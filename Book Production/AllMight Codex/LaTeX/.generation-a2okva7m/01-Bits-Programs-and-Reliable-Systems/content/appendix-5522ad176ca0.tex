@@ -1,0 +1,36 @@
+\hypertarget{appendix-5522ad176ca0}{}\label{referencestart:appendix-5522ad176ca0}
+\section{Field reordering and AoS versus SoA}\label{appendix-5522ad176ca0-field-reordering-and-aos-versus-soa}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-5522ad176ca0-definition-and-mechanism}
+
+Reordering fields can reduce alignment holes: conventional 1/8/1/4 members shrink 24→16 bytes when arranged 8/4/1/1. AoS (array of structures) interleaves full records; SoA (structure of arrays) separates each field into its own array. Smaller records do not prove faster code; hot fields and access patterns matter, and layout changes may break ABI.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-5522ad176ca0-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-f52f8c5a3afd]{Internal and tail padding} --- The position and amount of unused layout space determine reordering/packing effects.
+\item
+  \hyperref[appendix-e4ccdbab8320]{Cache lines and memory bandwidth} --- Field adjacency and stride affect useful bytes fetched per access.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-5522ad176ca0-used-by}
+
+Update downstream uses when later chunks build on this concept.
+
+\subsection{Recall and next depth}\label{appendix-5522ad176ca0-recall-and-next-depth}
+
+Calculate footprint savings, then ask which fields a loop actually reads.
+
+\textbf{Pending:} Measured AoS/SoA/AoSoA trade-offs, ECS and SIMD.
+
+\subsection{Source and navigation}\label{appendix-5522ad176ca0-source-and-navigation}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

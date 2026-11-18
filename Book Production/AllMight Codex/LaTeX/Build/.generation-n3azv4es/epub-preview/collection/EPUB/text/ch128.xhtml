@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch128.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-0c67cd5bf30a-pages-and-page-offsets" class="level2">
+<h2>Pages and page offsets</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-0c67cd5bf30a-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A page is a virtual address block; a frame is page-sized physical backing. With page size P=2^k, divide VA into VPN=floor(VA/P) and offset=VA mod P. Translation substitutes frame identity while preserving offset. The 4-KiB examples use k=12; actual supported sizes are platform-dependent.</p>
+</section>
+<section id="appendix-0c67cd5bf30a-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch131.xhtml#appendix-18ee4f913c3c-addresses-and-virtual-memory" class="wikilink">Addresses and virtual memory</a> — Mappings give numeric locations their process-specific storage identity.</li>
+<li><a href="ch105.xhtml#appendix-dbe5905163c2-bit-mask" class="wikilink">Bit mask (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Bit mask)</a> — A low-bit mask isolates the within-page offset.</li>
+<li><a href="ch063.xhtml#appendix-73425b25118e-shift-operations" class="wikilink">Shift operations (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Shift operations)</a> — Shifts relocate a selected byte or address field to its significance position.</li>
+</ul>
+</section>
+<section id="appendix-0c67cd5bf30a-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch125.xhtml#appendix-01e5905165c4-page-tables-and-mmu" class="wikilink">Page tables and MMU</a> — uses this mechanism as stated in its prerequisites.</li>
+<li><a href="ch172.xhtml#appendix-f897c1ddac8f-virtual-and-physical-contiguity" class="wikilink">Virtual and physical contiguity</a> — uses this mechanism as stated in its prerequisites.</li>
+</ul>
+</section>
+<section id="appendix-0c67cd5bf30a-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Split 0x12345ABC into VPN 12345 and offset ABC for 4 KiB.</p>
+<p><strong>Pending:</strong> Architecture page sizes, multilevel address fields, huge pages.</p>
+</section>
+<section id="appendix-0c67cd5bf30a-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

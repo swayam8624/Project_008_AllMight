@@ -1,0 +1,46 @@
+\hypertarget{appendix-3ee9861904d5}{}
+\section*{Camera calibration and bundle adjustment}
+\section{Camera calibration and bundle adjustment}\label{appendix-3ee9861904d5-camera-calibration-and-bundle-adjustment}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-3ee9861904d5-definition-and-mechanism}
+
+Camera calibration estimates parameters that map 3D points to image coordinates. Intrinsics describe focal scale, principal point, and lens distortion; extrinsics describe camera pose relative to the scene. Known calibration targets provide 3D-to-2D correspondences, and a nonlinear least-squares objective minimizes reprojection error. Bundle adjustment jointly refines many camera poses and 3D feature points by minimizing all observed image residuals. The problem is sparse because each image sees only a subset of points. It also has gauge freedoms: translating or scaling the entire reconstruction may leave projections unchanged, so fix a reference pose or scale. Robust loss functions reduce the effect of mismatched features. Good initialization, parameter scaling, and Jacobian structure determine whether optimization converges.
+
+\subsection{Prerequisites}\label{appendix-3ee9861904d5-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-cb3b26862282}{Homogeneous coordinates and perspective division (02-Foundations-II, appendix-cb3b26862282)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-1fad5e7f36fa}{Singular value decomposition (02-Foundations-II, appendix-1fad5e7f36fa)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-3ee9861904d5-used-by}
+
+\begin{itemize}
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography}{Worlds, Images and Inference}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-c4e98b6e4001}{Stereo correspondence and epipolar geometry (03-Visual-Computing-I, appendix-c4e98b6e4001)}
+\item
+  \hyperref[appendix-c5b332e400e7]{Radiance fields and Gaussian splatting}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-0976e86e5b9f}{Off-axis stereo projection and disparity (02-Foundations-II, appendix-0976e86e5b9f)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-fc99ad39f351}{Omnidirectional camera projections (02-Foundations-II, appendix-fc99ad39f351)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-2cbf2968e866}{Position reconstruction from depth (02-Foundations-II, appendix-2cbf2968e866)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-113f0267e5f4}{Camera gauge freedoms and observability (02-Foundations-II, appendix-113f0267e5f4)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-3ee9861904d5-full-teaching-explanation}
+
+\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch003-cameras-projection-and-calibration}{Cameras, projection, and calibration (03-Visual-Computing-I, 03-visual-computing-i-ch003-cameras-projection-and-calibration)} · \hyperref[04-visual-computing-ii-ch032-pose-estimation-transforms-and-robust-fitting]{Pose estimation, transforms, and robust fitting} · \hyperref[04-visual-computing-ii-ch032-stereo-relative-orientation-and-reconstruction]{Stereo, relative orientation, and reconstruction}
+
+\subsection{Phase 11 camera development}\label{appendix-3ee9861904d5-phase-11-camera-development}
+
+Linearize reprojection residuals as r(θ+δ)≈r(θ)+Jδ; the weighted information matrix \(J^{\mathsf T}WJ\) reveals parameter combinations that change observations. Null directions are local ambiguities, while small eigenvalues indicate weak constraints. In calibrated monocular structure from motion, global frame choice and common scene scale are gauge freedoms. Fix a pose and scale convention, or add a metric measurement, before interpreting covariance. Repeated nearly identical views may leave focal length, depth, and pose coupled even with many pixels. Link: \href{../02-Foundations-II/main.pdf\#nameddest=02-foundations-ii-ch037-a-camera-model-must-close-the-loop}{A camera model must close the loop (02-Foundations-II, 02-foundations-ii-ch037-a-camera-model-must-close-the-loop)}; research: \href{../02-Foundations-II/main.pdf\#nameddest=02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review}{Four deeper links from the TUM lecture review (02-Foundations-II, 02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review)}.

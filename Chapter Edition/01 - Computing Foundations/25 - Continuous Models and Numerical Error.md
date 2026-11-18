@@ -8,7 +8,7 @@ Differential equations and mesh operators model continuous change, but computers
 
 **Recall question:** Why can making a finite-difference step smaller eventually make the derivative estimate worse?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 57905–61007; source-span SHA256 98e491fd57ef297f86d8dfe4392e1d3ea527f3585a5a03b61c35468287b36a0f. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 58086–61254; source-span SHA256 ca1e4a7bab4052c68d565f688c192868c50165e5314e8cc3eb07ee9e12324ff1. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 # Continuous models meet numerical computation
@@ -305,7 +305,7 @@ The heat-equation discussion above already showed that a differential operator h
 
 A **Sturm–Liouville** problem has the form
 
-\[
+$$
 -\frac{d}{dx}
 \left(
 p(x)\frac{dy}{dx}
@@ -313,35 +313,35 @@ p(x)\frac{dy}{dx}
 -q(x)y
 =
 \lambda \rho(x)y
-\]
+$$
 
 under boundary conditions that make the differential operator self-adjoint with respect to the weighted inner product
 
-\[
+$$
 \langle f,g\rangle_\rho
 =
 \int_a^b
 f(x)^*g(x)\rho(x)\,dx.
-\]
+$$
 
-Self-adjointness is the infinite-dimensional analogue of a real symmetric/Hermitian matrix. Under the appropriate regular setting, eigenvalues are real and eigenfunctions associated with distinct eigenvalues are orthogonal under the weight \(\rho\). The conceptual bridge to the matrix spectral theorem is direct: a function can be expanded in operator-adapted modes, and the differential equation acts independently on those modes.
+Self-adjointness is the infinite-dimensional analogue of a real symmetric/Hermitian matrix. Under the appropriate regular setting, eigenvalues are real and eigenfunctions associated with distinct eigenvalues are orthogonal under the weight $\rho$. The conceptual bridge to the matrix spectral theorem is direct: a function can be expanded in operator-adapted modes, and the differential equation acts independently on those modes.
 
 This is why sine/cosine series appear for strings and heat flow, spherical harmonics appear for angular problems on a sphere, and Bessel functions appear in cylindrical/radial separation problems. They are not a bag of unrelated “special functions.” They are eigenfunctions selected by the operator, coordinate geometry, and boundary conditions.
 
 For a one-dimensional fixed-end string, spatial separation leads to
 
-\[
+$$
 X''+\lambda X=0,
 \qquad
 X(0)=X(L)=0,
-\]
+$$
 
 whose nonzero modes are
 
-\[
+$$
 X_n(x)=
 \sin\left(\frac{n\pi x}{L}\right).
-\]
+$$
 
 The boundary conditions quantize the allowed spatial frequencies. The temporal equation then determines how each coefficient oscillates. For heat flow the same spatial modes decay exponentially rather than oscillate. The geometry of the domain and boundary conditions choose the basis; the time-evolution law chooses what happens to each coefficient.
 
@@ -353,7 +353,7 @@ Source basis: Riley, Hobson, and Bence, *Mathematical Methods for Physics and En
 
 A Fourier series expands a periodic function in discrete harmonics. A Fourier transform extends the idea to a continuum of frequencies. With one common convention,
 
-\[
+$$
 \hat f(\omega)
 =
 \int_{-\infty}^{\infty}
@@ -364,58 +364,58 @@ f(t)
 \frac{1}{2\pi}
 \int_{-\infty}^{\infty}
 \hat f(\omega)e^{i\omega t}\,d\omega.
-\]
+$$
 
-The exact \(2\pi\) factors depend on convention; the transform pair must be declared together.
+The exact $2\pi$ factors depend on convention; the transform pair must be declared together.
 
 Differentiation becomes multiplication:
 
-\[
+$$
 \widehat{f'}(\omega)=i\omega\hat f(\omega),
-\]
+$$
 
 when boundary/regularity assumptions justify the manipulation. Convolution becomes pointwise multiplication:
 
-\[
+$$
 \widehat{f*g}
 =
 \hat f\,\hat g.
-\]
+$$
 
 This is why blur kernels, linear shift-invariant filters, diffraction formulas, image correlation, and frequency-domain PDE solvers all meet Fourier analysis. The transform is not “making an image into frequencies” in a vague sense; it changes coordinates so translation-invariant linear operators become multiplication.
 
 A Laplace transform,
 
-\[
+$$
 F(s)
 =
 \int_0^\infty
 f(t)e^{-st}\,dt,
-\]
+$$
 
-uses a complex parameter \(s\) and is especially useful for initial-value systems where exponential growth/decay and transient behavior matter. Derivatives transform into algebraic expressions that include initial conditions. Fourier analysis emphasizes steady frequency content; Laplace analysis includes a real exponential weighting and exposes poles that govern temporal modes. One can often obtain a Fourier transform as a boundary case when the relevant convergence conditions permit.
+uses a complex parameter $s$ and is especially useful for initial-value systems where exponential growth/decay and transient behavior matter. Derivatives transform into algebraic expressions that include initial conditions. Fourier analysis emphasizes steady frequency content; Laplace analysis includes a real exponential weighting and exposes poles that govern temporal modes. One can often obtain a Fourier transform as a boundary case when the relevant convergence conditions permit.
 
-A **Green function** solves a different but connected problem. For a linear operator \(L\), define \(G(x,\xi)\) by
+A **Green function** solves a different but connected problem. For a linear operator $L$, define $G(x,\xi)$ by
 
-\[
+$$
 L_x G(x,\xi)=\delta(x-\xi)
-\]
+$$
 
 with the desired boundary conditions. Then a solution of
 
-\[
+$$
 L u=f
-\]
+$$
 
 can be represented schematically as
 
-\[
+$$
 u(x)
 =
 \int G(x,\xi)f(\xi)\,d\xi
-\]
+$$
 
-plus any terms required by nonhomogeneous boundary conditions. \(G\) is an impulse response: it tells how a unit source at \(\xi\) influences \(x\). In translation-invariant domains, \(G(x,\xi)\) may depend only on \(x-\xi\), turning the integral into a convolution and reconnecting directly to Fourier multiplication.
+plus any terms required by nonhomogeneous boundary conditions. $G$ is an impulse response: it tells how a unit source at $\xi$ influences $x$. In translation-invariant domains, $G(x,\xi)$ may depend only on $x-\xi$, turning the integral into a convolution and reconnecting directly to Fourier multiplication.
 
 These are therefore three views of the same linear-operator problem. Eigenfunction expansion diagonalizes using problem-specific modes. Fourier/Laplace transforms diagonalize or algebraize operators using standard exponential families. A Green function represents the inverse operator as the response to impulses. The right choice depends on domain, boundary/initial conditions, symmetry, and whether an analytic or numerical representation is desired.
 
@@ -425,26 +425,26 @@ Source basis: Riley, Hobson, and Bence, Chapters 12–17 and 20–21 on Fourier 
 
 The same differential expression can define very different physical and numerical problems depending on its boundary and initial data. Three canonical linear PDE families recur throughout graphics and simulation:
 
-\[
+$$
 \frac{\partial u}{\partial t}
 =
 \kappa\nabla^2u
 \quad\text{(diffusion/heat)},
-\]
+$$
 
-\[
+$$
 \frac{\partial^2u}{\partial t^2}
 =
 c^2\nabla^2u
 \quad\text{(wave)},
-\]
+$$
 
 and
 
-\[
+$$
 \nabla^2u=f
 \quad\text{(Poisson; \(f=0\) gives Laplace)}.
-\]
+$$
 
 Diffusion is dissipative: high-frequency modes decay rapidly. The wave equation is second order in time and supports propagating oscillations. Poisson/Laplace are typically boundary-value equations without a time evolution at all. Reusing one “PDE solver” abstraction without representing these different contracts can hide which data are mathematically required.
 
@@ -452,9 +452,9 @@ A Dirichlet condition specifies the field value on a boundary. A Neumann conditi
 
 **Separation of variables** assumes a product such as
 
-\[
+$$
 u(x,t)=X(x)T(t)
-\]
+$$
 
 and rearranges a PDE so each coordinate-dependent side must equal a separation constant. This does not magically solve arbitrary PDEs. It succeeds when geometry, coefficients, and boundary conditions permit a separable basis. The resulting spatial equations are often Sturm–Liouville eigenproblems, which explains why the previous section is not separate trivia.
 
@@ -466,42 +466,108 @@ Source basis: Riley, Hobson, and Bence, Chapters 20–21 on the wave, diffusion,
 
 ### Complex analysis explains why conformal maps, residues, and asymptotic integrals share one language
 
-A complex-valued function \(f(z)\) of \(z=x+iy\) is differentiable in the complex sense only under stronger conditions than ordinary two-variable differentiability. Writing
+A complex-valued function $f(z)$ of $z=x+iy$ is differentiable in the complex sense only under stronger conditions than ordinary two-variable differentiability. Writing
 
-\[
+$$
 f(z)=u(x,y)+iv(x,y),
-\]
+$$
 
 analyticity implies the Cauchy–Riemann relations
 
-\[
+$$
 u_x=v_y,\qquad u_y=-v_x
-\]
+$$
 
-under the standard regularity assumptions. These equations force angle-preserving local behavior wherever \(f'(z)\neq0\), which is why analytic functions are a natural source of **conformal maps**.
+under the standard regularity assumptions. These equations force angle-preserving local behavior wherever $f'(z)\neq0$, which is why analytic functions are a natural source of **conformal maps**.
 
-Contour integration then turns analyticity into global identities. Cauchy’s theorem and integral formula constrain integrals of analytic functions; a Laurent series exposes isolated singularities. The coefficient of \((z-z_0)^{-1}\) is the **residue**, and the residue theorem converts certain contour integrals into a sum over enclosed singularities:
+Contour integration then turns analyticity into global identities. Cauchy’s theorem and integral formula constrain integrals of analytic functions; a Laurent series exposes isolated singularities. The coefficient of $(z-z_0)^{-1}$ is the **residue**, and the residue theorem converts certain contour integrals into a sum over enclosed singularities:
 
-\[
+$$
 \oint_C f(z)\,dz
 =
 2\pi i
 \sum_{z_k\in\mathrm{inside}(C)}
 \operatorname{Res}(f,z_k).
-\]
+$$
 
 For engineering mathematics, the point is not to replace numerical integration with clever contours everywhere. The pole/singularity structure often reveals system behavior directly. Inverse Laplace transforms, linear-system responses, wave propagation, and asymptotic integrals can all be interpreted through complex singularities.
 
+<!-- Book-completion teaching addition b4f78aa52ff8b1cd -->
+
+### A contour calculation with its missing limit made explicit
+
+The residue theorem becomes useful for a real integral when we can add a complex-plane path whose contribution tends to zero. Consider the convergent improper integral
+
+$$
+I=\int_{-\infty}^{\infty}\frac{dx}{x^2+1}.
+$$
+
+Use the complex function $f(z)=1/[(z-i)(z+i)]$, where $i^2=-1$. For $R>1$, travel from $-R$ to $R$ on the real axis, then return on the upper semicircle $\Gamma_R$, parametrized by $z=Re^{i\theta}$ for $0\leq\theta\leq\pi$. This closed path is counterclockwise. It encloses $i$ and excludes $-i$. The factor $(z-i)^{-1}$ makes $i$ a simple pole: multiplying by $z-i$ removes that first-order singularity. Its residue is
+
+$$
+\operatorname{Res}(f,i)
+=\lim_{z\to i}(z-i)f(z)
+=\frac{1}{2i}.
+$$
+
+There is no singularity on this contour. The theorem gives, at each $R>1$,
+
+$$
+\int_{-R}^{R}\frac{dx}{x^2+1}
++\int_{\Gamma_R}\frac{dz}{z^2+1}
+=2\pi i\frac{1}{2i}=\pi.
+$$
+
+We cannot simply erase the arc term. On the arc, the reverse triangle inequality gives $|z^2+1|\geq ||z|^2-1|=R^2-1$, while the arc length is $\pi R$. Bounding an integral by path length times the largest integrand magnitude yields
+
+$$
+\left|\int_{\Gamma_R}\frac{dz}{z^2+1}\right|
+\leq\frac{\pi R}{R^2-1}\longrightarrow0.
+$$
+
+Taking $R\to\infty$ now proves $I=\pi$. Evenness gives the half-line value $\pi/2$. The vanishing-arc argument is part of the proof; another integrand or another closing half-plane needs its own bound.
+
+**Independent real-variable solution.** On the positive half-line substitute $x=\tan\theta$. Then $dx=\sec^2\theta\,d\theta$ and $1+x^2=\sec^2\theta$, so the integral becomes $\int_0^{\pi/2}d\theta=\pi/2$. Doubling recovers the full-line answer.
+
+**Exercise: a double pole.** Evaluate
+
+$$
+J=\int_{-\infty}^{\infty}\frac{x^2}{(x^2+1)^2}\,dx
+$$
+
+with the same contour, and justify the arc limit. A double pole has a $(z-i)^{-2}$ leading singularity; its residue is still the coefficient of $(z-i)^{-1}$, not that leading coefficient.
+
+**Worked solution.** Put $g(z)=z^2/[(z-i)^2(z+i)^2]$. Removing the double pole leaves an analytic function, whose first derivative supplies the residue:
+
+$$
+\begin{aligned}
+\operatorname{Res}(g,i)
+&=\left.\frac{d}{dz}\big[(z-i)^2g(z)\big]\right|_{z=i}\\
+&=\left.\left(\frac{2z}{(z+i)^2}-\frac{2z^2}{(z+i)^3}\right)\right|_{z=i}
+=-\frac{i}{4}.
+\end{aligned}
+$$
+
+For $R>1$, the arc contribution is bounded by $\pi R^3/(R^2-1)^2$, which tends to zero. Hence $J=2\pi i(-i/4)=\pi/2$. Independently,
+
+$$
+\frac{x^2}{(x^2+1)^2}=\frac{1}{x^2+1}-\frac{1}{(x^2+1)^2}.
+$$
+
+The first full-line integral is $\pi$. In the second, the tangent substitution gives twice $\int_0^{\pi/2}\cos^2\theta\,d\theta=\pi/4$, so that full-line value is $\pi/2$. The difference is again $\pi/2$.
+
+The source comparison for this worked practice used Riley, Hobson and Bence, *Mathematical Methods for Physics and Engineering*, third edition, §24.13, physical PDF pages 891–900. This is one inspected section, not a claim that the entire book has been reviewed.
+
 When an integral contains a rapidly varying phase or exponential,
 
-\[
+$$
 I(\lambda)
 =
 \int e^{\lambda\phi(z)}a(z)\,dz,
 \qquad |\lambda|\gg1,
-\]
+$$
 
-the dominant contribution often comes from neighborhoods of stationary/saddle points where \(\phi'(z)=0\). Stationary-phase and steepest-descent methods deform or analyze the integration path so the important local contributions become explicit. WKB methods apply related asymptotic reasoning to differential equations with a slowly varying scale. These techniques are useful conceptual ancestors of modern importance/saddle-point approximations: large problems can be dominated by small geometrically structured regions.
+the dominant contribution often comes from neighborhoods of stationary/saddle points where $\phi'(z)=0$. Stationary-phase and steepest-descent methods deform or analyze the integration path so the important local contributions become explicit. WKB methods apply related asymptotic reasoning to differential equations with a slowly varying scale. These techniques are useful conceptual ancestors of modern importance/saddle-point approximations: large problems can be dominated by small geometrically structured regions.
 
 Source basis: Riley, Hobson, and Bence, Chapters 24–25 on analytic functions, Cauchy–Riemann equations, conformal transformations, contour integration, Laurent series, residues, inverse Laplace transforms, WKB, stationary phase, and steepest descent.
 
@@ -517,7 +583,7 @@ $$
 We want to advance from time $t_n$ to:
 
 $$
-t\_{n+1}=t_n+h,
+t_{n+1}=t_n+h,
 $$
 
 where $h>0$ is the timestep.
@@ -537,14 +603,14 @@ $$
 discarding second-order and higher terms gives:
 
 $$
-\boxed{ y\_{n+1}=y_n+h f(t_n,y_n) }.
+\boxed{ y_{n+1}=y_n+h f(t_n,y_n) }.
 $$
 
 This is explicit Euler integration.
 
 It is called explicit because the right side depends only on information already available at the current step.
 
-The solver does not need to solve an equation involving the unknown $y\_{n+1}$.
+The solver does not need to solve an equation involving the unknown $y_{n+1}$.
 
 ##### The algorithmic state transition
 
@@ -686,11 +752,11 @@ $$
 Explicit Euler updates both position and velocity using the old state:
 
 $$
-x\_{n+1}=x_n+hv_n,
+x_{n+1}=x_n+hv_n,
 $$
 
 $$
-v\_{n+1}=v_n+ha_n.
+v_{n+1}=v_n+ha_n.
 $$
 
 At the initial state:
@@ -758,17 +824,17 @@ The spring examples above began from a differential equation and asked how to in
 
 Let the generalized coordinates of a mechanical system be
 
-\[
+$$
 \mathbf q(t)
 =
 (q_1(t),\ldots,q_n(t)).
-\]
+$$
 
 The coordinates do not have to be Cartesian positions. They may be joint angles, slider distances, or any independent coordinates that describe a configuration locally.
 
 Define the **Lagrangian**
 
-\[
+$$
 \boxed{
 L(\mathbf q,\dot{\mathbf q},t)
 =
@@ -776,46 +842,46 @@ T(\mathbf q,\dot{\mathbf q},t)
 -
 V(\mathbf q,t)
 }
-\]
+$$
 
-for the common conservative mechanical case, where \(T\) is kinetic energy and \(V\) is potential energy.
+for the common conservative mechanical case, where $T$ is kinetic energy and $V$ is potential energy.
 
 For a candidate trajectory between fixed endpoint configurations at fixed times, define the **action**
 
-\[
+$$
 \boxed{
 S[\mathbf q]
 =
 \int_{t_0}^{t_1}
 L(\mathbf q,\dot{\mathbf q},t)\,dt
 }.
-\]
+$$
 
 Hamilton's principle states that the physical trajectory is stationary with respect to admissible infinitesimal variations of the path whose endpoint variations vanish:
 
-\[
+$$
 \delta S=0.
-\]
+$$
 
 “Stationary” is more precise than “minimum.” Depending on the problem, the physical path need not globally minimize the action. The first variation must vanish.
 
 #### Deriving the Euler–Lagrange equations rather than quoting them
 
-Perturb one coordinate by a small function \(\eta_i(t)\):
+Perturb one coordinate by a small function $\eta_i(t)$:
 
-\[
+$$
 q_i(t)\mapsto q_i(t)+\varepsilon\eta_i(t),
-\]
+$$
 
 with
 
-\[
+$$
 \eta_i(t_0)=\eta_i(t_1)=0.
-\]
+$$
 
-Differentiate the action with respect to \(\varepsilon\) at zero:
+Differentiate the action with respect to $\varepsilon$ at zero:
 
-\[
+$$
 \delta S
 =
 \int_{t_0}^{t_1}
@@ -826,11 +892,11 @@ Differentiate the action with respect to \(\varepsilon\) at zero:
 \frac{\partial L}{\partial \dot q_i}\dot\eta_i
 \right)
 dt.
-\]
+$$
 
 Integrate the second term by parts:
 
-\[
+$$
 \int
 \frac{\partial L}{\partial\dot q_i}
 \dot\eta_i\,dt
@@ -844,11 +910,11 @@ Integrate the second term by parts:
 \left(
 \frac{\partial L}{\partial\dot q_i}
 \right)\eta_i\,dt.
-\]
+$$
 
 The boundary term vanishes because the endpoint variations are zero. Therefore
 
-\[
+$$
 \delta S
 =
 \int_{t_0}^{t_1}
@@ -862,11 +928,11 @@ The boundary term vanishes because the endpoint variations are zero. Therefore
 \right)
 \right]
 \eta_i\,dt.
-\]
+$$
 
-The variations \(\eta_i\) are otherwise arbitrary. Hence every coefficient must vanish:
+The variations $\eta_i$ are otherwise arbitrary. Hence every coefficient must vanish:
 
-\[
+$$
 \boxed{
 \frac{d}{dt}
 \left(
@@ -877,83 +943,83 @@ The variations \(\eta_i\) are otherwise arbitrary. Hence every coefficient must 
 =
 0
 }.
-\]
+$$
 
 These are the Euler–Lagrange equations.
 
 For a particle in one dimension,
 
-\[
+$$
 L(x,\dot x)=\frac12m\dot x^2-V(x).
-\]
+$$
 
 Then
 
-\[
+$$
 \frac{\partial L}{\partial\dot x}=m\dot x,
 \qquad
 \frac{\partial L}{\partial x}=-V'(x),
-\]
+$$
 
 so
 
-\[
+$$
 m\ddot x+V'(x)=0.
-\]
+$$
 
 Because force is
 
-\[
+$$
 F(x)=-V'(x),
-\]
+$$
 
 we recover
 
-\[
+$$
 m\ddot x=F(x).
-\]
+$$
 
 The variational and Newtonian descriptions agree here, but the variational form generalizes naturally to non-Cartesian coordinates and exposes symmetries that may be hidden in component force equations.
 
 #### Generalized momentum is defined by the Lagrangian
 
-The momentum conjugate to \(q_i\) is
+The momentum conjugate to $q_i$ is
 
-\[
+$$
 \boxed{
 p_i
 =
 \frac{\partial L}{\partial\dot q_i}
 }.
-\]
+$$
 
-For a Cartesian particle with ordinary kinetic energy this becomes \(p_i=m\dot q_i\), but the definition is more general. In curvilinear coordinates or coupled systems, conjugate momentum need not be a mass times the corresponding coordinate velocity.
+For a Cartesian particle with ordinary kinetic energy this becomes $p_i=m\dot q_i$, but the definition is more general. In curvilinear coordinates or coupled systems, conjugate momentum need not be a mass times the corresponding coordinate velocity.
 
-This matters when converting an engine model into Hamiltonian form: blindly storing \(\mathbf p=m\mathbf v\) is only valid when the model's kinetic energy gives that relation.
+This matters when converting an engine model into Hamiltonian form: blindly storing $\mathbf p=m\mathbf v$ is only valid when the model's kinetic energy gives that relation.
 
 #### Cyclic coordinates reveal conservation laws immediately
 
-If a coordinate \(q_j\) does not appear explicitly in the Lagrangian,
+If a coordinate $q_j$ does not appear explicitly in the Lagrangian,
 
-\[
+$$
 \frac{\partial L}{\partial q_j}=0,
-\]
+$$
 
 then the Euler–Lagrange equation gives
 
-\[
+$$
 \frac{d}{dt}
 \left(
 \frac{\partial L}{\partial\dot q_j}
 \right)
 =0.
-\]
+$$
 
 Thus
 
-\[
+$$
 \boxed{p_j=\text{constant}.}
-\]
+$$
 
 Such a coordinate is called **cyclic** or **ignorable**. The word “ignorable” does not mean physically unimportant; it means the Lagrangian is invariant under translation in that coordinate.
 
@@ -965,29 +1031,29 @@ A conservation law should not be treated as a lucky algebraic cancellation. When
 
 The full theorem can be expressed geometrically, but three standard correspondences provide the engineering intuition:
 
-\[
+$$
 \boxed{
 \text{spatial translation symmetry}
 \longleftrightarrow
 \text{linear momentum conservation}
 }
-\]
+$$
 
-\[
+$$
 \boxed{
 \text{rotational symmetry}
 \longleftrightarrow
 \text{angular momentum conservation}
 }
-\]
+$$
 
-\[
+$$
 \boxed{
 \text{time-translation symmetry}
 \longleftrightarrow
 \text{energy conservation}
 }
-\]
+$$
 
 The assumptions matter. An external time-dependent force breaks time-translation invariance. A fixed wall or field can break spatial translation symmetry. Dissipation is generally not described by the simple conservative action above. A collision solver that injects or removes energy according to restitution is not obliged to conserve the pre-impact Hamiltonian.
 
@@ -995,29 +1061,29 @@ For debugging, however, symmetry-derived invariants are extremely useful. If an 
 
 ### Configuration space, velocity space, and phase space are different state spaces
 
-A configuration is one possible geometric arrangement of the system. The set of all configurations is the **configuration space**, usually denoted \(Q\).
+A configuration is one possible geometric arrangement of the system. The set of all configurations is the **configuration space**, usually denoted $Q$.
 
-For a point particle constrained to a sphere, \(Q\) is the sphere itself, not all of \(\mathbb R^3\). For a rigid body's orientation, the configuration space is the rotation group \(SO(3)\), not an arbitrary three-vector space even though software may use three local parameters or four quaternion components to represent it.
+For a point particle constrained to a sphere, $Q$ is the sphere itself, not all of $\mathbb R^3$. For a rigid body's orientation, the configuration space is the rotation group $SO(3)$, not an arbitrary three-vector space even though software may use three local parameters or four quaternion components to represent it.
 
-A Lagrangian state needs both configuration and velocity. Geometrically, velocities live in the tangent space \(T_qQ\) at the current configuration. The collection of all pairs
+A Lagrangian state needs both configuration and velocity. Geometrically, velocities live in the tangent space $T_qQ$ at the current configuration. The collection of all pairs
 
-\[
+$$
 (q,\dot q)
-\]
+$$
 
-forms the tangent bundle \(TQ\).
+forms the tangent bundle $TQ$.
 
 Hamiltonian mechanics instead uses configuration and conjugate momentum:
 
-\[
+$$
 (q,p).
-\]
+$$
 
-Momenta are covector-like objects belonging to the cotangent space \(T_q^*Q\). The collection of all such pairs is the **cotangent bundle**
+Momenta are covector-like objects belonging to the cotangent space $T_q^*Q$. The collection of all such pairs is the **cotangent bundle**
 
-\[
+$$
 \boxed{T^*Q,}
-\]
+$$
 
 which is the natural phase space for Hamiltonian mechanics.
 
@@ -1025,23 +1091,23 @@ This distinction connects directly to the earlier vector/covector discussion in 
 
 ### The Legendre transform moves from velocity to momentum
 
-Starting with a Lagrangian \(L(q,\dot q,t)\), define
+Starting with a Lagrangian $L(q,\dot q,t)$, define
 
-\[
+$$
 p_i=\frac{\partial L}{\partial\dot q_i}.
-\]
+$$
 
 If these relations can be inverted to obtain
 
-\[
+$$
 \dot{\mathbf q}
 =
 \dot{\mathbf q}(\mathbf q,\mathbf p,t),
-\]
+$$
 
 then define the Hamiltonian by the Legendre transform
 
-\[
+$$
 \boxed{
 H(\mathbf q,\mathbf p,t)
 =
@@ -1049,25 +1115,25 @@ H(\mathbf q,\mathbf p,t)
 -
 L(\mathbf q,\dot{\mathbf q},t)
 }.
-\]
+$$
 
 For
 
-\[
+$$
 L=\frac12m\dot q^2-V(q),
-\]
+$$
 
 we have
 
-\[
+$$
 p=m\dot q,
 \qquad
 \dot q=\frac pm.
-\]
+$$
 
 Therefore
 
-\[
+$$
 H
 =
 p\frac pm
@@ -1081,20 +1147,20 @@ V(q)
 \boxed{
 \frac{p^2}{2m}+V(q)
 }.
-\]
+$$
 
-In this familiar case \(H\) is total mechanical energy.
+In this familiar case $H$ is total mechanical energy.
 
 But “Hamiltonian equals energy” is not a definition that works without qualification. Time-dependent coordinates, velocity-dependent potentials, constrained or singular systems, and other generalized models can make the relationship subtler.
 
 The invertibility condition is also substantive. The velocity Hessian
 
-\[
+$$
 \left[
 \frac{\partial^2L}
 {\partial\dot q_i\partial\dot q_j}
 \right]
-\]
+$$
 
 must be nonsingular for the ordinary Legendre transformation to define velocities uniquely from momenta. If it is singular, constraints are present in the Hamiltonian description and a naive inversion fails. This is one reason constrained mechanics requires more than rearranging equations.
 
@@ -1102,7 +1168,7 @@ must be nonsingular for the ordinary Legendre transformation to define velocitie
 
 When the Legendre transform is regular, the dynamics can be written
 
-\[
+$$
 \boxed{
 \dot q_i
 =
@@ -1113,43 +1179,43 @@ When the Legendre transform is regular, the dynamics can be written
 -
 \frac{\partial H}{\partial q_i}
 }.
-\]
+$$
 
 Second-order equations in configuration become a first-order system on phase space.
 
 For a harmonic oscillator,
 
-\[
+$$
 H(q,p)
 =
 \frac{p^2}{2m}
 +
 \frac12kq^2.
-\]
+$$
 
 Then
 
-\[
+$$
 \dot q=\frac pm,
 \qquad
 \dot p=-kq.
-\]
+$$
 
 The energy level
 
-\[
+$$
 H(q,p)=E
-\]
+$$
 
-is an ellipse in the \((q,p)\) phase plane:
+is an ellipse in the $(q,p)$ phase plane:
 
-\[
+$$
 \frac{p^2}{2mE}
 +
 \frac{kq^2}{2E}
 =
 1.
-\]
+$$
 
 The exact trajectory circulates around this ellipse. This phase portrait makes numerical behavior visually interpretable. A method whose states spiral outward is injecting energy. A method whose states spiral inward is dissipating energy. A structure-preserving method may follow a nearby closed curve while its exact energy oscillates.
 
@@ -1159,58 +1225,58 @@ That geometric picture is the reason the symplectic discussion below is more tha
 
 In canonical coordinates
 
-\[
+$$
 (q_1,\ldots,q_n,p_1,\ldots,p_n),
-\]
+$$
 
 the canonical symplectic two-form is
 
-\[
+$$
 \boxed{
 \omega
 =
 \sum_{i=1}^{n}
 dq_i\wedge dp_i
 }.
-\]
+$$
 
 A two-form measures oriented infinitesimal area in pairs of tangent directions. The wedge product is antisymmetric:
 
-\[
+$$
 dq_i\wedge dp_i
 =
 -
 dp_i\wedge dq_i.
-\]
+$$
 
 In matrix form the same bilinear structure is represented by
 
-\[
+$$
 \Omega
 =
 \begin{bmatrix}
 0&I\\
 -I&0
 \end{bmatrix}.
-\]
+$$
 
-A Hamiltonian \(H\) determines a vector field \(X_H\) through the symplectic form. With one common sign convention,
+A Hamiltonian $H$ determines a vector field $X_H$ through the symplectic form. With one common sign convention,
 
-\[
+$$
 \boxed{
 \iota_{X_H}\omega=dH
 }
-\]
+$$
 
-with the corresponding canonical-coordinate convention chosen consistently. Expanding the relation yields Hamilton's equations. Different texts may place a minus sign in the defining contraction depending on whether \(\omega\) is written \(dq\wedge dp\) or \(dp\wedge dq\); the physical equations do not change when conventions are used consistently.
+with the corresponding canonical-coordinate convention chosen consistently. Expanding the relation yields Hamilton's equations. Different texts may place a minus sign in the defining contraction depending on whether $\omega$ is written $dq\wedge dp$ or $dp\wedge dq$; the physical equations do not change when conventions are used consistently.
 
-The important idea is that the Hamiltonian is not merely a scalar we try to conserve. Through \(\omega\), its differential generates the direction of motion in phase space.
+The important idea is that the Hamiltonian is not merely a scalar we try to conserve. Through $\omega$, its differential generates the direction of motion in phase space.
 
 ### Poisson brackets turn observables into a dynamical algebra
 
-Let \(f(q,p,t)\) be any scalar observable on phase space. Define the canonical **Poisson bracket**
+Let $f(q,p,t)$ be any scalar observable on phase space. Define the canonical **Poisson bracket**
 
-\[
+$$
 \boxed{
 \{f,g\}
 =
@@ -1223,11 +1289,11 @@ Let \(f(q,p,t)\) be any scalar observable on phase space. Define the canonical *
 \frac{\partial g}{\partial q_i}
 \right)
 }.
-\]
+$$
 
 Along Hamiltonian motion,
 
-\[
+$$
 \boxed{
 \frac{df}{dt}
 =
@@ -1235,44 +1301,44 @@ Along Hamiltonian motion,
 +
 \frac{\partial f}{\partial t}
 }.
-\]
+$$
 
-This single formula packages many conservation arguments. If \(f\) has no explicit time dependence and
+This single formula packages many conservation arguments. If $f$ has no explicit time dependence and
 
-\[
+$$
 \{f,H\}=0,
-\]
+$$
 
-then \(f\) is conserved.
+then $f$ is conserved.
 
-For the coordinate observable \(q_j\),
+For the coordinate observable $q_j$,
 
-\[
+$$
 \{q_j,H\}
 =
 \frac{\partial H}{\partial p_j}
 =
 \dot q_j.
-\]
+$$
 
-For \(p_j\),
+For $p_j$,
 
-\[
+$$
 \{p_j,H\}
 =
 -
 \frac{\partial H}{\partial q_j}
 =
 \dot p_j.
-\]
+$$
 
 Thus Hamilton's equations themselves are special cases of observable evolution.
 
 The bracket is bilinear and antisymmetric:
 
-\[
+$$
 \{f,g\}=-\{g,f\},
-\]
+$$
 
 obeys a product rule, and satisfies the Jacobi identity. Those properties make phase-space observables into a Lie algebra. For practical mechanics, the main value is conceptual compression: “commutes with the Hamiltonian under the Poisson bracket” becomes a test for a conserved quantity.
 
@@ -1280,7 +1346,7 @@ obeys a product rule, and satisfies the Jacobi identity. Those properties make p
 
 Consider the phase-space vector field
 
-\[
+$$
 \dot{\mathbf z}
 =
 \begin{bmatrix}
@@ -1292,11 +1358,11 @@ Consider the phase-space vector field
 \nabla_pH\\
 -\nabla_qH
 \end{bmatrix}.
-\]
+$$
 
 Its divergence in canonical coordinates is
 
-\[
+$$
 \nabla_{\mathbf z}\cdot\dot{\mathbf z}
 =
 \sum_i
@@ -1306,7 +1372,7 @@ Its divergence in canonical coordinates is
 \frac{\partial^2H}{\partial p_i\partial q_i}
 \right)
 =0
-\]
+$$
 
 when the required mixed derivatives are regular.
 
@@ -1314,11 +1380,11 @@ Zero divergence means the continuous Hamiltonian flow preserves phase-space volu
 
 This is **Liouville's theorem**.
 
-For one degree of freedom, phase space is two-dimensional, so volume preservation becomes area preservation. In higher dimensions, preserving \(2n\)-dimensional volume is weaker than preserving the full symplectic structure. A map can have determinant one and still fail the symplectic condition
+For one degree of freedom, phase space is two-dimensional, so volume preservation becomes area preservation. In higher dimensions, preserving $2n$-dimensional volume is weaker than preserving the full symplectic structure. A map can have determinant one and still fail the symplectic condition
 
-\[
+$$
 (D\Phi)^T\Omega(D\Phi)=\Omega.
-\]
+$$
 
 This distinction prevents a common shortcut: “volume preserving” and “symplectic” are not interchangeable.
 
@@ -1326,9 +1392,9 @@ This distinction prevents a common shortcut: “volume preserving” and “symp
 
 A change of phase-space variables
 
-\[
+$$
 (q,p)\mapsto(Q,P)
-\]
+$$
 
 is **canonical** when it preserves the symplectic form. In matrix language for a differentiable map, the Jacobian must satisfy the same symplectic condition used below for discrete integrators.
 
@@ -1340,7 +1406,7 @@ This perspective explains why the symplectic condition is the right discrete ana
 
 The hierarchy is now precise:
 
-\[
+$$
 \boxed{
 \text{action}
 \rightarrow
@@ -1352,7 +1418,7 @@ The hierarchy is now precise:
 \rightarrow
 \text{symplectic discrete update}
 }
-\]
+$$
 
 Each arrow introduces assumptions.
 
@@ -1372,13 +1438,13 @@ Source basis: V. I. Arnold, *Mathematical Methods of Classical Mechanics*, espec
 For our constant-mass spring, the velocity-first form is:
 
 $$
-\boxed{ v\_{n+1}=v_n+h a(x_n,v_n,t_n) }
+\boxed{ v_{n+1}=v_n+h a(x_n,v_n,t_n) }
 $$
 
 followed by:
 
 $$
-\boxed{ x\_{n+1}=x_n+h v\_{n+1} }.
+\boxed{ x_{n+1}=x_n+h v_{n+1} }.
 $$
 
 Compare this with explicit Euler, where position uses $v_n$.
@@ -1500,19 +1566,19 @@ $$
 Predict a half-step state using Euler:
 
 $$
-\mathbf y\_{\mathrm{mid}} = \mathbf y_n+\frac h2k_1.
+\mathbf y_{\mathrm{mid}} = \mathbf y_n+\frac h2k_1.
 $$
 
 Evaluate the derivative there:
 
 $$
-k_2=f\left(t_n+\frac h2,\mathbf y\_{\mathrm{mid}}\right).
+k_2=f\left(t_n+\frac h2,\mathbf y_{\mathrm{mid}}\right).
 $$
 
 Finally, use that midpoint slope for the full update:
 
 $$
-\boxed{ \mathbf y\_{n+1}=\mathbf y_n+hk_2 }.
+\boxed{ \mathbf y_{n+1}=\mathbf y_n+hk_2 }.
 $$
 
 This is the explicit midpoint method, a second-order Runge–Kutta method.
@@ -1584,7 +1650,7 @@ $$
 Midpoint state:
 
 $$
-y\_{\mathrm{mid}} = 1+\frac{0.1}{2}(-2) =0.9.
+y_{\mathrm{mid}} = 1+\frac{0.1}{2}(-2) =0.9.
 $$
 
 Midpoint slope:
@@ -1620,7 +1686,7 @@ k_2=f(t_n+h/2,y_n+hk_1/2),
 $$
 
 $$
-y\_{n+1}=y_n+hk_2.
+y_{n+1}=y_n+hk_2.
 $$
 
 Heun's explicit trapezoidal method instead predicts the endpoint slope:
@@ -1636,7 +1702,7 @@ $$
 then averages the two slopes:
 
 $$
-\boxed{ y\_{n+1} = y_n+\frac h2(k_1+k_2) }.
+\boxed{ y_{n+1} = y_n+\frac h2(k_1+k_2) }.
 $$
 
 For $y'=-2y$, $y_0=1$, and $h=0.1$:
@@ -1648,7 +1714,7 @@ $$
 The predicted endpoint is:
 
 $$
-y\_{\mathrm{predicted}}=1-0.2=0.8.
+y_{\mathrm{predicted}}=1-0.2=0.8.
 $$
 
 The endpoint derivative is:
@@ -1678,14 +1744,14 @@ A general Runge–Kutta method uses several derivative evaluations, called stage
 The generic equations are:
 
 $$
-k_i= f\left( t_n+c_ih,\\, y_n+h\sum\_{j=1}^{s}a\_{ij}k_j \right),
+k_i= f\left( t_n+c_ih,\, y_n+h\sum_{j=1}^{s}a_{ij}k_j \right),
 $$
 
 $$
-\boxed{ y\_{n+1} = y_n+h\sum\_{i=1}^{s}b_ik_i }.
+\boxed{ y_{n+1} = y_n+h\sum_{i=1}^{s}b_ik_i }.
 $$
 
-The coefficients $a\_{ij}$, $b_i$, and $c_i$ define the method.
+The coefficients $a_{ij}$, $b_i$, and $c_i$ define the method.
 
 For explicit methods, stage $i$ depends only on earlier stages $j\<i$, so its coefficient matrix is strictly lower triangular.
 
@@ -1720,7 +1786,7 @@ $$
 The final update is:
 
 $$
-\boxed{ y\_{n+1} = y_n+\frac h6(k_1+2k_2+2k_3+k_4) }.
+\boxed{ y_{n+1} = y_n+\frac h6(k_1+2k_2+2k_3+k_4) }.
 $$
 
 The weights are $1,2,2,1$, divided by six.
@@ -1828,7 +1894,7 @@ $$
 Additional coupled conditions are needed because the stages depend on the state as well as time, such as:
 
 $$
-\sum\_{i,j}b_i a\_{ij}c_j=\frac16.
+\sum_{i,j}b_i a_{ij}c_j=\frac16.
 $$
 
 These are examples of Runge–Kutta order conditions. The full fourth-order conditions ensure the method agrees with the appropriate rooted-tree terms of the exact solution expansion.
@@ -1880,13 +1946,13 @@ A sensible numerical method should reproduce that decay for appropriate timestep
 Explicit Euler gives:
 
 $$
-y\_{n+1}=y_n+h\lambda y_n.
+y_{n+1}=y_n+h\lambda y_n.
 $$
 
 Factor out $y_n$:
 
 $$
-\boxed{ y\_{n+1}=(1+h\lambda)y_n }.
+\boxed{ y_{n+1}=(1+h\lambda)y_n }.
 $$
 
 Define:
@@ -2008,7 +2074,7 @@ $$
 Explicit Euler produces:
 
 $$
-\mathbf y\_{n+1}=(I+hA)\mathbf y_n.
+\mathbf y_{n+1}=(I+hA)\mathbf y_n.
 $$
 
 Its update matrix is:
@@ -2020,19 +2086,19 @@ $$
 Since the eigenvalues of $A$ are $\pm i\omega$, the update-matrix eigenvalues are:
 
 $$
-\mu\_\pm=1\pm ih\omega.
+\mu_\pm=1\pm ih\omega.
 $$
 
 Their magnitudes are:
 
 $$
-|\mu\_\pm| = \sqrt{1+h^2\omega^2}.
+|\mu_\pm| = \sqrt{1+h^2\omega^2}.
 $$
 
 For any positive $h\omega$:
 
 $$
-\boxed{|\mu\_\pm|>1}.
+\boxed{|\mu_\pm|>1}.
 $$
 
 Therefore explicit Euler is unstable for the ideal harmonic oscillator for every positive fixed timestep.
@@ -2044,17 +2110,17 @@ Making the timestep smaller slows the energy growth, but does not remove the und
 The velocity-first update is:
 
 $$
-v\_{n+1}=v_n-h\omega^2x_n,
+v_{n+1}=v_n-h\omega^2x_n,
 $$
 
 $$
-x\_{n+1}=x_n+hv\_{n+1}.
+x_{n+1}=x_n+hv_{n+1}.
 $$
 
 Substitute the velocity update into position:
 
 $$
-x\_{n+1} =(1-h^2\omega^2)x_n+hv_n.
+x_{n+1} =(1-h^2\omega^2)x_n+hv_n.
 $$
 
 The matrix is:
@@ -2108,13 +2174,13 @@ It is not merely an implementation preference.
 For the scalar linear test equation $y'=\lambda y$, explicit midpoint and Heun's RK2 both have stability function:
 
 $$
-\boxed{ R\_{\mathrm{RK2}}(z)=1+z+\frac{z^2}{2} }.
+\boxed{ R_{\mathrm{RK2}}(z)=1+z+\frac{z^2}{2} }.
 $$
 
 Classical RK4 has:
 
 $$
-\boxed{ R\_{\mathrm{RK4}}(z)= 1+z+\frac{z^2}{2} +\frac{z^3}{6} +\frac{z^4}{24} }.
+\boxed{ R_{\mathrm{RK4}}(z)= 1+z+\frac{z^2}{2} +\frac{z^3}{6} +\frac{z^4}{24} }.
 $$
 
 These are truncated exponential series.
@@ -2212,16 +2278,16 @@ The practical stiffness criterion depends on the numerical method, requested acc
 Instead of evaluating the derivative at the current state:
 
 $$
-y\_{n+1}=y_n+hf(t_n,y_n),
+y_{n+1}=y_n+hf(t_n,y_n),
 $$
 
 backward Euler evaluates it at the unknown future state:
 
 $$
-\boxed{ y\_{n+1}=y_n+hf(t\_{n+1},y\_{n+1}) }.
+\boxed{ y_{n+1}=y_n+hf(t_{n+1},y_{n+1}) }.
 $$
 
-The method is implicit because $y\_{n+1}$ appears on both sides.
+The method is implicit because $y_{n+1}$ appears on both sides.
 
 For:
 
@@ -2232,19 +2298,19 @@ $$
 we obtain:
 
 $$
-y\_{n+1}=y_n-h\alpha y\_{n+1}.
+y_{n+1}=y_n-h\alpha y_{n+1}.
 $$
 
 Collect the future-state terms:
 
 $$
-y\_{n+1}(1+h\alpha)=y_n.
+y_{n+1}(1+h\alpha)=y_n.
 $$
 
 Therefore:
 
 $$
-\boxed{ y\_{n+1}=\frac{y_n}{1+h\alpha} }.
+\boxed{ y_{n+1}=\frac{y_n}{1+h\alpha} }.
 $$
 
 Its stability function is:
@@ -2286,13 +2352,13 @@ It can still be useful when that transient is intentionally unresolved and accur
 For a general vector ODE, define:
 
 $$
-G(\mathbf y\_{n+1}) = \mathbf y\_{n+1}-\mathbf y_n -hf(t\_{n+1},\mathbf y\_{n+1}).
+G(\mathbf y_{n+1}) = \mathbf y_{n+1}-\mathbf y_n -hf(t_{n+1},\mathbf y_{n+1}).
 $$
 
 We need to solve:
 
 $$
-G(\mathbf y\_{n+1})=0.
+G(\mathbf y_{n+1})=0.
 $$
 
 Newton's method linearizes this nonlinear equation.
@@ -2352,7 +2418,7 @@ Adaptive timestep control estimates local numerical error and adjusts $h$. If th
 Verlet integration uses a position-based recurrence. For constant timestep and suitable acceleration evaluation:
 
 $$
-x\_{n+1}=2x_n-x\_{n-1}+h^2a_n.
+x_{n+1}=2x_n-x_{n-1}+h^2a_n.
 $$
 
 It can provide useful time-reversible and long-term behavior for certain mechanical systems, but variable timesteps, damping, constraints, and velocity reconstruction require additional care.
@@ -2360,11 +2426,11 @@ It can provide useful time-reversible and long-term behavior for certain mechani
 Velocity Verlet updates position with current velocity and acceleration, then evaluates the new acceleration to update velocity:
 
 $$
-x\_{n+1}=x_n+hv_n+\frac{h^2}{2}a_n,
+x_{n+1}=x_n+hv_n+\frac{h^2}{2}a_n,
 $$
 
 $$
-v\_{n+1}=v_n+\frac h2(a_n+a\_{n+1}).
+v_{n+1}=v_n+\frac h2(a_n+a_{n+1}).
 $$
 
 For forces depending only on position in standard separable Hamiltonian systems, it is a second-order symplectic method.
@@ -2611,7 +2677,7 @@ That is an API coverage distinction, not a claim that the existing implementatio
 Another detail worth preserving in your tests is that `VerletPosition` uses the recurrence:
 
 $$
-x\_{n+1}=x_n+(x_n-x\_{n-1})+h^2a_n.
+x_{n+1}=x_n+(x_n-x_{n-1})+h^2a_n.
 $$
 
 This is the standard constant-timestep position Verlet structure. Applying it unchanged to varying timesteps does not generally preserve the intended approximation order.
@@ -2647,7 +2713,7 @@ They have different accuracy properties, computational costs, memory requirement
 In M049, we defined the derivative as a limit:
 
 $$
-f'(x)= \lim\_{h\to0} \frac{f(x+h)-f(x)}h.
+f'(x)= \lim_{h\to0} \frac{f(x+h)-f(x)}h.
 $$
 
 This is an exact mathematical definition.
@@ -2749,7 +2815,7 @@ Take $h=0.1$.
 The forward difference is:
 
 $$
-D\_{0.1}^+f(1)= \frac{\sin(1.1)-\sin(1)}{0.1}.
+D_{0.1}^+f(1)= \frac{\sin(1.1)-\sin(1)}{0.1}.
 $$
 
 Using:
@@ -2765,7 +2831,7 @@ $$
 we obtain:
 
 $$
-\boxed{ D\_{0.1}^+f(1)\approx0.497363753 }.
+\boxed{ D_{0.1}^+f(1)\approx0.497363753 }.
 $$
 
 The error is approximately:
@@ -2811,7 +2877,7 @@ They are especially useful when only past samples exist, such as when estimating
 For example:
 
 $$
-v_n\approx\frac{x_n-x\_{n-1}}h.
+v_n\approx\frac{x_n-x_{n-1}}h.
 $$
 
 This estimates velocity using the current and previous positions.
@@ -2823,7 +2889,7 @@ It is a numerical approximation, not a literal replacement for instantaneous vel
 At $x=1$, with $h=0.1$:
 
 $$
-D\_{0.1}^-f(1) = \frac{\sin1-\sin0.9}{0.1}.
+D_{0.1}^-f(1) = \frac{\sin1-\sin0.9}{0.1}.
 $$
 
 With:
@@ -2835,7 +2901,7 @@ $$
 we obtain:
 
 $$
-\boxed{ D\_{0.1}^-f(1)\approx0.581440752 }.
+\boxed{ D_{0.1}^-f(1)\approx0.581440752 }.
 $$
 
 The true derivative is approximately $0.540302306$.
@@ -2895,13 +2961,13 @@ $$
 Then:
 
 $$
-D\_{0.1}^0f(1) = \frac{\sin1.1-\sin0.9}{0.2}.
+D_{0.1}^0f(1) = \frac{\sin1.1-\sin0.9}{0.2}.
 $$
 
 Numerically:
 
 $$
-\boxed{ D\_{0.1}^0f(1)\approx0.539402252 }.
+\boxed{ D_{0.1}^0f(1)\approx0.539402252 }.
 $$
 
 The true derivative is:
@@ -2949,7 +3015,7 @@ Their individual rounding errors may not cancel.
 A simplified error model is:
 
 $$
-\boxed{ E\_{\mathrm{total}}(h) \approx C_1h+C_2\frac{\epsilon\_{\mathrm{mach}}}{h} }
+\boxed{ E_{\mathrm{total}}(h) \approx C_1h+C_2\frac{\epsilon_{\mathrm{mach}}}{h} }
 $$
 
 for forward differentiation, with constants depending on the function scale, curvature, arithmetic, and evaluation accuracy.
@@ -2967,25 +3033,25 @@ The best step size balances them.
 Differentiate the error model with respect to positive $h$:
 
 $$
-E'(h)= C_1- C_2\frac{\epsilon\_{\mathrm{mach}}}{h^2}.
+E'(h)= C_1- C_2\frac{\epsilon_{\mathrm{mach}}}{h^2}.
 $$
 
 Set it to zero:
 
 $$
-C_1= C_2\frac{\epsilon\_{\mathrm{mach}}}{h^2}.
+C_1= C_2\frac{\epsilon_{\mathrm{mach}}}{h^2}.
 $$
 
 Therefore:
 
 $$
-\boxed{ h\_{\mathrm{opt}} \approx \sqrt{\frac{C_2\epsilon\_{\mathrm{mach}}}{C_1}} }.
+\boxed{ h_{\mathrm{opt}} \approx \sqrt{\frac{C_2\epsilon_{\mathrm{mach}}}{C_1}} }.
 $$
 
 The characteristic scaling is:
 
 $$
-h\_{\mathrm{opt}}\sim\sqrt{\epsilon\_{\mathrm{mach}}}
+h_{\mathrm{opt}}\sim\sqrt{\epsilon_{\mathrm{mach}}}
 $$
 
 after suitable nondimensionalization.
@@ -2993,31 +3059,31 @@ after suitable nondimensionalization.
 For central differences, the truncation term is proportional to $h^2$:
 
 $$
-E\_{\mathrm{central}}(h) \approx C_1h^2+ C_2\frac{\epsilon\_{\mathrm{mach}}}{h}.
+E_{\mathrm{central}}(h) \approx C_1h^2+ C_2\frac{\epsilon_{\mathrm{mach}}}{h}.
 $$
 
 Differentiate:
 
 $$
-2C_1h- C_2\frac{\epsilon\_{\mathrm{mach}}}{h^2}=0.
+2C_1h- C_2\frac{\epsilon_{\mathrm{mach}}}{h^2}=0.
 $$
 
 Thus:
 
 $$
-h^3= \frac{C_2\epsilon\_{\mathrm{mach}}}{2C_1}.
+h^3= \frac{C_2\epsilon_{\mathrm{mach}}}{2C_1}.
 $$
 
 The characteristic scaling is:
 
 $$
-\boxed{ h\_{\mathrm{opt}}\sim \epsilon\_{\mathrm{mach}}^{1/3} }.
+\boxed{ h_{\mathrm{opt}}\sim \epsilon_{\mathrm{mach}}^{1/3} }.
 $$
 
 For IEEE-754 binary64:
 
 $$
-\epsilon\_{\mathrm{mach}} \approx2.22\times10^{-16}.
+\epsilon_{\mathrm{mach}} \approx2.22\times10^{-16}.
 $$
 
 The cube root is of order $6\times10^{-6}$.
@@ -3049,7 +3115,7 @@ even when the true derivative is nonzero.
 A robust finite-difference implementation can inspect the actual representable displacement:
 
 $$
-h\_{\mathrm{actual}}=\operatorname{fl}(x+h)-x,
+h_{\mathrm{actual}}=\operatorname{fl}(x+h)-x,
 $$
 
 where $\operatorname{fl}$ denotes floating-point rounding.

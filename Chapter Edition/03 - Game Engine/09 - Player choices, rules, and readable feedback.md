@@ -8,7 +8,7 @@ A working engine can still produce unclear play if its rules hide consequences. 
 
 **Recall question:** What can the player infer before acting, what state changes, and what feedback proves that the rule took effect?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 10843–11689; source-span SHA256 3bfc75d230f5a50321913b1c557337c30b0ead6d7b232f4fbb7f9e92e5c5903d. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 10869–11715; source-span SHA256 3bfc75d230f5a50321913b1c557337c30b0ead6d7b232f4fbb7f9e92e5c5903d. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Design for play beyond a feature checklist

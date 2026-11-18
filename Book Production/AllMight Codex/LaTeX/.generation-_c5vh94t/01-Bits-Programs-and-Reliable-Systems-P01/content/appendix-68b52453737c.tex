@@ -1,0 +1,56 @@
+\hypertarget{appendix-68b52453737c}{}\label{referencestart:appendix-68b52453737c}
+\section{Bitwise AND}\label{appendix-68b52453737c-bitwise-and}
+
+\hypertarget{appendix-68b52453737c-bitwise-and}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C001 · \textbf{Latest development:} C001
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-68b52453737c-definition-and-mechanism}
+
+\hypertarget{appendix-68b52453737c-definition-and-mechanism}{}
+
+Preserves selected lanes where the mask has 1 and clears lanes where it has 0.
+
+\end{allmightroledefinition}
+
+Per lane: 0\&0=0, 0\&1=0, 1\&0=0, 1\&1=1. \texttt{0xAD\ \&\ 0x07\ =\ 5}. Testing \texttt{(flags\ \&\ mask)!=0} asks whether any selected bit is set; equality with mask asks whether all are set. For an empty mask, any is false and all is true.
+
+\subsection{Prerequisites}\label{appendix-68b52453737c-prerequisites}
+
+\hypertarget{appendix-68b52453737c-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-24475e1596a8]{Boolean algebra} --- The logical domain is false/true.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-68b52453737c-used-by}
+
+\hypertarget{appendix-68b52453737c-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-fe6b457d68d8]{Logical versus bitwise operators} --- uses bitwise and as part of its representation or reasoning.
+\item
+  \hyperref[appendix-1652d27a8e90]{Half adder} --- uses bitwise and as part of its representation or reasoning.
+\item
+  \hyperref[appendix-b5c46b2d94ff]{Carry-lookahead and parallel-prefix adders} --- uses bitwise and as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-68b52453737c-recall-and-next-depth}
+
+\hypertarget{appendix-68b52453737c-recall-and-next-depth}{}
+
+Explain bitwise and without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} instruction mapping, vector lanes, and atomic read-modify-write.
+
+\subsection{Source and navigation}\label{appendix-68b52453737c-source-and-navigation}
+
+\hypertarget{appendix-68b52453737c-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

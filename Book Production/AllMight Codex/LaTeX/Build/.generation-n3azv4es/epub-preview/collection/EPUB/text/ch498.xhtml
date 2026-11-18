@@ -1,0 +1,596 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch498.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-932cf7182ff1-phase-8-linear-algebra-active-recall" class="level2">
+<h2>Phase 8 — Linear Algebra: Active Recall</h2>
+<p><strong>Fast spine:</strong> Measurements constrain → rank separates knowledge from freedom → factorizations expose structure → eigenvectors describe square-map directions → SVD describes every map → stable APIs report evidence.</p>
+<p>Read the full explanations in <a href="ch261.xhtml#id_01-foundations-i-ch019-the-graphics-problem-hiding-inside-a-matrix-equation" class="wikilink">From Constraints to Spectra (Mathematics for Visual Computing, Part 1, Ch. 3)</a>. These figure links jump to their source chapters.</p>
+<section id="appendix-932cf7182ff1-the-story-at-a-glance" class="level3">
+<h3>The story at a glance</h3>
+<p><img src="../media/file182.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+</section>
+<section id="appendix-932cf7182ff1-retrieve-the-mechanisms" class="level3">
+<h3>Retrieve the mechanisms</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Cue</th>
+<th>Short answer</th>
+<th>Read / view</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Why may <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">x</mi>
+  </mrow>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">b</mi>
+  </mrow>
+</math> have no answer?</td>
+<td>The target is outside <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Col</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+</math>.</td>
+<td><a href="ch261.xhtml#id_01-foundations-i-ch019-a-linear-equation-is-a-measurement-and-several-equations-are-geometry" class="wikilink">Constraint geometry (Mathematics for Visual Computing, Part 1, Ch. 3)</a> · <a href="ch261.xhtml#id_01-foundations-i-ch019-figure-l2---consistency-freedom-and-the-four-fundamental-spaces" class="wikilink">L2 (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+<tr>
+<td>What does a null vector mean?</td>
+<td>An input change no measurement can see; add it to any solution.</td>
+<td><a href="ch261.xhtml#id_01-foundations-i-ch019-rank-separates-what-the-measurements-determine-from-what-they-leave-free" class="wikilink">Four spaces (Mathematics for Visual Computing, Part 1, Ch. 3)</a> · <a href="ch261.xhtml#id_01-foundations-i-ch019-figure-l2---consistency-freedom-and-the-four-fundamental-spaces" class="wikilink">L2 (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+<tr>
+<td>What does elimination preserve?</td>
+<td>The solution set, only if row operations also transform <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">b</mi>
+  </mrow>
+</math>.</td>
+<td><a href="ch261.xhtml#id_01-foundations-i-ch019-elimination-turns-the-geometry-into-an-auditable-calculation" class="wikilink">Elimination (Mathematics for Visual Computing, Part 1, Ch. 3)</a> · <a href="ch261.xhtml#id_01-foundations-i-ch019-figure-l3---elimination-stores-work-for-later-solves" class="wikilink">L3 (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+<tr>
+<td>Why factor once?</td>
+<td>Reuse <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+  <mo>,</mo>
+  <mi>U</mi>
+</math> or <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+  <mo>,</mo>
+  <mi>R</mi>
+</math> for additional right-hand sides.</td>
+<td><a href="ch261.xhtml#id_01-foundations-i-ch019-figure-l3---elimination-stores-work-for-later-solves" class="wikilink">L3 (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+<tr>
+<td>Which factorization for what structure?</td>
+<td>LU general square; Cholesky SPD; QR least squares; SVD rank insight; iteration for huge sparse systems when suitable.</td>
+<td><a href="ch262.xhtml#id_01-foundations-i-ch020-structure-makes-a-decomposition-a-better-tool-than-generic-elimination" class="wikilink">Factorization guide (Mathematics for Visual Computing, Part 1, Ch. 4)</a> · <a href="ch262.xhtml#id_01-foundations-i-ch020-figure-l4---matrix-structure-determines-the-useful-factorization" class="wikilink">L4 (Mathematics for Visual Computing, Part 1, Ch. 4)</a></td>
+</tr>
+<tr>
+<td>What does a small residual prove?</td>
+<td>Near satisfaction of the equations; sensitivity can still make the solution inaccurate.</td>
+<td><a href="ch262.xhtml#id_01-foundations-i-ch020-eigenvectors-reveal-the-directions-a-square-map-does-not-turn" class="wikilink">Eigenpair sensitivity (Mathematics for Visual Computing, Part 1, Ch. 4)</a> · <a href="ch261.xhtml#id_01-foundations-i-ch019-matrix-norms-give-scale-to-residuals-and-error-claims" class="wikilink">Norms and error (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+<tr>
+<td>Why is a symmetric eigenbasis special?</td>
+<td>It is orthonormal, preserving 2-norm while diagonalizing the map.</td>
+<td><a href="ch262.xhtml#id_01-foundations-i-ch020-figure-l5---eigenanalysis-is-cleanest-when-the-basis-is-orthonormal" class="wikilink">L5 (Mathematics for Visual Computing, Part 1, Ch. 4)</a></td>
+</tr>
+<tr>
+<td>What is the SVD action?</td>
+<td>Input orthogonal coordinates → independent stretches → output orthogonal coordinates.</td>
+<td><a href="ch268.xhtml#id_02-foundations-ii-ch024-singular-value-decomposition-covers-every-rectangular-map" class="wikilink">SVD geometry (Mathematics for Visual Computing, Part 1, Ch. 8)</a> · <a href="ch268.xhtml#id_02-foundations-ii-ch024-figure-l6---every-linear-map-is-orthogonal-change-stretch-orthogonal-change" class="wikilink">L6 (Mathematics for Visual Computing, Part 1, Ch. 8)</a></td>
+</tr>
+<tr>
+<td>What does the pseudoinverse choose?</td>
+<td>Exact <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>A</mi>
+    <mo>+</mo>
+  </msup>
+</math>: least-squares fit, then minimum norm. Truncated <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msubsup>
+    <mi>A</mi>
+    <mi>τ</mi>
+    <mo>+</mo>
+  </msubsup>
+</math>: solve the retained-rank problem; original residual can increase.</td>
+<td><a href="ch268.xhtml#id_02-foundations-ii-ch024-pseudoinverse-makes-least-squares-and-minimum-norm-one-operation" class="wikilink">Pseudoinverse (Mathematics for Visual Computing, Part 1, Ch. 8)</a> · <a href="ch268.xhtml#id_02-foundations-ii-ch024-figure-l7---the-singular-spectrum-makes-inversion-and-compression-explicit" class="wikilink">L7 (Mathematics for Visual Computing, Part 1, Ch. 8)</a></td>
+</tr>
+<tr>
+<td>How does PCA connect to SVD?</td>
+<td>Center rows, factor <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>X</mi>
+  <mo>=</mo>
+  <mi>U</mi>
+  <mi mathvariant="normal">Σ</mi>
+  <msup>
+    <mi>V</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="sans-serif">T</mi>
+    </mrow>
+  </msup>
+</math>; <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>V</mi>
+</math> gives principal directions and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>U</mi>
+  <mi mathvariant="normal">Σ</mi>
+</math> scores.</td>
+<td><a href="ch268.xhtml#id_02-foundations-ii-ch024-pca-turns-a-cloud-of-points-into-measured-variation" class="wikilink">PCA (Mathematics for Visual Computing, Part 1, Ch. 8)</a></td>
+</tr>
+<tr>
+<td>What does polar decomposition separate?</td>
+<td>Orthogonal motion from symmetric stretch; reflection and singular ambiguity need attention.</td>
+<td><a href="ch268.xhtml#id_02-foundations-ii-ch024-polar-decomposition-separates-rotation-like-motion-from-stretch" class="wikilink">Polar decomposition (Mathematics for Visual Computing, Part 1, Ch. 8)</a></td>
+</tr>
+<tr>
+<td>Which SVD checks are independent?</td>
+<td>Reconstruction, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>U</mi>
+</math> orthogonality, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>V</mi>
+</math> orthogonality, ordering, dimensions, convergence.</td>
+<td><a href="ch292.xhtml#id_02-foundations-ii-ch038-figure-l8---svd-validation-needs-independent-checks" class="wikilink">L8 (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a></td>
+</tr>
+<tr>
+<td>When can diagonalization explain a matrix function?</td>
+<td>When its eigenbasis is usable; otherwise use a stable function-specific algorithm.</td>
+<td><a href="ch270.xhtml#id_02-foundations-ii-ch026-matrix-functions-turn-repeated-linear-actions-into-one-operator" class="wikilink">Matrix functions (Mathematics for Visual Computing, Part 2, Ch. 10)</a> · <a href="ch270.xhtml#id_02-foundations-ii-ch026-figure-l9---a-matrix-function-follows-the-same-action-after-a-change-of-basis" class="wikilink">L9 (Mathematics for Visual Computing, Part 2, Ch. 10)</a></td>
+</tr>
+<tr>
+<td>Direct or iterative solve?</td>
+<td>Decide from size, sparsity, right-hand-side reuse, convergence, memory, and error needs.</td>
+<td><a href="ch292.xhtml#id_02-foundations-ii-ch038-figure-l10---direct-and-iterative-methods-occupy-different-workloads" class="wikilink">L10 (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-932cf7182ff1-thirty-second-reconstruction" class="level3">
+<h3>Thirty-second reconstruction</h3>
+<ol type="1">
+<li>Sketch one measurement as a hyperplane; explain consistency using column space.</li>
+<li>Explain why rank and nullity count determined and invisible directions.</li>
+<li>Derive one pivot step and show the same row operation on the right-hand side.</li>
+<li>Select LU, Cholesky, QR, SVD, or an iterative method from matrix structure.</li>
+<li>Explain why normal equations square the condition number.</li>
+<li>Trace <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mi>U</mi>
+  <mi mathvariant="normal">Σ</mi>
+  <msup>
+    <mi>V</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="sans-serif">T</mi>
+    </mrow>
+  </msup>
+</math> on one vector.</li>
+<li>State what thresholding changes in a pseudoinverse or truncated SVD.</li>
+<li>Name separate SVD correctness checks and what a residual cannot prove.</li>
+</ol>
+<p><a href="ch261.xhtml#id_01-foundations-i-ch019-the-graphics-problem-hiding-inside-a-matrix-equation" class="wikilink">Full teaching volume (Mathematics for Visual Computing, Part 1, Ch. 3)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-phase-8---parts-701-800" class="wikilink">100-part title ledger</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-phase-8---from-constraints-to-spectra" class="wikilink">Dependency spine</a></p>
+</section>
+<section id="appendix-932cf7182ff1-fast-retrieval-restore-the-details-that-are-easy-to-blur" class="level3">
+<h3>Fast retrieval: restore the details that are easy to blur</h3>
+<p><a href="ch268.xhtml#id_02-foundations-ii-ch024-figure-l6a---watch-the-same-directions-become-an-ellipse" class="wikilink">Figure L6a: exact SVD geometry (Mathematics for Visual Computing, Part 1, Ch. 8)</a> · <img src="../media/file65.svg" class="wikilink" alt="Editable SVG" /></p>
+<figure class="allmight-auto-path-caption" data-auto-path-caption-uri="Visual Recall/phase8_svd_geometry.png">
+<img src="../media/file64.png" class="wikilink allmight-auto-path-caption" data-auto-path-caption-uri="Visual Recall/phase8_svd_geometry.png" alt="Visual Recall/phase8_svd_geometry.png" />
+<figcaption aria-hidden="true">Visual Recall/phase8_svd_geometry.png</figcaption>
+</figure>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Cue</th>
+<th>Shortest reliable answer</th>
+<th>Deep read / figure</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>When does Gram–Schmidt normalize a new column?</td>
+<td>Only if its residual norm is safely nonzero; rank deficiency needs rank handling or completion.</td>
+<td><a href="ch262.xhtml#id_01-foundations-i-ch020-orthogonal-coordinates-preserve-the-shape-of-the-problem" class="wikilink">Gram–Schmidt (Mathematics for Visual Computing, Part 1, Ch. 4)</a></td>
+</tr>
+<tr>
+<td>What does a Householder sign choice prevent?</td>
+<td>Choose <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>α</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mi>copysign</mi>
+  <mo stretchy="false">(</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>x</mi>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math> to avoid cancellation; compute the norm safely.</td>
+<td><a href="ch262.xhtml#id_01-foundations-i-ch020-reflections-and-plane-rotations-build-qr-without-losing-lengths" class="wikilink">Householder reflectors (Mathematics for Visual Computing, Part 1, Ch. 4)</a></td>
+</tr>
+<tr>
+<td>When is Givens rotation undefined?</td>
+<td>If <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo>=</mo>
+  <mi>b</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>, skip it; otherwise use <code>hypot(a,b)</code> for the scale.</td>
+<td><a href="ch262.xhtml#id_01-foundations-i-ch020-reflections-and-plane-rotations-build-qr-without-losing-lengths" class="wikilink">Givens rotations (Mathematics for Visual Computing, Part 1, Ch. 4)</a></td>
+</tr>
+<tr>
+<td>What residual remains after QR least squares?</td>
+<td>The irreducible perpendicular part <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>b</mi>
+    <mo>⊥</mo>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>I</mi>
+  <mo>−</mo>
+  <mi>Q</mi>
+  <msup>
+    <mi>Q</mi>
+    <mi>T</mi>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mi>b</mi>
+</math>; minimum residual norm is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <msub>
+    <mi>b</mi>
+    <mo>⊥</mo>
+  </msub>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+</math>.</td>
+<td><a href="ch262.xhtml#id_01-foundations-i-ch020-qr-turns-least-squares-into-a-triangular-solve-plus-an-irreducible-residual" class="wikilink">QR residual derivation (Mathematics for Visual Computing, Part 1, Ch. 4)</a></td>
+</tr>
+<tr>
+<td>What makes an eigenvector estimate sensitive?</td>
+<td>A small residual is backward evidence; a small eigengap can still rotate the vector or subspace.</td>
+<td><a href="ch262.xhtml#id_01-foundations-i-ch020-residuals-distinguish-backward-accuracy-from-forward-certainty" class="wikilink">Residual and eigengap (Mathematics for Visual Computing, Part 1, Ch. 4)</a> · <a href="ch262.xhtml#id_01-foundations-i-ch020-figure-l5---eigenanalysis-is-cleanest-when-the-basis-is-orthonormal" class="wikilink">L5 (Mathematics for Visual Computing, Part 1, Ch. 4)</a></td>
+</tr>
+<tr>
+<td>What does a real Schur 2×2 block mean?</td>
+<td>A real representation of a complex-conjugate eigenvalue pair; do not read only its diagonal.</td>
+<td><a href="ch262.xhtml#id_01-foundations-i-ch020-qr-iteration-and-jacobi-rotations-preserve-the-spectrum-while-simplifying-shape" class="wikilink">QR and Schur form (Mathematics for Visual Computing, Part 1, Ch. 4)</a></td>
+</tr>
+<tr>
+<td>Where is the plane-fit normal in an <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+  <mo>×</mo>
+  <mn>3</mn>
+</math> data SVD?</td>
+<td>In the right singular vectors <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>V</mi>
+</math>; take the smallest-variance direction.</td>
+<td><a href="ch268.xhtml#id_02-foundations-ii-ch024-plane-fits-eigengaps-and-interpretation-of-uncertain-components" class="wikilink">Plane fit and eigengap (Mathematics for Visual Computing, Part 1, Ch. 8)</a></td>
+</tr>
+<tr>
+<td>What must a wide SVD return?</td>
+<td>With <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <mi>m</mi>
+  <mo>,</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math>, thin <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>U</mi>
+  <mo>:</mo>
+  <mi>m</mi>
+  <mo>×</mo>
+  <mi>r</mi>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>σ</mi>
+  <mo>:</mo>
+  <mi>r</mi>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>V</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>:</mo>
+  <mi>r</mi>
+  <mo>×</mo>
+  <mi>n</mi>
+</math>; factor <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>A</mi>
+    <mi>T</mi>
+  </msup>
+</math> if using a tall backend.</td>
+<td><a href="ch292.xhtml#id_02-foundations-ii-ch038-householder-reductions-turn-a-dense-svd-into-a-bidiagonal-problem" class="wikilink">Wide SVD shapes (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a> · <a href="ch268.xhtml#id_02-foundations-ii-ch024-figure-l6---every-linear-map-is-orthogonal-change-stretch-orthogonal-change" class="wikilink">L6 (Mathematics for Visual Computing, Part 1, Ch. 8)</a></td>
+</tr>
+<tr>
+<td>What are zero singular vectors for?</td>
+<td>Right zero directions span <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Null</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+</math>; full <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>U</mi>
+</math> zero/completion directions span <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Null</mi>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>A</mi>
+    <mi>T</mi>
+  </msup>
+  <mo stretchy="false">)</mo>
+</math>.</td>
+<td><a href="ch292.xhtml#id_02-foundations-ii-ch038-zero-singular-directions-require-deliberate-orthonormal-completion" class="wikilink">Zero-singular completion (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a></td>
+</tr>
+<tr>
+<td>What is the exact <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>A</mi>
+    <mo>+</mo>
+  </msup>
+</math> rule?</td>
+<td>Reciprocate every positive <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>σ</mi>
+    <mi>i</mi>
+  </msub>
+</math>; it minimizes original residual, then chooses minimum norm.</td>
+<td><a href="ch268.xhtml#id_02-foundations-ii-ch024-the-moorepenrose-inverse-and-its-four-identities" class="wikilink">Exact pseudoinverse (Mathematics for Visual Computing, Part 1, Ch. 8)</a> · <a href="ch268.xhtml#id_02-foundations-ii-ch024-figure-l7---the-singular-spectrum-makes-inversion-and-compression-explicit" class="wikilink">L7 (Mathematics for Visual Computing, Part 1, Ch. 8)</a></td>
+</tr>
+<tr>
+<td>What does <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msubsup>
+    <mi>A</mi>
+    <mi>τ</mi>
+    <mo>+</mo>
+  </msubsup>
+</math> change?</td>
+<td>It discards positive values at or below <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>τ</mi>
+</math>; the original least-squares residual can increase.</td>
+<td><a href="ch268.xhtml#id_02-foundations-ii-ch024-thresholding-and-regularization-are-different-choices" class="wikilink">Thresholding versus regularization (Mathematics for Visual Computing, Part 1, Ch. 8)</a> · <a href="ch268.xhtml#id_02-foundations-ii-ch024-figure-l7---the-singular-spectrum-makes-inversion-and-compression-explicit" class="wikilink">L7 (Mathematics for Visual Computing, Part 1, Ch. 8)</a></td>
+</tr>
+<tr>
+<td>What errors does rank-<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math> SVD leave?</td>
+<td>Spectral error <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>σ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+</math>; Frobenius squared error <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>&gt;</mo>
+      <mi>k</mi>
+    </mrow>
+  </munder>
+  <msubsup>
+    <mi>σ</mi>
+    <mi>i</mi>
+    <mn>2</mn>
+  </msubsup>
+</math>.</td>
+<td><a href="ch268.xhtml#id_02-foundations-ii-ch024-low-rank-approximation-and-why-the-largest-directions-win" class="wikilink">Eckart–Young errors (Mathematics for Visual Computing, Part 1, Ch. 8)</a></td>
+</tr>
+<tr>
+<td>How do PCA scores relate to SVD?</td>
+<td>For centered row samples <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>X</mi>
+  <mo>=</mo>
+  <mi>U</mi>
+  <mi mathvariant="normal">Σ</mi>
+  <msup>
+    <mi>V</mi>
+    <mi>T</mi>
+  </msup>
+</math>, scores are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>X</mi>
+  <mi>V</mi>
+  <mo>=</mo>
+  <mi>U</mi>
+  <mi mathvariant="normal">Σ</mi>
+</math>; covariance eigenvalues are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msubsup>
+    <mi>σ</mi>
+    <mi>i</mi>
+    <mn>2</mn>
+  </msubsup>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>.</td>
+<td><a href="ch268.xhtml#id_02-foundations-ii-ch024-centered-measurements-reveal-principal-directions" class="wikilink">PCA scores (Mathematics for Visual Computing, Part 1, Ch. 8)</a></td>
+</tr>
+<tr>
+<td>What does polar decomposition call a reflection?</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>U</mi>
+  <msup>
+    <mi>V</mi>
+    <mi>T</mi>
+  </msup>
+</math> is orthogonal; if its determinant is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mn>1</mn>
+</math>, it is improper, and nearest <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math> flips a least-singular direction.</td>
+<td><a href="ch268.xhtml#id_02-foundations-ii-ch024-two-sided-rotations-nearest-proper-rotation-and-nonunique-directions" class="wikilink">Nearest proper rotation (Mathematics for Visual Computing, Part 1, Ch. 8)</a></td>
+</tr>
+<tr>
+<td>Which Jacobi angle convention is in use?</td>
+<td>For <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>J</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mo stretchy="false">[</mo>
+  <mi>c</mi>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+  <mo stretchy="false">[</mo>
+  <mo>−</mo>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mo stretchy="false">]</mo>
+  <mo stretchy="false">]</mo>
+</math>, use <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>p</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mi>p</mi>
+  <mo>−</mo>
+  <mi>s</mi>
+  <mi>q</mi>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>q</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>s</mi>
+  <mi>p</mi>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mi>q</mi>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>τ</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>β</mi>
+  <mo>−</mo>
+  <mi>α</mi>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mi>γ</mi>
+  <mo stretchy="false">)</mo>
+</math>; skip <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>γ</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>.</td>
+<td><a href="ch292.xhtml#id_02-foundations-ii-ch038-jacobi-svd-removes-column-coupling-pair-by-pair" class="wikilink">Jacobi convention (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a></td>
+</tr>
+<tr>
+<td>What bounds a strided matrix view?</td>
+<td>Check <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+  <mo>≤</mo>
+  <mi>s</mi>
+</math>, checked last offset <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mi>s</mi>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mi>c</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>&lt;</mo>
+  <mi>e</mi>
+</math>, and null pointer only with zero extent.</td>
+<td><a href="ch292.xhtml#id_02-foundations-ii-ch038-matrix-views-need-checked-address-arithmetic-as-well-as-a-stride" class="wikilink">View bounds (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a> · <a href="ch292.xhtml#id_02-foundations-ii-ch038-workspace-allocation-is-part-of-the-solver-contract" class="wikilink">Workspace bounds (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a></td>
+</tr>
+<tr>
+<td>When is the principal matrix log defined?</td>
+<td>When the spectrum avoids the closed negative real axis, including zero; other real logs may still exist.</td>
+<td><a href="ch270.xhtml#id_02-foundations-ii-ch026-logarithms-and-square-roots-need-domains-and-branches" class="wikilink">Log domain and branches (Mathematics for Visual Computing, Part 2, Ch. 10)</a> · <a href="ch270.xhtml#id_02-foundations-ii-ch026-figure-l9---a-matrix-function-follows-the-same-action-after-a-change-of-basis" class="wikilink">L9 (Mathematics for Visual Computing, Part 2, Ch. 10)</a></td>
+</tr>
+<tr>
+<td>What must CG preconditioning preserve?</td>
+<td>Use SPD PCG/symmetric preconditioning; vanilla CG on arbitrary <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>M</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi>A</mi>
+</math> may lose symmetry. Stop before zero-residual divisions.</td>
+<td><a href="ch292.xhtml#id_02-foundations-ii-ch038-direct-and-iterative-solvers-suit-different-workloads" class="wikilink">CG preconditioning and true residual (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a> · <a href="ch292.xhtml#id_02-foundations-ii-ch038-figure-l10---direct-and-iterative-methods-occupy-different-workloads" class="wikilink">L10 (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a></td>
+</tr>
+<tr>
+<td>What makes an SVD API result inspectable?</td>
+<td>Shapes/mode, rank threshold, workspace, convergence status, and independent reconstruction/orthogonality checks.</td>
+<td><a href="ch292.xhtml#id_02-foundations-ii-ch038-an-svd-api-begins-with-shapes-and-guarantees" class="wikilink">SVD API contract (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a> · <a href="ch292.xhtml#id_02-foundations-ii-ch038-figure-l8---svd-validation-needs-independent-checks" class="wikilink">L8 (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Read the linked teaching sections for the derivations and caveats; this table is a retrieval prompt, not a replacement explanation.</p>
+</blockquote>
+</section>
+<section id="appendix-932cf7182ff1-added-retrieval-prompt" class="level3">
+<h3>Added retrieval prompt</h3>
+<p>Whiten by solving Lz=x-mu; then Mahalanobis squared distance is z transpose z. A singular covariance needs lower-dimensional support, not full-area density. <a href="ch268.xhtml#id_02-foundations-ii-ch024-original-bridge-whiten-a-covariance-ellipse" class="wikilink">Rebuild the example (Mathematics for Visual Computing, Part 1, Ch. 8)</a>.</p>
+<figure class="allmight-auto-path-caption" data-auto-path-caption-uri="Visual Recall/Math Foundations/M08-1_cholesky-whitening.png">
+<img src="../media/file100.png" class="wikilink allmight-auto-path-caption" data-auto-path-caption-uri="Visual Recall/Math Foundations/M08-1_cholesky-whitening.png" alt="Visual Recall/Math Foundations/M08-1_cholesky-whitening.png" />
+<figcaption aria-hidden="true">Visual Recall/Math Foundations/M08-1_cholesky-whitening.png</figcaption>
+</figure>
+<p><strong>M08-1. A covariance ellipse and its whitened coordinates.</strong> For Sigma=<code>[[4,1.2],[1.2,1]]</code>, L=<code>[[2,0],[0.6,0.8]]</code>, mu=(3,-1), z=(1,1), x=(5,0.4), Mahalanobis squared distance 2, Euclidean squared distance 5.96, and density exp(-1)/(3.2 pi), about 0.0366 for an SPD 2D Gaussian.</p>
+</section>
+</section>
+</body>
+</html>

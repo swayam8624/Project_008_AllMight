@@ -1,0 +1,33 @@
+\hypertarget{appendix-1988d465c119}{}\label{referencestart:appendix-1988d465c119}
+\section{PDE fields and discrete Laplacians}\label{appendix-1988d465c119-pde-fields-and-discrete-laplacians}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-1988d465c119-definition-and-mechanism}
+
+A partial differential equation constrains a field through spatial and temporal derivatives. Laplace's equation \(\Delta u=0\) seeks a harmonic field whose value matches its neighborhood average; Poisson's equation adds a source term. On a regular grid, finite differences produce the five-point stencil with four neighbor weights and a negative center weight. On a triangle mesh, cotangent weights encode angles and a mass matrix normalizes by vertex area. Boundary conditions supply essential data: Dirichlet fixes values, Neumann fixes normal flux, and Robin combines them. Neumann Laplace systems require zero net flux and a pinned value or mean because constants lie in the nullspace. Explicit heat updates have a stability-limited time step; implicit updates solve a sparse system. PDE algorithms separate field representation, spatial operator, boundary conditions, and time integration.
+
+\subsection{Prerequisites}\label{appendix-1988d465c119-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-6a7869dd79a6]{Sampling aliasing and reconstruction}
+\item
+  \hyperref[appendix-d5b3c692d9f0]{Convolution and filter footprints}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-1988d465c119-used-by}
+
+\begin{itemize}
+\item
+  {Worlds, Images and Inference}
+\item
+  \hyperref[appendix-a9ba01fa72a6]{Collision barriers and continuous detection} \#\# Full teaching explanation
+\end{itemize}
+
+\href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch030-pdes-fields-and-discrete-solvers}{PDEs, fields, and discrete solvers (Spatial Worlds, Engine State, and Simulation, Spatial Worlds, Engine State, and Simulation, Chapter 11)} · \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch029-dynamics-forces-and-numerical-integration}{Dynamics, forces, and numerical integration (Spatial Worlds, Engine State, and Simulation, Spatial Worlds, Engine State, and Simulation, Chapter 10)} · \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing}{Meshes, connectivity, and geometry processing (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 9)}
+
+Expanded direct teaching: \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch021-a-triangle-turns-a-differential-into-a-concrete-field-calculation}{Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#A triangle turns a differential into a concrete field calculation (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 5)}.
+
+A valid finite-element cotangent stiffness can have negative edge weights while retaining nonnegative quadratic energy. Energy contraction, conservation and positivity of the evolving samples are separate requirements. \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch002-nonnegative-energy-and-nonnegative-weights-are-different-promises}{The single-triangle derivation (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 9)} shows the distinction; \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch002-a-stable-heat-step-can-still-create-a-negative-sample}{the heat-step trace (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 9)} gives a negative sample while energy decreases.

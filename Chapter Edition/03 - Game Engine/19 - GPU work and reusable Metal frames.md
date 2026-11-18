@@ -8,7 +8,7 @@ A CPU can build commands faster than a GPU finishes them, so frame memory needs 
 
 **Recall question:** What completion evidence permits a frame slot to be overwritten, and which resources remain live until that evidence arrives?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 41221–43848; source-span SHA256 cfd7f833a480094a921f51ac3364911c045d7a69608cc83b2934da228615d041. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 42150–44777; source-span SHA256 cfd7f833a480094a921f51ac3364911c045d7a69608cc83b2934da228615d041. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 # From GPU-generated work to a Metal frame that can be reused safely

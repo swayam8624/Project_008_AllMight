@@ -8,7 +8,7 @@ The derived body model needs examples that connect coefficients and memory layou
 
 **Recall question:** What numeric result should this body produce from the stated mass, dimensions, and force, and which sign error would reverse it?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 88629–92391; source-span SHA256 a80c507d46aace47666a19d94e7d193bba95ff2087ca35225db495c3a8498ef8. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 89810–93572; source-span SHA256 a80c507d46aace47666a19d94e7d193bba95ff2087ca35225db495c3a8498ef8. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Physical examples

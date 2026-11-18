@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch126.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-0682dbfc5f0e-packed-structures-and-misaligned-access" class="level2">
+<h2>Packed structures and misaligned access</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-0682dbfc5f0e-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Compiler packing extensions can weaken aggregate/member alignment and remove holes. A uint32 member at offset one may be misaligned. Direct extension-aware member access may receive special code generation; extracting an ordinary typed pointer can lose that treatment. Hardware tolerance does not establish legal C++ access. Explicit codecs avoid alignment, lifetime, and host-layout assumptions.</p>
+</section>
+<section id="appendix-0682dbfc5f0e-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch156.xhtml#appendix-a1f7c53b4742-alignment-and-padding" class="wikilink">Alignment and padding</a> — Address divisibility determines legal placement and layout holes.</li>
+<li><a href="ch171.xhtml#appendix-f52f8c5a3afd-internal-and-tail-padding" class="wikilink">Internal and tail padding</a> — The position and amount of unused layout space determine reordering/packing effects.</li>
+<li><a href="ch120.xhtml#appendix-f558f5b4d8f2-undefined-behavior" class="wikilink">Undefined behavior (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Undefined behavior)</a> — Hardware completion does not prove a language-level operation legal.</li>
+</ul>
+</section>
+<section id="appendix-0682dbfc5f0e-used-by" class="level3">
+<h3>Used by</h3>
+<p>Update downstream uses when later chunks build on this concept.</p>
+</section>
+<section id="appendix-0682dbfc5f0e-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Distinguish packing, endian normalization, and legal typed access.</p>
+<p><strong>Pending:</strong> Instruction-specific costs and mapped-file parsing.</p>
+</section>
+<section id="appendix-0682dbfc5f0e-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch051.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-53a8cfb25f8d-offset-binary-coding" class="level2">
+<h2>Offset-binary coding</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C006 · <strong>Latest development:</strong> C006</p>
+<section id="appendix-53a8cfb25f8d-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A bias turns signed levels into unsigned codes. For the source-shaped INT4 convention c=q+8, -3 becomes nibble0101, not the two’s-complement nibble1101.</p>
+</section>
+<section id="appendix-53a8cfb25f8d-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch092.xhtml#appendix-c99977d88b33-unsigned-modular-arithmetic" class="wikilink">Unsigned modular arithmetic</a> — supplies the representation or validity rule used above.</li>
+<li><a href="ch119.xhtml#appendix-f414bd4ed05c-interpretation-contract" class="wikilink">Interpretation contract</a> — supplies the representation or validity rule used above.</li>
+</ul>
+</section>
+<section id="appendix-53a8cfb25f8d-used-by" class="level3">
+<h3>Used by</h3>
+<p>Connect later dependent concepts here when their explanations use this mechanism.</p>
+</section>
+<section id="appendix-53a8cfb25f8d-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the example and identify the condition that would invalidate it.</p>
+<p><strong>Pending:</strong> Do not assume an INT4 label defines offset versus two’s-complement storage.</p>
+</section>
+<section id="appendix-53a8cfb25f8d-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-choosing-what-information-to-keep" class="wikilink">Continuous teaching story</a> · <span>Source coverage ledger</span> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-53a8cfb25f8d-ordering-and-bias" class="level3">
+<h3>Ordering and bias</h3>
+<p>Offset-binary represents signed values by adding a fixed bias before storing an unsigned code:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>With an <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>-bit field and the common midpoint bias <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+  <mo>=</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+</math>, the smallest signed value maps near code zero and the largest maps near the all-ones code. Unlike two’s complement, the unsigned lexical order of codes then matches the numeric order of represented values. That property is useful in some exponent fields, ADC outputs, sortable binary formats and hardware interfaces.</p>
+<p>The bias is part of the format contract. Decoding with the wrong bias shifts every value while still producing plausible numbers. The IEEE-754 exponent field is related but reserves all-zero and all-one exponent codes for subnormals/zero and infinities/NaNs, so it is not simply an unrestricted offset-binary integer.</p>
+<p>Tests should check both endpoints, the code corresponding to numeric zero, monotonic ordering, and rejection or handling of reserved codes when the surrounding format defines them.</p>
+</section>
+</section>
+</body>
+</html>

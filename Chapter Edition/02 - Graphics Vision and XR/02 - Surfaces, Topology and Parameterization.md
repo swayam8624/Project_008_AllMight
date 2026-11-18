@@ -8,7 +8,7 @@ A surface has both local shape and global connectivity, and one representation r
 
 **Recall question:** How do parameterization and topology answer different questions about a surface?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 2173–3087; source-span SHA256 3691cf05f3291ae62efa9c6d8c9ce065c149dd827c1424249af02f07ac4a9377. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 2204–3118; source-span SHA256 124ad7fa099f4d4b38f41d50bfa82f53d8cab0b2d962cd14b22be2cb1f69f270. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Surfaces, patches, topology, and parameterization
@@ -128,34 +128,34 @@ For a mesh scalar field $f$, a weighted discrete Laplacian at vertex $i$ has for
 
 Directly editing vertex positions makes global coordinates the primitive. Botsch and coauthors show another useful view: represent local shape through **differential coordinates**, modify those local quantities, then reconstruct positions by solving a sparse system.
 
-For a piecewise-linear scalar function \(f\) on a triangle mesh, its gradient is constant inside each triangle. Apply that independently to the three coordinate functions of the embedding,
+For a piecewise-linear scalar function $f$ on a triangle mesh, its gradient is constant inside each triangle. Apply that independently to the three coordinate functions of the embedding,
 
-\[
+$$
 p:S\rightarrow\mathbb R^3,
-\]
+$$
 
-and each face \(T\) has a \(3\times3\) Jacobian \(J_T\) built from the gradients of \(p_x,p_y,p_z\). A desired local rotation/scale/shear can be represented by a matrix \(M_T\), giving a target gradient
+and each face $T$ has a $3\times3$ Jacobian $J_T$ built from the gradients of $p_x,p_y,p_z$. A desired local rotation/scale/shear can be represented by a matrix $M_T$, giving a target gradient
 
-\[
+$$
 J'_T=M_TJ_T.
-\]
+$$
 
 The modified gradients generally no longer integrate exactly to one globally continuous surface. Reconstruction therefore asks for vertex positions whose gradients match the targets in least squares:
 
-\[
+$$
 E(p')
 =
 \int_S
 \|\nabla p'-J'\|^2\,dA.
-\]
+$$
 
 The Euler–Lagrange equation has Poisson form,
 
-\[
+$$
 \Delta p'
 =
 \operatorname{div}J',
-\]
+$$
 
 which becomes a sparse linear system after discretization. Handle and fixed-region positional constraints remove the null modes and make the solution correspond to the user’s intended edit.
 
@@ -163,26 +163,26 @@ This gives a deeper interpretation of “Poisson mesh editing.” The linear sol
 
 Laplacian editing uses per-vertex differential coordinates
 
-\[
+$$
 \delta_i=\Delta p_i
-\]
+$$
 
-instead of per-face gradients. Transform them to \(\delta_i'=M_i\delta_i\), then seek positions whose Laplacians match those targets. In the continuous formulation Botsch et al. minimize
+instead of per-face gradients. Transform them to $\delta_i'=M_i\delta_i$, then seek positions whose Laplacians match those targets. In the continuous formulation Botsch et al. minimize
 
-\[
+$$
 E(p')
 =
 \int_S
 \|\Delta p'-\delta'\|^2\,dA,
-\]
+$$
 
 leading to a bi-Laplacian equation
 
-\[
+$$
 \Delta^2p'
 =
 \Delta\delta'.
-\]
+$$
 
 The distinction matters. A first-order gradient formulation and a second-order Laplacian/shell formulation have different smoothness behavior at the boundary of the deformed region, different conditioning, and different sensitivity to constraints. “Both solve a sparse matrix” does not make them the same deformation model.
 
@@ -198,29 +198,29 @@ The current parameterization section says that angle, area, and scale cannot gen
 
 Let a local parameterization map a 2D parameter domain to a surface. Its Jacobian maps infinitesimal parameter-space directions into tangent vectors on the surface. Locally, a tiny circle in parameter space becomes an ellipse whose principal stretches are the two singular values
 
-\[
+$$
 \sigma_1,\sigma_2.
-\]
+$$
 
 Those two numbers separate the common distortion goals.
 
 A map is locally **conformal** when it preserves angles. Equivalently, the two principal stretches are equal:
 
-\[
+$$
 \sigma_1=\sigma_2.
-\]
+$$
 
 A tiny circle stays a circle, though its radius may change. It is **area preserving** when
 
-\[
+$$
 \sigma_1\sigma_2=1,
-\]
+$$
 
 so the determinant of the local metric/Jacobian preserves area, though a circle may become an ellipse. It is locally **isometric** when both are true:
 
-\[
+$$
 \sigma_1=\sigma_2=1.
-\]
+$$
 
 That preserves both angles and lengths locally. A general curved surface cannot be flattened isometrically; only special developable geometry permits it without cutting or distortion.
 
@@ -228,7 +228,7 @@ This turns UV quality into a local tensor measurement rather than a visual judge
 
 Least-squares conformal maps formulate conformality as a least-squares condition on the gradients of the two UV coordinate functions. Harmonic/barycentric parameterizations solve related sparse systems under boundary constraints. The boundary treatment is not a cosmetic detail: fixing a poor boundary polygon can force interior distortion even when the interior solver is exact.
 
-When a parameterization method reports one scalar “distortion,” ask which invariant it measures and in which map direction. Literature alternates between studying \(S\rightarrow\Omega\) and its inverse \(\Omega\rightarrow S\). Singular values invert under map inversion, so formulas can appear contradictory when the convention is unstated.
+When a parameterization method reports one scalar “distortion,” ask which invariant it measures and in which map direction. Literature alternates between studying $S\rightarrow\Omega$ and its inverse $\Omega\rightarrow S$. Singular values invert under map inversion, so formulas can appear contradictory when the convention is unstated.
 
 Source basis: *Polygon Mesh Processing*, Chapter 5, especially conformal mapping and §5.5’s distortion analysis in terms of the first fundamental form and singular values.
 
@@ -553,26 +553,26 @@ The count relationship $\chi=\sum_p(-1)^p\beta_p$ is useful because it connects 
 
 ### Alpha complexes turn a union of balls into a finite topological object
 
-A point cloud has no edges, faces, or loops until a scale rule is introduced. One geometric choice places a closed ball of radius \(r\) around every sample. The union
+A point cloud has no edges, faces, or loops until a scale rule is introduced. One geometric choice places a closed ball of radius $r$ around every sample. The union
 
-\[
+$$
 U(r)=
 \bigcup_{u\in S} B_u(r)
-\]
+$$
 
-is a continuous shape whose topology changes as \(r\) grows. Directly storing and analyzing the union is awkward, so computational topology seeks a finite complex with the same relevant topology.
+is a continuous shape whose topology changes as $r$ grows. Directly storing and analyzing the union is awkward, so computational topology seeks a finite complex with the same relevant topology.
 
 Intersect each ball with its Voronoi cell,
 
-\[
+$$
 R_u(r)
 =
 B_u(r)\cap V_u.
-\]
+$$
 
-Each \(R_u(r)\) is convex. The **alpha complex** is the nerve of this convex cover:
+Each $R_u(r)$ is convex. The **alpha complex** is the nerve of this convex cover:
 
-\[
+$$
 \operatorname{Alpha}(r)
 =
 \left\{
@@ -580,18 +580,18 @@ Each \(R_u(r)\) is convex. The **alpha complex** is the nerve of this convex cov
 \;\middle|\;
 \bigcap_{u\in\sigma}R_u(r)\neq\varnothing
 \right\}.
-\]
+$$
 
 Because every restricted cell lies inside its Voronoi cell, the alpha complex is a subcomplex of the Delaunay complex. The nerve theorem supplies the key bridge: under the convex-cover conditions, the combinatorial nerve has the same homotopy type as the union it represents.
 
-This is more than a convenient point-cloud triangulation. The radius \(r\) becomes an explicit geometric scale. At tiny radius the complex contains isolated vertices. Edges enter as restricted balls meet, then triangles and tetrahedra fill cycles and cavities. The nested family
+This is more than a convenient point-cloud triangulation. The radius $r$ becomes an explicit geometric scale. At tiny radius the complex contains isolated vertices. Edges enter as restricted balls meet, then triangles and tetrahedra fill cycles and cavities. The nested family
 
-\[
+$$
 \operatorname{Alpha}(r_1)
 \subseteq
 \operatorname{Alpha}(r_2)
 \subseteq\cdots
-\]
+$$
 
 is therefore a natural filtration for persistent homology.
 
@@ -620,36 +620,36 @@ Persistence is often presented as robust to small perturbations, but translating
 
 A persistence diagram is useful as a measurement only if a small perturbation of the measured function does not cause arbitrary topological chaos in the output. Edelsbrunner and Harer make this precise with the bottleneck metric.
 
-For two persistence diagrams \(X\) and \(Y\), augment each with diagonal points so short-lived features can be matched to the diagonal. The bottleneck distance is
+For two persistence diagrams $X$ and $Y$, augment each with diagonal points so short-lived features can be matched to the diagonal. The bottleneck distance is
 
-\[
+$$
 W_\infty(X,Y)
 =
 \inf_{\eta:X\to Y}
 \sup_{x\in X}
 \|x-\eta(x)\|_\infty,
-\]
+$$
 
-where \(\eta\) ranges over bijections respecting multiplicity. It asks for the matching whose worst paired displacement is as small as possible.
+where $\eta$ ranges over bijections respecting multiplicity. It asks for the matching whose worst paired displacement is as small as possible.
 
-For monotone filtration functions \(f\) and \(g\) on the same complex, the stability theorem gives
+For monotone filtration functions $f$ and $g$ on the same complex, the stability theorem gives
 
-\[
+$$
 W_\infty(
 \operatorname{Dgm}_p(f),
 \operatorname{Dgm}_p(g)
 )
 \le
 \|f-g\|_\infty.
-\]
+$$
 
-A corresponding theorem is developed for tame continuous functions on triangulable spaces. The important claim is quantitative: if every function value moves by at most \(\varepsilon\), then no persistence point needs to move by more than \(\varepsilon\) in bottleneck distance.
+A corresponding theorem is developed for tame continuous functions on triangulable spaces. The important claim is quantitative: if every function value moves by at most $\varepsilon$, then no persistence point needs to move by more than $\varepsilon$ in bottleneck distance.
 
 This does **not** say every short-persistence feature is noise. It says the representation is stable with respect to perturbations measured in a specified norm of a specified function. A genuine tiny handle can have low persistence. A large systematic scan gap can have high persistence. Choosing a deletion threshold is still a domain decision.
 
 The theorem is nevertheless valuable in a repair pipeline. If two depth reconstructions differ by a known bounded scalar-field perturbation, their persistence diagrams cannot disagree arbitrarily under the theorem’s conditions. Conversely, a diagram change much larger than the known perturbation scale suggests that some assumption changed—domain, filtration, registration, topology construction, or error bound—not merely tiny numerical noise.
 
-A practical validation should therefore store the filtration function and its units alongside the diagram. Comparing diagrams without recording whether \(f\) was height, distance-to-samples, curvature, confidence, or density makes the stability number uninterpretable.
+A practical validation should therefore store the filtration function and its units alongside the diagram. Comparing diagrams without recording whether $f$ was height, distance-to-samples, curvature, confidence, or density makes the stability number uninterpretable.
 
 Source basis: *Computational Topology*, Chapter VIII on bottleneck/Wasserstein distances and the stability theorems for filtrations and tame functions.
 
@@ -659,21 +659,21 @@ Persistent homology summarizes births and deaths of algebraic features. A **Reeb
 
 Given a continuous function
 
-\[
+$$
 f:X\rightarrow\mathbb R,
-\]
+$$
 
-two points are considered equivalent when they lie in the same connected component of the same level set. Quotienting \(X\) by that equivalence gives the Reeb graph \(R(f)\). Each point of the graph represents one contour/level-set component.
+two points are considered equivalent when they lie in the same connected component of the same level set. Quotienting $X$ by that equivalence gives the Reeb graph $R(f)$. Each point of the graph represents one contour/level-set component.
 
-This is useful for iso-surface extraction. Instead of scanning an entire volume to discover every component of \(f^{-1}(a)\), the Reeb graph can identify how many contour components exist at level \(a\) and provide representatives from which each component can be traced. When the domain is contractible, as in a cube volume, the Reeb graph is a tree and is often called a contour tree.
+This is useful for iso-surface extraction. Instead of scanning an entire volume to discover every component of $f^{-1}(a)$, the Reeb graph can identify how many contour components exist at level $a$ and provide representatives from which each component can be traced. When the domain is contractible, as in a cube volume, the Reeb graph is a tree and is often called a contour tree.
 
 For a Morse function on a manifold, critical points organize the graph. A local minimum creates a new level-set component; a saddle can merge or split components; a maximum destroys the final local component. On an orientable 2-manifold, minima/maxima correspond to degree-one nodes and the relevant saddles to degree-three nodes. Thus the topology of the scalar field becomes a one-dimensional combinatorial object.
 
 The height function on a torus is the canonical mental model. Starting below the torus gives an empty sublevel set. Passing the lowest critical point creates a disk. A saddle changes it to a cylinder, another saddle changes the connectivity again, and the maximum completes the torus. The critical values mark where topology changes; between them, level-set structure is stable.
 
-Reeb graphs are lossy summaries. They preserve component evolution and some one-dimensional connectivity, not the full topology or metric geometry. Edelsbrunner and Harer show, for example, that \(\beta_0(R(f))=\beta_0(X)\) and \(\beta_1(R(f))\le\beta_1(X)\). A graph is therefore useful for navigation through level sets and segmentation, but it should not replace a full homology/persistence computation when higher-dimensional features matter.
+Reeb graphs are lossy summaries. They preserve component evolution and some one-dimensional connectivity, not the full topology or metric geometry. Edelsbrunner and Harer show, for example, that $\beta_0(R(f))=\beta_0(X)$ and $\beta_1(R(f))\le\beta_1(X)$. A graph is therefore useful for navigation through level sets and segmentation, but it should not replace a full homology/persistence computation when higher-dimensional features matter.
 
-In graphics/vision, choose \(f\) to match the question: height for terrain, scalar density for volumetric imaging, geodesic distance for shape segmentation, curvature-like fields for surface decomposition, or confidence/error fields for reconstruction diagnostics. The graph summarizes **that function on that domain**, not shape in an absolute sense.
+In graphics/vision, choose $f$ to match the question: height for terrain, scalar density for volumetric imaging, geodesic distance for shape segmentation, curvature-like fields for surface decomposition, or confidence/error fields for reconstruction diagnostics. The graph summarizes **that function on that domain**, not shape in an absolute sense.
 
 Source basis: *Computational Topology*, Chapter VI on Morse functions, piecewise-linear critical points, Reeb graphs/contour trees, and the relationship between graph nodes and critical points.
 

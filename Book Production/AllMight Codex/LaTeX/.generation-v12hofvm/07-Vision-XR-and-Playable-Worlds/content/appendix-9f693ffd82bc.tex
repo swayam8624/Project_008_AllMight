@@ -1,0 +1,31 @@
+\hypertarget{appendix-9f693ffd82bc}{}\label{referencestart:appendix-9f693ffd82bc}
+\section{Sampling quality: stratification, quasi-Monte Carlo, and blue noise}\label{appendix-9f693ffd82bc-sampling-quality-stratification-quasi-monte-carlo-and-blue-noise}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{appendix-9f693ffd82bc-definition-and-mechanism}
+
+Sampling quality concerns the arrangement of points across dimensions used by an estimator, not only each coordinate's one-dimensional histogram. Stratification partitions a domain and allocates points across cells, reducing large gaps for suitable integrands. Quasi-Monte Carlo sequences such as Sobol aim for low discrepancy and often improve integration of smooth, structured functions, though their samples are dependent and error estimates differ from IID Monte Carlo. Blue-noise point sets suppress low-frequency clumping while retaining local separation; they are useful in image sampling and spatial placement but do not automatically minimize every integral's variance. Scrambling, domain mapping, dimensional ordering, and discontinuities affect performance. Compare methods against a clear target function and measure. The supplied probability narrative introduces stratification and Sobol but not blue-noise constructions; that part is an explicit teaching addition, not a received source claim.
+
+\subsection{Prerequisites}\label{appendix-9f693ffd82bc-prerequisites}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-daaf25bfd3a0]{Stateless keyed sampling and reproducibility}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-6a7869dd79a6}{Sampling aliasing and reconstruction (Light Transport and Image Synthesis, Reference notes: Sampling aliasing and reconstruction)}
+\item
+  \hyperref[appendix-184fcc411663]{Uniform shuffling without replacement} \#\# Used by
+\item
+  \hyperref[appendix-4192b2bdd21e]{Antialiasing and sample allocation}
+\item
+  \hyperref[appendix-1c5e85693a06]{Latin-hypercube sampling} \#\# Full teaching explanation
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch029-a-computer-produces-deterministic-pseudorandom-sequences}{Phase 10 teaching section (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 13)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)} · visual recall
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-9f693ffd82bc-source-coverage}
+
+Supplied lesson parts: 939 (T06 · M057).

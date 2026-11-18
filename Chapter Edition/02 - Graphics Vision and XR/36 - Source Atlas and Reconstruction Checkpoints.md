@@ -8,7 +8,7 @@ This span is a source atlas: it records course coverage, source identity and rec
 
 **Recall question:** What does a source record establish, and what remains unverified by that record?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 80439–82102; source-span SHA256 a99a6f5d2b4bdee5073e1b5a2b0e03d9b7188e48213026397cda427724a64d12. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 81441–83104; source-span SHA256 a99a6f5d2b4bdee5073e1b5a2b0e03d9b7188e48213026397cda427724a64d12. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Source legend - actual playlist coverage

@@ -1,0 +1,4092 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch214.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_01-foundations-i-ch012-commands-async-work-and-resource-lifetimes" class="level2">
+<h2>Commands, Async Work, and Resource Lifetimes</h2>
+<p><a href="ch001.xhtml#id_01-Bits-Programs-and-Reliable-Systems" class="wikilink">Reading map</a> · <a href="ch212.xhtml#id_01-foundations-i-ch011-c-const-borrowing-and-cpugpu-buffering" class="wikilink">Previous chapter</a> · <a href="ch215.xhtml#id_05-engine-i-ch001-a-game-promise-becomes-bytes-and-running-state" class="wikilink">Next chapter (Bits, Programs, and Reliable Systems, Part 4, Ch. 11)</a></p>
+<p>GPU command processors execute submitted work asynchronously, so recording a command is not the same as completing it. This chapter connects queue submission, synchronization, memory lifetime, and scheduling to frame-level performance choices.</p>
+<p><strong>By the end:</strong> Model when commands are recorded, submitted, executed, and retired, and use synchronization only at real dependency boundaries.</p>
+<p><strong>Recall question:</strong> How does a completion signal change what the CPU may safely read, overwrite, or destroy?</p>
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 22733–25911; source-span SHA256 42409f3d01bae1cf39b63ee62f06a72093a3be2f426b615a4f5d8274c3fe89c2. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_01-foundations-i-ch012-command-execution-async-work-memory-lifetimes" class="level4">
+<h4>COMMAND EXECUTION, ASYNC WORK &amp; MEMORY LIFETIMES</h4>
+<p><strong>GPU command processor</strong></p>
+<p>Your CPU does not directly call an ALU and say:</p>
+<blockquote>
+<p>Run this shader now.</p>
+</blockquote>
+<p>It records command data describing:</p>
+<ul>
+<li>pipeline state,</li>
+<li>resources,</li>
+<li>dispatch/draw dimensions,</li>
+<li>copies,</li>
+<li>barriers.</li>
+</ul>
+<p>The GPU command processor/front-end consumes those commands and schedules work onto execution engines.</p>
+<p>Therefore there are at least two parallel timelines:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>CPU command generation</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>GPU command execution</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A well-designed renderer prevents unnecessary synchronization between them.</p>
+<hr />
+<p><strong>Submission overhead</strong></p>
+<p>Imagine issuing 100,000 tiny dispatches each doing 20 arithmetic instructions.</p>
+<p>Even if GPU arithmetic is fast, command encoding, validation, queue processing and state transitions become significant.</p>
+<p>Hence GPU work should usually have enough granularity.</p>
+<p>“Use more dispatches” is not free.</p>
+<p>This is one reason kernels sometimes fuse adjacent stages.</p>
+<p>But excessive fusion increases register pressure and divergence.</p>
+<p>Once again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>tradeoff</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>KairoGPU’s current compute wrapper is intentionally synchronous</strong></p>
+<p>Current Kairo Metal vector operation performs:</p>
+<pre id="p10-kairo-sync" class="objc"><code>command = queue.commandBuffer();
+encode();
+command.commit();
+command.waitUntilCompleted();</code></pre>
+<p>for every vector add/multiply call.</p>
+<p>That is excellent for a simple deterministic wrapper and unit-testable API.</p>
+<p>But it destroys CPU–GPU overlap.</p>
+<p>The caller cannot enqueue:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64</mn>
+</math>
+<p>operations and let the GPU work asynchronously.</p>
+<p>The CPU waits after each one.</p>
+<p>That distinction is essential when interpreting its benchmark.</p>
+<hr />
+<p><strong>Asynchronous compute</strong></p>
+<p>Async compute means compute work can be scheduled independently of graphics work, potentially overlapping.</p>
+<p>Conceptually:</p>
+<pre id="p10-async" class="text"><code>Graphics: [shadow][gbuffer]------[lighting]
+Compute :        [particles][SSAO]</code></pre>
+<p>If resource dependencies permit and hardware has available execution capacity, some work can overlap.</p>
+<p>But:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>asynchronous submission does not guarantee physical parallel execution</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Why graphics + compute can fail to speed up</strong></p>
+<p>Suppose graphics already saturates:</p>
+<ul>
+<li>shader ALUs,</li>
+<li>memory bandwidth,</li>
+<li>register capacity.</li>
+</ul>
+<p>Launching compute concurrently may merely make both workloads compete.</p>
+<p>Frame may become slower.</p>
+<p>Async compute is valuable when workloads complement each other.</p>
+<p>For example one phase may be raster/backend heavy while compute uses spare arithmetic capacity.</p>
+<p>Or one workload may stall on memory while another has independent arithmetic.</p>
+<p>You profile.</p>
+<hr />
+<p><strong>Resource dependencies constrain overlap</strong></p>
+<p>Suppose compute writes buffer:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>Graphics immediately reads:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">→</mo>
+  <mi>G</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>s</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>is a real dependency.</p>
+<p>No amount of async queue magic removes it.</p>
+<p>To overlap, find independent work:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>while:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>s</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>runs.</p>
+<p>Dependency graphs, not queue count, determine possible overlap.</p>
+<hr />
+<p><strong>Transfer engines / copy queues</strong></p>
+<p>Many GPUs provide dedicated mechanisms for:</p>
+<ul>
+<li>buffer copies,</li>
+<li>texture copies,</li>
+<li>uploads,</li>
+<li>readbacks.</li>
+</ul>
+<p>On discrete GPUs these may correspond to separate DMA/copy engines.</p>
+<p>Using them can allow copying while graphics/compute continue.</p>
+<p>On Apple unified-memory systems, the physical memory model differs, but blit/copy encoders and resource synchronization still matter.</p>
+<p>Do not blindly transfer discrete-GPU assumptions to unified memory.</p>
+<hr />
+<p><strong>CPU→GPU upload bandwidth</strong></p>
+<p>On a discrete GPU, uploads typically cross a PCIe-like interconnect.</p>
+<p>If every frame uploads:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mtext> GB</mtext>
+</math>
+<p>at 60 FPS:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>60</mn>
+  <mtext> GB/s</mtext>
+</math>
+<p>of host→device traffic would be required before considering anything else.</p>
+<p>That can exceed the interconnect budget.</p>
+<p>Hence:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>keep persistent data resident on the GPU</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Upload only changes.</p>
+<hr />
+<p><strong>Apple unified memory changes the topology, not the optimization problem</strong></p>
+<p>CPU and GPU can share physical memory.</p>
+<p>That can avoid an explicit host→VRAM copy.</p>
+<p>But memory traffic is still finite.</p>
+<p>Caches still matter.</p>
+<p>Synchronization still matters.</p>
+<p>Writing massive CPU buffers that the GPU immediately streams still consumes DRAM bandwidth.</p>
+<p>Unified memory removes one kind of transfer bottleneck; it does not create infinite bandwidth.</p>
+<hr />
+<p><strong>GPU→CPU readback stalls</strong></p>
+<p>This is among the easiest ways to destroy a renderer.</p>
+<p>Bad pattern:</p>
+<div class="sourceCode" id="p10-bad-read"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-bad-read-1"><a href="#p10-bad-read-1" aria-hidden="true" tabindex="-1"></a>DispatchGPU<span class="op">();</span></span>
+<span id="p10-bad-read-2"><a href="#p10-bad-read-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-bad-read-3"><a href="#p10-bad-read-3" aria-hidden="true" tabindex="-1"></a>WaitForGPU<span class="op">();</span></span>
+<span id="p10-bad-read-4"><a href="#p10-bad-read-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-bad-read-5"><a href="#p10-bad-read-5" aria-hidden="true" tabindex="-1"></a>count <span class="op">=</span></span>
+<span id="p10-bad-read-6"><a href="#p10-bad-read-6" aria-hidden="true" tabindex="-1"></a>    ReadBuffer<span class="op">();</span></span>
+<span id="p10-bad-read-7"><a href="#p10-bad-read-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-bad-read-8"><a href="#p10-bad-read-8" aria-hidden="true" tabindex="-1"></a>SubmitNextWork<span class="op">(</span>count<span class="op">);</span></span></code></pre></div>
+<p>CPU stalls until GPU finishes.</p>
+<p>GPU may then stall waiting for CPU to submit subsequent work.</p>
+<p>The pipeline collapses.</p>
+<hr />
+<p><strong>Indirect buffers are one answer to readback</strong></p>
+<p>Instead:</p>
+<pre id="p10-gpu-chain" class="text"><code>GPU creates count
+GPU creates indirect args
+GPU consumes indirect args</code></pre>
+<p>Read the result back only when the CPU actually needs it, possibly several frames later.</p>
+<p>Maveb’s radix dispatch does exactly this.</p>
+<p>This is why indirect execution and pipelining are deeply connected topics.</p>
+<hr />
+<p><strong>Asynchronous readback</strong></p>
+<p>If CPU genuinely needs GPU data, copy into a CPU-visible readback buffer and process after completion.</p>
+<p>Current Maveb frame capture does this correctly.</p>
+<p>It encodes texture→buffer copy.</p>
+<p>Then registers a command-buffer completion handler.</p>
+<p>Only when GPU work has completed does the handler access buffer contents and construct the CPU capture.</p>
+<p>The main frame function does not call:</p>
+<div class="sourceCode" id="p10-no-wait"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-no-wait-1"><a href="#p10-no-wait-1" aria-hidden="true" tabindex="-1"></a>waitUntilCompleted<span class="op">()</span></span></code></pre></div>
+<p>for every screenshot copy.</p>
+<p>That preserves normal frame pipelining.</p>
+<hr />
+<p><strong>Persistent mapped upload buffers</strong></p>
+<p>The inefficient model:</p>
+<pre id="p10-map-everything" class="text"><code>create/map buffer
+write 64 bytes
+unmap
+submit
+
+create/map another buffer
+...</code></pre>
+<p>causes allocation/mapping overhead.</p>
+<p>Instead allocate a large CPU-visible upload buffer once and keep its CPU pointer available.</p>
+<p>Every frame allocate slices:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>+</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Write directly.</p>
+<p>Bind GPU buffer + offset.</p>
+<p>This is persistent mapped arena allocation.</p>
+<hr />
+<p><strong>Maveb FrameContext does exactly this</strong></p>
+<p>Each frame context owns an 8 MiB <code>StorageModeShared</code> upload buffer.</p>
+<p>Allocation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>n</mi>
+  <mi>U</mi>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>n</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo stretchy="false">←</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>+</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Returned slice contains:</p>
+<div class="sourceCode" id="p10-slice"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-slice-1"><a href="#p10-slice-1" aria-hidden="true" tabindex="-1"></a>buffer</span>
+<span id="p10-slice-2"><a href="#p10-slice-2" aria-hidden="true" tabindex="-1"></a>offset</span>
+<span id="p10-slice-3"><a href="#p10-slice-3" aria-hidden="true" tabindex="-1"></a>size</span>
+<span id="p10-slice-4"><a href="#p10-slice-4" aria-hidden="true" tabindex="-1"></a>cpuAddress</span></code></pre></div>
+<p>Default alignment:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>CPU writes directly through the shared buffer’s <code>contents()</code> pointer.</p>
+<p>No per-object Metal buffer creation.</p>
+<p>Very good.</p>
+<hr />
+<p><strong>It is technically a per-frame bump arena</strong></p>
+<p>The source labels it an <code>"Upload Ring"</code>.</p>
+<p>Inside one <code>FrameContext</code>, allocation is currently:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>monotonic cursor reset at beginFrame()</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>rather than a circular buffer with independent head and tail.</p>
+<p>The <strong>three FrameContexts together form the frame ring</strong>.</p>
+<p>Slot 0’s cursor is reset only when its frame context becomes reusable after GPU completion.</p>
+<p>This architecture is simpler than managing one giant circular arena with arbitrary in-flight ranges.</p>
+<hr />
+<p><strong>Ring buffer principle</strong></p>
+<p>For a true single-buffer ring, maintain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+</math>
+<p>for new allocations and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+</math>
+<p>for oldest GPU-in-use data.</p>
+<p>Never let head overtake live tail.</p>
+<p>If allocation reaches buffer end:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo stretchy="false">→</mo>
+  <mn>0</mn>
+</math>
+<p>only if the wrapped range is no longer in flight.</p>
+<p>This requires fences/timeline tracking.</p>
+<p>Per-frame arenas avoid much of that complexity.</p>
+<hr />
+<p><strong>Readback arena</strong></p>
+<p>Maveb also allocates a:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+  <mtext> KiB</mtext>
+</math>
+<p>shared readback buffer per frame context.</p>
+<p>Same aligned bump mechanism.</p>
+<p>That provides bounded CPU-visible storage for GPU results without creating one tiny readback resource per query.</p>
+<p>This is exactly the same allocation principle in the opposite data direction.</p>
+<hr />
+<p><strong>GPU memory suballocation</strong></p>
+<p>Suppose you need:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>10</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>small 4 KiB GPU buffers.</p>
+<p>Requesting 10,000 dedicated GPU memory allocations can be expensive and fragmented.</p>
+<p>Instead reserve a large block:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+  <mtext> MiB</mtext>
+</math>
+<p>and allocate slices from it.</p>
+<p>Resource:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This is suballocation.</p>
+<hr />
+<p><strong>Dedicated allocations versus suballocation</strong></p>
+<p>Dedicated allocation is attractive for:</p>
+<ul>
+<li>enormous textures/buffers,</li>
+<li>special alignment/tiling requirements,</li>
+<li>resources whose lifetime spans most of the application,</li>
+<li>allocations where backend recommends/requires dedication.</li>
+</ul>
+<p>Suballocation is excellent for:</p>
+<ul>
+<li>many small resources,</li>
+<li>dynamic/transient resources,</li>
+<li>predictable lifetime pools.</li>
+</ul>
+<p>A serious allocator usually supports both.</p>
+<hr />
+<p><strong>Internal and external fragmentation</strong></p>
+<p>Internal fragmentation:</p>
+<p>You allocate 300 bytes from a 512-byte block.</p>
+<p>Unused:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>212</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>External fragmentation:</p>
+<p>There is enough total free memory, but it exists in disconnected chunks.</p>
+<p>For example:</p>
+<pre id="p10-frag" class="text"><code>free 10 MB
+used 5 MB
+free 10 MB
+used 5 MB
+free 10 MB</code></pre>
+<p>Total free:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>30</mn>
+  <mtext> MB</mtext>
+  <mo>.</mo>
+</math>
+<p>A contiguous 25 MB allocation cannot fit.</p>
+<p>Allocator design matters in long-running engines.</p>
+<hr />
+<p><strong>Common suballocators</strong></p>
+<p>A linear/bump allocator is ideal for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>reset-whole-pool-at-once</mtext>
+</math>
+<p>transient data.</p>
+<p>A free-list allocator handles arbitrary lifetimes.</p>
+<p>Buddy allocation makes split/merge efficient while restricting block sizes to powers of two.</p>
+<p>Slab/pool allocators are excellent when many objects have equal size.</p>
+<p>There is no single GPU allocator for every lifetime class.</p>
+<hr />
+<p><strong>Resource aliasing</strong></p>
+<p>Suppose texture A is only used during shadow generation.</p>
+<p>Texture B is only used much later during bloom.</p>
+<p>Their lifetimes do not overlap.</p>
+<p>Instead of allocating:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>the renderer may place both resources in the same physical region at different times.</p>
+<p>That is resource aliasing.</p>
+<hr />
+<p><strong>Lifetime interval view</strong></p>
+<p>Represent resource lifetime as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>l</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Two resources may alias if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>l</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>A</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>∩</mo>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>l</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>B</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi data-mjx-alternate="1">∅</mi>
+  <mo>.</mo>
+</math>
+<p>This turns transient resource allocation into an interval-allocation problem.</p>
+<p>A frame graph can compute lifetimes automatically.</p>
+<hr />
+<p><strong>Aliasing requires synchronization discipline</strong></p>
+<p>Memory reuse is legal only after prior resource use has truly ended.</p>
+<p>Otherwise:</p>
+<pre id="p10-alias-bug" class="text"><code>pass A still reading memory
+pass B overwrites same bytes</code></pre>
+<p>gives corruption.</p>
+<p>Alias transitions may require explicit API barriers or hazard tracking depending on backend.</p>
+<p>Aliasing is memory optimization built on correct lifetime analysis.</p>
+<hr />
+<p><strong>Transient memory</strong></p>
+<p>A resource is transient if its contents need exist only during part of a frame.</p>
+<p>Examples:</p>
+<ul>
+<li>blur intermediates,</li>
+<li>temporary visibility lists,</li>
+<li>scan workspace,</li>
+<li>G-buffer attachments not needed after lighting.</li>
+</ul>
+<p>Because lifetimes are short and predictable, transient resources are ideal candidates for pooled/aliased memory.</p>
+<hr />
+<p><strong>Maveb already reserves per-frame transient memory infrastructure</strong></p>
+<p>Each <code>FrameContext</code> creates a private:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64</mn>
+  <mtext> MiB</mtext>
+</math>
+<p>Metal heap labelled:</p>
+<pre id="p10-transient" class="text"><code>Frame N Transient Heap</code></pre>
+<p>with tracked hazards.</p>
+<p>That is exactly the kind of backing storage from which transient resources can be allocated.</p>
+<p>From the inspected code, I would not yet claim that a general lifetime-aware frame-graph alias allocator is fully using this heap everywhere—the infrastructure is present, while full transient lifetime aliasing is a separate system.</p>
+<p>That distinction matters.</p>
+<hr />
+<p><strong>GPU timestamp queries</strong></p>
+<p>CPU timing:</p>
+<div class="sourceCode" id="p10-wrong-gpu-time"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-wrong-gpu-time-1"><a href="#p10-wrong-gpu-time-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> t0 <span class="op">=</span> CPUClock<span class="op">::</span>now<span class="op">();</span></span>
+<span id="p10-wrong-gpu-time-2"><a href="#p10-wrong-gpu-time-2" aria-hidden="true" tabindex="-1"></a>submit<span class="op">();</span></span>
+<span id="p10-wrong-gpu-time-3"><a href="#p10-wrong-gpu-time-3" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> t1 <span class="op">=</span> CPUClock<span class="op">::</span>now<span class="op">();</span></span></code></pre></div>
+<p>mostly measures:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>command submission cost</mtext>
+  <mo>.</mo>
+</math>
+<p>It does <strong>not</strong> measure shader execution.</p>
+<p>To measure GPU duration, the GPU itself records timestamps around work.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mtext>GPU timestamp before pass</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mtext>GPU timestamp after pass</mtext>
+  <mo>.</mo>
+</math>
+<p>Duration:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>T</mi>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>t</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>t</mi>
+            <mn>0</mn>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>×</mo>
+          <mtext>timestamp period</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Coarse GPU timing already exists in Maveb</strong></p>
+<p>The frame command buffer completion handler reads:</p>
+<div class="sourceCode" id="p10-gpu-time"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-gpu-time-1"><a href="#p10-gpu-time-1" aria-hidden="true" tabindex="-1"></a>GPUEndTime<span class="op">()</span> <span class="op">-</span></span>
+<span id="p10-gpu-time-2"><a href="#p10-gpu-time-2" aria-hidden="true" tabindex="-1"></a>GPUStartTime<span class="op">()</span></span></code></pre></div>
+<p>and stores milliseconds.</p>
+<p>That gives coarse command-buffer/frame GPU duration.</p>
+<p>Useful.</p>
+<p>But it does not tell you:</p>
+<pre id="p10-pass-timing-needed" class="text"><code>Gaussian projection: 0.3 ms
+Radix sort: 1.1 ms
+Scene pass: 2.8 ms
+TAA: 0.4 ms</code></pre>
+<p>For that you need pass-level GPU timestamp/counter instrumentation.</p>
+<hr />
+<p><strong>Pipeline statistics queries</strong></p>
+<p>Timing tells you:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>how long</mtext>
+  <mo>.</mo>
+</math>
+<p>Pipeline statistics can tell you:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>how much work</mtext>
+  <mo>.</mo>
+</math>
+<p>Depending on API/hardware, possible counters include:</p>
+<ul>
+<li>vertices processed,</li>
+<li>primitives generated,</li>
+<li>fragments,</li>
+<li>compute invocations,</li>
+<li>clipping statistics.</li>
+</ul>
+<p>If frame suddenly doubles from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mtext> ms</mtext>
+  <mo stretchy="false">→</mo>
+  <mn>16</mn>
+  <mtext> ms</mtext>
+  <mo>,</mo>
+</math>
+<p>statistics help distinguish:</p>
+<blockquote>
+<p>Shader got slower</p>
+</blockquote>
+<p>from:</p>
+<blockquote>
+<p>We accidentally submitted twice as much geometry.</p>
+</blockquote>
+<p>Not all metrics are available on every backend.</p>
+<p>Capability querying matters.</p>
+<hr />
+<p><strong>GPU profiling zones</strong></p>
+<p>A profiling system should expose named zones:</p>
+<pre id="p10-zones" class="text"><code>Frame
+ ├── Shadow
+ ├── Gaussian Project
+ ├── Gaussian Scan
+ ├── Gaussian Radix
+ ├── Gaussian Composite
+ ├── Scene
+ ├── TAA
+ └── Presentation</code></pre>
+<p>Each zone can associate:</p>
+<ul>
+<li>CPU encoding time,</li>
+<li>GPU start/end timestamp,</li>
+<li>counters,</li>
+<li>command-buffer identity.</li>
+</ul>
+<p>Then profiler visualizes dependency/overlap.</p>
+<p>Without zones, optimization becomes guesswork.</p>
+<hr />
+<p><strong>Current Maveb profiler status</strong></p>
+<p>The inspected <code>Profiler.cpp</code> is a CPU-side <code>ProfileScope</code>.</p>
+<p>It records:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>name</mtext>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mtext>milliseconds</mtext>
+</math>
+<p>under a mutex.</p>
+<p>The renderer separately records whole-command-buffer GPU time.</p>
+<p>So current infrastructure distinguishes some CPU/GPU timing, but a full per-pass GPU timestamp-zone system is still a useful future step.</p>
+<p>That would be particularly valuable for your Gaussian scan/radix pipeline.</p>
+<hr />
+</section>
+<section id="id_01-foundations-i-ch012-performance-modeling-principled-gpu-redesign" class="level4">
+<h4>PERFORMANCE MODELING &amp; PRINCIPLED GPU REDESIGN</h4>
+<p><strong>Occupancy versus instruction throughput</strong></p>
+<p>Pass 9 established:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>occupancy</mtext>
+  <mo>=</mo>
+  <mfrac>
+    <mtext>resident warps/waves</mtext>
+    <mtext>maximum</mtext>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Now comes the warning:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>high occupancy is useful only if it helps keep execution units productive</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Imagine kernel A:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>50</mn>
+  <mi mathvariant="normal">%</mi>
+  <mtext> occupancy</mtext>
+</math>
+<p>but every active warp continuously issues FMAs.</p>
+<p>Kernel B:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>100</mn>
+  <mi mathvariant="normal">%</mi>
+  <mtext> occupancy</mtext>
+</math>
+<p>but half its instructions are spill loads/stores.</p>
+<p>Kernel A may be much faster.</p>
+<hr />
+<p><strong>Register reduction can make performance worse</strong></p>
+<p>Suppose original kernel uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>80</mn>
+</math>
+<p>registers/thread.</p>
+<p>Compiler keeps all important state in registers.</p>
+<p>You manually rewrite it to use:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>48</mn>
+</math>
+<p>registers and occupancy rises.</p>
+<p>But now expensive values are recomputed repeatedly or memory accesses increase.</p>
+<p>Total work rises.</p>
+<p>Occupancy is not the objective.</p>
+<p>The objective is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>useful completed work per unit time</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Arithmetic intensity</strong></p>
+<p>Arithmetic intensity is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>I</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mtext>arithmetic operations</mtext>
+            <mtext>bytes transferred from limiting memory level</mtext>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Typically measured:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>FLOP/byte</mtext>
+  <mo>.</mo>
+</math>
+<p>A low-intensity kernel spends most of its effort moving data.</p>
+<p>A high-intensity kernel reuses data heavily and performs substantial computation per byte.</p>
+<hr />
+<p><strong>KairoGPU vector multiply arithmetic intensity</strong></p>
+<p>Per element:</p>
+<p>Load:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>h</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+</math>
+<p>= 4 bytes.</p>
+<p>Load:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>h</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+</math>
+<p>= 4 bytes.</p>
+<p>Store:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+</math>
+<p>= 4 bytes.</p>
+<p>Total:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>12</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>Arithmetic:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mtext> floating multiply</mtext>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>I</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mn>12</mn>
+          </mfrac>
+          <mo>≈</mo>
+          <mn>0.0833</mn>
+          <mtext> FLOP/byte</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Extremely low arithmetic intensity.</p>
+<p>This is almost certainly a memory-bandwidth-oriented workload on any modern GPU.</p>
+<p>Making the multiply itself twice as fast will barely help.</p>
+<hr />
+<p><strong>Effective bandwidth metric</strong></p>
+<p>If vector multiply processes <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> elements in <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math> seconds:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>B</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>effective</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mn>12</mn>
+              <mi>N</mi>
+            </mrow>
+            <mi>T</mi>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For repeated operations, multiply by iteration count.</p>
+<p>This metric is more informative than FLOP/s for such a kernel.</p>
+<hr />
+<p><strong>Current KairoGPU benchmark</strong></p>
+<p>Benchmark uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>20</mn>
+    </mrow>
+  </msup>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>048</mn>
+  <mo>,</mo>
+  <mn>576</mn>
+</math>
+<p>elements.</p>
+<p>Per dispatch logical traffic:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>12</mn>
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>12</mn>
+  <mo>,</mo>
+  <mn>582</mn>
+  <mo>,</mo>
+  <mn>912</mn>
+  <mtext> bytes</mtext>
+</math>
+<p>approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>12</mn>
+  <mtext> MiB</mtext>
+  <mo>.</mo>
+</math>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64</mn>
+</math>
+<p>iterations:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>768</mn>
+  <mtext> MiB</mtext>
+</math>
+<p>of logical buffer traffic.</p>
+<p>But every <code>VectorMultiplyFloat()</code> currently commits and waits for GPU completion.</p>
+<p>Therefore benchmark includes repeated command submission/synchronization overhead.</p>
+<p>It is useful as an end-to-end dispatch benchmark, but it is <strong>not yet a pure kernel-bandwidth benchmark</strong>.</p>
+<hr />
+<p><strong>Better benchmark separation</strong></p>
+<p>Measure separately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>submit</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>GPU</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>effective</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>dispatch count</mtext>
+  <mo>.</mo>
+</math>
+<p>Warm the pipeline first.</p>
+<p>Batch many dispatches in one command buffer if testing kernel throughput.</p>
+<p>Use GPU timestamps rather than CPU wall time for kernel execution.</p>
+<p>Then also maintain an end-to-end test because application overhead still matters.</p>
+<p>Both measurements answer different questions.</p>
+<hr />
+<p><strong>Matrix multiplication arithmetic intensity</strong></p>
+<p>Now examine Kairo’s tiled matrix multiply.</p>
+<p>Tile width:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>16.</mn>
+</math>
+<p>For one <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>K</mi>
+</math>-tile step, workgroup loads:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>T</mi>
+    <mn>2</mn>
+  </msup>
+</math>
+<p>elements from A and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>T</mi>
+    <mn>2</mn>
+  </msup>
+</math>
+<p>from B.</p>
+<p>Float bytes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <msup>
+    <mi>T</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>8</mn>
+  <msup>
+    <mi>T</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>It computes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>T</mi>
+    <mn>3</mn>
+  </msup>
+</math>
+<p>multiply-adds.</p>
+<p>Counting one FMA as two FLOPs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <msup>
+    <mi>T</mi>
+    <mn>3</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Arithmetic intensity approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>I</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mn>2</mn>
+              <msup>
+                <mi>T</mi>
+                <mn>3</mn>
+              </msup>
+            </mrow>
+            <mrow>
+              <mn>8</mn>
+              <msup>
+                <mi>T</mi>
+                <mn>2</mn>
+              </msup>
+            </mrow>
+          </mfrac>
+          <mo>=</mo>
+          <mfrac>
+            <mi>T</mi>
+            <mn>4</mn>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>At:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>16</mn>
+  <mo>:</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>I</mi>
+          <mo>≈</mo>
+          <mn>4</mn>
+          <mtext> FLOP/byte</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is roughly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>48</mn>
+  <mo>×</mo>
+</math>
+<p>the arithmetic intensity of simple vector multiply.</p>
+<p>Threadgroup-memory reuse is why.</p>
+<hr />
+<p><strong>Why larger tiles can raise intensity</strong></p>
+<p>Formula:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>≈</mo>
+  <mi>T</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>4.</mn>
+</math>
+<p>At:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>32</mn>
+  <mo>,</mo>
+</math>
+<p>theoretical tile intensity becomes around:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mtext> FLOP/byte</mtext>
+  <mo>.</mo>
+</math>
+<p>But a <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>32</mn>
+  <mo>×</mo>
+  <mn>32</mn>
+</math> group would contain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1024</mn>
+</math>
+<p>threads and require much more shared memory/register state.</p>
+<p>Occupancy or hardware group-size limits may collapse.</p>
+<p>Hence:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>greater data reuse can conflict with occupancy/resources</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is the kind of multi-variable optimization M132 expects.</p>
+<hr />
+<p><strong>Bandwidth-bound kernel</strong></p>
+<p>A kernel is bandwidth-bound when arithmetic units could process more work, but memory cannot feed them fast enough.</p>
+<p>Symptoms include:</p>
+<ul>
+<li>measured memory bandwidth near hardware limit,</li>
+<li>low ALU utilization,</li>
+<li>increasing arithmetic throughput doesn’t improve runtime,</li>
+<li>reducing bytes improves runtime strongly.</li>
+</ul>
+<p>Typical examples:</p>
+<ul>
+<li>vector copy,</li>
+<li>vector addition,</li>
+<li>simple particle state update,</li>
+<li>sparse gather.</li>
+</ul>
+<hr />
+<p><strong>Compute-bound kernel</strong></p>
+<p>A kernel is compute-bound when arithmetic pipelines are the limiting resource.</p>
+<p>Symptoms:</p>
+<ul>
+<li>high math-unit utilization,</li>
+<li>memory bandwidth below peak,</li>
+<li>reducing arithmetic improves runtime,</li>
+<li>more data reuse no longer matters much.</li>
+</ul>
+<p>Examples can include:</p>
+<ul>
+<li>large matrix multiplication,</li>
+<li>expensive procedural shading,</li>
+<li>heavy transcendental math,</li>
+<li>dense numerical kernels.</li>
+</ul>
+<hr />
+<p><strong>Roofline model</strong></p>
+<p>Let:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mtext>peak compute throughput</mtext>
+</math>
+<p>in FLOP/s.</p>
+<p>Let:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mtext>peak memory bandwidth</mtext>
+</math>
+<p>in bytes/s.</p>
+<p>For arithmetic intensity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+</math>
+<p>FLOP/byte, memory can supply at most:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mi>I</mi>
+</math>
+<p>FLOP/s worth of work.</p>
+<p>Therefore attainable performance is bounded by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mo>≤</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>P</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            </mrow>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>B</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            </mrow>
+          </msub>
+          <mi>I</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is the roofline model.</p>
+<hr />
+<p><strong>Ridge point</strong></p>
+<p>The two roofs intersect when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <msup>
+    <mi>I</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>I</mi>
+            <mo>∗</mo>
+          </msup>
+          <mo>=</mo>
+          <mfrac>
+            <msub>
+              <mi>P</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+              </mrow>
+            </msub>
+            <msub>
+              <mi>B</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+              </mrow>
+            </msub>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>&lt;</mo>
+  <msup>
+    <mi>I</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo>,</mo>
+</math>
+<p>kernel is potentially bandwidth bound.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>&gt;</mo>
+  <msup>
+    <mi>I</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo>,</mo>
+</math>
+<p>kernel can potentially become compute bound.</p>
+<p>This gives you a numerical way to decide whether to optimize data movement or arithmetic.</p>
+<hr />
+<p><strong>Example roofline reasoning</strong></p>
+<p>Imagine hypothetical GPU:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>10</mn>
+  <mtext> TFLOP/s</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>500</mn>
+  <mtext> GB/s</mtext>
+  <mo>.</mo>
+</math>
+<p>Ridge intensity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>I</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mn>10</mn>
+      <mo>×</mo>
+      <msup>
+        <mn>10</mn>
+        <mrow data-mjx-texclass="ORD">
+          <mn>12</mn>
+        </mrow>
+      </msup>
+    </mrow>
+    <mrow>
+      <mn>500</mn>
+      <mo>×</mo>
+      <msup>
+        <mn>10</mn>
+        <mn>9</mn>
+      </msup>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mn>20</mn>
+  <mtext> FLOP/byte</mtext>
+  <mo>.</mo>
+</math>
+<p>Vector multiply:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <mn>0.083</mn>
+  <mo>.</mo>
+</math>
+<p>Memory roof:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>500</mn>
+  <mo>×</mo>
+  <mn>0.083</mn>
+  <mo>≈</mo>
+  <mn>41.7</mn>
+  <mtext> GFLOP/s</mtext>
+  <mo>.</mo>
+</math>
+<p>Far below:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>10</mn>
+  <mtext> TFLOP/s</mtext>
+  <mo>.</mo>
+</math>
+<p>Optimizing multiply instruction is pointless.</p>
+<p>Your challenge is bandwidth and overhead.</p>
+<hr />
+<p><strong>Same hypothetical GPU, tiled matmul</strong></p>
+<p>Kairo’s <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>16</mn>
+  <mo>×</mo>
+  <mn>16</mn>
+</math> tiled kernel:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>≈</mo>
+  <mn>4.</mn>
+</math>
+<p>Memory roof:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>500</mn>
+  <mtext> GB/s</mtext>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mtext> TFLOP/s</mtext>
+  <mo>.</mo>
+</math>
+<p>Still below:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>10</mn>
+  <mtext> TFLOP/s</mtext>
+  <mo>.</mo>
+</math>
+<p>So even that hypothetical implementation may remain bandwidth-limited unless cache reuse or larger tiles raise effective intensity.</p>
+<p>This is why high-end GEMM kernels use sophisticated blocking across multiple memory levels.</p>
+<hr />
+<p><strong>Arithmetic intensity is measured at a memory level</strong></p>
+<p>Important subtlety.</p>
+<p>A value loaded once from DRAM may then be reused ten times from shared memory.</p>
+<p>DRAM arithmetic intensity is high.</p>
+<p>Shared-memory arithmetic intensity is different.</p>
+<p>Cache behavior changes effective traffic.</p>
+<p>Roofline analysis requires specifying the memory level whose bandwidth roof you are modeling.</p>
+<p>Advanced performance analysis can use hierarchical rooflines:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mi>L</mi>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mi>D</mi>
+  <mi>R</mi>
+  <mi>A</mi>
+  <mi>M</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Shader compiler optimization</strong></p>
+<p>Shader source is not hardware machine code.</p>
+<p>Compiler performs things such as:</p>
+<ul>
+<li>constant folding,</li>
+<li>dead-code elimination,</li>
+<li>common-subexpression elimination,</li>
+<li>loop transformations,</li>
+<li>FMA formation,</li>
+<li>instruction scheduling,</li>
+<li>register allocation,</li>
+<li>strength reduction.</li>
+</ul>
+<p>Therefore source code that “looks shorter” can generate worse machine code.</p>
+<p>And source that appears more complicated can compile better.</p>
+<hr />
+<p><strong>Common-subexpression versus register lifetime</strong></p>
+<p>Suppose:</p>
+<div class="sourceCode" id="p10-cse"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-cse-1"><a href="#p10-cse-1" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> expensive <span class="op">=</span></span>
+<span id="p10-cse-2"><a href="#p10-cse-2" aria-hidden="true" tabindex="-1"></a>    f<span class="op">(</span>x<span class="op">);</span></span>
+<span id="p10-cse-3"><a href="#p10-cse-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-cse-4"><a href="#p10-cse-4" aria-hidden="true" tabindex="-1"></a>a <span class="op">=</span></span>
+<span id="p10-cse-5"><a href="#p10-cse-5" aria-hidden="true" tabindex="-1"></a>    expensive <span class="op">*</span> y<span class="op">;</span></span>
+<span id="p10-cse-6"><a href="#p10-cse-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-cse-7"><a href="#p10-cse-7" aria-hidden="true" tabindex="-1"></a><span class="op">...</span> many instructions <span class="op">...</span></span>
+<span id="p10-cse-8"><a href="#p10-cse-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-cse-9"><a href="#p10-cse-9" aria-hidden="true" tabindex="-1"></a>b <span class="op">=</span></span>
+<span id="p10-cse-10"><a href="#p10-cse-10" aria-hidden="true" tabindex="-1"></a>    expensive <span class="op">*</span> z<span class="op">;</span></span></code></pre></div>
+<p>Keeping <code>expensive</code> avoids recomputation.</p>
+<p>But it remains live for a long time and occupies a register.</p>
+<p>Recomputing <code>f(x)</code> later may paradoxically improve occupancy if <code>f</code> is cheap.</p>
+<p>This is an advanced but fundamental compiler/performance tradeoff:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>compute versus storage even exists at the register level</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Loop unrolling</strong></p>
+<p>Unrolling:</p>
+<pre id="p10-unroll" class="text"><code>for i=0..7</code></pre>
+<p>into eight explicit operations can remove loop-control overhead and expose instruction-level parallelism.</p>
+<p>But it increases:</p>
+<ul>
+<li>code size,</li>
+<li>live temporaries,</li>
+<li>register pressure.</li>
+</ul>
+<p>A small fixed loop may benefit.</p>
+<p>A giant unrolled loop can spill catastrophically.</p>
+<p>Never assume <code>unroll = faster</code>.</p>
+<hr />
+<p><strong>Fast math</strong></p>
+<p>Strict IEEE-like arithmetic preserves semantics around:</p>
+<ul>
+<li>NaN,</li>
+<li>infinity,</li>
+<li>signed zero,</li>
+<li>rounding,</li>
+<li>operation ordering.</li>
+</ul>
+<p>Fast-math modes may permit:</p>
+<ul>
+<li>reassociation,</li>
+<li>reciprocal approximations,</li>
+<li>reciprocal-square-root approximations,</li>
+<li>approximate transcendental functions,</li>
+<li>FMA contraction,</li>
+<li>assumptions about finite values.</li>
+</ul>
+<p>This can increase speed substantially.</p>
+<p>But mathematical identity under real numbers does not imply bitwise identity under floating point.</p>
+<hr />
+<p><strong>Reassociation example</strong></p>
+<p>Strict:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>c</mi>
+</math>
+<p>is not necessarily equal to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mi>b</mi>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>in floating point.</p>
+<p>Take:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>=</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>20</mn>
+    </mrow>
+  </msup>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>b</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>20</mn>
+    </mrow>
+  </msup>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>c</mi>
+  <mo>=</mo>
+  <mn>3.14</mn>
+  <mo>.</mo>
+</math>
+<p>First:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mo>≈</mo>
+  <mn>0</mn>
+  <mo>+</mo>
+  <mn>3.14</mn>
+  <mo>=</mo>
+  <mn>3.14</mn>
+  <mo>.</mo>
+</math>
+<p>Second:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mi>b</mi>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≈</mo>
+  <mi>a</mi>
+  <mo>−</mo>
+  <mi>b</mi>
+  <mo>≈</mo>
+  <mn>0</mn>
+</math>
+<p>depending on rounding.</p>
+<p>Fast math can permit such reassociation.</p>
+<p>For shading this may be harmless.</p>
+<p>For deterministic reductions or fragile geometric predicates it may not be.</p>
+<hr />
+<p><strong>Reciprocal approximation</strong></p>
+<p>Instead of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mi>x</mi>
+    <mi>z</mi>
+  </mfrac>
+  <mo>,</mo>
+</math>
+<p>compiler might use approximate reciprocal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>≈</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>z</mi>
+  </mfrac>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo>=</mo>
+  <mi>x</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>Likewise normalization may use approximate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mn>1</mn>
+    <msqrt>
+      <mi>x</mi>
+    </msqrt>
+  </mfrac>
+</math>
+<p>hardware instructions.</p>
+<p>These can be excellent for normals, lighting or iterative algorithms tolerant to small error.</p>
+<p>They require careful validation in robust intersection/codecs/synchronization counters.</p>
+<hr />
+<p><strong>Half precision</strong></p>
+<p>IEEE FP16 has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mtext> sign bit</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>5</mn>
+  <mtext> exponent bits</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>10</mn>
+  <mtext> explicit fraction bits</mtext>
+  <mo>.</mo>
+</math>
+<p>Largest finite magnitude:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>65504.</mn>
+</math>
+<p>Precision is roughly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <mtext> decimal digits</mtext>
+</math>
+<p>depending on magnitude.</p>
+<p>It is not “a slightly less precise float.”</p>
+<p>Its numerical envelope is dramatically smaller than FP32.</p>
+<hr />
+<p><strong>Why FP16 can be fast</strong></p>
+<p>Half precision can reduce memory traffic by half:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mtext> bytes</mtext>
+  <mo stretchy="false">→</mo>
+  <mn>2</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>That doubles the number of values fitting in:</p>
+<ul>
+<li>cache,</li>
+<li>shared memory,</li>
+<li>memory transactions.</li>
+</ul>
+<p>Many GPUs also have higher native FP16 arithmetic throughput.</p>
+<p>So FP16 can help both:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>bandwidth</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>compute</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Good FP16 candidates</strong></p>
+<p>Quantities with naturally bounded ranges can work well:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mtext> or moderate HDR</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>−</mo>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Poor candidates include huge world coordinates or accumulated sums spanning many orders of magnitude.</p>
+<hr />
+<p><strong>Mixed precision</strong></p>
+<p>The mature solution is rarely:</p>
+<blockquote>
+<p>Make the entire renderer FP16.</p>
+</blockquote>
+<p>Instead:</p>
+<pre id="p10-mixed" class="text"><code>storage: half
+load
+convert/compute critical terms: float
+accumulate: float
+store: half</code></pre>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mi>P</mi>
+  <mn>16</mn>
+  <mo>×</mo>
+  <mi>F</mi>
+  <mi>P</mi>
+  <mn>16</mn>
+  <mo stretchy="false">→</mo>
+  <mi>F</mi>
+  <mi>P</mi>
+  <mn>32</mn>
+  <mtext> accumulator</mtext>
+  <mo>.</mo>
+</math>
+<p>This is especially common in matrix hardware.</p>
+<hr />
+<p><strong>FP16 Gaussian implications</strong></p>
+<p>Gaussian rendering contains values such as:</p>
+<ul>
+<li>positions,</li>
+<li>log scales,</li>
+<li>rotations,</li>
+<li>spherical harmonic coefficients,</li>
+<li>opacities.</li>
+</ul>
+<p>Some may tolerate half precision.</p>
+<p>World position may not, especially in large scenes.</p>
+<p>Depth sorting keys certainly should not casually become FP16 because ordering precision matters.</p>
+<p>Mixed-precision analysis should be per field.</p>
+<p>That would be an excellent research/performance experiment for Maveb.</p>
+<hr />
+<p><strong>SIMD-group matrix operations</strong></p>
+<p>Modern GPUs often expose specialized cooperative matrix hardware.</p>
+<p>Instead of each lane calculating a scalar dot product independently, a subgroup cooperatively multiplies matrix tiles:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mi>B</mi>
+  <mo>+</mo>
+  <mi>C</mi>
+  <mo>.</mo>
+</math>
+<p>Think:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>subgroup owns a matrix fragment rather than one scalar output</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Exact APIs differ by platform:</p>
+<ul>
+<li>tensor/matrix cores,</li>
+<li>cooperative matrices,</li>
+<li>subgroup matrix operations.</li>
+</ul>
+<p>The key architectural idea is common.</p>
+<hr />
+<p><strong>Why matrix units change algorithm design</strong></p>
+<p>Traditional tiled GEMM:</p>
+<pre id="p10-gemm-old" class="text"><code>load tile
+each thread performs scalar FMAs</code></pre>
+<p>Matrix units:</p>
+<pre id="p10-gemm-matrix" class="text"><code>load compatible fragments
+subgroup matrix multiply-accumulate
+store result</code></pre>
+<p>Throughput can be enormously higher for supported:</p>
+<ul>
+<li>dimensions,</li>
+<li>layouts,</li>
+<li>data types.</li>
+</ul>
+<p>But data must be shaped appropriately.</p>
+<p>You do not get matrix-unit performance from arbitrary irregular code.</p>
+<hr />
+<p><strong>KairoGPU matmul’s future path</strong></p>
+<p>Current KairoGPU <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>16</mn>
+  <mo>×</mo>
+  <mn>16</mn>
+</math> threadgroup matrix multiply is a clean educational tiled GEMM.</p>
+<p>A later optimized backend could dispatch a capability-dependent matrix implementation when subgroup matrix operations are available.</p>
+<p>That should remain behind the same semantic interface:</p>
+<div class="sourceCode" id="p10-matmul-interface"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-matmul-interface-1"><a href="#p10-matmul-interface-1" aria-hidden="true" tabindex="-1"></a>Device<span class="op">::</span>MatrixMultiply<span class="op">(...)</span></span></code></pre></div>
+<p>so correctness remains independent of the execution path.</p>
+<p>This is exactly where Vulkax-style capability querying becomes useful.</p>
+<hr />
+<p><strong>Debugging GPU races</strong></p>
+<p>GPU races are especially nasty because output may depend on scheduling.</p>
+<p>Typical symptoms:</p>
+<pre id="p10-race-symptoms" class="text"><code>works in debug
+fails in release
+
+works on one GPU
+fails on another
+
+adding printf/logging fixes it
+
+random flickering values
+
+failure rate changes with workload</code></pre>
+<p>These are classic indicators of missing synchronization or overlapping ownership.</p>
+<hr />
+<p><strong>Race example</strong></p>
+<p>Wrong:</p>
+<div class="sourceCode" id="p10-race"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-race-1"><a href="#p10-race-1" aria-hidden="true" tabindex="-1"></a>threadgroup <span class="ex">uint</span> sum<span class="op">;</span></span>
+<span id="p10-race-2"><a href="#p10-race-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-race-3"><a href="#p10-race-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>local <span class="op">==</span> <span class="dv">0</span><span class="op">)</span></span>
+<span id="p10-race-4"><a href="#p10-race-4" aria-hidden="true" tabindex="-1"></a>    sum <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="p10-race-5"><a href="#p10-race-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-race-6"><a href="#p10-race-6" aria-hidden="true" tabindex="-1"></a>sum <span class="op">+=</span> value<span class="op">;</span></span></code></pre></div>
+<p>Problems:</p>
+<p>Other threads may execute before lane 0 initializes.</p>
+<p>Multiple threads perform non-atomic RMW.</p>
+<p>Correctness requires synchronization and aggregation design.</p>
+<p>A barrier alone after initialization does <strong>not</strong> make <code>sum += value</code> atomic.</p>
+<p>This distinction is essential:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>ordering</mtext>
+          <mo>≠</mo>
+          <mtext>mutual exclusion/atomicity</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Correct reduction instead of atomic race</strong></p>
+<pre id="p10-correct-reduction" class="metal"><code>threadgroup uint scratch[256];
+
+scratch[local] =
+    value;
+
+threadgroup_barrier(
+    mem_flags::mem_threadgroup);
+
+for (uint stride = 128;
+     stride &gt; 0;
+     stride &gt;&gt;= 1)
+{
+    if (local &lt; stride)
+    {
+        scratch[local] +=
+            scratch[
+                local + stride];
+    }
+
+    threadgroup_barrier(
+        mem_flags::mem_threadgroup);
+}
+
+if (local == 0)
+    output[group] =
+        scratch[0];</code></pre>
+<p>Ownership at each stage is explicit.</p>
+<p>Far easier to prove correct.</p>
+<hr />
+<p><strong>Never “debug” a race by adding random barriers</strong></p>
+<p>A common reaction:</p>
+<pre id="p10-barrier-everywhere" class="text"><code>maybe barrier here?
+maybe another here?</code></pre>
+<p>This can:</p>
+<ul>
+<li>accidentally hide the race,</li>
+<li>destroy performance,</li>
+<li>still be wrong,</li>
+<li>deadlock if control flow diverges.</li>
+</ul>
+<p>Instead establish:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>who writes each location?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>who reads it?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>what dependency must order those events?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then choose the minimum correct primitive.</p>
+<hr />
+<p><strong>Race-debugging technique: deterministic oracle</strong></p>
+<p>Exactly like your BVH oracle and Vulkax Gaussian scheduler oracle:</p>
+<p>Implement a small CPU reference.</p>
+<p>For randomized input:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="REL">
+    <mover>
+      <mrow data-mjx-texclass="OP">
+        <mo>=</mo>
+      </mrow>
+      <mrow data-mjx-texclass="ORD">
+        <mo>?</mo>
+      </mrow>
+    </mover>
+  </mrow>
+  <mi>C</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Test thousands of seeds/sizes.</p>
+<p>Especially test:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mi>W</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mi>W</mi>
+  <mo>,</mo>
+  <mi>W</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mo>=</mo>
+  <mtext>workgroup size</mtext>
+  <mo>.</mo>
+</math>
+<p>Parallel bugs love boundary sizes.</p>
+<hr />
+<p><strong>Poison and sentinel values</strong></p>
+<p>Initialize output to impossible values:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mi>x</mi>
+  <mi>D</mi>
+  <mi>E</mi>
+  <mi>A</mi>
+  <mi>D</mi>
+  <mi>B</mi>
+  <mi>E</mi>
+  <mi>E</mi>
+  <mi>F</mi>
+</math>
+<p>or NaNs.</p>
+<p>After execution, check whether every required element changed exactly once.</p>
+<p>For compaction, validate:</p>
+<ul>
+<li>every output index in range,</li>
+<li>no duplicate IDs unless allowed,</li>
+<li>output count exact,</li>
+<li>stable ordering if promised.</li>
+</ul>
+<p>Structural validation often catches race bugs before pixel inspection does.</p>
+<hr />
+<p><strong>Designing a GPU algorithm systematically</strong></p>
+<p>Before writing shader code, write down the data model.</p>
+<p>What are inputs?</p>
+<p>What are outputs?</p>
+<p>What is one unit of independent work?</p>
+<p>Which outputs have unique writers?</p>
+<p>Where do threads need communication?</p>
+<p>Where does global synchronization occur?</p>
+<p>What bytes are read/written per element?</p>
+<p>What branch divergence exists?</p>
+<p>What limits occupancy?</p>
+<p>Then design kernels.</p>
+<p>This prevents “CPU code translated into 100,000 threads.”</p>
+<hr />
+<p><strong>A serial CPU visibility algorithm</strong></p>
+<p>Suppose CPU code is:</p>
+<div class="sourceCode" id="p10-serial-cull"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-serial-cull-1"><a href="#p10-serial-cull-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span>DrawCommand<span class="op">&gt;</span></span>
+<span id="p10-serial-cull-2"><a href="#p10-serial-cull-2" aria-hidden="true" tabindex="-1"></a>BuildDraws<span class="op">(</span></span>
+<span id="p10-serial-cull-3"><a href="#p10-serial-cull-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>span<span class="op">&lt;</span><span class="at">const</span> Object<span class="op">&gt;</span> objects<span class="op">,</span></span>
+<span id="p10-serial-cull-4"><a href="#p10-serial-cull-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Camera<span class="op">&amp;</span> camera<span class="op">)</span></span>
+<span id="p10-serial-cull-5"><a href="#p10-serial-cull-5" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="p10-serial-cull-6"><a href="#p10-serial-cull-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>DrawCommand<span class="op">&gt;</span> out<span class="op">;</span></span>
+<span id="p10-serial-cull-7"><a href="#p10-serial-cull-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-serial-cull-8"><a href="#p10-serial-cull-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="at">const</span> Object<span class="op">&amp;</span> object <span class="op">:</span></span>
+<span id="p10-serial-cull-9"><a href="#p10-serial-cull-9" aria-hidden="true" tabindex="-1"></a>         objects<span class="op">)</span></span>
+<span id="p10-serial-cull-10"><a href="#p10-serial-cull-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="p10-serial-cull-11"><a href="#p10-serial-cull-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>InsideFrustum<span class="op">(</span></span>
+<span id="p10-serial-cull-12"><a href="#p10-serial-cull-12" aria-hidden="true" tabindex="-1"></a>                object<span class="op">.</span>bounds<span class="op">,</span></span>
+<span id="p10-serial-cull-13"><a href="#p10-serial-cull-13" aria-hidden="true" tabindex="-1"></a>                camera<span class="op">.</span>frustum<span class="op">))</span></span>
+<span id="p10-serial-cull-14"><a href="#p10-serial-cull-14" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="p10-serial-cull-15"><a href="#p10-serial-cull-15" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span><span class="op">;</span></span>
+<span id="p10-serial-cull-16"><a href="#p10-serial-cull-16" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="p10-serial-cull-17"><a href="#p10-serial-cull-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-serial-cull-18"><a href="#p10-serial-cull-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>Occluded<span class="op">(</span></span>
+<span id="p10-serial-cull-19"><a href="#p10-serial-cull-19" aria-hidden="true" tabindex="-1"></a>                object<span class="op">.</span>bounds<span class="op">))</span></span>
+<span id="p10-serial-cull-20"><a href="#p10-serial-cull-20" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="p10-serial-cull-21"><a href="#p10-serial-cull-21" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span><span class="op">;</span></span>
+<span id="p10-serial-cull-22"><a href="#p10-serial-cull-22" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="p10-serial-cull-23"><a href="#p10-serial-cull-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-serial-cull-24"><a href="#p10-serial-cull-24" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="dt">uint32_t</span> lod <span class="op">=</span></span>
+<span id="p10-serial-cull-25"><a href="#p10-serial-cull-25" aria-hidden="true" tabindex="-1"></a>            ChooseLOD<span class="op">(</span></span>
+<span id="p10-serial-cull-26"><a href="#p10-serial-cull-26" aria-hidden="true" tabindex="-1"></a>                object<span class="op">,</span></span>
+<span id="p10-serial-cull-27"><a href="#p10-serial-cull-27" aria-hidden="true" tabindex="-1"></a>                camera<span class="op">);</span></span>
+<span id="p10-serial-cull-28"><a href="#p10-serial-cull-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-serial-cull-29"><a href="#p10-serial-cull-29" aria-hidden="true" tabindex="-1"></a>        out<span class="op">.</span>push_back<span class="op">(</span></span>
+<span id="p10-serial-cull-30"><a href="#p10-serial-cull-30" aria-hidden="true" tabindex="-1"></a>            MakeDrawCommand<span class="op">(</span></span>
+<span id="p10-serial-cull-31"><a href="#p10-serial-cull-31" aria-hidden="true" tabindex="-1"></a>                object<span class="op">,</span></span>
+<span id="p10-serial-cull-32"><a href="#p10-serial-cull-32" aria-hidden="true" tabindex="-1"></a>                lod<span class="op">));</span></span>
+<span id="p10-serial-cull-33"><a href="#p10-serial-cull-33" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="p10-serial-cull-34"><a href="#p10-serial-cull-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-serial-cull-35"><a href="#p10-serial-cull-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out<span class="op">;</span></span>
+<span id="p10-serial-cull-36"><a href="#p10-serial-cull-36" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Naively moving loop body to GPU is not the full solution because <code>push_back()</code> is a serial dynamic operation.</p>
+<hr />
+<p><strong>First GPU translation: atomic append</strong></p>
+<div class="sourceCode" id="p10-atomic-cull"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-atomic-cull-1"><a href="#p10-atomic-cull-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uint</span> i <span class="op">=</span></span>
+<span id="p10-atomic-cull-2"><a href="#p10-atomic-cull-2" aria-hidden="true" tabindex="-1"></a>    globalID<span class="op">;</span></span>
+<span id="p10-atomic-cull-3"><a href="#p10-atomic-cull-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-atomic-cull-4"><a href="#p10-atomic-cull-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>i <span class="op">&gt;=</span> objectCount<span class="op">)</span></span>
+<span id="p10-atomic-cull-5"><a href="#p10-atomic-cull-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span><span class="op">;</span></span>
+<span id="p10-atomic-cull-6"><a href="#p10-atomic-cull-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-atomic-cull-7"><a href="#p10-atomic-cull-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(!</span>Visible<span class="op">(</span>objects<span class="op">[</span>i<span class="op">]))</span></span>
+<span id="p10-atomic-cull-8"><a href="#p10-atomic-cull-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span><span class="op">;</span></span>
+<span id="p10-atomic-cull-9"><a href="#p10-atomic-cull-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-atomic-cull-10"><a href="#p10-atomic-cull-10" aria-hidden="true" tabindex="-1"></a><span class="ex">uint</span> dst <span class="op">=</span></span>
+<span id="p10-atomic-cull-11"><a href="#p10-atomic-cull-11" aria-hidden="true" tabindex="-1"></a>    atomic_fetch_add<span class="op">(</span></span>
+<span id="p10-atomic-cull-12"><a href="#p10-atomic-cull-12" aria-hidden="true" tabindex="-1"></a>        visibleCount<span class="op">,</span></span>
+<span id="p10-atomic-cull-13"><a href="#p10-atomic-cull-13" aria-hidden="true" tabindex="-1"></a>        <span class="dv">1</span><span class="op">);</span></span>
+<span id="p10-atomic-cull-14"><a href="#p10-atomic-cull-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-atomic-cull-15"><a href="#p10-atomic-cull-15" aria-hidden="true" tabindex="-1"></a>draws<span class="op">[</span>dst<span class="op">]</span> <span class="op">=</span></span>
+<span id="p10-atomic-cull-16"><a href="#p10-atomic-cull-16" aria-hidden="true" tabindex="-1"></a>    MakeDraw<span class="op">(</span>objects<span class="op">[</span>i<span class="op">]);</span></span></code></pre></div>
+<p>This may be excellent.</p>
+<p>Simple.</p>
+<p>One pass.</p>
+<p>If visibility is sparse and contention moderate, stop here.</p>
+<p>Do not overengineer.</p>
+<hr />
+<p><strong>Scalable deterministic translation</strong></p>
+<p>If atomic append becomes bottleneck or deterministic order is required:</p>
+<p>Pass A:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>∈</mo>
+  <mo fence="false" stretchy="false">{</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo fence="false" stretchy="false">}</mo>
+  <mo>.</mo>
+</math>
+<p>Scan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>S</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Pass B:</p>
+<div class="sourceCode" id="p10-scan-cull"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-scan-cull-1"><a href="#p10-scan-cull-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>visible<span class="op">[</span>i<span class="op">])</span></span>
+<span id="p10-scan-cull-2"><a href="#p10-scan-cull-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="p10-scan-cull-3"><a href="#p10-scan-cull-3" aria-hidden="true" tabindex="-1"></a>    draws<span class="op">[</span>offset<span class="op">[</span>i<span class="op">]]</span> <span class="op">=</span></span>
+<span id="p10-scan-cull-4"><a href="#p10-scan-cull-4" aria-hidden="true" tabindex="-1"></a>        MakeDraw<span class="op">(</span>objects<span class="op">[</span>i<span class="op">]);</span></span>
+<span id="p10-scan-cull-5"><a href="#p10-scan-cull-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Count:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>w</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>N</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <msub>
+    <mi>e</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>N</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Generate indirect args on GPU.</p>
+<p>Now every visible object has mathematically unique output ownership.</p>
+<hr />
+<p><strong>“More threads” can be slower</strong></p>
+<p>Suppose CPU algorithm processes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>128</mn>
+</math>
+<p>items.</p>
+<p>GPU implementation requires:</p>
+<ul>
+<li>upload,</li>
+<li>dispatch,</li>
+<li>barriers,</li>
+<li>scan,</li>
+<li>second dispatch,</li>
+<li>readback.</li>
+</ul>
+<p>CPU may finish before GPU submission overhead alone.</p>
+<p>Parallel hardware is useful when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>available parallel work</mtext>
+          <mo>×</mo>
+          <mtext>work per item</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>is large enough to amortize overhead.</p>
+<p>GPU is not a magical function accelerator.</p>
+<hr />
+<p><strong>Serial dependency cannot be solved by launching N threads</strong></p>
+<p>Consider:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>a</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Naively:</p>
+<div class="sourceCode" id="p10-bad-prefix"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-bad-prefix-1"><a href="#p10-bad-prefix-1" aria-hidden="true" tabindex="-1"></a>thread i<span class="op">:</span></span>
+<span id="p10-bad-prefix-2"><a href="#p10-bad-prefix-2" aria-hidden="true" tabindex="-1"></a>    x<span class="op">[</span>i<span class="op">]</span> <span class="op">=</span></span>
+<span id="p10-bad-prefix-3"><a href="#p10-bad-prefix-3" aria-hidden="true" tabindex="-1"></a>        x<span class="op">[</span>i<span class="op">-</span><span class="dv">1</span><span class="op">]</span> <span class="op">+</span></span>
+<span id="p10-bad-prefix-4"><a href="#p10-bad-prefix-4" aria-hidden="true" tabindex="-1"></a>        a<span class="op">[</span>i<span class="op">];</span></span></code></pre></div>
+<p>All threads have a dependency chain.</p>
+<p>Launching them simultaneously creates a race, not a scan.</p>
+<p>You must <strong>change the algorithm</strong>—for example to Blelloch’s tree structure.</p>
+<p>This is the core lesson of Part 2200:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>GPU optimization often requires algorithmic reformulation, not parallel syntax</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Amdahl’s law</strong></p>
+<p>Suppose fraction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+</math>
+<p>is perfectly parallelizable and fraction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>p</mi>
+</math>
+<p>remains serial.</p>
+<p>With theoretically infinite processors:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>S</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mrow>
+              <mn>1</mn>
+              <mo>−</mo>
+              <mi>p</mi>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>=</mo>
+  <mn>0.95</mn>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>20.</mn>
+</math>
+<p>Even infinite GPU cores cannot exceed 20× if 5% remains serial.</p>
+<p>This directly applies to Maveb’s currently serial block-sum/radix-offset stages at sufficiently large workloads.</p>
+<p>They may be insignificant today.</p>
+<p>But if they become dominant, adding more parallelism to histogram/scatter will not help.</p>
+<hr />
+<p><strong>Gustafson-style perspective</strong></p>
+<p>A GPU also lets us scale the problem.</p>
+<p>Instead of rendering the same 10,000 Gaussians faster, perhaps process:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>10</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000.</mn>
+</math>
+<p>Parallel computing often makes larger feasible workloads possible.</p>
+<p>Thus speedup is not the only objective.</p>
+<p>Throughput and problem scale matter.</p>
+<p>That is particularly relevant for reconstruction/rendering research like Maveb.</p>
+<hr />
+<p><strong>Optimization order</strong></p>
+<p>Before modifying code, classify bottleneck.</p>
+<p>If bandwidth-bound:</p>
+<p>reduce memory traffic or improve locality.</p>
+<p>If compute-bound:</p>
+<p>reduce arithmetic, use faster operations or specialized units.</p>
+<p>If latency-bound due to low occupancy:</p>
+<p>reduce registers/shared memory or expose more parallelism.</p>
+<p>If synchronization-bound:</p>
+<p>redesign ownership/aggregation.</p>
+<p>If command-bound:</p>
+<p>batch work/reduce dispatch count.</p>
+<p>If CPU-GPU synchronization-bound:</p>
+<p>remove waits/readbacks.</p>
+<p>If divergent:</p>
+<p>reorganize work or data.</p>
+<p>Without classification, optimization is gambling.</p>
+<hr />
+<p><strong>A practical roofline analysis of KairoGPU vector multiply</strong></p>
+<p>Known logical work per element:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mtext> FLOP</mtext>
+  <mo>.</mo>
+</math>
+<p>Logical traffic:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Q</mi>
+  <mo>=</mo>
+  <mn>12</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>Intensity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <mn>0.0833</mn>
+  <mo>.</mo>
+</math>
+<p>Measure GPU duration:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>measured</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mi>N</mi>
+    <mi>T</mi>
+  </mfrac>
+  <mtext> FLOP/s</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>measured</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mn>12</mn>
+      <mi>N</mi>
+    </mrow>
+    <mi>T</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>measured</mtext>
+    </mrow>
+  </msub>
+</math>
+<p>is near achievable memory bandwidth, stop optimizing arithmetic.</p>
+<p>Possible improvements become:</p>
+<ul>
+<li>fuse neighboring kernels to eliminate intermediate writes,</li>
+<li>operate in-place where legal,</li>
+<li>compress data,</li>
+<li>use half precision if error permits.</li>
+</ul>
+<hr />
+<p><strong>Kernel fusion increases arithmetic intensity</strong></p>
+<p>Suppose pipeline:</p>
+<pre id="p10-fusion-before" class="text"><code>A → kernel1 → temporary B
+B → kernel2 → C</code></pre>
+<p>Kernel 1 writes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>Kernel 2 reads:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>If fused:</p>
+<pre id="p10-fusion-after" class="text"><code>A → fused kernel → C</code></pre>
+<p>temporary B may stay in registers.</p>
+<p>You remove global:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>write B</mtext>
+  <mo>+</mo>
+  <mtext>read B</mtext>
+  <mo>.</mo>
+</math>
+<p>Arithmetic work stays roughly the same.</p>
+<p>Bytes fall.</p>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>I</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mi>F</mi>
+              <mi>L</mi>
+              <mi>O</mi>
+              <mi>P</mi>
+              <mi>s</mi>
+            </mrow>
+            <mrow>
+              <mi>b</mi>
+              <mi>y</mi>
+              <mi>t</mi>
+              <mi>e</mi>
+              <mi>s</mi>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>increases.</p>
+<p>But fused kernel may increase registers and reduce occupancy.</p>
+<p>Again, every optimization has a shadow.</p>
+<hr />
+<p><strong>Kernel fission can also help</strong></p>
+<p>Suppose one giant shader handles:</p>
+<pre id="p10-mega" class="text"><code>diffuse
+glass
+metal
+skin
+hair
+clearcoat
+volume
+debug</code></pre>
+<p>Register pressure and divergence become enormous.</p>
+<p>Splitting into specialized kernels can improve coherence and occupancy even though it increases dispatch overhead and intermediate traffic.</p>
+<p>Wavefront path tracing from Pass 8 is exactly this tradeoff.</p>
+<hr />
+<p><strong>Performance is a constrained optimization problem</strong></p>
+<p>Think of throughput as constrained by several ceilings:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mo>≤</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>P</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>compute</mtext>
+            </mrow>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>P</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>bandwidth</mtext>
+            </mrow>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>P</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>occupancy</mtext>
+            </mrow>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>P</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>sync</mtext>
+            </mrow>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>P</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>front-end</mtext>
+            </mrow>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Improving a ceiling that is not currently minimum does nothing.</p>
+<p>If memory bandwidth is bottleneck:</p>
+<p>doubling ALUs gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mi mathvariant="normal">%</mi>
+</math>
+<p>speedup.</p>
+<p>If command submission is bottleneck:</p>
+<p>better shared-memory tiling may barely matter.</p>
+<p>This mindset is more important than memorizing any one optimization.</p>
+<hr />
+<p><strong>Maveb performance reading from this phase</strong></p>
+<p>Your Gaussian pipeline currently performs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>projection</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>tile counts</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>scan</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>key generation</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>radix histogram</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>prefix</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>scatter</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>tile ranges</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>composite</mtext>
+  <mo>.</mo>
+</math>
+<p>Potential bottleneck classes are very different.</p>
+<p>Projection can be arithmetic-heavy.</p>
+<p>Key generation can be output-bandwidth-heavy.</p>
+<p>Radix sort can be memory-bandwidth/synchronization heavy.</p>
+<p>Serial radix-offset stage can become latency/serial-fraction limited.</p>
+<p>Composite can become overdraw/bandwidth or arithmetic heavy depending Gaussian occupancy and SH degree.</p>
+<p>Do not optimize “the Gaussian renderer” as one monolithic thing.</p>
+<p>Profile each phase.</p>
+<hr />
+<p><strong>Gaussian occupancy diagnostic is already useful</strong></p>
+<p>The shader has a debug mode visualizing approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mtext>Gaussians in tile</mtext>
+    <mn>64</mn>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>This tells you spatial load distribution.</p>
+<p>A screen region with huge per-tile occupancy implies composite work is highly imbalanced.</p>
+<p>That suggests different optimization strategies than a uniform screen.</p>
+<p>For example:</p>
+<ul>
+<li>finer tiles,</li>
+<li>early opacity termination,</li>
+<li>workload splitting.</li>
+</ul>
+<p>The correct response follows from data distribution.</p>
+<hr />
+<p><strong>Early opacity termination as algorithmic work reduction</strong></p>
+<p>Gaussian composite accumulates opacity and stops when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo>&gt;</mo>
+  <mn>0.999</mn>
+  <mo>.</mo>
+</math>
+<p>This is not merely an arithmetic micro-optimization.</p>
+<p>If sorted front-to-back for the chosen compositing formulation, opaque-enough pixels can skip many later splats.</p>
+<p>The best optimization is often:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>do less work</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>rather than:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext mathvariant="normal">do identical work 5%faster</mtext><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\text{do identical work 5\% faster}.
+</annotation></semantics></math>
+<hr />
+<p><strong>Current Kairo/Maveb/Vulkax audit for M130–M132</strong></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Current state from inspected code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPU spatial binning</td>
+<td>Yes: Gaussian tiles</td>
+</tr>
+<tr>
+<td>CPU oracle for GPU scheduling</td>
+<td>Yes in Vulkax</td>
+</tr>
+<tr>
+<td>CSR-like counts/offsets/references</td>
+<td>Yes by scheduler design</td>
+</tr>
+<tr>
+<td>Scan-based variable output</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Atomic counters</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>GPU indirect dispatch</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>GPU-generated dynamic dispatch count</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Frustum/Hi-Z GPU culling</td>
+<td>Not established by inspected snippets</td>
+</tr>
+<tr>
+<td>GPU LOD selection</td>
+<td>Not established here</td>
+</tr>
+<tr>
+<td>Particle system/free list</td>
+<td>Not established here</td>
+</tr>
+<tr>
+<td>Ping-pong buffers</td>
+<td>Yes: Gaussian radix keys/values</td>
+</tr>
+<tr>
+<td>Double/triple frame buffering</td>
+<td>Yes: Maveb triple frame contexts</td>
+</tr>
+<tr>
+<td>CPU-GPU frame pipeline</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Synchronous demo compute API</td>
+<td>KairoGPU currently waits per operation</td>
+</tr>
+<tr>
+<td>Persistent CPU-visible upload arena</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Upload arena capacity</td>
+<td>8 MiB/frame context</td>
+</tr>
+<tr>
+<td>Readback arena</td>
+<td>256 KiB/frame context</td>
+</tr>
+<tr>
+<td>Private transient heap</td>
+<td>64 MiB/frame context</td>
+</tr>
+<tr>
+<td>Full lifetime-based alias allocator</td>
+<td>Not demonstrated in inspected snippets</td>
+</tr>
+<tr>
+<td>Asynchronous frame capture readback</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Whole-command-buffer GPU time</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Per-pass GPU timestamp zones</td>
+<td>Not established</td>
+</tr>
+<tr>
+<td>CPU profiling scopes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Vector multiply AI</td>
+<td>~0.083 FLOP/byte</td>
+</tr>
+<tr>
+<td>Tiled matmul AI</td>
+<td>~4 FLOP/byte per tile stage at T=16</td>
+</tr>
+<tr>
+<td>FP16/matrix-specialized backend path</td>
+<td>Not established</td>
+</tr>
+<tr>
+<td>Parallel radix</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Parallel local scan</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Serial block-sum scan</td>
+<td>Yes; possible scale bottleneck</td>
+</tr>
+<tr>
+<td>Serial global radix-offset stage</td>
+<td>Yes; possible scale bottleneck</td>
+</tr>
+<tr>
+<td>Race/correctness validation oracle</td>
+<td>Strong in Vulkax scheduler design</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>The deepest M130–M132 connection</strong></p>
+<p>Notice the progression:</p>
+<p>Pass 9 taught:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>M130 turns scan into:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>bin construction</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>visible lists</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>indirect commands</mtext>
+  <mo>.</mo>
+</math>
+<p>M131 asks:</p>
+<blockquote>
+<p>How do I keep all of those results GPU-resident and avoid waiting on the CPU?</p>
+</blockquote>
+<p>M132 asks:</p>
+<blockquote>
+<p>After removing the obvious waits, what physical resource is actually limiting throughput?</p>
+</blockquote>
+<p>This is one continuous chain.</p>
+<hr />
+<p><strong>Serial CPU thinking versus GPU systems thinking</strong></p>
+<p>A CPU algorithm often owns one mutable container:</p>
+<div class="sourceCode" id="p10-cpu-push"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-cpu-push-1"><a href="#p10-cpu-push-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(...)</span></span>
+<span id="p10-cpu-push-2"><a href="#p10-cpu-push-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="p10-cpu-push-3"><a href="#p10-cpu-push-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(...)</span></span>
+<span id="p10-cpu-push-4"><a href="#p10-cpu-push-4" aria-hidden="true" tabindex="-1"></a>        vector<span class="op">.</span>push_back<span class="op">(...);</span></span>
+<span id="p10-cpu-push-5"><a href="#p10-cpu-push-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>GPU thinking asks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>How many outputs does each producer create?</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Can I derive disjoint output ownership?</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Can I avoid CPU visibility?</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Can the GPU construct the next dispatch itself?</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Can data remain resident?</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Can CPU prepare frame </mtext>
+  <mi>N</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mtext> while GPU executes </mtext>
+  <mi>N</mi>
+  <mo>?</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>What roof am I hitting afterward?</mtext>
+</math>
+<p>That is the architectural mindset Phase 22 is trying to establish.</p>
+<hr />
+<p><strong>Reconstruction: build a GPU-driven renderer from first principles</strong></p>
+<p>Start with objects:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>O</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>O</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>N</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Each has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mo>,</mo>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>,</mo>
+  <mi>L</mi>
+  <mi>O</mi>
+  <mi>D</mi>
+  <mi>d</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mo>.</mo>
+</math>
+<p>Compute kernel maps:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>thread </mtext>
+  <mi>i</mi>
+  <mo stretchy="false">↔</mo>
+  <msub>
+    <mi>O</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Frustum:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>p</mi>
+    <mi>i</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>F</mi>
+    </mrow>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>Hi-Z:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>p</mi>
+    <mi>i</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>O</mi>
+    </mrow>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>Combined:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <msubsup>
+    <mi>p</mi>
+    <mi>i</mi>
+    <mi>F</mi>
+  </msubsup>
+  <msubsup>
+    <mi>p</mi>
+    <mi>i</mi>
+    <mi>O</mi>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>Select LOD:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>l</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>j</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>S</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Compact:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>S</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If visible:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo stretchy="false">[</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>l</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then grouping/sorting can arrange by mesh/material/LOD.</p>
+<p>Generate indirect commands.</p>
+<p>GPU consumes those commands.</p>
+<p>CPU never needs the individual visible set.</p>
+<p>That is a GPU-driven pipeline.</p>
+<hr />
+<p><strong>Reconstruction: spatial bin construction</strong></p>
+<p>Given object <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> overlaps bins:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Count:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <msub>
+    <mi>B</mi>
+    <mi>i</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Scan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>&lt;</mo>
+      <mi>i</mi>
+    </mrow>
+  </munder>
+  <msub>
+    <mi>c</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Thread <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> writes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>k</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>b</mi>
+  <mi>i</mi>
+  <msub>
+    <mi>n</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>k</mi>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <mi>i</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then either sort by <code>bin</code> or directly construct per-bin counts/offsets depending algorithm.</p>
+<p>This is exactly the intellectual pattern behind Gaussian scheduling.</p>
+<hr />
+<p><strong>Reconstruction: frame pipeline</strong></p>
+<p>Frame contexts:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>F</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>F</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>F</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>CPU frame:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+</math>
+<p>uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>F</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+      <mn>3</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Before reuse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>F</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+      <mn>3</mn>
+    </mrow>
+  </msub>
+  <mtext> retired</mtext>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then reset:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>C</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>b</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>C</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Encode.</p>
+<p>Submit.</p>
+<p>Completion marks slot reusable.</p>
+<p>CPU proceeds.</p>
+<p>That is how Maveb’s current triple-buffered frame structure should be understood.</p>
+<hr />
+<p><strong>Reconstruction: choose the optimization from the roof</strong></p>
+<p>Suppose measured kernel has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <mn>0.1</mn>
+  <mtext> FLOP/B</mtext>
+</math>
+<p>and already consumes most memory bandwidth.</p>
+<p>Do not:</p>
+<ul>
+<li>unroll arithmetic,</li>
+<li>use matrix units,</li>
+<li>chase higher ALU occupancy.</li>
+</ul>
+<p>Instead reduce bytes.</p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <mn>100</mn>
+  <mtext> FLOP/B</mtext>
+</math>
+<p>and bandwidth utilization is low while compute pipelines are saturated.</p>
+<p>Then reduce arithmetic or use faster precision/special units.</p>
+<p>Suppose both are low.</p>
+<p>Look for:</p>
+<ul>
+<li>synchronization,</li>
+<li>poor occupancy,</li>
+<li>divergence,</li>
+<li>front-end/dispatch overhead,</li>
+<li>dependency stalls.</li>
+</ul>
+<p>Roofline starts the diagnosis; it does not end it.</p>
+<hr />
+<p><strong>Phase 22 recall sheet</strong></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Core idea</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPU hash table</td>
+<td>flat concurrent key→value structure, often open addressed</td>
+</tr>
+<tr>
+<td>Load factor</td>
+<td>occupied/capacity; high values increase probe divergence</td>
+</tr>
+<tr>
+<td>Spatial hashing</td>
+<td>quantized cell coordinate → hash</td>
+</tr>
+<tr>
+<td>Spatial binning</td>
+<td>objects grouped into spatial cells/tiles</td>
+</tr>
+<tr>
+<td>Atomic append</td>
+<td>simple dynamic output, but contention/order issues</td>
+</tr>
+<tr>
+<td>Scan construction</td>
+<td>count → scan → unique offsets → scatter</td>
+</tr>
+<tr>
+<td>Indirect args</td>
+<td>GPU writes commands later consumed by GPU</td>
+</tr>
+<tr>
+<td>GPU-driven renderer</td>
+<td>GPU decides visibility/LOD/work counts</td>
+</tr>
+<tr>
+<td>Frustum culling</td>
+<td>reject bound outside any frustum plane</td>
+</tr>
+<tr>
+<td>Hi-Z</td>
+<td>hierarchical conservative depth summary</td>
+</tr>
+<tr>
+<td>Conventional Hi-Z</td>
+<td>commonly max depth for conservative region test</td>
+</tr>
+<tr>
+<td>Reversed-Z Hi-Z</td>
+<td>corresponding min-depth hierarchy</td>
+</tr>
+<tr>
+<td>GPU LOD</td>
+<td>choose detail from projected screen size</td>
+</tr>
+<tr>
+<td>Particle free list</td>
+<td>atomic pool of reusable IDs</td>
+</tr>
+<tr>
+<td>Particle compaction</td>
+<td>alive predicate → scan → dense output</td>
+</tr>
+<tr>
+<td>Ping-pong</td>
+<td>algorithm reads old buffer, writes new one</td>
+</tr>
+<tr>
+<td>Double/triple buffering</td>
+<td>duplicate frame resources for overlap</td>
+</tr>
+<tr>
+<td>CPU-GPU pipeline</td>
+<td>CPU prepares future frame while GPU executes prior</td>
+</tr>
+<tr>
+<td>Command processor</td>
+<td>GPU consumes encoded draw/dispatch/copy commands</td>
+</tr>
+<tr>
+<td>Async compute</td>
+<td>potentially overlap compute and graphics</td>
+</tr>
+<tr>
+<td>Copy engine</td>
+<td>independent transfer mechanism where available</td>
+</tr>
+<tr>
+<td>Upload buffer</td>
+<td>CPU-visible staging/persistent memory</td>
+</tr>
+<tr>
+<td>Readback</td>
+<td>GPU→CPU path; immediate wait is dangerous</td>
+</tr>
+<tr>
+<td>Ring arena</td>
+<td>aligned slices reclaimed after GPU retirement</td>
+</tr>
+<tr>
+<td>Suballocation</td>
+<td>many resources from large memory block</td>
+</tr>
+<tr>
+<td>Dedicated allocation</td>
+<td>one allocation for one large/special resource</td>
+</tr>
+<tr>
+<td>Aliasing</td>
+<td>nonoverlapping resource lifetimes reuse physical memory</td>
+</tr>
+<tr>
+<td>Transient resource</td>
+<td>short frame-local lifetime</td>
+</tr>
+<tr>
+<td>GPU timestamp</td>
+<td>timing measured on GPU timeline</td>
+</tr>
+<tr>
+<td>Pipeline statistics</td>
+<td>counters describing amount of processed work</td>
+</tr>
+<tr>
+<td>Profiling zone</td>
+<td>named GPU interval/counter region</td>
+</tr>
+<tr>
+<td>Occupancy</td>
+<td>resident execution groups, not a performance score</td>
+</tr>
+<tr>
+<td>Arithmetic intensity</td>
+<td>FLOPs / transferred bytes</td>
+</tr>
+<tr>
+<td>Bandwidth bound</td>
+<td>memory roof limits throughput</td>
+</tr>
+<tr>
+<td>Compute bound</td>
+<td>arithmetic roof limits throughput</td>
+</tr>
+<tr>
+<td>Roofline</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+  <mo>≤</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mi>I</mi>
+  <mo stretchy="false">)</mo>
+</math></td>
+</tr>
+<tr>
+<td>Ridge point</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>I</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo>=</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+</math></td>
+</tr>
+<tr>
+<td>Fast math</td>
+<td>relaxed floating semantics for throughput</td>
+</tr>
+<tr>
+<td>FP16</td>
+<td>lower bandwidth/storage and often higher throughput, much less precision</td>
+</tr>
+<tr>
+<td>Matrix units</td>
+<td>subgroup-cooperative tiled matrix MAC hardware</td>
+</tr>
+<tr>
+<td>GPU race</td>
+<td>scheduling-dependent conflicting memory access</td>
+</tr>
+<tr>
+<td>GPU redesign</td>
+<td>change dependency structure, not merely thread the CPU loop</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Blank-page mastery gate</strong></p>
+<p>You should now be able to take a CPU loop that appends visible objects into a vector and produce two correct GPU versions: first an atomic-append implementation and then a deterministic predicate–scan–scatter version, while explaining exactly when each is preferable.</p>
+<p>From there, you should be able to explain why reading the visible count back to the CPU before drawing destroys GPU-driven execution, and replace that round trip with an indirect argument buffer.</p>
+<p>Then derive a compute frustum test from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>⋅</mo>
+  <mi>C</mi>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo>&lt;</mo>
+  <mo>−</mo>
+  <mi>r</mi>
+  <mo>,</mo>
+</math>
+<p>explain why conventional and reversed-Z Hi-Z pyramids use opposite conservative reductions, and derive a projected-size LOD metric proportional to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mi>f</mi>
+      <mi>r</mi>
+    </mrow>
+    <mi>z</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>You should be able to distinguish algorithmic ping-ponging from double/triple frame buffering, reconstruct Maveb’s three-frame semaphore/context system, and explain why resetting a frame’s upload cursor is only safe after that frame slot has retired on the GPU.</p>
+<p>Then take KairoGPU’s vector multiply and derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>12</mn>
+  </mfrac>
+  <mo>≈</mo>
+  <mn>0.083</mn>
+  <mtext> FLOP/B</mtext>
+  <mo>.</mo>
+</math>
+<p>Take its tiled matrix multiply and derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>≈</mo>
+  <mfrac>
+    <mi>T</mi>
+    <mn>4</mn>
+  </mfrac>
+  <mo>,</mo>
+</math>
+<p>therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>T</mi>
+      <mo>=</mo>
+      <mn>16</mn>
+    </mrow>
+  </msub>
+  <mo>≈</mo>
+  <mn>4.</mn>
+</math>
+<p>Then derive the roofline:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mo>≤</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>P</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            </mrow>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>B</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            </mrow>
+          </msub>
+          <mi>I</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and the ridge point:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>I</mi>
+            <mo>∗</mo>
+          </msup>
+          <mo>=</mo>
+          <msub>
+            <mi>P</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            </mrow>
+          </msub>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <msub>
+            <mi>B</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            </mrow>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>You should be able to explain why reducing register count can make a shader slower, why FP16 can improve both storage and arithmetic throughput but destroy world-space precision, why a subgroup matrix operation requires restructuring data into matrix fragments, and why adding a barrier does not repair an atomicity bug.</p>
+<p>Finally, reconstruct the complete Maveb Gaussian compute chain from the hardware perspective:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics>
+  <mtable displaystyle="true" columnspacing="1em" rowspacing="3pt">
+    <mtr>
+      <mtd>
+        <mtext>project</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>count tile references</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>parallel scan</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>GPU-generated indirect count</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>generate key/value records</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>subgroup histogram</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>prefix</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>stable radix scatter</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>tile ranges</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>composite</mtext>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+<annotation encoding="application/x-tex">
+\text{project}
+\rightarrow
+\text{count tile references}
+\rightarrow
+\text{parallel scan}
+\rightarrow
+\text{GPU-generated indirect count}
+\rightarrow
+\text{generate key/value records}
+\rightarrow
+\text{subgroup histogram}
+\rightarrow
+\text{prefix}
+\rightarrow
+\text{stable radix scatter}
+\rightarrow
+\text{tile ranges}
+\rightarrow
+\text{composite}.
+</annotation></semantics></math>
+<p>Then identify its likely scaling frontiers:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>serial block-sum scan</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>serial radix group-offset computation</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>memory traffic from repeated radix passes</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>per-tile compositing imbalance</mtext>
+  <mo>.</mo>
+</math>
+<p>That is the final Phase-22 skill: not merely knowing GPU algorithms, but being able to look at a real GPU pipeline and say <strong>which resource, dependency or data movement pattern is likely to become the next limit—and redesign the algorithm accordingly</strong>.</p>
+<p>We now enter <strong>Phase 23: Vulkan — Objects, Resources, Descriptors, Commands, Synchronization, Presentation, and Profiling</strong>. Pass 11 will go from Vulkan’s explicit-control philosophy through <code>VkInstance</code>, physical/logical devices, queues and queue families, swapchains/surface capabilities, buffers/images/memory heaps and memory types, staging and mapping, image layouts and views, samplers, descriptor sets/layouts/pools, push constants and pipeline layouts, shader modules/SPIR-V, graphics/compute pipeline construction and pipeline caches, command pools/buffers, primary/secondary command buffers, and command recording—all tied directly against your current Kairo Vulkan implementation rather than taught as disconnected API calls.</p>
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch001.xhtml#id_01-Bits-Programs-and-Reliable-Systems" class="wikilink">Reading map</a> · <a href="ch212.xhtml#id_01-foundations-i-ch011-c-const-borrowing-and-cpugpu-buffering" class="wikilink">Previous chapter</a> · <a href="ch415.xhtml#id_01-foundations-i-ch013-open-vulkan-devices-and-describe-resources" class="wikilink">Next chapter (GPU Architecture and Real-Time Rendering, Part 1, Ch. 3)</a></p>
+</section>
+</section>
+</body>
+</html>

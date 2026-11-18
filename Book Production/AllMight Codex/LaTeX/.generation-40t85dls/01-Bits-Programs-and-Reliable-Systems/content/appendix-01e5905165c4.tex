@@ -1,0 +1,54 @@
+\hypertarget{appendix-01e5905165c4}{}\label{referencestart:appendix-01e5905165c4}
+\section{Page tables and MMU}\label{appendix-01e5905165c4-page-tables-and-mmu}
+
+\hypertarget{appendix-01e5905165c4-page-tables-and-mmu}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-01e5905165c4-definition-and-mechanism}
+
+\hypertarget{appendix-01e5905165c4-definition-and-mechanism}{}
+
+The memory management unit (MMU) translates/protects accesses using mapping information. Page tables hold virtual-page→physical-frame mappings plus permissions/state, often hierarchically. A permitted VPN 12345→PFN 987 with offset ABC produces PA 987ABC. This model is architecture-neutral, not a specific entry format.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-01e5905165c4-prerequisites}
+
+\hypertarget{appendix-01e5905165c4-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0c67cd5bf30a]{Pages and page offsets} --- Page identity is translated while within-page position is preserved.
+\item
+  \hyperref[appendix-c2a9ad1e2b49]{Process isolation and page permissions} --- The mapping context and permissions constrain which accesses proceed.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-01e5905165c4-used-by}
+
+\hypertarget{appendix-01e5905165c4-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-7a2d9c5ce511]{TLB} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-cc0909a7ef14]{Page faults and demand paging} --- uses this mechanism as stated in its prerequisites.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-01e5905165c4-recall-and-next-depth}
+
+\hypertarget{appendix-01e5905165c4-recall-and-next-depth}{}
+
+Explain what changes and what stays fixed in translation.
+
+\textbf{Pending:} ARM/x86 table formats, walks, accessed/dirty bits, invalidation.
+
+\subsection{Source and navigation}\label{appendix-01e5905165c4-source-and-navigation}
+
+\hypertarget{appendix-01e5905165c4-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

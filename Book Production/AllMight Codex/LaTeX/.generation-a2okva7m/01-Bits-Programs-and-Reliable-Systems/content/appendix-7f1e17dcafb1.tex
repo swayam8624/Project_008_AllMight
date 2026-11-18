@@ -1,0 +1,42 @@
+\hypertarget{appendix-7f1e17dcafb1}{}\label{referencestart:appendix-7f1e17dcafb1}
+\section{Robust norm and intermediate range}\label{appendix-7f1e17dcafb1-robust-norm-and-intermediate-range}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C004 · \textbf{Latest development:} C004
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-7f1e17dcafb1-definition-and-mechanism}
+
+A final representable answer can be lost to overflowing intermediates. Squaring 1e20f overflows before a finite norm could be formed. Scale by maximum component or use hypot to avoid unnecessary squared overflow.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-7f1e17dcafb1-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-343615f49ddf]{IEEE-754 floating point} --- The format/arithmetic contract gives these bits their numerical domain.
+\item
+  \hyperref[appendix-eb336149c00a]{Floating-point infinities} --- Non-finite operands and overflowing intermediates need branches before ordinary finite formulas.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-7f1e17dcafb1-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-f744e41b95b4}{Unit directions and safe normalization (Vision, XR, and Playable Worlds, Reference notes: Unit directions and safe normalization)} --- Phase 6 uses this established foundation in its geometry narrative.
+\end{itemize}
+
+Connect later dependent concepts here as their lessons arrive.
+
+\subsection{Recall and next depth}\label{appendix-7f1e17dcafb1-recall-and-next-depth}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Non-finite policy, final range, accuracy and performance remain distinct; no repository fix is authorized.
+
+\subsection{Source and navigation}\label{appendix-7f1e17dcafb1-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

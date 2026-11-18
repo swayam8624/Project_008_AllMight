@@ -1,0 +1,34 @@
+\hypertarget{appendix-b677a85ba76f}{}\label{referencestart:appendix-b677a85ba76f}
+\section{Multiscale texture filtering}\label{appendix-b677a85ba76f-multiscale-texture-filtering}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} XR01 · \textbf{Latest development:} XR01
+
+\subsection{Definition and mechanism}\label{appendix-b677a85ba76f-definition-and-mechanism}
+
+Mipmaps prefilter texture scales; anisotropy reflects unequal footprint directions. Gaussian pyramids store coarse structure; Laplacian levels store differences between scales. A texel is not an output pixel, and interpolation cannot ensure lost information is recovered.
+
+\subsection{Prerequisites}\label{appendix-b677a85ba76f-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=appendix-d5b3c692d9f0}{Convolution and filter footprints (Geometry, Cameras, and Image Formation, Reference notes: Convolution and filter footprints)} --- A weighting footprint establishes the filtered response, boundary effects and frequency transfer.
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-6a7869dd79a6}{Sampling aliasing and reconstruction (Light Transport and Image Synthesis, Reference notes: Sampling aliasing and reconstruction)} --- Allocation/filtering must respect what reduced samples can distinguish.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-b677a85ba76f-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-4192b2bdd21e]{Antialiasing and sample allocation}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-b677a85ba76f-recall-and-next-depth}
+
+Explain a grazing-angle footprint and level log 2 rho. Pending: derivative-based GPU footprints and calibrated reconstruction. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.
+
+\subsection{Source and navigation}\label{appendix-b677a85ba76f-source-and-navigation}
+
+\hyperref[04-visual-computing-ii-ch042-multiresolution-work-must-preserve-the-right-information]{Expanded teaching explanation} · \hyperref[appendix-fd090d982a15-xr01---independent-seeing-and-representation-source]{Independent coverage} · \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Bits, Programs, and Reliable Systems, Reference notes: Dependency Map)}

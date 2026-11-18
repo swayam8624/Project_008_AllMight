@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch403.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-c39931e6e4c2-impulse-and-force-timing" class="level2">
+<h2>Impulse and force timing</h2>
+<p>Force and impulse are related but they belong to different timing contracts.</p>
+<p>Force is a rate of momentum change:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>d</mi>
+      <mi>p</mi>
+    </mrow>
+    <mrow>
+      <mi>d</mi>
+      <mi>t</mi>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Impulse integrates force over time:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>J</mi>
+  <mo>=</mo>
+  <msubsup>
+    <mo data-mjx-texclass="OP">∫</mo>
+    <mrow data-mjx-texclass="ORD">
+      <msub>
+        <mi>t</mi>
+        <mn>0</mn>
+      </msub>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <msub>
+        <mi>t</mi>
+        <mn>1</mn>
+      </msub>
+    </mrow>
+  </msubsup>
+  <mi>F</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>For constant mass and a linear impulse applied directly to the center of mass,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>v</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>M</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi>J</mi>
+  <mo>.</mo>
+</math>
+<p>There is <strong>no additional timestep factor</strong> when applying an impulse that is already an integrated momentum change. Multiplying by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+</math> again turns the update into the wrong units.</p>
+<p>For a force held constant through a numerical step,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>J</mi>
+  <mo>≈</mo>
+  <mi>F</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<p>so the timestep enters when converting the force into an approximate impulse.</p>
+<section id="appendix-c39931e6e4c2-off-centre-impulse" class="level3">
+<h3>Off-centre impulse</h3>
+<p>An impulse at world-space point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math> relative to center of mass <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> has lever arm</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mo>−</mo>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>Angular impulse is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>L</mi>
+  <mo>=</mo>
+  <mi>r</mi>
+  <mo>×</mo>
+  <mi>J</mi>
+  <mo>.</mo>
+</math>
+<p>With world inverse inertia <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+</math>,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mo>×</mo>
+  <mi>J</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>A contact solver uses this coupling when computing the effective mass seen along a contact direction.</p>
+</section>
+<section id="appendix-c39931e6e4c2-frame-event-versus-physical-force" class="level3">
+<h3>Frame event versus physical force</h3>
+<p>A “jump button pressed” event should not necessarily apply the same force every rendered frame while the button remains down. A one-shot impulse, a force over a defined simulation interval, and a controller velocity target are different game/physics contracts.</p>
+<p>The same issue appears with explosions, springs and contact responses.</p>
+</section>
+<section id="appendix-c39931e6e4c2-fixed-step" class="level3">
+<h3>Fixed step</h3>
+<p>Simulation forces should normally be accumulated and integrated on the fixed simulation clock. Rendering interpolation does not apply physics again. If multiple rendering frames occur between physics ticks, repeating a force per render frame introduces frame-rate dependence.</p>
+</section>
+<section id="appendix-c39931e6e4c2-verification" class="level3">
+<h3>Verification</h3>
+<p>Test the same physical scenario with different render rates but the same fixed simulation step. For impulses, verify momentum change directly. For forces, integrate over equal physical time and compare trajectories/convergence order.</p>
+<p>Read the connected explanation in <a href="ch401.xhtml#id_06-engine-ii-ch034-from-the-push-on-a-panel-to-a-repeatable-rigid-body-simulator" class="wikilink">Continuous Notes/Game Engine - From First Frame to Living Worlds#From the push on a panel to a repeatable rigid-body simulator</a>.</p>
+<p>Related: <a href="ch402.xhtml#appendix-66742099f8a0-center-of-mass-and-inertia" class="wikilink">Center of mass and inertia</a>, <a href="ch497.xhtml#appendix-8f96f9c4d5bc-time-integrators-and-symplectic-updates" class="wikilink">Time integrators and symplectic updates (Vision, XR, and Playable Worlds, Part 1, Reference notes: Time integrators and symplectic updates)</a>.</p>
+</section>
+<section id="appendix-c39931e6e4c2-constraint-level-continuation" class="level3">
+<h3>Constraint-level continuation</h3>
+<p>Forces change momentum over time; collision impulses change momentum at a discrete event. <code>tools/labs/constraint_friction_island_lab.cpp</code> now connects that distinction to a minimal sequential-impulse solver: an approaching normal velocity produces a nonnegative impulse that removes approach, a tangential impulse is clamped by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">|</mo>
+  <msub>
+    <mi>j</mi>
+    <mi>t</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>≤</mo>
+  <mi>μ</mi>
+  <msub>
+    <mi>j</mi>
+    <mi>n</mi>
+  </msub>
+</math>, and repeated sweeps propagate support through a two-body stack.</p>
+<p>The same witness builds contact islands with union-find. This makes a practical ownership boundary visible: contacts couple bodies inside an island, while disconnected islands may be solved independently. Angular effective mass, restitution thresholds, warm starting, sleeping and a full two-dimensional friction cone remain higher solver layers.</p>
+</section>
+</section>
+</body>
+</html>

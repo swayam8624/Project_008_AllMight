@@ -1,0 +1,33 @@
+\hypertarget{appendix-736a2345de4a}{}
+\section*{Mixed signedness}
+\chapter{Mixed signedness}\label{appendix-736a2345de4a-mixed-signedness}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\section{Definition and mechanism}\label{appendix-736a2345de4a-definition-and-mechanism}
+
+A negative signed operand can convert to a large unsigned value; choose semantic types consistently or use \texttt{std::cmp\_*}, \texttt{std::in\_range}, or \texttt{std::ssize} where appropriate.
+
+int −1 compared with unsigned int 1 converts to a large unsigned value on the usual host, so the comparison is false. std::cmp\_less preserves mathematical ordering. A valid index still needs a lower bound: \texttt{index\textgreater{}=0\ \&\&\ std::cmp\_less(index,size)}.
+
+\section{Prerequisites}\label{appendix-736a2345de4a-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5e2d663adf7f]{Usual arithmetic conversions} --- After promotions, equal-signedness operands use the higher-ranked type.
+\end{itemize}
+
+\section{Used by}\label{appendix-736a2345de4a-used-by}
+
+Connect later chunks here when they use this concept.
+
+\section{Recall and next depth}\label{appendix-736a2345de4a-recall-and-next-depth}
+
+Explain mixed signedness without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} API design, diagnostics, and range-safe indexing.
+
+\section{Source and navigation}\label{appendix-736a2345de4a-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Arithmetic\%20becomes\%20a\%20policy}{C002 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

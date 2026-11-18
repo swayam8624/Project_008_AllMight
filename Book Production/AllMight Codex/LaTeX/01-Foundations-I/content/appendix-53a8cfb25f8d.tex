@@ -1,0 +1,45 @@
+\hypertarget{appendix-53a8cfb25f8d}{}
+\section*{Offset-binary coding}
+\section{Offset-binary coding}\label{offset-binary-coding}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C006 · \textbf{Latest development:} C006
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A bias turns signed levels into unsigned codes. For the source-shaped INT4 convention c=q+8, -3 becomes nibble0101, not the two's-complement nibble1101.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c99977d88b33]{Unsigned modular arithmetic} --- supplies the representation or validity rule used above.
+\item
+  \hyperref[appendix-f414bd4ed05c]{Interpretation contract} --- supplies the representation or validity rule used above.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+Connect later dependent concepts here when their explanations use this mechanism.
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Reconstruct the example and identify the condition that would invalidate it.
+
+\textbf{Pending:} Do not assume an INT4 label defines offset versus two's-complement storage.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Choosing\%20what\%20information\%20to\%20keep}{Continuous teaching story} · \hyperref[appendix-fd090d982a15]{Source coverage ledger} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\subsection{Ordering and bias}\label{ordering-and-bias}
+
+Offset-binary represents signed values by adding a fixed bias before storing an unsigned code:
+
+\[q=x+B.\]
+
+With an \(n\)-bit field and the common midpoint bias \(B=2^{n-1}\), the smallest signed value maps near code zero and the largest maps near the all-ones code. Unlike two's complement, the unsigned lexical order of codes then matches the numeric order of represented values. That property is useful in some exponent fields, ADC outputs, sortable binary formats and hardware interfaces.
+
+The bias is part of the format contract. Decoding with the wrong bias shifts every value while still producing plausible numbers. The IEEE-754 exponent field is related but reserves all-zero and all-one exponent codes for subnormals/zero and infinities/NaNs, so it is not simply an unrestricted offset-binary integer.
+
+Tests should check both endpoints, the code corresponding to numeric zero, monotonic ordering, and rejection or handling of reserved codes when the surrounding format defines them.

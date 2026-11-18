@@ -1,0 +1,2616 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch327.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_03-visual-computing-i-ch015-rasterization-foundations-and-renderer-evidence" class="level2">
+<h2>Rasterization Foundations and Renderer Evidence</h2>
+<p><a href="ch316.xhtml#id_04-Light-Transport-and-Image-Synthesis" class="wikilink">Reading map</a> · <a href="ch326.xhtml#id_03-visual-computing-i-ch014-transparency-blending-and-visibility" class="wikilink">Previous chapter</a> · <a href="ch333.xhtml#id_03-visual-computing-i-ch019-textures-as-sampled-surface-signals" class="wikilink">Next chapter</a></p>
+<p>The renderer snapshot provides concrete evidence about a particular implementation before the text turns to general rasterization principles. This span establishes that distinction and develops the foundational pipeline.</p>
+<p><strong>By the end:</strong> Separate implementation-specific renderer evidence from general rasterization concepts.</p>
+<p><strong>Recall question:</strong> Which claims describe this renderer’s state, and which are general pipeline rules?</p>
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 35331–37362; source-span SHA256 a78b04e715d3b81b09dbc46ac29d254d8f057bb0a3210dcc2c4a1812faa8adc1. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_03-visual-computing-i-ch015-what-kairo-specifically-taught-us-in-this-pass" class="level4">
+<h4>What Kairo specifically taught us in this pass</h4>
+<p>The live implementation is currently a fairly clean traditional forward Vulkan renderer rather than a disguised “modern feature showcase,” which is useful for learning. It has an HDR offscreen color target, integer object picking, conventional D32 depth, no stencil, no MSAA, no backface culling, dynamic viewport/scissor, straight-alpha transparent blending, cutout discard, per-object indexed draws, small hand-created PSO permutations, a large camera/light uniform block, 128-byte per-draw push constants, no application Vulkan pipeline cache in this path, and a frame lifecycle explicitly decomposed into acquire → record → submit → present.</p>
+<p>That is an excellent baseline because later phases can introduce GPU-driven draws, render graphs, reversed-Z, Hi-Z, clustered lighting and more sophisticated transparency as measurable architectural changes instead of starting from an opaque engine where everything is already hidden.</p>
+</section>
+<section id="id_03-visual-computing-i-ch015-mastery-gate" class="level4">
+<h4>Mastery gate</h4>
+<p>If you can now explain <strong>why stencil needs three result operations</strong>, derive source-over blending, explain exactly why premultiplied alpha behaves better under filtering, derive why transparency ordering matters, explain why front-to-back benefits opaque rendering but conflicts with back-to-front transparency, derive the Hi-Z reduction direction for conventional and reversed depth, trace a compute-written indirect command through its synchronization into a draw, distinguish instance/uniform/storage/push data, explain why shader permutations explode, and reconstruct the CPU rasterizer from edge equations rather than memorizing its code, then Phase 19 is in good shape.</p>
+<p><strong>Depth gate: passed for Pass 2.</strong></p>
+</section>
+<section id="id_03-visual-computing-i-ch015-next-pass-03" class="level4">
+<h4>Next — Pass 03</h4>
+<p><strong>M115 + M116, Parts 1901–1944:</strong> radiometry and color science → radiance/irradiance/solid angle → linear RGB vs sRGB/gamma → HDR/exposure/tone mapping → texture signal theory → sampling/reconstruction → mipmaps/LOD derivatives → anisotropic filtering → compression → tangent-space normal mapping → parallax/displacement foundations.</p>
+<p>Rasterization converts projected geometry into covered pixel samples and uses depth to decide which fragment contributes.</p>
+</section>
+<section id="id_03-visual-computing-i-ch015-triangle-coverage-and-sampling" class="level4">
+<h4>Triangle coverage and sampling</h4>
+<p>Triangles are convenient primitives because polygons can be triangulated, edges are straight, and attributes can be interpolated across a face. A raster pipeline clips geometry, transforms vertices to screen coordinates, sets up triangles, finds covered sample locations, interpolates attributes, performs depth tests, and updates color samples. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-04---drawing-a-triangle-and-an-intro-to-sampling" class="wikilink">CMU-04 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> · <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-08---depth-and-transparency" class="wikilink">CMU-08 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+<p>The exact coverage of a pixel is the fraction of its area lying inside a triangle. For pixel region <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+</math>, the exact coverage is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">|</mo>
+  <mi>P</mi>
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mo stretchy="false">|</mo>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <msub>
+    <mo data-mjx-texclass="OP">∫</mo>
+    <mi>P</mi>
+  </msub>
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mn mathvariant="bold">1</mn>
+    </mrow>
+    <mi>T</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>x</mi>
+</math>, where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mn mathvariant="bold">1</mn>
+    </mrow>
+    <mi>T</mi>
+  </msub>
+</math> is 1 inside the triangle and 0 outside. Computing that integral exactly for every pixel is expensive. A center sample estimates it as either 0 or 1, so a tiny edge shift can flip the whole result. The jagged boundary is aliasing: high spatial frequencies in a sharp edge exceed what the pixel grid can represent. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-04---drawing-a-triangle-and-an-intro-to-sampling" class="wikilink">CMU-04 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+<p>Supersampling evaluates multiple points inside one pixel. If there are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> subpixel samples <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+</math>, estimated coverage is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>c</mi>
+      <mo>^</mo>
+    </mover>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>P</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>N</mi>
+  </mfrac>
+  <munderover>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>=</mo>
+      <mn>1</mn>
+    </mrow>
+    <mi>N</mi>
+  </munderover>
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mn mathvariant="bold">1</mn>
+    </mrow>
+    <mi>T</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Three covered samples out of four estimate coverage as <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>3</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>4</mn>
+</math>. More samples improve the estimate but cost computation. Filtering combines samples into a reconstructed pixel value. This is the same signal-processing problem as sampling a 1D waveform: samples alone do not recover arbitrary frequencies. A signal must be low-pass filtered before downsampling to prevent high frequencies from folding into lower ones. The Nyquist condition says a band-limited signal must be sampled at more than twice its highest frequency. A hard triangle edge is not band-limited, so practical renderers approximate antialiasing with finite sample patterns and reconstruction filters. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-04---drawing-a-triangle-and-an-intro-to-sampling" class="wikilink">CMU-04 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+<p>Nearest-neighbor reconstruction can look blocky; a box filter averages a footprint but may ring in frequency space; smoother filters trade sharpness against ringing. A regular grid has even coverage but can produce structured moiré when aligned with image features. Jittered random points make the error less structured; stratification ensures every subregion is represented. Blue-noise patterns avoid large clumps while suppressing low-frequency structure. Sample patterns change the appearance of error, so the most uniform geometric distribution is not always the visually best. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-04---drawing-a-triangle-and-an-intro-to-sampling" class="wikilink">CMU-04 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> · <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-19---variance-reduction" class="wikilink">CMU-19 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+</section>
+<section id="id_03-visual-computing-i-ch015-barycentric-coordinates-depth-and-alpha" class="level4">
+<h4>Barycentric coordinates, depth, and alpha</h4>
+<p>For triangle vertices <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+</math>, an interior point can be expressed as <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>λ</mi>
+    <mn>0</mn>
+  </msub>
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>λ</mi>
+    <mn>1</mn>
+  </msub>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>λ</mi>
+    <mn>2</mn>
+  </msub>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+</math>, with each <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>≥</mo>
+  <mn>0</mn>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>. The <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+</math> are barycentric coordinates. They interpolate vertex color, normals, or texture coordinates. Perspective projection requires the depth correction described earlier. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-04---drawing-a-triangle-and-an-intro-to-sampling" class="wikilink">CMU-04 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> · <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-07---perspective-projection-and-texture-mapping" class="wikilink">CMU-07 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+<p>The z-buffer stores nearest depth per sample. Under a smaller-is-nearer convention, a fragment with new depth <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>z</mi>
+</math> is accepted if <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>z</mi>
+  <mo>&lt;</mo>
+  <msub>
+    <mi>z</mi>
+    <mi>b</mi>
+  </msub>
+</math>, where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>z</mi>
+    <mi>b</mi>
+  </msub>
+</math> is stored depth. Accepted fragments replace both depth and color. For two overlapping opaque triangles at depths 8 and 3, the depth 3 fragment wins regardless of drawing order. Multisampling may store separate depth values at subpixel samples so a partly covered edge can retain correct visibility. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-08---depth-and-transparency" class="wikilink">CMU-08 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+<p>Transparency requires compositing because a transparent layer reveals what lies behind it. If foreground color is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>C</mi>
+    <mi>f</mi>
+  </msub>
+</math> with opacity <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>α</mi>
+    <mi>f</mi>
+  </msub>
+</math> and background color is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>C</mi>
+    <mi>b</mi>
+  </msub>
+</math>, foreground-over-background is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>o</mi>
+      <mi>u</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>f</mi>
+  </msub>
+  <msub>
+    <mi>C</mi>
+    <mi>f</mi>
+  </msub>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>f</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>b</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>The operation is order-dependent. <strong>Premultiplied alpha</strong> stores <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msubsup>
+    <mi>C</mi>
+    <mi>f</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>=</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>f</mi>
+  </msub>
+  <msub>
+    <mi>C</mi>
+    <mi>f</mi>
+  </msub>
+</math>, making the over operation <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msubsup>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>o</mi>
+      <mi>u</mi>
+      <mi>t</mi>
+    </mrow>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>=</mo>
+  <msubsup>
+    <mi>C</mi>
+    <mi>f</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>f</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <msubsup>
+    <mi>C</mi>
+    <mi>b</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+</math>. It also avoids colored fringes. For example, a fully transparent red pixel has straight color red and opacity zero. Averaging its straight color with opaque blue creates purple contamination even though the red was invisible. Premultiplied storage turns the transparent red into zero color, so filtering cannot introduce hidden red. <a href="ch331.xhtml#appendix-97578ed97952-depth-buffering-and-visibility-order" class="wikilink">Opaque visibility</a> can use depth order; blended translucent layers usually need back-to-front composition or another order-aware method. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-08---depth-and-transparency" class="wikilink">CMU-08 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+</section>
+<section id="id_03-visual-computing-i-ch015-how-a-triangle-reaches-the-framebuffer" class="level4">
+<h4>How a triangle reaches the framebuffer</h4>
+<p>The framebuffer is the array of samples that eventually becomes the displayed image. A color buffer stores color values; a depth buffer stores visibility values. A graphics pipeline turns vertex data into fragments, where a fragment is a candidate contribution to a sample. The following trace links geometry to pixels without treating any one stage as magic.</p>
+<p>Start with three triangle vertices in object coordinates. A model transform places the object in the scene. A view transform expresses the scene relative to the camera. Projection maps camera coordinates into a clip-space representation, and clipping discards or cuts geometry outside the view volume. Perspective division converts clip coordinates to normalized device coordinates; viewport mapping scales them to screen pixels. At this point the triangle’s edges can be tested against sample locations. If a sample is covered, barycentric weights interpolate attributes. A depth test rejects a fragment hidden behind another. The accepted sample writes shaded color into the color buffer. Multiple samples per pixel can retain separate edge coverage and depth until a resolve step combines them.</p>
+<p>Each coordinate space has a different convenient range and meaning. Object coordinates make a model reusable; world coordinates place all objects together; camera coordinates simplify view direction; clip coordinates make clipping efficient; screen coordinates index buffers. A matrix chain is often written <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+  <mi>V</mi>
+  <mi>M</mi>
+</math>, meaning projection times view times model for a column-vector convention. In execution the rightmost model matrix acts first. Reversing the order silently changes the result.</p>
+<p>The depth buffer stores projected depth, which is not generally a linear measure of distance from the camera. Perspective projection allocates more representable precision near the camera than far away under common mappings. Two surfaces with nearly equal depth may compare inconsistently, producing z-fighting. Solutions include adjusting near and far clipping planes, using a precision-aware depth format, or offsetting a surface intentionally. The depth representation and comparison rule are part of the rendering pipeline contract, not incidental state. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-01---course-overview" class="wikilink">CMU-01 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> · <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-04---drawing-a-triangle-and-an-intro-to-sampling" class="wikilink">CMU-04 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> · <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-05---spatial-transformations" class="wikilink">CMU-05 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> · <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-08---depth-and-transparency" class="wikilink">CMU-08 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+</section>
+<section id="id_03-visual-computing-i-ch015-a-depth-buffer-table-trace" class="level4">
+<h4>A depth-buffer table trace</h4>
+<p>For one sample, initialize depth to infinity and color to the background. Process fragment A at depth 8 and color red. Since 8 is nearer than infinity, write red and depth 8. Process fragment B at depth 3 and color blue. Since 3 is nearer than 8, overwrite with blue and depth 3. Process fragment C at depth 6 and color green. Since 6 is farther than 3, discard it. Final state is blue at depth 3. Reordering A and B still leaves B as the visible opaque fragment. If layers have fractional opacity, discarding the farther layer is wrong because it contributes through the foreground. Depth answers the visibility question; alpha compositing answers how visible layers combine.</p>
+</section>
+<section id="id_03-visual-computing-i-ch015-coverage-samples-and-a-triangle-rasterizer" class="level4">
+<h4>Coverage samples and a triangle rasterizer</h4>
+<p>A triangle’s coverage function is one inside the triangle and zero outside. An ideal pixel value would integrate this indicator over the square footprint of the pixel; for a colored surface, it would integrate the signal over the same footprint. A single sample at the pixel center estimates this integral very cheaply, but it can miss a thin triangle entirely or report full coverage when only a corner is touched. The edge of a triangle is a discontinuity, so it contains arbitrarily high spatial frequencies. The Nyquist–Shannon theorem’s exact reconstruction guarantee assumes a band-limited signal; a hard edge is not band-limited. This is why no finite regular sample rate perfectly solves all rasterization aliasing. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-04---drawing-a-triangle-and-an-intro-to-sampling" class="wikilink">CMU-04 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+<p>Supersampling approximates area coverage by taking several tests within a pixel and averaging their results. Suppose four sample points lie in a pixel and two are inside the triangle. The estimated coverage is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>2</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+</math>. The lecture compared one sample, four samples, sixteen samples, and 1,024 samples per pixel on a receding checkerboard. Each denser pattern looked smoother, but even 1,024 samples retained error because the image still has detail beyond that finite rate. A special checkerboard-on-plane example admits an analytic pixel integral, but arbitrary intersecting geometry, overlapping layers, and transparency make exact integration impractical. Sampling is attractive because the same finite-sample procedure works across general scenes. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-04---drawing-a-triangle-and-an-intro-to-sampling" class="wikilink">CMU-04 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+<p>For one point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math> and triangle vertices <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>2</mn>
+  </msub>
+</math>, a point-in-triangle test checks whether <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math> lies in the interior half-plane of each directed edge. A half-plane is one side of a line; an oriented edge test can use a 2D determinant or a dot product with the edge’s normal. Consistent vertex order matters because reversing an edge swaps its inside and outside sides. A pixel exactly on a shared edge needs a tie rule. The top-left rule assigns shared boundary samples to exactly one of the adjacent triangles; without it, two triangles can leave a hairline gap or double-draw the same sample. These same signed edge values can be normalized into barycentric coordinates, so coverage and interpolation can share arithmetic. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-04---drawing-a-triangle-and-an-intro-to-sampling" class="wikilink">CMU-04 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> · <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-07---perspective-projection-and-texture-mapping" class="wikilink">CMU-07 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+<p>To rasterize a whole triangle, one software strategy walks across pixel rows. The half-plane values for neighboring pixels change predictably, so each next test can update the previous result instead of recomputing every dot product. Row traversal also improves memory coherence: nearby framebuffer locations are accessed together. Modern graphics hardware instead evaluates many candidate samples in parallel inside a triangle’s bounding box. This trades extra tests for wide parallel execution and dedicated triangle-test hardware. A long, skinny triangle exposes the weakness: its rectangular bounding box may contain huge empty regions. Tiling adds a coarse test: reject a block wholly outside, accept a block wholly inside, and perform fine tests only on boundary blocks. A recursive hierarchy repeats this process at multiple scales, though traversal overhead can outweigh the saved work for common triangles. The design lesson is to match query granularity to hardware and geometry: exact tests only where coarse tests leave uncertainty. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-04---drawing-a-triangle-and-an-intro-to-sampling" class="wikilink">CMU-04 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+</section>
+<section id="id_03-visual-computing-i-ch015-modeling-a-cube-by-hand" class="level4">
+<h4>Modeling a cube by hand</h4>
+<p>The course introduction builds a cube centered at the origin with side length 2. Its coordinates are all sign combinations of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>. Each edge joins vertices differing in one coordinate. To draw the cube from a camera at <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+</math>, transform its vertices into camera coordinates, project them to the image plane, then draw each of the 12 edges. This exercise separates modeling from rendering: the cube is a list of vertices and edges, while a picture requires a camera and projection. It also makes the hidden pipeline concrete—changing camera position alters every projected coordinate even when the cube model stays the same. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-01---course-overview" class="wikilink">CMU-01 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+</section>
+<section id="id_03-visual-computing-i-ch015-a-cube-drawing-pipeline" class="level4">
+<h4>A cube drawing pipeline</h4>
+<p>Take a cube centered at the origin, with corners at every combination of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+  <mo>∈</mo>
+  <mo fence="false" stretchy="false">{</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo fence="false" stretchy="false">}</mo>
+</math>. To make an image, enumerate its twelve edges. For each edge, transform both endpoints from object coordinates to camera coordinates. Let the camera be at <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+</math> and look toward the origin. Build an orthonormal camera frame: viewing direction from camera to target, right direction from a cross product with the up vector, and camera-up from the cross of those two. Project each endpoint through the perspective divide, then rasterize the resulting screen-space line. The object description is unchanged if the camera moves; only the view transform changes. This separates model, camera, and image construction. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-01---course-overview" class="wikilink">CMU-01 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+<p>This toy task also exposes hidden conventions. If camera-up is nearly parallel to view direction, their cross product is nearly zero, so the camera frame is ill-conditioned. If an edge crosses the near clipping plane, clipping must trim it rather than projecting an endpoint behind the camera. If several edges overlap, visibility needs depth reasoning. A simple cube becomes an entry point to coordinate frames, projection, clipping, rasterization, and visibility.</p>
+</section>
+<section id="id_03-visual-computing-i-ch015-opaque-sample-update" class="level4">
+<h4>Opaque sample update</h4>
+<p>The following pseudocode states the invariant for a z-buffer. <code>nearer</code> must match the chosen depth convention, and clearing depth must use the corresponding far value.</p>
+<pre class="text"><code>for each covered sample s of triangle T:
+    z_new = interpolate_depth(T, s)
+    if nearer(z_new, depth[s]):
+        depth[s] = z_new
+        color[s] = shade(T, s)</code></pre>
+<p>The triangle’s coverage rule determines which samples reach this loop. The interpolation rule determines the candidate depth. The depth convention determines <code>nearer</code>. If any one of these differs from the rest of the pipeline, visible artifacts appear. Multisampling runs the update per subpixel sample. Transparent blending needs a different update because a fragment contributes without fully replacing the stored color. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-04---drawing-a-triangle-and-an-intro-to-sampling" class="wikilink">CMU-04 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> · <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-08---depth-and-transparency" class="wikilink">CMU-08 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+</section>
+<section id="id_03-visual-computing-i-ch015-a-final-numerical-checkpoint-coverage-color-and-accumulation" class="level4">
+<h4>A final numerical checkpoint: coverage, color, and accumulation</h4>
+<p>Imagine a black triangle covers exactly one quarter of a white pixel’s area. The physically averaged linear-light color is three quarters white and one quarter black, or 0.75. If the renderer uses four uniformly distributed subpixel samples and exactly one lands inside the triangle, the Monte Carlo estimate is also 0.75. With only one center sample, the result is either 0 or 1, depending on which side of the edge the sample lands. Both sampling schemes estimate the same target, but their variance differs. This tiny construction connects exact area integration, multisampling, and Monte Carlo estimation.</p>
+<p>Now suppose the white value is stored in a nonlinear display encoding. The estimate should still average physical light in linear space. Decode the four sample colors to linear values, average to 0.75, and encode once for display. Averaging encoded values directly changes the brightness because encoding is nonlinear. If the triangle is translucent, multiply each sample’s foreground color by opacity before averaging, then composite with the background in premultiplied form. The order of operations follows the meanings of the stored quantities: coverage determines where the surface exists, radiance determines its physical contribution, alpha determines how layers combine, and display encoding happens after those operations. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-04---drawing-a-triangle-and-an-intro-to-sampling" class="wikilink">CMU-04 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> · <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-08---depth-and-transparency" class="wikilink">CMU-08 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> · <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-14---color" class="wikilink">CMU-14 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> · <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-cmu-17---numerical-integration" class="wikilink">CMU-17 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a></p>
+</section>
+<section id="id_03-visual-computing-i-ch015-rasterization-and-depth" class="level4">
+<h4>Rasterization and depth</h4>
+<p>Rasterization starts with projected primitives and asks which pixels they cover. A triangle’s projected vertices define edge functions; evaluating the signs at a pixel sample determines whether it lies inside. Interpolated barycentric coordinates then carry depth and attributes across the triangle. A depth buffer stores the closest depth encountered so far. For a candidate fragment at depth (z), keep it if it is nearer than the saved value, then update that value. This resolves visibility without explicitly constructing a global sort of all surfaces. The rasterization lectures discuss triangle coverage, interpolation, depth testing, and the cost of arranging the work over screen tiles <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-17---rasterization" class="wikilink">MITG-17 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> · <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-18---rasterization-ii" class="wikilink">MITG-18 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:10:00–00:35:00; , 00:20:00–00:50:00).</p>
+<p>The z-buffer is simple and order-independent when depth values compare consistently, but precision is not uniform in camera distance under a perspective projection. Nearly equal depths can produce z-fighting. Reversing near/far choices, increasing precision, or moving the near plane can help; a depth buffer does not solve transparency ordering automatically. Rasterization also brings sampling back: a triangle may cover only part of a pixel, so single-sample coverage creates jagged edges. Multisample antialiasing evaluates geometric coverage at several sample positions while often shading the triangle less frequently than full supersampling. It improves edge coverage, but does not automatically antialias every shader signal or texture.</p>
+<p>A tiled renderer bins primitives into screen-space tiles, then processes the primitives relevant to each tile. This improves locality and parallel scheduling: a tile’s pixel region can be worked on with nearby data and an independent depth buffer. The 2021 rasterization lecture discusses the reordering and tiling of work, including space-filling curves as an ordering strategy <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-17---rasterization" class="wikilink">MITG-17 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:05:00–00:20:00; 00:45:00–01:10:00). Its algorithmic point is that spatial coherence is a performance resource: pixels near each other usually touch many of the same primitives and memory.</p>
+</section>
+<section id="id_03-visual-computing-i-ch015-rasterization-converts-projected-triangles-into-depth-tested-fragments" class="level4">
+<h4>Rasterization converts projected triangles into depth-tested fragments</h4>
+<p>A ray tracer spends work on rays that might hit many objects. A rasterizer streams triangles and asks which screen samples each projected triangle covers. This is useful under a hard frame deadline: at 30 frames per second, the entire frame budget is about <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>30</mn>
+</math> second, and missed deadlines are visible as stutter or latency. A typical pipeline transforms each triangle to camera/clip space, clips it to the view volume, projects vertices to the screen, generates fragments, shades them, depth-tests them, then presents a completed color buffer. Modern systems mix rasterization with ray tracing, but the pipeline makes the real-time tradeoffs explicit. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-17---rasterization" class="wikilink">MITG-17 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:01:29–00:05:12; 00:19:32–00:25:26)</p>
+<p>Projection maps a 3D triangle to a 2D triangle under the usual perspective camera, which lets scan conversion work in screen space. The vertex shader transforms one vertex at a time; the fragment stage handles candidate pixel samples generated by triangles. A fragment is a candidate sample associated with a primitive, not necessarily a final visible pixel. A million overlapping triangles can generate a million fragments even if they all land on one screen pixel. The depth test is what decides whether a fragment survives. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-17---rasterization" class="wikilink">MITG-17 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:20:39–00:23:50; 01:06:31–01:08:30)</p>
+<p>For a triangle with projected vertices <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+</math>, each oriented edge defines a signed linear function <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>E</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>a</mi>
+    <mi>i</mi>
+  </msub>
+  <mi>x</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>b</mi>
+    <mi>i</mi>
+  </msub>
+  <mi>y</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>i</mi>
+  </msub>
+</math>. Choose a consistent winding so the interior satisfies all three inequalities <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>E</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≥</mo>
+  <mn>0</mn>
+</math>. A simple scan converter tests pixels in a bounding rectangle and evaluates these edge functions. The rectangle limits work, though a long diagonal triangle can have a large bounding rectangle and few covered pixels. Robust rasterizers also define exact shared-edge ownership rules so adjacent triangles neither leave cracks nor shade the same sample twice. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-17---rasterization" class="wikilink">MITG-17 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:38:09–00:45:53)</p>
+<p>Depth buffering stores the nearest depth at each pixel. A candidate fragment passes when its depth is nearer than the recorded value; the color and depth are then updated. It avoids sorting triangles globally, unlike the painter’s algorithm, which draws far surfaces first and nearer ones over them. Three overlapping bars can form a cyclic ordering, so no single global sort works. Limited depth precision can cause Z-fighting: nearly coplanar surfaces quantize to indistinguishable or fluctuating depth values. Double buffering keeps the image being scanned out separate from the one currently being rendered; swapping buffers presents a completed frame at once. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-17---rasterization" class="wikilink">MITG-17 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:24:14–00:25:23; 00:32:00–00:33:50; 01:11:22–01:14:03)</p>
+<p>Clipping removes or splits geometry outside the <a href="ch328.xhtml#appendix-1c07d64f5e70-camera-view-and-clip-space-pipeline" class="wikilink">view frustum</a> before perspective division, preventing division-by-zero and behind-camera degeneracies. Frustum culling tests a whole object bound before streaming its triangles. Homogeneous rasterization retains 3D structure longer: each triangle edge and the eye define a plane, and candidate samples are tested against the three oriented half-spaces. This rejects regions behind the eye without first dividing coordinates by depth. Clipping can still be faster when it removes whole primitives early; the choice depends on where work runs and the hardware. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-17---rasterization" class="wikilink">MITG-17 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:55:00–01:04:35)</p>
+<p>The Z buffer need store only depth evidence, not the name of the object at a pixel. Shading can often run independently across fragments because the BRDF evaluation uses local position, normal, material, and light data. Shadows and reflections require extra passes or buffers because a single forward triangle stream does not automatically answer what is visible from a light or reflected viewpoint. The next topics therefore add screen-space attributes and specialized passes rather than assuming every ray-tracing operation transfers directly. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-17---rasterization" class="wikilink">MITG-17 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (01:05:23–01:08:30; 01:14:05–01:16:38)</p>
+</section>
+<section id="id_03-visual-computing-i-ch015-perspective-changes-the-interpolation-weights-inside-a-rasterized-triangle" class="level4">
+<h4>Perspective changes the interpolation weights inside a rasterized triangle</h4>
+<p>Rasterization finds a screen point first, but texture coordinates belong to the original 3D triangle. Linear barycentric weights in the projected triangle do not equal the weights in 3D: perspective division is nonlinear. Let the camera transform the homogeneous vertices into <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>q</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>C</mi>
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msubsup>
+    <mi>x</mi>
+    <mi>i</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>,</mo>
+  <msubsup>
+    <mi>y</mi>
+    <mi>i</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>,</mo>
+  <msubsup>
+    <mi>z</mi>
+    <mi>i</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>,</mo>
+  <msubsup>
+    <mi>w</mi>
+    <mi>i</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo stretchy="false">)</mo>
+</math>. For a 3D point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+</math>, the transformed point is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+  <mi>p</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>q</mi>
+    <mi>i</mi>
+  </msub>
+</math>. After perspective division, the screen coordinate is the ratio of weighted sums, not the weighted average of divided vertex coordinates. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-18---rasterization-ii" class="wikilink">MITG-18 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:15:01–00:24:05)</p>
+<p>A practical fragment recipe is: form the projected homogeneous vertex columns <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>q</mi>
+    <mn>0</mn>
+  </msub>
+  <mtext> </mtext>
+  <msub>
+    <mi>q</mi>
+    <mn>1</mn>
+  </msub>
+  <mtext> </mtext>
+  <msub>
+    <mi>q</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">]</mo>
+</math> in the coordinate convention used by the screen mapping. For fragment homogeneous screen coordinate <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mn>1</mn>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mi>T</mi>
+  </msup>
+</math>, solve <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+  <mi>μ</mi>
+  <mo>∝</mo>
+  <mi>r</mi>
+</math> using <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>μ</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>Q</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi>r</mi>
+</math>. Normalize the three entries: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>μ</mi>
+    <mi>i</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>μ</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>μ</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>μ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>. These are the perspective-correct 3D barycentrics. Then interpolate a texture coordinate or other vertex attribute <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>a</mi>
+    <mi>i</mi>
+  </msub>
+</math>. The per-triangle inverse can be precomputed; each fragment needs a matrix-vector multiply and normalization. The same weights interpolate depth and material attributes consistently. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-18---rasterization-ii" class="wikilink">MITG-18 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:18:01–00:34:11)</p>
+<p>Antialiasing is costly in a raster pipeline because shading can be much more expensive than deciding whether a sample is covered. Supersampling renders a larger image and filters it down. Multisampling instead stores multiple subpixel coverage and depth samples but evaluates the shader once for a pixel, sharing that color across covered samples. This concentrates extra work at object boundaries, where coverage changes sharply, while avoiding repeated BRDF work across a smoothly shaded interior. It is an approximation: strong texture or lighting variation inside a pixel may still need multiple shading samples. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-18---rasterization-ii" class="wikilink">MITG-18 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:35:09–00:53:00)</p>
+<p>Mipmapping stores a pyramid of prefiltered textures. Choosing only the nearest level can cause a discontinuity as an object moves through a level threshold. Trilinear filtering blends the two neighboring mip levels; each lookup is bilinear in UV, so a trilinear lookup conceptually combines eight texel values. For a tilted triangle, the screen pixel footprint maps to a stretched ellipse in UV. Let <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>J</mi>
+  <mo>=</mo>
+  <mi>∂</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>∂</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+</math>; its four partial derivatives describe how one screen pixel expands and rotates in texture space. The <a href="ch329.xhtml#appendix-1fad5e7f36fa-singular-value-decomposition" class="wikilink">singular directions</a> of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>J</mi>
+</math> estimate major and minor footprint axes. <a href="ch309.xhtml#appendix-d5b3c692d9f0-convolution-and-filter-footprints" class="wikilink">Anisotropic filtering (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Convolution and filter footprints)</a> approximates this ellipse with several circular/mip samples, improving detail along the short axis without aliasing along the long one. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-18---rasterization-ii" class="wikilink">MITG-18 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:53:00–01:03:20)</p>
+<p>Transparency complicates a single nearest-depth buffer because multiple layers contribute. A simple approximation draws opaque geometry first, then transparent surfaces with depth testing enabled but depth writes disabled. This lets a transparent window be occluded by a nearer opaque object while allowing multiple transparent layers to blend, though overlapping transparent surfaces still require careful order or more elaborate per-pixel fragment storage. A deferred shading pass stores visible depth and material/BRDF parameters first, then shades only the surface that survived visibility. A pre-Z pass writes depth before expensive shading; tile-based rendering limits active buffers to screen regions, which is especially useful on memory-limited mobile hardware. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-18---rasterization-ii" class="wikilink">MITG-18 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (01:16:39–01:22:02)</p>
+</section>
+<section id="id_03-visual-computing-i-ch015-from-measured-samples-to-parallel-gpu-execution" class="level3">
+<h3>From measured samples to parallel GPU execution</h3>
+<p>The triangle pipeline needs an explicit shader-memory ABI and a model of parallel work before an API call is meaningful. This full existing teaching chapter connects alignment, buffers, invocation scheduling, synchronization, arithmetic intensity and reusable GPU algorithms to those pixel calculations.</p>
+</section>
+<section id="id_03-visual-computing-i-ch015-make-a-shader-record-an-explicit-binary-contract" class="level3">
+<h3>Make a shader record an explicit binary contract</h3>
+<p>The CPU writes bytes; the shader interprets them using offsets, strides, scalar widths and layout rules. A <a href="ch330.xhtml#appendix-749048795dbb-shader-buffer-abi" class="wikilink">shader ABI</a>, or application binary interface, is that agreement at the byte boundary. A C++ field name does not communicate its intended offset to a GPU. The same is true of a C++ <code>bool</code>: its representation is not an automatic portable shader representation. Prefer an explicit integer flag and verify the complete packed record.</p>
+<p>Alignment is the set of byte addresses at which a value may begin. Size is how much storage represents the value. Array stride is the distance from the start of one element to the next. These quantities can differ. Under ordinary extended-alignment <code>std140</code> rules, a <code>vec3</code> begins at a 16-byte-aligned offset but its three float components occupy 12 bytes. A following scalar can occupy the fourth slot when the layout rules permit it. Treating every <code>vec3</code> as an unconditional 16-byte payload gives wrong predictions for some legal structures. Inspect compiler-generated member offsets and array strides, and assert the corresponding CPU offsets.</p>
+<p>For the GLSL block <code>float exposure; vec3 color; float roughness; vec2 uvScale;</code>, the ordinary member offsets are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>16</mn>
+  <mo>,</mo>
+  <mn>28</mn>
+  <mo>,</mo>
+  <mn>32</mn>
+</math> and the block’s rounded structure extent is 48 bytes. This is a layout calculation, not proof that an arbitrary C++ type has that representation. Arrays of floats have stride 16 under <code>std140</code> and stride 4 under ordinary base-alignment <code>std430</code>. Vulkan’s permitted uniform-block layouts depend on enabled features; feature promotion to a core API version does not make every optional feature automatically enabled. <a href="https://docs.vulkan.org/guide/latest/shader_memory_layout.html">Khronos shader memory layout guide</a></p>
+<p>Texture descriptor indexing changes how a shader finds an image; it does not remove resource lifetime or synchronization obligations. A descriptor is a binding record. An index into a table is an identifier. Neither means the allocation remains alive until a pending draw finishes. Track generation, ownership and completion independently. The material-facing interpretation remains in <a href="ch317.xhtml#id_03-visual-computing-i-ch005-ask-a-surface-where-incoming-energy-can-go" class="wikilink">Ask a surface where incoming energy can go</a>.</p>
+</section>
+<section id="id_03-visual-computing-i-ch015-let-many-invocations-cooperate-without-inventing-a-global-clock" class="level3">
+<h3>Let many invocations cooperate without inventing a global clock</h3>
+<p>A GPU dispatch launches many invocations: individual executions of a kernel. A workgroup is a set of invocations that can use a common shared-memory region and workgroup synchronization. A subgroup is a smaller execution collective exposed by an API. NVIDIA often calls its hardware collective a warp, while other vendors use wave terminology. Width and supported operations must be queried or constrained; 32 lanes is an example, not a portable constant.</p>
+<p>SIMT means single instruction, multiple threads. Many logical invocations execute instructions through grouped hardware. If lanes disagree on a branch, hardware may execute different paths with different active-lane masks. This is divergence. Its cost depends on the actual paths, reconvergence, compiler lowering and hardware. Removing a useful branch can increase work, so measure the kernel rather than memorizing that every branch is expensive.</p>
+<p>Latency is how long an individual operation takes. Throughput is how much work completes per unit time. A GPU can hide a memory wait by issuing ready work from another resident group. Occupancy measures the fraction of a relevant hardware residency limit occupied by active work; it is not a direct measure of useful work completed. Registers, shared memory, group size and implementation-specific allocation granularity constrain residency. More occupancy can help a latency-bound kernel and still lose to a lower-occupancy kernel that performs less work.</p>
+<p>Coalescing combines suitable nearby lane accesses into fewer memory transactions. Shared-memory bank conflicts arise when concurrent accesses need conflicting service from the same hardware bank. These are different mechanisms. A padded transpose tile can remove a bank conflict while leaving global access unchanged. Texture caches and unified physical memory likewise do not remove the need to reason about access patterns.</p>
+<section id="id_03-visual-computing-i-ch015-scan-turns-local-counts-into-nonoverlapping-output-regions" class="level4">
+<h4>Scan turns local counts into nonoverlapping output regions</h4>
+<p>Suppose four visible objects emit <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math> records. The <a href="ch332.xhtml#appendix-f2ee4d086415-prefix-scan-and-stream-compaction" class="wikilink">exclusive prefix sum</a> is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>o</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+</math>. Object <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> owns the interval <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>. These intervals do not overlap; their total output size is six. This explains why scan appears in visibility compaction, mesh generation, radix sorting and variable-length expansion. The mathematics is an allocation proof, not just a trick for adding numbers.</p>
+<p>For large arrays, first scan blocks locally, scan their totals, then add each block’s offset. If all workgroups cannot synchronize within the dispatch, use separate dispatch phases with explicit dependencies. A dispatch boundary by itself is not a universal memory-visibility guarantee. The consumer must wait for the relevant producer writes in the API’s execution and memory model. In Vulkan, stage and access scopes identify those producer and consumer operations. <a href="https://docs.vulkan.org/spec/latest/chapters/synchronization.html">Khronos synchronization specification</a></p>
+<p><img src="../media/file140.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p>Atomicity, ordering and rendezvous answer different questions. An atomic addition prevents that counter update from being torn or lost. Memory ordering governs visibility and order of related operations. A workgroup barrier makes the participating invocations meet at a synchronization point and establishes the specified memory effects. An atomic counter does not by itself establish that unrelated payload writes are ready for a reader. A workgroup barrier does not make another workgroup finish.</p>
+<p>Consider a final partially filled group in a tiled matrix multiply. Some lanes represent out-of-range matrix elements. They should write neutral zero values into their assigned shared slots and still participate in every required group barrier. Returning before a barrier that the other lanes reach can violate the synchronization contract. After consuming a shared tile, another barrier may be needed before any lane overwrites it for the next iteration. The first barrier protects consumers from incomplete loads; the second protects slower consumers from premature reuse.</p>
+</section>
+<section id="id_03-visual-computing-i-ch015-load-a-partial-matrix-tile-with-two-different-bounds" class="level4">
+<h4>Load a partial matrix tile with two different bounds</h4>
+<p>The supplied tiled multiplication excerpt uses a placeholder <code>valid</code> for both input loads. That placeholder is not a sufficient complete bounds rule. Let the left matrix have shape <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>M</mi>
+  <mo>×</mo>
+  <mi>K</mi>
+</math> and the right matrix shape <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>K</mi>
+  <mo>×</mo>
+  <mi>N</mi>
+</math>. For tile width <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math>, row <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+</math>, column <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+</math>, inner-dimension base <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>, and local coordinates <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>l</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>l</mi>
+    <mi>y</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>, the two legal-load predicates are</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>left valid</mtext>
+  <mo>:</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>r</mi>
+  <mo>&lt;</mo>
+  <mi>M</mi>
+  <mtext> </mtext>
+  <mo>∧</mo>
+  <mtext> </mtext>
+  <mi>b</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>l</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>&lt;</mo>
+  <mi>K</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mtext>right valid</mtext>
+  <mo>:</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>b</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>l</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>&lt;</mo>
+  <mi>K</mi>
+  <mtext> </mtext>
+  <mo>∧</mo>
+  <mtext> </mtext>
+  <mi>c</mi>
+  <mo>&lt;</mo>
+  <mi>N</mi>
+  <mo>.</mo>
+</math>
+<p>A thread whose output column is out of range can still need to load a left-hand element for another thread’s valid output. Similarly, an out-of-range output row does not by itself make its right-hand load unnecessary. Mask the two loads separately, write zero for each missing element, and let every participating thread reach both barriers. Finally store only when <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+  <mo>&lt;</mo>
+  <mi>M</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+  <mo>&lt;</mo>
+  <mi>N</mi>
+</math>. A zero-padded last tile makes the full inner tile loop valid without reading past either input.</p>
+<pre class="metal"><code>// Illustrative tile body, with T x T participating threads.
+// lhsTile and rhsTile are threadgroup arrays declared by the kernel.
+for (uint base = 0; base &lt; K; base += T) {
+    lhsTile[local.y][local.x] =
+        (row &lt; M &amp;&amp; base + local.x &lt; K)
+        ? lhs[row * K + base + local.x] : 0.0f;
+    rhsTile[local.y][local.x] =
+        (base + local.y &lt; K &amp;&amp; column &lt; N)
+        ? rhs[(base + local.y) * N + column] : 0.0f;
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    for (uint j = 0; j &lt; T; ++j)
+        sum += lhsTile[local.y][j] * rhsTile[j][local.x];
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+}
+if (row &lt; M &amp;&amp; column &lt; N)
+    output[row * N + column] = sum;</code></pre>
+<p>This is a kernel fragment with explicit assumptions, not a standalone compiled Metal program. CPU emulation of its load masks and arithmetic is recorded separately; that check does not establish Metal compilation, GPU synchronization or device behavior.</p>
+<p>The following supplied GPU lessons retain implementation-specific examples as source observations. Their Kairo and Maveb claims describe the supplied snapshot; this integration has not established that they match today’s repositories or tested their kernels on a GPU.</p>
+<p>Implementation-specific passages retain observations from the supplied Kairo/Maveb snapshot. They are not a fresh audit of those repositories. Source exercises and illustrative code are teaching material; only explicitly recorded checks have been executed here.</p>
+<p><strong>Material representation has several layers</strong></p>
+<p>A healthy engine should distinguish at least these domains:</p>
+<pre class="text"><code>authoring/interchange material
+        ↓
+persistent engine artifact
+        ↓
+runtime renderer-neutral material
+        ↓
+GPU material record
+        ↓
+shader representation</code></pre>
+<p>These do <strong>not</strong> need to have identical C++ structs.</p>
+<p>For Kairo today:</p>
+<pre class="text"><code>glTF material
+    ↓
+GltfMaterialData
+    ↓
+MakeGltfPBRMaterial()
+    ↓
+PBRMaterial
+    ↓
+MaterialUniform + descriptors
+    ↓
+GLSL MaterialData</code></pre>
+<p>That is already the correct broad layering.</p>
+<p>The danger begins when one layer’s ABI accidentally leaks into another.</p>
+<hr />
+<p><strong>GPU data layout is an ABI</strong></p>
+<p>Suppose C++ contains:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Material</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    Vec3 baseColor<span class="op">;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> roughness<span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> metallic<span class="op">;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>and GLSL says:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">layout</span><span class="op">(</span><span class="dt">std140</span><span class="op">)</span> <span class="kw">uniform</span> Material</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec3</span> baseColor<span class="op">;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> roughness<span class="op">;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> metallic<span class="op">;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>You cannot assume:</p>
+<pre class="text"><code>same field names
+→ same bytes.</code></pre>
+<p>CPU and GPU must agree on:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>offset</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>alignment</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>stride</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>matrix order</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>scalar size</mtext>
+  <mo>.</mo>
+</math>
+<p>This is a binary ABI contract.</p>
+<hr />
+<p><strong>Alignment versus size</strong></p>
+<p>These are different concepts.</p>
+<p>A scalar <code>float</code> has size:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+</math>
+<p>bytes.</p>
+<p>Its alignment is typically:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4.</mn>
+</math>
+<p>A <code>vec4</code> has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mtext>-byte size</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mtext>-byte alignment</mtext>
+  <mo>.</mo>
+</math>
+<p>A <code>vec3</code> contains 12 bytes of useful numeric data but frequently carries 16-byte alignment requirements in GPU interface layouts.</p>
+<p>That mismatch is where many CPU/GPU struct bugs begin.</p>
+<hr />
+<p><strong>std140</strong></p>
+<p><code>std140</code> is the traditional extended-alignment layout used especially for uniform blocks.</p>
+<p>The broad rules to internalize are:</p>
+<table>
+<colgroup>
+<col style="width: 42%" />
+<col style="width: 57%" />
+</colgroup>
+<thead>
+<tr>
+<th>Type</th>
+<th style="text-align: right;">Typical std140 base alignment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>float</code> / <code>int</code></td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td><code>vec2</code></td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr>
+<td><code>vec3</code></td>
+<td style="text-align: right;">16</td>
+</tr>
+<tr>
+<td><code>vec4</code></td>
+<td style="text-align: right;">16</td>
+</tr>
+<tr>
+<td>arrays</td>
+<td style="text-align: right;">element alignment/stride rounded to vec4-like 16-byte boundaries</td>
+</tr>
+<tr>
+<td>structs</td>
+<td style="text-align: right;">maximum member alignment, rounded to a 16-byte boundary</td>
+</tr>
+<tr>
+<td>matrices</td>
+<td style="text-align: right;">treated essentially as aligned vector arrays</td>
+</tr>
+</tbody>
+</table>
+<p>Vulkan documentation refers to std140 as <strong>extended alignment</strong>. <a href="https://docs.vulkan.org/guide/latest/shader_memory_layout.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<p>The primary characteristic is conservative 16-byte padding for aggregates such as arrays and structures.</p>
+<hr />
+<p><strong>Example std140 struct</strong></p>
+<p>Consider:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">layout</span><span class="op">(</span><span class="dt">std140</span><span class="op">)</span> <span class="kw">uniform</span> Example</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> exposure<span class="op">;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec3</span>  color<span class="op">;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> roughness<span class="op">;</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec2</span>  uvScale<span class="op">;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Start offset:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.</mn>
+</math>
+<p><code>exposure</code>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>offset</mtext>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mtext>size</mtext>
+  <mo>=</mo>
+  <mn>4.</mn>
+</math>
+<p>Next <code>vec3</code> requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mtext>-byte alignment</mtext>
+  <mo>.</mo>
+</math>
+<p>So we jump:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mo stretchy="false">→</mo>
+  <mn>16.</mn>
+</math>
+<p><code>color</code> begins at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16.</mn>
+</math>
+<p>This immediately introduces 12 bytes between the first float and the vector.</p>
+<p>Depending on exact member-layout rules and representation, relying on packing around <code>vec3</code> is notoriously error-prone.</p>
+<p>A much safer CPU-side shape is:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> <span class="kw">alignas</span><span class="op">(</span><span class="dv">16</span><span class="op">)</span> MaterialGPU</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>array<span class="op">&lt;</span><span class="dt">float</span><span class="op">,</span> <span class="dv">4</span><span class="op">&gt;</span> colorAndExposure<span class="op">;</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>array<span class="op">&lt;</span><span class="dt">float</span><span class="op">,</span> <span class="dv">4</span><span class="op">&gt;</span> params<span class="op">;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>which exactly mirrors:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="dt">vec4</span> colorAndExposure<span class="op">;</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="dt">vec4</span> params<span class="op">;</span></span></code></pre></div>
+<hr />
+<p><strong>Why Kairo’s current material block is smart</strong></p>
+<p>Kairo shader:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">layout</span><span class="op">(</span>set <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> <span class="dt">binding</span> <span class="op">=</span> <span class="dv">7</span><span class="op">)</span> <span class="kw">uniform</span> MaterialData</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> baseColorFactor<span class="op">;</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> emissiveAndNormalScale<span class="op">;</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> factors<span class="op">;</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> flags<span class="op">;</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> material<span class="op">;</span></span></code></pre></div>
+<p>That is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mo>×</mo>
+  <mn>16</mn>
+  <mo>=</mo>
+  <mn>64</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>CPU:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> MaterialUniform</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>array<span class="op">&lt;</span><span class="dt">float</span><span class="op">,</span> <span class="dv">16</span><span class="op">&gt;</span> Values<span class="op">{};</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>also:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>64</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>There are no:</p>
+<ul>
+<li><code>vec3</code> packing questions,</li>
+<li>bool representation questions,</li>
+<li>irregular offsets,</li>
+<li>nested arrays.</li>
+</ul>
+<p>This is deliberately boring, which is excellent for an ABI.</p>
+<hr />
+<p><strong>Kairo’s actual 64-byte mapping</strong></p>
+<p>Current packing is essentially:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext mathvariant="monospace">Values[0..3]</mtext>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mtext>baseRGB</mtext>
+  <mo>,</mo>
+  <mi>α</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext mathvariant="monospace">Values[4..7]</mtext>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mtext>emissiveRGB</mtext>
+  <mo>,</mo>
+  <mtext>normalScale</mtext>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext mathvariant="monospace">Values[8..11]</mtext>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mtext>metallic</mtext>
+  <mo>,</mo>
+  <mtext>roughness</mtext>
+  <mo>,</mo>
+  <mtext>AO</mtext>
+  <mo>,</mo>
+  <mtext>alphaCutoff</mtext>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext mathvariant="monospace">Values[12..15]</mtext>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mtext>alphaMode</mtext>
+  <mo>,</mo>
+  <mtext>doubleSided</mtext>
+  <mo>,</mo>
+  <mtext>unused</mtext>
+  <mo>,</mo>
+  <mtext>unused</mtext>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>That maps exactly onto four shader <code>vec4</code>s.</p>
+<p>This is a very robust GPU-data layout.</p>
+<hr />
+<p><strong>Why GPU-side booleans are awkward</strong></p>
+<p>A CPU <code>bool</code> may occupy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mtext> byte</mtext>
+  <mo>.</mo>
+</math>
+<p>A shader boolean in an interface block may obey entirely different representation/alignment requirements.</p>
+<p>Therefore sending:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> doubleSided<span class="op">;</span></span></code></pre></div>
+<p>directly into a raw GPU buffer is risky.</p>
+<p>Kairo instead converts:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>DoubleSided</span></code></pre></div>
+<p>into:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.0</mn>
+  <mtext> or </mtext>
+  <mn>1.0</mn>
+</math>
+<p>inside a float slot.</p>
+<p>This is simple and portable.</p>
+<p>For packed material tables, integers/bitfields are also common.</p>
+<hr />
+<p><strong>std430</strong></p>
+<p><code>std430</code> is Vulkan/GLSL’s <strong>base alignment</strong> layout.</p>
+<p>It relaxes some std140 aggregate padding.</p>
+<p>The biggest practical difference is arrays and structures of scalar/small-vector values.</p>
+<p>For example, under std140:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> values<span class="op">[</span><span class="dv">4</span><span class="op">];</span></span></code></pre></div>
+<p>commonly has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mtext>-byte stride</mtext>
+  <mo>.</mo>
+</math>
+<p>Thus four floats may consume:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>Under std430:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>stride</mtext>
+  <mo>=</mo>
+  <mn>4</mn>
+</math>
+<p>is possible, so the same array uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>Vulkan documents std430 as base alignment, and Vulkan 1.2’s <code>uniformBufferStandardLayout</code> feature allows std430-style layout for uniform buffers as well; storage buffers commonly use it already. <a href="https://docs.vulkan.org/guide/latest/shader_memory_layout.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<hr />
+<p><strong>Why std430 matters for large material arrays</strong></p>
+<p>Suppose you want:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>100</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>materials.</p>
+<p>Each material contains many scalars.</p>
+<p>If every scalar/array element is unnecessarily promoted to 16-byte stride, memory waste becomes substantial.</p>
+<p>For huge structured material tables, std430 is much more appropriate.</p>
+<p>A modern material SSBO could look like:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">layout</span><span class="op">(</span><span class="dt">std430</span><span class="op">,</span> set <span class="op">=</span> <span class="dv">1</span><span class="op">,</span> <span class="dt">binding</span> <span class="op">=</span> <span class="dv">0</span><span class="op">)</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="dt">readonly</span> <span class="kw">buffer</span> MaterialTable</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    MaterialGPU materials<span class="op">[];</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then each draw carries:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext mathvariant="monospace">materialIndex</mtext>
+</math>
+<p>instead of rebinding one UBO/descriptor set per material.</p>
+<p>That is a major architectural improvement toward GPU-driven rendering.</p>
+<hr />
+<p><strong>Example production material GPU record</strong></p>
+<p>A scalable representation might be:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> <span class="kw">alignas</span><span class="op">(</span><span class="dv">16</span><span class="op">)</span> MaterialGPU</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 16 bytes</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> BaseColorR<span class="op">;</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> BaseColorG<span class="op">;</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> BaseColorB<span class="op">;</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> BaseColorA<span class="op">;</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 16 bytes</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> EmissiveR<span class="op">;</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> EmissiveG<span class="op">;</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> EmissiveB<span class="op">;</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> NormalScale<span class="op">;</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 16 bytes</span></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Metallic<span class="op">;</span></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Roughness<span class="op">;</span></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> AO<span class="op">;</span></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> AlphaCutoff<span class="op">;</span></span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 16 bytes</span></span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> BaseColorTexture<span class="op">;</span></span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> NormalTexture<span class="op">;</span></span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> MetallicRoughnessTexture<span class="op">;</span></span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> EmissiveTexture<span class="op">;</span></span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 16 bytes</span></span>
+<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> OcclusionTexture<span class="op">;</span></span>
+<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Flags<span class="op">;</span></span>
+<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> TexCoordMask<span class="op">;</span></span>
+<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Reserved<span class="op">;</span></span>
+<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Total:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>80</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>The key change is that textures are no longer Vulkan handles inside the struct.</p>
+<p>They are <strong>indices into a resource table</strong>.</p>
+<p>That is the bridge to bindless rendering.</p>
+<hr />
+<p><strong>Padding is part of the format</strong></p>
+<p>Suppose CPU believes:</p>
+<pre class="text"><code>roughness offset = 12</code></pre>
+<p>but shader believes:</p>
+<pre class="text"><code>roughness offset = 16.</code></pre>
+<p>Then the shader does not get a subtly inaccurate roughness.</p>
+<p>It reads <strong>different bytes</strong>.</p>
+<p>A float bit pattern from some unrelated field may become:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>−</mo>
+  <mn>3.4</mn>
+  <mo>×</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>20</mn>
+    </mrow>
+  </msup>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mi>a</mi>
+  <mi>N</mi>
+  <mo>.</mo>
+</math>
+<p>This can then propagate into:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>D</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>GGX</mtext>
+    </mrow>
+  </msub>
+</math>
+<p>and the entire framebuffer.</p>
+<p>So GPU layout mismatches are not “serialization bugs.”</p>
+<p>They are shader execution corruption.</p>
+<hr />
+<p><strong>Compile-time layout defense</strong></p>
+<p>For explicit CPU GPU structures, use assertions:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> <span class="kw">alignas</span><span class="op">(</span><span class="dv">16</span><span class="op">)</span> MaterialGPU</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> BaseColor<span class="op">[</span><span class="dv">4</span><span class="op">];</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> EmissiveNormal<span class="op">[</span><span class="dv">4</span><span class="op">];</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Factors<span class="op">[</span><span class="dv">4</span><span class="op">];</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Flags<span class="op">[</span><span class="dv">4</span><span class="op">];</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="kw">static_assert</span><span class="op">(</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">sizeof</span><span class="op">(</span>MaterialGPU<span class="op">)</span> <span class="op">==</span> <span class="dv">64</span><span class="op">);</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="kw">static_assert</span><span class="op">(</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">alignof</span><span class="op">(</span>MaterialGPU<span class="op">)</span> <span class="op">==</span> <span class="dv">16</span><span class="op">);</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="kw">static_assert</span><span class="op">(</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>    offsetof<span class="op">(</span>MaterialGPU<span class="op">,</span> BaseColor<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a><span class="kw">static_assert</span><span class="op">(</span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>    offsetof<span class="op">(</span>MaterialGPU<span class="op">,</span> EmissiveNormal<span class="op">)</span> <span class="op">==</span> <span class="dv">16</span><span class="op">);</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a><span class="kw">static_assert</span><span class="op">(</span></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>    offsetof<span class="op">(</span>MaterialGPU<span class="op">,</span> Factors<span class="op">)</span> <span class="op">==</span> <span class="dv">32</span><span class="op">);</span></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a><span class="kw">static_assert</span><span class="op">(</span></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>    offsetof<span class="op">(</span>MaterialGPU<span class="op">,</span> Flags<span class="op">)</span> <span class="op">==</span> <span class="dv">48</span><span class="op">);</span></span></code></pre></div>
+<p>That turns a silent rendering bug into a compile-time failure.</p>
+<p>Even better, generate CPU/shader layouts from one schema where possible.</p>
+<hr />
+<p><strong>Why <code>std::array&lt;float,16&gt;</code> is robust but not expressive</strong></p>
+<p>Kairo currently avoids ABI mistakes with:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>array<span class="op">&lt;</span><span class="dt">float</span><span class="op">,</span><span class="dv">16</span><span class="op">&gt;</span></span></code></pre></div>
+<p>which is good.</p>
+<p>But:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>uniform<span class="op">.</span>Values<span class="op">[</span><span class="dv">10</span><span class="op">]</span></span></code></pre></div>
+<p>does not explain itself.</p>
+<p>The long-term better pattern is to retain both:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>explicit semantic field names</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>layout guarantees</mtext>
+  <mo>.</mo>
+</math>
+<p>For example:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> <span class="kw">alignas</span><span class="op">(</span><span class="dv">16</span><span class="op">)</span> MaterialGPU</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    Vec4f BaseColorFactor<span class="op">;</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    Vec4f EmissiveNormalScale<span class="op">;</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    Vec4f Factors<span class="op">;</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    Vec4f Flags<span class="op">;</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>provided <code>Vec4f</code> is explicitly guaranteed to be 16 bytes/aligned as needed.</p>
+<p>Then shader and CPU become mechanically readable.</p>
+<hr />
+<p><strong>Bindless: what problem are we solving?</strong></p>
+<p>Current Kairo has approximately:</p>
+<pre class="text"><code>draw 0
+→ bind descriptor set for material 0
+→ draw
+
+draw 1
+→ bind descriptor set for material 1
+→ draw
+
+draw 2
+→ bind descriptor set for material 2
+→ draw</code></pre>
+<p>Every set contains several texture descriptors plus material UBO state.</p>
+<p>This is perfectly reasonable for a compact renderer.</p>
+<p>But at very large scene scales, explicit per-material rebinding becomes expensive and complicates GPU-driven submission.</p>
+<p>Bindless-style rendering changes the model to:</p>
+<pre class="text"><code>one large texture/resource table
++
+material contains integer indices
++
+shader dynamically chooses resources</code></pre>
+<hr />
+<p><strong>Bindless conceptual model</strong></p>
+<p>Suppose:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">layout</span><span class="op">(</span>set <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> <span class="dt">binding</span> <span class="op">=</span> <span class="dv">0</span><span class="op">)</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">sampler2D</span> textures<span class="op">[];</span></span></code></pre></div>
+<p>Material record:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> MaterialGPU</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint</span> baseColorTexture<span class="op">;</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint</span> normalTexture<span class="op">;</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint</span> mrTexture<span class="op">;</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>MaterialGPU m <span class="op">=</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    materials<span class="op">[</span>materialIndex<span class="op">];</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="dt">vec4</span> base <span class="op">=</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">texture</span><span class="op">(</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>        textures<span class="op">[</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>            <span class="fu">nonuniformEXT</span><span class="op">(</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>                m<span class="op">.</span><span class="fu">baseColorTexture</span><span class="op">)],</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>        uv<span class="op">);</span></span></code></pre></div>
+<p>Now thousands of materials can coexist without rebinding a different descriptor set for every draw.</p>
+<hr />
+<p><strong>Why <code>nonuniformEXT</code> exists</strong></p>
+<p>Imagine one GPU wave processes fragments from different materials.</p>
+<p>Lane 0 chooses texture:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>17</mn>
+</math>
+<p>while lane 1 chooses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>42.</mn>
+</math>
+<p>The descriptor index is not uniform across the wave.</p>
+<p>Vulkan descriptor indexing explicitly provides support for non-uniform dynamic indexing of descriptor arrays, along with runtime arrays, partially bound arrays and update-after-bind behavior. <a href="https://docs.vulkan.org/refpages/latest/refpages/source/VK_EXT_descriptor_indexing.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<p>The shader/feature declarations must tell the implementation that indexing can differ across invocations.</p>
+<p>This is not merely syntax.</p>
+<p>It changes assumptions the compiler may make about descriptor selection.</p>
+<hr />
+<p><strong>Descriptor indexing capabilities</strong></p>
+<p>A Vulkan bindless-like design may rely on capabilities such as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext mathvariant="monospace">runtimeDescriptorArray</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext mathvariant="monospace">descriptorBindingPartiallyBound</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext mathvariant="monospace">descriptorBindingVariableDescriptorCount</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext mathvariant="monospace">shaderSampledImageArrayNonUniformIndexing</mtext>
+  <mo>,</mo>
+</math>
+<p>and possibly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext mathvariant="monospace">updateAfterBind</mtext>
+  <mo>.</mo>
+</math>
+<p>These features must be queried and enabled; they are not magical properties of declaring <code>sampler2D[]</code>. <a href="https://docs.vulkan.org/guide/latest/extensions/VK_EXT_descriptor_indexing.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<hr />
+<p><strong>Partially bound arrays</strong></p>
+<p>Suppose your shader declares capacity for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>100</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>textures.</p>
+<p>But currently only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>11</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>exist.</p>
+<p>Without suitable descriptor-indexing behavior, descriptor validity requirements can force every declared slot to be populated.</p>
+<p>With partially bound descriptors, unused dynamically unreferenced entries can remain invalid/unpopulated under the extension’s rules. <a href="https://docs.vulkan.org/spec/latest/chapters/descriptorsets.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<p>That makes large resource tables practical.</p>
+<hr />
+<p><strong>Update-after-bind</strong></p>
+<p>Ordinarily, descriptor contents are treated as stable while pending GPU work may use them.</p>
+<p>Update-after-bind relaxes some of those rules.</p>
+<p>This is useful for streaming:</p>
+<pre class="text"><code>frame running
+    ↓
+new texture finishes loading
+    ↓
+descriptor table slot updated</code></pre>
+<p>without rebuilding every material.</p>
+<p>But this flexibility introduces strict lifetime/synchronization responsibilities. Vulkan’s descriptor-indexing documentation emphasizes that descriptor updates and resource lifetime still need precise correctness rules. <a href="https://docs.vulkan.org/tutorial/latest/Building_a_Simple_Engine/Advanced_Topics/Descriptor_Indexing_UpdateAfterBind.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<p>“Bindless” does not mean “lifetime-less.”</p>
+<hr />
+<p><strong>A bindless handle is not ownership</strong></p>
+<p>Suppose material stores:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>textureIndex</mtext>
+  <mo>=</mo>
+  <mn>317.</mn>
+</math>
+<p>If texture 317 is destroyed while a command buffer still references that index, the integer remains 317.</p>
+<p>It has not become safe.</p>
+<p>A scalable renderer therefore needs some policy around:</p>
+<ul>
+<li>descriptor-slot lifetime,</li>
+<li>deferred destruction,</li>
+<li>frame fences,</li>
+<li>generation counters,</li>
+<li>residency,</li>
+<li>streaming.</li>
+</ul>
+<p>The hard part of bindless architecture is often resource lifetime, not shader syntax.</p>
+<hr />
+<p><strong>Descriptor indexing and GPU-driven rendering fit together</strong></p>
+<p>From Pass 2:</p>
+<p>GPU-driven rendering wants the GPU to generate draw commands.</p>
+<p>If each generated draw requires the CPU to bind a unique material descriptor set, we lose much of the point.</p>
+<p>Instead:</p>
+<pre class="text"><code>draw command
+contains materialID
+        ↓
+shader
+loads MaterialGPU[materialID]
+        ↓
+MaterialGPU
+contains texture indices
+        ↓
+descriptor table</code></pre>
+<p>Now the entire rendering decision can stay on GPU-visible data.</p>
+<p>This is why:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>bindless resources</mtext>
+          <mo>+</mo>
+          <mtext>material tables</mtext>
+          <mo>+</mo>
+          <mtext>indirect draws</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>form such a common modern architecture.</p>
+<hr />
+</section>
+<section id="id_03-visual-computing-i-ch015-m129" class="level4">
+<h4>+ M129</h4>
+<p>Phase 22 begins by changing the question again.</p>
+<p>In Phase 21 we asked:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>How do I construct a correct Monte Carlo estimator?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Now the question is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>How do I make millions of copies of useful work execute efficiently on throughput hardware?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The curriculum’s own repository anchors are unusually useful here because Maveb already contains a real Metal Gaussian pipeline with <strong>Blelloch scan, subgroup operations, threadgroup barriers, radix histograms, prefix sums and stable key/value scatter</strong>. So this pass is not merely explaining textbook GPU algorithms—we can reverse-engineer code you already have.</p>
+<hr />
+</section>
+<section id="id_03-visual-computing-i-ch015-gpu-execution-architecture" class="level4">
+<h4>GPU EXECUTION ARCHITECTURE</h4>
+<p><strong>CPU and GPU optimization start from different goals</strong></p>
+<p>A modern high-performance CPU is strongly optimized for <strong>low latency on relatively few instruction streams</strong>.</p>
+<p>It invests substantial silicon in things such as sophisticated branch prediction, speculative/out-of-order execution, large caches, powerful individual cores and mechanisms for extracting instruction-level parallelism from comparatively narrow serial programs.</p>
+<p>A GPU spends vastly more of its resources on arithmetic throughput.</p>
+<p>Instead of saying:</p>
+<blockquote>
+<p>Make one thread finish this operation as soon as physically possible.</p>
+</blockquote>
+<p>the GPU philosophy is closer to:</p>
+<blockquote>
+<p>Keep an enormous number of arithmetic lanes busy, and when some work stalls, immediately run other work.</p>
+</blockquote>
+<p>The distinction is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>CPU</mtext>
+          <mo>≈</mo>
+          <mtext>latency-oriented</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>versus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>GPU</mtext>
+          <mo>≈</mo>
+          <mtext>throughput-oriented</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Neither statement is absolute. CPUs have SIMD and many cores; GPUs have caches and sophisticated schedulers. It is the architectural emphasis that differs.</p>
+<hr />
+<p><strong>A simple latency versus throughput example</strong></p>
+<p>Imagine a memory operation takes notionally:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>400</mn>
+</math>
+<p>cycles before the requested data is ready.</p>
+<p>A CPU might try to avoid waiting by using caches, prefetchers, out-of-order execution and other independent instructions from the same few threads.</p>
+<p>A GPU instead may have many groups of threads ready.</p>
+<p>Warp A issues a memory load and stalls.</p>
+<p>Rather than waiting 400 cycles, the scheduler can issue:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>C</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>D</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>E</mi>
+  <mo>,</mo>
+  <mo>…</mo>
+</math>
+<p>provided those groups are ready.</p>
+<p>Hence:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>GPU latency hiding is primarily achieved by having other independent execution groups resident</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is the origin of the occupancy discussion later.</p>
+<hr />
+<p><strong>Compute unit / streaming multiprocessor concept</strong></p>
+<p>Different vendors use different terminology.</p>
+<p>NVIDIA commonly talks about an SM, or streaming multiprocessor.</p>
+<p>AMD commonly uses compute-unit/wave terminology.</p>
+<p>Apple exposes Metal execution abstractions rather than requiring you to reason in exact vendor-internal units.</p>
+<p>Generically, call it a <strong>compute unit</strong>.</p>
+<p>A compute unit contains some combination of execution lanes, warp/wave scheduling hardware, a large register file, fast shared/threadgroup memory, load/store hardware, special-function units and caches/interfaces to the wider GPU memory system.</p>
+<p>Many workgroups can potentially reside on one compute unit simultaneously.</p>
+<p>The central hierarchy is:</p>
+<pre id="id_5kw7e9" class="text"><code>GPU
+    compute units
+        resident workgroups
+            subgroups / warps / waves
+                lanes / invocations</code></pre>
+<p>These levels are not interchangeable.</p>
+<hr />
+<p><strong>SIMT</strong></p>
+<p>GPU shader programming exposes what appears to be many scalar threads:</p>
+<div class="sourceCode" id="e937zu"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="e937zu-1"><a href="#e937zu-1" aria-hidden="true" tabindex="-1"></a>kernel <span class="dt">void</span> Compute<span class="op">(</span><span class="ex">uint</span> id<span class="op">)</span></span>
+<span id="e937zu-2"><a href="#e937zu-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="e937zu-3"><a href="#e937zu-3" aria-hidden="true" tabindex="-1"></a>    output<span class="op">[</span>id<span class="op">]</span> <span class="op">=</span></span>
+<span id="e937zu-4"><a href="#e937zu-4" aria-hidden="true" tabindex="-1"></a>        input<span class="op">[</span>id<span class="op">]</span> <span class="op">*</span> <span class="fl">2.0</span><span class="bu">f</span><span class="op">;</span></span>
+<span id="e937zu-5"><a href="#e937zu-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Each invocation appears independent.</p>
+<p>But hardware typically groups several invocations and issues the same instruction across their lanes.</p>
+<p>This is <strong>Single Instruction, Multiple Threads</strong>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>SIMT</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Each lane has its own logical registers and IDs, but the subgroup often shares instruction issue.</p>
+<hr />
+<p><strong>SIMT versus CPU SIMD</strong></p>
+<p>This distinction matters.</p>
+<p>Your <code>KairoSIMD</code> implementation explicitly executes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+</math>
+<p>floats with AVX2:</p>
+<div class="sourceCode" id="qpohrx"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="qpohrx-1"><a href="#qpohrx-1" aria-hidden="true" tabindex="-1"></a>_mm256_add_ps<span class="op">(...)</span></span></code></pre></div>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+</math>
+<p>with AVX-512:</p>
+<div class="sourceCode" id="id_6vk2sf"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="id_6vk2sf-1"><a href="#id_6vk2sf-1" aria-hidden="true" tabindex="-1"></a>_mm512_add_ps<span class="op">(...)</span></span></code></pre></div>
+<p>There the programmer explicitly says:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>perform one vector operation across N lanes</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>On the GPU, you write something that appears scalar:</p>
+<pre id="id_2o38s4" class="metal"><code>kernel void add(
+    device const float* a,
+    device const float* b,
+    device float* out,
+    uint id [[thread_position_in_grid]])
+{
+    out[id] =
+        a[id] + b[id];
+}</code></pre>
+<p>Hardware groups many such invocations.</p>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>SIMD: vector lanes explicit in the programming model</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>while:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>SIMT: scalar-looking invocations grouped by execution hardware</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This distinction explains divergence.</p>
+<hr />
+<p><strong>Warp, wavefront and subgroup</strong></p>
+<p>The hardware execution group has different names.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>W</mi>
+          <mo>=</mo>
+          <mo fence="false" stretchy="false">{</mo>
+          <msub>
+            <mtext>lane</mtext>
+            <mn>0</mn>
+          </msub>
+          <mo>,</mo>
+          <mo>…</mo>
+          <mo>,</mo>
+          <msub>
+            <mtext>lane</mtext>
+            <mrow data-mjx-texclass="ORD">
+              <mi>S</mi>
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msub>
+          <mo fence="false" stretchy="false">}</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The width:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+</math>
+<p>is hardware/platform dependent.</p>
+<p>Do not write an engine assuming:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mo>=</mo>
+  <mn>32</mn>
+</math>
+<p>unless your target guarantees it.</p>
+<p>In cross-platform shader terminology, <strong>subgroup</strong> is the safest conceptual name.</p>
+<p>Metal calls corresponding operations <code>simdgroup</code> operations.</p>
+<p>Vulkan has subgroup operations.</p>
+<p>CUDA historically talks about warps.</p>
+<p>AMD literature commonly talks about wavefronts.</p>
+<hr />
+<p><strong>Maveb already exposes this hierarchy explicitly</strong></p>
+<p>Your Gaussian shader takes:</p>
+<pre id="z8wxwy" class="metal"><code>uint lane
+    [[thread_index_in_simdgroup]],
+
+uint simdGroup
+    [[simdgroup_index_in_threadgroup]],
+
+uint simdWidth
+    [[threads_per_simdgroup]],
+
+uint threadsPerGroup
+    [[threads_per_threadgroup]]</code></pre>
+<p>That means the shader can distinguish:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>global invocation</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>threadgroup-local invocation</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>subgroup</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>lane within subgroup</mtext>
+  <mo>.</mo>
+</math>
+<p>That is the complete execution hierarchy M127 is trying to teach.</p>
+<hr />
+<p><strong>Invocation IDs</strong></p>
+<p>For a one-dimensional dispatch, global index is conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>i</mi>
+          <mo>=</mo>
+          <mi>g</mi>
+          <mi>G</mi>
+          <mo>+</mo>
+          <mi>l</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo>=</mo>
+  <mtext>workgroup index</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mo>=</mo>
+  <mtext>threads per workgroup</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mo>=</mo>
+  <mtext>local thread index</mtext>
+  <mo>.</mo>
+</math>
+<p>GPU APIs usually provide this already as a global invocation ID.</p>
+<p>In Metal:</p>
+<pre id="id_0x8pi8" class="metal"><code>uint index
+    [[thread_position_in_grid]]</code></pre>
+<p>is exactly that.</p>
+<hr />
+<p><strong>KairoGPU’s vector kernel is the canonical 1D mapping</strong></p>
+<p>Current KairoGPU:</p>
+<pre id="v6nvzv" class="metal"><code>kernel void kairo_vector_multiply(
+    device const float* lhs,
+    device const float* rhs,
+    device float* output,
+    constant uint&amp; count,
+    uint index [[thread_position_in_grid]])
+{
+    if (index &lt; count)
+        output[index] =
+            lhs[index] * rhs[index];
+}</code></pre>
+<p>The mapping is perfect:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>one invocation</mtext>
+          <mo stretchy="false">↔</mo>
+          <mtext>one array element</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>No invocation communicates with another.</p>
+<p>This is the easiest class of GPU workload.</p>
+<hr />
+<p><strong>Workgroups / threadgroups</strong></p>
+<p>Invocations are organized into workgroups.</p>
+<p>For one workgroup:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>x</mi>
+  </msub>
+  <msub>
+    <mi>T</mi>
+    <mi>y</mi>
+  </msub>
+  <msub>
+    <mi>T</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>All invocations in the group can generally:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>share threadgroup/shared memory</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>synchronize at workgroup barriers</mtext>
+  <mo>.</mo>
+</math>
+<p>Different workgroups must be considered independent during one dispatch.</p>
+<p>There is no ordinary barrier inside a kernel that says:</p>
+<blockquote>
+<p>Wait until every workgroup on the entire GPU reaches this point.</p>
+</blockquote>
+<p>That restriction drives many multi-dispatch algorithms.</p>
+<hr />
+<p><strong>Why workgroups exist</strong></p>
+<p>Suppose 256 threads need to collaboratively reduce 256 values.</p>
+<p>If those threads belong to one workgroup, they can place values into fast threadgroup storage:</p>
+<pre id="et2xom" class="metal"><code>threadgroup float scratch[256];</code></pre>
+<p>then synchronize:</p>
+<pre id="yx8mk8" class="metal"><code>threadgroup_barrier(
+    mem_flags::mem_threadgroup);</code></pre>
+<p>and collaboratively operate on the array.</p>
+<p>Without workgroup locality, every intermediate exchange would need slower device memory plus more complicated synchronization.</p>
+<hr />
+<p><strong>Dispatch grids</strong></p>
+<p>A dispatch consists of many workgroups or a requested grid of threads.</p>
+<p>For a 1D array of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> elements with workgroup width <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>G</mi>
+</math>, conventional APIs dispatch:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>N</mi>
+            <mi>g</mi>
+          </msub>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">⌈</mo>
+            <mfrac>
+              <mi>N</mi>
+              <mi>G</mi>
+            </mfrac>
+            <mo data-mjx-texclass="CLOSE">⌉</mo>
+          </mrow>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>groups.</p>
+<p>For example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>1000</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>G</mi>
+  <mo>=</mo>
+  <mn>256.</mn>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>g</mi>
+  </msub>
+  <mo>=</mo>
+  <mo fence="false" stretchy="false">⌈</mo>
+  <mn>3.90625</mn>
+  <mo fence="false" stretchy="false">⌉</mo>
+  <mo>=</mo>
+  <mn>4.</mn>
+</math>
+<p>Total threads:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mo>×</mo>
+  <mn>256</mn>
+  <mo>=</mo>
+  <mn>1024.</mn>
+</math>
+<p>Therefore 24 invocations are outside valid input range and must perform:</p>
+<div class="sourceCode" id="id_9wj2yb"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="id_9wj2yb-1"><a href="#id_9wj2yb-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>id <span class="op">&gt;=</span> count<span class="op">)</span></span>
+<span id="id_9wj2yb-2"><a href="#id_9wj2yb-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span><span class="op">;</span></span></code></pre></div>
+<p>This is called <strong>over-dispatch</strong>.</p>
+<hr />
+<p><strong>Metal’s <code>dispatchThreads</code></strong></p>
+<p>Metal also provides a dispatch interface where the requested logical thread-grid size is explicit:</p>
+<pre id="d2ts06" class="objc"><code>dispatchThreads(
+    MTLSizeMake(count, 1, 1),
+    threadsPerThreadgroup);</code></pre>
+<p>KairoGPU uses exactly this for vector addition and multiplication.</p>
+<p>It still has:</p>
+<pre id="ccmw1t" class="metal"><code>if (index &lt; count)</code></pre>
+<p>which is harmless defensive correctness.</p>
+<hr />
+<p><strong>Workgroup scheduling</strong></p>
+<p>A workgroup is assigned to some compute unit.</p>
+<p>Multiple workgroups may be resident on that unit.</p>
+<p>Within them, the hardware schedules subgroups.</p>
+<p>The essential scheduling object is usually the subgroup/warp/wave rather than an individual invocation.</p>
+<p>Conceptually:</p>
+<pre id="r4h73i" class="text"><code>cycle:
+    choose ready warp
+    issue instruction
+
+later:
+    warp stalls on memory
+    choose another ready warp</code></pre>
+<p>This explains why GPU performance can remain excellent despite high individual memory latency.</p>
+<hr />
+<p><strong>Latency hiding</strong></p>
+<p>Imagine each subgroup performs:</p>
+<pre id="id_6d38i1" class="text"><code>load
+wait
+multiply
+store</code></pre>
+<p>If only one subgroup is resident, memory latency directly stalls the execution unit.</p>
+<p>If 16 are resident:</p>
+<pre id="bnfz56" class="text"><code>warp 0 → load, stalls
+warp 1 → execute
+warp 2 → execute
+...</code></pre>
+<p>By the time the scheduler returns to warp 0, its load may be ready.</p>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>latency hiding requires enough independent ready work</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is one major role of occupancy.</p>
+<hr />
+<p><strong>GPU occupancy</strong></p>
+<p>Occupancy is roughly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>O</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mtext>resident active subgroups</mtext>
+            <mtext>hardware maximum resident subgroups</mtext>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A workgroup consumes finite per-compute-unit resources.</p>
+<p>The number of simultaneously resident groups is constrained by the minimum of several limits:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>resident groups</mtext>
+    </mrow>
+  </msub>
+  <mo>≤</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <msub>
+      <mi>N</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mtext>thread limit</mtext>
+      </mrow>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>N</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mtext>register limit</mtext>
+      </mrow>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>N</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mtext>shared-memory limit</mtext>
+      </mrow>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>N</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mtext>group limit</mtext>
+      </mrow>
+    </msub>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>reg</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌊</mo>
+    <mfrac>
+      <msub>
+        <mi>R</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mtext>CU</mtext>
+        </mrow>
+      </msub>
+      <mrow>
+        <msub>
+          <mi>R</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mtext>thread</mtext>
+          </mrow>
+        </msub>
+        <msub>
+          <mi>T</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mtext>group</mtext>
+          </mrow>
+        </msub>
+      </mrow>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">⌋</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>And:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>shared</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌊</mo>
+    <mfrac>
+      <msub>
+        <mi>S</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mtext>CU</mtext>
+        </mrow>
+      </msub>
+      <msub>
+        <mi>S</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mtext>group</mtext>
+        </mrow>
+      </msub>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">⌋</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Whichever is smallest can become the occupancy bottleneck.</p>
+<hr />
+<p><strong>Occupancy example</strong></p>
+<p>Imagine a hypothetical compute unit with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>65536</mn>
+</math>
+<p>register units available.</p>
+<p>A kernel uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>64</mn>
+</math>
+<p>registers/thread.</p>
+<p>Workgroup:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>256.</mn>
+</math>
+<p>Registers/group:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64</mn>
+  <mo>×</mo>
+  <mn>256</mn>
+  <mo>=</mo>
+  <mn>16384.</mn>
+</math>
+<p>Register limit allows:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>65536</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>16384</mn>
+  <mo>=</mo>
+  <mn>4</mn>
+</math>
+<p>resident groups.</p>
+<p>If the compiler increases register usage to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>128</mn>
+</math>
+<p>per thread:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>128</mn>
+  <mo>×</mo>
+  <mn>256</mn>
+  <mo>=</mo>
+  <mn>32768</mn>
+  <mo>,</mo>
+</math>
+<p>so only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+</math>
+<p>groups fit.</p>
+<p>Without changing one line of dispatch code, occupancy has potentially halved.</p>
+<hr />
+<p><strong>Occupancy is not synonymous with performance</strong></p>
+<p>A kernel at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>100</mn>
+  <mi mathvariant="normal">%</mi>
+</math>
+<p>occupancy is not automatically faster than one at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>50</mn>
+  <mi mathvariant="normal">%</mi>
+  <mo>.</mo>
+</math>
+<p>Suppose lowering register usage to increase occupancy forces values to spill into memory.</p>
+<p>You gained resident warps but added expensive memory traffic.</p>
+<p>Or a compute-heavy kernel may already have enough instruction-level parallelism to hide latency with fewer warps.</p>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>occupancy is a constraint/diagnostic, not a score to maximize blindly</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>M132 will return to this tradeoff in even more detail.</p>
+<hr />
+<p><strong>Registers</strong></p>
+<p>Every invocation has logical private variables:</p>
+<pre id="t9jsa8" class="metal"><code>float sum;
+float3 position;
+float4 color;</code></pre>
+<p>The compiler tries to place these in registers.</p>
+<p>Registers are extremely fast.</p>
+<p>But the physical register file is finite.</p>
+<p>That means a deceptively innocent shader variable has a system-level cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>registers/thread</mtext>
+          <mo>×</mo>
+          <mtext>resident threads</mtext>
+          <mo>≤</mo>
+          <mtext>register-file capacity</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Register pressure</strong></p>
+<p>Register pressure increases from long-lived values, large unrolled loops, large temporary expressions, complex material/path states and local arrays whose indexing cannot be optimized well.</p>
+<p>Consider:</p>
+<div class="sourceCode" id="g2gruk"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="g2gruk-1"><a href="#g2gruk-1" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> a0<span class="op">,</span> a1<span class="op">,</span> a2<span class="op">,</span> a3<span class="op">;</span></span>
+<span id="g2gruk-2"><a href="#g2gruk-2" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> b0<span class="op">,</span> b1<span class="op">,</span> b2<span class="op">,</span> b3<span class="op">;</span></span>
+<span id="g2gruk-3"><a href="#g2gruk-3" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> c0<span class="op">,</span> c1<span class="op">,</span> c2<span class="op">,</span> c3<span class="op">;</span></span></code></pre></div>
+<p>If all remain live simultaneously, compiler must retain them.</p>
+<p>If some can be recomputed or have shorter live ranges, registers can be released/reused.</p>
+<p>Shader optimization is therefore partly <strong>lifetime engineering</strong>.</p>
+<hr />
+<p><strong>Register spilling</strong></p>
+<p>When register demand exceeds what the compiler/hardware can comfortably allocate, some values may spill into a thread-private address space that is physically backed by lower-level memory/cache.</p>
+<p>Instead of:</p>
+<pre id="i9imdl" class="text"><code>register → ALU</code></pre>
+<p>you can get:</p>
+<pre id="x9gdnc" class="text"><code>load spill
+ALU
+store spill</code></pre>
+<p>This is enormously slower.</p>
+<p>Hence a kernel can become slower when you “optimize” it by aggressively unrolling everything.</p>
+<hr />
+<p><strong>Shared / threadgroup memory</strong></p>
+<p>Threadgroup memory is fast on-chip storage shared by all invocations of one workgroup.</p>
+<p>KairoGPU’s tiled matrix multiplication uses:</p>
+<pre id="mmlugb" class="metal"><code>threadgroup float lhs_tile[16][16];
+threadgroup float rhs_tile[16][16];</code></pre>
+<p>That is the canonical shared-memory use case.</p>
+<p>Why?</p>
+<p>Without tiling, computing:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <munderover>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mo>=</mo>
+      <mn>0</mn>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mi>K</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </munderover>
+  <msub>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>k</mi>
+    </mrow>
+  </msub>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+</math>
+<p>requires every output thread to repeatedly fetch rows and columns from device memory.</p>
+<p>With a:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mo>×</mo>
+  <mn>16</mn>
+</math>
+<p>tile, each workgroup cooperatively loads chunks of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math> once, then reuses those values many times.</p>
+<hr />
+<p><strong>KairoGPU matrix multiplication</strong></p>
+<p>Current kernel:</p>
+<pre id="tun1bn" class="metal"><code>const uint row =
+    group.y * 16 + local.y;
+
+const uint column =
+    group.x * 16 + local.x;
+
+float sum = 0.0f;
+
+for (uint base = 0;
+     base &lt; K;
+     base += 16)
+{
+    lhs_tile[local.y][local.x] =
+        valid
+        ? lhs[row * K +
+              base + local.x]
+        : 0.0f;
+
+    rhs_tile[local.y][local.x] =
+        valid
+        ? rhs[
+            (base + local.y) *
+            columns +
+            column]
+        : 0.0f;
+
+    threadgroup_barrier(
+        mem_flags::mem_threadgroup);
+
+    for (uint offset = 0;
+         offset &lt; 16;
+         ++offset)
+    {
+        sum +=
+            lhs_tile[local.y][offset] *
+            rhs_tile[offset][local.x];
+    }
+
+    threadgroup_barrier(
+        mem_flags::mem_threadgroup);
+}</code></pre>
+<p>Each loaded tile element is reused by many threads.</p>
+<p>That increases arithmetic intensity dramatically.</p>
+<hr />
+<p><strong>Why there are two barriers</strong></p>
+<p>The first:</p>
+<pre id="lzwp5h" class="metal"><code>threadgroup_barrier(...)</code></pre>
+<p>guarantees every thread has finished loading its tile entries before any thread reads the shared tile.</p>
+<p>The second guarantees no thread begins overwriting the shared arrays for the next <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>K</mi>
+</math>-tile while another is still using the current one.</p>
+<p>Without either barrier, you have a race.</p>
+<hr />
+<p><strong>Shared-memory bank conflicts</strong></p>
+<p>Shared/threadgroup memory is physically partitioned into banks so multiple lanes can access it simultaneously.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>bank</mtext>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>d</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>d</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mtext>wordSize</mtext>
+  <mo stretchy="false">)</mo>
+  <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+  <mi>B</mi>
+</math>
+<p>for some hardware-dependent bank count <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math>.</p>
+<p>If many lanes access different addresses mapping to the same bank, accesses can serialize.</p>
+<p>That is a <strong>bank conflict</strong>.</p>
+<p>If lanes access different banks, accesses can proceed in parallel.</p>
+<hr />
+<p><strong>Why transpose-like accesses can create bank conflicts</strong></p>
+<p>Imagine a 2D shared array:</p>
+<div class="sourceCode" id="id_32aupj"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="id_32aupj-1"><a href="#id_32aupj-1" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> tile<span class="op">[</span><span class="dv">32</span><span class="op">][</span><span class="dv">32</span><span class="op">];</span></span></code></pre></div>
+<p>and each lane reads:</p>
+<div class="sourceCode" id="dov08i"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="dov08i-1"><a href="#dov08i-1" aria-hidden="true" tabindex="-1"></a>tile<span class="op">[</span>lane<span class="op">][</span>constantColumn<span class="op">]</span></span></code></pre></div>
+<p>depending on bank mapping, stride:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>32</mn>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mtext> bytes</mtext>
+</math>
+<p>may align repeatedly to the same bank.</p>
+<p>A classic mitigation is padding:</p>
+<div class="sourceCode" id="ucsz3u"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="ucsz3u-1"><a href="#ucsz3u-1" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> tile<span class="op">[</span><span class="dv">32</span><span class="op">][</span><span class="dv">33</span><span class="op">];</span></span></code></pre></div>
+<p>The extra column changes row stride and therefore bank mapping.</p>
+<p>Do not blindly apply CPU cache-line intuition here; shared-memory banks are a distinct hardware organization.</p>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch316.xhtml#id_04-Light-Transport-and-Image-Synthesis" class="wikilink">Reading map</a> · <a href="ch326.xhtml#id_03-visual-computing-i-ch014-transparency-blending-and-visibility" class="wikilink">Previous chapter</a> · <a href="ch422.xhtml#id_03-visual-computing-i-ch016-gpu-memory-divergence-and-execution-order" class="wikilink">Next chapter (GPU Architecture and Real-Time Rendering, Part 1, Ch. 9)</a></p>
+</section>
+</section>
+</section>
+</body>
+</html>

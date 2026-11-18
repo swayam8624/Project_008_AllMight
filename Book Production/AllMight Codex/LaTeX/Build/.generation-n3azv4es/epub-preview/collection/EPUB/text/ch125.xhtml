@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch125.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-01e5905165c4-page-tables-and-mmu" class="level2">
+<h2>Page tables and MMU</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-01e5905165c4-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>The memory management unit (MMU) translates/protects accesses using mapping information. Page tables hold virtual-page→physical-frame mappings plus permissions/state, often hierarchically. A permitted VPN 12345→PFN 987 with offset ABC produces PA 987ABC. This model is architecture-neutral, not a specific entry format.</p>
+</section>
+<section id="appendix-01e5905165c4-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch128.xhtml#appendix-0c67cd5bf30a-pages-and-page-offsets" class="wikilink">Pages and page offsets</a> — Page identity is translated while within-page position is preserved.</li>
+<li><a href="ch162.xhtml#appendix-c2a9ad1e2b49-process-isolation-and-page-permissions" class="wikilink">Process isolation and page permissions</a> — The mapping context and permissions constrain which accesses proceed.</li>
+</ul>
+</section>
+<section id="appendix-01e5905165c4-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch150.xhtml#appendix-7a2d9c5ce511-tlb" class="wikilink">TLB</a> — uses this mechanism as stated in its prerequisites.</li>
+<li><a href="ch165.xhtml#appendix-cc0909a7ef14-page-faults-and-demand-paging" class="wikilink">Page faults and demand paging</a> — uses this mechanism as stated in its prerequisites.</li>
+</ul>
+</section>
+<section id="appendix-01e5905165c4-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain what changes and what stays fixed in translation.</p>
+<p><strong>Pending:</strong> ARM/x86 table formats, walks, accessed/dirty bits, invalidation.</p>
+</section>
+<section id="appendix-01e5905165c4-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

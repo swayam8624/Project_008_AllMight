@@ -8,7 +8,7 @@ Mesh vertices, edges and faces describe connectivity in addition to position. Th
 
 **Recall question:** What information is lost when a mesh is represented only by independent triangles?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 56088–58760; source-span SHA256 527e67cd9bc0edb8249c4bdc2df4b7befbdafe310af89d9dd833bbcf50cac8c8. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 57090–59762; source-span SHA256 527e67cd9bc0edb8249c4bdc2df4b7befbdafe310af89d9dd833bbcf50cac8c8. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### PART IV — M071: Mesh Topology and Connectivity

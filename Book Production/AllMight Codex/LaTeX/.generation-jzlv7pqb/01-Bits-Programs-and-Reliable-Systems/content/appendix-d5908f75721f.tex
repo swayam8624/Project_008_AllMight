@@ -1,0 +1,30 @@
+\hypertarget{appendix-d5908f75721f}{}\label{referencestart:appendix-d5908f75721f}
+\section{Parameter passing and sink contracts}\label{appendix-d5908f75721f-parameter-passing-and-sink-contracts}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C009 · \textbf{Latest development:} C009
+
+\subsection{Definition and mechanism}\label{appendix-d5908f75721f-definition-and-mechanism}
+
+A by-value parameter is an object initialized from the argument expression: lvalues ordinarily copy, xvalues can move, and appropriate prvalues construct directly. References borrow; a pointer parameter copies its pointer value. A sink intentionally retains or consumes a value, not merely observes it.
+
+\subsection{Prerequisites}\label{appendix-d5908f75721f-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-d6d562ca9fbb]{References and aliases} --- Parameter access differs according to whether a new object is created or an existing referent is borrowed.
+\item
+  \hyperref[appendix-c25d60fed375]{Const qualification and shallow constness} --- A read-only parameter path does not establish global immutability or ownership.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-d5908f75721f-used-by}
+
+Later sources will extend this node when their guarantees are developed.
+
+\subsection{Recall and next depth}\label{appendix-d5908f75721f-recall-and-next-depth}
+
+Compare lvalue and prvalue calls with spare capacity, then add growth work. Pending: generic forwarding interfaces, ABI measurements and allocator-specific costs. Written coverage does not demonstrate personal mastery.
+
+\subsection{Source and navigation}\label{appendix-d5908f75721f-source-and-navigation}
+
+\hyperref[01-foundations-i-ch003-a-value-crosses-the-function-boundary]{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15-m009---parts-127-147]{Exact coverage} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

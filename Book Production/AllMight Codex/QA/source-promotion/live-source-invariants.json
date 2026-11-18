@@ -1,0 +1,60 @@
+{
+  "schema": "allmight-live-source-invariants-v1",
+  "status": "pass",
+  "production_manifest_sha256": "0179e8137b688e4f094dba44ffbd74fea94402826c9d88d23ea692bc7debf7cf",
+  "jobs_sha256": "3eafffd3d332bd52cf33822c94afda99c038834bdcb1c9e5d6c41a63032e8296",
+  "chapter_count": 129,
+  "volumes": [
+    {
+      "id": "01-Foundations-I",
+      "chapter_count": 20
+    },
+    {
+      "id": "02-Foundations-II",
+      "chapter_count": 19
+    },
+    {
+      "id": "03-Visual-Computing-I",
+      "chapter_count": 21
+    },
+    {
+      "id": "04-Visual-Computing-II",
+      "chapter_count": 22
+    },
+    {
+      "id": "05-Engine-I",
+      "chapter_count": 24
+    },
+    {
+      "id": "06-Engine-II",
+      "chapter_count": 23
+    }
+  ],
+  "counts": {
+    "source_hashes": 129,
+    "raw_ast_canonical_hashes": 129,
+    "original_raw_ast_hashes": 129,
+    "reader_ast_hashes": 129,
+    "reader_source_bindings": 129,
+    "xml_parses": 129,
+    "fenced_code_blocks": 5861,
+    "inline_code_spans": 7103,
+    "mermaid_occurrences": 117,
+    "unique_mermaid_job_ids": 95
+  },
+  "checks": {
+    "six_volume_topology": true,
+    "129_chapter_topology": true,
+    "volume_chapter_counts": true,
+    "chapter_invariant_errors": true,
+    "all_95_mermaid_jobs_covered": true
+  },
+  "errors": [],
+  "commands": [
+    "python3 Tools/Production/verify_source_invariants.py --root . --report QA/source-promotion/live-source-invariants.json"
+  ],
+  "limitations": [
+    "Source Markdown hash comparison verifies the recorded source bytes; the companion source inventory is audited separately.",
+    "This checks chapter AST/XML provenance and code bodies; it does not verify page layout, EPUB conformance, or native InDesign output."
+  ]
+}

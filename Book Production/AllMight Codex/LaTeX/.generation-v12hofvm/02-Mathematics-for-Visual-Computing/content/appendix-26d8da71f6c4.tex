@@ -1,0 +1,38 @@
+\hypertarget{appendix-26d8da71f6c4}{}\label{referencestart:appendix-26d8da71f6c4}
+\section{Quaternion matrix and axis-angle conversion}\label{appendix-26d8da71f6c4-quaternion-matrix-and-axis-angle-conversion}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase7 · \textbf{Latest development:} Phase7
+
+\subsection{Definition and mechanism}\label{appendix-26d8da71f6c4-definition-and-mechanism}
+
+A unit axis and angle give q=(cos(theta/2),axis sin(theta/2)). A quaternion rotation matrix is assembled by rotating basis axes. Converting back uses trace or largest-diagonal branches and assumes a proper orthogonal input; scale, shear and reflection require separate treatment.
+
+\textbf{Reconstruction cue:} Near a half turn, avoid dividing by a scalar component that approaches zero.
+
+\subsection{Prerequisites}\label{appendix-26d8da71f6c4-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-8e61ab68f6b2]{Quaternion rotation and double cover}
+\item
+  \hyperref[appendix-bd39c3bf5d64]{Matrices as linear maps and basis images}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-26d8da71f6c4-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5f723fbd0593]{Euler angles and gimbal singularity}
+\item
+  \hyperref[appendix-292c061cd47c]{Transform hierarchies TRS and shear}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-26d8da71f6c4-recall-and-next-depth}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\subsection{Source and navigation}\label{appendix-26d8da71f6c4-source-and-navigation}
+
+\hyperref[01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations]{Continuous explanation} · \hyperref[appendix-fd090d982a15-phase-7---parts-601-700]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-7---source-analysis-and-verification]{Sources and verification}

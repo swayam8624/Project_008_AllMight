@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch528.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-e569e60e18e6-robust-vector-angles" class="level2">
+<h2>Robust vector angles</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> Phase6 · <strong>Latest development:</strong> Phase6</p>
+<section id="appendix-e569e60e18e6-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>The unsigned angle uses nonzero finite directions. An atan2 expression combines cross magnitude and dot, retaining sine- and cosine-like information. Scale inputs before evaluating to reduce range failures. A signed angle requires a specified oriented plane.</p>
+<p>Parallel directions give zero, antiparallel directions give <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π</mi>
+</math>, and perpendicular directions give <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+</math>. Zero input has no angle.</p>
+</section>
+<section id="appendix-e569e60e18e6-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch463.xhtml#appendix-2391db8052b1-cross-products-and-oriented-area" class="wikilink">Cross products and oriented area</a> — Oriented area supplies face normals, frame signs and geometric determinants.</li>
+<li><a href="ch535.xhtml#appendix-f744e41b95b4-unit-directions-and-safe-normalization" class="wikilink">Unit directions and safe normalization</a> — Validated finite unit directions establish the preconditions for simplified geometry formulas.</li>
+</ul>
+</section>
+<section id="appendix-e569e60e18e6-used-by" class="level3">
+<h3>Used by</h3>
+<p>Later curriculum sources can deepen this same node; no future coverage is marked complete.</p>
+</section>
+<section id="appendix-e569e60e18e6-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Separate acos domain clamping from input validation, and explain when no angle needs computing. Full production proofs, target-specific integration and learner mastery require further evidence.</p>
+</section>
+<section id="appendix-e569e60e18e6-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch236.xhtml#id_01-foundations-i-ch017-an-angle-is-a-question-with-a-domain" class="wikilink">Teaching narrative (Mathematics for Visual Computing, Part 1, Ch. 1)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-phase-6---parts-501-600" class="wikilink">Coverage and source gap</a> · <a href="ch155.xhtml#appendix-a103e7846d21-phase-6---source-analysis-and-verification" class="wikilink">Evidence and limits</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map</a></p>
+</section>
+</section>
+</body>
+</html>

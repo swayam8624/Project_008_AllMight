@@ -1,0 +1,64 @@
+\hypertarget{appendix-b9afba7f63e5}{}\label{referencestart:appendix-b9afba7f63e5}
+\section{Stable quadratic root evaluation}\label{appendix-b9afba7f63e5-stable-quadratic-root-evaluation}
+
+\hypertarget{appendix-b9afba7f63e5-stable-quadratic-root-evaluation}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-b9afba7f63e5-definition-and-mechanism}
+
+\hypertarget{appendix-b9afba7f63e5-definition-and-mechanism}{}
+
+The direct quadratic formula can lose nearly all significant digits in one root when it subtracts nearly equal values. For real coefficients with nonzero leading coefficient and a valid nonnegative discriminant, compute a signed large-magnitude numerator first: \(q=-\frac12(b+\operatorname{copysign}(\sqrt{b^2-4ac},b))\), then obtain roots as \(q/a\) and \(c/q\). The second root follows from the product relation \(x_1x_2=c/a\). This avoids cancellation in the small root, but it does not prevent overflow in the discriminant or cover degenerate coefficients, nonfinite inputs, or \(q=0\); a robust solver also scales inputs and handles those cases explicitly. For example, the small root of \(x^2+10^8x+1=0\) is near \(-10^{-8}\), exactly the root most endangered by direct subtraction.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-b9afba7f63e5-prerequisites}
+
+\hypertarget{appendix-b9afba7f63e5-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-d7f8ba961670}{Stable reformulation (Bits, Programs, and Reliable Systems, Reference notes: Stable reformulation)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-bc44f7b42f42}{Unit roundoff (Bits, Programs, and Reliable Systems, Reference notes: Unit roundoff)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-8f6a01f284a7}{Conditioning and singularity (Bits, Programs, and Reliable Systems, Reference notes: Conditioning and singularity)}
+\item
+  \hyperref[appendix-aa2bf0d79639]{Algorithmic stability}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-b9afba7f63e5-used-by}
+
+\hypertarget{appendix-b9afba7f63e5-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-f63eb850796d]{Bracketed and open root solvers}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-b9afba7f63e5-full-teaching-explanation}
+
+\hypertarget{appendix-b9afba7f63e5-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch028-floating-point-answers-error-conditioning-stability-and-stable-arithmetic}{Floating-point answers: error, conditioning, stability, and stable arithmetic (Mathematics for Visual Computing, Ch. 12)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-b9afba7f63e5-source-coverage}
+
+\hypertarget{appendix-b9afba7f63e5-source-coverage}{}
+
+Supplied lesson parts: 974.
+
+\subsection{Future keywords}\label{appendix-b9afba7f63e5-future-keywords}
+
+\hypertarget{appendix-b9afba7f63e5-future-keywords}{}
+
+Vieta relation, discriminant scaling, cancellation

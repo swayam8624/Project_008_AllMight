@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch187.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-a978b29bbbb0-temporary-lifetime-extension" class="level2">
+<h2>Temporary lifetime extension</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C008 · <strong>Latest development:</strong> C008</p>
+<section id="appendix-a978b29bbbb0-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Ordinary temporary destruction occurs at the full-expression’s end unless specified extension applies. Direct local binding can extend lifetime, but a returned parameter reference cannot transitively extend it. Aggregate braces and parentheses differ for reference members; new-initializer extension does not last as long as the allocated holder.</p>
+</section>
+<section id="appendix-a978b29bbbb0-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch177.xhtml#appendix-37856d997bb0-reference-binding-and-converted-temporaries" class="wikilink">Reference binding and converted temporaries</a> — The chosen original or converted referent determines the destruction deadline.</li>
+<li><a href="ch127.xhtml#appendix-0b104bcba06b-storage-duration-and-object-lifetime" class="wikilink">Storage duration and object lifetime</a> — The referent and its backing storage must survive each alias use.</li>
+</ul>
+</section>
+<section id="appendix-a978b29bbbb0-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch190.xhtml#appendix-aea529eb5175-deferred-captures-and-borrowed-views" class="wikilink">Deferred captures and borrowed views</a></li>
+<li><a href="ch198.xhtml#appendix-d42039b1d6f7-ref-qualified-accessors" class="wikilink">Ref-qualified accessors</a></li>
+</ul>
+</section>
+<section id="appendix-a978b29bbbb0-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Draw the destruction point for pass(std::string{“x”}). Pending: detailed subobject extension and C++26 diagnostic changes. Written coverage does not establish learner mastery.</p>
+</section>
+<section id="appendix-a978b29bbbb0-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch173.xhtml#id_01-foundations-i-ch003-a-temporary-needs-an-explicit-lifetime-story" class="wikilink">Teaching explanation and examples</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m008---parts-113-126" class="wikilink">Exact coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

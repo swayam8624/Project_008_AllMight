@@ -1,0 +1,2579 @@
+{
+  "pandoc-api-version": [
+    1,
+    23,
+    1,
+    2
+  ],
+  "meta": {},
+  "blocks": [
+    {
+      "t": "Header",
+      "c": [
+        1,
+        [
+          "appendix-c5b332e400e7-radiance-fields-and-gaussian-splatting",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Radiance"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "fields"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "Gaussian"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "splatting"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Curriculum"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "depth:"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Developed"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "·"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "First"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "seen:"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "University"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "courses"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "·"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Latest"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "development:"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "University"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "courses"
+        }
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-c5b332e400e7-definition-and-mechanism",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Definition"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "mechanism"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Str",
+          "c": "A"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "radiance"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "field"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "represents"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "a"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "scene"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "by"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "the"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "color"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "density"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "seen"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "along"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "each"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "3D"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "viewing"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "ray."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "NeRF"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "maps"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "a"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "position"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "viewing"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "direction"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "through"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "a"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "learned"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "function,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "then"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "volume-renders"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "samples"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "using"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "transmittance"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "opacity"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "weights;"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "multiple"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "calibrated"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "photographs"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "supervise"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "the"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "result."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "This"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "representation"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "handles"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "view-dependent"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "appearance"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "but"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "can"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "require"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "many"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "ray"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "samples"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "careful"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "camera"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "alignment."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "3D"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Gaussian"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "splatting"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "instead"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "stores"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "anisotropic"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "colored"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Gaussian"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "primitives"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "in"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "space"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "projects"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "them"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "to"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "screen,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "sorting"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "blending"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "their"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "footprints"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "for"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "fast"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "interactive"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "views."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "2D"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Gaussian"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "splatting"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "uses"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "oriented"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "surface-like"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "splats"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "to"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "improve"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "geometric"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "consistency."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "These"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "methods"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "trade"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "continuous"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "function"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "evaluation"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "for"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "explicit"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "primitives"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "rasterization."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Sparse"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "or"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "biased"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "views"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "leave"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "unseen"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "regions"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "unconstrained;"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "floaters,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "blur,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "aliasing,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "incorrect"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "transparency"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "ordering,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "or"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "poor"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "geometry"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "can"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "remain"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "even"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "when"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "training"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "views"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "look"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "convincing."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Novel-view"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "quality"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "is"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "not"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "equivalent"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "to"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "a"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "watertight"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "mesh"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "or"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "physically"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "correct"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "material."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Reconstruction"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "quality"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "depends"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "on"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "camera"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "poses,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "coverage,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "calibration,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "the"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "scene’s"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "changing"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "illumination."
+        }
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-c5b332e400e7-prerequisites",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Prerequisites"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "BulletList",
+      "c": [
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Camera"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "calibration"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "bundle"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "adjustment"
+                    }
+                  ],
+                  [
+                    "#appendix-3ee9861904d5",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Sampling"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "aliasing"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "reconstruction"
+                    }
+                  ],
+                  [
+                    "#appendix-6a7869dd79a6",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Probability"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "density"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "change"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "of"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "measure"
+                    }
+                  ],
+                  [
+                    "#appendix-4815cd87ab8b",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Bounding"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "volume"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "hierarchies"
+                    }
+                  ],
+                  [
+                    "#appendix-0b426c47dd78",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Ray-triangle"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "intersection"
+                    }
+                  ],
+                  [
+                    "#appendix-47ac1bd6d144",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Automatic"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "differentiation"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "backpropagation"
+                    }
+                  ],
+                  [
+                    "#appendix-40df0855b4a7",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Latent-variable"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "models"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "generative"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "flows"
+                    }
+                  ],
+                  [
+                    "#appendix-2c568f05ee34",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-c5b332e400e7-used-by",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Used"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "by"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "BulletList",
+      "c": [
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Learned"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "representations"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "of"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "3D"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "shape"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "scenes"
+                    }
+                  ],
+                  [
+                    "#04-visual-computing-ii-ch034-learned-representations-of-3d-shape-and-scenes",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-c5b332e400e7-full-teaching-explanation",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Full"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "teaching"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "explanation"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "BulletList",
+      "c": [
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Learned"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "representations"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "of"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "3D"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "shape"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "scenes"
+                    }
+                  ],
+                  [
+                    "#04-visual-computing-ii-ch034-learned-representations-of-3d-shape-and-scenes",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-c5b332e400e7-recall-and-next-depth",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Recall"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "next"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "depth"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "BulletList",
+      "c": [
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Str",
+                "c": "Contrast"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "ray-sampled"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "density"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "compositing"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "with"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "projected"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "Gaussian"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "primitive"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "blending."
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Str",
+                "c": "What"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "can"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "excellent"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "training-view"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "synthesis"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "fail"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "to"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "establish"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "about"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "unseen"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "geometry?"
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-c5b332e400e7-source-and-navigation",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Source"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "navigation"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Str",
+          "c": "Teaching"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "narrative:"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "open"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "the"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "main"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "explanation"
+              }
+            ],
+            [
+              "#04-visual-computing-ii-ch034-learned-representations-of-3d-shape-and-scenes",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Str",
+          "c": "."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Browse"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "the"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "University"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "graphics"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "and"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "vision"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "index"
+              }
+            ],
+            [
+              "#appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Str",
+          "c": "."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Additional"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "chapter"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "connections:"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "Cameras,"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "projection,"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "and"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "calibration"
+              }
+            ],
+            [
+              "../03-Visual-Computing-I/03-Visual-Computing-I.epub#03-visual-computing-i-ch003-cameras-projection-and-calibration",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Str",
+          "c": ";"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "The"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "rendering"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "equation"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "and"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "light"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "transport"
+              }
+            ],
+            [
+              "../03-Visual-Computing-I/03-Visual-Computing-I.epub#03-visual-computing-i-ch007-the-rendering-equation-and-light-transport",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Str",
+          "c": ";"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "Visibility"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "queries"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "and"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "ray"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "intersections"
+              }
+            ],
+            [
+              "#04-visual-computing-ii-ch028-visibility-queries-and-ray-intersections-1",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Str",
+          "c": ";"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "Meshes,"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "connectivity,"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "and"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "geometry"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "processing"
+              }
+            ],
+            [
+              "../03-Visual-Computing-I/03-Visual-Computing-I.epub#03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Str",
+          "c": "."
+        }
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Str",
+          "c": "Caption/source"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "records:"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "SC-15"
+              }
+            ],
+            [
+              "#04-visual-computing-ii-ch036-sc-15---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-15-3d-vision",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Str",
+          "c": ","
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "P3-13"
+              }
+            ],
+            [
+              "#04-visual-computing-ii-ch036-p3-13---curves-and-surfaces",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Str",
+          "c": ","
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "P3-15"
+              }
+            ],
+            [
+              "#04-visual-computing-ii-ch036-p3-15---ray-tracing",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Str",
+          "c": "."
+        }
+      ]
+    }
+  ]
+}

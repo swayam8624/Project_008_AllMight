@@ -8,7 +8,7 @@ Probability gives a language for possible observations; statistics summarizes th
 
 **Recall question:** What does a sample mean tell you, and what information does it leave out?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 27311–28319; source-span SHA256 2145b4ef36c2ada3b1fa46bdc9f061fbb18ad7012b6ec0ce432b1b7e1ea307b2. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 27342–28350; source-span SHA256 2145b4ef36c2ada3b1fa46bdc9f061fbb18ad7012b6ec0ce432b1b7e1ea307b2. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## From Random Samples to Deliberate Computation

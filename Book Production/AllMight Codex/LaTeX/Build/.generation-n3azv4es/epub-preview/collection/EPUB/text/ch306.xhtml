@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch306.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-21f8456e2629-lens-optics-and-depth-of-field" class="level2">
+<h2>Lens optics and depth of field</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-21f8456e2629-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A pinhole camera maps every scene point to one image point through a single center, but a real lens has a finite aperture. Rays from one object point pass through different parts of the aperture and meet at a focused image point only for the chosen focus distance. Points nearer or farther from that plane form a blur disk called the circle of confusion. Stopping down the aperture narrows the cone of rays and increases depth of field, but reduces collected light and may require longer exposure or higher sensor gain. Focal length and focus distance also affect field of view and perspective magnification. A thin-lens model is an approximation; real lenses add aberrations and vignetting. The model helps explain why depth of field is both an optical effect and a sampling/integration process over aperture positions.</p>
+</section>
+<section id="appendix-21f8456e2629-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch328.xhtml#appendix-1c07d64f5e70-camera-view-and-clip-space-pipeline" class="wikilink">Camera view and clip-space pipeline (Light Transport and Image Synthesis, Part 1, Reference notes: Camera view and clip-space pipeline)</a></li>
+<li><a href="ch347.xhtml#appendix-44e00863b4d5-reflection-refraction-and-shading-directions" class="wikilink">Reflection refraction and shading directions (Light Transport and Image Synthesis, Part 1, Reference notes: Reflection refraction and shading directions)</a></li>
+</ul>
+</section>
+<section id="appendix-21f8456e2629-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><span>Worlds, Images and Inference</span></p></li>
+<li><p><a href="ch308.xhtml#appendix-92d45cdf2afc-exposure-and-sensor-response" class="wikilink">Exposure and sensor response</a></p></li>
+<li><p><a href="ch496.xhtml#appendix-8c40fad29462-ray-differentials-and-camera-sampling-measures" class="wikilink">Ray differentials and camera sampling measures (Vision, XR, and Playable Worlds, Part 1, Reference notes: Ray differentials and camera sampling measures)</a></p></li>
+</ul>
+</section>
+<section id="appendix-21f8456e2629-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<p><a href="ch305.xhtml#id_03-visual-computing-i-ch003-lens-optics-focus-and-image-formation" class="wikilink">Lens optics, focus, and image formation</a> · <a href="ch541.xhtml#id_04-visual-computing-ii-ch034-photographic-composition-history-and-communication" class="wikilink">Photographic composition, history, and communication (Vision, XR, and Playable Worlds, Part 1, Ch. 4)</a> · <a href="ch541.xhtml#id_04-visual-computing-ii-ch034-photographic-workflow-and-integrated-decisions" class="wikilink">Photographic workflow and integrated decisions (Vision, XR, and Playable Worlds, Part 1, Ch. 4)</a></p>
+</section>
+<section id="appendix-21f8456e2629-phase-11-camera-development" class="level3">
+<h3>Phase 11 camera development</h3>
+<p>A pinhole camera emits one ideal ray per image location. A finite-aperture lens samples a family of rays whose intersections form a blur disk away from the focal plane. A thin-lens camera therefore samples film and lens position, then aims through a focal point. Differentials from film offsets alone omit aperture variation unless the model includes it. Monte Carlo PDFs and camera weights must match the sampled film/aperture measure. The thin-lens model approximates real optics; aberrations and bokeh shape require richer models. Link: <a href="ch290.xhtml#id_02-foundations-ii-ch037-a-camera-model-must-close-the-loop" class="wikilink">A camera model must close the loop</a>; research: <a href="ch289.xhtml#id_02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review" class="wikilink">Four deeper links from the TUM lecture review</a>.</p>
+</section>
+</section>
+</body>
+</html>

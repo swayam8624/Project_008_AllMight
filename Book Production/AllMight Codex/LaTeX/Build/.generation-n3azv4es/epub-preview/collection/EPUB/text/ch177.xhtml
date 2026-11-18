@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch177.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-37856d997bb0-reference-binding-and-converted-temporaries" class="level2">
+<h2>Reference binding and converted temporaries</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C008 · <strong>Latest development:</strong> C008</p>
+<section id="appendix-37856d997bb0-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Binding chooses an initial referent under type/category rules. A const int&amp; bound to an int lvalue tracks that integer; a const double&amp; initialized from the same int binds a converted temporary snapshot. Base-subobject binding need not copy; bit-fields cannot provide ordinary mutable integer references.</p>
+</section>
+<section id="appendix-37856d997bb0-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch200.xhtml#appendix-d6d562ca9fbb-references-and-aliases" class="wikilink">References and aliases</a> — The initial alias and its referent determine later binding and deduction behavior.</li>
+<li><a href="ch175.xhtml#appendix-1121b30eaeb0-value-categories-and-materialization" class="wikilink">Value categories and materialization</a> — Expression category determines viable binding and whether temporary identity is needed.</li>
+</ul>
+</section>
+<section id="appendix-37856d997bb0-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch187.xhtml#appendix-a978b29bbbb0-temporary-lifetime-extension" class="wikilink">Temporary lifetime extension</a></li>
+</ul>
+</section>
+<section id="appendix-37856d997bb0-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Mutate the original after both bindings and predict their values. Pending: user-defined conversion overloads and volatile binding. Written coverage does not establish learner mastery.</p>
+</section>
+<section id="appendix-37856d997bb0-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch173.xhtml#id_01-foundations-i-ch003-binding-chooses-a-referent-not-always-the-one-you-imagined" class="wikilink">Teaching explanation and examples</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m008---parts-113-126" class="wikilink">Exact coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch508.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-b9afba7f63e5-stable-quadratic-root-evaluation" class="level2">
+<h2>Stable quadratic root evaluation</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 10 · <strong>Latest development:</strong> Phase 10</p>
+<section id="appendix-b9afba7f63e5-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>The direct quadratic formula can lose nearly all significant digits in one root when it subtracts nearly equal values. For real coefficients with nonzero leading coefficient and a valid nonnegative discriminant, compute a signed large-magnitude numerator first: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>2</mn>
+  </mfrac>
+  <mo stretchy="false">(</mo>
+  <mi>b</mi>
+  <mo>+</mo>
+  <mi>copysign</mi>
+  <mo stretchy="false">(</mo>
+  <msqrt>
+    <msup>
+      <mi>b</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>−</mo>
+    <mn>4</mn>
+    <mi>a</mi>
+    <mi>c</mi>
+  </msqrt>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+</math>, then obtain roots as <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>a</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>q</mi>
+</math>. The second root follows from the product relation <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>x</mi>
+    <mn>1</mn>
+  </msub>
+  <msub>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>a</mi>
+</math>. This avoids cancellation in the small root, but it does not prevent overflow in the discriminant or cover degenerate coefficients, nonfinite inputs, or <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>; a robust solver also scales inputs and handles those cases explicitly. For example, the small root of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <msup>
+    <mn>10</mn>
+    <mn>8</mn>
+  </msup>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo>=</mo>
+  <mn>0</mn>
+</math> is near <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>8</mn>
+    </mrow>
+  </msup>
+</math>, exactly the root most endangered by direct subtraction.</p>
+</section>
+<section id="appendix-b9afba7f63e5-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch104.xhtml#appendix-d7f8ba961670-stable-reformulation" class="wikilink">Stable reformulation (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Stable reformulation)</a></li>
+<li><a href="ch088.xhtml#appendix-bc44f7b42f42-unit-roundoff" class="wikilink">Unit roundoff (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Unit roundoff)</a></li>
+<li><a href="ch072.xhtml#appendix-8f6a01f284a7-conditioning-and-singularity" class="wikilink">Conditioning and singularity (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Conditioning and singularity)</a></li>
+<li><a href="ch502.xhtml#appendix-aa2bf0d79639-algorithmic-stability" class="wikilink">Algorithmic stability</a></li>
+</ul>
+</section>
+<section id="appendix-b9afba7f63e5-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch533.xhtml#appendix-f63eb850796d-bracketed-and-open-root-solvers" class="wikilink">Bracketed and open root solvers</a></li>
+</ul>
+</section>
+<section id="appendix-b9afba7f63e5-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch272.xhtml#id_02-foundations-ii-ch028-floating-point-answers-error-conditioning-stability-and-stable-arithmetic" class="wikilink">Floating-point answers: error, conditioning, stability, and stable arithmetic (Mathematics for Visual Computing, Part 2, Ch. 12)</a></li>
+</ul>
+</section>
+<section id="appendix-b9afba7f63e5-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 974.</p>
+</section>
+<section id="appendix-b9afba7f63e5-future-keywords" class="level3">
+<h3>Future keywords</h3>
+<p>Vieta relation, discriminant scaling, cancellation</p>
+</section>
+</section>
+</body>
+</html>

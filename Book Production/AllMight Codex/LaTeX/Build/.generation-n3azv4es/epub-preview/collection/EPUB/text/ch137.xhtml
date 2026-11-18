@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch137.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-367b6abf460e-little-endian" class="level2">
+<h2>Little endian</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-367b6abf460e-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>The lowest address holds the least-significant octet. For 0x12345678, offsets 0–3 hold 78/56/34/12. Writer byte i selects bits 8i through 8i+7; a matching reader restores the same weights. This is byte order, not bit reversal.</p>
+</section>
+<section id="appendix-367b6abf460e-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch161.xhtml#appendix-bc07c3d25b18-endianness" class="wikilink">Endianness</a> — Byte order tells how digit significance maps to sequence positions.</li>
+<li><a href="ch063.xhtml#appendix-73425b25118e-shift-operations" class="wikilink">Shift operations (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Shift operations)</a> — Shifts relocate a selected byte or address field to its significance position.</li>
+</ul>
+</section>
+<section id="appendix-367b6abf460e-used-by" class="level3">
+<h3>Used by</h3>
+<p>Update downstream uses when later chunks build on this concept.</p>
+</section>
+<section id="appendix-367b6abf460e-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Write and decode four bytes, including leading zero bytes.</p>
+<p><strong>Pending:</strong> Mixed-endian cases and protocol integration.</p>
+</section>
+<section id="appendix-367b6abf460e-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-367b6abf460e-reconstruction-depth" class="level3">
+<h3>Reconstruction depth</h3>
+<p>Little-endian byte order stores the least-significant byte first. The 32-bit integer</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mi>x</mi>
+  <mn>12345678</mn>
+</math>
+<p>appears in increasing memory addresses as</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>78</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <mn>56</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <mn>34</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <mn>12.</mn>
+</math>
+<p>That layout is useful only after the interpretation contract is known: the same four bytes could be part of an integer, float, packed header or text. Endianness never supplies the type by itself.</p>
+<p>Most contemporary desktop CPUs are little-endian, but that is not permission to encode a durable binary format with raw object bytes. A format needs explicit field widths, byte order, versioning and bounds checks. If a file is defined little-endian, decode each field as little-endian even on a little-endian host; the explicit operation documents the contract and preserves portability.</p>
+<p>Tests should use byte arrays whose numeric values are obvious, include unaligned offsets, and verify both read and write paths. For floating point, byte order and IEEE-754 representation are separate assumptions.</p>
+</section>
+</section>
+</body>
+</html>

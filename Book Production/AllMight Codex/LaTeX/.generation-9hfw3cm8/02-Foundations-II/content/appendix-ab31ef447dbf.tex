@@ -1,0 +1,57 @@
+\hypertarget{appendix-ab31ef447dbf}{}
+\section{Matrix multiplication and composition order}\label{appendix-ab31ef447dbf-matrix-multiplication-and-composition-order}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase7 · \textbf{Latest development:} Phase 9
+
+\subsection{Definition and mechanism}\label{appendix-ab31ef447dbf-definition-and-mechanism}
+
+The product AB applies B first for column-vector actions. Its entries sum A(i,k)B(k,j) over the shared dimension. Composition is associative over exact scalars and usually noncommutative; floating-point evaluation orders need not agree bitwise.
+
+\textbf{Reconstruction cue:} Rotation followed by translation differs from translation followed by rotation.
+
+\subsection{Prerequisites}\label{appendix-ab31ef447dbf-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-bd39c3bf5d64}{Matrices as linear maps and basis images (01-Foundations-I, appendix-bd39c3bf5d64)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-ab31ef447dbf-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-175ca5ff874d]{Matrix transpose symmetry and trace}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-5f723fbd0593}{Euler angles and gimbal singularity (01-Foundations-I, appendix-5f723fbd0593)}
+\item
+  \hyperref[appendix-0b3be18411f9]{Eigenvalues and eigenspaces} --- Extends this foundation into linear-systems and decomposition analysis.
+\item
+  \hyperref[appendix-1fad5e7f36fa]{Singular value decomposition} --- Extends this foundation into linear-systems and decomposition analysis.
+\item
+  \hyperref[appendix-0f4bc2bf2b1f]{Matrix functions} --- Extends this foundation into linear-systems and decomposition analysis.
+\item
+  \hyperref[appendix-f6e77f4a200f]{Gaussian elimination and pivoting} --- Extends this foundation into the Phase 8 dependency spine.
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-40df0855b4a7}{Automatic differentiation and backpropagation (03-Visual-Computing-I, appendix-40df0855b4a7)}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-d8a7ddb675eb}{Jacobians, pushforwards, and pullbacks (01-Foundations-I, appendix-d8a7ddb675eb)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-ab31ef447dbf-recall-and-next-depth}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\subsection{Source and navigation}\label{appendix-ab31ef447dbf-source-and-navigation}
+
+\href{../01-Foundations-I/main.pdf\#nameddest=01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations}{Continuous explanation (01-Foundations-I, 01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations)} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-fd090d982a15-phase-7---parts-601-700}{Coverage and source gap (01-Foundations-I, appendix-fd090d982a15-phase-7-\/-\/-parts-601-700)} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-a103e7846d21-phase-7---source-analysis-and-verification}{Sources and verification (01-Foundations-I, appendix-a103e7846d21-phase-7-\/-\/-source-analysis-and-verification)}
+
+\subsection{Full teaching explanation}\label{appendix-ab31ef447dbf-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[02-foundations-ii-ch021-jacobians-curvature-and-local-approximation]{Phase 9 teaching section}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-adf48f5dc5c1}{Visual Recall/09 - Calculus and Optimization - Visual Recall.md (01-Foundations-I, appendix-adf48f5dc5c1)} · Phase 9 visual recall
+\end{itemize}

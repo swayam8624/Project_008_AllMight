@@ -1,0 +1,795 @@
+\contentsline {chapter}{\numberline {1}Python and Numerical Tools for Graphics Systems}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Python, scientific computing and data analysis as graphics-systems infrastructure}{1}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}Python abstractions still have machine cost}{1}{subsection.1.1.1}%
+\contentsline {subsection}{\numberline {1.1.2}Buffer interfaces help only when the entire path stays zero-copy}{1}{subsection.1.1.2}%
+\contentsline {subsection}{\numberline {1.1.3}Profile before optimizing}{2}{subsection.1.1.3}%
+\contentsline {subsection}{\numberline {1.1.4}Vectorization moves loops out of the interpreter}{2}{subsection.1.1.4}%
+\contentsline {subsection}{\numberline {1.1.5}Broadcasting is shape algebra}{2}{subsection.1.1.5}%
+\contentsline {subsection}{\numberline {1.1.6}The GIL separates concurrency from CPU parallelism}{2}{subsection.1.1.6}%
+\contentsline {subsection}{\numberline {1.1.7}Native acceleration is a boundary-design problem}{2}{subsection.1.1.7}%
+\contentsline {subsection}{\numberline {1.1.8}Scientific computing begins with conditioning and stability}{3}{subsection.1.1.8}%
+\contentsline {subsection}{\numberline {1.1.9}Floating point changes algebra}{3}{subsection.1.1.9}%
+\contentsline {subsection}{\numberline {1.1.10}Linear algebra has structure-specific algorithms}{3}{subsection.1.1.10}%
+\contentsline {subsection}{\numberline {1.1.11}Optimization needs a model, derivatives and a stopping rule}{3}{subsection.1.1.11}%
+\contentsline {subsection}{\numberline {1.1.12}ODE/PDE numerics connect to simulation and reconstruction}{4}{subsection.1.1.12}%
+\contentsline {subsection}{\numberline {1.1.13}FFT is an algorithmic change}{4}{subsection.1.1.13}%
+\contentsline {subsection}{\numberline {1.1.14}pandas is a relational layer for experiments}{4}{subsection.1.1.14}%
+\contentsline {subsection}{\numberline {1.1.15}Jupyter is exploratory; the repository is authoritative}{4}{subsection.1.1.15}%
+\contentsline {subsection}{\numberline {1.1.16}SICP contributes architecture beneath syntax}{4}{subsection.1.1.16}%
+\contentsline {subsection}{\numberline {1.1.17}A reproducible graphics-research stack}{5}{subsection.1.1.17}%
+\contentsline {subsection}{\numberline {1.1.18}The deterministic system capstone and its evidence boundary}{5}{subsection.1.1.18}%
+\contentsline {subsection}{\numberline {1.1.19}From model bytes to a validated compressed-inference runtime}{6}{subsection.1.1.19}%
+\contentsline {subsection}{\numberline {1.1.20}Mathematical Foundations for Visual Computing --- From Vectors to Images}{6}{subsection.1.1.20}%
+\contentsline {subsection}{\numberline {1.1.21}Reading route}{7}{subsection.1.1.21}%
+\contentsline {section}{\numberline {1.2}Movement becomes geometry}{7}{section.1.2}%
+\contentsline {subsection}{\numberline {1.2.1}From Movement to Meaning: Vectors, Geometry, and Reliable Code}{7}{subsection.1.2.1}%
+\contentsline {subsection}{\numberline {1.2.2}The panel gives us a reason to learn}{8}{subsection.1.2.2}%
+\contentsline {subsubsection}{Figure G0 - The robot and its inspection panel}{8}{subsubsection*.5}%
+\contentsline {subsection}{\numberline {1.2.3}Numbers become a system of permitted operations}{9}{subsection.1.2.3}%
+\contentsline {subsubsection}{Why ordinary algebra needs a field}{9}{subsubsection*.6}%
+\contentsline {subsubsection}{Why graphics uses real-number models}{10}{subsubsection*.7}%
+\contentsline {subsubsection}{The machine is a model of the field, not the field}{10}{subsubsection*.8}%
+\contentsline {subsection}{\numberline {1.2.4}An arrow is not the address written beside it}{11}{subsection.1.2.4}%
+\contentsline {subsubsection}{First movement, then coordinate arithmetic}{11}{subsubsection*.9}%
+\contentsline {subsubsection}{Affine points do not have an intrinsic zero}{12}{subsubsection*.10}%
+\contentsline {subsection}{\numberline {1.2.5}A basis is a measuring arrangement, not the vector itself}{12}{subsection.1.2.5}%
+\contentsline {subsubsection}{The same arrow can have different coordinates}{12}{subsubsection*.11}%
+\contentsline {subsubsection}{Recover a component with the right measuring rule}{13}{subsubsection*.12}%
+\contentsline {paragraph}{First-use completion --- how coordinate measurements become normals, gradients, and reliable code}{14}{paragraph*.13}%
+\contentsline {subsubsection}{A coordinate frame becomes an implementable service: reconstruct, invert, reject, and measure}{16}{subsubsection*.14}%
+\contentsline {subsubsection}{G1 - One movement, two descriptions}{20}{subsubsection*.15}%
+\contentsline {subsubsection}{Why a basis can become unreliable}{20}{subsubsection*.16}%
+\contentsline {subsection}{\numberline {1.2.6}The reachable movements form a vector space}{20}{subsection.1.2.6}%
+\contentsline {subsubsection}{A subspace is a complete movement system inside a larger one}{21}{subsubsection*.17}%
+\contentsline {subsubsection}{Combinations describe what the robot can reach}{21}{subsubsection*.18}%
+\contentsline {subsubsection}{Independence removes redundant controls}{22}{subsubsection*.19}%
+\contentsline {subsubsection}{Immediate footing --- norm}{22}{subsubsection*.20}%
+\contentsline {subsubsection}{The same vector rules can describe a triangle's boundary}{22}{subsubsection*.21}%
+\contentsline {subsection}{\numberline {1.2.7}A ruler needs more than coordinate components}{23}{subsection.1.2.7}%
+\contentsline {subsubsection}{What makes a norm a norm?}{23}{subsubsection*.22}%
+\contentsline {subsubsection}{Distance compares points through a movement}{24}{subsubsection*.23}%
+\contentsline {subsubsection}{Choose what a length is meant to measure}{24}{subsubsection*.24}%
+\contentsline {subsubsection}{Bound a measurement using a dual norm}{25}{subsubsection*.25}%
+\contentsline {subsection}{\numberline {1.2.8}Reading the C++ laboratories}{26}{subsection.1.2.8}%
+\contentsline {subsubsection}{Immediate footing --- unit roundoff}{26}{subsubsection*.26}%
+\contentsline {subsubsection}{Scale first, then measure}{27}{subsubsection*.27}%
+\contentsline {subsection}{\numberline {1.2.9}The dot product turns two movements into a measurement}{28}{subsection.1.2.9}%
+\contentsline {subsubsection}{Derive the angle relationship}{28}{subsubsection*.28}%
+\contentsline {subsubsection}{A useful inequality and the missing norm proof}{28}{subsubsection*.29}%
+\contentsline {subsubsection}{Immediate footing --- least squares}{29}{subsubsection*.30}%
+\contentsline {subsection}{\numberline {1.2.10}Projection separates useful movement from sideways movement}{29}{subsection.1.2.10}%
+\contentsline {subsubsection}{An execution trace you can teach at the board}{30}{subsubsection*.31}%
+\contentsline {subsubsection}{G2 - Split the request into rail travel and sideways travel}{30}{subsubsection*.32}%
+\contentsline {subsubsection}{A camera-framing trace uses the same angle}{31}{subsubsection*.33}%
+\contentsline {subsubsection}{Immediate footing --- radians}{31}{subsubsection*.34}%
+\contentsline {subsubsection}{A rail, a wall, and a feasible region use the same nearest-point question}{31}{subsubsection*.35}%
+\contentsline {subsubsection}{A line fit is projection in observation space}{33}{subsubsection*.36}%
+\contentsline {subsection}{\numberline {1.2.11}Rotation first becomes understandable in a plane}{33}{subsection.1.2.11}%
+\contentsline {subsection}{\numberline {1.2.12}Oriented area tells us which side of the panel is front}{34}{subsection.1.2.12}%
+\contentsline {subsubsection}{The cross product and its definition}{34}{subsubsection*.37}%
+\contentsline {subsubsection}{The panel's normal and area}{35}{subsubsection*.38}%
+\contentsline {subsubsection}{Orientation is not storage order in memory}{35}{subsubsection*.39}%
+\contentsline {subsubsection}{Why three dimensions are special, but not the whole story}{36}{subsubsection*.40}%
+\contentsline {subsection}{\numberline {1.2.13}Signed volume extends the same idea into space}{36}{subsection.1.2.13}%
+\contentsline {subsubsection}{Nested cross products are not associative}{36}{subsubsection*.41}%
+\contentsline {subsubsection}{Immediate footing --- derivative}{37}{subsubsection*.42}%
+\contentsline {subsubsection}{A volume also constructs reciprocal measuring directions}{37}{subsubsection*.43}%
+\contentsline {subsection}{\numberline {1.2.14}An angle is a question with a domain}{37}{subsection.1.2.14}%
+\contentsline {subsection}{\numberline {1.2.15}Surface movement becomes a local frame}{38}{subsection.1.2.15}%
+\contentsline {subsubsection}{Texture coordinates specify preferred tangents}{38}{subsubsection*.44}%
+\contentsline {subsubsection}{Clean the frame without erasing its orientation}{39}{subsubsection*.45}%
+\contentsline {subsubsection}{Immediate footing --- rank and nullspace}{39}{subsubsection*.46}%
+\contentsline {subsection}{\numberline {1.2.16}Orthonormal frames make reconstruction simple}{40}{subsection.1.2.16}%
+\contentsline {subsubsection}{Build a frame from one direction}{40}{subsubsection*.47}%
+\contentsline {subsubsection}{Gram--Schmidt is repeated rejection}{40}{subsubsection*.48}%
+\contentsline {subsubsection}{Modified order changes floating-point behavior}{41}{subsubsection*.49}%
+\contentsline {chapter}{\numberline {2}Vectors for Light and Frames}{42}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Light uses the same decomposition in a new role}{42}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Reflection reverses the normal component}{42}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Refraction changes the tangent amount}{42}{subsection.2.1.2}%
+\contentsline {subsection}{\numberline {2.1.3}A half-vector is a bisector only after its inputs are understood}{43}{subsection.2.1.3}%
+\contentsline {subsection}{\numberline {2.1.4}Immediate footing --- gradient}{43}{subsection.2.1.4}%
+\contentsline {subsection}{\numberline {2.1.5}A derivative measures change; a gradient needs a ruler}{44}{subsection.2.1.5}%
+\contentsline {section}{\numberline {2.2}The sensor needs coordinates inside the triangle}{44}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}G3 - Reconstruct a sensor location from the corners}{45}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Derive the weights in a tilted triangle}{46}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Signed area also answers which side we are on}{46}{subsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.4}A predicate needs a trustworthy sign}{46}{subsection.2.2.4}%
+\contentsline {subsection}{\numberline {2.2.5}The same weights interpolate attributes}{47}{subsection.2.2.5}%
+\contentsline {subsection}{\numberline {2.2.6}Perspective changes the interpolation weights}{47}{subsection.2.2.6}%
+\contentsline {section}{\numberline {2.3}Weighted points lead from affine geometry to collision shapes}{48}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Convex means every straight connection stays inside}{48}{subsection.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2}Sweeping an object is a set addition}{48}{subsection.2.3.2}%
+\contentsline {subsection}{\numberline {2.3.3}A swept region answers \emph {whether}; a time-of-impact equation answers \emph {when}}{49}{subsection.2.3.3}%
+\contentsline {subsection}{\numberline {2.3.4}The same contact has a second quadratic structure: effective mass}{50}{subsection.2.3.4}%
+\contentsline {subsection}{\numberline {2.3.5}Conservative bounds are a mathematical inclusion guarantee, not a collision decision}{51}{subsection.2.3.5}%
+\contentsline {subsection}{\numberline {2.3.6}Collision becomes a question about the origin}{51}{subsection.2.3.6}%
+\contentsline {subsection}{\numberline {2.3.7}Support queries inspect the boundary without constructing it}{52}{subsection.2.3.7}%
+\contentsline {section}{\numberline {2.4}A matrix is a rule acting on geometry}{53}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}From Basis Images to Moving Worlds: Matrices, Transforms and Quaternions}{53}{subsection.2.4.1}%
+\contentsline {subsubsection}{Immediate footing --- quaternion}{53}{subsubsection*.51}%
+\contentsline {subsubsection}{Immediate footing --- field}{53}{subsubsection*.52}%
+\contentsline {subsubsection}{Immediate footing --- matrix}{53}{subsubsection*.53}%
+\contentsline {subsubsection}{Immediate footing --- determinant}{54}{subsubsection*.54}%
+\contentsline {subsubsection}{Immediate footing --- inner product}{54}{subsubsection*.55}%
+\contentsline {subsubsection}{Immediate footing --- linear map}{54}{subsubsection*.56}%
+\contentsline {subsubsection}{Immediate footing --- covector and dual space}{54}{subsubsection*.57}%
+\contentsline {subsubsection}{Immediate footing --- transpose and adjoint}{54}{subsubsection*.58}%
+\contentsline {subsection}{\numberline {2.4.2}Keep the promises visible while moving between representations}{55}{subsection.2.4.2}%
+\contentsline {subsubsection}{Immediate footing --- expectation}{55}{subsubsection*.59}%
+\contentsline {subsubsection}{Immediate footing --- covariance}{55}{subsubsection*.60}%
+\contentsline {subsection}{\numberline {2.4.3}The robot needs a rule for moving every direction}{56}{subsection.2.4.3}%
+\contentsline {subsubsection}{The convention contract for this volume}{56}{subsubsection*.61}%
+\contentsline {subsubsection}{Figure M1 - Coordinates weight the new basis directions}{58}{subsubsection*.62}%
+\contentsline {subsubsection}{Rows describe how to compute one output coordinate}{58}{subsubsection*.63}%
+\contentsline {subsubsection}{One projection, two coordinate descriptions}{59}{subsubsection*.64}%
+\contentsline {subsection}{\numberline {2.4.4}Combining rules explains the multiplication law}{60}{subsection.2.4.4}%
+\contentsline {subsubsection}{Order describes actions; parentheses describe grouping}{61}{subsubsection*.65}%
+\contentsline {subsubsection}{Figure M2 - The same operations give different results in different orders}{61}{subsubsection*.66}%
+\contentsline {subsection}{\numberline {2.4.5}A mathematical object is more than its coordinates}{62}{subsection.2.4.5}%
+\contentsline {subsubsection}{Immediate footing --- eigenpair}{63}{subsubsection*.67}%
+\contentsline {subsubsection}{Immediate footing --- singular value and SVD}{63}{subsubsection*.68}%
+\contentsline {subsubsection}{Immediate footing --- condition number}{63}{subsubsection*.69}%
+\contentsline {subsection}{\numberline {2.4.6}A Gram matrix remembers the geometry of a slanted basis}{64}{subsection.2.4.6}%
+\contentsline {subsection}{\numberline {2.4.7}Special matrices tell us what information a rule preserves}{65}{subsection.2.4.7}%
+\contentsline {subsection}{\numberline {2.4.8}Derive rotations from the directions that stay fixed}{65}{subsection.2.4.8}%
+\contentsline {subsubsection}{The oriented plane explains the Y-rotation signs}{66}{subsubsection*.70}%
+\contentsline {subsection}{\numberline {2.4.9}Transpose lets us compare measurements and structure}{67}{subsection.2.4.9}%
+\contentsline {subsection}{\numberline {2.4.10}Determinant measures oriented volume and exposes lost dimensions}{68}{subsection.2.4.10}%
+\contentsline {subsubsection}{Figure M3 - Three different questions answered by one determinant}{69}{subsubsection*.71}%
+\contentsline {subsection}{\numberline {2.4.11}Recovering an input has an algebraic route and a computational route}{69}{subsection.2.4.11}%
+\contentsline {subsubsection}{Minors and cofactors build a symbolic inverse}{69}{subsubsection*.72}%
+\contentsline {subsubsection}{Row reduction makes the inverse observable}{70}{subsubsection*.73}%
+\contentsline {subsection}{\numberline {2.4.12}An inverse can exist and still amplify uncertainty}{71}{subsection.2.4.12}%
+\contentsline {subsubsection}{Figure M4 - Uncertainty can be amplified by a reversible map}{72}{subsubsection*.74}%
+\contentsline {subsubsection}{Reconstruct the machine before adding translation}{73}{subsubsection*.75}%
+\contentsline {subsection}{\numberline {2.4.13}A normal is a measuring rule before it is an arrow}{73}{subsection.2.4.13}%
+\contentsline {subsubsection}{Derive the inverse transpose}{74}{subsubsection*.76}%
+\contentsline {subsection}{\numberline {2.4.14}Oriented areas deserve their own representation}{75}{subsection.2.4.14}%
+\contentsline {subsubsection}{Geometric algebra unifies measurement and area}{76}{subsubsection*.77}%
+\contentsline {subsection}{\numberline {2.4.15}Homogeneous coordinates preserve the role of a location}{76}{subsection.2.4.15}%
+\contentsline {subsubsection}{A projective point has many representatives}{77}{subsubsection*.78}%
+\contentsline {subsubsection}{NDC is not unit-vector normalization}{77}{subsubsection*.79}%
+\contentsline {subsection}{\numberline {2.4.16}The origin exposes the limit of an ordinary linear map}{78}{subsection.2.4.16}%
+\contentsline {subsubsection}{Figure M5 - The same frame moves a point and redirects a displacement}{79}{subsubsection*.80}%
+\contentsline {subsection}{\numberline {2.4.17}A frame combines directions with a place to stand}{79}{subsection.2.4.17}%
+\contentsline {subsubsection}{Composition follows the dependency of locations}{79}{subsubsection*.81}%
+\contentsline {subsubsection}{Undo the linear action before undoing its translated origin}{80}{subsubsection*.82}%
+\contentsline {chapter}{\numberline {3}Coordinate Frames and Linear Systems}{81}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Coordinates can change while the geometric object stays still}{81}{section.3.1}%
+\contentsline {section}{\numberline {3.2}A camera is another frame, so viewing uses its inverse}{82}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Figure M6 - Follow one point through named spaces}{83}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Clip coordinates retain the divisor}{83}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Tangent space supplies a surface-local measuring frame}{84}{subsection.3.2.3}%
+\contentsline {section}{\numberline {3.3}A normal transforms as a measurement that must still vanish on tangents}{85}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Orientation needs a state that can be composed}{85}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}A quaternion is an algebra before it is an orientation}{86}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}Conjugation gives the inverse and its precondition}{86}{subsection.3.4.2}%
+\contentsline {section}{\numberline {3.5}The sandwich turns half angles into a full rotation}{87}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Derive the axis-angle mapping by deriving its action}{87}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}Figure M8 - One orientation, several checkable actions}{88}{subsection.3.5.2}%
+\contentsline {subsection}{\numberline {3.5.3}Recover the axis while admitting when it is undefined}{88}{subsection.3.5.3}%
+\contentsline {subsection}{\numberline {3.5.4}Remove the redundant arithmetic only after preserving the proof}{88}{subsection.3.5.4}%
+\contentsline {subsection}{\numberline {3.5.5}The sign changes the stored value without changing the orientation}{89}{subsection.3.5.5}%
+\contentsline {section}{\numberline {3.6}A matrix and a quaternion should agree on every basis direction}{90}{section.3.6}%
+\contentsline {subsection}{\numberline {3.6.1}Recover a large component instead of dividing by a nearly-zero one}{90}{subsection.3.6.1}%
+\contentsline {section}{\numberline {3.7}Animation asks for a path, not merely an intermediate tuple}{91}{section.3.7}%
+\contentsline {subsection}{\numberline {3.7.1}Derive SLERP in a two-dimensional plane inside four dimensions}{91}{subsection.3.7.1}%
+\contentsline {subsection}{\numberline {3.7.2}Figure M9 - Choose a representative before choosing a path}{92}{subsection.3.7.2}%
+\contentsline {subsection}{\numberline {3.7.3}Norm repair and sign selection solve different problems}{92}{subsection.3.7.3}%
+\contentsline {subsection}{\numberline {3.7.4}Angle rates are not three components of angular velocity}{93}{subsection.3.7.4}%
+\contentsline {section}{\numberline {3.8}Euler coordinates remain useful when their chart is explicit}{94}{section.3.8}%
+\contentsline {subsection}{\numberline {3.8.1}Conversion cannot recover a historical sequence that was discarded}{94}{subsection.3.8.1}%
+\contentsline {section}{\numberline {3.9}Rigid motion adds translation without adding scale or shear}{95}{section.3.9}%
+\contentsline {subsection}{\numberline {3.9.1}Two coupled constraints make the eight coefficients a rigid motion}{96}{subsection.3.9.1}%
+\contentsline {subsection}{\numberline {3.9.2}Figure M10 - Representation follows the permitted operation}{96}{subsection.3.9.2}%
+\contentsline {section}{\numberline {3.10}A transform type must say what its stored fields mean}{96}{section.3.10}%
+\contentsline {subsection}{\numberline {3.10.1}Normals undo scale before following rotation}{97}{subsection.3.10.1}%
+\contentsline {subsection}{\numberline {3.10.2}The world result may no longer fit the local authoring fields}{97}{subsection.3.10.2}%
+\contentsline {section}{\numberline {3.11}A cached matrix is a dependency promise}{98}{section.3.11}%
+\contentsline {subsection}{\numberline {3.11.1}Figure M11 - Invalidate the values that actually depend on the edit}{98}{subsection.3.11.1}%
+\contentsline {subsection}{\numberline {3.11.2}Quaternion and transform reconstruction desk}{99}{subsection.3.11.2}%
+\contentsline {section}{\numberline {3.12}Measurements become constraints and computable answers}{100}{section.3.12}%
+\contentsline {subsubsection}{Immediate footing --- principal component analysis}{100}{subsubsection*.84}%
+\contentsline {subsection}{\numberline {3.12.1}The graphics problem hiding inside a matrix equation}{100}{subsection.3.12.1}%
+\contentsline {subsection}{\numberline {3.12.2}Constraints, rank, and what data can determine}{101}{subsection.3.12.2}%
+\contentsline {subsection}{\numberline {3.12.3}A linear equation is a measurement, and several equations are geometry}{102}{subsection.3.12.3}%
+\contentsline {subsection}{\numberline {3.12.4}A system is an intersection of constraints}{103}{subsection.3.12.4}%
+\contentsline {subsubsection}{Immediate footing --- gauge freedom}{103}{subsubsection*.85}%
+\contentsline {subsection}{\numberline {3.12.5}Rank separates what the measurements determine from what they leave free}{104}{subsection.3.12.5}%
+\contentsline {subsubsection}{Figure L2 - Consistency, freedom, and the four fundamental spaces}{105}{subsubsection*.86}%
+\contentsline {subsection}{\numberline {3.12.6}Rank, the four spaces, and the shape of the answer}{105}{subsection.3.12.6}%
+\contentsline {subsection}{\numberline {3.12.7}Matrix norms give scale to residuals and error claims}{107}{subsection.3.12.7}%
+\contentsline {subsection}{\numberline {3.12.8}Matrix norms put scale into error statements}{107}{subsection.3.12.8}%
+\contentsline {subsection}{\numberline {3.12.9}Elimination turns the geometry into an auditable calculation}{108}{subsection.3.12.9}%
+\contentsline {subsection}{\numberline {3.12.10}Row operations preserve equations for a precise reason}{109}{subsection.3.12.10}%
+\contentsline {subsection}{\numberline {3.12.11}REF and RREF expose pivots and free variables}{109}{subsection.3.12.11}%
+\contentsline {subsection}{\numberline {3.12.12}Elimination multipliers become stored factor data}{110}{subsection.3.12.12}%
+\contentsline {subsection}{\numberline {3.12.13}Pivoting separates algorithm failure from matrix failure}{111}{subsection.3.12.13}%
+\contentsline {subsection}{\numberline {3.12.14}Triangular solves perform the cheap second half}{112}{subsection.3.12.14}%
+\contentsline {subsection}{\numberline {3.12.15}LU and Doolittle make elimination reusable}{113}{subsection.3.12.15}%
+\contentsline {subsection}{\numberline {3.12.16}LUP carries the row permutation through the solve}{113}{subsection.3.12.16}%
+\contentsline {subsection}{\numberline {3.12.17}A runnable pivoted LU reference preserves the elimination history}{114}{subsection.3.12.17}%
+\contentsline {subsubsection}{What the packed factors mean}{118}{subsubsection*.87}%
+\contentsline {subsubsection}{Statuses and numerical limits}{119}{subsubsection*.88}%
+\contentsline {subsubsection}{Figure L3 - Elimination stores work for later solves}{119}{subsubsection*.89}%
+\contentsline {chapter}{\numberline {4}Choose Matrix Factorizations from Structure}{121}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Structure makes a decomposition a better tool than generic elimination}{121}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Figure L4 - Matrix structure determines the useful factorization}{122}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Immediate footing --- probability density}{122}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}Immediate footing --- Gaussian distribution}{122}{subsection.4.1.3}%
+\contentsline {subsection}{\numberline {4.1.4}Immediate footing --- Monte Carlo estimation}{123}{subsection.4.1.4}%
+\contentsline {section}{\numberline {4.2}Positive definiteness is a structural promise}{123}{section.4.2}%
+\contentsline {section}{\numberline {4.3}LDLT reaches symmetric indefinite matrices}{125}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Orthogonal coordinates preserve the shape of the problem}{125}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Reflections and plane rotations build QR without losing lengths}{127}{section.4.5}%
+\contentsline {section}{\numberline {4.6}QR turns least squares into a triangular solve plus an irreducible residual}{128}{section.4.6}%
+\contentsline {subsection}{\numberline {4.6.1}Immediate footing --- Jacobian}{129}{subsection.4.6.1}%
+\contentsline {subsection}{\numberline {4.6.2}Immediate footing --- Hessian}{129}{subsection.4.6.2}%
+\contentsline {section}{\numberline {4.7}Put the algorithms in a graphics context}{129}{section.4.7}%
+\contentsline {subsection}{\numberline {4.7.1}Scoped algorithm kernels worth retaining}{130}{subsection.4.7.1}%
+\contentsline {section}{\numberline {4.8}Change and uncertainty acquire a mathematical language}{130}{section.4.8}%
+\contentsline {subsection}{\numberline {4.8.1}Eigenvectors reveal the directions a square map does not turn}{131}{subsection.4.8.1}%
+\contentsline {subsection}{\numberline {4.8.2}Eigenvalues, eigenspaces, and the two kinds of multiplicity}{132}{subsection.4.8.2}%
+\contentsline {subsection}{\numberline {4.8.3}Diagonalization leads to the stronger symmetric spectral theorem}{132}{subsection.4.8.3}%
+\contentsline {subsubsection}{Figure L5 - Eigenanalysis is cleanest when the basis is orthonormal}{133}{subsubsection*.91}%
+\contentsline {subsection}{\numberline {4.8.4}Iteration extracts selected eigenpairs without solving a polynomial}{134}{subsection.4.8.4}%
+\contentsline {subsection}{\numberline {4.8.5}QR iteration and Jacobi rotations preserve the spectrum while simplifying shape}{134}{subsection.4.8.5}%
+\contentsline {subsection}{\numberline {4.8.6}Residuals distinguish backward accuracy from forward certainty}{135}{subsection.4.8.6}%
+\contentsline {subsection}{\numberline {4.8.7}Sensitivity depends on left and right eigenvectors}{136}{subsection.4.8.7}%
+\contentsline {subsection}{\numberline {4.8.8}Why eigenvectors, coordinates, and condition numbers connect}{137}{subsection.4.8.8}%
+\contentsline {subsection}{\numberline {4.8.9}From Local Change to Reliable Motion: Calculus and Optimization}{138}{subsection.4.8.9}%
+\contentsline {paragraph}{How to read this volume}{138}{paragraph*.92}%
+\contentsline {subsection}{\numberline {4.8.10}Derivatives are local linear maps}{139}{subsection.4.8.10}%
+\contentsline {subsection}{\numberline {4.8.11}Functions, limits, continuity, and scalar change}{140}{subsection.4.8.11}%
+\contentsline {subsubsection}{Local change: functions, derivatives, and differential geometry}{140}{subsubsection*.93}%
+\contentsline {paragraph}{Functions are mappings, not merely equations}{140}{paragraph*.94}%
+\contentsline {subparagraph}{The four kinds of functions we will continually encounter}{141}{subparagraph*.95}%
+\contentsline {subparagraph}{Functions have more properties than their formulas suggest}{141}{subparagraph*.96}%
+\contentsline {paragraph}{Function composition: building complex systems from smaller ones}{142}{paragraph*.97}%
+\contentsline {paragraph}{Limits: understanding behavior without necessarily evaluating a point}{143}{paragraph*.98}%
+\contentsline {subparagraph}{The rigorous epsilon-delta definition}{143}{subparagraph*.99}%
+\contentsline {subparagraph}{Left, right, infinite, and nonexistent limits}{144}{subparagraph*.100}%
+\contentsline {subparagraph}{Why limits matter to graphics}{144}{subparagraph*.101}%
+\contentsline {paragraph}{Continuity: when small input changes cannot cause finite output jumps}{144}{paragraph*.102}%
+\contentsline {subparagraph}{Three discontinuity mechanisms}{145}{subparagraph*.103}%
+\contentsline {subparagraph}{Continuity does not imply differentiability}{145}{subparagraph*.104}%
+\contentsline {subparagraph}{Differentiability implies continuity}{145}{subparagraph*.105}%
+\contentsline {paragraph}{The derivative as an instantaneous rate}{146}{paragraph*.106}%
+\contentsline {subparagraph}{The difference quotient is a secant slope}{147}{subparagraph*.107}%
+\contentsline {subparagraph}{A real implementation cannot use an infinitely small interval}{147}{subparagraph*.108}%
+\contentsline {paragraph}{The derivative is a local linear approximation}{148}{paragraph*.109}%
+\contentsline {subparagraph}{Numerical example: predicting nonlinear motion}{148}{subparagraph*.110}%
+\contentsline {subparagraph}{Why this is more powerful than memorizing derivative rules}{149}{subparagraph*.111}%
+\contentsline {paragraph}{Deriving the elementary differentiation rules}{149}{paragraph*.112}%
+\contentsline {subparagraph}{Constants and linear functions}{150}{subparagraph*.113}%
+\contentsline {subparagraph}{The power rule}{150}{subparagraph*.114}%
+\contentsline {subparagraph}{The product rule}{151}{subparagraph*.115}%
+\contentsline {subparagraph}{The quotient rule}{152}{subparagraph*.116}%
+\contentsline {subparagraph}{The chain rule}{152}{subparagraph*.117}%
+\contentsline {subparagraph}{Worked example}{153}{subparagraph*.118}%
+\contentsline {subparagraph}{The chain rule as a computational graph}{154}{subparagraph*.119}%
+\contentsline {paragraph}{Exponential functions}{154}{paragraph*.120}%
+\contentsline {subparagraph}{Example: exponential motion damping}{155}{subparagraph*.121}%
+\contentsline {paragraph}{Logarithms}{155}{paragraph*.122}%
+\contentsline {subparagraph}{Logarithmic differentiation}{156}{subparagraph*.123}%
+\contentsline {subparagraph}{Why logarithms are important in numerical computing}{156}{subparagraph*.124}%
+\contentsline {paragraph}{Trigonometric differentiation}{157}{paragraph*.125}%
+\contentsline {subparagraph}{Why radians matter}{157}{subparagraph*.126}%
+\contentsline {subparagraph}{Deriving the sine derivative}{157}{subparagraph*.127}%
+\contentsline {subparagraph}{Physical interpretation using circular motion}{158}{subparagraph*.128}%
+\contentsline {paragraph}{Inverse trigonometric differentiation}{159}{paragraph*.129}%
+\contentsline {subparagraph}{Arcsine}{159}{subparagraph*.130}%
+\contentsline {subparagraph}{Arccosine}{159}{subparagraph*.131}%
+\contentsline {subparagraph}{Arctangent}{160}{subparagraph*.132}%
+\contentsline {subparagraph}{The derivative of \BookInlineCode {{a}{t}{a}{n}{2}}{atan2}}{160}{subparagraph*.133}%
+\contentsline {subparagraph}{Derivatives of inverse functions in general}{161}{subparagraph*.134}%
+\contentsline {chapter}{\numberline {5}Multivariable Derivatives and Sensitivity}{162}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Multivariable derivatives and sensitivity}{162}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}Additional foundations: derivatives of vector operations}{162}{subsection.5.1.1}%
+\contentsline {paragraph}{The derivative of a vector's length}{162}{paragraph*.136}%
+\contentsline {paragraph}{The derivative of normalization}{163}{paragraph*.137}%
+\contentsline {paragraph}{Implicit differentiation as an additional bridge}{163}{paragraph*.138}%
+\contentsline {subsubsection}{Multivariable functions and partial derivatives}{164}{subsubsection*.139}%
+\contentsline {paragraph}{What does it mean to differentiate with respect to one variable?}{165}{paragraph*.140}%
+\contentsline {paragraph}{Partial derivatives do not automatically establish full differentiability}{166}{paragraph*.141}%
+\contentsline {subsubsection}{The gradient: collecting every first-order sensitivity}{166}{subsubsection*.142}%
+\contentsline {paragraph}{Why is the gradient a vector?}{167}{paragraph*.143}%
+\contentsline {paragraph}{Gradient versus derivative}{168}{paragraph*.144}%
+\contentsline {paragraph}{What if variables use different physical units?}{169}{paragraph*.145}%
+\contentsline {subsubsection}{Directional derivatives}{169}{subsubsection*.146}%
+\contentsline {paragraph}{Worked example: directional derivative at \((2,1)\)}{169}{paragraph*.147}%
+\contentsline {paragraph}{Connection to contour lines}{170}{paragraph*.148}%
+\contentsline {subsubsection}{Why the gradient is the steepest-ascent direction}{171}{subsubsection*.149}%
+\contentsline {paragraph}{A subtle limitation: steepest according to which distance?}{171}{paragraph*.150}%
+\contentsline {subsubsection}{The total derivative}{172}{subsubsection*.151}%
+\contentsline {paragraph}{Numerical example: total derivative of a moving point}{173}{paragraph*.152}%
+\contentsline {paragraph}{The material derivative in physics}{174}{paragraph*.153}%
+\contentsline {subsection}{\numberline {5.1.2}A triangle turns a differential into a concrete field calculation}{174}{subsection.5.1.2}%
+\contentsline {subsection}{\numberline {5.1.3}Storage coefficients are not yet a continuous inner product}{175}{subsection.5.1.3}%
+\contentsline {subsection}{\numberline {5.1.4}Positive energy and staying within a range are different guarantees}{176}{subsection.5.1.4}%
+\contentsline {section}{\numberline {5.2}Jacobians, curvature, and local approximation}{176}{section.5.2}%
+\contentsline {subsection}{\numberline {5.2.1}The Jacobian: the matrix of local change}{176}{subsection.5.2.1}%
+\contentsline {subsubsection}{Worked example: a nonlinear 2D transformation}{177}{subsubsection*.154}%
+\contentsline {subsubsection}{The Jacobian is not a global transformation matrix}{178}{subsubsection*.155}%
+\contentsline {subsubsection}{How the Jacobian transforms geometry}{179}{subsubsection*.156}%
+\contentsline {subsubsection}{The determinant also changes area}{179}{subsubsection*.157}%
+\contentsline {subsection}{\numberline {5.2.2}Deriving the perspective-projection Jacobian}{180}{subsection.5.2.2}%
+\contentsline {subsubsection}{Establish the coordinate convention}{180}{subsubsection*.158}%
+\contentsline {subsubsection}{Differentiate the horizontal coordinate}{181}{subsubsection*.159}%
+\contentsline {subsubsection}{Differentiate the vertical coordinate}{181}{subsubsection*.160}%
+\contentsline {subsubsection}{A fully worked numerical example}{182}{subsubsection*.161}%
+\contentsline {subsubsection}{Why the approximation breaks for large depth changes}{184}{subsubsection*.162}%
+\contentsline {subsection}{\numberline {5.2.3}The chain rule for Jacobians}{184}{subsection.5.2.3}%
+\contentsline {paragraph}{Why matrix multiplication appears}{185}{paragraph*.163}%
+\contentsline {subsubsection}{Camera transformation chain}{185}{subsubsection*.164}%
+\contentsline {paragraph}{Including object transforms}{186}{paragraph*.165}%
+\contentsline {paragraph}{Extending the chain to camera-pose optimization}{186}{paragraph*.166}%
+\contentsline {subsection}{\numberline {5.2.4}Hessians and second derivatives}{187}{subsection.5.2.4}%
+\contentsline {subsubsection}{A complete numerical example}{187}{subsubsection*.167}%
+\contentsline {paragraph}{Why the Hessian is often symmetric}{188}{paragraph*.168}%
+\contentsline {subsubsection}{Directional curvature}{188}{subsubsection*.169}%
+\contentsline {paragraph}{Eigenvalues of the Hessian}{189}{paragraph*.170}%
+\contentsline {subsubsection}{Hessian versus geometric surface curvature}{190}{subsubsection*.171}%
+\contentsline {subsection}{\numberline {5.2.5}Taylor series in one variable}{190}{subsection.5.2.5}%
+\contentsline {subsubsection}{Maclaurin series}{191}{subsubsection*.172}%
+\contentsline {paragraph}{A Taylor series is not always equal to its function}{192}{paragraph*.173}%
+\contentsline {subsection}{\numberline {5.2.6}Multivariable Taylor approximation}{192}{subsection.5.2.6}%
+\contentsline {subsubsection}{Deriving the quadratic form}{192}{subsubsection*.174}%
+\contentsline {subsubsection}{Complete numerical trace}{193}{subsubsection*.175}%
+\contentsline {paragraph}{Why this matters to optimization}{194}{paragraph*.176}%
+\contentsline {subsection}{\numberline {5.2.7}First-order linearization}{194}{subsection.5.2.7}%
+\contentsline {subsubsection}{Local linear models in dynamic systems}{195}{subsubsection*.177}%
+\contentsline {paragraph}{The Jacobian can expose instability}{195}{paragraph*.178}%
+\contentsline {subsection}{\numberline {5.2.8}Error terms and the limits of local approximations}{196}{subsection.5.2.8}%
+\contentsline {subsubsection}{Big-O and little-o are not interchangeable}{196}{subsubsection*.179}%
+\contentsline {subsubsection}{Error bound using a Hessian}{196}{subsubsection*.180}%
+\contentsline {subsubsection}{Relative error versus absolute error}{197}{subsubsection*.181}%
+\contentsline {subsubsection}{Conditioning versus approximation error}{197}{subsubsection*.182}%
+\contentsline {subsection}{\numberline {5.2.9}Production C++23 implementation: a camera projection differential oracle}{198}{subsection.5.2.9}%
+\contentsline {subsubsection}{Understanding the memory layout}{204}{subsubsection*.183}%
+\contentsline {subsubsection}{The two independent validations}{205}{subsubsection*.184}%
+\contentsline {subsection}{\numberline {5.2.10}Repository-grounded analysis: KairoMath and KairoRenderer --- source claims pending independent repository verification}{205}{subsection.5.2.10}%
+\contentsline {subsubsection}{KairoMath's actual matrix convention}{205}{subsubsection*.185}%
+\contentsline {subsubsection}{KairoRenderer's actual camera projection}{205}{subsubsection*.186}%
+\contentsline {subsubsection}{How the Jacobian already appears in your optimization implementation}{206}{subsubsection*.187}%
+\contentsline {paragraph}{The exact Hessian of least squares}{207}{paragraph*.188}%
+\contentsline {subsubsection}{KairoMath's automatic differentiation representation}{207}{subsubsection*.189}%
+\contentsline {subsection}{\numberline {5.2.11}Research bridge: from Jacobians to 3D Gaussian splatting}{208}{subsection.5.2.11}%
+\contentsline {subsubsection}{Numerical covariance example}{209}{subsubsection*.190}%
+\contentsline {subsubsection}{Important limitation of the first-order covariance approximation}{210}{subsubsection*.191}%
+\contentsline {subsubsection}{Beyond first-order: curvature-induced projection bias}{211}{subsubsection*.192}%
+\contentsline {subsection}{\numberline {5.2.12}Additional essential connections}{211}{subsection.5.2.12}%
+\contentsline {subsubsection}{The Hessian of a composition}{212}{subsubsection*.193}%
+\contentsline {subsubsection}{The inverse Jacobian}{212}{subsubsection*.194}%
+\contentsline {subsubsection}{Differentiation on rotation manifolds}{212}{subsubsection*.195}%
+\contentsline {subsubsection}{Coordinate changes and derivative transport}{213}{subsubsection*.196}%
+\contentsline {subsection}{\numberline {5.2.13}Debugging and failure-mode laboratory}{213}{subsection.5.2.13}%
+\contentsline {subsection}{\numberline {5.2.14}Reconstructing the conceptual system}{214}{subsection.5.2.14}%
+\contentsline {subsubsection}{Mastery challenge}{215}{subsubsection*.197}%
+\contentsline {subsection}{\numberline {5.2.15}Immediate footing --- ordinary differential equation}{215}{subsection.5.2.15}%
+\contentsline {chapter}{\numberline {6}Accumulation, Quadrature, and the Bridge to Probability}{217}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Integration and quadrature}{217}{section.6.1}%
+\contentsline {subsection}{\numberline {6.1.1}Accumulation and numerical simulation}{217}{subsection.6.1.1}%
+\contentsline {subsubsection}{Integration means accumulating infinitesimal contributions}{217}{subsubsection*.199}%
+\contentsline {paragraph}{Integration is not inherently an area calculation}{218}{paragraph*.200}%
+\contentsline {paragraph}{Definite versus indefinite integration}{218}{paragraph*.201}%
+\contentsline {paragraph}{Signed accumulation versus total distance}{219}{paragraph*.202}%
+\contentsline {subsubsection}{Riemann sums: constructing an integral from finite computations}{219}{subsubsection*.203}%
+\contentsline {paragraph}{Uniform partitions}{220}{paragraph*.204}%
+\contentsline {paragraph}{Worked trace: integrating \(x^2\)}{221}{paragraph*.205}%
+\contentsline {subsubsection}{The fundamental theorem of calculus}{222}{subsubsection*.206}%
+\contentsline {paragraph}{Part I: Differentiating an accumulation function}{222}{paragraph*.207}%
+\contentsline {paragraph}{Part II: Evaluating an integral using an antiderivative}{223}{paragraph*.208}%
+\contentsline {paragraph}{When the theorem is insufficient computationally}{223}{paragraph*.209}%
+\contentsline {subsubsection}{Rectangle rules: the first numerical quadrature methods}{223}{subsubsection*.210}%
+\contentsline {paragraph}{Deriving the left rule from Taylor expansion}{224}{paragraph*.211}%
+\contentsline {paragraph}{Why the midpoint method is more accurate}{224}{paragraph*.212}%
+\contentsline {paragraph}{A caveat about error orders}{225}{paragraph*.213}%
+\contentsline {subsubsection}{Trapezoidal integration}{226}{subsubsection*.214}%
+\contentsline {paragraph}{Error and exactness}{226}{paragraph*.215}%
+\contentsline {subsubsection}{Simpson's rule: integrating a local quadratic approximation}{227}{subsubsection*.216}%
+\contentsline {paragraph}{Deriving the weights explicitly}{227}{paragraph*.217}%
+\contentsline {paragraph}{Composite Simpson's rule}{228}{paragraph*.218}%
+\contentsline {paragraph}{Compare all five methods on the same problem}{229}{paragraph*.219}%
+\contentsline {subsubsection}{Ordinary differential equations: representing laws of continuous evolution}{229}{subsubsection*.220}%
+\contentsline {paragraph}{What makes an equation differential?}{229}{paragraph*.221}%
+\contentsline {paragraph}{Order, linearity, autonomy, and dimensions}{230}{paragraph*.222}%
+\contentsline {paragraph}{Converting higher-order equations to first-order systems}{231}{paragraph*.223}%
+\contentsline {paragraph}{State-space matrix representation}{232}{paragraph*.224}%
+\contentsline {subsubsection}{Initial-value problems: why a law does not determine a unique history}{232}{subsubsection*.225}%
+\contentsline {paragraph}{Existence and uniqueness are separate questions}{233}{paragraph*.226}%
+\contentsline {paragraph}{Integral form of an ODE}{234}{paragraph*.227}%
+\contentsline {section}{\numberline {6.2}Derivative, finite difference, and numerical error are different ideas}{234}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Numerical differentiation and automatic differentiation}{235}{section.6.3}%
+\contentsline {subsection}{\numberline {6.3.1}Numerical gradient checking}{235}{subsection.6.3.1}%
+\contentsline {paragraph}{Why checking an entire gradient can be expensive}{236}{paragraph*.228}%
+\contentsline {paragraph}{Directional gradient checking}{236}{paragraph*.229}%
+\contentsline {paragraph}{How should disagreement be measured?}{236}{paragraph*.230}%
+\contentsline {paragraph}{Gradient-checking failure cases}{237}{paragraph*.231}%
+\contentsline {subsection}{\numberline {6.3.2}Automatic differentiation: differentiating the program's operations}{237}{subsection.6.3.2}%
+\contentsline {paragraph}{Differentiation as composition of linear maps}{237}{paragraph*.232}%
+\contentsline {paragraph}{Automatic differentiation and numerical precision}{238}{paragraph*.233}%
+\contentsline {subsection}{\numberline {6.3.3}Forward-mode automatic differentiation}{238}{subsection.6.3.3}%
+\contentsline {subsubsection}{Dual numbers: the mathematical foundation}{239}{subsubsection*.234}%
+\contentsline {paragraph}{Deriving dual-number addition}{239}{paragraph*.235}%
+\contentsline {paragraph}{Deriving multiplication}{239}{paragraph*.236}%
+\contentsline {paragraph}{Deriving division}{240}{paragraph*.237}%
+\contentsline {paragraph}{Elementary functions}{240}{paragraph*.238}%
+\contentsline {subsubsection}{Fully documented C++23 dual-number implementation}{241}{subsubsection*.239}%
+\contentsline {paragraph}{Worked computational trace}{242}{paragraph*.240}%
+\contentsline {paragraph}{Generalization: Jacobian-vector products}{244}{paragraph*.241}%
+\contentsline {subsection}{\numberline {6.3.4}Reverse-mode automatic differentiation}{244}{subsection.6.3.4}%
+\contentsline {subsubsection}{Deriving reverse accumulation}{245}{subsubsection*.242}%
+\contentsline {paragraph}{Local reverse rules}{245}{paragraph*.243}%
+\contentsline {subsubsection}{Reverse-mode example: manually backpropagating the complete graph}{246}{subsubsection*.244}%
+\contentsline {paragraph}{Start at the scalar loss}{247}{paragraph*.245}%
+\contentsline {paragraph}{Backpropagate through addition}{247}{paragraph*.246}%
+\contentsline {paragraph}{Backpropagate through multiplication}{247}{paragraph*.247}%
+\contentsline {paragraph}{Backpropagate through sine}{248}{paragraph*.248}%
+\contentsline {paragraph}{Accumulate the two paths}{248}{paragraph*.249}%
+\contentsline {subsection}{\numberline {6.3.5}Computational graphs and reverse traversal}{248}{subsection.6.3.5}%
+\contentsline {subsubsection}{Why reverse topological order is necessary}{249}{subsubsection*.250}%
+\contentsline {subsubsection}{A working scalar reverse-mode tape in C++23}{249}{subsubsection*.251}%
+\contentsline {paragraph}{Construct the actual graph}{251}{paragraph*.252}%
+\contentsline {subsubsection}{Memory ownership and graph lifetime}{253}{subsubsection*.253}%
+\contentsline {subsection}{\numberline {6.3.6}Full validated C++23 reference program}{253}{subsection.6.3.6}%
+\contentsline {subsection}{\numberline {6.3.7}Advanced AD: Jacobian-vector products versus vector-Jacobian products}{254}{subsection.6.3.7}%
+\contentsline {paragraph}{Why reverse mode is efficient for scalar losses}{255}{paragraph*.254}%
+\contentsline {subsubsection}{Differentiating matrix multiplication}{256}{subsubsection*.255}%
+\contentsline {subsubsection}{Broadcasting requires gradient reduction}{257}{subsubsection*.256}%
+\contentsline {subsection}{\numberline {6.3.8}Differentiating a simulation through time}{258}{subsection.6.3.8}%
+\contentsline {subsubsection}{Differentiating an Euler step}{258}{subsubsection*.257}%
+\contentsline {subsubsection}{Continuous sensitivity equations}{259}{subsubsection*.258}%
+\contentsline {subsubsection}{Worked example: exponential damping}{259}{subsubsection*.259}%
+\contentsline {paragraph}{Differentiating the discrete Euler approximation}{260}{paragraph*.260}%
+\contentsline {subsubsection}{Reverse adjoint sensitivity for continuous systems}{261}{subsubsection*.261}%
+\contentsline {subsection}{\numberline {6.3.9}Actual KairoMath automatic differentiation architecture}{262}{subsection.6.3.9}%
+\contentsline {paragraph}{Graph representation}{262}{paragraph*.262}%
+\contentsline {paragraph}{Actual gradient accumulation}{263}{paragraph*.263}%
+\contentsline {paragraph}{Actual backward execution}{263}{paragraph*.264}%
+\contentsline {paragraph}{Matrix multiplication in your repository}{263}{paragraph*.265}%
+\contentsline {paragraph}{Checkpointing}{264}{paragraph*.266}%
+\contentsline {subsection}{\numberline {6.3.10}Production numerical behavior: what can break?}{264}{subsection.6.3.10}%
+\contentsline {paragraph}{Integrating the wrong state}{264}{paragraph*.267}%
+\contentsline {paragraph}{Updating a coupled system in place incorrectly}{265}{paragraph*.268}%
+\contentsline {paragraph}{Accuracy versus physical structure}{265}{paragraph*.269}%
+\contentsline {paragraph}{Nondifferentiable events}{265}{paragraph*.270}%
+\contentsline {paragraph}{GPU implementation and memory cost}{265}{paragraph*.271}%
+\contentsline {paragraph}{Floating-point determinism}{266}{paragraph*.272}%
+\contentsline {subsection}{\numberline {6.3.11}Research bridge: differentiable soft-body reconstruction}{266}{subsection.6.3.11}%
+\contentsline {subsubsection}{A falsifiable research question}{267}{subsubsection*.273}%
+\contentsline {subsubsection}{Connection to your Gaussian reconstruction work}{267}{subsubsection*.274}%
+\contentsline {subsection}{\numberline {6.3.12}Final reconstruction: M051 + M052}{268}{subsection.6.3.12}%
+\contentsline {subsubsection}{Reconstruction challenges}{268}{subsubsection*.275}%
+\contentsline {section}{\numberline {6.4}From Uncertainty to Trustworthy Samples: Probability and Monte Carlo}{268}{section.6.4}%
+\contentsline {section}{\numberline {6.5}Random measurements, expectation, and covariance}{268}{section.6.5}%
+\contentsline {chapter}{\numberline {7}Probability Models and Measurement Error}{271}{chapter.7}%
+\contentsline {section}{\numberline {7.1}1. A probability model begins with possible outcomes}{271}{section.7.1}%
+\contentsline {subsection}{\numberline {7.1.1}Experiments, outcomes, and sample spaces}{272}{subsection.7.1.1}%
+\contentsline {subsubsection}{1 A sample space is not necessarily a collection of equally likely outcomes}{272}{subsubsection*.277}%
+\contentsline {subsubsection}{2 Discrete versus continuous outcome spaces}{273}{subsubsection*.278}%
+\contentsline {subsubsection}{3 Randomness as a model, not a mystical property}{273}{subsubsection*.279}%
+\contentsline {subsection}{\numberline {7.1.2}Events and set operations}{273}{subsection.7.1.2}%
+\contentsline {subsubsection}{1 Probability of a union}{274}{subsubsection*.280}%
+\contentsline {subsubsection}{2 Disjoint events}{275}{subsubsection*.281}%
+\contentsline {subsubsection}{3 The formal measurable space}{275}{subsubsection*.282}%
+\contentsline {subsection}{\numberline {7.1.3}The three probability axioms}{276}{subsection.7.1.3}%
+\contentsline {subsubsection}{Axiom 1: Nonnegativity}{276}{subsubsection*.283}%
+\contentsline {subsubsection}{Axiom 2: Normalization}{276}{subsubsection*.284}%
+\contentsline {subsubsection}{Axiom 3: Countable additivity}{276}{subsubsection*.285}%
+\contentsline {subsubsection}{1 Deriving \(P(\varnothing )=0\)}{276}{subsubsection*.286}%
+\contentsline {subsubsection}{2 Deriving the complement rule}{277}{subsubsection*.287}%
+\contentsline {subsubsection}{3 Deriving monotonicity}{277}{subsubsection*.288}%
+\contentsline {subsubsection}{4 The union bound}{277}{subsubsection*.289}%
+\contentsline {subsection}{\numberline {7.1.4}Conditional probability}{278}{subsection.7.1.4}%
+\contentsline {subsubsection}{1 Deriving the formula by restricting the sample space}{278}{subsubsection*.290}%
+\contentsline {subsubsection}{2 The multiplication rule}{279}{subsubsection*.291}%
+\contentsline {subsubsection}{3 Conditioning can change the relevant probability distribution}{279}{subsubsection*.292}%
+\contentsline {subsubsection}{4 Conditioning on a zero-probability event}{279}{subsubsection*.293}%
+\contentsline {subsection}{\numberline {7.1.5}Independence: when information does not change probability}{280}{subsection.7.1.5}%
+\contentsline {subsubsection}{1 Independence versus mutually exclusive events}{280}{subsubsection*.294}%
+\contentsline {subsubsection}{2 Independent coin tosses}{280}{subsubsection*.295}%
+\contentsline {subsubsection}{3 Pairwise independence is not mutual independence}{281}{subsubsection*.296}%
+\contentsline {subsubsection}{4 Conditional independence}{281}{subsubsection*.297}%
+\contentsline {subsection}{\numberline {7.1.6}Bayes' theorem}{282}{subsection.7.1.6}%
+\contentsline {subsubsection}{1 The law of total probability}{282}{subsubsection*.298}%
+\contentsline {subsubsection}{2 Worked graphics example: a noisy visibility detector}{283}{subsubsection*.299}%
+\contentsline {subsubsection}{3 Posterior odds form}{284}{subsubsection*.300}%
+\contentsline {subsection}{\numberline {7.1.7}Measure uncertainty along an actual direction}{284}{subsection.7.1.7}%
+\contentsline {subsection}{\numberline {7.1.8}Whiten residuals without pretending every ellipse has the same probability}{286}{subsection.7.1.8}%
+\contentsline {section}{\numberline {7.2}2. Random quantities and their probability laws}{286}{section.7.2}%
+\contentsline {subsection}{\numberline {7.2.1}Random variables: turning outcomes into mathematical quantities}{286}{subsection.7.2.1}%
+\contentsline {subsubsection}{1 Random variables are functions, not mysterious changing numbers}{288}{subsubsection*.301}%
+\contentsline {subsubsection}{2 Random vectors}{288}{subsubsection*.302}%
+\contentsline {subsubsection}{3 A random variable need not have a density}{288}{subsubsection*.303}%
+\contentsline {subsection}{\numberline {7.2.2}Discrete random variables}{289}{subsection.7.2.2}%
+\contentsline {subsubsection}{1 Countably infinite distributions}{289}{subsubsection*.304}%
+\contentsline {subsubsection}{2 An example with two dice}{289}{subsubsection*.305}%
+\contentsline {subsection}{\numberline {7.2.3}Continuous random variables}{290}{subsection.7.2.3}%
+\contentsline {subsubsection}{1 Why individual exact values have zero probability}{290}{subsubsection*.306}%
+\contentsline {subsubsection}{2 Units of a density}{290}{subsubsection*.307}%
+\contentsline {subsection}{\numberline {7.2.4}Probability mass functions}{291}{subsection.7.2.4}%
+\contentsline {subsubsection}{1 PMFs can be represented explicitly or procedurally}{292}{subsubsection*.308}%
+\contentsline {subsubsection}{2 A PMF is not a histogram}{292}{subsubsection*.309}%
+\contentsline {subsection}{\numberline {7.2.5}Probability density functions}{292}{subsection.7.2.5}%
+\contentsline {subsubsection}{1 A density can exceed one}{293}{subsubsection*.310}%
+\contentsline {subsubsection}{2 The probability associated with a small region}{293}{subsubsection*.311}%
+\contentsline {subsubsection}{3 Densities depend on coordinates}{293}{subsubsection*.312}%
+\contentsline {subsection}{\numberline {7.2.6}Cumulative distribution functions}{294}{subsection.7.2.6}%
+\contentsline {subsubsection}{1 Fundamental properties}{294}{subsubsection*.313}%
+\contentsline {subsubsection}{2 CDF of a uniform variable}{295}{subsubsection*.314}%
+\contentsline {subsubsection}{3 CDF of a discrete variable}{295}{subsubsection*.315}%
+\contentsline {subsubsection}{4 Quantiles and inverse CDFs}{295}{subsubsection*.316}%
+\contentsline {section}{\numberline {7.3}3. Expected values describe centers; covariance describes dependence}{296}{section.7.3}%
+\contentsline {subsection}{\numberline {7.3.1}Expected value: what a random quantity averages to}{296}{subsection.7.3.1}%
+\contentsline {subsubsection}{1 Expectation is not necessarily a possible outcome}{296}{subsubsection*.317}%
+\contentsline {subsubsection}{2 Deriving expectation of a function}{297}{subsubsection*.318}%
+\contentsline {subsubsection}{3 Linearity of expectation}{297}{subsubsection*.319}%
+\contentsline {subsubsection}{4 Expectation of a product}{298}{subsubsection*.320}%
+\contentsline {subsubsection}{5 Expected value as an integral: the rendering connection}{298}{subsubsection*.321}%
+\contentsline {subsection}{\numberline {7.3.2}Variance: measuring spread around the mean}{298}{subsection.7.3.2}%
+\contentsline {subsubsection}{1 Deriving the computational formula}{299}{subsubsection*.322}%
+\contentsline {subsubsection}{2 Numerical example: variance of a two-point distribution}{300}{subsubsection*.323}%
+\contentsline {subsubsection}{3 Variance under scaling and translation}{300}{subsubsection*.324}%
+\contentsline {subsubsection}{4 Variance of a sum}{301}{subsubsection*.325}%
+\contentsline {subsection}{\numberline {7.3.3}Standard deviation}{301}{subsection.7.3.3}%
+\contentsline {subsubsection}{1 Population versus sample standard deviation}{301}{subsubsection*.326}%
+\contentsline {subsection}{\numberline {7.3.4}Covariance: measuring coupled uncertainty}{302}{subsection.7.3.4}%
+\contentsline {subsubsection}{1 Deriving the alternative formula}{302}{subsubsection*.327}%
+\contentsline {subsubsection}{2 Positive covariance}{302}{subsubsection*.328}%
+\contentsline {subsubsection}{3 Negative covariance}{302}{subsubsection*.329}%
+\contentsline {subsubsection}{4 Zero covariance}{303}{subsubsection*.330}%
+\contentsline {subsubsection}{5 Covariance under scaling}{303}{subsubsection*.331}%
+\contentsline {subsubsection}{6 Deriving variance of a sum}{303}{subsubsection*.332}%
+\contentsline {subsubsection}{7 The covariance matrix}{304}{subsubsection*.333}%
+\contentsline {subsection}{\numberline {7.3.5}Correlation: normalized covariance}{304}{subsection.7.3.5}%
+\contentsline {subsubsection}{1 Why correlation lies between -1 and 1}{305}{subsubsection*.334}%
+\contentsline {subsubsection}{2 Zero correlation is not independence}{305}{subsubsection*.335}%
+\contentsline {subsection}{\numberline {7.3.6}Joint distributions}{306}{subsection.7.3.6}%
+\contentsline {subsubsection}{1 A complete joint distribution example}{306}{subsubsection*.336}%
+\contentsline {subsubsection}{2 Compute the covariance}{307}{subsubsection*.337}%
+\contentsline {subsection}{\numberline {7.3.7}Marginal distributions}{307}{subsection.7.3.7}%
+\contentsline {subsubsection}{1 Why marginalization works}{308}{subsubsection*.338}%
+\contentsline {subsubsection}{2 Marginalization loses dependence information}{308}{subsubsection*.339}%
+\contentsline {subsection}{\numberline {7.3.8}Conditional distributions}{308}{subsection.7.3.8}%
+\contentsline {subsubsection}{1 Conditional distribution from our joint table}{309}{subsubsection*.340}%
+\contentsline {subsubsection}{2 Law of total expectation}{309}{subsubsection*.341}%
+\contentsline {subsubsection}{3 Law of total variance}{310}{subsubsection*.342}%
+\contentsline {subsubsection}{4 Why this matters for graphics and uncertainty}{311}{subsubsection*.343}%
+\contentsline {section}{\numberline {7.4}4. Discrete and continuous distribution families}{311}{section.7.4}%
+\contentsline {subsection}{\numberline {7.4.1}Bernoulli distribution}{311}{subsection.7.4.1}%
+\contentsline {subsubsection}{1 Deriving the mean}{312}{subsubsection*.344}%
+\contentsline {subsubsection}{2 Deriving the variance}{312}{subsubsection*.345}%
+\contentsline {subsubsection}{3 Bernoulli variables as indicators}{313}{subsubsection*.346}%
+\contentsline {subsubsection}{4 Bernoulli likelihood and cross-entropy}{313}{subsubsection*.347}%
+\contentsline {subsection}{\numberline {7.4.2}Binomial distribution}{314}{subsection.7.4.2}%
+\contentsline {subsubsection}{1 Deriving the binomial PMF}{314}{subsubsection*.348}%
+\contentsline {subsubsection}{2 Worked example}{315}{subsubsection*.349}%
+\contentsline {subsubsection}{3 Deriving mean and variance}{315}{subsubsection*.350}%
+\contentsline {subsubsection}{4 What if the trials are dependent?}{316}{subsubsection*.351}%
+\contentsline {subsubsection}{5 Numerically stable binomial probabilities}{316}{subsubsection*.352}%
+\contentsline {subsection}{\numberline {7.4.3}Uniform distribution}{317}{subsection.7.4.3}%
+\contentsline {subsubsection}{1 Deriving the normalization}{317}{subsubsection*.353}%
+\contentsline {subsubsection}{2 Deriving the mean: uniform distribution}{317}{subsubsection*.354}%
+\contentsline {subsubsection}{3 Deriving the variance: uniform distribution}{318}{subsubsection*.355}%
+\contentsline {subsubsection}{4 Worked example}{319}{subsubsection*.356}%
+\contentsline {subsubsection}{5 Uniform in coordinates is not always uniform geometrically}{319}{subsubsection*.357}%
+\contentsline {subsection}{\numberline {7.4.4}Gaussian or normal distribution}{320}{subsection.7.4.4}%
+\contentsline {subsubsection}{1 Why does the exponent contain a square?}{320}{subsubsection*.358}%
+\contentsline {subsubsection}{2 Deriving the Gaussian normalization constant}{321}{subsubsection*.359}%
+\contentsline {subsubsection}{3 Deriving the mean and variance}{322}{subsubsection*.360}%
+\contentsline {subsubsection}{4 Gaussian shapes}{323}{subsubsection*.361}%
+\contentsline {subsubsection}{5 Gaussian log-likelihood and least squares}{323}{subsubsection*.362}%
+\contentsline {subsubsection}{6 Gaussian assumptions and the central limit theorem}{323}{subsubsection*.363}%
+\contentsline {subsection}{\numberline {7.4.5}The standard normal distribution}{324}{subsection.7.4.5}%
+\contentsline {subsubsection}{1 Standardization}{324}{subsubsection*.364}%
+\contentsline {subsubsection}{2 Numerical example: standardized pixel error}{324}{subsubsection*.365}%
+\contentsline {subsubsection}{3 The error function}{325}{subsubsection*.366}%
+\contentsline {subsubsection}{4 Why standardized errors are useful}{326}{subsubsection*.367}%
+\contentsline {chapter}{\numberline {8}Waiting Times, Covariance, and Matrix Decomposition}{327}{chapter.8}%
+\contentsline {section}{\numberline {8.1}5. Waiting times, event counts, and covariance geometry}{327}{section.8.1}%
+\contentsline {subsection}{\numberline {8.1.1}Exponential distribution}{327}{subsection.8.1.1}%
+\contentsline {subsubsection}{1 Deriving the CDF}{327}{subsubsection*.369}%
+\contentsline {subsubsection}{2 Deriving the mean: exponential distribution}{328}{subsubsection*.370}%
+\contentsline {subsubsection}{3 Memorylessness}{329}{subsubsection*.371}%
+\contentsline {subsubsection}{4 Numerical example: exponential waiting times}{329}{subsubsection*.372}%
+\contentsline {subsubsection}{5 Numerical stability of the CDF}{330}{subsubsection*.373}%
+\contentsline {subsubsection}{6 Inverse-transform sampling}{330}{subsubsection*.374}%
+\contentsline {subsection}{\numberline {8.1.2}Poisson distribution}{331}{subsection.8.1.2}%
+\contentsline {subsubsection}{1 Derivation as a limit of binomial distributions}{331}{subsubsection*.375}%
+\contentsline {subsubsection}{2 Deriving the mean: Poisson distribution}{332}{subsubsection*.376}%
+\contentsline {subsubsection}{3 Deriving the variance: Poisson distribution}{332}{subsubsection*.377}%
+\contentsline {subsubsection}{4 Numerical example: Poisson event counts}{333}{subsubsection*.378}%
+\contentsline {subsubsection}{5 Poisson process and exponential waiting times}{334}{subsubsection*.379}%
+\contentsline {subsubsection}{6 Poisson counts in physical simulation}{334}{subsubsection*.380}%
+\contentsline {subsection}{\numberline {8.1.3}Multivariate Gaussian distribution}{334}{subsection.8.1.3}%
+\contentsline {subsubsection}{1 Begin with independent standard normals}{335}{subsubsection*.381}%
+\contentsline {subsubsection}{2 Transform the standard Gaussian}{336}{subsubsection*.382}%
+\contentsline {subsubsection}{3 Derive the density with a change of variables}{336}{subsubsection*.383}%
+\contentsline {subsubsection}{4 The Mahalanobis distance}{338}{subsubsection*.384}%
+\contentsline {subsubsection}{5 Geometric interpretation using eigenvectors}{338}{subsubsection*.385}%
+\contentsline {subsubsection}{6 Numerical 2D Gaussian example}{339}{subsubsection*.386}%
+\contentsline {subsubsection}{7 Determinant and density at the mean}{340}{subsubsection*.387}%
+\contentsline {subsubsection}{8 Cholesky factorization and Gaussian sampling}{340}{subsubsection*.388}%
+\contentsline {subsubsection}{9 Conditional Gaussian distributions}{342}{subsubsection*.389}%
+\contentsline {subsubsection}{10 Numerical conditional Gaussian example}{343}{subsubsection*.390}%
+\contentsline {subsubsection}{11 Important geometry: a 2D one-sigma ellipse is not a 68\% region}{344}{subsubsection*.391}%
+\contentsline {subsection}{\numberline {8.1.4}Covariance matrices in probability}{345}{subsection.8.1.4}%
+\contentsline {subsubsection}{1 Covariance is symmetric}{345}{subsubsection*.392}%
+\contentsline {subsubsection}{2 Variance in an arbitrary direction}{345}{subsubsection*.393}%
+\contentsline {subsubsection}{3 Affine uncertainty propagation}{346}{subsubsection*.394}%
+\contentsline {subsubsection}{4 Connection to rotations}{347}{subsubsection*.395}%
+\contentsline {subsubsection}{5 Nonlinear uncertainty propagation}{347}{subsubsection*.396}%
+\contentsline {subsubsection}{6 The connection to Gaussian splatting}{347}{subsubsection*.397}%
+\contentsline {subsubsection}{7 The rank of propagated covariance}{348}{subsubsection*.398}%
+\contentsline {subsection}{\numberline {8.1.5}Why covariance must be positive semidefinite}{349}{subsection.8.1.5}%
+\contentsline {subsubsection}{1 Eigenvalue interpretation}{349}{subsubsection*.399}%
+\contentsline {subsubsection}{2 Positive definite versus positive semidefinite}{350}{subsubsection*.400}%
+\contentsline {subsubsection}{3 Example of a singular but valid covariance}{350}{subsubsection*.401}%
+\contentsline {subsubsection}{4 Example of an invalid covariance}{351}{subsubsection*.402}%
+\contentsline {subsubsection}{5 A 2D covariance validity condition}{352}{subsubsection*.403}%
+\contentsline {subsubsection}{6 Cholesky factorization and positive definiteness}{352}{subsubsection*.404}%
+\contentsline {subsubsection}{Original bridge: whiten a covariance ellipse}{353}{subsubsection*.405}%
+\contentsline {subsubsection}{7 Numerical covariance repair}{353}{subsubsection*.406}%
+\contentsline {section}{\numberline {8.2}Singular directions explain reconstruction and variation}{354}{section.8.2}%
+\contentsline {subsection}{\numberline {8.2.1}Why a matrix factorization is a change in how we see the map}{354}{subsection.8.2.1}%
+\contentsline {subsection}{\numberline {8.2.2}Singular value decomposition covers every rectangular map}{355}{subsection.8.2.2}%
+\contentsline {subsection}{\numberline {8.2.3}The SVD equation as independent input-output channels}{355}{subsection.8.2.3}%
+\contentsline {subsection}{\numberline {8.2.4}Deriving singular directions through a Gram matrix}{356}{subsection.8.2.4}%
+\contentsline {subsection}{\numberline {8.2.5}Full, thin, and compact shapes for tall and wide matrices}{357}{subsection.8.2.5}%
+\contentsline {subsection}{\numberline {8.2.6}Rank, both nullspaces, and the four fundamental subspaces}{357}{subsection.8.2.6}%
+\contentsline {subsubsection}{Figure L6 - Every linear map is orthogonal change, stretch, orthogonal change}{358}{subsubsection*.407}%
+\contentsline {subsection}{\numberline {8.2.7}A concrete rotation, stretch, and coordinate trace}{358}{subsection.8.2.7}%
+\contentsline {subsubsection}{Figure L6a - Watch the same directions become an ellipse}{358}{subsubsection*.408}%
+\contentsline {subsection}{\numberline {8.2.8}Pseudoinverse makes least squares and minimum norm one operation}{359}{subsection.8.2.8}%
+\contentsline {subsection}{\numberline {8.2.9}The Moore--Penrose inverse and its four identities}{360}{subsection.8.2.9}%
+\contentsline {subsection}{\numberline {8.2.10}Least squares from decoupling, then minimum norm}{361}{subsection.8.2.10}%
+\contentsline {subsection}{\numberline {8.2.11}Conditioning: weak singular directions amplify uncertainty}{361}{subsection.8.2.11}%
+\contentsline {subsection}{\numberline {8.2.12}Low-rank approximation and why the largest directions win}{362}{subsection.8.2.12}%
+\contentsline {subsection}{\numberline {8.2.13}Thresholding and regularization are different choices}{363}{subsection.8.2.13}%
+\contentsline {subsection}{\numberline {8.2.14}SVD in a graphics sensitivity picture}{363}{subsection.8.2.14}%
+\contentsline {subsection}{\numberline {8.2.15}Why the pseudoinverse identities follow from projections}{364}{subsection.8.2.15}%
+\contentsline {subsubsection}{Figure L7 - The singular spectrum makes inversion and compression explicit}{364}{subsubsection*.409}%
+\contentsline {subsection}{\numberline {8.2.16}PCA turns a cloud of points into measured variation}{364}{subsection.8.2.16}%
+\contentsline {subsection}{\numberline {8.2.17}Centered measurements reveal principal directions}{365}{subsection.8.2.17}%
+\contentsline {subsection}{\numberline {8.2.18}Plane fits, eigengaps, and interpretation of uncertain components}{367}{subsection.8.2.18}%
+\contentsline {subsection}{\numberline {8.2.19}Polar decomposition separates rotation-like motion from stretch}{367}{subsection.8.2.19}%
+\contentsline {subsection}{\numberline {8.2.20}Polar decomposition separates frame dependent stretch from orientation}{368}{subsection.8.2.20}%
+\contentsline {subsection}{\numberline {8.2.21}Two-sided rotations, nearest proper rotation, and nonunique directions}{368}{subsection.8.2.21}%
+\contentsline {subsection}{\numberline {8.2.22}How numerical software computes and checks an SVD}{369}{subsection.8.2.22}%
+\contentsline {chapter}{\numberline {A}Reference Notes}{371}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Color encoding and linear-light operations}{371}{section.A.1}%
+\contentsline {subsection}{\numberline {A.1.1}Definition and mechanism}{371}{subsection.A.1.1}%
+\contentsline {subsection}{\numberline {A.1.2}Prerequisites}{371}{subsection.A.1.2}%
+\contentsline {subsection}{\numberline {A.1.3}Used by}{371}{subsection.A.1.3}%
+\contentsline {subsection}{\numberline {A.1.4}Recall and next depth}{371}{subsection.A.1.4}%
+\contentsline {subsection}{\numberline {A.1.5}Source and navigation}{371}{subsection.A.1.5}%
+\contentsline {subsection}{\numberline {A.1.6}University course development}{371}{subsection.A.1.6}%
+\contentsline {section}{\numberline {A.2}Determinants orientation and volume}{372}{section.A.2}%
+\contentsline {subsection}{\numberline {A.2.1}Definition and mechanism}{372}{subsection.A.2.1}%
+\contentsline {subsection}{\numberline {A.2.2}Prerequisites}{372}{subsection.A.2.2}%
+\contentsline {subsection}{\numberline {A.2.3}Used by}{372}{subsection.A.2.3}%
+\contentsline {subsection}{\numberline {A.2.4}Source and navigation}{372}{subsection.A.2.4}%
+\contentsline {subsection}{\numberline {A.2.5}University course development}{373}{subsection.A.2.5}%
+\contentsline {section}{\numberline {A.3}Dot and cross-product rounding}{373}{section.A.3}%
+\contentsline {subsection}{\numberline {A.3.1}Definition and mechanism}{373}{subsection.A.3.1}%
+\contentsline {subsection}{\numberline {A.3.2}Prerequisites}{373}{subsection.A.3.2}%
+\contentsline {subsection}{\numberline {A.3.3}Used by}{373}{subsection.A.3.3}%
+\contentsline {subsection}{\numberline {A.3.4}Recall and next depth}{374}{subsection.A.3.4}%
+\contentsline {subsection}{\numberline {A.3.5}Source and navigation}{374}{subsection.A.3.5}%
+\contentsline {section}{\numberline {A.4}Dual quaternions and rigid motion}{374}{section.A.4}%
+\contentsline {subsection}{\numberline {A.4.1}Definition and mechanism}{374}{subsection.A.4.1}%
+\contentsline {subsection}{\numberline {A.4.2}Prerequisites}{374}{subsection.A.4.2}%
+\contentsline {subsection}{\numberline {A.4.3}Used by}{374}{subsection.A.4.3}%
+\contentsline {subsection}{\numberline {A.4.4}Recall and next depth}{374}{subsection.A.4.4}%
+\contentsline {subsection}{\numberline {A.4.5}Source and navigation}{374}{subsection.A.4.5}%
+\contentsline {section}{\numberline {A.5}Euler angles and gimbal singularity}{374}{section.A.5}%
+\contentsline {subsection}{\numberline {A.5.1}Definition and mechanism}{375}{subsection.A.5.1}%
+\contentsline {subsection}{\numberline {A.5.2}Prerequisites}{375}{subsection.A.5.2}%
+\contentsline {subsection}{\numberline {A.5.3}Used by}{375}{subsection.A.5.3}%
+\contentsline {subsection}{\numberline {A.5.4}Recall and next depth}{375}{subsection.A.5.4}%
+\contentsline {subsection}{\numberline {A.5.5}Source and navigation}{375}{subsection.A.5.5}%
+\contentsline {section}{\numberline {A.6}GGUF binary model loading}{375}{section.A.6}%
+\contentsline {subsection}{\numberline {A.6.1}Prefix witness}{376}{subsection.A.6.1}%
+\contentsline {subsection}{\numberline {A.6.2}What a full loader must prove}{376}{subsection.A.6.2}%
+\contentsline {subsection}{\numberline {A.6.3}Quantized execution boundary}{376}{subsection.A.6.3}%
+\contentsline {subsection}{\numberline {A.6.4}Metadata and tensor-descriptor witness}{376}{subsection.A.6.4}%
+\contentsline {section}{\numberline {A.7}Inverse, rejection, and importance sampling}{377}{section.A.7}%
+\contentsline {subsection}{\numberline {A.7.1}Definition and mechanism}{377}{subsection.A.7.1}%
+\contentsline {subsection}{\numberline {A.7.2}Prerequisites}{377}{subsection.A.7.2}%
+\contentsline {subsection}{\numberline {A.7.3}Used by}{377}{subsection.A.7.3}%
+\contentsline {subsection}{\numberline {A.7.4}Full teaching explanation}{377}{subsection.A.7.4}%
+\contentsline {subsection}{\numberline {A.7.5}Source coverage}{378}{subsection.A.7.5}%
+\contentsline {section}{\numberline {A.8}Linear affine and projective transformations}{378}{section.A.8}%
+\contentsline {subsection}{\numberline {A.8.1}Definition and mechanism}{378}{subsection.A.8.1}%
+\contentsline {subsection}{\numberline {A.8.2}Prerequisites}{378}{subsection.A.8.2}%
+\contentsline {subsection}{\numberline {A.8.3}Used by}{378}{subsection.A.8.3}%
+\contentsline {subsection}{\numberline {A.8.4}Recall and next depth}{378}{subsection.A.8.4}%
+\contentsline {subsection}{\numberline {A.8.5}Source and navigation}{378}{subsection.A.8.5}%
+\contentsline {section}{\numberline {A.9}Mastery evidence levels}{378}{section.A.9}%
+\contentsline {subsection}{\numberline {A.9.1}0 --- Indexed}{378}{subsection.A.9.1}%
+\contentsline {subsection}{\numberline {A.9.2}1 --- Explained}{379}{subsection.A.9.2}%
+\contentsline {subsection}{\numberline {A.9.3}2 --- Derived and traced}{379}{subsection.A.9.3}%
+\contentsline {subsection}{\numberline {A.9.4}3 --- Reference implemented}{379}{subsection.A.9.4}%
+\contentsline {subsection}{\numberline {A.9.5}4 --- Independently verified}{379}{subsection.A.9.5}%
+\contentsline {subsection}{\numberline {A.9.6}5 --- Native-system verified}{379}{subsection.A.9.6}%
+\contentsline {subsection}{\numberline {A.9.7}6 --- Production-repository grounded}{379}{subsection.A.9.7}%
+\contentsline {subsection}{\numberline {A.9.8}7 --- Reconstructed mastery}{379}{subsection.A.9.8}%
+\contentsline {subsection}{\numberline {A.9.9}Required proof fields}{379}{subsection.A.9.9}%
+\contentsline {section}{\numberline {A.10}Matrices as linear maps and basis images}{380}{section.A.10}%
+\contentsline {subsection}{\numberline {A.10.1}Definition and mechanism}{380}{subsection.A.10.1}%
+\contentsline {subsection}{\numberline {A.10.2}Prerequisites}{380}{subsection.A.10.2}%
+\contentsline {subsection}{\numberline {A.10.3}Used by}{380}{subsection.A.10.3}%
+\contentsline {subsection}{\numberline {A.10.4}Source and navigation}{380}{subsection.A.10.4}%
+\contentsline {section}{\numberline {A.11}Matrix SIMD tiling and cache reuse}{381}{section.A.11}%
+\contentsline {subsection}{\numberline {A.11.1}Definition and mechanism}{381}{subsection.A.11.1}%
+\contentsline {subsection}{\numberline {A.11.2}Prerequisites}{381}{subsection.A.11.2}%
+\contentsline {subsection}{\numberline {A.11.3}Used by}{381}{subsection.A.11.3}%
+\contentsline {subsection}{\numberline {A.11.4}Recall and next depth}{381}{subsection.A.11.4}%
+\contentsline {subsection}{\numberline {A.11.5}Source and navigation}{381}{subsection.A.11.5}%
+\contentsline {section}{\numberline {A.12}Matrix inversion pivoting and residuals}{381}{section.A.12}%
+\contentsline {subsection}{\numberline {A.12.1}Definition and mechanism}{381}{subsection.A.12.1}%
+\contentsline {subsection}{\numberline {A.12.2}Prerequisites}{381}{subsection.A.12.2}%
+\contentsline {subsection}{\numberline {A.12.3}Used by}{382}{subsection.A.12.3}%
+\contentsline {subsection}{\numberline {A.12.4}Recall and next depth}{382}{subsection.A.12.4}%
+\contentsline {subsection}{\numberline {A.12.5}Source and navigation}{382}{subsection.A.12.5}%
+\contentsline {section}{\numberline {A.13}Matrix storage indexing and strides}{382}{section.A.13}%
+\contentsline {subsection}{\numberline {A.13.1}Definition and mechanism}{382}{subsection.A.13.1}%
+\contentsline {subsection}{\numberline {A.13.2}Prerequisites}{382}{subsection.A.13.2}%
+\contentsline {subsection}{\numberline {A.13.3}Used by}{382}{subsection.A.13.3}%
+\contentsline {subsection}{\numberline {A.13.4}Source and navigation}{383}{subsection.A.13.4}%
+\contentsline {section}{\numberline {A.14}Metric gradients and differential measurements}{383}{section.A.14}%
+\contentsline {section}{\numberline {A.15}Norms, dual norms and error budgets}{384}{section.A.15}%
+\contentsline {section}{\numberline {A.16}ONNX graph import and lowering}{385}{section.A.16}%
+\contentsline {subsection}{\numberline {A.16.1}Import pipeline}{385}{subsection.A.16.1}%
+\contentsline {subsection}{\numberline {A.16.2}Why an internal IR matters}{385}{subsection.A.16.2}%
+\contentsline {subsection}{\numberline {A.16.3}Executable graph contract}{385}{subsection.A.16.3}%
+\contentsline {subsection}{\numberline {A.16.4}Real protobuf and official reference-runtime witness}{386}{subsection.A.16.4}%
+\contentsline {section}{\numberline {A.17}Quantized matvec and dequantization}{386}{section.A.17}%
+\contentsline {subsection}{\numberline {A.17.1}Zero rows and exceptional values}{387}{subsection.A.17.1}%
+\contentsline {subsection}{\numberline {A.17.2}Reference versus optimized execution}{387}{subsection.A.17.2}%
+\contentsline {section}{\numberline {A.18}Quaternion algebra and Hamilton product}{387}{section.A.18}%
+\contentsline {subsection}{\numberline {A.18.1}Definition and mechanism}{387}{subsection.A.18.1}%
+\contentsline {subsection}{\numberline {A.18.2}Prerequisites}{387}{subsection.A.18.2}%
+\contentsline {subsection}{\numberline {A.18.3}Used by}{388}{subsection.A.18.3}%
+\contentsline {subsection}{\numberline {A.18.4}Recall and next depth}{388}{subsection.A.18.4}%
+\contentsline {subsection}{\numberline {A.18.5}Source and navigation}{388}{subsection.A.18.5}%
+\contentsline {section}{\numberline {A.19}Quaternion interpolation and shortest paths}{388}{section.A.19}%
+\contentsline {subsection}{\numberline {A.19.1}Definition and mechanism}{388}{subsection.A.19.1}%
+\contentsline {subsection}{\numberline {A.19.2}Prerequisites}{388}{subsection.A.19.2}%
+\contentsline {subsection}{\numberline {A.19.3}Used by}{388}{subsection.A.19.3}%
+\contentsline {subsection}{\numberline {A.19.4}Recall and next depth}{388}{subsection.A.19.4}%
+\contentsline {subsection}{\numberline {A.19.5}Source and navigation}{388}{subsection.A.19.5}%
+\contentsline {section}{\numberline {A.20}Quaternion matrix and axis-angle conversion}{388}{section.A.20}%
+\contentsline {subsection}{\numberline {A.20.1}Definition and mechanism}{389}{subsection.A.20.1}%
+\contentsline {subsection}{\numberline {A.20.2}Prerequisites}{389}{subsection.A.20.2}%
+\contentsline {subsection}{\numberline {A.20.3}Used by}{389}{subsection.A.20.3}%
+\contentsline {subsection}{\numberline {A.20.4}Recall and next depth}{389}{subsection.A.20.4}%
+\contentsline {subsection}{\numberline {A.20.5}Source and navigation}{389}{subsection.A.20.5}%
+\contentsline {section}{\numberline {A.21}Quaternion rotation and double cover}{389}{section.A.21}%
+\contentsline {subsection}{\numberline {A.21.1}Definition and mechanism}{389}{subsection.A.21.1}%
+\contentsline {subsection}{\numberline {A.21.2}Prerequisites}{389}{subsection.A.21.2}%
+\contentsline {subsection}{\numberline {A.21.3}Used by}{389}{subsection.A.21.3}%
+\contentsline {subsection}{\numberline {A.21.4}Recall and next depth}{390}{subsection.A.21.4}%
+\contentsline {subsection}{\numberline {A.21.5}Source and navigation}{390}{subsection.A.21.5}%
+\contentsline {subsection}{\numberline {A.21.6}University course development}{390}{subsection.A.21.6}%
+\contentsline {section}{\numberline {A.22}Reciprocal bases and coordinate measurements}{390}{section.A.22}%
+\contentsline {section}{\numberline {A.23}Tensor runtime layout and views}{391}{section.A.23}%
+\contentsline {subsection}{\numberline {A.23.1}Broadcasting is an index transformation}{392}{subsection.A.23.1}%
+\contentsline {subsection}{\numberline {A.23.2}Views, aliases, and mutation}{392}{subsection.A.23.2}%
+\contentsline {subsection}{\numberline {A.23.3}Executable reconstruction}{392}{subsection.A.23.3}%
+\contentsline {subsection}{\numberline {A.23.4}External contract}{392}{subsection.A.23.4}%
+\contentsline {subsection}{\numberline {A.23.5}Failure probes}{392}{subsection.A.23.5}%
+\contentsline {section}{\numberline {A.24}Transform hierarchies TRS and shear}{393}{section.A.24}%
+\contentsline {subsection}{\numberline {A.24.1}Definition and mechanism}{393}{subsection.A.24.1}%
+\contentsline {subsection}{\numberline {A.24.2}Prerequisites}{393}{subsection.A.24.2}%
+\contentsline {subsection}{\numberline {A.24.3}Used by}{393}{subsection.A.24.3}%
+\contentsline {subsection}{\numberline {A.24.4}Recall and next depth}{393}{subsection.A.24.4}%
+\contentsline {subsection}{\numberline {A.24.5}Source and navigation}{393}{subsection.A.24.5}%
+\contentsline {section}{\numberline {A.25}Transformer attention and KV cache runtime}{393}{section.A.25}%
+\contentsline {subsection}{\numberline {A.25.1}Causal masking}{394}{subsection.A.25.1}%
+\contentsline {subsection}{\numberline {A.25.2}Multi-head and grouped-query attention}{394}{subsection.A.25.2}%
+\contentsline {subsection}{\numberline {A.25.3}Residual, normalization, and feed-forward structure}{394}{subsection.A.25.3}%
+\contentsline {subsection}{\numberline {A.25.4}Executable witness}{395}{subsection.A.25.4}%
+\contentsline {chapter}{\numberline {B}Source Attachments}{396}{appendix.B}%

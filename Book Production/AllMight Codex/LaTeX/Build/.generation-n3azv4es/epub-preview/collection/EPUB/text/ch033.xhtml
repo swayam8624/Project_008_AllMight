@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch033.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-343615f49ddf-ieee-754-floating-point" class="level2">
+<h2>IEEE-754 floating point</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C001 · <strong>Latest development:</strong> C005</p>
+<section id="appendix-343615f49ddf-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>IEEE-754 specifies floating formats and behavior including representation classes, rounding directions and exception conditions. A finite bit pattern is interpreted through sign, exponent and significand rules, not as a two’s-complement integer.</p>
+<p>Binary32 has 1/8/23 stored fields and 24-bit normal precision; binary64 has 1/11/52 fields and 53-bit normal precision. Word 412A0000 encodes 10.625 in binary32. Exponent-zero and all-one fields distinguish zero/subnormal and infinity/NaN. Normal spacing expands with exponent; nearest-even and directed modes choose representable results under explicit rules. These format names do not prove every C++ float/double has those representations.</p>
+<p>M005 develops alignment, cancellation, FMA and accumulated error. Numeric equality is not representation identity, and moving rounding points can change the computed result.</p>
+</section>
+<section id="appendix-343615f49ddf-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch083.xhtml#appendix-ac697f5c66e8-bit-field" class="wikilink">Bit field</a> — A field is a declared range with offset s and width w, not automatically a C++ language bit-field member.</li>
+<li><a href="ch119.xhtml#appendix-f414bd4ed05c-interpretation-contract" class="wikilink">Interpretation contract</a> — For <code>0xAD</code>, unsigned interpretation gives 173; eight-bit two’s complement gives −83.</li>
+</ul>
+</section>
+<section id="appendix-343615f49ddf-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch034.xhtml#appendix-34443cec7170-binary16" class="wikilink">Binary16</a> — uses this mechanism to define its representation, error or validation contract.</p></li>
+<li><p><a href="ch015.xhtml#appendix-18b8dd966b5d-bfloat16" class="wikilink">Bfloat16</a> — uses this mechanism to define its representation, error or validation contract.</p></li>
+<li><p><a href="ch041.xhtml#appendix-41e8ef22a21e-fused-multiply-add" class="wikilink">Fused multiply-add</a> — Fused operation semantics and destination rounding are part of the arithmetic contract.</p></li>
+<li><p><a href="ch047.xhtml#appendix-5057f9ad327f-binary32" class="wikilink">Binary32</a> — uses ieee-754 floating point to establish this mechanism’s representation or policy.</p></li>
+<li><p><a href="ch116.xhtml#appendix-ed8531b46754-floating-point-exception-flags" class="wikilink">Floating-point exception flags</a> — uses ieee-754 floating point to establish this mechanism’s representation or policy.</p></li>
+<li><p><a href="ch136.xhtml#appendix-34ee45f161c1-bit-casting-and-representation" class="wikilink">Bit casting and representation (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Bit casting and representation)</a> — uses ieee-754 floating point to establish this mechanism’s representation or policy.</p></li>
+<li><p><a href="ch065.xhtml#appendix-7f1e17dcafb1-robust-norm-and-intermediate-range" class="wikilink">Robust norm and intermediate range</a> — uses ieee-754 floating point to establish this mechanism’s representation or policy.</p></li>
+</ul>
+<p>Connect later dependent concepts here when their lessons arrive.</p>
+</section>
+<section id="appendix-343615f49ddf-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct 10.625’s fields, distinguish epsilon from minimum positive values, and resolve an exact midpoint without calling it decimal rounding.</p>
+<p><strong>Pending:</strong> Extend this mechanism to later algorithms and target-specific behavior. See the M005 chapter for its current examples and validity assumptions.</p>
+</section>
+<section id="appendix-343615f49ddf-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-when-arithmetic-meets-uncertainty" class="wikilink">M005 development</a></p>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">C004 development</a></p>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-from-a-signal-to-an-interpretation" class="wikilink">C001 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-foundations" class="wikilink">Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

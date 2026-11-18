@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch462.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-2358b21a702d-mastery-evidence-ledger-12-november-2026" class="level2">
+<h2>Mastery evidence ledger — 12 November 2026</h2>
+<p>This ledger records <strong>what kind of evidence exists</strong>, not how many words were written. Use <a href="ch264.xhtml#appendix-2a2e5bd7143a-mastery-evidence-levels" class="wikilink">Mastery evidence levels (Mathematics for Visual Computing, Part 1, Reference notes: Mastery evidence levels)</a> for the ladder:</p>
+<p>0 Indexed → 1 Explained → 2 Derived/traced → 3 Reference implemented → 4 Independently verified → 5 Native-system verified → 6 Production-repository grounded → 7 Reconstructed mastery.</p>
+<p>A phase can hold different levels for different claims. For example, Vulkan synchronization can have a native API smoke witness while transient aliasing remains only derived. Do not average those into one misleading score.</p>
+<section id="appendix-2358b21a702d-current-phase-level-evidence-map" class="level3">
+<h3>Current phase-level evidence map</h3>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Subject</th>
+<th>Strongest current evidence</th>
+<th>Representative executable/reference artifacts</th>
+<th>Boundary that must not be overclaimed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Bits, numbers, memory</td>
+<td>Derived + executable examples</td>
+<td>existing binary/floating/format teaching and tests</td>
+<td>hardware electrical behavior and every compiler target are not measured</td>
+</tr>
+<tr>
+<td>2</td>
+<td>C++ object/lifetime model</td>
+<td>Reference implemented + compiler/sanitizer CI</td>
+<td>tools/m018, asset/lifetime labs, module boundary workflow</td>
+<td>exact ABI/compiler behavior still varies by toolchain/platform</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Modern C++/STL/modules</td>
+<td>Reference implemented + consumer/build tests</td>
+<td>PMR/ranges/policy/module labs</td>
+<td>broad zero-cost claims require workload-specific profiling</td>
+</tr>
+<tr>
+<td>4</td>
+<td>CPU/cache/SIMD/concurrency</td>
+<td>Reference implemented; some benchmark evidence</td>
+<td>phase4_cpu_systems_lab.cpp, scheduler/asset concurrency witnesses</td>
+<td>hardware counters, NUMA and architecture-specific SIMD throughput remain device evidence</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Algorithms/data structures</td>
+<td>Differential/reference implemented</td>
+<td>phase5_algorithm_workload_lab.cpp, algorithm_patterns_lab.cpp</td>
+<td>production workload choice still needs real distribution/profile data</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Vectors/geometric foundations</td>
+<td>Derived + tested scalar references</td>
+<td>basis/contact and vector reconstruction material</td>
+<td>SIMD/backend parity is separate</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Matrices/transforms/quaternions</td>
+<td>Derived + reference implementation</td>
+<td>basis/transform/quaternion code and dual-quaternion witness</td>
+<td>all coordinate conventions/importers are not automatically verified</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Advanced linear algebra</td>
+<td>Derived + numerical implementations</td>
+<td>LU/eigen/SVD/decomposition material and witnesses</td>
+<td>large sparse solver robustness and production conditioning datasets need more evidence</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Calculus/optimization</td>
+<td>Derived + numerical implementations</td>
+<td>finite-difference/optimizer/integrator teaching</td>
+<td>production inverse-problem convergence is workload-specific</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Probability/statistics/numerics</td>
+<td>Derived + statistical/numerical witnesses</td>
+<td>sampling/statistics code, Monte Carlo witness</td>
+<td>empirical claims still need enough independent samples/datasets</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Cameras/projective geometry</td>
+<td>Derived + numerical traces</td>
+<td>camera/projection/jacobian witnesses</td>
+<td>real calibration datasets and device conventions need current project evidence</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Geometry primitives</td>
+<td>Reference implemented in teaching corpus</td>
+<td>geometry/closest-point/intersection material</td>
+<td>full production geometry-library fuzzing remains separate</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Collision/GJK/CCD</td>
+<td>Multiple independent reference witnesses</td>
+<td>disk CCD, swept broadphase, contact/TOI labs</td>
+<td>arbitrary rotating 3D convex CCD and production solver parity remain higher evidence</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Spatial acceleration/navigation</td>
+<td>BVH query parity + SAH/Morton/refit references</td>
+<td>spatial_index_lab.cpp, bvh_sah_refit_lab.cpp</td>
+<td>full binned SAH/LBVH construction, dynamic rotations, SIMD/GPU traversal need workload/native evidence</td>
+</tr>
+<tr>
+<td>15</td>
+<td>ECS/data-oriented runtime</td>
+<td>Storage + scheduler/hierarchy references implemented</td>
+<td>ecs_reconstruction_lab.cpp, ecs_scheduler_hierarchy_lab.cpp</td>
+<td>concurrent structural mutation, work stealing and KairoECS parity need production evidence</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Engine architecture/assets/tooling</td>
+<td>Reference implemented with publication/concurrency witnesses</td>
+<td>asset pipeline, world contract, threaded publication labs</td>
+<td>current Kairo production integration remains a separate repository audit</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Rigid-body dynamics</td>
+<td>Reference implemented + numerical checks</td>
+<td>rigid/spring/mass/inertia teaching and labs</td>
+<td>production multi-body/3D engine parity remains separate</td>
+</tr>
+<tr>
+<td>18</td>
+<td>Contacts/constraints/CCD response</td>
+<td>Strong reference/differential evidence including friction/islands</td>
+<td>persistent contact, cache, penetration refresh, rigid-contact, constraint_friction_island_lab.cpp</td>
+<td>angular Jacobians, full friction cones, large 3D stacks/islands and production parity remain</td>
+</tr>
+<tr>
+<td>19</td>
+<td>Rasterization</td>
+<td>Coverage/interpolation + clipping/sample/stencil/blend CPU references</td>
+<td>raster_reference_lab.cpp, raster_pipeline_state_lab.cpp</td>
+<td>all clip planes, exact API sample rules, conservative rasterization and GPU parity remain</td>
+</tr>
+<tr>
+<td>20</td>
+<td>PBR/materials</td>
+<td>Isotropic + anisotropic/dielectric/furnace mathematical oracles</td>
+<td>pbr_reference_lab.cpp, pbr_extended_reference_lab.cpp</td>
+<td>rough transmission, multiple scattering, measured-material and material-import parity remain</td>
+</tr>
+<tr>
+<td>21</td>
+<td>Ray/path transport</td>
+<td>Scene-level geometry + MIS reference verified</td>
+<td>monte_carlo_transport_lab.cpp, path_transport_scene_lab.cpp</td>
+<td>emissive-geometry NEE, multibounce transport, BVH/image parity and media remain</td>
+</tr>
+<tr>
+<td>22</td>
+<td>GPU architecture/parallel algorithms</td>
+<td>Derived/reference + compile/native boundary</td>
+<td>prefix-scan teaching, native graphics workflow</td>
+<td>occupancy/bank/coalescing claims require device counters</td>
+</tr>
+<tr>
+<td>23</td>
+<td>Vulkan</td>
+<td>Native sync2 + buffer/timeline + image-layout/readback execution</td>
+<td>vulkan_sync_smoke.cpp, vulkan_buffer_timeline_smoke.cpp, vulkan_image_layout_smoke.cpp</td>
+<td>queue-family transfer, descriptor/shader visibility, transient aliasing, swapchain/present and production parity remain</td>
+</tr>
+<tr>
+<td>24</td>
+<td>Metal/render graph</td>
+<td>Logical graph + real MSL compile + native compute execution</td>
+<td>render_graph_contract_lab.cpp, metal_compile_smoke.metal, metal_runtime_smoke.mm</td>
+<td>CI executed MTLDevice/queue/pipeline/buffer/dispatch/completion; heaps, hazard capture, render-pass behavior, multi-queue sync and production parity remain</td>
+</tr>
+<tr>
+<td>25</td>
+<td>Gaussian splatting/captured worlds</td>
+<td>Projection + conic/tile/order CPU oracles</td>
+<td>gaussian_projection_reference_lab.cpp, gaussian_tile_conic_lab.cpp</td>
+<td>full SH, GPU radix/binning/rasterization and current Maveb/Vulkax parity remain</td>
+</tr>
+<tr>
+<td>26</td>
+<td>Advanced real-time rendering</td>
+<td>Temporal/shadow/cluster + TAA/SSR/SSAO/volume/particle CPU references</td>
+<td>realtime_rendering_reference_lab.cpp, realtime_effects_reference_lab.cpp</td>
+<td>production TAA masks/variance clipping, Hi-Z SSR, GTAO, scattering/froxels, GPU particle systems and renderer parity remain</td>
+</tr>
+<tr>
+<td>27</td>
+<td>Meshes/animation</td>
+<td>Topology + QEM + rigid-blend reference implemented</td>
+<td>mesh_topology_lab.cpp, qem_edge_collapse_lab.cpp, dual_quaternion_skinning_lab.cpp, animation controller lab</td>
+<td>optimal QEM/link-condition remeshing and production GPU skinning/import parity remain</td>
+</tr>
+<tr>
+<td>28</td>
+<td>Emulation/OS/network/crypto</td>
+<td>Real POSIX/network execution + primitive and native AES-GCM known-answer evidence</td>
+<td>emulator lab, posix_vm_file_lab.cpp, network_loopback_lab.cpp, crypto_primitives_lab.cpp, openssl_aes_gcm_smoke.cpp</td>
+<td>internet faults, crash durability, nonce/key lifecycle, replay policy, side channels and production security remain</td>
+</tr>
+<tr>
+<td>29</td>
+<td>ML runtime/tensors/compressed inference</td>
+<td>Tensor/attention + GGUF subset + real ONNX protobuf/checker/shape/reference execution</td>
+<td>phase29_ml_runtime_lab.cpp, gguf_metadata_tensor_lab.cpp, tools/ml/onnx_contract.py</td>
+<td>full GGUF catalog/payload, broad ONNX opsets/control flow/external data, tokenizer, SIMD/Metal kernels and production-model parity remain</td>
+</tr>
+<tr>
+<td>30</td>
+<td>Production/DCC/research/capstone</td>
+<td>Host-neutral pipeline + real Blender save/export/re-import host execution</td>
+<td>production_pipeline_contract_lab.cpp, tools/dcc/blender_contract.py</td>
+<td>Maya/Houdini/Nuke host runs, arbitrary-scene/material/armature parity, render farm/filesystem durability and learner oral mastery remain</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-2358b21a702d-what-this-repair-changed" class="level3">
+<h3>What this repair changed</h3>
+<p>The repair specifically closes the former <strong>representation gap</strong> where a topic could be called developed because a heading or short concept card existed. The repository now has:</p>
+<ul>
+<li>no Concepts/*.md file below the structural 1200-byte smoke floor;</li>
+<li>explicit evidence levels rather than one ambiguous developed state;</li>
+<li>an expanded family of independently compiled/run C++ reference laboratories for the previously weakest subjects;</li>
+<li>native Vulkan synchronization2/resource/image execution CI and Metal shader compilation plus command-buffer compute execution CI;</li>
+<li>reconstruction checkpoints inside all three canonical master volumes;</li>
+<li>known-answer cryptographic tests rather than prose-only primitive names;</li>
+<li>real POSIX loopback and mmap/descriptor execution;</li>
+<li>Phase 29 tensor/GGUF/ONNX/quantized-attention runtime ownership instead of an effectively blank phase;</li>
+<li>Phase 30 host-neutral publication/DCC boundaries instead of tool-name mentions;</li>
+<li>independent raster, PBR, Monte Carlo, Gaussian, temporal-rendering, ECS, spatial and mesh/skinning oracles.</li>
+</ul>
+</section>
+<section id="appendix-2358b21a702d-why-remaining-boundaries-are-recorded-rather-than-hidden" class="level3">
+<h3>Why remaining boundaries are recorded rather than hidden</h3>
+<p>The goal is maximum depth, not maximum confidence language. Some proof layers require hardware, external applications, current production repositories or human reconstruction:</p>
+<ul>
+<li>a software Vulkan ICD now proves API execution/validation for synchronization, buffer visibility/timeline, and image-layout/readback contracts, but not discrete-vendor physical-GPU performance;</li>
+<li>the current macOS CI host executed a real Metal compute pipeline, but heap aliasing, explicit hazard-tracking captures, render-pass behavior, multi-queue synchronization and production parity remain;</li>
+<li>a CPU Gaussian oracle can expose projection bugs but does not certify the current Maveb Metal kernel;</li>
+<li>an educational SHA/HMAC/HKDF implementation can prove bit-level understanding and known-answer agreement but should not become production cryptography;</li>
+<li>Blender now has a real headless host round trip; Maya/Houdini/Nuke remain host-neutral until equivalent licensed/current hosts execute their adapters;</li>
+<li>written material cannot prove Level 7 reconstructed mastery until a learner derives/implements/debugs it without copying.</li>
+</ul>
+<p>Those are not excuses or hidden gaps. They are the next evidence layer attached to the exact claim that needs it.</p>
+</section>
+<section id="appendix-2358b21a702d-regression-gates" class="level3">
+<h3>Regression gates</h3>
+<p>tools/check_depth_repair_contract.py checks that:</p>
+<ol type="1">
+<li>every required repair artifact still exists;</li>
+<li>no concept card silently collapses below the 1200-byte structural floor;</li>
+<li>exactly the three canonical continuous volumes remain;</li>
+<li>each canonical volume retains its reconstruction checkpoints.</li>
+</ol>
+<p>The generic C++20 workflow separately compiles and executes every tools/labs/*_lab.cpp under GCC sanitizer, Clang strict and GCC release modes. The native graphics workflow exercises Vulkan and Metal-specific toolchains. The consolidation/source-sync workflows protect the three-volume teaching surface.</p>
+<p>These checks are necessary evidence, not a semantic completion certificate.</p>
+</section>
+<section id="appendix-2358b21a702d-second-wave-closure-executable-boundaries-tightened" class="level3">
+<h3>Second-wave closure — executable boundaries tightened</h3>
+<p>The follow-up repair converted four previously explicit boundaries into tested reference artifacts:</p>
+<ul>
+<li><code>ecs_scheduler_hierarchy_lab.cpp</code> adds read/write conflict scheduling and subtree transform invalidation to the ECS layer;</li>
+<li><code>path_transport_scene_lab.cpp</code> connects camera geometry, Lambertian transport, two proposal PDFs and balance MIS to an analytic pixel target;</li>
+<li><code>gaussian_tile_conic_lab.cpp</code> continues projected covariance through conic inversion, conservative tile duplication, depth ordering and transmittance;</li>
+<li><code>qem_edge_collapse_lab.cpp</code> moves mesh simplification from topology-only discussion to plane quadrics, candidate error and geometric collapse rejection.</li>
+</ul>
+<p>These raise the corresponding claims from prose/partial-reference status. They do not erase the higher evidence boundaries stated in the phase table.</p>
+</section>
+<section id="appendix-2358b21a702d-third-wave-closure-pipeline-state-spatial-quality-solver-coupling-and-model-containers" class="level3">
+<h3>Third-wave closure — pipeline state, spatial quality, solver coupling, and model containers</h3>
+<p>The next repair wave closes another set of previously explicit reference gaps without promoting them beyond the evidence actually executed:</p>
+<ul>
+<li><code>raster_pipeline_state_lab.cpp</code> extends raster semantics through homogeneous clipping, explicit multisample coverage, stencil state, and premultiplied blending;</li>
+<li><code>pbr_extended_reference_lab.cpp</code> adds anisotropic GGX normalization, exact dielectric Fresnel, Snell refraction/total internal reflection, and a white-furnace energy integral;</li>
+<li><code>bvh_sah_refit_lab.cpp</code> adds surface-area split reasoning, Morton interleaving, and parent-bound refit to the earlier BVH query oracle;</li>
+<li><code>constraint_friction_island_lab.cpp</code> adds island connectivity, unilateral impulses, Coulomb friction clamping, and a tiny sequential-impulse stack;</li>
+<li><code>gguf_metadata_tensor_lab.cpp</code> advances GGUF from prefix-only validation to typed metadata, alignment and tensor descriptors.</li>
+</ul>
+<p>These are reference-level closures. Exact hardware/API behavior, production repository parity, third-party DCC execution, and learner Level-7 reconstruction are still tracked separately rather than absorbed into a generic “complete” label.</p>
+</section>
+<section id="appendix-2358b21a702d-native-execution-escalation" class="level3">
+<h3>Native execution escalation</h3>
+<p>The native graphics gate now goes beyond syntax-level API examples. Vulkan executes a real transfer fill into an allocated/bound buffer, records a resource-specific synchronization2 buffer barrier from transfer-write to host-read, signals a timeline semaphore, waits for a concrete timeline value, maps the memory and checks the written pattern. Metal compiles the MSL kernel and, when the macOS CI host exposes a Metal device, loads the metallib, creates a compute pipeline/queue/shared buffers, dispatches work, waits for command completion and validates the result. On the current macOS-15 CI run the host exposed a Metal device and the runtime witness passed; the SKIP path remains only as an honest fallback for future hosts without a device.</p>
+<p>This still does not elevate every Phase 23/24 claim to native verification. Image layout transitions, queue-family ownership, descriptor/shader visibility, heap aliasing, multi-queue behavior, capture-derived hazard evidence, and current Kairo/Maveb integration remain individually gated.</p>
+</section>
+<section id="appendix-2358b21a702d-dcc-execution-escalation" class="level3">
+<h3>DCC execution escalation</h3>
+<p>Blender is no longer represented only by prose or a host-neutral adapter. The dedicated CI workflow launches Blender in background mode, constructs a deterministic mesh asset and collection through <code>bpy</code>, attaches logical publication metadata, saves the source <code>.blend</code>, exports GLB, validates the GLB container/JSON contract, resets the host, re-imports the published artifact and checks geometry plus custom identity fields.</p>
+<p>This is intentionally a <strong>Blender-only</strong> native-host escalation. Maya, Houdini and Nuke are not marked executed because their current hosts/licenses are not available in this CI environment. Their contracts remain explicit and can be promoted only when equivalent host-side witnesses exist.</p>
+</section>
+<section id="appendix-2358b21a702d-fourth-wave-closure-temporal-effects-native-image-state-security-and-host-dcc" class="level3">
+<h3>Fourth-wave closure — temporal effects, native image state, security, and host DCC</h3>
+<p>The latest repair wave closes four more areas that were previously recorded only as future boundaries.</p>
+<p><strong>Advanced real-time effects.</strong> <code>realtime_effects_reference_lab.cpp</code> now checks deterministic Halton jitter, current-neighborhood history clipping, a screen-space depth-crossing ray-march oracle, SSAO-style depth/thickness visibility, homogeneous Beer–Lambert transmittance, and deterministic particle update/death/stable compaction. These are deliberately semantic CPU references; production Hi-Z traversal, GTAO, froxel scattering, reactive masks and native GPU particle systems remain higher evidence levels.</p>
+<p><strong>Vulkan images.</strong> <code>vulkan_image_layout_smoke.cpp</code> moves native evidence beyond a generic barrier and buffer visibility. It allocates an optimal-tiled RGBA image, records <code>UNDEFINED → TRANSFER_DST → TRANSFER_SRC</code> synchronization2 layout transitions, clears it, copies to a host-visible buffer, performs transfer-to-host synchronization and checks the UNORM bytes under validation. Queue-family ownership, descriptor/shader hazards and presentation remain separate.</p>
+<p><strong>Authenticated encryption.</strong> <code>openssl_aes_gcm_smoke.cpp</code> checks a standard AES-128-GCM known-answer vector through OpenSSL EVP, authenticated round trip, tag and AAD tamper rejection, nonce-sensitive output and discard-on-authentication-failure behavior. The evidence is for the primitive/API contract, not for nonce persistence, replay defense, key management or a complete production protocol.</p>
+<p><strong>DCC execution.</strong> Blender is now exercised as a real host rather than only named in an adapter contract: background Python creates the asset, saves the source scene, exports GLB with logical metadata, validates the binary glTF container, resets the host, re-imports the publication and checks geometry plus identity fields. Maya, Houdini and Nuke remain explicitly unexecuted rather than being promoted by analogy.</p>
+</section>
+<section id="appendix-2358b21a702d-onnx-interchange-escalation" class="level3">
+<h3>ONNX interchange escalation</h3>
+<p>Phase 29 no longer stops at a hand-modeled SSA graph contract. <code>tools/ml/onnx_contract.py</code> creates a real ONNX <code>ModelProto</code>, serializes and reloads the protobuf, preserves named initializers and opset metadata, passes the official checker, runs official symbolic shape inference, executes <code>MatMul → Add → Relu</code> with the ONNX reference evaluator, compares against an independently computed NumPy result, and requires the official checker to reject a duplicate-output SSA violation.</p>
+<p>This proves a bounded interchange/runtime slice, not universal ONNX support. Control-flow subgraphs, external data, arbitrary opsets/operators, custom domains, ONNX Runtime/device lowering, quantized operator kernels and current KairoONNX parity remain separate evidence gates.</p>
+</section>
+</section>
+</body>
+</html>

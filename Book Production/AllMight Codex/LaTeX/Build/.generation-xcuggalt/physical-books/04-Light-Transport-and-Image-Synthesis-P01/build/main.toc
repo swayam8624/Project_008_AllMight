@@ -1,0 +1,558 @@
+\contentsline {chapter}{\numberline {1}Reflectance, Materials and Light Transport}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Ask a surface where incoming energy can go}{1}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}Reconstruction checkpoint --- test the microfacet equations, not only the picture}{1}{subsection.1.1.1}%
+\contentsline {subsection}{\numberline {1.1.2}Make the asset and the shader agree}{2}{subsection.1.1.2}%
+\contentsline {chapter}{\numberline {2}The Rendering Equation and Path Probabilities}{59}{chapter.2}%
+\contentsline {section}{\numberline {2.1}The rendering equation and light transport}{59}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Follow one path without losing its probability}{59}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Reconstruction checkpoint --- isolate estimator invariants before tracing a scene}{59}{subsection.2.2.1}%
+\contentsline {subsubsection}{First-use completion --- construct the two estimators and prove what MIS preserves}{60}{subsubsection*.6}%
+\contentsline {subsection}{\numberline {2.2.2}A missing region cannot be repaired by taking more samples there}{62}{subsection.2.2.2}%
+\contentsline {chapter}{\numberline {3}Sampling Directions and Light Transport}{108}{chapter.3}%
+\contentsline {subsection}{\numberline {3.0.1}Next --- Pass 7: M123 + M124, Parts 2031--2069}{108}{subsection.3.0.1}%
+\contentsline {chapter}{\numberline {4}Point Lights, MIS and Environment Lighting}{144}{chapter.4}%
+\contentsline {chapter}{\numberline {5}A Production Path Tracer: Media, Randomness and Validation}{186}{chapter.5}%
+\contentsline {subsection}{\numberline {5.0.1}Next --- Pass 8: M125 + M126, Parts 2070--2100}{186}{subsection.5.0.1}%
+\contentsline {subsection}{\numberline {5.0.2}PARTS 2070--2089}{187}{subsection.5.0.2}%
+\contentsline {chapter}{\numberline {6}Transparency, Blending and Visibility}{221}{chapter.6}%
+\contentsline {subsection}{\numberline {6.0.1}Blending, transparency, alpha testing, overdraw, early-Z, queries, Hi-Z}{221}{subsection.6.0.1}%
+\contentsline {subsection}{\numberline {6.0.2}Instancing, batching, indirect drawing, GPU culling, mesh shaders, execution cost, data binding, PSOs and permutations}{233}{subsection.6.0.2}%
+\contentsline {subsection}{\numberline {6.0.3}Black-frame debugging, vertex tracing, complete CPU rasterization, GPU mapping}{249}{subsection.6.0.3}%
+\contentsline {chapter}{\numberline {7}Rasterization Foundations and Renderer Evidence}{279}{chapter.7}%
+\contentsline {subsection}{\numberline {7.0.1}What Kairo specifically taught us in this pass}{279}{subsection.7.0.1}%
+\contentsline {subsection}{\numberline {7.0.2}Mastery gate}{279}{subsection.7.0.2}%
+\contentsline {subsection}{\numberline {7.0.3}Next --- Pass 03}{279}{subsection.7.0.3}%
+\contentsline {subsection}{\numberline {7.0.4}Triangle coverage and sampling}{280}{subsection.7.0.4}%
+\contentsline {subsection}{\numberline {7.0.5}Barycentric coordinates, depth, and alpha}{280}{subsection.7.0.5}%
+\contentsline {subsection}{\numberline {7.0.6}How a triangle reaches the framebuffer}{281}{subsection.7.0.6}%
+\contentsline {subsection}{\numberline {7.0.7}A depth-buffer table trace}{282}{subsection.7.0.7}%
+\contentsline {subsection}{\numberline {7.0.8}Coverage samples and a triangle rasterizer}{282}{subsection.7.0.8}%
+\contentsline {subsection}{\numberline {7.0.9}Modeling a cube by hand}{283}{subsection.7.0.9}%
+\contentsline {subsection}{\numberline {7.0.10}A cube drawing pipeline}{283}{subsection.7.0.10}%
+\contentsline {subsection}{\numberline {7.0.11}Opaque sample update}{283}{subsection.7.0.11}%
+\contentsline {subsection}{\numberline {7.0.12}A final numerical checkpoint: coverage, color, and accumulation}{284}{subsection.7.0.12}%
+\contentsline {subsection}{\numberline {7.0.13}Rasterization and depth}{284}{subsection.7.0.13}%
+\contentsline {subsection}{\numberline {7.0.14}Rasterization converts projected triangles into depth-tested fragments}{285}{subsection.7.0.14}%
+\contentsline {subsection}{\numberline {7.0.15}Perspective changes the interpolation weights inside a rasterized triangle}{286}{subsection.7.0.15}%
+\contentsline {section}{\numberline {7.1}From measured samples to parallel GPU execution}{287}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Make a shader record an explicit binary contract}{287}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Let many invocations cooperate without inventing a global clock}{288}{section.7.3}%
+\contentsline {subsection}{\numberline {7.3.1}Scan turns local counts into nonoverlapping output regions}{288}{subsection.7.3.1}%
+\contentsline {subsection}{\numberline {7.3.2}Load a partial matrix tile with two different bounds}{289}{subsection.7.3.2}%
+\contentsline {subsection}{\numberline {7.3.3}+ M129}{303}{subsection.7.3.3}%
+\contentsline {subsection}{\numberline {7.3.4}GPU EXECUTION ARCHITECTURE}{304}{subsection.7.3.4}%
+\contentsline {chapter}{\numberline {8}Textures as Sampled Surface Signals}{318}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Textures and surface detail}{318}{section.8.1}%
+\contentsline {subsection}{\numberline {8.1.1}Match a texture footprint to the surface signal}{318}{subsection.8.1.1}%
+\contentsline {subsection}{\numberline {8.1.2}Repeat}{320}{subsection.8.1.2}%
+\contentsline {subsection}{\numberline {8.1.3}Clamp-to-edge}{320}{subsection.8.1.3}%
+\contentsline {subsection}{\numberline {8.1.4}Mirrored repeat}{320}{subsection.8.1.4}%
+\contentsline {subsection}{\numberline {8.1.5}Texture is a function over a surface}{359}{subsection.8.1.5}%
+\contentsline {subsection}{\numberline {8.1.6}Texture coordinates make one surface address many kinds of detail}{359}{subsection.8.1.6}%
+\contentsline {subsection}{\numberline {8.1.7}Figure U9 - Homogeneous depth changes interpolation weights}{361}{subsection.8.1.7}%
+\contentsline {chapter}{\numberline {9}A Complete Renderer as an Executable Forward Model}{362}{chapter.9}%
+\contentsline {section}{\numberline {9.1}A complete renderer makes the forward model executable}{362}{section.9.1}%
+\contentsline {subsubsection}{Camera and geometry}{363}{subsubsection*.40}%
+\contentsline {subsubsection}{Area-light estimate}{364}{subsubsection*.41}%
+\contentsline {subsubsection}{Color and display}{364}{subsubsection*.42}%
+\contentsline {subsection}{\numberline {9.1.1}Figure U5 - A direct-light renderer makes the pipeline executable}{365}{subsection.9.1.1}%
+\contentsline {section}{\numberline {9.2}XR systems closure --- from a rendered eye image to a stable spatial computer}{369}{section.9.2}%
+\contentsline {subsection}{\numberline {9.2.1}XR is a spectrum of scene ownership}{369}{subsection.9.2.1}%
+\contentsline {subsection}{\numberline {9.2.2}Coordinate spaces are contracts about meaning and lifetime}{370}{subsection.9.2.2}%
+\contentsline {subsection}{\numberline {9.2.3}The frame loop is organized around predicted display time}{370}{subsection.9.2.3}%
+\contentsline {subsection}{\numberline {9.2.4}Reprojection corrects a finished frame; it does not rerender the world}{371}{subsection.9.2.4}%
+\contentsline {subsection}{\numberline {9.2.5}Optics make the pre-lens image intentionally distorted}{371}{subsection.9.2.5}%
+\contentsline {subsection}{\numberline {9.2.6}Display timing is more than FPS}{371}{subsection.9.2.6}%
+\contentsline {subsection}{\numberline {9.2.7}Tracking is state estimation under calibration and observability limits}{372}{subsection.9.2.7}%
+\contentsline {subsubsection}{Make the visual correction small enough to inspect: an eight-state planar EKF}{372}{subsubsection*.43}%
+\contentsline {paragraph}{From raw 3-D IMU samples to the pose constraint used by VIO}{377}{paragraph*.44}%
+\contentsline {subparagraph}{Bias changes the relative motion, so production preintegration carries bias sensitivity}{379}{subparagraph*.45}%
+\contentsline {subparagraph}{How the preintegrated delta enters a sliding-window optimizer}{383}{subparagraph*.46}%
+\contentsline {subparagraph}{Filter VIO and sliding-window VIO remove old information differently}{384}{subparagraph*.47}%
+\contentsline {subparagraph}{Observability tells us which errors measurements can actually remove}{384}{subparagraph*.48}%
+\contentsline {subparagraph}{SLAM adds map identity, loop closure, and relocalization}{384}{subparagraph*.49}%
+\contentsline {subparagraph}{XR adds one final state: the pose at display time}{385}{subparagraph*.50}%
+\contentsline {subsubsection}{Calibration errors can masquerade as rendering errors}{385}{subsubsection*.51}%
+\contentsline {subsection}{\numberline {9.2.8}AR and MR require a real-world reconstruction contract}{385}{subsection.9.2.8}%
+\contentsline {subsection}{\numberline {9.2.9}Input is a family of tracked signals}{385}{subsection.9.2.9}%
+\contentsline {subsection}{\numberline {9.2.10}Spatial audio and haptics complete different loops}{386}{subsection.9.2.10}%
+\contentsline {subsection}{\numberline {9.2.11}Locomotion and cybersickness connect graphics to physiology}{386}{subsection.9.2.11}%
+\contentsline {subsection}{\numberline {9.2.12}Foveation is one instance of perceptual work allocation}{386}{subsection.9.2.12}%
+\contentsline {subsection}{\numberline {9.2.13}XR engine architecture should expose services, not one monolithic headset object}{386}{subsection.9.2.13}%
+\contentsline {subsection}{\numberline {9.2.14}ILLIXR is an inspectable research realization, not the definition of XR}{387}{subsection.9.2.14}%
+\contentsline {subsection}{\numberline {9.2.15}XR evaluation needs four evidence layers}{387}{subsection.9.2.15}%
+\contentsline {section}{\numberline {9.3}Neural rendering beyond NeRF and Gaussian splatting}{387}{section.9.3}%
+\contentsline {subsection}{\numberline {9.3.1}Ask which part of the graphics pipeline is learned}{388}{subsection.9.3.1}%
+\contentsline {subsection}{\numberline {9.3.2}A NeRF pixel is an integral before it is a neural-network output}{388}{subsection.9.3.2}%
+\contentsline {subsubsection}{Continuous transmittance explains the discrete alpha formula}{388}{subsubsection*.52}%
+\contentsline {subsubsection}{Why density is not the same thing as opacity}{389}{subsubsection*.53}%
+\contentsline {subsubsection}{The renderer is differentiable because every weight is a smooth chain of operations}{389}{subsubsection*.54}%
+\contentsline {subsubsection}{One pixel is not enough to recover a unique scene}{393}{subsubsection*.55}%
+\contentsline {subsubsection}{Positional encoding changes the function class the network can learn efficiently}{394}{subsubsection*.56}%
+\contentsline {subsubsection}{Sampling is part of both bias and cost}{394}{subsubsection*.57}%
+\contentsline {subsubsection}{A complete NeRF training loop has several contracts}{394}{subsubsection*.58}%
+\contentsline {subsubsection}{3D Gaussian Splatting changes the representation and rasterization path, not the need for training discipline}{395}{subsubsection*.59}%
+\contentsline {subsection}{\numberline {9.3.3}Radiance fields are representations, not necessarily MLPs}{396}{subsection.9.3.3}%
+\contentsline {subsection}{\numberline {9.3.4}Prefiltering remains necessary}{396}{subsection.9.3.4}%
+\contentsline {subsection}{\numberline {9.3.5}View synthesis and surface reconstruction are different objectives}{396}{subsection.9.3.5}%
+\contentsline {subsection}{\numberline {9.3.6}Dynamic scenes create another ambiguity axis}{396}{subsection.9.3.6}%
+\contentsline {subsection}{\numberline {9.3.7}Relighting requires disentangling geometry, material and illumination}{396}{subsection.9.3.7}%
+\contentsline {subsection}{\numberline {9.3.8}Generative 3-D can borrow a 2-D diffusion prior without having a target photograph}{397}{subsection.9.3.8}%
+\contentsline {subsubsection}{Why papers often describe SDS through its gradient}{397}{subsubsection*.60}%
+\contentsline {subsubsection}{Classifier-free guidance changes the force applied to the 3-D scene}{397}{subsubsection*.61}%
+\contentsline {subsubsection}{A 2-D prior does not automatically enforce one coherent 3-D object}{398}{subsubsection*.62}%
+\contentsline {subsubsection}{The complete research system has more than the SDS equation}{398}{subsubsection*.63}%
+\contentsline {subsection}{\numberline {9.3.9}Neural shading keeps an explicit renderer and learns a local function}{399}{subsection.9.3.9}%
+\contentsline {subsection}{\numberline {9.3.10}Neural radiance caching learns part of light transport}{399}{subsection.9.3.10}%
+\contentsline {subsection}{\numberline {9.3.11}Neural texture compression trades bandwidth for arithmetic}{399}{subsection.9.3.11}%
+\contentsline {subsection}{\numberline {9.3.12}XR constrains neural rendering more harshly than offline view synthesis}{399}{subsection.9.3.12}%
+\contentsline {subsection}{\numberline {9.3.13}Neural-rendering experiments need systems ablations}{399}{subsection.9.3.13}%
+\contentsline {section}{\numberline {9.4}Python as a 3D graphics and research instrument}{399}{section.9.4}%
+\contentsline {subsection}{\numberline {9.4.1}A 3D workflow must preserve representation meaning}{400}{subsection.9.4.1}%
+\contentsline {subsection}{\numberline {9.4.2}Spatial data structures make local geometry affordable}{400}{subsection.9.4.2}%
+\contentsline {subsection}{\numberline {9.4.3}PCA turns a point neighborhood into local shape evidence}{400}{subsection.9.4.3}%
+\contentsline {subsection}{\numberline {9.4.4}ICP is correspondence plus alignment repeated}{400}{subsection.9.4.4}%
+\contentsline {subsection}{\numberline {9.4.5}RANSAC separates model evidence from outliers}{400}{subsection.9.4.5}%
+\contentsline {subsection}{\numberline {9.4.6}Surface reconstruction chooses a prior}{401}{subsection.9.4.6}%
+\contentsline {subsection}{\numberline {9.4.7}Python DCC scripting makes asset generation reproducible}{401}{subsection.9.4.7}%
+\contentsline {subsection}{\numberline {9.4.8}pandas belongs after the renderer, not inside the frame loop}{401}{subsection.9.4.8}%
+\contentsline {subsection}{\numberline {9.4.9}Jupyter is for exploration; the repository is the experiment}{401}{subsection.9.4.9}%
+\contentsline {subsection}{\numberline {9.4.10}XR terminology has a history, and the history prevents sloppy category names}{401}{subsection.9.4.10}%
+\contentsline {subsection}{\numberline {9.4.11}Eye tracking is a privacy surface, not only a rendering optimization}{402}{subsection.9.4.11}%
+\contentsline {subsection}{\numberline {9.4.12}Neural-scene representations form a continuum between dense grids and learned functions}{403}{subsection.9.4.12}%
+\contentsline {subsection}{\numberline {9.4.13}3D interaction is its own design space, not a byproduct of hand tracking}{403}{subsection.9.4.13}%
+\contentsline {subsubsection}{Interaction fidelity is not always maximal naturalism}{404}{subsubsection*.64}%
+\contentsline {subsection}{\numberline {9.4.14}Locomotion couples interaction, tracked-space geometry and perception}{404}{subsection.9.4.14}%
+\contentsline {subsection}{\numberline {9.4.15}Presence, comfort and sickness are measurements, not adjectives}{405}{subsection.9.4.15}%
+\contentsline {subsection}{\numberline {9.4.16}An XR user study is an experiment with people, not a benchmark loop with extra columns}{405}{subsection.9.4.16}%
+\contentsline {subsubsection}{Within-subject and between-subject designs trade different sources of variance}{405}{subsubsection*.65}%
+\contentsline {subsubsection}{Counterbalancing stops condition order from becoming a hidden treatment}{405}{subsubsection*.66}%
+\contentsline {subsubsection}{Practice trials and measured trials should not be silently mixed}{406}{subsubsection*.67}%
+\contentsline {subsubsection}{Each dependent variable needs an operational definition}{406}{subsubsection*.68}%
+\contentsline {subsubsection}{Exclusions and stopping rules belong in the protocol before the result is known}{406}{subsubsection*.69}%
+\contentsline {subsubsection}{The apparatus is part of reproducibility}{406}{subsubsection*.70}%
+\contentsline {subsubsection}{Ethics and privacy are technical constraints too}{407}{subsubsection*.71}%
+\contentsline {subsubsection}{A clean study pipeline}{407}{subsubsection*.72}%
+\contentsline {subsection}{\numberline {9.4.17}Spatial audio is a geometry-and-filtering pipeline}{407}{subsection.9.4.17}%
+\contentsline {subsection}{\numberline {9.4.18}Display architectures attack different perceptual limitations}{408}{subsection.9.4.18}%
+\contentsline {subsection}{\numberline {9.4.19}Foveated rendering has a research lineage before modern VRS}{408}{subsection.9.4.19}%
+\contentsline {subsection}{\numberline {9.4.20}A return map for the key terms}{408}{subsection.9.4.20}%
+\contentsline {chapter}{\numberline {10}Lighting, Reconstruction and Surface Motion}{417}{chapter.10}%
+\contentsline {section}{\numberline {10.1}Illuminate, reconstruct and animate the surface}{417}{section.10.1}%
+\contentsline {subsection}{\numberline {10.1.1}ADVANCED REAL-TIME RENDERING}{417}{subsection.10.1.1}%
+\contentsline {subsection}{\numberline {10.1.2}M156}{417}{subsection.10.1.2}%
+\contentsline {subsection}{\numberline {10.1.3}MANY-LIGHT RENDERING AND CLUSTERED LIGHTING}{417}{subsection.10.1.3}%
+\contentsline {subsubsection}{Reconstruction checkpoint --- make the cluster coordinate measurable}{417}{subsubsection*.74}%
+\contentsline {subsection}{\numberline {10.1.4}Forward rendering}{418}{subsection.10.1.4}%
+\contentsline {subsection}{\numberline {10.1.5}Deferred rendering}{419}{subsection.10.1.5}%
+\contentsline {subsection}{\numberline {10.1.6}Tiled lighting}{419}{subsection.10.1.6}%
+\contentsline {subsection}{\numberline {10.1.7}Clustered lighting}{420}{subsection.10.1.7}%
+\contentsline {subsection}{\numberline {10.1.8}Screen-tile construction}{421}{subsection.10.1.8}%
+\contentsline {subsection}{\numberline {10.1.9}Logarithmic depth slicing}{421}{subsection.10.1.9}%
+\contentsline {subsection}{\numberline {10.1.10}Why log depth is good}{422}{subsection.10.1.10}%
+\contentsline {subsection}{\numberline {10.1.11}Linear slicing}{423}{subsection.10.1.11}%
+\contentsline {subsection}{\numberline {10.1.12}Frustum-cluster bounds}{423}{subsection.10.1.12}%
+\contentsline {subsection}{\numberline {10.1.13}Light bounding volumes}{424}{subsection.10.1.13}%
+\contentsline {subsection}{\numberline {10.1.14}Point-light sphere vs cluster}{424}{subsection.10.1.14}%
+\contentsline {subsection}{\numberline {10.1.15}Spot cone vs cluster}{425}{subsection.10.1.15}%
+\contentsline {subsection}{\numberline {10.1.16}Compact representation}{426}{subsection.10.1.16}%
+\contentsline {subsection}{\numberline {10.1.17}GPU construction}{427}{subsection.10.1.17}%
+\contentsline {subsection}{\numberline {10.1.18}Current Maveb construction}{427}{subsection.10.1.18}%
+\contentsline {subsection}{\numberline {10.1.19}Overflow handling}{428}{subsection.10.1.19}%
+\contentsline {subsection}{\numberline {10.1.20}Memory budgeting}{428}{subsection.10.1.20}%
+\contentsline {subsection}{\numberline {10.1.21}Debug visualization}{429}{subsection.10.1.21}%
+\contentsline {subsection}{\numberline {10.1.22}ADAPTIVE WORK, HYSTERESIS AND HI-Z}{429}{subsection.10.1.22}%
+\contentsline {subsection}{\numberline {10.1.23}Adaptive work}{430}{subsection.10.1.23}%
+\contentsline {subsection}{\numberline {10.1.24}Error metrics}{430}{subsection.10.1.24}%
+\contentsline {subsection}{\numberline {10.1.25}Work budget}{431}{subsection.10.1.25}%
+\contentsline {subsection}{\numberline {10.1.26}Online controller}{431}{subsection.10.1.26}%
+\contentsline {subsection}{\numberline {10.1.27}Temporal hysteresis}{432}{subsection.10.1.27}%
+\contentsline {subsection}{\numberline {10.1.28}Hi-Z}{433}{subsection.10.1.28}%
+\contentsline {subsection}{\numberline {10.1.29}Min-depth vs max-depth pyramid}{433}{subsection.10.1.29}%
+\contentsline {subsection}{\numberline {10.1.30}Screen-space bounding rectangle}{434}{subsection.10.1.30}%
+\contentsline {subsection}{\numberline {10.1.31}Occlusion false positives and false negatives}{435}{subsection.10.1.31}%
+\contentsline {subsection}{\numberline {10.1.32}SHADOWS AND AMBIENT OCCLUSION}{435}{subsection.10.1.32}%
+\contentsline {subsection}{\numberline {10.1.33}Shadow mapping}{435}{subsection.10.1.33}%
+\contentsline {subsection}{\numberline {10.1.34}Shadow acne}{436}{subsection.10.1.34}%
+\contentsline {subsection}{\numberline {10.1.35}Constant bias}{436}{subsection.10.1.35}%
+\contentsline {subsection}{\numberline {10.1.36}Slope-scaled bias}{436}{subsection.10.1.36}%
+\contentsline {subsection}{\numberline {10.1.37}Peter-panning}{436}{subsection.10.1.37}%
+\contentsline {subsection}{\numberline {10.1.38}PCF}{437}{subsection.10.1.38}%
+\contentsline {subsection}{\numberline {10.1.39}Cascaded shadow maps}{437}{subsection.10.1.39}%
+\contentsline {subsection}{\numberline {10.1.40}Cascade split formula}{437}{subsection.10.1.40}%
+\contentsline {subsection}{\numberline {10.1.41}Stabilization}{438}{subsection.10.1.41}%
+\contentsline {subsection}{\numberline {10.1.42}Shadow atlas}{439}{subsection.10.1.42}%
+\contentsline {subsection}{\numberline {10.1.43}Point-light cubemap shadows}{439}{subsection.10.1.43}%
+\contentsline {subsection}{\numberline {10.1.44}VSM}{440}{subsection.10.1.44}%
+\contentsline {subsection}{\numberline {10.1.45}Contact shadows}{440}{subsection.10.1.45}%
+\contentsline {subsection}{\numberline {10.1.46}Ambient occlusion}{440}{subsection.10.1.46}%
+\contentsline {subsection}{\numberline {10.1.47}SSAO}{441}{subsection.10.1.47}%
+\contentsline {subsection}{\numberline {10.1.48}Sample kernels}{441}{subsection.10.1.48}%
+\contentsline {subsection}{\numberline {10.1.49}Noise rotation}{442}{subsection.10.1.49}%
+\contentsline {subsection}{\numberline {10.1.50}HBAO}{442}{subsection.10.1.50}%
+\contentsline {subsection}{\numberline {10.1.51}GI, PROBES, SSR AND RADIANCE CASCADES}{442}{subsection.10.1.51}%
+\contentsline {subsection}{\numberline {10.1.52}Irradiance probes}{443}{subsection.10.1.52}%
+\contentsline {subsection}{\numberline {10.1.53}Radiance probes}{443}{subsection.10.1.53}%
+\contentsline {subsection}{\numberline {10.1.54}Probe interpolation}{443}{subsection.10.1.54}%
+\contentsline {subsection}{\numberline {10.1.55}Probe leakage}{444}{subsection.10.1.55}%
+\contentsline {subsection}{\numberline {10.1.56}Visibility-aware probes}{444}{subsection.10.1.56}%
+\contentsline {subsection}{\numberline {10.1.57}Reflection probes}{444}{subsection.10.1.57}%
+\contentsline {subsection}{\numberline {10.1.58}SSR}{444}{subsection.10.1.58}%
+\contentsline {subsection}{\numberline {10.1.59}Ray marching}{445}{subsection.10.1.59}%
+\contentsline {subsection}{\numberline {10.1.60}Thickness problem}{445}{subsection.10.1.60}%
+\contentsline {subsection}{\numberline {10.1.61}Missing data}{446}{subsection.10.1.61}%
+\contentsline {subsection}{\numberline {10.1.62}Radiance cascades}{446}{subsection.10.1.62}%
+\contentsline {subsection}{\numberline {10.1.63}TEMPORAL RENDERING AND POST}{446}{subsection.10.1.63}%
+\contentsline {subsubsection}{Reconstruction checkpoint --- history is a hypothesis with rejection tests}{446}{subsubsection*.75}%
+\contentsline {subsection}{\numberline {10.1.64}Motion vectors}{447}{subsection.10.1.64}%
+\contentsline {subsection}{\numberline {10.1.65}Previous-position vertex data}{448}{subsection.10.1.65}%
+\contentsline {subsection}{\numberline {10.1.66}Camera motion}{448}{subsection.10.1.66}%
+\contentsline {subsection}{\numberline {10.1.67}Skinned motion}{448}{subsection.10.1.67}%
+\contentsline {subsection}{\numberline {10.1.68}Procedural animation}{449}{subsection.10.1.68}%
+\contentsline {subsection}{\numberline {10.1.69}Reprojection}{449}{subsection.10.1.69}%
+\contentsline {subsection}{\numberline {10.1.70}History buffers}{449}{subsection.10.1.70}%
+\contentsline {subsection}{\numberline {10.1.71}Temporal blending}{450}{subsection.10.1.71}%
+\contentsline {subsection}{\numberline {10.1.72}History rejection}{450}{subsection.10.1.72}%
+\contentsline {subsection}{\numberline {10.1.73}Neighborhood clamping}{450}{subsection.10.1.73}%
+\contentsline {subsection}{\numberline {10.1.74}Ghosting}{451}{subsection.10.1.74}%
+\contentsline {subsection}{\numberline {10.1.75}Jitter}{451}{subsection.10.1.75}%
+\contentsline {subsection}{\numberline {10.1.76}Temporal upscaling}{451}{subsection.10.1.76}%
+\contentsline {subsection}{\numberline {10.1.77}Bloom}{452}{subsection.10.1.77}%
+\contentsline {subsection}{\numberline {10.1.78}Separable Gaussian blur}{452}{subsection.10.1.78}%
+\contentsline {subsection}{\numberline {10.1.79}Tone mapping}{453}{subsection.10.1.79}%
+\contentsline {subsection}{\numberline {10.1.80}Color grading LUT}{453}{subsection.10.1.80}%
+\contentsline {subsection}{\numberline {10.1.81}Motion blur}{454}{subsection.10.1.81}%
+\contentsline {subsection}{\numberline {10.1.82}Depth of field}{454}{subsection.10.1.82}%
+\contentsline {subsection}{\numberline {10.1.83}PARTICLES, DECALS AND TECHNIQUE SELECTION}{454}{subsection.10.1.83}%
+\contentsline {subsection}{\numberline {10.1.84}GPU particle buffers}{454}{subsection.10.1.84}%
+\contentsline {subsection}{\numberline {10.1.85}Alive/dead management}{455}{subsection.10.1.85}%
+\contentsline {subsection}{\numberline {10.1.86}Transparency sorting}{455}{subsection.10.1.86}%
+\contentsline {subsection}{\numberline {10.1.87}Soft particles}{456}{subsection.10.1.87}%
+\contentsline {subsection}{\numberline {10.1.88}Decals}{456}{subsection.10.1.88}%
+\contentsline {subsection}{\numberline {10.1.89}Screen-space decals}{456}{subsection.10.1.89}%
+\contentsline {subsection}{\numberline {10.1.90}Overdraw}{457}{subsection.10.1.90}%
+\contentsline {subsection}{\numberline {10.1.91}Ablations}{457}{subsection.10.1.91}%
+\contentsline {subsection}{\numberline {10.1.92}MESH TOPOLOGY, GEOMETRY PROCESSING, GLTF, SKINNING, ANIMATION AND MORPHS}{459}{subsection.10.1.92}%
+\contentsline {subsection}{\numberline {10.1.93}M162}{459}{subsection.10.1.93}%
+\contentsline {subsection}{\numberline {10.1.94}INDEXED MESHES, TOPOLOGY AND HALF-EDGES}{459}{subsection.10.1.94}%
+\contentsline {subsection}{\numberline {10.1.95}Indexed vertices and faces}{459}{subsection.10.1.95}%
+\contentsline {subsection}{\numberline {10.1.96}Attributes}{460}{subsection.10.1.96}%
+\contentsline {chapter}{\numberline {11}Terrain materials and image composition}{462}{chapter.11}%
+\contentsline {section}{\numberline {11.1}Blend a small, explicit set of terrain materials}{462}{section.11.1}%
+\contentsline {subsection}{\numberline {11.1.1}Add scenes only after the lower path can display an object}{462}{subsection.11.1.1}%
+\contentsline {subsection}{\numberline {11.1.2}Let the editor change a document, then let the world run it}{463}{subsection.11.1.2}%
+\contentsline {subsubsection}{Let the editor describe authored state without dictating runtime representation}{464}{subsubsection*.77}%
+\contentsline {paragraph}{Let object schemas bridge editor choices and runtime creation}{465}{paragraph*.78}%
+\contentsline {subsubsection}{When a game object is more than a class}{465}{subsubsection*.79}%
+\contentsline {subsection}{\numberline {11.1.3}Separate editing from running}{466}{subsection.11.1.3}%
+\contentsline {subsubsection}{Stopping play must account for shared assets too}{466}{subsubsection*.80}%
+\contentsline {subsubsection}{Copy authored scene data; rebuild runtime state}{467}{subsubsection*.81}%
+\contentsline {subsection}{\numberline {11.1.4}Keep camera identity separate from a render view}{468}{subsection.11.1.4}%
+\contentsline {subsection}{\numberline {11.1.5}Give each editor view its own projection and visibility policy}{468}{subsection.11.1.5}%
+\contentsline {subsection}{\numberline {11.1.6}Separate drawing a Gizmo from manipulating the selected object}{469}{subsection.11.1.6}%
+\contentsline {subsection}{\numberline {11.1.7}Let editor windows move without owning the application shell}{469}{subsection.11.1.7}%
+\contentsline {subsection}{\numberline {11.1.8}Put a diagnostic interface behind a clear frame lifecycle}{470}{subsection.11.1.8}%
+\contentsline {subsection}{\numberline {11.1.9}Make tools support short edit-test loops}{471}{subsection.11.1.9}%
+\contentsline {subsection}{\numberline {11.1.10}A click becomes scene selection only after the editor settles event ownership}{472}{subsection.11.1.10}%
+\contentsline {subsubsection}{Source-to-volume map}{472}{subsubsection*.82}%
+\contentsline {subsection}{\numberline {11.1.11}Replacing a scene must replace every panel's scene-bound selection}{473}{subsection.11.1.11}%
+\contentsline {subsubsection}{Source-to-volume map}{473}{subsubsection*.83}%
+\contentsline {subsection}{\numberline {11.1.12}A docked viewport needs separate focus and hover decisions}{473}{subsection.11.1.12}%
+\contentsline {subsubsection}{Source-to-volume map}{474}{subsubsection*.84}%
+\contentsline {subsection}{\numberline {11.1.13}Repeated editor controls need one shared layout rule}{474}{subsection.11.1.13}%
+\contentsline {subsubsection}{Source-to-volume map}{475}{subsubsection*.85}%
+\contentsline {subsubsection}{Size a thumbnail grid from the space each cell actually consumes}{475}{subsubsection*.86}%
+\contentsline {subsection}{\numberline {11.1.14}Let the editor panel size the scene render target}{475}{subsection.11.1.14}%
+\contentsline {subsection}{\numberline {11.1.15}Resize only cameras tied to the viewport}{476}{subsection.11.1.15}%
+\contentsline {subsection}{\numberline {11.1.16}Establish the editor shell before adding scene tools}{476}{subsection.11.1.16}%
+\contentsline {subsection}{\numberline {11.1.17}Give the editor its own camera}{477}{subsection.11.1.17}%
+\contentsline {subsection}{\numberline {11.1.18}Reject invalid viewport sizes before rebuilding targets}{477}{subsection.11.1.18}%
+\contentsline {subsection}{\numberline {11.1.19}Store transform parts separately and compose when needed}{478}{subsection.11.1.19}%
+\contentsline {subsection}{\numberline {11.1.20}Let scene ownership shape editor components}{478}{subsection.11.1.20}%
+\contentsline {subsection}{\numberline {11.1.21}Camera data belongs to a view contract}{478}{subsection.11.1.21}%
+\contentsline {subsection}{\numberline {11.1.22}Build the editor around inspectable operations}{479}{subsection.11.1.22}%
+\contentsline {subsubsection}{An object-ID image must preserve identity, not appearance}{479}{subsubsection*.87}%
+\contentsline {paragraph}{Trace the RGB picking pass}{480}{paragraph*.88}%
+\contentsline {subsubsection}{A tool is part of the engine's workflow}{480}{subsubsection*.89}%
+\contentsline {subsubsection}{Give world editing tools that match the question being asked}{480}{subsubsection*.90}%
+\contentsline {subsection}{\numberline {11.1.23}Picking needs an integer attachment and a viewport-local pixel}{481}{subsection.11.1.23}%
+\contentsline {subsubsection}{An editor manipulator can stay in world space while drawing above the scene}{482}{subsubsection*.91}%
+\contentsline {subsubsection}{Source-to-volume map}{483}{subsubsection*.92}%
+\contentsline {subsection}{\numberline {11.1.24}Use framebuffer attachments for editor interaction\BookInlineCode {{,}}{,}\#\#\#\# Selection and picking\BookInlineCode {{,}{\ }{a}{n}{d}}{,\ and}\#\#\#\# Camera and coordinate spaces`.}{484}{subsection.11.1.24}%
+\contentsline {subsubsection}{Selection and picking}{484}{subsubsection*.93}%
+\contentsline {subsubsection}{Inspector changes are data changes}{484}{subsubsection*.94}%
+\contentsline {subsubsection}{Narrow a click to an actual surface}{484}{subsubsection*.95}%
+\contentsline {subsubsection}{Parse descriptions first, then instantiate the world}{485}{subsubsection*.96}%
+\contentsline {subsection}{\numberline {11.1.25}Make serialization a compatibility contract}{486}{subsection.11.1.25}%
+\contentsline {subsubsection}{Count the cost you actually changed}{486}{subsubsection*.97}%
+\contentsline {subsubsection}{Keep console state, command execution, and input priority distinct}{487}{subsubsection*.98}%
+\contentsline {subsubsection}{Serialize meaning instead of dumping addresses}{488}{subsubsection*.99}%
+\contentsline {paragraph}{Separate a world chunk's authored description from its live objects}{488}{paragraph*.100}%
+\contentsline {subparagraph}{Stream world data while protecting both memory and visibility}{489}{subparagraph*.101}%
+\contentsline {subsection}{\numberline {11.1.26}Tooling is part of engine architecture}{491}{subsection.11.1.26}%
+\contentsline {subsection}{\numberline {11.1.27}A design tool is part of the design system}{491}{subsection.11.1.27}%
+\contentsline {subsection}{\numberline {11.1.28}Architecture should expose the decisions design needs}{492}{subsection.11.1.28}%
+\contentsline {subsection}{\numberline {11.1.29}Tooling as a shared language}{493}{subsection.11.1.29}%
+\contentsline {subsubsection}{Choose UI state lifetime and module boundaries deliberately}{493}{subsubsection*.102}%
+\contentsline {subsection}{\numberline {11.1.30}Treat editor panels as clients of live engine state}{493}{subsection.11.1.30}%
+\contentsline {subsubsection}{Discover script fields, then bind them to runtime state}{494}{subsubsection*.103}%
+\contentsline {subsection}{\numberline {11.1.31}Use framebuffer attachments for editor interaction}{494}{subsection.11.1.31}%
+\contentsline {subsection}{\numberline {11.1.32}Evidence boundary}{495}{subsection.11.1.32}%
+\contentsline {subsubsection}{A cached world transform depends on its parent too}{495}{subsubsection*.104}%
+\contentsline {subsubsection}{Scope and evidence}{495}{subsubsection*.105}%
+\contentsline {subsection}{\numberline {11.1.33}A scene is authored data with identity}{496}{subsection.11.1.33}%
+\contentsline {subsection}{\numberline {11.1.34}Keep source assets, import choices, and runtime packages distinct}{496}{subsection.11.1.34}%
+\contentsline {subsubsection}{A running game and a distributable game answer different questions}{497}{subsubsection*.106}%
+\contentsline {subsubsection}{Mesh-local geometry and entity transforms must agree}{498}{subsubsection*.107}%
+\contentsline {subsubsection}{Separate editable assets from runtime-ready data}{498}{subsubsection*.108}%
+\contentsline {paragraph}{Move repeated asset work out of the player's launch path}{499}{paragraph*.109}%
+\contentsline {subparagraph}{Place asset conversion cost where iteration can tolerate it}{499}{subparagraph*.110}%
+\contentsline {subsubsection}{Publish a cache only after it is a valid asset}{500}{subsubsection*.111}%
+\contentsline {subsubsection}{Keep source assets, engine choices, and runtime packages distinct}{501}{subsubsection*.112}%
+\contentsline {chapter}{\numberline {A}Reference Notes}{503}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Additive energy and approximate structure}{503}{section.A.1}%
+\contentsline {subsection}{\numberline {A.1.1}Definition and mechanism}{503}{subsection.A.1.1}%
+\contentsline {subsection}{\numberline {A.1.2}Prerequisites}{503}{subsection.A.1.2}%
+\contentsline {subsection}{\numberline {A.1.3}Used by}{503}{subsection.A.1.3}%
+\contentsline {subsection}{\numberline {A.1.4}Full teaching explanation}{503}{subsection.A.1.4}%
+\contentsline {subsection}{\numberline {A.1.5}Recall and next depth}{504}{subsection.A.1.5}%
+\contentsline {subsection}{\numberline {A.1.6}Source and navigation}{504}{subsection.A.1.6}%
+\contentsline {section}{\numberline {A.2}Attention and visual transformers}{504}{section.A.2}%
+\contentsline {subsection}{\numberline {A.2.1}Definition and mechanism}{504}{subsection.A.2.1}%
+\contentsline {subsection}{\numberline {A.2.2}Prerequisites}{504}{subsection.A.2.2}%
+\contentsline {subsection}{\numberline {A.2.3}Used by}{505}{subsection.A.2.3}%
+\contentsline {subsection}{\numberline {A.2.4}Full teaching explanation}{505}{subsection.A.2.4}%
+\contentsline {subsection}{\numberline {A.2.5}Recall and next depth}{505}{subsection.A.2.5}%
+\contentsline {subsection}{\numberline {A.2.6}Source and navigation}{505}{subsection.A.2.6}%
+\contentsline {section}{\numberline {A.3}Automatic differentiation and backpropagation}{505}{section.A.3}%
+\contentsline {subsection}{\numberline {A.3.1}Definition and mechanism}{505}{subsection.A.3.1}%
+\contentsline {subsubsection}{Phase 9--10 development}{506}{subsubsection*.113}%
+\contentsline {subsection}{\numberline {A.3.2}Prerequisites}{506}{subsection.A.3.2}%
+\contentsline {subsection}{\numberline {A.3.3}Used by}{506}{subsection.A.3.3}%
+\contentsline {subsection}{\numberline {A.3.4}Full teaching explanation}{506}{subsection.A.3.4}%
+\contentsline {subsection}{\numberline {A.3.5}Recall and next depth}{507}{subsection.A.3.5}%
+\contentsline {subsection}{\numberline {A.3.6}Source and navigation}{507}{subsection.A.3.6}%
+\contentsline {section}{\numberline {A.4}Barycentric coordinates and interpolation}{507}{section.A.4}%
+\contentsline {subsection}{\numberline {A.4.1}Definition and mechanism}{507}{subsection.A.4.1}%
+\contentsline {subsection}{\numberline {A.4.2}Prerequisites}{507}{subsection.A.4.2}%
+\contentsline {subsection}{\numberline {A.4.3}Used by}{507}{subsection.A.4.3}%
+\contentsline {subsection}{\numberline {A.4.4}Source and navigation}{508}{subsection.A.4.4}%
+\contentsline {subsection}{\numberline {A.4.5}University course development}{508}{subsection.A.4.5}%
+\contentsline {section}{\numberline {A.5}Bounding volume hierarchies}{508}{section.A.5}%
+\contentsline {subsection}{\numberline {A.5.1}Definition and mechanism}{508}{subsection.A.5.1}%
+\contentsline {subsection}{\numberline {A.5.2}Prerequisites}{509}{subsection.A.5.2}%
+\contentsline {subsection}{\numberline {A.5.3}Used by}{509}{subsection.A.5.3}%
+\contentsline {section}{\numberline {A.6}Camera calibration and bundle adjustment}{509}{section.A.6}%
+\contentsline {subsection}{\numberline {A.6.1}Definition and mechanism}{509}{subsection.A.6.1}%
+\contentsline {subsection}{\numberline {A.6.2}Prerequisites}{509}{subsection.A.6.2}%
+\contentsline {subsection}{\numberline {A.6.3}Used by}{509}{subsection.A.6.3}%
+\contentsline {subsection}{\numberline {A.6.4}Full teaching explanation}{510}{subsection.A.6.4}%
+\contentsline {subsection}{\numberline {A.6.5}Phase 11 camera development}{510}{subsection.A.6.5}%
+\contentsline {section}{\numberline {A.7}Camera view and clip-space pipeline}{510}{section.A.7}%
+\contentsline {subsection}{\numberline {A.7.1}Definition and mechanism}{510}{subsection.A.7.1}%
+\contentsline {subsection}{\numberline {A.7.2}Prerequisites}{511}{subsection.A.7.2}%
+\contentsline {subsection}{\numberline {A.7.3}Used by}{511}{subsection.A.7.3}%
+\contentsline {subsection}{\numberline {A.7.4}Recall and next depth}{511}{subsection.A.7.4}%
+\contentsline {subsection}{\numberline {A.7.5}Source and navigation}{511}{subsection.A.7.5}%
+\contentsline {subsection}{\numberline {A.7.6}University course development}{511}{subsection.A.7.6}%
+\contentsline {subsection}{\numberline {A.7.7}Phase 11 camera development}{512}{subsection.A.7.7}%
+\contentsline {section}{\numberline {A.8}Clustered lighting depth slicing}{512}{section.A.8}%
+\contentsline {subsection}{\numberline {A.8.1}Light assignment}{512}{subsection.A.8.1}%
+\contentsline {subsection}{\numberline {A.8.2}False positives versus false negatives}{513}{subsection.A.8.2}%
+\contentsline {subsection}{\numberline {A.8.3}Executable reference}{513}{subsection.A.8.3}%
+\contentsline {section}{\numberline {A.9}Collision barriers and continuous detection}{513}{section.A.9}%
+\contentsline {subsection}{\numberline {A.9.1}Definition and mechanism}{513}{subsection.A.9.1}%
+\contentsline {subsection}{\numberline {A.9.2}Prerequisites}{513}{subsection.A.9.2}%
+\contentsline {subsection}{\numberline {A.9.3}Used by}{514}{subsection.A.9.3}%
+\contentsline {subsection}{\numberline {A.9.4}Full teaching explanation}{514}{subsection.A.9.4}%
+\contentsline {subsection}{\numberline {A.9.5}Recall and next depth}{514}{subsection.A.9.5}%
+\contentsline {subsection}{\numberline {A.9.6}Source and navigation}{514}{subsection.A.9.6}%
+\contentsline {section}{\numberline {A.10}Constrained optimization and inverse kinematics}{514}{section.A.10}%
+\contentsline {subsection}{\numberline {A.10.1}Definition and mechanism}{514}{subsection.A.10.1}%
+\contentsline {subsubsection}{Phase 9--10 development}{515}{subsubsection*.114}%
+\contentsline {subsection}{\numberline {A.10.2}Prerequisites}{515}{subsection.A.10.2}%
+\contentsline {subsection}{\numberline {A.10.3}Used by}{515}{subsection.A.10.3}%
+\contentsline {subsection}{\numberline {A.10.4}Full teaching explanation}{516}{subsection.A.10.4}%
+\contentsline {section}{\numberline {A.11}Contrastive vision and image-language alignment}{516}{section.A.11}%
+\contentsline {subsection}{\numberline {A.11.1}Definition and mechanism}{516}{subsection.A.11.1}%
+\contentsline {subsection}{\numberline {A.11.2}Prerequisites}{516}{subsection.A.11.2}%
+\contentsline {subsection}{\numberline {A.11.3}Used by}{516}{subsection.A.11.3}%
+\contentsline {subsection}{\numberline {A.11.4}Full teaching explanation}{517}{subsection.A.11.4}%
+\contentsline {subsection}{\numberline {A.11.5}Recall and next depth}{517}{subsection.A.11.5}%
+\contentsline {subsection}{\numberline {A.11.6}Source and navigation}{517}{subsection.A.11.6}%
+\contentsline {section}{\numberline {A.12}Depth buffering and visibility order}{517}{section.A.12}%
+\contentsline {subsection}{\numberline {A.12.1}Definition and mechanism}{517}{subsection.A.12.1}%
+\contentsline {subsection}{\numberline {A.12.2}Prerequisites}{517}{subsection.A.12.2}%
+\contentsline {subsection}{\numberline {A.12.3}Used by}{517}{subsection.A.12.3}%
+\contentsline {subsection}{\numberline {A.12.4}Phase 11 camera development}{518}{subsection.A.12.4}%
+\contentsline {section}{\numberline {A.13}Edge localization and subpixel contours}{518}{section.A.13}%
+\contentsline {subsection}{\numberline {A.13.1}Definition and mechanism}{518}{subsection.A.13.1}%
+\contentsline {subsection}{\numberline {A.13.2}Prerequisites}{518}{subsection.A.13.2}%
+\contentsline {subsection}{\numberline {A.13.3}Used by}{518}{subsection.A.13.3}%
+\contentsline {subsection}{\numberline {A.13.4}Full teaching explanation}{519}{subsection.A.13.4}%
+\contentsline {section}{\numberline {A.14}Fourier analysis and spectral phase}{519}{section.A.14}%
+\contentsline {subsection}{\numberline {A.14.1}Definition and mechanism}{519}{subsection.A.14.1}%
+\contentsline {subsection}{\numberline {A.14.2}Prerequisites}{519}{subsection.A.14.2}%
+\contentsline {subsection}{\numberline {A.14.3}Used by}{519}{subsection.A.14.3}%
+\contentsline {subsection}{\numberline {A.14.4}Source and navigation}{519}{subsection.A.14.4}%
+\contentsline {subsection}{\numberline {A.14.5}University course development}{520}{subsection.A.14.5}%
+\contentsline {section}{\numberline {A.15}GPU vertex specification}{520}{section.A.15}%
+\contentsline {subsection}{\numberline {A.15.1}Definition and mechanism}{520}{subsection.A.15.1}%
+\contentsline {subsection}{\numberline {A.15.2}Prerequisites}{520}{subsection.A.15.2}%
+\contentsline {subsection}{\numberline {A.15.3}Used by}{521}{subsection.A.15.3}%
+\contentsline {subsection}{\numberline {A.15.4}Full teaching explanation}{521}{subsection.A.15.4}%
+\contentsline {subsection}{\numberline {A.15.5}Recall and next depth}{521}{subsection.A.15.5}%
+\contentsline {subsection}{\numberline {A.15.6}Source and navigation}{521}{subsection.A.15.6}%
+\contentsline {section}{\numberline {A.16}Half-edge mesh connectivity}{521}{section.A.16}%
+\contentsline {subsection}{\numberline {A.16.1}Definition and mechanism}{521}{subsection.A.16.1}%
+\contentsline {subsection}{\numberline {A.16.2}Prerequisites}{521}{subsection.A.16.2}%
+\contentsline {subsection}{\numberline {A.16.3}Used by}{522}{subsection.A.16.3}%
+\contentsline {section}{\numberline {A.17}Homogeneous coordinates and perspective division}{522}{section.A.17}%
+\contentsline {subsection}{\numberline {A.17.1}Definition and mechanism}{522}{subsection.A.17.1}%
+\contentsline {subsection}{\numberline {A.17.2}Prerequisites}{522}{subsection.A.17.2}%
+\contentsline {subsection}{\numberline {A.17.3}Used by}{522}{subsection.A.17.3}%
+\contentsline {subsection}{\numberline {A.17.4}Recall and next depth}{523}{subsection.A.17.4}%
+\contentsline {subsection}{\numberline {A.17.5}Source and navigation}{523}{subsection.A.17.5}%
+\contentsline {subsection}{\numberline {A.17.6}University course development}{523}{subsection.A.17.6}%
+\contentsline {subsection}{\numberline {A.17.7}Phase 11 camera development}{523}{subsection.A.17.7}%
+\contentsline {section}{\numberline {A.18}Hough transform and geometric voting}{524}{section.A.18}%
+\contentsline {subsection}{\numberline {A.18.1}Definition and mechanism}{524}{subsection.A.18.1}%
+\contentsline {subsection}{\numberline {A.18.2}Prerequisites}{524}{subsection.A.18.2}%
+\contentsline {subsection}{\numberline {A.18.3}Used by}{524}{subsection.A.18.3}%
+\contentsline {subsection}{\numberline {A.18.4}Full teaching explanation}{524}{subsection.A.18.4}%
+\contentsline {section}{\numberline {A.19}Latent-variable models and generative flows}{524}{section.A.19}%
+\contentsline {subsection}{\numberline {A.19.1}Definition and mechanism}{524}{subsection.A.19.1}%
+\contentsline {subsection}{\numberline {A.19.2}Prerequisites}{525}{subsection.A.19.2}%
+\contentsline {subsection}{\numberline {A.19.3}Used by}{525}{subsection.A.19.3}%
+\contentsline {subsection}{\numberline {A.19.4}Full teaching explanation}{525}{subsection.A.19.4}%
+\contentsline {subsection}{\numberline {A.19.5}Recall and next depth}{525}{subsection.A.19.5}%
+\contentsline {subsection}{\numberline {A.19.6}Source and navigation}{525}{subsection.A.19.6}%
+\contentsline {section}{\numberline {A.20}Learned image features and CNNs}{525}{section.A.20}%
+\contentsline {subsection}{\numberline {A.20.1}Definition and mechanism}{526}{subsection.A.20.1}%
+\contentsline {subsection}{\numberline {A.20.2}Prerequisites}{526}{subsection.A.20.2}%
+\contentsline {subsection}{\numberline {A.20.3}Used by}{526}{subsection.A.20.3}%
+\contentsline {subsection}{\numberline {A.20.4}Full teaching explanation}{526}{subsection.A.20.4}%
+\contentsline {subsection}{\numberline {A.20.5}Recall and next depth}{526}{subsection.A.20.5}%
+\contentsline {subsection}{\numberline {A.20.6}Source and navigation}{527}{subsection.A.20.6}%
+\contentsline {section}{\numberline {A.21}Light spectra and radiometry}{527}{section.A.21}%
+\contentsline {subsection}{\numberline {A.21.1}Definition and mechanism}{527}{subsection.A.21.1}%
+\contentsline {subsection}{\numberline {A.21.2}Prerequisites}{527}{subsection.A.21.2}%
+\contentsline {subsection}{\numberline {A.21.3}Used by}{527}{subsection.A.21.3}%
+\contentsline {subsection}{\numberline {A.21.4}Recall and next depth}{527}{subsection.A.21.4}%
+\contentsline {subsection}{\numberline {A.21.5}Source and navigation}{527}{subsection.A.21.5}%
+\contentsline {subsection}{\numberline {A.21.6}University course development}{528}{subsection.A.21.6}%
+\contentsline {section}{\numberline {A.22}Manifold polygon meshes and boundary structure}{528}{section.A.22}%
+\contentsline {subsection}{\numberline {A.22.1}Definition and mechanism}{528}{subsection.A.22.1}%
+\contentsline {subsection}{\numberline {A.22.2}Prerequisites}{528}{subsection.A.22.2}%
+\contentsline {subsection}{\numberline {A.22.3}Used by}{528}{subsection.A.22.3}%
+\contentsline {section}{\numberline {A.23}Microfacet normal distributions}{529}{section.A.23}%
+\contentsline {subsection}{\numberline {A.23.1}From NDF to BRDF}{529}{subsection.A.23.1}%
+\contentsline {subsection}{\numberline {A.23.2}Numerical behavior}{530}{subsection.A.23.2}%
+\contentsline {subsection}{\numberline {A.23.3}Executable reference}{530}{subsection.A.23.3}%
+\contentsline {subsection}{\numberline {A.23.4}Extended executable reference}{530}{subsection.A.23.4}%
+\contentsline {section}{\numberline {A.24}Multiple importance sampling}{530}{section.A.24}%
+\contentsline {subsection}{\numberline {A.24.1}Support matters}{531}{subsection.A.24.1}%
+\contentsline {subsection}{\numberline {A.24.2}Power heuristic}{531}{subsection.A.24.2}%
+\contentsline {subsection}{\numberline {A.24.3}Executable reference}{531}{subsection.A.24.3}%
+\contentsline {subsection}{\numberline {A.24.4}Scene-level MIS witness}{531}{subsection.A.24.4}%
+\contentsline {section}{\numberline {A.25}ODE integration and stability}{532}{section.A.25}%
+\contentsline {subsection}{\numberline {A.25.1}Definition and mechanism}{532}{subsection.A.25.1}%
+\contentsline {subsubsection}{Phase 9--10 development}{532}{subsubsection*.115}%
+\contentsline {subsection}{\numberline {A.25.2}Prerequisites}{532}{subsection.A.25.2}%
+\contentsline {subsection}{\numberline {A.25.3}Used by}{533}{subsection.A.25.3}%
+\contentsline {subsection}{\numberline {A.25.4}Full teaching explanation}{533}{subsection.A.25.4}%
+\contentsline {section}{\numberline {A.26}Optical flow and time to contact}{533}{section.A.26}%
+\contentsline {subsection}{\numberline {A.26.1}Definition and mechanism}{533}{subsection.A.26.1}%
+\contentsline {subsection}{\numberline {A.26.2}Prerequisites}{533}{subsection.A.26.2}%
+\contentsline {subsection}{\numberline {A.26.3}Used by}{533}{subsection.A.26.3}%
+\contentsline {section}{\numberline {A.27}Perception feedback and robot learning}{534}{section.A.27}%
+\contentsline {subsection}{\numberline {A.27.1}Definition and mechanism}{534}{subsection.A.27.1}%
+\contentsline {subsection}{\numberline {A.27.2}Prerequisites}{534}{subsection.A.27.2}%
+\contentsline {subsection}{\numberline {A.27.3}Used by}{534}{subsection.A.27.3}%
+\contentsline {subsection}{\numberline {A.27.4}Full teaching explanation}{535}{subsection.A.27.4}%
+\contentsline {subsection}{\numberline {A.27.5}Recall and next depth}{535}{subsection.A.27.5}%
+\contentsline {subsection}{\numberline {A.27.6}Source and navigation}{535}{subsection.A.27.6}%
+\contentsline {section}{\numberline {A.28}Prefix scan and stream compaction}{535}{section.A.28}%
+\contentsline {subsection}{\numberline {A.28.1}Parallel structure}{535}{subsection.A.28.1}%
+\contentsline {subsection}{\numberline {A.28.2}Stream compaction as an allocation proof}{536}{subsection.A.28.2}%
+\contentsline {subsection}{\numberline {A.28.3}Evidence boundary}{536}{subsection.A.28.3}%
+\contentsline {section}{\numberline {A.29}Quadric error mesh simplification}{536}{section.A.29}%
+\contentsline {subsection}{\numberline {A.29.1}Definition and mechanism}{536}{subsection.A.29.1}%
+\contentsline {subsection}{\numberline {A.29.2}Prerequisites}{537}{subsection.A.29.2}%
+\contentsline {subsection}{\numberline {A.29.3}Used by}{537}{subsection.A.29.3}%
+\contentsline {subsection}{\numberline {A.29.4}Full teaching explanation}{537}{subsection.A.29.4}%
+\contentsline {section}{\numberline {A.30}Radiance fields and Gaussian splatting}{537}{section.A.30}%
+\contentsline {subsection}{\numberline {A.30.1}Definition and mechanism}{537}{subsection.A.30.1}%
+\contentsline {subsection}{\numberline {A.30.2}Prerequisites}{537}{subsection.A.30.2}%
+\contentsline {subsection}{\numberline {A.30.3}Used by}{538}{subsection.A.30.3}%
+\contentsline {subsection}{\numberline {A.30.4}Full teaching explanation}{538}{subsection.A.30.4}%
+\contentsline {subsection}{\numberline {A.30.5}Recall and next depth}{538}{subsection.A.30.5}%
+\contentsline {subsection}{\numberline {A.30.6}Source and navigation}{538}{subsection.A.30.6}%
+\contentsline {section}{\numberline {A.31}Ray-triangle intersection}{538}{section.A.31}%
+\contentsline {subsection}{\numberline {A.31.1}Definition and mechanism}{538}{subsection.A.31.1}%
+\contentsline {subsection}{\numberline {A.31.2}Prerequisites}{538}{subsection.A.31.2}%
+\contentsline {subsection}{\numberline {A.31.3}Used by}{539}{subsection.A.31.3}%
+\contentsline {section}{\numberline {A.32}Reflectance and rendering equation}{539}{section.A.32}%
+\contentsline {subsection}{\numberline {A.32.1}Definition and mechanism}{539}{subsection.A.32.1}%
+\contentsline {subsection}{\numberline {A.32.2}Prerequisites}{539}{subsection.A.32.2}%
+\contentsline {subsection}{\numberline {A.32.3}Used by}{539}{subsection.A.32.3}%
+\contentsline {subsection}{\numberline {A.32.4}Source and navigation}{539}{subsection.A.32.4}%
+\contentsline {subsection}{\numberline {A.32.5}University course development}{540}{subsection.A.32.5}%
+\contentsline {section}{\numberline {A.33}Reflection refraction and shading directions}{540}{section.A.33}%
+\contentsline {subsection}{\numberline {A.33.1}Definition and mechanism}{540}{subsection.A.33.1}%
+\contentsline {subsection}{\numberline {A.33.2}Prerequisites}{540}{subsection.A.33.2}%
+\contentsline {subsection}{\numberline {A.33.3}Used by}{540}{subsection.A.33.3}%
+\contentsline {subsection}{\numberline {A.33.4}Recall and next depth}{540}{subsection.A.33.4}%
+\contentsline {subsection}{\numberline {A.33.5}Source and navigation}{541}{subsection.A.33.5}%
+\contentsline {subsection}{\numberline {A.33.6}University course development}{541}{subsection.A.33.6}%
+\contentsline {section}{\numberline {A.34}Russian roulette path termination}{541}{section.A.34}%
+\contentsline {subsection}{\numberline {A.34.1}Choosing the survival probability}{541}{subsection.A.34.1}%
+\contentsline {subsection}{\numberline {A.34.2}Conditional probability matters}{542}{subsection.A.34.2}%
+\contentsline {subsection}{\numberline {A.34.3}Executable reference}{542}{subsection.A.34.3}%
+\contentsline {section}{\numberline {A.35}Sampling aliasing and reconstruction}{542}{section.A.35}%
+\contentsline {subsection}{\numberline {A.35.1}Definition and mechanism}{542}{subsection.A.35.1}%
+\contentsline {subsubsection}{Phase 9--10 development}{542}{subsubsection*.116}%
+\contentsline {subsection}{\numberline {A.35.2}Prerequisites}{542}{subsection.A.35.2}%
+\contentsline {subsection}{\numberline {A.35.3}Used by}{542}{subsection.A.35.3}%
+\contentsline {subsection}{\numberline {A.35.4}Source and navigation}{543}{subsection.A.35.4}%
+\contentsline {subsection}{\numberline {A.35.5}University course development}{543}{subsection.A.35.5}%
+\contentsline {subsection}{\numberline {A.35.6}Full teaching explanation}{544}{subsection.A.35.6}%
+\contentsline {section}{\numberline {A.36}Sampling support and missing strata}{544}{section.A.36}%
+\contentsline {subsection}{\numberline {A.36.1}Stratification}{544}{subsection.A.36.1}%
+\contentsline {subsection}{\numberline {A.36.2}MIS support}{544}{subsection.A.36.2}%
+\contentsline {subsection}{\numberline {A.36.3}Debugging}{545}{subsection.A.36.3}%
+\contentsline {section}{\numberline {A.37}Shader buffer ABI}{545}{section.A.37}%
+\contentsline {subsection}{\numberline {A.37.1}Layout is a function of context}{545}{subsection.A.37.1}%
+\contentsline {subsection}{\numberline {A.37.2}Verify rather than guess}{545}{subsection.A.37.2}%
+\contentsline {subsection}{\numberline {A.37.3}Failure modes}{546}{subsection.A.37.3}%
+\contentsline {section}{\numberline {A.38}Shadow filtering: PCF and variance bounds}{546}{section.A.38}%
+\contentsline {subsection}{\numberline {A.38.1}Percentage-closer filtering}{546}{subsection.A.38.1}%
+\contentsline {subsection}{\numberline {A.38.2}Variance shadow maps}{546}{subsection.A.38.2}%
+\contentsline {subsection}{\numberline {A.38.3}Executable reference}{547}{subsection.A.38.3}%
+\contentsline {section}{\numberline {A.39}Singular value decomposition}{547}{section.A.39}%
+\contentsline {subsection}{\numberline {A.39.1}Prerequisites}{547}{subsection.A.39.1}%
+\contentsline {subsection}{\numberline {A.39.2}Used by}{547}{subsection.A.39.2}%
+\contentsline {subsection}{\numberline {A.39.3}University course development}{548}{subsection.A.39.3}%
+\contentsline {section}{\numberline {A.40}Subdivision surface masks}{548}{section.A.40}%
+\contentsline {subsection}{\numberline {A.40.1}Definition and mechanism}{548}{subsection.A.40.1}%
+\contentsline {subsection}{\numberline {A.40.2}Prerequisites}{548}{subsection.A.40.2}%
+\contentsline {subsection}{\numberline {A.40.3}Used by}{548}{subsection.A.40.3}%
+\contentsline {section}{\numberline {A.41}Surface orientation from image brightness}{549}{section.A.41}%
+\contentsline {subsection}{\numberline {A.41.1}Definition and mechanism}{549}{subsection.A.41.1}%
+\contentsline {subsection}{\numberline {A.41.2}Prerequisites}{549}{subsection.A.41.2}%
+\contentsline {subsection}{\numberline {A.41.3}Used by}{549}{subsection.A.41.3}%
+\contentsline {subsection}{\numberline {A.41.4}Full teaching explanation}{549}{subsection.A.41.4}%
+\contentsline {section}{\numberline {A.42}Template matching and distance transforms}{549}{section.A.42}%
+\contentsline {subsection}{\numberline {A.42.1}Definition and mechanism}{549}{subsection.A.42.1}%
+\contentsline {subsection}{\numberline {A.42.2}Prerequisites}{550}{subsection.A.42.2}%
+\contentsline {subsection}{\numberline {A.42.3}Used by}{550}{subsection.A.42.3}%
+\contentsline {subsection}{\numberline {A.42.4}Full teaching explanation}{550}{subsection.A.42.4}%
+\contentsline {section}{\numberline {A.43}Temporal history validation and reprojection}{550}{section.A.43}%
+\contentsline {subsection}{\numberline {A.43.1}Validation signals}{550}{subsection.A.43.1}%
+\contentsline {subsection}{\numberline {A.43.2}Disocclusion}{551}{subsection.A.43.2}%
+\contentsline {subsection}{\numberline {A.43.3}Accumulation and clamping}{551}{subsection.A.43.3}%
+\contentsline {subsection}{\numberline {A.43.4}Executable reference}{551}{subsection.A.43.4}%
+\contentsline {section}{\numberline {A.44}Triangle rasterization and coverage tests}{551}{section.A.44}%
+\contentsline {subsection}{\numberline {A.44.1}Definition and mechanism}{551}{subsection.A.44.1}%
+\contentsline {subsection}{\numberline {A.44.2}Prerequisites}{552}{subsection.A.44.2}%
+\contentsline {subsection}{\numberline {A.44.3}Used by}{552}{subsection.A.44.3}%

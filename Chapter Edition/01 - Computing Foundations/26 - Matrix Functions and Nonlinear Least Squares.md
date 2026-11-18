@@ -8,7 +8,7 @@ Matrix powers and functions describe repeated linear actions and linear differen
 
 **Recall question:** How does the matrix exponential solve a linear system’s continuous-time evolution, and what makes least-squares residuals informative?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 61008–63465; source-span SHA256 c98645470dc3bb383700d217b80d9b1105f9d2e56cb75f057ad4011f366c7eb4. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 61255–63712; source-span SHA256 fc40792e2af7044c14a6542ae11cf5116f6e261e6a7d4beaa5ad47a0306a7aec. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Matrix functions turn repeated linear actions into one operator
@@ -127,7 +127,7 @@ Optimization starts before we choose an algorithm. We first need to decide preci
 Suppose a camera predicts that a reconstructed 3D point appears at pixel location:
 
 $$
-\hat{\mathbf u}\_i(\mathbf x)= \begin{bmatrix}\hat u_i\\hat v_i\end{bmatrix}
+\hat{\mathbf u}_i(\mathbf x)= \begin{bmatrix}\hat u_i\\\hat v_i\end{bmatrix}
 $$
 
 where $\mathbf x$ contains the unknown camera parameters.
@@ -141,7 +141,7 @@ $$
 Define the residual:
 
 $$
-\boxed{ \mathbf r_i(\mathbf x) = \hat{\mathbf u}\_i(\mathbf x)-\mathbf u_i }.
+\boxed{ \mathbf r_i(\mathbf x) = \hat{\mathbf u}_i(\mathbf x)-\mathbf u_i }.
 $$
 
 A residual is the signed difference between a prediction and a target. For reprojection error, its components have units of pixels.
@@ -149,7 +149,7 @@ A residual is the signed difference between a prediction and a target. For repro
 We could minimize the sum of squared residual magnitudes:
 
 $$
-\boxed{ E(\mathbf x)= \frac12\sum\_{i=1}^{N} \|\mathbf r_i(\mathbf x)\|\_2^2 }.
+\boxed{ E(\mathbf x)= \frac12\sum_{i=1}^{N} \|\mathbf r_i(\mathbf x)\|_2^2 }.
 $$
 
 Why square the residuals?
@@ -161,7 +161,7 @@ But the choice is not automatically correct for every problem. Squared residuals
 For instance, if a measurement has standard deviation $\sigma_i$, it is often more appropriate to use the normalized residual:
 
 $$
-\tilde{\mathbf r}\_i= \frac{\mathbf r_i}{\sigma_i}.
+\tilde{\mathbf r}_i= \frac{\mathbf r_i}{\sigma_i}.
 $$
 
 A weighted objective is then:
@@ -181,7 +181,7 @@ A mathematical optimization problem specifies its decision variables, objective,
 For example, if our unknowns are a camera rotation $R$, camera translation $\mathbf t$, and positive focal length $f$, the problem could be:
 
 $$
-\min\_{R,\mathbf t,f}E(R,\mathbf t,f)
+\min_{R,\mathbf t,f}E(R,\mathbf t,f)
 $$
 
 subject to:
@@ -295,7 +295,7 @@ $$
 would have directional derivative:
 
 $$
-D\_{\mathbf d}f = \nabla f^T(-\nabla f) = -\|\nabla f\|^2<0.
+D_{\mathbf d}f = \nabla f^T(-\nabla f) = -\|\nabla f\|^2<0.
 $$
 
 A sufficiently small movement along that direction would decrease the objective, contradicting local minimality.
@@ -345,7 +345,7 @@ Second-order information cannot distinguish these cases.
 For a constrained problem:
 
 $$
-\min\_{x\ge0}(x+1)^2,
+\min_{x\ge0}(x+1)^2,
 $$
 
 the optimum is:
@@ -485,7 +485,7 @@ Boyd and Vandenberghe+1
 A general constrained problem can be expressed as:
 
 $$
-\begin{aligned} \min\_{\mathbf x}\quad &f(\mathbf x)\\ \text{subject to}\quad &g_i(\mathbf x)\le0,\quad i=1,\ldots,m,\\ &h_j(\mathbf x)=0,\quad j=1,\ldots,p. \end{aligned}
+\begin{aligned} \min_{\mathbf x}\quad &f(\mathbf x)\\ \text{subject to}\quad &g_i(\mathbf x)\le0,\quad i=1,\ldots,m,\\ &h_j(\mathbf x)=0,\quad j=1,\ldots,p. \end{aligned}
 $$
 
 Inequalities restrict the permissible region. Equalities restrict the solution to a surface or a lower-dimensional subset.
@@ -535,7 +535,7 @@ $$
 we obtain the gradient-descent update:
 
 $$
-\boxed{ \mathbf x\_{k+1} = \mathbf x_k-\alpha_k\nabla f(\mathbf x_k) }.
+\boxed{ \mathbf x_{k+1} = \mathbf x_k-\alpha_k\nabla f(\mathbf x_k) }.
 $$
 
 Here $\alpha_k>0$ is the step size, also called the learning rate in machine learning.
@@ -647,7 +647,7 @@ This is why choosing the direction and choosing the step length are separate opt
 An optimization update can be written:
 
 $$
-\mathbf x\_{k+1}=\mathbf x_k+\alpha_k\mathbf p_k,
+\mathbf x_{k+1}=\mathbf x_k+\alpha_k\mathbf p_k,
 $$
 
 where $\mathbf p_k$ is a chosen search direction.
@@ -675,7 +675,7 @@ $$
 Gradient descent becomes:
 
 $$
-\mathbf x\_{k+1} = (I-\alpha A)\mathbf x_k.
+\mathbf x_{k+1} = (I-\alpha A)\mathbf x_k.
 $$
 
 Diagonalize $A$:
@@ -695,13 +695,13 @@ $$
 Then:
 
 $$
-\mathbf z\_{k+1} = (I-\alpha\Lambda)\mathbf z_k.
+\mathbf z_{k+1} = (I-\alpha\Lambda)\mathbf z_k.
 $$
 
 Every eigenvector component evolves independently:
 
 $$
-\boxed{ z\_{i,k+1}=(1-\alpha\lambda_i)z\_{i,k} }.
+\boxed{ z_{i,k+1}=(1-\alpha\lambda_i)z_{i,k} }.
 $$
 
 For convergence to zero, each component must contract:
@@ -719,7 +719,7 @@ $$
 To satisfy every direction, we require:
 
 $$
-\boxed{ 0<\alpha<\frac2{\lambda\_{\max}} }.
+\boxed{ 0<\alpha<\frac2{\lambda_{\max}} }.
 $$
 
 This is not an arbitrary tuning recommendation. It is a stability condition derived from the eigenvalues of the objective's curvature matrix.
@@ -729,7 +729,7 @@ This is not an arbitrary tuning recommendation. It is a stability condition deri
 Suppose the eigenvalues of $A$ are:
 
 $$
-\lambda\_{\min}=1, \qquad \lambda\_{\max}=100.
+\lambda_{\min}=1, \qquad \lambda_{\max}=100.
 $$
 
 A step size must be below $0.02$ to satisfy the strict contraction condition for the steep direction.
@@ -737,7 +737,7 @@ A step size must be below $0.02$ to satisfy the strict contraction condition for
 But with $\alpha=0.01$, the shallow direction contracts by only:
 
 $$
-1-\alpha\lambda\_{\min}=0.99
+1-\alpha\lambda_{\min}=0.99
 $$
 
 each iteration.
@@ -747,7 +747,7 @@ The steep direction contracts rapidly, while the shallow direction makes slow pr
 The ratio:
 
 $$
-\boxed{\kappa(A)=\frac{\lambda\_{\max}}{\lambda\_{\min}}=100}
+\boxed{\kappa(A)=\frac{\lambda_{\max}}{\lambda_{\min}}=100}
 $$
 
 quantifies this curvature anisotropy for a positive-definite quadratic.
@@ -761,7 +761,7 @@ Let the eigenvalues lie in $[\mu,L]$, with $0<\mu\le L$.
 For a fixed step $\alpha$, the worst-case linear contraction factor is:
 
 $$
-q(\alpha)= \max\_{\lambda\in[\mu,L]} |1-\alpha\lambda|.
+q(\alpha)= \max_{\lambda\in[\mu,L]} |1-\alpha\lambda|.
 $$
 
 The optimal minimax choice balances the two endpoint factors:
@@ -841,7 +841,7 @@ the upper bound guarantees a decrease whenever $\mathbf g\ne0$.
 For the common choice $\alpha=1/L$:
 
 $$
-\boxed{ f(\mathbf x\_{k+1}) \le f(\mathbf x_k)- \frac1{2L}\|\nabla f(\mathbf x_k)\|^2 }.
+\boxed{ f(\mathbf x_{k+1}) \le f(\mathbf x_k)- \frac1{2L}\|\nabla f(\mathbf x_k)\|^2 }.
 $$
 
 This gives a quantitative decrease per step.
@@ -891,13 +891,13 @@ Momentum introduces a persistent update state.
 A common heavy-ball formulation is:
 
 $$
-\boxed{ \mathbf v\_{k+1} = \beta\mathbf v_k-\alpha\nabla f(\mathbf x_k) }
+\boxed{ \mathbf v_{k+1} = \beta\mathbf v_k-\alpha\nabla f(\mathbf x_k) }
 $$
 
 followed by:
 
 $$
-\boxed{ \mathbf x\_{k+1}=\mathbf x_k+\mathbf v\_{k+1} }.
+\boxed{ \mathbf x_{k+1}=\mathbf x_k+\mathbf v_{k+1} }.
 $$
 
 Here $\beta$ is the momentum coefficient, often chosen between zero and one.
@@ -911,7 +911,7 @@ Suppose the gradient repeatedly points in approximately the same direction.
 The recurrence adds new gradient contributions to a decaying history:
 
 $$
-\mathbf v\_{k+1} = -\alpha\mathbf g_k -\alpha\beta\mathbf g\_{k-1} -\alpha\beta^2\mathbf g\_{k-2} -\cdots
+\mathbf v_{k+1} = -\alpha\mathbf g_k -\alpha\beta\mathbf g_{k-1} -\alpha\beta^2\mathbf g_{k-2} -\cdots
 $$
 
 when initialized at zero, with the appropriate finite-history truncation.
@@ -1003,11 +1003,11 @@ $$
 $$
 
 $$
-\mathbf v\_{k+1} = \beta\mathbf v_k-\alpha\nabla f(\mathbf y_k),
+\mathbf v_{k+1} = \beta\mathbf v_k-\alpha\nabla f(\mathbf y_k),
 $$
 
 $$
-\mathbf x\_{k+1}=\mathbf x_k+\mathbf v\_{k+1}.
+\mathbf x_{k+1}=\mathbf x_k+\mathbf v_{k+1}.
 $$
 
 The gradient is evaluated at $\mathbf y_k$, not at $\mathbf x_k$.
@@ -1081,7 +1081,7 @@ $$
 Since $g=f'$ and $g'=f''$:
 
 $$
-\boxed{ x\_{k+1} = x_k-\frac{f'(x_k)}{f''(x_k)} }.
+\boxed{ x_{k+1} = x_k-\frac{f'(x_k)}{f''(x_k)} }.
 $$
 
 ##### Quadratic example
@@ -1101,7 +1101,7 @@ $$
 Newton's update is:
 
 $$
-x\_{k+1} = x_k-\frac{6(x_k-2)}6 =2.
+x_{k+1} = x_k-\frac{6(x_k-2)}6 =2.
 $$
 
 For any starting point, one exact Newton step reaches the minimizer $x=2$, assuming exact arithmetic.
@@ -1125,7 +1125,7 @@ $$
 For $x\ne0$:
 
 $$
-x\_{k+1} = x-\frac{3x^2}{6x} =\frac x2.
+x_{k+1} = x-\frac{3x^2}{6x} =\frac x2.
 $$
 
 The iterates approach zero.
@@ -1173,7 +1173,7 @@ $$
 The next iterate is:
 
 $$
-\mathbf x\_{k+1}=\mathbf x_k+\alpha_k\mathbf p_k.
+\mathbf x_{k+1}=\mathbf x_k+\alpha_k\mathbf p_k.
 $$
 
 Classical undamped Newton uses $\alpha_k=1$. A damped or line-search [[Chapter Edition/01 - Computing Foundations/26 - Matrix Functions and Nonlinear Least Squares#Optimization and inverse problems|Newton method]] chooses $\alpha_k$ to improve robustness.
@@ -1304,18 +1304,18 @@ A direct dense factorization typically requires $O(n^3)$ arithmetic, although st
 
 Quasi-Newton methods attempt to learn useful curvature information from changes in gradients instead of constructing the exact Hessian at every iteration.
 
-Suppose an optimization step moves from $\mathbf x_k$ to $\mathbf x\_{k+1}$.
+Suppose an optimization step moves from $\mathbf x_k$ to $\mathbf x_{k+1}$.
 
 Define:
 
 $$
-\boxed{ \mathbf s_k=\mathbf x\_{k+1}-\mathbf x_k }
+\boxed{ \mathbf s_k=\mathbf x_{k+1}-\mathbf x_k }
 $$
 
 and:
 
 $$
-\boxed{ \mathbf y_k= \nabla f(\mathbf x\_{k+1})- \nabla f(\mathbf x_k) }.
+\boxed{ \mathbf y_k= \nabla f(\mathbf x_{k+1})- \nabla f(\mathbf x_k) }.
 $$
 
 The letter $\mathbf y$ here denotes a gradient difference, not the function output from previous examples.
@@ -1337,7 +1337,7 @@ This relationship is the basis of the secant condition.
 Instead of computing the true Hessian, maintain an approximation $B_k$ satisfying:
 
 $$
-\boxed{ B\_{k+1}\mathbf s_k=\mathbf y_k }.
+\boxed{ B_{k+1}\mathbf s_k=\mathbf y_k }.
 $$
 
 This forces the new approximation to agree with the observed gradient change along the most recent step.
@@ -1357,17 +1357,17 @@ Let $B_k$ approximate the Hessian.
 Define:
 
 $$
-\mathbf s=\mathbf x\_{k+1}-\mathbf x_k,
+\mathbf s=\mathbf x_{k+1}-\mathbf x_k,
 $$
 
 $$
-\mathbf y=\nabla f(\mathbf x\_{k+1})-\nabla f(\mathbf x_k).
+\mathbf y=\nabla f(\mathbf x_{k+1})-\nabla f(\mathbf x_k).
 $$
 
 The BFGS Hessian update is:
 
 $$
-\boxed{ B\_{k+1} = B_k - \frac{B_k\mathbf s\mathbf s^TB_k} {\mathbf s^TB_k\mathbf s} + \frac{\mathbf y\mathbf y^T} {\mathbf y^T\mathbf s} }.
+\boxed{ B_{k+1} = B_k - \frac{B_k\mathbf s\mathbf s^TB_k} {\mathbf s^TB_k\mathbf s} + \frac{\mathbf y\mathbf y^T} {\mathbf y^T\mathbf s} }.
 $$
 
 The update changes the curvature estimate in directions informed by the observed step and gradient difference.
@@ -1389,7 +1389,7 @@ $$
 Then:
 
 $$
-\boxed{ M\_{k+1} = (I-\rho\mathbf s\mathbf y^T) M_k (I-\rho\mathbf y\mathbf s^T) + \rho\mathbf s\mathbf s^T }.
+\boxed{ M_{k+1} = (I-\rho\mathbf s\mathbf y^T) M_k (I-\rho\mathbf y\mathbf s^T) + \rho\mathbf s\mathbf s^T }.
 $$
 
 The search direction is:
@@ -1439,7 +1439,7 @@ In research code, L-BFGS can be attractive when reliable gradients are available
 So far, our update has the form:
 
 $$
-\mathbf x\_{k+1}=\mathbf x_k+\alpha_k\mathbf p_k.
+\mathbf x_{k+1}=\mathbf x_k+\alpha_k\mathbf p_k.
 $$
 
 Suppose a method has already selected a direction $\mathbf p_k$, perhaps from gradient descent, Newton, or BFGS.
@@ -1471,7 +1471,7 @@ If this quantity is negative, the direction is descending.
 An exact line search would choose:
 
 $$
-\alpha^\star=\arg\min\_{\alpha\ge0}\phi(\alpha).
+\alpha^\star=\arg\min_{\alpha\ge0}\phi(\alpha).
 $$
 
 But solving this one-dimensional problem exactly can be expensive. It may require many evaluations of a costly objective.
@@ -1712,7 +1712,7 @@ Here $B_k$ approximates the Hessian.
 We solve:
 
 $$
-\boxed{ \min\_{\|\mathbf p\|\le\Delta_k}m_k(\mathbf p) }
+\boxed{ \min_{\|\mathbf p\|\le\Delta_k}m_k(\mathbf p) }
 $$
 
 where $\Delta_k>0$ is the trust-region radius.
@@ -1884,7 +1884,7 @@ $$
 The first-order equations are:
 
 $$
-\nabla\_{\mathbf x}\mathcal L=0, \qquad h(\mathbf x)=0.
+\nabla_{\mathbf x}\mathcal L=0, \qquad h(\mathbf x)=0.
 $$
 
 ##### Worked example: constrained optimum on the unit circle
@@ -2034,7 +2034,7 @@ Lagrange multipliers handle equality constraints. KKT conditions extend first-or
 Consider:
 
 $$
-\min\_{\mathbf x}f(\mathbf x)
+\min_{\mathbf x}f(\mathbf x)
 $$
 
 subject to:
@@ -2058,7 +2058,7 @@ $$
 The KKT conditions are:
 
 $$
-\boxed{ \begin{aligned} \nabla\_{\mathbf x}\mathcal L&=0 &&\text{stationarity},\\ g_i(\mathbf x)&\le0 &&\text{primal inequality feasibility},\\ h_j(\mathbf x)&=0 &&\text{equality feasibility},\\ \lambda_i&\ge0 &&\text{dual feasibility},\\ \lambda_i g_i(\mathbf x)&=0 &&\text{complementary slackness}. \end{aligned} }
+\boxed{ \begin{aligned} \nabla_{\mathbf x}\mathcal L&=0 &&\text{stationarity},\\ g_i(\mathbf x)&\le0 &&\text{primal inequality feasibility},\\ h_j(\mathbf x)&=0 &&\text{equality feasibility},\\ \lambda_i&\ge0 &&\text{dual feasibility},\\ \lambda_i g_i(\mathbf x)&=0 &&\text{complementary slackness}. \end{aligned} }
 $$
 
 ##### Complementary slackness intuition
@@ -2190,17 +2190,17 @@ web.stanford.edu
 
 The KKT conditions above are easier to understand once the **Lagrange dual function** is derived rather than treated as a separate optimization trick. Consider
 
-\[
+$$
 \begin{aligned}
 \text{minimize}\quad & f_0(x)\\
 \text{subject to}\quad & f_i(x)\le 0,\quad i=1,\ldots,m,\\
 & Ax=b.
 \end{aligned}
-\]
+$$
 
-With multipliers \(\lambda_i\ge0\) and \(\nu\), the Lagrangian is
+With multipliers $\lambda_i\ge0$ and $\nu$, the Lagrangian is
 
-\[
+$$
 L(x,\lambda,\nu)
 =
 f_0(x)
@@ -2208,37 +2208,37 @@ f_0(x)
 \sum_{i=1}^{m}\lambda_i f_i(x)
 +
 \nu^T(Ax-b).
-\]
+$$
 
 For fixed multipliers, minimize over the primal variable:
 
-\[
+$$
 g(\lambda,\nu)
 =
 \inf_x L(x,\lambda,\nu).
-\]
+$$
 
-For any primal-feasible \(x\) and dual-feasible \(\lambda\ge0\),
+For any primal-feasible $x$ and dual-feasible $\lambda\ge0$,
 
-\[
+$$
 g(\lambda,\nu)
 \le
 f_0(x).
-\]
+$$
 
 This is **weak duality**. Every dual-feasible point supplies a certified lower bound on the primal optimum in a minimization problem. The dual problem chooses the best such certificate:
 
-\[
+$$
 \text{maximize}\quad g(\lambda,\nu)
 \quad
 \text{subject to}\quad \lambda\ge0.
-\]
+$$
 
 The **duality gap**
 
-\[
+$$
 f_0(x)-g(\lambda,\nu)
-\]
+$$
 
 therefore measures how far a primal/dual candidate pair is from proving optimality. A small objective gradient alone cannot make that certification.
 
@@ -2256,48 +2256,48 @@ Source basis: Boyd and Vandenberghe, *Convex Optimization*, Chapter 5 on the Lag
 
 Projected methods react to a boundary after a trial step. **Interior-point methods** take a different route: stay inside the feasible region and solve a sequence of smooth problems that approach the constrained optimum. For inequalities
 
-\[
+$$
 f_i(x)\le0,
-\]
+$$
 
 the logarithmic barrier
 
-\[
+$$
 \phi(x)
 =
 -\sum_{i=1}^{m}\log(-f_i(x))
-\]
+$$
 
 is finite only for strictly feasible points and diverges as a boundary is approached. The barrier subproblem is
 
-\[
+$$
 \min_x\;
 t f_0(x)+\phi(x)
 \quad
 \text{subject to}\quad Ax=b,
-\]
+$$
 
-with \(t>0\). Small \(t\) gives the barrier substantial influence; increasing \(t\) makes the objective dominate while the iterates remain interior.
+with $t>0$. Small $t$ gives the barrier substantial influence; increasing $t$ makes the objective dominate while the iterates remain interior.
 
-The minimizers \(x^*(t)\) trace the **central path**. Introduce
+The minimizers $x^*(t)$ trace the **central path**. Introduce
 
-\[
+$$
 \lambda_i(t)
 =
 -\frac{1}{t f_i(x^*(t))}.
-\]
+$$
 
 The barrier optimality conditions can then be written like KKT, except complementary slackness becomes
 
-\[
+$$
 -\lambda_i f_i(x)=\frac{1}{t}.
-\]
+$$
 
-As \(t\rightarrow\infty\), the right side tends to zero. The central path is therefore a continuous deformation toward the KKT conditions rather than an arbitrary sequence of penalty parameters.
+As $t\rightarrow\infty$, the right side tends to zero. The central path is therefore a continuous deformation toward the KKT conditions rather than an arbitrary sequence of penalty parameters.
 
 Each centering step is usually solved with Newton’s method subject to equality constraints. Linearization produces a KKT-like block system. This reconnects interior-point optimization to the existing material on symmetric-indefinite factorization and Schur complements. The numerical core is not “take an inverse”; it is repeatedly solve a structured linear system while controlling line search, feasibility, and residual decrease.
 
-A primal-dual interior-point method works directly with modified KKT residuals. The state includes primal variables \(x\), inequality multipliers \(\lambda\), and equality multipliers \(\nu\). A Newton step simultaneously reduces stationarity, feasibility, and complementarity residuals. This is why a production implementation should track a vector of residual criteria rather than one scalar loss.
+A primal-dual interior-point method works directly with modified KKT residuals. The state includes primal variables $x$, inequality multipliers $\lambda$, and equality multipliers $\nu$. A Newton step simultaneously reduces stationarity, feasibility, and complementarity residuals. This is why a production implementation should track a vector of residual criteria rather than one scalar loss.
 
 The barrier also has a useful mechanical interpretation given by Boyd and Vandenberghe. Each constraint creates a repulsive potential that becomes large near its boundary, while the scaled objective pulls toward lower objective values. A central point is where these influences balance. The analogy helps intuition, but the actual convergence claim comes from convex analysis and self-concordance, not from simulated physical dynamics.
 
@@ -2320,7 +2320,7 @@ be a residual vector.
 Define:
 
 $$
-\boxed{ E(\mathbf x)=\frac12\|\mathbf r(\mathbf x)\|\_2^2 }.
+\boxed{ E(\mathbf x)=\frac12\|\mathbf r(\mathbf x)\|_2^2 }.
 $$
 
 The residual dimension $m$ need not equal the parameter dimension $n$.
@@ -2424,7 +2424,7 @@ $$
 Let the residual Jacobian be:
 
 $$
-J\_{ij}= \frac{\partial r_i}{\partial x_j}.
+J_{ij}= \frac{\partial r_i}{\partial x_j}.
 $$
 
 The gradient is:
@@ -2456,7 +2456,7 @@ $$
 Collecting the entries:
 
 $$
-\boxed{ H_E = J^TJ+ \sum_i r_iH\_{r_i} }.
+\boxed{ H_E = J^TJ+ \sum_i r_iH_{r_i} }.
 $$
 
 The first term depends only on the residual Jacobian.

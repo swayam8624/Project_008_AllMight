@@ -1,0 +1,2096 @@
+{
+  "pandoc-api-version": [
+    1,
+    23,
+    1,
+    2
+  ],
+  "meta": {
+    "tags": {
+      "t": "MetaList",
+      "c": [
+        {
+          "t": "MetaInlines",
+          "c": [
+            {
+              "t": "Str",
+              "c": "concept"
+            }
+          ]
+        },
+        {
+          "t": "MetaInlines",
+          "c": [
+            {
+              "t": "Str",
+              "c": "cpp"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "t": "Header",
+      "c": [
+        1,
+        [
+          "appendix-a82f9c438857-object-construction-and-storage-reuse",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Object"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "construction"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "storage"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "reuse"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Curriculum"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "depth:"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Developed"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "·"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "First"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "seen:"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "C007"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "·"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Latest"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "development:"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "C010"
+        }
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-a82f9c438857-definition-and-mechanism",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Definition"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "mechanism"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Str",
+          "c": "Initialization"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "creates"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "an"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "occupant"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "whereas"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "assignment"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "replaces"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "an"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "existing"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "occupant’s"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "state."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Ordinary"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "constructor"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "failure"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "post-target"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "delegation"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "failure"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "have"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "different"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "complete-object"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "cleanup"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "behavior."
+        }
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Str",
+          "c": "Storage"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "needs"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "sufficient"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "size/alignment"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "before"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "object"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "initialization"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "can"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "complete"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "start"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "an"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "ordinary"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "lifetime."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "construct_at"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "destroy_at"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "separate"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "object"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "life"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "from"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "backing"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "storage."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "A"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "cast"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "alone"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "does"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "not"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "construct"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "arbitrary"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "types."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Some"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "specified"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "operations"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "implicitly"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "create"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "implicit-lifetime"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "objects;"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "replacement"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "launder"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "have"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "additional"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "preconditions."
+        }
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Str",
+          "c": "M010"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "adds"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "the"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "resource-management"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "view:"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "placement"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "construction"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "or"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Code",
+          "c": [
+            [
+              "",
+              [],
+              []
+            ],
+            "construct_at"
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "uses"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "already-provided"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "storage;"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "it"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "does"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "not"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "allocate"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "that"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "storage."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Code",
+          "c": [
+            [
+              "",
+              [],
+              []
+            ],
+            "destroy_at"
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "ends"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "the"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "occupant’s"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "lifetime,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "while"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "an"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "arena"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "separately"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "decides"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "when"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "to"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "reuse"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "or"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "release"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "its"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "bytes."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Explicit"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "destruction"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "is"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "safe"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "only"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "inside"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "a"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "protocol"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "that"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "prevents"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "accidental"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "second"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "destruction."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "See"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "Placement"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "construction"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "and"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "explicit"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "lifetime"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "management"
+              }
+            ],
+            [
+              "#appendix-f56c3e43fd4e",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Str",
+          "c": "."
+        }
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-a82f9c438857-prerequisites",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Prerequisites"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "BulletList",
+      "c": [
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Storage"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "duration"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "object"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "lifetime"
+                    }
+                  ],
+                  [
+                    "#appendix-0b104bcba06b",
+                    ""
+                  ]
+                ]
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "—"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "Backing-storage"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "duration"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "must"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "be"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "distinguished"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "from"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "the"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "occupant’s"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "start,"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "destruction"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "and"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "replacement."
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-a82f9c438857-used-by",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Used"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "by"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "BulletList",
+      "c": [
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Object"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "identity"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "generation"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "handles"
+                    }
+                  ],
+                  [
+                    "#appendix-f1581457d322",
+                    ""
+                  ]
+                ]
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "—"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "uses"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "this"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "prerequisite"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "to"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "establish"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "its"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "entity,"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "lifetime,"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "representation"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "or"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "lookup"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "contract."
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Return"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "values"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "copy"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "elision"
+                    }
+                  ],
+                  [
+                    "#appendix-b08d3788c5c6",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Constructors"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "invariant"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "establishment"
+                    }
+                  ],
+                  [
+                    "#appendix-7f8ec83d0886",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Relocation"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "versus"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "move"
+                    }
+                  ],
+                  [
+                    "#appendix-adfd6397af8d",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Placement"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "construction"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "explicit"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "lifetime"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "management"
+                    }
+                  ],
+                  [
+                    "#appendix-f56c3e43fd4e",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-a82f9c438857-recall-and-next-depth",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Recall"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "next"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "depth"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Str",
+          "c": "Give"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "an"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "example,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "explain"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "why"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "the"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "rule"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "exists,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "identify"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "which"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "guarantee"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "would"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "be"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "missing"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "if"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "the"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "prerequisite"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "were"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "ignored."
+        }
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Pending:"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "explicit"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "lifetime"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "restart,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "smart"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "ownership"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "allocator"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "protocols."
+        }
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-a82f9c438857-source-and-navigation",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Source"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "navigation"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "C009"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "development"
+              }
+            ],
+            [
+              "#appendix-fd090d982a15-appendix-fd090d982a15-m009---parts-127-147",
+              ""
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "C007"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "teaching"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "chapter"
+              }
+            ],
+            [
+              "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Storage is a place; an object is its occupant",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "·"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "Source"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "coverage"
+              }
+            ],
+            [
+              "#appendix-fd090d982a15-appendix-fd090d982a15-m007---parts-101-112",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "·"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "Dependency"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "Map"
+              }
+            ],
+            [
+              "Dependency Map",
+              ""
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

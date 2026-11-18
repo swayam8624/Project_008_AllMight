@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch392.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-fbfeb0430008-archetype-ecs" class="level2">
+<h2>Archetype ECS</h2>
+<p>An archetype ECS groups entities by an exact component-type signature. If Position and Velocity are present, that entity belongs in a chunk whose columns contain Position and Velocity values for the same row. If Velocity is later removed, the entity migrates to a different archetype. This differs from a sparse-set ECS, where each component type owns an independent dense pool.</p>
+<p>The appeal is iteration density. A system that requires Position + Velocity can iterate only matching archetype chunks and then walk compact columns with predictable memory access. The cost moves into structural change: adding or removing a component is no longer a metadata toggle; it is a migration between storage layouts.</p>
+<section id="appendix-fbfeb0430008-signature-and-chunk-model" class="level3">
+<h3>Signature and chunk model</h3>
+<p>Represent an archetype signature as a stable set or bitset of component type identifiers. A chunk for signature S owns:</p>
+<ul>
+<li>a dense entity-identity column;</li>
+<li>one column per component in S;</li>
+<li>capacity and live-row count;</li>
+<li>optional alignment/padding metadata;</li>
+<li>whatever ownership is required for non-trivial component lifetimes.</li>
+</ul>
+<p>All columns must agree on row meaning. Row i in the entity column and row i in every component column refer to the same logical entity. That is an invariant, not a convention.</p>
+<p>A system query for required set Q matches archetype S when Q is a subset of S. Optional/excluded components add more predicates, but they should not change the core idea: queries select storage groups, then iterate rows.</p>
+</section>
+<section id="appendix-fbfeb0430008-migration" class="level3">
+<h3>Migration</h3>
+<p>Suppose entity e moves from signature {Position} to {Position, Velocity}. A safe conceptual sequence is:</p>
+<ol type="1">
+<li>Validate that e is alive and that its location still names the source archetype and row.</li>
+<li>Reserve or allocate destination capacity before mutating source storage.</li>
+<li>Construct/copy/move retained components into the destination row.</li>
+<li>Construct the newly added component.</li>
+<li>Publish the new entity-to-location mapping.</li>
+<li>Remove the old source row.</li>
+<li>If removal uses swap-and-pop, repair the location of the source entity that moved into the vacated row.</li>
+<li>Destroy any source component objects whose lifetime ends.</li>
+</ol>
+<p>The exact order depends on exception and failure guarantees. “Destination first” helps, but it does not magically provide rollback for arbitrary component types. If a move constructor can throw after partially mutating a source object, the migration design needs a stronger policy: nothrow-movable components, copy fallback, staging storage, transactional indirection, or a documented weaker guarantee.</p>
+</section>
+<section id="appendix-fbfeb0430008-address-invalidation" class="level3">
+<h3>Address invalidation</h3>
+<p>Archetype migration frequently invalidates raw component addresses because the entity moves to a different chunk and source/destination vectors can reallocate. APIs should therefore prefer short-lived borrows, handles, or query callbacks over storing arbitrary component pointers across structural changes.</p>
+<p>Even without migration, chunk compaction may move rows. An address remaining inside the same allocation does not prove it still refers to the same entity.</p>
+</section>
+<section id="appendix-fbfeb0430008-scheduling-consequence" class="level3">
+<h3>Scheduling consequence</h3>
+<p>Archetypes make data access visible enough to build a scheduler. A system can declare reads and writes by component type. Two systems that only read the same component can run concurrently; a writer conflicts with any overlapping reader or writer unless a stronger partition proves disjoint data. Structural mutation is usually an even broader hazard because it can move storage while queries are iterating.</p>
+</section>
+<section id="appendix-fbfeb0430008-executable-reconstruction" class="level3">
+<h3>Executable reconstruction</h3>
+<p>tools/labs/ecs_reconstruction_lab.cpp contains a deliberately small two-archetype world. It proves:</p>
+<ul>
+<li>generational identity survives index reuse;</li>
+<li>sparse membership checks full identity rather than index alone;</li>
+<li>swap-and-pop repairs reverse mappings;</li>
+<li>Position-only → Position+Velocity migration preserves values;</li>
+<li>removing a middle source row repairs the moved entity’s location.</li>
+</ul>
+<p>The witness explicitly does not claim arbitrary-component exception safety, parallel structural mutation, production chunk packing, or KairoECS parity.</p>
+<p>Read the connected engine narrative at <a href="ch390.xhtml#id_05-engine-i-ch014-let-identity-survive-changes-in-storage" class="wikilink">Continuous Notes/Game Engine - From First Frame to Living Worlds#Let identity survive changes in storage</a>.</p>
+<p>Related: <a href="ch391.xhtml#appendix-8404d0b1a3e7-sparse-set-storage" class="wikilink">Sparse-set storage</a>, <a href="ch170.xhtml#appendix-f1581457d322-object-identity-and-generation-handles" class="wikilink">Object identity and generation handles (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Object identity and generation handles)</a>, <a href="ch141.xhtml#appendix-5522ad176ca0-field-reordering-and-aos-versus-soa" class="wikilink">Field reordering and AoS versus SoA (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Field reordering and AoS versus SoA)</a>.</p>
+</section>
+<section id="appendix-fbfeb0430008-scheduler-and-hierarchy-witness" class="level3">
+<h3>Scheduler and hierarchy witness</h3>
+<p>Storage density is only half of an ECS. <code>tools/labs/ecs_scheduler_hierarchy_lab.cpp</code> adds the next contract layer: systems declare component read/write masks, two readers may share a batch, and any overlapping writer creates a dependency. The witness uses deterministic first-fit batching and then verifies that no batch contains a conflicting pair. This is intentionally a semantic scheduler, not a claim about work stealing or lock-free execution.</p>
+<p>The same laboratory models transform hierarchy invalidation. Editing one local transform marks exactly its descendant subtree dirty; world evaluation recursively establishes the parent before a child consumes the parent’s world state. An unrelated sibling remains untouched. This closes the earlier gap where hierarchy and scheduling were described but not executable.</p>
+</section>
+</section>
+</body>
+</html>

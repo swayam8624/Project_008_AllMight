@@ -1,0 +1,36 @@
+\hypertarget{appendix-0026ec42c9d5}{}
+\section{Convex combinations and convex hulls}\label{appendix-0026ec42c9d5-convex-combinations-and-convex-hulls}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\subsection{Definition and mechanism}\label{appendix-0026ec42c9d5-definition-and-mechanism}
+
+Affine point combinations have weights summing to one. Convex combinations additionally have nonnegative weights. A convex set contains every segment between its members; a convex hull is the smallest such set containing supplied points.
+
+The panel is the convex hull of its corners. A filled disk is convex; its boundary alone is not.
+
+\subsection{Prerequisites}\label{appendix-0026ec42c9d5-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-02b9d9a81dca]{Barycentric coordinates and interpolation} --- Affine weights establish origin-independent combinations and inside-hull restrictions.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-0026ec42c9d5-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-215ac7099a82]{Minkowski sums and support mappings} --- Builds on this mechanism in the connected geometry story.
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-0234ab7f86b1}{Subdivision surface masks (04-Visual-Computing-II, appendix-0234ab7f86b1)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-0026ec42c9d5-recall-and-next-depth}
+
+Show origin invariance and explain why a hull can fill holes absent from the source object. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-0026ec42c9d5-source-and-navigation}
+
+\href{../01-Foundations-I/main.pdf\#nameddest=01-foundations-i-ch018-weighted-points-lead-from-affine-geometry-to-collision-shapes}{Teaching narrative (01-Foundations-I, 01-foundations-i-ch018-weighted-points-lead-from-affine-geometry-to-collision-shapes)} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-fd090d982a15-phase-6---parts-501-600}{Coverage and source gap (01-Foundations-I, appendix-fd090d982a15-phase-6-\/-\/-parts-501-600)} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-a103e7846d21-phase-6---source-analysis-and-verification}{Evidence and limits (01-Foundations-I, appendix-a103e7846d21-phase-6-\/-\/-source-analysis-and-verification)} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

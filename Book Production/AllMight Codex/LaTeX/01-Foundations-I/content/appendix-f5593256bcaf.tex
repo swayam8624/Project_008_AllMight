@@ -1,0 +1,31 @@
+\hypertarget{appendix-f5593256bcaf}{}
+\section*{Logical constness and mutable caches}
+\section{Logical constness and mutable caches}\label{logical-constness-and-mutable-caches}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Logical constness preserves public meaning while eligible mutable data members may change private state. A cache needs source/cache synchronization and invalidation. Copy a snapshot under protection rather than returning a reference that can outlive the lock. Mutable lambda captures are private closure state, not automatically thread-safe.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c25d60fed375]{Const qualification and shallow constness} --- Access-path qualification constrains nested conversions and member writes.
+\item
+  \hyperref[appendix-8e5214819615]{Class access and invariants} --- Internal cache changes must preserve the public invariant.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+Later sources will deepen this same node; no empty dependent nodes are created.
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+State the cache invariant and show how Set invalidates it. Pending: versioned publication, atomics and copy/move policy for mutex-bearing classes. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20cache\%20may\%20change\%20bits\%20without\%20changing\%20meaning}{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15]{Exact coverage} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

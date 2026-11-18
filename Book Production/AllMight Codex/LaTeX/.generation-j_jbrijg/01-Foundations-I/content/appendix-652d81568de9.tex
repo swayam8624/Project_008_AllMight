@@ -1,0 +1,35 @@
+\hypertarget{appendix-652d81568de9}{}
+\section*{Checked binary parsing}
+\chapter{Checked binary parsing}\label{appendix-652d81568de9-checked-binary-parsing}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C006 · \textbf{Latest development:} C006
+
+\section{Definition and mechanism}\label{appendix-652d81568de9-definition-and-mechanism}
+
+Validate products before size calculation, ranges with offset≤size and length≤size-offset, and practical resource limits before allocation. Mapping/alignment does not itself establish valid typed object access.
+
+\section{Prerequisites}\label{appendix-652d81568de9-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-590bbb2424c1]{Binary format contracts} --- supplies the representation or validity rule used above.
+\item
+  \hyperref[appendix-c99977d88b33]{Unsigned modular arithmetic} --- supplies the representation or validity rule used above.
+\item
+  \hyperref[appendix-2e245a6fa8d3]{Short-circuit evaluation} --- supplies the representation or validity rule used above.
+\end{itemize}
+
+\section{Used by}\label{appendix-652d81568de9-used-by}
+
+Connect later dependent concepts here when their explanations use this mechanism.
+
+\section{Recall and next depth}\label{appendix-652d81568de9-recall-and-next-depth}
+
+Reconstruct the example and identify the condition that would invalidate it.
+
+\textbf{Pending:} Full fuzzing, allocator-failure and platform mapping/lifetime validation remain separate.
+
+\section{Source and navigation}\label{appendix-652d81568de9-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Bytes\%20become\%20a\%20durable\%20agreement}{Continuous teaching story} · \hyperref[appendix-fd090d982a15]{Source coverage ledger} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

@@ -1,0 +1,2501 @@
+The canonical next five parts are:
+
+**516. Standard basis in \(\mathbb R^2\)**  
+**517. Standard basis in \(\mathbb R^3\)**  
+**518. Vector addition from the parallelogram rule**  
+**519. Scalar multiplication of vectors**  
+**520. Vector subtraction as displacement difference** Project_Sheldon_Master_Curricul…
+
+These five are intentionally foundational. They look elementary, but they are exactly the kind of material that later gets buried underneath matrices, transforms, physics, collision math, camera systems, tangent frames, and shader code. So we are going to treat them as the algebraic machinery they actually are, not as "x/y/z basics." Pasted markdown
+
+---
+
+# PART 516 — STANDARD BASIS IN \(\mathbb R^2\)
+
+## 516.1 What problem does a standard basis solve?
+
+From Part 514, we know that coordinates only make sense relative to a basis.
+
+A basis in a 2D vector space requires two independent vectors that span the whole space.
+
+There are infinitely many possible choices.
+
+For example:
+
+\[
+(1,0),(0,1)
+\]
+
+or:
+
+\[
+(1,1),(1,-1)
+\]
+
+or:
+
+\[
+(2,0),(1,3)
+\]
+
+can all form bases of \(\mathbb R^2\).
+
+So why do we overwhelmingly use:
+
+\[
+\boxed{
+\vec e_1=(1,0),\qquad \vec e_2=(0,1)
+}
+\]
+
+?
+
+Because this choice makes coordinate representation maximally direct.
+
+These are the **standard basis vectors** of \(\mathbb R^2\).
+
+---
+
+# 516.2 Why the notation \(\vec e_1,\vec e_2\)?
+
+The symbol:
+
+\[
+\vec e_i
+\]
+
+usually denotes the basis vector whose \(i\)-th coordinate is \(1\) and all others are \(0\).
+
+In \(\mathbb R^2\):
+
+\[
+\vec e_1=
+\begin{bmatrix}
+1\\
+0
+\end{bmatrix}
+\]
+
+and:
+
+\[
+\vec e_2=
+\begin{bmatrix}
+0\\
+1
+\end{bmatrix}.
+\]
+
+You may also see graphics-oriented names:
+
+\[
+\hat x,\quad \hat y
+\]
+
+or:
+
+```cpp
+X_AXIS
+Y_AXIS
+```
+
+The exact symbol varies.
+
+The role is the same.
+
+---
+
+# 516.3 Proving they form a basis
+
+A basis must be:
+
+1. linearly independent;
+2. spanning.
+
+### Independence
+
+Suppose:
+
+\[
+a\vec e_1+b\vec e_2=\vec0.
+\]
+
+Then:
+
+\[
+a(1,0)+b(0,1)=(0,0).
+\]
+
+So:
+
+\[
+(a,b)=(0,0).
+\]
+
+Therefore:
+
+\[
+a=0,\qquad b=0.
+\]
+
+Only the trivial solution exists.
+
+Hence:
+
+\[
+\vec e_1,\vec e_2
+\]
+
+are linearly independent.
+
+### Spanning
+
+Take arbitrary vector:
+
+\[
+\vec v=(x,y).
+\]
+
+Then:
+
+\[
+x\vec e_1+y\vec e_2
+=
+x(1,0)+y(0,1)
+\]
+
+which is:
+
+\[
+(x,0)+(0,y)
+\]
+
+therefore:
+
+\[
+(x,y).
+\]
+
+So every vector in \(\mathbb R^2\) can be constructed.
+
+Thus:
+
+\[
+\boxed{
+\{\vec e_1,\vec e_2\}
+\text{ is a basis of }\mathbb R^2.
+}
+\]
+
+---
+
+# 516.4 Why coordinates become visually obvious
+
+If:
+
+\[
+\vec v=(3,2)
+\]
+
+in the standard basis, then:
+
+\[
+\vec v=3\vec e_1+2\vec e_2.
+\]
+
+This means:
+
+```text
+3 units along standard X
++
+2 units along standard Y
+```
+
+Graphically:
+
+```text
+          y
+          ↑
+      2   |        ● (3,2)
+          |       /
+          |      /
+          |     /
+          |    /
+----------+----------------→ x
+          0       3
+```
+
+This is why Cartesian coordinates feel so natural.
+
+The standard basis aligns directly with the coordinate axes.
+
+---
+
+# 516.5 Why \((1,0)\) is not universally "right"
+
+This is a subtle but essential graphics point.
+
+Inside an abstract \(\mathbb R^2\) coordinate system, \((1,0)\) is the first standard basis vector.
+
+But its physical/geometric interpretation depends on the chosen coordinate convention.
+
+It might mean:
+
+```text
+screen right
+world east
+texture U direction
+local object X
+camera right
+```
+
+or something else.
+
+So:
+
+\[
+(1,0)
+\]
+
+is only "right" after the coordinate frame tells you what the first basis direction means.
+
+The standard basis is **standard relative to the coordinate representation**, not universal physical space.
+
+---
+
+# 516.6 Screen-space caveat
+
+In textbook mathematics:
+
+```text
++x → right
++y → up
+```
+
+But many screen coordinate systems use:
+
+```text
++x → right
++y → down
+```
+
+So:
+
+\[
+\vec e_2=(0,1)
+\]
+
+may visually point downward on screen.
+
+This does not change the algebra.
+
+It changes the geometric interpretation of the coordinate system.
+
+This is why engine code must never casually assume:
+
+```text
+positive Y = up
+```
+
+without knowing the API or space.
+
+---
+
+# 516.7 Implementation
+
+A simple constant representation:
+
+```cpp
+struct Vec2 {
+    float x;
+    float y;
+};
+
+inline constexpr Vec2 X_AXIS{1.0f, 0.0f};
+inline constexpr Vec2 Y_AXIS{0.0f, 1.0f};
+```
+
+Then:
+
+```cpp
+Vec2 v{3.0f, 2.0f};
+```
+
+implicitly means:
+
+\[
+3X_{\text{axis}}+2Y_{\text{axis}}.
+\]
+
+The memory contains only:
+
+```text
+3.0f
+2.0f
+```
+
+The basis is usually not stored because the standard basis is implicit in the type's coordinate convention.
+
+That is an important optimization of representation:
+
+\[
+\boxed{
+\text{shared conventional basis need not be stored per vector}
+}
+\]
+
+---
+
+# 516.8 Why this matters for engine math
+
+A million world-space positions may be stored as:
+
+```cpp
+Vec2 positions[1'000'000];
+```
+
+There is no basis stored beside each position.
+
+The engine assumes all these values are interpreted using the same world-space coordinate convention.
+
+That assumption is powerful—but dangerous if violated.
+
+When data crosses spaces, the implicit basis changes.
+
+That is why later transform matrices exist.
+
+---
+
+# PART 517 — STANDARD BASIS IN \(\mathbb R^3\)
+
+Now extend exactly the same reasoning to three dimensions.
+
+The standard basis is:
+
+\[
+\boxed{
+\vec e_1=(1,0,0)
+}
+\]
+
+\[
+\boxed{
+\vec e_2=(0,1,0)
+}
+\]
+
+\[
+\boxed{
+\vec e_3=(0,0,1)
+}
+\]
+
+often called:
+
+\[
+\hat x,\quad\hat y,\quad\hat z.
+\]
+
+---
+
+# 517.1 Why three basis vectors?
+
+Because:
+
+\[
+\dim\mathbb R^3=3.
+\]
+
+Therefore any basis contains exactly three vectors.
+
+We want three independent directions that span the entire space.
+
+The standard basis isolates one coordinate at a time.
+
+---
+
+# 517.2 Independence proof
+
+Suppose:
+
+\[
+a\vec e_1+b\vec e_2+c\vec e_3=\vec0.
+\]
+
+Then:
+
+\[
+a(1,0,0)
++
+b(0,1,0)
++
+c(0,0,1)
+=
+(0,0,0).
+\]
+
+So:
+
+\[
+(a,b,c)=(0,0,0).
+\]
+
+Therefore:
+
+\[
+a=b=c=0.
+\]
+
+Hence the three vectors are linearly independent.
+
+---
+
+# 517.3 Spanning proof
+
+Take arbitrary:
+
+\[
+\vec v=(x,y,z).
+\]
+
+Then:
+
+\[
+x\vec e_1+y\vec e_2+z\vec e_3
+\]
+
+equals:
+
+\[
+(x,0,0)+(0,y,0)+(0,0,z)
+\]
+
+which is:
+
+\[
+(x,y,z).
+\]
+
+Thus they span all of \(\mathbb R^3\).
+
+Therefore:
+
+\[
+\boxed{
+\{\vec e_1,\vec e_2,\vec e_3\}
+}
+\]
+
+is the standard basis.
+
+---
+
+# 517.4 The basis directions form the coordinate frame
+
+Geometrically:
+
+```text
+                  +Y
+                  ↑
+                  |
+                  |
+                  |
+                  O────────→ +X
+                 /
+                /
+               /
+             +Z
+```
+
+or perhaps:
+
+```text
+                  +Z
+                  ↑
+                  |
+                  |
+                  O────────→ +X
+                 /
+                /
+               /
+             +Y
+```
+
+depending on convention.
+
+This is already a warning:
+
+**there is no universal graphics meaning of X/Y/Z orientation.**
+
+Different engines and APIs choose different world-up and forward directions.
+
+---
+
+# 517.5 Forward is not universally \(-Z\)
+
+You may see:
+
+```text
+OpenGL-style camera convention:
+forward ≈ -Z
+```
+
+but other systems may use:
+
+```text
++Z forward
+```
+
+or:
+
+```text
++X forward
+```
+
+The standard basis only gives three independent coordinate directions.
+
+Semantic labels such as:
+
+```text
+right
+up
+forward
+```
+
+are extra conventions.
+
+Do not merge them unconsciously.
+
+---
+
+# 517.6 Right-handed versus left-handed systems preview
+
+The ordered basis:
+
+\[
+(\vec e_x,\vec e_y,\vec e_z)
+\]
+
+also has an orientation or **handedness**.
+
+That topic is explicitly later in Parts 563–565.
+
+For now, just know:
+
+> choosing which direction the third axis points relative to the first two affects orientation conventions.
+
+This later influences:
+
+- cross products;
+- camera matrices;
+- rotations;
+- winding;
+- projection conventions;
+- coordinate conversion.
+
+---
+
+# 517.7 Standard basis in memory
+
+Again, engines usually do not store these values per vector.
+
+They are implicit.
+
+Conceptually:
+
+```cpp
+inline constexpr Vec3 X_AXIS{1,0,0};
+inline constexpr Vec3 Y_AXIS{0,1,0};
+inline constexpr Vec3 Z_AXIS{0,0,1};
+```
+
+But a `Vec3` like:
+
+```cpp
+Vec3 v{5, -2, 7};
+```
+
+means:
+
+\[
+5\vec e_x-2\vec e_y+7\vec e_z.
+\]
+
+This is the linear-combination interpretation of coordinates.
+
+---
+
+# 517.8 World, local, and view standard bases
+
+This deserves precision.
+
+Suppose object local coordinates use:
+
+```text
+local basis:
+(1,0,0)local
+(0,1,0)local
+(0,0,1)local
+```
+
+and world coordinates also use:
+
+```text
+world basis:
+(1,0,0)world
+(0,1,0)world
+(0,0,1)world
+```
+
+These coordinate tuples look numerically identical.
+
+But the actual geometric basis directions may differ because the object's local frame is rotated in world space.
+
+So:
+
+\[
+(1,0,0)_{\text{local}}
+\]
+
+need not equal:
+
+\[
+(1,0,0)_{\text{world}}
+\]
+
+geometrically.
+
+This is Part 506's distinction in practical engine form.
+
+---
+
+# PART 518 — VECTOR ADDITION FROM THE PARALLELOGRAM RULE
+
+We introduced addition earlier because vector spaces need it.
+
+Now we isolate the geometric reason why vector addition works the way it does.
+
+---
+
+# 518.1 The problem
+
+Suppose one displacement is:
+
+\[
+\vec u.
+\]
+
+Another displacement is:
+
+\[
+\vec v.
+\]
+
+We want one vector representing the **combined displacement**.
+
+The operation must answer:
+
+> if I move by \(\vec u\), then by \(\vec v\), what single displacement has the same overall effect?
+
+That result is:
+
+\[
+\vec u+\vec v.
+\]
+
+---
+
+# 518.2 Head-to-tail derivation
+
+Let:
+
+```text
+A --u--> B --v--> C
+```
+
+Then total movement from \(A\) to \(C\) is:
+
+\[
+\vec u+\vec v.
+\]
+
+Graphically:
+
+```text
+A ●──────→● B
+  \   u     \
+   \         \ v
+    \         \
+     \         ▼
+      ────────→● C
+         u+v
+```
+
+The resulting vector joins the starting point to the final point.
+
+This is the **triangle rule**.
+
+---
+
+# 518.3 Parallelogram rule
+
+Because free vectors can be translated, place \(\vec u\) and \(\vec v\) at the same origin.
+
+Then construct a parallelogram:
+
+```text
+          ●
+         /|
+        / |
+      v/  |v
+      /   |
+     ●----●
+       u
+```
+
+The diagonal from the shared origin is:
+
+\[
+\boxed{
+\vec u+\vec v
+}
+\]
+
+This is the parallelogram rule.
+
+---
+
+# 518.4 Why parallelogram and head-to-tail are the same rule
+
+Start both vectors at origin \(O\).
+
+Then translate \(\vec v\) so its tail begins at the head of \(\vec u\).
+
+Because translation does not change a free vector, it remains the same \(\vec v\).
+
+The endpoint reached is exactly the opposite parallelogram corner.
+
+Therefore the diagonal equals the head-to-tail result.
+
+So these are not two different addition definitions.
+
+They are two visualizations of the same operation.
+
+---
+
+# 518.5 Why addition becomes component-wise
+
+Let:
+
+\[
+\vec u=(u_x,u_y)
+\]
+
+and:
+
+\[
+\vec v=(v_x,v_y).
+\]
+
+The first displacement changes X by:
+
+\[
+u_x.
+\]
+
+The second changes X by:
+
+\[
+v_x.
+\]
+
+Therefore total X change is:
+
+\[
+u_x+v_x.
+\]
+
+Likewise total Y change:
+
+\[
+u_y+v_y.
+\]
+
+Hence:
+
+\[
+\boxed{
+\vec u+\vec v
+=
+(u_x+v_x,\;u_y+v_y)
+}
+\]
+
+and in 3D:
+
+\[
+\boxed{
+(u_x,u_y,u_z)
++
+(v_x,v_y,v_z)
+=
+(u_x+v_x,\;
+u_y+v_y,\;
+u_z+v_z)
+}
+\]
+
+This formula is a coordinate manifestation of displacement composition.
+
+---
+
+# 518.6 Worked example
+
+Let:
+
+\[
+\vec u=(3,1)
+\]
+
+and:
+
+\[
+\vec v=(-2,4).
+\]
+
+Then:
+
+\[
+\vec u+\vec v
+=
+(3-2,\;1+4)
+\]
+
+so:
+
+\[
+\boxed{
+(1,5).
+}
+\]
+
+Interpretation:
+
+First move:
+
+```text
++3 X
++1 Y
+```
+
+then:
+
+```text
+-2 X
++4 Y
+```
+
+total:
+
+```text
++1 X
++5 Y
+```
+
+---
+
+# 518.7 Why addition is commutative
+
+Parallelogram geometry immediately gives:
+
+\[
+\vec u+\vec v
+=
+\vec v+\vec u.
+\]
+
+Whichever edge you traverse first, the opposite corner is the same.
+
+Coordinate proof:
+
+\[
+(u_x+v_x,\;u_y+v_y)
+\]
+
+equals:
+
+\[
+(v_x+u_x,\;v_y+u_y)
+\]
+
+because scalar addition is commutative.
+
+Thus:
+
+\[
+\boxed{
+\vec u+\vec v=\vec v+\vec u.
+}
+\]
+
+---
+
+# 518.8 Why addition is associative
+
+Take three vectors:
+
+\[
+\vec u,\vec v,\vec w.
+\]
+
+The final displacement after all three is independent of how we group them:
+
+\[
+(\vec u+\vec v)+\vec w
+=
+\vec u+(\vec v+\vec w).
+\]
+
+Coordinate-wise this follows from scalar associativity.
+
+But remember:
+
+\[
+\boxed{
+\text{mathematically associative}
+}
+\]
+
+does not imply:
+
+\[
+\boxed{
+\text{bit-exactly associative in floating point}
+}
+\]
+
+This matters for physics and accumulation.
+
+---
+
+# 518.9 Implementation
+
+```cpp
+struct Vec3 {
+    float x;
+    float y;
+    float z;
+};
+
+constexpr Vec3 operator+(Vec3 a, Vec3 b) noexcept {
+    return {
+        a.x + b.x,
+        a.y + b.y,
+        a.z + b.z
+    };
+}
+```
+
+Each line maps directly to displacement composition along one basis direction.
+
+For one 3D addition:
+
+```text
+3 scalar additions
+```
+
+No allocation is necessary.
+
+Time is fixed:
+
+\[
+O(1)
+\]
+
+for 3D.
+
+For general \(n\)-dimensional vectors:
+
+\[
+O(n).
+\]
+
+---
+
+# 518.10 Hot-loop behavior
+
+Suppose an engine updates positions:
+
+```cpp
+position += velocity * dt;
+```
+
+The vector addition itself is cheap.
+
+At large scale, performance may instead depend on:
+
+- memory layout;
+- cache locality;
+- SIMD width;
+- data fetch;
+- number of objects;
+- whether positions/velocities are SoA or AoS.
+
+So even though vector addition is mathematically trivial, a million additions can become a memory-throughput problem.
+
+---
+
+# 518.11 Invalid semantic addition
+
+The type system may permit:
+
+```cpp
+Vec3 color;
+Vec3 velocity;
+
+auto nonsense = color + velocity;
+```
+
+Mathematically, both may inhabit \(\mathbb R^3\) numerically.
+
+Semantically, that addition may be meaningless.
+
+So vector-space legality is not enough to guarantee domain meaning.
+
+Engine types may need semantic wrappers.
+
+---
+
+# PART 519 — SCALAR MULTIPLICATION OF VECTORS
+
+Now isolate the second primitive vector-space operation.
+
+---
+
+# 519.1 What problem does scalar multiplication solve?
+
+Suppose:
+
+\[
+\vec v
+\]
+
+represents a displacement.
+
+We want to express:
+
+```text
+twice that displacement
+half that displacement
+reverse it
+erase it
+```
+
+using one operation.
+
+That operation is scalar multiplication.
+
+For scalar:
+
+\[
+a\in F
+\]
+
+and vector:
+
+\[
+\vec v\in V,
+\]
+
+we write:
+
+\[
+\boxed{
+a\vec v.
+}
+\]
+
+---
+
+# 519.2 Geometric interpretation
+
+For \(a>0\):
+
+\[
+a\vec v
+\]
+
+keeps the same general direction but scales the amount.
+
+For:
+
+\[
+a>1,
+\]
+
+the vector becomes longer.
+
+For:
+
+\[
+0<a<1,
+\]
+
+it becomes shorter.
+
+For:
+
+\[
+a=0,
+\]
+
+it becomes the zero vector.
+
+For:
+
+\[
+a<0,
+\]
+
+the direction reverses and magnitude is scaled by \(|a|\).
+
+Conceptually:
+
+```text
+v       ─────→
+
+2v      ──────────→
+
+0.5v    ──→
+
+-v      ←─────
+
+-2v     ←──────────
+
+0v      •
+```
+
+---
+
+# 519.3 Component derivation
+
+Let:
+
+\[
+\vec v
+=
+v_x\vec e_x+v_y\vec e_y.
+\]
+
+Multiply by scalar \(a\):
+
+\[
+a\vec v
+=
+a(v_x\vec e_x+v_y\vec e_y).
+\]
+
+Distribute:
+
+\[
+=
+av_x\vec e_x+av_y\vec e_y.
+\]
+
+Therefore coordinates are:
+
+\[
+\boxed{
+a(v_x,v_y)
+=
+(av_x,av_y).
+}
+\]
+
+In 3D:
+
+\[
+\boxed{
+a(x,y,z)
+=
+(ax,ay,az).
+}
+\]
+
+Again, component-wise scaling is not arbitrary; it follows from distributivity.
+
+---
+
+# 519.4 Worked examples
+
+Take:
+
+\[
+\vec v=(2,-3).
+\]
+
+### Scale by 2
+
+\[
+2\vec v=(4,-6).
+\]
+
+### Scale by \(\frac12\)
+
+\[
+\frac12\vec v
+=
+(1,-1.5).
+\]
+
+### Scale by -1
+
+\[
+-\vec v=(-2,3).
+\]
+
+### Scale by 0
+
+\[
+0\vec v=(0,0).
+\]
+
+Each is exactly what the geometric intuition predicts.
+
+---
+
+# 519.5 Why negative scaling reverses direction
+
+Suppose:
+
+\[
+\vec v=(3,1).
+\]
+
+Then:
+
+\[
+-\vec v=(-3,-1).
+\]
+
+The new vector points exactly opposite in coordinate space.
+
+Also:
+
+\[
+\vec v+(-\vec v)=\vec0.
+\]
+
+So \(-1\) scaling produces the additive inverse.
+
+This matches the Part 507 proof:
+
+\[
+(-1)\vec v=-\vec v.
+\]
+
+---
+
+# 519.6 Scaling twice
+
+Suppose first:
+
+\[
+b\vec v
+\]
+
+then:
+
+\[
+a(b\vec v).
+\]
+
+Vector-space compatibility requires:
+
+\[
+a(b\vec v)
+=
+(ab)\vec v.
+\]
+
+Example:
+
+\[
+2(3\vec v)=6\vec v.
+\]
+
+So nested scaling collapses into scalar multiplication.
+
+This matters in engine calculations where chains of unit conversion, object scale, animation scale, or interpolation weights may multiply together.
+
+---
+
+# 519.7 Units and scalar multiplication
+
+Suppose:
+
+\[
+\vec v
+\]
+
+is velocity:
+
+\[
+\text{metres/second}.
+\]
+
+Multiply by timestep:
+
+\[
+\Delta t
+\]
+
+measured in seconds.
+
+Then:
+
+\[
+\vec v\Delta t
+\]
+
+has units:
+
+\[
+\frac{\text m}{\text s}\cdot\text s
+=
+\text m.
+\]
+
+So it becomes a displacement.
+
+This is why:
+
+```cpp
+position += velocity * dt;
+```
+
+is physically meaningful.
+
+The scalar multiplication is not merely numerical scaling.
+
+It can change physical units when the scalar itself has units.
+
+This connects vector algebra to dimensional analysis.
+
+---
+
+# 519.8 `velocity * dt` execution
+
+Suppose:
+
+\[
+\vec v=(10,2,0)\ \text{m/s}
+\]
+
+and:
+
+\[
+\Delta t=0.016\text{ s}.
+\]
+
+Then:
+
+\[
+\Delta\vec x
+=
+\vec v\Delta t.
+\]
+
+Compute:
+
+\[
+(10,2,0)\cdot0.016
+\]
+
+giving:
+
+\[
+(0.16,0.032,0)\text{ m}.
+\]
+
+Then:
+
+\[
+\vec x_{\text{new}}
+=
+\vec x_{\text{old}}+\Delta\vec x.
+\]
+
+This simple operation becomes the backbone of numerical motion integration later.
+
+---
+
+# 519.9 Scalar multiplication implementation
+
+```cpp
+constexpr Vec3 operator*(Vec3 v, float s) noexcept {
+    return {
+        v.x * s,
+        v.y * s,
+        v.z * s
+    };
+}
+
+constexpr Vec3 operator*(float s, Vec3 v) noexcept {
+    return v * s;
+}
+```
+
+Supporting both orders:
+
+```cpp
+v * 2.0f
+```
+
+and:
+
+```cpp
+2.0f * v
+```
+
+is useful because real scalar-vector multiplication is conventionally written in either form.
+
+---
+
+# 519.10 Why vector-times-vector is not the same operation
+
+Do not generalize:
+
+```cpp
+Vec3 * Vec3
+```
+
+as "scalar multiplication."
+
+Scalar multiplication specifically means:
+
+\[
+F\times V\rightarrow V.
+\]
+
+One operand is from the scalar field.
+
+Another is from the vector space.
+
+Component-wise vector multiplication may be useful in graphics:
+
+```cpp
+colorA * colorB
+```
+
+but it is a different operation with different semantics.
+
+Later dot and cross products are also different.
+
+---
+
+# 519.11 Floating-point numerical behavior
+
+Consider huge component:
+
+\[
+v_x=10^{38}.
+\]
+
+Scale by:
+
+\[
+100.
+\]
+
+Mathematically:
+
+\[
+10^{40}.
+\]
+
+But `float` may overflow to:
+
+\[
++\infty.
+\]
+
+Or consider:
+
+\[
+10^{-38}\cdot10^{-10}.
+\]
+
+The result may underflow severely.
+
+So scalar multiplication can trigger:
+
+- overflow;
+- underflow;
+- loss of precision;
+- NaN propagation.
+
+The algebra may be valid while the machine representation fails to preserve it exactly.
+
+---
+
+# PART 520 — VECTOR SUBTRACTION AS DISPLACEMENT DIFFERENCE
+
+Now comes an operation graphics programmers use constantly:
+
+\[
+\vec a-\vec b.
+\]
+
+But the geometric meaning depends on what those operands represent.
+
+---
+
+# 520.1 Subtraction is not fundamentally primitive
+
+Vector subtraction can be defined using addition and additive inverse:
+
+\[
+\boxed{
+\vec u-\vec v
+=
+\vec u+(-\vec v).
+}
+\]
+
+So subtraction needs no new vector-space axiom.
+
+It is derived.
+
+This mirrors scalar subtraction:
+
+\[
+a-b=a+(-b).
+\]
+
+---
+
+# 520.2 Coordinate rule
+
+Let:
+
+\[
+\vec u=(u_x,u_y,u_z)
+\]
+
+and:
+
+\[
+\vec v=(v_x,v_y,v_z).
+\]
+
+Then:
+
+\[
+\vec u-\vec v
+=
+\vec u+(-\vec v).
+\]
+
+Since:
+
+\[
+-\vec v=(-v_x,-v_y,-v_z),
+\]
+
+we get:
+
+\[
+\boxed{
+\vec u-\vec v
+=
+(u_x-v_x,\;
+u_y-v_y,\;
+u_z-v_z).
+}
+\]
+
+---
+
+# 520.3 The most important geometric use: point difference
+
+Suppose two points:
+
+\[
+A
+\]
+
+and:
+
+\[
+B
+\]
+
+have coordinates:
+
+\[
+A=(A_x,A_y)
+\]
+
+and:
+
+\[
+B=(B_x,B_y).
+\]
+
+The displacement from \(A\) to \(B\) is:
+
+\[
+\boxed{
+\overrightarrow{AB}=B-A.
+}
+\]
+
+This is one of the most important formulas in geometry.
+
+Why?
+
+Because we want a vector \(\vec d\) such that:
+
+\[
+A+\vec d=B.
+\]
+
+Solve:
+
+\[
+\vec d=B-A.
+\]
+
+So:
+
+\[
+\boxed{
+\text{destination} - \text{source}
+=
+\text{displacement from source to destination}.
+}
+\]
+
+---
+
+# 520.4 Worked example
+
+Let:
+
+\[
+A=(2,3)
+\]
+
+and:
+
+\[
+B=(7,5).
+\]
+
+Then:
+
+\[
+B-A
+=
+(7-2,\;5-3)
+\]
+
+giving:
+
+\[
+\boxed{
+(5,2).
+}
+\]
+
+Interpretation:
+
+To get from \(A\) to \(B\):
+
+```text
+move +5 along X
+move +2 along Y
+```
+
+Check:
+
+\[
+A+(B-A)
+\]
+
+equals:
+
+\[
+(2,3)+(5,2)
+=
+(7,5)
+=
+B.
+\]
+
+So the displacement is correct.
+
+---
+
+# 520.5 Order matters
+
+\[
+B-A
+\]
+
+and:
+
+\[
+A-B
+\]
+
+point in opposite directions.
+
+Since:
+
+\[
+A-B=-(B-A).
+\]
+
+Example:
+
+\[
+B-A=(5,2)
+\]
+
+but:
+
+\[
+A-B=(-5,-2).
+\]
+
+Therefore:
+
+\[
+\boxed{
+\text{subtraction is not commutative}
+}
+\]
+
+because:
+
+\[
+\vec u-\vec v
+\neq
+\vec v-\vec u
+\]
+
+unless the vectors happen to be equal.
+
+---
+
+# 520.6 Why this is called displacement difference
+
+Suppose:
+
+\[
+\vec u
+\]
+
+and:
+
+\[
+\vec v
+\]
+
+are themselves displacement vectors.
+
+Then:
+
+\[
+\vec u-\vec v
+\]
+
+asks:
+
+> what displacement must be added to \(\vec v\) to obtain \(\vec u\)?
+
+Because:
+
+\[
+\vec v+(\vec u-\vec v)=\vec u.
+\]
+
+So subtraction gives the **difference** between two displacement states.
+
+---
+
+# 520.7 Velocity difference
+
+Suppose two bodies have velocities:
+
+\[
+\vec v_A
+\]
+
+and:
+
+\[
+\vec v_B.
+\]
+
+Relative velocity often involves:
+
+\[
+\boxed{
+\vec v_B-\vec v_A.
+}
+\]
+
+This describes how B's motion differs from A's.
+
+Later collision response depends heavily on relative velocity.
+
+The same subtraction operation appears because both quantities inhabit the same vector space.
+
+---
+
+# 520.8 Ray direction from two points
+
+Suppose:
+
+\[
+P_{\text{camera}}
+\]
+
+and:
+
+\[
+P_{\text{target}}.
+\]
+
+A direction toward the target begins with:
+
+\[
+\vec d=P_{\text{target}}-P_{\text{camera}}.
+\]
+
+Then later we may normalize \(\vec d\).
+
+So ray generation fundamentally relies on point subtraction.
+
+The sequence is:
+
+```text
+target point
+-
+origin point
+=
+displacement
+↓
+normalize later
+=
+direction
+```
+
+This distinction is critical.
+
+---
+
+# 520.9 Surface edge vector
+
+Given triangle vertices:
+
+\[
+A,\quad B,\quad C,
+\]
+
+two edge vectors are commonly:
+
+\[
+\vec e_1=B-A
+\]
+
+and:
+
+\[
+\vec e_2=C-A.
+\]
+
+These are not points.
+
+They are displacements along triangle edges.
+
+Later:
+
+\[
+\vec e_1\times\vec e_2
+\]
+
+gives the geometric normal direction.
+
+So even advanced triangle geometry starts with subtraction.
+
+---
+
+# 520.10 Why point + point is different
+
+This preview matters.
+
+If \(A\) and \(B\) are geometric points, then:
+
+\[
+B-A
+\]
+
+has natural meaning:
+
+> displacement from A to B.
+
+But:
+
+\[
+A+B
+\]
+
+does not have the same natural geometric meaning.
+
+This is why points fundamentally belong to affine geometry rather than pure vector-space geometry.
+
+Full treatment appears in Parts 521–522.
+
+For now remember:
+
+```text
+point - point → vector
+point + vector → point
+vector + vector → vector
+```
+
+but:
+
+```text
+point + point → not a natural affine operation
+```
+
+---
+
+# 520.11 C++ semantic implementation
+
+A weak API might use:
+
+```cpp
+using Point3 = Vec3;
+```
+
+Then the compiler cannot distinguish:
+
+```cpp
+Point3 a;
+Point3 b;
+
+auto d = b - a;
+```
+
+from arbitrary vector subtraction.
+
+A stronger API could write:
+
+```cpp
+struct Point3 {
+    float x, y, z;
+};
+
+struct Vec3 {
+    float x, y, z;
+};
+
+constexpr Vec3 operator-(Point3 b, Point3 a) noexcept {
+    return {
+        b.x - a.x,
+        b.y - a.y,
+        b.z - a.z
+    };
+}
+
+constexpr Point3 operator+(Point3 p, Vec3 d) noexcept {
+    return {
+        p.x + d.x,
+        p.y + d.y,
+        p.z + d.z
+    };
+}
+```
+
+Now the type system expresses geometry.
+
+This is a much stronger design.
+
+---
+
+# 520.12 Why this prevents real bugs
+
+With distinct types:
+
+```cpp
+Point3 p1;
+Point3 p2;
+Vec3 velocity;
+```
+
+this operation:
+
+```cpp
+p2 - p1
+```
+
+returns a displacement.
+
+But nonsense like:
+
+```cpp
+p1 + p2
+```
+
+can be forbidden entirely.
+
+The type system now encodes affine semantics rather than relying on human discipline.
+
+This can prevent coordinate-system and physics bugs.
+
+---
+
+# 520.13 Numerical cancellation
+
+Vector subtraction has a major numerical danger.
+
+Suppose:
+
+\[
+A=(10^8,10^8,10^8)
+\]
+
+and:
+
+\[
+B=(10^8+1,10^8,10^8).
+\]
+
+Mathematically:
+
+\[
+B-A=(1,0,0).
+\]
+
+But if `float` cannot represent the `+1` difference at that magnitude, both coordinates may round to the same stored number.
+
+Then machine subtraction gives:
+
+\[
+(0,0,0)
+\]
+
+instead.
+
+This is **catastrophic loss of local detail due to large coordinates**.
+
+It is one reason large-world engines may use:
+
+- double precision;
+- camera-relative coordinates;
+- origin rebasing.
+
+Those later topics are Parts 1054–1057.
+
+But the numerical root begins here: subtraction of nearly equal large values.
+
+---
+
+# 520.14 Implementation
+
+```cpp
+constexpr Vec3 operator-(Vec3 a, Vec3 b) noexcept {
+    return {
+        a.x - b.x,
+        a.y - b.y,
+        a.z - b.z
+    };
+}
+```
+
+Fixed 3D complexity:
+
+\[
+O(1).
+\]
+
+For \(n\)-dimensional vectors:
+
+\[
+O(n).
+\]
+
+The arithmetic is cheap, but numerical precision and semantic correctness can be far more important than raw operation count.
+
+---
+
+# 516–520: THE COMPLETE CONNECTION
+
+These five Parts form a clean conceptual block.
+
+The **standard basis** gives us canonical coordinate directions:
+
+\[
+\vec e_x,\vec e_y,\vec e_z.
+\]
+
+A vector such as:
+
+\[
+(x,y,z)
+\]
+
+means:
+
+\[
+x\vec e_x+y\vec e_y+z\vec e_z.
+\]
+
+Now if we compose two displacements, we use:
+
+\[
+\boxed{
+\vec u+\vec v
+}
+\]
+
+which geometrically comes from the parallelogram/head-to-tail rule and computationally becomes component-wise addition.
+
+To change the amount of one displacement, we use:
+
+\[
+\boxed{
+a\vec v
+}
+\]
+
+which scales every coordinate component.
+
+To ask for the difference between two vectors—or especially the displacement between two points—we use:
+
+\[
+\boxed{
+\vec u-\vec v
+}
+\]
+
+which is addition of the additive inverse.
+
+So:
+
+```text
+standard basis
+      ↓
+coordinates
+      ↓
+vector addition
+      ↓
+compose displacements
+
+scalar multiplication
+      ↓
+scale/reverse/collapse displacement
+
+vector subtraction
+      ↓
+difference / relative displacement
+```
+
+---
+
+# COMPLETE WORKED ENGINE EXAMPLE
+
+Suppose a character has world-space point:
+
+\[
+P=(10,3,5).
+\]
+
+Velocity:
+
+\[
+\vec v=(4,0,-2)\ \text{m/s}.
+\]
+
+Frame time:
+
+\[
+\Delta t=0.016\text{ s}.
+\]
+
+First compute displacement:
+
+\[
+\Delta\vec p
+=
+\vec v\Delta t.
+\]
+
+So:
+
+\[
+(4,0,-2)\cdot0.016
+=
+(0.064,0,-0.032).
+\]
+
+Now add displacement to point:
+
+\[
+P'
+=
+P+\Delta\vec p.
+\]
+
+Therefore:
+
+\[
+P'
+=
+(10.064,3,4.968).
+\]
+
+Now suppose a target is at:
+
+\[
+T=(13,5,9).
+\]
+
+The displacement from the character to target is:
+
+\[
+T-P'.
+\]
+
+Compute:
+
+\[
+13-10.064=2.936
+\]
+
+\[
+5-3=2
+\]
+
+\[
+9-4.968=4.032.
+\]
+
+So:
+
+\[
+\boxed{
+\vec d=(2.936,2,4.032).
+}
+\]
+
+This simple chain uses three of today's Parts:
+
+```text
+velocity × dt
+→ scalar multiplication
+
+position + displacement
+→ vector addition / affine point displacement
+
+target - position
+→ displacement difference
+```
+
+Nearly every motion system in an engine rests on these operations.
+
+---
+
+# COMMON CONFUSIONS YOU SHOULD NOW ELIMINATE
+
+A standard basis is not "the only basis." It is merely the canonical axis-aligned basis used for ordinary coordinates.
+
+A vector's components are coefficients relative to that basis.
+
+Vector addition does not mean "add arbitrary structs with x/y/z fields"; it composes compatible vectors in the same space.
+
+Scalar multiplication does not mean component-wise vector multiplication. One operand is a scalar.
+
+Vector subtraction is not mysterious—it is addition of the negative vector.
+
+And the expression:
+
+\[
+B-A
+\]
+
+is not merely arithmetic on coordinates. When \(A\) and \(B\) are points, it has the geometric meaning:
+
+\[
+\boxed{
+\text{displacement from }A\text{ to }B.
+}
+\]
+
+---
+
+# INTERVIEW ATTACK TREE
+
+### Level 1 — What is the standard basis of \(\mathbb R^2\)?
+
+\[
+(1,0),(0,1).
+\]
+
+They are independent and span all of \(\mathbb R^2\).
+
+---
+
+### Level 2 — Why does \((x,y)\) mean \(x\) and \(y\)?
+
+Because:
+
+\[
+(x,y)
+=
+x(1,0)+y(0,1).
+\]
+
+The numbers are coefficients relative to the standard basis.
+
+---
+
+### Level 3 — What is the standard basis of \(\mathbb R^3\)?
+
+\[
+(1,0,0),
+(0,1,0),
+(0,0,1).
+\]
+
+---
+
+### Level 4 — Why is vector addition component-wise?
+
+Because total displacement along each basis direction is the sum of the individual displacements along that direction.
+
+---
+
+### Level 5 — Explain the parallelogram rule.
+
+Place two free vectors at the same origin. Complete the parallelogram. The diagonal from the shared origin is their sum.
+
+It is equivalent to head-to-tail composition.
+
+---
+
+### Level 6 — What does \(a\vec v\) mean geometrically?
+
+Scale the vector's displacement magnitude by \(|a|\); reverse orientation when \(a<0\); obtain zero vector when \(a=0\).
+
+---
+
+### Level 7 — What is vector subtraction?
+
+\[
+\vec u-\vec v
+=
+\vec u+(-\vec v).
+\]
+
+It gives the vector that must be added to \(\vec v\) to obtain \(\vec u\).
+
+---
+
+### Level 8 — What does \(B-A\) mean for points?
+
+The displacement from \(A\) to \(B\).
+
+---
+
+### Level 9 — Why can large-world subtraction fail in `float`?
+
+If \(A\) and \(B\) are huge and differ only slightly, their stored floating-point representations may lose the small difference before subtraction happens.
+
+---
+
+### Level 10 — Why aren't world-space `(1,0,0)` and local-space `(1,0,0)` necessarily the same vector?
+
+Because the numeric tuple is relative to different bases. Identical coefficients do not imply identical geometric directions across coordinate spaces.
+
+---
+
+# BLANK-SCREEN MASTERY GATE
+
+You should be able to prove that:
+
+\[
+(1,0),(0,1)
+\]
+
+form a basis of \(\mathbb R^2\), and that:
+
+\[
+(1,0,0),(0,1,0),(0,0,1)
+\]
+
+form a basis of \(\mathbb R^3\).
+
+You should reconstruct:
+
+\[
+(x,y,z)
+=
+x\vec e_x+y\vec e_y+z\vec e_z.
+\]
+
+You should derive component-wise addition from the geometric composition of displacement, not memorize the formula.
+
+You should explain all five scalar cases:
+
+\[
+a>1,\quad
+0<a<1,\quad
+a=0,\quad
+-1<a<0,\quad
+a<-1.
+\]
+
+And you should derive:
+
+\[
+B-A
+\]
+
+from the requirement:
+
+\[
+A+(B-A)=B.
+\]
+
+Most importantly, you should now be able to look at:
+
+```cpp
+Vec3 d = target - position;
+```
+
+and translate it mentally into:
+
+\[
+\boxed{
+\text{take two point coordinate representations in the same space and construct the geometric displacement from source to destination}
+}
+\]
+
+rather than merely:
+
+> subtract three floats.
+
+**Completed Part 516 — Standard basis in \(\mathbb R^2\)**  
+**Completed Part 517 — Standard basis in \(\mathbb R^3\)**  
+**Completed Part 518 — Vector addition from the parallelogram rule**  
+**Completed Part 519 — Scalar multiplication of vectors**  
+**Completed Part 520 — Vector subtraction as displacement difference**
+
+**Next Core Part 521 — Affine points versus free vectors.**

@@ -1,0 +1,44 @@
+\hypertarget{appendix-341296fb3f64}{}\label{referencestart:appendix-341296fb3f64}
+\section{Robust geometric predicates}\label{appendix-341296fb3f64-robust-geometric-predicates}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-341296fb3f64-definition-and-mechanism}
+
+A geometric predicate decides a category from a sign, such as orientation. Near cancellation, ordinary floating arithmetic may not certify that sign. Adaptive arithmetic adds work only when justified error bounds leave uncertainty. Exact stored-input decisions cannot restore rounded-away physical information.
+
+\end{allmightroledefinition}
+
+A triangle can have an accurately small area estimate yet an uncertified orientation sign. Declaring every small value zero changes topology instead of proving a decision.
+
+\subsection{Prerequisites}\label{appendix-341296fb3f64-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-2391db8052b1]{Cross products and oriented area} --- Oriented area supplies face normals, frame signs and geometric determinants.
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=appendix-5aef4f13483a}{Dot and cross-product rounding (Mathematics for Visual Computing, Reference notes: Dot and cross-product rounding)} --- Cancellation and rounded inputs explain when a determinant sign or finite measurement is uncertain.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-341296fb3f64-used-by}
+
+Later curriculum sources can deepen this same node; no future coverage is marked complete.
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-a9ba01fa72a6}{Collision barriers and continuous detection (Light Transport and Image Synthesis, Reference notes: Collision barriers and continuous detection)} \#\# Recall and next depth
+\end{itemize}
+
+Distinguish tolerance-based geometry, measurements and certified predicates; the Phase 6 lab implements only ordinary tests. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-341296fb3f64-source-and-navigation}
+
+\href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch018-the-sensor-needs-coordinates-inside-the-triangle}{Teaching narrative (Mathematics for Visual Computing, Ch. 2)} · \hyperref[appendix-fd090d982a15-phase-6---parts-501-600]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-6---source-analysis-and-verification]{Evidence and limits} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}
+
+\subsection{Phase 11 camera development}\label{appendix-341296fb3f64-phase-11-camera-development}
+
+Adaptive orientation and incircle predicates protect discrete sign decisions from floating-point error by refining arithmetic when an error bound cannot certify the result. Camera estimation has a different uncertainty: noisy pixels and weak observability can leave pose uncertain even when every sign is exact. Predicate robustness does not improve measurement accuracy, and a low reprojection residual does not guarantee every combinatorial decision was reliable. Keep layers distinct: use robust predicates for topology, uncertainty weights for image residuals, and Jacobian spectra for weak directions. Link: \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch037-a-camera-model-must-close-the-loop}{A camera model must close the loop (Geometry, Cameras, and Image Formation, Ch. 6)}; research: \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review}{Four deeper links from the TUM lecture review (Geometry, Cameras, and Image Formation, Ch. 5)}.

@@ -1,0 +1,1425 @@
+{
+  "pandoc-api-version": [
+    1,
+    23,
+    1,
+    2
+  ],
+  "meta": {
+    "tags": {
+      "t": "MetaList",
+      "c": [
+        {
+          "t": "MetaInlines",
+          "c": [
+            {
+              "t": "Str",
+              "c": "concept"
+            }
+          ]
+        },
+        {
+          "t": "MetaInlines",
+          "c": [
+            {
+              "t": "Str",
+              "c": "foundation"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "blocks": [
+    {
+      "t": "Header",
+      "c": [
+        1,
+        [
+          "appendix-a1b1b4580dfd-floating-point-addition-and-absorption",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Floating-point"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "addition"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "absorption"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Curriculum"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "depth:"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Introduced"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "·"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "First"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "seen:"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "C005"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "·"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Latest"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "development:"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "C005"
+        }
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-a1b1b4580dfd-definition-and-mechanism",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Definition"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "mechanism"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Str",
+          "c": "Addition"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "aligns"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "significands"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "to"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "a"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "common"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "exponent"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "before"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "adding/subtracting"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "rounding."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "At"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "2^24,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "upward"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "binary32"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "spacing"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "is"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "2,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "so"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "adding"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "1"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "is"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "a"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "tie"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "absorbed"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "to"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "the"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "same"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "even"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "endpoint."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "1.5+0.15625"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "aligns"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "by"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "three"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "bits"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "gives"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "1.65625"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "exactly."
+        }
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-a1b1b4580dfd-prerequisites",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Prerequisites"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "BulletList",
+      "c": [
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Significand"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "hidden"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "bit"
+                    }
+                  ],
+                  [
+                    "#appendix-a24fd710cf67",
+                    ""
+                  ]
+                ]
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "—"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "Significant"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "digit"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "positions"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "determine"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "alignment"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "and"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "what"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "leading"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "digits"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "cancel."
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Exponent"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "bias"
+                    }
+                  ],
+                  [
+                    "#appendix-2fae058c82e1",
+                    ""
+                  ]
+                ]
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "—"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "Effective"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "exponents"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "must"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "be"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "decoded"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "before"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "comparing"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "scale"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "and"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "shifting."
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Guard"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "round"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "sticky"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "bits"
+                    }
+                  ],
+                  [
+                    "#appendix-b572b631069b",
+                    ""
+                  ]
+                ]
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "—"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "Aligned-away"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "information"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "must"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "survive"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "sufficiently"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "to"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "choose"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "the"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "correct"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "rounded"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "neighbor."
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-a1b1b4580dfd-used-by",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Used"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "by"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "BulletList",
+      "c": [
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Floating-point"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "reassociation"
+                    }
+                  ],
+                  [
+                    "#appendix-c2ac4a84c283",
+                    ""
+                  ]
+                ]
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "—"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "uses"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "this"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "mechanism"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "to"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "establish"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "its"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "numerical"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "contract."
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-a1b1b4580dfd-recall-and-next-depth",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Recall"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "next"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "depth"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Str",
+          "c": "Reconstruct"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "the"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "definition’s"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "example"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "name"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "the"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "assumptions"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "that"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "make"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "it"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "valid."
+        }
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Pending:"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "A"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "full"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "software"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "adder"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "must"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "handle"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "classes,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "signs,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "range"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "every"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "rounding"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "mode;"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "current"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "trace"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "is"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "not"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "that"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "implementation."
+        }
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-a1b1b4580dfd-source-and-navigation",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Source"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "navigation"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "M005"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "teaching"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "chapter"
+              }
+            ],
+            [
+              "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#When arithmetic meets uncertainty",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "·"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "Part"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "definitions"
+              }
+            ],
+            [
+              "#appendix-fd090d982a15-appendix-fd090d982a15-m005---parts-77-88",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "·"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "Dependency"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "Map"
+              }
+            ],
+            [
+              "Dependency Map",
+              ""
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

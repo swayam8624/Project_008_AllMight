@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch050.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-537171d69d27-quantization-error-metrics" class="level2">
+<h2>Quantization error metrics</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C006 · <strong>Latest development:</strong> C006</p>
+<section id="appendix-537171d69d27-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>For N&gt;0, RMSE is sqrt(sum squared discrepancies/N), MAE is mean absolute discrepancy, and max error is the largest observed magnitude. Promote float operands before subtraction when measuring in double.</p>
+</section>
+<section id="appendix-537171d69d27-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch039.xhtml#appendix-3ae74e89b4e6-absolute-and-relative-error" class="wikilink">Absolute and relative error</a> — supplies the representation or validity rule used above.</li>
+<li><a href="ch570.xhtml#appendix-fdc7879e8bf2-quantization-and-compressed-weights" class="wikilink">Quantization and compressed weights (Vision, XR, and Playable Worlds, Part 2, Reference notes: Quantization and compressed weights)</a> — supplies the representation or validity rule used above.</li>
+</ul>
+</section>
+<section id="appendix-537171d69d27-used-by" class="level3">
+<h3>Used by</h3>
+<p>Connect later dependent concepts here when their explanations use this mechanism.</p>
+</section>
+<section id="appendix-537171d69d27-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the example and identify the condition that would invalidate it.</p>
+<p><strong>Pending:</strong> Representation error alone does not establish downstream task correctness.</p>
+</section>
+<section id="appendix-537171d69d27-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-choosing-what-information-to-keep" class="wikilink">Continuous teaching story</a> · <span>Source coverage ledger</span> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-537171d69d27-a-metric-must-match-what-the-consumer-loses" class="level3">
+<h3>A metric must match what the consumer loses</h3>
+<p>Quantization error is the difference <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>x</mi>
+  <mo>−</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>x</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+</math> between source and reconstruction, but one scalar summary cannot answer every engineering question. Mean squared error emphasizes large deviations; mean absolute error is less sensitive to outliers; maximum absolute error exposes worst-case bounds; relative error becomes useful when scale varies but is unstable near zero.</p>
+<p>For tensors, per-tensor MSE can hide one badly damaged channel or group. Diagnostics should often include per-group distributions, saturation counts, scale histograms, and downstream task error. A quantizer that minimizes weight MSE is not guaranteed to minimize model-output error because layers amplify directions differently.</p>
+<p>Signal metrics also depend on representation. Comparing gamma-encoded RGB with ordinary squared error is not the same as comparing linear-light energy. Normals may need angular error rather than component MSE.</p>
+<p>A useful quantization benchmark therefore reports storage cost together with several reconstruction metrics and one consumer-level metric. The metric is part of the experiment hypothesis, not a decorative number added after compression.</p>
+</section>
+</section>
+</body>
+</html>

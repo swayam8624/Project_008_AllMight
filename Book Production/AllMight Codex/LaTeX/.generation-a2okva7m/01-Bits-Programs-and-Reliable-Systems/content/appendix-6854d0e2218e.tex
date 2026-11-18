@@ -1,0 +1,38 @@
+\hypertarget{appendix-6854d0e2218e}{}\label{referencestart:appendix-6854d0e2218e}
+\section{Floating-point encoding and decoding}\label{appendix-6854d0e2218e-floating-point-encoding-and-decoding}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C004 · \textbf{Latest development:} C004
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-6854d0e2218e-definition-and-mechanism}
+
+Encoding chooses fields for a value; decoding classifies fields and reconstructs their meaning. 10.625 normalizes to 1.010101₂×2³, giving 412A0000. C1540000 decodes to −13.25.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-6854d0e2218e-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-2fae058c82e1]{Exponent bias} --- Stored exponents must be translated to effective powers before reconstructing value or spacing.
+\item
+  \hyperref[appendix-a24fd710cf67]{Significand and hidden bit} --- Fraction weights and effective precision determine value and the smallest retained position.
+\item
+  \hyperref[appendix-6b8075763724]{Hexadecimal} --- Four-bit groups make complete representation words independently inspectable.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-6854d0e2218e-used-by}
+
+Connect later dependent concepts here as their lessons arrive.
+
+\subsection{Recall and next depth}\label{appendix-6854d0e2218e-recall-and-next-depth}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Inexact conversion requires rounding; the exact worked examples do not explain every decimal conversion.
+
+\subsection{Source and navigation}\label{appendix-6854d0e2218e-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

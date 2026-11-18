@@ -8,7 +8,7 @@ After the physics and runtime examples, the volume returns to how teams learn wh
 
 **Recall question:** What observation would change your design decision, and what test can produce it without confusing a prototype with a shipped feature?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 100533–101302; source-span SHA256 bc94a3e6961f57b793be4d6e916d3cefb189a298e4d7fa0c693928ff91ed21a9. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 101714–102483; source-span SHA256 bc94a3e6961f57b793be4d6e916d3cefb189a298e4d7fa0c693928ff91ed21a9. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Use tools and evidence to keep the design revisable

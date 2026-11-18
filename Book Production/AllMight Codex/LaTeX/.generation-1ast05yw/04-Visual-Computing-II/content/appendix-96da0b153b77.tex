@@ -1,0 +1,39 @@
+\hypertarget{appendix-96da0b153b77}{}
+\section*{Reflectance and rendering equation}
+\section{Reflectance and rendering equation}\label{appendix-96da0b153b77-reflectance-and-rendering-equation}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} XR01 · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-96da0b153b77-definition-and-mechanism}
+
+A BRDF relates incident irradiance to outgoing radiance with directional weighting. The surface rendering equation adds emission and cosine-weighted incoming contributions. Visibility and transport assumptions matter; blurring completed output does not avoid shading.
+
+\subsection{Prerequisites}\label{appendix-96da0b153b77-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-215c2570199b]{Light spectra and radiometry} --- The light quantity and units must be established before its interaction or visual effect is modeled.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-96da0b153b77-used-by}
+
+Later independent XR sources will extend this same node. - \hyperref[appendix-031e02bf28af]{Monte Carlo rendering estimators and variance} - \hyperref[appendix-89b2d5b7c9e1]{Surface orientation from image brightness}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-68be451b78b1}{Reservoir resampling and ReSTIR (03-Visual-Computing-I, appendix-68be451b78b1)} \#\# Recall and next depth
+\end{itemize}
+
+Explain Lambertian rho/pi and identify what sampled shading approximates. Pending: transport estimators and actual workload profiling. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.
+
+\subsection{Source and navigation}\label{appendix-96da0b153b77-source-and-navigation}
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Materials\%20turn\%20incoming\%20light\%20into\%20outgoing\%20light}{Expanded teaching explanation} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-fd090d982a15-xr01---independent-seeing-and-representation-source}{Independent coverage (01-Foundations-I, appendix-fd090d982a15-xr01-\/-\/-independent-seeing-and-representation-source)} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\subsection{University course development}\label{appendix-96da0b153b77-university-course-development}
+
+Extend the existing light-transport note with the distinction between a material's directional response and the incident illumination it receives. At surface point \(x\), outgoing radiance depends on emitted radiance plus an integral over incoming directions. The BRDF \(f_r(x,\omega_i,\omega_o)\) is reflected outgoing radiance per incident irradiance, with units of inverse steradians; it depends on incoming direction \(\omega_i\) and viewing direction \(\omega_o\). A physically plausible BRDF is nonnegative and conserves energy, but can still have narrow glossy lobes that are difficult to sample. The rendering equation combines this local material response with visibility, incoming radiance, and the cosine foreshortening factor. This form explains why shading, direct lighting, global illumination, and Monte Carlo integration are connected parts of one transport calculation rather than independent image effects.
+
+\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch004-reflectance-brdfs-and-shading}{Reflectance, BRDFs, and shading (03-Visual-Computing-I, 03-visual-computing-i-ch004-reflectance-brdfs-and-shading)} · \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch007-the-rendering-equation-and-light-transport}{The rendering equation and light transport (03-Visual-Computing-I, 03-visual-computing-i-ch007-the-rendering-equation-and-light-transport)} · \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation}{Numerical integration and Monte Carlo estimation (03-Visual-Computing-I, 03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation)}

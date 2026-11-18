@@ -8,7 +8,7 @@ A BVH accelerates ray queries by pruning regions, but its traversal behavior sti
 
 **Recall question:** What can a traversal heatmap reveal that a rendered image cannot?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 24622–27310; source-span SHA256 1225f024e04f63c2ec9acfc23dfc104098fe9e3d8265b7750ef0d546157741a9. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 24653–27341; source-span SHA256 1225f024e04f63c2ec9acfc23dfc104098fe9e3d8265b7750ef0d546157741a9. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### PARTS 2090–2100

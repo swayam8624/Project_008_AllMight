@@ -1,0 +1,42 @@
+\hypertarget{appendix-5f1a2c3f97ff}{}\label{referencestart:appendix-5f1a2c3f97ff}
+\section{Numerical reproducibility}\label{appendix-5f1a2c3f97ff-numerical-reproducibility}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C005 · \textbf{Latest development:} C005
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-5f1a2c3f97ff-definition-and-mechanism}
+
+Repeatability in a defined environment, bitwise identity across a stated environment set, and numerical accuracy are different goals. Atomic updates can be race-free yet ordered differently; a fixed tree alone does not control FMA, subnormals or math libraries.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-5f1a2c3f97ff-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-4c8e0238e7ee]{Deterministic reduction tree} --- Repeatable grouping is one necessary component of reproducibility.
+\item
+  \hyperref[appendix-f11d1a521253]{Floating-point environment and compiler modes} --- Rounding, contraction, subnormal and optimization assumptions must match.
+\item
+  \hyperref[appendix-e12d1b03fefb]{Atomic operations and write contention} --- Indivisible updates do not impose a unique schedule-independent ordering.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-5f1a2c3f97ff-used-by}
+
+Connect later dependent concepts here when their lessons arrive.
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-b9db93e28371}{Reproducible numerical benchmarking (Vision, XR, and Playable Worlds, Reference notes: Reproducible numerical benchmarking)} \#\# Recall and next depth
+\end{itemize}
+
+Reconstruct the definition's example and name the assumptions that make it valid.
+
+\textbf{Pending:} Real CPU/GPU/thread-count experiments need recorded build/environment contracts; none is implied by this host lab.
+
+\subsection{Source and navigation}\label{appendix-5f1a2c3f97ff-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-when-arithmetic-meets-uncertainty]{M005 teaching chapter} · \hyperref[appendix-fd090d982a15-m005---parts-77-88]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

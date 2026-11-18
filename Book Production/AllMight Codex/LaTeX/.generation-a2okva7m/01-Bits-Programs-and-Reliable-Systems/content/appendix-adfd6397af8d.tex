@@ -1,0 +1,34 @@
+\hypertarget{appendix-adfd6397af8d}{}\label{referencestart:appendix-adfd6397af8d}
+\section{Relocation versus move}\label{appendix-adfd6397af8d-relocation-versus-move}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C009 · \textbf{Latest development:} C009
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-adfd6397af8d-definition-and-mechanism}
+
+A move leaves the source object alive; relocation ends its source lifetime as part of transfer. Move-construction plus old-object destruction is a relocation pattern, not general permission to memmove nontrivial objects. Proposal/toolchain facilities are not assumed portable in C++23.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-adfd6397af8d-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5636651017c2]{Move operations and moved-from states} --- Traits, failure policy and relocation must distinguish source survival from source destruction.
+\item
+  \hyperref[appendix-a82f9c438857]{Object construction and storage reuse} --- A new destination requires a valid lifetime, independently of available bytes.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-adfd6397af8d-used-by}
+
+Later sources will extend this node when their guarantees are developed.
+
+\subsection{Recall and next depth}\label{appendix-adfd6397af8d-recall-and-next-depth}
+
+Identify how a self-pointer could break representation relocation. Pending: versioned standard facilities and actual toolchain support. Written coverage does not demonstrate personal mastery.
+
+\subsection{Source and navigation}\label{appendix-adfd6397af8d-source-and-navigation}
+
+\hyperref[01-foundations-i-ch003-from-three-repairs-to-five-decisions-to-zero-boilerplate]{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15-m009---parts-127-147]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

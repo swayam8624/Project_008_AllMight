@@ -1,0 +1,1297 @@
+{
+  "pandoc-api-version": [
+    1,
+    23,
+    1,
+    2
+  ],
+  "meta": {},
+  "blocks": [
+    {
+      "t": "Header",
+      "c": [
+        1,
+        [
+          "appendix-1340cd1ce582-copy-semantics-and-resource-identity",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Copy"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "semantics"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "resource"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "identity"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Curriculum"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "depth:"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Introduced"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "·"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "First"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "seen:"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "C009"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "·"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Strong",
+          "c": [
+            {
+              "t": "Str",
+              "c": "Latest"
+            },
+            {
+              "t": "Space"
+            },
+            {
+              "t": "Str",
+              "c": "development:"
+            }
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "C009"
+        }
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-1340cd1ce582-definition-and-mechanism",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Definition"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "mechanism"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Str",
+          "c": "Copy"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "construction"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "creates"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "a"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "new"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "object"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "using"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "member/type"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "semantics."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Pointers"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "reference"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "bindings"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "preserve"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "associations;"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "vector-backed"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "pixel"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "values"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "duplicate"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "owned"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "contents;"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "copying"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "handles"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "does"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "not"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "clone"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "resources."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Deep"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "copying"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "a"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "graph"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "needs"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "a"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "defined"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "sharing"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "identity-remapping"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "policy."
+        }
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-1340cd1ce582-prerequisites",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Prerequisites"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "BulletList",
+      "c": [
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Object"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "identity"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "generation"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "handles"
+                    }
+                  ],
+                  [
+                    "#appendix-f1581457d322",
+                    ""
+                  ]
+                ]
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "—"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "Copying"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "an"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "identifier"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "differs"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "from"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "cloning"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "the"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "resource"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "or"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "application"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "entity."
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Ownership"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "non-owning"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "views"
+                    }
+                  ],
+                  [
+                    "#appendix-d52e4486f527",
+                    ""
+                  ]
+                ]
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "—"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "The"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "owner/view"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "distinction"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "determines"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "whether"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "copying"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "duplicates"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "resources"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "or"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "descriptors."
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-1340cd1ce582-used-by",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Used"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "by"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "BulletList",
+      "c": [
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Assignment"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "exception"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "guarantees"
+                    }
+                  ],
+                  [
+                    "#appendix-bea6beb5350f",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Move"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "operations"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "moved-from"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "states"
+                    }
+                  ],
+                  [
+                    "#appendix-5636651017c2",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "t": "Plain",
+            "c": [
+              {
+                "t": "Link",
+                "c": [
+                  [
+                    "",
+                    [
+                      "wikilink"
+                    ],
+                    []
+                  ],
+                  [
+                    {
+                      "t": "Str",
+                      "c": "Special"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "member"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "generation"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "and"
+                    },
+                    {
+                      "t": "Space"
+                    },
+                    {
+                      "t": "Str",
+                      "c": "traits"
+                    }
+                  ],
+                  [
+                    "#appendix-42e02a12c694",
+                    ""
+                  ]
+                ]
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-1340cd1ce582-recall-and-next-depth",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Recall"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "next"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "depth"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Str",
+          "c": "Choose"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "duplicate,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "share,"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "remap"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "or"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "reject"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "for"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "four"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "engine"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "types."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Pending:"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "graph-clone"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "algorithms"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "and"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "immutable"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "shared"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "ownership."
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "Written"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "coverage"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "does"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "not"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "demonstrate"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "personal"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "mastery."
+        }
+      ]
+    },
+    {
+      "t": "Header",
+      "c": [
+        2,
+        [
+          "appendix-1340cd1ce582-source-and-navigation",
+          [],
+          []
+        ],
+        [
+          {
+            "t": "Str",
+            "c": "Source"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "and"
+          },
+          {
+            "t": "Space"
+          },
+          {
+            "t": "Str",
+            "c": "navigation"
+          }
+        ]
+      ]
+    },
+    {
+      "t": "Para",
+      "c": [
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "Teaching"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "mechanism"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "and"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "examples"
+              }
+            ],
+            [
+              "#01-foundations-i-ch003-copy-a-meaning-rather-than-just-its-bytes",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "·"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "Exact"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "coverage"
+              }
+            ],
+            [
+              "#appendix-fd090d982a15-m009---parts-127-147",
+              ""
+            ]
+          ]
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Str",
+          "c": "·"
+        },
+        {
+          "t": "Space"
+        },
+        {
+          "t": "Link",
+          "c": [
+            [
+              "",
+              [
+                "wikilink"
+              ],
+              []
+            ],
+            [
+              {
+                "t": "Str",
+                "c": "Dependency"
+              },
+              {
+                "t": "Space"
+              },
+              {
+                "t": "Str",
+                "c": "Map"
+              }
+            ],
+            [
+              "#appendix-4ad47bdd269a",
+              ""
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch175.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-1121b30eaeb0-value-categories-and-materialization" class="level2">
+<h2>Value categories and materialization</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C008 · <strong>Latest development:</strong> C009</p>
+<section id="appendix-1121b30eaeb0-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>M009 develops result objects, direct same-type prvalue construction and C++23 move-eligible return expressions. Ordinary named-reference uses remain lvalues; optional NRVO is distinct from guaranteed direct construction.</p>
+<p>lvalues and xvalues identify objects/functions; prvalues produce values/results. Glvalue contains lvalue/xvalue; rvalue contains prvalue/xvalue. A named rvalue-reference variable is an lvalue in ordinary use. Materialization supplies temporary identity when needed; it does not require a redundant copy of every class prvalue.</p>
+</section>
+<section id="appendix-1121b30eaeb0-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch028.xhtml#appendix-2e4d494c2d94-declarations-and-definitions" class="wikilink">Declarations and definitions (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Declarations and definitions)</a> — Declarations establish the entities and types whose uses are being classified.</li>
+</ul>
+</section>
+<section id="appendix-1121b30eaeb0-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch177.xhtml#appendix-37856d997bb0-reference-binding-and-converted-temporaries" class="wikilink">Reference binding and converted temporaries</a></li>
+<li><a href="ch181.xhtml#appendix-5d4252a42886-auto-decltype-and-reference-collapsing" class="wikilink">Auto decltype and reference collapsing</a></li>
+<li><a href="ch174.xhtml#appendix-0104b704fb11-move-casts-and-forwarding-references" class="wikilink">Move casts and forwarding references</a></li>
+<li><a href="ch198.xhtml#appendix-d42039b1d6f7-ref-qualified-accessors" class="wikilink">Ref-qualified accessors</a></li>
+<li><a href="ch192.xhtml#appendix-b08d3788c5c6-return-values-and-copy-elision" class="wikilink">Return values and copy elision</a></li>
+</ul>
+</section>
+<section id="appendix-1121b30eaeb0-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Classify rr, std::move(rr), ++i and i++. Pending: overlapping subobjects and detailed materialization/return deduction. Written coverage does not establish learner mastery.</p>
+</section>
+<section id="appendix-1121b30eaeb0-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch207.xhtml#appendix-fd090d982a15-m009---parts-127-147" class="wikilink">C009 development</a></p>
+<p><a href="ch173.xhtml#id_01-foundations-i-ch003-an-expression-has-a-type-and-a-category" class="wikilink">Teaching explanation and examples</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m008---parts-113-126" class="wikilink">Exact coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

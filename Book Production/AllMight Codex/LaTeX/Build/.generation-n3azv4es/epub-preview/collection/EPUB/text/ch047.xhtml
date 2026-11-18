@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch047.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-5057f9ad327f-binary32" class="level2">
+<h2>Binary32</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C004 · <strong>Latest development:</strong> C004</p>
+<section id="appendix-5057f9ad327f-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A 32-bit binary interchange format with one sign bit, eight exponent bits and 23 fraction bits. Normal precision is 24 bits; exponent bias is 127. Word 3F800000 has E=127,F=0 and means 1.</p>
+</section>
+<section id="appendix-5057f9ad327f-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch033.xhtml#appendix-343615f49ddf-ieee-754-floating-point" class="wikilink">IEEE-754 floating point</a> — The format/arithmetic contract gives these bits their numerical domain.</li>
+<li><a href="ch083.xhtml#appendix-ac697f5c66e8-bit-field" class="wikilink">Bit field</a> — Masks, offsets and shifts isolate sign, exponent and fraction positions.</li>
+</ul>
+</section>
+<section id="appendix-5057f9ad327f-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch026.xhtml#appendix-2a2f1b74bdd3-terminating-fractions-and-dyadic-rationals" class="wikilink">Terminating fractions and dyadic rationals</a> — Its finite significand/exponent makes each stored finite value a dyadic rational.</p></li>
+<li><p><a href="ch023.xhtml#appendix-260182e617b7-mixed-precision-state-updates" class="wikilink">Mixed-precision state updates</a> — Its finite significand/exponent makes each stored finite value a dyadic rational.</p></li>
+<li><p><a href="ch048.xhtml#appendix-5078dfab64e6-binary64" class="wikilink">Binary64</a> — uses this mechanism in its explanation.</p></li>
+<li><p><a href="ch030.xhtml#appendix-2fae058c82e1-exponent-bias" class="wikilink">Exponent bias</a> — uses this mechanism in its explanation.</p></li>
+<li><p><a href="ch077.xhtml#appendix-a24fd710cf67-significand-and-hidden-bit" class="wikilink">Significand and hidden bit</a> — uses this mechanism in its explanation.</p></li>
+<li><p><a href="ch038.xhtml#appendix-3a048f032c1f-signed-zero" class="wikilink">Signed zero</a> — uses this mechanism in its explanation.</p></li>
+<li><p><a href="ch115.xhtml#appendix-eb336149c00a-floating-point-infinities" class="wikilink">Floating-point infinities</a> — uses this mechanism in its explanation.</p></li>
+<li><p><a href="ch102.xhtml#appendix-d6607cc4c235-nans-and-payloads" class="wikilink">NaNs and payloads</a> — uses this mechanism in its explanation.</p></li>
+</ul>
+</section>
+<section id="appendix-5057f9ad327f-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the concrete example in the definition and identify its validity assumptions.</p>
+<p><strong>Pending:</strong> Derive 00800000 and 7F7FFFFF; do not infer this format from the name float alone.</p>
+</section>
+<section id="appendix-5057f9ad327f-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">M004 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m004---parts-61-76" class="wikilink">Per-part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

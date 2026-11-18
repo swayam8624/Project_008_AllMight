@@ -1,0 +1,46 @@
+\hypertarget{appendix-8d863ed954d0}{}\label{referencestart:appendix-8d863ed954d0}
+\section{Inverse, rejection, and importance sampling}\label{appendix-8d863ed954d0-inverse-rejection-and-importance-sampling}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-8d863ed954d0-definition-and-mechanism}
+
+Sampling transforms convert simpler random inputs into a target law. Inverse-CDF sampling maps a uniform value through a quantile function; rejection sampling accepts proposal draws according to a bounded target-to-proposal ratio; importance sampling estimates an integral by dividing each sampled integrand by the actual proposal density. Each method requires correct support and endpoint handling. Importance sampling is unbiased when the proposal covers every contributing region and the weighted contribution is integrable; finite variance additionally requires the integral of f²/p to be finite. Rejection sampling needs a valid finite envelope. Discrete floating-point inputs can hit boundaries that have zero probability in an ideal continuous model. Report the density with its measure and use the same measure in the estimator. A proposal that misses target support cannot be repaired by a larger weight.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-8d863ed954d0-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4d0203f7944f}{Random variables and probability laws (Vision, XR, and Playable Worlds, Reference notes: Random variables and probability laws)}
+\item
+  \hyperref[appendix-4815cd87ab8b]{Probability density and change of measure}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-e0f7c7e08f3a}{Stateful pseudorandom generators and stream state (Vision, XR, and Playable Worlds, Reference notes: Stateful pseudorandom generators and stream state)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-8d863ed954d0-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-031e02bf28af]{Monte Carlo rendering estimators and variance}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-8d863ed954d0-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[02-foundations-ii-ch029-transformations-turn-simple-inputs-into-useful-samples]{Phase 10 teaching section}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)} · visual recall
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-8d863ed954d0-source-coverage}
+
+Supplied lesson parts: 940 (T06 · M057), 941 (T06 · M057), 942 (T06 · M057), 943 (T06 · M057), 944 (T06 · M057).

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch239.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-6b3d696dd902-reciprocal-bases-and-coordinate-measurements" class="level2">
+<h2>Reciprocal bases and coordinate measurements</h2>
+<p>A basis reconstructs vectors; a reciprocal basis measures their coefficients. Those are different jobs when the basis is not orthonormal.</p>
+<p>Let basis vectors <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>b</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>b</mi>
+    <mi>n</mi>
+  </msub>
+</math> form the columns of matrix <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math>. Coordinates <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+</math> reconstruct a vector by</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mo>=</mo>
+  <mi>B</mi>
+  <mi>c</mi>
+  <mo>.</mo>
+</math>
+<p>Recovering the coordinates means solving</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mi>c</mi>
+  <mo>=</mo>
+  <mi>v</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>c</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi>v</mi>
+</math>
+<p>when <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math> is square and nonsingular. The rows of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+</math> are the coordinate-measurement covectors. In Euclidean coordinates, their vector representatives are the columns of</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>These reciprocal vectors <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>b</mi>
+    <mi>i</mi>
+  </msup>
+</math> satisfy</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>b</mi>
+    <mi>i</mi>
+  </msup>
+  <mo>⋅</mo>
+  <msub>
+    <mi>b</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>=</mo>
+  <msubsup>
+    <mi>δ</mi>
+    <mi>j</mi>
+    <mi>i</mi>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>For the slanted basis <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>b</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>b</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math> and vector <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+</math>, directly dotting with the basis vectors gives <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+</math> and is wrong as a coordinate recovery rule. The reciprocal basis is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>b</mi>
+    <mn>1</mn>
+  </msup>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msup>
+    <mi>b</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>so the measurements are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>b</mi>
+    <mn>1</mn>
+  </msup>
+  <mo>⋅</mo>
+  <mi>v</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>b</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>⋅</mo>
+  <mi>v</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+</math>, exactly the coefficients that reconstruct <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>b</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>+</mo>
+  <mn>2</mn>
+  <msub>
+    <mi>b</mi>
+    <mn>2</mn>
+  </msub>
+</math>.</p>
+<p>A reciprocal basis is therefore a concrete bridge from vectors to covectors. It also explains why normal transformation uses an inverse transpose: normals are measurements that must continue to annihilate tangent directions after the tangent basis changes.</p>
+<p>In numerical code, do not build a matrix inverse merely to solve one coordinate problem. Use a factorization or direct solve appropriate to the matrix structure and condition.</p>
+<p>Full derivation and worked trace: <a href="ch236.xhtml#id_01-foundations-i-ch017-recover-a-component-with-the-right-measuring-rule" class="wikilink">Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Recover a component with the right measuring rule</a>.</p>
+<p>Related: <a href="ch475.xhtml#appendix-46da295c6787-covectors-linear-functionals-and-normal-transforms" class="wikilink">Covectors linear functionals and normal transforms (Vision, XR, and Playable Worlds, Part 1, Reference notes: Covectors linear functionals and normal transforms)</a>, <a href="ch515.xhtml#appendix-ce0341f7ea0d-basis-coordinates-and-dimension" class="wikilink">Basis coordinates and dimension (Vision, XR, and Playable Worlds, Part 1, Reference notes: Basis coordinates and dimension)</a>, <a href="ch072.xhtml#appendix-8f6a01f284a7-conditioning-and-singularity" class="wikilink">Conditioning and singularity (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Conditioning and singularity)</a>.</p>
+</section>
+</body>
+</html>

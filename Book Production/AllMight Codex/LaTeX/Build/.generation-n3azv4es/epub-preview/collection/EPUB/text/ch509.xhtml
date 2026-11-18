@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch509.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-b9db93e28371-reproducible-numerical-benchmarking" class="level2">
+<h2>Reproducible numerical benchmarking</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 10 · <strong>Latest development:</strong> Phase 10</p>
+<section id="appendix-b9db93e28371-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A useful numerical benchmark separates sample-level variability from run-level variability and pairs competing methods on the same inputs or seeds. Record the algorithm, precision, compiler/runtime settings, sample count, seed or keyed input, warm-up policy, timing method, and error metric. Compare distributions or paired differences rather than a single favorable run. A speed improvement is meaningful only if accuracy and failure rates remain acceptable for the target workload. For Monte Carlo methods, repeat independent runs and report uncertainty; for deterministic solvers, use analytical or manufactured solutions and measure convergence. Reproducibility is an experimental contract, not merely a fixed random seed. If the workload is stochastic, compare paired seeds and report both runtime and error distributions.</p>
+</section>
+<section id="appendix-b9db93e28371-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch055.xhtml#appendix-5f1a2c3f97ff-numerical-reproducibility" class="wikilink">Numerical reproducibility (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Numerical reproducibility)</a></li>
+<li><a href="ch513.xhtml#appendix-c83016554b1e-confidence-intervals-and-sequential-evidence" class="wikilink">Confidence intervals and sequential evidence</a></li>
+<li><a href="ch510.xhtml#appendix-bcc44e9d3d02-robust-summaries-and-error-metrics" class="wikilink">Robust summaries and error metrics</a></li>
+<li><a href="ch467.xhtml#appendix-31b8c295e05f-numerical-error-budgets" class="wikilink">Numerical error budgets</a></li>
+<li><a href="ch505.xhtml#appendix-aca80b6bf17a-convergence-order-and-richardson-extrapolation" class="wikilink">Convergence order and Richardson extrapolation</a></li>
+<li><a href="ch459.xhtml#appendix-1c5e85693a06-latin-hypercube-sampling" class="wikilink">Latin-hypercube sampling</a></li>
+</ul>
+</section>
+<section id="appendix-b9db93e28371-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch557.xhtml#appendix-65788587ef78-research-validity-and-ablation" class="wikilink">Research validity and ablation (Vision, XR, and Playable Worlds, Part 2, Reference notes: Research validity and ablation)</a></li>
+</ul>
+</section>
+<section id="appendix-b9db93e28371-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch276.xhtml#id_02-foundations-ii-ch031-test-numerical-methods-and-benchmark-reproducibly" class="wikilink">Test numerical methods and benchmark reproducibly (Mathematics for Visual Computing, Part 2, Ch. 15)</a></li>
+</ul>
+</section>
+<section id="appendix-b9db93e28371-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 999–1000.</p>
+</section>
+<section id="appendix-b9db93e28371-future-keywords" class="level3">
+<h3>Future keywords</h3>
+<p>paired trials, random seeds, uncertainty reporting</p>
+</section>
+</section>
+</body>
+</html>

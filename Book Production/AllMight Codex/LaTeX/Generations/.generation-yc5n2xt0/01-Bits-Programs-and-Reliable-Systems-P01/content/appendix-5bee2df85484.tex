@@ -1,0 +1,64 @@
+\hypertarget{appendix-5bee2df85484}{}\label{referencestart:appendix-5bee2df85484}
+\section{Byte and octet}\label{appendix-5bee2df85484-byte-and-octet}
+
+\hypertarget{appendix-5bee2df85484-byte-and-octet}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C001 · \textbf{Latest development:} C001
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-5bee2df85484-definition-and-mechanism}
+
+\hypertarget{appendix-5bee2df85484-definition-and-mechanism}{}
+
+An octet is exactly eight bits; a byte is the addressable unit and is eight bits on the target systems assumed here.
+
+\end{allmightroledefinition}
+
+An octet is exactly eight bits. In C++, a byte is the storage unit of \BookInlineCode{char}, \BookInlineCode{sizeof(char)==1}, and \BookInlineCode{CHAR\_BIT} tells its bit count. This curriculum's worked layouts assume eight-bit bytes. Addressing usually selects a byte, so individual bits are selected with masks.
+
+\subsection{Prerequisites}\label{appendix-5bee2df85484-prerequisites}
+
+\hypertarget{appendix-5bee2df85484-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-ddbb69998a2e]{Bit} --- A bit has two possible logical states.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-5bee2df85484-used-by}
+
+\hypertarget{appendix-5bee2df85484-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-d67a19507dc5]{Machine word} --- uses byte and octet as part of its representation or reasoning.
+\item
+  \hyperref[appendix-dbe5905163c2]{Bit mask} --- uses byte and octet as part of its representation or reasoning.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-bc07c3d25b18}{Endianness (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Endianness)} --- uses byte and octet as part of its representation or reasoning.
+\item
+  \hyperref[appendix-e4ccdbab8320]{Cache lines and memory bandwidth} --- uses byte and octet as part of its representation or reasoning.
+\item
+  \hyperref[appendix-cc04044b5782]{Fixed-width integer types} --- uses byte and octet as part of its representation or reasoning.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-a1f7c53b4742}{Alignment and padding (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Alignment and padding)} --- uses byte and octet as part of its representation or reasoning.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-18ee4f913c3c}{Addresses and virtual memory (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Addresses and virtual memory)} --- uses byte and octet as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-5bee2df85484-recall-and-next-depth}
+
+\hypertarget{appendix-5bee2df85484-recall-and-next-depth}{}
+
+Explain byte and octet without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} \BookInlineCode{CHAR\_BIT}, object representation, addressing, and alignment.
+
+\subsection{Source and navigation}\label{appendix-5bee2df85484-source-and-navigation}
+
+\hypertarget{appendix-5bee2df85484-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

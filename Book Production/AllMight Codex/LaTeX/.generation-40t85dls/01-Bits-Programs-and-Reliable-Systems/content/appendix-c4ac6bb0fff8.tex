@@ -1,0 +1,57 @@
+\hypertarget{appendix-c4ac6bb0fff8}{}\label{referencestart:appendix-c4ac6bb0fff8}
+\section{ABI and object layout}\label{appendix-c4ac6bb0fff8-abi-and-object-layout}
+
+\hypertarget{appendix-c4ac6bb0fff8-abi-and-object-layout}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C003 · \textbf{Latest development:} C007
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-c4ac6bb0fff8-definition-and-mechanism}
+
+\hypertarget{appendix-c4ac6bb0fff8-definition-and-mechanism}{}
+
+C++23 preserves declaration order for nonzero-size non-variant data members even across different access labels; earlier standards had weaker ordering guarantees. alignas can request supported stronger alignment, increasing stride. Standard-layout and trivial copyability are distinct; offsetof is guaranteed for standard-layout types, while use on others is conditionally supported. Verify CPU/upload/shader offsets separately.
+
+\end{allmightroledefinition}
+
+An application binary interface (ABI) specifies implementation-level calling and data-layout conventions. Member offsets, complete size/alignment, and calling conventions affect binary compatibility. sizeof/alignof/offsetof inspect a standard-layout record; they do not define a portable file schema. Assume stated target rules before deriving 0/4/8 offsets.
+
+\subsection{Prerequisites}\label{appendix-c4ac6bb0fff8-prerequisites}
+
+\hypertarget{appendix-c4ac6bb0fff8-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a1f7c53b4742]{Alignment and padding} --- Address divisibility determines legal placement and layout holes.
+\item
+  \hyperref[appendix-cc04044b5782]{Fixed-width integer types} --- The representation width fixes byte count and valid shift range.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-c4ac6bb0fff8-used-by}
+
+\hypertarget{appendix-c4ac6bb0fff8-used-by}{}
+
+\begin{itemize}
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=appendix-ffdc1d4e5350}{Matrix storage indexing and strides (Mathematics for Visual Computing, Reference notes: Matrix storage indexing and strides)}
+\item
+  \hyperref[appendix-958870a64c53]{Standard-layout and trivial copyability} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\end{itemize}
+
+Update downstream uses when later chunks build on this concept.
+
+\subsection{Recall and next depth}\label{appendix-c4ac6bb0fff8-recall-and-next-depth}
+
+\hypertarget{appendix-c4ac6bb0fff8-recall-and-next-depth}{}
+
+Separate measured compiler layout from a proposed wire schema.
+
+\textbf{Pending:} Full lifetime replacement, ownership/concurrency policies and cross-target ABI experiments; the opening examples do not establish those later guarantees.
+
+\subsection{Source and navigation}\label{appendix-c4ac6bb0fff8-source-and-navigation}
+
+\hypertarget{appendix-c4ac6bb0fff8-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)} · \hyperref[01-foundations-i-ch003-bringing-the-object-model-back-to-bytes]{C007 development}

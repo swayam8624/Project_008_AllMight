@@ -8,7 +8,7 @@ The design route now extends from authored story into spaces, companions, and de
 
 **Recall question:** How does an AI action change the world in a way the player can interpret, and which movement-versus-decision contract must hold?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 113347–114800; source-span SHA256 ed585a63c67558834ef4d51a1f8e0682ed93ec5f1b719384150bc14d9dc11c45. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 114610–116063; source-span SHA256 be7ed2847201db1d0aa0c1fe33faaf0d9da06b8bebefb3538da2035041cfb6ed. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Narrative can be authored, played, and retold
@@ -1409,7 +1409,7 @@ Once sliding begins, kinetic friction opposes the relative tangential velocity. 
 
 The common Coulomb model above is **isotropic** when the same tangential limit applies in every direction along the contact surface. Millington explicitly distinguishes this from **anisotropic friction**, where resistance depends on tangent direction. Real examples include a tire that strongly resists sideways sliding while allowing rolling, brushed or grooved materials, skis, conveyor-like surfaces, or game mechanics that deliberately make travel easier along one axis.
 
-In a three-dimensional contact, choose two orthogonal tangent directions \(\mathbf{t}_1,\mathbf{t}_2\). An isotropic friction cone bounds the tangential impulse magnitude by a circular condition such as \(\|\boldsymbol{\lambda}_t\|\le\mu\lambda_n\). Directional friction can instead use different limits along the tangent axes, producing an elliptical admissible region in the simplest model. If \(\mu_1\) and \(\mu_2\) are the directional coefficients, an explanatory normalized form is \((\lambda_{t1}/(\mu_1\lambda_n))^2+(\lambda_{t2}/(\mu_2\lambda_n))^2\le1\) for positive normal impulse and nonzero limits. This is a teaching model, not a claim that every engine should implement an ellipse. A tire model may need slip ratio, load, wheel angular speed, suspension, and a nonlinear force curve rather than a Coulomb ellipse.
+In a three-dimensional contact, choose two orthogonal tangent directions $\mathbf{t}_1,\mathbf{t}_2$. An isotropic friction cone bounds the tangential impulse magnitude by a circular condition such as $\|\boldsymbol{\lambda}_t\|\le\mu\lambda_n$. Directional friction can instead use different limits along the tangent axes, producing an elliptical admissible region in the simplest model. If $\mu_1$ and $\mu_2$ are the directional coefficients, an explanatory normalized form is $(\lambda_{t1}/(\mu_1\lambda_n))^2+(\lambda_{t2}/(\mu_2\lambda_n))^2\le1$ for positive normal impulse and nonzero limits. This is a teaching model, not a claim that every engine should implement an ellipse. A tire model may need slip ratio, load, wheel angular speed, suspension, and a nonlinear force curve rather than a Coulomb ellipse.
 
 Directional friction introduces a representation question absent from scalar materials: **which frame defines the preferred direction?** A wood grain direction may belong to the surface local frame. A tire’s longitudinal/lateral directions belong to the wheel orientation projected into the contact plane. If tangent axes are reconstructed arbitrarily every frame, merely rotating that basis can change the apparent material response. Store or derive a meaningful material direction and transform it consistently into the current contact frame.
 

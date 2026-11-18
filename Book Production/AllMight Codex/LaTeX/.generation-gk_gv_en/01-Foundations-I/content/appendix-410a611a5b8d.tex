@@ -1,0 +1,31 @@
+\hypertarget{appendix-410a611a5b8d}{}
+\section*{C++ modules and reachability}
+\chapter{C++ modules and reachability}\label{appendix-410a611a5b8d-c-modules-and-reachability}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C007 · \textbf{Latest development:} C007
+
+\section{Definition and mechanism}\label{appendix-410a611a5b8d-definition-and-mechanism}
+
+A named module imports semantic interfaces rather than textually pasting headers. A BMI supplies compiler-facing interface information; object code still participates in linking. Export visibility is not identical to semantic reachability, and a named-module import is distinct from a macro-bearing header-unit import.
+
+\section{Prerequisites}\label{appendix-410a611a5b8d-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-806686359e1b]{Translation units and linking} --- Interface information serves compilation, while object code serves linking; modules change their distribution.
+\end{itemize}
+
+\section{Used by}\label{appendix-410a611a5b8d-used-by}
+
+Later chunks extend this same node; dependent concepts are listed here as they are integrated.
+
+\section{Recall and next depth}\label{appendix-410a611a5b8d-recall-and-next-depth}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} Deeper ownership, pointer/reference, generic programming and module rules from later sources. This is written coverage, not demonstrated personal mastery.
+
+\section{Source and navigation}\label{appendix-410a611a5b8d-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Giving\%20a\%20program\%20a\%20buildable\%20shape}{C007 teaching chapter} · \hyperref[appendix-fd090d982a15-m007---parts-101-112]{Source coverage} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

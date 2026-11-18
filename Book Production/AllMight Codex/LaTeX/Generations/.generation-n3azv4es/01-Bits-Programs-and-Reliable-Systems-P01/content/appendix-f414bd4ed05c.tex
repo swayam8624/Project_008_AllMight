@@ -1,0 +1,82 @@
+\hypertarget{appendix-f414bd4ed05c}{}\label{referencestart:appendix-f414bd4ed05c}
+\section{Interpretation contract}\label{appendix-f414bd4ed05c-interpretation-contract}
+
+\hypertarget{appendix-f414bd4ed05c-interpretation-contract}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C003
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-f414bd4ed05c-definition-and-mechanism}
+
+\hypertarget{appendix-f414bd4ed05c-definition-and-mechanism}{}
+
+The width, layout, type, and conventions that turn an otherwise ambiguous bit pattern into data.
+
+\end{allmightroledefinition}
+
+For \BookInlineCode{{0}{x}{A}{D}}{0xAD}, unsigned interpretation gives 173; eight-bit two's complement gives −83. A contract must state width, signedness, field positions, byte order, allowed values, and any padding policy. Reinterpretation changes meaning; conversion may change the stored bits.
+
+\subsection{Prerequisites}\label{appendix-f414bd4ed05c-prerequisites}
+
+\hypertarget{appendix-f414bd4ed05c-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-ddbb69998a2e]{Bit} --- A bit has two possible logical states.
+\item
+  \hyperref[appendix-280445746493]{Bit significance} --- LSB means least significant bit, normally position 0 with weight 1.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-f414bd4ed05c-used-by}
+
+\hypertarget{appendix-f414bd4ed05c-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1d0dbe8924cc]{Fixed-point representation} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-53a8cfb25f8d]{Offset-binary coding} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#appendix-cbe594d1ab0a}{Integrity and authenticity (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Integrity and authenticity)} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#appendix-34ee45f161c1}{Bit casting and representation (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Bit casting and representation)} --- uses interpretation contract to establish this mechanism's representation or policy.
+\item
+  \hyperref[appendix-45303d03796a]{Integral promotion} --- uses interpretation contract as part of its representation or reasoning.
+\item
+  \hyperref[appendix-1f9963e1a5d1]{Bit packing} --- uses interpretation contract as part of its representation or reasoning.
+\item
+  \hyperref[appendix-f558f5b4d8f2]{Undefined behavior} --- uses interpretation contract as part of its representation or reasoning.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#appendix-91d09ebed979}{Serialization (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Serialization)} --- uses interpretation contract as part of its representation or reasoning.
+\item
+  \hyperref[appendix-942ad41afb30]{Compiler IR and machine instructions} --- uses interpretation contract as part of its representation or reasoning.
+\item
+  \hyperref[appendix-343615f49ddf]{IEEE-754 floating point} --- uses interpretation contract as part of its representation or reasoning.
+\item
+  \hyperref[appendix-05db24ccc28a]{Exhaustive finite-state testing} --- uses interpretation contract as part of its representation or reasoning.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#appendix-0b104bcba06b}{Storage duration and object lifetime (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Storage duration and object lifetime)} --- depends on this concept; see its prerequisite explanation.
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P02/main.pdf\#appendix-1077ea8fc737}{Continuous signals and discrete samples (Vision, XR, and Playable Worlds, Part 2, Reference notes: Continuous signals and discrete samples)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#appendix-a9f83ad40792}{Color encoding and linear-light operations (Mathematics for Visual Computing, Part 1, Reference notes: Color encoding and linear-light operations)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-f414bd4ed05c-recall-and-next-depth}
+
+\hypertarget{appendix-f414bd4ed05c-recall-and-next-depth}{}
+
+Explain interpretation contract without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} ABI, file formats, instruction encodings, pixels, and protocol schemas.
+
+\subsection{Source and navigation}\label{appendix-f414bd4ed05c-source-and-navigation}
+
+\hypertarget{appendix-f414bd4ed05c-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 development} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}
+
+\href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#01-foundations-i-ch002-where-the-bytes-live}{C003 development (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)}

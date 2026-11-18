@@ -8,7 +8,7 @@ Correct data structures answer only part of an engine’s job; a game also needs
 
 **Recall question:** How would you test that a chosen graph or spatial operation supports an actual player decision rather than only passing an isolated algorithm test?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 9744–10842; source-span SHA256 6108ecb33851f6e591b62ef7f35f4f588635a026750a60631e779b0e97ea78cf. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 9770–10868; source-span SHA256 60b7b6ebb6cb4c6bca5ff5e747da8c0a21e84a0e1d6420a4b33daefb199841a7. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## From an asset map to a correct navigable world — Phase 5, M028–M030, Parts 446–500
@@ -51,9 +51,9 @@ Now assign nonnegative weights to the same navigation graph: 0→1 costs 2, 0→
 
 A relaxation computes
 
-\[
+$$
 d(v)\leftarrow\min(d(v),\,d(u)+w(u,v)).
-\]
+$$
 
 The sum must be representable. An integer implementation should guard overflow; a floating implementation should specify how NaNs, infinities and negative values are handled. The lab uses a bounded integer infinity sentinel, checks positive-distance addition before performing it, rejects negative edge weights and ignores stale heap entries. With a binary heap and adjacency lists, an implementation that inserts an improved entry rather than decreasing an existing heap key typically has a bound on the order of O((V+E)log(V+E)) in a straightforward analysis, with variations from data structure and representation. Stating simply O(E log V) without identifying the queue and update strategy can hide assumptions.
 
@@ -61,10 +61,10 @@ The sum must be representable. An integer implementation should guard overflow; 
 
 **Floyd–Warshall** computes all-pairs shortest paths by gradually allowing more intermediate vertices. Let D_k(i,j) be the shortest route from i to j whose intermediate vertices are drawn from the first k candidate vertices. The recurrence is
 
-\[
+$$
 D_k(i,j)=\min\!\left(D_{k-1}(i,j),
 D_{k-1}(i,k)+D_{k-1}(k,j)\right).
-\]
+$$
 
 The algorithm follows from whether an optimal path uses intermediate k or not. A direct implementation costs O(V³) time and O(V²) storage, making it attractive as a small-graph *reference oracle* even when it is too expensive for a massive world graph. Negative cycles require explicit detection and interpretation. The Phase 5 lab uses bounded nonnegative generated weights and compares each Dijkstra row against Floyd–Warshall on 48 deterministic random six-vertex graphs. This is valuable differential testing, not proof for arbitrary graph size, negative weights or overflow.
 
@@ -72,9 +72,9 @@ The algorithm follows from whether an optimal path uses intermediate k or not. A
 
 In a large navigation world, we often want the shortest path to one target rather than the distances to all vertices. **A*** maintains the actual best-known cost g(n) from the start and a heuristic estimate h(n) of the remaining cost to the goal, ordering exploration by
 
-\[
+$$
 f(n)=g(n)+h(n).
-\]
+$$
 
 An **admissible heuristic** never overestimates the true remaining optimal cost h*(n), so h(n) ≤ h*(n). A **consistent heuristic** satisfies h(u) ≤ w(u,v)+h(v) for each edge and h(goal)=0, under the conventional nonnegative route-cost model. Consistency is a triangle inequality on heuristic potential and implies that f values behave nondecreasingly along improvements in a way that permits particularly simple closed-set handling. Admissibility and consistency are related but not synonymous.
 
@@ -120,10 +120,10 @@ One of the most important bridges from CPU algorithms to GPU execution is the **
 
 Formally,
 
-\[
+$$
 o_i=\sum_{j<i}c_j,\qquad
 \mathrm{total}=\sum_{j=0}^{n-1}c_j.
-\]
+$$
 
 An **inclusive scan** instead outputs the sum through the current element, e.g. [3,3,7,9]. The two definitions differ by an index shift and identity element. Confusing them can make GPU scatter writes overlap or start one element too far into a buffer. The lab tests both the expected exclusive offsets and total and rejects unsigned-sum overflow before it can wrap. An empty input has total zero and no offsets.
 
@@ -449,11 +449,11 @@ Nsight Systems can correlate Vulkan API calls, command-buffer creation, GPU work
 
 The first profiling question is therefore:
 
-\[
+$$
 \boxed{
 \text{where is time absent from useful work?}
 }
-\]
+$$
 
 not “which function looks expensive?”
 
@@ -479,7 +479,7 @@ Shader profiling becomes useful only after evidence says the workload is shader/
 
 This gives a narrowing funnel:
 
-\[
+$$
 \boxed{
 \text{system timeline}
 \rightarrow
@@ -489,7 +489,7 @@ This gives a narrowing funnel:
 \rightarrow
 \text{shader/source}
 }
-\]
+$$
 
 Jumping directly to source-level micro-optimization can waste hours when the real problem is an idle gap or synchronization edge.
 
@@ -531,9 +531,9 @@ Profile:
 
 Performance is a function of workload and hardware:
 
-\[
+$$
 T = T(\text{scene},\text{settings},\text{hardware},\text{driver},\text{build}).
-\]
+$$
 
 Store enough metadata with captures to reproduce that tuple.
 
@@ -553,7 +553,7 @@ If a shader is bandwidth limited, reducing ALU may do nothing. If it is latency 
 
 Profiling is an iterative scientific loop:
 
-\[
+$$
 \boxed{
 \text{observe}
 \rightarrow
@@ -563,7 +563,7 @@ Profiling is an iterative scientific loop:
 \rightarrow
 \text{remeasure}
 }
-\]
+$$
 
 Tracy and engine-side timers are excellent for continuous CPU instrumentation. RenderDoc is excellent for portable frame inspection. Nsight Systems is strong for CPU/GPU scheduling correlation on supported NVIDIA systems. Nsight Graphics provides deep Vulkan/D3D graphics and shader analysis on NVIDIA hardware. Xcode GPU tools serve the analogous Apple/Metal workflow.
 
@@ -590,7 +590,7 @@ A large curriculum gets weaker if every source is treated as authoritative about
 
 The curriculum rule is:
 
-\[
+$$
 \boxed{
 \text{concept source}
 \rightarrow
@@ -600,7 +600,7 @@ The curriculum rule is:
 \rightarrow
 \text{current specification}
 }
-\]
+$$
 
 That is why this volume does not create detached “Kohi,” “Cherno,” or “CppCon” chapters. Their material is merged where the engineering pressure makes it necessary.
 

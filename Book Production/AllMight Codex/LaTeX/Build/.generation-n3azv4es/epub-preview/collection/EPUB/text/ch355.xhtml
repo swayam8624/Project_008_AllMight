@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch355.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-96da0b153b77-reflectance-and-rendering-equation" class="level2">
+<h2>Reflectance and rendering equation</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> XR01 · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-96da0b153b77-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A BRDF relates incident irradiance to outgoing radiance with directional weighting. The surface rendering equation adds emission and cosine-weighted incoming contributions. Visibility and transport assumptions matter; blurring completed output does not avoid shading.</p>
+</section>
+<section id="appendix-96da0b153b77-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch341.xhtml#appendix-215c2570199b-light-spectra-and-radiometry" class="wikilink">Light spectra and radiometry</a> — The light quantity and units must be established before its interaction or visual effect is modeled.</li>
+</ul>
+</section>
+<section id="appendix-96da0b153b77-used-by" class="level3">
+<h3>Used by</h3>
+<p>Later independent XR sources will extend this same node. - <a href="ch278.xhtml#appendix-031e02bf28af-monte-carlo-rendering-estimators-and-variance" class="wikilink">Monte Carlo rendering estimators and variance (Mathematics for Visual Computing, Part 2, Reference notes: Monte Carlo rendering estimators and variance)</a> - <a href="ch354.xhtml#appendix-89b2d5b7c9e1-surface-orientation-from-image-brightness" class="wikilink">Surface orientation from image brightness</a></p>
+<ul>
+<li><a href="ch282.xhtml#appendix-68be451b78b1-reservoir-resampling-and-restir" class="wikilink">Reservoir resampling and ReSTIR (Mathematics for Visual Computing, Part 2, Reference notes: Reservoir resampling and ReSTIR)</a> ## Recall and next depth</li>
+</ul>
+<p>Explain Lambertian rho/pi and identify what sampled shading approximates. Pending: transport estimators and actual workload profiling. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.</p>
+</section>
+<section id="appendix-96da0b153b77-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-materials-turn-incoming-light-into-outgoing-light" class="wikilink">Expanded teaching explanation (Vision, XR, and Playable Worlds, Part 2, Ch. 9)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-xr01---independent-seeing-and-representation-source" class="wikilink">Independent coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-96da0b153b77-university-course-development" class="level3">
+<h3>University course development</h3>
+<p>Extend the existing light-transport note with the distinction between a material’s directional response and the incident illumination it receives. At surface point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>, outgoing radiance depends on emitted radiance plus an integral over incoming directions. The BRDF <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>o</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math> is reflected outgoing radiance per incident irradiance, with units of inverse steradians; it depends on incoming direction <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+</math> and viewing direction <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>ω</mi>
+    <mi>o</mi>
+  </msub>
+</math>. A physically plausible BRDF is nonnegative and conserves energy, but can still have narrow glossy lobes that are difficult to sample. The rendering equation combines this local material response with visibility, incoming radiance, and the cosine foreshortening factor. This form explains why shading, direct lighting, global illumination, and Monte Carlo integration are connected parts of one transport calculation rather than independent image effects.</p>
+<p><a href="ch310.xhtml#id_03-visual-computing-i-ch004-reflectance-brdfs-and-shading" class="wikilink">Reflectance, BRDFs, and shading (Geometry, Cameras, and Image Formation, Part 1, Ch. 11)</a> · <a href="ch319.xhtml#id_03-visual-computing-i-ch007-the-rendering-equation-and-light-transport" class="wikilink">The rendering equation and light transport</a> · <a href="ch277.xhtml#id_03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation" class="wikilink">Numerical integration and Monte Carlo estimation (Mathematics for Visual Computing, Part 2, Ch. 16)</a></p>
+</section>
+</section>
+</body>
+</html>

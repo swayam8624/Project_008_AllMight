@@ -8,7 +8,7 @@ Gaussian splatting represents captured scenes with oriented kernels carrying sha
 
 **Recall question:** Which parameters determine a Gaussian’s spatial support and appearance?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 82103–84849; source-span SHA256 ea06feddb05551bc324e247b4c1b72b558839cb97b983f21718f71dc5456d7e7. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 83105–85851; source-span SHA256 ea06feddb05551bc324e247b4c1b72b558839cb97b983f21718f71dc5456d7e7. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 # From an anisotropic kernel to an editable captured world

@@ -1,0 +1,3725 @@
+According to the canonical curriculum, the next three parts are **508. Subspaces**, **509. Linear combinations**, and **510. Span**. These three are tightly connected, but they are not the same concept: a **subspace** is a smaller vector space living inside a larger one; a **linear combination** is an operation for constructing vectors from other vectors; and the **span** of some vectors is the complete set of everything that can be constructed from them using linear combinations. Project_Sheldon_Master_Curricul…
+
+The dependency chain is:
+
+\[
+\boxed{
+\text{vector space}
+\rightarrow
+\text{subspace}
+\rightarrow
+\text{linear combination}
+\rightarrow
+\text{span}
+}
+\]
+
+and Parts 511–515 will build linear independence, basis, dimension, coordinates, and change of basis directly on top of what we establish here.
+
+---
+
+# PART 508 — SUBSPACES
+
+## 508.1 The problem that creates the idea of a subspace
+
+Part 507 gave us a vector space \(V\).
+
+For example,
+
+\[
+V=\mathbb R^3.
+\]
+
+That means our objects are triples
+
+\[
+(x,y,z),
+\]
+
+and we have vector addition and real scalar multiplication satisfying the vector-space axioms.
+
+But suppose our problem only ever uses vectors whose \(z\)-coordinate is zero:
+
+\[
+(x,y,0).
+\]
+
+These vectors lie inside \(\mathbb R^3\), but they do not use the entire space.
+
+Geometrically:
+
+```text
+                 z
+                 ↑
+                 |
+                 |
+      y          |
+      ↑          |
+      |          |
+      |__________|________→ x
+     /
+    /
+```
+
+The \(xy\)-plane is sitting inside 3D space.
+
+The natural question is:
+
+> Does that plane itself behave like a vector space?
+
+If it does, we would like to treat it as one without rebuilding all of linear algebra from zero.
+
+That smaller vector space is called a **subspace**.
+
+---
+
+# 508.2 Formal definition
+
+Let \(V\) be a vector space over a field \(F\).
+
+A subset
+
+\[
+W\subseteq V
+\]
+
+is called a **subspace of \(V\)** when \(W\), using the **same vector addition and scalar multiplication inherited from \(V\)**, is itself a vector space.
+
+That last phrase matters enormously.
+
+We do not invent new addition rules for \(W\).
+
+If vectors in \(V\) add using
+
+\[
+\vec u+\vec v,
+\]
+
+then vectors in \(W\) use exactly the same operation.
+
+Likewise for scalar multiplication.
+
+So:
+
+\[
+\boxed{
+W\le V
+}
+\]
+
+is sometimes used to mean that \(W\) is a subspace of \(V\).
+
+---
+
+# 508.3 Why checking all eight vector-space axioms would be wasteful
+
+Suppose \(V\) is already known to be a vector space.
+
+Then associativity already holds in \(V\):
+
+\[
+(\vec u+\vec v)+\vec w
+=
+\vec u+(\vec v+\vec w).
+\]
+
+If
+
+\[
+\vec u,\vec v,\vec w\in W\subseteq V,
+\]
+
+the exact same equality remains true because those vectors are also members of \(V\).
+
+Similarly:
+
+- addition is already commutative;
+- distributivity already holds;
+- scalar multiplication compatibility already holds.
+
+So most vector-space axioms are **inherited automatically**.
+
+The real danger is that performing an allowed operation could take us outside \(W\).
+
+Therefore the subspace test can be dramatically simplified.
+
+---
+
+# 508.4 The practical subspace test
+
+A nonempty subset \(W\subseteq V\) is a subspace if it is closed under:
+
+\[
+\boxed{\text{vector addition}}
+\]
+
+and
+
+\[
+\boxed{\text{scalar multiplication}}.
+\]
+
+Meaning:
+
+if
+
+\[
+\vec u,\vec v\in W,
+\]
+
+then:
+
+\[
+\vec u+\vec v\in W.
+\]
+
+And if:
+
+\[
+a\in F,\quad \vec v\in W,
+\]
+
+then:
+
+\[
+a\vec v\in W.
+\]
+
+That is enough.
+
+Why?
+
+Because the rest follows from the parent vector space.
+
+---
+
+# 508.5 Why zero automatically appears
+
+Suppose \(W\) is nonempty.
+
+Then there exists some:
+
+\[
+\vec v\in W.
+\]
+
+Closure under scalar multiplication says that for every scalar \(a\),
+
+\[
+a\vec v\in W.
+\]
+
+Choose:
+
+\[
+a=0.
+\]
+
+Then:
+
+\[
+0\vec v=\vec0.
+\]
+
+Therefore:
+
+\[
+\boxed{\vec0\in W}.
+\]
+
+So the zero vector does not need to be separately assumed if we already know \(W\neq\varnothing\) and scalar closure holds.
+
+---
+
+# 508.6 Why additive inverses automatically appear
+
+Again let:
+
+\[
+\vec v\in W.
+\]
+
+Because \(W\) is closed under scalar multiplication, choose:
+
+\[
+a=-1.
+\]
+
+Then:
+
+\[
+(-1)\vec v=-\vec v\in W.
+\]
+
+So every vector's additive inverse also belongs to the subset.
+
+Therefore the two closure properties recover the missing vector-space requirements.
+
+---
+
+# 508.7 The even stronger one-step subspace criterion
+
+There is an elegant equivalent test.
+
+A nonempty set \(W\subseteq V\) is a subspace if for every
+
+\[
+\vec u,\vec v\in W
+\]
+
+and every scalars
+
+\[
+a,b\in F,
+\]
+
+we have:
+
+\[
+\boxed{
+a\vec u+b\vec v\in W.
+}
+\]
+
+This single expression combines scalar multiplication and vector addition.
+
+Why?
+
+Choose:
+
+\[
+a=b=1.
+\]
+
+Then:
+
+\[
+\vec u+\vec v\in W.
+\]
+
+Choose:
+
+\[
+b=0.
+\]
+
+Then:
+
+\[
+a\vec u\in W.
+\]
+
+So closure under arbitrary two-vector weighted sums captures both essential closure requirements.
+
+You will shortly recognize
+
+\[
+a\vec u+b\vec v
+\]
+
+as a **linear combination**.
+
+That is why Parts 508 and 509 sit next to each other.
+
+---
+
+# 508.8 First example: the \(xy\)-plane
+
+Define:
+
+\[
+W=
+\{
+(x,y,z)\in\mathbb R^3
+\mid
+z=0
+\}.
+\]
+
+Equivalently:
+
+\[
+W=
+\{
+(x,y,0)
+\mid x,y\in\mathbb R
+\}.
+\]
+
+We want to prove:
+
+\[
+W
+\]
+
+is a subspace of:
+
+\[
+\mathbb R^3.
+\]
+
+Take two arbitrary vectors in \(W\):
+
+\[
+\vec u=(u_x,u_y,0)
+\]
+
+and:
+
+\[
+\vec v=(v_x,v_y,0).
+\]
+
+Add them:
+
+\[
+\vec u+\vec v
+=
+(u_x+v_x,\;u_y+v_y,\;0+0).
+\]
+
+Therefore:
+
+\[
+\vec u+\vec v
+=
+(u_x+v_x,\;u_y+v_y,\;0).
+\]
+
+Its third coordinate remains zero.
+
+Thus:
+
+\[
+\vec u+\vec v\in W.
+\]
+
+Now take scalar \(a\in\mathbb R\).
+
+\[
+a\vec u
+=
+(au_x,\;au_y,\;a\cdot0)
+\]
+
+so:
+
+\[
+a\vec u
+=
+(au_x,\;au_y,\;0).
+\]
+
+Again the third coordinate remains zero.
+
+Therefore:
+
+\[
+a\vec u\in W.
+\]
+
+Hence:
+
+\[
+\boxed{
+W\text{ is a subspace of }\mathbb R^3.
+}
+\]
+
+---
+
+# 508.9 What happened structurally?
+
+The defining constraint was:
+
+\[
+z=0.
+\]
+
+Addition preserved that constraint:
+
+\[
+0+0=0.
+\]
+
+Scalar multiplication preserved it:
+
+\[
+a0=0.
+\]
+
+This is a recurring theme.
+
+A subspace is often described by constraints that remain true under linear operations.
+
+---
+
+# 508.10 Another example: a line through the origin
+
+Choose some nonzero vector:
+
+\[
+\vec d\in\mathbb R^3.
+\]
+
+Consider:
+
+\[
+W=
+\{
+t\vec d
+\mid
+t\in\mathbb R
+\}.
+\]
+
+Geometrically, this is the infinite line passing through the origin in direction \(\vec d\).
+
+For example with:
+
+\[
+\vec d=(1,2,0),
+\]
+
+the set contains:
+
+\[
+\ldots,
+-2\vec d,
+-\vec d,
+\vec0,
+\vec d,
+2\vec d,
+3\vec d,
+\ldots
+\]
+
+and every noninteger real scaling too.
+
+Take:
+
+\[
+\vec u=a\vec d
+\]
+
+and:
+
+\[
+\vec v=b\vec d.
+\]
+
+Then:
+
+\[
+\vec u+\vec v
+=
+a\vec d+b\vec d.
+\]
+
+Using distributivity:
+
+\[
+=
+(a+b)\vec d.
+\]
+
+Since \(a+b\in\mathbb R\), this is still in \(W\).
+
+Now scale:
+
+\[
+c\vec u
+=
+c(a\vec d)
+=
+(ca)\vec d.
+\]
+
+Again still in \(W\).
+
+Therefore the line is a subspace.
+
+---
+
+# 508.11 Why the line must pass through the origin
+
+Now consider a shifted line:
+
+\[
+L=
+\{
+(1,t)
+\mid
+t\in\mathbb R
+\}.
+\]
+
+Graphically:
+
+```text
+y
+↑
+|       |
+|       |
+|       |
+|       |  x = 1
+|       |
++-------|--------------→ x
+0       1
+```
+
+Does this form a subspace of \(\mathbb R^2\)?
+
+Immediately check the zero vector:
+
+\[
+(0,0).
+\]
+
+Is it in \(L\)?
+
+No, because every member has first coordinate \(1\).
+
+Therefore:
+
+\[
+\boxed{
+L\text{ is not a subspace}.
+}
+\]
+
+We can also see scalar closure fail.
+
+Take:
+
+\[
+(1,2)\in L.
+\]
+
+Multiply by \(2\):
+
+\[
+2(1,2)=(2,4).
+\]
+
+But:
+
+\[
+(2,4)\notin L.
+\]
+
+So closure fails.
+
+This gives one of the most useful geometric recognition rules:
+
+\[
+\boxed{
+\text{Any geometric linear subspace must contain the origin.}
+}
+\]
+
+A plane or line shifted away from the origin is usually an **affine** set, not a vector subspace.
+
+Affine combinations are later Part 571.
+
+---
+
+# 508.12 A plane through the origin
+
+Consider:
+
+\[
+W=
+\{
+(x,y,z)\in\mathbb R^3
+\mid
+x+y+z=0
+\}.
+\]
+
+Take:
+
+\[
+\vec u=(u_x,u_y,u_z)
+\]
+
+with:
+
+\[
+u_x+u_y+u_z=0,
+\]
+
+and:
+
+\[
+\vec v=(v_x,v_y,v_z)
+\]
+
+with:
+
+\[
+v_x+v_y+v_z=0.
+\]
+
+For their sum:
+
+\[
+(u_x+v_x)+(u_y+v_y)+(u_z+v_z)
+\]
+
+rearrange:
+
+\[
+=
+(u_x+u_y+u_z)
++
+(v_x+v_y+v_z).
+\]
+
+Both parentheses equal zero:
+
+\[
+0+0=0.
+\]
+
+Therefore the sum remains inside.
+
+For scalar \(a\):
+
+\[
+a u_x+a u_y+a u_z
+=
+a(u_x+u_y+u_z)
+=
+a0
+=
+0.
+\]
+
+So the set is closed under scaling too.
+
+Therefore:
+
+\[
+\boxed{
+x+y+z=0
+}
+\]
+
+defines a subspace.
+
+---
+
+# 508.13 Why \(x+y+z=1\) does not
+
+Now consider:
+
+\[
+A=
+\{
+(x,y,z)
+\mid
+x+y+z=1
+\}.
+\]
+
+Take some member:
+
+\[
+(1,0,0).
+\]
+
+Scale it by \(2\):
+
+\[
+(2,0,0).
+\]
+
+But:
+
+\[
+2+0+0=2\neq1.
+\]
+
+Therefore scalar closure fails.
+
+Also:
+
+\[
+\vec0=(0,0,0)
+\]
+
+does not satisfy:
+
+\[
+0+0+0=1.
+\]
+
+So:
+
+\[
+\boxed{
+x+y+z=1
+}
+\]
+
+describes a plane, but not a vector subspace.
+
+Again:
+
+```text
+plane through origin       → can be subspace
+parallel shifted plane     → not subspace
+```
+
+The visual shape alone is insufficient.
+
+Its relationship to the origin matters.
+
+---
+
+# 508.14 The zero subspace
+
+Every vector space contains:
+
+\[
+\{\vec0\}.
+\]
+
+Does this set form a subspace?
+
+Yes.
+
+Addition:
+
+\[
+\vec0+\vec0=\vec0.
+\]
+
+Scalar multiplication:
+
+\[
+a\vec0=\vec0.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\{\vec0\}
+}
+\]
+
+is always a subspace.
+
+It is called the **zero subspace** or **trivial subspace**.
+
+---
+
+# 508.15 The whole vector space is also a subspace
+
+Obviously:
+
+\[
+V\subseteq V.
+\]
+
+Since \(V\) is already a vector space:
+
+\[
+\boxed{
+V
+}
+\]
+
+is itself a subspace of \(V\).
+
+So every vector space has at least two obvious subspaces:
+
+\[
+\{\vec0\}
+\]
+
+and:
+
+\[
+V.
+\]
+
+These are often called the **trivial subspaces**.
+
+Anything strictly between them is a **proper subspace**.
+
+---
+
+# 508.16 The unit circle is not a subspace
+
+Consider:
+
+\[
+U=
+\{
+(x,y)\in\mathbb R^2
+\mid
+x^2+y^2=1
+\}.
+\]
+
+This is the unit circle.
+
+Take:
+
+\[
+(1,0)\in U.
+\]
+
+Scale by:
+
+\[
+2.
+\]
+
+Then:
+
+\[
+(2,0).
+\]
+
+Its squared length is:
+
+\[
+4,
+\]
+
+not \(1\).
+
+So:
+
+\[
+(2,0)\notin U.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\text{unit circle is not a subspace}
+}
+\]
+
+because scalar closure fails.
+
+Likewise the unit sphere in 3D is not a subspace.
+
+---
+
+# 508.17 A quadrant is not a subspace
+
+Consider:
+
+\[
+Q=
+\{
+(x,y)
+\mid
+x\ge0,\ y\ge0
+\}.
+\]
+
+Addition remains inside.
+
+For example:
+
+\[
+(1,2)+(3,4)=(4,6).
+\]
+
+So addition closure looks fine.
+
+But choose:
+
+\[
+a=-1.
+\]
+
+Then:
+
+\[
+-1(1,2)=(-1,-2),
+\]
+
+which is outside the first quadrant.
+
+Therefore scalar closure fails.
+
+This demonstrates something important:
+
+\[
+\boxed{
+\text{passing one closure condition is not enough}
+}
+\]
+
+---
+
+# 508.18 Intersections of subspaces
+
+Suppose:
+
+\[
+W_1
+\]
+
+and:
+
+\[
+W_2
+\]
+
+are both subspaces of \(V\).
+
+Consider:
+
+\[
+W_1\cap W_2.
+\]
+
+This means vectors belonging to both.
+
+Is the intersection a subspace?
+
+Yes.
+
+Take:
+
+\[
+\vec u,\vec v\in W_1\cap W_2.
+\]
+
+Then they belong to both \(W_1\) and \(W_2\).
+
+Since both are subspaces:
+
+\[
+\vec u+\vec v\in W_1
+\]
+
+and:
+
+\[
+\vec u+\vec v\in W_2.
+\]
+
+Therefore:
+
+\[
+\vec u+\vec v\in W_1\cap W_2.
+\]
+
+Likewise for scalar multiplication.
+
+Thus:
+
+\[
+\boxed{
+W_1\cap W_2
+\text{ is always a subspace}.
+}
+\]
+
+This generalizes to intersections of arbitrarily many subspaces.
+
+---
+
+# 508.19 Unions are usually not subspaces
+
+Suppose in \(\mathbb R^2\):
+
+\[
+W_x=
+\{(x,0)\}
+\]
+
+is the \(x\)-axis.
+
+And:
+
+\[
+W_y=
+\{(0,y)\}
+\]
+
+is the \(y\)-axis.
+
+Their union contains:
+
+\[
+(1,0)
+\]
+
+and:
+
+\[
+(0,1).
+\]
+
+But their sum is:
+
+\[
+(1,1).
+\]
+
+That vector lies on neither axis.
+
+Therefore:
+
+\[
+(1,1)\notin W_x\cup W_y.
+\]
+
+So:
+
+\[
+\boxed{
+W_x\cup W_y
+}
+\]
+
+is not a subspace.
+
+The union of two subspaces is a subspace only in special cases—for example when one is contained entirely inside the other.
+
+---
+
+# 508.20 Computational representation of a subspace
+
+A subspace is primarily a mathematical set, so there is no single C++ memory representation.
+
+One possible representation is a **constraint**.
+
+For the \(xy\)-plane:
+
+```cpp
+bool belongsToXYPlane(Vec3 v) noexcept {
+    return v.z == 0.0f;
+}
+```
+
+Mathematically:
+
+\[
+z=0.
+\]
+
+But exact equality is fragile when values are produced numerically.
+
+A production numerical check might use:
+
+```cpp
+bool approximatelyInXYPlane(
+    Vec3 v,
+    float tolerance = 1e-6f) noexcept
+{
+    return std::abs(v.z) <= tolerance;
+}
+```
+
+Yet notice the conceptual shift.
+
+Mathematically:
+
+\[
+z=0
+\]
+
+is exact.
+
+Computationally:
+
+\[
+|z|\le\varepsilon
+\]
+
+defines a **thickened region**, not literally the mathematical subspace.
+
+So numerical membership and mathematical membership are not identical.
+
+---
+
+# 508.21 Another representation: generators
+
+Instead of defining a subspace by constraints, we can define it from vectors that generate it.
+
+For example the \(xy\)-plane can be generated from:
+
+\[
+(1,0,0)
+\]
+
+and:
+
+\[
+(0,1,0).
+\]
+
+Every vector in the plane can be written:
+
+\[
+a(1,0,0)+b(0,1,0).
+\]
+
+That idea is exactly **span**, Part 510.
+
+So a subspace can often be represented either by:
+
+```text
+constraints describing what vectors satisfy
+```
+
+or:
+
+```text
+generators describing how every vector can be constructed
+```
+
+Those are two complementary viewpoints.
+
+Later linear algebra constantly moves between them.
+
+---
+
+# PART 509 — LINEAR COMBINATIONS
+
+Now we introduce one of the most important operations in all of linear algebra.
+
+---
+
+# 509.1 Where linear combinations come from
+
+A vector space gives us exactly two primitive operations:
+
+\[
+\text{vector addition}
+\]
+
+and:
+
+\[
+\text{scalar multiplication}.
+\]
+
+So if we possess vectors:
+
+\[
+\vec v_1,\vec v_2,\ldots,\vec v_k,
+\]
+
+what kinds of new vectors can we construct using only those legal operations?
+
+We can scale them:
+
+\[
+a_1\vec v_1,
+\quad
+a_2\vec v_2,
+\quad
+\ldots
+\]
+
+and then add the results:
+
+\[
+a_1\vec v_1
++
+a_2\vec v_2
++
+\cdots
++
+a_k\vec v_k.
+\]
+
+That is a **linear combination**.
+
+---
+
+# 509.2 Formal definition
+
+Let:
+
+\[
+\vec v_1,\ldots,\vec v_k\in V
+\]
+
+and scalars:
+
+\[
+a_1,\ldots,a_k\in F.
+\]
+
+Then:
+
+\[
+\boxed{
+a_1\vec v_1
++
+a_2\vec v_2
++
+\cdots
++
+a_k\vec v_k
+}
+\]
+
+is called a **linear combination** of the vectors.
+
+The numbers:
+
+\[
+a_1,\ldots,a_k
+\]
+
+are called the **coefficients** or **weights**.
+
+No special restriction is placed on them beyond belonging to the scalar field.
+
+So in a real vector space, coefficients may be:
+
+\[
+2,\quad -5,\quad \frac12,\quad \pi,\quad 0,\quad\sqrt2,\ldots
+\]
+
+---
+
+# 509.3 A linear combination is not the same as an average
+
+This is important.
+
+Consider:
+
+\[
+2\vec u-7\vec v.
+\]
+
+That is a linear combination.
+
+The coefficients:
+
+\[
+2,\quad -7
+\]
+
+do not sum to one.
+
+They are not probabilities.
+
+They do not have to be positive.
+
+A linear combination allows **arbitrary field scalars**.
+
+Later:
+
+- affine combinations require coefficients summing to \(1\);
+- convex combinations additionally require nonnegative coefficients.
+
+Those are Parts 571–572.
+
+So for now:
+
+\[
+\boxed{
+\text{linear combination}
+=
+\text{arbitrary scalar-weighted sum}
+}
+\]
+
+---
+
+# 509.4 Geometric meaning
+
+Take two vectors in \(\mathbb R^2\):
+
+\[
+\vec u
+\]
+
+and:
+
+\[
+\vec v.
+\]
+
+Consider:
+
+\[
+a\vec u+b\vec v.
+\]
+
+The first term moves along the direction represented by \(\vec u\), scaled by \(a\).
+
+The second moves along \(\vec v\), scaled by \(b\).
+
+Then we add those movements.
+
+So a linear combination is a way of synthesizing a new displacement using existing directions.
+
+---
+
+# 509.5 Coordinate example
+
+Let:
+
+\[
+\vec u=(1,0)
+\]
+
+and:
+
+\[
+\vec v=(0,1).
+\]
+
+Choose:
+
+\[
+a=3,\qquad b=2.
+\]
+
+Then:
+
+\[
+3\vec u+2\vec v
+\]
+
+becomes:
+
+\[
+3(1,0)+2(0,1).
+\]
+
+Scale:
+
+\[
+(3,0)+(0,2).
+\]
+
+Add:
+
+\[
+\boxed{(3,2)}.
+\]
+
+So:
+
+\[
+(3,2)
+=
+3(1,0)+2(0,1).
+\]
+
+You have already seen this idea implicitly when discussing coordinates.
+
+Now it has a name.
+
+The components \(3\) and \(2\) are coefficients in a linear combination of reference vectors.
+
+Part 514 later formalizes this as coordinate representation relative to a basis.
+
+---
+
+# 509.6 Linear combinations explain coordinates
+
+This is one of the deepest connections so far.
+
+When you write:
+
+\[
+(3,2),
+\]
+
+you should increasingly think:
+
+\[
+3\vec e_1+2\vec e_2
+\]
+
+where the reference vectors are:
+
+\[
+\vec e_1=(1,0)
+\]
+
+and:
+
+\[
+\vec e_2=(0,1).
+\]
+
+The coordinate tuple does not merely store unrelated numbers.
+
+The numbers tell you **how much of each reference vector to combine**.
+
+So:
+
+\[
+\boxed{
+\text{coordinates are coefficients of a linear combination}
+}
+\]
+
+relative to chosen reference vectors.
+
+That statement becomes fully formal in Parts 512–514.
+
+---
+
+# 509.7 Worked example with non-axis-aligned vectors
+
+Let:
+
+\[
+\vec u=(1,1)
+\]
+
+and:
+
+\[
+\vec v=(1,-1).
+\]
+
+Consider:
+
+\[
+2\vec u+3\vec v.
+\]
+
+First:
+
+\[
+2\vec u
+=
+2(1,1)
+=
+(2,2).
+\]
+
+Then:
+
+\[
+3\vec v
+=
+3(1,-1)
+=
+(3,-3).
+\]
+
+Add:
+
+\[
+(2,2)+(3,-3)
+=
+(5,-1).
+\]
+
+Therefore:
+
+\[
+\boxed{
+2(1,1)+3(1,-1)=(5,-1).
+}
+\]
+
+Notice the resulting vector does not need to point in either original direction.
+
+Combining directions creates new directions.
+
+---
+
+# 509.8 Can we reconstruct a target vector?
+
+Suppose we have:
+
+\[
+\vec u=(1,1)
+\]
+
+and:
+
+\[
+\vec v=(1,-1).
+\]
+
+Can we produce:
+
+\[
+\vec t=(4,2)
+\]
+
+as a linear combination?
+
+We seek scalars \(a,b\) satisfying:
+
+\[
+a\vec u+b\vec v=\vec t.
+\]
+
+Substitute:
+
+\[
+a(1,1)+b(1,-1)=(4,2).
+\]
+
+Component-wise:
+
+\[
+(a+b,\;a-b)=(4,2).
+\]
+
+Therefore:
+
+\[
+a+b=4
+\]
+
+and:
+
+\[
+a-b=2.
+\]
+
+Add the equations:
+
+\[
+2a=6.
+\]
+
+Thus:
+
+\[
+a=3.
+\]
+
+Then:
+
+\[
+3+b=4
+\]
+
+so:
+
+\[
+b=1.
+\]
+
+Therefore:
+
+\[
+\boxed{
+(4,2)=3(1,1)+(1,-1).
+}
+\]
+
+This is the beginning of a huge class of questions:
+
+> Can this target vector be constructed from these vectors?
+
+Span answers exactly that question.
+
+---
+
+# 509.9 A target that cannot be produced
+
+Take vectors in \(\mathbb R^3\):
+
+\[
+\vec u=(1,0,0)
+\]
+
+and:
+
+\[
+\vec v=(0,1,0).
+\]
+
+Any linear combination is:
+
+\[
+a\vec u+b\vec v
+\]
+
+which gives:
+
+\[
+(a,b,0).
+\]
+
+Can we create:
+
+\[
+(1,2,3)?
+\]
+
+No.
+
+Every combination has third coordinate zero.
+
+But the target has:
+
+\[
+z=3.
+\]
+
+Therefore:
+
+\[
+(1,2,3)
+\]
+
+cannot be constructed from \(\vec u,\vec v\).
+
+This is exactly why those two vectors generate only the \(xy\)-plane rather than all of \(\mathbb R^3\).
+
+---
+
+# 509.10 Zero coefficients matter
+
+Suppose:
+
+\[
+a_3=0.
+\]
+
+Then:
+
+\[
+a_3\vec v_3
+=
+0\vec v_3
+=
+\vec0.
+\]
+
+So the vector contributes nothing.
+
+This means a linear combination may technically involve many vectors while only some have nonzero influence.
+
+For example:
+
+\[
+5\vec v_1
++
+0\vec v_2
+-
+2\vec v_3
+\]
+
+is still a linear combination of all three listed vectors.
+
+---
+
+# 509.11 Negative coefficients
+
+Negative coefficients reverse vectors.
+
+For example:
+
+\[
+-2\vec v.
+\]
+
+Geometrically:
+
+- reverse direction;
+- double the magnitude.
+
+Thus a linear combination is not constrained to the region "between" its generators.
+
+It can travel arbitrarily far in positive or negative directions.
+
+This is one reason span usually produces entire lines and planes through the origin rather than bounded shapes.
+
+---
+
+# 509.12 Linear combination of one vector
+
+With one vector:
+
+\[
+\vec v,
+\]
+
+the possible linear combinations are:
+
+\[
+a\vec v.
+\]
+
+As \(a\) varies over all real values:
+
+```text
+... -2v, -v, 0, v, 2v, ...
+```
+
+and every real scaling between them.
+
+Geometrically, for nonzero \(\vec v\), those combinations form a line through the origin.
+
+This will become:
+
+\[
+\operatorname{span}\{\vec v\}.
+\]
+
+---
+
+# 509.13 Linear combination of two vectors
+
+With two vectors:
+
+\[
+a\vec u+b\vec v,
+\]
+
+we may get different geometric possibilities.
+
+If \(\vec u\) and \(\vec v\) point along the same underlying direction, adding the second gives no fundamentally new direction.
+
+If they point along genuinely different directions, their combinations can fill a plane.
+
+The formal property determining whether one vector contributes something genuinely new is **linear independence**, Part 511.
+
+So we deliberately stop short of fully formalizing it here.
+
+For now:
+
+\[
+\boxed{
+\text{some generator sets contain redundant vectors}
+}
+\]
+
+and this can make coefficient representations non-unique.
+
+---
+
+# 509.14 Non-unique coefficients
+
+Consider:
+
+\[
+\vec u=(1,0)
+\]
+
+and:
+
+\[
+\vec v=(2,0).
+\]
+
+The vector:
+
+\[
+(4,0)
+\]
+
+can be written:
+
+\[
+4\vec u+0\vec v
+\]
+
+but also:
+
+\[
+0\vec u+2\vec v
+\]
+
+or:
+
+\[
+2\vec u+\vec v.
+\]
+
+So the same target has multiple coefficient representations.
+
+Why?
+
+Because:
+
+\[
+\vec v=2\vec u.
+\]
+
+The second vector contributes no new directional capability.
+
+Part 511 will call this **linear dependence**.
+
+The important preview is:
+
+\[
+\boxed{
+\text{linear combination coefficients need not be unique}
+}
+\]
+
+unless the generating vectors satisfy additional conditions.
+
+---
+
+# 509.15 Closure of a subspace under linear combinations
+
+Now connect back to Part 508.
+
+If \(W\) is a subspace and:
+
+\[
+\vec v_1,\ldots,\vec v_k\in W,
+\]
+
+then every linear combination:
+
+\[
+a_1\vec v_1+\cdots+a_k\vec v_k
+\]
+
+must also belong to \(W\).
+
+Why?
+
+Scalar closure guarantees:
+
+\[
+a_i\vec v_i\in W.
+\]
+
+Addition closure guarantees the sum stays inside \(W\).
+
+Thus:
+
+\[
+\boxed{
+\text{subspaces contain every linear combination of their vectors}
+}
+\]
+
+This statement is the bridge to span.
+
+---
+
+# 509.16 Implementation
+
+Suppose we want:
+
+\[
+\vec r
+=
+a\vec u+b\vec v.
+\]
+
+Canonical C++:
+
+```cpp
+struct Vec3 {
+    float x {};
+    float y {};
+    float z {};
+
+    constexpr Vec3 operator+(Vec3 rhs) const noexcept {
+        return {
+            x + rhs.x,
+            y + rhs.y,
+            z + rhs.z
+        };
+    }
+
+    constexpr Vec3 operator*(float s) const noexcept {
+        return {
+            x * s,
+            y * s,
+            z * s
+        };
+    }
+};
+
+constexpr Vec3 operator*(float s, Vec3 v) noexcept {
+    return v * s;
+}
+
+Vec3 linearCombination(
+    float a,
+    Vec3 u,
+    float b,
+    Vec3 v) noexcept
+{
+    return a * u + b * v;
+}
+```
+
+Mathematically:
+
+```cpp
+a * u
+```
+
+means:
+
+\[
+a\vec u.
+\]
+
+Then:
+
+```cpp
++ b * v
+```
+
+adds:
+
+\[
+b\vec v.
+\]
+
+No hidden operation exists.
+
+The code mirrors the algebra directly.
+
+---
+
+# 509.17 General \(k\)-vector implementation
+
+Suppose we have \(k\) vectors and \(k\) weights.
+
+A generic implementation could look like:
+
+```cpp
+Vec3 linearCombination(
+    std::span<const Vec3> vectors,
+    std::span<const float> weights)
+{
+    assert(vectors.size() == weights.size());
+
+    Vec3 result {0.0f, 0.0f, 0.0f};
+
+    for (std::size_t i = 0; i < vectors.size(); ++i) {
+        result.x += weights[i] * vectors[i].x;
+        result.y += weights[i] * vectors[i].y;
+        result.z += weights[i] * vectors[i].z;
+    }
+
+    return result;
+}
+```
+
+For each generator we perform three scalar multiplications and three accumulations.
+
+If there are \(k\) vectors and each has dimension \(n\), the mathematical work is:
+
+\[
+O(kn).
+\]
+
+For fixed 3D vectors:
+
+\[
+O(k).
+\]
+
+If both \(k\) and dimension are fixed small constants, it is effectively constant-sized work.
+
+---
+
+# 509.18 Memory access
+
+Suppose:
+
+```text
+vectors:
+[v0.x v0.y v0.z]
+[v1.x v1.y v1.z]
+[v2.x v2.y v2.z]
+...
+```
+
+and weights:
+
+```text
+[a0][a1][a2]...
+```
+
+Then the loop repeatedly loads:
+
+```text
+weight_i
+vector_i.x
+vector_i.y
+vector_i.z
+```
+
+and accumulates into one output.
+
+For large \(k\), this is reduction-like work.
+
+The cost may eventually become limited by:
+
+- memory bandwidth;
+- arithmetic throughput;
+- cache locality;
+- floating-point accumulation error.
+
+For tiny 2D/3D combinations, these concerns are usually negligible.
+
+---
+
+# 509.19 Floating-point accumulation order
+
+Mathematically:
+
+\[
+a_1\vec v_1+a_2\vec v_2+a_3\vec v_3
+\]
+
+is unaffected by regrouping.
+
+Machine arithmetic is not exactly associative.
+
+Suppose one term is enormous and another tiny.
+
+Adding the tiny one first versus last can change the rounded result.
+
+So a large numerical linear combination may depend somewhat on accumulation order.
+
+This becomes very important later in:
+
+- matrix multiplication;
+- numerical linear algebra;
+- least squares;
+- rendering accumulations;
+- optimization.
+
+The pure algebra says one thing.
+
+The finite machine approximation adds numerical considerations.
+
+---
+
+# PART 510 — SPAN
+
+Now we ask the natural question created by linear combinations:
+
+> Given some vectors, what is the entire set of vectors we can possibly construct from them?
+
+That set is their **span**.
+
+---
+
+# 510.1 Formal definition
+
+Given vectors:
+
+\[
+\vec v_1,\vec v_2,\ldots,\vec v_k
+\]
+
+in a vector space \(V\), define:
+
+\[
+\boxed{
+\operatorname{span}
+\{
+\vec v_1,\ldots,\vec v_k
+\}
+=
+\left\{
+a_1\vec v_1+\cdots+a_k\vec v_k
+\mid
+a_1,\ldots,a_k\in F
+\right\}
+}
+\]
+
+Read it carefully.
+
+The span is **not one vector**.
+
+It is a **set of vectors**.
+
+Every possible choice of coefficients produces one member.
+
+The collection of all such outcomes is the span.
+
+---
+
+# 510.2 First example: span of one vector
+
+Let:
+
+\[
+\vec v=(1,2).
+\]
+
+Then:
+
+\[
+\operatorname{span}\{\vec v\}
+=
+\{
+a(1,2)\mid a\in\mathbb R
+\}.
+\]
+
+Examples:
+
+\[
+a=0
+\Rightarrow
+(0,0)
+\]
+
+\[
+a=1
+\Rightarrow
+(1,2)
+\]
+
+\[
+a=2
+\Rightarrow
+(2,4)
+\]
+
+\[
+a=-1
+\Rightarrow
+(-1,-2).
+\]
+
+As \(a\) varies over all real numbers, this fills an infinite line through the origin.
+
+Thus:
+
+\[
+\boxed{
+\text{span of one nonzero vector}
+=
+\text{line through the origin}
+}
+\]
+
+in familiar geometric spaces.
+
+---
+
+# 510.3 Span of the zero vector
+
+What if:
+
+\[
+\vec v=\vec0?
+\]
+
+Then:
+
+\[
+a\vec0=\vec0
+\]
+
+for every scalar \(a\).
+
+So:
+
+\[
+\boxed{
+\operatorname{span}\{\vec0\}
+=
+\{\vec0\}.
+}
+\]
+
+The zero vector generates nothing beyond itself.
+
+---
+
+# 510.4 Span of two standard 2D directions
+
+Take:
+
+\[
+\vec e_1=(1,0)
+\]
+
+and:
+
+\[
+\vec e_2=(0,1).
+\]
+
+Their span contains vectors:
+
+\[
+a\vec e_1+b\vec e_2.
+\]
+
+Compute:
+
+\[
+a(1,0)+b(0,1)
+\]
+
+giving:
+
+\[
+(a,b).
+\]
+
+But \(a\) and \(b\) can be arbitrary real numbers.
+
+Therefore every vector:
+
+\[
+(x,y)\in\mathbb R^2
+\]
+
+can be obtained by choosing:
+
+\[
+a=x,\qquad b=y.
+\]
+
+Hence:
+
+\[
+\boxed{
+\operatorname{span}
+\{
+(1,0),(0,1)
+\}
+=
+\mathbb R^2.
+}
+\]
+
+These two vectors generate the entire plane.
+
+---
+
+# 510.5 Span of two non-axis directions
+
+Take:
+
+\[
+\vec u=(1,1)
+\]
+
+and:
+
+\[
+\vec v=(1,-1).
+\]
+
+Earlier we showed that:
+
+\[
+(4,2)
+=
+3\vec u+\vec v.
+\]
+
+Can these two generate every vector in \(\mathbb R^2\)?
+
+Let arbitrary target:
+
+\[
+(x,y).
+\]
+
+We seek \(a,b\) such that:
+
+\[
+a(1,1)+b(1,-1)=(x,y).
+\]
+
+Thus:
+
+\[
+a+b=x
+\]
+
+and:
+
+\[
+a-b=y.
+\]
+
+Add:
+
+\[
+2a=x+y.
+\]
+
+So:
+
+\[
+a=\frac{x+y}{2}.
+\]
+
+Subtract the equations:
+
+\[
+2b=x-y.
+\]
+
+Thus:
+
+\[
+b=\frac{x-y}{2}.
+\]
+
+Those real coefficients exist for every real \(x,y\).
+
+Therefore:
+
+\[
+\boxed{
+\operatorname{span}
+\{
+(1,1),(1,-1)
+\}
+=
+\mathbb R^2.
+}
+\]
+
+This demonstrates that the standard axes are not the only vectors capable of generating the plane.
+
+---
+
+# 510.6 Parallel generators do not expand the span
+
+Take:
+
+\[
+\vec u=(1,2)
+\]
+
+and:
+
+\[
+\vec v=(2,4).
+\]
+
+Notice:
+
+\[
+\vec v=2\vec u.
+\]
+
+Consider arbitrary combination:
+
+\[
+a\vec u+b\vec v.
+\]
+
+Replace \(\vec v\):
+
+\[
+a\vec u+b(2\vec u).
+\]
+
+Then:
+
+\[
+=
+(a+2b)\vec u.
+\]
+
+Every combination is still only some scalar multiple of \(\vec u\).
+
+Therefore:
+
+\[
+\boxed{
+\operatorname{span}\{\vec u,\vec v\}
+=
+\operatorname{span}\{\vec u\}.
+}
+\]
+
+Adding \(\vec v\) contributed no new reachable direction.
+
+This is exactly the redundancy that Part 511 formalizes as linear dependence.
+
+---
+
+# 510.7 Span of two vectors in 3D
+
+Take:
+
+\[
+\vec u=(1,0,0)
+\]
+
+and:
+
+\[
+\vec v=(0,1,0).
+\]
+
+Every linear combination is:
+
+\[
+a\vec u+b\vec v
+=
+(a,b,0).
+\]
+
+So:
+
+\[
+\operatorname{span}\{\vec u,\vec v\}
+=
+\{
+(x,y,0)
+\mid
+x,y\in\mathbb R
+\}.
+\]
+
+That is the \(xy\)-plane.
+
+Thus:
+
+\[
+\boxed{
+\text{two suitable directions in }\mathbb R^3
+\text{ can span a plane}
+}
+\]
+
+rather than all of 3D.
+
+---
+
+# 510.8 Three canonical 3D generators
+
+Take:
+
+\[
+\vec e_x=(1,0,0),
+\]
+
+\[
+\vec e_y=(0,1,0),
+\]
+
+\[
+\vec e_z=(0,0,1).
+\]
+
+Then:
+
+\[
+x\vec e_x+y\vec e_y+z\vec e_z
+\]
+
+equals:
+
+\[
+(x,y,z).
+\]
+
+Since any:
+
+\[
+(x,y,z)\in\mathbb R^3
+\]
+
+can be expressed this way:
+
+\[
+\boxed{
+\operatorname{span}
+\{
+\vec e_x,\vec e_y,\vec e_z
+\}
+=
+\mathbb R^3.
+}
+\]
+
+This is why these familiar vectors become the standard basis later.
+
+We deliberately do not yet use the formal definition of "basis," because Part 512 introduces basis vectors after Part 511 handles independence.
+
+---
+
+# 510.9 The span is always a subspace
+
+This is one of the central theorems of these Parts.
+
+Let:
+
+\[
+S=
+\operatorname{span}
+\{
+\vec v_1,\ldots,\vec v_k
+\}.
+\]
+
+We want to prove that \(S\) is a subspace of \(V\).
+
+First, \(S\) is nonempty because choose all coefficients zero:
+
+\[
+0\vec v_1+\cdots+0\vec v_k=\vec0.
+\]
+
+So:
+
+\[
+\vec0\in S.
+\]
+
+Now take:
+
+\[
+\vec x,\vec y\in S.
+\]
+
+Because they lie in the span, there exist coefficients:
+
+\[
+a_1,\ldots,a_k
+\]
+
+and:
+
+\[
+b_1,\ldots,b_k
+\]
+
+such that:
+
+\[
+\vec x=
+a_1\vec v_1+\cdots+a_k\vec v_k
+\]
+
+and:
+
+\[
+\vec y=
+b_1\vec v_1+\cdots+b_k\vec v_k.
+\]
+
+Add:
+
+\[
+\vec x+\vec y.
+\]
+
+Substitute:
+
+\[
+=
+(a_1\vec v_1+\cdots+a_k\vec v_k)
++
+(b_1\vec v_1+\cdots+b_k\vec v_k).
+\]
+
+Regroup by generator:
+
+\[
+=
+(a_1+b_1)\vec v_1
++
+\cdots
++
+(a_k+b_k)\vec v_k.
+\]
+
+This is still a linear combination of the original generators.
+
+Therefore:
+
+\[
+\vec x+\vec y\in S.
+\]
+
+Now take scalar \(c\).
+
+\[
+c\vec x
+=
+c(a_1\vec v_1+\cdots+a_k\vec v_k).
+\]
+
+Distribute:
+
+\[
+=
+(ca_1)\vec v_1
++
+\cdots
++
+(ca_k)\vec v_k.
+\]
+
+Again, still a linear combination.
+
+Therefore:
+
+\[
+c\vec x\in S.
+\]
+
+So \(S\) satisfies the subspace test.
+
+Hence:
+
+\[
+\boxed{
+\operatorname{span}
+\{
+\vec v_1,\ldots,\vec v_k
+\}
+\text{ is always a subspace}.
+}
+\]
+
+---
+
+# 510.10 Why span is the *smallest* subspace containing the generators
+
+This is the deeper meaning of span.
+
+Suppose some subspace \(W\) contains:
+
+\[
+\vec v_1,\ldots,\vec v_k.
+\]
+
+Because \(W\) is a subspace, it must contain every scalar multiple:
+
+\[
+a_i\vec v_i.
+\]
+
+Because it is closed under addition, it must contain every sum:
+
+\[
+a_1\vec v_1+\cdots+a_k\vec v_k.
+\]
+
+But the set of all such sums is exactly:
+
+\[
+\operatorname{span}
+\{
+\vec v_1,\ldots,\vec v_k
+\}.
+\]
+
+Therefore every subspace containing the generators must contain their span.
+
+So:
+
+\[
+\boxed{
+\operatorname{span}(S)
+=
+\text{smallest subspace containing }S.
+}
+\]
+
+That is arguably the most important conceptual definition of span.
+
+---
+
+# 510.11 Why "smallest" does not mean fewest vectors
+
+"Smallest" here means **set inclusion**.
+
+Suppose:
+
+\[
+W_1\subseteq W_2.
+\]
+
+Then \(W_1\) is the smaller set.
+
+The span is the subspace containing the required generators but no unnecessary vectors beyond those forced by vector-space closure.
+
+Once you place a vector inside a subspace, the axioms force you to include:
+
+\[
+2\vec v,\ -\vec v,\ \frac12\vec v,\ 0,\ldots
+\]
+
+and combinations with every other included vector.
+
+The span contains exactly everything that closure forces you to include.
+
+---
+
+# 510.12 Span as "reachable space"
+
+A powerful engineering intuition is:
+
+\[
+\boxed{
+\text{span}
+=
+\text{all states reachable by scalar-weighted addition of the generators}
+}
+\]
+
+Imagine the generators as controls.
+
+If you possess directions:
+
+\[
+\vec v_1,\ldots,\vec v_k,
+\]
+
+and you can choose arbitrary scalar amounts \(a_i\), then span tells you which resulting vectors can be synthesized.
+
+This idea later appears in many fields:
+
+- geometry;
+- animation;
+- numerical approximation;
+- optimization;
+- signal decomposition;
+- graphics basis functions;
+- control theory.
+
+---
+
+# 510.13 Order of generators does not matter
+
+Clearly:
+
+\[
+\operatorname{span}
+\{
+\vec u,\vec v
+\}
+=
+\operatorname{span}
+\{
+\vec v,\vec u
+\}.
+\]
+
+Why?
+
+The same set of linear combinations exists.
+
+A combination:
+
+\[
+a\vec u+b\vec v
+\]
+
+can be rewritten:
+
+\[
+b\vec v+a\vec u.
+\]
+
+So span depends on which vectors are available, not on their listing order.
+
+---
+
+# 510.14 Repeated vectors do not matter
+
+Likewise:
+
+\[
+\operatorname{span}
+\{
+\vec u,\vec v,\vec u
+\}
+=
+\operatorname{span}
+\{
+\vec u,\vec v
+\}.
+\]
+
+The duplicate copy introduces no new possible result.
+
+Any expression:
+
+\[
+a\vec u+b\vec v+c\vec u
+\]
+
+can be regrouped:
+
+\[
+(a+c)\vec u+b\vec v.
+\]
+
+Thus duplicate generators are redundant.
+
+---
+
+# 510.15 Adding an already-spanned vector changes nothing
+
+Suppose:
+
+\[
+\vec w
+\in
+\operatorname{span}\{\vec u,\vec v\}.
+\]
+
+Then:
+
+\[
+\vec w=a\vec u+b\vec v
+\]
+
+for some coefficients.
+
+Now compare:
+
+\[
+\operatorname{span}\{\vec u,\vec v\}
+\]
+
+and:
+
+\[
+\operatorname{span}\{\vec u,\vec v,\vec w\}.
+\]
+
+Any combination involving \(\vec w\):
+
+\[
+p\vec u+q\vec v+r\vec w
+\]
+
+can substitute:
+
+\[
+\vec w=a\vec u+b\vec v.
+\]
+
+Then:
+
+\[
+=
+p\vec u+q\vec v+r(a\vec u+b\vec v).
+\]
+
+Regroup:
+
+\[
+=
+(p+ra)\vec u+(q+rb)\vec v.
+\]
+
+So everything obtainable with \(\vec w\) was already obtainable without it.
+
+Therefore:
+
+\[
+\boxed{
+\vec w\in\operatorname{span}(S)
+\Rightarrow
+\operatorname{span}(S\cup\{\vec w\})
+=
+\operatorname{span}(S).
+}
+\]
+
+This property is the exact motivation for asking whether a generator is redundant.
+
+Part 511 attacks that question.
+
+---
+
+# 510.16 Span of the empty set
+
+This is subtle.
+
+What should:
+
+\[
+\operatorname{span}(\varnothing)
+\]
+
+be?
+
+A linear combination involving zero vectors has no terms.
+
+The mathematically consistent "empty sum" is defined as:
+
+\[
+\vec0.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\operatorname{span}(\varnothing)
+=
+\{\vec0\}.
+}
+\]
+
+This also fits the "smallest subspace containing the set" interpretation.
+
+Every subspace contains the empty set.
+
+The smallest possible subspace is:
+
+\[
+\{\vec0\}.
+\]
+
+---
+
+# 510.17 Span membership
+
+Given generators:
+
+\[
+\vec v_1,\ldots,\vec v_k
+\]
+
+and target:
+
+\[
+\vec t,
+\]
+
+the question:
+
+\[
+\vec t
+\in
+\operatorname{span}
+\{
+\vec v_1,\ldots,\vec v_k
+\}?
+\]
+
+means exactly:
+
+> Do there exist scalars \(a_1,\ldots,a_k\) such that
+
+\[
+a_1\vec v_1+\cdots+a_k\vec v_k=\vec t?
+\]
+
+That converts a set-membership problem into a coefficient-solving problem.
+
+This eventually becomes the matrix equation:
+
+\[
+A\mathbf x=\mathbf b
+\]
+
+in Phase 8.
+
+But you should already understand where that later equation comes from:
+
+```text
+columns/generators
+        ↓
+choose coefficients
+        ↓
+linear combination
+        ↓
+target vector
+```
+
+---
+
+# 510.18 You cannot enumerate a real span
+
+Suppose:
+
+\[
+\operatorname{span}\{\vec u,\vec v\}
+=
+\mathbb R^2.
+\]
+
+There are infinitely many real coefficient pairs:
+
+\[
+(a,b).
+\]
+
+You cannot store:
+
+```text
+every vector in the span
+```
+
+inside an array.
+
+That would be conceptually impossible.
+
+Instead, a computer stores a **finite generating representation**:
+
+```text
+generator 0
+generator 1
+...
+```
+
+and computes desired combinations when needed.
+
+This is an important representation lesson:
+
+\[
+\boxed{
+\text{an infinite mathematical set can have a finite description}
+}
+\]
+
+---
+
+# 510.19 Canonical storage of generators
+
+For example:
+
+```cpp
+struct GeneratorSet3 {
+    std::vector<Vec3> vectors;
+};
+```
+
+If it stores:
+
+```text
+[1,0,0]
+[0,1,0]
+```
+
+then mathematically its span is the \(xy\)-plane.
+
+The structure does **not** contain all vectors in the plane.
+
+It stores a recipe for producing them.
+
+Later, once redundant vectors are removed and the remaining vectors are independent, we arrive at the notion of a **basis**.
+
+---
+
+# 510.20 Generating one member of the span
+
+```cpp
+Vec3 evaluateLinearCombination(
+    std::span<const Vec3> generators,
+    std::span<const float> coefficients)
+{
+    assert(generators.size() == coefficients.size());
+
+    Vec3 result {0.0f, 0.0f, 0.0f};
+
+    for (std::size_t i = 0; i < generators.size(); ++i) {
+        const float a = coefficients[i];
+
+        result.x += a * generators[i].x;
+        result.y += a * generators[i].y;
+        result.z += a * generators[i].z;
+    }
+
+    return result;
+}
+```
+
+This does **not compute the span**.
+
+It computes **one member of the span** corresponding to one particular coefficient vector.
+
+That distinction matters.
+
+There is generally no finite loop that says:
+
+```cpp
+for (every real coefficient)
+```
+
+because there are infinitely many real choices.
+
+---
+
+# 510.21 Numerical span versus mathematical span
+
+Mathematically, suppose:
+
+\[
+\vec u=(1,0)
+\]
+
+and:
+
+\[
+\vec v=(1,10^{-12}).
+\]
+
+These are not exact scalar multiples of each other.
+
+So in exact real arithmetic they can generate all of \(\mathbb R^2\).
+
+But numerically they are almost parallel.
+
+To construct a vector with a significant vertical component may require enormous coefficients whose contributions nearly cancel horizontally.
+
+That can cause serious floating-point error.
+
+This is an early glimpse of **conditioning**.
+
+So there is a difference between:
+
+\[
+\text{mathematically spans the space}
+\]
+
+and:
+
+\[
+\text{numerically provides a stable representation of the space}.
+\]
+
+Later Parts on conditioning, decompositions and numerical linear algebra will make this precise.
+
+---
+
+# 510.22 A full worked chain: subspace → linear combination → span
+
+Take:
+
+\[
+V=\mathbb R^3.
+\]
+
+Define:
+
+\[
+\vec u=(1,0,0)
+\]
+
+and:
+
+\[
+\vec v=(0,1,0).
+\]
+
+Their linear combination is:
+
+\[
+a\vec u+b\vec v.
+\]
+
+Expand:
+
+\[
+a(1,0,0)+b(0,1,0).
+\]
+
+Therefore:
+
+\[
+=(a,b,0).
+\]
+
+Now let \(a,b\) vary over every real number.
+
+The set of all possible results is:
+
+\[
+\{
+(a,b,0)
+\mid
+a,b\in\mathbb R
+\}.
+\]
+
+That is:
+
+\[
+\operatorname{span}\{\vec u,\vec v\}.
+\]
+
+But this set is exactly the \(xy\)-plane:
+
+\[
+W=
+\{
+(x,y,0)
+\}.
+\]
+
+Earlier we proved \(W\) is a subspace.
+
+So:
+
+\[
+\boxed{
+W
+=
+\operatorname{span}
+\{
+(1,0,0),(0,1,0)
+\}
+}
+\]
+
+We have described the same mathematical object in two ways:
+
+```text
+constraint representation
+z = 0
+
+versus
+
+generator representation
+a(1,0,0) + b(0,1,0)
+```
+
+That dual viewpoint is tremendously important.
+
+---
+
+# HOW PARTS 508–510 FIT TOGETHER
+
+You should now see one continuous derivation.
+
+Start with a vector space:
+
+\[
+V.
+\]
+
+Sometimes we care only about a subset:
+
+\[
+W\subseteq V.
+\]
+
+If \(W\) remains closed under the vector operations, it is a:
+
+\[
+\boxed{\text{subspace}}.
+\]
+
+The basic operations available to us are:
+
+\[
+\text{scale vectors}
+\]
+
+and:
+
+\[
+\text{add vectors}.
+\]
+
+Combining these gives expressions:
+
+\[
+a_1\vec v_1+\cdots+a_k\vec v_k,
+\]
+
+called:
+
+\[
+\boxed{\text{linear combinations}}.
+\]
+
+Now collect every possible linear combination of chosen generators.
+
+That set is:
+
+\[
+\boxed{\text{their span}}.
+\]
+
+And because spans are closed under all linear combinations:
+
+\[
+\boxed{\text{every span is a subspace}}.
+\]
+
+Moreover:
+
+\[
+\boxed{
+\text{span}(S)
+=
+\text{smallest subspace containing }S.
+}
+\]
+
+So the conceptual chain is:
+
+```text
+VECTOR SPACE V
+      │
+      │ choose vectors
+      ▼
+{v1, v2, ..., vk}
+      │
+      │ arbitrary scaling + addition
+      ▼
+LINEAR COMBINATIONS
+a1v1 + ... + akvk
+      │
+      │ collect every possible result
+      ▼
+SPAN
+      │
+      ▼
+a SUBSPACE of V
+```
+
+---
+
+# WHAT NOT TO CONFUSE
+
+A **linear combination** is one vector:
+
+\[
+2\vec u-3\vec v.
+\]
+
+The **span** is the entire set of all possible such vectors:
+
+\[
+\{
+a\vec u+b\vec v
+\mid a,b\in\mathbb R
+\}.
+\]
+
+A **subspace** is any subset of a vector space that itself satisfies vector-space structure.
+
+Every span is a subspace.
+
+But when someone gives you a subspace abstractly, its generators may not yet have been specified.
+
+And a **generator set** may contain redundant vectors; removing that redundancy is what Parts 511–512 start addressing.
+
+---
+
+# HARD MASTERY EXAMPLE
+
+Consider:
+
+\[
+W=
+\{
+(x,y,z)\in\mathbb R^3
+\mid
+x+y-z=0
+\}.
+\]
+
+First prove it is a subspace.
+
+Take:
+
+\[
+\vec u=(u_x,u_y,u_z)
+\]
+
+and:
+
+\[
+\vec v=(v_x,v_y,v_z)
+\]
+
+satisfying:
+
+\[
+u_x+u_y-u_z=0
+\]
+
+and:
+
+\[
+v_x+v_y-v_z=0.
+\]
+
+For their sum:
+
+\[
+(u_x+v_x)+(u_y+v_y)-(u_z+v_z)
+\]
+
+rearrange:
+
+\[
+=
+(u_x+u_y-u_z)
++
+(v_x+v_y-v_z).
+\]
+
+Both are zero.
+
+So the sum remains inside.
+
+For scalar \(a\):
+
+\[
+a u_x+a u_y-a u_z
+=
+a(u_x+u_y-u_z)
+=
+0.
+\]
+
+So scalar closure also holds.
+
+Thus \(W\) is a subspace.
+
+Now solve the defining condition:
+
+\[
+x+y-z=0.
+\]
+
+Therefore:
+
+\[
+z=x+y.
+\]
+
+So any member looks like:
+
+\[
+(x,y,x+y).
+\]
+
+Break it apart:
+
+\[
+(x,y,x+y)
+=
+(x,0,x)+(0,y,y).
+\]
+
+Factor scalars:
+
+\[
+=
+x(1,0,1)+y(0,1,1).
+\]
+
+Therefore:
+
+\[
+\boxed{
+W
+=
+\operatorname{span}
+\{
+(1,0,1),(0,1,1)
+\}.
+}
+\]
+
+You just converted a **constraint description** into a **generator description**.
+
+That type of conversion becomes a major theme of linear algebra.
+
+---
+
+# PERFORMANCE AND IMPLEMENTATION REALITY
+
+For the mathematical concepts themselves, a subspace or span is usually not enumerated. Engines store a finite representation such as constraints, generator vectors, a basis, or later a transformation matrix.
+
+Generating one \(n\)-dimensional linear combination from \(k\) generators costs approximately:
+
+\[
+O(kn)
+\]
+
+scalar arithmetic.
+
+For fixed 3D:
+
+\[
+O(k).
+\]
+
+If \(k\) is also a tiny fixed constant, it becomes fixed arithmetic suitable for inlining and SIMD optimization.
+
+But the real engineering issue often becomes not arithmetic cost but **numerical quality**. Generator vectors that are extremely close to redundant may mathematically span the desired space while producing unstable coefficient calculations.
+
+That problem leads eventually to linear independence, bases, conditioning, QR, SVD and numerical rank.
+
+So even these elementary definitions sit directly underneath very advanced engine mathematics.
+
+---
+
+# MASTERY GATE — PART 508
+
+From a blank page, you should be able to define a subspace and explain why we do not need to recheck all eight vector-space axioms.
+
+You should prove the practical criterion:
+
+\[
+W\neq\varnothing,
+\qquad
+\vec u,\vec v\in W
+\Rightarrow
+\vec u+\vec v\in W,
+\]
+
+and:
+
+\[
+a\in F,\vec v\in W
+\Rightarrow
+a\vec v\in W.
+\]
+
+You should explain why those conditions imply:
+
+\[
+\vec0\in W
+\]
+
+and:
+
+\[
+-\vec v\in W.
+\]
+
+You should instantly know why:
+
+\[
+z=0
+\]
+
+can define a subspace while:
+
+\[
+z=1
+\]
+
+does not.
+
+And you should be able to explain why intersections of subspaces remain subspaces but arbitrary unions usually do not.
+
+---
+
+# MASTERY GATE — PART 509
+
+You should reconstruct:
+
+\[
+\boxed{
+a_1\vec v_1+\cdots+a_k\vec v_k
+}
+\]
+
+as the most general object that can be produced using scalar multiplication and vector addition.
+
+You should know that coefficients may be negative, zero, large, fractional, and need not sum to one.
+
+Given:
+
+\[
+\vec u=(1,1),\qquad
+\vec v=(1,-1),
+\]
+
+you should be able to solve:
+
+\[
+a\vec u+b\vec v=(x,y)
+\]
+
+and obtain:
+
+\[
+a=\frac{x+y}{2},
+\qquad
+b=\frac{x-y}{2}.
+\]
+
+Most importantly, you should see coordinate representations increasingly as **linear-combination coefficients**, not merely values stuffed into `x`, `y`, and `z`.
+
+---
+
+# MASTERY GATE — PART 510
+
+You should be able to define:
+
+\[
+\operatorname{span}
+\{
+\vec v_1,\ldots,\vec v_k
+\}
+\]
+
+without using vague language like "the area covered by vectors."
+
+The precise definition is:
+
+\[
+\boxed{
+\text{the set of every linear combination of the generators}.
+}
+\]
+
+You should prove that span is a subspace.
+
+Then prove the stronger statement:
+
+\[
+\boxed{
+\operatorname{span}(S)
+=
+\text{smallest subspace containing }S.
+}
+\]
+
+You should know immediately:
+
+\[
+\operatorname{span}\{(1,0)\}
+\]
+
+is the \(x\)-axis,
+
+\[
+\operatorname{span}\{(1,0),(0,1)\}
+=
+\mathbb R^2,
+\]
+
+and:
+
+\[
+\operatorname{span}\{(1,0,0),(0,1,0)\}
+\]
+
+is the \(xy\)-plane.
+
+You should also understand why adding a generator already inside the current span does not enlarge the span.
+
+That final question sets up the next Part perfectly:
+
+> **How do we determine whether a vector contributes genuinely new capability or is already constructible from the others?**
+
+That is exactly **linear independence**.
+
+**Completed Part 508 — Subspaces**  
+**Completed Part 509 — Linear combinations**  
+**Completed Part 510 — Span**
+
+**Next Core Part 511 — Linear independence.**

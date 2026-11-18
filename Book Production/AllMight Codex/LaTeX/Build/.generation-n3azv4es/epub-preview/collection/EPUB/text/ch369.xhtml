@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch369.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-b0efeb3f3648-clustered-lighting-depth-slicing" class="level2">
+<h2>Clustered lighting depth slicing</h2>
+<p>Clustered lighting partitions the camera frustum into three-dimensional cells and assigns lights to the cells they can influence. A fragment then tests only the lights attached to its cell rather than every light in the scene.</p>
+<p>The screen dimensions are naturally tiled in x and y. Depth needs more care because perspective scenes can span orders of magnitude. Uniform linear z slices often waste many clusters far from the camera or give poor resolution near it.</p>
+<p>A common logarithmic mapping for positive camera-space depth <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>z</mi>
+</math> between near <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> and far <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>log</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mo stretchy="false">(</mo>
+      <mi>z</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mi>n</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mi>log</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mo stretchy="false">(</mo>
+      <mi>f</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mi>n</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+</math>
+<p>then</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌊</mo>
+    <mi>t</mi>
+    <msub>
+      <mi>N</mi>
+      <mi>z</mi>
+    </msub>
+    <mo data-mjx-texclass="CLOSE">⌋</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<p>clamped to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <msub>
+    <mi>N</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>.</p>
+<p>Equal multiplicative depth ratios occupy equal widths in log space. With <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+  <mo>=</mo>
+  <mn>0.1</mn>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+  <mo>=</mo>
+  <mn>1000</mn>
+</math>, the decades 1→10 and 10→100 span the same number of ideal log slices.</p>
+<section id="appendix-b0efeb3f3648-light-assignment" class="level3">
+<h3>Light assignment</h3>
+<p>Depth slicing alone does not make a clustered renderer. For each point/spot light, determine a conservative cluster range from its influence volume. Then append the light ID to every overlapping cluster.</p>
+<p>The GPU implementation usually has two allocation problems:</p>
+<ol type="1">
+<li>count how many light references each cluster needs;</li>
+<li>prefix-scan those counts to obtain compact non-overlapping list offsets;</li>
+<li>fill the light-index array.</li>
+</ol>
+<p>Atomic append alternatives exist, but they require overflow policy and contention measurement.</p>
+</section>
+<section id="appendix-b0efeb3f3648-false-positives-versus-false-negatives" class="level3">
+<h3>False positives versus false negatives</h3>
+<p>A conservative cluster test may include a light that ultimately contributes nothing to a fragment. That costs shading work but preserves correctness. A false negative drops illumination and is a correctness bug.</p>
+<p>Cluster bounds therefore need to match the exact camera projection/depth convention, including reversed-Z if hardware depth is used to derive z.</p>
+</section>
+<section id="appendix-b0efeb3f3648-executable-reference" class="level3">
+<h3>Executable reference</h3>
+<p>tools/labs/realtime_rendering_reference_lab.cpp validates the logarithmic slice mapping, near/far clamping, monotonicity and equal-decade behavior. It does not yet implement full 3D light-volume/cluster intersection or GPU compaction.</p>
+<p>Related: <a href="ch332.xhtml#appendix-f2ee4d086415-prefix-scan-and-stream-compaction" class="wikilink">Prefix scan and stream compaction</a>, <a href="ch280.xhtml#appendix-275ec8847057-reversed-z-depth-contracts" class="wikilink">Reversed-Z depth contracts (Mathematics for Visual Computing, Part 2, Reference notes: Reversed-Z depth contracts)</a>.</p>
+</section>
+</section>
+</body>
+</html>

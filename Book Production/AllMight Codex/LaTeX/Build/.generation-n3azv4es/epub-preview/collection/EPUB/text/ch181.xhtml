@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch181.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-5d4252a42886-auto-decltype-and-reference-collapsing" class="level2">
+<h2>Auto decltype and reference collapsing</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C008 · <strong>Latest development:</strong> C008</p>
+<section id="appendix-5d4252a42886-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Ordinary by-value auto drops top-level const/reference information; auto&amp; preserves referent qualification. decltype(name) reports the declared type, while decltype((expression)) follows category. Collapsing yields an lvalue reference if either participating reference is &amp;, otherwise &amp;&amp;.</p>
+</section>
+<section id="appendix-5d4252a42886-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch175.xhtml#appendix-1121b30eaeb0-value-categories-and-materialization" class="wikilink">Value categories and materialization</a> — Expression category determines viable binding and whether temporary identity is needed.</li>
+<li><a href="ch200.xhtml#appendix-d6d562ca9fbb-references-and-aliases" class="wikilink">References and aliases</a> — The initial alias and its referent determine later binding and deduction behavior.</li>
+</ul>
+</section>
+<section id="appendix-5d4252a42886-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch174.xhtml#appendix-0104b704fb11-move-casts-and-forwarding-references" class="wikilink">Move casts and forwarding references</a></li>
+</ul>
+</section>
+<section id="appendix-5d4252a42886-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain why decltype(rr) is T&amp;&amp; but decltype((rr)) is T&amp;. Pending: constrained deduction, structured bindings and return-type deduction. Written coverage does not establish learner mastery.</p>
+</section>
+<section id="appendix-5d4252a42886-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch173.xhtml#id_01-foundations-i-ch003-an-expression-has-a-type-and-a-category" class="wikilink">Teaching explanation and examples</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m008---parts-113-126" class="wikilink">Exact coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

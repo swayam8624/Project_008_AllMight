@@ -1,0 +1,48 @@
+\hypertarget{appendix-e979eb012782}{}\label{referencestart:appendix-e979eb012782}
+\section{Flush-to-zero and denormals-are-zero}\label{appendix-e979eb012782-flush-to-zero-and-denormals-are-zero}
+
+\hypertarget{appendix-e979eb012782-flush-to-zero-and-denormals-are-zero}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C004 · \textbf{Latest development:} C004
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-e979eb012782-definition-and-mechanism}
+
+\hypertarget{appendix-e979eb012782-definition-and-mechanism}{}
+
+FTZ flushes certain tiny results to zero; DAZ treats subnormal inputs as zero in supporting environments. They change gradual-underflow behavior. Cost and support are target/mode-specific.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-e979eb012782-prerequisites}
+
+\hypertarget{appendix-e979eb012782-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-00a6e044c437]{Subnormals and gradual underflow} --- Constant tiny spacing and loss of relative precision define boundary and environment behavior.
+\item
+  \hyperref[appendix-f11d1a521253]{Floating-point environment and compiler modes} --- Compiler/runtime assumptions must preserve the intended direction and special-value semantics.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-e979eb012782-used-by}
+
+\hypertarget{appendix-e979eb012782-used-by}{}
+
+Connect later dependent concepts here as their lessons arrive.
+
+\subsection{Recall and next depth}\label{appendix-e979eb012782-recall-and-next-depth}
+
+\hypertarget{appendix-e979eb012782-recall-and-next-depth}{}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Measure actual shader/SIMD settings before claiming subnormal performance or preservation.
+
+\subsection{Source and navigation}\label{appendix-e979eb012782-source-and-navigation}
+
+\hypertarget{appendix-e979eb012782-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

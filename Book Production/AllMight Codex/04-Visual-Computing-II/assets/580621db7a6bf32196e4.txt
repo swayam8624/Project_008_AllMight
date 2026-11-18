@@ -1,0 +1,3966 @@
+We are continuing exactly with the canonical sequence:
+
+**543. Cross product determinant derivation**  
+**544. Cross product geometric meaning**  
+**545. Cross-product magnitude and parallelogram area**  
+**546. Cross-product orientation and the right-hand rule**  
+**547. Why the cross product is special to three dimensions** Project_Sheldon_Master_Curricul…
+
+One continuity note: **Part 542 is the formal definition of the cross product in \(\mathbb R^3\)**. You asked for 543–547, so I will use 542 only as the prerequisite: for two 3D vectors \(\vec a,\vec b\), \(\vec a\times\vec b\) is the cross product and returns another 3D vector. I will not mark 542 complete on your behalf.
+
+These five parts deserve the full treatment. The master instructions explicitly say not to compress cross product merely because several neighboring Parts are requested; the target is derivation, representation, implementation, numerical behavior, failure cases, and reconstruction. Pasted markdown
+
+---
+
+# PART 543 — CROSS PRODUCT DETERMINANT DERIVATION
+
+# 543.1 The problem
+
+The dot product solved this type of question:
+
+\[
+\vec a,\vec b
+\longrightarrow
+\text{scalar measuring alignment}.
+\]
+
+Now in 3D we want a different operation:
+
+\[
+\vec a,\vec b
+\longrightarrow
+\text{a vector perpendicular to both}.
+\]
+
+Suppose:
+
+\[
+\vec a=(a_x,a_y,a_z)
+\]
+
+and:
+
+\[
+\vec b=(b_x,b_y,b_z).
+\]
+
+We want:
+
+\[
+\vec c=\vec a\times\vec b
+\]
+
+such that, among other properties,
+
+\[
+\vec c\cdot\vec a=0
+\]
+
+and
+
+\[
+\vec c\cdot\vec b=0.
+\]
+
+The coordinate formula is
+
+\[
+\boxed{
+\vec a\times\vec b
+=
+\begin{pmatrix}
+a_yb_z-a_zb_y\\
+a_zb_x-a_xb_z\\
+a_xb_y-a_yb_x
+\end{pmatrix}
+}
+\]
+
+but the goal of Part 543 is to understand where this strange-looking pattern comes from.
+
+---
+
+# 543.2 Why does the formula have differences of products?
+
+Look at one component:
+
+\[
+a_yb_z-a_zb_y.
+\]
+
+It compares two ways in which the \(y\) and \(z\) components of the vectors interact.
+
+Notice its key property:
+
+if we exchange \(\vec a\) and \(\vec b\),
+
+\[
+b_ya_z-b_za_y
+=
+-(a_yb_z-a_zb_y).
+\]
+
+So the quantity changes sign under swapping the inputs.
+
+That sign sensitivity is exactly what an **oriented** geometric quantity needs.
+
+If order did not matter, we could not distinguish
+
+\[
+\vec a\rightarrow\vec b
+\]
+
+from
+
+\[
+\vec b\rightarrow\vec a.
+\]
+
+Orientation becomes the subject of Part 546.
+
+---
+
+# 543.3 The determinant object we need
+
+Full determinant theory appears much later in Parts 626–629, so we need only the specific machinery necessary here.
+
+For a \(2\times2\) array
+
+\[
+\begin{vmatrix}
+p&q\\
+r&s
+\end{vmatrix},
+\]
+
+define:
+
+\[
+\boxed{
+ps-qr.
+}
+\]
+
+For example:
+
+\[
+\begin{vmatrix}
+3&5\\
+2&7
+\end{vmatrix}
+=
+3(7)-5(2)
+=
+11.
+\]
+
+Notice again the subtraction of cross-products.
+
+Geometrically, this later becomes signed area.
+
+For now remember its algebraic structure.
+
+---
+
+# 543.4 Three small \(2\times2\) determinants appear naturally
+
+Given:
+
+\[
+a=
+(a_x,a_y,a_z)
+\]
+
+and
+
+\[
+b=
+(b_x,b_y,b_z),
+\]
+
+we can pair coordinate planes.
+
+### YZ plane
+
+\[
+\begin{vmatrix}
+a_y&a_z\\
+b_y&b_z
+\end{vmatrix}
+=
+a_yb_z-a_zb_y.
+\]
+
+### XZ plane
+
+\[
+\begin{vmatrix}
+a_x&a_z\\
+b_x&b_z
+\end{vmatrix}
+=
+a_xb_z-a_zb_x.
+\]
+
+### XY plane
+
+\[
+\begin{vmatrix}
+a_x&a_y\\
+b_x&b_y
+\end{vmatrix}
+=
+a_xb_y-a_yb_x.
+\]
+
+Those are nearly the three cross-product components.
+
+The middle one requires a sign reversal.
+
+---
+
+# 543.5 Determinant mnemonic
+
+Let the standard basis vectors be
+
+\[
+\vec e_x=(1,0,0),
+\]
+
+\[
+\vec e_y=(0,1,0),
+\]
+
+\[
+\vec e_z=(0,0,1).
+\]
+
+You will often see the cross product written formally as
+
+\[
+\boxed{
+\vec a\times\vec b
+=
+\begin{vmatrix}
+\vec e_x&\vec e_y&\vec e_z\\
+a_x&a_y&a_z\\
+b_x&b_y&b_z
+\end{vmatrix}.
+}
+\]
+
+There is an important caveat:
+
+**this is a determinant-style mnemonic.**
+
+An ordinary numerical determinant contains scalars in every entry. Here the first row contains basis vectors.
+
+What we are really doing is using the cofactor expansion pattern to construct a vector.
+
+---
+
+# 543.6 Expanding the determinant
+
+Expand across the first row.
+
+The sign pattern is:
+
+\[
++,\quad-,\quad+.
+\]
+
+Therefore:
+
+\[
+\vec a\times\vec b
+=
+\vec e_x
+\begin{vmatrix}
+a_y&a_z\\
+b_y&b_z
+\end{vmatrix}
+-
+\vec e_y
+\begin{vmatrix}
+a_x&a_z\\
+b_x&b_z
+\end{vmatrix}
++
+\vec e_z
+\begin{vmatrix}
+a_x&a_y\\
+b_x&b_y
+\end{vmatrix}.
+\]
+
+Now evaluate each \(2\times2\) determinant:
+
+\[
+=
+\vec e_x(a_yb_z-a_zb_y)
+\]
+
+\[
+-
+\vec e_y(a_xb_z-a_zb_x)
+\]
+
+\[
++
+\vec e_z(a_xb_y-a_yb_x).
+\]
+
+The middle term can be rearranged:
+
+\[
+-(a_xb_z-a_zb_x)
+=
+a_zb_x-a_xb_z.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\vec a\times\vec b
+=
+(a_yb_z-a_zb_y)\vec e_x
++
+(a_zb_x-a_xb_z)\vec e_y
++
+(a_xb_y-a_yb_x)\vec e_z.
+}
+\]
+
+Hence coordinates:
+
+\[
+\boxed{
+\vec a\times\vec b
+=
+(
+a_yb_z-a_zb_y,\;
+a_zb_x-a_xb_z,\;
+a_xb_y-a_yb_x
+).
+}
+\]
+
+---
+
+# 543.7 Do not memorize "xyzzy" patterns blindly
+
+You may encounter mnemonics such as:
+
+```text
+x = ay*bz - az*by
+y = az*bx - ax*bz
+z = ax*by - ay*bx
+```
+
+Fine as syntax memory.
+
+But if you forget it, you should reconstruct it through:
+
+\[
+\begin{vmatrix}
+e_x&e_y&e_z\\
+a_x&a_y&a_z\\
+b_x&b_y&b_z
+\end{vmatrix}.
+\]
+
+That is much stronger than depending on memorization.
+
+---
+
+# 543.8 Why this constructed vector is perpendicular to \(a\)
+
+Let's prove it.
+
+Let:
+
+\[
+c=a\times b.
+\]
+
+Then
+
+\[
+c=
+(
+a_yb_z-a_zb_y,\;
+a_zb_x-a_xb_z,\;
+a_xb_y-a_yb_x
+).
+\]
+
+Compute:
+
+\[
+a\cdot c.
+\]
+
+Expand:
+
+\[
+a_x(a_yb_z-a_zb_y)
++
+a_y(a_zb_x-a_xb_z)
++
+a_z(a_xb_y-a_yb_x).
+\]
+
+Distribute:
+
+\[
+a_xa_yb_z
+-
+a_xa_zb_y
++
+a_ya_zb_x
+-
+a_ya_xb_z
++
+a_za_xb_y
+-
+a_za_yb_x.
+\]
+
+Group cancellation pairs:
+
+\[
+a_xa_yb_z-a_ya_xb_z=0,
+\]
+
+\[
+-a_xa_zb_y+a_za_xb_y=0,
+\]
+
+\[
+a_ya_zb_x-a_za_yb_x=0.
+\]
+
+Therefore:
+
+\[
+\boxed{
+a\cdot(a\times b)=0.
+}
+\]
+
+So:
+
+\[
+\boxed{
+a\times b\perp a.
+}
+\]
+
+---
+
+# 543.9 Prove it is also perpendicular to \(b\)
+
+Now:
+
+\[
+b\cdot(a\times b).
+\]
+
+Expand:
+
+\[
+b_x(a_yb_z-a_zb_y)
++
+b_y(a_zb_x-a_xb_z)
++
+b_z(a_xb_y-a_yb_x).
+\]
+
+Giving:
+
+\[
+b_xa_yb_z
+-
+b_xa_zb_y
++
+b_ya_zb_x
+-
+b_ya_xb_z
++
+b_za_xb_y
+-
+b_za_yb_x.
+\]
+
+Again every term cancels with another.
+
+Therefore:
+
+\[
+\boxed{
+b\cdot(a\times b)=0.
+}
+\]
+
+Hence:
+
+\[
+\boxed{
+a\times b
+\text{ is orthogonal to both }a\text{ and }b.
+}
+\]
+
+This proves that the coordinate formula actually satisfies the central geometric requirement.
+
+---
+
+# 543.10 Worked example
+
+Let:
+
+\[
+a=(2,3,4),
+\]
+
+\[
+b=(5,6,7).
+\]
+
+Then:
+
+\[
+a\times b
+=
+(
+3\cdot7-4\cdot6,\;
+4\cdot5-2\cdot7,\;
+2\cdot6-3\cdot5
+).
+\]
+
+Calculate:
+
+\[
+x=21-24=-3,
+\]
+
+\[
+y=20-14=6,
+\]
+
+\[
+z=12-15=-3.
+\]
+
+Therefore:
+
+\[
+\boxed{
+a\times b=(-3,6,-3).
+}
+\]
+
+Check with \(a\):
+
+\[
+(2,3,4)\cdot(-3,6,-3)
+\]
+
+\[
+=-6+18-12
+\]
+
+\[
+=0.
+\]
+
+Check with \(b\):
+
+\[
+(5,6,7)\cdot(-3,6,-3)
+\]
+
+\[
+=-15+36-21
+\]
+
+\[
+=0.
+\]
+
+So our output is perpendicular to both.
+
+---
+
+# 543.11 Cross of a vector with itself
+
+Use the formula:
+
+\[
+a\times a.
+\]
+
+First component:
+
+\[
+a_ya_z-a_za_y=0.
+\]
+
+Second:
+
+\[
+a_za_x-a_xa_z=0.
+\]
+
+Third:
+
+\[
+a_xa_y-a_ya_x=0.
+\]
+
+Therefore:
+
+\[
+\boxed{
+a\times a=0.
+}
+\]
+
+Geometrically this will later correspond to zero area: a vector and itself do not span a plane.
+
+---
+
+# 543.12 Cross product with zero
+
+Similarly:
+
+\[
+a\times0=0.
+\]
+
+Every component product contains zero.
+
+So:
+
+\[
+\boxed{
+a\times0=0\times a=0.
+}
+\]
+
+---
+
+# 543.13 Bilinearity
+
+Cross product behaves linearly in each argument.
+
+For scalar \(\lambda\):
+
+\[
+(\lambda a)\times b
+=
+\lambda(a\times b).
+\]
+
+You can verify this directly from the coordinate formula because every component contains exactly one component from \(a\) and one from \(b\).
+
+Likewise:
+
+\[
+a\times(\lambda b)
+=
+\lambda(a\times b).
+\]
+
+And distributivity:
+
+\[
+\boxed{
+a\times(b+c)
+=
+a\times b+a\times c.
+}
+\]
+
+Similarly:
+
+\[
+\boxed{
+(a+b)\times c
+=
+a\times c+b\times c.
+}
+\]
+
+Thus cross product is another **bilinear** operation.
+
+But unlike dot product:
+
+\[
+a\cdot b\rightarrow\text{scalar},
+\]
+
+while:
+
+\[
+a\times b\rightarrow\text{vector}.
+\]
+
+---
+
+# 543.14 C++ implementation
+
+```cpp
+struct Vec3 {
+    float x{};
+    float y{};
+    float z{};
+};
+
+[[nodiscard]]
+constexpr Vec3 cross(Vec3 a, Vec3 b) noexcept
+{
+    return {
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    };
+}
+```
+
+You should be able to explain each line.
+
+The first component uses only the **YZ coordinates** because the result's X component measures the oriented interaction in the plane perpendicular to X.
+
+Similarly:
+
+```text
+cross.x ← YZ interaction
+cross.y ← ZX interaction
+cross.z ← XY interaction
+```
+
+That is a much better mental pattern than memorizing arbitrary symbols.
+
+---
+
+# 543.15 Operation count
+
+A straightforward `Vec3` cross uses:
+
+\[
+6
+\]
+
+multiplications and
+
+\[
+3
+\]
+
+subtractions.
+
+Fixed dimension means:
+
+\[
+O(1).
+\]
+
+No allocation.
+
+No dynamic memory.
+
+Usually all data can remain in registers.
+
+---
+
+# 543.16 Floating-point cancellation
+
+Consider:
+
+\[
+a_yb_z
+\]
+
+and:
+
+\[
+a_zb_y
+\]
+
+being almost equal.
+
+Their subtraction can lose significant digits.
+
+This occurs when the input vectors are almost parallel.
+
+For example:
+
+\[
+a=(1,1,0)
+\]
+
+and:
+
+\[
+b=(1,1+\varepsilon,0).
+\]
+
+Then:
+
+\[
+a\times b
+=
+(0,0,\varepsilon).
+\]
+
+If \(\varepsilon\) is tiny compared with the component scale, the true cross product is tiny and relative numerical error can become large.
+
+That is not random.
+
+A tiny cross product geometrically means the vectors almost fail to define a stable plane.
+
+The numerical instability reflects actual geometric degeneracy.
+
+---
+
+# PART 544 — CROSS PRODUCT GEOMETRIC MEANING
+
+Part 543 gave us arithmetic.
+
+Now: what is the resulting vector actually representing?
+
+---
+
+# 544.1 Two nonparallel vectors define a plane
+
+Take two nonparallel vectors:
+
+\[
+a,\quad b.
+\]
+
+Place their tails at the same origin.
+
+Every linear combination:
+
+\[
+sa+tb
+\]
+
+lies in a plane.
+
+That plane is:
+
+\[
+\operatorname{span}\{a,b\}.
+\]
+
+Because the vectors are nonparallel, this span has dimension 2.
+
+So in three-dimensional space:
+
+```text
+              b
+             ↗
+            /
+           /
+          ●────────→ a
+         /
+        /
+  plane spanned by a,b
+```
+
+---
+
+# 544.2 What direction is missing from that plane?
+
+There is one independent spatial direction perpendicular to this plane.
+
+The cross product gives us precisely a vector along that normal direction:
+
+\[
+\boxed{
+a\times b\perp a
+}
+\]
+
+and
+
+\[
+\boxed{
+a\times b\perp b.
+}
+\]
+
+Since every vector in the plane is a linear combination
+
+\[
+sa+tb,
+\]
+
+the cross product is actually perpendicular to the **entire plane**.
+
+Proof:
+
+\[
+(a\times b)\cdot(sa+tb)
+\]
+
+\[
+=
+s(a\times b)\cdot a
++
+t(a\times b)\cdot b.
+\]
+
+Both dots are zero.
+
+Therefore:
+
+\[
+\boxed{
+(a\times b)\cdot(sa+tb)=0.
+}
+\]
+
+So the cross product is a **normal vector to the plane spanned by the inputs**.
+
+---
+
+# 544.3 The result contains more than "a perpendicular direction"
+
+There are infinitely many vectors perpendicular to the plane that differ in magnitude:
+
+\[
+n,\quad2n,\quad100n,\ldots
+\]
+
+and there are two opposite orientations:
+
+\[
+n,\quad-n.
+\]
+
+The cross product chooses:
+
+1. a particular perpendicular axis;
+2. a particular orientation on that axis;
+3. a particular magnitude.
+
+The orientation comes in Part 546.
+
+The magnitude comes in Part 545.
+
+Thus "cross product gives a perpendicular vector" is correct but incomplete.
+
+---
+
+# 544.4 Standard basis example
+
+In a right-handed conventional frame:
+
+\[
+e_x=(1,0,0)
+\]
+
+and:
+
+\[
+e_y=(0,1,0).
+\]
+
+Cross:
+
+\[
+e_x\times e_y.
+\]
+
+Formula:
+
+\[
+(1,0,0)\times(0,1,0)
+\]
+
+gives:
+
+\[
+(0,0,1).
+\]
+
+Therefore:
+
+\[
+\boxed{
+e_x\times e_y=e_z.
+}
+\]
+
+The XY plane's normal is the Z direction.
+
+---
+
+# 544.5 Another basis pair
+
+\[
+e_y\times e_z=e_x.
+\]
+
+And:
+
+\[
+e_z\times e_x=e_y.
+\]
+
+So the cyclic pattern is:
+
+```text
+X → Y → Z → X
+```
+
+Cross consecutive directions in that cycle and you obtain the next.
+
+We'll explain orientation rigorously in Part 546.
+
+---
+
+# 544.6 Parallel inputs
+
+Suppose:
+
+\[
+b=ka.
+\]
+
+Then the two vectors do not define a genuine 2D plane.
+
+Their span is only a line.
+
+Example:
+
+\[
+a=(1,2,3)
+\]
+
+and:
+
+\[
+b=(2,4,6).
+\]
+
+Compute:
+
+\[
+a\times b.
+\]
+
+X:
+
+\[
+2(6)-3(4)=12-12=0.
+\]
+
+Y:
+
+\[
+3(2)-1(6)=6-6=0.
+\]
+
+Z:
+
+\[
+1(4)-2(2)=4-4=0.
+\]
+
+Thus:
+
+\[
+\boxed{
+a\times b=0.
+}
+\]
+
+So:
+
+\[
+\boxed{
+a\times b=0
+}
+\]
+
+for parallel vectors.
+
+For nonzero vectors, the converse also holds:
+
+\[
+\boxed{
+a\times b=0
+\iff
+a,b\text{ are parallel}.
+}
+\]
+
+We'll see this immediately from the magnitude formula in Part 545.
+
+---
+
+# 544.7 Why zero is the correct result for parallel inputs
+
+You might ask:
+
+> There are still many vectors perpendicular to a line, so why return zero?
+
+Exactly.
+
+With only one effective input direction, there is no unique normal direction.
+
+There is an entire plane of possible perpendicular directions.
+
+So the cross product cannot select one geometrically from the two dependent inputs.
+
+Zero correctly signals:
+
+\[
+\boxed{
+\text{the input pair failed to define an oriented plane}.
+}
+\]
+
+This is an important interpretation.
+
+---
+
+# 544.8 Triangle edges
+
+Suppose triangle vertices are points:
+
+\[
+A,\quad B,\quad C.
+\]
+
+Construct edge displacement vectors:
+
+\[
+e_1=B-A,
+\]
+
+\[
+e_2=C-A.
+\]
+
+Then:
+
+\[
+e_1\times e_2
+\]
+
+is perpendicular to the triangle's plane.
+
+Thus the cross product naturally constructs a triangle normal direction.
+
+Later Part 1125 handles triangle normals explicitly.
+
+For now, note the semantic chain:
+
+```text
+three points
+   ↓ subtract common point
+two displacement vectors
+   ↓ cross
+plane normal vector
+```
+
+---
+
+# 544.9 Why input order matters
+
+Take the same triangle.
+
+\[
+(B-A)\times(C-A)
+\]
+
+points to one side of the triangle.
+
+But:
+
+\[
+(C-A)\times(B-A)
+\]
+
+points to the opposite side.
+
+The geometric plane is unchanged.
+
+The **orientation** changes.
+
+This is fundamental for:
+
+- mesh winding;
+- front/back faces;
+- normals;
+- coordinate frame construction;
+- signed orientation tests.
+
+Part 546 derives the sign relationship.
+
+---
+
+# 544.10 Cross product and normal construction
+
+Suppose two tangent directions lie along a surface:
+
+\[
+t_1,\quad t_2.
+\]
+
+Then:
+
+\[
+n=t_1\times t_2
+\]
+
+is perpendicular to both.
+
+But note:
+
+\[
+n
+\]
+
+is generally **not unit length**.
+
+To obtain a unit normal:
+
+\[
+\hat n=
+\frac{t_1\times t_2}
+{\|t_1\times t_2\|}.
+\]
+
+This requires that:
+
+\[
+t_1\times t_2\neq0.
+\]
+
+If the tangent directions are parallel or nearly parallel, normal construction fails or becomes numerically unstable.
+
+That is a production-critical degeneracy.
+
+---
+
+# 544.11 Units
+
+Suppose \(a\) and \(b\) are displacement vectors measured in metres.
+
+Cross-product components contain products such as:
+
+\[
+a_yb_z.
+\]
+
+Therefore units are:
+
+\[
+m\cdot m=m^2.
+\]
+
+So:
+
+\[
+a\times b
+\]
+
+has area-like units:
+
+\[
+\boxed{m^2}.
+\]
+
+This already hints that its magnitude represents area.
+
+If instead:
+
+\[
+r
+\]
+
+is position/displacement in metres and
+
+\[
+F
+\]
+
+force in newtons,
+
+then:
+
+\[
+r\times F
+\]
+
+has units:
+
+\[
+N\cdot m,
+\]
+
+which appears in torque.
+
+Cross product preserves the product of operand units.
+
+---
+
+# 544.12 Cross product is not associative
+
+Do not assume:
+
+\[
+(a\times b)\times c
+=
+a\times(b\times c).
+\]
+
+It generally does not.
+
+A quick example:
+
+\[
+a=e_x,\quad
+b=e_x,\quad
+c=e_y.
+\]
+
+Left:
+
+\[
+(a\times b)\times c
+=
+0\times e_y
+=
+0.
+\]
+
+Right:
+
+\[
+a\times(b\times c)
+=
+e_x\times(e_x\times e_y).
+\]
+
+Since:
+
+\[
+e_x\times e_y=e_z,
+\]
+
+this becomes:
+
+\[
+e_x\times e_z=-e_y.
+\]
+
+Thus:
+
+\[
+0\neq-e_y.
+\]
+
+So cross product is not associative.
+
+Part 550 later teaches the actual vector triple-product identity.
+
+Do not invent parenthesis-free cross chains.
+
+---
+
+# 544.13 Cross product versus dot product
+
+These two operations capture complementary geometry.
+
+### Dot
+
+\[
+a\cdot b
+=
+\|a\|\|b\|\cos\theta.
+\]
+
+It measures **parallel alignment**.
+
+### Cross magnitude
+
+We will prove:
+
+\[
+\|a\times b\|
+=
+\|a\|\|b\|\sin\theta.
+\]
+
+It measures **perpendicular spread**.
+
+Think:
+
+```text
+dot   → how much the vectors line up
+
+cross → how much they open away from each other
+```
+
+At:
+
+\[
+\theta=0,
+\]
+
+dot is maximal, cross magnitude zero.
+
+At:
+
+\[
+\theta=90^\circ,
+\]
+
+dot zero, cross magnitude maximal for fixed lengths.
+
+They are complementary.
+
+---
+
+# PART 545 — CROSS-PRODUCT MAGNITUDE AND PARALLELOGRAM AREA
+
+Now we derive the magnitude.
+
+The result is:
+
+\[
+\boxed{
+\|a\times b\|
+=
+\|a\|\|b\|\sin\theta
+}
+\]
+
+and that number equals the area of the parallelogram spanned by \(a\) and \(b\).
+
+We're going to prove it rather than quote it.
+
+---
+
+# 545.1 Start from the coordinate formula
+
+Let:
+
+\[
+a=(a_x,a_y,a_z)
+\]
+
+and:
+
+\[
+b=(b_x,b_y,b_z).
+\]
+
+Then:
+
+\[
+a\times b
+=
+(
+a_yb_z-a_zb_y,\;
+a_zb_x-a_xb_z,\;
+a_xb_y-a_yb_x
+).
+\]
+
+Squared magnitude:
+
+\[
+\|a\times b\|^2
+\]
+
+equals:
+
+\[
+(a_yb_z-a_zb_y)^2
++
+(a_zb_x-a_xb_z)^2
++
+(a_xb_y-a_yb_x)^2.
+\]
+
+Now expand all three.
+
+---
+
+# 545.2 Expand the first square
+
+\[
+(a_yb_z-a_zb_y)^2
+\]
+
+becomes:
+
+\[
+a_y^2b_z^2
+-
+2a_ya_zb_yb_z
++
+a_z^2b_y^2.
+\]
+
+Second:
+
+\[
+(a_zb_x-a_xb_z)^2
+\]
+
+becomes:
+
+\[
+a_z^2b_x^2
+-
+2a_za_xb_xb_z
++
+a_x^2b_z^2.
+\]
+
+Third:
+
+\[
+(a_xb_y-a_yb_x)^2
+\]
+
+becomes:
+
+\[
+a_x^2b_y^2
+-
+2a_xa_yb_xb_y
++
+a_y^2b_x^2.
+\]
+
+Collect everything:
+
+\[
+\|a\times b\|^2
+=
+a_x^2b_y^2+a_x^2b_z^2
++a_y^2b_x^2+a_y^2b_z^2
++a_z^2b_x^2+a_z^2b_y^2
+\]
+
+\[
+-
+2(
+a_xa_yb_xb_y
++
+a_xa_zb_xb_z
++
+a_ya_zb_yb_z
+).
+\]
+
+Keep that expression.
+
+---
+
+# 545.3 Now expand \(\|a\|^2\|b\|^2\)
+
+We have:
+
+\[
+\|a\|^2
+=
+a_x^2+a_y^2+a_z^2,
+\]
+
+\[
+\|b\|^2
+=
+b_x^2+b_y^2+b_z^2.
+\]
+
+Multiply:
+
+\[
+\|a\|^2\|b\|^2
+=
+(a_x^2+a_y^2+a_z^2)
+(b_x^2+b_y^2+b_z^2).
+\]
+
+This produces all nine combinations:
+
+\[
+a_x^2b_x^2+
+a_x^2b_y^2+
+a_x^2b_z^2
+\]
+
+\[
++
+a_y^2b_x^2+
+a_y^2b_y^2+
+a_y^2b_z^2
+\]
+
+\[
++
+a_z^2b_x^2+
+a_z^2b_y^2+
+a_z^2b_z^2.
+\]
+
+---
+
+# 545.4 Expand \((a\cdot b)^2\)
+
+Dot:
+
+\[
+a\cdot b
+=
+a_xb_x+a_yb_y+a_zb_z.
+\]
+
+Square it:
+
+\[
+(a\cdot b)^2
+=
+a_x^2b_x^2+
+a_y^2b_y^2+
+a_z^2b_z^2
+\]
+
+\[
++
+2a_xa_yb_xb_y
++
+2a_xa_zb_xb_z
++
+2a_ya_zb_yb_z.
+\]
+
+Subtract this from:
+
+\[
+\|a\|^2\|b\|^2.
+\]
+
+The three matching-square terms disappear:
+
+\[
+a_x^2b_x^2,
+\quad
+a_y^2b_y^2,
+\quad
+a_z^2b_z^2.
+\]
+
+What remains is exactly the expanded expression for:
+
+\[
+\|a\times b\|^2.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\|a\times b\|^2
+=
+\|a\|^2\|b\|^2
+-
+(a\cdot b)^2.
+}
+\]
+
+This identity is extremely important.
+
+---
+
+# 545.5 Insert the cosine relation
+
+From Part 536:
+
+\[
+a\cdot b
+=
+\|a\|\|b\|\cos\theta.
+\]
+
+Square:
+
+\[
+(a\cdot b)^2
+=
+\|a\|^2\|b\|^2\cos^2\theta.
+\]
+
+Substitute:
+
+\[
+\|a\times b\|^2
+=
+\|a\|^2\|b\|^2
+-
+\|a\|^2\|b\|^2\cos^2\theta.
+\]
+
+Factor:
+
+\[
+=
+\|a\|^2\|b\|^2
+(1-\cos^2\theta).
+\]
+
+Using:
+
+\[
+1-\cos^2\theta=\sin^2\theta,
+\]
+
+we get:
+
+\[
+\boxed{
+\|a\times b\|^2
+=
+\|a\|^2
+\|b\|^2
+\sin^2\theta.
+}
+\]
+
+Take square roots:
+
+\[
+\|a\times b\|
+=
+\|a\|
+\|b\|
+|\sin\theta|.
+\]
+
+For the standard angle between vectors:
+
+\[
+0\le\theta\le\pi,
+\]
+
+and sine is nonnegative over that interval.
+
+Therefore:
+
+\[
+\boxed{
+\|a\times b\|
+=
+\|a\|
+\|b\|
+\sin\theta.
+}
+\]
+
+Derived.
+
+---
+
+# 545.6 Geometric area derivation
+
+Now consider the parallelogram formed by \(a\) and \(b\).
+
+Use:
+
+\[
+\|a\|
+\]
+
+as the base.
+
+What is its height?
+
+If \(\theta\) is the angle between \(a\) and \(b\), then the component of \(b\) perpendicular to \(a\) has magnitude:
+
+\[
+\|b\|\sin\theta.
+\]
+
+Therefore parallelogram area:
+
+\[
+A
+=
+\text{base}\times\text{height}
+\]
+
+becomes:
+
+\[
+A
+=
+\|a\|
+\|b\|
+\sin\theta.
+\]
+
+But that is exactly:
+
+\[
+\|a\times b\|.
+\]
+
+Hence:
+
+\[
+\boxed{
+\text{Area of parallelogram}(a,b)
+=
+\|a\times b\|.
+}
+\]
+
+This is the geometric meaning of cross-product magnitude.
+
+---
+
+# 545.7 Triangle area
+
+A triangle formed by the same two edge vectors occupies exactly half the parallelogram.
+
+So:
+
+\[
+\boxed{
+A_{\triangle}
+=
+\frac12
+\|a\times b\|.
+}
+\]
+
+For triangle vertices:
+
+\[
+A,B,C,
+\]
+
+let:
+
+\[
+e_1=B-A,
+\]
+
+\[
+e_2=C-A.
+\]
+
+Then:
+
+\[
+\boxed{
+\text{Triangle area}
+=
+\frac12
+\|
+(B-A)\times(C-A)
+\|.
+}
+\]
+
+You will use exactly this later.
+
+---
+
+# 545.8 Worked area example
+
+Let:
+
+\[
+a=(3,0,0)
+\]
+
+and:
+
+\[
+b=(1,4,0).
+\]
+
+Cross:
+
+\[
+a\times b.
+\]
+
+X:
+
+\[
+0(0)-0(4)=0.
+\]
+
+Y:
+
+\[
+0(1)-3(0)=0.
+\]
+
+Z:
+
+\[
+3(4)-0(1)=12.
+\]
+
+Thus:
+
+\[
+a\times b=(0,0,12).
+\]
+
+Magnitude:
+
+\[
+\boxed{12}.
+\]
+
+Geometrically, the parallelogram has base 3 and perpendicular height 4:
+
+\[
+3\times4=12.
+\]
+
+Perfect.
+
+Triangle area:
+
+\[
+\boxed{6}.
+\]
+
+---
+
+# 545.9 Parallel case
+
+If:
+
+\[
+\theta=0
+\]
+
+or:
+
+\[
+\theta=\pi,
+\]
+
+then:
+
+\[
+\sin\theta=0.
+\]
+
+Therefore:
+
+\[
+\|a\times b\|=0.
+\]
+
+So nonzero parallel vectors have zero cross product.
+
+This proves the claim from Part 544.
+
+---
+
+# 545.10 Perpendicular case
+
+If:
+
+\[
+\theta=90^\circ,
+\]
+
+then:
+
+\[
+\sin\theta=1.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\|a\times b\|
+=
+\|a\|\|b\|.
+}
+\]
+
+For fixed lengths this is the **maximum possible cross magnitude**.
+
+Perpendicular vectors span the largest parallelogram possible for those side lengths.
+
+---
+
+# 545.11 Cross magnitude as "degree of nonparallelness"
+
+For fixed lengths:
+
+\[
+\|a\times b\|
+\]
+
+is small when vectors are nearly parallel.
+
+Large when they approach perpendicular.
+
+Thus it is commonly used to detect:
+
+- degeneracy;
+- near-collinearity;
+- triangle area collapse;
+- unstable basis construction.
+
+But raw magnitude depends on input lengths.
+
+So:
+
+```cpp
+length(cross(a,b)) < epsilon
+```
+
+is not scale-independent.
+
+---
+
+# 545.12 Scale-aware parallelism measure
+
+For nonzero vectors:
+
+\[
+\frac{\|a\times b\|}
+{\|a\|\|b\|}
+=
+\sin\theta.
+\]
+
+So a scale-independent measure of angular nonparallelness is:
+
+\[
+|\sin\theta|.
+\]
+
+For already normalized vectors:
+
+\[
+\boxed{
+\|a\times b\|=\sin\theta.
+}
+\]
+
+That is analogous to:
+
+\[
+a\cdot b=\cos\theta
+\]
+
+for unit vectors.
+
+Thus for unit vectors:
+
+\[
+\boxed{
+(a\cdot b)^2
++
+\|a\times b\|^2
+=
+1.
+}
+\]
+
+Because:
+
+\[
+\cos^2\theta+\sin^2\theta=1.
+\]
+
+---
+
+# 545.13 Squared area optimization
+
+If you only need to compare areas, avoid the square root.
+
+Parallelogram area squared:
+
+\[
+\boxed{
+A^2
+=
+\|a\times b\|^2.
+}
+\]
+
+Triangle area squared:
+
+\[
+\boxed{
+A_\triangle^2
+=
+\frac14
+\|a\times b\|^2.
+}
+\]
+
+So to detect very small triangles you can work with squared cross magnitude.
+
+Again, thresholds must be squared and scale-aware.
+
+---
+
+# 545.14 Numerical instability near parallel vectors
+
+Suppose:
+
+\[
+a=(1,1,1)
+\]
+
+and:
+
+\[
+b=(1+\epsilon,1,1).
+\]
+
+The cross product consists of differences between nearly equal products.
+
+The true area is tiny.
+
+So relative error can become large.
+
+That is not surprising:
+
+when a triangle approaches zero area, its normal direction becomes poorly determined.
+
+Imagine a perfectly collapsed triangle:
+
+```text
+A ------ B ------ C
+```
+
+There is no unique plane normal because the "triangle" is only a line.
+
+Near collapse, tiny coordinate perturbations can rotate the inferred normal dramatically.
+
+The numerical instability reflects geometric ill-conditioning.
+
+---
+
+# PART 546 — CROSS-PRODUCT ORIENTATION AND THE RIGHT-HAND RULE
+
+We now address a question we deliberately postponed.
+
+Two opposite vectors are both perpendicular to a plane:
+
+\[
+n
+\]
+
+and:
+
+\[
+-n.
+\]
+
+Why should:
+
+\[
+a\times b
+\]
+
+choose one rather than the other?
+
+We need an **orientation convention**.
+
+---
+
+# 546.1 The ambiguity
+
+Take:
+
+\[
+a=e_x,
+\]
+
+\[
+b=e_y.
+\]
+
+Both:
+
+\[
+e_z
+\]
+
+and:
+
+\[
+-e_z
+\]
+
+are perpendicular to X and Y.
+
+Perpendicularity alone cannot decide.
+
+Magnitude cannot decide either because both have equal length.
+
+So a third property is necessary:
+
+\[
+\boxed{\text{orientation}.}
+\]
+
+The conventional 3D cross product chooses orientation according to a **right-handed orientation**.
+
+---
+
+# 546.2 Right-hand rule
+
+For:
+
+\[
+a\times b,
+\]
+
+use your right hand.
+
+Conceptual version:
+
+1. point your fingers along \(a\);
+2. curl them toward \(b\) through the smaller angle;
+3. your thumb points in the direction of \(a\times b\).
+
+Another common finger mnemonic is:
+
+```text
+index finger  → a
+middle finger → b
+thumb         → a × b
+```
+
+The exact physical hand pose is less important than the ordered relationship.
+
+The order is:
+
+\[
+\boxed{a\text{ first},\ b\text{ second}.}
+\]
+
+---
+
+# 546.3 Standard right-handed basis cycle
+
+In a conventional right-handed orthonormal basis:
+
+\[
+\boxed{
+e_x\times e_y=e_z
+}
+\]
+
+\[
+\boxed{
+e_y\times e_z=e_x
+}
+\]
+
+\[
+\boxed{
+e_z\times e_x=e_y.
+}
+\]
+
+Think cyclically:
+
+```text
+X → Y → Z → X
+```
+
+Going forward around this cycle gives positive results.
+
+Going backward gives negatives.
+
+---
+
+# 546.4 Reverse the order
+
+Consider:
+
+\[
+e_y\times e_x.
+\]
+
+The right-hand rule reverses direction.
+
+Therefore:
+
+\[
+e_y\times e_x=-e_z.
+\]
+
+In general:
+
+\[
+\boxed{
+a\times b
+=
+-(b\times a).
+}
+\]
+
+This property is called **anti-commutativity** or **skew symmetry**.
+
+Contrast dot product:
+
+\[
+a\cdot b=b\cdot a.
+\]
+
+So:
+
+```text
+dot product:
+swap inputs → same scalar
+
+cross product:
+swap inputs → negate result
+```
+
+This is crucial.
+
+---
+
+# 546.5 Derive anti-commutativity from coordinates
+
+Take:
+
+\[
+a\times b
+=
+(
+a_yb_z-a_zb_y,\ldots).
+\]
+
+Now:
+
+\[
+b\times a
+\]
+
+has X component:
+
+\[
+b_ya_z-b_za_y.
+\]
+
+Factor negative:
+
+\[
+=
+-(a_yb_z-a_zb_y).
+\]
+
+Same occurs for every component.
+
+Therefore:
+
+\[
+\boxed{
+b\times a=-(a\times b).
+}
+\]
+
+So the right-hand geometry and the coordinate algebra agree.
+
+---
+
+# 546.6 Why \(a\times a=0\) follows from anti-commutativity
+
+Set:
+
+\[
+b=a.
+\]
+
+Then:
+
+\[
+a\times a
+=
+-(a\times a).
+\]
+
+Add \(a\times a\) to both sides:
+
+\[
+2(a\times a)=0.
+\]
+
+Over real numbers:
+
+\[
+\boxed{
+a\times a=0.
+}
+\]
+
+Another derivation of a fact we already saw.
+
+---
+
+# 546.7 Triangle winding
+
+Suppose triangle vertices are ordered:
+
+\[
+A,B,C.
+\]
+
+Construct:
+
+\[
+n=(B-A)\times(C-A).
+\]
+
+Now swap \(B\) and \(C\):
+
+\[
+n'=(C-A)\times(B-A).
+\]
+
+Anti-commutativity gives:
+
+\[
+\boxed{
+n'=-n.
+}
+\]
+
+Thus vertex ordering controls the normal orientation.
+
+This is why mesh **winding order** matters.
+
+Later graphics pipelines use winding to decide front-facing versus back-facing triangles.
+
+The cross product provides the underlying orientation mathematics.
+
+---
+
+# 546.8 Clockwise versus counterclockwise depends on viewpoint
+
+Suppose a triangle appears counterclockwise when observed from one side.
+
+Walk around to the opposite side.
+
+It appears clockwise.
+
+So when talking about:
+
+```text
+clockwise
+counterclockwise
+```
+
+you must specify viewing direction.
+
+The cross-product normal supplies exactly such an orientation.
+
+Given a chosen outward normal, winding gains meaning relative to it.
+
+---
+
+# 546.9 Cross product creates oriented area
+
+Magnitude:
+
+\[
+\|a\times b\|
+\]
+
+measures area.
+
+Direction:
+
+\[
+\frac{a\times b}{\|a\times b\|}
+\]
+
+encodes plane orientation.
+
+Therefore the cross-product vector packages:
+
+\[
+\boxed{
+\text{area magnitude}
++
+\text{orientation normal}.
+}
+\]
+
+This is deeper than saying "cross gives a normal."
+
+It is an **oriented area representation** in 3D.
+
+Later exterior algebra makes this idea more explicit.
+
+---
+
+# 546.10 Right-handed coordinate systems versus the right-hand rule
+
+Be careful with terminology.
+
+The cross product is defined relative to an orientation.
+
+When we use the familiar coordinate formula:
+
+\[
+(a_yb_z-a_zb_y,\ldots),
+\]
+
+we are normally assuming the basis:
+
+\[
+(e_x,e_y,e_z)
+\]
+
+is positively oriented according to the right-hand rule.
+
+If a coordinate frame is defined with opposite handedness, blindly carrying geometric assumptions across systems can flip normals or winding interpretation.
+
+This is why engine conversions between different conventions can produce:
+
+- reversed triangle winding;
+- inverted normals;
+- mirrored transforms.
+
+Full coordinate handedness is intentionally Parts 563–565.
+
+---
+
+# 546.11 A subtle but important fact: cross product behaves differently under reflection
+
+Suppose you rotate the entire scene.
+
+The cross-product normal rotates naturally with it.
+
+No surprise.
+
+But a **reflection** changes handedness.
+
+Example: reflect X:
+
+\[
+(x,y,z)\mapsto(-x,y,z).
+\]
+
+Take:
+
+\[
+e_x\times e_y=e_z.
+\]
+
+After reflection:
+
+\[
+e_x\mapsto-e_x,
+\]
+
+\[
+e_y\mapsto e_y.
+\]
+
+Cross reflected vectors:
+
+\[
+(-e_x)\times e_y
+=
+-e_z.
+\]
+
+But the ordinary reflected version of original \(e_z\) is still:
+
+\[
+e_z.
+\]
+
+There is an extra sign.
+
+This is why cross-product outputs are often described as **axial vectors** or **pseudovectors** rather than ordinary polar vectors under orientation-reversing transformations.
+
+You do not need tensor machinery yet.
+
+The important observation is:
+
+\[
+\boxed{
+\text{cross-product orientation detects handedness changes}.
+}
+\]
+
+---
+
+# 546.12 Why this matters for normals
+
+Suppose a model is mirrored using negative scale on one axis.
+
+If you naively transform geometric orientations without accounting for the handedness flip, normals or winding may reverse.
+
+Later normal transformation and determinant signs make this precise.
+
+The root cause is already visible here:
+
+**reflection changes orientation.**
+
+---
+
+# 546.13 Engine code: order should be visible
+
+For triangle vertices:
+
+```cpp
+Vec3 edgeAB = b - a;
+Vec3 edgeAC = c - a;
+
+Vec3 geometricNormal = cross(edgeAB, edgeAC);
+```
+
+Changing to:
+
+```cpp
+cross(edgeAC, edgeAB)
+```
+
+does not produce "the same normal."
+
+It produces:
+
+\[
+-\text{normal}.
+\]
+
+So when debugging inverted normals, one of the first questions should be:
+
+> In which order are the edges crossed?
+
+---
+
+# 546.14 Zero destroys orientation
+
+If:
+
+\[
+a\times b=0,
+\]
+
+then there is no output orientation.
+
+This occurs when:
+
+- one input is zero;
+- inputs are parallel;
+- inputs are antiparallel.
+
+You cannot normalize that cross product into a valid normal.
+
+So this code is unsafe:
+
+```cpp
+Vec3 n = normalize(cross(a, b));
+```
+
+unless you know:
+
+\[
+a\times b\neq0.
+\]
+
+Production code needs a degeneracy policy.
+
+---
+
+# PART 547 — WHY THE CROSS PRODUCT IS SPECIAL TO THREE DIMENSIONS
+
+This Part is more profound than it sounds.
+
+Why are graphics libraries full of:
+
+```cpp
+cross(Vec3, Vec3)
+```
+
+but often no mathematically equivalent:
+
+```cpp
+cross(Vec4, Vec4)
+```
+
+returning a unique `Vec4`?
+
+Why does the familiar binary cross product naturally belong to 3D?
+
+Let's derive it.
+
+---
+
+# 547.1 Start with the geometric requirement
+
+Given two independent vectors:
+
+\[
+a,b
+\]
+
+in \(n\)-dimensional space, they span a 2D subspace:
+
+\[
+\operatorname{span}\{a,b\}.
+\]
+
+We want a result perpendicular to both.
+
+So we seek vectors \(x\) satisfying:
+
+\[
+x\cdot a=0
+\]
+
+and:
+
+\[
+x\cdot b=0.
+\]
+
+Those are two independent linear constraints.
+
+In an \(n\)-dimensional space, imposing two independent constraints generally leaves:
+
+\[
+\boxed{n-2}
+\]
+
+degrees of freedom.
+
+This is the key.
+
+---
+
+# 547.2 In three dimensions
+
+Set:
+
+\[
+n=3.
+\]
+
+Then:
+
+\[
+n-2=1.
+\]
+
+So the vectors perpendicular to both \(a\) and \(b\) form a **one-dimensional subspace**.
+
+A one-dimensional subspace is a line:
+
+```text
+           +normal
+              ↑
+              |
+              |
+--------------●--------------
+              |
+              |
+              ↓
+           -normal
+```
+
+Thus there is essentially one perpendicular axis, with only two orientations:
+
+\[
+n
+\]
+
+and:
+
+\[
+-n.
+\]
+
+The right-hand orientation convention chooses one.
+
+That is why in 3D two nonparallel vectors determine a unique cross-product direction up to sign.
+
+---
+
+# 547.3 In two dimensions
+
+Set:
+
+\[
+n=2.
+\]
+
+Then:
+
+\[
+n-2=0.
+\]
+
+Two independent vectors already span the entire space.
+
+There is no nonzero 2D vector perpendicular to both.
+
+Example:
+
+\[
+a=(1,0),
+\quad
+b=(0,1).
+\]
+
+A vector:
+
+\[
+x=(x_1,x_2)
+\]
+
+orthogonal to \(a\) requires:
+
+\[
+x_1=0.
+\]
+
+Orthogonal to \(b\) requires:
+
+\[
+x_2=0.
+\]
+
+Thus:
+
+\[
+x=0.
+\]
+
+So a 3D-style vector-valued cross product cannot return a nonzero perpendicular vector **inside 2D space**.
+
+---
+
+# 547.4 Yet programmers speak of a "2D cross product"
+
+You may see:
+
+```cpp
+float cross(Vec2 a, Vec2 b)
+{
+    return a.x * b.y - a.y * b.x;
+}
+```
+
+This returns a scalar:
+
+\[
+\boxed{
+a_xb_y-a_yb_x.
+}
+\]
+
+What is that?
+
+Embed the 2D vectors into 3D:
+
+\[
+a=(a_x,a_y,0),
+\]
+
+\[
+b=(b_x,b_y,0).
+\]
+
+Their 3D cross product is:
+
+\[
+(0,0,a_xb_y-a_yb_x).
+\]
+
+The X and Y components are always zero.
+
+Only Z survives.
+
+Since the perpendicular direction is implicitly known to be the out-of-plane Z axis, we can store only its signed coefficient.
+
+So the so-called 2D cross product is really a **signed oriented area scalar**.
+
+It is extremely useful for orientation tests.
+
+Full 2D orientation comes in Part 566.
+
+---
+
+# 547.5 What happens in four dimensions?
+
+Now:
+
+\[
+n=4.
+\]
+
+Then:
+
+\[
+n-2=2.
+\]
+
+Two independent vectors leave a **two-dimensional family** of perpendicular directions.
+
+Example:
+
+\[
+a=e_1=(1,0,0,0)
+\]
+
+and:
+
+\[
+b=e_2=(0,1,0,0).
+\]
+
+Any vector:
+
+\[
+x=(0,0,s,t)
+\]
+
+is perpendicular to both.
+
+For example:
+
+\[
+(0,0,1,0),
+\]
+
+\[
+(0,0,0,1),
+\]
+
+\[
+(0,0,1,1),
+\]
+
+and infinitely many others.
+
+Which one should:
+
+\[
+a\times b
+\]
+
+return?
+
+The input pair provides no canonical answer.
+
+That is the fundamental geometric obstruction.
+
+---
+
+# 547.6 Why "take the first perpendicular one" is not acceptable
+
+You could invent a rule such as:
+
+> choose the perpendicular direction closest to coordinate axis 3.
+
+But then the result would depend arbitrarily on the chosen coordinate system.
+
+Rotate the coordinates and the rule changes.
+
+A geometric operation should ideally depend on the geometry of its inputs, not an arbitrary preferred external axis.
+
+The ordinary 3D cross product does not need such extra data because the perpendicular complement is only one-dimensional.
+
+---
+
+# 547.7 General \(n\)-dimensional picture
+
+Two independent vectors span dimension:
+
+\[
+2.
+\]
+
+Their perpendicular complement has dimension:
+
+\[
+\boxed{n-2}.
+\]
+
+So:
+
+| Ambient dimension | Perpendicular complement to two independent vectors |
+|---|---:|
+| 2D | 0D |
+| 3D | 1D |
+| 4D | 2D |
+| 5D | 3D |
+| \(n\)D | \(n-2\)D |
+
+Only at:
+
+\[
+n=3
+\]
+
+does the perpendicular complement have exactly one dimension.
+
+That is the elementary geometric reason 3D is special.
+
+---
+
+# 547.8 There is an even deeper dimensional reason
+
+A pair of vectors does not fundamentally describe "another vector."
+
+It fundamentally describes an **oriented plane element**.
+
+Later Parts 584–585 call this an **exterior product / wedge product**:
+
+\[
+a\wedge b.
+\]
+
+We are not teaching that operation yet.
+
+But we need one counting fact.
+
+In \(n\) dimensions, the number of independent coordinate-plane pairs is:
+
+\[
+\binom n2
+=
+\frac{n(n-1)}2.
+\]
+
+Why?
+
+You choose two distinct coordinate directions out of \(n\).
+
+For 3D:
+
+\[
+\binom32=3.
+\]
+
+The plane components are:
+
+```text
+XY
+YZ
+ZX
+```
+
+Exactly three.
+
+And a 3D vector also has exactly three components:
+
+```text
+X
+Y
+Z
+```
+
+So in 3D:
+
+\[
+\boxed{
+\text{oriented-plane components}
+\leftrightarrow
+\text{vector components}
+}
+\]
+
+have matching dimensionality.
+
+This lets us encode an oriented plane element as its perpendicular vector.
+
+That encoding is the familiar cross product.
+
+---
+
+# 547.9 In four dimensions the counts no longer match
+
+For 4D:
+
+\[
+\binom42=6.
+\]
+
+There are six independent coordinate-plane pairs:
+
+\[
+12,\quad13,\quad14,\quad23,\quad24,\quad34.
+\]
+
+But an ordinary 4D vector has only four components.
+
+So an arbitrary oriented 2D plane element in 4D contains six independent components—not four.
+
+You cannot faithfully squeeze that general object into an ordinary 4D vector without losing information.
+
+This is another deep reason the 3D cross-product representation is special.
+
+---
+
+# 547.10 Solve when the component counts match
+
+Ask when:
+
+\[
+\binom n2=n.
+\]
+
+Then:
+
+\[
+\frac{n(n-1)}2=n.
+\]
+
+For nonzero \(n\), divide by \(n\):
+
+\[
+\frac{n-1}{2}=1.
+\]
+
+So:
+
+\[
+n-1=2,
+\]
+
+\[
+\boxed{n=3}.
+\]
+
+Thus three dimensions are uniquely suited to identifying oriented 2D plane elements with ordinary vectors in this way.
+
+That is a much deeper answer than:
+
+> because cross product was defined for Vec3.
+
+---
+
+# 547.11 Generalized perpendicular construction in \(n\) dimensions
+
+There *is* another generalization.
+
+In \(n\)-dimensional space, if you provide:
+
+\[
+n-1
+\]
+
+independent vectors, their span is an \((n-1)\)-dimensional hyperplane.
+
+Its perpendicular complement has dimension:
+
+\[
+n-(n-1)=1.
+\]
+
+So a unique normal direction up to sign exists.
+
+Thus in 4D, you can define a generalized operation taking **three** vectors:
+
+\[
+a,b,c
+\]
+
+and producing one vector perpendicular to all three.
+
+In 5D you would need four input vectors.
+
+So:
+
+\[
+\boxed{
+\text{binary two-input perpendicular-vector construction is naturally 3D;}
+}
+\]
+
+the generalized \(n\)-dimensional version typically takes \(n-1\) vectors.
+
+---
+
+# 547.12 Important nuance: the exceptional 7D cross product
+
+You may eventually encounter the mathematical statement:
+
+> Cross products exist in dimensions 3 and 7.
+
+This does **not** contradict what we just derived.
+
+There is an exceptional seven-dimensional bilinear vector cross product connected to the algebra of **octonions**.
+
+It satisfies remarkable analogues of:
+
+- perpendicularity;
+- magnitude relations;
+- antisymmetry.
+
+But it is not the ordinary determinant/right-hand-rule cross product used throughout 3D graphics, and it does not arise because two vectors in 7D have a unique perpendicular direction—they do not.
+
+Given two 7D vectors, their common perpendicular space has dimension:
+
+\[
+7-2=5.
+\]
+
+The exceptional algebra supplies extra structure selecting a direction.
+
+So the accurate statement is:
+
+\[
+\boxed{
+\text{the familiar canonical Euclidean cross product is intrinsically 3D;}
+}
+\]
+
+while more exotic cross-product structures exist under additional algebraic structure.
+
+This nuance prevents an overly simplistic mathematical claim.
+
+---
+
+# 547.13 Why graphics loves the 3D cross product
+
+Computer graphics operates heavily in ordinary 3D Euclidean space.
+
+So we repeatedly need:
+
+- triangle normals;
+- tangent-frame axes;
+- perpendicular directions;
+- oriented surface area;
+- torque;
+- angular momentum;
+- plane orientation;
+- basis construction.
+
+Three dimensions happen to give us a remarkably compact object:
+
+\[
+\boxed{
+\text{two vectors}
+\rightarrow
+\text{one perpendicular vector carrying orientation and area}.
+}
+\]
+
+That convenience is partly a gift of dimensionality.
+
+---
+
+# CROSS PRODUCT: THE COMPLETE MODEL SO FAR
+
+We now have three complementary statements.
+
+## Algebra
+
+\[
+\boxed{
+a\times b
+=
+(
+a_yb_z-a_zb_y,\;
+a_zb_x-a_xb_z,\;
+a_xb_y-a_yb_x
+).
+}
+\]
+
+## Geometry
+
+\[
+\boxed{
+a\times b
+\perp a,b.
+}
+\]
+
+## Magnitude
+
+\[
+\boxed{
+\|a\times b\|
+=
+\|a\|\|b\|\sin\theta.
+}
+\]
+
+## Orientation
+
+\[
+\boxed{
+a\times b=-(b\times a).
+}
+\]
+
+Direction follows the right-hand orientation convention.
+
+Together:
+
+\[
+\boxed{
+a\times b
+=
+\text{oriented normal whose magnitude equals spanned parallelogram area}.
+}
+\]
+
+That sentence is much closer to mastery than:
+
+> cross product gives a perpendicular vector.
+
+---
+
+# DOT AND CROSS TOGETHER
+
+For nonzero vectors:
+
+\[
+a\cdot b
+=
+\|a\|\|b\|\cos\theta
+\]
+
+while:
+
+\[
+\|a\times b\|
+=
+\|a\|\|b\|\sin\theta.
+\]
+
+Thus:
+
+```text
+DOT
+parallel component relationship
+cos θ
+
+CROSS
+perpendicular spread
+sin θ
+```
+
+For unit vectors:
+
+\[
+\boxed{
+a\cdot b=\cos\theta
+}
+\]
+
+and:
+
+\[
+\boxed{
+\|a\times b\|=\sin\theta.
+}
+\]
+
+So:
+
+\[
+\boxed{
+(a\cdot b)^2+\|a\times b\|^2=1
+}
+\]
+
+for unit vectors.
+
+More generally:
+
+\[
+\boxed{
+(a\cdot b)^2
++
+\|a\times b\|^2
+=
+\|a\|^2\|b\|^2.
+}
+\]
+
+This is the same identity derived in Part 545 rearranged.
+
+---
+
+# PRODUCTION C++ IMPLEMENTATION
+
+A minimal canonical implementation:
+
+```cpp
+struct Vec3 {
+    float x{};
+    float y{};
+    float z{};
+};
+
+[[nodiscard]]
+constexpr Vec3 cross(Vec3 a, Vec3 b) noexcept
+{
+    return {
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    };
+}
+```
+
+A triangle normal helper should **not** pretend degeneracy cannot exist:
+
+```cpp
+struct TriangleNormalResult {
+    Vec3 normal{};
+    bool valid{};
+};
+
+[[nodiscard]]
+TriangleNormalResult triangleUnitNormal(
+    Vec3 a,
+    Vec3 b,
+    Vec3 c,
+    float minAreaSquared) noexcept
+{
+    const Vec3 e0 = b - a;
+    const Vec3 e1 = c - a;
+
+    const Vec3 n = cross(e0, e1);
+    const float n2 = dot(n, n);
+
+    // n2 is parallelogram area squared.
+    // A zero or tiny value means the triangle does not define
+    // a numerically trustworthy plane normal.
+    if (n2 <= minAreaSquared) {
+        return {{0.0f, 0.0f, 0.0f}, false};
+    }
+
+    const float invLength = 1.0f / std::sqrt(n2);
+
+    return {
+        n * invLength,
+        true
+    };
+}
+```
+
+Notice what the validity test means geometrically.
+
+It is not:
+
+> some random cross product threshold.
+
+It is asking whether the two triangle edges span enough area to define a stable normal.
+
+---
+
+# WHY A FIXED EPSILON IS AGAIN DANGEROUS
+
+Suppose triangle edge lengths are around:
+
+\[
+10^{-4}.
+\]
+
+Cross magnitude has units of area and scales approximately like:
+
+\[
+10^{-8}.
+\]
+
+Now scale the whole model by:
+
+\[
+10^6.
+\]
+
+Cross magnitude scales by the square:
+
+\[
+10^{12}.
+\]
+
+Therefore the same geometric triangle under model scaling can move across a fixed raw threshold by enormous factors.
+
+A degeneracy criterion may need:
+
+- model-scale awareness;
+- relative edge-length comparison;
+- normalized inputs;
+- application-specific area tolerance.
+
+Never treat:
+
+```cpp
+lengthSquared(cross(e0,e1)) < 1e-6f
+```
+
+as universally meaningful.
+
+---
+
+# A SCALE-RELATIVE PARALLELISM TEST
+
+For nonzero vectors:
+
+\[
+\sin^2\theta
+=
+\frac{
+\|a\times b\|^2
+}{
+\|a\|^2\|b\|^2
+}.
+\]
+
+Therefore instead of comparing raw cross magnitude, you can compare:
+
+\[
+\boxed{
+\|a\times b\|^2
+\le
+\varepsilon^2
+\|a\|^2\|b\|^2.
+}
+\]
+
+That asks:
+
+> Is the sine of their angle small?
+
+This is much closer to a scale-independent parallelism test.
+
+Extreme floating-point ranges still require robustness, but the mathematical criterion is sound.
+
+---
+
+# SIMD/HARDWARE VIEW
+
+A cross product is a small fixed arithmetic kernel.
+
+Conceptually:
+
+```text
+shuffle components
+      ↓
+pairwise multiplies
+      ↓
+subtract paired products
+      ↓
+3-component output
+```
+
+Unlike a dot product, it does not horizontally reduce to a scalar.
+
+SIMD cross implementations often use lane shuffles/permutations to align:
+
+```text
+[y z x]
+[z x y]
+```
+
+patterns before multiply-subtract operations.
+
+For individual `Vec3`s, the arithmetic cost is tiny.
+
+For massive meshes, broader costs may dominate:
+
+- loading positions;
+- computing edges;
+- writing normals;
+- triangle indexing;
+- cache locality;
+- SIMD batching.
+
+Never optimize `cross()` in isolation before profiling the actual mesh-processing loop.
+
+---
+
+# DEBUGGING TREE — WRONG NORMAL
+
+If a generated normal is wrong, work through this order:
+
+```text
+Are the three inputs actually points?
+        ↓
+Are they all in the same coordinate space?
+        ↓
+Are edges constructed from the same reference point?
+        ↓
+e0 = B - A
+e1 = C - A
+        ↓
+Is the cross order correct?
+cross(e0,e1) versus cross(e1,e0)
+        ↓
+Is triangle degenerate or nearly degenerate?
+        ↓
+Is cross result finite?
+        ↓
+Was normalization attempted on zero?
+        ↓
+Was the model mirrored / handedness changed?
+        ↓
+Does downstream code expect the opposite winding convention?
+```
+
+This is considerably stronger than:
+
+> flip the normal until it looks right.
+
+---
+
+# MASTER WORKED EXAMPLE
+
+Take:
+
+\[
+A=(1,1,0),
+\]
+
+\[
+B=(4,1,0),
+\]
+
+\[
+C=(2,5,0).
+\]
+
+Construct edges:
+
+\[
+e_0=B-A
+=
+(3,0,0),
+\]
+
+\[
+e_1=C-A
+=
+(1,4,0).
+\]
+
+Cross:
+
+\[
+e_0\times e_1.
+\]
+
+Using formula:
+
+\[
+x=0(0)-0(4)=0,
+\]
+
+\[
+y=0(1)-3(0)=0,
+\]
+
+\[
+z=3(4)-0(1)=12.
+\]
+
+Therefore:
+
+\[
+\boxed{
+e_0\times e_1=(0,0,12).
+}
+\]
+
+It is perpendicular to both edges.
+
+Magnitude:
+
+\[
+12.
+\]
+
+So parallelogram area:
+
+\[
+12.
+\]
+
+Triangle area:
+
+\[
+6.
+\]
+
+Orientation:
+
+\[
++Z.
+\]
+
+Reverse vertex ordering:
+
+\[
+e_1\times e_0
+=
+(0,0,-12).
+\]
+
+Same area:
+
+\[
+12.
+\]
+
+Opposite orientation:
+
+\[
+-Z.
+\]
+
+This single example captures Parts 543–546 simultaneously.
+
+---
+
+# MASTERY GATE — PART 543
+
+From a blank page, reconstruct:
+
+\[
+\begin{vmatrix}
+e_x&e_y&e_z\\
+a_x&a_y&a_z\\
+b_x&b_y&b_z
+\end{vmatrix}
+\]
+
+and expand it into:
+
+\[
+\boxed{
+(
+a_yb_z-a_zb_y,\;
+a_zb_x-a_xb_z,\;
+a_xb_y-a_yb_x
+).
+}
+\]
+
+Then explicitly prove:
+
+\[
+a\cdot(a\times b)=0
+\]
+
+and:
+
+\[
+b\cdot(a\times b)=0.
+\]
+
+You should also know why the determinant notation containing basis vectors is a mnemonic/generalized expansion rather than an ordinary all-scalar determinant.
+
+---
+
+# MASTERY GATE — PART 544
+
+Explain why two nonparallel vectors span a plane.
+
+Then prove the cross product is perpendicular to **every vector in that plane**, not only the original two.
+
+Explain why parallel inputs produce zero and why zero is more appropriate than arbitrarily selecting one of infinitely many normals to their line.
+
+Then state what information cross product contains beyond perpendicular direction.
+
+---
+
+# MASTERY GATE — PART 545
+
+Derive:
+
+\[
+\boxed{
+\|a\times b\|^2
+=
+\|a\|^2\|b\|^2-(a\cdot b)^2
+}
+\]
+
+from coordinates.
+
+Then substitute:
+
+\[
+a\cdot b
+=
+\|a\|\|b\|\cos\theta
+\]
+
+to derive:
+
+\[
+\boxed{
+\|a\times b\|
+=
+\|a\|\|b\|\sin\theta.
+}
+\]
+
+Then independently derive parallelogram area as:
+
+\[
+base\times height
+=
+\|a\|\|b\|\sin\theta.
+\]
+
+You should be able to explain why triangle area is half the cross magnitude and why near-zero cross magnitude indicates geometric degeneracy.
+
+---
+
+# MASTERY GATE — PART 546
+
+Without memorized tables, reproduce the right-handed cycle:
+
+\[
+e_x\times e_y=e_z,
+\]
+
+\[
+e_y\times e_z=e_x,
+\]
+
+\[
+e_z\times e_x=e_y.
+\]
+
+Then derive:
+
+\[
+\boxed{
+b\times a=-(a\times b).
+}
+\]
+
+Explain why reversing triangle winding flips the normal without changing its area.
+
+Explain why a reflection/handedness flip can change orientation behavior even though rotations do not create that extra sign issue.
+
+---
+
+# MASTERY GATE — PART 547
+
+This one needs a real conceptual proof.
+
+Given two independent vectors in \(\mathbb R^n\), explain why their common perpendicular space has dimension:
+
+\[
+\boxed{n-2}.
+\]
+
+Then explain:
+
+- 2D → no nonzero common perpendicular;
+- 3D → one-dimensional perpendicular axis;
+- 4D → two-dimensional family of perpendicular vectors.
+
+Then reconstruct:
+
+\[
+\binom n2=\frac{n(n-1)}2
+\]
+
+as the number of independent oriented coordinate-plane components.
+
+Explain why:
+
+\[
+\binom32=3
+\]
+
+matching the three components of a 3D vector is a deep reason an oriented plane element can be represented by a vector in 3D.
+
+Finally, know the nuance that exceptional higher-dimensional structures such as the 7D octonionic cross product exist, but they are not the ordinary canonical 3D graphics cross product.
+
+---
+
+# WHAT YOU SHOULD NOW SEE WHEN READING CODE
+
+When you see:
+
+```cpp
+Vec3 e0 = b - a;
+Vec3 e1 = c - a;
+
+Vec3 n = cross(e0, e1);
+```
+
+you should not think:
+
+> magic normal formula.
+
+You should mentally unfold:
+
+```text
+B - A
+→ displacement along triangle edge
+
+C - A
+→ second independent displacement
+
+cross
+→ determinant-derived bilinear operation
+→ vector orthogonal to their span
+→ direction chosen by ordered/right-handed orientation
+→ magnitude equals parallelogram area
+→ zero means edge pair failed to define a 2D plane
+```
+
+Then:
+
+```cpp
+normalize(n)
+```
+
+means:
+
+```text
+discard area information
+retain oriented unit normal
+```
+
+provided:
+
+\[
+n\neq0.
+\]
+
+That is the depth at which the cross product becomes useful rather than memorized.
+
+**Completed Part 543 — Cross product determinant derivation**  
+**Completed Part 544 — Cross product geometric meaning**  
+**Completed Part 545 — Cross-product magnitude and parallelogram area**  
+**Completed Part 546 — Cross-product orientation and the right-hand rule**  
+**Completed Part 547 — Why the cross product is special to three dimensions**
+
+**Next Core Part 548 — Scalar triple product.**

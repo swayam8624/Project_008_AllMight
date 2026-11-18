@@ -1,0 +1,61 @@
+\hypertarget{appendix-d52e4486f527}{}
+\section*{Ownership and non-owning views}
+\section{Ownership and non-owning views}\label{ownership-and-non-owning-views}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C003 · \textbf{Latest development:} C010
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+By-value copies use member semantics, not recursive deep cloning. Rule-Zero composition delegates ownership to members; raw owners must coordinate transfer and release. Copying a pointer/view/handle is not acquiring ownership.
+
+Copying span/string\_view or capturing a view by value copies only a descriptor. An owning string capture supplies independent storage; a view or handle does not automatically pin a deferred resource.
+
+The inline C++ laboratory distinguishes NamedVector::to\_array, which copies values into a new array, from ArrayVector::view, which aliases actual array elements without owning them. Neither span nor pointer extends backing lifetime. Ownership and RAII are introduced as next-depth connections, not yet a full exception-safety treatment.
+
+M010 makes the distinction operational: an owner is responsible for release; a borrow only accesses. \texttt{std::unique\_ptr} expresses exclusive ownership, \texttt{std::shared\_ptr} retains a shared lifetime, and \texttt{std::weak\_ptr} observes without extending that lifetime. Smart pointers do not remove the borrow/invalidation rules of raw pointers obtained from them. See \href{}{RAII and resource handles (01-Foundations-I, appendix-69739d3ab49b)} and \href{}{Exclusive and shared smart-pointer ownership (01-Foundations-I, appendix-51602cabe815)}.
+
+An owner controls a resource's validity and release; a view merely refers to it. Vector owns its element buffer; span does not copy or prolong that buffer's life. Owner destruction or invalidating reallocation can dangle the span. A reader retaining a span needs stable live backing for every read, not only at construction.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0b104bcba06b]{Storage duration and object lifetime} --- Access requires an object and backing storage that are still valid.
+\item
+  \href{}{Dynamic allocation and heap (01-Foundations-I, appendix-c3480f7d9ff3)} --- Allocated buffers/blocks supply the storage whose ownership and fragmentation matter.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Memory-mapped files (01-Foundations-I, appendix-313ee7a0ba7b)} --- uses this mechanism as stated in its prerequisites.
+\item
+  \href{}{Atomic publication and durability (01-Foundations-I, appendix-e89a8f290ef5)} --- uses this mechanism as stated in its prerequisites.
+\item
+  \href{}{Deferred captures and borrowed views (01-Foundations-I, appendix-aea529eb5175)}
+\item
+  \href{}{Copy semantics and resource identity (01-Foundations-I, appendix-1340cd1ce582)}
+\item
+  \href{}{Rules of Three Five and Zero (01-Foundations-I, appendix-7679107d057e)}
+\item
+  \href{}{RAII and resource handles (01-Foundations-I, appendix-69739d3ab49b)}
+\item
+  \href{}{Exclusive and shared smart-pointer ownership (01-Foundations-I, appendix-51602cabe815)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Explain why returning a view into a local vector fails.
+
+\textbf{Pending:} smart owners, shared immutable data and scheduling/resource pinning.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{}{C009 development (01-Foundations-I, appendix-fd090d982a15 § M009 - Parts 127-147)}
+
+\href{}{C008 development and corrections (01-Foundations-I, appendix-fd090d982a15 § M008 - Parts 113-126)}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Where\%20the\%20bytes\%20live}{C003 teaching chapter} · \href{}{Part definitions (01-Foundations-I, appendix-fd090d982a15 § M003 - Parts 41-60)} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Bringing\%20the\%20object\%20model\%20back\%20to\%20bytes}{C007 development}

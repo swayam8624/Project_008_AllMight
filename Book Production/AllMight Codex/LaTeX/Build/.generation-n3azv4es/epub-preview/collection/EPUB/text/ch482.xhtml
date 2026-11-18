@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch482.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-541306fdbc1b-moore-penrose-pseudoinverse" class="level2">
+<h2>Moore-Penrose pseudoinverse</h2>
+<p>The exact SVD defines <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>A</mi>
+    <mo>+</mo>
+  </msup>
+</math> by reciprocating every positive singular value and transposing the orthogonal factors. <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>A</mi>
+    <mo>+</mo>
+  </msup>
+  <mi>b</mi>
+</math> minimizes residual first and Euclidean solution norm among minimizers second. A numerical cutoff instead produces <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msubsup>
+    <mi>A</mi>
+    <mi>τ</mi>
+    <mo>+</mo>
+  </msubsup>
+</math>: if it discards a positive singular value, it solves a retained-rank approximation and can increase the residual of the original system. The cutoff makes the treatment of weak directions explicit.</p>
+<p><strong>Use it when:</strong> rectangular or rank-deficient least squares needs a minimum-norm answer.</p>
+<p><strong>Developed in Phase 8:</strong> The exact pseudoinverse reciprocates every positive singular value, yielding the least-squares solution with minimum Euclidean norm. A practical cutoff defines a different, truncated operator: discarding even a positive singular value can increase the residual for the original system, so the tolerance and retained rank are part of the mathematical answer. <a href="ch268.xhtml#id_02-foundations-ii-ch024-the-moorepenrose-inverse-and-its-four-identities" class="wikilink">the exact pseudoinverse (Mathematics for Visual Computing, Part 1, Ch. 8)</a> · <a href="ch268.xhtml#id_02-foundations-ii-ch024-thresholding-and-regularization-are-different-choices" class="wikilink">truncation and regularization (Mathematics for Visual Computing, Part 1, Ch. 8)</a></p>
+<section id="appendix-541306fdbc1b-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<p><a href="ch329.xhtml#appendix-1fad5e7f36fa-singular-value-decomposition" class="wikilink">Singular value decomposition (Light Transport and Image Synthesis, Part 1, Reference notes: Singular value decomposition)</a>, <a href="ch493.xhtml#appendix-8572a4a060c1-linear-systems-and-fundamental-subspaces" class="wikilink">Linear systems and fundamental subspaces</a>, <a href="ch384.xhtml#appendix-f8657bac66e5-matrix-norms-and-numerical-error" class="wikilink">Matrix norms and numerical error (Spatial Worlds, Engine State, and Simulation, Part 1, Reference notes: Matrix norms and numerical error)</a>.</p>
+</section>
+<section id="appendix-541306fdbc1b-used-by" class="level3">
+<h3>Used by</h3>
+<p><a href="ch506.xhtml#appendix-ad175ef3c5bf-pca-and-covariance-eigensystems" class="wikilink">PCA and covariance eigensystems</a>, <a href="ch461.xhtml#appendix-221a483bec2d-matrix-factorization-choices" class="wikilink">Matrix factorization choices</a>.</p>
+<p><strong>Teaching path:</strong> <a href="ch268.xhtml#id_02-foundations-ii-ch024-pseudoinverse-makes-least-squares-and-minimum-norm-one-operation" class="wikilink">pseudoinverse (Mathematics for Visual Computing, Part 1, Ch. 8)</a>.</p>
+</section>
+</section>
+</body>
+</html>

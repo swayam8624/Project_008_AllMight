@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch191.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-afae48c31800-null-pointers-and-optional-access" class="level2">
+<h2>Null pointers and optional access</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C008 · <strong>Latest development:</strong> C008</p>
+<section id="appendix-afae48c31800-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A null pointer designates no object/function; nullptr_t converts to appropriate null pointer values without choosing an integer overload. A non-null pointer is not a lifetime or bounds proof. Deleting a typed null object pointer is valid, but bare delete nullptr is ill-formed.</p>
+</section>
+<section id="appendix-afae48c31800-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch145.xhtml#appendix-6af5921bc853-pointer-arithmetic-and-provenance" class="wikilink">Pointer arithmetic and provenance</a> — Storage relationships, bounds and lifetime distinguish valid access from a non-null value.</li>
+</ul>
+</section>
+<section id="appendix-afae48c31800-used-by" class="level3">
+<h3>Used by</h3>
+<p>Later sources will deepen this same node; no empty dependent nodes are created.</p>
+</section>
+<section id="appendix-afae48c31800-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain absence, stale access and one-past access separately. Pending: optional/reference wrapper APIs and owning-pointer policies. Written coverage does not establish learner mastery.</p>
+</section>
+<section id="appendix-afae48c31800-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch173.xhtml#id_01-foundations-i-ch003-a-pointer-carries-an-access-contract" class="wikilink">Teaching explanation and examples</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m008---parts-113-126" class="wikilink">Exact coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-afae48c31800-absence-must-be-part-of-the-type-or-contract" class="level3">
+<h3>Absence must be part of the type or contract</h3>
+<p>A null pointer represents “no object at this address-bearing interface”; dereferencing it is invalid. That makes raw pointer nullability an API question. If a parameter must always designate an object, a reference or explicitly non-null wrapper communicates more than a nullable pointer plus a comment.</p>
+<p>Optional ownership and optional observation are different. A <code>std::unique_ptr&lt;T&gt;</code> may be empty while also owning when nonempty; <code>T*</code> may be nullable but usually says nothing about ownership; <code>std::optional&lt;T&gt;</code> stores an optional value without indirection. Choosing among them should follow lifetime and absence semantics rather than syntax convenience.</p>
+<p>Null checks also do not prove lifetime. A non-null dangling pointer is still invalid, and a pointer can become logically stale even if its numeric address is later reused for a different object.</p>
+<p>Tests for optional APIs should cover absent state, present state, transitions between them, moved-from ownership and invalid external identifiers. Avoid sentinel pointer values other than the language-defined null representation unless a low-level ABI explicitly owns that convention.</p>
+</section>
+</section>
+</body>
+</html>

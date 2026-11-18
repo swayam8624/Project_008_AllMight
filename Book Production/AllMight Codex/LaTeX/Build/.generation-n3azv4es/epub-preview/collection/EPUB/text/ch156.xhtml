@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch156.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-a1f7c53b4742-alignment-and-padding" class="level2">
+<h2>Alignment and padding</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C002 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-a1f7c53b4742-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Alignment A restricts valid object starts to addresses divisible by A. alignof reports type alignment, which need not equal sizeof; alignas requests a supported stronger alignment. Padding fills layout holes and rounds array stride. Under 1/4/1 member rules, byte–uint32–byte uses offsets 0/4/8 and size 12. Power-of-two masks test low bits; checked align-up avoids unsigned overflow.</p>
+</section>
+<section id="appendix-a1f7c53b4742-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch053.xhtml#appendix-5bee2df85484-byte-and-octet" class="wikilink">Byte and octet (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Byte and octet)</a> — Byte units define both storage offsets and significance digits.</li>
+<li><a href="ch131.xhtml#appendix-18ee4f913c3c-addresses-and-virtual-memory" class="wikilink">Addresses and virtual memory</a> — Mappings give numeric locations their process-specific storage identity.</li>
+</ul>
+</section>
+<section id="appendix-a1f7c53b4742-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch464.xhtml#appendix-26bf6bf2fb8b-vector-storage-simd-and-boundary-layouts" class="wikilink">Vector storage SIMD and boundary layouts (Vision, XR, and Playable Worlds, Part 1, Reference notes: Vector storage SIMD and boundary layouts)</a> — Phase 6 uses this established foundation in its geometry narrative.</p></li>
+<li><p><a href="ch090.xhtml#appendix-c4ac6bb0fff8-abi-and-object-layout" class="wikilink">ABI and object layout (Bits, Programs, and Reliable Systems, Part 1, Reference notes: ABI and object layout)</a> — uses this mechanism as stated in its prerequisites.</p></li>
+<li><p><a href="ch171.xhtml#appendix-f52f8c5a3afd-internal-and-tail-padding" class="wikilink">Internal and tail padding</a> — uses this mechanism as stated in its prerequisites.</p></li>
+<li><p><a href="ch126.xhtml#appendix-0682dbfc5f0e-packed-structures-and-misaligned-access" class="wikilink">Packed structures and misaligned access</a> — uses this mechanism as stated in its prerequisites.</p></li>
+<li><p><a href="ch163.xhtml#appendix-c3480f7d9ff3-dynamic-allocation-and-heap" class="wikilink">Dynamic allocation and heap</a> — uses this mechanism as stated in its prerequisites.</p></li>
+<li><p><a href="ch291.xhtml#appendix-3c7b1a56de01-simd-and-gpu-data-layouts" class="wikilink">SIMD and GPU data layouts (Geometry, Cameras, and Image Formation, Part 1, Reference notes: SIMD and GPU data layouts)</a> — depends on this concept; see its prerequisite explanation.</p></li>
+</ul>
+</section>
+<section id="appendix-a1f7c53b4742-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Derive 12 bytes from six payload bytes and safely align 0x1003 to eight.</p>
+<p><strong>Pending:</strong> Over-aligned allocation, GPU layout rules and instruction-specific costs.</p>
+</section>
+<section id="appendix-a1f7c53b4742-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

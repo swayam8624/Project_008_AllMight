@@ -1,0 +1,44 @@
+\hypertarget{appendix-1121b30eaeb0}{}
+\section{Value categories and materialization}\label{appendix-1121b30eaeb0-value-categories-and-materialization}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C008 · \textbf{Latest development:} C009
+
+\subsection{Definition and mechanism}\label{appendix-1121b30eaeb0-definition-and-mechanism}
+
+M009 develops result objects, direct same-type prvalue construction and C++23 move-eligible return expressions. Ordinary named-reference uses remain lvalues; optional NRVO is distinct from guaranteed direct construction.
+
+lvalues and xvalues identify objects/functions; prvalues produce values/results. Glvalue contains lvalue/xvalue; rvalue contains prvalue/xvalue. A named rvalue-reference variable is an lvalue in ordinary use. Materialization supplies temporary identity when needed; it does not require a redundant copy of every class prvalue.
+
+\subsection{Prerequisites}\label{appendix-1121b30eaeb0-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-2e4d494c2d94]{Declarations and definitions} --- Declarations establish the entities and types whose uses are being classified.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-1121b30eaeb0-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-37856d997bb0]{Reference binding and converted temporaries}
+\item
+  \hyperref[appendix-5d4252a42886]{Auto decltype and reference collapsing}
+\item
+  \hyperref[appendix-0104b704fb11]{Move casts and forwarding references}
+\item
+  \hyperref[appendix-d42039b1d6f7]{Ref-qualified accessors}
+\item
+  \hyperref[appendix-b08d3788c5c6]{Return values and copy elision}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-1121b30eaeb0-recall-and-next-depth}
+
+Classify rr, std::move(rr), ++i and i++. Pending: overlapping subobjects and detailed materialization/return deduction. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{appendix-1121b30eaeb0-source-and-navigation}
+
+\hyperref[appendix-fd090d982a15-m009---parts-127-147]{C009 development}
+
+\hyperref[01-foundations-i-ch003-an-expression-has-a-type-and-a-category]{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

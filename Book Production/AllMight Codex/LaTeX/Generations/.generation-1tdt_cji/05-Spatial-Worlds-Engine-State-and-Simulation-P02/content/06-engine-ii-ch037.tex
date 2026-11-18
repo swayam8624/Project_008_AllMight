@@ -1,0 +1,4011 @@
+\chapter{Physical examples and state validation}\label{06-engine-ii-ch037-physical-examples-and-state-validation}\phantomsection\hypertarget{06-engine-ii-ch037}{}\label{stagechapter:06-engine-ii-ch037}
+
+\hypertarget{06-engine-ii-ch037-physical-examples-and-state-validation}{}
+
+\hyperref[volume-reading-map]{Reading map} · \hyperref[06-engine-ii-ch036-auditing-capsule-mass-properties-and-collision-formulas]{Previous chapter} · \hyperref[06-engine-ii-ch038-integrator-choices-and-energy-drift]{Next chapter}
+
+The derived body model needs examples that connect coefficients and memory layout to observable motion. This chapter turns representative bodies into checks for state, inertia, and update behavior.
+
+\textbf{By the end:} Use physical examples to validate rigid-body state, inertia, and transformation synchronization against explicit invariants.
+
+\textbf{Recall question:} What numeric result should this body produce from the stated mass, dimensions, and force, and which sign error would reverse it?
+
+\subsection{Physical examples}\label{06-engine-ii-ch037-physical-examples}
+
+\hypertarget{06-engine-ii-ch037-physical-examples}{}
+
+A continuously running reaction wheel or motor applies torque.
+
+A hammer striking a wrench gives an angular impulse.
+
+A thruster mounted away from COM applies force plus continuous torque.
+
+A collision at the edge of a crate produces linear plus angular impulse.
+
+The API should expose these concepts separately.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1651 --- Rigid-body state structure in memory}\label{06-engine-ii-ch037-part-1651-rigid-body-state-structure-in-memory}
+
+\hypertarget{06-engine-ii-ch037-part-1651-rigid-body-state-structure-in-memory}{}
+
+The mathematical state becomes a concrete runtime structure.
+
+Kairo currently stores roughly:
+
+\begin{verbatim}
+struct RigidBody
+{
+    BodyID ID;
+    bool Active;
+
+    BodyType Type;
+
+    MotionState State;
+    MassProperties Mass;
+    ForceAccumulation Forces;
+
+    bool EnableGravity;
+    float GravityScale;
+
+    float LinearDamping;
+    float AngularDamping;
+
+    float MaxLinearSpeed;
+    float MaxAngularSpeed;
+
+    CollisionDetectionMode CollisionDetection;
+
+    bool AllowSleeping;
+    bool Sleeping;
+    float SleepTimer;
+};
+\end{verbatim}
+
+And:
+
+\begin{verbatim}
+struct MotionState
+{
+    Vec3f Position;
+    Quaternionf Rotation;
+
+    Vec3f LinearVelocity;
+    Vec3f AngularVelocity;
+};
+\end{verbatim}
+
+This is an excellent place to understand the distinction between \textbf{state variables} and \textbf{parameters}.
+
+State evolves dynamically:
+
+\[
+x,q,v,\omega.
+\]
+
+Parameters define response:
+
+\[
+m^{-1},I^{-1},damping,gravityScale.
+\]
+
+Accumulators are transient:
+
+\[
+F,\tau.
+\]
+
+Flags define simulation policy:
+
+\begin{verbatim}
+static / dynamic / kinematic
+sleeping
+CCD mode
+\end{verbatim}
+
+Those categories have different update lifetimes.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{State that changes every simulation step}\label{06-engine-ii-ch037-state-that-changes-every-simulation-step}
+
+\hypertarget{06-engine-ii-ch037-state-that-changes-every-simulation-step}{}
+
+The hot state is:
+
+\[
+x,\quad q,\quad v,\quad\omega.
+\]
+
+Potentially also:
+
+\begin{verbatim}
+sleep timer
+sleep flag
+force accumulator
+\end{verbatim}
+
+This is the data you care about when considering cache layout later.
+
+Mass properties are usually much less frequently modified.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{\texorpdfstring{Why storing everything in one \BookInlineCode{{R}{i}{g}{i}{d}{B}{o}{d}{y}}{RigidBody} is acceptable initially}{Why storing everything in one  is acceptable initially}}\label{06-engine-ii-ch037-why-storing-everything-in-one-rigidbody-is-acceptable-initially}
+
+\hypertarget{06-engine-ii-ch037-why-storing-everything-in-one-rigidbody-is-acceptable-initially}{}
+
+A single AoS structure is simple.
+
+For thousands to hundreds of thousands of bodies, one could eventually separate:
+
+\begin{verbatim}
+hot dynamic motion
+cold configuration
+collision policy
+debug fields
+\end{verbatim}
+
+into hot/cold arrays.
+
+But architecture should be driven by profiling.
+
+The current Kairo representation is readable and coherent.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1652 --- Position representation}\label{06-engine-ii-ch037-part-1652-position-representation}
+
+\hypertarget{06-engine-ii-ch037-part-1652-position-representation}{}
+
+Position is ordinarily:
+
+\[
+\mathbf x=(x,y,z).
+\]
+
+Kairo uses:
+
+\begin{verbatim}
+Vec3f
+\end{verbatim}
+
+for physics state.
+
+This is normal for world sizes where 32-bit float precision is sufficient.
+
+A float has roughly 24 significant binary bits.
+
+Relative precision is approximately:
+
+\[
+2^{-23}
+\approx1.19\times10^{-7}.
+\]
+
+At distance:
+
+\[
+10^3m,
+\]
+
+resolution is around sub-millimetre-ish scale.
+
+At:
+
+\[
+10^6m,
+\]
+
+resolution becomes roughly tenths of metres.
+
+Thus giant open worlds often use:
+
+\begin{verbatim}
+origin rebasing
+double-precision world coordinates
+cell-local float physics
+\end{verbatim}
+
+rather than blindly making every physics calculation double.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Physics position should mean COM}\label{06-engine-ii-ch037-physics-position-should-mean-com}
+
+\hypertarget{06-engine-ii-ch037-physics-position-should-mean-com}{}
+
+This deserves repetition.
+
+For clean Newton-Euler simulation:
+
+\[
+\boxed{
+Position=COM.
+}
+\]
+
+Then:
+
+\[
+x_{point}
+=
+x_{COM}
++
+Rr.
+\]
+
+If authoring scene transform represents another pivot, convert at the bridge.
+
+That keeps solver equations correct and simple.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1653 --- Orientation quaternion representation}\label{06-engine-ii-ch037-part-1653-orientation-quaternion-representation}
+
+\hypertarget{06-engine-ii-ch037-part-1653-orientation-quaternion-representation}{}
+
+A normalized quaternion:
+
+\[
+q=(\mathbf v,w)
+\]
+
+with:
+
+\[
+\|q\|=1
+\]
+
+represents orientation.
+
+Unit quaternion advantages include compactness, no Euler gimbal lock in the representation, smooth interpolation, and efficient composition.
+
+But remember:
+
+\[
+q
+\]
+
+and:
+
+\[
+-q
+\]
+
+represent the \textbf{same physical rotation}.
+
+This matters in interpolation.
+
+If:
+
+\[
+q_0\cdot q_1<0,
+\]
+
+one quaternion is normally negated before interpolation to follow the shortest rotational path.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Rotation matrix relation}\label{06-engine-ii-ch037-rotation-matrix-relation}
+
+\hypertarget{06-engine-ii-ch037-rotation-matrix-relation}{}
+
+Quaternion corresponds to:
+
+\[
+R(q)\in SO(3).
+\]
+
+Then:
+
+\[
+R^TR=I,
+\]
+
+and:
+
+\[
+\det R=1.
+\]
+
+Those properties are why:
+
+\[
+R^{-1}=R^T
+\]
+
+and why our inertia transformations worked in Pass 16.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1654 --- Linear velocity representation}\label{06-engine-ii-ch037-part-1654-linear-velocity-representation}
+
+\hypertarget{06-engine-ii-ch037-part-1654-linear-velocity-representation}{}
+
+Linear velocity:
+
+\[
+\mathbf v
+\]
+
+is usually world-space:
+
+\[
+m/s.
+\]
+
+Kairo stores it world-space.
+
+Position integration is then trivial:
+
+\[
+x_{new}=x+v\,dt.
+\]
+
+Collision contact velocity likewise uses:
+
+\[
+v_p
+=
+v+
+\omega\times r.
+\]
+
+No transform of v is needed if all solver equations are world-space.
+
+That greatly reduces mistakes.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1655 --- Angular velocity representation}\label{06-engine-ii-ch037-part-1655-angular-velocity-representation}
+
+\hypertarget{06-engine-ii-ch037-part-1655-angular-velocity-representation}{}
+
+Angular velocity:
+
+\[
+\boldsymbol\omega
+\]
+
+is also stored as a three-dimensional vector.
+
+Units:
+
+\[
+rad/s.
+\]
+
+Kairo treats angular velocity as \textbf{world-space}.
+
+We can infer this from the math:
+
+\begin{verbatim}
+WorldInverseInertia(body) *
+body.Forces.Torque
+\end{verbatim}
+
+where torque and inverse inertia are world-space, producing world-space angular acceleration added directly to:
+
+\begin{verbatim}
+State.AngularVelocity.
+\end{verbatim}
+
+That convention determines quaternion derivative multiplication order later.
+
+This is an important point.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{World angular velocity versus body angular velocity}\label{06-engine-ii-ch037-world-angular-velocity-versus-body-angular-velocity}
+
+\hypertarget{06-engine-ii-ch037-world-angular-velocity-versus-body-angular-velocity}{}
+
+If \(\omega\) is world-space and quaternion rotates body→world, then commonly:
+
+\[
+\boxed{
+\dot q
+=
+\frac12
+\Omega_w q
+}
+\]
+
+where:
+
+\[
+\Omega_w=(\omega_x,\omega_y,\omega_z,0).
+\]
+
+If \(\omega\) were body-space, multiplication order would instead be:
+
+\[
+\dot q
+=
+\frac12
+q\Omega_b.
+\]
+
+Kairo currently uses:
+
+\begin{verbatim}
+derivative =
+    omega *
+    rotation *
+    0.5f;
+\end{verbatim}
+
+which is consistent with a world-space angular-velocity convention.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1656 --- Force and torque accumulators}\label{06-engine-ii-ch037-part-1656-force-and-torque-accumulators}
+
+\hypertarget{06-engine-ii-ch037-part-1656-force-and-torque-accumulators}{}
+
+We already saw:
+
+\begin{verbatim}
+struct ForceAccumulation
+{
+    Vec3f Force;
+    Vec3f Torque;
+};
+\end{verbatim}
+
+The accumulator is \textbf{not persistent force history}.
+
+It means:
+
+\begin{quote}
+Continuous forces requested for the current physics integration interval.
+\end{quote}
+
+After the step:
+
+\begin{verbatim}
+ClearForces(body.Forces);
+\end{verbatim}
+
+sets them back to zero.
+
+If an engine system wants a force continuously---for example thrust---it must apply it each physics step.
+
+This is a good design because continuous force becomes an explicit per-step input rather than a hidden permanent state.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Impulses bypass accumulators}\label{06-engine-ii-ch037-impulses-bypass-accumulators}
+
+\hypertarget{06-engine-ii-ch037-impulses-bypass-accumulators}{}
+
+An impulse changes:
+
+\[
+v,\omega
+\]
+
+immediately.
+
+It should not be stored in:
+
+\begin{verbatim}
+ForceAccumulation
+\end{verbatim}
+
+because then someone would multiply it by dt later.
+
+That would be dimensionally wrong.
+
+This separation is crucial.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1657 --- Sleeping flags and activity state}\label{06-engine-ii-ch037-part-1657-sleeping-flags-and-activity-state}
+
+\hypertarget{06-engine-ii-ch037-part-1657-sleeping-flags-and-activity-state}{}
+
+A body at rest still costs CPU if we continuously:
+
+\begin{verbatim}
+integrate gravity
+detect contacts
+solve resting constraints
+update tiny floating-point jitter
+\end{verbatim}
+
+Sleeping reduces this cost.
+
+A sleeping dynamic body is conceptually:
+
+\begin{verbatim}
+still a dynamic body
+but temporarily omitted from active simulation
+until an external event wakes it.
+\end{verbatim}
+
+Kairo distinguishes:
+
+\begin{verbatim}
+IsDynamicBodyType(body)
+\end{verbatim}
+
+from:
+
+\begin{verbatim}
+IsDynamic(body)
+\end{verbatim}
+
+This is excellent.
+
+The first means:
+
+\begin{quote}
+Is this fundamentally a dynamic body?
+\end{quote}
+
+The second means:
+
+\begin{quote}
+Should it currently be dynamically integrated?
+\end{quote}
+
+Current \BookInlineCode{{I}{s}{D}{y}{n}{a}{m}{i}{c}{(}{)}}{IsDynamic()} requires:
+
+\begin{verbatim}
+Active
+Dynamic type
+positive inverse mass
+not sleeping.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Sleeping state machine}\label{06-engine-ii-ch037-sleeping-state-machine}
+
+\hypertarget{06-engine-ii-ch037-sleeping-state-machine}{}
+
+Conceptually:
+
+\begin{verbatim}
+AWAKE
+  |
+  | low velocity for sufficient time
+  v
+SLEEPING
+  |
+  | force / impulse / moving contact / explicit wake
+  v
+AWAKE
+\end{verbatim}
+
+Kairo stores:
+
+\begin{verbatim}
+bool Sleeping;
+float SleepTimer;
+bool AllowSleeping;
+\end{verbatim}
+
+and global thresholds:
+
+\begin{verbatim}
+SleepLinearSpeed
+SleepAngularSpeed
+SleepTime
+\end{verbatim}
+
+in \BookInlineCode{{P}{h}{y}{s}{i}{c}{s}{S}{t}{e}{p}{S}{e}{t}{t}{i}{n}{g}{s}}{PhysicsStepSettings}.
+
+That is the correct basic architecture.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Why sleeping needs a timer}\label{06-engine-ii-ch037-why-sleeping-needs-a-timer}
+
+\hypertarget{06-engine-ii-ch037-why-sleeping-needs-a-timer}{}
+
+If you sleep immediately whenever:
+
+\[
+|v|<v_{threshold},
+\]
+
+an oscillating object can repeatedly sleep and wake around the threshold.
+
+Instead require:
+
+\[
+|v|<v_s
+\]
+
+and:
+
+\[
+|\omega|<\omega_s
+\]
+
+for:
+
+\[
+t>t_s.
+\]
+
+Only then sleep.
+
+This introduces hysteresis through time.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Sleeping body velocity}\label{06-engine-ii-ch037-sleeping-body-velocity}
+
+\hypertarget{06-engine-ii-ch037-sleeping-body-velocity}{}
+
+When a body transitions to sleep, engines usually snap:
+
+\[
+v=0,
+\qquad
+\omega=0.
+\]
+
+Otherwise tiny residual values can later reappear.
+
+Kairo's destroyed bodies are explicitly zeroed; sleeping logic likewise needs a consistent zeroing policy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Wake conditions}\label{06-engine-ii-ch037-wake-conditions}
+
+\hypertarget{06-engine-ii-ch037-wake-conditions}{}
+
+A dynamic body should typically wake when it receives a meaningful external change such as force, torque, impulse, collision from an active dynamic body, changed transform, or changed constraint.
+
+Kairo does several of these explicitly.
+
+\BookInlineCode{{A}{d}{d}{B}{o}{d}{y}{F}{o}{r}{c}{e}{(}{)}}{AddBodyForce()} calls:
+
+\begin{verbatim}
+WakeRigidBody(record);
+\end{verbatim}
+
+before accumulating force.
+
+\BookInlineCode{{A}{p}{p}{l}{y}{B}{o}{d}{y}{I}{m}{p}{u}{l}{s}{e}{A}{t}{P}{o}{i}{n}{t}{(}{)}}{ApplyBodyImpulseAtPoint()} checks the body type, wakes it, and then applies impulse.
+
+Contacts and joints have dedicated wake propagation.
+
+That is exactly what you want.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{One Kairo nuance}\label{06-engine-ii-ch037-one-kairo-nuance}
+
+\hypertarget{06-engine-ii-ch037-one-kairo-nuance}{}
+
+\BookInlineCode{{A}{d}{d}{B}{o}{d}{y}{F}{o}{r}{c}{e}{(}{)}}{AddBodyForce()} and \BookInlineCode{{A}{d}{d}{B}{o}{d}{y}{T}{o}{r}{q}{u}{e}{(}{)}}{AddBodyTorque()} currently wake and accumulate on any active body record, including static/kinematic records.
+
+Those non-dynamic bodies will not integrate the force and the accumulator is later cleared.
+
+This is harmless enough, but semantically the API could be stricter and simply no-op or reject continuous forces on non-dynamic bodies.
+
+That would make behavior more explicit.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1658 --- Body types: static, kinematic, dynamic}\label{06-engine-ii-ch037-part-1658-body-types-static-kinematic-dynamic}
+
+\hypertarget{06-engine-ii-ch037-part-1658-body-types-static-kinematic-dynamic}{}
+
+A practical rigid-body engine usually has exactly these three broad motion semantics.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1579}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2105}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2105}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2105}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2105}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Type
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Solver moves it?
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+User can move it?
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Responds to impulses?
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Has finite dynamic mass?
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Static & no & usually not during simulation & no & no \\
+Kinematic & no via solver & yes & no & effectively infinite \\
+Dynamic & yes & indirectly / teleport carefully & yes & yes \\
+\end{longtable}
+}
+
+Kairo uses:
+
+\begin{verbatim}
+enum class BodyType
+{
+    Static,
+    Kinematic,
+    Dynamic
+};
+\end{verbatim}
+
+which maps cleanly to this model.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1659 --- Kinematic semantics}\label{06-engine-ii-ch037-part-1659-kinematic-semantics}
+
+\hypertarget{06-engine-ii-ch037-part-1659-kinematic-semantics}{}
+
+A kinematic body is moved by authored/scripted motion rather than force response.
+
+It has effectively:
+
+\[
+m^{-1}=0
+\]
+
+for solver response.
+
+But unlike static geometry, it can have:
+
+\[
+v\neq0,
+\qquad
+\omega\neq0.
+\]
+
+So it can push dynamic bodies through contact.
+
+A moving platform is the classic example.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Why kinematic velocity matters}\label{06-engine-ii-ch037-why-kinematic-velocity-matters}
+
+\hypertarget{06-engine-ii-ch037-why-kinematic-velocity-matters}{}
+
+Imagine an elevator moving upward at:
+
+\[
+2m/s.
+\]
+
+A character standing on it must see the contact surface velocity as:
+
+\[
+2m/s.
+\]
+
+If you simply teleport the kinematic transform every frame while storing:
+
+\[
+v=0,
+\]
+
+the contact solver has incomplete information.
+
+For robust kinematics, either provide authored velocity explicitly or derive velocity from target pose differences:
+
+\[
+v_k
+=
+\frac{x_{target}-x_{current}}{dt}.
+\]
+
+For rotation, derive angular velocity from relative quaternion.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Current Kairo semantics}\label{06-engine-ii-ch037-current-kairo-semantics}
+
+\hypertarget{06-engine-ii-ch037-current-kairo-semantics}{}
+
+\BookInlineCode{{M}{a}{k}{e}{R}{i}{g}{i}{d}{B}{o}{d}{y}{(}{)}}{MakeRigidBody()} assigns:
+
+\begin{verbatim}
+StaticMassProperties()
+\end{verbatim}
+
+to both static and kinematic bodies.
+
+Thus their solver inverse mass/inertia are zero.
+
+\BookInlineCode{{I}{n}{t}{e}{g}{r}{a}{t}{e}{K}{i}{n}{e}{m}{a}{t}{i}{c}{V}{e}{l}{o}{c}{i}{t}{i}{e}{s}{(}{)}}{IntegrateKinematicVelocities()} then:
+
+\begin{verbatim}
+ApplyVelocityControls(body, dt);
+AdvanceMotionState(body.State, dt);
+\end{verbatim}
+
+so a kinematic body advances according to its authored velocity but does not respond to forces/impulses.
+
+That is coherent.
+
+One design question remains: Kairo currently applies linear/angular \textbf{damping} to kinematic velocity. Since kinematic motion is typically explicitly authored, many engines would not damp it automatically. Kairo's choice is valid if damping is intentionally part of kinematic motion policy, but it should remain deliberate.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1660 --- Dynamic-body semantics}\label{06-engine-ii-ch037-part-1660-dynamic-body-semantics}
+
+\hypertarget{06-engine-ii-ch037-part-1660-dynamic-body-semantics}{}
+
+Dynamic bodies are controlled by simulation.
+
+For a dynamic body:
+
+\[
+m^{-1}>0.
+\]
+
+Its velocity changes from:
+
+\[
+\text{forces}
++
+\text{torques}
++
+\text{impulses}
++
+\text{constraints}.
+\]
+
+Its position/orientation are then integrated.
+
+Current Kairo checks during construction:
+
+\begin{verbatim}
+if (
+    desc.Type == BodyType::Dynamic &&
+    desc.Mass.InverseMass <= 0.0f)
+{
+    throw ...;
+}
+\end{verbatim}
+
+Good.
+
+``Dynamic infinite-mass body'' would be contradictory.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{User movement of a dynamic body}\label{06-engine-ii-ch037-user-movement-of-a-dynamic-body}
+
+\hypertarget{06-engine-ii-ch037-user-movement-of-a-dynamic-body}{}
+
+There are several semantically different operations.
+
+\textbf{Teleport} means set pose immediately, usually preserve or explicitly reset velocity, wake body, update broadphase, and reset render interpolation.
+
+\textbf{Apply impulse} means physically alter momentum.
+
+\textbf{Set target} usually means use a motor/controller.
+
+\textbf{Set velocity} directly overrides dynamics.
+
+Do not use teleport to simulate physical movement unless that is really the intended behavior.
+
+Kairo's \BookInlineCode{{S}{e}{t}{E}{n}{t}{i}{t}{y}{P}{o}{s}{i}{t}{i}{o}{n}{(}{)}}{SetEntityPosition()} explicitly behaves as a teleport-like operation: scene and physics pose change immediately, previous/current render pose history are collapsed, and the body is woken.
+
+That avoids rendering a fake interpolation path from the old location.
+
+Excellent.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1661 --- Static-body semantics}\label{06-engine-ii-ch037-part-1661-static-body-semantics}
+
+\hypertarget{06-engine-ii-ch037-part-1661-static-body-semantics}{}
+
+Static body has:
+
+\[
+m^{-1}=0,
+\qquad
+I^{-1}=0.
+\]
+
+It participates in collision geometry but does not integrate.
+
+Typical examples:
+
+\begin{verbatim}
+terrain
+walls
+level architecture
+fixed obstacles.
+\end{verbatim}
+
+Static bodies should usually not be moved every frame.
+
+If you need frequent movement, use kinematic.
+
+Why?
+
+Broadphase acceleration structures can optimize static geometry aggressively.
+
+Changing static body poses may require expensive reinsertion/rebuilding.
+
+Kairo also restricts triangle mesh colliders to static bodies, which is a sensible initial policy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{one critical distinction}\label{06-engine-ii-ch037-one-critical-distinction}
+
+\hypertarget{06-engine-ii-ch037-one-critical-distinction}{}
+
+Do not think:
+
+\begin{verbatim}
+static = velocity zero
+kinematic = velocity nonzero
+dynamic = velocity arbitrary.
+\end{verbatim}
+
+That is wrong.
+
+The actual distinction is \textbf{who owns motion}.
+
+\[
+\boxed{
+Static:
+no motion owner during simulation
+}
+\]
+
+\[
+\boxed{
+Kinematic:
+application owns motion
+}
+\]
+
+\[
+\boxed{
+Dynamic:
+physics owns motion
+}
+\]
+
+That ownership distinction is much more useful than looking at current numerical velocity.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{DISCRETIZING NEWTON'S EQUATIONS}\label{06-engine-ii-ch037-discretizing-newtons-equations}
+
+\hypertarget{06-engine-ii-ch037-discretizing-newtons-equations}{}
+
+We now have state:
+
+\[
+x_n,
+v_n.
+\]
+
+Acceleration:
+
+\[
+a_n.
+\]
+
+We need:
+
+\[
+x_{n+1},
+v_{n+1}.
+\]
+
+Continuous equations:
+
+\[
+\dot x=v,
+\]
+
+\[
+\dot v=a.
+\]
+
+A computer cannot normally solve arbitrary continuous systems symbolically every frame.
+
+So we numerically integrate.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1662 --- Explicit Euler}\label{06-engine-ii-ch037-part-1662-explicit-euler}
+
+\hypertarget{06-engine-ii-ch037-part-1662-explicit-euler}{}
+
+For differential equation:
+
+\[
+\dot y=f(y,t),
+\]
+
+explicit Euler approximates:
+
+\[
+\boxed{
+y_{n+1}
+=
+y_n+
+h f(y_n,t_n).
+}
+\]
+
+For mechanics:
+
+\[
+x_{n+1}
+=
+x_n+
+v_nh
+\]
+
+and:
+
+\[
+v_{n+1}
+=
+v_n+
+a_nh.
+\]
+
+The key is:
+
+\[
+x
+\]
+
+uses \textbf{old velocity}.
+
+Kairo's reference helper:
+
+\begin{verbatim}
+state.Position +=
+    state.LinearVelocity * dt;
+
+state.Rotation =
+    IntegrateAngularVelocity(
+        state.Rotation,
+        state.AngularVelocity,
+        dt);
+
+state.LinearVelocity +=
+    linearAcceleration * dt;
+
+state.AngularVelocity +=
+    angularAcceleration * dt;
+\end{verbatim}
+
+is explicit Euler in that sense.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Explicit Euler error}\label{06-engine-ii-ch037-explicit-euler-error}
+
+\hypertarget{06-engine-ii-ch037-explicit-euler-error}{}
+
+Taylor expansion:
+
+\[
+x(t+h)
+=
+x(t)
++
+h\dot x(t)
++
+\frac{h^2}{2}\ddot x(t)
++
+O(h^3).
+\]
+
+Euler keeps only:
+
+\[
+x+h\dot x.
+\]
+
+Local truncation error:
+
+\[
+O(h^2).
+\]
+
+Accumulated global error across fixed time:
+
+\[
+\boxed{
+O(h).
+}
+\]
+
+So Euler is first-order accurate.
+
+Halving h approximately halves global integration error.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Gravity example}\label{06-engine-ii-ch037-gravity-example}
+
+\hypertarget{06-engine-ii-ch037-gravity-example}{}
+
+Start:
+
+\[
+x_0=0,\quad v_0=0.
+\]
+
+Let:
+
+\[
+a=-10.
+\]
+
+Step:
+
+\[
+h=0.1.
+\]
+
+Explicit Euler gives:
+
+\[
+x_1
+=
+0+0(0.1)
+=
+0.
+\]
+
+Velocity:
+
+\[
+v_1
+=
+0-10(0.1)
+=
+-1.
+\]
+
+True analytic position after 0.1 s:
+
+\[
+x=-\frac12(10)(0.1)^2=-0.05.
+\]
+
+Euler lagged because position used old velocity.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1663 --- Semi-implicit Euler}\label{06-engine-ii-ch037-part-1663-semi-implicit-euler}
+
+\hypertarget{06-engine-ii-ch037-part-1663-semi-implicit-euler}{}
+
+Semi-implicit Euler, also called symplectic Euler in this context, reverses update ordering:
+
+\[
+\boxed{
+v_{n+1}
+=
+v_n+a_nh
+}
+\]
+
+then:
+
+\[
+\boxed{
+x_{n+1}
+=
+x_n+v_{n+1}h.
+}
+\]
+
+Now gravity example gives:
+
+\[
+v_1=-1.
+\]
+
+Then:
+
+\[
+x_1=-0.1.
+\]
+
+This overshoots the analytic:
+
+\[
+-0.05.
+\]
+
+So why prefer it?
+
+Because for many mechanical systems, especially oscillatory/conservative systems, its \textbf{long-term energy behavior} is dramatically better.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1664 --- Why games prefer semi-implicit Euler}\label{06-engine-ii-ch037-part-1664-why-games-prefer-semi-implicit-euler}
+
+\hypertarget{06-engine-ii-ch037-part-1664-why-games-prefer-semi-implicit-euler}{}
+
+Consider harmonic oscillator:
+
+\[
+\ddot x
+=
+-\omega^2x.
+\]
+
+Explicit Euler:
+
+\[
+v_{n+1}
+=
+v_n-\omega^2x_nh,
+\]
+
+\[
+x_{n+1}
+=
+x_n+v_nh.
+\]
+
+The update matrix is:
+
+\[
+\begin{bmatrix}
+x_{n+1}\\v_{n+1}
+\end{bmatrix}
+=
+\begin{bmatrix}
+1&h\\
+-\omega^2h&1
+\end{bmatrix}
+\begin{bmatrix}
+x_n\\v_n
+\end{bmatrix}.
+\]
+
+Eigenvalue magnitude:
+
+\[
+\sqrt{1+\omega^2h^2}>1.
+\]
+
+Therefore energy grows.
+
+The oscillator spirals outward numerically.
+
+Explicit Euler artificially injects energy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Semi-implicit oscillator}\label{06-engine-ii-ch037-semi-implicit-oscillator}
+
+\hypertarget{06-engine-ii-ch037-semi-implicit-oscillator}{}
+
+Semi-implicit:
+
+\[
+v_{n+1}
+=
+v_n-\omega^2x_nh
+\]
+
+then:
+
+\[
+x_{n+1}
+=
+x_n+h v_{n+1}.
+\]
+
+Substitute:
+
+\[
+x_{n+1}
+=
+(1-\omega^2h^2)x_n+
+hv_n.
+\]
+
+Update matrix:
+
+\[
+A=
+\begin{bmatrix}
+1-\omega^2h^2&h\\
+-\omega^2h&1
+\end{bmatrix}.
+\]
+
+Its determinant:
+
+\[
+\det A=1.
+\]
+
+That volume-preserving/symplectic structure gives much better long-term qualitative behavior.
+
+Energy tends to oscillate around the true value rather than monotonically explode for stable timestep ranges.
+
+That is why semi-implicit Euler is extremely common in games.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{``More stable'' does not mean unconditionally stable}\label{06-engine-ii-ch037-more-stable-does-not-mean-unconditionally-stable}
+
+\hypertarget{06-engine-ii-ch037-more-stable-does-not-mean-unconditionally-stable}{}
+
+If:
+
+\[
+h
+\]
+
+is too large for system frequency, semi-implicit Euler also fails.
+
+For the simple harmonic oscillator the familiar stability condition is related to:
+
+\[
+h\omega<2.
+\]
+
+So:
+
+\[
+\boxed{
+\text{Integrator choice cannot rescue an absurd timestep.}
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Current Kairo integration architecture}\label{06-engine-ii-ch037-current-kairo-integration-architecture}
+
+\hypertarget{06-engine-ii-ch037-current-kairo-integration-architecture}{}
+
+Kairo does not literally call:
+
+\begin{verbatim}
+SemiImplicitEuler(...)
+\end{verbatim}
+
+inside \BookInlineCode{{P}{h}{y}{s}{i}{c}{s}{W}{o}{r}{l}{d}}{PhysicsWorld}.
+
+Instead it performs the same sequencing across the whole solver:
+
+\begin{verbatim}
+Integrate forces
+        ↓
+update v, ω
+        ↓
+collision/constraint impulses modify v, ω
+        ↓
+integrate x, q using the resulting velocities.
+\end{verbatim}
+
+For dynamic bodies:
+
+\begin{verbatim}
+body.State.LinearVelocity +=
+    acceleration * dt;
+
+body.State.AngularVelocity +=
+    worldInverseInertia *
+    torque *
+    dt;
+\end{verbatim}
+
+then after collision solving:
+
+\begin{verbatim}
+AdvanceMotionState(
+    body.State,
+    dt);
+\end{verbatim}
+
+which does:
+
+\begin{verbatim}
+state.Position +=
+    state.LinearVelocity * dt;
+
+state.Rotation =
+    IntegrateAngularVelocity(
+        state.Rotation,
+        state.AngularVelocity,
+        dt);
+\end{verbatim}
+
+That is semi-implicit in the important engine sense:
+
+\[
+\boxed{
+\text{new/solved velocity moves the pose.}
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1665 --- Position integration}\label{06-engine-ii-ch037-part-1665-position-integration}
+
+\hypertarget{06-engine-ii-ch037-part-1665-position-integration}{}
+
+For fixed velocity over one step:
+
+\[
+\boxed{
+x_{n+1}
+=
+x_n+v\,dt.
+}
+\]
+
+Kairo:
+
+\begin{verbatim}
+state.Position +=
+    state.LinearVelocity * dt;
+\end{verbatim}
+
+Simple.
+
+But the velocity used is the post-force/post-solver velocity.
+
+That is why order matters.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Position correction versus velocity integration}\label{06-engine-ii-ch037-position-correction-versus-velocity-integration}
+
+\hypertarget{06-engine-ii-ch037-position-correction-versus-velocity-integration}{}
+
+Collision engines may also directly correct penetrated positions.
+
+That is \textbf{not} ordinary velocity integration.
+
+It is constraint stabilization.
+
+Kairo currently performs:
+
+\begin{verbatim}
+SolveSolverIslands
+CorrectSolverIslandPositions
+IntegrateDynamicVelocitiesWithCCD
+\end{verbatim}
+
+so contact/joint correction and normal motion integration are separate concerns.
+
+Good.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1666 --- Linear velocity integration}\label{06-engine-ii-ch037-part-1666-linear-velocity-integration}
+
+\hypertarget{06-engine-ii-ch037-part-1666-linear-velocity-integration}{}
+
+From:
+
+\[
+a=\frac{dv}{dt},
+\]
+
+over small step:
+
+\[
+\boxed{
+v_{n+1}
+=
+v_n+a_n\,dt.
+}
+\]
+
+For rigid body:
+
+\[
+a
+=
+g
++
+m^{-1}F.
+\]
+
+So:
+
+\[
+\boxed{
+v_{n+1}
+=
+v_n+
+\left(
+g+m^{-1}F
+\right)dt.
+}
+\]
+
+Kairo does exactly this.
+
+Then applies exponential damping:
+
+\[
+v
+\leftarrow
+ve^{-\lambda dt}.
+\]
+
+Then velocity clamp.
+
+This means current effective operation order is:
+
+\[
+\text{force integration}
+\rightarrow
+\text{damping}
+\rightarrow
+\text{clamp}
+\rightarrow
+\text{contact solver}.
+\]
+
+That order is part of your simulation semantics.
+
+Changing it can change results.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1667 --- Quaternion derivative from angular velocity}\label{06-engine-ii-ch037-part-1667-quaternion-derivative-from-angular-velocity}
+
+\hypertarget{06-engine-ii-ch037-part-1667-quaternion-derivative-from-angular-velocity}{}
+
+This is one of the most important derivations.
+
+Suppose angular velocity is world-space:
+
+\[
+\omega=
+(\omega_x,\omega_y,\omega_z).
+\]
+
+Define pure quaternion:
+
+\[
+\Omega
+=
+(\omega_x,\omega_y,\omega_z,0).
+\]
+
+For quaternion q mapping body orientation into world coordinates:
+
+\[
+\boxed{
+\dot q
+=
+\frac12
+\Omega q.
+}
+\]
+
+Kairo implements:
+
+\begin{verbatim}
+const Quaternionf omega
+{
+    angularVelocity,
+    0.0f
+};
+
+const Quaternionf derivative =
+    omega *
+    rotation *
+    0.5f;
+\end{verbatim}
+
+which matches that convention.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Deriving the half factor}\label{06-engine-ii-ch037-deriving-the-half-factor}
+
+\hypertarget{06-engine-ii-ch037-deriving-the-half-factor}{}
+
+For constant angular velocity over infinitesimal dt, rotation increment is approximately:
+
+\[
+dq
+\approx
+\left(
+\frac12\omega dt,
+1
+\right).
+\]
+
+More rigorously, exact increment quaternion is:
+
+\[
+\delta q
+=
+\left(
+\hat\omega
+\sin\frac{\theta}{2},
+\cos\frac{\theta}{2}
+\right),
+\]
+
+with:
+
+\[
+\theta
+=
+|\omega|dt.
+\]
+
+For very small \(\theta\):
+
+\[
+\sin(\theta/2)
+\approx
+\theta/2
+\]
+
+and:
+
+\[
+\cos(\theta/2)
+\approx1.
+\]
+
+Therefore vector part:
+
+\[
+\hat\omega
+\frac{|\omega|dt}{2}
+=
+\frac12\omega dt.
+\]
+
+Hence:
+
+\[
+q(t+dt)
+\approx
+q+
+\frac12\Omega q\,dt.
+\]
+
+That is the quaternion derivative form.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Why multiplication order matters}\label{06-engine-ii-ch037-why-multiplication-order-matters}
+
+\hypertarget{06-engine-ii-ch037-why-multiplication-order-matters}{}
+
+Quaternion multiplication is noncommutative:
+
+\[
+pq\neq qp.
+\]
+
+If angular velocity is represented in world coordinates:
+
+\[
+\dot q
+=
+\frac12\Omega_wq.
+\]
+
+If represented in body coordinates:
+
+\[
+\dot q
+=
+\frac12q\Omega_b.
+\]
+
+You cannot swap these casually.
+
+Kairo's world-space angular velocity and:
+
+\begin{verbatim}
+omega * rotation
+\end{verbatim}
+
+are coherent with one another.
+
+That consistency is more important than memorizing one universal ordering.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1668 --- Quaternion orientation integration}\label{06-engine-ii-ch037-part-1668-quaternion-orientation-integration}
+
+\hypertarget{06-engine-ii-ch037-part-1668-quaternion-orientation-integration}{}
+
+First-order orientation integration:
+
+\[
+q_{n+1}
+=
+q_n+
+\dot q_n dt.
+\]
+
+Using derivative:
+
+\[
+\boxed{
+q_{n+1}
+=
+q_n+
+\frac12
+\Omega_n q_n dt.
+}
+\]
+
+Kairo's current implementation:
+
+\begin{verbatim}
+return
+    (
+        rotation +
+        derivative * dt
+    ).Normalized();
+\end{verbatim}
+
+is exactly this.
+
+This is a first-order approximation of rotational exponential motion.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Angular velocity choice in semi-implicit integration}\label{06-engine-ii-ch037-angular-velocity-choice-in-semi-implicit-integration}
+
+\hypertarget{06-engine-ii-ch037-angular-velocity-choice-in-semi-implicit-integration}{}
+
+Kairo's \BookInlineCode{{S}{e}{m}{i}{I}{m}{p}{l}{i}{c}{i}{t}{E}{u}{l}{e}{r}{(}{)}}{SemiImplicitEuler()} first updates:
+
+\begin{verbatim}
+state.AngularVelocity +=
+    angularAcceleration * dt;
+\end{verbatim}
+
+then calls orientation integration using the \textbf{new angular velocity}.
+
+Thus rotational state follows the same semi-implicit philosophy as translation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1669 --- Quaternion renormalization}\label{06-engine-ii-ch037-part-1669-quaternion-renormalization}
+
+\hypertarget{06-engine-ii-ch037-part-1669-quaternion-renormalization}{}
+
+A valid rotation quaternion must satisfy:
+
+\[
+\|q\|=1.
+\]
+
+Numerical integration produces:
+
+\[
+q'
+=
+q+\dot qdt.
+\]
+
+In finite precision:
+
+\[
+\|q'\|
+\neq1
+\]
+
+exactly.
+
+So normalize:
+
+\[
+\boxed{
+q
+\leftarrow
+\frac{q}{\|q\|}.
+}
+\]
+
+Kairo does this every orientation integration step.
+
+That is correct and cheap.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{What happens without normalization}\label{06-engine-ii-ch037-what-happens-without-normalization}
+
+\hypertarget{06-engine-ii-ch037-what-happens-without-normalization}{}
+
+A non-unit quaternion used as though unit may introduce:
+
+\begin{verbatim}
+scaling-like transform errors
+incorrect rotation matrices
+gradually increasing orientation distortion.
+\end{verbatim}
+
+Even if the drift per frame is tiny, over thousands of frames it accumulates.
+
+Kairo's certification test runs orientation integration for:
+
+\[
+20,000
+\]
+
+steps and checks the quaternion remains normalized within tolerance.
+
+That is a good regression test.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Normalization is not a fix for poor integration}\label{06-engine-ii-ch037-normalization-is-not-a-fix-for-poor-integration}
+
+\hypertarget{06-engine-ii-ch037-normalization-is-not-a-fix-for-poor-integration}{}
+
+This distinction matters.
+
+Normalizing removes drift away from the unit quaternion manifold.
+
+It does \textbf{not} make the angular trajectory high-order accurate.
+
+You can have:
+
+\[
+\|q\|=1
+\]
+
+while orientation is still numerically wrong.
+
+Normalization fixes representation validity, not integration truncation error.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1670 --- Exponential-map orientation integration}\label{06-engine-ii-ch037-part-1670-exponential-map-orientation-integration}
+
+\hypertarget{06-engine-ii-ch037-part-1670-exponential-map-orientation-integration}{}
+
+If angular velocity is constant over a step, we can integrate orientation more geometrically.
+
+Magnitude:
+
+\[
+\omega=
+\|\boldsymbol\omega\|.
+\]
+
+Rotation angle during dt:
+
+\[
+\theta
+=
+\omega dt.
+\]
+
+If:
+
+\[
+\omega>0,
+\]
+
+axis:
+
+\[
+\hat\omega
+=
+\frac{\boldsymbol\omega}{\omega}.
+\]
+
+Increment quaternion:
+
+\[
+\boxed{
+\Delta q
+=
+\left(
+\hat\omega
+\sin\frac{\theta}{2},
+\cos\frac{\theta}{2}
+\right).
+}
+\]
+
+For world-space angular velocity:
+
+\[
+\boxed{
+q_{new}
+=
+\Delta q\,q.
+}
+\]
+
+This represents the exact finite rotation corresponding to constant angular velocity over the step.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Exponential-map implementation}\label{06-engine-ii-ch037-exponential-map-implementation}
+
+\hypertarget{06-engine-ii-ch037-exponential-map-implementation}{}
+
+\begin{verbatim}
+Quaternionf IntegrateAngularVelocityExpMap(
+    const Quaternionf& orientation,
+    const Vec3f& angularVelocity,
+    float dt)
+{
+    const float speed =
+        angularVelocity.Length();
+
+    // Small-angle branch avoids division by a tiny speed.
+    if (speed < 1.0e-7f)
+    {
+        const Quaternionf omega{
+            angularVelocity,
+            0.0f
+        };
+
+        return (
+            orientation +
+            omega *
+            orientation *
+            (0.5f * dt)
+        ).Normalized();
+    }
+
+    const Vec3f axis =
+        angularVelocity /
+        speed;
+
+    const float angle =
+        speed * dt;
+
+    const float half =
+        0.5f * angle;
+
+    const float s =
+        std::sin(half);
+
+    const Quaternionf delta{
+        axis * s,
+        std::cos(half)
+    };
+
+    // World-space angular velocity convention.
+    return (
+        delta *
+        orientation
+    ).Normalized();
+}
+\end{verbatim}
+
+For constant \(\omega\), this gives a much better orientation update than first-order quaternion Euler.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Why exponential map is natural}\label{06-engine-ii-ch037-why-exponential-map-is-natural}
+
+\hypertarget{06-engine-ii-ch037-why-exponential-map-is-natural}{}
+
+Rotations do not live in ordinary Euclidean vector space.
+
+They live on:
+
+\[
+SO(3).
+\]
+
+Angular velocity belongs to the corresponding tangent/Lie algebra:
+
+\[
+\mathfrak{so}(3).
+\]
+
+The exponential map takes a tangent-space angular displacement:
+
+\[
+\omega dt
+\]
+
+and maps it onto a finite rotation.
+
+That is precisely what:
+
+\[
+\Delta q
+\]
+
+is doing.
+
+You do not need advanced Lie theory to use it, but the mathematical structure explains why the method feels so natural.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Is Kairo currently using exponential-map integration?}\label{06-engine-ii-ch037-is-kairo-currently-using-exponential-map-integration}
+
+\hypertarget{06-engine-ii-ch037-is-kairo-currently-using-exponential-map-integration}{}
+
+No.
+
+The current \BookInlineCode{{I}{n}{t}{e}{g}{r}{a}{t}{e}{A}{n}{g}{u}{l}{a}{r}{V}{e}{l}{o}{c}{i}{t}{y}{(}{)}}{IntegrateAngularVelocity()} uses:
+
+\[
+q_{n+1}
+=
+Normalize(
+q_n+
+\frac12\Omega q_n dt
+).
+\]
+
+That is first-order derivative integration plus renormalization.
+
+It is a respectable V1 choice.
+
+But an exponential-map variant would be a worthwhile improvement, especially for:
+
+\begin{verbatim}
+large angular speeds
+larger dt
+research-quality rotational trajectories.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1671 --- Fixed timestep}\label{06-engine-ii-ch037-part-1671-fixed-timestep}
+
+\hypertarget{06-engine-ii-ch037-part-1671-fixed-timestep}{}
+
+A fixed timestep means physics always advances by:
+
+\[
+\boxed{
+dt=h
+}
+\]
+
+for example:
+
+\[
+h=\frac1{60}s
+\]
+
+regardless of render-frame duration.
+
+So the physics sequence is:
+
+\begin{verbatim}
+step 0: t = 0
+step 1: t = 1/60
+step 2: t = 2/60
+...
+\end{verbatim}
+
+This gives every physics step the same numerical conditions.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Why fixed timestep helps determinism}\label{06-engine-ii-ch037-why-fixed-timestep-helps-determinism}
+
+\hypertarget{06-engine-ii-ch037-why-fixed-timestep-helps-determinism}{}
+
+If the same state receives the same inputs and executes the same floating-point operations in the same order with the same:
+
+\[
+dt,
+\]
+
+replay is much more reproducible.
+
+Variable dt changes numerical trajectories even when total elapsed time is identical.
+
+Thus:
+
+\[
+\boxed{
+fixed dt is one of the foundations of deterministic simulation.
+}
+\]
+
+It is not sufficient for cross-machine bitwise determinism by itself, but it is enormously helpful.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1672 --- Variable timestep instability}\label{06-engine-ii-ch037-part-1672-variable-timestep-instability}
+
+\hypertarget{06-engine-ii-ch037-part-1672-variable-timestep-instability}{}
+
+Naive game loop:
+
+\begin{verbatim}
+while (running)
+{
+    float dt =
+        TimeSinceLastFrame();
+
+    physics.Step(dt);
+}
+\end{verbatim}
+
+Suppose render frames alternate:
+
+\[
+8ms,25ms,12ms,40ms,\dots
+\]
+
+Then integration matrix changes every step.
+
+Spring stability changes.
+
+Constraint bias changes.
+
+Collision penetration changes.
+
+Damping changes unless carefully formulated.
+
+The same gameplay event produces different trajectories depending on rendering load.
+
+That is undesirable.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Nonlinear systems are especially sensitive}\label{06-engine-ii-ch037-nonlinear-systems-are-especially-sensitive}
+
+\hypertarget{06-engine-ii-ch037-nonlinear-systems-are-especially-sensitive}{}
+
+Generally:
+
+\[
+Step(dt_1+dt_2)
+\neq
+Step(dt_2)(Step(dt_1)).
+\]
+
+Numerical integration is not time-partition invariant.
+
+Therefore:
+
+\begin{verbatim}
+one 32 ms step
+\end{verbatim}
+
+is not equivalent to:
+
+\begin{verbatim}
+two 16 ms steps.
+\end{verbatim}
+
+That is one reason substepping exists.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1673 --- Accumulator-based fixed stepping}\label{06-engine-ii-ch037-part-1673-accumulator-based-fixed-stepping}
+
+\hypertarget{06-engine-ii-ch037-part-1673-accumulator-based-fixed-stepping}{}
+
+Suppose render-frame elapsed time:
+
+\[
+\Delta t_{frame}.
+\]
+
+Maintain accumulator:
+
+\[
+A.
+\]
+
+Each frame:
+
+\[
+A\leftarrow A+\Delta t_{frame}.
+\]
+
+Then while:
+
+\[
+A\ge h,
+\]
+
+perform:
+
+\[
+PhysicsStep(h)
+\]
+
+and:
+
+\[
+A\leftarrow A-h.
+\]
+
+Pseudo-code:
+
+\begin{verbatim}
+accumulator += frameDelta;
+
+while (accumulator >= fixedDt)
+{
+    physics.Step(fixedDt);
+
+    accumulator -= fixedDt;
+}
+\end{verbatim}
+
+Physics consumes real time in fixed-size quanta.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{allmightroleexample}
+
+\subsection{Example}\label{06-engine-ii-ch037-example}
+
+\hypertarget{06-engine-ii-ch037-example}{}
+
+Let:
+
+\end{allmightroleexample}
+
+\[
+h=16.6667ms.
+\]
+
+Render frame arrives after:
+
+\[
+40ms.
+\]
+
+Accumulator:
+
+\[
+A=40ms.
+\]
+
+First step leaves:
+
+\[
+23.3333ms.
+\]
+
+Second leaves:
+
+\[
+6.6666ms.
+\]
+
+So physics advances:
+
+\[
+33.3334ms
+\]
+
+and leaves fractional remainder:
+
+\[
+6.6666ms.
+\]
+
+That remainder becomes interpolation alpha later.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Current Kairo has two fixed-step layers}\label{06-engine-ii-ch037-current-kairo-has-two-fixed-step-layers}
+
+\hypertarget{06-engine-ii-ch037-current-kairo-has-two-fixed-step-layers}{}
+
+\BookInlineCode{{P}{h}{y}{s}{i}{c}{s}{W}{o}{r}{l}{d}{:}{:}{S}{t}{e}{p}{F}{i}{x}{e}{d}{(}{)}}{PhysicsWorld::StepFixed()} itself supports an accumulator.
+
+But the actual \BookInlineCode{{R}{u}{n}{t}{i}{m}{e}{P}{h}{y}{s}{i}{c}{s}{B}{r}{i}{d}{g}{e}}{RuntimePhysicsBridge} also owns a higher-level accumulator because it additionally needs:
+
+\begin{verbatim}
+scene pose history
+render interpolation
+frame-delta clamping
+runtime fixed-step callbacks.
+\end{verbatim}
+
+That bridge-level ownership makes sense.
+
+You generally should not stack both accumulator mechanisms simultaneously.
+
+The runtime bridge calls:
+
+\begin{verbatim}
+m_World.Step(
+    FixedDeltaSeconds);
+\end{verbatim}
+
+directly for each substep.
+
+Good.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1674 --- Multiple physics substeps}\label{06-engine-ii-ch037-part-1674-multiple-physics-substeps}
+
+\hypertarget{06-engine-ii-ch037-part-1674-multiple-physics-substeps}{}
+
+Suppose one rendered frame is long enough for three fixed steps.
+
+The engine performs:
+
+\begin{verbatim}
+Physics step
+Physics step
+Physics step
+Render once.
+\end{verbatim}
+
+This is normal.
+
+The renderer and physics do not need matching frequencies.
+
+Render:
+
+\[
+144Hz
+\]
+
+Physics:
+
+\[
+60Hz
+\]
+
+or:
+
+Render:
+
+\[
+30Hz
+\]
+
+Physics may perform two 60Hz substeps in that frame.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Why substeps improve collision and constraints}\label{06-engine-ii-ch037-why-substeps-improve-collision-and-constraints}
+
+\hypertarget{06-engine-ii-ch037-why-substeps-improve-collision-and-constraints}{}
+
+A moving body travels approximately:
+
+\[
+d=vdt.
+\]
+
+Halve dt:
+
+\[
+d/2.
+\]
+
+This reduces:
+
+\begin{verbatim}
+penetration per step
+constraint error
+tunnelling probability
+spring instability.
+\end{verbatim}
+
+But doubles broadphase/narrowphase/solver work.
+
+Substeps trade CPU time for numerical quality.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1675 --- Maximum-substep budgets}\label{06-engine-ii-ch037-part-1675-maximum-substep-budgets}
+
+\hypertarget{06-engine-ii-ch037-part-1675-maximum-substep-budgets}{}
+
+What if frame stalls for:
+
+\[
+1s?
+\]
+
+At:
+
+\[
+60Hz,
+\]
+
+you would need:
+
+\[
+60
+\]
+
+physics steps in one rendered frame.
+
+Executing all could take so long that the next frame is late too.
+
+Therefore set:
+
+\[
+N_{max}.
+\]
+
+Kairo runtime default:
+
+\[
+\boxed{
+MaximumSubsteps=8.
+}
+\]
+
+It validates range:
+
+\[
+1\le N_{max}\le64.
+\]
+
+That is a practical safety guard.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Maximum frame delta}\label{06-engine-ii-ch037-maximum-frame-delta}
+
+\hypertarget{06-engine-ii-ch037-maximum-frame-delta}{}
+
+Kairo also limits how much elapsed wall time enters the accumulator:
+
+\begin{verbatim}
+m_Accumulator +=
+    std::min(
+        elapsedSeconds,
+        MaximumFrameDeltaSeconds);
+\end{verbatim}
+
+default:
+
+\[
+0.25s.
+\]
+
+So a debugger pause of ten seconds does not suddenly request 600 physics steps.
+
+This is another anti-catastrophe mechanism.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1676 --- Spiral of death}\label{06-engine-ii-ch037-part-1676-spiral-of-death}
+
+\hypertarget{06-engine-ii-ch037-part-1676-spiral-of-death}{}
+
+Imagine physics step h corresponds to:
+
+\[
+16.7ms
+\]
+
+of simulation time.
+
+But each physics step actually takes:
+
+\[
+20ms
+\]
+
+CPU time.
+
+You are falling behind.
+
+The frame accumulates more elapsed time while trying to catch up.
+
+More accumulated time requires more physics steps.
+
+More steps take more time.
+
+That creates positive feedback:
+
+\[
+\boxed{
+\text{behind}
+\rightarrow
+\text{more work}
+\rightarrow
+\text{further behind}.
+}
+\]
+
+This is the \textbf{spiral of death}.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{The mathematical condition}\label{06-engine-ii-ch037-the-mathematical-condition}
+
+\hypertarget{06-engine-ii-ch037-the-mathematical-condition}{}
+
+Suppose physics simulation cost per simulated second exceeds available real CPU time.
+
+Let:
+
+\[
+C
+\]
+
+be real seconds required to simulate one physics second.
+
+If:
+
+\[
+C>1,
+\]
+
+you fundamentally cannot keep real time.
+
+Backlog grows without bound.
+
+No accumulator trick can solve an overloaded system.
+
+You must either reduce workload, lower simulation frequency, parallelize, degrade simulation quality, or drop simulation time.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1677 --- Dropping excessive accumulated time}\label{06-engine-ii-ch037-part-1677-dropping-excessive-accumulated-time}
+
+\hypertarget{06-engine-ii-ch037-part-1677-dropping-excessive-accumulated-time}{}
+
+Once maximum substeps are exhausted, you must choose a policy.
+
+Kairo's \BookInlineCode{{P}{h}{y}{s}{i}{c}{s}{W}{o}{r}{l}{d}{:}{:}{S}{t}{e}{p}{F}{i}{x}{e}{d}{(}{)}}{PhysicsWorld::StepFixed()} currently does:
+
+\begin{verbatim}
+if (
+    steps == maxSubSteps &&
+    m_FixedAccumulator >= fixedDt)
+{
+    m_FixedAccumulator = 0.0f;
+}
+\end{verbatim}
+
+The higher-level runtime bridge is slightly more refined:
+
+\begin{verbatim}
+if (
+    m_Accumulator >=
+    m_Settings.FixedDeltaSeconds)
+{
+    m_Accumulator =
+        std::fmod(
+            m_Accumulator,
+            m_Settings.FixedDeltaSeconds);
+
+    result.DroppedExcessTime =
+        true;
+}
+\end{verbatim}
+
+So it discards whole unprocessed fixed steps but preserves the sub-step remainder.
+
+That is a good explicit overload policy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{What dropping time means physically}\label{06-engine-ii-ch037-what-dropping-time-means-physically}
+
+\hypertarget{06-engine-ii-ch037-what-dropping-time-means-physically}{}
+
+Suppose:
+
+\[
+200ms
+\]
+
+of real elapsed time arrives.
+
+Your substep budget allows only:
+
+\[
+8\times16.67
+\approx133.3ms.
+\]
+
+Some simulation time is lost.
+
+The game world advances less than wall time.
+
+This produces a temporary slow-motion-like discontinuity.
+
+But it prevents runaway catch-up.
+
+That is often preferable.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Other overload policies}\label{06-engine-ii-ch037-other-overload-policies}
+
+\hypertarget{06-engine-ii-ch037-other-overload-policies}{}
+
+A different engine might preserve all accumulated time and accept temporary frame stalls, clamp frame delta earlier, dynamically lower solver quality, run physics slower than real time, or resynchronize state from authoritative network/server state.
+
+There is no universal answer.
+
+Kairo deliberately chooses:
+
+\[
+\boxed{
+\text{bounded simulation work over perfect wall-time catchup}.
+}
+\]
+
+That is a reasonable game-runtime policy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1678 --- Previous/current physics snapshots}\label{06-engine-ii-ch037-part-1678-previouscurrent-physics-snapshots}
+
+\hypertarget{06-engine-ii-ch037-part-1678-previouscurrent-physics-snapshots}{}
+
+A fixed-step simulation updates only at discrete times:
+
+\[
+t_n,
+t_{n+1},
+t_{n+2}.
+\]
+
+Rendering may happen in between.
+
+So retain two physics poses:
+
+\[
+Pose_{previous}
+\]
+
+and:
+
+\[
+Pose_{current}.
+\]
+
+Kairo's \BookInlineCode{{R}{u}{n}{t}{i}{m}{e}{P}{h}{y}{s}{i}{c}{s}{B}{r}{i}{d}{g}{e}}{RuntimePhysicsBridge} has:
+
+\begin{verbatim}
+struct PoseHistory
+{
+    Transformf Previous;
+    Transformf Current;
+};
+\end{verbatim}
+
+Before every fixed step:
+
+\begin{verbatim}
+pose.Previous =
+    pose.Current;
+\end{verbatim}
+
+After physics:
+
+\begin{verbatim}
+pose.Current.Translation =
+    state.Position;
+
+pose.Current.Rotation =
+    state.Rotation;
+\end{verbatim}
+
+This is exactly the architecture required for interpolation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{``Snapshot'' has two meanings}\label{06-engine-ii-ch037-snapshot-has-two-meanings}
+
+\hypertarget{06-engine-ii-ch037-snapshot-has-two-meanings}{}
+
+There are actually two different snapshot concepts in current Kairo.
+
+The lightweight render snapshot is:
+
+\begin{verbatim}
+Previous / Current Transform
+\end{verbatim}
+
+used every frame for interpolation.
+
+The complete deterministic simulation snapshot is:
+
+\begin{verbatim}
+PhysicsWorldSnapshot
+\end{verbatim}
+
+used for restore/replay/topology transactions.
+
+Do not confuse them.
+
+One is presentation history.
+
+The other is full simulation state.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Full physics snapshot}\label{06-engine-ii-ch037-full-physics-snapshot}
+
+\hypertarget{06-engine-ii-ch037-full-physics-snapshot}{}
+
+Kairo's replay system stores an initial:
+
+\begin{verbatim}
+PhysicsWorldSnapshot
+\end{verbatim}
+
+then a sequence of commands and expected state hashes.
+
+Replay:
+
+\begin{verbatim}
+restore snapshot
+apply frame commands
+fixed Step
+hash state
+compare.
+\end{verbatim}
+
+That is an excellent deterministic-regression architecture.
+
+It tests much more than visual output.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Snapshot must include hidden dynamic memory}\label{06-engine-ii-ch037-snapshot-must-include-hidden-dynamic-memory}
+
+\hypertarget{06-engine-ii-ch037-snapshot-must-include-hidden-dynamic-memory}{}
+
+A correct deterministic world snapshot cannot store only:
+
+\begin{verbatim}
+position
+rotation.
+\end{verbatim}
+
+It may need:
+
+\begin{verbatim}
+linear/angular velocity
+sleep state/timer
+forces if captured between input and step
+collider topology
+constraint state
+contact cache / warm-start information
+fixed accumulator where relevant.
+\end{verbatim}
+
+Anything influencing future evolution belongs in the state closure.
+
+Kairo's physics snapshot/restore system is already significantly richer than a pose dump.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1679 --- Render interpolation between physics snapshots}\label{06-engine-ii-ch037-part-1679-render-interpolation-between-physics-snapshots}
+
+\hypertarget{06-engine-ii-ch037-part-1679-render-interpolation-between-physics-snapshots}{}
+
+Let accumulator remainder be:
+
+\[
+A,
+\]
+
+fixed timestep:
+
+\[
+h.
+\]
+
+Define:
+
+\[
+\boxed{
+\alpha
+=
+\frac{A}{h}.
+}
+\]
+
+Since:
+
+\[
+0\le A<h,
+\]
+
+we have:
+
+\[
+0\le\alpha<1.
+\]
+
+Then rendered position:
+
+\[
+\boxed{
+x_r
+=
+(1-\alpha)x_{prev}
++
+\alpha x_{curr}.
+}
+\]
+
+Kairo computes exactly:
+
+\begin{verbatim}
+InterpolationAlpha =
+    clamp(
+        accumulator /
+        FixedDeltaSeconds,
+        0.0f,
+        1.0f);
+\end{verbatim}
+
+then calls:
+
+\begin{verbatim}
+Interpolate(
+    Previous,
+    Current,
+    alpha);
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Why rendering current physics pose directly jitters}\label{06-engine-ii-ch037-why-rendering-current-physics-pose-directly-jitters}
+
+\hypertarget{06-engine-ii-ch037-why-rendering-current-physics-pose-directly-jitters}{}
+
+Physics 60 Hz means pose changes every:
+
+\[
+16.67ms.
+\]
+
+At 144 Hz, rendering every:
+
+\[
+6.94ms.
+\]
+
+Several rendered frames see the same physics transform before it suddenly jumps.
+
+Visually:
+
+\begin{verbatim}
+frame 1: x0
+frame 2: x0
+frame 3: x0
+frame 4: x1
+frame 5: x1
+...
+\end{verbatim}
+
+Interpolation produces smoothly moving presentation poses between snapshots.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Rotation interpolation}\label{06-engine-ii-ch037-rotation-interpolation}
+
+\hypertarget{06-engine-ii-ch037-rotation-interpolation}{}
+
+Positions use linear interpolation.
+
+Orientations require quaternion interpolation.
+
+For normalized quaternions, common choices are:
+
+\[
+SLERP
+\]
+
+or normalized linear interpolation:
+
+\[
+NLERP.
+\]
+
+SLERP:
+
+\[
+q(t)
+=
+\frac{
+\sin((1-t)\theta)
+}{
+\sin\theta
+}q_0
++
+\frac{
+\sin(t\theta)
+}{
+\sin\theta
+}q_1.
+\]
+
+It gives constant angular speed along the shortest great-circle path after quaternion-sign correction.
+
+NLERP:
+
+\[
+q(t)
+=
+Normalize(
+(1-t)q_0+tq_1
+)
+\]
+
+is cheaper and often visually sufficient.
+
+Kairo's generic \BookInlineCode{{T}{r}{a}{n}{s}{f}{o}{r}{m}{f}{:}{:}{I}{n}{t}{e}{r}{p}{o}{l}{a}{t}{e}}{Transformf::Interpolate} owns the exact policy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Interpolation introduces presentation latency}\label{06-engine-ii-ch037-interpolation-introduces-presentation-latency}
+
+\hypertarget{06-engine-ii-ch037-interpolation-introduces-presentation-latency}{}
+
+The classic previous/current interpolation scheme renders a state somewhere between the last two completed physics states.
+
+That means presentation is roughly one physics step behind the most recently theoretically extrapolatable state.
+
+At:
+
+\[
+60Hz
+\]
+
+this is roughly up to:
+
+\[
+16.7ms.
+\]
+
+The trade is:
+
+\[
+\boxed{
+slight latency
+\leftrightarrow
+smooth, stable presentation.
+}
+\]
+
+For most objects this is excellent.
+
+For latency-sensitive local player cameras/controllers, engines sometimes use different prediction/presentation strategies.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Teleports and interpolation}\label{06-engine-ii-ch037-teleports-and-interpolation}
+
+\hypertarget{06-engine-ii-ch037-teleports-and-interpolation}{}
+
+Suppose body teleports from:
+
+\[
+x=0
+\]
+
+to:
+
+\[
+x=100.
+\]
+
+If history remains:
+
+\begin{verbatim}
+Previous = 0
+Current = 100
+\end{verbatim}
+
+renderer will animate a fake high-speed movement across the world.
+
+Wrong.
+
+On teleport:
+
+\[
+Previous=Current=100.
+\]
+
+Kairo's \BookInlineCode{{S}{e}{t}{E}{n}{t}{i}{t}{y}{P}{o}{s}{i}{t}{i}{o}{n}{(}{)}}{SetEntityPosition()} does exactly this:
+
+\begin{verbatim}
+pose.Previous = world;
+pose.Current = world;
+\end{verbatim}
+
+Excellent detail.
+
+Snapshot restore does the same thing so the first frame after restore does not interpolate from pre-load state.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1680 --- Physics→scene transform synchronization}\label{06-engine-ii-ch037-part-1680-physicsscene-transform-synchronization}
+
+\hypertarget{06-engine-ii-ch037-part-1680-physicsscene-transform-synchronization}{}
+
+Dynamic body is owned by physics.
+
+After simulation:
+
+\[
+x_{physics},q_{physics}
+\]
+
+must become the runtime scene pose used by rendering/gameplay presentation.
+
+The naive approach:
+
+\begin{verbatim}
+sceneTransform =
+    physicsTransform;
+\end{verbatim}
+
+works only for root entities with identical coordinate conventions and no parent.
+
+Kairo handles the harder case.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Scene hierarchy problem}\label{06-engine-ii-ch037-scene-hierarchy-problem}
+
+\hypertarget{06-engine-ii-ch037-scene-hierarchy-problem}{}
+
+Suppose child entity physics produces world transform:
+
+\[
+T_w^{child}.
+\]
+
+Scene stores local transform relative to parent:
+
+\[
+T_l^{child}.
+\]
+
+If parent world transform is:
+
+\[
+T_w^{parent},
+\]
+
+then:
+
+\[
+\boxed{
+T_l^{child}
+=
+(T_w^{parent})^{-1}
+T_w^{child}.
+}
+\]
+
+Kairo's \BookInlineCode{{T}{o}{L}{o}{c}{a}{l}{(}{)}}{ToLocal()} performs this conversion.
+
+For translation it uses:
+
+\begin{verbatim}
+WorldToLocal(
+    parentWorld,
+    world.Translation);
+\end{verbatim}
+
+for rotation:
+
+\begin{verbatim}
+Inverse(parentWorld.Rotation) *
+world.Rotation;
+\end{verbatim}
+
+and scale is divided component-wise.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Why parent-first publication is required}\label{06-engine-ii-ch037-why-parent-first-publication-is-required}
+
+\hypertarget{06-engine-ii-ch037-why-parent-first-publication-is-required}{}
+
+When converting a child's interpolated world pose into local coordinates, you need its parent's \textbf{current published world transform}.
+
+Therefore process:
+
+\begin{verbatim}
+root
+  ↓
+child
+  ↓
+grandchild
+\end{verbatim}
+
+not arbitrary entity storage order.
+
+Kairo explicitly traverses:
+
+\begin{verbatim}
+for (root : RootEntities())
+    PublishSubtree(root, alpha);
+\end{verbatim}
+
+and recursively publishes children.
+
+This is exactly the right scene-hierarchy synchronization rule.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Physics should not directly depend on Scene}\label{06-engine-ii-ch037-physics-should-not-directly-depend-on-scene}
+
+\hypertarget{06-engine-ii-ch037-physics-should-not-directly-depend-on-scene}{}
+
+Notice the architecture:
+
+\begin{verbatim}
+PhysicsWorld
+\end{verbatim}
+
+does not know:
+
+\begin{verbatim}
+EngineCore::Scene.
+\end{verbatim}
+
+The bridge owns synchronization.
+
+That preserves:
+
+\[
+PhysicsEngine
+\nrightarrow
+EngineCore scene policy.
+\]
+
+The integration layer depends on both.
+
+This is Phase 16 architecture paying dividends inside Phase 17.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Dynamic ownership direction}\label{06-engine-ii-ch037-dynamic-ownership-direction}
+
+\hypertarget{06-engine-ii-ch037-dynamic-ownership-direction}{}
+
+For dynamic body:
+
+\[
+\boxed{
+Physics\rightarrow Scene.
+}
+\]
+
+The physics pose is authoritative.
+
+Scene receives an interpolated presentation transform.
+
+Do not, in the same frame, also blindly copy scene transform back into the dynamic body.
+
+That would create ownership conflict.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Part 1681 --- Scene→kinematic synchronization}\label{06-engine-ii-ch037-part-1681-scenekinematic-synchronization}
+
+\hypertarget{06-engine-ii-ch037-part-1681-scenekinematic-synchronization}{}
+
+Kinematic bodies reverse the authority direction.
+
+For kinematic:
+
+\[
+\boxed{
+Scene/Game logic\rightarrow Physics.
+}
+\]
+
+The application specifies target movement.
+
+Physics uses that movement in contacts but does not solve forces onto the kinematic body.
+
+That makes synchronization fundamentally asymmetric:
+
+\[
+Dynamic:
+Physics\rightarrow Scene
+\]
+
+\[
+Kinematic:
+Scene\rightarrow Physics.
+\]
+
+This is a crucial architecture invariant.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Kinematic pose update should occur before physics step}\label{06-engine-ii-ch037-kinematic-pose-update-should-occur-before-physics-step}
+
+\hypertarget{06-engine-ii-ch037-kinematic-pose-update-should-occur-before-physics-step}{}
+
+Correct timeline:
+
+\begin{verbatim}
+gameplay updates kinematic target
+        ↓
+scene/animation computes world pose
+        ↓
+bridge updates kinematic physics pose/velocity
+        ↓
+PhysicsWorld::Step
+        ↓
+contacts see moving kinematic velocity
+        ↓
+dynamic bodies respond.
+\end{verbatim}
+
+If you push kinematic pose after physics, contacts are one step late.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Deriving kinematic linear velocity}\label{06-engine-ii-ch037-deriving-kinematic-linear-velocity}
+
+\hypertarget{06-engine-ii-ch037-deriving-kinematic-linear-velocity}{}
+
+Given previous:
+
+\[
+x_0
+\]
+
+and target:
+
+\[
+x_1,
+\]
+
+fixed timestep:
+
+\[
+h,
+\]
+
+set:
+
+\[
+\boxed{
+v_k
+=
+\frac{x_1-x_0}{h}.
+}
+\]
+
+Then advance over h:
+
+\[
+x_0+v_kh=x_1.
+\]
+
+This lets contacts see the true platform velocity.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Deriving kinematic angular velocity from quaternions}\label{06-engine-ii-ch037-deriving-kinematic-angular-velocity-from-quaternions}
+
+\hypertarget{06-engine-ii-ch037-deriving-kinematic-angular-velocity-from-quaternions}{}
+
+Previous orientation:
+
+\[
+q_0.
+\]
+
+Target:
+
+\[
+q_1.
+\]
+
+Relative rotation for world convention:
+
+\[
+\Delta q
+=
+q_1q_0^{-1}.
+\]
+
+Choose quaternion sign so:
+
+\[
+\Delta q_w\ge0
+\]
+
+for shortest path.
+
+Write:
+
+\[
+\Delta q
+=
+(
+\hat n\sin(\theta/2),
+\cos(\theta/2)
+).
+\]
+
+Then:
+
+\[
+\theta
+=
+2\operatorname{atan2}
+(
+\|\Delta q_v\|,
+\Delta q_w
+).
+\]
+
+So:
+
+\[
+\boxed{
+\omega_k
+=
+\hat n
+\frac{\theta}{h}.
+}
+\]
+
+That is the angular velocity that carries q0 to q1 over the fixed step.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{A proper kinematic target API}\label{06-engine-ii-ch037-a-proper-kinematic-target-api}
+
+\hypertarget{06-engine-ii-ch037-a-proper-kinematic-target-api}{}
+
+Rather than directly mutating raw state:
+
+\begin{verbatim}
+void SetKinematicTarget(
+    BodyID body,
+    const Vec3f& targetPosition,
+    const Quaternionf& targetRotation,
+    float fixedDt)
+{
+    RigidBody& b =
+        RequireBody(body);
+
+    if (b.Type != BodyType::Kinematic)
+        throw ...;
+
+    // Linear velocity that reaches target exactly at the
+    // end of the next fixed simulation step.
+    b.State.LinearVelocity =
+        (
+            targetPosition -
+            b.State.Position
+        ) / fixedDt;
+
+    // Relative finite rotation.
+    Quaternionf delta =
+        targetRotation *
+        b.State.Rotation.Conjugate();
+
+    // q and -q represent the same orientation.
+    // Flip to use the shortest angular route.
+    if (delta.w < 0.0f)
+        delta = -delta;
+
+    delta =
+        delta.Normalized();
+
+    const float sinHalf =
+        Vec3f{
+            delta.x,
+            delta.y,
+            delta.z
+        }.Length();
+
+    if (sinHalf < 1.0e-7f)
+    {
+        b.State.AngularVelocity =
+            Vec3f::Zero();
+    }
+    else
+    {
+        const Vec3f axis =
+            Vec3f{
+                delta.x,
+                delta.y,
+                delta.z
+            } /
+            sinHalf;
+
+        const float angle =
+            2.0f *
+            std::atan2(
+                sinHalf,
+                delta.w);
+
+        b.State.AngularVelocity =
+            axis *
+            (angle / fixedDt);
+    }
+}
+\end{verbatim}
+
+Now collision response sees correct kinematic surface velocity.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Current Kairo Part 1681 status}\label{06-engine-ii-ch037-current-kairo-part-1681-status}
+
+\hypertarget{06-engine-ii-ch037-current-kairo-part-1681-status}{}
+
+The runtime bridge does an excellent job for:
+
+\[
+Physics\rightarrow Scene
+\]
+
+and exposes a:
+
+\begin{verbatim}
+RuntimeFixedStepListener::BeforePhysicsStep()
+\end{verbatim}
+
+hook precisely at the right point for systems that need to make fixed-step input changes before physics.
+
+It also provides explicit world-position synchronization through:
+
+\begin{verbatim}
+SetEntityPosition().
+\end{verbatim}
+
+What is not intrinsic in the inspected \BookInlineCode{{R}{u}{n}{t}{i}{m}{e}{P}{h}{y}{s}{i}{c}{s}{B}{r}{i}{d}{g}{e}}{RuntimePhysicsBridge} is a generic automatic pass that, before every substep, scans authored kinematic Scene transforms and derives their linear/angular velocities from changed target transforms.
+
+Therefore Part 1681's \textbf{conceptual architecture is clear}, while the fully general automatic scene→kinematic target pipeline appears to remain an extension point.
+
+That is a useful gap rather than a hidden one.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{KAIRO DEEP AUDIT --- IMPULSE APPLICATION ORDER}\label{06-engine-ii-ch037-kairo-deep-audit-impulse-application-order}
+
+\hypertarget{06-engine-ii-ch037-kairo-deep-audit-impulse-application-order}{}
+
+Current player call:
+
+\begin{verbatim}
+ApplyEntityImpulse(...)
+\end{verbatim}
+
+reaches:
+
+\begin{verbatim}
+PhysicsWorld::ApplyBodyImpulseAtPoint(...)
+\end{verbatim}
+
+which performs:
+
+\begin{verbatim}
+if (!IsDynamicBodyType(record))
+{
+    return;
+}
+
+WakeRigidBody(record);
+
+ApplyImpulseAtPoint(
+    record.State,
+    record.Mass.InverseMass,
+    WorldInverseInertia(record),
+    impulse,
+    worldPoint);
+\end{verbatim}
+
+Notice the careful order.
+
+It checks \textbf{body type}, not:
+
+\begin{verbatim}
+IsDynamic(record)
+\end{verbatim}
+
+because \BookInlineCode{{I}{s}{D}{y}{n}{a}{m}{i}{c}{(}{)}}{IsDynamic()} returns false when sleeping.
+
+A sleeping body is still allowed to receive an impulse.
+
+Then:
+
+\begin{verbatim}
+WakeRigidBody(record);
+\end{verbatim}
+
+happens before:
+
+\begin{verbatim}
+WorldInverseInertia(record).
+\end{verbatim}
+
+This matters because \BookInlineCode{{W}{o}{r}{l}{d}{I}{n}{v}{e}{r}{s}{e}{I}{n}{e}{r}{t}{i}{a}{(}{)}}{WorldInverseInertia()} returns zero if the body is not currently dynamic/awake.
+
+So the ordering prevents a sleeping body's angular impulse from being accidentally lost.
+
+That is a genuinely good implementation detail.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Force versus impulse timing inside the current world}\label{06-engine-ii-ch037-force-versus-impulse-timing-inside-the-current-world}
+
+\hypertarget{06-engine-ii-ch037-force-versus-impulse-timing-inside-the-current-world}{}
+
+Current broad sequence is:
+
+\begin{verbatim}
+IntegrateForces
+        ↓
+Kinematic motion update
+        ↓
+Broadphase
+        ↓
+Narrowphase
+        ↓
+Contact solver / impulses
+        ↓
+Position correction
+        ↓
+Dynamic pose integration
+        ↓
+Sleeping
+        ↓
+Clear force accumulators
+\end{verbatim}
+
+This means external continuous forces affect velocity before contact solving.
+
+Contact solver then sees those new velocities.
+
+Finally post-solver velocities advance positions.
+
+That is exactly the ordering you generally want for semi-implicit rigid-body simulation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Why immediate gameplay impulses can be applied before the step}\label{06-engine-ii-ch037-why-immediate-gameplay-impulses-can-be-applied-before-the-step}
+
+\hypertarget{06-engine-ii-ch037-why-immediate-gameplay-impulses-can-be-applied-before-the-step}{}
+
+Suppose gameplay does:
+
+\begin{verbatim}
+ApplyEntityImpulse(player, jumpImpulse);
+\end{verbatim}
+
+then:
+
+\begin{verbatim}
+physics.Advance(...);
+\end{verbatim}
+
+The body's velocity changes immediately before force integration/contact solving.
+
+The next solver step therefore sees the new jump velocity.
+
+Good.
+
+If impulse were stored for some later arbitrary phase, ordering would be harder to reason about.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{But contact-solver impulses are internal to the step}\label{06-engine-ii-ch037-but-contact-solver-impulses-are-internal-to-the-step}
+
+\hypertarget{06-engine-ii-ch037-but-contact-solver-impulses-are-internal-to-the-step}{}
+
+External gameplay impulse:
+
+\begin{verbatim}
+user-facing event
+\end{verbatim}
+
+and contact impulse:
+
+\begin{verbatim}
+constraint solution
+\end{verbatim}
+
+share the same mathematics:
+
+\[
+\Delta v=M^{-1}J.
+\]
+
+But they occur at different architectural layers.
+
+This is important.
+
+Do not expose the sequential solver's internal accumulated contact impulse as though it were simply a gameplay impulse API.
+
+The math is the same; ownership and lifetime are not.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Contact effective mass preview}\label{06-engine-ii-ch037-contact-effective-mass-preview}
+
+\hypertarget{06-engine-ii-ch037-contact-effective-mass-preview}{}
+
+Although full contact constraints belong to Pass 18, M099's impulse system is already visible in Kairo's:
+
+\begin{verbatim}
+ContactNormalDenominator(...)
+\end{verbatim}
+
+The scalar denominator is:
+
+\[
+k
+=
+m_A^{-1}
++
+m_B^{-1}
++
+n\cdot
+\left[
+(I_A^{-1}(r_A\times n))\times r_A
++
+(I_B^{-1}(r_B\times n))\times r_B
+\right].
+\]
+
+Then normal impulse magnitude is approximately:
+
+\[
+\boxed{
+j
+=
+-\frac{
+(1+e)v_n
+}{
+k
+}.
+}
+\]
+
+This denominator is effectively the inverse of the two-body \textbf{effective mass along the contact normal}.
+
+So everything we learned about linear and angular impulse is already assembling into the collision solver.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Rigid-body state memory and ownership}\label{06-engine-ii-ch037-rigid-body-state-memory-and-ownership}
+
+\hypertarget{06-engine-ii-ch037-rigid-body-state-memory-and-ownership}{}
+
+There is a broader lesson here.
+
+The body has multiple categories of ``memory'':
+
+\[
+\boxed{
+\text{configuration memory}
+}
+\]
+
+such as mass, damping and body type;
+
+\[
+\boxed{
+\text{dynamic memory}
+}
+\]
+
+such as position, velocity, sleeping state;
+
+\[
+\boxed{
+\text{step-local memory}
+}
+\]
+
+such as force accumulator;
+
+and later:
+
+\[
+\boxed{
+\text{solver memory}
+}
+\]
+
+such as warm-start impulses.
+
+When implementing snapshot/replay, you need to decide which memory affects future state.
+
+Anything that does belongs to deterministic simulation state.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Sleeping and determinism}\label{06-engine-ii-ch037-sleeping-and-determinism}
+
+\hypertarget{06-engine-ii-ch037-sleeping-and-determinism}{}
+
+Sleeping is not merely an optimization.
+
+It changes the executed equations.
+
+One run that sleeps a body at step:
+
+\[
+N
+\]
+
+while another does not can diverge immediately.
+
+Therefore thresholds:
+
+\begin{verbatim}
+SleepLinearSpeed
+SleepAngularSpeed
+SleepTime
+\end{verbatim}
+
+must be considered deterministic simulation parameters.
+
+They belong in replay/build configuration when exact simulation reproduction matters.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Fixed timestep and determinism are not synonymous}\label{06-engine-ii-ch037-fixed-timestep-and-determinism-are-not-synonymous}
+
+\hypertarget{06-engine-ii-ch037-fixed-timestep-and-determinism-are-not-synonymous}{}
+
+Fixed timestep helps, but two machines can still diverge from:
+
+\begin{verbatim}
+different floating-point instruction selection
+FMA differences
+parallel solver ordering
+unordered iteration
+different SIMD implementations
+compiler optimization.
+\end{verbatim}
+
+Kairo's physics replay hash architecture is therefore important.
+
+Rather than assuming determinism, it can test:
+
+\[
+ExpectedStateHash
+=
+ActualStateHash.
+\]
+
+That is much stronger.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Cross-platform deterministic replay}\label{06-engine-ii-ch037-cross-platform-deterministic-replay}
+
+\hypertarget{06-engine-ii-ch037-cross-platform-deterministic-replay}{}
+
+For serious deterministic requirements, you eventually need to control:
+
+\[
+\text{iteration order}
+\]
+
+\[
+\text{floating-point environment}
+\]
+
+\[
+\text{parallel reduction ordering}
+\]
+
+\[
+\text{random seeds}
+\]
+
+\[
+\text{solver order}
+\]
+
+\[
+\text{dt}
+\]
+
+\[
+\text{initial state}.
+\]
+
+Exact floating-point bitwise determinism across architectures is a very high bar.
+
+For research replication, record enough state and tolerate carefully defined numerical error where bitwise identity is not mandatory.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Fixed-step listener architecture}\label{06-engine-ii-ch037-fixed-step-listener-architecture}
+
+\hypertarget{06-engine-ii-ch037-fixed-step-listener-architecture}{}
+
+The runtime bridge currently invokes:
+
+\begin{verbatim}
+listener->BeforePhysicsStep(
+    FixedDeltaSeconds);
+\end{verbatim}
+
+inside every substep immediately before:
+
+\begin{verbatim}
+m_World.Step(
+    FixedDeltaSeconds);
+\end{verbatim}
+
+This is the right place for fixed-step simulation inputs.
+
+For example:
+
+\begin{verbatim}
+controller motor forces
+kinematic target synchronization
+vehicle controls
+scripted physics actions.
+\end{verbatim}
+
+Why not once per render frame?
+
+Because one render frame may contain:
+
+\[
+0,1,2,\dots,N
+\]
+
+physics steps.
+
+Physics-sensitive input must be sampled/applied at the physics-step boundary.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Render-frame input versus physics-step input}\label{06-engine-ii-ch037-render-frame-input-versus-physics-step-input}
+
+\hypertarget{06-engine-ii-ch037-render-frame-input-versus-physics-step-input}{}
+
+Suppose one render frame triggers two physics substeps.
+
+If you call:
+
+\begin{verbatim}
+AddForce(...)
+\end{verbatim}
+
+once before both, Kairo clears force after first \BookInlineCode{{S}{t}{e}{p}{(}{)}}{Step()}.
+
+Second step gets no force.
+
+If thrust is intended continuous across the entire frame, it needs to be re-applied before each fixed substep.
+
+That is exactly why:
+
+\begin{verbatim}
+BeforePhysicsStep()
+\end{verbatim}
+
+exists.
+
+This is an important integration detail.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Continuous force with substeps}\label{06-engine-ii-ch037-continuous-force-with-substeps}
+
+\hypertarget{06-engine-ii-ch037-continuous-force-with-substeps}{}
+
+Suppose thrust:
+
+\[
+F=100N.
+\]
+
+One render frame requires three fixed steps.
+
+Correct:
+
+\begin{verbatim}
+step 1:
+AddForce(100)
+Step(h)
+
+step 2:
+AddForce(100)
+Step(h)
+
+step 3:
+AddForce(100)
+Step(h)
+\end{verbatim}
+
+Total impulse:
+
+\[
+J
+=
+100(3h).
+\]
+
+If you apply force only once:
+
+\[
+J
+=
+100h.
+\]
+
+You under-apply by factor three.
+
+This bug is extremely common when people first combine force accumulators with fixed stepping.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Impulse under multiple substeps}\label{06-engine-ii-ch037-impulse-under-multiple-substeps}
+
+\hypertarget{06-engine-ii-ch037-impulse-under-multiple-substeps}{}
+
+An impulse is different.
+
+A gameplay event:
+
+\begin{verbatim}
+jump pressed
+\end{verbatim}
+
+should usually apply once:
+
+\[
+J.
+\]
+
+Do not reapply it every substep unless the event semantics actually demand it.
+
+So your fixed-step input layer must distinguish:
+
+\begin{verbatim}
+stateful continuous control
+\end{verbatim}
+
+from:
+
+\begin{verbatim}
+edge-triggered impulse event.
+\end{verbatim}
+
+For example:
+
+\begin{verbatim}
+throttle held → force every step
+jump pressed → impulse once.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hyperref[volume-reading-map]{Reading map} · \hyperref[06-engine-ii-ch036-auditing-capsule-mass-properties-and-collision-formulas]{Previous chapter} · \hyperref[06-engine-ii-ch038-integrator-choices-and-energy-drift]{Next chapter}

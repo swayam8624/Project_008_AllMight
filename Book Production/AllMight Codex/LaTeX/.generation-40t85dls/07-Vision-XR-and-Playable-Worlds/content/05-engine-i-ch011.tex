@@ -1,0 +1,4262 @@
+\chapter{Streaming resources through explicit states}\label{05-engine-i-ch011-streaming-resources-through-explicit-states}\phantomsection\hypertarget{05-engine-i-ch011}{}\label{stagechapter:05-engine-i-ch011}
+
+\hypertarget{05-engine-i-ch011-streaming-resources-through-explicit-states}{}
+
+\hyperref[volume-reading-map]{Reading map} · \hyperref[05-engine-i-ch010-engine-changes-across-subsystem-contracts]{Previous chapter} · \hyperref[05-engine-i-ch012-transactions-recovery-and-safe-project-boundaries]{Next chapter}
+
+Large worlds cannot load every resource before play begins, so readiness becomes a state transition with owners and versions. This chapter develops asynchronous work, publication, residency, and safe replacement as one resource lifecycle.
+
+\textbf{By the end:} Model streaming as request, decode, validation, upload, publication, use, and retirement, including stale completion and memory-budget cases.
+
+\textbf{Recall question:} When an older load finishes after a newer request, what prevents the stale result from becoming visible or freeing a resource still in use?
+
+\textbf{A streaming state machine}
+
+A useful state model:
+
+\begin{verbatim}
+Unloaded
+   |
+   v
+Requested
+   |
+   v
+LoadingCPU
+   |
+   v
+CPUReady
+   |
+   v
+UploadQueued
+   |
+   v
+Resident
+   |
+   v
+EvictPending
+   |
+   v
+Unloaded
+\end{verbatim}
+
+With separate:
+
+\begin{verbatim}
+Failed
+\end{verbatim}
+
+state.
+
+Do not represent all of this as:
+
+\begin{verbatim}
+bool loaded;
+\end{verbatim}
+
+There are many intermediate states with different ownership.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Asset identity during streaming}
+
+Asset handle remains:
+
+\begin{verbatim}
+valid
+\end{verbatim}
+
+while asset is Unloaded.
+
+Queries may return:
+
+\begin{verbatim}
+placeholder
+fallback
+pending future
+not resident status.
+\end{verbatim}
+
+Thus again:
+
+\[
+AssetExistence
+\neq
+CPUResidency
+\neq
+GPUResidency.
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Async request object}
+
+Conceptually:
+
+\begin{verbatim}
+struct AssetRequest
+{
+    AssetID Asset;
+    ResidencyPriority Priority;
+};
+\end{verbatim}
+
+Asset runtime deduplicates multiple requests for same asset.
+
+If ten entities request the same texture:
+
+\begin{verbatim}
+one load
+ten consumers.
+\end{verbatim}
+
+Do not launch ten disk reads.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Streaming priorities}
+
+Useful priority inputs include:
+
+\[
+\text{camera distance}
+\]
+
+\[
+\text{screen-space size}
+\]
+
+\[
+\text{gameplay criticality}
+\]
+
+\[
+\text{predicted future visibility}
+\]
+
+\[
+\text{explicit preload priority}.
+\]
+
+A hero character texture should beat a distant optional prop when budgets are constrained.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Partial residency}
+
+Residency need not be all-or-nothing.
+
+Textures:
+
+\begin{verbatim}
+coarse mip resident
+high mips streaming.
+\end{verbatim}
+
+Meshes:
+
+\begin{verbatim}
+low LOD resident
+high LOD requested.
+\end{verbatim}
+
+Worlds:
+
+\begin{verbatim}
+near cells resident
+far cells absent.
+\end{verbatim}
+
+This makes residency a level rather than a bool.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Residency state}
+
+A richer resource entry:
+
+\begin{verbatim}
+enum class ResidencyState
+{
+    Unloaded,
+    Loading,
+    CPUResident,
+    Uploading,
+    GPUResident,
+    EvictPending,
+    Failed
+};
+
+struct AssetRuntimeEntry
+{
+    AssetID Asset;
+    ResidencyState State;
+
+    std::size_t CPUBytes;
+    std::size_t GPUBytes;
+
+    std::uint64_t LastUsedFrame;
+    std::uint32_t PinCount;
+};
+\end{verbatim}
+
+Now resource manager can make budget decisions.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{CPU and GPU residency are independent}
+
+A texture may be:
+
+\begin{verbatim}
+CPU artifact present
+GPU resource absent
+\end{verbatim}
+
+during upload or after GPU eviction.
+
+It may also be:
+
+\begin{verbatim}
+GPU resident
+CPU source artifact discarded
+\end{verbatim}
+
+if the runtime no longer needs CPU pixels.
+
+Therefore track separately where useful:
+
+\[
+R_{CPU},
+R_{GPU}.
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Memory budgeting}
+
+Suppose GPU texture budget:
+
+\[
+B=4\text{ GiB}.
+\]
+
+Current resident textures consume:
+
+\[
+3.9\text{ GiB}.
+\]
+
+New request requires:
+
+\[
+500\text{ MiB}.
+\]
+
+Resource manager must evict approximately:
+
+\[
+400\text{ MiB}
+\]
+
+plus safety margin.
+
+Candidates might be ranked by:
+
+\begin{verbatim}
+unpinned
+oldest use
+lowest priority
+largest reclaim value.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Residency is policy}
+
+Low-level GPU API should not decide:
+
+\begin{quote}
+unload distant mountain.
+\end{quote}
+
+It only knows allocation.
+
+High-level streaming system has scene/game knowledge.
+
+Thus:
+
+\begin{verbatim}
+Streaming policy
+      ↓
+Residency manager
+      ↓
+Renderer/GPU allocator
+\end{verbatim}
+
+preserves proper dependency direction.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reference counting versus explicit residency}
+
+Reference counting says:
+
+\[
+resource\ stays\ alive
+\iff
+refcount>0.
+\]
+
+This works well for ordinary CPU object ownership.
+
+It is often insufficient for streaming.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why references do not equal residency need}
+
+Suppose a Scene contains references to 50,000 textures.
+
+If each reference increments a strong runtime refcount:
+
+\[
+all\ 50,000
+\]
+
+may remain resident forever.
+
+But many are currently:
+
+\begin{verbatim}
+off-screen
+far away
+inactive level
+low-priority.
+\end{verbatim}
+
+The fact that an asset is \textbf{logically referenced} does not mean its heavy runtime payload must remain resident.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Three concepts should be separated}
+
+A good model distinguishes:
+
+\[
+\boxed{
+Reference
+}
+\]
+
+meaning:
+
+\begin{quote}
+some durable object names this asset.
+\end{quote}
+
+\[
+\boxed{
+Request
+}
+\]
+
+meaning:
+
+\begin{quote}
+some runtime consumer currently wants it available.
+\end{quote}
+
+\[
+\boxed{
+Pin
+}
+\]
+
+meaning:
+
+\begin{quote}
+do not evict it yet.
+\end{quote}
+
+These are different.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Explicit residency leases}
+
+Example:
+
+\begin{verbatim}
+class ResidencyLease
+{
+public:
+    ~ResidencyLease()
+    {
+        manager.Release(asset);
+    }
+};
+\end{verbatim}
+
+A system can acquire:
+
+\begin{verbatim}
+auto lease =
+    assets.Acquire(texture);
+\end{verbatim}
+
+while it requires residency.
+
+But simple counts still need budget/priority semantics.
+
+So:
+
+\begin{verbatim}
+pin count
+priority
+last use
+budget
+\end{verbatim}
+
+often work together.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Weak persistent handles}
+
+An authored:
+
+\begin{verbatim}
+TextureAssetHandle
+\end{verbatim}
+
+is effectively a weak persistent reference to identity.
+
+It should not force runtime GPU residency merely because a material exists somewhere in a project file.
+
+This is another benefit of Kairo's AssetHandle containing only \texttt{AssetID}, not a shared\_ptr to runtime texture.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Resource lifetime across frames in flight}
+
+This closes M092.
+
+A resource may have several overlapping lifetimes:
+
+\[
+L_{\text{AssetID}}
+\]
+
+persistent project lifetime,
+
+\[
+L_{\text{DerivedArtifact}}
+\]
+
+cache/runtime CPU lifetime,
+
+\[
+L_{\text{RuntimeHandle}}
+\]
+
+process resource lifetime,
+
+\[
+L_{\text{GPUUse}}
+\]
+
+asynchronous submission lifetime.
+
+These are not equal.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The key inequality}
+
+For resource R submitted to GPU at work item \(S\):
+
+\[
+\boxed{
+L_R
+>
+Completion(S).
+}
+\]
+
+CPU saying:
+
+\begin{verbatim}
+"I don't need it anymore"
+\end{verbatim}
+
+is not enough if GPU still does.
+
+This is conceptually identical to deferred reclamation in concurrent data structures.
+
+A resource is retired logically first, physically freed later.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Example three-frame timeline}
+
+Imagine CPU:
+
+\begin{verbatim}
+CPU frame 10 submitted using Texture A
+CPU frame 11 reloads and publishes Texture B
+CPU frame 12 uses B
+\end{verbatim}
+
+GPU:
+
+\begin{verbatim}
+currently executing frame 9.
+\end{verbatim}
+
+Texture A must remain alive for frame 10 even though no future CPU frame will reference it.
+
+So:
+
+\begin{verbatim}
+Asset mapping:
+A -> B immediately for future work
+
+GPU memory:
+old A remains until frame 10 fence signals.
+\end{verbatim}
+
+Logical replacement and physical destruction are separate operations.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hot-reload publication model}
+
+A robust runtime entry can be:
+
+\begin{verbatim}
+struct TextureEntry
+{
+    AssetID Asset;
+
+    std::uint64_t Revision;
+
+    TextureRuntimeHandle Current;
+};
+
+void PublishReplacement(
+    TextureEntry& entry,
+    TextureRuntimeHandle replacement)
+{
+    TextureRuntimeHandle old =
+        entry.Current;
+
+    entry.Current = replacement;
+    ++entry.Revision;
+
+    RetireAfterGPUCompletion(old);
+}
+\end{verbatim}
+
+That is the core operation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Material/mesh transitive hot reload}
+
+Suppose:
+
+\begin{verbatim}
+Material
+  ↓
+Texture
+\end{verbatim}
+
+Texture reload may not require rebuilding Material if material only stores stable AssetID/descriptor binding.
+
+It may only require rebinding the new runtime texture.
+
+But if a shader changes resource layout:
+
+\begin{verbatim}
+descriptor layout changed
+\end{verbatim}
+
+dependent pipelines/material bindings may need rebuilding.
+
+The dependency graph must distinguish such relationships.
+
+Hot reload is not always ``replace one object.''
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Failure during hot reload}
+
+If replacement shader fails to compile:
+
+\begin{verbatim}
+keep old pipeline
+report error
+\end{verbatim}
+
+Do not replace working runtime state with null merely because source file is temporarily invalid while the user types.
+
+Editor hot reload especially needs \textbf{last-known-good semantics}.
+
+This drastically improves authoring UX.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo M092 architecture map}
+
+Your code currently has a particularly strong split:
+
+\begin{verbatim}
+AssetID
+    persistent UUID
+
+AssetMetadata
+    path/type/origin/importer/revision/deps
+
+AssetRegistry
+    ID/path topology authority
+
+ImportDatabase
+    source fingerprint +
+    importer/version/settings provenance
+
+AssetImporter
+    source -> derived artifact
+
+ImporterRegistry
+    exact importer ID/version registry
+
+DerivedDataCache
+    immutable recipe-addressed artifacts
+
+SourceWatcher
+    portable source-change observation
+
+KairoRenderer
+    artifact -> runtime GPU representation
+\end{verbatim}
+
+That is a coherent pipeline.
+
+It is not one monolithic asset manager.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The current asset pipeline end-to-end}
+
+For a texture:
+
+\begin{verbatim}
+Textures/Wall.png
+        |
+        | AssetID identifies it persistently
+        v
+AssetRegistry metadata
+        |
+        v
+ImportRecord
+        |
+        | source fingerprint
+        | importer = kairo.texture.stb
+        | importer version
+        | canonical settings
+        v
+DerivedDataKey
+        |
+      cache?
+      /    \
+    yes     no
+     |       |
+     |   StbTextureImporter
+     |       |
+     |    mip chain
+     |       |
+     +--- TextureArtifact
+              |
+              v
+       Renderer adapter
+              |
+              v
+       VulkanTexture2D
+              |
+              v
+          VkImage
+\end{verbatim}
+
+This is the mental model to keep.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Three kinds of hashes in an asset system}
+
+Do not conflate:
+
+\textbf{Persistent asset identity}
+
+Kairo:
+
+\[
+UUID.
+\]
+
+\textbf{Source content fingerprint}
+
+Answers:
+
+\begin{quote}
+are source bytes the same?
+\end{quote}
+
+\textbf{Derived cache key}
+
+Answers:
+
+\begin{quote}
+is the entire derivation recipe identical?
+\end{quote}
+
+These serve different roles.
+
+A robust asset system may use all three simultaneously.
+
+Kairo does.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Three kinds of versions}
+
+Similarly distinguish:
+
+\[
+MetadataRevision
+\]
+
+for registry metadata changes,
+
+\[
+ImporterVersion
+\]
+
+for derivation implementation,
+
+\[
+RuntimeRevision
+\]
+
+for currently published runtime resource generation/hot reload.
+
+One vague \texttt{version} field cannot express all three cleanly.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Asset deletion}
+
+Current AssetRegistry refuses to remove an asset while another registered asset depends on it.
+
+That is a very good invariant.
+
+Without this:
+
+\begin{verbatim}
+Material -> Texture
+\end{verbatim}
+
+could become silently dangling.
+
+A higher-level editor may support:
+
+\begin{verbatim}
+Delete anyway and clear references
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+Delete with dependency replacement.
+\end{verbatim}
+
+But those should be explicit transactions.
+
+Registry-level safety should remain strict.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Asset move}
+
+Moving asset path should not affect AssetID.
+
+Kairo's registry updates:
+
+\begin{verbatim}
+ID -> new path
+path index
+metadata revision
+\end{verbatim}
+
+atomically enough to avoid leaving an asset with no path mapping if allocation fails.
+
+This demonstrates an important principle:
+
+\[
+\boxed{
+\text{metadata operations deserve strong exception guarantees too}.
+}
+\]
+
+Asset databases are persistent state, not disposable scratch memory.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dependency graph complexity}
+
+Let:
+
+\[
+V=
+\text{asset count}
+\]
+
+and:
+
+\[
+E=
+\text{dependency count}.
+\]
+
+Cycle detection through full reachability per mutation may cost:
+
+\[
+O(V+E)
+\]
+
+in worst case.
+
+For editor-scale graphs this is usually acceptable.
+
+If asset graphs become enormous and mutations frequent, maintain additional topological information or use more sophisticated incremental DAG algorithms.
+
+Correctness first.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{DDC size management}
+
+Content-addressed invalidation produces old unreachable entries.
+
+Therefore DDC eventually needs garbage collection.
+
+Possible policy:
+
+\begin{verbatim}
+size budget
+LRU
+age threshold
+workspace manifest reachability
+\end{verbatim}
+
+Importantly, deleting DDC is safe.
+
+All entries should be reproducible from source + tools.
+
+That is the criterion for calling it a cache.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{DDC versus packaged build artifacts}
+
+A local DDC may contain many historical/unused entries.
+
+A shipping package should contain only the dependency closure of the chosen build/startup content.
+
+Pipeline:
+
+\begin{verbatim}
+project
+    ↓
+resolve package roots
+    ↓
+dependency closure
+    ↓
+resolve current derived artifacts
+    ↓
+copy/cook package manifest + payloads.
+\end{verbatim}
+
+Do not simply ship the entire developer cache.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reproducibility}
+
+For a derivation to be reproducible:
+
+\[
+Artifact
+=
+F(
+Source,
+Dependencies,
+Settings,
+ImporterVersion,
+Target
+).
+\]
+
+There must be no hidden dependency on:
+
+\begin{verbatim}
+current directory
+wall-clock time
+random seed
+machine locale
+unordered-map iteration
+untracked tool version.
+\end{verbatim}
+
+Any hidden input undermines the cache.
+
+This is why canonical settings, exact importer version and deterministic manifests matter.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Locale}
+
+Parsing:
+
+\begin{verbatim}
+1.25
+\end{verbatim}
+
+must mean the same thing on systems whose locale expects commas.
+
+Asset formats should use locale-independent numeric parsing/serialization.
+
+Kairo consistently uses explicit classic/character-based parsing in several persistence systems, which is the right philosophy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Deterministic dependency ordering}
+
+Even if dependency vector semantics are unordered, writing them in arbitrary hash-table iteration order can produce different artifact bytes.
+
+Canonicalize:
+
+\begin{verbatim}
+sort by stable ID
+\end{verbatim}
+
+before serialization/hashing unless order itself is meaningful.
+
+Deterministic representation helps:
+
+\begin{verbatim}
+cache hits
+diffs
+reproducible builds
+tests.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Asset importer error boundaries}
+
+Importer errors should say:
+
+\begin{verbatim}
+asset
+source
+importer
+location if known
+reason.
+\end{verbatim}
+
+But importer failure should not partially mutate registry or runtime.
+
+Your current functional boundary:
+
+\begin{verbatim}
+Importer returns artifact or throws
+\end{verbatim}
+
+is excellent for this.
+
+Transaction owner can decide whether to:
+
+\begin{verbatim}
+keep old artifact
+mark source dirty
+show error
+retry.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Build versus runtime import}
+
+Editor:
+
+\begin{verbatim}
+source watcher detects change
+    ↓
+import
+    ↓
+DDC
+    ↓
+hot reload.
+\end{verbatim}
+
+Shipping runtime:
+
+\begin{verbatim}
+manifest
+    ↓
+prebuilt artifact
+    ↓
+runtime resource.
+\end{verbatim}
+
+Ideally shipped game does not need source file import paths.
+
+This is Part 1518 and M092 working together.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Cross-platform artifacts}
+
+Some artifacts can be backend-neutral:
+
+\begin{verbatim}
+canonical mesh vertices/indices
+animation tracks
+scene hierarchy.
+\end{verbatim}
+
+Others should be target-specific:
+
+\begin{verbatim}
+BC7/ASTC textures
+shader binaries
+pipeline libraries.
+\end{verbatim}
+
+So the asset pipeline may have two derivation stages:
+
+\[
+Source
+\rightarrow
+CanonicalArtifact
+\rightarrow
+PlatformArtifact.
+\]
+
+This avoids re-parsing expensive source while still producing platform-specific output.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The complete future Kairo asset runtime}
+
+A strong next-generation runtime could be:
+
+\begin{verbatim}
+AssetRegistry
+    persistent metadata
+
+Import pipeline / DDC
+    authoring/build side
+
+RuntimeAssetManager
+    AssetID -> RuntimeEntry
+                |
+                +-- artifact state
+                +-- residency
+                +-- revision
+                +-- current resource handle
+                +-- load future
+                +-- last GPU use
+
+RendererResourceManager
+    generational runtime handles
+    deferred destruction
+    memory budgeting
+\end{verbatim}
+
+This preserves every lifetime boundary.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Runtime asset entry design}
+
+For example:
+
+\begin{verbatim}
+enum class AssetLoadState
+{
+    Unloaded,
+    LoadingCPU,
+    CPUReady,
+    UploadQueued,
+    Resident,
+    Failed
+};
+
+struct RuntimeTextureEntry
+{
+    AssetID PersistentID;
+
+    std::uint64_t PublishedRevision = 0;
+
+    AssetLoadState State =
+        AssetLoadState::Unloaded;
+
+    TextureRuntimeHandle Current{};
+
+    std::size_t ResidentGPUBytes = 0;
+
+    std::uint64_t LastUsedSubmission = 0;
+
+    std::uint32_t PinCount = 0;
+};
+\end{verbatim}
+
+Notice what is \textbf{not} here:
+
+\begin{verbatim}
+source path as identity
+raw VkImage exposed to scene
+shared_ptr forcing residency.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Safe reload algorithm}
+
+\begin{verbatim}
+void ReloadTexture(
+    AssetID asset)
+{
+    // 1. Re-import or fetch new derived artifact.
+    TextureArtifact artifact =
+        BuildCurrentArtifact(asset);
+
+    // 2. Build replacement completely.
+    TextureRuntimeHandle replacement =
+        renderer.CreateTexture(artifact);
+
+    // 3. Publish only after success.
+    auto& entry =
+        runtimeAssets.Texture(asset);
+
+    const auto old =
+        entry.Current;
+
+    entry.Current = replacement;
+    ++entry.PublishedRevision;
+    entry.State =
+        AssetLoadState::Resident;
+
+    // 4. Old resource is logically dead,
+    //    but may remain physically alive.
+    if (old.IsValid())
+    {
+        renderer.RetireTexture(
+            old,
+            renderer.LastSubmittedTimeline());
+    }
+}
+\end{verbatim}
+
+This combines Parts 1540, 1541 and 1545 into one coherent runtime operation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo gap priorities}
+
+If I were extending the codebase specifically from this pass, the most valuable next work would be:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{External-source closure hashing} for glTF and shader include-style dependencies, because a DDC key must include every input that can change output.
+\item
+  A dedicated \textbf{shader import/compiler pipeline}, because \texttt{AssetType::Shader} exists but no built-in shader compiler was found.
+\item
+  A \textbf{runtime asset/resource manager} separating AssetID from loaded CPU/GPU resource state.
+\item
+  \textbf{Generational renderer resource handles} if slot reuse is introduced.
+\item
+  \textbf{GPU deferred destruction/timeline retirement}, required for safe hot reload and streaming.
+\item
+  Explicit \textbf{residency/budget management} rather than letting persistent references imply residency.
+\end{enumerate}
+
+That order moves from correctness first to runtime sophistication.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Architecture issue to watch in current umbrella linking}
+
+Your top-level:
+
+\begin{verbatim}
+KairoGameEngine INTERFACE
+\end{verbatim}
+
+links a broad collection of engine targets.
+
+That is fine as an application-facing convenience target.
+
+But lower-level runtime libraries should still link the narrowest targets they truly need whenever practical.
+
+Otherwise everything importing the umbrella can gradually acquire transitive access to:
+
+\begin{verbatim}
+renderer
+physics
+assets
+ECS
+reflection
+\end{verbatim}
+
+even when it should conceptually depend on only one or two.
+
+An umbrella is useful at the composition boundary.
+
+It should not become the default dependency of foundational modules.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{EngineCore's current direction is good}
+
+Several of your current Core modules demonstrate the right principle.
+
+\texttt{ProjectDescriptor} stores renderer policy without importing renderer.
+
+\texttt{Application} owns generic layers rather than concrete rendering/physics.
+
+Scene data stores persistent asset handles, not GPU handles.
+
+Runtime VM IDs are not serialized.
+
+Physics IDs are runtime-only.
+
+Scene→ECS conversion lives in a bridge.
+
+Those are not isolated coding details.
+
+They are repeated applications of:
+
+\[
+\boxed{
+\text{persistent data knows stable contracts;
+runtime adapters know concrete implementations}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dependency reconstruction challenge}
+
+Suppose you need to render physics debug shapes.
+
+Bad:
+
+\begin{verbatim}
+KairoPhysicsEngine
+       ↓
+KairoRenderer
+\end{verbatim}
+
+if Physics is intended to remain renderer-neutral.
+
+Design instead:
+
+\begin{verbatim}
+KairoPhysicsEngine
+   exposes DebugShape[]
+          |
+          v
+PhysicsRenderBridge
+          |
+          v
+KairoRenderer.
+\end{verbatim}
+
+Now answer:
+
+\begin{quote}
+Which module owns the bridge?
+\end{quote}
+
+The highest-level integration module that is allowed to depend on both.
+
+If you can derive this without memorization, you understand dependency inversion.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Cycle reconstruction challenge}
+
+Given:
+
+\begin{verbatim}
+Scene → Renderer
+Renderer → Scene
+\end{verbatim}
+
+extract:
+
+\begin{verbatim}
+RenderScene
+MeshDraw
+CameraPose
+LightDraw
+\end{verbatim}
+
+as a rendering contract.
+
+Then:
+
+\begin{verbatim}
+Scene
+   |
+   v
+SceneRenderExtraction
+   |
+   v
+RenderScene
+   |
+   v
+Renderer.
+\end{verbatim}
+
+Remove Renderer dependency from Scene.
+
+That is architectural cycle removal through directional data extraction.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Service reconstruction challenge}
+
+Compare:
+
+\begin{verbatim}
+void AI::Update()
+{
+    auto& physics =
+        Services::Get<PhysicsWorld>();
+}
+\end{verbatim}
+
+against:
+
+\begin{verbatim}
+AI::AI(
+    PhysicsQuery& physics)
+    : m_Physics(physics)
+{}
+\end{verbatim}
+
+Explain why the second provides:
+
+\begin{verbatim}
+visible dependencies
+testability
+instance isolation
+explicit lifetime.
+\end{verbatim}
+
+Then explain why a narrow:
+
+\begin{verbatim}
+AISystemContext
+\end{verbatim}
+
+may be useful when several related services are needed.
+
+But reject a god \texttt{EngineContext}.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Lifecycle reconstruction challenge}
+
+Given:
+
+\begin{verbatim}
+Platform
+Device
+Renderer
+RenderBridge
+World
+\end{verbatim}
+
+if:
+
+\begin{verbatim}
+Renderer uses Device
+RenderBridge uses Renderer + World
+\end{verbatim}
+
+initialize:
+
+\begin{verbatim}
+Platform
+Device
+Renderer
+World
+RenderBridge.
+\end{verbatim}
+
+Shutdown dependency-safe:
+
+\begin{verbatim}
+RenderBridge
+World/runtime users
+Renderer resources
+Renderer
+Device
+Platform.
+\end{verbatim}
+
+If jobs or GPU submissions exist, quiesce them before destroying dependencies.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Asset-identity reconstruction challenge}
+
+Given a texture that moves path and later changes pixels, identify the correct changing/stable values.
+
+Rename:
+
+\begin{verbatim}
+Textures/A.png
+→ Environment/A.png
+\end{verbatim}
+
+Persistent:
+
+\[
+AssetID:
+\text{unchanged}.
+\]
+
+Path:
+
+\[
+\text{changed}.
+\]
+
+Metadata revision:
+
+\[
+\text{changed}.
+\]
+
+Source bytes:
+
+\[
+\text{same}.
+\]
+
+Source fingerprint:
+
+\[
+\text{same}.
+\]
+
+Derived key:
+
+\[
+\text{same}
+\]
+
+if path is intentionally not a semantic importer input.
+
+Now edit pixels.
+
+AssetID:
+
+\[
+\text{unchanged}.
+\]
+
+Source fingerprint:
+
+\[
+\text{changed}.
+\]
+
+Derived key:
+
+\[
+\text{changed}.
+\]
+
+That is the identity model.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{DDC reconstruction challenge}
+
+You should be able to derive:
+
+\[
+K=
+H(
+SourceFingerprint,
+AssetType,
+ImporterID,
+ImporterVersion,
+CanonicalSettings,
+DependencyFingerprints,
+Target
+).
+\]
+
+Some of those fields may be omitted only if they provably do not influence the artifact.
+
+Then state the cache invariant:
+
+\[
+\boxed{
+K_1=K_2
+\Rightarrow
+ArtifactBytes_1=ArtifactBytes_2.
+}
+\]
+
+If this is false, the cache key is incomplete or the importer is nondeterministic.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hot-reload reconstruction challenge}
+
+Given Texture A currently in use:
+
+\begin{verbatim}
+detect source change
+\end{verbatim}
+
+Do \textbf{not} destroy A.
+
+Perform:
+
+\begin{verbatim}
+build artifact B
+create GPU resource B
+validate B
+publish B for future frames
+retire A at its last GPU-use timeline
+destroy A only after completion.
+\end{verbatim}
+
+If any step before publication fails:
+
+\begin{verbatim}
+A stays current.
+\end{verbatim}
+
+That is safe hot reload.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Streaming reconstruction challenge}
+
+Explain why this is wrong:
+
+\begin{verbatim}
+if (material.TextureHandle.IsValid())
+{
+    // therefore texture exists on GPU
+}
+\end{verbatim}
+
+A valid persistent handle only means the asset is referenced.
+
+Correct flow:
+
+\begin{verbatim}
+AssetHandle
+    ↓
+RuntimeAssetManager
+    ↓
+ResidencyState
+    ↓
+Resident?
+   /     \
+ yes      no
+ |        |
+use      request/fallback.
+\end{verbatim}
+
+That distinction is central to any scalable asset system.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Frames-in-flight reconstruction challenge}
+
+CPU replaced resource at frame 20.
+
+GPU still executing frame 18 and frame 19/20 are queued.
+
+Question:
+
+\begin{quote}
+Can old resource be destroyed immediately?
+\end{quote}
+
+No.
+
+Destroy only after the last submission that references it completes.
+
+The relevant condition is:
+
+\[
+CompletedTimeline
+\ge
+LastUseTimeline(oldResource).
+\]
+
+Not:
+
+\begin{verbatim}
+CPU has moved on.
+\end{verbatim}
+
+That is Part 1545.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Exact coverage --- M091 + M092}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}rll@{}}
+\toprule\noalign{}
+Part & Topic & Status \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1501 & Game-engine architecture as dependency management & ✓ \\
+1502 & Foundation versus runtime responsibilities & ✓ \\
+1503 & Dependency inversion in engine modules & ✓ \\
+1504 & Avoiding cyclic module dependencies & ✓ \\
+1505 & Static versus shared libraries & ✓ \\
+1506 & Header-only versus compiled libraries & ✓ \\
+1507 & Stable runtime interfaces & ✓ \\
+1508 & Backend-specific implementation boundaries & ✓ \\
+1509 & Platform abstraction layers & ✓ \\
+1510 & Service locators and trade-offs & ✓ \\
+1511 & Dependency injection & ✓ \\
+1512 & Global state and hidden coupling & ✓ \\
+1513 & Engine contexts/service bundles & ✓ \\
+1514 & Application lifecycle & ✓ \\
+1515 & Initialization order & ✓ \\
+1516 & Shutdown order & ✓ \\
+1517 & Runtime versus editor process concerns & ✓ \\
+1518 & Authoring versus shipped runtime & ✓ \\
+1519 & Standalone player architecture & ✓ \\
+1520 & Headless validation paths & ✓ \\
+1521 & Asset identity & ✓ \\
+1522 & Path-based asset identity & ✓ \\
+1523 & UUID-based asset identity & ✓ \\
+1524 & Content-addressed asset identity & ✓ \\
+1525 & Asset handles & ✓ \\
+1526 & Generational asset handles & ✓ \\
+1527 & Asset registry & ✓ \\
+1528 & Asset metadata & ✓ \\
+1529 & Source versus derived runtime assets & ✓ \\
+1530 & Importer interfaces & ✓ \\
+1531 & OBJ import pipeline boundaries & ✓ \\
+1532 & glTF import pipeline boundaries & ✓ \\
+1533 & Texture import pipeline boundaries & ✓ \\
+1534 & Shader import/compilation pipeline & ✓ \\
+1535 & Asset dependency graphs & ✓ \\
+1536 & Asset-cache keys & ✓ \\
+1537 & Derived-data caches & ✓ \\
+1538 & Cache invalidation & ✓ \\
+1539 & Incremental asset builds & ✓ \\
+1540 & Asset hot reloading & ✓ \\
+1541 & Safe GPU-resource replacement during hot reload & ✓ \\
+1542 & Asset streaming & ✓ \\
+1543 & Residency state & ✓ \\
+1544 & Reference counting versus explicit residency & ✓ \\
+1545 & Resource lifetime across frames in flight & ✓ \\
+\end{longtable}
+}
+
+The main architecture you should retain is this:
+
+\[
+\boxed{
+\begin{array}{cccccc}
+\text{Source Asset}
+&\rightarrow&
+\text{Persistent AssetID}
+&\rightarrow&
+\text{Import Recipe}
+&\rightarrow
+\\[4pt]
+\text{Derived Artifact}
+&\rightarrow&
+\text{Runtime Resource}
+&\rightarrow&
+\text{GPU Submission}
+&\rightarrow
+\\[4pt]
+&&
+\text{Deferred Retirement}
+&&&
+\end{array}
+}
+\]
+
+while the software architecture around it is:
+
+\[
+\boxed{
+\text{Foundation}
+\leftarrow
+\text{Subsystems}
+\leftarrow
+\text{Integration Bridges}
+\leftarrow
+\text{Player / Editor / Game}
+}
+\]
+
+with callbacks/interfaces allowing control flow to travel in the opposite direction \textbf{without reversing source dependencies}.
+
+For your current Kairo codebase, the largest concrete findings from this pass are that the high-level layering and persistent/runtime identity separation are already strong, the DDC itself is unusually careful, but the next significant correctness/performance frontier is the runtime resource layer: \textbf{complete dependency-closure hashing for compound sources, dedicated shader derivation, generational loaded-resource handles, safe asynchronous GPU retirement, streaming/residency budgets, and last-known-good hot reload.}
+
+\textbf{Pass 14 is M093 + M094, Parts 1546--1582.} That takes the next step into \textbf{serialization goals and formats, text versus binary, forward/backward compatibility, endianness, checksums, object/ECS/scene references, reflection metadata/type/property IDs, safe type erasure, inspector architecture, then undo/redo transactions, autosave/recovery, project manifests, path sandboxing, symlink/traversal defense, packaging, atomic publication, and build-config versus runtime-config separation.}
+
+\subsection{Serialization, Schema Evolution, Compatibility, Endianness, Integrity, Object References, Reflection, Type Erasure, Undo/Redo, Transactions, Recovery, Autosave, Sandboxed Paths, Packaging, Relocatable Bundles, Atomic Publication, and Configuration Boundaries}\label{05-engine-i-ch011-serialization-schema-evolution-compatibility-endianness-integrity-object-references-reflection-type-erasure-undoredo-transactions-recovery-autosave-sandboxed-paths-packaging-relocatable-bundles-atomic-publication-and-configuration-boundaries}
+
+\hypertarget{05-engine-i-ch011-serialization-schema-evolution-compatibility-endianness-integrity-object-references-reflection-type-erasure-undoredo-transactions-recovery-autosave-sandboxed-paths-packaging-relocatable-bundles-atomic-publication-and-configuration-boundaries}{}
+
+Pass 13 ended with:
+
+\[
+\text{Source Asset}
+\rightarrow
+\text{Derived Artifact}
+\rightarrow
+\text{Runtime Resource}.
+\]
+
+Pass 14 asks how the \emph{meaning} of all that data survives time.
+
+A renderer object may live for milliseconds. A scene file may need to survive ten years, four engine versions, a CPU-architecture change, property renames, editor crashes, an interrupted save, a moved project directory, and a plugin no longer installed.
+
+So the central question becomes:
+
+\[
+\boxed{
+\text{How do we make engine state durable without making today's C++ layout tomorrow's file format?}
+}
+\]
+
+Then M094 adds the editor-side problem:
+
+\[
+\boxed{
+\text{How do we make destructive authoring operations reversible and crash-safe?}
+}
+\]
+
+This is one of the most practically important passes because many engine projects get rendering right before they get persistence right---and bad persistence eventually destroys user work.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{SERIALIZATION, COMPATIBILITY, REFLECTION, INSPECTORS AND TYPE ERASURE}\label{05-engine-i-ch011-serialization-compatibility-reflection-inspectors-and-type-erasure}
+
+\hypertarget{05-engine-i-ch011-serialization-compatibility-reflection-inspectors-and-type-erasure}{}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Serialization goals}
+
+Serialization is not merely:
+
+\begin{quote}
+Turn object into bytes.
+\end{quote}
+
+That definition is too weak.
+
+For an engine, serialization commonly needs to satisfy several independent properties:
+
+\[
+\boxed{
+Persistence
+}
+\]
+
+The data survives process termination.
+
+\[
+\boxed{
+Portability
+}
+\]
+
+The data can move between machines/platforms.
+
+\[
+\boxed{
+Determinism
+}
+\]
+
+Equivalent logical states preferably produce equivalent serialized representations.
+
+\[
+\boxed{
+Evolvability
+}
+\]
+
+Future engine versions can interpret older data or migrate it.
+
+\[
+\boxed{
+Integrity
+}
+\]
+
+Corruption can be detected.
+
+\[
+\boxed{
+Security
+}
+\]
+
+Malformed input cannot request unbounded allocations, escape project roots or exploit parser assumptions.
+
+\[
+\boxed{
+Performance
+}
+\]
+
+Parsing and storage costs are appropriate for the use case.
+
+Those goals conflict.
+
+A human-editable scene file optimizes differently from a GPU texture artifact.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Serialization domains}
+
+You should not have one universal serializer for every purpose.
+
+A game engine normally has several serialization domains.
+
+\begin{verbatim}
+Editor scene
+    human-readable
+    diff-friendly
+    versioned
+    semantic
+
+Derived asset
+    compact
+    validated
+    deterministic
+    fast to load
+
+Network packet
+    bandwidth-sensitive
+    transient
+    compatibility constrained
+
+Save game
+    durable
+    version-aware
+    player-facing
+
+Recovery snapshot
+    crash-resistant
+    redundant
+    checksummed
+\end{verbatim}
+
+All serialize information.
+
+They do not need the same format.
+
+That is a recurring lesson:
+
+\[
+\boxed{
+\text{serialization is a policy boundary, not a utility function.}
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Serialization should capture semantics, not object representation}
+
+Suppose:
+
+\begin{verbatim}
+struct Camera
+{
+    ProjectionMode Mode;
+    float VerticalFov;
+    float NearPlane;
+    float FarPlane;
+};
+\end{verbatim}
+
+Bad persistent format:
+
+\begin{verbatim}
+write(
+    reinterpret_cast<char*>(&camera),
+    sizeof(camera));
+\end{verbatim}
+
+That stores whatever today's compiler happened to choose for:
+
+\begin{verbatim}
+padding
+enum representation
+alignment
+float layout assumptions
+member order
+ABI
+\end{verbatim}
+
+The file silently becomes coupled to one compiled object layout.
+
+Instead store meaning:
+
+\begin{verbatim}
+camera
+projection perspective
+vertical-fov 60
+near-plane 0.1
+far-plane 1000
+\end{verbatim}
+
+or a binary equivalent with explicit field identifiers and numeric widths.
+
+The serializer should describe:
+
+\[
+\boxed{
+Camera\ semantics
+}
+\]
+
+rather than:
+
+\[
+\boxed{
+Camera\ memory.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Text versus binary serialization}
+
+Text serialization represents logical values through characters.
+
+Examples:
+
+\begin{verbatim}
+near-plane 0.1
+visible true
+mesh "a912..."
+\end{verbatim}
+
+Binary serialization stores encoded fields directly as bytes.
+
+Neither is inherently superior.
+
+They optimize different dimensions.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why text formats are powerful for authoring}
+
+Text provides:
+
+\begin{itemize}
+\tightlist
+\item
+  easy inspection,
+\item
+  source-control diffs,
+\item
+  mergeability,
+\item
+  manual repair,
+\item
+  debugging,
+\item
+  tooling with ordinary editors.
+\end{itemize}
+
+Suppose a light changes:
+
+\begin{verbatim}
+- intensity 1000
++ intensity 1500
+\end{verbatim}
+
+That is excellent for source control.
+
+Compare an opaque binary diff:
+
+\begin{verbatim}
+8 bytes changed.
+\end{verbatim}
+
+Far less useful to artists and programmers.
+
+This is why your current Kairo project, scene and asset-manifest formats being deterministic textual formats is a strong authoring choice.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Costs of text}
+
+Text is usually:
+
+\begin{itemize}
+\tightlist
+\item
+  larger,
+\item
+  slower to parse,
+\item
+  requires numeric conversion,
+\item
+  requires escaping,
+\item
+  susceptible to representation ambiguity if not canonicalized.
+\end{itemize}
+
+For example floating value:
+
+\[
+1
+\]
+
+could be written:
+
+\begin{verbatim}
+1
+1.0
+1.000000
+1e0
+\end{verbatim}
+
+All are semantically equivalent.
+
+If serialized byte identity matters, choose one canonical representation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Binary serialization advantages}
+
+Binary can provide:
+
+\begin{itemize}
+\tightlist
+\item
+  compact storage,
+\item
+  faster decoding,
+\item
+  direct fixed-width numeric representation,
+\item
+  easier chunked random access,
+\item
+  reduced parsing overhead.
+\end{itemize}
+
+A derived mesh artifact might have:
+
+\begin{verbatim}
+header
+vertex count
+index count
+vertex bytes
+index bytes
+\end{verbatim}
+
+There is no strong reason an end user needs to edit that manually.
+
+Binary is natural.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Binary does not automatically mean fast}
+
+A bad binary format can be slower than a good textual one.
+
+For example:
+
+\begin{verbatim}
+millions of tiny length-prefixed heap allocations
+\end{verbatim}
+
+will perform poorly regardless of binary encoding.
+
+The real factors include:
+
+\[
+\text{allocation count}
+\]
+
+\[
+\text{branching}
+\]
+
+\[
+\text{copy count}
+\]
+
+\[
+\text{data locality}
+\]
+
+\[
+\text{compression}
+\]
+
+\[
+\text{schema complexity}.
+\]
+
+Binary is an encoding choice, not a performance guarantee.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Versioned file formats}
+
+Every persistent format that may evolve should identify its schema version.
+
+Kairo does this consistently.
+
+Examples conceptually:
+
+\begin{verbatim}
+kairo-project 2
+kairo-assets 1
+kairo-scene 5
+kairo-recovery 1
+kairo-package 1
+\end{verbatim}
+
+This immediately answers:
+
+\begin{quote}
+Which grammar and semantics should parse this file?
+\end{quote}
+
+Without a version, a parser encounters an unknown structure and has no principled way to distinguish:
+
+\begin{verbatim}
+corruption
+new format
+old format
+wrong file type.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Magic + version}
+
+A robust header often carries at least:
+
+\[
+Magic
+\]
+
+and:
+
+\[
+Version.
+\]
+
+Binary example:
+
+\begin{verbatim}
+struct FileHeader
+{
+    std::uint32_t Magic;
+    std::uint32_t Version;
+};
+\end{verbatim}
+
+Where:
+
+\begin{verbatim}
+constexpr uint32_t Magic =
+    0x4B414952; // illustrative "KAIR"
+\end{verbatim}
+
+Then parser first verifies:
+
+\begin{verbatim}
+Is this even my file format?
+\end{verbatim}
+
+before interpreting payload.
+
+Text formats achieve the same through a canonical first line.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Version numbers must correspond to semantic interpretation}
+
+Do not increment versions for arbitrary reasons.
+
+A file version means:
+
+\begin{quote}
+The reader must potentially use different logic to interpret this representation.
+\end{quote}
+
+If internal C++ code is refactored but serialized semantics remain identical, the file version need not change.
+
+If field meaning changes:
+
+\begin{verbatim}
+intensity used to mean arbitrary units
+\end{verbatim}
+
+and now means:
+
+\begin{verbatim}
+candela
+\end{verbatim}
+
+that is a schema-semantic change.
+
+Version/migration is required.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Schema evolution}
+
+Schema evolution is the process of changing persistent representation while preserving meaningful old data.
+
+Suppose v1:
+
+\begin{verbatim}
+light
+color 1 1 1
+intensity 5
+\end{verbatim}
+
+v2 introduces unit:
+
+\begin{verbatim}
+light
+color 1 1 1
+intensity 5
+unit candela
+\end{verbatim}
+
+Old files lack the field.
+
+Reader can assign:
+
+\begin{verbatim}
+unit = legacy
+\end{verbatim}
+
+or convert according to a known v1 rule.
+
+That is migration.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Types of schema evolution}
+
+The easiest change is adding an optional field with a default:
+
+\begin{verbatim}
+v1:
+roughness
+
+v2:
+roughness
+double-sided = false
+\end{verbatim}
+
+More complex:
+
+\begin{verbatim}
+v1:
+fov-horizontal
+
+v2:
+fov-vertical
+\end{verbatim}
+
+requires viewport/aspect assumptions.
+
+Harder:
+
+\begin{verbatim}
+v1:
+Euler rotation
+
+v2:
+Quaternion rotation.
+\end{verbatim}
+
+Requires mathematical conversion.
+
+Even harder:
+
+\begin{verbatim}
+v1:
+one Mesh component
+
+v2:
+MeshRenderer + MaterialSlot entities.
+\end{verbatim}
+
+Now migration changes object topology.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Migration should be semantic}
+
+A good migration function is conceptually:
+
+\[
+M_{v1\rightarrow v2}:
+Schema_{v1}
+\rightarrow
+Schema_{v2}.
+\]
+
+It should not be:
+
+\begin{verbatim}
+reinterpret_cast<NewStruct*>(oldBytes);
+\end{verbatim}
+
+You are converting meaning.
+
+Example:
+
+\begin{verbatim}
+CameraV2 Migrate(
+    const CameraV1& old)
+{
+    CameraV2 result;
+
+    result.VerticalFov =
+        ConvertHorizontalToVertical(
+            old.HorizontalFov,
+            old.AssumedAspectRatio);
+
+    result.NearPlane =
+        old.NearPlane;
+
+    return result;
+}
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Forward compatibility}
+
+Forward compatibility asks:
+
+\begin{quote}
+Can an older reader tolerate data produced by a newer writer?
+\end{quote}
+
+Suppose reader understands:
+
+\begin{verbatim}
+position
+rotation
+\end{verbatim}
+
+but newer writer adds:
+
+\begin{verbatim}
+scale.
+\end{verbatim}
+
+If old reader can safely ignore unknown \texttt{scale}, forward compatibility exists for that change.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Forward compatibility is difficult when semantics are required}
+
+Suppose newer format adds:
+
+\begin{verbatim}
+compression zstd
+\end{verbatim}
+
+and old reader understands only:
+
+\begin{verbatim}
+compression none.
+\end{verbatim}
+
+It cannot simply ignore the field because it cannot decode the payload.
+
+Forward compatibility is therefore not binary yes/no for a whole format.
+
+It is feature-dependent.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Backward compatibility}
+
+Backward compatibility asks:
+
+\begin{quote}
+Can a newer reader interpret files written by an older writer?
+\end{quote}
+
+This is usually much more important for editor/project formats.
+
+If Kairo 0.5 loads a Kairo 0.4 project and migrates it successfully, that is backward compatibility.
+
+A mature engine often promises:
+
+\[
+CurrentReader
+\rightarrow
+OldFiles.
+\]
+
+It may not promise:
+
+\[
+OldReader
+\rightarrow
+CurrentFiles.
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Compatibility matrix}
+
+Imagine versions:
+
+\begin{verbatim}
+Reader v1
+Reader v2
+Reader v3
+
+Writer v1
+Writer v2
+Writer v3
+\end{verbatim}
+
+Compatibility is a matrix, not a vague adjective.
+
+For example:
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lrrr@{}}
+\toprule\noalign{}
+Reader & File v1 & File v2 & File v3 \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+v1 & yes & maybe & no \\
+v2 & yes & yes & maybe \\
+v3 & yes & yes & yes \\
+\end{longtable}
+}
+
+Document this.
+
+Testing compatibility fixtures is far more meaningful than saying:
+
+\begin{quote}
+We support old files.
+\end{quote}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Unknown-field handling}
+
+Suppose new Camera file:
+
+\begin{verbatim}
+camera
+fov 60
+near 0.1
+chromatic-aberration 0.2
+\end{verbatim}
+
+Older reader understands only first two fields.
+
+It has choices.
+
+\textbf{Strict rejection}
+
+\begin{verbatim}
+unknown field -> error
+\end{verbatim}
+
+Advantages:
+
+\begin{itemize}
+\tightlist
+\item
+  typo detection,
+\item
+  no silent information loss,
+\item
+  simple semantics.
+\end{itemize}
+
+Disadvantages:
+
+\begin{itemize}
+\tightlist
+\item
+  poor forward compatibility.
+\end{itemize}
+
+\textbf{Ignore unknown field}
+
+Advantages:
+
+\begin{itemize}
+\tightlist
+\item
+  forward extensibility.
+\end{itemize}
+
+Disadvantages:
+
+\begin{itemize}
+\tightlist
+\item
+  read/save may destroy fields it did not understand.
+\end{itemize}
+
+\textbf{Preserve unknown field}
+
+Old reader keeps opaque unknown data and writes it back unchanged.
+
+This provides much stronger round-trip compatibility.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Strictness is useful for authoring correctness}
+
+Your current Kairo parsers are deliberately strict in several inspected formats.
+
+For example \texttt{AssetManifest} rejects:
+
+\begin{verbatim}
+unknown statement
+unsupported version
+duplicate/nested malformed records.
+\end{verbatim}
+
+\texttt{ProjectDescriptor} similarly rejects unknown statements.
+
+Recovery manifests also reject unknown statements.
+
+This is a valid policy because it catches:
+
+\begin{verbatim}
+typos
+partial corruption
+unsupported newer formats
+ambiguous interpretation.
+\end{verbatim}
+
+But it means these formats do not obtain generic forward compatibility through unknown-field preservation.
+
+That is an explicit trade.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Extensible binary formats commonly use field IDs}
+
+Instead of positional layout:
+
+\begin{verbatim}
+field 0 = x
+field 1 = y
+field 2 = z
+\end{verbatim}
+
+encode:
+
+\begin{verbatim}
+propertyID
+wireType
+length
+payload
+\end{verbatim}
+
+Unknown property ID can then be skipped using length.
+
+This is why self-describing/tagged binary formats evolve more gracefully than naive fixed struct dumps.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stable endianness}
+
+Consider integer:
+
+\[
+0x12345678.
+\]
+
+Little-endian memory:
+
+\begin{verbatim}
+78 56 34 12
+\end{verbatim}
+
+Big-endian:
+
+\begin{verbatim}
+12 34 56 78.
+\end{verbatim}
+
+If you write native integer bytes and read on opposite endian architecture, value changes.
+
+Persistent binary formats must define byte order.
+
+Usually:
+
+\begin{verbatim}
+little-endian
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+network/big-endian.
+\end{verbatim}
+
+Then convert explicitly.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Endian-safe write}
+
+Conceptually:
+
+\begin{verbatim}
+void WriteU32LE(
+    Writer& out,
+    std::uint32_t value)
+{
+    std::byte bytes[4]
+    {
+        std::byte(value & 0xff),
+        std::byte((value >> 8) & 0xff),
+        std::byte((value >> 16) & 0xff),
+        std::byte((value >> 24) & 0xff)
+    };
+
+    out.Write(bytes);
+}
+\end{verbatim}
+
+This representation is independent of host endianness.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stable numeric widths}
+
+Avoid persistent:
+
+\begin{verbatim}
+size_t
+long
+unsigned long
+\end{verbatim}
+
+because their widths can vary by platform/compiler model.
+
+Prefer:
+
+\begin{verbatim}
+std::uint8_t
+std::uint16_t
+std::uint32_t
+std::uint64_t
+
+std::int32_t
+std::int64_t
+\end{verbatim}
+
+when binary representation requires a fixed width.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Boolean representation}
+
+Do not serialize \texttt{sizeof(bool)} bytes blindly.
+
+Define:
+
+\begin{verbatim}
+0 = false
+1 = true.
+\end{verbatim}
+
+Reject other values unless schema intentionally allows them.
+
+Same for enums.
+
+Do not serialize underlying enum bytes unless the persistent schema explicitly defines the numeric values.
+
+Kairo frequently persists semantic enum names rather than compiler-dependent ordinals, which is stronger for textual durability.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Floating point}
+
+If storing IEEE-754 \texttt{float32}, say so explicitly.
+
+If format must support architectures where float representation differs, conversion is required.
+
+On modern target machines IEEE-754 is overwhelmingly common, but a durable format should still define:
+
+\begin{verbatim}
+binary32
+binary64
+little-endian byte order.
+\end{verbatim}
+
+Text float parsing must also reject:
+
+\begin{verbatim}
+NaN
+Infinity
+\end{verbatim}
+
+where they violate engine invariants.
+
+Your Kairo reflection layer explicitly rejects non-finite floating values in \texttt{PropertyValue}, which is good defensive behavior.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Checksums and content hashes}
+
+A checksum answers:
+
+\begin{quote}
+Are these bytes likely corrupted?
+\end{quote}
+
+A cryptographic/content hash can answer:
+
+\begin{quote}
+Is this exactly the same content identity?
+\end{quote}
+
+They are related but not identical roles.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Simple checksum}
+
+Example CRC/FNV-style checksum:
+
+\[
+C=Checksum(bytes).
+\]
+
+Recovery snapshot stores:
+
+\begin{verbatim}
+payload size
+payload checksum.
+\end{verbatim}
+
+On load:
+
+\[
+size_{actual}=size_{expected}
+\]
+
+and:
+
+\[
+Checksum(actual)=Checksum(expected).
+\]
+
+If not:
+
+\begin{verbatim}
+reject recovery point.
+\end{verbatim}
+
+Your current recovery system does this.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{FNV is not a security primitive}
+
+Kairo's recovery code explicitly uses FNV-1a as a \textbf{corruption detector}, not cryptographic authentication.
+
+Correct.
+
+If an attacker deliberately modifies both payload and checksum, FNV offers no meaningful tamper resistance.
+
+For untrusted distribution/integrity, use something stronger:
+
+\[
+SHA\text{-}256
+\]
+
+or authenticated signatures/MACs depending on threat model.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Content hash versus checksum}
+
+DDC:
+
+\[
+SHA256(recipe)
+\]
+
+is serving identity.
+
+Recovery:
+
+\[
+FNV(payload)
+\]
+
+is serving accidental-corruption detection.
+
+Do not conflate these.
+
+Same mathematical tool family, different security/semantic requirements.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Chunk checksums}
+
+Large binary artifact could contain:
+
+\begin{verbatim}
+Header
+Chunk table
+Mesh chunk
+Animation chunk
+Texture chunk
+\end{verbatim}
+
+You may checksum each chunk individually.
+
+Then corruption can be localized.
+
+You may also hash whole file.
+
+Trade-off:
+
+\begin{verbatim}
+one global hash = simpler
+per-chunk hashes = better localization/streaming validation.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Serialization of object references}
+
+Object pointers cannot be persisted.
+
+Suppose:
+
+\begin{verbatim}
+Material* material;
+\end{verbatim}
+
+At runtime address:
+
+\[
+0x7fa123...
+\]
+
+has no meaning on next launch.
+
+Serialize stable identity instead:
+
+\begin{verbatim}
+MaterialAssetID
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+SceneEntityID.
+\end{verbatim}
+
+On load:
+
+\[
+ID\rightarrow object.
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Two-pass reference resolution}
+
+The universal pattern is:
+
+Create every object and build:
+
+\[
+SerializedID
+\rightarrow
+RuntimeObject.
+\]
+
+Resolve references.
+
+Example:
+
+\begin{verbatim}
+Entity 10 parent 4
+Entity 4 parent none
+\end{verbatim}
+
+Even if Entity 10 appears first in file, loading works.
+
+This same pattern appeared in Pass 12 for cloning and ECS extraction.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reference classes}
+
+Not every reference has same ownership semantics.
+
+You may distinguish:
+
+\begin{verbatim}
+Strong reference
+Weak reference
+Optional reference
+External asset reference
+Scene-local reference
+Cross-scene reference.
+\end{verbatim}
+
+For example:
+
+\begin{verbatim}
+MeshRenderer -> MeshAsset
+\end{verbatim}
+
+can remain valid when entity changes.
+
+A parent relation typically requires target in same loaded scene.
+
+A gameplay target may be optional and disappear.
+
+Serializer must understand the semantics.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{ECS entity serialization}
+
+Never serialize:
+
+\begin{verbatim}
+Entity{Index=42, Generation=7}
+\end{verbatim}
+
+as persistent entity identity unless that runtime handle is explicitly defined as persistent---which it generally should not be.
+
+Runtime slot allocation is transient.
+
+Serialize:
+
+\begin{verbatim}
+PersistentEntityID
+\end{verbatim}
+
+and create runtime entities anew on load.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Entity reference conversion}
+
+Save:
+
+\begin{verbatim}
+Runtime Entity {12,4}
+      ↓
+Scene Entity 105
+\end{verbatim}
+
+Serialized reference:
+
+\begin{verbatim}
+105.
+\end{verbatim}
+
+Load:
+
+\begin{verbatim}
+Scene Entity 105
+      ↓
+Runtime Entity {3,1}.
+\end{verbatim}
+
+The runtime representation can be completely different.
+
+That is desirable.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{ECS component schema}
+
+A persistent ECS-like scene might encode:
+
+\begin{verbatim}
+entity 105
+component Transform
+  position ...
+component Camera
+  fov ...
+end
+\end{verbatim}
+
+But remember Pass 12's architecture:
+
+Kairo's durable \texttt{EngineCore::Scene} and process-local \texttt{KairoECS} are deliberately separate.
+
+That means Kairo does not need to serialize its sparse-set internal indices.
+
+It serializes authored scene semantics and extracts runtime ECS later.
+
+This is the cleaner design.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Scene-graph serialization}
+
+A scene graph needs:
+
+\begin{verbatim}
+entities
+components
+hierarchy
+stable IDs
+asset references.
+\end{verbatim}
+
+There are two common hierarchy representations.
+
+Nested:
+
+\begin{verbatim}
+Root
+{
+    Child
+    {
+        Grandchild
+    }
+}
+\end{verbatim}
+
+or flat IDs:
+
+\begin{verbatim}
+entity 1 parent none
+entity 2 parent 1
+entity 3 parent 2.
+\end{verbatim}
+
+Flat ID representation is often easier for:
+
+\begin{verbatim}
+random ordering
+references
+incremental editing
+streaming.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Validate hierarchy after loading}
+
+A parser must not assume file hierarchy is valid.
+
+Check:
+
+\[
+Parent(E)\neq E.
+\]
+
+Check parent exists.
+
+Check no cycles.
+
+Check perhaps one root policy if required.
+
+Check depth bounds if recursion is used.
+
+Malicious/corrupt file:
+
+\begin{verbatim}
+1 parent 2
+2 parent 3
+3 parent 1
+\end{verbatim}
+
+must not lead to infinite traversal.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Transactional scene loading}
+
+Do not mutate live scene as parse proceeds.
+
+Use:
+
+\begin{verbatim}
+Scene candidate;
+
+ParseInto(candidate);
+Validate(candidate);
+
+liveScene =
+    std::move(candidate);
+\end{verbatim}
+
+If parse fails at entity 997:
+
+\begin{verbatim}
+live scene remains unchanged.
+\end{verbatim}
+
+Your Kairo scene/project loading architecture repeatedly follows this strong-exception pattern.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reflection metadata}
+
+Reflection metadata describes a type in a machine-readable engine-owned way.
+
+Example:
+
+\begin{verbatim}
+Type:
+Kairo.Engine.Camera
+
+Display:
+Camera
+
+Properties:
+VerticalFov
+NearPlane
+FarPlane
+Exposure
+Primary
+\end{verbatim}
+
+Each property can carry:
+
+\begin{verbatim}
+stable key
+display name
+value kind
+category
+tooltip
+numeric range
+read-only flag
+enum options
+reference target type.
+\end{verbatim}
+
+KairoReflection already implements essentially this model.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Metadata is not the object's value}
+
+Descriptor:
+
+\begin{verbatim}
+"near plane is a floating point value"
+\end{verbatim}
+
+is metadata.
+
+Instance:
+
+\begin{verbatim}
+NearPlane = 0.1
+\end{verbatim}
+
+is data.
+
+Separate:
+
+\[
+Schema
+\]
+
+from:
+
+\[
+InstanceState.
+\]
+
+That enables one descriptor to inspect thousands of objects.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stable reflection keys}
+
+Your reflection system uses dotted ASCII identifiers such as:
+
+\begin{verbatim}
+Kairo.Engine.Transform
+\end{verbatim}
+
+instead of compiler RTTI names.
+
+This is a very good choice.
+
+RTTI names can be:
+
+\begin{verbatim}
+compiler-dependent
+mangled
+unstable across builds.
+\end{verbatim}
+
+A persistent reflection key should be designed as data schema identity.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Type IDs}
+
+A type ID is stable identity for a reflected type.
+
+You have several implementation choices.
+
+\textbf{String key}
+
+\begin{verbatim}
+Kairo.Engine.Transform
+\end{verbatim}
+
+Advantages:
+
+\begin{itemize}
+\tightlist
+\item
+  readable,
+\item
+  collision-free if uniqueness enforced,
+\item
+  persistent-friendly.
+\end{itemize}
+
+Cost:
+
+\begin{itemize}
+\tightlist
+\item
+  larger comparisons/storage.
+\end{itemize}
+
+\textbf{Integer ID assigned at runtime}
+
+Fast, but registration order can make it unstable.
+
+\textbf{Hashed stable string}
+
+\[
+TypeID=Hash("Kairo.Engine.Transform").
+\]
+
+Compact and deterministic, but collisions must be handled.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Persistent versus runtime type IDs}
+
+A useful design is:
+
+\begin{verbatim}
+persistent:
+stable string/hash
+
+runtime:
+dense TypeIndex
+\end{verbatim}
+
+At startup:
+
+\begin{verbatim}
+"Kairo.Engine.Transform"
+    ↓
+runtime index 7.
+\end{verbatim}
+
+Then hot loops can use:
+
+\begin{verbatim}
+uint16_t TypeIndex;
+\end{verbatim}
+
+while persistence remains compiler/order independent.
+
+This is the same persistent/runtime identity separation we have seen everywhere.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hash collisions}
+
+If:
+
+\[
+TypeID=Hash(key),
+\]
+
+you cannot simply assume collisions never occur.
+
+At registration:
+
+\begin{verbatim}
+if (
+    sameHash &&
+    differentKey)
+{
+    fail loudly;
+}
+\end{verbatim}
+
+or use sufficiently wide IDs and store canonical key for validation.
+
+A 64-bit hash makes accidental collision unlikely but not logically impossible.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Property IDs}
+
+Within one type, every property needs stable identity.
+
+Bad identity:
+
+\begin{verbatim}
+property index 3.
+\end{verbatim}
+
+Reordering fields changes meaning.
+
+Better:
+
+\begin{verbatim}
+Kairo.Engine.Camera.NearPlane
+\end{verbatim}
+
+or type-local:
+
+\begin{verbatim}
+near-plane.
+\end{verbatim}
+
+Stable property ID allows:
+
+\begin{verbatim}
+undo
+serialization
+animation binding
+editor presets
+network replication
+property diffing.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Property display names are not IDs}
+
+Display text:
+
+\begin{verbatim}
+Near Plane
+\end{verbatim}
+
+may later become:
+
+\begin{verbatim}
+Near Clip
+\end{verbatim}
+
+for UI wording.
+
+That should not invalidate persistence.
+
+Your ImGui inspector uses stable reflection keys for commit callbacks rather than display labels.
+
+This is precisely correct:
+
+\begin{verbatim}
+DisplayName = presentation
+Key = identity.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reflection without language runtime reflection}
+
+C++ historically does not provide Java/C\#-style full runtime field enumeration.
+
+So engines build their own reflection.
+
+Kairo does not ask:
+
+\begin{verbatim}
+for(auto member : typeof(Camera).members())
+\end{verbatim}
+
+because ordinary C++ cannot generally do that in portable production code.
+
+Instead descriptors are explicitly constructed and registered.
+
+That is entirely valid.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Explicit reflection registration}
+
+Conceptually:
+
+\begin{verbatim}
+TypeDescriptor CameraDescriptor()
+{
+    TypeDescriptor type;
+
+    type.Key =
+        "Kairo.Engine.Camera";
+
+    type.DisplayName =
+        "Camera";
+
+    type.Properties.push_back(
+        MakeMemberProperty<Camera>(
+            {
+                .Key =
+                    "near-plane",
+                .DisplayName =
+                    "Near Plane"
+            },
+            &Camera::NearPlane));
+
+    return type;
+}
+\end{verbatim}
+
+The compiler validates the member pointer type.
+
+The engine owns metadata semantics.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Benefits of explicit registration}
+
+You choose deliberately what is reflected.
+
+Private implementation details can remain invisible.
+
+You can expose a semantic property that is not literally a field.
+
+Example:
+
+\begin{verbatim}
+Euler Rotation
+\end{verbatim}
+
+could read/write underlying Quaternion.
+
+Reflection is an abstraction layer.
+
+It does not have to mirror memory layout.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Compile-time reflection patterns}
+
+Even without full language reflection, templates can generate descriptors.
+
+Kairo's:
+
+\begin{verbatim}
+MakeMemberProperty<Object, Member>(
+    metadata,
+    memberPointer)
+\end{verbatim}
+
+is an example.
+
+Compile time knows:
+
+\begin{verbatim}
+Object type
+Member type
+pointer-to-member.
+\end{verbatim}
+
+Runtime descriptor stores a type-erased accessor.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Template-generated accessor}
+
+Conceptually:
+
+\begin{verbatim}
+descriptor.Read =
+    [member](const void* object)
+    {
+        const Object* typed =
+            static_cast<
+                const Object*>(
+                    object);
+
+        return Encode(
+            typed->*member);
+    };
+\end{verbatim}
+
+Write:
+
+\begin{verbatim}
+descriptor.Write =
+    [member](
+        void* object,
+        const PropertyValue& value)
+    {
+        Object* typed =
+            static_cast<Object*>(
+                object);
+
+        typed->*member =
+            Decode<Member>(value);
+    };
+\end{verbatim}
+
+This bridges compile-time type safety into runtime reflection.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reflection macro pattern}
+
+Another common design:
+
+\begin{verbatim}
+REFLECT_TYPE(Camera,
+    PROPERTY(NearPlane),
+    PROPERTY(FarPlane),
+    PROPERTY(Exposure));
+\end{verbatim}
+
+Macros reduce boilerplate but have drawbacks:
+
+\begin{verbatim}
+debuggability
+macro syntax
+tooling complexity.
+\end{verbatim}
+
+Modern template/constexpr code can often replace many macros.
+
+Use macros only when they improve ergonomics materially.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Static descriptor pattern}
+
+You can make:
+
+\begin{verbatim}
+template<>
+struct Reflection<Camera>
+{
+    static constexpr auto Key =
+        "Kairo.Engine.Camera";
+
+    static TypeDescriptor Build();
+};
+\end{verbatim}
+
+Then generic registry bootstrap:
+
+\begin{verbatim}
+registry.Register(
+    Reflection<Camera>::Build());
+\end{verbatim}
+
+This creates a strong association between C++ type and stable schema descriptor without relying on language RTTI names.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Runtime reflection registry}
+
+A registry maps stable key to descriptor:
+
+\[
+TypeKey
+\rightarrow
+TypeDescriptor.
+\]
+
+Kairo's registry uses deterministic ordered storage:
+
+\begin{verbatim}
+std::map<std::string, TypeDescriptor>
+\end{verbatim}
+
+and sorts properties by stable key during registration.
+
+That is a deliberate determinism choice.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Immutable descriptors after registration}
+
+Your reflection registry does not silently mutate already registered descriptors.
+
+This matters.
+
+Suppose inspector is currently showing:
+
+\begin{verbatim}
+property key "near-plane"
+\end{verbatim}
+
+and a plugin reload changes its meaning underneath it.
+
+That would be dangerous.
+
+Immutable registration means descriptor semantics remain stable for that registry lifetime.
+
+Plugin reload can construct a new registry/epoch rather than mutate existing contracts unpredictably.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Registry validation}
+
+Kairo validates:
+
+\begin{verbatim}
+stable type keys
+stable property keys
+display names
+categories
+read accessor presence
+write accessor for writable properties
+numeric ranges
+enum option uniqueness
+reference metadata
+array metadata limits.
+\end{verbatim}
+
+This is exactly what reflection registration should do.
+
+Fail when schema is registered, not three hours later when editor opens one rare component.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Property getters and setters}
+
+Reflection should not necessarily expose raw member addresses.
+
+Getter/setter abstraction gives control.
+
+Getter:
+
+\begin{verbatim}
+PropertyValue Read(
+    const void*);
+\end{verbatim}
+
+Setter:
+
+\begin{verbatim}
+void Write(
+    void*,
+    const PropertyValue&);
+\end{verbatim}
+
+This enables validation and conversion.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why raw offset reflection is risky}
+
+Some reflection systems store:
+
+\begin{verbatim}
+offsetof(Camera, NearPlane).
+\end{verbatim}
+
+Then compute:
+
+\begin{verbatim}
+char* base +
+offset.
+\end{verbatim}
+
+Fast, but tightly coupled to standard-layout assumptions and exact memory layout.
+
+It also bypasses semantic validation.
+
+Getter/setter reflection is more flexible.
+
+Kairo chooses getters/setters through \texttt{std::function}.
+
+That is appropriate for editor/reflection workloads where correctness and flexibility matter more than nanosecond access.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Semantic setters}
+
+Suppose:
+
+\begin{verbatim}
+void Camera::SetNear(float n)
+{
+    if (n <= 0)
+        throw ...;
+
+    NearPlane = n;
+}
+\end{verbatim}
+
+Reflection should ideally use this semantic path.
+
+Likewise quaternion write may normalize.
+
+Asset handle write may validate target type.
+
+A property setter is an invariant boundary.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Strong exception behavior}
+
+Setter should preferably behave:
+
+\[
+\text{valid new value}
+\Rightarrow
+\text{commit}
+\]
+
+\[
+\text{invalid new value}
+\Rightarrow
+\text{old value unchanged}.
+\]
+
+This is crucial because editor commands depend on reliable rollback/undo semantics later in M094.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Inspector adapters}
+
+Reflection metadata should remain UI-framework neutral.
+
+It says:
+
+\begin{verbatim}
+Property kind = FloatingPoint
+Range = [0.01, 1000]
+DisplayName = Near Plane
+\end{verbatim}
+
+It should not say:
+
+\begin{verbatim}
+ImGui::DragFloat
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+QtSlider.
+\end{verbatim}
+
+UI adapter interprets metadata.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo's inspector boundary}
+
+\texttt{ImGuiReflectionInspector} receives:
+
+\begin{verbatim}
+ReflectionRegistry
+Scene entity
+commit callback.
+\end{verbatim}
+
+It enumerates reflected components and picks an ImGui widget from \texttt{PropertyValueKind}.
+
+That means:
+
+\begin{verbatim}
+reflection metadata
+\end{verbatim}
+
+does not import ImGui.
+
+Instead:
+
+\begin{verbatim}
+ImGui adapter
+    ↓
+reflection.
+\end{verbatim}
+
+Correct dependency direction.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Widget mapping}
+
+Current logic naturally supports:
+
+\begin{verbatim}
+Boolean          -> checkbox
+Signed integer   -> numeric drag
+Unsigned integer -> numeric drag
+Floating point   -> ranged drag
+String           -> text input
+Vector2/3/4      -> component drag
+Quaternion       -> 4-component editor
+Enumeration      -> combo
+Reference        -> reference string editor
+Array            -> current summary/display
+\end{verbatim}
+
+This is the generic-inspector payoff.
+
+One UI implementation can inspect many component types.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Inspector must not own mutation semantics}
+
+Notice Kairo's inspector does not directly perform arbitrary scene writes.
+
+When edited value changes, it invokes:
+
+\begin{verbatim}
+commit(
+    typeKey,
+    propertyKey,
+    edited);
+\end{verbatim}
+
+That callback can generate an undoable command.
+
+This is a very strong architectural separation:
+
+\begin{verbatim}
+UI detects intent
+      ↓
+command layer performs mutation.
+\end{verbatim}
+
+Without this, every widget becomes a secret mutation path bypassing undo.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Serialization driven by reflection}
+
+If reflection knows:
+
+\begin{verbatim}
+type
+properties
+kinds
+getters
+\end{verbatim}
+
+generic serializer can do:
+
+\begin{verbatim}
+for (const auto& property
+     : descriptor.Properties)
+{
+    PropertyValue value =
+        registry.Read(
+            typeKey,
+            property.Key,
+            object);
+
+    writer.Write(
+        property.Key,
+        value);
+}
+\end{verbatim}
+
+This removes duplicate hand-written field enumeration.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Deserialization driven by reflection}
+
+Conceptually:
+
+\begin{verbatim}
+for (SerializedField field : input)
+{
+    const PropertyDescriptor* p =
+        descriptor.Find(field.ID);
+
+    if (!p)
+    {
+        HandleUnknown(field);
+        continue;
+    }
+
+    PropertyValue value =
+        Decode(
+            field,
+            p->ValueKind);
+
+    registry.Write(
+        descriptor.Key,
+        p->Key,
+        object,
+        value);
+}
+\end{verbatim}
+
+Now reflection schema and persistence schema can share metadata.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reflection-driven serialization trade-off}
+
+Be careful with the temptation:
+
+\begin{quote}
+Reflect everything, therefore serialize everything.
+\end{quote}
+
+Not every reflected property should be persisted.
+
+Examples:
+
+\begin{verbatim}
+runtime statistics
+computed bounds
+debug state
+cached matrix
+GPU handle.
+\end{verbatim}
+
+So reflection metadata may need flags:
+
+\begin{verbatim}
+Serializable
+Transient
+EditorVisible
+ReadOnly
+NetworkReplicated
+SaveGame
+\end{verbatim}
+
+depending on engine scale.
+
+Reflection is a metadata platform.
+
+Serialization is one consumer.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo design}
+
+Kairo currently uses reflection primarily for editor inspection and semantic values while scene serialization remains an explicit dedicated format.
+
+That is a defensible design.
+
+Explicit scene serializers give precise control over:
+
+\begin{verbatim}
+versioning
+ordering
+validation
+migration.
+\end{verbatim}
+
+Reflection can gradually reduce boilerplate later without forcing persistence to become purely automatic.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Editor UI driven by reflection}
+
+The generic inspector architecture is:
+
+\[
+Object
+\rightarrow
+TypeDescriptor
+\rightarrow
+PropertyDescriptors
+\rightarrow
+PropertyValue
+\rightarrow
+UIWidget.
+\]
+
+This means adding a new reflected property can automatically make it appear in the inspector.
+
+That is a massive tooling scalability improvement.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Metadata can improve UX}
+
+Reflection property metadata can include:
+
+\begin{verbatim}
+Tooltip
+Category
+Advanced flag
+ReadOnly
+NumericRange
+Step
+Enum options
+Reference target.
+\end{verbatim}
+
+Then an editor gains consistent behavior across hundreds of components.
+
+Without metadata every component requires a bespoke panel.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Generic inspector versus custom inspector}
+
+Generic reflection UI handles the common 80--90\%.
+
+Some types still deserve a specialized inspector.
+
+Example:
+
+\begin{verbatim}
+Material
+Animation graph
+Particle system
+Terrain
+Navigation mesh.
+\end{verbatim}
+
+Use generic reflection as the baseline.
+
+Allow type-specific adapters when domain UX requires them.
+
+Do not force everything through primitive widgets.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Safe type erasure}
+
+Type erasure allows runtime code to manipulate values whose concrete C++ type is not known at compile time.
+
+Kairo reflection uses:
+
+\begin{verbatim}
+const void*
+void*
+\end{verbatim}
+
+plus descriptor-specific functions.
+
+This is a classic type-erasure boundary.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{\texttt{void*} itself is not safe}
+
+This is dangerous:
+
+\begin{verbatim}
+void* object =
+    GetAnything();
+
+descriptorForCamera.Read(object);
+\end{verbatim}
+
+if object is actually a Light.
+
+The cast inside accessor becomes invalid.
+
+So safety comes from \textbf{pairing pointer with the correct descriptor}.
+
+The invariant is:
+
+\[
+\boxed{
+(objectAddress,TypeDescriptor)
+}
+\]
+
+must correspond to the same concrete type.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Safer erased object view}
+
+You can encode this:
+
+\begin{verbatim}
+struct ReflectedObjectView
+{
+    void* Object = nullptr;
+    const TypeDescriptor* Type = nullptr;
+};
+\end{verbatim}
+
+Read:
+
+\begin{verbatim}
+PropertyValue Read(
+    ReflectedObjectView object,
+    PropertyID property);
+\end{verbatim}
+
+Now the pointer and schema travel together.
+
+Still not mathematically impossible to construct incorrectly, but far harder to mix accidentally.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Runtime type token}
+
+Stronger:
+
+\begin{verbatim}
+struct ErasedObject
+{
+    void* Data;
+    TypeID Type;
+};
+\end{verbatim}
+
+Registry checks:
+
+\[
+object.Type=
+descriptor.TypeID
+\]
+
+before accessor invocation.
+
+This converts silent undefined behavior into a deterministic runtime error.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Owned type-erased values}
+
+Kairo's \texttt{PropertyValue} is another safer kind of type erasure.
+
+It uses:
+
+\begin{verbatim}
+std::variant<
+    bool,
+    int64_t,
+    uint64_t,
+    double,
+    string,
+    Vector...
+>
+\end{verbatim}
+
+This is significantly safer than:
+
+\begin{verbatim}
+void* value;
+\end{verbatim}
+
+because the variant remembers its active alternative.
+
+\texttt{PropertyValueKind} can be checked against expected descriptor kind before writing.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why \texttt{std::any} is less ideal here}
+
+You could use:
+
+\begin{verbatim}
+std::any.
+\end{verbatim}
+
+But then the reflection transport becomes dependent on concrete C++ type identities.
+
+Kairo deliberately defines a canonical, engine-neutral value model:
+
+\begin{verbatim}
+double
+Vector3Value
+ReferenceValue
+EnumerationValue
+ArrayValue.
+\end{verbatim}
+
+That is much better for:
+
+\begin{verbatim}
+editor
+serialization
+plugin boundaries
+potential scripting.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reflection must own values, not dangling references}
+
+Kairo's reflected \texttt{PropertyValue} owns strings, arrays and composite values.
+
+This is important.
+
+Returning:
+
+\begin{verbatim}
+std::string_view
+\end{verbatim}
+
+into a component would create lifetime hazards.
+
+An inspector may keep the value after component storage changes.
+
+Owned values decouple reflection transport lifetime from object storage lifetime.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hyperref[volume-reading-map]{Reading map} · \hyperref[05-engine-i-ch010-engine-changes-across-subsystem-contracts]{Previous chapter} · \hyperref[05-engine-i-ch012-transactions-recovery-and-safe-project-boundaries]{Next chapter}

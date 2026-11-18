@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch368.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-7cac8a689849-shadow-filtering-pcf-and-variance-bounds" class="level2">
+<h2>Shadow filtering: PCF and variance bounds</h2>
+<p>A shadow map stores visibility information from a light-space camera. At shading time the receiver is projected into shadow-map coordinates and compared against stored depth.</p>
+<p>The raw binary comparison is discontinuous. Filtering changes the estimator, and different methods filter different mathematical quantities.</p>
+<section id="appendix-7cac8a689849-percentage-closer-filtering" class="level3">
+<h3>Percentage-closer filtering</h3>
+<p>PCF performs several depth comparisons and averages the binary visibility results:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>N</mi>
+  </mfrac>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <mrow data-mjx-texclass="ORD">
+    <mn mathvariant="bold">1</mn>
+  </mrow>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>c</mi>
+      <mi>e</mi>
+      <mi>i</mi>
+      <mi>v</mi>
+      <mi>e</mi>
+      <mi>r</mi>
+    </mrow>
+  </msub>
+  <mo>≤</mo>
+  <msub>
+    <mi>z</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> is a declared bias under the shadow-map depth convention.</p>
+<p>Filtering depths first and comparing once is not equivalent to averaging comparisons.</p>
+<p>Bias is not a free visual knob. Constant/slope/normal-offset policies trade acne against detached shadows. The correct sign also depends on depth convention.</p>
+</section>
+<section id="appendix-7cac8a689849-variance-shadow-maps" class="level3">
+<h3>Variance shadow maps</h3>
+<p>VSM stores moments such as</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>μ</mi>
+  <mo>=</mo>
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <mi>Z</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <msup>
+    <mi>Z</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Variance is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>σ</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <msup>
+    <mi>Z</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">]</mo>
+  <mo>−</mo>
+  <msup>
+    <mi>μ</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>For receiver depth <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+  <mo>&gt;</mo>
+  <mi>μ</mi>
+</math>, a one-sided Chebyshev/Cantelli-style bound commonly used by VSM gives a maximum probability estimate of being on the visible side:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msup>
+      <mi>σ</mi>
+      <mn>2</mn>
+    </msup>
+    <mrow>
+      <msup>
+        <mi>σ</mi>
+        <mn>2</mn>
+      </msup>
+      <mo>+</mo>
+      <mo stretchy="false">(</mo>
+      <mi>t</mi>
+      <mo>−</mo>
+      <mi>μ</mi>
+      <msup>
+        <mo stretchy="false">)</mo>
+        <mn>2</mn>
+      </msup>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>The moment representation can be filtered efficiently, but the probabilistic bound can cause light bleeding. Minimum variance clamps and light-bleeding reduction modify behavior and should be treated as approximations.</p>
+</section>
+<section id="appendix-7cac8a689849-executable-reference" class="level3">
+<h3>Executable reference</h3>
+<p>tools/labs/realtime_rendering_reference_lab.cpp computes a 3×3 PCF fraction on a hand-checkable map and checks that the VSM upper bound stays in [0,1] and decreases as a receiver moves farther beyond the mean blocker depth.</p>
+<p>This does not prove cascade selection, perspective aliasing control, receiver-plane bias, EVSM, GPU sampling state or production shadow quality.</p>
+<p>Related: <a href="ch280.xhtml#appendix-275ec8847057-reversed-z-depth-contracts" class="wikilink">Reversed-Z depth contracts (Mathematics for Visual Computing, Part 2, Reference notes: Reversed-Z depth contracts)</a>, <a href="ch320.xhtml#appendix-10308c3d753e-sampling-support-and-missing-strata" class="wikilink">Sampling support and missing strata</a>.</p>
+</section>
+</section>
+</body>
+</html>

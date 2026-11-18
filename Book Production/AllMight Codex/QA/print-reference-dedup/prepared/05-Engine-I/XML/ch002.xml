@@ -1,0 +1,1190 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Chapter xmlns:ns0="http://ns.adobe.com/AdobeInDesign/4.0/" id="05-engine-i-ch002" source="Chapter Edition/03 - Game Engine/02 - How bytes become programs, objects, and resource references.md">
+<Content ns0:pstyle="ChapterHeader" id="05-engine-i-ch002-how-bytes-become-programs-objects-and-resource-references">02 — How bytes become programs, objects, and resource references</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#05-engine-i-ch001">Previous chapter</Link> · <Link href="#05-engine-i-ch003">Next chapter</Link></Content>
+<Content ns0:pstyle="Content">The opening representation story now needs durable rules: a byte sequence must survive storage and become the right live object. This chapter follows encoding, compilation, initialization, and identity so that later systems can rely on the same meaning.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">By the end:</Strong> Reconstruct the path from serialized bytes to typed state and identify the lifetime and identity rules at each boundary.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Recall question:</Strong> Given a stored resource record, how do you validate it, construct its runtime object, and keep references valid as storage changes?</Content>
+
+
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-where-the-bytes-live">Where the bytes live</Content>
+<Content ns0:pstyle="Content">A good numeric interpretation is not yet usable storage. Representations must be placed at addresses, inside valid objects and mappings. Byte order, alignment, memory translation and ownership answer different questions; solving one does not automatically solve the rest.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-a-value-is-not-its-address-order">A value is not its address order</Content>
+<Content ns0:pstyle="Content">An <Strong ns0:cstyle="Bold">address</Strong> identifies a location in an address space. In our octet-based examples, consecutive addresses name consecutive eight-bit bytes. <Strong ns0:cstyle="Bold">Significance</Strong> means the positional weight of a byte in a multi-byte number. <Link href="#print-redirect-1c672577133daa1d">Endianness</Link> is the contract connecting significance to increasing addresses. It does not reverse the bits inside each byte.</Content>
+<Content ns0:pstyle="Content">Store the 32-bit unsigned value <InlineCode ns0:cstyle="InlineCode">0x12345678</InlineCode> at address <InlineCode ns0:cstyle="InlineCode">0x1000</InlineCode>:</Content>
+<Table ns0:table="table" ns0:trows="5" ns0:tcols="3" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Address</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption"><Link href="#print-redirect-088d954c1e8c5865">Little-endian</Link> byte</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption"><Link href="#print-redirect-b0a6a3eae7eaa32b">Big-endian</Link> byte</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">0x1000</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">78</InlineCode> — lowest significance</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">12</InlineCode> — highest significance</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">0x1001</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">56</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">34</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">0x1002</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">34</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">56</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">0x1003</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">12</InlineCode> — highest significance</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">78</InlineCode> — lowest significance</Content></Cell></Table>
+<Content ns0:pstyle="Content">The value remains 305,419,896. Reading the little-endian bytes with a big-endian decoder instead produces <InlineCode ns0:cstyle="InlineCode">0x78563412</InlineCode>: an interpretation mismatch, not random corruption.</Content>
+<Content ns0:pstyle="Content">For unsigned value <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0cfb135b111632e99e113052.svg" alt="x" jobId="0cfb135b111632e99e113052" originalTeX="x" /> stored in <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7e0169371fd671a4ffc5c604.svg" alt="n" jobId="7e0169371fd671a4ffc5c604" originalTeX="n" /> octets, with byte index <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c9a9aab9bd49b5120a91abe6.svg" alt="i" jobId="c9a9aab9bd49b5120a91abe6" originalTeX="i" /> starting at zero:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4bc52ac02bda8ecd57b31625.svg" alt="&#10;b_i^{\mathrm{LE}}=\left\lfloor x/256^i\right\rfloor\bmod256,\qquad&#10;b_i^{\mathrm{BE}}=\left\lfloor x/256^{n-1-i}\right\rfloor\bmod256&#10;" jobId="4bc52ac02bda8ecd57b31625" originalTeX="&#10;b_i^{\mathrm{LE}}=\left\lfloor x/256^i\right\rfloor\bmod256,\qquad&#10;b_i^{\mathrm{BE}}=\left\lfloor x/256^{n-1-i}\right\rfloor\bmod256&#10;" /></Formula>
+<Content ns0:pstyle="Content">Each byte is a base-256 digit. Big-endian decoding uses the same Horner idea as positional decoding: start at zero, multiply by 256, add the next byte.</Content>
+<Table ns0:table="table" ns0:trows="5" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Byte read</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Decimal accumulator</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">12</InlineCode> = 18</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">18</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">34</InlineCode> = 52</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bed686bd37a6bdea7b414904.svg" alt="18\times256+52=4660" jobId="bed686bd37a6bdea7b414904" originalTeX="18\times256+52=4660" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">56</InlineCode> = 86</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/32738f1f5d7df96e5c0fe96b.svg" alt="4660\times256+86=1193046" jobId="32738f1f5d7df96e5c0fe96b" originalTeX="4660\times256+86=1193046" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">78</InlineCode> = 120</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1cf3315874c7b74622675c2f.svg" alt="1193046\times256+120=305419896" jobId="1cf3315874c7b74622675c2f" originalTeX="1193046\times256+120=305419896" /></Content></Cell></Table>
+<Content ns0:pstyle="Content">For little endian, add each byte with its weight: <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fa3e4e5724b7066fe8a1433f.svg" alt="120+86\times256+52\times256^2+18\times256^3" jobId="fa3e4e5724b7066fe8a1433f" originalTeX="120+86\times256+52\times256^2+18\times256^3" /> gives the same answer.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-28b1a07b0a420c9d">Serialization</Link> means encoding data into a specified external byte sequence; <Strong ns0:cstyle="Bold">deserialization</Strong> reads and validates that sequence. A <Strong ns0:cstyle="Bold">wire format</Strong> is such a contract for transmission, though the same idea applies to files. Specify field widths, byte order, field order, version, valid values, and length limits. Do not rely on the native arrangement of a C++ object.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-17c085d55c0216de">Byte swapping</Link> reverses the significance-byte order of a value. A host-to-network conversion swaps only if the host and required format differ. “Network order” conventionally refers to big endian in relevant Internet fields; it does not make every network protocol big endian. Treat each format as authoritative.</Content>
+<Content ns0:pstyle="Content">Lab: encode <InlineCode ns0:cstyle="InlineCode">0x12345678</InlineCode> both ways, decode with the matching rule, deliberately decode with the wrong rule, and write down all four resulting byte/value pairs. A correct round trip alone cannot prove the external format is correct: two consistently wrong functions can undo each other’s mistake.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-alignment-is-a-placement-requirement">Alignment is a placement requirement</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-e5ea3aea5375e68f">Alignment</Link> <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6372fce2b4dc5c2cf6a13715.svg" alt="A" jobId="6372fce2b4dc5c2cf6a13715" originalTeX="A" /> means an object’s start must lie at an address divisible by <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6372fce2b4dc5c2cf6a13715.svg" alt="A" jobId="6372fce2b4dc5c2cf6a13715" originalTeX="A" />. <Strong ns0:cstyle="Bold">Padding</Strong> is space inserted to satisfy placement or stride requirements; it is not an additional data member. In C++, <InlineCode ns0:cstyle="InlineCode">alignof(T)</InlineCode> reports the type’s alignment and <InlineCode ns0:cstyle="InlineCode">sizeof(T)</InlineCode> its complete-object size in C++ bytes. <InlineCode ns0:cstyle="InlineCode">alignas</InlineCode> can request a supported stronger alignment. An <Link href="#print-redirect-e26de754b50b013b">ABI</Link>, or application binary interface, specifies concrete conventions used when compiled components interact, including layout and calling conventions.</Content>
+<Content ns0:pstyle="Content">For numeric byte offset <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/df25e600d976a703c705ec86.svg" alt="p" jobId="df25e600d976a703c705ec86" originalTeX="p" /> and positive alignment <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6372fce2b4dc5c2cf6a13715.svg" alt="A" jobId="6372fce2b4dc5c2cf6a13715" originalTeX="A" />, upward rounding is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/28d31a9826e59de22566a7db.svg" alt="&#10;\operatorname{alignUp}(p,A)=A\left\lceil p/A\right\rceil&#10;" jobId="28d31a9826e59de22566a7db" originalTeX="&#10;\operatorname{alignUp}(p,A)=A\left\lceil p/A\right\rceil&#10;" /></Formula>
+<Content ns0:pstyle="Content">The ceiling <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e493c543dd67ad9d2e9ef4ee.svg" alt="\lceil q\rceil" jobId="e493c543dd67ad9d2e9ef4ee" originalTeX="\lceil q\rceil" /> is the smallest integer not less than <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8de0ad9ec33a4617bea95024.svg" alt="q" jobId="8de0ad9ec33a4617bea95024" originalTeX="q" />. For <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/94bc349c2b0dd443a685db00.svg" alt="p=13,A=8" jobId="94bc349c2b0dd443a685db00" originalTeX="p=13,A=8" />, the next multiple is 16, so three bytes are skipped. If <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/df25e600d976a703c705ec86.svg" alt="p" jobId="df25e600d976a703c705ec86" originalTeX="p" /> is already 16, it stays 16. A safe implementation can compute the remainder, determine the needed increment, then check that the increment fits before adding. For power-of-two <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6372fce2b4dc5c2cf6a13715.svg" alt="A" jobId="6372fce2b4dc5c2cf6a13715" originalTeX="A" />, <InlineCode ns0:cstyle="InlineCode">(p &amp; (A-1)) == 0</InlineCode> tests alignment; the common <InlineCode ns0:cstyle="InlineCode">(p+A-1)&amp;~(A-1)</InlineCode> shortcut still needs an overflow check and the power-of-two precondition.</Content>
+<Content ns0:pstyle="Content">Consider a record containing byte, 32-bit integer, byte, under explicitly assumed size/alignment pairs 1/1, 4/4, 1/1 and record alignment 4:</Content>
+<Table role="row-cards" sourceColumns="5" sourceRows="5" sourceHeadRows="1" sourceBodyHeadRows=""><RowCard kind="header"><Content ns0:pstyle="Caption">Column 1:</Content><Content ns0:pstyle="TableCell">Step</Content><Content ns0:pstyle="Caption">Column 2:</Content><Content ns0:pstyle="TableCell">Cursor before placement</Content><Content ns0:pstyle="Caption">Column 3:</Content><Content ns0:pstyle="TableCell">Required alignment</Content><Content ns0:pstyle="Caption">Column 4:</Content><Content ns0:pstyle="TableCell">Member offset / occupied bytes</Content><Content ns0:pstyle="Caption">Column 5:</Content><Content ns0:pstyle="TableCell">Cursor afterward</Content></RowCard><RowCard sourceBody="0" sourceRow="0"><RowLabel><Content ns0:pstyle="Caption">First byte</Content></RowLabel><RowValue column="2"><Content ns0:pstyle="Caption">Cursor before placement</Content><Content ns0:pstyle="TableCell">0</Content></RowValue><RowValue column="3"><Content ns0:pstyle="Caption">Required alignment</Content><Content ns0:pstyle="TableCell">1</Content></RowValue><RowValue column="4"><Content ns0:pstyle="Caption">Member offset / occupied bytes</Content><Content ns0:pstyle="TableCell">offset 0 / byte 0</Content></RowValue><RowValue column="5"><Content ns0:pstyle="Caption">Cursor afterward</Content><Content ns0:pstyle="TableCell">1</Content></RowValue></RowCard><RowCard sourceBody="0" sourceRow="1"><RowLabel><Content ns0:pstyle="Caption">Integer</Content></RowLabel><RowValue column="2"><Content ns0:pstyle="Caption">Cursor before placement</Content><Content ns0:pstyle="TableCell">1</Content></RowValue><RowValue column="3"><Content ns0:pstyle="Caption">Required alignment</Content><Content ns0:pstyle="TableCell">4</Content></RowValue><RowValue column="4"><Content ns0:pstyle="Caption">Member offset / occupied bytes</Content><Content ns0:pstyle="TableCell">offset 4 / bytes 4–7</Content></RowValue><RowValue column="5"><Content ns0:pstyle="Caption">Cursor afterward</Content><Content ns0:pstyle="TableCell">8</Content></RowValue></RowCard><RowCard sourceBody="0" sourceRow="2"><RowLabel><Content ns0:pstyle="Caption">Last byte</Content></RowLabel><RowValue column="2"><Content ns0:pstyle="Caption">Cursor before placement</Content><Content ns0:pstyle="TableCell">8</Content></RowValue><RowValue column="3"><Content ns0:pstyle="Caption">Required alignment</Content><Content ns0:pstyle="TableCell">1</Content></RowValue><RowValue column="4"><Content ns0:pstyle="Caption">Member offset / occupied bytes</Content><Content ns0:pstyle="TableCell">offset 8 / byte 8</Content></RowValue><RowValue column="5"><Content ns0:pstyle="Caption">Cursor afterward</Content><Content ns0:pstyle="TableCell">9</Content></RowValue></RowCard><RowCard sourceBody="0" sourceRow="3"><RowLabel><Content ns0:pstyle="Caption">Finish record</Content></RowLabel><RowValue column="2"><Content ns0:pstyle="Caption">Cursor before placement</Content><Content ns0:pstyle="TableCell">9</Content></RowValue><RowValue column="3"><Content ns0:pstyle="Caption">Required alignment</Content><Content ns0:pstyle="TableCell">4</Content></RowValue><RowValue column="4"><Content ns0:pstyle="Caption">Member offset / occupied bytes</Content><Content ns0:pstyle="TableCell">tail padding bytes 9–11</Content></RowValue><RowValue column="5"><Content ns0:pstyle="Caption">Cursor afterward</Content><Content ns0:pstyle="TableCell">12</Content></RowValue></RowCard></Table>
+<Content ns0:pstyle="Content">Bytes 1–3 are <Link href="#print-redirect-8977fb631fbbe084">internal padding</Link>. Bytes 9–11 are <Strong ns0:cstyle="Bold">tail padding</Strong>. Why keep the tail? An array places the next record 12 bytes later; its integer then begins at <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/971e6b17167140b6a224001d.svg" alt="12+4=16" jobId="971e6b17167140b6a224001d" originalTeX="12+4=16" />, still four-aligned. Without tail padding, a stride of 9 would misalign later members.</Content>
+<Content ns0:pstyle="Content">Six payload bytes therefore occupy twelve record bytes under this layout contract. This is a worked ABI example, not a universal language promise that every such record has these exact offsets. Observe <InlineCode ns0:cstyle="InlineCode">sizeof</InlineCode>, <InlineCode ns0:cstyle="InlineCode">alignof</InlineCode>, and <InlineCode ns0:cstyle="InlineCode">offsetof</InlineCode> on a suitable standard-layout type on the actual target. The language’s general placement rules are in the <Link href="https://eel.is/c++draft/basic.align">C++ alignment section</Link>.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-smaller-records-are-not-always-faster-records">Smaller records are not always faster records</Content>
+<Content ns0:pstyle="Content"><Link href="#appendix-5522ad176ca0">Field reordering</Link> can reduce holes. Assume fields with size/alignment 1/1, 8/8, 1/1, and 4/4. In that order, offsets are 0,8,16,20, ending at 24. Put the 8-byte field first, then the 4-byte field, then both bytes: offsets 0,8,12,13; end 14 rounds to 16. For one million records, that example reduces record storage from 24 MB to 16 MB in decimal units.</Content>
+<Content ns0:pstyle="Content">But reordering an exposed record can break an ABI, a file format, or positional initialization assumptions. Do not silently change a public contract for a size win.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">AoS</Strong>, array of structures, stores complete records next to each other. <Strong ns0:cstyle="Bold">SoA</Strong>, structure of arrays, stores one array per field. If a loop reads only positions from a position/color/id record, SoA can avoid loading irrelevant fields. If it reads every field of one object, AoS may suit the access pattern. <Strong ns0:cstyle="Bold">Locality</Strong> means nearby or repeatedly used data can be served efficiently; it is about the access pattern, not merely the smallest <InlineCode ns0:cstyle="InlineCode">sizeof</InlineCode>.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-f38aec0fe0d9843c">Packing directives</Link> are implementation extensions that can reduce or remove padding. They can place a member at an address that fails its ordinary alignment requirement. A <Strong ns0:cstyle="Bold">misaligned access</Strong> is an access at such an unsuitable boundary. Hardware may handle it slowly, tolerate it cheaply, or fault, depending on the instruction and platform. Crossing a cache-line or page boundary can add work. Hardware tolerance does not grant unrestricted valid C++ typed access.</Content>
+<Content ns0:pstyle="Content">A <Strong ns0:cstyle="Bold">cache line</Strong> is a block of nearby memory transferred and tracked by a data cache; its size is a target property. A packed structure is still not a portable wire format: packing does not specify endian order, version, or validation.</Content>
+<Content ns0:pstyle="Content">For external bytes, reconstruct an integer explicitly or copy a suitable representation into an existing aligned, trivially copyable object under the appropriate rules. <Strong ns0:cstyle="Bold">Trivially copyable</Strong> identifies types whose object representation can be copied in the ways C++ permits; it does not mean arbitrary bytes are a valid value of every type. Copying does not normalize endian order. Avoid casting an arbitrary byte-buffer address to a typed pointer and assuming that alignment, object lifetime, bounds, and representation are all solved.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-a-pointer-is-more-than-an-integer-location">A pointer is more than an integer location</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-501b44815360d401">A pointer</Link> is a typed means of referring to an object or array position, subject to bounds, lifetime, and alignment rules. <Strong ns0:cstyle="Bold">Provenance</Strong> concerns its association with the storage/object from which the pointer originates; knowing a numeric address alone does not establish legal access.</Content>
+<Content ns0:pstyle="Content">Within an array, <InlineCode ns0:cstyle="InlineCode">p+i</InlineCode> advances <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c9a9aab9bd49b5120a91abe6.svg" alt="i" jobId="c9a9aab9bd49b5120a91abe6" originalTeX="i" /> elements, not <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c9a9aab9bd49b5120a91abe6.svg" alt="i" jobId="c9a9aab9bd49b5120a91abe6" originalTeX="i" /> bytes. For a four-byte element type, moving from element 0 to element 3 spans twelve bytes. The <Strong ns0:cstyle="Bold">one-past</Strong> pointer may be formed for valid array operations, but must not be dereferenced. <Strong ns0:cstyle="Bold">Dereference</Strong> means accessing the object through the pointer.</Content>
+<Content ns0:pstyle="Content">Separate four questions when checking an access:</Content>
+<List type="ordered" start="1" numberStyle="Decimal" delimiter="Period">
+<ListItem><Content ns0:pstyle="Content">Is the storage mapped and permitted by the machine/OS?</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">Is the location within the correct C++ object’s or array’s bounds?</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">Is a suitable object currently alive there?</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">Is the pointer/type/alignment valid for the intended operation?</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">A successful hardware load does not, by itself, answer the last three.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-virtual-memory-translates-page-identity">Virtual memory translates page identity</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-224d3a40a8a63bd3">Virtual memory</Link> gives a process its own address-space view. A <Strong ns0:cstyle="Bold">process</Strong> is an executing program with an operating-system-managed context and resources. A virtual address is interpreted within that context; a physical address identifies backing memory at the hardware level in our simplified model.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-b6902515c481a516">Isolation</Link> prevents one process from freely accessing another’s private mappings. Process A’s virtual address <InlineCode ns0:cstyle="InlineCode">0x400000</InlineCode> might select frame 27, while process B’s same virtual number selects frame 913. Deliberate shared mappings can instead select the same frame. <Strong ns0:cstyle="Bold">Permissions</Strong> specify allowed access, such as read, write, execute, and user access.</Content>
+<Content ns0:pstyle="Content">A <Link href="#print-redirect-bf465bf038ad2838">page</Link> is a fixed-size block of virtual addresses; a <Strong ns0:cstyle="Bold">frame</Strong> is a corresponding physical-memory block. Page size is a system/configuration property. Use 4 KiB here as an example: <Strong ns0:cstyle="Bold">KiB</Strong> means 1024 bytes, so 4 KiB is 4096 bytes, not 4000.</Content>
+<Content ns0:pstyle="Content">For page size <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cfc7b5d402b5c1cf7f81a319.svg" alt="P=2^k" jobId="cfc7b5d402b5c1cf7f81a319" originalTeX="P=2^k" />, split virtual address <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8159190f75a6df80f5f72eda.svg" alt="VA" jobId="8159190f75a6df80f5f72eda" originalTeX="VA" /> into virtual page number <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ed617ce1813e81aecaae7a6f.svg" alt="VPN" jobId="ed617ce1813e81aecaae7a6f" originalTeX="VPN" /> and byte offset <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6df9701b82bc22ef089c1d1a.svg" alt="o" jobId="6df9701b82bc22ef089c1d1a" originalTeX="o" />. If the mapping selects physical frame number <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f1d23d66af743600d6d068e8.svg" alt="PFN" jobId="f1d23d66af743600d6d068e8" originalTeX="PFN" />:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/48493b3b13b77cacbee8da00.svg" alt="&#10;VPN=\left\lfloor VA/P\right\rfloor,\qquad&#10;o=VA\bmod P,\qquad&#10;PA=PFN\,P+o&#10;" jobId="48493b3b13b77cacbee8da00" originalTeX="&#10;VPN=\left\lfloor VA/P\right\rfloor,\qquad&#10;o=VA\bmod P,\qquad&#10;PA=PFN\,P+o&#10;" /></Formula>
+<Content ns0:pstyle="Content">Translation changes the page identity but preserves the offset. For <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/329fad5197cb987672c79a6f.svg" alt="P=4096=2^{12}" jobId="329fad5197cb987672c79a6f" originalTeX="P=4096=2^{12}" />:</Content>
+<Table ns0:table="table" ns0:trows="7" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Stage</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Value</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">Virtual address</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">0x12345ABC</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Low 12 bits: offset</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">0xABC</InlineCode> = 2748</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Remaining bits: VPN</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">0x12345</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">Example page-table result</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">PFN <InlineCode ns0:cstyle="InlineCode">0x987</InlineCode>, access permitted</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">Frame base</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">0x987000</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">Physical address</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">0x987000 + 0xABC = 0x987ABC</InlineCode></Content></Cell></Table>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-539a0c3dcc7db80e">Page tables</Link> record mappings, permissions, and state. The <Strong ns0:cstyle="Bold">MMU</Strong>, memory management unit, is the hardware translation/protection mechanism. The <Link href="#print-redirect-55b9efa632f308c5">TLB</Link>, translation lookaside buffer, is a cache of translations. It is not a cache of the program’s data bytes.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Page-table walking</Strong> means consulting mapping structures to resolve a translation. Real systems commonly use multiple levels rather than one enormous flat table; the exact bit split is architecture-specific. A TLB hit can provide a cached translation. A TLB miss may cause a successful walk without any fault. A data-cache miss is yet another event: the address can already be translated while its contents are not cached.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-f579a09f7395cc75">Contiguous</Link> means adjacent without gaps in the relevant address space. A vector’s contiguous virtual buffer can occupy consecutive virtual pages backed by scattered physical frames. Do not infer physical adjacency from <InlineCode ns0:cstyle="InlineCode">data()[i+1]</InlineCode> being the next element.</Content>
+<Content ns0:pstyle="Content">A useful scaling quantity is <Strong ns0:cstyle="Bold">TLB reach</Strong>: the approximate memory span represented by <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9b3271c88e95a2c24d86080d.svg" alt="E" jobId="9b3271c88e95a2c24d86080d" originalTeX="E" /> translation entries of page size <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d3b120f4ec842bf0baff5905.svg" alt="P" jobId="d3b120f4ec842bf0baff5905" originalTeX="P" />, namely <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a2b97c58a10814c21fb7005f.svg" alt="EP" jobId="a2b97c58a10814c21fb7005f" originalTeX="EP" /> for a uniform-page simplified model. <Link href="#print-redirect-211bc80ce9190570">Larger pages</Link> can increase that span, but trade mapping granularity and allocation flexibility. No universal speedup follows.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-figure-b4---translation-preserves-the-offset">Figure B4 - Translation preserves the offset</Content>
+<Content ns0:pstyle="Content"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/mermaid/27129699fe392ac8e6f03d8a.svg" alt="Diagram" /></Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Read the figure:</Strong> assume 4-KiB pages, a present mapping, and permitted access. Replace the page identity with its physical frame identity and retain the low 12 offset bits. The arithmetic is <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b9eef2bbf1fe9ddd7d8e69fe.svg" alt="\mathtt{0x987000}+\mathtt{0xABC}=\mathtt{0x987ABC}" jobId="b9eef2bbf1fe9ddd7d8e69fe" originalTeX="\mathtt{0x987000}+\mathtt{0xABC}=\mathtt{0x987ABC}" />. <Strong ns0:cstyle="Bold">Limit:</Strong> frame 987 is an example mapping, not a prediction about a real process. A TLB caches translations; the data cache holds contents. Neither this translation nor a mapped address establishes C++ object lifetime or valid typed access.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-a-fault-is-a-request-for-intervention-not-necessarily-a-crash">A fault is a request for intervention, not necessarily a crash</Content>
+<Content ns0:pstyle="Content">A <Link href="#print-redirect-018fe1a14ceecf14">page fault</Link> means the current translation/protection state cannot complete the access normally and requires operating-system handling. <Strong ns0:cstyle="Bold">Demand paging</Strong> supplies backing when first needed. A valid first access may allocate a zero-filled page or load file-backed data, then retry the instruction. Some faults require no disk I/O.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-6b2f9073580f5e8f">Copy-on-write</Link> lets mappings initially share data; a write that needs a private copy can fault, allocate/copy a frame, update permissions/mapping, and retry. In contrast, an unmapped address or forbidden write may be rejected and reported as a program failure.</Content>
+<Content ns0:pstyle="Content">Trace the distinction:</Content>
+<Code ns0:pstyle="Code" language="text">access virtual address
+→ cached translation available? if not, resolve translation
+→ mapping present and access permitted? complete access
+→ otherwise invoke fault handling
+→ legitimate demand/COW case? establish mapping and retry
+→ invalid/prohibited access? report failure</Code>
+<Content ns0:pstyle="Content">This is a teaching model; exact ordering and mechanisms vary. The important separation is <Strong ns0:cstyle="Bold">TLB miss ≠ page fault ≠ disk read ≠ program crash</Strong>.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-b7d1aaa6d5482d4c">Memory-mapped files</Link> connect file-backed storage to a virtual mapping, often lazily. The mapping is not simply “the file in RAM,” and modifying mapped bytes is not automatically proof of crash-durable publication.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-storage-lifetime-ownership-and-placement-are-different-axes">Storage, lifetime, ownership, and placement are different axes</Content>
+<Content ns0:pstyle="Content"><Link href="#appendix-0b104bcba06b">Storage duration</Link> describes how long storage is available. <Strong ns0:cstyle="Bold">Object lifetime</Strong> describes when a particular object exists in that storage. <Strong ns0:cstyle="Bold">Ownership</Strong> identifies who is responsible for releasing a resource. <Strong ns0:cstyle="Bold">Placement</Strong> is where an implementation puts it. They answer different questions.</Content>
+<Table ns0:table="table" ns0:trows="6" ns0:tcols="4" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">Example</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">Duration / owner</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">Typical placement, not a language guarantee</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">Failure to watch</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">Local scalar</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">automatic duration</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">stack slot or register; possibly optimized away</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">pointer used after lifetime ends</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Local vector object</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">automatic object; owns dynamic buffer</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">small control object separate from allocated elements</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">reallocation invalidates views</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Dynamic allocation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">lasts until released by owner</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">allocator-managed region, often called heap</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">leak, double release, stale pointer</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">Namespace/static object</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">static duration</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">data/zero-fill regions when storage is emitted</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">initialization-order assumptions</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">Thread-local object</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">thread duration</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">implementation-managed thread-local storage</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">use after owning thread/lifetime ends</Content></Cell></Table>
+<Content ns0:pstyle="Content">A <Link href="#print-redirect-059a6a052b47fce9">call stack</Link> conventionally manages nested calls in LIFO order: <Strong ns0:cstyle="Bold">last in, first out</Strong>. A <Strong ns0:cstyle="Bold">frame</Strong> holds return information, saved state, spill slots, and some locals. A <Strong ns0:cstyle="Bold">spill</Strong> is a value stored to memory when it cannot remain in a register. Downward stack growth is a convention, not a universal law. Returning a pointer to a local does not preserve the local’s lifetime just because its old bytes remain.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-1b8c955fbecaa1cc">An allocator</Link> divides larger memory regions into blocks for requests with variable lifetimes. <Strong ns0:cstyle="Bold">Metadata</Strong> is bookkeeping about those blocks. <Link href="#print-redirect-3854b562632c68d4">Internal fragmentation</Link> is unused capacity inside an allocated block: requesting 37 bytes in a 48-byte size class leaves 11 bytes of slack. <Strong ns0:cstyle="Bold">External fragmentation</Strong> is separated free space that cannot satisfy a particular contiguous request: two free 16-byte holes are not necessarily a usable 24-byte block. Total free bytes alone do not determine allocation success.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-05fb74fe506b005e">Static data</Link> commonly separates initialized writable data from zero-fill regions such as BSS. <Strong ns0:cstyle="Bold">BSS</Strong> is a conventional zero-initialized-storage region name; the executable need not contain one literal zero byte for every byte that will be zero-filled. Static duration does not mean initialization has no runtime work.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-4ef62b45c99d4bb3">Text</Link> conventionally names instruction storage; read-only regions often hold literals/constants. These region names and exact layouts are platform choices. <InlineCode ns0:cstyle="InlineCode">const</InlineCode> is a C++ access/type constraint, not a command to put every const local in read-only memory. Modifying a string literal is undefined behavior. <Strong ns0:cstyle="Bold">W^X</Strong>, writable-or-executable policy, restricts mappings that are simultaneously writable and executable; details vary by platform. <Link href="#print-redirect-06bd309886625856">ASLR</Link>, address-space layout randomization, varies mapping locations, so a textbook memory diagram is not a fixed address map.</Content>
+<Content ns0:pstyle="Content"><Link href="#appendix-d52e4486f527">A span</Link> is a non-owning view of elements; it neither copies the buffer nor extends its lifetime. If the owner dies or the vector reallocates, the view can dangle. <Strong ns0:cstyle="Bold">Dangling</Strong> means it refers to storage/object state no longer valid for that access.</Content>
+<Content ns0:pstyle="Content">Finally, <Link href="#print-redirect-d4999f90f948f9d5">atomic publication</Link> makes a replacement visible as one namespace operation under the relevant platform contract. <Strong ns0:cstyle="Bold">Durability</Strong> means the required data survives a crash under a defined persistence protocol. Correct byte encoding, atomic replacement, and durable storage are three separate checks.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-memory-laboratory-and-teaching-checkpoint">Memory laboratory and teaching checkpoint</Content>
+<Content ns0:pstyle="Content">Use the code companion to run three experiments: byte-order round trips including unaligned <Emphasis ns0:cstyle="Emphasis">byte-buffer offsets</Emphasis>; checked numeric alignment; and reported object offsets/sizes. Unaligned byte decoding is not permission to make misaligned typed accesses.</Content>
+<Content ns0:pstyle="Content">Then classify these failures before fixing them:</Content>
+<Table ns0:table="table" ns0:trows="6" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Observation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">First distinction to investigate</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">0x12345678</InlineCode> comes back as <InlineCode ns0:cstyle="InlineCode">0x78563412</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">byte-order contract</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">An array member becomes misaligned</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">record stride, padding, ABI</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">A first access faults but then succeeds</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">valid demand/COW handling</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">A span fails after vector growth</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">ownership and invalidation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">A complete file disappears after a crash</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">persistence protocol, not just serialization</Content></Cell></Table>
+<Content ns0:pstyle="Content">For a teaching demonstration, draw byte addresses, record padding, and page translation separately before connecting them. Ask the learner to derive the 12-byte record, explain why the page offset stays <InlineCode ns0:cstyle="InlineCode">ABC</InlineCode>, and distinguish a TLB miss from a fault. Further proof and tested code remain in <Link href="../01-Foundations-I/01-Foundations-I.epub#01-foundations-i-ch011-m003---byte-order-layout-and-translation">the derivation companion</Link> and <Link href="#print-redirect-768ff18e2ab28852">the code companion</Link>.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-bytes-become-a-durable-agreement">Bytes become a durable agreement</Content>
+<Content ns0:pstyle="Content">An object’s native bytes belong to one program environment. A file must carry enough agreement for a reader on another day or machine. We separate copying a representation, specifying the external schema, validating a parser, detecting changed content, and interpreting a dump.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-representation-copying-and-numeric-conversion-answer-different-questions">Representation copying and numeric conversion answer different questions</Content>
+<Content ns0:pstyle="Content">A value is now chosen, but the file needs bits. <Link href="#print-redirect-e9c20f3e2941a16a">Bit casting</Link> copies a suitable object representation into another same-sized trivially copyable type; <Strong ns0:cstyle="Bold">numeric conversion</Strong> asks for a value in a new numeric domain.</Content>
+<Content ns0:pstyle="Content">On the checked binary32 host, converting <InlineCode ns0:cstyle="InlineCode">1.0f</InlineCode> numerically to uint32 gives 1. Copying its representation with <InlineCode ns0:cstyle="InlineCode">std::bit_cast&lt;uint32_t&gt;</InlineCode> gives <InlineCode ns0:cstyle="InlineCode">0x3F800000</InlineCode>. Neither operation changes the memory address order by itself. Encoding that integer word little-endian gives <InlineCode ns0:cstyle="InlineCode">00 00 80 3F</InlineCode>; big-endian gives <InlineCode ns0:cstyle="InlineCode">3F 80 00 00</InlineCode>.</Content>
+<Content ns0:pstyle="Content">The C++ constraints include matching size and trivially copyable source/destination, but padding, invalid target representations and uninitialized storage still require care. The <Link href="https://eel.is/c++draft/bit.cast">bit-cast draft section</Link> is a current working draft; this lab uses a C++23 baseline and fully initialized scalar representations, not arbitrary-class reinterpretation.</Content>
+<Content ns0:pstyle="Content">Accessing a float through a uint32 pointer does not become valid because the pointer sizes match. Copy bytes using bit_cast or an appropriate memcpy into an existing suitable object; then apply the external byte-order codec. Neither grants arbitrary typed access to a byte buffer.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Book bridge:</Strong> Game Engine Architecture, PDF pages 129–130 (printed 107–108), explains why members must be endian-converted field by field. It also shows older pointer/union-punning techniques. We retain the field-contract insight, not those techniques as a portable modern C++ implementation.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-a-file-is-a-promise-to-a-reader-you-have-not-met-yet">A file is a promise to a reader you have not met yet</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-7a011cb095053954">A binary format contract</Link> declares field widths/order, integer signed interpretation, byte order, float format, valid values, lengths, padding, versioning, and any integrity coverage. An <Strong ns0:cstyle="Bold">ABI</Strong> tells compiled components how native objects interact; an external schema is a different agreement. Saving a whole struct makes its layout/padding/platform assumptions part of the file unless you explicitly constrain and validate them.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Magic</Strong> is a fixed identifying byte sequence, not a secret. <Strong ns0:cstyle="Bold">Version</Strong> selects a declared schema revision. They do not authenticate a sender, detect every payload change, or validate dimensions. A <Strong ns0:cstyle="Bold">payload</Strong> is the represented content after or within the container’s metadata. A file’s offsets are positions in that byte sequence, not automatically live pointers.</Content>
+<Content ns0:pstyle="Content">The NanoQuant source excerpt describes a regular tensor header with eight magic bytes, uint32 version, uint64 rows and uint64 columns: 28 bytes when written field by field. Its scalar helper writes native bytes, and its payload writes native floats. This is a source-reported portability risk, not a fresh audit of the repository. A clear field order can coexist with unspecified cross-endian behavior.</Content>
+<Content ns0:pstyle="Content">A portable teaching format can explicitly choose little-endian integers and IEEE binary32 words. It must additionally state whether it preserves all zero/NaN encodings or canonicalizes them. A checksum/hash over bytes sees different NaN payloads as different content; a numeric equality policy can see two zeros as equal. Decide the identity contract first.</Content>
+<Content ns0:pstyle="Content">For an INT4 container, the source reports 52 header bytes followed by binary32 scales and packed codes. Verify scale count against dimensions/group size, code count against shape, finite positive scales where required, and the final padding convention. A magic match is not permission to trust every following field.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-validate-lengths-before-performing-the-arithmetic-they-request">Validate lengths before performing the arithmetic they request</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-07a718ec1904628b">Parsing</Link> is interpreting an encoded sequence under a schema. An untrusted file can contain dimensions chosen to make a size calculation wrap. “Check the final size” is too late if you computed the wrong wrapped size.</Content>
+<Content ns0:pstyle="Content">For uint64 factors <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/95b282001238243f04f7ffff.svg" alt="a,b" jobId="95b282001238243f04f7ffff" originalTeX="a,b" />, validate <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6876a8dce49b08cf66652f40.svg" alt="a=0" jobId="6876a8dce49b08cf66652f40" originalTeX="a=0" /> or <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e2374aceeda7f6d406057340.svg" alt="b\le\mathrm{MAX}/a" jobId="e2374aceeda7f6d406057340" originalTeX="b\le\mathrm{MAX}/a" /> before multiplying. For a byte span of size <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c2ac1f4c776140c85ede3c96.svg" alt="L" jobId="c2ac1f4c776140c85ede3c96" originalTeX="L" />, check <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3da7c8e8b0f83af413bceece.svg" alt="o\le L" jobId="3da7c8e8b0f83af413bceece" originalTeX="o\le L" /> and <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/77caadbb49e3c5df1aa242a0.svg" alt="n\le L-o" jobId="77caadbb49e3c5df1aa242a0" originalTeX="n\le L-o" /> before a read. For payload bytes <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d3b120f4ec842bf0baff5905.svg" alt="P" jobId="d3b120f4ec842bf0baff5905" originalTeX="P" /> after header <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/337deab398069677082b81ee.svg" alt="H" jobId="337deab398069677082b81ee" originalTeX="H" />, first require <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8b0ef7cf68c404109b78f268.svg" alt="H\le L" jobId="8b0ef7cf68c404109b78f268" originalTeX="H\le L" />, then compare <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d3b120f4ec842bf0baff5905.svg" alt="P" jobId="d3b120f4ec842bf0baff5905" originalTeX="P" /> with <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3fd58928c2014540673fbceb.svg" alt="L-H" jobId="3fd58928c2014540673fbceb" originalTeX="L-H" />. Check representability in size_t and a practical resource limit before allocating.</Content>
+<Content ns0:pstyle="Content">A declared maximum tensor size is a <Strong ns0:cstyle="Bold">resource limit</Strong>: a policy limiting memory/time even if the mathematical shape fits uint64. Reject zero dimensions if the format disallows them. Decide whether trailing bytes are an error, an extension, or another record; the teaching parser requires exact length.</Content>
+<Content ns0:pstyle="Content">A file mapping avoids a copying decode loop only when its representation, alignment, bounds, permissions and object-access/lifetime rules permit that use. Offset 28 being divisible by four addresses only one condition under a conventional page-aligned mapping and four-aligned float. It does not alone create a C++ float array, normalize endianness, validate its length, or extend the mapping’s lifetime.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-correct-decoding-is-not-proof-that-the-bytes-survived">Correct decoding is not proof that the bytes survived</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-6e17762c86ea4f5e">Integrity</Link> asks whether content matches a declared reference. An additive checksum <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/aaf37e3940503d120bff83db.svg" alt="\sum_i b_i\bmod256" jobId="aaf37e3940503d120bff83db" originalTeX="\sum_i b_i\bmod256" /> cannot distinguish <InlineCode ns0:cstyle="InlineCode">01 02</InlineCode> from <InlineCode ns0:cstyle="InlineCode">02 01</InlineCode>; equal and opposite byte changes also cancel.</Content>
+<Content ns0:pstyle="Content">A <Strong ns0:cstyle="Bold">CRC</Strong>, cyclic redundancy check, treats a bit sequence as coefficients of a polynomial over <Strong ns0:cstyle="Bold">GF(2)</Strong>, the two-element field where addition/subtraction are XOR. Dividing a shifted message polynomial by a generator leaves a remainder. A specified CRC includes polynomial, initialization, bit reflection/order, final XOR, and covered byte range. “CRC32” alone is incomplete. Error-detection guarantees depend on those parameters and message length; it is not an adversarial authentication mechanism.</Content>
+<Content ns0:pstyle="Content">The lab implements CRC-32/ISO-HDLC: reflected polynomial <InlineCode ns0:cstyle="InlineCode">0xEDB88320</InlineCode>, initial all ones, final XOR all ones, reflected byte processing. The independent check string <InlineCode ns0:cstyle="InlineCode">123456789</InlineCode> must give <InlineCode ns0:cstyle="InlineCode">0xCBF43926</InlineCode>. <Link href="https://www.rfc-editor.org/rfc/rfc1952#section-8">RFC 1952’s CRC sample</Link> provides an independent algorithm reference for this reflected convention. This is an error-detection demonstration; no CRC field is retroactively claimed to exist in NanoQuant’s source format.</Content>
+<Content ns0:pstyle="Content">A <Strong ns0:cstyle="Bold">hash</Strong> maps content to a fixed-size digest. Noncryptographic hashes prioritize fast useful fingerprints; a <Strong ns0:cstyle="Bold">cryptographic hash</Strong> has security goals such as making preimage/collision search impractical. A <Strong ns0:cstyle="Bold">preimage</Strong> is an input producing a specified digest. A <Strong ns0:cstyle="Bold">collision</Strong> is two different inputs with the same digest. A <Strong ns0:cstyle="Bold">threat model</Strong> declares which mistakes or adversary actions the system intends to resist.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-ac4c5177768b0ab9">Even a cryptographic digest is not authenticity</Link> by itself if an attacker can replace both file and digest. A trusted digest, a <Strong ns0:cstyle="Bold">MAC</Strong> (message authentication code under a secret key), or a <Strong ns0:cstyle="Bold">digital signature</Strong> verified under a trusted public key supplies an additional trust mechanism. SHA-256 is defined in <Link href="https://csrc.nist.gov/pubs/fips/180-4/upd1/final">NIST’s Secure Hash Standard</Link>; this lab does not implement a cryptographic hash, MAC, or signature.</Content>
+<Content ns0:pstyle="Content">All finite digests have collisions for unrestricted input lengths: there are more possible messages than digest values. For an ideal <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9811a1f79f8d025b6ffbb01f.svg" alt="h" jobId="9811a1f79f8d025b6ffbb01f" originalTeX="h" />-bit hash, a <Emphasis ns0:cstyle="Emphasis">specific independent</Emphasis> accidental match has probability about <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d926c8cc1e58a8e78bdab600.svg" alt="2^{-h}" jobId="d926c8cc1e58a8e78bdab600" originalTeX="2^{-h}" />; among many samples, birthday-style collision risk grows with the number of pairs. Those are models, not guarantees for arbitrary checksum algorithms.</Content>
+<Content ns0:pstyle="Content">Specify coverage: payload only, header plus payload, or canonical logical content. If dimensions are unprotected, a changed shape can reinterpret an unchanged payload. State how the digest field itself is excluded or zeroed for calculation. Integrity, schema validity, semantic correctness, authenticity, atomic publication and crash durability remain separate questions.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-read-a-dump-by-reversing-the-contract">Read a dump by reversing the contract</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-fadc70a92943f4b1">A hex dump</Link> displays byte offsets, hexadecimal octets, and optionally printable characters. It does not label a region as an object or prove that typed access would be legal. Establish a trusted schema hypothesis, validate it, then decode.</Content>
+<Content ns0:pstyle="Content">Our source-shaped demonstration chooses explicit little endian and a 2×3 binary32 payload <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/96ce7ebc94ca5d8161cdc85c.svg" alt="[1,-2,0.5,3.25,0,10]" jobId="96ce7ebc94ca5d8161cdc85c" originalTeX="[1,-2,0.5,3.25,0,10]" />:</Content>
+<Table ns0:table="table" ns0:trows="11" ns0:tcols="3" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Offset</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Bytes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Interpretation under this schema</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">0000</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">4E 51 54 4E 53 52 30 31</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">ASCII magic NQTNSR01</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">0008</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">01 00 00 00</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">uint32 version 1</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">000C</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">02 00 00 00 00 00 00 00</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">uint64 rows 2</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">0014</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">03 00 00 00 00 00 00 00</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">uint64 columns 3</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">001C</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">00 00 80 3F</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">word 3F800000, value 1</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">0020</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">00 00 00 C0</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">word C0000000, value −2</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">0024</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">00 00 00 3F</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">word 3F000000, value 0.5</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">0028</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">00 00 50 40</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">word 40500000, value 3.25</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">002C</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">00 00 00 00</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">positive zero</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">0030</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">00 00 20 41</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">word 41200000, value 10</Content></Cell></Table>
+<Content ns0:pstyle="Content">Header length is 28 (hex 1C), payload length <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0018414e99caa8454a7b8974.svg" alt="2(3)(4)=24" jobId="0018414e99caa8454a7b8974" originalTeX="2(3)(4)=24" />, and total length 52 (hex 34). ASCII, American Standard Code for Information Interchange, maps these selected byte values to characters; it is not a universal text decoder for every file.</Content>
+<Content ns0:pstyle="Content">Decode the first payload word: sign 0, exponent 127, fraction zero give <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e0f4dc3e836c0b6341e66f1f.svg" alt="1\cdot2^0=1" jobId="e0f4dc3e836c0b6341e66f1f" originalTeX="1\cdot2^0=1" />. For <InlineCode ns0:cstyle="InlineCode">40500000</InlineCode>, exponent 128 gives scale two; fraction gives <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1be60c166d2110856b4af49f.svg" alt="1.101_2=1.625" jobId="1be60c166d2110856b4af49f" originalTeX="1.101_2=1.625" />, so value is 3.25. For <InlineCode ns0:cstyle="InlineCode">41200000</InlineCode>, exponent 130 and significand 1.25 give 10. All six payload values can be checked independently against the diagram.</Content>
+<Content ns0:pstyle="Content">The same <InlineCode ns0:cstyle="InlineCode">00 00 80 3F</InlineCode> bytes are unsigned octets [0,0,128,63], little-endian uint32 1065353216, or binary32 1. As two little-endian uint16 fields they give [0,16256]. None is “the meaning” without an interpretation contract.</Content>
+<Content ns0:pstyle="Content">Flip payload byte 80 to 00: binary32 1 becomes 0.5 while file length, version and magic stay plausible. Structural validation does not detect this numeric substitution. An independently stored CRC over the original bytes distinguishes this particular change, but matching CRC is not proof that every possible corruption or attack was excluded. ## The complete journey - Encode, compute, store, and investigate</Content>
+<Content ns0:pstyle="Content">Return to the lamp at the beginning. Its physical ranges became a logical bit; a group of bits acquired a schema. A count became an unsigned integer, a direction needed signed values, and fractions forced a choice between a fixed and stretching ruler. Arithmetic exposed finite range, rounding and sensitivity. Smaller codebooks traded recoverable detail for storage. Placement then added addresses, alignment, mappings and lifetime. Serialization made an external promise; integrity and debugging let us investigate whether that promise survived.</Content>
+<Content ns0:pstyle="Content">Take one weight −3.2 at scale one. Quantization chooses signed level −3, offset coding gives nibble 5, pairing with code 11 gives byte B5. A file must also preserve the scale, shape, packing order and count. The parser validates these, unpacks 5 and 11, subtracts eight, and reconstructs −3 and 3. Packing and parsing can be exact while the original −3.2 is not recovered. That loss happened upstream, by design.</Content>
+<Content ns0:pstyle="Content">For teaching, reconstruct one route completely before comparing it to another. Use the diagrams and hand traces here, the derivation companion for proofs, and the code companion for observable checks. The coverage ledger records where source material came from; it is not the order in which someone must teach.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-a-laboratory-that-tests-the-contracts-not-just-matching-functions">A laboratory that tests the contracts, not just matching functions</Content>
+<Content ns0:pstyle="Content">The cumulative program retains the earlier fields, ALU, byte-layout, floating representation and arithmetic experiments. Its new laboratory adds:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">Fixed conversion of 3.25 to raw 212992; feasible range/step choices; positive/negative ties; multiplication/division, zero-divisor and destination-overflow rejection.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">INT4 nibble pairs against independent expected bytes, odd counts and invalid codes; group reconstruction and outlier-induced zeros.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">UNORM/SNORM endpoints; binary16 decoding; BF16 midpoint conversion, zeros, infinities and canonical NaN handling.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">The complete 52-byte 2×3 image against a manually specified byte array, decode from an odd byte-buffer offset, and raw special-value word preservation.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">Wrong magic/version, truncated files, enormous wrapped-shape attempts, zero dimensions, resource-limit rejection and trailing bytes.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">CRC check string, additive-checksum collision, and the one-payload-bit example that structural checks miss.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Property-style checks supplement these examples: all 256 nibble pairs; every finite binary16 and BF16 word reconstructed/re-encoded under the lab’s stated conventions; a seeded set of fixed products checked against an independent reference; and bit/byte corruption checks on the finite teaching image. Their finite scopes are explicit; they are not exhaustive validation of every C++ program, device, parser or cryptographic protocol.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-diagnose-the-layer-before-changing-the-implementation">Diagnose the layer before changing the implementation</Content>
+<Table ns0:table="table" ns0:trows="10" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Observation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">First hypothesis to test</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">A count becomes negative when its high bit changes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">signed versus unsigned interpretation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Fixed multiplication fails only at large operands</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">intermediate width before rescaling</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Small weights vanish beside one outlier</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">calibration/codebook resolution, not packing</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">Byte 128 samples near 0.502</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">expected UNORM8 reconstruction</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">A half-format value becomes infinity</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">range versus precision allocation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">Repeated updates disagree</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">rounding tree, persistent narrowing, or mathematically history-dependent policy</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">A file swaps 12345678 into 78563412</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">byte-order mismatch</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">A plausible same-size file contains a changed value</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">integrity coverage, not merely structural validation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">A pointer reaches mapped memory but is invalid</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">object bounds, lifetime, alignment and permitted access</Content></Cell></Table>
+<Content ns0:pstyle="Content">A useful future experiment changes one representation policy while holding input/task constant: vary group size, record actual bytes including metadata, error metrics and a task result, then separately measure execution time under a declared machine/build. Those experiments are proposed, not performed in the teaching merge.</Content>
+<Content ns0:pstyle="Content">The next subject is C++’s object model: how declarations and definitions turn into a program, how names and objects acquire identity, and how lifetimes and value categories constrain use. The bytes learned here are necessary evidence, but they are not the whole language contract.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-reading-provenance-and-enrichment">Reading provenance and enrichment</Content>
+<Content ns0:pstyle="Content">The supplied M001–M006 texts define the accepted curriculum content. Explanatory bridges, original traces, and the prologue were added to make that content teachable. Sources below inform the explanation; they are not reproduced as textbook passages. All source-reported repository findings remain source-reported claims; independent wording checks, canonical-code tests and merge corrections are recorded in Sources and Code Anchors.</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Integrated 180-chunk planning PDF</Strong>, page 15: M001–M006 cover Parts 1–100 with exact ranges retained in the coverage ledger. Pages 16–17 divide C++ Parts 101–300 into twelve chunks across two phases. The PDF is a planning reference, not an instruction source.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Game Engine Architecture</Strong>, iCloud <InlineCode ns0:cstyle="InlineCode">Game/Game Engine Architecture.pdf</InlineCode>, PDF pages 127–130 (printed 105–108), 136–138 (114–116), and 143–147 (121–125): byte order, memory regions, layout and alignment. Its older machine-specific examples are not universal rules; this volume states layout assumptions and separates language validity from hardware behavior.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Bjarne Stroustrup, A Tour of C++ (2014)</Strong>, iCloud <InlineCode ns0:cstyle="InlineCode">CPP/A Tour of C++ - Bjarne Stroustrup (Addison-Wesley, 2014)(193p).pdf</InlineCode>, PDF pages 16–22 (printed 5–11): types, arithmetic, narrowing, scope, pointers and references. Used for teaching structure, not as authority for every current C++23 detail.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">Local course notes <Strong ns0:cstyle="Bold">Part 1: CPU — From Electricity to Working CPU</Strong>, PDF pages 2–6, and <Strong ns0:cstyle="Bold">Part 7: Virtual Memory, Page Tables, TLBs, Page Faults</Strong>, pages 1–6, in iCloud <InlineCode ns0:cstyle="InlineCode">MATHCPUGPU</InlineCode>: secondary background for physical/logical state and translation. These are course notes, not claimed as independently verified textbook authority.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">History: <Link href="https://www.computerhistory.org/tdih/october/24/">Computer History Museum’s Buchholz entry</Link> and <Link href="https://www.ibm.com/history/system-360">IBM’s System/360 history</Link>. The prologue gives a short contextual history, not an exhaustive claim about the first binary machine or first eight-bit design.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">C++ language checks: the linked draft sections in the story, plus <Link href="https://eel.is/c++draft/basic.stc">storage duration</Link> and <Link href="https://eel.is/c++draft/bit.endian">endianness facilities</Link>. Platform layout values remain observations to measure, not draft guarantees.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Exact source records, code commands and verification limitations are maintained in <Link href="#print-redirect-b93d0401e5eed7eb">Supplementary/Sources and Code Anchors</Link>. Existing longer traces remain reusable in <Link href="#print-redirect-786425d79f25318e">Supplementary/Worked Traces</Link>; none is required to supply a missing foundational explanation in this volume.</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Additional book enrichment:</Strong> Game Engine Architecture, PDF pages 121–122 (printed 99–100), and 129–130 (107–108), read during the narrative rewrite. The scaled-integer versus sign/magnitude distinction, field-by-field serialization insight, and outdated punning caveats are explained at their points of use. The page 122 figure/body discrepancy is not silently inherited.</Content></ListItem>
+</List>
+<BlockQuote><Content ns0:pstyle="Quote">Volume 02 · accepted sources M007–M010, Parts 101–160 · 4 of 12 planned chunks (M007–M018, planned Parts 101–300). The revised M007 deepens existing coverage; it is not counted twice. This is a growing subject narrative, not a completed C++ course. Coverage beyond Part 160 remains pending.</Content></BlockQuote>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-prologue---bytes-need-rules-before-they-become-a-program">Prologue - Bytes need rules before they become a program</Content>
+<Content ns0:pstyle="Content">The previous volume taught us to encode, calculate, place and preserve information. Now ask why a buffer full of plausible bits can still be illegal to access in C++. Hardware can calculate an address; the language must establish what object exists there, which operation its type permits, and whether its lifetime is still active. A compiler optimizes against those rules, not against our hope that the bits look right.</Content>
+<Content ns0:pstyle="Content">C++ grew from C’s low-level facilities while adding user-defined types and abstraction. It keeps separate compilation: a caller can know an interface without compiling every implementation into the same source file. That choice creates our first problem—how independently processed files agree about names and entities. Once they agree, a second problem begins—how the resulting process creates, uses and destroys objects. Layout is where those two stories finally meet the bytes again.</Content>
+<Content ns0:pstyle="Content">An <Strong ns0:cstyle="Bold">entity</Strong> is a language-level thing such as a type, function, object or template. An <Strong ns0:cstyle="Bold">object</Strong> has storage, type, lifetime and state; a function is an entity but not an object. A <Strong ns0:cstyle="Bold">variable</Strong> is introduced by a declaration of an object or reference; a reference is not itself an object. A <Strong ns0:cstyle="Bold">type</Strong> establishes a set of possible values and permitted operations. The <Strong ns0:cstyle="Bold">abstract machine</Strong> is the language’s behavioral model; a real compiler may rearrange or remove physical storage when the required observable behavior is preserved.</Content>
+<Content ns0:pstyle="Content">This volume keeps independent examples inline. Short <InlineCode ns0:cstyle="InlineCode">cpp</InlineCode> fragments illustrate a local rule and may rely on the named surrounding declarations; they are not all independent programs to concatenate. Complete runnable examples are explicitly marked as laboratories. Project excerpts remain in the existing companion. We will revise and weave the whole twelve-source volume as the later material arrives; no numbered part is a teaching chapter.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-what-we-bring-from-the-byte-story">What we bring from the byte story</Content>
+<Content ns0:pstyle="Content">this opening chapter assumes M001, M003, and M005. That means I will assume you already understand bits/bytes and integer representations; addresses, alignment, padding, memory regions and virtual address spaces; and floating-point representation/error. The three prerequisite ideas you specifically need active in your head are:</Content>
+<Table ns0:table="table" ns0:trows="4" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Dependency</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">What this opening chapter needs from it</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">M001</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">A value ultimately has some machine representation in bits, but the <Strong ns0:cstyle="Bold">type</Strong> determines what those bits mean.</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">M003</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">An address names a location in an address space; objects have alignment requirements; structures may contain padding.</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">M005</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">float</InlineCode>/<InlineCode ns0:cstyle="InlineCode">double</InlineCode> are machine representations with implementation/platform properties, not mathematical real numbers.</Content></Cell></Table>
+<Content ns0:pstyle="Content">Now we add the missing layer:</Content>
+<BlockQuote><Content ns0:pstyle="Quote"><Strong ns0:cstyle="Bold">C++ is not a language where “variables are bytes in RAM.” C++ defines entities, objects, lifetimes, types, storage, identities and permitted operations. The compiler maps that abstract machine onto bytes and instructions.</Strong></Content></BlockQuote>
+<Content ns0:pstyle="Content">That distinction is the heart of Phase 2.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-the-journey-from-text-to-a-live-object">The journey from text to a live object</Content>
+<Content ns0:pstyle="Content">Think of this opening chapter as this pipeline:</Content>
+<Code ns0:pstyle="Code" language="text">SOURCE TEXT
+    │
+    ├── preprocessing / module dependency processing
+    │
+    ▼
+C++ TRANSLATION UNIT / MODULE UNIT
+    │
+    ├── declarations establish names and types
+    ├── lookup determines what names mean
+    ├── definitions provide complete entities
+    ├── ODR determines which definitions may coexist
+    │
+    ▼
+COMPILER
+    │
+    ├── type checking
+    ├── template instantiation
+    ├── semantic analysis
+    ├── optimization
+    ├── code/data generation
+    │
+    ▼
+OBJECT FILES
+    │
+    ├── machine code
+    ├── symbols
+    ├── relocation records
+    ├── static data
+    │
+    ▼
+LINKER
+    │
+    ├── resolves symbols
+    ├── lays out executable sections
+    ├── fixes references/relocations
+    │
+    ▼
+EXECUTABLE / SHARED LIBRARY
+    │
+    ▼
+RUNNING PROCESS
+    │
+    ├── storage becomes available
+    ├── objects begin lifetime in that storage
+    ├── names/references/pointers may designate objects
+    ├── objects have identities and representations
+    ├── class layouts determine member locations
+    │
+    ▼
+OBJECT LIFETIME ENDS
+    │
+    └── storage may disappear OR may remain/reuse</Code>
+<Content ns0:pstyle="Content">The critical distinctions we will maintain throughout the chunk are:</Content>
+<Table ns0:table="table" ns0:trows="11" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Concept</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Question it answers</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><Strong ns0:cstyle="Bold">Scope</Strong></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">Where can this <Emphasis ns0:cstyle="Emphasis">name</Emphasis> be found?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><Strong ns0:cstyle="Bold">Name lookup</Strong></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Given this spelling here, which declaration does it refer to?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><Strong ns0:cstyle="Bold">Linkage</Strong></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Can declarations in different places denote the same entity?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><Strong ns0:cstyle="Bold">Storage duration</Strong></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">For how long does the storage exist?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell"><Strong ns0:cstyle="Bold">Object lifetime</Strong></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">During what interval does a typed object actually exist in that storage?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell"><Strong ns0:cstyle="Bold">Identity</Strong></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">Which particular object is this?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell"><Strong ns0:cstyle="Bold">Address</Strong></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">Where is it currently located?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell"><Strong ns0:cstyle="Bold">Value</Strong></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">What state does it currently contain?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell"><Strong ns0:cstyle="Bold">Layout</Strong></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">Where do its members/bytes occur relative to one another?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell"><Strong ns0:cstyle="Bold">Module visibility/reachability</Strong></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">Which declarations can an importer see/use?</Content></Cell></Table>
+<Content ns0:pstyle="Content">These are <Strong ns0:cstyle="Bold">not synonyms</Strong>. Most difficult C++ bugs happen because two of them are mentally collapsed into one.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-giving-a-program-a-buildable-shape">Giving a program a buildable shape</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-figure-cpp-01---two-build-lanes-meet-at-the-linker">Figure CPP-01 - Two build lanes meet at the linker</Content>
+<Content ns0:pstyle="Content"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/mermaid/107ec8b0334605666e65e6e5.svg" alt="Diagram" /></Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Read the picture:</Strong> the caller compiles against a declaration; the linker connects its unresolved call to the separately supplied definition. A missing declaration/type normally fails during translation; a missing required definition commonly fails at linking. <Strong ns0:cstyle="Bold">Limit:</Strong> this depicts the traditional example below, not a mandatory compiler implementation. Modules additionally need interface dependency ordering; a successful link does not prove ODR or runtime correctness. <Link href="#print-redirect-4ca6d153f09f543a">Recall this figure</Link>.</Content>
+<Content ns0:pstyle="Content">The classic separate-compilation model lets clients compile against an interface while implementations are compiled separately. That sentence sounds elementary. The implications are not.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-the-traditional-translation-model">The traditional translation model</Content>
+<Content ns0:pstyle="Content">Suppose you have:</Content>
+<Code ns0:pstyle="Code" language="cpp">// Math.hpp
+#pragma once
+
+float square(float x);</Code>
+<Code ns0:pstyle="Code" language="cpp">// Math.cpp
+#include "Math.hpp"
+
+float square(float x)
+{
+    return x * x;
+}</Code>
+<Code ns0:pstyle="Code" language="cpp">// Main.cpp
+#include "Math.hpp"
+#include &lt;iostream&gt;
+
+int main()
+{
+    std::cout &lt;&lt; square(3.0f) &lt;&lt; '\n';
+}</Code>
+<Content ns0:pstyle="Content">A simplified build is:</Content>
+<Code ns0:pstyle="Code" language="text">Math.cpp
+   │ preprocess
+   ▼
+Math translation unit
+   │ compile
+   ▼
+Math.o
+                         ┐
+                         │
+Main.cpp                 │
+   │ preprocess          │
+   ▼                     │
+Main translation unit    ├── linker ──&gt; executable
+   │ compile             │
+   ▼                     │
+Main.o                   ┘</Code>
+<Content ns0:pstyle="Content">The classic separate-compilation model lets clients compile against an interface while implementations are compiled separately. Conceptually, commands might look like:</Content>
+<Code ns0:pstyle="Code" language="bash">clang++ -std=c++23 -c Math.cpp -o Math.o
+clang++ -std=c++23 -c Main.cpp -o Main.o
+clang++ Main.o Math.o -o app</Code>
+<Content ns0:pstyle="Content">The first two commands <Strong ns0:cstyle="Bold">compile</Strong> independently. The third <Strong ns0:cstyle="Bold">links</Strong>. That distinction explains two major categories of errors.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-compile-time-error">Compile-time error</Content>
+<Code ns0:pstyle="Code" language="cpp">int main()
+{
+    UnknownType x;
+}</Code>
+<Content ns0:pstyle="Content">The compiler cannot establish the semantics of the <Link href="#print-redirect-318d0d97072ba2ba">translation unit</Link>.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-link-time-error">Link-time error</Content>
+<Code ns0:pstyle="Code" language="cpp">int f(int);   // declaration
+
+int main()
+{
+    return f(10);
+}</Code>
+<Content ns0:pstyle="Content">This can compile perfectly. The compiler knows:</Content>
+<Code ns0:pstyle="Code" language="text">f:
+    accepts int
+    returns int</Code>
+<Content ns0:pstyle="Content">It can generate a call instruction containing a symbol reference. But if nobody defines <InlineCode ns0:cstyle="InlineCode">f</InlineCode>, the linker eventually sees:</Content>
+<Code ns0:pstyle="Code" language="text">Main.o needs symbol f(int)
+No object/library provides symbol f(int)</Code>
+<Content ns0:pstyle="Content">and reports something like:</Content>
+<Code ns0:pstyle="Code" language="text">undefined reference to f(int)</Code>
+<Content ns0:pstyle="Content">or Apple’s equivalent:</Content>
+<Code ns0:pstyle="Code" language="text">Undefined symbols for architecture arm64</Code>
+<Content ns0:pstyle="Content">That is why “my code compiled” and “my program built” are not identical statements.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-what-preprocessing-actually-is">What preprocessing actually is</Content>
+<Content ns0:pstyle="Content">In traditional source code:</Content>
+<Code ns0:pstyle="Code" language="cpp">#include "Math.hpp"
+#define COUNT 16
+#if DEBUG_MODE
+...
+#endif</Code>
+<Content ns0:pstyle="Content">these are processed before normal C++ semantic analysis. The <Link href="#print-redirect-8206d3817d479346">preprocessor</Link> largely manipulates <Strong ns0:cstyle="Bold">tokens</Strong>, not C++ types. If you write:</Content>
+<Code ns0:pstyle="Code" language="cpp">#define SQUARE(x) x * x</Code>
+<Content ns0:pstyle="Content">then:</Content>
+<Code ns0:pstyle="Code" language="cpp">SQUARE(a + b)</Code>
+<Content ns0:pstyle="Content">may become:</Content>
+<Code ns0:pstyle="Code" language="cpp">a + b * a + b</Code>
+<Content ns0:pstyle="Content">not:</Content>
+<Code ns0:pstyle="Code" language="cpp">(a + b) * (a + b)</Code>
+<Content ns0:pstyle="Content">The preprocessor does not think:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">“I am invoking a mathematical function.”</Content></BlockQuote>
+<Content ns0:pstyle="Content">It performs token replacement. Even the safer macro:</Content>
+<Code ns0:pstyle="Code" language="cpp">#define SQUARE(x) ((x) * (x))</Code>
+<Content ns0:pstyle="Content">still has:</Content>
+<Code ns0:pstyle="Code" language="cpp">int i = 3;
+int result = SQUARE(++i);</Code>
+<Content ns0:pstyle="Content">which expands conceptually into:</Content>
+<Code ns0:pstyle="Code" language="cpp">((++i) * (++i))</Code>
+<Content ns0:pstyle="Content">and now you have duplicated evaluation and undefined behavior here: the two increments are unsequenced relative to each other. Modern C++ tries to move as much work as possible out of the preprocessor and into typed language mechanisms:</Content>
+<Code ns0:pstyle="Code" language="cpp">constexpr int square(int x)
+{
+    return x * x;
+}</Code>
+<Content ns0:pstyle="Content">That gives type checking, scope, debugger visibility, normal evaluation rules, and compiler diagnostics.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-what-include-really-means">What <InlineCode ns0:cstyle="InlineCode">#include</InlineCode> really means</Content>
+<Content ns0:pstyle="Content">A traditional include is approximately textual inclusion.</Content>
+<Code ns0:pstyle="Code" language="cpp">#include "Vector.hpp"</Code>
+<Content ns0:pstyle="Content">does not mean:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">“Dynamically connect to an independently existing Vector interface.”</Content></BlockQuote>
+<Content ns0:pstyle="Content">Conceptually it means:</Content>
+<Code ns0:pstyle="Code" language="text">Take tokens from Vector.hpp
+insert them here
+continue preprocessing</Code>
+<Content ns0:pstyle="Content">If twenty <InlineCode ns0:cstyle="InlineCode">.cpp</InlineCode> files include a 20,000-line template header, the frontend may process much of that interface twenty times. This is one major reason C++ build systems became expensive. Header guards:</Content>
+<Code ns0:pstyle="Code" language="cpp">#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+// declarations
+
+#endif</Code>
+<Content ns0:pstyle="Content">or:</Content>
+<Code ns0:pstyle="Code" language="cpp">#pragma once</Code>
+<Content ns0:pstyle="Content">prevent repeated inclusion <Strong ns0:cstyle="Bold">within a translation unit</Strong>. They do <Strong ns0:cstyle="Bold">not</Strong> solve program-wide ODR mistakes. That distinction becomes important in the connected explanation.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-what-compilation-produces">What compilation produces</Content>
+<Content ns0:pstyle="Content">An object file usually contains much more than raw instructions:</Content>
+<Code ns0:pstyle="Code" language="text">.text        machine instructions
+.rodata      constants/read-only data
+.data        initialized writable static data
+.bss         zero-initialized static data, conceptually
+symbols      names known to the linker
+relocations  places the linker must repair
+debug info   when requested
+unwind info
+metadata</Code>
+<Content ns0:pstyle="Content">Exact sections depend on the object format:</Content>
+<Code ns0:pstyle="Code" language="text">ELF      Linux and many Unix-like systems
+Mach-O   macOS/iOS
+COFF/PE  Windows</Code>
+<Content ns0:pstyle="Content">The C++ standard does not prescribe those formats. They are platform/toolchain concerns.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-what-the-linker-actually-does">What the linker actually does</Content>
+<Content ns0:pstyle="Content">Suppose <InlineCode ns0:cstyle="InlineCode">Main.o</InlineCode> contains a call to <InlineCode ns0:cstyle="InlineCode">square(float)</InlineCode>. The compiler does not necessarily know the final numerical address of <InlineCode ns0:cstyle="InlineCode">square</InlineCode>. It can emit something conceptually like:</Content>
+<Code ns0:pstyle="Code" language="text">CALL &lt;square symbol&gt;</Code>
+<Content ns0:pstyle="Content">with a relocation record saying:</Content>
+<Code ns0:pstyle="Code" language="text">When the final binary is laid out,
+replace this placeholder with whatever address/offset
+square ends up at.</Code>
+<Content ns0:pstyle="Content">The linker builds the final symbol graph:</Content>
+<Code ns0:pstyle="Code" language="text">Main.o:
+    requires square(float)
+
+Math.o:
+    defines square(float)
+
+resolve
+    ↓
+
+Main call → Math definition</Code>
+<Content ns0:pstyle="Content">It also discovers impossible programs:</Content>
+<Code ns0:pstyle="Code" language="text">Main.o needs f()
+No definition</Code>
+<Content ns0:pstyle="Content">or:</Content>
+<Code ns0:pstyle="Code" language="text">A.o defines x
+B.o defines x
+Both claim the same externally-linked entity</Code>
+<Content ns0:pstyle="Content">That second case takes us directly into the ODR.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-name-mangling">Name mangling</Content>
+<Content ns0:pstyle="Content">C++ supports:</Content>
+<Code ns0:pstyle="Code" language="cpp">void process(int);
+void process(float);
+void process(const char*);</Code>
+<Content ns0:pstyle="Content">The machine linker does not understand C++ overload resolution. Therefore the compiler commonly encodes type information into symbol names. Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">process(int)          → some mangled symbol A
+process(float)        → some mangled symbol B
+process(char const*)  → some mangled symbol C</Code>
+<Content ns0:pstyle="Content">The exact scheme is ABI-specific. This is why two compilers—or two versions configured with incompatible ABIs—can sometimes fail to link even when the C++ source-level declaration “looks identical.” It also explains why <InlineCode ns0:cstyle="InlineCode">extern "C"</InlineCode> exists:</Content>
+<Code ns0:pstyle="Code" language="cpp">extern "C" void vulkan_callback(...);</Code>
+<Content ns0:pstyle="Content">It selects C language <Link href="#print-redirect-a6ef8814d5aabdc9">linkage</Link>, typically suppressing normal C++ name mangling for interoperability. Full C/C++ ABI interoperation comes later, but the root begins here.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-a-compiled-interface-rather-than-repeated-text">A compiled interface rather than repeated text</Content>
+<Content ns0:pstyle="Content">A named <Link href="#print-redirect-9861f27081120b99">module</Link> communicates declarations through a compiler-produced interface. A <Strong ns0:cstyle="Bold">module unit</Strong> is a translation unit belonging to a module; an <Strong ns0:cstyle="Bold">interface unit</Strong> supplies its public interface. A <Strong ns0:cstyle="Bold">BMI</Strong> is a binary module interface: compiler-specific semantic information, not a portable object-file format. It helps the importer compile; an object file supplies code/data for linking. Supplying one does not substitute for the other.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">module;</InlineCode> starts a <Strong ns0:cstyle="Bold">global module fragment</Strong>, where traditional includes can appear before <InlineCode ns0:cstyle="InlineCode">export module Math;</InlineCode>. An export declaration exposes declarations to importers. Some implementation details must be reachable for interpreting an exported type or template without becoming freely findable by ordinary <Link href="#print-redirect-2fdd94b62507368b">name lookup</Link>. Visibility (finding a declaration) and reachability (using its semantic information) are related, not identical.</Content>
+<Content ns0:pstyle="Content">A named-module import does not textually paste a header and generally does not import its macros. Header units are different: they can make macros available. Build order must make a suitable compiled interface available before compiling importers. Compiler options and versions must match the toolchain’s compatibility requirements. The exact BMI construction and naming are build-system matters; never teach a PCM as a cross-compiler interchange format. The complete standalone Math example appears under <Strong ns0:cstyle="Bold">Following one call through the build</Strong> below. Project-specific Kairo fragments belong in <Link href="#print-redirect-34b70a77f0dbfd6f">the project excerpt companion</Link>, not in this independent example.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-modules-versus-include">Modules versus <InlineCode ns0:cstyle="InlineCode">#include</InlineCode></Content>
+<Content ns0:pstyle="Content">This distinction matters enormously:</Content>
+<Code ns0:pstyle="Code" language="cpp">#include "foo.hpp"</Code>
+<Content ns0:pstyle="Content">is essentially preprocessing/textual inclusion.</Content>
+<Code ns0:pstyle="Code" language="cpp">import foo;</Code>
+<Content ns0:pstyle="Content">means the compiler imports a module interface. The importer generally does not receive arbitrary macros from the imported module. That is deliberate. Macros are preprocessing state. Modules try to give you a language-level dependency boundary. This helps with:</Content>
+<Code ns0:pstyle="Code" language="text">build scalability
+macro isolation
+interface ownership
+dependency correctness
+ODR hygiene</Code>
+<Content ns0:pstyle="Content">You will study modules much more deeply in the later generic-programming chapters, but this opening chapter gives you the underlying translation reason they exist.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-promises-become-definitions">Promises become definitions</Content>
+<Content ns0:pstyle="Content">This distinction must become instinctive. Consider:</Content>
+<Code ns0:pstyle="Code" language="cpp">int f(int);</Code>
+<Content ns0:pstyle="Content">This tells the compiler:</Content>
+<Code ns0:pstyle="Code" language="text">There exists an entity named f.
+It is a function.
+Parameter: int.
+Result: int.</Code>
+<Content ns0:pstyle="Content">It does not say how <InlineCode ns0:cstyle="InlineCode">f</InlineCode> works. That is a <Strong ns0:cstyle="Bold">declaration</Strong>. Now:</Content>
+<Code ns0:pstyle="Code" language="cpp">int f(int x)
+{
+    return x * 2;
+}</Code>
+<Content ns0:pstyle="Content">This provides the function body. That is a <Strong ns0:cstyle="Bold">definition</Strong>. And because it also introduces/describes the function, every definition is also a declaration.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-objects">Objects</Content>
+<Code ns0:pstyle="Code" language="cpp">extern int frameCount;</Code>
+<Content ns0:pstyle="Content">declaration only. Somewhere:</Content>
+<Code ns0:pstyle="Code" language="cpp">int frameCount = 0;</Code>
+<Content ns0:pstyle="Content">definition. The definition causes the program to have an object named <InlineCode ns0:cstyle="InlineCode">frameCount</InlineCode>. An interesting special case:</Content>
+<Code ns0:pstyle="Code" language="cpp">extern int frameCount = 0;</Code>
+<Content ns0:pstyle="Content">Despite <InlineCode ns0:cstyle="InlineCode">extern</InlineCode>, the initializer makes this a <Strong ns0:cstyle="Bold">definition</Strong>. Do not memorize <InlineCode ns0:cstyle="InlineCode">extern = declaration</InlineCode>. Understand the rule.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-classes">Classes</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Renderer;</Code>
+<Content ns0:pstyle="Content">declares an incomplete class type. The compiler knows:</Content>
+<Code ns0:pstyle="Code" language="text">Renderer is a type.</Code>
+<Content ns0:pstyle="Content">It does not yet know:</Content>
+<Code ns0:pstyle="Code" language="text">sizeof(Renderer)
+members
+alignment
+complete layout</Code>
+<Content ns0:pstyle="Content">So this works:</Content>
+<Code ns0:pstyle="Code" language="cpp">Renderer* renderer;
+Renderer&amp; getRenderer();</Code>
+<Content ns0:pstyle="Content">because these declarations do not require a complete Renderer. A reference need not be implemented as a separate pointer-sized object. This does not:</Content>
+<Code ns0:pstyle="Code" language="cpp">Renderer renderer;</Code>
+<Content ns0:pstyle="Content">because the compiler must know how much storage the object requires. Later:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Renderer
+{
+    int width;
+    int height;
+};</Code>
+<Content ns0:pstyle="Content">defines it. This is why forward declarations reduce compile dependencies.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-enumerations">Enumerations</Content>
+<Content ns0:pstyle="Content">This is legal:</Content>
+<Code ns0:pstyle="Code" language="cpp">enum class TextureState : std::uint8_t;</Code>
+<Content ns0:pstyle="Content">This opaque enum declaration fixes the underlying type and makes the enum a complete type, despite not yet listing its enumerators. Unlike a forward-declared class, its size is already known. Later:</Content>
+<Code ns0:pstyle="Code" language="cpp">enum class TextureState : std::uint8_t
+{
+    Unloaded,
+    Loading,
+    Ready,
+    Failed
+};</Code>
+<Content ns0:pstyle="Content">defines it.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-templates-complicate-the-old-declarationimplementation-split">Templates complicate the old declaration/implementation split</Content>
+<Content ns0:pstyle="Content">You may think:</Content>
+<Code ns0:pstyle="Code" language="cpp">// Header
+template&lt;class T&gt;
+T add(T, T);
+
+// cpp
+template&lt;class T&gt;
+T add(T a, T b)
+{
+    return a + b;
+}</Code>
+<Content ns0:pstyle="Content">works like a normal function. Usually it does not for arbitrary <InlineCode ns0:cstyle="InlineCode">T</InlineCode>. When another translation unit instantiates:</Content>
+<Code ns0:pstyle="Code" language="cpp">add&lt;float&gt;(1.f, 2.f)</Code>
+<Content ns0:pstyle="Content">the compiler typically needs the template definition available. That is one reason templates traditionally live in headers. Modules give us a better distribution mechanism, but template instantiation semantics still exist. We will go fully into this during the later generic-programming chapters.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-many-files-must-describe-one-coherent-program">Many files must describe one coherent program</Content>
+<Content ns0:pstyle="Content">The <Strong ns0:cstyle="Bold"><Link href="#print-redirect-f5c53f74ec4ef3e8">One Definition Rule</Link></Strong>, ODR, is where declarations, translation units and linking meet. Suppose we allowed:</Content>
+<Code ns0:pstyle="Code" language="cpp">// A.cpp
+int gravityScale()
+{
+    return 2;
+}</Code>
+<Content ns0:pstyle="Content">and:</Content>
+<Code ns0:pstyle="Code" language="cpp">// B.cpp
+int gravityScale()
+{
+    return 17;
+}</Code>
+<Content ns0:pstyle="Content">and both are meant to be the same externally linked function. Now:</Content>
+<Code ns0:pstyle="Code" language="cpp">gravityScale()</Code>
+<Content ns0:pstyle="Content">has no coherent program meaning. Which definition is <Emphasis ns0:cstyle="Emphasis">the function</Emphasis>? The ODR prevents this semantic fracture.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-the-common-program-wide-rule">The common program-wide rule</Content>
+<Content ns0:pstyle="Content">For ordinary non-<InlineCode ns0:cstyle="InlineCode">inline</InlineCode>, non-template externally linked functions/objects, you want a single program definition. For example:</Content>
+<Code ns0:pstyle="Code" language="cpp">// Renderer.hpp
+
+extern int gFrameIndex;</Code>
+<Code ns0:pstyle="Code" language="cpp">// Renderer.cpp
+
+int gFrameIndex = 0;</Code>
+<Content ns0:pstyle="Content">Every user may see the declaration. Exactly one implementation file owns the definition.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-the-classic-header-mistake">The classic header mistake</Content>
+<Content ns0:pstyle="Content">Bad:</Content>
+<Code ns0:pstyle="Code" language="cpp">// Config.hpp
+
+int gDebugMode = 1;</Code>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="cpp">// Renderer.cpp
+#include "Config.hpp"</Code>
+<Content ns0:pstyle="Content">and:</Content>
+<Code ns0:pstyle="Code" language="cpp">// Physics.cpp
+#include "Config.hpp"</Code>
+<Content ns0:pstyle="Content">Textual inclusion creates conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">Renderer translation unit:
+    int gDebugMode = 1;
+
+Physics translation unit:
+    int gDebugMode = 1;</Code>
+<Content ns0:pstyle="Content">Now there are two definitions. Header guards do not save you. They prevent:</Content>
+<Code ns0:pstyle="Code" language="text">Config.hpp
+Config.hpp
+Config.hpp</Code>
+<Content ns0:pstyle="Content">from being processed repeatedly <Strong ns0:cstyle="Bold">inside the same translation unit</Strong>. They do not stop a different translation unit from independently receiving the definition.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-two-modern-solutions">Two modern solutions</Content>
+<Content ns0:pstyle="Content">One traditional solution is:</Content>
+<Code ns0:pstyle="Code" language="cpp">// Config.hpp
+extern int gDebugMode;
+
+// Config.cpp
+int gDebugMode = 1;</Code>
+<Content ns0:pstyle="Content">A C++17+ solution, when a genuine globally accessible variable is appropriate:</Content>
+<Code ns0:pstyle="Code" language="cpp">inline int gDebugMode = 1;</Code>
+<Content ns0:pstyle="Content">An inline variable may have equivalent definitions in multiple translation units under the ODR rules. Important:</Content>
+<BlockQuote><Content ns0:pstyle="Quote"><InlineCode ns0:cstyle="InlineCode">inline</InlineCode> in C++ does not fundamentally mean “the CPU call will be replaced by the body.”</Content></BlockQuote>
+<Content ns0:pstyle="Content">That meaning is historical. The optimizer may inline a function without the <InlineCode ns0:cstyle="InlineCode">inline</InlineCode> keyword and decline to inline one with it. At the language level, <InlineCode ns0:cstyle="InlineCode">inline</InlineCode> is substantially about <Strong ns0:cstyle="Bold">multiple definition semantics and entity identity</Strong>.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-why-class-definitions-may-live-in-headers">Why class definitions may live in headers</Content>
+<Content ns0:pstyle="Content">The multi-translation-unit exceptions have conditions, not only matching-looking syntax: matching tokens and relevant name lookup must agree, with specified exceptions. Definitions attached to named modules do not simply inherit the traditional header permission. Some ODR violations require no diagnostic; a successful link is not proof of validity.</Content>
+<Content ns0:pstyle="Content">You have seen:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Vec3
+{
+    float x;
+    float y;
+    float z;
+
+    float lengthSquared() const
+    {
+        return x*x + y*y + z*z;
+    }
+};</Code>
+<Content ns0:pstyle="Content">included by many source files. Why does this not immediately violate the ODR? Because the language specifically permits certain entities—such as class definitions, templates, and inline entities—to have matching definitions in multiple translation units under strict conditions. It is not:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">“ODR means literally every C++ definition can occur once in all source text.”</Content></BlockQuote>
+<Content ns0:pstyle="Content">That would make headers impossible. The deep form is closer to:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">The program must maintain <Strong ns0:cstyle="Bold">one coherent definition of an entity</Strong>, while the language permits certain equivalent definitions to occur in multiple translation units.</Content></BlockQuote>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-the-evil-odr-bug-definitions-that-look-like-the-same-header-but-arent">The evil ODR bug: definitions that look like the same header but aren’t</Content>
+<Content ns0:pstyle="Content">Consider:</Content>
+<Code ns0:pstyle="Code" language="cpp">// Behavior.hpp
+
+inline int behavior()
+{
+#ifdef FAST_MODE
+    return 1;
+#else
+    return 2;
+#endif
+}</Code>
+<Content ns0:pstyle="Content">Compile:</Content>
+<Code ns0:pstyle="Code" language="text">A.cpp with FAST_MODE
+B.cpp without FAST_MODE</Code>
+<Content ns0:pstyle="Content">After preprocessing:</Content>
+<Code ns0:pstyle="Code" language="cpp">// A translation unit
+inline int behavior()
+{
+    return 1;
+}</Code>
+<Content ns0:pstyle="Content">versus:</Content>
+<Code ns0:pstyle="Code" language="cpp">// B translation unit
+inline int behavior()
+{
+    return 2;
+}</Code>
+<Content ns0:pstyle="Content">The source filename is the same. The effective definitions are not. You have fractured the ODR. Some ODR violations require no diagnostic. That means:</Content>
+<Code ns0:pstyle="Code" language="text">compiler: okay
+linker: maybe okay
+program: semantically invalid</Code>
+<Content ns0:pstyle="Content">This is one of C++’s nastier classes of bugs.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-why-modules-help">Why modules help</Content>
+<Content ns0:pstyle="Content">A named module interface is compiled as a module interface rather than textually reconstructed independently in every importer. That removes many opportunities for:</Content>
+<Code ns0:pstyle="Code" language="text">same header + different macro environment = different declaration</Code>
+<Content ns0:pstyle="Content">It does not abolish the ODR, but it gives the compiler a stronger semantic module boundary. This is one reason your move toward <InlineCode ns0:cstyle="InlineCode">.cppm</InlineCode> in Kairo is technically meaningful rather than merely stylistic.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-linkage-is-related-to-odr-but-is-not-odr">Linkage is related to ODR, but is not ODR</Content>
+<Content ns0:pstyle="Content">Traditional example:</Content>
+<Code ns0:pstyle="Code" language="cpp">namespace
+{
+    int helper()
+    {
+        return 42;
+    }
+}</Code>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">helper</InlineCode> is translation-unit-private. Another old form is:</Content>
+<Code ns0:pstyle="Code" language="cpp">static int helper()
+{
+    return 42;
+}</Code>
+<Content ns0:pstyle="Content">for a namespace-scope function. Modern C++ usually favors unnamed namespaces for TU-private namespace entities. C++20 modules add an additional idea, <Strong ns0:cstyle="Bold">module linkage</Strong>, for certain names attached to named modules. So do not reduce linkage to:</Content>
+<Code ns0:pstyle="Code" language="text">internal vs external forever</Code>
+<Content ns0:pstyle="Content">because an illustrative codebase is C++23 and module-based.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-a-spelling-needs-a-place-and-a-meaning">A spelling needs a place and a meaning</Content>
+<Content ns0:pstyle="Content">Lookup comes before overload resolution: first determine which declarations a spelling finds, then choose among viable candidates. A derived <InlineCode ns0:cstyle="InlineCode">draw(float)</InlineCode> can hide all base overloads named <InlineCode ns0:cstyle="InlineCode">draw</InlineCode>, including <InlineCode ns0:cstyle="InlineCode">draw(int)</InlineCode>; <InlineCode ns0:cstyle="InlineCode">using Base::draw;</InlineCode> restores those base declarations to the derived overload set. A <Strong ns0:cstyle="Bold">candidate</Strong> is a function considered for the call; a <Strong ns0:cstyle="Bold">viable</Strong> candidate satisfies the call’s argument constraints. Hiding is not the same as overriding.</Content>
+<Content ns0:pstyle="Content">The name’s point of declaration also matters. In a local <InlineCode ns0:cstyle="InlineCode">int x=x;</InlineCode>, the right-hand name finds the newly declared local, not a hidden outer <InlineCode ns0:cstyle="InlineCode">x</InlineCode>. In C++23, reading that local’s uninitialized integer value is undefined behavior. This is a bad example to diagnose, not execute; different C++26 uninitialized-value wording must not be silently retrofitted into the C++23 lab.</Content>
+<Content ns0:pstyle="Content">The classic separate-compilation model lets clients compile against an interface while implementations are compiled separately. The easiest mistake here is believing:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">“scope = lifetime.”</Content></BlockQuote>
+<Content ns0:pstyle="Content">No. Consider:</Content>
+<Code ns0:pstyle="Code" language="cpp">int* p = nullptr;
+
+void f()
+{
+    static int x = 10;
+    p = &amp;x;
+}</Code>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">x</InlineCode> has <Strong ns0:cstyle="Bold">block scope</Strong>. Its name <InlineCode ns0:cstyle="InlineCode">x</InlineCode> is inaccessible outside the block. But it has <Strong ns0:cstyle="Bold">static <Link href="#appendix-0b104bcba06b">storage duration</Link></Strong>, so the object persists until program termination. Scope concerns the <Strong ns0:cstyle="Bold">name</Strong>. <Link href="#print-redirect-198dc8acb1412673">Object construction and storage reuse</Link> explains how lifetime differs from backing storage.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-block-scope">Block scope</Content>
+<Code ns0:pstyle="Code" language="cpp">void render()
+{
+    int frame = 10;
+
+    {
+        int sample = 4;
+    }
+
+    // sample unavailable here
+}</Code>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">sample</InlineCode>’s name belongs to the inner block.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-name-hiding">Name hiding</Content>
+<Code ns0:pstyle="Code" language="cpp">int x = 1;
+
+void f()
+{
+    int x = 2;
+
+    std::cout &lt;&lt; x;    // local x = 2
+    std::cout &lt;&lt; ::x;  // global x = 1
+}</Code>
+<Content ns0:pstyle="Content">The local declaration <Strong ns0:cstyle="Bold">hides</Strong> the outer declaration. It did not delete the global object. It changed what unqualified lookup finds. This distinction is extremely useful when debugging large engine systems.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-class-scope">Class scope</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Camera
+{
+    float nearPlane;
+    float farPlane;
+
+    float depthRange() const
+    {
+        return farPlane - nearPlane;
+    }
+};</Code>
+<Content ns0:pstyle="Content">Unqualified lookup for:</Content>
+<Code ns0:pstyle="Code" language="cpp">nearPlane</Code>
+<Content ns0:pstyle="Content">inside <InlineCode ns0:cstyle="InlineCode">depthRange()</InlineCode> finds the class member. The compiler effectively understands it relative to the current object, roughly:</Content>
+<Code ns0:pstyle="Code" language="cpp">this-&gt;nearPlane</Code>
+<Content ns0:pstyle="Content">although the language semantics are richer than textual rewriting.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-namespace-scope">Namespace scope</Content>
+<Code ns0:pstyle="Code" language="cpp">namespace kairo::render
+{
+    struct Camera {};
+}</Code>
+<Content ns0:pstyle="Content">Outside:</Content>
+<Code ns0:pstyle="Code" language="cpp">kairo::render::Camera c;</Code>
+<Content ns0:pstyle="Content">That is <Strong ns0:cstyle="Bold">qualified lookup</Strong>. Inside a suitable context:</Content>
+<Code ns0:pstyle="Code" language="cpp">using kairo::render::Camera;
+
+Camera c;</Code>
+<Content ns0:pstyle="Content">you’ve introduced a declaration into consideration for unqualified usage.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-using-namespace-versus-using-declaration"><InlineCode ns0:cstyle="InlineCode">using namespace</InlineCode> versus using declaration</Content>
+<Content ns0:pstyle="Content">This:</Content>
+<Code ns0:pstyle="Code" language="cpp">using namespace kairo::render;</Code>
+<Content ns0:pstyle="Content">makes many names candidates during lookup. This:</Content>
+<Code ns0:pstyle="Code" language="cpp">using kairo::render::Camera;</Code>
+<Content ns0:pstyle="Content">specifically introduces <InlineCode ns0:cstyle="InlineCode">Camera</InlineCode>. The second is usually less polluting. Putting a broad using-directive in a public textual header alters consumer lookup. Module exports and reachability are not textual inclusion: do not claim every directive in a module automatically leaks into every importer. Prefer narrow declarations and explicit qualification at public boundaries.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-argument-dependent-lookup-adl">Argument-dependent lookup — ADL</Content>
+<Content ns0:pstyle="Content">Suppose:</Content>
+<Code ns0:pstyle="Code" language="cpp">namespace math
+{
+    struct Vec3 {};
+
+    float Dot(Vec3, Vec3);
+}</Code>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="cpp">math::Vec3 a;
+math::Vec3 b;
+
+float d = Dot(a, b);</Code>
+<Content ns0:pstyle="Content">may find <InlineCode ns0:cstyle="InlineCode">math::Dot</InlineCode> even though you did not write:</Content>
+<Code ns0:pstyle="Code" language="cpp">math::Dot</Code>
+<Content ns0:pstyle="Content">Why? Because arguments belong to namespace <InlineCode ns0:cstyle="InlineCode">math</InlineCode>, and <Strong ns0:cstyle="Bold">argument-dependent lookup</Strong> considers associated namespaces/classes. This is central to idiomatic generic C++. For example, this pattern:</Content>
+<Code ns0:pstyle="Code" language="cpp">using std::swap;
+swap(a, b);</Code>
+<Content ns0:pstyle="Content">allows normal lookup to see <InlineCode ns0:cstyle="InlineCode">std::swap</InlineCode> while <Link href="#print-redirect-1a38a079923db1d9">ADL</Link> can discover a type-specific <InlineCode ns0:cstyle="InlineCode">swap</InlineCode> in the type’s own namespace. We will revisit this deeply during templates because template name lookup creates another dimension: some names are looked up when the template is defined, while dependent names may participate in lookup at instantiation.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-modules-add-visibilityreachability-not-a-replacement-for-scopes">Modules add visibility/reachability, not a replacement for scopes</Content>
+<Content ns0:pstyle="Content">Your module contains:</Content>
+<Code ns0:pstyle="Code" language="cpp">export module Kairo.ECS.Entity;
+
+export namespace kairo::ecs
+{
+    struct Entity { ... };
+}</Code>
+<Content ns0:pstyle="Content">Then a consumer can:</Content>
+<Code ns0:pstyle="Code" language="cpp">import Kairo.ECS.Entity;
+
+kairo::ecs::Entity e;</Code>
+<Content ns0:pstyle="Content">There are two separate questions:</Content>
+<Code ns0:pstyle="Code" language="text">Is Entity exported/reachable from this module?</Code>
+<Content ns0:pstyle="Content">and:</Content>
+<Code ns0:pstyle="Code" language="text">Given "kairo::ecs::Entity", which declaration does lookup find?</Code>
+<Content ns0:pstyle="Content">Modules affect availability. Scopes and lookup still determine meaning.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-a-name-does-not-decide-how-long-storage-lasts">A name does not decide how long storage lasts</Content>
+<Content ns0:pstyle="Content">Now we enter the part of C++ that unlocks pointers, RAII and ownership. <Strong ns0:cstyle="Bold">Storage duration is about storage.</Strong> It answers:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">How long is the region capable of containing this object retained?</Content></BlockQuote>
+<Content ns0:pstyle="Content">The four major categories are:</Content>
+<Table ns0:table="table" ns0:trows="5" ns0:tcols="3" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Storage duration</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Typical source</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Lifetime of storage</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">automatic</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">ordinary block local / parameters</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">associated block/call execution</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">static</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">namespace objects, local <InlineCode ns0:cstyle="InlineCode">static</InlineCode>, static data members</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">entire program</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">thread</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">thread_local</InlineCode> — <Link href="#print-redirect-5692c4d14fc7bd64">Thread-local storage</Link></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">duration of the corresponding thread</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">dynamic</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">allocation functions / <InlineCode ns0:cstyle="InlineCode">new</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">until explicitly released</Content></Cell></Table>
+<Content ns0:pstyle="Content">Do not automatically translate those into:</Content>
+<Code ns0:pstyle="Code" language="text">automatic = stack
+dynamic = heap</Code>
+<Content ns0:pstyle="Content">Those are common implementation strategies. The language specifies <Strong ns0:cstyle="Bold">semantics</Strong>, not a mandatory physical memory architecture.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-automatic-storage-duration">Automatic storage duration</Content>
+<Code ns0:pstyle="Code" language="cpp">void update()
+{
+    Entity e;
+}</Code>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">e</InlineCode> normally has automatic storage duration. A typical implementation reserves its storage in the function’s stack frame. Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">enter update
+    reserve/identify storage for e
+    construct e
+    use e
+    destroy e
+    storage ceases to be reserved for e
+leave update</Code>
+<Content ns0:pstyle="Content">The optimizer can eliminate the physical stack slot altogether if observable program behavior remains equivalent. So saying:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">“A local variable is on the stack”</Content></BlockQuote>
+<Content ns0:pstyle="Content">is often practically useful, but <Strong ns0:cstyle="Bold">not the C++ semantic definition</Strong>.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-static-storage-duration">Static storage duration</Content>
+<Content ns0:pstyle="Content">Namespace object:</Content>
+<Code ns0:pstyle="Code" language="cpp">int frameCount = 0;</Code>
+<Content ns0:pstyle="Content">has static storage duration. So does:</Content>
+<Code ns0:pstyle="Code" language="cpp">void f()
+{
+    static int calls = 0;
+    ++calls;
+}</Code>
+<Content ns0:pstyle="Content">The <Emphasis ns0:cstyle="Emphasis">name</Emphasis> <InlineCode ns0:cstyle="InlineCode">calls</InlineCode> has block scope. The <Emphasis ns0:cstyle="Emphasis">storage</Emphasis> persists for the whole program. The local static is initialized the first time execution reaches its declaration, unless it can undergo earlier initialization under language rules. Since C++11, initialization of a function-local static is synchronized: concurrent first calls do not independently construct multiple copies. That makes patterns like:</Content>
+<Code ns0:pstyle="Code" language="cpp">Renderer&amp; renderer()
+{
+    static Renderer instance;
+    return instance;
+}</Code>
+<Content ns0:pstyle="Content">much safer than they were historically. But it does not solve every architectural problem with global state.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-the-static-initialization-order-problem">The static initialization order problem</Content>
+<Content ns0:pstyle="Content">Suppose:</Content>
+<Code ns0:pstyle="Code" language="cpp">// A.cpp
+Renderer renderer{device};</Code>
+<Content ns0:pstyle="Content">and:</Content>
+<Code ns0:pstyle="Code" language="cpp">// B.cpp
+Device device;</Code>
+<Content ns0:pstyle="Content">If <InlineCode ns0:cstyle="InlineCode">renderer</InlineCode> needs <InlineCode ns0:cstyle="InlineCode">device</InlineCode> during dynamic initialization, their initialization order across translation units can be problematic. This is the classic <Strong ns0:cstyle="Bold">static initialization order fiasco</Strong>. A function-local static can defer construction until actual use:</Content>
+<Code ns0:pstyle="Code" language="cpp">Device&amp; device()
+{
+    static Device d;
+    return d;
+}</Code>
+<Content ns0:pstyle="Content">But in engines, an even cleaner design is often explicit ownership:</Content>
+<Code ns0:pstyle="Code" language="text">Engine
+ ├── Device
+ ├── Renderer
+ ├── AssetSystem
+ └── PhysicsWorld</Code>
+<Content ns0:pstyle="Content">with deterministic initialization and shutdown order. This will come back hard during RAII and engine architecture.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-constinit"><InlineCode ns0:cstyle="InlineCode">constinit</InlineCode></Content>
+<Content ns0:pstyle="Content">C++20 provides:</Content>
+<Code ns0:pstyle="Code" language="cpp">constinit int value = 42;</Code>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">constinit</InlineCode> requires static initialization. It is useful when you care about avoiding dynamic initialization ordering. Do not confuse it with <InlineCode ns0:cstyle="InlineCode">const</InlineCode>. This is valid conceptually:</Content>
+<Code ns0:pstyle="Code" language="cpp">constinit int counter = 0;
+
+void increment()
+{
+    ++counter;
+}</Code>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">counter</InlineCode> can still be mutable. <InlineCode ns0:cstyle="InlineCode">constinit</InlineCode> concerns initialization timing.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-thread-storage-duration">Thread storage duration</Content>
+<Code ns0:pstyle="Code" language="cpp">thread_local int commandBufferIndex = 0;</Code>
+<Content ns0:pstyle="Content">Each thread gets its own instance. Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">Thread A:
+    commandBufferIndex_A
+
+Thread B:
+    commandBufferIndex_B
+
+Thread C:
+    commandBufferIndex_C</Code>
+<Content ns0:pstyle="Content">This can be useful for:</Content>
+<Code ns0:pstyle="Code" language="text">per-thread allocators
+scratch arenas
+profiling state
+temporary command-building state
+thread-specific random engines</Code>
+<Content ns0:pstyle="Content">But it is not automatically free. TLS access has ABI/runtime costs, and thread-local destructors/initialization can complicate shutdown.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-dynamic-storage-duration">Dynamic storage duration</Content>
+<Code ns0:pstyle="Code" language="cpp">Entity* p = new Entity{};</Code>
+<Content ns0:pstyle="Content">There are <Strong ns0:cstyle="Bold">two objects to reason about</Strong>:</Content>
+<Code ns0:pstyle="Code" language="text">p
+└── pointer object
+    automatic storage duration
+
+*p
+└── Entity object
+    dynamic storage duration</Code>
+<Content ns0:pstyle="Content">This is one of the first mental separations I want permanently burned in:</Content>
+<Code ns0:pstyle="Code" language="text">pointer lifetime != pointed object's lifetime
+pointer storage != pointee storage</Code>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="cpp">delete p;</Code>
+<Content ns0:pstyle="Content">ends the <InlineCode ns0:cstyle="InlineCode">Entity</InlineCode> lifetime and releases its dynamically allocated storage. But:</Content>
+<Code ns0:pstyle="Code" language="cpp">p</Code>
+<Content ns0:pstyle="Content">may still physically contain the old address. The pointer object itself remains alive until its scope ends. Its <Strong ns0:cstyle="Bold">value is now dangling</Strong>. This is the bridge into the borrowing and invalidation story below.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-storage-is-a-place-an-object-is-its-occupant">Storage is a place; an object is its occupant</Content>
+<Content ns0:pstyle="Content">This is one of the deepest ideas in C++. Consider a parking space.</Content>
+<Code ns0:pstyle="Code" language="text">storage = the parking space
+object  = the particular car currently occupying it</Code>
+<Content ns0:pstyle="Content">You can have:</Content>
+<Code ns0:pstyle="Code" language="text">parking space exists
+no car exists</Code>
+<Content ns0:pstyle="Content">or:</Content>
+<Code ns0:pstyle="Code" language="text">parking space exists
+Car A lives there
+Car A leaves
+same parking space remains
+Car B arrives</Code>
+<Content ns0:pstyle="Content">The location did not change. The object identity did. That is almost exactly what low-level C++ storage reuse does.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-raw-storage-is-not-automatically-a-live-object-of-arbitrary-type">Raw storage is not automatically a live object of arbitrary type</Content>
+<Content ns0:pstyle="Content">Consider:</Content>
+<Code ns0:pstyle="Code" language="cpp">#include &lt;cstddef&gt;
+
+alignas(64) std::byte storage[64];</Code>
+<Content ns0:pstyle="Content">You have storage. You do <Strong ns0:cstyle="Bold">not</Strong> automatically have:</Content>
+<Code ns0:pstyle="Code" language="cpp">Renderer
+Texture
+Matrix
+Entity</Code>
+<Content ns0:pstyle="Content">living in it. Storage has:</Content>
+<Code ns0:pstyle="Code" language="text">address
+size
+alignment</Code>
+<Content ns0:pstyle="Content">An object adds:</Content>
+<Code ns0:pstyle="Code" language="text">type
+lifetime
+identity
+value/state
+language-permitted operations</Code>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-construction-starts-a-lifetime">Construction starts a lifetime</Content>
+<Content ns0:pstyle="Content">A canonical advanced example:</Content>
+<Code ns0:pstyle="Code" language="cpp">#include &lt;cstddef&gt;
+#include &lt;memory&gt;
+
+struct Particle
+{
+    float x;
+    float y;
+};
+
+alignas(Particle) std::byte storage[sizeof(Particle)];
+
+Particle* p =
+    std::construct_at(
+        reinterpret_cast&lt;Particle*&gt;(storage),
+        Particle{1.0f, 2.0f}
+    );</Code>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">before construct_at:
+
+storage:
++-----------------------+
+| raw bytes             |
++-----------------------+
+^
+suitably aligned address
+
+no Particle lifetime
+
+
+after construct_at:
+
+storage:
++-----------------------+
+| Particle{x=1, y=2}    |
++-----------------------+
+^
+Particle object lifetime active</Code>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::destroy_at(p);</Code>
+<Content ns0:pstyle="Content">ends the <InlineCode ns0:cstyle="InlineCode">Particle</InlineCode> lifetime. The byte array’s storage itself remains. This exact separation powers:</Content>
+<Code ns0:pstyle="Code" language="text">object pools
+arena allocators
+std::vector internals
+std::optional
+std::variant
+ECS component storage
+small-buffer optimization
+allocator implementations
+lock-free structures</Code>
+<Content ns0:pstyle="Content">So object lifetime is not academic lawyering. It is an engine programming primitive.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-new-actually-combines-operations"><InlineCode ns0:cstyle="InlineCode">new</InlineCode> actually combines operations</Content>
+<Content ns0:pstyle="Content">When you write:</Content>
+<Code ns0:pstyle="Code" language="cpp">auto* p = new Particle{1, 2};</Code>
+<Content ns0:pstyle="Content">conceptually you get:</Content>
+<Code ns0:pstyle="Code" language="text">1. obtain suitably sized/aligned storage
+2. construct Particle in that storage
+3. return pointer to the object</Code>
+<Content ns0:pstyle="Content">Similarly:</Content>
+<Code ns0:pstyle="Code" language="cpp">delete p;</Code>
+<Content ns0:pstyle="Content">conceptually performs:</Content>
+<Code ns0:pstyle="Code" language="text">1. destroy object
+2. release storage</Code>
+<Content ns0:pstyle="Content">Custom allocators split those steps apart intentionally.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-a-dangerous-misconception">A dangerous misconception</Content>
+<Content ns0:pstyle="Content">After:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::destroy_at(p);</Code>
+<Content ns0:pstyle="Content">the bytes may still look exactly like:</Content>
+<Code ns0:pstyle="Code" language="text">00 00 80 3F 00 00 00 40</Code>
+<Content ns0:pstyle="Content">which could encode 1.0f and 2.0f on a little-endian IEEE binary32 target (not a universal byte representation). But the old <InlineCode ns0:cstyle="InlineCode">Particle</InlineCode> object is dead. The persistence of bytes does not imply persistence of object lifetime. This is why:</Content>
+<BlockQuote><Content ns0:pstyle="Quote"><Strong ns0:cstyle="Bold">Memory containing plausible bits does not prove that a live C++ object exists there.</Strong></Content></BlockQuote>
+<Content ns0:pstyle="Content">That principle will explain many undefined behaviors later.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-lifetime-beginning-and-ending-more-precisely">Lifetime beginning and ending more precisely</Content>
+<Content ns0:pstyle="Content">For an ordinary class object, lifetime generally begins after appropriately aligned storage exists and its initialization completes. For class objects, lifetime ends when destruction begins or when its storage is released/reused according to the language rules. C++ has advanced exceptions involving:</Content>
+<Code ns0:pstyle="Code" language="text">unions
+implicit-lifetime types
+allocators
+storage reuse
+subobjects
+placement construction</Code>
+<Content ns0:pstyle="Content">so “constructor begins lifetime, destructor ends lifetime” is a good first model but not the entire standard. In a later lifetime chapter, when we cover placement construction and lifetime restart, we will explore the hard rules such as transparent replacement and the rare situations where <InlineCode ns0:cstyle="InlineCode">std::launder</InlineCode> enters the picture.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-modern-implicit-lifetime-objects">Modern implicit-lifetime objects</Content>
+<Content ns0:pstyle="Content">Modern C++ deliberately permits some low-level operations to implicitly begin lifetime for <Strong ns0:cstyle="Bold">implicit-lifetime types</Strong>, because otherwise routines using allocation/memory blocks would be unnecessarily impossible to express. That does <Strong ns0:cstyle="Bold">not</Strong> mean:</Content>
+<Code ns0:pstyle="Code" language="text">bytes always automatically become whatever type you cast them to</Code>
+<Content ns0:pstyle="Content">This remains wrong thinking:</Content>
+<Code ns0:pstyle="Code" language="cpp">SomeHugeComplexType* p =
+    reinterpret_cast&lt;SomeHugeComplexType*&gt;(randomBytes);</Code>
+<Content ns0:pstyle="Content">A cast changes how an expression is interpreted. It does not magically satisfy every object-lifetime precondition.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-values-occupants-and-addresses-tell-different-stories">Values, occupants and addresses tell different stories</Content>
+<Content ns0:pstyle="Content">Two copies of an entity handle are different C++ handle objects, even when their index/generation values identify the same application entity. The handle’s own address is not the entity’s identity. Conversely, a stable entity identity does not guarantee a stable address for its current component storage. Keep C++ object identity, application identity, and storage location on separate lines of the diagram.</Content>
+<Content ns0:pstyle="Content">Now distinguish:</Content>
+<Code ns0:pstyle="Code" language="text">value
+identity
+address</Code>
+<Content ns0:pstyle="Content">Suppose:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Particle
+{
+    int health;
+};
+
+Particle a{100};
+Particle b{100};</Code>
+<Content ns0:pstyle="Content">Their values are equal. Their identities are not.</Content>
+<Code ns0:pstyle="Code" language="text">a:
+value = {100}
+identity = object A
+address = perhaps 0x1000
+
+b:
+value = {100}
+identity = object B
+address = perhaps 0x2000</Code>
+<Content ns0:pstyle="Content">Changing:</Content>
+<Code ns0:pstyle="Code" language="cpp">a.health = 50;</Code>
+<Content ns0:pstyle="Content">changes <InlineCode ns0:cstyle="InlineCode">a</InlineCode>’s value. It does not turn <InlineCode ns0:cstyle="InlineCode">a</InlineCode> into a different object. Identity survives ordinary mutation.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-address-is-often-useful-as-identity-but-is-not-identity-itself">Address is often useful as identity, but is not identity itself</Content>
+<Content ns0:pstyle="Content">During a normal object’s lifetime, its address is often a useful way of designating it. But the general equation:</Content>
+<Code ns0:pstyle="Code" language="text">identity == numerical address</Code>
+<Content ns0:pstyle="Content">is false. Why? Because storage can be reused.</Content>
+<Code ns0:pstyle="Code" language="text">Time t0:
+address 0x1000 → Enemy A
+
+destroy A
+
+Time t1:
+address 0x1000 → Enemy B</Code>
+<Content ns0:pstyle="Content">Same numerical address. Different lifetime. Different object identity. This is the exact conceptual reason stale pointers are dangerous.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-a-handle-remembers-which-occupant-was-intended">A handle remembers which occupant was intended</Content>
+<Content ns0:pstyle="Content">An <Link href="#appendix-f1581457d322">index-and-generation handle</Link> stores a slot number and a reuse counter, rather than relying on an address. Slot 42 at generation 7 is not slot 42 at generation 8. An ECS (entity-component system) is a design where entities identify collections of components; the handle identifies a logical entity while component objects may move.</Content>
+<Content ns0:pstyle="Content">A valid-looking index is not a live entity check. Resolving a handle must check bounds, occupancy and generation against an owning registry. A generation counter eventually wraps; choose a width/reuse policy and document the collision horizon. Handles also need registry ownership: slot 42 in two worlds does not mean the same entity. These are system-identity constraints, not automatic properties of a C++ struct. The source-reported Kairo record is retained separately; the self-contained laboratory below verifies a small illustrative handle.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-multiple-things-can-even-share-an-address">Multiple things can even share an address</Content>
+<Content ns0:pstyle="Content">Several C++ mechanisms weaken “different thing = different numerical address.” A union stores different members over overlapping storage:</Content>
+<Code ns0:pstyle="Code" language="cpp">union U
+{
+    int i;
+    float f;
+};</Code>
+<Content ns0:pstyle="Content">Both members begin at the union’s address. Only the appropriate active-member/lifetime rules make accesses valid. Empty base optimization can place an empty base subobject at an address shared with other structural parts of a complete object under ABI rules. C++20 also has:</Content>
+<Code ns0:pstyle="Code" language="cpp">[[no_unique_address]]</Code>
+<Content ns0:pstyle="Content">which permits certain empty member subobjects to overlap storage. So a raw address is better thought of as:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">a coordinate in storage, not a complete description of object identity.</Content></BlockQuote>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-stdaddressof"><InlineCode ns0:cstyle="InlineCode">std::addressof</InlineCode></Content>
+<Content ns0:pstyle="Content">C++ permits overloading <InlineCode ns0:cstyle="InlineCode">operator&amp;</InlineCode>. Therefore:</Content>
+<Code ns0:pstyle="Code" language="cpp">&amp;object</Code>
+<Content ns0:pstyle="Content">can theoretically invoke user-defined behavior. When generic low-level code truly wants the actual object address, use:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::addressof(object)</Code>
+<Content ns0:pstyle="Content">This bypasses overloaded <InlineCode ns0:cstyle="InlineCode">operator&amp;</InlineCode>. That is a niche tool, but it reveals an important C++ theme:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">Surface syntax and object-model meaning are not always identical.</Content></BlockQuote>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-choose-a-type-for-its-promise-not-its-familiar-size">Choose a type for its promise, not its familiar size</Content>
+<Content ns0:pstyle="Content">Native <InlineCode ns0:cstyle="InlineCode">bool</InlineCode> is a language value type, not a portable one-byte GPU/file field. Use an explicitly defined wire integer encoding, such as zero/one, validate received codes, and convert to bool by a value operation. Do not deserialize arbitrary bytes directly into a bool and assume every representation valid. Similarly, Unicode character types express code-unit intent, not automatic decoding into characters.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">float</InlineCode>, <InlineCode ns0:cstyle="InlineCode">double</InlineCode> and <InlineCode ns0:cstyle="InlineCode">long double</InlineCode> do not portably mean binary32, binary64 and binary128. If a protocol needs binary32, check its stated assumptions: size in bytes, CHAR_BIT, numeric_limits precision/exponent properties and representation requirements. <InlineCode ns0:cstyle="InlineCode">is_iec559</InlineCode> alone does not specify one exact IEEE format. A wire decoder must still establish byte order and valid field interpretation.</Content>
+<Content ns0:pstyle="Content">Your first machine-level assumption must be destroyed:</Content>
+<BlockQuote><Content ns0:pstyle="Quote"><InlineCode ns0:cstyle="InlineCode">int</InlineCode> does <Strong ns0:cstyle="Bold">not</Strong> mean “32-bit integer” in the C++ language.</Content></BlockQuote>
+<Content ns0:pstyle="Content">The major fundamental categories include:</Content>
+<Table ns0:table="table" ns0:trows="9" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Category</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Examples</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">void</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">void</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">null pointer type</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">std::nullptr_t</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Boolean</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">bool</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">ordinary character/integer</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">char</InlineCode>, <InlineCode ns0:cstyle="InlineCode">signed char</InlineCode>, <InlineCode ns0:cstyle="InlineCode">unsigned char</InlineCode>, <InlineCode ns0:cstyle="InlineCode">short</InlineCode>, <InlineCode ns0:cstyle="InlineCode">int</InlineCode>, <InlineCode ns0:cstyle="InlineCode">long</InlineCode>, <InlineCode ns0:cstyle="InlineCode">long long</InlineCode>, unsigned forms</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">Unicode character</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">char8_t</InlineCode>, <InlineCode ns0:cstyle="InlineCode">char16_t</InlineCode>, <InlineCode ns0:cstyle="InlineCode">char32_t</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">wide character</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">wchar_t</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">floating</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">float</InlineCode>, <InlineCode ns0:cstyle="InlineCode">double</InlineCode>, <InlineCode ns0:cstyle="InlineCode">long double</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">implementation-defined extended types</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">implementation/compiler dependent</Content></Cell></Table>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-what-the-standard-does-guarantee">What the standard does guarantee</Content>
+<Content ns0:pstyle="Content">This is always true:</Content>
+<Code ns0:pstyle="Code" language="cpp">sizeof(char) == 1</Code>
+<Content ns0:pstyle="Content">But the unit of <InlineCode ns0:cstyle="InlineCode">sizeof</InlineCode> is a <Strong ns0:cstyle="Bold">C++ byte</Strong>, and a byte is at least 8 bits. Check:</Content>
+<Code ns0:pstyle="Code" language="cpp">#include &lt;climits&gt;
+
+std::cout &lt;&lt; CHAR_BIT;</Code>
+<Content ns0:pstyle="Content">Most systems you will use report:</Content>
+<Code ns0:pstyle="Code" language="text">8</Code>
+<Content ns0:pstyle="Content">But:</Content>
+<Code ns0:pstyle="Code" language="text">C++ byte == exactly 8 bits</Code>
+<Content ns0:pstyle="Content">is not a universal language guarantee.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-integer-relative-sizes">Integer relative sizes</Content>
+<Content ns0:pstyle="Content">The language guarantees a nondecreasing capacity relationship roughly:</Content>
+<Code ns0:pstyle="Code" language="text">signed char
+   ≤ short
+   ≤ int
+   ≤ long
+   ≤ long long</Code>
+<Content ns0:pstyle="Content">with minimum widths traditionally corresponding to at least:</Content>
+<Code ns0:pstyle="Code" language="text">signed char : 8 bits
+short       : 16
+int         : 16
+long        : 32
+long long   : 64</Code>
+<Content ns0:pstyle="Content">Common modern platforms choose more. For example, typical 64-bit ABIs differ:</Content>
+<Code ns0:pstyle="Code" language="text">LP64
+    int       32
+    long      64
+    pointer   64
+
+LLP64
+    int       32
+    long      32
+    long long 64
+    pointer   64</Code>
+<Content ns0:pstyle="Content">macOS/Linux commonly use LP64. 64-bit Windows uses LLP64. Therefore this code is broken as a portability assumption:</Content>
+<Code ns0:pstyle="Code" language="cpp">static_assert(sizeof(long) == sizeof(void*));</Code>
+<Content ns0:pstyle="Content">even though it works on one family of systems.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-exact-width-integer-types">Exact-width integer types</Content>
+<Content ns0:pstyle="Content">For binary formats, handles, GPU structs, hashes and network protocols, you commonly want:</Content>
+<Code ns0:pstyle="Code" language="cpp">#include &lt;cstdint&gt;
+
+std::uint8_t
+std::uint16_t
+std::uint32_t
+std::uint64_t</Code>
+<Content ns0:pstyle="Content">A handle can express its fields using these types:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::uint32_t index;
+std::uint32_t generation;</Code>
+<Content ns0:pstyle="Content">That gives a clear representation contract:</Content>
+<Code ns0:pstyle="Code" language="text">index      = 32-bit unsigned if uint32_t exists
+generation = 32-bit unsigned if uint32_t exists</Code>
+<Content ns0:pstyle="Content">Important subtlety: The exact-width aliases such as <InlineCode ns0:cstyle="InlineCode">std::uint32_t</InlineCode> are <Strong ns0:cstyle="Bold">optional</Strong> in the standard. An implementation provides them only if it has a corresponding integer type with exactly that width and required representation constraints. On all mainstream systems relevant to your work, they exist.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-least-and-fast"><InlineCode ns0:cstyle="InlineCode">least</InlineCode> and <InlineCode ns0:cstyle="InlineCode">fast</InlineCode></Content>
+<Content ns0:pstyle="Content">C++ also provides:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::uint_least32_t
+std::uint_fast32_t</Code>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">least</InlineCode> means:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">smallest available integer type with at least that many bits.</Content></BlockQuote>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">fast</InlineCode> means:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">implementation-selected type intended to be fast while having at least that many bits.</Content></BlockQuote>
+<Content ns0:pstyle="Content">Do not assume:</Content>
+<Code ns0:pstyle="Code" language="cpp">uint_fast32_t == uint32_t</Code>
+<Content ns0:pstyle="Content">Its width can be larger. For serialized formats, use exact-width types when exact width is part of the format. For pure computation, <InlineCode ns0:cstyle="InlineCode">fast</InlineCode>/native types can sometimes make sense.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-stdsize_t"><InlineCode ns0:cstyle="InlineCode">std::size_t</InlineCode></Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">sizeof</InlineCode> returns std::size_t. A container returns its own size_type, commonly size_t for standard configurations; do not make that equivalence a rule for every container. A checked conversion from a serialized count must separately establish representability and a practical allocation/resource limit.</Content>
+<Content ns0:pstyle="Content">Expressions such as:</Content>
+<Code ns0:pstyle="Code" language="cpp">sizeof(T)
+vector.size()</Code>
+<Content ns0:pstyle="Content">use an unsigned size type usually represented by <InlineCode ns0:cstyle="InlineCode">std::size_t</InlineCode>. Its purpose is not:</Content>
+<Code ns0:pstyle="Code" language="text">some particular 64-bit integer</Code>
+<Content ns0:pstyle="Content">Its purpose is:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">an unsigned integer type capable of representing the size of any object.</Content></BlockQuote>
+<Content ns0:pstyle="Content">On a common 64-bit system it is usually 64-bit. Do not serialize <InlineCode ns0:cstyle="InlineCode">size_t</InlineCode> directly as a stable file-format field if the format must be portable across ABIs. Use something explicit:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::uint64_t count;</Code>
+<Content ns0:pstyle="Content">and validate conversion into <InlineCode ns0:cstyle="InlineCode">std::size_t</InlineCode> at runtime.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-char-signedness"><InlineCode ns0:cstyle="InlineCode">char</InlineCode> signedness</Content>
+<Content ns0:pstyle="Content">Plain:</Content>
+<Code ns0:pstyle="Code" language="cpp">char</Code>
+<Content ns0:pstyle="Content">is a distinct type from:</Content>
+<Code ns0:pstyle="Code" language="cpp">signed char
+unsigned char</Code>
+<Content ns0:pstyle="Content">Whether plain <InlineCode ns0:cstyle="InlineCode">char</InlineCode> behaves as signed or unsigned for values outside the common positive range is implementation-defined. Therefore don’t do protocol arithmetic relying on:</Content>
+<Code ns0:pstyle="Code" language="cpp">char byte;
+if (byte &lt; 0) ...</Code>
+<Content ns0:pstyle="Content">Use:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::uint8_t</Code>
+<Content ns0:pstyle="Content">for an 8-bit integer quantity when appropriate, or:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::byte</Code>
+<Content ns0:pstyle="Content">when you mean <Strong ns0:cstyle="Bold">raw byte data rather than number</Strong>. This semantic distinction is excellent:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::byte header[16];</Code>
+<Content ns0:pstyle="Content">says:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">these are bytes.</Content></BlockQuote>
+<Content ns0:pstyle="Content">while:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::uint8_t samples[16];</Code>
+<Content ns0:pstyle="Content">says:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">these are 8-bit integer values.</Content></BlockQuote>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-numeric_limits"><InlineCode ns0:cstyle="InlineCode">numeric_limits</InlineCode></Content>
+<Content ns0:pstyle="Content">Instead of assumptions:</Content>
+<Code ns0:pstyle="Code" language="cpp">int max = 2147483647;</Code>
+<Content ns0:pstyle="Content">query the type:</Content>
+<Code ns0:pstyle="Code" language="cpp">#include &lt;limits&gt;
+
+auto maxInt = std::numeric_limits&lt;int&gt;::max();
+auto minInt = std::numeric_limits&lt;int&gt;::lowest();
+
+auto eps = std::numeric_limits&lt;float&gt;::epsilon();
+auto inf = std::numeric_limits&lt;float&gt;::infinity();</Code>
+<Content ns0:pstyle="Content">A handle’s invalid-index sentinel can use:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::numeric_limits&lt;std::uint32_t&gt;::max()</Code>
+<Content ns0:pstyle="Content">for <InlineCode ns0:cstyle="InlineCode">Entity::InvalidIndex</InlineCode>. Good. Representation properties belong to the type, not to folklore.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch002-give-a-domain-its-own-vocabulary">Give a domain its own vocabulary</Content>
+<Content ns0:pstyle="Content">An integer is often too permissive. Imagine:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::uint8_t state;</Code>
+<Content ns0:pstyle="Content">and:</Content>
+<Code ns0:pstyle="Code" language="text">0 = created
+1 = destroyed
+2 = component added
+3 = component removed</Code>
+<Content ns0:pstyle="Content">Nothing prevents:</Content>
+<Code ns0:pstyle="Code" language="cpp">state = 218;</Code>
+<Content ns0:pstyle="Content">Nothing tells readers what <InlineCode ns0:cstyle="InlineCode">2</InlineCode> means. So C++ provides enumerations.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-old-unscoped-enums">Old unscoped enums</Content>
+<Code ns0:pstyle="Code" language="cpp">enum Color
+{
+    Red,
+    Green,
+    Blue
+};</Code>
+<Content ns0:pstyle="Content">Historically, names such as:</Content>
+<Code ns0:pstyle="Code" language="cpp">Red
+Green
+Blue</Code>
+<Content ns0:pstyle="Content">enter the surrounding scope. And enumerators readily convert into integral values. That leads to:</Content>
+<Code ns0:pstyle="Code" language="cpp">enum Color { Red, Green };
+enum Error { None, DiskFull };
+
+Color c = Red;
+
+if (c == 1)
+{
+    ...
+}</Code>
+<Content ns0:pstyle="Content">or namespace pollution:</Content>
+<Code ns0:pstyle="Code" language="cpp">enum Status { Unknown };
+enum Result { Unknown }; // collision</Code>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch002-scoped-enums">Scoped enums</Content>
+<Content ns0:pstyle="Content">Use:</Content>
+<Code ns0:pstyle="Code" language="cpp">enum class Color
+{
+    Red,
+    Green,
+    Blue
+};</Code>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="cpp">Color c = Color::Red;</Code>
+<Content ns0:pstyle="Content">not:</Content>
+<Code ns0:pstyle="Code" language="cpp">Color c = Red; // normally no</Code>
+<Content ns0:pstyle="Content">and:</Content>
+<Code ns0:pstyle="Code" language="cpp">int x = Color::Red; // no implicit conversion</Code>
+<Content ns0:pstyle="Content">This is exactly the kind of restriction we want.</Content>
+
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#05-engine-i-ch001">Previous chapter</Link> · <Link href="#05-engine-i-ch003">Next chapter</Link></Content>
+</Chapter>

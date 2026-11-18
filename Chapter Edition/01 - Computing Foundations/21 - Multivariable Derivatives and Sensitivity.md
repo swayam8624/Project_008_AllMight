@@ -8,7 +8,7 @@ Scalar calculus extends to vector-valued quantities through Jacobians, chain rul
 
 **Recall question:** How does a Jacobian describe the first-order change of a vector output when several inputs change?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 46370–49357; source-span SHA256 282a6d0da34c917c63ad2ea7725fa7123ddb20e6e00166bc5fda6464c6dbfbb0. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 46551–49538; source-span SHA256 4111ddaad4528c03cf41ae286e36e01dc9832affe7b253f832bd8cdc6ebe5074. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Multivariable derivatives and sensitivity
@@ -209,13 +209,13 @@ Suppose we change $x$ but hold $y$ fixed.
 The [[Chapter Edition/01 - Computing Foundations/21 - Multivariable Derivatives and Sensitivity#Multivariable derivatives and sensitivity|partial derivative]] with respect to $x$ is:
 
 $$
-\frac{\partial f}{\partial x} = \lim\_{h\to0} \frac{f(x+h,y)-f(x,y)}h.
+\frac{\partial f}{\partial x} = \lim_{h\to0} \frac{f(x+h,y)-f(x,y)}h.
 $$
 
 Likewise, the partial derivative with respect to $y$ is:
 
 $$
-\frac{\partial f}{\partial y} = \lim\_{h\to0} \frac{f(x,y+h)-f(x,y)}h.
+\frac{\partial f}{\partial y} = \lim_{h\to0} \frac{f(x,y+h)-f(x,y)}h.
 $$
 
 The symbol $\partial$ is used because we are differentiating with respect to only one of several input coordinates.
@@ -387,7 +387,7 @@ The derivative of a scalar function of several variables is formally a linear fu
 For Euclidean coordinates, this linear functional can be represented as a row vector:
 
 $$
-Df(\mathbf x)= \begin{bmatrix} f\_{x_1}&f\_{x_2}&\cdots&f\_{x_n} \end{bmatrix}.
+Df(\mathbf x)= \begin{bmatrix} f_{x_1}&f_{x_2}&\cdots&f_{x_n} \end{bmatrix}.
 $$
 
 The gradient is conventionally written as the corresponding column vector:
@@ -429,13 +429,13 @@ But what happens when we move in an arbitrary direction?
 Let $\mathbf u$ be a unit direction vector. The [[Chapter Edition/01 - Computing Foundations/21 - Multivariable Derivatives and Sensitivity#Multivariable derivatives and sensitivity|directional derivative]] is:
 
 $$
-D\_{\mathbf u}f(\mathbf x) = \lim\_{h\to0} \frac{f(\mathbf x+h\mathbf u)-f(\mathbf x)}h.
+D_{\mathbf u}f(\mathbf x) = \lim_{h\to0} \frac{f(\mathbf x+h\mathbf u)-f(\mathbf x)}h.
 $$
 
 When $f$ is differentiable:
 
 $$
-\boxed{ D\_{\mathbf u}f(\mathbf x) = \nabla f(\mathbf x)\cdot\mathbf u }.
+\boxed{ D_{\mathbf u}f(\mathbf x) = \nabla f(\mathbf x)\cdot\mathbf u }.
 $$
 
 This follows by substituting $\Delta\mathbf x=h\mathbf u$ into the local linear approximation:
@@ -469,7 +469,7 @@ $$
 Then:
 
 $$
-\begin{aligned} D\_{\mathbf u}f &=4\left(\frac35\right)+10\left(\frac45\right)\\ &=\frac{12}{5}+\frac{40}{5}\\ &=\boxed{10.4}. \end{aligned}
+\begin{aligned} D_{\mathbf u}f &=4\left(\frac35\right)+10\left(\frac45\right)\\ &=\frac{12}{5}+\frac{40}{5}\\ &=\boxed{10.4}. \end{aligned}
 $$
 
 The output increases at a local rate of $10.4$ per unit distance traveled in that direction.
@@ -527,13 +527,13 @@ People often memorize that the gradient points uphill. We should prove it and un
 Suppose we want the direction $\mathbf u$ that maximizes the rate of increase of $f$, subject to:
 
 $$
-\|\mathbf u\|\_2=1.
+\|\mathbf u\|_2=1.
 $$
 
 The directional derivative is:
 
 $$
-D\_{\mathbf u}f=\nabla f\cdot\mathbf u.
+D_{\mathbf u}f=\nabla f\cdot\mathbf u.
 $$
 
 Using the geometric dot-product definition:
@@ -545,7 +545,7 @@ $$
 Since $\|\mathbf u\|=1$:
 
 $$
-D\_{\mathbf u}f = \|\nabla f\|\cos\theta.
+D_{\mathbf u}f = \|\nabla f\|\cos\theta.
 $$
 
 Its maximum occurs when:
@@ -559,13 +559,13 @@ meaning $\mathbf u$ points in the same direction as the gradient.
 Thus, if $\nabla f\ne0$:
 
 $$
-\boxed{ \mathbf u\_{\max}= \frac{\nabla f}{\|\nabla f\|} }.
+\boxed{ \mathbf u_{\max}= \frac{\nabla f}{\|\nabla f\|} }.
 $$
 
 The steepest-descent direction is the negative:
 
 $$
-\boxed{ \mathbf u\_{\min}= -\frac{\nabla f}{\|\nabla f\|} }.
+\boxed{ \mathbf u_{\min}= -\frac{\nabla f}{\|\nabla f\|} }.
 $$
 
 This is a direct consequence of the Cauchy–Schwarz inequality.
@@ -579,7 +579,7 @@ The argument assumes Euclidean unit length.
 Suppose distance is instead measured by a positive-definite metric matrix $G$:
 
 $$
-\|\mathbf u\|\_G^2=\mathbf u^TG\mathbf u.
+\|\mathbf u\|_G^2=\mathbf u^TG\mathbf u.
 $$
 
 The steepest-ascent direction under this metric is proportional to:
@@ -591,10 +591,10 @@ $$
 After normalization in the $G$-metric:
 
 $$
-\mathbf u\_{\max} = \frac{G^{-1}\nabla f} {\sqrt{\nabla f^TG^{-1}\nabla f}}.
+\mathbf u_{\max} = \frac{G^{-1}\nabla f} {\sqrt{\nabla f^TG^{-1}\nabla f}}.
 $$
 
-To see why, substitute $\mathbf v=G^{1/2}\mathbf u$ into the maximization problem. The constraint becomes $\|\mathbf v\|\_2=1$, while the objective becomes $(G^{-1/2}\nabla f)^T\mathbf v$. Ordinary Cauchy–Schwarz then gives the formula.
+To see why, substitute $\mathbf v=G^{1/2}\mathbf u$ into the maximization problem. The constraint becomes $\|\mathbf v\|_2=1$, while the objective becomes $(G^{-1/2}\nabla f)^T\mathbf v$. Ordinary Cauchy–Schwarz then gives the formula.
 
 This generalized view is the mathematical foundation behind preconditioning, natural gradients, and optimization on curved spaces.
 
@@ -832,7 +832,7 @@ with the output dimensions as rows and input dimensions as columns.
 Each entry:
 
 $$
-J\_{ij}=\frac{\partial f_i}{\partial x_j}
+J_{ij}=\frac{\partial f_i}{\partial x_j}
 $$
 
 answers: How sensitive is output component $i$ to input component $j$?
@@ -948,7 +948,7 @@ $$
 where:
 
 $$
-\lim\_{\|\mathbf h\|\to0} \frac{\|\mathbf r(\mathbf h)\|}{\|\mathbf h\|}=0.
+\lim_{\|\mathbf h\|\to0} \frac{\|\mathbf r(\mathbf h)\|}{\|\mathbf h\|}=0.
 $$
 
 This definition is known as Fréchet differentiability in Euclidean spaces.
@@ -1097,7 +1097,7 @@ $$
 Assemble the Jacobian, using one output coordinate per row:
 
 $$
-\boxed{ J\_\pi(X,Y,Z)= \begin{bmatrix} \frac{f_x}{Z}&0&-\frac{f_xX}{Z^2}\\[4pt] 0&\frac{f_y}{Z}&-\frac{f_yY}{Z^2} \end{bmatrix} }.
+\boxed{ J_\pi(X,Y,Z)= \begin{bmatrix} \frac{f_x}{Z}&0&-\frac{f_xX}{Z^2}\\[4pt] 0&\frac{f_y}{Z}&-\frac{f_yY}{Z^2} \end{bmatrix} }.
 $$
 
 Every term now has a clear interpretation.
@@ -1159,7 +1159,7 @@ $$
 Thus:
 
 $$
-\boxed{ J\_\pi= \begin{bmatrix} 400&0&-40\\ 0&410&-20.5 \end{bmatrix} }.
+\boxed{ J_\pi= \begin{bmatrix} 400&0&-40\\ 0&410&-20.5 \end{bmatrix} }.
 $$
 
 Suppose the point moves by:
@@ -1171,7 +1171,7 @@ $$
 The predicted pixel displacement is:
 
 $$
-\Delta\mathbf s \approx J\_\pi\Delta\mathbf p.
+\Delta\mathbf s \approx J_\pi\Delta\mathbf p.
 $$
 
 Multiplying:
@@ -1219,25 +1219,25 @@ The original function is nonlinear, but for this small perturbation, the Jacobia
 The exact horizontal displacement is:
 
 $$
-\Delta u\_{\text{exact}} = f_x\left( \frac{X+\Delta X}{Z+\Delta Z} -\frac XZ \right).
+\Delta u_{\text{exact}} = f_x\left( \frac{X+\Delta X}{Z+\Delta Z} -\frac XZ \right).
 $$
 
 Combine the fractions:
 
 $$
-\Delta u\_{\text{exact}} = f_x\frac{Z\Delta X-X\Delta Z}{Z(Z+\Delta Z)}.
+\Delta u_{\text{exact}} = f_x\frac{Z\Delta X-X\Delta Z}{Z(Z+\Delta Z)}.
 $$
 
 The Jacobian prediction is:
 
 $$
-\Delta u\_{\text{linear}} = f_x\frac{Z\Delta X-X\Delta Z}{Z^2}.
+\Delta u_{\text{linear}} = f_x\frac{Z\Delta X-X\Delta Z}{Z^2}.
 $$
 
 Subtract:
 
 $$
-\boxed{ \Delta u\_{\text{exact}}-\Delta u\_{\text{linear}} = -\frac{f_x(Z\Delta X-X\Delta Z)\Delta Z} {Z^2(Z+\Delta Z)} }.
+\boxed{ \Delta u_{\text{exact}}-\Delta u_{\text{linear}} = -\frac{f_x(Z\Delta X-X\Delta Z)\Delta Z} {Z^2(Z+\Delta Z)} }.
 $$
 
 This is an exact expression for the horizontal [[Chapter Edition/01 - Computing Foundations/21 - Multivariable Derivatives and Sensitivity#Jacobians, curvature, and local approximation|linearization error]], provided both projections are defined.
@@ -1351,14 +1351,14 @@ $$
 By the chain rule:
 
 $$
-\boxed{ \frac{\partial\mathbf s}{\partial\mathbf p_w} = J\_\pi(\mathbf p_c)R }.
+\boxed{ \frac{\partial\mathbf s}{\partial\mathbf p_w} = J_\pi(\mathbf p_c)R }.
 $$
 
 This matrix is $2\times3$.
 
 Its entries describe how a world-space motion affects image-space position after accounting for camera orientation.
 
-Translation affects the camera-space point at which $J\_\pi$ is evaluated, but the derivative of the affine world-to-camera mapping with respect to point position is still $R$.
+Translation affects the camera-space point at which $J_\pi$ is evaluated, but the derivative of the affine world-to-camera mapping with respect to point position is still $R$.
 
 ##### Including object transforms
 
@@ -1373,7 +1373,7 @@ where $A$ is the linear part of an object transform.
 Then:
 
 $$
-\boxed{ \frac{\partial\mathbf s}{\partial\mathbf p_o} = J\_\pi(\mathbf p_c)RA }.
+\boxed{ \frac{\partial\mathbf s}{\partial\mathbf p_o} = J_\pi(\mathbf p_c)RA }.
 $$
 
 Each matrix acts on perturbations in its own coordinate space.
@@ -1387,25 +1387,25 @@ Suppose we perturb a camera-space point using a small translation $\delta\mathbf
 For a left-applied perturbation to the camera-space point:
 
 $$
-\mathbf p_c' = \exp([\delta\boldsymbol\omega]\_\times)\mathbf p_c +\delta\mathbf t.
+\mathbf p_c' = \exp([\delta\boldsymbol\omega]_\times)\mathbf p_c +\delta\mathbf t.
 $$
 
-Here $[\mathbf a]\_\times$ is the skew-symmetric matrix satisfying:
+Here $[\mathbf a]_\times$ is the skew-symmetric matrix satisfying:
 
 $$
-[\mathbf a]\_\times\mathbf b=\mathbf a\times\mathbf b.
+[\mathbf a]_\times\mathbf b=\mathbf a\times\mathbf b.
 $$
 
 For small rotation:
 
 $$
-\exp([\delta\boldsymbol\omega]\_\times) \approx I+[\delta\boldsymbol\omega]\_\times.
+\exp([\delta\boldsymbol\omega]_\times) \approx I+[\delta\boldsymbol\omega]_\times.
 $$
 
 Therefore:
 
 $$
-\begin{aligned} \delta\mathbf p_c &\approx\delta\boldsymbol\omega\times\mathbf p_c +\delta\mathbf t\\ &=-[\mathbf p_c]\_\times\delta\boldsymbol\omega +\delta\mathbf t. \end{aligned}
+\begin{aligned} \delta\mathbf p_c &\approx\delta\boldsymbol\omega\times\mathbf p_c +\delta\mathbf t\\ &=-[\mathbf p_c]_\times\delta\boldsymbol\omega +\delta\mathbf t. \end{aligned}
 $$
 
 If we parameterize the perturbation as:
@@ -1417,13 +1417,13 @@ $$
 then:
 
 $$
-\frac{\partial\mathbf p_c} {\partial\delta\boldsymbol\xi} = \begin{bmatrix} -[\mathbf p_c]\_\times&I_3 \end{bmatrix}.
+\frac{\partial\mathbf p_c} {\partial\delta\boldsymbol\xi} = \begin{bmatrix} -[\mathbf p_c]_\times&I_3 \end{bmatrix}.
 $$
 
 The projected-point Jacobian with respect to these six perturbation parameters becomes:
 
 $$
-\boxed{ J\_{\text{pose}} = J\_\pi \begin{bmatrix} -[\mathbf p_c]\_\times&I_3 \end{bmatrix} }.
+\boxed{ J_{\text{pose}} = J_\pi \begin{bmatrix} -[\mathbf p_c]_\times&I_3 \end{bmatrix} }.
 $$
 
 This is a $2\times6$ Jacobian.
@@ -1654,7 +1654,7 @@ $$
 The general degree-$n$ Taylor polynomial is:
 
 $$
-\boxed{ T_n(a+h)= \sum\_{k=0}^{n} \frac{f^{(k)}(a)}{k!}h^k }.
+\boxed{ T_n(a+h)= \sum_{k=0}^{n} \frac{f^{(k)}(a)}{k!}h^k }.
 $$
 
 The factorial appears because differentiating $h^k$ exactly $k$ times produces $k!$.
@@ -1744,22 +1744,22 @@ $$
 The second-order part is:
 
 $$
-\frac12 \begin{bmatrix}h_x&h_y\end{bmatrix} \begin{bmatrix} f\_{xx}&f\_{xy}\\ f\_{yx}&f\_{yy} \end{bmatrix} \begin{bmatrix}h_x\\h_y\end{bmatrix}.
+\frac12 \begin{bmatrix}h_x&h_y\end{bmatrix} \begin{bmatrix} f_{xx}&f_{xy}\\ f_{yx}&f_{yy} \end{bmatrix} \begin{bmatrix}h_x\\h_y\end{bmatrix}.
 $$
 
 Multiplying gives:
 
 $$
-\frac12\left( f\_{xx}h_x^2+ f\_{xy}h_xh_y+ f\_{yx}h_yh_x+ f\_{yy}h_y^2 \right).
+\frac12\left( f_{xx}h_x^2+ f_{xy}h_xh_y+ f_{yx}h_yh_x+ f_{yy}h_y^2 \right).
 $$
 
 When mixed derivatives agree:
 
 $$
-\boxed{ \frac12\left( f\_{xx}h_x^2+ 2f\_{xy}h_xh_y+ f\_{yy}h_y^2 \right) }.
+\boxed{ \frac12\left( f_{xx}h_x^2+ 2f_{xy}h_xh_y+ f_{yy}h_y^2 \right) }.
 $$
 
-The cross term $2f\_{xy}h_xh_y$ describes coupling between the two perturbation directions.
+The cross term $2f_{xy}h_xh_y$ describes coupling between the two perturbation directions.
 
 This is the second-order equivalent of how an off-diagonal matrix element couples coordinates in linear algebra.
 
@@ -1848,7 +1848,7 @@ $$
 Differentiate with respect to $\mathbf h$, assuming symmetric $H$:
 
 $$
-\nabla\_{\mathbf h}m=\nabla f+H\mathbf h.
+\nabla_{\mathbf h}m=\nabla f+H\mathbf h.
 $$
 
 Setting this equal to zero gives:
@@ -1902,7 +1902,7 @@ $$
 where:
 
 $$
-A=\left.\frac{\partial F}{\partial\mathbf x}\right|\_0, \qquad B=\left.\frac{\partial F}{\partial\mathbf u}\right|\_0.
+A=\left.\frac{\partial F}{\partial\mathbf x}\right|_0, \qquad B=\left.\frac{\partial F}{\partial\mathbf u}\right|_0.
 $$
 
 If the operating point is an equilibrium satisfying $F(\mathbf x_0,\mathbf u_0)=0$, the perturbation dynamics become:
@@ -1992,7 +1992,7 @@ $$
 when:
 
 $$
-\lim\_{h\to0}\frac{r(h)}{|h|}=0.
+\lim_{h\to0}\frac{r(h)}{|h|}=0.
 $$
 
 A function can satisfy $o(h)$ without an $O(h^2)$ bound.
@@ -2006,13 +2006,13 @@ So differentiability alone does not guarantee quadratic first-order approximatio
 For a twice continuously differentiable scalar function, if the Hessian operator norm satisfies:
 
 $$
-\|H_f(\mathbf z)\|\_2\le M
+\|H_f(\mathbf z)\|_2\le M
 $$
 
 throughout the line segment joining $\mathbf x$ and $\mathbf x+\mathbf h$, then the first-order Taylor error satisfies:
 
 $$
-\boxed{ \left| f(\mathbf x+\mathbf h) -f(\mathbf x) -\nabla f(\mathbf x)^T\mathbf h \right| \le \frac M2\|\mathbf h\|\_2^2 }.
+\boxed{ \left| f(\mathbf x+\mathbf h) -f(\mathbf x) -\nabla f(\mathbf x)^T\mathbf h \right| \le \frac M2\|\mathbf h\|_2^2 }.
 $$
 
 The constant $M$ bounds the maximum local curvature along the segment.
@@ -2034,13 +2034,13 @@ A large perturbation in a nearly linear region may be acceptable. A tiny perturb
 Absolute error is:
 
 $$
-E\_{\text{abs}}=|\hat y-y|.
+E_{\text{abs}}=|\hat y-y|.
 $$
 
 Relative error is:
 
 $$
-E\_{\text{rel}}=\frac{|\hat y-y|}{|y|},
+E_{\text{rel}}=\frac{|\hat y-y|}{|y|},
 $$
 
 when $y\ne0$.
@@ -2054,7 +2054,7 @@ Likewise, a tiny absolute error near a true value of zero can correspond to an e
 For vectors, we often use norm-based errors:
 
 $$
-E=\|\hat{\mathbf y}-\mathbf y\|\_2.
+E=\|\hat{\mathbf y}-\mathbf y\|_2.
 $$
 
 For multiple samples, additional metrics such as maximum error, RMS error, and percentile errors reveal different kinds of failure.
@@ -2477,7 +2477,7 @@ The implementation also applies a Y-axis sign flip once in its projection matrix
 Meanwhile, [KairoMath/Matrix.cppm](https://github.com/swayam8624/KairoMath/blob/master/Matrix.cppm?utm_source=chatgpt.com), around lines 1758–1781, constructs a right-handed perspective matrix with a zero-to-one depth range and:
 
 $$
-w\_{\text{clip}}=-z\_{\text{view}}.
+w_{\text{clip}}=-z_{\text{view}}.
 $$
 
 This differs in representation from the positive-forward camera-space convention used in our canonical projection derivation.
@@ -2485,12 +2485,12 @@ This differs in representation from the positive-forward camera-space convention
 For an ideal centered projection, we can convert between these conventions by using:
 
 $$
-X=X\_{\text{view}},\quad Y=-Y\_{\text{view}},\quad Z=-Z\_{\text{view}}
+X=X_{\text{view}},\quad Y=-Y_{\text{view}},\quad Z=-Z_{\text{view}}
 $$
 
 when converting to a positive-forward, positive-downward image-camera frame, with the relevant viewport mapping applied.
 
-Consequently, you should not paste the canonical $J\_\pi$ directly into an engine function without checking what coordinate space its input occupies and whether viewport or projection sign conventions have already been applied.
+Consequently, you should not paste the canonical $J_\pi$ directly into an engine function without checking what coordinate space its input occupies and whether viewport or projection sign conventions have already been applied.
 
 A robust engine API should either state the expected coordinate frame explicitly or expose a transformation that makes the conversion unambiguous.
 
@@ -2507,7 +2507,7 @@ Why is that the correct gradient for a standard least-squares objective?
 Suppose:
 
 $$
-E(\mathbf x)=\frac12\|\mathbf r(\mathbf x)\|^2 =\frac12\sum\_{i=1}^m r_i(\mathbf x)^2.
+E(\mathbf x)=\frac12\|\mathbf r(\mathbf x)\|^2 =\frac12\sum_{i=1}^m r_i(\mathbf x)^2.
 $$
 
 Here $\mathbf r$ is a residual vector, such as the difference between predicted and observed image coordinates.
@@ -2515,13 +2515,13 @@ Here $\mathbf r$ is a residual vector, such as the difference between predicted 
 Differentiate with respect to parameter $x_j$:
 
 $$
-\frac{\partial E}{\partial x_j} = \sum\_{i=1}^m r_i \frac{\partial r_i}{\partial x_j}.
+\frac{\partial E}{\partial x_j} = \sum_{i=1}^m r_i \frac{\partial r_i}{\partial x_j}.
 $$
 
 The residual Jacobian has entries:
 
 $$
-J\_{ij}=\frac{\partial r_i}{\partial x_j}.
+J_{ij}=\frac{\partial r_i}{\partial x_j}.
 $$
 
 Collecting all parameter derivatives produces:
@@ -2547,7 +2547,7 @@ $$
 differentiate again:
 
 $$
-\boxed{ \nabla^2E = J^TJ+ \sum\_{i=1}^m r_i\nabla^2r_i }.
+\boxed{ \nabla^2E = J^TJ+ \sum_{i=1}^m r_i\nabla^2r_i }.
 $$
 
 The term $J^TJ$ is positive semidefinite and describes the first-order residual sensitivity.
@@ -2557,7 +2557,7 @@ The remaining term depends on the residual values and second derivatives of the 
 Gauss–Newton approximates the Hessian by:
 
 $$
-H\_{\mathrm{GN}}=J^TJ.
+H_{\mathrm{GN}}=J^TJ.
 $$
 
 This approximation is particularly attractive when the residuals are small near a solution.
@@ -2615,7 +2615,7 @@ A perspective projection is nonlinear, so a 3D Gaussian does not generally trans
 However, we can linearize the projection around the mean:
 
 $$
-\pi(\mathbf p) \approx \pi(\boldsymbol\mu) + J\_\pi(\boldsymbol\mu) (\mathbf p-\boldsymbol\mu).
+\pi(\mathbf p) \approx \pi(\boldsymbol\mu) + J_\pi(\boldsymbol\mu) (\mathbf p-\boldsymbol\mu).
 $$
 
 Define the random perturbation:
@@ -2633,25 +2633,25 @@ $$
 Then the linearized image perturbation is:
 
 $$
-\delta\mathbf s=J\_\pi\boldsymbol\epsilon.
+\delta\mathbf s=J_\pi\boldsymbol\epsilon.
 $$
 
 Its covariance is:
 
 $$
-\begin{aligned} \operatorname{Cov}(\delta\mathbf s) &=\mathbb E[ (J\_\pi\boldsymbol\epsilon) (J\_\pi\boldsymbol\epsilon)^T ]\\ &=J\_\pi\\, \mathbb E[\boldsymbol\epsilon\boldsymbol\epsilon^T]\\, J\_\pi^T. \end{aligned}
+\begin{aligned} \operatorname{Cov}(\delta\mathbf s) &=\mathbb E[ (J_\pi\boldsymbol\epsilon) (J_\pi\boldsymbol\epsilon)^T ]\\ &=J_\pi\, \mathbb E[\boldsymbol\epsilon\boldsymbol\epsilon^T]\, J_\pi^T. \end{aligned}
 $$
 
 Therefore:
 
 $$
-\boxed{ \Sigma\_{\text{image}} \approx J\_\pi\Sigma J\_\pi^T }.
+\boxed{ \Sigma_{\text{image}} \approx J_\pi\Sigma J_\pi^T }.
 $$
 
 If the original Gaussian covariance is defined in world space, and $R$ is the linear rotational part of the world-to-camera transformation:
 
 $$
-\boxed{ \Sigma\_{\text{image}} \approx J\_\pi R\Sigma\_{\text{world}}R^TJ\_\pi^T }.
+\boxed{ \Sigma_{\text{image}} \approx J_\pi R\Sigma_{\text{world}}R^TJ_\pi^T }.
 $$
 
 This is the first-order covariance projection used in 3D Gaussian splatting formulations. A survey of the field expresses this same Jacobian-based transformation and explains its role in approximating projective geometry.&#x20;
@@ -2667,7 +2667,7 @@ ACM Computing Surveys
 Use our previously derived Jacobian:
 
 $$
-J\_\pi= \begin{bmatrix} 400&0&-40\\ 0&410&-20.5 \end{bmatrix}.
+J_\pi= \begin{bmatrix} 400&0&-40\\ 0&410&-20.5 \end{bmatrix}.
 $$
 
 Suppose the camera-space Gaussian has independent coordinate uncertainties with standard deviations:
@@ -2685,7 +2685,7 @@ $$
 Compute:
 
 $$
-\Sigma\_{\text{image}}=J\_\pi\Sigma J\_\pi^T.
+\Sigma_{\text{image}}=J_\pi\Sigma J_\pi^T.
 $$
 
 The top-left entry is:
@@ -2709,7 +2709,7 @@ $$
 Thus:
 
 $$
-\boxed{ \Sigma\_{\text{image}}= \begin{bmatrix} 20&2.05\\ 2.05&68.290625 \end{bmatrix} \text{ pixels}^2 }.
+\boxed{ \Sigma_{\text{image}}= \begin{bmatrix} 20&2.05\\ 2.05&68.290625 \end{bmatrix} \text{ pixels}^2 }.
 $$
 
 Even though the original 3D covariance was diagonal, its image-space covariance contains an off-diagonal component.
@@ -2793,7 +2793,7 @@ This reveals something the first-order approximation misses: a nonlinear transfo
 For the horizontal projection $u=f_xX/Z+c_x$, the nonzero second derivatives include:
 
 $$
-u\_{XZ}=u\_{ZX}=-\frac{f_x}{Z^2}, \qquad u\_{ZZ}=\frac{2f_xX}{Z^3}.
+u_{XZ}=u_{ZX}=-\frac{f_x}{Z^2}, \qquad u_{ZZ}=\frac{2f_xX}{Z^3}.
 $$
 
 The second-order mean correction is:
@@ -2825,7 +2825,7 @@ $$
 Differentiating again:
 
 $$
-\boxed{ H\_{g\circ F} = J_F^TH_gJ_F + \sum\_{k=1}^{m} \frac{\partial g}{\partial y_k}H\_{F_k} }.
+\boxed{ H_{g\circ F} = J_F^TH_gJ_F + \sum_{k=1}^{m} \frac{\partial g}{\partial y_k}H_{F_k} }.
 $$
 
 The first term transports the outer function's curvature through the inner Jacobian.
@@ -2849,7 +2849,7 @@ has an invertible Jacobian at a point and satisfies the assumptions of the inver
 Then the inverse mapping exists locally, and:
 
 $$
-\boxed{ J\_{F^{-1}}(F(\mathbf x))= [J_F(\mathbf x)]^{-1} }.
+\boxed{ J_{F^{-1}}(F(\mathbf x))= [J_F(\mathbf x)]^{-1} }.
 $$
 
 This is the multidimensional counterpart of:
@@ -2873,7 +2873,7 @@ Treating its nine entries as independent optimization variables ignores the orth
 A more appropriate local update uses a three-dimensional tangent-space perturbation:
 
 $$
-R\_{\text{new}}=\exp([\delta\boldsymbol\omega]\_\times)R.
+R_{\text{new}}=\exp([\delta\boldsymbol\omega]_\times)R.
 $$
 
 The gradient and Jacobian are then expressed with respect to the local perturbation coordinates, rather than nine unconstrained matrix entries.
@@ -2899,13 +2899,13 @@ $$
 By the chain rule:
 
 $$
-\boxed{ \nabla\_{\mathbf z}\tilde f = A^T\nabla\_{\mathbf x}f }.
+\boxed{ \nabla_{\mathbf z}\tilde f = A^T\nabla_{\mathbf x}f }.
 $$
 
 If $A$ is constant, the Hessian transforms as:
 
 $$
-\boxed{ H\_{\mathbf z}=A^TH\_{\mathbf x}A }.
+\boxed{ H_{\mathbf z}=A^TH_{\mathbf x}A }.
 $$
 
 These formulas show how gradients and Hessians depend on parameterization.
@@ -2925,7 +2925,7 @@ Knowing the correct derivatives is only half the engineering problem. We must al
 | Gradient descent moves uphill                                    | Incorrect sign or gradient                             | Evaluate directional derivative against actual objective change             |
 | Derivatives explode near zero depth                              | Perspective singularity                                | Monitor $Z$, clipping, and Jacobian norms                               |
 | Normal derivatives become unstable                               | Division by near-zero vector length                    | Test zero and near-zero vectors                                             |
-| Hessian unexpectedly asymmetric                                  | Incorrect mixed derivatives or numerical approximation | Compare $H\_{ij}$ and $H\_{ji}$, inspect regularity                 |
+| Hessian unexpectedly asymmetric                                  | Incorrect mixed derivatives or numerical approximation | Compare $H_{ij}$ and $H_{ji}$, inspect regularity                 |
 | Finite differences disagree at tiny step sizes                   | Floating-point cancellation                            | Sweep step size logarithmically                                             |
 | Linearization accurate nearby but fails farther away             | Neglected nonlinear terms                              | Plot error versus perturbation magnitude                                    |
 | Gradient is zero but result is not a minimum                     | Stationary saddle or maximum                           | Inspect Hessian eigenvalues or directional behavior                         |
@@ -2968,7 +2968,7 @@ The complete progression from Parts 801–831 can be expressed as one chain:
 The following formulas are the most important reconstruction anchors:
 
 $$
-\boxed{ \begin{aligned} f'(x)&=\lim\_{h\to0}\frac{f(x+h)-f(x)}h\\[3pt] Df(\mathbf x)[\mathbf h]&=\nabla f(\mathbf x)^T\mathbf h\\[3pt] F(\mathbf x+\mathbf h)&\approx F(\mathbf x)+J_F(\mathbf x)\mathbf h\\[3pt] J\_{G\circ F}&=J_GJ_F\\[3pt] f(\mathbf x+\mathbf h)&\approx f(\mathbf x)+\nabla f^T\mathbf h+ \frac12\mathbf h^TH_f\mathbf h\\[3pt] \Sigma\_{\text{image}}&\approx J\_\pi\Sigma J\_\pi^T \end{aligned} }
+\boxed{ \begin{aligned} f'(x)&=\lim_{h\to0}\frac{f(x+h)-f(x)}h\\[3pt] Df(\mathbf x)[\mathbf h]&=\nabla f(\mathbf x)^T\mathbf h\\[3pt] F(\mathbf x+\mathbf h)&\approx F(\mathbf x)+J_F(\mathbf x)\mathbf h\\[3pt] J_{G\circ F}&=J_GJ_F\\[3pt] f(\mathbf x+\mathbf h)&\approx f(\mathbf x)+\nabla f^T\mathbf h+ \frac12\mathbf h^TH_f\mathbf h\\[3pt] \Sigma_{\text{image}}&\approx J_\pi\Sigma J_\pi^T \end{aligned} }
 $$
 
 Every formula is a different expression of how local changes propagate through a system.

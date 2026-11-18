@@ -15,31 +15,31 @@ Follow one visible player action through memory, engine boundaries, rendering, t
 
 | [[Chapter Edition/03 - Game Engine/04 - Resource ownership, failure paths, and review practice|04 — Resource ownership, failure paths, and review practice]] | 55.8 | Follow a resource through acquisition, use, replacement, failure, and shutdown while keeping claims tied to demonstrated evidence. |
 
-| [[Chapter Edition/03 - Game Engine/05 - Generic asset pipelines with stable identity|05 — Generic asset pipelines with stable identity]] | 49.0 | Choose which asset operations can be generic and which depend on semantic type, then implement identity that survives storage movement. |
+| [[Chapter Edition/03 - Game Engine/05 - Generic asset pipelines with stable identity|05 — Generic asset pipelines with stable identity]] | 49.7 | Choose which asset operations can be generic and which depend on semantic type, then implement identity that survives storage movement. |
 
-| [[Chapter Edition/03 - Game Engine/06 - Queries, lazy ranges, allocators, and module boundaries|06 — Queries, lazy ranges, allocators, and module boundaries]] | 43.4 | Design a query that returns only the needed view and state the ownership, allocator, and compilation boundaries it depends on. |
+| [[Chapter Edition/03 - Game Engine/06 - Queries, lazy ranges, allocators, and module boundaries|06 — Queries, lazy ranges, allocators, and module boundaries]] | 43.7 | Design a query that returns only the needed view and state the ownership, allocator, and compilation boundaries it depends on. |
 
-| [[Chapter Edition/03 - Game Engine/07 - Typed APIs and measured CPU data structures|07 — Typed APIs and measured CPU data structures]] | 43.5 | Connect strong types and PIMPL to measured CPU costs, then select containers and scheduling structures by their operation patterns. |
+| [[Chapter Edition/03 - Game Engine/07 - Typed APIs and measured CPU data structures|07 — Typed APIs and measured CPU data structures]] | 47.4 | Connect strong types and PIMPL to measured CPU costs, then select containers and scheduling structures by their operation patterns. |
 
-| [[Chapter Edition/03 - Game Engine/08 - Algorithms, application boundaries, and a first playable|08 — Algorithms, application boundaries, and a first playable]] | 52.8 | Select algorithms for world queries and navigation, then connect them to a minimal application and a playable validation loop. |
+| [[Chapter Edition/03 - Game Engine/08 - Algorithms, application boundaries, and a first playable|08 — Algorithms, application boundaries, and a first playable]] | 54.1 | Select algorithms for world queries and navigation, then connect them to a minimal application and a playable validation loop. |
 
 | [[Chapter Edition/03 - Game Engine/09 - Player choices, rules, and readable feedback|09 — Player choices, rules, and readable feedback]] | 56.3 | Analyze a feature as a loop of visible options, player action, authoritative state change, and legible consequence. |
 
-| [[Chapter Edition/03 - Game Engine/10 - Engine changes across subsystem contracts|10 — Engine changes across subsystem contracts]] | 57.9 | Explain how an engine change crosses dependencies and preserve stable contracts among game code, tools, runtime services, and backends. |
+| [[Chapter Edition/03 - Game Engine/10 - Engine changes across subsystem contracts|10 — Engine changes across subsystem contracts]] | 68.2 | Explain how an engine change crosses dependencies and preserve stable contracts among game code, tools, runtime services, and backends. |
 
 | [[Chapter Edition/03 - Game Engine/11 - Streaming resources through explicit states|11 — Streaming resources through explicit states]] | 58.2 | Model streaming as request, decode, validation, upload, publication, use, and retirement, including stale completion and memory-budget cases. |
 
-| [[Chapter Edition/03 - Game Engine/12 - Transactions, recovery, and safe project boundaries|12 — Transactions, recovery, and safe project boundaries]] | 55.9 | Design undo/redo, save recovery, path validation, and package publication so partial failure cannot silently corrupt authored work. |
+| [[Chapter Edition/03 - Game Engine/12 - Transactions, recovery, and safe project boundaries|12 — Transactions, recovery, and safe project boundaries]] | 59.6 | Design undo/redo, save recovery, path validation, and package publication so partial failure cannot silently corrupt authored work. |
 
 | [[Chapter Edition/03 - Game Engine/13 - Portable startup, windows, events, and input|13 — Portable startup, windows, events, and input]] | 49.6 | Describe startup/shutdown dependencies and separate native window events, application input state, and game actions. |
 
 | [[Chapter Edition/03 - Game Engine/14 - Application clocks and stable input identity|14 — Application clocks and stable input identity]] | 49.3 | Distinguish wall time, frame time, and simulation ticks, and ensure input identifiers remain meaningful across updates. |
 
-| [[Chapter Edition/03 - Game Engine/15 - Sparse-set components and generational entity handles|15 — Sparse-set components and generational entity handles]] | 53.2 | Implement component membership and entity identity while accounting for swap removal, slot reuse, and stale handles. |
+| [[Chapter Edition/03 - Game Engine/15 - Sparse-set components and generational entity handles|15 — Sparse-set components and generational entity handles]] | 56.4 | Implement component membership and entity identity while accounting for swap removal, slot reuse, and stale handles. |
 
 | [[Chapter Edition/03 - Game Engine/16 - Archetypes, chunks, relationships, and transforms|16 — Archetypes, chunks, relationships, and transforms]] | 54.0 | Compare sparse-set and archetype operations, then specify how entity migration and transform dependencies preserve identity and update order. |
 
-| [[Chapter Edition/03 - Game Engine/17 - ECS performance through cache and scheduling|17 — ECS performance through cache and scheduling]] | 53.7 | Explain how cache-line ownership and scheduling influence an ECS workload, and propose measurements that isolate the bottleneck. |
+| [[Chapter Edition/03 - Game Engine/17 - ECS performance through cache and scheduling|17 — ECS performance through cache and scheduling]] | 63.0 | Explain how cache-line ownership and scheduling influence an ECS workload, and propose measurements that isolate the bottleneck. |
 
 | [[Chapter Edition/03 - Game Engine/18 - ECS contracts, diagnostics, and GPU handoff|18 — ECS contracts, diagnostics, and GPU handoff]] | 43.7 | Audit ECS invariants with diagnostics and tests, then explain how entity data becomes render work with explicit ownership. |
 
@@ -49,9 +49,9 @@ Follow one visible player action through memory, engine boundaries, rendering, t
 
 | [[Chapter Edition/03 - Game Engine/21 - Buffers, images, memory, and uploads|21 — Buffers, images, memory, and uploads]] | 63.6 | Select resource layouts and memory types from API requirements, and trace a CPU upload until the GPU may safely consume it. |
 
-| [[Chapter Edition/03 - Game Engine/22 - Vulkan synchronization and multi-frame lifetimes|22 — Vulkan synchronization and multi-frame lifetimes]] | 58.7 | Derive the dependency and lifetime requirements for a resource crossing Vulkan commands, queues, or frames in flight. |
+| [[Chapter Edition/03 - Game Engine/22 - Vulkan synchronization and multi-frame lifetimes|22 — Vulkan synchronization and multi-frame lifetimes]] | 60.5 | Derive the dependency and lifetime requirements for a resource crossing Vulkan commands, queues, or frames in flight. |
 
-| [[Chapter Edition/03 - Game Engine/23 - Execute and measure a Metal frame|23 — Execute and measure a Metal frame]] | 54.5 | Reconstruct command encoding, submission, presentation, and timing for a Metal frame while preserving each object’s ownership. |
+| [[Chapter Edition/03 - Game Engine/23 - Execute and measure a Metal frame|23 — Execute and measure a Metal frame]] | 56.4 | Reconstruct command encoding, submission, presentation, and timing for a Metal frame while preserving each object’s ownership. |
 
 | [[Chapter Edition/03 - Game Engine/24 - Profiling and languageplatform ownership|24 — Profiling and language/platform ownership]] | 39.7 | Interpret profiling output with build and workload context, and cross language/platform boundaries without leaking ownership or global state. |
 
@@ -71,9 +71,9 @@ Follow one visible player action through memory, engine boundaries, rendering, t
 
 | [[Chapter Edition/03 - Game Engine/32 - Terrain materials and image composition|32 — Terrain materials and image composition]] | 56.1 | Implement and validate a bounded material blend, including texture inputs, weights, and visible edge cases. |
 
-| [[Chapter Edition/03 - Game Engine/33 - Versioned scenes and transactional loading|33 — Versioned scenes and transactional loading]] | 56.6 | Design schema validation, stable IDs, migration, and transactional replacement for a saved scene. |
+| [[Chapter Edition/03 - Game Engine/33 - Versioned scenes and transactional loading|33 — Versioned scenes and transactional loading]] | 69.5 | Design schema validation, stable IDs, migration, and transactional replacement for a saved scene. |
 
-| [[Chapter Edition/03 - Game Engine/34 - Rigid-body motion from forces to contact|34 — Rigid-body motion from forces to contact]] | 50.6 | Relate forces and impulses to linear/angular motion, compute simple inertia, and explain the assumptions behind a rigid-body contact step. |
+| [[Chapter Edition/03 - Game Engine/34 - Rigid-body motion from forces to contact|34 — Rigid-body motion from forces to contact]] | 51.8 | Relate forces and impulses to linear/angular motion, compute simple inertia, and explain the assumptions behind a rigid-body contact step. |
 
 | [[Chapter Edition/03 - Game Engine/35 - A complete rigid-body state before the formula audit|35 — A complete rigid-body state before the formula audit]] | 42.1 | Describe the rigid-body state and its update responsibilities, including body-local force points, world transforms, and the distinction between stored state and derived values. |
 
@@ -89,7 +89,7 @@ Follow one visible player action through memory, engine boundaries, rendering, t
 
 | [[Chapter Edition/03 - Game Engine/41 - Evidence, tools, and revisable design|41 — Evidence, tools, and revisable design]] | 51.0 | Use the right artifact and evidence level to test a design question, distinguishing observed behavior, inference, and future intent. |
 
-| [[Chapter Edition/03 - Game Engine/42 - From cartridge bytes to a reproducible machine|42 — From cartridge bytes to a reproducible machine]] | 52.9 | Trace a stateful system from bytes to reproducible execution and identify what must be serialized or synchronized for replay. |
+| [[Chapter Edition/03 - Game Engine/42 - From cartridge bytes to a reproducible machine|42 — From cartridge bytes to a reproducible machine]] | 57.9 | Trace a stateful system from bytes to reproducible execution and identify what must be serialized or synchronized for replay. |
 
 | [[Chapter Edition/03 - Game Engine/43 - Compiling renderer intent into backend work|43 — Compiling renderer intent into backend work]] | 45.4 | Map a render request to backend work while preserving resource dependencies, barriers, and lifetime ownership. |
 

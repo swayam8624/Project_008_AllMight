@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch149.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-7a06e5baac04-copy-on-write" class="level2">
+<h2>Copy-on-write</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-7a06e5baac04-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>COW initially shares physical contents while deferring private copies. A permitted write to a COW-protected mapping faults; OS allocates/copies a frame, updates the writer’s mapping, and retries. Other mappings retain old contents. Not every read-only page is COW, so not every write fault is recoverable.</p>
+</section>
+<section id="appendix-7a06e5baac04-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch165.xhtml#appendix-cc0909a7ef14-page-faults-and-demand-paging" class="wikilink">Page faults and demand paging</a> — Deferred private copying is implemented through a recoverable write fault.</li>
+</ul>
+</section>
+<section id="appendix-7a06e5baac04-used-by" class="level3">
+<h3>Used by</h3>
+<p>Update downstream uses when later chunks build on this concept.</p>
+</section>
+<section id="appendix-7a06e5baac04-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Show frame identity before and after one process writes.</p>
+<p><strong>Pending:</strong> Fork behavior, mapping flags, reference tracking and costs.</p>
+</section>
+<section id="appendix-7a06e5baac04-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-7a06e5baac04-reconstruction-depth" class="level3">
+<h3>Reconstruction depth</h3>
+<p>Copy-on-write delays physical copying until shared data is actually modified. At the virtual-memory level, two address spaces may initially map the same physical page as read-only. A write triggers a protection fault; the operating system allocates a private page, copies old contents, updates the writer’s page table and resumes the instruction.</p>
+<p>The key invariant is logical independence after a write, even though physical storage was shared before it. This is why process creation can be cheap initially without eagerly duplicating every writable page.</p>
+<p>COW has costs that disappear in a high-level description: the first write can incur a page fault and page copy, dirty-page accounting changes, and large working sets can turn an initially cheap clone into substantial later memory traffic. Huge pages and NUMA placement make those costs workload-dependent.</p>
+<p>Do not generalize OS page COW into a recommendation for C++ value types. Library-level copy-on-write strings or containers complicate iterator/reference validity, threading and mutation semantics. The mechanism is useful when ownership and fault or copy behavior are explicit.</p>
+</section>
+</section>
+</body>
+</html>

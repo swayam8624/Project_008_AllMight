@@ -8,7 +8,7 @@ Depth buffers encode an ordering decision under finite precision, and projection
 
 **Recall question:** For the chosen near/far range, where is depth precision concentrated and how can you test whether shadow acne is numerical or geometric?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 72763–76641; source-span SHA256 9b739549c6e26330204a1f584cc78ea197418353d28ed6acdd7663971d7bb602. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 73692–77570; source-span SHA256 9b739549c6e26330204a1f584cc78ea197418353d28ed6acdd7663971d7bb602. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Conventional depth

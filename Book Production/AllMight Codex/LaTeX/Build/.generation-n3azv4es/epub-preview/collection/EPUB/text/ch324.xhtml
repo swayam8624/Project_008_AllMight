@@ -1,0 +1,4990 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch324.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_03-visual-computing-i-ch009-point-lights-mis-and-environment-lighting" class="level2">
+<h2>Point Lights, MIS and Environment Lighting</h2>
+<p><a href="ch316.xhtml#id_04-Light-Transport-and-Image-Synthesis" class="wikilink">Reading map</a> · <a href="ch323.xhtml#id_03-visual-computing-i-ch008-sampling-directions-and-light-transport" class="wikilink">Previous chapter</a> · <a href="ch325.xhtml#id_03-visual-computing-i-ch010-a-production-path-tracer-media-randomness-and-validation" class="wikilink">Next chapter</a></p>
+<p>Point lights are discrete directional events while environment illumination occupies a continuous distribution. Multiple importance sampling connects competing estimators while keeping each light’s probability model explicit.</p>
+<p><strong>By the end:</strong> Compare point-light and environment estimators and explain MIS weighting.</p>
+<p><strong>Recall question:</strong> What makes a point light a delta distribution, and how does MIS use competing PDFs?</p>
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 19392–22236; source-span SHA256 16b6d00e3ebc5af580eefb93c84fdf8ec1efee1705d4fc8c8338215452502337. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<p><strong>Point-light sampling</strong></p>
+<p>A point light has zero area.</p>
+<p>From point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>, there is exactly one direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ω</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <msub>
+        <mi>P</mi>
+        <mi>L</mi>
+      </msub>
+      <mo>−</mo>
+      <mi>x</mi>
+    </mrow>
+    <mrow>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+      <msub>
+        <mi>P</mi>
+        <mi>L</mi>
+      </msub>
+      <mo>−</mo>
+      <mi>x</mi>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>This is a delta-direction light sampling event.</p>
+<p>There is no finite ordinary solid-angle PDF like:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mn>4</mn>
+  <mi>π</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>for sampling the point light itself.</p>
+<p>It is a discrete/delta event.</p>
+<p>Its contribution for radiant intensity <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>I</mi>
+</math> is approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>∝</mo>
+  <mfrac>
+    <mi>I</mi>
+    <msup>
+      <mi>r</mi>
+      <mn>2</mn>
+    </msup>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mi>V</mi>
+  <mo>.</mo>
+</math>
+<p>Kairo’s <code>PointLight::Intensity</code> is explicitly documented in candela, so inverse-square attenuation is appropriate for its basic photometric interpretation.</p>
+<hr />
+<p><strong>Delta lights and MIS</strong></p>
+<p>A delta point light cannot be hit by randomly selecting an arbitrary continuous BSDF direction with nonzero probability.</p>
+<p>Probability of selecting exactly one direction from a continuum is zero.</p>
+<p>Therefore ordinary finite-PDF MIS comparison with a continuous BSDF sampler must treat delta distributions specially.</p>
+<p>This is why rendering code usually labels sampling events:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>delta</mtext>
+</math>
+<p>versus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>non-delta</mtext>
+  <mo>.</mo>
+</math>
+<p>You should never attempt to “evaluate the point-light PDF as a huge number.”</p>
+<p>It belongs to a different measure/distribution class.</p>
+<hr />
+<p><strong>Environment lighting</strong></p>
+<p>An environment map defines radiance for every direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>env</mtext>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>ω</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>There is no finite light position.</p>
+<p>A ray that escapes geometry returns:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>L</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>L</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>env</mtext>
+            </mrow>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>ω</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Current Kairo does exactly this in <code>Scene::SampleEnvironment()</code>.</p>
+<p>If environment texture exists, direction is converted into equirectangular coordinates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>2</mn>
+  </mfrac>
+  <mo>+</mo>
+  <mfrac>
+    <mrow>
+      <mrow data-mjx-texclass="OP">
+        <mi>atan</mi>
+        <mn>2</mn>
+      </mrow>
+      <mo stretchy="false">(</mo>
+      <mi>z</mi>
+      <mo>,</mo>
+      <mi>x</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mn>2</mn>
+      <mi>π</mi>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>2</mn>
+  </mfrac>
+  <mo>−</mo>
+  <mfrac>
+    <mrow>
+      <mi>arcsin</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mo stretchy="false">(</mo>
+      <mi>y</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mi>π</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>That is equivalent to latitude-longitude mapping.</p>
+<hr />
+<p><strong>Uniform environment sampling</strong></p>
+<p>One straightforward NEE strategy samples a uniform sphere direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <mn>4</mn>
+      <mi>π</mi>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then test whether the direction is above the shading normal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>⋅</mo>
+  <mi>ω</mi>
+  <mo>&gt;</mo>
+  <mn>0.</mn>
+</math>
+<p>Evaluate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <msub>
+        <mi>L</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mtext>env</mtext>
+        </mrow>
+      </msub>
+      <mo stretchy="false">(</mo>
+      <mi>ω</mi>
+      <mo stretchy="false">)</mo>
+      <msub>
+        <mi>f</mi>
+        <mi>r</mi>
+      </msub>
+      <mo stretchy="false">(</mo>
+      <mi>n</mi>
+      <mo>⋅</mo>
+      <mi>ω</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mn>1</mn>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mo stretchy="false">(</mo>
+      <mn>4</mn>
+      <mi>π</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>This is unbiased.</p>
+<p>But HDR environment maps often contain tiny, extremely bright features such as the sun.</p>
+<p>Uniform sampling wastes almost all samples in dark sky regions.</p>
+<hr />
+<p><strong>Uniform UV sampling is not uniform sphere sampling</strong></p>
+<p>An equirectangular map uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mi>ϕ</mi>
+    <mrow>
+      <mn>2</mn>
+      <mi>π</mi>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>v</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mi>θ</mi>
+    <mi>π</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>A texel spans:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>ϕ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>θ</mi>
+  <mo>.</mo>
+</math>
+<p>Its spherical solid angle is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mi>ω</mi>
+          <mo>=</mo>
+          <mi>sin</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <mi>θ</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <mi>d</mi>
+          <mi>θ</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <mi>d</mi>
+          <mi>ϕ</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Therefore texels near the equator represent much larger solid angle than texels near the poles.</p>
+<p>If you uniformly choose map texels, you do <strong>not</strong> uniformly sample directions.</p>
+<p>This is a classic environment-map bug.</p>
+<hr />
+<p><strong>PDF of uniform UV sampling</strong></p>
+<p>Since:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>ϕ</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>π</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>u</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>θ</mi>
+  <mo>=</mo>
+  <mi>π</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>v</mi>
+  <mo>,</mo>
+</math>
+<p>we get:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <msup>
+    <mi>π</mi>
+    <mn>2</mn>
+  </msup>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>u</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>v</mi>
+  <mo>.</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>u</mi>
+      <mi>v</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>
+<p>on the unit square, then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>u</mi>
+      <mi>v</mi>
+    </mrow>
+  </msub>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">|</mo>
+    <mfrac>
+      <mrow>
+        <mi>d</mi>
+        <mi>u</mi>
+        <mstyle scriptlevel="0">
+          <mspace width="0.167em"></mspace>
+        </mstyle>
+        <mi>d</mi>
+        <mi>v</mi>
+      </mrow>
+      <mrow>
+        <mi>d</mi>
+        <mi>ω</mi>
+      </mrow>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">|</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mi>ω</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mrow>
+              <mn>2</mn>
+              <msup>
+                <mi>π</mi>
+                <mn>2</mn>
+              </msup>
+              <mi>sin</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <mi>θ</mi>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The apparent singularity near poles reflects how many UV samples get packed into tiny solid angle there.</p>
+<p>This is why one must always know the PDF’s measure.</p>
+<hr />
+<p><strong>Environment importance sampling</strong></p>
+<p>A better environment sampler chooses directions roughly proportional to radiance contribution.</p>
+<p>For a latitude-longitude texel at row corresponding to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>θ</mi>
+</math>, use weight:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>w</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mi>j</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>Y</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mi>j</mi>
+            </mrow>
+          </msub>
+          <mi>sin</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <msub>
+            <mi>θ</mi>
+            <mi>j</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>Y</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+</math>
+<p>is luminance.</p>
+<p>Why multiply by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>?</mo>
+</math>
+<p>Because each texel’s solid angle is proportional to it.</p>
+<p>Sampling only by pixel luminance would over-represent polar texels relative to their actual angular area.</p>
+<hr />
+<p><strong>Environment luminance</strong></p>
+<p>A simple linear-RGB luminance approximation may be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Y</mi>
+  <mo>=</mo>
+  <mn>0.2126</mn>
+  <mi>R</mi>
+  <mo>+</mo>
+  <mn>0.7152</mn>
+  <mi>G</mi>
+  <mo>+</mo>
+  <mn>0.0722</mn>
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>The exact coefficients depend on RGB primaries/working space.</p>
+<p>For importance sampling, what matters most is a scalar proportional to expected energy.</p>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>Y</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Normalize all weights:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msub>
+      <mi>w</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi>i</mi>
+        <mi>j</mi>
+      </mrow>
+    </msub>
+    <mrow>
+      <munder>
+        <mo data-mjx-texclass="OP">∑</mo>
+        <mrow data-mjx-texclass="ORD">
+          <mi>k</mi>
+          <mi>l</mi>
+        </mrow>
+      </munder>
+      <msub>
+        <mi>w</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mi>k</mi>
+          <mi>l</mi>
+        </mrow>
+      </msub>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Now texels containing bright sun pixels receive much higher probability.</p>
+<hr />
+<p><strong>Cumulative distribution function sampling</strong></p>
+<p>For a 1D discrete distribution:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>build cumulative:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>…</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>Draw:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ξ</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Find smallest index <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>&gt;</mo>
+  <mi>ξ</mi>
+  <mo>.</mo>
+</math>
+<p>This can be located with binary search:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>log</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>For a 2D environment map, typically build:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>marginal CDF over rows</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>plus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>conditional CDF over columns within each row</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>2D environment CDF construction</strong></p>
+<p>For each row <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>j</mi>
+</math>, compute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>Y</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Row sum:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>W</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>w</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Build conditional distribution:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>j</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <msub>
+      <mi>w</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi>i</mi>
+        <mi>j</mi>
+      </mrow>
+    </msub>
+    <msub>
+      <mi>W</mi>
+      <mi>j</mi>
+    </msub>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then marginal row distribution:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo stretchy="false">(</mo>
+  <mi>j</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <msub>
+      <mi>W</mi>
+      <mi>j</mi>
+    </msub>
+    <mrow>
+      <munder>
+        <mo data-mjx-texclass="OP">∑</mo>
+        <mi>k</mi>
+      </munder>
+      <msub>
+        <mi>W</mi>
+        <mi>k</mi>
+      </msub>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Sampling:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>j</mi>
+  <mo>∼</mo>
+  <mi>P</mi>
+  <mo stretchy="false">(</mo>
+  <mi>j</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mo>∼</mo>
+  <mi>P</mi>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>j</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Joint probability:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mo stretchy="false">(</mo>
+          <mi>i</mi>
+          <mo>,</mo>
+          <mi>j</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mi>P</mi>
+          <mo stretchy="false">(</mo>
+          <mi>j</mi>
+          <mo stretchy="false">)</mo>
+          <mi>P</mi>
+          <mo stretchy="false">(</mo>
+          <mi>i</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mi>j</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then jitter within the chosen texel and convert the discrete texel probability to a continuous directional PDF.</p>
+<hr />
+<p><strong>Why texel probability is not yet a solid-angle PDF</strong></p>
+<p>Suppose selected texel probability is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>If we sample uniformly inside that texel, UV density is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>u</mi>
+      <mi>v</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mi>W</mi>
+  <mi>H</mi>
+</math>
+<p>because texel UV area is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <mi>W</mi>
+      <mi>H</mi>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msub>
+      <mi>p</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi>u</mi>
+        <mi>v</mi>
+      </mrow>
+    </msub>
+    <mrow>
+      <mn>2</mn>
+      <msup>
+        <mi>π</mi>
+        <mn>2</mn>
+      </msup>
+      <mi>sin</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mi>θ</mi>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mi>ω</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>P</mi>
+                <mrow data-mjx-texclass="ORD">
+                  <mi>i</mi>
+                  <mi>j</mi>
+                </mrow>
+              </msub>
+              <mi>W</mi>
+              <mi>H</mi>
+            </mrow>
+            <mrow>
+              <mn>2</mn>
+              <msup>
+                <mi>π</mi>
+                <mn>2</mn>
+              </msup>
+              <mi>sin</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <mi>θ</mi>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+</math> in the importance weights and the conversion are not redundant; one handles texel solid angle during discrete selection, the other converts from UV density into directional density.</p>
+<hr />
+<p><strong>Alias-table sampling</strong></p>
+<p>CDF lookup costs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>log</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>with binary search.</p>
+<p>Alias method preprocesses a discrete distribution into two arrays, conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>probability</mtext>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>alias</mtext>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Sampling then requires:</p>
+<ol type="1">
+<li>choose one column uniformly;</li>
+<li>draw one random threshold;</li>
+<li>choose either column or alias.</li>
+</ol>
+<p>Runtime:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>O</mi>
+          <mo stretchy="false">(</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Preprocessing is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This is valuable for:</p>
+<ul>
+<li>thousands of lights,</li>
+<li>large environment distributions,</li>
+<li>repeated sampling over many rays.</li>
+</ul>
+<hr />
+<p><strong>Alias-table intuition</strong></p>
+<p>Imagine every bin should contain exactly average probability mass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>N</mi>
+  <mo>.</mo>
+</math>
+<p>Some original outcomes are underfull.</p>
+<p>Some are overfull.</p>
+<p>During preprocessing, use excess probability from overfull bins to top up underfull bins.</p>
+<p>Each final column stores:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>primary outcome</mtext>
+</math>
+<p>plus possibly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>alias outcome</mtext>
+  <mo>.</mo>
+</math>
+<p>At sampling time, one uniform column and one coin flip reproduce the original nonuniform distribution.</p>
+<p>The method trades preprocessing and memory for constant-time sampling.</p>
+<hr />
+<p><strong>Current Kairo environment status</strong></p>
+<p>Current Kairo:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>can sample an environment when a ray misses</mtext>
+  <mo>.</mo>
+</math>
+<p>It supports:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>constant environment color</mtext>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>lat-long texture</mtext>
+  <mo>.</mo>
+</math>
+<p>What it does <strong>not yet implement</strong> is environment next-event estimation.</p>
+<p>There is currently no:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>uniform directional environment sampler</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>luminance</mtext>
+  <mo>×</mo>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mtext> importance distribution</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>CDF</mtext>
+  <mo>,</mo>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>alias table</mtext>
+</math>
+<p>in <code>Environment.cppm</code>.</p>
+<p>Therefore bright HDR environment illumination can only be discovered by ordinary bounce directions.</p>
+<p>That is a major variance opportunity.</p>
+<hr />
+<p><strong>Multiple samples per pixel</strong></p>
+<p>A pixel estimate after <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> samples is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mrow data-mjx-texclass="ORD">
+              <mover>
+                <mi>X</mi>
+                <mo stretchy="false">¯</mo>
+              </mover>
+            </mrow>
+            <mi>N</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mi>N</mi>
+          </mfrac>
+          <munderover>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mo>=</mo>
+              <mn>1</mn>
+            </mrow>
+            <mi>N</mi>
+          </munderover>
+          <msub>
+            <mi>X</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Each <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>X</mi>
+    <mi>i</mi>
+  </msub>
+</math> may include randomness from:</p>
+<ul>
+<li>subpixel location,</li>
+<li>BSDF direction,</li>
+<li>light sample,</li>
+<li>Russian roulette,</li>
+<li>environment sample,</li>
+<li>lens sample in future,</li>
+<li>time sample in future.</li>
+</ul>
+<p>More samples reduce estimator variance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Var</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>X</mi>
+        <mo stretchy="false">¯</mo>
+      </mover>
+    </mrow>
+    <mi>N</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <msup>
+      <mi>σ</mi>
+      <mn>2</mn>
+    </msup>
+    <mi>N</mi>
+  </mfrac>
+</math>
+<p>for independent samples.</p>
+<p>Standard deviation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>σ</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mrow data-mjx-texclass="ORD">
+                <mover>
+                  <mi>X</mi>
+                  <mo stretchy="false">¯</mo>
+                </mover>
+              </mrow>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mi>σ</mi>
+            <msqrt>
+              <mi>N</mi>
+            </msqrt>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Current Kairo pixel sampling</strong></p>
+<p>Kairo’s renderer uses <code>StratifiedPixelSample()</code>.</p>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>&gt;</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>it computes grid side:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌈</mo>
+    <msqrt>
+      <mi>N</mi>
+    </msqrt>
+    <mo data-mjx-texclass="CLOSE">⌉</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Sample index determines stratum:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>s</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>i</mi>
+  <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+  <mi>s</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>s</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>=</mo>
+  <mo fence="false" stretchy="false">⌊</mo>
+  <mi>i</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>s</mi>
+  <mo fence="false" stretchy="false">⌋</mo>
+  <mo>.</mo>
+</math>
+<p>Then adds deterministic hashed jitter inside each stratum.</p>
+<p>This is better distributed than purely independent random points.</p>
+<p>It also remains deterministic from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mtext>sample</mtext>
+  <mo>,</mo>
+  <mtext>seed</mtext>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>That is excellent for testing.</p>
+<hr />
+<p><strong>Subtle stratification issue for non-square sample counts</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>5.</mn>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mo>=</mo>
+  <mo fence="false" stretchy="false">⌈</mo>
+  <msqrt>
+    <mn>5</mn>
+  </msqrt>
+  <mo fence="false" stretchy="false">⌉</mo>
+  <mo>=</mo>
+  <mn>3.</mn>
+</math>
+<p>Grid has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>9</mn>
+</math>
+<p>possible cells.</p>
+<p>But only first 5 are populated.</p>
+<p>Taking the first five cells gives zero probability to four cells. For a generic pixel integrand, equal averaging then estimates the mean over the selected region rather than the full pixel. This can introduce bias, rather than only a less symmetric noise pattern.</p>
+<p>So current sampling is a practical compact stratification method, not a mathematically perfect <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math>-sample stratification for every arbitrary <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math>.</p>
+<p>Common production choices use square sample counts, Latin-hypercube methods, Sobol, PMJ, blue noise or other low-discrepancy sequences.</p>
+<p>Those come later in the curriculum.</p>
+<hr />
+<p><strong>Progressive accumulation</strong></p>
+<p>Instead of rendering:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1024</mn>
+</math>
+<p>samples in one blocking call, render:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+</math>
+<p>sample per pixel repeatedly.</p>
+<p>After pass 1:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>X</mi>
+        <mo stretchy="false">¯</mo>
+      </mover>
+    </mrow>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>X</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>After pass 2:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>X</mi>
+        <mo stretchy="false">¯</mo>
+      </mover>
+    </mrow>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <msub>
+        <mi>X</mi>
+        <mn>1</mn>
+      </msub>
+      <mo>+</mo>
+      <msub>
+        <mi>X</mi>
+        <mn>2</mn>
+      </msub>
+    </mrow>
+    <mn>2</mn>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>After <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mrow data-mjx-texclass="ORD">
+              <mover>
+                <mi>X</mi>
+                <mo stretchy="false">¯</mo>
+              </mover>
+            </mrow>
+            <mi>n</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mi>n</mi>
+          </mfrac>
+          <munderover>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>k</mi>
+              <mo>=</mo>
+              <mn>1</mn>
+            </mrow>
+            <mi>n</mi>
+          </munderover>
+          <msub>
+            <mi>X</mi>
+            <mi>k</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This enables:</p>
+<ul>
+<li>progressively improving preview,</li>
+<li>stopping whenever quality is sufficient,</li>
+<li>adaptive sampling,</li>
+<li>interactive renderer feedback.</li>
+</ul>
+<hr />
+<p><strong>Online mean update</strong></p>
+<p>You do not need to store all samples.</p>
+<p>Given previous mean:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>μ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>new sample:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>update:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>μ</mi>
+            <mi>n</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>μ</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>n</mi>
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msub>
+          <mo>+</mo>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>x</mi>
+                <mi>n</mi>
+              </msub>
+              <mo>−</mo>
+              <msub>
+                <mi>μ</mi>
+                <mrow data-mjx-texclass="ORD">
+                  <mi>n</mi>
+                  <mo>−</mo>
+                  <mn>1</mn>
+                </mrow>
+              </msub>
+            </mrow>
+            <mi>n</mi>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Derivation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>μ</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mo stretchy="false">(</mo>
+      <mi>n</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+      <mo stretchy="false">)</mo>
+      <msub>
+        <mi>μ</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mi>n</mi>
+          <mo>−</mo>
+          <mn>1</mn>
+        </mrow>
+      </msub>
+      <mo>+</mo>
+      <msub>
+        <mi>x</mi>
+        <mi>n</mi>
+      </msub>
+    </mrow>
+    <mi>n</mi>
+  </mfrac>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <msub>
+    <mi>μ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <mfrac>
+    <mrow>
+      <msub>
+        <mi>x</mi>
+        <mi>n</mi>
+      </msub>
+      <mo>−</mo>
+      <msub>
+        <mi>μ</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mi>n</mi>
+          <mo>−</mo>
+          <mn>1</mn>
+        </mrow>
+      </msub>
+    </mrow>
+    <mi>n</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>This is numerically and operationally useful for progressive rendering.</p>
+<hr />
+<p><strong>Current Kairo progressive renderer</strong></p>
+<p>Kairo’s <code>RenderProgressive(scene, passes)</code> currently runs one-sample-per-pixel render passes with incremented seeds.</p>
+<p>It sums each completed pass image:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mo>=</mo>
+  <munderover>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mo>=</mo>
+      <mn>1</mn>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mi>P</mi>
+    </mrow>
+  </munderover>
+  <msub>
+    <mi>I</mi>
+    <mi>k</mi>
+  </msub>
+</math>
+<p>and finally divides by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo>.</mo>
+</math>
+<p>This is mathematically equivalent to the arithmetic mean.</p>
+<p>The limitation is architectural: it only computes the final average after the requested pass batch and does not maintain per-pixel online sample count/variance as first-class state.</p>
+<p>The comments themselves describe future inspectable intermediate images.</p>
+<hr />
+<p><strong>Per-pixel variance</strong></p>
+<p>A pixel with samples:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>n</mi>
+  </msub>
+</math>
+<p>has sample variance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>s</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mrow>
+              <mi>n</mi>
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </mfrac>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mi>i</mi>
+          </munder>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>x</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>−</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>x</mi>
+              <mo stretchy="false">¯</mo>
+            </mover>
+          </mrow>
+          <msup>
+            <mo stretchy="false">)</mo>
+            <mn>2</mn>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For RGB we can track variance separately per channel, or often track luminance variance to drive adaptive sampling.</p>
+<p>High variance means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>pixel estimate remains statistically unstable</mtext>
+  <mo>.</mo>
+</math>
+<p>Low variance means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>additional samples are producing similar results</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Why naive variance computation can be numerically poor</strong></p>
+<p>Computing:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">]</mo>
+  <mo>−</mo>
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <mi>x</mi>
+  <msup>
+    <mo stretchy="false">]</mo>
+    <mn>2</mn>
+  </msup>
+</math>
+<p>can suffer catastrophic cancellation when values are large but variance is small.</p>
+<p>Welford’s online algorithm is robust.</p>
+<p>Maintain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>μ</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>M</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>For new sample <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo stretchy="false">←</mo>
+  <mi>n</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>δ</mi>
+  <mo>=</mo>
+  <mi>x</mi>
+  <mo>−</mo>
+  <mi>μ</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>μ</mi>
+  <mo stretchy="false">←</mo>
+  <mi>μ</mi>
+  <mo>+</mo>
+  <mi>δ</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>n</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>δ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>x</mi>
+  <mo>−</mo>
+  <mi>μ</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>M</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">←</mo>
+  <msub>
+    <mi>M</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>+</mo>
+  <mi>δ</mi>
+  <msub>
+    <mi>δ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>s</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>=</mo>
+          <mfrac>
+            <msub>
+              <mi>M</mi>
+              <mn>2</mn>
+            </msub>
+            <mrow>
+              <mi>n</mi>
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>A useful film accumulator</strong></p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> PixelStatistics</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> count <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    Color mean <span class="op">=</span> Color<span class="op">::</span>Black<span class="op">();</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    Color m2   <span class="op">=</span> Color<span class="op">::</span>Black<span class="op">();</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> AddSample<span class="op">(</span><span class="at">const</span> Color<span class="op">&amp;</span> x<span class="op">)</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        <span class="op">++</span>count<span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> Color delta <span class="op">=</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>            x <span class="op">-</span> mean<span class="op">;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        mean <span class="op">+=</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>            delta <span class="op">/</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">float</span><span class="op">&gt;(</span>count<span class="op">);</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> Color delta2 <span class="op">=</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>            x <span class="op">-</span> mean<span class="op">;</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>        m2 <span class="op">+=</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>            delta <span class="op">*</span> delta2<span class="op">;</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    Color Variance<span class="op">()</span> <span class="at">const</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>count <span class="op">&lt;</span> <span class="dv">2</span><span class="op">)</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> Color<span class="op">::</span>Black<span class="op">();</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>            m2 <span class="op">/</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">float</span><span class="op">&gt;(</span>count <span class="op">-</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    Color StandardError<span class="op">()</span> <span class="at">const</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>count <span class="op">&lt;</span> <span class="dv">2</span><span class="op">)</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> Color<span class="op">::</span>Black<span class="op">();</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Sqrt<span class="op">(</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>            Variance<span class="op">()</span> <span class="op">/</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">float</span><span class="op">&gt;(</span>count<span class="op">));</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>This would be a natural evolution of Kairo’s current <code>Film</code>, which presently stores only the final <code>Color3f</code> per pixel.</p>
+<hr />
+<p><strong>Variance enables adaptive sampling</strong></p>
+<p>Suppose pixel A has estimated standard error:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.001</mn>
+  <mo>.</mo>
+</math>
+<p>Pixel B:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.25</mn>
+  <mo>.</mo>
+</math>
+<p>Spending another 1000 samples equally on both is wasteful.</p>
+<p>Adaptive sampling allocates more work to high-variance pixels.</p>
+<p>A termination criterion might compare:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mtext>standard error</mtext>
+    <mrow>
+      <mo stretchy="false">|</mo>
+      <mtext>mean</mtext>
+      <mrow data-mjx-texclass="ORD">
+        <mo stretchy="false">|</mo>
+      </mrow>
+      <mo>+</mo>
+      <mi>ϵ</mi>
+    </mrow>
+  </mfrac>
+</math>
+<p>against a threshold.</p>
+<p>This is more advanced than current M124 requirements, but it follows directly from per-pixel variance.</p>
+<hr />
+<p><strong>Noise versus bias</strong></p>
+<p>An estimator can have:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>variance</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>bias</mtext>
+  <mo>.</mo>
+</math>
+<p>Bias:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>Bias</mi>
+          <mo>=</mo>
+          <mi>E</mi>
+          <mo stretchy="false">[</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>I</mi>
+              <mo stretchy="false">^</mo>
+            </mover>
+          </mrow>
+          <mo stretchy="false">]</mo>
+          <mo>−</mo>
+          <mi>I</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Variance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>E</mi>
+          <mo stretchy="false">[</mo>
+          <mo stretchy="false">(</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>I</mi>
+              <mo stretchy="false">^</mo>
+            </mover>
+          </mrow>
+          <mo>−</mo>
+          <mi>E</mi>
+          <mo stretchy="false">[</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>I</mi>
+              <mo stretchy="false">^</mo>
+            </mover>
+          </mrow>
+          <mo stretchy="false">]</mo>
+          <msup>
+            <mo stretchy="false">)</mo>
+            <mn>2</mn>
+          </msup>
+          <mo stretchy="false">]</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Unbiased noisy path tracer:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>I</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>I</mi>
+</math>
+<p>but finite images fluctuate.</p>
+<p>A biased renderer may look smooth but converge to the wrong answer.</p>
+<hr />
+<p><strong>Mean-squared error decomposition</strong></p>
+<p>A useful identity is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>M</mi>
+          <mi>S</mi>
+          <mi>E</mi>
+          <mo>=</mo>
+          <mi>Var</mi>
+          <mo>+</mo>
+          <msup>
+            <mi>Bias</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This explains why small controlled bias may sometimes be acceptable in production.</p>
+<p>A slightly biased estimator with dramatically lower variance may produce lower visible error at finite rendering time.</p>
+<p>But that must be a conscious engineering decision.</p>
+<hr />
+<p><strong>Sources of bias</strong></p>
+<p>A hard maximum bounce depth introduces bias.</p>
+<p>Contribution clamping introduces bias.</p>
+<p>An incorrect MIS scheme introduces bias.</p>
+<p>Denoising can introduce reconstruction bias.</p>
+<p>Approximate BRDFs are model bias relative to real physics.</p>
+<p>Finite precision can introduce numerical errors.</p>
+<p>Russian roulette, however, <strong>does not inherently introduce bias</strong> when survival compensation is correct.</p>
+<p>That distinction matters.</p>
+<hr />
+<p><strong>Fireflies</strong></p>
+<p>Fireflies are isolated extremely bright samples.</p>
+<p>They usually arise when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mfrac>
+            <mrow>
+              <mi>f</mi>
+              <mo stretchy="false">(</mo>
+              <mi>x</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+            <mrow>
+              <mi>p</mi>
+              <mo stretchy="false">(</mo>
+              <mi>x</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>becomes very large for a rare event.</p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>1000</mn>
+</math>
+<p>but:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>6</mn>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Then weight:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>10</mn>
+    <mn>9</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Even if event happens once in millions of samples, one occurrence can dominate a pixel average.</p>
+<hr />
+<p><strong>Common firefly sources</strong></p>
+<p>A glossy BRDF randomly landing on a tiny intense light is a classic case.</p>
+<p>A bright HDR sun pixel sampled with a nearly uniform environment PDF is another.</p>
+<p>Near-specular caustic paths can create extremely concentrated transport.</p>
+<p>Shading-normal mismatches can cause artificial BRDF amplification.</p>
+<p>Near-zero PDFs, malformed roughness, invalid normals or bad Jacobians can create numerical fireflies rather than legitimate statistical ones.</p>
+<p>The correct first response is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>find why </mtext>
+          <mi>f</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <mi>p</mi>
+          <mtext> is huge</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Not immediately clamp the pixel.</p>
+<hr />
+<p><strong>Clamping</strong></p>
+<p>One firefly suppression technique:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>C</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <mi>C</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>componentwise or by luminance.</p>
+<p>This reduces variance.</p>
+<p>But:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <msup>
+    <mi>C</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo stretchy="false">]</mo>
+  <mo>≠</mo>
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <mi>C</mi>
+  <mo stretchy="false">]</mo>
+</math>
+<p>whenever contributions above threshold genuinely occur.</p>
+<p>Therefore clamping is biased.</p>
+<p>The image usually becomes too dark in transport regions depending on rare high-energy paths.</p>
+<hr />
+<p><strong>Why clamping can still be useful</strong></p>
+<p>In interactive rendering or game-oriented offline preview, a tiny amount of bias may be preferable to obvious fireflies.</p>
+<p>A better hierarchy of fixes is conceptually:</p>
+<p>First fix incorrect PDFs/Jacobians/BRDFs.</p>
+<p>Then improve importance sampling.</p>
+<p>Then use NEE and MIS.</p>
+<p>Then improve environment/light distributions.</p>
+<p>Then, only if necessary, use carefully controlled clamping.</p>
+<p>Clamping should be treated as a variance-management compromise, not as the mathematical solution.</p>
+<hr />
+<p><strong>Path-space intuition</strong></p>
+<p>Instead of thinking one bounce at a time, think of a whole path:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>x</mi>
+              <mo stretchy="false">¯</mo>
+            </mover>
+          </mrow>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>x</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>x</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>,</mo>
+          <mo>…</mo>
+          <mo>,</mo>
+          <msub>
+            <mi>x</mi>
+            <mi>k</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mtext>camera</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>emitter/environment</mtext>
+  <mo>.</mo>
+</math>
+<p>A path contribution roughly contains products of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>emission</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>BRDF/BSDF values</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>geometry terms</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>visibility</mtext>
+  <mo>,</mo>
+</math>
+<p>divided by path-sampling density.</p>
+<p>Thus rendering can be viewed as integration over a gigantic <strong>path space</strong> rather than merely directions at one surface.</p>
+<p>This is the conceptual foundation for:</p>
+<ul>
+<li>bidirectional path tracing,</li>
+<li>vertex connection and merging,</li>
+<li>Metropolis light transport.</li>
+</ul>
+<p>We are not implementing those now, but the mental model starts here.</p>
+<hr />
+<p><strong>Path notation and event classes</strong></p>
+<p>A common shorthand uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo>=</mo>
+  <mtext>emitter</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo>=</mo>
+  <mtext>diffuse</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mo>=</mo>
+  <mtext>glossy</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mo>=</mo>
+  <mtext>specular/delta</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mtext>camera</mtext>
+  <mo>.</mo>
+</math>
+<p>A simple direct diffuse path:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>D</mi>
+  <mi>E</mi>
+  <mo>.</mo>
+</math>
+<p>A mirror reflection:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>S</mi>
+  <mi>E</mi>
+  <mo>.</mo>
+</math>
+<p>Diffuse interreflection:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>D</mi>
+  <mi>D</mi>
+  <mi>E</mi>
+  <mo>.</mo>
+</math>
+<p>Caustic-like path:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>D</mi>
+  <mi>S</mi>
+  <mi>S</mi>
+  <mi>E</mi>
+</math>
+<p>depending on direction convention/path ordering.</p>
+<p>Path-space classification helps explain why some algorithms handle certain transport well and others poorly.</p>
+<hr />
+<p><strong>Specular delta distributions</strong></p>
+<p>A perfect mirror reflects into exactly one outgoing direction.</p>
+<p>Its BRDF cannot be represented as an ordinary smooth finite function.</p>
+<p>It contains a Dirac delta distribution.</p>
+<p>Informally:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>∝</mo>
+  <mi>δ</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>r</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Why does this matter?</p>
+<p>Because probability of selecting exactly the mirror direction using a continuous hemisphere sampler is zero.</p>
+<p>Therefore perfect-specular events require specialized deterministic/delta sampling.</p>
+<hr />
+<p><strong>Delta event versus very glossy event</strong></p>
+<p>Rough GGX with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>0.01</mn>
+</math>
+<p>is still technically a finite-width continuous distribution.</p>
+<p>Perfect mirror:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>in ideal mathematical form becomes a delta.</p>
+<p>These behave differently in MIS.</p>
+<p>For a delta event, there is usually only one valid transport direction.</p>
+<p>The sampled BSDF event is treated with discrete probability rather than ordinary finite solid-angle density in the same way.</p>
+<p>You must not evaluate the perfect mirror using a naïve:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>finite number</mtext>
+</math>
+<p>as though it were diffuse.</p>
+<hr />
+<p><strong>Diffuse event</strong></p>
+<p>A diffuse event scatters over an entire hemisphere.</p>
+<p>For Lambert:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo>=</mo>
+  <mi>ρ</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>π</mi>
+  <mo>.</mo>
+</math>
+<p>A continuum of directions has nonzero contribution.</p>
+<p>Cosine-weighted sampling works well.</p>
+<p>This is a <strong>non-delta continuous event</strong>.</p>
+<hr />
+<p><strong>Glossy event</strong></p>
+<p>A glossy BRDF such as GGX rough reflection also has continuous support over a range of directions, but concentrated around specular configurations.</p>
+<p>It is non-delta as long as roughness is nonzero.</p>
+<p>A GGX VNDF sampler is appropriate.</p>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>diffuse</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>glossy</mtext>
+</math>
+<p>are both continuous, but their ideal PDFs differ drastically.</p>
+<hr />
+<p><strong>Why event classification matters for NEE</strong></p>
+<p>At a diffuse surface:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>sample lights explicitly</mtext>
+  <mo>.</mo>
+</math>
+<p>At a rough glossy surface:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>sample lights + BSDF with MIS</mtext>
+  <mo>.</mo>
+</math>
+<p>At a perfect mirror surface:</p>
+<p>there is usually no need to perform ordinary direct-light NEE toward arbitrary lights because only one outgoing direction is supported by the BSDF delta.</p>
+<p>This is why path tracers often carry flags such as:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>BSDF_Diffuse</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>BSDF_Glossy</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>BSDF_Specular</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>BSDF_Reflection</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>BSDF_Transmission</span></code></pre></div>
+<p>They control both sampling and MIS logic.</p>
+<hr />
+<p><strong>Glass as probabilistic event selection</strong></p>
+<p>At an ideal dielectric interface, Fresnel gives reflection probability:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo>.</mo>
+</math>
+<p>Transmission energy fraction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>F</mi>
+  <mo>.</mo>
+</math>
+<p>Whitted tracing spawned both reflection and refraction rays.</p>
+<p>Path tracing can instead select <strong>one</strong> branch.</p>
+<p>Draw:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ξ</mi>
+  <mo>∼</mo>
+  <mi>U</mi>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ξ</mi>
+  <mo>&lt;</mo>
+  <mi>F</mi>
+  <mo>,</mo>
+</math>
+<p>choose reflection.</p>
+<p>Otherwise choose transmission.</p>
+<p>This avoids exponential ray branching.</p>
+<hr />
+<p><strong>Why choosing probability equal to Fresnel is elegant</strong></p>
+<p>Suppose reflected contribution factor contains:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo>.</mo>
+</math>
+<p>Sampling reflection with probability:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>F</mi>
+  <mo>.</mo>
+</math>
+<p>Monte Carlo weight includes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mi>F</mi>
+    <msub>
+      <mi>p</mi>
+      <mi>r</mi>
+    </msub>
+  </mfrac>
+  <mo>=</mo>
+  <mfrac>
+    <mi>F</mi>
+    <mi>F</mi>
+  </mfrac>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>Similarly transmission:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>F</mi>
+  <mo>,</mo>
+</math>
+<p>and in the simplest lossless conceptual case:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mn>1</mn>
+      <mo>−</mo>
+      <mi>F</mi>
+    </mrow>
+    <msub>
+      <mi>p</mi>
+      <mi>t</mi>
+    </msub>
+  </mfrac>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>So Fresnel factor cancels selection probability.</p>
+<p>This dramatically stabilizes ideal dielectric event sampling.</p>
+<hr />
+<p><strong>Glass pseudocode</strong></p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>BSDFSample SampleIdealGlass<span class="op">(</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    Vec3 wo<span class="op">,</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    Vec3 n<span class="op">,</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> etaI<span class="op">,</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> etaT<span class="op">,</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    RNG<span class="op">&amp;</span> rng<span class="op">)</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> cosTheta <span class="op">=</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>clamp<span class="op">(</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>            Dot<span class="op">(</span>wo<span class="op">,</span> n<span class="op">),</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.0</span><span class="bu">f</span><span class="op">,</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>            <span class="fl">1.0</span><span class="bu">f</span><span class="op">);</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> F <span class="op">=</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        FresnelDielectric<span class="op">(</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>            cosTheta<span class="op">,</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>            etaI<span class="op">,</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>            etaT<span class="op">);</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> eta <span class="op">=</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        etaI <span class="op">/</span> etaT<span class="op">;</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="kw">auto</span> wt <span class="op">=</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>        Refract<span class="op">(</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>            <span class="op">-</span>wo<span class="op">,</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>            n<span class="op">,</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>            eta<span class="op">);</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Total internal reflection.</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>wt<span class="op">)</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>Wi <span class="op">=</span> Reflect<span class="op">(-</span>wo<span class="op">,</span> n<span class="op">),</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>Probability <span class="op">=</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">,</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>IsDelta <span class="op">=</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>IsTransmission <span class="op">=</span> <span class="kw">false</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>        <span class="op">};</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>Random01<span class="op">(</span>rng<span class="op">)</span> <span class="op">&lt;</span> F<span class="op">)</span></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>Wi <span class="op">=</span> Reflect<span class="op">(-</span>wo<span class="op">,</span> n<span class="op">),</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>Probability <span class="op">=</span> F<span class="op">,</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>IsDelta <span class="op">=</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>IsTransmission <span class="op">=</span> <span class="kw">false</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>        <span class="op">};</span></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>Wi <span class="op">=</span> <span class="op">*</span>wt<span class="op">,</span></span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>Probability <span class="op">=</span> <span class="fl">1.0</span><span class="bu">f</span> <span class="op">-</span> F<span class="op">,</span></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>IsDelta <span class="op">=</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>IsTransmission <span class="op">=</span> <span class="kw">true</span></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The full radiance-domain transmission throughput requires careful refractive-index factors.</p>
+<p>That belongs to the next pass together with nested media and explicit IOR tracking.</p>
+<p>Do not simplify full dielectric transport to “just <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>F</mi>
+</math>” once we derive the BTDF rigorously.</p>
+<hr />
+<p><strong>Total internal reflection in event selection</strong></p>
+<p>If refraction has no real solution:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>sin</mi>
+    <mn>2</mn>
+  </msup>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>&gt;</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>Reflection probability becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>Transmission probability:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>So event selection naturally becomes deterministic mirror reflection.</p>
+<p>No special arbitrary fallback is needed beyond recognizing TIR.</p>
+<hr />
+<p><strong>Current Kairo Path mode versus theory</strong></p>
+<p>This is the most important repository audit in this pass.</p>
+<p>Current <code>TracePath()</code> only has a special material branch for:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>MaterialType<span class="op">::</span>Emissive</span></code></pre></div>
+<p>There is no branch for:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>Mirror</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>Glass</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>PBR</span></code></pre></div>
+<p>inside the current path integrator.</p>
+<p>After direct lighting, every non-emissive surface receives:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>CosineHemisphereDirection<span class="op">(</span>hit<span class="op">.</span>Normal<span class="op">)</span></span></code></pre></div>
+<p>and the next bounce is weighted approximately by:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>albedo <span class="op">/</span> survivalProbability</span></code></pre></div>
+<p>Therefore current Kairo <strong>Path mode effectively treats every non-emissive surface as diffuse Lambertian for indirect transport</strong>, even when the material record says Mirror, Glass or PBR.</p>
+<p>The Whitted integrator handles mirror/glass properly.</p>
+<p>The direct PBR integrator handles GGX direct illumination.</p>
+<p>But the path integrator has not yet unified those into a general BSDF transport system.</p>
+<p>That is the largest architectural gap exposed by M123/M124.</p>
+<hr />
+<p><strong>What a general Kairo BSDF layer should look like</strong></p>
+<p>Instead of the path integrator knowing material types directly, introduce an abstraction conceptually like:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> BSDFSample</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    Vec3 Wi<span class="op">;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    Color F<span class="op">;</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Pdf<span class="op">;</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> IsDelta<span class="op">;</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> IsReflection<span class="op">;</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> IsTransmission<span class="op">;</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>Color EvaluateBSDF<span class="op">(</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Material<span class="op">&amp;</span> material<span class="op">,</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> SurfaceHit<span class="op">&amp;</span> hit<span class="op">,</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    Vec3 wo<span class="op">,</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    Vec3 wi<span class="op">);</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> PdfBSDF<span class="op">(</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Material<span class="op">&amp;</span> material<span class="op">,</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> SurfaceHit<span class="op">&amp;</span> hit<span class="op">,</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    Vec3 wo<span class="op">,</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    Vec3 wi<span class="op">);</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>BSDFSample SampleBSDF<span class="op">(</span></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Material<span class="op">&amp;</span> material<span class="op">,</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> SurfaceHit<span class="op">&amp;</span> hit<span class="op">,</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    Vec3 wo<span class="op">,</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>    RNG<span class="op">&amp;</span> rng<span class="op">);</span></span></code></pre></div>
+<p>Then the integrator operates generically:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sample <span class="op">=</span> SampleBSDF<span class="op">(...);</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>beta <span class="op">*=</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">.</span>F <span class="op">*</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    abs<span class="op">(</span>dot<span class="op">(</span>N<span class="op">,</span> sample<span class="op">.</span>Wi<span class="op">))</span> <span class="op">/</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    sample<span class="op">.</span>Pdf<span class="op">;</span></span></code></pre></div>
+<p>Mirror returns delta reflection.</p>
+<p>Glass returns Fresnel-selected delta reflection/transmission.</p>
+<p>Lambert returns cosine-sampled diffuse.</p>
+<p>PBR returns GGX/VNDF reflection plus diffuse mixture.</p>
+<p>That architecture is where the renderer should move.</p>
+<hr />
+<p><strong>Sampling a mixture BSDF</strong></p>
+<p>Suppose metallic-roughness dielectric material contains:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>One simple sampling strategy chooses diffuse with probability:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>d</mi>
+  </msub>
+</math>
+<p>and specular with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>If diffuse selected:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>∼</mo>
+  <msubsup>
+    <mi>p</mi>
+    <mi>d</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>dir</mtext>
+    </mrow>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>If specular:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>∼</mo>
+  <msubsup>
+    <mi>p</mi>
+    <mi>s</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>dir</mtext>
+    </mrow>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>The complete mixture PDF for an obtained direction is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>p</mi>
+          <mo stretchy="false">(</mo>
+          <mi>ω</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <msub>
+            <mi>p</mi>
+            <mi>d</mi>
+          </msub>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <msubsup>
+            <mi>p</mi>
+            <mi>d</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>dir</mtext>
+            </mrow>
+          </msubsup>
+          <mo stretchy="false">(</mo>
+          <mi>ω</mi>
+          <mo stretchy="false">)</mo>
+          <mo>+</mo>
+          <msub>
+            <mi>p</mi>
+            <mi>s</mi>
+          </msub>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <msubsup>
+            <mi>p</mi>
+            <mi>s</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>dir</mtext>
+            </mrow>
+          </msubsup>
+          <mo stretchy="false">(</mo>
+          <mi>ω</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>You must evaluate the <strong>full BSDF</strong>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>s</mi>
+  </msub>
+</math>
+<p>and divide by the <strong>mixture PDF</strong>, not merely the PDF of the branch you happened to choose if both lobes have support there.</p>
+<p>This is a common implementation error.</p>
+<hr />
+<p><strong>Mixture probability should approximate lobe energy</strong></p>
+<p>Choosing:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0.5</mn>
+</math>
+<p>is simple.</p>
+<p>But if a metal has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>≈</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>half the samples are wasted.</p>
+<p>Better choose lobe probabilities based on expected diffuse/specular energy.</p>
+<p>For metallic:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mn>1.</mn>
+</math>
+<p>For diffuse dielectric:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>d</mi>
+  </msub>
+</math>
+<p>can be larger while still preserving nonzero specular selection.</p>
+<p>This is another form of importance sampling.</p>
+<hr />
+<p><strong>Full next-event estimation architecture</strong></p>
+<p>At each non-delta path vertex <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>:</p>
+<p>Choose a light index:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>j</mi>
+  <mo>∼</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>light</mtext>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>j</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Sample that light:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>s</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Its complete light PDF is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mi>L</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>P</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>light</mtext>
+            </mrow>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>j</mi>
+          <mo stretchy="false">)</mo>
+          <mi>p</mi>
+          <mo stretchy="false">(</mo>
+          <mi>ω</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mi>j</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Evaluate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>V</mi>
+  <mo>.</mo>
+</math>
+<p>Evaluate BSDF PDF for the same direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Apply:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msubsup>
+      <mi>p</mi>
+      <mi>L</mi>
+      <mn>2</mn>
+    </msubsup>
+    <mrow>
+      <msubsup>
+        <mi>p</mi>
+        <mi>L</mi>
+        <mn>2</mn>
+      </msubsup>
+      <mo>+</mo>
+      <msubsup>
+        <mi>p</mi>
+        <mi>B</mi>
+        <mn>2</mn>
+      </msubsup>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then add:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>L</mi>
+          <mrow data-mjx-texclass="REL">
+            <mo>+</mo>
+          </mrow>
+          <mo>=</mo>
+          <mi>β</mi>
+          <msub>
+            <mi>w</mi>
+            <mi>L</mi>
+          </msub>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>f</mi>
+                <mi>r</mi>
+              </msub>
+              <msub>
+                <mi>L</mi>
+                <mi>i</mi>
+              </msub>
+              <mi>cos</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <mi>θ</mi>
+              <mi>V</mi>
+            </mrow>
+            <msub>
+              <mi>p</mi>
+              <mi>L</mi>
+            </msub>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is the light-sampling side of MIS NEE.</p>
+<hr />
+<p><strong>Matching BSDF-emitter MIS</strong></p>
+<p>When the BSDF-sampled path later reaches a light/environment, evaluate the light technique’s PDF for that same direction.</p>
+<p>Suppose previous BSDF PDF was:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Equivalent light PDF:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msubsup>
+      <mi>p</mi>
+      <mi>B</mi>
+      <mn>2</mn>
+    </msubsup>
+    <mrow>
+      <msubsup>
+        <mi>p</mi>
+        <mi>B</mi>
+        <mn>2</mn>
+      </msubsup>
+      <mo>+</mo>
+      <msubsup>
+        <mi>p</mi>
+        <mi>L</mi>
+        <mn>2</mn>
+      </msubsup>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Emission contribution:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>L</mi>
+          <mrow data-mjx-texclass="REL">
+            <mo>+</mo>
+          </mrow>
+          <mo>=</mo>
+          <mi>β</mi>
+          <msub>
+            <mi>w</mi>
+            <mi>B</mi>
+          </msub>
+          <msub>
+            <mi>L</mi>
+            <mi>e</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If previous event was delta:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>
+<p>because ordinary light sampling could not generate that delta path in the same way.</p>
+<p>This is the symmetry missing from many half-implemented MIS renderers.</p>
+<hr />
+<p><strong>Environment NEE with MIS</strong></p>
+<p>At a diffuse/glossy surface, sample environment direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ω</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>∼</mo>
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>env</mtext>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Trace shadow ray to infinity.</p>
+<p>If unoccluded:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>env</mtext>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>L</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Evaluate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>PdfBSDF</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>L</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msubsup>
+      <mi>p</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mtext>env</mtext>
+      </mrow>
+      <mn>2</mn>
+    </msubsup>
+    <mrow>
+      <msubsup>
+        <mi>p</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mtext>env</mtext>
+        </mrow>
+        <mn>2</mn>
+      </msubsup>
+      <mo>+</mo>
+      <msubsup>
+        <mi>p</mi>
+        <mi>B</mi>
+        <mn>2</mn>
+      </msubsup>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Contribution:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>L</mi>
+            <mi>d</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>β</mi>
+          <msub>
+            <mi>w</mi>
+            <mi>L</mi>
+          </msub>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>L</mi>
+                <mrow data-mjx-texclass="ORD">
+                  <mtext>env</mtext>
+                </mrow>
+              </msub>
+              <msub>
+                <mi>f</mi>
+                <mi>r</mi>
+              </msub>
+              <mi>cos</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <mi>θ</mi>
+            </mrow>
+            <msub>
+              <mi>p</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mtext>env</mtext>
+              </mrow>
+            </msub>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If the subsequent BSDF ray misses the scene and sees the environment, perform the symmetric BSDF-side weighting.</p>
+<p>That is how HDR skies can become both efficient and unbiased.</p>
+<hr />
+<p><strong>Per-pixel firefly diagnostics</strong></p>
+<p>A mature renderer should not just show a final noisy image.</p>
+<p>Track at least conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>sample</mtext>
+    </mrow>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>β</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>BSDF</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>light</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>bounce where max occurred</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>event class</mtext>
+  <mo>.</mo>
+</math>
+<p>If one pixel has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+</math>
+<p>sample radiance while neighbors are around:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mo>,</mo>
+</math>
+<p>you want to know whether it was caused by:</p>
+<pre class="text"><code>GGX sample at bounce 4,
+environment sun,
+pdf = 1.2e-8</code></pre>
+<p>rather than merely seeing a white dot.</p>
+<p>Path debugging needs transport metadata.</p>
+<hr />
+<p><strong>Progressive convergence experiment</strong></p>
+<p>For one fixed scene, render:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>16</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>64</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>256</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>1024</mn>
+</math>
+<p>samples per pixel.</p>
+<p>Use a very high-sample reference:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>.</mo>
+</math>
+<p>Compute RMSE:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>M</mi>
+  <mi>S</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>N</mi>
+  </msub>
+  <mo>=</mo>
+  <msqrt>
+    <mfrac>
+      <mn>1</mn>
+      <mi>M</mi>
+    </mfrac>
+    <munder>
+      <mo data-mjx-texclass="OP">∑</mo>
+      <mi>p</mi>
+    </munder>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <msub>
+      <mi>I</mi>
+      <mi>N</mi>
+    </msub>
+    <mo stretchy="false">(</mo>
+    <mi>p</mi>
+    <mo stretchy="false">)</mo>
+    <mo>−</mo>
+    <mi>R</mi>
+    <mo stretchy="false">(</mo>
+    <mi>p</mi>
+    <mo stretchy="false">)</mo>
+    <msup>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+      <mn>2</mn>
+    </msup>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>For independent Monte Carlo, error should roughly trend:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>R</mi>
+          <mi>M</mi>
+          <mi>S</mi>
+          <mi>E</mi>
+          <mo>∝</mo>
+          <msup>
+            <mi>N</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+              <mrow data-mjx-texclass="ORD">
+                <mo>/</mo>
+              </mrow>
+              <mn>2</mn>
+            </mrow>
+          </msup>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>until other errors dominate.</p>
+<p>If error plateaus at a nonzero level, suspect <strong>bias</strong>, not ordinary Monte Carlo noise.</p>
+<p>That is an extremely important debugging distinction.</p>
+<hr />
+<p><strong>Noise pattern can diagnose sampling</strong></p>
+<p>Uniform random sampling creates white-noise-like high-frequency variation.</p>
+<p>Stratification suppresses low-frequency clustering in finite sample sets.</p>
+<p>Low-discrepancy sequences create more even coverage.</p>
+<p>Blue-noise sequences push error toward frequencies that are less visually objectionable.</p>
+<p>The estimator can remain mathematically correct while the <em>spatial structure</em> of finite-sample error changes dramatically.</p>
+<p>That will matter later for real-time rendering.</p>
+<hr />
+<p><strong>Current Kairo progressive testing</strong></p>
+<p>The current tests verify that progressive path rendering:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>produces finite pixels</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>is deterministic for the same seeds</mtext>
+  <mo>.</mo>
+</math>
+<p>That is good infrastructure.</p>
+<p>What is still absent is a real convergence test checking:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>error decreases with sample count</mtext>
+</math>
+<p>and a per-pixel variance estimator.</p>
+<p>Those are natural M124 additions.</p>
+<hr />
+<p><strong>Research-quality variance comparison</strong></p>
+<p>To compare sampling strategies, hold everything fixed except the sampler.</p>
+<p>For example render the same scene using:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>uniform hemisphere</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>cosine hemisphere</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>GGX NDF</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>GGX VNDF</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>light sampling</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>MIS</mtext>
+  <mo>.</mo>
+</math>
+<p>Measure at fixed:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>ray count</mtext>
+</math>
+<p>rather than merely fixed SPP.</p>
+<p>Why?</p>
+<p>A technique that launches three shadow rays per bounce costs more than one that launches none.</p>
+<p>Quality per sample and quality per unit time are different metrics.</p>
+<p>The meaningful research quantity is often:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>error versus compute budget</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Variance and BVH cost interact</strong></p>
+<p>Suppose method A requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>100</mn>
+</math>
+<p>samples for target variance but each sample costs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>5</mn>
+</math>
+<p>rays.</p>
+<p>Method B needs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>200</mn>
+</math>
+<p>samples but costs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+</math>
+<p>ray each.</p>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mn>500</mn>
+  <mtext> rays</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mn>200</mn>
+  <mtext> rays</mtext>
+  <mo>.</mo>
+</math>
+<p>So “lower variance per sample” does not automatically mean faster rendering.</p>
+<p>Integrator design must optimize:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>variance</mtext>
+          <mo>×</mo>
+          <mtext>cost</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>or an equivalent time-normalized metric.</p>
+<p>This becomes very important with complex MIS and next-event estimation.</p>
+<hr />
+<p><strong>Path tracing is probability bookkeeping</strong></p>
+<p>At this stage the core renderer is no longer difficult because ray intersection is mysterious.</p>
+<p>The hard part is maintaining a consistent probability story.</p>
+<p>For every random choice you must be able to answer:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>What was sampled?</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Under what measure?</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>What was its PDF?</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Did another technique also sample this event?</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>If yes, what is the MIS weight?</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>How does this choice update throughput?</mtext>
+</math>
+<p>If you cannot answer those questions for every bounce, the integrator is not yet trustworthy.</p>
+<hr />
+<p><strong>A more complete Kairo-style path-loop target</strong></p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>Color TracePath<span class="op">(</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Scene<span class="op">&amp;</span> scene<span class="op">,</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    Ray ray<span class="op">,</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    RNG<span class="op">&amp;</span> rng<span class="op">)</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    Color L <span class="op">=</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>        Color<span class="op">::</span>Black<span class="op">();</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    Color beta <span class="op">=</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>        Color<span class="op">::</span>White<span class="op">();</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> previousBsdfPdf <span class="op">=</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">;</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> previousDelta <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">uint32_t</span> bounce <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>         bounce <span class="op">&lt;</span> MaxDepth<span class="op">;</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>         <span class="op">++</span>bounce<span class="op">)</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="kw">auto</span> hit <span class="op">=</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>            scene<span class="op">.</span>Intersect<span class="op">(</span>ray<span class="op">);</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>hit<span class="op">)</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> Color Le <span class="op">=</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>                scene<span class="op">.</span>SampleEnvironment<span class="op">(</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>                    ray<span class="op">.</span>Direction<span class="op">);</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="op">(</span>bounce <span class="op">==</span> <span class="dv">0</span> <span class="op">||</span></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>                previousDelta<span class="op">)</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>                L <span class="op">+=</span> beta <span class="op">*</span> Le<span class="op">;</span></span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>                <span class="at">const</span> <span class="dt">float</span> lightPdf <span class="op">=</span></span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>                    scene<span class="op">.</span>EnvironmentPdf<span class="op">(</span></span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>                        ray<span class="op">.</span>Direction<span class="op">);</span></span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>                <span class="at">const</span> <span class="dt">float</span> w <span class="op">=</span></span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>                    PowerHeuristic<span class="op">(</span></span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>                        previousBsdfPdf<span class="op">,</span></span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>                        lightPdf<span class="op">);</span></span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>                L <span class="op">+=</span></span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>                    beta <span class="op">*</span></span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a>                    Le <span class="op">*</span></span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>                    w<span class="op">;</span></span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> Material<span class="op">&amp;</span> material <span class="op">=</span></span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a>            scene<span class="op">.</span>Materials<span class="op">[</span></span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>                hit<span class="op">-&gt;</span>MaterialIndex<span class="op">];</span></span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a>        <span class="co">// -----------------------------------------------------</span></span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Emissive surface hit.</span></span>
+<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a>        <span class="co">// -----------------------------------------------------</span></span>
+<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>IsEmitter<span class="op">(</span>material<span class="op">))</span></span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> Color Le <span class="op">=</span></span>
+<span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a>                material<span class="op">.</span>Emission<span class="op">;</span></span>
+<span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-65"><a href="#cb11-65" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="op">(</span>bounce <span class="op">==</span> <span class="dv">0</span> <span class="op">||</span></span>
+<span id="cb11-66"><a href="#cb11-66" aria-hidden="true" tabindex="-1"></a>                previousDelta<span class="op">)</span></span>
+<span id="cb11-67"><a href="#cb11-67" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb11-68"><a href="#cb11-68" aria-hidden="true" tabindex="-1"></a>                L <span class="op">+=</span> beta <span class="op">*</span> Le<span class="op">;</span></span>
+<span id="cb11-69"><a href="#cb11-69" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb11-70"><a href="#cb11-70" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span></span>
+<span id="cb11-71"><a href="#cb11-71" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb11-72"><a href="#cb11-72" aria-hidden="true" tabindex="-1"></a>                <span class="at">const</span> <span class="dt">float</span> lightPdf <span class="op">=</span></span>
+<span id="cb11-73"><a href="#cb11-73" aria-hidden="true" tabindex="-1"></a>                    scene<span class="op">.</span>PdfEmitterHit<span class="op">(</span></span>
+<span id="cb11-74"><a href="#cb11-74" aria-hidden="true" tabindex="-1"></a>                        ray<span class="op">,</span></span>
+<span id="cb11-75"><a href="#cb11-75" aria-hidden="true" tabindex="-1"></a>                        <span class="op">*</span>hit<span class="op">);</span></span>
+<span id="cb11-76"><a href="#cb11-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-77"><a href="#cb11-77" aria-hidden="true" tabindex="-1"></a>                <span class="at">const</span> <span class="dt">float</span> w <span class="op">=</span></span>
+<span id="cb11-78"><a href="#cb11-78" aria-hidden="true" tabindex="-1"></a>                    PowerHeuristic<span class="op">(</span></span>
+<span id="cb11-79"><a href="#cb11-79" aria-hidden="true" tabindex="-1"></a>                        previousBsdfPdf<span class="op">,</span></span>
+<span id="cb11-80"><a href="#cb11-80" aria-hidden="true" tabindex="-1"></a>                        lightPdf<span class="op">);</span></span>
+<span id="cb11-81"><a href="#cb11-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-82"><a href="#cb11-82" aria-hidden="true" tabindex="-1"></a>                L <span class="op">+=</span></span>
+<span id="cb11-83"><a href="#cb11-83" aria-hidden="true" tabindex="-1"></a>                    beta <span class="op">*</span></span>
+<span id="cb11-84"><a href="#cb11-84" aria-hidden="true" tabindex="-1"></a>                    Le <span class="op">*</span></span>
+<span id="cb11-85"><a href="#cb11-85" aria-hidden="true" tabindex="-1"></a>                    w<span class="op">;</span></span>
+<span id="cb11-86"><a href="#cb11-86" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb11-87"><a href="#cb11-87" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb11-88"><a href="#cb11-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-89"><a href="#cb11-89" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> Vec3 wo <span class="op">=</span></span>
+<span id="cb11-90"><a href="#cb11-90" aria-hidden="true" tabindex="-1"></a>            <span class="op">-</span>ray<span class="op">.</span>Direction<span class="op">;</span></span>
+<span id="cb11-91"><a href="#cb11-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-92"><a href="#cb11-92" aria-hidden="true" tabindex="-1"></a>        <span class="co">// -----------------------------------------------------</span></span>
+<span id="cb11-93"><a href="#cb11-93" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Next-event estimation for non-delta BSDFs.</span></span>
+<span id="cb11-94"><a href="#cb11-94" aria-hidden="true" tabindex="-1"></a>        <span class="co">// -----------------------------------------------------</span></span>
+<span id="cb11-95"><a href="#cb11-95" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>IsPureDelta<span class="op">(</span>material<span class="op">))</span></span>
+<span id="cb11-96"><a href="#cb11-96" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb11-97"><a href="#cb11-97" aria-hidden="true" tabindex="-1"></a>            LightSample light <span class="op">=</span></span>
+<span id="cb11-98"><a href="#cb11-98" aria-hidden="true" tabindex="-1"></a>                scene<span class="op">.</span>SampleLight<span class="op">(</span></span>
+<span id="cb11-99"><a href="#cb11-99" aria-hidden="true" tabindex="-1"></a>                    <span class="op">*</span>hit<span class="op">,</span></span>
+<span id="cb11-100"><a href="#cb11-100" aria-hidden="true" tabindex="-1"></a>                    rng<span class="op">);</span></span>
+<span id="cb11-101"><a href="#cb11-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-102"><a href="#cb11-102" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="op">(</span>light<span class="op">.</span>Valid <span class="op">&amp;&amp;</span></span>
+<span id="cb11-103"><a href="#cb11-103" aria-hidden="true" tabindex="-1"></a>                light<span class="op">.</span>Pdf <span class="op">&gt;</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb11-104"><a href="#cb11-104" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb11-105"><a href="#cb11-105" aria-hidden="true" tabindex="-1"></a>                <span class="at">const</span> <span class="dt">float</span> cosTheta <span class="op">=</span></span>
+<span id="cb11-106"><a href="#cb11-106" aria-hidden="true" tabindex="-1"></a>                    <span class="bu">std::</span>max<span class="op">(</span></span>
+<span id="cb11-107"><a href="#cb11-107" aria-hidden="true" tabindex="-1"></a>                        Dot<span class="op">(</span></span>
+<span id="cb11-108"><a href="#cb11-108" aria-hidden="true" tabindex="-1"></a>                            hit<span class="op">-&gt;</span>ShadingNormal<span class="op">,</span></span>
+<span id="cb11-109"><a href="#cb11-109" aria-hidden="true" tabindex="-1"></a>                            light<span class="op">.</span>Wi<span class="op">),</span></span>
+<span id="cb11-110"><a href="#cb11-110" aria-hidden="true" tabindex="-1"></a>                        <span class="fl">0.0</span><span class="bu">f</span><span class="op">);</span></span>
+<span id="cb11-111"><a href="#cb11-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-112"><a href="#cb11-112" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="op">(</span>cosTheta <span class="op">&gt;</span> <span class="fl">0.0</span><span class="bu">f</span> <span class="op">&amp;&amp;</span></span>
+<span id="cb11-113"><a href="#cb11-113" aria-hidden="true" tabindex="-1"></a>                    <span class="op">!</span>scene<span class="op">.</span>Occluded<span class="op">(</span></span>
+<span id="cb11-114"><a href="#cb11-114" aria-hidden="true" tabindex="-1"></a>                        SpawnShadowRay<span class="op">(</span></span>
+<span id="cb11-115"><a href="#cb11-115" aria-hidden="true" tabindex="-1"></a>                            <span class="op">*</span>hit<span class="op">,</span></span>
+<span id="cb11-116"><a href="#cb11-116" aria-hidden="true" tabindex="-1"></a>                            light<span class="op">.</span>Wi<span class="op">,</span></span>
+<span id="cb11-117"><a href="#cb11-117" aria-hidden="true" tabindex="-1"></a>                            light<span class="op">.</span>Distance<span class="op">)))</span></span>
+<span id="cb11-118"><a href="#cb11-118" aria-hidden="true" tabindex="-1"></a>                <span class="op">{</span></span>
+<span id="cb11-119"><a href="#cb11-119" aria-hidden="true" tabindex="-1"></a>                    <span class="at">const</span> Color f <span class="op">=</span></span>
+<span id="cb11-120"><a href="#cb11-120" aria-hidden="true" tabindex="-1"></a>                        EvaluateBSDF<span class="op">(</span></span>
+<span id="cb11-121"><a href="#cb11-121" aria-hidden="true" tabindex="-1"></a>                            material<span class="op">,</span></span>
+<span id="cb11-122"><a href="#cb11-122" aria-hidden="true" tabindex="-1"></a>                            <span class="op">*</span>hit<span class="op">,</span></span>
+<span id="cb11-123"><a href="#cb11-123" aria-hidden="true" tabindex="-1"></a>                            wo<span class="op">,</span></span>
+<span id="cb11-124"><a href="#cb11-124" aria-hidden="true" tabindex="-1"></a>                            light<span class="op">.</span>Wi<span class="op">);</span></span>
+<span id="cb11-125"><a href="#cb11-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-126"><a href="#cb11-126" aria-hidden="true" tabindex="-1"></a>                    <span class="at">const</span> <span class="dt">float</span> bsdfPdf <span class="op">=</span></span>
+<span id="cb11-127"><a href="#cb11-127" aria-hidden="true" tabindex="-1"></a>                        PdfBSDF<span class="op">(</span></span>
+<span id="cb11-128"><a href="#cb11-128" aria-hidden="true" tabindex="-1"></a>                            material<span class="op">,</span></span>
+<span id="cb11-129"><a href="#cb11-129" aria-hidden="true" tabindex="-1"></a>                            <span class="op">*</span>hit<span class="op">,</span></span>
+<span id="cb11-130"><a href="#cb11-130" aria-hidden="true" tabindex="-1"></a>                            wo<span class="op">,</span></span>
+<span id="cb11-131"><a href="#cb11-131" aria-hidden="true" tabindex="-1"></a>                            light<span class="op">.</span>Wi<span class="op">);</span></span>
+<span id="cb11-132"><a href="#cb11-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-133"><a href="#cb11-133" aria-hidden="true" tabindex="-1"></a>                    <span class="at">const</span> <span class="dt">float</span> w <span class="op">=</span></span>
+<span id="cb11-134"><a href="#cb11-134" aria-hidden="true" tabindex="-1"></a>                        light<span class="op">.</span>IsDelta</span>
+<span id="cb11-135"><a href="#cb11-135" aria-hidden="true" tabindex="-1"></a>                        <span class="op">?</span> <span class="fl">1.0</span><span class="bu">f</span></span>
+<span id="cb11-136"><a href="#cb11-136" aria-hidden="true" tabindex="-1"></a>                        <span class="op">:</span> PowerHeuristic<span class="op">(</span></span>
+<span id="cb11-137"><a href="#cb11-137" aria-hidden="true" tabindex="-1"></a>                            light<span class="op">.</span>Pdf<span class="op">,</span></span>
+<span id="cb11-138"><a href="#cb11-138" aria-hidden="true" tabindex="-1"></a>                            bsdfPdf<span class="op">);</span></span>
+<span id="cb11-139"><a href="#cb11-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-140"><a href="#cb11-140" aria-hidden="true" tabindex="-1"></a>                    L <span class="op">+=</span></span>
+<span id="cb11-141"><a href="#cb11-141" aria-hidden="true" tabindex="-1"></a>                        beta <span class="op">*</span></span>
+<span id="cb11-142"><a href="#cb11-142" aria-hidden="true" tabindex="-1"></a>                        f <span class="op">*</span></span>
+<span id="cb11-143"><a href="#cb11-143" aria-hidden="true" tabindex="-1"></a>                        light<span class="op">.</span>Radiance <span class="op">*</span></span>
+<span id="cb11-144"><a href="#cb11-144" aria-hidden="true" tabindex="-1"></a>                        <span class="op">(</span>cosTheta <span class="op">*</span></span>
+<span id="cb11-145"><a href="#cb11-145" aria-hidden="true" tabindex="-1"></a>                         w <span class="op">/</span></span>
+<span id="cb11-146"><a href="#cb11-146" aria-hidden="true" tabindex="-1"></a>                         light<span class="op">.</span>Pdf<span class="op">);</span></span>
+<span id="cb11-147"><a href="#cb11-147" aria-hidden="true" tabindex="-1"></a>                <span class="op">}</span></span>
+<span id="cb11-148"><a href="#cb11-148" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb11-149"><a href="#cb11-149" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb11-150"><a href="#cb11-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-151"><a href="#cb11-151" aria-hidden="true" tabindex="-1"></a>        <span class="co">// -----------------------------------------------------</span></span>
+<span id="cb11-152"><a href="#cb11-152" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Continue path by BSDF sampling.</span></span>
+<span id="cb11-153"><a href="#cb11-153" aria-hidden="true" tabindex="-1"></a>        <span class="co">// -----------------------------------------------------</span></span>
+<span id="cb11-154"><a href="#cb11-154" aria-hidden="true" tabindex="-1"></a>        BSDFSample bsdf <span class="op">=</span></span>
+<span id="cb11-155"><a href="#cb11-155" aria-hidden="true" tabindex="-1"></a>            SampleBSDF<span class="op">(</span></span>
+<span id="cb11-156"><a href="#cb11-156" aria-hidden="true" tabindex="-1"></a>                material<span class="op">,</span></span>
+<span id="cb11-157"><a href="#cb11-157" aria-hidden="true" tabindex="-1"></a>                <span class="op">*</span>hit<span class="op">,</span></span>
+<span id="cb11-158"><a href="#cb11-158" aria-hidden="true" tabindex="-1"></a>                wo<span class="op">,</span></span>
+<span id="cb11-159"><a href="#cb11-159" aria-hidden="true" tabindex="-1"></a>                rng<span class="op">);</span></span>
+<span id="cb11-160"><a href="#cb11-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-161"><a href="#cb11-161" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>bsdf<span class="op">.</span>Valid <span class="op">||</span></span>
+<span id="cb11-162"><a href="#cb11-162" aria-hidden="true" tabindex="-1"></a>            bsdf<span class="op">.</span>Pdf <span class="op">&lt;=</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb11-163"><a href="#cb11-163" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb11-164"><a href="#cb11-164" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb11-165"><a href="#cb11-165" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb11-166"><a href="#cb11-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-167"><a href="#cb11-167" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="dt">float</span> cosine <span class="op">=</span></span>
+<span id="cb11-168"><a href="#cb11-168" aria-hidden="true" tabindex="-1"></a>            bsdf<span class="op">.</span>IsDelta</span>
+<span id="cb11-169"><a href="#cb11-169" aria-hidden="true" tabindex="-1"></a>            <span class="op">?</span> <span class="fl">1.0</span><span class="bu">f</span></span>
+<span id="cb11-170"><a href="#cb11-170" aria-hidden="true" tabindex="-1"></a>            <span class="op">:</span> <span class="bu">std::</span>abs<span class="op">(</span></span>
+<span id="cb11-171"><a href="#cb11-171" aria-hidden="true" tabindex="-1"></a>                Dot<span class="op">(</span></span>
+<span id="cb11-172"><a href="#cb11-172" aria-hidden="true" tabindex="-1"></a>                    hit<span class="op">-&gt;</span>ShadingNormal<span class="op">,</span></span>
+<span id="cb11-173"><a href="#cb11-173" aria-hidden="true" tabindex="-1"></a>                    bsdf<span class="op">.</span>Wi<span class="op">));</span></span>
+<span id="cb11-174"><a href="#cb11-174" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-175"><a href="#cb11-175" aria-hidden="true" tabindex="-1"></a>        beta <span class="op">*=</span></span>
+<span id="cb11-176"><a href="#cb11-176" aria-hidden="true" tabindex="-1"></a>            bsdf<span class="op">.</span>F <span class="op">*</span></span>
+<span id="cb11-177"><a href="#cb11-177" aria-hidden="true" tabindex="-1"></a>            <span class="op">(</span>cosine <span class="op">/</span></span>
+<span id="cb11-178"><a href="#cb11-178" aria-hidden="true" tabindex="-1"></a>             bsdf<span class="op">.</span>Pdf<span class="op">);</span></span>
+<span id="cb11-179"><a href="#cb11-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-180"><a href="#cb11-180" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>IsFinite<span class="op">(</span>beta<span class="op">)</span> <span class="op">||</span></span>
+<span id="cb11-181"><a href="#cb11-181" aria-hidden="true" tabindex="-1"></a>            MaxComponent<span class="op">(</span>beta<span class="op">)</span> <span class="op">&lt;=</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb11-182"><a href="#cb11-182" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb11-183"><a href="#cb11-183" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb11-184"><a href="#cb11-184" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb11-185"><a href="#cb11-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-186"><a href="#cb11-186" aria-hidden="true" tabindex="-1"></a>        previousBsdfPdf <span class="op">=</span></span>
+<span id="cb11-187"><a href="#cb11-187" aria-hidden="true" tabindex="-1"></a>            bsdf<span class="op">.</span>Pdf<span class="op">;</span></span>
+<span id="cb11-188"><a href="#cb11-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-189"><a href="#cb11-189" aria-hidden="true" tabindex="-1"></a>        previousDelta <span class="op">=</span></span>
+<span id="cb11-190"><a href="#cb11-190" aria-hidden="true" tabindex="-1"></a>            bsdf<span class="op">.</span>IsDelta<span class="op">;</span></span>
+<span id="cb11-191"><a href="#cb11-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-192"><a href="#cb11-192" aria-hidden="true" tabindex="-1"></a>        ray <span class="op">=</span></span>
+<span id="cb11-193"><a href="#cb11-193" aria-hidden="true" tabindex="-1"></a>            SpawnRay<span class="op">(</span></span>
+<span id="cb11-194"><a href="#cb11-194" aria-hidden="true" tabindex="-1"></a>                <span class="op">*</span>hit<span class="op">,</span></span>
+<span id="cb11-195"><a href="#cb11-195" aria-hidden="true" tabindex="-1"></a>                bsdf<span class="op">.</span>Wi<span class="op">,</span></span>
+<span id="cb11-196"><a href="#cb11-196" aria-hidden="true" tabindex="-1"></a>                bsdf<span class="op">.</span>IsTransmission<span class="op">);</span></span>
+<span id="cb11-197"><a href="#cb11-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-198"><a href="#cb11-198" aria-hidden="true" tabindex="-1"></a>        <span class="co">// -----------------------------------------------------</span></span>
+<span id="cb11-199"><a href="#cb11-199" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Russian roulette.</span></span>
+<span id="cb11-200"><a href="#cb11-200" aria-hidden="true" tabindex="-1"></a>        <span class="co">// -----------------------------------------------------</span></span>
+<span id="cb11-201"><a href="#cb11-201" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>bounce <span class="op">&gt;=</span> <span class="dv">3</span><span class="op">)</span></span>
+<span id="cb11-202"><a href="#cb11-202" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb11-203"><a href="#cb11-203" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> <span class="dt">float</span> survival <span class="op">=</span></span>
+<span id="cb11-204"><a href="#cb11-204" aria-hidden="true" tabindex="-1"></a>                <span class="bu">std::</span>clamp<span class="op">(</span></span>
+<span id="cb11-205"><a href="#cb11-205" aria-hidden="true" tabindex="-1"></a>                    MaxComponent<span class="op">(</span>beta<span class="op">),</span></span>
+<span id="cb11-206"><a href="#cb11-206" aria-hidden="true" tabindex="-1"></a>                    <span class="fl">0.05</span><span class="bu">f</span><span class="op">,</span></span>
+<span id="cb11-207"><a href="#cb11-207" aria-hidden="true" tabindex="-1"></a>                    <span class="fl">0.95</span><span class="bu">f</span><span class="op">);</span></span>
+<span id="cb11-208"><a href="#cb11-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-209"><a href="#cb11-209" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="op">(</span>Random01<span class="op">(</span>rng<span class="op">)</span> <span class="op">&gt;</span></span>
+<span id="cb11-210"><a href="#cb11-210" aria-hidden="true" tabindex="-1"></a>                survival<span class="op">)</span></span>
+<span id="cb11-211"><a href="#cb11-211" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb11-212"><a href="#cb11-212" aria-hidden="true" tabindex="-1"></a>                <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb11-213"><a href="#cb11-213" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb11-214"><a href="#cb11-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-215"><a href="#cb11-215" aria-hidden="true" tabindex="-1"></a>            beta <span class="op">/=</span> survival<span class="op">;</span></span>
+<span id="cb11-216"><a href="#cb11-216" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb11-217"><a href="#cb11-217" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb11-218"><a href="#cb11-218" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-219"><a href="#cb11-219" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> L<span class="op">;</span></span>
+<span id="cb11-220"><a href="#cb11-220" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>There are still subtleties around delta BSDF conventions, transmission Jacobians, shading normals, nested media and light-selection PDFs, but this architecture is qualitatively closer to a complete modern path tracer than current <code>TracePath()</code>.</p>
+<hr />
+<p><strong>The deepest connection: every “rendering trick” is a sampling strategy</strong></p>
+<p>A hard shadow ray is a very specialized light sample.</p>
+<p>An area-light shadow ray is a sample from emitter area.</p>
+<p>A cosine bounce is a BRDF-oriented sample.</p>
+<p>GGX sampling is specular-lobe importance sampling.</p>
+<p>Environment CDF sampling is incoming-radiance importance sampling.</p>
+<p>MIS combines multiple distributions because no one proposal distribution tracks the entire integrand perfectly.</p>
+<p>Russian roulette samples path length.</p>
+<p>Subpixel jitter samples the pixel footprint.</p>
+<p>Even glass Fresnel selection samples between discrete transport events.</p>
+<p>Thus the path tracer can be understood as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>a carefully constructed sequence of random variables whose expectation equals the rendering equation.</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is the real conceptual leap of M123/M124.</p>
+<hr />
+<p><strong>Current Kairo M123/M124 audit</strong></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Current Kairo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Subpixel stratification</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Uniform sphere sampler</td>
+<td>Not exposed in current path code</td>
+</tr>
+<tr>
+<td>Uniform hemisphere sampler</td>
+<td>Not current path strategy</td>
+</tr>
+<tr>
+<td>Cosine hemisphere sampler</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Surface-basis transform</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Lambert importance sampling</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>GGX NDF sampling</td>
+<td>No in <code>PathIntegrator</code></td>
+</tr>
+<tr>
+<td>GGX VNDF sampling</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Power heuristic function</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Complete two-sided MIS</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Diffuse path throughput</td>
+<td>Implicit via Lambert/cosine cancellation</td>
+</tr>
+<tr>
+<td>Generic <code>f*cos/pdf</code> path loop</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Maximum depth</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Russian roulette</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Survival from accumulated throughput</td>
+<td>No; current surface albedo used</td>
+</tr>
+<tr>
+<td>Point-light NEE</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Directional/spot NEE</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Area-light sampling</td>
+<td>Fixed sample grid</td>
+</tr>
+<tr>
+<td>Correct area→solid-angle PDF formula</td>
+<td>Computed</td>
+</tr>
+<tr>
+<td>Physically complete area-light estimator</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>Environment miss radiance</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Environment NEE</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Environment importance map</td>
+<td>No</td>
+</tr>
+<tr>
+<td>CDF/alias sampler</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Multiple samples/pixel</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Progressive passes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Online per-pixel mean</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>Per-pixel variance</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>Firefly instrumentation</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>Explicit delta/glossy/diffuse event types</td>
+<td>Not in path integrator</td>
+</tr>
+<tr>
+<td>Fresnel path-event selection</td>
+<td>Whitted only, not current Path mode</td>
+</tr>
+<tr>
+<td>Mirror transport in Path mode</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>Glass transport in Path mode</td>
+<td>Not yet</td>
+</tr>
+<tr>
+<td>PBR/GGX indirect transport</td>
+<td>Not yet</td>
+</tr>
+</tbody>
+</table>
+<p>This is an excellent place to draw the line between “features whose source code exists somewhere in the renderer” and “features integrated into a mathematically unified path tracer.”</p>
+<hr />
+<p><strong>PASS 7 RECONSTRUCTION SHEET</strong></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Core equation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Uniform sphere</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mn>4</mn>
+  <mi>π</mi>
+  <mo stretchy="false">)</mo>
+</math></td>
+</tr>
+<tr>
+<td>Uniform hemisphere</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mi>π</mi>
+  <mo stretchy="false">)</mo>
+</math></td>
+</tr>
+<tr>
+<td>Uniform sphere sample</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>z</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mn>2</mn>
+  <mi>ξ</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <mi>ϕ</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>π</mi>
+  <mi>ξ</mi>
+</math></td>
+</tr>
+<tr>
+<td>Cosine hemisphere</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+  <mo>=</mo>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>π</mi>
+</math></td>
+</tr>
+<tr>
+<td>Cosine sample</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+  <mo>=</mo>
+  <msqrt>
+    <mi>ξ</mi>
+  </msqrt>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <mi>ϕ</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>π</mi>
+  <mi>ξ</mi>
+</math></td>
+</tr>
+<tr>
+<td>Local→world</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>ω</mi>
+  <mo>=</mo>
+  <mi>x</mi>
+  <mi>T</mi>
+  <mo>+</mo>
+  <mi>y</mi>
+  <mi>N</mi>
+  <mo>+</mo>
+  <mi>z</mi>
+  <mi>B</mi>
+</math></td>
+</tr>
+<tr>
+<td>Lambert</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+  <mo>=</mo>
+  <mi>ρ</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>π</mi>
+</math></td>
+</tr>
+<tr>
+<td>Lambert+cosine cancellation</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>p</mi>
+  <mo>=</mo>
+  <mi>ρ</mi>
+</math></td>
+</tr>
+<tr>
+<td>MC variance term</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo data-mjx-texclass="OP">∫</mo>
+  <msup>
+    <mi>f</mi>
+    <mn>2</mn>
+  </msup>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>p</mi>
+  <mo>−</mo>
+  <msup>
+    <mi>I</mi>
+    <mn>2</mn>
+  </msup>
+</math></td>
+</tr>
+<tr>
+<td>Ideal importance PDF</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>p</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo>∝</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>f</mi>
+  <mo stretchy="false">|</mo>
+</math></td>
+</tr>
+<tr>
+<td>GGX half-vector PDF</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>H</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>D</mi>
+  <mo stretchy="false">(</mo>
+  <mi>H</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>H</mi>
+  <mo stretchy="false">)</mo>
+</math></td>
+</tr>
+<tr>
+<td>Reflection Jacobian</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>H</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mn>4</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>V</mi>
+  <mo>⋅</mo>
+  <mi>H</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo stretchy="false">)</mo>
+</math></td>
+</tr>
+<tr>
+<td>VNDF</td>
+<td>condition GGX normals on visibility from <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>V</mi>
+</math></td>
+</tr>
+<tr>
+<td>Balance MIS</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo data-mjx-texclass="OP">∑</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>j</mi>
+  </msub>
+  <msub>
+    <mi>p</mi>
+    <mi>j</mi>
+  </msub>
+</math></td>
+</tr>
+<tr>
+<td>Power MIS</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo data-mjx-texclass="OP">∑</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>j</mi>
+  </msub>
+  <msub>
+    <mi>p</mi>
+    <mi>j</mi>
+  </msub>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+</math></td>
+</tr>
+<tr>
+<td>Throughput</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>β</mi>
+  <mo stretchy="false">←</mo>
+  <mi>β</mi>
+  <mi>f</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>p</mi>
+</math></td>
+</tr>
+<tr>
+<td>Emission contribution</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+  <mo stretchy="false">←</mo>
+  <mi>L</mi>
+  <mo>+</mo>
+  <mi>β</mi>
+  <msub>
+    <mi>L</mi>
+    <mi>e</mi>
+  </msub>
+</math></td>
+</tr>
+<tr>
+<td>Russian roulette</td>
+<td>survive with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+</math>, then <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>β</mi>
+  <mo stretchy="false">←</mo>
+  <mi>β</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+</math></td>
+</tr>
+<tr>
+<td>NEE</td>
+<td>explicitly sample a light at current vertex</td>
+</tr>
+<tr>
+<td>Uniform area PDF</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>A</mi>
+</math></td>
+</tr>
+<tr>
+<td>Area→solid-angle</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>A</mi>
+  </msub>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>L</mi>
+  </msub>
+  <mo stretchy="false">|</mo>
+</math></td>
+</tr>
+<tr>
+<td>Point light</td>
+<td>delta direction, inverse-square intensity</td>
+</tr>
+<tr>
+<td>Uniform environment</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mn>4</mn>
+  <mi>π</mi>
+  <mo stretchy="false">)</mo>
+</math></td>
+</tr>
+<tr>
+<td>Lat-long solid angle</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <msup>
+    <mi>π</mi>
+    <mn>2</mn>
+  </msup>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>u</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>v</mi>
+</math></td>
+</tr>
+<tr>
+<td>Env importance weight</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>w</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>Y</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>j</mi>
+  </msub>
+</math></td>
+</tr>
+<tr>
+<td>CDF sampling</td>
+<td>invert cumulative probability</td>
+</tr>
+<tr>
+<td>Alias sampling</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math> discrete sampling after preprocessing</td>
+</tr>
+<tr>
+<td>Pixel mean</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>X</mi>
+        <mo stretchy="false">¯</mo>
+      </mover>
+    </mrow>
+    <mi>N</mi>
+  </msub>
+  <mo>=</mo>
+  <msup>
+    <mi>N</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo data-mjx-texclass="OP">∑</mo>
+  <msub>
+    <mi>X</mi>
+    <mi>i</mi>
+  </msub>
+</math></td>
+</tr>
+<tr>
+<td>Online mean</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>μ</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>μ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>μ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>n</mi>
+</math></td>
+</tr>
+<tr>
+<td>Sample variance</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <msub>
+    <mi>M</mi>
+    <mn>2</mn>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math></td>
+</tr>
+<tr>
+<td>Monte Carlo noise</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>σ</mi>
+  <mo>∝</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msqrt>
+    <mi>N</mi>
+  </msqrt>
+</math></td>
+</tr>
+<tr>
+<td>MSE</td>
+<td>variance + bias²</td>
+</tr>
+<tr>
+<td>Firefly</td>
+<td>rare huge <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>p</mi>
+</math> contribution</td>
+</tr>
+<tr>
+<td>Clamping</td>
+<td>lowers variance but introduces bias</td>
+</tr>
+<tr>
+<td>Delta specular</td>
+<td>probability mass concentrated on exact direction</td>
+</tr>
+<tr>
+<td>Glass selection</td>
+<td>reflection with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math>, transmission with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>F</mi>
+</math></td>
+</tr>
+</tbody>
+</table>
+<p>The curriculum explicitly places M123 and M124 as the sampling, MIS, throughput, NEE, variance and path-event foundation before the later production path-tracer work.</p>
+<p><strong>Blank-page mastery gate</strong></p>
+<p>From no notes, derive uniform-sphere sampling by starting from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>θ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>ϕ</mi>
+</math>
+<p>and showing why:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>z</mi>
+  <mo>=</mo>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+</math>
+<p>must be uniform.</p>
+<p>Then derive cosine hemisphere sampling from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>θ</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+</math>
+<p>until you get:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>=</mo>
+  <msqrt>
+    <mi>ξ</mi>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>Then show why Lambert plus cosine sampling yields:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mo stretchy="false">(</mo>
+      <mi>ρ</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mi>π</mi>
+      <mo stretchy="false">)</mo>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mi>θ</mi>
+    </mrow>
+    <mrow>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mi>θ</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mi>π</mi>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mi>ρ</mi>
+  <mo>.</mo>
+</math>
+<p>Then derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Var</mi>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mfrac>
+      <mrow>
+        <mi>f</mi>
+        <mo stretchy="false">(</mo>
+        <mi>X</mi>
+        <mo stretchy="false">)</mo>
+      </mrow>
+      <mrow>
+        <mi>p</mi>
+        <mo stretchy="false">(</mo>
+        <mi>X</mi>
+        <mo stretchy="false">)</mo>
+      </mrow>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP">∫</mo>
+  <mfrac>
+    <msup>
+      <mi>f</mi>
+      <mn>2</mn>
+    </msup>
+    <mi>p</mi>
+  </mfrac>
+  <mo>−</mo>
+  <msup>
+    <mi>I</mi>
+    <mn>2</mn>
+  </msup>
+</math>
+<p>and use it to explain importance sampling.</p>
+<p>Then reconstruct GGX half-vector sampling and explain why converting:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mo stretchy="false">→</mo>
+  <mi>L</mi>
+</math>
+<p>requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <mn>4</mn>
+      <mrow data-mjx-texclass="ORD">
+        <mo stretchy="false">|</mo>
+      </mrow>
+      <mi>V</mi>
+      <mo>⋅</mo>
+      <mi>H</mi>
+      <mo stretchy="false">|</mo>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then derive the balance and power MIS heuristics and explain why weighting only the light-sampled half of a two-technique MIS scheme is incomplete.</p>
+<p>Then reconstruct:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>β</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>β</mi>
+    <mi>k</mi>
+  </msub>
+  <mfrac>
+    <mrow>
+      <msub>
+        <mi>f</mi>
+        <mi>k</mi>
+      </msub>
+      <mrow data-mjx-texclass="ORD">
+        <mo stretchy="false">|</mo>
+      </mrow>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <msub>
+        <mi>θ</mi>
+        <mi>k</mi>
+      </msub>
+      <mo stretchy="false">|</mo>
+    </mrow>
+    <msub>
+      <mi>p</mi>
+      <mi>k</mi>
+    </msub>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then prove Russian roulette is unbiased:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <mi>X</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>C</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mo>.</mo>
+</math>
+<p>Then derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <msub>
+        <mi>θ</mi>
+        <mi>L</mi>
+      </msub>
+    </mrow>
+    <msup>
+      <mi>r</mi>
+      <mn>2</mn>
+    </msup>
+  </mfrac>
+  <mi>d</mi>
+  <mi>A</mi>
+</math>
+<p>and therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>A</mi>
+  </msub>
+  <mfrac>
+    <msup>
+      <mi>r</mi>
+      <mn>2</mn>
+    </msup>
+    <mrow>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <msub>
+        <mi>θ</mi>
+        <mi>L</mi>
+      </msub>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then explain why environment-map importance weights require:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Y</mi>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>.</mo>
+</math>
+<p>Finally explain the difference between:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>diffuse</mtext>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mtext>glossy</mtext>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mtext>delta specular</mtext>
+  <mo>,</mo>
+</math>
+<p>and why ideal glass can choose reflection with probability <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math> and transmission with probability <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>F</mi>
+</math> without tracing both branches.</p>
+<p>If you can reconstruct all of those pieces, then Monte Carlo path tracing is no longer “random rays.” It is a controlled probability estimator whose every random choice has a measure, a PDF, a transport factor and a reason.</p>
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch316.xhtml#id_04-Light-Transport-and-Image-Synthesis" class="wikilink">Reading map</a> · <a href="ch323.xhtml#id_03-visual-computing-i-ch008-sampling-directions-and-light-transport" class="wikilink">Previous chapter</a> · <a href="ch325.xhtml#id_03-visual-computing-i-ch010-a-production-path-tracer-media-randomness-and-validation" class="wikilink">Next chapter</a></p>
+</section>
+</body>
+</html>

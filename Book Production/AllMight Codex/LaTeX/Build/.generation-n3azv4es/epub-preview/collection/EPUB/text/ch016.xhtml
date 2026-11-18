@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch016.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-1a599c924a4e-signed-integer-overflow" class="level2">
+<h2>Signed integer overflow</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C002 · <strong>Latest development:</strong> C002</p>
+<section id="appendix-1a599c924a4e-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A signed arithmetic result outside its type’s range is undefined in C++; hardware low bits do not create a language-level wrap guarantee.</p>
+<p>Overflow concerns the operation’s signed type after promotions. int maximum + 1 is undefined. For checked addition, reject b&gt;0 and a&gt;max−b, or b&lt;0 and a&lt;min−b, before evaluating a+b. Hardware status flags do not change the C++ contract.</p>
+</section>
+<section id="appendix-1a599c924a4e-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch006.xhtml#appendix-05f39b10364d-minimum-signed-value" class="wikilink">Minimum signed value</a> — N-bit two’s complement spans −2ᴺ⁻¹ through 2ᴺ⁻¹−1.</li>
+<li><a href="ch120.xhtml#appendix-f558f5b4d8f2-undefined-behavior" class="wikilink">Undefined behavior</a> — The C++ language imposes no requirements on an execution that invokes undefined behavior.</li>
+</ul>
+</section>
+<section id="appendix-1a599c924a4e-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch036.xhtml#appendix-3999c6209649-saturating-arithmetic" class="wikilink">Saturating arithmetic</a> — uses signed integer overflow as part of its representation or reasoning.</li>
+</ul>
+</section>
+<section id="appendix-1a599c924a4e-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain signed integer overflow without the label, work the example above, then state the assumption whose removal would change the result.</p>
+<p><strong>Pending:</strong> checked arithmetic facilities, optimizer transformations, and sanitizers.</p>
+</section>
+<section id="appendix-1a599c924a4e-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-arithmetic-becomes-a-policy" class="wikilink">C002 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-foundations" class="wikilink">Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

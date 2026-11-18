@@ -1,0 +1,44 @@
+\hypertarget{appendix-d580b422240f}{}\label{referencestart:appendix-d580b422240f}
+\section{Stable probability normalization and log-sum-exp}\label{appendix-d580b422240f-stable-probability-normalization-and-log-sum-exp}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{appendix-d580b422240f-definition-and-mechanism}
+
+To normalize nonnegative weights, divide each by their sum; direct summation can overflow even when the normalized probabilities are representable. Scale by the largest weight before summing. For log weights \(a_i\), compute \(m+\log\sum_i e^{a_i-m}\), where \(m=\max_i a_i\). Subtracting the maximum prevents exponential overflow, and the result can be used to form softmax probabilities. This assumes at least one finite, valid weight and requires an explicit policy for all-zero, negative, NaN, or infinite inputs. Underflow of very small normalized probabilities is a separate concern from overflow; do not silently equate zero after underflow with mathematically impossible. For log weights \((1000,1001,1000)\), subtracting \(1001\) keeps exponentials bounded while leaving the normalized probabilities unchanged.
+
+\subsection{Prerequisites}\label{appendix-d580b422240f-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-4815cd87ab8b]{Probability density and change of measure}
+\item
+  \hyperref[appendix-bc44f7b42f42]{Unit roundoff}
+\item
+  \hyperref[appendix-d7f8ba961670]{Stable reformulation}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-d580b422240f-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-031e02bf28af]{Monte Carlo rendering estimators and variance}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-d580b422240f-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch031-keep-probability-weights-stable-before-sampling}{Keep probability weights stable before sampling (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 15)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-d580b422240f-source-coverage}
+
+Supplied lesson parts: 993--994.
+
+\subsection{Future keywords}\label{appendix-d580b422240f-future-keywords}
+
+softmax, partition function, log-domain accumulation

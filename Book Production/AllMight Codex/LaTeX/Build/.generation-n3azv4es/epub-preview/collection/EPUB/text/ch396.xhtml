@@ -1,0 +1,3648 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch396.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_05-engine-i-ch018-ecs-contracts-diagnostics-and-gpu-handoff" class="level2">
+<h2>ECS contracts, diagnostics, and GPU handoff</h2>
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch395.xhtml#id_05-engine-i-ch017-ecs-performance-through-cache-and-scheduling" class="wikilink">Previous chapter</a> · <a href="ch397.xhtml#id_06-engine-ii-ch028-bvh-traversal-refitting-and-simd" class="wikilink">Next chapter</a></p>
+<p>An ECS needs evidence for its identity, query, and memory promises before rendering can consume its state. This chapter closes those defenses and transitions from world storage to explicit GPU work and resource lifetimes.</p>
+<p><strong>By the end:</strong> Audit ECS invariants with diagnostics and tests, then explain how entity data becomes render work with explicit ownership.</p>
+<p><strong>Recall question:</strong> Which ECS invariant would you inspect first when a rendered object is stale, duplicated, or associated with the wrong entity?</p>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 39294–42149; source-span SHA256 2ecbedf31698c5c218155465870cd46220538733edb6ad7fa0a48b4b95f8bbad. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_05-engine-i-ch018-diagnostics-memory-complexity-api-contracts-and-complete-ecs-defense" class="level4">
+<h4>DIAGNOSTICS, MEMORY, COMPLEXITY, API CONTRACTS AND COMPLETE ECS DEFENSE</h4>
+<hr />
+<p><strong>ECS debugging views</strong></p>
+<p>A production ECS needs visibility into itself.</p>
+<p>You want to inspect an entity and see:</p>
+<pre class="text"><code>Entity {42,7}
+Alive: yes
+
+Components:
+Transform
+Velocity
+Health
+Renderable</code></pre>
+<p>For a sparse set:</p>
+<pre class="text"><code>Transform:
+Sparse[42] = 831
+DenseEntity[831] = {42,7}</code></pre>
+<p>For an archetype ECS:</p>
+<pre class="text"><code>Archetype #17
+Chunk #4
+Row 81</code></pre>
+<p>Without this, storage bugs are miserable to diagnose.</p>
+<hr />
+<p><strong>Entity inspector</strong></p>
+<p>A debug API could provide:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> EntityDebugInfo</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    Entity Handle<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> Alive<span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>ComponentTypeInfo<span class="op">&gt;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        Components<span class="op">;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>But generic enumeration requires a component type registry.</p>
+<p>Current Kairo’s type-erased <code>StorageBase</code> can be extended with:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">virtual</span> <span class="bu">std::</span>string_view TypeName<span class="op">()</span> <span class="at">const</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">virtual</span> <span class="dt">bool</span> Contains<span class="op">(</span>Entity<span class="op">)</span> <span class="at">const</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">virtual</span> <span class="bu">std::</span>size_t Size<span class="op">()</span> <span class="at">const</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span></code></pre></div>
+<p>Then debug tooling can inspect without knowing T.</p>
+<hr />
+<p><strong>Storage invariant checker</strong></p>
+<p>Debug builds should expose:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> SparseSet<span class="op">&lt;</span>T<span class="op">&gt;::</span>Validate<span class="op">()</span> <span class="at">const</span><span class="op">;</span></span></code></pre></div>
+<p>Check:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">|</mo>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>For every dense index <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mo stretchy="false">[</mo>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>d</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>For every sparse entry <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+  <mo>≠</mo>
+  <mi>M</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mo>&lt;</mo>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>No duplicate entity indices.</p>
+<p>Generations match.</p>
+<p>Such validators catch corruption close to its source.</p>
+<hr />
+<p><strong>Registry invariant checker</strong></p>
+<p>Registry-wide:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>For each free index:</p>
+<pre class="text"><code>in bounds
+not alive
+generation not retired</code></pre>
+<p>No duplicate free indices.</p>
+<p>For every live component owner:</p>
+<pre class="text"><code>registry.IsAlive(owner) == true.</code></pre>
+<p>For destroyed entity:</p>
+<pre class="text"><code>no storage contains exact stale handle.</code></pre>
+<p>Call this under debug/test builds.</p>
+<hr />
+<p><strong>Component-pool statistics</strong></p>
+<p>For each component pool record:</p>
+<pre class="text"><code>count
+capacity
+sparse extent
+dense bytes
+sparse bytes
+estimated allocated bytes</code></pre>
+<p>For example:</p>
+<pre class="text"><code>Transform:
+  count = 950,000
+  dense capacity = 1,000,000
+  sparse size = 1,000,000</code></pre>
+<p>This turns memory behavior into data.</p>
+<hr />
+<p><strong>Useful density metric</strong></p>
+<p>Define:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <msub>
+    <mi>y</mi>
+    <mi>C</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>C</mi>
+      <mi>o</mi>
+      <mi>m</mi>
+      <mi>p</mi>
+      <mi>o</mi>
+      <mi>n</mi>
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>t</mi>
+      <mi>C</mi>
+      <mi>o</mi>
+      <mi>u</mi>
+      <mi>n</mi>
+      <msub>
+        <mi>t</mi>
+        <mi>C</mi>
+      </msub>
+    </mrow>
+    <mrow>
+      <mi>S</mi>
+      <mi>p</mi>
+      <mi>a</mi>
+      <mi>r</mi>
+      <mi>s</mi>
+      <mi>e</mi>
+      <mi>E</mi>
+      <mi>x</mi>
+      <mi>t</mi>
+      <mi>e</mi>
+      <mi>n</mi>
+      <msub>
+        <mi>t</mi>
+        <mi>C</mi>
+      </msub>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>100</mn>
+</math>
+<p>but:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>E</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo>=</mo>
+  <mn>0.01</mn>
+  <mi mathvariant="normal">%</mi>
+  <mo>.</mo>
+</math>
+<p>A flat sparse array is wasting memory for this component.</p>
+<p>That is direct evidence to consider paged sparse storage.</p>
+<hr />
+<p><strong>Dense utilization</strong></p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>s</mi>
+      <mi>i</mi>
+      <mi>z</mi>
+      <mi>e</mi>
+    </mrow>
+    <mrow>
+      <mi>c</mi>
+      <mi>a</mi>
+      <mi>p</mi>
+      <mi>a</mi>
+      <mi>c</mi>
+      <mi>i</mi>
+      <mi>t</mi>
+      <mi>y</mi>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>A dense vector with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mn>100</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>uses only 10% of reserved component slots.</p>
+<p>Perhaps reserve policy is overly aggressive.</p>
+<p>Expose these numbers.</p>
+<hr />
+<p><strong>Structural statistics</strong></p>
+<p>Useful runtime counters:</p>
+<pre class="text"><code>entities created/frame
+entities destroyed/frame
+components added/frame
+components removed/frame
+generation reuse count
+query visits
+journal events</code></pre>
+<p>A sudden spike in structural churn may explain frame-time regression.</p>
+<p>Data-oriented architecture should be observable.</p>
+<hr />
+<p><strong>Detecting dangling external component pointers</strong></p>
+<p>This is one of the hardest practical problems.</p>
+<p>Suppose:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>Transform<span class="op">*</span> cached <span class="op">=</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    registry<span class="op">.</span>TryGet<span class="op">&lt;</span>Transform<span class="op">&gt;(</span>entity<span class="op">);</span></span></code></pre></div>
+<p>Later component pool reallocates.</p>
+<p><code>cached</code> points to freed old storage.</p>
+<p>How can engine detect misuse?</p>
+<hr />
+<p><strong>Debug storage epochs</strong></p>
+<p>Give each component pool a structural epoch:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="dt">uint64_t</span> MutationEpoch<span class="op">;</span></span></code></pre></div>
+<p>Increment whenever an operation may invalidate addresses:</p>
+<pre class="text"><code>reallocation
+swap-remove
+compaction
+migration</code></pre>
+<p>A debug borrow stores:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">typename</span> T<span class="op">&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ComponentBorrow</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    T<span class="op">*</span> Pointer<span class="op">;</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> PoolBase<span class="op">*</span> Owner<span class="op">;</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> Epoch<span class="op">;</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Dereference checks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mi>w</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+  <mi>C</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>E</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mo>.</mo>
+</math>
+<p>If not:</p>
+<pre class="text"><code>stale component borrow detected.</code></pre>
+<hr />
+<p><strong>Debug proxy handle</strong></p>
+<p>Instead of exposing raw T* in debug mode:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">typename</span> T<span class="op">&gt;</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> CheckedComponentRef</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    T<span class="op">&amp;</span> Get<span class="op">()</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>        <span class="ot">assert</span><span class="op">(</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Epoch</span> <span class="op">==</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Pool</span><span class="op">-&gt;</span>MutationEpoch<span class="op">());</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="op">*</span><span class="va">m_Pointer</span><span class="op">;</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Release builds can use direct references if overhead is unacceptable.</p>
+<p>Debug builds gain excellent diagnostics.</p>
+<hr />
+<p><strong>AddressSanitizer helps, but not enough</strong></p>
+<p>ASan can detect:</p>
+<pre class="text"><code>use-after-free</code></pre>
+<p>when vector reallocation frees old storage.</p>
+<p>But swap-remove can produce a nastier case:</p>
+<pre class="text"><code>pointer still points to allocated memory
+but now another entity occupies it.</code></pre>
+<p>ASan sees valid memory.</p>
+<p>Semantically it is wrong.</p>
+<p>Storage epochs/ownership checks can detect what memory sanitizers cannot.</p>
+<hr />
+<p><strong>Poisoning removed storage</strong></p>
+<p>Debug allocators can overwrite removed slots:</p>
+<pre class="text"><code>0xDD
+0xDEADBEEF</code></pre>
+<p>but if swap-removal immediately fills that slot with another component, poisoning does not help.</p>
+<p>The stale pointer now aliases a live but wrong object.</p>
+<p>That is why identity-aware debug handles are superior.</p>
+<hr />
+<p><strong>Memory budgeting for millions of entities</strong></p>
+<p>This is where hand-wavy ECS design ends.</p>
+<p>Let’s budget an example.</p>
+<p>One million entity slots.</p>
+<p>Kairo entity metadata currently roughly includes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>:</mo>
+  <mn>4</mn>
+  <mtext> bytes</mtext>
+</math>
+<p>plus <code>vector&lt;bool&gt;</code> alive bitmap approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mtext> bit/entity</mtext>
+  <mo>.</mo>
+</math>
+<p>Generation array:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mtext> bytes</mtext>
+  <mo>≈</mo>
+  <mn>3.81</mn>
+  <mtext> MiB</mtext>
+  <mo>.</mo>
+</math>
+<p>Alive bitmap:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>8</mn>
+  <mo>=</mo>
+  <mn>125</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mtext> bytes</mtext>
+  <mo>≈</mo>
+  <mn>0.119</mn>
+  <mtext> MiB</mtext>
+  <mo>.</mo>
+</math>
+<p>Ignoring capacity/allocator metadata:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>≈</mo>
+  <mn>3.93</mn>
+  <mtext> MiB</mtext>
+</math>
+<p>for core lifetime metadata.</p>
+<hr />
+<p><strong>Free-list worst case</strong></p>
+<p>If all one million slots become free:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>3.81</mn>
+  <mtext> MiB</mtext>
+  <mo>.</mo>
+</math>
+<p>So entity allocator metadata in a pathological mostly-dead world might approach roughly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>7.7</mn>
+  <mtext> MiB</mtext>
+</math>
+<p>before vector overhead.</p>
+<p>Not bad.</p>
+<p>Components dominate.</p>
+<hr />
+<p><strong>Transform pool example</strong></p>
+<p>Assume:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Transform</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// hypothetical 40 bytes</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Kairo dense storage stores:</p>
+<pre class="text"><code>Component array
+Entity array
+Sparse array</code></pre>
+<p>For one million Transform owners:</p>
+<p>Component data:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>40</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>≈</mo>
+  <mn>38.15</mn>
+  <mtext> MiB</mtext>
+  <mo>.</mo>
+</math>
+<p>Dense Entity array; Kairo Entity is 8 bytes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>≈</mo>
+  <mn>7.63</mn>
+  <mtext> MiB</mtext>
+  <mo>.</mo>
+</math>
+<p>Sparse <code>uint32_t</code>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>≈</mo>
+  <mn>3.81</mn>
+  <mtext> MiB</mtext>
+  <mo>.</mo>
+</math>
+<p>Total approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>49.6</mn>
+  <mtext> MiB</mtext>
+  <mo>.</mo>
+</math>
+<p>One component pool.</p>
+<hr />
+<p><strong>Sparse component example</strong></p>
+<p>Suppose only 1,000 entities have BossAI, but highest entity index is one million.</p>
+<p>Component size:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>Dense components:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>≈</mo>
+  <mn>0.244</mn>
+  <mtext> MiB</mtext>
+  <mo>.</mo>
+</math>
+<p>Dense entities:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>≈</mo>
+  <mn>0.008</mn>
+  <mtext> MiB</mtext>
+  <mo>.</mo>
+</math>
+<p>Flat sparse array:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>≈</mo>
+  <mn>3.81</mn>
+  <mtext> MiB</mtext>
+  <mo>.</mo>
+</math>
+<p>Sparse metadata is over 15× larger than actual component payload.</p>
+<p>This is precisely the use case where paged sparse storage matters.</p>
+<hr />
+<p><strong>Memory budget formula for flat sparse set</strong></p>
+<p>For component C:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>M</mi>
+            <mi>C</mi>
+          </msub>
+          <mo>≈</mo>
+          <msub>
+            <mi>E</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            </mrow>
+          </msub>
+          <mo>⋅</mo>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>z</mi>
+          <mi>e</mi>
+          <mi>o</mi>
+          <mi>f</mi>
+          <mo stretchy="false">(</mo>
+          <mi>S</mi>
+          <mi>p</mi>
+          <mi>a</mi>
+          <mi>r</mi>
+          <mi>s</mi>
+          <mi>e</mi>
+          <mi>I</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>x</mi>
+          <mo stretchy="false">)</mo>
+          <mo>+</mo>
+          <msub>
+            <mi>N</mi>
+            <mi>C</mi>
+          </msub>
+          <mo>⋅</mo>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>z</mi>
+          <mi>e</mi>
+          <mi>o</mi>
+          <mi>f</mi>
+          <mo stretchy="false">(</mo>
+          <mi>E</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+          <mo stretchy="false">)</mo>
+          <mo>+</mo>
+          <msub>
+            <mi>N</mi>
+            <mi>C</mi>
+          </msub>
+          <mo>⋅</mo>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>z</mi>
+          <mi>e</mi>
+          <mi>o</mi>
+          <mi>f</mi>
+          <mo stretchy="false">(</mo>
+          <mi>C</mi>
+          <mo stretchy="false">)</mo>
+          <mo>+</mo>
+          <mi>C</mi>
+          <mi>a</mi>
+          <mi>p</mi>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+          <mi>W</mi>
+          <mi>a</mi>
+          <mi>s</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+</math>
+<p>is sparse extent, approximately largest entity index + 1.</p>
+<p>And:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>C</mi>
+  </msub>
+</math>
+<p>is number of owners.</p>
+<p>This formula should be in your head.</p>
+<hr />
+<p><strong>One million entities with ten common components</strong></p>
+<p>If ten common components each pay a 4 MiB flat sparse array:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>10</mn>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>40</mn>
+  <mtext> MiB</mtext>
+</math>
+<p>just for sparse maps.</p>
+<p>Often acceptable on desktop.</p>
+<p>On constrained platforms or with 200 component types:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>200</mn>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>800</mn>
+  <mtext> MiB</mtext>
+</math>
+<p>if every pool expands to the million-slot extent.</p>
+<p>That becomes disastrous.</p>
+<p>Paged sparse arrays avoid paying full extent for untouched pages.</p>
+<hr />
+<p><strong>Archetype memory overhead</strong></p>
+<p>Archetypes eliminate per-component sparse arrays inside an archetype.</p>
+<p>Entity location table might cost:</p>
+<pre class="text"><code>archetype/chunk pointer/index
+row
+generation/etc.</code></pre>
+<p>and chunks contain packed component columns.</p>
+<p>But archetypes can waste memory through partially filled chunks.</p>
+<p>So compare:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>W</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+</math>
+<p>versus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>h</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>k</mi>
+  <mi>F</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>W</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Again: workload.</p>
+<hr />
+<p><strong>Sparse-set complexity</strong></p>
+<p>For flat sparse set:</p>
+<p>Membership:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mo stretchy="false">(</mo>
+  <mi>E</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Lookup:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>E</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Insertion:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>amortized, because dense vector push is amortized constant and sparse resize may occasionally cost more.</p>
+<p>Removal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>with swap-remove, assuming move operation cost is treated as constant with respect to entity count.</p>
+<p>Iteration:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>N</mi>
+    <mi>C</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Multi-component sparse query complexity</strong></p>
+<p>For query requiring <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math> components with smallest pool size <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>O</mi>
+          <mo stretchy="false">(</mo>
+          <mi>m</mi>
+          <mo stretchy="false">(</mo>
+          <mi>k</mi>
+          <mo>−</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For fixed <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>m</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>However big-O hides memory latency.</p>
+<p>Each membership check may access:</p>
+<pre class="text"><code>another sparse array
+another dense entity array
+another dense component slot</code></pre>
+<p>so cache behavior matters enormously.</p>
+<hr />
+<p><strong>Entity destruction complexity</strong></p>
+<p>Current Kairo destruction checks every registered storage:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>T</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math> is number of component types/pools.</p>
+<p>If only <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+</math> components belong to the entity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo>≪</mo>
+  <mi>T</mi>
+  <mo>,</mo>
+</math>
+<p>a per-entity signature/list could reduce removal work toward:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>c</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This is an example where theoretical complexity reveals a scaling opportunity.</p>
+<hr />
+<p><strong>Sparse array growth complexity</strong></p>
+<p>Suppose component first appears on entity index 999,999.</p>
+<p><code>EnsureSparseIndex</code> may resize from tiny size to one million.</p>
+<p>That single insertion costs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>E</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>for initialization of new sparse entries.</p>
+<p>Thus insertion is not strict constant-time in every operation.</p>
+<p>It is amortized/workload dependent.</p>
+<p>This matters for rare components added late to high-index entities.</p>
+<p>Paged sparse storage avoids giant one-shot expansions.</p>
+<hr />
+<p><strong>Archetype migration complexity</strong></p>
+<p>Entity moving from archetype A to B must move all common components.</p>
+<p>Let:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mtext>number of shared components</mtext>
+  <mo>.</mo>
+</math>
+<p>Let component move costs be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>M</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Migration cost roughly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>T</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>migrate</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>T</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>lookup</mtext>
+            </mrow>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>T</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>allocate row</mtext>
+            </mrow>
+          </msub>
+          <mo>+</mo>
+          <munderover>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mo>=</mo>
+              <mn>1</mn>
+            </mrow>
+            <mrow data-mjx-texclass="ORD">
+              <mi>C</mi>
+            </mrow>
+          </munderover>
+          <msub>
+            <mi>M</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>T</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>construct/remove changed</mtext>
+            </mrow>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>T</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>source swap repair</mtext>
+            </mrow>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If component moves are constant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>C</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>But C++ nontrivial moves can hide allocations or external operations.</p>
+<hr />
+<p><strong>Structural cost depends on bytes moved too</strong></p>
+<p>Two archetypes each have five components.</p>
+<p>Case A components total:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>Case B:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mtext> KiB</mtext>
+  <mo>.</mo>
+</math>
+<p>Both are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>components, yet real migration cost differs dramatically.</p>
+<p>A more realistic performance model tracks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mi>y</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+</math>
+<p>and component-specific move complexity.</p>
+<hr />
+<p><strong>Archetype lookup complexity</strong></p>
+<p>Destination archetype lookup using hash map:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>average.</p>
+<p>But building/hash-comparing dynamic signatures may cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>C</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Transition caching from Pass 11 changes repeated:</p>
+<pre class="text"><code>A + Health</code></pre>
+<p>from signature rebuilding to a cached edge.</p>
+<p>Then transition lookup can approach:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This is why archetype transition graphs matter.</p>
+<hr />
+<p><strong>Designing ECS APIs around ownership/invalidation</strong></p>
+<p>This may be the most important M090 topic.</p>
+<p>An API must make it hard to accidentally depend on unstable physical storage.</p>
+<p>Bad API:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>Transform<span class="op">*</span> GetPermanentTransform<span class="op">(</span>Entity e<span class="op">);</span></span></code></pre></div>
+<p>The word “permanent” is a lie.</p>
+<p>Better:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>Transform<span class="op">&amp;</span> Get<span class="op">(</span>Entity e<span class="op">);</span></span></code></pre></div>
+<p>with documented lifetime:</p>
+<blockquote>
+<p>valid until the next structural operation that can invalidate this pool.</p>
+</blockquote>
+<p>Even better for long-lived references:</p>
+<pre class="text"><code>store Entity
+resolve component when needed.</code></pre>
+<hr />
+<p><strong>Invalidation contract should be explicit</strong></p>
+<p>For current sparse-set pool, document something like:</p>
+<p><strong><code>Emplace&lt;T&gt;</code></strong></p>
+<p>May reallocate T’s dense arrays.</p>
+<p>Therefore may invalidate all:</p>
+<pre class="text"><code>T*
+T&amp;
+spans/iterators into pool T.</code></pre>
+<p><strong><code>Remove&lt;T&gt;</code></strong></p>
+<p>May move the last T into another slot.</p>
+<p>Therefore invalidates:</p>
+<pre class="text"><code>reference to removed T
+reference/pointer to moved last T&#39;s old address
+semantic association at removed slot address.</code></pre>
+<p><strong>Other component pools</strong></p>
+<p>Adding Velocity should not invalidate Transform pointers if storages are truly independent.</p>
+<p>That distinction is useful.</p>
+<hr />
+<p><strong>Registry destruction invalidation</strong></p>
+<p>Destroy entity may remove components from many pools.</p>
+<p>Therefore:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>registry<span class="op">.</span>Destroy<span class="op">(</span>e<span class="op">);</span></span></code></pre></div>
+<p>potentially invalidates references in every pool from which e owns a component, because each removal may swap-move a last element.</p>
+<p>This is wider than:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>Remove<span class="op">&lt;</span>Transform<span class="op">&gt;(</span>e<span class="op">).</span></span></code></pre></div>
+<p>Users should know it.</p>
+<hr />
+<p><strong>Query callback ownership contract</strong></p>
+<p>A safe contract:</p>
+<pre class="text"><code>callback borrows component references
+for the duration of that callback invocation.
+
+do not store them beyond structural synchronization boundary.</code></pre>
+<p>Structural changes should be queued rather than executed directly.</p>
+<p>This is far clearer than relying on users to reverse-engineer vector behavior.</p>
+<hr />
+<p><strong>Const query APIs</strong></p>
+<p>Provide separate:</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>EachRead<span class="op">&lt;</span>T<span class="op">&gt;</span></span></code></pre></div>
+<p>or const-registry iteration returning:</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> T<span class="op">&amp;.</span></span></code></pre></div>
+<p>That communicates both C++ mutability and scheduler access intent.</p>
+<p>Later:</p>
+<pre class="text"><code>Read&lt;T&gt;
+Write&lt;U&gt;</code></pre>
+<p>can feed hazard detection.</p>
+<p>API semantics and scheduler semantics should reinforce each other.</p>
+<hr />
+<p><strong>Entity handle validation at subsystem boundaries</strong></p>
+<p>Do not assume an Entity received from another subsystem is live.</p>
+<p>Before mutation:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(!</span>registry<span class="op">.</span>IsAlive<span class="op">(</span>entity<span class="op">))</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span></code></pre></div>
+<p>especially for:</p>
+<ul>
+<li>delayed events,</li>
+<li>asynchronous jobs,</li>
+<li>network packets,</li>
+<li>GPU readback,</li>
+<li>timers,</li>
+<li>script callbacks.</li>
+</ul>
+<p>Generational handles make validation cheap.</p>
+<p>Use it.</p>
+<hr />
+<p><strong>Testing generation reuse bugs</strong></p>
+<p>Kairo already has an excellent basic test:</p>
+<pre class="text"><code>create first
+destroy first
+assert old not alive
+create recycled
+assert same index
+assert different generation
+assert recycled alive.</code></pre>
+<p>That is exactly the first required generation test.</p>
+<p>But production testing should go deeper.</p>
+<hr />
+<p><strong>Stale mutation test</strong></p>
+<p>Create:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>g</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Destroy.</p>
+<p>Create:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>g</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then verify all operations using <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>E</mi>
+    <mn>1</mn>
+  </msub>
+</math> fail:</p>
+<pre class="text"><code>Emplace
+Get
+Remove
+Destroy
+Has</code></pre>
+<p>while E2 remains untouched.</p>
+<p>This proves stale handles cannot mutate replacement state.</p>
+<p>Your current tests already cover part of this.</p>
+<hr />
+<p><strong>Component stale-generation test</strong></p>
+<p>Your direct SparseSet test is especially good.</p>
+<p>It inserts:</p>
+<pre class="text"><code>{42,1}</code></pre>
+<p>then attempts:</p>
+<pre class="text"><code>{42,2}</code></pre>
+<p>without first removing old generation.</p>
+<p>The pool rejects it.</p>
+<p>This proves sparse mapping cannot silently create two generations sharing one sparse index.</p>
+<p>That is a very valuable invariant test.</p>
+<hr />
+<p><strong>Rapid reuse stress test</strong></p>
+<p>Do:</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>Entity previous <span class="op">{};</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="bu">std::</span>size_t i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>     i <span class="op">&lt;</span> <span class="dv">10&#39;000&#39;000</span><span class="op">;</span></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>     <span class="op">++</span>i<span class="op">)</span></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>    Entity e <span class="op">=</span> registry<span class="op">.</span>Create<span class="op">();</span></span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>previous<span class="op">.</span>IsValid<span class="op">())</span></span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>        <span class="ot">assert</span><span class="op">(!</span>registry<span class="op">.</span>IsAlive<span class="op">(</span>previous<span class="op">));</span></span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-14"><a href="#cb43-14" aria-hidden="true" tabindex="-1"></a>    registry<span class="op">.</span>Destroy<span class="op">(</span>e<span class="op">);</span></span>
+<span id="cb43-15"><a href="#cb43-15" aria-hidden="true" tabindex="-1"></a>    previous <span class="op">=</span> e<span class="op">;</span></span>
+<span id="cb43-16"><a href="#cb43-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>You expect:</p>
+<ul>
+<li>slot reuse,</li>
+<li>increasing generations,</li>
+<li>no stale resurrection,</li>
+<li>no component leakage,</li>
+<li>stable entity count.</li>
+</ul>
+<hr />
+<p><strong>Max-generation retirement test</strong></p>
+<p>Because Kairo retires a slot at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <mi>I</mi>
+  <mi>N</mi>
+  <mi>T</mi>
+  <msub>
+    <mn>32</mn>
+    <mi>M</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>X</mi>
+  <mo>,</mo>
+</math>
+<p>this needs a direct test.</p>
+<p>Do not loop four billion times.</p>
+<p>Expose test-only state or construct a Registry fixture whose generation is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <mi>I</mi>
+  <mi>N</mi>
+  <mi>T</mi>
+  <msub>
+    <mn>32</mn>
+    <mi>M</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>X</mi>
+  <mo>−</mo>
+  <mn>1.</mn>
+</math>
+<p>Destroy the penultimate-generation entity.</p>
+<p>Reuse once at max generation.</p>
+<p>Destroy again.</p>
+<p>Verify slot is <strong>not pushed back onto free list</strong>.</p>
+<p>Then next Create must allocate another index.</p>
+<p>That proves no wraparound alias.</p>
+<hr />
+<p><strong>Randomized property testing</strong></p>
+<p>Generate random sequences:</p>
+<pre class="text"><code>Create
+Destroy
+Add&lt;T&gt;
+Remove&lt;T&gt;
+Get&lt;T&gt;
+Create
+...</code></pre>
+<p>Maintain a simple trusted reference model.</p>
+<p>After every operation compare:</p>
+<pre class="text"><code>alive set
+component ownership
+component values.</code></pre>
+<p>Also run:</p>
+<pre class="text"><code>ValidateRegistryInvariants().</code></pre>
+<p>Randomized state-machine testing is exceptionally effective for ECS bugs.</p>
+<hr />
+<p><strong>Benchmarking ECS versus object-oriented layout</strong></p>
+<p>Current Kairo benchmark measures:</p>
+<pre class="text"><code>Position + Velocity + Active</code></pre>
+<p>with Active on 1/10 entities.</p>
+<p>It runs 120 iterations and emits JSON:</p>
+<pre class="text"><code>kairo.ecs.benchmark.v1</code></pre>
+<p>including visits/sec.</p>
+<p>That is useful.</p>
+<p>But it does <strong>not yet answer Part 1499 completely</strong> because there is no OOP baseline in that benchmark.</p>
+<hr />
+<p><strong>Fair OOP baseline</strong></p>
+<p>Do not sabotage OOP with deliberately awful allocations like:</p>
+<div class="sourceCode" id="cb49"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>vector<span class="op">&lt;</span>unique_ptr<span class="op">&lt;</span>GameObject<span class="op">&gt;&gt;</span></span></code></pre></div>
+<p>and then claim ECS is faster.</p>
+<p>Use realistic alternatives.</p>
+<p>For example:</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Object</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>    Position PositionData<span class="op">;</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>    Velocity VelocityData<span class="op">;</span></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> Active<span class="op">;</span></span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>stored contiguously:</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span>Object<span class="op">&gt;.</span></span></code></pre></div>
+<p>Then benchmark the same semantic operation.</p>
+<hr />
+<p><strong>AoS baseline</strong></p>
+<div class="sourceCode" id="cb52"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Object</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>    Position P<span class="op">;</span></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>    Velocity V<span class="op">;</span></span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> Active<span class="op">;</span></span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span>Object<span class="op">&amp;</span> object <span class="op">:</span> objects<span class="op">)</span></span>
+<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>object<span class="op">.</span>Active<span class="op">)</span></span>
+<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb52-12"><a href="#cb52-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-13"><a href="#cb52-13" aria-hidden="true" tabindex="-1"></a>    object<span class="op">.</span>P<span class="op">.</span>x <span class="op">+=</span> object<span class="op">.</span>V<span class="op">.</span>x<span class="op">;</span></span>
+<span id="cb52-14"><a href="#cb52-14" aria-hidden="true" tabindex="-1"></a>    object<span class="op">.</span>P<span class="op">.</span>y <span class="op">+=</span> object<span class="op">.</span>V<span class="op">.</span>y<span class="op">;</span></span>
+<span id="cb52-15"><a href="#cb52-15" aria-hidden="true" tabindex="-1"></a>    object<span class="op">.</span>P<span class="op">.</span>z <span class="op">+=</span> object<span class="op">.</span>V<span class="op">.</span>z<span class="op">;</span></span>
+<span id="cb52-16"><a href="#cb52-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Compare to ECS:</p>
+<div class="sourceCode" id="cb53"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>registry<span class="op">.</span>Each<span class="op">&lt;</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>    Position<span class="op">,</span></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>    Velocity<span class="op">,</span></span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>    Active<span class="op">&gt;(...);</span></span></code></pre></div>
+<p>Now the comparison is meaningful.</p>
+<hr />
+<p><strong>What do you actually expect?</strong></p>
+<p>If every Object has Position, Velocity and Active and all are updated together, AoS may perform extremely well.</p>
+<p>ECS does not magically win.</p>
+<p>If objects contain many unrelated fields:</p>
+<pre class="text"><code>Name
+AI
+Renderer
+Audio
+Inventory
+Script
+Debug</code></pre>
+<p>and movement uses only Position+Velocity, ECS/SoA begins to gain.</p>
+<p>If Active exists on only 10% of entities, a sparse-set query scanning the 10% Active pool may avoid testing 90% entirely.</p>
+<p>Now storage structure changes the amount of work.</p>
+<hr />
+<p><strong>Benchmark several populations</strong></p>
+<p>At minimum compare:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <msup>
+    <mn>10</mn>
+    <mn>3</mn>
+  </msup>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <msup>
+    <mn>10</mn>
+    <mn>4</mn>
+  </msup>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <msup>
+    <mn>10</mn>
+    <mn>5</mn>
+  </msup>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>And component density:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mi mathvariant="normal">%</mi>
+  <mo>,</mo>
+  <mn>10</mn>
+  <mi mathvariant="normal">%</mi>
+  <mo>,</mo>
+  <mn>50</mn>
+  <mi mathvariant="normal">%</mi>
+  <mo>,</mo>
+  <mn>100</mn>
+  <mi mathvariant="normal">%</mi>
+  <mo>.</mo>
+</math>
+<p>Also test:</p>
+<pre class="text"><code>single-component iteration
+two-component join
+three-component join
+random Get
+component add/remove churn
+entity create/destroy</code></pre>
+<p>ECS performance is multidimensional.</p>
+<hr />
+<p><strong>Measure latency and throughput</strong></p>
+<p>Iteration:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+</math>
+<p>is useful.</p>
+<p>Also measure:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>s</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<p>For structural mutations:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>s</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>d</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>s</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>s</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>c</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>s</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<p>For queries:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>s</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>q</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+</math>
+<p>and total matched entities.</p>
+<p>Without operation-specific metrics, one “ECS benchmark score” is not very meaningful.</p>
+<hr />
+<p><strong>Warm-up</strong></p>
+<p>First iteration may include:</p>
+<ul>
+<li>page faults,</li>
+<li>branch predictor cold state,</li>
+<li>lazy allocations,</li>
+<li>instruction-cache warming.</li>
+</ul>
+<p>Run warm-up iterations before timing.</p>
+<p>Then repeat benchmark many times.</p>
+<p>Report:</p>
+<pre class="text"><code>median
+p95
+min/max</code></pre>
+<p>rather than one number.</p>
+<hr />
+<p><strong>Avoid dead-code elimination</strong></p>
+<p>Compiler may remove work whose result is never observed.</p>
+<p>Current Kairo benchmark increments:</p>
+<div class="sourceCode" id="cb57"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>visits</span></code></pre></div>
+<p>and prints output, and modifies component positions, so there is observable activity.</p>
+<p>For more aggressive optimized benchmarks, compute a checksum at the end.</p>
+<hr />
+<p><strong>Benchmark build configuration</strong></p>
+<p>Never compare:</p>
+<pre class="text"><code>ECS Release -O3</code></pre>
+<p>against:</p>
+<pre class="text"><code>OOP Debug.</code></pre>
+<p>Record:</p>
+<pre class="text"><code>compiler
+compiler version
+optimization flags
+CPU
+OS
+entity count
+commit hash</code></pre>
+<p>Kairo wisely emits schema-structured benchmark JSON instead of putting hardware-specific bragging numbers into the README.</p>
+<p>That is good benchmark hygiene.</p>
+<hr />
+<p><strong>Implementing a generational sparse-set ECS from a blank file</strong></p>
+<p>Now we rebuild the whole thing.</p>
+<p>No memorized library.</p>
+<p>No magical containers beyond vectors/maps.</p>
+<p>We need to defend every data structure.</p>
+<p>Start with entity identity.</p>
+<hr />
+<p><strong>Entity handle</strong></p>
+<div class="sourceCode" id="cb61"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;cstdint&gt;</span></span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;limits&gt;</span></span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Entity <span class="kw">final</span></span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">static</span> <span class="kw">constexpr</span> <span class="bu">std::</span>uint32_t InvalidIndex <span class="op">=</span></span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>numeric_limits<span class="op">&lt;</span><span class="bu">std::</span>uint32_t<span class="op">&gt;::</span>max<span class="op">();</span></span>
+<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-9"><a href="#cb61-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t Index <span class="op">=</span> InvalidIndex<span class="op">;</span></span>
+<span id="cb61-10"><a href="#cb61-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t Generation <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb61-11"><a href="#cb61-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-12"><a href="#cb61-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">[[</span><span class="at">nodiscard</span><span class="op">]]</span></span>
+<span id="cb61-13"><a href="#cb61-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">constexpr</span> <span class="dt">bool</span> IsNull<span class="op">()</span> <span class="at">const</span> <span class="kw">noexcept</span></span>
+<span id="cb61-14"><a href="#cb61-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb61-15"><a href="#cb61-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Index <span class="op">==</span> InvalidIndex<span class="op">;</span></span>
+<span id="cb61-16"><a href="#cb61-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb61-17"><a href="#cb61-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-18"><a href="#cb61-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">friend</span> <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span><span class="op">==(</span></span>
+<span id="cb61-19"><a href="#cb61-19" aria-hidden="true" tabindex="-1"></a>        Entity<span class="op">,</span></span>
+<span id="cb61-20"><a href="#cb61-20" aria-hidden="true" tabindex="-1"></a>        Entity<span class="op">)</span> <span class="kw">noexcept</span> <span class="op">=</span> <span class="cf">default</span><span class="op">;</span></span>
+<span id="cb61-21"><a href="#cb61-21" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Why two fields?</p>
+<p>Index gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>slot addressing.</p>
+<p>Generation prevents ABA on index reuse.</p>
+<p>Why 32 bits each?</p>
+<p>Simple, large space, and generation wrap becomes astronomically remote; Kairo goes further and retires max-generation slots.</p>
+<hr />
+<p><strong>Sparse set</strong></p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;cassert&gt;</span></span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;cstdint&gt;</span></span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;limits&gt;</span></span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdexcept&gt;</span></span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;utility&gt;</span></span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;vector&gt;</span></span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">typename</span> T<span class="op">&gt;</span></span>
+<span id="cb62-9"><a href="#cb62-9" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SparseSet</span>
+<span id="cb62-10"><a href="#cb62-10" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb62-11"><a href="#cb62-11" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb62-12"><a href="#cb62-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">static</span> <span class="kw">constexpr</span> <span class="bu">std::</span>uint32_t Missing <span class="op">=</span></span>
+<span id="cb62-13"><a href="#cb62-13" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>numeric_limits<span class="op">&lt;</span><span class="bu">std::</span>uint32_t<span class="op">&gt;::</span>max<span class="op">();</span></span>
+<span id="cb62-14"><a href="#cb62-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-15"><a href="#cb62-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">[[</span><span class="at">nodiscard</span><span class="op">]]</span></span>
+<span id="cb62-16"><a href="#cb62-16" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> Contains<span class="op">(</span>Entity entity<span class="op">)</span> <span class="at">const</span> <span class="kw">noexcept</span></span>
+<span id="cb62-17"><a href="#cb62-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb62-18"><a href="#cb62-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>entity<span class="op">.</span>IsNull<span class="op">()</span> <span class="op">||</span></span>
+<span id="cb62-19"><a href="#cb62-19" aria-hidden="true" tabindex="-1"></a>            entity<span class="op">.</span>Index <span class="op">&gt;=</span> <span class="va">m_Sparse</span><span class="op">.</span>size<span class="op">())</span></span>
+<span id="cb62-20"><a href="#cb62-20" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb62-21"><a href="#cb62-21" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb62-22"><a href="#cb62-22" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb62-23"><a href="#cb62-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-24"><a href="#cb62-24" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="bu">std::</span>uint32_t dense <span class="op">=</span></span>
+<span id="cb62-25"><a href="#cb62-25" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Sparse</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">];</span></span>
+<span id="cb62-26"><a href="#cb62-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-27"><a href="#cb62-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
+<span id="cb62-28"><a href="#cb62-28" aria-hidden="true" tabindex="-1"></a>            dense <span class="op">!=</span> Missing <span class="op">&amp;&amp;</span></span>
+<span id="cb62-29"><a href="#cb62-29" aria-hidden="true" tabindex="-1"></a>            dense <span class="op">&lt;</span> <span class="va">m_Entities</span><span class="op">.</span>size<span class="op">()</span> <span class="op">&amp;&amp;</span></span>
+<span id="cb62-30"><a href="#cb62-30" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Entities</span><span class="op">[</span>dense<span class="op">]</span> <span class="op">==</span> entity<span class="op">;</span></span>
+<span id="cb62-31"><a href="#cb62-31" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb62-32"><a href="#cb62-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-33"><a href="#cb62-33" aria-hidden="true" tabindex="-1"></a>    <span class="kw">template</span><span class="op">&lt;</span><span class="kw">typename</span><span class="op">...</span> Args<span class="op">&gt;</span></span>
+<span id="cb62-34"><a href="#cb62-34" aria-hidden="true" tabindex="-1"></a>    T<span class="op">&amp;</span> Emplace<span class="op">(</span></span>
+<span id="cb62-35"><a href="#cb62-35" aria-hidden="true" tabindex="-1"></a>        Entity entity<span class="op">,</span></span>
+<span id="cb62-36"><a href="#cb62-36" aria-hidden="true" tabindex="-1"></a>        Args<span class="op">&amp;&amp;...</span> args<span class="op">)</span></span>
+<span id="cb62-37"><a href="#cb62-37" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb62-38"><a href="#cb62-38" aria-hidden="true" tabindex="-1"></a>        EnsureSparse<span class="op">(</span>entity<span class="op">.</span>Index<span class="op">);</span></span>
+<span id="cb62-39"><a href="#cb62-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-40"><a href="#cb62-40" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>Contains<span class="op">(</span>entity<span class="op">))</span></span>
+<span id="cb62-41"><a href="#cb62-41" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb62-42"><a href="#cb62-42" aria-hidden="true" tabindex="-1"></a>            <span class="cf">throw</span> <span class="bu">std::</span>invalid_argument<span class="op">(</span></span>
+<span id="cb62-43"><a href="#cb62-43" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;Component already exists.&quot;</span><span class="op">);</span></span>
+<span id="cb62-44"><a href="#cb62-44" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb62-45"><a href="#cb62-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-46"><a href="#cb62-46" aria-hidden="true" tabindex="-1"></a>        <span class="co">// A different generation may still occupy this</span></span>
+<span id="cb62-47"><a href="#cb62-47" aria-hidden="true" tabindex="-1"></a>        <span class="co">// sparse index. Allowing another dense entry</span></span>
+<span id="cb62-48"><a href="#cb62-48" aria-hidden="true" tabindex="-1"></a>        <span class="co">// would orphan the old one.</span></span>
+<span id="cb62-49"><a href="#cb62-49" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span><span class="va">m_Sparse</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">]</span> <span class="op">!=</span> Missing<span class="op">)</span></span>
+<span id="cb62-50"><a href="#cb62-50" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb62-51"><a href="#cb62-51" aria-hidden="true" tabindex="-1"></a>            <span class="cf">throw</span> <span class="bu">std::</span>logic_error<span class="op">(</span></span>
+<span id="cb62-52"><a href="#cb62-52" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;Sparse entity index is occupied &quot;</span></span>
+<span id="cb62-53"><a href="#cb62-53" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;by another generation.&quot;</span><span class="op">);</span></span>
+<span id="cb62-54"><a href="#cb62-54" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb62-55"><a href="#cb62-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-56"><a href="#cb62-56" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span><span class="va">m_Entities</span><span class="op">.</span>size<span class="op">()</span> <span class="op">&gt;=</span></span>
+<span id="cb62-57"><a href="#cb62-57" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span><span class="bu">std::</span>size_t<span class="op">&gt;(</span>Missing<span class="op">))</span></span>
+<span id="cb62-58"><a href="#cb62-58" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb62-59"><a href="#cb62-59" aria-hidden="true" tabindex="-1"></a>            <span class="cf">throw</span> <span class="bu">std::</span>overflow_error<span class="op">(</span></span>
+<span id="cb62-60"><a href="#cb62-60" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;SparseSet exhausted 32-bit dense indices.&quot;</span><span class="op">);</span></span>
+<span id="cb62-61"><a href="#cb62-61" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb62-62"><a href="#cb62-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-63"><a href="#cb62-63" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="kw">auto</span> dense <span class="op">=</span></span>
+<span id="cb62-64"><a href="#cb62-64" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span><span class="bu">std::</span>uint32_t<span class="op">&gt;(</span></span>
+<span id="cb62-65"><a href="#cb62-65" aria-hidden="true" tabindex="-1"></a>                <span class="va">m_Entities</span><span class="op">.</span>size<span class="op">());</span></span>
+<span id="cb62-66"><a href="#cb62-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-67"><a href="#cb62-67" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Add entity first.</span></span>
+<span id="cb62-68"><a href="#cb62-68" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Entities</span><span class="op">.</span>push_back<span class="op">(</span>entity<span class="op">);</span></span>
+<span id="cb62-69"><a href="#cb62-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-70"><a href="#cb62-70" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span></span>
+<span id="cb62-71"><a href="#cb62-71" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb62-72"><a href="#cb62-72" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Construct component.</span></span>
+<span id="cb62-73"><a href="#cb62-73" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Components</span><span class="op">.</span>emplace_back<span class="op">(</span></span>
+<span id="cb62-74"><a href="#cb62-74" aria-hidden="true" tabindex="-1"></a>                <span class="bu">std::</span>forward<span class="op">&lt;</span>Args<span class="op">&gt;(</span>args<span class="op">)...);</span></span>
+<span id="cb62-75"><a href="#cb62-75" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb62-76"><a href="#cb62-76" aria-hidden="true" tabindex="-1"></a>        <span class="cf">catch</span> <span class="op">(...)</span></span>
+<span id="cb62-77"><a href="#cb62-77" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb62-78"><a href="#cb62-78" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Restore parallel-array invariant.</span></span>
+<span id="cb62-79"><a href="#cb62-79" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Entities</span><span class="op">.</span>pop_back<span class="op">();</span></span>
+<span id="cb62-80"><a href="#cb62-80" aria-hidden="true" tabindex="-1"></a>            <span class="cf">throw</span><span class="op">;</span></span>
+<span id="cb62-81"><a href="#cb62-81" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb62-82"><a href="#cb62-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-83"><a href="#cb62-83" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Publish sparse mapping only after both</span></span>
+<span id="cb62-84"><a href="#cb62-84" aria-hidden="true" tabindex="-1"></a>        <span class="co">// dense entries exist successfully.</span></span>
+<span id="cb62-85"><a href="#cb62-85" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Sparse</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">]</span> <span class="op">=</span> dense<span class="op">;</span></span>
+<span id="cb62-86"><a href="#cb62-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-87"><a href="#cb62-87" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">m_Components</span><span class="op">.</span>back<span class="op">();</span></span>
+<span id="cb62-88"><a href="#cb62-88" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb62-89"><a href="#cb62-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-90"><a href="#cb62-90" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> Remove<span class="op">(</span>Entity entity<span class="op">)</span></span>
+<span id="cb62-91"><a href="#cb62-91" aria-hidden="true" tabindex="-1"></a>        <span class="kw">noexcept</span><span class="op">(</span></span>
+<span id="cb62-92"><a href="#cb62-92" aria-hidden="true" tabindex="-1"></a>            <span class="bu">std::</span>is_nothrow_move_assignable_v<span class="op">&lt;</span>T<span class="op">&gt;)</span></span>
+<span id="cb62-93"><a href="#cb62-93" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb62-94"><a href="#cb62-94" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>Contains<span class="op">(</span>entity<span class="op">))</span></span>
+<span id="cb62-95"><a href="#cb62-95" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb62-96"><a href="#cb62-96" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb62-97"><a href="#cb62-97" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb62-98"><a href="#cb62-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-99"><a href="#cb62-99" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="bu">std::</span>uint32_t dense <span class="op">=</span></span>
+<span id="cb62-100"><a href="#cb62-100" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Sparse</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">];</span></span>
+<span id="cb62-101"><a href="#cb62-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-102"><a href="#cb62-102" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="bu">std::</span>uint32_t last <span class="op">=</span></span>
+<span id="cb62-103"><a href="#cb62-103" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span><span class="bu">std::</span>uint32_t<span class="op">&gt;(</span></span>
+<span id="cb62-104"><a href="#cb62-104" aria-hidden="true" tabindex="-1"></a>                <span class="va">m_Entities</span><span class="op">.</span>size<span class="op">()</span> <span class="op">-</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb62-105"><a href="#cb62-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-106"><a href="#cb62-106" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>dense <span class="op">!=</span> last<span class="op">)</span></span>
+<span id="cb62-107"><a href="#cb62-107" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb62-108"><a href="#cb62-108" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Move final entity/component into hole.</span></span>
+<span id="cb62-109"><a href="#cb62-109" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Entities</span><span class="op">[</span>dense<span class="op">]</span> <span class="op">=</span></span>
+<span id="cb62-110"><a href="#cb62-110" aria-hidden="true" tabindex="-1"></a>                <span class="bu">std::</span>move<span class="op">(</span><span class="va">m_Entities</span><span class="op">[</span>last<span class="op">]);</span></span>
+<span id="cb62-111"><a href="#cb62-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-112"><a href="#cb62-112" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Components</span><span class="op">[</span>dense<span class="op">]</span> <span class="op">=</span></span>
+<span id="cb62-113"><a href="#cb62-113" aria-hidden="true" tabindex="-1"></a>                <span class="bu">std::</span>move<span class="op">(</span><span class="va">m_Components</span><span class="op">[</span>last<span class="op">]);</span></span>
+<span id="cb62-114"><a href="#cb62-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-115"><a href="#cb62-115" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Repair moved entity&#39;s reverse map.</span></span>
+<span id="cb62-116"><a href="#cb62-116" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Sparse</span><span class="op">[</span></span>
+<span id="cb62-117"><a href="#cb62-117" aria-hidden="true" tabindex="-1"></a>                <span class="va">m_Entities</span><span class="op">[</span>dense<span class="op">].</span>Index</span>
+<span id="cb62-118"><a href="#cb62-118" aria-hidden="true" tabindex="-1"></a>            <span class="op">]</span> <span class="op">=</span> dense<span class="op">;</span></span>
+<span id="cb62-119"><a href="#cb62-119" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb62-120"><a href="#cb62-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-121"><a href="#cb62-121" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Entities</span><span class="op">.</span>pop_back<span class="op">();</span></span>
+<span id="cb62-122"><a href="#cb62-122" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Components</span><span class="op">.</span>pop_back<span class="op">();</span></span>
+<span id="cb62-123"><a href="#cb62-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-124"><a href="#cb62-124" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Sparse</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">]</span> <span class="op">=</span> Missing<span class="op">;</span></span>
+<span id="cb62-125"><a href="#cb62-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-126"><a href="#cb62-126" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb62-127"><a href="#cb62-127" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb62-128"><a href="#cb62-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-129"><a href="#cb62-129" aria-hidden="true" tabindex="-1"></a>    T<span class="op">*</span> TryGet<span class="op">(</span>Entity entity<span class="op">)</span> <span class="kw">noexcept</span></span>
+<span id="cb62-130"><a href="#cb62-130" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb62-131"><a href="#cb62-131" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>Contains<span class="op">(</span>entity<span class="op">))</span></span>
+<span id="cb62-132"><a href="#cb62-132" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb62-133"><a href="#cb62-133" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="kw">nullptr</span><span class="op">;</span></span>
+<span id="cb62-134"><a href="#cb62-134" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb62-135"><a href="#cb62-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-136"><a href="#cb62-136" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="op">&amp;</span><span class="va">m_Components</span><span class="op">[</span></span>
+<span id="cb62-137"><a href="#cb62-137" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Sparse</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">]];</span></span>
+<span id="cb62-138"><a href="#cb62-138" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb62-139"><a href="#cb62-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-140"><a href="#cb62-140" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> T<span class="op">*</span> TryGet<span class="op">(</span></span>
+<span id="cb62-141"><a href="#cb62-141" aria-hidden="true" tabindex="-1"></a>        Entity entity<span class="op">)</span> <span class="at">const</span> <span class="kw">noexcept</span></span>
+<span id="cb62-142"><a href="#cb62-142" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb62-143"><a href="#cb62-143" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>Contains<span class="op">(</span>entity<span class="op">))</span></span>
+<span id="cb62-144"><a href="#cb62-144" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb62-145"><a href="#cb62-145" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="kw">nullptr</span><span class="op">;</span></span>
+<span id="cb62-146"><a href="#cb62-146" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb62-147"><a href="#cb62-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-148"><a href="#cb62-148" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="op">&amp;</span><span class="va">m_Components</span><span class="op">[</span></span>
+<span id="cb62-149"><a href="#cb62-149" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Sparse</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">]];</span></span>
+<span id="cb62-150"><a href="#cb62-150" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb62-151"><a href="#cb62-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-152"><a href="#cb62-152" aria-hidden="true" tabindex="-1"></a>    T<span class="op">&amp;</span> Get<span class="op">(</span>Entity entity<span class="op">)</span></span>
+<span id="cb62-153"><a href="#cb62-153" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb62-154"><a href="#cb62-154" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>T<span class="op">*</span> result <span class="op">=</span> TryGet<span class="op">(</span>entity<span class="op">))</span></span>
+<span id="cb62-155"><a href="#cb62-155" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb62-156"><a href="#cb62-156" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="op">*</span>result<span class="op">;</span></span>
+<span id="cb62-157"><a href="#cb62-157" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb62-158"><a href="#cb62-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-159"><a href="#cb62-159" aria-hidden="true" tabindex="-1"></a>        <span class="cf">throw</span> <span class="bu">std::</span>out_of_range<span class="op">(</span></span>
+<span id="cb62-160"><a href="#cb62-160" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;Entity does not own component.&quot;</span><span class="op">);</span></span>
+<span id="cb62-161"><a href="#cb62-161" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb62-162"><a href="#cb62-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-163"><a href="#cb62-163" aria-hidden="true" tabindex="-1"></a>    <span class="op">[[</span><span class="at">nodiscard</span><span class="op">]]</span></span>
+<span id="cb62-164"><a href="#cb62-164" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>size_t Size<span class="op">()</span> <span class="at">const</span> <span class="kw">noexcept</span></span>
+<span id="cb62-165"><a href="#cb62-165" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb62-166"><a href="#cb62-166" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">m_Components</span><span class="op">.</span>size<span class="op">();</span></span>
+<span id="cb62-167"><a href="#cb62-167" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb62-168"><a href="#cb62-168" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-169"><a href="#cb62-169" aria-hidden="true" tabindex="-1"></a>    <span class="op">[[</span><span class="at">nodiscard</span><span class="op">]]</span></span>
+<span id="cb62-170"><a href="#cb62-170" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="bu">std::</span>vector<span class="op">&lt;</span>Entity<span class="op">&gt;&amp;</span></span>
+<span id="cb62-171"><a href="#cb62-171" aria-hidden="true" tabindex="-1"></a>    Entities<span class="op">()</span> <span class="at">const</span> <span class="kw">noexcept</span></span>
+<span id="cb62-172"><a href="#cb62-172" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb62-173"><a href="#cb62-173" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">m_Entities</span><span class="op">;</span></span>
+<span id="cb62-174"><a href="#cb62-174" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb62-175"><a href="#cb62-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-176"><a href="#cb62-176" aria-hidden="true" tabindex="-1"></a>    <span class="op">[[</span><span class="at">nodiscard</span><span class="op">]]</span></span>
+<span id="cb62-177"><a href="#cb62-177" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>T<span class="op">&gt;&amp;</span></span>
+<span id="cb62-178"><a href="#cb62-178" aria-hidden="true" tabindex="-1"></a>    Components<span class="op">()</span> <span class="kw">noexcept</span></span>
+<span id="cb62-179"><a href="#cb62-179" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb62-180"><a href="#cb62-180" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">m_Components</span><span class="op">;</span></span>
+<span id="cb62-181"><a href="#cb62-181" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb62-182"><a href="#cb62-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-183"><a href="#cb62-183" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span><span class="op">:</span></span>
+<span id="cb62-184"><a href="#cb62-184" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="bu">std::</span>uint32_t<span class="op">&gt;</span> <span class="va">m_Sparse</span><span class="op">;</span></span>
+<span id="cb62-185"><a href="#cb62-185" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>Entity<span class="op">&gt;</span> <span class="va">m_Entities</span><span class="op">;</span></span>
+<span id="cb62-186"><a href="#cb62-186" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="va">m_Components</span><span class="op">;</span></span>
+<span id="cb62-187"><a href="#cb62-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-188"><a href="#cb62-188" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> EnsureSparse<span class="op">(</span></span>
+<span id="cb62-189"><a href="#cb62-189" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>uint32_t index<span class="op">)</span></span>
+<span id="cb62-190"><a href="#cb62-190" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb62-191"><a href="#cb62-191" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>index <span class="op">&gt;=</span> <span class="va">m_Sparse</span><span class="op">.</span>size<span class="op">())</span></span>
+<span id="cb62-192"><a href="#cb62-192" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb62-193"><a href="#cb62-193" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Sparse</span><span class="op">.</span>resize<span class="op">(</span></span>
+<span id="cb62-194"><a href="#cb62-194" aria-hidden="true" tabindex="-1"></a>                <span class="kw">static_cast</span><span class="op">&lt;</span><span class="bu">std::</span>size_t<span class="op">&gt;(</span></span>
+<span id="cb62-195"><a href="#cb62-195" aria-hidden="true" tabindex="-1"></a>                    index<span class="op">)</span> <span class="op">+</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb62-196"><a href="#cb62-196" aria-hidden="true" tabindex="-1"></a>                Missing<span class="op">);</span></span>
+<span id="cb62-197"><a href="#cb62-197" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb62-198"><a href="#cb62-198" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb62-199"><a href="#cb62-199" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>This is the fundamental storage engine.</p>
+<hr />
+<p><strong>Why three arrays?</strong></p>
+<p><code>m_Sparse</code> provides:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">→</mo>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p><code>m_Entities</code> provides:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">→</mo>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<p><code>m_Components</code> provides:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">→</mo>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Together:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo stretchy="false">↔</mo>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>R</mi>
+  <mi>o</mi>
+  <mi>w</mi>
+  <mo stretchy="false">↔</mo>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Without dense entity array, swap repair would not know which entity was moved.</p>
+<p>Without sparse array, lookup would require search.</p>
+<p>Without dense component array, iteration loses locality.</p>
+<p>Every structure has a reason.</p>
+<hr />
+<p><strong>Type-erased pool base</strong></p>
+<p>Registry must remove components from all unknown pool types during entity destruction.</p>
+<div class="sourceCode" id="cb63"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> IComponentPool</span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> <span class="op">~</span>IComponentPool<span class="op">()</span> <span class="op">=</span> <span class="cf">default</span><span class="op">;</span></span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> <span class="dt">bool</span> Remove<span class="op">(</span></span>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>        Entity entity<span class="op">)</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb63-8"><a href="#cb63-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-9"><a href="#cb63-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> <span class="dt">bool</span> Contains<span class="op">(</span></span>
+<span id="cb63-10"><a href="#cb63-10" aria-hidden="true" tabindex="-1"></a>        Entity entity<span class="op">)</span> <span class="at">const</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb63-11"><a href="#cb63-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-12"><a href="#cb63-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> <span class="bu">std::</span>size_t Size<span class="op">()</span></span>
+<span id="cb63-13"><a href="#cb63-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="kw">noexcept</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb63-14"><a href="#cb63-14" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Typed pool:</p>
+<div class="sourceCode" id="cb64"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">typename</span> T<span class="op">&gt;</span></span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ComponentPool <span class="kw">final</span></span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">:</span> <span class="kw">public</span> IComponentPool</span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a>    SparseSet<span class="op">&lt;</span>T<span class="op">&gt;</span> Storage<span class="op">;</span></span>
+<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> Remove<span class="op">(</span>Entity e<span class="op">)</span> <span class="kw">override</span></span>
+<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb64-10"><a href="#cb64-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Storage<span class="op">.</span>Remove<span class="op">(</span>e<span class="op">);</span></span>
+<span id="cb64-11"><a href="#cb64-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb64-12"><a href="#cb64-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-13"><a href="#cb64-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> Contains<span class="op">(</span></span>
+<span id="cb64-14"><a href="#cb64-14" aria-hidden="true" tabindex="-1"></a>        Entity e<span class="op">)</span> <span class="at">const</span> <span class="kw">override</span></span>
+<span id="cb64-15"><a href="#cb64-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb64-16"><a href="#cb64-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Storage<span class="op">.</span>Contains<span class="op">(</span>e<span class="op">);</span></span>
+<span id="cb64-17"><a href="#cb64-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb64-18"><a href="#cb64-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-19"><a href="#cb64-19" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>size_t Size<span class="op">()</span></span>
+<span id="cb64-20"><a href="#cb64-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="kw">noexcept</span> <span class="kw">override</span></span>
+<span id="cb64-21"><a href="#cb64-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb64-22"><a href="#cb64-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Storage<span class="op">.</span>Size<span class="op">();</span></span>
+<span id="cb64-23"><a href="#cb64-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb64-24"><a href="#cb64-24" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<hr />
+<p><strong>Registry metadata</strong></p>
+<div class="sourceCode" id="cb65"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;memory&gt;</span></span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;typeindex&gt;</span></span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;unordered_map&gt;</span></span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Registry</span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span><span class="op">:</span></span>
+<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="bu">std::</span>uint32_t<span class="op">&gt;</span></span>
+<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Generations</span><span class="op">;</span></span>
+<span id="cb65-10"><a href="#cb65-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-11"><a href="#cb65-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">bool</span><span class="op">&gt;</span></span>
+<span id="cb65-12"><a href="#cb65-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Alive</span><span class="op">;</span></span>
+<span id="cb65-13"><a href="#cb65-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-14"><a href="#cb65-14" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="bu">std::</span>uint32_t<span class="op">&gt;</span></span>
+<span id="cb65-15"><a href="#cb65-15" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Free</span><span class="op">;</span></span>
+<span id="cb65-16"><a href="#cb65-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-17"><a href="#cb65-17" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>unordered_map<span class="op">&lt;</span></span>
+<span id="cb65-18"><a href="#cb65-18" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>type_index<span class="op">,</span></span>
+<span id="cb65-19"><a href="#cb65-19" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>IComponentPool<span class="op">&gt;&gt;</span></span>
+<span id="cb65-20"><a href="#cb65-20" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Pools</span><span class="op">;</span></span>
+<span id="cb65-21"><a href="#cb65-21" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Defend each:</p>
+<p><code>m_Generations</code> is flat O(1) validation metadata. <code>m_Alive</code> distinguishes currently occupied slots. <code>m_Free</code> gives O(1) slot reuse. <code>m_Pools</code> maps C++ type identity to storage while keeping pools type-erased at registry level.</p>
+<hr />
+<p><strong>Entity creation</strong></p>
+<div class="sourceCode" id="cb66"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>Entity Create<span class="op">()</span></span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t index<span class="op">;</span></span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span><span class="va">m_Free</span><span class="op">.</span>empty<span class="op">())</span></span>
+<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a>        index <span class="op">=</span> <span class="va">m_Free</span><span class="op">.</span>back<span class="op">();</span></span>
+<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Free</span><span class="op">.</span>pop_back<span class="op">();</span></span>
+<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a>        <span class="ot">assert</span><span class="op">(</span></span>
+<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a>            index <span class="op">&lt;</span> <span class="va">m_Alive</span><span class="op">.</span>size<span class="op">());</span></span>
+<span id="cb66-12"><a href="#cb66-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-13"><a href="#cb66-13" aria-hidden="true" tabindex="-1"></a>        <span class="ot">assert</span><span class="op">(</span></span>
+<span id="cb66-14"><a href="#cb66-14" aria-hidden="true" tabindex="-1"></a>            <span class="op">!</span><span class="va">m_Alive</span><span class="op">[</span>index<span class="op">]);</span></span>
+<span id="cb66-15"><a href="#cb66-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-16"><a href="#cb66-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Alive</span><span class="op">[</span>index<span class="op">]</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb66-17"><a href="#cb66-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb66-18"><a href="#cb66-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb66-19"><a href="#cb66-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb66-20"><a href="#cb66-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span><span class="va">m_Generations</span><span class="op">.</span>size<span class="op">()</span> <span class="op">&gt;=</span></span>
+<span id="cb66-21"><a href="#cb66-21" aria-hidden="true" tabindex="-1"></a>            Entity<span class="op">::</span>InvalidIndex<span class="op">)</span></span>
+<span id="cb66-22"><a href="#cb66-22" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb66-23"><a href="#cb66-23" aria-hidden="true" tabindex="-1"></a>            <span class="cf">throw</span> <span class="bu">std::</span>overflow_error<span class="op">(</span></span>
+<span id="cb66-24"><a href="#cb66-24" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;Entity index space exhausted.&quot;</span><span class="op">);</span></span>
+<span id="cb66-25"><a href="#cb66-25" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb66-26"><a href="#cb66-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-27"><a href="#cb66-27" aria-hidden="true" tabindex="-1"></a>        index <span class="op">=</span></span>
+<span id="cb66-28"><a href="#cb66-28" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span><span class="bu">std::</span>uint32_t<span class="op">&gt;(</span></span>
+<span id="cb66-29"><a href="#cb66-29" aria-hidden="true" tabindex="-1"></a>                <span class="va">m_Generations</span><span class="op">.</span>size<span class="op">());</span></span>
+<span id="cb66-30"><a href="#cb66-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-31"><a href="#cb66-31" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Generations</span><span class="op">.</span>push_back<span class="op">(</span><span class="dv">1</span><span class="op">);</span></span>
+<span id="cb66-32"><a href="#cb66-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-33"><a href="#cb66-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span></span>
+<span id="cb66-34"><a href="#cb66-34" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb66-35"><a href="#cb66-35" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Alive</span><span class="op">.</span>push_back<span class="op">(</span><span class="kw">true</span><span class="op">);</span></span>
+<span id="cb66-36"><a href="#cb66-36" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb66-37"><a href="#cb66-37" aria-hidden="true" tabindex="-1"></a>        <span class="cf">catch</span> <span class="op">(...)</span></span>
+<span id="cb66-38"><a href="#cb66-38" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb66-39"><a href="#cb66-39" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Generations</span><span class="op">.</span>pop_back<span class="op">();</span></span>
+<span id="cb66-40"><a href="#cb66-40" aria-hidden="true" tabindex="-1"></a>            <span class="cf">throw</span><span class="op">;</span></span>
+<span id="cb66-41"><a href="#cb66-41" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb66-42"><a href="#cb66-42" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb66-43"><a href="#cb66-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-44"><a href="#cb66-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span></span>
+<span id="cb66-45"><a href="#cb66-45" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb66-46"><a href="#cb66-46" aria-hidden="true" tabindex="-1"></a>        index<span class="op">,</span></span>
+<span id="cb66-47"><a href="#cb66-47" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Generations</span><span class="op">[</span>index<span class="op">]</span></span>
+<span id="cb66-48"><a href="#cb66-48" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb66-49"><a href="#cb66-49" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Notice rollback if metadata allocation fails.</p>
+<hr />
+<p><strong>Handle validation</strong></p>
+<div class="sourceCode" id="cb67"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> IsAlive<span class="op">(</span></span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>    Entity entity<span class="op">)</span> <span class="at">const</span> <span class="kw">noexcept</span></span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span></span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">!</span>entity<span class="op">.</span>IsNull<span class="op">()</span> <span class="op">&amp;&amp;</span></span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>        entity<span class="op">.</span>Index <span class="op">&lt;</span></span>
+<span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Generations</span><span class="op">.</span>size<span class="op">()</span> <span class="op">&amp;&amp;</span></span>
+<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Alive</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">]</span> <span class="op">&amp;&amp;</span></span>
+<span id="cb67-9"><a href="#cb67-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Generations</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">]</span> <span class="op">==</span></span>
+<span id="cb67-10"><a href="#cb67-10" aria-hidden="true" tabindex="-1"></a>            entity<span class="op">.</span>Generation<span class="op">;</span></span>
+<span id="cb67-11"><a href="#cb67-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This is the generation barrier.</p>
+<p>Every externally supplied Entity must eventually be checked against it before mutation.</p>
+<hr />
+<p><strong>Entity destruction</strong></p>
+<div class="sourceCode" id="cb68"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> Destroy<span class="op">(</span>Entity entity<span class="op">)</span></span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>IsAlive<span class="op">(</span>entity<span class="op">))</span></span>
+<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb68-7"><a href="#cb68-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-8"><a href="#cb68-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Remove old generation&#39;s components before</span></span>
+<span id="cb68-9"><a href="#cb68-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// allowing slot to become a new entity.</span></span>
+<span id="cb68-10"><a href="#cb68-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span><span class="op">&amp;</span> <span class="op">[</span>_<span class="op">,</span> pool<span class="op">]</span> <span class="op">:</span> <span class="va">m_Pools</span><span class="op">)</span></span>
+<span id="cb68-11"><a href="#cb68-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb68-12"><a href="#cb68-12" aria-hidden="true" tabindex="-1"></a>        pool<span class="op">-&gt;</span>Remove<span class="op">(</span>entity<span class="op">);</span></span>
+<span id="cb68-13"><a href="#cb68-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb68-14"><a href="#cb68-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-15"><a href="#cb68-15" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_Alive</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">]</span> <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb68-16"><a href="#cb68-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-17"><a href="#cb68-17" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t<span class="op">&amp;</span> generation <span class="op">=</span></span>
+<span id="cb68-18"><a href="#cb68-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Generations</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">];</span></span>
+<span id="cb68-19"><a href="#cb68-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-20"><a href="#cb68-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>generation <span class="op">!=</span></span>
+<span id="cb68-21"><a href="#cb68-21" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>numeric_limits<span class="op">&lt;</span></span>
+<span id="cb68-22"><a href="#cb68-22" aria-hidden="true" tabindex="-1"></a>            <span class="bu">std::</span>uint32_t<span class="op">&gt;::</span>max<span class="op">())</span></span>
+<span id="cb68-23"><a href="#cb68-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb68-24"><a href="#cb68-24" aria-hidden="true" tabindex="-1"></a>        <span class="op">++</span>generation<span class="op">;</span></span>
+<span id="cb68-25"><a href="#cb68-25" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Free</span><span class="op">.</span>push_back<span class="op">(</span>entity<span class="op">.</span>Index<span class="op">);</span></span>
+<span id="cb68-26"><a href="#cb68-26" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb68-27"><a href="#cb68-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb68-28"><a href="#cb68-28" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb68-29"><a href="#cb68-29" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Retire permanently rather than wrap.</span></span>
+<span id="cb68-30"><a href="#cb68-30" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb68-31"><a href="#cb68-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-32"><a href="#cb68-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb68-33"><a href="#cb68-33" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This ordering enforces:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>No recycled slot retains old-generation components</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Typed pool creation</strong></p>
+<div class="sourceCode" id="cb69"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">typename</span> T<span class="op">&gt;</span></span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>ComponentPool<span class="op">&lt;</span>T<span class="op">&gt;&amp;</span> Pool<span class="op">()</span></span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="bu">std::</span>type_index key <span class="op">=</span></span>
+<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>type_index<span class="op">(</span><span class="kw">typeid</span><span class="op">(</span>T<span class="op">));</span></span>
+<span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="kw">auto</span> found <span class="op">=</span></span>
+<span id="cb69-8"><a href="#cb69-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Pools</span><span class="op">.</span>find<span class="op">(</span>key<span class="op">);</span></span>
+<span id="cb69-9"><a href="#cb69-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-10"><a href="#cb69-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>found <span class="op">!=</span> <span class="va">m_Pools</span><span class="op">.</span>end<span class="op">())</span></span>
+<span id="cb69-11"><a href="#cb69-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb69-12"><a href="#cb69-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="op">*</span><span class="kw">static_cast</span><span class="op">&lt;</span></span>
+<span id="cb69-13"><a href="#cb69-13" aria-hidden="true" tabindex="-1"></a>            ComponentPool<span class="op">&lt;</span>T<span class="op">&gt;*&gt;(</span></span>
+<span id="cb69-14"><a href="#cb69-14" aria-hidden="true" tabindex="-1"></a>                found<span class="op">-&gt;</span>second<span class="op">.</span>get<span class="op">());</span></span>
+<span id="cb69-15"><a href="#cb69-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb69-16"><a href="#cb69-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-17"><a href="#cb69-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">auto</span> created <span class="op">=</span></span>
+<span id="cb69-18"><a href="#cb69-18" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>make_unique<span class="op">&lt;</span></span>
+<span id="cb69-19"><a href="#cb69-19" aria-hidden="true" tabindex="-1"></a>            ComponentPool<span class="op">&lt;</span>T<span class="op">&gt;&gt;();</span></span>
+<span id="cb69-20"><a href="#cb69-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-21"><a href="#cb69-21" aria-hidden="true" tabindex="-1"></a>    ComponentPool<span class="op">&lt;</span>T<span class="op">&gt;*</span> pointer <span class="op">=</span></span>
+<span id="cb69-22"><a href="#cb69-22" aria-hidden="true" tabindex="-1"></a>        created<span class="op">.</span>get<span class="op">();</span></span>
+<span id="cb69-23"><a href="#cb69-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-24"><a href="#cb69-24" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_Pools</span><span class="op">.</span>emplace<span class="op">(</span></span>
+<span id="cb69-25"><a href="#cb69-25" aria-hidden="true" tabindex="-1"></a>        key<span class="op">,</span></span>
+<span id="cb69-26"><a href="#cb69-26" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>move<span class="op">(</span>created<span class="op">));</span></span>
+<span id="cb69-27"><a href="#cb69-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-28"><a href="#cb69-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">*</span>pointer<span class="op">;</span></span>
+<span id="cb69-29"><a href="#cb69-29" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This is lazy pool creation.</p>
+<hr />
+<p><strong>Component insertion</strong></p>
+<div class="sourceCode" id="cb70"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">typename</span> T<span class="op">,</span> <span class="kw">typename</span><span class="op">...</span> Args<span class="op">&gt;</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>T<span class="op">&amp;</span> Emplace<span class="op">(</span></span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>    Entity entity<span class="op">,</span></span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a>    Args<span class="op">&amp;&amp;...</span> args<span class="op">)</span></span>
+<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb70-6"><a href="#cb70-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>IsAlive<span class="op">(</span>entity<span class="op">))</span></span>
+<span id="cb70-7"><a href="#cb70-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb70-8"><a href="#cb70-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">throw</span> <span class="bu">std::</span>invalid_argument<span class="op">(</span></span>
+<span id="cb70-9"><a href="#cb70-9" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;Cannot mutate stale entity.&quot;</span><span class="op">);</span></span>
+<span id="cb70-10"><a href="#cb70-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb70-11"><a href="#cb70-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb70-12"><a href="#cb70-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Pool<span class="op">&lt;</span>T<span class="op">&gt;()</span></span>
+<span id="cb70-13"><a href="#cb70-13" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>Storage</span>
+<span id="cb70-14"><a href="#cb70-14" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>Emplace<span class="op">(</span></span>
+<span id="cb70-15"><a href="#cb70-15" aria-hidden="true" tabindex="-1"></a>            entity<span class="op">,</span></span>
+<span id="cb70-16"><a href="#cb70-16" aria-hidden="true" tabindex="-1"></a>            <span class="bu">std::</span>forward<span class="op">&lt;</span>Args<span class="op">&gt;(</span></span>
+<span id="cb70-17"><a href="#cb70-17" aria-hidden="true" tabindex="-1"></a>                args<span class="op">)...);</span></span>
+<span id="cb70-18"><a href="#cb70-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Registry validation and pool generation validation form two defensive layers.</p>
+<hr />
+<p><strong>Multi-component iteration</strong></p>
+<p>For two components:</p>
+<div class="sourceCode" id="cb71"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span></span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">typename</span> A<span class="op">,</span></span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">typename</span> B<span class="op">,</span></span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">typename</span> Function<span class="op">&gt;</span></span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> Each<span class="op">(</span>Function<span class="op">&amp;&amp;</span> function<span class="op">)</span></span>
+<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">auto</span><span class="op">&amp;</span> a <span class="op">=</span> Pool<span class="op">&lt;</span>A<span class="op">&gt;().</span>Storage<span class="op">;</span></span>
+<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">auto</span><span class="op">&amp;</span> b <span class="op">=</span> Pool<span class="op">&lt;</span>B<span class="op">&gt;().</span>Storage<span class="op">;</span></span>
+<span id="cb71-9"><a href="#cb71-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-10"><a href="#cb71-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>a<span class="op">.</span>Size<span class="op">()</span> <span class="op">&lt;=</span> b<span class="op">.</span>Size<span class="op">())</span></span>
+<span id="cb71-11"><a href="#cb71-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb71-12"><a href="#cb71-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="kw">auto</span><span class="op">&amp;</span> entities <span class="op">=</span></span>
+<span id="cb71-13"><a href="#cb71-13" aria-hidden="true" tabindex="-1"></a>            a<span class="op">.</span>Entities<span class="op">();</span></span>
+<span id="cb71-14"><a href="#cb71-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-15"><a href="#cb71-15" aria-hidden="true" tabindex="-1"></a>        <span class="kw">auto</span><span class="op">&amp;</span> values <span class="op">=</span></span>
+<span id="cb71-16"><a href="#cb71-16" aria-hidden="true" tabindex="-1"></a>            a<span class="op">.</span>Components<span class="op">();</span></span>
+<span id="cb71-17"><a href="#cb71-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-18"><a href="#cb71-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="op">(</span><span class="bu">std::</span>size_t i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb71-19"><a href="#cb71-19" aria-hidden="true" tabindex="-1"></a>             i <span class="op">&lt;</span> entities<span class="op">.</span>size<span class="op">();</span></span>
+<span id="cb71-20"><a href="#cb71-20" aria-hidden="true" tabindex="-1"></a>             <span class="op">++</span>i<span class="op">)</span></span>
+<span id="cb71-21"><a href="#cb71-21" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb71-22"><a href="#cb71-22" aria-hidden="true" tabindex="-1"></a>            Entity entity <span class="op">=</span> entities<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb71-23"><a href="#cb71-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-24"><a href="#cb71-24" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="op">(</span>B<span class="op">*</span> second <span class="op">=</span></span>
+<span id="cb71-25"><a href="#cb71-25" aria-hidden="true" tabindex="-1"></a>                    b<span class="op">.</span>TryGet<span class="op">(</span>entity<span class="op">))</span></span>
+<span id="cb71-26"><a href="#cb71-26" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb71-27"><a href="#cb71-27" aria-hidden="true" tabindex="-1"></a>                <span class="bu">std::</span>invoke<span class="op">(</span></span>
+<span id="cb71-28"><a href="#cb71-28" aria-hidden="true" tabindex="-1"></a>                    function<span class="op">,</span></span>
+<span id="cb71-29"><a href="#cb71-29" aria-hidden="true" tabindex="-1"></a>                    entity<span class="op">,</span></span>
+<span id="cb71-30"><a href="#cb71-30" aria-hidden="true" tabindex="-1"></a>                    values<span class="op">[</span>i<span class="op">],</span></span>
+<span id="cb71-31"><a href="#cb71-31" aria-hidden="true" tabindex="-1"></a>                    <span class="op">*</span>second<span class="op">);</span></span>
+<span id="cb71-32"><a href="#cb71-32" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb71-33"><a href="#cb71-33" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb71-34"><a href="#cb71-34" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb71-35"><a href="#cb71-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb71-36"><a href="#cb71-36" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb71-37"><a href="#cb71-37" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="kw">auto</span><span class="op">&amp;</span> entities <span class="op">=</span></span>
+<span id="cb71-38"><a href="#cb71-38" aria-hidden="true" tabindex="-1"></a>            b<span class="op">.</span>Entities<span class="op">();</span></span>
+<span id="cb71-39"><a href="#cb71-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-40"><a href="#cb71-40" aria-hidden="true" tabindex="-1"></a>        <span class="kw">auto</span><span class="op">&amp;</span> values <span class="op">=</span></span>
+<span id="cb71-41"><a href="#cb71-41" aria-hidden="true" tabindex="-1"></a>            b<span class="op">.</span>Components<span class="op">();</span></span>
+<span id="cb71-42"><a href="#cb71-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-43"><a href="#cb71-43" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="op">(</span><span class="bu">std::</span>size_t i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb71-44"><a href="#cb71-44" aria-hidden="true" tabindex="-1"></a>             i <span class="op">&lt;</span> entities<span class="op">.</span>size<span class="op">();</span></span>
+<span id="cb71-45"><a href="#cb71-45" aria-hidden="true" tabindex="-1"></a>             <span class="op">++</span>i<span class="op">)</span></span>
+<span id="cb71-46"><a href="#cb71-46" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb71-47"><a href="#cb71-47" aria-hidden="true" tabindex="-1"></a>            Entity entity <span class="op">=</span> entities<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb71-48"><a href="#cb71-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-49"><a href="#cb71-49" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="op">(</span>A<span class="op">*</span> first <span class="op">=</span></span>
+<span id="cb71-50"><a href="#cb71-50" aria-hidden="true" tabindex="-1"></a>                    a<span class="op">.</span>TryGet<span class="op">(</span>entity<span class="op">))</span></span>
+<span id="cb71-51"><a href="#cb71-51" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb71-52"><a href="#cb71-52" aria-hidden="true" tabindex="-1"></a>                <span class="co">// Preserve caller&#39;s requested order.</span></span>
+<span id="cb71-53"><a href="#cb71-53" aria-hidden="true" tabindex="-1"></a>                <span class="bu">std::</span>invoke<span class="op">(</span></span>
+<span id="cb71-54"><a href="#cb71-54" aria-hidden="true" tabindex="-1"></a>                    function<span class="op">,</span></span>
+<span id="cb71-55"><a href="#cb71-55" aria-hidden="true" tabindex="-1"></a>                    entity<span class="op">,</span></span>
+<span id="cb71-56"><a href="#cb71-56" aria-hidden="true" tabindex="-1"></a>                    <span class="op">*</span>first<span class="op">,</span></span>
+<span id="cb71-57"><a href="#cb71-57" aria-hidden="true" tabindex="-1"></a>                    values<span class="op">[</span>i<span class="op">]);</span></span>
+<span id="cb71-58"><a href="#cb71-58" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb71-59"><a href="#cb71-59" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb71-60"><a href="#cb71-60" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb71-61"><a href="#cb71-61" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This is the essence of Kairo’s current query strategy.</p>
+<hr />
+<p><strong>Why smallest-pool iteration is defensible</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">|</mo>
+  <mi>A</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">|</mo>
+  <mi>B</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>=</mo>
+  <mn>10</mn>
+  <mo>,</mo>
+  <mn>000.</mn>
+</math>
+<p>Scanning A:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>candidates.</p>
+<p>Scanning B:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>10</mn>
+  <mo>,</mo>
+  <mn>000.</mn>
+</math>
+<p>Since membership tests are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>, B is clearly preferable.</p>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mi>r</mi>
+          <mi>i</mi>
+          <mi>v</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mo>=</mo>
+          <mi>a</mi>
+          <mi>r</mi>
+          <mi>g</mi>
+          <mi>m</mi>
+          <mi>i</mi>
+          <msub>
+            <mi>n</mi>
+            <mi>i</mi>
+          </msub>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mi>P</mi>
+          <mi>o</mi>
+          <mi>o</mi>
+          <msub>
+            <mi>l</mi>
+            <mi>i</mi>
+          </msub>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is not an arbitrary micro-optimization.</p>
+<p>It is the algorithmic query policy.</p>
+<hr />
+<p><strong>But “smallest pool” is not always absolute optimality</strong></p>
+<p>Imagine smallest pool is randomly ordered relative to other component dense arrays, causing many cache misses.</p>
+<p>A slightly larger pool whose order correlates with another hot pool might sometimes outperform it.</p>
+<p>Archetype storage solves much of this by aligning component row ownership.</p>
+<p>Therefore smallest-pool is a strong sparse-set heuristic, not a universal theorem about machine performance.</p>
+<p>Benchmark.</p>
+<hr />
+<p><strong>The complete Kairo architecture now makes sense</strong></p>
+<p>Your current codebase has three deliberately different layers.</p>
+<pre class="text"><code>EngineCore::Scene
+    durable authored identity
+    validation
+    hierarchy
+    serialization
+    reflection
+
+          ↓ explicit extraction
+
+KairoECS
+    generational runtime identity
+    sparse-set pools
+    dense iteration
+    structural journal
+
+          ↓ adapters
+
+Physics / Renderer / Gameplay
+    process-local subsystem IDs
+    hot runtime state</code></pre>
+<p>This separation is one of the strongest aspects of the current architecture.</p>
+<p>Do not collapse it accidentally.</p>
+<hr />
+<p><strong>Current Kairo gaps exposed by M089/M090</strong></p>
+<p>The current implementation already has a lot: stale-generation tests, sparse sets, smallest-pool joins, authored/runtime identity separation, scene versioning, reflection descriptors, durable scene IDs, transactional runtime scene edits, and a deterministic JSON ECS benchmark.</p>
+<p>The major remaining gaps for this specific pass are:</p>
+<pre class="text"><code>generic KairoECS component serializer
+entity-reference reflection/remapping at ECS level
+generic ECS clone policy
+prefab inheritance/override system
+ECS-level inspector/debug storage views
+storage epochs / checked component borrows
+OOP/AoS benchmark baseline
+paged sparse arrays for very sparse high-index pools
+stronger formal nontrivial/noexcept component contracts
+generalized network entity bridge</code></pre>
+<p>None of those invalidate the current architecture. They are the next production layers.</p>
+<hr />
+<p><strong>Memory-budget exercise</strong></p>
+<p>Assume:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000.</mn>
+</math>
+<p>Components:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mo>=</mo>
+  <mn>48</mn>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>N</mi>
+    <mi>T</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo>=</mo>
+  <mn>12</mn>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>N</mi>
+    <mi>V</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>600</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mo>=</mo>
+  <mn>4</mn>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>N</mi>
+    <mi>H</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>100</mn>
+  <mo>,</mo>
+  <mn>000.</mn>
+</math>
+<p>Each flat sparse array spans one million entries:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mtext> MB approximately</mtext>
+  <mo>.</mo>
+</math>
+<p>Dense Entity handle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>Transform pool:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>48</mn>
+  <mi>M</mi>
+  <mo>+</mo>
+  <mn>8</mn>
+  <mi>M</mi>
+  <mo>+</mo>
+  <mn>4</mn>
+  <mi>M</mi>
+  <mo>=</mo>
+  <mn>60</mn>
+  <mi>M</mi>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>Velocity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>12</mn>
+  <mo stretchy="false">(</mo>
+  <mn>600</mn>
+  <mi>k</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mn>8</mn>
+  <mo stretchy="false">(</mo>
+  <mn>600</mn>
+  <mi>k</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mn>4</mn>
+  <mi>M</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <mn>7.2</mn>
+  <mi>M</mi>
+  <mo>+</mo>
+  <mn>4.8</mn>
+  <mi>M</mi>
+  <mo>+</mo>
+  <mn>4</mn>
+  <mi>M</mi>
+  <mo>=</mo>
+  <mn>16</mn>
+  <mi>M</mi>
+  <mo>.</mo>
+</math>
+<p>Health:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.4</mn>
+  <mi>M</mi>
+  <mo>+</mo>
+  <mn>0.8</mn>
+  <mi>M</mi>
+  <mo>+</mo>
+  <mn>4</mn>
+  <mi>M</mi>
+  <mo>=</mo>
+  <mn>5.2</mn>
+  <mi>M</mi>
+  <mo>.</mo>
+</math>
+<p>Total:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>81.2</mn>
+  <mi>M</mi>
+</math>
+<p>bytes before allocator overhead, capacities and entity metadata.</p>
+<p>Notice Health payload is only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.4</mn>
+  <mi>M</mi>
+</math>
+<p>but its sparse map is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mi>M</mi>
+  <mo>.</mo>
+</math>
+<p>That ratio immediately tells you which pool benefits most from paging.</p>
+<hr />
+<p><strong>One million entity performance thought experiment</strong></p>
+<p>Movement system requires:</p>
+<pre class="text"><code>Transform + Velocity.</code></pre>
+<p>Transform count:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mi>M</mi>
+  <mo>.</mo>
+</math>
+<p>Velocity count:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>600</mn>
+  <mi>k</mi>
+  <mo>.</mo>
+</math>
+<p>Sparse-set strategy scans:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>600</mn>
+  <mi>k</mi>
+</math>
+<p>velocity owners.</p>
+<p>Per candidate:</p>
+<pre class="text"><code>Velocity contiguous read
+Transform sparse lookup
+Transform dense lookup</code></pre>
+<p>Archetype strategy might scan several matching archetype chunks totaling exactly 600k entities with:</p>
+<pre class="text"><code>Transform[row]
+Velocity[row]</code></pre>
+<p>aligned.</p>
+<p>You should expect archetype iteration to have superior cross-component locality.</p>
+<p>But adding/removing Velocity on 200k entities could make archetype migration far more expensive.</p>
+<p>That is the actual trade-off to benchmark.</p>
+<hr />
+<p><strong>The “object-oriented” comparison must also include virtual behavior</strong></p>
+<p>A traditional design might be:</p>
+<div class="sourceCode" id="cb77"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> GameObject</span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> <span class="dt">void</span> Update<span class="op">(</span><span class="dt">float</span> dt<span class="op">)</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a>    Transform TransformData<span class="op">;</span></span>
+<span id="cb77-7"><a href="#cb77-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// many unrelated fields...</span></span>
+<span id="cb77-8"><a href="#cb77-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then update loop:</p>
+<div class="sourceCode" id="cb78"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="kw">auto</span><span class="op">&amp;</span> object <span class="op">:</span> objects<span class="op">)</span></span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>    object<span class="op">-&gt;</span>Update<span class="op">(</span>dt<span class="op">);</span></span>
+<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This can introduce:</p>
+<ul>
+<li>pointer chasing,</li>
+<li>polymorphic dispatch,</li>
+<li>heterogeneous object sizes,</li>
+<li>unrelated data loaded,</li>
+<li>unpredictable instruction flow.</li>
+</ul>
+<p>ECS system:</p>
+<pre class="text"><code>one operation
+over homogeneous data.</code></pre>
+<p>This is where data-oriented design often wins significantly.</p>
+<p>But benchmark both a realistic polymorphic baseline <strong>and</strong> a strong contiguous AoS baseline.</p>
+<p>Otherwise you learn nothing useful.</p>
+<hr />
+<p><strong>Data-oriented design is about traversal direction</strong></p>
+<p>Traditional object thinking:</p>
+<pre class="text"><code>for each object:
+    run all behavior touching many fields.</code></pre>
+<p>Data-oriented thinking:</p>
+<pre class="text"><code>for each operation:
+    traverse exactly the data needed.</code></pre>
+<p>That is the deeper distinction.</p>
+<p>ECS is one implementation pattern for this.</p>
+<p>Not the definition itself.</p>
+<hr />
+<p><strong>The most important lifetime equation of this phase</strong></p>
+<p>You should mentally separate four lifetimes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>persistent ID</mtext>
+    </mrow>
+  </msub>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>runtime entity</mtext>
+    </mrow>
+  </msub>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>component object</mtext>
+    </mrow>
+  </msub>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>component address</mtext>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>These are not equal.</p>
+<p>A persistent Scene ID may survive save/load.</p>
+<p>Runtime Entity survives until Destroy.</p>
+<p>A Transform object survives until component removal/entity destroy.</p>
+<p>Its <strong>address</strong> may survive only until vector relocation/swap-remove.</p>
+<p>Thus typically:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>address</mtext>
+    </mrow>
+  </msub>
+  <mo>≤</mo>
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>component</mtext>
+    </mrow>
+  </msub>
+  <mo>≤</mo>
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>runtime entity</mtext>
+    </mrow>
+  </msub>
+</math>
+<p>while persistent identity can span multiple runtime incarnations.</p>
+<p>This hierarchy explains a huge number of engine bugs.</p>
+<hr />
+<p><strong>Reconstruction challenge — nontrivial component lifetime</strong></p>
+<p>Given raw chunk memory and component T, you must be able to explain:</p>
+<pre class="text"><code>reserve aligned storage
+    ↓
+construct_at
+    ↓
+object becomes live
+    ↓
+systems use it
+    ↓
+move-construct during migration
+    ↓
+destroy old instance
+    ↓
+eventually destroy new instance</code></pre>
+<p>And explain why:</p>
+<div class="sourceCode" id="cb83"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>memcpy<span class="op">()</span></span></code></pre></div>
+<p>is not a universal substitute.</p>
+<p>Also explain why <code>std::vector&lt;T&gt;</code> currently saves Kairo from most raw-lifetime complexity.</p>
+<hr />
+<p><strong>Reconstruction challenge — persistence</strong></p>
+<p>Given runtime:</p>
+<pre class="text"><code>Entity {42,7}
+Target -&gt; Entity {91,4}</code></pre>
+<p>and persistent mapping:</p>
+<pre class="text"><code>{42,7} -&gt; SceneID 100
+{91,4} -&gt; SceneID 200</code></pre>
+<p>save:</p>
+<pre class="text"><code>Entity 100
+Target 200</code></pre>
+<p>Then on load:</p>
+<pre class="text"><code>SceneID100 -&gt; runtime {9,1}
+SceneID200 -&gt; runtime {10,1}</code></pre>
+<p>and reconstruct:</p>
+<pre class="text"><code>{9,1}.Target = {10,1}.</code></pre>
+<p>If you ever serialize <code>{42,7}</code> directly as durable identity, you have violated the architecture.</p>
+<hr />
+<p><strong>Reconstruction challenge — cloning</strong></p>
+<p>Original:</p>
+<pre class="text"><code>A
+├── B
+└── C
+
+B.Target = C</code></pre>
+<p>Clone:</p>
+<pre class="text"><code>A&#39;
+├── B&#39;
+└── C&#39;</code></pre>
+<p>Build mapping:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">→</mo>
+  <msup>
+    <mi>A</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo stretchy="false">→</mo>
+  <msup>
+    <mi>B</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>,</mo>
+  <mi>C</mi>
+  <mo stretchy="false">→</mo>
+  <msup>
+    <mi>C</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>B</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>.</mo>
+  <mi>T</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mo stretchy="false">[</mo>
+  <mi>C</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <msup>
+    <mi>C</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>An external reference D not in clone set usually remains D.</p>
+<p>This is exactly the algorithm you should be able to derive from scratch.</p>
+<hr />
+<p><strong>Reconstruction challenge — sparse-set correctness proof</strong></p>
+<p>Given dense index <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mo stretchy="false">[</mo>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>d</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>That is the invariant.</p>
+<p>Insert E:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mo stretchy="false">|</mo>
+</math>
+<p>append E/component,</p>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mo stretchy="false">[</mo>
+  <mi>E</mi>
+  <mo>.</mo>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Remove E at d.</p>
+<p>Let last entity be L at <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>l</mi>
+</math>.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo>≠</mo>
+  <mi>l</mi>
+  <mo>,</mo>
+</math>
+<p>move L to d and repair:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mo stretchy="false">[</mo>
+  <mi>L</mi>
+  <mo>.</mo>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mo stretchy="false">[</mo>
+  <mi>E</mi>
+  <mo>.</mo>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>M</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>The invariant holds.</p>
+<p>That is the entire mathematical core of sparse-set storage.</p>
+<hr />
+<p><strong>Reconstruction challenge — generation correctness proof</strong></p>
+<p>Entity handle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>g</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Registry validates iff:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo>∧</mo>
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>Destroy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo stretchy="false">←</mo>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo stretchy="false">←</mo>
+  <mi>g</mi>
+  <mo>+</mo>
+  <mn>1.</mn>
+</math>
+<p>Recreate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>E</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>g</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>For stale E:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo>≠</mo>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>s</mi>
+  <mi>A</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>E</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Kairo further retires max-generation slots, so generation wrap cannot revalidate ancient handles.</p>
+<p>That is your stale-handle proof.</p>
+<hr />
+<p><strong>Reconstruction challenge — API invalidation</strong></p>
+<p>Answer instantly:</p>
+<p>If:</p>
+<div class="sourceCode" id="cb91"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a>Transform<span class="op">&amp;</span> t <span class="op">=</span></span>
+<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a>    registry<span class="op">.</span>Get<span class="op">&lt;</span>Transform<span class="op">&gt;(</span>A<span class="op">);</span></span></code></pre></div>
+<p>and then:</p>
+<div class="sourceCode" id="cb92"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a>registry<span class="op">.</span>Emplace<span class="op">&lt;</span>Transform<span class="op">&gt;(</span>B<span class="op">);</span></span></code></pre></div>
+<p><code>t</code> may be invalidated by vector reallocation.</p>
+<p>If:</p>
+<div class="sourceCode" id="cb93"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a>registry<span class="op">.</span>Remove<span class="op">&lt;</span>Transform<span class="op">&gt;(</span>C<span class="op">);</span></span></code></pre></div>
+<p><code>t</code> may be invalidated if A’s transform was the last element moved into C’s removed slot, or if <code>t</code> was C itself.</p>
+<p>If:</p>
+<div class="sourceCode" id="cb94"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a>registry<span class="op">.</span>Emplace<span class="op">&lt;</span>Velocity<span class="op">&gt;(</span>B<span class="op">);</span></span></code></pre></div>
+<p>a Transform reference normally remains unaffected because Velocity owns separate storage.</p>
+<p>If:</p>
+<div class="sourceCode" id="cb95"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a>registry<span class="op">.</span>Destroy<span class="op">(</span>C<span class="op">);</span></span></code></pre></div>
+<p>several component pools may reorder.</p>
+<p>This should become automatic reasoning.</p>
+<hr />
+<p><strong>Exact coverage — M089 + M090</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Part</th>
+<th>Topic</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1475</td>
+<td>Component construction and destruction</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1476</td>
+<td>Non-trivial C++ component types</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1477</td>
+<td>Move-only components</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1478</td>
+<td>Component serialization</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1479</td>
+<td>Entity-reference serialization</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1480</td>
+<td>Versioned component schemas</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1481</td>
+<td>Reflection-driven component inspection</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1482</td>
+<td>Editor property panels over ECS data</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1483</td>
+<td>Undo/redo for component edits</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1484</td>
+<td>Prefab/template entity concepts</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1485</td>
+<td>Scene loading into an ECS</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1486</td>
+<td>Scene saving from an ECS</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1487</td>
+<td>Entity duplication</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1488</td>
+<td>Entity cloning with remapped references</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1489</td>
+<td>Network entity IDs vs local entity IDs</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1490</td>
+<td>Deterministic entity iteration</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1491</td>
+<td>ECS debugging views</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1492</td>
+<td>Component-pool statistics</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1493</td>
+<td>Detecting dangling external component pointers</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1494</td>
+<td>Million-entity memory budgeting</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1495</td>
+<td>Sparse-set complexity analysis</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1496</td>
+<td>Archetype migration complexity</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1497</td>
+<td>Ownership/invalidation API design</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1498</td>
+<td>Entity-generation reuse testing</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1499</td>
+<td>ECS vs object-oriented benchmarking</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1500</td>
+<td>Build and defend a complete generational sparse-set ECS</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<p>You now have the full logical chain of the ECS phase:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtable displaystyle="true" columnalign="right left" columnspacing="0em" rowspacing="3pt">
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>Entity index</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>Generation safety</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>Free-list reuse</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>Sparse/dense component storage</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>Multi-component joins</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>Structural mutation boundaries</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>Archetypes/chunks as an alternative</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>SoA/hot-cold layouts</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>relationships and hierarchy</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>render/physics/script/input bridges</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>events and system DAGs</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>parallel scheduling</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>real C++ object lifetime</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>serialization/reflection/editor semantics</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>persistent/runtime/network ID separation</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">↓</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mtext>diagnostics, memory budgets and benchmarks</mtext>
+                <mo>.</mo>
+              </mtd>
+            </mtr>
+          </mtable>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The largest architectural lesson is that <strong>an entity, a component object, the component’s memory address, the authored scene object, the physics body, the renderer object and the network object are all different identities with different lifetimes</strong>. Good engine architecture connects those identities with explicit bridges rather than pretending one integer or pointer can safely mean all of them.</p>
+<p><strong>Pass 13 moves into Phase 16, beginning at Part 1501</strong>: engine architecture as dependency management, foundation/runtime responsibilities, dependency inversion, cyclic-module avoidance, library boundaries, ABI/build decisions, module ownership, engine/application boundaries, and the larger asset/reflection/serialization/tooling architecture that turns all the subsystems we built so far into one maintainable engine.</p>
+</section>
+<section id="id_05-engine-i-ch018-give-the-renderer-a-clear-job-then-meet-the-graphics-api" class="level3">
+<h3>Give the renderer a clear job, then meet the graphics API</h3>
+</section>
+<section id="id_05-engine-i-ch018-explicit-backend-execution-closes-the-renderers-lifetime-contract" class="level3">
+<h3>Explicit backend execution closes the renderer’s lifetime contract</h3>
+<p>The frontend knows <em>what</em> image must be produced; the backend knows <em>when</em> resources may be read, written and retired. This full migrated Vulkan/Metal chapter connects queues, synchronization, descriptors, resource transitions, frame overlap and device state to the engine’s visible frame. Code fragments retain the original verification limits.</p>
+</section>
+<section id="id_05-engine-i-ch018-from-generated-gpu-work-to-safe-explicit-execution" class="level3">
+<h3>From generated GPU work to safe explicit execution</h3>
+<p>The following extension follows data from GPU work generation through explicit API execution, renderer planning, Gaussian images, lighting, and animated surfaces. Definitions and worked examples precede the retained detailed lessons. Source-project observations about Kairo, Maveb and Vulkax are supplied draft claims; they have not been independently certified against a current repository revision. API examples retained below include fragments and pseudocode. Their presence is not a claim that every snippet was compiled or every device path tested. <!-- CHAPTER-SOURCE-END --></p>
+<hr />
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch395.xhtml#id_05-engine-i-ch017-ecs-performance-through-cache-and-scheduling" class="wikilink">Previous chapter</a> · <a href="ch423.xhtml#id_05-engine-i-ch019-gpu-work-and-reusable-metal-frames" class="wikilink">Next chapter (GPU Architecture and Real-Time Rendering, Part 1, Ch. 10)</a></p>
+</section>
+</section>
+</body>
+</html>

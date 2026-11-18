@@ -8,7 +8,7 @@ The renderer snapshot provides concrete evidence about a particular implementati
 
 **Recall question:** Which claims describe this renderer’s state, and which are general pipeline rules?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 35300–37331; source-span SHA256 a78b04e715d3b81b09dbc46ac29d254d8f057bb0a3210dcc2c4a1812faa8adc1. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 35331–37362; source-span SHA256 a78b04e715d3b81b09dbc46ac29d254d8f057bb0a3210dcc2c4a1812faa8adc1. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### What Kairo specifically taught us in this pass

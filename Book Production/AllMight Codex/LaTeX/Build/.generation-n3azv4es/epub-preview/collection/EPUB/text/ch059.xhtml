@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch059.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-6854d0e2218e-floating-point-encoding-and-decoding" class="level2">
+<h2>Floating-point encoding and decoding</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C004 · <strong>Latest development:</strong> C004</p>
+<section id="appendix-6854d0e2218e-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Encoding chooses fields for a value; decoding classifies fields and reconstructs their meaning. 10.625 normalizes to 1.010101₂×2³, giving 412A0000. C1540000 decodes to −13.25.</p>
+</section>
+<section id="appendix-6854d0e2218e-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch030.xhtml#appendix-2fae058c82e1-exponent-bias" class="wikilink">Exponent bias</a> — Stored exponents must be translated to effective powers before reconstructing value or spacing.</li>
+<li><a href="ch077.xhtml#appendix-a24fd710cf67-significand-and-hidden-bit" class="wikilink">Significand and hidden bit</a> — Fraction weights and effective precision determine value and the smallest retained position.</li>
+<li><a href="ch062.xhtml#appendix-6b8075763724-hexadecimal" class="wikilink">Hexadecimal</a> — Four-bit groups make complete representation words independently inspectable.</li>
+</ul>
+</section>
+<section id="appendix-6854d0e2218e-used-by" class="level3">
+<h3>Used by</h3>
+<p>Connect later dependent concepts here as their lessons arrive.</p>
+</section>
+<section id="appendix-6854d0e2218e-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the concrete example in the definition and identify its validity assumptions.</p>
+<p><strong>Pending:</strong> Inexact conversion requires rounding; the exact worked examples do not explain every decimal conversion.</p>
+</section>
+<section id="appendix-6854d0e2218e-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">M004 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m004---parts-61-76" class="wikilink">Per-part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

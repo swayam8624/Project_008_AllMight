@@ -1,0 +1,38 @@
+\hypertarget{appendix-e31893dec985}{}\label{referencestart:appendix-e31893dec985}
+\section{Surface tangents normals and bitangents}\label{appendix-e31893dec985-surface-tangents-normals-and-bitangents}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\subsection{Definition and mechanism}\label{appendix-e31893dec985-definition-and-mechanism}
+
+Tangents span local surface movement; normals measure perpendicularity; bitangents supply the second tangent axis. Texture derivatives carry physical stretch. Cleaned TBN frames need normalization, degeneracy checks and a mirrored-UV sign convention.
+
+Panel texture derivatives are \((4,0,0)\) and \((0,3,0)\) before normalization. A collapsed UV determinant cannot uniquely determine texture directions.
+
+\subsection{Prerequisites}\label{appendix-e31893dec985-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-2391db8052b1]{Cross products and oriented area} --- Oriented area supplies face normals, frame signs and geometric determinants.
+\item
+  \hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization} --- Validated finite unit directions establish the preconditions for simplified geometry formulas.
+\item
+  \hyperref[appendix-505a502c372a]{Projection rejection and scalar components} --- Removing an unwanted component creates residuals, tangent axes and mirror decompositions.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-e31893dec985-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c39f1ed34271]{Orthonormal frames and Gram-Schmidt} --- Builds on this mechanism in the connected geometry story.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-e31893dec985-recall-and-next-depth}
+
+Derive the edge/UV equations and retain the handedness sign while orthogonalizing. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-e31893dec985-source-and-navigation}
+
+\href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch017-surface-movement-becomes-a-local-frame}{Teaching narrative (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 1)} · \hyperref[appendix-fd090d982a15-phase-6---parts-501-600]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-6---source-analysis-and-verification]{Evidence and limits} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

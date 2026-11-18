@@ -8,7 +8,7 @@ Engine capabilities become meaningful through the game’s rules, camera, action
 
 **Recall question:** Which action, feedback, and consequence make this rule legible, and what assumption about the player or culture remains untested?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 112055–113346; source-span SHA256 fead69b1ae18c7940f9d7c71c5b104eeba3eca1bece0b260277cbb277cef491d. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 113318–114609; source-span SHA256 9db792ac7a3b729d7a4f5dff158ac72944fbf672939cadf3ddb73c308359f3b7. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Turn a design document into a set of tools, not a single promise
@@ -753,7 +753,7 @@ Do not concatenate these two files into one translation unit: they intentionally
 
 For a single rigid-body contact, world coordinates contain more information than the normal collision rule needs. Millington constructs a **contact coordinate frame** whose origin is the contact point and whose first axis follows the contact normal; two perpendicular tangent axes complete an orthonormal basis. The point is not cosmetic. In that frame, the frictionless impulse has only a normal component, while friction lives in the tangent plane. A basis change lets the solver express the rule in coordinates aligned with the constraint, then transform the resulting impulse back to world space for application.
 
-The complete impulse calculation must include both translation and rotation. An impulse \(\mathbf{J}\) changes linear velocity by \(m^{-1}\mathbf{J}\). Applied at a world-space offset \(\mathbf{r}\) from the center of mass, it changes angular velocity through the world inverse-inertia tensor and the torque impulse \(\mathbf{r}\times\mathbf{J}\). Therefore the velocity of the actual contact point changes by a combination of the linear response and the angular response. A light object struck near its center and the same object struck near its edge can require different impulses to achieve the same normal separating-velocity target because the edge strike spends part of the response on rotation.
+The complete impulse calculation must include both translation and rotation. An impulse $\mathbf{J}$ changes linear velocity by $m^{-1}\mathbf{J}$. Applied at a world-space offset $\mathbf{r}$ from the center of mass, it changes angular velocity through the world inverse-inertia tensor and the torque impulse $\mathbf{r}\times\mathbf{J}$. Therefore the velocity of the actual contact point changes by a combination of the linear response and the angular response. A light object struck near its center and the same object struck near its edge can require different impulses to achieve the same normal separating-velocity target because the edge strike spends part of the response on rotation.
 
 A useful way to reconstruct Millington’s six-stage logic is: build and validate the contact basis; compute how a unit impulse changes each body’s contact-point velocity including angular response; combine the two bodies into an effective contact response; compute the desired change in relative contact velocity from current closing velocity, restitution, and resting-contact policy; solve for the contact-space impulse, adding bounded tangential components when friction is enabled; then transform the impulse to world space and apply equal-and-opposite linear/angular changes to the participating dynamic bodies.
 

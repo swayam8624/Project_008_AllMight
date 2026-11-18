@@ -8,7 +8,7 @@ Transparency changes the order in which fragments contribute to the framebuffer.
 
 **Recall question:** Why can ordinary depth writes produce incorrect results for translucent surfaces?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 31770–35299; source-span SHA256 cca08a61b824c23d34e7efe82368468cffe8228d30cca6795b826c341661cb77. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 31801–35330; source-span SHA256 9768468ffe0591ef778fa7677b9d06d203f9efc509fdfe16bf00e469a4a3139e. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Blending, transparency, alpha testing, overdraw, early-Z, queries, Hi-Z
@@ -1456,9 +1456,9 @@ $$
 
 not:
 
-\[
+$$
 \text{Can I remove every `if`?}
-\]
+$$
 
 This becomes particularly important with material megashaders.
 

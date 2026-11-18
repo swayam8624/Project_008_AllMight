@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch220.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-877738f6f4d2-batch-009-a-coverage-map" class="level2">
+<h2>Batch 009 A coverage map</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>A-group source</th>
+<th>Teaching coverage in additions-a.md</th>
+<th>Existing live-book headings that fit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-paLdjChPxo</code> Introducing the NEW 3D Game Engine Series</td>
+<td>Review discipline, diagrams/tests/docs, AI-generated code comprehension, and limits of creator plans.</td>
+<td><code>#### Source-to-volume map</code>; <code>#### Documentation is part of the build and release path</code>; <code>#### Separate implementation evidence from design discussion</code></td>
+</tr>
+<tr>
+<td><code>1W1FtRaY69Y</code> Hazel code review</td>
+<td>Layering, render queue boundaries, scene update/physics separation, asset pipeline and example project scale.</td>
+<td><code>#### Keep engine lifecycle separate from game-specific frame work</code>; <code>### Keep example behavior in the example application</code>; <code>### Choose a module boundary that matches how the game is developed</code>; <code>#### Source-to-volume map</code></td>
+</tr>
+<tr>
+<td><code>2njnCUau3zk</code> Hazel 2D dev vlog</td>
+<td>Quad batching, per-frame allocation, profiling/static analysis and the limits of single-project timing.</td>
+<td><code>### Batch the data that actually travels together</code>; <code>### Measure the renderer, then choose a batch boundary</code>; <code>#### A capacity target needs a later measurement</code></td>
+</tr>
+<tr>
+<td><code>32PRB7Tebbo</code> Sparky engine tour</td>
+<td>Build/configuration workflow, exports, naming/API maturity, platform support, and implementation boundaries.</td>
+<td><code>### Make build and source organization part of maintenance</code>; <code>#### Keep declarations, ownership, and implementation visible</code>; <code>### Put a rendering boundary between games and graphics APIs</code></td>
+</tr>
+<tr>
+<td><code>ddfMzq0CNTw</code> Renderer performance review</td>
+<td>Frame timing, profiling, eliminating unused passes, and benchmark scope.</td>
+<td><code>### Diagnose a frame as a pipeline</code>; <code>#### Use controlled simplification and hardware counters to find a GPU bottleneck</code>; <code>### Measure the renderer, then choose a batch boundary</code></td>
+</tr>
+<tr>
+<td><code>lAXOmE481j4</code> Multiplayer engine review</td>
+<td>Static library boundary, headless server, remote latency, main-thread blocking, message semantics and bounded polling.</td>
+<td><code>### Build boundaries: library choice, runtime assumptions, and warning scope</code>; <code>### Packaging changes the host, not the engine’s obligations</code>; <code>#### Main-thread work and threads</code>; <code>#### Separate application events from game messages</code>; <code>### Time is part of the design</code></td>
+</tr>
+<tr>
+<td><code>lwDdMYzUnxs</code> Series format discussion</td>
+<td>Distinguish process archive, concise conceptual teaching, and line-by-line tutorial; keep plans as plans.</td>
+<td><code>## Know which story each source can tell</code>; <code>#### Documentation is part of the build and release path</code></td>
+</tr>
+<tr>
+<td><code>nyZnRxvSJrY</code> UE5 reaction</td>
+<td>Version-bound questions about streaming worlds, geometry detail, dynamic animation, and audio.</td>
+<td><code>#### Treat screenshots and trailers as observations, not implementation proofs</code>; <code>### Focus the prototype on the risky question</code>; <code>#### Shared systems should pay for themselves</code></td>
+</tr>
+<tr>
+<td><code>sIAXLH7ZqCw</code> Hazel-inspired cube review</td>
+<td>Vertex attributes/normals, indices, primitive scale, graphics abstraction, and code review scope.</td>
+<td><code>#### A shared position is not always a shared vertex</code>; <code>#### Camera and coordinate spaces</code>; <code>#### API abstraction has a price</code>; <code>### Put a rendering boundary between games and graphics APIs</code></td>
+</tr>
+<tr>
+<td><code>yGggmfDGGv0</code> Sparky multiple rendering APIs</td>
+<td>Backend interfaces/factories, resource and shader differences, incomplete backend maturity.</td>
+<td><code>### Build a renderer interface before investing in one graphics API</code>; <code>#### Add a second graphics API only after shared assumptions are ready</code>; <code>### Separate shader interface from backend implementation</code></td>
+</tr>
+<tr>
+<td><code>zqmgcQd6ayc</code> Sparky PBR devlog</td>
+<td>Layer lifecycle, environment-map filtering, material maps, material instances, and explicit unfinished shading.</td>
+<td><code>### Layers give features a place to live</code>; <code>### Time is part of the design</code>; <code>#### Load six sky directions into one cubemap resource</code>; <code>#### Let the engine prepare HDR environments for image-based lighting</code>; <code>#### Materials combine surface values with texture references</code>; <code>### Pack scalar material maps only under an explicit channel contract</code>; <code>### Treat a material file as a versioned contract between authoring data and shader inputs</code></td>
+</tr>
+</tbody>
+</table>
+<p>All destinations above are existing headings in <code>Continuous Notes/Game Engine - From First Frame to Living Worlds.md</code>. The source materials are historical, narrated, and at times incomplete; the synthesis labels plans and creator/reviewer observations accordingly. The Unreal reaction and creator strategy discussions are contextual observations rather than engine implementation evidence.</p>
+</section>
+</body>
+</html>

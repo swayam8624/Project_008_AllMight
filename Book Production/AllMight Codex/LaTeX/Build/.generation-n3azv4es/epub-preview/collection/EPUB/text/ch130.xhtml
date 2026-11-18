@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch130.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-17c93c4c2f19-static-storage-and-initialization" class="level2">
+<h2>Static storage and initialization</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C007</p>
+<section id="appendix-17c93c4c2f19-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>constinit requires static initialization without making an object const. Dynamic initialization across translation units requires ordering care; explicit owners or function-local statics can provide a clear dependency path. Local-static first initialization is synchronized since C++11, but later calls/mutations still require normal concurrency rules. Initialization and shutdown dependencies are distinct.</p>
+<p>Namespace-scope/static objects have program-duration storage. Initialized writable objects commonly use data-like regions; zero-initialized objects use BSS-like zero-fill, avoiding literal zeros in the executable. Some objects require runtime dynamic initialization; cross-unit order is a distinct problem from storage allocation.</p>
+</section>
+<section id="appendix-17c93c4c2f19-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch127.xhtml#appendix-0b104bcba06b-storage-duration-and-object-lifetime" class="wikilink">Storage duration and object lifetime</a> — Access requires an object and backing storage that are still valid.</li>
+</ul>
+</section>
+<section id="appendix-17c93c4c2f19-used-by" class="level3">
+<h3>Used by</h3>
+<p>Update downstream uses when later chunks build on this concept.</p>
+</section>
+<section id="appendix-17c93c4c2f19-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain a large zero-initialized global without equally large file bytes.</p>
+<p><strong>Pending:</strong> Full lifetime replacement, ownership/concurrency policies and cross-target ABI experiments; the opening examples do not establish those later guarantees.</p>
+</section>
+<section id="appendix-17c93c4c2f19-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a> · <a href="ch124.xhtml#id_01-foundations-i-ch002-a-name-does-not-decide-how-long-storage-lasts" class="wikilink">C007 development</a></p>
+</section>
+</section>
+</body>
+</html>

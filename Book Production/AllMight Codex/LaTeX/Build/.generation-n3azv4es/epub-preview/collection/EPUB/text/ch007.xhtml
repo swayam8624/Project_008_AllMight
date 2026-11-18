@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch007.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-098192f8d46d-merkle-trees-and-authenticated-structure" class="level2">
+<h2>Merkle trees and authenticated structure</h2>
+<p>A Merkle tree hashes data into leaves and repeatedly hashes child digests into parent digests until one root remains. The root commits to the entire ordered leaf set under the collision-resistance assumptions of the hash and the tree encoding.</p>
+<p>A safe design domain-separates leaves from internal nodes, for example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>H</mi>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mi>x</mi>
+  <mn>00</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <msub>
+    <mi>a</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo>=</mo>
+  <mi>H</mi>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mi>x</mi>
+  <mn>01</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>t</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Without an unambiguous encoding, different logical tree structures can accidentally serialize to the same byte concatenation before hashing.</p>
+<section id="appendix-098192f8d46d-inclusion-proof" class="level3">
+<h3>Inclusion proof</h3>
+<p>To prove that one leaf belongs to a tree, provide the sibling hash at each level and the left/right ordering bits. The verifier starts from the leaf hash and reconstructs the root. Proof size is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>log</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math> for a balanced binary tree.</p>
+<p>The trusted root must come from a trusted channel or authenticated record. A Merkle proof checked against an attacker-provided root proves nothing about authenticity.</p>
+</section>
+<section id="appendix-098192f8d46d-odd-leaf-policy" class="level3">
+<h3>Odd leaf policy</h3>
+<p>When a level has an odd number of nodes, the format must specify what happens: duplicate the last node, promote it, or use another encoding. Different policies create different roots.</p>
+<p>tools/labs/crypto_primitives_lab.cpp uses an explicit domain-separated construction and duplicates the last digest on odd levels. The test proves determinism and that changing one sample leaf changes the root in the exercised case.</p>
+<p>Related: <a href="ch169.xhtml#appendix-ed338677de0a-checksums-crcs-and-hashes" class="wikilink">Checksums CRCs and hashes (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Checksums CRCs and hashes)</a>, <a href="ch164.xhtml#appendix-cbe594d1ab0a-integrity-and-authenticity" class="wikilink">Integrity and authenticity (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Integrity and authenticity)</a>.</p>
+</section>
+</section>
+</body>
+</html>

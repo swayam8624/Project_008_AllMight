@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch514.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-cac01ebeeb11-axial-depth-and-euclidean-range" class="level2">
+<h2>Axial depth and Euclidean range</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 11 · <strong>Latest development:</strong> Phase 11</p>
+<section id="appendix-cac01ebeeb11-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Axial depth measures distance along the camera’s forward axis; Euclidean range measures distance from the camera centre along the viewing ray. With a right-handed view frame looking along <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mi>Z</mi>
+</math>, positive axial depth is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mi>z</mi>
+</math>, while range is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+  <mo>=</mo>
+  <msqrt>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>+</mo>
+    <msup>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>+</mo>
+    <msup>
+      <mi>z</mi>
+      <mn>2</mn>
+    </msup>
+  </msqrt>
+</math>. They agree only on the optical axis. For a unit ray direction <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math> with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>q</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>&lt;</mo>
+  <mn>0</mn>
+</math>, a range measurement converts to axial depth as <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mi>r</mi>
+  <msub>
+    <mi>q</mi>
+    <mi>z</mi>
+  </msub>
+</math>. A range sensor and a perspective depth buffer may therefore encode different quantities. Applying a depth-buffer formula directly to a range image distorts reconstructed geometry away from the image centre. At view point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>12</mn>
+  <mo stretchy="false">)</mo>
+</math>, axial depth is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>12</mn>
+</math> while range is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>13</mn>
+</math>, a visible distinction off-axis.</p>
+</section>
+<section id="appendix-cac01ebeeb11-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch328.xhtml#appendix-1c07d64f5e70-camera-view-and-clip-space-pipeline" class="wikilink">Camera view and clip-space pipeline (Light Transport and Image Synthesis, Part 1, Reference notes: Camera view and clip-space pipeline)</a></li>
+<li><a href="ch535.xhtml#appendix-f744e41b95b4-unit-directions-and-safe-normalization" class="wikilink">Unit directions and safe normalization</a></li>
+</ul>
+</section>
+<section id="appendix-cac01ebeeb11-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch458.xhtml#appendix-1bc40b08db4a-hardware-depth-buffer-linearization" class="wikilink">Hardware depth-buffer linearization</a></li>
+<li><a href="ch466.xhtml#appendix-2cbf2968e866-position-reconstruction-from-depth" class="wikilink">Position reconstruction from depth</a></li>
+<li><a href="ch446.xhtml#appendix-0976e86e5b9f-off-axis-stereo-projection-and-disparity" class="wikilink">Off-axis stereo projection and disparity</a></li>
+</ul>
+</section>
+<section id="appendix-cac01ebeeb11-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch288.xhtml#id_02-foundations-ii-ch035-recover-geometry-from-depth-and-construct-screen-space-rays" class="wikilink">Recover geometry from depth and construct screen-space rays (Geometry, Cameras, and Image Formation, Part 1, Ch. 4)</a></li>
+</ul>
+</section>
+<section id="appendix-cac01ebeeb11-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 1078.</p>
+</section>
+<section id="appendix-cac01ebeeb11-future-keywords" class="level3">
+<h3>Future keywords</h3>
+<p>range image, optical axis, axial distance</p>
+</section>
+</section>
+</body>
+</html>

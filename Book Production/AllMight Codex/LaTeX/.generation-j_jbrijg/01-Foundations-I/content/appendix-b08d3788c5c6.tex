@@ -1,0 +1,31 @@
+\hypertarget{appendix-b08d3788c5c6}{}
+\section*{Return values and copy elision}
+\chapter{Return values and copy elision}\label{appendix-b08d3788c5c6-return-values-and-copy-elision}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C009 · \textbf{Latest development:} C009
+
+\section{Definition and mechanism}\label{appendix-b08d3788c5c6-definition-and-mechanism}
+
+Appropriate same-type prvalues directly initialize result objects since C++17. NRVO for eligible named locals is optional in C++23 and needs a usable fallback. Move-eligible local/parameter return expressions have special xvalue treatment; return std::move(local) loses the ordinary NRVO form.
+
+\section{Prerequisites}\label{appendix-b08d3788c5c6-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1121b30eaeb0]{Value categories and materialization} --- The return expression category distinguishes result construction from a bound path or move candidate.
+\item
+  \hyperref[appendix-a82f9c438857]{Object construction and storage reuse} --- A new destination requires a valid lifetime, independently of available bytes.
+\end{itemize}
+
+\section{Used by}\label{appendix-b08d3788c5c6-used-by}
+
+Later sources will extend this node when their guarantees are developed.
+
+\section{Recall and next depth}\label{appendix-b08d3788c5c6-recall-and-next-depth}
+
+Return an immovable type directly, then explain why a named-local return fails. Pending: overlapping-subobject cases and detailed return deduction. Written coverage does not demonstrate personal mastery.
+
+\section{Source and navigation}\label{appendix-b08d3788c5c6-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Return\%20a\%20result\%20without\%20handing\%20out\%20a\%20lifetime\%20problem}{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15-m009---parts-127-147]{Exact coverage} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

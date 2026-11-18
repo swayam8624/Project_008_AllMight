@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch157.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-a7c50686d81f-allocator-fragmentation" class="level2">
+<h2>Allocator fragmentation</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-a7c50686d81f-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Internal fragmentation is unused space inside an allocated block, e.g. 37 bytes requested in a 48-byte class leaves 11. External fragmentation is free space split into holes incapable of satisfying one contiguous request, e.g. three separated 20-byte holes cannot supply one 60-byte block. Metadata overhead is an additional cost.</p>
+</section>
+<section id="appendix-a7c50686d81f-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch163.xhtml#appendix-c3480f7d9ff3-dynamic-allocation-and-heap" class="wikilink">Dynamic allocation and heap</a> — Allocated buffers/blocks supply the storage whose ownership and fragmentation matter.</li>
+</ul>
+</section>
+<section id="appendix-a7c50686d81f-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch166.xhtml#appendix-ce688d1acdab-huge-pages-and-tlb-reach" class="wikilink">Huge pages and TLB reach</a> — uses this mechanism as stated in its prerequisites.</li>
+</ul>
+</section>
+<section id="appendix-a7c50686d81f-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Distinguish slack, metadata, and separated holes.</p>
+<p><strong>Pending:</strong> Coalescing, size classes, virtual commitment and measured overhead.</p>
+</section>
+<section id="appendix-a7c50686d81f-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-a7c50686d81f-reconstruction-depth" class="level3">
+<h3>Reconstruction depth</h3>
+<p>Fragmentation is wasted allocation capacity caused by request shapes and allocator policy. Internal fragmentation is unused space inside an allocated block because of alignment, size classes or rounding. External fragmentation is free memory split into pieces that cannot satisfy a larger request even when total free bytes are sufficient.</p>
+<p>A game or graphics workload amplifies the issue because lifetimes are structured: per-frame temporaries, long-lived assets, streaming resources and transient staging data behave differently. Using one general heap for all of them can mix lifetimes and make reuse less predictable.</p>
+<p>A useful experiment records requested bytes, committed bytes, peak live bytes, largest free span, allocation count and reuse over time. Frame arenas eliminate external fragmentation inside a frame by resetting wholesale; pools trade generality for fixed-size reuse; free lists require split and coalesce policy.</p>
+<p>Fragmentation is not measured by “the process uses a lot of memory” alone. Residency, allocator metadata, page commitment and application-owned slack must be separated before choosing a remedy.</p>
+</section>
+</section>
+</body>
+</html>

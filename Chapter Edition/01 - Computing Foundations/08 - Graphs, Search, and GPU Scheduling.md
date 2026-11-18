@@ -8,7 +8,7 @@ Engine relationships can be represented as graphs, but edge meaning determines t
 
 **Recall question:** Which property of the edges makes breadth-first search or Dijkstra’s algorithm valid for a particular path problem?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 10594–12837; source-span SHA256 51d3a3a77518ed51cea9635faa799be90d1b2eb3f6e74838c668e8f5784265ea. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 10775–13018; source-span SHA256 e85ba160079230ab8e2844abe43aff02341b2d5ad9a3c6e005943c9ef780a944. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## From an asset map to a correct navigable world — Phase 5, M028–M030, Parts 446–500
@@ -51,9 +51,9 @@ Now assign nonnegative weights to the same navigation graph: 0→1 costs 2, 0→
 
 A relaxation computes
 
-\[
+$$
 d(v)\leftarrow\min(d(v),\,d(u)+w(u,v)).
-\]
+$$
 
 The sum must be representable. An integer implementation should guard overflow; a floating implementation should specify how NaNs, infinities and negative values are handled. The lab uses a bounded integer infinity sentinel, checks positive-distance addition before performing it, rejects negative edge weights and ignores stale heap entries. With a binary heap and adjacency lists, an implementation that inserts an improved entry rather than decreasing an existing heap key typically has a bound on the order of O((V+E)log(V+E)) in a straightforward analysis, with variations from data structure and representation. Stating simply O(E log V) without identifying the queue and update strategy can hide assumptions.
 
@@ -61,10 +61,10 @@ The sum must be representable. An integer implementation should guard overflow; 
 
 **Floyd–Warshall** computes all-pairs shortest paths by gradually allowing more intermediate vertices. Let D_k(i,j) be the shortest route from i to j whose intermediate vertices are drawn from the first k candidate vertices. The recurrence is
 
-\[
+$$
 D_k(i,j)=\min\!\left(D_{k-1}(i,j),
 D_{k-1}(i,k)+D_{k-1}(k,j)\right).
-\]
+$$
 
 The algorithm follows from whether an optimal path uses intermediate k or not. A direct implementation costs O(V³) time and O(V²) storage, making it attractive as a small-graph *reference oracle* even when it is too expensive for a massive world graph. Negative cycles require explicit detection and interpretation. The Phase 5 lab uses bounded nonnegative generated weights and compares each Dijkstra row against Floyd–Warshall on 48 deterministic random six-vertex graphs. This is valuable differential testing, not proof for arbitrary graph size, negative weights or overflow.
 
@@ -72,9 +72,9 @@ The algorithm follows from whether an optimal path uses intermediate k or not. A
 
 In a large navigation world, we often want the shortest path to one target rather than the distances to all vertices. **A*** maintains the actual best-known cost g(n) from the start and a heuristic estimate h(n) of the remaining cost to the goal, ordering exploration by
 
-\[
+$$
 f(n)=g(n)+h(n).
-\]
+$$
 
 An **admissible heuristic** never overestimates the true remaining optimal cost h*(n), so h(n) ≤ h*(n). A **consistent heuristic** satisfies h(u) ≤ w(u,v)+h(v) for each edge and h(goal)=0, under the conventional nonnegative route-cost model. Consistency is a triangle inequality on heuristic potential and implies that f values behave nondecreasingly along improvements in a way that permits particularly simple closed-set handling. Admissibility and consistency are related but not synonymous.
 
@@ -120,10 +120,10 @@ One of the most important bridges from CPU algorithms to GPU execution is the **
 
 Formally,
 
-\[
+$$
 o_i=\sum_{j<i}c_j,\qquad
 \mathrm{total}=\sum_{j=0}^{n-1}c_j.
-\]
+$$
 
 An **inclusive scan** instead outputs the sum through the current element, e.g. [3,3,7,9]. The two definitions differ by an index shift and identity element. Confusing them can make GPU scatter writes overlap or start one element too far into a buffer. The lab tests both the expected exclusive offsets and total and rejects unsigned-sum overflow before it can wrap. An empty input has total zero and no offsets.
 

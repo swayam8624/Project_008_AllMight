@@ -1,0 +1,44 @@
+\hypertarget{appendix-2ed044358b82}{}
+\section*{Arithmetic policies}
+\section{Arithmetic policies}\label{appendix-2ed044358b82-arithmetic-policies}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\subsection{Definition and mechanism}\label{appendix-2ed044358b82-definition-and-mechanism}
+
+Modular, checked, widened, saturated, and arbitrary-precision arithmetic define different outcomes when a mathematical result does not fit.
+
+A policy states the intended response to an unrepresentable answer: wrap modulo a base, report checked failure, widen storage, clamp to an endpoint, or grow arbitrary precision. Choose by subsystem meaning. Color-byte output and hash arithmetic need different policies.
+
+\subsection{Prerequisites}\label{appendix-2ed044358b82-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c99977d88b33]{Unsigned modular arithmetic} --- Modulo m retains the remainder class after division by m.
+\item
+  \hyperref[appendix-4fbc03d20829]{Two\textquotesingle s complement} --- For raw unsigned value u in N bits, signed decoding is u when u\textless2ᴺ⁻¹, otherwise u−2ᴺ.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-2ed044358b82-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-3333db47830f]{Fixed-point rescaling} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-1e45d0613db3]{Capped weighted updates} --- Capping changes which influence is retained rather than only the representation.
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-fdc7879e8bf2}{Quantization and compressed weights (04-Visual-Computing-II, appendix-fdc7879e8bf2)} --- uses arithmetic policies as part of its representation or reasoning.
+\item
+  \hyperref[appendix-3999c6209649]{Saturating arithmetic} --- uses arithmetic policies as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-2ed044358b82-recall-and-next-depth}
+
+Explain arithmetic policies without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} choosing and documenting policies per subsystem.
+
+\subsection{Source and navigation}\label{appendix-2ed044358b82-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

@@ -1,0 +1,33 @@
+\hypertarget{appendix-c746afaa47d1}{}
+\section*{Noexcept and transfer selection}
+\section{Noexcept and transfer selection}\label{noexcept-and-transfer-selection}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C009 · \textbf{Latest development:} C009
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+noexcept is an escaping-exception contract; violation terminates. move\_if\_noexcept selects const T\& when a throwing move and usable copy make rollback safer, otherwise T\&\&. It casts rather than transfers, and non-copyable throwing moves may weaken operation-specific guarantees.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5636651017c2]{Move operations and moved-from states} --- Traits, failure policy and relocation must distinguish source survival from source destruction.
+\item
+  \hyperref[appendix-bea6beb5350f]{Assignment and exception guarantees} --- A type's transfer declarations must support its chosen failure transaction.
+\item
+  \hyperref[appendix-42e02a12c694]{Special member generation and traits} --- The actual usable construction expression determines trait-controlled transfer selection.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+Later sources will extend this node when their guarantees are developed.
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Derive both tested helper result types and the rollback limitation. Pending: exact per-container exceptional effects and allocator propagation. Written coverage does not demonstrate personal mastery.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Failure\%20guarantees\%20shape\%20the\%20transfer\%20algorithm}{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15]{Exact coverage} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

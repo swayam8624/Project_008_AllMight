@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch487.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-67c87a3d9e94-sparse-and-iterative-solvers" class="level2">
+<h2>Sparse and iterative solvers</h2>
+<p>Sparse storage avoids zeros when structure and scale justify its index overhead. Iterative methods replace a dense factorization with matrix-vector products and a convergence process. Conjugate gradient requires symmetric positive definiteness; preconditioning, residual criteria, and a maximum iteration count belong in the contract.</p>
+<p><strong>Use it when:</strong> large structured systems make dense storage or factorization impractical.</p>
+<p><strong>Developed in Phase 8:</strong> Sparse storage pays off when zeros and dimensions outweigh indexing overhead, while direct factorization can create fill that destroys sparsity. Iterative methods instead use matrix-vector products and stopping tests; conjugate gradient requires an SPD operator, and preconditioning, a maximum iteration count, and a true residual make convergence reviewable. <a href="ch292.xhtml#id_02-foundations-ii-ch038-sparse-storage-changes-the-cost-model" class="wikilink">storage and fill (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a> · <a href="ch292.xhtml#id_02-foundations-ii-ch038-direct-and-iterative-solvers-suit-different-workloads" class="wikilink">direct versus iterative solving (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a></p>
+<section id="appendix-67c87a3d9e94-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<p><a href="ch493.xhtml#appendix-8572a4a060c1-linear-systems-and-fundamental-subspaces" class="wikilink">Linear systems and fundamental subspaces</a>, <a href="ch480.xhtml#appendix-50d2ea3c9b26-symmetric-positive-definite-matrices-and-cholesky" class="wikilink">Symmetric positive-definite matrices and Cholesky</a>, <a href="ch384.xhtml#appendix-f8657bac66e5-matrix-norms-and-numerical-error" class="wikilink">Matrix norms and numerical error (Spatial Worlds, Engine State, and Simulation, Part 1, Reference notes: Matrix norms and numerical error)</a>.</p>
+</section>
+<section id="appendix-67c87a3d9e94-used-by" class="level3">
+<h3>Used by</h3>
+<p><a href="ch461.xhtml#appendix-221a483bec2d-matrix-factorization-choices" class="wikilink">Matrix factorization choices</a>, <a href="ch260.xhtml#appendix-ffdc1d4e5350-matrix-storage-indexing-and-strides" class="wikilink">Matrix storage indexing and strides (Mathematics for Visual Computing, Part 1, Reference notes: Matrix storage indexing and strides)</a>.</p>
+<p><strong>Teaching path:</strong> <a href="ch292.xhtml#id_02-foundations-ii-ch038-sparse-problems-change-the-economics-of-solving" class="wikilink">sparse and iterative methods (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a>.</p>
+</section>
+</section>
+</body>
+</html>

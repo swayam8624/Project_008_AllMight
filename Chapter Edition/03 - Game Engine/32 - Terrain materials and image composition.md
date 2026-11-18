@@ -8,7 +8,7 @@ A terrain tile must combine a compact set of materials while the renderer preser
 
 **Recall question:** Do the blend weights sum to the intended value, and what image test reveals a missing texture or incorrect color-space conversion?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 78477–79213; source-span SHA256 2000f6bc683f156d903b93519bb5fc0f2fa169c761045d770090c25156ed9940. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 79406–80142; source-span SHA256 2000f6bc683f156d903b93519bb5fc0f2fa169c761045d770090c25156ed9940. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Blend a small, explicit set of terrain materials

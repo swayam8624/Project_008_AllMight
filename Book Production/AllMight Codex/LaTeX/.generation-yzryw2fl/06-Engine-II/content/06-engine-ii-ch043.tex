@@ -1,0 +1,3302 @@
+\hypertarget{06-engine-ii-ch043}{}
+\chapter{43 --- Compiling renderer intent into backend work}\label{06-engine-ii-ch043-compiling-renderer-intent-into-backend-work}
+
+\hyperref[volume-reading-map]{Reading map} · \hyperref[06-engine-ii-ch042-from-cartridge-bytes-to-a-reproducible-machine]{Previous chapter} · \hyperref[06-engine-ii-ch044-cross-backend-conversion-and-agreement]{Next chapter}
+
+A renderer should express what a frame needs before translating it into API-specific commands. This chapter makes the compilation boundary explicit so ordering, resource state, and backend execution can be checked separately.
+
+\textbf{By the end:} Map a render request to backend work while preserving resource dependencies, barriers, and lifetime ownership.
+
+\textbf{Recall question:} What logical dependency does this command represent, and where is it enforced in the selected backend?
+
+\section{Compile renderer intent into backend work}\label{06-engine-ii-ch043-compile-renderer-intent-into-backend-work}
+
+\subsection{+ M144}\label{06-engine-ii-ch043-m144}
+
+This pass closes \textbf{Phase 24}.
+
+The curriculum boundary is exact: \textbf{M142 owns 2351--2360}, covering multi-backend motivation, neutral handles/resource descriptions, capability contracts, escape hatches and the failure of lowest-common-denominator abstractions; \textbf{M143 owns 2361--2384}, covering the complete render-graph dependency/lifetime/state model; and \textbf{M144 owns 2385--2400}, covering conversion boundaries, portable scene/material/mesh contracts, shader/layout strategy, Metal↔Vulkan adaptation, reference/backend agreement testing, and native-strength multi-backend design.
+
+There are two ideas that dominate everything in this pass:
+
+\[
+\boxed{
+\text{Share rendering intent, not native API mechanics}
+}
+\]
+
+and
+
+\[
+\boxed{
+\text{A render graph describes dependencies;
+the backend chooses how those dependencies become GPU commands.}
+}
+\]
+
+If you remember those two statements, the entire architecture reconstructs itself.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{MULTI-BACKEND RENDERER ARCHITECTURE}\label{06-engine-ii-ch043-multi-backend-renderer-architecture}
+
+\textbf{Why have multiple rendering backends?}
+
+Suppose your engine supports:
+
+\[
+Metal,\ Vulkan,\ D3D12,\ OpenGL.
+\]
+
+The naive reaction is:
+
+\begin{quote}
+Write rendering four times.
+\end{quote}
+
+That is not what we want.
+
+The second naive reaction is:
+
+\begin{quote}
+Build one fake API that looks vaguely like all four.
+\end{quote}
+
+That is often even worse.
+
+The correct goal is:
+
+\[
+\boxed{
+\text{one engine rendering model}
+}
+\]
+
+with:
+
+\[
+\boxed{
+\text{multiple native execution implementations}.
+}
+\]
+
+The engine should agree on things such as:
+
+\[
+\text{mesh},
+\]
+
+\[
+\text{material},
+\]
+
+\[
+\text{light},
+\]
+
+\[
+\text{render pass intent},
+\]
+
+\[
+\text{resource usage},
+\]
+
+\[
+\text{camera}.
+\]
+
+It should not pretend these are universal:
+
+\begin{verbatim}
+VkDescriptorSet
+MTLArgumentBuffer
+ID3D12DescriptorHeap
+OpenGL texture unit
+\end{verbatim}
+
+They are implementation mechanisms.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The three-layer renderer}
+
+A good architecture is:
+
+\begin{verbatim}
+Engine / Scene
+      ↓
+Renderer-neutral intent
+      ↓
+Backend implementation
+      ↓
+Metal / Vulkan / D3D12 / ...
+\end{verbatim}
+
+For example:
+
+\begin{verbatim}
+MeshDraw draw;
+draw.Mesh = meshHandle;
+draw.Model = worldTransform;
+draw.Material = material;
+\end{verbatim}
+
+is renderer intent.
+
+This:
+
+\begin{verbatim}
+vkCmdBindDescriptorSets(...);
+\end{verbatim}
+
+is Vulkan execution.
+
+This:
+
+\begin{verbatim}
+encoder->setFragmentTexture(...);
+\end{verbatim}
+
+is Metal execution.
+
+Do not mix the layers.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo is already moving in the right direction}
+
+Kairo's public renderer API exposes concepts such as:
+
+\begin{verbatim}
+Mesh
+PBRMaterial
+RenderScene
+RenderLight
+MeshHandle
+TextureHandle
+ViewportCapture
+\end{verbatim}
+
+rather than exposing:
+
+\begin{verbatim}
+VkBuffer
+VkImage
+MTLBuffer
+MTLTexture
+\end{verbatim}
+
+to ordinary scene code.
+
+\texttt{RendererRuntime} then stores a variant of concrete backend runtimes:
+
+\begin{verbatim}
+std::variant<
+    std::unique_ptr<VulkanRendererRuntime>,
+    std::unique_ptr<OpenGLRendererRuntime>,
+    std::unique_ptr<MetalRendererRuntime>,
+    std::unique_ptr<Direct3D12RendererRuntime>
+>
+\end{verbatim}
+
+depending on what is compiled.
+
+That is already much closer to the correct architecture than trying to wrap native API calls one-for-one.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Backend selection policy is separate from renderer semantics}
+
+Kairo separates:
+
+\[
+\text{which backend should I use?}
+\]
+
+from:
+
+\[
+\text{how rendering works}.
+\]
+
+Current native-first policy is approximately:
+
+\begin{verbatim}
+macOS   → Metal
+Windows → D3D12
+Linux   → Vulkan
+\end{verbatim}
+
+with Vulkan/OpenGL fallbacks based on compiled availability.
+
+Good.
+
+This means application code can request:
+
+\begin{verbatim}
+auto
+metal
+vulkan
+d3d12
+opengl
+\end{verbatim}
+
+without changing scene extraction.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{backend-neutral resource handles}
+
+Do not let gameplay code keep:
+
+\begin{verbatim}
+VkImage image;
+\end{verbatim}
+
+because now scene code knows Vulkan.
+
+Instead:
+
+\begin{verbatim}
+TextureHandle texture;
+MeshHandle mesh;
+BufferHandle buffer;
+\end{verbatim}
+
+The renderer owns the native resource behind them.
+
+Current Kairo:
+
+\begin{verbatim}
+using TextureHandle =
+    std::uint64_t;
+
+using MeshHandle =
+    std::uint64_t;
+\end{verbatim}
+
+with:
+
+\[
+0=\text{invalid}.
+\]
+
+Simple and effective.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why handles beat native pointers}
+
+Suppose backend changes from Vulkan to Metal.
+
+An asset system storing:
+
+\begin{verbatim}
+TextureHandle{17}
+\end{verbatim}
+
+doesn't care.
+
+Backend registry might map:
+
+\begin{verbatim}
+17
+→ VulkanTexture
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+17
+→ MetalTexture
+\end{verbatim}
+
+depending on active runtime.
+
+The user of the handle sees identity.
+
+The backend sees implementation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Raw integer handles have a stale-handle problem}
+
+Suppose resource index 42 is destroyed.
+
+Later a new resource receives 42.
+
+Old code accidentally still stores:
+
+\[
+42.
+\]
+
+Now it refers to the new resource.
+
+A stronger handle is generational:
+
+\begin{verbatim}
+struct TextureHandle
+{
+    uint32_t Index;
+    uint32_t Generation;
+};
+\end{verbatim}
+
+Registry entry:
+
+\begin{verbatim}
+struct TextureEntry
+{
+    uint32_t Generation;
+    NativeTexture Resource;
+};
+\end{verbatim}
+
+Validation:
+
+\[
+handle.Generation
+=
+entry.Generation.
+\]
+
+If not:
+
+\[
+\boxed{\text{stale handle detected}.}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Handle composition}
+
+A compact 64-bit handle can encode:
+
+\[
+H=
+(G<<32)|I.
+\]
+
+where:
+
+\[
+I=\text{index},
+\]
+
+\[
+G=\text{generation}.
+\]
+
+Recover:
+
+\[
+I=H\&0xffffffff,
+\]
+
+\[
+G=H>>32.
+\]
+
+Current Kairo's plain \texttt{uint64\_t} can evolve into this without changing the external storage size.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{RenderGraph handles are already typed}
+
+Kairo's render graph uses:
+
+\begin{verbatim}
+struct RenderResourceHandle
+{
+    uint32_t Value;
+};
+\end{verbatim}
+
+and:
+
+\begin{verbatim}
+struct RenderPassHandle
+{
+    uint32_t Value;
+};
+\end{verbatim}
+
+This prevents accidentally passing a pass handle where a resource handle is expected.
+
+Maveb's render graph goes a little further:
+
+\begin{verbatim}
+struct ResourceHandle
+{
+    uint32_t index;
+    uint32_t generation;
+};
+\end{verbatim}
+
+which adds stale-handle protection.
+
+The ideal general resource system combines both ideas:
+
+\[
+\boxed{
+\text{typed + generational}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{backend-neutral buffer descriptions}
+
+A generic buffer description should describe \textbf{intent}.
+
+Not:
+
+\begin{verbatim}
+VkBufferUsageFlags VulkanUsage;
+\end{verbatim}
+
+Instead:
+
+\begin{verbatim}
+enum class BufferUsage : uint32_t
+{
+    Vertex   = 1 << 0,
+    Index    = 1 << 1,
+    Uniform  = 1 << 2,
+    Storage  = 1 << 3,
+    Indirect = 1 << 4,
+    CopySrc  = 1 << 5,
+    CopyDst  = 1 << 6
+};
+\end{verbatim}
+
+Then:
+
+\begin{verbatim}
+struct BufferDesc
+{
+    uint64_t Size;
+    BufferUsage Usage;
+
+    MemoryClass Memory;
+
+    std::string DebugName;
+};
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Memory class should also express intent}
+
+Do not expose:
+
+\begin{verbatim}
+VK_MEMORY_PROPERTY_HOST_VISIBLE
+\end{verbatim}
+
+to portable engine code.
+
+Use something like:
+
+\begin{verbatim}
+enum class MemoryClass
+{
+    GPUOnly,
+    CPUToGPU,
+    GPUToCPU
+};
+\end{verbatim}
+
+Backend translates:
+
+\texttt{GPUOnly}:
+
+Vulkan:
+
+\[
+DEVICE_LOCAL
+\]
+
+Metal:
+
+\[
+Private.
+\]
+
+\texttt{CPUToGPU}:
+
+Vulkan:
+
+\[
+HOST_VISIBLE
+\]
+
+plus suitable coherency strategy.
+
+Metal:
+
+\[
+Shared.
+\]
+
+That is semantic translation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Avoid overpromising exact equivalence}
+
+\texttt{GPUOnly} is not:
+
+\begin{quote}
+exactly \texttt{Private} and exactly \texttt{DEVICE\_LOCAL}.
+\end{quote}
+
+Those APIs expose different memory models.
+
+It means:
+
+\[
+\boxed{
+\text{CPU does not require direct access and GPU performance is preferred}.
+}
+\]
+
+Backend then chooses best representation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{backend-neutral texture descriptions}
+
+A useful texture description:
+
+\begin{verbatim}
+struct TextureDesc
+{
+    TextureDimension Dimension;
+
+    uint32_t Width;
+    uint32_t Height;
+    uint32_t Depth;
+
+    uint32_t MipLevels;
+    uint32_t ArrayLayers;
+    uint32_t Samples;
+
+    PixelFormat Format;
+    TextureUsage Usage;
+
+    MemoryClass Memory;
+
+    std::string DebugName;
+};
+\end{verbatim}
+
+Again, semantic fields.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Texture usage}
+
+Portable usage might include:
+
+\begin{verbatim}
+Sampled
+Storage
+ColorAttachment
+DepthAttachment
+CopySrc
+CopyDst
+Presentable
+\end{verbatim}
+
+Backend conversion:
+
+\[
+Sampled
+\rightarrow
+VK_IMAGE_USAGE_SAMPLED
+\]
+
+or:
+
+\[
+MTLTextureUsageShaderRead.
+\]
+
+Same intent.
+
+Different API flags.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Format abstraction needs discipline}
+
+You can define:
+
+\begin{verbatim}
+RGBA8_UNorm
+RGBA8_sRGB
+RGBA16_Float
+R32_UInt
+D32_Float
+\end{verbatim}
+
+But never invent a portable format unless you know how all target backends support it.
+
+Backend capability query should answer:
+
+\[
+SupportsFormat(
+format,
+usage).
+\]
+
+For example, a format might support shader sampling but not rendering on one device.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{sampler descriptions}
+
+Portable sampler:
+
+\begin{verbatim}
+struct SamplerDesc
+{
+    Filter Min;
+    Filter Mag;
+    Filter Mip;
+
+    AddressMode U;
+    AddressMode V;
+    AddressMode W;
+
+    float MaxAnisotropy;
+
+    CompareFunction Comparison;
+};
+\end{verbatim}
+
+Maps naturally to both Vulkan and Metal.
+
+Kairo currently exposes only authored U/V addressing in its public \texttt{TextureSampler}, while filtering remains linear by policy.
+
+That is perfectly reasonable for its current asset/material scope.
+
+A generic RHI sampler description would be broader.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{backend-neutral pipeline descriptions}
+
+This becomes trickier.
+
+A neutral graphics pipeline might describe:
+
+\begin{verbatim}
+struct GraphicsPipelineDesc
+{
+    ShaderHandle Vertex;
+    ShaderHandle Fragment;
+
+    VertexLayout VertexInput;
+
+    PrimitiveTopology Topology;
+
+    RasterState Raster;
+    DepthStencilState DepthStencil;
+    BlendState Blend;
+
+    std::vector<PixelFormat>
+        ColorFormats;
+
+    PixelFormat DepthFormat;
+
+    uint32_t SampleCount;
+};
+\end{verbatim}
+
+This works because these are rendering semantics.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Do not try to normalize everything}
+
+Metal can dynamically change states that Vulkan may traditionally bake into a pipeline.
+
+Vulkan may support dynamic rendering.
+
+Metal has tile-specific capabilities.
+
+D3D12 has root signatures.
+
+So pipeline description should describe:
+
+\[
+\boxed{\text{what the engine wants}}
+\]
+
+without pretending the compiled backend pipeline object has identical structure.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Pipeline cache key}
+
+A pipeline descriptor naturally becomes a cache key:
+
+\[
+K=
+hash(
+shaders,
+formats,
+vertexLayout,
+raster,
+depth,
+blend,
+samples
+).
+\]
+
+Backend:
+
+\begin{verbatim}
+K → native pipeline object
+\end{verbatim}
+
+This avoids recompiling equivalent states.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{capability queries, not assumptions}
+
+Never do:
+
+\begin{verbatim}
+if (backend == Metal)
+    assumeRayTracing = true;
+\end{verbatim}
+
+Instead:
+
+\begin{verbatim}
+RendererCapabilities caps =
+    renderer.Capabilities();
+\end{verbatim}
+
+perhaps:
+
+\begin{verbatim}
+struct RendererCapabilities
+{
+    bool RayTracing;
+    bool MeshShaders;
+    bool BindlessTextures;
+    bool AsyncCompute;
+    bool MemorylessAttachments;
+    bool TimelineSynchronization;
+
+    uint32_t MaxColorAttachments;
+    uint32_t MaxTextureDimension2D;
+};
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Capability is device-level, not merely API-level}
+
+Vulkan supports ray tracing extensions.
+
+That does not imply every Vulkan GPU supports them.
+
+Metal exposes ray tracing capabilities.
+
+That does not imply every Metal device supports them.
+
+Therefore:
+
+\[
+\boxed{
+FeatureAvailable
+=
+BackendSupports
+\land
+DeviceSupports.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Maveb already follows this pattern}
+
+Its Metal capability inspection asks the actual device:
+
+\[
+supportsFamily(...)
+\]
+
+\[
+supportsRaytracing()
+\]
+
+\[
+supportsDynamicLibraries().
+\]
+
+That is exactly the correct philosophy.
+
+Kairo's current neutral backend query is more focused on:
+
+\[
+\text{compiled backend availability}
+\]
+
+than detailed GPU feature capabilities.
+
+A future neutral capability object would complement it.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{feature-level contracts}
+
+A single boolean such as:
+
+\begin{verbatim}
+SupportsRenderer = true;
+\end{verbatim}
+
+is too vague.
+
+Define feature contracts.
+
+Example:
+
+\begin{verbatim}
+CoreRaster
+    sampled textures
+    depth
+    MRT
+    indexed draws
+
+AdvancedRaster
+    indirect draws
+    storage buffers
+
+Bindless
+    large resource arrays
+    nonuniform indexing
+
+AsyncCompute
+    independent compute scheduling
+
+RayTracing
+    acceleration structures
+    ray queries/pipelines
+\end{verbatim}
+
+Then renderer paths can require:
+
+\[
+FeatureLevel\ge X
+\]
+
+or test individual contracts.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Graceful feature selection}
+
+Suppose clustered forward renderer needs compute + storage buffers.
+
+If unavailable:
+
+\[
+\boxed{
+\text{fall back to CPU light lists}
+}
+\]
+
+rather than:
+
+\begin{quote}
+Vulkan failed.
+\end{quote}
+
+Similarly:
+
+Ray-traced reflections unavailable:
+
+\[
+SSR\rightarrow probe\ reflection.
+\]
+
+Feature contracts allow real fallback design.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{backend-specific escape hatches}
+
+A portable renderer eventually needs native integration.
+
+Examples:
+
+\begin{itemize}
+\tightlist
+\item
+  Dear ImGui Metal backend needs \texttt{MTLDevice},
+\item
+  Vulkan tooling needs render pass/device/queue,
+\item
+  platform capture may need native texture,
+\item
+  video encoder may consume Metal texture directly.
+\end{itemize}
+
+The answer is not:
+
+\begin{quote}
+expose native handles everywhere.
+\end{quote}
+
+The answer is:
+
+\[
+\boxed{
+\text{explicit, narrow escape hatch}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo already does this well}
+
+Ordinary rendering uses neutral API.
+
+Tooling-specific accessors expose:
+
+\begin{verbatim}
+VulkanBackendContext
+MetalBackendContext
+Direct3D12BackendContext
+\end{verbatim}
+
+and viewport textures.
+
+Metal viewport identity is exposed as erased:
+
+\begin{verbatim}
+void* Texture;
+\end{verbatim}
+
+with documentation that clients must treat it as borrowed and not retain/release it.
+
+This is exactly what an escape hatch should look like:
+
+\[
+\boxed{
+\text{localized + explicit + non-portable by construction}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Escape hatch should advertise danger}
+
+For example:
+
+\begin{verbatim}
+NativeMetalContext&
+GetNativeMetalContext();
+\end{verbatim}
+
+should exist only in platform/tooling code.
+
+Not:
+
+\begin{verbatim}
+renderer.GetNativeHandle()
+\end{verbatim}
+
+called throughout gameplay.
+
+One possible policy:
+
+\begin{verbatim}
+if (renderer.Backend()
+    != GraphicsBackend::Metal)
+{
+    throw ...
+}
+\end{verbatim}
+
+so misuse fails immediately.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{why lowest-common-denominator abstractions fail}
+
+Suppose your neutral API only supports what OpenGL 3, Vulkan, Metal and D3D12 all expose identically.
+
+You may end up with:
+
+\begin{verbatim}
+draw
+texture
+vertex buffer
+uniform
+\end{verbatim}
+
+and lose:
+
+\begin{verbatim}
+argument buffers
+descriptor indexing
+mesh shaders
+ray tracing
+memoryless attachments
+timeline synchronization
+explicit heaps
+async compute
+subpass/tile features
+\end{verbatim}
+
+Congratulations---you built a modern engine that behaves like an old API.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Correct abstraction principle}
+
+Do not define:
+
+\[
+\boxed{
+Capabilities=
+intersection(
+Metal,
+Vulkan,
+D3D12,
+OpenGL).
+}
+\]
+
+Instead:
+
+\[
+\boxed{
+CoreIntent
++
+CapabilityQueries
++
+OptionalFeatureInterfaces
++
+NativeEscapeHatches.
+}
+\]
+
+That lets common code remain common while backends remain strong.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Portable does not mean identical}
+
+A good abstraction says:
+
+\begin{quote}
+Render this HDR scene with depth and shadowing.
+\end{quote}
+
+A bad abstraction says:
+
+\begin{quote}
+Every backend must implement a pretend \texttt{PipelineBarrier()} with exactly Vulkan semantics.
+\end{quote}
+
+Metal does not need to become Vulkan.
+
+Vulkan does not need to become Metal.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{COMPLETE RENDER GRAPH}\label{06-engine-ii-ch043-complete-render-graph}
+
+Now we move to one of the most important engine systems in the entire curriculum.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{render-graph motivation}
+
+A traditional renderer manually says:
+
+\begin{verbatim}
+Create ShadowTexture
+
+ShadowPass()
+Barrier()
+
+GeometryPass()
+Barrier()
+
+TAA()
+Barrier()
+
+Bloom()
+Barrier()
+
+Present()
+\end{verbatim}
+
+Problems emerge as passes increase.
+
+Which pass owns resource?
+
+Who last wrote it?
+
+Is it still needed?
+
+Can two textures reuse memory?
+
+Did we forget a barrier?
+
+Can this pass be culled?
+
+Can compute overlap graphics?
+
+A render graph makes those relationships explicit.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Render graph as a mathematical graph}
+
+Define:
+
+\[
+G=(V,E)
+\]
+
+where vertices:
+
+\[
+V=
+\text{render passes}.
+\]
+
+Directed edge:
+
+\[
+A\rightarrow B
+\]
+
+means:
+
+\[
+\boxed{
+B\text{ depends on }A.
+}
+\]
+
+For valid execution:
+
+\[
+G
+\]
+
+should be a DAG:
+
+\[
+\boxed{
+\text{Directed Acyclic Graph}.
+}
+\]
+
+Then topological sorting yields legal execution order.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Resource graph interpretation}
+
+You can also think bipartitely:
+
+\begin{verbatim}
+Pass A
+   ↓ writes
+Resource X
+   ↓ read by
+Pass B
+\end{verbatim}
+
+The engine usually compiles resource accesses into pass-to-pass dependency edges.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{pass nodes}
+
+A pass should declare intent.
+
+Example:
+
+\begin{verbatim}
+graph.AddPass(
+    "Lighting",
+    {
+        Read(gbufferNormal,
+             ShaderRead),
+
+        Read(gbufferDepth,
+             ShaderRead),
+
+        Write(hdrColor,
+              ColorAttachment)
+    },
+    [] {
+        EncodeLighting();
+    });
+\end{verbatim}
+
+Pass declaration should separate:
+
+\[
+\boxed{
+\text{dependency description}
+}
+\]
+
+from:
+
+\[
+\boxed{
+\text{execution callback}.
+}
+\]
+
+That is exactly what current Kairo graph does.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo pass object}
+
+Each pass stores:
+
+\begin{verbatim}
+Name
+Accesses
+Dependencies
+Execute
+\end{verbatim}
+
+and every access stores:
+
+\begin{verbatim}
+Resource
+Mode
+State
+\end{verbatim}
+
+with mode:
+
+\[
+Read,
+Write,
+ReadWrite.
+\]
+
+This is already a solid minimal model.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{resource nodes}
+
+Resource node represents logical resource, not necessarily immediately allocated native memory.
+
+Example:
+
+\begin{verbatim}
+RenderResourceDesc
+{
+    .Name =
+        "Scene HDR",
+
+    .Kind =
+        Texture,
+
+    .EstimatedBytes =
+        1920*1080*8,
+
+    .Transient =
+        true,
+
+    .InitialState =
+        Undefined
+};
+\end{verbatim}
+
+Logical identity exists before physical allocation decision.
+
+That is critical.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Logical versus physical resource}
+
+Logical:
+
+\begin{verbatim}
+BloomHalf
+\end{verbatim}
+
+means:
+
+\begin{quote}
+pass graph's half-resolution bloom intermediate.
+\end{quote}
+
+Physical resource may be:
+
+\begin{verbatim}
+VkImage #41
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+MTLTexture from transient heap slot 3.
+\end{verbatim}
+
+Logical resource survives backend abstraction.
+
+Physical object does not.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{declaring reads}
+
+Suppose pass reads texture:
+
+\[
+R.
+\]
+
+Declaration:
+
+\begin{verbatim}
+{
+    R,
+    RenderAccessMode::Read,
+    RenderResourceState::ShaderRead
+}
+\end{verbatim}
+
+This communicates:
+
+\[
+\boxed{
+\text{pass requires value produced earlier}.
+}
+\]
+
+Compiler can now establish RAW dependency.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Read-before-write validation}
+
+For transient resource whose initial state is:
+
+\[
+Undefined,
+\]
+
+reading before first write is invalid.
+
+Kairo explicitly detects this and throws.
+
+This is powerful because a runtime black-screen bug becomes a graph compile error:
+
+\begin{verbatim}
+Resource 'History' is read before its first write.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{writes}
+
+Write declaration:
+
+\begin{verbatim}
+{
+    hdr,
+    Write,
+    ColorAttachment
+}
+\end{verbatim}
+
+means pass produces a new value.
+
+Writes matter because all prior accesses may have to finish.
+
+If previous writer exists:
+
+\[
+WAW.
+\]
+
+If readers exist:
+
+\[
+WAR.
+\]
+
+Both create ordering requirements.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hazard dependency construction}
+
+For every resource track:
+
+\[
+lastWriter
+\]
+
+and:
+
+\[
+activeReaders.
+\]
+
+On read:
+
+\[
+lastWriter
+\rightarrow
+currentRead.
+\]
+
+On write:
+
+\[
+lastWriter
+\rightarrow
+currentWrite
+\]
+
+and:
+
+\[
+reader_i
+\rightarrow
+currentWrite
+\quad\forall i.
+\]
+
+Then:
+
+\[
+activeReaders=\emptyset,
+\]
+
+\[
+lastWriter=currentWrite.
+\]
+
+Current Kairo does exactly this.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why two readers need no edge}
+
+If:
+
+\begin{verbatim}
+Pass A reads X
+Pass B reads X
+\end{verbatim}
+
+neither mutates X.
+
+Therefore:
+
+\[
+A
+\not\rightarrow
+B
+\]
+
+and:
+
+\[
+B
+\not\rightarrow
+A.
+\]
+
+They may be reordered or potentially overlap.
+
+This is how graphs expose parallelism.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{dependency building}
+
+Consider:
+
+\begin{verbatim}
+Shadow writes ShadowMap
+
+Geometry reads ShadowMap
+         writes HDR
+
+Bloom reads HDR
+      writes Bloom
+
+Present reads HDR and Bloom
+\end{verbatim}
+
+Edges:
+
+\[
+Shadow\rightarrow Geometry
+\]
+
+\[
+Geometry\rightarrow Bloom
+\]
+
+\[
+Geometry\rightarrow Present
+\]
+
+\[
+Bloom\rightarrow Present.
+\]
+
+The graph does not need hardcoded pass order.
+
+Dependencies derive order.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Explicit dependencies still matter}
+
+Some dependencies do not arise from resource hazards.
+
+Example:
+
+\begin{verbatim}
+GPU timestamp reset
+must happen before
+profiling pass
+\end{verbatim}
+
+or API lifecycle:
+
+\begin{verbatim}
+Acquire
+→
+Record
+→
+Submit
+→
+Present.
+\end{verbatim}
+
+Kairo provides:
+
+\begin{verbatim}
+DependsOn(pass,
+          dependency);
+\end{verbatim}
+
+for these.
+
+Its Vulkan frame graph currently uses explicit dependencies for lifecycle ordering.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{cycle detection}
+
+Invalid:
+
+\[
+A\rightarrow B
+\]
+
+and:
+
+\[
+B\rightarrow A.
+\]
+
+No valid execution order exists.
+
+Kairo uses Kahn-style topological sorting.
+
+If sorted pass count:
+
+\[
+|O|
+\]
+
+is not:
+
+\[
+|V|,
+\]
+
+there is a cycle.
+
+Formally:
+
+\[
+\boxed{
+|TopologicalOrder|<|V|
+\Rightarrow
+cycle.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kahn algorithm}
+
+Compute indegree:
+
+\[
+deg^{-}(v).
+\]
+
+Put every zero-indegree node in ready set.
+
+Repeatedly:
+
+\[
+v=popReady()
+\]
+
+append to order.
+
+For every outgoing edge:
+
+\[
+v\rightarrow u
+\]
+
+decrement:
+
+\[
+deg^{-}(u).
+\]
+
+If it becomes zero:
+
+\[
+push(u).
+\]
+
+At end compare size.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo makes topological order deterministic}
+
+It uses a priority queue ordered by pass index.
+
+Therefore if multiple passes are valid simultaneously, lower declared index wins.
+
+That is useful for:
+
+\begin{itemize}
+\tightlist
+\item
+  reproducible testing,
+\item
+  deterministic captures,
+\item
+  stable debugging.
+\end{itemize}
+
+Random legal schedules are technically correct but terrible for reproducibility.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{topological sorting}
+
+Graph:
+
+\begin{verbatim}
+      A
+     / \
+    B   C
+     \ /
+      D
+\end{verbatim}
+
+Valid orders:
+
+\begin{verbatim}
+A B C D
+A C B D
+\end{verbatim}
+
+Both correct.
+
+Topological order represents one linearization of a partial order.
+
+This distinction becomes important for async queues later.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{execution ordering}
+
+Compiled graph should be immutable during execution.
+
+Current Kairo compiles:
+
+\begin{verbatim}
+resource descriptions
+ordered passes
+transitions
+lifetimes
+alias slots
+\end{verbatim}
+
+then \texttt{Execute()} walks passes in order.
+
+Before each callback:
+
+\begin{verbatim}
+ApplyTransitions(...)
+\end{verbatim}
+
+may translate graph state transitions into native backend barriers.
+
+This is an excellent separation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Compilation versus execution}
+
+Compile phase performs expensive reasoning:
+
+\[
+dependencies,
+cycles,
+lifetimes,
+aliasing,
+transitions.
+\]
+
+Execution phase should be simple:
+
+\begin{verbatim}
+for pass in compiledOrder:
+    apply inferred native state changes
+    execute pass callback
+\end{verbatim}
+
+This minimizes per-frame logic.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Static versus dynamic graph}
+
+Some engines rebuild graph every frame.
+
+Others compile stable topology and only update runtime values.
+
+If topology is stable:
+
+\[
+\boxed{
+\text{cache compiled graph}.
+}
+\]
+
+If feature toggles alter pass set, rebuild when configuration changes.
+
+The right balance depends on renderer architecture.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{resource lifetime intervals}
+
+If resource first appears at pass:
+
+\[
+f
+\]
+
+and last appears at:
+
+\[
+l,
+\]
+
+its logical lifetime is:
+
+\[
+\boxed{
+[f,l].
+}
+\]
+
+Example:
+
+\begin{verbatim}
+Pass 0: write A
+Pass 1: read A
+Pass 2: read A
+\end{verbatim}
+
+Then:
+
+\[
+A=[0,2].
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{first and last use}
+
+Kairo scans compiled execution order.
+
+For first encounter:
+
+\[
+FirstPass=position.
+\]
+
+Every encounter updates:
+
+\[
+LastPass=position.
+\]
+
+That gives interval.
+
+This is exactly the information required for transient aliasing.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why declaration order is not lifetime order}
+
+Imagine pass declarations:
+
+\begin{verbatim}
+A
+B
+C
+\end{verbatim}
+
+but dependency sort gives:
+
+\begin{verbatim}
+B
+A
+C.
+\end{verbatim}
+
+Lifetime must use \textbf{compiled order}.
+
+Kairo correctly computes lifetimes after topological sorting.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{transient-resource allocation}
+
+Transient resource exists only for frame/pass graph.
+
+Examples:
+
+\begin{verbatim}
+Bloom temporary
+G-buffer intermediate
+SSR ray buffer
+post-process scratch
+temporary compute histogram
+\end{verbatim}
+
+You do not necessarily need one physical allocation for every logical transient.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Naive memory}
+
+Suppose:
+
+\[
+R_1=16MB,
+R_2=16MB,
+R_3=16MB.
+\]
+
+Naive:
+
+\[
+M=48MB.
+\]
+
+But if their lifetimes do not overlap:
+
+\[
+R_1:[0,1]
+\]
+
+\[
+R_2:[2,3]
+\]
+
+\[
+R_3:[4,5]
+\]
+
+then physical memory can potentially be:
+
+\[
+\boxed{16MB}
+\]
+
+instead.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{aliasing}
+
+Two logical resources may share backing storage if lifetimes don't overlap.
+
+For intervals:
+
+\[
+A=[a_0,a_1],
+\]
+
+\[
+B=[b_0,b_1],
+\]
+
+non-overlap iff:
+
+\[
+\boxed{
+a_1<b_0
+\lor
+b_1<a_0.
+}
+\]
+
+Notice strict inequality.
+
+If:
+
+\[
+a_1=b_0,
+\]
+
+both are used during same pass index.
+
+They cannot blindly alias.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo's alias algorithm}
+
+For each transient sorted by first use, find existing slot where:
+
+\[
+slot.Kind=resource.Kind,
+\]
+
+\[
+slot.Capacity\ge resource.Bytes,
+\]
+
+\[
+slot.LastPass<resource.FirstPass.
+\]
+
+If found, reuse.
+
+Otherwise create new slot.
+
+This is a greedy interval-coloring-like allocator.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo scale test is good}
+
+It constructs:
+
+\[
+256
+\]
+
+transient textures in a chain.
+
+Each overlaps only immediate neighbor.
+
+Expected physical slots:
+
+\[
+\le2.
+\]
+
+The test asserts transient allocation:
+
+\[
+\le
+2\times4096
+\]
+
+rather than:
+
+\[
+256\times4096.
+\]
+
+Excellent test of lifetime-based reuse.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{But current alias compatibility is intentionally incomplete}
+
+Today Kairo checks only:
+
+\[
+Kind
+\]
+
+and:
+
+\[
+EstimatedBytes.
+\]
+
+That is not sufficient for production native aliasing.
+
+Two textures might differ in:
+
+\begin{itemize}
+\tightlist
+\item
+  format,
+\item
+  dimensions,
+\item
+  sample count,
+\item
+  usage,
+\item
+  alignment,
+\item
+  memory class,
+\item
+  tiling requirements.
+\end{itemize}
+
+Vulkan memory requirements may differ.
+
+Metal heap resource-size/alignment requirements may differ.
+
+Therefore real alias compatibility must include:
+
+\[
+\boxed{
+\text{native-compatible memory class and alignment requirements}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Better alias descriptor}
+
+Conceptually:
+
+\begin{verbatim}
+struct AliasClass
+{
+    ResourceKind Kind;
+
+    MemoryClass Memory;
+
+    uint64_t Size;
+    uint64_t Alignment;
+
+    uint32_t SampleCount;
+
+    FormatCompatibilityClass FormatClass;
+
+    ResourceUsage Usage;
+};
+\end{verbatim}
+
+Then backend confirms compatibility.
+
+Never alias merely because byte counts match.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Aliasing is graph coloring intuition}
+
+Each resource interval is a vertex.
+
+If two intervals overlap, connect them.
+
+Resources connected by conflict edge cannot share physical slot.
+
+Then physical allocation resembles graph coloring.
+
+For interval graphs this can be solved efficiently.
+
+Greedy sorted-by-start works well.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{barrier inference}
+
+Once graph knows previous state and next state:
+
+\[
+S_{before}
+\rightarrow
+S_{after},
+\]
+
+it can ask backend for required synchronization.
+
+Kairo stores:
+
+\begin{verbatim}
+RenderResourceTransition
+{
+    Resource;
+    Before;
+    After;
+}
+\end{verbatim}
+
+and creates one whenever requested state changes.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Example transition}
+
+Resource begins:
+
+\[
+Undefined.
+\]
+
+Geometry:
+
+\[
+ColorAttachment.
+\]
+
+Post:
+
+\[
+ShaderRead.
+\]
+
+So compiler produces:
+
+\[
+Undefined
+\rightarrow
+ColorAttachment
+\]
+
+then:
+
+\[
+ColorAttachment
+\rightarrow
+ShaderRead.
+\]
+
+Vulkan backend can map these to image barriers.
+
+Metal tracked resources may need little/no explicit action.
+
+Same graph.
+
+Different implementation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{State transition alone is not always enough}
+
+Current Kairo state enum:
+
+\begin{verbatim}
+Undefined
+ColorAttachment
+DepthAttachment
+ShaderRead
+CopySource
+CopyDestination
+Present
+\end{verbatim}
+
+is a good minimal set.
+
+But future GPU-driven renderer needs distinctions such as:
+
+\begin{verbatim}
+ShaderStorageRead
+ShaderStorageWrite
+IndirectArgument
+VertexBuffer
+IndexBuffer
+UniformRead
+AccelerationStructureRead
+RayTracingWrite
+\end{verbatim}
+
+because Vulkan synchronization needs exact consumer/producer access scopes.
+
+So as backend sophistication grows:
+
+\[
+\boxed{
+\text{logical state model must grow with actual hazard semantics}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Barrier derivation example}
+
+Graph says:
+
+\[
+CopyDestination
+\rightarrow
+ShaderRead.
+\]
+
+Vulkan mapping:
+
+\[
+TRANSFER
++
+TRANSFER_WRITE
+\]
+
+to:
+
+\[
+FRAGMENT/COMPUTE
++
+SHADER_READ.
+\]
+
+Metal:
+
+tracked resource:
+
+\[
+\text{encoder ordering may suffice}.
+\]
+
+Untracked resource:
+
+\[
+\text{appropriate barrier/fence}.
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{layout/state transition inference}
+
+Vulkan images have layouts.
+
+Metal does not expose equivalent image layout transitions to engine in same fashion.
+
+Therefore neutral graph should express:
+
+\[
+\text{semantic state},
+\]
+
+not:
+
+\begin{verbatim}
+VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL.
+\end{verbatim}
+
+Vulkan converts:
+
+\[
+ShaderRead
+\rightarrow
+VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL.
+\]
+
+Metal interprets:
+
+\[
+ShaderRead
+\]
+
+as binding/hazard intent without fake layouts.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{State is broader than Vulkan layout}
+
+A resource state often means:
+
+\[
+\boxed{
+\text{how resource is being used}
+}
+\]
+
+which may imply:
+
+\begin{itemize}
+\tightlist
+\item
+  pipeline stage,
+\item
+  memory access,
+\item
+  layout,
+\item
+  ownership.
+\end{itemize}
+
+So graph state should be semantic.
+
+Backend derives native requirements.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{cross-queue dependencies}
+
+Suppose graphics produces depth.
+
+Compute queue performs SSAO.
+
+Graphics queue then consumes AO.
+
+Logical:
+
+\[
+GraphicsDepth
+\rightarrow
+ComputeSSAO
+\rightarrow
+GraphicsLighting.
+\]
+
+A topological order alone does not synchronize two independent hardware queues.
+
+You need cross-queue signaling.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Vulkan cross-queue mapping}
+
+Could be:
+
+\begin{verbatim}
+Graphics submission
+    signals timeline = 15
+
+Compute submission
+    waits timeline >= 15
+    executes SSAO
+    signals timeline = 16
+
+Graphics lighting
+    waits timeline >= 16
+\end{verbatim}
+
+If exclusive queue families differ, resource ownership transfer may also be necessary.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Metal cross-queue mapping}
+
+Could use:
+
+\[
+MTLSharedEvent.
+\]
+
+Graphics signals:
+
+\[
+15.
+\]
+
+Compute waits:
+
+\[
+15.
+\]
+
+Compute signals:
+
+\[
+16.
+\]
+
+Graphics waits:
+
+\[
+16.
+\]
+
+Same graph dependency.
+
+Native synchronization differs.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Queue assignment must become part of pass metadata}
+
+For example:
+
+\begin{verbatim}
+enum class QueueClass
+{
+    Graphics,
+    Compute,
+    Transfer
+};
+\end{verbatim}
+
+Pass:
+
+\begin{verbatim}
+PassDesc
+{
+    QueueClass::Compute,
+    ...
+};
+\end{verbatim}
+
+Compiler can then identify:
+
+\[
+\boxed{
+dependency crosses queue boundary.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Async queue scheduling changes lifetime analysis}
+
+This is subtle and important.
+
+Current Kairo computes lifetime using a single linear pass order.
+
+That works when execution is serial.
+
+But with async compute:
+
+\begin{verbatim}
+Graphics A ────────┐
+                  │
+Compute B ─────────────
+\end{verbatim}
+
+two passes can overlap in real time despite having some topological ordering.
+
+Then:
+
+\[
+LastPass<FirstPass
+\]
+
+in one linear ordering does \textbf{not necessarily prove} physical non-overlap.
+
+For cross-queue aliasing you need a happens-before analysis.
+
+This is a major step beyond simple render graphs.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Safe async aliasing rule}
+
+Two resources may alias only if graph proves:
+
+\[
+end(A)
+\prec
+begin(B)
+\]
+
+in the dependency partial order.
+
+Not merely:
+
+\[
+index(A)<index(B).
+\]
+
+If neither is ordered relative to the other:
+
+\[
+A\parallel B
+\]
+
+and they may overlap.
+
+Therefore they cannot safely share memory.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{pass culling}
+
+Suppose graph contains:
+
+\begin{verbatim}
+DebugNormals
+\end{verbatim}
+
+but debug output is not shown.
+
+If no later live pass consumes its output and it has no side effect:
+
+\[
+\boxed{
+\text{remove pass entirely}.
+}
+\]
+
+This reduces GPU work.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reverse liveness analysis}
+
+Start from roots:
+
+\[
+\text{presented outputs}
+\]
+
+\[
+\text{explicit exports}
+\]
+
+\[
+\text{side-effect passes}.
+\]
+
+Mark them live.
+
+Then recursively mark their dependencies live.
+
+Everything else:
+
+\[
+\boxed{\text{dead pass}.}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Maveb render graph already performs pass culling}
+
+Its graph marks passes required if:
+
+\[
+sideEffect=true
+\]
+
+or they write a resource marked:
+
+\[
+output=true.
+\]
+
+Then walks dependencies backward.
+
+Only live passes participate in topological scheduling.
+
+That is a real pass-culling implementation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo currently does not cull}
+
+Current Kairo compiles all declared passes.
+
+So compared with Maveb:
+
+Kairo has stronger:
+
+\[
+state\ transitions,
+alias\ slots,
+transition\ hooks.
+\]
+
+Maveb has:
+
+\[
+pass\ culling,
+DOT\ graph\ export,
+generational\ handles.
+\]
+
+A future unified implementation can combine the strengths.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{imported external resources}
+
+Some resources were created outside graph.
+
+Examples:
+
+\begin{verbatim}
+swapchain image
+CAMetalDrawable texture
+persistent shadow atlas
+engine-owned history
+video texture
+editor viewport
+\end{verbatim}
+
+Graph should import rather than own.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Imported resource needs initial state}
+
+The graph must know how external resource enters graph.
+
+For example:
+
+\[
+SwapchainInitial=Present.
+\]
+
+or:
+
+\[
+HistoryInitial=ShaderRead.
+\]
+
+Otherwise first transition cannot be inferred.
+
+Current Kairo models external resource via:
+
+\begin{verbatim}
+RenderResourceKind::External
+\end{verbatim}
+
+and requires external resources to be non-transient.
+
+Good.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Vulkan graph example}
+
+It creates:
+
+\begin{verbatim}
+VulkanNativeFrame
+\end{verbatim}
+
+as:
+
+\[
+External
+\]
+
+with:
+
+\[
+InitialState=Present.
+\]
+
+Then logical stages:
+
+\begin{verbatim}
+Retire
+Acquire
+Record
+Submit
+Present
+\end{verbatim}
+
+use this token/resource.
+
+This current graph is more of a \textbf{frame-lifecycle dependency object} than a complete per-image render graph, but the abstraction principle is sound.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{persistent history resources}
+
+TAA history:
+
+\[
+H_{t-1}
+\]
+
+must survive to next frame.
+
+Therefore it cannot be transiently aliased as soon as current frame ends.
+
+Graph resource should be:
+
+\[
+Transient=false.
+\]
+
+Initial state:
+
+\[
+ShaderRead
+\]
+
+if valid.
+
+Current Kairo tests exactly this notion: a persistent resource initialized as \texttt{ShaderRead} may be read immediately, while persistent \texttt{Undefined} read is rejected.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{History invalidation}
+
+Persistent doesn't mean always valid.
+
+Invalidate history on:
+
+\begin{itemize}
+\tightlist
+\item
+  camera cut,
+\item
+  resolution change,
+\item
+  projection change,
+\item
+  scene discontinuity,
+\item
+  major geometry repair,
+\item
+  renderer mode switch.
+\end{itemize}
+
+Then either:
+
+\[
+HistoryValid=false
+\]
+
+or graph inserts clear/initialize pass.
+
+Maveb's TAA system already carries explicit history validity state.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Ping-pong history}
+
+Typical:
+
+\[
+H_0,H_1.
+\]
+
+Frame \(t\):
+
+read:
+
+\[
+H_{t\bmod2}
+\]
+
+write:
+
+\[
+H_{(t+1)\bmod2}.
+\]
+
+Next frame swap roles.
+
+You must ensure frames in flight do not cause simultaneous reuse hazards.
+
+With multiple frames in flight, history scheduling becomes more complex than simple CPU frame parity unless GPU execution order guarantees it.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{swapchain/drawable resources in graph}
+
+Presentation resource is special.
+
+Vulkan:
+
+\[
+SwapchainImage.
+\]
+
+Metal:
+
+\[
+CAMetalDrawable.texture.
+\]
+
+These are acquired externally.
+
+They should appear near graph boundary.
+
+Conceptually:
+
+\begin{verbatim}
+Import Presentable
+
+ToneMap:
+    read HDR
+    write Presentable
+
+Present:
+    consume Presentable
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Acquire as graph boundary}
+
+For Vulkan:
+
+\[
+Acquire
+\]
+
+produces access to presentation image.
+
+For Metal:
+
+\[
+nextDrawable/currentDrawable
+\]
+
+provides drawable texture.
+
+Graph may represent acquisition as external lifecycle operation rather than ordinary resource pass.
+
+Either way:
+
+\[
+\boxed{
+\text{presentation image lifetime begins late and ends at presentation}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Do not build whole renderer around swapchain}
+
+Internal HDR/depth/temporal resources should be independent.
+
+Swapchain/drawable is only final destination.
+
+Then resize/presentation format changes don't infect every pass.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{debugging dependency mistakes}
+
+Common graph failures:
+
+Read before write.
+
+Missing write declaration.
+
+Incorrect state.
+
+Missing side-effect root causing pass culling.
+
+Cycle.
+
+Aliasing resources whose lifetimes actually overlap.
+
+Cross-frame history improperly marked transient.
+
+Queue dependency omitted.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Debugging rule}
+
+When image is wrong, do not immediately inspect shader.
+
+First ask:
+
+\[
+\boxed{
+\text{Was correct producer executed?}
+}
+\]
+
+\[
+\boxed{
+\text{Was resource initialized?}
+}
+\]
+
+\[
+\boxed{
+\text{Was consumer ordered after producer?}
+}
+\]
+
+\[
+\boxed{
+\text{Was native synchronization emitted?}
+}
+\]
+
+\[
+\boxed{
+\text{Was physical allocation reused too early?}
+}
+\]
+
+Render graphs shift many ``graphics bugs'' into dependency bugs.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{visualizing graph}
+
+Maveb emits DOT:
+
+\begin{verbatim}
+digraph AetherRenderGraph {
+  p0 [label="Shadow"];
+  p1 [label="Geometry"];
+  p2 [label="TAA"];
+  p3 [label="Present"];
+
+  p0 -> p1;
+  p1 -> p2;
+  p2 -> p3;
+}
+\end{verbatim}
+
+Then Graphviz can visualize it.
+
+This is extremely valuable.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Better graph visualization}
+
+An engine UI should show:
+
+\begin{verbatim}
+Pass name
+Queue
+Execution order
+CPU/GPU timing
+
+Reads
+Writes
+
+Resource state before/after
+
+First use
+Last use
+
+Alias slot
+
+Culled/live
+\end{verbatim}
+
+Then resource:
+
+\begin{verbatim}
+SceneHDR
+  16.6 MB
+  first: Geometry
+  last: ToneMap
+  alias slot: 3
+\end{verbatim}
+
+You can debug memory and ordering visually.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{resource naming}
+
+Never accept:
+
+\begin{verbatim}
+Texture_27
+\end{verbatim}
+
+if semantic name is known.
+
+Use:
+
+\begin{verbatim}
+Scene HDR
+Scene Depth
+TAA History A
+Bloom Half
+Gaussian IDs
+Directional Shadow Cascades
+\end{verbatim}
+
+Kairo requires unique graph resource names.
+
+Maveb labels native resources extensively.
+
+These should be connected.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Name propagation}
+
+Ideal:
+
+\begin{verbatim}
+RenderGraph resource:
+    Scene HDR
+
+↓ Vulkan backend
+VkImage debug name:
+    Scene HDR
+
+↓ Metal backend
+MTLTexture label:
+    Scene HDR
+
+↓ capture/profiler
+same label
+\end{verbatim}
+
+Now the engine, graph and GPU debugger all speak one vocabulary.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{GPU capture correlation}
+
+Suppose graph says:
+
+\begin{verbatim}
+Pass 17: Temporal Resolve
+\end{verbatim}
+
+GPU capture should show encoder/debug region:
+
+\begin{verbatim}
+Temporal Resolve
+\end{verbatim}
+
+If graph timing says pass 17 is slow, you can immediately find it in Xcode/RenderDoc.
+
+This is why names are infrastructure, not decoration.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo profile warning}
+
+Kairo's graph profile currently measures CPU callback/recording duration.
+
+Not GPU duration.
+
+So:
+
+\begin{verbatim}
+Geometry: 0.35 ms
+\end{verbatim}
+
+means CPU graph callback time.
+
+A future GPU profiler should correlate:
+
+\[
+GraphPassID
+\]
+
+with:
+
+\[
+GPU timestamp range.
+\]
+
+Then you can compare:
+
+\begin{verbatim}
+CPU encode: 0.18 ms
+GPU execute: 2.7 ms
+\end{verbatim}
+
+for the same pass.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{A production render-graph data model}
+
+A stronger version could look like:
+
+\begin{verbatim}
+struct PassDesc
+{
+    std::string Name;
+
+    QueueClass Queue;
+
+    std::vector<ResourceAccess>
+        Accesses;
+
+    bool HasSideEffects = false;
+
+    ExecuteCallback Execute;
+};
+
+struct ResourceAccess
+{
+    ResourceHandle Resource;
+
+    AccessMode Access;
+
+    ResourceUsage Usage;
+
+    ShaderStageMask Stages;
+};
+\end{verbatim}
+
+Notice separate:
+
+\[
+Access
+\]
+
+and:
+
+\[
+Usage/Stages.
+\]
+
+That gives enough information for Vulkan synchronization.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Better state representation}
+
+Instead of only:
+
+\begin{verbatim}
+ShaderRead
+\end{verbatim}
+
+you might represent:
+
+\begin{verbatim}
+struct ResourceState
+{
+    PipelineDomain Domain;
+    AccessFlags Access;
+    UsageClass Usage;
+};
+\end{verbatim}
+
+Example:
+
+\begin{verbatim}
+ComputeShader
+StorageWrite
+StorageBuffer
+\end{verbatim}
+
+versus:
+
+\begin{verbatim}
+FragmentShader
+SampledRead
+SampledTexture
+\end{verbatim}
+
+These are both ``shader use'' but require different native synchronization.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Compiler stages}
+
+A production render graph can conceptually compile through:
+
+\begin{verbatim}
+validate declarations
+↓
+construct hazards/dependencies
+↓
+mark live passes
+↓
+detect cycles
+↓
+assign queues
+↓
+schedule passes
+↓
+compute lifetimes
+↓
+plan transient allocations
+↓
+infer state transitions
+↓
+infer inter-queue synchronization
+↓
+generate backend execution plan
+\end{verbatim}
+
+That is essentially a compiler.
+
+Because it is one.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Render graph as compiler IR}
+
+This is the deepest useful perspective.
+
+Scene rendering code produces high-level IR:
+
+\begin{verbatim}
+Shadow writes S
+Geometry reads S writes H
+Bloom reads H writes B
+Present reads H,B
+\end{verbatim}
+
+Compiler transforms into:
+
+\begin{verbatim}
+ordered passes
+physical resources
+barriers
+queue waits/signals
+load/store decisions
+\end{verbatim}
+
+Vulkan/Metal backends are code generators.
+
+That is why compiler theory ideas such as:
+
+\begin{itemize}
+\tightlist
+\item
+  dependency graphs,
+\item
+  liveness,
+\item
+  alias analysis,
+\item
+  scheduling
+\end{itemize}
+
+appear here.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hyperref[volume-reading-map]{Reading map} · \hyperref[06-engine-ii-ch042-from-cartridge-bytes-to-a-reproducible-machine]{Previous chapter} · \hyperref[06-engine-ii-ch044-cross-backend-conversion-and-agreement]{Next chapter}

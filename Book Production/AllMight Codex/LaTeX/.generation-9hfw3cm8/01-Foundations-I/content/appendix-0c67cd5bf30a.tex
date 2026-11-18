@@ -1,0 +1,40 @@
+\hypertarget{appendix-0c67cd5bf30a}{}
+\section{Pages and page offsets}\label{appendix-0c67cd5bf30a-pages-and-page-offsets}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\subsection{Definition and mechanism}\label{appendix-0c67cd5bf30a-definition-and-mechanism}
+
+A page is a virtual address block; a frame is page-sized physical backing. With page size P=2\^{}k, divide VA into VPN=floor(VA/P) and offset=VA mod P. Translation substitutes frame identity while preserving offset. The 4-KiB examples use k=12; actual supported sizes are platform-dependent.
+
+\subsection{Prerequisites}\label{appendix-0c67cd5bf30a-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-18ee4f913c3c]{Addresses and virtual memory} --- Mappings give numeric locations their process-specific storage identity.
+\item
+  \hyperref[appendix-dbe5905163c2]{Bit mask} --- A low-bit mask isolates the within-page offset.
+\item
+  \hyperref[appendix-73425b25118e]{Shift operations} --- Shifts relocate a selected byte or address field to its significance position.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-0c67cd5bf30a-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-01e5905165c4]{Page tables and MMU} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-f897c1ddac8f]{Virtual and physical contiguity} --- uses this mechanism as stated in its prerequisites.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-0c67cd5bf30a-recall-and-next-depth}
+
+Split 0x12345ABC into VPN 12345 and offset ABC for 4 KiB.
+
+\textbf{Pending:} Architecture page sizes, multilevel address fields, huge pages.
+
+\subsection{Source and navigation}\label{appendix-0c67cd5bf30a-source-and-navigation}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

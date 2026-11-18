@@ -8,7 +8,7 @@ GPU performance depends on memory traffic, divergent execution and synchronizati
 
 **Recall question:** How can divergent control flow reduce subgroup efficiency?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 37332–40668; source-span SHA256 97747b6c97e94bf083c6a849b1d49ce42a8620679d0c96f200ff99ada6dbc21d. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 37363–41670; source-span SHA256 8379b807643454273f6eebd337220d877bb76c633619f4e24e75c526131a5b67. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS & ORDERING
@@ -3331,6 +3331,977 @@ If you can explain why the current radix histogram uses `simd_sum`, why the scat
 
 You are reasoning in **parallel algorithm structure**.
 
+
+<!-- Book-completion teaching addition 2326a513e3ee805f -->
+
+## Build GPU bins and fixed hash tables only after capacity and ownership are explicit
+
+The Phase 22 algorithm pass has already derived atomics, exclusive scans, stable scatter, dispatch boundaries and device-memory dependencies. This section uses those tools to build two query structures: a spatial bin index and a fixed-capacity open-addressing table. They solve different lookup problems, but both need explicit ownership and an honest capacity result before a later dispatch is allowed to query their output.
+
+A **spatial bin** maps a position or object bound to one or more cells in a regular grid. A **hash table** maps a discrete key to a slot chosen by a hash and collision-resolution rule. Neither structure becomes correct merely because threads can atomically reserve output positions.
+
+### First decide what a successful build means
+
+Suppose a pass processes $N$ input records and has output capacity $C$. Keep these values distinct:
+
+- `attempted`: how many records requested an output slot;
+- `written`: how many records were actually stored within capacity;
+- `overflow`: whether any record could not be represented.
+
+Initialize `attempted=0` and `overflow=false` before the pass, and make those initialization writes visible to the producer invocations. Choose a counter width that can represent every attempted reservation without wrapping: even a rejected reservation increments it. Otherwise two requests could receive the same wrapped ticket. A bounded atomic append can reserve a unique ticket:
+
+```text
+ ticket = atomic_add(attempted, 1)
+ if ticket < C:
+     output[ticket] = record
+     // This record owns exactly one in-range destination.
+ else:
+     atomic_store(overflow, true)
+```
+
+The atomic counter gives each request a different ticket. It does **not** guarantee that every request fits. When the build pass is finished, the consumer may use the output only if the published result says `overflow == false`. If overflow is true, the structure is incomplete: grow or reallocate and rebuild, or return a visible failure. Do not clamp the count to $C$ and quietly treat the prefix as a complete candidate set. The missing records may contain the only correct hit, collision candidate, or particle.
+
+If every input contributes exactly one record and $N\le C$, then the completed output count is $N$. If some inputs are filtered, use a separate predicate/scan/scatter count or publish the exact completed count after the build. Do not expose a count before all payload writes have finished.
+
+The safe publication point is after the producer dispatch has completed and the API has established the write-to-read dependency for the consumer. In Vulkan, the synchronization guide shows a compute shader-write to later compute shader-read barrier for this case; a dispatch boundary by itself should not be mistaken for the required memory visibility rule. CUDA kernel launches are asynchronous with respect to the host, so host-side reuse also needs stream/event/device synchronization appropriate to the producer and consumer streams. See the [Vulkan compute-to-compute synchronization examples](https://docs.vulkan.org/guide/latest/synchronization_examples.html) and the [CUDA guide's kernel and synchronization model](https://docs.nvidia.com/cuda/cuda-programming-guide/02-basics/intro-to-cuda-cpp.html).
+
+### Worked 2D spatial-bin build
+
+Let a 2D grid cover the half-open domain
+
+$$
+[-2,2)\times[-2,2)
+$$
+
+with cell width $h=1$. There are $4\times4$ cells. For an in-domain point $(x,y)$, define
+
+$$
+i_x=\left\lfloor\frac{x-(-2)}{1}\right\rfloor,
+\qquad
+i_y=\left\lfloor\frac{y-(-2)}{1}\right\rfloor,
+\qquad
+b=i_y\cdot4+i_x.
+$$
+
+Use `floor`, not truncation toward zero. For example, with an origin at zero and width one, $x=-0.2$ belongs to cell $-1$ under a signed grid convention; truncation would incorrectly produce $0$. Here the explicit domain offset keeps valid cell coordinates nonnegative, while `floor` still defines the boundary rule.
+
+Reject non-finite coordinates before applying `floor` or converting to a cell index, and check integer/index ranges before flattening. Assign these records:
+
+| Record | Position | Cell coordinate | Flat bin |
+|---|---:|---:|---:|
+| A | $(-1.2,-0.1)$ | $(0,1)$ | 4 |
+| B | $(0.2,-0.1)$ | $(2,1)$ | 6 |
+| C | $(0.9,0.9)$ | $(2,2)$ | 10 |
+| D | $(2.0,0.0)$ | outside: upper edge is excluded | reject |
+| E | $(-2.1,0.0)$ | outside domain | reject |
+
+The half-open rule is deliberate: points on the lower edge $-2$ are included, and points on upper edge $2$ are excluded. Another engine can clamp or place out-of-domain values in overflow cells, but the choice must be stated and used consistently by both build and query.
+
+Initialize all bin counts to zero. Establish a producer-to-consumer memory dependency at **each** stage boundary: initialization → count, count → scan, scan → scatter, and scatter → query. A single barrier only after scatter cannot repair an earlier scan that read unfinished counts. Build the index in three stages:
+
+1. **Count:** atomically increment `count[bin]` for each accepted record. This count is exact after the dispatch completes, even though the order of increments is nondeterministic.
+2. **Exclusive scan:** scan the 16 bin counts to obtain each bin's start offset. For A, B and C, the nonzero counts are `count[4]=1`, `count[6]=1`, and `count[10]=1`. Their exclusive offsets are `offset[4]=0`, `offset[6]=1`, and `offset[10]=2`; the total number of entries is 3.
+3. **Scatter:** initialize each bin cursor to zero (with the appropriate write-to-read dependency), then write each input ID into the range owned by its bin. With one record per bin, the result is `bin 4 → [A]`, `bin 6 → [B]`, and `bin 10 → [C]`.
+
+If A and a new record F both land in bin 4, `atomic_add(cursor[4],1)` gives them distinct destinations inside bin 4's range. Which record gets the first destination may vary between runs. That is safe if later code treats a bin as an unordered candidate set. If deterministic order is needed for reproducible output, compute a deterministic per-bin rank—for example, sort by `(bin, inputID)` or use a stable segmented rank—rather than assuming atomic arrival order is stable.
+
+For a record whose bound overlaps multiple cells, count one entry for every overlapped cell. The sum of bin counts is then the required entry capacity, not the number of objects. Use counter and offset widths that can represent the entire entry sum without overflow, and scan those counts before scatter. If the allocated entry array is too small, flag the build as failed and rebuild with enough space; never silently omit overlapped cells.
+
+### Fixed-capacity open addressing with a bounded build pass
+
+A fixed open-addressing table stores keys in slots. When two keys choose the same initial slot, a probing rule examines later slots. The NVIDIA [cuCollections `static_map` documentation](https://github.com/NVIDIA/cuCollections/blob/dev/include/cuco/static_map.cuh) describes a fixed-size open-addressing map and explicitly warns that its insert operations do not grow the table. That is the right capacity lesson: a fixed table needs a deliberate failure policy.
+
+For a small teaching model, use eight slots, linear probing, and
+
+$$
+h(k)=k\bmod8.
+$$
+
+Reserve `EMPTY` as a sentinel key that is not a valid input key. Initialize every key slot to `EMPTY`. Preprocess the input so keys are unique. If duplicate keys are possible, first group them and either require byte-identical payloads or reduce them in a deterministic, documented order. “Whichever thread writes last” is not a valid duplicate policy.
+
+Each build invocation probes at most eight slots. At a slot, use an atomic compare-and-swap (CAS) to change `EMPTY` to the incoming key. CAS returns the old value: if it was `EMPTY`, this invocation owns that slot and is the only writer of its payload; if it already held the same key, apply the declared duplicate policy; if it held a different key, continue probing. NVIDIA documents `atomicCAS` as an atomic compare-and-swap operation in the [CUDA Programming Guide](https://docs.nvidia.com/cuda/cuda-programming-guide/pdf/cuda-programming-guide.pdf).
+
+```text
+for probe in 0 .. 7:
+    slot = (hash(key) + probe) mod 8
+    old = atomic_CAS(keySlot[slot], EMPTY, key)
+
+    if old == EMPTY:
+        payload[slot] = value       // this invocation owns this new slot
+        return INSERTED
+
+    if old == key:
+        return DUPLICATE_OR_CONFLICT // resolve before build, by contract
+
+return TABLE_FULL
+```
+
+This pseudocode is intentionally **build-only**. It does not allow a query to inspect a slot while another invocation is still writing its payload. The CAS claims the key slot, but this teaching protocol does not use the claimed key as a same-dispatch publication signal for the separate payload. Finish the complete build dispatch, establish the API-specific device-memory dependency, and only then launch the query dispatch. Do not add concurrent deletion, resize, or insert-and-lookup behavior to this example. Production concurrent maps need a stronger publication and memory-ordering design; the official cuCollections API supports richer operations under its documented configuration and constraints.
+
+### Collision trace and full-table failure
+
+Insert keys `1`, `9`, and `17` into an empty eight-slot table. All have initial slot 1:
+
+| Insert | Probe sequence | Result |
+|---|---|---|
+| 1 | 1 | CAS claims slot 1; owner writes its payload |
+| 9 | 1 occupied by 1; 2 empty | CAS claims slot 2; owner writes its payload |
+| 17 | 1 occupied; 2 occupied; 3 empty | CAS claims slot 3; owner writes its payload |
+
+After the build dispatch and the producer-to-consumer memory dependency, lookup for 9 probes slots 1 then 2 and returns the payload at slot 2. A lookup must stop at an `EMPTY` slot because this insertion policy never skips an empty slot while probing.
+
+**Full-table exercise with solution.** Fill the table with eight distinct keys. Try to insert key 17. It may compare against eight occupied slots and then return `TABLE_FULL`; the loop must terminate after exactly eight probes. It must not wrap forever, overwrite an occupied key, or publish a partial payload. Set an overflow/failure flag, reject this table version for queries if completeness is required, and rebuild with a larger capacity or report failure. If key 17 is actually a duplicate already present, the equality check returns the existing-key outcome instead; duplicate handling is a separate condition from capacity exhaustion.
+
+**Duplicate-key exercise with solution.** Two input records have key 9 but payloads 4 and 7. The build protocol cannot choose a meaningful value by racing two writers. Preprocess by key and define a deterministic reduction; for example, if the intended value is a sum, reduce to 11 in a fixed input order, then build one `(9,11)` pair. If no reduction is defined, reject the duplicate input as a contract violation.
+
+### Limits and exit check
+
+The bin example uses one point per cell assignment; an object's bounding region may need several bin entries. The hash example uses fixed capacity, a reserved empty sentinel, unique preprocessed keys, bounded linear probing and a build/query phase boundary. It does not prove a production GPU hash map, concurrent lookup during insertion, deletion, resize, cross-API atomic semantics, or performance. Those require API-specific memory-order rules, capacity sizing and tests. NVIDIA's cuCollections is a production implementation reference, while its fixed-map documentation also makes clear that a static map does not grow automatically.
+
+Before using either structure, a learner should be able to: compute a signed grid cell with the declared boundary rule; derive count/scan offsets and scatter destinations; distinguish attempted appends from a complete published output; trace a collision chain and terminate a full-table insertion; explain which thread owns each payload write; state what duplicate keys mean; and show the producer-to-consumer device-memory dependency before querying the finished table.
+
+<!-- Book-completion teaching addition 7165172590d93b10 -->
+
+<!-- Book-completion teaching addition ad7020bce71c0990 -->
+
+### Reconstruct the append, bin and hash contracts on the CPU
+
+This complete C++20 oracle checks the preceding exact coordinates, scan offsets, collision chain, duplicate reduction and capacity failures. Every check stays active with NDEBUG. The sequential implementation deliberately supplies no GPU race, atomic-memory-order or performance evidence. Its publication flag models the contract to enforce; a real GPU backend must implement the device-memory handoff described above.
+
+Run from the vault root:
+
+```sh
+c++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror tools/labs/gpu_structure_reference_lab.cpp -o /tmp/allmight-gpu-structures
+/tmp/allmight-gpu-structures
+```
+
+```cpp
+// CPU reference oracle for the staged GPU append/bin/hash lesson.
+// This models the data contracts sequentially. It proves no GPU visibility,
+// race-freedom, memory ordering, scheduling determinism, or performance claim.
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdint>
+#include <iostream>
+#include <limits>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
+
+namespace {
+
+void Check(bool condition, const std::string& message)
+{
+    // Deliberately not assert(): checks stay active under -DNDEBUG and -O2.
+    if (!condition)
+        throw std::runtime_error("CHECK FAILED: " + message);
+}
+
+// The next attempted ticket is returned, then the counter advances.
+// Refuse wraparound so a wrapped ticket cannot alias an earlier destination.
+bool TryTakeCounterTicket(std::uint64_t& counter, std::uint64_t& ticket)
+{
+    if (counter == std::numeric_limits<std::uint64_t>::max())
+        return false;
+
+    ticket = counter;
+    ++counter;
+    return true;
+}
+
+struct AppendResult
+{
+    std::uint64_t attempted = 0;
+    std::vector<int> stored;
+    bool overflow = false;
+    bool publishable = false;
+};
+
+AppendResult BoundedAppend(const std::vector<int>& input, std::size_t capacity)
+{
+    AppendResult result;
+    result.stored.reserve(capacity);
+
+    for (int value : input)
+    {
+        std::uint64_t ticket = 0;
+        if (!TryTakeCounterTicket(result.attempted, ticket))
+        {
+            result.overflow = true;
+            break;
+        }
+
+        if (ticket < capacity)
+        {
+            // Each ticket below capacity owns one unique slot.
+            result.stored.push_back(value);
+        }
+        else
+        {
+            // Preserve the failure signal. Never present a truncated prefix as
+            // a complete candidate set.
+            result.overflow = true;
+        }
+    }
+
+    result.publishable = !result.overflow;
+    return result;
+}
+
+struct Grid
+{
+    double minX = -2.0;
+    double minY = -2.0;
+    double maxX = 2.0; // Upper edge is excluded: [min, max).
+    double maxY = 2.0;
+    double cellWidth = 1.0;
+    int cellsX = 4;
+    int cellsY = 4;
+};
+
+struct Point
+{
+    int id;
+    double x;
+    double y;
+};
+
+struct Cell
+{
+    int x;
+    int y;
+    int flat;
+};
+
+void ValidateGrid(const Grid& grid)
+{
+    Check(std::isfinite(grid.minX) && std::isfinite(grid.minY) &&
+          std::isfinite(grid.maxX) && std::isfinite(grid.maxY) &&
+          std::isfinite(grid.cellWidth) && grid.cellWidth > 0,
+          "grid domain and positive width must be finite");
+    Check(grid.minX < grid.maxX && grid.minY < grid.maxY &&
+          grid.cellsX > 0 && grid.cellsY > 0,
+          "grid extent and cell counts must be positive");
+    const auto count = static_cast<std::int64_t>(grid.cellsX) * grid.cellsY;
+    Check(count <= std::numeric_limits<int>::max(), "flat bin index fits int");
+    const double nx = (grid.maxX - grid.minX) / grid.cellWidth;
+    const double ny = (grid.maxY - grid.minY) / grid.cellWidth;
+    Check(std::isfinite(nx) && std::isfinite(ny) &&
+          std::ceil(nx) == grid.cellsX && std::ceil(ny) == grid.cellsY,
+          "cell counts must cover exactly the declared domain");
+}
+
+std::optional<Cell> ToCell(const Grid& grid, double x, double y)
+{
+    ValidateGrid(grid);
+    // Reject NaN and infinities before floor or integer conversion.
+    if (!std::isfinite(x) || !std::isfinite(y))
+        return std::nullopt;
+
+    // Half-open domain gives one unambiguous owner to every boundary point.
+    if (x < grid.minX || x >= grid.maxX ||
+        y < grid.minY || y >= grid.maxY)
+        return std::nullopt;
+
+    // floor is essential for signed coordinates. Truncation toward zero would
+    // map a negative fraction to cell zero instead of the cell to its left.
+    const double fx = std::floor((x - grid.minX) / grid.cellWidth);
+    const double fy = std::floor((y - grid.minY) / grid.cellWidth);
+    // Validate in floating point before any potentially out-of-range cast.
+    if (!std::isfinite(fx) || !std::isfinite(fy) ||
+        fx < 0 || fx >= grid.cellsX || fy < 0 || fy >= grid.cellsY)
+        return std::nullopt;
+    const int ix = static_cast<int>(fx);
+    const int iy = static_cast<int>(fy);
+
+    return Cell{ix, iy, iy * grid.cellsX + ix};
+}
+
+struct BinBuild
+{
+    std::vector<std::uint64_t> counts;
+    std::vector<std::uint64_t> offsets;
+    std::vector<int> recordIds;
+    std::uint64_t totalEntries = 0;
+    bool overflow = false;
+    bool publishable = false;
+};
+
+BinBuild BuildPointBins(const Grid& grid,
+                        const std::vector<Point>& points,
+                        std::size_t entryCapacity)
+{
+    ValidateGrid(grid);
+    const int binCount = grid.cellsX * grid.cellsY;
+    BinBuild result;
+    result.counts.assign(static_cast<std::size_t>(binCount), 0); // Initialize counts.
+    result.offsets.assign(static_cast<std::size_t>(binCount), 0);
+
+    // Count pass. Invalid/out-of-domain points follow the declared reject rule.
+    for (const Point& point : points)
+    {
+        const auto cell = ToCell(grid, point.x, point.y);
+        if (!cell)
+            continue;
+
+        std::uint64_t ignoredTicket = 0;
+        if (!TryTakeCounterTicket(result.counts[static_cast<std::size_t>(cell->flat)],
+                                  ignoredTicket))
+        {
+            result.overflow = true;
+            return result;
+        }
+    }
+
+    // Exclusive scan. Check addition so neither total nor offsets can wrap.
+    std::uint64_t running = 0;
+    for (int bin = 0; bin < binCount; ++bin)
+    {
+        result.offsets[static_cast<std::size_t>(bin)] = running;
+        const std::uint64_t count = result.counts[static_cast<std::size_t>(bin)];
+        if (count > std::numeric_limits<std::uint64_t>::max() - running)
+        {
+            result.overflow = true;
+            return result;
+        }
+        running += count;
+    }
+    result.totalEntries = running;
+
+    // Capacity is checked before scatter. An undersized output is a failed build,
+    // not a partially valid index.
+    if (result.totalEntries > entryCapacity)
+    {
+        result.overflow = true;
+        return result;
+    }
+
+    result.recordIds.assign(static_cast<std::size_t>(result.totalEntries), -1);
+    std::vector<std::uint64_t> cursors(static_cast<std::size_t>(binCount), 0); // Initialize cursors.
+
+    // Sequential CPU reference scatter preserves input order within each bin.
+    // A GPU atomic cursor can assign a different within-bin order across runs.
+    for (const Point& point : points)
+    {
+        const auto cell = ToCell(grid, point.x, point.y);
+        if (!cell)
+            continue;
+
+        const std::size_t bin = static_cast<std::size_t>(cell->flat);
+        const std::uint64_t local = cursors[bin]++;
+        const std::uint64_t destination = result.offsets[bin] + local;
+        Check(destination < result.recordIds.size(), "scatter destination is in range");
+        result.recordIds[static_cast<std::size_t>(destination)] = point.id;
+    }
+
+    result.publishable = true;
+    return result;
+}
+
+std::vector<std::pair<int, int>> DeterministicBinOrder(
+    const Grid& grid, const std::vector<Point>& points)
+{
+    // Sorting by (bin, record ID) is a deterministic alternative when a stable
+    // order is required instead of atomic arrival order.
+    std::vector<std::pair<int, int>> entries;
+    for (const Point& point : points)
+    {
+        const auto cell = ToCell(grid, point.x, point.y);
+        if (cell)
+            entries.emplace_back(cell->flat, point.id);
+    }
+    std::sort(entries.begin(), entries.end());
+    return entries;
+}
+
+struct KeyValue
+{
+    int key;
+    int value;
+};
+
+enum class DuplicatePolicy
+{
+    Reject,
+    SumAfterDeterministicSort
+};
+
+std::optional<std::vector<KeyValue>> PreprocessKeys(
+    std::vector<KeyValue> input, DuplicatePolicy policy)
+{
+    std::stable_sort(input.begin(), input.end(),
+        [](const KeyValue& a, const KeyValue& b) { return a.key < b.key; });
+
+    std::vector<KeyValue> output;
+    for (std::size_t i = 0; i < input.size();)
+    {
+        std::size_t end = i + 1;
+        while (end < input.size() && input[end].key == input[i].key)
+            ++end;
+
+        if (end - i > 1 && policy == DuplicatePolicy::Reject)
+            return std::nullopt;
+
+        if (policy == DuplicatePolicy::SumAfterDeterministicSort)
+        {
+            // Input order among equal keys is retained by stable_sort, so this
+            // reference reduction has an explicitly fixed order.
+            std::int64_t sum = 0;
+            for (std::size_t j = i; j < end; ++j)
+            {
+                const auto term = static_cast<std::int64_t>(input[j].value);
+                Check((term >= 0 && sum <= std::numeric_limits<std::int64_t>::max() - term) ||
+                      (term < 0 && sum >= std::numeric_limits<std::int64_t>::min() - term),
+                      "duplicate accumulator must not overflow");
+                sum += term;
+            }
+            Check(sum >= std::numeric_limits<int>::min() &&
+                  sum <= std::numeric_limits<int>::max(),
+                  "duplicate reduction fits payload type");
+            output.push_back(KeyValue{input[i].key, static_cast<int>(sum)});
+        }
+        else
+        {
+            output.push_back(input[i]);
+        }
+        i = end;
+    }
+    return output;
+}
+
+class FixedHashTable
+{
+public:
+    static constexpr std::size_t kCapacity = 8;
+    static constexpr int kEmpty = std::numeric_limits<int>::min();
+
+    enum class InsertStatus { Inserted, Duplicate, Full, InvalidSentinel };
+
+    FixedHashTable()
+    {
+        // Initialize every key and payload before the build phase.
+        keys_.fill(kEmpty);
+        values_.fill(0);
+    }
+
+    InsertStatus InsertBuildOnly(KeyValue item, std::size_t& probes)
+    {
+        Check(!published_, "cannot insert after query publication");
+        probes = 0;
+        if (item.key == kEmpty)
+        {
+            failed_ = true;
+            return InsertStatus::InvalidSentinel;
+        }
+
+        const std::size_t first = Hash(item.key);
+        for (std::size_t attempt = 0; attempt < kCapacity; ++attempt)
+        {
+            ++probes;
+            const std::size_t slot = (first + attempt) % kCapacity;
+
+            if (keys_[slot] == kEmpty)
+            {
+                // The successful CAS-equivalent claim owns the payload write.
+                // This sequential oracle models slot ownership only; it does
+                // not prove a concurrent GPU implementation is race-free.
+                keys_[slot] = item.key;
+                values_[slot] = item.value;
+                return InsertStatus::Inserted;
+            }
+
+            if (keys_[slot] == item.key)
+            {
+                // Duplicates must be resolved before this build pass. Never
+                // let two racing writers choose a payload by arrival order.
+                failed_ = true;
+                return InsertStatus::Duplicate;
+            }
+        }
+
+        failed_ = true;
+        return InsertStatus::Full; // Bounded: at most eight probes.
+    }
+
+    bool FinishBuild()
+    {
+        // A real GPU must additionally establish API-specific device-memory
+        // visibility before its separate query dispatch.
+        published_ = !failed_;
+        return published_;
+    }
+
+    std::optional<int> LookupPublished(int key, std::size_t& probes) const
+    {
+        Check(published_, "query is rejected until complete build is published");
+        probes = 0;
+        const std::size_t first = Hash(key);
+        for (std::size_t attempt = 0; attempt < kCapacity; ++attempt)
+        {
+            ++probes;
+            const std::size_t slot = (first + attempt) % kCapacity;
+            if (keys_[slot] == kEmpty)
+                return std::nullopt;
+            if (keys_[slot] == key)
+                return values_[slot];
+        }
+        return std::nullopt;
+    }
+
+private:
+    static std::size_t Hash(int key)
+    {
+        // This is the lesson's deliberately simple positive-key hash.
+        const int remainder = key % static_cast<int>(kCapacity);
+        return static_cast<std::size_t>(remainder < 0 ? remainder + kCapacity : remainder);
+    }
+
+    std::array<int, kCapacity> keys_{};
+    std::array<int, kCapacity> values_{};
+    bool failed_ = false;
+    bool published_ = false;
+};
+
+void RunChecks()
+{
+    // Check invalid contracts explicitly rather than relying on undefined casts.
+    Grid invalidGrid;
+    invalidGrid.cellWidth = 0;
+    bool badGridRejected = false;
+    try { (void)ToCell(invalidGrid, 0, 0); }
+    catch (const std::runtime_error&) { badGridRejected = true; }
+    Check(badGridRejected, "zero-width grid is rejected before division");
+
+    FixedHashTable unpublished;
+    std::size_t beforeProbes = 0;
+    bool earlyQueryRejected = false;
+    try { (void)unpublished.LookupPublished(1, beforeProbes); }
+    catch (const std::runtime_error&) { earlyQueryRejected = true; }
+    Check(earlyQueryRejected, "query before publication is rejected");
+    Check(unpublished.InsertBuildOnly({FixedHashTable::kEmpty, 0}, beforeProbes) ==
+          FixedHashTable::InsertStatus::InvalidSentinel, "reserved key is rejected");
+    Check(!unpublished.FinishBuild(), "sentinel failure invalidates the build");
+
+    // Counter-width boundary: no wraparound ticket is ever returned.
+    std::uint64_t counter = std::numeric_limits<std::uint64_t>::max() - 1;
+    std::uint64_t ticket = 0;
+    Check(TryTakeCounterTicket(counter, ticket), "last representable increment succeeds");
+    Check(ticket == std::numeric_limits<std::uint64_t>::max() - 1,
+          "ticket equals pre-increment counter");
+    Check(counter == std::numeric_limits<std::uint64_t>::max(), "counter reaches max");
+    Check(!TryTakeCounterTicket(counter, ticket), "counter refuses wraparound");
+
+    // Append capacity is explicit; attempted is not the same as stored.
+    const AppendResult append = BoundedAppend({10, 20, 30}, 2);
+    Check(append.attempted == 3, "append counts all requests");
+    Check(append.stored == std::vector<int>({10, 20}), "only in-capacity tickets store");
+    Check(append.overflow, "append overflow is visible");
+    Check(!append.publishable, "truncated append result is not published as complete");
+
+    const AppendResult appendFits = BoundedAppend({4, 5}, 2);
+    Check(appendFits.attempted == 2 && appendFits.stored.size() == 2,
+          "in-capacity append stores every input");
+    Check(!appendFits.overflow && appendFits.publishable, "complete append is publishable");
+
+    // Signed coordinate, finite-value, and half-open-boundary cases.
+    const Grid grid;
+    const auto lower = ToCell(grid, -2.0, -2.0);
+    Check(lower && lower->x == 0 && lower->y == 0 && lower->flat == 0,
+          "lower boundary is included");
+    Check(!ToCell(grid, 2.0, 0.0), "upper x boundary is excluded");
+    Check(!ToCell(grid, 0.0, 2.0), "upper y boundary is excluded");
+    Check(!ToCell(grid, -2.1, 0.0), "out-of-domain point is rejected");
+    Check(!ToCell(grid, std::numeric_limits<double>::infinity(), 0.0),
+          "nonfinite point is rejected");
+    const double negativeFraction = std::floor((-0.2 - (-1.0)) / 1.0);
+    Check(negativeFraction == 0.0, "offset floor gives expected signed-grid cell");
+    Check(std::trunc(-0.2) == 0.0 && std::floor(-0.2) == -1.0,
+          "truncation differs from floor for a negative fraction");
+
+    const std::vector<Point> points{
+        {1, -1.2, -0.1}, // cell (0,1), flat bin 4
+        {2,  0.2, -0.1}, // cell (2,1), flat bin 6
+        {3,  0.9,  0.9}, // cell (2,2), flat bin 10
+        {4,  2.0,  0.0}, // excluded upper boundary
+        {5, -2.1,  0.0}  // outside
+    };
+    const BinBuild bins = BuildPointBins(grid, points, 3);
+    Check(bins.publishable && !bins.overflow, "exact-capacity bin build succeeds");
+    Check(bins.totalEntries == 3, "only three in-domain points are binned");
+    Check(bins.counts[4] == 1 && bins.counts[6] == 1 && bins.counts[10] == 1,
+          "expected bins have one entry each");
+    Check(bins.offsets[4] == 0 && bins.offsets[6] == 1 && bins.offsets[10] == 2,
+          "exclusive scan offsets are 0,1,2");
+    Check(bins.recordIds == std::vector<int>({1, 2, 3}),
+          "scatter writes records to scanned ranges");
+    const BinBuild binsTooSmall = BuildPointBins(grid, points, 2);
+    Check(binsTooSmall.overflow && !binsTooSmall.publishable,
+          "undersized bin array fails before publishing partial output");
+
+    const std::vector<Point> sameBin{
+        {8, -1.2, -0.1}, {6, -1.4, -0.4}
+    };
+    const auto stable = DeterministicBinOrder(grid, sameBin);
+    Check(stable == std::vector<std::pair<int, int>>({{4, 6}, {4, 8}}),
+          "(bin,ID) sort yields deterministic within-bin order");
+
+    // Duplicate-key policy: reject by default, or explicitly pre-reduce.
+    Check(!PreprocessKeys({{9, 4}, {9, 7}}, DuplicatePolicy::Reject),
+          "duplicate policy can reject conflicting keys");
+    const auto reduced = PreprocessKeys({{9, 4}, {9, 7}},
+                                        DuplicatePolicy::SumAfterDeterministicSort);
+    Check(reduced && reduced->size() == 1 && (*reduced)[0].key == 9 &&
+          (*reduced)[0].value == 11, "duplicate sum is explicit and deterministic");
+
+    // Collision trace: 1, 9 and 17 all begin at slot 1 in the 8-slot table.
+    FixedHashTable table;
+    std::size_t probes = 0;
+    Check(table.InsertBuildOnly({1, 100}, probes) == FixedHashTable::InsertStatus::Inserted &&
+          probes == 1, "key 1 claims slot 1");
+    Check(table.InsertBuildOnly({9, 900}, probes) == FixedHashTable::InsertStatus::Inserted &&
+          probes == 2, "key 9 probes slots 1 then 2");
+    Check(table.InsertBuildOnly({17, 1700}, probes) == FixedHashTable::InsertStatus::Inserted &&
+          probes == 3, "key 17 probes slots 1,2,3");
+    Check(table.FinishBuild(), "complete collision table is published");
+    Check(table.LookupPublished(9, probes) == std::optional<int>(900) && probes == 2,
+          "lookup follows probe chain after build publication");
+    Check(!table.LookupPublished(25, probes), "missing lookup stops at empty slot");
+
+    // Duplicate insertions invalidate this build rather than race to choose a value.
+    FixedHashTable duplicateTable;
+    Check(duplicateTable.InsertBuildOnly({9, 4}, probes) == FixedHashTable::InsertStatus::Inserted,
+          "first unique key inserted");
+    Check(duplicateTable.InsertBuildOnly({9, 7}, probes) == FixedHashTable::InsertStatus::Duplicate,
+          "duplicate key is rejected");
+    Check(!duplicateTable.FinishBuild(), "failed duplicate build is not published");
+
+    // Full-table failure is bounded to exactly eight probes and not published.
+    FixedHashTable full;
+    for (int key = 0; key < 8; ++key)
+        Check(full.InsertBuildOnly({key, key * 10}, probes) ==
+              FixedHashTable::InsertStatus::Inserted, "fill one table slot per key");
+    Check(full.InsertBuildOnly({17, 170}, probes) == FixedHashTable::InsertStatus::Full,
+          "ninth unique key fails in a full table");
+    Check(probes == FixedHashTable::kCapacity, "full-table search is bounded to capacity probes");
+    Check(!full.FinishBuild(), "full-table build is not published as complete");
+
+    std::cout << "PASS: CPU reference contracts (append, bins, duplicates, bounded hash build)\n";
+}
+
+} // namespace
+
+int main()
+{
+    try
+    {
+        RunChecks();
+        return 0;
+    }
+    catch (const std::exception& error)
+    {
+        std::cerr << error.what() << '\n';
+        return 1;
+    }
+}
+```
+
+## Keep a frame's memory alive until its final consumer is finished
+
+The bin builder has a clear end: publish a complete structure, then let a later dispatch read it. A renderer repeats the same problem at a larger scale. While the GPU reads frame $f$'s transforms, the CPU wants to prepare frame $f+1$. Giving both processors the same mutable bytes would make the answer depend on who reaches the memory first. Buffering gives each in-flight version its own storage. Synchronization decides when that storage becomes reusable.
+
+A **frame in flight** is submitted work whose relevant consumers have not finished. Its lifetime is not necessarily the lifetime of the displayed image. A swapchain image, a CPU command-recording slot and an upload-memory slice may have different counts and completion conditions. Record which consumer retires each resource instead of treating one frame number as universal permission to overwrite.
+
+### Double and triple buffering change ownership, not execution speed
+
+With one transform buffer, the CPU must wait before overwriting data the GPU still reads. Two or three versions let it prepare another frame while earlier data remains owned by the GPU. This can hide unequal preparation times. It cannot make a six-millisecond GPU workload execute in two milliseconds. Extra queued frames can increase the age of input when it appears on screen.
+
+Work a simple timeline. CPU preparation takes 2 ms per frame; one GPU queue takes 6 ms per frame. Ignore presentation and transfer costs. Assume one completion token covers every GPU read of a slot. The CPU may write a slot only after its previous token completes.
+
+| Frame and slot | CPU writes | Submitted at | GPU execution | Slot may be reused |
+|---|---:|---:|---:|---:|
+| 0, A | 0–2 ms | 2 ms | 2–8 ms | 8 ms |
+| 1, B | 2–4 ms | 4 ms | 8–14 ms | 14 ms |
+| 2, C | 4–6 ms | 6 ms | 14–20 ms | 20 ms |
+| 3, A | 8–10 ms | 10 ms | 20–26 ms | 26 ms |
+
+At 6 ms the CPU cannot overwrite A: frame 0 reads it until 8 ms. It waits for **A's retirement**; cycling the slot index proves nothing about completion. After startup, the GPU finishes one frame every 6 ms, at most about $1000/6\approx166.7$ frames per second in this model.
+
+**Solved comparison.** With two slots, frame 2 cannot begin writing A until 8 ms. It is prepared from 8–10 ms and executes from 14–20 ms. The first GPU completion times remain 8, 14 and 20 ms. Triple buffering did not improve sustained throughput here. It let the CPU prepare frame 2 earlier, which can absorb variable preparation time, but can also queue older input. Measure presentation latency separately from throughput.
+
+A **GPU command processor** consumes submitted commands and directs work to execution engines. Recording or submitting a draw does not mean its shader invocations have finished. Before resetting command storage, recycling descriptors or releasing resources, observe the completion condition required by the backend.
+
+### Async compute starts with a dependency graph
+
+**Asynchronous compute** submits compute work through a path that can be scheduled independently of graphics where the device and API permit. A second queue is an opportunity for overlap, not proof of a second independent GPU. The workloads can compete for shader cores, registers, caches and memory bandwidth.
+
+Suppose an upload $U$ takes 1 ms; culling $C$ takes 2 ms and reads that upload; an unrelated shadow pass $S$ takes 3 ms; main drawing $D$ takes 4 ms and reads both culling and shadows. Dependencies are $U\to C\to D$ and $S\to D$. If $U$ and $S$ start at time zero on suitable engines, $C$ follows $U$, and there is no resource contention, $D$ starts at $\max(1+2,3)=3$ ms and ends at 7 ms. A serial schedule takes 10 ms. Seven milliseconds is an **ideal schedule bound under those assumptions**, not a device benchmark.
+
+If culling reads last frame's depth, identify that input version and its temporal validity. If it reads the same main pass's not-yet-produced depth, the proposed overlap is cyclic. If culling and shadows both saturate bandwidth, overlap may lengthen both. Compare measured serial and overlapped schedules using the same inputs and quality requirements. NVIDIA's [async-compute guidance](https://developer.nvidia.com/blog/advanced-api-performance-async-compute-and-overlap/) explains complementary workloads and contention on its hardware; it is not a universal speedup guarantee.
+
+A **copy or transfer queue** accepts transfers separately from graphics/compute commands. Some hardware has dedicated copy engines, but queue availability does not guarantee physical independence or full overlap. Copied data still needs a transfer-write-to-consumer-read dependency. Vulkan queues from different families may also need ownership transfers for exclusively shared resources. Host completion, queue ordering and access/layout transitions answer different questions. Use the [Vulkan synchronization guide](https://docs.vulkan.org/guide/latest/synchronization.html) and its examples for backend-specific rules.
+
+### Uploads need bandwidth, visibility and retirement
+
+An **upload** moves CPU-produced data into storage usable by the GPU. A discrete GPU may use host-visible staging storage followed by a transfer to device-local storage. Unified-memory hardware has a different physical path; shared memory does not remove ordering, cache-policy or ownership rules.
+
+For $B$ bytes at sustained effective bandwidth $W$ bytes per second, the transfer-only estimate is $B/W$. With an assumed 16 GiB/s, uploading 64 MiB takes
+
+$$
+t=\frac{64\cdot2^{20}}{16\cdot2^{30}}\ \mathrm{s}
+ =\frac1{256}\ \mathrm{s}\approx3.90625\ \mathrm{ms}.
+$$
+
+This excludes allocation, command overhead, cache maintenance and contention. An advertised interconnect rate is not achieved application bandwidth.
+
+**Persistent mapping** keeps a host-visible allocation mapped across updates, avoiding repeated map/unmap calls. It does not mean the GPU has stopped reading. In Vulkan, non-coherent mapped memory needs the specified flush for host writes. Coherent memory removes that explicit cache-maintenance requirement but still needs the applicable ordering and visibility rules. Respect non-coherent atom size and resource alignment; distinct logical slices may share a cache-maintenance atom. See the [Vulkan memory specification](https://docs.vulkan.org/spec/latest/chapters/memory.html).
+
+A **ring upload buffer** wraps a write position within a bounded allocation. Track each live interval's offset, size and final-consumer completion token. Align a proposed start, check arithmetic and allocation bounds, and prove the whole interval avoids every unretired range. Wrapping is not evidence that bytes are free. If no safe interval exists, wait for the required completion, grow within budget, use another allocation or visibly defer/reject the upload. Microsoft gives a [fence-based ring-buffer lifetime example](https://learn.microsoft.com/en-us/windows/win32/direct3d12/fence-based-resource-management).
+
+**Worked allocation.** A 1024-byte ring uses 256-byte alignment. A owns $[0,256)$ and retires at token 11; B owns $[256,512)$ and retires at 12. A 300-byte request at offset 512 occupies $[512,812)$; the next aligned start is 1024, so another request must wrap or use another allocation. At completed token 10, wrapping to zero would overwrite A. At token 11, a 128-byte request can use $[0,128)$, but a 300-byte request would overlap B and remains unsafe until token 12. These comparisons assume one ordered completion timeline covering every consumer. Independent queues need a join token or per-queue retirement conditions.
+
+### Readback reverses the direction, not the lifetime rule
+
+A **readback** makes GPU-produced data available to the CPU. Read only after the GPU write/copy completes and after the backend's host-visibility/cache operations. Vulkan non-coherent host reads require invalidation after completion. Mapping memory does not wait for its producer.
+
+Waiting for an occasional screenshot may be acceptable. Per-frame statistics can use a readback ring: the CPU examines an older completed sample while the GPU produces another. Label samples with source frame and configuration. If a CPU decision requires the current GPU answer, that dependency is real; delaying readback changes the algorithm.
+
+### Suballocation and aliasing require different proofs
+
+A **suballocation** gives resources disjoint intervals within a larger allocation. It reduces allocation overhead but must respect queried size, alignment, compatible memory types and dedicated-allocation requirements. A **dedicated allocation** gives one resource its own allocation, simplifying ownership or satisfying a requirement at a potential packing cost. Do not infer allocation requirements solely from visible pixel or vertex counts.
+
+**Aliasing** lets resources share physical bytes at different times. It needs spatial compatibility and a temporal proof that the old resource's final access precedes the new resource's first access, plus backend-specific aliasing, synchronization and layout rules. An asynchronous reader prevents reuse even after the resource's last graphics command has been submitted.
+
+For compatible resources requiring 3 MiB, 5 MiB and 4 MiB, a serial A→B→C chain with no overlapping lifetimes may fit in one 5 MiB region if API/alignment constraints permit. If A and C overlap while B is disjoint from both, simultaneous A+C demand is 7 MiB. A valid plan gives A and C disjoint 3+4 MiB ranges and lets B reuse memory later. The one-resource maximum of 5 MiB is insufficient. Allocation therefore follows the scheduled dependency graph, not just pass declaration order.
+
+**Transient** describes an intended short lifetime, not automatic permission to alias or discard data. It is also distinct from Vulkan's specific transient-attachment usage and lazily allocated memory features. The Engine book's [[Chapter Edition/03 - Game Engine/42 - From cartridge bytes to a reproducible machine#From a list of render passes to a proved execution order|render-graph compiler]] develops the ownership representation; these intervals explain what it must prove.
+
+**Exercise and solution.** May the CPU rewrite a mapped staging slice when its copy finishes? Only if that copy is the slice's final consumer. If later work reads directly from the slice, retirement is later. If the copy reads staging storage and later work reads only a separate destination allocation, copy completion can retire staging while the destination stays alive. Draw both allocations and name their last consumers separately.
+
+The exit test is practical: identify every owner, byte interval, visibility operation and completion condition in one frame graph. Buffer count, queue count and mapping duration are implementation choices around that proof.
+
+<!-- Book-completion teaching addition ce8e1a049c0b90f5 -->
+
+## Measure the limiting resource before changing the arithmetic
+
+Once ownership and synchronization are correct, a slow frame becomes a measurement problem. The CPU's submission time is not the GPU's execution time, and a high count of active threads is not the same as useful throughput. Start with a reproducible input, a correct reference output and a clearly bounded region of work. Otherwise a faster result may simply be doing less work or returning a different answer.
+
+### A query reports a defined event, not an explanation by itself
+
+A **timestamp query** records a device timestamp at an API-defined point. A **pipeline-statistics query** counts supported events such as shader invocations or processed primitives. Statistics answer how much of a defined activity occurred; timestamps help measure elapsed device time. Neither directly identifies the cause of a bottleneck.
+
+In Vulkan, check feature support, the chosen queue's timestamp-valid bits and timestamp period, the allowed query scope, reset/reuse rules and result availability. Read results only when available, or explicitly account for a wait. Convert timestamp differences using the advertised period and valid-bit width. Do not subtract arbitrary counters from different queues as if all devices guaranteed a single synchronized clock. The [Vulkan query specification](https://docs.vulkan.org/spec/latest/chapters/queries.html) defines those contracts.
+
+For an illustrative queue with a 1 ns timestamp period and no wrap during the measured interval, ticks 120000 and 2120000 differ by 2000000 ticks, hence 2 ms. Waiting on those results immediately after each dispatch may serialize the workload being measured. Record multiple zones and read a completed result set later. A profiling zone is a named measurement interval; labels need the frame/configuration identity so an old result is not attached to a new experiment.
+
+Suppose culling halves submitted triangles but draw time barely changes. The triangle count confirms reduced work at one stage. The remaining bottleneck could be fragment shading, memory traffic or fixed overhead. Conversely, fewer fragment invocations with a larger elapsed time can arise from more expensive surviving fragments. Use a controlled change and relevant counters rather than naming a winner from one statistic.
+
+### Derive a roofline bound with matching units
+
+**Arithmetic intensity** is useful arithmetic work divided by bytes crossing a specified memory boundary:
+
+$$
+I=\frac{F}{B}\quad\left[\frac{\mathrm{FLOP}}{\mathrm{byte}}\right].
+$$
+
+A FLOP is one floating-point operation in the stated counting convention. A fused multiply-add is usually counted as two operations even though it can be one instruction. Specify whether $B$ is DRAM traffic, cache traffic or a simplified source-level estimate. Those denominators produce different intensities.
+
+If an appropriate arithmetic peak is $P_{\max}$ FLOP/s and sustainable bandwidth at that boundary is $W$ bytes/s, the basic roofline bound is
+
+$$
+P\leq\min(P_{\max},WI),\qquad
+t\geq\max\left(\frac{F}{P_{\max}},\frac{B}{W}\right).
+$$
+
+The **ridge point** $I_*=P_{\max}/W$ separates the bandwidth ceiling from the arithmetic ceiling in this simplified model. The inequalities are optimistic bounds. Launch overhead, dependency chains, occupancy, instruction mix, cache misses and imperfect scheduling can make the kernel slower. A point below the roof is not proof of a compiler bug. See [NVIDIA's roofline analysis](https://developer.nvidia.com/blog/accelerating-hpc-applications-with-nsight-compute-roofline-analysis/) for the measurement method and hierarchy of memory boundaries.
+
+**Worked streaming example.** For FP32 $y_i=a x_i+y_i$, count one multiplication and one addition: 2 FLOP per element. Assuming one 4-byte read of $x_i$, one 4-byte read of $y_i$ and one 4-byte write of $y_i$, the source-level estimate is 12 bytes and $I=1/6$ FLOP/byte. Treat the scalar $a$ as reused. On an illustrative machine with 2 TFLOP/s appropriate peak and 200 GB/s sustainable bandwidth, the ridge is 10 FLOP/byte. The streaming kernel's bandwidth ceiling is about 33.3 GFLOP/s, far below 2 TFLOP/s. Replacing one arithmetic instruction cannot eliminate its data movement. Actual DRAM bytes may differ because of caches, transactions or store policy; measure them before treating 12 bytes as an observed counter.
+
+**Worked reuse example.** For dense square $C=AB$ with dimension $n$, count $2n^3$ operations in the conventional multiply-add model. If an idealized algorithm transfers A and B once and writes C once, FP32 traffic is $12n^2$ bytes, so $I=n/6$. At $n=128$, that estimate is about 21.3 FLOP/byte. This says that sufficient data reuse can move the kernel toward an arithmetic limit. It does not prove a naive implementation reads each input once. Tiling, register/shared storage and scheduling must actually realize reuse. Reading an old C for an additional scaled accumulation changes the byte count.
+
+**Occupancy** measures resident active execution groups relative to a hardware limit. More occupancy can hide latency, but reducing registers to raise occupancy may spill values into memory. A lower-occupancy kernel that reuses data or performs more independent work per thread can win. Benchmark the actual instruction and memory behavior; do not optimize the occupancy percentage as if it were the application's objective. The [CUDA Best Practices Guide](https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html) develops the hardware-specific measurement context.
+
+### Fast math changes a numerical contract
+
+A shader compiler can remove redundant work, combine operations and choose instructions under its permitted semantics. **Fast math** is a family of compiler options and assumptions, not one portable algorithm. Depending on compiler and flags, it can permit reassociation, contraction, approximate reciprocals or functions, flushing tiny values, or assumptions about NaNs, infinities and signed zero. Record exact compiler version, flags and target; do not assume a flag has identical meaning across backends.
+
+Finite-precision addition is not associative. Under rounded FP32-like arithmetic, adding a small number to a huge opposite-sign pair can produce either the small number or zero depending on association. A threshold test can then choose a different branch. Fusing multiplication and addition changes where rounding happens; it can improve accuracy while also changing bitwise results. The Foundations book's floating-point lesson supplies the representation model; here the consequence is that optimization needs an output-error contract.
+
+For an image pass, compare both image error and the decisions it changes: coverage, depth ordering, visibility, convergence or accumulated energy. For a geometric predicate, a tiny numerical error can flip a sign and change topology. A low average error does not make that acceptable. Keep a strict baseline, test exceptional and near-boundary inputs, and accept the optimization only within a justified domain and tolerance.
+
+### Half precision is a range and accumulation decision
+
+IEEE binary16 uses 1 sign bit, 5 exponent bits and 10 explicit fraction bits, giving 11 significant binary digits for normal values. Its largest finite value is 65504; the smallest positive normal is $2^{-14}$ and the smallest positive subnormal is $2^{-24}$. Device behavior for subnormals and intermediate arithmetic must still be checked.
+
+Near one, adjacent normal values are spaced by $2^{-10}$. With round-to-nearest the usual unit-roundoff scale is $2^{-11}$, about $4.88\times10^{-4}$. Near 2048, spacing is 2, so 2049 lies halfway between representable neighbors; ties-to-even rounds it to 2048. Repeatedly adding a unit increment to an FP16 accumulator already at 2048 can lose every increment. An FP32 accumulator can retain those increments over this small example, but cannot undo inputs that were already rounded to FP16.
+
+Distinguish storage format, multiplication format, accumulator format and final conversion. FP16 storage with FP32 accumulation can reduce traffic without forcing every partial sum into FP16. It still has input-quantization error, and a final FP16 conversion can overflow or lose detail. Matrix/Tensor hardware may have additional formats and rounding rules. The [CUDA half-precision API](https://docs.nvidia.com/cuda/cuda-math-api/cuda_math_api/group__CUDA__MATH__INTRINSIC__HALF.html) is an API reference, not permission to infer every target's behavior.
+
+**Exercise and solution.** A position is roughly 2048 world units from the origin and must retain changes of 0.1 units. Direct binary16 world-coordinate storage cannot represent that spacing there. Store a local coordinate relative to a stable origin, use a wider representation, or redesign the error budget. A later FP32 computation cannot recover the lost 0.1 if quantization already erased it.
+
+### Collective matrix operations distribute a tile across lanes
+
+A **subgroup matrix operation** cooperatively computes a small matrix product using values distributed among participating lanes. The logical equation is still
+
+$$
+D_{ij}=\sum_{k=0}^{K-1} A_{ik}B_{kj}+C_{ij}.
+$$
+
+For $A=\begin{bmatrix}1&2\\3&4\end{bmatrix}$ and $B=\begin{bmatrix}5&6\\7&8\end{bmatrix}$ with $C=0$, the result is $\begin{bmatrix}19&22\\43&50\end{bmatrix}$. The four dot products contain eight multiply-add pairs, conventionally 16 FLOP. That mathematical result does not specify which lane stores each fragment.
+
+A backend must query the supported tile shapes, input/accumulator types and subgroup/feature requirements, then use its documented load, multiply-accumulate and store operations. Do not guess fragment layout from lane IDs or assume a vendor's tile shape is portable. Every required participant must reach a collective operation under the API's execution rules. For a partial edge tile, pad or mask input loads according to a valid collective protocol rather than letting required lanes skip the operation.
+
+This is the next form of the reuse argument: a tile's loaded elements contribute to several dot products before leaving fast storage. Tensor-style peak throughput matters only if the algorithm reaches that path with supported formats, sufficient reuse and acceptable numerical error. The exit test is to derive the result, account for bytes and FLOPs, name the precision at every stage, and explain why a supported collective cannot be treated as independent per-thread multiplication.
+
+<!-- Book-completion teaching addition b5313e0d1775a1df -->
+
+### Check the scheduling and precision examples with a scalar witness
+
+The following complete standard-library Python program reproduces the two/three-slot timeline, retired byte intervals, transfer units, ideal overlap/roofline bounds, binary16 rounding and the small matrix result. Its six checks run normally and with Python optimization enabled. They validate the stated scalar model, not GPU scheduling, cache coherence, compiler fast-math behavior or hardware matrix operations.
+
+```sh
+python3 tools/labs/gpu_budget_precision_lab.py
+python3 -O tools/labs/gpu_budget_precision_lab.py
+```
+
+```python
+#!/usr/bin/env python3
+"""Scalar witnesses for the book's GPU timeline/budget examples, not a GPU test."""
+from dataclasses import dataclass
+import math
+import struct
+import unittest
+
+
+def rounded(value, code):
+    # 'e' is IEEE binary16 storage; 'f' is binary32 storage. Packing performs a
+    # storage conversion. Host arithmetic between conversions remains Python float.
+    # This cannot certify shader flags, device subnormals or matrix instructions.
+    return struct.unpack('<' + code, struct.pack('<' + code, float(value)))[0]
+
+
+@dataclass(frozen=True)
+class Frame:
+    number: int
+    slot: int
+    cpu_start: float
+    submitted: float
+    gpu_start: float
+    retired: float
+
+
+def timeline(cpu_ms, gpu_ms, slots, frame_count):
+    # One ordered GPU queue; retirement covers every consumer of a frame slot.
+    # No transfer, presentation, separate queues or host-recording overhead.
+    if (not math.isfinite(cpu_ms) or not math.isfinite(gpu_ms) or
+            cpu_ms <= 0 or gpu_ms <= 0 or
+            not isinstance(slots, int) or isinstance(slots, bool) or slots <= 0 or
+            not isinstance(frame_count, int) or frame_count < 0):
+        raise ValueError('positive finite durations/slots and nonnegative frame count required')
+    slot_retired = [0.0] * slots
+    cpu_time = gpu_time = 0.0
+    result = []
+    for number in range(frame_count):
+        slot = number % slots
+        # Reusing the index grants no ownership: wait for that slot's old reader.
+        cpu_start = max(cpu_time, slot_retired[slot])
+        submitted = cpu_start + cpu_ms
+        gpu_start = max(submitted, gpu_time)
+        retired = gpu_start + gpu_ms
+        if not all(math.isfinite(t) for t in (submitted, retired)):
+            raise OverflowError('timeline exceeds representable duration')
+        result.append(Frame(number, slot, cpu_start, submitted, gpu_start, retired))
+        slot_retired[slot] = retired
+        cpu_time, gpu_time = submitted, retired
+    return result
+
+
+def overlap(first, second):
+    # Adjacent half-open ranges do not overlap.
+    return first[0] < second[1] and second[0] < first[1]
+
+
+def can_reuse(request, live_ranges, completed):
+    # One scalar token is valid only for one ordered/joined completion timeline.
+    return all(token <= completed or not overlap(request, interval)
+               for interval, token in live_ranges)
+
+
+class BudgetPrecisionChecks(unittest.TestCase):
+    def test_buffer_timeline_and_throughput(self):
+        frames = timeline(2, 6, 3, 4)
+        self.assertEqual([(f.cpu_start, f.submitted, f.gpu_start, f.retired)
+                          for f in frames],
+                         [(0, 2, 2, 8), (2, 4, 8, 14),
+                          (4, 6, 14, 20), (8, 10, 20, 26)])
+        twice = timeline(2, 6, 2, 3)
+        self.assertEqual([f.retired for f in twice], [8, 14, 20])
+        # More slots did not change the bottleneck's completion cadence here.
+        self.assertEqual(twice[2].cpu_start, 8)
+        self.assertEqual(frames[2].cpu_start, 4)
+
+    def test_interval_retirement_not_modulo(self):
+        live = [((0, 256), 11), ((256, 512), 12)]
+        self.assertFalse(can_reuse((0, 128), live, 10))
+        self.assertTrue(can_reuse((0, 128), live, 11))
+        self.assertFalse(can_reuse((0, 300), live, 11))
+        self.assertTrue(can_reuse((0, 300), live, 12))
+        self.assertFalse(overlap((0, 256), (256, 512)))
+
+    def test_transfer_and_roofline_units(self):
+        # Binary MiB/GiB for the transfer, decimal GB/s/TFLOP/s for the
+        # illustrative roofline. Mixing these conventions silently changes results.
+        transfer_seconds = 64 * 2**20 / (16 * 2**30)
+        self.assertEqual(transfer_seconds, 1 / 256)
+        self.assertEqual(transfer_seconds * 1000, 3.90625)
+        peak, bandwidth = 2e12, 200e9
+        intensity = 2 / 12
+        self.assertEqual(peak / bandwidth, 10)
+        self.assertAlmostEqual(min(peak, bandwidth * intensity) / 1e9, 100 / 3)
+        # 2*n^3 conventional FLOP and 12*n^2 bytes under ideal input reuse.
+        self.assertAlmostEqual((2 * 128**3) / (12 * 128**2), 128 / 6)
+        self.assertEqual(max(1 + 2, 3) + 4, 7)  # Ideal U/C versus S overlap.
+
+    def test_storage_precision_and_association(self):
+        self.assertEqual(rounded(65504, 'e'), 65504)
+        self.assertEqual(rounded(2**-24, 'e'), 2**-24)
+        with self.assertRaises(OverflowError):
+            rounded(70000, 'e')
+        # Ties-to-even: 2049 is between binary16 neighbors 2048 and 2050.
+        self.assertEqual(rounded(2048 + 1, 'e'), 2048)
+        half_acc = 2048.0
+        wide_acc = 2048.0
+        for _ in range(8):
+            half_acc = rounded(half_acc + 1, 'e')
+            wide_acc = rounded(wide_acc + 1, 'f')
+        self.assertEqual(half_acc, 2048)
+        self.assertEqual(wide_acc, 2056)
+        a, b, c = 2**30, -(2**30), 1.0
+        left = rounded(rounded(a + b, 'f') + c, 'f')
+        right = rounded(a + rounded(b + c, 'f'), 'f')
+        self.assertEqual((left, right), (1, 0))
+        # This demonstrates explicit storage rounding, not execution of a
+        # compiler's fast-math optimization on a GPU.
+
+    def test_matrix_example(self):
+        a, b = [[1, 2], [3, 4]], [[5, 6], [7, 8]]
+        result = [[sum(a[i][k] * b[k][j] for k in range(2))
+                   for j in range(2)] for i in range(2)]
+        self.assertEqual(result, [[19, 22], [43, 50]])
+        # A scalar oracle knows the result, not a backend's lane-fragment layout.
+
+    def test_invalid_timeline_inputs(self):
+        for cpu, gpu, slots in [(0, 1, 3), (2, -1, 3), (2, 6, 0),
+                                (float('nan'), 6, 3), (2, float('inf'), 3)]:
+            with self.assertRaises(ValueError):
+                timeline(cpu, gpu, slots, 1)
+
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)
+```
 
 ### Next — Pass 10: M130 + M131 + M132, Parts 2157–2200
 

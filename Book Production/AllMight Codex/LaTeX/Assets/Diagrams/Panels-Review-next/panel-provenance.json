@@ -1,0 +1,1815 @@
+{
+  "schema": "allmight-held-panels-review-v1",
+  "purpose": "Tentative semantic panel recomposition review; not active print mapping.",
+  "source_override_manifest_sha256": "a5a32274d7b1defe613e919be98e4f7ade300a9295ba061f8c76dbff74500dd3",
+  "renderer_jobs": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/jobs.json",
+  "source_panels": [
+    {
+      "source_asset_id": "0afe9d09c4fc80ae1bff5d38",
+      "source_graph_sha256": "29ce4bfd846e86f76c8cd8c88f02060d9e31584ea4d4e6948c94340280b04fe4",
+      "expected_source_graph_sha256": "29ce4bfd846e86f76c8cd8c88f02060d9e31584ea4d4e6948c94340280b04fe4",
+      "source_markdown": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "source_code_exact": "flowchart LR\n  A[\"Mesh / Texture / CheckedShader\"] --> B{\"Uploadable<T> satisfied?\"}\n  B -->|no| X[\"Constrained API unavailable at compile time\"]\n  B -->|yes| T[\"AssetTraits<T> selects size policy\"]\n  T --> F[\"Args&&... + std::forward preserve caller's argument category\"]\n  F --> C{\"Construct next unpublished slot\"}\n  C -->|throws| R[\"Published prefix unchanged\"]\n  C -->|succeeds| P[\"Increment published count; AssetId returned\"]\n  P --> S[\"Checked heterogeneous batch accounting\"]",
+      "source_kind": "flowchart LR",
+      "panel_count": 3,
+      "layout_transform": {
+        "source_direction": "LR",
+        "panel_direction": "TB",
+        "source_nodes_edges_and_label_text_unchanged": true
+      },
+      "partition_validation": "PASS: every non-header source line appears exactly once across panels",
+      "source_control_line_duplicates": [],
+      "source_edge_transition_or_message_lines_exact": [
+        "  A[\"Mesh / Texture / CheckedShader\"] --> B{\"Uploadable<T> satisfied?\"}",
+        "  B -->|no| X[\"Constrained API unavailable at compile time\"]",
+        "  B -->|yes| T[\"AssetTraits<T> selects size policy\"]",
+        "  T --> F[\"Args&&... + std::forward preserve caller's argument category\"]",
+        "  F --> C{\"Construct next unpublished slot\"}",
+        "  C -->|throws| R[\"Published prefix unchanged\"]",
+        "  C -->|succeeds| P[\"Increment published count; AssetId returned\"]",
+        "  P --> S[\"Checked heterogeneous batch accounting\"]"
+      ],
+      "cross_panel_node_aliases": [
+        {
+          "source_node_id": "C",
+          "label": "Construct next unpublished slot",
+          "panels": [
+            2,
+            3
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "T",
+          "label": "AssetTraits<T> selects size policy",
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        }
+      ],
+      "cross_panel_sequence_relations": [],
+      "sequence_participant_declarations": [],
+      "sequence_control_blocks_preserved_whole": false,
+      "source_min_projected_font_pt_current_held": 2.0944496931137104,
+      "panels": [
+        {
+          "panel": 1,
+          "variant_id": "0afe9d09c4fc80ae1bff5d38-panel-01",
+          "source_line_indices_zero_based": [
+            1,
+            2,
+            3
+          ],
+          "source_lines_exact": [
+            "  A[\"Mesh / Texture / CheckedShader\"] --> B{\"Uploadable<T> satisfied?\"}",
+            "  B -->|no| X[\"Constrained API unavailable at compile time\"]",
+            "  B -->|yes| T[\"AssetTraits<T> selects size policy\"]"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "5d160ec1b519bb7184c718f9fd80355850f0deba0d64124425f2ec6697bc83a4",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0afe9d09c4fc80ae1bff5d38-panel-01.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0afe9d09c4fc80ae1bff5d38-panel-01.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0afe9d09c4fc80ae1bff5d38-panel-01.png",
+          "svg_pre_finalize_sha256": "7a4df66a3ba61df3f08c0da222fde2848b1b81c6d00245a8cf625e438af25f3f",
+          "svg_sha256": "38dc50dda6fc96274237b5d298fa383ccce71dd73c24729571916e7bf7e18b42",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "588f50f4df810fa465fed961564b4cb41ab1453fdefdbefe6e6bbf5a1b40b59b",
+          "review_render_code_sha256": "84206ad99aafda388ef6ca673320decf4ac5c2400d1721be6abe10e9b6a3e5d6",
+          "review_normalization_protocol": "review-flowchart-literal-angle-bracket-v1",
+          "review_normalization_reason": "Escape the Mermaid HTML-like angle-bracket tokens in Uploadable<T> and AssetTraits<T> for literal display; source labels remain exact."
+        },
+        {
+          "panel": 2,
+          "variant_id": "0afe9d09c4fc80ae1bff5d38-panel-02",
+          "source_line_indices_zero_based": [
+            4,
+            5,
+            6
+          ],
+          "source_lines_exact": [
+            "  T --> F[\"Args&&... + std::forward preserve caller's argument category\"]",
+            "  F --> C{\"Construct next unpublished slot\"}",
+            "  C -->|throws| R[\"Published prefix unchanged\"]"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "0ead46e41460f49b6cb49cd107eb55389f9a63b8d3947d6373c0ebe0703eb5cc",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0afe9d09c4fc80ae1bff5d38-panel-02.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0afe9d09c4fc80ae1bff5d38-panel-02.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0afe9d09c4fc80ae1bff5d38-panel-02.png",
+          "svg_pre_finalize_sha256": "fdf087e25bb545d26d19a39446bec04c246a6e4240efaec396be293e88a3e37e",
+          "svg_sha256": "143b03773584fd36de415a3edeb9d6a8eecf80aa34f86267bd98c8fae5f2d706",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "52f499711a41b803f2c3b76003493ec519de935ce0b3e5691cc76221155f6d6d"
+        },
+        {
+          "panel": 3,
+          "variant_id": "0afe9d09c4fc80ae1bff5d38-panel-03",
+          "source_line_indices_zero_based": [
+            7,
+            8
+          ],
+          "source_lines_exact": [
+            "  C -->|succeeds| P[\"Increment published count; AssetId returned\"]",
+            "  P --> S[\"Checked heterogeneous batch accounting\"]"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "32a67dc9878e88c01e641d1dad0ea24eaaaaeebf79a5e154a4f3a3a8d3932d37",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0afe9d09c4fc80ae1bff5d38-panel-03.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0afe9d09c4fc80ae1bff5d38-panel-03.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0afe9d09c4fc80ae1bff5d38-panel-03.png",
+          "svg_pre_finalize_sha256": "a5f53cd1cc33b1ae7174db9d343ab7ca0f308c96b8a5eb60ab0c433cb58863b7",
+          "svg_sha256": "8409cbd8ea30d1bbcc394d90d128b44018d62f175f8406ad3246e2d8a669f0b9",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "85a51c023703bb85bf1b4baa56b58f91c09aef73fd7e1027236664c2bd412e06"
+        }
+      ]
+    },
+    {
+      "source_asset_id": "0b0e76bfeca07fcd2864142a",
+      "source_graph_sha256": "7ede969ac75607cadad94db0b61c9fea472d59a48f11055b7f4ea65f5381d956",
+      "expected_source_graph_sha256": "7ede969ac75607cadad94db0b61c9fea472d59a48f11055b7f4ea65f5381d956",
+      "source_markdown": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/01 - Bits, Numbers and Memory - Visual Recall.md",
+      "source_code_exact": "sequenceDiagram\n    participant W as Writer\n    participant B as Byte image\n    participant R as Reader\n    W->>B: Encode widths, order, representation, version\n    R->>B: Check header and declared dimensions\n    R->>R: Check products, bounds and resource limits\n    R->>B: Verify specified integrity coverage\n    R->>R: Decode only validated fields\n    Note over W,R: Authenticity and crash durability require separate contracts",
+      "source_kind": "sequenceDiagram",
+      "panel_count": 2,
+      "layout_transform": null,
+      "partition_validation": "PASS: every non-header source line appears exactly once across panels",
+      "source_control_line_duplicates": [],
+      "source_edge_transition_or_message_lines_exact": [
+        "    W->>B: Encode widths, order, representation, version",
+        "    R->>B: Check header and declared dimensions",
+        "    R->>R: Check products, bounds and resource limits",
+        "    R->>B: Verify specified integrity coverage",
+        "    R->>R: Decode only validated fields",
+        "    Note over W,R: Authenticity and crash durability require separate contracts"
+      ],
+      "cross_panel_node_aliases": [
+        {
+          "source_node_id": "B",
+          "label": "Byte image",
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "R",
+          "label": "Reader",
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "W",
+          "label": "Writer",
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        }
+      ],
+      "cross_panel_sequence_relations": [],
+      "sequence_participant_declarations": [
+        "    participant W as Writer",
+        "    participant B as Byte image",
+        "    participant R as Reader"
+      ],
+      "sequence_control_blocks_preserved_whole": true,
+      "source_min_projected_font_pt_current_held": 5.755373493975904,
+      "panels": [
+        {
+          "panel": 1,
+          "variant_id": "0b0e76bfeca07fcd2864142a-panel-01",
+          "source_line_indices_zero_based": [
+            4,
+            5,
+            6
+          ],
+          "source_lines_exact": [
+            "    W->>B: Encode widths, order, representation, version",
+            "    R->>B: Check header and declared dimensions",
+            "    R->>R: Check products, bounds and resource limits"
+          ],
+          "repeated_participant_line_indices_zero_based": [
+            1,
+            2,
+            3
+          ],
+          "repeated_participant_lines_exact": [
+            "    participant W as Writer",
+            "    participant B as Byte image",
+            "    participant R as Reader"
+          ],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [
+            {
+              "source_line_index_zero_based": 4,
+              "exact_source_label": "Encode widths, order, representation, version",
+              "rendered_label_with_display_breaks": "Encode widths, order,<br/>representation, version",
+              "visible_text_after_break_removal": "Encode widths, order, representation, version",
+              "word_sequence_validation": "PASS"
+            },
+            {
+              "source_line_index_zero_based": 5,
+              "exact_source_label": "Check header and declared dimensions",
+              "rendered_label_with_display_breaks": "Check header and declared<br/>dimensions",
+              "visible_text_after_break_removal": "Check header and declared dimensions",
+              "word_sequence_validation": "PASS"
+            },
+            {
+              "source_line_index_zero_based": 6,
+              "exact_source_label": "Check products, bounds and resource limits",
+              "rendered_label_with_display_breaks": "Check products, bounds and<br/>resource limits",
+              "visible_text_after_break_removal": "Check products, bounds and resource limits",
+              "word_sequence_validation": "PASS"
+            }
+          ],
+          "synthetic_content": [],
+          "rendered_code_sha256": "b8db0fbb351fe1c6ffeb6b22cdcbb0fe3f1166b0407698721e2024b89947f4d0",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0b0e76bfeca07fcd2864142a-panel-01.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0b0e76bfeca07fcd2864142a-panel-01.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0b0e76bfeca07fcd2864142a-panel-01.png",
+          "svg_pre_finalize_sha256": "185bcf7ac432150f686b7ae19eac00440b6cf1bb903e05ca88434f6adcf81fa6",
+          "svg_sha256": "79a098d52860c612dbf87a70d5c2c35df725632d98e40a469955e289b9283d64",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "b3d5ba988aade2e86954ebd7d6fe40f9e15676ebef3b52f789d2292d4fc4f40e"
+        },
+        {
+          "panel": 2,
+          "variant_id": "0b0e76bfeca07fcd2864142a-panel-02",
+          "source_line_indices_zero_based": [
+            7,
+            8,
+            9
+          ],
+          "source_lines_exact": [
+            "    R->>B: Verify specified integrity coverage",
+            "    R->>R: Decode only validated fields",
+            "    Note over W,R: Authenticity and crash durability require separate contracts"
+          ],
+          "repeated_participant_line_indices_zero_based": [
+            1,
+            2,
+            3
+          ],
+          "repeated_participant_lines_exact": [
+            "    participant W as Writer",
+            "    participant B as Byte image",
+            "    participant R as Reader"
+          ],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [
+            {
+              "source_line_index_zero_based": 7,
+              "exact_source_label": "Verify specified integrity coverage",
+              "rendered_label_with_display_breaks": "Verify specified integrity<br/>coverage",
+              "visible_text_after_break_removal": "Verify specified integrity coverage",
+              "word_sequence_validation": "PASS"
+            },
+            {
+              "source_line_index_zero_based": 9,
+              "exact_source_label": "Authenticity and crash durability require separate contracts",
+              "rendered_label_with_display_breaks": "Authenticity and crash<br/>durability require separate<br/>contracts",
+              "visible_text_after_break_removal": "Authenticity and crash durability require separate contracts",
+              "word_sequence_validation": "PASS"
+            }
+          ],
+          "synthetic_content": [],
+          "rendered_code_sha256": "ca19988648b13e4d07669d1399e4d6a32c8aed0cac176440e526fb16bcb6d7f9",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0b0e76bfeca07fcd2864142a-panel-02.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0b0e76bfeca07fcd2864142a-panel-02.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0b0e76bfeca07fcd2864142a-panel-02.png",
+          "svg_pre_finalize_sha256": "e5d5ffee428d9244e4967c1ecbc91e25ada709490478b65babe9ce1d4186d07b",
+          "svg_sha256": "14ea1bb2559656700fc963419146acd203e55707d793c29f926665f15f35d411",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "69d575c5c06ba6fd9a5d4442a9bf61ecd8c4c9c37ee4756fd0809ed03aa8a1fb",
+          "review_render_code_sha256": "df0cc58166046b380ca886fa3039dc3563c86e616dd5d2581a0fb04a6f1a1107",
+          "review_normalization_protocol": "review-sequence-margin-v1",
+          "review_normalization_reason": "Increase only the Mermaid sequence diagram horizontal canvas margin to keep the authored self-message label inside the panel; source lines and font sizes unchanged."
+        }
+      ]
+    },
+    {
+      "source_asset_id": "2ce7218d89da9386836a7652",
+      "source_graph_sha256": "1bfe0d5ef549be0d3fe7edb7756d6c81d38699e88445ddb4224f3aab9d92c755",
+      "expected_source_graph_sha256": "1bfe0d5ef549be0d3fe7edb7756d6c81d38699e88445ddb4224f3aab9d92c755",
+      "source_markdown": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "source_code_exact": "flowchart LR\n    A[\"Owned snapshot: five live + one retired\"] --> B[\"Custom forward iterator skips tombstone\"]\n    B --> C[\"Lazy filter | transform view\"]\n    C --> D[\"Borrowed or owning view?\"]\n    D --> E[\"Ranges algorithms with projections\"]\n    E --> F[\"Owned output: custom allocator / PMR\"]\n    F --> G[\"Monotonic arena lifetime and overflow\"]\n    G --> H[\"Named C++ module interface and partition\"]\n    H --> I[\"Separate implementation and importers\"]\n    I --> J[\"Versioned C ABI wrapper for C11 caller\"]",
+      "source_kind": "flowchart LR",
+      "panel_count": 3,
+      "layout_transform": {
+        "source_direction": "LR",
+        "panel_direction": "TB",
+        "source_nodes_edges_and_label_text_unchanged": true
+      },
+      "partition_validation": "PASS: every non-header source line appears exactly once across panels",
+      "source_control_line_duplicates": [],
+      "source_edge_transition_or_message_lines_exact": [
+        "    A[\"Owned snapshot: five live + one retired\"] --> B[\"Custom forward iterator skips tombstone\"]",
+        "    B --> C[\"Lazy filter | transform view\"]",
+        "    C --> D[\"Borrowed or owning view?\"]",
+        "    D --> E[\"Ranges algorithms with projections\"]",
+        "    E --> F[\"Owned output: custom allocator / PMR\"]",
+        "    F --> G[\"Monotonic arena lifetime and overflow\"]",
+        "    G --> H[\"Named C++ module interface and partition\"]",
+        "    H --> I[\"Separate implementation and importers\"]",
+        "    I --> J[\"Versioned C ABI wrapper for C11 caller\"]"
+      ],
+      "cross_panel_node_aliases": [
+        {
+          "source_node_id": "D",
+          "label": "Borrowed or owning view?",
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "G",
+          "label": "Monotonic arena lifetime and overflow",
+          "panels": [
+            2,
+            3
+          ],
+          "relationship": "same source node ID reused across panels"
+        }
+      ],
+      "cross_panel_sequence_relations": [],
+      "sequence_participant_declarations": [],
+      "sequence_control_blocks_preserved_whole": false,
+      "source_min_projected_font_pt_current_held": 1.5053445378151262,
+      "panels": [
+        {
+          "panel": 1,
+          "variant_id": "2ce7218d89da9386836a7652-panel-01",
+          "source_line_indices_zero_based": [
+            1,
+            2,
+            3
+          ],
+          "source_lines_exact": [
+            "    A[\"Owned snapshot: five live + one retired\"] --> B[\"Custom forward iterator skips tombstone\"]",
+            "    B --> C[\"Lazy filter | transform view\"]",
+            "    C --> D[\"Borrowed or owning view?\"]"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "7484b0dad54bd8ef194629a6b8f589344b7c583c28686a4b21558032ff6700f8",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/2ce7218d89da9386836a7652-panel-01.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/2ce7218d89da9386836a7652-panel-01.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/2ce7218d89da9386836a7652-panel-01.png",
+          "svg_pre_finalize_sha256": "3e3233b2dad939fa8924f23f9f8e545cd93365065b90a123b19e9a0357520fd3",
+          "svg_sha256": "1891eb8fb33b585685b909895e134e04d59813915c9a1c3cdd5d86b4f3da4e57",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "5c105809dc355728489d07e42b54d2e570796f74692136b5fa9e7d3a20844668"
+        },
+        {
+          "panel": 2,
+          "variant_id": "2ce7218d89da9386836a7652-panel-02",
+          "source_line_indices_zero_based": [
+            4,
+            5,
+            6
+          ],
+          "source_lines_exact": [
+            "    D --> E[\"Ranges algorithms with projections\"]",
+            "    E --> F[\"Owned output: custom allocator / PMR\"]",
+            "    F --> G[\"Monotonic arena lifetime and overflow\"]"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "ae878b3fd451ec5e6dab67badc7320609140e0c2acb0ae7faf171dc3ec4055cd",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/2ce7218d89da9386836a7652-panel-02.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/2ce7218d89da9386836a7652-panel-02.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/2ce7218d89da9386836a7652-panel-02.png",
+          "svg_pre_finalize_sha256": "d2e554e38da3f39baf1ad39c9797ca8df5f7a609d013b237f113576aa1764d68",
+          "svg_sha256": "ef88f42092d5e4713f8cfcde36adef4451e64996a02131400e6cbf3de4e12aee",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "1a86bd91e0e3edcd9eeb81c947d7950a613c34da3248784fbc6bc29afedc190d"
+        },
+        {
+          "panel": 3,
+          "variant_id": "2ce7218d89da9386836a7652-panel-03",
+          "source_line_indices_zero_based": [
+            7,
+            8,
+            9
+          ],
+          "source_lines_exact": [
+            "    G --> H[\"Named C++ module interface and partition\"]",
+            "    H --> I[\"Separate implementation and importers\"]",
+            "    I --> J[\"Versioned C ABI wrapper for C11 caller\"]"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "0912ceb6af22c4302398352285ed4e3788ccb04c32709a0052ed7455bfeea354",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/2ce7218d89da9386836a7652-panel-03.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/2ce7218d89da9386836a7652-panel-03.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/2ce7218d89da9386836a7652-panel-03.png",
+          "svg_pre_finalize_sha256": "6b3bb7a011930f8e343638c6c41b2335e0a601aa82052c5e37853dedf046a6f4",
+          "svg_sha256": "78fc844ee029cf9b910d75b417c000978030f6cd9662189609083838038f22cc",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "b043bd6a9298064d0bb6f17b7ab85f9996732d0cb965fb688970de7af7eeff60"
+        }
+      ]
+    },
+    {
+      "source_asset_id": "ae23cbd6aa6c6b535c2ab7a2",
+      "source_graph_sha256": "a89edc0b8afc83ba7aaed41e0026d4d582759414c0a1d15654063887de5e83f9",
+      "expected_source_graph_sha256": "a89edc0b8afc83ba7aaed41e0026d4d582759414c0a1d15654063887de5e83f9",
+      "source_markdown": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "source_code_exact": "flowchart LR\n    A[\"PixelFormat chosen in type\"] --> B[\"PixelTraits: channels as compile-time value\"]\n    B --> C[\"checked width \u00d7 height \u00d7 channels\"]\n    C --> D{\"Policy budget allows bytes?\"}\n    D -->|no| R[\"Reject; recorder unchanged\"]\n    D -->|yes| E{\"Payload tag\"}\n    E -->|Verify| F[\"Require exact source span length\"]\n    E -->|Metadata only| G[\"Mark plan, not ready resource\"]\n    F --> H[\"Alpha branch + Morton table\"]\n    G --> H\n    H --> I[\"CRTP recorder accepts plan\"]",
+      "source_kind": "flowchart LR",
+      "panel_count": 3,
+      "layout_transform": {
+        "source_direction": "LR",
+        "panel_direction": "TB",
+        "source_nodes_edges_and_label_text_unchanged": true
+      },
+      "partition_validation": "PASS: every non-header source line appears exactly once across panels",
+      "source_control_line_duplicates": [],
+      "source_edge_transition_or_message_lines_exact": [
+        "    A[\"PixelFormat chosen in type\"] --> B[\"PixelTraits: channels as compile-time value\"]",
+        "    B --> C[\"checked width \u00d7 height \u00d7 channels\"]",
+        "    C --> D{\"Policy budget allows bytes?\"}",
+        "    D -->|no| R[\"Reject; recorder unchanged\"]",
+        "    D -->|yes| E{\"Payload tag\"}",
+        "    E -->|Verify| F[\"Require exact source span length\"]",
+        "    E -->|Metadata only| G[\"Mark plan, not ready resource\"]",
+        "    F --> H[\"Alpha branch + Morton table\"]",
+        "    G --> H",
+        "    H --> I[\"CRTP recorder accepts plan\"]"
+      ],
+      "cross_panel_node_aliases": [
+        {
+          "source_node_id": "D",
+          "label": "Policy budget allows bytes?",
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "F",
+          "label": "Require exact source span length",
+          "panels": [
+            2,
+            3
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "G",
+          "label": "Mark plan, not ready resource",
+          "panels": [
+            2,
+            3
+          ],
+          "relationship": "same source node ID reused across panels"
+        }
+      ],
+      "cross_panel_sequence_relations": [],
+      "sequence_participant_declarations": [],
+      "sequence_control_blocks_preserved_whole": false,
+      "source_min_projected_font_pt_current_held": 1.8139636886554844,
+      "panels": [
+        {
+          "panel": 1,
+          "variant_id": "ae23cbd6aa6c6b535c2ab7a2-panel-01",
+          "source_line_indices_zero_based": [
+            1,
+            2,
+            3
+          ],
+          "source_lines_exact": [
+            "    A[\"PixelFormat chosen in type\"] --> B[\"PixelTraits: channels as compile-time value\"]",
+            "    B --> C[\"checked width \u00d7 height \u00d7 channels\"]",
+            "    C --> D{\"Policy budget allows bytes?\"}"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "bb7ac682e2ab673fb359249e1f0b7ce571b29ae45b40af546053bf2b75bd48e9",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/ae23cbd6aa6c6b535c2ab7a2-panel-01.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/ae23cbd6aa6c6b535c2ab7a2-panel-01.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/ae23cbd6aa6c6b535c2ab7a2-panel-01.png",
+          "svg_pre_finalize_sha256": "8c800046fd6dff82974a369d14ef5b05c9d7eab1675929780f023aa94ee05b30",
+          "svg_sha256": "2905fa171c9fccdc182b44709c740946d5d6ef77755cbf458477098d38e3947b",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "6f06f4a0f951c56dbc1102e49f4e43677989dfd007ac1cdbdac24335661404b0"
+        },
+        {
+          "panel": 2,
+          "variant_id": "ae23cbd6aa6c6b535c2ab7a2-panel-02",
+          "source_line_indices_zero_based": [
+            4,
+            5,
+            6,
+            7
+          ],
+          "source_lines_exact": [
+            "    D -->|no| R[\"Reject; recorder unchanged\"]",
+            "    D -->|yes| E{\"Payload tag\"}",
+            "    E -->|Verify| F[\"Require exact source span length\"]",
+            "    E -->|Metadata only| G[\"Mark plan, not ready resource\"]"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "5aaa0df2f1fe4e2a38cecc75fad46963cbd59623766e484b7bfabad7e051d7eb",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/ae23cbd6aa6c6b535c2ab7a2-panel-02.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/ae23cbd6aa6c6b535c2ab7a2-panel-02.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/ae23cbd6aa6c6b535c2ab7a2-panel-02.png",
+          "svg_pre_finalize_sha256": "9bc4a5fa7d25c2a10d372a51ce3329df1dd530c743357449e23cf5145c054515",
+          "svg_sha256": "45d40c529c3b6ce8c47e30eef1d580e001ebd142906821c0100bcd2d8589b2d7",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "684f66253e8f48b514120fa83ea5d25901d4bdf6ee6ea82a3357c40c19eb1bb8"
+        },
+        {
+          "panel": 3,
+          "variant_id": "ae23cbd6aa6c6b535c2ab7a2-panel-03",
+          "source_line_indices_zero_based": [
+            8,
+            9,
+            10
+          ],
+          "source_lines_exact": [
+            "    F --> H[\"Alpha branch + Morton table\"]",
+            "    G --> H",
+            "    H --> I[\"CRTP recorder accepts plan\"]"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "a66f59cdfa96d49cfa1d6802d5a885ba47ae94e1f928426f8418fa5ee9e5f5ee",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/ae23cbd6aa6c6b535c2ab7a2-panel-03.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/ae23cbd6aa6c6b535c2ab7a2-panel-03.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/ae23cbd6aa6c6b535c2ab7a2-panel-03.png",
+          "svg_pre_finalize_sha256": "c311e2274e4d3c0b0f5087b861100ab4cb7ea982d98f6be1aa35deee3b795a1f",
+          "svg_sha256": "6f5b72aa70ca20e8e058f21dc5bf8577c876244be889bf47a9ae08ad446cf867",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "cc948a3ce7e1fbbe26dde0cc2404d40c287535c5261771d2351d2e0c0ca33b61"
+        }
+      ]
+    },
+    {
+      "source_asset_id": "4587c34d178f477c59c8cb55",
+      "source_graph_sha256": "3ea1f254d29f38b57d04d6971fb8f4c21c029dfb660fa27144e40214b56d0ef4",
+      "expected_source_graph_sha256": "3ea1f254d29f38b57d04d6971fb8f4c21c029dfb660fa27144e40214b56d0ef4",
+      "source_markdown": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "source_code_exact": "sequenceDiagram\n    participant F as Function\n    participant O as RAII owner\n    participant R as Resource\n    F->>R: acquire\n    R-->>F: handle\n    F->>O: immediately adopt handle\n    alt normal return\n        F->>O: scope ends\n    else early return or exception\n        F->>O: scope unwinds\n    end\n    O->>R: matching release exactly once",
+      "source_kind": "sequenceDiagram",
+      "panel_count": 2,
+      "layout_transform": null,
+      "partition_validation": "PASS: every non-header source line appears exactly once across panels",
+      "source_control_line_duplicates": [],
+      "source_edge_transition_or_message_lines_exact": [
+        "    F->>R: acquire",
+        "    R-->>F: handle",
+        "    F->>O: immediately adopt handle",
+        "    alt normal return",
+        "        F->>O: scope ends",
+        "    else early return or exception",
+        "        F->>O: scope unwinds",
+        "    end",
+        "    O->>R: matching release exactly once"
+      ],
+      "cross_panel_node_aliases": [
+        {
+          "source_node_id": "F",
+          "label": "Function",
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "O",
+          "label": "RAII owner",
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "R",
+          "label": "Resource",
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        }
+      ],
+      "cross_panel_sequence_relations": [],
+      "sequence_participant_declarations": [
+        "    participant F as Function",
+        "    participant O as RAII owner",
+        "    participant R as Resource"
+      ],
+      "sequence_control_blocks_preserved_whole": true,
+      "source_min_projected_font_pt_current_held": 7.093118829981719,
+      "panels": [
+        {
+          "panel": 1,
+          "variant_id": "4587c34d178f477c59c8cb55-panel-01",
+          "source_line_indices_zero_based": [
+            4,
+            5,
+            6
+          ],
+          "source_lines_exact": [
+            "    F->>R: acquire",
+            "    R-->>F: handle",
+            "    F->>O: immediately adopt handle"
+          ],
+          "repeated_participant_line_indices_zero_based": [
+            1,
+            2,
+            3
+          ],
+          "repeated_participant_lines_exact": [
+            "    participant F as Function",
+            "    participant O as RAII owner",
+            "    participant R as Resource"
+          ],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "f8e3bea63bcf2f7190685f609d04c8f22f3c40d88b1119c648a3f3106e96b3ea",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/4587c34d178f477c59c8cb55-panel-01.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/4587c34d178f477c59c8cb55-panel-01.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/4587c34d178f477c59c8cb55-panel-01.png",
+          "svg_pre_finalize_sha256": "22ccb8bc15a04636989db86496beb8423258d212ce746e322e29e0358684abc5",
+          "svg_sha256": "be6df96effcc055c4d93ac45e775cf75fa2239c9698a5d09f586eb9f435d5c58",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "cbc0167be6169881d500f4765db4643d9fa1b671d64c20eb43a74a08e1399b1a"
+        },
+        {
+          "panel": 2,
+          "variant_id": "4587c34d178f477c59c8cb55-panel-02",
+          "source_line_indices_zero_based": [
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "source_lines_exact": [
+            "    alt normal return",
+            "        F->>O: scope ends",
+            "    else early return or exception",
+            "        F->>O: scope unwinds",
+            "    end",
+            "    O->>R: matching release exactly once"
+          ],
+          "repeated_participant_line_indices_zero_based": [
+            1,
+            2,
+            3
+          ],
+          "repeated_participant_lines_exact": [
+            "    participant F as Function",
+            "    participant O as RAII owner",
+            "    participant R as Resource"
+          ],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [
+            {
+              "source_line_index_zero_based": 12,
+              "exact_source_label": "matching release exactly once",
+              "rendered_label_with_display_breaks": "matching release exactly<br/>once",
+              "visible_text_after_break_removal": "matching release exactly once",
+              "word_sequence_validation": "PASS"
+            }
+          ],
+          "synthetic_content": [],
+          "rendered_code_sha256": "72838c1ab6d259048179f82ab1913ae8c3bd6dfb717896e91aae7432cad2ad0d",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/4587c34d178f477c59c8cb55-panel-02.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/4587c34d178f477c59c8cb55-panel-02.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/4587c34d178f477c59c8cb55-panel-02.png",
+          "svg_pre_finalize_sha256": "7d14652b903bd57e6f3de9e04aa4a616d7852621252de5ca00920fd8601648ea",
+          "svg_sha256": "0052dfc98d71e1424e2b550f282ad9ce90c9ad09fb71ce09d0cdbe0ab6fc350b",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "7186e450df46237992f801465c0fba68db7c3d79a9fcfd24d4855eccb712c066"
+        }
+      ]
+    },
+    {
+      "source_asset_id": "cf7ccfbe05510be35f986d5b",
+      "source_graph_sha256": "1aa89426875be3de25519ca25de9cc4cdcc3c2c628d4463284b330e5f77d1115",
+      "expected_source_graph_sha256": "1aa89426875be3de25519ca25de9cc4cdcc3c2c628d4463284b330e5f77d1115",
+      "source_markdown": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/06 - Geometry and Vector Implementation - Visual Recall.md",
+      "source_code_exact": "flowchart TD\n    X[Input components] --> F{finite?}\n    F -- no --> E[Reject / report invalid input]\n    F -- yes --> Z{zero or near-degenerate?}\n    Z -- yes --> D[Use explicit degenerate policy]\n    Z -- no --> S[Scale to safe range]\n    S --> C[Compute with declared precision]\n    C --> Q{decision sign / tolerance reliable?}\n    Q -- no --> U[Return uncertain or robust fallback]\n    Q -- yes --> O[Use result]",
+      "source_kind": "flowchart TD",
+      "panel_count": 3,
+      "layout_transform": null,
+      "partition_validation": "PASS: every non-header source line appears exactly once across panels",
+      "source_control_line_duplicates": [],
+      "source_edge_transition_or_message_lines_exact": [
+        "    X[Input components] --> F{finite?}",
+        "    F -- no --> E[Reject / report invalid input]",
+        "    F -- yes --> Z{zero or near-degenerate?}",
+        "    Z -- yes --> D[Use explicit degenerate policy]",
+        "    Z -- no --> S[Scale to safe range]",
+        "    S --> C[Compute with declared precision]",
+        "    C --> Q{decision sign / tolerance reliable?}",
+        "    Q -- no --> U[Return uncertain or robust fallback]",
+        "    Q -- yes --> O[Use result]"
+      ],
+      "cross_panel_node_aliases": [
+        {
+          "source_node_id": "C",
+          "label": null,
+          "panels": [
+            2,
+            3
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "no",
+          "label": null,
+          "panels": [
+            1,
+            2,
+            3
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "yes",
+          "label": null,
+          "panels": [
+            1,
+            2,
+            3
+          ],
+          "relationship": "same source node ID reused across panels"
+        }
+      ],
+      "cross_panel_sequence_relations": [],
+      "sequence_participant_declarations": [],
+      "sequence_control_blocks_preserved_whole": false,
+      "source_min_projected_font_pt_current_held": 2.4215357466595777,
+      "panels": [
+        {
+          "panel": 1,
+          "variant_id": "cf7ccfbe05510be35f986d5b-panel-01",
+          "source_line_indices_zero_based": [
+            1,
+            2,
+            3
+          ],
+          "source_lines_exact": [
+            "    X[Input components] --> F{finite?}",
+            "    F -- no --> E[Reject / report invalid input]",
+            "    F -- yes --> Z{zero or near-degenerate?}"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "317df901809ea4b7eed3083efdb4646e80bd0e3de5215a70edd35b45c2cf381e",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cf7ccfbe05510be35f986d5b-panel-01.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cf7ccfbe05510be35f986d5b-panel-01.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cf7ccfbe05510be35f986d5b-panel-01.png",
+          "svg_pre_finalize_sha256": "08815069fbf2eb10dcff420b3f60d6dfcd066b3201590c36bd243e4103a2fc1f",
+          "svg_sha256": "0a2d1dd5b304f5f5ff10184460f81d834f710aab99e47eeae1b4ab5a0f960b84",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "fee8fa32bacab8a0dbefa3131affc021743db4e7ce9092fad0a25d73bf370dc3"
+        },
+        {
+          "panel": 2,
+          "variant_id": "cf7ccfbe05510be35f986d5b-panel-02",
+          "source_line_indices_zero_based": [
+            4,
+            5,
+            6
+          ],
+          "source_lines_exact": [
+            "    Z -- yes --> D[Use explicit degenerate policy]",
+            "    Z -- no --> S[Scale to safe range]",
+            "    S --> C[Compute with declared precision]"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "b5067d04ae7049d03eb0b23dade321c92bdbd5ba0b36b1ca58ced81e66b57689",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cf7ccfbe05510be35f986d5b-panel-02.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cf7ccfbe05510be35f986d5b-panel-02.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cf7ccfbe05510be35f986d5b-panel-02.png",
+          "svg_pre_finalize_sha256": "e7e1413fecde0340d64c5d643b1bac9f2008b5bdffe89e765720a1ca45cfde05",
+          "svg_sha256": "5a1363f90117073fbba782658871bc534c078fce21661ecd62902bf26fb20083",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "d21cb2bad5943038507a1cfb452178d5005b23801f0694019640648f6203f3d2"
+        },
+        {
+          "panel": 3,
+          "variant_id": "cf7ccfbe05510be35f986d5b-panel-03",
+          "source_line_indices_zero_based": [
+            7,
+            8,
+            9
+          ],
+          "source_lines_exact": [
+            "    C --> Q{decision sign / tolerance reliable?}",
+            "    Q -- no --> U[Return uncertain or robust fallback]",
+            "    Q -- yes --> O[Use result]"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "5e79bbd721fae3993589e93114d2bccf1192e202e0763c6711edd3771613717b",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cf7ccfbe05510be35f986d5b-panel-03.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cf7ccfbe05510be35f986d5b-panel-03.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cf7ccfbe05510be35f986d5b-panel-03.png",
+          "svg_pre_finalize_sha256": "876a822b4443e468a9a4b1a4375706ce38482ce2345e52b69b4bf83550072f3c",
+          "svg_sha256": "5382b55e0accf4eedb8ba1452b71c9c84c2afe6632d3644834ba0511092b2ca3",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "7eca01ed3aefdb99ba65311a98bfc1a31774db3e1a17784bbd05dda0225c3c2c"
+        }
+      ]
+    },
+    {
+      "source_asset_id": "fb9dffc7a9c985e55f55150e",
+      "source_graph_sha256": "e4dc0f40d13026bde8eccafa7712bd11f9bf9938d886a8627cbffebad2b465f0",
+      "expected_source_graph_sha256": "e4dc0f40d13026bde8eccafa7712bd11f9bf9938d886a8627cbffebad2b465f0",
+      "source_markdown": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "source_code_exact": "stateDiagram-v2\n    [*] --> StorageReserved\n    StorageReserved --> ObjectAAlive: construct A / construct_at\n    ObjectAAlive --> StorageReserved: destroy A / destroy_at\n    StorageReserved --> ObjectBAlive: construct B in same suitable storage\n    ObjectBAlive --> StorageReserved: destroy B\n    StorageReserved --> StorageReleased: allocator releases bytes\n    StorageReleased --> [*]",
+      "source_kind": "stateDiagram-v2",
+      "panel_count": 2,
+      "layout_transform": null,
+      "partition_validation": "PASS: every non-header source line appears exactly once across panels",
+      "source_control_line_duplicates": [],
+      "source_edge_transition_or_message_lines_exact": [
+        "    [*] --> StorageReserved",
+        "    StorageReserved --> ObjectAAlive: construct A / construct_at",
+        "    ObjectAAlive --> StorageReserved: destroy A / destroy_at",
+        "    StorageReserved --> ObjectBAlive: construct B in same suitable storage",
+        "    ObjectBAlive --> StorageReserved: destroy B",
+        "    StorageReserved --> StorageReleased: allocator releases bytes",
+        "    StorageReleased --> [*]"
+      ],
+      "cross_panel_node_aliases": [
+        {
+          "source_node_id": "StorageReserved",
+          "label": null,
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        }
+      ],
+      "cross_panel_sequence_relations": [],
+      "sequence_participant_declarations": [],
+      "sequence_control_blocks_preserved_whole": false,
+      "source_min_projected_font_pt_current_held": 4.180936948710845,
+      "panels": [
+        {
+          "panel": 1,
+          "variant_id": "fb9dffc7a9c985e55f55150e-panel-01",
+          "source_line_indices_zero_based": [
+            1,
+            2,
+            3
+          ],
+          "source_lines_exact": [
+            "    [*] --> StorageReserved",
+            "    StorageReserved --> ObjectAAlive: construct A / construct_at",
+            "    ObjectAAlive --> StorageReserved: destroy A / destroy_at"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "b2e83fd46adcb3145e6e61a2bb218d34f15a4fb1e0788cf68cae76176270d44e",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/fb9dffc7a9c985e55f55150e-panel-01.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/fb9dffc7a9c985e55f55150e-panel-01.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/fb9dffc7a9c985e55f55150e-panel-01.png",
+          "svg_pre_finalize_sha256": "0cb933b310f72f5330568245aa3fcd20c62e2410a6c76de60d4807df74f4466f",
+          "svg_sha256": "aebe711502e00b7f0b6633e2f7b8f4eec912122b7d7ec1a21e891e191adc331f",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans.",
+            "State diagram CSS font-size 10px to 12px; node IDs and label text unchanged."
+          ],
+          "pdf_sha256": "69b0df5ed82a38c857cab9bd75cd617f1263b32bf25e1e14dbc5e6aaaa01586b"
+        },
+        {
+          "panel": 2,
+          "variant_id": "fb9dffc7a9c985e55f55150e-panel-02",
+          "source_line_indices_zero_based": [
+            4,
+            5,
+            6,
+            7
+          ],
+          "source_lines_exact": [
+            "    StorageReserved --> ObjectBAlive: construct B in same suitable storage",
+            "    ObjectBAlive --> StorageReserved: destroy B",
+            "    StorageReserved --> StorageReleased: allocator releases bytes",
+            "    StorageReleased --> [*]"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "8ece75b0f66169557fa5a43a3979f416802a485274339b1b7c33e7198bdaa2e8",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/fb9dffc7a9c985e55f55150e-panel-02.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/fb9dffc7a9c985e55f55150e-panel-02.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/fb9dffc7a9c985e55f55150e-panel-02.png",
+          "svg_pre_finalize_sha256": "b41ed621a6b847211199364342614ba74241b78dcd1f21737635363bc1b23255",
+          "svg_sha256": "b82cc2a52518bfa872b140f9f403497348199182304ade37135c43357bd94e8f",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans.",
+            "State diagram CSS font-size 10px to 12px; node IDs and label text unchanged."
+          ],
+          "pdf_sha256": "7e14974ddafa5017506ff5dda8757945b23428148ee3cf37d4c1deafda52d8fe"
+        }
+      ]
+    },
+    {
+      "source_asset_id": "8e675126df1a1b1854a18b23",
+      "source_graph_sha256": "41889358d0544d4f3a4ef88e4f2eff084d1f1b78021cfe56feac08231d1dc94f",
+      "expected_source_graph_sha256": "41889358d0544d4f3a4ef88e4f2eff084d1f1b78021cfe56feac08231d1dc94f",
+      "source_markdown": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/08 - Algorithms, application boundaries, and a first playable.md",
+      "source_code_exact": "sequenceDiagram\n  participant U as User or Player\n  participant P as Parser\n  participant C as Candidate Scene\n  participant R as Resolver\n  participant W as Active World\n  U->>P: Open scene bytes\n  P->>C: Parse authored records\n  C->>R: Validate assets and saved IDs\n  R->>C: Resolve references in second pass\n  C->>C: Check hierarchy and component invariants\n  alt every check succeeds\n    C->>W: Publish candidate world\n    W-->>U: New scene active\n  else parse, resolve, or validation fails\n    C-->>U: Diagnostic and keep active world unchanged\n  end",
+      "source_kind": "sequenceDiagram",
+      "panel_count": 3,
+      "layout_transform": null,
+      "partition_validation": "PASS: every non-header source line appears exactly once across panels",
+      "source_control_line_duplicates": [],
+      "source_edge_transition_or_message_lines_exact": [
+        "  U->>P: Open scene bytes",
+        "  P->>C: Parse authored records",
+        "  C->>R: Validate assets and saved IDs",
+        "  R->>C: Resolve references in second pass",
+        "  C->>C: Check hierarchy and component invariants",
+        "  alt every check succeeds",
+        "    C->>W: Publish candidate world",
+        "    W-->>U: New scene active",
+        "  else parse, resolve, or validation fails",
+        "    C-->>U: Diagnostic and keep active world unchanged",
+        "  end"
+      ],
+      "cross_panel_node_aliases": [
+        {
+          "source_node_id": "C",
+          "label": "Candidate Scene",
+          "panels": [
+            1,
+            2,
+            3
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "U",
+          "label": "User or Player",
+          "panels": [
+            1,
+            3
+          ],
+          "relationship": "same source node ID reused across panels"
+        }
+      ],
+      "cross_panel_sequence_relations": [],
+      "sequence_participant_declarations": [
+        "  participant U as User or Player",
+        "  participant P as Parser",
+        "  participant C as Candidate Scene",
+        "  participant R as Resolver",
+        "  participant W as Active World"
+      ],
+      "sequence_control_blocks_preserved_whole": true,
+      "source_min_projected_font_pt_current_held": 4.772369003690037,
+      "panels": [
+        {
+          "panel": 1,
+          "variant_id": "8e675126df1a1b1854a18b23-panel-01",
+          "source_line_indices_zero_based": [
+            6,
+            7
+          ],
+          "source_lines_exact": [
+            "  U->>P: Open scene bytes",
+            "  P->>C: Parse authored records"
+          ],
+          "repeated_participant_line_indices_zero_based": [
+            1,
+            2,
+            3
+          ],
+          "repeated_participant_lines_exact": [
+            "  participant U as User or Player",
+            "  participant P as Parser",
+            "  participant C as Candidate Scene"
+          ],
+          "omitted_unreferenced_source_participants": [
+            "  participant R as Resolver",
+            "  participant W as Active World"
+          ],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "f37f710ef921de29571a9c91fb0f42e142c61d42f51ff7729e470b6dda2d3d36",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/8e675126df1a1b1854a18b23-panel-01.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/8e675126df1a1b1854a18b23-panel-01.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/8e675126df1a1b1854a18b23-panel-01.png",
+          "svg_pre_finalize_sha256": "7e11a9473ddc714ac0ddb6d4789f4dd92b8d44b52301348f45c2f59293460de0",
+          "svg_sha256": "3177621e06b329ff5aa6e08be134472c033e1fe669bf0993a09c904c48d7b820",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "b76553ac21fb78137ee0f7b97c7ae645917e8df7ad8dd068553700dc03361907"
+        },
+        {
+          "panel": 2,
+          "variant_id": "8e675126df1a1b1854a18b23-panel-02",
+          "source_line_indices_zero_based": [
+            8,
+            9,
+            10
+          ],
+          "source_lines_exact": [
+            "  C->>R: Validate assets and saved IDs",
+            "  R->>C: Resolve references in second pass",
+            "  C->>C: Check hierarchy and component invariants"
+          ],
+          "repeated_participant_line_indices_zero_based": [
+            3,
+            4
+          ],
+          "repeated_participant_lines_exact": [
+            "  participant C as Candidate Scene",
+            "  participant R as Resolver"
+          ],
+          "omitted_unreferenced_source_participants": [
+            "  participant U as User or Player",
+            "  participant P as Parser",
+            "  participant W as Active World"
+          ],
+          "display_only_label_wraps": [
+            {
+              "source_line_index_zero_based": 8,
+              "exact_source_label": "Validate assets and saved IDs",
+              "rendered_label_with_display_breaks": "Validate assets and saved<br/>IDs",
+              "visible_text_after_break_removal": "Validate assets and saved IDs",
+              "word_sequence_validation": "PASS"
+            },
+            {
+              "source_line_index_zero_based": 9,
+              "exact_source_label": "Resolve references in second pass",
+              "rendered_label_with_display_breaks": "Resolve references in second<br/>pass",
+              "visible_text_after_break_removal": "Resolve references in second pass",
+              "word_sequence_validation": "PASS"
+            },
+            {
+              "source_line_index_zero_based": 10,
+              "exact_source_label": "Check hierarchy and component invariants",
+              "rendered_label_with_display_breaks": "Check hierarchy and<br/>component invariants",
+              "visible_text_after_break_removal": "Check hierarchy and component invariants",
+              "word_sequence_validation": "PASS"
+            }
+          ],
+          "synthetic_content": [],
+          "rendered_code_sha256": "6cf5fb1e3b5ac274515483263bbd7da70dfb6c49ea5330cfdb3a9983e3a5f34e",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/8e675126df1a1b1854a18b23-panel-02.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/8e675126df1a1b1854a18b23-panel-02.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/8e675126df1a1b1854a18b23-panel-02.png",
+          "svg_pre_finalize_sha256": "477c17db3752639eb24e67cce62b14f8427f69cc8805b2b04ef7b9fc6119fdfa",
+          "svg_sha256": "ab186e18b3794aae5f46c77930dcffc16c58263149464632b92e7eb734822a4d",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "9d9d5065e55d74481181a6f6c9e8db2cc9cd83fe8ae494fd9e54cd32cc9a20a9",
+          "review_render_code_sha256": "93de1d3056fbfed41786e9a5d845793edf1c901a582a30c318aac900475ff7fe",
+          "review_normalization_protocol": "review-sequence-margin-v1",
+          "review_normalization_reason": "Increase only the Mermaid sequence diagram horizontal canvas margin to keep the authored self-message label inside the panel; source lines and font sizes unchanged."
+        },
+        {
+          "panel": 3,
+          "variant_id": "8e675126df1a1b1854a18b23-panel-03",
+          "source_line_indices_zero_based": [
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "source_lines_exact": [
+            "  alt every check succeeds",
+            "    C->>W: Publish candidate world",
+            "    W-->>U: New scene active",
+            "  else parse, resolve, or validation fails",
+            "    C-->>U: Diagnostic and keep active world unchanged",
+            "  end"
+          ],
+          "repeated_participant_line_indices_zero_based": [
+            1,
+            3,
+            5
+          ],
+          "repeated_participant_lines_exact": [
+            "  participant U as User or Player",
+            "  participant C as Candidate Scene",
+            "  participant W as Active World"
+          ],
+          "omitted_unreferenced_source_participants": [
+            "  participant P as Parser",
+            "  participant R as Resolver"
+          ],
+          "display_only_label_wraps": [
+            {
+              "source_line_index_zero_based": 15,
+              "exact_source_label": "Diagnostic and keep active world unchanged",
+              "rendered_label_with_display_breaks": "Diagnostic and keep active<br/>world unchanged",
+              "visible_text_after_break_removal": "Diagnostic and keep active world unchanged",
+              "word_sequence_validation": "PASS"
+            }
+          ],
+          "synthetic_content": [],
+          "rendered_code_sha256": "ca8ad3a2da08b15531f94d376f1c2ad3b189d8553f198a6ce452edba436c3888",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/8e675126df1a1b1854a18b23-panel-03.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/8e675126df1a1b1854a18b23-panel-03.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/8e675126df1a1b1854a18b23-panel-03.png",
+          "svg_pre_finalize_sha256": "430b28670ce78890ec4a7d31d840241759e9bc11d079abfefc6ac79cd3578b47",
+          "svg_sha256": "1809feca08b29dbdc5cd73fad149160f317919bd0aa72b2b0bf725377900663e",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "18c79187f6a975f638ba9942886a30297da9f7813ff53f35f5ccce194f451ca6"
+        }
+      ]
+    },
+    {
+      "source_asset_id": "12f60b7ab1e672dd10535591",
+      "source_graph_sha256": "f584dc91da6230dcc0e2d927df47685c2eeea85f0b7a7e3b1bd91b78ea1cd665",
+      "expected_source_graph_sha256": "f584dc91da6230dcc0e2d927df47685c2eeea85f0b7a7e3b1bd91b78ea1cd665",
+      "source_markdown": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/41 - Evidence, tools, and revisable design.md",
+      "source_code_exact": "sequenceDiagram\n  participant W as File watcher\n  participant C as Compiler/loader\n  participant P as Candidate pipeline\n  participant R as Renderer clients\n  participant G as GPU work in flight\n  W->>C: Change event\n  C->>C: Read stable file and compile\n  C->>P: Create candidate modules/pipeline\n  alt compile and compatibility checks succeed\n    P->>R: Publish new version at safe boundary\n    R->>G: Submit commands referencing new version\n    G-->>R: Old work completes\n    R->>P: Retire old pipeline and module\n  else compile or compatibility fails\n    C-->>R: Keep previous version and report diagnostic\n  end",
+      "source_kind": "sequenceDiagram",
+      "panel_count": 4,
+      "layout_transform": null,
+      "partition_validation": "PASS: every non-header source line appears across panels; all non-control source lines occur once and any control duplication is listed",
+      "source_control_line_duplicates": [
+        {
+          "zero_based_line_index": 9,
+          "exact_source_line": "  alt compile and compatibility checks succeed",
+          "panels": [
+            2,
+            3,
+            4
+          ]
+        },
+        {
+          "zero_based_line_index": 16,
+          "exact_source_line": "  end",
+          "panels": [
+            2,
+            3,
+            4
+          ]
+        }
+      ],
+      "source_edge_transition_or_message_lines_exact": [
+        "  W->>C: Change event",
+        "  C->>C: Read stable file and compile",
+        "  C->>P: Create candidate modules/pipeline",
+        "  alt compile and compatibility checks succeed",
+        "    P->>R: Publish new version at safe boundary",
+        "    R->>G: Submit commands referencing new version",
+        "  end",
+        "  alt compile and compatibility checks succeed",
+        "    G-->>R: Old work completes",
+        "    R->>P: Retire old pipeline and module",
+        "  end",
+        "  alt compile and compatibility checks succeed",
+        "  else compile or compatibility fails",
+        "    C-->>R: Keep previous version and report diagnostic",
+        "  end"
+      ],
+      "cross_panel_node_aliases": [
+        {
+          "source_node_id": "C",
+          "label": "Compiler/loader",
+          "panels": [
+            1,
+            4
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "G",
+          "label": "GPU work in flight",
+          "panels": [
+            2,
+            3
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "P",
+          "label": "Candidate pipeline",
+          "panels": [
+            1,
+            2,
+            3
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "R",
+          "label": "Renderer clients",
+          "panels": [
+            2,
+            3,
+            4
+          ],
+          "relationship": "same source node ID reused across panels"
+        }
+      ],
+      "cross_panel_sequence_relations": [
+        {
+          "from_panel": 1,
+          "to_panel": 2,
+          "source_message_order": "new pipeline creation precedes successful publication"
+        },
+        {
+          "from_panel": 2,
+          "to_panel": 3,
+          "shared_source_condition": "  alt compile and compatibility checks succeed",
+          "source_message_order": "publication and command submission precede in-flight completion and retirement"
+        },
+        {
+          "from_panel": 3,
+          "to_panel": 4,
+          "shared_source_condition": "  alt compile and compatibility checks succeed",
+          "branch_relation": "  else compile or compatibility fails",
+          "source_message_order": "success path and failure path are alternative outcomes of the same condition"
+        }
+      ],
+      "sequence_participant_declarations": [
+        "  participant W as File watcher",
+        "  participant C as Compiler/loader",
+        "  participant P as Candidate pipeline",
+        "  participant R as Renderer clients",
+        "  participant G as GPU work in flight"
+      ],
+      "sequence_control_blocks_preserved_whole": true,
+      "source_min_projected_font_pt_current_held": 4.7841381011097415,
+      "panels": [
+        {
+          "panel": 1,
+          "variant_id": "12f60b7ab1e672dd10535591-panel-01",
+          "source_line_indices_zero_based": [
+            6,
+            7,
+            8
+          ],
+          "source_lines_exact": [
+            "  W->>C: Change event",
+            "  C->>C: Read stable file and compile",
+            "  C->>P: Create candidate modules/pipeline"
+          ],
+          "repeated_participant_line_indices_zero_based": [
+            1,
+            2,
+            3
+          ],
+          "repeated_participant_lines_exact": [
+            "  participant W as File watcher",
+            "  participant C as Compiler/loader",
+            "  participant P as Candidate pipeline"
+          ],
+          "omitted_unreferenced_source_participants": [
+            "  participant R as Renderer clients",
+            "  participant G as GPU work in flight"
+          ],
+          "display_only_label_wraps": [
+            {
+              "source_line_index_zero_based": 8,
+              "exact_source_label": "Create candidate modules/pipeline",
+              "rendered_label_with_display_breaks": "Create candidate<br/>modules/pipeline",
+              "visible_text_after_break_removal": "Create candidate modules/pipeline",
+              "word_sequence_validation": "PASS"
+            }
+          ],
+          "synthetic_content": [],
+          "rendered_code_sha256": "ecc719b4fcf3c0a95f634db39c4335e8dc41eb356c3cae9b9a537cc0f017c8e6",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-01.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-01.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-01.png",
+          "svg_pre_finalize_sha256": "196ed4ecac71e0236c20c6d5f3b96baa1e682f78c90c877ba64f9224d9a73e70",
+          "svg_sha256": "c796a0a385f1a97c2600a1528ad0b0bc7e1b2f9c65834c7cea8c9f4132ba9e6f",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "998e5c7035ed9ec059ed7c977525c376e1453b8514771cbcdda428c1fcd3c666",
+          "review_render_code_sha256": "1fea4f623fc4d6f40f73e97bb8fd383d1d1cee06f6217084732853b1f41084ee",
+          "review_normalization_protocol": "review-sequence-margin-v1",
+          "review_normalization_reason": "Increase only the Mermaid sequence diagram horizontal canvas margin to keep the authored self-message label inside the panel; source lines and font sizes unchanged."
+        },
+        {
+          "panel": 2,
+          "variant_id": "12f60b7ab1e672dd10535591-panel-02",
+          "source_line_indices_zero_based": [
+            9,
+            10,
+            11,
+            16
+          ],
+          "source_lines_exact": [
+            "  alt compile and compatibility checks succeed",
+            "    P->>R: Publish new version at safe boundary",
+            "    R->>G: Submit commands referencing new version",
+            "  end"
+          ],
+          "repeated_participant_line_indices_zero_based": [
+            3,
+            4,
+            5
+          ],
+          "repeated_participant_lines_exact": [
+            "  participant P as Candidate pipeline",
+            "  participant R as Renderer clients",
+            "  participant G as GPU work in flight"
+          ],
+          "omitted_unreferenced_source_participants": [
+            "  participant W as File watcher",
+            "  participant C as Compiler/loader"
+          ],
+          "display_only_label_wraps": [
+            {
+              "source_line_index_zero_based": 10,
+              "exact_source_label": "Publish new version at safe boundary",
+              "rendered_label_with_display_breaks": "Publish new version at safe<br/>boundary",
+              "visible_text_after_break_removal": "Publish new version at safe boundary",
+              "word_sequence_validation": "PASS"
+            },
+            {
+              "source_line_index_zero_based": 11,
+              "exact_source_label": "Submit commands referencing new version",
+              "rendered_label_with_display_breaks": "Submit commands referencing<br/>new version",
+              "visible_text_after_break_removal": "Submit commands referencing new version",
+              "word_sequence_validation": "PASS"
+            }
+          ],
+          "synthetic_content": [],
+          "rendered_code_sha256": "083ec0da5a716b4c8e138ada9e7e5dc16b703f4317a6a9609533219b14e0a98b",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-02.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-02.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-02.png",
+          "svg_pre_finalize_sha256": "08ad8c90a545c9ecc3c86a5006447719b1e34f5b7d32020cc52197edc185dbce",
+          "svg_sha256": "1003ecbc9bd2688813b6cdd2d1e64ded390bfed4c7a92793861230e230e0da95",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "6adb9c311b43bbe256197434c41dfd510f5f0e97836b82113167916afab8fc4f"
+        },
+        {
+          "panel": 3,
+          "variant_id": "12f60b7ab1e672dd10535591-panel-03",
+          "source_line_indices_zero_based": [
+            9,
+            12,
+            13,
+            16
+          ],
+          "source_lines_exact": [
+            "  alt compile and compatibility checks succeed",
+            "    G-->>R: Old work completes",
+            "    R->>P: Retire old pipeline and module",
+            "  end"
+          ],
+          "repeated_participant_line_indices_zero_based": [
+            3,
+            4,
+            5
+          ],
+          "repeated_participant_lines_exact": [
+            "  participant P as Candidate pipeline",
+            "  participant R as Renderer clients",
+            "  participant G as GPU work in flight"
+          ],
+          "omitted_unreferenced_source_participants": [
+            "  participant W as File watcher",
+            "  participant C as Compiler/loader"
+          ],
+          "display_only_label_wraps": [
+            {
+              "source_line_index_zero_based": 13,
+              "exact_source_label": "Retire old pipeline and module",
+              "rendered_label_with_display_breaks": "Retire old pipeline and<br/>module",
+              "visible_text_after_break_removal": "Retire old pipeline and module",
+              "word_sequence_validation": "PASS"
+            }
+          ],
+          "synthetic_content": [],
+          "rendered_code_sha256": "166fa5ee411ab8c5f7d4dcaa8e399b862b1f7a2f643d6616f03ebb16765bad82",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-03.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-03.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-03.png",
+          "svg_pre_finalize_sha256": "38eff6702576de6bf60986e85f0b545042a80dc6d2cdb61bbb4a0ea8c0e46fbe",
+          "svg_sha256": "ce41aeb828f50ca3a50604949f6b939c323abe8a33700f0c944dca8aa9ec3402",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "6e8f90e476442f4954d01a2d670291b1ea158839b2f396f7106ddf0451898463"
+        },
+        {
+          "panel": 4,
+          "variant_id": "12f60b7ab1e672dd10535591-panel-04",
+          "source_line_indices_zero_based": [
+            9,
+            14,
+            15,
+            16
+          ],
+          "source_lines_exact": [
+            "  alt compile and compatibility checks succeed",
+            "  else compile or compatibility fails",
+            "    C-->>R: Keep previous version and report diagnostic",
+            "  end"
+          ],
+          "repeated_participant_line_indices_zero_based": [
+            2,
+            4
+          ],
+          "repeated_participant_lines_exact": [
+            "  participant C as Compiler/loader",
+            "  participant R as Renderer clients"
+          ],
+          "omitted_unreferenced_source_participants": [
+            "  participant W as File watcher",
+            "  participant P as Candidate pipeline",
+            "  participant G as GPU work in flight"
+          ],
+          "display_only_label_wraps": [
+            {
+              "source_line_index_zero_based": 15,
+              "exact_source_label": "Keep previous version and report diagnostic",
+              "rendered_label_with_display_breaks": "Keep previous version and<br/>report diagnostic",
+              "visible_text_after_break_removal": "Keep previous version and report diagnostic",
+              "word_sequence_validation": "PASS"
+            }
+          ],
+          "synthetic_content": [],
+          "rendered_code_sha256": "ba47c5d4a53a9606320b0f9a457c28e5a7dbdbee2d605c81eec69b93cedb83e7",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-04.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-04.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-04.png",
+          "svg_pre_finalize_sha256": "12fd25f61b8720e07567045ed596ce310a0edc84da65a39546734de481e9c874",
+          "svg_sha256": "0dc07e79e8154409b3faf42945b42e8c2aeb6e27c5bebbdcf1b09ddb6042b0e8",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "3864752451b2092d24f27bb019983a6f0de2a7c6c7503c870502cbec30858a61"
+        }
+      ]
+    },
+    {
+      "source_asset_id": "cc5b9ccaf7c8fa11a4b0ea16",
+      "source_graph_sha256": "9fe47c389914c4179e9046871cab1ac9736d9983afd55d7b196cfb32a760d13d",
+      "expected_source_graph_sha256": "9fe47c389914c4179e9046871cab1ac9736d9983afd55d7b196cfb32a760d13d",
+      "source_markdown": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/01 - Computing Foundations/11 - C++ Const, Borrowing, and CPU\u2013GPU Buffering.md",
+      "source_code_exact": "sequenceDiagram\n    participant CPU\n    participant Queue\n    participant GPU\n    CPU->>CPU: Fill slot 0\n    CPU->>Queue: Commit C0(slot 0)\n    Queue->>GPU: Schedule C0\n    CPU->>CPU: Fill slot 1 while C0 runs\n    CPU->>Queue: Commit C1(slot 1)\n    GPU-->>CPU: C0 completion: slot 0 reusable\n    CPU->>CPU: Refill slot 0",
+      "source_kind": "sequenceDiagram",
+      "panel_count": 2,
+      "layout_transform": null,
+      "partition_validation": "PASS: every non-header source line appears exactly once across panels",
+      "source_control_line_duplicates": [],
+      "source_edge_transition_or_message_lines_exact": [
+        "    CPU->>CPU: Fill slot 0",
+        "    CPU->>Queue: Commit C0(slot 0)",
+        "    Queue->>GPU: Schedule C0",
+        "    CPU->>CPU: Fill slot 1 while C0 runs",
+        "    CPU->>Queue: Commit C1(slot 1)",
+        "    GPU-->>CPU: C0 completion: slot 0 reusable",
+        "    CPU->>CPU: Refill slot 0"
+      ],
+      "cross_panel_node_aliases": [
+        {
+          "source_node_id": "CPU",
+          "label": "CPU",
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "GPU",
+          "label": "GPU",
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "Queue",
+          "label": "Queue",
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        }
+      ],
+      "cross_panel_sequence_relations": [],
+      "sequence_participant_declarations": [
+        "    participant CPU",
+        "    participant Queue",
+        "    participant GPU"
+      ],
+      "sequence_control_blocks_preserved_whole": true,
+      "source_min_projected_font_pt_current_held": 6.655121783876502,
+      "panels": [
+        {
+          "panel": 1,
+          "variant_id": "cc5b9ccaf7c8fa11a4b0ea16-panel-01",
+          "source_line_indices_zero_based": [
+            4,
+            5,
+            6,
+            7
+          ],
+          "source_lines_exact": [
+            "    CPU->>CPU: Fill slot 0",
+            "    CPU->>Queue: Commit C0(slot 0)",
+            "    Queue->>GPU: Schedule C0",
+            "    CPU->>CPU: Fill slot 1 while C0 runs"
+          ],
+          "repeated_participant_line_indices_zero_based": [
+            1,
+            2,
+            3
+          ],
+          "repeated_participant_lines_exact": [
+            "    participant CPU",
+            "    participant Queue",
+            "    participant GPU"
+          ],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "e6832338ab469501b1f16c0280960433ab3422e9145d94b264dd40aa77718aa6",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cc5b9ccaf7c8fa11a4b0ea16-panel-01.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cc5b9ccaf7c8fa11a4b0ea16-panel-01.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cc5b9ccaf7c8fa11a4b0ea16-panel-01.png",
+          "svg_pre_finalize_sha256": "aad673fff24b7a1882529aeba172a640b748435918c5f8011632d8ea1f6c1205",
+          "svg_sha256": "3bb4dc5950fffbec2744646980a96d9f2082d092015369649495cede9ae2cdd5",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "d9365c3efc556f53c08103cefd0025b46a67064754abb1d109c44911c275d0ba",
+          "review_render_code_sha256": "5467a1e99df1920d0a8a06aa895908832c051b3cfbff09f4820e59091cf3b65a",
+          "review_normalization_protocol": "review-sequence-margin-v1",
+          "review_normalization_reason": "Increase only the Mermaid sequence diagram horizontal canvas margin to keep the authored self-message label inside the panel; source lines and font sizes unchanged."
+        },
+        {
+          "panel": 2,
+          "variant_id": "cc5b9ccaf7c8fa11a4b0ea16-panel-02",
+          "source_line_indices_zero_based": [
+            8,
+            9,
+            10
+          ],
+          "source_lines_exact": [
+            "    CPU->>Queue: Commit C1(slot 1)",
+            "    GPU-->>CPU: C0 completion: slot 0 reusable",
+            "    CPU->>CPU: Refill slot 0"
+          ],
+          "repeated_participant_line_indices_zero_based": [
+            1,
+            2,
+            3
+          ],
+          "repeated_participant_lines_exact": [
+            "    participant CPU",
+            "    participant Queue",
+            "    participant GPU"
+          ],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [
+            {
+              "source_line_index_zero_based": 9,
+              "exact_source_label": "C0 completion: slot 0 reusable",
+              "rendered_label_with_display_breaks": "C0 completion: slot 0<br/>reusable",
+              "visible_text_after_break_removal": "C0 completion: slot 0 reusable",
+              "word_sequence_validation": "PASS"
+            }
+          ],
+          "synthetic_content": [],
+          "rendered_code_sha256": "df1c6e144b957b5bc780d488f1cf039145b75226063ef59dd426ede89a1927b4",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cc5b9ccaf7c8fa11a4b0ea16-panel-02.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cc5b9ccaf7c8fa11a4b0ea16-panel-02.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cc5b9ccaf7c8fa11a4b0ea16-panel-02.png",
+          "svg_pre_finalize_sha256": "a2408c4a40c8d854424c503fd7b0c8a93afec1d8d5b83c1c8f831f23509e0ff1",
+          "svg_sha256": "407e03252b69c1f7d151d7fcb8deb0f74da44ebf51b6370f072def1228d65f0f",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "12ca158ef412257a5954d1c21af95a0770510b636991c6f28bd137b717b413c1"
+        }
+      ]
+    },
+    {
+      "source_asset_id": "3c3f8693bed9a50626badd2c",
+      "source_graph_sha256": "9a3f88cf8d7fee49704eec0572c3f7702b7c8f960516fbf132a51afe97c50b29",
+      "expected_source_graph_sha256": "9a3f88cf8d7fee49704eec0572c3f7702b7c8f960516fbf132a51afe97c50b29",
+      "source_markdown": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/09 - Player choices, rules, and readable feedback.md",
+      "source_code_exact": "flowchart LR\n  A[\"Active player chooses robot combat and moves a robot or fires\"] --> C{\"Has a player just met either win condition?\"}\n  B[\"Active player chooses scholarly connection and places a stone, or moves one if unable to place\"] --> C\n  C -- \"Yes\" --> D[\"That player wins the whole game immediately\"]\n  C -- \"No\" --> E[\"Opponent chooses and makes a legal move for the active player in the other contest\"]\n  E --> F{\"Has a player just met either win condition?\"}\n  F -- \"Yes\" --> D\n  F -- \"No\" --> G[\"Continue the alternating turn sequence\"]",
+      "source_kind": "flowchart LR",
+      "panel_count": 2,
+      "layout_transform": {
+        "source_direction": "LR",
+        "panel_direction": "TB",
+        "source_nodes_edges_and_label_text_unchanged": true
+      },
+      "partition_validation": "PASS: every non-header source line appears exactly once across panels",
+      "source_control_line_duplicates": [],
+      "source_edge_transition_or_message_lines_exact": [
+        "  A[\"Active player chooses robot combat and moves a robot or fires\"] --> C{\"Has a player just met either win condition?\"}",
+        "  B[\"Active player chooses scholarly connection and places a stone, or moves one if unable to place\"] --> C",
+        "  C -- \"Yes\" --> D[\"That player wins the whole game immediately\"]",
+        "  C -- \"No\" --> E[\"Opponent chooses and makes a legal move for the active player in the other contest\"]",
+        "  E --> F{\"Has a player just met either win condition?\"}",
+        "  F -- \"Yes\" --> D",
+        "  F -- \"No\" --> G[\"Continue the alternating turn sequence\"]"
+      ],
+      "cross_panel_node_aliases": [
+        {
+          "source_node_id": "D",
+          "label": "That player wins the whole game immediately",
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        },
+        {
+          "source_node_id": "E",
+          "label": "Opponent chooses and makes a legal move for the active player in the other contest",
+          "panels": [
+            1,
+            2
+          ],
+          "relationship": "same source node ID reused across panels"
+        }
+      ],
+      "cross_panel_sequence_relations": [],
+      "sequence_participant_declarations": [],
+      "sequence_control_blocks_preserved_whole": false,
+      "source_min_projected_font_pt_current_held": 2.922115410592747,
+      "panels": [
+        {
+          "panel": 1,
+          "variant_id": "3c3f8693bed9a50626badd2c-panel-01",
+          "source_line_indices_zero_based": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "source_lines_exact": [
+            "  A[\"Active player chooses robot combat and moves a robot or fires\"] --> C{\"Has a player just met either win condition?\"}",
+            "  B[\"Active player chooses scholarly connection and places a stone, or moves one if unable to place\"] --> C",
+            "  C -- \"Yes\" --> D[\"That player wins the whole game immediately\"]",
+            "  C -- \"No\" --> E[\"Opponent chooses and makes a legal move for the active player in the other contest\"]"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "1571623b0b4458a543486848253acd1c91717a68b3ac132b9e6df7251549bacd",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/3c3f8693bed9a50626badd2c-panel-01.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/3c3f8693bed9a50626badd2c-panel-01.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/3c3f8693bed9a50626badd2c-panel-01.png",
+          "svg_pre_finalize_sha256": "7fdbc734eb2dfb7664cd87915ffbde4e7f6ee06975ed00a199b736a31e7e37a4",
+          "svg_sha256": "1db5573a51ff905ca909181e45cf2abb6bba4d4c4a4a5d9a1899dba444a81a48",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "7c64ce76826f92d09e920fb600341030c9c49e922d0be79ee010d12e3778a894"
+        },
+        {
+          "panel": 2,
+          "variant_id": "3c3f8693bed9a50626badd2c-panel-02",
+          "source_line_indices_zero_based": [
+            5,
+            6,
+            7
+          ],
+          "source_lines_exact": [
+            "  E --> F{\"Has a player just met either win condition?\"}",
+            "  F -- \"Yes\" --> D",
+            "  F -- \"No\" --> G[\"Continue the alternating turn sequence\"]"
+          ],
+          "repeated_participant_line_indices_zero_based": [],
+          "repeated_participant_lines_exact": [],
+          "omitted_unreferenced_source_participants": [],
+          "display_only_label_wraps": [],
+          "synthetic_content": [],
+          "rendered_code_sha256": "a650683a0c79512d8e9328f1b8b0da410aaf8578001c7cf754bdfe7062f2e82d",
+          "svg": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/3c3f8693bed9a50626badd2c-panel-02.svg",
+          "pdf": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/3c3f8693bed9a50626badd2c-panel-02.pdf",
+          "png": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/3c3f8693bed9a50626badd2c-panel-02.png",
+          "svg_pre_finalize_sha256": "e973760a9620a43faf4f2ce8970cc14d9e5782a9f8c6fd6a3fe77060dbc5dee9",
+          "svg_sha256": "e818aeeacf7ae615dc283c45b91f476c49599a5bb0a8408aa9397e22be7021f4",
+          "tentative_svg_adjustments": [
+            "Set xml:space=\"preserve\" on SVG root so SVG renderers retain authored spaces across adjacent tspans."
+          ],
+          "pdf_sha256": "27337d44dbc93acf1b182a8abefac881cb96cf04e100c79dc2e7b6cc6f1aee5e"
+        }
+      ]
+    }
+  ],
+  "state_label_style_adjustments": [
+    "0afe9d09c4fc80ae1bff5d38-panel-01.svg",
+    "0b0e76bfeca07fcd2864142a-panel-02.svg",
+    "8e675126df1a1b1854a18b23-panel-02.svg",
+    "12f60b7ab1e672dd10535591-panel-01.svg",
+    "cc5b9ccaf7c8fa11a4b0ea16-panel-01.svg"
+  ]
+}

@@ -1,0 +1,3225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch397.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_06-engine-ii-ch028-bvh-traversal-refitting-and-simd" class="level2">
+<h2>BVH traversal, refitting, and SIMD</h2>
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch396.xhtml#id_05-engine-i-ch018-ecs-contracts-diagnostics-and-gpu-handoff" class="wikilink">Previous chapter</a> · <a href="ch398.xhtml#id_06-engine-ii-ch029-dynamic-spatial-indices-for-moving-worlds" class="wikilink">Next chapter</a></p>
+<p>A hierarchy reduces query work only when its bounds remain valid after scene changes. This chapter follows traversal and refitting, then asks which parts can be widened or vectorized without weakening correctness.</p>
+<p><strong>By the end:</strong> Trace a BVH query, update bounds after motion, and describe the invariants required for wide nodes and SIMD traversal.</p>
+<p><strong>Recall question:</strong> Which bound should be tested next during traversal, and what update must occur when one primitive moves?</p>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 66795–69635; source-span SHA256 1580276dba98f17fb98555784211497c698d4620ac47d3b3333db5b734885863. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_06-engine-ii-ch028-traversal-refitting-wide-bvhs-and-simd" class="level4">
+<h4>TRAVERSAL, REFITTING, WIDE BVHs AND SIMD</h4>
+<p>We now own tree construction.</p>
+<p>The next question is:</p>
+<blockquote>
+<p>How does a query move through that tree while doing the minimum necessary work?</p>
+</blockquote>
+<hr />
+<p><strong>Depth-first BVH traversal</strong></p>
+<p>Consider:</p>
+<pre class="text"><code>                  N0
+               /      \
+             N1        N2
+            /  \      /  \
+          L3   L4   L5   L6</code></pre>
+<p>Suppose the ray intersects N0.</p>
+<p>Depth-first traversal follows one branch until reaching a leaf, then returns to unexplored branches.</p>
+<p>Pseudocode:</p>
+<pre class="text"><code>push(root)
+
+while stack not empty:
+    node = pop()
+
+    if query misses node.bounds:
+        continue
+
+    if leaf:
+        test primitives
+    else:
+        push children</code></pre>
+<p>That is the core BVH traversal algorithm.</p>
+<p>The tree itself does not answer the final query.</p>
+<p>It eliminates impossible work.</p>
+<hr />
+<p><strong>Explicit traversal stacks</strong></p>
+<p>Recursive traversal can be expressed naturally:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> traverse<span class="op">(</span>Node<span class="op">*</span> node<span class="op">)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>intersect<span class="op">(</span>node<span class="op">-&gt;</span>bounds<span class="op">))</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span><span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>node<span class="op">-&gt;</span>leaf<span class="op">)</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        test<span class="op">(</span>node<span class="op">-&gt;</span>primitives<span class="op">);</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        traverse<span class="op">(</span>node<span class="op">-&gt;</span>left<span class="op">);</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        traverse<span class="op">(</span>node<span class="op">-&gt;</span>right<span class="op">);</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>But high-performance implementations often use explicit stacks.</p>
+<p>Why?</p>
+<p>Function recursion consumes call-stack state and gives the implementation less explicit control over traversal order.</p>
+<p>An explicit stack:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>array<span class="op">&lt;</span><span class="dt">uint32_t</span><span class="op">,</span> <span class="dv">64</span><span class="op">&gt;</span> stack<span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="dt">uint32_t</span> top <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>stack<span class="op">[</span>top<span class="op">++]</span> <span class="op">=</span> root<span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(</span>top <span class="op">!=</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">uint32_t</span> nodeIndex <span class="op">=</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        stack<span class="op">[--</span>top<span class="op">];</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>allows you to decide which child is visited next.</p>
+<p>It can also avoid dynamic allocation.</p>
+<p>Your traversal currently uses:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span>SpatialIndex<span class="op">&gt;</span> stack<span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>stack<span class="op">.</span>reserve<span class="op">(</span><span class="dv">64</span><span class="op">);</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>stack<span class="op">.</span>push_back<span class="op">(</span><span class="dv">0</span><span class="op">);</span></span></code></pre></div>
+<p>This is convenient and safe for arbitrary depth, but <code>reserve(64)</code> may allocate heap storage for every query.</p>
+<p>For a very hot ray-tracing path, a fixed local stack or small-buffer container can remove that per-query allocation.</p>
+<p>But there is a tradeoff: fixed stacks need an overflow policy.</p>
+<p>Never assume tree depth can never exceed the capacity unless construction enforces that invariant.</p>
+<p>Your builder already has:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>MaxDepth <span class="op">=</span> <span class="dv">64</span><span class="op">;</span></span></code></pre></div>
+<p>which could support a carefully designed fixed traversal stack, although wide traversal and sibling scheduling may affect the exact capacity calculation.</p>
+<hr />
+<p><strong>Stackless BVH traversal</strong></p>
+<p>Can traversal avoid a stack entirely?</p>
+<p>Yes, by storing enough structural information to know where to continue after finishing a subtree.</p>
+<p>One option is a <strong>parent pointer</strong>, which your node already stores.</p>
+<p>Another common concept is an <strong>escape index</strong> or <strong>rope</strong>.</p>
+<p>For depth-first linearized nodes:</p>
+<pre class="text"><code>Node:
+    bounds
+    firstChild
+    escape</code></pre>
+<p>If the node intersects, descend.</p>
+<p>If it misses, jump directly to <code>escape</code>.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>N0
+|
++-- N1
+|   |
+|   +-- L2
+|   +-- L3
+|
++-- N4</code></pre>
+<p>The escape link for N1 points to N4.</p>
+<p>A stackless traversal might be:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>index <span class="op">=</span> root<span class="op">;</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(</span>index <span class="op">!=</span> INVALID<span class="op">)</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Node<span class="op">&amp;</span> node <span class="op">=</span> nodes<span class="op">[</span>index<span class="op">];</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>intersects<span class="op">(</span>node<span class="op">.</span>bounds<span class="op">))</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>        index <span class="op">=</span> node<span class="op">.</span>escape<span class="op">;</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>node<span class="op">.</span>isLeaf<span class="op">())</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        testLeaf<span class="op">(</span>node<span class="op">);</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>        index <span class="op">=</span> node<span class="op">.</span>escape<span class="op">;</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>        index <span class="op">=</span> node<span class="op">.</span>firstChild<span class="op">;</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The advantage is reduced per-ray stack storage.</p>
+<p>The disadvantage is more complex node layout and potentially less flexible ordering.</p>
+<p>For closest-hit rays, near-first ordering becomes harder if the linear layout disagrees with ray direction.</p>
+<hr />
+<p><strong>Near-child-first ray traversal</strong></p>
+<p>Suppose a ray intersects both child boxes.</p>
+<p>Their first intersection parameters are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>3</mn>
+</math>
+<p>and</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mi>R</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>20.</mn>
+</math>
+<p>Which child should we traverse first?</p>
+<p>For closest-hit queries, the near child.</p>
+<p>Why?</p>
+<p>Suppose the left subtree contains an actual primitive hit at</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>4.</mn>
+</math>
+<p>Then current closest becomes</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>closest</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>4.</mn>
+</math>
+<p>The right child begins at <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>20</mn>
+</math>, therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>20</mn>
+  <mo>&gt;</mo>
+  <mn>4.</mn>
+</math>
+<p>The entire right subtree can now be discarded.</p>
+<p>If we traversed the far child first, we might perform substantial work before discovering the near hit.</p>
+<p>Therefore near-first ordering is not required for correctness, but can massively improve pruning.</p>
+<p>Your current <code>Raycast()</code> calculates:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>leftDistance</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>rightDistance</span></code></pre></div>
+<p>and when both children intersect:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>leftDistance <span class="op">&lt;</span> rightDistance<span class="op">)</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    stack<span class="op">.</span>push_back<span class="op">(</span>node<span class="op">.</span>Right<span class="op">);</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    stack<span class="op">.</span>push_back<span class="op">(</span>node<span class="op">.</span>Left<span class="op">);</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Because the stack is LIFO, the left child is processed next.</p>
+<p>So your closest-hit traversal already implements near-child-first ordering.</p>
+<hr />
+<p><strong>Closest-hit pruning by current ray t</strong></p>
+<p>Suppose current nearest primitive hit is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>best</mtext>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>For any node whose bounding box cannot be entered before <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>best</mtext>
+    </mrow>
+  </msub>
+</math>, no primitive in that node can improve the solution.</p>
+<p>Thus the node’s ray-box test uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>best</mtext>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Every time we discover a closer primitive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>best</mtext>
+    </mrow>
+  </msub>
+  <mo stretchy="false">←</mo>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>hit</mtext>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>The search domain shrinks dynamically.</p>
+<p>This is branch-and-bound reasoning.</p>
+<p>The BVH tree gives spatial lower bounds.</p>
+<p>The current closest hit gives an upper bound.</p>
+<p>When:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>nodeNear</mtext>
+    </mrow>
+  </msub>
+  <mo>&gt;</mo>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>best</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>the subtree cannot contain the optimum.</p>
+<p>This same pattern appears far beyond ray tracing:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Lower bound of unexplored region</mtext>
+          <mo>&gt;</mo>
+          <mtext>best known solution</mtext>
+          <mo stretchy="false">⇒</mo>
+          <mtext>prune</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Your implementation correctly passes <code>closestDistance</code> into its node AABB tests and updates it whenever a closer primitive hit appears.</p>
+<hr />
+<p><strong>A subtle inefficiency in your current traversal</strong></p>
+<p>Your implementation performs child bounds tests here:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>RayIntersectsAABB<span class="op">(</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    ray<span class="op">,</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    bvh<span class="op">.</span>Nodes<span class="op">[</span>node<span class="op">.</span>Left<span class="op">].</span>Bounds<span class="op">,</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    closestDistance<span class="op">,</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    leftDistance<span class="op">);</span></span></code></pre></div>
+<p>and similarly for right.</p>
+<p>It then pushes the intersected child.</p>
+<p>When that child is popped on the next loop iteration, the code again performs:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>RayIntersectsAABB<span class="op">(</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    ray<span class="op">,</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    node<span class="op">.</span>Bounds<span class="op">,</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    closestDistance<span class="op">,</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    boundsDistance<span class="op">);</span></span></code></pre></div>
+<p>Therefore many node AABBs are tested twice.</p>
+<p>Why might this have been written this way?</p>
+<p>Because child pretesting is required to determine near versus far ordering.</p>
+<p>A common optimization is to store the already calculated entry distance on the stack:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> StackEntry</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> node<span class="op">;</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> nearT<span class="op">;</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then the popped node need not repeat the ray-box test unless the current closest hit has changed enough that a cheap <code>nearT &gt; closestDistance</code> check can reject it.</p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>entry<span class="op">.</span>nearT <span class="op">&gt;</span> closestDistance<span class="op">)</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">continue</span><span class="op">;</span></span></code></pre></div>
+<p>This converts a repeated six-slab test into one scalar comparison.</p>
+<p>Whether this materially improves performance must be benchmarked.</p>
+<hr />
+<p><strong>Any-hit traversal</strong></p>
+<p>Any-hit asks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">∃</mi>
+  <mi>p</mi>
+  <mo>:</mo>
+  <mi>Intersect</mi>
+  <mo stretchy="false">(</mo>
+  <mi>Q</mi>
+  <mo>,</mo>
+  <mi>p</mi>
+  <mo stretchy="false">)</mo>
+  <mo>?</mo>
+</math>
+<p>The moment one acceptable hit is found:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>return true</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>No closest distance must be maintained.</p>
+<p>This makes it ideal for binary visibility queries.</p>
+<p>Shadow ray:</p>
+<pre class="text"><code>Light ------------------------- Surface point
+             ^
+             |
+      Is anything here?</code></pre>
+<p>If one opaque occluder exists, traversal ends.</p>
+<p>Your <code>RaycastAny()</code> does exactly this.</p>
+<p>It traverses nodes until <code>primitiveHit()</code> returns true, then returns immediately.</p>
+<p>It does <strong>not</strong> perform near-child sorting.</p>
+<p>That does not affect correctness.</p>
+<p>However, ordering can still affect performance: a child likely to contain a hit should ideally be visited first.</p>
+<p>For incoherent shadow rays, deciding that order may or may not be worth the additional box-intersection work.</p>
+<p>This is a workload-dependent tradeoff.</p>
+<hr />
+<p><strong>One current API subtlety: <code>Raycast().Hits</code></strong></p>
+<p>Your closest-hit traversal performs:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>hit <span class="op">&amp;&amp;</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    hit<span class="op">-&gt;</span>Distance <span class="op">&lt;=</span> closestDistance<span class="op">)</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    result<span class="op">.</span>Hits<span class="op">.</span>push_back<span class="op">(*</span>hit<span class="op">);</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    result<span class="op">.</span>Closest <span class="op">=</span> <span class="op">*</span>hit<span class="op">;</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    closestDistance <span class="op">=</span> hit<span class="op">-&gt;</span>Distance<span class="op">;</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>That means <code>result.Hits</code> is <strong>not an all-hit list</strong>.</p>
+<p>Suppose traversal encounters distances:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>12</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mn>7</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mn>9</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mn>3.</mn>
+</math>
+<p>The stored sequence becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mn>12</mn>
+  <mo>,</mo>
+  <mn>7</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>The hit at 9 is valid geometrically but is discarded because 7 was already closer.</p>
+<p>Therefore <code>Hits</code> currently means something like:</p>
+<blockquote>
+<p>sequence of progressively improving closest candidates encountered during traversal.</p>
+</blockquote>
+<p>That is a perfectly usable internal diagnostic concept, but the name <code>Hits</code> can be mistaken for an all-hit query.</p>
+<p>If external users interpret it as every ray hit, the API would be misleading.</p>
+<p>A clearer design could expose only <code>Closest</code>, or rename the vector to something like <code>ImprovingHits</code>/<code>TraversalHits</code>, while implementing a distinct <code>RaycastAll()</code> traversal if actual all-hit semantics are needed.</p>
+<hr />
+<p><strong>BVH overlap traversal</strong></p>
+<p>Ray traversal is only one BVH query.</p>
+<p>Consider AABB query <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+</math>.</p>
+<p>At node <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Q</mi>
+  <mo>∩</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>N</mi>
+  </msub>
+  <mo>=</mo>
+  <mi data-mjx-alternate="1">∅</mi>
+  <mo stretchy="false">⇒</mo>
+  <mtext>skip entire subtree</mtext>
+  <mo>.</mo>
+</math>
+<p>If it overlaps, continue.</p>
+<p>At leaves, test the actual primitive bounds:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Q</mi>
+  <mo>∩</mo>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <msub>
+        <mi>P</mi>
+        <mi>i</mi>
+      </msub>
+    </mrow>
+  </msub>
+  <mo>≠</mo>
+  <mi data-mjx-alternate="1">∅</mi>
+  <mo>.</mo>
+</math>
+<p>Canonical traversal:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>stack<span class="op">.</span>push<span class="op">(</span>root<span class="op">);</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(!</span>stack<span class="op">.</span>empty<span class="op">())</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    Node node <span class="op">=</span> pop<span class="op">();</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>overlap<span class="op">(</span>query<span class="op">,</span> node<span class="op">.</span>bounds<span class="op">))</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>node<span class="op">.</span>isLeaf<span class="op">())</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="op">(</span>primitive <span class="op">:</span> node<span class="op">)</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="op">(</span>overlap<span class="op">(</span>query<span class="op">,</span> primitive<span class="op">.</span>bounds<span class="op">))</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>                output<span class="op">.</span>push_back<span class="op">(</span>primitive<span class="op">);</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>        stack<span class="op">.</span>push<span class="op">(</span>node<span class="op">.</span>left<span class="op">);</span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>        stack<span class="op">.</span>push<span class="op">(</span>node<span class="op">.</span>right<span class="op">);</span></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Your <code>QueryAABB()</code> implements exactly this structure and supports layer-mask filtering.</p>
+<p>This is acceleration, not necessarily final narrowphase.</p>
+<p>If each <code>SpatialPrimitive.Bounds</code> represents a broadphase collider box, a returned ID means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>&quot;candidate whose bound overlaps query&quot;</mtext>
+</math>
+<p>not necessarily:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>&quot;exact underlying shape overlaps query&quot;</mtext>
+  <mo>.</mo>
+</math>
+<p>That distinction prevents broadphase results from being mistaken for exact collision results.</p>
+<hr />
+<p><strong>BVH point query</strong></p>
+<p>A point can be treated as a zero-size AABB:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mi>P</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mi>P</mi>
+  <mo>,</mo>
+  <mi>P</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Your <code>QueryPoint()</code> literally delegates:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> QueryAABB<span class="op">(</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    bvh<span class="op">,</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    SpatialAABB<span class="op">::</span>FromPoint<span class="op">(</span>point<span class="op">),</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    layerMask<span class="op">);</span></span></code></pre></div>
+<p>That is excellent API reuse because containment:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo>∈</mo>
+  <mi>B</mi>
+</math>
+<p>is equivalent to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>P</mi>
+  <mo>,</mo>
+  <mi>P</mi>
+  <mo stretchy="false">]</mo>
+  <mo>∩</mo>
+  <mi>B</mi>
+  <mo>≠</mo>
+  <mi data-mjx-alternate="1">∅</mi>
+  <mo>.</mo>
+</math>
+<p>Again, the result identifies primitive <strong>bounds</strong> containing the point.</p>
+<p>It does not prove that the point lies inside an arbitrary triangle mesh or convex hull.</p>
+<p>That would require the appropriate narrowphase/containment test.</p>
+<hr />
+<p><strong>BVH frustum query</strong></p>
+<p>For each node:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo>∩</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>N</mi>
+  </msub>
+  <mo>=</mo>
+  <mi data-mjx-alternate="1">∅</mi>
+  <mo stretchy="false">⇒</mo>
+  <mtext>prune</mtext>
+  <mo>.</mo>
+</math>
+<p>If the bound survives frustum rejection, descend.</p>
+<p>At leaves, classify primitive bounds.</p>
+<p>Your <code>QueryFrustum()</code> uses:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>frustum<span class="op">.</span>IntersectsAABB<span class="op">(</span>node<span class="op">.</span>Bounds<span class="op">)</span></span></code></pre></div>
+<p>for nodes and again for leaf primitive bounds.</p>
+<p>This is particularly effective for rendering because the hierarchy can reject entire groups of objects with six-plane tests against one node bound.</p>
+<p>If 10,000 nearby renderables occupy one region outside the camera, a high-level BVH node may eliminate all 10,000.</p>
+<p>The query structure becomes:</p>
+<pre class="text"><code>Camera frustum
+       |
+       v
+BVH root
+       |
+       +--- outside? ---&gt; reject enormous subtree
+       |
+       v
+surviving children
+       |
+       v
+leaf bounds
+       |
+       v
+visible candidate IDs</code></pre>
+<p>The output should normally remain conservative for rendering: extra visible candidates are preferable to incorrectly disappearing geometry.</p>
+<hr />
+<p><strong>BVH refitting</strong></p>
+<p>Suppose the topology remains valid but primitives move.</p>
+<p>Do we have to rebuild the tree?</p>
+<p>Not necessarily.</p>
+<p><strong>Refitting</strong> preserves the tree topology and updates bounds.</p>
+<p>For a leaf:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">⋃</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>p</mi>
+      <mo>∈</mo>
+      <mi>L</mi>
+    </mrow>
+  </munder>
+  <mi>B</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>For an internal node:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mi>N</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>left</mtext>
+      <mo stretchy="false">(</mo>
+      <mi>N</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </msub>
+  <mo>∪</mo>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>right</mtext>
+      <mo stretchy="false">(</mo>
+      <mi>N</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Therefore process bottom-up.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> refitBVH<span class="op">(</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    BVH<span class="op">&amp;</span> bvh<span class="op">,</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>span<span class="op">&lt;</span><span class="at">const</span> AABB<span class="op">&gt;</span> updatedPrimitiveBounds<span class="op">)</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 1. Update leaf bounds.</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="bu">std::</span>size_t nodeIndex <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>         nodeIndex <span class="op">&lt;</span> bvh<span class="op">.</span>nodes<span class="op">.</span>size<span class="op">();</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>         <span class="op">++</span>nodeIndex<span class="op">)</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>        Node<span class="op">&amp;</span> node <span class="op">=</span> bvh<span class="op">.</span>nodes<span class="op">[</span>nodeIndex<span class="op">];</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>node<span class="op">.</span>isLeaf<span class="op">())</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>        AABB bounds <span class="op">=</span> AABB<span class="op">::</span>Empty<span class="op">();</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="op">(</span><span class="bu">std::</span>uint32_t i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>             i <span class="op">&lt;</span> node<span class="op">.</span>primitiveCount<span class="op">;</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>             <span class="op">++</span>i<span class="op">)</span></span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> <span class="kw">auto</span> primitive <span class="op">=</span></span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>                bvh<span class="op">.</span>primitiveOrder<span class="op">[</span></span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>                    node<span class="op">.</span>firstPrimitive <span class="op">+</span> i<span class="op">];</span></span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>            bounds<span class="op">.</span>expand<span class="op">(</span></span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>                updatedPrimitiveBounds<span class="op">[</span>primitive<span class="op">]);</span></span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>        node<span class="op">.</span>bounds <span class="op">=</span> bounds<span class="op">;</span></span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 2. Update internal nodes bottom-up.</span></span>
+<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>    <span class="co">//</span></span>
+<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>    <span class="co">// This assumes construction order guarantees children</span></span>
+<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a>    <span class="co">// appear after parents, as in a pre-order flat layout.</span></span>
+<span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="bu">std::</span>size_t i <span class="op">=</span> bvh<span class="op">.</span>nodes<span class="op">.</span>size<span class="op">();</span></span>
+<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a>         i<span class="op">--</span> <span class="op">&gt;</span> <span class="dv">0</span><span class="op">;)</span></span>
+<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a>        Node<span class="op">&amp;</span> node <span class="op">=</span> bvh<span class="op">.</span>nodes<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-41"><a href="#cb22-41" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>node<span class="op">.</span>isLeaf<span class="op">())</span></span>
+<span id="cb22-42"><a href="#cb22-42" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb22-43"><a href="#cb22-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-44"><a href="#cb22-44" aria-hidden="true" tabindex="-1"></a>        node<span class="op">.</span>bounds <span class="op">=</span></span>
+<span id="cb22-45"><a href="#cb22-45" aria-hidden="true" tabindex="-1"></a>            Union<span class="op">(</span></span>
+<span id="cb22-46"><a href="#cb22-46" aria-hidden="true" tabindex="-1"></a>                bvh<span class="op">.</span>nodes<span class="op">[</span>node<span class="op">.</span>left<span class="op">].</span>bounds<span class="op">,</span></span>
+<span id="cb22-47"><a href="#cb22-47" aria-hidden="true" tabindex="-1"></a>                bvh<span class="op">.</span>nodes<span class="op">[</span>node<span class="op">.</span>right<span class="op">].</span>bounds<span class="op">);</span></span>
+<span id="cb22-48"><a href="#cb22-48" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb22-49"><a href="#cb22-49" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This is usually much cheaper than rebuilding because no split decisions or sorting are performed.</p>
+<p>If each node is visited once:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>refit</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>N</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>nodes</mtext>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>For a binary BVH with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+</math> leaves, internal node count is on the order of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+</math>, so refitting is linear.</p>
+<hr />
+<p><strong>When reverse node order is valid</strong></p>
+<p>The previous code assumes a construction layout in which descendants have larger indices than ancestors.</p>
+<p>Your recursive builder does exactly that:</p>
+<ol type="1">
+<li>append parent,</li>
+<li>recurse left,</li>
+<li>recurse right.</li>
+</ol>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>&lt;</mo>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">(</mo>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Consequently walking the flat node array backwards visits children before parents.</p>
+<p>That makes reverse-order refitting possible without recursion.</p>
+<p>This is a beautiful example of how construction order creates an algorithmic property later.</p>
+<p>The flat layout is not merely storage.</p>
+<p>It can encode traversal/refit relationships.</p>
+<hr />
+<p><strong>Selective refitting</strong></p>
+<p>Suppose only one primitive moves.</p>
+<p>Refitting the entire tree is unnecessary.</p>
+<p>If leaves know their parents, update the affected leaf, then walk upward:</p>
+<pre class="text"><code>changed primitive
+      |
+      v
+leaf bound
+      |
+      v
+parent
+      |
+      v
+grandparent
+      |
+      v
+root</code></pre>
+<p>At each ancestor:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mi>N</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>∪</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>R</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Your <code>BVHNode</code> already stores <code>Parent</code>.</p>
+<p>Therefore the representation already contains one of the pieces needed for incremental refitting.</p>
+<p>What is missing is a reverse mapping from primitive to containing leaf.</p>
+<p>You currently know:</p>
+<pre class="text"><code>leaf -&gt; primitive range</code></pre>
+<p>but efficient selective updates also benefit from:</p>
+<pre class="text"><code>primitive -&gt; leaf</code></pre>
+<p>Otherwise locating the affected leaf may itself require searching the tree or scanning leaves.</p>
+<hr />
+<p><strong>Rebuilding</strong></p>
+<p>Refit changes bounds.</p>
+<p>Rebuild changes topology.</p>
+<p>A rebuild re-runs partition decisions:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>primitives</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>new bounds</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>new splits</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>new tree</mtext>
+  <mo>.</mo>
+</math>
+<p>Why ever pay this cost?</p>
+<p>Because topology can become poor after large motion.</p>
+<p>Imagine the tree initially separates objects spatially:</p>
+<pre class="text"><code>LEFT subtree              RIGHT subtree
+
+AAAA AAAAA                BBBB BBBB</code></pre>
+<p>After deformation:</p>
+<pre class="text"><code>LEFT objects:   A A A A scattered everywhere
+RIGHT objects:  B B B B scattered everywhere</code></pre>
+<p>Refitting creates enormous overlapping child bounds:</p>
+<pre class="text"><code>+---------------------------------------+
+| LEFT BOUND                            |
+|     +---------------------------------+----+
+|     | RIGHT BOUND                          |
+|     |                                      |
++-----|--------------------------------------+
+      +--------------------------------------+</code></pre>
+<p>The tree remains mathematically valid.</p>
+<p>But nearly every query enters both branches.</p>
+<p>Acceleration collapses.</p>
+<hr />
+<p><strong>Quality degradation under deformation</strong></p>
+<p>This distinction is essential:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>BVH correctness</mtext>
+          <mo>≠</mo>
+          <mtext>BVH quality</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A refitted tree can be 100% correct and almost useless.</p>
+<p>Useful quality measures include expected SAH cost, sibling overlap, child-to-parent area ratio, traversal node counts, or actual measured query cost.</p>
+<p>For an internal node, a simple overlap-volume metric could be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>Q</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>overlap</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>V</mi>
+      <mo stretchy="false">(</mo>
+      <msub>
+        <mi>B</mi>
+        <mi>L</mi>
+      </msub>
+      <mo>∩</mo>
+      <msub>
+        <mi>B</mi>
+        <mi>R</mi>
+      </msub>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mi>V</mi>
+      <mo stretchy="false">(</mo>
+      <msub>
+        <mi>B</mi>
+        <mi>P</mi>
+      </msub>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>But volume overlap does not necessarily predict ray traversal perfectly.</p>
+<p>SAH-inspired metric:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>Q</mi>
+    <mi>N</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msub>
+      <mi>A</mi>
+      <mi>L</mi>
+    </msub>
+    <msub>
+      <mi>A</mi>
+      <mi>P</mi>
+    </msub>
+  </mfrac>
+  <msub>
+    <mi>C</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>+</mo>
+  <mfrac>
+    <msub>
+      <mi>A</mi>
+      <mi>R</mi>
+    </msub>
+    <msub>
+      <mi>A</mi>
+      <mi>P</mi>
+    </msub>
+  </mfrac>
+  <msub>
+    <mi>C</mi>
+    <mi>R</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>An even better production metric may be direct telemetry:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>average visited nodes/query</mtext>
+</math>
+<p>and</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>primitive tests/query</mtext>
+  <mo>.</mo>
+</math>
+<p>Your traversal already returns:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>VisitedNodes</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>TestedPrimitives</span></code></pre></div>
+<p>which gives you exactly the instrumentation required to detect quality degradation empirically.</p>
+<p>A practical rebuild policy could look like:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mtext>current avg visited nodes</mtext>
+    <mtext>baseline avg visited nodes</mtext>
+  </mfrac>
+  <mo>&gt;</mo>
+  <mi>τ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mo stretchy="false">⇒</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mtext>schedule rebuild</mtext>
+  <mo>.</mo>
+</math>
+<p>This is not automatically optimal, but it gives you a measurable control signal instead of guessing.</p>
+<p>Dynamic-scene BVH literature explicitly observes that refitting can preserve correctness while traversal performance deteriorates enough to justify rebuilding. <a href="https://www.researchgate.net/publication/234777055_Special_Section_Parallel_Graphics_and_Visualization_Fast_parallel_and_asynchronous_construction_of_BVHs_for_ray_tracing_animated_scenes?utm_source=chatgpt.com">ResearchGate</a></p>
+<hr />
+<p><strong>Your repository currently has no static-BVH refit/rebuild API</strong></p>
+<p>I searched the current <code>KairoSpatial</code> implementation for static-BVH refit, rebuild, quantized-node, wide-node and packet-traversal implementations.</p>
+<p>They are not currently exposed as implemented BVH mechanisms.</p>
+<p>That means Parts 1330–1336 are primarily <strong>canonical theory and implementation targets</strong>, not descriptions of already-existing Kairo behavior.</p>
+<p>This is important to say explicitly rather than pretending the repository already contains all curriculum topics.</p>
+<p>You do already possess several prerequisites for refitting:</p>
+<pre class="text"><code>BVHNode.Parent
+BVHNode.Bounds
+BVHNode.Left / Right
+leaf primitive ranges
+flat recursive node order</code></pre>
+<p>So adding static refit would fit naturally into the current representation.</p>
+<hr />
+<p><strong>Wide BVHs</strong></p>
+<p>So far every internal node has two children.</p>
+<p>That is BVH2.</p>
+<p>A wide BVH might use four children:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mi>V</mi>
+  <mi>H</mi>
+  <mn>4</mn>
+</math>
+<p>or eight:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mi>V</mi>
+  <mi>H</mi>
+  <mn>8.</mn>
+</math>
+<p>Conceptually:</p>
+<pre class="text"><code>Binary:
+
+                 Node
+                /    \
+               A      B
+
+
+BVH4:
+
+              Node
+          /    |    |    \
+         A     B    C     D</code></pre>
+<p>Why make nodes wider?</p>
+<p>Tree depth decreases.</p>
+<p>A perfectly balanced binary tree with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> leaves has approximate depth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>D</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>≈</mo>
+  <msub>
+    <mi>log</mi>
+    <mn>2</mn>
+  </msub>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>N</mi>
+  <mo>.</mo>
+</math>
+<p>For branching factor <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>D</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>≈</mo>
+  <msub>
+    <mi>log</mi>
+    <mi>k</mi>
+  </msub>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>N</mi>
+  <mo>.</mo>
+</math>
+<p>With one million leaves:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>log</mi>
+    <mn>2</mn>
+  </msub>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>≈</mo>
+  <mn>20</mn>
+</math>
+<p>while</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>log</mi>
+    <mn>8</mn>
+  </msub>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>≈</mo>
+  <mn>6.64</mn>
+  <mo>.</mo>
+</math>
+<p>So a BVH8 can reduce traversal levels dramatically.</p>
+<p>But every node now needs to test more children.</p>
+<p>This becomes attractive when SIMD can test several child boxes in parallel.</p>
+<hr />
+<p><strong>Binary traversal versus wide traversal</strong></p>
+<p>For BVH2:</p>
+<pre class="text"><code>test left box
+test right box
+choose order</code></pre>
+<p>For BVH8:</p>
+<pre class="text"><code>test 8 child boxes simultaneously
+        |
+        v
+8-bit hit mask
+        |
+        v
+sort/interleave surviving children
+        |
+        v
+continue</code></pre>
+<p>A wide node representation might use structure-of-arrays:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> BVH8Node</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> minX<span class="op">[</span><span class="dv">8</span><span class="op">];</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> minY<span class="op">[</span><span class="dv">8</span><span class="op">];</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> minZ<span class="op">[</span><span class="dv">8</span><span class="op">];</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> maxX<span class="op">[</span><span class="dv">8</span><span class="op">];</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> maxY<span class="op">[</span><span class="dv">8</span><span class="op">];</span></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> maxZ<span class="op">[</span><span class="dv">8</span><span class="op">];</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> child<span class="op">[</span><span class="dv">8</span><span class="op">];</span></span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>That layout is deliberately SIMD-friendly.</p>
+<p>One vector load obtains multiple <code>minX</code> values.</p>
+<p>This connects directly back to the SoA material from M021/M078.</p>
+<p>Wide BVHs are therefore not merely “trees with more children.”</p>
+<p>They are a co-design between:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>tree topology</mtext>
+          <mo>+</mo>
+          <mtext>node layout</mtext>
+          <mo>+</mo>
+          <mtext>SIMD width</mtext>
+          <mo>+</mo>
+          <mtext>traversal algorithm</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Embree is an excellent production example of this architecture-aware design, including BVH4 variants and multiple primitive layouts selected for different memory/performance characteristics. <a href="https://embree.github.io/papers/2014-Siggraph-Embree.pdf?utm_source=chatgpt.com">embree.github.io</a></p>
+<hr />
+<p><strong>Wide-node construction</strong></p>
+<p>How do we obtain a BVH4 or BVH8?</p>
+<p>One option is to build a binary BVH first and collapse subtrees.</p>
+<p>Suppose:</p>
+<pre class="text"><code>              P
+            /   \
+           A     B
+          / \   / \
+         C  D  E  F</code></pre>
+<p>Collapse one level:</p>
+<pre class="text"><code>              P
+        /     |     |     \
+       C      D     E      F</code></pre>
+<p>Now P has four children.</p>
+<p>The collapse decision should consider traversal quality and node width.</p>
+<p>Blindly flattening everything may worsen bounding overlap.</p>
+<p>More advanced builders construct wide BVHs directly or use SAH-based collapsing.</p>
+<p>The important invariant remains:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mi>P</mi>
+  </msub>
+  <mo>⊇</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">⋃</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <msub>
+        <mi>C</mi>
+        <mi>i</mi>
+      </msub>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Quantized BVH bounds</strong></p>
+<p>Bounds consume substantial memory.</p>
+<p>For a BVH8 storing full 32-bit floating point bounds:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mtext> children</mtext>
+  <mo>×</mo>
+  <mn>6</mn>
+  <mtext> coordinates</mtext>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mtext> bytes</mtext>
+  <mo>=</mo>
+  <mn>192</mn>
+  <mtext> bytes</mtext>
+</math>
+<p>just for child AABBs.</p>
+<p>That is several cache lines before child metadata.</p>
+<p>Quantization reduces this.</p>
+<p>Suppose parent bounds are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mi>P</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>A child min coordinate <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+  </msub>
+</math> can be represented relative to parent extent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <msub>
+        <mi>x</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+        </mrow>
+      </msub>
+      <mo>−</mo>
+      <msub>
+        <mi>P</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          <mo>,</mo>
+          <mi>x</mi>
+        </mrow>
+      </msub>
+    </mrow>
+    <mrow>
+      <msub>
+        <mi>P</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+          <mo>,</mo>
+          <mi>x</mi>
+        </mrow>
+      </msub>
+      <mo>−</mo>
+      <msub>
+        <mi>P</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          <mo>,</mo>
+          <mi>x</mi>
+        </mrow>
+      </msub>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>With <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> quantization bits:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mi>round</mi>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <mi>u</mi>
+    <mo stretchy="false">(</mo>
+    <msup>
+      <mn>2</mn>
+      <mi>b</mi>
+    </msup>
+    <mo>−</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Decoding gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>x</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+      <mo>,</mo>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <mfrac>
+    <mi>q</mi>
+    <mrow>
+      <msup>
+        <mn>2</mn>
+        <mi>b</mi>
+      </msup>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </mfrac>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+      <mo>,</mo>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+      <mo>,</mo>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Conservative quantization</strong></p>
+<p>Ordinary nearest-value rounding can shrink a bound.</p>
+<p>That is dangerous.</p>
+<p>A quantized BVH must preserve:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>true</mtext>
+    </mrow>
+  </msub>
+  <mo>⊆</mo>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>decoded</mtext>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Therefore minima should round outward downward and maxima outward upward.</p>
+<p>For <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+  <mo>=</mo>
+  <msup>
+    <mn>2</mn>
+    <mi>b</mi>
+  </msup>
+  <mo>−</mo>
+  <mn>1</mn>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>q</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌊</mo>
+    <mi>Q</mi>
+    <mfrac>
+      <mrow>
+        <msub>
+          <mi>x</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          </mrow>
+        </msub>
+        <mo>−</mo>
+        <msub>
+          <mi>P</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          </mrow>
+        </msub>
+      </mrow>
+      <mrow>
+        <msub>
+          <mi>P</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+          </mrow>
+        </msub>
+        <mo>−</mo>
+        <msub>
+          <mi>P</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          </mrow>
+        </msub>
+      </mrow>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">⌋</mo>
+  </mrow>
+</math>
+<p>and</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>q</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌈</mo>
+    <mi>Q</mi>
+    <mfrac>
+      <mrow>
+        <msub>
+          <mi>x</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+          </mrow>
+        </msub>
+        <mo>−</mo>
+        <msub>
+          <mi>P</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          </mrow>
+        </msub>
+      </mrow>
+      <mrow>
+        <msub>
+          <mi>P</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+          </mrow>
+        </msub>
+        <mo>−</mo>
+        <msub>
+          <mi>P</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          </mrow>
+        </msub>
+      </mrow>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">⌉</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Then decode both.</p>
+<p>This may enlarge the child slightly.</p>
+<p>That introduces extra false-positive traversal but preserves correctness.</p>
+<p>This is the same conservative principle from M078, now applied to compressed spatial representation.</p>
+<hr />
+<p><strong>Quantization error</strong></p>
+<p>With parent extent <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>E</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> bits, one quantization step is approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mi>E</mi>
+    <mrow>
+      <msup>
+        <mn>2</mn>
+        <mi>b</mi>
+      </msup>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>With eight bits:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mo>≈</mo>
+  <mfrac>
+    <mi>E</mi>
+    <mn>255</mn>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>If parent X extent is 100 m:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Δ</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>≈</mo>
+  <mn>0.392</mn>
+  <mtext> m</mtext>
+  <mo>.</mo>
+</math>
+<p>That can significantly inflate small child boxes.</p>
+<p>With 16 bits:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Δ</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>≈</mo>
+  <mfrac>
+    <mn>100</mn>
+    <mn>65535</mn>
+  </mfrac>
+  <mo>≈</mo>
+  <mn>1.53</mn>
+  <mtext> mm</mtext>
+  <mo>.</mo>
+</math>
+<p>Therefore quantization quality is relative to parent extent.</p>
+<p>Hierarchical quantization helps because deeper nodes usually cover progressively smaller spatial regions.</p>
+<p>Compressed wide BVHs can reduce working-set size and improve cache behavior, which is one reason compressed wide layouts are actively studied for high-performance traversal. <a href="https://www.intel.com/content/dam/develop/external/us/en/documents/wide-bvh-traversal-with-a-short-stack-837099.pdf?utm_source=chatgpt.com">Intel</a></p>
+<hr />
+<p><strong>BVH node memory layout</strong></p>
+<p>Now we reach a topic people often underestimate.</p>
+<p>Two BVHs can have identical topology and identical bounds but perform differently because their nodes occupy memory differently.</p>
+<p>Consider an AoS binary node:</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Node</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    AABB bounds<span class="op">;</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> left<span class="op">;</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> right<span class="op">;</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> first<span class="op">;</span></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> count<span class="op">;</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Traversal reads:</p>
+<pre class="text"><code>bounds
+child metadata
+possibly primitive metadata</code></pre>
+<p>For internal nodes, leaf fields may be unused.</p>
+<p>For leaves, child fields may be unused.</p>
+<p>That means every node carries mutually exclusive information.</p>
+<p>Alternative packed representations encode node type inside metadata:</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> PackedNode</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    AABB bounds<span class="op">;</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> offset<span class="op">;</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> meta<span class="op">;</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>For an internal node:</p>
+<pre class="text"><code>offset -&gt; first child
+meta   -&gt; internal flag</code></pre>
+<p>For a leaf:</p>
+<pre class="text"><code>offset -&gt; primitive offset
+meta   -&gt; leaf flag + primitive count</code></pre>
+<p>This reduces memory footprint.</p>
+<p>But compression may add decoding operations.</p>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>smaller</mtext>
+  <mo>⇏</mo>
+  <mtext>always faster</mtext>
+  <mo>.</mo>
+</math>
+<p>You trade memory bandwidth against decode complexity and implementation flexibility.</p>
+<hr />
+<p><strong>Cache-line reasoning</strong></p>
+<p>Suppose a node fits in one 64-byte cache line.</p>
+<p>Loading the node may require one cache-line transfer.</p>
+<p>If it is 80 bytes and straddles two cache lines, potentially two lines must be fetched.</p>
+<p>But the exact cost depends on alignment, cache state, hardware prefetching and neighboring accesses.</p>
+<p>Therefore never optimize node layout purely from <code>sizeof</code>.</p>
+<p>Measure:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>cache misses</mtext>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mtext>bytes/ray</mtext>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mtext>nodes/ray</mtext>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mtext>cycles/node</mtext>
+  <mo>.</mo>
+</math>
+<p>Your current node contains:</p>
+<pre class="text"><code>AABB
+Left
+Right
+FirstPrimitive
+PrimitiveCount
+Parent</code></pre>
+<p>To know its actual ABI size, alignment and padding, measure:</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>cout <span class="op">&lt;&lt;</span> <span class="kw">sizeof</span><span class="op">(</span>BVHNode<span class="op">)</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>          <span class="op">&lt;&lt;</span> <span class="ch">&#39; &#39;</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>          <span class="op">&lt;&lt;</span> <span class="kw">alignof</span><span class="op">(</span>BVHNode<span class="op">);</span></span></code></pre></div>
+<p>Do not infer it solely from source fields because the underlying <code>Vec3f/AABBf</code> alignment rules matter.</p>
+<hr />
+<p><strong>Primitive ordering matters too</strong></p>
+<p>Your hierarchy separates:</p>
+<div class="sourceCode" id="cb44"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>Primitives</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>PrimitiveOrder</span></code></pre></div>
+<p>A leaf owns a range in <code>PrimitiveOrder</code>.</p>
+<p>Then:</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>PrimitiveAtOrderedOffset<span class="op">(</span>offset<span class="op">)</span></span></code></pre></div>
+<p>performs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mo>=</mo>
+  <mtext>PrimitiveOrder[offset]</mtext>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Primitives</mtext>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>That adds an indirection.</p>
+<p>Why keep it?</p>
+<p>Because construction can reorder primitive <strong>references</strong> without moving the original primitive records.</p>
+<p>This makes building convenient and preserves stable original indexing.</p>
+<p>An alternative is to physically reorder primitive records into leaf order after construction.</p>
+<p>That can improve leaf traversal locality but changes indices and may require remapping external identifiers.</p>
+<p>Again, there is no universally free choice.</p>
+<p>Embree’s published architecture explicitly discusses the memory/performance trade-off between leaves that store references to primitives and layouts that place primitive data contiguously for faster traversal. <a href="https://embree.github.io/papers/2014-Siggraph-Embree.pdf?utm_source=chatgpt.com">embree.github.io</a></p>
+<hr />
+<p><strong>SIMD packet BVH traversal</strong></p>
+<p>There are two fundamentally different SIMD strategies that beginners often conflate.</p>
+<p><strong>Strategy A: one ray versus many child boxes</strong></p>
+<p>A wide BVH node contains four or eight child AABBs.</p>
+<p>SIMD lanes represent child nodes.</p>
+<pre class="text"><code>one ray
+
+lane 0 -&gt; child 0
+lane 1 -&gt; child 1
+lane 2 -&gt; child 2
+lane 3 -&gt; child 3
+...</code></pre>
+<p>This is node SIMD.</p>
+<p><strong>Strategy B: many rays versus one box</strong></p>
+<p>A packet contains rays:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>R</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>R</mi>
+    <mn>7</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Each SIMD lane represents one ray.</p>
+<pre class="text"><code>one BVH node
+
+lane 0 -&gt; ray 0
+lane 1 -&gt; ray 1
+lane 2 -&gt; ray 2
+...</code></pre>
+<p>This is ray-packet traversal.</p>
+<p>They solve different vectorization problems.</p>
+<hr />
+<p><strong>Why ray packets work</strong></p>
+<p>Primary camera rays are often coherent.</p>
+<p>Neighboring pixels have nearby origins and similar directions.</p>
+<p>Thus a packet such as:</p>
+<pre class="text"><code>R0 R1 R2 R3
+R4 R5 R6 R7</code></pre>
+<p>often traverses the same BVH regions.</p>
+<p>Instead of running eight independent traversals, we can process them together.</p>
+<p>For each node calculate a lane mask:</p>
+<pre class="text"><code>ray 0 intersects node? 1
+ray 1 intersects node? 1
+ray 2 intersects node? 0
+ray 3 intersects node? 1
+...
+
+mask = 1101...</code></pre>
+<p>If mask is zero, reject the node for the entire packet.</p>
+<p>Otherwise continue with only active lanes.</p>
+<hr />
+<p><strong>Packet divergence</strong></p>
+<p>Packet traversal performs poorly when rays become incoherent.</p>
+<p>Imagine reflected rays bouncing in different directions.</p>
+<pre class="text"><code>R0 -&gt; north
+R1 -&gt; south
+R2 -&gt; west
+R3 -&gt; up
+R4 -&gt; east
+...</code></pre>
+<p>Now every ray may require a different subtree.</p>
+<p>SIMD lanes diverge.</p>
+<p>If one lane needs child A and another needs child B, the packet may eventually visit both.</p>
+<p>The work approaches the union of all individual traversal paths.</p>
+<p>This can eliminate packet efficiency.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Packet traversal benefits from ray coherence.</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Primary rays: often coherent.</p>
+<p>Diffuse secondary rays: frequently less coherent.</p>
+<p>Shadow rays: depends heavily on light geometry and scene layout.</p>
+<hr />
+<p><strong>Packet traversal state</strong></p>
+<p>Suppose packet width is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>W</mi>
+</math>.</p>
+<p>Maintain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>M</mi>
+    <mi>N</mi>
+  </msub>
+  <mo>∈</mo>
+  <mo fence="false" stretchy="false">{</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <msup>
+    <mo fence="false" stretchy="false">}</mo>
+    <mi>W</mi>
+  </msup>
+</math>
+<p>for every stack entry, where bit/lane <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> indicates whether ray <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> remains active for that node.</p>
+<p>Pseudo-architecture:</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> PacketStackEntry</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> node<span class="op">;</span></span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>    LaneMask activeRays<span class="op">;</span></span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a>push<span class="op">({</span>root<span class="op">,</span> allRays<span class="op">});</span></span>
+<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-9"><a href="#cb51-9" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(!</span>stack<span class="op">.</span>empty<span class="op">())</span></span>
+<span id="cb51-10"><a href="#cb51-10" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb51-11"><a href="#cb51-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">auto</span> <span class="op">[</span>nodeIndex<span class="op">,</span> active<span class="op">]</span> <span class="op">=</span> pop<span class="op">();</span></span>
+<span id="cb51-12"><a href="#cb51-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-13"><a href="#cb51-13" aria-hidden="true" tabindex="-1"></a>    LaneMask intersects <span class="op">=</span></span>
+<span id="cb51-14"><a href="#cb51-14" aria-hidden="true" tabindex="-1"></a>        intersectAABBPacket<span class="op">(</span></span>
+<span id="cb51-15"><a href="#cb51-15" aria-hidden="true" tabindex="-1"></a>            rays<span class="op">,</span></span>
+<span id="cb51-16"><a href="#cb51-16" aria-hidden="true" tabindex="-1"></a>            active<span class="op">,</span></span>
+<span id="cb51-17"><a href="#cb51-17" aria-hidden="true" tabindex="-1"></a>            nodes<span class="op">[</span>nodeIndex<span class="op">].</span>bounds<span class="op">);</span></span>
+<span id="cb51-18"><a href="#cb51-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-19"><a href="#cb51-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>intersects<span class="op">.</span>none<span class="op">())</span></span>
+<span id="cb51-20"><a href="#cb51-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb51-21"><a href="#cb51-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-22"><a href="#cb51-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>nodes<span class="op">[</span>nodeIndex<span class="op">].</span>isLeaf<span class="op">())</span></span>
+<span id="cb51-23"><a href="#cb51-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb51-24"><a href="#cb51-24" aria-hidden="true" tabindex="-1"></a>        intersectPrimitivePacket<span class="op">(</span></span>
+<span id="cb51-25"><a href="#cb51-25" aria-hidden="true" tabindex="-1"></a>            rays<span class="op">,</span></span>
+<span id="cb51-26"><a href="#cb51-26" aria-hidden="true" tabindex="-1"></a>            intersects<span class="op">,</span></span>
+<span id="cb51-27"><a href="#cb51-27" aria-hidden="true" tabindex="-1"></a>            leaf<span class="op">);</span></span>
+<span id="cb51-28"><a href="#cb51-28" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb51-29"><a href="#cb51-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb51-30"><a href="#cb51-30" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb51-31"><a href="#cb51-31" aria-hidden="true" tabindex="-1"></a>        push<span class="op">({</span></span>
+<span id="cb51-32"><a href="#cb51-32" aria-hidden="true" tabindex="-1"></a>            nodes<span class="op">[</span>nodeIndex<span class="op">].</span>left<span class="op">,</span></span>
+<span id="cb51-33"><a href="#cb51-33" aria-hidden="true" tabindex="-1"></a>            intersects</span>
+<span id="cb51-34"><a href="#cb51-34" aria-hidden="true" tabindex="-1"></a>        <span class="op">});</span></span>
+<span id="cb51-35"><a href="#cb51-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-36"><a href="#cb51-36" aria-hidden="true" tabindex="-1"></a>        push<span class="op">({</span></span>
+<span id="cb51-37"><a href="#cb51-37" aria-hidden="true" tabindex="-1"></a>            nodes<span class="op">[</span>nodeIndex<span class="op">].</span>right<span class="op">,</span></span>
+<span id="cb51-38"><a href="#cb51-38" aria-hidden="true" tabindex="-1"></a>            intersects</span>
+<span id="cb51-39"><a href="#cb51-39" aria-hidden="true" tabindex="-1"></a>        <span class="op">});</span></span>
+<span id="cb51-40"><a href="#cb51-40" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb51-41"><a href="#cb51-41" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The actual high-performance version becomes substantially more complicated because each lane has its own closest distance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+      <mo>,</mo>
+      <mn>0</mn>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+      <mo>,</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+      <mo>,</mo>
+      <mi>W</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Node intersection therefore uses a vector of ray-specific bounds.</p>
+<hr />
+<p><strong>Single-ray SIMD versus packet SIMD</strong></p>
+<p>Modern CPU ray tracers frequently use SIMD even for individual rays by testing multiple child boxes or primitives at once.</p>
+<p>This can be superior to packets for incoherent workloads.</p>
+<p>The distinction is:</p>
+<pre class="text"><code>Packet traversal:
+SIMD axis = rays
+
+Wide-node traversal:
+SIMD axis = child bounds
+
+Primitive SIMD:
+SIMD axis = primitives</code></pre>
+<p>A sophisticated renderer may choose among all three depending on ray coherence.</p>
+<p>This is one of the major lessons from production ray-tracing systems such as Embree: SIMD width, node arity, triangle layout and ray coherence have to be designed together rather than treated as independent optimizations. <a href="https://embree.github.io/papers/2014-Siggraph-Embree.pdf?utm_source=chatgpt.com">embree.github.io</a></p>
+<hr />
+<p><strong>A complete closest-hit traversal implementation</strong></p>
+<p>Let us now write the canonical mechanism with the optimization we identified earlier: store the already-computed near distance on the stack.</p>
+<div class="sourceCode" id="cb53"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> TraversalEntry</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t nodeIndex<span class="op">;</span></span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> nearT<span class="op">;</span></span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span> <span class="op">&lt;</span><span class="kw">class</span> PrimitiveIntersector<span class="op">&gt;</span></span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>optional<span class="op">&lt;</span>Hit<span class="op">&gt;</span> closestHitBVH<span class="op">(</span></span>
+<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> BVH<span class="op">&amp;</span> bvh<span class="op">,</span></span>
+<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Ray<span class="op">&amp;</span> ray<span class="op">,</span></span>
+<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a>    PrimitiveIntersector<span class="op">&amp;&amp;</span> intersectPrimitive<span class="op">,</span></span>
+<span id="cb53-12"><a href="#cb53-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> maxDistance<span class="op">)</span></span>
+<span id="cb53-13"><a href="#cb53-13" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb53-14"><a href="#cb53-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>bvh<span class="op">.</span>nodes<span class="op">.</span>empty<span class="op">())</span></span>
+<span id="cb53-15"><a href="#cb53-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">std::</span>nullopt<span class="op">;</span></span>
+<span id="cb53-16"><a href="#cb53-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-17"><a href="#cb53-17" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>array<span class="op">&lt;</span>TraversalEntry<span class="op">,</span> <span class="dv">128</span><span class="op">&gt;</span> stack<span class="op">{};</span></span>
+<span id="cb53-18"><a href="#cb53-18" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>size_t stackSize <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb53-19"><a href="#cb53-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-20"><a href="#cb53-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> rootNear <span class="op">=</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">;</span></span>
+<span id="cb53-21"><a href="#cb53-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-22"><a href="#cb53-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>intersectAABB<span class="op">(</span></span>
+<span id="cb53-23"><a href="#cb53-23" aria-hidden="true" tabindex="-1"></a>            ray<span class="op">,</span></span>
+<span id="cb53-24"><a href="#cb53-24" aria-hidden="true" tabindex="-1"></a>            bvh<span class="op">.</span>nodes<span class="op">[</span><span class="dv">0</span><span class="op">].</span>bounds<span class="op">,</span></span>
+<span id="cb53-25"><a href="#cb53-25" aria-hidden="true" tabindex="-1"></a>            maxDistance<span class="op">,</span></span>
+<span id="cb53-26"><a href="#cb53-26" aria-hidden="true" tabindex="-1"></a>            rootNear<span class="op">))</span></span>
+<span id="cb53-27"><a href="#cb53-27" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb53-28"><a href="#cb53-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">std::</span>nullopt<span class="op">;</span></span>
+<span id="cb53-29"><a href="#cb53-29" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb53-30"><a href="#cb53-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-31"><a href="#cb53-31" aria-hidden="true" tabindex="-1"></a>    stack<span class="op">[</span>stackSize<span class="op">++]</span> <span class="op">=</span></span>
+<span id="cb53-32"><a href="#cb53-32" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span><span class="dv">0</span><span class="bu">u</span><span class="op">,</span> rootNear<span class="op">};</span></span>
+<span id="cb53-33"><a href="#cb53-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-34"><a href="#cb53-34" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> closest <span class="op">=</span></span>
+<span id="cb53-35"><a href="#cb53-35" aria-hidden="true" tabindex="-1"></a>        maxDistance<span class="op">;</span></span>
+<span id="cb53-36"><a href="#cb53-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-37"><a href="#cb53-37" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>optional<span class="op">&lt;</span>Hit<span class="op">&gt;</span> best<span class="op">;</span></span>
+<span id="cb53-38"><a href="#cb53-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-39"><a href="#cb53-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="op">(</span>stackSize <span class="op">!=</span> <span class="dv">0</span><span class="op">)</span></span>
+<span id="cb53-40"><a href="#cb53-40" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb53-41"><a href="#cb53-41" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> TraversalEntry current <span class="op">=</span></span>
+<span id="cb53-42"><a href="#cb53-42" aria-hidden="true" tabindex="-1"></a>            stack<span class="op">[--</span>stackSize<span class="op">];</span></span>
+<span id="cb53-43"><a href="#cb53-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-44"><a href="#cb53-44" aria-hidden="true" tabindex="-1"></a>        <span class="co">// The box was already tested when inserted.</span></span>
+<span id="cb53-45"><a href="#cb53-45" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Since closest may have decreased meanwhile,</span></span>
+<span id="cb53-46"><a href="#cb53-46" aria-hidden="true" tabindex="-1"></a>        <span class="co">// one scalar test can now prune the node.</span></span>
+<span id="cb53-47"><a href="#cb53-47" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>current<span class="op">.</span>nearT <span class="op">&gt;</span> closest<span class="op">)</span></span>
+<span id="cb53-48"><a href="#cb53-48" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb53-49"><a href="#cb53-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-50"><a href="#cb53-50" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> BVHNode<span class="op">&amp;</span> node <span class="op">=</span></span>
+<span id="cb53-51"><a href="#cb53-51" aria-hidden="true" tabindex="-1"></a>            bvh<span class="op">.</span>nodes<span class="op">[</span>current<span class="op">.</span>nodeIndex<span class="op">];</span></span>
+<span id="cb53-52"><a href="#cb53-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-53"><a href="#cb53-53" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>node<span class="op">.</span>isLeaf<span class="op">())</span></span>
+<span id="cb53-54"><a href="#cb53-54" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb53-55"><a href="#cb53-55" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> <span class="op">(</span><span class="bu">std::</span>uint32_t i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb53-56"><a href="#cb53-56" aria-hidden="true" tabindex="-1"></a>                 i <span class="op">&lt;</span> node<span class="op">.</span>primitiveCount<span class="op">;</span></span>
+<span id="cb53-57"><a href="#cb53-57" aria-hidden="true" tabindex="-1"></a>                 <span class="op">++</span>i<span class="op">)</span></span>
+<span id="cb53-58"><a href="#cb53-58" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb53-59"><a href="#cb53-59" aria-hidden="true" tabindex="-1"></a>                <span class="at">const</span> <span class="bu">std::</span>uint32_t primitive <span class="op">=</span></span>
+<span id="cb53-60"><a href="#cb53-60" aria-hidden="true" tabindex="-1"></a>                    bvh<span class="op">.</span>primitiveOrder<span class="op">[</span></span>
+<span id="cb53-61"><a href="#cb53-61" aria-hidden="true" tabindex="-1"></a>                        node<span class="op">.</span>firstPrimitive <span class="op">+</span> i<span class="op">];</span></span>
+<span id="cb53-62"><a href="#cb53-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-63"><a href="#cb53-63" aria-hidden="true" tabindex="-1"></a>                <span class="kw">auto</span> hit <span class="op">=</span></span>
+<span id="cb53-64"><a href="#cb53-64" aria-hidden="true" tabindex="-1"></a>                    intersectPrimitive<span class="op">(</span></span>
+<span id="cb53-65"><a href="#cb53-65" aria-hidden="true" tabindex="-1"></a>                        primitive<span class="op">,</span></span>
+<span id="cb53-66"><a href="#cb53-66" aria-hidden="true" tabindex="-1"></a>                        ray<span class="op">,</span></span>
+<span id="cb53-67"><a href="#cb53-67" aria-hidden="true" tabindex="-1"></a>                        closest<span class="op">);</span></span>
+<span id="cb53-68"><a href="#cb53-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-69"><a href="#cb53-69" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="op">(!</span>hit<span class="op">)</span></span>
+<span id="cb53-70"><a href="#cb53-70" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb53-71"><a href="#cb53-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-72"><a href="#cb53-72" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="op">(</span>hit<span class="op">-&gt;</span>distance <span class="op">&lt;</span> <span class="fl">0.0</span><span class="bu">f</span> <span class="op">||</span></span>
+<span id="cb53-73"><a href="#cb53-73" aria-hidden="true" tabindex="-1"></a>                    hit<span class="op">-&gt;</span>distance <span class="op">&gt;</span> closest<span class="op">)</span></span>
+<span id="cb53-74"><a href="#cb53-74" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb53-75"><a href="#cb53-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-76"><a href="#cb53-76" aria-hidden="true" tabindex="-1"></a>                closest <span class="op">=</span> hit<span class="op">-&gt;</span>distance<span class="op">;</span></span>
+<span id="cb53-77"><a href="#cb53-77" aria-hidden="true" tabindex="-1"></a>                best <span class="op">=</span> <span class="op">*</span>hit<span class="op">;</span></span>
+<span id="cb53-78"><a href="#cb53-78" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb53-79"><a href="#cb53-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-80"><a href="#cb53-80" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb53-81"><a href="#cb53-81" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb53-82"><a href="#cb53-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-83"><a href="#cb53-83" aria-hidden="true" tabindex="-1"></a>        <span class="dt">float</span> leftNear <span class="op">=</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">;</span></span>
+<span id="cb53-84"><a href="#cb53-84" aria-hidden="true" tabindex="-1"></a>        <span class="dt">float</span> rightNear <span class="op">=</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">;</span></span>
+<span id="cb53-85"><a href="#cb53-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-86"><a href="#cb53-86" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="dt">bool</span> hitLeft <span class="op">=</span></span>
+<span id="cb53-87"><a href="#cb53-87" aria-hidden="true" tabindex="-1"></a>            intersectAABB<span class="op">(</span></span>
+<span id="cb53-88"><a href="#cb53-88" aria-hidden="true" tabindex="-1"></a>                ray<span class="op">,</span></span>
+<span id="cb53-89"><a href="#cb53-89" aria-hidden="true" tabindex="-1"></a>                bvh<span class="op">.</span>nodes<span class="op">[</span>node<span class="op">.</span>left<span class="op">].</span>bounds<span class="op">,</span></span>
+<span id="cb53-90"><a href="#cb53-90" aria-hidden="true" tabindex="-1"></a>                closest<span class="op">,</span></span>
+<span id="cb53-91"><a href="#cb53-91" aria-hidden="true" tabindex="-1"></a>                leftNear<span class="op">);</span></span>
+<span id="cb53-92"><a href="#cb53-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-93"><a href="#cb53-93" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="dt">bool</span> hitRight <span class="op">=</span></span>
+<span id="cb53-94"><a href="#cb53-94" aria-hidden="true" tabindex="-1"></a>            intersectAABB<span class="op">(</span></span>
+<span id="cb53-95"><a href="#cb53-95" aria-hidden="true" tabindex="-1"></a>                ray<span class="op">,</span></span>
+<span id="cb53-96"><a href="#cb53-96" aria-hidden="true" tabindex="-1"></a>                bvh<span class="op">.</span>nodes<span class="op">[</span>node<span class="op">.</span>right<span class="op">].</span>bounds<span class="op">,</span></span>
+<span id="cb53-97"><a href="#cb53-97" aria-hidden="true" tabindex="-1"></a>                closest<span class="op">,</span></span>
+<span id="cb53-98"><a href="#cb53-98" aria-hidden="true" tabindex="-1"></a>                rightNear<span class="op">);</span></span>
+<span id="cb53-99"><a href="#cb53-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-100"><a href="#cb53-100" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>hitLeft <span class="op">&amp;&amp;</span> hitRight<span class="op">)</span></span>
+<span id="cb53-101"><a href="#cb53-101" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb53-102"><a href="#cb53-102" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Push far first because stack is LIFO.</span></span>
+<span id="cb53-103"><a href="#cb53-103" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="op">(</span>leftNear <span class="op">&lt;=</span> rightNear<span class="op">)</span></span>
+<span id="cb53-104"><a href="#cb53-104" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb53-105"><a href="#cb53-105" aria-hidden="true" tabindex="-1"></a>                stack<span class="op">[</span>stackSize<span class="op">++]</span> <span class="op">=</span></span>
+<span id="cb53-106"><a href="#cb53-106" aria-hidden="true" tabindex="-1"></a>                    <span class="op">{</span>node<span class="op">.</span>right<span class="op">,</span> rightNear<span class="op">};</span></span>
+<span id="cb53-107"><a href="#cb53-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-108"><a href="#cb53-108" aria-hidden="true" tabindex="-1"></a>                stack<span class="op">[</span>stackSize<span class="op">++]</span> <span class="op">=</span></span>
+<span id="cb53-109"><a href="#cb53-109" aria-hidden="true" tabindex="-1"></a>                    <span class="op">{</span>node<span class="op">.</span>left<span class="op">,</span> leftNear<span class="op">};</span></span>
+<span id="cb53-110"><a href="#cb53-110" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb53-111"><a href="#cb53-111" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span></span>
+<span id="cb53-112"><a href="#cb53-112" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb53-113"><a href="#cb53-113" aria-hidden="true" tabindex="-1"></a>                stack<span class="op">[</span>stackSize<span class="op">++]</span> <span class="op">=</span></span>
+<span id="cb53-114"><a href="#cb53-114" aria-hidden="true" tabindex="-1"></a>                    <span class="op">{</span>node<span class="op">.</span>left<span class="op">,</span> leftNear<span class="op">};</span></span>
+<span id="cb53-115"><a href="#cb53-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-116"><a href="#cb53-116" aria-hidden="true" tabindex="-1"></a>                stack<span class="op">[</span>stackSize<span class="op">++]</span> <span class="op">=</span></span>
+<span id="cb53-117"><a href="#cb53-117" aria-hidden="true" tabindex="-1"></a>                    <span class="op">{</span>node<span class="op">.</span>right<span class="op">,</span> rightNear<span class="op">};</span></span>
+<span id="cb53-118"><a href="#cb53-118" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb53-119"><a href="#cb53-119" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb53-120"><a href="#cb53-120" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>hitLeft<span class="op">)</span></span>
+<span id="cb53-121"><a href="#cb53-121" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb53-122"><a href="#cb53-122" aria-hidden="true" tabindex="-1"></a>            stack<span class="op">[</span>stackSize<span class="op">++]</span> <span class="op">=</span></span>
+<span id="cb53-123"><a href="#cb53-123" aria-hidden="true" tabindex="-1"></a>                <span class="op">{</span>node<span class="op">.</span>left<span class="op">,</span> leftNear<span class="op">};</span></span>
+<span id="cb53-124"><a href="#cb53-124" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb53-125"><a href="#cb53-125" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>hitRight<span class="op">)</span></span>
+<span id="cb53-126"><a href="#cb53-126" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb53-127"><a href="#cb53-127" aria-hidden="true" tabindex="-1"></a>            stack<span class="op">[</span>stackSize<span class="op">++]</span> <span class="op">=</span></span>
+<span id="cb53-128"><a href="#cb53-128" aria-hidden="true" tabindex="-1"></a>                <span class="op">{</span>node<span class="op">.</span>right<span class="op">,</span> rightNear<span class="op">};</span></span>
+<span id="cb53-129"><a href="#cb53-129" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb53-130"><a href="#cb53-130" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb53-131"><a href="#cb53-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-132"><a href="#cb53-132" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> best<span class="op">;</span></span>
+<span id="cb53-133"><a href="#cb53-133" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The complete causal chain is now visible:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>node bounds</mtext>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>near</mtext>
+    </mrow>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mtext>near-first ordering</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>early primitive hit</mtext>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>closest</mtext>
+    </mrow>
+  </msub>
+  <mo stretchy="false">↓→</mo>
+  <mtext>more subtree pruning</mtext>
+  <mo>.</mo>
+</math>
+<p>That is why construction quality and traversal algorithm are inseparable.</p>
+<p>A good tree gives traversal more opportunities to prune.</p>
+<p>A good traversal exploits those opportunities quickly.</p>
+<hr />
+<p><strong>Manual traversal trace</strong></p>
+<p>Consider:</p>
+<pre class="text"><code>                         N0
+                  [0 ---------------- 20]
+                    /               \
+                   /                 \
+                 N1                   N2
+              [1---8]              [9----20]
+             /      \              /       \
+           P0       P1           P2         P3
+          t=7      t=3          t=11       miss</code></pre>
+<p>Initial:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>closest</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi mathvariant="normal">∞</mi>
+  <mo>.</mo>
+</math>
+<p>Root N0 intersects.</p>
+<p>Child entry distances:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>N</mi>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>N</mi>
+      <mn>2</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>9.</mn>
+</math>
+<p>Visit N1 first.</p>
+<p>Suppose N1’s children yield primitive P1 at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>3.</mn>
+</math>
+<p>Now:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>closest</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>3.</mn>
+</math>
+<p>Return to pending N2.</p>
+<p>Its recorded entry distance is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>9.</mn>
+</math>
+<p>Since</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>9</mn>
+  <mo>&gt;</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+</math>
+<p>N2 is pruned without touching P2 or P3.</p>
+<p>The BVH saved two primitive tests and further node traversal.</p>
+<p>Scale this to millions of primitives and this mechanism becomes the difference between interactive and unusable rendering.</p>
+<hr />
+<p><strong>Build quality affects traversal exponentially through overlap</strong></p>
+<p>Suppose siblings barely overlap:</p>
+<pre class="text"><code>+--------+      +--------+
+| LEFT   |      | RIGHT  |
++--------+      +--------+</code></pre>
+<p>Most rays enter one or the other.</p>
+<p>Now suppose:</p>
+<pre class="text"><code>+-------------------+
+| LEFT              |
+|    +-------------------+
+|    | RIGHT        |    |
++----|--------------+    |
+     +-------------------+</code></pre>
+<p>Many rays enter both.</p>
+<p>Every time both children survive, traversal branches.</p>
+<p>Repeated overlap throughout several levels can produce a combinatorial increase in visited nodes.</p>
+<p>This is why balancing primitive counts alone is not enough.</p>
+<p>A slightly unbalanced SAH tree can outperform a perfectly balanced median tree because it reduces simultaneous child intersections.</p>
+<hr />
+<p><strong>Build-time complexity comparison</strong></p>
+<p>Let <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> be primitive count.</p>
+<p><strong>Median builder with sorting at every node</strong></p>
+<p>At a node of size <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>m</mi>
+  <mi>log</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>m</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>for sorting.</p>
+<p>Across a balanced hierarchy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <msup>
+    <mi>log</mi>
+    <mn>2</mn>
+  </msup>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>is a reasonable upper-level characterization of repeated full sorting.</p>
+<p><strong>Binned SAH</strong></p>
+<p>Each node can bin and partition in roughly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>m</mi>
+  <mo>+</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>for fixed bin count <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math>.</p>
+<p>Across balanced levels:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mi>log</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>approximately.</p>
+<p><strong>Morton / LBVH-style builder</strong></p>
+<p>Morton-code calculation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Sorting:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mi>log</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>with comparison sort, or potentially closer to linear passes using radix sort.</p>
+<p>Topology generation from sorted keys can be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This is why LBVH is attractive for rapidly changing scenes, particularly on GPUs.</p>
+<p>The tradeoff is tree quality: raw Morton-based trees can have poorer traversal efficiency than high-quality SAH trees.</p>
+<p>Hybrid techniques therefore often use fast Morton construction plus local/treelet optimization.</p>
+<hr />
+<p><strong>Your builder’s current complexity profile</strong></p>
+<p>Your current repository has three distinct paths.</p>
+<p><strong>Median path</strong></p>
+<p>Each recursive node:</p>
+<div class="sourceCode" id="cb57"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>stable_sort<span class="op">(</span>range by selected axis<span class="op">)</span></span></code></pre></div>
+<p>then splits midpoint.</p>
+<p>Build quality is simple and predictable.</p>
+<p>Build cost can be substantial because ranges are repeatedly sorted.</p>
+<p><strong>SAH path</strong></p>
+<p>For every node:</p>
+<pre class="text"><code>sort X
+prefix/suffix sweep
+
+sort Y
+prefix/suffix sweep
+
+sort Z
+prefix/suffix sweep</code></pre>
+<p>plus temporary <code>left/right</code> vectors.</p>
+<p>This gives relatively high-quality split candidates but significant build overhead.</p>
+<p><strong>Morton path</strong></p>
+<p>One global Morton sort occurs before recursion.</p>
+<p>Then recursive ranges are split at their midpoint.</p>
+<p>No per-node sorting happens.</p>
+<p>This makes it substantially closer to a fast build path, although the current <code>stable_sort</code> comparator recomputes normalized centroids and Morton codes during comparisons instead of precomputing one key per primitive.</p>
+<p>A more efficient design would store:</p>
+<div class="sourceCode" id="cb59"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> MortonRef</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> code<span class="op">;</span></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> primitive<span class="op">;</span></span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>compute each code once, then sort those records.</p>
+<p>For large builds, that avoids repeated Morton encoding inside the comparison function.</p>
+<hr />
+<p><strong>Repository tests and what they actually prove</strong></p>
+<p>Your <code>SpatialTests.cpp</code> checks several important invariants.</p>
+<p>The suite verifies that root bounds equal the brute union of all primitive bounds, empty/single-element trees behave correctly, leaf primitive counts obey <code>MaxLeafSize</code>, Morton build mode produces a valid hierarchy, closest raycasts return the expected primitive, any-hit exits before visiting every primitive in the sample, and AABB/sphere/frustum queries agree with direct expected results.</p>
+<p><code>ScaleStressTests.cpp</code> raises the size.</p>
+<p>It constructs a:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64</mn>
+  <mo>×</mo>
+  <mn>64</mn>
+  <mo>=</mo>
+  <mn>4096</mn>
+</math>
+<p>primitive grid, builds with Morton ordering and leaf size eight, then checks 128 AABB queries against brute force.</p>
+<p>This is valuable correctness evidence.</p>
+<p>What it does <strong>not</strong> yet establish is comparative build quality.</p>
+<p>The test does not currently ask questions such as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>median nodes/query</mtext>
+</math>
+<p>versus</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>SAH nodes/query</mtext>
+</math>
+<p>versus</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Morton nodes/query</mtext>
+  <mo>.</mo>
+</math>
+<p>Nor does it benchmark:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>build ms</mtext>
+</math>
+<p>against:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>query ms</mtext>
+  <mo>.</mo>
+</math>
+<p>Those are the exact experiments M079/M080 naturally motivate.</p>
+<hr />
+<p><strong>A proper BVH benchmark matrix</strong></p>
+<p>For each build strategy, record:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>What it tells you</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Build time</td>
+<td>Construction overhead</td>
+</tr>
+<tr>
+<td>Node count</td>
+<td>Hierarchy storage</td>
+</tr>
+<tr>
+<td>Leaf count</td>
+<td>Terminal grouping</td>
+</tr>
+<tr>
+<td>Maximum/average depth</td>
+<td>Structural shape</td>
+</tr>
+<tr>
+<td>Bytes/tree</td>
+<td>Memory cost</td>
+</tr>
+<tr>
+<td>Average nodes/ray</td>
+<td>Traversal quality</td>
+</tr>
+<tr>
+<td>p95 nodes/ray</td>
+<td>Bad-case traversal</td>
+</tr>
+<tr>
+<td>Average primitive tests/ray</td>
+<td>Pruning effectiveness</td>
+</tr>
+<tr>
+<td>Rays/sec</td>
+<td>End-to-end throughput</td>
+</tr>
+<tr>
+<td>AABB queries/sec</td>
+<td>Non-ray workload quality</td>
+</tr>
+<tr>
+<td>Refit time</td>
+<td>Dynamic update cost</td>
+</tr>
+<tr>
+<td>Post-deformation traversal cost</td>
+<td>Quality degradation</td>
+</tr>
+<tr>
+<td>Rebuild threshold benefit</td>
+<td>Whether rebuilding pays</td>
+</tr>
+</tbody>
+</table>
+<p>Do this on different distributions.</p>
+<p>Uniform grid.</p>
+<p>Clustered scene.</p>
+<p>One giant primitive plus many tiny primitives.</p>
+<p>Long corridor.</p>
+<p>Random clouds.</p>
+<p>Highly overlapping primitives.</p>
+<p>Deforming mesh.</p>
+<p>This is important because there is no universally “best BVH builder.”</p>
+<p>There is a best builder <strong>for a workload and cost budget</strong>.</p>
+<hr />
+<p><strong>CPU cache behavior</strong></p>
+<p>Traversal repeatedly performs:</p>
+<pre class="text"><code>load node
+test bounds
+decide children
+load next node
+...</code></pre>
+<p>A highly coherent traversal may reuse upper nodes heavily.</p>
+<p>Root and top-level nodes can remain hot in cache.</p>
+<p>Lower nodes are visited more sparsely.</p>
+<p>This creates an asymmetry:</p>
+<pre class="text"><code>Top BVH levels:
+high reuse
+small count
+likely cache-resident
+
+Bottom BVH levels:
+huge count
+lower reuse
+memory-bandwidth sensitive</code></pre>
+<p>Wide-node compression is especially useful deeper in the hierarchy because reducing the node working set increases the chance relevant child data arrives in fewer cache lines.</p>
+<p>But wide nodes also increase each individual node’s raw information.</p>
+<p>Hence compression and quantization become natural partners for wide BVHs.</p>
+<hr />
+<p><strong>GPU traversal</strong></p>
+<p>The same conceptual BVH works on GPUs, but the execution constraints change.</p>
+<p>CPU:</p>
+<pre class="text"><code>few powerful threads
+large caches
+out-of-order execution
+branch prediction
+SIMD</code></pre>
+<p>GPU:</p>
+<pre class="text"><code>many lightweight threads
+SIMT warps/waves
+latency hiding
+coalesced memory access
+divergence concerns
+limited per-thread local state</code></pre>
+<p>An explicit per-ray traversal stack consumes registers/local memory.</p>
+<p>Too much stack state reduces occupancy.</p>
+<p>A wide or stackless representation may therefore become attractive.</p>
+<p>Packet coherence maps differently because GPU hardware already groups threads into execution warps/waves.</p>
+<p>The tree layout can determine whether neighboring threads access nearby nodes or scatter across memory.</p>
+<p>This is why BVHs used in hardware ray tracing are deeply tied to architecture.</p>
+<p>The abstract tree is only the beginning.</p>
+<hr />
+<p><strong>RT hardware perspective</strong></p>
+<p>Modern ray-tracing hardware accelerates parts of the traversal/intersection pipeline.</p>
+<p>Conceptually the application still supplies acceleration structures and rays.</p>
+<p>The hardware can accelerate operations analogous to:</p>
+<pre class="text"><code>ray-box traversal
+hierarchy navigation
+triangle intersection</code></pre>
+<p>But it cannot make a badly structured scene representation irrelevant.</p>
+<p>Build mode, update mode, instance structure, memory footprint and dynamic geometry still affect performance.</p>
+<p>A useful mental model is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>RT hardware accelerates BVH machinery;</mtext>
+          <mstyle scriptlevel="0">
+            <mspace width="1em"></mspace>
+          </mstyle>
+          <mtext>it does not repeal spatial reasoning.</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Understanding software BVHs remains essential for debugging hardware-accelerated ray tracing.</p>
+<hr />
+<p><strong>Two-level BVHs</strong></p>
+<p>Real rendering engines frequently distinguish geometry-level and scene-level hierarchy.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>Top-Level Acceleration Structure
+
+             TLAS
+           /      \
+       Instance A  Instance B
+          |           |
+          v           v
+        BLAS A       BLAS B
+          |           |
+       triangles    triangles</code></pre>
+<p>A BLAS represents local geometry.</p>
+<p>TLAS represents transformed instances.</p>
+<p>Why do this?</p>
+<p>Suppose one chair mesh appears 100 times.</p>
+<p>We should not duplicate its triangle BVH 100 times.</p>
+<p>Store one BLAS.</p>
+<p>Each instance stores a transformation and a top-level bound.</p>
+<p>Traversal becomes:</p>
+<pre class="text"><code>world ray
+  |
+TLAS
+  |
+instance hit
+  |
+transform ray into instance local space
+  |
+BLAS
+  |
+triangle</code></pre>
+<p>This is the same local-space query strategy you already saw with triangle-mesh colliders.</p>
+<p>It is a general engine pattern.</p>
+<hr />
+<p><strong>Instancing and transform correctness</strong></p>
+<p>For rigid transform:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>R</mi>
+  <msub>
+    <mi>x</mi>
+    <mi>l</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Ray origin transforms:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>O</mi>
+    <mi>l</mi>
+  </msub>
+  <mo>=</mo>
+  <msup>
+    <mi>R</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>O</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>−</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>D</mi>
+    <mi>l</mi>
+  </msub>
+  <mo>=</mo>
+  <msup>
+    <mi>R</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <msub>
+    <mi>D</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>If scale exists, especially nonuniform scale, parameter/distance semantics become more subtle.</p>
+<p>If you renormalize local direction, local <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math> no longer directly equals world-space <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math>.</p>
+<p>A robust instance traversal must preserve a clear parameter convention.</p>
+<p>This is the same issue we covered in M077 mesh raycasts but now expressed as BVH hierarchy design.</p>
+<hr />
+<p><strong>BVH build determinism</strong></p>
+<p>Your builder uses <code>std::stable_sort</code>.</p>
+<p>That gives equal-key primitives stable relative ordering.</p>
+<p>Determinism matters for:</p>
+<pre class="text"><code>reproducible debugging
+networked simulations
+benchmark comparisons
+regression tests
+research experiments
+binary output comparison</code></pre>
+<p>However stable sorting alone does not guarantee cross-platform bit-identical trees.</p>
+<p>Floating-point centroid computation, sort implementations, equal NaN behavior, compiler settings and parallel construction can still differ.</p>
+<p>If strict reproducibility matters, define explicit tie-breaks.</p>
+<p>For example:</p>
+<div class="sourceCode" id="cb68"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>lhsCentroid <span class="op">&lt;</span> rhsCentroid<span class="op">)</span></span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>rhsCentroid <span class="op">&lt;</span> lhsCentroid<span class="op">)</span></span>
+<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-7"><a href="#cb68-7" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> lhsPrimitiveID <span class="op">&lt;</span> rhsPrimitiveID<span class="op">;</span></span></code></pre></div>
+<p>That turns equality into a total ordering.</p>
+<p>For Morton keys:</p>
+<pre class="text"><code>(code, primitiveID)</code></pre>
+<p>is even more explicit.</p>
+<hr />
+<p><strong>Numerical considerations during BVH construction</strong></p>
+<p>BVHs are often considered data-structure problems, but floating-point behavior matters.</p>
+<p>AABB union repeatedly performs min/max:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Ordinary finite numbers behave well here.</p>
+<p>NaNs are dangerous because comparison semantics can poison or inconsistently ignore coordinates depending on implementation.</p>
+<p>Therefore primitive bounds should be validated before build.</p>
+<p>Your <code>BuildBVH()</code> already checks:</p>
+<div class="sourceCode" id="cb70"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(!</span>primitives<span class="op">[</span>i<span class="op">].</span>Bounds<span class="op">.</span>IsValid<span class="op">())</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">throw</span> <span class="op">...</span></span></code></pre></div>
+<p>That is the correct boundary.</p>
+<p>However, <code>IsValid()</code> should itself ensure not merely:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo>≤</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+</math>
+<p>but also appropriate finite-coordinate requirements if the system expects them.</p>
+<p>An infinite root bound would technically contain geometry but destroy useful SAH and traversal behavior.</p>
+<hr />
+<p><strong>Degenerate primitive bounds</strong></p>
+<p>A triangle perfectly parallel to XY can have:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Its AABB has zero thickness along Z.</p>
+<p>That is not automatically invalid.</p>
+<p>Its surface area remains:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <msub>
+    <mi>d</mi>
+    <mi>x</mi>
+  </msub>
+  <msub>
+    <mi>d</mi>
+    <mi>y</mi>
+  </msub>
+</math>
+<p>when <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>d</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>.</p>
+<p>A point primitive could have:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>d</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>d</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>d</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Then surface area is zero.</p>
+<p>SAH divisions involving a zero-area parent require a fallback strategy.</p>
+<p>Examples:</p>
+<pre class="text"><code>all primitive centroids identical
+all primitive bounds collapse to one point
+all primitives lie on same degenerate geometric configuration</code></pre>
+<p>A safe builder should detect these cases and choose median/index splitting or create a leaf rather than divide by zero.</p>
+<hr />
+<p><strong>BVH failure modes you should be able to diagnose</strong></p>
+<p>A ray missing visible triangles despite brute-force intersection succeeding usually indicates an <strong>incorrect bound or traversal false negative</strong>, not merely a poor tree.</p>
+<p>A correct BVH that is slower than brute force on some scene may indicate excessive overlap, tiny leaves, pathological structure or a workload too small to amortize traversal.</p>
+<p>Stack overflow indicates pathological depth or inadequate traversal-stack capacity.</p>
+<p>A dynamic mesh that becomes slower every frame despite correct output suggests refit quality degradation.</p>
+<p>Random crashes after building often indicate node-reference invalidation, bad child indices, or primitive-order corruption.</p>
+<p>Flickering misses around huge coordinates may originate in ray–AABB numerical precision rather than tree topology.</p>
+<p>SAH build taking unexpectedly long may result from repeated sorting and allocations—the exact issue your current full-sweep implementation exposes.</p>
+<p>Morton tree correct but slower than SAH is not contradictory. Build speed and traversal quality are separate objectives.</p>
+<hr />
+<p><strong>Debugging a BVH visually</strong></p>
+<p>Your <code>SpatialDebug.cppm</code> already exposes <code>ExtractBVHBoxes()</code>.</p>
+<p>That is useful.</p>
+<p>But note the current implementation writes:</p>
+<div class="sourceCode" id="cb72"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>Depth <span class="op">=</span> <span class="dv">0</span></span></code></pre></div>
+<p>for every extracted BVH node.</p>
+<p>So the debug record does not currently reconstruct static-BVH depth.</p>
+<p>An improved visualization should derive depth from parent links or traversal.</p>
+<p>Then color nodes by hierarchy depth:</p>
+<pre class="text"><code>depth 0   root
+depth 1   children
+depth 2   grandchildren
+...</code></pre>
+<p>Useful visualizations include:</p>
+<pre class="text"><code>node AABBs by depth
+leaf occupancy
+overlapping siblings
+ray traversal order
+visited node count
+pruned nodes
+Morton order
+SAH split planes
+refit before/after bounds</code></pre>
+<p>For SAH specifically, displaying candidate split planes and their costs can make an apparently mysterious builder completely understandable.</p>
+<hr />
+<p><strong>Research bridge — what is actually worth testing here?</strong></p>
+<p>A useful research-grade question is:</p>
+<p><strong>Can a hybrid builder select among full SAH, binned SAH, Morton hierarchy and refit/rebuild using scene telemetry such that total build + query cost beats any one fixed strategy across changing workloads?</strong></p>
+<p>This is related to, but distinct from, the adaptive broadphase research file already present in <code>KairoSpatial/research/adaptive_collision_pipeline.yaml</code>.</p>
+<p>That file currently proposes choosing among:</p>
+<pre class="text"><code>dynamic AABB tree
+sweep-and-prune
+spatial hash</code></pre>
+<p>using online density, velocity and churn telemetry.</p>
+<p>The same philosophy can be brought inside the BVH family.</p>
+<p>Let</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>total</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>build/update</mtext>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <mi>Q</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>query</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+</math> is expected query count before the next update.</p>
+<p>A high-quality SAH build is valuable when <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+</math> is huge.</p>
+<p>A fast Morton build may dominate when geometry changes every frame and only a small number of queries occur.</p>
+<p>A refit dominates when motion is modest and tree topology remains good.</p>
+<p>A rebuild dominates when refitting has degraded traversal badly.</p>
+<p>Therefore the actual optimization target is not:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>build</mtext>
+    </mrow>
+  </msub>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>query</mtext>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>It is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">(</mo>
+            <msub>
+              <mi>T</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mtext>update</mtext>
+              </mrow>
+            </msub>
+            <mo>+</mo>
+            <mi>Q</mi>
+            <mstyle scriptlevel="0">
+              <mspace width="0.167em"></mspace>
+            </mstyle>
+            <msub>
+              <mi>T</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mtext>query</mtext>
+              </mrow>
+            </msub>
+            <mo data-mjx-texclass="CLOSE">)</mo>
+          </mrow>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>subject to correctness and latency constraints.</p>
+<p>That turns “which BVH is best?” into a measurable systems question rather than a naming contest.</p>
+<hr />
+<p><strong>Repository audit summary</strong></p>
+<p>Your current <code>KairoSpatial</code> design is a <strong>binary, flat-array, index-linked BVH</strong> with cached primitive bounds/centroids, stable primitive ordering, parent indices and configurable leaf/depth limits.</p>
+<p>Its median builder chooses the largest centroid axis and recursively median-splits.</p>
+<p>Its SAH path performs exact candidate sweeps over centroid-sorted primitives for all three axes, using:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>A</mi>
+    <mi>L</mi>
+  </msub>
+  <msub>
+    <mi>N</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>A</mi>
+    <mi>R</mi>
+  </msub>
+  <msub>
+    <mi>N</mi>
+    <mi>R</mi>
+  </msub>
+</math>
+<p>as the split objective.</p>
+<p>Its Morton path performs 10-bit-per-axis centroid quantization and 30-bit Morton ordering, followed by midpoint recursive splitting.</p>
+<p>Its closest-hit traversal uses an explicit vector stack, current-distance pruning and near-child-first ordering.</p>
+<p>Its any-hit traversal short-circuits.</p>
+<p>It supports AABB, sphere, point and frustum BVH queries.</p>
+<p>Its tests verify correctness against direct/brute-force expectations, including a 4096-primitive Morton-ordered stress case.</p>
+<p>It currently does <strong>not</strong> implement canonical prefix-based LBVH topology construction, static-BVH refitting, static rebuild heuristics, wide BVHs, quantized bounds or packet SIMD traversal.</p>
+<p>Those are not criticisms—they are simply the exact boundary between the repository’s current implementation and the complete M079/M080 curriculum.</p>
+<hr />
+<p><strong>Compact recall sheet — M079</strong></p>
+<p><strong>CONCEPT:</strong> Use conservative hierarchical bounds so one cheap query can eliminate many expensive primitive tests.</p>
+<p><strong>REPRESENTATION:</strong></p>
+<pre class="text"><code>BVH
+├── Nodes[]
+│    ├── Bounds
+│    ├── Left/Right
+│    ├── FirstPrimitive/Count
+│    └── Parent
+├── Primitives[]
+└── PrimitiveOrder[]</code></pre>
+<p><strong>CORE INVARIANT:</strong></p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mi>N</mi>
+  </msub>
+  <mo>⊇</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">⋃</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>subtree</mtext>
+    </mrow>
+  </munder>
+  <msub>
+    <mi>B</mi>
+    <mi>P</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p><strong>MEDIAN SPLIT:</strong></p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>x</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mi>arg</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>sort centroids, split middle.</p>
+<p><strong>SAH:</strong></p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>split</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>T</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>I</mi>
+  </msub>
+  <mfrac>
+    <mrow>
+      <msub>
+        <mi>A</mi>
+        <mi>L</mi>
+      </msub>
+      <msub>
+        <mi>N</mi>
+        <mi>L</mi>
+      </msub>
+      <mo>+</mo>
+      <msub>
+        <mi>A</mi>
+        <mi>R</mi>
+      </msub>
+      <msub>
+        <mi>N</mi>
+        <mi>R</mi>
+      </msub>
+    </mrow>
+    <msub>
+      <mi>A</mi>
+      <mi>P</mi>
+    </msub>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Compare against:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>leaf</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>N</mi>
+  <msub>
+    <mi>C</mi>
+    <mi>I</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p><strong>BINNED SAH:</strong> centroid → fixed bins → prefix/suffix bounds → evaluate <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+</math> boundaries.</p>
+<p><strong>MORTON:</strong> normalize → quantize → interleave bits → sort.</p>
+<p><strong>LBVH:</strong> sorted Morton keys → longest common prefixes → radix-tree topology → bounds.</p>
+<p><strong>KAIRO REALITY:</strong> Morton sort exists; prefix/radix LBVH topology does not yet. Current Morton mode splits sorted ranges by midpoint.</p>
+<hr />
+<p><strong>Compact recall sheet — M080</strong></p>
+<p><strong>DEPTH-FIRST TRAVERSAL:</strong></p>
+<pre class="text"><code>push root
+
+while stack:
+    pop node
+    reject if query misses bounds
+
+    if leaf:
+        test primitives
+    else:
+        push children</code></pre>
+<p><strong>CLOSEST HIT:</strong></p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>best</mtext>
+    </mrow>
+  </msub>
+  <mo stretchy="false">↓</mo>
+</math>
+<p>as hits improve.</p>
+<p>Reject subtree when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>nodeNear</mtext>
+    </mrow>
+  </msub>
+  <mo>&gt;</mo>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>best</mtext>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Visit near child first to discover tight <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>best</mtext>
+    </mrow>
+  </msub>
+</math> early.</p>
+<p><strong>ANY HIT:</strong> terminate at first accepted primitive intersection.</p>
+<p><strong>OVERLAP:</strong> node AABB prune → leaf bound check.</p>
+<p><strong>POINT:</strong> zero-size AABB query.</p>
+<p><strong>FRUSTUM:</strong> conservative AABB/frustum pruning.</p>
+<p><strong>REFIT:</strong></p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>leaf</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP">⋃</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>P</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>parent</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>∪</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>R</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p><strong>REBUILD:</strong> rerun topology generation when refitted hierarchy quality deteriorates.</p>
+<p><strong>WIDE BVH:</strong> fewer levels, more child tests, natural SIMD mapping.</p>
+<p><strong>QUANTIZATION:</strong> encode child bounds relative to parent; round outward to preserve containment.</p>
+<p><strong>PACKET SIMD:</strong> one lane per ray; useful with coherent rays, degraded by divergence.</p>
+<p><strong>CURRENT KAIRO:</strong> BVH2 + explicit stack + near-first closest traversal. No static refit/wide/quantized/packet implementation yet.</p>
+<hr />
+<p><strong>Reconstruction challenge</strong></p>
+<p>Before Pass 08, you should be able to reconstruct the following from a blank page without memorized prose.</p>
+<p>Derive why SAH contains the ratio <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>A</mi>
+    <mi>C</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>A</mi>
+    <mi>P</mi>
+  </msub>
+</math>, then derive the leaf-versus-split decision including <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>C</mi>
+    <mi>T</mi>
+  </msub>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>C</mi>
+    <mi>I</mi>
+  </msub>
+</math>. Explain why the simplified Kairo expression preserves split ranking but changes the formal stopping model. Starting from three 10-bit coordinates, explain how Morton dilation and interleaving produce one 30-bit key, then explain why sorting those keys is <strong>not by itself</strong> canonical LBVH construction. Draw a flat <code>BVHNode[]</code> representation and manually execute a closest-hit ray with near-first traversal, showing exactly when <code>tClosest</code> removes a pending subtree. Then explain why refitting preserves correctness while potentially destroying performance, derive bottom-up refit, and finally explain why BVH8 + quantized child bounds + SIMD is a coherent design rather than three unrelated optimizations.</p>
+<p>If you can do those six things and implement the skeletons without copying, you own the central machinery of this pass.</p>
+<p><strong>Pass 07 is complete in coverage: M079 + M080, Parts 1301–1336.</strong></p>
+<p><strong>Next — Pass 08: M081 + M082, Parts 1337–1374.</strong> That moves from largely static BVHs into <strong>dynamic AABB trees, fat bounds, insertion/removal heuristics, sweep-and-prune, temporal coherence, spatial hashes, dense/hashed grids, octrees, quadtrees, KD-trees, BSP/sphere hierarchies, scene graphs, portals/PVS and hierarchical occlusion.</strong> <a href="https://research.nvidia.com/publication/2012-06_maximizing-parallelism-construction-bvhs-octrees-and-k-d-trees?utm_source=chatgpt.com">NVIDIA</a></p>
+</section>
+<section id="id_06-engine-ii-ch028-dynamic-spatial-indices-sweep-and-prune-hash-grids-octrees-quadtrees-kd-trees-bsp-sphere-hierarchies-portalspvs-and-hierarchical-z" class="level4">
+<h4>Dynamic Spatial Indices, Sweep-and-Prune, Hash Grids, Octrees, Quadtrees, KD-Trees, BSP, Sphere Hierarchies, Portals/PVS and Hierarchical-Z</h4>
+<p><strong>Coverage:</strong> M081 owns <strong>Parts 1337–1356</strong> and M082 owns <strong>Parts 1357–1374</strong>. The curriculum explicitly requires every part in both ranges with no skips. Graphics_Engine_Mastery_Integra… Graphics_Engine_Mastery_Integra…</p>
+<p>We finished Pass 07 with a mainly static hierarchy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>primitives</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>BVH construction</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>many accelerated queries</mtext>
+  <mo>.</mo>
+</math>
+<p>Pass 08 changes the problem.</p>
+<p>A game world is not static. Characters move. Projectiles move. Doors open. Particles spawn and die. The camera crosses rooms. A physics broadphase is queried every frame. A renderer wants to discard objects that are not merely outside the frustum, but actually hidden behind other geometry.</p>
+<p>So the question becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>How do we organize a world whose spatial relationships themselves change?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>And there is no single universal answer.</p>
+<p>A dynamic AABB tree trades slightly inflated bounds for cheap motion. Sweep-and-prune exploits temporal coherence. Hash grids exploit approximately uniform object scale. Octrees explicitly subdivide space. KD-trees dominate many point-neighbor problems. Portals exploit architectural connectivity. Hierarchical-Z exploits the image-space depth already generated by the renderer.</p>
+<p>The entire pass is ultimately about <strong>matching the index to the structure of the workload</strong>.</p>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch436.xhtml#id_06-engine-ii-ch027-preparing-and-publishing-runtime-content" class="wikilink">Previous chapter (GPU Architecture and Real-Time Rendering, Part 2, Ch. 18)</a> · <a href="ch398.xhtml#id_06-engine-ii-ch029-dynamic-spatial-indices-for-moving-worlds" class="wikilink">Next chapter</a></p>
+</section>
+</section>
+</body>
+</html>

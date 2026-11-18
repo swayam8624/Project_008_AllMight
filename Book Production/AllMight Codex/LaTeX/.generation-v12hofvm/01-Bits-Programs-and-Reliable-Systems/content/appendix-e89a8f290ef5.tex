@@ -1,0 +1,40 @@
+\hypertarget{appendix-e89a8f290ef5}{}\label{referencestart:appendix-e89a8f290ef5}
+\section{Atomic publication and durability}\label{appendix-e89a8f290ef5-atomic-publication-and-durability}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\subsection{Definition and mechanism}\label{appendix-e89a8f290ef5-definition-and-mechanism}
+
+Publishing a prepared temporary file by replacement concerns observers of the filesystem namespace. Crash durability concerns whether contents and namespace updates survive failures; it needs a specified platform/filesystem protocol. Neither follows from building a vector of bytes. The supplied AtomicFile excerpt is an unverified repository claim, not a tested durability guarantee.
+
+\subsection{Prerequisites}\label{appendix-e89a8f290ef5-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-91d09ebed979]{Serialization} --- Publication persists already-specified bytes, rather than defining their format.
+\item
+  \hyperref[appendix-d52e4486f527]{Ownership and non-owning views} --- A mapping or publication pipeline must keep referenced bytes valid.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-e89a8f290ef5-used-by}
+
+Update downstream uses when later chunks build on this concept.
+
+\subsection{Recall and next depth}\label{appendix-e89a8f290ef5-recall-and-next-depth}
+
+Name the observers and failure model for an atomic guarantee.
+
+\textbf{Pending:} Platform replacement semantics, flush ordering, recovery and cross-volume limits.
+
+\subsection{Source and navigation}\label{appendix-e89a8f290ef5-source-and-navigation}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}
+
+\subsection{Executed POSIX durability sequence}\label{appendix-e89a8f290ef5-executed-posix-durability-sequence}
+
+The durability contract now has an actual syscall-level witness in \texttt{tools/labs/atomic\_publication\_durability\_lab.cpp}.
+
+The reference creates a staging file with exclusive creation, writes the complete payload, calls \texttt{fsync} on the file, closes it, renames it within the same directory, opens the containing directory, and calls \texttt{fsync} on that directory before treating publication as complete. It then verifies the final bytes and absence of the staging name. Separate tests reject a pre-existing staging file and a traversal-style final name.
+
+This is stronger than ``write temp then rename,'' because rename atomicity and durable persistence are different properties. The file sync requests persistence of file contents/metadata; the directory sync requests persistence of the directory-entry change. Successful calls on CI are evidence that the operating-system/filesystem accepted that ordering. They are \textbf{not} a laboratory power-cut test and cannot promise identical persistence guarantees on every filesystem, storage controller, Windows API, network filesystem or production asset pipeline.

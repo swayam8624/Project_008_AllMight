@@ -8,7 +8,7 @@ Integration accumulates changing quantities and is not limited to geometric area
 
 **Recall question:** What quantity is being accumulated in a chosen integral, and what assumptions make a quadrature rule accurate enough?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 49358–52396; source-span SHA256 febb1514dfc9c7a3628c940baf2a680485acd99576522f7e25756967a0559c67. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 49539–52577; source-span SHA256 f7601707cd4131ce8c85b441615f81255539c62e5a76d5e474b349fa388c33f7. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Integration and quadrature
@@ -43,24 +43,24 @@ $$
 Add all the displacements:
 
 $$
-\Delta x\approx\sum\_{i=0}^{N-1}v(t_i)\Delta t.
+\Delta x\approx\sum_{i=0}^{N-1}v(t_i)\Delta t.
 $$
 
 If we make the intervals increasingly small, their accumulated contribution approaches the definite integral:
 
 $$
-\boxed{\Delta x=\int_0^2v(t)\\,dt}.
+\boxed{\Delta x=\int_0^2v(t)\,dt}.
 $$
 
 For our velocity:
 
 $$
-\int_0^2 3t^2\\,dt = \left[t^3\right]\_0^2=8.
+\int_0^2 3t^2\,dt = \left[t^3\right]_0^2=8.
 $$
 
 The object travels 8 metres.
 
-The expression $[t^3]\_0^2$ means evaluate $t^3$ at the upper boundary and subtract its value at the lower boundary.
+The expression $[t^3]_0^2$ means evaluate $t^3$ at the upper boundary and subtract its value at the lower boundary.
 
 This is the fundamental meaning of integration: it calculates the net accumulation of a continuously varying quantity.
 
@@ -73,7 +73,7 @@ An integral can represent accumulated displacement, work, mass, electric charge,
 For instance, work done by a variable force along a one-dimensional path is:
 
 $$
-W=\int\_{x_0}^{x_1}F(x)\\,dx.
+W=\int_{x_0}^{x_1}F(x)\,dx.
 $$
 
 If force is measured in newtons and position in metres, the integral has units of newton-metres, or joules.
@@ -81,7 +81,7 @@ If force is measured in newtons and position in metres, the integral has units o
 The impulse delivered by a time-varying force is:
 
 $$
-\mathbf J=\int\_{t_0}^{t_1}\mathbf F(t)\\,dt,
+\mathbf J=\int_{t_0}^{t_1}\mathbf F(t)\,dt,
 $$
 
 with units of newton-seconds, equal to the change in linear momentum.
@@ -95,7 +95,7 @@ The geometric interpretation differs across these applications, but the principl
 A definite integral has specified boundaries:
 
 $$
-\int_a^b f(x)\\,dx.
+\int_a^b f(x)\,dx.
 $$
 
 It produces a scalar when $f$ is scalar-valued and integrable, or a vector when the integrand is vector-valued and the integral is defined componentwise.
@@ -103,7 +103,7 @@ It produces a scalar when $f$ is scalar-valued and integrable, or a vector when 
 An indefinite integral denotes a family of antiderivatives:
 
 $$
-\int f(x)\\,dx=F(x)+C,
+\int f(x)\,dx=F(x)+C,
 $$
 
 where:
@@ -117,7 +117,7 @@ The constant $C$ exists because differentiation eliminates additive constants.
 For example:
 
 $$
-\int 6x\\,dx=3x^2+C.
+\int 6x\,dx=3x^2+C.
 $$
 
 There is no single unique antiderivative unless an additional condition fixes $C$.
@@ -135,19 +135,19 @@ If an object moves forward and then backward, positive and negative velocity con
 For a differentiable one-dimensional trajectory:
 
 $$
-x(b)-x(a)=\int_a^b v(t)\\,dt.
+x(b)-x(a)=\int_a^b v(t)\,dt.
 $$
 
 Total distance is:
 
 $$
-\boxed{D=\int_a^b|v(t)|\\,dt}.
+\boxed{D=\int_a^b|v(t)|\,dt}.
 $$
 
 For a three-dimensional path $\mathbf x(t)$, its arc length is:
 
 $$
-\boxed{ L=\int_a^b\|\mathbf x'(t)\|\\,dt }.
+\boxed{ L=\int_a^b\|\mathbf x'(t)\|\,dt }.
 $$
 
 The norm converts velocity into nonnegative speed. This distinction matters in animation path lengths, odometry, physical travel distances, and path-following systems.
@@ -161,7 +161,7 @@ To understand numerical integration, we need to reconstruct the integral using f
 Suppose we want:
 
 $$
-I=\int_a^b f(x)\\,dx.
+I=\int_a^b f(x)\,dx.
 $$
 
 Divide the interval into $N$ subintervals:
@@ -173,21 +173,21 @@ $$
 Define the width of the $i$-th interval as:
 
 $$
-\Delta x_i=x\_{i+1}-x_i.
+\Delta x_i=x_{i+1}-x_i.
 $$
 
-Choose a sampling point $\xi_i\in[x_i,x\_{i+1}]$.
+Choose a sampling point $\xi_i\in[x_i,x_{i+1}]$.
 
 Then the Riemann sum is:
 
 $$
-S_N=\sum\_{i=0}^{N-1}f(\xi_i)\Delta x_i.
+S_N=\sum_{i=0}^{N-1}f(\xi_i)\Delta x_i.
 $$
 
 For a Riemann-integrable function, as the maximum subinterval width tends to zero, the sum approaches the integral:
 
 $$
-\boxed{ \int_a^b f(x)\\,dx = \lim\_{\|\mathcal P\|\to0} \sum\_{i=0}^{N-1}f(\xi_i)\Delta x_i }.
+\boxed{ \int_a^b f(x)\,dx = \lim_{\|\mathcal P\|\to0} \sum_{i=0}^{N-1}f(\xi_i)\Delta x_i }.
 $$
 
 Here $\mathcal P$ denotes the partition, and its mesh width is:
@@ -221,19 +221,19 @@ $$
 A left-endpoint Riemann sum is:
 
 $$
-L_N=h\sum\_{i=0}^{N-1}f(x_i).
+L_N=h\sum_{i=0}^{N-1}f(x_i).
 $$
 
 A right-endpoint sum is:
 
 $$
-R_N=h\sum\_{i=1}^{N}f(x_i).
+R_N=h\sum_{i=1}^{N}f(x_i).
 $$
 
 A midpoint sum is:
 
 $$
-M_N=h\sum\_{i=0}^{N-1}f\left(x_i+\frac h2\right).
+M_N=h\sum_{i=0}^{N-1}f\left(x_i+\frac h2\right).
 $$
 
 All three approximate the same integral, but their error differs because they choose different representatives of the function within each interval.
@@ -243,7 +243,7 @@ All three approximate the same integral, but their error differs because they ch
 Consider:
 
 $$
-I=\int_0^2x^2\\,dx=\frac83\approx2.6666667.
+I=\int_0^2x^2\,dx=\frac83\approx2.6666667.
 $$
 
 Take four equal intervals:
@@ -297,7 +297,7 @@ The fundamental theorem establishes two related statements.
 Define an accumulation function:
 
 $$
-A(x)=\int_a^x f(t)\\,dt.
+A(x)=\int_a^x f(t)\,dt.
 $$
 
 The upper boundary changes with $x$, so $A(x)$ represents everything accumulated from $a$ to the current location $x$.
@@ -313,13 +313,13 @@ Why?
 For a small increment $h$:
 
 $$
-A(x+h)-A(x)=\int_x^{x+h}f(t)\\,dt.
+A(x+h)-A(x)=\int_x^{x+h}f(t)\,dt.
 $$
 
 Divide by $h$:
 
 $$
-\frac{A(x+h)-A(x)}h = \frac1h\int_x^{x+h}f(t)\\,dt.
+\frac{A(x+h)-A(x)}h = \frac1h\int_x^{x+h}f(t)\,dt.
 $$
 
 The right side is the average value of $f$ over the tiny interval.
@@ -339,7 +339,7 @@ The dummy variable $t$ names the points being accumulated; the upper endpoint $x
 For a physical trajectory:
 
 $$
-x(t)=x(t_0)+\int\_{t_0}^{t}v(s)\\,ds,
+x(t)=x(t_0)+\int_{t_0}^{t}v(s)\,ds,
 $$
 
 we recover:
@@ -351,7 +351,7 @@ $$
 For velocity obtained by accumulating acceleration:
 
 $$
-v(t)=v(t_0)+\int\_{t_0}^{t}a(s)\\,ds,
+v(t)=v(t_0)+\int_{t_0}^{t}a(s)\,ds,
 $$
 
 differentiating recovers acceleration.
@@ -361,7 +361,7 @@ differentiating recovers acceleration.
 If $F'(x)=f(x)$, and $f$ satisfies the usual integrability assumptions, then:
 
 $$
-\boxed{\int_a^b f(x)\\,dx=F(b)-F(a)}.
+\boxed{\int_a^b f(x)\,dx=F(b)-F(a)}.
 $$
 
 This converts an accumulation problem into two evaluations of an antiderivative.
@@ -375,7 +375,7 @@ $$
 Therefore:
 
 $$
-\int_0^2x^2\\,dx = \frac{2^3}{3}-0 =\frac83.
+\int_0^2x^2\,dx = \frac{2^3}{3}-0 =\frac83.
 $$
 
 ##### When the theorem is insufficient computationally
@@ -385,7 +385,7 @@ The theorem is exact, but it does not imply that every integral can be evaluated
 For example:
 
 $$
-\int e^{-x^2}\\,dx
+\int e^{-x^2}\,dx
 $$
 
 does not have an antiderivative expressible using only elementary functions.
@@ -415,7 +415,7 @@ $$
 Integrate over $s\in[0,h]$:
 
 $$
-\int\_{x_i}^{x_i+h}f(x)\\,dx = hf(x_i)+\frac{h^2}{2}f'(x_i)+O(h^3)
+\int_{x_i}^{x_i+h}f(x)\,dx = hf(x_i)+\frac{h^2}{2}f'(x_i)+O(h^3)
 $$
 
 under sufficient smoothness assumptions.
@@ -453,7 +453,7 @@ for $s\in[-h/2,h/2]$.
 Integrating the linear term:
 
 $$
-\int\_{-h/2}^{h/2}f'(m_i)s\\,ds=0.
+\int_{-h/2}^{h/2}f'(m_i)s\,ds=0.
 $$
 
 The positive and negative contributions cancel.
@@ -461,7 +461,7 @@ The positive and negative contributions cancel.
 Consequently:
 
 $$
-\int\_{x_i}^{x\_{i+1}}f(x)\\,dx = hf(m_i)+\frac{h^3}{24}f''(m_i)+O(h^5)
+\int_{x_i}^{x_{i+1}}f(x)\,dx = hf(m_i)+\frac{h^3}{24}f''(m_i)+O(h^5)
 $$
 
 for sufficiently smooth $f$.
@@ -505,7 +505,7 @@ $$
 Integrate:
 
 $$
-\begin{aligned} \int_a^b p(x)\\,dx &=hf(a)+ \frac{f(b)-f(a)}h\frac{h^2}{2}\\ &=\frac h2[f(a)+f(b)]. \end{aligned}
+\begin{aligned} \int_a^b p(x)\,dx &=hf(a)+ \frac{f(b)-f(a)}h\frac{h^2}{2}\\ &=\frac h2[f(a)+f(b)]. \end{aligned}
 $$
 
 Therefore the single-interval trapezoidal rule is:
@@ -517,7 +517,7 @@ $$
 For a uniform partition, adding the trapezoids gives:
 
 $$
-\boxed{ T_N= h\left[ \frac{f(a)}2+ \sum\_{i=1}^{N-1}f(x_i)+ \frac{f(b)}2 \right] }.
+\boxed{ T_N= h\left[ \frac{f(a)}2+ \sum_{i=1}^{N-1}f(x_i)+ \frac{f(b)}2 \right] }.
 $$
 
 Interior sample points have weight one because each is shared by neighboring trapezoids. The two boundary points appear only once, so they have weight one-half.
@@ -535,7 +535,7 @@ The exact value is $2.6666667$.
 For a twice continuously differentiable function, the global error of the composite trapezoidal rule is bounded by:
 
 $$
-\boxed{ |I-T_N| \le \frac{(b-a)h^2}{12} \max\_{x\in[a,b]}|f''(x)| }.
+\boxed{ |I-T_N| \le \frac{(b-a)h^2}{12} \max_{x\in[a,b]}|f''(x)| }.
 $$
 
 Thus, trapezoidal integration is globally second-order accurate under these assumptions.
@@ -592,24 +592,24 @@ $$
 p(u)=f(x_0)L_0(u)+f(x_1)L_1(u)+f(x_2)L_2(u).
 $$
 
-Because $dx=h\\,du$:
+Because $dx=h\,du$:
 
 $$
-\int\_{x_0}^{x_2}p(x)\\,dx = h\int_0^2p(u)\\,du.
+\int_{x_0}^{x_2}p(x)\,dx = h\int_0^2p(u)\,du.
 $$
 
 Evaluate each basis integral:
 
 $$
-\int_0^2L_0(u)\\,du=\frac13,
+\int_0^2L_0(u)\,du=\frac13,
 $$
 
 $$
-\int_0^2L_1(u)\\,du=\frac43,
+\int_0^2L_1(u)\,du=\frac43,
 $$
 
 $$
-\int_0^2L_2(u)\\,du=\frac13.
+\int_0^2L_2(u)\,du=\frac13.
 $$
 
 Therefore:
@@ -623,7 +623,7 @@ $$
 For an even number $N$ of uniformly spaced intervals:
 
 $$
-\boxed{ S_N= \frac h3 \left[ f_0+f_N+ 4\sum\_{\substack{i=1\\\i\text{ odd}}}^{N-1}f_i+ 2\sum\_{\substack{i=2\\\i\text{ even}}}^{N-2}f_i \right] }.
+\boxed{ S_N= \frac h3 \left[ f_0+f_N+ 4\sum_{\substack{i=1\\\i\text{ odd}}}^{N-1}f_i+ 2\sum_{\substack{i=2\\\i\text{ even}}}^{N-2}f_i \right] }.
 $$
 
 The number of subintervals must be even for the standard composite Simpson's $1/3$ rule because each quadratic interpolant spans two intervals.
@@ -641,7 +641,7 @@ An interesting result is that Simpson's rule is exact for polynomials through de
 Under sufficient smoothness:
 
 $$
-\boxed{ |I-S_N| \le \frac{(b-a)h^4}{180} \max\_{x\in[a,b]}|f^{(4)}(x)| }.
+\boxed{ |I-S_N| \le \frac{(b-a)h^4}{180} \max_{x\in[a,b]}|f^{(4)}(x)| }.
 $$
 
 Simpson's rule is therefore globally fourth-order accurate, compared with second order for midpoint and trapezoidal rules and first order for left/right rectangle rules.
@@ -656,7 +656,7 @@ Simpson's rule is therefore globally fourth-order accurate, compared with second
 | Trapezoidal     | 2.750000 | 0.083333       | $O(h^2)$ |
 | Simpson         | 2.666667 | 0              | $O(h^4)$ |
 
-All estimates use four equal subintervals for $\int_0^2x^2\\,dx$. Orders assume sufficient smoothness and a fixed interval as $h\to0$.
+All estimates use four equal subintervals for $\int_0^2x^2\,dx$. Orders assume sufficient smoothness and a fixed interval as $h\to0$.
 
 Higher-order methods are not automatically better for every workload. Simpson's rule benefits from smoothness and regularly structured sampling. For discontinuous or noisy measurements, the extra polynomial approximation may have little advantage, and irregularly spaced data requires a modified formulation.
 
@@ -810,10 +810,10 @@ $$
 \boxed{ \frac{d\mathbf y}{dt} = \begin{bmatrix} v\\ -\frac{k}{m}x \end{bmatrix} }.
 $$
 
-For a damped spring receiving an external force $F\_{\mathrm{ext}}(t)$:
+For a damped spring receiving an external force $F_{\mathrm{ext}}(t)$:
 
 $$
-\boxed{ \frac{d}{dt} \begin{bmatrix} x\\v \end{bmatrix} = \begin{bmatrix} v\\ \frac{F\_{\mathrm{ext}}(t)-cv-kx}{m} \end{bmatrix} }.
+\boxed{ \frac{d}{dt} \begin{bmatrix} x\\v \end{bmatrix} = \begin{bmatrix} v\\ \frac{F_{\mathrm{ext}}(t)-cv-kx}{m} \end{bmatrix} }.
 $$
 
 This representation is fundamental to simulation architecture.
@@ -939,7 +939,7 @@ This issue has practical analogues in discontinuous contact laws, friction model
 From the fundamental theorem of calculus:
 
 $$
-\boxed{ \mathbf y(t) = \mathbf y_0+ \int\_{t_0}^{t}f(s,\mathbf y(s))\\,ds }.
+\boxed{ \mathbf y(t) = \mathbf y_0+ \int_{t_0}^{t}f(s,\mathbf y(s))\,ds }.
 $$
 
 This is a particularly powerful expression.
@@ -1044,7 +1044,7 @@ $$
 The chain rule predicts:
 
 $$
-\frac{d}{dh}L(\mathbf x+h\mathbf d)\bigg|\_{h=0} = \nabla L(\mathbf x)^T\mathbf d.
+\frac{d}{dh}L(\mathbf x+h\mathbf d)\bigg|_{h=0} = \nabla L(\mathbf x)^T\mathbf d.
 $$
 
 Estimate the same quantity numerically:
@@ -1070,13 +1070,13 @@ Randomized directions provide broad coverage. However, a finite collection of ch
 Absolute error is:
 
 $$
-E\_{\mathrm{abs}}= |D_h-\mathbf g^T\mathbf d|.
+E_{\mathrm{abs}}= |D_h-\mathbf g^T\mathbf d|.
 $$
 
 A scaled comparison can use:
 
 $$
-\boxed{ E\_{\mathrm{scaled}} = \frac{ |D_h-\mathbf g^T\mathbf d| }{ \max(s,\ |D_h|,\ |\mathbf g^T\mathbf d|) } }
+\boxed{ E_{\mathrm{scaled}} = \frac{ |D_h-\mathbf g^T\mathbf d| }{ \max(s,\ |D_h|,\ |\mathbf g^T\mathbf d|) } }
 $$
 
 where $s>0$ is a scale chosen for the problem.
@@ -1146,13 +1146,13 @@ Automatic differentiation combines these local rules along the actual computatio
 Suppose:
 
 $$
-F=F_k\circ F\_{k-1}\circ\cdots\circ F_1.
+F=F_k\circ F_{k-1}\circ\cdots\circ F_1.
 $$
 
 The Jacobian chain rule gives:
 
 $$
-J_F = J\_{F_k}\cdots J\_{F_2}J\_{F_1}.
+J_F = J_{F_k}\cdots J_{F_2}J_{F_1}.
 $$
 
 There are two major strategies for computing the resulting derivative.
@@ -1346,7 +1346,7 @@ because higher-order terms contain $\varepsilon^2$ and vanish.
 Therefore:
 
 $$
-\boxed{ \sin(a+b\varepsilon) = \sin a+b\cos a\\,\varepsilon }
+\boxed{ \sin(a+b\varepsilon) = \sin a+b\cos a\,\varepsilon }
 $$
 
 and:
@@ -1683,7 +1683,7 @@ $$
 Thus:
 
 $$
-\boxed{ \bar x\mathrel{+}=\bar z\\,y, \qquad \bar y\mathrel{+}=\bar z\\,x }.
+\boxed{ \bar x\mathrel{+}=\bar z\,y, \qquad \bar y\mathrel{+}=\bar z\,x }.
 $$
 
 For sine:
@@ -1809,19 +1809,19 @@ $$
 Thus:
 
 $$
-\bar x\_{\text{product}} = \bar a\\,y = 13.818594853(3).
+\bar x_{\text{product}} = \bar a\,y = 13.818594853(3).
 $$
 
 So:
 
 $$
-\bar x\_{\text{product}} \approx41.455784560.
+\bar x_{\text{product}} \approx41.455784560.
 $$
 
 The gradient contribution to $y$ is:
 
 $$
-\bar y=\bar a\\,x.
+\bar y=\bar a\,x.
 $$
 
 Therefore:
@@ -1841,7 +1841,7 @@ $$
 Its contribution to $x$ is:
 
 $$
-\bar x\_{\text{sine}} = \bar b\cos x.
+\bar x_{\text{sine}} = \bar b\cos x.
 $$
 
 At $x=2$, $\cos2\approx-0.416146837$, producing a negative contribution of approximately $-5.750565$.
@@ -1853,7 +1853,7 @@ The variable $x$ influences the loss through multiplication and sine.
 Therefore:
 
 $$
-\bar x = \bar x\_{\text{product}} + \bar x\_{\text{sine}}.
+\bar x = \bar x_{\text{product}} + \bar x_{\text{sine}}.
 $$
 
 The final result is:
@@ -2360,7 +2360,7 @@ This is why modern deep-learning systems invest so heavily in efficient matrix k
 Suppose a matrix $X\in\mathbb R^{N\times D}$ receives a row-wise bias:
 
 $$
-Y\_{ij}=X\_{ij}+b_j.
+Y_{ij}=X_{ij}+b_j.
 $$
 
 Here:
@@ -2374,19 +2374,19 @@ Every row uses the same bias element.
 Let the upstream gradient be:
 
 $$
-G\_{ij}=\frac{\partial L}{\partial Y\_{ij}}.
+G_{ij}=\frac{\partial L}{\partial Y_{ij}}.
 $$
 
 The input gradient is:
 
 $$
-\frac{\partial L}{\partial X\_{ij}}=G\_{ij}.
+\frac{\partial L}{\partial X_{ij}}=G_{ij}.
 $$
 
 But the bias gradient is:
 
 $$
-\boxed{ \frac{\partial L}{\partial b_j} = \sum\_{i=1}^{N}G\_{ij} }.
+\boxed{ \frac{\partial L}{\partial b_j} = \sum_{i=1}^{N}G_{ij} }.
 $$
 
 Why do we sum over rows?
@@ -2442,7 +2442,7 @@ These are related, but not always numerically identical.
 Suppose:
 
 $$
-\mathbf y\_{n+1} = \mathbf y_n+ h f(t_n,\mathbf y_n,\boldsymbol\theta).
+\mathbf y_{n+1} = \mathbf y_n+ h f(t_n,\mathbf y_n,\boldsymbol\theta).
 $$
 
 Differentiate with respect to one parameter $\theta$.
@@ -2458,7 +2458,7 @@ Assume, for now, that the timestep is constant and independent of $\theta$.
 Then:
 
 $$
-\frac{\partial\mathbf y\_{n+1}}{\partial\theta} = \frac{\partial\mathbf y_n}{\partial\theta} + h\frac{d}{d\theta} f(t_n,\mathbf y_n,\theta).
+\frac{\partial\mathbf y_{n+1}}{\partial\theta} = \frac{\partial\mathbf y_n}{\partial\theta} + h\frac{d}{d\theta} f(t_n,\mathbf y_n,\theta).
 $$
 
 The total derivative of $f$ is:
@@ -2470,10 +2470,10 @@ $$
 Therefore:
 
 $$
-\boxed{ S\_{n+1} = S_n+ h\left(J_fS_n+f\_\theta\right) }.
+\boxed{ S_{n+1} = S_n+ h\left(J_fS_n+f_\theta\right) }.
 $$
 
-Here $J_f=\partial f/\partial\mathbf y$ is the Jacobian of the dynamics with respect to state, and $f\_\theta=\partial f/\partial\theta$ is the direct parameter derivative.
+Here $J_f=\partial f/\partial\mathbf y$ is the Jacobian of the dynamics with respect to state, and $f_\theta=\partial f/\partial\theta$ is the direct parameter derivative.
 
 This equation is the differentiated Euler update.
 
@@ -2490,13 +2490,13 @@ $$
 differentiate with respect to $\theta$:
 
 $$
-\frac{d}{dt} \left( \frac{\partial\mathbf y}{\partial\theta} \right) = J_f \frac{\partial\mathbf y}{\partial\theta} + f\_\theta.
+\frac{d}{dt} \left( \frac{\partial\mathbf y}{\partial\theta} \right) = J_f \frac{\partial\mathbf y}{\partial\theta} + f_\theta.
 $$
 
 Thus:
 
 $$
-\boxed{ \dot S=J_fS+f\_\theta }.
+\boxed{ \dot S=J_fS+f_\theta }.
 $$
 
 This is an ODE in its own right.
@@ -2504,7 +2504,7 @@ This is an ODE in its own right.
 We can integrate the physical state and sensitivity together:
 
 $$
-\frac d{dt} \begin{bmatrix} \mathbf y\\S \end{bmatrix} = \begin{bmatrix} f(t,\mathbf y,\theta)\\ J_fS+f\_\theta \end{bmatrix}.
+\frac d{dt} \begin{bmatrix} \mathbf y\\S \end{bmatrix} = \begin{bmatrix} f(t,\mathbf y,\theta)\\ J_fS+f_\theta \end{bmatrix}.
 $$
 
 The extra sensitivity state can be large if there are many parameters.
@@ -2552,7 +2552,7 @@ $$
 Its derivatives are:
 
 $$
-f_y=-\lambda, \qquad f\_\lambda=-y.
+f_y=-\lambda, \qquad f_\lambda=-y.
 $$
 
 Therefore:
@@ -2580,7 +2580,7 @@ Both derivations agree.
 Explicit Euler gives:
 
 $$
-y\_{n+1}=(1-\lambda h)y_n.
+y_{n+1}=(1-\lambda h)y_n.
 $$
 
 After $N$ steps:
@@ -2630,7 +2630,7 @@ $$
 Introduce an adjoint variable $\boldsymbol\lambda(t)$ with terminal condition:
 
 $$
-\boxed{ \boldsymbol\lambda(T)= \nabla\_{\mathbf y}\ell(\mathbf y(T)) }.
+\boxed{ \boldsymbol\lambda(T)= \nabla_{\mathbf y}\ell(\mathbf y(T)) }.
 $$
 
 The continuous adjoint satisfies:
@@ -2642,7 +2642,7 @@ $$
 Under appropriate smoothness assumptions and when the initial state does not depend on parameters, the parameter gradient is:
 
 $$
-\boxed{ \frac{dL}{d\boldsymbol\theta} = \int_0^T \left(\frac{\partial f}{\partial\boldsymbol\theta}\right)^T \boldsymbol\lambda(t)\\,dt }.
+\boxed{ \frac{dL}{d\boldsymbol\theta} = \int_0^T \left(\frac{\partial f}{\partial\boldsymbol\theta}\right)^T \boldsymbol\lambda(t)\,dt }.
 $$
 
 If the initial state depends on parameters, an additional initial-condition sensitivity term appears. Explicit parameter dependence in the terminal loss also contributes directly, and running costs require further terms.
@@ -2752,7 +2752,7 @@ That gives us a direct connection between the mathematics and physical tensor ac
 For example, the left operand's gradient entry is accumulated using:
 
 $$
-(\nabla_A L)\_{ri} = \sum_cG\_{rc}B\_{ic}.
+(\nabla_A L)_{ri} = \sum_cG_{rc}B_{ic}.
 $$
 
 This is exactly the corresponding element of $GB^T$.
@@ -2760,7 +2760,7 @@ This is exactly the corresponding element of $GB^T$.
 The right operand's gradient is:
 
 $$
-(\nabla_B L)\_{ic} = \sum_rA\_{ri}G\_{rc}.
+(\nabla_B L)_{ic} = \sum_rA_{ri}G_{rc}.
 $$
 
 That is the corresponding element of $A^TG$.
@@ -2899,7 +2899,7 @@ Suppose a soft body has unknown stiffness $k$ and damping $c$.
 We can observe its positions at selected times:
 
 $$
-\mathbf x\_{\mathrm{observed}}(t_1),\ldots, \mathbf x\_{\mathrm{observed}}(t_N).
+\mathbf x_{\mathrm{observed}}(t_1),\ldots, \mathbf x_{\mathrm{observed}}(t_N).
 $$
 
 We simulate the soft body using parameters:
@@ -2911,13 +2911,13 @@ $$
 The simulator produces:
 
 $$
-\mathbf x\_{\mathrm{simulated}}(t_i;\boldsymbol\theta).
+\mathbf x_{\mathrm{simulated}}(t_i;\boldsymbol\theta).
 $$
 
 Define an objective:
 
 $$
-\boxed{ L(\boldsymbol\theta)= \frac12\sum\_{i=1}^{N} \left\| \mathbf x\_{\mathrm{simulated}}(t_i;\boldsymbol\theta) - \mathbf x\_{\mathrm{observed}}(t_i) \right\|^2 }.
+\boxed{ L(\boldsymbol\theta)= \frac12\sum_{i=1}^{N} \left\| \mathbf x_{\mathrm{simulated}}(t_i;\boldsymbol\theta) - \mathbf x_{\mathrm{observed}}(t_i) \right\|^2 }.
 $$
 
 The forward problem is to simulate motion from material parameters.
@@ -2927,7 +2927,7 @@ The inverse problem is to recover material parameters from observed motion.
 The combined pipeline is:
 
 $$
-\boldsymbol\theta \rightarrow \text{forces} \rightarrow \text{ODE integration} \rightarrow \text{trajectory} \rightarrow L \rightarrow \nabla\_{\boldsymbol\theta}L.
+\boldsymbol\theta \rightarrow \text{forces} \rightarrow \text{ODE integration} \rightarrow \text{trajectory} \rightarrow L \rightarrow \nabla_{\boldsymbol\theta}L.
 $$
 
 Forward simulation and differentiation are now connected.

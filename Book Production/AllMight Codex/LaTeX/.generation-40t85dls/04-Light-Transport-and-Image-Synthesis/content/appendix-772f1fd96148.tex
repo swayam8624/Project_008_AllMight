@@ -1,0 +1,80 @@
+\hypertarget{appendix-772f1fd96148}{}\label{referencestart:appendix-772f1fd96148}
+\section{Contrastive vision and image-language alignment}\label{appendix-772f1fd96148-contrastive-vision-and-image-language-alignment}
+
+\hypertarget{appendix-772f1fd96148-contrastive-vision-and-image-language-alignment}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-772f1fd96148-definition-and-mechanism}
+
+\hypertarget{appendix-772f1fd96148-definition-and-mechanism}{}
+
+Contrastive image-language learning trains an image encoder and a text encoder to place matching descriptions near their images in a shared feature space. For a batch of paired examples, cosine similarities between normalized embeddings form a score matrix; a temperature scales the scores, and an InfoNCE-style cross-entropy treats the matching pair as the positive while other batch items act as negatives. The objective makes retrieval and zero-shot label comparison possible by encoding class names as text. It learns statistical alignment, not a guarantee that every phrase is grounded in the pixels. Batch composition, duplicate or semantically similar negatives, captions, and web-data biases all shape the representation. A model may associate a prompt with correlated context rather than the requested object, and similarity scores are not calibrated probabilities. Evaluation must distinguish retrieval, classification, localization, and reasoning rather than treating one score as general visual understanding.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-772f1fd96148-prerequisites}
+
+\hypertarget{appendix-772f1fd96148-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=appendix-4815cd87ab8b}{Probability density and change of measure (Mathematics for Visual Computing, Reference notes: Probability density and change of measure)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-65788587ef78}{Research validity and ablation (Vision, XR, and Playable Worlds, Reference notes: Research validity and ablation)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-b2c1846508bf}{Perceptual metrics and display calibration (Vision, XR, and Playable Worlds, Reference notes: Perceptual metrics and display calibration)}
+\item
+  \hyperref[appendix-47c51ea026fb]{Learned image features and CNNs}
+\item
+  \hyperref[appendix-a9d5dfdd164a]{Attention and visual transformers}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-772f1fd96148-used-by}
+
+\hypertarget{appendix-772f1fd96148-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch031-self-supervision-and-evaluation}{Self-supervision and evaluation (Vision, XR, and Playable Worlds, Ch. 2)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch031-vision-language-models-and-grounded-tools}{Vision-language models and grounded tools (Vision, XR, and Playable Worlds, Ch. 2)}
+\item
+  \hyperref[appendix-b0c42da325f1]{Perception feedback and robot learning}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-772f1fd96148-full-teaching-explanation}
+
+\hypertarget{appendix-772f1fd96148-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch031-self-supervision-and-evaluation}{Self-supervision and evaluation (Vision, XR, and Playable Worlds, Ch. 2)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch031-vision-language-models-and-grounded-tools}{Vision-language models and grounded tools (Vision, XR, and Playable Worlds, Ch. 2)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-772f1fd96148-recall-and-next-depth}
+
+\hypertarget{appendix-772f1fd96148-recall-and-next-depth}{}
+
+\begin{itemize}
+\tightlist
+\item
+  Identify one positive pair and the negatives in a batch-level InfoNCE objective.
+\item
+  Why does a high image-text similarity score not prove that the named object is grounded?
+\end{itemize}
+
+\subsection{Source and navigation}\label{appendix-772f1fd96148-source-and-navigation}
+
+\hypertarget{appendix-772f1fd96148-source-and-navigation}{}
+
+Teaching narrative: \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch031-self-supervision-and-evaluation}{open the main explanation (Vision, XR, and Playable Worlds, Ch. 2)}. Browse the \hyperref[appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series]{University graphics and vision index}. Additional chapter connections: \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch030-recognition-templates-and-industrial-matching}{Recognition, templates, and industrial matching (Spatial Worlds, Engine State, and Simulation, Ch. 11)}; \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch030-edges-contours-and-subpixel-localization}{Edges, contours, and subpixel localization (Spatial Worlds, Engine State, and Simulation, Ch. 11)}; \hyperref[04-visual-computing-ii-ch035-a-complete-renderer-makes-the-forward-model-executable]{A complete renderer makes the forward model executable}.
+
+Caption/source records: \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch036-sc-16---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-16-vision-and-language}{SC-16 (Vision, XR, and Playable Worlds, Ch. 5)}.

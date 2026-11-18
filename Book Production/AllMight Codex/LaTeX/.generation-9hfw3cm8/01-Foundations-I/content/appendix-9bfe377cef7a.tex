@@ -1,0 +1,40 @@
+\hypertarget{appendix-9bfe377cef7a}{}
+\section{Destruction and partial construction}\label{appendix-9bfe377cef7a-destruction-and-partial-construction}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C009 · \textbf{Latest development:} C010
+
+\subsection{Definition and mechanism}\label{appendix-9bfe377cef7a-definition-and-mechanism}
+
+The destructor body precedes reverse member/base cleanup. Ordinary constructor failure destroys completed subobjects but not the incomplete whole; failure after a delegating target completed has a distinct cleanup case. RAII binds resource release to an owning object's lifetime.
+
+M010 extends the cleanup invariant to files, locks and native handles, and distinguishes destruction from external resource completion. A destructor can enqueue deferred release when an asynchronous user still holds the resource. Constructor failure remains safe when each acquired duty is immediately represented by a completed owner member.
+
+\subsection{Prerequisites}\label{appendix-9bfe377cef7a-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-3cb49709605a]{Member order and delegating constructors} --- Reverse cleanup depends on the order and completeness of subobject construction.
+\item
+  \href{../05-Engine-I/main.pdf\#nameddest=appendix-0b104bcba06b}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)} --- Cleanup belongs to an occupant's lifetime, not merely a numeric storage address.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-9bfe377cef7a-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-bea6beb5350f]{Assignment and exception guarantees}
+\item
+  \hyperref[appendix-5636651017c2]{Move operations and moved-from states}
+\item
+  \hyperref[appendix-69739d3ab49b]{RAII and resource handles}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-9bfe377cef7a-recall-and-next-depth}
+
+Reconstruct both recorded failure event arrays. Pending: smart owners, polymorphic cleanup and explicit lifetime restart. Written coverage does not demonstrate personal mastery.
+
+\subsection{Source and navigation}\label{appendix-9bfe377cef7a-source-and-navigation}
+
+\hyperref[01-foundations-i-ch003-destruction-closes-the-ownership-interval]{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15-m009---parts-127-147]{Exact coverage} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

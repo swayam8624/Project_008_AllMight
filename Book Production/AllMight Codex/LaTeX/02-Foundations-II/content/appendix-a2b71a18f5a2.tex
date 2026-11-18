@@ -1,0 +1,114 @@
+\hypertarget{appendix-a2b71a18f5a2}{}
+\section*{11 - Projective Geometry and Cameras - Visual Recall}
+\section{Camera projection: shortest useful recall}\label{camera-projection-shortest-useful-recall}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/print/4abab6c6666532c33a20acc2b6c03666a0f9ff6f7bac73681fcf3cacfa4910fa.pdf}}
+
+\subsection{Frames and transforms}\label{frames-and-transforms}
+
+\begin{itemize}
+\tightlist
+\item
+  A coordinate needs a frame: \(p=o+Bp_F\). Camera world-to-view is \(p_V=R^T(p_W-c)\); points use homogeneous \(w=1\), directions use \(w=0\), and normals use \(A^{-T}\).
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20coordinate\%20is\%20a\%20claim\%20about\%20a\%20frame}{Frames and coordinate meaning} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20camera\%20is\%20an\%20inverse\%20pose}{Camera pose and view transform}
+\end{itemize}
+
+\subsection{Projection, depth, raster, and culling}\label{projection-depth-raster-and-culling}
+
+\begin{itemize}
+\tightlist
+\item
+  For RH view space looking down \(-Z\), axial depth is \(d=-z_v\) and perspective clip \(w=d\). Projection and depth mapping are separate choices; declare NDC range, depth direction, viewport origin, and Y orientation.
+\item
+  Recover positions using the rendered projection and matching pixel centre, viewport, and depth convention. A frustum plane test is conservative: sphere reject if \(s<-r\); AABB reject if \(s<-\sum_i|n_i|e_i\).
+\item
+  Perspective-correct attributes interpolate as \(\sum_i\lambda_i(a_i/w_i)/\sum_i\lambda_i/w_i\); depth has its own projected interpolation rule.
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Projection\%20turns\%20rays\%20into\%20clip\%20coordinates}{Projection derivation} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Depth\%20is\%20a\%20numerical\%20design\%20choice}{Depth precision} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20projected\%20point\%20still\%20needs\%20a\%20raster\%20convention}{Raster mapping} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#The\%20viewing\%20volume\%20is\%20six\%20half-spaces}{Frustum culling} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Raster\%20interpolation\%20remembers\%20homogeneous\%20depth}{Interpolation}
+\end{itemize}
+
+\subsection{Time and calibrated image formation}\label{time-and-calibrated-image-formation}
+
+\begin{itemize}
+\tightlist
+\item
+  Track jittered and unjittered projection state. Intrinsics map optical-camera rays to pixels; extrinsics map between world and optical camera. Lens distortion is a separate nonlinear map with a valid domain and inversion method.
+\item
+  Thin-lens rays originate across the aperture and converge on the focus plane. CoC and depth-of-field limits depend on an explicit sensor blur criterion. Aperture and shutter affect collected light; ISO-like gain does not add photons.
+\item
+  Stereo depth follows \(Z=f_xB/\Delta x\) for a rectified pinhole pair. Equal image areas on a sphere do not imply equal solid angles.
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20camera\%20image\%20changes\%20over\%20time}{Temporal camera state} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Intrinsics\%20map\%20optical\%20rays\%20to\%20pixels}{Intrinsics} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Extrinsics\%20place\%20the\%20optical\%20camera\%20in\%20the\%20world}{Extrinsics} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Real\%20lenses\%20bend\%20the\%20pinhole\%20image}{Lens distortion}
+\end{itemize}
+
+\subsection{Reconstruction, stereo, and optics}\label{reconstruction-stereo-and-optics}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Recover\%20geometry\%20from\%20depth\%20and\%20construct\%20screen-space\%20rays}{Depth reconstruction and screen rays} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Build\%20projection\%20and\%20stereo\%20geometry\%20around\%20real\%20camera\%20baselines}{Stereo geometry} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Represent\%20directions\%20over\%20the\%20full\%20sphere}{Panorama and fisheye} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Model\%20exposure,\%20physical\%20optics,\%20and\%20depth\%20of\%20field}{Exposure and thin lens} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Make\%20camera\%20conventions\%20explicit\%20and\%20debug\%20the\%20full\%20transform\%20chain}{Camera contract and debugging}
+\end{itemize}
+
+\subsection{Essential figures}\label{essential-figures}
+
+\begin{itemize}
+\tightlist
+\item
+  {[}Figure placeholder: camera coordinate frames through raster and pixel centre{]}
+\item
+  {[}Figure placeholder: standard and reversed-Z depth, with binary32 next-float reconstruction explicitly scoped{]}
+\item
+  {[}Figure placeholder: conservative frustum plane and support-radius tests{]}
+\item
+  {[}Figure placeholder: affine versus perspective-correct attribute interpolation{]}
+\item
+  {[}Figure placeholder: stereo disparity and uncertainty, calibrated distortion, and sphere sampling measure{]}
+\item
+  {[}Figure placeholder: thin-lens CoC and full object-to-lens-to-sensor ray path{]}
+\end{itemize}
+
+\subsection{Figures and their full explanations}\label{figures-and-their-full-explanations}
+
+\begin{itemize}
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Figure\%20C11-1\%20—\%20Depth\%20mapping\%20and\%20floating-point\%20spacing\%20work\%20together}{C11-1 · Depth mapping and floating-point spacing work together} --- RH camera looks down −Z, zero-to-one depth, n=0.1 and finite conventional far=100000; reversed curve uses infinite far. Right: error after rounding depth to binary32 and moving to its next representable value, including rounding and inversion effects. This is not a complete GPU transform-error model.
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Figure\%20C11-2\%20—\%20Culling\%20is\%20a\%20conservative\%20half-space\%20test}{C11-2 · Culling is a conservative half-space test} --- This s--x cross-section has near=1, far=5 and ±45° side planes. For an inward unit plane normal, a sphere is outside only when signed centre distance \textless{} −radius. For an AABB use r = \textbar nx\textbar ex + \textbar ny\textbar ey + \textbar nz\textbar ez. Passing each plane does not prove exact intersection with the whole frustum.
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Figure\%20C11-3\%20—\%20Attributes\%20follow\%20reciprocal\%20clip\%20w}{C11-3 · Attributes follow reciprocal clip w} --- Vertex clip w values are (1,4,4); attribute values are (0,1,1). At the screen centroid the affine value is 2/3 and the corrected value is 1/3. Use sum(λ a/w) / sum(λ/w); depth-buffer interpolation has its own projected-depth rule.
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Figure\%20C11-4\%20—\%20Stereo\%20turns\%20pixel\%20uncertainty\%20into\%20depth\%20uncertainty}{C11-4 · Stereo turns pixel uncertainty into depth uncertainty} --- Rectified pinhole pair: focal length 800 pixels, baseline 0.064 m, disparity noise σd=0.25 pixel. Z=fB/d and σZ≈Z²σd/(fB). This local propagation assumes corresponding points, small noise and valid calibration; it is not a perception model.
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Figure\%20C11-5\%20—\%20Focus\%20distance,\%20focal\%20length\%20and\%20aperture\%20are\%20different\%20controls}{C11-5 · Focus distance, focal length and aperture are different controls} --- Paraxial 50 mm lens at f/2 focused at 2 m: 1/F=1/u+1/v and c=D\textbar v0/v−1\textbar, with D=F/N. The 0.03 mm threshold is an explicitly chosen viewing criterion. This excludes diffraction, aberrations and sensor processing.
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Figure\%20C11-6\%20—\%20Distortion\%20is\%20a\%20map\%20with\%20a\%20domain,\%20not\%20just\%20a\%20coefficient\%20list}{C11-6 · Distortion is a map with a domain, not just a coefficient list} --- Normalized Brown-style radial example xd=x(1+k₁r²), yd=y(1+k₁r²). This displayed domain has positive radial derivative 1+3k₁r², so the local radial map remains monotone. Larger radii can fold; numerical undistortion requires domain and convergence checks.
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Figure\%20C11-7\%20—\%20Image\%20coordinates\%20need\%20a\%20sampling-measure\%20conversion}{C11-7 · Image coordinates need a sampling-measure conversion} --- For longitude λ and latitude φ, dω=cosφ dλ dφ. Equal-width equirectangular image rows shrink toward the poles. Ray-differential Jacobians generalize the local image-area-to-solid-angle conversion; they do not by themselves specify lens-area or shutter-time probability.
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Figure\%20C11-8\%20—\%20Residual\%20count\%20does\%20not\%20guarantee\%20observable\%20motion}{C11-8 · Residual count does not guarantee observable motion} --- Toy Lucas--Kanade information matrices H=sum(∇I∇Iᵀ): repeated horizontal gradients give eigenvalues (0,3); diverse gradients give (1,3). Small eigenvalues expose weak directions. Camera-calibration gauge freedoms require a larger Jacobian model and explicit constraints.
+\end{itemize}
+
+\subsection{Linked camera concepts}\label{linked-camera-concepts}
+
+\hyperref[appendix-cac01ebeeb11]{Axial depth and Euclidean range} · \hyperref[appendix-1bc40b08db4a]{Hardware depth-buffer linearization} · \hyperref[appendix-2cbf2968e866]{Position reconstruction from depth} · \hyperref[appendix-f1a6d43e80d1]{Screen-space ray generation and mouse picking} · \hyperref[appendix-0976e86e5b9f]{Off-axis stereo projection and disparity} · \hyperref[appendix-fc99ad39f351]{Omnidirectional camera projections}
+
+\subsection{Deeper research retrieval}\label{deeper-research-retrieval}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Robust decisions:} compare a determinant against a certified arithmetic error bound; escalate uncertain signs. Exactness refers to the represented inputs. \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20sign\%20can\%20matter\%20more\%20than\%20a\%20coordinate:\%20robust\%20predicates}{Predicate derivation}
+\item
+  \textbf{Observable parameters:} fix frame/scale gauges before interpreting weak directions of the weighted Jacobian. More residuals alone do not guarantee new information. \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Calibration\%20needs\%20informative\%20observations\%20and\%20a\%20fixed\%20gauge}{Calibration and gauge}
+\item
+  \textbf{Finite pixels:} differentiate the normalized camera-ray map; convert image area to solid angle with the cross-product Jacobian. \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20camera\%20ray\%20carries\%20a\%20pixel\%20footprint}{Ray footprints}
+\item
+  \textbf{Two and three views:} recover translation direction before metric scale; test cheirality and degeneracy; pairwise consistency alone is weaker than joint multiview consistency. \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Calibrated\%20two-view\%20geometry:\%20direction\%20before\%20distance}{Multi-view reconstruction}
+\end{itemize}
+
+\textbf{Source scope:} selected TUM playlist 17 positions: 13 fully read caption tracks and four explicitly labeled official-PDF fallbacks. The full per-position legend is in \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#External\%20course\%20legend\%20and\%20evidence\%20boundary}{the continuous volume}.
+
+\subsection{Research concept links}\label{research-concept-links}
+
+\hyperref[appendix-113f0267e5f4]{Camera gauge freedoms and observability} · \hyperref[appendix-8c40fad29462]{Ray differentials and camera sampling measures}

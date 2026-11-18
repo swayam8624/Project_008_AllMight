@@ -104,6 +104,51 @@ def migrate_legacy_links(text):
                    for n, line in enumerate(lines, 1))
 
 
+def normalize_math_delimiters(text):
+    """Convert legacy math delimiters while preserving TeX bodies and code."""
+    lines = text.splitlines(keepends=True)
+    masked = lines[:]
+    for block in code_blocks(text):
+        for index in range(block.start-1, block.end):
+            masked[index] = ''.join('\n' if c == '\n' else ' ' for c in masked[index])
+    for index, line in enumerate(masked):
+        masked[index] = re.sub('(' + BT + r'+).*?\1', lambda m: ' '*len(m[0]), line)
+    mask = ''.join(masked)
+    opened = None
+    edits = []
+    index = start = 0
+    while index < len(mask):
+        if opened:
+            close = {'$': '$', '$$': '$$', r'\[': r'\]', r'\(': r'\)'}[opened]
+            if mask.startswith(close, index) and (index == 0 or mask[index-1] != '\\'):
+                if opened in (r'\[', r'\('):
+                    body = text[start+len(opened):index]
+                    if opened == r'\(':
+                        replacement = '$'+body+'$'
+                    else:
+                        replacement = '$$'+('' if body.startswith('\n') else '\n')+body
+                        replacement += ('' if body.endswith('\n') else '\n')+'$$'
+                    edits.append((start, index+len(close), replacement))
+                index += len(close)
+                opened = None
+                continue
+        else:
+            delimiter = next((v for v in ('$$', '$', r'\[', r'\(')
+                              if mask.startswith(v, index)
+                              and (index == 0 or mask[index-1] != '\\')), None)
+            if delimiter:
+                opened, start = delimiter, index
+                index += len(delimiter)
+                continue
+        index += 1
+    if opened:
+        raise ValueError('Unclosed mathematical delimiter '+opened)
+    result = text
+    for first, last, replacement in reversed(edits):
+        result = result[:first]+replacement+result[last:]
+    return result
+
+
 def normalized_baseline(text, volume_name):
     """Only the user's specific corrections are exempted from preservation.
 
@@ -120,10 +165,16 @@ def normalized_baseline(text, volume_name):
     if volume_name.startswith("Game Engine"):
         text = text.replace('Read a concept where it first helps solve a problem. If a word is unfamiliar, its first useful appearance should supply enough explanation to continue. The mathematics volume and C++ volume are deeper companions, but a link does not replace the explanation needed here: [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs]] and [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs]].', 'Read a concept where it first helps solve a problem. If a word is unfamiliar, its first useful appearance should supply enough explanation to continue. Mathematics, C++ and systems now share [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs|the Computing Foundations book]]; the explanation needed to follow this Engine narrative still belongs here.', 1)
     corrections = Path(__file__).parent / "book_completion/approved_text_corrections.json"
-    if corrections.is_file():
-        for correction in json.loads(corrections.read_text()):
-            if Path(correction["file"]).name == volume_name:
-                text = text.replace(correction["before"], correction["after"], 1)
+    entries = json.loads(corrections.read_text()) if corrections.is_file() else []
+    for correction in entries:
+        if (Path(correction["file"]).name == volume_name
+                and correction.get("stage") != "after_math_normalization"):
+            text = text.replace(correction["before"], correction["after"], 1)
+    text = normalize_math_delimiters(text)
+    for correction in entries:
+        if (Path(correction["file"]).name == volume_name
+                and correction.get("stage") == "after_math_normalization"):
+            text = text.replace(correction["before"], correction["after"], 1)
     return text
 
 

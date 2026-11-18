@@ -1,0 +1,54 @@
+\hypertarget{appendix-bea6beb5350f}{}\label{referencestart:appendix-bea6beb5350f}
+\section{Assignment and exception guarantees}\label{appendix-bea6beb5350f-assignment-and-exception-guarantees}
+
+\hypertarget{appendix-bea6beb5350f-assignment-and-exception-guarantees}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C009 · \textbf{Latest development:} C009
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-bea6beb5350f-definition-and-mechanism}
+
+\hypertarget{appendix-bea6beb5350f-definition-and-mechanism}{}
+
+Assignment replaces an already-live target. Prepare a complete replacement before a non-throwing commit to preserve the old target on failure; copy-and-swap then releases old state through temporary destruction. Strong, basic and non-throwing guarantees are separate contracts.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-bea6beb5350f-prerequisites}
+
+\hypertarget{appendix-bea6beb5350f-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1340cd1ce582]{Copy semantics and resource identity} --- Assignment and moving must implement a defined semantic value rather than a raw pointer copy.
+\item
+  \hyperref[appendix-7f8ec83d0886]{Constructors and invariant establishment} --- Initialization form and structural order determine how the constructor establishes members.
+\item
+  \hyperref[appendix-9bfe377cef7a]{Destruction and partial construction} --- Transfer algorithms need a safe source/temporary cleanup path on success and failure.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-bea6beb5350f-used-by}
+
+\hypertarget{appendix-bea6beb5350f-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c746afaa47d1]{Noexcept and transfer selection}
+\item
+  \hyperref[appendix-7679107d057e]{Rules of Three Five and Zero}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-bea6beb5350f-recall-and-next-depth}
+
+\hypertarget{appendix-bea6beb5350f-recall-and-next-depth}{}
+
+Inject allocation failure before commit and predict both owners. Pending: capacity-reusing assignment and subsystem-wide rollback. Written coverage does not demonstrate personal mastery.
+
+\subsection{Source and navigation}\label{appendix-bea6beb5350f-source-and-navigation}
+
+\hypertarget{appendix-bea6beb5350f-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch003-replacing-a-value-is-not-creating-an-object]{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15-m009---parts-127-147]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

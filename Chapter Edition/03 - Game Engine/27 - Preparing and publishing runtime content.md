@@ -8,7 +8,7 @@ Authoring data becomes useful only after import, conversion, cache validation, a
 
 **Recall question:** If a material or renderer setting changes during import, how does the cache know the output is stale and prevent an old completion from being published?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 63429–65865; source-span SHA256 fd409f3e205fdda302b2c4d96b39b53484c202b268607ef7756544624eb1eb69. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 64358–66794; source-span SHA256 fd409f3e205fdda302b2c4d96b39b53484c202b268607ef7756544624eb1eb69. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Prepare and publish content before promising it is ready

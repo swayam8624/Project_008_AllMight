@@ -1,0 +1,43 @@
+\hypertarget{appendix-0a09b6dfdc86}{}
+\section*{Tensor-product interpolation}
+\section{Tensor-product interpolation}\label{tensor-product-interpolation}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Bilinear and trilinear interpolation apply one-dimensional linear weights independently along each coordinate axis. In a rectangular cell, each corner contributes the product of its axis weights; the weights are nonnegative and sum to one for coordinates inside the cell. This preserves the range of scalar corner values, but the interpolated surface can be twisted rather than planar, and derivatives may jump across cell boundaries. For a voxel field, trilinear interpolation provides a continuous in-cell estimate; differentiating it yields a local gradient, which need not have unit length even when samples approximate signed distance. Keep coordinates normalized to the cell and define behavior outside the sampled grid explicitly.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0c2a5f69851e]{Interpolation versus approximation}
+\item
+  \href{}{Sampling aliasing and reconstruction (04-Visual-Computing-II, appendix-6a7869dd79a6)}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  No downstream concept node is added in this stage.
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Reconstructing\%20values\%20and\%20curves\%20between\%20samples}{Reconstructing values and curves between samples}
+\end{itemize}
+
+\subsection{Source coverage}\label{source-coverage}
+
+Supplied lesson parts: 978--979.
+
+\subsection{Future keywords}\label{future-keywords}
+
+bilinear weights, trilinear fields, tensor-product basis

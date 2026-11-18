@@ -1,0 +1,45 @@
+\hypertarget{appendix-7a2d9c5ce511}{}
+\section*{TLB}
+\chapter{TLB}\label{appendix-7a2d9c5ce511-tlb}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\section{Definition and mechanism}\label{appendix-7a2d9c5ce511-definition-and-mechanism}
+
+The translation lookaside buffer caches recent address translations and relevant access metadata, not the bytes being loaded. A miss may trigger a valid page-table walk without OS fault handling. A TLB hit can coexist with a data-cache miss. Context and permissions matter; it is not just a global VPN-only dictionary.
+
+\section{Prerequisites}\label{appendix-7a2d9c5ce511-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-01e5905165c4]{Page tables and MMU} --- Cached or faulting translation starts from the mapping/protection mechanism.
+\end{itemize}
+
+\section{Used by}\label{appendix-7a2d9c5ce511-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-ce688d1acdab]{Huge pages and TLB reach} --- uses this mechanism as stated in its prerequisites.
+\end{itemize}
+
+\section{Recall and next depth}\label{appendix-7a2d9c5ce511-recall-and-next-depth}
+
+Distinguish a translation miss, cache miss, and page fault.
+
+\textbf{Pending:} ASIDs/PCIDs, shootdowns, hierarchy, associativity, and measured reach.
+
+\section{Source and navigation}\label{appendix-7a2d9c5ce511-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Where\%20the\%20bytes\%20live}{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\section{Reconstruction depth}\label{appendix-7a2d9c5ce511-reconstruction-depth}
+
+The Translation Lookaside Buffer caches recent virtual-page to physical-frame translations. Without a cached translation, the processor performs a page-table walk, which itself requires memory accesses and can stall an otherwise cache-friendly loop.
+
+TLB locality differs from data-cache locality. A traversal can touch one cache line from thousands of separate pages: each useful access is small, but the page working set can exceed TLB capacity. Huge pages increase TLB reach because one translation covers more bytes, although they introduce allocation and fragmentation trade-offs.
+
+When profiling, do not diagnose every unexplained memory stall as a TLB problem. Hardware performance counters can separate cache misses, page walks and TLB misses on supported CPUs. Synthetic experiments should vary stride and working-set pages while keeping useful work controlled.
+
+For engine data, dense arrays often help both cache and TLB locality; pointer-heavy structures can hurt both. NUMA adds another axis: a translation may be cached while the physical page still resides on a remote node.

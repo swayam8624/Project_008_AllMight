@@ -8,7 +8,7 @@ Orthographic and perspective projections map camera-space geometry into clip coo
 
 **Recall question:** Why must clipping occur before perspective division, and when is a half-pixel adjustment incorrect?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 80694–84091; source-span SHA256 32c5a1323849c45482aa8ab1fe8b09afadcc574f1190425580f4e0622544d155. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 80941–84338; source-span SHA256 fcf61fdb48daa14bb38e7cbb8d87cc82df71979648d4c3d5d7fa16fca6ec1b8b. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Projection turns rays into clip coordinates
@@ -24,13 +24,13 @@ Imagine a camera looking along local $-Z$.
 Consider two equal-sized squares, one at:
 
 $$
- z=-2 
+ z=-2
 $$
 
 and another at:
 
 $$
- z=-20. 
+ z=-20.
 $$
 
 Under orthographic projection, their horizontal and vertical image dimensions are equal.
@@ -42,13 +42,13 @@ The camera is defined by a rectangular viewing volume with horizontal boundaries
 For our right-handed convention:
 
 $$
- z_{\mathrm{near}}=-n, \qquad z_{\mathrm{far}}=-f 
+ z_{\mathrm{near}}=-n, \qquad z_{\mathrm{far}}=-f
 $$
 
 where:
 
 $$
- 0\<n\<f. 
+ 0\<n\<f.
 $$
 
 The view volume is a rectangular box, rather than a pyramidal frustum.
@@ -60,7 +60,7 @@ Under orthographic projection, the projected XY position depends only on the cam
 For a centred orthographic camera:
 
 $$
- x_n=k_xx_v, \qquad y_n=k_yy_v. 
+ x_n=k_xx_v, \qquad y_n=k_yy_v.
 $$
 
 There is no division by depth.
@@ -68,13 +68,13 @@ There is no division by depth.
 A point at:
 
 $$
- (1,2,-3) 
+ (1,2,-3)
 $$
 
 and a point at:
 
 $$
- (1,2,-300) 
+ (1,2,-300)
 $$
 
 have identical projected XY coordinates.
@@ -94,65 +94,65 @@ However, calling an orthographic view physically realistic is not generally corr
 We want to map the horizontal camera-space interval:
 
 $$
- x\in[l,r] 
+ x\in[l,r]
 $$
 
 to:
 
 $$
- x_n\in[-1,1]. 
+ x_n\in[-1,1].
 $$
 
 Assume an affine mapping:
 
 $$
- x_n=ax+b. 
+ x_n=ax+b.
 $$
 
 Enforce the endpoints:
 
 $$
- al+b=-1, 
+ al+b=-1,
 $$
 
 $$
- ar+b=1. 
+ ar+b=1.
 $$
 
 Subtract:
 
 $$
- a(r-l)=2. 
+ a(r-l)=2.
 $$
 
 Therefore:
 
 $$
- \boxed{ a=\frac2{r-l} }. 
+ \boxed{ a=\frac2{r-l} }.
 $$
 
 Substitute into the first equation:
 
 $$
- b=-1-\frac{2l}{r-l}. 
+ b=-1-\frac{2l}{r-l}.
 $$
 
 Combine:
 
 $$
- \boxed{ b=-\frac{r+l}{r-l} }. 
+ \boxed{ b=-\frac{r+l}{r-l} }.
 $$
 
 Thus:
 
 $$
- \boxed{ x_n= \frac{2x}{r-l} -\frac{r+l}{r-l} }. 
+ \boxed{ x_n= \frac{2x}{r-l} -\frac{r+l}{r-l} }.
 $$
 
 For the vertical coordinate, the same reasoning gives:
 
 $$
- \boxed{ y_n= \frac{2y}{t-b} -\frac{t+b}{t-b} }. 
+ \boxed{ y_n= \frac{2y}{t-b} -\frac{t+b}{t-b} }.
 $$
 
 ### Derive the depth mapping
@@ -162,51 +162,51 @@ Under our right-handed camera convention, points in front have negative view-spa
 We want the conventional zero-to-one depth mapping:
 
 $$
- z=-n\longmapsto z_n=0, 
+ z=-n\longmapsto z_n=0,
 $$
 
 $$
- z=-f\longmapsto z_n=1. 
+ z=-f\longmapsto z_n=1.
 $$
 
 Assume:
 
 $$
- z_n=Az+B. 
+ z_n=Az+B.
 $$
 
 The endpoint equations are:
 
 $$
- -An+B=0, 
+ -An+B=0,
 $$
 
 $$
- -Af+B=1. 
+ -Af+B=1.
 $$
 
 Subtract the first equation from the second:
 
 $$
- -A(f-n)=1. 
+ -A(f-n)=1.
 $$
 
 Thus:
 
 $$
- \boxed{ A=-\frac1{f-n} }. 
+ \boxed{ A=-\frac1{f-n} }.
 $$
 
 From the first equation:
 
 $$
- B=An=-\frac n{f-n}. 
+ B=An=-\frac n{f-n}.
 $$
 
 Therefore:
 
 $$
- \boxed{ z_n=\frac{-z-n}{f-n} }. 
+ \boxed{ z_n=\frac{-z-n}{f-n} }.
 $$
 
 ### Assemble the matrix
@@ -214,19 +214,19 @@ $$
 Using column-vector multiplication:
 
 $$
- \boxed{ P_{\mathrm{ortho}}^{[0,1]}= \begin{bmatrix} \dfrac2{r-l}&0&0&-\dfrac{r+l}{r-l}\\ 0&\dfrac2{t-b}&0&-\dfrac{t+b}{t-b}\\ 0&0&-\dfrac1{f-n}&-\dfrac n{f-n}\\ 0&0&0&1 \end{bmatrix} }. 
+ \boxed{ P_{\mathrm{ortho}}^{[0,1]}= \begin{bmatrix} \dfrac2{r-l}&0&0&-\dfrac{r+l}{r-l}\\ 0&\dfrac2{t-b}&0&-\dfrac{t+b}{t-b}\\ 0&0&-\dfrac1{f-n}&-\dfrac n{f-n}\\ 0&0&0&1 \end{bmatrix} }.
 $$
 
 Multiply it by:
 
 $$
- \begin{bmatrix}x\\y\\z\\1\end{bmatrix}. 
+ \begin{bmatrix}x\\y\\z\\1\end{bmatrix}.
 $$
 
 The resulting homogeneous coordinate has:
 
 $$
- w_c=1. 
+ w_c=1.
 $$
 
 Therefore the perspective division does nothing to XY.
@@ -238,25 +238,25 @@ This is why the orthographic matrix does not produce perspective shrinking.
 If the target depth interval is:
 
 $$
- [-1,1], 
+ [-1,1],
 $$
 
 the depth mapping must send:
 
 $$
- -n\mapsto-1, \qquad -f\mapsto1. 
+ -n\mapsto-1, \qquad -f\mapsto1.
 $$
 
 Solving the same affine mapping gives:
 
 $$
- \boxed{ z_n= -\frac{2z+f+n}{f-n} }. 
+ \boxed{ z_n= -\frac{2z+f+n}{f-n} }.
 $$
 
 Thus the depth row becomes:
 
 $$
- \begin{bmatrix} 0&0&-\dfrac2{f-n}&-\dfrac{f+n}{f-n} \end{bmatrix}. 
+ \begin{bmatrix} 0&0&-\dfrac2{f-n}&-\dfrac{f+n}{f-n} \end{bmatrix}.
 $$
 
 The XY rows remain unchanged.
@@ -266,23 +266,23 @@ The XY rows remain unchanged.
 For reversed zero-to-one depth:
 
 $$
- -n\mapsto1, 
+ -n\mapsto1,
 $$
 
 $$
- -f\mapsto0. 
+ -f\mapsto0.
 $$
 
 The mapping is:
 
 $$
- \boxed{ z_n=\frac{z+f}{f-n} }. 
+ \boxed{ z_n=\frac{z+f}{f-n} }.
 $$
 
 The third row becomes:
 
 $$
- \begin{bmatrix} 0&0&\dfrac1{f-n}&\dfrac f{f-n} \end{bmatrix}. 
+ \begin{bmatrix} 0&0&\dfrac1{f-n}&\dfrac f{f-n} \end{bmatrix}.
 $$
 
 Orthographic depth is linear in camera-space depth. Reversing the mapping does not create the same large floating-point precision benefit that reversed-Z produces for perspective projection.
@@ -292,41 +292,41 @@ Orthographic depth is linear in camera-space depth. Reversing the mapping does n
 Let:
 
 $$
- l=-4,\ r=4,\ b=-3,\ t=3, 
+ l=-4,\ r=4,\ b=-3,\ t=3,
 $$
 
 $$
- n=1,\ f=101. 
+ n=1,\ f=101.
 $$
 
 For a point:
 
 $$
- \mathbf p_V= \begin{bmatrix}2\\1.5\\-51\\1\end{bmatrix}, 
+ \mathbf p_V= \begin{bmatrix}2\\1.5\\-51\\1\end{bmatrix},
 $$
 
 the horizontal coordinate is:
 
 $$
- x_n=\frac{2(2)}8=0.5. 
+ x_n=\frac{2(2)}8=0.5.
 $$
 
 The vertical coordinate is:
 
 $$
- y_n=\frac{2(1.5)}6=0.5. 
+ y_n=\frac{2(1.5)}6=0.5.
 $$
 
 The depth is:
 
 $$
- z_n=\frac{51-1}{101-1}=\frac{50}{100}=0.5. 
+ z_n=\frac{51-1}{101-1}=\frac{50}{100}=0.5.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf p_{\mathrm{NDC}}=(0.5,0.5,0.5) }. 
+ \boxed{ \mathbf p_{\mathrm{NDC}}=(0.5,0.5,0.5) }.
 $$
 
 Every coordinate lies at the midpoint between its corresponding boundaries.
@@ -340,7 +340,7 @@ A point's apparent position depends on both its transverse displacement and its 
 For our camera convention, define positive forward distance:
 
 $$
- \boxed{d=-z_v>0}. 
+ \boxed{d=-z_v>0}.
 $$
 
 The camera looks toward $-Z$, but it is more convenient to express physical depth as a positive number $d$.
@@ -350,25 +350,25 @@ Suppose the camera has a virtual image plane at distance $s>0$.
 A point:
 
 $$
- (x_v,y_v,-d) 
+ (x_v,y_v,-d)
 $$
 
 projects to image-plane coordinates:
 
 $$
- \boxed{ x_{\mathrm{image}}=\frac{s}{d}x_v } 
+ \boxed{ x_{\mathrm{image}}=\frac{s}{d}x_v }
 $$
 
 and:
 
 $$
- \boxed{ y_{\mathrm{image}}=\frac{s}{d}y_v }. 
+ \boxed{ y_{\mathrm{image}}=\frac{s}{d}y_v }.
 $$
 
 The key factor is:
 
 $$
- \frac1d. 
+ \frac1d.
 $$
 
 As depth increases, apparent size decreases.
@@ -382,13 +382,13 @@ Suppose an object has physical height $H_o$ and is approximately perpendicular t
 Its projected height on the virtual image plane is:
 
 $$
- \boxed{ h_{\mathrm{image}}=\frac{sH_o}{d} }. 
+ \boxed{ h_{\mathrm{image}}=\frac{sH_o}{d} }.
 $$
 
 If the object moves from depth $d$ to depth $2d$:
 
 $$
- h'_{\mathrm{image}} = \frac{sH_o}{2d} = \frac12h_{\mathrm{image}}. 
+ h'_{\mathrm{image}} = \frac{sH_o}{2d} = \frac12h_{\mathrm{image}}.
 $$
 
 Thus doubling distance halves apparent size in the ideal pinhole model.
@@ -400,7 +400,7 @@ This is the basic geometric explanation for perspective.
 The projected coordinate:
 
 $$
- x_{\mathrm{image}}=\frac{s x_v}{d} 
+ x_{\mathrm{image}}=\frac{s x_v}{d}
 $$
 
 is a ratio of quantities.
@@ -424,19 +424,19 @@ The two right triangles formed by the camera centre, optical axis, and projected
 Therefore:
 
 $$
- \frac{x_s}{s}=\frac{x}{d}. 
+ \frac{x_s}{s}=\frac{x}{d}.
 $$
 
 Multiply by $s$:
 
 $$
- \boxed{ x_s=\frac{s}{d}x }. 
+ \boxed{ x_s=\frac{s}{d}x }.
 $$
 
 The same derivation gives:
 
 $$
- \boxed{ y_s=\frac{s}{d}y }. 
+ \boxed{ y_s=\frac{s}{d}y }.
 $$
 
 ### Field of view from the viewing triangle
@@ -448,19 +448,19 @@ The vertical field of view is $\theta_y$.
 The upper half of the viewing triangle satisfies:
 
 $$
- \tan\left(\frac{\theta_y}{2}\right) = \frac{H_s/2}{s}. 
+ \tan\left(\frac{\theta_y}{2}\right) = \frac{H_s/2}{s}.
 $$
 
 Therefore:
 
 $$
- \boxed{ H_s=2s\tan\left(\frac{\theta_y}{2}\right) }. 
+ \boxed{ H_s=2s\tan\left(\frac{\theta_y}{2}\right) }.
 $$
 
 At depth $d$, the visible world-space height is:
 
 $$
- \boxed{ H(d)=2d\tan\left(\frac{\theta_y}{2}\right) }. 
+ \boxed{ H(d)=2d\tan\left(\frac{\theta_y}{2}\right) }.
 $$
 
 This formula is useful for determining the footprint of a pixel at a given camera depth and for selecting spatial detail relative to screen resolution.
@@ -470,31 +470,31 @@ This formula is useful for determining the footprint of a pixel at a given camer
 Suppose:
 
 $$
- \theta_y=60^\circ, \qquad d=10. 
+ \theta_y=60^\circ, \qquad d=10.
 $$
 
 Then:
 
 $$
- H(10)=20\tan30^\circ. 
+ H(10)=20\tan30^\circ.
 $$
 
 Since:
 
 $$
- \tan30^\circ=\frac1{\sqrt3}, 
+ \tan30^\circ=\frac1{\sqrt3},
 $$
 
 we get:
 
 $$
- \boxed{ H(10)\approx11.5470 }. 
+ \boxed{ H(10)\approx11.5470 }.
 $$
 
 At depth 20:
 
 $$
- H(20)\approx23.0940. 
+ H(20)\approx23.0940.
 $$
 
 The visible height doubles with depth.
@@ -502,7 +502,7 @@ The visible height doubles with depth.
 For a framebuffer with 1080 pixels vertically, the idealized world-space height corresponding to one pixel at depth 10 is approximately:
 
 $$
- \frac{11.5470}{1080}\approx0.01069 
+ \frac{11.5470}{1080}\approx0.01069
 $$
 
 world units, assuming a locally front-facing plane and simple pinhole projection.
@@ -516,19 +516,19 @@ This is one reason distant geometry has smaller screen-space footprints.
 The perspective divide converts homogeneous clip coordinates:
 
 $$
- \mathbf p_C= (x_c,y_c,z_c,w_c) 
+ \mathbf p_C= (x_c,y_c,z_c,w_c)
 $$
 
 into NDC:
 
 $$
- \boxed{ \mathbf p_N= \left( \frac{x_c}{w_c}, \frac{y_c}{w_c}, \frac{z_c}{w_c} \right) }. 
+ \boxed{ \mathbf p_N= \left( \frac{x_c}{w_c}, \frac{y_c}{w_c}, \frac{z_c}{w_c} \right) }.
 $$
 
 In our right-handed perspective convention, we will choose:
 
 $$
- \boxed{ w_c=-z_v=d }. 
+ \boxed{ w_c=-z_v=d }.
 $$
 
 Then any clip coordinate proportional to camera-space $x$ or $y$ becomes inversely proportional to depth after division.
@@ -536,13 +536,13 @@ Then any clip coordinate proportional to camera-space $x$ or $y$ becomes inverse
 For example, choose:
 
 $$
- x_c=k_xx_v. 
+ x_c=k_xx_v.
 $$
 
 Then:
 
 $$
- x_n= \frac{k_xx_v}{-z_v} = k_x\frac{x_v}{d}. 
+ x_n= \frac{k_xx_v}{-z_v} = k_x\frac{x_v}{d}.
 $$
 
 This is exactly the similar-triangle relationship.
@@ -552,13 +552,13 @@ This is exactly the similar-triangle relationship.
 Suppose the projection produces:
 
 $$
- \mathbf p_C= \begin{bmatrix} 2\\1\\3\\4 \end{bmatrix}. 
+ \mathbf p_C= \begin{bmatrix} 2\\1\\3\\4 \end{bmatrix}.
 $$
 
 The NDC position is:
 
 $$
- \boxed{ \mathbf p_N= \begin{bmatrix} 0.5\\0.25\\0.75 \end{bmatrix} }. 
+ \boxed{ \mathbf p_N= \begin{bmatrix} 0.5\\0.25\\0.75 \end{bmatrix} }.
 $$
 
 The division is applied to all three spatial coordinates, including depth.
@@ -570,19 +570,19 @@ The perspective divide is undefined.
 For our perspective matrix:
 
 $$
- w_c=-z_v. 
+ w_c=-z_v.
 $$
 
 Thus a point lying exactly on the camera plane:
 
 $$
- z_v=0 
+ z_v=0
 $$
 
 has:
 
 $$
- w_c=0. 
+ w_c=0.
 $$
 
 It cannot be projected as an ordinary finite camera-visible point through the perspective divide.
@@ -594,13 +594,13 @@ The clipping and rasterization pipeline must handle such geometry before perform
 A point behind the camera has:
 
 $$
- z_v>0, 
+ z_v>0,
 $$
 
 so:
 
 $$
- w_c=-z_v<0. 
+ w_c=-z_v<0.
 $$
 
 Blindly dividing a behind-camera point can produce XY coordinates that look numerically plausible while describing an invalid visible projection.
@@ -616,13 +616,13 @@ Homogeneous coordinates represent geometric points in projective space.
 For ordinary affine 3D points, we commonly use:
 
 $$
- (x,y,z,1). 
+ (x,y,z,1).
 $$
 
 But a general projective point is represented by:
 
 $$
- \boxed{ (x,y,z,w) } 
+ \boxed{ (x,y,z,w) }
 $$
 
 with not all components zero.
@@ -630,25 +630,25 @@ with not all components zero.
 Two nonzero homogeneous vectors represent the same projective point if they differ by a nonzero scalar factor:
 
 $$
- \boxed{ (x,y,z,w) \sim (\lambda x,\lambda y,\lambda z,\lambda w) } 
+ \boxed{ (x,y,z,w) \sim (\lambda x,\lambda y,\lambda z,\lambda w) }
 $$
 
 for:
 
 $$
- \lambda\ne0. 
+ \lambda\ne0.
 $$
 
 For example:
 
 $$
- (2,4,6,2) 
+ (2,4,6,2)
 $$
 
 and:
 
 $$
- (1,2,3,1) 
+ (1,2,3,1)
 $$
 
 represent the same finite point.
@@ -656,7 +656,7 @@ represent the same finite point.
 After homogeneous division, both produce:
 
 $$
- (1,2,3). 
+ (1,2,3).
 $$
 
 ### Why projective equivalence matters
@@ -664,7 +664,7 @@ $$
 Suppose a projection matrix produces:
 
 $$
- \mathbf p_C=(x_c,y_c,z_c,w_c). 
+ \mathbf p_C=(x_c,y_c,z_c,w_c).
 $$
 
 Multiplying all four coordinates by a positive nonzero scalar does not change the post-divide NDC values.
@@ -678,7 +678,7 @@ However, when interpreting clip inequalities in a graphics pipeline, the sign an
 An affine transformation has a final row of:
 
 $$
- (0,0,0,1) 
+ (0,0,0,1)
 $$
 
 under the conventional homogeneous matrix representation.
@@ -690,7 +690,7 @@ A perspective projection matrix contains a final row involving the original $z$ 
 Thus:
 
 $$
- w_c 
+ w_c
 $$
 
 depends on depth.
@@ -702,7 +702,7 @@ That is the mathematical mechanism allowing perspective projection to be express
 In projective geometry, homogeneous vectors with:
 
 $$
- w=0 
+ w=0
 $$
 
 can represent points at infinity, corresponding to directions.
@@ -720,7 +720,7 @@ The fourth clip coordinate has several distinct roles that are easy to conflate.
 First, it enables the perspective divide:
 
 $$
- x_n=x_c/w_c, \qquad y_n=y_c/w_c. 
+ x_n=x_c/w_c, \qquad y_n=y_c/w_c.
 $$
 
 Second, it defines the homogeneous clipping boundaries.
@@ -736,25 +736,25 @@ Our camera looks toward negative view-space $Z$.
 A visible point has:
 
 $$
- z_v=-d, \qquad d>0. 
+ z_v=-d, \qquad d>0.
 $$
 
 If we set:
 
 $$
- w_c=-z_v, 
+ w_c=-z_v,
 $$
 
 then:
 
 $$
- w_c=d>0. 
+ w_c=d>0.
 $$
 
 The perspective divide gives:
 
 $$
- x_n\propto x_v/d. 
+ x_n\propto x_v/d.
 $$
 
 Thus projected displacement decreases as positive depth increases.
@@ -766,7 +766,7 @@ The $w$ coordinate naturally represents forward view depth for this conventional
 The identity:
 
 $$
- w_c=-z_v 
+ w_c=-z_v
 $$
 
 is a property of the particular perspective matrix we choose.
@@ -776,7 +776,7 @@ It is not a universal definition of the fourth homogeneous coordinate.
 For a conventional orthographic projection:
 
 $$
- w_c=1. 
+ w_c=1.
 $$
 
 For an oblique or more general projective transformation, $w_c$ may be a different linear combination of input coordinates.
@@ -792,19 +792,19 @@ Directly interpolating $a$ linearly in screen space generally does not reproduce
 The rasterizer uses relationships involving:
 
 $$
- \frac{a_i}{w_i} 
+ \frac{a_i}{w_i}
 $$
 
 and:
 
 $$
- \frac1{w_i}. 
+ \frac1{w_i}.
 $$
 
 The attribute can be reconstructed using:
 
 $$
- \boxed{ a= \frac{ \sum_i\lambda_i(a_i/w_i) }{ \sum_i\lambda_i(1/w_i) } } 
+ \boxed{ a= \frac{ \sum_i\lambda_i(a_i/w_i) }{ \sum_i\lambda_i(1/w_i) } }
 $$
 
 where $\lambda_i$ are screen-space barycentric coordinates.
@@ -832,37 +832,37 @@ Assume:
 At positive depth $d=-z_v$, the half-height of the visible region is:
 
 $$
- h(d)=d\tan(\theta_y/2). 
+ h(d)=d\tan(\theta_y/2).
 $$
 
 A point at the top of the view has:
 
 $$
- y_v=h(d). 
+ y_v=h(d).
 $$
 
 We want it to map to:
 
 $$
- y_n=1. 
+ y_n=1.
 $$
 
 Therefore:
 
 $$
- y_n= \frac{y_v}{d\tan(\theta_y/2)}. 
+ y_n= \frac{y_v}{d\tan(\theta_y/2)}.
 $$
 
 Define:
 
 $$
- \boxed{ s_y=\frac1{\tan(\theta_y/2)} }. 
+ \boxed{ s_y=\frac1{\tan(\theta_y/2)} }.
 $$
 
 Then:
 
 $$
- \boxed{ y_n=\frac{s_yy_v}{d} }. 
+ \boxed{ y_n=\frac{s_yy_v}{d} }.
 $$
 
 ### Derive the horizontal scale
@@ -870,31 +870,31 @@ $$
 The visible width is the visible height multiplied by aspect ratio:
 
 $$
- w(d)=a\,h(d). 
+ w(d)=a\,h(d).
 $$
 
 Thus the horizontal half-width is:
 
 $$
- a\,d\tan(\theta_y/2). 
+ a\,d\tan(\theta_y/2).
 $$
 
 Therefore:
 
 $$
- \boxed{ x_n= \frac{x_v}{ad\tan(\theta_y/2)} }. 
+ \boxed{ x_n= \frac{x_v}{ad\tan(\theta_y/2)} }.
 $$
 
 Define:
 
 $$
- \boxed{ s_x=\frac{s_y}{a} }. 
+ \boxed{ s_x=\frac{s_y}{a} }.
 $$
 
 Then:
 
 $$
- \boxed{ x_n=\frac{s_xx_v}{d} }. 
+ \boxed{ x_n=\frac{s_xx_v}{d} }.
 $$
 
 ### Choose homogeneous $w$
@@ -902,19 +902,19 @@ $$
 Let:
 
 $$
- \boxed{ w_c=-z_v=d }. 
+ \boxed{ w_c=-z_v=d }.
 $$
 
 Then we can generate the desired XY numerators using:
 
 $$
- x_c=s_xx_v, \qquad y_c=s_yy_v. 
+ x_c=s_xx_v, \qquad y_c=s_yy_v.
 $$
 
 After division:
 
 $$
- x_n=x_c/w_c, \qquad y_n=y_c/w_c. 
+ x_n=x_c/w_c, \qquad y_n=y_c/w_c.
 $$
 
 ### Derive the depth row
@@ -922,101 +922,101 @@ $$
 Assume the clip-space depth is linear in view-space $z$:
 
 $$
- \boxed{ z_c=Az_v+B }. 
+ \boxed{ z_c=Az_v+B }.
 $$
 
 Since:
 
 $$
- w_c=-z_v, 
+ w_c=-z_v,
 $$
 
 the NDC depth is:
 
 $$
- z_n= \frac{Az_v+B}{-z_v}. 
+ z_n= \frac{Az_v+B}{-z_v}.
 $$
 
 Let positive view depth be:
 
 $$
- d=-z_v. 
+ d=-z_v.
 $$
 
 Then:
 
 $$
- z_c=-Ad+B, 
+ z_c=-Ad+B,
 $$
 
 $$
- w_c=d. 
+ w_c=d.
 $$
 
 Therefore:
 
 $$
- \boxed{ z_n=-A+\frac Bd }. 
+ \boxed{ z_n=-A+\frac Bd }.
 $$
 
 We require near depth:
 
 $$
- d=n\longmapsto z_n=0. 
+ d=n\longmapsto z_n=0.
 $$
 
 Thus:
 
 $$
- -A+\frac Bn=0. 
+ -A+\frac Bn=0.
 $$
 
 So:
 
 $$
- \boxed{B=An}. 
+ \boxed{B=An}.
 $$
 
 We also require far depth:
 
 $$
- d=f\longmapsto z_n=1. 
+ d=f\longmapsto z_n=1.
 $$
 
 Thus:
 
 $$
- -A+\frac Bf=1. 
+ -A+\frac Bf=1.
 $$
 
 Substitute $B=An$:
 
 $$
- -A+\frac{An}{f}=1. 
+ -A+\frac{An}{f}=1.
 $$
 
 Factor:
 
 $$
- A\left(-1+\frac nf\right)=1. 
+ A\left(-1+\frac nf\right)=1.
 $$
 
 Therefore:
 
 $$
- A\frac{n-f}{f}=1. 
+ A\frac{n-f}{f}=1.
 $$
 
 Hence:
 
 $$
- \boxed{ A=\frac f{n-f} =-\frac f{f-n} }. 
+ \boxed{ A=\frac f{n-f} =-\frac f{f-n} }.
 $$
 
 And:
 
 $$
- \boxed{ B=An= \frac{fn}{n-f} =-\frac{fn}{f-n} }. 
+ \boxed{ B=An= \frac{fn}{n-f} =-\frac{fn}{f-n} }.
 $$
 
 ### Assemble the matrix · V11.03.26
@@ -1024,25 +1024,25 @@ $$
 We want:
 
 $$
- x_c=s_xx_v, 
+ x_c=s_xx_v,
 $$
 
 $$
- y_c=s_yy_v, 
+ y_c=s_yy_v,
 $$
 
 $$
- z_c=Az_v+B, 
+ z_c=Az_v+B,
 $$
 
 $$
- w_c=-z_v. 
+ w_c=-z_v.
 $$
 
 Therefore:
 
 $$
- \boxed{ P_{\mathrm{perspective}}^{[0,1]}= \begin{bmatrix} \dfrac1{a\tan(\theta_y/2)}&0&0&0\\ 0&\dfrac1{\tan(\theta_y/2)}&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix} }. 
+ \boxed{ P_{\mathrm{perspective}}^{[0,1]}= \begin{bmatrix} \dfrac1{a\tan(\theta_y/2)}&0&0&0\\ 0&\dfrac1{\tan(\theta_y/2)}&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix} }.
 $$
 
 Every nonzero entry has now been derived.
@@ -1058,31 +1058,31 @@ The third row produces the requested near-to-far depth mapping.
 Take a point on the optical axis at the near plane:
 
 $$
- \mathbf p_V=(0,0,-n,1)^T. 
+ \mathbf p_V=(0,0,-n,1)^T.
 $$
 
 Its clip $z$ is:
 
 $$
- z_c= -\frac f{f-n}(-n)-\frac{fn}{f-n}. 
+ z_c= -\frac f{f-n}(-n)-\frac{fn}{f-n}.
 $$
 
 Thus:
 
 $$
- z_c= \frac{fn}{f-n}-\frac{fn}{f-n}=0. 
+ z_c= \frac{fn}{f-n}-\frac{fn}{f-n}=0.
 $$
 
 Its clip $w$ is:
 
 $$
- w_c=n. 
+ w_c=n.
 $$
 
 Therefore:
 
 $$
- \boxed{z_n=0/n=0}. 
+ \boxed{z_n=0/n=0}.
 $$
 
 ### Verify the far plane
@@ -1090,31 +1090,31 @@ $$
 At:
 
 $$
- z_v=-f, 
+ z_v=-f,
 $$
 
 we get:
 
 $$
- z_c= \frac{f^2}{f-n}-\frac{fn}{f-n}. 
+ z_c= \frac{f^2}{f-n}-\frac{fn}{f-n}.
 $$
 
 Factor:
 
 $$
- z_c= \frac{f(f-n)}{f-n}=f. 
+ z_c= \frac{f(f-n)}{f-n}=f.
 $$
 
 And:
 
 $$
- w_c=f. 
+ w_c=f.
 $$
 
 Thus:
 
 $$
- \boxed{z_n=f/f=1}. 
+ \boxed{z_n=f/f=1}.
 $$
 
 ### Numerical matrix example
@@ -1122,49 +1122,49 @@ $$
 Use:
 
 $$
- \theta_y=60^\circ, 
+ \theta_y=60^\circ,
 $$
 
 $$
- a=\frac{16}{9}, 
+ a=\frac{16}{9},
 $$
 
 $$
- n=0.1,\qquad f=1000. 
+ n=0.1,\qquad f=1000.
 $$
 
 Because:
 
 $$
- \tan30^\circ=\frac1{\sqrt3}, 
+ \tan30^\circ=\frac1{\sqrt3},
 $$
 
 the vertical scale is:
 
 $$
- s_y=\sqrt3\approx1.7320508. 
+ s_y=\sqrt3\approx1.7320508.
 $$
 
 The horizontal scale is:
 
 $$
- s_x=\frac{\sqrt3}{16/9} \approx0.9742786. 
+ s_x=\frac{\sqrt3}{16/9} \approx0.9742786.
 $$
 
 The depth coefficients are approximately:
 
 $$
- A=-1.00010001, 
+ A=-1.00010001,
 $$
 
 $$
- B=-0.100010001. 
+ B=-0.100010001.
 $$
 
 Thus:
 
 $$
- \boxed{ P\approx \begin{bmatrix} 0.9742786&0&0&0\\ 0&1.7320508&0&0\\ 0&0&-1.00010001&-0.100010001\\ 0&0&-1&0 \end{bmatrix} }. 
+ \boxed{ P\approx \begin{bmatrix} 0.9742786&0&0&0\\ 0&1.7320508&0&0\\ 0&0&-1.00010001&-0.100010001\\ 0&0&-1&0 \end{bmatrix} }.
 $$
 
 This is a conventional right-handed, zero-to-one, non-reversed perspective projection.
@@ -1186,7 +1186,7 @@ The projection also assigns depth. That mapping controls both clipping and how f
 Vertical field of view, written:
 
 $$
- \boxed{\theta_y}, 
+ \boxed{\theta_y},
 $$
 
 is the angular extent visible from the bottom to the top of the image.
@@ -1194,13 +1194,13 @@ is the angular extent visible from the bottom to the top of the image.
 For a pinhole camera with virtual image-plane half-height $h$ and image-plane distance $s$:
 
 $$
- \boxed{ \tan(\theta_y/2)=\frac hs }. 
+ \boxed{ \tan(\theta_y/2)=\frac hs }.
 $$
 
 Therefore:
 
 $$
- \boxed{ \theta_y=2\arctan(h/s) }. 
+ \boxed{ \theta_y=2\arctan(h/s) }.
 $$
 
 ### Field of view controls perspective scale
@@ -1208,7 +1208,7 @@ $$
 The projection Y scale is:
 
 $$
- \boxed{ s_y=\frac1{\tan(\theta_y/2)} }. 
+ \boxed{ s_y=\frac1{\tan(\theta_y/2)} }.
 $$
 
 A smaller field of view gives a larger projection scale.
@@ -1224,37 +1224,37 @@ Objects appear smaller, with more of the surrounding scene visible.
 For:
 
 $$
- \theta_y=30^\circ, 
+ \theta_y=30^\circ,
 $$
 
 we have:
 
 $$
- s_y=\frac1{\tan15^\circ}\approx3.732. 
+ s_y=\frac1{\tan15^\circ}\approx3.732.
 $$
 
 For:
 
 $$
- \theta_y=60^\circ, 
+ \theta_y=60^\circ,
 $$
 
 we have:
 
 $$
- s_y=\frac1{\tan30^\circ}\approx1.732. 
+ s_y=\frac1{\tan30^\circ}\approx1.732.
 $$
 
 For:
 
 $$
- \theta_y=90^\circ, 
+ \theta_y=90^\circ,
 $$
 
 we have:
 
 $$
- s_y=\frac1{\tan45^\circ}=1. 
+ s_y=\frac1{\tan45^\circ}=1.
 $$
 
 As vertical FOV increases, projected object height decreases for the same depth.
@@ -1266,7 +1266,7 @@ C++ trigonometric functions expect radians.
 Convert degrees to radians:
 
 $$
- \boxed{ \theta_{\mathrm{rad}}= \theta_{\mathrm{deg}}\frac\pi{180} }. 
+ \boxed{ \theta_{\mathrm{rad}}= \theta_{\mathrm{deg}}\frac\pi{180} }.
 $$
 
 A camera API should use a clearly named type or field such as:
@@ -1290,43 +1290,43 @@ Let the image-plane half-width be $w$ and half-height be $h$.
 The aspect ratio is:
 
 $$
- a=\frac wh. 
+ a=\frac wh.
 $$
 
 We know:
 
 $$
- \tan(\theta_y/2)=\frac hs. 
+ \tan(\theta_y/2)=\frac hs.
 $$
 
 Also:
 
 $$
- \tan(\theta_x/2)=\frac ws. 
+ \tan(\theta_x/2)=\frac ws.
 $$
 
 Because:
 
 $$
- w=ah, 
+ w=ah,
 $$
 
 we get:
 
 $$
- \tan(\theta_x/2) = a\frac hs. 
+ \tan(\theta_x/2) = a\frac hs.
 $$
 
 Therefore:
 
 $$
- \boxed{ \tan(\theta_x/2) = a\tan(\theta_y/2) }. 
+ \boxed{ \tan(\theta_x/2) = a\tan(\theta_y/2) }.
 $$
 
 Take arctangent:
 
 $$
- \boxed{ \theta_x= 2\arctan \left( a\tan(\theta_y/2) \right) }. 
+ \boxed{ \theta_x= 2\arctan \left( a\tan(\theta_y/2) \right) }.
 $$
 
 This formula is essential when changing window aspect ratio.
@@ -1336,19 +1336,19 @@ This formula is essential when changing window aspect ratio.
 Suppose:
 
 $$
- \theta_y=60^\circ, \qquad a=\frac{16}{9}. 
+ \theta_y=60^\circ, \qquad a=\frac{16}{9}.
 $$
 
 Then:
 
 $$
- \theta_x= 2\arctan \left( \frac{16}{9}\tan30^\circ \right). 
+ \theta_x= 2\arctan \left( \frac{16}{9}\tan30^\circ \right).
 $$
 
 Numerically:
 
 $$
- \boxed{ \theta_x\approx91.492845^\circ }. 
+ \boxed{ \theta_x\approx91.492845^\circ }.
 $$
 
 Thus a 60° vertical FOV corresponds to approximately 91.5° horizontal FOV at 16:9.
@@ -1358,7 +1358,7 @@ Thus a 60° vertical FOV corresponds to approximately 91.5° horizontal FOV at 1
 A tempting mistake is:
 
 $$
- \theta_x=a\theta_y. 
+ \theta_x=a\theta_y.
 $$
 
 This is generally wrong.
@@ -1376,7 +1376,7 @@ For wide FOVs, the error becomes significant.
 The projection aspect ratio is:
 
 $$
- \boxed{ a=\frac WH } 
+ \boxed{ a=\frac WH }
 $$
 
 where $W,H$ describe the intended image or viewport dimensions, assuming square pixels in the usual simple model.
@@ -1384,19 +1384,19 @@ where $W,H$ describe the intended image or viewport dimensions, assuming square 
 For:
 
 $$
- W=1920,\quad H=1080, 
+ W=1920,\quad H=1080,
 $$
 
 we have:
 
 $$
- \boxed{ a=\frac{16}{9}\approx1.777778 }. 
+ \boxed{ a=\frac{16}{9}\approx1.777778 }.
 $$
 
 Aspect ratio affects the horizontal scale of a perspective projection when vertical FOV is held constant:
 
 $$
- s_x=\frac{s_y}{a}. 
+ s_x=\frac{s_y}{a}.
 $$
 
 ### Horizontal versus vertical FOV locking
@@ -1418,25 +1418,25 @@ The choice changes what the camera reveals during resizing.
 Suppose the vertical FOV remains:
 
 $$
- 60^\circ. 
+ 60^\circ.
 $$
 
 At aspect 1:1:
 
 $$
- \theta_x=60^\circ. 
+ \theta_x=60^\circ.
 $$
 
 At aspect 16:9:
 
 $$
- \theta_x\approx91.49^\circ. 
+ \theta_x\approx91.49^\circ.
 $$
 
 At aspect 21:9:
 
 $$
- \theta_x= 2\arctan\left(\frac{21}{9}\tan30^\circ\right) \approx106.82^\circ. 
+ \theta_x= 2\arctan\left(\frac{21}{9}\tan30^\circ\right) \approx106.82^\circ.
 $$
 
 Wider aspect reveals more horizontal angular extent under vertical-FOV locking.
@@ -1456,13 +1456,13 @@ The intrinsic matrix $K$ is derived in the calibration chapter.
 The near clipping plane is located at positive camera depth:
 
 $$
- \boxed{d=n} 
+ \boxed{d=n}
 $$
 
 or:
 
 $$
- z_v=-n 
+ z_v=-n
 $$
 
 under our right-handed convention.
@@ -1470,7 +1470,7 @@ under our right-handed convention.
 For ordinary perspective projection:
 
 $$
- \boxed{n>0}. 
+ \boxed{n>0}.
 $$
 
 A near plane at exactly zero causes a degenerate perspective frustum and invalid matrix coefficients.
@@ -1488,7 +1488,7 @@ This prevents the rasterizer from attempting to project geometry that intersects
 A ray tracer may use a minimum ray parameter:
 
 $$
- t_{\min}=\varepsilon 
+ t_{\min}=\varepsilon
 $$
 
 to avoid self-intersections or reject nearby hits.
@@ -1504,13 +1504,13 @@ The two concepts serve related but distinct purposes.
 Suppose:
 
 $$
- n=0.0001, \qquad f=1000. 
+ n=0.0001, \qquad f=1000.
 $$
 
 The far-to-near ratio is:
 
 $$
- \frac fn=10^7. 
+ \frac fn=10^7.
 $$
 
 Under conventional perspective depth mapping, finite depth-buffer precision becomes especially problematic at large distances.
@@ -1526,13 +1526,13 @@ In conventional perspective projection, moving the near plane unnecessarily clos
 The far plane is located at positive camera depth:
 
 $$
- \boxed{d=f} 
+ \boxed{d=f}
 $$
 
 with:
 
 $$
- f>n. 
+ f>n.
 $$
 
 Under ordinary finite perspective projection, it defines the farthest depth accepted by the conventional clipping volume.
@@ -1556,7 +1556,7 @@ These are independent camera properties in the idealized projection model.
 Suppose:
 
 $$
- n=0.1,\qquad f=100. 
+ n=0.1,\qquad f=100.
 $$
 
 The depth range extends from 0.1 to 100 world units.
@@ -1564,7 +1564,7 @@ The depth range extends from 0.1 to 100 world units.
 If the far plane becomes:
 
 $$
- f=1000, 
+ f=1000,
 $$
 
 the projection now accepts geometry ten times farther away.
@@ -1578,7 +1578,7 @@ But the depth mapping changes because the near/far coefficients change.
 Yes, for perspective projection we can take the limit:
 
 $$
- f\to\infty 
+ f\to\infty
 $$
 
 and derive a finite projection matrix.
@@ -1596,7 +1596,7 @@ This part explains an enormous number of rendering artifacts.
 Many developers assume a depth buffer stores physical distance from the camera:
 
 $$
- d=0.1,\ 1,\ 10,\ 100,\ldots 
+ d=0.1,\ 1,\ 10,\ 100,\ldots
 $$
 
 in a linear fashion.
@@ -1606,7 +1606,7 @@ For conventional perspective projection, that is not what happens.
 The post-divide depth is a function of reciprocal camera-space depth:
 
 $$
- \boxed{ z_{\mathrm{NDC}}(d)=A+\frac Bd }. 
+ \boxed{ z_{\mathrm{NDC}}(d)=A+\frac Bd }.
 $$
 
 The constants depend on the projection convention and near/far planes.
@@ -1614,23 +1614,23 @@ The constants depend on the projection convention and near/far planes.
 For our conventional right-handed zero-to-one projection:
 
 $$
- \boxed{ z_{\mathrm{NDC}}(d) = \frac f{f-n} - \frac{fn}{(f-n)d} }. 
+ \boxed{ z_{\mathrm{NDC}}(d) = \frac f{f-n} - \frac{fn}{(f-n)d} }.
 $$
 
 You can rewrite this as:
 
 $$
- \boxed{ z_{\mathrm{NDC}}(d) = \frac f{f-n}\left(1-\frac nd\right) }. 
+ \boxed{ z_{\mathrm{NDC}}(d) = \frac f{f-n}\left(1-\frac nd\right) }.
 $$
 
 This formula maps:
 
 $$
- d=n\mapsto0, 
+ d=n\mapsto0,
 $$
 
 $$
- d=f\mapsto1. 
+ d=f\mapsto1.
 $$
 
 But the mapping is not linear in $d$.
@@ -1640,19 +1640,19 @@ But the mapping is not linear in $d$.
 Differentiate:
 
 $$
- z(d)= \frac f{f-n} - \frac{fn}{(f-n)d}. 
+ z(d)= \frac f{f-n} - \frac{fn}{(f-n)d}.
 $$
 
 The derivative is:
 
 $$
- \boxed{ \frac{dz}{dd} = \frac{fn}{(f-n)d^2} }. 
+ \boxed{ \frac{dz}{dd} = \frac{fn}{(f-n)d^2} }.
 $$
 
 The derivative decreases as:
 
 $$
- \frac1{d^2}. 
+ \frac1{d^2}.
 $$
 
 Therefore a fixed change in physical depth produces a much smaller change in stored depth when the object is far away.
@@ -1666,7 +1666,7 @@ Far away, many different physical depths are compressed into a tiny portion of t
 Use:
 
 $$
- n=0.1,\qquad f=1000. 
+ n=0.1,\qquad f=1000.
 $$
 
 The conventional depth mapping gives:
@@ -1702,25 +1702,25 @@ The chart compares conventional finite-far depth with infinite reversed-Z. The l
 Suppose the stored normalized depth changes by a small amount:
 
 $$
- \Delta z. 
+ \Delta z.
 $$
 
 Using a first-order approximation:
 
 $$
- \Delta z\approx\frac{dz}{dd}\Delta d. 
+ \Delta z\approx\frac{dz}{dd}\Delta d.
 $$
 
 Therefore:
 
 $$
- \Delta d\approx \frac{\Delta z}{dz/dd}. 
+ \Delta d\approx \frac{\Delta z}{dz/dd}.
 $$
 
 Substitute the derivative:
 
 $$
- \boxed{ \Delta d \approx \frac{(f-n)d^2}{fn}\Delta z }. 
+ \boxed{ \Delta d \approx \frac{(f-n)d^2}{fn}\Delta z }.
 $$
 
 This is an approximate local mapping from depth-buffer spacing to physical view-depth spacing.
@@ -1730,13 +1730,13 @@ This is an approximate local mapping from depth-buffer spacing to physical view-
 For a normalized 24-bit fixed-point depth buffer, the approximate quantization step is:
 
 $$
- \Delta z= \frac1{2^{24}-1} \approx5.96\times10^{-8}. 
+ \Delta z= \frac1{2^{24}-1} \approx5.96\times10^{-8}.
 $$
 
 With:
 
 $$
- n=0.1,\quad f=1000, 
+ n=0.1,\quad f=1000,
 $$
 
 we obtain the following first-order physical depth increments:
@@ -1760,7 +1760,7 @@ These are local approximations based on idealized fixed-point spacing, not guara
 The precision formula contains:
 
 $$
- \frac1n. 
+ \frac1n.
 $$
 
 If the near plane is pushed closer to zero, the far-depth resolution deteriorates.
@@ -1768,19 +1768,19 @@ If the near plane is pushed closer to zero, the far-depth resolution deteriorate
 For a large depth range $f\gg n$, the coefficient:
 
 $$
- \frac{f-n}{fn} 
+ \frac{f-n}{fn}
 $$
 
 is approximately:
 
 $$
- \frac1n. 
+ \frac1n.
 $$
 
 Therefore:
 
 $$
- \boxed{ \Delta d\approx\frac{d^2}{n}\Delta z }. 
+ \boxed{ \Delta d\approx\frac{d^2}{n}\Delta z }.
 $$
 
 This makes the near plane extremely important.
@@ -1813,17 +1813,17 @@ The result may appear as flickering, striped patterns, unstable overlays, or sur
 Suppose two walls are positioned at:
 
 $$
- d_1=500.000, 
+ d_1=500.000,
 $$
 
 $$
- d_2=500.001. 
+ d_2=500.001.
 $$
 
 Their physical separation is:
 
 $$
- 0.001. 
+ 0.001.
 $$
 
 But under conventional perspective depth, the difference in normalized depth may be smaller than one representable depth-buffer step.
@@ -1861,13 +1861,13 @@ Reversed-Z changes the depth mapping so that the near plane corresponds to a lar
 For zero-to-one depth:
 
 $$
- \boxed{ d=n\mapsto1 } 
+ \boxed{ d=n\mapsto1 }
 $$
 
 and:
 
 $$
- \boxed{ d=f\mapsto0 }. 
+ \boxed{ d=f\mapsto0 }.
 $$
 
 The camera remains right-handed and forward remains $-Z$.
@@ -1881,99 +1881,99 @@ It changes the depth mapping and associated depth-test convention.
 We still use:
 
 $$
- w_c=-z_v=d. 
+ w_c=-z_v=d.
 $$
 
 Assume:
 
 $$
- z_c=Az_v+B. 
+ z_c=Az_v+B.
 $$
 
 Therefore:
 
 $$
- z_n=-A+\frac Bd. 
+ z_n=-A+\frac Bd.
 $$
 
 Now enforce:
 
 $$
- -A+\frac Bn=1 
+ -A+\frac Bn=1
 $$
 
 and:
 
 $$
- -A+\frac Bf=0. 
+ -A+\frac Bf=0.
 $$
 
 Subtract the second equation from the first:
 
 $$
- B\left(\frac1n-\frac1f\right)=1. 
+ B\left(\frac1n-\frac1f\right)=1.
 $$
 
 Thus:
 
 $$
- B\frac{f-n}{nf}=1. 
+ B\frac{f-n}{nf}=1.
 $$
 
 Therefore:
 
 $$
- \boxed{ B=\frac{nf}{f-n} }. 
+ \boxed{ B=\frac{nf}{f-n} }.
 $$
 
 From the far equation:
 
 $$
- -A+\frac Bf=0. 
+ -A+\frac Bf=0.
 $$
 
 So:
 
 $$
- A=\frac Bf=\frac n{f-n}. 
+ A=\frac Bf=\frac n{f-n}.
 $$
 
 Hence:
 
 $$
- \boxed{ z_c= \frac n{f-n}z_v+ \frac{nf}{f-n} }. 
+ \boxed{ z_c= \frac n{f-n}z_v+ \frac{nf}{f-n} }.
 $$
 
 The complete reversed-Z perspective matrix becomes:
 
 $$
- \boxed{ P_{\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac n{f-n}&\dfrac{nf}{f-n}\\ 0&0&-1&0 \end{bmatrix} }. 
+ \boxed{ P_{\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac n{f-n}&\dfrac{nf}{f-n}\\ 0&0&-1&0 \end{bmatrix} }.
 $$
 
 After division:
 
 $$
- \boxed{ z_n(d)= \frac{nf}{(f-n)d} -\frac n{f-n} }. 
+ \boxed{ z_n(d)= \frac{nf}{(f-n)d} -\frac n{f-n} }.
 $$
 
 At the near plane:
 
 $$
- d=n: 
+ d=n:
 $$
 
 $$
- z_n= \frac f{f-n}-\frac n{f-n}=1. 
+ z_n= \frac f{f-n}-\frac n{f-n}=1.
 $$
 
 At the far plane:
 
 $$
- d=f: 
+ d=f:
 $$
 
 $$
- z_n= \frac n{f-n}-\frac n{f-n}=0. 
+ z_n= \frac n{f-n}-\frac n{f-n}=0.
 $$
 
 The boundary conditions are satisfied exactly in real arithmetic.
@@ -2042,7 +2042,7 @@ This is why floating-point depth plus reversed-Z is the particularly important c
 An infinite far plane is obtained by taking:
 
 $$
- \boxed{f\to\infty}. 
+ \boxed{f\to\infty}.
 $$
 
 We can derive the resulting matrices from the finite-far formulas.
@@ -2052,43 +2052,43 @@ We can derive the resulting matrices from the finite-far formulas.
 Start from:
 
 $$
- P= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix}. 
+ P= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix}.
 $$
 
 As:
 
 $$
- f\to\infty, 
+ f\to\infty,
 $$
 
 we have:
 
 $$
- \frac f{f-n}\to1. 
+ \frac f{f-n}\to1.
 $$
 
 Also:
 
 $$
- \frac{fn}{f-n}\to n. 
+ \frac{fn}{f-n}\to n.
 $$
 
 Therefore:
 
 $$
- \boxed{ P_{\infty,\mathrm{standard}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-1&-n\\ 0&0&-1&0 \end{bmatrix} }. 
+ \boxed{ P_{\infty,\mathrm{standard}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-1&-n\\ 0&0&-1&0 \end{bmatrix} }.
 $$
 
 After division:
 
 $$
- z_n(d)= \frac{d-n}{d} = 1-\frac nd. 
+ z_n(d)= \frac{d-n}{d} = 1-\frac nd.
 $$
 
 Thus:
 
 $$
- \boxed{ z_n(d)=1-\frac nd }. 
+ \boxed{ z_n(d)=1-\frac nd }.
 $$
 
 At $d=n$, depth is zero.
@@ -2100,41 +2100,41 @@ As $d\to\infty$, depth approaches one.
 Start from:
 
 $$
- P_{\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac n{f-n}&\dfrac{nf}{f-n}\\ 0&0&-1&0 \end{bmatrix}. 
+ P_{\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac n{f-n}&\dfrac{nf}{f-n}\\ 0&0&-1&0 \end{bmatrix}.
 $$
 
 As $f\to\infty$:
 
 $$
- \frac n{f-n}\to0. 
+ \frac n{f-n}\to0.
 $$
 
 And:
 
 $$
- \frac{nf}{f-n}\to n. 
+ \frac{nf}{f-n}\to n.
 $$
 
 Thus:
 
 $$
- \boxed{ P_{\infty,\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&0&n\\ 0&0&-1&0 \end{bmatrix} }. 
+ \boxed{ P_{\infty,\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&0&n\\ 0&0&-1&0 \end{bmatrix} }.
 $$
 
 After division:
 
 $$
- z_c=n, 
+ z_c=n,
 $$
 
 $$
- w_c=d. 
+ w_c=d.
 $$
 
 Therefore:
 
 $$
- \boxed{ z_n(d)=\frac nd }. 
+ \boxed{ z_n(d)=\frac nd }.
 $$
 
 This is extraordinarily simple.
@@ -2142,13 +2142,13 @@ This is extraordinarily simple.
 Near plane:
 
 $$
- d=n\Rightarrow z_n=1. 
+ d=n\Rightarrow z_n=1.
 $$
 
 Infinite depth:
 
 $$
- d\to\infty\Rightarrow z_n\to0. 
+ d\to\infty\Rightarrow z_n\to0.
 $$
 
 ### Recover positive view depth
@@ -2156,13 +2156,13 @@ $$
 For this particular infinite reversed-Z projection:
 
 $$
- z_n=\frac nd. 
+ z_n=\frac nd.
 $$
 
 Solve:
 
 $$
- \boxed{ d=\frac n{z_n} }. 
+ \boxed{ d=\frac n{z_n} }.
 $$
 
 For $z_n=0$, the ideal mapping corresponds to infinite depth.
@@ -2170,7 +2170,7 @@ For $z_n=0$, the ideal mapping corresponds to infinite depth.
 For finite depth:
 
 $$
- z_n>0. 
+ z_n>0.
 $$
 
 This simple relation is useful for understanding depth reconstruction, although robust implementation must also account for the viewport depth transform, precision, and any projection modifications.
@@ -2182,55 +2182,55 @@ Depth linearization follows in the later depth-reconstruction chapter.
 Let:
 
 $$
- n=0.1. 
+ n=0.1.
 $$
 
 For:
 
 $$
- d=1, 
+ d=1,
 $$
 
 we have:
 
 $$
- z_n=\frac{0.1}{1}=0.1. 
+ z_n=\frac{0.1}{1}=0.1.
 $$
 
 For:
 
 $$
- d=10, 
+ d=10,
 $$
 
 we have:
 
 $$
- z_n=0.01. 
+ z_n=0.01.
 $$
 
 For:
 
 $$
- d=100, 
+ d=100,
 $$
 
 we have:
 
 $$
- z_n=0.001. 
+ z_n=0.001.
 $$
 
 For:
 
 $$
- d=1000, 
+ d=1000,
 $$
 
 we have:
 
 $$
- z_n=0.0001. 
+ z_n=0.0001.
 $$
 
 The matrix needs no finite far value.
@@ -2277,13 +2277,13 @@ These are separate design choices.
 A conventional right-handed camera frequently uses:
 
 $$
- \boxed{ \text{camera forward}=-Z }. 
+ \boxed{ \text{camera forward}=-Z }.
 $$
 
 A conventional left-handed camera formulation frequently uses:
 
 $$
- \boxed{ \text{camera forward}=+Z }. 
+ \boxed{ \text{camera forward}=+Z }.
 $$
 
 The full interpretation depends on the associated basis convention.
@@ -2293,19 +2293,19 @@ The full interpretation depends on the associated basis convention.
 Under our reference convention:
 
 $$
- d=-z_v, 
+ d=-z_v,
 $$
 
 so the homogeneous depth denominator is:
 
 $$
- \boxed{w_c=-z_v}. 
+ \boxed{w_c=-z_v}.
 $$
 
 The final projection row is:
 
 $$
- \boxed{ (0,0,-1,0) }. 
+ \boxed{ (0,0,-1,0) }.
 $$
 
 ### Conventional left-handed perspective
@@ -2313,77 +2313,77 @@ $$
 For a camera using positive view-space $Z$ as forward depth:
 
 $$
- d=z_v>0. 
+ d=z_v>0.
 $$
 
 Choose:
 
 $$
- \boxed{w_c=z_v}. 
+ \boxed{w_c=z_v}.
 $$
 
 Now assume:
 
 $$
- z_c=Az_v+B. 
+ z_c=Az_v+B.
 $$
 
 We want:
 
 $$
- z_n=\frac{Ad+B}{d} =A+\frac Bd. 
+ z_n=\frac{Ad+B}{d} =A+\frac Bd.
 $$
 
 For conventional zero-to-one depth:
 
 $$
- d=n\mapsto0, 
+ d=n\mapsto0,
 $$
 
 $$
- d=f\mapsto1. 
+ d=f\mapsto1.
 $$
 
 Thus:
 
 $$
- A+\frac Bn=0 
+ A+\frac Bn=0
 $$
 
 and:
 
 $$
- A+\frac Bf=1. 
+ A+\frac Bf=1.
 $$
 
 Subtract:
 
 $$
- B\left(\frac1n-\frac1f\right)=-1. 
+ B\left(\frac1n-\frac1f\right)=-1.
 $$
 
 Therefore:
 
 $$
- \boxed{ B=-\frac{nf}{f-n} }. 
+ \boxed{ B=-\frac{nf}{f-n} }.
 $$
 
 Then:
 
 $$
- A=-\frac Bn=\frac f{f-n}. 
+ A=-\frac Bn=\frac f{f-n}.
 $$
 
 The conventional positive-Z-forward perspective matrix becomes:
 
 $$
- \boxed{ P_{\mathrm{LH}}^{[0,1]}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&1&0 \end{bmatrix} }. 
+ \boxed{ P_{\mathrm{LH}}^{[0,1]}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&1&0 \end{bmatrix} }.
 $$
 
 Compare with our right-handed zero-to-one matrix:
 
 $$
- P_{\mathrm{RH}}^{[0,1]}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix}. 
+ P_{\mathrm{RH}}^{[0,1]}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix}.
 $$
 
 The signs of the depth-related terms differ because the view-space forward-depth convention differs.
@@ -2393,7 +2393,7 @@ The signs of the depth-related terms differ because the view-space forward-depth
 A right-handed camera can use:
 
 $$
- z_n\in[0,1]. 
+ z_n\in[0,1].
 $$
 
 That is exactly what your KairoMath projection helper does.
@@ -2401,13 +2401,13 @@ That is exactly what your KairoMath projection helper does.
 A left-handed camera can also use:
 
 $$
- z_n\in[0,1]. 
+ z_n\in[0,1].
 $$
 
 Likewise, a right-handed camera can target traditional OpenGL:
 
 $$
- z_n\in[-1,1]. 
+ z_n\in[-1,1].
 $$
 
 These are independent axes of configuration.
@@ -2439,19 +2439,19 @@ Traditional OpenGL uses a symmetric clip-depth interval.
 For a vertex in homogeneous clip space:
 
 $$
- (x_c,y_c,z_c,w_c), 
+ (x_c,y_c,z_c,w_c),
 $$
 
 the default clip volume includes:
 
 $$
- \boxed{-w_c\le z_c\le w_c}. 
+ \boxed{-w_c\le z_c\le w_c}.
 $$
 
 After division:
 
 $$
- \boxed{-1\le z_n\le1}. 
+ \boxed{-1\le z_n\le1}.
 $$
 
 This differs from the ordinary Vulkan/Metal zero-to-one depth convention.
@@ -2461,79 +2461,79 @@ This differs from the ordinary Vulkan/Metal zero-to-one depth convention.
 Again let:
 
 $$
- z_c=Az_v+B, 
+ z_c=Az_v+B,
 $$
 
 $$
- w_c=-z_v=d. 
+ w_c=-z_v=d.
 $$
 
 Thus:
 
 $$
- z_n=-A+\frac Bd. 
+ z_n=-A+\frac Bd.
 $$
 
 For traditional OpenGL, impose:
 
 $$
- d=n\mapsto-1, 
+ d=n\mapsto-1,
 $$
 
 $$
- d=f\mapsto1. 
+ d=f\mapsto1.
 $$
 
 The equations are:
 
 $$
- -A+\frac Bn=-1, 
+ -A+\frac Bn=-1,
 $$
 
 $$
- -A+\frac Bf=1. 
+ -A+\frac Bf=1.
 $$
 
 Subtract:
 
 $$
- B\left(\frac1n-\frac1f\right)=-2. 
+ B\left(\frac1n-\frac1f\right)=-2.
 $$
 
 Therefore:
 
 $$
- B=-\frac{2nf}{f-n}. 
+ B=-\frac{2nf}{f-n}.
 $$
 
 From the far equation:
 
 $$
- -A+\frac Bf=1. 
+ -A+\frac Bf=1.
 $$
 
 Thus:
 
 $$
- A=\frac Bf-1. 
+ A=\frac Bf-1.
 $$
 
 Substitute:
 
 $$
- A=-\frac{2n}{f-n}-1. 
+ A=-\frac{2n}{f-n}-1.
 $$
 
 Combine:
 
 $$
- \boxed{ A=-\frac{f+n}{f-n} }. 
+ \boxed{ A=-\frac{f+n}{f-n} }.
 $$
 
 Therefore:
 
 $$
- \boxed{ P_{\mathrm{OpenGL,default}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac{f+n}{f-n}&-\dfrac{2nf}{f-n}\\ 0&0&-1&0 \end{bmatrix} }. 
+ \boxed{ P_{\mathrm{OpenGL,default}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac{f+n}{f-n}&-\dfrac{2nf}{f-n}\\ 0&0&-1&0 \end{bmatrix} }.
 $$
 
 ### Depth-buffer mapping
@@ -2541,7 +2541,7 @@ $$
 Traditional OpenGL typically maps NDC depth $[-1,1]$ into the window-depth interval $[0,1]$:
 
 $$
- \boxed{ z_{\mathrm{window}}=\frac{z_n+1}{2} } 
+ \boxed{ z_{\mathrm{window}}=\frac{z_n+1}{2} }
 $$
 
 when the depth range is configured to its usual defaults.
@@ -2588,13 +2588,13 @@ Simply changing the depth comparison operator without changing the projection an
 Vulkan's ordinary depth-clipping convention uses:
 
 $$
- \boxed{ 0\le z_c\le w_c }. 
+ \boxed{ 0\le z_c\le w_c }.
 $$
 
 After perspective division:
 
 $$
- \boxed{ 0\le z_n\le1 }. 
+ \boxed{ 0\le z_n\le1 }.
 $$
 
 This is why your KairoMath projection helper is documented as Vulkan/Metal-friendly.
@@ -2625,13 +2625,13 @@ viewport.maxDepth = 1.0f;
 Under the ordinary zero-to-one mapping, framebuffer depth is:
 
 $$
- \boxed{ z_f= \text{minDepth} + z_n(\text{maxDepth}-\text{minDepth}) }. 
+ \boxed{ z_f= \text{minDepth} + z_n(\text{maxDepth}-\text{minDepth}) }.
 $$
 
 For the usual defaults:
 
 $$
- z_f=z_n. 
+ z_f=z_n.
 $$
 
 Vulkan also permits configurations where the depth-range endpoints are reversed, subject to its specification and enabled features.
@@ -2680,7 +2680,7 @@ This is an important debugging distinction.
 Metal uses a zero-to-one normalized depth convention for ordinary visible geometry:
 
 $$
- \boxed{ 0\le z_n\le1 }. 
+ \boxed{ 0\le z_n\le1 }.
 $$
 
 Like Vulkan, it can use a right-handed camera model that looks toward local $-Z$.
@@ -2692,7 +2692,7 @@ The world-space handedness and view matrix are application choices.
 For our right-handed zero-to-one convention, the matrix:
 
 $$
- P= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix} 
+ P= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix}
 $$
 
 is mathematically appropriate for ordinary finite perspective projection.
@@ -2700,7 +2700,7 @@ is mathematically appropriate for ordinary finite perspective projection.
 A reversed-Z Metal projection can instead use:
 
 $$
- P_{\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac n{f-n}&\dfrac{nf}{f-n}\\ 0&0&-1&0 \end{bmatrix}. 
+ P_{\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac n{f-n}&\dfrac{nf}{f-n}\\ 0&0&-1&0 \end{bmatrix}.
 $$
 
 Metal accepts clip-space positions from vertex shaders and performs perspective division and viewport mapping as part of its rasterization pipeline. Apple's depth-testing documentation provides a concrete description of this process.&#x20;
@@ -2715,7 +2715,7 @@ This is a storage and API representation detail.
 The mathematical transform may still be expressed as:
 
 $$
- \mathbf p'=M\mathbf p. 
+ \mathbf p'=M\mathbf p.
 $$
 
 When transferring a CPU-side row-major matrix to a shader expecting column-based storage, ensure the memory representation is converted correctly.
@@ -2754,13 +2754,13 @@ Your inspected [Maveb Camera.cpp](https://github.com/swayam8624/Maveb/blob/main/
 Its finite-depth coefficients are:
 
 $$
- \boxed{ A=\frac n{f-n}, \qquad B=\frac{nf}{f-n} }. 
+ \boxed{ A=\frac n{f-n}, \qquad B=\frac{nf}{f-n} }.
 $$
 
 Its infinite-far coefficients become:
 
 $$
- \boxed{ A=0,\qquad B=n }. 
+ \boxed{ A=0,\qquad B=n }.
 $$
 
 These match our derivations exactly.
@@ -2794,37 +2794,37 @@ These are separate conventions.
 For an image with top-left origin, width $W$, height $H$, and positive raster Y downward, a common mapping is:
 
 $$
- \boxed{ x_p=\frac{x_n+1}{2}W } 
+ \boxed{ x_p=\frac{x_n+1}{2}W }
 $$
 
 and:
 
 $$
- \boxed{ y_p=\frac{1-y_n}{2}H }. 
+ \boxed{ y_p=\frac{1-y_n}{2}H }.
 $$
 
 Under this mapping:
 
 $$
- y_n=1 
+ y_n=1
 $$
 
 maps to raster top:
 
 $$
- y_p=0. 
+ y_p=0.
 $$
 
 And:
 
 $$
- y_n=-1 
+ y_n=-1
 $$
 
 maps to raster bottom:
 
 $$
- y_p=H. 
+ y_p=H.
 $$
 
 ### Vulkan's positive-height viewport
@@ -2832,7 +2832,7 @@ $$
 Under the standard Vulkan viewport formula:
 
 $$
- y_f=\frac{H}{2}y_n+y_0+\frac H2 
+ y_f=\frac{H}{2}y_n+y_0+\frac H2
 $$
 
 for a positive viewport height $H$.
@@ -2840,11 +2840,11 @@ for a positive viewport height $H$.
 Thus:
 
 $$
- y_n=-1\mapsto y_0, 
+ y_n=-1\mapsto y_0,
 $$
 
 $$
- y_n=1\mapsto y_0+H. 
+ y_n=1\mapsto y_0+H.
 $$
 
 With a top-left framebuffer interpretation, positive NDC Y maps downward.
@@ -2852,7 +2852,7 @@ With a top-left framebuffer interpretation, positive NDC Y maps downward.
 To make a conventional $+Y$-up camera render upright using a positive-height Vulkan viewport, the application can negate projected Y:
 
 $$
- \boxed{ y_c'=-y_c }. 
+ \boxed{ y_c'=-y_c }.
 $$
 
 This is the strategy used by your inspected `KairoRenderer/Camera.cppm`:
@@ -2904,19 +2904,19 @@ The viewport transform converts NDC into framebuffer coordinates.
 For a generic axis-aligned viewport with:
 
 $$
- x_0,y_0,W,H, 
+ x_0,y_0,W,H,
 $$
 
 a mathematical mapping with X increasing right and NDC Y increasing up is:
 
 $$
- \boxed{ x_p=x_0+\frac W2(x_n+1) } 
+ \boxed{ x_p=x_0+\frac W2(x_n+1) }
 $$
 
 and, for top-left raster coordinates:
 
 $$
- \boxed{ y_p=y_0+\frac H2(1-y_n) }. 
+ \boxed{ y_p=y_0+\frac H2(1-y_n) }.
 $$
 
 ### Deriving X mapping
@@ -2924,51 +2924,51 @@ $$
 We want:
 
 $$
- x_n=-1\mapsto x_0, 
+ x_n=-1\mapsto x_0,
 $$
 
 $$
- x_n=1\mapsto x_0+W. 
+ x_n=1\mapsto x_0+W.
 $$
 
 Assume:
 
 $$
- x_p=ax_n+b. 
+ x_p=ax_n+b.
 $$
 
 The equations give:
 
 $$
- -a+b=x_0, 
+ -a+b=x_0,
 $$
 
 $$
- a+b=x_0+W. 
+ a+b=x_0+W.
 $$
 
 Subtract:
 
 $$
- 2a=W. 
+ 2a=W.
 $$
 
 Thus:
 
 $$
- a=W/2. 
+ a=W/2.
 $$
 
 Then:
 
 $$
- b=x_0+W/2. 
+ b=x_0+W/2.
 $$
 
 Therefore:
 
 $$
- \boxed{ x_p=x_0+\frac W2(x_n+1) }. 
+ \boxed{ x_p=x_0+\frac W2(x_n+1) }.
 $$
 
 ### Deriving Y mapping
@@ -2976,51 +2976,51 @@ $$
 For a top-left raster convention, we want:
 
 $$
- y_n=1\mapsto y_0, 
+ y_n=1\mapsto y_0,
 $$
 
 $$
- y_n=-1\mapsto y_0+H. 
+ y_n=-1\mapsto y_0+H.
 $$
 
 Assume:
 
 $$
- y_p=cy_n+d. 
+ y_p=cy_n+d.
 $$
 
 Then:
 
 $$
- c+d=y_0, 
+ c+d=y_0,
 $$
 
 $$
- -c+d=y_0+H. 
+ -c+d=y_0+H.
 $$
 
 Subtract:
 
 $$
- -2c=H. 
+ -2c=H.
 $$
 
 Therefore:
 
 $$
- c=-H/2. 
+ c=-H/2.
 $$
 
 Then:
 
 $$
- d=y_0+H/2. 
+ d=y_0+H/2.
 $$
 
 Thus:
 
 $$
- \boxed{ y_p=y_0+\frac H2(1-y_n) }. 
+ \boxed{ y_p=y_0+\frac H2(1-y_n) }.
 $$
 
 ### Viewport offsets
@@ -3028,35 +3028,35 @@ $$
 Suppose an editor scene is rendered inside a viewport panel starting at:
 
 $$
- (x_0,y_0)=(200,100) 
+ (x_0,y_0)=(200,100)
 $$
 
 with dimensions:
 
 $$
- W=800,\qquad H=600. 
+ W=800,\qquad H=600.
 $$
 
 A point at NDC centre:
 
 $$
- (0,0) 
+ (0,0)
 $$
 
 maps to:
 
 $$
- x_p=200+400=600, 
+ x_p=200+400=600,
 $$
 
 $$
- y_p=100+300=400. 
+ y_p=100+300=400.
 $$
 
 Thus:
 
 $$
- \boxed{(x_p,y_p)=(600,400)}. 
+ \boxed{(x_p,y_p)=(600,400)}.
 $$
 
 If a picking routine assumes the viewport starts at $(0,0)$, it will interpret the wrong pixel.
@@ -3068,13 +3068,13 @@ This is a frequent editor bug when the rendering target occupies only part of a 
 For zero-to-one depth and normal viewport endpoints:
 
 $$
- \boxed{ z_f=\mathrm{minDepth} + z_n(\mathrm{maxDepth}-\mathrm{minDepth}) }. 
+ \boxed{ z_f=\mathrm{minDepth} + z_n(\mathrm{maxDepth}-\mathrm{minDepth}) }.
 $$
 
 For OpenGL-style negative-one-to-one depth mapped into a conventional zero-to-one window interval:
 
 $$
- \boxed{ z_f=\frac{z_n+1}{2} } 
+ \boxed{ z_f=\frac{z_n+1}{2} }
 $$
 
 when the depth range uses the corresponding defaults.
@@ -3100,31 +3100,31 @@ A raster image contains discrete pixels.
 Under the common modern convention, the centre of pixel:
 
 $$
- (i,j) 
+ (i,j)
 $$
 
 lies at continuous raster coordinate:
 
 $$
- \boxed{ (x_p,y_p)=(i+0.5,j+0.5) }. 
+ \boxed{ (x_p,y_p)=(i+0.5,j+0.5) }.
 $$
 
 The top-left pixel is indexed:
 
 $$
- (0,0). 
+ (0,0).
 $$
 
 Its centre is:
 
 $$
- \boxed{(0.5,0.5)}. 
+ \boxed{(0.5,0.5)}.
 $$
 
 The next pixel to the right has centre:
 
 $$
- (1.5,0.5). 
+ (1.5,0.5).
 $$
 
 This half-unit offset is not a mysterious antialiasing correction. It follows from defining integer coordinates at pixel-cell corners.
@@ -3136,49 +3136,49 @@ Assume a full-size top-left raster viewport.
 The horizontal viewport mapping is:
 
 $$
- x_p=\frac{x_n+1}{2}W. 
+ x_p=\frac{x_n+1}{2}W.
 $$
 
 For pixel column $i$, use its centre:
 
 $$
- x_p=i+0.5. 
+ x_p=i+0.5.
 $$
 
 Solve:
 
 $$
- i+0.5=\frac{x_n+1}{2}W. 
+ i+0.5=\frac{x_n+1}{2}W.
 $$
 
 Multiply:
 
 $$
- \frac{2(i+0.5)}W=x_n+1. 
+ \frac{2(i+0.5)}W=x_n+1.
 $$
 
 Thus:
 
 $$
- \boxed{ x_n=\frac{2(i+0.5)}W-1 }. 
+ \boxed{ x_n=\frac{2(i+0.5)}W-1 }.
 $$
 
 For Y:
 
 $$
- y_p=\frac{1-y_n}{2}H. 
+ y_p=\frac{1-y_n}{2}H.
 $$
 
 At row $j$:
 
 $$
- y_p=j+0.5. 
+ y_p=j+0.5.
 $$
 
 Therefore:
 
 $$
- \boxed{ y_n=1-\frac{2(j+0.5)}H }. 
+ \boxed{ y_n=1-\frac{2(j+0.5)}H }.
 $$
 
 These formulas convert discrete pixel indices to corresponding NDC sample positions.
@@ -3188,31 +3188,31 @@ These formulas convert discrete pixel indices to corresponding NDC sample positi
 For:
 
 $$
- i=0,\qquad j=0, 
+ i=0,\qquad j=0,
 $$
 
 we have:
 
 $$
- x_n=\frac1{1920}-1. 
+ x_n=\frac1{1920}-1.
 $$
 
 Thus:
 
 $$
- \boxed{x_n\approx-0.999479167}. 
+ \boxed{x_n\approx-0.999479167}.
 $$
 
 And:
 
 $$
- y_n=1-\frac1{1080}. 
+ y_n=1-\frac1{1080}.
 $$
 
 Thus:
 
 $$
- \boxed{y_n\approx0.999074074}. 
+ \boxed{y_n\approx0.999074074}.
 $$
 
 The pixel centre is slightly inside the NDC boundaries rather than exactly at $(-1,1)$.
@@ -3224,31 +3224,31 @@ Consider a 1920-pixel-wide image.
 The geometric centre of the viewport is:
 
 $$
- x_p=960. 
+ x_p=960.
 $$
 
 But pixel centres occur at:
 
 $$
- i+0.5. 
+ i+0.5.
 $$
 
 The two central pixel centres are:
 
 $$
- 959.5 
+ 959.5
 $$
 
 and:
 
 $$
- 960.5. 
+ 960.5.
 $$
 
 There is no pixel whose centre is exactly at:
 
 $$
- 960. 
+ 960.
 $$
 
 The optical axis of a centred camera passes between the two central columns.
@@ -3266,27 +3266,27 @@ For an odd-resolution image, there can be one central pixel whose centre aligns 
 To generate a camera ray through pixel $(i,j)$, we commonly begin with its centre:
 
 $$
- u=\frac{i+0.5}{W}, 
+ u=\frac{i+0.5}{W},
 $$
 
 $$
- v=\frac{j+0.5}{H}. 
+ v=\frac{j+0.5}{H}.
 $$
 
 Subpixel sampling adds jitter:
 
 $$
- u=\frac{i+\xi_x}{W}, 
+ u=\frac{i+\xi_x}{W},
 $$
 
 $$
- v=\frac{j+\xi_y}{H}, 
+ v=\frac{j+\xi_y}{H},
 $$
 
 where:
 
 $$
- \xi_x,\xi_y\in[0,1). 
+ \xi_x,\xi_y\in[0,1).
 $$
 
 This connects pixel-sampling strategies with camera projection mathematics.
@@ -3304,7 +3304,7 @@ The most important example is the difference between Direct3D 9 and Direct3D 10.
 Direct3D 9 traditionally defined the upper-left pixel centre at integer coordinate:
 
 $$
- \boxed{(0,0)}. 
+ \boxed{(0,0)}.
 $$
 
 Thus the first pixel centre was not at $(0.5,0.5)$ under that convention.
@@ -3316,7 +3316,7 @@ Applications rendering screen-aligned quads sometimes needed an offset to align 
 Direct3D 10 changed the raster-coordinate convention so that the upper-left corner of the upper-left pixel is the origin, and the centre lies at:
 
 $$
- \boxed{(0.5,0.5)}. 
+ \boxed{(0.5,0.5)}.
 $$
 
 Microsoft documents this historical distinction explicitly.&#x20;
@@ -3327,13 +3327,13 @@ Microsoft documents this historical distinction explicitly.&#x20;
 Suppose a modern renderer already maps pixel indices using:
 
 $$
- x_p=i+0.5. 
+ x_p=i+0.5.
 $$
 
 If we apply an additional half-pixel translation copied from an old Direct3D 9 tutorial, the sample location becomes:
 
 $$
- i+1. 
+ i+1.
 $$
 
 This creates an unintended shift.
@@ -3353,13 +3353,13 @@ It is:
 For a texture of width $W$, a conventional normalized UV coordinate for the centre of texel $i$ is:
 
 $$
- \boxed{ u_i=\frac{i+0.5}{W} }. 
+ \boxed{ u_i=\frac{i+0.5}{W} }.
 $$
 
 For a texture of height $H$:
 
 $$
- \boxed{ v_j=\frac{j+0.5}{H} } 
+ \boxed{ v_j=\frac{j+0.5}{H} }
 $$
 
 under a top-left-style normalized indexing convention.
@@ -3367,13 +3367,13 @@ under a top-left-style normalized indexing convention.
 For example, for a $4\times4$ texture, the centres along either dimension are:
 
 $$
- \boxed{ 0.125,\ 0.375,\ 0.625,\ 0.875 }. 
+ \boxed{ 0.125,\ 0.375,\ 0.625,\ 0.875 }.
 $$
 
 They are not:
 
 $$
- 0,\ 0.25,\ 0.5,\ 0.75. 
+ 0,\ 0.25,\ 0.5,\ 0.75.
 $$
 
 The latter values correspond to cell boundaries under the usual normalized coordinate mapping.

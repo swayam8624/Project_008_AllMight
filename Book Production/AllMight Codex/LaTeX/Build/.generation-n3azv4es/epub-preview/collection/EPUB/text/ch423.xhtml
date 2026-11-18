@@ -1,0 +1,3790 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch423.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_05-engine-i-ch019-gpu-work-and-reusable-metal-frames" class="level2">
+<h2>GPU work and reusable Metal frames</h2>
+<p><a href="ch410.xhtml#id_06-GPU-Architecture-and-Real-Time-Rendering" class="wikilink">Reading map</a> · <a href="ch422.xhtml#id_03-visual-computing-i-ch016-gpu-memory-divergence-and-execution-order" class="wikilink">Previous chapter</a> · <a href="ch428.xhtml#id_05-engine-i-ch020-gpu-performance-models-and-principled-redesign" class="wikilink">Next chapter (GPU Architecture and Real-Time Rendering, Part 2, Ch. 11)</a></p>
+<p>A CPU can build commands faster than a GPU finishes them, so frame memory needs a reuse condition. This chapter follows generated work through Metal command submission and separates CPU ownership from GPU completion.</p>
+<p><strong>By the end:</strong> Trace one frame’s command, buffer, and completion state, and determine when each frame-scoped allocation can be reused.</p>
+<p><strong>Recall question:</strong> What completion evidence permits a frame slot to be overwritten, and which resources remain live until that evidence arrives?</p>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 42150–44777; source-span SHA256 cfd7f833a480094a921f51ac3364911c045d7a69608cc83b2934da228615d041. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_05-engine-i-ch019-from-gpu-generated-work-to-a-metal-frame-that-can-be-reused-safely" class="level3">
+<h3>From GPU-generated work to a Metal frame that can be reused safely</h3>
+<p>A useful way to learn a graphics backend is to follow one object from a decision made on the GPU to the moment its pixels become visible. Along that route, several topics that can look like separate API trivia turn out to be one system: GPU work generation, command scheduling, temporary memory, frame overlap, resource ownership, and the arithmetic that decides whether a kernel is limited by computation or data movement.</p>
+<p>The examples below are teaching examples, not measurements of a particular Apple GPU. API facts are linked to Apple’s documentation. The supplied source notes include observations about Kairo and Maveb code, but this supplement did not independently check out or inspect those repositories. Treat those observations as dated source claims rather than current repository facts. The snippets are pseudocode unless explicitly identified as Apple documentation examples; none here has been compiled.</p>
+<section id="id_05-engine-i-ch019-the-list-that-the-cpu-used-to-build" class="level4">
+<h4>The list that the CPU used to build</h4>
+<p>Imagine a scene with 10,000 objects. A serial CPU renderer loops over them, tests whether each object can affect the view, and pushes visible identifiers into a list. It then tells the graphics API to draw the list. This design is easy to reason about, but it requires the CPU to learn a result that the GPU can calculate more cheaply and then send a command description back to the GPU. On a discrete GPU that round trip may involve a readback. On unified memory it still requires a synchronization point and CPU scheduling. The important cost is not merely copying bytes: it is making a CPU decision depend on work that only the GPU can finish.</p>
+<p>The GPU-oriented pipeline keeps the predicate, compacted list, and draw count resident on the GPU:</p>
+<p><img src="../media/file71.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p>A <strong>predicate</strong> is a true/false condition, here “does this object survive the culling test?” A <strong>compaction</strong> packs the surviving items into a dense output range. A <strong>dispatch</strong> is one launch of a compute grid. An <strong>indirect command</strong> is a command whose count or dimensions are read by the GPU from a buffer, so the CPU does not need to know the result before submission.</p>
+<p>Two common compaction strategies expose a fundamental GPU design choice. In an atomic append, each passing thread increments a shared counter and writes its ID to the returned slot:</p>
+<pre class="text"><code>if visible[i]:
+    slot = atomic_fetch_add(count, 1)
+    visibleIDs[slot] = i</code></pre>
+<p>For 3,700 visible items, the final count is 3,700 and every output slot from 0 through 3,699 is filled. The order is generally scheduling-dependent: object 814 might obtain slot 0 in one run and slot 12 in another. If the consumer treats the result as a set, that is fine. If stable ordering matters, it is not. A hot counter can serialize many lanes, and a single global atomic may become a bottleneck.</p>
+<p>A scan-based method does more phases but gives each item a unique deterministic destination. Let <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+</math> be 1 when item <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> passes and 0 otherwise. The exclusive prefix sum is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <munderover>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>=</mo>
+      <mn>0</mn>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </munderover>
+  <msub>
+    <mi>p</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Each passing item writes to <code>visibleIDs[o_i]</code>. If item 0, 2, and 4 pass, their offsets are 0, 1, and 2. In a large GPU, the prefix sum itself is built hierarchically: each workgroup scans a local segment, a later phase scans workgroup totals, and a final phase adds each segment’s base offset. A workgroup barrier coordinates threads in one workgroup; it is not a global barrier that safely coordinates every workgroup in an arbitrarily large dispatch. Dispatch boundaries, with appropriate resource dependencies, become global phase boundaries.</p>
+<p>Then a final one-thread or small compute operation writes an indirect argument structure such as a draw count or dispatch grid. The CPU records that a later operation will consume the argument buffer, but the GPU determines its contents. This changes the CPU’s role from “calculate all visible work” to “submit a valid dependency chain.” A direct draw is still better for tiny fixed work; GPU-generated commands are valuable when they remove CPU readback, reduce submission count, or keep a large variable workload on the device. They are not automatically faster: scan has multiple launches and temporary storage, while atomic append has contention and unstable ordering.</p>
+</section>
+<section id="id_05-engine-i-ch019-keep-separate-kinds-of-ping-pong-separate" class="level4">
+<h4>Keep separate kinds of ping-pong separate</h4>
+<p>Suppose a particle update reads positions <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>x</mi>
+    <mi>t</mi>
+  </msub>
+</math> and velocities <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>v</mi>
+    <mi>t</mi>
+  </msub>
+</math>, computes a new state, and writes <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+</math>. If each thread reads and writes the same arrays without a carefully proven in-place scheme, one particle may observe another particle’s partially updated state. Two state buffers solve that problem: read from A, write to B, then swap roles. That is <strong>algorithmic ping-pong</strong>; it separates old simulation state from new simulation state.</p>
+<p>A frame ring solves another problem. While frame 0 is still executing, the CPU may prepare frame 1. If both frames write the same upload bytes, frame 1 can overwrite data frame 0 has not read yet. A <strong>frame slot</strong> is a set of per-frame temporary resources that can be reused only after the submission using them has completed. Two or three slots can let CPU and GPU overlap. A slot count does not by itself prove safety: code must associate each slot with the command buffer that last used it and wait, poll, or receive a completion signal before recycling it.</p>
+<p>Consider three slots, S0, S1, and S2. At time <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>, CPU prepares S0 and submits command buffer C0. At <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>, while C0 executes, CPU fills S1 and submits C1. At <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+</math>, CPU fills S2 and submits C2. At <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>3</mn>
+</math>, CPU wants S0 again. It may reuse S0 only if C0 has completed; “three loop iterations elapsed” is not a completion proof. If the GPU stalls, C0 may still be reading S0. If completion arrives, S0 is retired and can be filled with a later frame. More slots may improve throughput under some loads, while increasing memory use and input-to-display latency.</p>
+<p><span class="diagram-panels"><img src="../media/file72.svg" class="allmight-diagram-panel" data-panel-index="1" data-panel-count="2" alt="Diagram" /><img src="../media/file73.svg" alt="" /></span><img src="../media/file74.png" class="allmight-diagram-panel" data-panel-index="2" data-panel-count="2" alt="" /></p>
+<p>The source material describes a per-frame bump arena and ring buffers. A <strong>bump arena</strong> allocates by advancing a cursor through a larger allocation; reclaiming the whole arena at once is cheap. A <strong>ring buffer</strong> reserves a contiguous logical stream whose physical allocation wraps around. Both need a retirement rule: the CPU may not reclaim a range while the GPU still refers to it. A fixed 256-byte alignment often appears as a project policy for uniform or argument records, but it is not a universal rule for every Metal binding. The correct alignment depends on resource type, binding path, platform capability, and documented API requirements. Store the chosen alignment beside the allocator contract rather than teaching a magic number as a law.</p>
+</section>
+<section id="id_05-engine-i-ch019-dependency-graphs-are-the-real-meaning-of-asynchrony" class="level4">
+<h4>Dependency graphs are the real meaning of asynchrony</h4>
+<p>An asynchronous command submission lets the CPU continue without waiting for GPU completion. It does not mean the GPU work is independent. If a culling compute pass writes visible IDs and an indirect draw reads them, the draw depends on the compute pass. If a copy engine uploads a texture and a render pass samples it, rendering depends on the copy. If a readback buffer is consumed by the CPU, CPU access depends on the GPU finishing and on any required visibility/coherency operation.</p>
+<p>Represent each operation as a node and each “must happen before and be visible to” relation as an edge. For example, <code>upload → cull → compact → indirect draw → present</code> is one path. A second independent shadow-map pass might overlap part of it, but only if it does not contend for the same constrained resources and has no data dependency. Two queues or command streams do not guarantee overlap. If both saturate memory bandwidth, or one waits on the other’s output, additional scheduling machinery can increase overhead without shortening the critical path.</p>
+<p>Apple’s command-structure guidance says command buffers on a queue are scheduled after earlier committed buffers waiting in that queue; the perceived order is preserved, though implementation reordering is possible when it does not change observable behavior. A committed command buffer cannot be reused. Its scheduled callback marks scheduling, not completion; <code>addCompletedHandler</code> runs when the GPU has finished the commands. A blocking <code>waitUntilCompleted</code> stalls the calling CPU thread and is usually inappropriate in an interactive frame loop. See Apple’s <a href="https://developer.apple.com/documentation/Metal/setting-up-a-command-structure">command structure guide</a> and <a href="https://developer.apple.com/documentation/metal/mtlcommandbuffer">MTLCommandBuffer reference</a>.</p>
+<p>Metal hazard tracking and explicit synchronization must be understood at the resource-access level. In classic <code>MTLCommandQueue</code> paths, Metal can automatically synchronize conflicts for directly bound resources using tracked hazard mode; heap-created resources default to untracked, and newer Metal 4 queue paths require explicit resource synchronization regardless of the resource hazard-tracking property. Check the exact queue/API generation and resource provenance. A fence, event, or barrier is not a universal “flush everything” switch. <code>MTLFence</code> orders GPU memory operations between passes; Apple documents its supported scopes and encoding rules. Events coordinate workloads across queues, and shared events extend synchronization to CPU code and, where supported, other devices. Do not transplant Vulkan’s host fence meaning onto <code>MTLFence</code>; the word “fence” is reused by APIs for different synchronization layers. When correctness depends on a cross-queue producer-consumer edge, state which resource is written, which operation consumes it, and which Metal mechanism establishes ordering and visibility.</p>
+<p>There is a subtle but important distinction between a <strong>lifetime edge</strong> and a <strong>data dependency edge</strong>. A resource can stay alive for the entire frame and still be read before its producer’s writes are visible. Conversely, a dependency may be correct while the CPU frees an object or recycles its memory too early. For every transient resource, write down: who allocates it, who writes it, who reads it, what event makes the write available, and what completion permits reuse. This five-question habit catches many “works on my GPU” failures.</p>
+</section>
+<section id="id_05-engine-i-ch019-arithmetic-intensity-tells-you-what-to-measure-next" class="level4">
+<h4>Arithmetic intensity tells you what to measure next</h4>
+<p>A kernel’s <strong>arithmetic intensity</strong> is the number of floating-point operations performed per byte transferred at a chosen level of the memory hierarchy. “Chosen level” matters: data can be fetched from external memory once and reused many times from a cache or threadgroup memory. A byte count that ignores reuse can misclassify the bottleneck.</p>
+<p>For a vector multiply <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>y</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>a</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>b</mi>
+    <mi>i</mi>
+  </msub>
+</math> with 32-bit floats, each element performs one multiplication and, in an ideal streaming pass, reads 4 bytes from <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>, reads 4 from <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>, and writes 4 to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>. Thus</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mn>1</mn>
+      <mtext> FLOP</mtext>
+    </mrow>
+    <mrow>
+      <mn>12</mn>
+      <mtext> bytes</mtext>
+    </mrow>
+  </mfrac>
+  <mo>≈</mo>
+  <mn>0.0833</mn>
+  <mtext> FLOP/byte</mtext>
+  <mo>.</mo>
+</math>
+<p>This low intensity suggests that memory bandwidth may dominate on a device capable of far more floating-point work per second than this stream can feed. But the conclusion must be tested: cache behavior, launch overhead, CPU synchronization, and the actual memory traffic may dominate a small benchmark. A benchmark that calls <code>waitUntilCompleted</code> after every dispatch measures an intentionally serialized path, not necessarily the throughput of a pipelined application.</p>
+<p>For matrix multiplication, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>k</mi>
+  </munder>
+  <msub>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>k</mi>
+    </mrow>
+  </msub>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+</math>, a naïve output-at-a-time implementation reloads many values. A tiled kernel loads a tile of A and B into fast local storage and reuses each value across multiple multiply-adds. For square tile width <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math>, one tile step performs about <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>2</mn>
+  <msup>
+    <mi>T</mi>
+    <mn>3</mn>
+  </msup>
+</math> floating operations (counting multiply and add separately) and moves about <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>8</mn>
+  <msup>
+    <mi>T</mi>
+    <mn>2</mn>
+  </msup>
+</math> bytes of 32-bit A/B inputs, before output traffic and cache effects. So the simplified intensity is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>≈</mo>
+  <mfrac>
+    <mrow>
+      <mn>2</mn>
+      <msup>
+        <mi>T</mi>
+        <mn>3</mn>
+      </msup>
+    </mrow>
+    <mrow>
+      <mn>8</mn>
+      <msup>
+        <mi>T</mi>
+        <mn>2</mn>
+      </msup>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mfrac>
+    <mi>T</mi>
+    <mn>4</mn>
+  </mfrac>
+  <mtext> FLOP/byte</mtext>
+  <mo>.</mo>
+</math>
+<p>At <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>16</mn>
+</math>, that model gives about 4 FLOP/byte. This is an idealized comparison, not a benchmark prediction: it omits output stores, padding, edge tiles, synchronization, register spills, and whether the cache already retains data.</p>
+<p>The roofline model bounds attainable performance by</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo>≤</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mi>I</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+</math> is peak compute throughput, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+</math> is sustainable bandwidth at the memory level under study, and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>I</mi>
+</math> is arithmetic intensity at that level. If an illustrative GPU sustains 10 TFLOP/s and 500 GB/s, its “ridge point” is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>10,000</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>500</mn>
+  <mo>=</mo>
+  <mn>20</mn>
+</math> FLOP/byte. A vector multiply at 0.083 FLOP/byte lies far to the bandwidth side of this simplified roof. A tiled matrix operation at 4 FLOP/byte is improved, but still below the example ridge. The values are hypothetical and should never be reported as a device measurement.</p>
+<p>The model suggests choices, not guarantees. Fusion can remove an intermediate write/read and increase useful operations per byte, but may extend register lifetimes or reduce occupancy. Fission can add memory traffic but make each kernel simpler, increase parallelism, or lower register pressure. Reducing registers per thread may permit more resident workgroups, yet additional spills can make the kernel slower. Measure GPU time separately from CPU submission time, warm-up, allocation, and synchronization. Inspect a representative workload and a profiler capture before deciding which roof is relevant.</p>
+</section>
+<section id="id_05-engine-i-ch019-metal-is-a-chain-of-objects-with-distinct-jobs" class="level4">
+<h4>Metal is a chain of objects with distinct jobs</h4>
+<p>Metal’s core object model is easier to remember if each object answers one question. <code>MTLDevice</code> represents a GPU and creates resources or pipeline states. <code>MTLCommandQueue</code> accepts command buffers for that device. <code>MTLCommandBuffer</code> records a sequence of work to submit. A <strong>command encoder</strong> writes one kind of work into it: render commands, compute commands, or blits (resource copies and related transfer operations). A render pipeline state packages compiled vertex/fragment stages and fixed configuration such as attachment formats. A compute pipeline state represents a compiled kernel and exposes device/pipeline properties relevant to dispatch.</p>
+<p>An encoder is not a reusable global command stream; it is the scoped place where commands of that type are encoded into a command buffer. End the encoder before starting another encoder on the same command buffer. The sequence might be: create command buffer, encode compute culling, end compute encoder, encode a blit or another compute stage if needed, end it, encode render, end render, register presentation, commit. The command buffer owns the ordered command recording; the encoder configures and emits one segment. Pipeline state is reusable across frames; command buffer and encoder are per-submission work objects. Mixing these lifetimes obscures bugs.</p>
+<p>A drawable is a scarce presentation image supplied through a view or layer. Apple recommends obtaining it as late as practical—ideally just before encoding the onscreen pass—and holding it as briefly as possible. <code>MTKView.currentRenderPassDescriptor</code> implicitly obtains the current drawable; <code>currentDrawable</code> may be nil if all drawable objects are in use. Encode into that drawable’s texture, register its presentation on the command buffer, then commit. See <a href="https://developer.apple.com/documentation/metalkit/mtkview/">MTKView</a> and <a href="https://developer.apple.com/documentation/MetalKit/MTKView/currentDrawable">currentDrawable</a>. This is why expensive CPU scene preparation should generally happen before acquiring the drawable.</p>
+<p>Render attachments also have a begin/end contract. A load action says whether an attachment’s previous contents are needed, should be cleared, or need not be preserved. A store action says whether the result must survive the pass. If depth is only used during one pass and discarded afterward, storing it to external memory is unnecessary. Apple-family tile rendering can keep eligible temporary attachment data in tile memory, and Metal memoryless resources are explicitly temporary pass-local resources; they cannot be loaded from or stored to. This is a useful optimization when its constraints match the render graph, not a universal promise that a pass will run faster. Resource type, GPU family, attachment action, format, and later consumers matter. See Apple’s <a href="https://developer.apple.com/documentation/metal/setting-resource-storage-modes">storage-mode guide</a> and <a href="https://developer.apple.com/documentation/metal/mtlresourceoptions/storagemodememoryless"><code>storageModeMemoryless</code></a>.</p>
+<p>Metal storage modes describe where a resource lives and who can access it. Shared storage gives CPU and GPU access to system memory; private storage is GPU-only; managed storage can represent separate CPU/GPU copies on platforms that support it; memoryless storage is temporary render-pass memory on supported Apple GPUs. Defaults vary by architecture. Apple advises using the system default when suitable and checking feature support rather than assuming a particular machine from a product label. “Unified memory” removes a separate-copy topology for many resources; it does not remove the need to avoid CPU/GPU races or to observe completion before changing data that GPU work still uses.</p>
+</section>
+<section id="id_05-engine-i-ch019-c-objective-c-and-swift-have-different-ownership-rules" class="level4">
+<h4>C++, Objective-C++, and Swift have different ownership rules</h4>
+<p>A renderer commonly has a C++ engine core and an Objective-C/Swift presentation shell. Objective-C++ (<code>.mm</code>) lets one translation unit speak both C++ and Objective-C, making it a practical narrow bridge: C++ contracts and data structures remain on one side, Metal objects and Cocoa view types on the other. Keep that boundary deliberate. A generic renderer should not expose <code>id&lt;MTLDevice&gt;</code> through every public engine interface if a small backend-specific implementation can own the handle.</p>
+<p>Objective-C ARC (Automatic Reference Counting) manages strong and weak object references inserted by the compiler. It is not C++ RAII (resource acquisition is initialization): C++ destructors govern C++ object lifetime, while Objective-C objects follow ARC ownership. <code>__bridge</code>, <code>__bridge_retained</code>, and <code>__bridge_transfer</code> express different transfer behavior between Objective-C object pointers and opaque C pointers. A bridge cast does not, by itself, prove that a GPU submission has stopped using a resource. The CPU object’s retain lifetime and the allocation’s safe-to-reuse lifetime are related but distinct questions.</p>
+<p>A completion handler is an asynchronous callback. It should capture only what it needs, avoid unprotected mutation of renderer state, and move UI changes onto the main queue when required by the UI framework. A safe pattern is often: completion signals a slot-retirement mechanism or publishes a small immutable result; the main thread consumes it at an appropriate point. Do not block the render/UI thread waiting for every command buffer unless the operation inherently requires an immediate answer, such as a deliberately synchronous picking path. For ordinary rendering, asynchronous submission plus per-slot completion tracking is the shape that allows overlap.</p>
+<p>For a C++/Swift boundary, prefer a narrow C-compatible interface or Objective-C++ wrapper with explicit ownership and error semantics. A Swift closure retained by C++ needs a clear release path; a raw pointer must state whether it is borrowed, retained, or owned. An <code>NSError</code> should preserve a meaningful domain, code, and description rather than being flattened into a generic failure. These are interface design principles; they do not certify any particular Kairo or Maveb bridge implementation, which was not checked against source code here.</p>
+</section>
+<section id="id_05-engine-i-ch019-a-repeatable-design-and-debugging-walk-through" class="level4">
+<h4>A repeatable design and debugging walk-through</h4>
+<p>Take GPU culling as a concrete exercise. First write the CPU baseline and measure separately: scene traversal, culling, list construction, command submission, and GPU rendering. Next define the output contract: visible object IDs, exact count, allowed ordering, and capacity. If order does not matter and the count is modest, start with atomic append. If stable order or per-item offsets matter, build a scan pipeline and account for all intermediate arrays and dispatch boundaries. Then keep the count on the GPU and produce indirect work rather than reading it back only to issue a draw.</p>
+<p>Now draw the dependency graph: bounds upload must be complete before culling reads; culling writes predicates; scan reads predicates; scatter writes the compact list; indirect-argument generation writes count fields; render consumes list and arguments. Mark every producer-to-consumer edge and every lifetime end. Assign temporary memory to a frame slot or a transient pass, and refuse to recycle it until the last consumer’s command buffer completes. If resources cross queues, encode the exact synchronization relationship. If they stay on one queue, rely only on documented queue and hazard rules, not an intuition that “GPU commands happen in order.”</p>
+<p>Then inspect the cost model. Estimate arithmetic intensity for the kernel’s data movement. Estimate bytes uploaded and whether persistent/ring allocation can reduce CPU allocation overhead. Measure GPU timestamps around the actual stages and CPU wall time around preparation and submission. An optimization that shortens culling but adds two dispatches may lose for 100 objects and win for 100,000. A change that cuts average frame time may increase worst-case latency if it adds queued frames. Report workload size, device, configuration, warm-up, and whether the measurement waited for completion.</p>
+<p>Finally construct a failure trace deliberately. For a frame-slot overwrite: CPU writes slot 0 for C0; GPU starts C0; CPU wraps and writes slot 0 for C3 before C0 completes; C0 now reads some old and some new values. The symptom may be intermittent geometry corruption. For a missing dependency: compute writes an indirect count; render consumes it without an ordering/visibility edge; GPU may see stale or partial arguments. For wrong scan math: exclusive offset uses an inclusive sum; first passing item writes to slot 1, leaving a hole and potentially exceeding capacity. For the wrong roofline diagnosis: benchmark blocks after every tiny kernel, reporting CPU launch/sync overhead as if it were shader throughput. Each trace begins with a violated contract, not with a mysterious graphics driver.</p>
+<p>The reliable mental model is compact: a GPU algorithm produces data; a dependency graph makes that data ready for its consumer; a frame-slot lifetime makes its storage safe to reuse; a command buffer carries the ordered work to a Metal queue; a completion signal retires work that has truly finished; a performance model tells you which measurement to improve. Keep these contracts explicit and API details become easier to place.</p>
+</section>
+<section id="id_05-engine-i-ch019-give-one-image-an-explicit-path-through-the-machine" class="level4">
+<h4>Give one image an explicit path through the machine</h4>
+<section id="id_05-engine-i-ch019-native-api-evidence-is-a-separate-layer-from-the-logical-renderer" class="level5">
+<h5>Native-API evidence is a separate layer from the logical renderer</h5>
+<p>The renderer chapters distinguish resources, commands, dependencies and render-graph hazards, but a CPU dependency graph cannot prove GPU visibility. This branch now adds a native evidence boundary. <code>tools/native/vulkan_sync_smoke.cpp</code> creates a Vulkan 1.3 instance/device, enables synchronization2, records a <code>VkMemoryBarrier2</code> through <code>vkCmdPipelineBarrier2</code>, submits with <code>vkQueueSubmit2</code>, waits for completion and treats validation-layer errors as failures when the layer is available. A separate macOS CI job compiles <code>tools/native/metal_compile_smoke.metal</code> into AIR and a metallib.</p>
+<p>That raises Vulkan to real API execution and Metal to real shader-toolchain compilation, but the distinction remains important. The Vulkan smoke test uses a general memory barrier; it does not yet prove per-image layouts, queue-family ownership, timeline protocols or transient aliasing. The Metal job does not execute a command buffer on Apple GPU hardware, so it cannot prove heap aliasing, memoryless attachments or tracked/untracked hazard behavior. <a href="ch425.xhtml#appendix-1680333ac796-native-gpu-evidence-protocol" class="wikilink">Native GPU evidence protocol</a>, <a href="ch427.xhtml#appendix-f15ce0d9c170-vulkan-synchronization2-and-resource-transitions" class="wikilink">Vulkan synchronization2 and resource transitions</a>, <a href="ch426.xhtml#appendix-563b2cb23fc3-metal-heaps-memoryless-resources-and-hazards" class="wikilink">Metal heaps memoryless resources and hazards</a>, and <a href="ch424.xhtml#appendix-0fc95374cb7e-render-graph-barrier-lowering" class="wikilink">Render graph barrier lowering</a> define the ladder from logical graph to production backend.</p>
+<p>Imagine the workshop scene is ready: meshes, materials, a camera and an editor panel waiting for the next image. The rendering mathematics tells us which values to calculate. An explicit graphics API asks a different set of questions: where will those values live, which operations will read them, and what proves the previous user has finished? Vulkan exposes those contracts through resource objects, recorded commands and dependencies. Its handles are names for parts of this agreement, not a sequence of unrelated incantations.</p>
+</section>
+<section id="id_05-engine-i-ch019-start-by-separating-discovery-from-permission" class="level5">
+<h5>Start by separating discovery from permission</h5>
+<p>An instance connects the application to a Vulkan implementation. A physical-device handle identifies an enumerated adapter; a logical device opens the selected features and queues of that adapter for the application. A surface represents a particular window-system presentation target. Presentation support must therefore be checked for the chosen surface and queue family. A queue family describes compatible operation capabilities and command allocation; a queue is a submission channel, not a CPU thread or proof of an independent hardware engine.</p>
+<p>A property reports a limit or characteristic, such as an alignment or maximum image size. A feature reports a capability that may need enabling. An extension adds an API capability beyond a declared baseline. Support, enablement and actual use are three separate facts. Record the capability that each renderer path requires and what happens when it is unavailable. This is more useful than ranking adapters only by a familiar vendor or assuming the first enumerated adapter works.</p>
+<p>On a portability implementation, instance enumeration policy and the device’s portability-subset contract are separate steps. A loader can hide portability adapters unless the appropriate enumeration extension and creation flag are used; a device advertising the portability-subset extension brings additional device requirements. Validation and diagnostic extensions likewise need discovery. An example that requests a recent command or feature cannot quietly assume it is part of a Vulkan 1.1 baseline.</p>
+</section>
+<section id="id_05-engine-i-ch019-create-storage-and-then-describe-how-to-interpret-it" class="level5">
+<h5>Create storage and then describe how to interpret it</h5>
+<p>A buffer describes a linear byte resource. An image describes structured storage with a format, extent, mips, layers, sample count and usage. Device memory supplies backing allocation. A view selects an interpretation and subresource range; a sampler supplies filtering and addressing behavior. A descriptor connects a shader binding to the intended buffer or image view and sampler. A descriptor’s layout field describes the image layout expected during access; writing that field does not transition the image.</p>
+<p>Before binding ordinary resource memory, query its size, alignment and compatible memory-type mask. A type is usable only if the resource permits its index and its property flags meet the required properties. A preference is different from a requirement. Device-local and host-visible can coexist in one type; therefore “device-local means the CPU cannot map it” is false in general. Mapping an optimal-tiled image allocation also does not by itself provide a simple tightly packed pixel layout. A staging copy is one explicit upload design, not a synonym for every possible device-local allocation.</p>
+<p>Suppose a suballocator has cursor <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+  <mo>=</mo>
+  <mn>300</mn>
+</math>, required alignment <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo>=</mo>
+  <mn>256</mn>
+</math>, and resource size <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+  <mo>=</mo>
+  <mn>160</mn>
+</math>. The next start is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>o</mi>
+  <mo>=</mo>
+  <mo fence="false" stretchy="false">⌈</mo>
+  <mi>c</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>a</mi>
+  <mo fence="false" stretchy="false">⌉</mo>
+  <mi>a</mi>
+  <mo>=</mo>
+  <mn>512</mn>
+</math>, and the occupied interval is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">[</mo>
+  <mn>512</mn>
+  <mo>,</mo>
+  <mn>672</mn>
+  <mo stretchy="false">)</mo>
+</math>. The 212-byte gap is alignment padding. A checked implementation must reject zero alignment and detect arithmetic overflow before applying a bit-mask shortcut. Mixed buffers and images can add granularity and dedicated-allocation constraints; satisfying one offset equation does not establish complete Vulkan allocation compatibility.</p>
+<p>A pipeline layout declares the resource interface: descriptor-set layouts and push-constant ranges. The pipeline combines that interface with shader stages and rendering state. A shader module contains intermediate code, not a guarantee that every final pipeline using it has been compiled. Pipeline caches are implementation-specific acceleration data; retain enough identity and failure handling to rebuild rather than treating an arbitrary cache blob as portable executable code.</p>
+</section>
+<section id="id_05-engine-i-ch019-follow-a-frame-slot-and-a-presentation-image-separately" class="level5">
+<h5>Follow a frame slot and a presentation image separately</h5>
+<p>Let the renderer use two frame slots and a swapchain with three images. For frame number <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>, the CPU may choose slot <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+  <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+  <mn>2</mn>
+</math>. Acquisition returns an image index independently. A possible sequence is:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Frame</th>
+<th style="text-align: right;">Reusable CPU/GPU slot</th>
+<th style="text-align: right;">Acquired image</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+<p>Slot 0’s fence proves when slot 0’s command storage and mutable uniform region may be reused. It does not say which swapchain image will be acquired next. Keep slot-indexed command pools, descriptors and upload regions separate from image-indexed image views and presentation state. A readback also needs its frame, camera and resource generation so a delayed result is interpreted against the state that produced it.</p>
+<p>Use an acquire semaphore associated with the frame slot, after its previous wait is known to have completed. For present-wait semaphores, a robust basic pattern associates one with each swapchain image. Waiting for graphics completion alone does not prove that presentation has finished consuming a semaphore. Reacquiring the same image and establishing the acquire wait provides the relevant reuse ordering. This is the specific distinction documented in the <a href="https://docs.vulkan.org/guide/latest/swapchain_semaphore_reuse.html">Khronos swapchain semaphore guide</a>.</p>
+<p>The safe frame loop is a small transaction. First wait for the chosen slot’s previous work, collect eligible retired payloads, and handle completed readbacks. Then acquire an image. An out-of-date result before a usable acquisition must not leave a reset fence that no submission will signal. Prepare and record the new work; reset its completion fence only when entering a path that will submit, with an explicit failure policy. Submit waits on acquisition at a stage covering the first relevant image use. Presentation waits on rendering’s signal.</p>
+<p>After successful acquisition, an arbitrary exception cannot simply abandon both the image and a signaled binary semaphore and then repeat the ordinary loop. The recovery policy must resolve that acquired-image/semaphore state, for example by completing a defined fallback frame or performing controlled presentation-resource recovery. A supported maintenance API may offer more explicit operations, but it requires its own feature and synchronization handling. Likewise, submission failure is not a successful frame: device loss stops normal work, and other failures require a documented recovery path before waiting on a fence that has no pending signal.</p>
+<p><img src="../media/file75.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p>This diagram shows control obligations. Its arrows do not mean the CPU waits between every box: semaphores carry device-side dependencies while the CPU continues preparing independent work.</p>
+</section>
+<section id="id_05-engine-i-ch019-a-command-buffer-is-reusable-only-under-its-actual-state-contract" class="level5">
+<h5>A command buffer is reusable only under its actual state contract</h5>
+<p>Recording turns commands into an executable stream. Submission makes that stream pending. It cannot be reset while pending. After completion, an ordinary reusable command buffer can become executable again; one recorded with one-time-submit usage instead becomes invalid and must be reset before another recording. Destroyed referenced resources or invalidated secondary recordings can also invalidate a previously recorded stream. “The fence signaled” establishes a completion fact, not permanent validity of everything ever referenced.</p>
+<p>A command pool is externally synchronized allocation state. Recording a buffer allocated from a pool participates in that synchronization contract; having one command-buffer handle per worker does not automatically make a shared pool safe. A common organization is one pool for each recording worker, queue family and reusable lifetime class. Reset only when every submission using the relevant buffers is finished. The <a href="https://docs.vulkan.org/spec/latest/chapters/cmdbuffers.html">command-buffer specification</a> defines these state and synchronization obligations.</p>
+</section>
+<section id="id_05-engine-i-ch019-derive-a-dependency-from-the-real-producer-and-consumer" class="level5">
+<h5>Derive a dependency from the real producer and consumer</h5>
+<p>Suppose compute culling writes indirect arguments. The consumer is the draw-indirect stage reading commands, not a vertex shader reading ordinary data. If the same compute pass also produces instance attributes consumed by vertex fetch, that second resource use requires the corresponding vertex-input read scope. One dependency tuple does not automatically cover all other outputs of the dispatch.</p>
+<p>Distinguish read-after-write, write-after-read and write-after-write. A later reader must observe the producer’s values. A later writer must wait until earlier readers no longer need the overwritten contents. A later writer must be ordered against an earlier writer when the result depends on their order. An execution-only dependency can suffice for a pure write-after-read hazard; visibility operations are needed when values must be carried from a write to a later access. This distinction is illustrated by the <a href="https://docs.vulkan.org/guide/latest/synchronization_examples.html">Khronos synchronization examples</a>.</p>
+<p>For a shadow map, include every stage in which the actual depth writes can occur. Early and late fragment tests are distinct possibilities; naming only late tests is not a universal shadow barrier. For an image, also identify the aspect, mip and layer range, old and new layouts, and any required queue-family ownership transfer. Layout, access, ownership and completion are related contracts, not alternative spellings for the same thing.</p>
+<p>Readback completes a longer path. Make the GPU’s writes available to the host through the required memory dependency, establish completion, and invalidate a noncoherent mapped range before CPU reads where required. Host-coherent memory removes explicit cache-maintenance operations; it does not replace producer/consumer dependencies or authorize a CPU read before the copy finishes. The retained source’s fence-plus-coherency description assumes the rest of that path is correctly established; it is not a complete readback proof by itself.</p>
+</section>
+<section id="id_05-engine-i-ch019-retire-a-resource-after-every-user-not-after-one-convenient-clock" class="level5">
+<h5>Retire a resource after every user, not after one convenient clock</h5>
+<p>The C++ owner answers who will eventually destroy a payload. The GPU dependency system answers when destruction is legal. Releasing a logical texture handle can remove it from future scene use while an owning retirement record keeps its old native image, view and memory alive. Capture that payload by ownership; a callback that refers to an already destroyed wrapper does not preserve it.</p>
+<p>For a resource used on graphics, compute and transfer queues, write a completion stamp <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>g</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>t</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>. If the observed completion values are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>d</mi>
+    <mi>g</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>d</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>d</mi>
+    <mi>t</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>, the payload is ready only when</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>d</mi>
+    <mi>g</mi>
+  </msub>
+  <mo>≥</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>g</mi>
+  </msub>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mo>∧</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>d</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>≥</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>c</mi>
+  </msub>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mo>∧</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>d</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>≥</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>The example <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>9</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+</math> is not ready at <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>10</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>100</mn>
+  <mo stretchy="false">)</mo>
+</math>: compute is still using it. Values from separate timeline semaphores cannot be compared as if they were one global timestamp. A single joined completion token can be sufficient if a dependency chain proves that its signal follows every relevant use. A host counter that merely assigns increasing numbers to independent queues does not prove that order.</p>
+<p>A FIFO retirement queue also has a data-structure assumption. If entries arrive with retirement values 100 and then 3, a collector that checks only the front will keep the second entry even when completion reaches 5. It remains safe but delays reclamation. Enforce ordered insertion, use a structure appropriate to the ordering, or scan ready entries independently. With multiple queue stamps there may be no single scalar order at all.</p>
+<p>The complete CPU model below tests ownership and the completion predicate. It deliberately does not call Vulkan: passing the model tests establishes those bookkeeping rules, not correct native API barriers, device lifetime, presentation or GPU execution.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;algorithm&gt;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;array&gt;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;cassert&gt;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;cstdint&gt;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;memory&gt;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdexcept&gt;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;utility&gt;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;vector&gt;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">// CPU bookkeeping model. These values are not native GPU handles.</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> Stamp <span class="op">=</span> <span class="bu">std::</span>array<span class="op">&lt;</span><span class="bu">std::</span>uint64_t<span class="op">,</span> <span class="dv">3</span><span class="op">&gt;;</span> <span class="co">// graphics, compute, transfer</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Payload <span class="op">{</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> id<span class="op">;</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;*</span> destructionLog<span class="op">;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    Payload<span class="op">(</span><span class="dt">int</span> value<span class="op">,</span> <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;&amp;</span> log<span class="op">)</span> <span class="op">:</span> id<span class="op">(</span>value<span class="op">),</span> destructionLog<span class="op">(&amp;</span>log<span class="op">)</span> <span class="op">{}</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    Payload<span class="op">(</span><span class="at">const</span> Payload<span class="op">&amp;)</span> <span class="op">=</span> <span class="kw">delete</span><span class="op">;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    Payload<span class="op">&amp;</span> <span class="kw">operator</span><span class="op">=(</span><span class="at">const</span> Payload<span class="op">&amp;)</span> <span class="op">=</span> <span class="kw">delete</span><span class="op">;</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">~</span>Payload<span class="op">()</span> <span class="op">{</span> destructionLog<span class="op">-&gt;</span>push_back<span class="op">(</span>id<span class="op">);</span> <span class="op">}</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> RetirementQueue <span class="op">{</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> Entry <span class="op">{</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>        Stamp required<span class="op">;</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>Payload<span class="op">&gt;</span> payload<span class="op">;</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>Entry<span class="op">&gt;</span> entries<span class="op">;</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    Stamp observed<span class="op">{};</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">static</span> <span class="dt">bool</span> covers<span class="op">(</span><span class="at">const</span> Stamp<span class="op">&amp;</span> completed<span class="op">,</span> <span class="at">const</span> Stamp<span class="op">&amp;</span> required<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="op">(</span><span class="bu">std::</span>size_t i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> completed<span class="op">.</span>size<span class="op">();</span> <span class="op">++</span>i<span class="op">)</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="op">(</span>completed<span class="op">[</span>i<span class="op">]</span> <span class="op">&lt;</span> required<span class="op">[</span>i<span class="op">])</span> <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> retire<span class="op">(</span>Stamp required<span class="op">,</span> <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>Payload<span class="op">&gt;</span> payload<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>payload<span class="op">)</span> <span class="cf">throw</span> <span class="bu">std::</span>invalid_argument<span class="op">(</span><span class="st">&quot;missing payload&quot;</span><span class="op">);</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>        entries<span class="op">.</span>push_back<span class="op">({</span>required<span class="op">,</span> <span class="bu">std::</span>move<span class="op">(</span>payload<span class="op">)});</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>size_t collect<span class="op">(</span>Stamp completed<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>covers<span class="op">(</span>completed<span class="op">,</span> observed<span class="op">))</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>            <span class="cf">throw</span> <span class="bu">std::</span>invalid_argument<span class="op">(</span><span class="st">&quot;completion counters regressed&quot;</span><span class="op">);</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>        observed <span class="op">=</span> completed<span class="op">;</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="kw">auto</span> before <span class="op">=</span> entries<span class="op">.</span>size<span class="op">();</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>erase_if<span class="op">(</span>entries<span class="op">,</span> <span class="op">[&amp;](</span><span class="at">const</span> Entry<span class="op">&amp;</span> entry<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> covers<span class="op">(</span>completed<span class="op">,</span> entry<span class="op">.</span>required<span class="op">);</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>        <span class="op">});</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> before <span class="op">-</span> entries<span class="op">.</span>size<span class="op">();</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>size_t size<span class="op">()</span> <span class="at">const</span> <span class="op">{</span> <span class="cf">return</span> entries<span class="op">.</span>size<span class="op">();</span> <span class="op">}</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;</span> destroyed<span class="op">;</span> <span class="co">// outlives every Payload in this test</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>    RetirementQueue queue<span class="op">;</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>    queue<span class="op">.</span>retire<span class="op">({</span><span class="dv">100</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">},</span> <span class="bu">std::</span>make_unique<span class="op">&lt;</span>Payload<span class="op">&gt;(</span><span class="dv">1</span><span class="op">,</span> destroyed<span class="op">));</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>    <span class="kw">auto</span> payload <span class="op">=</span> <span class="bu">std::</span>make_unique<span class="op">&lt;</span>Payload<span class="op">&gt;(</span><span class="dv">2</span><span class="op">,</span> destroyed<span class="op">);</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>    queue<span class="op">.</span>retire<span class="op">({</span><span class="dv">3</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">},</span> <span class="bu">std::</span>move<span class="op">(</span>payload<span class="op">));</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>    <span class="ot">assert</span><span class="op">(!</span>payload<span class="op">);</span> <span class="co">// retirement queue now owns it</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>    queue<span class="op">.</span>retire<span class="op">({</span><span class="dv">9</span><span class="op">,</span> <span class="dv">5</span><span class="op">,</span> <span class="dv">3</span><span class="op">},</span> <span class="bu">std::</span>make_unique<span class="op">&lt;</span>Payload<span class="op">&gt;(</span><span class="dv">3</span><span class="op">,</span> destroyed<span class="op">));</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>    <span class="ot">assert</span><span class="op">(</span>destroyed<span class="op">.</span>empty<span class="op">());</span></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Unordered insertion must not block a ready entry behind value 100.</span></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>    <span class="ot">assert</span><span class="op">(</span>queue<span class="op">.</span>collect<span class="op">({</span><span class="dv">5</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">})</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>    <span class="ot">assert</span><span class="op">((</span>destroyed <span class="op">==</span> <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;{</span><span class="dv">2</span><span class="op">}));</span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>    <span class="co">// A large transfer completion cannot replace unfinished compute work.</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>    <span class="ot">assert</span><span class="op">(</span>queue<span class="op">.</span>collect<span class="op">({</span><span class="dv">10</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">100</span><span class="op">})</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>    <span class="ot">assert</span><span class="op">(</span>queue<span class="op">.</span>size<span class="op">()</span> <span class="op">==</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>    <span class="ot">assert</span><span class="op">(</span>queue<span class="op">.</span>collect<span class="op">({</span><span class="dv">10</span><span class="op">,</span> <span class="dv">5</span><span class="op">,</span> <span class="dv">100</span><span class="op">})</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>    <span class="ot">assert</span><span class="op">((</span>destroyed <span class="op">==</span> <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;{</span><span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">}));</span></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>    <span class="ot">assert</span><span class="op">(</span>queue<span class="op">.</span>collect<span class="op">({</span><span class="dv">100</span><span class="op">,</span> <span class="dv">5</span><span class="op">,</span> <span class="dv">100</span><span class="op">})</span> <span class="op">==</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>    <span class="ot">assert</span><span class="op">(</span>queue<span class="op">.</span>size<span class="op">()</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>    <span class="ot">assert</span><span class="op">((</span>destroyed <span class="op">==</span> <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;{</span><span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="dv">1</span><span class="op">}));</span></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> rejected <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span> <span class="op">{</span> queue<span class="op">.</span>collect<span class="op">({</span><span class="dv">99</span><span class="op">,</span> <span class="dv">5</span><span class="op">,</span> <span class="dv">100</span><span class="op">});</span> <span class="op">}</span></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>    <span class="cf">catch</span> <span class="op">(</span><span class="at">const</span> <span class="bu">std::</span>invalid_argument<span class="op">&amp;)</span> <span class="op">{</span> rejected <span class="op">=</span> <span class="kw">true</span><span class="op">;</span> <span class="op">}</span></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>    <span class="ot">assert</span><span class="op">(</span>rejected<span class="op">);</span></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>    rejected <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span> <span class="op">{</span> queue<span class="op">.</span>retire<span class="op">({</span><span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">},</span> <span class="kw">nullptr</span><span class="op">);</span> <span class="op">}</span></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>    <span class="cf">catch</span> <span class="op">(</span><span class="at">const</span> <span class="bu">std::</span>invalid_argument<span class="op">&amp;)</span> <span class="op">{</span> rejected <span class="op">=</span> <span class="kw">true</span><span class="op">;</span> <span class="op">}</span></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>    <span class="ot">assert</span><span class="op">(</span>rejected<span class="op">);</span></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a>    <span class="co">// A real renderer must likewise drain/resolve all payload uses at shutdown.</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The test drains every payload before the queue dies. A real shutdown must first resolve all relevant device uses and keep the device, allocation machinery, and destruction dependencies alive until retirement finishes. A default C++ container destructor is not a substitute for that shutdown protocol. This CPU model was compiled and run with address and undefined-behavior sanitizers; no native Vulkan execution is claimed.</p>
+</section>
+</section>
+<section id="id_05-engine-i-ch019-build-variable-gpu-workloads-without-a-cpu-round-trip" class="level4">
+<h4>Build variable GPU workloads without a CPU round trip</h4>
+<section id="id_05-engine-i-ch019-m132" class="level5">
+<h5>+ M132</h5>
+<p>Pass 10 completes <strong>Phase 22: GPU Architecture, SIMT Execution, Memory Hierarchy, Compute, and Parallel GPU Algorithms</strong>.</p>
+<p>The mastery cards make the intent explicit: M130 is the shift into <strong>GPU-resident scheduling and GPU-driven pipelines</strong>, M131 is about keeping CPU, GPU and memory systems overlapped without accidental stalls, and M132 asks you to predict performance from resource usage and data movement instead of treating GPU optimization as trial-and-error.</p>
+<hr />
+</section>
+<section id="id_05-engine-i-ch019-gpu-resident-data-structures-gpu-driven-work" class="level5">
+<h5>GPU-RESIDENT DATA STRUCTURES &amp; GPU-DRIVEN WORK</h5>
+<p><strong>The next GPU transition: from parallel computation to parallel scheduling</strong></p>
+<p>Pass 9 taught:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>map</mtext>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mtext>reduce</mtext>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mtext>scan</mtext>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mtext>compact</mtext>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mtext>sort</mtext>
+  <mo>.</mo>
+</math>
+<p>Those operations become far more powerful once the GPU stops merely processing work selected by the CPU and begins deciding:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>what work should exist at all</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A traditional renderer might do:</p>
+<pre id="p10-cpu-driven" class="text"><code>CPU:
+    inspect every object
+    determine visibility
+    choose LOD
+    build draw list
+    upload commands
+    submit draws
+
+GPU:
+    execute them</code></pre>
+<p>A GPU-driven renderer tries to move toward:</p>
+<pre id="p10-gpu-driven" class="text"><code>GPU:
+    inspect object data
+    determine visibility
+    select LOD
+    compact visible objects
+    produce command arguments
+    consume those arguments</code></pre>
+<p>The CPU submits the <strong>algorithm</strong>, not necessarily every individual piece of work.</p>
+<hr />
+<p><strong>GPU hash tables</strong></p>
+<p>A hash table maps:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo stretchy="false">→</mo>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Hash function:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>k</mi>
+  <mo stretchy="false">)</mo>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mi>M</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>On a CPU we might use linked buckets, trees or dynamically allocated nodes.</p>
+<p>Those are usually poor GPU representations because they introduce:</p>
+<ul>
+<li>pointer chasing,</li>
+<li>random memory,</li>
+<li>dynamic allocation,</li>
+<li>divergent traversal.</li>
+</ul>
+<p>A more GPU-friendly representation is frequently a flat array with open addressing.</p>
+<hr />
+<p><strong>Open-addressed hash table</strong></p>
+<p>Suppose table capacity is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mo>.</mo>
+</math>
+<p>Initial position:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>i</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>k</mi>
+  <mo stretchy="false">)</mo>
+  <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+  <mi>M</mi>
+  <mo>.</mo>
+</math>
+<p>If occupied by another key, probe:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>i</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>i</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>+</mo>
+  <mi>j</mi>
+  <mo stretchy="false">)</mo>
+  <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+  <mi>M</mi>
+</math>
+<p>for linear probing.</p>
+<p>Insertion needs an atomic compare-and-swap.</p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="p10-hash-insert"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-hash-insert-1"><a href="#p10-hash-insert-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constexpr</span> <span class="dt">uint32_t</span> Empty <span class="op">=</span></span>
+<span id="p10-hash-insert-2"><a href="#p10-hash-insert-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">0xffffffff</span><span class="bu">u</span><span class="op">;</span></span>
+<span id="p10-hash-insert-3"><a href="#p10-hash-insert-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-hash-insert-4"><a href="#p10-hash-insert-4" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> Insert<span class="op">(</span></span>
+<span id="p10-hash-insert-5"><a href="#p10-hash-insert-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> key<span class="op">,</span></span>
+<span id="p10-hash-insert-6"><a href="#p10-hash-insert-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> value<span class="op">)</span></span>
+<span id="p10-hash-insert-7"><a href="#p10-hash-insert-7" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="p10-hash-insert-8"><a href="#p10-hash-insert-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> slot <span class="op">=</span></span>
+<span id="p10-hash-insert-9"><a href="#p10-hash-insert-9" aria-hidden="true" tabindex="-1"></a>        Hash<span class="op">(</span>key<span class="op">)</span> <span class="op">&amp;</span> <span class="op">(</span>TableSize <span class="op">-</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="p10-hash-insert-10"><a href="#p10-hash-insert-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-hash-insert-11"><a href="#p10-hash-insert-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">uint32_t</span> probe <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="p10-hash-insert-12"><a href="#p10-hash-insert-12" aria-hidden="true" tabindex="-1"></a>         probe <span class="op">&lt;</span> MaxProbe<span class="op">;</span></span>
+<span id="p10-hash-insert-13"><a href="#p10-hash-insert-13" aria-hidden="true" tabindex="-1"></a>         <span class="op">++</span>probe<span class="op">)</span></span>
+<span id="p10-hash-insert-14"><a href="#p10-hash-insert-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="p10-hash-insert-15"><a href="#p10-hash-insert-15" aria-hidden="true" tabindex="-1"></a>        <span class="dt">uint32_t</span> previous <span class="op">=</span></span>
+<span id="p10-hash-insert-16"><a href="#p10-hash-insert-16" aria-hidden="true" tabindex="-1"></a>            atomic_compare_exchange<span class="op">(</span></span>
+<span id="p10-hash-insert-17"><a href="#p10-hash-insert-17" aria-hidden="true" tabindex="-1"></a>                table<span class="op">[</span>slot<span class="op">].</span>key<span class="op">,</span></span>
+<span id="p10-hash-insert-18"><a href="#p10-hash-insert-18" aria-hidden="true" tabindex="-1"></a>                Empty<span class="op">,</span></span>
+<span id="p10-hash-insert-19"><a href="#p10-hash-insert-19" aria-hidden="true" tabindex="-1"></a>                key<span class="op">);</span></span>
+<span id="p10-hash-insert-20"><a href="#p10-hash-insert-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-hash-insert-21"><a href="#p10-hash-insert-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>previous <span class="op">==</span> Empty <span class="op">||</span></span>
+<span id="p10-hash-insert-22"><a href="#p10-hash-insert-22" aria-hidden="true" tabindex="-1"></a>            previous <span class="op">==</span> key<span class="op">)</span></span>
+<span id="p10-hash-insert-23"><a href="#p10-hash-insert-23" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="p10-hash-insert-24"><a href="#p10-hash-insert-24" aria-hidden="true" tabindex="-1"></a>            table<span class="op">[</span>slot<span class="op">].</span>value <span class="op">=</span></span>
+<span id="p10-hash-insert-25"><a href="#p10-hash-insert-25" aria-hidden="true" tabindex="-1"></a>                value<span class="op">;</span></span>
+<span id="p10-hash-insert-26"><a href="#p10-hash-insert-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-hash-insert-27"><a href="#p10-hash-insert-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span><span class="op">;</span></span>
+<span id="p10-hash-insert-28"><a href="#p10-hash-insert-28" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="p10-hash-insert-29"><a href="#p10-hash-insert-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-hash-insert-30"><a href="#p10-hash-insert-30" aria-hidden="true" tabindex="-1"></a>        slot <span class="op">=</span></span>
+<span id="p10-hash-insert-31"><a href="#p10-hash-insert-31" aria-hidden="true" tabindex="-1"></a>            <span class="op">(</span>slot <span class="op">+</span> <span class="dv">1</span><span class="op">)</span> <span class="op">&amp;</span></span>
+<span id="p10-hash-insert-32"><a href="#p10-hash-insert-32" aria-hidden="true" tabindex="-1"></a>            <span class="op">(</span>TableSize <span class="op">-</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="p10-hash-insert-33"><a href="#p10-hash-insert-33" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="p10-hash-insert-34"><a href="#p10-hash-insert-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-hash-insert-35"><a href="#p10-hash-insert-35" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Overflow/failure must be tracked.</span></span>
+<span id="p10-hash-insert-36"><a href="#p10-hash-insert-36" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The atomic ensures two lanes cannot both claim the same empty slot.</p>
+<hr />
+<p><strong>Hash-table load factor matters enormously on GPUs</strong></p>
+<p>Define:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>α</mi>
+          <mo>=</mo>
+          <mfrac>
+            <msub>
+              <mi>N</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mtext>occupied</mtext>
+              </mrow>
+            </msub>
+            <msub>
+              <mi>M</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mtext>capacity</mtext>
+              </mrow>
+            </msub>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>At low:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>,</mo>
+</math>
+<p>most lookups resolve quickly.</p>
+<p>As:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo stretchy="false">→</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>probe lengths grow dramatically.</p>
+<p>That creates:</p>
+<ul>
+<li>more random memory traffic,</li>
+<li>longer divergent loops,</li>
+<li>greater atomic contention.</li>
+</ul>
+<p>A CPU might tolerate moderate extra probing.</p>
+<p>On SIMT hardware, one lane performing 30 probes can hold up a subgroup whose other lanes finished after two.</p>
+<p>Thus hash-table performance is not just average lookup count.</p>
+<p>It is also:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>distribution of probe lengths across lanes in the same subgroup</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Spatial hashing</strong></p>
+<p>For spatial data, convert position:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>into integer cell coordinate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌊</mo>
+    <mfrac>
+      <mi>x</mi>
+      <mi>s</mi>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">⌋</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌊</mo>
+    <mfrac>
+      <mi>y</mi>
+      <mi>s</mi>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">⌋</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌊</mo>
+    <mfrac>
+      <mi>z</mi>
+      <mi>s</mi>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">⌋</mo>
+  </mrow>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mo>=</mo>
+  <mtext>cell size</mtext>
+  <mo>.</mo>
+</math>
+<p>Then hash:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>z</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>A simple conceptual mixer is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>x</mi>
+  </msub>
+  <msub>
+    <mi>p</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>⊕</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>y</mi>
+  </msub>
+  <msub>
+    <mi>p</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>⊕</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>z</mi>
+  </msub>
+  <msub>
+    <mi>p</mi>
+    <mn>3</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Spatial hashing is useful when the conceptual grid is enormous or sparse.</p>
+<p>A dense <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>1000</mn>
+    <mn>3</mn>
+  </msup>
+</math> grid contains:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>10</mn>
+    <mn>9</mn>
+  </msup>
+</math>
+<p>cells.</p>
+<p>If only 10,000 are occupied, dense storage is absurd.</p>
+<p>Hash only occupied cells.</p>
+<hr />
+<p><strong>Dense spatial binning versus spatial hashing</strong></p>
+<p>Do not confuse them.</p>
+<p>For a screen divided into:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>120</mn>
+  <mo>×</mo>
+  <mn>68</mn>
+</math>
+<p>tiles, the total tile count is only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8160.</mn>
+</math>
+<p>A dense array of 8160 counters/offsets is cheap.</p>
+<p>Hashing would add unnecessary collisions and indirection.</p>
+<p>For an effectively unbounded sparse 3D world, hashing becomes attractive.</p>
+<p>Your Gaussian renderer correctly uses <strong>dense tile binning</strong>, not a hash table.</p>
+<p>That is the better data structure for its domain.</p>
+<hr />
+<p><strong>Spatial binning</strong></p>
+<p>Suppose object <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> belongs to bin:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>b</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>We need data structure:</p>
+<pre id="p10-csr-bins" class="text"><code>bin 0 → object indices...
+bin 1 → object indices...
+bin 2 → object indices...</code></pre>
+<p>The canonical GPU representation is CSR-like:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>b</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>b</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>For bin <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>b</mi>
+  </msub>
+  <mo>:</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>b</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo stretchy="false">]</mo>
+</math>
+<p>are that bin’s objects.</p>
+<p>Your Vulkax Gaussian scheduler’s comments explicitly describe this structure: tile counts, prefix offsets and references, with a CPU oracle validating CSR shape, bounds, tile membership and deterministic ordering.</p>
+<hr />
+<p><strong>Atomic append construction</strong></p>
+<p>The simplest GPU builder:</p>
+<div class="sourceCode" id="p10-atomic-bin"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-atomic-bin-1"><a href="#p10-atomic-bin-1" aria-hidden="true" tabindex="-1"></a><span class="dt">uint32_t</span> local <span class="op">=</span></span>
+<span id="p10-atomic-bin-2"><a href="#p10-atomic-bin-2" aria-hidden="true" tabindex="-1"></a>    atomic_fetch_add<span class="op">(</span></span>
+<span id="p10-atomic-bin-3"><a href="#p10-atomic-bin-3" aria-hidden="true" tabindex="-1"></a>        binCounts<span class="op">[</span>bin<span class="op">],</span></span>
+<span id="p10-atomic-bin-4"><a href="#p10-atomic-bin-4" aria-hidden="true" tabindex="-1"></a>        <span class="dv">1</span><span class="op">);</span></span>
+<span id="p10-atomic-bin-5"><a href="#p10-atomic-bin-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-atomic-bin-6"><a href="#p10-atomic-bin-6" aria-hidden="true" tabindex="-1"></a>binEntries<span class="op">[</span></span>
+<span id="p10-atomic-bin-7"><a href="#p10-atomic-bin-7" aria-hidden="true" tabindex="-1"></a>    bin <span class="op">*</span> MaxEntriesPerBin <span class="op">+</span></span>
+<span id="p10-atomic-bin-8"><a href="#p10-atomic-bin-8" aria-hidden="true" tabindex="-1"></a>    local</span>
+<span id="p10-atomic-bin-9"><a href="#p10-atomic-bin-9" aria-hidden="true" tabindex="-1"></a><span class="op">]</span> <span class="op">=</span> objectID<span class="op">;</span></span></code></pre></div>
+<p>Or one global append:</p>
+<div class="sourceCode" id="p10-global-append"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-global-append-1"><a href="#p10-global-append-1" aria-hidden="true" tabindex="-1"></a><span class="dt">uint32_t</span> dst <span class="op">=</span></span>
+<span id="p10-global-append-2"><a href="#p10-global-append-2" aria-hidden="true" tabindex="-1"></a>    atomic_fetch_add<span class="op">(</span></span>
+<span id="p10-global-append-3"><a href="#p10-global-append-3" aria-hidden="true" tabindex="-1"></a>        globalCount<span class="op">,</span></span>
+<span id="p10-global-append-4"><a href="#p10-global-append-4" aria-hidden="true" tabindex="-1"></a>        <span class="dv">1</span><span class="op">);</span></span>
+<span id="p10-global-append-5"><a href="#p10-global-append-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-global-append-6"><a href="#p10-global-append-6" aria-hidden="true" tabindex="-1"></a>output<span class="op">[</span>dst<span class="op">]</span> <span class="op">=</span></span>
+<span id="p10-global-append-7"><a href="#p10-global-append-7" aria-hidden="true" tabindex="-1"></a>    objectID<span class="op">;</span></span></code></pre></div>
+<p>This is extremely easy.</p>
+<p>And often perfectly good.</p>
+<hr />
+<p><strong>Atomic append problems</strong></p>
+<p>Imagine every projected Gaussian overlaps the same central screen tile.</p>
+<p>Thousands of threads execute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>A</mi>
+  <mi>d</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">[</mo>
+  <mtext>center</mtext>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>That one counter becomes a serialization hotspot.</p>
+<p>Other issues include capacity management and nondeterministic ordering.</p>
+<p>If threads race for append positions, the output order depends on execution timing.</p>
+<p>If deterministic order matters, atomic append alone may be insufficient.</p>
+<hr />
+<p><strong>Count → scan → scatter construction</strong></p>
+<p>The more scalable construction from Pass 9:</p>
+<p>First calculate each producer’s output count:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then exclusive scan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>&lt;</mo>
+      <mi>i</mi>
+    </mrow>
+  </munder>
+  <msub>
+    <mi>c</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Now producer <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> owns:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>It writes without atomics.</p>
+<p>This is exactly how Maveb’s Gaussian tile expansion works.</p>
+<p>Projected Gaussian <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>number of overlapping tiles</mtext>
+  <mo>.</mo>
+</math>
+<p>Scan gives its base destination.</p>
+<p>Then it writes all tile references to its private region.</p>
+<hr />
+<p><strong>Atomic append versus scan is not ideological</strong></p>
+<p>Atomic append costs roughly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>one atomic per output</mtext>
+</math>
+<p>and often one dispatch.</p>
+<p>Scan construction costs multiple phases:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>count</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>scan</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>scatter</mtext>
+  <mo>.</mo>
+</math>
+<p>For small or sparse output:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>atomic append may be faster</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For huge output with contention or deterministic-layout requirements:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>scan construction often scales better</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is a recurring engine design decision.</p>
+<hr />
+<p><strong>Indirect argument buffers</strong></p>
+<p>Now suppose the GPU computes that only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>K</mi>
+</math>
+<p>items remain.</p>
+<p>The naive route is:</p>
+<pre id="p10-bad-readback" class="text"><code>GPU computes K
+↓
+CPU reads K
+↓
+CPU submits dispatch(K)</code></pre>
+<p>That requires a GPU→CPU synchronization/readback.</p>
+<p>Terrible.</p>
+<p>Instead GPU writes a buffer containing command arguments.</p>
+<p>Later the GPU command processor consumes that buffer.</p>
+<p>That is <strong>indirect dispatch/draw</strong>.</p>
+<hr />
+<p><strong>Current Maveb indirect dispatch is already real</strong></p>
+<p>Maveb allocates:</p>
+<pre id="p10-indirect-buffer" class="text"><code>Gaussian Radix Indirect Dispatch</code></pre>
+<p>as a GPU-private buffer containing three <code>uint32_t</code>s.</p>
+<p>Its scan stage writes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>c</mi>
+  <msub>
+    <mi>h</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌈</mo>
+    <mfrac>
+      <msub>
+        <mi>N</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mtext>generated entries</mtext>
+        </mrow>
+      </msub>
+      <mn>256</mn>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">⌉</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>c</mi>
+  <msub>
+    <mi>h</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>c</mi>
+  <msub>
+    <mi>h</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>Then later Metal executes:</p>
+<div class="sourceCode" id="p10-indirect-dispatch"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-indirect-dispatch-1"><a href="#p10-indirect-dispatch-1" aria-hidden="true" tabindex="-1"></a>histogram<span class="op">-&gt;</span></span>
+<span id="p10-indirect-dispatch-2"><a href="#p10-indirect-dispatch-2" aria-hidden="true" tabindex="-1"></a>    dispatchThreadgroups<span class="op">(</span></span>
+<span id="p10-indirect-dispatch-3"><a href="#p10-indirect-dispatch-3" aria-hidden="true" tabindex="-1"></a>        indirectDispatchBuffer<span class="op">,</span></span>
+<span id="p10-indirect-dispatch-4"><a href="#p10-indirect-dispatch-4" aria-hidden="true" tabindex="-1"></a>        <span class="dv">0</span><span class="op">,</span></span>
+<span id="p10-indirect-dispatch-5"><a href="#p10-indirect-dispatch-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span><span class="dv">256</span><span class="op">,</span><span class="dv">1</span><span class="op">,</span><span class="dv">1</span><span class="op">});</span></span></code></pre></div>
+<p>and does the same for radix scatter.</p>
+<p>The CPU never needs to know the dynamic entry count before launching those stages.</p>
+<p>That is exactly Part 2161.</p>
+<hr />
+<p><strong>Why indirect execution matters</strong></p>
+<p>Without it:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mo stretchy="false">→</mo>
+  <mi>C</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mo stretchy="false">→</mo>
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+</math>
+<p>forms a round trip.</p>
+<p>With indirect arguments:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>P</mi>
+  <msub>
+    <mi>U</mi>
+    <mi>A</mi>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mtext>argument buffer</mtext>
+  <mo stretchy="false">→</mo>
+  <mi>G</mi>
+  <mi>P</mi>
+  <msub>
+    <mi>U</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>No CPU stall.</p>
+<p>This is a foundational primitive of GPU-driven rendering.</p>
+<hr />
+<p><strong>GPU-driven culling pipeline</strong></p>
+<p>Suppose there are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>renderable instances.</p>
+<p>A scalable pipeline can do:</p>
+<pre id="p10-cull-pipeline" class="text"><code>instance bounds
+    ↓
+frustum test
+    ↓
+optional occlusion test
+    ↓
+LOD selection
+    ↓
+visibility predicate/count
+    ↓
+compaction
+    ↓
+draw/dispatch arguments
+    ↓
+indirect rendering</code></pre>
+<p>The CPU submits a small number of passes rather than inspecting one million objects every frame.</p>
+<hr />
+<p><strong>Frustum culling in compute</strong></p>
+<p>A perspective frustum can be represented by six planes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>d</mi>
+    <mi>j</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>with signed distance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>s</mi>
+    <mi>j</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>⋅</mo>
+  <mi>x</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>d</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>For bounding sphere center <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math>, radius <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+</math>, if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>n</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>⋅</mo>
+  <mi>C</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>d</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>&lt;</mo>
+  <mo>−</mo>
+  <mi>r</mi>
+</math>
+<p>for any plane <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>j</mi>
+</math>, sphere is entirely outside.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>v</mi>
+          <mi>i</mi>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>b</mi>
+          <mi>l</mi>
+          <msub>
+            <mi>e</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>frustum</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <munder>
+            <mo data-mjx-texclass="OP">⋀</mo>
+            <mi>j</mi>
+          </munder>
+          <mo stretchy="false">[</mo>
+          <msub>
+            <mi>n</mi>
+            <mi>j</mi>
+          </msub>
+          <mo>⋅</mo>
+          <mi>C</mi>
+          <mo>+</mo>
+          <msub>
+            <mi>d</mi>
+            <mi>j</mi>
+          </msub>
+          <mo>≥</mo>
+          <mo>−</mo>
+          <mi>r</mi>
+          <mo stretchy="false">]</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>One invocation per object.</p>
+<p>Very parallel.</p>
+<hr />
+<p><strong>AABB frustum test</strong></p>
+<p>For an AABB you can use the positive vertex relative to each plane normal.</p>
+<p>For plane normal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>z</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>choose box corner:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">{</mo>
+    <mtable columnalign="left left" columnspacing="1em" rowspacing=".2em">
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>x</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            </mrow>
+          </msub>
+          <mo>,</mo>
+        </mtd>
+        <mtd>
+          <msub>
+            <mi>n</mi>
+            <mi>x</mi>
+          </msub>
+          <mo>≥</mo>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>x</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+            </mrow>
+          </msub>
+          <mo>,</mo>
+        </mtd>
+        <mtd>
+          <msub>
+            <mi>n</mi>
+            <mi>x</mi>
+          </msub>
+          <mo>&lt;</mo>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE" fence="true" stretchy="true" symmetric="true"></mo>
+  </mrow>
+</math>
+<p>and similarly for <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+</math>.</p>
+<p>If even the most positive point satisfies:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>⋅</mo>
+  <mi>p</mi>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo>&lt;</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>box is completely outside.</p>
+<p>This avoids testing all eight corners.</p>
+<hr />
+<p><strong>Visibility predicate into compaction</strong></p>
+<p>Each object writes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">{</mo>
+    <mtable columnalign="left left" columnspacing="1em" rowspacing=".2em">
+      <mtr>
+        <mtd>
+          <mn>1</mn>
+          <mo>,</mo>
+        </mtd>
+        <mtd>
+          <mtext>visible</mtext>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+          <mo>,</mo>
+        </mtd>
+        <mtd>
+          <mtext>culled</mtext>
+          <mo>.</mo>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE" fence="true" stretchy="true" symmetric="true"></mo>
+  </mrow>
+</math>
+<p>Exclusive scan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>&lt;</mo>
+      <mi>i</mi>
+    </mrow>
+  </munder>
+  <msub>
+    <mi>p</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo stretchy="false">⇒</mo>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>i</mi>
+  <mo>.</mo>
+</math>
+<p>Number of visible objects:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>v</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>o</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>N</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>N</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>GPU can then write indirect arguments:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>N</mi>
+    <mi>v</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>No CPU visibility list.</p>
+<hr />
+<p><strong>Hi-Z occlusion culling</strong></p>
+<p>Frustum culling answers:</p>
+<blockquote>
+<p>Could this object project onto the image?</p>
+</blockquote>
+<p>It does not answer:</p>
+<blockquote>
+<p>Is it hidden behind already visible geometry?</p>
+</blockquote>
+<p>For that we use a hierarchical depth pyramid, often called Hi-Z.</p>
+<p>Mip 0 contains full-resolution depth.</p>
+<p>Each higher mip summarizes a larger region.</p>
+<hr />
+<p><strong>What depth should a Hi-Z level store?</strong></p>
+<p>This depends on depth convention.</p>
+<p>For conventional depth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>a conservative occlusion hierarchy commonly stores:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+          <mo stretchy="false">(</mo>
+          <mtext>depths</mtext>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for a region.</p>
+<p>Why?</p>
+<p>To prove an object is behind <strong>every</strong> occluder in that region, its nearest possible depth must be farther than the farthest stored occluder depth.</p>
+<p>With reversed-Z:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>the relationship reverses and the conservative hierarchy stores:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          <mo stretchy="false">(</mo>
+          <mtext>depths</mtext>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+  <mo>.</mo>
+</math>
+<p>Your earlier reversed-Z work therefore changes Hi-Z reduction semantics too.</p>
+<hr />
+<p><strong>Building the depth pyramid</strong></p>
+<p>For conventional Z:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>H</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>l</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">{</mo>
+    <mtable columnalign="left left" columnspacing="1em" rowspacing=".2em">
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>H</mi>
+            <mi>l</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mn>2</mn>
+          <mi>x</mi>
+          <mo>,</mo>
+          <mn>2</mn>
+          <mi>y</mi>
+          <mo stretchy="false">)</mo>
+          <mo>,</mo>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>H</mi>
+            <mi>l</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mn>2</mn>
+          <mi>x</mi>
+          <mo>+</mo>
+          <mn>1</mn>
+          <mo>,</mo>
+          <mn>2</mn>
+          <mi>y</mi>
+          <mo stretchy="false">)</mo>
+          <mo>,</mo>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>H</mi>
+            <mi>l</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mn>2</mn>
+          <mi>x</mi>
+          <mo>,</mo>
+          <mn>2</mn>
+          <mi>y</mi>
+          <mo>+</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+          <mo>,</mo>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>H</mi>
+            <mi>l</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mn>2</mn>
+          <mi>x</mi>
+          <mo>+</mo>
+          <mn>1</mn>
+          <mo>,</mo>
+          <mn>2</mn>
+          <mi>y</mi>
+          <mo>+</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE" fence="true" stretchy="true" symmetric="true"></mo>
+  </mrow>
+</math>
+<p>For reversed Z, substitute <code>min</code>.</p>
+<p>Each mip covers twice the linear screen extent.</p>
+<p>This lets one coarse sample conservatively represent many full-resolution pixels.</p>
+<hr />
+<p><strong>Testing an object’s screen rectangle</strong></p>
+<p>Project the object’s bounds into screen space.</p>
+<p>Suppose projected rectangle dimensions are approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mo>×</mo>
+  <mi>h</mi>
+  <mo>.</mo>
+</math>
+<p>Choose a mip where one/few texels cover that rectangle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>m</mi>
+          <mo>≈</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">⌊</mo>
+            <msub>
+              <mi>log</mi>
+              <mn>2</mn>
+            </msub>
+            <mo data-mjx-texclass="NONE">⁡</mo>
+            <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            <mo stretchy="false">(</mo>
+            <mi>w</mi>
+            <mo>,</mo>
+            <mi>h</mi>
+            <mo stretchy="false">)</mo>
+            <mo data-mjx-texclass="CLOSE">⌋</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Sample Hi-Z around the rectangle.</p>
+<p>Compare object’s nearest possible depth against the conservative depth value.</p>
+<p>If object is definitely behind all represented depth, cull.</p>
+<hr />
+<p><strong>Hi-Z must be conservative</strong></p>
+<p>A false negative:</p>
+<blockquote>
+<p>object considered visible even though hidden</p>
+</blockquote>
+<p>costs performance.</p>
+<p>A false positive:</p>
+<blockquote>
+<p>visible object incorrectly culled</p>
+</blockquote>
+<p>produces missing geometry.</p>
+<p>Therefore culling algorithms deliberately err toward:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>visible</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Numerical margins, previous-frame depth and fast-moving cameras make conservative bias essential.</p>
+<hr />
+<p><strong>Previous-frame Hi-Z</strong></p>
+<p>One practical GPU-driven renderer often culls frame <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> using depth from frame <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+</math>.</p>
+<p>That avoids needing a complete depth prepass before all culling.</p>
+<p>But camera/object movement can expose previously hidden geometry.</p>
+<p>Hence conservative expansion, temporal hysteresis or a two-phase renderer may be necessary.</p>
+<p>Occlusion culling is not merely a depth comparison; it is also a temporal correctness problem.</p>
+<hr />
+<p><strong>GPU LOD selection</strong></p>
+<p>An object’s projected size determines how much detail is useful.</p>
+<p>For bounding sphere radius:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+</math>
+<p>at view-space depth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>z</mi>
+  <mo>,</mo>
+</math>
+<p>projected screen radius is approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>r</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>px</mtext>
+            </mrow>
+          </msub>
+          <mo>∝</mo>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>f</mi>
+                <mrow data-mjx-texclass="ORD">
+                  <mtext>px</mtext>
+                </mrow>
+              </msub>
+              <mi>r</mi>
+            </mrow>
+            <mi>z</mi>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>As <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>z</mi>
+</math> increases, projected size falls.</p>
+<p>LOD thresholds can then be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>r</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>px</mtext>
+    </mrow>
+  </msub>
+  <mo>&gt;</mo>
+  <msub>
+    <mi>T</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">⇒</mo>
+  <mi>L</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>D</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>&lt;</mo>
+  <msub>
+    <mi>r</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>px</mtext>
+    </mrow>
+  </msub>
+  <mo>≤</mo>
+  <msub>
+    <mi>T</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">⇒</mo>
+  <mi>L</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>D</mi>
+    <mn>1</mn>
+  </msub>
+</math>
+<p>and so forth.</p>
+<hr />
+<p><strong>LOD hysteresis</strong></p>
+<p>Without hysteresis, an object near a threshold can alternate:</p>
+<pre id="p10-lod-flicker" class="text"><code>LOD 1
+LOD 2
+LOD 1
+LOD 2</code></pre>
+<p>due to camera jitter.</p>
+<p>Use different enter/leave thresholds.</p>
+<p>For example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>D</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mi>L</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>D</mi>
+    <mn>2</mn>
+  </msub>
+</math>
+<p>at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>r</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>px</mtext>
+    </mrow>
+  </msub>
+  <mo>&lt;</mo>
+  <mn>90</mn>
+</math>
+<p>but return:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>D</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mi>L</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>D</mi>
+    <mn>1</mn>
+  </msub>
+</math>
+<p>only at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>r</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>px</mtext>
+    </mrow>
+  </msub>
+  <mo>&gt;</mo>
+  <mn>110.</mn>
+</math>
+<p>State reduces temporal popping.</p>
+<hr />
+<p><strong>GPU-driven command generation</strong></p>
+<p>The culling/LOD kernel can output records such as:</p>
+<div class="sourceCode" id="p10-draw-command"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-draw-command-1"><a href="#p10-draw-command-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> DrawCommand</span>
+<span id="p10-draw-command-2"><a href="#p10-draw-command-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="p10-draw-command-3"><a href="#p10-draw-command-3" aria-hidden="true" tabindex="-1"></a>    <span class="ex">uint</span> indexCount<span class="op">;</span></span>
+<span id="p10-draw-command-4"><a href="#p10-draw-command-4" aria-hidden="true" tabindex="-1"></a>    <span class="ex">uint</span> instanceCount<span class="op">;</span></span>
+<span id="p10-draw-command-5"><a href="#p10-draw-command-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-draw-command-6"><a href="#p10-draw-command-6" aria-hidden="true" tabindex="-1"></a>    <span class="ex">uint</span> firstIndex<span class="op">;</span></span>
+<span id="p10-draw-command-7"><a href="#p10-draw-command-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span>  vertexOffset<span class="op">;</span></span>
+<span id="p10-draw-command-8"><a href="#p10-draw-command-8" aria-hidden="true" tabindex="-1"></a>    <span class="ex">uint</span> firstInstance<span class="op">;</span></span>
+<span id="p10-draw-command-9"><a href="#p10-draw-command-9" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>or the equivalent command format for the backend.</p>
+<p>Then an indirect renderer consumes those commands.</p>
+<p>Potential CPU workload becomes:</p>
+<pre id="p10-cpu-small" class="text"><code>update camera
+submit culling
+submit indirect rendering</code></pre>
+<p>instead of thousands of individual draw decisions.</p>
+<hr />
+<p><strong>GPU particle simulation</strong></p>
+<p>Particles are almost ideal compute workload.</p>
+<p>Each particle might store:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo>,</mo>
+  <mi>V</mi>
+  <mo>,</mo>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Simple integration:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>V</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>+</mo>
+      <mi mathvariant="normal">Δ</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>V</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>a</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>+</mo>
+      <mi mathvariant="normal">Δ</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>P</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>V</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>+</mo>
+      <mi mathvariant="normal">Δ</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo stretchy="false">←</mo>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo>+</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>One invocation per particle.</p>
+<hr />
+<p><strong>Structure of arrays for particles</strong></p>
+<p>Instead of:</p>
+<div class="sourceCode" id="p10-particle-aos"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-particle-aos-1"><a href="#p10-particle-aos-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Particle</span>
+<span id="p10-particle-aos-2"><a href="#p10-particle-aos-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="p10-particle-aos-3"><a href="#p10-particle-aos-3" aria-hidden="true" tabindex="-1"></a>    float3 position<span class="op">;</span></span>
+<span id="p10-particle-aos-4"><a href="#p10-particle-aos-4" aria-hidden="true" tabindex="-1"></a>    float3 velocity<span class="op">;</span></span>
+<span id="p10-particle-aos-5"><a href="#p10-particle-aos-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> age<span class="op">;</span></span>
+<span id="p10-particle-aos-6"><a href="#p10-particle-aos-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> lifetime<span class="op">;</span></span>
+<span id="p10-particle-aos-7"><a href="#p10-particle-aos-7" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>a compute-heavy particle system may prefer:</p>
+<pre id="p10-particle-soa" class="text"><code>positions[]
+velocities[]
+ages[]
+lifetimes[]</code></pre>
+<p>if different kernels touch different fields.</p>
+<p>Simulation might need position/velocity/age.</p>
+<p>Rendering might only need position/color/size.</p>
+<p>SoA reduces irrelevant memory traffic.</p>
+<hr />
+<p><strong>Particle spawning</strong></p>
+<p>You need a dead particle slot.</p>
+<p>One design maintains a free-index stack:</p>
+<pre id="p10-free-list" class="text"><code>freeIndices[]
+freeCount</code></pre>
+<p>Spawn:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>S</mi>
+  <mi>u</mi>
+  <mi>b</mi>
+  <mo stretchy="false">(</mo>
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>−</mo>
+  <mn>1.</mn>
+</math>
+<p>Index:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+  <mo>=</mo>
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Initialize particle.</p>
+<p>When particle dies, return ID:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>A</mi>
+  <mi>d</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+  <mo>.</mo>
+</math>
+<p>This works well when spawn/death volume is moderate.</p>
+<hr />
+<p><strong>Free-list hazards</strong></p>
+<p>You must establish ownership.</p>
+<p>A slot must not simultaneously be:</p>
+<ul>
+<li>alive,</li>
+<li>in the free list,</li>
+<li>allocated twice.</li>
+</ul>
+<p>Phase boundaries help.</p>
+<p>For example:</p>
+<pre id="p10-particle-phases" class="text"><code>simulate/mark dead
+    ↓
+collect dead IDs
+    ↓
+spawn using updated free list</code></pre>
+<p>is easier to reason about than arbitrary simultaneous mutation of everything.</p>
+<p>GPU algorithms become tractable when ownership is phase-structured.</p>
+<hr />
+<p><strong>Particle compaction</strong></p>
+<p>Another model stores a dense alive-particle list every frame.</p>
+<p>Predicate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mi>g</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>&lt;</mo>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Scan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>exclusiveScan</mi>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If alive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>P</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Now:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>next</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP">∑</mo>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Next simulation only processes live particles.</p>
+<p>That can be far better when many particles die.</p>
+<hr />
+<p><strong>Free-list versus compaction</strong></p>
+<p>A free list maintains stable particle slots but leaves holes.</p>
+<p>Compaction produces dense arrays but moves particles.</p>
+<p>Stable IDs may require separate identity fields.</p>
+<p>Again, no universal winner.</p>
+<p>If rendering/simulation benefits strongly from contiguous alive data, compaction is attractive.</p>
+<p>If stable slots and incremental spawning matter, free lists may win.</p>
+<p>Hybrid systems are common.</p>
+<hr />
+<p><strong>Particle sorting</strong></p>
+<p>Transparent particles often need approximate back-to-front rendering.</p>
+<p>Generate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>y</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>depth</mtext>
+  <mo>.</mo>
+</math>
+<p>Value:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <msub>
+    <mi>D</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then key-value sort.</p>
+<p>Your Maveb Gaussian system is effectively solving a closely related problem: depth ordering translucent splats within screen tiles.</p>
+<p>The radix infrastructure from Pass 9 transfers naturally.</p>
+<hr />
+<p><strong>Ping-pong buffers</strong></p>
+<p>Suppose simulation update reads old state and writes new state:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>F</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>S</mi>
+    <mi>t</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If every thread reads and writes the same array, invocation <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> may observe already-updated neighbor state.</p>
+<p>Instead:</p>
+<pre id="p10-pingpong" class="text"><code>Frame/iteration n:
+    read A
+    write B
+
+Frame/iteration n+1:
+    read B
+    write A</code></pre>
+<p>This is ping-ponging.</p>
+<p>It solves a <strong>data dependency</strong>.</p>
+<hr />
+<p><strong>Ping-pong is not the same as double buffering</strong></p>
+<p>They often both use two buffers, but their purposes differ.</p>
+<p>Ping-pong:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>algorithmic old state versus new state</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Double buffering:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>one frame/resource can be consumed while another is produced</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A particle simulation may use two state buffers for ping-pong <strong>and</strong> three copies of other per-frame resources for frames in flight.</p>
+<p>Keep those concepts separate.</p>
+<hr />
+<p><strong>Maveb radix uses ping-pong</strong></p>
+<p>You already have:</p>
+<pre id="p10-radix-ping" class="text"><code>keysA
+keysB
+
+valuesA
+valuesB</code></pre>
+<p>Pass 0:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">→</mo>
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>Pass 1:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo stretchy="false">→</mo>
+  <mi>A</mi>
+  <mo>.</mo>
+</math>
+<p>That is algorithmic ping-pong.</p>
+<p>The same principle appears in iterative fluid solvers, temporal buffers and image processing.</p>
+<hr />
+<p><strong>Double buffering</strong></p>
+<p>CPU produces frame <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+</math> resource while GPU consumes frame <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math>.</p>
+<p>Two copies prevent overwrite.</p>
+<p>Timeline:</p>
+<pre id="p10-double" class="text"><code>time →
+CPU: [prepare A] [prepare B] [wait?]
+GPU:             [use A   ] [use B]</code></pre>
+<p>If GPU occasionally lags by more than one frame, CPU may catch up and stall.</p>
+<p>Triple buffering increases slack.</p>
+<hr />
+<p><strong>Triple buffering</strong></p>
+<p>With three frame contexts:</p>
+<pre id="p10-triple" class="text"><code>frame 0 → slot A
+frame 1 → slot B
+frame 2 → slot C
+frame 3 → slot A again</code></pre>
+<p>Slot A may only be reused after GPU has finished frame 0.</p>
+<p>Advantages:</p>
+<ul>
+<li>more overlap,</li>
+<li>fewer CPU waits.</li>
+</ul>
+<p>Costs:</p>
+<ul>
+<li>more memory,</li>
+<li>potentially more frame latency.</li>
+</ul>
+<hr />
+<p><strong>Maveb is genuinely triple buffered</strong></p>
+<p>Current renderer creates three frame contexts and initializes:</p>
+<div class="sourceCode" id="p10-maveb-semaphore"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-maveb-semaphore-1"><a href="#p10-maveb-semaphore-1" aria-hidden="true" tabindex="-1"></a>frameSemaphore <span class="op">=</span></span>
+<span id="p10-maveb-semaphore-2"><a href="#p10-maveb-semaphore-2" aria-hidden="true" tabindex="-1"></a>    dispatch_semaphore_create<span class="op">(</span><span class="dv">3</span><span class="op">);</span></span></code></pre></div>
+<p>Frame slot:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>s</mi>
+          <mi>l</mi>
+          <mi>o</mi>
+          <mi>t</mi>
+          <mo>=</mo>
+          <mi>f</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mi>m</mi>
+          <mi>e</mi>
+          <mi>N</mi>
+          <mi>u</mi>
+          <mi>m</mi>
+          <mi>b</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+          <mn>3.</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Before creating new GPU work the CPU waits for an available frame slot.</p>
+<p>When the command buffer completes, its completion handler signals the semaphore.</p>
+<p>This is a real three-frames-in-flight system, not merely a theoretical <code>frameIndex % 3</code> variable.</p>
+<hr />
+<p><strong>CPU–GPU pipelining</strong></p>
+<p>Without pipelining:</p>
+<pre id="p10-serialized" class="text"><code>CPU prepare frame
+GPU execute frame
+CPU prepare next
+GPU execute next</code></pre>
+<p>one processor is idle almost constantly.</p>
+<p>Desired:</p>
+<pre id="p10-pipeline" class="text"><code>time →
+CPU: F0 prepare | F1 prepare | F2 prepare
+GPU:            | F0 GPU     | F1 GPU     | F2 GPU</code></pre>
+<p>Total frame latency may span multiple stages, but throughput can approach the slower stage:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>frame throughput</mtext>
+    </mrow>
+  </msub>
+  <mo>≈</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>CPU</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>GPU</mtext>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Not:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>CPU</mtext>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>GPU</mtext>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>That is the point of frames in flight.</p>
+<hr />
+</section>
+<section id="id_05-engine-i-ch019-command-execution-async-work-memory-lifetimes" class="level5">
+<h5>COMMAND EXECUTION, ASYNC WORK &amp; MEMORY LIFETIMES</h5>
+<p><strong>GPU command processor</strong></p>
+<p>Your CPU does not directly call an ALU and say:</p>
+<blockquote>
+<p>Run this shader now.</p>
+</blockquote>
+<p>It records command data describing:</p>
+<ul>
+<li>pipeline state,</li>
+<li>resources,</li>
+<li>dispatch/draw dimensions,</li>
+<li>copies,</li>
+<li>barriers.</li>
+</ul>
+<p>The GPU command processor/front-end consumes those commands and schedules work onto execution engines.</p>
+<p>Therefore there are at least two parallel timelines:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>CPU command generation</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>GPU command execution</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A well-designed renderer prevents unnecessary synchronization between them.</p>
+<hr />
+<p><strong>Submission overhead</strong></p>
+<p>Imagine issuing 100,000 tiny dispatches each doing 20 arithmetic instructions.</p>
+<p>Even if GPU arithmetic is fast, command encoding, validation, queue processing and state transitions become significant.</p>
+<p>Hence GPU work should usually have enough granularity.</p>
+<p>“Use more dispatches” is not free.</p>
+<p>This is one reason kernels sometimes fuse adjacent stages.</p>
+<p>But excessive fusion increases register pressure and divergence.</p>
+<p>Once again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>tradeoff</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>KairoGPU’s current compute wrapper is intentionally synchronous</strong></p>
+<p>Current Kairo Metal vector operation performs:</p>
+<pre id="p10-kairo-sync" class="objc"><code>command = queue.commandBuffer();
+encode();
+command.commit();
+command.waitUntilCompleted();</code></pre>
+<p>for every vector add/multiply call.</p>
+<p>That is excellent for a simple deterministic wrapper and unit-testable API.</p>
+<p>But it destroys CPU–GPU overlap.</p>
+<p>The caller cannot enqueue:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64</mn>
+</math>
+<p>operations and let the GPU work asynchronously.</p>
+<p>The CPU waits after each one.</p>
+<p>That distinction is essential when interpreting its benchmark.</p>
+<hr />
+<p><strong>Asynchronous compute</strong></p>
+<p>Async compute means compute work can be scheduled independently of graphics work, potentially overlapping.</p>
+<p>Conceptually:</p>
+<pre id="p10-async" class="text"><code>Graphics: [shadow][gbuffer]------[lighting]
+Compute :        [particles][SSAO]</code></pre>
+<p>If resource dependencies permit and hardware has available execution capacity, some work can overlap.</p>
+<p>But:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>asynchronous submission does not guarantee physical parallel execution</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Why graphics + compute can fail to speed up</strong></p>
+<p>Suppose graphics already saturates:</p>
+<ul>
+<li>shader ALUs,</li>
+<li>memory bandwidth,</li>
+<li>register capacity.</li>
+</ul>
+<p>Launching compute concurrently may merely make both workloads compete.</p>
+<p>Frame may become slower.</p>
+<p>Async compute is valuable when workloads complement each other.</p>
+<p>For example one phase may be raster/backend heavy while compute uses spare arithmetic capacity.</p>
+<p>Or one workload may stall on memory while another has independent arithmetic.</p>
+<p>You profile.</p>
+<hr />
+<p><strong>Resource dependencies constrain overlap</strong></p>
+<p>Suppose compute writes buffer:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>Graphics immediately reads:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">→</mo>
+  <mi>G</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>s</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>is a real dependency.</p>
+<p>No amount of async queue magic removes it.</p>
+<p>To overlap, find independent work:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>while:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>s</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>runs.</p>
+<p>Dependency graphs, not queue count, determine possible overlap.</p>
+<hr />
+<p><strong>Transfer engines / copy queues</strong></p>
+<p>Many GPUs provide dedicated mechanisms for:</p>
+<ul>
+<li>buffer copies,</li>
+<li>texture copies,</li>
+<li>uploads,</li>
+<li>readbacks.</li>
+</ul>
+<p>On discrete GPUs these may correspond to separate DMA/copy engines.</p>
+<p>Using them can allow copying while graphics/compute continue.</p>
+<p>On Apple unified-memory systems, the physical memory model differs, but blit/copy encoders and resource synchronization still matter.</p>
+<p>Do not blindly transfer discrete-GPU assumptions to unified memory.</p>
+<hr />
+<p><strong>CPU→GPU upload bandwidth</strong></p>
+<p>On a discrete GPU, uploads typically cross a PCIe-like interconnect.</p>
+<p>If every frame uploads:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mtext> GB</mtext>
+</math>
+<p>at 60 FPS:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>60</mn>
+  <mtext> GB/s</mtext>
+</math>
+<p>of host→device traffic would be required before considering anything else.</p>
+<p>That can exceed the interconnect budget.</p>
+<p>Hence:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>keep persistent data resident on the GPU</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Upload only changes.</p>
+<hr />
+<p><strong>Apple unified memory changes the topology, not the optimization problem</strong></p>
+<p>CPU and GPU can share physical memory.</p>
+<p>That can avoid an explicit host→VRAM copy.</p>
+<p>But memory traffic is still finite.</p>
+<p>Caches still matter.</p>
+<p>Synchronization still matters.</p>
+<p>Writing massive CPU buffers that the GPU immediately streams still consumes DRAM bandwidth.</p>
+<p>Unified memory removes one kind of transfer bottleneck; it does not create infinite bandwidth.</p>
+<hr />
+<p><strong>GPU→CPU readback stalls</strong></p>
+<p>This is among the easiest ways to destroy a renderer.</p>
+<p>Bad pattern:</p>
+<div class="sourceCode" id="p10-bad-read"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-bad-read-1"><a href="#p10-bad-read-1" aria-hidden="true" tabindex="-1"></a>DispatchGPU<span class="op">();</span></span>
+<span id="p10-bad-read-2"><a href="#p10-bad-read-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-bad-read-3"><a href="#p10-bad-read-3" aria-hidden="true" tabindex="-1"></a>WaitForGPU<span class="op">();</span></span>
+<span id="p10-bad-read-4"><a href="#p10-bad-read-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-bad-read-5"><a href="#p10-bad-read-5" aria-hidden="true" tabindex="-1"></a>count <span class="op">=</span></span>
+<span id="p10-bad-read-6"><a href="#p10-bad-read-6" aria-hidden="true" tabindex="-1"></a>    ReadBuffer<span class="op">();</span></span>
+<span id="p10-bad-read-7"><a href="#p10-bad-read-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="p10-bad-read-8"><a href="#p10-bad-read-8" aria-hidden="true" tabindex="-1"></a>SubmitNextWork<span class="op">(</span>count<span class="op">);</span></span></code></pre></div>
+<p>CPU stalls until GPU finishes.</p>
+<p>GPU may then stall waiting for CPU to submit subsequent work.</p>
+<p>The pipeline collapses.</p>
+<hr />
+<p><strong>Indirect buffers are one answer to readback</strong></p>
+<p>Instead:</p>
+<pre id="p10-gpu-chain" class="text"><code>GPU creates count
+GPU creates indirect args
+GPU consumes indirect args</code></pre>
+<p>Read the result back only when the CPU actually needs it, possibly several frames later.</p>
+<p>Maveb’s radix dispatch does exactly this.</p>
+<p>This is why indirect execution and pipelining are deeply connected topics.</p>
+<hr />
+<p><strong>Asynchronous readback</strong></p>
+<p>If CPU genuinely needs GPU data, copy into a CPU-visible readback buffer and process after completion.</p>
+<p>Current Maveb frame capture does this correctly.</p>
+<p>It encodes texture→buffer copy.</p>
+<p>Then registers a command-buffer completion handler.</p>
+<p>Only when GPU work has completed does the handler access buffer contents and construct the CPU capture.</p>
+<p>The main frame function does not call:</p>
+<div class="sourceCode" id="p10-no-wait"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-no-wait-1"><a href="#p10-no-wait-1" aria-hidden="true" tabindex="-1"></a>waitUntilCompleted<span class="op">()</span></span></code></pre></div>
+<p>for every screenshot copy.</p>
+<p>That preserves normal frame pipelining.</p>
+<hr />
+<p><strong>Persistent mapped upload buffers</strong></p>
+<p>The inefficient model:</p>
+<pre id="p10-map-everything" class="text"><code>create/map buffer
+write 64 bytes
+unmap
+submit
+
+create/map another buffer
+...</code></pre>
+<p>causes allocation/mapping overhead.</p>
+<p>Instead allocate a large CPU-visible upload buffer once and keep its CPU pointer available.</p>
+<p>Every frame allocate slices:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>+</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Write directly.</p>
+<p>Bind GPU buffer + offset.</p>
+<p>This is persistent mapped arena allocation.</p>
+<hr />
+<p><strong>Maveb FrameContext does exactly this</strong></p>
+<p>Each frame context owns an 8 MiB <code>StorageModeShared</code> upload buffer.</p>
+<p>Allocation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>n</mi>
+  <mi>U</mi>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>n</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo stretchy="false">←</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>+</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Returned slice contains:</p>
+<div class="sourceCode" id="p10-slice"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-slice-1"><a href="#p10-slice-1" aria-hidden="true" tabindex="-1"></a>buffer</span>
+<span id="p10-slice-2"><a href="#p10-slice-2" aria-hidden="true" tabindex="-1"></a>offset</span>
+<span id="p10-slice-3"><a href="#p10-slice-3" aria-hidden="true" tabindex="-1"></a>size</span>
+<span id="p10-slice-4"><a href="#p10-slice-4" aria-hidden="true" tabindex="-1"></a>cpuAddress</span></code></pre></div>
+<p>Default alignment:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>CPU writes directly through the shared buffer’s <code>contents()</code> pointer.</p>
+<p>No per-object Metal buffer creation.</p>
+<p>Very good.</p>
+<hr />
+<p><strong>It is technically a per-frame bump arena</strong></p>
+<p>The source labels it an <code>"Upload Ring"</code>.</p>
+<p>Inside one <code>FrameContext</code>, allocation is currently:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>monotonic cursor reset at beginFrame()</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>rather than a circular buffer with independent head and tail.</p>
+<p>The <strong>three FrameContexts together form the frame ring</strong>.</p>
+<p>Slot 0’s cursor is reset only when its frame context becomes reusable after GPU completion.</p>
+<p>This architecture is simpler than managing one giant circular arena with arbitrary in-flight ranges.</p>
+<hr />
+<p><strong>Ring buffer principle</strong></p>
+<p>For a true single-buffer ring, maintain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+</math>
+<p>for new allocations and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+</math>
+<p>for oldest GPU-in-use data.</p>
+<p>Never let head overtake live tail.</p>
+<p>If allocation reaches buffer end:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo stretchy="false">→</mo>
+  <mn>0</mn>
+</math>
+<p>only if the wrapped range is no longer in flight.</p>
+<p>This requires fences/timeline tracking.</p>
+<p>Per-frame arenas avoid much of that complexity.</p>
+<hr />
+<p><strong>Readback arena</strong></p>
+<p>Maveb also allocates a:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+  <mtext> KiB</mtext>
+</math>
+<p>shared readback buffer per frame context.</p>
+<p>Same aligned bump mechanism.</p>
+<p>That provides bounded CPU-visible storage for GPU results without creating one tiny readback resource per query.</p>
+<p>This is exactly the same allocation principle in the opposite data direction.</p>
+<hr />
+<p><strong>GPU memory suballocation</strong></p>
+<p>Suppose you need:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>10</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>small 4 KiB GPU buffers.</p>
+<p>Requesting 10,000 dedicated GPU memory allocations can be expensive and fragmented.</p>
+<p>Instead reserve a large block:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+  <mtext> MiB</mtext>
+</math>
+<p>and allocate slices from it.</p>
+<p>Resource:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This is suballocation.</p>
+<hr />
+<p><strong>Dedicated allocations versus suballocation</strong></p>
+<p>Dedicated allocation is attractive for:</p>
+<ul>
+<li>enormous textures/buffers,</li>
+<li>special alignment/tiling requirements,</li>
+<li>resources whose lifetime spans most of the application,</li>
+<li>allocations where backend recommends/requires dedication.</li>
+</ul>
+<p>Suballocation is excellent for:</p>
+<ul>
+<li>many small resources,</li>
+<li>dynamic/transient resources,</li>
+<li>predictable lifetime pools.</li>
+</ul>
+<p>A serious allocator usually supports both.</p>
+<hr />
+<p><strong>Internal and external fragmentation</strong></p>
+<p>Internal fragmentation:</p>
+<p>You allocate 300 bytes from a 512-byte block.</p>
+<p>Unused:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>212</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>External fragmentation:</p>
+<p>There is enough total free memory, but it exists in disconnected chunks.</p>
+<p>For example:</p>
+<pre id="p10-frag" class="text"><code>free 10 MB
+used 5 MB
+free 10 MB
+used 5 MB
+free 10 MB</code></pre>
+<p>Total free:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>30</mn>
+  <mtext> MB</mtext>
+  <mo>.</mo>
+</math>
+<p>A contiguous 25 MB allocation cannot fit.</p>
+<p>Allocator design matters in long-running engines.</p>
+<hr />
+<p><strong>Common suballocators</strong></p>
+<p>A linear/bump allocator is ideal for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>reset-whole-pool-at-once</mtext>
+</math>
+<p>transient data.</p>
+<p>A free-list allocator handles arbitrary lifetimes.</p>
+<p>Buddy allocation makes split/merge efficient while restricting block sizes to powers of two.</p>
+<p>Slab/pool allocators are excellent when many objects have equal size.</p>
+<p>There is no single GPU allocator for every lifetime class.</p>
+<hr />
+<p><strong>Resource aliasing</strong></p>
+<p>Suppose texture A is only used during shadow generation.</p>
+<p>Texture B is only used much later during bloom.</p>
+<p>Their lifetimes do not overlap.</p>
+<p>Instead of allocating:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>the renderer may place both resources in the same physical region at different times.</p>
+<p>That is resource aliasing.</p>
+<hr />
+<p><strong>Lifetime interval view</strong></p>
+<p>Represent resource lifetime as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>l</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Two resources may alias if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>l</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>A</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>∩</mo>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>l</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>B</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi data-mjx-alternate="1">∅</mi>
+  <mo>.</mo>
+</math>
+<p>This turns transient resource allocation into an interval-allocation problem.</p>
+<p>A frame graph can compute lifetimes automatically.</p>
+<hr />
+<p><strong>Aliasing requires synchronization discipline</strong></p>
+<p>Memory reuse is legal only after prior resource use has truly ended.</p>
+<p>Otherwise:</p>
+<pre id="p10-alias-bug" class="text"><code>pass A still reading memory
+pass B overwrites same bytes</code></pre>
+<p>gives corruption.</p>
+<p>Alias transitions may require explicit API barriers or hazard tracking depending on backend.</p>
+<p>Aliasing is memory optimization built on correct lifetime analysis.</p>
+<hr />
+<p><strong>Transient memory</strong></p>
+<p>A resource is transient if its contents need exist only during part of a frame.</p>
+<p>Examples:</p>
+<ul>
+<li>blur intermediates,</li>
+<li>temporary visibility lists,</li>
+<li>scan workspace,</li>
+<li>G-buffer attachments not needed after lighting.</li>
+</ul>
+<p>Because lifetimes are short and predictable, transient resources are ideal candidates for pooled/aliased memory.</p>
+<hr />
+<p><strong>Maveb already reserves per-frame transient memory infrastructure</strong></p>
+<p>Each <code>FrameContext</code> creates a private:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64</mn>
+  <mtext> MiB</mtext>
+</math>
+<p>Metal heap labelled:</p>
+<pre id="p10-transient" class="text"><code>Frame N Transient Heap</code></pre>
+<p>with tracked hazards.</p>
+<p>That is exactly the kind of backing storage from which transient resources can be allocated.</p>
+<p>From the inspected code, I would not yet claim that a general lifetime-aware frame-graph alias allocator is fully using this heap everywhere—the infrastructure is present, while full transient lifetime aliasing is a separate system.</p>
+<p>That distinction matters.</p>
+<hr />
+<p><strong>GPU timestamp queries</strong></p>
+<p>CPU timing:</p>
+<div class="sourceCode" id="p10-wrong-gpu-time"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-wrong-gpu-time-1"><a href="#p10-wrong-gpu-time-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> t0 <span class="op">=</span> CPUClock<span class="op">::</span>now<span class="op">();</span></span>
+<span id="p10-wrong-gpu-time-2"><a href="#p10-wrong-gpu-time-2" aria-hidden="true" tabindex="-1"></a>submit<span class="op">();</span></span>
+<span id="p10-wrong-gpu-time-3"><a href="#p10-wrong-gpu-time-3" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> t1 <span class="op">=</span> CPUClock<span class="op">::</span>now<span class="op">();</span></span></code></pre></div>
+<p>mostly measures:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>command submission cost</mtext>
+  <mo>.</mo>
+</math>
+<p>It does <strong>not</strong> measure shader execution.</p>
+<p>To measure GPU duration, the GPU itself records timestamps around work.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mtext>GPU timestamp before pass</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mtext>GPU timestamp after pass</mtext>
+  <mo>.</mo>
+</math>
+<p>Duration:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>T</mi>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>t</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>t</mi>
+            <mn>0</mn>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>×</mo>
+          <mtext>timestamp period</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Coarse GPU timing already exists in Maveb</strong></p>
+<p>The frame command buffer completion handler reads:</p>
+<div class="sourceCode" id="p10-gpu-time"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="p10-gpu-time-1"><a href="#p10-gpu-time-1" aria-hidden="true" tabindex="-1"></a>GPUEndTime<span class="op">()</span> <span class="op">-</span></span>
+<span id="p10-gpu-time-2"><a href="#p10-gpu-time-2" aria-hidden="true" tabindex="-1"></a>GPUStartTime<span class="op">()</span></span></code></pre></div>
+<p>and stores milliseconds.</p>
+<p>That gives coarse command-buffer/frame GPU duration.</p>
+<p>Useful.</p>
+<p>But it does not tell you:</p>
+<pre id="p10-pass-timing-needed" class="text"><code>Gaussian projection: 0.3 ms
+Radix sort: 1.1 ms
+Scene pass: 2.8 ms
+TAA: 0.4 ms</code></pre>
+<p>For that you need pass-level GPU timestamp/counter instrumentation.</p>
+<hr />
+<p><strong>Pipeline statistics queries</strong></p>
+<p>Timing tells you:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>how long</mtext>
+  <mo>.</mo>
+</math>
+<p>Pipeline statistics can tell you:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>how much work</mtext>
+  <mo>.</mo>
+</math>
+<p>Depending on API/hardware, possible counters include:</p>
+<ul>
+<li>vertices processed,</li>
+<li>primitives generated,</li>
+<li>fragments,</li>
+<li>compute invocations,</li>
+<li>clipping statistics.</li>
+</ul>
+<p>If frame suddenly doubles from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mtext> ms</mtext>
+  <mo stretchy="false">→</mo>
+  <mn>16</mn>
+  <mtext> ms</mtext>
+  <mo>,</mo>
+</math>
+<p>statistics help distinguish:</p>
+<blockquote>
+<p>Shader got slower</p>
+</blockquote>
+<p>from:</p>
+<blockquote>
+<p>We accidentally submitted twice as much geometry.</p>
+</blockquote>
+<p>Not all metrics are available on every backend.</p>
+<p>Capability querying matters.</p>
+<hr />
+<p><strong>GPU profiling zones</strong></p>
+<p>A profiling system should expose named zones:</p>
+<pre id="p10-zones" class="text"><code>Frame
+ ├── Shadow
+ ├── Gaussian Project
+ ├── Gaussian Scan
+ ├── Gaussian Radix
+ ├── Gaussian Composite
+ ├── Scene
+ ├── TAA
+ └── Presentation</code></pre>
+<p>Each zone can associate:</p>
+<ul>
+<li>CPU encoding time,</li>
+<li>GPU start/end timestamp,</li>
+<li>counters,</li>
+<li>command-buffer identity.</li>
+</ul>
+<p>Then profiler visualizes dependency/overlap.</p>
+<p>Without zones, optimization becomes guesswork.</p>
+<hr />
+<p><strong>Current Maveb profiler status</strong></p>
+<p>The inspected <code>Profiler.cpp</code> is a CPU-side <code>ProfileScope</code>.</p>
+<p>It records:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>name</mtext>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mtext>milliseconds</mtext>
+</math>
+<p>under a mutex.</p>
+<p>The renderer separately records whole-command-buffer GPU time.</p>
+<p>So current infrastructure distinguishes some CPU/GPU timing, but a full per-pass GPU timestamp-zone system is still a useful future step.</p>
+<p>That would be particularly valuable for your Gaussian scan/radix pipeline.</p>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch410.xhtml#id_06-GPU-Architecture-and-Real-Time-Rendering" class="wikilink">Reading map</a> · <a href="ch396.xhtml#id_05-engine-i-ch018-ecs-contracts-diagnostics-and-gpu-handoff" class="wikilink">Previous chapter (Spatial Worlds, Engine State, and Simulation, Part 2, Ch. 18)</a> · <a href="ch428.xhtml#id_05-engine-i-ch020-gpu-performance-models-and-principled-redesign" class="wikilink">Next chapter (GPU Architecture and Real-Time Rendering, Part 2, Ch. 11)</a></p>
+</section>
+</section>
+</section>
+</section>
+</body>
+</html>

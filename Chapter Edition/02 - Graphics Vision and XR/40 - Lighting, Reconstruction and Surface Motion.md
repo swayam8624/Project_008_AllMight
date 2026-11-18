@@ -8,7 +8,7 @@ Rendering captured kernels still requires lighting, reconstruction and temporal 
 
 **Recall question:** What additional information is needed when a captured surface changes over time?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 91349–94605; source-span SHA256 a55a6beecf9a393c115d469a2d7f91cc09f84521eeced8863d8c7b2727ef8229. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 92692–95948; source-span SHA256 a55a6beecf9a393c115d469a2d7f91cc09f84521eeced8863d8c7b2727ef8229. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Illuminate, reconstruct and animate the surface

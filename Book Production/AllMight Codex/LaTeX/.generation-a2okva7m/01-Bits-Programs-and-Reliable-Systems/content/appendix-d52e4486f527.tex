@@ -1,0 +1,64 @@
+\hypertarget{appendix-d52e4486f527}{}\label{referencestart:appendix-d52e4486f527}
+\section{Ownership and non-owning views}\label{appendix-d52e4486f527-ownership-and-non-owning-views}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C003 · \textbf{Latest development:} C010
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-d52e4486f527-definition-and-mechanism}
+
+By-value copies use member semantics, not recursive deep cloning. Rule-Zero composition delegates ownership to members; raw owners must coordinate transfer and release. Copying a pointer/view/handle is not acquiring ownership.
+
+\end{allmightroledefinition}
+
+Copying span/string\_view or capturing a view by value copies only a descriptor. An owning string capture supplies independent storage; a view or handle does not automatically pin a deferred resource.
+
+The inline C++ laboratory distinguishes NamedVector::to\_array, which copies values into a new array, from ArrayVector::view, which aliases actual array elements without owning them. Neither span nor pointer extends backing lifetime. Ownership and RAII are introduced as next-depth connections, not yet a full exception-safety treatment.
+
+M010 makes the distinction operational: an owner is responsible for release; a borrow only accesses. \texttt{std::unique\_ptr} expresses exclusive ownership, \texttt{std::shared\_ptr} retains a shared lifetime, and \texttt{std::weak\_ptr} observes without extending that lifetime. Smart pointers do not remove the borrow/invalidation rules of raw pointers obtained from them. See \hyperref[appendix-69739d3ab49b]{RAII and resource handles} and \hyperref[appendix-51602cabe815]{Exclusive and shared smart-pointer ownership}.
+
+An owner controls a resource's validity and release; a view merely refers to it. Vector owns its element buffer; span does not copy or prolong that buffer's life. Owner destruction or invalidating reallocation can dangle the span. A reader retaining a span needs stable live backing for every read, not only at construction.
+
+\subsection{Prerequisites}\label{appendix-d52e4486f527-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0b104bcba06b]{Storage duration and object lifetime} --- Access requires an object and backing storage that are still valid.
+\item
+  \hyperref[appendix-c3480f7d9ff3]{Dynamic allocation and heap} --- Allocated buffers/blocks supply the storage whose ownership and fragmentation matter.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-d52e4486f527-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-313ee7a0ba7b]{Memory-mapped files} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-e89a8f290ef5]{Atomic publication and durability} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-aea529eb5175]{Deferred captures and borrowed views}
+\item
+  \hyperref[appendix-1340cd1ce582]{Copy semantics and resource identity}
+\item
+  \hyperref[appendix-7679107d057e]{Rules of Three Five and Zero}
+\item
+  \hyperref[appendix-69739d3ab49b]{RAII and resource handles}
+\item
+  \hyperref[appendix-51602cabe815]{Exclusive and shared smart-pointer ownership}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-d52e4486f527-recall-and-next-depth}
+
+Explain why returning a view into a local vector fails.
+
+\textbf{Pending:} smart owners, shared immutable data and scheduling/resource pinning.
+
+\subsection{Source and navigation}\label{appendix-d52e4486f527-source-and-navigation}
+
+\hyperref[appendix-fd090d982a15-m009---parts-127-147]{C009 development}
+
+\hyperref[appendix-fd090d982a15-m008---parts-113-126]{C008 development and corrections}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)} · \hyperref[01-foundations-i-ch003-bringing-the-object-model-back-to-bytes]{C007 development}

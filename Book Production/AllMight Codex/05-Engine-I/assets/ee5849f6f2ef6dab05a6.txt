@@ -1,0 +1,1404 @@
+Use one continuous example: **a triangular metal panel bolted into a robot workcell**.
+
+Its corners are:
+
+\[
+A,\;B,\;C
+\]
+
+and there is a small sensor at point:
+
+\[
+P
+\]
+
+somewhere on the panel.
+
+The robot needs to know where the panel is, which side is its front, whether a point lies inside it, and how to interpolate temperature/color values measured at its three corners.
+
+That single example contains **handedness, orientation, affine geometry, barycentre, and barycentric coordinates**.
+
+---
+
+# 1. Handedness = how the whole 3D world labels rotation/orientation
+
+Imagine the robot's coordinate tripod:
+
+```text
+             +Y
+              ↑
+              |
+              |
+              ●──────→ +X
+             /
+            /
+          +Z
+```
+
+There are two fundamentally different ways X, Y and Z can be arranged:
+
+- right-handed;
+- left-handed.
+
+The test is essentially:
+
+\[
+(X\times Y)\cdot Z
+\]
+
+Positive means one handedness, negative the other.
+
+## Real-life analogy
+
+Look at your left and right hands.
+
+They are mirror images.
+
+You can rotate your right hand all day, but you cannot rotate it into a left hand.
+
+You need a **mirror/reflection**.
+
+That is exactly what handedness means geometrically.
+
+---
+
+## Why does the robot care?
+
+Suppose the CAD software defines:
+
+```text
+X = right
+Y = forward
+Z = up
+```
+
+but your rendering/robotics software imports the model using a coordinate convention with the opposite handedness.
+
+The triangle may appear in the right physical location, but things involving **orientation** may reverse:
+
+- front and back faces;
+- triangle winding;
+- normals;
+- clockwise/counterclockwise tests;
+- cross products;
+- rotations.
+
+The plate may suddenly look "inside out."
+
+---
+
+# 2. Orientation = which way something is facing or ordered
+
+Now forget the whole 3D coordinate system for a moment.
+
+Look only at our triangle:
+
+```text
+              C
+             / \
+            /   \
+           /  P  \
+          /       \
+         A─────────B
+```
+
+Suppose its vertices are stored:
+
+\[
+A\rightarrow B\rightarrow C.
+\]
+
+Seen from one side, that might be counterclockwise.
+
+If we instead store:
+
+\[
+A\rightarrow C\rightarrow B,
+\]
+
+we have reversed the triangle orientation.
+
+The triangle occupies the exact same physical region.
+
+Only its **ordering/facing** changed.
+
+---
+
+# 3. Real-life orientation example: which side of a panel is the front?
+
+The robot has a welding tool.
+
+It must weld the **front** of the panel, not the rear.
+
+From the triangle edges:
+
+\[
+B-A
+\]
+
+and:
+
+\[
+C-A,
+\]
+
+we calculate:
+
+\[
+N=(B-A)\times(C-A).
+\]
+
+That gives an oriented normal.
+
+Maybe:
+
+```text
+              N
+              ↑
+              |
+              |
+       C──────●
+      /      /
+     /      /
+    A──────B
+```
+
+Reverse the vertices:
+
+\[
+(C-A)\times(B-A)
+\]
+
+and:
+
+\[
+N'=-N.
+\]
+
+Now the robot thinks "front" is the other side.
+
+So:
+
+\[
+\boxed{
+\text{orientation tells us which side/direction is positive}.
+}
+\]
+
+---
+
+# 4. Handedness and orientation are related, but not identical
+
+This distinction is important.
+
+### Handedness
+
+Describes the orientation of the **entire coordinate basis**:
+
+\[
+X,Y,Z.
+\]
+
+### Orientation
+
+Can describe an individual object/order:
+
+\[
+A,B,C.
+\]
+
+You can have:
+
+- a right-handed world;
+- containing a triangle wound one way;
+- and another triangle wound the opposite way.
+
+So handedness is the global coordinate convention.
+
+Triangle orientation is a local ordering.
+
+---
+
+# 5. How changing handedness can flip orientation
+
+Suppose our right-handed room coordinates are converted to another system by mirroring Z:
+
+\[
+(x,y,z)
+\rightarrow
+(x,y,-z).
+\]
+
+The triangle still has the same shape.
+
+Lengths stay the same.
+
+Angles stay the same.
+
+But the world has undergone a mirror reflection.
+
+An orientation-sensitive quantity can reverse sign.
+
+So a triangle that was considered front-facing may become back-facing unless you also compensate by reversing its vertex ordering.
+
+This is why model importers sometimes do things resembling:
+
+```text
+flip one coordinate axis
++
+reverse triangle winding
+```
+
+The first converts coordinate convention.
+
+The second restores the desired surface orientation.
+
+---
+
+# 6. 2D orientation = "did I turn left or right?"
+
+Now imagine looking straight down at our panel.
+
+Coordinates:
+
+\[
+A=(0,0)
+\]
+
+\[
+B=(4,0)
+\]
+
+\[
+C=(1,3).
+\]
+
+We evaluate:
+
+\[
+(B_x-A_x)(C_y-A_y)
+-
+(B_y-A_y)(C_x-A_x).
+\]
+
+That is:
+
+\[
+4(3)-0(1)=12.
+\]
+
+Positive.
+
+With normal mathematical XY coordinates, this means:
+
+\[
+A\rightarrow B\rightarrow C
+\]
+
+turns counterclockwise.
+
+---
+
+# 7. Real-life 2D orientation use
+
+Imagine a delivery robot driving:
+
+```text
+A → B → C
+```
+
+The same determinant tells:
+
+> From road AB, is destination C to my left or right?
+
+That's orientation.
+
+The same idea is used in:
+
+- GPS/navigation;
+- polygon winding;
+- convex hulls;
+- triangle rasterization;
+- line intersection;
+- collision geometry.
+
+So the signed area formula is really a **left/right test**.
+
+---
+
+# 8. 3D orientation = "which side of this surface am I on?"
+
+Now suppose the robot camera is at point:
+
+\[
+D.
+\]
+
+Triangle:
+
+\[
+A,B,C
+\]
+
+defines the panel plane.
+
+Compute:
+
+\[
+N=(B-A)\times(C-A).
+\]
+
+Then:
+
+\[
+N\cdot(D-A).
+\]
+
+Positive means the camera lies on one side.
+
+Negative means the other side.
+
+Zero means the camera lies exactly in the triangle plane.
+
+So:
+
+\[
+\boxed{
+\text{2D orientation}
+\rightarrow
+\text{left/right}
+}
+\]
+
+while:
+
+\[
+\boxed{
+\text{3D orientation}
+\rightarrow
+\text{front/back of a plane}.
+}
+\]
+
+Same fundamental idea.
+
+---
+
+# 9. Now affine geometry enters
+
+Suppose the panel is mounted somewhere in the factory.
+
+Later the robot moves the entire panel:
+
+```text
+original
+
+              C
+             / \
+            / P \
+           /     \
+          A───────B
+
+
+after moving it
+
+                         C'
+                        / \
+                       / P'\
+                      /     \
+                     A'──────B'
+```
+
+The important question:
+
+> How can we describe P relative to the triangle so that when the entire triangle moves, P automatically moves correctly with it?
+
+This is where **affine combinations** appear.
+
+---
+
+# 10. Affine = relative geometry without caring where world origin is
+
+Suppose:
+
+\[
+P
+=
+\alpha A+\beta B+\gamma C
+\]
+
+with:
+
+\[
+\boxed{
+\alpha+\beta+\gamma=1.
+}
+\]
+
+Example:
+
+\[
+P
+=
+0.5A+0.25B+0.25C.
+\]
+
+This says:
+
+```text
+50% contribution from A
+25% contribution from B
+25% contribution from C
+```
+
+Not necessarily "percentage distance."
+
+They are **affine weights**.
+
+---
+
+# 11. Why does the sum have to equal 1?
+
+Move the entire panel by:
+
+\[
+T.
+\]
+
+Then:
+
+\[
+A'=A+T,
+\]
+
+\[
+B'=B+T,
+\]
+
+\[
+C'=C+T.
+\]
+
+Use same weights:
+
+\[
+P'
+=
+0.5A'+0.25B'+0.25C'.
+\]
+
+Substitute:
+
+\[
+=
+0.5(A+T)
++
+0.25(B+T)
++
+0.25(C+T).
+\]
+
+Collect translation:
+
+\[
+=
+0.5A+0.25B+0.25C
++
+(0.5+0.25+0.25)T.
+\]
+
+Weights sum to one:
+
+\[
+= P+T.
+\]
+
+Exactly correct.
+
+So:
+
+\[
+\boxed{
+\sum weights=1
+}
+\]
+
+makes the description independent of the world origin.
+
+That is the core meaning of **affine** here.
+
+---
+
+# 12. Simplest real-life meaning of affine
+
+Think:
+
+> "Describe where something is relative to other things rather than relative to absolute zero."
+
+If you say:
+
+> The sensor is halfway between these two screws.
+
+That relationship remains true when the entire machine is moved.
+
+That is affine thinking.
+
+---
+
+# 13. Barycentric coordinates = affine weights using triangle vertices
+
+Now we give those weights a specific name.
+
+For triangle:
+
+\[
+A,B,C,
+\]
+
+if:
+
+\[
+P=
+\alpha A+\beta B+\gamma C
+\]
+
+and:
+
+\[
+\alpha+\beta+\gamma=1,
+\]
+
+then:
+
+\[
+\boxed{
+(\alpha,\beta,\gamma)
+}
+\]
+
+are P's **barycentric coordinates**.
+
+Example:
+
+\[
+\boxed{
+P=(0.5,\;0.25,\;0.25)_{\text{barycentric}}
+}
+\]
+
+means:
+
+\[
+P
+=
+0.5A+
+0.25B+
+0.25C.
+\]
+
+---
+
+# 14. Barycentre versus barycentric coordinates
+
+These sound nearly identical but are different.
+
+## Barycentric coordinates
+
+Any weights:
+
+\[
+(\alpha,\beta,\gamma)
+\]
+
+summing to 1.
+
+They describe any point relative to the triangle.
+
+## Barycentre / centroid
+
+The special point where all three weights are equal:
+
+\[
+\boxed{
+\alpha=\beta=\gamma=\frac13.
+}
+\]
+
+Thus:
+
+\[
+\boxed{
+G=
+\frac{A+B+C}{3}.
+}
+\]
+
+That is the triangle's centroid.
+
+So:
+
+```text
+barycentric coordinates
+= general coordinate system
+
+barycentre
+= one special point
+```
+
+---
+
+# 15. Real-life barycentre example
+
+Imagine the triangular plate has equal thickness and uniform material.
+
+Its center of mass lies at:
+
+\[
+\frac13A+
+\frac13B+
+\frac13C.
+\]
+
+If you want to balance the plate on a sharp point, place that point at the centroid.
+
+That is a literal physical barycentre.
+
+---
+
+# 16. Why barycentric coordinates matter more than just finding the center
+
+Suppose our sensor location has:
+
+\[
+(\alpha,\beta,\gamma)
+=
+(0.5,0.25,0.25).
+\]
+
+Now move the panel.
+
+Rotate it.
+
+Scale it.
+
+Even mirror it.
+
+As long as the same affine transformation is applied to:
+
+\[
+A,B,C,P,
+\]
+
+the barycentric coordinates remain:
+
+\[
+\boxed{
+(0.5,0.25,0.25).
+}
+\]
+
+That's enormously useful.
+
+The coordinates describe the sensor's **relationship to the triangle**, not the factory.
+
+---
+
+# 17. The ongoing example: now add temperature sensors
+
+Suppose triangle corners have temperature readings:
+
+\[
+T_A=20^\circ C,
+\]
+
+\[
+T_B=40^\circ C,
+\]
+
+\[
+T_C=60^\circ C.
+\]
+
+Our interior sensor point has:
+
+\[
+(\alpha,\beta,\gamma)
+=
+(0.5,0.25,0.25).
+\]
+
+Estimate temperature there:
+
+\[
+T_P
+=
+0.5T_A+
+0.25T_B+
+0.25T_C.
+\]
+
+So:
+
+\[
+=
+10+10+15
+=
+\boxed{35^\circ C}.
+\]
+
+Same weights locate the point **and interpolate its attributes**.
+
+This is the killer property.
+
+---
+
+# 18. Now replace temperature with graphics data
+
+The exact same equation works for:
+
+### Colors
+
+\[
+C_P=
+\alpha C_A+
+\beta C_B+
+\gamma C_C.
+\]
+
+### Texture coordinates
+
+\[
+UV_P=
+\alpha UV_A+
+\beta UV_B+
+\gamma UV_C.
+\]
+
+### Normals
+
+\[
+N'_P=
+\alpha N_A+
+\beta N_B+
+\gamma N_C.
+\]
+
+Then normalize:
+
+\[
+N_P=
+\operatorname{normalize}(N'_P).
+\]
+
+### Depth-like values
+
+Same basic weighted interpolation idea, with the perspective-correction caveat later.
+
+So a rasterizer needs barycentrics because every pixel inside a triangle needs values between the three vertices.
+
+---
+
+# 19. How orientation gives us barycentric coordinates
+
+This is where all the topics connect beautifully.
+
+Our triangle has total signed area:
+
+\[
+A_{ABC}.
+\]
+
+Point \(P\) divides it into three triangles:
+
+```text
+                 C
+                /|\
+               / | \
+              /  P  \
+             / /   \ \
+            / /     \ \
+           A───────────B
+```
+
+The weight of A is related to the triangle opposite A:
+
+\[
+PBC.
+\]
+
+Specifically:
+
+\[
+\boxed{
+\alpha=
+\frac{
+\text{signed area}(PBC)
+}{
+\text{signed area}(ABC)
+}.
+}
+\]
+
+Likewise:
+
+\[
+\boxed{
+\beta=
+\frac{
+\text{signed area}(APC)
+}{
+\text{signed area}(ABC)
+}
+}
+\]
+
+and:
+
+\[
+\boxed{
+\gamma=
+\frac{
+\text{signed area}(ABP)
+}{
+\text{signed area}(ABC)
+}.
+}
+\]
+
+So the chain is literally:
+
+\[
+\boxed{
+\text{orientation test}
+\rightarrow
+\text{signed area}
+\rightarrow
+\text{area ratio}
+\rightarrow
+\text{barycentric coordinate}.
+}
+\]
+
+---
+
+# 20. Why signed area rather than ordinary area?
+
+Because sign tells which side of an edge P lies on.
+
+For a point inside:
+
+\[
+\alpha,\beta,\gamma\ge0.
+\]
+
+For a point outside, one or more weights can become negative.
+
+Example:
+
+```text
+             C
+            / \
+           /   \
+          /     \
+         A───────B
+                  \
+                   P
+```
+
+P lies beyond edge \(BC\).
+
+You might obtain something like:
+
+\[
+\alpha=-0.2,
+\]
+
+\[
+\beta=0.7,
+\]
+
+\[
+\gamma=0.5.
+\]
+
+They still sum:
+
+\[
+-0.2+0.7+0.5=1.
+\]
+
+The negative value tells you exactly which side of the triangle was crossed.
+
+If you used absolute areas, you'd destroy that information.
+
+---
+
+# 21. Point-in-triangle falls out automatically
+
+Suppose we compute:
+
+\[
+(\alpha,\beta,\gamma).
+\]
+
+Then:
+
+### Inside
+
+\[
+\alpha>0,\quad
+\beta>0,\quad
+\gamma>0.
+\]
+
+### On an edge
+
+One coordinate equals zero.
+
+For example:
+
+\[
+\gamma=0
+\]
+
+means point lies on:
+
+\[
+AB.
+\]
+
+### At a vertex
+
+Example at \(A\):
+
+\[
+(1,0,0).
+\]
+
+### Outside
+
+At least one coordinate is negative.
+
+So barycentrics don't merely interpolate things.
+
+They encode triangle-region information.
+
+---
+
+# 22. Complete ongoing example
+
+Imagine this is our triangular plate:
+
+```text
+                     C
+              temperature = 60
+                     ●
+                    / \
+                   /   \
+                  / P   \
+                 /       \
+                /         \
+               ●───────────●
+               A           B
+            T=20          T=40
+```
+
+Suppose:
+
+\[
+P=
+0.5A+
+0.25B+
+0.25C.
+\]
+
+Then:
+
+```text
+barycentric coordinate
+P = (0.5, 0.25, 0.25)
+```
+
+Because all weights are positive:
+
+```text
+P is inside triangle.
+```
+
+Its interpolated temperature:
+
+\[
+35^\circ C.
+\]
+
+If corner colors were stored instead, the same weights give its color.
+
+If UV coordinates were stored, same weights give UV.
+
+If normals were stored, same weights give the raw interpolated normal.
+
+---
+
+# 23. Now mirror the entire panel
+
+Suppose the robot imports the panel into a coordinate system with opposite handedness.
+
+For simplicity:
+
+\[
+(x,y,z)\rightarrow(x,y,-z).
+\]
+
+What happens?
+
+### Distances
+
+Same.
+
+### Angles
+
+Same.
+
+### Triangle shape
+
+Same.
+
+### Barycentric coordinates of P
+
+Still:
+
+\[
+\boxed{(0.5,0.25,0.25)}.
+\]
+
+### Interpolated temperature
+
+Still:
+
+\[
+35^\circ C.
+\]
+
+### Orientation sign
+
+May reverse.
+
+### Triangle normal
+
+May reverse relative to the new coordinate orientation.
+
+### Winding/front-face interpretation
+
+May reverse.
+
+This is an incredibly useful distinction:
+
+\[
+\boxed{
+\text{barycentrics survive a common affine mirror}
+}
+\]
+
+while:
+
+\[
+\boxed{
+\text{orientation-sensitive signs flip}.
+}
+\]
+
+---
+
+# 24. Why barycentrics survive the mirror
+
+Original:
+
+\[
+P=
+0.5A+0.25B+0.25C.
+\]
+
+Apply some affine transform:
+
+\[
+F(X)=MX+t.
+\]
+
+Then:
+
+\[
+F(P)
+=
+0.5F(A)+0.25F(B)+0.25F(C).
+\]
+
+So the weights stay identical.
+
+Reflection is an affine transformation.
+
+Therefore barycentrics survive.
+
+This is a huge reason they are useful in geometry algorithms.
+
+---
+
+# 25. So what does affine mean compared with handedness?
+
+These operate at different conceptual levels.
+
+### Affine transformation
+
+Things such as:
+
+- translation;
+- rotation;
+- scale;
+- shear;
+- reflection;
+- combinations of these.
+
+Affine transforms preserve:
+
+- straight lines;
+- ratios along lines;
+- barycentric coordinates;
+- parallelism.
+
+But they do **not** necessarily preserve:
+
+- Euclidean lengths;
+- angles.
+
+For example, nonuniform scale changes angles.
+
+---
+
+# 26. Handedness reversal is one particular affine phenomenon
+
+A reflection is affine.
+
+And reflection reverses orientation.
+
+So:
+
+```text
+AFFINE TRANSFORMS
+│
+├── translations
+├── rotations
+├── scales
+├── shears
+└── reflections
+       ↓
+       can reverse handedness/orientation
+```
+
+Thus:
+
+\[
+\boxed{
+\text{handedness reversal can happen through an affine transformation}.
+}
+\]
+
+But "affine" does not mean "handedness."
+
+Affine is a broader category.
+
+---
+
+# 27. One simple table for the entire idea
+
+| Concept | Simplest meaning | Our panel example |
+|---|---|---|
+| **Handedness** | How XYZ axes are oriented together | Which mirrored version of the factory coordinate frame we use |
+| **Orientation** | Which way an ordered object faces/turns | Is triangle ABC clockwise/counterclockwise; which side is its front |
+| **Signed area** | 2D amount + orientation | Positive or negative triangle area |
+| **Signed volume** | 3D amount + orientation | Which side of plane ABC the camera/tool lies |
+| **Affine** | Relative geometry independent of world origin | Move/rotate/scale/shear/mirror the whole panel and preserve relative relationships |
+| **Barycentric coordinates** | Affine weights relative to triangle vertices | \(P=0.5A+0.25B+0.25C\) |
+| **Barycentre** | Equal-weight center | \((A+B+C)/3\) |
+| **Interpolation** | Apply the same weights to vertex data | Estimate temperature/color/UV at P |
+
+---
+
+# 28. The most important cause-and-effect chain
+
+Think of the entire thing like this:
+
+```text
+WORLD AXES
+    ↓
+have a handedness
+    ↓
+which gives a meaning to positive orientation
+    ↓
+triangle vertex order produces signed area
+    ↓
+signed subtriangle areas
+    ↓
+divide by signed total area
+    ↓
+barycentric coordinates
+    ↓
+locate P relative to A,B,C
+    ↓
+reuse those same weights
+    ↓
+interpolate color / UV / normal / temperature / etc.
+```
+
+Now suppose you mirror the world:
+
+```text
+mirror
+   ↓
+handedness flips
+   ↓
+orientation signs may flip
+   ↓
+all signed triangle areas flip consistently
+   ↓
+numerator and denominator both flip
+   ↓
+barycentric ratios stay unchanged
+   ↓
+interpolated attributes stay unchanged
+```
+
+That is perhaps the most important connection among the topics.
+
+---
+
+# 29. A game-engine version of the same example
+
+A GPU is rasterizing a triangle.
+
+Vertices:
+
+```text
+A
+B
+C
+```
+
+Each has:
+
+```text
+position
+color
+UV
+normal
+```
+
+For a pixel P:
+
+### Step 1
+
+Use signed edge/orientation functions:
+
+\[
+\operatorname{orient2D}.
+\]
+
+Determine if P lies inside.
+
+### Step 2
+
+Normalize those signed areas to obtain:
+
+\[
+\alpha,\beta,\gamma.
+\]
+
+### Step 3
+
+Interpolate:
+
+\[
+color_P
+=
+\alpha color_A+
+\beta color_B+
+\gamma color_C.
+\]
+
+Likewise UV and other attributes, with perspective correction where appropriate.
+
+### Step 4
+
+If imported mesh went through a handedness-changing reflection, fix orientation/winding conventions as required.
+
+That's the real pipeline connection.
+
+---
+
+# 30. One sentence for each concept
+
+If you need the simplest possible mental hooks:
+
+**Handedness**
+
+> "Is my XYZ world the original version or its mirror?"
+
+**Orientation**
+
+> "Which way is this ordered thing facing/turning?"
+
+**Signed area**
+
+> "How big is this 2D triangle, and which way is it wound?"
+
+**Signed volume**
+
+> "How big is this 3D volume, and which side/orientation does it have?"
+
+**Affine**
+
+> "Describe relative geometry so moving the whole setup doesn't change the relationship."
+
+**Barycentric coordinates**
+
+> "How much of A, B, and C makes this point?"
+
+**Barycentre**
+
+> "The equal-weight balance point."
+
+**Interpolation**
+
+> "Use the point's A/B/C weights on the data stored at A/B/C."
+
+And the single relationship to remember is:
+
+\[
+\boxed{
+\text{handedness controls orientation conventions;}
+}
+\]
+
+\[
+\boxed{
+\text{orientation gives signed areas/volumes;}
+}
+\]
+
+\[
+\boxed{
+\text{signed areas can produce barycentric weights;}
+}
+\]
+
+\[
+\boxed{
+\text{barycentric weights are affine;}
+}
+\]
+
+\[
+\boxed{
+\text{affine weights locate points and interpolate triangle data.}
+}
+\]
+
+That is the practical meaning of the whole 564–570 block.

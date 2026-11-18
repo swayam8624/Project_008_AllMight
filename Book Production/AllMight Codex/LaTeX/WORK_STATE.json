@@ -1,0 +1,115 @@
+{
+  "status": "final_attachment_routing_and_inline_code_freeze_pending",
+  "source": "production-manifest.json; original Markdown remains unchanged",
+  "converter": "Tools/convert.py",
+  "stage_catalog": "Tools/stage-catalog.json",
+  "candidate_generation": ".generation-_c5vh94t",
+  "candidate_generation_path": "LaTeX/.generation-_c5vh94t",
+  "generation_status": "staged only; not activated; includes frozen core semantic/header filter but predates final inline-code wrapping fix",
+  "inventory": {
+    "source_fragments": 568,
+    "chapter_fragments": 129,
+    "companion_fragments": 439,
+    "stages": 7,
+    "stage_chapter_counts": [
+      20,
+      16,
+      14,
+      11,
+      29,
+      21,
+      18
+    ],
+    "missing_assets": 0,
+    "unresolved_links": 0,
+    "tables": 512,
+    "native_math_nodes": 39464,
+    "non_mermaid_code_blocks": 5912
+  },
+  "companion_assignment": {
+    "rule": "earliest direct chapter citation in approved stage order; legacy semantic-volume fallback only for notes with no direct chapter use; global indexes go to stage 7 reference atlas",
+    "direct_chapter_use": 415,
+    "legacy_semantic_volume_fallback": 24,
+    "stage7_reference_atlas": 2,
+    "counts_by_stage": [
+      204,
+      31,
+      18,
+      44,
+      8,
+      10,
+      124
+    ],
+    "assigned_once": true,
+    "missing": 0,
+    "duplicate": 0
+  },
+  "page_limit_plan": {
+    "target_pages": 650,
+    "maximum_pages": 800,
+    "status": "provisional 14-part map exists for earlier staged candidate; final weights and part assignments must be recomputed after inline-code wrapping freeze",
+    "provisional_map": "Tools/physical-parts.json",
+    "provisional_generation": ".generation-40t85dls",
+    "proof_command": "python3 Tools/build.py --generation <final-generation> --plan-physical-parts"
+  },
+  "proof": {
+    "runtime": "TeX Live 2025 pinned bin path",
+    "build_root": "LaTeX/Build/<generation>/stage-proofs",
+    "final_generation": ".generation-_c5vh94t",
+    "current_stage": "waiting for final inline-code wrap/style freeze before authoritative proof and part builds",
+    "provisional_stage7": {
+      "generation": ".generation-40t85dls",
+      "pages": 1261,
+      "status": "compiled before final inline-code wrap fix; style changed during compile and is not authoritative"
+    },
+    "previous_stage_weights": {
+      "generation": ".generation-v12hofvm",
+      "stages": [
+        {
+          "id": "01-Bits-Programs-and-Reliable-Systems",
+          "pages": 2006
+        },
+        {
+          "id": "02-Mathematics-for-Visual-Computing",
+          "pages": 863
+        },
+        {
+          "id": "03-Geometry-Cameras-and-Image-Formation",
+          "pages": 758
+        },
+        {
+          "id": "04-Light-Transport-and-Image-Synthesis",
+          "pages": 590
+        },
+        {
+          "id": "05-Spatial-Worlds-Engine-State-and-Simulation",
+          "pages": 1485
+        },
+        {
+          "id": "06-GPU-Architecture-and-Real-Time-Rendering",
+          "pages": 1226
+        }
+      ],
+      "status": "provisional from earlier style/callout state"
+    },
+    "physical_part_count_provisional": 14,
+    "physical_parts_map": "provisional only; regenerate after final style freeze"
+  },
+  "qa": {
+    "source_fidelity": "independent QA requested for .generation-_c5vh94t; pending",
+    "cross_volume_links": "header hypertarget filter and remote destination fixture passed; full final PDF preflight pending",
+    "font_embedding": "pending final physical PDFs",
+    "page_size": "pending final physical PDFs",
+    "render_review": "pending",
+    "diagram_readability": "pending"
+  },
+  "known_limits": [
+    "Attachment audit found repeated per-part inclusion in the current staged generation: the later final converter will deduplicate exact source bodies by full SHA, retain source-path aliases/link-use provenance, and route remote links to the single owning part. The current 85 per-part records are not a final unique inventory.",
+    "The latest staged candidate is .generation-_c5vh94t; it is not activated and predates a final inline-code wrapping correction in progress.",
+    "An earlier 14-part map exists for .generation-40t85dls, but its page weights and assignments are provisional. Stage 1 requires at least four contiguous groups under the 800-page cap when first-use references remain with their citing chapters.",
+    "The earlier Stage 7 proof recorded 1,261 pages but the style hash changed during that compile; do not treat it as authoritative.",
+    "Source Markdown remains unchanged. The source Math normalization example and NX matrix corrections are narrowly scoped export transformations with provenance entries.",
+    "Final authoritative stage proofs, part PDFs, full source-fidelity verification, link/destination checks, and PDF preflight remain outstanding.",
+    "Logical-stage proof entrypoints and corrected attachment inventory/page-weight handling are implemented in Tools/convert.py and Tools/build.py but need validation in a newly regenerated candidate."
+  ]
+}

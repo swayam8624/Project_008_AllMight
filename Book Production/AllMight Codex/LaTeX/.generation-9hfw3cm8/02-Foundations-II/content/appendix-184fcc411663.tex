@@ -1,0 +1,46 @@
+\hypertarget{appendix-184fcc411663}{}
+\section{Uniform shuffling without replacement}\label{appendix-184fcc411663-uniform-shuffling-without-replacement}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{appendix-184fcc411663-definition-and-mechanism}
+
+Fisher--Yates generates a uniform permutation by walking from the last array element downward and choosing an index uniformly from the unshuffled prefix. Each permutation has probability \(1/n!\) if every bounded integer choice is unbiased and the random source meets its assumptions. A common error is to use a random integer routine with modulo bias; another is to draw from the wrong interval and omit permutations. For a fixed input array, test that the output contains every original element once; statistical tests can supplement, but not replace, deterministic checks of bounds and uniqueness. The same primitive supports uniform sample subsets and randomized stratification.
+
+\subsection{Prerequisites}\label{appendix-184fcc411663-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-e0f7c7e08f3a]{Stateful pseudorandom generators and stream state}
+\item
+  \hyperref[appendix-daaf25bfd3a0]{Stateless keyed sampling and reproducibility}
+\item
+  \hyperref[appendix-f1ef323f6ed7]{Probability spaces, events, and conditioning}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-184fcc411663-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1c5e85693a06]{Latin-hypercube sampling}
+\item
+  \hyperref[appendix-9f693ffd82bc]{Sampling quality: stratification, quasi-Monte Carlo, and blue noise}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-184fcc411663-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[02-foundations-ii-ch031-design-samples-without-replacement-stratified-and-low-discrepancy]{Design samples: without replacement, stratified, and low-discrepancy}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-184fcc411663-source-coverage}
+
+Supplied lesson parts: 995.
+
+\subsection{Future keywords}\label{appendix-184fcc411663-future-keywords}
+
+Fisher--Yates, bounded random integer, permutation uniformity

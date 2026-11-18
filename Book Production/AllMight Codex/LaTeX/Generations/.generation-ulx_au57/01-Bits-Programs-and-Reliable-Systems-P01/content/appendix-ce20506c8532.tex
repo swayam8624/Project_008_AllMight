@@ -1,0 +1,54 @@
+\hypertarget{appendix-ce20506c8532}{}\label{referencestart:appendix-ce20506c8532}
+\section{Signed magnitude}\label{appendix-ce20506c8532-signed-magnitude}
+
+\hypertarget{appendix-ce20506c8532-signed-magnitude}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-ce20506c8532-definition-and-mechanism}
+
+\hypertarget{appendix-ce20506c8532-definition-and-mechanism}{}
+
+The high bit selects sign while remaining bits encode magnitude; this is intuitive but has positive and negative zero and needs sign-aware arithmetic.
+
+\end{allmightroledefinition}
+
+The high bit holds sign and the remaining bits hold magnitude. Eight-bit +5 is \BookInlineCode{{0}{0}{0}{0}{0}{1}{0}{1}}{00000101}, −5 is \BookInlineCode{{1}{0}{0}{0}{0}{1}{0}{1}}{10000101}, and \BookInlineCode{{0}{0}{0}{0}{0}{0}{0}{0}}{00000000} and \BookInlineCode{{1}{0}{0}{0}{0}{0}{0}{0}}{10000000} both denote zero. Mixed signs require magnitude comparison and subtraction rather than ordinary raw-bit addition.
+
+\subsection{Prerequisites}\label{appendix-ce20506c8532-prerequisites}
+
+\hypertarget{appendix-ce20506c8532-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-83c3f28f7bda]{Positional notation} --- A base is the number of available digits.
+\item
+  \hyperref[appendix-280445746493]{Bit significance} --- LSB means least significant bit, normally position 0 with weight 1.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-ce20506c8532-used-by}
+
+\hypertarget{appendix-ce20506c8532-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-03c678cd40b3]{One\textquotesingle s complement} --- uses signed magnitude as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-ce20506c8532-recall-and-next-depth}
+
+\hypertarget{appendix-ce20506c8532-recall-and-next-depth}{}
+
+Explain signed magnitude without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} floating-point sign fields and non-integer signed encodings.
+
+\subsection{Source and navigation}\label{appendix-ce20506c8532-source-and-navigation}
+
+\hypertarget{appendix-ce20506c8532-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

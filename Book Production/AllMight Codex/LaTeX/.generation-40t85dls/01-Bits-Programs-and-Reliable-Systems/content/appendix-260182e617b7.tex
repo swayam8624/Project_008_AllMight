@@ -1,0 +1,54 @@
+\hypertarget{appendix-260182e617b7}{}\label{referencestart:appendix-260182e617b7}
+\section{Mixed-precision state updates}\label{appendix-260182e617b7-mixed-precision-state-updates}
+
+\hypertarget{appendix-260182e617b7-mixed-precision-state-updates}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C005 · \textbf{Latest development:} C005
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-260182e617b7-definition-and-mechanism}
+
+\hypertarget{appendix-260182e617b7-definition-and-mechanism}{}
+
+Finite binary32 promotes exactly to binary64, but lost bits are not recovered. Double update arithmetic followed by float persistent storage rounds each step. A three-sample mean near 0.5 distinguishes float from double state despite double intermediates.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-260182e617b7-prerequisites}
+
+\hypertarget{appendix-260182e617b7-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5057f9ad327f]{Binary32} --- Its finite significand/exponent makes each stored finite value a dyadic rational.
+\item
+  \hyperref[appendix-5078dfab64e6]{Binary64} --- A wider format can represent finite binary32 values exactly but not recover earlier loss.
+\item
+  \hyperref[appendix-614afe1de592]{Rounding to nearest ties to even} --- Midpoint decisions determine separate/fused results and narrowed persistent state.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-260182e617b7-used-by}
+
+\hypertarget{appendix-260182e617b7-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1e45d0613db3]{Capped weighted updates} --- uses this mechanism to establish its numerical contract.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-260182e617b7-recall-and-next-depth}
+
+\hypertarget{appendix-260182e617b7-recall-and-next-depth}{}
+
+Reconstruct the definition's example and name the assumptions that make it valid.
+
+\textbf{Pending:} Quantized state, large/rounded weights, overflow-proof generic updates and real reconstruction datasets.
+
+\subsection{Source and navigation}\label{appendix-260182e617b7-source-and-navigation}
+
+\hypertarget{appendix-260182e617b7-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-when-arithmetic-meets-uncertainty]{M005 teaching chapter} · \hyperref[appendix-fd090d982a15-m005---parts-77-88]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

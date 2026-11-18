@@ -8,7 +8,7 @@ A single loader pattern must serve meshes, textures, and other assets without er
 
 **Recall question:** Which steps can be shared across asset types, and which must remain specific to an asset’s meaning?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 7108–8604; source-span SHA256 d3ef0a635e6493a87500dc691a49d29a8cf312d736efe57d1655bdbc2d5f0619. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 7108–8604; source-span SHA256 844cdb87692d5306cf5100ff3f5db964417d4235b3581c3f4825f9692c874ad2. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## One asset pipeline, many asset types — generic code without accidental promises
@@ -189,11 +189,11 @@ may still copy: most move constructors take a non-const rvalue reference because
 
 The engine rule is:
 
-\[
+$$
 \boxed{
 \text{use move to express permission to transfer from a source whose state may change}
 }
-\]
+$$
 
 not “sprinkle move on expensive objects.”
 
@@ -218,11 +218,11 @@ This is why an asset factory or ECS construction helper can accidentally turn ev
 
 Reference collapsing provides the mechanism:
 
-\[
+$$
 T\&\& \text{ with } T=U\&
 \quad\Rightarrow\quad
 U\&.
-\]
+$$
 
 The engineering point is not memorizing the collapse table. It is understanding that generic wrappers must preserve the semantic difference between “borrow/copy this existing object” and “you may consume this temporary.”
 
@@ -242,11 +242,11 @@ But declaring noexcept dishonestly is worse: an escaping exception causes termin
 
 The rule is therefore:
 
-\[
+$$
 \boxed{
 \text{declare noexcept when the implementation's contract genuinely supports it}
 }
-\]
+$$
 
 and understand that exception specifications participate in optimization and generic-library behavior.
 
@@ -278,13 +278,13 @@ A cache may be mutable. A lazily initialized field may be mutable. Another objec
 
 For a shared engine object, the concurrency contract must be separate:
 
-\[
+$$
 \boxed{
 \text{const-correctness}
 \neq
 \text{data-race freedom}
 }
-\]
+$$
 
 If a const method mutates a cache, that cache needs synchronization or a design that avoids shared mutation.
 
@@ -369,17 +369,17 @@ Use emplacement when constructing the element from constructor arguments is the 
 
 The consistent message across the modern C++ sources is not “use the newest feature everywhere.” It is:
 
-\[
+$$
 \boxed{
 \text{make ownership, lifetime, type intent and synchronization easier to verify}
 }
-\]
+$$
 
 A Tour of C++ gives the integrated language map. Effective Modern C++ concentrates on C++11/14 feature interactions such as type deduction, smart pointers, move/forwarding, lambdas and atomics. Professional C++ broadens the discussion into design, testing, debugging, efficiency, multithreading and maintainability. CppCon talks are most useful when a particular engine problem needs a deeper specialist treatment. The Cherno's C++ material gives practical demonstrations that can be connected back to these rules.
 
 The source hierarchy for this volume is therefore:
 
-\[
+$$
 \text{language semantics}
 \rightarrow
 \text{small example}
@@ -387,7 +387,7 @@ The source hierarchy for this volume is therefore:
 \text{engine ownership/lifetime consequence}
 \rightarrow
 \text{measured production behavior}
-\]
+$$
 
 rather than a list of style commandments.
 
@@ -449,13 +449,13 @@ Now ownership semantics are inherited from a tested vocabulary type. The compile
 
 The important reduction is
 
-\[
+$$
 \boxed{
 \text{fewer custom lifetime transitions}
 \Rightarrow
 \text{fewer states requiring manual proof}
 }
-\]
+$$
 
 Rule of zero therefore matters to engine design because it moves correctness responsibility from ad-hoc transitions into well-defined types.
 
@@ -517,11 +517,11 @@ The job owns the immutable upload payload but only carries identity for the text
 
 The rule is:
 
-\[
+$$
 \boxed{
 \text{representation should reveal lifetime category whenever practical}
 }
-\]
+$$
 
 A raw pointer can be correct, but pointer alone does not communicate enough of the lifetime contract for long-lived asynchronous engine work.
 
@@ -615,11 +615,11 @@ This matters for:
 
 The engine rule is not to fear low-level code. It is to write low-level code inside a model whose assumptions can be established.
 
-\[
+$$
 \boxed{
 \text{only optimize inside a contract whose preconditions you can prove}
 }
-\]
+$$
 
 When code intentionally depends on representation, use mechanisms that make the operation legal and visible: bit-casting, byte copies, alignment-aware allocation, explicit lifetime APIs where needed, and small wrappers around platform-specific behavior.
 
@@ -676,7 +676,7 @@ This is not automatically faster. It helps only if memory traffic, vectorization
 
 A simple decomposition is:
 
-\[
+$$
 T
 \approx
 T_{\text{memory}}
@@ -688,7 +688,7 @@ T_{\text{branches}}
 T_{\text{synchronization}}
 +
 T_{\text{overhead}}.
-\]
+$$
 
 Changing AoS to SoA primarily attacks memory traffic and vectorization constraints. If another term dominates, the speedup may be small.
 
@@ -734,11 +734,11 @@ private:
 
 Hot loops can still traverse direct arrays, while editor, debugging, scripting, and gameplay code can receive structured views.
 
-\[
+$$
 \boxed{
 \text{abstraction boundary need not equal physical memory layout}
 }
-\]
+$$
 
 This is central to ECS, animation, particles, transforms, visibility, and renderer scene databases.
 
@@ -754,7 +754,7 @@ The caller may own those vertices in a vector, fixed array, memory-mapped file, 
 
 For multidimensional data, mdspan extends the same idea to shape, strides, and index mapping. This is valuable for matrices, tiled images, tensors, simulation grids, and staging views because it separates four concerns:
 
-\[
+$$
 \text{owner}
 \quad
 \text{shape}
@@ -762,17 +762,17 @@ For multidimensional data, mdspan extends the same idea to shape, strides, and i
 \text{layout mapping}
 \quad
 \text{element access}.
-\]
+$$
 
 Conceptually:
 
-\[
+$$
 \text{logical index}
 \overset{\text{mapping}}{\longrightarrow}
 \text{linear offset}
 \overset{\text{accessor}}{\longrightarrow}
 \text{element}.
-\]
+$$
 
 That separation mirrors GPU resource-view design and is useful far beyond the standard library type itself.
 
@@ -813,11 +813,11 @@ A monotonic resource is efficient when individual deallocation is unnecessary an
 
 But the critical rule is:
 
-\[
+$$
 \boxed{
 \text{an object allocated from a short-lived resource must not escape that resource lifetime}
 }
-\]
+$$
 
 PMR does not eliminate lifetime reasoning. It makes the allocation domain explicit enough that the lifetime can be audited.
 
@@ -858,11 +858,11 @@ When the parent scope ends, children are completed, cancelled, or joined accordi
 
 That gives a powerful invariant:
 
-\[
+$$
 \boxed{
 \text{async lifetime should be nested whenever possible}
 }
-\]
+$$
 
 Detached work is sometimes necessary, but it should be exceptional because detached lifetime is harder to prove.
 
@@ -887,13 +887,13 @@ Cancellation after submission is different. GPU work may already reference stagi
 
 Therefore:
 
-\[
+$$
 \boxed{
 \text{cancel logical operation}
 \neq
 \text{instantly destroy all physical resources involved}
 }
-\]
+$$
 
 This is the same lifetime separation used by deferred GPU destruction.
 
@@ -907,7 +907,7 @@ A class can need a type at runtime without requiring that type's full definition
 
 The relevant productivity model is:
 
-\[
+$$
 T_{\text{developer loop}}
 =
 T_{\text{edit}}
@@ -917,7 +917,7 @@ T_{\text{incremental compile}}
 T_{\text{link}}
 +
 T_{\text{launch/test}}.
-\]
+$$
 
 If a frequently edited header forces hundreds of translation units to rebuild, it is a productivity hotspot even when runtime performance is perfect.
 
@@ -969,7 +969,7 @@ This keeps optimization from becoming folklore.
 
 The combined rule for this C++ layer is:
 
-\[
+$$
 \boxed{
 \text{make ownership explicit}
 +
@@ -979,7 +979,7 @@ The combined rule for this C++ layer is:
 +
 \text{make performance claims reproducible}
 }
-\]
+$$
 
 Source integration basis for this deepening includes CppCon material on lifetime management, undefined behavior, data-oriented design, mdspan, performance engineering, build profiling, and coroutine/structured-concurrency practice. The conference boundaries are intentionally not preserved: each concept is placed where it constrains engine code.
 
@@ -1119,11 +1119,11 @@ This sequence has a deliberate order. The capacity check happens before construc
 
 Let `c` be the number of published entries before the call and `C` the static capacity. We maintain the invariant:
 
-\[
+$$
 0\le c\le C,\qquad
 \text{slots }[0,c)\text{ are engaged},\qquad
 \text{slots }[c,C)\text{ are disengaged}.
-\]
+$$
 
 If `c=C`, the function rejects the insertion and changes nothing. If `c<C` and the proposed construction throws, the next optional remains disengaged and the published count stays `c`. If construction succeeds, the new slot is engaged, and incrementing the count makes the published interval `[0,c+1)`. This is a short, inspectable correctness proof that depends on the container's real semantics, not merely the word "generic".
 
@@ -1170,7 +1170,7 @@ The solution is not “move everything into templates.” We must split the **st
 
 ### The pixel format is not an integer whose meaning we must rediscover
 
-Suppose the tile is an 8-by-2 image with four 8-bit channels per pixel. It has \(8\times 2=16\) pixels. Each pixel contributes four source bytes, so its uncompressed, tightly packed payload has \(16\times4=64\) bytes. For an RGB image with four rows and four columns, the source payload has \(4\times4\times3=48\) bytes. These equations arise from the representation we have chosen: width and height count pixels, while `channels` counts 8-bit source components per pixel. They do **not** automatically give the amount of device memory after alignment, row-pitch requirements, mipmaps, block compression, or backend-specific allocation overhead.
+Suppose the tile is an 8-by-2 image with four 8-bit channels per pixel. It has $8\times 2=16$ pixels. Each pixel contributes four source bytes, so its uncompressed, tightly packed payload has $16\times4=64$ bytes. For an RGB image with four rows and four columns, the source payload has $4\times4\times3=48$ bytes. These equations arise from the representation we have chosen: width and height count pixels, while `channels` counts 8-bit source components per pixel. They do **not** automatically give the amount of device memory after alignment, row-pitch requirements, mipmaps, block compression, or backend-specific allocation overhead.
 
 Our asset type already knows its format. We therefore define a finite domain:
 
@@ -1235,7 +1235,7 @@ static_assert(checked_product(8, 4) == 32);
 
 The word `constexpr` means this function is **eligible** for evaluation in a constant-expression context when the necessary conditions hold. It does not say every invocation executes during compilation. In the static assertion, `checked_product(8,4)` is evaluated as a constant expression. When we later call `checked_product(runtime_width,runtime_height)`, the same source function may execute at runtime. A compiler may also optimize a runtime call using ordinary constant propagation where it has sufficient information; that optimization is distinct from the language-level requirement to produce a constant expression.
 
-Why is the overflow check written as a division? Multiplying first would already lose the information we needed to detect overflow. For nonnegative unsigned numbers \(x,y\), a product fits in a maximum representable value \(M\) exactly when \(x\le M/y\) for \(y\ne0\). We therefore test the inequality before multiplication. The `y == 0` case needs separate handling to avoid division by zero; multiplying by zero is safe and yields zero. In the tile pipeline, we apply this function once to `width * height` and again to `pixels * channels`. This establishes a correct *count arithmetic* invariant, although it does not establish enough available memory or any GPU-specific alignment guarantee.
+Why is the overflow check written as a division? Multiplying first would already lose the information we needed to detect overflow. For nonnegative unsigned numbers $x,y$, a product fits in a maximum representable value $M$ exactly when $x\le M/y$ for $y\ne0$. We therefore test the inequality before multiplication. The `y == 0` case needs separate handling to avoid division by zero; multiplying by zero is safe and yields zero. In the tile pipeline, we apply this function once to `width * height` and again to `pixels * channels`. This establishes a correct *count arithmetic* invariant, although it does not establish enough available memory or any GPU-specific alignment guarantee.
 
 At runtime, the laboratory asks for a tile with width `SIZE_MAX` and height two. The first multiplication check throws before computing an overflowing product. The policy and recorder are not invoked after that failure, so the rejected request does not appear as a planned tile. In a compile-time constant-evaluation context, a call that attempts to evaluate the throwing path cannot produce the required constant expression; the program must reject its use as a compile-time constant. This is not an excuse to rely on exceptions in a real-time hot loop: the public engine may instead return a typed error, as Phase 2 developed. The function illustrates the distinction between the *arithmetic rule* and the *chosen error-delivery policy*.
 
@@ -1269,23 +1269,23 @@ Three terms are now distinguishable. `constexpr` enables constant evaluation of 
 
 The same engine that loads textures may divide images into small tiles and assign compact keys to neighboring positions. One common ordering scheme is **Morton order**, also called Z-order, which interleaves the binary digits of two coordinates. It is useful because coordinates that are near one another often receive nearby keys, but it does not guarantee perfect spatial locality or replace a complete spatial index.
 
-Take a four-bit coordinate \(x\). Write its bits as \(x_3x_2x_1x_0\). To make room for a second coordinate, place each bit at an even position:
+Take a four-bit coordinate $x$. Write its bits as $x_3x_2x_1x_0$. To make room for a second coordinate, place each bit at an even position:
 
-\[
+$$
 \operatorname{spread}(x)
 =\sum_{i=0}^{3} \left(\left\lfloor\frac{x}{2^i}\right\rfloor\bmod 2\right)2^{2i}.
-\]
+$$
 
-The division and remainder here simply ask for bit \(i\); in C++ we use a right shift and bitwise AND. For \(x=3\), binary `0011`, the low two bits are set, so spreading produces `00000101`, decimal five. For \(y=5\), binary `0101`, spreading produces `00010001`, decimal seventeen. Shift the spread \(y\) bits left by one and combine:
+The division and remainder here simply ask for bit $i$; in C++ we use a right shift and bitwise AND. For $x=3$, binary `0011`, the low two bits are set, so spreading produces `00000101`, decimal five. For $y=5$, binary `0101`, spreading produces `00010001`, decimal seventeen. Shift the spread $y$ bits left by one and combine:
 
-\[
+$$
 \operatorname{morton}(3,5)
 =\operatorname{spread}(3)\;|\;
 \big(\operatorname{spread}(5)\ll 1\big)
 =5\;|\;(17\ll1)
 =5\;|\;34
 =39.
-\]
+$$
 
 The bitwise OR is correct here because one spread result occupies even bit positions and the other, after shifting, occupies odd bit positions; there is no overlapping set bit to carry. If the coordinates are outside the range zero through fifteen, the four-bit function cannot represent them and must reject them or use a wider scheme. This small example is **one four-bit-per-axis tile key**, not a complete texture layout for arbitrary image dimensions.
 
@@ -1370,7 +1370,7 @@ public:
 
 The policy instance's *type* is fixed by the specialization, but its stored state, such as a 64-byte budget, can still be supplied at runtime. That distinction is important: choosing `ByteBudgetPolicy` at compile time does not mean the number 64 must be a template argument. We can change budgets between planner objects without compiling a different type for every numeric value.
 
-For the RGBA example, width eight and height two require \(8\times2\times4=64\) bytes. With a 64-byte budget, the plan is accepted and recorded. An 8-by-3 tile would require 96 bytes, so the same planner throws before recording it. A different 4-by-4 tile also requires 64 bytes, but when the verified-payload mode is used with an empty buffer, it fails the length check. Both failure paths leave the recorder's count at one. The error source and the publish boundary remain observable; policy selection does not hide them.
+For the RGBA example, width eight and height two require $8\times2\times4=64$ bytes. With a 64-byte budget, the plan is accepted and recorded. An 8-by-3 tile would require 96 bytes, so the same planner throws before recording it. A different 4-by-4 tile also requires 64 bytes, but when the verified-payload mode is used with an empty buffer, it fails the length check. Both failure paths leave the recorder's count at one. The error source and the publish boundary remain observable; policy selection does not hide them.
 
 ### The recorder is known statically; explain the CRTP rather than mystifying it
 
@@ -1491,7 +1491,7 @@ There is also a transaction boundary worth examining. The `TilePlanner::prepare`
 
 ### A mastery test that connects every mechanism without breaking the narrative
 
-You should now be able to reconstruct the following reasoning without opening the source. Start with a mesh/texture asset pipeline and explain which values are known by the compiler and which appear only at runtime. Derive the source-byte size \(W\times H\times C\) and explain why multiplication must be checked before forming the result. Design a trait whose compile-time channel count is an `integral_constant` value, then show when `if constexpr` eliminates a format-specific branch and when `constexpr` merely permits a calculation to execute during compilation.
+You should now be able to reconstruct the following reasoning without opening the source. Start with a mesh/texture asset pipeline and explain which values are known by the compiler and which appear only at runtime. Derive the source-byte size $W\times H\times C$ and explain why multiplication must be checked before forming the result. Design a trait whose compile-time channel count is an `integral_constant` value, then show when `if constexpr` eliminates a format-specific branch and when `constexpr` merely permits a calculation to execute during compilation.
 
 Build a legal compile-time tile configuration with `consteval`; explain why a runtime argument cannot replace a required constant expression. Derive a four-bit Morton table from interleaving coordinate bits and verify why (3,5) yields 39. Explain why the resulting `inline constexpr` table and the `constinit` mutable counter make different guarantees. Choose two budget policies and show why the checked arithmetic contract remains valid under both. Build a `RecorderBase<Derived>` and explain precisely why the derived cast is sound only for a genuinely appropriate object; contrast that static call with runtime type erasure. Use empty tag types to distinguish a verified payload from a metadata-only plan and explain why the latter cannot be used as proof of upload readiness. Finally draw the three policy holder layouts and state what EBO and `[[no_unique_address]]` *permit*—and what they do not promise across compilers.
 

@@ -1,0 +1,46 @@
+\hypertarget{appendix-f63eb850796d}{}\label{referencestart:appendix-f63eb850796d}
+\section{Bracketed and open root solvers}\label{appendix-f63eb850796d-bracketed-and-open-root-solvers}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{appendix-f63eb850796d-definition-and-mechanism}
+
+A root solver seeks \(f(x)=0\). A bracketed method maintains an interval whose endpoints have opposite signs; continuity then guarantees at least one root remains inside, and bisection provides a predictable shrinking error bound. Open methods such as secant and Newton can converge faster near a well-behaved simple root, but they may diverge, encounter a zero derivative, or leave the relevant domain. A safeguarded hybrid uses a bracket for global protection and accepts fast proposals only when they preserve progress. Residual size alone does not certify root accuracy when the root is poorly conditioned, and discontinuous functions do not satisfy the sign-change guarantee.
+
+\subsection{Prerequisites}\label{appendix-f63eb850796d-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-aa2bf0d79639]{Algorithmic stability}
+\item
+  \hyperref[appendix-8f6a01f284a7]{Conditioning and singularity}
+\item
+  \hyperref[appendix-b9afba7f63e5]{Stable quadratic root evaluation}
+\item
+  \hyperref[appendix-d83b0ad1be7f]{A posteriori error bounds for contractive iteration}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-f63eb850796d-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-31b8c295e05f]{Numerical error budgets}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-f63eb850796d-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch028-finding-roots-with-guarantees-and-convergence-checks}{Finding roots with guarantees and convergence checks (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 12)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-f63eb850796d-source-coverage}
+
+Supplied lesson parts: 984--988.
+
+\subsection{Future keywords}\label{appendix-f63eb850796d-future-keywords}
+
+bisection, secant method, Newton method, Brent-style safeguard

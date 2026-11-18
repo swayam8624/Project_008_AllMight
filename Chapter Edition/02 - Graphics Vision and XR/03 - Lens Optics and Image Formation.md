@@ -8,7 +8,7 @@ The camera does not record an abstract ray directly: an optical system forms an 
 
 **Recall question:** How does changing the focus tolerance alter the acceptable image-distance interval?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 3088–3633; source-span SHA256 234e0e39434b3adbc828b221fd90c4ba777b0e9626abb705fe182486666fc470. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 3119–3664; source-span SHA256 234e0e39434b3adbc828b221fd90c4ba777b0e9626abb705fe182486666fc470. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Lens optics, focus, and image formation

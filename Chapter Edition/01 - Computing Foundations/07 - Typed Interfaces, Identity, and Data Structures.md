@@ -8,7 +8,7 @@ The registry’s contract now crosses module and ABI boundaries, so type safety 
 
 **Recall question:** What does a heap, Bloom filter, ordered tree, or disjoint-set structure promise—and what does each leave unanswered?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 9917–10593; source-span SHA256 b7e4a76ceb20782e78e411986c4de6fa7a969f0117a4a2ba87445aa7e273f4a8. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 9917–10774; source-span SHA256 d197dd08c4e167cecc190fec02ef26b5f82cbb6f38c10c8b9eec24cef5b92f99. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## A registry crosses its last C++ boundary: hidden implementation, typed identity and measured abstraction cost
@@ -147,9 +147,9 @@ The distinction between static and dynamic dimensions appears when the same math
 
 For a dot product of size n, the straightforward algorithm is
 
-\[
+$$
 s=\sum_{i=0}^{n-1}a_i b_i.
-\]
+$$
 
 It performs n multiplications and n additions in a single pass (counting the first accumulation into zero), with O(n) time and O(1) auxiliary scalar storage. Floating-point addition, however, is not associative, so a compiler's SIMD reduction or reassociation may change rounding. The mathematical formula and the machine's numerical contract must not be casually equated. For large n, error analysis, compensated summation and reduction order may matter more than whether the vector's dimension was a template parameter.
 
@@ -301,17 +301,17 @@ Trace a hot asset loop. One instruction loads the record's mass, another loads x
 
 A simple recurrence makes this precise. For a scalar reduction
 
-\[
+$$
 s_{i+1}=s_i+x_i m_i,
-\]
+$$
 
 every new value of s depends on the previous sum. Even if loads and multiplications overlap, the accumulation itself forms a dependency chain. Multiple independent partial accumulators can shorten that chain, but changing the grouping changes floating-point rounding. A compiler using permitted vector or fast-math transformations can choose a different evaluation tree; strict language and compiler options limit which transformations are legal. Therefore a proposed faster reduction must state **both its numerical tolerance and its reassociation policy**.
 
 Instruction-level parallelism (ILP) is the independence available among operations within one instruction stream. Superscalar issue width is a hardware upper bound on how many appropriate operations can be issued in a cycle, not a guarantee that every instruction sequence reaches that width. Execution-port conflicts, dependent chains, branch recovery, cache misses, front-end bandwidth and register pressure reduce the realized rate. A useful first model is
 
-\[
+$$
 T_{\text{CPU}}\approx \frac{I\,\mathrm{CPI}}{f},
-\]
+$$
 
 where I is the number of executed instructions, CPI the *measured average* cycles per instruction and f the frequency. CPI is an aggregate result of a workload and machine, not an intrinsic constant for one C++ expression. Instructions that retire several per cycle can produce CPI below one; stalls can make it much larger. Frequency scaling and heterogeneous core placement further invalidate naive cycle-to-wall-time assumptions.
 
@@ -339,10 +339,10 @@ Prefetchers may recognize predictable sequential or strided streams and begin lo
 
 We can estimate a bandwidth lower bound when the memory-bound conditions really apply:
 
-\[
+$$
 T \;\geq\; \frac{\text{bytes that must cross the limiting interface}}
                     {\text{sustainable bytes per second}}.
-\]
+$$
 
 For a purely illustrative machine capable of sustaining 20 GB/s on the relevant transfer path, moving 2 GB of indispensable data takes at least 0.1 s on that path. The estimate is only useful if the bytes and the interface are correctly identified. Cache reuse can reduce DRAM traffic; write allocation, coherence, other threads and prefetching can increase it. We should never take the structure's size and automatically equate it to memory-bus traffic.
 
@@ -408,6 +408,121 @@ For a loop processing N elements in packets of W lanes, the main body executes r
 
 Alignment means that an address is a multiple of a required boundary. Some SIMD loads benefit from or require alignment; others accept unaligned addresses with possible architectural or workload-dependent costs. ISO C++ object alignment, allocator guarantees and an ISA's memory-operation requirements are related but distinct. A programmer cannot assume a vector's data pointer is aligned to a particular extended SIMD width merely because the element is a float. If using aligned instructions, establish or check alignment through the correct allocator and type contracts.
 
+<!-- Book-completion teaching addition a6d1c5b3901d4323 -->
+
+#### Three lane-arithmetic contracts: wrap, saturate and widen
+
+A packed operation applies the same operation to several independent element lanes held in a vector. “Independent” matters: when one 8-bit lane overflows, its carry does not flow into the next lane. A real instruction’s lane width and overflow policy are ISA-specific, so first work out the desired result for each lane as a small scalar calculation.
+
+Take four unsigned 8-bit lanes:
+
+$$
+a=[250,1,128,0],\qquad b=[10,255,128,7].
+$$
+
+**Wrapping addition** keeps the low eight bits of each exact sum. For an unsigned 8-bit result, this is reduction modulo $2^8=256$:
+
+| Lane | Exact sum | Low eight bits | Wrapping result |
+|---:|---:|---:|---:|
+| 0 | $250+10=260=0x104$ | $0x04$ | 4 |
+| 1 | $1+255=256=0x100$ | $0x00$ | 0 |
+| 2 | $128+128=256=0x100$ | $0x00$ | 0 |
+| 3 | $0+7=7$ | $0x07$ | 7 |
+
+So the wrapping vector is $[4,0,0,7]$. Lane 0’s carry is discarded; it does not increment lane 1. This is different from adding the four bytes as one 32-bit integer.
+
+**Saturating addition** uses a different policy: clamp each lane’s exact sum to the largest representable value, 255. Its result is $[255,255,255,7]$. **Widening addition** keeps the exact sums in 16-bit lanes, producing $[260,256,256,7]$. Neither saturation nor widening happens merely because values are stored in an 8-bit vector; the chosen operation must request and support that policy.
+
+In portable C++, two `std::uint8_t` operands undergo integral promotion before addition. On implementations where `int` represents every `std::uint8_t` value, the addition is evaluated as `int`; explicitly converting the sum back to `std::uint8_t` gives the value congruent modulo $2^8$. To make the model and intermediate width visible, the companion lab first adds in `unsigned int`, then stores the bounded exact sum in `std::uint16_t`, then either narrows explicitly for wrapping, clamps for saturation, or keeps the 16-bit value for widening. This scalar loop is an oracle for lane results. It does not prove the compiler emitted SIMD instructions, and it does not establish any ISA’s exact instruction semantics.
+
+Signed lanes need an equally explicit policy. With signed eight-bit range $[-128,127]$, exact sums $120+20=140$ and $-120-20=-140$ saturate to $127$ and $-128$, while a two's-complement wrapping contract gives $-116$ and $116$. Widening preserves $140$ and $-140$. These hardware-style contracts do not make overflowing ordinary signed C++ arithmetic valid: check the expression's promoted type, range and conversion rules. The program below verifies the unsigned profile; it does not claim execution of a signed SIMD instruction.
+
+**Worked check.** For lane 0, $250+10=260$. Since $260=1\cdot256+4$, wrapping stores 4; saturation stores 255; widening stores 260. For lane 3, $0+7=7$, so all three policies produce 7. These checks distinguish a real overflow case from an ordinary lane and catch accidental carry between lanes.
+
+**Exercise.** For $x=[15,240,127,250]$ and $y=[20,30,1,10]$, calculate the wrapping, saturating and 16-bit widening sums. Which lanes overflow the 8-bit range? Explain why one lane’s overflow cannot alter another lane’s answer.
+
+**Solution.** The exact lane sums are $[35,270,128,260]$. Modulo 256 gives wrapping results $[35,14,128,4]$, because $270=256+14$ and $260=256+4$. Clamping each exact result to 255 gives $[35,255,128,255]$. Widening keeps $[35,270,128,260]$. Lanes 1 and 3 exceed 255. Each result is computed per lane; the discarded carry or clamp in one lane has no path into another lane.
+
+These are three arithmetic contracts, not a claim that one instruction supports all three. Before replacing a scalar loop with an ISA intrinsic, check that ISA’s lane width, signedness, wrap/saturate/widen rule, feature availability, alignment, tail behavior and fallback. Then compare the selected instruction’s per-lane results with this scalar oracle on boundary values as well as ordinary values.
+
+The complete scalar oracle follows. Its checks include both the worked trace and solved exercise and remain active in release builds. Compile and run the saved source with:
+
+```sh
+c++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror tools/labs/packed_arithmetic_lab.cpp -o /tmp/packed_arithmetic_lab
+/tmp/packed_arithmetic_lab
+```
+
+This validates lane arithmetic, not generated SIMD instructions or speedup.
+
+```cpp
+// Portable scalar oracle for independent packed 8-bit lane addition.
+// This models three arithmetic policies; it does not select or prove SIMD code.
+#include <array>
+#include <cstdint>
+#include <cstddef>
+#include <iostream>
+#include <limits>
+
+struct Results {
+    std::array<std::uint8_t, 4> wrapping{};
+    std::array<std::uint8_t, 4> saturating{};
+    std::array<std::uint16_t, 4> widening{};
+};
+
+constexpr Results add_lanes(const std::array<std::uint8_t, 4>& a,
+                            const std::array<std::uint8_t, 4>& b) {
+    Results out{};
+    for (std::size_t lane = 0; lane < a.size(); ++lane) {
+        // Promote before adding so the exact sum is visible and in range.
+        // Unsigned int can represent the largest sum, 255+255.
+        const unsigned sum = static_cast<unsigned>(a[lane]) +
+                             static_cast<unsigned>(b[lane]);
+        const auto exact = static_cast<std::uint16_t>(sum);
+        // Narrowing to uint8_t applies the unsigned modulo-2^8 conversion.
+        out.wrapping[lane] = static_cast<std::uint8_t>(exact);
+        // Saturation is an explicit policy, not ordinary uint8_t addition.
+        out.saturating[lane] = static_cast<std::uint8_t>(
+            exact > std::numeric_limits<std::uint8_t>::max()
+                ? std::numeric_limits<std::uint8_t>::max() : exact);
+        // Preserve each lane's exact sum in the wider result type.
+        out.widening[lane] = exact;
+    }
+    return out;
+}
+
+template<class T, std::size_t N>
+bool equals(const std::array<T, N>& actual, const std::array<T, N>& expected) {
+    for (std::size_t i = 0; i < N; ++i)
+        if (actual[i] != expected[i]) return false;
+    return true;
+}
+
+int main() {
+    constexpr std::array<std::uint8_t, 4> a{250, 1, 128, 0};
+    constexpr std::array<std::uint8_t, 4> b{10, 255, 128, 7};
+    constexpr auto r = add_lanes(a, b);
+    constexpr std::array<std::uint8_t, 4> wrap{4, 0, 0, 7};
+    constexpr std::array<std::uint8_t, 4> sat{255, 255, 255, 7};
+    constexpr std::array<std::uint16_t, 4> wide{260, 256, 256, 7};
+    // Keep checks active under NDEBUG: no assert-only test contract.
+    if (!equals(r.wrapping, wrap) || !equals(r.saturating, sat) ||
+        !equals(r.widening, wide)) {
+        std::cerr << "packed-lane scalar oracle mismatch\n";
+        return 1;
+    }
+    // Reproduce the solved exercise independently of the first example.
+    constexpr auto exercise = add_lanes({15, 240, 127, 250}, {20, 30, 1, 10});
+    if (exercise.wrapping != std::array<std::uint8_t, 4>{35, 14, 128, 4} ||
+        exercise.saturating != std::array<std::uint8_t, 4>{35, 255, 128, 255} ||
+        exercise.widening != std::array<std::uint16_t, 4>{35, 270, 128, 260}) {
+        std::cerr << "exercise arithmetic mismatch\n";
+        return 1;
+    }
+    std::cout << "packed lane scalar oracle: PASS\n";
+    return 0;
+}
+```
+
 Horizontal reduction combines multiple lanes into one result. It can create a tree of additions rather than a left-to-right scalar chain. For floating-point input, that tree may round differently. Likewise, a branchless SIMD mask can avoid branch divergence while still doing unused operations; gather and scatter can access noncontiguous addresses but often lose the advantage of contiguous streams. Gather/scatter should be chosen from actual address patterns, not because the instructions sound more advanced.
 
 Auto-vectorization depends on the compiler proving enough about loop independence, aliasing, trip counts, alignment and target instruction support. Conditional code, indirect indexing, potential exceptions and unclear alias relationships may block profitable transformations. The practical evidence chain is: compile with explicit optimization and target options, request the compiler's vectorization report, inspect the relevant machine code, check numerical correctness, then benchmark a realistic workload. The absence of a vectorization message does not alone prove poor performance; the presence of one does not prove speedup.
@@ -442,9 +557,9 @@ Different ownership patterns suggest different allocation strategies. A free-lis
 
 Alignment constrains the addresses at which objects may reside. If a type needs alignment a, its address must be divisible by a under the relevant C++/ABI definition. Over-aligned allocations may require an allocation mechanism that honors the greater alignment. For a linear arena with current cursor p and power-of-two a, a familiar alignment expression is
 
-\[
+$$
 p_{\mathrm{aligned}}=(p+a-1)\mathbin{\&}\sim(a-1),
-\]
+$$
 
 but a correct implementation must ensure that p+a−1 does not overflow, that a is valid, that the aligned extent fits the backing allocation, and that the returned pointer meets the type's actual alignment. A robust arena should reason about byte spans and capacity *before* pointer arithmetic. The formulas are not license to write past a buffer.
 
@@ -522,9 +637,9 @@ The test first partitions a 10,000-element array into fixed chunks, submits inde
 
 A practical scheduler chooses **grain size** so each task contains enough useful work to amortize scheduling overhead but not so much that one worker remains busy after others finish. If a task costs c units of useful work and incurs overhead h, then for n tasks
 
-\[
+$$
 T_{\mathrm{overhead}}\approx n h,
-\]
+$$
 
 before accounting for contention, cache effects and critical path dependencies. Smaller tasks improve load balancing in irregular workloads but increase overhead. Coarser tasks reduce overhead but may create idle workers and poor balance. There is no universal ideal grain size expressed solely in bytes or number of particles.
 
@@ -534,9 +649,9 @@ A **task dependency graph** makes execution constraints explicit. If animation m
 
 For a workload with total work W and critical-path length S, the work/span model gives a conceptual lower bound
 
-\[
+$$
 T_P\;\geq\;\max\!\left(\frac{W}{P},\, S\right)
-\]
+$$
 
 for P equal-speed processors under the model. W/P expresses total work capacity; S expresses serial dependency limitations. Real systems add scheduler cost, synchronization, memory effects and heterogeneous execution. A job system with a hundred workers cannot beat a single long dependency chain.
 
@@ -544,9 +659,9 @@ for P equal-speed processors under the model. W/P expresses total work capacity;
 
 Parallel reductions expose an immediate determinism problem. Floating-point addition is generally not associative:
 
-\[
+$$
 (a+b)+c\neq a+(b+c)
-\]
+$$
 
 for some representable a, b, c under finite-precision rounding. If task completion order determines reduction order, two valid executions may obtain slightly different results even without a data race. For deterministic physics, reproducible experiments and binary comparison tests, the update must define its accumulation and iteration ordering (or tolerate and quantify numerical differences).
 
@@ -564,9 +679,9 @@ A proper microbenchmark includes warm-up and repeated runs, measures enough work
 
 A useful speedup model is **Amdahl's law**. If fraction s of the baseline execution is inherently serial and the remainder is accelerated by a factor P, then the idealized overall speedup is
 
-\[
+$$
 S(P)=\frac{1}{s+(1-s)/P}.
-\]
+$$
 
 With s=0.2 and P=4, the ideal speedup is 1/(0.2+0.8/4)=2.5, *not* four. As P grows without limit, the maximum under this fixed-fraction model approaches 1/s=5. The model assumes the work fractions and costs are meaningful and ignores many real overheads; it does not predict actual hardware utilization. It teaches us why profiling the serial fraction and the critical path matters before growing the pool.
 
@@ -592,6 +707,72 @@ Let n denote the number of stored assets. An operation's running time can be ana
 
 A single operation often has multiple relevant input sizes. Building an index of n assets may depend on the total bytes B of their names; exploring a graph depends on vertices V and edges E; an open-addressed hash table's expected probe length depends on load factor α=n/m as well as on n; a matrix graph representation costs Θ(V²) storage even when the edge count is small. When a paper or tutorial says simply "linear time," ask *linear in what?* The same operation might be O(n) in object count but O(B) in total input bytes.
 
+<!-- Book-completion teaching addition 004b07ac84227223 -->
+
+### A recurrence turns recursive calls into a cost equation
+
+When an algorithm calls itself on smaller inputs, describe its running time with a **recurrence**: a rule for the cost on size $n$ in terms of costs on smaller sizes, plus the work done outside those recursive calls. For a divide-and-conquer algorithm with $a$ subproblems, each of size $n/b$, and nonrecursive work $f(n)$, the common form is
+
+$$
+T(n)=aT(n/b)+f(n),\qquad T(1)=\Theta(1),
+$$
+
+where $a\geq1$, $b>1$, and $f(n)$ is asymptotically nonnegative. For a first derivation, assume $n$ is a power of $b$ so each level has equal-size subproblems. Real algorithms round sizes and stop at a base threshold; those details should be checked, but usually do not change the bound when the split stays balanced.
+
+At recursion depth $i$, there are $a^i$ subproblems, each of size $n/b^i$. The nonrecursive work on that level is therefore
+
+$$
+a^i f(n/b^i).
+$$
+
+The tree reaches size one after about $\log_b n$ levels. It has
+
+$$
+a^{\log_b n}=n^{\log_b a}
+$$
+
+leaves. Write $p=\log_b a$; the total leaf work is $\Theta(n^p)$ when each base case costs constant work. The comparison behind the Master theorem is between $f(n)$ (work near the root) and $n^p$ (work represented by the leaves). Summing level costs explains why the larger contribution dominates, why a tie accumulates across levels, and why the result depends on regularity assumptions.
+
+For $T(n)=aT(n/b)+f(n)$, the standard three cases are:
+
+1. **Leaves dominate.** If there is a constant $\varepsilon>0$ such that $f(n)=O(n^{p-\varepsilon})$, then $T(n)=\Theta(n^p)$.
+2. **Levels have comparable work.** If $f(n)=\Theta(n^p\log^k n)$ for a constant $k\geq0$, then $T(n)=\Theta(n^p\log^{k+1}n)$. The familiar equal-work case is $k=0$. This statement does not cover every possible logarithmic factor; in particular it makes no claim for negative $k$.
+3. **Root-side work dominates.** If there is a constant $\varepsilon>0$ with $f(n)=\Omega(n^{p+\varepsilon})$, and the regularity condition
+
+   $$
+   a f(n/b)\leq c f(n)\quad\text{for some constant }c<1
+   $$
+
+   holds for sufficiently large $n$, then $T(n)=\Theta(f(n))$. The condition prevents the next level from growing back to rival the root cost.
+
+These are conditional tools, not a button for every recurrence. Check the subproblem count and size, the nonrecursive work, the base case, and (for Case 3) regularity. If none of the cases applies, sum a recursion tree, use substitution/induction, or use another method instead of forcing a match.
+
+**Worked example 1: binary search.** A balanced binary search makes at most one recursive call on half the range and does constant work to compare and select a half:
+
+$$
+T(n)=T(n/2)+\Theta(1).
+$$
+
+Here $a=1$, $b=2$, and $p=\log_2 1=0$. The level-work tie is $f(n)=\Theta(n^0\log^0 n)$, so Case 2 with $k=0$ gives $T(n)=\Theta(\log n)$. The sorted-range precondition is part of the algorithm's correctness; the recurrence says nothing about an unsorted input.
+
+**Worked example 2: mergesort on eight values.** Split into two equal halves and merge in linear work: $T(n)=2T(n/2)+n$, with $T(1)=1$. Directly,
+
+$$
+T(2)=2(1)+2=4,\quad T(4)=2(4)+4=12,\quad T(8)=2(12)+8=32.
+$$
+
+For general $n$, $a=2$, $b=2$, and $p=1$. Each level costs $2^i(n/2^i)=n$; there are $\log_2 n$ non-leaf levels and $n$ constant-cost leaves. Thus $T(n)=\Theta(n\log n)$, matching Case 2 at $k=0$. This derivation explains the bound instead of merely naming a theorem.
+
+**Worked example 3: root-dominant work.** For $T(n)=2T(n/2)+n^2$, $p=1$, and $f(n)=n^2=\Omega(n^{1+\varepsilon})$ for, say, $\varepsilon=1/2$. Regularity holds because $2f(n/2)=n^2/2\leq(1/2)f(n)$. Case 3 gives $T(n)=\Theta(n^2)$: the root's work outweighs the geometrically shrinking work below it.
+
+**A boundary the three cases do not cover.** Consider $T(n)=2T(n/2)+n/\log_2 n$ above a constant-size base case. Here $p=1$. The added work is not smaller than $n^{1-\varepsilon}$ for any fixed positive $\varepsilon$, is not $\Theta(n\log^k n)$ for any $k\geq0$, and is not polynomially larger than $n$. No standard case applies. At level $i$ while subproblem size is at least two, all nodes together do about $n/(\log_2 n-i)$ work. Summing these levels gives $n H_{\lfloor\log_2 n\rfloor}=\Theta(n\log\log n)$; the leaves contribute only $\Theta(n)$. The recursion tree supplies the answer that an overextended Master theorem would miss.
+
+**Exercise.** Classify $T(n)=3T(n/2)+n$ with constant base cost. Find $p=\log_2 3$, identify the applicable case, and give a tight asymptotic bound.
+
+**Solution.** The recurrence has $a=3$, $b=2$, so $p=\log_2 3\approx1.585$. Choose any fixed $\varepsilon$ with $0<\varepsilon<p-1$; then $n=O(n^{p-\varepsilon})$. Case 1 applies: the leaves dominate, and $T(n)=\Theta(n^{\log_2 3})$. The answer is not $\Theta(n\log n)$ because the number of subproblems grows faster than the amount of merge-like work at each node.
+
+**Source trail.** The recurrence method and theorem conditions can be checked against [MIT 6.006 Recitation 3](https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/1869dbf640ded6b31f1bd369d2001ef5_MIT6_006S20_r03.pdf) and [MIT 6.046 Lecture 3](https://ocw.mit.edu/courses/6-046j-introduction-to-algorithms-sma-5503-fall-2005/9cdb6914be3e87215cb86f327ee4180b_lec3.pdf). The exact eight-element recurrence and boundary example above are worked here so that the result can be reconstructed without watching a lecture.
+
 **Best-, average- and worst-case** statements require different assumptions. A linear search for a key at the front may take one comparison; its worst case scans n elements; an average-case result needs a distribution over positions or inputs. Hash lookup is expected O(1) only under a stated hashing, table and load regime; malicious collisions or pathological clustering can create much worse behavior. A balanced search tree offers O(log n) worst-case search but may have less favorable constants and locality. These distinctions do not license omitting a worst-case failure or calling an empirical benchmark "a proof of average complexity."
 
 Space complexity should identify auxiliary storage separately from input and output storage. Merge sort may allocate Θ(n) temporary storage; in-place heapsort can use O(1) extra array space with an unstable order; recursive depth-first search may use O(V) call-stack frames in a long chain, while an explicit stack makes that usage visible and avoids stack overflow from unbounded recursion. In an engine, the difference between transient scratch and persistent storage also affects frame arenas, thread-local resources and GPU memory budgets.
@@ -600,9 +781,9 @@ Space complexity should identify auxiliary storage separately from input and out
 
 A dynamic array stores elements contiguously and supports amortized O(1) append under geometric growth. Suppose capacity doubles whenever it fills. At growth sizes 1,2,4,8,..., the number of elements moved over n insertions is bounded by a geometric series:
 
-\[
+$$
 1+2+4+\cdots+2^k < 2^{k+1}\leq 2n
-\]
+$$
 
 for the relevant k near the final capacity. Although one particular insertion can move Θ(n) elements, the total relocation work across n insertions is O(n), making average amortized relocation cost O(1) per insertion. This is an **aggregate analysis**, not a guarantee that every append has constant latency. A real engine may need to reserve capacity before a frame deadline to avoid an occasional large allocation/copy in a hot path.
 
@@ -616,9 +797,9 @@ A linked list avoids relocating existing nodes during insertion at a known posit
 
 An asset-streaming queue receives new work and processes it in FIFO order. We can represent it with a fixed array, a head index and a count. Its invariant is 0 ≤ count ≤ capacity; the next insertion position is
 
-\[
+$$
 \mathrm{tail}=(\mathrm{head}+\mathrm{count})\bmod C.
-\]
+$$
 
 When count=C, the queue is full; when count=0, it is empty. This avoids the ambiguity of a representation using only head and tail, for which head==tail can mean full *or* empty unless one slot is deliberately left unused or another state bit/count is stored. A design that leaves one slot unused has effective capacity C−1. Neither representation is universally better; the full/empty policy must be explicit to callers.
 
@@ -646,9 +827,9 @@ Sometimes the streaming system wants to ask whether a requested asset is *defini
 
 With n inserted keys and ideal independent uniform hashing assumptions, a familiar approximate false-positive probability is
 
-\[
+$$
 p_{\mathrm{fp}}\approx\left(1-e^{-kn/m}\right)^k.
-\]
+$$
 
 The approximation comes from estimating the probability that a bit remains zero after kn bit assignments as (1−1/m)^{kn}≈e^{-kn/m}, then requiring all k queried positions to be one. This is an approximate probabilistic model, not an exact guarantee for arbitrary poor or correlated hash functions. The choice of m and k trades memory, compute and false-positive rate.
 

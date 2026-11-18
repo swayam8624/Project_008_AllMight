@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch049.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-50af792c9da7-hmac-and-hkdf" class="level2">
+<h2>HMAC and HKDF</h2>
+<p>HMAC authenticates a message under a shared secret key. HKDF uses HMAC to turn input keying material into one or more pseudorandom-looking keys with explicit context separation.</p>
+<section id="appendix-50af792c9da7-extract-then-expand" class="level3">
+<h3>Extract then expand</h3>
+<p>HKDF has two conceptual stages.</p>
+<p>Extract computes a pseudorandom key:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>R</mi>
+  <mi>K</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>HMAC</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>s</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>I</mi>
+  <mi>K</mi>
+  <mi>M</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Expand derives output keying material in blocks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>HMAC</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>P</mi>
+      <mi>R</mi>
+      <mi>K</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mn>0</mn>
+  <mi>x</mi>
+  <mn>01</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>HMAC</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>P</mi>
+      <mi>R</mi>
+      <mi>K</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>T</mi>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>i</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Concatenate blocks until the requested output length is reached.</p>
+<p>The info field is not decoration. It lets the same root keying material derive separate keys for different purposes, versions, peers or directions. Domain separation reduces accidental cross-protocol key reuse.</p>
+<p>A salt can improve extraction and should follow the protocol design. HKDF does not create entropy that is absent from the input keying material.</p>
+</section>
+<section id="appendix-50af792c9da7-evidence" class="level3">
+<h3>Evidence</h3>
+<p>tools/labs/crypto_primitives_lab.cpp validates HMAC-SHA256 against RFC 4231 and HKDF-SHA256 extract/expand against RFC 5869 test vectors.</p>
+<p>That proves the bit-level reference on those vectors. It does not establish side-channel resistance, secret erasure, key storage, protocol context selection or application security.</p>
+<p>Primary standards: RFC 2104 / RFC 4231 for HMAC testing and RFC 5869 for HKDF.</p>
+<p>Related: <a href="ch164.xhtml#appendix-cbe594d1ab0a-integrity-and-authenticity" class="wikilink">Integrity and authenticity (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Integrity and authenticity)</a>, <a href="ch169.xhtml#appendix-ed338677de0a-checksums-crcs-and-hashes" class="wikilink">Checksums CRCs and hashes (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Checksums CRCs and hashes)</a>.</p>
+</section>
+</section>
+</body>
+</html>

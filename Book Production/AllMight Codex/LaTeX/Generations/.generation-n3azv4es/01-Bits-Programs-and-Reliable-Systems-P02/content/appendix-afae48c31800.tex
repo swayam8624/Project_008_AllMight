@@ -1,0 +1,56 @@
+\hypertarget{appendix-afae48c31800}{}\label{referencestart:appendix-afae48c31800}
+\section{Null pointers and optional access}\label{appendix-afae48c31800-null-pointers-and-optional-access}
+
+\hypertarget{appendix-afae48c31800-null-pointers-and-optional-access}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-afae48c31800-definition-and-mechanism}
+
+\hypertarget{appendix-afae48c31800-definition-and-mechanism}{}
+
+A null pointer designates no object/function; nullptr\_t converts to appropriate null pointer values without choosing an integer overload. A non-null pointer is not a lifetime or bounds proof. Deleting a typed null object pointer is valid, but bare delete nullptr is ill-formed.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-afae48c31800-prerequisites}
+
+\hypertarget{appendix-afae48c31800-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-6af5921bc853]{Pointer arithmetic and provenance} --- Storage relationships, bounds and lifetime distinguish valid access from a non-null value.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-afae48c31800-used-by}
+
+\hypertarget{appendix-afae48c31800-used-by}{}
+
+Later sources will deepen this same node; no empty dependent nodes are created.
+
+\subsection{Recall and next depth}\label{appendix-afae48c31800-recall-and-next-depth}
+
+\hypertarget{appendix-afae48c31800-recall-and-next-depth}{}
+
+Explain absence, stale access and one-past access separately. Pending: optional/reference wrapper APIs and owning-pointer policies. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{appendix-afae48c31800-source-and-navigation}
+
+\hypertarget{appendix-afae48c31800-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch003-a-pointer-carries-an-access-contract]{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}
+
+\subsection{Absence must be part of the type or contract}\label{appendix-afae48c31800-absence-must-be-part-of-the-type-or-contract}
+
+\hypertarget{appendix-afae48c31800-absence-must-be-part-of-the-type-or-contract}{}
+
+A null pointer represents ``no object at this address-bearing interface''; dereferencing it is invalid. That makes raw pointer nullability an API question. If a parameter must always designate an object, a reference or explicitly non-null wrapper communicates more than a nullable pointer plus a comment.
+
+Optional ownership and optional observation are different. A \BookInlineCode{{s}{t}{d}{:}{:}{u}{n}{i}{q}{u}{e}{\_}{p}{t}{r}{\textless{}}{T}{\textgreater{}}}{std::unique\_ptr\textless{}T\textgreater{}} may be empty while also owning when nonempty; \BookInlineCode{{T}{*}}{T*} may be nullable but usually says nothing about ownership; \BookInlineCode{{s}{t}{d}{:}{:}{o}{p}{t}{i}{o}{n}{a}{l}{\textless{}}{T}{\textgreater{}}}{std::optional\textless{}T\textgreater{}} stores an optional value without indirection. Choosing among them should follow lifetime and absence semantics rather than syntax convenience.
+
+Null checks also do not prove lifetime. A non-null dangling pointer is still invalid, and a pointer can become logically stale even if its numeric address is later reused for a different object.
+
+Tests for optional APIs should cover absent state, present state, transitions between them, moved-from ownership and invalid external identifiers. Avoid sentinel pointer values other than the language-defined null representation unless a low-level ABI explicitly owns that convention.

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch048.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-5078dfab64e6-binary64" class="level2">
+<h2>Binary64</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C004 · <strong>Latest development:</strong> C004</p>
+<section id="appendix-5078dfab64e6-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A 64-bit binary interchange format with 1/11/52 fields, 53 significant normal bits and bias 1023. Normal exponent range is −1022 through 1023. Word 3FF0000000000000 means 1.</p>
+</section>
+<section id="appendix-5078dfab64e6-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch047.xhtml#appendix-5057f9ad327f-binary32" class="wikilink">Binary32</a> — The concrete fields provide the representation used in this mechanism.</li>
+</ul>
+</section>
+<section id="appendix-5078dfab64e6-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch023.xhtml#appendix-260182e617b7-mixed-precision-state-updates" class="wikilink">Mixed-precision state updates</a> — A wider format can represent finite binary32 values exactly but not recover earlier loss.</li>
+</ul>
+<p>Connect later dependent concepts here as their lessons arrive.</p>
+</section>
+<section id="appendix-5078dfab64e6-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the concrete example in the definition and identify its validity assumptions.</p>
+<p><strong>Pending:</strong> Apply the class rules using exponent 2047; long double is not automatically this format.</p>
+</section>
+<section id="appendix-5078dfab64e6-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">M004 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m004---parts-61-76" class="wikilink">Per-part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-5078dfab64e6-precision-exponent-range-and-the-integer-exact-region" class="level3">
+<h3>Precision, exponent range, and the integer-exact region</h3>
+<p>IEEE-754 binary64 uses 1 sign bit, 11 exponent bits, and 52 stored fraction bits. Normal values have an implicit leading one, giving 53 bits of significand precision. Around magnitude one, the gap between adjacent values is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>52</mn>
+    </mrow>
+  </msup>
+</math>.</p>
+<p>Every integer with magnitude up to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>53</mn>
+    </mrow>
+  </msup>
+</math> is exactly representable, but beyond that boundary adjacent integers begin sharing the same floating representation. This matters when timestamps, IDs, byte counts or large counters are moved through a double-based API: an integer may be within the exponent range yet still lose unit precision.</p>
+<p>Binary64 dramatically reduces rounding error compared with binary32 but doubles storage/bandwidth and does not cure unstable algorithms. Coordinate systems for large worlds often use double on the CPU and camera-relative float on the GPU, making the conversion boundary part of the design.</p>
+<p>Tests should cover adjacent values around <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>53</mn>
+    </mrow>
+  </msup>
+</math>, normal/subnormal transitions, overflow, signed zero, infinities/NaNs, and cancellation cases that remain ill-conditioned even at 64-bit precision.</p>
+</section>
+</section>
+</body>
+</html>

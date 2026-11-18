@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch158.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-a82f9c438857-object-construction-and-storage-reuse" class="level2">
+<h2>Object construction and storage reuse</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C007 · <strong>Latest development:</strong> C010</p>
+<section id="appendix-a82f9c438857-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Initialization creates an occupant whereas assignment replaces an existing occupant’s state. Ordinary constructor failure and post-target delegation failure have different complete-object cleanup behavior.</p>
+<p>Storage needs sufficient size/alignment before object initialization can complete and start an ordinary lifetime. construct_at and destroy_at separate object life from backing storage. A cast alone does not construct arbitrary types. Some specified operations implicitly create implicit-lifetime objects; replacement and launder have additional preconditions.</p>
+<p>M010 adds the resource-management view: placement construction or <code>construct_at</code> uses already-provided storage; it does not allocate that storage. <code>destroy_at</code> ends the occupant’s lifetime, while an arena separately decides when to reuse or release its bytes. Explicit destruction is safe only inside a protocol that prevents accidental second destruction. See <a href="ch206.xhtml#appendix-f56c3e43fd4e-placement-construction-and-explicit-lifetime-management" class="wikilink">Placement construction and explicit lifetime management (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Placement construction and explicit lifetime management)</a>.</p>
+</section>
+<section id="appendix-a82f9c438857-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch127.xhtml#appendix-0b104bcba06b-storage-duration-and-object-lifetime" class="wikilink">Storage duration and object lifetime</a> — Backing-storage duration must be distinguished from the occupant’s start, destruction and replacement.</li>
+</ul>
+</section>
+<section id="appendix-a82f9c438857-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch170.xhtml#appendix-f1581457d322-object-identity-and-generation-handles" class="wikilink">Object identity and generation handles</a> — uses this prerequisite to establish its entity, lifetime, representation or lookup contract.</li>
+<li><a href="ch192.xhtml#appendix-b08d3788c5c6-return-values-and-copy-elision" class="wikilink">Return values and copy elision</a></li>
+<li><a href="ch184.xhtml#appendix-7f8ec83d0886-constructors-and-invariant-establishment" class="wikilink">Constructors and invariant establishment</a></li>
+<li><a href="ch189.xhtml#appendix-adfd6397af8d-relocation-versus-move" class="wikilink">Relocation versus move</a></li>
+<li><a href="ch206.xhtml#appendix-f56c3e43fd4e-placement-construction-and-explicit-lifetime-management" class="wikilink">Placement construction and explicit lifetime management (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Placement construction and explicit lifetime management)</a></li>
+</ul>
+</section>
+<section id="appendix-a82f9c438857-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.</p>
+<p><strong>Pending:</strong> explicit lifetime restart, smart ownership and allocator protocols.</p>
+</section>
+<section id="appendix-a82f9c438857-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch207.xhtml#appendix-fd090d982a15-m009---parts-127-147" class="wikilink">C009 development</a></p>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-storage-is-a-place-an-object-is-its-occupant" class="wikilink">C007 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m007---parts-101-112" class="wikilink">Source coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

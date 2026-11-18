@@ -1,0 +1,40 @@
+\hypertarget{appendix-806686359e1b}{}
+\section*{Translation units and linking}
+\chapter{Translation units and linking}\label{appendix-806686359e1b-translation-units-and-linking}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C007 · \textbf{Latest development:} C007
+
+\section{Definition and mechanism}\label{appendix-806686359e1b-definition-and-mechanism}
+
+A translation unit is source after preprocessing together with its included material; module units add ownership and dependency rules. Compilation checks meaning and emits code/interface information; linking resolves implementation references. An unknown type is a frontend error, while a declared but undefined odr-used function commonly fails linking.
+
+\section{Prerequisites}\label{appendix-806686359e1b-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-942ad41afb30]{Compiler IR and machine instructions} --- Compilation and emitted code explain why separately translated units need a link step.
+\end{itemize}
+
+\section{Used by}\label{appendix-806686359e1b-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-33c0a92ce855]{Preprocessing and macro boundaries} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \hyperref[appendix-410a611a5b8d]{C++ modules and reachability} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \hyperref[appendix-2e4d494c2d94]{Declarations and definitions} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\end{itemize}
+
+Later chunks extend this same node; dependent concepts are listed here as they are integrated.
+
+\section{Recall and next depth}\label{appendix-806686359e1b-recall-and-next-depth}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} Deeper ownership, pointer/reference, generic programming and module rules from later sources. This is written coverage, not demonstrated personal mastery.
+
+\section{Source and navigation}\label{appendix-806686359e1b-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Giving\%20a\%20program\%20a\%20buildable\%20shape}{C007 teaching chapter} · \hyperref[appendix-fd090d982a15-m007---parts-101-112]{Source coverage} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

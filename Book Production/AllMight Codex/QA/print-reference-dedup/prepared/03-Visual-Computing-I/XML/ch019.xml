@@ -1,0 +1,1333 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Chapter xmlns:ns0="http://ns.adobe.com/AdobeInDesign/4.0/" id="03-visual-computing-i-ch019" source="Chapter Edition/02 - Graphics Vision and XR/19 - Textures as Sampled Surface Signals.md">
+<Content ns0:pstyle="ChapterHeader" id="03-visual-computing-i-ch019-textures-as-sampled-surface-signals">19 — Textures as Sampled Surface Signals</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/02 - Graphics Vision and XR/00 - Reading Map">Reading map</Link> · <Link href="#03-visual-computing-i-ch018">Previous chapter</Link> · <Link href="#03-visual-computing-i-ch020">Next chapter</Link></Content>
+<Content ns0:pstyle="Content">A texture stores samples of a signal over a surface, and its footprint changes with projection. Filtering must account for that changing footprint to avoid unstable detail and aliasing.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">By the end:</Strong> Connect texture sampling, surface footprints and filtering choices.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Recall question:</Strong> Why does a minified texture need a different footprint than a magnified one?</Content>
+
+
+<Content ns0:pstyle="SubchapterHeader" id="03-visual-computing-i-ch019-textures-and-surface-detail">Textures and surface detail</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="03-visual-computing-i-ch019-match-a-texture-footprint-to-the-surface-signal">Match a texture footprint to the surface signal</Content>
+<Content ns0:pstyle="Content">Implementation-specific passages retain observations from the supplied Kairo/Maveb snapshot. They are not a fresh audit of those repositories. Source exercises and illustrative code are teaching material; only explicitly recorded checks have been executed here.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">A texture is a sampled signal</Strong></Content>
+<Content ns0:pstyle="Content">Suppose there exists an ideal continuous function:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d849848aa751a24bc540aa13.svg" alt="&#10;f(u,v).&#10;" jobId="d849848aa751a24bc540aa13" originalTeX="&#10;f(u,v).&#10;" /></Formula>
+<Content ns0:pstyle="Content">A digital texture does not store that continuous function.</Content>
+<Content ns0:pstyle="Content">It stores discrete samples:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b5becc524d05c122f579ed35.svg" alt="&#10;f[i,j].&#10;" jobId="b5becc524d05c122f579ed35" originalTeX="&#10;f[i,j].&#10;" /></Formula>
+<Content ns0:pstyle="Content">These samples are <Strong ns0:cstyle="Bold">texels</Strong>.</Content>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e8456c9244bced6da3fbcc37.svg" alt="&#10;\boxed{&#10;\text{texture sampling is a signal-reconstruction problem}&#10;}&#10;" jobId="e8456c9244bced6da3fbcc37" originalTeX="&#10;\boxed{&#10;\text{texture sampling is a signal-reconstruction problem}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">not merely “look up a color in an image.”</Content>
+<Content ns0:pstyle="Content">This viewpoint explains:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">nearest filtering,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">bilinear filtering,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">mipmaps,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">anisotropy,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">aliasing.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Texel versus pixel</Strong></Content>
+<Content ns0:pstyle="Content">A <Strong ns0:cstyle="Bold">texel</Strong> belongs to a texture.</Content>
+<Content ns0:pstyle="Content">A <Strong ns0:cstyle="Bold">pixel</Strong> belongs to an output image.</Content>
+<Content ns0:pstyle="Content">They are not necessarily one-to-one.</Content>
+<Content ns0:pstyle="Content">One texel may cover hundreds of pixels during magnification.</Content>
+<Content ns0:pstyle="Content">Thousands of texels may map into a single pixel during minification.</Content>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/64f6eca69a652dffe5ddf2fd.svg" alt="&#10;\boxed{&#10;\text{texel density}&#10;\neq&#10;\text{screen pixel density}&#10;}&#10;" jobId="64f6eca69a652dffe5ddf2fd" originalTeX="&#10;\boxed{&#10;\text{texel density}&#10;\neq&#10;\text{screen pixel density}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">and texture filtering exists because we must map between those sampling grids.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">UV coordinates</Strong></Content>
+<Content ns0:pstyle="Content">A texture coordinate commonly uses:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6b86c7fa75a26f90469772c6.svg" alt="&#10;(u,v)\in[0,1]^2.&#10;" jobId="6b86c7fa75a26f90469772c6" originalTeX="&#10;(u,v)\in[0,1]^2.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For width <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b8384a897ac473bd448edc57.svg" alt="W" jobId="b8384a897ac473bd448edc57" originalTeX="W" />, height <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/337deab398069677082b81ee.svg" alt="H" jobId="337deab398069677082b81ee" originalTeX="H" />, a simple conceptual conversion is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/552c4968814efa16bcbe0b20.svg" alt="&#10;x=uW,&#10;\qquad&#10;y=vH.&#10;" jobId="552c4968814efa16bcbe0b20" originalTeX="&#10;x=uW,&#10;\qquad&#10;y=vH.&#10;" /></Formula>
+<Content ns0:pstyle="Content">But texels represent cells with centers, so filtering implementations usually account for the half-texel relationship.</Content>
+<Content ns0:pstyle="Content">A useful conceptual coordinate for bilinear filtering is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2b4e5ca07e60a6f512084d69.svg" alt="&#10;x=uW-\frac12,&#10;" jobId="2b4e5ca07e60a6f512084d69" originalTeX="&#10;x=uW-\frac12,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/edde2d83b1ea9e2efc1475ea.svg" alt="&#10;y=vH-\frac12.&#10;" jobId="edde2d83b1ea9e2efc1475ea" originalTeX="&#10;y=vH-\frac12.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then integer texel centers align naturally with the reconstructed samples.</Content>
+<Content ns0:pstyle="Content">Actual Vulkan normalized-coordinate sampling has precise rules defined in the sampling specification, including coordinate conversion, image dimensions, wrapping and filtering. <Link href="https://docs.vulkan.org/spec/latest/chapters/textures.html?utm_source=chatgpt.com">docs.vulkan.org</Link></Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Wrapping modes</Strong></Content>
+<Content ns0:pstyle="Content">What happens if:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/79fa02571f1baa27f0c2a1c4.svg" alt="&#10;u=1.25?&#10;" jobId="79fa02571f1baa27f0c2a1c4" originalTeX="&#10;u=1.25?&#10;" /></Formula>
+<Content ns0:pstyle="SubChapterSubHeading" id="03-visual-computing-i-ch019-repeat">Repeat</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/90808e722e46f8cdbd1394a3.svg" alt="&#10;u'=u-\lfloor u\rfloor.&#10;" jobId="90808e722e46f8cdbd1394a3" originalTeX="&#10;u'=u-\lfloor u\rfloor.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/43d78005b7303d5fe71c21a7.svg" alt="&#10;1.25\rightarrow0.25.&#10;" jobId="43d78005b7303d5fe71c21a7" originalTeX="&#10;1.25\rightarrow0.25.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="03-visual-computing-i-ch019-clamp-to-edge">Clamp-to-edge</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/02a6f8ea69c6e0fdedf2d965.svg" alt="&#10;u'=&#10;\operatorname{clamp}(u,0,1).&#10;" jobId="02a6f8ea69c6e0fdedf2d965" originalTeX="&#10;u'=&#10;\operatorname{clamp}(u,0,1).&#10;" /></Formula>
+<Content ns0:pstyle="Content">So:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a0feb05be17c0427cc230462.svg" alt="&#10;1.25\rightarrow1.&#10;" jobId="a0feb05be17c0427cc230462" originalTeX="&#10;1.25\rightarrow1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="03-visual-computing-i-ch019-mirrored-repeat">Mirrored repeat</Content>
+<Content ns0:pstyle="Content">Intervals alternate direction:</Content>
+<Code ns0:pstyle="Code" language="text">0→1
+1→0
+0→1
+...</Code>
+<Content ns0:pstyle="Content">This avoids the discontinuity that ordinary repetition produces at every tile boundary for some textures.</Content>
+<Content ns0:pstyle="Content">Your current <InlineCode ns0:cstyle="InlineCode">TextureSampler</InlineCode> supports:</Content>
+<Code ns0:pstyle="Code" language="text">Repeat
+MirroredRepeat
+ClampToEdge</Code>
+<Content ns0:pstyle="Content">for U/V.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Nearest sampling</Strong></Content>
+<Content ns0:pstyle="Content">Nearest chooses the closest stored sample.</Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0dae686bd465b640d4537f53.svg" alt="&#10;i=\operatorname{round}(x),&#10;" jobId="0dae686bd465b640d4537f53" originalTeX="&#10;i=\operatorname{round}(x),&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4fcbe3207bf0808ffe86cec9.svg" alt="&#10;j=\operatorname{round}(y).&#10;" jobId="4fcbe3207bf0808ffe86cec9" originalTeX="&#10;j=\operatorname{round}(y).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2ce106919582625439bcefa4.svg" alt="&#10;C=T[i,j].&#10;" jobId="2ce106919582625439bcefa4" originalTeX="&#10;C=T[i,j].&#10;" /></Formula>
+<Content ns0:pstyle="Content">Advantages:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">cheap,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">preserves hard pixel-art edges,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">deterministic sample choice.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Disadvantages:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">blocky magnification,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">severe minification aliasing.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Bilinear filtering</Strong></Content>
+<Content ns0:pstyle="Content">Let texture coordinate map to:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2e5d7375acebcfa5d474636b.svg" alt="&#10;x=i+\alpha,&#10;" jobId="2e5d7375acebcfa5d474636b" originalTeX="&#10;x=i+\alpha,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/716a64a741c065865ec65343.svg" alt="&#10;y=j+\beta&#10;" jobId="716a64a741c065865ec65343" originalTeX="&#10;y=j+\beta&#10;" /></Formula>
+<Content ns0:pstyle="Content">where:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/86545d2de7216c56d7c79805.svg" alt="&#10;0\le\alpha,\beta&lt;1.&#10;" jobId="86545d2de7216c56d7c79805" originalTeX="&#10;0\le\alpha,\beta&lt;1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Four texels contribute:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/86e47819f427ebbac1b00e9d.svg" alt="&#10;T_{00}=T[i,j],&#10;" jobId="86e47819f427ebbac1b00e9d" originalTeX="&#10;T_{00}=T[i,j],&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/abd446818d90e12041456cf5.svg" alt="&#10;T_{10}=T[i+1,j],&#10;" jobId="abd446818d90e12041456cf5" originalTeX="&#10;T_{10}=T[i+1,j],&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/beeb88c7fb223f0b3d678011.svg" alt="&#10;T_{01}=T[i,j+1],&#10;" jobId="beeb88c7fb223f0b3d678011" originalTeX="&#10;T_{01}=T[i,j+1],&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/58ea956c0119cd2b6e824656.svg" alt="&#10;T_{11}=T[i+1,j+1].&#10;" jobId="58ea956c0119cd2b6e824656" originalTeX="&#10;T_{11}=T[i+1,j+1].&#10;" /></Formula>
+<Content ns0:pstyle="Content">Interpolate horizontally:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8535c579988093a2241b18e4.svg" alt="&#10;A=(1-\alpha)T_{00}+\alpha T_{10},&#10;" jobId="8535c579988093a2241b18e4" originalTeX="&#10;A=(1-\alpha)T_{00}+\alpha T_{10},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f54d01ca6d450baaee9ad49e.svg" alt="&#10;B=(1-\alpha)T_{01}+\alpha T_{11}.&#10;" jobId="f54d01ca6d450baaee9ad49e" originalTeX="&#10;B=(1-\alpha)T_{01}+\alpha T_{11}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then vertically:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/37d073ecceb7265950f71bcf.svg" alt="&#10;\boxed{&#10;C=(1-\beta)A+\beta B.&#10;}&#10;" jobId="37d073ecceb7265950f71bcf" originalTeX="&#10;\boxed{&#10;C=(1-\beta)A+\beta B.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Expanded:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d31795837968b576d18e97fb.svg" alt="&#10;C=&#10;(1-\alpha)(1-\beta)T_{00}&#10;+&#10;\alpha(1-\beta)T_{10}&#10;+&#10;(1-\alpha)\beta T_{01}&#10;+&#10;\alpha\beta T_{11}.&#10;" jobId="d31795837968b576d18e97fb" originalTeX="&#10;C=&#10;(1-\alpha)(1-\beta)T_{00}&#10;+&#10;\alpha(1-\beta)T_{10}&#10;+&#10;(1-\alpha)\beta T_{01}&#10;+&#10;\alpha\beta T_{11}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is a separable triangle filter.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Bilinear does not solve minification</Strong></Content>
+<Content ns0:pstyle="Content">Suppose a distant surface maps one screen pixel onto a:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/721639517856efccf54a1a46.svg" alt="&#10;64\times64&#10;" jobId="721639517856efccf54a1a46" originalTeX="&#10;64\times64&#10;" /></Formula>
+<Content ns0:pstyle="Content">texel footprint.</Content>
+<Content ns0:pstyle="Content">That pixel conceptually represents information from:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/59719e1c07d381745a9a3d18.svg" alt="&#10;4096&#10;" jobId="59719e1c07d381745a9a3d18" originalTeX="&#10;4096&#10;" /></Formula>
+<Content ns0:pstyle="Content">source texels.</Content>
+<Content ns0:pstyle="Content">Bilinear filtering samples only four nearby texels.</Content>
+<Content ns0:pstyle="Content">Four samples cannot represent the average of 4096 high-frequency texels.</Content>
+<Content ns0:pstyle="Content">This violates sampling theory and causes:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">moiré,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">shimmering,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">temporal crawling,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">unstable fine patterns.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Thus:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b611f6ad0a981158d60b2b4e.svg" alt="&#10;\boxed{\text{bilinear filtering is reconstruction, not sufficient prefiltering}}&#10;" jobId="b611f6ad0a981158d60b2b4e" originalTeX="&#10;\boxed{\text{bilinear filtering is reconstruction, not sufficient prefiltering}}&#10;" /></Formula>
+<Content ns0:pstyle="Content">for heavy minification.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Nyquist intuition</Strong></Content>
+<Content ns0:pstyle="Content">If the underlying texture contains frequency <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f578847f32a4126956ae3cda.svg" alt="f" jobId="f578847f32a4126956ae3cda" originalTeX="f" />, the screen sampling rate must be at least:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/723bc546cc60fc0f976e4c87.svg" alt="&#10;2f&#10;" jobId="723bc546cc60fc0f976e4c87" originalTeX="&#10;2f&#10;" /></Formula>
+<Content ns0:pstyle="Content">to represent it without aliasing.</Content>
+<Content ns0:pstyle="Content">When the texture footprint shrinks on screen, high-frequency components exceed the screen’s Nyquist limit.</Content>
+<Content ns0:pstyle="Content">They must be removed <Strong ns0:cstyle="Bold">before sampling</Strong>.</Content>
+<Content ns0:pstyle="Content">This is exactly what mipmaps provide.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Mipmaps</Strong></Content>
+<Content ns0:pstyle="Content">Mip level 0:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/131c6f955c12e63f9cccd9d6.svg" alt="&#10;W\times H.&#10;" jobId="131c6f955c12e63f9cccd9d6" originalTeX="&#10;W\times H.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Level 1:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/83183b7389e2645b73f052e4.svg" alt="&#10;\frac W2\times\frac H2.&#10;" jobId="83183b7389e2645b73f052e4" originalTeX="&#10;\frac W2\times\frac H2.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Level 2:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a2798b6b3b90f1bf9af9d0de.svg" alt="&#10;\frac W4\times\frac H4.&#10;" jobId="a2798b6b3b90f1bf9af9d0de" originalTeX="&#10;\frac W4\times\frac H4.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Eventually:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/83d9c887935e983bde364bc0.svg" alt="&#10;1\times1.&#10;" jobId="83d9c887935e983bde364bc0" originalTeX="&#10;1\times1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Example:</Content>
+<Code ns0:pstyle="Code" language="text">1024×1024
+512×512
+256×256
+128×128
+64×64
+32×32
+16×16
+8×8
+4×4
+2×2
+1×1</Code>
+<Content ns0:pstyle="Content">Each level is a prefiltered representation suitable for a larger texture footprint.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Total mipmap memory</Strong></Content>
+<Content ns0:pstyle="Content">For an uncompressed square texture:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9d40429cba1f9006c8887dac.svg" alt="&#10;1+\frac14+\frac1{16}+\frac1{64}+\cdots&#10;" jobId="9d40429cba1f9006c8887dac" originalTeX="&#10;1+\frac14+\frac1{16}+\frac1{64}+\cdots&#10;" /></Formula>
+<Content ns0:pstyle="Content">is a geometric series.</Content>
+<Content ns0:pstyle="Content">Its sum tends toward:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/efcd5520dfe77cd77de3dea2.svg" alt="&#10;\frac{1}{1-\frac14}&#10;=&#10;\frac43.&#10;" jobId="efcd5520dfe77cd77de3dea2" originalTeX="&#10;\frac{1}{1-\frac14}&#10;=&#10;\frac43.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore a complete mip chain costs only about:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d564b2c647671189d502fff8.svg" alt="&#10;\boxed{33\%}&#10;" jobId="d564b2c647671189d502fff8" originalTeX="&#10;\boxed{33\%}&#10;" /></Formula>
+<Content ns0:pstyle="Content">more storage than the base image.</Content>
+<Content ns0:pstyle="Content">This is extraordinarily cheap relative to the quality and cache benefits.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Correct mip generation</Strong></Content>
+<Content ns0:pstyle="Content">A simplistic color mip takes a 2×2 block:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/50aeb2047c14e6cb46066833.svg" alt="&#10;C_{00},C_{10},C_{01},C_{11}&#10;" jobId="50aeb2047c14e6cb46066833" originalTeX="&#10;C_{00},C_{10},C_{01},C_{11}&#10;" /></Formula>
+<Content ns0:pstyle="Content">and averages:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/62946e8c22d0f505ccf233ee.svg" alt="&#10;C'=&#10;\frac{&#10;C_{00}+C_{10}+C_{01}+C_{11}&#10;}{4}.&#10;" jobId="62946e8c22d0f505ccf233ee" originalTeX="&#10;C'=&#10;\frac{&#10;C_{00}+C_{10}+C_{01}+C_{11}&#10;}{4}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">But that average must happen in the <Strong ns0:cstyle="Bold">correct domain</Strong>.</Content>
+<Content ns0:pstyle="Content">For color:</Content>
+<Code ns0:pstyle="Code" language="text">sRGB bytes
+  ↓ decode
+linear RGB
+  ↓ average/filter
+linear RGB mip
+  ↓ encode if stored in sRGB format
+sRGB bytes</Code>
+<Content ns0:pstyle="Content">Your KairoAssets implementation does exactly that.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Normal maps cannot be mipmapped like ordinary RGB</Strong></Content>
+<Content ns0:pstyle="Content">Suppose two normals are:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/204352cdc205789ea31264d7.svg" alt="&#10;N_1=(1,0,0),&#10;" jobId="204352cdc205789ea31264d7" originalTeX="&#10;N_1=(1,0,0),&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4daa910033c3a74b44c36564.svg" alt="&#10;N_2=(0,1,0).&#10;" jobId="4daa910033c3a74b44c36564" originalTeX="&#10;N_2=(0,1,0).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Their simple average is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ddc714c7329d6e177e90af6e.svg" alt="&#10;(0.5,0.5,0).&#10;" jobId="ddc714c7329d6e177e90af6e" originalTeX="&#10;(0.5,0.5,0).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Its length is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/eb0e532c063d5c09fb234e61.svg" alt="&#10;\sqrt{0.5}&#10;\approx0.707.&#10;" jobId="eb0e532c063d5c09fb234e61" originalTeX="&#10;\sqrt{0.5}&#10;\approx0.707.&#10;" /></Formula>
+<Content ns0:pstyle="Content">It is no longer a unit normal.</Content>
+<Content ns0:pstyle="Content">A basic normal-map mip generator therefore:</Content>
+<List type="ordered" start="1" numberStyle="Decimal" delimiter="Period">
+<ListItem><Content ns0:pstyle="Content">decodes RGB to vectors,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">averages vectors,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">renormalizes,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">re-encodes.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Your KairoAssets mip builder explicitly does this for normal maps.</Content>
+<Content ns0:pstyle="Content">That is an excellent example of:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3ce4a554a611445d041ea5b3.svg" alt="&#10;\boxed{&#10;\text{texture semantic determines the correct filtering operation}.&#10;}&#10;" jobId="3ce4a554a611445d041ea5b3" originalTeX="&#10;\boxed{&#10;\text{texture semantic determines the correct filtering operation}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Mipmap level selection</Strong></Content>
+<Content ns0:pstyle="Content">Suppose UV changes by:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a844a607de84f5fb6cb9db00.svg" alt="&#10;\frac{\partial u}{\partial x},&#10;\quad&#10;\frac{\partial v}{\partial x},&#10;\quad&#10;\frac{\partial u}{\partial y},&#10;\quad&#10;\frac{\partial v}{\partial y}.&#10;" jobId="a844a607de84f5fb6cb9db00" originalTeX="&#10;\frac{\partial u}{\partial x},&#10;\quad&#10;\frac{\partial v}{\partial x},&#10;\quad&#10;\frac{\partial u}{\partial y},&#10;\quad&#10;\frac{\partial v}{\partial y}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Convert normalized UV derivatives into base-level texel units:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3f868fb651679593847c96b5.svg" alt="&#10;\mathbf d_x=&#10;\left(&#10;W\frac{\partial u}{\partial x},&#10;H\frac{\partial v}{\partial x}&#10;\right),&#10;" jobId="3f868fb651679593847c96b5" originalTeX="&#10;\mathbf d_x=&#10;\left(&#10;W\frac{\partial u}{\partial x},&#10;H\frac{\partial v}{\partial x}&#10;\right),&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1743d5d5c666766e6b535831.svg" alt="&#10;\mathbf d_y=&#10;\left(&#10;W\frac{\partial u}{\partial y},&#10;H\frac{\partial v}{\partial y}&#10;\right).&#10;" jobId="1743d5d5c666766e6b535831" originalTeX="&#10;\mathbf d_y=&#10;\left(&#10;W\frac{\partial u}{\partial y},&#10;H\frac{\partial v}{\partial y}&#10;\right).&#10;" /></Formula>
+<Content ns0:pstyle="Content">A common isotropic footprint estimate is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bec318af0c93f46cf01179c0.svg" alt="&#10;\rho=&#10;\max(&#10;\|\mathbf d_x\|,&#10;\|\mathbf d_y\|&#10;).&#10;" jobId="bec318af0c93f46cf01179c0" originalTeX="&#10;\rho=&#10;\max(&#10;\|\mathbf d_x\|,&#10;\|\mathbf d_y\|&#10;).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/eec2fb945353ccf82f889641.svg" alt="&#10;\boxed{&#10;\lambda=\log_2\rho&#10;}&#10;" jobId="eec2fb945353ccf82f889641" originalTeX="&#10;\boxed{&#10;\lambda=\log_2\rho&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">is the desired mip LOD.</Content>
+<Content ns0:pstyle="Content">Examples:</Content>
+<Content ns0:pstyle="Content">If:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b749a0988da9c6e0e7ba8e35.svg" alt="&#10;\rho=1&#10;" jobId="b749a0988da9c6e0e7ba8e35" originalTeX="&#10;\rho=1&#10;" /></Formula>
+<Content ns0:pstyle="Content">then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/20849b03e03ca429344ec2b0.svg" alt="&#10;\lambda=0.&#10;" jobId="20849b03e03ca429344ec2b0" originalTeX="&#10;\lambda=0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Use base level.</Content>
+<Content ns0:pstyle="Content">If:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b70f464cc83c92640fa2895a.svg" alt="&#10;\rho=2&#10;" jobId="b70f464cc83c92640fa2895a" originalTeX="&#10;\rho=2&#10;" /></Formula>
+<Content ns0:pstyle="Content">then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/89518433e7f51f9fffdcef7e.svg" alt="&#10;\lambda=1.&#10;" jobId="89518433e7f51f9fffdcef7e" originalTeX="&#10;\lambda=1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">If:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ac075d05cb3d72a03e594b4a.svg" alt="&#10;\rho=8&#10;" jobId="ac075d05cb3d72a03e594b4a" originalTeX="&#10;\rho=8&#10;" /></Formula>
+<Content ns0:pstyle="Content">then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a3149fbf8d5dfea887ec0548.svg" alt="&#10;\lambda=3.&#10;" jobId="a3149fbf8d5dfea887ec0548" originalTeX="&#10;\lambda=3.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Vulkan similarly derives implicit LOD from coordinate derivatives, with the exact scale-factor and LOD procedure specified by the API. <Link href="https://docs.vulkan.org/spec/latest/chapters/textures.html?utm_source=chatgpt.com">docs.vulkan.org</Link></Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why logarithm appears</Strong></Content>
+<Content ns0:pstyle="Content">Every mip level halves resolution.</Content>
+<Content ns0:pstyle="Content">A scale factor of:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/16202c4c3e042f3e4b727a00.svg" alt="&#10;2&#10;" jobId="16202c4c3e042f3e4b727a00" originalTeX="&#10;2&#10;" /></Formula>
+<Content ns0:pstyle="Content">means one level down.</Content>
+<Content ns0:pstyle="Content">A scale of:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1f6184d4490947cfb3c6c74e.svg" alt="&#10;4=2^2&#10;" jobId="1f6184d4490947cfb3c6c74e" originalTeX="&#10;4=2^2&#10;" /></Formula>
+<Content ns0:pstyle="Content">means two levels down.</Content>
+<Content ns0:pstyle="Content">A scale of:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2234e0d18040e5a73dd2e6d5.svg" alt="&#10;8=2^3&#10;" jobId="2234e0d18040e5a73dd2e6d5" originalTeX="&#10;8=2^3&#10;" /></Formula>
+<Content ns0:pstyle="Content">means three levels down.</Content>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2ddf81c7507c35428fb7b17e.svg" alt="&#10;\lambda=\log_2\rho.&#10;" jobId="2ddf81c7507c35428fb7b17e" originalTeX="&#10;\lambda=\log_2\rho.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The logarithm is not an arbitrary graphics convention.</Content>
+<Content ns0:pstyle="Content">It follows directly from the geometric mip pyramid.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Trilinear filtering</Strong></Content>
+<Content ns0:pstyle="Content">Suppose:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b3c2b9f2b179f78632ba1fbb.svg" alt="&#10;\lambda=3.25.&#10;" jobId="b3c2b9f2b179f78632ba1fbb" originalTeX="&#10;\lambda=3.25.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Bilinear sample level 3:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/da9a2256bc0d471cf560cb93.svg" alt="&#10;C_3.&#10;" jobId="da9a2256bc0d471cf560cb93" originalTeX="&#10;C_3.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Bilinear sample level 4:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a149c9b3220d442863a28d93.svg" alt="&#10;C_4.&#10;" jobId="a149c9b3220d442863a28d93" originalTeX="&#10;C_4.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then interpolate:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/608e0df48a653e4d9abac9a6.svg" alt="&#10;\boxed{&#10;C=&#10;0.75C_3+0.25C_4.&#10;}&#10;" jobId="608e0df48a653e4d9abac9a6" originalTeX="&#10;\boxed{&#10;C=&#10;0.75C_3+0.25C_4.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is trilinear filtering:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">bilinear in <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea65d6ef23bc372feb44e03b.svg" alt="u,v" jobId="ea65d6ef23bc372feb44e03b" originalTeX="u,v" /> at first mip,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">bilinear in <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea65d6ef23bc372feb44e03b.svg" alt="u,v" jobId="ea65d6ef23bc372feb44e03b" originalTeX="u,v" /> at second mip,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">linear between mip levels.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Vulkan’s <InlineCode ns0:cstyle="InlineCode">VK_SAMPLER_MIPMAP_MODE_LINEAR</InlineCode> similarly selects neighboring mip levels and interpolates between them. <Link href="https://docs.vulkan.org/tutorial/latest/09_Generating_Mipmaps.html?utm_source=chatgpt.com">docs.vulkan.org</Link></Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo’s current sampler</Strong></Content>
+<Content ns0:pstyle="Content">Your current Vulkan sampler uses:</Content>
+<Code ns0:pstyle="Code" language="cpp">magFilter  = VK_FILTER_LINEAR;
+minFilter  = VK_FILTER_LINEAR;
+mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+minLod     = 0;
+maxLod     = mipLevels - 1;</Code>
+<Content ns0:pstyle="Content">Therefore Kairo already has:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/362d9c5af37f3729fb928a2f.svg" alt="&#10;\boxed{\text{bilinear + trilinear mip filtering}}&#10;" jobId="362d9c5af37f3729fb928a2f" originalTeX="&#10;\boxed{\text{bilinear + trilinear mip filtering}}&#10;" /></Formula>
+<Content ns0:pstyle="Content">for ordinary material textures.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Derivatives again</Strong></Content>
+<Content ns0:pstyle="Content">Last pass we used:</Content>
+<Code ns0:pstyle="Code" language="glsl">dFdx(inTexCoord)
+dFdy(inTexCoord)</Code>
+<Content ns0:pstyle="Content">to build a tangent basis.</Content>
+<Content ns0:pstyle="Content">The texture hardware also needs essentially the same information.</Content>
+<Content ns0:pstyle="Content">A shader expression:</Content>
+<Code ns0:pstyle="Code" language="glsl">texture(baseColorMap, inTexCoord)</Code>
+<Content ns0:pstyle="Content">normally performs <Strong ns0:cstyle="Bold">implicit LOD</Strong> lookup in the fragment stage.</Content>
+<Content ns0:pstyle="Content">The sampler derives how rapidly the UV changes across neighboring fragments and selects an appropriate mip level. Vulkan explicitly states that implicit-LOD image instructions calculate derivatives from neighboring fragment coordinates and use those derivatives for LOD selection. <Link href="https://docs.vulkan.org/spec/latest/chapters/textures.html?utm_source=chatgpt.com">docs.vulkan.org</Link></Content>
+<Content ns0:pstyle="Content">Thus:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/984e0ec68f214a2b6afe106a.svg" alt="&#10;\boxed{&#10;\text{fragment quads}&#10;\rightarrow&#10;UV derivatives&#10;\rightarrow&#10;texture footprint&#10;\rightarrow&#10;LOD&#10;}&#10;" jobId="984e0ec68f214a2b6afe106a" originalTeX="&#10;\boxed{&#10;\text{fragment quads}&#10;\rightarrow&#10;UV derivatives&#10;\rightarrow&#10;texture footprint&#10;\rightarrow&#10;LOD&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">is an actual hardware/dataflow connection.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Texture footprint is not generally square</Strong></Content>
+<Content ns0:pstyle="Content">Consider a floor stretching into the distance.</Content>
+<Content ns0:pstyle="Content">Near the camera, one pixel might cover:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3e56102b90ef883337167325.svg" alt="&#10;2\times2&#10;" jobId="3e56102b90ef883337167325" originalTeX="&#10;2\times2&#10;" /></Formula>
+<Content ns0:pstyle="Content">texels.</Content>
+<Content ns0:pstyle="Content">Farther away, due to foreshortening, one screen pixel might cover an elongated region:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5ba3c5cf9fbc5716bb662058.svg" alt="&#10;2\times64&#10;" jobId="5ba3c5cf9fbc5716bb662058" originalTeX="&#10;2\times64&#10;" /></Formula>
+<Content ns0:pstyle="Content">texels.</Content>
+<Content ns0:pstyle="Content">An isotropic mip level sees essentially the largest dimension:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/201ea95971115ef2c426c54f.svg" alt="&#10;64,&#10;" jobId="201ea95971115ef2c426c54f" originalTeX="&#10;64,&#10;" /></Formula>
+<Content ns0:pstyle="Content">and picks a low-resolution mip suitable for that scale.</Content>
+<Content ns0:pstyle="Content">But along the short direction, that mip is far too blurry.</Content>
+<Content ns0:pstyle="Content">This is why trilinear filtering causes distant ground textures to lose detail.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Anisotropic filtering</Strong></Content>
+<Content ns0:pstyle="Content">Anisotropic filtering recognizes that the footprint can be elongated.</Content>
+<Content ns0:pstyle="Content">Instead of approximating it as a square/circle, think of an ellipse.</Content>
+<Content ns0:pstyle="Content">Let major and minor footprint lengths be:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/10041bb81ea7357b4c6a132e.svg" alt="&#10;a,\quad b.&#10;" jobId="10041bb81ea7357b4c6a132e" originalTeX="&#10;a,\quad b.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Anisotropy ratio:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fafeec89d034524605dd113e.svg" alt="&#10;\boxed{&#10;A=\frac{a}{b}.&#10;}&#10;" jobId="fafeec89d034524605dd113e" originalTeX="&#10;\boxed{&#10;A=\frac{a}{b}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">For:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3d949dbb671fc546bd4b1951.svg" alt="&#10;A=1&#10;" jobId="3d949dbb671fc546bd4b1951" originalTeX="&#10;A=1&#10;" /></Formula>
+<Content ns0:pstyle="Content">the footprint is isotropic.</Content>
+<Content ns0:pstyle="Content">For:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4c6b2fedbd4198557cb05349.svg" alt="&#10;A=16&#10;" jobId="4c6b2fedbd4198557cb05349" originalTeX="&#10;A=16&#10;" /></Formula>
+<Content ns0:pstyle="Content">it is highly elongated.</Content>
+<Content ns0:pstyle="Content">Anisotropic filtering samples more intelligently along the long direction while retaining higher resolution across the short direction.</Content>
+<Content ns0:pstyle="Content">The exact algorithm is implementation dependent in Vulkan, controlled by sampler anisotropy state and hardware limits. <Link href="https://docs.vulkan.org/spec/latest/chapters/textures.html?utm_source=chatgpt.com">docs.vulkan.org</Link></Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo currently has anisotropy effectively disabled</Strong></Content>
+<Content ns0:pstyle="Content">Your sampler contains:</Content>
+<Code ns0:pstyle="Code" language="cpp">create.maxAnisotropy = 1.0f;</Code>
+<Content ns0:pstyle="Content">but does not enable:</Content>
+<Code ns0:pstyle="Code" language="cpp">create.anisotropyEnable = VK_TRUE;</Code>
+<Content ns0:pstyle="Content">The zero-initialized structure therefore has anisotropy disabled.</Content>
+<Content ns0:pstyle="Content">So today:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dd96cd44a4162cfa4ffa3ad6.svg" alt="&#10;\boxed{&#10;\text{Kairo = trilinear isotropic filtering}&#10;}&#10;" jobId="dd96cd44a4162cfa4ffa3ad6" originalTeX="&#10;\boxed{&#10;\text{Kairo = trilinear isotropic filtering}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">not anisotropic filtering.</Content>
+<Content ns0:pstyle="Content">A production change would need to:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">query sampler-anisotropy feature support,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">enable it,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">clamp requested anisotropy to device limits.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">CPU sampler skeleton</Strong></Content>
+<Content ns0:pstyle="Content">A simplified software equivalent clarifies the entire hierarchy:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct ImageLevel
+{
+    int width;
+    int height;
+    std::vector&lt;Vec4&gt; texels; // Already linearized for this example.
+};
+
+struct Texture2D
+{
+    std::vector&lt;ImageLevel&gt; mipLevels;
+};
+
+float Repeat(float x)
+{
+    return x - std::floor(x);
+}
+
+const Vec4&amp; FetchWrapped(
+    const ImageLevel&amp; image,
+    int x,
+    int y)
+{
+    // Repeat addressing.
+    x %= image.width;
+    y %= image.height;
+
+    if (x &lt; 0) x += image.width;
+    if (y &lt; 0) y += image.height;
+
+    return image.texels[
+        static_cast&lt;std::size_t&gt;(y * image.width + x)];
+}
+
+Vec4 SampleBilinear(
+    const ImageLevel&amp; image,
+    Vec2 uv)
+{
+    // Normalized repeating UV coordinates.
+    uv.x = Repeat(uv.x);
+    uv.y = Repeat(uv.y);
+
+    // Place integer texel coordinates at texel centers.
+    const float x =
+        uv.x * static_cast&lt;float&gt;(image.width) - 0.5f;
+
+    const float y =
+        uv.y * static_cast&lt;float&gt;(image.height) - 0.5f;
+
+    const int x0 =
+        static_cast&lt;int&gt;(std::floor(x));
+
+    const int y0 =
+        static_cast&lt;int&gt;(std::floor(y));
+
+    const float tx = x - std::floor(x);
+    const float ty = y - std::floor(y);
+
+    const Vec4 c00 =
+        FetchWrapped(image, x0,     y0);
+
+    const Vec4 c10 =
+        FetchWrapped(image, x0 + 1, y0);
+
+    const Vec4 c01 =
+        FetchWrapped(image, x0,     y0 + 1);
+
+    const Vec4 c11 =
+        FetchWrapped(image, x0 + 1, y0 + 1);
+
+    const Vec4 row0 =
+        c00 * (1.0f - tx) +
+        c10 * tx;
+
+    const Vec4 row1 =
+        c01 * (1.0f - tx) +
+        c11 * tx;
+
+    return
+        row0 * (1.0f - ty) +
+        row1 * ty;
+}
+
+float ComputeMipLOD(
+    Vec2 dUVdx,
+    Vec2 dUVdy,
+    int baseWidth,
+    int baseHeight)
+{
+    // Convert normalized UV derivatives into texel-space derivatives.
+    const Vec2 dx{
+        dUVdx.x * baseWidth,
+        dUVdx.y * baseHeight
+    };
+
+    const Vec2 dy{
+        dUVdy.x * baseWidth,
+        dUVdy.y * baseHeight
+    };
+
+    const float rhoX =
+        std::sqrt(dx.x * dx.x + dx.y * dx.y);
+
+    const float rhoY =
+        std::sqrt(dy.x * dy.x + dy.y * dy.y);
+
+    const float rho =
+        std::max(rhoX, rhoY);
+
+    // rho &lt;= 1 means base-level magnification or approximately 1:1 sampling.
+    return std::log2(std::max(rho, 1.0f));
+}
+
+Vec4 SampleTrilinear(
+    const Texture2D&amp; texture,
+    Vec2 uv,
+    Vec2 dUVdx,
+    Vec2 dUVdy)
+{
+    const auto&amp; base = texture.mipLevels.front();
+
+    float lod =
+        ComputeMipLOD(
+            dUVdx,
+            dUVdy,
+            base.width,
+            base.height);
+
+    lod = std::clamp(
+        lod,
+        0.0f,
+        static_cast&lt;float&gt;(
+            texture.mipLevels.size() - 1));
+
+    const int low =
+        static_cast&lt;int&gt;(std::floor(lod));
+
+    const int high =
+        std::min(
+            low + 1,
+            static_cast&lt;int&gt;(
+                texture.mipLevels.size() - 1));
+
+    const float t =
+        lod - static_cast&lt;float&gt;(low);
+
+    const Vec4 a =
+        SampleBilinear(texture.mipLevels[low], uv);
+
+    const Vec4 b =
+        SampleBilinear(texture.mipLevels[high], uv);
+
+    return
+        a * (1.0f - t) +
+        b * t;
+}</Code>
+<Content ns0:pstyle="Content">This is not a bit-for-bit Vulkan sampler implementation, but the conceptual pipeline is correct:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/36eb5be819bbb28430ce3bbd.svg" alt="&#10;UV&#10;\rightarrow&#10;\text{derivatives}&#10;\rightarrow&#10;\lambda&#10;\rightarrow&#10;\text{mip pair}&#10;\rightarrow&#10;\text{bilinear samples}&#10;\rightarrow&#10;\text{LOD interpolation}.&#10;" jobId="36eb5be819bbb28430ce3bbd" originalTeX="&#10;UV&#10;\rightarrow&#10;\text{derivatives}&#10;\rightarrow&#10;\lambda&#10;\rightarrow&#10;\text{mip pair}&#10;\rightarrow&#10;\text{bilinear samples}&#10;\rightarrow&#10;\text{LOD interpolation}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Texture compression</Strong></Content>
+<Content ns0:pstyle="Content">Uncompressed RGBA8 costs:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/759ab60ac5b25578c49a5b90.svg" alt="&#10;4\text{ bytes/texel}.&#10;" jobId="759ab60ac5b25578c49a5b90" originalTeX="&#10;4\text{ bytes/texel}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">A 4096×4096 texture requires:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8b8768546e0fd182b42e8b07.svg" alt="&#10;4096^2\times4&#10;\approx67.1\text{ MB}&#10;" jobId="8b8768546e0fd182b42e8b07" originalTeX="&#10;4096^2\times4&#10;\approx67.1\text{ MB}&#10;" /></Formula>
+<Content ns0:pstyle="Content">before mipmaps.</Content>
+<Content ns0:pstyle="Content">With full mip chain:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/70deaff672475198b5d796fd.svg" alt="&#10;67.1\times\frac43&#10;\approx89.5\text{ MB}.&#10;" jobId="70deaff672475198b5d796fd" originalTeX="&#10;67.1\times\frac43&#10;\approx89.5\text{ MB}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Ten such textures approach:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f1bd05cc9617e22d813230f9.svg" alt="&#10;895\text{ MB}.&#10;" jobId="f1bd05cc9617e22d813230f9" originalTeX="&#10;895\text{ MB}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is why GPU texture compression matters.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Block compression</Strong></Content>
+<Content ns0:pstyle="Content">Many GPU formats compress small blocks independently.</Content>
+<Content ns0:pstyle="Content">For example, BC1 uses 4×4 blocks.</Content>
+<Content ns0:pstyle="Content">A block represents:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/67bae8dc3e821cfa9632d21c.svg" alt="&#10;16\text{ texels}&#10;" jobId="67bae8dc3e821cfa9632d21c" originalTeX="&#10;16\text{ texels}&#10;" /></Formula>
+<Content ns0:pstyle="Content">using 8 bytes.</Content>
+<Content ns0:pstyle="Content">So:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1024e0661f752b62cc57e94b.svg" alt="&#10;\frac{8\times8\text{ bits}}&#10;{16}&#10;=&#10;4\text{ bits/texel}.&#10;" jobId="1024e0661f752b62cc57e94b" originalTeX="&#10;\frac{8\times8\text{ bits}}&#10;{16}&#10;=&#10;4\text{ bits/texel}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Compared with RGBA8:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/edc018eb1c627515724601cd.svg" alt="&#10;32\text{ bits/texel}.&#10;" jobId="edc018eb1c627515724601cd" originalTeX="&#10;32\text{ bits/texel}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is an 8× reduction.</Content>
+<Content ns0:pstyle="Content">Because blocks are independently decodable, the GPU can still perform random texture access without decompressing the entire image.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Compression is semantic too</Strong></Content>
+<Content ns0:pstyle="Content">Different texture types prefer different formats.</Content>
+<Content ns0:pstyle="Content">Examples:</Content>
+<Code ns0:pstyle="Code" language="text">base color:
+BC7 / ASTC high-quality color
+
+normal XY:
+BC5
+
+single-channel masks:
+BC4
+
+mobile:
+ASTC / ETC families</Code>
+<Content ns0:pstyle="Content">Why BC5 for normals?</Content>
+<Content ns0:pstyle="Content">Normal mapping can store:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/08e737bb4e43653a1f3f30ef.svg" alt="&#10;x,y&#10;" jobId="08e737bb4e43653a1f3f30ef" originalTeX="&#10;x,y&#10;" /></Formula>
+<Content ns0:pstyle="Content">and reconstruct:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6c83c623519c07fb8ac2807c.svg" alt="&#10;z=&#10;\sqrt{&#10;\max(&#10;0,&#10;1-x^2-y^2&#10;)&#10;}.&#10;" jobId="6c83c623519c07fb8ac2807c" originalTeX="&#10;z=&#10;\sqrt{&#10;\max(&#10;0,&#10;1-x^2-y^2&#10;)&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So two high-quality signed-ish channels can be better than wasting general RGBA compression on XYZ.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo currently has no GPU block-compressed texture path</Strong></Content>
+<Content ns0:pstyle="Content">Your current texture enum supports only:</Content>
+<Code ns0:pstyle="Code" language="text">R8
+RG8
+RGBA8
+RGBA16Float</Code>
+<Content ns0:pstyle="Content">No BCn, ASTC or ETC formats are represented yet.</Content>
+<Content ns0:pstyle="Content">So this portion of M116 is currently a future asset/runtime capability.</Content>
+<Content ns0:pstyle="Content">A later production texture artifact should probably encode:</Content>
+<Code ns0:pstyle="Code" language="text">pixel/block format
+color space
+semantic
+mip chain
+possibly platform transcoding target</Code>
+<Content ns0:pstyle="Content">rather than assuming raw pixels.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Normal maps</Strong></Content>
+<Content ns0:pstyle="Content">A geometric normal approximates surface orientation at mesh resolution.</Content>
+<Content ns0:pstyle="Content">A normal map stores much higher-frequency orientation information.</Content>
+<Content ns0:pstyle="Content">Typically RGB encodes a tangent-space vector.</Content>
+<Content ns0:pstyle="Content">Stored value:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e809411189788999cc980bf8.svg" alt="&#10;C\in[0,1]^3.&#10;" jobId="e809411189788999cc980bf8" originalTeX="&#10;C\in[0,1]^3.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Decode:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8e7e5c17499733a2181b303d.svg" alt="&#10;\boxed{&#10;N_t=2C-1.&#10;}&#10;" jobId="8e7e5c17499733a2181b303d" originalTeX="&#10;\boxed{&#10;N_t=2C-1.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">For the neutral normal:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1491da0d5a8bc565b28f3ed3.svg" alt="&#10;N_t=(0,0,1).&#10;" jobId="1491da0d5a8bc565b28f3ed3" originalTeX="&#10;N_t=(0,0,1).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Its encoded RGB is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/81534a39c3b91cf8b2aa8ab8.svg" alt="&#10;(0.5,0.5,1).&#10;" jobId="81534a39c3b91cf8b2aa8ab8" originalTeX="&#10;(0.5,0.5,1).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Which explains the characteristic bluish appearance of normal maps.</Content>
+<Content ns0:pstyle="Content">The glTF specification likewise defines tangent-space normal textures as linear data, maps sampled RGB with <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0c5e7d3e034d88956e38dea1.svg" alt="2C-1" jobId="0c5e7d3e034d88956e38dea1" originalTeX="2C-1" />, and requires the normal to be normalized before lighting. <Link href="https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html?utm_source=chatgpt.com">Khronos Registry</Link></Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why tangent space</Strong></Content>
+<Content ns0:pstyle="Content">Suppose the same normal-map texture is used on surfaces facing:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">+X,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">+Y,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">+Z.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">If the map stored world-space normals, it could not simply rotate with the object.</Content>
+<Content ns0:pstyle="Content">Tangent space creates a local surface frame:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2e6cb955cdc6dce53b105881.svg" alt="&#10;T=\text{tangent},&#10;" jobId="2e6cb955cdc6dce53b105881" originalTeX="&#10;T=\text{tangent},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9715f7c83f0ab31a0cf8379c.svg" alt="&#10;B=\text{bitangent},&#10;" jobId="9715f7c83f0ab31a0cf8379c" originalTeX="&#10;B=\text{bitangent},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/aa524c8b7d62edf305f11352.svg" alt="&#10;N=\text{surface normal}.&#10;" jobId="aa524c8b7d62edf305f11352" originalTeX="&#10;N=\text{surface normal}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">A tangent-space map stores perturbations relative to that frame.</Content>
+<Content ns0:pstyle="Content">Thus the same texture naturally follows:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">object rotation,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">surface orientation,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">UV parameterization.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">TBN matrix</Strong></Content>
+<Content ns0:pstyle="Content">Build:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3cce92e5a54f653881839ac7.svg" alt="&#10;\boxed{&#10;TBN=&#10;\begin{bmatrix}&#10;T&amp;B&amp;N&#10;\end{bmatrix}&#10;}&#10;" jobId="3cce92e5a54f653881839ac7" originalTeX="&#10;\boxed{&#10;TBN=&#10;\begin{bmatrix}&#10;T&amp;B&amp;N&#10;\end{bmatrix}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/500b2ae09d4e1a2a9a68ff86.svg" alt="&#10;\boxed{&#10;N_{\text{world}}&#10;=&#10;TBN\,N_{\text{tangent}}.&#10;}&#10;" jobId="500b2ae09d4e1a2a9a68ff86" originalTeX="&#10;\boxed{&#10;N_{\text{world}}&#10;=&#10;TBN\,N_{\text{tangent}}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">For:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/58c3c2e1a23e0af3541d007c.svg" alt="&#10;N_t=(0,0,1),&#10;" jobId="58c3c2e1a23e0af3541d007c" originalTeX="&#10;N_t=(0,0,1),&#10;" /></Formula>
+<Content ns0:pstyle="Content">we obtain:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e6ea60daef0b3fcc05c956b3.svg" alt="&#10;N_w=N.&#10;" jobId="e6ea60daef0b3fcc05c956b3" originalTeX="&#10;N_w=N.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ecf3d184c97117f6ad9c5a1a.svg" alt="&#10;N_t=(1,0,0),&#10;" jobId="ecf3d184c97117f6ad9c5a1a" originalTeX="&#10;N_t=(1,0,0),&#10;" /></Formula>
+<Content ns0:pstyle="Content">we obtain:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f092f67cd49f6dc289cf20b9.svg" alt="&#10;N_w=T.&#10;" jobId="f092f67cd49f6dc289cf20b9" originalTeX="&#10;N_w=T.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So the tangent-space vector’s XYZ coordinates mean weights along:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3dcf8a6d62d549fe3b24a5ca.svg" alt="&#10;T,B,N.&#10;" jobId="3dcf8a6d62d549fe3b24a5ca" originalTeX="&#10;T,B,N.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Building tangent and bitangent from geometry + UVs</Strong></Content>
+<Content ns0:pstyle="Content">Take triangle edges:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e5e39912102618bfda9db100.svg" alt="&#10;E_1=P_1-P_0,&#10;" jobId="e5e39912102618bfda9db100" originalTeX="&#10;E_1=P_1-P_0,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/83c0fc07c91a8c75e29e3eb9.svg" alt="&#10;E_2=P_2-P_0.&#10;" jobId="83c0fc07c91a8c75e29e3eb9" originalTeX="&#10;E_2=P_2-P_0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Texture-coordinate differences:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fc281339cf4a8944176ab203.svg" alt="&#10;\Delta UV_1=&#10;(u_1-u_0,v_1-v_0),&#10;" jobId="fc281339cf4a8944176ab203" originalTeX="&#10;\Delta UV_1=&#10;(u_1-u_0,v_1-v_0),&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/94848fd7ec6f940d252579d5.svg" alt="&#10;\Delta UV_2=&#10;(u_2-u_0,v_2-v_0).&#10;" jobId="94848fd7ec6f940d252579d5" originalTeX="&#10;\Delta UV_2=&#10;(u_2-u_0,v_2-v_0).&#10;" /></Formula>
+<Content ns0:pstyle="Content">We assume:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ab05aeea780596335704eddf.svg" alt="&#10;E_1=&#10;T\Delta u_1+&#10;B\Delta v_1,&#10;" jobId="ab05aeea780596335704eddf" originalTeX="&#10;E_1=&#10;T\Delta u_1+&#10;B\Delta v_1,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/67292b7b442d588eb507b816.svg" alt="&#10;E_2=&#10;T\Delta u_2+&#10;B\Delta v_2.&#10;" jobId="67292b7b442d588eb507b816" originalTeX="&#10;E_2=&#10;T\Delta u_2+&#10;B\Delta v_2.&#10;" /></Formula>
+<Content ns0:pstyle="Content">In matrix form:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7b06b80ead3e15234c8d5ede.svg" alt="&#10;\begin{bmatrix}&#10;E_1&amp;E_2&#10;\end{bmatrix}&#10;=&#10;\begin{bmatrix}&#10;T&amp;B&#10;\end{bmatrix}&#10;\begin{bmatrix}&#10;\Delta u_1&amp;\Delta u_2\\&#10;\Delta v_1&amp;\Delta v_2&#10;\end{bmatrix}.&#10;" jobId="7b06b80ead3e15234c8d5ede" originalTeX="&#10;\begin{bmatrix}&#10;E_1&amp;E_2&#10;\end{bmatrix}&#10;=&#10;\begin{bmatrix}&#10;T&amp;B&#10;\end{bmatrix}&#10;\begin{bmatrix}&#10;\Delta u_1&amp;\Delta u_2\\&#10;\Delta v_1&amp;\Delta v_2&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The determinant is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/829fdd08d6a3f299cb455f65.svg" alt="&#10;D=&#10;\Delta u_1\Delta v_2&#10;-&#10;\Delta u_2\Delta v_1.&#10;" jobId="829fdd08d6a3f299cb455f65" originalTeX="&#10;D=&#10;\Delta u_1\Delta v_2&#10;-&#10;\Delta u_2\Delta v_1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">If:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e1858f178baf4f7ae0e325a6.svg" alt="&#10;D=0,&#10;" jobId="e1858f178baf4f7ae0e325a6" originalTeX="&#10;D=0,&#10;" /></Formula>
+<Content ns0:pstyle="Content">UV mapping is locally singular.</Content>
+<Content ns0:pstyle="Content">Otherwise:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d157b3c74edfe70241d62f37.svg" alt="&#10;r=\frac1D.&#10;" jobId="d157b3c74edfe70241d62f37" originalTeX="&#10;r=\frac1D.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/411ef4cf66a3243974b9a5b8.svg" alt="&#10;\boxed{&#10;T=&#10;r(&#10;E_1\Delta v_2&#10;-&#10;E_2\Delta v_1&#10;)&#10;}&#10;" jobId="411ef4cf66a3243974b9a5b8" originalTeX="&#10;\boxed{&#10;T=&#10;r(&#10;E_1\Delta v_2&#10;-&#10;E_2\Delta v_1&#10;)&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">and</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c26d992c6c9bf761f7a55b8e.svg" alt="&#10;\boxed{&#10;B=&#10;r(&#10;E_2\Delta u_1&#10;-&#10;E_1\Delta u_2&#10;).&#10;}&#10;" jobId="c26d992c6c9bf761f7a55b8e" originalTeX="&#10;\boxed{&#10;B=&#10;r(&#10;E_2\Delta u_1&#10;-&#10;E_1\Delta u_2&#10;).&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Tangent should be orthogonalized</Strong></Content>
+<Content ns0:pstyle="Content">Interpolated normals and tangents may cease to be exactly orthogonal.</Content>
+<Content ns0:pstyle="Content">Given normal <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea63a9f9a03c273b93026960.svg" alt="N" jobId="ea63a9f9a03c273b93026960" originalTeX="N" />, Gram-Schmidt tangent correction:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ebc6102bd9200282d69ad45f.svg" alt="&#10;\boxed{&#10;T'=&#10;\operatorname{normalize}&#10;(&#10;T-N(N\cdot T)&#10;)&#10;}&#10;" jobId="ebc6102bd9200282d69ad45f" originalTeX="&#10;\boxed{&#10;T'=&#10;\operatorname{normalize}&#10;(&#10;T-N(N\cdot T)&#10;)&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then bitangent can be reconstructed as:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/486b71abb2b94cb4502f7e99.svg" alt="&#10;B=&#10;h(N\times T')&#10;" jobId="486b71abb2b94cb4502f7e99" originalTeX="&#10;B=&#10;h(N\times T')&#10;" /></Formula>
+<Content ns0:pstyle="Content">where:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f19efcc4ac050e9b2e29a419.svg" alt="&#10;h\in\{-1,+1\}&#10;" jobId="f19efcc4ac050e9b2e29a419" originalTeX="&#10;h\in\{-1,+1\}&#10;" /></Formula>
+<Content ns0:pstyle="Content">is handedness.</Content>
+<Content ns0:pstyle="Content">This avoids storing an entire bitangent vector.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Bitangent handedness</Strong></Content>
+<Content ns0:pstyle="Content">Mirrored UV islands reverse texture-space orientation.</Content>
+<Content ns0:pstyle="Content">The determinant:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/048a16fad85c9eaa3bf21d0a.svg" alt="&#10;D=&#10;\Delta u_1\Delta v_2-&#10;\Delta u_2\Delta v_1&#10;" jobId="048a16fad85c9eaa3bf21d0a" originalTeX="&#10;D=&#10;\Delta u_1\Delta v_2-&#10;\Delta u_2\Delta v_1&#10;" /></Formula>
+<Content ns0:pstyle="Content">changes sign under such mirroring.</Content>
+<Content ns0:pstyle="Content">Therefore the tangent frame may be right-handed or left-handed.</Content>
+<Content ns0:pstyle="Content">A common representation stores tangent:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4d72e49ea2eca6afc0c00d66.svg" alt="&#10;(T_x,T_y,T_z,h)&#10;" jobId="4d72e49ea2eca6afc0c00d66" originalTeX="&#10;(T_x,T_y,T_z,h)&#10;" /></Formula>
+<Content ns0:pstyle="Content">where:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c1a2861df3913a014b562d84.svg" alt="&#10;h=\pm1.&#10;" jobId="c1a2861df3913a014b562d84" originalTeX="&#10;h=\pm1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/51a7268e137615649352577b.svg" alt="&#10;\boxed{&#10;B=h(N\times T).&#10;}&#10;" jobId="51a7268e137615649352577b" originalTeX="&#10;\boxed{&#10;B=h(N\times T).&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">If handedness is ignored, normal maps can invert or produce seams on mirrored UV islands.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Canonical tangent construction</Strong></Content>
+<Code ns0:pstyle="Code" language="cpp">struct TangentFrame
+{
+    Vec3 tangent;
+    Vec3 bitangent;
+};
+
+TangentFrame BuildTriangleTangentFrame(
+    Vec3 p0,
+    Vec3 p1,
+    Vec3 p2,
+    Vec2 uv0,
+    Vec2 uv1,
+    Vec2 uv2,
+    Vec3 normal)
+{
+    const Vec3 e1 = p1 - p0;
+    const Vec3 e2 = p2 - p0;
+
+    const Vec2 dUV1 = uv1 - uv0;
+    const Vec2 dUV2 = uv2 - uv0;
+
+    const float determinant =
+        dUV1.x * dUV2.y -
+        dUV1.y * dUV2.x;
+
+    if (std::abs(determinant) &lt; 1.0e-8f)
+    {
+        // Degenerate UV parameterization.
+        // A production implementation needs a stable fallback basis.
+        const Vec3 tangent =
+            BuildAnyPerpendicular(normal);
+
+        return
+        {
+            tangent,
+            Normalize(Cross(normal, tangent))
+        };
+    }
+
+    const float r = 1.0f / determinant;
+
+    Vec3 tangent =
+        (e1 * dUV2.y -
+         e2 * dUV1.y) * r;
+
+    Vec3 bitangentRaw =
+        (e2 * dUV1.x -
+         e1 * dUV2.x) * r;
+
+    // Remove any normal-direction component from T.
+    tangent =
+        Normalize(
+            tangent -
+            normal * Dot(normal, tangent));
+
+    const float handedness =
+        Dot(
+            Cross(normal, tangent),
+            bitangentRaw) &lt; 0.0f
+            ? -1.0f
+            : 1.0f;
+
+    const Vec3 bitangent =
+        Cross(normal, tangent) *
+        handedness;
+
+    return { tangent, bitangent };
+}</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Your current Kairo takes a different but mathematically related route</Strong></Content>
+<Content ns0:pstyle="Content">Kairo does not currently require stored vertex tangents in its <InlineCode ns0:cstyle="InlineCode">MeshVertex</InlineCode>.</Content>
+<Content ns0:pstyle="Content">It has:</Content>
+<Code ns0:pstyle="Code" language="text">Position
+Color
+Normal
+TexCoord</Code>
+<Content ns0:pstyle="Content">Then in <InlineCode ns0:cstyle="InlineCode">triangle.frag</InlineCode> it reconstructs the tangent basis from derivatives:</Content>
+<Code ns0:pstyle="Code" language="glsl">dpdx = dFdx(inWorldPosition);
+dpdy = dFdy(inWorldPosition);
+
+duvdx = dFdx(inTexCoord);
+duvdy = dFdy(inTexCoord);</Code>
+<Content ns0:pstyle="Content">and computes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/47336d2fadf0fe7badcf2315.svg" alt="&#10;D=&#10;u_xv_y-u_yv_x.&#10;" jobId="47336d2fadf0fe7badcf2315" originalTeX="&#10;D=&#10;u_xv_y-u_yv_x.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/764ea7a54a952c17154a4949.svg" alt="&#10;\boxed{&#10;T=&#10;\frac{&#10;P_xv_y-P_yv_x&#10;}{D}&#10;}&#10;" jobId="764ea7a54a952c17154a4949" originalTeX="&#10;\boxed{&#10;T=&#10;\frac{&#10;P_xv_y-P_yv_x&#10;}{D}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">which is the same 2×2 inversion principle we derived.</Content>
+<Content ns0:pstyle="Content">The bitangent uses:</Content>
+<Code ns0:pstyle="Code" language="glsl">cross(N, T) * sign(D)</Code>
+<Content ns0:pstyle="Content">to retain orientation.</Content>
+<Content ns0:pstyle="Content">That is mathematically coherent.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Derivative-based tangent versus authored tangent</Strong></Content>
+<Content ns0:pstyle="Content">Derivative reconstruction has advantages:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">no tangent vertex attribute,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">handles the actual interpolated UV/world geometry,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">convenient for dynamically generated geometry.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">But authored/generated tangents are often preferable when matching a content-authoring tangent convention, especially across seams and baked normal maps.</Content>
+<Content ns0:pstyle="Content">Normal maps are frequently baked assuming a specific tangent-space generator, commonly MikkTSpace or an equivalent convention.</Content>
+<Content ns0:pstyle="Content">If your renderer reconstructs a different tangent frame than the baker used, visible seams can appear even if every vector is mathematically “reasonable.”</Content>
+<Content ns0:pstyle="Content">That will become important once asset fidelity becomes stricter.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Applying a normal map</Strong></Content>
+<Content ns0:pstyle="Content">A canonical GLSL path:</Content>
+<Code ns0:pstyle="Code" language="glsl">vec3 geometricNormal = normalize(inNormal);
+
+// World-space tangent frame.
+vec3 tangent =
+    normalize(
+        inTangent.xyz -
+        geometricNormal *
+        dot(geometricNormal, inTangent.xyz));
+
+float handedness =
+    inTangent.w;
+
+vec3 bitangent =
+    handedness *
+    cross(geometricNormal, tangent);
+
+mat3 TBN =
+    mat3(
+        tangent,
+        bitangent,
+        geometricNormal);
+
+// Normal-map textures are linear DATA.
+// Do not sRGB-decode them.
+vec3 tangentNormal =
+    texture(normalMap, uv).xyz * 2.0 - 1.0;
+
+// Optional material normal strength.
+tangentNormal.xy *= normalScale;
+
+// Re-normalize after scaling.
+tangentNormal =
+    normalize(tangentNormal);
+
+vec3 shadingNormal =
+    normalize(TBN * tangentNormal);</Code>
+<Content ns0:pstyle="Content">The glTF normal-scale convention similarly scales X/Y before normalization. <Link href="https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html?utm_source=chatgpt.com">Khronos Registry</Link></Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Height maps</Strong></Content>
+<Content ns0:pstyle="Content">A height map stores:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/93642d7173e9ff3c05d780b7.svg" alt="&#10;h(u,v)&#10;" jobId="93642d7173e9ff3c05d780b7" originalTeX="&#10;h(u,v)&#10;" /></Formula>
+<Content ns0:pstyle="Content">rather than a direction.</Content>
+<Content ns0:pstyle="Content">It describes scalar surface elevation.</Content>
+<Content ns0:pstyle="Content">A normal can be derived from its gradient.</Content>
+<Content ns0:pstyle="Content">Locally, if:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9e536f5b8beba7dfa293b2de.svg" alt="&#10;z=h(u,v),&#10;" jobId="9e536f5b8beba7dfa293b2de" originalTeX="&#10;z=h(u,v),&#10;" /></Formula>
+<Content ns0:pstyle="Content">then tangent directions are approximately:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/33d53ab6cd8318b8beb56b40.svg" alt="&#10;P_u=&#10;(1,0,h_u),&#10;" jobId="33d53ab6cd8318b8beb56b40" originalTeX="&#10;P_u=&#10;(1,0,h_u),&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/26f730ea2e0282c905bf23a8.svg" alt="&#10;P_v=&#10;(0,1,h_v).&#10;" jobId="26f730ea2e0282c905bf23a8" originalTeX="&#10;P_v=&#10;(0,1,h_v).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Their cross product is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8160335c70955b00b92285b6.svg" alt="&#10;P_u\times P_v&#10;=&#10;(-h_u,-h_v,1).&#10;" jobId="8160335c70955b00b92285b6" originalTeX="&#10;P_u\times P_v&#10;=&#10;(-h_u,-h_v,1).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Thus:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/17385c77a4e13988f963ce0c.svg" alt="&#10;\boxed{&#10;N&#10;\propto&#10;\left(&#10;-\frac{\partial h}{\partial u},&#10;-\frac{\partial h}{\partial v},&#10;1&#10;\right).&#10;}&#10;" jobId="17385c77a4e13988f963ce0c" originalTeX="&#10;\boxed{&#10;N&#10;\propto&#10;\left(&#10;-\frac{\partial h}{\partial u},&#10;-\frac{\partial h}{\partial v},&#10;1&#10;\right).&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">This shows the relationship:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e78685825c597d4971497fd4.svg" alt="&#10;\boxed{&#10;\text{height map}&#10;\rightarrow&#10;\text{gradient}&#10;\rightarrow&#10;\text{normal map}.&#10;}&#10;" jobId="e78685825c597d4971497fd4" originalTeX="&#10;\boxed{&#10;\text{height map}&#10;\rightarrow&#10;\text{gradient}&#10;\rightarrow&#10;\text{normal map}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">A normal map essentially stores local differential orientation directly.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Height versus normal information</Strong></Content>
+<Content ns0:pstyle="Content">Normal maps encode slope.</Content>
+<Content ns0:pstyle="Content">They generally lose absolute height.</Content>
+<Content ns0:pstyle="Content">Two height fields can differ by:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/75e6f07f8b7da646426fc4a8.svg" alt="&#10;h_2(u,v)=h_1(u,v)+100&#10;" jobId="75e6f07f8b7da646426fc4a8" originalTeX="&#10;h_2(u,v)=h_1(u,v)+100&#10;" /></Formula>
+<Content ns0:pstyle="Content">and have identical gradients:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5c68ce9fd522d5d1d4ca0dd9.svg" alt="&#10;\nabla h_2=\nabla h_1.&#10;" jobId="5c68ce9fd522d5d1d4ca0dd9" originalTeX="&#10;\nabla h_2=\nabla h_1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore they yield identical normals.</Content>
+<Content ns0:pstyle="Content">So:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e4d56c010096093529b49e09.svg" alt="&#10;\boxed{&#10;\text{normal map does not uniquely determine height}.&#10;}&#10;" jobId="e4d56c010096093529b49e09" originalTeX="&#10;\boxed{&#10;\text{normal map does not uniquely determine height}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Height contains an integrable scalar field; normals contain local orientation.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Parallax mapping</Strong></Content>
+<Content ns0:pstyle="Content">Normal mapping changes lighting orientation but does not change where texture features appear as the camera moves.</Content>
+<Content ns0:pstyle="Content">Parallax mapping uses height to shift UVs according to view direction.</Content>
+<Content ns0:pstyle="Content">Transform viewing direction into tangent space:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/23639a3d832e92c3639b7e35.svg" alt="&#10;V_t=(V_x,V_y,V_z).&#10;" jobId="23639a3d832e92c3639b7e35" originalTeX="&#10;V_t=(V_x,V_y,V_z).&#10;" /></Formula>
+<Content ns0:pstyle="Content">A simple offset model is approximately:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8ca4cb205c662e2063fcd606.svg" alt="&#10;\boxed{&#10;\Delta UV&#10;=&#10;s\,h(u,v)&#10;\frac{(V_x,V_y)}{V_z}&#10;}&#10;" jobId="8ca4cb205c662e2063fcd606" originalTeX="&#10;\boxed{&#10;\Delta UV&#10;=&#10;s\,h(u,v)&#10;\frac{(V_x,V_y)}{V_z}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">where <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a44fe1d252e22270a15674e2.svg" alt="s" jobId="a44fe1d252e22270a15674e2" originalTeX="s" /> controls apparent depth.</Content>
+<Content ns0:pstyle="Content">Then sample using:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e105aa7edc924dc0be8b69da.svg" alt="&#10;UV'=UV-\Delta UV&#10;" jobId="e105aa7edc924dc0be8b69da" originalTeX="&#10;UV'=UV-\Delta UV&#10;" /></Formula>
+<Content ns0:pstyle="Content">depending on height convention.</Content>
+<Content ns0:pstyle="Content">As:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b63eca534f220617c7ed9e94.svg" alt="&#10;V_z\rightarrow0&#10;" jobId="b63eca534f220617c7ed9e94" originalTeX="&#10;V_z\rightarrow0&#10;" /></Formula>
+<Content ns0:pstyle="Content">at grazing angles, the shift becomes large.</Content>
+<Content ns0:pstyle="Content">That is where basic parallax approximations break down.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why parallax mapping is still fake geometry</Strong></Content>
+<Content ns0:pstyle="Content">Parallax mapping changes texture lookup.</Content>
+<Content ns0:pstyle="Content">It does <Strong ns0:cstyle="Bold">not</Strong> move the rasterized surface.</Content>
+<Content ns0:pstyle="Content">Therefore it cannot correctly change:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">silhouette,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">true occlusion against other objects,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">physical intersection,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">cast-shadow geometry.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">A brick wall may appear recessed internally but retain a perfectly flat silhouette.</Content>
+<Content ns0:pstyle="Content">Steep parallax and parallax occlusion mapping improve self-occlusion and ray-height intersection approximations, but still operate inside the original geometric surface.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Displacement mapping</Strong></Content>
+<Content ns0:pstyle="Content">Displacement actually changes position:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/516ac6beea96b3507ff26461.svg" alt="&#10;\boxed{&#10;P'=P+hN.&#10;}&#10;" jobId="516ac6beea96b3507ff26461" originalTeX="&#10;\boxed{&#10;P'=P+hN.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Now the geometry itself moves.</Content>
+<Content ns0:pstyle="Content">Therefore displacement can affect:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">silhouette,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">depth,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">shadows,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">intersections,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">rasterized coverage.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">But if the base mesh is too coarse, displacing only existing vertices cannot represent high-frequency height.</Content>
+<Content ns0:pstyle="Content">Therefore displacement often requires:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">dense meshes,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">tessellation,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">subdivision,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">mesh shader amplification,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">offline subdivision.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">This is why displacement is more expensive but more geometrically correct.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Normal vs parallax vs displacement</Strong></Content>
+<Content ns0:pstyle="Content">Think of these as increasing levels of geometric commitment:</Content>
+<Table role="row-cards" sourceColumns="5" sourceRows="5" sourceHeadRows="1" sourceBodyHeadRows=""><RowCard kind="header"><Content ns0:pstyle="Caption">Column 1:</Content><Content ns0:pstyle="TableCell">Technique</Content><Content ns0:pstyle="Caption">Column 2:</Content><Content ns0:pstyle="TableCell">Changes shading normal</Content><Content ns0:pstyle="Caption">Column 3:</Content><Content ns0:pstyle="TableCell">Changes texture position</Content><Content ns0:pstyle="Caption">Column 4:</Content><Content ns0:pstyle="TableCell">Changes geometry/depth</Content><Content ns0:pstyle="Caption">Column 5:</Content><Content ns0:pstyle="TableCell">Changes silhouette</Content></RowCard><RowCard sourceBody="0" sourceRow="0"><RowLabel><Content ns0:pstyle="Caption">Normal map</Content></RowLabel><RowValue column="2"><Content ns0:pstyle="Caption">Changes shading normal</Content><Content ns0:pstyle="TableCell">Yes</Content></RowValue><RowValue column="3"><Content ns0:pstyle="Caption">Changes texture position</Content><Content ns0:pstyle="TableCell">No</Content></RowValue><RowValue column="4"><Content ns0:pstyle="Caption">Changes geometry/depth</Content><Content ns0:pstyle="TableCell">No</Content></RowValue><RowValue column="5"><Content ns0:pstyle="Caption">Changes silhouette</Content><Content ns0:pstyle="TableCell">No</Content></RowValue></RowCard><RowCard sourceBody="0" sourceRow="1"><RowLabel><Content ns0:pstyle="Caption">Basic parallax</Content></RowLabel><RowValue column="2"><Content ns0:pstyle="Caption">Changes shading normal</Content><Content ns0:pstyle="TableCell">Usually + normal</Content></RowValue><RowValue column="3"><Content ns0:pstyle="Caption">Changes texture position</Content><Content ns0:pstyle="TableCell">Yes</Content></RowValue><RowValue column="4"><Content ns0:pstyle="Caption">Changes geometry/depth</Content><Content ns0:pstyle="TableCell">No</Content></RowValue><RowValue column="5"><Content ns0:pstyle="Caption">Changes silhouette</Content><Content ns0:pstyle="TableCell">No</Content></RowValue></RowCard><RowCard sourceBody="0" sourceRow="2"><RowLabel><Content ns0:pstyle="Caption">POM / steep parallax</Content></RowLabel><RowValue column="2"><Content ns0:pstyle="Caption">Changes shading normal</Content><Content ns0:pstyle="TableCell">Yes</Content></RowValue><RowValue column="3"><Content ns0:pstyle="Caption">Changes texture position</Content><Content ns0:pstyle="TableCell">Yes + approximate self-occlusion</Content></RowValue><RowValue column="4"><Content ns0:pstyle="Caption">Changes geometry/depth</Content><Content ns0:pstyle="TableCell">No</Content></RowValue><RowValue column="5"><Content ns0:pstyle="Caption">Changes silhouette</Content><Content ns0:pstyle="TableCell">Usually no</Content></RowValue></RowCard><RowCard sourceBody="0" sourceRow="3"><RowLabel><Content ns0:pstyle="Caption">Displacement</Content></RowLabel><RowValue column="2"><Content ns0:pstyle="Caption">Changes shading normal</Content><Content ns0:pstyle="TableCell">Yes indirectly</Content></RowValue><RowValue column="3"><Content ns0:pstyle="Caption">Changes texture position</Content><Content ns0:pstyle="TableCell">Geometry moves</Content></RowValue><RowValue column="4"><Content ns0:pstyle="Caption">Changes geometry/depth</Content><Content ns0:pstyle="TableCell">Yes</Content></RowValue><RowValue column="5"><Content ns0:pstyle="Caption">Changes silhouette</Content><Content ns0:pstyle="TableCell">Yes</Content></RowValue></RowCard></Table>
+<Content ns0:pstyle="Content">The best technique depends on viewing distance and geometric importance.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Texture-space filtering is semantic filtering</Strong></Content>
+<Content ns0:pstyle="Content">This is perhaps the most important M116 principle.</Content>
+<Content ns0:pstyle="Content">Different textures store different mathematical objects.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Color map</Strong></Content>
+<Content ns0:pstyle="Content">Stores radiometric/color quantity.</Content>
+<Content ns0:pstyle="Content">Correct reduction:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2f616b0171ae18108aba042c.svg" alt="&#10;\text{linearize}&#10;\rightarrow&#10;\text{filter}&#10;\rightarrow&#10;\text{encode}.&#10;" jobId="2f616b0171ae18108aba042c" originalTeX="&#10;\text{linearize}&#10;\rightarrow&#10;\text{filter}&#10;\rightarrow&#10;\text{encode}.&#10;" /></Formula>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Normal map</Strong></Content>
+<Content ns0:pstyle="Content">Stores directions.</Content>
+<Content ns0:pstyle="Content">Correct reduction:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/235031bcedee23cf86bceeec.svg" alt="&#10;\text{decode vectors}&#10;\rightarrow&#10;\text{average}&#10;\rightarrow&#10;\text{renormalize}.&#10;" jobId="235031bcedee23cf86bceeec" originalTeX="&#10;\text{decode vectors}&#10;\rightarrow&#10;\text{average}&#10;\rightarrow&#10;\text{renormalize}.&#10;" /></Formula>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Roughness</Strong></Content>
+<Content ns0:pstyle="Content">Stores a material parameter.</Content>
+<Content ns0:pstyle="Content">A straight arithmetic average may not preserve the appearance of a nonlinear BRDF perfectly.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Alpha mask</Strong></Content>
+<Content ns0:pstyle="Content">Simple averaging changes coverage.</Content>
+<Content ns0:pstyle="Content">Mip generation may need coverage-preserving filtering.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Height</Strong></Content>
+<Content ns0:pstyle="Content">Stores scalar geometry.</Content>
+<Content ns0:pstyle="Content">Its filtering may need to preserve extrema depending on use.</Content>
+<Content ns0:pstyle="Content">This means:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/20c0692d4c743bed25e1f5b2.svg" alt="&#10;\boxed{&#10;\text{one generic RGBA mip generator is not physically correct for every texture semantic}.&#10;}&#10;" jobId="20c0692d4c743bed25e1f5b2" originalTeX="&#10;\boxed{&#10;\text{one generic RGBA mip generator is not physically correct for every texture semantic}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Kairo has already taken a strong first step by storing explicit <InlineCode ns0:cstyle="InlineCode">TextureSemantic</InlineCode>.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo current texture pipeline audit</Strong></Content>
+<Content ns0:pstyle="Content">The current pipeline looks approximately like:</Content>
+<Code ns0:pstyle="Code" language="text">asset image
+    ↓
+semantic classification
+    ↓
+TextureArtifact
+    ├── ColorSpace = SRGB or Linear
+    ├── Semantic = Color / Normal / Data / HDR
+    ├── PixelFormat
+    └── explicit mip chain
+            ↓
+VulkanTexture2D
+    ↓
+SRGB artifact
+→ VK_FORMAT_*_SRGB
+
+Linear artifact
+→ VK_FORMAT_*_UNORM / SFLOAT
+            ↓
+VkSampler
+    ├── linear magnification
+    ├── linear minification
+    ├── linear mip interpolation
+    ├── repeat/mirror/clamp addressing
+    └── anisotropy disabled
+            ↓
+triangle.frag
+    ├── baseColorMap
+    ├── normalMap
+    ├── metallicRoughnessMap
+    ├── emissiveMap
+    └── occlusionMap</Code>
+<Content ns0:pstyle="Content">That is already a reasonably coherent color/texture architecture.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo’s strongest correctness invariants today</Strong></Content>
+<Content ns0:pstyle="Content">The important ones are:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8b1261f2d3adf81409055601.svg" alt="&#10;\boxed{&#10;\text{Material factors are linear}&#10;}&#10;" jobId="8b1261f2d3adf81409055601" originalTeX="&#10;\boxed{&#10;\text{Material factors are linear}&#10;}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/624c9fe3be47a3b2a3aca688.svg" alt="&#10;\boxed{&#10;\text{Color textures may be sRGB}&#10;}&#10;" jobId="624c9fe3be47a3b2a3aca688" originalTeX="&#10;\boxed{&#10;\text{Color textures may be sRGB}&#10;}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b8f197837fb8d778880979a9.svg" alt="&#10;\boxed{&#10;\text{Normal/data/HDR textures must be linear}&#10;}&#10;" jobId="b8f197837fb8d778880979a9" originalTeX="&#10;\boxed{&#10;\text{Normal/data/HDR textures must be linear}&#10;}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/132106f2bede59e219a2d81f.svg" alt="&#10;\boxed{&#10;\text{sRGB mip filtering is done in linear light}&#10;}&#10;" jobId="132106f2bede59e219a2d81f" originalTeX="&#10;\boxed{&#10;\text{sRGB mip filtering is done in linear light}&#10;}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b4de65046daf953e80b75731.svg" alt="&#10;\boxed{&#10;\text{normal-map mip vectors are renormalized}&#10;}&#10;" jobId="b4de65046daf953e80b75731" originalTeX="&#10;\boxed{&#10;\text{normal-map mip vectors are renormalized}&#10;}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a3e00e240830ad4489af1f4f.svg" alt="&#10;\boxed{&#10;\text{Vulkan SRGB image formats perform sampling decode}&#10;}&#10;" jobId="a3e00e240830ad4489af1f4f" originalTeX="&#10;\boxed{&#10;\text{Vulkan SRGB image formats perform sampling decode}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">These are exactly the sorts of invariants that prevent “why does everything look subtly wrong?” bugs.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Important gaps in the current Kairo path</Strong></Content>
+<Content ns0:pstyle="Content">There are also clear next steps.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Anisotropic filtering</Strong></Content>
+<Content ns0:pstyle="Content">Currently disabled.</Content>
+<Content ns0:pstyle="Content">Especially visible on:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">floors,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">roads,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">walls viewed obliquely.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Texture compression</Strong></Content>
+<Content ns0:pstyle="Content">No BC/ASTC/ETC artifact/runtime format path yet.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Authored tangent-space compatibility</Strong></Content>
+<Content ns0:pstyle="Content">Current tangent frame is derivative generated.</Content>
+<Content ns0:pstyle="Content">This may diverge from baked tangent-space conventions.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">HDR post pipeline</Strong></Content>
+<Content ns0:pstyle="Content">Tone mapping currently happens inside the material fragment shader, before the HDR viewport image.</Content>
+<Content ns0:pstyle="Content">Ideally:</Content>
+<Code ns0:pstyle="Code" language="text">material shading
+→ HDR target
+→ bloom/exposure/post
+→ tone mapper
+→ display transform</Code>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Color-management expansion</Strong></Content>
+<Content ns0:pstyle="Content">The current pipeline primarily assumes linear/sRGB semantics rather than a full working-space/display-transform architecture.</Content>
+<Content ns0:pstyle="Content">For serious film/image-fidelity ambitions, eventually you will care about:</Content>
+<Code ns0:pstyle="Code" language="text">ACEScg-like working spaces
+Display P3
+Rec.2020
+HDR display transforms
+gamut mapping</Code>
+<Content ns0:pstyle="Content">but those are deliberately beyond the exact M115 atom list.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">A subtle texture bug: double sRGB decode</Strong></Content>
+<Content ns0:pstyle="Content">Suppose a base-color texture uses:</Content>
+<Code ns0:pstyle="Code" language="text">VK_FORMAT_R8G8B8A8_SRGB.</Code>
+<Content ns0:pstyle="Content">Sampling already returns linear values.</Content>
+<Content ns0:pstyle="Content">If your shader then does:</Content>
+<Code ns0:pstyle="Code" language="glsl">color = pow(texture(...).rgb, vec3(2.2));</Code>
+<Content ns0:pstyle="Content">you decode it twice.</Content>
+<Content ns0:pstyle="Content">Result: dramatically too dark.</Content>
+<Content ns0:pstyle="Content">The rule is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1fa22722e8187600614d37bb.svg" alt="&#10;\boxed{&#10;\text{Know whether transfer decoding is performed by the texture format}&#10;}&#10;" jobId="1fa22722e8187600614d37bb" originalTeX="&#10;\boxed{&#10;\text{Know whether transfer decoding is performed by the texture format}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">before applying manual conversion.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">The opposite bug: treating sRGB bytes as linear</Strong></Content>
+<Content ns0:pstyle="Content">If an ordinary PNG base-color image is uploaded as:</Content>
+<Code ns0:pstyle="Code" language="text">VK_FORMAT_R8G8B8A8_UNORM</Code>
+<Content ns0:pstyle="Content">instead of SRGB, <InlineCode ns0:cstyle="InlineCode">texture()</InlineCode> returns its encoded values untouched.</Content>
+<Content ns0:pstyle="Content">Then the renderer multiplies those nonlinear values during lighting.</Content>
+<Content ns0:pstyle="Content">The result can look:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">too bright in midtones,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">incorrect in blends,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">wrong under mip filtering.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">This is why texture semantic and color-space metadata cannot be an afterthought.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">A subtle normal-map bug: sRGB decode</Strong></Content>
+<Content ns0:pstyle="Content">Suppose neutral normal:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3f5877fb1b88ee182c18ac06.svg" alt="&#10;(0.5,0.5,1)&#10;" jobId="3f5877fb1b88ee182c18ac06" originalTeX="&#10;(0.5,0.5,1)&#10;" /></Formula>
+<Content ns0:pstyle="Content">is mistakenly treated as sRGB.</Content>
+<Content ns0:pstyle="Content">Decode 0.5:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/649cfca187e3cca9504c7d53.svg" alt="&#10;0.5\rightarrow0.214.&#10;" jobId="649cfca187e3cca9504c7d53" originalTeX="&#10;0.5\rightarrow0.214.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then convert to tangent normal:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/aea45ae5841a7c305ca3f99b.svg" alt="&#10;2(0.214)-1&#10;=&#10;-0.572.&#10;" jobId="aea45ae5841a7c305ca3f99b" originalTeX="&#10;2(0.214)-1&#10;=&#10;-0.572.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So instead of neutral:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/af5dcc7347f4e242b1558753.svg" alt="&#10;(0,0,1)&#10;" jobId="af5dcc7347f4e242b1558753" originalTeX="&#10;(0,0,1)&#10;" /></Formula>
+<Content ns0:pstyle="Content">you obtain approximately:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fd4134f14e7f06392ef49618.svg" alt="&#10;(-0.572,-0.572,1).&#10;" jobId="fd4134f14e7f06392ef49618" originalTeX="&#10;(-0.572,-0.572,1).&#10;" /></Formula>
+<Content ns0:pstyle="Content">The whole surface appears tilted.</Content>
+<Content ns0:pstyle="Content">This is why:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4968bd91a2a07b7208194af1.svg" alt="&#10;\boxed{\text{normal maps must be linear data}}&#10;" jobId="4968bd91a2a07b7208194af1" originalTeX="&#10;\boxed{\text{normal maps must be linear data}}&#10;" /></Formula>
+<Content ns0:pstyle="Content">is non-negotiable.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">LOD bias</Strong></Content>
+<Content ns0:pstyle="Content">Texture lookup can apply a bias:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c37836c4f7493f360567c2ed.svg" alt="&#10;\lambda'=\lambda+b.&#10;" jobId="c37836c4f7493f360567c2ed" originalTeX="&#10;\lambda'=\lambda+b.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Positive bias:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0c32fcaf06be55ff2676f46f.svg" alt="&#10;b&gt;0&#10;" jobId="0c32fcaf06be55ff2676f46f" originalTeX="&#10;b&gt;0&#10;" /></Formula>
+<Content ns0:pstyle="Content">selects lower-resolution mips earlier.</Content>
+<Content ns0:pstyle="Content">Result:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">blurrier,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">more stable,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">potentially faster.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Negative bias:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ecadcd45834d4714b34236af.svg" alt="&#10;b&lt;0&#10;" jobId="ecadcd45834d4714b34236af" originalTeX="&#10;b&lt;0&#10;" /></Formula>
+<Content ns0:pstyle="Content">selects sharper mips.</Content>
+<Content ns0:pstyle="Content">Result:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">sharper,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">potentially more aliasing/shimmering.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Vulkan exposes sampler LOD bias directly in <InlineCode ns0:cstyle="InlineCode">VkSamplerCreateInfo</InlineCode>. <Link href="https://docs.vulkan.org/spec/latest/chapters/samplers.html?utm_source=chatgpt.com">docs.vulkan.org</Link></Content>
+<Content ns0:pstyle="Content">This becomes particularly relevant with TAA/upscaling systems where a modest negative bias may be used to recover texture detail, but only if temporal reconstruction controls aliasing.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Texture cache intuition</Strong></Content>
+<Content ns0:pstyle="Content">Mipmaps are not merely anti-aliasing.</Content>
+<Content ns0:pstyle="Content">Suppose one distant pixel needs information from a 64×64 base-level footprint.</Content>
+<Content ns0:pstyle="Content">Without mips, accesses may touch many cache lines and still alias badly.</Content>
+<Content ns0:pstyle="Content">At the proper mip level, the same represented footprint may correspond to only a few nearby texels.</Content>
+<Content ns0:pstyle="Content">Therefore mipmapping improves:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/065872d77e14704ad1721d56.svg" alt="&#10;\text{quality}&#10;" jobId="065872d77e14704ad1721d56" originalTeX="&#10;\text{quality}&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/22f1ba9914d7537c6601a9ac.svg" alt="&#10;\text{memory locality/bandwidth}.&#10;" jobId="22f1ba9914d7537c6601a9ac" originalTeX="&#10;\text{memory locality/bandwidth}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is why disabling mipmaps to “make textures sharper” is usually disastrous in large scenes.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Texture compression and cache efficiency</Strong></Content>
+<Content ns0:pstyle="Content">Compression also reduces bandwidth.</Content>
+<Content ns0:pstyle="Content">If uncompressed data costs:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6143a59290d3b41f52b287ce.svg" alt="&#10;32\text{ bits/texel}&#10;" jobId="6143a59290d3b41f52b287ce" originalTeX="&#10;32\text{ bits/texel}&#10;" /></Formula>
+<Content ns0:pstyle="Content">and BC1 costs:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5c1271325f0de3d99ec70e4d.svg" alt="&#10;4\text{ bits/texel},&#10;" jobId="5c1271325f0de3d99ec70e4d" originalTeX="&#10;4\text{ bits/texel},&#10;" /></Formula>
+<Content ns0:pstyle="Content">then many more texture blocks fit into:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">VRAM,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">caches,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">memory transactions.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Compression therefore improves not just capacity but potentially sampling throughput.</Content>
+<Content ns0:pstyle="Content">The trade-off is reconstruction error.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Normal map strength</Strong></Content>
+<Content ns0:pstyle="Content">Your current shader does:</Content>
+<Code ns0:pstyle="Code" language="glsl">tangentNormal.xy *= normalScale;</Code>
+<Content ns0:pstyle="Content">before transforming into world space.</Content>
+<Content ns0:pstyle="Content">Why X/Y only?</Content>
+<Content ns0:pstyle="Content">Because:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0fb88bcc23bc4b879c9a7b61.svg" alt="&#10;(x,y)&#10;" jobId="0fb88bcc23bc4b879c9a7b61" originalTeX="&#10;(x,y)&#10;" /></Formula>
+<Content ns0:pstyle="Content">encode lateral slope relative to the base normal axis.</Content>
+<Content ns0:pstyle="Content">Scaling them adjusts deviation from:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d787778ad4e94d13df3ed10c.svg" alt="&#10;(0,0,1).&#10;" jobId="d787778ad4e94d13df3ed10c" originalTeX="&#10;(0,0,1).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then the result should be normalized.</Content>
+<Content ns0:pstyle="Content">The glTF convention similarly applies normal-scale to tangent-space X/Y. <Link href="https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html?utm_source=chatgpt.com">Khronos Registry</Link></Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Normal transformations and non-uniform scale</Strong></Content>
+<Content ns0:pstyle="Content">Suppose model scale is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/116b57146b8c468113b23d98.svg" alt="&#10;S=&#10;\begin{bmatrix}&#10;2&amp;0&amp;0\\&#10;0&amp;1&amp;0\\&#10;0&amp;0&amp;0.5&#10;\end{bmatrix}.&#10;" jobId="116b57146b8c468113b23d98" originalTeX="&#10;S=&#10;\begin{bmatrix}&#10;2&amp;0&amp;0\\&#10;0&amp;1&amp;0\\&#10;0&amp;0&amp;0.5&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">You cannot transform normals using the same matrix as positions.</Content>
+<Content ns0:pstyle="Content">Normals must remain perpendicular to transformed surface tangent vectors.</Content>
+<Content ns0:pstyle="Content">The correct normal transform is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3b7796ada34fcee0407f5d58.svg" alt="&#10;\boxed{&#10;N'&#10;=&#10;(M^{-1})^T N.&#10;}&#10;" jobId="3b7796ada34fcee0407f5d58" originalTeX="&#10;\boxed{&#10;N'&#10;=&#10;(M^{-1})^T N.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Your Kairo pipeline already passes a separate normal matrix through push constants.</Content>
+<Content ns0:pstyle="Content">That becomes especially important when combining world-space derivative tangents with transformed geometric normals.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why normal mapping needs normalization several times</Strong></Content>
+<Content ns0:pstyle="Content">Normalization appears in several places:</Content>
+<Code ns0:pstyle="Code" language="text">interpolated geometric normal
+    ↓ normalize
+
+tangent after interpolation/derivation
+    ↓ normalize/orthogonalize
+
+sampled tangent-space normal
+    ↓ decode
+    ↓ optional scale
+    ↓ normalize
+
+TBN transformation
+    ↓
+world-space shading normal
+    ↓ normalize</Code>
+<Content ns0:pstyle="Content">Skipping any of these can change BRDF behavior because dot products such as:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/029a87ee3d349be6eac323df.svg" alt="&#10;N\cdot L&#10;" jobId="029a87ee3d349be6eac323df" originalTeX="&#10;N\cdot L&#10;" /></Formula>
+<Content ns0:pstyle="Content">assume unit vectors.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why interpolation destroys normal length</Strong></Content>
+<Content ns0:pstyle="Content">Take two normals:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ba6b79184a127499703a8b90.svg" alt="&#10;N_0=(1,0,0),&#10;" jobId="ba6b79184a127499703a8b90" originalTeX="&#10;N_0=(1,0,0),&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/97be3102eac709014eebb728.svg" alt="&#10;N_1=(0,1,0).&#10;" jobId="97be3102eac709014eebb728" originalTeX="&#10;N_1=(0,1,0).&#10;" /></Formula>
+<Content ns0:pstyle="Content">At midpoint:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b066cc1f159c467e42a4e9a7.svg" alt="&#10;N=&#10;0.5N_0+0.5N_1&#10;=&#10;(0.5,0.5,0).&#10;" jobId="b066cc1f159c467e42a4e9a7" originalTeX="&#10;N=&#10;0.5N_0+0.5N_1&#10;=&#10;(0.5,0.5,0).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Length:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dda54ff16add2a7f7d6736e3.svg" alt="&#10;\|N\|=&#10;\sqrt{0.5}&#10;\approx0.707.&#10;" jobId="dda54ff16add2a7f7d6736e3" originalTeX="&#10;\|N\|=&#10;\sqrt{0.5}&#10;\approx0.707.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore interpolated normals must be normalized before lighting.</Content>
+<Content ns0:pstyle="Content">This is not a numerical accident.</Content>
+<Content ns0:pstyle="Content">Linear interpolation of unit vectors does not generally stay on the unit sphere.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">The full color → texture → lighting dataflow</Strong></Content>
+<Content ns0:pstyle="Content">For a base-color texture:</Content>
+<Code ns0:pstyle="Code" language="text">PNG/JPEG encoded bytes
+       ↓
+classified as sRGB color
+       ↓
+mip generation:
+decode → filter → re-encode
+       ↓
+VK_FORMAT_*_SRGB
+       ↓
+texture sampling
+hardware sRGB → linear conversion
+       ↓
+linear baseColor
+       ↓
+BRDF / lighting arithmetic
+       ↓
+scene-linear HDR
+       ↓
+exposure
+       ↓
+tone mapping
+       ↓
+display-linear SDR/HDR signal
+       ↓
+display transfer encoding
+       ↓
+monitor</Code>
+<Content ns0:pstyle="Content">For a normal map:</Content>
+<Code ns0:pstyle="Code" language="text">normal-map bytes
+       ↓
+classified as linear data
+       ↓
+linear mip generation:
+decode vectors → filter → normalize → re-encode
+       ↓
+VK_FORMAT_*_UNORM
+       ↓
+texture sampling
+       ↓
+[0,1]^3
+       ↓
+2x - 1
+       ↓
+tangent-space normal
+       ↓
+normalScale
+       ↓
+normalize
+       ↓
+TBN
+       ↓
+world-space shading normal
+       ↓
+BRDF</Code>
+<Content ns0:pstyle="Content">If you can reconstruct these two paths, you understand much of this pass.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Research bridge — image fidelity experiment</Strong></Content>
+<Content ns0:pstyle="Content">A useful controlled experiment for M115/M116 would deliberately test each “small” color/sampling decision independently.</Content>
+<Content ns0:pstyle="Content">Build reference scenes containing:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">grayscale ramps,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">black/white checkerboards,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">high-frequency stripes,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">oblique textured planes,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">mirrored UV islands,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">normal-map spheres,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">extreme HDR emitters.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Then compare variants:</Content>
+<Code ns0:pstyle="Code" language="text">correct sRGB decode
+vs
+treat sRGB as linear
+
+linear mip averaging
+vs
+encoded-space averaging
+
+normal-map renormalization
+vs
+raw RGB averaging
+
+trilinear
+vs
+anisotropic
+
+derivative-generated tangents
+vs
+authored MikkTSpace tangents
+
+Reinhard
+vs
+filmic tone mapping</Code>
+<Content ns0:pstyle="Content">Measure:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/43e742d9134094c8c0fb205b.svg" alt="&#10;\text{RMSE},&#10;" jobId="43e742d9134094c8c0fb205b" originalTeX="&#10;\text{RMSE},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6aadf52d20a0b002b71f7370.svg" alt="&#10;\text{SSIM},&#10;" jobId="6aadf52d20a0b002b71f7370" originalTeX="&#10;\text{SSIM},&#10;" /></Formula>
+<Content ns0:pstyle="Content">temporal shimmer,</Content>
+<Content ns0:pstyle="Content">and, where appropriate, angular normal error:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/db622603e664a4d64fe6839b.svg" alt="&#10;\boxed{&#10;\theta_{\text{err}}&#10;=&#10;\cos^{-1}&#10;(&#10;N_{\text{ref}}\cdot N_{\text{test}}&#10;)&#10;}.&#10;" jobId="db622603e664a4d64fe6839b" originalTeX="&#10;\boxed{&#10;\theta_{\text{err}}&#10;=&#10;\cos^{-1}&#10;(&#10;N_{\text{ref}}\cdot N_{\text{test}}&#10;)&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For Maveb/Vulkax work, this matters because a renderer-validation experiment is meaningless if apparently geometric residuals are actually caused by:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">transfer-function mismatch,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">incorrect mip filtering,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">tangent mismatch,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">exposure/tone-map mismatch.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">That is precisely why the curriculum labels M115/M116 as a shading foundation for image-fidelity research.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">PASS 3 RECALL SHEET</Strong></Content>
+<Table ns0:table="table" ns0:trows="36" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Cue</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Reconstruct</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">Radiant energy</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/53a1fd7a21736b779e4ab8fe.svg" alt="Q" jobId="53a1fd7a21736b779e4ab8fe" originalTeX="Q" />, joules</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Flux</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b11be02d9b10d6d568236b67.svg" alt="\Phi=dQ/dt" jobId="b11be02d9b10d6d568236b67" originalTeX="\Phi=dQ/dt" />, watts</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Irradiance</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f0cd60feadc9092307f6c745.svg" alt="E=d\Phi/dA" jobId="f0cd60feadc9092307f6c745" originalTeX="E=d\Phi/dA" />, W/m²</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">Solid angle</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dd7a2d168d83addc4ca83bd2.svg" alt="\Omega=A/r^2" jobId="dd7a2d168d83addc4ca83bd2" originalTeX="\Omega=A/r^2" />, steradians</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">Radiance</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/aaf43c5f3eb71118ad5a747c.svg" alt="L=d^2\Phi/(dA\cos\theta\,d\omega)" jobId="aaf43c5f3eb71118ad5a747c" originalTeX="L=d^2\Phi/(dA\cos\theta\,d\omega)" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">Irradiance from radiance</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9b312d70bbcf62ac7bed788a.svg" alt="E=\int L_i\cos\theta\,d\omega" jobId="9b312d70bbcf62ac7bed788a" originalTeX="E=\int L_i\cos\theta\,d\omega" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">Constant hemispherical radiance</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0a0d42364fe1acbefce418d8.svg" alt="E=\pi L" jobId="0a0d42364fe1acbefce418d8" originalTeX="E=\pi L" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">Vacuum ray</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">radiance invariant without absorption/scattering</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">Tristimulus</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">spectrum → three perceptual/color coordinates</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">Linear RGB</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">arithmetic proportional to light</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content ns0:pstyle="TableCell">sRGB decode</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content ns0:pstyle="TableCell">piecewise 12.92 / exponent 2.4 function</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content ns0:pstyle="TableCell">Lighting rule</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content ns0:pstyle="TableCell">decode first, compute in linear, encode last</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content ns0:pstyle="TableCell">Color space</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content ns0:pstyle="TableCell">primaries + white point + transfer function</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="13"><Content ns0:pstyle="TableCell">HDR</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="13"><Content ns0:pstyle="TableCell">scene values can exceed 1</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="14"><Content ns0:pstyle="TableCell">Exposure</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="14"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ab1844d45865d623bcc9d283.svg" alt="C'=2^{EV}C" jobId="ab1844d45865d623bcc9d283" originalTeX="C'=2^{EV}C" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="15"><Content ns0:pstyle="TableCell">Reinhard</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="15"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3fc48fcd9cac6524faefa0be.svg" alt="T(x)=x/(1+x)" jobId="3fc48fcd9cac6524faefa0be" originalTeX="T(x)=x/(1+x)" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="16"><Content ns0:pstyle="TableCell">Texture</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="16"><Content ns0:pstyle="TableCell">sampled 2D signal</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="17"><Content ns0:pstyle="TableCell">Texel vs pixel</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="17"><Content ns0:pstyle="TableCell">source texture sample vs framebuffer sample</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="18"><Content ns0:pstyle="TableCell">Bilinear</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="18"><Content ns0:pstyle="TableCell">four texels</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="19"><Content ns0:pstyle="TableCell">Mipmap</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="19"><Content ns0:pstyle="TableCell">prefiltered pyramid</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="20"><Content ns0:pstyle="TableCell">Full mip cost</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="20"><Content ns0:pstyle="TableCell">~4/3 base-level storage</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="21"><Content ns0:pstyle="TableCell">LOD</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="21"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/939bb9a02ff89a4759eed953.svg" alt="\lambda=\log_2\rho" jobId="939bb9a02ff89a4759eed953" originalTeX="\lambda=\log_2\rho" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="22"><Content ns0:pstyle="TableCell">Trilinear</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="22"><Content ns0:pstyle="TableCell">bilinear at two mips + interpolate between mips</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="23"><Content ns0:pstyle="TableCell">Anisotropy</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="23"><Content ns0:pstyle="TableCell">elongated pixel footprint</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="24"><Content ns0:pstyle="TableCell">Normal decode</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="24"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9e42dbfa58dfc9ef95a1058b.svg" alt="N_t=2C-1" jobId="9e42dbfa58dfc9ef95a1058b" originalTeX="N_t=2C-1" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="25"><Content ns0:pstyle="TableCell">Tangent determinant</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="25"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ef2faf0edd2a55c86b0b67d1.svg" alt="D=\Delta u_1\Delta v_2-\Delta u_2\Delta v_1" jobId="ef2faf0edd2a55c86b0b67d1" originalTeX="D=\Delta u_1\Delta v_2-\Delta u_2\Delta v_1" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="26"><Content ns0:pstyle="TableCell">Tangent</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="26"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cfbeab2bf4739e3a83402d62.svg" alt="T=(E_1\Delta v_2-E_2\Delta v_1)/D" jobId="cfbeab2bf4739e3a83402d62" originalTeX="T=(E_1\Delta v_2-E_2\Delta v_1)/D" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="27"><Content ns0:pstyle="TableCell">Bitangent</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="27"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f23fb5a3ceee86b37925e5ce.svg" alt="B=h(N\times T)" jobId="f23fb5a3ceee86b37925e5ce" originalTeX="B=h(N\times T)" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="28"><Content ns0:pstyle="TableCell">Height-derived normal</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="28"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dbc604858fd1f7a2e747f788.svg" alt="N\propto(-h_u,-h_v,1)" jobId="dbc604858fd1f7a2e747f788" originalTeX="N\propto(-h_u,-h_v,1)" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="29"><Content ns0:pstyle="TableCell">Parallax</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="29"><Content ns0:pstyle="TableCell">shifts UV, not geometry</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="30"><Content ns0:pstyle="TableCell">Displacement</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="30"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/78f48676efb9bc5737049b21.svg" alt="P'=P+hN" jobId="78f48676efb9bc5737049b21" originalTeX="P'=P+hN" />, changes actual geometry</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="31"><Content ns0:pstyle="TableCell">Kairo color semantics</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="31"><Content ns0:pstyle="TableCell">Color may be sRGB; Normal/Data/HDR linear</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="32"><Content ns0:pstyle="TableCell">Kairo filtering</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="32"><Content ns0:pstyle="TableCell">bilinear + trilinear; anisotropy currently off</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="33"><Content ns0:pstyle="TableCell">Kairo normal frame</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="33"><Content ns0:pstyle="TableCell">reconstructed from fragment derivatives</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="34"><Content ns0:pstyle="TableCell">Kairo tone map</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="34"><Content ns0:pstyle="TableCell">exposure + per-channel Reinhard currently inside material shader</Content></Cell></Table>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Blank-screen reconstruction gate</Strong></Content>
+<Content ns0:pstyle="Content">Without looking back, you should be able to rebuild this sequence:</Content>
+<Code ns0:pstyle="Code" language="text">PHYSICAL LIGHT
+     ↓
+spectral energy
+     ↓
+RGB approximation
+     ↓
+radiance arriving at surface
+     ↓
+BRDF / lighting arithmetic
+     ↓
+scene-linear HDR RGB
+     ↑
+     │
+base-color texture
+sRGB stored
+     ↓
+decode to linear
+     ↓
+mip/filter in correct domain
+     ↓
+linear texture sample
+     ┘
+
+scene-linear HDR
+     ↓
+exposure: × 2^EV
+     ↓
+tone map
+     ↓
+display encoding
+     ↓
+screen</Code>
+<Content ns0:pstyle="Content">Then separately reconstruct:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2783fcab59550816eae838a5.svg" alt="&#10;\mathbf d_x=&#10;(Wu_x,Hv_x),&#10;" jobId="2783fcab59550816eae838a5" originalTeX="&#10;\mathbf d_x=&#10;(Wu_x,Hv_x),&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/053f40e04222ca6492096a8c.svg" alt="&#10;\mathbf d_y=&#10;(Wu_y,Hv_y),&#10;" jobId="053f40e04222ca6492096a8c" originalTeX="&#10;\mathbf d_y=&#10;(Wu_y,Hv_y),&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d129c8c65636ca14470b9254.svg" alt="&#10;\rho=&#10;\max(&#10;\|\mathbf d_x\|,&#10;\|\mathbf d_y\|&#10;),&#10;" jobId="d129c8c65636ca14470b9254" originalTeX="&#10;\rho=&#10;\max(&#10;\|\mathbf d_x\|,&#10;\|\mathbf d_y\|&#10;),&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2ddf81c7507c35428fb7b17e.svg" alt="&#10;\lambda=\log_2\rho.&#10;" jobId="2ddf81c7507c35428fb7b17e" originalTeX="&#10;\lambda=\log_2\rho.&#10;" /></Formula>
+<Content ns0:pstyle="Content">And finally:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c0970b4c9cc2b99541ef703b.svg" alt="&#10;E_1=T\Delta u_1+B\Delta v_1,&#10;" jobId="c0970b4c9cc2b99541ef703b" originalTeX="&#10;E_1=T\Delta u_1+B\Delta v_1,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f13c5620eb75cc45f45dfb9a.svg" alt="&#10;E_2=T\Delta u_2+B\Delta v_2&#10;" jobId="f13c5620eb75cc45f45dfb9a" originalTeX="&#10;E_2=T\Delta u_2+B\Delta v_2&#10;" /></Formula>
+<Content ns0:pstyle="Content">leading to:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1ff2ccf22634aba4ca8a4372.svg" alt="&#10;T=&#10;\frac{&#10;E_1\Delta v_2-E_2\Delta v_1&#10;}{&#10;\Delta u_1\Delta v_2-&#10;\Delta u_2\Delta v_1&#10;}.&#10;" jobId="1ff2ccf22634aba4ca8a4372" originalTeX="&#10;T=&#10;\frac{&#10;E_1\Delta v_2-E_2\Delta v_1&#10;}{&#10;\Delta u_1\Delta v_2-&#10;\Delta u_2\Delta v_1&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">If those equations, their units/domains, and their corresponding Kairo code paths can be reconstructed, M115/M116 are genuinely understood rather than vocabulary-memorized.</Content>
+<Content ns0:pstyle="Content">Textures attach spatially varying signals to surfaces, so filtering must follow their projected footprint.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="03-visual-computing-i-ch019-texture-is-a-function-over-a-surface">Texture is a function over a surface</Content>
+<Content ns0:pstyle="Content">A texture map stores a signal in a two-dimensional parameter domain. A surface point is assigned UV coordinates ((u,v)), and the renderer samples the image or function there. Parameterization is the mapping that flattens a surface to a domain; it inevitably introduces distortion, seams, or both. For a mesh triangle with per-vertex coordinates (u_i,v_i), barycentric interpolation transfers a hit point to texture space. If texture coordinates are outside the unit tile, the sampler needs a policy: repeat, clamp, mirror, or border color.</Content>
+<Content ns0:pstyle="Content">A sampled texture usually needs interpolation. If the query lies between four texel centers with fractional coordinates <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2f8b2ff142e6628b29c7e129.svg" alt="a,b\in[0,1]" jobId="2f8b2ff142e6628b29c7e129" originalTeX="a,b\in[0,1]" />, bilinear interpolation blends horizontally and then vertically:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8175fdedb8ef7769d9564dd1.svg" alt="&#10;T(u,v)=(1-b)((1-a)T_{00}+aT_{10})+b((1-a)T_{01}+aT_{11}).&#10;" jobId="8175fdedb8ef7769d9564dd1" originalTeX="&#10;T(u,v)=(1-b)((1-a)T_{00}+aT_{10})+b((1-a)T_{01}+aT_{11}).&#10;" /></Formula>
+<Content ns0:pstyle="Content">For instance, if the four texel values are 0, 1, 1, and 0 in row order, then at the center (a=b=0.5) the two horizontal interpolants are both 0.5, so the final result is 0.5. Nearest-neighbor sampling would instead jump between 0 and 1 at texel boundaries. Bilinear filtering removes that discontinuity, although it cannot recover detail that was lost when the image was sampled.</Content>
+<Content ns0:pstyle="Content">This produces a continuous-looking signal from discrete texels, but it is still a reconstruction filter. The texture lecture discusses parameterization, texture lookup, and bilinear interpolation, then connects shaders to procedural signals such as Perlin noise <Link href="../04-Visual-Computing-II/04-Visual-Computing-II.epub#04-visual-computing-ii-ch036-mitg-14---texture-mapping">MITG-14</Link> (00:25:00–00:45:00; 00:45:00–01:05:00). Procedural textures evaluate a function instead of storing every value, making them resolution-independent and useful for irregular natural patterns. Their high-frequency detail still has to be filtered when projected to a pixel grid.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="03-visual-computing-i-ch019-texture-coordinates-make-one-surface-address-many-kinds-of-detail">Texture coordinates make one surface address many kinds of detail</Content>
+<Content ns0:pstyle="Content">A triangle mesh describes where a surface is, but that is too coarse a storage scheme for fine color, roughness, or relief. Texture mapping gives each surface point a second address in a two-dimensional parameter domain. For a triangle with 3D corners <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0a0664d752d225f0ba022390.svg" alt="p_0,p_1,p_2" jobId="0a0664d752d225f0ba022390" originalTeX="p_0,p_1,p_2" /> and corresponding texture corners <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b714f35da994e27684243699.svg" alt="u_0,u_1,u_2" jobId="b714f35da994e27684243699" originalTeX="u_0,u_1,u_2" />, a hit point has barycentric weights <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7c4849cd7f1e9b5d631b6756.svg" alt="(\lambda_0,\lambda_1,\lambda_2)" jobId="7c4849cd7f1e9b5d631b6756" originalTeX="(\lambda_0,\lambda_1,\lambda_2)" />, with <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9028d7c71120df8d6f499378.svg" alt="\lambda_i\ge 0" jobId="9028d7c71120df8d6f499378" originalTeX="\lambda_i\ge 0" /> and <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bfc41a74206d1370ece96f45.svg" alt="\sum_i\lambda_i=1" jobId="bfc41a74206d1370ece96f45" originalTeX="\sum_i\lambda_i=1" />. Reuse those weights in texture space:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ddeca9e1a0a1b3c81bfb63b7.svg" alt="&#10;p=\sum_{i=0}^2\lambda_i p_i,\qquad u=\sum_{i=0}^2\lambda_i u_i.&#10;" jobId="ddeca9e1a0a1b3c81bfb63b7" originalTeX="&#10;p=\sum_{i=0}^2\lambda_i p_i,\qquad u=\sum_{i=0}^2\lambda_i u_i.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The mesh intersection answers where the ray hit in 3D; the second expression answers which texel neighborhood to sample. If <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/df25e600d976a703c705ec86.svg" alt="p" jobId="df25e600d976a703c705ec86" originalTeX="p" /> has weights <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3143f76e480031d2b4994171.svg" alt="(1/2,1/4,1/4)" jobId="3143f76e480031d2b4994171" originalTeX="(1/2,1/4,1/4)" />, then the texture lookup is exactly the same weighted average of the three texture corners. This is why texture coordinates are attached to triangle corners rather than inferred from world position. A shared 3D vertex may have two different UV coordinates on opposite sides of a seam. If one vertex had to have only one UV address, seams could not open. <Link href="../04-Visual-Computing-II/04-Visual-Computing-II.epub#04-visual-computing-ii-ch036-mitg-14---texture-mapping">MITG-14</Link> (00:15:34–00:21:04)</Content>
+<Content ns0:pstyle="Content">A UV atlas cuts a curved surface into patches before laying it flat. A triangle itself is planar and can be flattened without stretching, but the neighborhood around a curved vertex generally cannot be flattened while preserving every length and angle. A closed sphere cannot be continuously mapped to one flat disk without a cut or singularity. A designer therefore balances distortion against seam placement: seams hidden behind ears or under a character may be visually safer than a mathematically uniform cut. Leaving more edges connected improves continuity, but concentrates distortion; cutting every triangle removes much of that distortion while producing many discontinuous islands and difficult painting. <Link href="../04-Visual-Computing-II/04-Visual-Computing-II.epub#04-visual-computing-ii-ch036-mitg-14---texture-mapping">MITG-14</Link> (00:21:46–00:25:58; 00:35:42–00:36:48)</Content>
+<Content ns0:pstyle="Content">UV generation is an optimization problem with both geometric and topological choices. Even with the cuts fixed, each mesh vertex contributes two unknowns. A local objective can penalize edge stretch or angle distortion. But a valid atlas must also avoid unintended overlap: if two unrelated triangles occupy the same UV region, they sample the same texture colors. The lecture’s Tutte construction fixes the boundary to a convex shape and places each interior UV point at a weighted average of its neighbors. Each condition is linear, so all interior positions can be solved as a sparse linear system. This gives a useful injective starting map under the method’s assumptions; later optimization may trade cut length against local distortion while preserving non-overlap. <Link href="../04-Visual-Computing-II/04-Visual-Computing-II.epub#04-visual-computing-ii-ch036-mitg-14---texture-mapping">MITG-14</Link> (00:40:22–00:48:52)</Content>
+<Content ns0:pstyle="Content">Parameterization methods include artist-chosen seams, closed-form cylinder or sphere projections, and automatic optimization. A photo projected from a virtual camera is useful for image-based rendering, where a simple geometric proxy carries photographs from one or more views. It is less suitable for a freely turning object because a projection designed for one camera may stretch or slide under another. A tiled texture can reuse a small image with wraparound coordinates, while a normal map stores a perturbed normal rather than color. Normal mapping gives a low-polygon mesh fine shading variation, often baked from a high-resolution model, but cannot produce the true silhouette, parallax, or mutual occlusion of displaced geometry. <Link href="../04-Visual-Computing-II/04-Visual-Computing-II.epub#04-visual-computing-ii-ch036-mitg-14---texture-mapping">MITG-14</Link> (00:37:49–00:40:20; 00:49:49–00:56:41)</Content>
+<Content ns0:pstyle="Content">A sampled image is a grid of texels (texture pixels), so a non-integer UV coordinate needs reconstruction. Nearest-neighbor lookup picks one texel and creates visible jumps. Bilinear filtering interpolates between four neighbors: interpolate horizontally in the two rows, then vertically between the results. The order gives the same bilinear polynomial. When the texture becomes small on screen, one output pixel covers many texture texels. Sampling only one can alias the pattern into flicker or moiré. A mip pyramid precomputes successively half-sized averages; selecting the level whose texel footprint roughly matches the screen footprint approximates the needed area average. The extra memory is bounded: for a square texture, the level sizes sum to <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/59cd5e39832bc904a2a32d48.svg" alt="N^2(1+1/4+1/16+\cdots)=\frac43N^2" jobId="59cd5e39832bc904a2a32d48" originalTeX="N^2(1+1/4+1/16+\cdots)=\frac43N^2" />, ignoring tiny rounding effects. A surface tilted away from the camera has an elongated, direction-dependent footprint, so isotropic mip selection can blur too much in one direction; <Link href="#appendix-d5b3c692d9f0">anisotropic filtering</Link> samples that footprint more selectively. <Link href="../04-Visual-Computing-II/04-Visual-Computing-II.epub#04-visual-computing-ii-ch036-mitg-14---texture-mapping">MITG-14</Link> (00:27:06–00:34:15)</Content>
+<Content ns0:pstyle="Content">Texture maps can hold any per-surface signal, not just RGB: diffuse coefficient, specular strength, roughness, or other BRDF parameters. Normal maps encode direction changes that perturb the normal used by lighting. Store directions in a coordinate frame that rotates with the surface (often tangent space), rather than naïvely storing world-space XYZ values that become invalid when the object moves. A coarse mesh with a normal map can reproduce the lighting of fine bumps from a distance, while remaining visibly flat in silhouette or when occlusion matters. <Link href="../04-Visual-Computing-II/04-Visual-Computing-II.epub#04-visual-computing-ii-ch036-mitg-14---texture-mapping">MITG-14</Link> (00:49:49–00:56:41)</Content>
+<Content ns0:pstyle="Content">A procedural shader computes a surface signal from position or other attributes at shading time. For example, a checker can be built from parity of integer cell coordinates, so it extends indefinitely and has no stored image boundary. Procedural patterns offer compact, resolution-independent definitions, but they still require filtering: a mathematically sharp checkerboard can alias when many cells fall into one pixel. Perlin noise supplies smooth, locally varying values with a controllable spatial scale. Combining octaves at different frequencies creates multiscale structure; thresholding or taking absolute values introduces ridges, and perturbing a sinusoid with noise creates irregular marble veins. These are design functions, not physical laws. <Link href="../04-Visual-Computing-II/04-Visual-Computing-II.epub#04-visual-computing-ii-ch036-mitg-14---texture-mapping">MITG-14</Link> (00:57:07–01:13:44)</Content>
+<BlockQuote><Content ns0:pstyle="Quote"><Strong ns0:cstyle="Bold">Evidence boundary:</Strong> the available transcript runs through 01:14:23; video metadata gives a duration of 01:14:25. This is effectively full caption coverage, but no video frames were reviewed.</Content></BlockQuote>
+<Content ns0:pstyle="SubChapterSubHeading" id="03-visual-computing-i-ch019-figure-u9---homogeneous-depth-changes-interpolation-weights">Figure U9 - Homogeneous depth changes interpolation weights</Content>
+<Figure><Content ns0:pstyle="Content"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/03-Visual-Computing-I/assets/147beec16ec465031221.png" alt="Visual Recall/University Graphics and Vision/perspective-interpolation.png" /></Content></Figure>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Read the figure.</Strong> A screen-space triangle has vertices <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/add526d2f61aa5be2456a31e.svg" alt="A_0=(0,0)" jobId="add526d2f61aa5be2456a31e" originalTeX="A_0=(0,0)" />, <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b30c64afa0329db9f9f84e97.svg" alt="A_1=(2,0)" jobId="b30c64afa0329db9f9f84e97" originalTeX="A_1=(2,0)" />, and <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9451b7653c1ba87c94a4cde9.svg" alt="A_2=(0,2)" jobId="9451b7653c1ba87c94a4cde9" originalTeX="A_2=(0,2)" />. At point <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ca16e891363adb711ae3d492.svg" alt="P=(0.5,0.5)" jobId="ca16e891363adb711ae3d492" originalTeX="P=(0.5,0.5)" />, screen-space barycentric weights are <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/34f68d8d1c44b73716d687f8.svg" alt="(\lambda_0,\lambda_1,\lambda_2)=(0.5,0.25,0.25)" jobId="34f68d8d1c44b73716d687f8" originalTeX="(\lambda_0,\lambda_1,\lambda_2)=(0.5,0.25,0.25)" />; they sum to one and reconstruct <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d3b120f4ec842bf0baff5905.svg" alt="P" jobId="d3b120f4ec842bf0baff5905" originalTeX="P" />. The scalar vertex attributes are <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6940d92906e94ba6d4c36efe.svg" alt="a=(0,1,0)" jobId="6940d92906e94ba6d4c36efe" originalTeX="a=(0,1,0)" /> and clip-space homogeneous coordinates are <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/78087adba6e088a53ab2a951.svg" alt="w=(1,2,4)" jobId="78087adba6e088a53ab2a951" originalTeX="w=(1,2,4)" />. Affine interpolation gives <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9419a0c55a9305f79bf23e7b.svg" alt="\sum_i\lambda_i a_i=0.25" jobId="9419a0c55a9305f79bf23e7b" originalTeX="\sum_i\lambda_i a_i=0.25" />. Perspective-correct interpolation normalizes <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3ee350b0d88e7930df6fce5b.svg" alt="\lambda_i/w_i" jobId="3ee350b0d88e7930df6fce5b" originalTeX="\lambda_i/w_i" />, yielding weights <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2b7026e79a3d69c25293cba9.svg" alt="(8/11,2/11,1/11)" jobId="2b7026e79a3d69c25293cba9" originalTeX="(8/11,2/11,1/11)" /> and attribute <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bfc53931147567bd2b08cc77.svg" alt="2/11\approx0.181818" jobId="bfc53931147567bd2b08cc77" originalTeX="2/11\approx0.181818" />. This example treats the listed <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9eac1f1c4e026bbe119b1283.svg" alt="w_i" jobId="9eac1f1c4e026bbe119b1283" originalTeX="w_i" /> as the clip-space denominators used by the rasterizer; values are chosen to make the projective correction visible.</Content>
+
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/02 - Graphics Vision and XR/00 - Reading Map">Reading map</Link> · <Link href="#03-visual-computing-i-ch018">Previous chapter</Link> · <Link href="#03-visual-computing-i-ch020">Next chapter</Link></Content>
+</Chapter>

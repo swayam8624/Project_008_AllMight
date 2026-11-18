@@ -1,0 +1,32 @@
+\hypertarget{appendix-ad175ef3c5bf}{}\label{referencestart:appendix-ad175ef3c5bf}
+\section{PCA and covariance eigensystems}\label{appendix-ad175ef3c5bf-pca-and-covariance-eigensystems}
+
+Center sample rows, then find the orthogonal directions of greatest variance. For centered \(X\), SVD gives directions in \(V\), scores in \(U\Sigma\), and covariance eigenvalues \(\sigma_i^2/(N-1)\). Units and feature scaling change the question; near-equal eigenvalues make individual axes unstable.
+
+\textbf{Use it when:} describing point clouds, reducing dimensions, or estimating a best-fit plane.
+
+\textbf{Developed in Phase 8:} PCA first centers observations so the covariance measures variation around the sample mean. The right singular vectors of centered data give principal directions, \(U\Sigma\) gives scores, and squared singular values scaled by sample count give covariance eigenvalues; feature units and small eigengaps affect interpretation. \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch024-centered-measurements-reveal-principal-directions}{centering and principal axes (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 8)} · \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch024-plane-fits-eigengaps-and-interpretation-of-uncertain-components}{plane fits and eigengaps (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 8)}
+
+\textbf{Phase 9--10 development:} For a random vector \(X\) with finite second moments, covariance is \(\Sigma=\mathbb E[(X-\mu)(X-\mu)^T]\). For every vector \(v\), \(v^T\Sigma v=\mathbb E[(v^T(X-\mu))^2]\geq0\), so covariance is positive semidefinite. Its eigenvectors give uncorrelated principal directions and the eigenvalues give variance along them. Whitening rescales nonzero-variance directions and needs a stated policy for zero or tiny eigenvalues. A Gaussian kernel used to model rendering footprints is a spatial distribution model, not automatically a statement about epistemic uncertainty.
+
+\subsection{Prerequisites}\label{appendix-ad175ef3c5bf-prerequisites}
+
+\hyperref[appendix-0b3be18411f9]{Eigenvalues and eigenspaces}, \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-1fad5e7f36fa}{Singular value decomposition (Light Transport and Image Synthesis, Reference notes: Singular value decomposition)}, \hyperref[appendix-50d2ea3c9b26]{Symmetric positive-definite matrices and Cholesky}. - \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=appendix-54c383df9992}{Expectation, covariance, and dependence (Spatial Worlds, Engine State, and Simulation, Reference notes: Expectation, covariance, and dependence)} - \hyperref[appendix-12bbe185dbe5]{Multivariate Gaussian distributions and whitening} - \hyperref[appendix-541306fdbc1b]{Moore-Penrose pseudoinverse} - \hyperref[appendix-c3421e6b4f2c]{QR factorization and least squares}
+
+\subsection{Used by}\label{appendix-ad175ef3c5bf-used-by}
+
+\hyperref[appendix-73f5bcf7a462]{Polar decomposition}, \hyperref[appendix-221a483bec2d]{Matrix factorization choices}.
+
+\textbf{Teaching path:} \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch024-pca-turns-a-cloud-of-points-into-measured-variation}{PCA from data (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 8)}.
+
+\subsection{Full teaching explanation}\label{appendix-ad175ef3c5bf-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch023-expected-values-describe-centers-covariance-describes-dependence}{Phase 10 teaching section (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 7)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch024-waiting-times-event-counts-and-covariance-geometry}{Phase 10 teaching section (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 8)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)} · Phase 10 visual recall
+\end{itemize}

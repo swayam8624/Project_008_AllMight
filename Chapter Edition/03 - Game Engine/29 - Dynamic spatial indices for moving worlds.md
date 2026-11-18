@@ -8,7 +8,7 @@ A static hierarchy is not the only answer when objects move or appear in cluster
 
 **Recall question:** What scene change makes this structure expensive, and how would you measure candidate quality as well as update time?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 68707–72762; source-span SHA256 0a1d95e8e64589028feba2df9ad295ec874ad0af8d1b6b600776ddefbc76e85b. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 69636–73691; source-span SHA256 0a1d95e8e64589028feba2df9ad295ec874ad0af8d1b6b600776ddefbc76e85b. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Dynamic AABB Trees, Sweep-and-Prune, Spatial Hashes and Uniform Grids

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch111.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-e4ccdbab8320-cache-lines-and-memory-bandwidth" class="level2">
+<h2>Cache lines and memory bandwidth</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C001 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-e4ccdbab8320-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Packing can place more logical values in each transferred cache line, trading arithmetic for lower footprint and traffic.</p>
+<p>A cache line is the block moved between cache levels; memory bandwidth is bytes transferred per unit time. With an illustrative 64-byte line, byte-per-bit data stores 64 logical bits, while packed data stores 512. Real line sizes and performance must be measured for the target.</p>
+</section>
+<section id="appendix-e4ccdbab8320-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch053.xhtml#appendix-5bee2df85484-byte-and-octet" class="wikilink">Byte and octet</a> — An octet is exactly eight bits.</li>
+<li><a href="ch131.xhtml#appendix-18ee4f913c3c-addresses-and-virtual-memory" class="wikilink">Addresses and virtual memory (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Addresses and virtual memory)</a> — An address names a storage location in an address space.</li>
+</ul>
+</section>
+<section id="appendix-e4ccdbab8320-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch141.xhtml#appendix-5522ad176ca0-field-reordering-and-aos-versus-soa" class="wikilink">Field reordering and AoS versus SoA (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Field reordering and AoS versus SoA)</a> — depends on this concept; see its prerequisite explanation.</li>
+</ul>
+</section>
+<section id="appendix-e4ccdbab8320-m003-development" class="level3">
+<h3>M003 development</h3>
+<p>A four-byte load at line offset 62 crosses two 64-byte lines; a page crossing also requires a second translation. Reordering 24→16-byte records reduces footprint, not necessarily measured traffic or speed. <a href="ch141.xhtml#appendix-5522ad176ca0-field-reordering-and-aos-versus-soa" class="wikilink">Field reordering and AoS versus SoA (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Field reordering and AoS versus SoA)</a> separates hot field arrays from full records; <a href="ch150.xhtml#appendix-7a2d9c5ce511-tlb" class="wikilink">TLB (Bits, Programs, and Reliable Systems, Part 2, Reference notes: TLB)</a> caches translations rather than contents.</p>
+</section>
+<section id="appendix-e4ccdbab8320-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain cache lines and memory bandwidth without the label, work the example above, then state the assumption whose removal would change the result.</p>
+<p><strong>Pending:</strong> measurement, locality, hierarchy levels, and prefetch behavior.</p>
+</section>
+<section id="appendix-e4ccdbab8320-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-from-a-signal-to-an-interpretation" class="wikilink">C001 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-foundations" class="wikilink">Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 development (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)</a></p>
+</section>
+</section>
+</body>
+</html>

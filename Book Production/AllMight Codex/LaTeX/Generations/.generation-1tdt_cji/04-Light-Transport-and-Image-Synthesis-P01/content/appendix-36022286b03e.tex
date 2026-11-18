@@ -1,0 +1,48 @@
+\hypertarget{appendix-36022286b03e}{}\label{referencestart:appendix-36022286b03e}
+\section{Edge localization and subpixel contours}\label{appendix-36022286b03e-edge-localization-and-subpixel-contours}
+
+\hypertarget{appendix-36022286b03e-edge-localization-and-subpixel-contours}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-36022286b03e-definition-and-mechanism}
+
+\hypertarget{appendix-36022286b03e-definition-and-mechanism}{}
+
+An edge is a rapid image-intensity change, often associated with a material or depth boundary. Differentiating a noisy image amplifies high-frequency noise, so edge detectors first smooth with a Gaussian-like filter and then compute a gradient. Gradient magnitude estimates edge strength; gradient direction estimates the local normal. Nonmaximum suppression keeps a candidate only if it is a local maximum along that normal, thinning a broad response to a contour. Thresholding and hysteresis connect strong responses through weaker neighboring pixels. Subpixel localization fits a local peak to gradient samples, estimating a contour position between pixel centers. Accuracy depends on sampling, blur, contrast, and the assumed edge profile. This makes edge detection a measurement problem whose output uncertainty should propagate into later line, pose, or shape fitting.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-36022286b03e-prerequisites}
+
+\hypertarget{appendix-36022286b03e-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#nameddest=appendix-d5b3c692d9f0}{Convolution and filter footprints (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Convolution and filter footprints)}
+\item
+  \hyperref[appendix-6a7869dd79a6]{Sampling aliasing and reconstruction}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-36022286b03e-used-by}
+
+\hypertarget{appendix-36022286b03e-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  {Worlds, Images and Inference}
+\item
+  \hyperref[appendix-a5b0383b3b3e]{Hough transform and geometric voting}
+\item
+  \hyperref[appendix-5fb4af80d1c7]{Template matching and distance transforms}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-36022286b03e-full-teaching-explanation}
+
+\hypertarget{appendix-36022286b03e-full-teaching-explanation}{}
+
+\href{../05-Spatial-Worlds-Engine-State-and-Simulation-P01/main.pdf\#nameddest=04-visual-computing-ii-ch030-edges-contours-and-subpixel-localization}{Edges, contours, and subpixel localization (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 11)} · \href{../05-Spatial-Worlds-Engine-State-and-Simulation-P01/main.pdf\#nameddest=04-visual-computing-ii-ch030-recognition-templates-and-industrial-matching}{Recognition, templates, and industrial matching (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 11)}

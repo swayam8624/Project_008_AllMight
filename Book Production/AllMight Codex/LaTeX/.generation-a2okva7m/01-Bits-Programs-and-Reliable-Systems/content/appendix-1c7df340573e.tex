@@ -1,0 +1,42 @@
+\hypertarget{appendix-1c7df340573e}{}\label{referencestart:appendix-1c7df340573e}
+\section{Subtraction through addition}\label{appendix-1c7df340573e-subtraction-through-addition}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-1c7df340573e-definition-and-mechanism}
+
+\(A-B=A+\sim B+1\), allowing the same adder to implement both operations; some ISAs fold borrow state into carry-in.
+
+\end{allmightroledefinition}
+
+At N-bit residue width, A−B equals A+NOTₙ(B)+1. Binary 6502-style SBC computes A−B−(1−C), equivalently A+NOT₈(B)+C. C=1 means no incoming borrow; output carry=1 means no outgoing borrow.
+
+\subsection{Prerequisites}\label{appendix-1c7df340573e-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-4fbc03d20829]{Two\textquotesingle s complement} --- For raw unsigned value u in N bits, signed decoding is u when u\textless2ᴺ⁻¹, otherwise u−2ᴺ.
+\item
+  \hyperref[appendix-d1a5b1e520c2]{Full adder} --- A full adder adds A, B, and carry-in.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-1c7df340573e-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-89985e6a2685]{Binary long division} --- uses subtraction through addition as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-1c7df340573e-recall-and-next-depth}
+
+Explain subtraction through addition without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} ISA flag conventions and multi-word subtraction.
+
+\subsection{Source and navigation}\label{appendix-1c7df340573e-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

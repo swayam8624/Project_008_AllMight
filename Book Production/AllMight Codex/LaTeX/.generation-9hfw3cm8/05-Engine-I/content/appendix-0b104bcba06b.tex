@@ -1,0 +1,66 @@
+\hypertarget{appendix-0b104bcba06b}{}
+\section{Storage duration and object lifetime}\label{appendix-0b104bcba06b-storage-duration-and-object-lifetime}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C003 · \textbf{Latest development:} C010
+
+\subsection{Definition and mechanism}\label{appendix-0b104bcba06b-definition-and-mechanism}
+
+Direct local reference binding can extend a temporary under specified rules; a returned parameter alias does not renew the deadline. A reference's own lifetime does not prove the referent's lifetime.
+
+Construction and destruction can delimit an occupant while backing storage remains. The inline C++ lab uses construct\_at/destroy\_at in an alignas byte buffer and new/delete as the combined allocation/construction and destruction/release operations. The pointer object does not own or extend pointee life. Implicit object creation occurs only for specified operations and suitable types; a reinterpret\_cast is not a universal construction operation.
+
+Storage duration specifies how long storage is potentially available: automatic, static, thread, or dynamic. Object lifetime describes when a particular initialized object exists within it. Old bytes can remain after lifetime ends without authorizing access. const restricts mutation, not physical placement. Language categories do not dictate a universal segment map.
+
+M010 reuses this separation for smart owners and arenas: a wrapper's storage duration, the managed object's lifetime, the ownership-group lifetime, and an external GPU-use interval may all end at different times. Placement construction reuses suitable live storage; object destruction alone does not return that storage to an allocator.
+
+\subsection{Prerequisites}\label{appendix-0b104bcba06b-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-f414bd4ed05c}{Interpretation contract (01-Foundations-I, appendix-f414bd4ed05c)} --- Representation, type, and lifetime must identify what object exists.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-0b104bcba06b-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-3b88c6cd7195}{Thread-local storage (01-Foundations-I, appendix-3b88c6cd7195)} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-a82f9c438857}{Object construction and storage reuse (01-Foundations-I, appendix-a82f9c438857)} --- separates an occupant's construction from backing storage availability.
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-6af5921bc853}{Pointer arithmetic and provenance (01-Foundations-I, appendix-6af5921bc853)} --- uses this mechanism as stated in its prerequisites.
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-b081b7abe193}{Call stack and stack frames (01-Foundations-I, appendix-b081b7abe193)} --- uses this mechanism as stated in its prerequisites.
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-c3480f7d9ff3}{Dynamic allocation and heap (01-Foundations-I, appendix-c3480f7d9ff3)} --- uses this mechanism as stated in its prerequisites.
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-17c93c4c2f19}{Static storage and initialization (01-Foundations-I, appendix-17c93c4c2f19)} --- uses this mechanism as stated in its prerequisites.
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-5f9e5e2f0a5e}{Read-only data and code (01-Foundations-I, appendix-5f9e5e2f0a5e)} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-d52e4486f527]{Ownership and non-owning views} --- uses this mechanism as stated in its prerequisites.
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-d6d562ca9fbb}{References and aliases (01-Foundations-I, appendix-d6d562ca9fbb)}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-a978b29bbbb0}{Temporary lifetime extension (01-Foundations-I, appendix-a978b29bbbb0)}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-9bfe377cef7a}{Destruction and partial construction (01-Foundations-I, appendix-9bfe377cef7a)}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-69739d3ab49b}{RAII and resource handles (01-Foundations-I, appendix-69739d3ab49b)}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-f56c3e43fd4e}{Placement construction and explicit lifetime management (01-Foundations-I, appendix-f56c3e43fd4e)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-0b104bcba06b-recall-and-next-depth}
+
+Explain why returning a local pointer is invalid even if bytes remain.
+
+\textbf{Pending:} Further lifetime replacement corner cases, allocator/concurrency policies and cross-target ABI experiments; the opening examples do not establish those later guarantees.
+
+\subsection{Source and navigation}\label{appendix-0b104bcba06b-source-and-navigation}
+
+\href{../01-Foundations-I/main.pdf\#nameddest=appendix-fd090d982a15-m008---parts-113-126}{C008 development and corrections (01-Foundations-I, appendix-fd090d982a15-m008-\/-\/-parts-113-126)}
+
+\href{../01-Foundations-I/main.pdf\#nameddest=01-foundations-i-ch002-where-the-bytes-live}{C003 teaching chapter (01-Foundations-I, 01-foundations-i-ch002-where-the-bytes-live)} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-fd090d982a15-m003---parts-41-60}{Part definitions (01-Foundations-I, appendix-fd090d982a15-m003-\/-\/-parts-41-60)} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)} · \href{../01-Foundations-I/main.pdf\#nameddest=01-foundations-i-ch002-storage-is-a-place-an-object-is-its-occupant}{C007 development (01-Foundations-I, 01-foundations-i-ch002-storage-is-a-place-an-object-is-its-occupant)}

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch484.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-55e4b5b0a1e6-lu-factorization-and-reusable-solves" class="level2">
+<h2>LU factorization and reusable solves</h2>
+<p>LU stores elimination as triangular factors. With row pivoting in this vault’s convention, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+  <mi>A</mi>
+  <mo>=</mo>
+  <mi>L</mi>
+  <mi>U</mi>
+</math>; apply the same permutation to each right-hand side, then solve one lower- and one upper-triangular system. Factorization cost is amortized across repeated solves.</p>
+<p><strong>Use it when:</strong> solving square general systems, especially with multiple right-hand sides.</p>
+<p><strong>Developed in Phase 8:</strong> The multipliers used to eliminate entries become the lower factor, while the remaining upper triangle records the reduced system; with row exchanges the convention is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+  <mi>A</mi>
+  <mo>=</mo>
+  <mi>L</mi>
+  <mi>U</mi>
+</math>. The runnable pivoted LU reference traces permutation, factor storage, status, and repeated forward/back substitution on actual values. <a href="ch261.xhtml#id_01-foundations-i-ch019-a-runnable-pivoted-lu-reference-preserves-the-elimination-history" class="wikilink">runnable pivoted LU lab (Mathematics for Visual Computing, Part 1, Ch. 3)</a> · <a href="ch261.xhtml#id_01-foundations-i-ch019-triangular-solves-perform-the-cheap-second-half" class="wikilink">forward and backward solves (Mathematics for Visual Computing, Part 1, Ch. 3)</a></p>
+<section id="appendix-55e4b5b0a1e6-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<p><a href="ch534.xhtml#appendix-f6e77f4a200f-gaussian-elimination-and-pivoting" class="wikilink">Gaussian elimination and pivoting</a>, <a href="ch260.xhtml#appendix-ffdc1d4e5350-matrix-storage-indexing-and-strides" class="wikilink">Matrix storage indexing and strides (Mathematics for Visual Computing, Part 1, Reference notes: Matrix storage indexing and strides)</a>.</p>
+</section>
+<section id="appendix-55e4b5b0a1e6-used-by" class="level3">
+<h3>Used by</h3>
+<p><a href="ch461.xhtml#appendix-221a483bec2d-matrix-factorization-choices" class="wikilink">Matrix factorization choices</a>, <a href="ch487.xhtml#appendix-67c87a3d9e94-sparse-and-iterative-solvers" class="wikilink">Sparse and iterative solvers</a>.</p>
+<p><strong>Teaching path:</strong> <a href="ch261.xhtml#id_01-foundations-i-ch019-elimination-turns-the-geometry-into-an-auditable-calculation" class="wikilink">factor and solve (Mathematics for Visual Computing, Part 1, Ch. 3)</a>.</p>
+</section>
+</section>
+</body>
+</html>

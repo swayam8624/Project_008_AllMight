@@ -8,7 +8,7 @@ Intrinsics describe how a camera forms image measurements, while extrinsics plac
 
 **Recall question:** Why is the translation column of a world-to-camera matrix not generally the camera’s world-space position?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 86865–89919; source-span SHA256 48bb391c2f104a753e3e8be7e12a92afce6837509bb0390a1bde75894e3003b8. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 87112–90166; source-span SHA256 d05c86caf710d5dae5ba53d28b3e1e882519751530a0c533621a24830008f64c. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Extrinsics place the optical camera in the world
@@ -28,7 +28,7 @@ The direction of the transformation must be explicit.
 In computer vision, a common extrinsic convention maps world coordinates into camera coordinates:
 
 $$
- \boxed{ \mathbf X_C=R_{CW}\mathbf X_W+\mathbf t_{CW} }. 
+ \boxed{ \mathbf X_C=R_{CW}\mathbf X_W+\mathbf t_{CW} }.
 $$
 
 The subscript $CW$ here means world-to-camera.
@@ -38,25 +38,25 @@ The subscript $CW$ here means world-to-camera.
 Suppose the camera centre in world coordinates is:
 
 $$
- \mathbf C_W. 
+ \mathbf C_W.
 $$
 
 At that point:
 
 $$
- \mathbf X_W=\mathbf C_W. 
+ \mathbf X_W=\mathbf C_W.
 $$
 
 Its camera coordinates must be zero:
 
 $$
- \mathbf0=R_{CW}\mathbf C_W+\mathbf t_{CW}. 
+ \mathbf0=R_{CW}\mathbf C_W+\mathbf t_{CW}.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf t_{CW}=-R_{CW}\mathbf C_W }. 
+ \boxed{ \mathbf t_{CW}=-R_{CW}\mathbf C_W }.
 $$
 
 This is one of the most important extrinsic relationships.
@@ -68,7 +68,7 @@ The translation vector in the world-to-camera extrinsic matrix is generally not 
 Suppose the camera is at:
 
 $$
- \mathbf C_W= \begin{bmatrix}3\\0\\0\end{bmatrix} 
+ \mathbf C_W= \begin{bmatrix}3\\0\\0\end{bmatrix}
 $$
 
 with identity world-to-camera rotation.
@@ -76,31 +76,31 @@ with identity world-to-camera rotation.
 Then:
 
 $$
- R_{CW}=I. 
+ R_{CW}=I.
 $$
 
 The extrinsic translation is:
 
 $$
- \mathbf t_{CW}= -I \begin{bmatrix}3\\0\\0\end{bmatrix} = \begin{bmatrix}-3\\0\\0\end{bmatrix}. 
+ \mathbf t_{CW}= -I \begin{bmatrix}3\\0\\0\end{bmatrix} = \begin{bmatrix}-3\\0\\0\end{bmatrix}.
 $$
 
 The world point:
 
 $$
- \mathbf X_W=(4,0,5) 
+ \mathbf X_W=(4,0,5)
 $$
 
 transforms to:
 
 $$
- \mathbf X_C= (4,0,5)+(-3,0,0). 
+ \mathbf X_C= (4,0,5)+(-3,0,0).
 $$
 
 Thus:
 
 $$
- \boxed{ \mathbf X_C=(1,0,5) }. 
+ \boxed{ \mathbf X_C=(1,0,5) }.
 $$
 
 The point is one unit right of the camera and five units forward.
@@ -110,25 +110,25 @@ The point is one unit right of the camera and five units forward.
 If the camera-to-world pose is:
 
 $$
- T_{WC}= \begin{bmatrix} R_{WC}&\mathbf C_W\\ 0&1 \end{bmatrix}, 
+ T_{WC}= \begin{bmatrix} R_{WC}&\mathbf C_W\\ 0&1 \end{bmatrix},
 $$
 
 then:
 
 $$
- \boxed{ T_{CW}=T_{WC}^{-1} }. 
+ \boxed{ T_{CW}=T_{WC}^{-1} }.
 $$
 
 For a rigid rotation:
 
 $$
- R_{CW}=R_{WC}^T. 
+ R_{CW}=R_{WC}^T.
 $$
 
 And:
 
 $$
- \boxed{ \mathbf t_{CW}=-R_{WC}^T\mathbf C_W }. 
+ \boxed{ \mathbf t_{CW}=-R_{WC}^T\mathbf C_W }.
 $$
 
 Thus a camera pose and an extrinsic matrix encode the same rigid relationship in opposite directions.
@@ -138,13 +138,13 @@ Thus a camera pose and an extrinsic matrix encode the same rigid relationship in
 The world-to-camera rigid extrinsic matrix is:
 
 $$
- \boxed{ T_{CW}= \begin{bmatrix} R_{CW}&\mathbf t_{CW}\\ 0&1 \end{bmatrix} }. 
+ \boxed{ T_{CW}= \begin{bmatrix} R_{CW}&\mathbf t_{CW}\\ 0&1 \end{bmatrix} }.
 $$
 
 For projection calculations, we frequently use only the top three rows:
 
 $$
- \boxed{ [R_{CW}\mid\mathbf t_{CW}] } 
+ \boxed{ [R_{CW}\mid\mathbf t_{CW}] }
 $$
 
 which form a $3\times4$ matrix.
@@ -152,19 +152,19 @@ which form a $3\times4$ matrix.
 The full ideal pinhole projection is then:
 
 $$
- \boxed{ \lambda\tilde{\mathbf x} = K[R_{CW}\mid\mathbf t_{CW}] \tilde{\mathbf X}_W } 
+ \boxed{ \lambda\tilde{\mathbf x} = K[R_{CW}\mid\mathbf t_{CW}] \tilde{\mathbf X}_W }
 $$
 
 where:
 
 $$
- \tilde{\mathbf x}= \begin{bmatrix}u\\v\\1\end{bmatrix} 
+ \tilde{\mathbf x}= \begin{bmatrix}u\\v\\1\end{bmatrix}
 $$
 
 is a homogeneous image point and:
 
 $$
- \tilde{\mathbf X}_W= \begin{bmatrix}X\\Y\\Z\\1\end{bmatrix} 
+ \tilde{\mathbf X}_W= \begin{bmatrix}X\\Y\\Z\\1\end{bmatrix}
 $$
 
 is a homogeneous world point.
@@ -174,7 +174,7 @@ is a homogeneous world point.
 Define:
 
 $$
- \boxed{ P_{\mathrm{CV}}=K[R\mid t] }. 
+ \boxed{ P_{\mathrm{CV}}=K[R\mid t] }.
 $$
 
 This is a $3\times4$ projective camera matrix.
@@ -184,7 +184,7 @@ It maps projective 3D world points into projective 2D image points.
 In homogeneous notation:
 
 $$
- \boxed{ \tilde{\mathbf x}\sim P_{\mathrm{CV}}\tilde{\mathbf X}_W }. 
+ \boxed{ \tilde{\mathbf x}\sim P_{\mathrm{CV}}\tilde{\mathbf X}_W }.
 $$
 
 The symbol $\sim$ means projective equivalence up to a nonzero scalar.
@@ -196,59 +196,59 @@ This matrix has a different purpose from the $4\times4$ GPU clip-space projectio
 Suppose:
 
 $$
- K= \begin{bmatrix} 800&0&960\\ 0&800&540\\ 0&0&1 \end{bmatrix}. 
+ K= \begin{bmatrix} 800&0&960\\ 0&800&540\\ 0&0&1 \end{bmatrix}.
 $$
 
 Let:
 
 $$
- R=I, 
+ R=I,
 $$
 
 $$
- t=(-1,0,0)^T. 
+ t=(-1,0,0)^T.
 $$
 
 Then:
 
 $$
- [R\mid t] = \begin{bmatrix} 1&0&0&-1\\ 0&1&0&0\\ 0&0&1&0 \end{bmatrix}. 
+ [R\mid t] = \begin{bmatrix} 1&0&0&-1\\ 0&1&0&0\\ 0&0&1&0 \end{bmatrix}.
 $$
 
 Multiply:
 
 $$
- P_{\mathrm{CV}}= K[R\mid t]. 
+ P_{\mathrm{CV}}= K[R\mid t].
 $$
 
 The result is:
 
 $$
- \boxed{ P_{\mathrm{CV}}= \begin{bmatrix} 800&0&960&-800\\ 0&800&540&0\\ 0&0&1&0 \end{bmatrix} }. 
+ \boxed{ P_{\mathrm{CV}}= \begin{bmatrix} 800&0&960&-800\\ 0&800&540&0\\ 0&0&1&0 \end{bmatrix} }.
 $$
 
 Consider world point:
 
 $$
- \tilde{\mathbf X}_W=(2,0,5,1)^T. 
+ \tilde{\mathbf X}_W=(2,0,5,1)^T.
 $$
 
 Multiply:
 
 $$
- P_{\mathrm{CV}}\tilde{\mathbf X}_W = \begin{bmatrix} 800(2)+960(5)-800\\ 800(0)+540(5)\\ 5 \end{bmatrix}. 
+ P_{\mathrm{CV}}\tilde{\mathbf X}_W = \begin{bmatrix} 800(2)+960(5)-800\\ 800(0)+540(5)\\ 5 \end{bmatrix}.
 $$
 
 Thus:
 
 $$
- = \begin{bmatrix} 5600\\2700\\5 \end{bmatrix}. 
+ = \begin{bmatrix} 5600\\2700\\5 \end{bmatrix}.
 $$
 
 Divide by the last coordinate:
 
 $$
- \boxed{ (u,v)=(1120,540) }. 
+ \boxed{ (u,v)=(1120,540) }.
 $$
 
 This is consistent with the camera being located one world unit to the right of the origin and observing the point at relative $X=1,Z=5$.
@@ -258,37 +258,37 @@ This is consistent with the camera being located one world unit to the right of 
 Our graphics camera uses:
 
 $$
- +X\text{ right},\quad+Y\text{ up},\quad-Z\text{ forward}. 
+ +X\text{ right},\quad+Y\text{ up},\quad-Z\text{ forward}.
 $$
 
 Our CV camera uses:
 
 $$
- +X\text{ right},\quad+Y\text{ down},\quad+Z\text{ forward}. 
+ +X\text{ right},\quad+Y\text{ down},\quad+Z\text{ forward}.
 $$
 
 A rotation that converts graphics view coordinates to this CV optical frame is:
 
 $$
- \boxed{ S= \begin{bmatrix} 1&0&0\\ 0&-1&0\\ 0&0&-1 \end{bmatrix} }. 
+ \boxed{ S= \begin{bmatrix} 1&0&0\\ 0&-1&0\\ 0&0&-1 \end{bmatrix} }.
 $$
 
 Then:
 
 $$
- \boxed{ \mathbf X_{\mathrm{CV}}=S\mathbf X_{\mathrm{graphicsView}} }. 
+ \boxed{ \mathbf X_{\mathrm{CV}}=S\mathbf X_{\mathrm{graphicsView}} }.
 $$
 
 For graphics point:
 
 $$
- (1,2,-5), 
+ (1,2,-5),
 $$
 
 the CV coordinate becomes:
 
 $$
- \boxed{(1,-2,5)}. 
+ \boxed{(1,-2,5)}.
 $$
 
 The point is right, above the optical axis, and in front.
@@ -298,7 +298,7 @@ Because CV image $Y$ increases downward, its pixel $v$ coordinate is less than t
 Notice:
 
 $$
- \det S=(1)(-1)(-1)=+1. 
+ \det S=(1)(-1)(-1)=+1.
 $$
 
 This is a proper 180° rotation about the X axis, not an orientation-reversing reflection.
@@ -318,49 +318,49 @@ There is no lens aperture, defocus blur, or optical distortion in the ideal mode
 Given world point:
 
 $$
- \mathbf X_W, 
+ \mathbf X_W,
 $$
 
 first transform into camera coordinates:
 
 $$
- \boxed{ \mathbf X_C=R\mathbf X_W+\mathbf t }. 
+ \boxed{ \mathbf X_C=R\mathbf X_W+\mathbf t }.
 $$
 
 Write:
 
 $$
- \mathbf X_C=(X_C,Y_C,Z_C). 
+ \mathbf X_C=(X_C,Y_C,Z_C).
 $$
 
 Assume:
 
 $$
- Z_C>0. 
+ Z_C>0.
 $$
 
 Normalize:
 
 $$
- \boxed{ x=\frac{X_C}{Z_C}, \qquad y=\frac{Y_C}{Z_C} }. 
+ \boxed{ x=\frac{X_C}{Z_C}, \qquad y=\frac{Y_C}{Z_C} }.
 $$
 
 Apply intrinsics:
 
 $$
- \boxed{ u=f_xx+sy+c_x } 
+ \boxed{ u=f_xx+sy+c_x }
 $$
 
 and:
 
 $$
- \boxed{ v=f_yy+c_y }. 
+ \boxed{ v=f_yy+c_y }.
 $$
 
 Together:
 
 $$
- \boxed{ \tilde{\mathbf x} \sim K[R\mid t]\tilde{\mathbf X}_W }. 
+ \boxed{ \tilde{\mathbf x} \sim K[R\mid t]\tilde{\mathbf X}_W }.
 $$
 
 ### Why a single image cannot determine unique 3D depth
@@ -368,19 +368,19 @@ $$
 Suppose a pixel corresponds to normalized coordinates:
 
 $$
- (x,y). 
+ (x,y).
 $$
 
 All points along the camera ray:
 
 $$
- \boxed{ \mathbf X_C(\lambda)= \lambda \begin{bmatrix} x\\y\\1 \end{bmatrix} } 
+ \boxed{ \mathbf X_C(\lambda)= \lambda \begin{bmatrix} x\\y\\1 \end{bmatrix} }
 $$
 
 for:
 
 $$
- \lambda>0 
+ \lambda>0
 $$
 
 project to the same ideal pixel.
@@ -388,11 +388,11 @@ project to the same ideal pixel.
 Indeed:
 
 $$
- \frac{\lambda x}{\lambda}=x, 
+ \frac{\lambda x}{\lambda}=x,
 $$
 
 $$
- \frac{\lambda y}{\lambda}=y. 
+ \frac{\lambda y}{\lambda}=y.
 $$
 
 The scale cancels.
@@ -412,7 +412,7 @@ If all scene points and camera translations are scaled by the same positive fact
 For example, doubling the depth and transverse camera-relative coordinates preserves normalized ratios:
 
 $$
- \frac{2X}{2Z}=\frac XZ. 
+ \frac{2X}{2Z}=\frac XZ.
 $$
 
 Thus image observations alone may not determine absolute metric scale.
@@ -426,25 +426,25 @@ This is a central issue in structure-from-motion and monocular SLAM.
 Suppose an observed image point is:
 
 $$
- \mathbf u_i^{\mathrm{obs}} 
+ \mathbf u_i^{\mathrm{obs}}
 $$
 
 and the camera model predicts:
 
 $$
- \hat{\mathbf u}_i= \pi(K,R,t,\mathbf X_i). 
+ \hat{\mathbf u}_i= \pi(K,R,t,\mathbf X_i).
 $$
 
 Define the reprojection residual:
 
 $$
- \boxed{ \mathbf r_i= \hat{\mathbf u}_i-\mathbf u_i^{\mathrm{obs}} }. 
+ \boxed{ \mathbf r_i= \hat{\mathbf u}_i-\mathbf u_i^{\mathrm{obs}} }.
 $$
 
 A common calibration objective is:
 
 $$
- \boxed{ E= \sum_i \\|\mathbf r_i\\|_2^2 }. 
+ \boxed{ E= \sum_i \|\mathbf r_i\|_2^2 }.
 $$
 
 This connects camera geometry directly to least-squares estimation and robust optimization.
@@ -458,11 +458,11 @@ The optimization can be nonlinear and sensitive to parameter initialization, out
 Let:
 
 $$
- u=f_x\frac XZ+c_x, 
+ u=f_x\frac XZ+c_x,
 $$
 
 $$
- v=f_y\frac YZ+c_y 
+ v=f_y\frac YZ+c_y
 $$
 
 for zero skew.
@@ -470,7 +470,7 @@ for zero skew.
 The Jacobian with respect to camera-space point coordinates is:
 
 $$
- \boxed{ J_\pi= \begin{bmatrix} \dfrac{f_x}{Z}&0&-\dfrac{f_xX}{Z^2}\\ 0&\dfrac{f_y}{Z}&-\dfrac{f_yY}{Z^2} \end{bmatrix} }. 
+ \boxed{ J_\pi= \begin{bmatrix} \dfrac{f_x}{Z}&0&-\dfrac{f_xX}{Z^2}\\ 0&\dfrac{f_y}{Z}&-\dfrac{f_yY}{Z^2} \end{bmatrix} }.
 $$
 
 This follows by partial differentiation.
@@ -478,29 +478,29 @@ This follows by partial differentiation.
 For example:
 
 $$
- \frac{\partial u}{\partial X}=\frac{f_x}{Z}, 
+ \frac{\partial u}{\partial X}=\frac{f_x}{Z},
 $$
 
 $$
- \frac{\partial u}{\partial Z}=-\frac{f_xX}{Z^2}. 
+ \frac{\partial u}{\partial Z}=-\frac{f_xX}{Z^2}.
 $$
 
 The Jacobian maps small 3D camera-space perturbations into image-space pixel perturbations:
 
 $$
- \boxed{ \Delta\mathbf u\approx J_\pi\Delta\mathbf X_C }. 
+ \boxed{ \Delta\mathbf u\approx J_\pi\Delta\mathbf X_C }.
 $$
 
 If the 3D point has covariance:
 
 $$
- \Sigma_X, 
+ \Sigma_X,
 $$
 
 then first-order image covariance is:
 
 $$
- \boxed{ \Sigma_u\approx J_\pi\Sigma_XJ_\pi^T }. 
+ \boxed{ \Sigma_u\approx J_\pi\Sigma_XJ_\pi^T }.
 $$
 
 This is a direct application of probability and covariance theory.
@@ -546,7 +546,7 @@ A distortion model describes the difference between ideal normalized pinhole coo
 Let:
 
 $$
- (x,y) 
+ (x,y)
 $$
 
 be the ideal undistorted normalized camera coordinates.
@@ -554,7 +554,7 @@ be the ideal undistorted normalized camera coordinates.
 Let:
 
 $$
- (x_d,y_d) 
+ (x_d,y_d)
 $$
 
 be distorted normalized coordinates produced by the lens model.
@@ -562,25 +562,25 @@ be distorted normalized coordinates produced by the lens model.
 The distortion transformation is:
 
 $$
- \boxed{ D: (x,y)\mapsto(x_d,y_d) }. 
+ \boxed{ D: (x,y)\mapsto(x_d,y_d) }.
 $$
 
 After distortion, the intrinsic matrix converts normalized coordinates to pixels:
 
 $$
- \boxed{ u=f_xx_d+sy_d+c_x } 
+ \boxed{ u=f_xx_d+sy_d+c_x }
 $$
 
 and:
 
 $$
- \boxed{ v=f_yy_d+c_y }. 
+ \boxed{ v=f_yy_d+c_y }.
 $$
 
 Therefore the correct pipeline is:
 
 $$
- \boxed{ \mathbf X_W \rightarrow \mathbf X_C \rightarrow (x,y) \rightarrow (x_d,y_d) \rightarrow (u,v) }. 
+ \boxed{ \mathbf X_W \rightarrow \mathbf X_C \rightarrow (x,y) \rightarrow (x_d,y_d) \rightarrow (u,v) }.
 $$
 
 The order matters.
@@ -633,25 +633,25 @@ Radial distortion depends primarily on distance from the optical centre in norma
 Define:
 
 $$
- \boxed{ r^2=x^2+y^2 }. 
+ \boxed{ r^2=x^2+y^2 }.
 $$
 
 A common polynomial radial factor is:
 
 $$
- \boxed{ L(r)= 1+k_1r^2+k_2r^4+k_3r^6 }. 
+ \boxed{ L(r)= 1+k_1r^2+k_2r^4+k_3r^6 }.
 $$
 
 The radially distorted coordinates are:
 
 $$
- \boxed{ x_d=xL(r) } 
+ \boxed{ x_d=xL(r) }
 $$
 
 and:
 
 $$
- \boxed{ y_d=yL(r) }. 
+ \boxed{ y_d=yL(r) }.
 $$
 
 The coefficients $k_1,k_2,k_3$ determine how magnification changes with distance from the image centre.
@@ -663,7 +663,7 @@ An ideal rotationally symmetric distortion field should not depend on the angula
 Its radial scaling depends on the radius:
 
 $$
- r=\sqrt{x^2+y^2}. 
+ r=\sqrt{x^2+y^2}.
 $$
 
 For a smooth radial model symmetric under coordinate sign reversal, a polynomial in $r^2$ is a natural parameterization.
@@ -671,7 +671,7 @@ For a smooth radial model symmetric under coordinate sign reversal, a polynomial
 Thus the distortion scale can be modeled as:
 
 $$
- 1+k_1r^2+k_2r^4+k_3r^6+\cdots. 
+ 1+k_1r^2+k_2r^4+k_3r^6+\cdots.
 $$
 
 The constant term is one so the mapping has unit scale at the optical centre in this normalized formulation.
@@ -685,13 +685,13 @@ Points at large radius are mapped inward compared with the ideal pinhole model.
 For a simple model with:
 
 $$
- k_1<0 
+ k_1<0
 $$
 
 and sufficiently small higher-order contributions:
 
 $$
- L(r)<1 
+ L(r)<1
 $$
 
 away from the centre.
@@ -699,7 +699,7 @@ away from the centre.
 Thus:
 
 $$
- r_d=rL(r)\<r. 
+ r_d=rL(r)\<r.
 $$
 
 Straight lines away from the image centre can appear bowed outward.
@@ -713,7 +713,7 @@ In a common pincushion-distortion regime, magnification increases with radius.
 For a simple positive $k_1$ model:
 
 $$
- L(r)>1 
+ L(r)>1
 $$
 
 away from the centre.
@@ -721,7 +721,7 @@ away from the centre.
 Then:
 
 $$
- r_d>r. 
+ r_d>r.
 $$
 
 Straight lines can appear pulled inward toward the centre.
@@ -733,63 +733,63 @@ Again, the total radial polynomial matters, especially when higher-order coeffic
 Take:
 
 $$
- x=0.3,\qquad y=0.4. 
+ x=0.3,\qquad y=0.4.
 $$
 
 Then:
 
 $$
- r^2=0.3^2+0.4^2 =0.09+0.16 =\boxed{0.25}. 
+ r^2=0.3^2+0.4^2 =0.09+0.16 =\boxed{0.25}.
 $$
 
 Let:
 
 $$
- k_1=-0.2, 
+ k_1=-0.2,
 $$
 
 $$
- k_2=0.04, 
+ k_2=0.04,
 $$
 
 $$
- k_3=0. 
+ k_3=0.
 $$
 
 Then:
 
 $$
- L(r)=1-0.2(0.25)+0.04(0.25^2). 
+ L(r)=1-0.2(0.25)+0.04(0.25^2).
 $$
 
 Compute:
 
 $$
- L(r)=1-0.05+0.0025 =\boxed{0.9525}. 
+ L(r)=1-0.05+0.0025 =\boxed{0.9525}.
 $$
 
 Therefore:
 
 $$
- x_d=0.3(0.9525) =\boxed{0.28575}. 
+ x_d=0.3(0.9525) =\boxed{0.28575}.
 $$
 
 And:
 
 $$
- y_d=0.4(0.9525) =\boxed{0.381}. 
+ y_d=0.4(0.9525) =\boxed{0.381}.
 $$
 
 The ideal point:
 
 $$
- (0.3,0.4) 
+ (0.3,0.4)
 $$
 
 moves inward to:
 
 $$
- \boxed{(0.28575,0.381)}. 
+ \boxed{(0.28575,0.381)}.
 $$
 
 The distortion preserves the point's angular direction in this radial-only model.
@@ -799,7 +799,7 @@ The distortion preserves the point's angular direction in this radial-only model
 The distorted radial distance is:
 
 $$
- \boxed{ r_d=rL(r) }. 
+ \boxed{ r_d=rL(r) }.
 $$
 
 For a unique radial inverse across the valid domain, we need the radial mapping to be suitably one-to-one.
@@ -807,7 +807,7 @@ For a unique radial inverse across the valid domain, we need the radial mapping 
 A sufficient local condition for positive radial orientation is:
 
 $$
- \boxed{ \frac{dr_d}{dr}>0 } 
+ \boxed{ \frac{dr_d}{dr}>0 }
 $$
 
 throughout the modeled domain.
@@ -815,19 +815,19 @@ throughout the modeled domain.
 Differentiate:
 
 $$
- r_d=r(1+k_1r^2+k_2r^4+k_3r^6). 
+ r_d=r(1+k_1r^2+k_2r^4+k_3r^6).
 $$
 
 Thus:
 
 $$
- \frac{dr_d}{dr} = 1+k_1r^2+k_2r^4+k_3r^6 +r(2k_1r+4k_2r^3+6k_3r^5). 
+ \frac{dr_d}{dr} = 1+k_1r^2+k_2r^4+k_3r^6 +r(2k_1r+4k_2r^3+6k_3r^5).
 $$
 
 Combine:
 
 $$
- \boxed{ \frac{dr_d}{dr} = 1+3k_1r^2+5k_2r^4+7k_3r^6 }. 
+ \boxed{ \frac{dr_d}{dr} = 1+3k_1r^2+5k_2r^4+7k_3r^6 }.
 $$
 
 If this derivative becomes zero, the radial mapping can locally fold or lose invertibility.
@@ -842,7 +842,7 @@ OpenCV's calibration documentation explicitly discusses the need for physically 
 More complex OpenCV-compatible models can use a rational radial factor:
 
 $$
- \boxed{ L(r)= \frac{ 1+k_1r^2+k_2r^4+k_3r^6 }{ 1+k_4r^2+k_5r^4+k_6r^6 } }. 
+ \boxed{ L(r)= \frac{ 1+k_1r^2+k_2r^4+k_3r^6 }{ 1+k_4r^2+k_5r^4+k_6r^6 } }.
 $$
 
 This adds flexibility but also introduces possible denominator singularities.
@@ -862,19 +862,19 @@ Unlike purely radial distortion, it does not simply multiply both image coordina
 The common two-parameter model uses:
 
 $$
- p_1,\quad p_2. 
+ p_1,\quad p_2.
 $$
 
 Its displacement terms are:
 
 $$
- \boxed{ \Delta x_t= 2p_1xy+p_2(r^2+2x^2) } 
+ \boxed{ \Delta x_t= 2p_1xy+p_2(r^2+2x^2) }
 $$
 
 and:
 
 $$
- \boxed{ \Delta y_t= p_1(r^2+2y^2)+2p_2xy }. 
+ \boxed{ \Delta y_t= p_1(r^2+2y^2)+2p_2xy }.
 $$
 
 ### Full radial-plus-tangential model
@@ -882,19 +882,19 @@ $$
 Define:
 
 $$
- L(r)=1+k_1r^2+k_2r^4+k_3r^6. 
+ L(r)=1+k_1r^2+k_2r^4+k_3r^6.
 $$
 
 Then:
 
 $$
- \boxed{ x_d= xL(r)+2p_1xy+p_2(r^2+2x^2) } 
+ \boxed{ x_d= xL(r)+2p_1xy+p_2(r^2+2x^2) }
 $$
 
 and:
 
 $$
- \boxed{ y_d= yL(r)+p_1(r^2+2y^2)+2p_2xy }. 
+ \boxed{ y_d= yL(r)+p_1(r^2+2y^2)+2p_2xy }.
 $$
 
 This is a standard five-coefficient Brown–Conrady-style camera distortion formulation.
@@ -902,7 +902,7 @@ This is a standard five-coefficient Brown–Conrady-style camera distortion form
 A common OpenCV coefficient order for the five-coefficient case is:
 
 $$
- \boxed{ (k_1,k_2,p_1,p_2,k_3) }. 
+ \boxed{ (k_1,k_2,p_1,p_2,k_3) }.
 $$
 
 The order of parameters in a software file must be treated as an explicit schema contract.
@@ -914,19 +914,19 @@ Do not assume every calibration library stores coefficients in the same order.
 Take:
 
 $$
- x=0.3,\qquad y=0.4. 
+ x=0.3,\qquad y=0.4.
 $$
 
 Then:
 
 $$
- r^2=0.25. 
+ r^2=0.25.
 $$
 
 Let:
 
 $$
- p_1=0.01,\qquad p_2=-0.005, 
+ p_1=0.01,\qquad p_2=-0.005,
 $$
 
 with radial coefficients zero.
@@ -934,67 +934,67 @@ with radial coefficients zero.
 The horizontal tangential displacement is:
 
 $$
- \Delta x_t= 2(0.01)(0.3)(0.4) +(-0.005)(0.25+2(0.3)^2). 
+ \Delta x_t= 2(0.01)(0.3)(0.4) +(-0.005)(0.25+2(0.3)^2).
 $$
 
 First term:
 
 $$
- 2(0.01)(0.12)=0.0024. 
+ 2(0.01)(0.12)=0.0024.
 $$
 
 Second term:
 
 $$
- -0.005(0.25+0.18) =-0.005(0.43) =-0.00215. 
+ -0.005(0.25+0.18) =-0.005(0.43) =-0.00215.
 $$
 
 Therefore:
 
 $$
- \boxed{ \Delta x_t=0.00025 }. 
+ \boxed{ \Delta x_t=0.00025 }.
 $$
 
 Thus:
 
 $$
- \boxed{x_d=0.30025}. 
+ \boxed{x_d=0.30025}.
 $$
 
 For Y:
 
 $$
- \Delta y_t= 0.01(0.25+2(0.4)^2) +2(-0.005)(0.3)(0.4). 
+ \Delta y_t= 0.01(0.25+2(0.4)^2) +2(-0.005)(0.3)(0.4).
 $$
 
 First term:
 
 $$
- 0.01(0.25+0.32)=0.0057. 
+ 0.01(0.25+0.32)=0.0057.
 $$
 
 Second term:
 
 $$
- -0.01(0.12)=-0.0012. 
+ -0.01(0.12)=-0.0012.
 $$
 
 Thus:
 
 $$
- \boxed{ \Delta y_t=0.0045 }. 
+ \boxed{ \Delta y_t=0.0045 }.
 $$
 
 Therefore:
 
 $$
- \boxed{y_d=0.4045}. 
+ \boxed{y_d=0.4045}.
 $$
 
 The point moves asymmetrically:
 
 $$
- (0.3,0.4)\mapsto(0.30025,0.4045). 
+ (0.3,0.4)\mapsto(0.30025,0.4045).
 $$
 
 It does not simply move radially inward or outward.
@@ -1010,11 +1010,11 @@ Their numerical magnitudes should not be interpreted as millimetre displacements
 Pixel distortion depends on intrinsics:
 
 $$
- \Delta u\approx f_x\Delta x_d+s\Delta y_d, 
+ \Delta u\approx f_x\Delta x_d+s\Delta y_d,
 $$
 
 $$
- \Delta v\approx f_y\Delta y_d. 
+ \Delta v\approx f_y\Delta y_d.
 $$
 
 A small normalized distortion can correspond to several pixels when focal scales are large.
@@ -1024,25 +1024,25 @@ A small normalized distortion can correspond to several pixels when focal scales
 A real calibrated camera forward model is:
 
 $$
- \boxed{ \mathbf X_C=R\mathbf X_W+\mathbf t } 
+ \boxed{ \mathbf X_C=R\mathbf X_W+\mathbf t }
 $$
 
 followed by:
 
 $$
- \boxed{ x=X_C/Z_C,\qquad y=Y_C/Z_C } 
+ \boxed{ x=X_C/Z_C,\qquad y=Y_C/Z_C }
 $$
 
 then:
 
 $$
- \boxed{ (x_d,y_d)=D(x,y) } 
+ \boxed{ (x_d,y_d)=D(x,y) }
 $$
 
 and finally:
 
 $$
- \boxed{ \begin{bmatrix}u\\v\\1\end{bmatrix} \sim K \begin{bmatrix}x_d\\y_d\\1\end{bmatrix} }. 
+ \boxed{ \begin{bmatrix}u\\v\\1\end{bmatrix} \sim K \begin{bmatrix}x_d\\y_d\\1\end{bmatrix} }.
 $$
 
 This full mapping is nonlinear due to distortion, even though the rigid transform and intrinsic matrix are linear in homogeneous coordinates.
@@ -1058,19 +1058,19 @@ We want to recover the ideal normalized pinhole coordinate, or construct an undi
 The distortion model provides a forward mapping:
 
 $$
- \boxed{ \mathbf q_d=D(\mathbf q) } 
+ \boxed{ \mathbf q_d=D(\mathbf q) }
 $$
 
 where:
 
 $$
- \mathbf q= \begin{bmatrix}x\\y\end{bmatrix}. 
+ \mathbf q= \begin{bmatrix}x\\y\end{bmatrix}.
 $$
 
 Given $\mathbf q_d$, we seek:
 
 $$
- \boxed{ D(\mathbf q)=\mathbf q_d }. 
+ \boxed{ D(\mathbf q)=\mathbf q_d }.
 $$
 
 This is a nonlinear root-finding problem.
@@ -1082,7 +1082,7 @@ Newton iteration, Jacobians, and numerical-stability analysis directly apply.
 Given observed pixel:
 
 $$
- (u_d,v_d), 
+ (u_d,v_d),
 $$
 
 first remove intrinsics.
@@ -1090,13 +1090,13 @@ first remove intrinsics.
 For zero skew:
 
 $$
- \boxed{ x_d=\frac{u_d-c_x}{f_x} } 
+ \boxed{ x_d=\frac{u_d-c_x}{f_x} }
 $$
 
 and:
 
 $$
- \boxed{ y_d=\frac{v_d-c_y}{f_y} }. 
+ \boxed{ y_d=\frac{v_d-c_y}{f_y} }.
 $$
 
 If skew is nonzero, use the inverse intrinsic matrix instead of independently dividing both coordinates.
@@ -1104,7 +1104,7 @@ If skew is nonzero, use the inverse intrinsic matrix instead of independently di
 Now solve:
 
 $$
- D(x,y)=(x_d,y_d). 
+ D(x,y)=(x_d,y_d).
 $$
 
 ### Fixed-point inversion
@@ -1112,7 +1112,7 @@ $$
 A simple approach starts with:
 
 $$
- \boxed{ (x_0,y_0)=(x_d,y_d) }. 
+ \boxed{ (x_0,y_0)=(x_d,y_d) }.
 $$
 
 If distortion is weak, we can iteratively subtract the estimated distortion displacement.
@@ -1120,29 +1120,29 @@ If distortion is weak, we can iteratively subtract the estimated distortion disp
 For a pure radial model:
 
 $$
- x_d=xL(r), 
+ x_d=xL(r),
 $$
 
 $$
- y_d=yL(r). 
+ y_d=yL(r).
 $$
 
 One possible iteration is:
 
 $$
- \boxed{ x_{k+1}=\frac{x_d}{L(r_k)} } 
+ \boxed{ x_{k+1}=\frac{x_d}{L(r_k)} }
 $$
 
 and:
 
 $$
- \boxed{ y_{k+1}=\frac{y_d}{L(r_k)} } 
+ \boxed{ y_{k+1}=\frac{y_d}{L(r_k)} }
 $$
 
 where:
 
 $$
- r_k^2=x_k^2+y_k^2. 
+ r_k^2=x_k^2+y_k^2.
 $$
 
 This can work under suitable conditions.
@@ -1156,37 +1156,37 @@ A strongly distorted or noninvertible mapping can cause divergence or convergenc
 Define the residual function:
 
 $$
- \boxed{ \mathbf F(\mathbf q)= D(\mathbf q)-\mathbf q_d }. 
+ \boxed{ \mathbf F(\mathbf q)= D(\mathbf q)-\mathbf q_d }.
 $$
 
 We seek:
 
 $$
- \mathbf F(\mathbf q)=\mathbf0. 
+ \mathbf F(\mathbf q)=\mathbf0.
 $$
 
 At iteration $k$, linearize:
 
 $$
- \mathbf F(\mathbf q_k+\Delta\mathbf q) \approx \mathbf F(\mathbf q_k)+J_D(\mathbf q_k)\Delta\mathbf q. 
+ \mathbf F(\mathbf q_k+\Delta\mathbf q) \approx \mathbf F(\mathbf q_k)+J_D(\mathbf q_k)\Delta\mathbf q.
 $$
 
 Set the linear model to zero:
 
 $$
- J_D(\mathbf q_k)\Delta\mathbf q = -\mathbf F(\mathbf q_k). 
+ J_D(\mathbf q_k)\Delta\mathbf q = -\mathbf F(\mathbf q_k).
 $$
 
 Thus:
 
 $$
- \boxed{ \Delta\mathbf q = -J_D(\mathbf q_k)^{-1} \mathbf F(\mathbf q_k) }. 
+ \boxed{ \Delta\mathbf q = -J_D(\mathbf q_k)^{-1} \mathbf F(\mathbf q_k) }.
 $$
 
 The update is:
 
 $$
- \boxed{ \mathbf q_{k+1} = \mathbf q_k- J_D(\mathbf q_k)^{-1} [D(\mathbf q_k)-\mathbf q_d] }. 
+ \boxed{ \mathbf q_{k+1} = \mathbf q_k- J_D(\mathbf q_k)^{-1} [D(\mathbf q_k)-\mathbf q_d] }.
 $$
 
 In practice, solve the $2\times2$ linear system rather than explicitly computing a general matrix inverse.
@@ -1196,113 +1196,113 @@ In practice, solve the $2\times2$ linear system rather than explicitly computing
 Let:
 
 $$
- r^2=x^2+y^2. 
+ r^2=x^2+y^2.
 $$
 
 Define:
 
 $$
- L=1+k_1r^2+k_2r^4+k_3r^6. 
+ L=1+k_1r^2+k_2r^4+k_3r^6.
 $$
 
 It is convenient to treat $L$ as a function of:
 
 $$
- q=r^2. 
+ q=r^2.
 $$
 
 Then:
 
 $$
- L(q)=1+k_1q+k_2q^2+k_3q^3. 
+ L(q)=1+k_1q+k_2q^2+k_3q^3.
 $$
 
 Differentiate:
 
 $$
- \boxed{ L_q=\frac{dL}{dq} = k_1+2k_2q+3k_3q^2 }. 
+ \boxed{ L_q=\frac{dL}{dq} = k_1+2k_2q+3k_3q^2 }.
 $$
 
 Because:
 
 $$
- q=x^2+y^2, 
+ q=x^2+y^2,
 $$
 
 we have:
 
 $$
- \frac{\partial q}{\partial x}=2x, 
+ \frac{\partial q}{\partial x}=2x,
 $$
 
 $$
- \frac{\partial q}{\partial y}=2y. 
+ \frac{\partial q}{\partial y}=2y.
 $$
 
 Therefore:
 
 $$
- \boxed{ \frac{\partial L}{\partial x}=2xL_q } 
+ \boxed{ \frac{\partial L}{\partial x}=2xL_q }
 $$
 
 and:
 
 $$
- \boxed{ \frac{\partial L}{\partial y}=2yL_q }. 
+ \boxed{ \frac{\partial L}{\partial y}=2yL_q }.
 $$
 
 Now recall:
 
 $$
- x_d=xL+2p_1xy+p_2(r^2+2x^2). 
+ x_d=xL+2p_1xy+p_2(r^2+2x^2).
 $$
 
 Differentiate with respect to $x$:
 
 $$
- \frac{\partial x_d}{\partial x} = L+x\frac{\partial L}{\partial x} +2p_1y +p_2(2x+4x). 
+ \frac{\partial x_d}{\partial x} = L+x\frac{\partial L}{\partial x} +2p_1y +p_2(2x+4x).
 $$
 
 Thus:
 
 $$
- \boxed{ J_{00}= L+2x^2L_q+2p_1y+6p_2x }. 
+ \boxed{ J_{00}= L+2x^2L_q+2p_1y+6p_2x }.
 $$
 
 Differentiate $x_d$ with respect to $y$:
 
 $$
- \frac{\partial x_d}{\partial y} = x\frac{\partial L}{\partial y} +2p_1x +2p_2y. 
+ \frac{\partial x_d}{\partial y} = x\frac{\partial L}{\partial y} +2p_1x +2p_2y.
 $$
 
 Therefore:
 
 $$
- \boxed{ J_{01}= 2xyL_q+2p_1x+2p_2y }. 
+ \boxed{ J_{01}= 2xyL_q+2p_1x+2p_2y }.
 $$
 
 For the second distorted coordinate:
 
 $$
- y_d=yL+p_1(r^2+2y^2)+2p_2xy. 
+ y_d=yL+p_1(r^2+2y^2)+2p_2xy.
 $$
 
 Differentiate with respect to $x$:
 
 $$
- \boxed{ J_{10}= 2xyL_q+2p_1x+2p_2y }. 
+ \boxed{ J_{10}= 2xyL_q+2p_1x+2p_2y }.
 $$
 
 Differentiate with respect to $y$:
 
 $$
- \boxed{ J_{11}= L+2y^2L_q+6p_1y+2p_2x }. 
+ \boxed{ J_{11}= L+2y^2L_q+6p_1y+2p_2x }.
 $$
 
 Thus the full Jacobian is:
 
 $$
- \boxed{ J_D= \begin{bmatrix} L+2x^2L_q+2p_1y+6p_2x& 2xyL_q+2p_1x+2p_2y\\ 2xyL_q+2p_1x+2p_2y& L+2y^2L_q+6p_1y+2p_2x \end{bmatrix} }. 
+ \boxed{ J_D= \begin{bmatrix} L+2x^2L_q+2p_1y+6p_2x& 2xyL_q+2p_1x+2p_2y\\ 2xyL_q+2p_1x+2p_2y& L+2y^2L_q+6p_1y+2p_2x \end{bmatrix} }.
 $$
 
 This analytic Jacobian is implemented in the reference C++23 laboratory.
@@ -1312,55 +1312,55 @@ This analytic Jacobian is implemented in the reference C++23 laboratory.
 Let the current residual be:
 
 $$
- \mathbf e= \begin{bmatrix} e_x\\e_y \end{bmatrix} = D(\mathbf q)-\mathbf q_d. 
+ \mathbf e= \begin{bmatrix} e_x\\e_y \end{bmatrix} = D(\mathbf q)-\mathbf q_d.
 $$
 
 Write:
 
 $$
- J_D= \begin{bmatrix} a&b\\c&d \end{bmatrix}. 
+ J_D= \begin{bmatrix} a&b\\c&d \end{bmatrix}.
 $$
 
 The determinant is:
 
 $$
- \boxed{ \Delta=ad-bc }. 
+ \boxed{ \Delta=ad-bc }.
 $$
 
 When:
 
 $$
- \Delta\ne0, 
+ \Delta\ne0,
 $$
 
 the inverse is:
 
 $$
- J_D^{-1} = \frac1\Delta \begin{bmatrix} d&-b\\ -c&a \end{bmatrix}. 
+ J_D^{-1} = \frac1\Delta \begin{bmatrix} d&-b\\ -c&a \end{bmatrix}.
 $$
 
 Therefore the correction is:
 
 $$
- \boxed{ \delta_x= \frac{de_x-be_y}{\Delta} } 
+ \boxed{ \delta_x= \frac{de_x-be_y}{\Delta} }
 $$
 
 and:
 
 $$
- \boxed{ \delta_y= \frac{-ce_x+ae_y}{\Delta} }. 
+ \boxed{ \delta_y= \frac{-ce_x+ae_y}{\Delta} }.
 $$
 
 Update:
 
 $$
- \boxed{ x_{k+1}=x_k-\delta_x } 
+ \boxed{ x_{k+1}=x_k-\delta_x }
 $$
 
 and:
 
 $$
- \boxed{ y_{k+1}=y_k-\delta_y }. 
+ \boxed{ y_{k+1}=y_k-\delta_y }.
 $$
 
 ### What can go wrong?
@@ -1401,25 +1401,25 @@ The process generally requires image filtering and a choice of output camera int
 Suppose the undistorted normalized point has uncertainty covariance:
 
 $$
- \Sigma_q. 
+ \Sigma_q.
 $$
 
 The distorted point is:
 
 $$
- \mathbf q_d=D(\mathbf q). 
+ \mathbf q_d=D(\mathbf q).
 $$
 
 For small uncertainty, first-order covariance propagation gives:
 
 $$
- \boxed{ \Sigma_d\approx J_D\Sigma_qJ_D^T }. 
+ \boxed{ \Sigma_d\approx J_D\Sigma_qJ_D^T }.
 $$
 
 After mapping to pixels with an intrinsic linear part $K_{2\times2}$:
 
 $$
- \boxed{ \Sigma_{\mathrm{pixels}} \approx K_{2\times2} J_D\Sigma_qJ_D^T K_{2\times2}^T }. 
+ \boxed{ \Sigma_{\mathrm{pixels}} \approx K_{2\times2} J_D\Sigma_qJ_D^T K_{2\times2}^T }.
 $$
 
 This allows camera calibration uncertainty to be connected to image-space observation uncertainty.

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch152.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-91d09ebed979-serialization" class="level2">
+<h2>Serialization</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C001 · <strong>Latest development:</strong> C006</p>
+<section id="appendix-91d09ebed979-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Serialization maps semantic fields to a specified byte sequence; decoding validates and reconstructs them. Width, order, version, bounds, and padding policy belong to that contract. A U8/U32-LE/U64-LE header occupies 13 bytes at offsets 0/1/5, independently of a native record’s possible 16-byte ABI layout. Packing removes some holes, not host dependencies. Publication and durability are subsequent operations.</p>
+<p>M004 extension: a binary32 representation word such as 3F800000 can be serialized as little-endian bytes 00 00 80 3F. Raw-bit preservation retains signed-zero and NaN-payload differences; canonicalization deliberately merges them. Numeric equality does not imply byte identity. This is a format policy, not permission to change existing files.</p>
+<p>M006 adds explicit schema/version/identity contracts, overflow-safe dimensions and resource limits, raw-word payload preservation, integrity coverage and a complete 52-byte demonstration. A native scalar writer is not automatically cross-endian stable.</p>
+</section>
+<section id="appendix-91d09ebed979-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch119.xhtml#appendix-f414bd4ed05c-interpretation-contract" class="wikilink">Interpretation contract (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Interpretation contract)</a> — Representation, type, and lifetime must identify what object exists.</li>
+<li><a href="ch095.xhtml#appendix-cc04044b5782-fixed-width-integer-types" class="wikilink">Fixed-width integer types (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Fixed-width integer types)</a> — The representation width fixes byte count and valid shift range.</li>
+<li><a href="ch161.xhtml#appendix-bc07c3d25b18-endianness" class="wikilink">Endianness</a> — Byte order tells how digit significance maps to sequence positions.</li>
+</ul>
+</section>
+<section id="appendix-91d09ebed979-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch142.xhtml#appendix-590bbb2424c1-binary-format-contracts" class="wikilink">Binary format contracts</a> — uses this mechanism to define its representation, error or validation contract.</p></li>
+<li><p><a href="ch169.xhtml#appendix-ed338677de0a-checksums-crcs-and-hashes" class="wikilink">Checksums CRCs and hashes</a> — uses this mechanism to define its representation, error or validation contract.</p></li>
+<li><p><a href="ch112.xhtml#appendix-e90053a4b201-floating-point-canonicalization" class="wikilink">Floating-point canonicalization (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Floating-point canonicalization)</a> — uses serialization to establish this mechanism’s representation or policy.</p></li>
+<li><p><a href="ch168.xhtml#appendix-e89a8f290ef5-atomic-publication-and-durability" class="wikilink">Atomic publication and durability</a> — uses this mechanism as stated in its prerequisites.</p></li>
+</ul>
+</section>
+<section id="appendix-91d09ebed979-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain why packed/native memory dumps do not establish a portable schema.</p>
+<p><strong>Pending:</strong> Version migration, malformed-input protocols, other floating formats and cross-platform special-value transport.</p>
+</section>
+<section id="appendix-91d09ebed979-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-bytes-become-a-durable-agreement" class="wikilink">Narrative development</a></p>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">C004 representation policy (Bits, Programs, and Reliable Systems, Part 1, Ch. 1)</a></p>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

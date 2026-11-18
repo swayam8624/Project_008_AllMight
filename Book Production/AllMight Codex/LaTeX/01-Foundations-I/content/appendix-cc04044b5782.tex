@@ -1,0 +1,57 @@
+\hypertarget{appendix-cc04044b5782}{}
+\section*{Fixed-width integer types}
+\section{Fixed-width integer types}\label{fixed-width-integer-types}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C002 · \textbf{Latest development:} C008
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Native bool is not a portable wire/GPU field; validate an explicit zero/one encoding. Floating type names do not guarantee exact IEEE formats; is\_iec559 alone does not identify binary32.
+
+int need not be32 bits; sizeof(char)==1 measures a C++ byte and CHAR\_BIT is at least8. Plain char is distinct from signed/unsigned char and its signedness is implementation-defined. size\_t represents object sizes, not a stable serialized field. Query numeric\_limits for digits, lowest, max and floating capabilities. A container's size\_type is not universally required to be exactly size\_t.
+
+\texttt{\textless{}cstdint\textgreater{}} exact-width types express binary layout contracts; \texttt{least} and \texttt{fast} families have different portability goals.
+
+When supplied, std::uint32\_t has exactly 32 bits; uint\_least32\_t has at least 32; uint\_fast32\_t is chosen for speed with at least 32. Exact-width typedefs are optional on implementations lacking suitable types. size\_t represents object sizes and ptrdiff\_t differences.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-d67a19507dc5]{Machine word} --- A processor's natural integer processing width is often called its word width, but the term is architecture dependent.
+\item
+  \hyperref[appendix-5bee2df85484]{Byte and octet} --- An octet is exactly eight bits.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-23640fcee147]{Scoped enums and validated domains} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \hyperref[appendix-34ee45f161c1]{Bit casting and representation} --- uses fixed-width integer types to establish this mechanism's representation or policy.
+\item
+  \hyperref[appendix-45303d03796a]{Integral promotion} --- uses fixed-width integer types as part of its representation or reasoning.
+\item
+  \hyperref[appendix-91d09ebed979]{Serialization} --- uses fixed-width integer types as part of its representation or reasoning.
+\item
+  \hyperref[appendix-33e7a011b684]{Guest and host integer domains} --- uses fixed-width integer types as part of its representation or reasoning.
+\item
+  \hyperref[appendix-11ba36693aa2]{Byte swapping and network order} --- depends on this concept; see its prerequisite explanation.
+\item
+  \hyperref[appendix-c4ac6bb0fff8]{ABI and object layout} --- depends on this concept; see its prerequisite explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Explain fixed-width integer types without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} Full lifetime replacement, ownership/concurrency policies and cross-target ABI experiments; the opening examples do not establish those later guarantees.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\hyperref[appendix-fd090d982a15]{C008 development and corrections}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Arithmetic\%20becomes\%20a\%20policy}{C002 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Choose\%20a\%20type\%20for\%20its\%20promise,\%20not\%20its\%20familiar\%20size}{C007 development}

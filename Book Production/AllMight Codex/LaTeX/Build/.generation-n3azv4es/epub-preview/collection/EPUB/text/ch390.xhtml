@@ -1,0 +1,2200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch390.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_05-engine-i-ch014-application-clocks-and-stable-input-identity" class="level2">
+<h2>Application clocks and stable input identity</h2>
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch389.xhtml#id_05-engine-i-ch013-portable-startup-windows-events-and-input" class="wikilink">Previous chapter</a> · <a href="ch393.xhtml#id_05-engine-i-ch015-sparse-set-components-and-generational-entity-handles" class="wikilink">Next chapter</a></p>
+<p>Input and timing must agree on which state transition belongs to which simulation step. This chapter clarifies frame measurement, tick pacing, and stable identity before introducing dense component storage.</p>
+<p><strong>By the end:</strong> Distinguish wall time, frame time, and simulation ticks, and ensure input identifiers remain meaningful across updates.</p>
+<p><strong>Recall question:</strong> How do you measure a frame without confusing it with a simulation tick, and what data lets an input be replayed at the correct tick?</p>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 25443–27304; source-span SHA256 24b9b0f0f8f5149af61d211cb836157cd24fab0273a4c7d80590eb3a8c65182a. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_05-engine-i-ch014-keep-application-key-names-independent-of-a-windowing-library" class="level4">
+<h4>Keep application key names independent of a windowing library</h4>
+<p>Suppose game code asks whether the Tab key is pressed. If it must name <code>GLFW_KEY_TAB</code>, every client that uses the engine now needs GLFW’s headers, and a later backend change can alter the meaning of that integer. Define an engine-owned key-code vocabulary at the public boundary instead. The platform backend translates its native code to that vocabulary when producing events, and translates the engine value back when making a native polling query. The conversion point is the adapter boundary, where both code systems are known.</p>
+<p>There are two broad policies. One can compile different numeric values for each platform, which avoids repeated conversion but makes serialized bindings platform-dependent. Or the engine can keep stable internal values and map to/from each backend. A stable serialized control map can use symbolic names such as <code>Tab</code> or a versioned engine code; it should not silently assume an operating system’s integer assignments are portable. The Hazel episode copies a particular GLFW-era key table into engine headers and discusses conversion against Win32’s different virtual-key assignments. That is a historical prototype decision; for a current project, choose and document a stable scheme and verify mappings for every supported backend. <a href="https://www.youtube.com/watch?v=zaJGn8pur5I">Caption source: Key and Mouse Codes</a></p>
+<p>The demonstration notes that letter codes align with ASCII and can be cast to characters, but this convenience applies only to that part of the chosen table. A key code is not generally text: Shift, layout, dead keys, IME composition, and keyboard layout can make text input differ from physical-key identity. Use key events for controls and a separate text-input path for user-entered characters. Likewise, a modifier bitmask describes modifiers accompanying an event; it is not the same thing as a durable key identity. These distinctions prevent a shortcut system from accidentally becoming a text-entry implementation. <a href="https://www.youtube.com/watch?v=zaJGn8pur5I">Caption source: Key and Mouse Codes</a></p>
+</section>
+<section id="id_05-engine-i-ch014-a-held-button-and-a-completed-tap-carry-different-information" class="level4">
+<h4>A held button and a completed tap carry different information</h4>
+<p>Imagine a player taps jump while a slow frame is being rendered. At <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mrow data-mjx-texclass="ORD">
+    <mi data-mjx-auto-op="false">ms</mi>
+  </mrow>
+</math> the button is up, at <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>5</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mrow data-mjx-texclass="ORD">
+    <mi data-mjx-auto-op="false">ms</mi>
+  </mrow>
+</math> it goes down, and at <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>9</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mrow data-mjx-texclass="ORD">
+    <mi data-mjx-auto-op="false">ms</mi>
+  </mrow>
+</math> it comes up again. The next update samples the stored state at <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>16</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mrow data-mjx-texclass="ORD">
+    <mi data-mjx-auto-op="false">ms</mi>
+  </mrow>
+</math>. Both update-time samples say “up,” even though a complete tap occurred between them. A <strong>state</strong> answers “is the button down at this sampling point?” An <strong>edge</strong> records a change, such as “a press arrived.” A state sample cannot reconstruct every intervening change.</p>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 21%" />
+<col style="width: 28%" />
+<col style="width: 28%" />
+</colgroup>
+<thead>
+<tr>
+<th>Time</th>
+<th>Input transition</th>
+<th style="text-align: right;">Held state after processing it</th>
+<th style="text-align: right;">Pending press count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Start</td>
+<td>None</td>
+<td style="text-align: right;">false</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>5</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mrow data-mjx-texclass="ORD">
+    <mi data-mjx-auto-op="false">ms</mi>
+  </mrow>
+</math></td>
+<td>Press</td>
+<td style="text-align: right;">true</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>9</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mrow data-mjx-texclass="ORD">
+    <mi data-mjx-auto-op="false">ms</mi>
+  </mrow>
+</math></td>
+<td>Release</td>
+<td style="text-align: right;">false</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>16</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mrow data-mjx-texclass="ORD">
+    <mi data-mjx-auto-op="false">ms</mi>
+  </mrow>
+</math></td>
+<td>Simulation consumes the press</td>
+<td style="text-align: right;">false</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<p>Only genuine down transitions increment this example’s press counter; repeated-key actions need a separate policy. This table is an original trace for a deliberately simple policy: delivered press transitions increment a counter, release transitions change held state, and simulation consumes a pending press exactly once. It assumes the input layer has actually received and processed the transitions. A counter preserves how many presses arrived, but not their exact ordering relative to other inputs. A timestamped event queue is a better fit when that ordering matters. Neither structure means that a jump is permitted: grounded state, cooldowns and game rules still decide the action.</p>
+<p>For movement, read the held state during the update and scale the motion by the chosen time step. For a one-shot action, consume an edge under an explicit rule. If several simulation steps occur during one rendered frame, decide which step receives a new press; do not make every catch-up step consume the same edge. If no step runs, retain the edge until its intended boundary. Focus loss, UI capture, pause and replay need policies for clearing, routing or retaining that pending input.</p>
+<p><img src="../media/file153.png" alt="Diagram" /></p>
+<p>GLFW’s state query returns the last reported cached key state; it does not directly resample the physical keyboard. Its guide warns that a press and release can be missed between queries and describes callbacks and sticky-key mode as alternatives. Sticky mode retains a press until queried; it is not a complete ordered event history. OS key-repeat timing is also unsuitable for driving held-key movement. Those API facts support the distinction above; the counter, tick-consumption policy and numeric trace are original engine-design examples. <a href="https://www.glfw.org/docs/latest/input_guide.html">GLFW input guide</a></p>
+</section>
+<section id="id_05-engine-i-ch014-normalize-input-before-gameplay-consumes-it" class="level4">
+<h4>Normalize input before gameplay consumes it</h4>
+<p>A keyboard key press is delivered differently by operating systems. Gameplay, however, wants to ask a simple question: “Is the jump action pressed?” If game code tests native key codes directly, a later platform port spreads through every gameplay feature. Input should therefore have two stages. The platform captures native events; the engine converts them to stable key/button or action states; gameplay consumes those states.</p>
+<p>The series develops input in parts: <a href="https://www.youtube.com/watch?v=ZZhfCYNbVp8">Kohi #009</a> introduces input, <a href="https://www.youtube.com/watch?v=6zjpgUX1TRY">#010</a> connects the Windows-specific part, and <a href="https://www.youtube.com/watch?v=kIWFdKcGQPM">#011</a> adds Linux. Those captions make an important architectural relationship explicit: the engine-level input system and platform implementation meet at a seam. The window receives events; a translation step updates the input state; gameplay queries an engine-level representation. In the full #011 caption, Linux key events pass through an X keycode-to-keysym conversion and then a switch mapping to engine key enums; upper/lowercase symbols are folded to one engine key. Mouse button indices are normalized and pointer motion forwards X/Y coordinates, while wheel handling is explicitly left for a later episode. The same build step exposes a missing portable string-duplication helper, prompting a first core string abstraction. This is useful evidence that portability work often discovers non-window dependencies in unrelated core code.</p>
+<p>A key state has at least two useful notions. “Down” describes whether the key is held now. “Pressed this frame” describes a transition from up to down since the previous update. The latter avoids repeated actions every frame when a player intended one tap. Similarly, “released this frame” captures the opposite transition. A robust input update compares current state with prior state rather than trying to reconstruct a gameplay action from every raw event.</p>
+<p>This design also prevents a common timing bug. If event pumping happens after gameplay reads input, the game sees the prior frame’s state and appears to respond one frame late. If input state is updated several times during a single frame with inconsistent reset rules, short presses may disappear or repeat. A clear loop order—collect events, update normalized input, run gameplay update, render—gives those states an understandable meaning. “Frame” means one iteration of this update/render cycle.</p>
+<p>The captions later show input enabling a mock camera so the learner can move around the scene while the engine evolves (<a href="https://www.youtube.com/watch?v=s9xSwQvbG2w">stream</a>). That is a useful test fixture: an engine can be visually complicated while still offering a simple camera control that confirms event delivery, frame updates and transforms are connected. The camera is not itself proof that all input semantics are finished; it is a visible end-to-end check for the specific path it exercises.</p>
+<section id="id_05-engine-i-ch014-preserve-input-edges-as-well-as-the-final-held-state" class="level5">
+<h5>Preserve input edges as well as the final held state</h5>
+<p>A held-state snapshot answers “is this key down now?” It does not necessarily describe everything that happened since the previous simulation step. Suppose the player taps a key quickly while the program is processing platform messages:</p>
+<table>
+<thead>
+<tr>
+<th>Observation</th>
+<th>Held state</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Previous simulation step</td>
+<td>Up</td>
+</tr>
+<tr>
+<td>Platform delivers key-down</td>
+<td>Down</td>
+</tr>
+<tr>
+<td>Platform delivers key-up</td>
+<td>Up</td>
+</tr>
+<tr>
+<td>Next simulation step</td>
+<td>Up</td>
+</tr>
+</tbody>
+</table>
+<p>Comparing only the two simulation snapshots sees Up followed by Up and loses the tap. Preserve the press and release edges as events, or accumulate explicit transition flags until the intended consumer has processed them. A <strong>transition</strong> is a change of state; a <strong>repeat</strong> message for a key already held is not automatically another physical press.</p>
+<p>Now consider several fixed simulation ticks occurring before one displayed frame. A one-shot action such as opening a door should consume the press according to the input policy, rather than firing once in every catch-up tick. A continuous action such as walking can use the held state across those ticks. That difference belongs in the gameplay command boundary, not in an accidental placement of the previous-state copy.</p>
+<p>Focus loss needs a policy too. If the window loses focus after a key-down and receives no corresponding release, a purely event-updated held flag can remain stuck. Clear or reconcile relevant state on focus changes, and decide whether outstanding one-shot commands remain valid. Timestamp input when ordering matters, then specify how it maps to simulation ticks.</p>
+<p>The fully read Kohi input lessons develop current/previous state tracking, key and button processing, and platform event routing. The quick-tap and catch-up examples extend that foundation to expose information a final-state snapshot cannot retain. They are original worked cases, not a claim that every edge policy is implemented in the early tutorial. <a href="https://www.youtube.com/watch?v=ZZhfCYNbVp8">Input state</a>, <a href="https://www.youtube.com/watch?v=6zjpgUX1TRY">Windows event processing</a>.</p>
+</section>
+<section id="id_05-engine-i-ch014-input-travels-through-two-clocks-a-focus-owner-and-a-durable-tick-command" class="level5">
+<h5>Input travels through two clocks, a focus owner, and a durable tick command</h5>
+<p>A controller stick report is a two-dimensional sample <code>(x,y)</code> in a device-specific coordinate convention; it is not yet a requested game velocity. The player may tilt diagonally, the physical stick may fail to return precisely to the electrical center, the input UI may have keyboard focus, and the display frame that receives an event may contain zero, one, or several physics ticks. These are distinct problems. Solve them in the order physical device -&gt; calibration -&gt; logical action -&gt; ownership/capture -&gt; timestamped tick command -&gt; gameplay, not by allowing gameplay systems to query raw keys whenever they happen to run.</p>
+<p>For a normalized stick <code>v = (x,y)</code>, use its <strong>radial</strong> magnitude <code>r = sqrt(x²+y²)</code> instead of dead-zoning <code>x</code> and <code>y</code> separately. With inner dead-zone <code>d</code> in <code>[0,1)</code>, define the output vector as zero for <code>r &lt;= d</code>. Otherwise set <code>r' = (min(r,1)-d)/(1-d)</code> and <code>v' = (r'/r)v</code>. The scaling preserves the original direction because the same positive gain multiplies both axes. For example, <code>v=(0.3,0.4)</code> has <code>r=0.5</code>; with <code>d=0.2</code>, the new radius is <code>(0.5-0.2)/0.8=0.375</code>, hence <code>v'=(0.225,0.3)</code>. An axial dead zone can erase a gentle diagonal on one axis and distort aiming. If an outer dead zone or response curve is added, specify its order relative to calibration and remapping. A low-pass filter suppresses jitter but also adds latency; record its state and time base and do not assume a different sampling frequency preserves the same feel.</p>
+<p>A quick press-release can occur entirely between simulation ticks. Polling the final held state yields <code>up</code> before and <code>up</code> after, and the tap disappears. Retain <em>transition records</em> in order (<code>pressed</code>, <code>released</code>) until the next simulation consumption boundary. A tick can receive both transitions while ending with held=false. Each transition is consumed exactly once; a second simulation tick in the same display frame must not repeat the first tick’s press event. For deterministic replays, record the <strong>logical action, tick number, value and order</strong> after the device mapping and UI-capture decision, not an unspecified host key scan code alone. A real timestamp-to-tick policy must also define events arriving exactly at a tick boundary and the permitted clock-quantization tolerance.</p>
+<p>Capture is an owner, not a property of a pixel hit test. If a text field or console takes focus while the MoveForward key is held, the gameplay action must be released or it can remain permanently stuck; it is not sufficient to ignore future key-up events. On device disconnect, clear device-specific state, send any necessary synthetic release, and decide whether another device can continue the same logical action. On a focus transition, UI and gameplay must not both consume the same activation. The reference lab’s <code>TickInput</code> is a deliberately small single-button demonstration of the invariant and its focus-release rule. A shipping input router must additionally handle multiple active devices, capture ownership per source, bindings/chords/axes, accessibility remapping, platform timestamps, hot-plug, and vibration as an <strong>output</strong> command (not as gameplay input).</p>
+<p>This expands the control-device material of Gregory’s Chapter 8 into a modern fixed-step and editor-aware path. It connects to the previous engine loop material without pretending that sampling a button once per render frame solves time ownership.</p>
+</section>
+<section id="id_05-engine-i-ch014-derive-frame-time-from-a-monotonic-clock-then-treat-pacing-as-a-separate-choice" class="level5">
+<h5>Derive frame time from a monotonic clock, then treat pacing as a separate choice</h5>
+<p>A minimal clock stores a start reading and an elapsed duration. On each update, elapsed seconds are <code>now - start</code>; a frame delta is <code>current_elapsed - previous_elapsed</code>. Feed that delta into game update and input update instead of passing zero. Keep the absolute timer monotonic: wall-clock time can jump when the system clock is corrected, while frame measurement needs a steadily increasing source. Platform code should normalize each OS timer to seconds so the application does not depend on counter units.</p>
+<p>Measuring a frame and limiting its rate are distinct operations. The loop can measure work time, accumulate elapsed time for an FPS counter, and calculate the remaining portion of a target interval such as 1/60 second. Sleeping for that remainder is an optional pacing policy; it should not be mistaken for a guarantee of a precise frame rate because sleep resolution and scheduling vary by OS. A debugger pause also produces a large delta, so test observations taken while stepping are not representative of normal frame timing. The tutorial leaves limiting disabled in its scaffold, which is a useful reminder to make the policy explicit.</p>
+<p>Source reading: <a href="https://www.youtube.com/watch?v=bbPdEkRaVNE">caption source</a>. Captions document the narrated development state; on-screen code and reported builds were not independently reproduced.</p>
+</section>
+<section id="id_05-engine-i-ch014-pace-the-quiet-period-after-a-resize" class="level5">
+<h5>Pace the quiet period after a resize</h5>
+<p>A frame-count debounce can expire almost immediately if the loop keeps iterating while rendering is skipped. In a Kohi fix, waiting 30 frames before rebuilding swapchain resources returned early without beginning or ending a normal frame; increasing the threshold to 120 still reached it rapidly. The presenter adds a 16 ms sleep to pace the path, then reports rebuilding about half a second after resizing stops. This is an expedient frame-count-plus-sleep fix, not a general time-based debounce or robust pacing policy. <a href="https://www.youtube.com/watch?v=x8ao57nbMlY">Resize debounce fix</a></p>
+<p><strong>Chronology clarification:</strong> after the temporary 120-frame diagnostic, the presenter restores the threshold to 30 frames. The sleep component alone is then about <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>30</mn>
+  <mo>×</mo>
+  <mn>16</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mrow data-mjx-texclass="ORD">
+    <mi data-mjx-auto-op="false">ms</mi>
+  </mrow>
+  <mo>=</mo>
+  <mn>0.48</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="normal">s</mi>
+  </mrow>
+</math>; 120 such sleeps would instead total about <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1.92</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="normal">s</mi>
+  </mrow>
+</math>. The observed half-second behavior belongs to the restored threshold. Actual elapsed time also includes loop work and scheduling, so this calculation still does not turn frame counting into a time-based debounce guarantee.</p>
+</section>
+</section>
+<section id="id_05-engine-i-ch014-scale-movement-by-elapsed-time-and-state-what-the-clock-means" class="level4">
+<h4>Scale movement by elapsed time, and state what the clock means</h4>
+<p>Suppose an arrow key moves a camera by a fixed 0.1 units each update. At 60 updates per second, that is 6 units per second; at 10 updates per second, it is 1 unit per second. Frame-based movement makes simulation speed depend on rendering speed. The lesson reproduces this mismatch and motivates delta time at 00:30–03:30, then works through the 60-versus-30 frame examples around 03:40–08:30. <a href="https://www.youtube.com/watch?v=pctGOMDW-HQ&amp;t=30s">TIMESTEPS and DELTA TIME</a> <a href="https://www.youtube.com/watch?v=pctGOMDW-HQ&amp;t=220s">TIMESTEPS and DELTA TIME</a> <a href="https://www.youtube.com/watch?v=pctGOMDW-HQ&amp;t=500s">TIMESTEPS and DELTA TIME</a></p>
+<p>Let <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+</math> be elapsed seconds since the previous update and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math> be a velocity in world-units per second. Then the frame’s displacement is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>x</mi>
+  <mo>=</mo>
+  <mi>v</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>v</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>At 60 Hz, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>≈</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>60</mn>
+</math> s; at 30 Hz, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>≈</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>30</mn>
+</math> s, so each slower update advances about twice as far. Over the same real-time interval, ideal constant-velocity motion covers the same distance, while the lower frame rate displays fewer, larger steps. The episode states this distinction at 08:30–10:00 and then introduces a small time-step value object that stores seconds and offers milliseconds at 11:00–13:00. <a href="https://www.youtube.com/watch?v=pctGOMDW-HQ&amp;t=510s">TIMESTEPS and DELTA TIME</a> <a href="https://www.youtube.com/watch?v=pctGOMDW-HQ&amp;t=660s">TIMESTEPS and DELTA TIME</a></p>
+<p>The demonstrated loop reads the current platform time, subtracts the previous frame time, stores the new value, and passes the resulting interval through application/layer updates. The caption notes that GLFW is used directly as a temporary clock source and suggests a platform abstraction later around 13:00–18:30. The first interval is unusual because there is no prior frame timestamp; initialize the baseline before the first measured update or explicitly accept a one-frame startup artifact. The video prints seconds and milliseconds and observes about 16.6 ms per frame with VSync at 18:00–19:00. <a href="https://www.youtube.com/watch?v=pctGOMDW-HQ&amp;t=780s">TIMESTEPS and DELTA TIME</a> <a href="https://www.youtube.com/watch?v=pctGOMDW-HQ&amp;t=1080s">TIMESTEPS and DELTA TIME</a></p>
+<p>The camera then multiplies movement and rotation speeds by elapsed time. With VSync disabled, the old fixed-per-frame motion becomes visibly too fast; after scaling movement by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+</math>, the episode reports roughly the same speed when VSync is restored. That before/after experiment is shown around 20:30–25:00. Treat it as evidence for the input-to-camera update path, not a proof of frame pacing, deterministic simulation, or physics stability. <a href="https://www.youtube.com/watch?v=pctGOMDW-HQ&amp;t=1230s">TIMESTEPS and DELTA TIME</a> <a href="https://www.youtube.com/watch?v=pctGOMDW-HQ&amp;t=1350s">TIMESTEPS and DELTA TIME</a></p>
+<p>A variable delta solves frame-rate-scaled movement, but it does not make every simulation robust to arbitrarily large stalls. Physics engines often use a fixed simulation step with an accumulator while rendering interpolates between simulation states; this episode does not implement that pattern. Decide whether each update is visual input, gameplay simulation, or physics, and define what happens after a long pause, debugger stop, or minimized window. Clamp or subdivide unusually large intervals only with an explicit policy. The speaker says a fixed-rate update can fall behind under load at about 08:20–10:10; the lesson’s next topic is object transforms at 26:50–27:30, not a fixed-step physics implementation. <a href="https://www.youtube.com/watch?v=pctGOMDW-HQ&amp;t=500s">TIMESTEPS and DELTA TIME</a> <a href="https://www.youtube.com/watch?v=pctGOMDW-HQ&amp;t=1610s">TIMESTEPS and DELTA TIME</a></p>
+</section>
+<section id="id_05-engine-i-ch014-make-timestep-and-integration-choices-explicit" class="level4">
+<h4>Make timestep and integration choices explicit</h4>
+<p>Suppose a particle begins at position <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math> with velocity <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math>, acceleration <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>, and is advanced for a duration <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+</math> seconds. A simple game integrator may first advance position using the current velocity,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>n</mi>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<p>then compute acceleration from forces and advance velocity,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>a</mi>
+    <mi>n</mi>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>That ordering is meaningful: the position step uses the old velocity, while the newly computed velocity affects the next step. A different integrator can produce a different result even with the same force and timestep. So “integrate the particle” is not a neutral implementation detail; it defines when inputs influence visible motion. (Game Physics Engine Development, PDF pp. 73-76.)</p>
+<p>The selected chapter also shows a deliberate approximation. The constant-acceleration position equation contains an extra term, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mfrac>
+    <mn>1</mn>
+    <mn>2</mn>
+  </mfrac>
+  <mi>a</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <msup>
+    <mi>t</mi>
+    <mn>2</mn>
+  </msup>
+</math>, but the sample engine drops it and uses current velocity only. For a small timestep and ordinary acceleration, the omitted displacement may be small. For a short, strong force, it can visibly matter. A designer who needs a punchy recoil kick or a fast launch should not assume that the approximation is harmless just because it works for falling particles. It is a measurable design and simulation choice. (Game Physics Engine Development, PDF pp. 74-76.)</p>
+<p>Damping is another place where a formula silently becomes a player-facing rule. If a factor <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math> is applied once per rendered frame, then changing the frame rate changes how quickly motion dies away: more updates mean more multiplications. If instead <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math> represents the fraction retained over one second, the chapter applies <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>d</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="normal">Δ</mi>
+      <mi>t</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mo stretchy="false">(</mo>
+      <mn>1</mn>
+      <mstyle scriptlevel="0">
+        <mspace width="0.167em"></mspace>
+      </mstyle>
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="normal">s</mi>
+      </mrow>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </msup>
+</math> each update, where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+</math> is the elapsed duration. This keeps the intended decay closer across different frame durations, though it costs a power operation. An engine may choose a cheaper per-step approximation for huge particle counts, but then should treat the visual difference as part of the behavior, not as an invisible optimization. (Game Physics Engine Development, PDF p. 75.)</p>
+<p>The practical contract around an integrator should state at least: the units of duration, whether duration must be positive, which state fields the caller may set, whether forces are accumulated or persistent, and when accumulated forces are cleared. The example implementation asserts positive duration, advances position, derives acceleration from force times inverse mass, updates velocity, then applies damping. The pages do not show the complete force accumulator lifecycle, so that final clearing policy must be verified elsewhere before copying the interface. (Game Physics Engine Development, PDF p. 76.)</p>
+<p>Inverse mass is particularly useful for static world geometry. A wall with inverse mass zero receives no acceleration contribution from accumulated force in this model, while a dynamic crate has positive inverse mass. Zero inverse mass alone does not erase an object’s existing velocity or separately configured base acceleration, so the engine must also keep those values appropriate for an immovable body. Storing inverse mass avoids dividing by mass each time. But the name matters: accidentally storing mass in an inverse-mass field reverses the expected response. A small API that accepts ordinary mass and converts internally can keep content authors from making that mistake. (Game Physics Engine Development, PDF pp. 70-71, 76.)</p>
+</section>
+<section id="id_05-engine-i-ch014-time-is-part-of-the-design" class="level4">
+<h4>Time is part of the design</h4>
+<p>A frame is not simply “run every subsystem once.” The amount of real time between frames varies with hardware load, background work, and display cadence. The simulation therefore needs an explicit relationship between wall-clock time and game time. Gregory treats rendering loops, game loops, timelines, measuring time, and multiprocessing as separate but related architectural choices (Gregory, Ch. 7, contents PDF pp. 10–11; implementation passages in §7.1–7.5, PDF pp. 326–345, printed pp. 304–323). The important design decision is not to copy an old loop pattern. It is to decide which state must advance deterministically, which work can be asynchronous, and how the rendered frame observes the latest coherent simulation state.</p>
+<p>A basic fixed-step simulation accumulates elapsed time and advances in slices of a chosen duration <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>h</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">←</mo>
+  <mi>A</mi>
+  <mo>+</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mtext>while </mtext>
+  <mi>A</mi>
+  <mo>≥</mo>
+  <mi>h</mi>
+  <mo>:</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <mi>S</mi>
+  <mo stretchy="false">←</mo>
+  <mi>step</mi>
+  <mo stretchy="false">(</mo>
+  <mi>S</mi>
+  <mo>,</mo>
+  <mi>h</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <mi>A</mi>
+  <mo stretchy="false">←</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>h</mi>
+  <mo>.</mo>
+</math>
+<p>Here (S) is simulation state and (A) is accumulated time. The display can render at a different rate. If the renderer interpolates between the two latest simulation states, it can present smooth motion without making the physics step size depend on display speed. This pattern is a teaching example, not an attributed algorithm from a specific cited paragraph. Its tradeoffs are concrete: too large an <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>h</mi>
+</math> increases numerical error and tunneling risk; too small an <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>h</mi>
+</math> costs CPU; a long pause can create a “spiral of death” if the engine tries to catch up forever. A game may cap catch-up steps and deliberately drop excess simulation time, but that changes world-time semantics and must be an explicit product choice.</p>
+<p>The jump system should consume input at a defined boundary. One clean arrangement is to timestamp raw input, turn it into a gameplay command, and apply that command on the next simulation tick. The renderer may show a prediction to reduce perceived lag, but prediction and authoritative state should remain distinguishable. For networked games, a tick identifier and stable input ordering become critical because two peers must agree which command affected which state. Gregory’s contents specifically call out networked and multiprocessor loops (§7.6–7.7, contents PDF p.11); those topics are only inventoried here, not deeply read. This section therefore recommends the concepts but does not claim a particular network protocol.</p>
+</section>
+<section id="id_05-engine-i-ch014-teach-a-control-when-the-player-needs-it" class="level4">
+<h4>Teach a control when the player needs it</h4>
+<p>A <strong>heads-up display (HUD)</strong> is information drawn over the game view. The proposal keeps most HUD elements hidden until they answer a current question: show flashlight charge while the flashlight is on, display recently equipped or collected items briefly, and reveal health and ammunition when aiming or after damage. This is contextual visibility. Instead of leaving every number on screen all the time, the design ties each indicator to a state where the player can use it. [PDF pp. 614–615 / printed pp. 589–590]</p>
+<p>The spec also proposes help text at the moment a mechanic first matters, rather than a separate tutorial level. Picking up a weapon can prompt the attack control; encountering the inventory can teach how to switch weapons; reaching the insanity threshold can explain how to activate that mode. The prompt fades after enough reading time or after the player succeeds, and a setting can disable repeated assistance. The design lesson is to connect instruction to a visible opportunity and to provide a way to dismiss or suppress it. Those rules are proposed behavior, not proof of an implemented tutorial system. [PDF p. 614 / printed p. 589]</p>
+</section>
+<section id="id_05-engine-i-ch014-update-gameplay-state-then-let-subsystems-batch-their-work" class="level4">
+<h4>Update gameplay state, then let subsystems batch their work</h4>
+<p>A character’s state at a moment might include position, velocity, health, and animation choice. The game loop advances that state from an earlier time using a time delta. This broad use of “state” means the object’s data at that moment; it is different from the named states inside a finite-state machine.</p>
+<p>A tempting design is to call <code>Update(dt)</code> on every object and have each object update its own physics, animation, sound, collision, and rendering. The chapter explains why this scatters similar work: a renderer would receive one object’s request, then unrelated physics and audio work, then another render request. Instead, the object can change gameplay values and configure subsystem-owned records. Once objects have had their turn, rendering, animation, and other systems can process their respective data in batches. The exact ownership boundary depends on the engine, but the teaching point is to keep gameplay decisions distinct from subsystem-wide processing.</p>
+<p>(<em>Game Engine Architecture</em>, PDF pp. 779–783 / printed pp. 757–761.)</p>
+</section>
+<section id="id_05-engine-i-ch014-let-dependencies-set-the-update-order" class="level4">
+<h4>Let dependencies set the update order</h4>
+<p>Suppose a character carries a sword. The sword’s world position depends on the final pose of the character’s hand, so updating both objects in an arbitrary order can leave the sword using the prior frame’s pose for one frame. The relationship creates an ordering constraint: update the character first, then the attached object.</p>
+<p>Batching also reduces unrelated costs. If a subsystem stores its per-object data together, it can process nearby data with better cache locality; it can compute global values once, allocate temporary resources once per batch, and overlap similar work in a pipeline. There is a correctness reason too: a group of colliding rigid bodies may need to resolve their interpenetrations together, so processing each body in isolation cannot generally produce a satisfactory result. These are the chapter’s reasons for batching, not measured performance guarantees. (<em>Game Engine Architecture</em>, PDF pp. 784–785 / printed pp. 762–763.)</p>
+<p>A whole game frame has similar dependencies. Animation can produce a pose that ragdoll physics consumes; physics returns body positions that animation then uses to finalize the skeleton. A single <code>Update(dt)</code> call per object hides these stages. The chapter’s phased approach makes them explicit: objects can receive hooks before or after a subsystem pass, and lists can limit each hook to objects that need it. (Game Engine Architecture, PDF pp. 785–788 / printed pp. 763–766.)</p>
+<p>When dependencies form several layers, group objects by tier: unattached roots first, their children next, then objects attached to those children. Run the necessary subsystem phases for each tier. This bucketed schedule preserves parent-before-child updates while retaining batches inside each tier. A vehicle, its passenger, and the passenger’s held item make a small constructed example. The author cites Naughty Dog’s <em>Uncharted</em> workflow as a historical example; that account is not evidence of current studio practice or a universal engine design. (PDF pp. 788–790 / printed pp. 766–768.)</p>
+</section>
+<section id="id_05-engine-i-ch014-make-mixed-time-reads-visible" class="level4">
+<h4>Make mixed-time reads visible</h4>
+<p>Objects are processed one by one, so during the loop some objects hold the new frame’s state while others still hold the old state. A query can therefore be internally valid C++ and still read the wrong time. If an attachment uses its parent’s newly updated position but the parent has not run yet, the attachment appears one frame behind. State that should be read consistently must have a clear time meaning: previous snapshot or current result.</p>
+<p>The chapter proposes keeping each object’s previous state while computing its next one. That uses more memory, but it gives every object a consistent old snapshot and allows interpolation between old and new states for display. The excerpt cites Havok as maintaining previous and current rigid-body states for that purpose. The new states can still be inconsistent while they are being computed. Timestamps can help catch queries that read a state from the wrong update phase. A timestamp does not make partially updated data consistent by itself; it only makes the mismatch detectable. (Game Engine Architecture, PDF pp. 790–793 / printed pp. 768–771.)</p>
+<p>The same dependencies explain why gameplay objects are hard to parallelize: objects may inspect one another unpredictably. The text describes message passing as one way a carefully designed object model could avoid direct cross-object reads, while its account of common practice keeps game-object logic serial and parallelizes data-heavy engine systems. For a costly subsystem job, an object can issue a non-blocking request and continue other work; it later consumes the result. Ask how early the request can start and how late the result can be used. Some systems may tolerate last frame’s result, but that introduces a deliberate latency. Batching requests, such as collecting many ray casts for one collision-system pass, can also reduce per-call overhead; converting synchronous one-at-a-time code may require reorganizing when requests are issued and collected. These are architectural ideas in a historical chapter, not guarantees about modern engines or hardware. (PDF pp. 793–795 / printed pp. 771–773.)</p>
+<p>The last page begins the next topic: an event is an occurrence of interest during play, such as an explosion, an enemy spotting the player, or a health pack being collected. The event system must notify interested objects and provide a route for their responses. The assigned excerpt only introduces those two responsibilities; it does not cover a complete event queue or dispatch policy. (PDF p. 795 / printed p. 773.)</p>
+</section>
+<section id="id_05-engine-i-ch014-keep-identity-storage-and-ownership-in-agreement" class="level3">
+<h3>Keep identity, storage, and ownership in agreement</h3>
+<p>The first object can live in a local variable. A world that creates, removes, saves, and reloads objects needs a more deliberate lifetime model.</p>
+<section id="id_05-engine-i-ch014-a-live-object-needs-an-identity-that-survives-storage-changes" class="level4">
+<h4>A live object needs an identity that survives storage changes</h4>
+<p>A crate’s position in an array is not necessarily its permanent identity. Removing another item can move it, and reusing an old slot can accidentally make an old reference point at a new object. <strong>Identity</strong> answers “which logical object?”; <strong>storage</strong> answers “where do its current bytes live?”</p>
+<p>An arena can reclaim a region of bytes together, but reclaiming bytes is not the same as running C++ destructors. If an arena stores objects that own other resources, arrange their cleanup before reset or deliberately restrict what may be stored there. Likewise, releasing CPU scratch memory does not prove that a GPU copy has finished reading it.</p>
+<p>A <strong>handle</strong> is a small token that the owner resolves into the current object. A common teaching design stores a slot number and a <strong>generation</strong>, a counter that changes when a slot is reused. The owner accepts a handle only when both parts match an alive slot. Suppose crate A occupied slot 7 at generation 4. After A is destroyed, slot 7 is reused for crate B at generation 5. A’s old handle is rejected instead of silently selecting B.</p>
+<p>This does not make a handle automatically thread-safe, nor does it stop a caller keeping a raw pointer after validation. The validation and use must follow a lifetime rule. A bounded-width generation can eventually wrap; the laboratory retires a slot at the maximum generation instead of cycling into an old identifier. Other engines choose different tradeoffs and must state their assumptions.</p>
+<p>An <strong>entity</strong> is a world object’s identity. A <strong>component</strong> stores one kind of data associated with it. A <strong>transform</strong> records placement, orientation, and scale. A <strong>collider</strong> supplies the geometry and settings used to test physical interactions; it need not be identical to the visible mesh. A <strong>system</strong> performs work over suitable data. <strong>ECS</strong>, entity-component-system, names a family of ways to organize these relationships; it is not a command to put every behavior into one universal framework. A small object-oriented world, tables of components, or a hybrid can all be reasonable if access and ownership are clear.</p>
+<p>During an iteration, defer changes that would invalidate the iterator or change the meaning of the current pass. <strong>Deferred destruction</strong> means recording a removal request and applying it at an agreed safe boundary. A raw pointer that happened to work before a container reallocated is not a lifetime guarantee. The C++ companion develops these ownership and borrowing issues in more detail: <a href="ch167.xhtml#appendix-d52e4486f527-ownership-and-non-owning-views" class="wikilink">Concepts/Ownership and non-owning views (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Ownership and non-owning views)</a>.</p>
+<p><img src="../media/file154.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p>Notice that the GPU may extend the final lifetime. Removing a crate from the scene does not prove that a submitted graphics command has stopped reading its mesh. CPU and GPU completion are different facts.</p>
+</section>
+<section id="id_05-engine-i-ch014-keep-submitted-render-resources-alive-until-their-users-finish" class="level4">
+<h4>Keep submitted render resources alive until their users finish</h4>
+<p>Imagine a layer submits a draw using a shader and vertex array, then the layer is removed before the renderer processes that draw. The game thread may already have destroyed the layer and released its last references, while a queued render command still needs those resources. “The caller is done” and “the renderer is done” are different moments.</p>
+<p>A useful lifetime trace is:</p>
+<pre class="text"><code>Game thread                 Render queue / render thread
+submit(shader, geometry) -&gt; retain draw data and resource references
+release layer&#39;s handles     process queued draw
+                            release queued references</code></pre>
+<p>The <code>Refs, Scopes and Smart Pointers</code> episode introduces <code>Scope&lt;T&gt;</code> as an alias for unique ownership and <code>Ref&lt;T&gt;</code> as an alias for shared ownership. Its point is that public engine code can express intent without spelling <code>std::unique_ptr</code> or <code>std::shared_ptr</code> at every resource boundary, and could later change the implementation behind those aliases. A shared reference is appropriate when several parties must independently keep a CPU resource object alive; it is not a reason to make every pointer shared. A uniquely owned layer or short-lived local helper can remain uniquely owned. The choice answers who may keep the object alive, not merely who calls <code>delete</code>. <a href="https://www.youtube.com/watch?v=HkGZ378nArE">Caption source: Refs, Scopes and Smart Pointers</a></p>
+<p>CPU object lifetime and GPU-use lifetime are separate contracts. A reference count can prevent the CPU-side wrapper from being destroyed while the render queue holds a reference. It does not, by itself, prove that previously submitted GPU commands have finished reading the underlying buffer or image. GPU storage still needs an API-appropriate completion rule—such as a fence or timeline value—before it is destroyed or recycled. Keep those two questions explicit: “Can CPU code still access this object?” and “Can in-flight device work still use this allocation?” The episode motivates retaining renderer assets across deferred work; the GPU completion rule is a general extension, not an implementation demonstrated there. <a href="https://www.youtube.com/watch?v=HkGZ378nArE">Caption source: Refs, Scopes and Smart Pointers</a></p>
+<p>The speaker also notes shared ownership costs, including a separately managed control block and atomic reference-count operations in the standard shared-pointer implementation. Treat those as a measured tradeoff, not an automatic performance failure: first establish the required lifetime, then profile if reference counting appears in a hot path. The episode’s <code>Ref</code> and <code>Scope</code> aliases improve vocabulary and preserve a possible implementation seam, but do not replace an asset manager. An asset manager may add identity, caching, load state, eviction policy, and explicit retention rules that a shared pointer alone does not provide. <a href="https://www.youtube.com/watch?v=HkGZ378nArE">Caption source: Refs, Scopes and Smart Pointers</a></p>
+<section id="id_05-engine-i-ch014-fence-and-semaphore-jobs" class="level5">
+<h5>Fence and semaphore jobs</h5>
+<p>A <strong>fence</strong> is the host-facing completion signal in this frame loop: after submission, the GPU signals it when that submission finishes, and a later CPU wait allows safe reuse of the associated frame resources. A <strong>binary semaphore</strong> carries ordering between device-side operations. Image acquisition signals an “image available” semaphore; queue submission waits on it before color-attachment output can write the image. The submission can signal a “render finished” semaphore for presentation to wait on. These primitives do different jobs: the fence paces CPU reuse, while semaphores link work in the queue/presentation path. [Khronos, <a href="https://docs.vulkan.org/guide/latest/synchronization.html">Synchronization</a>; <a href="https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/02_Rendering_and_presentation.html">Rendering and presentation</a>]</p>
+<p>A compact illustrative pattern is:</p>
+<pre class="text"><code>wait(frameFence[slot])
+result, image = acquire(imageAvailable[slot])
+if result is out-of-date: recreate swapchain; return
+wait(imageFence[image]) if that image has a prior submission
+imageFence[image] = frameFence[slot]
+record(commandBuffer[slot or image], image)
+reset(frameFence[slot])                 # only when submission will follow
+submit(wait=imageAvailable[slot], signal=renderFinished[image], fence=frameFence[slot])
+present(wait=renderFinished[image], image)
+slot = (slot + 1) mod framesInFlight</code></pre>
+<p>This is a teaching trace, not reconstructed episode code. The index used for command buffers depends on the engine’s resource organization. The important invariant is that the acquired image is the render target, and each reusable synchronization object is paired with the work or image whose completion it represents. The current Khronos tutorial sizes presentation-wait semaphores by swapchain image and indexes them by image index, because a frame-slot fence does not by itself prove that the presentation engine has finished waiting on a semaphore. [Khronos, <a href="https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/03_Frames_in_flight.html">Frames in flight</a>; <a href="https://docs.vulkan.org/guide/latest/swapchain_semaphore_reuse.html">Swapchain semaphore reuse</a>]</p>
+<p>There is a specific early-return trap: if a frame fence is reset and image acquisition then returns <code>VK_ERROR_OUT_OF_DATE_KHR</code>, the function may return without submitting work to signal that now-unsignaled fence. A later wait on it can deadlock. The current Khronos tutorial addresses this by delaying the reset until acquisition succeeds and the frame is definitely going to be submitted. It also describes recreating the swapchain for an out-of-date result and waiting for a nonzero framebuffer size when minimized. [Khronos, <a href="https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/04_Swap_chain_recreation.html">Swapchain recreation and fixing a deadlock</a>]</p>
+</section>
+</section>
+<section id="id_05-engine-i-ch014-state-ownership-and-memory-lifetime" class="level4">
+<h4>State ownership and memory lifetime</h4>
+<p>Now consider what “the player is grounded” means. If animation, gameplay, and physics each keep their own unrelated grounded flag, drift is inevitable. The engine should identify one authoritative source and define how derived representations are refreshed. A common choice is: physics owns the contact facts for a tick; gameplay consumes a grounded/support result and decides whether jump is permitted; animation consumes gameplay movement intent and the resulting pose inputs. The result sent to rendering is a snapshot, not a second authority.</p>
+<p>Memory choices affect these contracts. Gregory’s support-systems contents point to allocator design and memory management (Ch. 5, contents PDF p.10); his text explains that custom allocation can better match known usage patterns, but relocating allocations requires pointer discipline or indirection such as handles (PDF pp. 229–241, printed pp. 207–219). Translate that into a practical rule: use a short-lived arena for temporary per-frame contact candidates; use a pool or stable slot table for entities whose identity must persist; avoid retaining raw pointers into a buffer that may move or be reset. These are not interchangeable allocator recipes. Pick based on lifetime and access pattern, measure, and document invalidation.</p>
+<p>For example, a <code>BodyHandle</code> can be a slot plus generation counter. A contact manifold stores handles, not raw addresses. If a body is deleted and its slot reused, the old generation no longer resolves. This protects delayed events and debug overlays from accidentally referring to a different object. The cost is an indirection and validation check. For tightly packed solver arrays, the engine can resolve handles once per step into local indexed data, preserving both safety and cache-friendly iteration.</p>
+<p>Resource memory has another lifecycle. Gregory’s resource chapter distinguishes raw authoring data, processing/conditioning, packaging, loading, and runtime use; the asset build must understand dependencies so an edit causes dependent outputs to be rebuilt (Ch. 6 contents PDF pp. 10–11; selected text PDF pp. 301–307, printed pp. 279–285). His discussion also identifies streaming as loading data in the background while the main program continues (PDF p.291, printed p.269). A jump on a platform in the next streamed region raises a boundary question: does physics wait for collision data, use a conservative placeholder, or prevent entry until the region is ready? That is a gameplay contract as much as a file-I/O problem.</p>
+<p>A resource manager gives the rest of the engine one place to request resource types and apply type-specific initialization (Gregory, PDF pp. 304–307, printed pp. 282–285). It can coalesce duplicate loads and track references, but it should not hide every cost. If a gameplay call that appears cheap can trigger disk I/O, decompression, GPU upload, and memory growth, frame-time spikes will be difficult to reason about. Offer explicit asynchronous request/completion states where cost is uncertain. Let the editor and build pipeline validate missing dependencies before the player sees a broken jump animation.</p>
+<section id="id_05-engine-i-ch014-read-memory-statistics-as-a-ledger-with-a-stated-boundary" class="level5">
+<h5>Read memory statistics as a ledger with a stated boundary</h5>
+<p>A memory report becomes useful when its numbers answer a precise question. <strong>Live bytes</strong> are the tracked allocations not yet released. <strong>Cumulative allocated bytes</strong> count allocations over time, including memory already released. <strong>Peak live bytes</strong> are the largest simultaneously live total observed. They can differ even in a program that releases everything correctly.</p>
+<p>Consider a wrapper that records requested heap bytes:</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 26%" />
+<col style="width: 26%" />
+<col style="width: 26%" />
+</colgroup>
+<thead>
+<tr>
+<th>Operation</th>
+<th style="text-align: right;">Live bytes</th>
+<th style="text-align: right;">Cumulative allocated bytes</th>
+<th style="text-align: right;">Peak live bytes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Allocate a 1,024-byte texture staging block</td>
+<td style="text-align: right;">1,024</td>
+<td style="text-align: right;">1,024</td>
+<td style="text-align: right;">1,024</td>
+</tr>
+<tr>
+<td>Allocate a 256-byte temporary block</td>
+<td style="text-align: right;">1,280</td>
+<td style="text-align: right;">1,280</td>
+<td style="text-align: right;">1,280</td>
+</tr>
+<tr>
+<td>Free the staging block</td>
+<td style="text-align: right;">256</td>
+<td style="text-align: right;">1,280</td>
+<td style="text-align: right;">1,280</td>
+</tr>
+<tr>
+<td>Free the temporary block</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1,280</td>
+<td style="text-align: right;">1,280</td>
+</tr>
+</tbody>
+</table>
+<p>A cumulative total that keeps rising is not by itself evidence of a leak. Conversely, a zero total from one wrapper does not prove that the process has released every allocation. Third-party libraries, platform APIs, GPU allocations, and unwrapped calls can live outside its accounting boundary. Also distinguish bytes requested by callers from the allocator’s actual reserved space, padding, and metadata.</p>
+<p>A <strong>memory tag</strong> assigns a category such as texture loading, arrays, or application state. Tags help locate responsibility; they do not change ownership. For the counts to remain meaningful, deallocation must subtract the same size and category that allocation recorded. Depending entirely on a caller’s guessed size or tag makes the report vulnerable to its own bookkeeping mistakes. Store or otherwise verify allocation metadata where the allocator contract permits it.</p>
+<p>An arena adds a second boundary. Resetting its logical allocation position can make its objects unavailable while retaining the arena’s backing storage for reuse. Report reserved backing bytes separately from currently occupied space. Calling a reset “freeing all memory” conceals this distinction and can mislead both optimization and lifetime reasoning.</p>
+<p>The fully read Kohi memory-subsystem lesson motivates tagged allocation and accounting. The ledger and arena distinction above are original teaching extensions; they do not claim that the early wrapper measures every allocation in an operating-system process. <a href="https://www.youtube.com/watch?v=_GBUCo2FbUk">Caption source: Memory Subsystem</a>.</p>
+</section>
+<section id="id_05-engine-i-ch014-align-the-address-the-caller-receives" class="level5">
+<h5>Align the address the caller receives</h5>
+<p>A pool beginning on a 32-byte boundary does not guarantee that every payload returned from it is 32-byte aligned. If a 12-byte header precedes the payload, a block starting at <code>0x1000</code> returns <code>0x100C</code>, which is twelve bytes past that boundary. Alignment belongs to the final address, after metadata and padding have been considered.</p>
+<p>One layout can reserve space for a size breadcrumb, align the user pointer, and retain enough information to recover the allocator’s original range on release. The contract needs more than a rounding expression: the alignment must be supported, all size additions must fit, the payload and metadata must remain inside the reserved block, and deallocation must recover exactly the range originally allocated.</p>
+<p>Metadata has alignment rules too. A payload satisfying a byte-aligned request may not leave a preceding typed integer aligned; a header immediately after a 15-byte payload may also be misaligned. Add suitable padding or use a representation that permits safe byte copying into an aligned local object. Do not assume that hardware tolerating an unaligned load makes an arbitrary typed C access portable.</p>
+<p>Test a range of payload sizes and alignments, not only a rounded size such as 64 bytes. Include alignment one, small odd payloads, exact-capacity requests, requests that cannot fit, and the representable-size limit of any compact size field. Failure must not advance the allocator or discard a still-valid old allocation.</p>
+<p>The fully read Kohi correction rearranges metadata to repair the caller-visible alignment guarantee. The numerical address and additional metadata checks here expand that contract; they are not independent verification of the tutorial’s allocator implementation. <a href="https://www.youtube.com/watch?v=VQ6Q9B_WDlM">Caption source: Memory Alignment Correction</a>.</p>
+<p>Related foundations: <a href="ch156.xhtml#appendix-a1f7c53b4742-alignment-and-padding" class="wikilink">Alignment and padding (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Alignment and padding)</a>.</p>
+<section id="id_05-engine-i-ch014-recover-the-original-allocation-range" class="level6">
+<h6>Recover the original allocation range</h6>
+<p>The corrected source layout stores a four-byte payload size immediately before the aligned pointer and a trailing header retaining the original block start. That compact breadcrumb imposes a 32-bit representability limit. <a href="https://www.youtube.com/watch?v=VQ6Q9B_WDlM">Alignment correction</a>.</p>
+<p>The free-list layer may also return an alignment offset. Free must receive that offset and the original consumed range; adding a base offset twice shifts the allocation, while forgetting padding on release strands or overlaps free space. A later allocator walkthrough uses a header before the pointer to record size, alignment, and offset, and adds report-only memory tags. Report-only accounting must not be confused with freeing driver-owned memory. <a href="https://www.youtube.com/watch?v=Fo9ri9DMu74">Allocator offset and accounting walkthrough</a></p>
+<p>These reported repairs do not establish exhaustive allocator correctness.</p>
+</section>
+</section>
+<section id="id_05-engine-i-ch014-bridge-vulkan-allocation-callbacks-to-an-engine-allocator" class="level5">
+<h5>Bridge Vulkan allocation callbacks to an engine allocator</h5>
+<p>Vulkan allocation callbacks can route driver requests through an engine allocator, but the bridge must honor the requested alignment and preserve existing bytes when reallocation succeeds. A replacement should allocate first, copy the old contents, and release the old block only after the replacement is valid. The Kohi implementation checks that the requested alignment matches its original allocation, but its captioned discussion is uncertain about zero-size reallocation semantics; verify edge behavior against the Vulkan specification before treating the bridge as conformant. <a href="https://www.youtube.com/watch?v=F9hN1PrxnHE">Kohi Vulkan allocator callbacks</a></p>
+<p>Separate allocations the application owns from driver-internal allocation notifications. The former provide a pointer that the engine can later free; the latter report size for accounting but do not transfer ownership. Counters for hooked buffer/image paths are useful diagnostics, not a census of all driver or resident GPU memory. The episode reports GPU-local and ordinary Vulkan totals and explicitly calls its allocator an early version; its measurements exclude unhooked resources.</p>
+</section>
+</section>
+<section id="id_05-engine-i-ch014-give-memory-a-lifetime-that-matches-the-work" class="level4">
+<h4>Give memory a lifetime that matches the work</h4>
+<p>Imagine loading a cave level. Its collision mesh, room graph, and encounter records are all created together. When the player leaves the cave, none of those objects need to outlive the level. A stack allocator fits this job: reserve a level region, remember a marker before loading, and return to that marker when unloading. The useful guarantee is not that every object can be freed whenever convenient. It is that the group has one clear storage-reclamation point. Allocations made after the marker are reclaimed with a constant-time pointer reset. That does not automatically run object destructors or release external resources such as file handles; the engine must arrange that work separately. The tradeoff is strict: a cave object cannot be individually freed while later allocations remain live, and a pointer into the region becomes invalid after rollback. (Game Engine Architecture, PDF pp. 229-231.)</p>
+<p>Now consider per-frame visibility work: a list of lights visible to the camera, temporary sorting keys, and a scratch list of draw commands. If every entry is consumed before the frame ends, a single-frame allocator can reset the whole scratch region at the next frame. The question for the engine API is therefore not merely “how many bytes?” but “until when may a caller use this pointer?” A name such as <code>FrameScratch</code> can make the boundary obvious, and an API should avoid storing its result in persistent world state. A two-buffer version is useful when a worker job writes results that the next frame consumes: the buffer from frame (i) remains available during frame (i+1), then becomes reusable. This only works if the consumer finishes before the reuse boundary. (Game Engine Architecture, PDF pp. 235-237.)</p>
+<p>For thousands of short-lived projectile records of exactly one size, a pool is a better shape. Every slot can be handed out or returned independently, so one projectile can die while others remain. Equal-sized slots avoid the “enough total free bytes, but no large enough hole” failure common to a general heap. The pool is not a universal allocator: if a caller needs a differently sized object or retains a slot after returning it, the pool contract no longer protects that caller. (Game Engine Architecture, PDF pp. 231-232, 238-239.)</p>
+<p>This gives a useful engine review habit: draw a lifetime beside each allocation category. Level data lives from load to unload; frame scratch lives until frame completion; asynchronous output may live through the next frame; entity records may need independent lifetimes. Then choose storage whose reset/free rule matches that lifetime. The source’s double-ended stack example makes this concrete: level data grows from one end while temporary frame data grows from the other, sharing capacity while keeping separate rollback directions. But neither side may cross the other, so capacity planning and high-water instrumentation still matter. (Game Engine Architecture, PDF pp. 229, 231, 235-237.)</p>
+<p>Alignment and relocation expose another boundary: a pointer is not just an address if the allocator needs hidden information to recover its original block, and moving blocks invalidates outstanding pointers unless every reference is relocated. For a compact engine, stable addresses may be a deliberate simplification. A movable heap can reclaim holes, but only if the engine owns references well enough to update them. Handles or indices can make relocation possible; unrestricted raw pointers make it difficult. The selected pages explain the relocation problem, but do not prescribe handles as its solution. (Game Engine Architecture, PDF pp. 233-235, 240.)</p>
+<section id="id_05-engine-i-ch014-two-scratch-buffers-still-need-a-completion-rule" class="level5">
+<h5>Two scratch buffers still need a completion rule</h5>
+<p>Suppose a visibility job reads a temporary list from scratch buffer A. The main thread moves on and writes the next frame’s list into buffer B. Alternating buffers has bought the job extra time; it has not proved the job finished. If the main thread resets A while that job still holds a pointer into it, the pointer may still name allocated memory whose contents now belong to different work. This is a lifetime error even if no allocator reports a use-after-free.</p>
+<p><img src="../media/file155.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p>The source’s double-buffered allocator gives a useful way to separate adjacent frames’ data. The completion gate above is an original extension for asynchronous consumers, not a claim that two buffers are a universal scheduling solution. For a CPU job, its completion token can release the borrow. For GPU-visible storage, use the completion condition for the actual submission that reads it. A frame counter or a CPU smart pointer alone does not establish that condition. Extra buffers reduce pressure under some workloads, but the reuse rule still needs proof that all relevant consumers are done. Storage capacity and safe reuse are separate questions. (Gregory, <em>Game Engine Architecture</em>, supplied 2009 edition, PDF pp. 235–237; asynchronous example and diagram are original teaching.)</p>
+<p>The same distinction helps when reading <a href="ch127.xhtml#appendix-0b104bcba06b-storage-duration-and-object-lifetime" class="wikilink">storage duration and object lifetime (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Storage duration and object lifetime)</a> and <a href="ch167.xhtml#appendix-d52e4486f527-ownership-and-non-owning-views" class="wikilink">ownership and non-owning views (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Ownership and non-owning views)</a>: keeping bytes allocated, keeping an object alive, and allowing a borrowed view to remain valid are related contracts that must agree.</p>
+</section>
+</section>
+<section id="id_05-engine-i-ch014-give-memory-a-purpose-then-choose-an-allocator-to-fit-it" class="level4">
+<h4>Give memory a purpose, then choose an allocator to fit it</h4>
+<p>General-purpose allocation is convenient but can become expensive or unpredictable in systems that create many short-lived objects. An allocator is a component that decides how a region of memory is handed out and reclaimed. The right allocator depends on the lifetime pattern, not on fashion. The series introduces a memory subsystem in <a href="https://www.youtube.com/watch?v=_GBUCo2FbUk">Kohi #007</a>, and later captions cover dynamic allocation, freelists and allocator work: <a href="https://www.youtube.com/watch?v=BSBFBWwG8Ds">dynamic allocator</a>, <a href="https://www.youtube.com/watch?v=sP7xRUyP3e0">freelists</a>, <a href="https://www.youtube.com/watch?v=SNDJ-rGJd5A">wrapping up freelists and allocators</a>, and a live stream that identifies a first simple allocator as its main task (<a href="https://www.youtube.com/watch?v=3ZFcvBjRFN0">stream</a>).</p>
+<p>A linear allocator is a good first example. It owns a fixed block and advances an offset as allocations are requested. Allocation is cheap: align the current offset, return that address, advance by size. Releasing individual objects is not supported; the whole block is reset at once. This is ideal for temporary data whose lifetime naturally ends together, such as per-frame scratch data. It is a poor fit for objects that must be freed independently or survive an unpredictable time.</p>
+<p>A pool allocator handles a known set of same-sized objects. It divides a block into slots and tracks which slots are free. Allocation and release can be constant-time, but the object size and pool capacity constrain use. A freelist is a linked list of free slots; the link may be stored inside each free slot itself. The lesson is not “use a freelist everywhere.” It is that known, repeated allocation patterns can be served with predictable behavior by a specialized structure.</p>
+<p>A dynamic allocator can serve varying sizes in a managed region, but then fragmentation, alignment, metadata and coalescing become concerns. Fragmentation means usable bytes are split into pieces too small for a particular request. Alignment means an address must satisfy a boundary requirement for the object or API that will access it. The current repository contains allocator modules under <code>kohi.core/src/memory/allocators/</code>, including linear, pool and dynamic allocators. Its roadmap explicitly says the freelist should be reworked to account for alignment and calls out carrying alignment into renderbuffer allocation. That is direct evidence that “size fits” is not enough: GPU-facing buffers can have stricter alignment requirements than a generic byte allocation.</p>
+<p>A good allocator API needs observable failure. If a fixed arena is exhausted, silently returning overlapping memory corrupts unrelated objects. If a pool cannot supply a slot, the caller must know. A useful debug build tracks requested sizes, tags or allocation sites, but debug metadata should not obscure the basic contract. Start with the lifetime story: who allocates, who owns, who releases, and when is bulk reset safe? Only then select the allocator.</p>
+<p>The later GitHub mirror has concrete allocator variants beyond the early videos. In the pinned <a href="https://github.com/travisvroman/kohi/blob/05a5193d5ed4890703cfcbbeb5c5e947feefecf6/kohi.core/src/memory/allocators/linear_allocator.c">linear allocator source</a>, allocation advances a byte offset and <code>free_all</code> optionally clears the full arena; the inspected allocator does not align each request. The <a href="https://github.com/travisvroman/kohi/blob/05a5193d5ed4890703cfcbbeb5c5e947feefecf6/kohi.core/src/memory/allocators/pool_allocator.c">pool allocator source</a> uses fixed element slots plus a free-node array. Its <code>pool_allocator_destroy</code> body is empty in this mirror even though creation allocates its backing memory, an apparent cleanup gap that deserves verification before relying on that snapshot. The <a href="https://github.com/travisvroman/kohi/blob/05a5193d5ed4890703cfcbbeb5c5e947feefecf6/kohi.core/src/memory/allocators/dynamic_allocator.c">dynamic allocator</a> combines a freelist with per-allocation size storage, alignment metadata, and optional debug guards/source-location fields. These code observations describe the later GitHub revision, not what the earlier videos had already implemented; no build or allocator test was run. The source retrospective says the engine had 77.5 thousand lines, 472 commits and 265 full episodes by its writing point, and it praises the organization while acknowledging areas to improve. Those figures are from the repository retrospective and should not be mistaken for a live count at this revision. They illustrate a broader practical risk: custom allocation can be educational and useful, but every custom policy becomes code that must be tested, profiled and explained. Avoid building an allocator subsystem before a real allocation pattern needs it.</p>
+<section id="id_05-engine-i-ch014-total-free-space-is-not-necessarily-one-usable-range" class="level5">
+<h5>Total free space is not necessarily one usable range</h5>
+<p>A <strong>free list</strong> records ranges available for allocation. For a simple 64-byte example, let each requested range start at an eight-byte boundary and use half-open notation: <code>[0,16)</code> includes offsets zero through fifteen. This is a logical byte-offset example, not a claim about a graphics device’s required alignment.</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Allocated ranges</th>
+<th>Free ranges</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Start</td>
+<td>None</td>
+<td><code>[0,64)</code></td>
+</tr>
+<tr>
+<td>Allocate A: 16 bytes</td>
+<td>A at <code>[0,16)</code></td>
+<td><code>[16,64)</code></td>
+</tr>
+<tr>
+<td>Allocate B: 16 bytes</td>
+<td>A at <code>[0,16)</code>, B at <code>[16,32)</code></td>
+<td><code>[32,64)</code></td>
+</tr>
+<tr>
+<td>Release A</td>
+<td>B at <code>[16,32)</code></td>
+<td><code>[0,16)</code>, <code>[32,64)</code></td>
+</tr>
+<tr>
+<td>Release B and merge adjacent free ranges</td>
+<td>None</td>
+<td><code>[0,64)</code></td>
+</tr>
+</tbody>
+</table>
+<p>After releasing A, 48 bytes are free in total, but the largest contiguous free range is only 32 bytes. A request for one contiguous 48-byte block cannot fit. This is <strong>external fragmentation</strong>: available space is separated by live allocations. After B is released, <strong>coalescing</strong> merges neighboring free ranges, restoring one 64-byte span.</p>
+<p>An allocator must also represent its own bookkeeping. Running out of free-list nodes can be different from running out of payload bytes. Resizing that metadata does not itself resize a GPU buffer or move uploaded mesh data. A GPU-buffer resize needs its own allocation, copy, synchronization, and publication path. Returning a byte range to the free list before earlier GPU work finishes can allow a new mesh to overwrite data still in use.</p>
+<p>Reallocation needs a failure policy: if a larger replacement cannot be obtained, preserve the old valid allocation unless the contract explicitly states otherwise. Validate sizes and range arithmetic before copying. A byte-offset allocator, a CPU pointer allocator, and a GPU resource manager can share ideas without sharing all alignment or lifetime rules.</p>
+<p>The fully read Kohi free-list and dynamic-allocator lessons motivate these structures. The 64-byte trace and separation of bookkeeping from GPU payload are original teaching extensions. <a href="https://www.youtube.com/watch?v=sP7xRUyP3e0">Free list</a>, <a href="https://www.youtube.com/watch?v=BSBFBWwG8Ds">dynamic allocator</a>.</p>
+</section>
+<section id="id_05-engine-i-ch014-dynamic-arrays-in-c-track-capacity-separately-from-length" class="level5">
+<h5>Dynamic arrays in C: track capacity separately from length</h5>
+<p>A small generic C array can store a header containing capacity, logical length, and element stride, followed by contiguous element storage. Return a pointer to the element region so ordinary indexing still works; recover the header with a documented pointer offset in helper functions. Macros can provide <code>sizeof(element)</code> and make push calls accept a value, while implementation functions operate on byte pointers. This is a compact technique, but it depends on careful alignment, pointer arithmetic, overflow checks, and strict ownership. Those details deserve tests before treating the container as production-ready.</p>
+<p>Capacity is reserved storage; length is the number of initialized elements. Growing capacity (for example, doubling it) preserves existing bytes, but popping need not shrink the allocation. Reserving room does not make elements logically present: after a bulk copy into reserved storage, explicitly set the length before iteration. A middle removal shifts the tail left, and insertion shifts it right; both should validate the index and compute byte counts from stride. Keep these invariants visible in the API so callers do not confuse allocated room with valid elements.</p>
+<p>A growing allocation can invalidate pointers into its old storage. Reject overflowing <code>count * stride</code> and capacity-growth arithmetic before allocating or copying; a larger capacity is not evidence that arbitrary byte counts are safe.</p>
+<p>Source reading: <a href="https://www.youtube.com/watch?v=XQ6qljkh2KI">caption source</a>. Captions document the narrated development state; on-screen code and reported builds were not independently reproduced.</p>
+</section>
+</section>
+<section id="id_05-engine-i-ch014-separate-state-ownership-from-state-use" class="level4">
+<h4>Separate state ownership from state use</h4>
+<p>Many engine bugs are ownership bugs with a graphics symptom. The code that creates a buffer must know when it can be destroyed. The code that submits work must not free a resource still referenced by an in-flight command buffer. A material should not own a shared texture accidentally if multiple materials use it. A scene unload should release its references without invalidating a global asset cache. Thinking in terms of ownership makes these relationships explicit.</p>
+<p>A useful rule is to ask four questions whenever a subsystem API returns an object: Who owns it? How long is it valid? Who releases it? What happens if the operation fails? A raw pointer only answers “where is it now,” not any of these lifetime questions. An opaque handle may improve safety if the manager validates it, but then the manager owns the storage and must document whether handles survive reload or relocation.</p>
+<p>GPU execution makes lifetime less intuitive because the CPU and GPU do not share one timeline. Suppose the CPU records a draw using a texture, submits it, and immediately destroys the texture. The CPU has finished issuing commands, but the GPU may not yet have executed them. A safe design tracks completion or defers destruction until the relevant fence signals. This is why synchronization and resource lifetime belong in the same mental model.</p>
+<p>The repository’s retrospective highlights verbose asset requests and API differences between asset and resource systems, while its TODO proposes per-type request/release operations. Those observations are best converted into design questions, not copied as a universal API: Does this type need asynchronous creation? Is it safe to share? Should the API return a handle, callback result or ready pointer? Is release a decrement of a reference count or an explicit owner action? A consistent answer reduces accidental leaks and double frees.</p>
+</section>
+<section id="id_05-engine-i-ch014-preserve-ownership-freshness-and-intent-in-engine-apis" class="level4">
+<h4>Preserve ownership, freshness, and intent in engine APIs</h4>
+<p>Several review comments connect seemingly small APIs to larger contracts. Physics queries may observe the previous completed simulation step unless the caller waits for fresh data. Working directories distinguish engine resources from project assets. UV offsets should be represented in a way that supports the renderer’s batching model and the editor’s eventual crop workflow. Unbinding graphics state may make debugging clearer even where a later draw would bind new state. Each example asks the same design question: which subsystem owns this data, when is it valid, and what user or caller intent does the API expose? The review is a historical discussion and its implementation comments are not evidence about current runtime behavior (The Cherno, “Finishing the Pull Requests!,” 01:09:00–01:30:52).</p>
+<section id="id_05-engine-i-ch014-treat-ownership-proposals-as-questions-about-lifetime-and-identity" class="level5">
+<h5>Treat ownership proposals as questions about lifetime and identity</h5>
+<p>Code reviews often recommend “use a shared pointer,” “put it in a pool,” or “make it a scene member.” These are not interchangeable fixes. First ask: who creates the object, who may keep using it, what event ends that use, and what identity survives replacement or relocation?</p>
+<p>A borrowed reference is safe only while its owner guarantees the object remains alive and stable. An owning handle can extend lifetime, but shared ownership can obscure which subsystem must shut down first. An index survives vector reallocation because it does not store an element address, but it may refer to a different object after compaction unless the container preserves slot identity or checks a generation. A stable ID answers “which object?” while a pointer answers “where is it now?” A pool may improve locality for frequently traversed components, but it also needs a deletion/reuse policy and a way to validate handles. These are different contracts, not automatic performance upgrades.</p>
+<p>The Hazel guest review raises these distinctions for queued callbacks, layer pointers, intrusive reference counting, buffer views, and scene teardown. A queued callback that captures shared ownership may be appropriate if the task must outlive its producer; a synchronous borrowed reference may be enough if the call cannot escape. A buffer described as pointer-plus-length can be a non-owning view, while a separate explicit release operation suggests ownership exists elsewhere. Read the actual type and call sites before concluding what owns the bytes. The episode’s discussion of interpreting raw file bytes as objects is explicitly unsettled; casting does not itself settle object lifetime, alignment, padding, or serialization rules. <a href="https://www.youtube.com/watch?v=Glq1oDBy1cQ">Hazel code review</a>, 00:14–00:24 and 00:45–00:52</p>
+<p>The same caution applies to suggested data-oriented redesigns. A component-per-heap-allocation design can scatter hot data, but replacing it with packed arrays is beneficial only if traversal is important and the storage/handle rules remain correct. Measure the workload and define mutation/deletion semantics before treating a reviewer’s cache-locality argument as a measured win. Likewise, returning a reference to a current scene is only a defect if the caller can outlive or observe replacement of that scene without a valid contract. The 13-year-old engine review, Hazel 2D review, terminal engine review, and no-library engine review all contain useful design questions, but their source-level claims are not independent builds or reproductions.</p>
+</section>
+</section>
+<section id="id_05-engine-i-ch014-give-references-a-way-to-survive-object-deletion-and-relocation" class="level4">
+<h4>Give references a way to survive object deletion and relocation</h4>
+<p>Imagine a projectile keeps a reference to the target it hit. If the target is removed, a plain pointer still contains the old address. It may seem to work until another object reuses that memory, then the projectile can accidentally act on the newcomer. The chapter calls this a stale pointer. A handle table inserts a lookup step: a small handle stores a slot, and the table stores the current object address. Removing an object can clear its slot; moving it can update the slot. Reusing slots creates another hazard, so pair the slot with an object identity or generation value and check both when resolving the handle.</p>
+<p>The book also describes smart pointers, which wrap pointers with ownership or reference-counting behavior. This can help manage lifetime, but ownership rules and runtime costs need deliberate design. The printed Boost and <code>auto_ptr</code> discussion is historical; it should not be read as current C++ library guidance. The chapter’s handle code is a teaching sketch and says it is incomplete.</p>
+<p>(<em>Game Engine Architecture</em>, PDF pp. 772–777 / printed pp. 750–755.)</p>
+</section>
+</section>
+<section id="id_05-engine-i-ch014-let-identity-survive-changes-in-storage" class="level3">
+<h3>Let identity survive changes in storage</h3>
+<section id="id_05-engine-i-ch014-reconstruction-checkpoint-prove-identity-survives-relocation" class="level4">
+<h4>Reconstruction checkpoint — prove identity survives relocation</h4>
+<p>The long ECS chapter below already derives generations, sparse/dense storage, archetypes, migration, queries and scheduling. The missing layer was an independent executable proof that the central identity invariants actually survive storage movement. <code>tools/labs/ecs_reconstruction_lab.cpp</code> now supplies that layer: it destroys and reuses an entity index while proving the stale generation stays dead; removes a middle sparse-set element and verifies the swap-moved entity’s reverse map; and migrates a Position-only entity into a Position+Velocity archetype while repairing the source-row location of another entity moved by compaction.</p>
+<p>The witness deliberately stops before the hardest production claims. Its destination-first teaching migration is not a universal strong exception guarantee for arbitrary component types; structural changes are not performed concurrently; chunk packing and system-DAG conflict resolution are not yet benchmarked against current KairoECS. Those remain separate evidence levels rather than being inferred from the prose. Use <a href="ch391.xhtml#appendix-8404d0b1a3e7-sparse-set-storage" class="wikilink">Sparse-set storage</a> and <a href="ch392.xhtml#appendix-fbfeb0430008-archetype-ecs" class="wikilink">Archetype ECS</a> as compact reconstruction maps, and use the full chapter below for the surrounding ownership and scheduling story.</p>
+<p>Repository-specific passages below describe the supplied Kairo snapshot. They have not been revalidated against a current checkout; code fragments retain their stated surrounding context and are not all standalone tested programs. Numerical and contract explanations are taught independently of those implementation observations.</p>
+</section>
+<section id="id_05-engine-i-ch014-entity-identity-generational-handles-type-identity-sparse-set-ecs-dense-storage-queries-invalidation-and-deferred-structural-changes" class="level4">
+<h4>Entity Identity, Generational Handles, Type Identity, Sparse-Set ECS, Dense Storage, Queries, Invalidation and Deferred Structural Changes</h4>
+<p>This pass begins <strong>Phase 15: ECS, Generational Handles, Sparse Sets, Archetypes, Scene Data, and Data-Oriented Design</strong>. M085 owns <strong>Parts 1401–1411</strong>, while M086 owns <strong>Parts 1412–1434</strong>, with every atom in both ranges required. Graphics_Engine_Mastery_Integra… Graphics_Engine_Mastery_Integra…</p>
+<p>And for this pass, the central idea is not merely:</p>
+<blockquote>
+<p>“An ECS stores components separately.”</p>
+</blockquote>
+<p>That is far too shallow.</p>
+<p>The actual engineering problem is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics>
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtable displaystyle="true" columnspacing="1em" rowspacing="3pt">
+            <mtr>
+              <mtd>
+                <mtext>How do we represent millions of changing</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd>
+                <mtext>objects so that identity remains safe while</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd>
+                <mtext>data remains compact, cache-friendly,</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd>
+                <mtext>queryable and mutable?</mtext>
+              </mtd>
+            </mtr>
+          </mtable>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+<annotation encoding="application/x-tex">
+\boxed{
+\text{How do we represent millions of changing objects so that identity remains safe while data remains compact, cache-friendly, queryable and mutable?}
+}
+</annotation></semantics></math>
+<p>Those goals conflict.</p>
+<p>Stable objects suggest pointers.</p>
+<p>Compact storage suggests moving memory.</p>
+<p>Fast deletion suggests swap-removal.</p>
+<p>Stable references suggest not moving memory.</p>
+<p>Generic components suggest type erasure.</p>
+<p>Fast queries suggest compile-time types or dense numeric IDs.</p>
+<p>Immediate mutation is easy to understand.</p>
+<p>Immediate mutation during iteration can corrupt the very arrays being iterated.</p>
+<p>M085 and M086 are about resolving these tensions deliberately.</p>
+<hr />
+</section>
+<section id="id_05-engine-i-ch014-entity-identity-generations-free-lists-and-component-type-identity" class="level4">
+<h4>ENTITY IDENTITY, GENERATIONS, FREE LISTS AND COMPONENT TYPE IDENTITY</h4>
+<hr />
+<p><strong>Entity identity as data rather than an object hierarchy</strong></p>
+<p>Traditional object-oriented game code often starts like this:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> GameObject</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    Transform transform<span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    Mesh<span class="op">*</span> mesh<span class="op">;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    PhysicsBody<span class="op">*</span> body<span class="op">;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    Script<span class="op">*</span> script<span class="op">;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> <span class="dt">void</span> Update<span class="op">(</span><span class="dt">float</span> dt<span class="op">);</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then subclasses grow:</p>
+<pre class="text"><code>GameObject
+├── Player
+├── Enemy
+│   ├── FlyingEnemy
+│   ├── ArmoredEnemy
+│   └── BossEnemy
+├── Vehicle
+├── Projectile
+└── Pickup</code></pre>
+<p>This looks clean until combinations explode.</p>
+<p>What is:</p>
+<pre class="text"><code>a destructible moving light-emitting physics object</code></pre>
+<p>supposed to inherit from?</p>
+<p>ECS changes the model.</p>
+<p>An entity is not an object containing its behavior.</p>
+<p>An entity is simply an <strong>identity</strong>.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>Entity player<span class="op">;</span></span></code></pre></div>
+<p>The data exists elsewhere:</p>
+<pre class="text"><code>Entity 42
+
+Transform pool  -&gt; Transform for 42
+Velocity pool   -&gt; Velocity for 42
+Renderable pool -&gt; Renderable for 42
+Health pool     -&gt; Health for 42</code></pre>
+<p>The entity itself can be nearly meaningless.</p>
+<p>That is intentional.</p>
+<hr />
+<p><strong>Identity and data ownership become separate concepts</strong></p>
+<p>Imagine:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo>=</mo>
+  <mn>42.</mn>
+</math>
+<p>The identifier 42 does not contain a transform.</p>
+<p>Instead:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>P</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mo stretchy="false">[</mo>
+  <mn>42</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<p>may contain a transform.</p>
+<p>Likewise:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>h</mi>
+  <mi>y</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>s</mi>
+  <mi>P</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mo stretchy="false">[</mo>
+  <mn>42</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<p>may or may not exist.</p>
+<p>This separates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>who</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>what data they currently possess</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+  <mo>.</mo>
+</math>
+<p>That allows composition:</p>
+<pre class="text"><code>Entity A:
+Transform
+Renderable
+
+Entity B:
+Transform
+PhysicsBody
+
+Entity C:
+Transform
+Renderable
+PhysicsBody
+Light
+Health</code></pre>
+<p>No inheritance lattice is required.</p>
+<hr />
+<p><strong>This does not mean “entities are just integer array indices”</strong></p>
+<p>A raw integer such as:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="dt">uint32_t</span> entity <span class="op">=</span> <span class="dv">17</span><span class="op">;</span></span></code></pre></div>
+<p>looks attractive.</p>
+<p>Suppose entity 17 is destroyed.</p>
+<p>Later the index is reused:</p>
+<pre class="text"><code>old entity:
+17
+
+destroy
+
+new entity:
+17</code></pre>
+<p>Now some old system still has:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>Entity target <span class="op">=</span> <span class="dv">17</span><span class="op">;</span></span></code></pre></div>
+<p>That stale reference silently refers to the new object.</p>
+<p>This is an <strong>ABA problem</strong>.</p>
+<p>From the holder’s perspective:</p>
+<pre class="text"><code>17 existed
+17 disappeared
+17 exists again</code></pre>
+<p>and raw identity provides no way to distinguish old 17 from new 17.</p>
+<p>That is catastrophic.</p>
+<hr />
+<p><strong>Your current Kairo entity handle</strong></p>
+<p><code>KairoECS/Entity.cppm</code> currently defines:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Entity <span class="kw">final</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">static</span> <span class="kw">constexpr</span> <span class="bu">std::</span>uint32_t InvalidIndex <span class="op">=</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>numeric_limits<span class="op">&lt;</span><span class="bu">std::</span>uint32_t<span class="op">&gt;::</span>max<span class="op">();</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t Index <span class="op">=</span> InvalidIndex<span class="op">;</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t Generation <span class="op">=</span> <span class="dv">0</span><span class="bu">u</span><span class="op">;</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">[[</span><span class="at">nodiscard</span><span class="op">]]</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">constexpr</span> <span class="dt">bool</span> IsValid<span class="op">()</span> <span class="at">const</span> <span class="kw">noexcept</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Index <span class="op">!=</span> InvalidIndex<span class="op">;</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">friend</span> <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span><span class="op">==(</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> Entity<span class="op">&amp;,</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> Entity<span class="op">&amp;)</span> <span class="kw">noexcept</span> <span class="op">=</span> <span class="cf">default</span><span class="op">;</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>That is already a generational handle.</p>
+<p>An entity is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>E</mi>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>x</mi>
+          <mo>,</mo>
+          <mi>g</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>not merely:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo>=</mo>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>That distinction is foundational.</p>
+<hr />
+<p><strong>Entity index representation</strong></p>
+<p>The index identifies a slot in registry metadata.</p>
+<p>For example:</p>
+<pre class="text"><code>index
+
+0 -&gt; generation 4, alive
+1 -&gt; generation 9, dead
+2 -&gt; generation 1, alive
+3 -&gt; generation 3, alive</code></pre>
+<p>Kairo stores:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span><span class="bu">std::</span>uint32_t<span class="op">&gt;</span> <span class="va">m_Generations</span><span class="op">;</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">bool</span><span class="op">&gt;</span>          <span class="va">m_Alive</span><span class="op">;</span></span></code></pre></div>
+<p>So entity:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>Entity<span class="op">{</span><span class="dv">3</span><span class="op">,</span> <span class="dv">3</span><span class="op">}</span></span></code></pre></div>
+<p>means:</p>
+<blockquote>
+<p>inspect registry slot 3 and require generation 3.</p>
+</blockquote>
+<p>The index provides efficient direct addressing.</p>
+<p>Instead of:</p>
+<pre class="text"><code>hash entity UUID -&gt; registry record</code></pre>
+<p>we have:</p>
+<pre class="text"><code>registryMetadata[entity.Index]</code></pre>
+<p>which is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math> and cache-friendly.</p>
+<hr />
+<p><strong>Why index 0 is not inherently special</strong></p>
+<p>Some systems reserve entity 0 as null.</p>
+<p>Kairo does not need to.</p>
+<p>Its invalid state is:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>Index <span class="op">=</span> UINT32_MAX<span class="op">;</span></span></code></pre></div>
+<p>So index:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+</math>
+<p>is a perfectly usable entity slot.</p>
+<p>This is cleaner than sacrificing index 0 unless some API interoperability requires it.</p>
+<hr />
+<p><strong><code>Entity::IsValid()</code> is not the same as “entity is alive”</strong></p>
+<p>This distinction matters.</p>
+<p>Current:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>entity<span class="op">.</span>IsValid<span class="op">()</span></span></code></pre></div>
+<p>only verifies:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>≠</mo>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>It does <strong>not</strong> prove:</p>
+<ul>
+<li>index is within registry bounds,</li>
+<li>slot is alive,</li>
+<li>generation matches.</li>
+</ul>
+<p>Actual liveness requires registry state.</p>
+<p>Your <code>Registry::IsAlive()</code> correctly does:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    entity<span class="op">.</span>IsValid<span class="op">()</span> <span class="op">&amp;&amp;</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    entity<span class="op">.</span>Index <span class="op">&lt;</span> <span class="va">m_Generations</span><span class="op">.</span>size<span class="op">()</span> <span class="op">&amp;&amp;</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_Alive</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">]</span> <span class="op">&amp;&amp;</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_Generations</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">]</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">==</span> entity<span class="op">.</span>Generation<span class="op">;</span></span></code></pre></div>
+<p>Thus there are two concepts:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>syntactically non-null handle</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>currently live entity</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+  <mo>.</mo>
+</math>
+<p>Do not conflate them.</p>
+<hr />
+<p><strong>Generation counters</strong></p>
+<p>Suppose slot 5 begins:</p>
+<pre class="text"><code>Index      = 5
+Generation = 1</code></pre>
+<p>Entity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Destroy it.</p>
+<p>Increment generation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo stretchy="false">[</mo>
+  <mn>5</mn>
+  <mo stretchy="false">]</mo>
+  <mo stretchy="false">←</mo>
+  <mn>2.</mn>
+</math>
+<p>When slot 5 is reused:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Now stale handle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>fails:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo stretchy="false">[</mo>
+  <mn>5</mn>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mo>≠</mo>
+  <mn>1.</mn>
+</math>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>s</mi>
+  <mi>A</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>while:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>s</mi>
+  <mi>A</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>That solves index reuse.</p>
+<hr />
+<p><strong>Why generations solve the stale-handle problem</strong></p>
+<p>Suppose physics holds:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>Entity target <span class="op">=</span> enemy<span class="op">;</span></span></code></pre></div>
+<p>Enemy dies.</p>
+<p>Another entity later receives the same index.</p>
+<p>Without generations:</p>
+<pre class="text"><code>target = new unrelated entity</code></pre>
+<p>silently.</p>
+<p>With generations:</p>
+<pre class="text"><code>target.Index      = 431
+target.Generation = 8
+
+registry slot 431 generation = 9</code></pre>
+<p>Therefore validation fails.</p>
+<p>The old reference cannot accidentally mutate the replacement object.</p>
+<p>This is one of the highest-value safety mechanisms in an engine.</p>
+<hr />
+<p><strong>Generation counters do not provide infinite uniqueness automatically</strong></p>
+<p>Suppose generation uses <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+</math> bits.</p>
+<p>There are only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>2</mn>
+    <mi>g</mi>
+  </msup>
+</math>
+<p>possible values.</p>
+<p>Eventually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo stretchy="false">→</mo>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo stretchy="false">→</mo>
+  <mo>⋯</mo>
+  <mo stretchy="false">→</mo>
+  <msup>
+    <mn>2</mn>
+    <mi>g</mi>
+  </msup>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">→</mo>
+  <mn>0.</mn>
+</math>
+<p>If wrap occurs, an ancient stale handle may become valid again.</p>
+<p>That recreates ABA.</p>
+<p>For a 12-bit generation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>12</mn>
+    </mrow>
+  </msup>
+  <mo>=</mo>
+  <mn>4096.</mn>
+</math>
+<p>A pathological slot reused 60 times per second wraps in:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4096</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>60</mn>
+  <mo>≈</mo>
+  <mn>68.3</mn>
+  <mtext> seconds</mtext>
+  <mo>.</mo>
+</math>
+<p>That is surprisingly quick.</p>
+<p>So generation width matters.</p>
+<hr />
+<p><strong>Kairo’s generation policy is stronger</strong></p>
+<p>Your generation is full:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="dt">uint32_t</span></span></code></pre></div>
+<p>and your destruction path explicitly checks:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="dt">bool</span> recyclable <span class="op">=</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_Generations</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">]</span> <span class="op">!=</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>numeric_limits<span class="op">&lt;</span><span class="bu">std::</span>uint32_t<span class="op">&gt;::</span>max<span class="op">();</span></span></code></pre></div>
+<p>If generation reaches:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>32</mn>
+    </mrow>
+  </msup>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>the slot is <strong>retired instead of wrapping</strong>.</p>
+<p>That gives a strict process-lifetime invariant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>a destroyed Kairo handle will never become valid again through generation wrap</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>It sacrifices one entity slot after more than four billion reuse cycles of that exact slot.</p>
+<p>That is an excellent trade.</p>
+<hr />
+<p><strong>Packing index and generation into one integer</strong></p>
+<p>Your current Kairo handle stores:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="dt">uint32_t</span> Index<span class="op">;</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="dt">uint32_t</span> Generation<span class="op">;</span></span></code></pre></div>
+<p>This already contains the right information.</p>
+<p>But the curriculum also requires understanding <strong>packed handles</strong>.</p>
+<p>Use one 64-bit integer:</p>
+<pre class="text"><code>63                             32 31                             0
++--------------------------------+--------------------------------+
+|          generation            |             index              |
++--------------------------------+--------------------------------+</code></pre>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>w</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>≪</mo>
+  <mn>32</mn>
+  <mo stretchy="false">)</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>C++:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> PackedEntity</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">using</span> Value <span class="op">=</span> <span class="bu">std::</span>uint64_t<span class="op">;</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">static</span> <span class="kw">constexpr</span> Value IndexMask <span class="op">=</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>        <span class="bn">0x00000000FFFFFFFF</span><span class="bu">ull</span><span class="op">;</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">static</span> <span class="kw">constexpr</span> <span class="dt">unsigned</span> GenerationShift <span class="op">=</span> <span class="dv">32</span><span class="op">;</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>    Value Raw <span class="op">=</span> IndexMask<span class="op">;</span> <span class="co">// invalid index, generation 0</span></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">[[</span><span class="at">nodiscard</span><span class="op">]]</span></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">constexpr</span> <span class="bu">std::</span>uint32_t Index<span class="op">()</span> <span class="at">const</span> <span class="kw">noexcept</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">static_cast</span><span class="op">&lt;</span><span class="bu">std::</span>uint32_t<span class="op">&gt;(</span></span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>            Raw <span class="op">&amp;</span> IndexMask<span class="op">);</span></span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">[[</span><span class="at">nodiscard</span><span class="op">]]</span></span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">constexpr</span> <span class="bu">std::</span>uint32_t Generation<span class="op">()</span> <span class="at">const</span> <span class="kw">noexcept</span></span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">static_cast</span><span class="op">&lt;</span><span class="bu">std::</span>uint32_t<span class="op">&gt;(</span></span>
+<span id="cb30-23"><a href="#cb30-23" aria-hidden="true" tabindex="-1"></a>            Raw <span class="op">&gt;&gt;</span> GenerationShift<span class="op">);</span></span>
+<span id="cb30-24"><a href="#cb30-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb30-25"><a href="#cb30-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-26"><a href="#cb30-26" aria-hidden="true" tabindex="-1"></a>    <span class="op">[[</span><span class="at">nodiscard</span><span class="op">]]</span></span>
+<span id="cb30-27"><a href="#cb30-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">static</span> <span class="kw">constexpr</span> PackedEntity Make<span class="op">(</span></span>
+<span id="cb30-28"><a href="#cb30-28" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>uint32_t index<span class="op">,</span></span>
+<span id="cb30-29"><a href="#cb30-29" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>uint32_t generation<span class="op">)</span> <span class="kw">noexcept</span></span>
+<span id="cb30-30"><a href="#cb30-30" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb30-31"><a href="#cb30-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
+<span id="cb30-32"><a href="#cb30-32" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb30-33"><a href="#cb30-33" aria-hidden="true" tabindex="-1"></a>            <span class="op">(</span><span class="kw">static_cast</span><span class="op">&lt;</span>Value<span class="op">&gt;(</span>generation<span class="op">)</span> <span class="op">&lt;&lt;</span> GenerationShift<span class="op">)</span></span>
+<span id="cb30-34"><a href="#cb30-34" aria-hidden="true" tabindex="-1"></a>            <span class="op">|</span></span>
+<span id="cb30-35"><a href="#cb30-35" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span>Value<span class="op">&gt;(</span>index<span class="op">)</span></span>
+<span id="cb30-36"><a href="#cb30-36" aria-hidden="true" tabindex="-1"></a>        <span class="op">};</span></span>
+<span id="cb30-37"><a href="#cb30-37" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb30-38"><a href="#cb30-38" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<hr />
+<p><strong>What packing actually buys you</strong></p>
+<p>Kairo’s current pair of <code>uint32_t</code>s is normally already 8 bytes.</p>
+<p>A packed <code>uint64_t</code> is also 8 bytes.</p>
+<p>So packing does not necessarily save memory.</p>
+<p>The advantages are instead:</p>
+<ul>
+<li>one scalar value for hashing/comparison,</li>
+<li>convenient atomic operations on platforms with native 64-bit atomics,</li>
+<li>easier serialization as one integer,</li>
+<li>explicit bit allocation,</li>
+<li>easier passing through C APIs.</li>
+</ul>
+<p>The disadvantages are:</p>
+<ul>
+<li>bit manipulation,</li>
+<li>fixed allocation between index/generation bits,</li>
+<li>easier accidental misuse,</li>
+<li>generation width may be reduced if packed into 32 bits.</li>
+</ul>
+<hr />
+<p><strong>32-bit packed handles</strong></p>
+<p>Suppose total handle is only 32 bits.</p>
+<p>A common split is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>20</mn>
+  <mtext> index bits</mtext>
+  <mo>+</mo>
+  <mn>12</mn>
+  <mtext> generation bits</mtext>
+  <mo>.</mo>
+</math>
+<p>Maximum slot index count:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>20</mn>
+    </mrow>
+  </msup>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>048</mn>
+  <mo>,</mo>
+  <mn>576.</mn>
+</math>
+<p>Generation states:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>12</mn>
+    </mrow>
+  </msup>
+  <mo>=</mo>
+  <mn>4096.</mn>
+</math>
+<p>Current EnTT’s default 32-bit entity traits use exactly a 20-bit entity field and 12-bit version field, while its 64-bit traits use 32 bits for each. This is a useful real production example of the capacity-versus-generation-width tradeoff. <a href="https://skypjack.github.io/entt/entity_8hpp_source.html?utm_source=chatgpt.com">skypjack.github.io</a></p>
+<p>Other choices:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Index bits</th>
+<th style="text-align: right;">Generation bits</th>
+<th style="text-align: right;">Max slots</th>
+<th style="text-align: right;">Generation states</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">16.7 M</td>
+<td style="text-align: right;">256</td>
+</tr>
+<tr>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">1.05 M</td>
+<td style="text-align: right;">4096</td>
+</tr>
+<tr>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">65,536</td>
+<td style="text-align: right;">65,536</td>
+</tr>
+<tr>
+<td style="text-align: right;">32</td>
+<td style="text-align: right;">32 in a 64-bit handle</td>
+<td style="text-align: right;">4.29 B</td>
+<td style="text-align: right;">4.29 B</td>
+</tr>
+</tbody>
+</table>
+<p>There is no universal split.</p>
+<hr />
+<p><strong>Free lists</strong></p>
+<p>Once an entity dies, its index should usually become reusable.</p>
+<p>Suppose registry has slots:</p>
+<pre class="text"><code>0 alive
+1 dead
+2 alive
+3 dead
+4 alive</code></pre>
+<p>Without reuse, new entities always append:</p>
+<pre class="text"><code>5
+6
+7
+8
+...</code></pre>
+<p>Metadata arrays grow forever.</p>
+<p>Instead store dead reusable slots:</p>
+<pre class="text"><code>free list:
+3
+1</code></pre>
+<p>Then next entity creation pops one.</p>
+<p>Your Kairo implementation uses:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span><span class="bu">std::</span>uint32_t<span class="op">&gt;</span> <span class="va">m_FreeIndices</span><span class="op">;</span></span></code></pre></div>
+<p>as a stack.</p>
+<p>That gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>amortized,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>p</mi>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>LIFO versus FIFO free lists</strong></p>
+<p>A vector stack gives LIFO reuse.</p>
+<p>Suppose:</p>
+<pre class="text"><code>destroy 100
+destroy 200
+destroy 300</code></pre>
+<p>free list:</p>
+<pre class="text"><code>100 200 300</code></pre>
+<p>next creation gets:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>300.</mn>
+</math>
+<p>This often helps locality because the most recently used metadata slot is reused quickly.</p>
+<p>But rapid create/destroy loops can repeatedly hammer the same slot, advancing its generation quickly.</p>
+<p>With 32-bit generations and slot retirement, that is essentially irrelevant in realistic process lifetimes.</p>
+<p>With tiny generation fields, it matters.</p>
+<hr />
+<p><strong>Intrusive free lists</strong></p>
+<p>A separate vector is not the only design.</p>
+<p>Dead slot metadata itself can store the next free index:</p>
+<pre class="text"><code>slot 5 -&gt; slot 9 -&gt; slot 14 -&gt; end</code></pre>
+<p>Then:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="dt">uint32_t</span> freeHead<span class="op">;</span></span></code></pre></div>
+<p>is enough.</p>
+<p>A dead entity slot could reinterpret one metadata field as:</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>NextFree</span></code></pre></div>
+<p>much like your <code>DynamicAABBTreeNode</code> intended in the previous pass.</p>
+<p>This saves the separate free-index vector but makes slot state representation more complicated.</p>
+<p>Kairo’s separate vector is simpler and perfectly reasonable.</p>
+<hr />
+<p><strong>Entity creation from a free-list slot</strong></p>
+<p>Current Kairo creation has two paths.</p>
+<p><strong>Reuse path</strong></p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(!</span><span class="va">m_FreeIndices</span><span class="op">.</span>empty<span class="op">())</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>    index <span class="op">=</span> <span class="va">m_FreeIndices</span><span class="op">.</span>back<span class="op">();</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_FreeIndices</span><span class="op">.</span>pop_back<span class="op">();</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_Alive</span><span class="op">[</span>index<span class="op">]</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The generation was already incremented when the old entity died.</p>
+<p>So returned entity is:</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>Entity<span class="op">{</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    index<span class="op">,</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_Generations</span><span class="op">[</span>index<span class="op">]</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>No new metadata slot is allocated.</p>
+<hr />
+<p><strong>New-slot creation</strong></p>
+<p>If free list is empty:</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>index <span class="op">=</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">uint32_t</span><span class="op">&gt;(</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Generations</span><span class="op">.</span>size<span class="op">());</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a><span class="va">m_Generations</span><span class="op">.</span>push_back<span class="op">(</span><span class="dv">1</span><span class="bu">u</span><span class="op">);</span></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a><span class="va">m_Alive</span><span class="op">.</span>push_back<span class="op">(</span><span class="kw">true</span><span class="op">);</span></span></code></pre></div>
+<p>New entities begin generation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1.</mn>
+</math>
+<p>Why not 0?</p>
+<p>There is no deep requirement.</p>
+<p>Starting at one makes generation zero available as a conspicuous default/uninitialized value.</p>
+<p>It also means default:</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>Entity<span class="op">{}</span></span></code></pre></div>
+<p>has:</p>
+<pre class="text"><code>InvalidIndex
+Generation 0</code></pre>
+<p>which looks distinct from normal created entities.</p>
+<hr />
+<p><strong>Kairo creation exception safety</strong></p>
+<p>Your current <code>Create()</code> does something many small ECS examples omit.</p>
+<p>Before structural mutation:</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>ReserveJournalSlot<span class="op">();</span></span></code></pre></div>
+<p>Then for a new slot:</p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="va">m_Generations</span><span class="op">.</span>push_back<span class="op">(</span><span class="dv">1</span><span class="bu">u</span><span class="op">);</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_Alive</span><span class="op">.</span>push_back<span class="op">(</span><span class="kw">true</span><span class="op">);</span></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a><span class="cf">catch</span> <span class="op">(...)</span></span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_Generations</span><span class="op">.</span>pop_back<span class="op">();</span></span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">throw</span><span class="op">;</span></span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>So if <code>m_Alive</code> allocation fails, the generation vector is rolled back.</p>
+<p>That preserves:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>m</mi>
+    <mi>G</mi>
+  </msub>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>m</mi>
+    <mi>A</mi>
+  </msub>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This is not glamorous ECS theory.</p>
+<p>It is exactly what production container design requires.</p>
+<hr />
+<p><strong>Entity destruction and generation increments</strong></p>
+<p>Destroying an entity must happen in a careful order.</p>
+<p>Naïvely:</p>
+<pre class="text"><code>mark dead
+push free index
+remove components
+increment generation</code></pre>
+<p>is dangerous because failures or reentrant code could expose inconsistent states.</p>
+<p>Your current ordering is much more deliberate:</p>
+<pre class="text"><code>1. Verify entity is alive
+2. Reserve journal capacity
+3. Ensure free list can accept index
+4. Remove every component
+5. Mark entity dead
+6. Decrement live count
+7. Journal Destroyed using old handle
+8. Increment generation
+9. Push reusable index</code></pre>
+<p>This preserves several invariants.</p>
+<hr />
+<p><strong>Why components must be removed before index recycling</strong></p>
+<p>Imagine entity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>7</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>owns:</p>
+<pre class="text"><code>Transform
+Velocity
+Health</code></pre>
+<p>If slot 7 is reused before those components disappear, new entity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>7</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>could encounter storage left by generation 4.</p>
+<p>Sparse storage must never silently attach stale data to the new incarnation.</p>
+<p>Your <code>Destroy()</code> therefore loops:</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="at">const</span> <span class="kw">auto</span><span class="op">&amp;</span> storage <span class="op">:</span> <span class="va">m_Storages</span><span class="op">)</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">(</span><span class="dt">void</span><span class="op">)</span>storage<span class="op">-&gt;</span>Remove<span class="op">(</span>entity<span class="op">);</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>before recycling the index.</p>
+<p>That establishes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>reusable entity slot</mtext>
+          <mo stretchy="false">⇒</mo>
+          <mtext>no components from previous generation remain</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Generation must advance before reuse</strong></p>
+<p>The critical ordering is:</p>
+<pre class="text"><code>destroy old entity
+     ↓
+invalidate old generation
+     ↓
+place index on free list
+     ↓
+future Create may reuse</code></pre>
+<p>Never:</p>
+<pre class="text"><code>free index
+     ↓
+reuse
+     ↓
+increment generation later</code></pre>
+<p>because there would be a window where old and new identity collide.</p>
+<p>Kairo correctly increments before <code>m_FreeIndices.push_back()</code>.</p>
+<hr />
+<p><strong>Validating an entity handle</strong></p>
+<p>The complete validation predicate is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>E</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>V</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mo>∧</mo>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>B</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>s</mi>
+  <mo>∧</mo>
+  <mi>A</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo stretchy="false">[</mo>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">]</mo>
+  <mo>∧</mo>
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo stretchy="false">[</mo>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>E</mi>
+  <mo>.</mo>
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>In C++:</p>
+<div class="sourceCode" id="cb53"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> IsAlive<span class="op">(</span>Entity e<span class="op">)</span> <span class="at">const</span> <span class="kw">noexcept</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span></span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>        e<span class="op">.</span>Index <span class="op">!=</span> InvalidIndex <span class="op">&amp;&amp;</span></span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>        e<span class="op">.</span>Index <span class="op">&lt;</span> generations<span class="op">.</span>size<span class="op">()</span> <span class="op">&amp;&amp;</span></span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>        alive<span class="op">[</span>e<span class="op">.</span>Index<span class="op">]</span> <span class="op">&amp;&amp;</span></span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>        generations<span class="op">[</span>e<span class="op">.</span>Index<span class="op">]</span> <span class="op">==</span> e<span class="op">.</span>Generation<span class="op">;</span></span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Every externally supplied entity should eventually cross this boundary before mutating registry state.</p>
+<hr />
+<p><strong>Why generation must also be checked in component storage</strong></p>
+<p>One might say:</p>
+<blockquote>
+<p>Registry already validates entities. Why should <code>SparseSet</code> care about generations?</p>
+</blockquote>
+<p>Because <code>SparseSet&lt;T&gt;</code> is also an independent public type in Kairo.</p>
+<p>Someone could construct:</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>Entity old<span class="op">{</span><span class="dv">42</span><span class="op">,</span><span class="dv">1</span><span class="op">};</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>Entity newer<span class="op">{</span><span class="dv">42</span><span class="op">,</span><span class="dv">2</span><span class="op">};</span></span></code></pre></div>
+<p>directly.</p>
+<p>The component pool must remain internally coherent even when used separately.</p>
+<p>Your <code>SparseSet::Contains()</code> checks:</p>
+<div class="sourceCode" id="cb55"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="dt">uint32_t</span> dense <span class="op">=</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_Sparse</span><span class="op">[</span>entity<span class="op">.</span>Index<span class="op">];</span></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span></span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>    dense <span class="op">!=</span> Missing <span class="op">&amp;&amp;</span></span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>    dense <span class="op">&lt;</span> <span class="va">m_Entities</span><span class="op">.</span>size<span class="op">()</span> <span class="op">&amp;&amp;</span></span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_Entities</span><span class="op">[</span>dense<span class="op">]</span> <span class="op">==</span> entity<span class="op">;</span></span></code></pre></div>
+<p>That final equality checks both:</p>
+<pre class="text"><code>Index
+Generation</code></pre>
+<p>because <code>Entity::operator==</code> compares both fields.</p>
+<p>Excellent.</p>
+<hr />
+<p><strong>Component type identity</strong></p>
+<p>Entities are one axis of identity.</p>
+<p>Components need another.</p>
+<p>When user writes:</p>
+<div class="sourceCode" id="cb57"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>registry<span class="op">.</span>Get<span class="op">&lt;</span>Transform<span class="op">&gt;(</span>entity<span class="op">);</span></span></code></pre></div>
+<p>the ECS must find:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mo>&lt;</mo>
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mo>&gt;</mo>
+  <mo>.</mo>
+</math>
+<p>When user writes:</p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>registry<span class="op">.</span>Get<span class="op">&lt;</span>Velocity<span class="op">&gt;(</span>entity<span class="op">);</span></span></code></pre></div>
+<p>it must find:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mo>&lt;</mo>
+  <mi>V</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo>&gt;</mo>
+  <mo>.</mo>
+</math>
+<p>So every component type needs an identity.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>Transform   -&gt; type 0
+Velocity    -&gt; type 1
+Health      -&gt; type 2
+Renderable  -&gt; type 3
+...</code></pre>
+<p>That numeric mapping enables:</p>
+<ul>
+<li>pool lookup,</li>
+<li>component masks,</li>
+<li>serialization metadata,</li>
+<li>reflection,</li>
+<li>query caching,</li>
+<li>command buffers.</li>
+</ul>
+<hr />
+<p><strong>Static component type IDs</strong></p>
+<p>A simple runtime-local scheme is:</p>
+<div class="sourceCode" id="cb60"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> ComponentTypeID <span class="op">=</span> <span class="bu">std::</span>uint32_t<span class="op">;</span></span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a><span class="kw">inline</span> ComponentTypeID NextComponentTypeID<span class="op">()</span></span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">static</span> ComponentTypeID next <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> next<span class="op">++;</span></span>
+<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb60-8"><a href="#cb60-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb60-9"><a href="#cb60-9" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">typename</span> T<span class="op">&gt;</span></span>
+<span id="cb60-10"><a href="#cb60-10" aria-hidden="true" tabindex="-1"></a>ComponentTypeID ComponentType<span class="op">()</span></span>
+<span id="cb60-11"><a href="#cb60-11" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb60-12"><a href="#cb60-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">static</span> <span class="at">const</span> ComponentTypeID id <span class="op">=</span></span>
+<span id="cb60-13"><a href="#cb60-13" aria-hidden="true" tabindex="-1"></a>        NextComponentTypeID<span class="op">();</span></span>
+<span id="cb60-14"><a href="#cb60-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb60-15"><a href="#cb60-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> id<span class="op">;</span></span>
+<span id="cb60-16"><a href="#cb60-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Then:</p>
+<div class="sourceCode" id="cb61"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>ComponentType<span class="op">&lt;</span>Transform<span class="op">&gt;()</span> <span class="op">==</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>ComponentType<span class="op">&lt;</span>Velocity<span class="op">&gt;()</span>  <span class="op">==</span> <span class="dv">1</span><span class="op">;</span></span></code></pre></div>
+<p>within one execution.</p>
+<p>Lookup can become:</p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span>StorageBase<span class="op">*&gt;</span> pools<span class="op">;</span></span></code></pre></div>
+<p>instead of:</p>
+<div class="sourceCode" id="cb63"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>unordered_map<span class="op">&lt;</span>type_index<span class="op">,</span> <span class="op">...&gt;</span></span></code></pre></div>
+<p>which can be substantially cheaper.</p>
+<hr />
+<p><strong>Why lazy static IDs are not persistent schema IDs</strong></p>
+<p>Suppose registration order changes:</p>
+<p>Run A:</p>
+<pre class="text"><code>Transform -&gt; 0
+Velocity  -&gt; 1
+Health    -&gt; 2</code></pre>
+<p>Run B:</p>
+<pre class="text"><code>Health    -&gt; 0
+Transform -&gt; 1
+Velocity  -&gt; 2</code></pre>
+<p>If file says:</p>
+<pre class="text"><code>component type 1</code></pre>
+<p>its meaning changed.</p>
+<p>So lazy static IDs are excellent for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>process-local fast indexing</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>but usually terrible for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>serialization/network protocol identity</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+  <mo>.</mo>
+</math>
+<p>These are separate requirements.</p>
+<hr />
+<p><strong>Thread safety of static type allocation</strong></p>
+<p>Function-local static initialization is thread-safe in modern C++.</p>
+<p>But the shared counter itself must also be safely incremented if different component types can be first-used concurrently.</p>
+<p>A naïve:</p>
+<div class="sourceCode" id="cb67"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>next<span class="op">++;</span></span></code></pre></div>
+<p>on a global integer is a data race.</p>
+<p>Solutions include:</p>
+<ul>
+<li>register component types during single-threaded initialization,</li>
+<li>atomic counter,</li>
+<li>mutex-protected registry,</li>
+<li>compile-time type registration.</li>
+</ul>
+<p>Engine startup registration is often the simplest.</p>
+<hr />
+<p><strong>Runtime component type registries</strong></p>
+<p>A real component registry often stores much more than a number.</p>
+<p>For example:</p>
+<div class="sourceCode" id="cb68"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ComponentDescriptor</span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>    ComponentTypeID ID<span class="op">;</span></span>
+<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>string Name<span class="op">;</span></span>
+<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-7"><a href="#cb68-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>size_t Size<span class="op">;</span></span>
+<span id="cb68-8"><a href="#cb68-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>size_t Alignment<span class="op">;</span></span>
+<span id="cb68-9"><a href="#cb68-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-10"><a href="#cb68-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="op">(*</span>DefaultConstruct<span class="op">)(</span><span class="dt">void</span><span class="op">*);</span></span>
+<span id="cb68-11"><a href="#cb68-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="op">(*</span>Destroy<span class="op">)(</span><span class="dt">void</span><span class="op">*);</span></span>
+<span id="cb68-12"><a href="#cb68-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="op">(*</span>MoveConstruct<span class="op">)(</span><span class="dt">void</span><span class="op">*,</span> <span class="dt">void</span><span class="op">*);</span></span>
+<span id="cb68-13"><a href="#cb68-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-14"><a href="#cb68-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Later:</span></span>
+<span id="cb68-15"><a href="#cb68-15" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Serialize</span></span>
+<span id="cb68-16"><a href="#cb68-16" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Deserialize</span></span>
+<span id="cb68-17"><a href="#cb68-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Reflect</span></span>
+<span id="cb68-18"><a href="#cb68-18" aria-hidden="true" tabindex="-1"></a>    <span class="co">// EditorDraw</span></span>
+<span id="cb68-19"><a href="#cb68-19" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then:</p>
+<pre class="text"><code>type ID
+   ↓
+descriptor
+   ↓
+size/alignment/lifetime/serialization/etc.</code></pre>
+<p>This is the beginning of a reflection-aware ECS.</p>
+<hr />
+<p><strong>What Kairo currently uses</strong></p>
+<p>Kairo currently finds pools using:</p>
+<div class="sourceCode" id="cb70"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>unordered_map<span class="op">&lt;</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>type_index<span class="op">,</span></span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>StorageBase<span class="op">&gt;</span></span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> <span class="va">m_Pools</span><span class="op">;</span></span></code></pre></div>
+<p>Lookup:</p>
+<div class="sourceCode" id="cb71"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="va">m_Pools</span><span class="op">.</span>find<span class="op">(</span></span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>type_index<span class="op">(</span><span class="kw">typeid</span><span class="op">(</span>Component<span class="op">))</span></span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a><span class="op">);</span></span></code></pre></div>
+<p>This is a valid <strong>runtime C++ type identity</strong> solution.</p>
+<p>It means component types do not require registration ahead of time.</p>
+<p>The first:</p>
+<div class="sourceCode" id="cb72"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>Emplace<span class="op">&lt;</span>Transform<span class="op">&gt;</span></span></code></pre></div>
+<p>can create <code>Pool&lt;Transform&gt;</code> lazily.</p>
+<p>But <code>std::type_index</code> is not the stable serialized identity you would want for scene schemas, editor metadata or networking.</p>
+<p>So current Kairo has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>runtime storage type identity</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>but not yet:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>explicit persistent component schema identity</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That later connects directly to reflection and serialization.</p>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch389.xhtml#id_05-engine-i-ch013-portable-startup-windows-events-and-input" class="wikilink">Previous chapter</a> · <a href="ch393.xhtml#id_05-engine-i-ch015-sparse-set-components-and-generational-entity-handles" class="wikilink">Next chapter</a></p>
+</section>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch362.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-c5b332e400e7-radiance-fields-and-gaussian-splatting" class="level2">
+<h2>Radiance fields and Gaussian splatting</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-c5b332e400e7-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A radiance field represents a scene by the color and density seen along each 3D viewing ray. NeRF maps a position and viewing direction through a learned function, then volume-renders samples using transmittance and opacity weights; multiple calibrated photographs supervise the result. This representation handles view-dependent appearance but can require many ray samples and careful camera alignment. 3D Gaussian splatting instead stores anisotropic colored Gaussian primitives in space and projects them to screen, sorting and blending their footprints for fast interactive views. 2D Gaussian splatting uses oriented surface-like splats to improve geometric consistency. These methods trade continuous function evaluation for explicit primitives and rasterization. Sparse or biased views leave unseen regions unconstrained; floaters, blur, aliasing, incorrect transparency ordering, or poor geometry can remain even when training views look convincing. Novel-view quality is not equivalent to a watertight mesh or physically correct material. Reconstruction quality depends on camera poses, coverage, calibration, and the scene’s changing illumination.</p>
+</section>
+<section id="appendix-c5b332e400e7-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch345.xhtml#appendix-3ee9861904d5-camera-calibration-and-bundle-adjustment" class="wikilink">Camera calibration and bundle adjustment</a></li>
+<li><a href="ch351.xhtml#appendix-6a7869dd79a6-sampling-aliasing-and-reconstruction" class="wikilink">Sampling aliasing and reconstruction</a></li>
+<li><a href="ch281.xhtml#appendix-4815cd87ab8b-probability-density-and-change-of-measure" class="wikilink">Probability density and change of measure (Mathematics for Visual Computing, Part 2, Reference notes: Probability density and change of measure)</a></li>
+<li><a href="ch337.xhtml#appendix-0b426c47dd78-bounding-volume-hierarchies" class="wikilink">Bounding volume hierarchies</a></li>
+<li><a href="ch348.xhtml#appendix-47ac1bd6d144-ray-triangle-intersection" class="wikilink">Ray-triangle intersection</a></li>
+<li><a href="ch346.xhtml#appendix-40df0855b4a7-automatic-differentiation-and-backpropagation" class="wikilink">Automatic differentiation and backpropagation</a></li>
+<li><a href="ch343.xhtml#appendix-2c568f05ee34-latent-variable-models-and-generative-flows" class="wikilink">Latent-variable models and generative flows</a></li>
+</ul>
+</section>
+<section id="appendix-c5b332e400e7-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch541.xhtml#id_04-visual-computing-ii-ch034-learned-representations-of-3d-shape-and-scenes" class="wikilink">Learned representations of 3D shape and scenes (Vision, XR, and Playable Worlds, Part 1, Ch. 4)</a></li>
+</ul>
+</section>
+<section id="appendix-c5b332e400e7-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch541.xhtml#id_04-visual-computing-ii-ch034-learned-representations-of-3d-shape-and-scenes" class="wikilink">Learned representations of 3D shape and scenes (Vision, XR, and Playable Worlds, Part 1, Ch. 4)</a></li>
+</ul>
+</section>
+<section id="appendix-c5b332e400e7-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<ul>
+<li>Contrast ray-sampled density compositing with projected Gaussian primitive blending.</li>
+<li>What can excellent training-view synthesis fail to establish about unseen geometry?</li>
+</ul>
+</section>
+<section id="appendix-c5b332e400e7-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p>Teaching narrative: <a href="ch541.xhtml#id_04-visual-computing-ii-ch034-learned-representations-of-3d-shape-and-scenes" class="wikilink">open the main explanation (Vision, XR, and Playable Worlds, Part 1, Ch. 4)</a>. Browse the <a href="ch547.xhtml#appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series" class="wikilink">University graphics and vision index</a>. Additional chapter connections: <a href="ch305.xhtml#id_03-visual-computing-i-ch003-cameras-projection-and-calibration" class="wikilink">Cameras, projection, and calibration (Geometry, Cameras, and Image Formation, Part 1, Ch. 10)</a>; <a href="ch319.xhtml#id_03-visual-computing-i-ch007-the-rendering-equation-and-light-transport" class="wikilink">The rendering equation and light transport</a>; <a href="ch383.xhtml#id_04-visual-computing-ii-ch028-visibility-queries-and-ray-intersections-1" class="wikilink">Visibility queries and ray intersections (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 9)</a>; <a href="ch296.xhtml#id_03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing" class="wikilink">Meshes, connectivity, and geometry processing (Geometry, Cameras, and Image Formation, Part 1, Ch. 9)</a>.</p>
+<p>Caption/source records: <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-sc-15---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-15-3d-vision" class="wikilink">SC-15 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>, <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-p3-13---curves-and-surfaces" class="wikilink">P3-13 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>, <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-p3-15---ray-tracing" class="wikilink">P3-15 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>.</p>
+</section>
+</section>
+</body>
+</html>

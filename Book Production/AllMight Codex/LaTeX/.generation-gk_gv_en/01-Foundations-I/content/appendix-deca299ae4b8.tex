@@ -1,0 +1,35 @@
+\hypertarget{appendix-deca299ae4b8}{}
+\section*{ULP distance policies}
+\chapter{ULP distance policies}\label{appendix-deca299ae4b8-ulp-distance-policies}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C004 · \textbf{Latest development:} C004
+
+\section{Definition and mechanism}\label{appendix-deca299ae4b8-definition-and-mechanism}
+
+Distance counts representable steps under a declared ordering/equality policy. The finite-only laboratory collapses both zeros to one key and rejects NaNs/infinities. Across negative minimum subnormal to positive minimum subnormal distance is two.
+
+\section{Prerequisites}\label{appendix-deca299ae4b8-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-14bab4cab9d4]{ULP and representable spacing} --- Adjacent representable points define rounding candidates, errors and step distances.
+\item
+  \hyperref[appendix-3a048f032c1f]{Signed zero} --- Numerical equality merges two encodings and must be reflected in the chosen ordering or byte policy.
+\item
+  \hyperref[appendix-d6607cc4c235]{NaNs and payloads} --- Unordered comparisons and payload distinctions require explicit metric, comparison and serialization policy.
+\end{itemize}
+
+\section{Used by}\label{appendix-deca299ae4b8-used-by}
+
+Connect later dependent concepts here as their lessons arrive.
+
+\section{Recall and next depth}\label{appendix-deca299ae4b8-recall-and-next-depth}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} A raw complement key with two zero slots overcounts cross-zero intervals unless corrected.
+
+\section{Source and navigation}\label{appendix-deca299ae4b8-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20stretching\%20ruler\%20for\%20real-valued\%20quantities}{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

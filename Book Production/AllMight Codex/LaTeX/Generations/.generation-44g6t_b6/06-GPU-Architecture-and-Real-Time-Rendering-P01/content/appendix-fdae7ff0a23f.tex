@@ -1,0 +1,66 @@
+\hypertarget{appendix-fdae7ff0a23f}{}\label{referencestart:appendix-fdae7ff0a23f}
+\section{Interface contracts and publication}\label{appendix-fdae7ff0a23f-interface-contracts-and-publication}
+
+\hypertarget{appendix-fdae7ff0a23f-interface-contracts-and-publication}{}
+
+An interface contract says more than which function name to call. It defines the states in which an operation is valid and what becomes true when it succeeds.
+
+A complete contract should state:
+
+\begin{itemize}
+\tightlist
+\item
+  valid input domain and units;
+\item
+  ownership and lifetime of arguments/results;
+\item
+  mutation and aliasing;
+\item
+  failure representation and exception/error guarantees;
+\item
+  thread/concurrency rules;
+\item
+  timing: immediate, deferred or asynchronous;
+\item
+  invalidation;
+\item
+  observability/publication point.
+\end{itemize}
+
+\subsection{Publication is a state transition}\label{appendix-fdae7ff0a23f-publication-is-a-state-transition}
+
+\hypertarget{appendix-fdae7ff0a23f-publication-is-a-state-transition}{}
+
+A producer may construct a resource privately and then publish it so consumers can rely on it. Before publication, partial state can remain invisible. After publication, every documented invariant must hold.
+
+For CPU concurrency, release/acquire synchronization is one possible publication mechanism when the memory model requirements fit the data structure.
+
+For asynchronous assets, ``decode finished'' does not mean ``GPU resource is safe to sample.'' A useful state machine may distinguish:
+
+requested → decoded → upload recorded → submitted → GPU-ready → published.
+
+Similarly, an obsolete request must not publish after a newer generation has replaced it. Generation IDs or request tokens protect the destination identity.
+
+\subsection{Ownership versus readiness}\label{appendix-fdae7ff0a23f-ownership-versus-readiness}
+
+\hypertarget{appendix-fdae7ff0a23f-ownership-versus-readiness}{}
+
+A reference can be alive but not ready. A GPU buffer wrapper can exist while its upload is still in flight. Conversely, a resource can be GPU-ready while the CPU owner is about to destroy it unless retirement is deferred until all GPU use completes.
+
+Lifetime and synchronization are independent axes.
+
+\subsection{Failure guarantees}\label{appendix-fdae7ff0a23f-failure-guarantees}
+
+\hypertarget{appendix-fdae7ff0a23f-failure-guarantees}{}
+
+If publication is atomic, consumers should observe either the old valid version or the new valid version, not a half-updated mixture. That promise requires implementation evidence appropriate to the domain: atomics/locks for CPU state, transaction/staging for files, semaphore/fence/queue dependencies for GPU work.
+
+\subsection{Evidence}\label{appendix-fdae7ff0a23f-evidence}
+
+\hypertarget{appendix-fdae7ff0a23f-evidence}{}
+
+tools/labs/threaded\_asset\_publication\_lab.cpp and tools/labs/production\_pipeline\_contract\_lab.cpp exercise two different publication domains: concurrent asset decoding/publication and deterministic staged production publication.
+
+Read the connected explanation in \hyperref[01-foundations-i-ch008-an-api-is-a-promise-about-an-operation]{Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#An API is a promise about an operation}.
+
+Related: \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-e89a8f290ef5}{Atomic publication and durability (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Atomic publication and durability)}, \href{../07-Vision-XR-and-Playable-Worlds-P02/main.pdf\#nameddest=appendix-91eaa3cbdbc3}{Production manifests and transactional publication (Vision, XR, and Playable Worlds, Part 2, Reference notes: Production manifests and transactional publication)}, \hyperref[appendix-f15ce0d9c170]{Vulkan synchronization2 and resource transitions}.

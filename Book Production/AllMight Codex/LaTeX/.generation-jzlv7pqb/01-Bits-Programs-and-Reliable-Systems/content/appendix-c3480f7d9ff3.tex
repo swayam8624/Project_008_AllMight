@@ -1,0 +1,38 @@
+\hypertarget{appendix-c3480f7d9ff3}{}\label{referencestart:appendix-c3480f7d9ff3}
+\section{Dynamic allocation and heap}\label{appendix-c3480f7d9ff3-dynamic-allocation-and-heap}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\subsection{Definition and mechanism}\label{appendix-c3480f7d9ff3-definition-and-mechanism}
+
+An allocator manages variable-lifetime blocks from larger memory regions; new/free-store usage is commonly called heap allocation. An allocated object's later latency depends on locality, not the heap label. Vector metadata may be automatic/static while its element buffer is separately dynamic. Over-aligned types need suitable allocation support.
+
+\subsection{Prerequisites}\label{appendix-c3480f7d9ff3-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0b104bcba06b]{Storage duration and object lifetime} --- Access requires an object and backing storage that are still valid.
+\item
+  \hyperref[appendix-a1f7c53b4742]{Alignment and padding} --- Address divisibility determines legal placement and layout holes.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-c3480f7d9ff3-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a7c50686d81f]{Allocator fragmentation} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-d52e4486f527]{Ownership and non-owning views} --- uses this mechanism as stated in its prerequisites.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-c3480f7d9ff3-recall-and-next-depth}
+
+Separate allocation work, element buffer location, and access cost.
+
+\textbf{Pending:} Arenas, slabs, size classes, synchronization and resource allocators.
+
+\subsection{Source and navigation}\label{appendix-c3480f7d9ff3-source-and-navigation}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

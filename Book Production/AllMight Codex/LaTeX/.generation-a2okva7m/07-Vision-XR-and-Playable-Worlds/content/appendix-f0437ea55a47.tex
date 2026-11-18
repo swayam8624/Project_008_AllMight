@@ -1,0 +1,44 @@
+\hypertarget{appendix-f0437ea55a47}{}\label{referencestart:appendix-f0437ea55a47}
+\section{Conditional Gaussians and Schur complements}\label{appendix-f0437ea55a47-conditional-gaussians-and-schur-complements}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-f0437ea55a47-definition-and-mechanism}
+
+Conditioning one block of a jointly Gaussian vector on another produces a Gaussian conditional law under the usual nonsingular assumptions. Its mean shifts by the cross-covariance times the inverse observed-block covariance, while its covariance is the Schur complement Σbb−ΣbaΣaa⁻¹Σab. That conditional covariance is positive semidefinite: insert the vector (−Σaa⁻¹Σabv,v) into the joint covariance quadratic form. If the joint covariance is positive definite, the Schur complement is positive definite. The conditional covariance does not depend on the observed value, although the conditional mean does. This formula links Bayesian updating, Gaussian elimination, and block linear systems. Singular observed blocks require a compatible degenerate-Gaussian treatment or a rank-revealing method; blindly applying an inverse is invalid.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-f0437ea55a47-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-12bbe185dbe5]{Multivariate Gaussian distributions and whitening}
+\item
+  \hyperref[appendix-f6e77f4a200f]{Gaussian elimination and pivoting}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-f0437ea55a47-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  This node is a current endpoint in the supplied Phase 9--10 path.
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-f0437ea55a47-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch024-waiting-times-event-counts-and-covariance-geometry}{Phase 10 teaching section (Mathematics for Visual Computing, Ch. 8)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)} · visual recall
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-f0437ea55a47-source-coverage}
+
+Supplied lesson parts: 920 (T01 · M055), 928 (T01 · M056), 929 (T01 · M056), 930 (T01 · M056).

@@ -245,3 +245,35 @@ Reconstruct without looking: show why the screen midpoint gives $u=0.2$ for $w=(
 | What makes the planar camera bearing model valid? | Known landmarks, planar motion and the explicitly identity body-to-camera extrinsic. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Make the visual correction small enough to inspect: an eight-state planar EKF|EKF state, gate and covariance update]] |
 | What is IMU preintegration compressing? | High-rate samples between keyframes into declared relative motion summaries; it is not a complete visual estimator. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#From raw 3-D IMU samples to the pose constraint used by VIO|Frames, deltas and reconstruction]] |
 | What connects extinction to a pixel? | Segment opacity and remaining transmittance weight emitted sample colors. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#A NeRF pixel is an integral before it is a neural-network output|Discrete volume rendering and gradients]] |
+
+## Build a query structure without silently losing candidates
+
+```mermaid
+flowchart LR
+    I["Initialize counters"] --> C["Count accepted entries"]
+    C --> S["Exclusive scan"]
+    S --> W["Scatter owned ranges"]
+    W --> V["Validate capacity and visibility"]
+    V --> Q["Query finished structure"]
+```
+
+Each arrow that transfers device-produced data needs the API's required dependency. Finishing a dispatch alone does not replace memory visibility.
+
+| Recall prompt | Short answer | Full lesson |
+|---|---|---|
+| Is an append ticket a stored record? | Only when it fits. Track attempted count, stored count and overflow; reject an incomplete candidate structure. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Build GPU bins and fixed hash tables only after capacity and ownership are explicit|Capacity and publication]] |
+| How do bins avoid overlap? | Count entries, scan counts into disjoint starts, then scatter within each owned bin interval. Atomic arrival order can vary. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Worked 2D spatial-bin build|Signed coordinates, offsets and ordering]] |
+| What does CAS publish in the small hash model? | It claims a key slot for one payload writer. Queries wait for the whole build and memory handoff. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Fixed-capacity open addressing with a bounded build pass|Ownership and duplicate policy]] |
+| How does a full table terminate? | Probe at most its capacity; report failure and rebuild or reject. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Collision trace and full-table failure|Eight-slot trace and solved exercises]] |
+
+## Buffering, budget and precision in five answers
+
+| Prompt | Short answer | Return to the full derivation |
+|---|---|---|
+| What retires a frame's storage? | Its final consumer's completed token; cycling a slot index proves nothing. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Double and triple buffering change ownership, not execution speed|2 ms CPU / 6 ms GPU timeline]] |
+| Can async compute always overlap a draw? | Only if dependencies and resource contention permit. Two queues do not imply independent execution hardware. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Async compute starts with a dependency graph|7 ms ideal bound versus 10 ms serial schedule]] |
+| Does persistent mapping permit overwrite? | No. Mapping, cache visibility and consumer completion are different conditions. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Uploads need bandwidth, visibility and retirement|Ring allocation and token trace]] |
+| Which roofline ceiling matters? | The smaller of arithmetic peak and bandwidth × arithmetic intensity, with matching units and memory boundary. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Derive a roofline bound with matching units|Streaming versus matrix reuse]] |
+| Why can FP16 lose a unit increment at 2048? | Neighbor spacing is 2; 2049 rounds to 2048 under ties-to-even. Widening later cannot restore lost input. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Half precision is a range and accumulation decision|Range, rounding and local-coordinate exercise]] |
+
+Reproduce the numerical examples in [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Check the scheduling and precision examples with a scalar witness|the six-check scalar witness]]. The witness does not execute a GPU.

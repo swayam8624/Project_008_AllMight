@@ -1,0 +1,642 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch473.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-38d9c8aca357-from-movement-to-meaning-geometry-and-vector-implementation" class="level2">
+<h2>From Movement to Meaning — Geometry and Vector Implementation</h2>
+<p><strong>Scope:</strong> Companion to <a href="ch236.xhtml#id_01-foundations-i-ch017-the-panel-gives-us-a-reason-to-learn" class="wikilink">06 - From Movement to Meaning - Vectors, Geometry and Reliable Code (Mathematics for Visual Computing, Part 1, Ch. 1)</a>. The diagrams compress the robot-panel story; reconstruct the definitions, equations and failure cases from the chapter.</p>
+<section id="appendix-38d9c8aca357-one-panel-one-coordinate-story" class="level3">
+<h3>One panel, one coordinate story</h3>
+</section>
+<section id="appendix-38d9c8aca357-four-figure-cards---read-hide-reconstruct" class="level3">
+<h3>Four figure cards - read, hide, reconstruct</h3>
+<figure>
+<img src="../media/file80.png" class="wikilink" alt="600" />
+<figcaption aria-hidden="true">600</figcaption>
+</figure>
+<p><strong>Scene cue:</strong> identify the panel’s corners, a sensor location, its displacement and a surface normal before writing components. The illustration is qualitative; its cyan cone is a schematic camera field of view. <a href="ch236.xhtml#id_01-foundations-i-ch017-figure-g0---the-robot-and-its-inspection-panel" class="wikilink">Open Figure G0 and the numerical panel setup (Mathematics for Visual Computing, Part 1, Ch. 1)</a>.</p>
+<p>Each card links to a captioned figure beside its full explanation in the continuous chapter. The numbers use the chapter’s robot panel; each figure is compact and horizontal so it can be studied independently.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Card</th>
+<th>Shortest useful note</th>
+<th>Figure and explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>G1 · Role before tuple</strong></td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+  <mo>−</mo>
+  <mi>P</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">v</mi>
+  </mrow>
+</math>; <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+  <mo>+</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">v</mi>
+  </mrow>
+  <mo>=</mo>
+  <mi>Q</mi>
+</math>. A basis changes components, not the arrow: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mn>2</mn>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>. A skew basis needs <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">v</mi>
+  </mrow>
+  <msup>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <msup>
+    <mi>c</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="sans-serif">T</mi>
+    </mrow>
+  </msup>
+  <mi>G</mi>
+  <mi>c</mi>
+  <mo>=</mo>
+  <mn>13</mn>
+</math>, not <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>1</mn>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <msup>
+    <mn>2</mn>
+    <mn>2</mn>
+  </msup>
+</math>.</td>
+<td><a href="ch236.xhtml#id_01-foundations-i-ch017-g1---one-movement-two-descriptions" class="wikilink">Open Figure G1 and its limits (Mathematics for Visual Computing, Part 1, Ch. 1)</a></td>
+</tr>
+<tr>
+<td><strong>G2 · Along + across</strong></td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">p</mi>
+  </mrow>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="bold">a</mi>
+      </mrow>
+      <mo>⋅</mo>
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="bold">b</mi>
+      </mrow>
+    </mrow>
+    <mrow>
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="bold">b</mi>
+      </mrow>
+      <mo>⋅</mo>
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="bold">b</mi>
+      </mrow>
+    </mrow>
+  </mfrac>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">b</mi>
+  </mrow>
+</math>; <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">r</mi>
+  </mrow>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">a</mi>
+  </mrow>
+  <mo>−</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">p</mi>
+  </mrow>
+</math>. For <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> along <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>α</mi>
+  <mo>=</mo>
+  <mn>1.5</mn>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">p</mi>
+  </mrow>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">r</mi>
+  </mrow>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. Require <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">b</mi>
+  </mrow>
+  <mo>≠</mo>
+  <mn>0</mn>
+</math>; check <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">r</mi>
+  </mrow>
+  <mo>⋅</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">b</mi>
+  </mrow>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>.</td>
+<td><a href="ch236.xhtml#id_01-foundations-i-ch017-g2---split-the-request-into-rail-travel-and-sideways-travel" class="wikilink">Open Figure G2 and the numerical trace (Mathematics for Visual Computing, Part 1, Ch. 1)</a></td>
+</tr>
+<tr>
+<td><strong>G3 · Location + interpolation</strong></td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+  <mo>=</mo>
+  <mi>α</mi>
+  <mi>A</mi>
+  <mo>+</mo>
+  <mi>β</mi>
+  <mi>B</mi>
+  <mo>+</mo>
+  <mi>γ</mi>
+  <mi>C</mi>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>α</mi>
+  <mo>+</mo>
+  <mi>β</mi>
+  <mo>+</mo>
+  <mi>γ</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>. Panel weights <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>5</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>12</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+</math> give <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>35</mn>
+</math>. Nonnegative weights mean inside only for an in-plane point and nondegenerate triangle.</td>
+<td><a href="ch245.xhtml#id_01-foundations-i-ch018-g3---reconstruct-a-sensor-location-from-the-corners" class="wikilink">Open Figure G3 and off-plane/perspective limits (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td><strong>G4 · Preserve perpendicularity</strong></td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">t</mi>
+    </mrow>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">t</mi>
+  </mrow>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">n</mi>
+    </mrow>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <msup>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">n</mi>
+  </mrow>
+</math>. For <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mi>diag</mi>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>⋅</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>. Check numerical usability; normalize shading normals after transformation.</td>
+<td><span>Open Figure G4 and failure branches</span></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recall test:</strong> redraw one card without looking, reproduce its arithmetic, then state a case where its formula cannot safely be used. For uncertainty in determinant signs, reopen <a href="ch245.xhtml#id_01-foundations-i-ch018-a-predicate-needs-a-trustworthy-sign" class="wikilink">the predicate discussion (Mathematics for Visual Computing, Part 1, Ch. 2)</a> rather than adding a universal epsilon.</p>
+<section id="appendix-38d9c8aca357-whole-story-overview" class="level4">
+<h4>Whole-story overview</h4>
+<p><img src="../media/file172.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Caption:</strong> Coordinates describe a geometric object relative to a basis; they are not the object itself. A point has a location role; a vector has a displacement role.</p>
+</section>
+</section>
+<section id="appendix-38d9c8aca357-geometry-operations-by-question" class="level3">
+<h3>Geometry operations by question</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Geometric question</th>
+<th>Tool</th>
+<th>Key interpretation / check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>How long is this displacement?</td>
+<td>Norm</td>
+<td>Scale inputs before squaring when range could overflow/underflow.</td>
+</tr>
+<tr>
+<td>How aligned are two directions?</td>
+<td>Dot product</td>
+<td>Sign and magnitude depend on lengths; normalize only after validating nonzero finite inputs.</td>
+</tr>
+<tr>
+<td>What part points along a direction?</td>
+<td>Projection</td>
+<td>Decompose into parallel and perpendicular components.</td>
+</tr>
+<tr>
+<td>Which way is the oriented surface facing?</td>
+<td>Cross product</td>
+<td>Order/winding matters; magnitude is parallelogram area.</td>
+</tr>
+<tr>
+<td>Which side or signed volume?</td>
+<td>Determinant/triple product</td>
+<td>Near-zero signs can be numerically uncertain.</td>
+</tr>
+<tr>
+<td>Where inside the triangle?</td>
+<td>Barycentric weights</td>
+<td>Weights sum to one; perspective interpolation changes screen-space weights.</td>
+</tr>
+<tr>
+<td>How do normals transform?</td>
+<td>Inverse transpose</td>
+<td>Preserve orthogonality to transformed tangents.</td>
+</tr>
+<tr>
+<td>Are these shapes intersecting?</td>
+<td>Convex support / Minkowski difference</td>
+<td>Convert shared-point question to whether the origin is in the difference set.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-38d9c8aca357-coordinate-frame-same-movement-different-coordinates" class="level3">
+<h3>Coordinate frame: same movement, different coordinates</h3>
+<p><img src="../media/file173.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Caption:</strong> Changing components does not change the underlying vector. In a non-orthonormal basis, ordinary component dot products do not directly equal geometric inner products; the Gram matrix carries the metric.</p>
+</section>
+<section id="appendix-38d9c8aca357-robust-computation-validate-before-normalizing-or-deciding" class="level3">
+<h3>Robust computation: validate before normalizing or deciding</h3>
+<p><span class="diagram-panels"><img src="../media/file174.svg" class="allmight-diagram-panel" data-panel-index="1" data-panel-count="3" alt="Diagram" /><img src="../media/file175.svg" alt="" /><img src="../media/file176.svg" alt="" /></span><img src="../media/file177.png" class="allmight-diagram-panel" data-panel-index="2" data-panel-count="3" alt="" /><img src="../media/file178.png" class="allmight-diagram-panel" data-panel-index="3" data-panel-count="3" alt="" /></p>
+<p><strong>Caption:</strong> Clamping an invalid intermediate is not a proof that the original geometry was valid. Input validity, arithmetic range, tolerance meaning and decision confidence are separate checks.</p>
+</section>
+<section id="appendix-38d9c8aca357-a-three-number-type-is-not-the-complete-contract" class="level3">
+<h3>A three-number type is not the complete contract</h3>
+<pre class="text"><code>geometric promise  ──&gt; initialization, role, units, space
+storage promise    ──&gt; size, alignment, offsets, stride
+execution promise  ──&gt; scalar/SIMD behavior and errors
+boundary promise   ──&gt; GPU format, shader layout, serialization</code></pre>
+<p><strong>Caption:</strong> A 12-byte CPU <code>Vec3</code> does not prove shader compatibility, array semantics, safe indexing, or a portable file representation.</p>
+</section>
+<section id="appendix-38d9c8aca357-retrieval-prompts" class="level3">
+<h3>Retrieval prompts</h3>
+<ol type="1">
+<li>Why can point minus point produce a vector, but point plus point be meaningless?</li>
+<li>What does a basis change alter, and what stays fixed?</li>
+<li>Why does a cross-product sign depend on order and handedness?</li>
+<li>Which exact conditions make a normalized vector meaningful?</li>
+<li>Why does perspective correction change barycentric interpolation?</li>
+<li>Why must the normal matrix be the inverse transpose?</li>
+<li>What evidence distinguishes a robust predicate from a merely tested floating-point expression?</li>
+</ol>
+<blockquote>
+<p>[!answer]- Compact key Affine points have no intrinsic origin, while displacements do. Coordinates depend on the chosen basis; the geometric vector does not. Cross product is antisymmetric and encodes orientation. A direction needs finite, nonzero input and range-safe length computation. Perspective division is nonlinear, so interpolation must account for reciprocal depth. The inverse transpose preserves tangent-normal orthogonality under a general linear transform. A tested expression is evidence over those cases; a robust/certified claim requires stated assumptions and a procedure that guarantees the decision.</p>
+</blockquote>
+<p><a href="ch236.xhtml#id_01-foundations-i-ch017-the-panel-gives-us-a-reason-to-learn" class="wikilink">Teach the full Phase 6 story (Mathematics for Visual Computing, Part 1, Ch. 1)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-phase-6---parts-501-600" class="wikilink">Part coverage</a> · <a href="ch443.xhtml#id_02-foundations-ii-ch039-phase-6---geometry-reconstruction-proofs" class="wikilink">Derivations</a></p>
+</section>
+<section id="appendix-38d9c8aca357-one-page-active-recall-mini-atlas" class="level3">
+<h3>One-page active-recall mini-atlas</h3>
+<p>Use each row as a prompt: say the rule, state its precondition, then point to the linked chapter section for the full explanation and figures. The short cues are retrieval hooks, not replacements for the teaching narrative.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Recall cue</th>
+<th>Shortest useful note</th>
+<th>Reopen in the continuous chapter</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>What is the robot trying to represent?</strong></td>
+<td>A tuple is only storage; decide whether it means a point, displacement, direction, unit normal, or measurement, and state its frame and units.</td>
+<td><a href="ch236.xhtml#id_01-foundations-i-ch017-the-panel-gives-us-a-reason-to-learn" class="wikilink">Panel and problem setup (Mathematics for Visual Computing, Part 1, Ch. 1)</a> · <a href="ch290.xhtml#id_02-foundations-ii-ch037-three-stored-numbers-are-not-the-complete-contract" class="wikilink">Vec3 contracts (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)</a></td>
+</tr>
+<tr>
+<td><strong>What changes when I change coordinates?</strong></td>
+<td>The geometric vector stays fixed; its components change with the basis. A skew basis needs its Gram matrix to measure angles and lengths correctly.</td>
+<td><a href="ch236.xhtml#id_01-foundations-i-ch017-an-arrow-is-not-the-address-written-beside-it" class="wikilink">Points and vectors (Mathematics for Visual Computing, Part 1, Ch. 1)</a> · <a href="ch236.xhtml#id_01-foundations-i-ch017-a-basis-is-a-measuring-arrangement-not-the-vector-itself" class="wikilink">Basis change (Mathematics for Visual Computing, Part 1, Ch. 1)</a> · <a href="ch245.xhtml#id_01-foundations-i-ch018-a-gram-matrix-remembers-the-geometry-of-a-slanted-basis" class="wikilink">Gram matrix (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td><strong>Can the robot reach this movement?</strong></td>
+<td>Allowed combinations form a span; closure under addition and scalar scaling makes a subspace. Independence means no control direction is redundant.</td>
+<td><a href="ch236.xhtml#id_01-foundations-i-ch017-the-reachable-movements-form-a-vector-space" class="wikilink">Reachability and independence (Mathematics for Visual Computing, Part 1, Ch. 1)</a></td>
+</tr>
+<tr>
+<td><strong>How much, which way, how aligned?</strong></td>
+<td>Norm measures length; dot measures alignment; projection extracts a component. Check finite/nonzero inputs before normalization and scale before squaring.</td>
+<td><a href="ch236.xhtml#id_01-foundations-i-ch017-a-ruler-needs-more-than-coordinate-components" class="wikilink">Norm and distance (Mathematics for Visual Computing, Part 1, Ch. 1)</a> · <a href="ch236.xhtml#id_01-foundations-i-ch017-the-dot-product-turns-two-movements-into-a-measurement" class="wikilink">Dot and angle (Mathematics for Visual Computing, Part 1, Ch. 1)</a> · <a href="ch236.xhtml#id_01-foundations-i-ch017-projection-separates-useful-movement-from-sideways-movement" class="wikilink">Projection (Mathematics for Visual Computing, Part 1, Ch. 1)</a></td>
+</tr>
+<tr>
+<td><strong>Which side is the panel facing?</strong></td>
+<td>Cross-product order encodes orientation; magnitude is area. A triple product gives signed volume; near-zero signs need a reliability policy.</td>
+<td><a href="ch236.xhtml#id_01-foundations-i-ch017-oriented-area-tells-us-which-side-of-the-panel-is-front" class="wikilink">Cross product and winding (Mathematics for Visual Computing, Part 1, Ch. 1)</a> · <a href="ch236.xhtml#id_01-foundations-i-ch017-signed-volume-extends-the-same-idea-into-space" class="wikilink">Signed volume (Mathematics for Visual Computing, Part 1, Ch. 1)</a></td>
+</tr>
+<tr>
+<td><strong>How do I make a stable local surface frame?</strong></td>
+<td>Choose tangents, reject the unwanted component, then normalize safely. Gram–Schmidt is repeated rejection; order and precision affect the result.</td>
+<td><a href="ch236.xhtml#id_01-foundations-i-ch017-surface-movement-becomes-a-local-frame" class="wikilink">Surface frame (Mathematics for Visual Computing, Part 1, Ch. 1)</a> · <a href="ch236.xhtml#id_01-foundations-i-ch017-orthonormal-frames-make-reconstruction-simple" class="wikilink">Orthonormal frame (Mathematics for Visual Computing, Part 1, Ch. 1)</a></td>
+</tr>
+<tr>
+<td><strong>How does geometry become shading?</strong></td>
+<td>Reflection flips the normal component; refraction changes the tangent component. Normals are covectors: transform them with inverse transpose to preserve perpendicularity.</td>
+<td><a href="ch245.xhtml#id_01-foundations-i-ch018-light-uses-the-same-decomposition-in-a-new-role" class="wikilink">Lighting decomposition (Mathematics for Visual Computing, Part 1, Ch. 2)</a> · <a href="ch245.xhtml#id_01-foundations-i-ch018-a-normal-is-a-measuring-rule-before-it-is-an-arrow" class="wikilink">Normal transform (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td><strong>Where is the sensor on the triangle?</strong></td>
+<td>Barycentric weights sum to one; they locate points and interpolate attributes. Perspective projection changes screen-space weights; orientation predicates need trustworthy signs.</td>
+<td><a href="ch245.xhtml#id_01-foundations-i-ch018-the-sensor-needs-coordinates-inside-the-triangle" class="wikilink">Barycentric coordinates and predicates (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td><strong>When do shapes touch?</strong></td>
+<td>Convex combinations describe convex shapes; a Minkowski difference turns intersection into asking whether the origin belongs to the difference.</td>
+<td><a href="ch245.xhtml#id_01-foundations-i-ch018-weighted-points-lead-from-affine-geometry-to-collision-shapes" class="wikilink">Convexity and collision (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td><strong>Why add a fourth coordinate?</strong></td>
+<td>Homogeneous coordinates let matrix operations express translation; projective points have equivalent scaled representatives. NDC is not a normalized direction.</td>
+<td><a href="ch245.xhtml#id_01-foundations-i-ch018-homogeneous-coordinates-preserve-the-role-of-a-location" class="wikilink">Homogeneous and projective coordinates (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td><strong>What can the computer invalidate?</strong></td>
+<td>Floating-point arithmetic can overflow, underflow, lose small changes, or give an uncertain sign. Validate inputs, scale safely, then apply explicit tolerance/error policy.</td>
+<td><a href="ch236.xhtml#id_01-foundations-i-ch017-the-machine-is-a-model-of-the-field-not-the-field" class="wikilink">Floating-point model (Mathematics for Visual Computing, Part 1, Ch. 1)</a> · <a href="ch290.xhtml#id_02-foundations-ii-ch037-reliability-begins-at-the-boundary-of-the-calculation" class="wikilink">Numerical boundary (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)</a></td>
+</tr>
+<tr>
+<td><strong>What must the C++ type/API promise?</strong></td>
+<td>Separate geometric role, units, scalar precision, memory layout, SIMD behavior, and GPU/serialization agreement; <code>Vec3</code> alone proves none of the external contracts.</td>
+<td><a href="ch290.xhtml#id_02-foundations-ii-ch037-types-can-remember-the-promises-that-three-components-forget" class="wikilink">Semantic types (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)</a> · <a href="ch290.xhtml#id_02-foundations-ii-ch037-storage-and-computation-can-choose-different-layouts" class="wikilink">CPU/GPU layout (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)</a> · <a href="ch290.xhtml#id_02-foundations-ii-ch037-a-complete-scalar-laboratory-makes-the-story-executable" class="wikilink">Executable reference and tests (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)</a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-38d9c8aca357-landscape-concept-maps" class="level3">
+<h3>Landscape concept maps</h3>
+<section id="appendix-38d9c8aca357-the-panel-from-geometry-to-engine-data" class="level4">
+<h4>The panel: from geometry to engine data</h4>
+<p><img src="../media/file179.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Caption:</strong> Read left to right as the robot’s work, not a list of disconnected formulas. Revisit <a href="ch236.xhtml#id_01-foundations-i-ch017-the-panel-gives-us-a-reason-to-learn" class="wikilink">the panel setup (Mathematics for Visual Computing, Part 1, Ch. 1)</a> and <a href="ch245.xhtml#id_01-foundations-i-ch018-the-sensor-needs-coordinates-inside-the-triangle" class="wikilink">the sensor's triangle coordinates (Mathematics for Visual Computing, Part 1, Ch. 2)</a>.</p>
+</section>
+<section id="appendix-38d9c8aca357-three-tools-three-different-questions" class="level4">
+<h4>Three tools, three different questions</h4>
+<p><img src="../media/file180.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Caption:</strong> Do not substitute one operation for another: they answer different geometric questions. See <a href="ch236.xhtml#id_01-foundations-i-ch017-the-dot-product-turns-two-movements-into-a-measurement" class="wikilink">dot (Mathematics for Visual Computing, Part 1, Ch. 1)</a>, <a href="ch236.xhtml#id_01-foundations-i-ch017-oriented-area-tells-us-which-side-of-the-panel-is-front" class="wikilink">cross (Mathematics for Visual Computing, Part 1, Ch. 1)</a>, and <a href="ch236.xhtml#id_01-foundations-i-ch017-projection-separates-useful-movement-from-sideways-movement" class="wikilink">projection (Mathematics for Visual Computing, Part 1, Ch. 1)</a>.</p>
+</section>
+<section id="appendix-38d9c8aca357-reliability-ladder" class="level4">
+<h4>Reliability ladder</h4>
+<p><img src="../media/file181.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Caption:</strong> A mathematically valid construction is not automatically a reliable machine decision. Follow <span>safe norm</span>, <a href="ch245.xhtml#id_01-foundations-i-ch018-a-predicate-needs-a-trustworthy-sign" class="wikilink">predicate reliability (Mathematics for Visual Computing, Part 1, Ch. 2)</a>, and <a href="ch290.xhtml#id_02-foundations-ii-ch037-reliability-begins-at-the-boundary-of-the-calculation" class="wikilink">calculation boundary (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)</a>.</p>
+</section>
+</section>
+<section id="appendix-38d9c8aca357-added-retrieval-prompt" class="level3">
+<h3>Added retrieval prompt</h3>
+<p>Camera framing uses a point angle atan2(y,z); double the largest half-angle for full vertical FOV; include asin(r/d) for a sphere. <a href="ch236.xhtml#id_01-foundations-i-ch017-projection-separates-useful-movement-from-sideways-movement" class="wikilink">Rebuild the camera trace (Mathematics for Visual Computing, Part 1, Ch. 1)</a>.</p>
+<figure class="allmight-auto-path-caption" data-auto-path-caption-uri="Visual Recall/Math Foundations/M06-1_vector-reflection.png">
+<img src="../media/file89.png" class="wikilink allmight-auto-path-caption" data-auto-path-caption-uri="Visual Recall/Math Foundations/M06-1_vector-reflection.png" alt="Visual Recall/Math Foundations/M06-1_vector-reflection.png" />
+<figcaption aria-hidden="true">Visual Recall/Math Foundations/M06-1_vector-reflection.png</figcaption>
+</figure>
+<p><strong>M06-1. Reflection across the horizontal mirror normal.</strong> The shown incident vector has v dot n=-1 and reflected vector r=(2,1); both squared norms are 5.</p>
+</section>
+<section id="appendix-38d9c8aca357-vectors-as-measurements-retrieve-the-missing-steps" class="level3">
+<h3>Vectors as measurements — retrieve the missing steps</h3>
+<figure class="allmight-auto-path-caption" data-auto-path-caption-uri="Visual Recall/Integrated Mathematics/metrics-and-measurements.png">
+<img src="../media/file102.png" class="wikilink allmight-auto-path-caption" data-auto-path-caption-uri="Visual Recall/Integrated Mathematics/metrics-and-measurements.png" alt="Visual Recall/Integrated Mathematics/metrics-and-measurements.png" />
+<figcaption aria-hidden="true">Visual Recall/Integrated Mathematics/metrics-and-measurements.png</figcaption>
+</figure>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Prompt</th>
+<th>Short answer</th>
+<th>Explain immediately</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Why do dot measurements differ from coordinates?</td>
+<td>A slanted reconstruction basis needs reciprocal measuring directions.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Recover a component with the right measuring rule</td>
+</tr>
+<tr>
+<td>Is every norm an ordinary dot-product length?</td>
+<td>No. The taxicab norm fails the parallelogram identity.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Choose what a length is meant to measure</td>
+</tr>
+<tr>
+<td>What does a dual norm measure?</td>
+<td>Worst scalar response over an allowed vector-error ball.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Bound a measurement using a dual norm</td>
+</tr>
+<tr>
+<td>Is the Euclidean nearest point always the right constrained answer?</td>
+<td>Only for that distance rule; a weighted ruler changes the correction direction.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A rail, a wall, and a feasible region use the same nearest-point question</td>
+</tr>
+<tr>
+<td>Differential or gradient?</td>
+<td>A differential measures change; a metric turns it into a gradient vector.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A derivative measures change; a gradient needs a ruler</td>
+</tr>
+<tr>
+<td>Can a mesh boundary be a vector?</td>
+<td>Yes: coefficients weight elements; boundary is linear.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The same vector rules can describe a triangle’s boundary</td>
+</tr>
+<tr>
+<td>Are angle rates angular-velocity components?</td>
+<td>Only in special configurations/conventions; instantaneous axes form a state-dependent map.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Angle rates are not three components of angular velocity</td>
+</tr>
+<tr>
+<td>Why is covariance directional?</td>
+<td>A scalar measurement has variance <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>a</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mi mathvariant="normal">Σ</mi>
+  <mi>a</mi>
+</math>.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Measure uncertainty along an actual direction</td>
+</tr>
+<tr>
+<td>Is a unit uncertainty ellipse a 68% region?</td>
+<td>Not generally. The stated two-dimensional Gaussian unit ellipse contains about 39.35%.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Whiten residuals without pretending every ellipse has the same probability</td>
+</tr>
+<tr>
+<td>How do vertex samples become a derivative?</td>
+<td>Barycentric gradients reconstruct a constant field gradient per flat triangle.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A triangle turns a differential into a concrete field calculation</td>
+</tr>
+</tbody>
+</table>
+<p>The figure’s four panels use the exact examples in those sections: norm balls, reciprocal directions, two constrained projections, and the covariance ellipse. Cover the answers and reconstruct one calculation from each panel. The book contains the assumptions and full derivations.</p>
+</section>
+</section>
+</body>
+</html>

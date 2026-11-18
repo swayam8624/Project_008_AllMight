@@ -8,7 +8,7 @@ A surface material describes how incoming energy is scattered toward outgoing di
 
 **Recall question:** Which numerical checks can reveal a broken BRDF before a scene render does?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 5493–9520; source-span SHA256 a991fb91656381fa229d00fa95405d65b41972810e12bb9f9316712472afb0b2. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 5524–9551; source-span SHA256 a991fb91656381fa229d00fa95405d65b41972810e12bb9f9316712472afb0b2. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Ask a surface where incoming energy can go

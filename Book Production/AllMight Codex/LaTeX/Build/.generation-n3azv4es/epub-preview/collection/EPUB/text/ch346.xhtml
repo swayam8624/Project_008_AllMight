@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch346.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-40df0855b4a7-automatic-differentiation-and-backpropagation" class="level2">
+<h2>Automatic differentiation and backpropagation</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> Phase 9</p>
+<section id="appendix-40df0855b4a7-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Automatic differentiation evaluates derivatives by applying the chain rule to the operations in a program. Each operation has a local derivative rule; composing the rules gives the derivative of the complete computation without symbolically expanding it or approximating it by finite differences. Forward mode propagates a tangent perturbation and computes a Jacobian-vector product (JVP), useful when there are few inputs. Reverse mode propagates sensitivities from outputs back to inputs and computes a vector-Jacobian product (VJP), making gradients of one scalar loss with respect to millions of parameters practical. Backpropagation is reverse-mode differentiation through a neural network’s computation graph. It does not remove numerical problems: nondifferentiable operations require conventions, saturated activations can yield tiny gradients, and an incorrect graph or reduction yields an incorrect gradient. Gradients are local sensitivity information, not proof of a global optimum. Finite differences remain a useful small-scale check, but cancellation and step-size tradeoffs make them a poor training method.</p>
+<section id="appendix-40df0855b4a7-phase-910-development" class="level4">
+<h4>Phase 9–10 development</h4>
+<p>Forward mode propagates an input tangent through local derivatives and computes a Jacobian-vector product. Reverse mode propagates an output sensitivity backward and computes a vector-Jacobian product. These are chain-rule evaluations on the operation graph, distinct from finite differences, which perturb inputs and can suffer cancellation. The reverse pass requires a valid reverse-topological order and storage that remains alive until propagation finishes. Differentiating a converged solution uses an implicit equation and its local Jacobian; it is not automatically the same as differentiating every solver iteration.</p>
+</section>
+</section>
+<section id="appendix-40df0855b4a7-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch342.xhtml#appendix-29f4bea4c2bb-constrained-optimization-and-inverse-kinematics" class="wikilink">Constrained optimization and inverse kinematics</a></li>
+<li><a href="ch503.xhtml#appendix-ab31ef447dbf-matrix-multiplication-and-composition-order" class="wikilink">Matrix multiplication and composition order (Vision, XR, and Playable Worlds, Part 1, Reference notes: Matrix multiplication and composition order)</a></li>
+<li><a href="ch089.xhtml#appendix-c2ac4a84c283-floating-point-reassociation" class="wikilink">Floating-point reassociation (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Floating-point reassociation)</a></li>
+<li><a href="ch491.xhtml#appendix-7bc181935c42-derivative-as-a-local-linear-map" class="wikilink">Derivative as a local linear map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Derivative as a local linear map)</a></li>
+<li><a href="ch518.xhtml#appendix-d8a7ddb675eb-jacobians-pushforwards-and-pullbacks" class="wikilink">Jacobians, pushforwards, and pullbacks (Vision, XR, and Playable Worlds, Part 1, Reference notes: Jacobians, pushforwards, and pullbacks)</a></li>
+</ul>
+</section>
+<section id="appendix-40df0855b4a7-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch539.xhtml#id_04-visual-computing-ii-ch031-learning-a-visual-classifier-from-examples" class="wikilink">Learning a visual classifier from examples (Vision, XR, and Playable Worlds, Part 1, Ch. 2)</a></li>
+<li><a href="ch385.xhtml#id_04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics" class="wikilink">Optimization, constraints, and inverse kinematics (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 10)</a></li>
+<li><a href="ch349.xhtml#appendix-47c51ea026fb-learned-image-features-and-cnns" class="wikilink">Learned image features and CNNs</a></li>
+<li><a href="ch358.xhtml#appendix-a9d5dfdd164a-attention-and-visual-transformers" class="wikilink">Attention and visual transformers</a></li>
+<li><a href="ch343.xhtml#appendix-2c568f05ee34-latent-variable-models-and-generative-flows" class="wikilink">Latent-variable models and generative flows</a></li>
+<li><a href="ch362.xhtml#appendix-c5b332e400e7-radiance-fields-and-gaussian-splatting" class="wikilink">Radiance fields and Gaussian splatting</a></li>
+<li><a href="ch360.xhtml#appendix-b0c42da325f1-perception-feedback-and-robot-learning" class="wikilink">Perception feedback and robot learning</a></li>
+<li><a href="ch495.xhtml#appendix-8836553d56fc-implicit-differentiation-and-parameter-sensitivities" class="wikilink">Implicit differentiation and parameter sensitivities (Vision, XR, and Playable Worlds, Part 1, Reference notes: Implicit differentiation and parameter sensitivities)</a></li>
+</ul>
+</section>
+<section id="appendix-40df0855b4a7-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch539.xhtml#id_04-visual-computing-ii-ch031-learning-a-visual-classifier-from-examples" class="wikilink">Learning a visual classifier from examples (Vision, XR, and Playable Worlds, Part 1, Ch. 2)</a></li>
+<li><a href="ch385.xhtml#id_04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics" class="wikilink">Optimization, constraints, and inverse kinematics (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 10)</a></li>
+<li><a href="ch266.xhtml#id_02-foundations-ii-ch022-numerical-differentiation-and-automatic-differentiation" class="wikilink">Phase 9 teaching section (Mathematics for Visual Computing, Part 1, Ch. 6)</a></li>
+<li><a href="ch084.xhtml#appendix-adf48f5dc5c1-calculus-and-optimization-visual-recall" class="wikilink">Visual Recall/09 - Calculus and Optimization - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 09 - Calculus and Optimization - Visual Recall)</a> · Phase 9 visual recall</li>
+</ul>
+</section>
+<section id="appendix-40df0855b4a7-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<ul>
+<li>Compare a JVP and VJP by naming the direction propagated and the Jacobian multiplication performed.</li>
+<li>Why does a correct gradient still fail to guarantee a global minimum?</li>
+</ul>
+</section>
+<section id="appendix-40df0855b4a7-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p>Teaching narrative: <a href="ch539.xhtml#id_04-visual-computing-ii-ch031-learning-a-visual-classifier-from-examples" class="wikilink">open the main explanation (Vision, XR, and Playable Worlds, Part 1, Ch. 2)</a>. Browse the <a href="ch547.xhtml#appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series" class="wikilink">University graphics and vision index</a>. Additional chapter connections: <a href="ch385.xhtml#id_04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics" class="wikilink">Optimization, constraints, and inverse kinematics (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 10)</a>; <a href="ch262.xhtml#id_01-foundations-i-ch020-qr-turns-least-squares-into-a-triangular-solve-plus-an-irreducible-residual" class="wikilink">QR turns least squares into a triangular solve plus an irreducible residual (Mathematics for Visual Computing, Part 1, Ch. 4)</a>; <a href="ch124.xhtml#id_01-foundations-i-ch002-a-compiled-interface-rather-than-repeated-text" class="wikilink">A compiled interface rather than repeated text (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)</a>.</p>
+<p>Caption/source records: <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-sc-02---stanford-cs231n-spring-2025-lecture-2-image-classification-with-linear-classifiers" class="wikilink">SC-02 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>, <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-sc-03---stanford-cs231n-spring-2025-lecture-3-regularization-and-optimization" class="wikilink">SC-03 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>, <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-sc-04---stanford-cs231n-spring-2025-lecture-4-neural-networks-and-backpropagation" class="wikilink">SC-04 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>.</p>
+</section>
+</section>
+</body>
+</html>

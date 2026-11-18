@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch069.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-8d687c9c08ab-carry-overflow-negative-and-zero-flags" class="level2">
+<h2>Carry, overflow, negative, and zero flags</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C002 · <strong>Latest development:</strong> C002</p>
+<section id="appendix-8d687c9c08ab-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p><code>C</code> reports unsigned carry, <code>V</code> signed-range failure, <code>N</code> the result’s sign bit, and <code>Z</code> an all-zero architectural result.</p>
+<p>For eight-bit addition, C tests exact sum&gt;255; V tests signed sum outside [−128,127]; N is result bit 7; Z tests low result==0. <code>7F+01</code> gives 0,1,1,0; <code>FF+01</code> gives 1,0,0,1 in C,V,N,Z order. These are binary arithmetic flags, not decimal-mode behavior.</p>
+</section>
+<section id="appendix-8d687c9c08ab-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch046.xhtml#appendix-4fbc03d20829-twos-complement" class="wikilink">Two's complement</a> — For raw unsigned value u in N bits, signed decoding is u when u&lt;2ᴺ⁻¹, otherwise u−2ᴺ.</li>
+<li><a href="ch098.xhtml#appendix-d1a5b1e520c2-full-adder" class="wikilink">Full adder</a> — A full adder adds A, B, and carry-in.</li>
+</ul>
+</section>
+<section id="appendix-8d687c9c08ab-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch032.xhtml#appendix-33e7a011b684-guest-and-host-integer-domains" class="wikilink">Guest and host integer domains</a> — uses carry, overflow, negative, and zero flags as part of its representation or reasoning.</li>
+</ul>
+</section>
+<section id="appendix-8d687c9c08ab-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain carry, overflow, negative, and zero flags without the label, work the example above, then state the assumption whose removal would change the result.</p>
+<p><strong>Pending:</strong> Apply and reconstruct this concept independently.</p>
+</section>
+<section id="appendix-8d687c9c08ab-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-arithmetic-becomes-a-policy" class="wikilink">C002 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-foundations" class="wikilink">Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

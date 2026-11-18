@@ -1,0 +1,35 @@
+\hypertarget{appendix-03c678cd40b3}{}
+\section*{One's complement}
+\chapter{One's complement}\label{appendix-03c678cd40b3-ones-complement}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\section{Definition and mechanism}\label{appendix-03c678cd40b3-definition-and-mechanism}
+
+Negation inverts every bit, leaving two zeros and requiring end-around carry for ordinary addition.
+
+Negative x is the N-bit complement of positive x. Eight-bit −5 is \texttt{11111010}; zeros are all zeros and all ones. Adding 5 and encoded −3 gives a carry plus low value 1; end-around carry adds that carry back to yield 2.
+
+\section{Prerequisites}\label{appendix-03c678cd40b3-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-8f38927cfc54]{Bitwise NOT} --- Complement must specify width: eight-bit complement of \texttt{0x0F} is \texttt{0xF0}, while sixteen-bit complement is \texttt{0xFFF0}.
+\item
+  \hyperref[appendix-ce20506c8532]{Signed magnitude} --- The high bit holds sign and the remaining bits hold magnitude.
+\end{itemize}
+
+\section{Used by}\label{appendix-03c678cd40b3-used-by}
+
+Connect later chunks here when they use this concept.
+
+\section{Recall and next depth}\label{appendix-03c678cd40b3-recall-and-next-depth}
+
+Explain one's complement without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} Internet checksums and historical machines.
+
+\section{Source and navigation}\label{appendix-03c678cd40b3-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Arithmetic\%20becomes\%20a\%20policy}{C002 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

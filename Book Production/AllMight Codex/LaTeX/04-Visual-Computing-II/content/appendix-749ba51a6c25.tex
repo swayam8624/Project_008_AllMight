@@ -1,0 +1,57 @@
+\hypertarget{appendix-749ba51a6c25}{}
+\section*{GPU vertex specification}
+\section{GPU vertex specification}\label{gpu-vertex-specification}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A GPU vertex-input specification explains how bytes in one or more buffers become per-vertex shader inputs. A buffer object owns bytes; a vertex array object records their interpretation: enabled attributes, component count and type, normalization, stride, byte offset, and the buffer binding used for fetch. Stride is the number of bytes between successive vertices; offset is the first component's byte position. For vertex i, the address is base + offset + i × stride. For interleaved records containing position (3 floats), normal (3), and UV (2), the stride is 8 × 4 = 32 bytes and the UV offset is 24 bytes. Modern binding APIs separate attribute format from the buffer binding; older pointer-style calls can capture the buffer bound at setup time. A wrong stride may still address valid memory, so the symptom is often plausible but scrambled geometry. The contract must agree with CPU packing, shader input types, and the API's state-capture rules.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Vector storage SIMD and boundary layouts (02-Foundations-II, appendix-26bf6bf2fb8b)}
+\item
+  \href{}{Matrix storage indexing and strides (01-Foundations-I, appendix-ffdc1d4e5350)}
+\item
+  \hyperref[appendix-1c07d64f5e70]{Camera view and clip-space pipeline}
+\item
+  \href{}{Pointer arithmetic and provenance (01-Foundations-I, appendix-6af5921bc853)}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Rasterization,\%20coverage,\%20and\%20depth}{Rasterization, coverage, and depth}
+\item
+  \href{}{Homogeneous clipping and perspective interpolation (03-Visual-Computing-I, appendix-40426e4b2103)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Rasterization,\%20coverage,\%20and\%20depth}{Rasterization, coverage, and depth}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  Trace the fetched address for vertex 3 when stride is 32 bytes and offset is 24 bytes.
+\item
+  Why can an incorrect stride produce plausible but scrambled geometry without a memory fault?
+\end{itemize}
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+Teaching narrative: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Rasterization,\%20coverage,\%20and\%20depth}{open the main explanation}. Browse the \href{}{University graphics and vision index (02-Foundations-II, appendix-a6d556a4ef50 § University graphics vision and photography - independent series)}. Additional chapter connections: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#A\%20scene\%20description\%20becomes\%20an\%20image}{A scene description becomes an image}; \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Rasterization,\%20coverage,\%20and\%20depth}{Rasterization, coverage, and depth}; \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#The\%20mathematical\%20table\%20needs\%20an\%20explicit\%20storage\%20agreement}{The mathematical table needs an explicit storage agreement}; \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20pointer\%20carries\%20an\%20access\%20contract}{A pointer carries an access contract}.
+
+Caption/source records: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#P1-01\%20-\%20Module\%201.1:\%20Course\%20Intro\%20&\%20Administrivia\%20Part\%201\%20Graphics\%20&\%20Visual\%20Computing\%202026}{P1-01}, \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#P3-03\%20-\%20Moving\%20Objects\%20in\%20Space}{P3-03}, \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#P3-04\%20-\%20Rotations\%20About\%20an\%20Arbitrary\%20Axis}{P3-04}.

@@ -1,0 +1,65 @@
+\hypertarget{appendix-02b9d9a81dca}{}\label{referencestart:appendix-02b9d9a81dca}
+\section{Barycentric coordinates and interpolation}\label{appendix-02b9d9a81dca-barycentric-coordinates-and-interpolation}
+
+\hypertarget{appendix-02b9d9a81dca-barycentric-coordinates-and-interpolation}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase6 · \textbf{Latest development:} University courses
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-02b9d9a81dca-definition-and-mechanism}
+
+\hypertarget{appendix-02b9d9a81dca-definition-and-mechanism}{}
+
+Barycentric weights reconstruct a triangle point as an affine combination. The weights sum to one; nonnegative weights describe points inside or on a nondegenerate triangle. Dot-system solves on off-plane inputs describe their projection, not proven surface membership.
+
+\end{allmightroledefinition}
+
+The panel sensor \((1,1,0)\) has weights \((5/12,1/4,1/3)\) and corner temperatures \((20,40,50)\) interpolate to \(35\).
+
+\subsection{Prerequisites}\label{appendix-02b9d9a81dca-prerequisites}
+
+\hypertarget{appendix-02b9d9a81dca-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-3b863809f82a}{Gram matrices and coordinate metrics (Vision, XR, and Playable Worlds, Part 1, Reference notes: Gram matrices and coordinate metrics)} --- Pairwise basis measurements define the systems and metric used in reconstruction.
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-0659864c0aa3}{Vectors coordinates and affine points (Vision, XR, and Playable Worlds, Part 1, Reference notes: Vectors coordinates and affine points)} --- Point, displacement and coordinate roles determine which geometric operations are meaningful.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-02b9d9a81dca-used-by}
+
+\hypertarget{appendix-02b9d9a81dca-used-by}{}
+
+\begin{itemize}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-0026ec42c9d5}{Convex combinations and convex hulls (Vision, XR, and Playable Worlds, Part 1, Reference notes: Convex combinations and convex hulls)} --- Builds on this mechanism in the connected geometry story.
+\item
+  \hyperref[appendix-ed3f9bc298fe]{Triangle rasterization and coverage tests}
+\item
+  \hyperref[appendix-47ac1bd6d144]{Ray-triangle intersection}
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#nameddest=appendix-c4e98b6e4001}{Stereo correspondence and epipolar geometry (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Stereo correspondence and epipolar geometry)}
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#nameddest=appendix-40426e4b2103}{Homogeneous clipping and perspective interpolation (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Homogeneous clipping and perspective interpolation)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-0c2a5f69851e}{Interpolation versus approximation (Vision, XR, and Playable Worlds, Part 1, Reference notes: Interpolation versus approximation)} \#\# Recall and next depth
+\end{itemize}
+
+Derive signed-area ratios; distinguish affine attribute interpolation from perspective-correct screen interpolation. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-02b9d9a81dca-source-and-navigation}
+
+\hypertarget{appendix-02b9d9a81dca-source-and-navigation}{}
+
+\href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#nameddest=01-foundations-i-ch018-the-sensor-needs-coordinates-inside-the-triangle}{Teaching narrative (Mathematics for Visual Computing, Part 1, Ch. 2)} · \hyperref[appendix-fd090d982a15-phase-6---parts-501-600]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-6---source-analysis-and-verification]{Evidence and limits} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}
+
+\subsection{University course development}\label{appendix-02b9d9a81dca-university-course-development}
+
+\hypertarget{appendix-02b9d9a81dca-university-course-development}{}
+
+Extend the existing interpolation note with the geometric meanings that make triangle rasterization and camera calibration easier to reason about. For triangle vertices \(p_0,p_1,p_2\), a point inside can be written \(p=\lambda_0p_0+\lambda_1p_1+\lambda_2p_2\), where the weights sum to one and are nonnegative. Each weight is the area of the opposite subtriangle divided by the full triangle area; equivalently it is a signed edge-distance normalized by altitude. The weights therefore provide both a point-in-triangle test and attribute interpolation. They also reveal a limitation: screen-space weights do not linearly interpolate a 3D attribute after perspective projection. Interpolate reciprocal depth and attribute divided by depth, then divide the interpolated values to recover perspective-correct texture coordinates or colors.
+
+\href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#nameddest=03-visual-computing-i-ch012-rasterization-coverage-and-depth}{Rasterization, coverage, and depth (Mathematics for Visual Computing, Part 2, Ch. 16)} · \hyperref[03-visual-computing-i-ch019-textures-and-surface-detail]{Textures and surface detail} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=04-visual-computing-ii-ch032-pose-estimation-transforms-and-robust-fitting}{Pose estimation, transforms, and robust fitting (Vision, XR, and Playable Worlds, Part 1, Ch. 3)}

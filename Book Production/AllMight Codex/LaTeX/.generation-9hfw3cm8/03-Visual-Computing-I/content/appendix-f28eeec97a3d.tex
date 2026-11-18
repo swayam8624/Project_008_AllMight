@@ -1,0 +1,29 @@
+\hypertarget{appendix-f28eeec97a3d}{}
+\section{Spline bases and curve evaluation}\label{appendix-f28eeec97a3d-spline-bases-and-curve-evaluation}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-f28eeec97a3d-definition-and-mechanism}
+
+A spline is a piecewise polynomial curve whose neighboring pieces join under explicit continuity constraints. A cubic Bézier segment uses four control points and Bernstein weights; the weights sum to one, so the curve lies in their convex hull. A B-spline uses local basis functions so moving one control point changes only nearby spans rather than the whole curve. Knots mark where polynomial pieces meet; repeated knots reduce continuity. Catmull--Rom curves interpolate their control points and can be convenient for motion paths, while Bézier curves expose endpoint tangents through their handles. To evaluate a curve, compute basis weights at parameter \(t\) and take their weighted sum of control points. Position, first derivative, and parameterization speed matter separately: even a smooth path may speed up or slow down unless its parameter is adjusted.
+
+\subsection{Prerequisites}\label{appendix-f28eeec97a3d-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-ce0341f7ea0d}{Basis coordinates and dimension (01-Foundations-I, appendix-ce0341f7ea0d)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-f28eeec97a3d-used-by}
+
+\begin{itemize}
+\item
+  {Worlds, Images and Inference {[}referenced source unavailable{]}}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-ddbec701898c}{Bézier curves and De Casteljau evaluation (02-Foundations-II, appendix-ddbec701898c)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-db3aef8f2fd6}{Cubic Hermite interpolation (02-Foundations-II, appendix-db3aef8f2fd6)} \#\# Full teaching explanation
+\end{itemize}
+
+\hyperref[03-visual-computing-i-ch001-curves-as-controllable-functions]{Curves as controllable functions} · \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch029-animation-curves-and-motion-paths}{Animation curves and motion paths (04-Visual-Computing-II, 04-visual-computing-ii-ch029-animation-curves-and-motion-paths)}

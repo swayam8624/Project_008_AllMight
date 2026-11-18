@@ -1,0 +1,44 @@
+\hypertarget{appendix-b60686ba06a1}{}
+\section*{Fourier analysis and spectral phase}
+\section{Fourier analysis and spectral phase}\label{fourier-analysis-and-spectral-phase}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} XR01 · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Fourier coordinates encode frequency magnitude and phase; phase places structure. DFT analyzes a finite periodic block, FFT computes that transform efficiently, and finite-window leakage differs from bin spacing. Interior one-sided amplitude bins need conjugate-pair normalization.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1077ea8fc737]{Continuous signals and discrete samples} --- Filtering/frequency analysis operates on a declared domain and its samples.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-6a7869dd79a6]{Sampling aliasing and reconstruction}
+\item
+  \href{}{Convolution and filter footprints (03-Visual-Computing-I, appendix-d5b3c692d9f0)}
+\item
+  \hyperref[appendix-8b76b0efd27f]{PSF OTF and MTF}
+\item
+  \hyperref[appendix-b2c1846508bf]{Perceptual metrics and display calibration}
+\item
+  \hyperref[appendix-3c73f7862157]{Exceptional projections and dimension} \#\# Recall and next depth
+\end{itemize}
+
+Recover the two tested sinusoid amplitudes and explain leakage. Pending: FFT implementations, windows and finite-boundary estimates. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Fourier\%20coordinates\%20reveal\%20what\%20a\%20filter\%20removes}{Expanded teaching explanation} · \href{}{Independent coverage (01-Foundations-I, appendix-fd090d982a15 § XR01 - Independent seeing and representation source)} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\subsection{University course development}\label{university-course-development}
+
+Extend the existing frequency-domain treatment with visual interpretation and filtering consequences. A Fourier coefficient records how strongly a sinusoidal basis function occurs at a given frequency and phase. In images, the origin of a two-dimensional spectrum represents slow spatial variation; moving farther from it corresponds to finer variation. A broad bright center indicates low-frequency structure, while energy far from the center often represents edges and texture. Filtering multiplies each frequency by the filter response: a low-pass response suppresses fine detail, and a high-pass response emphasizes it. Aliasing folds unresolved high frequencies into lower ones because sampled sinusoids can share identical sample values. This explains moiré patterns and animated shimmer, and shows why a spectrum is useful for diagnosing sampling problems rather than only for theoretical signal processing.
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Sampling\%20continuous\%20signals\%20and\%20image\%20formation}{Sampling continuous signals and image formation} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Image\%20sampling,\%20filtering,\%20and\%20efficient\%20reconstruction}{Image sampling, filtering, and efficient reconstruction} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Edges,\%20contours,\%20and\%20subpixel\%20localization}{Edges, contours, and subpixel localization}

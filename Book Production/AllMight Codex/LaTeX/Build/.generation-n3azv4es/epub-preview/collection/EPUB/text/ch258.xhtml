@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch258.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-da478be01d02-determinants-orientation-and-volume" class="level2">
+<h2>Determinants orientation and volume</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase7 · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-da478be01d02-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A square matrix determinant measures oriented volume scale. Zero means rank loss; sign records orientation reversal. Its magnitude depends on scale and is not a standalone measure of numerical conditioning.</p>
+<p><strong>Reconstruction cue:</strong> Uniform tiny scaling can have tiny determinant and condition number one.</p>
+</section>
+<section id="appendix-da478be01d02-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch463.xhtml#appendix-2391db8052b1-cross-products-and-oriented-area" class="wikilink">Cross products and oriented area (Vision, XR, and Playable Worlds, Part 1, Reference notes: Cross products and oriented area)</a></li>
+<li><a href="ch256.xhtml#appendix-bd39c3bf5d64-matrices-as-linear-maps-and-basis-images" class="wikilink">Matrices as linear maps and basis images</a></li>
+</ul>
+</section>
+<section id="appendix-da478be01d02-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch250.xhtml#appendix-48d2e66378ab-matrix-inversion-pivoting-and-residuals" class="wikilink">Matrix inversion pivoting and residuals</a></li>
+<li><a href="ch490.xhtml#appendix-73f5bcf7a462-polar-decomposition" class="wikilink">Polar decomposition (Vision, XR, and Playable Worlds, Part 1, Reference notes: Polar decomposition)</a> — Extends this foundation into linear-systems and decomposition analysis. ## Recall and next depth</li>
+</ul>
+<p>Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.</p>
+</section>
+<section id="appendix-da478be01d02-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch245.xhtml#id_01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations" class="wikilink">Continuous explanation</a> · <a href="ch207.xhtml#appendix-fd090d982a15-phase-7---parts-601-700" class="wikilink">Coverage and source gap</a> · <a href="ch155.xhtml#appendix-a103e7846d21-phase-7---source-analysis-and-verification" class="wikilink">Sources and verification</a></p>
+</section>
+<section id="appendix-da478be01d02-university-course-development" class="level3">
+<h3>University course development</h3>
+<p>Computational geometry often decides whether points are left or right of a directed line, whether three points are collinear, or whether a point lies inside a circle. These decisions reduce to determinant signs. For points <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+</math> in 2D, the signed area determinant classifies orientation. If its exact value is near zero, floating-point rounding can change the sign and make neighboring algorithms disagree, creating flipped triangles or invalid topology. Robust predicates evaluate a fast approximate determinant with an error bound; if the sign is certain they stop, and if uncertain they recompute with higher precision. This adaptive strategy spends extra work only near degeneracy. It does not make constructed intersection coordinates exact, but it protects discrete branching decisions that must be globally consistent in triangulation, mesh repair, and ray-edge intersection.</p>
+<p><a href="ch540.xhtml#id_04-visual-computing-ii-ch032-pose-estimation-transforms-and-robust-fitting" class="wikilink">Pose estimation, transforms, and robust fitting (Vision, XR, and Playable Worlds, Part 1, Ch. 3)</a> · <a href="ch383.xhtml#id_04-visual-computing-ii-ch028-visibility-queries-and-ray-intersections-1" class="wikilink">Visibility queries and ray intersections (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 9)</a> · <a href="ch296.xhtml#id_03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing" class="wikilink">Meshes, connectivity, and geometry processing (Geometry, Cameras, and Image Formation, Part 1, Ch. 9)</a></p>
+</section>
+</section>
+</body>
+</html>

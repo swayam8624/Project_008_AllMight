@@ -1,0 +1,84 @@
+{
+  "schema": "allmight-source-promotion-verification-v1",
+  "status": "passed",
+  "scope": "source-only generated production promotion; EPUB binaries and native outputs are outside this report",
+  "candidate_manifest_sha256": "95bf366cf994fffb639fc11f820598783e3b29ff77f86f62dfd123305750ee0f",
+  "live_manifest_sha256": "0179e8137b688e4f094dba44ffbd74fea94402826c9d88d23ea692bc7debf7cf",
+  "live_jobs_sha256": "3eafffd3d332bd52cf33822c94afda99c038834bdcb1c9e5d6c41a63032e8296",
+  "live_link_targets_sha256": "a7c4bd6f6a95db240e92357e90a94ce34ccee8799f7a7367cbde22b1b166b162",
+  "counts": {
+    "total": 57624,
+    "add": 3618,
+    "identical": 52194,
+    "replace_generated": 1805,
+    "conflict": 0,
+    "deletions": 0
+  },
+  "chapters": {
+    "count": 129,
+    "source_sha256_errors": 0,
+    "corrected_parser_chapters": 14,
+    "corrected_reader_paths_missing": 0
+  },
+  "companions": {
+    "expected_unique": 439,
+    "manifest_unique": 439,
+    "missing": 0,
+    "extra": 0,
+    "source_hash_mismatches": 0,
+    "current_source_hash_mismatches": 0,
+    "manifest_reference_rows": 2485
+  },
+  "resources": {
+    "media_reference_count": 42811,
+    "missing_media_targets": 0,
+    "private_candidate_references_after_rebase": 0
+  },
+  "new_math_jobs": {
+    "count": 236,
+    "svg_mml_outputs_verified": true,
+    "pdf_rows_verified": true,
+    "merged_print_map_path": "../../Tools/Production/merged-print-asset-manifest.json",
+    "merged_print_map_sha256": "9e0f015169a181889488d070fb733ab42026815e808b326e9bdca243a8aa17cc",
+    "merged_print_map_row_count": 25832,
+    "original_merged_map_sha256": "9e0f015169a181889488d070fb733ab42026815e808b326e9bdca243a8aa17cc",
+    "durable_map_sha256": "31733e4fbabe43ee775411212be1a8820222ec407944a960e60add373b73dd26",
+    "durable_map_row_count": 25832
+  },
+  "font_metadata": {
+    "path": "../../Tools/Production/svg-base-font-metadata.json",
+    "sha256": "feebc9b99eb4595b74906fd4934f794f7d63dd7aa35031f567c4242ae1fe34ab",
+    "entries": 25830,
+    "kind_counts": {
+      "math": 25735,
+      "mermaid": 94,
+      "mermaid-composite": 1
+    },
+    "unresolved_count": 0,
+    "svg_hashes_match_print_map": true
+  },
+  "preservation": {
+    "markdown_sources_modified": false,
+    "deletions": 0,
+    "source_design_qa_indesign_and_tooling_outside_scope_preserved": true,
+    "prepromotion_snapshot_file_count": 2781,
+    "prepromotion_snapshot_bytes": 850647041
+  },
+  "postrender_v2": {
+    "status": "pass",
+    "report_path": "postpromotion-postrender-verification.json",
+    "report_sha256": "78dbc451d78c1eb255b7b8cc072d72293729f898e0bc11b9460bdf8f721854df"
+  },
+  "epub": {
+    "outputs_excluded_from_source_only_copy_scope": true,
+    "validation_owned_by_epub_pipeline": true
+  },
+  "source_inventory": {
+    "path": "source-inventory.json",
+    "sha256": "75e6efc91c040fa937d13666e310461cb39be945f6727a67092641e62e6629e6",
+    "chapters": 129,
+    "unique_companions": 439,
+    "companion_manifest_reference_rows": 2485,
+    "current_hash_errors": 0
+  }
+}

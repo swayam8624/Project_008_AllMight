@@ -1,0 +1,33 @@
+\hypertarget{appendix-736a2345de4a}{}
+\section*{Mixed signedness}
+\section{Mixed signedness}\label{mixed-signedness}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A negative signed operand can convert to a large unsigned value; choose semantic types consistently or use \texttt{std::cmp\_*}, \texttt{std::in\_range}, or \texttt{std::ssize} where appropriate.
+
+int −1 compared with unsigned int 1 converts to a large unsigned value on the usual host, so the comparison is false. std::cmp\_less preserves mathematical ordering. A valid index still needs a lower bound: \texttt{index\textgreater{}=0\ \&\&\ std::cmp\_less(index,size)}.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5e2d663adf7f]{Usual arithmetic conversions} --- After promotions, equal-signedness operands use the higher-ranked type.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+Connect later chunks here when they use this concept.
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Explain mixed signedness without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} API design, diagnostics, and range-safe indexing.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Arithmetic\%20becomes\%20a\%20policy}{C002 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

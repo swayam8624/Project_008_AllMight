@@ -1,0 +1,52 @@
+\hypertarget{appendix-f9b8b9188c7f}{}\label{referencestart:appendix-f9b8b9188c7f}
+\section{Borrow invalidation and logical identity}\label{appendix-f9b8b9188c7f-borrow-invalidation-and-logical-identity}
+
+\hypertarget{appendix-f9b8b9188c7f-borrow-invalidation-and-logical-identity}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-f9b8b9188c7f-definition-and-mechanism}
+
+\hypertarget{appendix-f9b8b9188c7f-definition-and-mechanism}{}
+
+A borrow relies on an external lifetime/mutation contract. Vector reallocation invalidates element paths; destruction ends a referent's lifetime. Move-assigning a final dense-pool element into a live earlier slot may preserve that C++ object while changing its logical entity association.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-f9b8b9188c7f-prerequisites}
+
+\hypertarget{appendix-f9b8b9188c7f-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-6af5921bc853]{Pointer arithmetic and provenance} --- Storage relationships, bounds and lifetime distinguish valid access from a non-null value.
+\item
+  \hyperref[appendix-f1581457d322]{Object identity and generation handles} --- Live C++ objects and application entities can diverge when pool slots are repurposed.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-f9b8b9188c7f-used-by}
+
+\hypertarget{appendix-f9b8b9188c7f-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-aa405b7c3903]{Borrow contracts and pool epochs}
+\item
+  \hyperref[appendix-aea529eb5175]{Deferred captures and borrowed views}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-f9b8b9188c7f-recall-and-next-depth}
+
+\hypertarget{appendix-f9b8b9188c7f-recall-and-next-depth}{}
+
+Trace owner11 becoming owner33 without first-slot destruction. Pending: per-container invalidation guarantees and stable-storage designs. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{appendix-f9b8b9188c7f-source-and-navigation}
+
+\hypertarget{appendix-f9b8b9188c7f-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch003-when-a-valid-borrow-stops-naming-the-intended-thing]{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

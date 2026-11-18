@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch255.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-a9f83ad40792-color-encoding-and-linear-light-operations" class="level2">
+<h2>Color encoding and linear-light operations</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> XR01 · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-a9f83ad40792-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Color primaries/white point and nonlinear transfer encoding are different. Physical intensity filtering uses the appropriate linear quantity; black/white averaging then sRGB encoding gives about 0.735, not encoded 0.5. Tone/gamut mapping and absolute display luminance need separate contracts.</p>
+</section>
+<section id="appendix-a9f83ad40792-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch341.xhtml#appendix-215c2570199b-light-spectra-and-radiometry" class="wikilink">Light spectra and radiometry (Light Transport and Image Synthesis, Part 1, Reference notes: Light spectra and radiometry)</a> — The light quantity and units must be established before its interaction or visual effect is modeled.</li>
+<li><a href="ch119.xhtml#appendix-f414bd4ed05c-interpretation-contract" class="wikilink">Interpretation contract (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Interpretation contract)</a> — A numeric sample requires a domain, units and encoding convention.</li>
+</ul>
+</section>
+<section id="appendix-a9f83ad40792-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch565.xhtml#appendix-b2c1846508bf-perceptual-metrics-and-display-calibration" class="wikilink">Perceptual metrics and display calibration (Vision, XR, and Playable Worlds, Part 2, Reference notes: Perceptual metrics and display calibration)</a></li>
+<li><a href="ch308.xhtml#appendix-92d45cdf2afc-exposure-and-sensor-response" class="wikilink">Exposure and sensor response (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Exposure and sensor response)</a></li>
+</ul>
+</section>
+<section id="appendix-a9f83ad40792-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>State the metric’s encoding and peak before comparing images. Pending: standardized HDR and measured display calibration. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.</p>
+</section>
+<section id="appendix-a9f83ad40792-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-encoded-rgb-must-not-masquerade-as-linear-light" class="wikilink">Expanded teaching explanation (Vision, XR, and Playable Worlds, Part 2, Ch. 9)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-xr01---independent-seeing-and-representation-source" class="wikilink">Independent coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-a9f83ad40792-university-course-development" class="level3">
+<h3>University course development</h3>
+<p>Extend the existing color note with why image-processing arithmetic must distinguish encoded values from light. A display encoding such as sRGB uses a nonlinear transfer curve so code values allocate precision in a way that suits perception and storage. Averaging or adding those encoded numbers does not generally average or add emitted light. Decode to linear-light RGB before blending, filtering, estimating radiance, or compositing, then encode for display. If two equal-area samples contain linear intensities <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0</mn>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+</math>, their physical average is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.5</mn>
+</math>; averaging their encoded sRGB values and treating that result as light yields a different, brighter answer. Color primaries and a white point also define the coordinate system of RGB, so a numeric triplet is incomplete without its color space. Keep scene-referred radiance, display-referred color, and perceptual appearance separate.</p>
+<p><a href="ch310.xhtml#id_03-visual-computing-i-ch004-color-perception-encoding-and-display" class="wikilink">Color perception, encoding, and display (Geometry, Cameras, and Image Formation, Part 1, Ch. 11)</a> · <a href="ch310.xhtml#id_03-visual-computing-i-ch004-light-measurement-and-radiometry" class="wikilink">Light measurement and radiometry (Geometry, Cameras, and Image Formation, Part 1, Ch. 11)</a> · <a href="ch310.xhtml#id_03-visual-computing-i-ch004-image-sampling-filtering-and-efficient-reconstruction" class="wikilink">Image sampling, filtering, and efficient reconstruction (Geometry, Cameras, and Image Formation, Part 1, Ch. 11)</a></p>
+</section>
+</section>
+</body>
+</html>

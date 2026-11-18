@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch337.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-0b426c47dd78-bounding-volume-hierarchies" class="level2">
+<h2>Bounding volume hierarchies</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-0b426c47dd78-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A bounding volume hierarchy (BVH) organizes primitives into a tree of enclosing boxes. An internal node’s box contains the boxes of its children; a leaf stores a small set of triangles. To trace a ray, test the root box, recurse only into intersected children, and compare triangle hits in reached leaves. A box miss safely rejects every primitive beneath it, so the hierarchy reduces expensive exact tests when geometry is spatially coherent. Construction chooses how to group primitives and where to split; a surface-area heuristic estimates expected traversal work, while simpler median splits are faster to build. Dynamic scenes may refit boxes after deformation or rebuild the hierarchy when overlap grows. Correctness requires every primitive to remain enclosed; performance depends on tree quality and ray distribution.</p>
+</section>
+<section id="appendix-0b426c47dd78-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch348.xhtml#appendix-47ac1bd6d144-ray-triangle-intersection" class="wikilink">Ray-triangle intersection</a></li>
+<li><a href="ch366.xhtml#appendix-fab348609369-manifold-polygon-meshes-and-boundary-structure" class="wikilink">Manifold polygon meshes and boundary structure</a></li>
+</ul>
+</section>
+<section id="appendix-0b426c47dd78-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><span>Worlds, Images and Inference</span></p></li>
+<li><p><a href="ch362.xhtml#appendix-c5b332e400e7-radiance-fields-and-gaussian-splatting" class="wikilink">Radiance fields and Gaussian splatting</a> ## Full teaching explanation</p></li>
+</ul>
+<p><a href="ch385.xhtml#id_04-visual-computing-ii-ch029-acceleration-structures-and-robust-queries-1" class="wikilink">Acceleration structures and robust queries (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 10)</a> · <a href="ch383.xhtml#id_04-visual-computing-ii-ch028-visibility-queries-and-ray-intersections-1" class="wikilink">Visibility queries and ray intersections (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 9)</a></p>
+</section>
+</section>
+</body>
+</html>

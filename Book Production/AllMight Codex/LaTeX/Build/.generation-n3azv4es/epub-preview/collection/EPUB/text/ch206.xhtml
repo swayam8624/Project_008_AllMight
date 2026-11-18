@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch206.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-f56c3e43fd4e-placement-construction-and-explicit-lifetime-management" class="level2">
+<h2>Placement construction and explicit lifetime management</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C010 · <strong>Latest development:</strong> C010</p>
+<section id="appendix-f56c3e43fd4e-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Placement new or <code>std::construct_at</code> initializes an object in storage already provided by the caller; it does not allocate that backing storage. The storage must have adequate size and alignment. <code>std::destroy_at</code> ends an object’s lifetime but does not release the storage. A pool/container must track occupancy, partial construction, exactly-once destruction, and when reuse is permitted. Transparent replacement and <code>std::launder</code> have detailed preconditions; launder neither constructs nor revives an object.</p>
+</section>
+<section id="appendix-f56c3e43fd4e-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch158.xhtml#appendix-a82f9c438857-object-construction-and-storage-reuse" class="wikilink">Object construction and storage reuse (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Object construction and storage reuse)</a> — An object’s lifetime is not the same as backing storage availability.</li>
+<li><a href="ch061.xhtml#appendix-69739d3ab49b-raii-and-resource-handles" class="wikilink">RAII and resource handles (Bits, Programs, and Reliable Systems, Part 1, Reference notes: RAII and resource handles)</a> — Low-level storage protocols still need one responsible owner.</li>
+</ul>
+</section>
+<section id="appendix-f56c3e43fd4e-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch158.xhtml#appendix-a82f9c438857-object-construction-and-storage-reuse" class="wikilink">Object construction and storage reuse (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Object construction and storage reuse)</a></li>
+<li><a href="ch170.xhtml#appendix-f1581457d322-object-identity-and-generation-handles" class="wikilink">Object identity and generation handles (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Object identity and generation handles)</a></li>
+</ul>
+</section>
+<section id="appendix-f56c3e43fd4e-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Sketch Empty → Live(A) → Empty → Live(B) → Released. State the operation and precondition on every edge. Pending: implicit-lifetime operations, allocator traits, and container exception guarantees.</p>
+</section>
+<section id="appendix-f56c3e43fd4e-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch203.xhtml#id_01-foundations-i-ch004-placement-construction-reuses-storage-it-does-not-allocate-it" class="wikilink">M010 teaching narrative</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m010---parts-148-160" class="wikilink">Source coverage</a></p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch027.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-2e245a6fa8d3-short-circuit-evaluation" class="level2">
+<h2>Short-circuit evaluation</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C001 · <strong>Latest development:</strong> C001</p>
+<section id="appendix-2e245a6fa8d3-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p><code>&amp;&amp;</code> may skip its right operand after false; <code>||</code> may skip it after true, so evaluation safety is part of semantics.</p>
+<p>Built-in logical AND skips its right operand after false; logical OR skips it after true. <code>ptr &amp;&amp; ptr-&gt;ready()</code> guards the dereference. A bitwise <code>&amp;</code> evaluates both operands. Operator spelling therefore determines both result meaning and whether a dangerous expression is evaluated.</p>
+</section>
+<section id="appendix-2e245a6fa8d3-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch123.xhtml#appendix-fe6b457d68d8-logical-versus-bitwise-operators" class="wikilink">Logical versus bitwise operators</a> — Built-in <code>&amp;&amp;</code>, <code>||</code>, and <code>!</code> convert operands to truth conditions.</li>
+</ul>
+</section>
+<section id="appendix-2e245a6fa8d3-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch144.xhtml#appendix-652d81568de9-checked-binary-parsing" class="wikilink">Checked binary parsing (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Checked binary parsing)</a> — uses this mechanism to define its representation, error or validation contract.</li>
+</ul>
+<p>Connect later chunks here when they use this concept.</p>
+</section>
+<section id="appendix-2e245a6fa8d3-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain short-circuit evaluation without the label, work the example above, then state the assumption whose removal would change the result.</p>
+<p><strong>Pending:</strong> sequencing, side effects, and optimizer control flow.</p>
+</section>
+<section id="appendix-2e245a6fa8d3-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-from-a-signal-to-an-interpretation" class="wikilink">C001 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-foundations" class="wikilink">Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

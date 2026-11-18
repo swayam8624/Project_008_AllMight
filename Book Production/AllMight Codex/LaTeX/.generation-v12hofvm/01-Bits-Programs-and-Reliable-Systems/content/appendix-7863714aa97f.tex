@@ -1,0 +1,30 @@
+\hypertarget{appendix-7863714aa97f}{}\label{referencestart:appendix-7863714aa97f}
+\section{Argument-dependent lookup}\label{appendix-7863714aa97f-argument-dependent-lookup}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C007 · \textbf{Latest development:} C007
+
+\subsection{Definition and mechanism}\label{appendix-7863714aa97f-definition-and-mechanism}
+
+For a suitable unqualified function call, argument types contribute associated namespaces/classes to candidate lookup. dot(a,b) can find geometry::dot for geometry::Pair arguments. using std::swap; swap(a,b) combines a fallback with custom ADL candidates. Some ordinary lookup results suppress ADL.
+
+\subsection{Prerequisites}\label{appendix-7863714aa97f-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-b12b31759da1]{Scopes and name lookup} --- Ordinary lookup provides candidates and suppression rules before arguments can add associated candidates.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-7863714aa97f-used-by}
+
+Later chunks extend this same node; dependent concepts are listed here as they are integrated.
+
+\subsection{Recall and next depth}\label{appendix-7863714aa97f-recall-and-next-depth}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} Deeper ownership, pointer/reference, generic programming and module rules from later sources. This is written coverage, not demonstrated personal mastery.
+
+\subsection{Source and navigation}\label{appendix-7863714aa97f-source-and-navigation}
+
+\hyperref[01-foundations-i-ch002-a-spelling-needs-a-place-and-a-meaning]{C007 teaching chapter} · \hyperref[appendix-fd090d982a15-m007---parts-101-112]{Source coverage} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

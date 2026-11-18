@@ -1,0 +1,18 @@
+\hypertarget{appendix-541306fdbc1b}{}\label{referencestart:appendix-541306fdbc1b}
+\section{Moore-Penrose pseudoinverse}\label{appendix-541306fdbc1b-moore-penrose-pseudoinverse}
+
+The exact SVD defines \(A^+\) by reciprocating every positive singular value and transposing the orthogonal factors. \(A^+b\) minimizes residual first and Euclidean solution norm among minimizers second. A numerical cutoff instead produces \(A_\tau^+\): if it discards a positive singular value, it solves a retained-rank approximation and can increase the residual of the original system. The cutoff makes the treatment of weak directions explicit.
+
+\textbf{Use it when:} rectangular or rank-deficient least squares needs a minimum-norm answer.
+
+\textbf{Developed in Phase 8:} The exact pseudoinverse reciprocates every positive singular value, yielding the least-squares solution with minimum Euclidean norm. A practical cutoff defines a different, truncated operator: discarding even a positive singular value can increase the residual for the original system, so the tolerance and retained rank are part of the mathematical answer. \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch024-the-moorepenrose-inverse-and-its-four-identities}{the exact pseudoinverse (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 8)} · \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch024-thresholding-and-regularization-are-different-choices}{truncation and regularization (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 8)}
+
+\subsection{Prerequisites}\label{appendix-541306fdbc1b-prerequisites}
+
+\hyperref[appendix-1fad5e7f36fa]{Singular value decomposition}, \hyperref[appendix-8572a4a060c1]{Linear systems and fundamental subspaces}, \hyperref[appendix-f8657bac66e5]{Matrix norms and numerical error}.
+
+\subsection{Used by}\label{appendix-541306fdbc1b-used-by}
+
+\hyperref[appendix-ad175ef3c5bf]{PCA and covariance eigensystems}, \hyperref[appendix-221a483bec2d]{Matrix factorization choices}.
+
+\textbf{Teaching path:} \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch024-pseudoinverse-makes-least-squares-and-minimum-norm-one-operation}{pseudoinverse (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 8)}.

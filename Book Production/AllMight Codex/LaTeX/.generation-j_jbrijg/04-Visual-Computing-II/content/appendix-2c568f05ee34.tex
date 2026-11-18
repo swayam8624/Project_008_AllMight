@@ -1,0 +1,57 @@
+\hypertarget{appendix-2c568f05ee34}{}
+\section*{Latent-variable models and generative flows}
+\chapter{Latent-variable models and generative flows}\label{appendix-2c568f05ee34-latent-variable-models-and-generative-flows}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\section{Definition and mechanism}\label{appendix-2c568f05ee34-definition-and-mechanism}
+
+Generative models describe how data could be produced, often by first sampling a latent variable \(z\) and mapping it to an observation \(x\). A variational autoencoder (VAE) learns an encoder distribution \(q(z|x)\) and decoder \(p(x|z)\); its evidence lower bound balances reconstruction likelihood against a KL penalty that keeps the latent distribution tractable. A generative adversarial network (GAN) trains a generator against a discriminator, creating a game that can produce sharp samples but may be unstable or collapse to limited modes. Normalizing flows use invertible transformations so the data density can be computed with a change-of-variables Jacobian determinant. These methods solve different tradeoffs among likelihood, sample quality, latent structure, and optimization stability. Their assumptions matter: a VAE's posterior family may be too simple, a GAN score is not a calibrated density, and a flow's invertibility constrains architecture. Generated samples are not evidence that the model has learned the true causal process.
+
+\section{Prerequisites}\label{appendix-2c568f05ee34-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-4815cd87ab8b}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)}
+\item
+  \hyperref[appendix-29f4bea4c2bb]{Constrained optimization and inverse kinematics}
+\item
+  \hyperref[appendix-65788587ef78]{Research validity and ablation}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-40df0855b4a7}{Automatic differentiation and backpropagation (03-Visual-Computing-I, appendix-40df0855b4a7)}
+\end{itemize}
+
+\section{Used by}\label{appendix-2c568f05ee34-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Generative\%20models\%20learn\%20distributions\%20and\%20samplers}{Generative models learn distributions and samplers}
+\item
+  \hyperref[appendix-c5b332e400e7]{Radiance fields and Gaussian splatting}
+\end{itemize}
+
+\section{Full teaching explanation}\label{appendix-2c568f05ee34-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Generative\%20models\%20learn\%20distributions\%20and\%20samplers}{Generative models learn distributions and samplers}
+\end{itemize}
+
+\section{Recall and next depth}\label{appendix-2c568f05ee34-recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  State the VAE reconstruction/KL tradeoff, GAN adversarial objective, and flow change-of-variables role.
+\item
+  Which assumption or training failure distinguishes each family?
+\end{itemize}
+
+\section{Source and navigation}\label{appendix-2c568f05ee34-source-and-navigation}
+
+Teaching narrative: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Generative\%20models\%20learn\%20distributions\%20and\%20samplers}{open the main explanation}. Browse the \href{../02-Foundations-II/main.pdf\#nameddest=appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series}{University graphics and vision index (02-Foundations-II, appendix-a6d556a4ef50-university-graphics-vision-and-photography-\/-\/-independent-series)}. Additional chapter connections: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Numerical\%20integration\%20and\%20Monte\%20Carlo\%20estimation}{Numerical integration and Monte Carlo estimation}; \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Optimization,\%20constraints,\%20and\%20inverse\%20kinematics}{Optimization, constraints, and inverse kinematics}; \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20linear\%20equation\%20is\%20a\%20measurement,\%20and\%20several\%20equations\%20are\%20geometry}{A linear equation is a measurement, and several equations are geometry}.
+
+Caption/source records: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#SC-13\%20-\%20Stanford\%20CS231N\%20Deep\%20Learning\%20for\%20Computer\%20Vision\%20Spring\%202025\%20Lecture\%2013:\%20Generative\%20Models\%201}{SC-13}, \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#SC-14\%20-\%20Stanford\%20CS231N\%20Deep\%20Learning\%20for\%20Computer\%20Vision\%20Spring\%202025\%20Lecture\%2014:\%20Generative\%20Models\%202}{SC-14}.

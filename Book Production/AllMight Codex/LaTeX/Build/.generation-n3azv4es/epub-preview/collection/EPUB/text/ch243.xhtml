@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch243.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-ea2dadd21ce5-transformer-attention-and-kv-cache-runtime" class="level2">
+<h2>Transformer attention and KV cache runtime</h2>
+<p>A transformer runtime becomes understandable when tensor shapes remain visible. For one attention head, let a token representation produce query, key and value vectors</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>,</mo>
+  <mi>k</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo>∈</mo>
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="double-struck">R</mi>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mi>d</mi>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>For a query attending to keys <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>k</mi>
+    <mi>j</mi>
+  </msub>
+</math>, the scaled score is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ℓ</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <msup>
+        <mi>q</mi>
+        <mi>T</mi>
+      </msup>
+      <msub>
+        <mi>k</mi>
+        <mi>j</mi>
+      </msub>
+    </mrow>
+    <msqrt>
+      <mi>d</mi>
+    </msqrt>
+  </mfrac>
+  <mo>,</mo>
+</math>
+<p>followed by a stable softmax</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msup>
+      <mi>e</mi>
+      <mrow data-mjx-texclass="ORD">
+        <msub>
+          <mi>ℓ</mi>
+          <mi>j</mi>
+        </msub>
+        <mo>−</mo>
+        <mi>m</mi>
+      </mrow>
+    </msup>
+    <mrow>
+      <munder>
+        <mo data-mjx-texclass="OP">∑</mo>
+        <mi>t</mi>
+      </munder>
+      <msup>
+        <mi>e</mi>
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>ℓ</mi>
+            <mi>t</mi>
+          </msub>
+          <mo>−</mo>
+          <mi>m</mi>
+        </mrow>
+      </msup>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>m</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    <mi>t</mi>
+  </munder>
+  <msub>
+    <mi>ℓ</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>and the output is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>j</mi>
+  </munder>
+  <msub>
+    <mi>p</mi>
+    <mi>j</mi>
+  </msub>
+  <msub>
+    <mi>v</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Subtracting <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+</math> does not change the distribution because the same factor appears in numerator and denominator, but it prevents overflow when logits are large.</p>
+<section id="appendix-ea2dadd21ce5-causal-masking" class="level3">
+<h3>Causal masking</h3>
+<p>For autoregressive decoding at token position <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math>, a query must not observe keys and values from future positions. In a batch attention matrix this is represented by a causal mask before softmax. During incremental decoding, a correctly managed KV cache gives the same structural guarantee: only keys and values through the current token have been appended.</p>
+<p>The cache exists because recomputing all earlier K/V projections every token is wasteful. If each layer has key/value vectors of head width <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>d</mi>
+    <mi>h</mi>
+  </msub>
+</math>, number of KV heads <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>h</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mi>v</mi>
+    </mrow>
+  </msub>
+</math>, sequence length <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+</math>, and element size <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>, the rough storage per layer is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mi>L</mi>
+  <msub>
+    <mi>h</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mi>v</mi>
+    </mrow>
+  </msub>
+  <msub>
+    <mi>d</mi>
+    <mi>h</mi>
+  </msub>
+  <mi>b</mi>
+</math>
+<p>bytes before allocator and alignment overhead. Cache datatype, paging strategy and maximum context length are therefore memory-system decisions.</p>
+</section>
+<section id="appendix-ea2dadd21ce5-multi-head-and-grouped-query-attention" class="level3">
+<h3>Multi-head and grouped-query attention</h3>
+<p>Multiple heads perform the same mechanism with separate projected subspaces. Grouped-query attention may use fewer key/value heads than query heads; the mapping from query head to KV head must be explicit. GGUF metadata commonly carries head-count and key/value dimension information, so model loading and runtime shape validation meet at this boundary.</p>
+</section>
+<section id="appendix-ea2dadd21ce5-residual-normalization-and-feed-forward-structure" class="level3">
+<h3>Residual, normalization, and feed-forward structure</h3>
+<p>Attention is only one sublayer. A complete transformer block also needs residual paths, normalization, and a feed-forward network or architecture-specific alternative. The order—pre-norm versus post-norm, RMSNorm versus LayerNorm, activation and gating choice—is part of the model architecture and must come from the model contract rather than a generic “transformer” assumption.</p>
+</section>
+<section id="appendix-ea2dadd21ce5-executable-witness" class="level3">
+<h3>Executable witness</h3>
+<p>tools/labs/phase29_ml_runtime_lab.cpp implements stable softmax and a small incremental KV cache. Two keys with distinct values make the weighting observable; a single-token case proves that incremental causal attention cannot see a future token that has not been appended.</p>
+<p>It intentionally does not claim multi-head batching, rotary position embeddings, grouped-query attention, tokenizer behavior, paged KV caches, fused kernels or production-model parity. Those are separate implementation milestones.</p>
+<p>Related: <a href="ch241.xhtml#appendix-cebadf3106d1-tensor-runtime-layout-and-views" class="wikilink">Tensor runtime layout and views</a>, <a href="ch244.xhtml#appendix-fef72dd246f2-gguf-binary-model-loading" class="wikilink">GGUF binary model loading</a>, <a href="ch240.xhtml#appendix-a87217e3af2b-onnx-graph-import-and-lowering" class="wikilink">ONNX graph import and lowering</a>, <a href="ch237.xhtml#appendix-241c0e42ac2d-quantized-matvec-and-dequantization" class="wikilink">Quantized matvec and dequantization</a>.</p>
+</section>
+</section>
+</body>
+</html>

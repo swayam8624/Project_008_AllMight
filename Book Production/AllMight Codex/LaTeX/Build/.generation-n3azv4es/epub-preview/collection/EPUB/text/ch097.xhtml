@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch097.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-ceb4c4a9b5a1-fixed-point-range-and-resolution" class="level2">
+<h2>Fixed-point range and resolution</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C006 · <strong>Latest development:</strong> C006</p>
+<section id="appendix-ceb4c4a9b5a1-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>For signed N-bit raw storage and F fraction bits, step is 2^-F and the positive endpoint is (2<sup>(N-1)-1)/2</sup>F. Required step 0.001 and magnitude 1e6 in 32 bits allow F=10 or 11.</p>
+</section>
+<section id="appendix-ceb4c4a9b5a1-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch018.xhtml#appendix-1d0dbe8924cc-fixed-point-representation" class="wikilink">Fixed-point representation</a> — supplies the representation or validity rule used above.</li>
+</ul>
+</section>
+<section id="appendix-ceb4c4a9b5a1-used-by" class="level3">
+<h3>Used by</h3>
+<p>Connect later dependent concepts here when their explanations use this mechanism.</p>
+</section>
+<section id="appendix-ceb4c4a9b5a1-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the example and identify the condition that would invalidate it.</p>
+<p><strong>Pending:</strong> Coordinate-origin and wider-carrier designs need their own range proofs.</p>
+</section>
+<section id="appendix-ceb4c4a9b5a1-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-choosing-what-information-to-keep" class="wikilink">Continuous teaching story</a> · <span>Source coverage ledger</span> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-ceb4c4a9b5a1-reconstruction-depth" class="level3">
+<h3>Reconstruction depth</h3>
+<p>A fixed-point value stores an integer <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math> together with an implied scale <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+</math>, so the represented real quantity is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mi>q</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>For a binary fractional format with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math> fractional bits, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+  <mo>=</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mi>F</mi>
+    </mrow>
+  </msup>
+</math>. Increasing <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math> improves resolution but consumes integer range because storage width has not changed. For signed <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math>-bit two’s-complement storage, the approximate real range is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mo>−</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mi>N</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mi>N</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mi>s</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>This makes format choice an error-budget decision rather than a syntax decision. Position data may need large range; normalized coefficients may need fine local resolution. Multiplication temporarily doubles the number of fractional bits, so a production operation needs a widened intermediate or a deliberate rescale, round and saturate policy.</p>
+<p>Tests should exercise representable endpoints, half-step rounding, overflow, negative values, multiplication rescaling and accumulation. A format can be perfectly deterministic and still be numerically unsuitable if its step size exceeds the physical or visual tolerance of the subsystem using it.</p>
+</section>
+</section>
+</body>
+</html>

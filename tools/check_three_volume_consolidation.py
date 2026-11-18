@@ -65,7 +65,7 @@ def main():
             old = historical(name, XR_BASE)
             begin, end = old.index(XR_START), old.index(MATH_START)
             require(begin < end, "Historical XR seam changed")
-            xr = migrate_legacy_links(old[begin:end])
+            xr = normalized_baseline(old[begin:end], GRAPHICS)
             require(current.count(XR_START) == 1, "XR reader route missing/duplicated")
             require(current.index(MATH_START) < current.index(XR_START),
                     "XR source relocated ahead of its mathematics prerequisites")

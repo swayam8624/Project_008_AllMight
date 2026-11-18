@@ -1,0 +1,1052 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Chapter xmlns:ns0="http://ns.adobe.com/AdobeInDesign/4.0/" id="05-engine-i-ch003" source="Chapter Edition/03 - Game Engine/03 - Object representation, lifetime, and enforceable promises.md">
+<Content ns0:pstyle="ChapterHeader" id="05-engine-i-ch003-object-representation-lifetime-and-enforceable-promises">03 — Object representation, lifetime, and enforceable promises</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#05-engine-i-ch002">Previous chapter</Link> · <Link href="#05-engine-i-ch004">Next chapter</Link></Content>
+<Content ns0:pstyle="Content">Once a program has live objects, similar syntax can still create different states and lifetimes. This chapter compares initialization, copying, references, and invariants to show when a representation is safe to expose.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">By the end:</Strong> Distinguish representation from validation and explain how constructors, ownership, and lifetime rules protect invariants.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Recall question:</Strong> For a record that owns data, which operations create, transfer, borrow, or invalidate that data, and how would you prove each?</Content>
+
+
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-representation-is-an-intention-not-input-validation">Representation is an intention, not input validation</Content>
+<Content ns0:pstyle="Content">A useful independent example is:</Content>
+<Code ns0:pstyle="Code" language="cpp">enum class ChangeKind : std::uint8_t {
+    Created, Destroyed, ComponentAdded, ComponentRemoved
+};</Code>
+<Content ns0:pstyle="Content">Include <InlineCode ns0:cstyle="InlineCode">&lt;cstdint&gt;</InlineCode> before this fragment. The scoped enum’s default underlying type would be <InlineCode ns0:cstyle="InlineCode">int</InlineCode>; the explicit underlying type requests an eight-bit representation on targets providing that alias. This helps compact records but says nothing about file version, endian order of other fields, or GPU compatibility. In the fragments below, <InlineCode ns0:cstyle="InlineCode">StructuralChangeKind</InlineCode> means an equivalent enum with these same four enumerators; each fragment is illustrative, not a separate complete program.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-getting-the-underlying-integer">Getting the underlying integer</Content>
+<Content ns0:pstyle="Content">In C++23:</Content>
+<Code ns0:pstyle="Code" language="cpp">#include &lt;utility&gt;
+
+auto raw = std::to_underlying(
+    StructuralChangeKind::Destroyed
+);</Code>
+<Content ns0:pstyle="Content">This is better than repeatedly spelling:</Content>
+<Code ns0:pstyle="Code" language="cpp">static_cast&lt;std::uint8_t&gt;(
+    StructuralChangeKind::Destroyed
+);</Code>
+<Content ns0:pstyle="Content">because the return type tracks the enum’s actual underlying type. Earlier code commonly used <InlineCode ns0:cstyle="InlineCode">std::underlying_type_t&lt;E&gt;</InlineCode>.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-an-enum-can-represent-more-than-just-the-named-enumerators">An enum can represent more than just the named enumerators</Content>
+<Content ns0:pstyle="Content">Never assume deserializing one byte automatically validates:</Content>
+<Code ns0:pstyle="Code" language="cpp">StructuralChangeKind</Code>
+<Content ns0:pstyle="Content">You might receive:</Content>
+<Code ns0:pstyle="Code" language="text">0xC7</Code>
+<Content ns0:pstyle="Content">Your protocol should validate the domain. Conceptually:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::optional&lt;StructuralChangeKind&gt;
+decodeChangeKind(std::uint8_t raw)
+{
+    switch (raw)
+    {
+        case 0:
+            return StructuralChangeKind::Created;
+        case 1:
+            return StructuralChangeKind::Destroyed;
+        case 2:
+            return StructuralChangeKind::ComponentAdded;
+        case 3:
+            return StructuralChangeKind::ComponentRemoved;
+        default:
+            return std::nullopt;
+    }
+}</Code>
+<Content ns0:pstyle="Content">The enum gives you type safety <Strong ns0:cstyle="Bold">inside a correct C++ program</Strong>. It does not sanitize arbitrary external bytes. That matters in game assets, network messages and binary scene files.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-enum-flags">Enum flags</Content>
+<Content ns0:pstyle="Content">Sometimes an enum represents mutually exclusive states:</Content>
+<Code ns0:pstyle="Code" language="cpp">enum class State
+{
+    Idle,
+    Running,
+    Dead
+};</Code>
+<Content ns0:pstyle="Content">Sometimes it represents a bitmask:</Content>
+<Code ns0:pstyle="Code" language="cpp">enum class Access : std::uint32_t
+{
+    None  = 0,
+    Read  = 1u &lt;&lt; 0,
+    Write = 1u &lt;&lt; 1,
+    Exec  = 1u &lt;&lt; 2
+};</Code>
+<Content ns0:pstyle="Content">For <InlineCode ns0:cstyle="InlineCode">enum class</InlineCode> (<Link href="#print-redirect-f7fc93b3babcf556">Scoped enums and validated domains</Link>), bitwise operations do not automatically exist:</Content>
+<Code ns0:pstyle="Code" language="cpp">Access::Read | Access::Write</Code>
+<Content ns0:pstyle="Content">requires operator definitions or explicit underlying conversion. That is good because the compiler forces the API designer to say:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">These enumerators are intentionally combinable.</Content></BlockQuote>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-records-acquire-their-initial-state">Records acquire their initial state</Content>
+<Content ns0:pstyle="Content">This becomes crucial in engine code because many types are deliberately simple records. Consider:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Vertex
+{
+    float x;
+    float y;
+    float z;
+    std::uint32_t color;
+};</Code>
+<Content ns0:pstyle="Content">No custom constructor is required to initialize it. You can write:</Content>
+<Code ns0:pstyle="Code" language="cpp">Vertex v{
+    1.0f,
+    2.0f,
+    3.0f,
+    0xFFFFFFFFu
+};</Code>
+<Content ns0:pstyle="Content">This is <Strong ns0:cstyle="Bold"><Link href="#print-redirect-f39aff0008836143">aggregate initialization</Link></Strong>. The language knows how to initialize the constituent elements directly.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-what-counts-as-an-aggregate">What counts as an aggregate?</Content>
+<Content ns0:pstyle="Content">For modern C++20/23 class types, the practical rules include no user-declared or inherited constructors, no private/protected direct non-static data members, no virtual functions, and no prohibited virtual/private/protected base-class structure. Instead of memorizing every standard-revision wording change, test actual intent:</Content>
+<Code ns0:pstyle="Code" language="cpp">#include &lt;type_traits&gt;
+
+static_assert(std::is_aggregate_v&lt;Vertex&gt;);</Code>
+<Content ns0:pstyle="Content">That is the professional approach. The precise aggregate definition evolved across C++ versions.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-similar-braces-can-invoke-different-mechanisms">Similar braces can invoke different mechanisms</Content>
+<Content ns0:pstyle="Content">A record with public members, default member initializers and member functions can still be an <Link href="#print-redirect-f39aff0008836143">aggregate</Link>. For example, the laboratory’s <InlineCode ns0:cstyle="InlineCode">ResourceHandle</InlineCode> has no user-declared constructor, and its <InlineCode ns0:cstyle="InlineCode">{42,7}</InlineCode> initialization initializes its two non-static fields. A static constant does not become a per-object aggregate element. Contrast <InlineCode ns0:cstyle="InlineCode">struct Vec { float x,y,z; Vec(float a,float b,float c):x(a),y(b),z(c){} };</InlineCode>. Its user-declared constructor makes it non-aggregate in C++20/23. <InlineCode ns0:cstyle="InlineCode">Vec{1,2,3}</InlineCode> selects that constructor. Even a constructor explicitly defaulted on its first declaration is user-declared; do not substitute the older no user-provided constructor criterion for the modern rule. Ordinary methods do not by themselves disqualify an aggregate. Arrays are aggregates too, and aggregate bases precede direct members in element order.</Content>
+<Content ns0:pstyle="Content">Use <InlineCode ns0:cstyle="InlineCode">std::is_aggregate_v&lt;T&gt;</InlineCode> when aggregate initialization is an intentional API property. A later added constructor can break designated initialization without changing any field names. Source-reported Entity/Vector contrasts remain examples to verify in the actual project.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-initialization-order">Initialization order</Content>
+<Content ns0:pstyle="Content">Aggregate elements are initialized in their declaration/order rules, not in arbitrary conceptual order. For:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Particle
+{
+    float x;
+    float y;
+    int lifetime;
+};</Code>
+<Content ns0:pstyle="Content">this maps naturally:</Content>
+<Code ns0:pstyle="Code" language="cpp">Particle p{
+    10.0f,
+    20.0f,
+    60
+};</Code>
+<Content ns0:pstyle="Content">But positional initialization can become difficult to read:</Content>
+<Code ns0:pstyle="Code" language="cpp">PipelineDesc desc{
+    1,
+    0,
+    true,
+    false,
+    4,
+    1
+};</Code>
+<Content ns0:pstyle="Content">What is <InlineCode ns0:cstyle="InlineCode">4</InlineCode>? What is <InlineCode ns0:cstyle="InlineCode">1</InlineCode>? Hence C++20 designated initialization.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-designated-initializers">Designated initializers</Content>
+<Code ns0:pstyle="Code" language="cpp">Particle p{
+    .x = 10.0f,
+    .y = 20.0f,
+    .lifetime = 60
+};</Code>
+<Content ns0:pstyle="Content">Unlike C, C++ requires the designators to respect declaration order. If declaration is:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Particle
+{
+    float x;
+    float y;
+    int lifetime;
+};</Code>
+<Content ns0:pstyle="Content">then this is not portable-valid C++ designated initialization:</Content>
+<Code ns0:pstyle="Code" language="cpp">Particle p{
+    .lifetime = 60,
+    .x = 10.0f
+};</Code>
+<Content ns0:pstyle="Content">The order must follow:</Content>
+<Code ns0:pstyle="Code" language="text">x → y → lifetime</Code>
+<Content ns0:pstyle="Content">Also, C++ designators name direct data members rather than supporting all of C’s more permissive designated-initialization forms.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-missing-members">Missing members</Content>
+<Content ns0:pstyle="Content">Suppose:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Material
+{
+    float roughness = 0.5f;
+    float metallic  = 0.0f;
+    bool doubleSided{};
+};</Code>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="cpp">Material m{
+    .roughness = 0.8f
+};</Code>
+<Content ns0:pstyle="Content">leaves the other members to their default member initialization rules. This can make data descriptors very expressive.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-aggregate-initialization-and-api-evolution">Aggregate initialization and API evolution</Content>
+<Content ns0:pstyle="Content">Here is a real engineering trap. Version 1:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Dispatch
+{
+    std::uint32_t x;
+    std::uint32_t y;
+    std::uint32_t z;
+};</Code>
+<Content ns0:pstyle="Content">Client:</Content>
+<Code ns0:pstyle="Code" language="cpp">Dispatch d{8, 8, 1};</Code>
+<Content ns0:pstyle="Content">Then someone changes the structure:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Dispatch
+{
+    std::uint32_t queue;
+    std::uint32_t x;
+    std::uint32_t y;
+    std::uint32_t z;
+};</Code>
+<Content ns0:pstyle="Content">Now positional initialization has a changed meaning or fails. Designators make intent clearer:</Content>
+<Code ns0:pstyle="Code" language="cpp">Dispatch d{
+    .x = 8,
+    .y = 8,
+    .z = 1
+};</Code>
+<Content ns0:pstyle="Content">But adding/reordering members can still have ABI/layout consequences. Source-level convenience does not imply binary compatibility.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-braces-do-more-than-aggregates">Braces do more than aggregates</Content>
+<Content ns0:pstyle="Content">Effective Modern C++ spends substantial attention on this because:</Content>
+<Code ns0:pstyle="Code" language="cpp">T{...}</Code>
+<Content ns0:pstyle="Content">does <Strong ns0:cstyle="Bold">not always mean aggregate initialization</Strong>. For example:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::vector&lt;int&gt; a(10, 20);</Code>
+<Content ns0:pstyle="Content">means approximately:</Content>
+<Code ns0:pstyle="Code" language="text">10 elements, each value 20</Code>
+<Content ns0:pstyle="Content">while:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::vector&lt;int&gt; b{10, 20};</Code>
+<Content ns0:pstyle="Content">means:</Content>
+<Code ns0:pstyle="Code" language="text">two elements: 10 and 20</Code>
+<Content ns0:pstyle="Content">because <InlineCode ns0:cstyle="InlineCode">std::initializer_list</InlineCode> overloads receive special preference during braced constructor overload resolution. So braces offer:</Content>
+<Code ns0:pstyle="Code" language="text">narrowing protection
+clear default construction
+aggregate initialization
+initializer-list construction
+ordinary constructor calls</Code>
+<Content ns0:pstyle="Content">depending on the type. Never determine semantics from punctuation alone. Ask:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">What initialization mechanism and overload resolution rules apply to this type?</Content></BlockQuote>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-public-records-and-protected-invariants">Public records and protected invariants</Content>
+<Content ns0:pstyle="Content">This one is simpler syntactically but culturally important. The classic separate-compilation model lets clients compile against an interface while implementations are compiled separately. These:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct A
+{
+    int x;
+};</Code>
+<Content ns0:pstyle="Content">and:</Content>
+<Code ns0:pstyle="Code" language="cpp">class A
+{
+public:
+    int x;
+};</Code>
+<Content ns0:pstyle="Content">have the same access semantics. A <InlineCode ns0:cstyle="InlineCode">struct</InlineCode> can have:</Content>
+<Code ns0:pstyle="Code" language="text">constructors
+destructors
+virtual functions
+private members
+inheritance
+templates
+operators
+static members
+friends</Code>
+<Content ns0:pstyle="Content">A <InlineCode ns0:cstyle="InlineCode">class</InlineCode> can be a simple aggregate. There is no language rule saying:</Content>
+<Code ns0:pstyle="Code" language="text">struct = dumb C data
+class = real object-oriented object</Code>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-the-other-difference-base-class-access">The other difference: base-class access</Content>
+<Content ns0:pstyle="Content">With:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Derived : Base
+{
+};</Code>
+<Content ns0:pstyle="Content">inheritance is public by default. With:</Content>
+<Code ns0:pstyle="Code" language="cpp">class Derived : Base
+{
+};</Code>
+<Content ns0:pstyle="Content">inheritance is private by default. Equivalent explicit forms:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Derived : public Base {};</Code>
+<Content ns0:pstyle="Content">and:</Content>
+<Code ns0:pstyle="Code" language="cpp">class Derived : private Base {};</Code>
+<Content ns0:pstyle="Content">This is the second language-level default difference.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-a-convention-about-promises">A convention about promises</Content>
+<Content ns0:pstyle="Content">Use a struct for an intentionally transparent record; use a class when a public API maintains an <Strong ns0:cstyle="Bold">invariant</Strong>, a condition that must remain true after each allowed operation. A record with unrestricted public fields cannot promise an invariant that callers can freely violate. These are design choices, not language restrictions: structs can hide members and classes can expose them. Neither keyword alone determines copying, lifetime, allocation, virtual dispatch, or thread safety.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-bringing-the-object-model-back-to-bytes">Bringing the object model back to bytes</Content>
+<Content ns0:pstyle="Content">An <Strong ns0:cstyle="Bold">ABI</Strong> (application binary interface) is the target agreement about data layout, symbols and calls. A <Strong ns0:cstyle="Bold">stride</Strong> is the byte distance between successive records. An <Strong ns0:cstyle="Bold">offset</Strong> is a member’s displacement from a chosen record origin. Internal padding separates members; tail padding completes the record’s stride. In C++23, nonzero-size non-variant data members follow declaration order even across access labels; this does not imply no gaps, and it is stronger than some earlier language versions.</Content>
+<Content ns0:pstyle="Content">Now we finally connect C++ source declarations to actual bytes. Take:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Example
+{
+    char a;
+    double b;
+    char c;
+};</Code>
+<Content ns0:pstyle="Content">A beginner imagines:</Content>
+<Code ns0:pstyle="Code" language="text">a : 1 byte
+b : 8 bytes
+c : 1 byte
+--------------
+total 10</Code>
+<Content ns0:pstyle="Content">But processors and ABIs have alignment requirements. Assume:</Content>
+<Code ns0:pstyle="Code" language="text">alignof(char)   = 1
+alignof(double) = 8</Code>
+<Content ns0:pstyle="Content">A typical ABI may lay it out as:</Content>
+<Code ns0:pstyle="Code" language="text">offset
+0       a
+1-7     padding
+8-15    b
+16      c
+17-23   tail padding</Code>
+<Content ns0:pstyle="Content">So:</Content>
+<Code ns0:pstyle="Code" language="cpp">sizeof(Example)</Code>
+<Content ns0:pstyle="Content">could be:</Content>
+<Code ns0:pstyle="Code" language="text">24</Code>
+<Content ns0:pstyle="Content">not 10. Why tail padding? Because if you have:</Content>
+<Code ns0:pstyle="Code" language="cpp">Example array[2];</Code>
+<Content ns0:pstyle="Content">then:</Content>
+<Code ns0:pstyle="Code" language="text">array[1]</Code>
+<Content ns0:pstyle="Content">must begin at an address suitably aligned for <InlineCode ns0:cstyle="InlineCode">double</InlineCode>. If object size were 17:</Content>
+<Code ns0:pstyle="Code" language="text">first object starts 0
+next starts 17</Code>
+<Content ns0:pstyle="Content">which would misalign its <InlineCode ns0:cstyle="InlineCode">double</InlineCode>. Rounding total size to the class alignment allows:</Content>
+<Code ns0:pstyle="Code" language="text">object 0: [0,23]
+object 1: [24,47]</Code>
+<Content ns0:pstyle="Content">with proper repeated alignment.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-typical-alignment-calculation">Typical alignment calculation</Content>
+<Content ns0:pstyle="Content">For a conventional ABI, a useful mental algorithm is:</Content>
+<Code ns0:pstyle="Code" language="text">offset = 0
+
+for each member:     offset = round_up(offset, alignof(member))     member.offset = offset     offset += sizeof(member)
+
+class_alignment = ABI-selected alignment, often max(member alignments)
+sizeof(class) = round_up(offset, class_alignment)</Code>
+<Content ns0:pstyle="Content">This is not the complete C++ standard’s universal class-layout algorithm. Bases, empty subobjects, <InlineCode ns0:cstyle="InlineCode">[[no_unique_address]]</InlineCode>, virtual mechanisms, packing pragmas, bit-fields and ABI choices complicate it. But it correctly explains ordinary POD-like engine structs on mainstream ABIs.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-reordering-members-can-reduce-padding">Reordering members can reduce padding</Content>
+<Content ns0:pstyle="Content">Assume:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Bad
+{
+    char a;
+    double b;
+    char c;
+};</Code>
+<Content ns0:pstyle="Content">Typical result:</Content>
+<Code ns0:pstyle="Code" language="text">24 bytes</Code>
+<Content ns0:pstyle="Content">Reorder:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Better
+{
+    double b;
+    char a;
+    char c;
+};</Code>
+<Content ns0:pstyle="Content">Typical:</Content>
+<Code ns0:pstyle="Code" language="text">offset 0-7 : b
+offset 8   : a
+offset 9   : c
+offset10-15: tail padding
+
+size = 16</Code>
+<Content ns0:pstyle="Content">For one object:</Content>
+<Code ns0:pstyle="Code" language="text">8 bytes saved</Code>
+<Content ns0:pstyle="Content">For one million:</Content>
+<Code ns0:pstyle="Code" language="text">~8 MB saved</Code>
+<Content ns0:pstyle="Content">But don’t mindlessly reorder public binary formats. Changing member order can alter:</Content>
+<Code ns0:pstyle="Code" language="text">ABI
+serialized layout
+shader layout
+network packet layout
+cache packing
+debug tooling assumptions</Code>
+<Content ns0:pstyle="Content">Optimization and compatibility can conflict.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-alignof-and-alignas"><InlineCode ns0:cstyle="InlineCode">alignof</InlineCode> and <InlineCode ns0:cstyle="InlineCode">alignas</InlineCode></Content>
+<Content ns0:pstyle="Content">Query alignment:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::cout &lt;&lt; alignof(float);
+std::cout &lt;&lt; alignof(Vec3f);</Code>
+<Content ns0:pstyle="Content">Request stronger alignment:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct alignas(16) SIMDVec4
+{
+    float x;
+    float y;
+    float z;
+    float w;
+};</Code>
+<Content ns0:pstyle="Content">Now:</Content>
+<Code ns0:pstyle="Code" language="cpp">alignof(SIMDVec4) &gt;= 16</Code>
+<Content ns0:pstyle="Content">subject to implementation support. Why do this? Possible reasons:</Content>
+<Code ns0:pstyle="Code" language="text">SIMD load requirements/preference
+cache-line separation
+GPU-facing ABI structure
+atomic/hardware constraint
+false-sharing control</Code>
+<Content ns0:pstyle="Content">But over-alignment can increase memory footprint.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-standard-layout-does-not-mean-packed-c-struct"><InlineCode ns0:cstyle="InlineCode">standard-layout</InlineCode> does NOT mean “packed C struct”</Content>
+<Content ns0:pstyle="Content">This distinction matters enormously. Check:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::is_standard_layout_v&lt;T&gt;</Code>
+<Content ns0:pstyle="Content">A <Link href="#print-redirect-37fca21ffdf3f518">standard-layout</Link> type satisfies a set of structural restrictions intended to preserve useful low-level layout properties. It does <Strong ns0:cstyle="Bold">not</Strong> mean:</Content>
+<Code ns0:pstyle="Code" language="text">no padding
+cross-platform binary stable
+same layout on every compiler
+GPU-compatible
+safe to memcpy into any foreign API
+network-serializable
+endianness-independent</Code>
+<Content ns0:pstyle="Content">Those are separate properties. The exact formal standard-layout eligibility rules involving base classes have evolved and are complicated enough that production code should query:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::is_standard_layout_v&lt;T&gt;</Code>
+<Content ns0:pstyle="Content">rather than attempting to duplicate the language definition in an illustrative metaprogram.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-trivially_copyable-is-another-distinct-concept"><InlineCode ns0:cstyle="InlineCode">trivially_copyable</InlineCode> is another distinct concept</Content>
+<Content ns0:pstyle="Content">You can test:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::is_trivially_copyable_v&lt;T&gt;</Code>
+<Content ns0:pstyle="Content">This has to do with whether byte-wise copying can legitimately reproduce object representations under the language’s permitted operations. It is not the same as:</Content>
+<Code ns0:pstyle="Code" language="text">standard-layout
+aggregate
+trivial</Code>
+<Content ns0:pstyle="Content">Think of four independent questions:</Content>
+<Table ns0:table="table" ns0:trows="5" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Property</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Main question</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">aggregate</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">Can it use aggregate initialization semantics?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">standard-layout</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Does it satisfy C-like structural layout constraints?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">trivially copyable</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Can object representations be copied bytewise under defined rules?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">trivial</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">Are relevant construction/copy/destruction operations trivial?</Content></Cell></Table>
+<Content ns0:pstyle="Content">Old C++ literature often bundled properties into “POD.” Modern C++ reasoning should use the actual traits you need.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-adjacent-members-are-not-an-array">Adjacent members are not an array</Content>
+<Content ns0:pstyle="Content">Consider an independent record <InlineCode ns0:cstyle="InlineCode">struct NamedVector { float x,y,z; };</InlineCode>. Even if size is twelve bytes, every member is a separate subobject. A <Strong ns0:cstyle="Bold">subobject</Strong> is an object inside another object, such as a member or array element; it has its own type and lifetime constraints.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">(&amp;v.x)[1]</InlineCode> is not valid access to <InlineCode ns0:cstyle="InlineCode">v.y</InlineCode>. A non-array object is treated as a one-element array for pointer arithmetic: forming <InlineCode ns0:cstyle="InlineCode">&amp;v.x + 1</InlineCode> can produce its one-past pointer, but dereferencing it as the next float is not permitted. Adding two already leaves that one-element bound. Physical adjacency and standard-layout do not create a float array. This is the source attachment’s central project-shaped finding, but here it is a language analysis of an independent representation, not a freshly verified Kairo defect.</Content>
+<Content ns0:pstyle="Content">A span is a non-owning view over an existing valid range. <InlineCode ns0:cstyle="InlineCode">std::span&lt;float,3&gt;{&amp;v.x,3}</InlineCode> does not manufacture the missing array. A cast likewise does not create it. Byte inspection, valid array traversal and named-member access are different operations.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-correct-alternatives">Correct alternatives</Content>
+<Content ns0:pstyle="Content">If <InlineCode ns0:cstyle="InlineCode">.x</InlineCode>, <InlineCode ns0:cstyle="InlineCode">.y</InlineCode>, <InlineCode ns0:cstyle="InlineCode">.z</InlineCode> syntax is important, retain separate fields and write indexing explicitly:</Content>
+<Code ns0:pstyle="Code" language="cpp">constexpr T&amp; operator[](std::size_t index) noexcept
+{
+    assert(index &lt; 3);
+
+    switch (index)
+    {
+        case 0: return x;
+        case 1: return y;
+        default: return z;
+    }
+}
+
+constexpr const T&amp; operator[](std::size_t index) const noexcept
+{
+    assert(index &lt; 3);
+
+    switch (index)
+    {
+        case 0: return x;
+        case 1: return y;
+        default: return z;
+    }
+}</Code>
+<Content ns0:pstyle="Content">For explicit contiguous export:</Content>
+<Code ns0:pstyle="Code" language="cpp">[[nodiscard]]
+constexpr std::array&lt;T, 3&gt; ToArray() const noexcept
+{
+    return {x, y, z};
+}</Code>
+<Content ns0:pstyle="Content">If true array semantics are the fundamental representation, instead store:</Content>
+<Code ns0:pstyle="Code" language="cpp">template&lt;typename T&gt;
+struct Vector3
+{
+    std::array&lt;T, 3&gt; values{};
+
+    constexpr T&amp; x() noexcept { return values[0]; }
+    constexpr T&amp; y() noexcept { return values[1]; }
+    constexpr T&amp; z() noexcept { return values[2]; }
+
+    constexpr T* Data() noexcept
+    {
+        return values.data();
+    }
+};</Code>
+<Content ns0:pstyle="Content">Now:</Content>
+<Code ns0:pstyle="Code" language="cpp">Data()[1]</Code>
+<Content ns0:pstyle="Content">really traverses an array. Do <Strong ns0:cstyle="Bold">not</Strong> “fix” the existing representation by creating:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::span&lt;T, 3&gt;{&amp;x, 3}</Code>
+<Content ns0:pstyle="Content">because the underlying problem remains: <InlineCode ns0:cstyle="InlineCode">&amp;x</InlineCode> does not designate element zero of a three-element <InlineCode ns0:cstyle="InlineCode">T</InlineCode> array. A project audit should first establish the current representation, callers and revision before proposing a production change.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-why-the-bug-often-appears-to-work-forever">Why the bug often appears to work forever</Content>
+<Content ns0:pstyle="Content">The ABI probably lays:</Content>
+<Code ns0:pstyle="Code" language="text">x: offset 0
+y: offset 4
+z: offset 8</Code>
+<Content ns0:pstyle="Content">for <InlineCode ns0:cstyle="InlineCode">float</InlineCode>. Machine code for:</Content>
+<Code ns0:pstyle="Code" language="cpp">(&amp;x)[1]</Code>
+<Content ns0:pstyle="Content">will calculate:</Content>
+<Code ns0:pstyle="Code" language="text">address(x) + sizeof(float)</Code>
+<Content ns0:pstyle="Content">which numerically lands on <InlineCode ns0:cstyle="InlineCode">y</InlineCode>. So:</Content>
+<Code ns0:pstyle="Code" language="text">debug: works
+release: works
+Clang: works
+GCC: works
+10 million frames: works</Code>
+<Content ns0:pstyle="Content">does not prove defined C++ behavior. Undefined behavior means:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">The C++ language no longer constrains the implementation to the semantics you intended.</Content></BlockQuote>
+<Content ns0:pstyle="Content">That is why language-level validity matters even when the hardware arithmetic “obviously works.” This becomes much more serious when optimizers use alias/lifetime rules to transform code.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-cpu-layout-is-not-gpu-layout">CPU layout is not GPU layout</Content>
+<Content ns0:pstyle="Content">Your code asserts:</Content>
+<Code ns0:pstyle="Code" language="cpp">sizeof(Vec3f) == 3 * sizeof(float)</Code>
+<Content ns0:pstyle="Content">On mainstream hardware:</Content>
+<Code ns0:pstyle="Code" language="text">Vec3f = 12 bytes</Code>
+<Content ns0:pstyle="Content">Do not conclude:</Content>
+<Code ns0:pstyle="Code" language="text">therefore GPU float3 is always 12-byte stride/alignment compatible</Code>
+<Content ns0:pstyle="Content">GPU-side layout depends on:</Content>
+<Code ns0:pstyle="Code" language="text">API
+shader language
+buffer category
+selected layout rules
+alignment rules
+packing rules
+vertex input declarations</Code>
+<Content ns0:pstyle="Content">For example, a graphics API may let you explicitly describe a vertex attribute:</Content>
+<Code ns0:pstyle="Code" language="text">position:
+    format = three 32-bit floats
+    offset = 0
+stride = whatever CPU vertex stride is</Code>
+<Content ns0:pstyle="Content">while uniform/storage buffer layout may apply different alignment rules. Metal also distinguishes vector packing situations and provides packed representations for cases where you need a tight external layout. So your correct engineering pipeline is:</Content>
+<Code ns0:pstyle="Code" language="text">C++ logical type
+      ↓
+CPU representation
+      ↓
+explicit backend upload representation
+      ↓
+API-described offsets/stride/alignment
+      ↓
+shader representation</Code>
+<Content ns0:pstyle="Content">not:</Content>
+<Code ns0:pstyle="Code" language="text">standard-layout C++ type
+      ⇒ automatically GPU-compatible</Code>
+<Content ns0:pstyle="Content">This matters directly in Vulkan, Metal, Gaussian splatting, mesh upload, skinning and shader parameter code.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-offsetof"><InlineCode ns0:cstyle="InlineCode">offsetof</InlineCode></Content>
+<Content ns0:pstyle="Content">For standard-layout types:</Content>
+<Code ns0:pstyle="Code" language="cpp">#include &lt;cstddef&gt;
+
+struct Vertex
+{
+    float px;
+    float py;
+    float pz;
+    std::uint32_t color;
+};
+
+static_assert(std::is_standard_layout_v&lt;Vertex&gt;);
+
+static_assert(offsetof(Vertex, px) == 0);</Code>
+<Content ns0:pstyle="Content">You can use offset checks to enforce a binary/API contract. If a shader/upload ABI expects:</Content>
+<Code ns0:pstyle="Code" language="text">position offset 0
+color    offset 12
+stride   16</Code>
+<Content ns0:pstyle="Content">make those expectations executable:</Content>
+<Code ns0:pstyle="Code" language="cpp">static_assert(offsetof(Vertex, color) == 12);
+static_assert(sizeof(Vertex) == 16);</Code>
+<Content ns0:pstyle="Content">Then a layout-breaking code change fails at compile time rather than rendering corrupted triangles. That is exactly how language knowledge becomes engine reliability.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-pragma-pack-is-not-a-magic-optimization"><InlineCode ns0:cstyle="InlineCode">#pragma pack</InlineCode> is not a magic optimization</Content>
+<Content ns0:pstyle="Content">You will sometimes see:</Content>
+<Code ns0:pstyle="Code" language="cpp">#pragma pack(push, 1)
+
+struct Header
+{
+    std::uint8_t type;
+    std::uint32_t length;
+};
+
+#pragma pack(pop)</Code>
+<Content ns0:pstyle="Content">This can remove normal padding on supporting compilers. But it is non-standard and can produce misaligned members. Then:</Content>
+<Code ns0:pstyle="Code" language="cpp">header.length</Code>
+<Content ns0:pstyle="Content">may require slower unaligned access or, on some architectures/instruction choices, require special handling. For external binary formats, a better design is often:</Content>
+<Code ns0:pstyle="Code" language="text">read individual fields from bytes
+decode endian explicitly
+validate values
+construct normal aligned C++ object</Code>
+<Content ns0:pstyle="Content">rather than forcing runtime objects to impersonate disk packets.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-bit-fields">Bit-fields</Content>
+<Content ns0:pstyle="Content">Similarly:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Flags
+{
+    unsigned visible : 1;
+    unsigned shadow  : 1;
+    unsigned dynamic : 1;
+};</Code>
+<Content ns0:pstyle="Content">does not give you a portable three-bit file format. Bit-field allocation order and packing details are implementation-defined. They can be useful internally, but for stable formats use explicit masks:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::uint32_t flags;
+
+constexpr std::uint32_t Visible = 1u &lt;&lt; 0;
+constexpr std::uint32_t Shadow  = 1u &lt;&lt; 1;
+constexpr std::uint32_t Dynamic = 1u &lt;&lt; 2;</Code>
+<Content ns0:pstyle="Content">Now serialization representation is under your control.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-following-an-escaped-address-through-time">Following an escaped address through time</Content>
+<Content ns0:pstyle="Content">For this independent trace, use <InlineCode ns0:cstyle="InlineCode">struct Entity { std::uint32_t Index; std::uint32_t Generation; };</InlineCode> with <InlineCode ns0:cstyle="InlineCode">&lt;cstdint&gt;</InlineCode>. It is a teaching record, not an import of the Kairo module. The stale dereference shown later is an invalid example to analyze, not to execute.</Content>
+<Content ns0:pstyle="Content">Take:</Content>
+<Code ns0:pstyle="Code" language="cpp">Entity* escaped = nullptr;
+
+void update()
+{
+    Entity local{
+        .Index = 42,
+        .Generation = 7
+    };
+
+    escaped = &amp;local;
+}</Code>
+<Content ns0:pstyle="Content">Before calling <InlineCode ns0:cstyle="InlineCode">update</InlineCode>:</Content>
+<Code ns0:pstyle="Code" language="text">escaped object:
+    static storage duration
+    value = nullptr</Code>
+<Content ns0:pstyle="Content">Enter <InlineCode ns0:cstyle="InlineCode">update</InlineCode>. Storage for <InlineCode ns0:cstyle="InlineCode">local</InlineCode> becomes available:</Content>
+<Code ns0:pstyle="Code" language="text">automatic storage
+address hypothetically 0x7FF0</Code>
+<Content ns0:pstyle="Content">Initialization completes:</Content>
+<Code ns0:pstyle="Code" language="text">Entity object lifetime begins
+identity = Entity object A
+address  = 0x7FF0
+value:
+    Index      42
+    Generation 7</Code>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="cpp">escaped = &amp;local;</Code>
+<Content ns0:pstyle="Content">Now:</Content>
+<Code ns0:pstyle="Code" language="text">escaped value = 0x7FF0</Code>
+<Content ns0:pstyle="Content">Exit the function. <InlineCode ns0:cstyle="InlineCode">local</InlineCode>’s lifetime ends. Its automatic storage is no longer reserved for that object. But <InlineCode ns0:cstyle="InlineCode">escaped</InlineCode> still contains:</Content>
+<Code ns0:pstyle="Code" language="text">0x7FF0</Code>
+<Content ns0:pstyle="Content">That numerical address has not magically become <InlineCode ns0:cstyle="InlineCode">nullptr</InlineCode>. So:</Content>
+<Code ns0:pstyle="Code" language="cpp">escaped-&gt;Index</Code>
+<Content ns0:pstyle="Content">attempts to use an object after its lifetime ended. This is undefined behavior. Later:</Content>
+<Code ns0:pstyle="Code" language="cpp">void somethingElse()
+{
+    Entity another{
+        .Index = 99,
+        .Generation = 5
+    };
+}</Code>
+<Content ns0:pstyle="Content">The implementation might reuse address:</Content>
+<Code ns0:pstyle="Code" language="text">0x7FF0</Code>
+<Content ns0:pstyle="Content">Now the same address may contain a <Strong ns0:cstyle="Bold">different object</Strong>. That is why:</Content>
+<Code ns0:pstyle="Code" language="text">same address ≠ same lifetime
+same address ≠ same identity</Code>
+<Content ns0:pstyle="Content">And it is conceptually the same reason ECS generation counters exist.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-following-one-call-through-the-build">Following one call through the build</Content>
+<Content ns0:pstyle="Content">Assume:</Content>
+<Code ns0:pstyle="Code" language="cpp">// Math.cppm
+export module Math;
+
+export int twice(int);</Code>
+<Content ns0:pstyle="Content">and:</Content>
+<Code ns0:pstyle="Code" language="cpp">// MathImpl.cpp
+module Math;
+
+int twice(int x)
+{
+    return x * 2;
+}</Code>
+<Content ns0:pstyle="Content">and:</Content>
+<Code ns0:pstyle="Code" language="cpp">// App.cpp
+import Math;
+
+int main()
+{
+    return twice(21) == 42 ? 0 : 1;
+}</Code>
+<Content ns0:pstyle="Content">Conceptually the module interface establishes an exported declaration:</Content>
+<Code ns0:pstyle="Code" language="text">name: twice
+type: int(int)
+module ownership/reachability: Math</Code>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">App.cpp</InlineCode> performs lookup and sees the exported declaration. The compiler therefore knows the call is valid and emits code referencing the appropriate function entity. <InlineCode ns0:cstyle="InlineCode">MathImpl.cpp</InlineCode> provides the definition. At link time:</Content>
+<Code ns0:pstyle="Code" language="text">App object:
+    requires twice(int)
+
+Math implementation object:
+    defines twice(int)
+
+linker:
+    resolve</Code>
+<Content ns0:pstyle="Content">If the definition disappears:</Content>
+<Code ns0:pstyle="Code" language="text">source syntax valid
+name lookup valid
+type checking valid
+compilation valid
+
+link:
+    unresolved function definition</Code>
+<Content ns0:pstyle="Content">If two illegal non-inline definitions appear:</Content>
+<Code ns0:pstyle="Code" language="text">meaning itself violates ODR</Code>
+<Content ns0:pstyle="Content">and the linker may catch a duplicate symbol—although not all ODR violations are guaranteed to be diagnosed. The distinction between:</Content>
+<Code ns0:pstyle="Code" language="text">lookup failure
+compile failure
+link failure
+ODR violation</Code>
+<Content ns0:pstyle="Content">is now precise.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-giving-another-name-to-a-live-object">Giving another name to a live object</Content>
+<Content ns0:pstyle="Content">We now have objects with lifetimes and identities. How can another piece of code work with one without creating a second object? A <Link href="#print-redirect-d80a35efe651fd45">reference</Link> supplies an <Strong ns0:cstyle="Bold">alias</Strong>: another way to designate an existing referent. The <Strong ns0:cstyle="Bold">referent</Strong> is the thing designated; the name of a reference is not the referent’s owner.</Content>
+<Code ns0:pstyle="Code" language="cpp">int a = 2;
+int b = 9;
+int&amp; alias = a;
+alias = b;
+b = 20;
+// a == 9, b == 20; alias still designates a.</Code>
+<Content ns0:pstyle="Content">Read <InlineCode ns0:cstyle="InlineCode">int&amp; alias = a</InlineCode> as binding, not as a box containing a replaceable address. Read <InlineCode ns0:cstyle="InlineCode">alias = b</InlineCode> as assignment to the already-bound <InlineCode ns0:cstyle="InlineCode">a</InlineCode>, not rebinding. The three visible states are <InlineCode ns0:cstyle="InlineCode">(a,b)=(2,9)</InlineCode>, then <InlineCode ns0:cstyle="InlineCode">(9,9)</InlineCode>, then <InlineCode ns0:cstyle="InlineCode">(9,20)</InlineCode>. That trace is more useful than memorizing that references “cannot be reseated.” A pointer, in contrast, is an object storing a pointer value: <InlineCode ns0:cstyle="InlineCode">int* p = &amp;a; p = &amp;b;</InlineCode> changes which object <InlineCode ns0:cstyle="InlineCode">p</InlineCode> designates without assigning either integer.</Content>
+<Content ns0:pstyle="Content">A reference definition normally needs an initializer. <InlineCode ns0:cstyle="InlineCode">extern int&amp; shared;</InlineCode> is a declaration, not an exception permitting an unbound reference object. Reference members obtain bindings through their containing object’s initialization. No well-defined ordinary reference represents an optional null state; obtaining one by dereferencing a null pointer does not manufacture a legitimate “null reference.” Yet references can dangle after their referents die. Required access is not permanent access.</Content>
+<Content ns0:pstyle="Content">References are not objects. They do not form arrays of references, and there are no pointers to references. <InlineCode ns0:cstyle="InlineCode">sizeof(alias)</InlineCode> describes the referred-to integer; <InlineCode ns0:cstyle="InlineCode">&amp;alias</InlineCode> obtains its address. Functions can also be referents. A reference to a pointer, <InlineCode ns0:cstyle="InlineCode">int*&amp; selected = p</InlineCode>, aliases the pointer object: assigning <InlineCode ns0:cstyle="InlineCode">selected = &amp;a</InlineCode> reseats <InlineCode ns0:cstyle="InlineCode">p</InlineCode>. This is different from <InlineCode ns0:cstyle="InlineCode">int*</InlineCode> pointing at an integer and different again from a reference to that integer.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">std::reference_wrapper&lt;T&gt;</InlineCode> from <InlineCode ns0:cstyle="InlineCode">&lt;functional&gt;</InlineCode> is a copyable object wrapping a reference-like association, useful in containers. Copying the wrapper does not copy or own the referent. <InlineCode ns0:cstyle="InlineCode">std::addressof(object)</InlineCode> from <InlineCode ns0:cstyle="InlineCode">&lt;memory&gt;</InlineCode> gets an actual object address even when a user-defined <InlineCode ns0:cstyle="InlineCode">operator&amp;</InlineCode> changes the meaning of ordinary <InlineCode ns0:cstyle="InlineCode">&amp;object</InlineCode>. None of these mechanisms prevents the referent from dying.</Content>
+<Content ns0:pstyle="Content">Teaching checkpoint: draw the integer objects first, then arrows for the access paths. Which statement changes a value, which changes an arrow, and which creates a new object? That question will also untangle <InlineCode ns0:cstyle="InlineCode">const</InlineCode> later.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-an-expression-has-a-type-and-a-category">An expression has a type and a category</Content>
+<Content ns0:pstyle="Content">A type answers what operations and values an expression supports. A <Link href="#print-redirect-c73f31308fe20867">value category</Link> answers how that expression relates to identity and value production. Category belongs to an expression, not permanently to a variable. <Strong ns0:cstyle="Bold">lvalue</Strong> means an expression identifying a function or object without the expiring-object designation. <Strong ns0:cstyle="Bold">xvalue</Strong> identifies an object whose resources may be reused. <Strong ns0:cstyle="Bold">prvalue</Strong> computes a value to initialize an object or supply an operand. The broader family <Strong ns0:cstyle="Bold">glvalue</Strong> contains lvalues and xvalues; <Strong ns0:cstyle="Bold">rvalue</Strong> contains prvalues and xvalues. These are overlapping families, not five disjoint boxes.</Content>
+<Table ns0:table="table" ns0:trows="8" ns0:tcols="3" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Expression, assuming <InlineCode ns0:cstyle="InlineCode">int x=4; int&amp;&amp; rr=7;</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Category</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">What to notice</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">x</InlineCode>, <InlineCode ns0:cstyle="InlineCode">rr</InlineCode>, <InlineCode ns0:cstyle="InlineCode">*p</InlineCode> when valid</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">lvalue</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">Naming <InlineCode ns0:cstyle="InlineCode">rr</InlineCode> does not automatically consume its referent.</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">std::move(x)</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">xvalue</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Still designates <InlineCode ns0:cstyle="InlineCode">x</InlineCode>; no new integer is created by the cast.</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">4</InlineCode>, <InlineCode ns0:cstyle="InlineCode">x+1</InlineCode>, <InlineCode ns0:cstyle="InlineCode">x++</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">prvalue</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Produces a value; postfix increment’s old value is not the updated object.</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">++x</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">lvalue</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">The built-in prefix operation designates the updated <InlineCode ns0:cstyle="InlineCode">x</InlineCode>.</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">call returning <InlineCode ns0:cstyle="InlineCode">T&amp;</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">lvalue</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">The returned access path has identity.</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">call returning <InlineCode ns0:cstyle="InlineCode">T&amp;&amp;</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">xvalue</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">Expiring designation does not itself prove lifetime safety.</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">ordinary call returning <InlineCode ns0:cstyle="InlineCode">T</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">prvalue</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">Produces the result object/value.</Content></Cell></Table>
+<Content ns0:pstyle="Content">“lvalue means left side of assignment” fails immediately: a const lvalue is not assignable. “rvalue means temporary” fails for <InlineCode ns0:cstyle="InlineCode">std::move(x)</InlineCode>, which designates an existing object. String literals are lvalue arrays: <InlineCode ns0:cstyle="InlineCode">"hello"</InlineCode> has type <InlineCode ns0:cstyle="InlineCode">const char[6]</InlineCode>, including its terminating zero, not a temporary <InlineCode ns0:cstyle="InlineCode">std::string</InlineCode>.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Materialization</Strong> is the conversion that supplies a temporary object when a prvalue needs an identity-bearing result, for example to bind a reference. Do not teach that every class prvalue must first live in a separate temporary and then be copied: modern C++ can initialize the final result directly. The result-construction story below develops direct construction and optional NRVO.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-43f97c4553a41527">decltype</Link> can expose category without evaluating its operand. For an unparenthesized name it reports the declared type; for a general expression it yields <InlineCode ns0:cstyle="InlineCode">T&amp;</InlineCode> for an lvalue, <InlineCode ns0:cstyle="InlineCode">T&amp;&amp;</InlineCode> for an xvalue, and <InlineCode ns0:cstyle="InlineCode">T</InlineCode> for a prvalue. Thus <InlineCode ns0:cstyle="InlineCode">decltype(rr)</InlineCode> is <InlineCode ns0:cstyle="InlineCode">int&amp;&amp;</InlineCode>, but <InlineCode ns0:cstyle="InlineCode">decltype((rr))</InlineCode> is <InlineCode ns0:cstyle="InlineCode">int&amp;</InlineCode>. The parentheses remove the special name rule. That distinction is checked against the <Link href="https://eel.is/c++draft/dcl.type.decltype">draft’s decltype rules</Link>.</Content>
+<Code ns0:pstyle="Code" language="cpp">const int n = 3;
+auto value = n;          // int: a new object, top-level const dropped
+auto&amp; path = n;          // const int&amp;: preserve the referent's constness
+decltype(auto) copy = n; // const int: name rule
+decltype(auto) borrow = (n); // const int&amp;: expression rule</Code>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">decltype(auto)</InlineCode> is therefore not “a more precise auto that is always better.” Adding parentheses in a returning function can change a returned value into a dangling reference. An <Strong ns0:cstyle="Bold">unevaluated operand</Strong> is inspected for language properties rather than executed: <InlineCode ns0:cstyle="InlineCode">decltype(++n)</InlineCode> still must be well-formed, but a valid <InlineCode ns0:cstyle="InlineCode">decltype(++x)</InlineCode> does not increment <InlineCode ns0:cstyle="InlineCode">x</InlineCode>.</Content>
+<Content ns0:pstyle="Content">Named rvalue-reference variables are lvalues in ordinary use. There is a specific C++23 exception for move-eligible expressions in return contexts; do not extend that special rule to an arbitrary use of <InlineCode ns0:cstyle="InlineCode">rr</InlineCode>. Later return/copy-elision material will develop it.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-binding-chooses-a-referent-not-always-the-one-you-imagined">Binding chooses a referent, not always the one you imagined</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-c6bf887ec81a6424">Binding</Link> establishes the initial association. For ordinary same-type integers without volatile complications, this is the useful opening matrix:</Content>
+<Table ns0:table="table" ns0:trows="4" ns0:tcols="4" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">Initializer</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption"><InlineCode ns0:cstyle="InlineCode">int&amp;</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption"><InlineCode ns0:cstyle="InlineCode">const int&amp;</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption"><InlineCode ns0:cstyle="InlineCode">int&amp;&amp;</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">non-const integer lvalue</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">binds original</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">binds original read-only</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">rejected</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">const integer lvalue</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">rejected</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">binds original</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">rejected</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">integer prvalue or non-const xvalue</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">rejected</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">binds temporary/original respectively</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">binds temporary/original respectively</Content></Cell></Table>
+<Content ns0:pstyle="Content">An rvalue reference to const, <InlineCode ns0:cstyle="InlineCode">const int&amp;&amp;</InlineCode>, can bind const rvalues too, but is not a general forwarding reference. These rules describe binding; they do not prove that a bound object will survive later use.</Content>
+<Code ns0:pstyle="Code" language="cpp">int count = 10;
+const int&amp; live = count;
+const double&amp; snapshot = count;
+count = 50;
+// live sees 50; snapshot still sees 10.0.</Code>
+<Content ns0:pstyle="Content">The second reference needs a <InlineCode ns0:cstyle="InlineCode">double</InlineCode>, so conversion produces a temporary <InlineCode ns0:cstyle="InlineCode">double</InlineCode> initialized from the old integer. The temporary, not <InlineCode ns0:cstyle="InlineCode">count</InlineCode>, is its referent. Conversely, a <InlineCode ns0:cstyle="InlineCode">Base&amp;</InlineCode> bound to a compatible <InlineCode ns0:cstyle="InlineCode">Derived</InlineCode> lvalue can designate the original object’s base subobject rather than copy it. A <Strong ns0:cstyle="Bold">subobject</Strong> is an object nested within another, such as a member, base, or array element.</Content>
+<Content ns0:pstyle="Content">Bit-fields need another distinction. They are members occupying a specified number of bits, not independently addressable ordinary integers. <InlineCode ns0:cstyle="InlineCode">int&amp;</InlineCode> cannot bind directly to an integer bit-field; a suitable const reference can bind to a temporary holding its value. Updating the original field does not update that copied value. This is conversion/snapshot behavior, not mysterious aliasing.</Content>
+<Content ns0:pstyle="Content">References also preserve array extent where pointer conversion would lose it:</Content>
+<Code ns0:pstyle="Code" language="cpp">int samples[3]{10, 20, 30};
+int (&amp;whole)[3] = samples;
+const char (&amp;word)[6] = "hello";
+// whole identifies the entire array; word includes the terminating zero.</Code>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Array-to-pointer conversion</Strong>, often called decay, produces a pointer to the first element in many expression contexts. A reference to an array binds the array instead. Decay is not the assertion that arrays “are pointers.” Their sizes, types, and valid operations differ.</Content>
+<Content ns0:pstyle="Content">Ask four questions when reading any binding: what type is required, what category is supplied, was a conversion needed, and which actual object became the referent? Then ask how long that object lives.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-a-temporary-needs-an-explicit-lifetime-story">A temporary needs an explicit lifetime story</Content>
+<Content ns0:pstyle="Content">A <Strong ns0:cstyle="Bold">full-expression</Strong> is an expression not nested inside another expression for the relevant language rules. In these simple statements, its end is the semicolon. Ordinary temporaries are destroyed at that end, after the statement’s work. <Link href="#print-redirect-1d8291cc17b51fc0">Lifetime extension</Link> has specific syntactic rules; it is not an ownership service that follows every alias.</Content>
+<Content ns0:pstyle="Content">First define this function at namespace scope:</Content>
+<Code ns0:pstyle="Code" language="cpp">const std::string&amp; pass(const std::string&amp; s) { return s; }</Code>
+<Content ns0:pstyle="Content">Then compare these local declarations inside a caller:</Content>
+<Code ns0:pstyle="Code" language="cpp">const std::string&amp; direct = std::string{"kept"};
+// The directly bound temporary lives for direct's local lifetime.
+const std::string&amp; escaped = pass(std::string{"gone"});
+// The temporary dies at this semicolon. Never read escaped afterwards.</Code>
+<Content ns0:pstyle="Content">The call temporarily binds its parameter for the calling full-expression. Returning that reference does not start a second extension. The calling reference is still a path to the same object, whose deadline was already set. Splitting the timeline makes the danger visible:</Content>
+<Table ns0:table="table" ns0:trows="5" ns0:tcols="3" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Event</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Temporary alive?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Access consequence</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">construct <InlineCode ns0:cstyle="InlineCode">"gone"</InlineCode> temporary</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">parameter may read it</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">return reference from <InlineCode ns0:cstyle="InlineCode">pass</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">result still designates it</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">initialize <InlineCode ns0:cstyle="InlineCode">escaped</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">no transitive extension</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">finish initializer full-expression</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">no</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">escaped</InlineCode> dangles</Content></Cell></Table>
+<Content ns0:pstyle="Content">Directly binding through permitted built-in member access can extend the containing temporary, as in <InlineCode ns0:cstyle="InlineCode">const auto&amp; name = Record{"Ada"}.name;</InlineCode> for a suitable public <InlineCode ns0:cstyle="InlineCode">name</InlineCode> member. Calling a getter that returns <InlineCode ns0:cstyle="InlineCode">const std::string&amp;</InlineCode> is different: the call result is not that permitted member-access expression. This is why a getter on a temporary needs its own contract.</Content>
+<Content ns0:pstyle="Content">Aggregate initialization supplies a deliberately sharp laboratory case:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Holder { const int&amp; value; };
+Holder kept{7};  // braces extend the directly bound temporary to kept's lifetime
+Holder lost(7);  // C++20+: temporary dies at this statement's end
+// Do not read lost.value after its declaration.
+auto* heap = new Holder{7}; // temporary dies at this statement's end too
+delete heap;              // do not read heap-&gt;value; deletion cannot rescue it</Code>
+<Content ns0:pstyle="Content">The <InlineCode ns0:cstyle="InlineCode">new</InlineCode> expression can keep the holder object alive while its reference member dangles. Allocating the borrower does not allocate ownership of the borrowed object. The brace/parenthesis exception and parameter/new exceptions are specified in <Link href="https://eel.is/c++draft/class.temporary">temporary object lifetime</Link>.</Content>
+<Content ns0:pstyle="Content">Never return a reference to a local automatic object. A C++23 function returning a reference directly bound to a temporary also leaves a dangling result; current draft/C++26 rules reject that direct return binding. Do not confuse a newly mandated diagnostic with a newly introduced safety problem. Nor should a compiler warning be treated as a universal lifetime proof.</Content>
+<Content ns0:pstyle="Content">Lifetime extension is narrowly useful for local work. For transfer across a function boundary, a returned owning value is usually the clearer starting contract. The cleanup and composition story below develops RAII; owning smart-pointer policies remain later depth, not implied by the word “reference.”</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-move-permission-is-not-resource-transfer">Move permission is not resource transfer</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-063184b6acfa6c95">std::move</Link> from <InlineCode ns0:cstyle="InlineCode">&lt;utility&gt;</InlineCode> casts an expression to an xvalue while preserving constness. It does not transfer a resource by itself. <InlineCode ns0:cstyle="InlineCode">std::move(text);</InlineCode> alone neither clears a string nor creates a destination. A subsequent constructor or assignment chooses an overload and performs whatever operation that type defines.</Content>
+<Code ns0:pstyle="Code" language="cpp">std::string original = "frame";
+std::string&amp;&amp; alias = std::move(original); // binding only; original still "frame"
+std::string destination = std::move(original); // construction may use a move
+// Don't assume original is empty: consult the moved-from contract.
+const std::string fixed = "label";
+std::string copied = std::move(fixed); // const preserved; usual string copy selected</Code>
+<Content ns0:pstyle="Content">An ordinary <InlineCode ns0:cstyle="InlineCode">std::string</InlineCode> move constructor requires a non-const rvalue reference; it cannot generally detach the storage of a const source. “Moved-from” does not mean destroyed, universally empty, or universally reusable for every operation. The value-transfer story below develops consumer operations and their contracts. This distinction and the terminology update from older “universal reference” to <Strong ns0:cstyle="Bold">forwarding reference</Strong> were cross-checked against selected passages in Meyers; see <Link href="#print-redirect-6bd74e0095c467a2">Reading record</Link>.</Content>
+<Content ns0:pstyle="Content">A deduced, cv-unqualified template parameter in <InlineCode ns0:cstyle="InlineCode">T&amp;&amp;</InlineCode> is a forwarding reference:</Content>
+<Code ns0:pstyle="Code" language="cpp">void inspect(int&amp;) { /* lvalue access */ }
+void inspect(int&amp;&amp;) { /* expiring access */ }
+template&lt;class T&gt;
+void relay(T&amp;&amp; item) {
+    inspect(std::forward&lt;T&gt;(item));
+}</Code>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">relay(x)</InlineCode> with an integer lvalue deduces <InlineCode ns0:cstyle="InlineCode">T=int&amp;</InlineCode>; <InlineCode ns0:cstyle="InlineCode">relay(4)</InlineCode> deduces <InlineCode ns0:cstyle="InlineCode">T=int</InlineCode>. The parameter name <InlineCode ns0:cstyle="InlineCode">item</InlineCode> is an lvalue in the body in either case. <InlineCode ns0:cstyle="InlineCode">std::forward&lt;T&gt;</InlineCode> restores the category represented by the deduction. Replacing it with unconditional <InlineCode ns0:cstyle="InlineCode">std::move</InlineCode> would treat even the caller’s lvalue as expiring.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Reference collapsing</Strong> removes reference-to-reference combinations formed through deduction or aliases: <InlineCode ns0:cstyle="InlineCode">&amp;</InlineCode> combined with either <InlineCode ns0:cstyle="InlineCode">&amp;</InlineCode> or <InlineCode ns0:cstyle="InlineCode">&amp;&amp;</InlineCode> yields <InlineCode ns0:cstyle="InlineCode">&amp;</InlineCode>; only <InlineCode ns0:cstyle="InlineCode">&amp;&amp;</InlineCode> combined with <InlineCode ns0:cstyle="InlineCode">&amp;&amp;</InlineCode> yields <InlineCode ns0:cstyle="InlineCode">&amp;&amp;</InlineCode>. It is not permission to write a direct <InlineCode ns0:cstyle="InlineCode">int&amp; &amp;</InlineCode> declaration. <InlineCode ns0:cstyle="InlineCode">const T&amp;&amp;</InlineCode>, <InlineCode ns0:cstyle="InlineCode">std::vector&lt;T&gt;&amp;&amp;</InlineCode>, or <InlineCode ns0:cstyle="InlineCode">T&amp;&amp;</InlineCode> where the class template already fixed <InlineCode ns0:cstyle="InlineCode">T</InlineCode> are not this forwarding pattern. <InlineCode ns0:cstyle="InlineCode">auto&amp;&amp;</InlineCode> often uses similar deduction, but deduction from a braced initializer list is a notable exception, not a generic forwarding argument.</Content>
+<Content ns0:pstyle="Content">This is a mechanism lesson, not a rule to forward every expression everywhere. An ordinary function taking <InlineCode ns0:cstyle="InlineCode">Widget&amp;&amp;</InlineCode> has a fixed parameter type. Whether it may consume that object is an API decision; the declaration alone does not perform the consumption.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-a-pointer-carries-an-access-contract">A pointer carries an access contract</Content>
+<Content ns0:pstyle="Content">References gave us required aliases; <Link href="#print-redirect-98c66aefa52c9451">pointers</Link> give us stored, reseatable, potentially absent access paths. A <Strong ns0:cstyle="Bold">null pointer value</Strong> designates no object or function. <InlineCode ns0:cstyle="InlineCode">nullptr</InlineCode> has type <InlineCode ns0:cstyle="InlineCode">std::nullptr_t</InlineCode> and converts to null pointer values without pretending to be an integer argument. Overloads <InlineCode ns0:cstyle="InlineCode">choose(int)</InlineCode> and <InlineCode ns0:cstyle="InlineCode">choose(int*)</InlineCode> select the integer overload for <InlineCode ns0:cstyle="InlineCode">0</InlineCode>, the pointer overload for <InlineCode ns0:cstyle="InlineCode">nullptr</InlineCode>.</Content>
+<Code ns0:pstyle="Code" language="cpp">int* absent = nullptr;
+delete absent; // valid: no pointed-to object is destroyed
+// delete nullptr; // ill-formed: nullptr_t is not a pointer-to-object type</Code>
+<Content ns0:pstyle="Content">The supplied source’s bare <InlineCode ns0:cstyle="InlineCode">delete nullptr;</InlineCode> was corrected to the typed-pointer form. The <Link href="https://eel.is/c++draft/expr.delete">delete-expression rules</Link> distinguish operand type from a valid null operand value. Null’s object representation need not be all zero bits. A successful null check proves only absence was excluded; it says nothing about lifetime, bounds, or current ownership.</Content>
+<Content ns0:pstyle="Content">Ordinary throwing <InlineCode ns0:cstyle="InlineCode">new T</InlineCode> reports allocation failure with <InlineCode ns0:cstyle="InlineCode">std::bad_alloc</InlineCode>. A nothrow allocation form can return null for allocation failure, but an exception thrown by <InlineCode ns0:cstyle="InlineCode">T</InlineCode>’s constructor is a separate matter and can still propagate. <InlineCode ns0:cstyle="InlineCode">std::optional&lt;T*&gt;</InlineCode> can represent both no stored pointer and a stored null pointer; use two levels of absence only when both have a defined meaning.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">*p</InlineCode> forms an lvalue designating the pointee when permitted. The expression does not itself mean “read its bytes into a value”; a subsequent value conversion can do that. Valid access requires an appropriate live object, type accessibility, alignment, permissions, and an in-range position. A <Strong ns0:cstyle="Bold">one-past pointer</Strong> marks the end of an array and can participate in allowed traversal/comparison; it is not a dereferenceable element.</Content>
+<Content ns0:pstyle="Content">For <InlineCode ns0:cstyle="InlineCode">int values[3]</InlineCode>, the permitted positions formed relative to <InlineCode ns0:cstyle="InlineCode">values</InlineCode> are offsets zero through three inclusive. <InlineCode ns0:cstyle="InlineCode">values+3</InlineCode> may be an end marker. <InlineCode ns0:cstyle="InlineCode">values+4</InlineCode> is already outside permitted pointer formation; the rule does not wait for dereference. Subtraction requires pointers into the same array (including its end) and a result representable in <InlineCode ns0:cstyle="InlineCode">std::ptrdiff_t</InlineCode>. A non-array object is treated as a one-element array for this arithmetic, not as a license to walk adjacent members.</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Pair { int x, y; };
+Pair pair{1, 2};
+int* first = &amp;pair.x;
+// first + 1 is one-past x, not an authorized pointer to y.
+// first[1] is invalid even if a layout report shows adjacent members.
+int real[2]{1, 2};
+int* end = real + 2; // valid end marker, never dereference it</Code>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-501b44815360d401">Provenance</Link> names the relationship between a pointer value, storage, and the object/path from which it was obtained. Do not replace that relationship with “an integer address that seems plausible.” An available <InlineCode ns0:cstyle="InlineCode">std::uintptr_t</InlineCode> supports the specified pointer-to-integer-and-back round trip; it does not authorize arbitrary arithmetic, revive a destroyed occupant, or confer access to unrelated storage. WG21’s <Link href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3407r1.html">P3407R1</Link> is research discussion, not an adopted C++23 rulebook.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">void*</InlineCode> can carry certain object pointers but cannot be dereferenced as an object of unknown type in ordinary C++. A cast supplies a type expression, not a construction or validity proof. Character/byte inspection through <InlineCode ns0:cstyle="InlineCode">char</InlineCode>, <InlineCode ns0:cstyle="InlineCode">unsigned char</InlineCode>, or <InlineCode ns0:cstyle="InlineCode">std::byte</InlineCode> is different from arbitrary typed access; <InlineCode ns0:cstyle="InlineCode">signed char</InlineCode> is not listed as the general C++ byte-aliasing exception. Inspecting representation does not make an arbitrary byte buffer a live valid <InlineCode ns0:cstyle="InlineCode">Widget</InlineCode>. Function pointers and member pointers have their own rules; do not assume they share object-pointer representations. A GPU device address is meaningful only under the relevant backend/address-space contract, not automatically dereferenceable by CPU C++.</Content>
+<Content ns0:pstyle="Content">At the teaching desk, write “non-null,” “mapped,” “aligned,” “in bounds,” “live,” and “correct entity” separately. None is a substitute for the others.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-when-a-valid-borrow-stops-naming-the-intended-thing">When a valid borrow stops naming the intended thing</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-figure-cpp-02---a-borrow-can-fail-in-two-different-ways">Figure CPP-02 - A borrow can fail in two different ways</Content>
+<Content ns0:pstyle="Content"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/mermaid/d0a11e9895d264bc1132a27d.svg" alt="Diagram" /></Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Read the picture:</Strong> a reallocation breaks access to the former element, while swap-and-pop assignment can preserve a slot’s C++ lifetime but change its application identity. The examples below show both mechanisms. <Strong ns0:cstyle="Bold">Limit:</Strong> reacquisition must occur through a currently valid owner/registry under its mutation and synchronization contract; an old pointer cannot validate itself, and a generation check alone does not stabilize a component address. <Link href="#print-redirect-4ca6d153f09f543a">Recall this figure</Link>.</Content>
+<Content ns0:pstyle="Content">A <Strong ns0:cstyle="Bold">borrow</Strong> is a non-owning access path used under an external lifetime and mutation contract. A <Strong ns0:cstyle="Bold">dangling</Strong> pointer/reference outlives the object it once designated. <Link href="#appendix-f9b8b9188c7f">Invalidation</Link> can arise when a container reallocates, removes elements, or changes the association the application intended.</Content>
+<Content ns0:pstyle="Content">A vector has a control object, a capacity (allocated element slots), and a size (live elements). Exceeding capacity during growth can replace the element buffer. Reallocation invalidates element references, pointers, and iterators; reserving capacity before taking a borrow can avoid reallocation up to that capacity, not forever. The distinction between size and capacity and the reserve guarantee is checked against <Link href="https://eel.is/c++draft/vector.capacity">vector capacity</Link>.</Content>
+<Code ns0:pstyle="Code" language="cpp">std::vector&lt;int&gt; numbers{10};
+int&amp; old = numbers[0];
+numbers.reserve(numbers.capacity() + 1); // forces reallocation if successful
+// old must not be used. Reacquire through numbers[0].</Code>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">reserve</InlineCode> protects against a particular growth mechanism, not every erase or structural change. Erasing a vector element invalidates references/iterators at or after the erased position. A swap-and-pop pool can exhibit a different failure: move-assigning the last component into an earlier existing slot can leave that slot object alive while changing which entity its state represents.</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Slot { int entity; int value; };
+std::vector&lt;Slot&gt; pool{{11, 100}, {22, 200}, {33, 300}};
+Slot* cached = &amp;pool[0];       // intended entity 11
+pool[0] = std::move(pool.back());
+pool.pop_back();
+// cached still reaches the live first Slot, now representing entity 33.</Code>
+<Table ns0:table="table" ns0:trows="4" ns0:tcols="4" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">Stage</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">Slot zero’s C++ lifetime</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">Logical owner</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">What the old path guarantees</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">borrow first slot</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">live</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">11</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">current access to 11 under present contract</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">assign last slot into first</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">continues</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">33</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">access to a live Slot, not the original entity</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">destroy last element</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">first still live</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">33</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">no recovery of entity 11’s association</Content></Cell></Table>
+<Content ns0:pstyle="Content">This is <Strong ns0:cstyle="Bold">semantic invalidation</Strong>, not necessarily a dangling pointer. The last element’s old borrow does dangle after its destruction. Reallocation creates yet another failure. Do not label all three “the address changed.” AddressSanitizer can miss the semantic case completely, and allocated vector capacity need not be poisoned when a popped object dies.</Content>
+<Content ns0:pstyle="Content"><Link href="#appendix-f1581457d322">Generation handles</Link> validate logical entity identity through a registry. Two copied handles are two separate C++ objects with equal handle values, potentially identifying the same application entity. A currently valid handle does not prove that an earlier <InlineCode ns0:cstyle="InlineCode">Component&amp;</InlineCode> survived the pool’s subsequent mutations. Entity generation and pool location are separate dimensions.</Content>
+<Content ns0:pstyle="Content">The source reports KairoECS <InlineCode ns0:cstyle="InlineCode">Get</InlineCode>, <InlineCode ns0:cstyle="InlineCode">TryGet</InlineCode>, and <InlineCode ns0:cstyle="InlineCode">Emplace</InlineCode> borrows into dense vector storage, plus swap-and-pop removal. Those are useful hypotheses for an audit, not independently confirmed repository facts here. The local <InlineCode ns0:cstyle="InlineCode">Slot</InlineCode> example establishes the mechanism without depending on that project.</Content>
+<Content ns0:pstyle="Content">For a conservative <Link href="#print-redirect-45cd723a39107ec6">pool-epoch contract</Link>, increment a mutation counter on every operation declared to invalidate borrows. A checked borrow records that counter and checks it before accessing the cached element. An <Strong ns0:cstyle="Bold">epoch</Strong> is a version identifying a permitted observation interval. The pool/epoch object must itself outlive every checked borrow; otherwise even reading the counter is unsafe. Counter wrap, bypassed mutations, concurrent access, and check-then-use races remain policy obligations. An epoch is a debug witness, not an owning pointer or automatic synchronization.</Content>
+<Content ns0:pstyle="Content">An efficient starting discipline is: acquire the component, perform a narrow operation without structural mutation, discard the borrow, mutate, validate the handle again, and reacquire. Longer-lived component access needs an explicitly stronger storage/ownership contract. “Stable entity IDs” is not that contract.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-borrowed-views-and-deferred-work-need-an-owner-story">Borrowed views and deferred work need an owner story</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-9ae787fe3f9b97c2">std::span&lt;T&gt;</Link> describes a contiguous range with an extent; <InlineCode ns0:cstyle="InlineCode">std::string_view</InlineCode> describes characters without owning them. A <Strong ns0:cstyle="Bold">view</Strong> is a descriptor of existing data, not a copy of the data. A span can improve length-aware code, but it does not establish the underlying range’s validity or extend lifetime. A view into a local string returned by a function dangles. A reference member in a renderer likewise requires its device to outlive that renderer’s use of the device.</Content>
+<Code ns0:pstyle="Code" language="cpp">// Invalid contract: do not call this and use the result.
+std::string_view bad_name() {
+    std::string local = "Ada";
+    return local;
+}
+// Owning result: the caller receives its own string object.
+std::string good_name() { return "Ada"; }</Code>
+<Content ns0:pstyle="Content">A lambda’s <Strong ns0:cstyle="Bold">closure</Strong> is the object storing its captures. <InlineCode ns0:cstyle="InlineCode">[&amp;]</InlineCode> stores reference-like access to locals; <InlineCode ns0:cstyle="InlineCode">[this]</InlineCode> captures the pointer to the current object, not ownership of that object. If queued work runs later, returning from the creator or destroying the owner can invalidate those paths. Capturing a <InlineCode ns0:cstyle="InlineCode">string_view</InlineCode> by value still copies only its descriptor. Capturing an owning string by value supplies a different contract.</Content>
+<Code ns0:pstyle="Code" language="cpp">std::string label = "frame";
+auto snapshot_job = [saved = label] { return saved.size(); };
+label.clear();
+// snapshot_job still owns its independent saved string.</Code>
+<Content ns0:pstyle="Content">Ownership of the closure and scheduling still matter: the callable must itself remain alive when invoked. Capturing a resource handle by value preserves the handle bits, not necessarily resource existence; deferred work may need validation or a lifetime-pinning policy. Smart-pointer ownership and complete scheduling contracts remain future depth.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-read-only-is-a-path-not-an-ownership-or-synchronization-promise">Read-only is a path, not an ownership or synchronization promise</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-a4e064cbf3abad46">const</Link> constrains modification through a type/access path. A const object and a const path to a mutable object are not interchangeable. <InlineCode ns0:cstyle="InlineCode">const int&amp; view = mutable_int;</InlineCode> prohibits assignment through <InlineCode ns0:cstyle="InlineCode">view</InlineCode>, but the original mutable access can still update the same integer. Conversely, modifying an actually const object through <InlineCode ns0:cstyle="InlineCode">const_cast</InlineCode> is undefined behavior. Removing a qualifier is not permission to write.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Top-level const</Strong> qualifies the immediate object described by a type; <Strong ns0:cstyle="Bold">low-level const</Strong> qualifies an object accessed through a pointer/reference. <Strong ns0:cstyle="Bold">Shallow constness</Strong> means a const owner containing a pointer does not automatically make the pointee const. <InlineCode ns0:cstyle="InlineCode">const</InlineCode> does not imply compile-time evaluation: runtime input can initialize a const local. <InlineCode ns0:cstyle="InlineCode">constexpr</InlineCode> and <InlineCode ns0:cstyle="InlineCode">constinit</InlineCode> answer different initialization questions.</Content>
+<Table ns0:table="table" ns0:trows="5" ns0:tcols="3" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Declaration</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Reseat pointer?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Modify <InlineCode ns0:cstyle="InlineCode">T</InlineCode> through pointer?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">T* p</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">yes, if actually mutable and valid</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">const T* p</InlineCode> / <InlineCode ns0:cstyle="InlineCode">T const* p</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">no</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">T* const p</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">no</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">yes, if actually mutable and valid</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">const T* const p</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">no</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">no</Content></Cell></Table>
+<Content ns0:pstyle="Content">The same principle applies to ranges. <InlineCode ns0:cstyle="InlineCode">const std::span&lt;int&gt;</InlineCode> makes the descriptor const but still permits modifying its integer elements. <InlineCode ns0:cstyle="InlineCode">std::span&lt;const int&gt;</InlineCode> gives read-only element access, but mutable aliases elsewhere may still write. Neither owns the integers. A public <InlineCode ns0:cstyle="InlineCode">const int*</InlineCode> parameter promises a read-only path, not global immutability.</Content>
+<Content ns0:pstyle="Content">For ordinary by-value parameters, top-level const does not distinguish function signatures: <InlineCode ns0:cstyle="InlineCode">void f(int)</InlineCode> and <InlineCode ns0:cstyle="InlineCode">void f(const int)</InlineCode> declare the same function. Pointer-to-const and pointer-to-mutable parameters can distinguish overloads because the pointed-to qualification differs. A reference itself cannot be reseated; a const qualification applied to a reference through an alias does not turn it into a new “const reference object.” Describe constness of its referent instead.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-7692ad7743e8c524">Qualification conversions</Link> are safety rules, not a general permission to sprinkle const into any nesting level:</Content>
+<Code ns0:pstyle="Code" language="cpp">int* p = nullptr;
+int** pp = &amp;p;
+// const int** unsafe = pp; // rejected
+const int* const* safe = pp; // permitted: the intermediate pointer is read-only</Code>
+<Content ns0:pstyle="Content">If the rejected conversion existed, <InlineCode ns0:cstyle="InlineCode">*unsafe = &amp;actually_const_int</InlineCode> could put a pointer to a const integer into the original mutable <InlineCode ns0:cstyle="InlineCode">int* p</InlineCode>. Then <InlineCode ns0:cstyle="InlineCode">*p = 9</InlineCode> would write to a const object through an apparently mutable type. The intermediate const in the permitted conversion blocks precisely that injection. This is why <InlineCode ns0:cstyle="InlineCode">int*</InlineCode> to <InlineCode ns0:cstyle="InlineCode">const int*</InlineCode> is safe but <InlineCode ns0:cstyle="InlineCode">int**</InlineCode> to <InlineCode ns0:cstyle="InlineCode">const int**</InlineCode> is not. See the <Link href="https://eel.is/c++draft/conv.qual">qualification-conversion rule</Link> and <Link href="../01-Foundations-I/01-Foundations-I.epub#01-foundations-i-ch011-c---qualification-safety-and-borrow-intervals">full counterexample</Link>.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">volatile</InlineCode> is not a replacement for a mutex or atomic access. It has specialized observable-access uses; it does not provide a general happens-before relationship or prevent data races. Neither pointer constness nor a const member function proves thread safety.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-an-accessor-must-respect-the-callers-lifetime">An accessor must respect the caller’s lifetime</Content>
+<Content ns0:pstyle="Content">A const non-static member function restricts access to ordinary non-mutable members through its implicit object path. It does not freeze unrelated global state, static members, mutable members, or objects reached by stored pointers. The <Link href="https://eel.is/c++draft/class.mfct.non.static">non-static member-function rules</Link> distinguish the object’s access qualification from global immutability.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-39170574322e2513">Ref qualifiers</Link> constrain the caller’s object category: <InlineCode ns0:cstyle="InlineCode">&amp;</InlineCode> selects persistent lvalue-object access; <InlineCode ns0:cstyle="InlineCode">&amp;&amp;</InlineCode> selects rvalue-object access. A getter returning a borrow from a temporary is often an avoidable design error. Give a persistent owner a borrowed member path and an expiring owner an owning result:</Content>
+<Code ns0:pstyle="Code" language="cpp">class Named {
+    std::string name_;
+public:
+    explicit Named(std::string name) : name_(std::move(name)) {}
+    std::string&amp; Name() &amp; { return name_; }
+    const std::string&amp; Name() const &amp; { return name_; }
+    std::string Name() &amp;&amp; { return std::move(name_); }
+    std::string Name() const &amp;&amp; { return name_; } // copy from const temporary
+};</Code>
+<Content ns0:pstyle="Content">The fourth overload is important. A const temporary cannot use the non-const <InlineCode ns0:cstyle="InlineCode">&amp;&amp;</InlineCode> overload; without a const-rvalue policy, a <InlineCode ns0:cstyle="InlineCode">const &amp;</InlineCode> member overload may still give it a dangling borrowed result. Returning a value for both rvalue paths closes that hole. Alternatively delete both rvalue getter overloads and reject such calls. A value-returning getter may still copy a persistent object if that is the desired API; this four-way design is an illustration, not a universal performance rule.</Content>
+<Code ns0:pstyle="Code" language="cpp">Named owner{"persistent"};
+const std::string&amp; borrowed = owner.Name(); // owner must survive the use
+std::string owned = Named{"temporary"}.Name(); // survives temporary destruction</Code>
+<Content ns0:pstyle="Content">Inside an <InlineCode ns0:cstyle="InlineCode">&amp;&amp;</InlineCode> member function, the expression <InlineCode ns0:cstyle="InlineCode">*this</InlineCode> is still an lvalue; <InlineCode ns0:cstyle="InlineCode">name_</InlineCode> is not automatically moved just because the caller was an rvalue. Explicit <InlineCode ns0:cstyle="InlineCode">std::move(name_)</InlineCode> makes the consuming intent visible. <InlineCode ns0:cstyle="InlineCode">std::as_const(owner)</InlineCode> creates a const lvalue path; its rvalue overload is deleted rather than accepting a temporary. An <InlineCode ns0:cstyle="InlineCode">override</InlineCode> specifier also catches accidental const-signature mismatches in virtual interfaces.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-a-cache-may-change-bits-without-changing-meaning">A cache may change bits without changing meaning</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-90189d66ae07d532">Logical constness</Link> preserves what the object means to its users, not necessarily every private bit. A lazily computed cache may change internally while the represented mesh or polynomial remains the same. <InlineCode ns0:cstyle="InlineCode">mutable</InlineCode> permits a non-static member to be modified through a const object path; it does not erase its synchronization or invalidation obligations.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Lazy computation</Strong> delays work until a result is requested. <Strong ns0:cstyle="Bold">Cache invalidation</Strong> removes or versions a cached result when its source changes. An <Strong ns0:cstyle="Bold">invariant</Strong> is a condition required at the boundaries of the public operations. Here the invariant is that a populated cache agrees with the current source. Protecting only the cache while reading a concurrently changing source does not preserve it.</Content>
+<Code ns0:pstyle="Code" language="cpp">class CachedSquare {
+    mutable std::mutex mutex_;
+    int source_ = 3;
+    mutable std::optional&lt;int&gt; square_;
+public:
+    void Set(int value) {
+        std::scoped_lock lock(mutex_);
+        source_ = value;       // caller must keep squaring within int range
+        square_.reset();
+    }
+    int Get() const {
+        std::scoped_lock lock(mutex_);
+        if (!square_) square_ = source_ * source_;
+        return *square_;      // copy result while still protected
+    }
+};</Code>
+<Content ns0:pstyle="Content">For this small illustration all reads/writes of source and cache share one mutex. A <Strong ns0:cstyle="Bold">mutex</Strong> excludes overlapping critical sections; <Strong ns0:cstyle="Bold">scoped locking</Strong> releases it on scope exit, including exceptions. The returned integer is a snapshot, not a reference into a cache that might be reset after unlocking. Expensive computation may require a versioned compute-outside-lock protocol, but that needs validation of the source version before publishing the result. Simply returning <InlineCode ns0:cstyle="InlineCode">const Result&amp;</InlineCode> under a lock would not make later unlocked reads safe.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">mutable</InlineCode> applies to eligible non-static data members, not reference members or a top-level const member. <InlineCode ns0:cstyle="InlineCode">mutable const T* pointer</InlineCode> can be valid because the pointer itself is mutable while its pointee path is const. A mutex is not copyable; adding it changes the containing type’s default copy/move possibilities. Decide those operations deliberately rather than assuming a cached type remains an ordinary copyable record.</Content>
+<Content ns0:pstyle="Content">A mutable lambda addresses a different problem: it permits modification of the closure’s by-value captures through its call operator. <InlineCode ns0:cstyle="InlineCode">auto counter = [n=0]() mutable { return ++n; };</InlineCode> increments that closure’s private counter, not an external original integer. It gives no automatic thread safety when several threads invoke the same closure.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-choose-the-access-contract-before-the-parameter-syntax">Choose the access contract before the parameter syntax</Content>
+<Content ns0:pstyle="Content">We have enough vocabulary to ask the right next questions. Is this argument a small value to copy, required borrowed access, optional access, a bounded range, or a resource to consume? Does the function return an owning result or a path into someone else’s lifetime? These questions precede whether a signature uses <InlineCode ns0:cstyle="InlineCode">T</InlineCode>, <InlineCode ns0:cstyle="InlineCode">T&amp;</InlineCode>, <InlineCode ns0:cstyle="InlineCode">const T&amp;</InlineCode>, <InlineCode ns0:cstyle="InlineCode">T*</InlineCode>, or <InlineCode ns0:cstyle="InlineCode">T&amp;&amp;</InlineCode>.</Content>
+<Content ns0:pstyle="Content">Passing an integer by const reference is not automatically faster than passing its value. Indirection, aliasing restrictions, ABI behavior, and inlining affect generated work. <Strong ns0:cstyle="Bold">Aliasing</Strong> means several access paths can designate the same object: <InlineCode ns0:cstyle="InlineCode">update(x,x)</InlineCode> can make two reference parameters interact in a way independent value parameters do not. The <Link href="https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#f16-for-in-parameters-pass-cheaply-copied-types-by-value-and-others-by-reference-to-const">Core Guidelines’ input-parameter guidance</Link> is design guidance, not a benchmark result. Now we can develop these interface choices into construction, transfer and cleanup policies.</Content>
+<Content ns0:pstyle="Content">At the board, connect the story: declarations identify entities; storage hosts live objects; expression categories describe uses; binding chooses a referent; lifetime limits the path; mutation may invalidate its physical or logical target; const restricts access; ownership and synchronization remain separate obligations. That is the foundation for reliable interfaces.</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-worked-api-choice-borrow-consume-retain-or-copy-a-value">Worked API choice: borrow, consume, retain, or copy a value</Content>
+<Content ns0:pstyle="Content">A function signature should say whether it borrows access, consumes one owner, or retains shared lifetime. Copying a value is a separate decision from extending an object’s lifetime. This self-contained C++20 example demonstrates those choices and a matching deleter for a C file handle.</Content>
+<Code ns0:pstyle="Code" language="cpp">#include &lt;cstdio&gt;
+#include &lt;iostream&gt;
+#include &lt;memory&gt;
+#include &lt;string&gt;
+#include &lt;utility&gt;
+
+struct FileCloser {
+    void operator()(std::FILE* file) const noexcept {
+        if (file) std::fclose(file);
+    }
+};
+using TempFile = std::unique_ptr&lt;std::FILE, FileCloser&gt;;
+
+void inspect_file(std::FILE&amp; file) {
+    (void)file; // Borrowed access; this function does not close it.
+    std::cout &lt;&lt; "inspect: caller still owns file\n";
+}
+
+void consume_file(TempFile file) {
+    (void)file; // Sink: ownership arrived by value and ends at function exit.
+    std::cout &lt;&lt; "consume: callee owns file until return\n";
+}
+
+void inspect_shared(const std::shared_ptr&lt;const std::string&gt;&amp; text) {
+    std::cout &lt;&lt; "observe: " &lt;&lt; *text &lt;&lt; '\n';
+    // Borrow the existing handle for this call; do not store a copy.
+}
+
+struct Cache {
+    std::shared_ptr&lt;const std::string&gt; retained;
+
+    void retain_shared(std::shared_ptr&lt;const std::string&gt; text) {
+        retained = std::move(text); // Sink: keep a shared owner after return.
+    }
+};
+
+int main() {
+    // Same value at the start, independent owned strings after copying.
+    std::string title = "North";
+    std::string copy = title;
+    copy[0] = 'M';
+    std::cout &lt;&lt; "values: " &lt;&lt; title &lt;&lt; " / " &lt;&lt; copy &lt;&lt; '\n';
+
+    auto file = TempFile{std::tmpfile()}; // Custom deleter calls fclose.
+    if (!file) return 1;
+    inspect_file(*file);                   // Borrow FILE&amp;, no ownership transfer.
+    consume_file(std::move(file));          // Transfer unique ownership by value.
+    std::cout &lt;&lt; "caller handle after sink: " &lt;&lt; (file ? "full" : "empty") &lt;&lt; '\n';
+
+    Cache cache;
+    auto shared = std::make_shared&lt;const std::string&gt;("shared lifetime");
+    inspect_shared(shared);                 // Borrow the shared_ptr handle by const ref.
+    cache.retain_shared(shared);             // Copy into sink, then retain in Cache.
+    shared.reset();                          // Cache keeps the object alive.
+    std::cout &lt;&lt; "cache after caller reset: " &lt;&lt; *cache.retained &lt;&lt; '\n';
+}</Code>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-the-call-site-decision">The call-site decision</Content>
+<Table ns0:table="table" ns0:trows="6" ns0:tcols="3" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Need at the boundary</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Parameter shape</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">What the signature communicates</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">Read or mutate a live object only during this call</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">T&amp;</InlineCode> / <InlineCode ns0:cstyle="InlineCode">const T&amp;</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">Borrow. The caller maintains lifetime and obeys invalidation rules.</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Consume one exclusive owner</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">std::unique_ptr&lt;T&gt;</InlineCode> by value</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Sink. The caller passes <InlineCode ns0:cstyle="InlineCode">std::move(owner)</InlineCode>; the callee owns the cleanup duty.</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Keep shared lifetime</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">std::shared_ptr&lt;T&gt;</InlineCode> by value</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Join/retain the ownership group. A copy extends lifetime beyond the call if stored.</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">Temporarily inspect an already shared handle</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">const std::shared_ptr&lt;T&gt;&amp;</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">Borrow the handle without incrementing the owner count just for parameter passing. Do not store the reference.</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">Release a non-memory resource</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">Owner plus matching deleter/RAII wrapper</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">Cleanup follows that resource’s protocol; <InlineCode ns0:cstyle="InlineCode">std::FILE</InlineCode> uses <InlineCode ns0:cstyle="InlineCode">fclose</InlineCode>, not <InlineCode ns0:cstyle="InlineCode">delete</InlineCode>.</Content></Cell></Table>
+<Content ns0:pstyle="Content">An API that only observes data generally should take <InlineCode ns0:cstyle="InlineCode">T&amp;</InlineCode> or <InlineCode ns0:cstyle="InlineCode">const T&amp;</InlineCode>, even if some caller happens to own it through a <InlineCode ns0:cstyle="InlineCode">shared_ptr</InlineCode>. Use a shared-pointer parameter when the function’s contract actually depends on shared ownership or transfers/retains that handle. By-value strings illustrate value semantics: the copy owns a separate string value. Two shared pointers, by contrast, can refer into one shared object; copying the handle is not a deep copy of the pointee.</Content>
+<Content ns0:pstyle="Content">Standard wording matters for edge cases. Standard-library objects are generally valid but unspecified after a move unless the type specification guarantees more; use only operations whose preconditions hold. A user-defined type must preserve its own documented invariant. <Link href="https://eel.is/c++draft/lib.types.movedfrom">C++ draft: moved-from library types</Link>. Operations on distinct shared-pointer objects may share a control block under specified library guarantees, but this does not synchronize the pointed-to object; mutable access still needs synchronization or immutability. <Link href="https://eel.is/c++draft/util.smartptr.shared">C++ draft: shared_ptr general requirements</Link>. These corrections address overbroad statements in selected CppCon talks and Q&amp;A; the example is original. The selected full-caption sources were Inbal Levi on smart pointers and RAII, Dave Abrahams on value semantics, Ben Saks on move semantics, and Phil Nash on lifetime management: <Link href="https://www.youtube.com/watch?v=07rJOzFRs6M">Levi</Link>, <Link href="https://www.youtube.com/watch?v=QthAU-t3PQ4">Abrahams</Link>, <Link href="https://www.youtube.com/watch?v=szU5b972F7E">Saks</Link>, and <Link href="https://www.youtube.com/watch?v=aMvIv6blzBs">Nash</Link>.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-a-value-crosses-the-function-boundary">A value crosses the function boundary</Content>
+<Content ns0:pstyle="Content">Borrowing solves access without duplication. It does not solve ownership of a result that must survive the caller, or independence when one function transforms data. <Link href="#print-redirect-f9f701b4acf73ce9">By-value parameters</Link> supply a separate object initialized from the argument expression. The <Strong ns0:cstyle="Bold">argument</Strong> is what the caller supplies; the <Strong ns0:cstyle="Bold">parameter</Strong> is the callee’s declared input. Do not replace that distinction with “all calls mechanically copy bytes.” The source’s category and the destination type choose how initialization works.</Content>
+<Content ns0:pstyle="Content">Use an engine-shaped teaching model with no engine dependencies:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Extent2D { std::uint32_t width=0, height=0; };
+struct TexturePayload {
+    std::string debugName;
+    Extent2D extent{};
+    std::uint32_t mipCount=1;
+    std::vector&lt;std::byte&gt; pixels;
+};</Code>
+<Content ns0:pstyle="Content">An extent is a pair of dimensions; a mip level is a progressively lower-resolution texture level. This record describes CPU data, not a live GPU allocation. <InlineCode ns0:cstyle="InlineCode">std::string</InlineCode> and <InlineCode ns0:cstyle="InlineCode">std::vector</InlineCode> own their own storage according to their library contracts. The record itself need not implement manual release. Image format validation is deliberately not implemented by these four fields alone.</Content>
+<Content ns0:pstyle="Content">For <InlineCode ns0:cstyle="InlineCode">void receive(TexturePayload payload)</InlineCode>, <InlineCode ns0:cstyle="InlineCode">receive(existing)</InlineCode> ordinarily copy-constructs the parameter from an lvalue. <InlineCode ns0:cstyle="InlineCode">receive(std::move(existing))</InlineCode> can move-construct it from an xvalue. <InlineCode ns0:cstyle="InlineCode">receive(TexturePayload{})</InlineCode> directly constructs the parameter from a same-type prvalue. Changing <InlineCode ns0:cstyle="InlineCode">payload.debugName</InlineCode> does not change the caller’s original string after an ordinary copy. However, a by-value record containing a raw pointer can still designate shared external data: separate outer objects do not prove separate reachable resources.</Content>
+<Table ns0:table="table" ns0:trows="7" ns0:tcols="3" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Signature shape</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Callee gets</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Contract to state</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">T value</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">separate T object</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">value semantics; may store/transform its own value</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">const T&amp; value</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">required borrowed path</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">read-only through this path; no retention beyond validity</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">T&amp; value</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">required mutable borrowed path</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">in-out operation; aliasing may occur</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">const T* value</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">a copied pointer object</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">document whether null means absence; otherwise validity required</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">T&amp;&amp; value</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">rvalue-bound borrowed path</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">permission to consume when the API promises that; not an automatic transfer</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">std::span&lt;const T&gt;</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">copied range descriptor</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">valid live sequence; no owning lifetime extension</Content></Cell></Table>
+<Content ns0:pstyle="Content">A <Strong ns0:cstyle="Bold">sink</Strong> is an operation intended to retain or consume a supplied value. A by-value sink allows the caller to preserve an lvalue by copying or surrender an expiring value by moving:</Content>
+<Code ns0:pstyle="Code" language="cpp">class TextureCache {
+    std::vector&lt;TexturePayload&gt; records_;
+public:
+    void Insert(TexturePayload payload) {
+        records_.push_back(std::move(payload));
+    }
+};</Code>
+<Content ns0:pstyle="Content">If capacity is already sufficient, insertion from an lvalue ordinarily means one copy into the parameter and one move into the element. A directly produced value can initialize the parameter without an intermediate transfer, then move into the element. Growth adds transfer work for old elements; do not omit it from a performance claim. Two overloads, <InlineCode ns0:cstyle="InlineCode">Insert(const T&amp;)</InlineCode> and <InlineCode ns0:cstyle="InlineCode">Insert(T&amp;&amp;)</InlineCode>, can avoid the extra parameter-to-destination step but add interface/implementation work. Reusing destination capacity during assignment can favor yet another design. Choose based on semantics and measured workload, not a slogan.</Content>
+<Content ns0:pstyle="Content">Pointer parameters are themselves passed by value unless the signature says otherwise. <InlineCode ns0:cstyle="InlineCode">void reset(T* p){p=nullptr;}</InlineCode> resets only that local pointer. <InlineCode ns0:cstyle="InlineCode">void reset(T*&amp; p){p=nullptr;}</InlineCode> can reseat the caller’s pointer. Optional access must say what null does. A declaration <InlineCode ns0:cstyle="InlineCode">void process(float values[16])</InlineCode> adjusts to a pointer parameter; it does not enforce sixteen elements. A span packages pointer and count but still relies on a valid range. At C/driver boundaries, wrap the documented pointer protocol rather than inventing an ownership guarantee. Portable C++23 has no standard <InlineCode ns0:cstyle="InlineCode">restrict</InlineCode> keyword; compiler extensions require a real non-aliasing promise.</Content>
+<Content ns0:pstyle="Content">An alias trace makes the difference concrete. Given <InlineCode ns0:cstyle="InlineCode">destination += source; source *= 0.5f;</InlineCode>, passing distinct values source4/destination4 yields source2/destination8. Passing the same object to both reference parameters gives 4→8→4. The signature admits this association unless its contract explicitly excludes it; an optimizer cannot assume distinct referents merely because the parameter names differ.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-return-a-result-without-handing-out-a-lifetime-problem">Return a result without handing out a lifetime problem</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-f37cffc4a32956fe">Return by value</Link> establishes a result object rather than borrowing a local’s expired storage. A <Strong ns0:cstyle="Bold">result object</Strong> is the object initialized by the value-producing call in the relevant context. Many ABIs let a caller provide destination storage through a hidden address for a large result; that implementation technique is not a mandated layout or calling convention.</Content>
+<Code ns0:pstyle="Code" language="cpp">TexturePayload fallback() {
+    return TexturePayload{.debugName="fallback", .extent={1,1},
+                          .mipCount=1, .pixels={}};
+}
+TexturePayload built() {
+    TexturePayload result;
+    result.debugName="built";
+    return result;
+}</Code>
+<Content ns0:pstyle="Content">The two returns have different guarantees. Since C++17, an appropriate same-type prvalue directly initializes its destination; there need not be an intermediate object that requires copying or moving. <Strong ns0:cstyle="Bold">NRVO</Strong>, named return value optimization, is permitted for an eligible non-volatile local object, excluding a function parameter or handler parameter. It can make the named local and result the same object, but is optional in C++23. The optional case still requires a valid fallback. See <Link href="https://eel.is/c++draft/class.copy.elision">copy-elision conditions</Link>.</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Token {
+    Token()=default;
+    Token(const Token&amp;)=delete;
+    Token(Token&amp;&amp;)=delete;
+};
+Token direct() { return Token{}; } // valid C++17+: no transfer constructor needed
+// Token named() { Token token; return token; } // rejected: unavailable fallback</Code>
+<Content ns0:pstyle="Content">The destructor must still be accessible and usable where required; the result ultimately dies. “No copy required” does not mean “no destruction requirements.” Direct construction also has context limits, such as potentially overlapping subobjects; do not generalize a complete-object example to every base-subobject initialization.</Content>
+<Content ns0:pstyle="Content">For an eligible local or by-value parameter returned in C++23, implicit-move rules treat the return expression as an xvalue. In ordinary uses a named rvalue-reference variable is still an lvalue; this return context is the special rule already previewed. <Link href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2266r3.html">P2266R3</Link> documents that change. Returning a parameter is not NRVO, although it can move. <InlineCode ns0:cstyle="InlineCode">return std::move(local);</InlineCode> removes the simple named-local NRVO form; prefer <InlineCode ns0:cstyle="InlineCode">return local;</InlineCode> when applicable. Const on a returned local can prevent destructive moving in the fallback, even if NRVO hides the cost on one compiler.</Content>
+<Content ns0:pstyle="Content">A reference return answers a different question: where is an existing object? Returning a local automatic object by reference or pointer does not keep it alive. Returning a static object can supply persistent shared access, not a caller-owned independent value; returning a container element inherits container invalidation. Views carry the same underlying-storage obligation. The existing four-way ref-qualified getter handles both mutable and const temporary callers, closing the const-rvalue hole in the attachment’s shorter getter example. Likewise, <InlineCode ns0:cstyle="InlineCode">decltype(auto)</InlineCode> returning <InlineCode ns0:cstyle="InlineCode">(member)</InlineCode> can preserve a borrowed reference, not an owning result.</Content>
+<Content ns0:pstyle="Content">Instrumenting transfer constructors can help explain selection, but optional elision can omit observable copy/move side effects. Under direct prvalue semantics there is no hidden transfer to count. Therefore never make required business logic depend on a copy constructor running. Tests below distinguish mandatory assertions from compiler-dependent NRVO observations.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-construction-establishes-a-usable-state">Construction establishes a usable state</Content>
+<Content ns0:pstyle="Content">A <Link href="#print-redirect-f9d76e2bf717f342">constructor</Link> initializes the object and establishes its invariant; it is not merely an ordinary method run after a complete object already exists. Before its body, base and member initialization has taken place. A <Strong ns0:cstyle="Bold">member-initializer list</Strong> is the syntax after the constructor’s colon, such as <InlineCode ns0:cstyle="InlineCode">: name_(std::move(name))</InlineCode>. It is not a <InlineCode ns0:cstyle="InlineCode">std::initializer_list</InlineCode> container of values.</Content>
+<Code ns0:pstyle="Code" language="cpp">class TextureRecord {
+    std::string name_;
+    Extent2D extent_;
+    std::vector&lt;std::byte&gt; pixels_;
+public:
+    TextureRecord(std::string name, Extent2D extent,
+                  std::vector&lt;std::byte&gt; pixels)
+        : name_(std::move(name)), extent_(extent), pixels_(std::move(pixels)) {
+        if (!extent_.width || !extent_.height)
+            throw std::invalid_argument("zero extent");
+    }
+};</Code>
+<Content ns0:pstyle="Content">The check establishes only nonzero dimensions, not a complete image schema. A production invariant might additionally relate byte count, format, extent, mip layout, and resource limits using checked arithmetic. This is where values become usable domain objects rather than arbitrary collections of bits.</Content>
+<Content ns0:pstyle="Content">Assigning <InlineCode ns0:cstyle="InlineCode">name_</InlineCode> in the body would first initialize the member by some other rule and then assign it. For a class member that can mean default construction followed by replacement; for a reference or const member, body assignment cannot provide the initial binding/value. Prefer direct member initialization for initial state. Allocation supplies storage; construction establishes an occupant, whether in automatic storage, dynamically allocated storage, or an explicitly managed buffer.</Content>
+<Content ns0:pstyle="Content">A constructor cannot return an error value. It can throw, or creation can be mediated by a factory returning an error-bearing result such as C++23 <InlineCode ns0:cstyle="InlineCode">std::expected&lt;T,E&gt;</InlineCode> where appropriate. That is an interface choice; <InlineCode ns0:cstyle="InlineCode">expected</InlineCode> does not make underlying allocations incapable of throwing. Do not register <InlineCode ns0:cstyle="InlineCode">this</InlineCode> with callbacks or jobs before the intended invariant exists. Other code could observe unfinished state, and construction failure might leave the registration dangling.</Content>
+<Content ns0:pstyle="Content">Use <InlineCode ns0:cstyle="InlineCode">explicit</InlineCode> for a single-argument constructor when automatic conversion is undesirable: <InlineCode ns0:cstyle="InlineCode">explicit Index(std::uint32_t)</InlineCode> supports <InlineCode ns0:cstyle="InlineCode">Index{3}</InlineCode> but not an accidental integer argument where an Index is required. The complete conversion-overload story remains later depth.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-empty-syntax-does-not-promise-initialized-members">Empty syntax does not promise initialized members</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-5226cea2d64f134e">Default initialization</Link> and <Strong ns0:cstyle="Bold">value initialization</Strong> name language mechanisms, not interchangeable spellings. A default constructor is callable with no arguments; it may have parameters with defaults. An implicitly declared constructor, a first-declaration <InlineCode ns0:cstyle="InlineCode">=default</InlineCode>, and an empty user-written body need not have identical properties.</Content>
+<Table ns0:table="table" ns0:trows="7" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Type and declaration</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Mechanism/current state</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">automatic <InlineCode ns0:cstyle="InlineCode">int n;</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">default initialization performs no scalar initialization; do not read before setting</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">int n{};</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">initializes integer to zero</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">aggregate <InlineCode ns0:cstyle="InlineCode">struct Stats{int uploads;}; Stats s{};</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">aggregate initialization gives uploads zero</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">struct A{int n; A()=default;}; A a{};</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">selected constructor is not user-provided; value initialization supplies zero initialization first</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">struct B{int n; B(){}}; B b{};</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">user-provided empty constructor does not initialize n; do not read it</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">struct C{int n=0; C(){}}; C c{};</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">default member initializer supplies zero even with that body</Content></Cell></Table>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Zero initialization</Strong> supplies zero/null values according to type; it is not a generic claim that every object’s full byte representation is memset-zero. <Strong ns0:cstyle="Bold">User-declared</Strong> means a declaration was written by the programmer. <Strong ns0:cstyle="Bold">User-provided</Strong> excludes a function explicitly defaulted or deleted on its first declaration. Thus <InlineCode ns0:cstyle="InlineCode">A()=default</InlineCode> inside the class is user-declared but not user-provided; declaring <InlineCode ns0:cstyle="InlineCode">A();</InlineCode> then defining <InlineCode ns0:cstyle="InlineCode">A::A()=default;</InlineCode> outside counts as user-provided. These terms affect initialization and triviality; they are not decorative vocabulary. The <Link href="https://eel.is/c++draft/dcl.init">initialization rules</Link> supply the mechanisms behind the table.</Content>
+<Content ns0:pstyle="Content">In C++23 an ordinary read of an uninitialized automatic int has undefined behavior. Later language-version distinctions must not be used to justify such a read in this laboratory. Write defaults beside members where they describe an intended state. This does not force every type to have a valid empty domain state: a device-backed object may intentionally require arguments.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">Stats stats();</InlineCode> declares a function returning Stats, not an object. The <Strong ns0:cstyle="Bold">most vexing parse</Strong> is the family of declaration ambiguities where an intended object declaration is parsed as a function declaration. <InlineCode ns0:cstyle="InlineCode">Stats stats{};</InlineCode> avoids this case. Likewise <InlineCode ns0:cstyle="InlineCode">new int</InlineCode> leaves the scalar uninitialized, while <InlineCode ns0:cstyle="InlineCode">new int()</InlineCode> value-initializes it to zero; neither is a recommendation for manual allocation in ordinary application code.</Content>
+<Content ns0:pstyle="Content">Braces may choose aggregate initialization or a constructor/initializer-list route; parentheses and braces are not universal substitutes. The earlier reference-member temporary example already demonstrated a lifetime difference. Ask which mechanism the exact declaration selects rather than memorizing that braces make everything zero.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-construction-order-records-lifetime-dependencies">Construction order records lifetime dependencies</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-679b095c84a8ec4d">Initialization order</Link> is structural: virtual bases when applicable, direct bases in their specified order, non-static data members in declaration order, then the constructor body. Reordering entries after the colon does not reorder construction. The fixed order lets all constructor overloads share a coherent reverse cleanup order.</Content>
+<Code ns0:pstyle="Code" language="cpp">class MeasuredPixels {
+    std::vector&lt;std::byte&gt; pixels_; // provider must be declared first
+    std::size_t byteCount_;
+public:
+    explicit MeasuredPixels(std::vector&lt;std::byte&gt; pixels)
+        : pixels_(std::move(pixels)), byteCount_(pixels_.size()) {}
+};</Code>
+<Content ns0:pstyle="Content">Declaring <InlineCode ns0:cstyle="InlineCode">byteCount_</InlineCode> first and computing it from <InlineCode ns0:cstyle="InlineCode">pixels_.size()</InlineCode> would inspect a member before its construction, regardless of the visually reassuring initializer list. Write both declarations and initializers in dependency order; use compiler reorder warnings. A constructor’s explicit member initializer overrides that member’s default initializer rather than assigning after it.</Content>
+<Content ns0:pstyle="Content">The same idea handles a staging buffer needing its device during cleanup: declare <InlineCode ns0:cstyle="InlineCode">Device device_; Buffer buffer_;</InlineCode> so the buffer is constructed after and destroyed before the device. This is a lifetime dependency, not merely an ABI/layout preference. An externally borrowed device still needs its own outliving guarantee.</Content>
+<Content ns0:pstyle="Content">A <Strong ns0:cstyle="Bold">delegating constructor</Strong> names another constructor of the same class as its sole member initializer. The target performs base/member initialization and its body, then the delegating body executes. This centralizes validation and prevents defaults drifting between overloads:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct NamedCount {
+    std::string name;
+    int count;
+    NamedCount(std::string n, int c):name(std::move(n)),count(c) {
+        if (count&lt;0) throw std::invalid_argument("negative count");
+    }
+    explicit NamedCount(int c):NamedCount("unnamed",c) {}
+};</Code>
+<Content ns0:pstyle="Content">A delegating initializer cannot also initialize selected members. Delegation cycles are ill-formed; the chain must terminate at a constructor that actually initializes the subobjects. These are specified construction rules, not an optimization tactic. See <Link href="https://eel.is/c++draft/class.base.init">base and member initialization</Link>.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-destruction-closes-the-ownership-interval">Destruction closes the ownership interval</Content>
+<Content ns0:pstyle="Content">A <Link href="#print-redirect-08f86a4447b735c7">destructor</Link> performs an object’s cleanup. For a fully constructed ordinary automatic class object, leaving its scope triggers destruction, including when an exception unwinds the scope. <Strong ns0:cstyle="Bold">Stack unwinding</Strong> is that cleanup of active scopes while an exception propagates. Deterministic means tied to a defined lifetime boundary, not a promise that the OS will execute cleanup after abrupt termination or process kill.</Content>
+<Content ns0:pstyle="Content">The destructor body runs before the member/base destructors. Members are then destroyed in reverse construction order, followed by bases under their rules. If a non-delegating constructor throws, already-completed bases/members are destroyed in reverse order; the complete object’s destructor is not invoked. A member whose constructor did not complete is not treated as a fully constructed member either. By contrast, if a delegating target has completed and the later delegating body throws, cleanup can invoke the object’s destructor. State which case is being traced rather than asserting “a throwing constructor never invokes its destructor” without qualification. See <Link href="https://eel.is/c++draft/except.ctor">constructor exception cleanup</Link>.</Content>
+<Content ns0:pstyle="Content">RAII—resource acquisition is initialization—uses an owning object’s lifetime to control a resource’s release. Owning vector/string members already demonstrate the principle. A raw pointer data member alone does not run delete automatically: destruction of the pointer object only ends that pointer’s lifetime. Explicitly destroying an ordinary automatic object and then allowing its normal destruction without valid lifetime restoration is not a routine cleanup technique.</Content>
+<Content ns0:pstyle="Content">Cleanup should normally not throw. If an exception escapes a non-throwing destructor, termination follows; a second escaping destructor exception during active exception unwinding also leads to termination. Error-reporting close/flush operations may therefore be separate explicit functions, with the destructor retaining a safe non-throwing fallback. A trivial destructor may require no runtime cleanup, but the object still has a lifetime end.</Content>
+<Content ns0:pstyle="Content">The inline construction-failure trace below records member1 construction, member2 construction, entry to body, then destruction of member2 and member1. The absent complete-object destructor is the observable distinction. It also records the successful path where the destructor body runs first.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-copy-a-meaning-rather-than-just-its-bytes">Copy a meaning rather than just its bytes</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-dbcb47edc8aacee2">Copy construction</Link> creates a new object from an existing same-type object under the selected copy operation. <InlineCode ns0:cstyle="InlineCode">T b=a;</InlineCode> is initialization despite its equals sign. Generated copying of an ordinary non-union class is memberwise: strings copy strings, vectors copy their elements into destination-owned storage, scalars copy values, pointers copy pointer values, and reference members bind the same referent. It is not a universal memcpy or recursively deep clone.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Shallow copy</Strong> preserves associations to existing resources; <Strong ns0:cstyle="Bold">deep copy</Strong> duplicates the resources defined by the type’s copy contract. Neither is universally correct. Copying an integer texture ID should not clone a GPU texture. Copying an owning CPU pixel value may intentionally produce independent pixel storage. Copying a reference-bearing binding should preserve its alias association. A scene clone may need an old-ID→new-ID mapping so internal relationships and intended sharing survive; blindly recursing through pointers can duplicate shared resources or loop through cycles.</Content>
+<Code ns0:pstyle="Code" language="cpp">TexturePayload original;
+original.pixels.resize(4);
+TexturePayload independent=original;
+independent.pixels[0]=std::byte{7};
+// original.pixels[0] is unchanged by this write.
+struct Borrowed { TexturePayload* payload; };
+Borrowed first{&amp;original};
+Borrowed second=first; // two descriptors, one external payload</Code>
+<Content ns0:pstyle="Content">For a raw-memory owner with a destructor calling <InlineCode ns0:cstyle="InlineCode">delete[] data_</InlineCode>, an implicit pointer copy can create two alleged owners of one allocation and double deletion at destruction. The repair is not simply “write a copy constructor”: decide whether the semantic operation is deep copying, shared ownership with an appropriate owner type, or deleted copying. A type representing unique GPU/OS state may reject copying. Copy-on-write, where sharing persists until a mutation duplicates data, adds hidden allocation, alias invalidation and synchronization costs; it is a deliberate design, not a free deep-copy optimization.</Content>
+<Content ns0:pstyle="Content">Cross-member invariants need particular care. A generated move of <InlineCode ns0:cstyle="InlineCode">{extent,pixels}</InlineCode> moves each member appropriately but can leave nonzero source dimensions with a moved-from pixel container. If the class promises a relationship between dimensions and populated bytes for every live state, “the members are individually valid” is insufficient. Either allow/document an empty moved-from domain state, implement coordinated semantics in the responsible owner abstraction, or redesign the invariant. Rule Zero removes boilerplate; it does not prove arbitrary domain relationships.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-replacing-a-value-is-not-creating-an-object">Replacing a value is not creating an object</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-1fc9d2ea7050d165">Assignment</Link> changes an already-live target through an assignment operator. Copy assignment normally preserves the source’s semantic value while replacing the destination’s. Generated assignment uses member assignments rather than constructing a second complete target. Existing vector/string capacity can sometimes be reused, so its cost need not equal new-object copy construction.</Content>
+<Code ns0:pstyle="Code" language="cpp">TexturePayload made=original; // construction
+made=independent;             // assignment to an existing object</Code>
+<Content ns0:pstyle="Content">The conventional signature <InlineCode ns0:cstyle="InlineCode">T&amp; operator=(const T&amp;)</InlineCode> returns <InlineCode ns0:cstyle="InlineCode">*this</InlineCode>, allowing <InlineCode ns0:cstyle="InlineCode">a=b=c</InlineCode>. Language copy-assignment forms are broader, but that common shape expresses a reference to the assigned target. Reference members and const scalar members can make generated assignment deleted, even when copying into a new object is valid. A custom assignment through a reference referent is possible only as an explicitly chosen different contract; it does not reseat that reference.</Content>
+<Content ns0:pstyle="Content">Self-assignment is a real alias case: <InlineCode ns0:cstyle="InlineCode">x=x</InlineCode>. In a naive raw owner, deleting the destination’s old resource before making a replacement loses the original data and rollback state. If the source aliases the destination, later updates to destination metadata also change what <InlineCode ns0:cstyle="InlineCode">other</InlineCode> sees; an exact implementation might copy from a saved freed address or from its new uninitialized allocation. Neither should be taught as a safe algorithm, but don’t claim every ordering gives the same use-after-free trace.</Content>
+<Content ns0:pstyle="Content">The safer transaction is <Strong ns0:cstyle="Bold">prepare → commit → cleanup</Strong>. Allocate and copy a replacement while the old value remains intact; only after success replace the owning metadata and release the old allocation. <Strong ns0:cstyle="Bold">Copy-and-swap</Strong> implements that with a complete temporary copy, a non-throwing swap, and the temporary’s destructor releasing the former destination. It handles self-copy and can provide the strong guarantee, but often sacrifices destination-capacity reuse. The byte-owner lab implements this policy and deliberately injects allocation failure before commit.</Content>
+<Content ns0:pstyle="Content">A <Strong ns0:cstyle="Bold">strong exception guarantee</Strong> means failure leaves the operation’s promised observable state unchanged. A <Strong ns0:cstyle="Bold">basic guarantee</Strong> preserves valid invariants/no resource leaks while allowing values to change. A <Strong ns0:cstyle="Bold">non-throwing guarantee</Strong> means the operation cannot report failure by escaping an exception. These are contracts to establish, not decorations added by syntax. Memberwise assignment of several individually safe members does not automatically give an all-or-nothing guarantee for the entire enclosing object.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-a-move-transfers-responsibility-while-the-source-survives">A move transfers responsibility while the source survives</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch003-figure-cpp-03---move-the-duty-keep-both-object-lifetimes">Figure CPP-03 - Move the duty, keep both object lifetimes</Content>
+<Content ns0:pstyle="Content"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/mermaid/ba2887e220b79ef291059820.svg" alt="Diagram" /></Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Read the picture:</Strong> this is the manual byte-block contract below: construction creates the destination; ownership moves; the source remains a live, safely destructible empty object. <Strong ns0:cstyle="Bold">Limit:</Strong> <InlineCode ns0:cstyle="InlineCode">std::move</InlineCode> alone is a cast, not this transfer. Other types may copy, move inline data, or leave a valid but unspecified source state; move assignment also has an existing destination resource to handle. <Link href="#print-redirect-4ca6d153f09f543a">Recall this figure</Link>.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-9384d025de8e4e54">Move construction</Link> creates a new destination from an expiring source; <Strong ns0:cstyle="Bold">move assignment</Strong> replaces an existing destination, which may already own a resource needing release. For a pointer-owning byte block, a move can transfer the allocation pointer and size, then set the source to a documented empty state. <InlineCode ns0:cstyle="InlineCode">std::exchange(source.pointer,nullptr)</InlineCode> returns the old pointer while installing the new source state. That differs from merely copying the pointer and leaving two owners.</Content>
+<Table ns0:table="table" ns0:trows="4" ns0:tcols="4" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">Before/operation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">Destination</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">Source</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">Lifetime consequence</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">move construction</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">new owner takes allocation A</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">becomes empty under this block’s contract</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">source object remains alive</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">move assignment into owner B</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">releases B, takes A</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">becomes empty</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">both outer object lifetimes continue</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">destruction after move</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">releases only its current owned resource</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">empty source safely releases nothing</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">lifetime ends at normal destruction</Content></Cell></Table>
+<Content ns0:pstyle="Content">Inside <InlineCode ns0:cstyle="InlineCode">T(T&amp;&amp; other)</InlineCode>, the named expression <InlineCode ns0:cstyle="InlineCode">other</InlineCode> is an lvalue in ordinary member-initializer/body use. Move class-type members with explicit intent where needed; copying a scalar size is already cheap. <InlineCode ns0:cstyle="InlineCode">std::move</InlineCode> preserves const: an ordinary <InlineCode ns0:cstyle="InlineCode">T(T&amp;&amp;)</InlineCode> cannot bind a const source, so an available <InlineCode ns0:cstyle="InlineCode">T(const T&amp;)</InlineCode> may be selected instead. A cast without a consumer performs no ownership transfer.</Content>
+<Content ns0:pstyle="Content">Self-move, <InlineCode ns0:cstyle="InlineCode">x=std::move(x)</InlineCode>, also needs a documented policy. Our manual block uses an identity guard and preserves its value. Do not demand that every standard-library type preserve its exact old value under self-move; consult its valid-state contract and operation preconditions. A moved-from object is still alive. Standard-library types generally specify valid-but-unspecified states unless they give a stronger guarantee; a user-defined type must implement its own promised invariant. <Strong ns0:cstyle="Bold">Unspecified</Strong> is not uninitialized or undefined: the value is not promised, but permitted operations still have defined requirements. <InlineCode ns0:cstyle="InlineCode">empty()</InlineCode> may be a valid query even though you cannot assume its answer; <InlineCode ns0:cstyle="InlineCode">front()</InlineCode> still requires a nonempty sequence.</Content>
+<Content ns0:pstyle="Content">For our block, the stronger contract is size0/null after a distinct-object move, plus safe destruction, copying of that empty state and assignment of a fresh value. It avoids traversing a nonexistent range when size is zero. For the earlier texture payload, consult member contracts without asserting the entire source vector/string must have a particular printed value.</Content>
+<Content ns0:pstyle="Content">Moving is not necessarily constant-time. An inline <InlineCode ns0:cstyle="InlineCode">std::array&lt;float,N&gt;</InlineCode> still transfers N inline values. Small-string storage may live inside the string object and be copied rather than pointer-stolen. Allocator-aware move assignment may require elementwise work when storage cannot be adopted by the destination allocator. A user-written move can do arbitrary work. Measure bytes, allocations, time and workload—not merely the occurrence of an ampersand.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-failure-guarantees-shape-the-transfer-algorithm">Failure guarantees shape the transfer algorithm</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-cc2d1d5de33e4bfd">noexcept</Link> declares a non-throwing exception contract, not that the function contains no throw-capable instructions. If an exception escapes such a function, termination follows. Mark a move non-throwing only when its actual members/resource policy support that promise.</Content>
+<Content ns0:pstyle="Content">Container growth must balance transfer cost with rollback. A throwing move might mutate the first source element, then fail on a later one; restoring the original sequence may be impossible. If non-mutating copying is available, an implementation can use it to preserve the required guarantee. <InlineCode ns0:cstyle="InlineCode">std::move_if_noexcept(x)</InlineCode> selects an access category: it yields a const-reference path when move construction may throw and copying is possible, otherwise an rvalue-reference path. It does not itself transfer anything. See <Link href="https://eel.is/c++draft/forward">forward/move helpers</Link>.</Content>
+<Content ns0:pstyle="Content">The spelling is therefore a policy bridge from type properties to an operation’s failure guarantee. If copying is impossible, a throwing move remains the available choice and a particular container operation can have weaker exceptional-effect guarantees. Do not teach “vector always gives strong rollback” regardless of type and operation. Neither should a trait-controlled algorithm assume every library implementation must use exactly one named helper internally.</Content>
+<Content ns0:pstyle="Content">Defaulted moves can derive exception properties from their selected member/base operations when left to the language. Forcing <InlineCode ns0:cstyle="InlineCode">noexcept</InlineCode> on a defaulted move without checking its subobjects is not automatically an improvement: a throw can terminate. Member composition often lets the compiler propagate the correct behavior. The inline probe checks the helper’s return type directly rather than inferring a portable vector strategy from a constructor log.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-let-the-compiler-compose-the-operations">Let the compiler compose the operations</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-a576dcda95129049">Special members</Link> are the default constructor, copy/move constructors, copy/move assignment operators, and destructor. Whether the compiler declares one, whether it is deleted, and whether an expression can use it are three different questions.</Content>
+<Table ns0:table="table" ns0:trows="7" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Programmer declaration in an ordinary class</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Consequence to check in C++23</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">no constructor declarations</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">default constructor can be implicitly declared</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">ordinary/default constructor</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">does not alone suppress implicit copy/move operations</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">copy constructor or copy assignment</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">suppresses implicit move generation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">destructor, including first-declaration <InlineCode ns0:cstyle="InlineCode">=default</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">suppresses implicit move generation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">move constructor or move assignment</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">implicitly declared copy operations are defined as deleted unless usable copy operations are supplied explicitly</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">defaulted operation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">may itself be deleted because a selected member/base operation is unusable</Content></Cell></Table>
+<Content ns0:pstyle="Content">This is a practical map, not the complete union/inheritance/constraint rulebook. A reference member can copy-bind, yet generated assignment is deleted. A non-copyable owner member can make the containing object non-copyable. A named constructor being available does not imply all required operations are available. The <Link href="https://eel.is/c++draft/class.copy.ctor">copy/move constructor</Link> and <Link href="https://eel.is/c++draft/class.copy.assign">assignment</Link> rules govern those details.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">std::is_move_constructible_v&lt;T&gt;</InlineCode> asks whether construction from a <InlineCode ns0:cstyle="InlineCode">T&amp;&amp;</InlineCode> expression is valid. It does not ask whether the selected constructor’s parameter is exactly <InlineCode ns0:cstyle="InlineCode">T&amp;&amp;</InlineCode>. A class with a user-declared destructor can have no generated dedicated move constructor but still accept an rvalue through <InlineCode ns0:cstyle="InlineCode">const T&amp;</InlineCode> copying. The trait may be true—and copying may be expensive. Likewise a nothrow trait classifies the valid expression, which could be a non-throwing copy.</Content>
+<Content ns0:pstyle="Content">An explicitly deleted move constructor can remain the best overload and reject an rvalue even when a copy constructor exists. A defaulted move that becomes deleted has specified ignore rules permitting fallback in relevant cases. “Unavailable move always falls back to copying” is therefore too broad. The diagnostic exercise demonstrates the explicitly deleted case.</Content>
+<Content ns0:pstyle="Content">First-declaration defaulting can retain triviality and inferred properties that a hand-written equivalent body loses. A <Strong ns0:cstyle="Bold">trivial</Strong> operation has the specified simple language properties; it is not synonymous with “fast enough in my benchmark.” Trivially copyable, standard-layout, aggregate, and nothrow-movable remain distinct traits. Rule-Zero composition containing vectors does not magically become trivially copyable or serialization-ready.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-from-three-repairs-to-five-decisions-to-zero-boilerplate">From three repairs to five decisions to zero boilerplate</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-c960e9f70bb0d462">The Rule of Three</Link> is a design heuristic: if raw-resource semantics require a custom destructor, copy constructor, or copy assignment, consider all three together. It is not a compiler requirement to support copying; explicitly deleting copying can be correct. The Rule of Five adds move construction and move assignment as coordinated decisions after C++11.</Content>
+<Content ns0:pstyle="Content">The <Strong ns0:cstyle="Bold">Rule of Zero</Strong> moves ownership responsibility into members whose own operations already match the intended semantics, so the containing class usually needs no custom copy/move/destruction operations. It does not mean “never write a constructor”: ordinary validation or default construction can coexist with composed transfer/cleanup. The texture payload’s owning string/vector members and a scalar math record illustrate the approach without requiring a hand-maintained five-function protocol.</Content>
+<Content ns0:pstyle="Content">The raw owner below is educational infrastructure: its five operations expose the ownership invariant, failure transaction and source-reset contract. Prefer a vector-backed byte value for ordinary application code. A low-level unique resource wrapper may still need custom/deleted operations; then application-level records compose that tested owner instead of repeating resource logic.</Content>
+<Content ns0:pstyle="Content"><Link href="#print-redirect-ec104ef12251464c">Relocation</Link> distinguishes transfer plus an ended source lifetime from a move that leaves its source alive until normal later destruction. Container growth often uses move-construction followed by destruction; that pair must not be conflated with a universally legal memcpy of arbitrary nontrivial objects. The attachment discusses proposal-era trivial relocation. Here it is a future/toolchain-dependent research bridge, not a portable C++23 facility or an adopted-language-status claim. Self-references, external registrations and lifetime rules can make a bitwise relocation invalid even when a type’s source code looks small.</Content>
+<Content ns0:pstyle="Content">The design progression is responsibility, not fashion: define the meaning of a copy, define who releases a resource, make failure and self-alias cases safe, supply moves where meaningful, then remove redundant custom code when composition already satisfies those contracts.</Content>
+<Content ns0:pstyle="SubchapterHeader" id="05-engine-i-ch003-trace-one-payload-from-decode-to-cache">Trace one payload from decode to cache</Content>
+<Content ns0:pstyle="Content">Assume the cache has reserved enough capacity for the next insertion; otherwise growth adds old-element transfer and invalidation. Assume TexturePayload retains ordinary composed string/vector semantics.</Content>
+<Table ns0:table="table" ns0:trows="8" ns0:tcols="3" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Stage</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Mechanism</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Which object/resource is owned where?</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">wall=built()</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">optional NRVO or implicit-move fallback</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">caller receives an owning payload value</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">cache.Insert(wall)</InlineCode> begins</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">copy construction of value parameter</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">wall preserved; parameter gets independent vector storage</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">parameter enters <InlineCode ns0:cstyle="InlineCode">push_back(std::move(payload))</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">move construction of new cache element</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">cache element takes member state; parameter remains alive moved-from</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">Insert returns</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">parameter destruction</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">releases whatever members still own, without invalidating the cache’s independent owner</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">cache.Insert(fallback())</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">direct result/parameter initialization, then element move</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">no mandatory intermediate parameter-transfer copy/move</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">cache grows later</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">member/type-dependent transfer to new backing</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">old borrows may be invalidated even if handles persist</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">cache dies</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">reverse destruction of contained ownership</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">CPU allocations released; no implied GPU destruction from a numeric handle</Content></Cell></Table>
+<Content ns0:pstyle="Content">This does not implement a decoder or uploader. It establishes the value-transfer backbone those systems would use. A 4096×4096 RGBA8 pixel image alone contains 67,108,864 bytes, or64 MiB, before mip levels/metadata. Copying that vector and copying a64-bit handle are radically different operations despite both using <InlineCode ns0:cstyle="InlineCode">=</InlineCode> syntax.</Content>
+<Content ns0:pstyle="Content">For teaching, ask the listener at every arrow: is a new object created, is an existing value assigned, is an access path merely bound, does source lifetime continue, what allocation is owned, and what happens if the operation fails? Those questions connect the entire build/object/borrow/value story.</Content>
+
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#05-engine-i-ch002">Previous chapter</Link> · <Link href="#05-engine-i-ch004">Next chapter</Link></Content>
+</Chapter>

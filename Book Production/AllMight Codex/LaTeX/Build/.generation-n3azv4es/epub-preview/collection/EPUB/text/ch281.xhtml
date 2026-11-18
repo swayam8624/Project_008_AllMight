@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch281.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-4815cd87ab8b-probability-density-and-change-of-measure" class="level2">
+<h2>Probability density and change of measure</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> Phase 10</p>
+<section id="appendix-4815cd87ab8b-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A probability density describes probability per unit of a chosen measure, not probability at a point. A density <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>A</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo stretchy="false">)</mo>
+</math> over area differs from a density <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>ω</mi>
+  <mo stretchy="false">)</mo>
+</math> over solid angle. When a mapping changes variables, its Jacobian converts density so total probability remains one: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>B</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>A</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>d</mi>
+  <mi>a</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>d</mi>
+  <mi>b</mi>
+  <mo stretchy="false">|</mo>
+</math> in one dimension, with the determinant of the inverse Jacobian in multiple dimensions. In rendering, choosing a point on a light and using its direction from a shading point requires an area-to-solid-angle conversion involving distance squared and the light’s projected cosine. Estimator formulas are only correct when the sampling density and integral use the same measure. This concept prevents missing factors in importance sampling, environment-map sampling, and camera-lens integration.</p>
+<section id="appendix-4815cd87ab8b-phase-910-development" class="level4">
+<h4>Phase 9–10 development</h4>
+<p>A density is meaningful relative to a measure and its support; its value at a point is not itself an event probability. For a continuous scalar variable, an interval probability is the integral of the density over that interval. Under a differentiable one-to-one change of variables, the transformed density includes the absolute determinant of the inverse Jacobian. Values outside the transformed support have zero probability. A mixed law can contain both point masses and a continuous part, so one PDF alone cannot describe every distribution. When a renderer changes a surface-area density into a solid-angle density, the geometric Jacobian must preserve the same probability.</p>
+</section>
+</section>
+<section id="appendix-4815cd87ab8b-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch341.xhtml#appendix-215c2570199b-light-spectra-and-radiometry" class="wikilink">Light spectra and radiometry (Light Transport and Image Synthesis, Part 1, Reference notes: Light spectra and radiometry)</a></li>
+<li><a href="ch477.xhtml#appendix-4d0203f7944f-random-variables-and-probability-laws" class="wikilink">Random variables and probability laws (Vision, XR, and Playable Worlds, Part 1, Reference notes: Random variables and probability laws)</a></li>
+</ul>
+</section>
+<section id="appendix-4815cd87ab8b-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><span>Worlds, Images and Inference</span></p></li>
+<li><p><a href="ch278.xhtml#appendix-031e02bf28af-monte-carlo-rendering-estimators-and-variance" class="wikilink">Monte Carlo rendering estimators and variance</a></p></li>
+<li><p><a href="ch358.xhtml#appendix-a9d5dfdd164a-attention-and-visual-transformers" class="wikilink">Attention and visual transformers (Light Transport and Image Synthesis, Part 1, Reference notes: Attention and visual transformers)</a></p></li>
+<li><p><a href="ch353.xhtml#appendix-772f1fd96148-contrastive-vision-and-image-language-alignment" class="wikilink">Contrastive vision and image-language alignment (Light Transport and Image Synthesis, Part 1, Reference notes: Contrastive vision and image-language alignment)</a></p></li>
+<li><p><a href="ch343.xhtml#appendix-2c568f05ee34-latent-variable-models-and-generative-flows" class="wikilink">Latent-variable models and generative flows (Light Transport and Image Synthesis, Part 1, Reference notes: Latent-variable models and generative flows)</a></p></li>
+<li><p><a href="ch360.xhtml#appendix-b0c42da325f1-perception-feedback-and-robot-learning" class="wikilink">Perception feedback and robot learning (Light Transport and Image Synthesis, Part 1, Reference notes: Perception feedback and robot learning)</a></p></li>
+<li><p><a href="ch362.xhtml#appendix-c5b332e400e7-radiance-fields-and-gaussian-splatting" class="wikilink">Radiance fields and Gaussian splatting (Light Transport and Image Synthesis, Part 1, Reference notes: Radiance fields and Gaussian splatting)</a></p></li>
+<li><p><a href="ch518.xhtml#appendix-d8a7ddb675eb-jacobians-pushforwards-and-pullbacks" class="wikilink">Jacobians, pushforwards, and pullbacks (Vision, XR, and Playable Worlds, Part 1, Reference notes: Jacobians, pushforwards, and pullbacks)</a></p></li>
+<li><p><a href="ch265.xhtml#appendix-8d863ed954d0-inverse-rejection-and-importance-sampling" class="wikilink">Inverse, rejection, and importance sampling (Mathematics for Visual Computing, Part 1, Reference notes: Inverse, rejection, and importance sampling)</a></p></li>
+<li><p><a href="ch452.xhtml#appendix-12bbe185dbe5-multivariate-gaussian-distributions-and-whitening" class="wikilink">Multivariate Gaussian distributions and whitening (Vision, XR, and Playable Worlds, Part 1, Reference notes: Multivariate Gaussian distributions and whitening)</a></p></li>
+<li><p><a href="ch459.xhtml#appendix-1c5e85693a06-latin-hypercube-sampling" class="wikilink">Latin-hypercube sampling (Vision, XR, and Playable Worlds, Part 1, Reference notes: Latin-hypercube sampling)</a></p></li>
+<li><p><a href="ch516.xhtml#appendix-d580b422240f-stable-probability-normalization-and-log-sum-exp" class="wikilink">Stable probability normalization and log-sum-exp (Vision, XR, and Playable Worlds, Part 1, Reference notes: Stable probability normalization and log-sum-exp)</a> ## Full teaching explanation</p></li>
+</ul>
+<p><a href="ch310.xhtml#id_03-visual-computing-i-ch004-light-measurement-and-radiometry" class="wikilink">Light measurement and radiometry (Geometry, Cameras, and Image Formation, Part 1, Ch. 11)</a> · <a href="ch277.xhtml#id_03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation" class="wikilink">Numerical integration and Monte Carlo estimation</a> · <a href="ch305.xhtml#id_03-visual-computing-i-ch003-lens-optics-focus-and-image-formation" class="wikilink">Lens optics, focus, and image formation (Geometry, Cameras, and Image Formation, Part 1, Ch. 10)</a> - <a href="ch267.xhtml#id_02-foundations-ii-ch023-random-quantities-and-their-probability-laws" class="wikilink">Phase 10 teaching section (Mathematics for Visual Computing, Part 1, Ch. 7)</a> - <a href="ch273.xhtml#id_02-foundations-ii-ch029-transformations-turn-simple-inputs-into-useful-samples" class="wikilink">Phase 10 teaching section</a> - <a href="ch094.xhtml#appendix-cb5af353ef77-probability-and-uncertainty-visual-recall" class="wikilink">Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)</a> · Phase 10 visual recall</p>
+</section>
+</section>
+</body>
+</html>

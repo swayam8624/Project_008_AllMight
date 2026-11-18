@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch570.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-fdc7879e8bf2-quantization-and-compressed-weights" class="level2">
+<h2>Quantization and compressed weights</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C001 · <strong>Latest development:</strong> C006</p>
+<section id="appendix-fdc7879e8bf2-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Low-precision values and packed model weights reuse field-width, mask, shift, and bandwidth trade-offs.</p>
+<p>Quantization maps a larger numeric domain to a smaller discrete set, usually with information loss. Packing stores those discrete codes compactly; dequantization reconstructs approximations. Bit packing alone is lossless for valid codes, whereas quantization changes represented precision.</p>
+<p>M006 develops affine scales and zero points, local group calibration, offset-coded INT4, one-bit row centroids, metadata overhead and error metrics. Packing preserves discrete codes; quantization deliberately loses information. See the worked five-value group in the continuous story.</p>
+</section>
+<section id="appendix-fdc7879e8bf2-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch020.xhtml#appendix-1f9963e1a5d1-bit-packing" class="wikilink">Bit packing (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Bit packing)</a> — Packing places several constrained values into a carrier.</li>
+<li><a href="ch029.xhtml#appendix-2ed044358b82-arithmetic-policies" class="wikilink">Arithmetic policies (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Arithmetic policies)</a> — A policy states the intended response to an unrepresentable answer: wrap modulo a base, report checked failure, widen storage, clamp to an endpoint, or grow arbitrary precision.</li>
+</ul>
+</section>
+<section id="appendix-fdc7879e8bf2-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch044.xhtml#appendix-4ccd7a775813-one-bit-centroid-quantization" class="wikilink">One-bit centroid quantization (Bits, Programs, and Reliable Systems, Part 1, Reference notes: One-bit centroid quantization)</a> — uses this mechanism to define its representation, error or validation contract.</li>
+<li><a href="ch050.xhtml#appendix-537171d69d27-quantization-error-metrics" class="wikilink">Quantization error metrics (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Quantization error metrics)</a> — uses this mechanism to define its representation, error or validation contract.</li>
+</ul>
+<p>Connect later chunks here when they use this concept.</p>
+</section>
+<section id="appendix-fdc7879e8bf2-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain quantization and compressed weights without the label, work the example above, then state the assumption whose removal would change the result.</p>
+<p><strong>Pending:</strong> task-level accuracy and throughput experiments, alternative calibration objectives and target kernels; these were not measured in the teaching merge.</p>
+</section>
+<section id="appendix-fdc7879e8bf2-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-choosing-what-information-to-keep" class="wikilink">Narrative development (Bits, Programs, and Reliable Systems, Part 1, Ch. 1)</a></p>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-from-a-signal-to-an-interpretation" class="wikilink">C001 teaching chapter (Bits, Programs, and Reliable Systems, Part 1, Ch. 1)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-foundations" class="wikilink">Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

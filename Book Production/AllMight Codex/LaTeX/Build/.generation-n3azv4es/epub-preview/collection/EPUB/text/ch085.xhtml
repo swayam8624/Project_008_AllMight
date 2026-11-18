@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch085.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-b2402c453dac-unorm-and-snorm" class="level2">
+<h2>UNORM and SNORM</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C006 · <strong>Latest development:</strong> C006</p>
+<section id="appendix-b2402c453dac-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>UNORM decodes q/(2^n-1); UNORM8 code128 gives128/255. SNORM commonly clamps q/(2^(n-1)-1) at -1, so -128 and -127 both map to -1 for eight bits.</p>
+</section>
+<section id="appendix-b2402c453dac-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch101.xhtml#appendix-d5da3eaabaef-affine-quantization-and-zero-point" class="wikilink">Affine quantization and zero point</a> — supplies the representation or validity rule used above.</li>
+</ul>
+</section>
+<section id="appendix-b2402c453dac-used-by" class="level3">
+<h3>Used by</h3>
+<p>Connect later dependent concepts here when their explanations use this mechanism.</p>
+</section>
+<section id="appendix-b2402c453dac-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the example and identify the condition that would invalidate it.</p>
+<p><strong>Pending:</strong> Hardware/API conversion and supported format use must be verified per target; sRGB is separate.</p>
+</section>
+<section id="appendix-b2402c453dac-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-choosing-what-information-to-keep" class="wikilink">Continuous teaching story</a> · <span>Source coverage ledger</span> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-b2402c453dac-reconstruction-depth" class="level3">
+<h3>Reconstruction depth</h3>
+<p>An <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>-bit <strong>UNORM</strong> integer <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <msup>
+    <mn>2</mn>
+    <mi>n</mi>
+  </msup>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math> represents a real value approximately in <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math> through</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mi>q</mi>
+    <mrow>
+      <msup>
+        <mn>2</mn>
+        <mi>n</mi>
+      </msup>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Quantization reverses that map with a declared rounding rule and saturation. The endpoint denominator matters: dividing by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mi>n</mi>
+  </msup>
+</math> would make the largest code fail to represent exactly <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+</math>. This is why a normalized color channel can round-trip its endpoints even though most interior values incur quantization error.</p>
+<p><strong>SNORM</strong> maps a signed integer code to approximately <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">[</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>. APIs differ in how the most-negative integer is treated, so the format specification—not intuition—owns the exact decode rule. This matters for normals and tangent vectors: decoding produces components, not a guaranteed unit vector. A sampled normal map usually requires later reconstruction or normalization and a coordinate-space convention.</p>
+<p>A useful test suite checks endpoint codes, monotonicity, round-trip error bounds, saturation outside the nominal domain, and the API’s exact most-negative SNORM behavior. Treating UNORM/SNORM as “small floats” hides where nonlinear color encoding, signed-vector normalization, and integer filtering contracts actually enter.</p>
+</section>
+</section>
+</body>
+</html>

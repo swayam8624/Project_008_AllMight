@@ -1,0 +1,4774 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch333.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_03-visual-computing-i-ch019-textures-as-sampled-surface-signals" class="level2">
+<h2>Textures as Sampled Surface Signals</h2>
+<p><a href="ch316.xhtml#id_04-Light-Transport-and-Image-Synthesis" class="wikilink">Reading map</a> · <a href="ch327.xhtml#id_03-visual-computing-i-ch015-rasterization-foundations-and-renderer-evidence" class="wikilink">Previous chapter</a> · <a href="ch334.xhtml#id_04-visual-computing-ii-ch035-a-complete-renderer-as-an-executable-forward-model" class="wikilink">Next chapter</a></p>
+<p>A texture stores samples of a signal over a surface, and its footprint changes with projection. Filtering must account for that changing footprint to avoid unstable detail and aliasing.</p>
+<p><strong>By the end:</strong> Connect texture sampling, surface footprints and filtering choices.</p>
+<p><strong>Recall question:</strong> Why does a minified texture need a different footprint than a magnified one?</p>
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 46448–49181; source-span SHA256 7652991984c323a7432aee7bf45394b9029c86219ca693a6cea9960a1be03bec. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_03-visual-computing-i-ch019-textures-and-surface-detail" class="level3">
+<h3>Textures and surface detail</h3>
+<section id="id_03-visual-computing-i-ch019-match-a-texture-footprint-to-the-surface-signal" class="level4">
+<h4>Match a texture footprint to the surface signal</h4>
+<p>Implementation-specific passages retain observations from the supplied Kairo/Maveb snapshot. They are not a fresh audit of those repositories. Source exercises and illustrative code are teaching material; only explicitly recorded checks have been executed here.</p>
+<p><strong>A texture is a sampled signal</strong></p>
+<p>Suppose there exists an ideal continuous function:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>A digital texture does not store that continuous function.</p>
+<p>It stores discrete samples:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>j</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>These samples are <strong>texels</strong>.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>texture sampling is a signal-reconstruction problem</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>not merely “look up a color in an image.”</p>
+<p>This viewpoint explains:</p>
+<ul>
+<li>nearest filtering,</li>
+<li>bilinear filtering,</li>
+<li>mipmaps,</li>
+<li>anisotropy,</li>
+<li>aliasing.</li>
+</ul>
+<hr />
+<p><strong>Texel versus pixel</strong></p>
+<p>A <strong>texel</strong> belongs to a texture.</p>
+<p>A <strong>pixel</strong> belongs to an output image.</p>
+<p>They are not necessarily one-to-one.</p>
+<p>One texel may cover hundreds of pixels during magnification.</p>
+<p>Thousands of texels may map into a single pixel during minification.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>texel density</mtext>
+          <mo>≠</mo>
+          <mtext>screen pixel density</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and texture filtering exists because we must map between those sampling grids.</p>
+<hr />
+<p><strong>UV coordinates</strong></p>
+<p>A texture coordinate commonly uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <msup>
+    <mo stretchy="false">]</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>For width <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>W</mi>
+</math>, height <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>H</mi>
+</math>, a simple conceptual conversion is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mi>u</mi>
+  <mi>W</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>y</mi>
+  <mo>=</mo>
+  <mi>v</mi>
+  <mi>H</mi>
+  <mo>.</mo>
+</math>
+<p>But texels represent cells with centers, so filtering implementations usually account for the half-texel relationship.</p>
+<p>A useful conceptual coordinate for bilinear filtering is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mi>u</mi>
+  <mi>W</mi>
+  <mo>−</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>2</mn>
+  </mfrac>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo>=</mo>
+  <mi>v</mi>
+  <mi>H</mi>
+  <mo>−</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>2</mn>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then integer texel centers align naturally with the reconstructed samples.</p>
+<p>Actual Vulkan normalized-coordinate sampling has precise rules defined in the sampling specification, including coordinate conversion, image dimensions, wrapping and filtering. <a href="https://docs.vulkan.org/spec/latest/chapters/textures.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<hr />
+<p><strong>Wrapping modes</strong></p>
+<p>What happens if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mo>=</mo>
+  <mn>1.25</mn>
+  <mo>?</mo>
+</math>
+</section>
+<section id="id_03-visual-computing-i-ch019-repeat" class="level4">
+<h4>Repeat</h4>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>u</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>u</mi>
+  <mo>−</mo>
+  <mo fence="false" stretchy="false">⌊</mo>
+  <mi>u</mi>
+  <mo fence="false" stretchy="false">⌋</mo>
+  <mo>.</mo>
+</math>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1.25</mn>
+  <mo stretchy="false">→</mo>
+  <mn>0.25</mn>
+  <mo>.</mo>
+</math>
+<hr />
+</section>
+<section id="id_03-visual-computing-i-ch019-clamp-to-edge" class="level4">
+<h4>Clamp-to-edge</h4>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>u</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>clamp</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1.25</mn>
+  <mo stretchy="false">→</mo>
+  <mn>1.</mn>
+</math>
+<hr />
+</section>
+<section id="id_03-visual-computing-i-ch019-mirrored-repeat" class="level4">
+<h4>Mirrored repeat</h4>
+<p>Intervals alternate direction:</p>
+<pre class="text"><code>0→1
+1→0
+0→1
+...</code></pre>
+<p>This avoids the discontinuity that ordinary repetition produces at every tile boundary for some textures.</p>
+<p>Your current <code>TextureSampler</code> supports:</p>
+<pre class="text"><code>Repeat
+MirroredRepeat
+ClampToEdge</code></pre>
+<p>for U/V.</p>
+<hr />
+<p><strong>Nearest sampling</strong></p>
+<p>Nearest chooses the closest stored sample.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mo>=</mo>
+  <mi>round</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>j</mi>
+  <mo>=</mo>
+  <mi>round</mi>
+  <mo stretchy="false">(</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>j</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Advantages:</p>
+<ul>
+<li>cheap,</li>
+<li>preserves hard pixel-art edges,</li>
+<li>deterministic sample choice.</li>
+</ul>
+<p>Disadvantages:</p>
+<ul>
+<li>blocky magnification,</li>
+<li>severe minification aliasing.</li>
+</ul>
+<hr />
+<p><strong>Bilinear filtering</strong></p>
+<p>Let texture coordinate map to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mi>i</mi>
+  <mo>+</mo>
+  <mi>α</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo>=</mo>
+  <mi>j</mi>
+  <mo>+</mo>
+  <mi>β</mi>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>≤</mo>
+  <mi>α</mi>
+  <mo>,</mo>
+  <mi>β</mi>
+  <mo>&lt;</mo>
+  <mn>1.</mn>
+</math>
+<p>Four texels contribute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>00</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>j</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>10</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mi>j</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>01</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>j</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>11</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mi>j</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Interpolate horizontally:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>α</mi>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>00</mn>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <mi>α</mi>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>10</mn>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>α</mi>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>01</mn>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <mi>α</mi>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>11</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then vertically:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>C</mi>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mn>1</mn>
+          <mo>−</mo>
+          <mi>β</mi>
+          <mo stretchy="false">)</mo>
+          <mi>A</mi>
+          <mo>+</mo>
+          <mi>β</mi>
+          <mi>B</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Expanded:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>α</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>β</mi>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>00</mn>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <mi>α</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>β</mi>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>10</mn>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>α</mi>
+  <mo stretchy="false">)</mo>
+  <mi>β</mi>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>01</mn>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <mi>α</mi>
+  <mi>β</mi>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>11</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>This is a separable triangle filter.</p>
+<hr />
+<p><strong>Bilinear does not solve minification</strong></p>
+<p>Suppose a distant surface maps one screen pixel onto a:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64</mn>
+  <mo>×</mo>
+  <mn>64</mn>
+</math>
+<p>texel footprint.</p>
+<p>That pixel conceptually represents information from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4096</mn>
+</math>
+<p>source texels.</p>
+<p>Bilinear filtering samples only four nearby texels.</p>
+<p>Four samples cannot represent the average of 4096 high-frequency texels.</p>
+<p>This violates sampling theory and causes:</p>
+<ul>
+<li>moiré,</li>
+<li>shimmering,</li>
+<li>temporal crawling,</li>
+<li>unstable fine patterns.</li>
+</ul>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>bilinear filtering is reconstruction, not sufficient prefiltering</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for heavy minification.</p>
+<hr />
+<p><strong>Nyquist intuition</strong></p>
+<p>If the underlying texture contains frequency <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>, the screen sampling rate must be at least:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mi>f</mi>
+</math>
+<p>to represent it without aliasing.</p>
+<p>When the texture footprint shrinks on screen, high-frequency components exceed the screen’s Nyquist limit.</p>
+<p>They must be removed <strong>before sampling</strong>.</p>
+<p>This is exactly what mipmaps provide.</p>
+<hr />
+<p><strong>Mipmaps</strong></p>
+<p>Mip level 0:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mo>×</mo>
+  <mi>H</mi>
+  <mo>.</mo>
+</math>
+<p>Level 1:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mi>W</mi>
+    <mn>2</mn>
+  </mfrac>
+  <mo>×</mo>
+  <mfrac>
+    <mi>H</mi>
+    <mn>2</mn>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Level 2:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mi>W</mi>
+    <mn>4</mn>
+  </mfrac>
+  <mo>×</mo>
+  <mfrac>
+    <mi>H</mi>
+    <mn>4</mn>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Eventually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>×</mo>
+  <mn>1.</mn>
+</math>
+<p>Example:</p>
+<pre class="text"><code>1024×1024
+512×512
+256×256
+128×128
+64×64
+32×32
+16×16
+8×8
+4×4
+2×2
+1×1</code></pre>
+<p>Each level is a prefiltered representation suitable for a larger texture footprint.</p>
+<hr />
+<p><strong>Total mipmap memory</strong></p>
+<p>For an uncompressed square texture:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>+</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>4</mn>
+  </mfrac>
+  <mo>+</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>16</mn>
+  </mfrac>
+  <mo>+</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>64</mn>
+  </mfrac>
+  <mo>+</mo>
+  <mo>⋯</mo>
+</math>
+<p>is a geometric series.</p>
+<p>Its sum tends toward:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <mn>1</mn>
+      <mo>−</mo>
+      <mfrac>
+        <mn>1</mn>
+        <mn>4</mn>
+      </mfrac>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mfrac>
+    <mn>4</mn>
+    <mn>3</mn>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Therefore a complete mip chain costs only about:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mn>33</mn>
+          <mi mathvariant="normal">%</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>more storage than the base image.</p>
+<p>This is extraordinarily cheap relative to the quality and cache benefits.</p>
+<hr />
+<p><strong>Correct mip generation</strong></p>
+<p>A simplistic color mip takes a 2×2 block:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>00</mn>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>10</mn>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>01</mn>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>11</mn>
+    </mrow>
+  </msub>
+</math>
+<p>and averages:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>C</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <msub>
+        <mi>C</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mn>00</mn>
+        </mrow>
+      </msub>
+      <mo>+</mo>
+      <msub>
+        <mi>C</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mn>10</mn>
+        </mrow>
+      </msub>
+      <mo>+</mo>
+      <msub>
+        <mi>C</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mn>01</mn>
+        </mrow>
+      </msub>
+      <mo>+</mo>
+      <msub>
+        <mi>C</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mn>11</mn>
+        </mrow>
+      </msub>
+    </mrow>
+    <mn>4</mn>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>But that average must happen in the <strong>correct domain</strong>.</p>
+<p>For color:</p>
+<pre class="text"><code>sRGB bytes
+  ↓ decode
+linear RGB
+  ↓ average/filter
+linear RGB mip
+  ↓ encode if stored in sRGB format
+sRGB bytes</code></pre>
+<p>Your KairoAssets implementation does exactly that.</p>
+<hr />
+<p><strong>Normal maps cannot be mipmapped like ordinary RGB</strong></p>
+<p>Suppose two normals are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Their simple average is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Its length is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msqrt>
+    <mn>0.5</mn>
+  </msqrt>
+  <mo>≈</mo>
+  <mn>0.707</mn>
+  <mo>.</mo>
+</math>
+<p>It is no longer a unit normal.</p>
+<p>A basic normal-map mip generator therefore:</p>
+<ol type="1">
+<li>decodes RGB to vectors,</li>
+<li>averages vectors,</li>
+<li>renormalizes,</li>
+<li>re-encodes.</li>
+</ol>
+<p>Your KairoAssets mip builder explicitly does this for normal maps.</p>
+<p>That is an excellent example of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>texture semantic determines the correct filtering operation</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Mipmap level selection</strong></p>
+<p>Suppose UV changes by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mi>∂</mi>
+      <mi>u</mi>
+    </mrow>
+    <mrow>
+      <mi>∂</mi>
+      <mi>x</mi>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mfrac>
+    <mrow>
+      <mi>∂</mi>
+      <mi>v</mi>
+    </mrow>
+    <mrow>
+      <mi>∂</mi>
+      <mi>x</mi>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mfrac>
+    <mrow>
+      <mi>∂</mi>
+      <mi>u</mi>
+    </mrow>
+    <mrow>
+      <mi>∂</mi>
+      <mi>y</mi>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mfrac>
+    <mrow>
+      <mi>∂</mi>
+      <mi>v</mi>
+    </mrow>
+    <mrow>
+      <mi>∂</mi>
+      <mi>y</mi>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Convert normalized UV derivatives into base-level texel units:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">d</mi>
+    </mrow>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <mi>W</mi>
+    <mfrac>
+      <mrow>
+        <mi>∂</mi>
+        <mi>u</mi>
+      </mrow>
+      <mrow>
+        <mi>∂</mi>
+        <mi>x</mi>
+      </mrow>
+    </mfrac>
+    <mo>,</mo>
+    <mi>H</mi>
+    <mfrac>
+      <mrow>
+        <mi>∂</mi>
+        <mi>v</mi>
+      </mrow>
+      <mrow>
+        <mi>∂</mi>
+        <mi>x</mi>
+      </mrow>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">d</mi>
+    </mrow>
+    <mi>y</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <mi>W</mi>
+    <mfrac>
+      <mrow>
+        <mi>∂</mi>
+        <mi>u</mi>
+      </mrow>
+      <mrow>
+        <mi>∂</mi>
+        <mi>y</mi>
+      </mrow>
+    </mfrac>
+    <mo>,</mo>
+    <mi>H</mi>
+    <mfrac>
+      <mrow>
+        <mi>∂</mi>
+        <mi>v</mi>
+      </mrow>
+      <mrow>
+        <mi>∂</mi>
+        <mi>y</mi>
+      </mrow>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>A common isotropic footprint estimate is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ρ</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">d</mi>
+    </mrow>
+    <mi>x</mi>
+  </msub>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo>,</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">d</mi>
+    </mrow>
+    <mi>y</mi>
+  </msub>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>λ</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>log</mi>
+            <mn>2</mn>
+          </msub>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <mi>ρ</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>is the desired mip LOD.</p>
+<p>Examples:</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ρ</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>λ</mi>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Use base level.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ρ</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>λ</mi>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ρ</mi>
+  <mo>=</mo>
+  <mn>8</mn>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>λ</mi>
+  <mo>=</mo>
+  <mn>3.</mn>
+</math>
+<p>Vulkan similarly derives implicit LOD from coordinate derivatives, with the exact scale-factor and LOD procedure specified by the API. <a href="https://docs.vulkan.org/spec/latest/chapters/textures.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<hr />
+<p><strong>Why logarithm appears</strong></p>
+<p>Every mip level halves resolution.</p>
+<p>A scale factor of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+</math>
+<p>means one level down.</p>
+<p>A scale of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mo>=</mo>
+  <msup>
+    <mn>2</mn>
+    <mn>2</mn>
+  </msup>
+</math>
+<p>means two levels down.</p>
+<p>A scale of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mo>=</mo>
+  <msup>
+    <mn>2</mn>
+    <mn>3</mn>
+  </msup>
+</math>
+<p>means three levels down.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>λ</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>log</mi>
+    <mn>2</mn>
+  </msub>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>ρ</mi>
+  <mo>.</mo>
+</math>
+<p>The logarithm is not an arbitrary graphics convention.</p>
+<p>It follows directly from the geometric mip pyramid.</p>
+<hr />
+<p><strong>Trilinear filtering</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>λ</mi>
+  <mo>=</mo>
+  <mn>3.25</mn>
+  <mo>.</mo>
+</math>
+<p>Bilinear sample level 3:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mn>3</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Bilinear sample level 4:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mn>4</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then interpolate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>C</mi>
+          <mo>=</mo>
+          <mn>0.75</mn>
+          <msub>
+            <mi>C</mi>
+            <mn>3</mn>
+          </msub>
+          <mo>+</mo>
+          <mn>0.25</mn>
+          <msub>
+            <mi>C</mi>
+            <mn>4</mn>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is trilinear filtering:</p>
+<ul>
+<li>bilinear in <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+</math> at first mip,</li>
+<li>bilinear in <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+</math> at second mip,</li>
+<li>linear between mip levels.</li>
+</ul>
+<p>Vulkan’s <code>VK_SAMPLER_MIPMAP_MODE_LINEAR</code> similarly selects neighboring mip levels and interpolates between them. <a href="https://docs.vulkan.org/tutorial/latest/09_Generating_Mipmaps.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<hr />
+<p><strong>Kairo’s current sampler</strong></p>
+<p>Your current Vulkan sampler uses:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>magFilter  <span class="op">=</span> VK_FILTER_LINEAR<span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>minFilter  <span class="op">=</span> VK_FILTER_LINEAR<span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>mipmapMode <span class="op">=</span> VK_SAMPLER_MIPMAP_MODE_LINEAR<span class="op">;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>minLod     <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>maxLod     <span class="op">=</span> mipLevels <span class="op">-</span> <span class="dv">1</span><span class="op">;</span></span></code></pre></div>
+<p>Therefore Kairo already has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>bilinear + trilinear mip filtering</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for ordinary material textures.</p>
+<hr />
+<p><strong>Derivatives again</strong></p>
+<p>Last pass we used:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="bu">dFdx</span><span class="op">(</span>inTexCoord<span class="op">)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="bu">dFdy</span><span class="op">(</span>inTexCoord<span class="op">)</span></span></code></pre></div>
+<p>to build a tangent basis.</p>
+<p>The texture hardware also needs essentially the same information.</p>
+<p>A shader expression:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="bu">texture</span><span class="op">(</span>baseColorMap<span class="op">,</span> inTexCoord<span class="op">)</span></span></code></pre></div>
+<p>normally performs <strong>implicit LOD</strong> lookup in the fragment stage.</p>
+<p>The sampler derives how rapidly the UV changes across neighboring fragments and selects an appropriate mip level. Vulkan explicitly states that implicit-LOD image instructions calculate derivatives from neighboring fragment coordinates and use those derivatives for LOD selection. <a href="https://docs.vulkan.org/spec/latest/chapters/textures.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>fragment quads</mtext>
+          <mo stretchy="false">→</mo>
+          <mi>U</mi>
+          <mi>V</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>i</mi>
+          <mi>v</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>v</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mo stretchy="false">→</mo>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>x</mi>
+          <mi>t</mi>
+          <mi>u</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>f</mi>
+          <mi>o</mi>
+          <mi>o</mi>
+          <mi>t</mi>
+          <mi>p</mi>
+          <mi>r</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mo stretchy="false">→</mo>
+          <mi>L</mi>
+          <mi>O</mi>
+          <mi>D</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>is an actual hardware/dataflow connection.</p>
+<hr />
+<p><strong>Texture footprint is not generally square</strong></p>
+<p>Consider a floor stretching into the distance.</p>
+<p>Near the camera, one pixel might cover:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mo>×</mo>
+  <mn>2</mn>
+</math>
+<p>texels.</p>
+<p>Farther away, due to foreshortening, one screen pixel might cover an elongated region:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mo>×</mo>
+  <mn>64</mn>
+</math>
+<p>texels.</p>
+<p>An isotropic mip level sees essentially the largest dimension:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64</mn>
+  <mo>,</mo>
+</math>
+<p>and picks a low-resolution mip suitable for that scale.</p>
+<p>But along the short direction, that mip is far too blurry.</p>
+<p>This is why trilinear filtering causes distant ground textures to lose detail.</p>
+<hr />
+<p><strong>Anisotropic filtering</strong></p>
+<p>Anisotropic filtering recognizes that the footprint can be elongated.</p>
+<p>Instead of approximating it as a square/circle, think of an ellipse.</p>
+<p>Let major and minor footprint lengths be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>b</mi>
+  <mo>.</mo>
+</math>
+<p>Anisotropy ratio:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>A</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mi>a</mi>
+            <mi>b</mi>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>
+<p>the footprint is isotropic.</p>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mn>16</mn>
+</math>
+<p>it is highly elongated.</p>
+<p>Anisotropic filtering samples more intelligently along the long direction while retaining higher resolution across the short direction.</p>
+<p>The exact algorithm is implementation dependent in Vulkan, controlled by sampler anisotropy state and hardware limits. <a href="https://docs.vulkan.org/spec/latest/chapters/textures.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<hr />
+<p><strong>Kairo currently has anisotropy effectively disabled</strong></p>
+<p>Your sampler contains:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>create<span class="op">.</span>maxAnisotropy <span class="op">=</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">;</span></span></code></pre></div>
+<p>but does not enable:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>create<span class="op">.</span>anisotropyEnable <span class="op">=</span> VK_TRUE<span class="op">;</span></span></code></pre></div>
+<p>The zero-initialized structure therefore has anisotropy disabled.</p>
+<p>So today:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Kairo = trilinear isotropic filtering</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>not anisotropic filtering.</p>
+<p>A production change would need to:</p>
+<ul>
+<li>query sampler-anisotropy feature support,</li>
+<li>enable it,</li>
+<li>clamp requested anisotropy to device limits.</li>
+</ul>
+<hr />
+<p><strong>CPU sampler skeleton</strong></p>
+<p>A simplified software equivalent clarifies the entire hierarchy:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ImageLevel</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> width<span class="op">;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> height<span class="op">;</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>Vec4<span class="op">&gt;</span> texels<span class="op">;</span> <span class="co">// Already linearized for this example.</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Texture2D</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>ImageLevel<span class="op">&gt;</span> mipLevels<span class="op">;</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> Repeat<span class="op">(</span><span class="dt">float</span> x<span class="op">)</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x <span class="op">-</span> <span class="bu">std::</span>floor<span class="op">(</span>x<span class="op">);</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> Vec4<span class="op">&amp;</span> FetchWrapped<span class="op">(</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> ImageLevel<span class="op">&amp;</span> image<span class="op">,</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> x<span class="op">,</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> y<span class="op">)</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Repeat addressing.</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>    x <span class="op">%=</span> image<span class="op">.</span>width<span class="op">;</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    y <span class="op">%=</span> image<span class="op">.</span>height<span class="op">;</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>x <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> x <span class="op">+=</span> image<span class="op">.</span>width<span class="op">;</span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>y <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> y <span class="op">+=</span> image<span class="op">.</span>height<span class="op">;</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> image<span class="op">.</span>texels<span class="op">[</span></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>        <span class="kw">static_cast</span><span class="op">&lt;</span><span class="bu">std::</span>size_t<span class="op">&gt;(</span>y <span class="op">*</span> image<span class="op">.</span>width <span class="op">+</span> x<span class="op">)];</span></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>Vec4 SampleBilinear<span class="op">(</span></span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> ImageLevel<span class="op">&amp;</span> image<span class="op">,</span></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>    Vec2 uv<span class="op">)</span></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Normalized repeating UV coordinates.</span></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>    uv<span class="op">.</span>x <span class="op">=</span> Repeat<span class="op">(</span>uv<span class="op">.</span>x<span class="op">);</span></span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>    uv<span class="op">.</span>y <span class="op">=</span> Repeat<span class="op">(</span>uv<span class="op">.</span>y<span class="op">);</span></span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Place integer texel coordinates at texel centers.</span></span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> x <span class="op">=</span></span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>        uv<span class="op">.</span>x <span class="op">*</span> <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">float</span><span class="op">&gt;(</span>image<span class="op">.</span>width<span class="op">)</span> <span class="op">-</span> <span class="fl">0.5</span><span class="bu">f</span><span class="op">;</span></span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> y <span class="op">=</span></span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>        uv<span class="op">.</span>y <span class="op">*</span> <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">float</span><span class="op">&gt;(</span>image<span class="op">.</span>height<span class="op">)</span> <span class="op">-</span> <span class="fl">0.5</span><span class="bu">f</span><span class="op">;</span></span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">int</span> x0 <span class="op">=</span></span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a>        <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;(</span><span class="bu">std::</span>floor<span class="op">(</span>x<span class="op">));</span></span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">int</span> y0 <span class="op">=</span></span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a>        <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;(</span><span class="bu">std::</span>floor<span class="op">(</span>y<span class="op">));</span></span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> tx <span class="op">=</span> x <span class="op">-</span> <span class="bu">std::</span>floor<span class="op">(</span>x<span class="op">);</span></span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> ty <span class="op">=</span> y <span class="op">-</span> <span class="bu">std::</span>floor<span class="op">(</span>y<span class="op">);</span></span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec4 c00 <span class="op">=</span></span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>        FetchWrapped<span class="op">(</span>image<span class="op">,</span> x0<span class="op">,</span>     y0<span class="op">);</span></span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec4 c10 <span class="op">=</span></span>
+<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a>        FetchWrapped<span class="op">(</span>image<span class="op">,</span> x0 <span class="op">+</span> <span class="dv">1</span><span class="op">,</span> y0<span class="op">);</span></span>
+<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec4 c01 <span class="op">=</span></span>
+<span id="cb10-65"><a href="#cb10-65" aria-hidden="true" tabindex="-1"></a>        FetchWrapped<span class="op">(</span>image<span class="op">,</span> x0<span class="op">,</span>     y0 <span class="op">+</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb10-66"><a href="#cb10-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-67"><a href="#cb10-67" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec4 c11 <span class="op">=</span></span>
+<span id="cb10-68"><a href="#cb10-68" aria-hidden="true" tabindex="-1"></a>        FetchWrapped<span class="op">(</span>image<span class="op">,</span> x0 <span class="op">+</span> <span class="dv">1</span><span class="op">,</span> y0 <span class="op">+</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb10-69"><a href="#cb10-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-70"><a href="#cb10-70" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec4 row0 <span class="op">=</span></span>
+<span id="cb10-71"><a href="#cb10-71" aria-hidden="true" tabindex="-1"></a>        c00 <span class="op">*</span> <span class="op">(</span><span class="fl">1.0</span><span class="bu">f</span> <span class="op">-</span> tx<span class="op">)</span> <span class="op">+</span></span>
+<span id="cb10-72"><a href="#cb10-72" aria-hidden="true" tabindex="-1"></a>        c10 <span class="op">*</span> tx<span class="op">;</span></span>
+<span id="cb10-73"><a href="#cb10-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-74"><a href="#cb10-74" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec4 row1 <span class="op">=</span></span>
+<span id="cb10-75"><a href="#cb10-75" aria-hidden="true" tabindex="-1"></a>        c01 <span class="op">*</span> <span class="op">(</span><span class="fl">1.0</span><span class="bu">f</span> <span class="op">-</span> tx<span class="op">)</span> <span class="op">+</span></span>
+<span id="cb10-76"><a href="#cb10-76" aria-hidden="true" tabindex="-1"></a>        c11 <span class="op">*</span> tx<span class="op">;</span></span>
+<span id="cb10-77"><a href="#cb10-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-78"><a href="#cb10-78" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span></span>
+<span id="cb10-79"><a href="#cb10-79" aria-hidden="true" tabindex="-1"></a>        row0 <span class="op">*</span> <span class="op">(</span><span class="fl">1.0</span><span class="bu">f</span> <span class="op">-</span> ty<span class="op">)</span> <span class="op">+</span></span>
+<span id="cb10-80"><a href="#cb10-80" aria-hidden="true" tabindex="-1"></a>        row1 <span class="op">*</span> ty<span class="op">;</span></span>
+<span id="cb10-81"><a href="#cb10-81" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-82"><a href="#cb10-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-83"><a href="#cb10-83" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> ComputeMipLOD<span class="op">(</span></span>
+<span id="cb10-84"><a href="#cb10-84" aria-hidden="true" tabindex="-1"></a>    Vec2 dUVdx<span class="op">,</span></span>
+<span id="cb10-85"><a href="#cb10-85" aria-hidden="true" tabindex="-1"></a>    Vec2 dUVdy<span class="op">,</span></span>
+<span id="cb10-86"><a href="#cb10-86" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> baseWidth<span class="op">,</span></span>
+<span id="cb10-87"><a href="#cb10-87" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> baseHeight<span class="op">)</span></span>
+<span id="cb10-88"><a href="#cb10-88" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb10-89"><a href="#cb10-89" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Convert normalized UV derivatives into texel-space derivatives.</span></span>
+<span id="cb10-90"><a href="#cb10-90" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec2 dx<span class="op">{</span></span>
+<span id="cb10-91"><a href="#cb10-91" aria-hidden="true" tabindex="-1"></a>        dUVdx<span class="op">.</span>x <span class="op">*</span> baseWidth<span class="op">,</span></span>
+<span id="cb10-92"><a href="#cb10-92" aria-hidden="true" tabindex="-1"></a>        dUVdx<span class="op">.</span>y <span class="op">*</span> baseHeight</span>
+<span id="cb10-93"><a href="#cb10-93" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb10-94"><a href="#cb10-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-95"><a href="#cb10-95" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec2 dy<span class="op">{</span></span>
+<span id="cb10-96"><a href="#cb10-96" aria-hidden="true" tabindex="-1"></a>        dUVdy<span class="op">.</span>x <span class="op">*</span> baseWidth<span class="op">,</span></span>
+<span id="cb10-97"><a href="#cb10-97" aria-hidden="true" tabindex="-1"></a>        dUVdy<span class="op">.</span>y <span class="op">*</span> baseHeight</span>
+<span id="cb10-98"><a href="#cb10-98" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb10-99"><a href="#cb10-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-100"><a href="#cb10-100" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> rhoX <span class="op">=</span></span>
+<span id="cb10-101"><a href="#cb10-101" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>sqrt<span class="op">(</span>dx<span class="op">.</span>x <span class="op">*</span> dx<span class="op">.</span>x <span class="op">+</span> dx<span class="op">.</span>y <span class="op">*</span> dx<span class="op">.</span>y<span class="op">);</span></span>
+<span id="cb10-102"><a href="#cb10-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-103"><a href="#cb10-103" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> rhoY <span class="op">=</span></span>
+<span id="cb10-104"><a href="#cb10-104" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>sqrt<span class="op">(</span>dy<span class="op">.</span>x <span class="op">*</span> dy<span class="op">.</span>x <span class="op">+</span> dy<span class="op">.</span>y <span class="op">*</span> dy<span class="op">.</span>y<span class="op">);</span></span>
+<span id="cb10-105"><a href="#cb10-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-106"><a href="#cb10-106" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> rho <span class="op">=</span></span>
+<span id="cb10-107"><a href="#cb10-107" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>max<span class="op">(</span>rhoX<span class="op">,</span> rhoY<span class="op">);</span></span>
+<span id="cb10-108"><a href="#cb10-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-109"><a href="#cb10-109" aria-hidden="true" tabindex="-1"></a>    <span class="co">// rho &lt;= 1 means base-level magnification or approximately 1:1 sampling.</span></span>
+<span id="cb10-110"><a href="#cb10-110" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">std::</span>log2<span class="op">(</span><span class="bu">std::</span>max<span class="op">(</span>rho<span class="op">,</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">));</span></span>
+<span id="cb10-111"><a href="#cb10-111" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-112"><a href="#cb10-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-113"><a href="#cb10-113" aria-hidden="true" tabindex="-1"></a>Vec4 SampleTrilinear<span class="op">(</span></span>
+<span id="cb10-114"><a href="#cb10-114" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Texture2D<span class="op">&amp;</span> texture<span class="op">,</span></span>
+<span id="cb10-115"><a href="#cb10-115" aria-hidden="true" tabindex="-1"></a>    Vec2 uv<span class="op">,</span></span>
+<span id="cb10-116"><a href="#cb10-116" aria-hidden="true" tabindex="-1"></a>    Vec2 dUVdx<span class="op">,</span></span>
+<span id="cb10-117"><a href="#cb10-117" aria-hidden="true" tabindex="-1"></a>    Vec2 dUVdy<span class="op">)</span></span>
+<span id="cb10-118"><a href="#cb10-118" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb10-119"><a href="#cb10-119" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="kw">auto</span><span class="op">&amp;</span> base <span class="op">=</span> texture<span class="op">.</span>mipLevels<span class="op">.</span>front<span class="op">();</span></span>
+<span id="cb10-120"><a href="#cb10-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-121"><a href="#cb10-121" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> lod <span class="op">=</span></span>
+<span id="cb10-122"><a href="#cb10-122" aria-hidden="true" tabindex="-1"></a>        ComputeMipLOD<span class="op">(</span></span>
+<span id="cb10-123"><a href="#cb10-123" aria-hidden="true" tabindex="-1"></a>            dUVdx<span class="op">,</span></span>
+<span id="cb10-124"><a href="#cb10-124" aria-hidden="true" tabindex="-1"></a>            dUVdy<span class="op">,</span></span>
+<span id="cb10-125"><a href="#cb10-125" aria-hidden="true" tabindex="-1"></a>            base<span class="op">.</span>width<span class="op">,</span></span>
+<span id="cb10-126"><a href="#cb10-126" aria-hidden="true" tabindex="-1"></a>            base<span class="op">.</span>height<span class="op">);</span></span>
+<span id="cb10-127"><a href="#cb10-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-128"><a href="#cb10-128" aria-hidden="true" tabindex="-1"></a>    lod <span class="op">=</span> <span class="bu">std::</span>clamp<span class="op">(</span></span>
+<span id="cb10-129"><a href="#cb10-129" aria-hidden="true" tabindex="-1"></a>        lod<span class="op">,</span></span>
+<span id="cb10-130"><a href="#cb10-130" aria-hidden="true" tabindex="-1"></a>        <span class="fl">0.0</span><span class="bu">f</span><span class="op">,</span></span>
+<span id="cb10-131"><a href="#cb10-131" aria-hidden="true" tabindex="-1"></a>        <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">float</span><span class="op">&gt;(</span></span>
+<span id="cb10-132"><a href="#cb10-132" aria-hidden="true" tabindex="-1"></a>            texture<span class="op">.</span>mipLevels<span class="op">.</span>size<span class="op">()</span> <span class="op">-</span> <span class="dv">1</span><span class="op">));</span></span>
+<span id="cb10-133"><a href="#cb10-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-134"><a href="#cb10-134" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">int</span> low <span class="op">=</span></span>
+<span id="cb10-135"><a href="#cb10-135" aria-hidden="true" tabindex="-1"></a>        <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;(</span><span class="bu">std::</span>floor<span class="op">(</span>lod<span class="op">));</span></span>
+<span id="cb10-136"><a href="#cb10-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-137"><a href="#cb10-137" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">int</span> high <span class="op">=</span></span>
+<span id="cb10-138"><a href="#cb10-138" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>min<span class="op">(</span></span>
+<span id="cb10-139"><a href="#cb10-139" aria-hidden="true" tabindex="-1"></a>            low <span class="op">+</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb10-140"><a href="#cb10-140" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;(</span></span>
+<span id="cb10-141"><a href="#cb10-141" aria-hidden="true" tabindex="-1"></a>                texture<span class="op">.</span>mipLevels<span class="op">.</span>size<span class="op">()</span> <span class="op">-</span> <span class="dv">1</span><span class="op">));</span></span>
+<span id="cb10-142"><a href="#cb10-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-143"><a href="#cb10-143" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> t <span class="op">=</span></span>
+<span id="cb10-144"><a href="#cb10-144" aria-hidden="true" tabindex="-1"></a>        lod <span class="op">-</span> <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">float</span><span class="op">&gt;(</span>low<span class="op">);</span></span>
+<span id="cb10-145"><a href="#cb10-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-146"><a href="#cb10-146" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec4 a <span class="op">=</span></span>
+<span id="cb10-147"><a href="#cb10-147" aria-hidden="true" tabindex="-1"></a>        SampleBilinear<span class="op">(</span>texture<span class="op">.</span>mipLevels<span class="op">[</span>low<span class="op">],</span> uv<span class="op">);</span></span>
+<span id="cb10-148"><a href="#cb10-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-149"><a href="#cb10-149" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec4 b <span class="op">=</span></span>
+<span id="cb10-150"><a href="#cb10-150" aria-hidden="true" tabindex="-1"></a>        SampleBilinear<span class="op">(</span>texture<span class="op">.</span>mipLevels<span class="op">[</span>high<span class="op">],</span> uv<span class="op">);</span></span>
+<span id="cb10-151"><a href="#cb10-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-152"><a href="#cb10-152" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span></span>
+<span id="cb10-153"><a href="#cb10-153" aria-hidden="true" tabindex="-1"></a>        a <span class="op">*</span> <span class="op">(</span><span class="fl">1.0</span><span class="bu">f</span> <span class="op">-</span> t<span class="op">)</span> <span class="op">+</span></span>
+<span id="cb10-154"><a href="#cb10-154" aria-hidden="true" tabindex="-1"></a>        b <span class="op">*</span> t<span class="op">;</span></span>
+<span id="cb10-155"><a href="#cb10-155" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This is not a bit-for-bit Vulkan sampler implementation, but the conceptual pipeline is correct:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <mi>V</mi>
+  <mo stretchy="false">→</mo>
+  <mtext>derivatives</mtext>
+  <mo stretchy="false">→</mo>
+  <mi>λ</mi>
+  <mo stretchy="false">→</mo>
+  <mtext>mip pair</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>bilinear samples</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>LOD interpolation</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Texture compression</strong></p>
+<p>Uncompressed RGBA8 costs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mtext> bytes/texel</mtext>
+  <mo>.</mo>
+</math>
+<p>A 4096×4096 texture requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>4096</mn>
+    <mn>2</mn>
+  </msup>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mo>≈</mo>
+  <mn>67.1</mn>
+  <mtext> MB</mtext>
+</math>
+<p>before mipmaps.</p>
+<p>With full mip chain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>67.1</mn>
+  <mo>×</mo>
+  <mfrac>
+    <mn>4</mn>
+    <mn>3</mn>
+  </mfrac>
+  <mo>≈</mo>
+  <mn>89.5</mn>
+  <mtext> MB</mtext>
+  <mo>.</mo>
+</math>
+<p>Ten such textures approach:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>895</mn>
+  <mtext> MB</mtext>
+  <mo>.</mo>
+</math>
+<p>This is why GPU texture compression matters.</p>
+<hr />
+<p><strong>Block compression</strong></p>
+<p>Many GPU formats compress small blocks independently.</p>
+<p>For example, BC1 uses 4×4 blocks.</p>
+<p>A block represents:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mtext> texels</mtext>
+</math>
+<p>using 8 bytes.</p>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mn>8</mn>
+      <mo>×</mo>
+      <mn>8</mn>
+      <mtext> bits</mtext>
+    </mrow>
+    <mn>16</mn>
+  </mfrac>
+  <mo>=</mo>
+  <mn>4</mn>
+  <mtext> bits/texel</mtext>
+  <mo>.</mo>
+</math>
+<p>Compared with RGBA8:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>32</mn>
+  <mtext> bits/texel</mtext>
+  <mo>.</mo>
+</math>
+<p>That is an 8× reduction.</p>
+<p>Because blocks are independently decodable, the GPU can still perform random texture access without decompressing the entire image.</p>
+<hr />
+<p><strong>Compression is semantic too</strong></p>
+<p>Different texture types prefer different formats.</p>
+<p>Examples:</p>
+<pre class="text"><code>base color:
+BC7 / ASTC high-quality color
+
+normal XY:
+BC5
+
+single-channel masks:
+BC4
+
+mobile:
+ASTC / ETC families</code></pre>
+<p>Why BC5 for normals?</p>
+<p>Normal mapping can store:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+</math>
+<p>and reconstruct:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>z</mi>
+  <mo>=</mo>
+  <msqrt>
+    <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    <mo stretchy="false">(</mo>
+    <mn>0</mn>
+    <mo>,</mo>
+    <mn>1</mn>
+    <mo>−</mo>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>−</mo>
+    <msup>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msup>
+    <mo stretchy="false">)</mo>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>So two high-quality signed-ish channels can be better than wasting general RGBA compression on XYZ.</p>
+<hr />
+<p><strong>Kairo currently has no GPU block-compressed texture path</strong></p>
+<p>Your current texture enum supports only:</p>
+<pre class="text"><code>R8
+RG8
+RGBA8
+RGBA16Float</code></pre>
+<p>No BCn, ASTC or ETC formats are represented yet.</p>
+<p>So this portion of M116 is currently a future asset/runtime capability.</p>
+<p>A later production texture artifact should probably encode:</p>
+<pre class="text"><code>pixel/block format
+color space
+semantic
+mip chain
+possibly platform transcoding target</code></pre>
+<p>rather than assuming raw pixels.</p>
+<hr />
+<p><strong>Normal maps</strong></p>
+<p>A geometric normal approximates surface orientation at mesh resolution.</p>
+<p>A normal map stores much higher-frequency orientation information.</p>
+<p>Typically RGB encodes a tangent-space vector.</p>
+<p>Stored value:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <msup>
+    <mo stretchy="false">]</mo>
+    <mn>3</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Decode:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>N</mi>
+            <mi>t</mi>
+          </msub>
+          <mo>=</mo>
+          <mn>2</mn>
+          <mi>C</mi>
+          <mo>−</mo>
+          <mn>1.</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For the neutral normal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Its encoded RGB is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Which explains the characteristic bluish appearance of normal maps.</p>
+<p>The glTF specification likewise defines tangent-space normal textures as linear data, maps sampled RGB with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>2</mn>
+  <mi>C</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+</math>, and requires the normal to be normalized before lighting. <a href="https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html?utm_source=chatgpt.com">Khronos Registry</a></p>
+<hr />
+<p><strong>Why tangent space</strong></p>
+<p>Suppose the same normal-map texture is used on surfaces facing:</p>
+<ul>
+<li>+X,</li>
+<li>+Y,</li>
+<li>+Z.</li>
+</ul>
+<p>If the map stored world-space normals, it could not simply rotate with the object.</p>
+<p>Tangent space creates a local surface frame:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mtext>tangent</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mtext>bitangent</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mtext>surface normal</mtext>
+  <mo>.</mo>
+</math>
+<p>A tangent-space map stores perturbations relative to that frame.</p>
+<p>Thus the same texture naturally follows:</p>
+<ul>
+<li>object rotation,</li>
+<li>surface orientation,</li>
+<li>UV parameterization.</li>
+</ul>
+<hr />
+<p><strong>TBN matrix</strong></p>
+<p>Build:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>T</mi>
+          <mi>B</mi>
+          <mi>N</mi>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">[</mo>
+            <mtable columnspacing="1em" rowspacing="4pt">
+              <mtr>
+                <mtd>
+                  <mi>T</mi>
+                </mtd>
+                <mtd>
+                  <mi>B</mi>
+                </mtd>
+                <mtd>
+                  <mi>N</mi>
+                </mtd>
+              </mtr>
+            </mtable>
+            <mo data-mjx-texclass="CLOSE">]</mo>
+          </mrow>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>N</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>world</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mi>T</mi>
+          <mi>B</mi>
+          <mi>N</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <msub>
+            <mi>N</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>tangent</mtext>
+            </mrow>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>we obtain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>N</mi>
+  <mo>.</mo>
+</math>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>we obtain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mo>.</mo>
+</math>
+<p>So the tangent-space vector’s XYZ coordinates mean weights along:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mi>N</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Building tangent and bitangent from geometry + UVs</strong></p>
+<p>Take triangle edges:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>P</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>P</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>P</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Texture-coordinate differences:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>U</mi>
+  <msub>
+    <mi>V</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>u</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>u</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>U</mi>
+  <msub>
+    <mi>V</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>u</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>We assume:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>+</mo>
+  <mi>B</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>+</mo>
+  <mi>B</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>In matrix form:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>E</mi>
+            <mn>1</mn>
+          </msub>
+        </mtd>
+        <mtd>
+          <msub>
+            <mi>E</mi>
+            <mn>2</mn>
+          </msub>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mi>T</mi>
+        </mtd>
+        <mtd>
+          <mi>B</mi>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mi mathvariant="normal">Δ</mi>
+          <msub>
+            <mi>u</mi>
+            <mn>1</mn>
+          </msub>
+        </mtd>
+        <mtd>
+          <mi mathvariant="normal">Δ</mi>
+          <msub>
+            <mi>u</mi>
+            <mn>2</mn>
+          </msub>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mi mathvariant="normal">Δ</mi>
+          <msub>
+            <mi>v</mi>
+            <mn>1</mn>
+          </msub>
+        </mtd>
+        <mtd>
+          <mi mathvariant="normal">Δ</mi>
+          <msub>
+            <mi>v</mi>
+            <mn>2</mn>
+          </msub>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>The determinant is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo>=</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>1</mn>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>UV mapping is locally singular.</p>
+<p>Otherwise:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>D</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>T</mi>
+          <mo>=</mo>
+          <mi>r</mi>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>E</mi>
+            <mn>1</mn>
+          </msub>
+          <mi mathvariant="normal">Δ</mi>
+          <msub>
+            <mi>v</mi>
+            <mn>2</mn>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>E</mi>
+            <mn>2</mn>
+          </msub>
+          <mi mathvariant="normal">Δ</mi>
+          <msub>
+            <mi>v</mi>
+            <mn>1</mn>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>B</mi>
+          <mo>=</mo>
+          <mi>r</mi>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>E</mi>
+            <mn>2</mn>
+          </msub>
+          <mi mathvariant="normal">Δ</mi>
+          <msub>
+            <mi>u</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>E</mi>
+            <mn>1</mn>
+          </msub>
+          <mi mathvariant="normal">Δ</mi>
+          <msub>
+            <mi>u</mi>
+            <mn>2</mn>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Tangent should be orthogonalized</strong></p>
+<p>Interpolated normals and tangents may cease to be exactly orthogonal.</p>
+<p>Given normal <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math>, Gram-Schmidt tangent correction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>T</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msup>
+          <mo>=</mo>
+          <mi>normalize</mi>
+          <mo stretchy="false">(</mo>
+          <mi>T</mi>
+          <mo>−</mo>
+          <mi>N</mi>
+          <mo stretchy="false">(</mo>
+          <mi>N</mi>
+          <mo>⋅</mo>
+          <mi>T</mi>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then bitangent can be reconstructed as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>×</mo>
+  <msup>
+    <mi>T</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo stretchy="false">)</mo>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo>∈</mo>
+  <mo fence="false" stretchy="false">{</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo fence="false" stretchy="false">}</mo>
+</math>
+<p>is handedness.</p>
+<p>This avoids storing an entire bitangent vector.</p>
+<hr />
+<p><strong>Bitangent handedness</strong></p>
+<p>Mirrored UV islands reverse texture-space orientation.</p>
+<p>The determinant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo>=</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>1</mn>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+</math>
+<p>changes sign under such mirroring.</p>
+<p>Therefore the tangent frame may be right-handed or left-handed.</p>
+<p>A common representation stores tangent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>h</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo>=</mo>
+  <mo>±</mo>
+  <mn>1.</mn>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>B</mi>
+          <mo>=</mo>
+          <mi>h</mi>
+          <mo stretchy="false">(</mo>
+          <mi>N</mi>
+          <mo>×</mo>
+          <mi>T</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If handedness is ignored, normal maps can invert or produce seams on mirrored UV islands.</p>
+<hr />
+<p><strong>Canonical tangent construction</strong></p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> TangentFrame</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    Vec3 tangent<span class="op">;</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    Vec3 bitangent<span class="op">;</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>TangentFrame BuildTriangleTangentFrame<span class="op">(</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    Vec3 p0<span class="op">,</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    Vec3 p1<span class="op">,</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    Vec3 p2<span class="op">,</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    Vec2 uv0<span class="op">,</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    Vec2 uv1<span class="op">,</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    Vec2 uv2<span class="op">,</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    Vec3 normal<span class="op">)</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3 e1 <span class="op">=</span> p1 <span class="op">-</span> p0<span class="op">;</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3 e2 <span class="op">=</span> p2 <span class="op">-</span> p0<span class="op">;</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec2 dUV1 <span class="op">=</span> uv1 <span class="op">-</span> uv0<span class="op">;</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec2 dUV2 <span class="op">=</span> uv2 <span class="op">-</span> uv0<span class="op">;</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> determinant <span class="op">=</span></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>        dUV1<span class="op">.</span>x <span class="op">*</span> dUV2<span class="op">.</span>y <span class="op">-</span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>        dUV1<span class="op">.</span>y <span class="op">*</span> dUV2<span class="op">.</span>x<span class="op">;</span></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span><span class="bu">std::</span>abs<span class="op">(</span>determinant<span class="op">)</span> <span class="op">&lt;</span> <span class="fl">1.0e-8</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Degenerate UV parameterization.</span></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>        <span class="co">// A production implementation needs a stable fallback basis.</span></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> Vec3 tangent <span class="op">=</span></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>            BuildAnyPerpendicular<span class="op">(</span>normal<span class="op">);</span></span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>            tangent<span class="op">,</span></span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>            Normalize<span class="op">(</span>Cross<span class="op">(</span>normal<span class="op">,</span> tangent<span class="op">))</span></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>        <span class="op">};</span></span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> r <span class="op">=</span> <span class="fl">1.0</span><span class="bu">f</span> <span class="op">/</span> determinant<span class="op">;</span></span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>    Vec3 tangent <span class="op">=</span></span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>        <span class="op">(</span>e1 <span class="op">*</span> dUV2<span class="op">.</span>y <span class="op">-</span></span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>         e2 <span class="op">*</span> dUV1<span class="op">.</span>y<span class="op">)</span> <span class="op">*</span> r<span class="op">;</span></span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a>    Vec3 bitangentRaw <span class="op">=</span></span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>        <span class="op">(</span>e2 <span class="op">*</span> dUV1<span class="op">.</span>x <span class="op">-</span></span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a>         e1 <span class="op">*</span> dUV2<span class="op">.</span>x<span class="op">)</span> <span class="op">*</span> r<span class="op">;</span></span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Remove any normal-direction component from T.</span></span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>    tangent <span class="op">=</span></span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>        Normalize<span class="op">(</span></span>
+<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>            tangent <span class="op">-</span></span>
+<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>            normal <span class="op">*</span> Dot<span class="op">(</span>normal<span class="op">,</span> tangent<span class="op">));</span></span>
+<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> handedness <span class="op">=</span></span>
+<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a>        Dot<span class="op">(</span></span>
+<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a>            Cross<span class="op">(</span>normal<span class="op">,</span> tangent<span class="op">),</span></span>
+<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a>            bitangentRaw<span class="op">)</span> <span class="op">&lt;</span> <span class="fl">0.0</span><span class="bu">f</span></span>
+<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a>            <span class="op">?</span> <span class="op">-</span><span class="fl">1.0</span><span class="bu">f</span></span>
+<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a>            <span class="op">:</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">;</span></span>
+<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3 bitangent <span class="op">=</span></span>
+<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a>        Cross<span class="op">(</span>normal<span class="op">,</span> tangent<span class="op">)</span> <span class="op">*</span></span>
+<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a>        handedness<span class="op">;</span></span>
+<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">{</span> tangent<span class="op">,</span> bitangent <span class="op">};</span></span>
+<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<p><strong>Your current Kairo takes a different but mathematically related route</strong></p>
+<p>Kairo does not currently require stored vertex tangents in its <code>MeshVertex</code>.</p>
+<p>It has:</p>
+<pre class="text"><code>Position
+Color
+Normal
+TexCoord</code></pre>
+<p>Then in <code>triangle.frag</code> it reconstructs the tangent basis from derivatives:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>dpdx <span class="op">=</span> <span class="bu">dFdx</span><span class="op">(</span>inWorldPosition<span class="op">);</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>dpdy <span class="op">=</span> <span class="bu">dFdy</span><span class="op">(</span>inWorldPosition<span class="op">);</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>duvdx <span class="op">=</span> <span class="bu">dFdx</span><span class="op">(</span>inTexCoord<span class="op">);</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>duvdy <span class="op">=</span> <span class="bu">dFdy</span><span class="op">(</span>inTexCoord<span class="op">);</span></span></code></pre></div>
+<p>and computes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>u</mi>
+    <mi>x</mi>
+  </msub>
+  <msub>
+    <mi>v</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>u</mi>
+    <mi>y</mi>
+  </msub>
+  <msub>
+    <mi>v</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>T</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>P</mi>
+                <mi>x</mi>
+              </msub>
+              <msub>
+                <mi>v</mi>
+                <mi>y</mi>
+              </msub>
+              <mo>−</mo>
+              <msub>
+                <mi>P</mi>
+                <mi>y</mi>
+              </msub>
+              <msub>
+                <mi>v</mi>
+                <mi>x</mi>
+              </msub>
+            </mrow>
+            <mi>D</mi>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>which is the same 2×2 inversion principle we derived.</p>
+<p>The bitangent uses:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cross</span><span class="op">(</span>N<span class="op">,</span> T<span class="op">)</span> <span class="op">*</span> <span class="bu">sign</span><span class="op">(</span>D<span class="op">)</span></span></code></pre></div>
+<p>to retain orientation.</p>
+<p>That is mathematically coherent.</p>
+<hr />
+<p><strong>Derivative-based tangent versus authored tangent</strong></p>
+<p>Derivative reconstruction has advantages:</p>
+<ul>
+<li>no tangent vertex attribute,</li>
+<li>handles the actual interpolated UV/world geometry,</li>
+<li>convenient for dynamically generated geometry.</li>
+</ul>
+<p>But authored/generated tangents are often preferable when matching a content-authoring tangent convention, especially across seams and baked normal maps.</p>
+<p>Normal maps are frequently baked assuming a specific tangent-space generator, commonly MikkTSpace or an equivalent convention.</p>
+<p>If your renderer reconstructs a different tangent frame than the baker used, visible seams can appear even if every vector is mathematically “reasonable.”</p>
+<p>That will become important once asset fidelity becomes stricter.</p>
+<hr />
+<p><strong>Applying a normal map</strong></p>
+<p>A canonical GLSL path:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="dt">vec3</span> geometricNormal <span class="op">=</span> <span class="bu">normalize</span><span class="op">(</span>inNormal<span class="op">);</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="co">// World-space tangent frame.</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="dt">vec3</span> tangent <span class="op">=</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">normalize</span><span class="op">(</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>        inTangent<span class="op">.</span><span class="fu">xyz</span> <span class="op">-</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>        geometricNormal <span class="op">*</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>        <span class="bu">dot</span><span class="op">(</span>geometricNormal<span class="op">,</span> inTangent<span class="op">.</span><span class="fu">xyz</span><span class="op">));</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> handedness <span class="op">=</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    inTangent<span class="op">.</span><span class="fu">w</span><span class="op">;</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="dt">vec3</span> bitangent <span class="op">=</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    handedness <span class="op">*</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">cross</span><span class="op">(</span>geometricNormal<span class="op">,</span> tangent<span class="op">);</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="dt">mat3</span> TBN <span class="op">=</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">mat3</span><span class="op">(</span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>        tangent<span class="op">,</span></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>        bitangent<span class="op">,</span></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>        geometricNormal<span class="op">);</span></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a><span class="co">// Normal-map textures are linear DATA.</span></span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a><span class="co">// Do not sRGB-decode them.</span></span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a><span class="dt">vec3</span> tangentNormal <span class="op">=</span></span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>    <span class="bu">texture</span><span class="op">(</span>normalMap<span class="op">,</span> uv<span class="op">).</span><span class="fu">xyz</span> <span class="op">*</span> <span class="fl">2.0</span> <span class="op">-</span> <span class="fl">1.0</span><span class="op">;</span></span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a><span class="co">// Optional material normal strength.</span></span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>tangentNormal<span class="op">.</span><span class="fu">xy</span> <span class="op">*=</span> normalScale<span class="op">;</span></span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a><span class="co">// Re-normalize after scaling.</span></span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>tangentNormal <span class="op">=</span></span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>    <span class="bu">normalize</span><span class="op">(</span>tangentNormal<span class="op">);</span></span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a><span class="dt">vec3</span> shadingNormal <span class="op">=</span></span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a>    <span class="bu">normalize</span><span class="op">(</span>TBN <span class="op">*</span> tangentNormal<span class="op">);</span></span></code></pre></div>
+<p>The glTF normal-scale convention similarly scales X/Y before normalization. <a href="https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html?utm_source=chatgpt.com">Khronos Registry</a></p>
+<hr />
+<p><strong>Height maps</strong></p>
+<p>A height map stores:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>rather than a direction.</p>
+<p>It describes scalar surface elevation.</p>
+<p>A normal can be derived from its gradient.</p>
+<p>Locally, if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>z</mi>
+  <mo>=</mo>
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>then tangent directions are approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mi>u</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <msub>
+    <mi>h</mi>
+    <mi>u</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mi>v</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <msub>
+    <mi>h</mi>
+    <mi>v</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Their cross product is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mi>u</mi>
+  </msub>
+  <mo>×</mo>
+  <msub>
+    <mi>P</mi>
+    <mi>v</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <msub>
+    <mi>h</mi>
+    <mi>u</mi>
+  </msub>
+  <mo>,</mo>
+  <mo>−</mo>
+  <msub>
+    <mi>h</mi>
+    <mi>v</mi>
+  </msub>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>N</mi>
+          <mo>∝</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">(</mo>
+            <mo>−</mo>
+            <mfrac>
+              <mrow>
+                <mi>∂</mi>
+                <mi>h</mi>
+              </mrow>
+              <mrow>
+                <mi>∂</mi>
+                <mi>u</mi>
+              </mrow>
+            </mfrac>
+            <mo>,</mo>
+            <mo>−</mo>
+            <mfrac>
+              <mrow>
+                <mi>∂</mi>
+                <mi>h</mi>
+              </mrow>
+              <mrow>
+                <mi>∂</mi>
+                <mi>v</mi>
+              </mrow>
+            </mfrac>
+            <mo>,</mo>
+            <mn>1</mn>
+            <mo data-mjx-texclass="CLOSE">)</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This shows the relationship:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>height map</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>gradient</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>normal map</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A normal map essentially stores local differential orientation directly.</p>
+<hr />
+<p><strong>Height versus normal information</strong></p>
+<p>Normal maps encode slope.</p>
+<p>They generally lose absolute height.</p>
+<p>Two height fields can differ by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>h</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>h</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mn>100</mn>
+</math>
+<p>and have identical gradients:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">∇</mi>
+  <msub>
+    <mi>h</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mi mathvariant="normal">∇</mi>
+  <msub>
+    <mi>h</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Therefore they yield identical normals.</p>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>normal map does not uniquely determine height</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Height contains an integrable scalar field; normals contain local orientation.</p>
+<hr />
+<p><strong>Parallax mapping</strong></p>
+<p>Normal mapping changes lighting orientation but does not change where texture features appear as the camera moves.</p>
+<p>Parallax mapping uses height to shift UVs according to view direction.</p>
+<p>Transform viewing direction into tangent space:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>V</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>V</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>V</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>V</mi>
+    <mi>z</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>A simple offset model is approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="normal">Δ</mi>
+          <mi>U</mi>
+          <mi>V</mi>
+          <mo>=</mo>
+          <mi>s</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <mi>h</mi>
+          <mo stretchy="false">(</mo>
+          <mi>u</mi>
+          <mo>,</mo>
+          <mi>v</mi>
+          <mo stretchy="false">)</mo>
+          <mfrac>
+            <mrow>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>V</mi>
+                <mi>x</mi>
+              </msub>
+              <mo>,</mo>
+              <msub>
+                <mi>V</mi>
+                <mi>y</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+            </mrow>
+            <msub>
+              <mi>V</mi>
+              <mi>z</mi>
+            </msub>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+</math> controls apparent depth.</p>
+<p>Then sample using:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <msup>
+    <mi>V</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>U</mi>
+  <mi>V</mi>
+  <mo>−</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>U</mi>
+  <mi>V</mi>
+</math>
+<p>depending on height convention.</p>
+<p>As:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>V</mi>
+    <mi>z</mi>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mn>0</mn>
+</math>
+<p>at grazing angles, the shift becomes large.</p>
+<p>That is where basic parallax approximations break down.</p>
+<hr />
+<p><strong>Why parallax mapping is still fake geometry</strong></p>
+<p>Parallax mapping changes texture lookup.</p>
+<p>It does <strong>not</strong> move the rasterized surface.</p>
+<p>Therefore it cannot correctly change:</p>
+<ul>
+<li>silhouette,</li>
+<li>true occlusion against other objects,</li>
+<li>physical intersection,</li>
+<li>cast-shadow geometry.</li>
+</ul>
+<p>A brick wall may appear recessed internally but retain a perfectly flat silhouette.</p>
+<p>Steep parallax and parallax occlusion mapping improve self-occlusion and ray-height intersection approximations, but still operate inside the original geometric surface.</p>
+<hr />
+<p><strong>Displacement mapping</strong></p>
+<p>Displacement actually changes position:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>P</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msup>
+          <mo>=</mo>
+          <mi>P</mi>
+          <mo>+</mo>
+          <mi>h</mi>
+          <mi>N</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Now the geometry itself moves.</p>
+<p>Therefore displacement can affect:</p>
+<ul>
+<li>silhouette,</li>
+<li>depth,</li>
+<li>shadows,</li>
+<li>intersections,</li>
+<li>rasterized coverage.</li>
+</ul>
+<p>But if the base mesh is too coarse, displacing only existing vertices cannot represent high-frequency height.</p>
+<p>Therefore displacement often requires:</p>
+<ul>
+<li>dense meshes,</li>
+<li>tessellation,</li>
+<li>subdivision,</li>
+<li>mesh shader amplification,</li>
+<li>offline subdivision.</li>
+</ul>
+<p>This is why displacement is more expensive but more geometrically correct.</p>
+<hr />
+<p><strong>Normal vs parallax vs displacement</strong></p>
+<p>Think of these as increasing levels of geometric commitment:</p>
+<table>
+<colgroup>
+<col style="width: 15%" />
+<col style="width: 21%" />
+<col style="width: 21%" />
+<col style="width: 21%" />
+<col style="width: 21%" />
+</colgroup>
+<thead>
+<tr>
+<th>Technique</th>
+<th style="text-align: right;">Changes shading normal</th>
+<th style="text-align: right;">Changes texture position</th>
+<th style="text-align: right;">Changes geometry/depth</th>
+<th style="text-align: right;">Changes silhouette</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Normal map</td>
+<td style="text-align: right;">Yes</td>
+<td style="text-align: right;">No</td>
+<td style="text-align: right;">No</td>
+<td style="text-align: right;">No</td>
+</tr>
+<tr>
+<td>Basic parallax</td>
+<td style="text-align: right;">Usually + normal</td>
+<td style="text-align: right;">Yes</td>
+<td style="text-align: right;">No</td>
+<td style="text-align: right;">No</td>
+</tr>
+<tr>
+<td>POM / steep parallax</td>
+<td style="text-align: right;">Yes</td>
+<td style="text-align: right;">Yes + approximate self-occlusion</td>
+<td style="text-align: right;">No</td>
+<td style="text-align: right;">Usually no</td>
+</tr>
+<tr>
+<td>Displacement</td>
+<td style="text-align: right;">Yes indirectly</td>
+<td style="text-align: right;">Geometry moves</td>
+<td style="text-align: right;">Yes</td>
+<td style="text-align: right;">Yes</td>
+</tr>
+</tbody>
+</table>
+<p>The best technique depends on viewing distance and geometric importance.</p>
+<hr />
+<p><strong>Texture-space filtering is semantic filtering</strong></p>
+<p>This is perhaps the most important M116 principle.</p>
+<p>Different textures store different mathematical objects.</p>
+<p><strong>Color map</strong></p>
+<p>Stores radiometric/color quantity.</p>
+<p>Correct reduction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>linearize</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>filter</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>encode</mtext>
+  <mo>.</mo>
+</math>
+<p><strong>Normal map</strong></p>
+<p>Stores directions.</p>
+<p>Correct reduction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>decode vectors</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>average</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>renormalize</mtext>
+  <mo>.</mo>
+</math>
+<p><strong>Roughness</strong></p>
+<p>Stores a material parameter.</p>
+<p>A straight arithmetic average may not preserve the appearance of a nonlinear BRDF perfectly.</p>
+<p><strong>Alpha mask</strong></p>
+<p>Simple averaging changes coverage.</p>
+<p>Mip generation may need coverage-preserving filtering.</p>
+<p><strong>Height</strong></p>
+<p>Stores scalar geometry.</p>
+<p>Its filtering may need to preserve extrema depending on use.</p>
+<p>This means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>one generic RGBA mip generator is not physically correct for every texture semantic</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Kairo has already taken a strong first step by storing explicit <code>TextureSemantic</code>.</p>
+<hr />
+<p><strong>Kairo current texture pipeline audit</strong></p>
+<p>The current pipeline looks approximately like:</p>
+<pre class="text"><code>asset image
+    ↓
+semantic classification
+    ↓
+TextureArtifact
+    ├── ColorSpace = SRGB or Linear
+    ├── Semantic = Color / Normal / Data / HDR
+    ├── PixelFormat
+    └── explicit mip chain
+            ↓
+VulkanTexture2D
+    ↓
+SRGB artifact
+→ VK_FORMAT_*_SRGB
+
+Linear artifact
+→ VK_FORMAT_*_UNORM / SFLOAT
+            ↓
+VkSampler
+    ├── linear magnification
+    ├── linear minification
+    ├── linear mip interpolation
+    ├── repeat/mirror/clamp addressing
+    └── anisotropy disabled
+            ↓
+triangle.frag
+    ├── baseColorMap
+    ├── normalMap
+    ├── metallicRoughnessMap
+    ├── emissiveMap
+    └── occlusionMap</code></pre>
+<p>That is already a reasonably coherent color/texture architecture.</p>
+<hr />
+<p><strong>Kairo’s strongest correctness invariants today</strong></p>
+<p>The important ones are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Material factors are linear</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Color textures may be sRGB</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Normal/data/HDR textures must be linear</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>sRGB mip filtering is done in linear light</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>normal-map mip vectors are renormalized</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Vulkan SRGB image formats perform sampling decode</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>These are exactly the sorts of invariants that prevent “why does everything look subtly wrong?” bugs.</p>
+<hr />
+<p><strong>Important gaps in the current Kairo path</strong></p>
+<p>There are also clear next steps.</p>
+<p><strong>Anisotropic filtering</strong></p>
+<p>Currently disabled.</p>
+<p>Especially visible on:</p>
+<ul>
+<li>floors,</li>
+<li>roads,</li>
+<li>walls viewed obliquely.</li>
+</ul>
+<p><strong>Texture compression</strong></p>
+<p>No BC/ASTC/ETC artifact/runtime format path yet.</p>
+<p><strong>Authored tangent-space compatibility</strong></p>
+<p>Current tangent frame is derivative generated.</p>
+<p>This may diverge from baked tangent-space conventions.</p>
+<p><strong>HDR post pipeline</strong></p>
+<p>Tone mapping currently happens inside the material fragment shader, before the HDR viewport image.</p>
+<p>Ideally:</p>
+<pre class="text"><code>material shading
+→ HDR target
+→ bloom/exposure/post
+→ tone mapper
+→ display transform</code></pre>
+<p><strong>Color-management expansion</strong></p>
+<p>The current pipeline primarily assumes linear/sRGB semantics rather than a full working-space/display-transform architecture.</p>
+<p>For serious film/image-fidelity ambitions, eventually you will care about:</p>
+<pre class="text"><code>ACEScg-like working spaces
+Display P3
+Rec.2020
+HDR display transforms
+gamut mapping</code></pre>
+<p>but those are deliberately beyond the exact M115 atom list.</p>
+<hr />
+<p><strong>A subtle texture bug: double sRGB decode</strong></p>
+<p>Suppose a base-color texture uses:</p>
+<pre class="text"><code>VK_FORMAT_R8G8B8A8_SRGB.</code></pre>
+<p>Sampling already returns linear values.</p>
+<p>If your shader then does:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>color <span class="op">=</span> <span class="bu">pow</span><span class="op">(</span><span class="bu">texture</span><span class="op">(...).</span><span class="fu">rgb</span><span class="op">,</span> <span class="dt">vec3</span><span class="op">(</span><span class="fl">2.2</span><span class="op">));</span></span></code></pre></div>
+<p>you decode it twice.</p>
+<p>Result: dramatically too dark.</p>
+<p>The rule is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Know whether transfer decoding is performed by the texture format</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>before applying manual conversion.</p>
+<hr />
+<p><strong>The opposite bug: treating sRGB bytes as linear</strong></p>
+<p>If an ordinary PNG base-color image is uploaded as:</p>
+<pre class="text"><code>VK_FORMAT_R8G8B8A8_UNORM</code></pre>
+<p>instead of SRGB, <code>texture()</code> returns its encoded values untouched.</p>
+<p>Then the renderer multiplies those nonlinear values during lighting.</p>
+<p>The result can look:</p>
+<ul>
+<li>too bright in midtones,</li>
+<li>incorrect in blends,</li>
+<li>wrong under mip filtering.</li>
+</ul>
+<p>This is why texture semantic and color-space metadata cannot be an afterthought.</p>
+<hr />
+<p><strong>A subtle normal-map bug: sRGB decode</strong></p>
+<p>Suppose neutral normal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>is mistakenly treated as sRGB.</p>
+<p>Decode 0.5:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.5</mn>
+  <mo stretchy="false">→</mo>
+  <mn>0.214</mn>
+  <mo>.</mo>
+</math>
+<p>Then convert to tangent normal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mo stretchy="false">(</mo>
+  <mn>0.214</mn>
+  <mo stretchy="false">)</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mn>0.572</mn>
+  <mo>.</mo>
+</math>
+<p>So instead of neutral:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>you obtain approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mn>0.572</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>0.572</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>The whole surface appears tilted.</p>
+<p>This is why:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>normal maps must be linear data</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>is non-negotiable.</p>
+<hr />
+<p><strong>LOD bias</strong></p>
+<p>Texture lookup can apply a bias:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>λ</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>λ</mi>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mo>.</mo>
+</math>
+<p>Positive bias:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>
+<p>selects lower-resolution mips earlier.</p>
+<p>Result:</p>
+<ul>
+<li>blurrier,</li>
+<li>more stable,</li>
+<li>potentially faster.</li>
+</ul>
+<p>Negative bias:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mo>&lt;</mo>
+  <mn>0</mn>
+</math>
+<p>selects sharper mips.</p>
+<p>Result:</p>
+<ul>
+<li>sharper,</li>
+<li>potentially more aliasing/shimmering.</li>
+</ul>
+<p>Vulkan exposes sampler LOD bias directly in <code>VkSamplerCreateInfo</code>. <a href="https://docs.vulkan.org/spec/latest/chapters/samplers.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<p>This becomes particularly relevant with TAA/upscaling systems where a modest negative bias may be used to recover texture detail, but only if temporal reconstruction controls aliasing.</p>
+<hr />
+<p><strong>Texture cache intuition</strong></p>
+<p>Mipmaps are not merely anti-aliasing.</p>
+<p>Suppose one distant pixel needs information from a 64×64 base-level footprint.</p>
+<p>Without mips, accesses may touch many cache lines and still alias badly.</p>
+<p>At the proper mip level, the same represented footprint may correspond to only a few nearby texels.</p>
+<p>Therefore mipmapping improves:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>quality</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>memory locality/bandwidth</mtext>
+  <mo>.</mo>
+</math>
+<p>This is why disabling mipmaps to “make textures sharper” is usually disastrous in large scenes.</p>
+<hr />
+<p><strong>Texture compression and cache efficiency</strong></p>
+<p>Compression also reduces bandwidth.</p>
+<p>If uncompressed data costs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>32</mn>
+  <mtext> bits/texel</mtext>
+</math>
+<p>and BC1 costs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mtext> bits/texel</mtext>
+  <mo>,</mo>
+</math>
+<p>then many more texture blocks fit into:</p>
+<ul>
+<li>VRAM,</li>
+<li>caches,</li>
+<li>memory transactions.</li>
+</ul>
+<p>Compression therefore improves not just capacity but potentially sampling throughput.</p>
+<p>The trade-off is reconstruction error.</p>
+<hr />
+<p><strong>Normal map strength</strong></p>
+<p>Your current shader does:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>tangentNormal<span class="op">.</span><span class="fu">xy</span> <span class="op">*=</span> normalScale<span class="op">;</span></span></code></pre></div>
+<p>before transforming into world space.</p>
+<p>Why X/Y only?</p>
+<p>Because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>encode lateral slope relative to the base normal axis.</p>
+<p>Scaling them adjusts deviation from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then the result should be normalized.</p>
+<p>The glTF convention similarly applies normal-scale to tangent-space X/Y. <a href="https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html?utm_source=chatgpt.com">Khronos Registry</a></p>
+<hr />
+<p><strong>Normal transformations and non-uniform scale</strong></p>
+<p>Suppose model scale is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>2</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0.5</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>You cannot transform normals using the same matrix as positions.</p>
+<p>Normals must remain perpendicular to transformed surface tangent vectors.</p>
+<p>The correct normal transform is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>N</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msup>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <msup>
+            <mi>M</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msup>
+          <msup>
+            <mo stretchy="false">)</mo>
+            <mi>T</mi>
+          </msup>
+          <mi>N</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Your Kairo pipeline already passes a separate normal matrix through push constants.</p>
+<p>That becomes especially important when combining world-space derivative tangents with transformed geometric normals.</p>
+<hr />
+<p><strong>Why normal mapping needs normalization several times</strong></p>
+<p>Normalization appears in several places:</p>
+<pre class="text"><code>interpolated geometric normal
+    ↓ normalize
+
+tangent after interpolation/derivation
+    ↓ normalize/orthogonalize
+
+sampled tangent-space normal
+    ↓ decode
+    ↓ optional scale
+    ↓ normalize
+
+TBN transformation
+    ↓
+world-space shading normal
+    ↓ normalize</code></pre>
+<p>Skipping any of these can change BRDF behavior because dot products such as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>L</mi>
+</math>
+<p>assume unit vectors.</p>
+<hr />
+<p><strong>Why interpolation destroys normal length</strong></p>
+<p>Take two normals:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>At midpoint:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>0.5</mn>
+  <msub>
+    <mi>N</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>+</mo>
+  <mn>0.5</mn>
+  <msub>
+    <mi>N</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Length:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>N</mi>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo>=</mo>
+  <msqrt>
+    <mn>0.5</mn>
+  </msqrt>
+  <mo>≈</mo>
+  <mn>0.707</mn>
+  <mo>.</mo>
+</math>
+<p>Therefore interpolated normals must be normalized before lighting.</p>
+<p>This is not a numerical accident.</p>
+<p>Linear interpolation of unit vectors does not generally stay on the unit sphere.</p>
+<hr />
+<p><strong>The full color → texture → lighting dataflow</strong></p>
+<p>For a base-color texture:</p>
+<pre class="text"><code>PNG/JPEG encoded bytes
+       ↓
+classified as sRGB color
+       ↓
+mip generation:
+decode → filter → re-encode
+       ↓
+VK_FORMAT_*_SRGB
+       ↓
+texture sampling
+hardware sRGB → linear conversion
+       ↓
+linear baseColor
+       ↓
+BRDF / lighting arithmetic
+       ↓
+scene-linear HDR
+       ↓
+exposure
+       ↓
+tone mapping
+       ↓
+display-linear SDR/HDR signal
+       ↓
+display transfer encoding
+       ↓
+monitor</code></pre>
+<p>For a normal map:</p>
+<pre class="text"><code>normal-map bytes
+       ↓
+classified as linear data
+       ↓
+linear mip generation:
+decode vectors → filter → normalize → re-encode
+       ↓
+VK_FORMAT_*_UNORM
+       ↓
+texture sampling
+       ↓
+[0,1]^3
+       ↓
+2x - 1
+       ↓
+tangent-space normal
+       ↓
+normalScale
+       ↓
+normalize
+       ↓
+TBN
+       ↓
+world-space shading normal
+       ↓
+BRDF</code></pre>
+<p>If you can reconstruct these two paths, you understand much of this pass.</p>
+<hr />
+<p><strong>Research bridge — image fidelity experiment</strong></p>
+<p>A useful controlled experiment for M115/M116 would deliberately test each “small” color/sampling decision independently.</p>
+<p>Build reference scenes containing:</p>
+<ul>
+<li>grayscale ramps,</li>
+<li>black/white checkerboards,</li>
+<li>high-frequency stripes,</li>
+<li>oblique textured planes,</li>
+<li>mirrored UV islands,</li>
+<li>normal-map spheres,</li>
+<li>extreme HDR emitters.</li>
+</ul>
+<p>Then compare variants:</p>
+<pre class="text"><code>correct sRGB decode
+vs
+treat sRGB as linear
+
+linear mip averaging
+vs
+encoded-space averaging
+
+normal-map renormalization
+vs
+raw RGB averaging
+
+trilinear
+vs
+anisotropic
+
+derivative-generated tangents
+vs
+authored MikkTSpace tangents
+
+Reinhard
+vs
+filmic tone mapping</code></pre>
+<p>Measure:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>RMSE</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>SSIM</mtext>
+  <mo>,</mo>
+</math>
+<p>temporal shimmer,</p>
+<p>and, where appropriate, angular normal error:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>θ</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>err</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <msup>
+            <mi>cos</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msup>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>N</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>ref</mtext>
+            </mrow>
+          </msub>
+          <mo>⋅</mo>
+          <msub>
+            <mi>N</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>test</mtext>
+            </mrow>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+  <mo>.</mo>
+</math>
+<p>For Maveb/Vulkax work, this matters because a renderer-validation experiment is meaningless if apparently geometric residuals are actually caused by:</p>
+<ul>
+<li>transfer-function mismatch,</li>
+<li>incorrect mip filtering,</li>
+<li>tangent mismatch,</li>
+<li>exposure/tone-map mismatch.</li>
+</ul>
+<p>That is precisely why the curriculum labels M115/M116 as a shading foundation for image-fidelity research.</p>
+<hr />
+<p><strong>PASS 3 RECALL SHEET</strong></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Cue</th>
+<th>Reconstruct</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Radiant energy</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+</math>, joules</td>
+</tr>
+<tr>
+<td>Flux</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Φ</mi>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi>Q</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>d</mi>
+  <mi>t</mi>
+</math>, watts</td>
+</tr>
+<tr>
+<td>Irradiance</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>E</mi>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi mathvariant="normal">Φ</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>d</mi>
+  <mi>A</mi>
+</math>, W/m²</td>
+</tr>
+<tr>
+<td>Solid angle</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Ω</mi>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+</math>, steradians</td>
+</tr>
+<tr>
+<td>Radiance</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>d</mi>
+    <mn>2</mn>
+  </msup>
+  <mi mathvariant="normal">Φ</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mi>A</mi>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>ω</mi>
+  <mo stretchy="false">)</mo>
+</math></td>
+</tr>
+<tr>
+<td>Irradiance from radiance</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>E</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP">∫</mo>
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>ω</mi>
+</math></td>
+</tr>
+<tr>
+<td>Constant hemispherical radiance</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>E</mi>
+  <mo>=</mo>
+  <mi>π</mi>
+  <mi>L</mi>
+</math></td>
+</tr>
+<tr>
+<td>Vacuum ray</td>
+<td>radiance invariant without absorption/scattering</td>
+</tr>
+<tr>
+<td>Tristimulus</td>
+<td>spectrum → three perceptual/color coordinates</td>
+</tr>
+<tr>
+<td>Linear RGB</td>
+<td>arithmetic proportional to light</td>
+</tr>
+<tr>
+<td>sRGB decode</td>
+<td>piecewise 12.92 / exponent 2.4 function</td>
+</tr>
+<tr>
+<td>Lighting rule</td>
+<td>decode first, compute in linear, encode last</td>
+</tr>
+<tr>
+<td>Color space</td>
+<td>primaries + white point + transfer function</td>
+</tr>
+<tr>
+<td>HDR</td>
+<td>scene values can exceed 1</td>
+</tr>
+<tr>
+<td>Exposure</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>C</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mi>E</mi>
+      <mi>V</mi>
+    </mrow>
+  </msup>
+  <mi>C</mi>
+</math></td>
+</tr>
+<tr>
+<td>Reinhard</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>x</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>+</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math></td>
+</tr>
+<tr>
+<td>Texture</td>
+<td>sampled 2D signal</td>
+</tr>
+<tr>
+<td>Texel vs pixel</td>
+<td>source texture sample vs framebuffer sample</td>
+</tr>
+<tr>
+<td>Bilinear</td>
+<td>four texels</td>
+</tr>
+<tr>
+<td>Mipmap</td>
+<td>prefiltered pyramid</td>
+</tr>
+<tr>
+<td>Full mip cost</td>
+<td>~4/3 base-level storage</td>
+</tr>
+<tr>
+<td>LOD</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>λ</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>log</mi>
+    <mn>2</mn>
+  </msub>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>ρ</mi>
+</math></td>
+</tr>
+<tr>
+<td>Trilinear</td>
+<td>bilinear at two mips + interpolate between mips</td>
+</tr>
+<tr>
+<td>Anisotropy</td>
+<td>elongated pixel footprint</td>
+</tr>
+<tr>
+<td>Normal decode</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>N</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>C</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+</math></td>
+</tr>
+<tr>
+<td>Tangent determinant</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+  <mo>=</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>1</mn>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+</math></td>
+</tr>
+<tr>
+<td>Tangent</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>E</mi>
+    <mn>1</mn>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>E</mi>
+    <mn>2</mn>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>D</mi>
+</math></td>
+</tr>
+<tr>
+<td>Bitangent</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>×</mo>
+  <mi>T</mi>
+  <mo stretchy="false">)</mo>
+</math></td>
+</tr>
+<tr>
+<td>Height-derived normal</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+  <mo>∝</mo>
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <msub>
+    <mi>h</mi>
+    <mi>u</mi>
+  </msub>
+  <mo>,</mo>
+  <mo>−</mo>
+  <msub>
+    <mi>h</mi>
+    <mi>v</mi>
+  </msub>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math></td>
+</tr>
+<tr>
+<td>Parallax</td>
+<td>shifts UV, not geometry</td>
+</tr>
+<tr>
+<td>Displacement</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>P</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>P</mi>
+  <mo>+</mo>
+  <mi>h</mi>
+  <mi>N</mi>
+</math>, changes actual geometry</td>
+</tr>
+<tr>
+<td>Kairo color semantics</td>
+<td>Color may be sRGB; Normal/Data/HDR linear</td>
+</tr>
+<tr>
+<td>Kairo filtering</td>
+<td>bilinear + trilinear; anisotropy currently off</td>
+</tr>
+<tr>
+<td>Kairo normal frame</td>
+<td>reconstructed from fragment derivatives</td>
+</tr>
+<tr>
+<td>Kairo tone map</td>
+<td>exposure + per-channel Reinhard currently inside material shader</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Blank-screen reconstruction gate</strong></p>
+<p>Without looking back, you should be able to rebuild this sequence:</p>
+<pre class="text"><code>PHYSICAL LIGHT
+     ↓
+spectral energy
+     ↓
+RGB approximation
+     ↓
+radiance arriving at surface
+     ↓
+BRDF / lighting arithmetic
+     ↓
+scene-linear HDR RGB
+     ↑
+     │
+base-color texture
+sRGB stored
+     ↓
+decode to linear
+     ↓
+mip/filter in correct domain
+     ↓
+linear texture sample
+     ┘
+
+scene-linear HDR
+     ↓
+exposure: × 2^EV
+     ↓
+tone map
+     ↓
+display encoding
+     ↓
+screen</code></pre>
+<p>Then separately reconstruct:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">d</mi>
+    </mrow>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>W</mi>
+  <msub>
+    <mi>u</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>H</mi>
+  <msub>
+    <mi>v</mi>
+    <mi>x</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">d</mi>
+    </mrow>
+    <mi>y</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>W</mi>
+  <msub>
+    <mi>u</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>H</mi>
+  <msub>
+    <mi>v</mi>
+    <mi>y</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ρ</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">d</mi>
+    </mrow>
+    <mi>x</mi>
+  </msub>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo>,</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">d</mi>
+    </mrow>
+    <mi>y</mi>
+  </msub>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>λ</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>log</mi>
+    <mn>2</mn>
+  </msub>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>ρ</mi>
+  <mo>.</mo>
+</math>
+<p>And finally:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>+</mo>
+  <mi>B</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>+</mo>
+  <mi>B</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+</math>
+<p>leading to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <msub>
+        <mi>E</mi>
+        <mn>1</mn>
+      </msub>
+      <mi mathvariant="normal">Δ</mi>
+      <msub>
+        <mi>v</mi>
+        <mn>2</mn>
+      </msub>
+      <mo>−</mo>
+      <msub>
+        <mi>E</mi>
+        <mn>2</mn>
+      </msub>
+      <mi mathvariant="normal">Δ</mi>
+      <msub>
+        <mi>v</mi>
+        <mn>1</mn>
+      </msub>
+    </mrow>
+    <mrow>
+      <mi mathvariant="normal">Δ</mi>
+      <msub>
+        <mi>u</mi>
+        <mn>1</mn>
+      </msub>
+      <mi mathvariant="normal">Δ</mi>
+      <msub>
+        <mi>v</mi>
+        <mn>2</mn>
+      </msub>
+      <mo>−</mo>
+      <mi mathvariant="normal">Δ</mi>
+      <msub>
+        <mi>u</mi>
+        <mn>2</mn>
+      </msub>
+      <mi mathvariant="normal">Δ</mi>
+      <msub>
+        <mi>v</mi>
+        <mn>1</mn>
+      </msub>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>If those equations, their units/domains, and their corresponding Kairo code paths can be reconstructed, M115/M116 are genuinely understood rather than vocabulary-memorized.</p>
+<p>Textures attach spatially varying signals to surfaces, so filtering must follow their projected footprint.</p>
+</section>
+<section id="id_03-visual-computing-i-ch019-texture-is-a-function-over-a-surface" class="level4">
+<h4>Texture is a function over a surface</h4>
+<p>A texture map stores a signal in a two-dimensional parameter domain. A surface point is assigned UV coordinates ((u,v)), and the renderer samples the image or function there. Parameterization is the mapping that flattens a surface to a domain; it inevitably introduces distortion, seams, or both. For a mesh triangle with per-vertex coordinates (u_i,v_i), barycentric interpolation transfers a hit point to texture space. If texture coordinates are outside the unit tile, the sampler needs a policy: repeat, clamp, mirror, or border color.</p>
+<p>A sampled texture usually needs interpolation. If the query lies between four texel centers with fractional coordinates <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>, bilinear interpolation blends horizontally and then vertically:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>a</mi>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>00</mn>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <mi>a</mi>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>10</mn>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>a</mi>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>01</mn>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <mi>a</mi>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>11</mn>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>For instance, if the four texel values are 0, 1, 1, and 0 in row order, then at the center (a=b=0.5) the two horizontal interpolants are both 0.5, so the final result is 0.5. Nearest-neighbor sampling would instead jump between 0 and 1 at texel boundaries. Bilinear filtering removes that discontinuity, although it cannot recover detail that was lost when the image was sampled.</p>
+<p>This produces a continuous-looking signal from discrete texels, but it is still a reconstruction filter. The texture lecture discusses parameterization, texture lookup, and bilinear interpolation, then connects shaders to procedural signals such as Perlin noise <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-14---texture-mapping" class="wikilink">MITG-14 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:25:00–00:45:00; 00:45:00–01:05:00). Procedural textures evaluate a function instead of storing every value, making them resolution-independent and useful for irregular natural patterns. Their high-frequency detail still has to be filtered when projected to a pixel grid.</p>
+</section>
+<section id="id_03-visual-computing-i-ch019-texture-coordinates-make-one-surface-address-many-kinds-of-detail" class="level4">
+<h4>Texture coordinates make one surface address many kinds of detail</h4>
+<p>A triangle mesh describes where a surface is, but that is too coarse a storage scheme for fine color, roughness, or relief. Texture mapping gives each surface point a second address in a two-dimensional parameter domain. For a triangle with 3D corners <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>2</mn>
+  </msub>
+</math> and corresponding texture corners <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>u</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>u</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msub>
+</math>, a hit point has barycentric weights <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>λ</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>λ</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>λ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>, with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>≥</mo>
+  <mn>0</mn>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>. Reuse those weights in texture space:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>=</mo>
+  <munderover>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>=</mo>
+      <mn>0</mn>
+    </mrow>
+    <mn>2</mn>
+  </munderover>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>u</mi>
+  <mo>=</mo>
+  <munderover>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>=</mo>
+      <mn>0</mn>
+    </mrow>
+    <mn>2</mn>
+  </munderover>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>u</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>The mesh intersection answers where the ray hit in 3D; the second expression answers which texel neighborhood to sample. If <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math> has weights <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>4</mn>
+  <mo stretchy="false">)</mo>
+</math>, then the texture lookup is exactly the same weighted average of the three texture corners. This is why texture coordinates are attached to triangle corners rather than inferred from world position. A shared 3D vertex may have two different UV coordinates on opposite sides of a seam. If one vertex had to have only one UV address, seams could not open. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-14---texture-mapping" class="wikilink">MITG-14 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:15:34–00:21:04)</p>
+<p>A UV atlas cuts a curved surface into patches before laying it flat. A triangle itself is planar and can be flattened without stretching, but the neighborhood around a curved vertex generally cannot be flattened while preserving every length and angle. A closed sphere cannot be continuously mapped to one flat disk without a cut or singularity. A designer therefore balances distortion against seam placement: seams hidden behind ears or under a character may be visually safer than a mathematically uniform cut. Leaving more edges connected improves continuity, but concentrates distortion; cutting every triangle removes much of that distortion while producing many discontinuous islands and difficult painting. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-14---texture-mapping" class="wikilink">MITG-14 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:21:46–00:25:58; 00:35:42–00:36:48)</p>
+<p>UV generation is an optimization problem with both geometric and topological choices. Even with the cuts fixed, each mesh vertex contributes two unknowns. A local objective can penalize edge stretch or angle distortion. But a valid atlas must also avoid unintended overlap: if two unrelated triangles occupy the same UV region, they sample the same texture colors. The lecture’s Tutte construction fixes the boundary to a convex shape and places each interior UV point at a weighted average of its neighbors. Each condition is linear, so all interior positions can be solved as a sparse linear system. This gives a useful injective starting map under the method’s assumptions; later optimization may trade cut length against local distortion while preserving non-overlap. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-14---texture-mapping" class="wikilink">MITG-14 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:40:22–00:48:52)</p>
+<p>Parameterization methods include artist-chosen seams, closed-form cylinder or sphere projections, and automatic optimization. A photo projected from a virtual camera is useful for image-based rendering, where a simple geometric proxy carries photographs from one or more views. It is less suitable for a freely turning object because a projection designed for one camera may stretch or slide under another. A tiled texture can reuse a small image with wraparound coordinates, while a normal map stores a perturbed normal rather than color. Normal mapping gives a low-polygon mesh fine shading variation, often baked from a high-resolution model, but cannot produce the true silhouette, parallax, or mutual occlusion of displaced geometry. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-14---texture-mapping" class="wikilink">MITG-14 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:37:49–00:40:20; 00:49:49–00:56:41)</p>
+<p>A sampled image is a grid of texels (texture pixels), so a non-integer UV coordinate needs reconstruction. Nearest-neighbor lookup picks one texel and creates visible jumps. Bilinear filtering interpolates between four neighbors: interpolate horizontally in the two rows, then vertically between the results. The order gives the same bilinear polynomial. When the texture becomes small on screen, one output pixel covers many texture texels. Sampling only one can alias the pattern into flicker or moiré. A mip pyramid precomputes successively half-sized averages; selecting the level whose texel footprint roughly matches the screen footprint approximates the needed area average. The extra memory is bounded: for a square texture, the level sizes sum to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>N</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>4</mn>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>16</mn>
+  <mo>+</mo>
+  <mo>⋯</mo>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <mn>4</mn>
+    <mn>3</mn>
+  </mfrac>
+  <msup>
+    <mi>N</mi>
+    <mn>2</mn>
+  </msup>
+</math>, ignoring tiny rounding effects. A surface tilted away from the camera has an elongated, direction-dependent footprint, so isotropic mip selection can blur too much in one direction; <a href="ch309.xhtml#appendix-d5b3c692d9f0-convolution-and-filter-footprints" class="wikilink">anisotropic filtering (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Convolution and filter footprints)</a> samples that footprint more selectively. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-14---texture-mapping" class="wikilink">MITG-14 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:27:06–00:34:15)</p>
+<p>Texture maps can hold any per-surface signal, not just RGB: diffuse coefficient, specular strength, roughness, or other BRDF parameters. Normal maps encode direction changes that perturb the normal used by lighting. Store directions in a coordinate frame that rotates with the surface (often tangent space), rather than naïvely storing world-space XYZ values that become invalid when the object moves. A coarse mesh with a normal map can reproduce the lighting of fine bumps from a distance, while remaining visibly flat in silhouette or when occlusion matters. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-14---texture-mapping" class="wikilink">MITG-14 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:49:49–00:56:41)</p>
+<p>A procedural shader computes a surface signal from position or other attributes at shading time. For example, a checker can be built from parity of integer cell coordinates, so it extends indefinitely and has no stored image boundary. Procedural patterns offer compact, resolution-independent definitions, but they still require filtering: a mathematically sharp checkerboard can alias when many cells fall into one pixel. Perlin noise supplies smooth, locally varying values with a controllable spatial scale. Combining octaves at different frequencies creates multiscale structure; thresholding or taking absolute values introduces ridges, and perturbing a sinusoid with noise creates irregular marble veins. These are design functions, not physical laws. <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-mitg-14---texture-mapping" class="wikilink">MITG-14 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a> (00:57:07–01:13:44)</p>
+<blockquote>
+<p><strong>Evidence boundary:</strong> the available transcript runs through 01:14:23; video metadata gives a duration of 01:14:25. This is effectively full caption coverage, but no video frames were reviewed.</p>
+</blockquote>
+</section>
+<section id="id_03-visual-computing-i-ch019-figure-u9---homogeneous-depth-changes-interpolation-weights" class="level4">
+<h4>Figure U9 - Homogeneous depth changes interpolation weights</h4>
+<figure class="allmight-auto-path-caption" data-auto-path-caption-uri="Visual Recall/University Graphics and Vision/perspective-interpolation.png">
+<img src="../media/file141.png" class="wikilink allmight-auto-path-caption" data-auto-path-caption-uri="Visual Recall/University Graphics and Vision/perspective-interpolation.png" alt="Visual Recall/University Graphics and Vision/perspective-interpolation.png" />
+<figcaption aria-hidden="true">Visual Recall/University Graphics and Vision/perspective-interpolation.png</figcaption>
+</figure>
+<p><strong>Read the figure.</strong> A screen-space triangle has vertices <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>A</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>A</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>, and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>A</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+</math>. At point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>0.5</mn>
+  <mo stretchy="false">)</mo>
+</math>, screen-space barycentric weights are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>λ</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>λ</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>λ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>0.25</mn>
+  <mo>,</mo>
+  <mn>0.25</mn>
+  <mo stretchy="false">)</mo>
+</math>; they sum to one and reconstruct <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+</math>. The scalar vertex attributes are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> and clip-space homogeneous coordinates are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo stretchy="false">)</mo>
+</math>. Affine interpolation gives <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>a</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0.25</mn>
+</math>. Perspective-correct interpolation normalizes <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+</math>, yielding weights <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>8</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>11</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>11</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>11</mn>
+  <mo stretchy="false">)</mo>
+</math> and attribute <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>2</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>11</mn>
+  <mo>≈</mo>
+  <mn>0.181818</mn>
+</math>. This example treats the listed <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+</math> as the clip-space denominators used by the rasterizer; values are chosen to make the projective correction visible.</p>
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch316.xhtml#id_04-Light-Transport-and-Image-Synthesis" class="wikilink">Reading map</a> · <a href="ch233.xhtml#id_03-visual-computing-i-ch018-c-representation-ownership-and-lifetime" class="wikilink">Previous chapter (Bits, Programs, and Reliable Systems, Part 4, Ch. 19)</a> · <a href="ch373.xhtml#id_03-visual-computing-i-ch020-geometry-queries-from-scene-to-contact" class="wikilink">Next chapter (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 1)</a></p>
+</section>
+</section>
+</section>
+</body>
+</html>

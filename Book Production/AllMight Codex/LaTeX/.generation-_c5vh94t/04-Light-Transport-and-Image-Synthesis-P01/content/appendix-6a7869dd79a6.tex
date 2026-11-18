@@ -1,0 +1,91 @@
+\hypertarget{appendix-6a7869dd79a6}{}\label{referencestart:appendix-6a7869dd79a6}
+\section{Sampling aliasing and reconstruction}\label{appendix-6a7869dd79a6-sampling-aliasing-and-reconstruction}
+
+\hypertarget{appendix-6a7869dd79a6-sampling-aliasing-and-reconstruction}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} XR01 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-6a7869dd79a6-definition-and-mechanism}
+
+\hypertarget{appendix-6a7869dd79a6-definition-and-mechanism}{}
+
+Uniform samples identify frequencies only modulo sample rate and corresponding real-signal equivalences. Strictly band-limited ideal reconstruction needs non-overlapping spectral replicas; exact-Nyquist phase is a boundary hazard. Prefilter before decimation.
+
+\end{allmightroledefinition}
+
+\subsubsection{Phase 9--10 development}\label{appendix-6a7869dd79a6-phase-910-development}
+
+\hypertarget{appendix-6a7869dd79a6-phase-910-development}{}
+
+Signal aliasing occurs when distinct signal frequencies produce the same sampled values; reconstruction then cannot recover which signal generated the samples without additional assumptions. Stratification, low-discrepancy sequences, and blue-noise point sets describe where samples are placed, not a guarantee that the signal is band-limited or that an estimator is unbiased. Each strategy still needs a valid support, probability weight, and reconstruction filter.
+
+\subsection{Prerequisites}\label{appendix-6a7869dd79a6-prerequisites}
+
+\hypertarget{appendix-6a7869dd79a6-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-b60686ba06a1]{Fourier analysis and spectral phase} --- Frequency and phase reveal transfer, sampling ambiguity and structural loss.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-6a7869dd79a6-used-by}
+
+\hypertarget{appendix-6a7869dd79a6-used-by}{}
+
+\begin{itemize}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P02/main.pdf\#nameddest=appendix-b677a85ba76f}{Multiscale texture filtering (Vision, XR, and Playable Worlds, Part 2, Reference notes: Multiscale texture filtering)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P02/main.pdf\#nameddest=appendix-70895739febb}{Spatiotemporal sampling and retinal motion (Vision, XR, and Playable Worlds, Part 2, Reference notes: Spatiotemporal sampling and retinal motion)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P02/main.pdf\#nameddest=appendix-4192b2bdd21e}{Antialiasing and sample allocation (Vision, XR, and Playable Worlds, Part 2, Reference notes: Antialiasing and sample allocation)}
+\item
+  \hyperref[appendix-ed3f9bc298fe]{Triangle rasterization and coverage tests}
+\item
+  \hyperref[appendix-36022286b03e]{Edge localization and subpixel contours}
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#nameddest=appendix-1988d465c119}{PDE fields and discrete Laplacians (Geometry, Cameras, and Image Formation, Part 1, Reference notes: PDE fields and discrete Laplacians)}
+\item
+  \hyperref[appendix-47c51ea026fb]{Learned image features and CNNs}
+\item
+  \hyperref[appendix-c5b332e400e7]{Radiance fields and Gaussian splatting}
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#nameddest=appendix-68be451b78b1}{Reservoir resampling and ReSTIR (Mathematics for Visual Computing, Part 2, Reference notes: Reservoir resampling and ReSTIR)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-9f693ffd82bc}{Sampling quality: stratification, quasi-Monte Carlo, and blue noise (Vision, XR, and Playable Worlds, Part 1, Reference notes: Sampling quality: stratification, quasi-Monte Carlo, and blue noise)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-0a09b6dfdc86}{Tensor-product interpolation (Vision, XR, and Playable Worlds, Part 1, Reference notes: Tensor-product interpolation)} \#\# Recall and next depth
+\end{itemize}
+
+Prove 13Hz and 3Hz sample identity at 10Hz. Pending: anisotropic/nonuniform sampling and actual reconstruction errors. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.
+
+\subsection{Source and navigation}\label{appendix-6a7869dd79a6-source-and-navigation}
+
+\hypertarget{appendix-6a7869dd79a6-source-and-navigation}{}
+
+\href{../07-Vision-XR-and-Playable-Worlds-P02/main.pdf\#nameddest=04-visual-computing-ii-ch042-sampling-is-a-question-of-what-remains-distinguishable}{Expanded teaching explanation (Vision, XR, and Playable Worlds, Part 2, Ch. 9)} · \hyperref[appendix-fd090d982a15-xr01---independent-seeing-and-representation-source]{Independent coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}
+
+\subsection{University course development}\label{appendix-6a7869dd79a6-university-course-development}
+
+\hypertarget{appendix-6a7869dd79a6-university-course-development}{}
+
+Sampling records measurements of a continuous signal on a discrete grid. Frequencies that differ by integer multiples of the sampling rate can produce the same samples, so the sampled values alone cannot identify which original signal was present. For ideal band-limited reconstruction, the signal must be restricted below half the sampling rate; equality at the limiting frequency needs additional phase and endpoint conditions. A real pixel also integrates light over area and exposure time, making its measurement a filtered sample. Prefiltering attenuates frequencies that would alias, while reconstruction estimates a continuous signal from the stored samples. Ideal sinc reconstruction has infinite support; practical filters trade computation, sharpness, ringing and residual aliasing. More samples reduce integration error only when their placement and weights match the intended pixel or path-space measure.
+
+\href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#nameddest=03-visual-computing-i-ch003-sampling-continuous-signals-and-image-formation}{Sampling continuous signals and image formation (Geometry, Cameras, and Image Formation, Part 1, Ch. 10)} · \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#nameddest=03-visual-computing-i-ch004-image-sampling-filtering-and-efficient-reconstruction}{Image sampling, filtering, and efficient reconstruction (Geometry, Cameras, and Image Formation, Part 1, Ch. 11)}
+
+\subsection{Full teaching explanation}\label{appendix-6a7869dd79a6-full-teaching-explanation}
+
+\hypertarget{appendix-6a7869dd79a6-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#nameddest=02-foundations-ii-ch029-a-computer-produces-deterministic-pseudorandom-sequences}{Phase 10 teaching section (Mathematics for Visual Computing, Part 2, Ch. 13)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#nameddest=02-foundations-ii-ch030-monte-carlo-estimates-trade-computation-for-uncertainty}{Phase 10 teaching section (Mathematics for Visual Computing, Part 2, Ch. 14)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#nameddest=appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)} · Phase 10 visual recall
+\end{itemize}

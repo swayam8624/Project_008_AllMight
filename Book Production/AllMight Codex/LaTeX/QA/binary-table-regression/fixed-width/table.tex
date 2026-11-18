@@ -1,0 +1,32 @@
+\documentclass[11pt]{book}
+\usepackage[print]{allmight-book}
+\begin{document}
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.4200}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.2700}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3100}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Property
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+binary32
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+binary64
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Sign position & 31 & 63 \\
+Exponent positions & 30--23: 8 bits & 62--52: 11 bits \\
+Fraction positions & 22--0: 23 bits & 51--0: 52 bits \\
+Normal significand precision \(p\) & 24 bits & 53 bits \\
+\href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-2fae058c82e1}{Bias (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Exponent bias)} \(B\) & 127 & 1023 \\
+Normal exponent \(e\) & −126 through 127 & −1022 through 1023 \\
+Smallest positive normal & \(2^{-126}\) & \(2^{-1022}\) \\
+Smallest positive subnormal & \(2^{-149}\) & \(2^{-1074}\) \\
+\end{longtable}
+}
+
+\end{document}

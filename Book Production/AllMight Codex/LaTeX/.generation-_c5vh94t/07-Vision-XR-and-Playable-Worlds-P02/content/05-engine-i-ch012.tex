@@ -1,0 +1,4328 @@
+\chapter{Transactions, recovery, and safe project boundaries}\label{05-engine-i-ch012-transactions-recovery-and-safe-project-boundaries}\phantomsection\hypertarget{05-engine-i-ch012}{}\label{stagechapter:05-engine-i-ch012}
+
+\hypertarget{05-engine-i-ch012-transactions-recovery-and-safe-project-boundaries}{}
+
+\hyperref[volume-reading-map]{Reading map} · \hyperref[05-engine-i-ch011-streaming-resources-through-explicit-states]{Previous chapter} · \href{../05-Spatial-Worlds-Engine-State-and-Simulation-P01/main.pdf\#nameddest=05-engine-i-ch013-portable-startup-windows-events-and-input}{Next chapter (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 13)}
+
+Interactive tools need edits that can be undone and projects that can be reopened after failure. This chapter makes mutation transactional and treats paths, packages, backups, and atomic publication as security and recovery contracts.
+
+\textbf{By the end:} Design undo/redo, save recovery, path validation, and package publication so partial failure cannot silently corrupt authored work.
+
+\textbf{Recall question:} Which state is authoritative before and after a failed save, and how does the system prove that the published project is complete?
+
+\subsection{UNDO, TRANSACTIONS, RECOVERY, PROJECT BOUNDARIES, PATH SECURITY, PACKAGING AND ATOMIC PUBLICATION}\label{05-engine-i-ch012-undo-transactions-recovery-project-boundaries-path-security-packaging-and-atomic-publication}
+
+\hypertarget{05-engine-i-ch012-undo-transactions-recovery-project-boundaries-path-security-packaging-and-atomic-publication}{}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Undo commands}
+
+Undo begins with one idea:
+
+\[
+\boxed{
+\text{An edit must contain enough information to reverse itself.}
+}
+\]
+
+For property edit:
+
+\begin{verbatim}
+Entity
+Component
+Property
+Before
+After.
+\end{verbatim}
+
+For create entity:
+
+\begin{verbatim}
+CreatedEntityID
+complete creation state.
+\end{verbatim}
+
+For delete entity:
+
+\begin{verbatim}
+serialized deleted subtree.
+\end{verbatim}
+
+The inverse operation must be deterministic.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Command interface}
+
+Kairo currently defines:
+
+\begin{verbatim}
+class EditorCommand
+{
+public:
+    virtual std::string_view
+    Name() const noexcept = 0;
+
+    virtual void Execute() = 0;
+    virtual void Undo() = 0;
+
+    virtual bool TryMerge(
+        EditorCommand&) noexcept
+    {
+        return false;
+    }
+};
+\end{verbatim}
+
+This is an excellent minimal command model.
+
+Each command owns the state necessary for forward and reverse transitions.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Creation command identity}
+
+A subtle problem:
+
+Create entity.
+
+Undo.
+
+Redo.
+
+If redo allocates a \textbf{different Entity ID}, references or selection state may behave unexpectedly.
+
+Kairo's creation commands preserve the allocated scene identity.
+
+First execution:
+
+\begin{verbatim}
+allocate ID 42.
+\end{verbatim}
+
+Undo:
+
+\begin{verbatim}
+destroy 42.
+\end{verbatim}
+
+Redo:
+
+\begin{verbatim}
+CreateEntityWithID(42).
+\end{verbatim}
+
+This is exactly the right editor semantic.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Undo commands should store semantic state}
+
+For Light edit:
+
+Bad:
+
+\begin{verbatim}
+store pointer to Light
+store raw bytes.
+\end{verbatim}
+
+Better:
+
+\begin{verbatim}
+Entity ID
+Before LightComponent
+After LightComponent.
+\end{verbatim}
+
+Kairo's \texttt{SetSceneComponentCommand} follows this model.
+
+It captures complete before/after component values.
+
+Undo therefore does not depend on stale memory addresses.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Command-pattern undo/redo}
+
+Command history is a sequence:
+
+\[
+C_0,C_1,\dots,C_{n-1}.
+\]
+
+Maintain cursor \(k\):
+
+\begin{verbatim}
+[ applied commands | redo commands ]
+                  ^
+                cursor
+\end{verbatim}
+
+If:
+
+\[
+k=3,
+\]
+
+commands 0--2 are applied.
+
+Commands 3 onward are redoable.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Undo}
+
+Undo command:
+
+\[
+C_{k-1}.Undo().
+\]
+
+Only after successful Undo:
+
+\[
+k\leftarrow k-1.
+\]
+
+This ordering matters.
+
+If Undo throws and cursor moved first, history would claim state changed when it did not.
+
+Current Kairo does the operation first and changes cursor afterward.
+
+Strong design.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Redo}
+
+Redo:
+
+\[
+C_k.Execute().
+\]
+
+Then:
+
+\[
+k\leftarrow k+1.
+\]
+
+Again cursor changes only after successful execution.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{New edit after undo}
+
+History:
+
+\begin{verbatim}
+A B C D
+      ^
+\end{verbatim}
+
+Suppose C/D are redo branch.
+
+Now execute X.
+
+Expected:
+
+\begin{verbatim}
+A B X
+\end{verbatim}
+
+not:
+
+\begin{verbatim}
+A B X C D.
+\end{verbatim}
+
+Kairo truncates redo entries when a new command executes after undo.
+
+This is standard linear undo semantics.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Command history memory}
+
+Unlimited undo can retain huge snapshots.
+
+Imagine deleting a 2 GiB terrain entity snapshot 500 times.
+
+History becomes enormous.
+
+Kairo bounds command history, defaulting to:
+
+\[
+512
+\]
+
+entries.
+
+When full, oldest applied command is evicted.
+
+That is a reasonable first memory policy.
+
+More advanced systems use:
+
+\begin{verbatim}
+byte budget
+compressed snapshots
+disk-backed history.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Command merging}
+
+Slider drag generates many micro-edits:
+
+\begin{verbatim}
+1.00
+1.01
+1.02
+...
+3.50.
+\end{verbatim}
+
+Without merging, Ctrl-Z walks every intermediate frame.
+
+Kairo's:
+
+\begin{verbatim}
+TryMerge(...)
+\end{verbatim}
+
+allows adjacent compatible commands to coalesce.
+
+A merged command should preserve:
+
+\begin{verbatim}
+Before = initial value
+After = latest value.
+\end{verbatim}
+
+That makes one intuitive undo step.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Transactional editor changes}
+
+A transaction is stronger than an undo command.
+
+It means an operation involving several mutations behaves:
+
+\[
+\boxed{
+\text{all succeed or none become visible}.
+}
+\]
+
+Suppose ``Add Physics Preview'' adds:
+
+\begin{verbatim}
+RigidBody
+Collider.
+\end{verbatim}
+
+If RigidBody succeeds but Collider validation fails, leaving only one component is undesirable.
+
+A transactional command should prevalidate or mutate a candidate state first.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Strong exception guarantee}
+
+For an operation \(F\):
+
+\[
+F(State)=
+\begin{cases}
+State',&success\\
+State,&failure
+\end{cases}
+\]
+
+not:
+
+\[
+State_{half-mutated}.
+\]
+
+Kairo's command interface explicitly requires a strong exception guarantee from commands.
+
+This is a very good contract.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Validate before mutation}
+
+Example:
+
+\begin{verbatim}
+void SetMaterial(
+    Entity e,
+    MaterialAssetHandle asset)
+{
+    // May throw.
+    assets.Resolve(asset);
+
+    // Only mutate after validation.
+    scene.SetMaterial(e, asset);
+}
+\end{verbatim}
+
+Kairo's logic-document command uses precisely this pattern: it resolves the typed asset before replacing the component.
+
+This keeps failure atomic.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Candidate-copy transactions}
+
+For complex state:
+
+\begin{verbatim}
+Scene candidate = scene;
+
+ApplyOperation(candidate);
+
+candidate.Validate();
+
+scene =
+    std::move(candidate);
+\end{verbatim}
+
+This can be expensive but gives strong semantics.
+
+Your RuntimeWorld and several project-loading paths already use candidate state before commit.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Multi-command transactions}
+
+Sometimes one UI action logically contains many commands.
+
+Example prefab instantiation:
+
+\begin{verbatim}
+create root
+create 20 children
+add components
+set hierarchy
+resolve references.
+\end{verbatim}
+
+Undo should happen as one action.
+
+Use composite command:
+
+\begin{verbatim}
+class CompositeCommand
+{
+    vector<Command> Commands;
+};
+\end{verbatim}
+
+Execute in order.
+
+Undo in reverse:
+
+\[
+C_n^{-1},
+C_{n-1}^{-1},
+\dots,
+C_0^{-1}.
+\]
+
+If an Execute fails midway, undo already-applied children before propagating failure.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Transaction boundary should match user intent}
+
+Not every low-level mutation deserves an undo record.
+
+User performs:
+
+\begin{quote}
+Duplicate subtree.
+\end{quote}
+
+That is one logical operation even though hundreds of component writes occur.
+
+The undo stack should reflect \textbf{semantic authoring actions}, not internal implementation calls.
+
+This dramatically improves editor usability.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Recovery journals}
+
+Undo protects against:
+
+\begin{verbatim}
+user mistake during a live session.
+\end{verbatim}
+
+Recovery protects against:
+
+\begin{verbatim}
+process crash
+OS crash
+power loss
+editor bug.
+\end{verbatim}
+
+These are different problems.
+
+Undo history stored only in RAM disappears during a crash.
+
+Recovery state must live outside the process.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Snapshot versus write-ahead journal}
+
+Two broad approaches exist.
+
+\textbf{Snapshot}
+
+Periodically save complete recovery state:
+
+\begin{verbatim}
+Project
+Manifest
+Scene
+Documents
+Draft buffers.
+\end{verbatim}
+
+\textbf{Operation journal}
+
+Append every mutation:
+
+\begin{verbatim}
+SetTransform
+DeleteEntity
+ChangeMaterial
+...
+\end{verbatim}
+
+Then replay after last durable checkpoint.
+
+Kairo currently uses a recovery \textbf{snapshot} model.
+
+That is simpler and robust.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo recovery snapshot}
+
+A recovery point contains metadata such as:
+
+\begin{verbatim}
+original project root
+project file
+active scene
+creation time
+list of recovery files.
+\end{verbatim}
+
+Each payload records:
+
+\begin{verbatim}
+role
+target path
+payload path
+byte count
+checksum
+dirty state
+active state.
+\end{verbatim}
+
+The snapshot includes:
+
+\begin{verbatim}
+project descriptor
+asset manifest
+scene
+authoring documents
+text drafts.
+\end{verbatim}
+
+This is impressively complete.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Drafts versus canonical documents}
+
+One subtle feature matters greatly.
+
+A text editor buffer may currently contain invalid syntax.
+
+Example user is halfway typing:
+
+\begin{verbatim}
+function foo(
+\end{verbatim}
+
+An autosave/recovery system must preserve those bytes.
+
+It must \textbf{not} require them to parse as a valid authoritative document.
+
+Kairo distinguishes:
+
+\begin{verbatim}
+AuthoringDocument
+TextDraft.
+\end{verbatim}
+
+The recovery code explicitly says drafts may be syntactically invalid and should not be promoted to authoritative state merely because they were recovered.
+
+That is exactly correct.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Recovery integrity}
+
+On load Kairo verifies:
+
+\[
+ActualByteCount=
+ManifestByteCount
+\]
+
+and:
+
+\[
+Checksum(payload)=
+ManifestChecksum.
+\]
+
+If one payload fails:
+
+\begin{verbatim}
+reject recovery snapshot.
+\end{verbatim}
+
+This is much safer than opening a partially written state and hoping.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Recovery publication}
+
+A recovery snapshot is built in a staging directory.
+
+Only after payloads and manifest are complete is the snapshot directory published into the recovery root.
+
+Thus discovery sees either:
+
+\begin{verbatim}
+old complete snapshots
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+new complete snapshot.
+\end{verbatim}
+
+Not a partially assembled snapshot masquerading as valid.
+
+This is atomic-publication thinking at directory granularity.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Retention}
+
+Recovery data grows indefinitely unless bounded.
+
+Kairo defaults to:
+
+\[
+10
+\]
+
+snapshots and permits up to:
+
+\[
+64.
+\]
+
+Old recovery points can be removed according to creation ordering.
+
+This is the correct distinction:
+
+\begin{verbatim}
+recovery data is redundant safety state,
+not permanent project history.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Autosave architecture}
+
+Autosave is a policy layered over recovery primitives.
+
+The safe definition is not:
+
+\begin{quote}
+Call Save All every 30 seconds.
+\end{quote}
+
+That can overwrite the user's authoritative files with partially edited state.
+
+Better:
+
+\[
+\boxed{
+Autosave
+\rightarrow
+RecoverySnapshot.
+}
+\]
+
+The user's real project remains unchanged.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Autosave should not clear dirty state}
+
+Suppose scene is unsaved.
+
+Autosave creates recovery snapshot.
+
+The editor must still display:
+
+\begin{verbatim}
+*
+unsaved changes.
+\end{verbatim}
+
+Because autosave did not commit the user's canonical project.
+
+Kairo's recovery API explicitly says creating a recovery point does not modify:
+
+\begin{verbatim}
+dirty flags
+command history
+authored files.
+\end{verbatim}
+
+Excellent.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Autosave scheduling}
+
+A practical policy might trigger when:
+
+\[
+TimeSinceLastRecovery
+>
+T
+\]
+
+and:
+
+\[
+HasUnsavedChanges
+\]
+
+and editor is not currently in a critical file operation.
+
+For example:
+
+\begin{verbatim}
+if (
+    session.HasUnsavedChanges() &&
+    now - lastRecovery >
+        std::chrono::minutes(2))
+{
+    session.CreateRecoveryPoint();
+}
+\end{verbatim}
+
+But do not perform heavy serialization synchronously every frame.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Snapshot consistency under asynchronous autosave}
+
+If autosave happens on a background thread while UI mutates Scene concurrently, copying live structures without synchronization is dangerous.
+
+Options:
+
+\begin{verbatim}
+short lock + snapshot copy
+immutable/persistent document structures
+command barrier
+serialize a versioned copy.
+\end{verbatim}
+
+The recovery job should operate on a stable snapshot, not moving live state.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo status for autosave}
+
+The inspected code clearly provides:
+
+\begin{verbatim}
+CreateRecoveryPoint
+LoadRecoverySnapshot
+RestoreRecoveryPoint
+retention
+checksums
+draft preservation.
+\end{verbatim}
+
+A full time-based autosave scheduler was not evident in the inspected recovery/session files.
+
+So the \textbf{recovery mechanism exists}; automatic scheduling is a host/editor policy that can be layered on top.
+
+That is a reasonable architectural separation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Project descriptors}
+
+A project descriptor tells the engine how to bootstrap the project.
+
+Current Kairo descriptor contains:
+
+\begin{verbatim}
+Name
+AssetManifest
+StartupScene
+EngineVersion
+InputMap
+RenderingProfile
+GraphicsBackend
+optional PlayExecutable
+EnabledPlugins
+BuildProfiles.
+\end{verbatim}
+
+This is exactly the right level of information.
+
+It does not contain:
+
+\begin{verbatim}
+VkDevice
+runtime ECS entity IDs
+GPU resources.
+\end{verbatim}
+
+It contains persistent bootstrap policy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Descriptor versus runtime state}
+
+Descriptor:
+
+\begin{verbatim}
+graphics-backend metal
+\end{verbatim}
+
+is configuration.
+
+Runtime:
+
+\begin{verbatim}
+selected physical device
+queue family
+swapchain image count
+\end{verbatim}
+
+is runtime state.
+
+Do not serialize runtime discoveries back into project descriptor unless they are deliberate project settings.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Descriptor versioning}
+
+Kairo supports:
+
+\begin{verbatim}
+kairo-project 1
+kairo-project 2.
+\end{verbatim}
+
+New v2 fields include broader engine/build settings.
+
+The parser explicitly applies version-specific requirements.
+
+That is much better than:
+
+\begin{verbatim}
+try reading fields and guess format.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Manifest validation}
+
+A manifest should be validated structurally and semantically.
+
+Structural validation:
+
+\begin{verbatim}
+header valid?
+token count correct?
+values parse?
+counts bounded?
+records closed?
+\end{verbatim}
+
+Semantic validation:
+
+\begin{verbatim}
+IDs valid?
+paths valid?
+asset types valid?
+dependencies exist?
+dependency types match?
+cycles absent?
+duplicates absent?
+\end{verbatim}
+
+Do both.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo asset manifest validation}
+
+Current parser bounds:
+
+\[
+ManifestSize\le64\text{ MiB}.
+\]
+
+It bounds:
+
+\[
+AssetCount\le1,000,000.
+\]
+
+It bounds dependency count per asset.
+
+It limits path/importer lengths.
+
+It rejects unknown statements.
+
+Then registry installation performs graph/topology validation.
+
+This is strong layered validation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why limits are security features}
+
+Input says:
+
+\begin{verbatim}
+array-count = 4,000,000,000.
+\end{verbatim}
+
+Naive parser:
+
+\begin{verbatim}
+vector.resize(count);
+\end{verbatim}
+
+may attempt huge allocation.
+
+Always validate before allocating:
+
+\[
+count\le MaximumAllowed.
+\]
+
+Every variable-length structure needs a budget.
+
+This applies even to ``local project files'' because corrupted data should not be capable of crashing the tool unpredictably.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Duplicate validation}
+
+Manifest might list same AssetID twice.
+
+Or two paths differing only by case:
+
+\begin{verbatim}
+Textures/A.png
+textures/a.png.
+\end{verbatim}
+
+On Windows/macOS configurations these may alias.
+
+Kairo's portable path key case-folds logical paths to avoid such ambiguous manifests.
+
+That is an important cross-platform policy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Sandboxed project-relative paths}
+
+A project file should normally reference:
+
+\begin{verbatim}
+Scenes/Main.kscene
+Textures/A.png.
+\end{verbatim}
+
+Not:
+
+\begin{verbatim}
+C:\Users\Alice\Desktop\foo.png
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+/home/alice/foo.png.
+\end{verbatim}
+
+Project-relative paths enable:
+
+\[
+\boxed{
+relocatability
++
+portability
++
+sandboxing.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Path resolution model}
+
+Given canonical root:
+
+\[
+R.
+\]
+
+Given validated relative path:
+
+\[
+p.
+\]
+
+Candidate:
+
+\[
+C=Canonical(R/p).
+\]
+
+Then require:
+
+\[
+C\in Descendants(R).
+\]
+
+That is stronger than lexical normalization alone because symlinks can alter filesystem resolution.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Never use string-prefix containment}
+
+Wrong:
+
+\begin{verbatim}
+candidateString.starts_with(
+    rootString);
+\end{verbatim}
+
+If root:
+
+\begin{verbatim}
+/Game
+\end{verbatim}
+
+then:
+
+\begin{verbatim}
+/Game2/evil.txt
+\end{verbatim}
+
+also starts with \texttt{/Game}.
+
+Kairo's \texttt{IsWithinProjectRoot()} compares filesystem path components instead.
+
+Correct.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Existing files and future outputs differ}
+
+Existing path can use:
+
+\begin{verbatim}
+std::filesystem::canonical(...)
+\end{verbatim}
+
+because target exists.
+
+Future save path may not exist yet.
+
+Kairo uses:
+
+\begin{verbatim}
+weakly_canonical(...)
+\end{verbatim}
+
+for future output paths, resolving existing prefixes while allowing missing final components.
+
+This distinction is exactly right.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Path traversal prevention}
+
+Classic traversal:
+
+\begin{verbatim}
+../../../../etc/passwd
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+..\..\Windows\System32.
+\end{verbatim}
+
+If joined naively:
+
+\begin{verbatim}
+root / userPath
+\end{verbatim}
+
+attacker can escape root.
+
+Kairo's \texttt{NormalizeAssetPath()} rejects parent components.
+
+That is the first line of defense.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Absolute path injection}
+
+Also reject:
+
+\begin{verbatim}
+/etc/passwd
+C:\Windows\System32
+\\server\share
+\end{verbatim}
+
+because path joining semantics may discard the project root.
+
+A relative-project field should be \textbf{provably relative}.
+
+Kairo checks:
+
+\begin{verbatim}
+is_absolute
+has_root_name
+has_root_directory.
+\end{verbatim}
+
+Good.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Encodings and separators}
+
+Cross-platform paths are tricky.
+
+On Windows:
+
+\begin{verbatim}
+\
+\end{verbatim}
+
+is native separator.
+
+Portable project formats should usually canonicalize to:
+
+\begin{verbatim}
+/
+\end{verbatim}
+
+when serialized.
+
+Kairo uses generic path spelling and validates portable character sets.
+
+This means the same manifest behaves consistently across host systems.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{\texttt{.} and empty components}
+
+Normalize:
+
+\begin{verbatim}
+Meshes/./Cube.obj
+\end{verbatim}
+
+to:
+
+\begin{verbatim}
+Meshes/Cube.obj.
+\end{verbatim}
+
+Reject paths that normalize to the project root itself when a file is expected.
+
+Canonical path representation reduces ambiguity and duplicate identities.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Symlink escape prevention}
+
+Lexical traversal checks are not enough.
+
+Suppose:
+
+\begin{verbatim}
+Project/
+    Assets/
+        External -> /etc
+\end{verbatim}
+
+Then user path:
+
+\begin{verbatim}
+Assets/External/passwd
+\end{verbatim}
+
+contains no \texttt{..}.
+
+Lexically it appears inside project.
+
+Filesystem resolution escapes.
+
+Therefore canonicalize after filesystem resolution and verify containment.
+
+Kairo does this for existing project files.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Future output symlink problem}
+
+Suppose:
+
+\begin{verbatim}
+Project/Saves
+\end{verbatim}
+
+is a symlink to:
+
+\begin{verbatim}
+/tmp/other.
+\end{verbatim}
+
+Saving:
+
+\begin{verbatim}
+Saves/Main.kscene
+\end{verbatim}
+
+would escape project.
+
+\texttt{ResolveProjectOutput()} uses \texttt{weakly\_canonical(root\ /\ relative)} and then component-wise root containment.
+
+This catches existing symlink redirects.
+
+Good.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Packaging is stricter}
+
+Kairo's package collector rejects symbolic links entirely.
+
+This is an excellent packaging policy.
+
+Why?
+
+A bundle should contain concrete files, not references whose meaning changes after relocation.
+
+A symlink could point:
+
+\begin{verbatim}
+outside project
+to machine-specific location
+to missing target after installation.
+\end{verbatim}
+
+Rejecting all symlinks produces a much cleaner portable bundle.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{TOCTOU caveat}
+
+There is one deeper security issue.
+
+Sequence:
+
+\begin{verbatim}
+canonicalize path
+check path
+open file
+\end{verbatim}
+
+has a time-of-check/time-of-use window.
+
+An adversarial process could replace a path component with a symlink between check and open.
+
+For a normal trusted desktop project environment, canonicalization is usually sufficient.
+
+For hardened untrusted sandboxes, use OS-level directory handles and no-follow APIs such as \texttt{openat}-style relative opening, platform equivalents, and descriptor-relative traversal.
+
+That is the difference between:
+
+\[
+\text{robust editor sandboxing}
+\]
+
+and:
+
+\[
+\text{hostile multi-user filesystem security}.
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Runtime packaging}
+
+Packaging converts a development project into a runnable deployment bundle.
+
+It should not simply \texttt{zip} the whole repository.
+
+Exclude:
+
+\begin{verbatim}
+.git
+temporary caches
+recovery journals
+editor-only metadata
+build outputs recursively copied into themselves.
+\end{verbatim}
+
+Include:
+
+\begin{verbatim}
+runtime project
+required assets
+player executable
+required runtime libraries
+manifest
+launcher/config.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo package pipeline}
+
+\texttt{PackageRuntimeProject()} roughly performs:
+
+\begin{verbatim}
+select build profile
+resolve player executable
+validate output
+create staging directory
+collect bounded project payload
+reject symlinks/non-regular entries
+copy project
+relocate descriptor as Project.kproject
+copy player
+write launcher
+write package manifest
+re-open staged RuntimeProject
+publish staging directory.
+\end{verbatim}
+
+That is a serious packaging pipeline rather than an ad-hoc copy script.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Revalidate staged package}
+
+One particularly good step is:
+
+\begin{verbatim}
+RuntimeProject(
+    packagedProject /
+    "Project.kproject");
+\end{verbatim}
+
+before publication.
+
+This means all descriptor-relative paths are exercised in the \textbf{actual relocated layout}.
+
+So:
+
+\begin{verbatim}
+package builds
+\end{verbatim}
+
+is not considered success until:
+
+\begin{verbatim}
+packaged project can bootstrap.
+\end{verbatim}
+
+Excellent acceptance gate.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Package closure}
+
+The next level beyond copying an entire project tree is dependency-closure packaging.
+
+Given startup scene roots:
+
+\[
+R.
+\]
+
+Compute transitive asset closure:
+
+\[
+Closure(R).
+\]
+
+Package only needed cooked assets.
+
+This reduces shipping size and prevents unused source content from leaking into distribution.
+
+Current packaging appears project-tree based with filtering rather than complete asset-DAG cooking, so dependency-closure packaging remains a future optimization.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Development versus release packaging}
+
+Development bundle may include:
+
+\begin{verbatim}
+symbols
+debug shaders
+validation layers configuration
+diagnostics
+editable assets.
+\end{verbatim}
+
+Release:
+
+\begin{verbatim}
+optimized cooked assets
+stripped symbols
+shipping config
+no editor recovery state.
+\end{verbatim}
+
+Project \texttt{BuildProfiles} already provide the right policy hook.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Relocatable bundles}
+
+A relocatable bundle runs regardless of absolute install directory.
+
+Bad:
+
+\begin{verbatim}
+/home/swayam/KairoBuild/project/Scenes/Main.kscene
+\end{verbatim}
+
+embedded into executable.
+
+Good:
+
+\begin{verbatim}
+project/Project.kproject
+\end{verbatim}
+
+resolved relative to package root.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Launcher-relative discovery}
+
+Kairo's Unix launcher determines:
+
+\begin{verbatim}
+KAIRO_PACKAGE_ROOT=
+    directory of launcher
+\end{verbatim}
+
+then executes:
+
+\begin{verbatim}
+bin/KairoPlayer
+project/Project.kproject
+\end{verbatim}
+
+relative to that root.
+
+Thus moving:
+
+\begin{verbatim}
+Build/Release
+\end{verbatim}
+
+to:
+
+\begin{verbatim}
+/Applications/MyGame
+\end{verbatim}
+
+does not break project paths.
+
+That is relocatability.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Shared libraries complicate relocatability}
+
+If KairoPlayer dynamically depends on:
+
+\begin{verbatim}
+libFoo.so
+SomeFramework.dylib
+Some.dll
+\end{verbatim}
+
+package must include them and configure loader discovery.
+
+Linux:
+
+\begin{verbatim}
+RPATH / $ORIGIN
+\end{verbatim}
+
+macOS:
+
+\begin{verbatim}
+@executable_path
+@loader_path
+install names.
+\end{verbatim}
+
+Windows:
+
+\begin{verbatim}
+DLL beside executable
+or controlled search paths.
+\end{verbatim}
+
+Static linking reduces much of this complexity.
+
+But a truly relocatable shared-library build must manage loader paths explicitly.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Runtime content must also avoid absolute paths}
+
+Even if executable locates project correctly, a scene containing:
+
+\begin{verbatim}
+C:\Users\Swayam\Textures\a.png
+\end{verbatim}
+
+kills relocatability.
+
+That is why Part 1576's project-relative path discipline and Part 1580 are connected.
+
+Relocatable packaging is not a packaging-only feature.
+
+It starts at every persistent reference.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Atomic publication by rename}
+
+Suppose saving:
+
+\begin{verbatim}
+Assets.kassets.
+\end{verbatim}
+
+Bad:
+
+\begin{verbatim}
+open destination truncate
+write half
+power loss.
+\end{verbatim}
+
+Now original file is gone and replacement is incomplete.
+
+Better:
+
+\begin{verbatim}
+write temporary sibling
+flush/close
+validate
+rename temp -> destination.
+\end{verbatim}
+
+Within the same filesystem, rename/replacement can provide atomic \textbf{visibility} semantics.
+
+Readers see old or new name, not half a file.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why same-directory temporary matters}
+
+Rename between different filesystems may become:
+
+\begin{verbatim}
+copy + delete
+\end{verbatim}
+
+or fail.
+
+Atomicity is typically guaranteed only within the same filesystem.
+
+So create:
+
+\begin{verbatim}
+Assets.kassets.tmp-UUID
+\end{verbatim}
+
+beside:
+
+\begin{verbatim}
+Assets.kassets.
+\end{verbatim}
+
+Kairo follows this pattern.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Windows versus POSIX replacement}
+
+Kairo centralizes platform behavior in \texttt{AtomicFile.cppm}.
+
+On Windows it uses:
+
+\begin{verbatim}
+MoveFileExW(
+    temporary,
+    destination,
+    MOVEFILE_REPLACE_EXISTING |
+    MOVEFILE_WRITE_THROUGH);
+\end{verbatim}
+
+On non-Windows it uses:
+
+\begin{verbatim}
+std::filesystem::rename(
+    temporary,
+    destination);
+\end{verbatim}
+
+This avoids duplicating platform-specific final-publication behavior across manifests/scenes/documents.
+
+Good architecture.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Atomic visibility is not full crash durability}
+
+This distinction is extremely important.
+
+Suppose:
+
+\begin{verbatim}
+write()
+flush C++ stream
+rename()
+\end{verbatim}
+
+completes.
+
+\texttt{flush()} generally pushes data to the OS kernel.
+
+It does \textbf{not necessarily guarantee} the data has reached stable physical storage.
+
+For stronger POSIX crash durability you may need:
+
+\begin{verbatim}
+fsync(temp file)
+rename()
+fsync(parent directory)
+\end{verbatim}
+
+and equivalent platform-specific primitives.
+
+Thus:
+
+\[
+\boxed{
+Atomic\ rename
+\neq
+Guaranteed\ power-loss\ durability.
+}
+\]
+
+Kairo's current atomic replacement design is strong against partial application-level writes and rename-level replacement failures, but do not overstate POSIX \texttt{std::filesystem::rename\ +\ ostream::flush} as full journaled-disk durability.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Directory publication}
+
+Packaging uses a similar principle.
+
+Build complete staging directory:
+
+\begin{verbatim}
+.Release.kairo-stage-123/
+\end{verbatim}
+
+then rename:
+
+\begin{verbatim}
+stage
+→
+Release.
+\end{verbatim}
+
+If replacing an existing package, Kairo:
+
+\begin{verbatim}
+existing -> backup
+stage -> output
+\end{verbatim}
+
+and attempts rollback if publication fails.
+
+That is transactional directory publication.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Multi-file atomicity}
+
+Atomic rename solves one file.
+
+Suppose project Save All modifies:
+
+\begin{verbatim}
+Project.kproject
+Assets.kassets
+Main.kscene.
+\end{verbatim}
+
+Saving each atomically does \textbf{not} make the set atomically consistent across a crash.
+
+Crash after manifest replacement but before scene replacement can leave mixed generations.
+
+Kairo's own comments correctly avoid claiming cross-file crash atomicity.
+
+Recovery journaling addresses this higher-level problem.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Ways to achieve stronger multi-file commits}
+
+You can use:
+
+\textbf{Generation directory}
+
+Write:
+
+\begin{verbatim}
+generation-42/
+\end{verbatim}
+
+completely.
+
+Then atomically switch:
+
+\begin{verbatim}
+current -> generation-42
+\end{verbatim}
+
+through a manifest/pointer.
+
+\textbf{Journal}
+
+Record intended transaction.
+
+Apply files.
+
+Mark commit complete.
+
+Recovery either rolls forward or rolls back.
+
+\textbf{Single container}
+
+Store project in one database/container that supports transactions.
+
+Each approach adds complexity.
+
+For Kairo's current editor, independent atomic files + recovery snapshots is a very reasonable balance.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Build configuration versus runtime configuration}
+
+This distinction is frequently abused.
+
+Build configuration determines \textbf{what code/artifacts are produced}.
+
+Examples:
+
+\begin{verbatim}
+Debug / Release
+sanitizers enabled
+editor target built
+raytracer built
+AI cloud provider compiled
+Vulkan backend compiled.
+\end{verbatim}
+
+Runtime configuration determines \textbf{how an existing executable behaves}.
+
+Examples:
+
+\begin{verbatim}
+renderer = metal
+resolution = 1920×1080
+volume = 0.8
+startup scene
+graphics quality.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Build-time configuration}
+
+Current Kairo CMake options include things like:
+
+\begin{verbatim}
+BUILD_EDITOR
+BUILD_PLAYER
+BUILD_RAYTRACER
+BUILD_COMPUTE_STACK
+ENABLE_SANITIZERS
+ENABLE_PACKAGING.
+\end{verbatim}
+
+These change the target graph or compilation.
+
+They belong to build configuration.
+
+You cannot meaningfully toggle:
+
+\begin{verbatim}
+ENABLE_SANITIZERS=true
+\end{verbatim}
+
+at runtime if sanitizer instrumentation was never compiled in.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Runtime configuration}
+
+\texttt{ProjectDescriptor} contains:
+
+\begin{verbatim}
+graphics-backend
+rendering-profile
+startup-scene
+input-map
+plugins
+build profiles.
+\end{verbatim}
+
+Some of these are persistent project policy consumed at startup.
+
+For example:
+
+\begin{verbatim}
+graphics-backend = auto
+\end{verbatim}
+
+can be overridden by player command line:
+
+\begin{verbatim}
+--renderer metal.
+\end{verbatim}
+
+That is runtime policy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Compile-time feature vs runtime feature}
+
+Suppose Vulkan support is not built.
+
+Project says:
+
+\begin{verbatim}
+graphics-backend vulkan.
+\end{verbatim}
+
+Runtime cannot magically create Vulkan code.
+
+So capability is:
+
+\[
+AvailableRuntimeOptions
+=
+CompiledCapabilities
+\cap
+PlatformCapabilities.
+\]
+
+Runtime configuration selects \textbf{within} compiled capabilities.
+
+That is the correct relation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Environment configuration}
+
+There is also deployment/environment configuration:
+
+\begin{verbatim}
+cache directory
+logging level
+crash upload endpoint
+server port.
+\end{verbatim}
+
+Some may be runtime command-line/environment settings rather than project-persistent settings.
+
+Do not stuff every setting into \texttt{ProjectDescriptor}.
+
+Ask:
+
+\begin{quote}
+Is this project content, user preference, machine configuration, build configuration or runtime session state?
+\end{quote}
+
+Different scopes deserve different storage.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Configuration precedence}
+
+A common policy:
+
+\[
+Defaults
+<
+ProjectConfig
+<
+UserConfig
+<
+CommandLine.
+\]
+
+Example:
+
+\begin{verbatim}
+engine default:
+renderer auto
+
+project:
+renderer vulkan
+
+user:
+renderer metal
+
+CLI:
+--renderer opengl
+\end{verbatim}
+
+Final:
+
+\begin{verbatim}
+opengl.
+\end{verbatim}
+
+The exact precedence is a product choice.
+
+But it should be deterministic and documented.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Never serialize secrets into project config accidentally}
+
+Runtime configuration can include credentials:
+
+\begin{verbatim}
+API tokens
+server keys.
+\end{verbatim}
+
+These should not enter:
+
+\begin{verbatim}
+source-controlled Project.kproject.
+\end{verbatim}
+
+Secrets belong in environment/secure credential stores.
+
+This is another reason configuration scopes must remain distinct.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reflection + undo integration}
+
+Now combine M093 and M094.
+
+Inspector reads:
+
+\begin{verbatim}
+TypeKey
+PropertyKey
+CurrentValue.
+\end{verbatim}
+
+User edits.
+
+Do not call reflection setter directly from UI.
+
+Instead create:
+
+\begin{verbatim}
+ReflectedPropertyCommand
+{
+    Entity;
+    TypeKey;
+    PropertyKey;
+    Before;
+    After;
+};
+\end{verbatim}
+
+Execute:
+
+\begin{verbatim}
+registry.Write(...After).
+\end{verbatim}
+
+Undo:
+
+\begin{verbatim}
+registry.Write(...Before).
+\end{verbatim}
+
+Now every reflected property automatically participates in undo.
+
+That is one of the greatest practical benefits of stable property IDs.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Example reflected property command}
+
+\begin{verbatim}
+class SetReflectedPropertyCommand
+    final : public EditorCommand
+{
+public:
+    SetReflectedPropertyCommand(
+        ReflectionRegistry& reflection,
+        std::string type,
+        std::string property,
+        void* object,
+        PropertyValue before,
+        PropertyValue after)
+        : m_Reflection(&reflection),
+          m_Type(std::move(type)),
+          m_Property(std::move(property)),
+          m_Object(object),
+          m_Before(std::move(before)),
+          m_After(std::move(after))
+    {}
+
+    void Execute() override
+    {
+        m_Reflection->Write(
+            m_Type,
+            m_Property,
+            m_Object,
+            m_After);
+    }
+
+    void Undo() override
+    {
+        m_Reflection->Write(
+            m_Type,
+            m_Property,
+            m_Object,
+            m_Before);
+    }
+
+private:
+    ReflectionRegistry* m_Reflection;
+
+    std::string m_Type;
+    std::string m_Property;
+
+    void* m_Object;
+
+    PropertyValue m_Before;
+    PropertyValue m_After;
+};
+\end{verbatim}
+
+But there is a major problem.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Do not store long-lived raw \texttt{void*} in editor commands}
+
+That object's address may change.
+
+Scene may be reloaded.
+
+Entity may be destroyed.
+
+Component may move.
+
+So actual editor command should store:
+
+\begin{verbatim}
+persistent Scene Entity ID
+TypeKey
+PropertyKey
+Before
+After.
+\end{verbatim}
+
+On Execute/Undo:
+
+\begin{verbatim}
+resolve entity
+resolve component object
+write reflected property.
+\end{verbatim}
+
+Again:
+
+\[
+\boxed{
+Identity
+\neq
+Address.
+}
+\]
+
+This same principle has now appeared in ECS, assets, GPU resources, object references, undo and reflection.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reflection + serialization integration}
+
+If every serializable property has stable ID:
+
+\begin{verbatim}
+Camera.NearPlane
+Camera.FarPlane
+Camera.Exposure.
+\end{verbatim}
+
+then file can store:
+
+\begin{verbatim}
+type Kairo.Engine.Camera
+
+property near-plane 0.1
+property far-plane 1000
+property exposure 1.
+\end{verbatim}
+
+Generic loader resolves:
+
+\[
+TypeKey
+\rightarrow
+TypeDescriptor
+\]
+
+then:
+
+\[
+PropertyKey
+\rightarrow
+PropertyDescriptor.
+\]
+
+This is how reflection becomes schema machinery.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Property rename problem}
+
+Suppose:
+
+\begin{verbatim}
+near-plane
+\end{verbatim}
+
+renamed to:
+
+\begin{verbatim}
+near-clip.
+\end{verbatim}
+
+If property key changes, old serialized files break.
+
+Therefore distinguish:
+
+\begin{verbatim}
+DisplayName can change freely.
+
+Persistent PropertyKey should remain stable.
+\end{verbatim}
+
+If semantic key must change, provide migration alias:
+
+\begin{verbatim}
+old near-plane
+→ new near-clip.
+\end{verbatim}
+
+Never casually rename persistent IDs for cosmetic reasons.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Type rename problem}
+
+Similarly:
+
+\begin{verbatim}
+Kairo.Engine.MeshRenderer
+\end{verbatim}
+
+might later be called:
+
+\begin{verbatim}
+Kairo.Rendering.MeshRenderer
+\end{verbatim}
+
+as code organization changes.
+
+Should persistent type ID change?
+
+Probably not unless schema identity truly changes.
+
+Persistence identity should not necessarily mirror source namespace.
+
+You may keep legacy stable key forever while C++ type moves namespaces.
+
+This is why persistent IDs must not be auto-derived blindly from \texttt{typeid}.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Unknown reflected properties}
+
+Suppose plugin missing.
+
+Scene has:
+
+\begin{verbatim}
+Kairo.Plugin.Water
+\end{verbatim}
+
+but registry does not contain that type.
+
+Policies include:
+
+\begin{verbatim}
+hard failure
+preserve opaque component
+load placeholder
+disable component.
+\end{verbatim}
+
+If editor aims to preserve projects even when optional plugin is temporarily unavailable, opaque preservation can be extremely valuable.
+
+If runtime requires plugin for correctness, hard failure may be right.
+
+This policy belongs to serialization/product design.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Version reflection descriptors too}
+
+If a reflected type's schema evolves, you may associate:
+
+\begin{verbatim}
+struct TypeDescriptor
+{
+    StableTypeID ID;
+    uint32_t SchemaVersion;
+    ...
+};
+\end{verbatim}
+
+Then serializer can know:
+
+\begin{verbatim}
+Component Camera schema 3.
+\end{verbatim}
+
+This is more scalable than relying only on global scene-format version when plugins/components evolve independently.
+
+Kairo currently uses stable type/property keys and versioned scene formats; per-type schema versions would be a possible future extension.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Safe type erasure + plugins}
+
+Suppose plugin registers:
+
+\begin{verbatim}
+TypeDescriptor
+accessor callbacks.
+\end{verbatim}
+
+Then plugin unloads while registry still holds \texttt{std::function} lambdas whose code lives inside unloaded library.
+
+Calling them becomes catastrophic.
+
+So dynamic plugin systems require descriptor/code lifetime coupling.
+
+Policy:
+
+\begin{verbatim}
+plugin may unload only after
+all registered descriptors are removed
+and no reflected objects remain.
+\end{verbatim}
+
+Or descriptors remain valid until process shutdown.
+
+Type erasure solves type coupling.
+
+It does not solve code lifetime automatically.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Inspector transactions}
+
+When user drags Transform X for 200 frames:
+
+\begin{verbatim}
+UI needs immediate live preview.
+\end{verbatim}
+
+But undo should be one command.
+
+A strong pattern:
+
+\begin{verbatim}
+BeginInteraction:
+capture Before
+
+During drag:
+apply preview state
+
+EndInteraction:
+capture After
+push one command representing Before→After
+\end{verbatim}
+
+Be careful not to execute command twice if preview already applied.
+
+Kairo's \texttt{TryMerge} model is another valid solution: each incremental command executes and subsequent commands merge into the previous history entry.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Recovery versus undo history}
+
+Should recovery snapshots store entire undo stack?
+
+Not necessarily.
+
+Two different recovery goals:
+
+\textbf{Document recovery}
+
+Restore unsaved content.
+
+\textbf{Session recovery}
+
+Restore undo/redo cursor, selection, tabs, camera, etc.
+
+Kairo currently prioritizes authored/recovery payloads and session context such as active document.
+
+That is a sound first target.
+
+Recovering exact undo history requires serializing every command, which is significantly more complex.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Recovery snapshots and checksum collision}
+
+FNV-1a 64-bit collision is possible.
+
+For accidental bit corruption, risk is sufficiently low for many editor recovery contexts.
+
+For adversarially modified recovery directories, not secure.
+
+If future threat model includes untrusted recovery payloads, replace or augment with SHA-256.
+
+Security algorithms should match threat model rather than superstition.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Recovery timestamp ordering}
+
+Kairo goes beyond simply naming snapshots by wall clock.
+
+Wall clocks can move backward.
+
+Multiple snapshots can occur in same millisecond.
+
+It ensures each published recovery timestamp is greater than prior valid snapshots.
+
+This gives deterministic retention ordering even across clock rollback/collisions.
+
+That is a thoughtful production detail.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Project paths and case sensitivity}
+
+Suppose Linux allows both:
+
+\begin{verbatim}
+Textures/A.png
+Textures/a.png.
+\end{verbatim}
+
+Windows may treat them as same path.
+
+A cross-platform project should reject ambiguous case-only duplicates.
+
+Kairo's portable key lowercases paths for lookup while preserving authored spelling.
+
+This is a pragmatic cross-platform policy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Unicode path complexity}
+
+Even case folding does not solve every Unicode issue.
+
+Characters may have multiple normalization forms:
+
+\[\text{é}\]
+
+can be one code point or:
+
+\[
+e+\text{combining accent}.
+\]
+
+Some filesystems normalize automatically; others do not.
+
+A fully portable asset pipeline may need defined Unicode normalization rules.
+
+Kairo's current path rules concentrate on portable ASCII-sensitive filesystem hazards and Windows reserved names, which is already strong; deeper Unicode canonicalization can become relevant for global content pipelines.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Manifest canonical ordering}
+
+Current AssetManifest serializer sorts assets by stable AssetID and dependencies by dependency ID.
+
+This means semantically identical registry state serializes consistently.
+
+Benefits:
+
+\begin{verbatim}
+clean diffs
+stable hashes
+reproducible builds
+lower merge noise.
+\end{verbatim}
+
+Deterministic ordering is one of the cheapest high-value persistence improvements.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reflection registry canonical ordering}
+
+Similarly Kairo:
+
+\begin{verbatim}
+uses std::map for types
+sorts properties by stable key.
+\end{verbatim}
+
+That makes descriptor snapshots deterministic independent of registration call order.
+
+Again, deterministic metadata matters for:
+
+\begin{verbatim}
+tooling
+testing
+serialization
+plugin diagnostics.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Build config should not leak into data semantics accidentally}
+
+Suppose Debug build serializes:
+
+\begin{verbatim}
+sizeof(size_t)=8
+\end{verbatim}
+
+while another target differs.
+
+Persistent file must not depend on compile flags such as:
+
+\begin{verbatim}
+NDEBUG
+packing pragmas
+compiler ABI.
+\end{verbatim}
+
+The serialization layer acts as the firewall between:
+
+\[
+BuildConfiguration
+\]
+
+and:
+
+\[
+PersistentDataSchema.
+\]
+
+This is one reason explicit field serialization matters.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Runtime config should not invalidate DDC unless semantically relevant}
+
+Suppose runtime setting:
+
+\begin{verbatim}
+masterVolume = 0.5.
+\end{verbatim}
+
+It should not change asset cache keys.
+
+But build/import setting:
+
+\begin{verbatim}
+texture compression = BC7.
+\end{verbatim}
+
+must.
+
+So configuration scope influences derivation identity.
+
+Ask:
+
+\[
+\text{Can this setting change artifact bytes?}
+\]
+
+If yes:
+
+\[
+\text{include in DDC recipe}.
+\]
+
+If no, do not over-invalidate.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Configuration is another dependency graph}
+
+Artifact:
+
+\[
+A=F(Source,Settings,Toolchain).
+\]
+
+Thus configuration values are hidden edges in build graph.
+
+If a setting influences output but is not included in cache key:
+
+\[
+\text{cache correctness bug}.
+\]
+
+This connects M092's DDC logic directly to Part 1582.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo audit for M093/M094}
+
+The inspected implementation currently provides:
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Area
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Current Kairo status
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Versioned project formats & Implemented \\
+Versioned scene formats & Implemented \\
+Versioned asset manifest & Implemented \\
+Strict unknown-statement handling & Implemented in inspected text formats \\
+Stable asset/entity references & Implemented \\
+Stable reflection type/property keys & Implemented \\
+UI-neutral reflection values & Implemented \\
+Runtime reflection registry & Implemented \\
+Generic getter/setter descriptors & Implemented \\
+Generic ImGui reflection inspector & Implemented \\
+Safe owned \texttt{PropertyValue} type erasure & Implemented \\
+\texttt{void*} object erasure & Implemented, descriptor pairing remains invariant \\
+Command-pattern undo/redo & Implemented \\
+Bounded command history & Implemented \\
+Redo-branch truncation & Implemented \\
+Command merging hook & Implemented \\
+Scene creation commands preserve IDs & Implemented \\
+Strong-exception command contract & Explicit \\
+Recovery snapshots & Implemented \\
+Recovery payload checksums & Implemented \\
+Invalid text draft recovery & Implemented \\
+Recovery retention & Implemented \\
+Periodic autosave scheduler & Not evident in inspected core recovery code \\
+Project descriptor v2 & Implemented \\
+Asset manifest validation & Implemented \\
+Project-relative path normalization & Implemented \\
+Traversal rejection & Implemented \\
+Canonical symlink escape checks & Implemented \\
+Packaging symlink rejection & Implemented \\
+Runtime package staging & Implemented \\
+Staged package bootstrap validation & Implemented \\
+Relocatable launcher & Implemented \\
+Atomic file replacement & Implemented \\
+Atomic directory package publication & Implemented \\
+Full fsync-style POSIX crash durability & Not established by the inspected atomic-file code \\
+Build/runtime config separation & Strongly present \\
+\end{longtable}
+}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Important Kairo improvement: checked erased object views}
+
+Current reflection accessors accept:
+
+\begin{verbatim}
+const void*
+void*.
+\end{verbatim}
+
+The registry validates:
+
+\begin{verbatim}
+type key
+property key
+PropertyValue kind.
+\end{verbatim}
+
+But it cannot intrinsically prove that:
+
+\begin{verbatim}
+void*
+\end{verbatim}
+
+actually points to the C++ type associated with descriptor.
+
+A useful future abstraction:
+
+\begin{verbatim}
+struct ReflectedObject
+{
+    void* Address = nullptr;
+    std::string_view TypeKey;
+};
+\end{verbatim}
+
+Then:
+
+\begin{verbatim}
+registry.Write(
+    object,
+    property,
+    value);
+\end{verbatim}
+
+compares:
+
+\[
+object.TypeKey=
+descriptor.Key.
+\]
+
+This turns one class of UB into deterministic validation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stronger alternative using runtime token}
+
+\begin{verbatim}
+using RuntimeTypeToken =
+    std::uint32_t;
+
+struct ReflectedObject
+{
+    void* Address;
+    RuntimeTypeToken RuntimeType;
+};
+\end{verbatim}
+
+TypeDescriptor contains matching token.
+
+Persistent key remains:
+
+\begin{verbatim}
+Kairo.Engine.Camera.
+\end{verbatim}
+
+Runtime token is dense and fast.
+
+Again:
+
+\[
+PersistentID
+\neq
+RuntimeIndex.
+\]
+
+Same architecture as assets and ECS.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Important Kairo improvement: reflection serialization policy flags}
+
+Current metadata already has:
+
+\begin{verbatim}
+ReadOnly
+Multiline
+Advanced.
+\end{verbatim}
+
+Future flags might include:
+
+\begin{verbatim}
+enum class PropertyFlags
+{
+    None,
+    ReadOnly,
+    Multiline,
+    Advanced,
+
+    Serializable,
+    Transient,
+    SaveGame,
+    Replicated,
+    EditorOnly
+};
+\end{verbatim}
+
+This lets reflection drive more systems without assuming every visible property belongs in every persistence domain.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Important Kairo improvement: field aliases}
+
+For schema evolution:
+
+\begin{verbatim}
+PropertyMetadata
+{
+    Key = "near-clip",
+    LegacyKeys =
+    {
+        "near-plane"
+    }
+};
+\end{verbatim}
+
+Deserializer sees old field:
+
+\begin{verbatim}
+near-plane
+\end{verbatim}
+
+and maps it to current property.
+
+Writer emits only:
+
+\begin{verbatim}
+near-clip.
+\end{verbatim}
+
+This gradually canonicalizes old formats.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Important Kairo improvement: descriptor schema version}
+
+\begin{verbatim}
+struct TypeDescriptor
+{
+    std::string Key;
+    uint32_t SchemaVersion;
+
+    ...
+};
+\end{verbatim}
+
+Then plugin/component persistence can evolve independently from whole-scene version.
+
+This becomes especially valuable once third-party components exist.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Important Kairo improvement: recovery scheduling}
+
+Existing primitives are already strong.
+
+A thin editor policy can add:
+
+\begin{verbatim}
+class RecoveryScheduler
+{
+public:
+    void Tick(
+        ProjectSession& session,
+        TimePoint now)
+    {
+        if (
+            !session.HasUnsavedChanges())
+        {
+            return;
+        }
+
+        if (
+            now - m_LastSnapshot <
+            m_Interval)
+        {
+            return;
+        }
+
+        session.CreateRecoveryPoint();
+
+        m_LastSnapshot = now;
+    }
+
+private:
+    Duration m_Interval =
+        std::chrono::minutes(2);
+
+    TimePoint m_LastSnapshot{};
+};
+\end{verbatim}
+
+In production, snapshot creation may be delegated to an I/O worker after capturing immutable state.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Important Kairo improvement: full durable save option}
+
+Current atomic rename semantics are excellent for normal editor failure resistance.
+
+For workloads where power-loss durability matters, introduce a lower-level durable file abstraction:
+
+\begin{verbatim}
+write temp
+flush userspace
+fsync temp
+atomic rename
+fsync containing directory.
+\end{verbatim}
+
+On Windows, use the appropriate write-through/handle flush semantics.
+
+Then expose:
+
+\begin{verbatim}
+SaveMode::Atomic
+SaveMode::Durable.
+\end{verbatim}
+
+Not every editor keystroke requires durability-grade fsync latency.
+
+Recovery snapshots perhaps do.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Important Kairo improvement: package dependency closure}
+
+Current package process copies a validated project payload with exclusions.
+
+Future release cooker should use:
+
+\begin{verbatim}
+startup scene
++
+runtime config roots
+        ↓
+asset dependency DAG
+        ↓
+transitive required assets
+        ↓
+platform-specific derived artifacts
+        ↓
+runtime package.
+\end{verbatim}
+
+Then exclude:
+
+\begin{verbatim}
+source OBJ
+source PSD
+unused scenes
+unused editor documents
+local DDC.
+\end{verbatim}
+
+This would complete Pass 13's authoring/runtime separation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- serialization}
+
+Given:
+
+\begin{verbatim}
+struct Camera
+{
+    float Near;
+    float Far;
+};
+\end{verbatim}
+
+Explain why this is wrong:
+
+\begin{verbatim}
+file.write(
+    reinterpret_cast<char*>(&camera),
+    sizeof(Camera));
+\end{verbatim}
+
+Then derive a robust representation defining:
+
+\begin{verbatim}
+format identity
+version
+field IDs/names
+float representation
+validation
+unknown-field policy.
+\end{verbatim}
+
+If you cannot explain padding, ABI, endian, schema evolution and unknown-field consequences, serialization is not yet mastered.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- compatibility}
+
+Suppose v1:
+
+\begin{verbatim}
+entity
+position
+rotation
+\end{verbatim}
+
+v2 adds:
+
+\begin{verbatim}
+scale.
+\end{verbatim}
+
+Answer separately:
+
+\textbf{New reader loading old file}
+
+Backward compatibility.
+
+Give:
+
+\begin{verbatim}
+scale = 1.
+\end{verbatim}
+
+\textbf{Old reader loading new file}
+
+Forward compatibility.
+
+Possible only if unknown \texttt{scale} can be skipped or preserved.
+
+Then explain why strict parsers intentionally reject it.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- object references}
+
+Given:
+
+\begin{verbatim}
+Entity 10 parent Entity 5
+\end{verbatim}
+
+runtime entities are:
+
+\begin{verbatim}
+10 -> {42,7}
+5  -> {91,3}.
+\end{verbatim}
+
+Save:
+
+\begin{verbatim}
+10 parent 5.
+\end{verbatim}
+
+Never:
+
+\begin{verbatim}
+42:7 parent 91:3.
+\end{verbatim}
+
+Load:
+
+\begin{verbatim}
+create all persistent entities
+build ID map
+resolve parent references
+validate no cycles.
+\end{verbatim}
+
+That algorithm should now be automatic.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- reflection}
+
+Given C++ field:
+
+\begin{verbatim}
+float Camera::Exposure;
+\end{verbatim}
+
+derive:
+
+\begin{verbatim}
+Stable TypeKey
+Stable PropertyKey
+DisplayName
+PropertyValueKind
+Read accessor
+Write accessor
+Range
+Flags.
+\end{verbatim}
+
+Then trace:
+
+\begin{verbatim}
+Camera instance
+    ↓
+registry.Read
+    ↓
+PropertyValue
+    ↓
+ImGui adapter
+    ↓
+user changes
+    ↓
+command
+    ↓
+registry.Write.
+\end{verbatim}
+
+That is the complete reflection/editor path.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- type erasure}
+
+Explain why:
+
+\begin{verbatim}
+void* object
+\end{verbatim}
+
+does not provide type safety.
+
+Safety comes from:
+
+\begin{verbatim}
+object pointer
++
+correct descriptor
++
+validated PropertyValue kind.
+\end{verbatim}
+
+Then propose runtime TypeToken if you need explicit misuse detection.
+
+That is safe type erasure.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- undo}
+
+History:
+
+\begin{verbatim}
+A B C D
+cursor after D.
+\end{verbatim}
+
+Undo twice:
+
+\begin{verbatim}
+A B | C D.
+\end{verbatim}
+
+Execute X.
+
+Result:
+
+\begin{verbatim}
+A B X |
+\end{verbatim}
+
+C/D discarded.
+
+Then explain why cursor moves only \textbf{after} Execute/Undo succeeds.
+
+That is command-history correctness.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- recovery}
+
+Explain difference:
+
+\begin{verbatim}
+Save
+\end{verbatim}
+
+writes authoritative state.
+
+\begin{verbatim}
+Undo
+\end{verbatim}
+
+reverses semantic edits in current process.
+
+\begin{verbatim}
+Recovery snapshot
+\end{verbatim}
+
+protects unsaved state against process failure.
+
+\begin{verbatim}
+Autosave
+\end{verbatim}
+
+periodically produces recovery state without necessarily committing authoritative files.
+
+Those are four separate mechanisms.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- path sandbox}
+
+Given:
+
+\begin{verbatim}
+ProjectRoot =
+/Users/x/Game
+
+Input =
+Assets/../Outside/file
+\end{verbatim}
+
+reject lexically.
+
+Given:
+
+\begin{verbatim}
+Assets/External
+\end{verbatim}
+
+is symlink to:
+
+\begin{verbatim}
+/etc.
+\end{verbatim}
+
+canonical path escapes root.
+
+Reject after filesystem resolution.
+
+Then explain why string prefix comparison is unsafe and path-component comparison is required.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- atomic save}
+
+Correct sequence:
+
+\begin{verbatim}
+serialize/validate
+      ↓
+write sibling temp
+      ↓
+flush/close
+      ↓
+atomic replace
+      ↓
+cleanup.
+\end{verbatim}
+
+Explain:
+
+\[
+\text{atomic visibility}
+\]
+
+versus:
+
+\[
+\text{power-loss durability}.
+\]
+
+They are not identical.
+
+That distinction is important enough to remember permanently.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- package relocation}
+
+Bundle:
+
+\begin{verbatim}
+MyGame/
+├── run.sh
+├── bin/
+│   └── KairoPlayer
+└── project/
+    ├── Project.kproject
+    ├── Scenes/
+    └── Assets...
+\end{verbatim}
+
+Launcher discovers root from itself.
+
+All project paths are relative.
+
+Therefore moving:
+
+\begin{verbatim}
+/home/a/MyGame
+\end{verbatim}
+
+to:
+
+\begin{verbatim}
+/opt/MyGame
+\end{verbatim}
+
+should still work.
+
+That is relocatability.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- configuration}
+
+Classify:
+
+\begin{verbatim}
+BUILD_EDITOR=ON
+\end{verbatim}
+
+as build-time.
+
+\begin{verbatim}
+--renderer metal
+\end{verbatim}
+
+as runtime.
+
+\begin{verbatim}
+startup-scene Scenes/Main.kscene
+\end{verbatim}
+
+as persistent project runtime policy.
+
+\begin{verbatim}
+OPENAI_API_KEY
+\end{verbatim}
+
+as environment/secret configuration.
+
+\begin{verbatim}
+texture-compression=BC7
+\end{verbatim}
+
+as asset-build configuration and therefore potentially a DDC-key input.
+
+If you can classify settings by lifetime/scope, you understand Part 1582 rather than merely memorizing terms.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The deep unifying principle of M093}
+
+Serialization, reflection and compatibility are all fundamentally about \textbf{stable semantic identity}.
+
+You need stable identity for:
+
+\[
+Type
+\]
+
+\[
+Property
+\]
+
+\[
+Entity
+\]
+
+\[
+Asset
+\]
+
+\[
+FileFormat.
+\]
+
+And you must keep those identities independent from:
+
+\begin{verbatim}
+memory address
+vector index
+compiler RTTI name
+display label
+filesystem location
+GPU handle.
+\end{verbatim}
+
+This is the exact same principle that has appeared repeatedly throughout the curriculum.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The deep unifying principle of M094}
+
+Undo, recovery and atomic save are all forms of \textbf{controlled state transition}.
+
+Instead of:
+
+\[
+State
+\rightarrow
+Mutation
+\]
+
+think:
+
+\[
+\boxed{
+State_{old}
+\xrightarrow{validated\ transaction}
+State_{new}.
+}
+\]
+
+And preserve enough information to either:
+
+\[
+Rollback
+\]
+
+or:
+
+\[
+Recover.
+\]
+
+Undo gives semantic rollback.
+
+Atomic rename gives file-level publication.
+
+Recovery gives crash-level restoration.
+
+Staging packaging gives directory-level publication.
+
+These are the same systems idea applied at different scopes.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Exact coverage --- M093 + M094}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}rll@{}}
+\toprule\noalign{}
+Part & Topic & Status \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1546 & Serialization goals & ✓ \\
+1547 & Binary versus text serialization & ✓ \\
+1548 & Versioned file formats & ✓ \\
+1549 & Schema evolution & ✓ \\
+1550 & Forward compatibility & ✓ \\
+1551 & Backward compatibility & ✓ \\
+1552 & Unknown-field handling & ✓ \\
+1553 & Stable endianness and numeric widths & ✓ \\
+1554 & Checksums and content hashes & ✓ \\
+1555 & Serialization of object references & ✓ \\
+1556 & Serialization of ECS entities & ✓ \\
+1557 & Scene-graph serialization & ✓ \\
+1558 & Reflection metadata & ✓ \\
+1559 & Type IDs & ✓ \\
+1560 & Property IDs & ✓ \\
+1561 & Reflection without language runtime reflection & ✓ \\
+1562 & Compile-time reflection patterns & ✓ \\
+1563 & Runtime reflection registries & ✓ \\
+1564 & Property getters and setters & ✓ \\
+1565 & Inspector adapters & ✓ \\
+1566 & Serialization driven by reflection & ✓ \\
+1567 & Editor UI driven by reflection & ✓ \\
+1568 & Safe type erasure & ✓ \\
+1569 & Undo commands & ✓ \\
+1570 & Command-pattern undo/redo & ✓ \\
+1571 & Transactional editor changes & ✓ \\
+1572 & Recovery journals & ✓ \\
+1573 & Autosave architecture & ✓ \\
+1574 & Project descriptors & ✓ \\
+1575 & Manifest validation & ✓ \\
+1576 & Sandboxed project-relative paths & ✓ \\
+1577 & Path traversal prevention & ✓ \\
+1578 & Symlink escape prevention & ✓ \\
+1579 & Runtime packaging & ✓ \\
+1580 & Relocatable bundles & ✓ \\
+1581 & Atomic publication by filesystem rename & ✓ \\
+1582 & Build configuration versus runtime configuration & ✓ \\
+\end{longtable}
+}
+
+You now have the complete persistence/tooling chain:
+
+\[
+\boxed{
+\begin{aligned}
+\text{C++ object}
+&\rightarrow
+\text{stable reflected schema}
+\\
+&\rightarrow
+\text{versioned semantic representation}
+\\
+&\rightarrow
+\text{validated references}
+\\
+&\rightarrow
+\text{atomic persistent file}
+\\
+&\rightarrow
+\text{recovery-protected editor state}
+\\
+&\rightarrow
+\text{relocatable runtime package}.
+\end{aligned}
+}
+\]
+
+And the Kairo-specific architecture is already substantially aligned with that model: \textbf{strict versioned text formats, persistent IDs instead of pointers, stable reflection keys instead of RTTI names, generic owned reflection values, UI-neutral descriptors, command-based undo, recovery snapshots with checksums, canonicalized project-relative paths, symlink escape checking, staged package validation, and atomic replacement.}
+
+The biggest remaining upgrades from this pass are not conceptual rewrites. They are production hardening: \textbf{runtime-checked reflected object/type pairing, reflection serialization-policy flags and schema aliases, automatic recovery scheduling, stronger fsync-level durability where required, and dependency-closure/platform-cooked runtime packages.}
+
+\textbf{Pass 15 is M095 + M096, Parts 1583--1600.} It closes Phase 16 with \textbf{CMake's target model; PUBLIC/PRIVATE/INTERFACE dependency propagation; imported/alias targets; presets; Ninja's build DAG; compiler toolchains; Clang/MSVC portability; C++ modules across targets; Git submodule pinning; reproducible superbuilds; CI matrices; unit/integration/smoke testing; crash reporting; structured logs/profiling hooks; portable subsystem boundaries; and finally drawing the full ownership/data flow from source asset → editor → package → player → runtime subsystem.}
+
+\subsection{Imported targets describe external artifacts; aliases provide a stable name}\label{05-engine-i-ch012-imported-targets-describe-external-artifacts-aliases-provide-a-stable-name}
+
+\hypertarget{05-engine-i-ch012-imported-targets-describe-external-artifacts-aliases-provide-a-stable-name}{}
+
+A CMake target is a named node in the build graph, with properties describing its sources, output and usage requirements. An \textbf{imported target} describes an artifact built outside this CMake build. It creates no compile/archive rule for that artifact, but consumers can still inherit its declared include paths, definitions and link requirements. An \textbf{alias} gives the same target another name. It does not copy properties or create a wrapper library; later changes to the real target remain visible through the alias.
+
+This exercise uses CMake 3.18's documented behavior. A non-GLOBAL imported target is visible in its declaring directory and descendants. CMake 3.18 permits an alias of that imported target, with matching directory visibility. An alias cannot itself be aliased, installed or exported, and cannot be the target whose properties are modified. Modify the real target; there is no requirement that all such modifications precede creation of the alias.
+
+\subsubsection{A complete project with an externally produced archive}\label{05-engine-i-ch012-a-complete-project-with-an-externally-produced-archive}
+
+\hypertarget{05-engine-i-ch012-a-complete-project-with-an-externally-produced-archive}{}
+
+Create the files below under \texttt{tools/labs/cmake\_imported\_alias/}, or use the saved copy in the vault. The vendor source is included solely so this exercise can produce its own stand-in archive before CMake runs. The CMake build then treats that archive exactly as an outside artifact: it builds only the consumer. No package download or third-party library is required.
+
+\textbf{CMakeLists.txt}
+
+\begin{verbatim}
+# This minimum selects the documented imported-alias directory-scope behavior.
+cmake_minimum_required(VERSION 3.18)
+# Enable and identify the host C++ toolchain. No dependency is downloaded.
+project(ImportedAliasExample LANGUAGES CXX)
+
+if(NOT DEFINED VENDOR_MATH_LIBRARY OR NOT EXISTS "${VENDOR_MATH_LIBRARY}")
+  message(FATAL_ERROR "Set VENDOR_MATH_LIBRARY to the prebuilt vendor_math archive")
+endif()
+
+# The target is a build-graph description of a file produced elsewhere.
+# It contributes no compile or archive rule of its own.
+add_subdirectory(deps)
+add_subdirectory(scope_probe)
+\end{verbatim}
+
+\textbf{deps/CMakeLists.txt}
+
+\begin{verbatim}
+# STATIC describes the external archive; IMPORTED means CMake will not build it.
+add_library(Vendor::Math STATIC IMPORTED)
+set_target_properties(Vendor::Math PROPERTIES
+  IMPORTED_LOCATION "${VENDOR_MATH_LIBRARY}"
+  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/include"
+  INTERFACE_COMPILE_DEFINITIONS "VENDOR_MATH_IMPORTED=1"
+)
+
+# Alias supplies this project with a stable name. It remains the same target.
+add_library(Project::Math ALIAS Vendor::Math)
+# An alias does not copy properties. Later changes to Vendor::Math are
+# observed through Project::Math too; modify the real target, not the alias.
+
+# Both imported target and its alias are visible in this child directory.
+add_subdirectory(consumer)
+\end{verbatim}
+
+\textbf{deps/include/vendor\_math.hpp}
+
+\begin{verbatim}
+#pragma once
+namespace vendor { int forty_two(); }
+\end{verbatim}
+
+\textbf{deps/vendor\_math.cpp}
+
+\begin{verbatim}
+#include "vendor_math.hpp"
+namespace vendor { int forty_two() { return 42; } }
+\end{verbatim}
+
+\textbf{deps/consumer/CMakeLists.txt}
+
+\begin{verbatim}
+if(NOT TARGET Vendor::Math OR NOT TARGET Project::Math)
+  message(FATAL_ERROR "Imported target and alias must be visible below deps/")
+endif()
+add_executable(imported_consumer main.cpp)
+# Linking the alias carries its location and include/definition usage requirements.
+target_link_libraries(imported_consumer PRIVATE Project::Math)
+\end{verbatim}
+
+\textbf{deps/consumer/main.cpp}
+
+\begin{verbatim}
+#include <vendor_math.hpp>
+int main() {
+  // This compile-time check proves INTERFACE_COMPILE_DEFINITIONS propagated.
+#ifndef VENDOR_MATH_IMPORTED
+#error expected imported target usage requirement
+#endif
+  return vendor::forty_two() == 42 ? 0 : 1;
+}
+\end{verbatim}
+
+\textbf{scope\_probe/CMakeLists.txt}
+
+\begin{verbatim}
+# The imported target was not GLOBAL; sibling directories cannot see it.
+if(TARGET Vendor::Math OR TARGET Project::Math)
+  message(FATAL_ERROR "non-GLOBAL imported target leaked outside deps/")
+endif()
+message(STATUS "PASS: non-GLOBAL imported target and alias are directory-scoped")
+\end{verbatim}
+
+\textbf{negative/CMakeLists.txt}
+
+\begin{verbatim}
+cmake_minimum_required(VERSION 3.18)
+project(ExpectedFailure LANGUAGES CXX)
+add_executable(missing_target main.cpp)
+target_link_libraries(missing_target PRIVATE Missing::Target)
+\end{verbatim}
+
+\textbf{negative/main.cpp}
+
+\begin{verbatim}
+int main() { return 0; }
+\end{verbatim}
+
+\subsubsection{Read the dependency graph, then run it}\label{05-engine-i-ch012-read-the-dependency-graph-then-run-it}
+
+\hypertarget{05-engine-i-ch012-read-the-dependency-graph-then-run-it}{}
+
+The imported name and alias are declared in \texttt{deps/}. Its consumer is a descendant, so both names resolve there. The root's \texttt{scope\_probe/} is a sibling, so neither non-GLOBAL name resolves there. Linking \texttt{Project::Math} carries the archive location, header directory and \texttt{VENDOR\_MATH\_IMPORTED} definition. The consumer never receives a hand-written include flag or macro outside the target interface, and its compile-time check fails if that interface is lost.
+
+For independent siblings that need the dependency, declare it in their common parent, intentionally use an imported GLOBAL target, or consume a package configuration that defines the target in the required scope. An alias created where the real target is invisible does not repair visibility. The \texttt{::} name is also useful: an unresolved namespaced dependency raises a configure/generate error instead of being treated as an ordinary raw linker name.
+
+From the example's directory, produce the archive outside the CMake graph and build the consumer. These shell comments explain which owner performs each step:
+
+\begin{verbatim}
+# The host compiler and archiver act as the external vendor for this small demo.
+c++ -std=c++11 -Ideps/include -c deps/vendor_math.cpp -o /tmp/vendor_math.o
+ar rcs /tmp/libvendor_math.a /tmp/vendor_math.o
+
+# IMPORTED_LOCATION receives an absolute path to that already-existing archive.
+cmake -S . -B /tmp/imported-alias-build -DVENDOR_MATH_LIBRARY=/tmp/libvendor_math.a
+cmake --build /tmp/imported-alias-build
+/tmp/imported-alias-build/deps/consumer/imported_consumer
+
+# This independent negative project must fail for Missing::Target, not a compiler error.
+cmake -S negative -B /tmp/imported-alias-negative
+\end{verbatim}
+
+\textbf{Worked solution and expected results.} The positive project reports that the imported target and alias are directory-scoped, compiles the consumer with its inherited header path and definition, links the prebuilt archive, and returns zero. The negative project fails during configuration/generation because \texttt{Missing::Target} is not defined. A nonzero return alone is insufficient evidence: inspect the diagnostic to confirm the intended failure. If the positive consumer cannot find the header, inspect \texttt{INTERFACE\_INCLUDE\_DIRECTORIES}; if its macro check fails, inspect \texttt{INTERFACE\_COMPILE\_DEFINITIONS}; if linking fails, verify the archive's absolute path, architecture and symbol definition.
+
+The solution to making the target visible to a sibling is a scope change at the shared dependency declaration, not a duplicate archive or an alias of an invisible target. If a dependency's requirements are wrong, update the real imported target; the alias remains another spelling of it.
+
+A static archive uses \texttt{IMPORTED\_LOCATION}. A Windows shared-library package may need both \texttt{IMPORTED\_IMPLIB} for the link-time import library and \texttt{IMPORTED\_LOCATION} for the runtime DLL. A header-only imported INTERFACE target has no compiled artifact. Multiple configurations may require configuration-specific locations. Those are distinct package contracts; this static host example does not test every platform layout.
+
+Source policy: the \href{https://cmake.org/cmake/help/v3.18/command/add_library.html}{CMake 3.18 add\_library reference}, \href{https://cmake.org/cmake/help/v3.18/command/target_link_libraries.html}{target\_link\_libraries}, and \href{https://cmake.org/cmake/help/v3.18/prop_tgt/IMPORTED_LOCATION.html}{IMPORTED\_LOCATION} define the behavior used here. The completed lab verifies this one project under the recorded installed toolchain, not every CMake generator or vendor SDK.
+
+\textbf{Complete source→editor→runtime data and ownership flow}
+
+This is the culmination of the entire Phase 16.
+
+We are going to trace \textbf{one texture}, \textbf{one scene entity}, and \textbf{one frame} through the whole engine.
+
+If you can draw this from memory, you understand the phase.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 1 --- source content}
+
+Artist creates:
+
+\begin{verbatim}
+Project/
+└── Textures/
+    └── Wall.png
+\end{verbatim}
+
+At this stage the authoritative thing is:
+
+\[
+SourceBytes.
+\]
+
+Ownership:
+
+\begin{verbatim}
+filesystem/project content.
+\end{verbatim}
+
+It is not yet:
+
+\begin{verbatim}
+renderer texture
+GPU image
+runtime handle.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 2 --- persistent asset registration}
+
+Asset system gives it:
+
+\[
+AssetID=A_{wall}.
+\]
+
+Metadata:
+
+\begin{verbatim}
+ID
+Type = Texture
+Path = Textures/Wall.png
+Importer = kairo.texture.stb
+Dependencies...
+\end{verbatim}
+
+Ownership:
+
+\begin{verbatim}
+AssetRegistry owns metadata.
+\end{verbatim}
+
+Important separation:
+
+\[
+A_{wall}
+\neq
+"Textures/Wall.png".
+\]
+
+Move path; ID survives.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 3 --- import recipe}
+
+Import database records:
+
+\begin{verbatim}
+source fingerprint
+importer ID
+importer version
+canonical settings.
+\end{verbatim}
+
+Derived key:
+
+\[
+K=
+H(
+SourceFingerprint,
+ImporterID,
+ImporterVersion,
+Settings,
+Target,
+DependencyInputs
+).
+\]
+
+Ownership:
+
+\begin{verbatim}
+import pipeline.
+\end{verbatim}
+
+This is reproducibility metadata.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 4 --- derived artifact}
+
+Importer produces:
+
+\begin{verbatim}
+TextureArtifact
+\end{verbatim}
+
+with:
+
+\begin{verbatim}
+dimensions
+format
+mip levels
+pixel payload.
+\end{verbatim}
+
+DDC stores it under immutable key K.
+
+Ownership:
+
+\begin{verbatim}
+DerivedDataCache.
+\end{verbatim}
+
+Deleting DDC should not destroy project identity.
+
+The artifact is reproducible.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 5 --- authored scene reference}
+
+A scene entity's MeshRenderer/Material may store:
+
+\begin{verbatim}
+TextureAssetHandle{
+    AssetID = A_wall
+}.
+\end{verbatim}
+
+Ownership:
+
+\begin{verbatim}
+EngineCore Scene.
+\end{verbatim}
+
+It does not store:
+
+\begin{verbatim}
+VkImage
+TextureHandle
+filesystem pointer.
+\end{verbatim}
+
+Excellent lifetime separation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 6 --- editor inspection}
+
+Reflection registry describes:
+
+\begin{verbatim}
+MeshRenderer
+Material
+asset-reference property.
+\end{verbatim}
+
+Inspector displays stable semantic reference.
+
+User edits.
+
+The ImGui layer emits intent:
+
+\begin{verbatim}
+Set property
+\end{verbatim}
+
+rather than mutating arbitrary bytes.
+
+Ownership flow:
+
+\begin{verbatim}
+UI
+    ↓
+Editor command
+    ↓
+Scene persistent state.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 7 --- undo transaction}
+
+Command captures:
+
+\begin{verbatim}
+Entity ID
+TypeKey
+PropertyKey
+Before
+After.
+\end{verbatim}
+
+Execute modifies scene.
+
+History owns command.
+
+Undo reverses.
+
+The scene remains the authoritative authored state.
+
+No renderer object is directly edited by the property widget.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 8 --- persistent save}
+
+Scene serializer writes:
+
+\begin{verbatim}
+stable entity IDs
+component schema
+asset IDs
+hierarchy references.
+\end{verbatim}
+
+It uses a versioned format.
+
+Save sequence:
+
+\begin{verbatim}
+serialize candidate
+write temporary sibling
+flush/close
+atomic replace.
+\end{verbatim}
+
+Ownership transfers from in-memory scene representation to durable file representation.
+
+They represent the same semantics, not the same memory.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 9 --- recovery path}
+
+If scene is unsaved:
+
+\begin{verbatim}
+CreateRecoveryPoint
+\end{verbatim}
+
+serializes current in-memory state into separate recovery snapshot.
+
+Recovery owns redundant safety copies.
+
+It does \textbf{not} become canonical project state unless explicitly restored.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 10 --- packaging}
+
+Build profile determines output.
+
+Packaging creates staging tree:
+
+\begin{verbatim}
+package/
+├── bin/KairoPlayer
+├── project/Project.kproject
+├── project/Scenes/...
+└── package.kmanifest
+\end{verbatim}
+
+It rejects unsafe symlinks and transient editor state.
+
+Then staged project is reopened and validated.
+
+Only after success does package become visible.
+
+Ownership:
+
+\begin{verbatim}
+packaging pipeline
+→ published bundle.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 11 --- Player bootstrap}
+
+Launcher determines package root.
+
+Runs:
+
+\begin{verbatim}
+KairoPlayer
+project/Project.kproject.
+\end{verbatim}
+
+Player loads:
+
+\begin{verbatim}
+ProjectDescriptor
+AssetManifest
+StartupScene.
+\end{verbatim}
+
+No editor is required.
+
+The runtime composition root constructs:
+
+\begin{verbatim}
+runtime project
+ECS bridge
+physics
+audio
+input
+renderer
+gameplay
+render bridge.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 12 --- scene→runtime ECS extraction}
+
+Persistent authored:
+
+\begin{verbatim}
+Scene Entity 1007
+\end{verbatim}
+
+becomes:
+
+\begin{verbatim}
+Runtime Entity {Index,Generation}.
+\end{verbatim}
+
+Bridge records:
+
+\[
+SceneID
+\leftrightarrow
+RuntimeEntity.
+\]
+
+Persistent scene remains distinct from process-local ECS storage.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 13 --- asset runtime resolution}
+
+The runtime entity references:
+
+\[
+A_{wall}.
+\]
+
+Asset runtime resolves:
+
+\begin{verbatim}
+AssetID
+   ↓
+derived artifact
+   ↓
+renderer resource creation.
+\end{verbatim}
+
+Renderer creates:
+
+\begin{verbatim}
+TextureHandle T17
+\end{verbatim}
+
+which may internally correspond to:
+
+\begin{verbatim}
+VkImage
+MTLTexture
+ID3D12Resource
+OpenGL texture.
+\end{verbatim}
+
+Now we have three distinct identities:
+
+\[
+A_{wall}
+\]
+
+persistent,
+
+\[
+T17
+\]
+
+runtime renderer identity,
+
+and:
+
+\[
+GPUObject
+\]
+
+backend-specific object.
+
+Never merge them conceptually.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 14 --- simulation}
+
+Runtime systems operate on:
+
+\begin{verbatim}
+ECS entities
+physics BodyIDs
+input state
+script state.
+\end{verbatim}
+
+Physics may map:
+
+\[
+RuntimeEntity
+\leftrightarrow
+BodyID.
+\]
+
+Renderer does not become physics owner.
+
+Subsystem-specific identities remain separate.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 15 --- render extraction}
+
+ECS:
+
+\begin{verbatim}
+Transform
+Renderable
+Light
+Camera
+\end{verbatim}
+
+becomes frame data:
+
+\begin{verbatim}
+RenderScene
+MeshDraw[]
+Lights
+Camera.
+\end{verbatim}
+
+This is a \textbf{copy/extraction boundary}.
+
+Renderer receives exactly what it needs.
+
+It does not traverse arbitrary editor Scene internals.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 16 --- render graph}
+
+Renderer compiles:
+
+\begin{verbatim}
+passes
+resources
+accesses
+transitions
+lifetimes.
+\end{verbatim}
+
+RenderGraph produces execution plan.
+
+CPU timing can produce:
+
+\begin{verbatim}
+RenderGraphExecutionProfile.
+\end{verbatim}
+
+Backend records GPU work.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 17 --- GPU submission}
+
+Backend submits resources.
+
+Now their lifetime extends beyond CPU frame construction.
+
+For a resource R:
+
+\[
+Lifetime(R)
+>
+LastGPUUse(R).
+\]
+
+If hot reloaded:
+
+\begin{verbatim}
+new resource published
+old resource retired
+old object destroyed only after GPU completion.
+\end{verbatim}
+
+This is the frames-in-flight rule from Pass 13.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 18 --- diagnostics}
+
+Along the entire path:
+
+\begin{verbatim}
+Logger
+profiling
+validation
+tests
+crash metadata.
+\end{verbatim}
+
+observe the system.
+
+Diagnostics should \textbf{observe} engine state.
+
+They should not become the owner of core semantics.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stage 19 --- CI proves the complete graph}
+
+The build artifact did not emerge from nowhere.
+
+CI reconstructs:
+
+\begin{verbatim}
+workspace.lock
+        ↓
+exact repositories
+        ↓
+preset
+        ↓
+toolchain
+        ↓
+CMake target graph
+        ↓
+Ninja DAG
+        ↓
+build
+        ↓
+unit tests
+        ↓
+integration tests
+        ↓
+smoke tests
+        ↓
+package.
+\end{verbatim}
+
+That chain is the \textbf{build-time equivalent} of your runtime ownership chain.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The two master DAGs}
+
+At this point you should mentally separate two large graphs.
+
+\subsection{Build DAG}\label{05-engine-i-ch012-build-dag}
+
+\hypertarget{05-engine-i-ch012-build-dag}{}
+
+\[
+SourceRepos
+\rightarrow
+CMakeTargets
+\rightarrow
+GeneratedArtifacts
+\rightarrow
+Executables.
+\]
+
+\subsection{Runtime DAG}\label{05-engine-i-ch012-runtime-dag}
+
+\hypertarget{05-engine-i-ch012-runtime-dag}{}
+
+\[
+ProjectData
+\rightarrow
+RuntimeServices
+\rightarrow
+SubsystemResources
+\rightarrow
+FrameWork.
+\]
+
+Neither should contain hidden cycles.
+
+And both should have explicit ownership.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The full Kairo architecture in one view}
+
+\begin{verbatim}
+                    DEVELOPMENT / AUTHORING
+
+ Source repositories
+       |
+       | exact SHAs
+       v
+ workspace.lock
+       |
+       v
+ CMake target graph
+       |
+       v
+ Ninja build graph
+       |
+       +--------------------+
+       |                    |
+       v                    v
+    KairoEditor          KairoPlayer
+       |                    ^
+       |                    |
+       v                    |
+ Project + source assets    |
+       |                    |
+       v                    |
+ Asset Registry             |
+       |                    |
+       v                    |
+ Importers / DDC            |
+       |                    |
+       v                    |
+ Derived artifacts          |
+       |                    |
+       v                    |
+ Scene authoring            |
+       |                    |
+       v                    |
+ Reflection inspector       |
+       |                    |
+       v                    |
+ Undo / recovery            |
+       |                    |
+       v                    |
+ Persistent project files   |
+       |                    |
+       +-------> Packaging--+
+                            |
+                            v
+
+                         RUNTIME
+
+                     ProjectDescriptor
+                            |
+                            v
+                       AssetManifest
+                            |
+                            v
+                         Scene
+                            |
+                            v
+                      ECS extraction
+                    /       |        \
+                   v        v         v
+               Physics    Logic     Render
+                   |        |         |
+                   +--------+---------+
+                            |
+                            v
+                        Frame state
+                            |
+                            v
+                       RenderScene
+                            |
+                            v
+                       RenderGraph
+                            |
+                            v
+                      Backend commands
+                            |
+                            v
+                           GPU
+\end{verbatim}
+
+That is Phase 16.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hyperref[volume-reading-map]{Reading map} · \hyperref[05-engine-i-ch011-streaming-resources-through-explicit-states]{Previous chapter} · \href{../05-Spatial-Worlds-Engine-State-and-Simulation-P01/main.pdf\#nameddest=05-engine-i-ch013-portable-startup-windows-events-and-input}{Next chapter (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 13)}

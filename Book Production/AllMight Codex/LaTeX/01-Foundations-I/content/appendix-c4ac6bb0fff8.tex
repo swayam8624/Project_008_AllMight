@@ -1,0 +1,42 @@
+\hypertarget{appendix-c4ac6bb0fff8}{}
+\section*{ABI and object layout}
+\section{ABI and object layout}\label{abi-and-object-layout}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C003 · \textbf{Latest development:} C007
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+C++23 preserves declaration order for nonzero-size non-variant data members even across different access labels; earlier standards had weaker ordering guarantees. alignas can request supported stronger alignment, increasing stride. Standard-layout and trivial copyability are distinct; offsetof is guaranteed for standard-layout types, while use on others is conditionally supported. Verify CPU/upload/shader offsets separately.
+
+An application binary interface (ABI) specifies implementation-level calling and data-layout conventions. Member offsets, complete size/alignment, and calling conventions affect binary compatibility. sizeof/alignof/offsetof inspect a standard-layout record; they do not define a portable file schema. Assume stated target rules before deriving 0/4/8 offsets.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a1f7c53b4742]{Alignment and padding} --- Address divisibility determines legal placement and layout holes.
+\item
+  \hyperref[appendix-cc04044b5782]{Fixed-width integer types} --- The representation width fixes byte count and valid shift range.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-ffdc1d4e5350]{Matrix storage indexing and strides}
+\item
+  \hyperref[appendix-958870a64c53]{Standard-layout and trivial copyability} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\end{itemize}
+
+Update downstream uses when later chunks build on this concept.
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Separate measured compiler layout from a proposed wire schema.
+
+\textbf{Pending:} Full lifetime replacement, ownership/concurrency policies and cross-target ABI experiments; the opening examples do not establish those later guarantees.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Where\%20the\%20bytes\%20live}{C003 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Bringing\%20the\%20object\%20model\%20back\%20to\%20bytes}{C007 development}

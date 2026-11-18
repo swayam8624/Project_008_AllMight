@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch302.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-e4d8ed8d6787-persistent-homology" class="level2">
+<h2>Persistent homology</h2>
+<p>Ordinary homology asks which connected components, loops and higher-dimensional voids exist in one topological complex. Persistent homology asks how those features appear and disappear as a scale or threshold changes.</p>
+<p>Begin with a <strong>filtration</strong>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>K</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>⊆</mo>
+  <msub>
+    <mi>K</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>⊆</mo>
+  <mo>⋯</mo>
+  <mo>⊆</mo>
+  <msub>
+    <mi>K</mi>
+    <mi>m</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Each step adds vertices, edges, faces or higher cells according to a declared rule. A topological feature is born when it first appears and dies when it becomes a boundary or merges according to the homology pairing convention.</p>
+<p>Its persistence is often summarized by an interval</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>b</mi>
+  <mo>,</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>or a point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>b</mi>
+  <mo>,</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+</math> in a persistence diagram.</p>
+<section id="appendix-e4d8ed8d6787-what-persistence-means" class="level3">
+<h3>What persistence means</h3>
+<p>A long-lived feature is stable across a wider range of the chosen filtration parameter. That can make it more robust to one class of perturbation, but it is not proof that the feature is physically meaningful. The conclusion depends on:</p>
+<ul>
+<li>the distance or scalar field used;</li>
+<li>sampling density;</li>
+<li>noise/outlier model;</li>
+<li>complex construction such as Vietoris–Rips, Čech or alpha complex;</li>
+<li>coefficient field;</li>
+<li>filtration scale.</li>
+</ul>
+<p>A persistent loop in a noisy scan can reflect real geometry, a sampling hole, or the behavior of the chosen complex.</p>
+</section>
+<section id="appendix-e4d8ed8d6787-union-find-intuition-for-h0" class="level3">
+<h3>Union-find intuition for H0</h3>
+<p>For connected components, persistence can be understood with disjoint sets. Vertices are born as components. When an edge connects two previously separate components, one component dies at that edge’s filtration value according to a consistent elder-rule convention.</p>
+<p>Higher-dimensional persistence requires boundary-matrix reduction or more specialized algorithms.</p>
+</section>
+<section id="appendix-e4d8ed8d6787-meshreconstruction-relevance" class="level3">
+<h3>Mesh/reconstruction relevance</h3>
+<p>Persistent homology can help diagnose captured geometry across thresholds: which holes survive changing reconstruction confidence, neighborhood radius or density? That is a better use than quoting a Betti number from one arbitrary threshold.</p>
+<p>A study should compare the persistence structure with controlled synthetic holes/noise so the interpretation is calibrated.</p>
+</section>
+<section id="appendix-e4d8ed8d6787-evidence-boundary" class="level3">
+<h3>Evidence boundary</h3>
+<p>The repository’s mathematics expansion develops complexes, chains, boundaries, Betti reasoning and persistence concepts. It does not yet claim a production-scale persistent-homology solver or a theorem that a persistent feature corresponds to a physically correct surface.</p>
+<p>Read the connected explanation in <a href="ch296.xhtml#id_03-visual-computing-i-ch002-from-a-scanned-triangle-soup-to-a-mesh-we-can-trust" class="wikilink">Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#From a scanned triangle soup to a mesh we can trust</a>.</p>
+<p>Related: <a href="ch301.xhtml#appendix-e38976cbbf86-mesh-topology-and-homology" class="wikilink">Mesh topology and homology</a>, <a href="ch304.xhtml#appendix-faac749c9cdd-half-edge-topology-invariants" class="wikilink">Half-edge topology invariants</a>.</p>
+</section>
+</section>
+</body>
+</html>

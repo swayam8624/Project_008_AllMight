@@ -1,0 +1,3577 @@
+We now move into a very important bridge block. The canonical sequence is:
+
+**571. Affine combinations versus linear combinations**  
+**572. Convex combinations**  
+**573. Convex sets**  
+**574. Convex hull intuition**  
+**575. Minkowski sum intuition**  
+**576. Minkowski difference intuition**  
+**577. Support functions of convex shapes**  
+**578. Homogeneous coordinates as projective representatives**  
+**579. Points and directions through homogeneous \(w\)**. Project_Sheldon_Master_Curricul…
+
+The dependency chain is excellent:
+
+\[
+\boxed{
+\text{linear combination}
+\rightarrow
+\text{affine combination}
+\rightarrow
+\text{convex combination}
+}
+\]
+
+then:
+
+\[
+\boxed{
+\text{convex combinations}
+\rightarrow
+\text{convex sets}
+\rightarrow
+\text{convex hulls}
+}
+\]
+
+then:
+
+\[
+\boxed{
+\text{convex shapes}
+\rightarrow
+\text{Minkowski operations}
+\rightarrow
+\text{support functions}
+}
+\]
+
+and finally:
+
+\[
+\boxed{
+\text{points vs vectors}
+\rightarrow
+\text{homogeneous representation}
+\rightarrow
+w
+}
+\]
+
+which eventually becomes the mathematical language of transforms, clipping and projection.
+
+---
+
+# PART 571 — AFFINE COMBINATIONS VERSUS LINEAR COMBINATIONS
+
+This distinction is fundamental because vectors and points do **not** obey exactly the same algebra.
+
+---
+
+## 571.1 Linear combination
+
+Given vectors:
+
+\[
+v_1,v_2,\ldots,v_n
+\]
+
+and arbitrary scalars:
+
+\[
+a_1,a_2,\ldots,a_n,
+\]
+
+a linear combination is:
+
+\[
+\boxed{
+a_1v_1+a_2v_2+\cdots+a_nv_n.
+}
+\]
+
+There is **no restriction** on:
+
+\[
+a_1+\cdots+a_n.
+\]
+
+Example:
+
+\[
+v_1=(1,0),
+\qquad
+v_2=(0,1).
+\]
+
+Then:
+
+\[
+3v_1-7v_2
+=
+(3,-7).
+\]
+
+Perfectly valid.
+
+Linear combinations belong naturally to vector spaces.
+
+---
+
+# 571.2 Why vectors allow this
+
+Vectors are free displacements.
+
+If:
+
+\[
+v
+\]
+
+is a displacement, then:
+
+\[
+2v
+\]
+
+means twice the displacement.
+
+And:
+
+\[
+-v
+\]
+
+means the opposite displacement.
+
+The zero vector exists naturally:
+
+\[
+0v=0.
+\]
+
+So unrestricted scaling makes sense.
+
+---
+
+# 571.3 Points are different
+
+Suppose:
+
+\[
+A,B
+\]
+
+are points.
+
+What does:
+
+\[
+2A
+\]
+
+mean geometrically?
+
+Without choosing an origin, nothing intrinsic.
+
+Likewise:
+
+\[
+A+B
+\]
+
+has no natural meaning as a point in ordinary affine geometry.
+
+But this does make sense:
+
+\[
+B-A.
+\]
+
+Why?
+
+Point minus point produces a displacement vector.
+
+And:
+
+\[
+A+v
+\]
+
+makes sense:
+
+point plus displacement gives point.
+
+That was Parts 521–522.
+
+---
+
+# 571.4 Affine combination
+
+An affine combination of points:
+
+\[
+P_1,\ldots,P_n
+\]
+
+has form:
+
+\[
+\boxed{
+a_1P_1+\cdots+a_nP_n
+}
+\]
+
+subject to:
+
+\[
+\boxed{
+a_1+\cdots+a_n=1.
+}
+\]
+
+The sum-to-one constraint is what makes the result independent of the arbitrary origin.
+
+---
+
+# 571.5 Derive translation invariance
+
+Translate all points by \(t\):
+
+\[
+P_i'=P_i+t.
+\]
+
+Then:
+
+\[
+\sum_i a_iP_i'
+=
+\sum_i a_i(P_i+t).
+\]
+
+Expand:
+
+\[
+=
+\sum_i a_iP_i+
+\left(
+\sum_i a_i
+\right)t.
+\]
+
+If:
+
+\[
+\sum_i a_i=1,
+\]
+
+then:
+
+\[
+=
+\sum_i a_iP_i+t.
+\]
+
+Exactly what a point should do under translation.
+
+Therefore:
+
+\[
+\boxed{
+\text{sum of weights}=1
+}
+\]
+
+is the mathematical condition that makes the combination affine.
+
+---
+
+# 571.6 If weights sum to zero
+
+Something interesting happens.
+
+Suppose:
+
+\[
+\sum_i a_i=0.
+\]
+
+Then under translation:
+
+\[
+\sum_i a_i(P_i+t)
+=
+\sum_i a_iP_i.
+\]
+
+The translation disappears.
+
+So a weighted point combination whose coefficients sum to zero behaves like a **vector**, not a point.
+
+Example:
+
+\[
+B-A.
+\]
+
+Weights:
+
+\[
+(-1,+1).
+\]
+
+Sum:
+
+\[
+0.
+\]
+
+And indeed:
+
+\[
+B-A
+\]
+
+is a displacement vector.
+
+This is a deep unification:
+
+\[
+\boxed{
+\sum a_i=1
+\Rightarrow
+\text{point-like affine result}
+}
+\]
+
+\[
+\boxed{
+\sum a_i=0
+\Rightarrow
+\text{vector-like translation-invariant result}.
+}
+\]
+
+---
+
+# 571.7 Midpoint as affine combination
+
+Midpoint:
+
+\[
+M=\frac12A+\frac12B.
+\]
+
+Weights sum:
+
+\[
+\frac12+\frac12=1.
+\]
+
+So midpoint is affine.
+
+Translate A and B together and M translates with them.
+
+---
+
+# 571.8 Extrapolation is still affine
+
+Consider:
+
+\[
+P=2B-A.
+\]
+
+Weights:
+
+\[
+-1+2=1.
+\]
+
+So this is still an affine combination.
+
+Geometrically:
+
+```text
+A -------- B -------- P
+```
+
+P lies beyond B.
+
+Thus:
+
+\[
+\boxed{
+\text{affine does not imply inside}.
+}
+\]
+
+Negative weights are allowed.
+
+That distinction becomes Part 572.
+
+---
+
+# 571.9 Linear vs affine in one sentence
+
+Linear combination:
+
+\[
+\boxed{
+\sum a_iv_i
+}
+\]
+
+with arbitrary coefficients.
+
+Affine combination:
+
+\[
+\boxed{
+\sum a_iP_i,
+\qquad
+\sum a_i=1.
+}
+\]
+
+Linear combination answers:
+
+> What vector can I construct from these vectors?
+
+Affine combination answers:
+
+> What point can I construct relative to these points without caring where the global origin is?
+
+---
+
+# 571.10 C++ semantic design
+
+This is why a strong math API might distinguish:
+
+```cpp
+struct Point3;
+struct Vec3;
+```
+
+and permit:
+
+```cpp
+Point3 + Vec3 -> Point3
+Point3 - Point3 -> Vec3
+Vec3 + Vec3   -> Vec3
+```
+
+while deliberately not defining arbitrary:
+
+```cpp
+Point3 + Point3
+```
+
+except through named operations such as:
+
+```cpp
+midpoint(a, b)
+```
+
+or barycentric interpolation.
+
+The type system can protect affine semantics.
+
+---
+
+# PART 572 — CONVEX COMBINATIONS
+
+An affine combination allows negative coefficients.
+
+A **convex combination** adds one more restriction:
+
+\[
+\boxed{
+a_i\ge0.
+}
+\]
+
+So:
+
+\[
+\boxed{
+\sum_i a_iP_i,
+\qquad
+a_i\ge0,
+\qquad
+\sum_i a_i=1.
+}
+\]
+
+---
+
+# 572.1 Why nonnegative matters
+
+Take two points:
+
+\[
+A,B.
+\]
+
+Any affine combination is:
+
+\[
+P=(1-t)A+tB.
+\]
+
+Because weights sum to one.
+
+If:
+
+\[
+0\le t\le1,
+\]
+
+both weights are nonnegative.
+
+Then P lies on the line segment between A and B.
+
+If:
+
+\[
+t>1,
+\]
+
+then:
+
+\[
+1-t<0.
+\]
+
+P moves beyond B.
+
+If:
+
+\[
+t<0,
+\]
+
+P moves beyond A.
+
+Therefore:
+
+\[
+\boxed{
+\text{nonnegative affine weights keep you inside the endpoints}.
+}
+\]
+
+---
+
+# 572.2 Triangle case
+
+For triangle:
+
+\[
+A,B,C,
+\]
+
+a convex combination is:
+
+\[
+P=\alpha A+\beta B+\gamma C
+\]
+
+where:
+
+\[
+\alpha,\beta,\gamma\ge0
+\]
+
+and:
+
+\[
+\alpha+\beta+\gamma=1.
+\]
+
+Exactly the barycentric inside-triangle condition from Part 568.
+
+Thus barycentric coordinates inside a triangle are convex weights.
+
+---
+
+# 572.3 Convex versus affine
+
+Example:
+
+\[
+P=-A+B+C.
+\]
+
+Weights:
+
+\[
+-1+1+1=1.
+\]
+
+So it is affine.
+
+But:
+
+\[
+-1<0.
+\]
+
+Therefore not convex.
+
+So:
+
+\[
+\boxed{
+\text{every convex combination is affine}
+}
+\]
+
+but:
+
+\[
+\boxed{
+\text{not every affine combination is convex}.
+}
+\]
+
+---
+
+# 572.4 Physical intuition: mixing
+
+Suppose three paints have colors:
+
+\[
+C_1,C_2,C_3.
+\]
+
+You mix:
+
+\[
+20\%,30\%,50\%.
+\]
+
+Weights:
+
+\[
+0.2,0.3,0.5
+\]
+
+sum to one and are nonnegative.
+
+Result:
+
+\[
+C=0.2C_1+0.3C_2+0.5C_3.
+\]
+
+That is a convex combination.
+
+Negative paint quantity would not make physical sense.
+
+This "weighted average" intuition is excellent for convex combinations.
+
+---
+
+# 572.5 Convex combinations are weighted averages
+
+Because weights are nonnegative and sum to 1, no term can push the result past all inputs in an affine sense.
+
+For real scalars:
+
+\[
+x=\sum_i a_ix_i
+\]
+
+satisfies:
+
+\[
+\min_i x_i
+\le x\le
+\max_i x_i.
+\]
+
+For vectors/points, the analogous geometric statement is that the result stays within the convex region generated by the inputs.
+
+That leads directly to convex sets.
+
+---
+
+# PART 573 — CONVEX SETS
+
+A set \(C\) is convex if taking any two points inside it and connecting them with a straight segment never leaves the set.
+
+Formal definition:
+
+\[
+\boxed{
+x,y\in C,\quad
+t\in[0,1]
+\Rightarrow
+(1-t)x+ty\in C.
+}
+\]
+
+That expression is exactly a two-point convex combination.
+
+---
+
+# 573.1 Circle disk versus circle boundary
+
+Be careful.
+
+A **filled disk**:
+
+```text
+   *****
+ *********
+***********
+***********
+ *********
+   *****
+```
+
+is convex.
+
+Take any two points inside. The connecting line segment remains inside.
+
+But the **circle boundary alone** is not convex.
+
+Take opposite boundary points:
+
+```text
+A ●-----------● B
+```
+
+The line segment between them runs through the interior, which is not part of the boundary-only set.
+
+Therefore the set fails the definition.
+
+---
+
+# 573.2 Rectangle
+
+A filled rectangle is convex.
+
+Any line segment connecting two interior points stays inside.
+
+---
+
+# 573.3 Crescent / concave polygon
+
+Consider:
+
+```text
+********
+*      *
+*   ****
+*   *
+*   ****
+*      *
+********
+```
+
+Take points on opposite sides of an indentation.
+
+The segment can pass outside the shape.
+
+Therefore the set is nonconvex.
+
+---
+
+# 573.4 Why engines love convex objects
+
+Convex geometry has strong properties.
+
+For example:
+
+- a line intersects a convex set in at most one continuous interval;
+- local extrema are easier to reason about;
+- separating directions behave cleanly;
+- support points are meaningful;
+- collision algorithms such as GJK operate naturally on convex shapes.
+
+Nonconvex shapes are often decomposed into convex pieces because convex collision questions are dramatically easier.
+
+---
+
+# 573.5 Convexity can be defined using any finite convex combination
+
+The two-point definition implies a stronger statement.
+
+If:
+
+\[
+x_1,\ldots,x_n\in C
+\]
+
+and:
+
+\[
+a_i\ge0,
+\qquad
+\sum_i a_i=1,
+\]
+
+then:
+
+\[
+\boxed{
+\sum_i a_ix_i\in C.
+}
+\]
+
+We can prove this recursively.
+
+For three points:
+
+\[
+a+b+c=1.
+\]
+
+Assume:
+
+\[
+a+b>0.
+\]
+
+Define:
+
+\[
+q=
+\frac{a}{a+b}x+
+\frac{b}{a+b}y.
+\]
+
+Those normalized weights sum to one, so:
+
+\[
+q\in C.
+\]
+
+Then:
+
+\[
+ax+by+cz
+=
+(a+b)q+cz.
+\]
+
+Since:
+
+\[
+(a+b)+c=1,
+\]
+
+this is a convex combination of \(q\) and \(z\).
+
+Therefore it lies in C.
+
+So convex sets contain all convex mixtures of their points.
+
+---
+
+# 573.6 Convexity is affine-invariant
+
+Apply an affine transform:
+
+\[
+F(x)=Lx+t.
+\]
+
+Take points:
+
+\[
+x,y\in C.
+\]
+
+Their transformed convex combination:
+
+\[
+F((1-s)x+sy).
+\]
+
+Because F is affine:
+
+\[
+=
+(1-s)F(x)+sF(y).
+\]
+
+Therefore affine transformations preserve convexity.
+
+So:
+
+- translation;
+- rotation;
+- scale;
+- shear;
+- reflection
+
+all preserve convexity as long as the affine transform is applied consistently.
+
+A cube can become a sheared parallelepiped and remain convex.
+
+---
+
+# PART 574 — CONVEX HULL INTUITION
+
+Suppose you have arbitrary points:
+
+```text
+       ●
+
+ ●          ●
+
+       ●
+
+   ●             ●
+```
+
+You want the **smallest convex set containing all of them**.
+
+That is the convex hull.
+
+---
+
+# 574.1 Rubber-band intuition
+
+Hammer nails into a board at the sample points.
+
+Stretch a rubber band around all nails.
+
+Release it.
+
+The rubber band contracts until it touches the outermost nails.
+
+The enclosed region is the convex hull.
+
+```text
+        ●
+      /   \
+   ●       ●
+   |   ●   |
+   ●       ●
+      \   /
+        ●
+```
+
+Interior points do not affect the hull boundary.
+
+---
+
+# 574.2 Formal definition through convex combinations
+
+Given points:
+
+\[
+p_1,\ldots,p_n,
+\]
+
+their convex hull is:
+
+\[
+\boxed{
+\operatorname{conv}\{p_i\}
+=
+\left\{
+\sum_i a_ip_i
+\mid
+a_i\ge0,\;
+\sum_i a_i=1
+\right\}.
+}
+\]
+
+So:
+
+\[
+\boxed{
+\text{convex hull = set of every possible convex combination of the input points}.
+}
+\]
+
+This connects directly to Parts 572–573.
+
+---
+
+# 574.3 Why it is the smallest convex set
+
+Let H be all convex combinations of the points.
+
+First, every original point belongs to H because choose one weight 1 and the rest 0.
+
+Second, H is convex because a convex combination of convex combinations is again a convex combination.
+
+Third, any convex set containing all original points must contain every convex combination of those points.
+
+Therefore it must contain H.
+
+So H is the smallest possible convex container.
+
+---
+
+# 574.4 Why hulls matter in engines
+
+Suppose a complicated model:
+
+```text
+spiky robot mesh
+thousands of triangles
+```
+
+needs broad collision approximation.
+
+A convex hull can produce a simpler outer shell.
+
+It loses concavities but preserves containment.
+
+This can drastically simplify collision queries.
+
+Other uses include:
+
+- collision proxies;
+- mesh simplification;
+- bounding geometry;
+- computational geometry;
+- navigation;
+- separating-axis reasoning.
+
+---
+
+# 574.5 Hull vertices versus interior points
+
+Suppose point:
+
+\[
+P
+\]
+
+can be written as a convex combination of other points.
+
+Then P does not need to be a hull vertex.
+
+Example:
+
+\[
+P=\frac13A+\frac13B+\frac13C.
+\]
+
+P lies inside triangle ABC.
+
+It cannot push the convex hull outward.
+
+This is why hull algorithms throw away most interior data.
+
+---
+
+# PART 575 — MINKOWSKI SUM INTUITION
+
+Now we move from convex geometry to one of the central constructions in collision detection.
+
+Given two sets:
+
+\[
+A,B\subseteq\mathbb R^n,
+\]
+
+their Minkowski sum is:
+
+\[
+\boxed{
+A+B
+=
+\{a+b\mid a\in A,\;b\in B\}.
+}
+\]
+
+Every point of A is added to every point of B.
+
+---
+
+# 575.1 Point + shape intuition
+
+Let:
+
+\[
+A=\{p\}
+\]
+
+contain a single point.
+
+Then:
+
+\[
+A+B
+=
+p+B.
+\]
+
+This simply translates B by p.
+
+So Minkowski sum generalizes translation from a single offset to an entire set of offsets.
+
+---
+
+# 575.2 Segment + segment
+
+Take horizontal segment:
+
+\[
+A=[-1,1]\times\{0\}.
+\]
+
+Take vertical segment:
+
+\[
+B=\{0\}\times[-1,1].
+\]
+
+Every point:
+
+\[
+(x,0)\in A
+\]
+
+plus every:
+
+\[
+(0,y)\in B
+\]
+
+produces:
+
+\[
+(x,y)
+\]
+
+with:
+
+\[
+-1\le x\le1,
+\qquad
+-1\le y\le1.
+\]
+
+Therefore their Minkowski sum is a square.
+
+So:
+
+```text
+horizontal segment
++
+vertical segment
+=
+rectangle
+```
+
+Set addition can create a higher-dimensional shape.
+
+---
+
+# 575.3 Shape sweeping intuition
+
+Suppose A represents all positions of an object's center and B represents the shape around that center.
+
+Then:
+
+\[
+A+B
+\]
+
+represents all space occupied while B's reference point travels through A.
+
+Example:
+
+A = line segment path.
+
+B = disk.
+
+Then:
+
+\[
+A+B
+\]
+
+is a capsule-like swept region:
+
+```text
+   ___________
+ /             \
+|               |
+ \_____________/
+```
+
+This makes Minkowski sums extremely useful for:
+
+- swept volumes;
+- configuration spaces;
+- motion planning;
+- collision expansion.
+
+---
+
+# 575.4 Disk + polygon
+
+If B is a disk of radius r, then:
+
+\[
+A+B
+\]
+
+is conceptually A expanded outward by radius r.
+
+Corners become rounded.
+
+This appears in robot path planning:
+
+Instead of moving a circular robot around obstacles, you can enlarge obstacles by the robot radius and treat the robot as a point.
+
+That is a configuration-space trick.
+
+---
+
+# 575.5 Minkowski sums preserve convexity
+
+Suppose A and B are convex.
+
+Take:
+
+\[
+x=a_1+b_1
+\]
+
+and:
+
+\[
+y=a_2+b_2
+\]
+
+from \(A+B\).
+
+For:
+
+\[
+t\in[0,1],
+\]
+
+consider:
+
+\[
+(1-t)x+ty.
+\]
+
+Substitute:
+
+\[
+=
+(1-t)(a_1+b_1)
++
+t(a_2+b_2).
+\]
+
+Group:
+
+\[
+=
+[(1-t)a_1+ta_2]
++
+[(1-t)b_1+tb_2].
+\]
+
+Because A is convex:
+
+\[
+(1-t)a_1+ta_2\in A.
+\]
+
+Because B is convex:
+
+\[
+(1-t)b_1+tb_2\in B.
+\]
+
+Thus the sum belongs to:
+
+\[
+A+B.
+\]
+
+Therefore:
+
+\[
+\boxed{
+A,B\text{ convex}
+\Rightarrow
+A+B\text{ convex}.
+}
+\]
+
+This fact is crucial for GJK-style collision algorithms.
+
+---
+
+# 575.6 Complexity if done naively for point sets
+
+Suppose polygon A has:
+
+\[
+m
+\]
+
+vertices and B has:
+
+\[
+n.
+\]
+
+Naively adding every pair creates:
+
+\[
+mn
+\]
+
+candidate points:
+
+\[
+a_i+b_j.
+\]
+
+Then one could compute their convex hull.
+
+That is often wasteful.
+
+For convex polygons arranged in angular order, Minkowski sums can be generated much more efficiently by merging edge directions.
+
+That algorithm belongs later; current concern is the geometric operation itself.
+
+---
+
+# PART 576 — MINKOWSKI DIFFERENCE INTUITION
+
+The collision version of Minkowski difference is usually:
+
+\[
+\boxed{
+A-B
+=
+\{a-b\mid a\in A,\;b\in B\}.
+}
+\]
+
+This is equivalent to:
+
+\[
+\boxed{
+A+(-B)
+}
+\]
+
+where:
+
+\[
+-B=\{-b\mid b\in B\}.
+\]
+
+So Minkowski difference means:
+
+```text
+reflect B through origin
+then Minkowski-add it to A
+```
+
+---
+
+# 576.1 Why collision detection loves this
+
+Suppose shapes A and B intersect.
+
+Then there exists some point:
+
+\[
+p
+\]
+
+such that:
+
+\[
+p\in A
+\]
+
+and:
+
+\[
+p\in B.
+\]
+
+Therefore choose:
+
+\[
+a=p,
+\qquad
+b=p.
+\]
+
+Then:
+
+\[
+a-b=0.
+\]
+
+Thus:
+
+\[
+0\in A-B.
+\]
+
+Conversely, if:
+
+\[
+0\in A-B,
+\]
+
+then there exist:
+
+\[
+a\in A,\quad b\in B
+\]
+
+such that:
+
+\[
+a-b=0.
+\]
+
+Therefore:
+
+\[
+a=b.
+\]
+
+So the shapes share a point.
+
+Hence:
+
+\[
+\boxed{
+A\cap B\neq\emptyset
+\iff
+0\in A-B.
+}
+\]
+
+That is a spectacular transformation.
+
+We changed:
+
+> Do two complicated shapes overlap?
+
+into:
+
+> Does one derived shape contain the origin?
+
+That is the core insight behind GJK collision detection.
+
+---
+
+# 576.2 Simple 1D example
+
+Let:
+
+\[
+A=[2,4]
+\]
+
+and:
+
+\[
+B=[3,5].
+\]
+
+Then:
+
+\[
+A-B
+\]
+
+contains values:
+
+\[
+a-b.
+\]
+
+Minimum:
+
+\[
+2-5=-3.
+\]
+
+Maximum:
+
+\[
+4-3=1.
+\]
+
+So:
+
+\[
+A-B=[-3,1].
+\]
+
+It contains:
+
+\[
+0.
+\]
+
+Therefore A and B overlap.
+
+Correct.
+
+---
+
+# 576.3 Non-overlap case
+
+Let:
+
+\[
+A=[0,1]
+\]
+
+and:
+
+\[
+B=[3,4].
+\]
+
+Then:
+
+\[
+A-B
+=
+[-4,-2].
+\]
+
+Zero is not inside.
+
+Thus shapes do not overlap.
+
+---
+
+# 576.4 Why relative position appears naturally
+
+A difference:
+
+\[
+a-b
+\]
+
+is a relative displacement between a point of B and a point of A.
+
+So Minkowski difference converts pairwise relative geometry into one origin-centered shape.
+
+The origin represents:
+
+\[
+a=b.
+\]
+
+That is exactly collision/contact.
+
+---
+
+# 576.5 Terminology warning
+
+Some mathematical morphology literature uses "Minkowski difference" or erosion-related notation differently.
+
+In collision detection, when engineers say Minkowski difference for GJK, they usually mean:
+
+\[
+\boxed{
+A+(-B)
+=
+\{a-b\}.
+}
+\]
+
+Always inspect the definition in a specific source rather than trusting the name alone.
+
+---
+
+# PART 577 — SUPPORT FUNCTIONS OF CONVEX SHAPES
+
+Now imagine a convex shape.
+
+Pick some direction:
+
+\[
+d.
+\]
+
+Ask:
+
+> Which point of the shape lies farthest in direction d?
+
+That operation is the **support mapping**.
+
+---
+
+# 577.1 Support function
+
+For set C:
+
+\[
+\boxed{
+h_C(d)
+=
+\max_{x\in C}
+d\cdot x.
+}
+\]
+
+The result:
+
+\[
+h_C(d)
+\]
+
+is a scalar.
+
+It tells how far C extends in direction d, measured as a dot-product coordinate.
+
+A **support point** is some:
+
+\[
+x^*
+\]
+
+where that maximum is attained:
+
+\[
+\boxed{
+x^*\in
+\operatorname*{arg\,max}_{x\in C}
+d\cdot x.
+}
+\]
+
+There may be more than one support point.
+
+---
+
+# 577.2 Why dot product selects "farthest"
+
+If d is unit:
+
+\[
+d\cdot x
+\]
+
+is the signed scalar projection of x onto d.
+
+So maximizing it literally means:
+
+> choose the point whose projection along d is largest.
+
+If d is not unit, the ordering is unchanged for positive scaling.
+
+Thus support direction does not need normalization merely to find the maximizing point.
+
+---
+
+# 577.3 Square example
+
+Square:
+
+\[
+[-1,1]^2.
+\]
+
+Take:
+
+\[
+d=(1,0).
+\]
+
+Maximize:
+
+\[
+d\cdot(x,y)=x.
+\]
+
+Maximum is:
+
+\[
+1.
+\]
+
+Any point on right edge:
+
+\[
+(1,y)
+\]
+
+is a support point.
+
+So support points need not be unique.
+
+---
+
+# 577.4 Diagonal direction
+
+Take:
+
+\[
+d=(1,1).
+\]
+
+Dot at square corners:
+
+\[
+(-1,-1)\rightarrow -2,
+\]
+
+\[
+(1,-1)\rightarrow0,
+\]
+
+\[
+(-1,1)\rightarrow0,
+\]
+
+\[
+(1,1)\rightarrow2.
+\]
+
+So support point:
+
+\[
+\boxed{(1,1)}.
+\]
+
+---
+
+# 577.5 Sphere support point
+
+Sphere centered at c, radius r.
+
+We want maximize:
+
+\[
+d\cdot x.
+\]
+
+Every sphere point can be written:
+
+\[
+x=c+ru
+\]
+
+where:
+
+\[
+\|u\|=1.
+\]
+
+Then:
+
+\[
+d\cdot x
+=
+d\cdot c+r(d\cdot u).
+\]
+
+Maximum of:
+
+\[
+d\cdot u
+\]
+
+for unit u occurs when:
+
+\[
+u=\frac d{\|d\|}.
+\]
+
+Therefore:
+
+\[
+\boxed{
+support_C(d)
+=
+c+r\frac d{\|d\|}
+}
+\]
+
+for nonzero d.
+
+And scalar support value:
+
+\[
+\boxed{
+h_C(d)
+=
+d\cdot c+r\|d\|.
+}
+\]
+
+---
+
+# 577.6 Box support point
+
+For axis-aligned box with min/max coordinates, maximize:
+
+\[
+d_xx+d_yy+d_zz.
+\]
+
+Each coordinate can be chosen independently.
+
+If:
+
+\[
+d_x>0,
+\]
+
+choose maximum X.
+
+If:
+
+\[
+d_x<0,
+\]
+
+choose minimum X.
+
+Thus support point can be found with a few sign tests.
+
+No iteration over the entire surface is needed.
+
+---
+
+# 577.7 Convex hull support
+
+If C is the convex hull of vertices:
+
+\[
+v_1,\ldots,v_n,
+\]
+
+the maximum linear functional occurs at an extreme point.
+
+Thus:
+
+\[
+\boxed{
+h_C(d)
+=
+\max_i d\cdot v_i.
+}
+\]
+
+So for a convex polygon/polyhedron represented by vertices, a simple support implementation scans vertices.
+
+Complexity:
+
+\[
+O(n)
+\]
+
+per query.
+
+More specialized representations can accelerate this.
+
+---
+
+# 577.8 The crucial Minkowski support identity
+
+For:
+
+\[
+C=A+B,
+\]
+
+compute:
+
+\[
+h_C(d).
+\]
+
+By definition:
+
+\[
+h_{A+B}(d)
+=
+\max_{a\in A,b\in B}
+d\cdot(a+b).
+\]
+
+Distribute:
+
+\[
+=
+\max_{a,b}
+[d\cdot a+d\cdot b].
+\]
+
+Because a and b are independent choices:
+
+\[
+=
+\max_a d\cdot a
++
+\max_b d\cdot b.
+\]
+
+Therefore:
+
+\[
+\boxed{
+h_{A+B}(d)
+=
+h_A(d)+h_B(d).
+}
+\]
+
+And support points can be combined:
+
+\[
+\boxed{
+support_{A+B}(d)
+=
+support_A(d)
++
+support_B(d)
+}
+\]
+
+choosing compatible maximizers.
+
+---
+
+# 577.9 Minkowski difference support mapping
+
+Recall:
+
+\[
+A-B=A+(-B).
+\]
+
+Support of reflected B:
+
+\[
+support_{-B}(d)
+=
+-support_B(-d).
+\]
+
+Therefore:
+
+\[
+\boxed{
+support_{A-B}(d)
+=
+support_A(d)
+-
+support_B(-d).
+}
+\]
+
+This formula is one of the core reasons GJK does **not need to explicitly construct the Minkowski difference**.
+
+You ask A and B independently for support points.
+
+Then subtract.
+
+That can be dramatically cheaper than constructing a new polyhedron.
+
+---
+
+# 577.10 GJK preview
+
+GJK conceptually asks whether:
+
+\[
+0\in A-B.
+\]
+
+But instead of building:
+
+\[
+A-B
+\]
+
+explicitly, it repeatedly queries support points in strategically chosen directions.
+
+The support function lets the algorithm explore the boundary of the Minkowski difference on demand.
+
+That is a major engine connection.
+
+---
+
+# PART 578 — HOMOGENEOUS COORDINATES AS PROJECTIVE REPRESENTATIVES
+
+Now we switch domains.
+
+This Part begins one of the most important representation tricks in graphics.
+
+Suppose we have ordinary 3D point:
+
+\[
+p=(x,y,z).
+\]
+
+Homogeneous coordinates represent it with four numbers:
+
+\[
+\boxed{
+(X,Y,Z,W).
+}
+\]
+
+But these four numbers are **not simply a normal 4D point**.
+
+They are a representative of a projective equivalence class.
+
+---
+
+# 578.1 Multiple quadruples represent the same point
+
+For any nonzero scalar:
+
+\[
+\lambda\neq0,
+\]
+
+the homogeneous tuples:
+
+\[
+(X,Y,Z,W)
+\]
+
+and:
+
+\[
+(\lambda X,\lambda Y,\lambda Z,\lambda W)
+\]
+
+represent the same projective point.
+
+We write conceptually:
+
+\[
+\boxed{
+(X,Y,Z,W)
+\sim
+(\lambda X,\lambda Y,\lambda Z,\lambda W).
+}
+\]
+
+Example:
+
+\[
+(2,4,6,2)
+\]
+
+and:
+
+\[
+(1,2,3,1)
+\]
+
+represent the same Euclidean point.
+
+Why?
+
+Divide by W.
+
+---
+
+# 578.2 Dehomogenization
+
+If:
+
+\[
+W\neq0,
+\]
+
+recover ordinary coordinates:
+
+\[
+\boxed{
+x=\frac XW,
+\qquad
+y=\frac YW,
+\qquad
+z=\frac ZW.
+}
+\]
+
+For:
+
+\[
+(2,4,6,2),
+\]
+
+we get:
+
+\[
+(1,2,3).
+\]
+
+For:
+
+\[
+(10,20,30,10),
+\]
+
+same:
+
+\[
+(1,2,3).
+\]
+
+So homogeneous coordinates contain scale redundancy.
+
+---
+
+# 578.3 Why deliberately introduce redundancy?
+
+Because that redundancy makes transformations that were awkward in ordinary coordinates become expressible uniformly in a higher-dimensional representation.
+
+Most importantly:
+
+- translation;
+- perspective/projective operations;
+- points at infinity;
+- projective intersections.
+
+The later matrix Parts will exploit this heavily.
+
+For now, understand the representation itself.
+
+---
+
+# 578.4 Canonical representative
+
+For an ordinary Euclidean point:
+
+\[
+p=(x,y,z),
+\]
+
+the simplest homogeneous representative is:
+
+\[
+\boxed{
+(x,y,z,1).
+}
+\]
+
+But it is not the only one.
+
+Equivalent:
+
+\[
+(2x,2y,2z,2),
+\]
+
+\[
+(-3x,-3y,-3z,-3),
+\]
+
+etc.
+
+As long as W is nonzero and the scale is shared across all four components.
+
+---
+
+# 578.5 Homogeneous coordinates as rays through a higher-dimensional origin
+
+This gives strong intuition.
+
+Consider 2D Euclidean point:
+
+\[
+(x,y).
+\]
+
+Represent it in 3D homogeneous space:
+
+\[
+(x,y,1).
+\]
+
+All equivalent representatives lie on the line:
+
+\[
+\lambda(x,y,1).
+\]
+
+So one projective point corresponds to a **line through the origin** in homogeneous space.
+
+Example:
+
+```text
+          • (2x,2y,2)
+         /
+        • (x,y,1)
+       /
+      /
+     O
+```
+
+All nonzero points on that line represent the same projective point.
+
+That's why homogeneous coordinates are called **representatives** rather than ordinary unique coordinates.
+
+---
+
+# 578.6 Why the plane W=1 is special
+
+Ordinary Euclidean points can be visualized as intersections of homogeneous rays with:
+
+\[
+W=1.
+\]
+
+Given representative:
+
+\[
+(X,Y,Z,W),
+\]
+
+move along the same homogeneous ray until W becomes 1.
+
+Scale by:
+
+\[
+\frac1W.
+\]
+
+Then:
+
+\[
+\left(
+\frac XW,
+\frac YW,
+\frac ZW,
+1
+\right).
+\]
+
+That is exactly dehomogenization.
+
+---
+
+# 578.7 What happens at W=0?
+
+You cannot divide by zero.
+
+So:
+
+\[
+(X,Y,Z,0)
+\]
+
+does not represent a finite Euclidean point.
+
+Instead these represent **directions / points at infinity** in projective geometry.
+
+That is exactly Part 579.
+
+---
+
+# 578.8 Projective representatives and numeric scale
+
+Because:
+
+\[
+H\sim\lambda H,
+\]
+
+a homogeneous vector can grow or shrink in magnitude without changing the represented projective point.
+
+This means comparing raw homogeneous tuples componentwise is often wrong.
+
+For example:
+
+\[
+(1,2,3,1)
+\]
+
+and:
+
+\[
+(2,4,6,2)
+\]
+
+are not numerically equal as `Vec4`s but represent the same projective point.
+
+This semantic distinction matters later when debugging clip-space/projective code.
+
+---
+
+# PART 579 — POINTS AND DIRECTIONS THROUGH HOMOGENEOUS \(w\)
+
+Now we connect homogeneous coordinates to the point/vector distinction from Parts 521–524.
+
+This is one of the nicest pieces of graphics mathematics.
+
+---
+
+# 579.1 Point
+
+An ordinary Euclidean point:
+
+\[
+P=(x,y,z)
+\]
+
+is represented canonically as:
+
+\[
+\boxed{
+P_h=(x,y,z,1).
+}
+\]
+
+Direction vector:
+
+\[
+V=(v_x,v_y,v_z)
+\]
+
+is represented as:
+
+\[
+\boxed{
+V_h=(v_x,v_y,v_z,0).
+}
+\]
+
+So:
+
+\[
+\boxed{
+w=1
+\Rightarrow
+\text{point}
+}
+\]
+
+and:
+
+\[
+\boxed{
+w=0
+\Rightarrow
+\text{direction}
+}
+\]
+
+for canonical affine homogeneous representatives.
+
+But there is a deeper reason than "that's the convention."
+
+---
+
+# 579.2 Translation is the key
+
+A point should respond to translation:
+
+\[
+P' = P+t.
+\]
+
+A direction should not:
+
+\[
+V'=V.
+\]
+
+Homogeneous \(w\) lets one representation distinguish these two behaviors.
+
+Conceptually define affine transformation:
+
+\[
+x\mapsto Ax+t.
+\]
+
+For homogeneous pair:
+
+\[
+(x,w),
+\]
+
+the corresponding rule can be written:
+
+\[
+\boxed{
+(x,w)
+\mapsto
+(Ax+wt,\;w).
+}
+\]
+
+Look what happens.
+
+For a point:
+
+\[
+w=1.
+\]
+
+Then:
+
+\[
+Ax+1t
+=
+Ax+t.
+\]
+
+Translation applies.
+
+For a direction:
+
+\[
+w=0.
+\]
+
+Then:
+
+\[
+Ax+0t
+=
+Ax.
+\]
+
+Translation disappears.
+
+That is the reason \(w\) works.
+
+---
+
+# 579.3 This reproduces affine point/vector algebra
+
+Take two homogeneous points:
+
+\[
+P_h=(P,1),
+\]
+
+\[
+Q_h=(Q,1).
+\]
+
+Subtract:
+
+\[
+Q_h-P_h
+=
+(Q-P,0).
+\]
+
+The result has:
+
+\[
+w=0.
+\]
+
+So:
+
+\[
+\boxed{
+\text{point} - \text{point}
+=
+\text{direction}.
+}
+\]
+
+Exactly as affine geometry demanded.
+
+---
+
+# 579.4 Point + direction
+
+\[
+(P,1)+(V,0)
+=
+(P+V,1).
+\]
+
+So:
+
+\[
+\boxed{
+\text{point}+\text{direction}
+=
+\text{point}.
+}
+\]
+
+Again perfect.
+
+---
+
+# 579.5 Direction + direction
+
+\[
+(V,0)+(W,0)
+=
+(V+W,0).
+\]
+
+Therefore:
+
+\[
+\boxed{
+\text{direction}+\text{direction}
+=
+\text{direction}.
+}
+\]
+
+Again correct.
+
+---
+
+# 579.6 Point + point exposes why affine semantics matter
+
+\[
+(P,1)+(Q,1)
+=
+(P+Q,2).
+\]
+
+This has:
+
+\[
+w=2.
+\]
+
+If you dehomogenize:
+
+\[
+\left(
+\frac{P+Q}{2},1
+\right),
+\]
+
+you get the midpoint.
+
+This is interesting, but it does **not** mean ordinary point addition should suddenly be interpreted as a fundamental geometric operation.
+
+Homogeneous scale equivalence changed the semantics.
+
+You must know whether you're doing vector arithmetic on representatives or meaningful affine/projective operations.
+
+---
+
+# 579.7 Difference between w=0 and "the zero vector"
+
+A direction:
+
+\[
+(v_x,v_y,v_z,0)
+\]
+
+can be nonzero.
+
+The w component being zero does not mean the whole homogeneous vector is zero.
+
+Example:
+
+\[
+(1,0,0,0)
+\]
+
+means the X direction / a projective point at infinity along X.
+
+The actual all-zero homogeneous vector:
+
+\[
+(0,0,0,0)
+\]
+
+is invalid as a projective representative because scaling it never produces a meaningful nonzero representative.
+
+Projective homogeneous coordinates exclude the all-zero tuple.
+
+---
+
+# 579.8 Why directions are points at infinity
+
+Take ordinary point:
+
+\[
+P_\lambda
+=
+(\lambda v_x,\lambda v_y,\lambda v_z).
+\]
+
+Its homogeneous form:
+
+\[
+(\lambda v_x,\lambda v_y,\lambda v_z,1).
+\]
+
+Scale the homogeneous representative by:
+
+\[
+\frac1\lambda:
+\]
+
+\[
+(v_x,v_y,v_z,1/\lambda).
+\]
+
+Now let:
+
+\[
+\lambda\rightarrow\infty.
+\]
+
+Then:
+
+\[
+1/\lambda\rightarrow0.
+\]
+
+So the limiting projective representative is:
+
+\[
+\boxed{
+(v_x,v_y,v_z,0).
+}
+\]
+
+That is why \(w=0\) is interpreted as a point infinitely far away in direction v.
+
+This is not merely poetic terminology.
+
+It falls naturally out of homogeneous scaling.
+
+---
+
+# 579.9 Parallel lines and points at infinity
+
+In Euclidean geometry, parallel lines never meet.
+
+Projective geometry extends the plane/space so parallel lines meet at a point at infinity corresponding to their common direction.
+
+For example, railway tracks:
+
+```text
+\                    /
+ \                  /
+  \                /
+   \              /
+    \            /
+     \          /
+      \        /
+       \      /
+        \    /
+         \  /
+```
+
+In perspective vision they appear to meet at a **vanishing point**.
+
+Projective geometry treats that vanishing direction as a legitimate projective point.
+
+Homogeneous \(w=0\) is the algebraic representation of that idea.
+
+---
+
+# 579.10 Why graphics needs this distinction
+
+Later, transformations use one unified representation:
+
+```cpp
+Vec4 point     {x, y, z, 1};
+Vec4 direction {x, y, z, 0};
+```
+
+Then translation naturally affects the first but not the second.
+
+That becomes especially valuable when using one transformation representation for:
+
+- positions;
+- directions;
+- tangent vectors;
+- camera coordinates;
+- projective operations.
+
+However, surface normals later require additional care because normals are not ordinary direction vectors under general affine transformations. That is exactly why Part 582 exists.
+
+---
+
+# 579.11 C++ representation
+
+Conceptually:
+
+```cpp
+struct HPoint3 {
+    double x;
+    double y;
+    double z;
+    double w;
+};
+
+[[nodiscard]]
+HPoint3 fromPoint(Point3 p)
+{
+    return {p.x, p.y, p.z, 1.0};
+}
+
+[[nodiscard]]
+HPoint3 fromDirection(Vec3 v)
+{
+    return {v.x, v.y, v.z, 0.0};
+}
+```
+
+But a production API may prefer distinct semantic types instead of allowing arbitrary misuse of raw `Vec4`.
+
+Why?
+
+Because:
+
+```cpp
+Vec4
+```
+
+does not tell you whether:
+
+- it is a homogeneous point;
+- a direction;
+- a color;
+- a quaternion;
+- arbitrary four-component data.
+
+Same storage shape, different mathematics.
+
+---
+
+# 579.12 Dehomogenizing only points
+
+If:
+
+\[
+w\neq0,
+\]
+
+you can produce Euclidean point:
+
+\[
+\boxed{
+\left(
+\frac{x}{w},
+\frac{y}{w},
+\frac{z}{w}
+\right).
+}
+\]
+
+If:
+
+\[
+w=0,
+\]
+
+that division is invalid.
+
+So this code:
+
+```cpp
+Vec3 euclidean = {
+    h.x / h.w,
+    h.y / h.w,
+    h.z / h.w
+};
+```
+
+requires the explicit precondition:
+
+\[
+h.w\neq0.
+\]
+
+Later perspective pipelines depend heavily on exactly when this division is valid and meaningful.
+
+---
+
+# THE ENTIRE CONVEXITY BLOCK IN ONE ONGOING EXAMPLE
+
+Suppose a game has a player represented by a convex capsule and a wall represented by a convex box.
+
+## Affine combination
+
+The player's center can be described relative to reference points without depending on the world origin.
+
+## Convex combination
+
+Any convex mixture of points inside the capsule remains inside the capsule.
+
+## Convex set
+
+The capsule is convex: segment between any two internal points remains inside.
+
+## Convex hull
+
+If we start with sample points from a coarse collision mesh, their convex hull forms the smallest convex shell containing them.
+
+## Minkowski sum
+
+Expand the wall by the player's collision shape.
+
+Now instead of moving a fat player around the wall, conceptually move a point around an expanded obstacle.
+
+## Minkowski difference
+
+For two convex collision shapes A and B:
+
+\[
+A-B
+\]
+
+turns overlap into an origin-containment question:
+
+\[
+\boxed{
+A\cap B\neq\emptyset
+\iff
+0\in A-B.
+}
+\]
+
+## Support function
+
+Instead of explicitly building:
+
+\[
+A-B,
+\]
+
+ask:
+
+\[
+support_A(d)-support_B(-d).
+\]
+
+That gives an extreme point of the Minkowski difference.
+
+That chain is basically the mathematical foundation underneath GJK.
+
+---
+
+# THE ENTIRE HOMOGENEOUS BLOCK IN ONE ONGOING EXAMPLE
+
+Suppose a sword model contains:
+
+position:
+
+\[
+P=(2,1,5)
+\]
+
+and forward direction:
+
+\[
+F=(0,0,-1).
+\]
+
+Homogeneous form:
+
+\[
+P_h=(2,1,5,1)
+\]
+
+and:
+
+\[
+F_h=(0,0,-1,0).
+\]
+
+Move sword by:
+
+\[
+t=(10,0,0).
+\]
+
+Point should move:
+
+\[
+P'=(12,1,5).
+\]
+
+Direction should remain:
+
+\[
+F'=(0,0,-1).
+\]
+
+The homogeneous rule:
+
+\[
+(x,w)\mapsto(Ax+wt,w)
+\]
+
+automatically does this.
+
+For point:
+
+\[
+w=1
+\Rightarrow
++t.
+\]
+
+For direction:
+
+\[
+w=0
+\Rightarrow
++0t.
+\]
+
+That one bit of affine information carried by \(w\) is why homogeneous coordinates are so powerful.
+
+---
+
+# DEEP CONNECTION: AFFINE WEIGHTS AND HOMOGENEOUS \(w\)
+
+There is a beautiful relationship between Part 571 and Part 579.
+
+Suppose homogeneous points:
+
+\[
+P_i=(p_i,1).
+\]
+
+Take weighted combination:
+
+\[
+\sum_i a_iP_i.
+\]
+
+Its resulting w component is:
+
+\[
+\boxed{
+w=\sum_i a_i.
+}
+\]
+
+Therefore:
+
+### If weights sum to 1
+
+\[
+w=1.
+\]
+
+The result is point-like.
+
+That is an affine combination.
+
+### If weights sum to 0
+
+\[
+w=0.
+\]
+
+The result is direction-like.
+
+That is a translation-invariant vector combination.
+
+So homogeneous coordinates encode the exact distinction we developed abstractly in affine geometry:
+
+\[
+\boxed{
+\sum a_i=1
+\leftrightarrow
+\text{point}
+\leftrightarrow
+w=1
+}
+\]
+
+\[
+\boxed{
+\sum a_i=0
+\leftrightarrow
+\text{direction}
+\leftrightarrow
+w=0.
+}
+\]
+
+This is not coincidence.
+
+It is the same affine structure written in a different representation.
+
+---
+
+# DEEP CONNECTION: CONVEX HULL AND SUPPORT FUNCTIONS
+
+The convex hull of points:
+
+\[
+p_1,\ldots,p_n
+\]
+
+contains infinitely many points.
+
+Yet to find its extreme position in direction d:
+
+\[
+h(d)
+=
+\max_{x\in hull} d\cdot x,
+\]
+
+you only need to inspect the extreme input vertices.
+
+Why?
+
+Any point in the hull is:
+
+\[
+x=\sum_i a_ip_i
+\]
+
+with convex weights.
+
+Then:
+
+\[
+d\cdot x
+=
+\sum_i a_i(d\cdot p_i).
+\]
+
+Because the coefficients are a convex mixture, this value can never exceed the maximum individual:
+
+\[
+\max_i d\cdot p_i.
+\]
+
+Thus:
+
+\[
+\boxed{
+h_{\operatorname{conv}(P)}(d)
+=
+\max_i d\cdot p_i.
+}
+\]
+
+This is why support mappings work so cleanly for convex hulls.
+
+---
+
+# NUMERICAL AND ENGINE FAILURE MODES
+
+### Affine/convex weights
+
+Floating-point weights may sum to:
+
+\[
+0.99999994
+\]
+
+instead of 1.
+
+For interpolation this may be harmless or can be renormalized if required.
+
+But blindly renormalizing can hide a deeper bug if the error is large.
+
+---
+
+### Convex-set assumptions
+
+A collision algorithm designed only for convex shapes can fail catastrophically if fed a concave mesh.
+
+A support function alone is not enough to magically make a nonconvex object behave like a convex one; support queries expose the convex hull of the set for linear maximization purposes.
+
+---
+
+### Minkowski operations
+
+Explicitly constructing a Minkowski difference can explode combinatorially for large polyhedra.
+
+Support-based algorithms avoid materializing the entire shape.
+
+---
+
+### Support directions
+
+Direction:
+
+\[
+d=0
+\]
+
+has no unique "farthest direction."
+
+For a support function:
+
+\[
+d\cdot x=0
+\]
+
+for every x.
+
+Any point is a maximizer.
+
+A support mapping should have a documented zero-direction policy.
+
+---
+
+### Homogeneous points
+
+Never dehomogenize with:
+
+\[
+w=0.
+\]
+
+And for tiny:
+
+\[
+|w|\ll1,
+\]
+
+division can generate huge coordinates and amplify numerical error.
+
+That has a real projective interpretation: the point is very far away in Euclidean coordinates.
+
+---
+
+# HARDWARE / COMPLEXITY
+
+Parts 571–574 are primarily mathematical structures.
+
+For a finite convex combination of \(n\) vectors of dimension d:
+
+\[
+O(nd)
+\]
+
+arithmetic.
+
+Testing convexity of an arbitrary polyhedron is a broader geometry problem; the definition itself is not an algorithm.
+
+A naive support point for an n-vertex convex mesh costs:
+
+\[
+\boxed{O(n)}
+\]
+
+dots.
+
+For analytic primitives such as sphere, AABB or capsule, support can often be:
+
+\[
+\boxed{O(1)}.
+\]
+
+This is one reason collision systems often provide shape-specific support functions.
+
+Homogeneous point/direction representation adds one scalar component. For a float vector:
+
+```text
+Vec3 = 3 floats
+Vec4 = 4 floats
+```
+
+The additional component may actually align naturally with SIMD widths and later matrix operations, though storage/performance depends on layout and architecture.
+
+---
+
+# MASTERY GATE — 571
+
+Explain why:
+
+\[
+\sum_i a_i=1
+\]
+
+makes a point combination translation-covariant.
+
+Then explain why:
+
+\[
+\sum_i a_i=0
+\]
+
+makes the result translation-invariant and therefore vector-like.
+
+Give one affine combination with negative weight.
+
+---
+
+# MASTERY GATE — 572
+
+Define convex combination:
+
+\[
+\boxed{
+a_i\ge0,\qquad\sum_i a_i=1.
+}
+\]
+
+Explain why a two-point convex combination traces exactly the line segment joining the points.
+
+Explain why convex implies affine but affine does not imply convex.
+
+---
+
+# MASTERY GATE — 573
+
+From memory:
+
+\[
+\boxed{
+x,y\in C,\quad
+t\in[0,1]
+\Rightarrow
+(1-t)x+ty\in C.
+}
+\]
+
+Classify:
+
+- filled circle;
+- circle boundary;
+- rectangle;
+- crescent;
+- triangle interior.
+
+And defend every answer using the line-segment test.
+
+---
+
+# MASTERY GATE — 574
+
+Define the convex hull in two ways:
+
+1. smallest convex set containing the points;
+2. all convex combinations of those points.
+
+Explain why these two definitions are equivalent.
+
+Then explain the rubber-band intuition without relying on it as the proof.
+
+---
+
+# MASTERY GATE — 575
+
+Reconstruct:
+
+\[
+\boxed{
+A+B=\{a+b\}.
+}
+\]
+
+Explain:
+
+- point + shape;
+- segment + segment;
+- shape sweeping;
+- obstacle expansion.
+
+Then prove convex + convex gives convex Minkowski sum.
+
+---
+
+# MASTERY GATE — 576
+
+Derive:
+
+\[
+\boxed{
+A-B=A+(-B).
+}
+\]
+
+Then prove:
+
+\[
+\boxed{
+A\cap B\neq\emptyset
+\iff
+0\in A-B.
+}
+\]
+
+If you cannot reconstruct this proof, do not move on to GJK later.
+
+This identity is GJK's reason for existing.
+
+---
+
+# MASTERY GATE — 577
+
+Define:
+
+\[
+\boxed{
+h_C(d)=\max_{x\in C}d\cdot x.
+}
+\]
+
+Explain the difference between:
+
+- support value;
+- support point.
+
+Derive sphere support.
+
+Derive AABB support.
+
+Then prove:
+
+\[
+\boxed{
+support_{A-B}(d)
+=
+support_A(d)-support_B(-d).
+}
+\]
+
+This is one of the most important collision-geometry formulas you have learned so far.
+
+---
+
+# MASTERY GATE — 578
+
+Explain why:
+
+\[
+(X,Y,Z,W)
+\]
+
+and:
+
+\[
+\lambda(X,Y,Z,W)
+\]
+
+represent the same projective point for nonzero \(\lambda\).
+
+Derive dehomogenization:
+
+\[
+\boxed{
+(x,y,z)
+=
+\left(
+\frac XW,
+\frac YW,
+\frac ZW
+\right)
+}
+\]
+
+for:
+
+\[
+W\neq0.
+\]
+
+Explain the "ray through the homogeneous origin" interpretation.
+
+And explain why:
+
+\[
+(0,0,0,0)
+\]
+
+is not a valid projective representative.
+
+---
+
+# MASTERY GATE — 579
+
+Memorizing:
+
+```text
+point w=1
+direction w=0
+```
+
+is not enough.
+
+You must derive why.
+
+Start with affine transformation:
+
+\[
+x\mapsto Ax+t.
+\]
+
+Show the homogeneous behavior:
+
+\[
+\boxed{
+(x,w)\mapsto(Ax+wt,w).
+}
+\]
+
+Then prove:
+
+\[
+w=1
+\Rightarrow
+\text{translation applies}
+\]
+
+and:
+
+\[
+w=0
+\Rightarrow
+\text{translation disappears}.
+\]
+
+Then derive:
+
+\[
+(Q,1)-(P,1)
+=
+(Q-P,0).
+\]
+
+And explain why \(w=0\) also represents points at infinity/directions.
+
+---
+
+# THE FINAL 571–579 MENTAL MODEL
+
+The whole block is really one giant progression.
+
+First:
+
+\[
+\boxed{
+\text{linear combination}
+}
+\]
+
+lets vectors combine freely.
+
+Restrict coefficients so they sum to one:
+
+\[
+\boxed{
+\text{affine combination}.
+}
+\]
+
+Then require them also to be nonnegative:
+
+\[
+\boxed{
+\text{convex combination}.
+}
+\]
+
+All points obtainable this way form:
+
+\[
+\boxed{
+\text{convex hull}.
+}
+\]
+
+Convex shapes can then be combined:
+
+\[
+\boxed{
+A+B
+}
+\]
+
+or compared through relative geometry:
+
+\[
+\boxed{
+A-B.
+}
+\]
+
+Instead of constructing those shapes explicitly, ask only for their farthest point:
+
+\[
+\boxed{
+support(d).
+}
+\]
+
+That becomes the foundation of convex collision detection.
+
+Then we revisit affine point/vector semantics from a new representation angle.
+
+Homogeneous coordinates add:
+
+\[
+\boxed{w}
+\]
+
+so that one higher-dimensional representation can distinguish:
+
+\[
+\boxed{
+\text{points}
+}
+\]
+
+from:
+
+\[
+\boxed{
+\text{directions}.
+}
+\]
+
+And the deepest connection is:
+
+\[
+\boxed{
+\sum a_i=1
+\Longleftrightarrow
+\text{point-like}
+\Longleftrightarrow
+w=1
+}
+\]
+
+versus:
+
+\[
+\boxed{
+\sum a_i=0
+\Longleftrightarrow
+\text{direction-like}
+\Longleftrightarrow
+w=0.
+}
+\]
+
+That connection is going to make later matrices and transforms far less mysterious.
+
+**Completed Part 571 — Affine combinations versus linear combinations**  
+**Completed Part 572 — Convex combinations**  
+**Completed Part 573 — Convex sets**  
+**Completed Part 574 — Convex hull intuition**  
+**Completed Part 575 — Minkowski sum intuition**  
+**Completed Part 576 — Minkowski difference intuition**  
+**Completed Part 577 — Support functions of convex shapes**  
+**Completed Part 578 — Homogeneous coordinates as projective representatives**  
+**Completed Part 579 — Points and directions through homogeneous \(w\)**
+
+**Next Core Part 580 — Normalized device-coordinate intuition as a vector-space mapping.**

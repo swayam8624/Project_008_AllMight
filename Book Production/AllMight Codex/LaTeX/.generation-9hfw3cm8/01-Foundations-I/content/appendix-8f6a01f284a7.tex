@@ -1,0 +1,57 @@
+\hypertarget{appendix-8f6a01f284a7}{}
+\section{Conditioning and singularity}\label{appendix-8f6a01f284a7-conditioning-and-singularity}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C004 · \textbf{Latest development:} Phase7
+
+\subsection{Definition and mechanism}\label{appendix-8f6a01f284a7-definition-and-mechanism}
+
+Conditioning measures sensitivity to input perturbation. \(A=10^{-4}I_2\) has determinant \(10^{-8}\) but condition number one in the 2-norm. Uniform scaling changes determinant magnitude without changing this conditioning measure.
+
+Phase 7 develops \(\kappa(A)=\|A\|\|A^{-1}\|\), near-parallel-column sensitivity, pivoted elimination and inverse residuals. Equal determinants can conceal very different stretch ratios: \(\operatorname{diag}(10^{-10},10^{-10})\) and \(\operatorname{diag}(1,10^{-20})\) both have determinant \(10^{-20}\) but conditions one and \(10^{20}\). \hyperref[01-foundations-i-ch018-an-inverse-can-exist-and-still-amplify-uncertainty]{Full worked sensitivity example}.
+
+Subtraction of nearby inputs exposes input uncertainty relative to a small difference. Sensitivity belongs to the problem; exact subtraction of stored operands cannot recover information lost when those inputs were rounded.
+
+\subsection{Prerequisites}\label{appendix-8f6a01f284a7-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0ec599f8ba27]{Numerical tolerance policies} --- An absolute numerical threshold can change with scale without measuring mathematical sensitivity.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-8f6a01f284a7-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-48d2e66378ab]{Matrix inversion pivoting and residuals}
+\item
+  \hyperref[appendix-a7fbaf6d1b1c]{Forward and backward error} --- Input sensitivity is distinct from errors an implementation introduces.
+\item
+  \hyperref[appendix-a2773a6a2f9d]{Cancellation and loss of significance} --- Input sensitivity is distinct from errors an implementation introduces.
+\end{itemize}
+
+Connect later dependent concepts here as their lessons arrive. - \href{../02-Foundations-II/main.pdf\#nameddest=appendix-f6e77f4a200f}{Gaussian elimination and pivoting (02-Foundations-II, appendix-f6e77f4a200f)} --- Extends this foundation into linear-systems and decomposition analysis. - \href{../02-Foundations-II/main.pdf\#nameddest=appendix-c3421e6b4f2c}{QR factorization and least squares (02-Foundations-II, appendix-c3421e6b4f2c)} --- Extends this foundation into linear-systems and decomposition analysis. - \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-18eacf61a04b}{ODE integration and stability (04-Visual-Computing-II, appendix-18eacf61a04b)}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-d83b0ad1be7f}{A posteriori error bounds for contractive iteration (02-Foundations-II, appendix-d83b0ad1be7f)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-aa2bf0d79639}{Algorithmic stability (02-Foundations-II, appendix-aa2bf0d79639)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-f63eb850796d}{Bracketed and open root solvers (02-Foundations-II, appendix-f63eb850796d)}
+\item
+  \hyperref[appendix-31b8c295e05f]{Numerical error budgets}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-b9afba7f63e5}{Stable quadratic root evaluation (02-Foundations-II, appendix-b9afba7f63e5)} \#\# Recall and next depth
+\end{itemize}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Robust condition estimation, growth factors, advanced factorizations and application-specific error budgets extend the current inversion laboratory.
+
+\subsection{Source and navigation}\label{appendix-8f6a01f284a7-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-when-arithmetic-meets-uncertainty]{M005 development}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

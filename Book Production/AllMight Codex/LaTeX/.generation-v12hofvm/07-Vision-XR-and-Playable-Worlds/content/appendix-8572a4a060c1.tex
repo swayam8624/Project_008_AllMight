@@ -1,0 +1,18 @@
+\hypertarget{appendix-8572a4a060c1}{}\label{referencestart:appendix-8572a4a060c1}
+\section{Linear systems and fundamental subspaces}\label{appendix-8572a4a060c1-linear-systems-and-fundamental-subspaces}
+
+A linear system \(A\mathbf x=\mathbf b\) asks which inputs satisfy all row measurements at once. It is consistent exactly when \(\mathbf b\) lies in the column space. The null space contains input changes invisible to every measurement; rank-nullity counts observable versus free directions.
+
+\textbf{Use it when:} explaining consistency, underdetermination, least squares, parameter observability, or constraints in geometry.
+
+\textbf{Developed in Phase 8:} The expanded treatment connects each row to a hyperplane and the complete matrix to a map: consistency asks whether the target lies in the column space, while the null space describes every invisible change to a solution. Rank then counts constrained directions and determines the dimension of the solution family. \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-a-system-is-an-intersection-of-constraints}{constraint geometry (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)} · \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-rank-the-four-spaces-and-the-shape-of-the-answer}{rank and solution families (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)}
+
+\subsection{Prerequisites}\label{appendix-8572a4a060c1-prerequisites}
+
+\href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=appendix-bd39c3bf5d64}{Matrices as linear maps and basis images (Mathematics for Visual Computing, Reference notes: Matrices as linear maps and basis images)}, \hyperref[appendix-ce0341f7ea0d]{Basis coordinates and dimension}, \hyperref[appendix-505a502c372a]{Projection rejection and scalar components}.
+
+\subsection{Used by}\label{appendix-8572a4a060c1-used-by}
+
+\hyperref[appendix-f6e77f4a200f]{Gaussian elimination and pivoting}, \hyperref[appendix-c3421e6b4f2c]{QR factorization and least squares}, \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-1fad5e7f36fa}{Singular value decomposition (Light Transport and Image Synthesis, Reference notes: Singular value decomposition)}, \hyperref[appendix-541306fdbc1b]{Moore-Penrose pseudoinverse}, \hyperref[appendix-67c87a3d9e94]{Sparse and iterative solvers}.
+
+\textbf{Teaching path:} \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-a-linear-equation-is-a-measurement-and-several-equations-are-geometry}{constraint geometry (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)} · \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-rank-separates-what-the-measurements-determine-from-what-they-leave-free}{four spaces (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)}. - \hyperref[appendix-0b3be18411f9]{Eigenvalues and eigenspaces} --- Extends this foundation into the Phase 8 dependency spine.

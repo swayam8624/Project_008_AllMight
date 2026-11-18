@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch492.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-80521eae6b71-numerical-quadrature-and-error" class="level2">
+<h2>Numerical quadrature and error</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 9 · <strong>Latest development:</strong> Phase 9</p>
+<section id="appendix-80521eae6b71-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Quadrature approximates a definite integral from finitely many function evaluations. Left, right, and midpoint rectangle rules use constant local models; the trapezoid rule uses linear interpolation; Simpson’s rule integrates a local quadratic fit over paired intervals. Their errors depend on smoothness, interval size, and rule-specific derivative bounds. Refining the mesh usually improves accuracy for smooth functions, but increases computation and may expose floating-point accumulation error. Adaptive quadrature places more samples where the integrand changes rapidly, provided its error estimator is trustworthy. Quadrature differs from Monte Carlo: deterministic rules have dimension-dependent behavior, while random sampling is attractive in high dimensions but has statistical uncertainty. Report the interval, nodes, weights, stopping tolerance, and error-control method so numerical results can be reproduced.</p>
+</section>
+<section id="appendix-80521eae6b71-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch456.xhtml#appendix-1a50e72435c2-definite-integrals-and-the-fundamental-theorem" class="wikilink">Definite integrals and the fundamental theorem</a></li>
+<li><a href="ch039.xhtml#appendix-3ae74e89b4e6-absolute-and-relative-error" class="wikilink">Absolute and relative error (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Absolute and relative error)</a></li>
+</ul>
+</section>
+<section id="appendix-80521eae6b71-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p>This node is a current endpoint in the supplied Phase 9–10 path.</p></li>
+<li><p><a href="ch505.xhtml#appendix-aca80b6bf17a-convergence-order-and-richardson-extrapolation" class="wikilink">Convergence order and Richardson extrapolation</a></p></li>
+<li><p><a href="ch489.xhtml#appendix-6b0648b2b8e8-discretization-truncation-and-roundoff" class="wikilink">Discretization, truncation, and roundoff</a> ## Full teaching explanation</p></li>
+<li><p><a href="ch266.xhtml#id_02-foundations-ii-ch022-integration-and-quadrature" class="wikilink">Phase 9 teaching section (Mathematics for Visual Computing, Part 1, Ch. 6)</a></p></li>
+<li><p><a href="ch084.xhtml#appendix-adf48f5dc5c1-calculus-and-optimization-visual-recall" class="wikilink">Visual Recall/09 - Calculus and Optimization - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 09 - Calculus and Optimization - Visual Recall)</a> · visual recall</p></li>
+</ul>
+</section>
+<section id="appendix-80521eae6b71-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 835 (T03 · M051), 836 (T03 · M051), 837 (T03 · M051).</p>
+</section>
+</section>
+</body>
+</html>

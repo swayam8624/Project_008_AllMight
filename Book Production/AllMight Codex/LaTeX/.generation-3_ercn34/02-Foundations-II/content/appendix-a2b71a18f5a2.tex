@@ -1,0 +1,114 @@
+\hypertarget{appendix-a2b71a18f5a2}{}
+\section*{11 - Projective Geometry and Cameras - Visual Recall}
+\section{Camera projection: shortest useful recall}\label{appendix-a2b71a18f5a2-camera-projection-shortest-useful-recall}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{../current/Assets/Print/5244ad8c769ea819bb1bdeeff816a0762ce2388ad77cd9385cd14864abfe791d.pdf}}
+
+\subsection{Frames and transforms}\label{appendix-a2b71a18f5a2-frames-and-transforms}
+
+\begin{itemize}
+\tightlist
+\item
+  A coordinate needs a frame: \(p=o+Bp_F\). Camera world-to-view is \(p_V=R^T(p_W-c)\); points use homogeneous \(w=1\), directions use \(w=0\), and normals use \(A^{-T}\).
+\item
+  \hyperref[02-foundations-ii-ch032-a-coordinate-is-a-claim-about-a-frame]{Frames and coordinate meaning} · \hyperref[02-foundations-ii-ch032-a-camera-is-an-inverse-pose]{Camera pose and view transform}
+\end{itemize}
+
+\subsection{Projection, depth, raster, and culling}\label{appendix-a2b71a18f5a2-projection-depth-raster-and-culling}
+
+\begin{itemize}
+\tightlist
+\item
+  For RH view space looking down \(-Z\), axial depth is \(d=-z_v\) and perspective clip \(w=d\). Projection and depth mapping are separate choices; declare NDC range, depth direction, viewport origin, and Y orientation.
+\item
+  Recover positions using the rendered projection and matching pixel centre, viewport, and depth convention. A frustum plane test is conservative: sphere reject if \(s<-r\); AABB reject if \(s<-\sum_i|n_i|e_i\).
+\item
+  Perspective-correct attributes interpolate as \(\sum_i\lambda_i(a_i/w_i)/\sum_i\lambda_i/w_i\); depth has its own projected interpolation rule.
+\item
+  \hyperref[02-foundations-ii-ch033-projection-turns-rays-into-clip-coordinates]{Projection derivation} · \hyperref[02-foundations-ii-ch033-depth-is-a-numerical-design-choice]{Depth precision} · \hyperref[02-foundations-ii-ch033-a-projected-point-still-needs-a-raster-convention]{Raster mapping} · \hyperref[02-foundations-ii-ch034-the-viewing-volume-is-six-half-spaces]{Frustum culling} · \hyperref[02-foundations-ii-ch034-raster-interpolation-remembers-homogeneous-depth]{Interpolation}
+\end{itemize}
+
+\subsection{Time and calibrated image formation}\label{appendix-a2b71a18f5a2-time-and-calibrated-image-formation}
+
+\begin{itemize}
+\tightlist
+\item
+  Track jittered and unjittered projection state. Intrinsics map optical-camera rays to pixels; extrinsics map between world and optical camera. Lens distortion is a separate nonlinear map with a valid domain and inversion method.
+\item
+  Thin-lens rays originate across the aperture and converge on the focus plane. CoC and depth-of-field limits depend on an explicit sensor blur criterion. Aperture and shutter affect collected light; ISO-like gain does not add photons.
+\item
+  Stereo depth follows \(Z=f_xB/\Delta x\) for a rectified pinhole pair. Equal image areas on a sphere do not imply equal solid angles.
+\item
+  \hyperref[02-foundations-ii-ch036-a-camera-image-changes-over-time]{Temporal camera state} · \hyperref[02-foundations-ii-ch034-intrinsics-map-optical-rays-to-pixels]{Intrinsics} · \hyperref[02-foundations-ii-ch035-extrinsics-place-the-optical-camera-in-the-world]{Extrinsics} · \hyperref[02-foundations-ii-ch035-real-lenses-bend-the-pinhole-image]{Lens distortion}
+\end{itemize}
+
+\subsection{Reconstruction, stereo, and optics}\label{appendix-a2b71a18f5a2-reconstruction-stereo-and-optics}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[02-foundations-ii-ch035-recover-geometry-from-depth-and-construct-screen-space-rays]{Depth reconstruction and screen rays} · \hyperref[02-foundations-ii-ch035-build-projection-and-stereo-geometry-around-real-camera-baselines]{Stereo geometry} · \hyperref[02-foundations-ii-ch035-represent-directions-over-the-full-sphere]{Panorama and fisheye} · \hyperref[02-foundations-ii-ch036-model-exposure-physical-optics-and-depth-of-field]{Exposure and thin lens} · \hyperref[02-foundations-ii-ch037-make-camera-conventions-explicit-and-debug-the-full-transform-chain]{Camera contract and debugging}
+\end{itemize}
+
+\subsection{Essential figures}\label{appendix-a2b71a18f5a2-essential-figures}
+
+\begin{itemize}
+\tightlist
+\item
+  {[}Figure placeholder: camera coordinate frames through raster and pixel centre{]}
+\item
+  {[}Figure placeholder: standard and reversed-Z depth, with binary32 next-float reconstruction explicitly scoped{]}
+\item
+  {[}Figure placeholder: conservative frustum plane and support-radius tests{]}
+\item
+  {[}Figure placeholder: affine versus perspective-correct attribute interpolation{]}
+\item
+  {[}Figure placeholder: stereo disparity and uncertainty, calibrated distortion, and sphere sampling measure{]}
+\item
+  {[}Figure placeholder: thin-lens CoC and full object-to-lens-to-sensor ray path{]}
+\end{itemize}
+
+\subsection{Figures and their full explanations}\label{appendix-a2b71a18f5a2-figures-and-their-full-explanations}
+
+\begin{itemize}
+\item
+  \hyperref[02-foundations-ii-ch033-figure-c11-1-depth-mapping-and-floating-point-spacing-work-together]{C11-1 · Depth mapping and floating-point spacing work together} --- RH camera looks down −Z, zero-to-one depth, n=0.1 and finite conventional far=100000; reversed curve uses infinite far. Right: error after rounding depth to binary32 and moving to its next representable value, including rounding and inversion effects. This is not a complete GPU transform-error model.
+\item
+  \hyperref[02-foundations-ii-ch034-figure-c11-2-culling-is-a-conservative-half-space-test]{C11-2 · Culling is a conservative half-space test} --- This s--x cross-section has near=1, far=5 and ±45° side planes. For an inward unit plane normal, a sphere is outside only when signed centre distance \textless{} −radius. For an AABB use r = \textbar nx\textbar ex + \textbar ny\textbar ey + \textbar nz\textbar ez. Passing each plane does not prove exact intersection with the whole frustum.
+\item
+  \hyperref[02-foundations-ii-ch034-figure-c11-3-attributes-follow-reciprocal-clip-w]{C11-3 · Attributes follow reciprocal clip w} --- Vertex clip w values are (1,4,4); attribute values are (0,1,1). At the screen centroid the affine value is 2/3 and the corrected value is 1/3. Use sum(λ a/w) / sum(λ/w); depth-buffer interpolation has its own projected-depth rule.
+\item
+  \hyperref[02-foundations-ii-ch035-figure-c11-4-stereo-turns-pixel-uncertainty-into-depth-uncertainty]{C11-4 · Stereo turns pixel uncertainty into depth uncertainty} --- Rectified pinhole pair: focal length 800 pixels, baseline 0.064 m, disparity noise σd=0.25 pixel. Z=fB/d and σZ≈Z²σd/(fB). This local propagation assumes corresponding points, small noise and valid calibration; it is not a perception model.
+\item
+  \hyperref[02-foundations-ii-ch036-figure-c11-5-focus-distance-focal-length-and-aperture-are-different-controls]{C11-5 · Focus distance, focal length and aperture are different controls} --- Paraxial 50 mm lens at f/2 focused at 2 m: 1/F=1/u+1/v and c=D\textbar v0/v−1\textbar, with D=F/N. The 0.03 mm threshold is an explicitly chosen viewing criterion. This excludes diffraction, aberrations and sensor processing.
+\item
+  \hyperref[02-foundations-ii-ch035-figure-c11-6-distortion-is-a-map-with-a-domain-not-just-a-coefficient-list]{C11-6 · Distortion is a map with a domain, not just a coefficient list} --- Normalized Brown-style radial example xd=x(1+k₁r²), yd=y(1+k₁r²). This displayed domain has positive radial derivative 1+3k₁r², so the local radial map remains monotone. Larger radii can fold; numerical undistortion requires domain and convergence checks.
+\item
+  \hyperref[02-foundations-ii-ch035-figure-c11-7-image-coordinates-need-a-sampling-measure-conversion]{C11-7 · Image coordinates need a sampling-measure conversion} --- For longitude λ and latitude φ, dω=cosφ dλ dφ. Equal-width equirectangular image rows shrink toward the poles. Ray-differential Jacobians generalize the local image-area-to-solid-angle conversion; they do not by themselves specify lens-area or shutter-time probability.
+\item
+  \hyperref[02-foundations-ii-ch035-figure-c11-8-residual-count-does-not-guarantee-observable-motion]{C11-8 · Residual count does not guarantee observable motion} --- Toy Lucas--Kanade information matrices H=sum(∇I∇Iᵀ): repeated horizontal gradients give eigenvalues (0,3); diverse gradients give (1,3). Small eigenvalues expose weak directions. Camera-calibration gauge freedoms require a larger Jacobian model and explicit constraints.
+\end{itemize}
+
+\subsection{Linked camera concepts}\label{appendix-a2b71a18f5a2-linked-camera-concepts}
+
+\hyperref[appendix-cac01ebeeb11]{Axial depth and Euclidean range} · \hyperref[appendix-1bc40b08db4a]{Hardware depth-buffer linearization} · \hyperref[appendix-2cbf2968e866]{Position reconstruction from depth} · \hyperref[appendix-f1a6d43e80d1]{Screen-space ray generation and mouse picking} · \hyperref[appendix-0976e86e5b9f]{Off-axis stereo projection and disparity} · \hyperref[appendix-fc99ad39f351]{Omnidirectional camera projections}
+
+\subsection{Deeper research retrieval}\label{appendix-a2b71a18f5a2-deeper-research-retrieval}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Robust decisions:} compare a determinant against a certified arithmetic error bound; escalate uncertain signs. Exactness refers to the represented inputs. \hyperref[02-foundations-ii-ch034-a-sign-can-matter-more-than-a-coordinate-robust-predicates]{Predicate derivation}
+\item
+  \textbf{Observable parameters:} fix frame/scale gauges before interpreting weak directions of the weighted Jacobian. More residuals alone do not guarantee new information. \hyperref[02-foundations-ii-ch036-calibration-needs-informative-observations-and-a-fixed-gauge]{Calibration and gauge}
+\item
+  \textbf{Finite pixels:} differentiate the normalized camera-ray map; convert image area to solid angle with the cross-product Jacobian. \hyperref[02-foundations-ii-ch036-a-camera-ray-carries-a-pixel-footprint]{Ray footprints}
+\item
+  \textbf{Two and three views:} recover translation direction before metric scale; test cheirality and degeneracy; pairwise consistency alone is weaker than joint multiview consistency. \hyperref[02-foundations-ii-ch036-calibrated-two-view-geometry-direction-before-distance]{Multi-view reconstruction}
+\end{itemize}
+
+\textbf{Source scope:} selected TUM playlist 17 positions: 13 fully read caption tracks and four explicitly labeled official-PDF fallbacks. The full per-position legend is in {the continuous volume {[}referenced source unavailable{]}}.
+
+\subsection{Research concept links}\label{appendix-a2b71a18f5a2-research-concept-links}
+
+\hyperref[appendix-113f0267e5f4]{Camera gauge freedoms and observability} · \hyperref[appendix-8c40fad29462]{Ray differentials and camera sampling measures}

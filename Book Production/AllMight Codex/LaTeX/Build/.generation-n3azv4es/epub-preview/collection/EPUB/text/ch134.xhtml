@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch134.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-313ee7a0ba7b-memory-mapped-files" class="level2">
+<h2>Memory-mapped files</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-313ee7a0ba7b-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A file mapping makes file-backed bytes accessible through a virtual region. Fault handling can supply pages lazily; ownership, access flags, mapping length, and synchronization still matter. A mapped byte buffer is not automatically a set of live aligned C++ objects. File persistence and virtual access are separate mechanisms.</p>
+</section>
+<section id="appendix-313ee7a0ba7b-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch165.xhtml#appendix-cc0909a7ef14-page-faults-and-demand-paging" class="wikilink">Page faults and demand paging</a> — Deferred private copying is implemented through a recoverable write fault.</li>
+<li><a href="ch167.xhtml#appendix-d52e4486f527-ownership-and-non-owning-views" class="wikilink">Ownership and non-owning views</a> — A mapping or publication pipeline must keep referenced bytes valid.</li>
+</ul>
+</section>
+<section id="appendix-313ee7a0ba7b-used-by" class="level3">
+<h3>Used by</h3>
+<p>Update downstream uses when later chunks build on this concept.</p>
+</section>
+<section id="appendix-313ee7a0ba7b-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Separate mapping setup, first-touch loading, typed parsing and persistence.</p>
+<p><strong>Pending:</strong> Platform mapping APIs, sharing modes, truncation and synchronization.</p>
+</section>
+<section id="appendix-313ee7a0ba7b-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

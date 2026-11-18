@@ -1,0 +1,626 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch154.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-960160274237-c-objects-ownership-and-lifetime-visual-recall" class="level2">
+<h2>C++: Objects, Ownership and Lifetime — Visual Recall</h2>
+<p><strong>Scope:</strong> Companion to <span>Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs</span>. A compact teaching board, not a substitute for the worked chapter. Draw each model from memory; explain every arrow and state its preconditions.</p>
+<section id="appendix-960160274237-one-page-short-notes" class="level3">
+<h3>One-page short notes</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Story stop</th>
+<th>Shortest useful note</th>
+<th>Open the explanation / figure</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Build</td>
+<td>Translation makes declarations visible, definitions executable, and linking joins program pieces.</td>
+<td><a href="ch124.xhtml#id_01-foundations-i-ch002-the-journey-from-text-to-a-live-object" class="wikilink">Build pipeline</a> · <a href="ch124.xhtml#id_01-foundations-i-ch002-a-compiled-interface-rather-than-repeated-text" class="wikilink">Modules</a></td>
+</tr>
+<tr>
+<td>Object</td>
+<td>Storage is the place; lifetime is the interval; identity is the occupant. Same address does not promise same object.</td>
+<td><a href="ch124.xhtml#id_01-foundations-i-ch002-storage-is-a-place-an-object-is-its-occupant" class="wikilink">Storage/object figure</a> · <a href="ch124.xhtml#id_01-foundations-i-ch002-a-handle-remembers-which-occupant-was-intended" class="wikilink">Generation handle</a></td>
+</tr>
+<tr>
+<td>Borrow</td>
+<td>A pointer/reference/view grants access, not ownership. Validity depends on the referent, lifetime, mutation, and invalidation contract.</td>
+<td><a href="ch173.xhtml#id_01-foundations-i-ch003-when-a-valid-borrow-stops-naming-the-intended-thing" class="wikilink">Borrow hazards</a> · <a href="ch173.xhtml#id_01-foundations-i-ch003-borrowed-views-and-deferred-work-need-an-owner-story" class="wikilink">Deferred views</a></td>
+</tr>
+<tr>
+<td>Value</td>
+<td>Construction creates; assignment replaces; move may transfer responsibility while source remains alive. Rule of Zero composes tested owners.</td>
+<td><a href="ch173.xhtml#id_01-foundations-i-ch003-construction-establishes-a-usable-state" class="wikilink">Construction/destruction</a> · <a href="ch173.xhtml#id_01-foundations-i-ch003-from-three-repairs-to-five-decisions-to-zero-boilerplate" class="wikilink">Rule of Zero</a></td>
+</tr>
+<tr>
+<td>Resource</td>
+<td>RAII binds cleanup to an owner lifetime; external users may require deferred release.</td>
+<td><a href="ch203.xhtml#id_01-foundations-i-ch004-from-a-live-object-to-responsible-resource-ownership" class="wikilink">Four-lifetime figure and full story (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)</a></td>
+</tr>
+<tr>
+<td>Smart owner</td>
+<td><code>unique_ptr</code> = one duty; <code>shared_ptr</code> = shared lifetime; <code>weak_ptr</code> = observe, then <code>lock()</code> to try. Shared ownership does not synchronize the pointee.</td>
+<td><a href="ch203.xhtml#id_01-foundations-i-ch004-exclusive-ownership-unique_ptr-makes-transfer-visible" class="wikilink">Exclusive ownership (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)</a> · <a href="ch203.xhtml#id_01-foundations-i-ch004-shared-ownership-one-object-a-group-of-owners-and-a-separate-control-block" class="wikilink">Shared ownership (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)</a> · <a href="ch203.xhtml#id_01-foundations-i-ch004-weak-observation-breaks-cycles-without-pretending-an-object-is-alive" class="wikilink">Weak observation (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)</a></td>
+</tr>
+<tr>
+<td>Raw storage</td>
+<td>Allocation obtains bytes; construction starts an object; destruction ends its life; deallocation returns bytes. Placement construction does not allocate.</td>
+<td><a href="ch203.xhtml#id_01-foundations-i-ch004-custom-allocation-separates-obtaining-bytes-from-constructing-objects" class="wikilink">Allocation versus construction (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)</a> · <a href="ch203.xhtml#id_01-foundations-i-ch004-placement-construction-reuses-storage-it-does-not-allocate-it" class="wikilink">Placement/lifetime figure (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)</a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Board in one breath:</strong> source → object → borrow/owner → value transfer → RAII cleanup → safe external reclamation. At every arrow ask: <strong>who owns it, how long is it valid, and what ends use?</strong></p>
+<p>The notes above target a single landscape page when rendered at ordinary study-note scale. The diagrams and answer keys below remain the linked detail, not required reading for every review pass.</p>
+</section>
+<section id="appendix-960160274237-one-story-from-source-text-to-responsibly-released-resource" class="level3">
+<h3>One story: from source text to responsibly released resource</h3>
+<p><img src="../media/file37.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Caption:</strong> Resource safety starts with the object model but ends only when the external-use contract permits release. A C++ destructor is not a GPU completion fence.</p>
+</section>
+<section id="appendix-960160274237-four-figure-briefs" class="level3">
+<h3>Four figure briefs</h3>
+<p>Use one row as a small revision card. Open its figure to see the caption and the surrounding worked example. The four cards supplement the existing notes and ownership boards.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Card</th>
+<th>Short note</th>
+<th>Figure and explanation</th>
+<th>Check yourself</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Build</td>
+<td>Declare to compile a call; supply the definition to link it. Header guards act inside one translation unit.</td>
+<td><a href="ch124.xhtml#id_01-foundations-i-ch002-figure-cpp-01---two-build-lanes-meet-at-the-linker" class="wikilink">CPP-01 · two build lanes</a></td>
+<td>Why can a call compile yet fail at link time?</td>
+</tr>
+<tr>
+<td>Borrow</td>
+<td>Reallocation can dangle a path; slot assignment can keep it live while changing the entity. Validate, then reacquire.</td>
+<td><a href="ch173.xhtml#id_01-foundations-i-ch003-figure-cpp-02---a-borrow-can-fail-in-two-different-ways" class="wikilink">CPP-02 · lifetime versus identity</a></td>
+<td>Can the same address still reach the wrong entity?</td>
+</tr>
+<tr>
+<td>Move</td>
+<td>Construction creates a destination; a move operation may transfer duty. The source remains alive under its type’s contract.</td>
+<td><a href="ch173.xhtml#id_01-foundations-i-ch003-figure-cpp-03---move-the-duty-keep-both-object-lifetimes" class="wikilink">CPP-03 · two live objects, one duty</a></td>
+<td>Why does <code>std::move(x)</code> alone release nothing?</td>
+</tr>
+<tr>
+<td>GPU release</td>
+<td>RAII triggers the selected cleanup protocol; GPU completion governs when native release is safe.</td>
+<td><a href="ch203.xhtml#id_01-foundations-i-ch004-figure-cpp-04---cpu-cleanup-can-precede-gpu-reclamation" class="wikilink">CPP-04 · deferred reclamation (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)</a></td>
+<td>Which owner keeps the device and pending release queue alive?</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Answers:</strong> translation sees a usable declaration but linking still needs the definition; yes, semantic invalidation can preserve a live slot; <code>std::move</code> changes expression category and requires a consuming operation; the renderer must explicitly own the queue/device until all pending duties complete.</p>
+</section>
+<section id="appendix-960160274237-ownership-decision-board" class="level3">
+<h3>Ownership decision board</h3>
+<p><img src="../media/file38.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Caption:</strong> Pick semantics first, syntax second. A raw pointer usually borrows; it does not extend lifetime. Shared ownership is a relationship, not a generic safety upgrade.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Need</th>
+<th>Recall</th>
+<th>Common trap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Borrow briefly</td>
+<td><code>T&amp;</code>, <code>T*</code>, <code>span</code></td>
+<td>Caller must preserve lifetime and validity.</td>
+</tr>
+<tr>
+<td>Own exclusively</td>
+<td><code>unique_ptr&lt;T&gt;</code></td>
+<td><code>get()</code> borrows; <code>release()</code> transfers the duty.</td>
+</tr>
+<tr>
+<td>Own jointly</td>
+<td><code>shared_ptr&lt;T&gt;</code></td>
+<td>Control-block safety does not synchronize <code>T</code>.</td>
+</tr>
+<tr>
+<td>Observe jointly owned object</td>
+<td><code>weak_ptr&lt;T&gt;::lock()</code></td>
+<td>Check the returned owner; <code>expired()</code> then use is a race.</td>
+</tr>
+<tr>
+<td>Release a native handle</td>
+<td>Custom/domain deleter</td>
+<td>Match the API, device/context, and allocator.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-960160274237-raii-move-cleanup-from-branches-into-scope" class="level3">
+<h3>RAII: move cleanup from branches into scope</h3>
+<p><span class="diagram-panels"><img src="../media/file39.svg" class="allmight-diagram-panel" data-panel-index="1" data-panel-count="2" alt="Diagram" /><img src="../media/file40.svg" alt="" /></span><img src="../media/file41.png" class="allmight-diagram-panel" data-panel-index="2" data-panel-count="2" alt="" /></p>
+<p><strong>Caption:</strong> Partial construction is safe only for responsibilities already held by fully constructed members/guards. A naked raw handle between acquire and adoption is a leak window.</p>
+</section>
+<section id="appendix-960160274237-storage-object-and-occupant-are-different-states" class="level3">
+<h3>Storage, object and occupant are different states</h3>
+<p><span class="diagram-panels"><img src="../media/file42.svg" class="allmight-diagram-panel" data-panel-index="1" data-panel-count="2" alt="Diagram" /><img src="../media/file43.svg" alt="" /></span><img src="../media/file44.png" class="allmight-diagram-panel" data-panel-index="2" data-panel-count="2" alt="" /></p>
+<p><strong>Caption:</strong> Destroying an occupant does not necessarily free its storage. Same address does not mean same object. Correct alignment, size, construction, destruction and replacement rules still apply; <code>std::launder</code> does not construct or revive anything.</p>
+</section>
+<section id="appendix-960160274237-the-four-questions-to-ask-at-a-resource-boundary" class="level3">
+<h3>The four questions to ask at a resource boundary</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Ask</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Storage</td>
+<td>Which bytes, with what size/alignment?</td>
+<td>Arena slot large and aligned enough for <code>Widget</code>.</td>
+</tr>
+<tr>
+<td>Object</td>
+<td>Which live typed occupant?</td>
+<td><code>Widget</code> has completed construction.</td>
+</tr>
+<tr>
+<td>Ownership</td>
+<td>Who ends its lifetime/releases the handle?</td>
+<td>Move-only <code>GpuBuffer</code> owner.</td>
+</tr>
+<tr>
+<td>External use</td>
+<td>When is reclamation safe?</td>
+<td>GPU completion fence/timeline.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-960160274237-retrieval-prompts" class="level3">
+<h3>Retrieval prompts</h3>
+<ol type="1">
+<li>Why can a stack object own heap or GPU resources?</li>
+<li>What does RAII automate, and what release timing must a GPU wrapper still know?</li>
+<li>Why is <code>shared_ptr</code> copying not a synchronization policy for the pointed-to object?</li>
+<li>Why does <code>weak_ptr::lock()</code> give a stronger test than checking <code>expired()</code> first?</li>
+<li>How can a <code>weak_ptr</code> keep control-block storage allocated after object destruction?</li>
+<li>What is the difference among <code>new T</code>, <code>::operator new</code>, <code>construct_at</code>, <code>destroy_at</code>, and deallocation?</li>
+<li>Why does <code>unique_ptr&lt;Derived&gt;</code> converting to <code>unique_ptr&lt;Base&gt;</code> require a correct base destruction contract?</li>
+<li>What exactly does <code>std::launder</code> not do?</li>
+</ol>
+<blockquote>
+<p>[!answer]- Compact key Scope-based owners run cleanup on normal exit and unwinding. External completion is a separate condition. Shared-pointer thread safety concerns ownership bookkeeping, not arbitrary pointee mutation. <code>lock()</code> atomically attempts to obtain a strong owner. Weak observers can keep the control block, but not the managed object’s lifetime, alive. A new-expression combines storage allocation and initialization; allocation functions alone only acquire storage; construction starts an object lifetime; destruction ends it; deallocation returns storage. Base deletion needs a valid virtual destructor or a deleter retaining the concrete type. <code>launder</code> can obtain a pointer to an already-live object only under its rules; it is no general repair tool.</p>
+</blockquote>
+<p><a href="ch203.xhtml#id_01-foundations-i-ch004-from-a-live-object-to-responsible-resource-ownership" class="wikilink">Teach the full ownership story (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m010---parts-148-160" class="wikilink">Part coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-960160274237-added-retrieval-prompt" class="level3">
+<h3>Added retrieval prompt</h3>
+<p>Borrow: T&amp; or const T&amp;. Consume: unique_ptr&lt;T&gt; by value. Retain shared lifetime: shared_ptr&lt;T&gt; by value. Borrow an existing shared handle: const shared_ptr&lt;T&gt;&amp; only for that call. Use a matching deleter for non-memory resources. <a href="ch173.xhtml#id_01-foundations-i-ch003-worked-api-choice-borrow-consume-retain-or-copy-a-value" class="wikilink">Rebuild the API lab</a>.</p>
+</section>
+<section id="appendix-960160274237-requests-and-replaceable-backends-m011-retrieval-experiment" class="level3">
+<h3>Requests and replaceable backends — M011 retrieval experiment</h3>
+<p>A renderer’s command is <strong>one of several known shapes</strong>; the runtime backend is <strong>one implementation of a common contract</strong>. These are two different decisions, so redraw the story without looking: command value → active alternative → borrowed submit call → virtual override → checked visitor → logical result → correctly destroyed owner. Then explain what remains separate from the story: the GPU’s completion and native-resource release rules.</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>From memory, reconstruct the situation</th>
+<th>What the answer must account for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Why can a union’s storage not be treated as several simultaneously live objects?</td>
+<td>One active member and the correct lifetime transitions; a byte pattern is not a type tag.</td>
+</tr>
+<tr>
+<td>How does a request prove its form?</td>
+<td><code>variant</code> discriminant, checked <code>get_if</code> / <code>visit</code>, and possible exceptional valueless state.</td>
+</tr>
+<tr>
+<td>Why does a base reference call the derived implementation but a copied base value not preserve it?</td>
+<td>Static type, dynamic type, subobjects, virtual dispatch and slicing.</td>
+</tr>
+<tr>
+<td>Why is the interface destructor virtual?</td>
+<td>Destruction through an owning base pointer must reach the derived destructor; external GPU use has its own completion rule.</td>
+</tr>
+<tr>
+<td>What does a diamond with a virtual common base mean?</td>
+<td>Two inheritance paths reach one most-derived common-base subobject, not a mandated memory offset.</td>
+</tr>
+<tr>
+<td>What can each cast prove?</td>
+<td><code>static_cast</code> follows a statically permitted conversion; <code>dynamic_cast</code> can runtime-check polymorphic relationships; <code>reinterpret_cast</code> does not create objects; <code>const_cast</code> does not legalize writing to genuinely const storage.</td>
+</tr>
+<tr>
+<td>Why must two handles with the same slot but different generations compare unequal?</td>
+<td>Identity includes the occupant generation; equality still does not prove current liveness.</td>
+</tr>
+<tr>
+<td>Why does the overridden <code>reserve</code> body see 2 through a base view but 7 through a derived view?</td>
+<td>Default argument from static type; virtual body from dynamic type.</td>
+</tr>
+<tr>
+<td>Can <code>&lt;=&gt;</code> always produce a total order?</td>
+<td>Integer ID fields can support strong ordering; NaN yields unordered floating comparisons and demands an explicit container key policy.</td>
+</tr>
+<tr>
+<td>Can we claim this is the fastest dispatch architecture?</td>
+<td>No: compare allocation, memory layout, branch behavior and optimizer effects on the same workload.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Blank-file reconstruction:</strong> Recreate <code>Clear</code>, <code>DrawMesh</code>, <code>Upload</code>, <code>Request</code>, <code>Backend</code> and <code>CountingBackend</code> with a single exclusive owner; verify command counts, derived destructor execution, failed runtime cast, slicing, shared virtual base, generation-aware equality, NaN’s unordered comparison, overload selection and static default-argument binding. Full code and the checked build command are in <a href="ch595.xhtml#source-source-file-9e5ff4ba88e6efabc938832a" class="wikilink">the M011 C++20 laboratory</a>; complete derivations and failure explanations are in <a href="ch203.xhtml#id_01-foundations-i-ch004-from-one-owned-resource-to-many-requests-and-a-replaceable-backend" class="wikilink">the continuous narrative (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)</a>. Do not infer Kairo or GPU execution from this standalone test.</p>
+</section>
+<section id="appendix-960160274237-one-request-one-transaction-callbacks-that-may-outlive-their-caller-m012-reconstruction" class="level3">
+<h3>One request, one transaction, callbacks that may outlive their caller — M012 reconstruction</h3>
+<p>Read the complete <a href="ch203.xhtml#id_01-foundations-i-ch004-from-an-accepted-render-request-to-a-resource-that-survives-failures-and-callbacks" class="wikilink">M012 narrative (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)</a> only <em>after</em> attempting this recall route. The important picture begins with an editor requesting a resource and ends with either a fully published asset or the original published store unchanged.</p>
+<p><img src="../media/file45.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p>The first thing to reconstruct is <em>why each arrow is necessary</em>. The request’s count must be distinct from an asset index, because identical raw integer types do not carry the same domain meaning. The file must be decoded as checked bytes, not by assuming any pointer cast creates a live <code>WireHeader</code>. Preparation must be private because callbacks or render systems must never observe half-constructed state. Every acquired handle must have one owner before a throwing operation can intervene. Publication needs a precise boundary: an exception before the commit must not modify existing records under the stated guarantee; a callback that throws afterward is a different event requiring its own policy.</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Reconstruction question</th>
+<th>Minimum evidence the reader must produce</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Why is a raw <code>std::size_t</code> a dangerous API for bytes?</td>
+<td>Show accidental unit mixing; write <code>explicit ByteCount</code> with explicit conversion back.</td>
+</tr>
+<tr>
+<td>Can a function pointer close over a local variable?</td>
+<td>No: a plain pointer carries a callable identity; extra state needs a context, whose lifetime is separately guaranteed.</td>
+</tr>
+<tr>
+<td>Why is a member-function pointer not an ordinary callback address?</td>
+<td>Explain the required instance and demonstrate <code>object.*member</code> invocation.</td>
+</tr>
+<tr>
+<td>What does a functor or lambda actually store?</td>
+<td>Draw state fields or references; contrast capture of an integer, pointer, view and <code>this</code>.</td>
+</tr>
+<tr>
+<td>How do value and reference captures differ after mutation?</td>
+<td>Predict snapshot 10 and live view 20; explain why a deferred reference may dangle.</td>
+</tr>
+<tr>
+<td>What changes when a lambda is stored in <code>std::function</code>?</td>
+<td>Type erasure, copyable target, possible storage cost, empty-call error; no guaranteed inline capacity.</td>
+</tr>
+<tr>
+<td>Which exceptions cause cleanup, and what cannot be rolled back?</td>
+<td>Distinguish stack unwinding/local RAII from preexisting external side effects.</td>
+</tr>
+<tr>
+<td>What are the basic, strong and no-throw guarantees?</td>
+<td>State valid-but-changed, unchanged observable state, and non-escaping exceptions; give each an example.</td>
+</tr>
+<tr>
+<td>Why must the native resource move be non-throwing?</td>
+<td>Trace vector growth, element relocation, and the relevant strong-guarantee conditions.</td>
+</tr>
+<tr>
+<td>Why can’t input validation live only in <code>assert</code>?</td>
+<td><code>NDEBUG</code> can remove it; show typed invalid-input errors separately from programmer invariant failures.</td>
+</tr>
+<tr>
+<td>What do <code>bit_cast</code> and trivially copyable prove?</td>
+<td>A constrained representation-value operation, not a portable six-byte disk schema.</td>
+</tr>
+<tr>
+<td>Why is a typed pointer into an arbitrary file unsafe?</td>
+<td>Length, alignment, lifetime, alias rules, endian and padding are independent checks.</td>
+</tr>
+<tr>
+<td>How do we demonstrate rollback?</td>
+<td>Reproduce counts: (0,0,0), (1,1,0), (1,2,1), (2,3,1), then 0 live at destruction.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Blank-file laboratory:</strong> Rebuild <code>ByteCount</code>; the fake device; the move-only <code>Resource</code>; the private <code>AssetRecord</code>; <code>AssetStore::upload</code> returning a typed result; function/member/functor callbacks; value/reference and owning-lifetime lambda captures; and a six-byte little-endian serializer. Compile under C++20 and warnings as errors, execute the deliberate failure after handle acquisition, then repeat under <code>-DNDEBUG</code>. The tested reference and exact commands are in <a href="ch615.xhtml#source-source-file-32e93bc026677e074aaa7771" class="wikilink">the M012 lab</a> and the source/evidence record. Do not classify this exercise as complete learner mastery until it can be reconstructed and explained independently.</p>
+</section>
+<section id="appendix-960160274237-one-asset-pipeline-many-types-m013-retrieval" class="level3">
+<h3>One asset pipeline, many types — M013 retrieval</h3>
+<p>The preceding recall exercise ended with a safe, published asset. Now the editor wants <em>the same preparation and publication guarantees</em> for meshes, textures with different channel counts, and shader records. We must avoid duplicating stores without erasing type safety. Redraw this path from memory, then justify every boundary rather than reciting template vocabulary:</p>
+<p><span class="diagram-panels"><img src="../media/file46.svg" class="allmight-diagram-panel" data-panel-index="1" data-panel-count="3" alt="Diagram" /><img src="../media/file47.svg" alt="" /><img src="../media/file48.svg" alt="" /></span><img src="../media/file49.png" class="allmight-diagram-panel" data-panel-index="2" data-panel-count="3" alt="" /><img src="../media/file50.png" class="allmight-diagram-panel" data-panel-index="3" data-panel-count="3" alt="" /></p>
+<p>Imagine one <code>Mesh</code> containing three unsigned indices, one <code>Texture&lt;4&gt;</code> containing twelve texels, and one <code>Texture&lt;3&gt;</code> containing five texels. Explain why a trait gives 12, 48 and 15 source bytes, then derive why the checked batch accumulator returns 75. Show why a bound such as <code>texel_count &gt; max/Channels</code> must be checked <em>before</em> multiplication. Finally explain why none of these counts establishes the actual GPU allocation size.</p>
+<p>Now reconstruct the implementation without opening the reference. Start with <code>template&lt;class T&gt;</code> function-template deduction. Build <code>template&lt;class T, size_t Capacity&gt;</code> with fixed optional slots and explain why the non-type capacity changes the class specialization. Provide the full <code>AssetTraits&lt;Mesh&gt;</code> specialization and the partial <code>AssetTraits&lt;Texture&lt;Channels&gt;&gt;</code> specialization, then contrast class-template specialization with function overloading. Derive <code>U&amp; &amp; → U&amp;</code>, <code>U&amp; &amp;&amp; → U&amp;</code>, <code>U&amp;&amp; &amp; → U&amp;</code>, and <code>U&amp;&amp; &amp;&amp; → U&amp;&amp;</code>. Use those results to show why <code>meshes.emplace(input)</code> makes a copy while <code>meshes.emplace(std::move(input))</code> selects a move path; do not assume the moved-from vector must be empty.</p>
+<p>The next reconstruction must connect a heterogeneous parameter pack to a checked fold. Show what happens for zero arguments and why a fold’s grouping is not itself a universal left-to-right side-effect guarantee. Then implement the earlier <code>std::void_t</code> SFINAE detection pattern and a clearer <code>Uploadable</code> concept with compound requirements. State exactly what a <code>requires</code> expression checks and what it <em>does not</em> execute. Constrain <code>emplace</code> with <code>std::constructible_from</code> and show why the overload <code>route(const T&amp;)</code> selects the constrained path for supported assets and the generic fallback for <code>UnknownAsset</code>.</p>
+<p>Finally prove publication. If the published count is <code>c</code>, slots <code>[0,c)</code> are live and slots <code>[c,Capacity)</code> are empty. When the constructor throws in slot <code>c</code>, the count is not incremented. Reconstruct the deliberately failed <code>CheckedShader(-1)</code> attempt and show why the previously published version 3 remains valid and version 4 can use the next slot. Explain what would break if we supported deletion, stored raw references after the depot’s lifetime, invoked the API concurrently or replaced the CPU-only record with an asynchronously used GPU buffer without retirement bookkeeping.</p>
+<p><strong>Evidence and full explanation:</strong> <a href="ch208.xhtml#id_01-foundations-i-ch005-one-asset-pipeline-many-asset-types-generic-code-without-accidental-promises" class="wikilink">the M013 narrative (Bits, Programs, and Reliable Systems, Part 3, Ch. 5)</a>, <a href="ch606.xhtml#source-source-file-a5db53514d74ae247b4ac42f" class="wikilink">the tested C++20 laboratory</a> and <a href="ch207.xhtml#appendix-fd090d982a15-m013-parts-201216-generic-asset-preparation-with-constrained-apis" class="wikilink">the 16-part coverage map</a>. The test checks representative semantics, not the learner’s independent ability to reconstruct these decisions or current Kairo implementation details.</p>
+</section>
+<section id="appendix-960160274237-the-tile-planner-makes-a-choice-m014-reconstruction" class="level3">
+<h3>The tile planner makes a choice — M014 reconstruction</h3>
+<p>This recall path belongs after <a href="ch208.xhtml#id_01-foundations-i-ch005-a-texture-tile-that-chooses-its-work-before-the-frame-begins" class="wikilink">the full M014 narrative (Bits, Programs, and Reliable Systems, Part 3, Ch. 5)</a> and the <a href="ch598.xhtml#source-source-file-f5eb017280bb6b2ae6b1475d" class="wikilink">C++20 lab</a>. Its purpose is to rebuild the decision chain from memory, not to duplicate an encyclopedia of template keywords.</p>
+<p>Picture one 8×2 RGBA texture tile, a budget of 64 bytes, a 64-byte CPU buffer, and a counting recorder. Before the renderer tries to use it, the planning layer must establish what is known from the type and what still depends on the incoming data. Draw this path, then explain each transition and its failure condition:</p>
+<p><span class="diagram-panels"><img src="../media/file51.svg" class="allmight-diagram-panel" data-panel-index="1" data-panel-count="3" alt="Diagram" /><img src="../media/file52.svg" alt="" /><img src="../media/file53.svg" alt="" /></span><img src="../media/file54.png" class="allmight-diagram-panel" data-panel-index="2" data-panel-count="3" alt="" /><img src="../media/file55.png" class="allmight-diagram-panel" data-panel-index="3" data-panel-count="3" alt="" /></p>
+<p>A correct reconstruction should derive <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>8</mn>
+  <mo>×</mo>
+  <mn>2</mn>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>64</mn>
+</math> bytes from the uncompressed source representation, then explain why <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><semantics><mrow><mn>8</mn><mo>×</mo><mn>3</mn><mo>×</mo><mn>4</mn><mo>=</mo><mn>96</mn></mrow><annotation encoding="application/x-tex">8\times3\times4=96</annotation></semantics></math> fails the budget. It should show why a 4×4 RGBA request with no buffer fails <strong>only when the verification tag demands a real payload</strong>. The metadata-only 4×4 RGB path may report 48 planned bytes, but it has not proved any upload complete. Show how overflow is rejected by checking <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><semantics><mrow><mi>x</mi><mo>&gt;</mo><mrow><mi mathvariant="normal">m</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">x</mi></mrow><mi>/</mi><mi>y</mi></mrow><annotation encoding="application/x-tex">x &gt; \mathrm{max}/y</annotation></semantics></math> <em>before multiplication</em>, not by multiplying and inspecting the wrapped result.</p>
+<p>Rebuild <code>PixelTraits&lt;Format&gt;</code> using <code>std::integral_constant</code> and distinguish the fact that a type is empty from an assertion that it costs zero bytes in every containing object. Demonstrate an <code>if constexpr</code> RGBA branch and contrast it with a normal runtime <code>if</code>. Write a <code>constexpr</code> function that accepts either compile-time or runtime arguments; then change the problem so that a <code>consteval</code> function demands a valid compile-time tile definition. Explain why <code>constinit</code> permits a mutable, single-threaded diagnostic counter but does not make it <code>const</code> or atomic.</p>
+<p>Derive the four-bit Morton lookup without memorizing its answer. Spread <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mn>3</mn>
+</math> to binary <code>00000101</code> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+  <mo>=</mo>
+  <mn>5</mn>
+</math> to <code>00010001</code>. Shift the second pattern and OR the results to recover decimal 39. Construct the sixteen-entry table during constant evaluation. Then explain when a small lookup table might lose to shift/mask arithmetic because memory traffic and locality matter.</p>
+<p>From that setup, implement a stateless policy and a stateful budget policy with the same <code>validate</code> operation. Use <code>TilePlanner&lt;Format,Policy,Recorder&gt;</code> to compose the behavior without a runtime backend switch. Show why <code>RecorderBase&lt;Derived&gt;</code> may call <code>Derived::record_impl</code> only when it is genuinely part of an appropriately derived object; compare this static dispatch with a runtime-selected <code>std::function</code> target. Construct <code>VerifyPayloadTag</code> and <code>MetadataOnlyTag</code> and explain exactly how overload resolution chooses a validation path from the caller’s tag type. Finally compare normal empty-policy membership, private empty-base inheritance, and <code>[[no_unique_address]]</code> membership. On the tested Linux compilers their respective sizes were 16, 8 and 8 bytes; the rule is <strong>a permitted optimization</strong>, not a universal numeric contract, and compilers can treat the attribute differently.</p>
+<p>A complete blank-screen test recreates the accepted 64-byte RGBA plan, rejected 96-byte budget attempt, rejected empty verified payload, accepted 48-byte metadata-only RGB plan, and rejected overflowing extent. The recorder receives exactly two plans in the demonstrated sequence; failed requests do not reach it. Then state why this is <strong>not</strong> a real GPU resource, performance benchmark, atomic transaction for arbitrary throwing recorders, or proof of thread safety. The evidence ledger preserves the exact compiled commands and original fourteen-part mapping: <a href="ch207.xhtml#appendix-fd090d982a15-m014-parts-217230-one-tile-planner-and-its-compile-time-policy-decisions" class="wikilink">M014 traceability</a> · <a href="ch155.xhtml#appendix-a103e7846d21-phase-4-additive-reconstruction-m014-parts-217230" class="wikilink">verification record</a>.</p>
+</section>
+<section id="appendix-960160274237-a-growing-asset-store-must-preserve-its-promises-m015-retrieval" class="level3">
+<h3>A growing asset store must preserve its promises — M015 retrieval</h3>
+<p>A previously working fixed-capacity asset depot now grows, removes assets, accepts work in different scheduling orders, and lets the editor find items by name. <strong>Do not use the following as a replacement for the derivations</strong> in <a href="ch209.xhtml#id_01-foundations-i-ch006-an-asset-registry-grows-while-its-handles-must-not-change" class="wikilink">the complete M015 chapter (Bits, Programs, and Reliable Systems, Part 3, Ch. 6)</a>. Start with this diagram and explain why its arrows and lifetime boundaries exist:</p>
+<p><img src="../media/file56.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p>First distinguish <code>size</code> from <code>capacity</code>, and prove why <code>reserve(2)</code> creates <strong>zero</strong> live elements whereas <code>resize(5)</code> creates five. With a geometric capacity sequence <code>1,g,g²,...</code>, derive the sum of relocation work and explain why an individual append can still have linear latency while amortized append cost remains constant. State the operations that invalidate vector pointers and the difference between an append with spare capacity, one requiring reallocation, a middle erase and <code>reserve</code> that does or does not change capacity. A pointer does not move itself when the vector relocates.</p>
+<p>Then reconstruct the identity protocol. Slot zero holds generation one; a handle <code>{0,1}</code> reaches it. After erase, that occupant is destroyed, its generation advances, and a new asset occupies slot zero at generation two. Draw why <code>{0,1}</code> no longer resolves. Explain what happens if generation wraps, if a raw <code>Asset*</code> or span was retained across reallocation, or if the renderer still has an asynchronous GPU read in flight. Distinguish a CPU identity check from the device-completion requirement.</p>
+<p>Show the two injected publication failures: one before any slot change, another after a new slot has been populated but before the name index becomes discoverable. Prove why the rollback resets the candidate and removes a newly appended unpublished slot; explain why the test’s successful outcome is not an unrestricted claim about arbitrary throwing user callbacks or all allocator behaviors.</p>
+<p>Now change the workload. A fixed-size channel array needs <code>std::array</code>, not vector growth. A front/back event stream makes <code>deque</code> attractive, but its iterator stability differs from that of its existing element references. A <code>list</code> can transfer a node with <code>splice</code> while keeping an iterator to an unaffected node; a <code>forward_list</code> needs the predecessor for <code>erase_after</code>. Explain what those guarantees cost in nodes, pointer chasing and cache locality compared with a contiguous vector scan.</p>
+<p>Next give two lookup problems. For ordered traversal and range queries, consider <code>std::map</code> / <code>std::set</code>, with logarithmic comparison-based behavior. For name-to-handle lookup or membership, use <code>std::unordered_map</code> / <code>std::unordered_set</code> and explain expected versus worst-case complexity. Write a hash that returns zero for every string; twenty-four distinct names now collide in the same bucket without becoming equal. Derive <code>load_factor = size/bucket_count</code>, explain what <code>max_load_factor(0.5)</code> and <code>reserve(96)</code> request, and state why rehash invalidates unordered iterators but does not generally invalidate references to surviving elements.</p>
+<p>Finally build the scheduling choices from user needs: a FIFO <code>queue</code>, LIFO <code>stack</code>, and a <code>priority_queue</code> whose comparator orders priority 3 before priority 1 and earlier sequence numbers before later ones within equal priority. Explain why priority_queue does not promise tie stability unless the comparator defines it.</p>
+<p>Finish by distinguishing <strong>borrow</strong> from <strong>ownership</strong>. A <code>span&lt;const uint8_t&gt;</code> carries a range while its byte vector remains alive and stable; it does not own the bytes. A <code>string_view</code> may point into only the middle of a stored string and need not be NUL-terminated at its end. Copy <code>"stone"</code> into <code>std::string</code> before destroying or modifying the source. Describe why the local observed short-string capacity of 15 cannot be advertised as a portable SSO specification.</p>
+<p><strong>Actual reconstruction witness:</strong> <a href="ch592.xhtml#source-source-file-e829cf731b17419e282775cf" class="wikilink">M015 C++20 lab</a>, compiled and run with GCC sanitizers, Clang, and a GCC release-style build. A learner should be able to recreate the sequence of checks without the reference and explain every failure. <a href="ch207.xhtml#appendix-fd090d982a15-m015-parts-231250-growing-the-asset-registry-without-losing-identities" class="wikilink">Original 20-part mapping</a> · <a href="ch155.xhtml#appendix-a103e7846d21-phase-5-additive-reconstruction-m015-parts-231250" class="wikilink">Exact test and provenance ledger</a>. Do not claim personal mastery or real Kairo/GPU verification merely because this standalone model passes.</p>
+</section>
+<section id="appendix-960160274237-query-the-registry-without-confusing-identity-and-a-snapshot-m016-reconstruction" class="level3">
+<h3>Query the registry without confusing identity and a snapshot — M016 reconstruction</h3>
+<p>The previous M015 exercise produced a generation-checked asset registry. The new problem is to report on assets without changing their live ownership and without assuming that a handle stays current forever. Read the <a href="ch209.xhtml#id_01-foundations-i-ch006-from-a-living-asset-registry-to-reliable-queries-and-transformations" class="wikilink">full M016 narrative (Bits, Programs, and Reliable Systems, Part 3, Ch. 6)</a> before testing recall; the questions below should be reconstructed as <em>one processing story</em>, not as twenty memorized API names.</p>
+<p><img src="../media/file57.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p>Starting with the five records <code>brick.mesh</code> (48 bytes, priority 2), <code>sky.tex</code> (64, priority 3), <code>ui.tex</code> (16, priority 3), <code>terrain.mesh</code> (128, priority 1) and <code>rock.mesh</code> (48, priority 2), answer each part in coherent explanations:</p>
+<ol type="1">
+<li><p><strong>Describe each result’s meaning.</strong> Why does <code>optional&lt;AssetHandle&gt;</code> mean “possibly absent” but fail to distinguish an empty query from a missing name? Build <code>ExpectedLike&lt;AssetHandle,LookupError&gt;</code> as a C++20 model. Explain exactly what its <code>has_value()</code> contract requires before <code>value()</code> is accessed and why it is not a full replacement for C++23 <code>std::expected</code>. Then distinguish that result from an Inspect/Upload/Evict <code>variant</code> and from a diagnostic <code>any</code>. Predict a wrong <code>any_cast</code>.</p></li>
+<li><p><strong>Rebuild the report shape.</strong> Group count and error count in a <code>pair</code> and three report fields in a <code>tuple</code>. Show that <code>auto [a,b] = pair</code> copies this pair, while <code>auto&amp; [a,b] = pair</code> aliases it. Explain why a named struct can be clearer at a long-lived public API boundary and why a borrowed structured binding needs an owner that outlives it.</p></li>
+<li><p><strong>Prove the traversal capabilities before selecting the algorithm.</strong> Classify <code>istream_iterator&lt;int&gt;</code>, <code>forward_list&lt;int&gt;::iterator</code>, <code>list&lt;int&gt;::iterator</code>, <code>deque&lt;int&gt;::iterator</code> and <code>vector&lt;int&gt;::iterator</code> according to input, forward, bidirectional, random-access and contiguous iterator concepts. Why can <code>std::sort</code> operate on the vector’s random-access iterators but not directly on <code>list</code> iterators? Why may binary search over forward iterators have logarithmic comparison count but linear iterator advances?</p></li>
+<li><p><strong>Choose ordering by what the editor needs.</strong> Write a comparator that first orders byte counts, then asset names so equal byte counts have deterministic tie breaking. Explain why <code>std::sort</code> need not preserve the order of comparator-equivalent records and why common introsort-like implementations are not mandated by the C++ standard. For descending priorities, write <code>stable_sort</code> and predict the relative order of <code>sky.tex</code> vs <code>ui.tex</code> and <code>brick.mesh</code> vs <code>rock.mesh</code>. State the strict-weak-ordering requirements the comparator must satisfy.</p></li>
+<li><p><strong>Partition only when the task is binary membership.</strong> Use <code>std::partition</code> to put mesh records before non-mesh records; verify both halves and use <code>partition_point</code> on the resulting already-partitioned range. Explain why the two groups are not automatically sorted and why partitioning does not promise to retain original relative order. Say when <code>stable_partition</code> would be appropriate.</p></li>
+<li><p><strong>Derive the binary-search boundaries.</strong> Once the byte-count ordering is <code>[16,48,48,64,128]</code>, prove that <code>lower_bound(48)</code> returns index 1 and <code>upper_bound(48)</code> returns index 3. Explain why <code>equal_range</code> gives <code>[1,3)</code> and why <code>lower_bound(50)</code> points to index 3 despite having no match. Supply comparator overloads in both element/value and value/element orders. Describe why using a priority-sorted sequence here would violate the precondition.</p></li>
+<li><p><strong>Compare one-off scanning with a maintained index.</strong> Use <code>std::find</code> to look for <code>sky.tex</code> in an unsorted name snapshot. Explain when this simple linear scan is preferable to building a fresh hash index, and when repeated lookups should instead use the registry’s already maintained name index.</p></li>
+<li><p><strong>Transform and reduce with the correct numeric meaning.</strong> Derive <code>[48,64,16,128,48]</code> using <code>std::transform</code> and an output back inserter, then calculate <code>304</code> using an explicit <code>std::size_t{0}</code> initial accumulator. Write the ordered <code>std::accumulate</code> fold and explain why <code>std::reduce</code> may regroup operations, even if a particular run happens to use one thread. Use <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>20</mn>
+    </mrow>
+  </msup>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>20</mn>
+    </mrow>
+  </msup>
+  <mo>,</mo>
+  <mn>3</mn>
+</math> to derive both 3 and 4 from different floating-point groupings. State separate overflow, accuracy and deterministic-reproducibility policies.</p></li>
+<li><p><strong>Erase at the correct ownership boundary.</strong> Starting with <code>{1,2,3,4,5,6}</code>, use <code>remove_if</code> to keep odd IDs but demonstrate that the vector still reports size six until <code>erase</code> destroys the suffix. Then use C++20 <code>std::erase_if</code> to remove the two texture records from an <strong>owned report snapshot</strong>, leaving three rows. Explain why the live asset registry has not evicted those assets and what additional generation validation, index cleanup and GPU retirement a real eviction would require.</p></li>
+</ol>
+<p><strong>Blank-file witness:</strong> reconstruct the program in <a href="ch593.xhtml#source-source-file-c479bd493444d093f6c34898" class="wikilink">asset_query_algorithm_lab.cpp</a> with active failure checks, compile under C++20 with warnings as errors, then rerun with <code>-DNDEBUG</code> and sanitizers. The reference was actually run with GCC 14.2 ASan/UBSan, Clang 17 and GCC release flags. Reconstruct the expected values before running it; a passing executable is not a substitute for understanding the data/iterator/lifetime contracts.</p>
+<p><strong>Audit:</strong> <a href="ch207.xhtml#appendix-fd090d982a15-m016-parts-251270-the-asset-registry-becomes-a-query-and-transformation-pipeline" class="wikilink">the original 20-part mapping</a> and <a href="ch155.xhtml#appendix-a103e7846d21-phase-6-additive-reconstruction-m016-parts-251270" class="wikilink">the source and verification ledger</a>. The registry’s <em>live</em> concurrency, the separately named Kairo implementations and the learner’s independent reconstruction remain unverified here.</p>
+</section>
+<section id="appendix-960160274237-from-borrowed-reports-to-module-boundaries-m017-reconstruction" class="level3">
+<h3>From borrowed reports to module boundaries — M017 reconstruction</h3>
+<p>The Phase 6 report used an owned snapshot so that sorting and erasing metadata did not mutate live engine state. The next problem is making that report <em>composable</em> without accidentally copying intermediates, choosing where its scratch allocations live, and sharing its API with separately compiled consumers. The full explanation is <a href="ch209.xhtml#id_01-foundations-i-ch006-from-copying-every-asset-report-to-a-lazy-allocatable-separately-compiled-query-service" class="wikilink">the M017 continuous chapter (Bits, Programs, and Reliable Systems, Part 3, Ch. 6)</a>. Reconstruct the mechanism below <strong>from the problem</strong>, not by reciting the names of its twenty C++ features.</p>
+<p><span class="diagram-panels"><img src="../media/file58.svg" class="allmight-diagram-panel" data-panel-index="1" data-panel-count="3" alt="Diagram" /><img src="../media/file59.svg" alt="" /><img src="../media/file60.svg" alt="" /></span><img src="../media/file61.png" class="allmight-diagram-panel" data-panel-index="2" data-panel-count="3" alt="" /><img src="../media/file62.png" class="allmight-diagram-panel" data-panel-index="3" data-panel-count="3" alt="" /></p>
+<p><strong>First reconstruct what the loop means.</strong> Draw the hidden range variable, begin iterator, end sentinel and increment/compare/dereference sequence behind a range-for. Define a cursor that holds a borrowed pointer to the snapshot vector and a numeric index, and makes <code>operator++</code> skip retired slots. State the invariants for normal, end and default-created iterators; do not dereference the end. Explain why your cursor models <code>std::forward_iterator</code> and why it does not model random access or contiguity. With one 512-byte retired texture and live byte counts 48,64,16,128,48, predict exactly five visits and total 304.</p>
+<p><strong>Next reconstruct laziness and lifetime.</strong> Compose <code>views::all(rows) | views::filter(...) | views::transform(...)</code> to obtain four names from those live rows with at least 48 bytes. Explain why merely forming the pipeline does not copy all four names into a vector and why iterating it later can call the predicate again. Predict why it is wrong to rely on a precise predicate invocation count for arbitrary repeat traversals. Compare <code>views::all(lvalue_vector)</code> with <code>views::all(rvalue_vector)</code> and explain how a <code>ref_view</code> can satisfy <code>borrowed_range</code> without keeping the vector itself alive. Conversely, explain why an owning view storing the vector need not qualify as a borrowed range when the view’s own destruction destroys the data.</p>
+<p><strong>Use a projection only when the search needs one property.</strong> Without constructing a separate names vector, use <code>std::ranges::find(rows, "sky.tex", &amp;Row::name)</code> and predict the record’s byte count. Sort an <em>owned copy</em> by <code>&amp;Row::bytes</code> and state why the 512-byte retired row will still appear at the end unless you filtered it first. Discuss why the source vector’s contiguity does not make a filter view a writable random-access container. Compare <code>AtLeastBytes{48}</code> against an equivalent threshold-capturing lambda, giving a plan for benchmarking actual instruction and allocation costs instead of asserting one form is always faster.</p>
+<p><strong>Now choose who owns allocation.</strong> Build a typed <code>TrackingAllocator&lt;T&gt;</code> that shares statistics across copies and rebindings, uses proper alignment and pairs successful storage acquisitions with deallocation. Explain why allocation is not the same as constructing a <code>T</code> object, and why allocator equality/propagation matter when a container moves or swaps. Then replace the compile-time allocator type with a <code>std::pmr::vector</code> and a <code>std::pmr::unordered_map</code>, both pointing to a counting <code>memory_resource</code>. Explain how unordered buckets/nodes and nested PMR strings may require allocator propagation, and why the resource must outlive both containers.</p>
+<p><strong>Derive the arena lifetime, not just its common-case speed.</strong> Give a 128-byte aligned scratch buffer to a monotonic resource, then allocate 2,048 64-bit values. Explain why the initial buffer cannot contain the entire request; the resource must obtain upstream blocks. Predict why destroying the vector does not immediately free those blocks and why destroying/releasing the arena later can. Repeat with a 64-byte buffer and <code>null_memory_resource</code> upstream and predict <code>std::bad_alloc</code>. State the difference between a frame scratch lifetime and staging memory still held by an asynchronous GPU operation; neither the presence of PMR nor a move-only vector resolves the missing completion fence.</p>
+<p><strong>Finally build an actual module graph.</strong> In separate files, put a <code>:rules</code> partition containing an exported 1,024-byte preview budget, a primary <code>export module allmight.asset_query</code> interface that re-exports that partition, and a <code>module allmight.asset_query;</code> implementation unit defining <code>make_preview</code>. Compile in dependency order. Write two <em>separate importing translation units</em> that use an exported inline function, link them with the implementation, and explain which declarations are exported and why that is distinct from C++ namespace naming or C language linkage. Build <code>asset_query_interop.hpp</code> as a header unit before using <code>import "asset_query_interop.hpp";</code>; compare this with an ordinary <code>#include</code> and explain macro/toolchain implications. Then expose a small versioned C header declaring <code>int allmight_asset_approved_v1(uint64_t)</code>; build a C11 consumer using <code>gcc</code> and link it with the C++ wrapper and module objects. Explain exactly what this test establishes about the chosen GCC14 toolchain, and why it does not certify ABI stability across unrelated compilers or plugin versions.</p>
+<p>The real sources are <a href="ch594.xhtml#source-source-file-a1c76c44bc377537c732f5c4" class="wikilink">the tested C++20 CPU lab</a> and <a href="ch597.xhtml#source-source-file-e1b7c3e4f52da0e7c9c36a41" class="wikilink">the executable module graph script</a>. The local runtime lab passed GCC14 ASan/UBSan, Clang17 and GCC14 release; the module graph passed GCC14’s ordered module/header-unit build with three linked consumers. The original <a href="ch207.xhtml#appendix-fd090d982a15-m017-parts-271290-lazy-asset-queries-allocation-lifetimes-and-compiled-api-boundaries" class="wikilink">twenty-title coverage map</a> and <a href="ch155.xhtml#appendix-a103e7846d21-phase-7-additive-reconstruction-m017-parts-271290" class="wikilink">verification ledger</a> distinguish that evidence from external Kairo audits and unmeasured performance. Personal mastery is earned only after independent explanation, tests and failure-case reconstruction; the authored lesson and one passing lab cannot grant it automatically.</p>
+</section>
+<section id="appendix-960160274237-preserve-an-asset-while-the-engine-changes-m018-reconstruction" class="level3">
+<h3>Preserve an asset while the engine changes — M018 reconstruction</h3>
+<p>The editor selected a teapot before the asset service started deleting, reallocating and reusing storage. The renderer has independently compiled clients, several classes of resource handles and mathematical values from different coordinate frames. Reconstruct the API by starting with the event, <strong>not</strong> with a memorized list of PIMPL, concepts and expression templates. The complete reasoning lives in <a href="ch210.xhtml#id_01-foundations-i-ch007-a-registry-crosses-its-last-c-boundary-hidden-implementation-typed-identity-and-measured-abstraction-cost" class="wikilink">the M018 continuous chapter (Bits, Programs, and Reliable Systems, Part 3, Ch. 7)</a>. The actually compiled service and its test program are in <a href="ch607.xhtml#source-source-file-8aedc3fdcd10c91971507448" class="wikilink">the test laboratory</a> and <a href="ch596.xhtml#source-source-file-c936569afa19be638ec87991" class="wikilink">the multi-TU build</a>.</p>
+<p><strong>Reconstruction 1 — identity, storage, and ABI.</strong> A mesh occupies slot zero in catalog A at generation one, and the client retains a handle. The vector reallocates, the mesh is erased, and a second mesh occupies the same slot. Explain precisely why a pointer might become invalid on reallocation, why a stale index could identify the wrong mesh, why a generation alone does not distinguish two separate catalogs, and why a MeshTag prevents a texture handle being silently passed to a mesh operation. The correct handle is a value containing a type-level kind and catalog/slot/generation runtime identity. A valid lookup compares all required fields and checks that the slot still holds a live value. After erase, the old generation must fail even when the slot is reused. The returned optional MeshInfo is a copy, so keeping it after erase cannot dangle, although its description is now stale. Confirm with the executable’s delete/reuse and cross-catalog tests.</p>
+<p><strong>Reconstruction 2 — the public header is not the implementation.</strong> Write a declaration of an asset service that contains only an incomplete Impl and a unique pointer to that implementation. Explain why the destructor and move assignment must be defined where Impl is complete. Identify which client recompilations PIMPL can avoid and which ABI questions remain. Then identify the <em>actual costs</em>: one implementation allocation in the constructed design, pointer indirection and possible out-of-line call overhead. PIMPL is appropriate for a relatively cold service boundary, not automatically for every inner-loop vector, task or splat. Name the deep-const hazard: an owning pointer stored in a const public object does not in itself make the pointee immutable.</p>
+<p><strong>Reconstruction 3 — three floats are not automatically the same mathematical value.</strong> Demonstrate why a world-space displacement and a camera-space displacement must be different C++ types, while also explaining the actual linear or affine transform that converts between them. Show why a point requires translation but a direction does not, why a normal may require inverse-transpose transformation, and why a quantity in meters cannot simply be added to a quantity in seconds. The phantom marker constrains type checking without adding a stored tag field; the underlying numeric representation does not perform a coordinate transform. Compare a fixed-size Vector&lt;float,3,WorldSpace&gt; with a runtime span requiring an explicit extent check. Explain why the supplied RealScalar concept intentionally rejects integers and user-defined autodiff scalars.</p>
+<p><strong>Reconstruction 4 — materialization is both a performance and a lifetime decision.</strong> Trace eager a+b+c. Then trace a SumExpr storing references and evaluating operator<code>[](i)</code> on demand. Construct the dangerous saved outer expression that refers to a destroyed temporary inner node, and explain why its later evaluation is undefined behavior. Rewrite the example so the inner expression outlives evaluation. Explain how aliasing, SIMD, floating-point reassociation and compiler optimization affect the claim that lazy evaluation must be faster. The tested vectors produce (12,15,18); matching output is necessary but cannot alone establish absence of hidden allocations or the safety of every expression tree.</p>
+<p><strong>Reconstruction 5 — own storage or embed links?</strong> Compare an intrusive task stack, where the task contains its next pointer and must outlive its membership, against a forward_list owning its elements. Show what breaks when a linked Task is destroyed, moved or inserted twice. The tested stack rejects duplicate membership and unlinks on pop. That is not a safe general-purpose ownership scheme for arbitrary user destruction. Predict how allocation, locality and mutation patterns could make either representation preferable.</p>
+<p><strong>Reconstruction 6 — interrogate the machine rather than assuming zero cost.</strong> Compile the assembly probe with optimized GCC and Clang. Find the named externally visible function. Decide whether the templated addition was inlined and whether there are calls or unnecessary transfers <em>on that compiler/target</em>. Explain why a different ISA, link-time optimization, compiler flags or fast-math setting can produce different machine code and numerical results. State a fair baseline and define actual comparable workloads before declaring one catalog representation faster. A successful presence check for an assembly symbol is a build witness, not a timing benchmark.</p>
+<p><strong>Final synthesis.</strong> Draw the lifetime sequence from editor selection to catalog erase and eventual GPU retirement. Distinguish three independently necessary guarantees: the CPU logical handle remains validated, the public C++ representation remains insulated as promised, and a GPU resource stays alive while submitted work may still read it. The M018 sample tests the first two in a limited CPU setting and does <strong>not</strong> implement the third. Compile under release -DNDEBUG and explain why the test program uses throwing checks instead of ordinary asserts. Then independently implement an asset handle with one additional version or session policy, state its invariants and design negative tests that could falsify those invariants.</p>
+<p><strong>Mastery criterion:</strong> without looking up the code, reconstruct the public header, its out-of-line implementation, the validation predicate, an exception-safe reuse transition, a typed fixed/dynamic math interface, a lifetime-safe lazy expression evaluation, and a falsifiable compiler-cost experiment. Reading the answers is not evidence of independent reconstruction.</p>
+</section>
+<section id="appendix-960160274237-make-the-rejected-operation-part-of-the-lesson" class="level3">
+<h3>Make the rejected operation part of the lesson</h3>
+<p><img src="../media/file63.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Read the figure:</strong> type checks decide whether the operation has the right meaning; lifetime checks decide whether its borrowed objects still exist. Both must hold. A successful type check does not extend an operand’s lifetime.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Prompt</th>
+<th>Short answer</th>
+<th>Full explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Two vector types differ; is mixing prevented?</td>
+<td>Test the actual eager, lazy and materialization operations. Every path needs the same scalar/space/extent restrictions.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The delayed path must preserve the same mathematical contract</td>
+</tr>
+<tr>
+<td>Does a named inner expression become constexpr?</td>
+<td>Naming extends this node’s usable lifetime; it does not make references to automatic locals valid in that constexpr initializer. The saved lab uses const.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Expression templates: delaying evaluation can remove an intermediate and create a lifetime bug</td>
+</tr>
+<tr>
+<td>Why forbid copying this intrusive stack?</td>
+<td>Two head pointers can share hooks; popping one clears membership while the other still points at that node.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Intrusive storage exposes a different ownership contract</td>
+</tr>
+<tr>
+<td>Who survives stack destruction?</td>
+<td>Caller-owned linked tasks must survive at stable addresses; the destructor clears hooks without deleting tasks.</td>
+<td>[[tools/m018/m018_lab.cpp</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Reconstruct:</strong> predict the sequence A.push(task), copy A to B, B.pop(), A.push(task). Explain the duplicate-pop failure in the unchecked design and why the current stack rejects copying before execution. Then draw task/stack destruction order and show a valid unlink-and-reuse sequence.</p>
+</section>
+<section id="appendix-960160274237-gpu-interfaces-and-cooperation-shortest-useful-recall" class="level3">
+<h3>GPU interfaces and cooperation — shortest useful recall</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Prompt</th>
+<th>Recall answer</th>
+<th>Expand immediately</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size, alignment, stride?</td>
+<td>Payload extent, legal start addresses, distance between elements. A 12-byte <code>vec3</code> can require 16-byte start alignment.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Make a shader record an explicit binary contract</td>
+</tr>
+<tr>
+<td>Is a texture-table index ownership?</td>
+<td>No. Keep its referenced generation and allocation alive through pending uses.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Let a renderer evolve without losing resource ownership</td>
+</tr>
+<tr>
+<td>Workgroup versus subgroup?</td>
+<td>Workgroups cooperate with shared storage and barriers; subgroups expose a smaller execution collective. Width is not universally 32.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Let many invocations cooperate without inventing a global clock</td>
+</tr>
+<tr>
+<td>What does scan allocate?</td>
+<td>Nonoverlapping output ranges: counts <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math> become offsets <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+</math>.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Scan turns local counts into nonoverlapping output regions</td>
+</tr>
+<tr>
+<td>Atomic, ordering, barrier?</td>
+<td>Protect an operation; govern visibility/order; rendezvous with specified memory effects. These are different contracts.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Scan turns local counts into nonoverlapping output regions</td>
+</tr>
+<tr>
+<td>Can out-of-range lanes return before a required group barrier?</td>
+<td>Generally no. Supply neutral values while preserving the barrier participation contract.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Scan turns local counts into nonoverlapping output regions</td>
+</tr>
+</tbody>
+</table>
+<p>Explain the two barriers in tiled matrix multiplication: one protects complete tile loading; one protects reuse after every consumer finishes. Explain why a later dispatch still needs the API’s execution and memory dependency, rather than assuming a dispatch boundary flushes everything.</p>
+</section>
+<section id="appendix-960160274237-api-resource-stages" class="level3">
+<h3>API resource stages</h3>
+<p>A name, initialized API object, allocated storage, initialized bytes and completed use are different states. glCreateBuffers establishes the object; a storage command establishes capacity; null initial data does not mean zero-filled bytes. <a href="ch411.xhtml#id_01-foundations-i-ch008-a-buffer-name-an-api-object-and-its-storage-are-separate" class="wikilink">Open the worked API distinction (GPU Architecture and Real-Time Rendering, Part 1, Ch. 1)</a>. A nonzero integer alone proves neither a safe draw range nor safe retirement.</p>
+</section>
+<section id="appendix-960160274237-temporary-objects-retrieve-the-lifetime-boundary" class="level3">
+<h3>Temporary objects — retrieve the lifetime boundary</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Prompt</th>
+<th>Short answer</th>
+<th>Full commented witness</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Does every reference extend a temporary’s lifetime?</td>
+<td>No. The binding context matters; a borrowed view never owns its source.</td>
+<td>[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Turn the lifetime rule into a scope trace</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</body>
+</html>

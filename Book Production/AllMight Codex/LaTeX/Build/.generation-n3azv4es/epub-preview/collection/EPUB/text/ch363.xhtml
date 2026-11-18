@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch363.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-cb3b26862282-homogeneous-coordinates-and-perspective-division" class="level2">
+<h2>Homogeneous coordinates and perspective division</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase6 · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-cb3b26862282-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Phase 7 derives the affine block matrix, distinguishes a singular affine map from an invertible frame, and traces model → view → homogeneous clip → NDC using a declared projection. <a href="ch261.xhtml#id_01-foundations-i-ch019-figure-m6---follow-one-point-through-named-spaces" class="wikilink">The worked figure (Mathematics for Visual Computing, Part 1, Ch. 3)</a> keeps the divisor visible and checks the chosen near/far depth endpoints.</p>
+<p>An affine homogeneous point has last coordinate one; a direction has zero. Nonzero common scale defines projective equivalence, while dehomogenization divides by a nonzero final component. Clip representatives and projective classes have related but distinct semantics.</p>
+<p><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>6</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math> describe one finite projective point. NDC normalization standardizes ranges, not vector length.</p>
+</section>
+<section id="appendix-cb3b26862282-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch445.xhtml#appendix-0659864c0aa3-vectors-coordinates-and-affine-points" class="wikilink">Vectors coordinates and affine points (Vision, XR, and Playable Worlds, Part 1, Reference notes: Vectors coordinates and affine points)</a> — Point, displacement and coordinate roles determine which geometric operations are meaningful.</li>
+</ul>
+</section>
+<section id="appendix-cb3b26862282-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch246.xhtml#appendix-0bf0ca73f735-linear-affine-and-projective-transformations" class="wikilink">Linear affine and projective transformations (Mathematics for Visual Computing, Part 1, Reference notes: Linear affine and projective transformations)</a></li>
+</ul>
+<p>Later curriculum sources can deepen this same node; no future coverage is marked complete. - <a href="ch348.xhtml#appendix-47ac1bd6d144-ray-triangle-intersection" class="wikilink">Ray-triangle intersection</a> - <a href="ch345.xhtml#appendix-3ee9861904d5-camera-calibration-and-bundle-adjustment" class="wikilink">Camera calibration and bundle adjustment</a></p>
+<ul>
+<li><a href="ch307.xhtml#appendix-40426e4b2103-homogeneous-clipping-and-perspective-interpolation" class="wikilink">Homogeneous clipping and perspective interpolation (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Homogeneous clipping and perspective interpolation)</a></li>
+<li><a href="ch466.xhtml#appendix-2cbf2968e866-position-reconstruction-from-depth" class="wikilink">Position reconstruction from depth (Vision, XR, and Playable Worlds, Part 1, Reference notes: Position reconstruction from depth)</a></li>
+<li><a href="ch451.xhtml#appendix-113f0267e5f4-camera-gauge-freedoms-and-observability" class="wikilink">Camera gauge freedoms and observability (Vision, XR, and Playable Worlds, Part 1, Reference notes: Camera gauge freedoms and observability)</a></li>
+</ul>
+</section>
+<section id="appendix-cb3b26862282-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain why perspective division is nonlinear and why clipping must precede casual division. Full production proofs, target-specific integration and learner mastery require further evidence.</p>
+</section>
+<section id="appendix-cb3b26862282-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch245.xhtml#id_01-foundations-i-ch018-homogeneous-coordinates-preserve-the-role-of-a-location" class="wikilink">Teaching narrative (Mathematics for Visual Computing, Part 1, Ch. 2)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-phase-6---parts-501-600" class="wikilink">Coverage and source gap</a> · <a href="ch155.xhtml#appendix-a103e7846d21-phase-6---source-analysis-and-verification" class="wikilink">Evidence and limits</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-cb3b26862282-university-course-development" class="level3">
+<h3>University course development</h3>
+<p>Extend the existing account with the geometric reason for the final divide. A 3D point is stored as <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>; after multiplying by a projective matrix it becomes <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>X</mi>
+  <mo>,</mo>
+  <mi>Y</mi>
+  <mo>,</mo>
+  <mi>Z</mi>
+  <mo>,</mo>
+  <mi>W</mi>
+  <mo stretchy="false">)</mo>
+</math>. Dividing the first three components by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>W</mi>
+</math> maps the homogeneous representative to ordinary coordinates. Any nonzero scalar multiple of a homogeneous vector represents the same point, which is why this division is meaningful. For a perspective camera, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>W</mi>
+</math> is chosen to depend on depth, so apparent size shrinks with distance. A direction has homogeneous coordinate zero and is not translated like a point. Projection matrices encode the camera frustum before division; afterward, a viewport transform scales and shifts normalized coordinates to pixels and commonly flips the vertical axis because image rows increase downward. Keep clipping before division to avoid unstable behavior around <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>W</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>.</p>
+<p><a href="ch294.xhtml#id_03-visual-computing-i-ch001-coordinate-frames-transformations-and-pose" class="wikilink">Coordinate frames, transformations, and pose (Geometry, Cameras, and Image Formation, Part 1, Ch. 8)</a> · <a href="ch305.xhtml#id_03-visual-computing-i-ch003-cameras-projection-and-calibration" class="wikilink">Cameras, projection, and calibration (Geometry, Cameras, and Image Formation, Part 1, Ch. 10)</a></p>
+</section>
+<section id="appendix-cb3b26862282-phase-11-camera-development" class="level3">
+<h3>Phase 11 camera development</h3>
+<p>Homogeneous image coordinates represent a ray up to nonzero scale; perspective division produces normalized image coordinates. Monocular reconstruction has a separate physical scale gauge: multiplying all scene points and camera translations by the same positive factor preserves projections. Do not confuse representational scale with unknown metric scale. A known object dimension, baseline, or depth measurement can anchor metres; normalizing a homogeneous vector cannot. This assumes calibrated perspective projection without an external scale prior. The distinction explains why a numerically precise reconstruction can still lack physical units. Link: <a href="ch290.xhtml#id_02-foundations-ii-ch037-a-camera-model-must-close-the-loop" class="wikilink">A camera model must close the loop (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)</a>; research: <a href="ch289.xhtml#id_02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review" class="wikilink">Four deeper links from the TUM lecture review (Geometry, Cameras, and Image Formation, Part 1, Ch. 5)</a>.</p>
+</section>
+</section>
+</body>
+</html>

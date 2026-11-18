@@ -1,0 +1,65 @@
+{
+  "schema": "allmight-held-panel-review-adjustments-v1",
+  "assets": [
+    {
+      "id": "0afe9d09c4fc80ae1bff5d38-panel-01",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TB\n  A[\"Mesh / Texture / CheckedShader\"] --> B{\"Uploadable<T> satisfied?\"}\n  B -->|no| X[\"Constrained API unavailable at compile time\"]\n  B -->|yes| T[\"AssetTraits<T> selects size policy\"]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0afe9d09c4fc80ae1bff5d38-panel-01.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "volume": "01-Foundations-I",
+      "render_code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TB\n  A[\"Mesh / Texture / CheckedShader\"] --> B{\"Uploadable&lt;T&gt; satisfied?\"}\n  B -->|no| X[\"Constrained API unavailable at compile time\"]\n  B -->|yes| T[\"AssetTraits&lt;T&gt; selects size policy\"]",
+      "normalization_protocol": "review-flowchart-literal-angle-bracket-v1",
+      "normalization_reason": "Escape the Mermaid HTML-like angle-bracket tokens in Uploadable<T> and AssetTraits<T> for literal display; source labels remain exact.",
+      "normalization_ref": "panel-review-result.json"
+    },
+    {
+      "id": "0b0e76bfeca07fcd2864142a-panel-02",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n    participant W as Writer\n    participant B as Byte image\n    participant R as Reader\n    R->>B: Verify specified integrity<br/>coverage\n    R->>R: Decode only validated fields\n    Note over W,R: Authenticity and crash<br/>durability require separate<br/>contracts",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0b0e76bfeca07fcd2864142a-panel-02.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/01 - Bits, Numbers and Memory - Visual Recall.md",
+      "volume": "01-Foundations-I",
+      "render_code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 30, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n    participant W as Writer\n    participant B as Byte image\n    participant R as Reader\n    R->>B: Verify specified integrity<br/>coverage\n    R->>R: Decode only validated fields\n    Note over W,R: Authenticity and crash<br/>durability require separate<br/>contracts",
+      "normalization_protocol": "review-sequence-margin-v1",
+      "normalization_reason": "Increase only the Mermaid sequence diagram horizontal canvas margin to keep the authored self-message label inside the panel; source lines and font sizes unchanged.",
+      "normalization_ref": "panel-review-result.json"
+    },
+    {
+      "id": "8e675126df1a1b1854a18b23-panel-02",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n  participant C as Candidate Scene\n  participant R as Resolver\n  C->>R: Validate assets and saved<br/>IDs\n  R->>C: Resolve references in second<br/>pass\n  C->>C: Check hierarchy and<br/>component invariants",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/8e675126df1a1b1854a18b23-panel-02.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/08 - Algorithms, application boundaries, and a first playable.md",
+      "volume": "05-Engine-I",
+      "render_code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 30, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n  participant C as Candidate Scene\n  participant R as Resolver\n  C->>R: Validate assets and saved<br/>IDs\n  R->>C: Resolve references in second<br/>pass\n  C->>C: Check hierarchy and<br/>component invariants",
+      "normalization_protocol": "review-sequence-margin-v1",
+      "normalization_reason": "Increase only the Mermaid sequence diagram horizontal canvas margin to keep the authored self-message label inside the panel; source lines and font sizes unchanged.",
+      "normalization_ref": "panel-review-result.json"
+    },
+    {
+      "id": "12f60b7ab1e672dd10535591-panel-01",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n  participant W as File watcher\n  participant C as Compiler/loader\n  participant P as Candidate pipeline\n  W->>C: Change event\n  C->>C: Read stable file and compile\n  C->>P: Create candidate<br/>modules/pipeline",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-01.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/41 - Evidence, tools, and revisable design.md",
+      "volume": "06-Engine-II",
+      "render_code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 30, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n  participant W as File watcher\n  participant C as Compiler/loader\n  participant P as Candidate pipeline\n  W->>C: Change event\n  C->>C: Read stable file and compile\n  C->>P: Create candidate<br/>modules/pipeline",
+      "normalization_protocol": "review-sequence-margin-v1",
+      "normalization_reason": "Increase only the Mermaid sequence diagram horizontal canvas margin to keep the authored self-message label inside the panel; source lines and font sizes unchanged.",
+      "normalization_ref": "panel-review-result.json"
+    },
+    {
+      "id": "cc5b9ccaf7c8fa11a4b0ea16-panel-01",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n    participant CPU\n    participant Queue\n    participant GPU\n    CPU->>CPU: Fill slot 0\n    CPU->>Queue: Commit C0(slot 0)\n    Queue->>GPU: Schedule C0\n    CPU->>CPU: Fill slot 1 while C0 runs",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cc5b9ccaf7c8fa11a4b0ea16-panel-01.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/01 - Computing Foundations/11 - C++ Const, Borrowing, and CPU\u2013GPU Buffering.md",
+      "volume": "01-Foundations-I",
+      "render_code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 30, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n    participant CPU\n    participant Queue\n    participant GPU\n    CPU->>CPU: Fill slot 0\n    CPU->>Queue: Commit C0(slot 0)\n    Queue->>GPU: Schedule C0\n    CPU->>CPU: Fill slot 1 while C0 runs",
+      "normalization_protocol": "review-sequence-margin-v1",
+      "normalization_reason": "Increase only the Mermaid sequence diagram horizontal canvas margin to keep the authored self-message label inside the panel; source lines and font sizes unchanged.",
+      "normalization_ref": "panel-review-result.json"
+    }
+  ]
+}

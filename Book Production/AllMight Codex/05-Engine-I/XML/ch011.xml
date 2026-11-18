@@ -1,0 +1,1334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Chapter xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/" id="05-engine-i-ch011" source="Chapter Edition/03 - Game Engine/11 - Streaming resources through explicit states.md">
+<Content aid:pstyle="ChapterHeader" id="05-engine-i-ch011-streaming-resources-through-explicit-states">11 — Streaming resources through explicit states&#13;</Content>
+<Content aid:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#05-engine-i-ch010">Previous chapter</Link> · <Link href="#05-engine-i-ch012">Next chapter</Link>&#13;</Content>
+<Content aid:pstyle="Content">Large worlds cannot load every resource before play begins, so readiness becomes a state transition with owners and versions. This chapter develops asynchronous work, publication, residency, and safe replacement as one resource lifecycle.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">By the end:</Strong> Model streaming as request, decode, validation, upload, publication, use, and retirement, including stale completion and memory-budget cases.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Recall question:</Strong> When an older load finishes after a newer request, what prevents the stale result from becoming visible or freeing a resource still in use?&#13;</Content>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 16279–20419; source-span SHA256 81533611d264a650abc63f2d382154b8cf1a1e248c708174371955334754e42b. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">A streaming state machine</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A useful state model:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Unloaded&#10;   |&#10;   v&#10;Requested&#10;   |&#10;   v&#10;LoadingCPU&#10;   |&#10;   v&#10;CPUReady&#10;   |&#10;   v&#10;UploadQueued&#10;   |&#10;   v&#10;Resident&#10;   |&#10;   v&#10;EvictPending&#10;   |&#10;   v&#10;Unloaded&#13;</Code>
+<Content aid:pstyle="Content">With separate:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Failed&#13;</Code>
+<Content aid:pstyle="Content">state.&#13;</Content>
+<Content aid:pstyle="Content">Do not represent all of this as:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">bool loaded;&#13;</Code>
+<Content aid:pstyle="Content">There are many intermediate states with different ownership.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Asset identity during streaming</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Asset handle remains:&#13;</Content>
+<Code aid:pstyle="Code" language="text">valid&#13;</Code>
+<Content aid:pstyle="Content">while asset is Unloaded.&#13;</Content>
+<Content aid:pstyle="Content">Queries may return:&#13;</Content>
+<Code aid:pstyle="Code" language="text">placeholder&#10;fallback&#10;pending future&#10;not resident status.&#13;</Code>
+<Content aid:pstyle="Content">Thus again:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/03367b2455f36ddcf3db27ec.svg" alt="&#10;AssetExistence&#10;\neq&#10;CPUResidency&#10;\neq&#10;GPUResidency.&#10;" jobId="03367b2455f36ddcf3db27ec" originalTeX="&#10;AssetExistence&#10;\neq&#10;CPUResidency&#10;\neq&#10;GPUResidency.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Async request object</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct AssetRequest&#10;{&#10;    AssetID Asset;&#10;    ResidencyPriority Priority;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Asset runtime deduplicates multiple requests for same asset.&#13;</Content>
+<Content aid:pstyle="Content">If ten entities request the same texture:&#13;</Content>
+<Code aid:pstyle="Code" language="text">one load&#10;ten consumers.&#13;</Code>
+<Content aid:pstyle="Content">Do not launch ten disk reads.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Streaming priorities</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Useful priority inputs include:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/690f31a0f760420ba3b1a37f.svg" alt="&#10;\text{camera distance}&#10;" jobId="690f31a0f760420ba3b1a37f" originalTeX="&#10;\text{camera distance}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/089c83e4843b34d6fa02cb43.svg" alt="&#10;\text{screen-space size}&#10;" jobId="089c83e4843b34d6fa02cb43" originalTeX="&#10;\text{screen-space size}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/57c272f8b1c15d65eea766d0.svg" alt="&#10;\text{gameplay criticality}&#10;" jobId="57c272f8b1c15d65eea766d0" originalTeX="&#10;\text{gameplay criticality}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e674031c75a570909f566a0a.svg" alt="&#10;\text{predicted future visibility}&#10;" jobId="e674031c75a570909f566a0a" originalTeX="&#10;\text{predicted future visibility}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/24d9f1571263d8610cba52e9.svg" alt="&#10;\text{explicit preload priority}.&#10;" jobId="24d9f1571263d8610cba52e9" originalTeX="&#10;\text{explicit preload priority}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">A hero character texture should beat a distant optional prop when budgets are constrained.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Partial residency</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Residency need not be all-or-nothing.&#13;</Content>
+<Content aid:pstyle="Content">Textures:&#13;</Content>
+<Code aid:pstyle="Code" language="text">coarse mip resident&#10;high mips streaming.&#13;</Code>
+<Content aid:pstyle="Content">Meshes:&#13;</Content>
+<Code aid:pstyle="Code" language="text">low LOD resident&#10;high LOD requested.&#13;</Code>
+<Content aid:pstyle="Content">Worlds:&#13;</Content>
+<Code aid:pstyle="Code" language="text">near cells resident&#10;far cells absent.&#13;</Code>
+<Content aid:pstyle="Content">This makes residency a level rather than a bool.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Residency state</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A richer resource entry:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">enum class ResidencyState&#10;{&#10;    Unloaded,&#10;    Loading,&#10;    CPUResident,&#10;    Uploading,&#10;    GPUResident,&#10;    EvictPending,&#10;    Failed&#10;};&#10;&#10;struct AssetRuntimeEntry&#10;{&#10;    AssetID Asset;&#10;    ResidencyState State;&#10;&#10;    std::size_t CPUBytes;&#10;    std::size_t GPUBytes;&#10;&#10;    std::uint64_t LastUsedFrame;&#10;    std::uint32_t PinCount;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Now resource manager can make budget decisions.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">CPU and GPU residency are independent</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A texture may be:&#13;</Content>
+<Code aid:pstyle="Code" language="text">CPU artifact present&#10;GPU resource absent&#13;</Code>
+<Content aid:pstyle="Content">during upload or after GPU eviction.&#13;</Content>
+<Content aid:pstyle="Content">It may also be:&#13;</Content>
+<Code aid:pstyle="Code" language="text">GPU resident&#10;CPU source artifact discarded&#13;</Code>
+<Content aid:pstyle="Content">if the runtime no longer needs CPU pixels.&#13;</Content>
+<Content aid:pstyle="Content">Therefore track separately where useful:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5898cf6b0b1871a312541f07.svg" alt="&#10;R_{CPU},&#10;R_{GPU}.&#10;" jobId="5898cf6b0b1871a312541f07" originalTeX="&#10;R_{CPU},&#10;R_{GPU}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Memory budgeting</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose GPU texture budget:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/31246471c93b5ccb734e4444.svg" alt="&#10;B=4\text{ GiB}.&#10;" jobId="31246471c93b5ccb734e4444" originalTeX="&#10;B=4\text{ GiB}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Current resident textures consume:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/18ed45266fb7bea4321a2f76.svg" alt="&#10;3.9\text{ GiB}.&#10;" jobId="18ed45266fb7bea4321a2f76" originalTeX="&#10;3.9\text{ GiB}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">New request requires:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cebb0fea246f71289e5a09fd.svg" alt="&#10;500\text{ MiB}.&#10;" jobId="cebb0fea246f71289e5a09fd" originalTeX="&#10;500\text{ MiB}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Resource manager must evict approximately:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8e3fb63137232a102d9ff5aa.svg" alt="&#10;400\text{ MiB}&#10;" jobId="8e3fb63137232a102d9ff5aa" originalTeX="&#10;400\text{ MiB}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">plus safety margin.&#13;</Content>
+<Content aid:pstyle="Content">Candidates might be ranked by:&#13;</Content>
+<Code aid:pstyle="Code" language="text">unpinned&#10;oldest use&#10;lowest priority&#10;largest reclaim value.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Residency is policy</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Low-level GPU API should not decide:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">unload distant mountain.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">It only knows allocation.&#13;</Content>
+<Content aid:pstyle="Content">High-level streaming system has scene/game knowledge.&#13;</Content>
+<Content aid:pstyle="Content">Thus:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Streaming policy&#10;      ↓&#10;Residency manager&#10;      ↓&#10;Renderer/GPU allocator&#13;</Code>
+<Content aid:pstyle="Content">preserves proper dependency direction.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reference counting versus explicit residency</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Reference counting says:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1208296415409749b0c37115.svg" alt="&#10;resource\ stays\ alive&#10;\iff&#10;refcount&gt;0.&#10;" jobId="1208296415409749b0c37115" originalTeX="&#10;resource\ stays\ alive&#10;\iff&#10;refcount&gt;0.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This works well for ordinary CPU object ownership.&#13;</Content>
+<Content aid:pstyle="Content">It is often insufficient for streaming.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why references do not equal residency need</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose a Scene contains references to 50,000 textures.&#13;</Content>
+<Content aid:pstyle="Content">If each reference increments a strong runtime refcount:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f6f5877a2de64a5ec73266fa.svg" alt="&#10;all\ 50,000&#10;" jobId="f6f5877a2de64a5ec73266fa" originalTeX="&#10;all\ 50,000&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">may remain resident forever.&#13;</Content>
+<Content aid:pstyle="Content">But many are currently:&#13;</Content>
+<Code aid:pstyle="Code" language="text">off-screen&#10;far away&#10;inactive level&#10;low-priority.&#13;</Code>
+<Content aid:pstyle="Content">The fact that an asset is <Strong aid:cstyle="Bold">logically referenced</Strong> does not mean its heavy runtime payload must remain resident.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Three concepts should be separated</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A good model distinguishes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/82d3c883e9860b9f5f2b32c9.svg" alt="&#10;\boxed{&#10;Reference&#10;}&#10;" jobId="82d3c883e9860b9f5f2b32c9" originalTeX="&#10;\boxed{&#10;Reference&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">meaning:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">some durable object names this asset.&#13;</Content></BlockQuote>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/696c3c18f4977eff7e531c8b.svg" alt="&#10;\boxed{&#10;Request&#10;}&#10;" jobId="696c3c18f4977eff7e531c8b" originalTeX="&#10;\boxed{&#10;Request&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">meaning:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">some runtime consumer currently wants it available.&#13;</Content></BlockQuote>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/052bb7eb2ad2cd23555595fd.svg" alt="&#10;\boxed{&#10;Pin&#10;}&#10;" jobId="052bb7eb2ad2cd23555595fd" originalTeX="&#10;\boxed{&#10;Pin&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">meaning:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">do not evict it yet.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">These are different.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Explicit residency leases</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">class ResidencyLease&#10;{&#10;public:&#10;    ~ResidencyLease()&#10;    {&#10;        manager.Release(asset);&#10;    }&#10;};&#13;</Code>
+<Content aid:pstyle="Content">A system can acquire:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">auto lease =&#10;    assets.Acquire(texture);&#13;</Code>
+<Content aid:pstyle="Content">while it requires residency.&#13;</Content>
+<Content aid:pstyle="Content">But simple counts still need budget/priority semantics.&#13;</Content>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Code aid:pstyle="Code" language="text">pin count&#10;priority&#10;last use&#10;budget&#13;</Code>
+<Content aid:pstyle="Content">often work together.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Weak persistent handles</Strong>&#13;</Content>
+<Content aid:pstyle="Content">An authored:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">TextureAssetHandle&#13;</Code>
+<Content aid:pstyle="Content">is effectively a weak persistent reference to identity.&#13;</Content>
+<Content aid:pstyle="Content">It should not force runtime GPU residency merely because a material exists somewhere in a project file.&#13;</Content>
+<Content aid:pstyle="Content">This is another benefit of Kairo’s AssetHandle containing only <InlineCode aid:cstyle="InlineCode">AssetID</InlineCode>, not a shared_ptr to runtime texture.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Resource lifetime across frames in flight</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This closes M092.&#13;</Content>
+<Content aid:pstyle="Content">A resource may have several overlapping lifetimes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5dcdd40b6c118bd3c92cba9f.svg" alt="&#10;L_{\text{AssetID}}&#10;" jobId="5dcdd40b6c118bd3c92cba9f" originalTeX="&#10;L_{\text{AssetID}}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">persistent project lifetime,&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b49c26820da1f4bbd1ff97d9.svg" alt="&#10;L_{\text{DerivedArtifact}}&#10;" jobId="b49c26820da1f4bbd1ff97d9" originalTeX="&#10;L_{\text{DerivedArtifact}}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">cache/runtime CPU lifetime,&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d4cb2cc443e21fb530e22ce9.svg" alt="&#10;L_{\text{RuntimeHandle}}&#10;" jobId="d4cb2cc443e21fb530e22ce9" originalTeX="&#10;L_{\text{RuntimeHandle}}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">process resource lifetime,&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c494f8119ff155ee109545c7.svg" alt="&#10;L_{\text{GPUUse}}&#10;" jobId="c494f8119ff155ee109545c7" originalTeX="&#10;L_{\text{GPUUse}}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">asynchronous submission lifetime.&#13;</Content>
+<Content aid:pstyle="Content">These are not equal.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The key inequality</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For resource R submitted to GPU at work item <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/114c2fc1c980af2b47cfc64a.svg" alt="S" jobId="114c2fc1c980af2b47cfc64a" originalTeX="S"/>:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0400a6157964a63adc225575.svg" alt="&#10;\boxed{&#10;L_R&#10;&gt;&#10;Completion(S).&#10;}&#10;" jobId="0400a6157964a63adc225575" originalTeX="&#10;\boxed{&#10;L_R&#10;&gt;&#10;Completion(S).&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">CPU saying:&#13;</Content>
+<Code aid:pstyle="Code" language="text">"I don't need it anymore"&#13;</Code>
+<Content aid:pstyle="Content">is not enough if GPU still does.&#13;</Content>
+<Content aid:pstyle="Content">This is conceptually identical to deferred reclamation in concurrent data structures.&#13;</Content>
+<Content aid:pstyle="Content">A resource is retired logically first, physically freed later.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Example three-frame timeline</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Imagine CPU:&#13;</Content>
+<Code aid:pstyle="Code" language="text">CPU frame 10 submitted using Texture A&#10;CPU frame 11 reloads and publishes Texture B&#10;CPU frame 12 uses B&#13;</Code>
+<Content aid:pstyle="Content">GPU:&#13;</Content>
+<Code aid:pstyle="Code" language="text">currently executing frame 9.&#13;</Code>
+<Content aid:pstyle="Content">Texture A must remain alive for frame 10 even though no future CPU frame will reference it.&#13;</Content>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Asset mapping:&#10;A -&gt; B immediately for future work&#10;&#10;GPU memory:&#10;old A remains until frame 10 fence signals.&#13;</Code>
+<Content aid:pstyle="Content">Logical replacement and physical destruction are separate operations.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Hot-reload publication model</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A robust runtime entry can be:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct TextureEntry&#10;{&#10;    AssetID Asset;&#10;&#10;    std::uint64_t Revision;&#10;&#10;    TextureRuntimeHandle Current;&#10;};&#10;&#10;void PublishReplacement(&#10;    TextureEntry&amp; entry,&#10;    TextureRuntimeHandle replacement)&#10;{&#10;    TextureRuntimeHandle old =&#10;        entry.Current;&#10;&#10;    entry.Current = replacement;&#10;    ++entry.Revision;&#10;&#10;    RetireAfterGPUCompletion(old);&#10;}&#13;</Code>
+<Content aid:pstyle="Content">That is the core operation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Material/mesh transitive hot reload</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Material&#10;  ↓&#10;Texture&#13;</Code>
+<Content aid:pstyle="Content">Texture reload may not require rebuilding Material if material only stores stable AssetID/descriptor binding.&#13;</Content>
+<Content aid:pstyle="Content">It may only require rebinding the new runtime texture.&#13;</Content>
+<Content aid:pstyle="Content">But if a shader changes resource layout:&#13;</Content>
+<Code aid:pstyle="Code" language="text">descriptor layout changed&#13;</Code>
+<Content aid:pstyle="Content">dependent pipelines/material bindings may need rebuilding.&#13;</Content>
+<Content aid:pstyle="Content">The dependency graph must distinguish such relationships.&#13;</Content>
+<Content aid:pstyle="Content">Hot reload is not always “replace one object.”&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Failure during hot reload</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If replacement shader fails to compile:&#13;</Content>
+<Code aid:pstyle="Code" language="text">keep old pipeline&#10;report error&#13;</Code>
+<Content aid:pstyle="Content">Do not replace working runtime state with null merely because source file is temporarily invalid while the user types.&#13;</Content>
+<Content aid:pstyle="Content">Editor hot reload especially needs <Strong aid:cstyle="Bold">last-known-good semantics</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">This drastically improves authoring UX.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo M092 architecture map</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your code currently has a particularly strong split:&#13;</Content>
+<Code aid:pstyle="Code" language="text">AssetID&#10;    persistent UUID&#10;&#10;AssetMetadata&#10;    path/type/origin/importer/revision/deps&#10;&#10;AssetRegistry&#10;    ID/path topology authority&#10;&#10;ImportDatabase&#10;    source fingerprint +&#10;    importer/version/settings provenance&#10;&#10;AssetImporter&#10;    source -&gt; derived artifact&#10;&#10;ImporterRegistry&#10;    exact importer ID/version registry&#10;&#10;DerivedDataCache&#10;    immutable recipe-addressed artifacts&#10;&#10;SourceWatcher&#10;    portable source-change observation&#10;&#10;KairoRenderer&#10;    artifact -&gt; runtime GPU representation&#13;</Code>
+<Content aid:pstyle="Content">That is a coherent pipeline.&#13;</Content>
+<Content aid:pstyle="Content">It is not one monolithic asset manager.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The current asset pipeline end-to-end</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For a texture:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Textures/Wall.png&#10;        |&#10;        | AssetID identifies it persistently&#10;        v&#10;AssetRegistry metadata&#10;        |&#10;        v&#10;ImportRecord&#10;        |&#10;        | source fingerprint&#10;        | importer = kairo.texture.stb&#10;        | importer version&#10;        | canonical settings&#10;        v&#10;DerivedDataKey&#10;        |&#10;      cache?&#10;      /    \&#10;    yes     no&#10;     |       |&#10;     |   StbTextureImporter&#10;     |       |&#10;     |    mip chain&#10;     |       |&#10;     +--- TextureArtifact&#10;              |&#10;              v&#10;       Renderer adapter&#10;              |&#10;              v&#10;       VulkanTexture2D&#10;              |&#10;              v&#10;          VkImage&#13;</Code>
+<Content aid:pstyle="Content">This is the mental model to keep.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Three kinds of hashes in an asset system</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Do not conflate:&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Persistent asset identity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/07fe78a6ef59319753c4e63d.svg" alt="&#10;UUID.&#10;" jobId="07fe78a6ef59319753c4e63d" originalTeX="&#10;UUID.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Source content fingerprint</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Answers:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">are source bytes the same?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Derived cache key</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Answers:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">is the entire derivation recipe identical?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">These serve different roles.&#13;</Content>
+<Content aid:pstyle="Content">A robust asset system may use all three simultaneously.&#13;</Content>
+<Content aid:pstyle="Content">Kairo does.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Three kinds of versions</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Similarly distinguish:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/95f1a7d5ba2e30874e2c5ebd.svg" alt="&#10;MetadataRevision&#10;" jobId="95f1a7d5ba2e30874e2c5ebd" originalTeX="&#10;MetadataRevision&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">for registry metadata changes,&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f283e8d1fd3f13dff48a6100.svg" alt="&#10;ImporterVersion&#10;" jobId="f283e8d1fd3f13dff48a6100" originalTeX="&#10;ImporterVersion&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">for derivation implementation,&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2c9ba0f21f2ab543dcc3be98.svg" alt="&#10;RuntimeRevision&#10;" jobId="2c9ba0f21f2ab543dcc3be98" originalTeX="&#10;RuntimeRevision&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">for currently published runtime resource generation/hot reload.&#13;</Content>
+<Content aid:pstyle="Content">One vague <InlineCode aid:cstyle="InlineCode">version</InlineCode> field cannot express all three cleanly.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Asset deletion</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current AssetRegistry refuses to remove an asset while another registered asset depends on it.&#13;</Content>
+<Content aid:pstyle="Content">That is a very good invariant.&#13;</Content>
+<Content aid:pstyle="Content">Without this:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Material -&gt; Texture&#13;</Code>
+<Content aid:pstyle="Content">could become silently dangling.&#13;</Content>
+<Content aid:pstyle="Content">A higher-level editor may support:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Delete anyway and clear references&#13;</Code>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Delete with dependency replacement.&#13;</Code>
+<Content aid:pstyle="Content">But those should be explicit transactions.&#13;</Content>
+<Content aid:pstyle="Content">Registry-level safety should remain strict.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Asset move</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Moving asset path should not affect AssetID.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s registry updates:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ID -&gt; new path&#10;path index&#10;metadata revision&#13;</Code>
+<Content aid:pstyle="Content">atomically enough to avoid leaving an asset with no path mapping if allocation fails.&#13;</Content>
+<Content aid:pstyle="Content">This demonstrates an important principle:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f511afd03517684269525775.svg" alt="&#10;\boxed{&#10;\text{metadata operations deserve strong exception guarantees too}.&#10;}&#10;" jobId="f511afd03517684269525775" originalTeX="&#10;\boxed{&#10;\text{metadata operations deserve strong exception guarantees too}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Asset databases are persistent state, not disposable scratch memory.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Dependency graph complexity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Let:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e79cf100e20b52892f7a028e.svg" alt="&#10;V=&#10;\text{asset count}&#10;" jobId="e79cf100e20b52892f7a028e" originalTeX="&#10;V=&#10;\text{asset count}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7d85f1836c251b9d1f46c94d.svg" alt="&#10;E=&#10;\text{dependency count}.&#10;" jobId="7d85f1836c251b9d1f46c94d" originalTeX="&#10;E=&#10;\text{dependency count}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Cycle detection through full reachability per mutation may cost:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/afbc44b753791d1058497f0b.svg" alt="&#10;O(V+E)&#10;" jobId="afbc44b753791d1058497f0b" originalTeX="&#10;O(V+E)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">in worst case.&#13;</Content>
+<Content aid:pstyle="Content">For editor-scale graphs this is usually acceptable.&#13;</Content>
+<Content aid:pstyle="Content">If asset graphs become enormous and mutations frequent, maintain additional topological information or use more sophisticated incremental DAG algorithms.&#13;</Content>
+<Content aid:pstyle="Content">Correctness first.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">DDC size management</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Content-addressed invalidation produces old unreachable entries.&#13;</Content>
+<Content aid:pstyle="Content">Therefore DDC eventually needs garbage collection.&#13;</Content>
+<Content aid:pstyle="Content">Possible policy:&#13;</Content>
+<Code aid:pstyle="Code" language="text">size budget&#10;LRU&#10;age threshold&#10;workspace manifest reachability&#13;</Code>
+<Content aid:pstyle="Content">Importantly, deleting DDC is safe.&#13;</Content>
+<Content aid:pstyle="Content">All entries should be reproducible from source + tools.&#13;</Content>
+<Content aid:pstyle="Content">That is the criterion for calling it a cache.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">DDC versus packaged build artifacts</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A local DDC may contain many historical/unused entries.&#13;</Content>
+<Content aid:pstyle="Content">A shipping package should contain only the dependency closure of the chosen build/startup content.&#13;</Content>
+<Content aid:pstyle="Content">Pipeline:&#13;</Content>
+<Code aid:pstyle="Code" language="text">project&#10;    ↓&#10;resolve package roots&#10;    ↓&#10;dependency closure&#10;    ↓&#10;resolve current derived artifacts&#10;    ↓&#10;copy/cook package manifest + payloads.&#13;</Code>
+<Content aid:pstyle="Content">Do not simply ship the entire developer cache.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reproducibility</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For a derivation to be reproducible:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2e019e2f7c7a1eaabec58032.svg" alt="&#10;Artifact&#10;=&#10;F(&#10;Source,&#10;Dependencies,&#10;Settings,&#10;ImporterVersion,&#10;Target&#10;).&#10;" jobId="2e019e2f7c7a1eaabec58032" originalTeX="&#10;Artifact&#10;=&#10;F(&#10;Source,&#10;Dependencies,&#10;Settings,&#10;ImporterVersion,&#10;Target&#10;).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">There must be no hidden dependency on:&#13;</Content>
+<Code aid:pstyle="Code" language="text">current directory&#10;wall-clock time&#10;random seed&#10;machine locale&#10;unordered-map iteration&#10;untracked tool version.&#13;</Code>
+<Content aid:pstyle="Content">Any hidden input undermines the cache.&#13;</Content>
+<Content aid:pstyle="Content">This is why canonical settings, exact importer version and deterministic manifests matter.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Locale</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Parsing:&#13;</Content>
+<Code aid:pstyle="Code" language="text">1.25&#13;</Code>
+<Content aid:pstyle="Content">must mean the same thing on systems whose locale expects commas.&#13;</Content>
+<Content aid:pstyle="Content">Asset formats should use locale-independent numeric parsing/serialization.&#13;</Content>
+<Content aid:pstyle="Content">Kairo consistently uses explicit classic/character-based parsing in several persistence systems, which is the right philosophy.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Deterministic dependency ordering</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Even if dependency vector semantics are unordered, writing them in arbitrary hash-table iteration order can produce different artifact bytes.&#13;</Content>
+<Content aid:pstyle="Content">Canonicalize:&#13;</Content>
+<Code aid:pstyle="Code" language="text">sort by stable ID&#13;</Code>
+<Content aid:pstyle="Content">before serialization/hashing unless order itself is meaningful.&#13;</Content>
+<Content aid:pstyle="Content">Deterministic representation helps:&#13;</Content>
+<Code aid:pstyle="Code" language="text">cache hits&#10;diffs&#10;reproducible builds&#10;tests.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Asset importer error boundaries</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Importer errors should say:&#13;</Content>
+<Code aid:pstyle="Code" language="text">asset&#10;source&#10;importer&#10;location if known&#10;reason.&#13;</Code>
+<Content aid:pstyle="Content">But importer failure should not partially mutate registry or runtime.&#13;</Content>
+<Content aid:pstyle="Content">Your current functional boundary:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Importer returns artifact or throws&#13;</Code>
+<Content aid:pstyle="Content">is excellent for this.&#13;</Content>
+<Content aid:pstyle="Content">Transaction owner can decide whether to:&#13;</Content>
+<Code aid:pstyle="Code" language="text">keep old artifact&#10;mark source dirty&#10;show error&#10;retry.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Build versus runtime import</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Editor:&#13;</Content>
+<Code aid:pstyle="Code" language="text">source watcher detects change&#10;    ↓&#10;import&#10;    ↓&#10;DDC&#10;    ↓&#10;hot reload.&#13;</Code>
+<Content aid:pstyle="Content">Shipping runtime:&#13;</Content>
+<Code aid:pstyle="Code" language="text">manifest&#10;    ↓&#10;prebuilt artifact&#10;    ↓&#10;runtime resource.&#13;</Code>
+<Content aid:pstyle="Content">Ideally shipped game does not need source file import paths.&#13;</Content>
+<Content aid:pstyle="Content">This is Part 1518 and M092 working together.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Cross-platform artifacts</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Some artifacts can be backend-neutral:&#13;</Content>
+<Code aid:pstyle="Code" language="text">canonical mesh vertices/indices&#10;animation tracks&#10;scene hierarchy.&#13;</Code>
+<Content aid:pstyle="Content">Others should be target-specific:&#13;</Content>
+<Code aid:pstyle="Code" language="text">BC7/ASTC textures&#10;shader binaries&#10;pipeline libraries.&#13;</Code>
+<Content aid:pstyle="Content">So the asset pipeline may have two derivation stages:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cf2be77ea0c83e01dcc7c6fa.svg" alt="&#10;Source&#10;\rightarrow&#10;CanonicalArtifact&#10;\rightarrow&#10;PlatformArtifact.&#10;" jobId="cf2be77ea0c83e01dcc7c6fa" originalTeX="&#10;Source&#10;\rightarrow&#10;CanonicalArtifact&#10;\rightarrow&#10;PlatformArtifact.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This avoids re-parsing expensive source while still producing platform-specific output.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The complete future Kairo asset runtime</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A strong next-generation runtime could be:&#13;</Content>
+<Code aid:pstyle="Code" language="text">AssetRegistry&#10;    persistent metadata&#10;&#10;Import pipeline / DDC&#10;    authoring/build side&#10;&#10;RuntimeAssetManager&#10;    AssetID -&gt; RuntimeEntry&#10;                |&#10;                +-- artifact state&#10;                +-- residency&#10;                +-- revision&#10;                +-- current resource handle&#10;                +-- load future&#10;                +-- last GPU use&#10;&#10;RendererResourceManager&#10;    generational runtime handles&#10;    deferred destruction&#10;    memory budgeting&#13;</Code>
+<Content aid:pstyle="Content">This preserves every lifetime boundary.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Runtime asset entry design</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For example:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">enum class AssetLoadState&#10;{&#10;    Unloaded,&#10;    LoadingCPU,&#10;    CPUReady,&#10;    UploadQueued,&#10;    Resident,&#10;    Failed&#10;};&#10;&#10;struct RuntimeTextureEntry&#10;{&#10;    AssetID PersistentID;&#10;&#10;    std::uint64_t PublishedRevision = 0;&#10;&#10;    AssetLoadState State =&#10;        AssetLoadState::Unloaded;&#10;&#10;    TextureRuntimeHandle Current{};&#10;&#10;    std::size_t ResidentGPUBytes = 0;&#10;&#10;    std::uint64_t LastUsedSubmission = 0;&#10;&#10;    std::uint32_t PinCount = 0;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Notice what is <Strong aid:cstyle="Bold">not</Strong> here:&#13;</Content>
+<Code aid:pstyle="Code" language="text">source path as identity&#10;raw VkImage exposed to scene&#10;shared_ptr forcing residency.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Safe reload algorithm</Strong>&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">void ReloadTexture(&#10;    AssetID asset)&#10;{&#10;    // 1. Re-import or fetch new derived artifact.&#10;    TextureArtifact artifact =&#10;        BuildCurrentArtifact(asset);&#10;&#10;    // 2. Build replacement completely.&#10;    TextureRuntimeHandle replacement =&#10;        renderer.CreateTexture(artifact);&#10;&#10;    // 3. Publish only after success.&#10;    auto&amp; entry =&#10;        runtimeAssets.Texture(asset);&#10;&#10;    const auto old =&#10;        entry.Current;&#10;&#10;    entry.Current = replacement;&#10;    ++entry.PublishedRevision;&#10;    entry.State =&#10;        AssetLoadState::Resident;&#10;&#10;    // 4. Old resource is logically dead,&#10;    //    but may remain physically alive.&#10;    if (old.IsValid())&#10;    {&#10;        renderer.RetireTexture(&#10;            old,&#10;            renderer.LastSubmittedTimeline());&#10;    }&#10;}&#13;</Code>
+<Content aid:pstyle="Content">This combines Parts 1540, 1541 and 1545 into one coherent runtime operation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo gap priorities</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If I were extending the codebase specifically from this pass, the most valuable next work would be:&#13;</Content>
+<List type="ordered" start="1" numberStyle="Decimal" delimiter="Period">
+<ListItem><Content aid:pstyle="Content"><Strong aid:cstyle="Bold">External-source closure hashing</Strong> for glTF and shader include-style dependencies, because a DDC key must include every input that can change output.&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">A dedicated <Strong aid:cstyle="Bold">shader import/compiler pipeline</Strong>, because <InlineCode aid:cstyle="InlineCode">AssetType::Shader</InlineCode> exists but no built-in shader compiler was found.&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">A <Strong aid:cstyle="Bold">runtime asset/resource manager</Strong> separating AssetID from loaded CPU/GPU resource state.&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Generational renderer resource handles</Strong> if slot reuse is introduced.&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content"><Strong aid:cstyle="Bold">GPU deferred destruction/timeline retirement</Strong>, required for safe hot reload and streaming.&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">Explicit <Strong aid:cstyle="Bold">residency/budget management</Strong> rather than letting persistent references imply residency.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">That order moves from correctness first to runtime sophistication.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Architecture issue to watch in current umbrella linking</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your top-level:&#13;</Content>
+<Code aid:pstyle="Code" language="cmake">KairoGameEngine INTERFACE&#13;</Code>
+<Content aid:pstyle="Content">links a broad collection of engine targets.&#13;</Content>
+<Content aid:pstyle="Content">That is fine as an application-facing convenience target.&#13;</Content>
+<Content aid:pstyle="Content">But lower-level runtime libraries should still link the narrowest targets they truly need whenever practical.&#13;</Content>
+<Content aid:pstyle="Content">Otherwise everything importing the umbrella can gradually acquire transitive access to:&#13;</Content>
+<Code aid:pstyle="Code" language="text">renderer&#10;physics&#10;assets&#10;ECS&#10;reflection&#13;</Code>
+<Content aid:pstyle="Content">even when it should conceptually depend on only one or two.&#13;</Content>
+<Content aid:pstyle="Content">An umbrella is useful at the composition boundary.&#13;</Content>
+<Content aid:pstyle="Content">It should not become the default dependency of foundational modules.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">EngineCore’s current direction is good</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Several of your current Core modules demonstrate the right principle.&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">ProjectDescriptor</InlineCode> stores renderer policy without importing renderer.&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">Application</InlineCode> owns generic layers rather than concrete rendering/physics.&#13;</Content>
+<Content aid:pstyle="Content">Scene data stores persistent asset handles, not GPU handles.&#13;</Content>
+<Content aid:pstyle="Content">Runtime VM IDs are not serialized.&#13;</Content>
+<Content aid:pstyle="Content">Physics IDs are runtime-only.&#13;</Content>
+<Content aid:pstyle="Content">Scene→ECS conversion lives in a bridge.&#13;</Content>
+<Content aid:pstyle="Content">Those are not isolated coding details.&#13;</Content>
+<Content aid:pstyle="Content">They are repeated applications of:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea1551454e78cc9acb957160.svg" alt="&#10;\boxed{&#10;\text{persistent data knows stable contracts;&#10;runtime adapters know concrete implementations}.&#10;}&#10;" jobId="ea1551454e78cc9acb957160" originalTeX="&#10;\boxed{&#10;\text{persistent data knows stable contracts;&#10;runtime adapters know concrete implementations}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Dependency reconstruction challenge</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose you need to render physics debug shapes.&#13;</Content>
+<Content aid:pstyle="Content">Bad:&#13;</Content>
+<Code aid:pstyle="Code" language="text">KairoPhysicsEngine&#10;       ↓&#10;KairoRenderer&#13;</Code>
+<Content aid:pstyle="Content">if Physics is intended to remain renderer-neutral.&#13;</Content>
+<Content aid:pstyle="Content">Design instead:&#13;</Content>
+<Code aid:pstyle="Code" language="text">KairoPhysicsEngine&#10;   exposes DebugShape[]&#10;          |&#10;          v&#10;PhysicsRenderBridge&#10;          |&#10;          v&#10;KairoRenderer.&#13;</Code>
+<Content aid:pstyle="Content">Now answer:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Which module owns the bridge?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">The highest-level integration module that is allowed to depend on both.&#13;</Content>
+<Content aid:pstyle="Content">If you can derive this without memorization, you understand dependency inversion.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Cycle reconstruction challenge</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Given:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Scene → Renderer&#10;Renderer → Scene&#13;</Code>
+<Content aid:pstyle="Content">extract:&#13;</Content>
+<Code aid:pstyle="Code" language="text">RenderScene&#10;MeshDraw&#10;CameraPose&#10;LightDraw&#13;</Code>
+<Content aid:pstyle="Content">as a rendering contract.&#13;</Content>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Scene&#10;   |&#10;   v&#10;SceneRenderExtraction&#10;   |&#10;   v&#10;RenderScene&#10;   |&#10;   v&#10;Renderer.&#13;</Code>
+<Content aid:pstyle="Content">Remove Renderer dependency from Scene.&#13;</Content>
+<Content aid:pstyle="Content">That is architectural cycle removal through directional data extraction.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Service reconstruction challenge</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Compare:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">void AI::Update()&#10;{&#10;    auto&amp; physics =&#10;        Services::Get&lt;PhysicsWorld&gt;();&#10;}&#13;</Code>
+<Content aid:pstyle="Content">against:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">AI::AI(&#10;    PhysicsQuery&amp; physics)&#10;    : m_Physics(physics)&#10;{}&#13;</Code>
+<Content aid:pstyle="Content">Explain why the second provides:&#13;</Content>
+<Code aid:pstyle="Code" language="text">visible dependencies&#10;testability&#10;instance isolation&#10;explicit lifetime.&#13;</Code>
+<Content aid:pstyle="Content">Then explain why a narrow:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">AISystemContext&#13;</Code>
+<Content aid:pstyle="Content">may be useful when several related services are needed.&#13;</Content>
+<Content aid:pstyle="Content">But reject a god <InlineCode aid:cstyle="InlineCode">EngineContext</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Lifecycle reconstruction challenge</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Given:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Platform&#10;Device&#10;Renderer&#10;RenderBridge&#10;World&#13;</Code>
+<Content aid:pstyle="Content">if:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Renderer uses Device&#10;RenderBridge uses Renderer + World&#13;</Code>
+<Content aid:pstyle="Content">initialize:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Platform&#10;Device&#10;Renderer&#10;World&#10;RenderBridge.&#13;</Code>
+<Content aid:pstyle="Content">Shutdown dependency-safe:&#13;</Content>
+<Code aid:pstyle="Code" language="text">RenderBridge&#10;World/runtime users&#10;Renderer resources&#10;Renderer&#10;Device&#10;Platform.&#13;</Code>
+<Content aid:pstyle="Content">If jobs or GPU submissions exist, quiesce them before destroying dependencies.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Asset-identity reconstruction challenge</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Given a texture that moves path and later changes pixels, identify the correct changing/stable values.&#13;</Content>
+<Content aid:pstyle="Content">Rename:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Textures/A.png&#10;→ Environment/A.png&#13;</Code>
+<Content aid:pstyle="Content">Persistent:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/54b93aa9f2cf0a46da3650e0.svg" alt="&#10;AssetID:&#10;\text{unchanged}.&#10;" jobId="54b93aa9f2cf0a46da3650e0" originalTeX="&#10;AssetID:&#10;\text{unchanged}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Path:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/db312c50174edbc6197ef522.svg" alt="&#10;\text{changed}.&#10;" jobId="db312c50174edbc6197ef522" originalTeX="&#10;\text{changed}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Metadata revision:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/db312c50174edbc6197ef522.svg" alt="&#10;\text{changed}.&#10;" jobId="db312c50174edbc6197ef522" originalTeX="&#10;\text{changed}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Source bytes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/56f7fee0b11882940aaf8411.svg" alt="&#10;\text{same}.&#10;" jobId="56f7fee0b11882940aaf8411" originalTeX="&#10;\text{same}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Source fingerprint:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/56f7fee0b11882940aaf8411.svg" alt="&#10;\text{same}.&#10;" jobId="56f7fee0b11882940aaf8411" originalTeX="&#10;\text{same}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Derived key:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/afd5702bf034983acbb5eabe.svg" alt="&#10;\text{same}&#10;" jobId="afd5702bf034983acbb5eabe" originalTeX="&#10;\text{same}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">if path is intentionally not a semantic importer input.&#13;</Content>
+<Content aid:pstyle="Content">Now edit pixels.&#13;</Content>
+<Content aid:pstyle="Content">AssetID:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/87e08e9bb4b73f0e6e951232.svg" alt="&#10;\text{unchanged}.&#10;" jobId="87e08e9bb4b73f0e6e951232" originalTeX="&#10;\text{unchanged}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Source fingerprint:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/db312c50174edbc6197ef522.svg" alt="&#10;\text{changed}.&#10;" jobId="db312c50174edbc6197ef522" originalTeX="&#10;\text{changed}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Derived key:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/db312c50174edbc6197ef522.svg" alt="&#10;\text{changed}.&#10;" jobId="db312c50174edbc6197ef522" originalTeX="&#10;\text{changed}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is the identity model.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">DDC reconstruction challenge</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You should be able to derive:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ccd6c43c5d6ccb87b4b8d9e6.svg" alt="&#10;K=&#10;H(&#10;SourceFingerprint,&#10;AssetType,&#10;ImporterID,&#10;ImporterVersion,&#10;CanonicalSettings,&#10;DependencyFingerprints,&#10;Target&#10;).&#10;" jobId="ccd6c43c5d6ccb87b4b8d9e6" originalTeX="&#10;K=&#10;H(&#10;SourceFingerprint,&#10;AssetType,&#10;ImporterID,&#10;ImporterVersion,&#10;CanonicalSettings,&#10;DependencyFingerprints,&#10;Target&#10;).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Some of those fields may be omitted only if they provably do not influence the artifact.&#13;</Content>
+<Content aid:pstyle="Content">Then state the cache invariant:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d5b8bb2459d8ad697a105391.svg" alt="&#10;\boxed{&#10;K_1=K_2&#10;\Rightarrow&#10;ArtifactBytes_1=ArtifactBytes_2.&#10;}&#10;" jobId="d5b8bb2459d8ad697a105391" originalTeX="&#10;\boxed{&#10;K_1=K_2&#10;\Rightarrow&#10;ArtifactBytes_1=ArtifactBytes_2.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If this is false, the cache key is incomplete or the importer is nondeterministic.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Hot-reload reconstruction challenge</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Given Texture A currently in use:&#13;</Content>
+<Code aid:pstyle="Code" language="text">detect source change&#13;</Code>
+<Content aid:pstyle="Content">Do <Strong aid:cstyle="Bold">not</Strong> destroy A.&#13;</Content>
+<Content aid:pstyle="Content">Perform:&#13;</Content>
+<Code aid:pstyle="Code" language="text">build artifact B&#10;create GPU resource B&#10;validate B&#10;publish B for future frames&#10;retire A at its last GPU-use timeline&#10;destroy A only after completion.&#13;</Code>
+<Content aid:pstyle="Content">If any step before publication fails:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A stays current.&#13;</Code>
+<Content aid:pstyle="Content">That is safe hot reload.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Streaming reconstruction challenge</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Explain why this is wrong:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">if (material.TextureHandle.IsValid())&#10;{&#10;    // therefore texture exists on GPU&#10;}&#13;</Code>
+<Content aid:pstyle="Content">A valid persistent handle only means the asset is referenced.&#13;</Content>
+<Content aid:pstyle="Content">Correct flow:&#13;</Content>
+<Code aid:pstyle="Code" language="text">AssetHandle&#10;    ↓&#10;RuntimeAssetManager&#10;    ↓&#10;ResidencyState&#10;    ↓&#10;Resident?&#10;   /     \&#10; yes      no&#10; |        |&#10;use      request/fallback.&#13;</Code>
+<Content aid:pstyle="Content">That distinction is central to any scalable asset system.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Frames-in-flight reconstruction challenge</Strong>&#13;</Content>
+<Content aid:pstyle="Content">CPU replaced resource at frame 20.&#13;</Content>
+<Content aid:pstyle="Content">GPU still executing frame 18 and frame 19/20 are queued.&#13;</Content>
+<Content aid:pstyle="Content">Question:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Can old resource be destroyed immediately?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">No.&#13;</Content>
+<Content aid:pstyle="Content">Destroy only after the last submission that references it completes.&#13;</Content>
+<Content aid:pstyle="Content">The relevant condition is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/70dcf4f04f12092f8d133083.svg" alt="&#10;CompletedTimeline&#10;\ge&#10;LastUseTimeline(oldResource).&#10;" jobId="70dcf4f04f12092f8d133083" originalTeX="&#10;CompletedTimeline&#10;\ge&#10;LastUseTimeline(oldResource).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Not:&#13;</Content>
+<Code aid:pstyle="Code" language="text">CPU has moved on.&#13;</Code>
+<Content aid:pstyle="Content">That is Part 1545.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Exact coverage — M091 + M092</Strong>&#13;</Content>
+<Table aid:table="table" aid:trows="46" aid:tcols="3" sourceHeadRows="1" sourceBodyHeadRows=""><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="header"><Content aid:pstyle="Caption">Part&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="header"><Content aid:pstyle="Caption">Topic&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="header"><Content aid:pstyle="Caption">Status&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">1501&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">Game-engine architecture as dependency management&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">1502&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">Foundation versus runtime responsibilities&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">1503&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">Dependency inversion in engine modules&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">1504&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">Avoiding cyclic module dependencies&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">1505&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">Static versus shared libraries&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">1506&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">Header-only versus compiled libraries&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">1507&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">Stable runtime interfaces&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">1508&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">Backend-specific implementation boundaries&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">1509&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">Platform abstraction layers&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">1510&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">Service locators and trade-offs&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">1511&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">Dependency injection&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">1512&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">Global state and hidden coupling&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">1513&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">Engine contexts/service bundles&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">1514&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">Application lifecycle&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">1515&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">Initialization order&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">1516&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">Shutdown order&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">1517&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">Runtime versus editor process concerns&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">1518&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">Authoring versus shipped runtime&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">1519&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">Standalone player architecture&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">1520&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">Headless validation paths&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">1521&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">Asset identity&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">1522&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">Path-based asset identity&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">1523&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">UUID-based asset identity&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">1524&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">Content-addressed asset identity&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">1525&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">Asset handles&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">1526&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">Generational asset handles&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">1527&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">Asset registry&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">1528&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">Asset metadata&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">1529&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">Source versus derived runtime assets&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">1530&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">Importer interfaces&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">1531&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">OBJ import pipeline boundaries&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">1532&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">glTF import pipeline boundaries&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">1533&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">Texture import pipeline boundaries&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">1534&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">Shader import/compilation pipeline&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="34"><Content aid:pstyle="TableCell">1535&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="34"><Content aid:pstyle="TableCell">Asset dependency graphs&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="34"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="35"><Content aid:pstyle="TableCell">1536&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="35"><Content aid:pstyle="TableCell">Asset-cache keys&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="35"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="36"><Content aid:pstyle="TableCell">1537&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="36"><Content aid:pstyle="TableCell">Derived-data caches&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="36"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="37"><Content aid:pstyle="TableCell">1538&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="37"><Content aid:pstyle="TableCell">Cache invalidation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="37"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="38"><Content aid:pstyle="TableCell">1539&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="38"><Content aid:pstyle="TableCell">Incremental asset builds&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="38"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="39"><Content aid:pstyle="TableCell">1540&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="39"><Content aid:pstyle="TableCell">Asset hot reloading&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="39"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="40"><Content aid:pstyle="TableCell">1541&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="40"><Content aid:pstyle="TableCell">Safe GPU-resource replacement during hot reload&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="40"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="41"><Content aid:pstyle="TableCell">1542&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="41"><Content aid:pstyle="TableCell">Asset streaming&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="41"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="42"><Content aid:pstyle="TableCell">1543&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="42"><Content aid:pstyle="TableCell">Residency state&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="42"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="43"><Content aid:pstyle="TableCell">1544&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="43"><Content aid:pstyle="TableCell">Reference counting versus explicit residency&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="43"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="44"><Content aid:pstyle="TableCell">1545&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="44"><Content aid:pstyle="TableCell">Resource lifetime across frames in flight&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="44"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell></Table>
+<Content aid:pstyle="Content">The main architecture you should retain is this:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cc121bd5708cc1dd87317e0d.svg" alt="&#10;\boxed{&#10;\begin{array}{cccccc}&#10;\text{Source Asset}&#10;&amp;\rightarrow&amp;&#10;\text{Persistent AssetID}&#10;&amp;\rightarrow&amp;&#10;\text{Import Recipe}&#10;&amp;\rightarrow&#10;\\[4pt]&#10;\text{Derived Artifact}&#10;&amp;\rightarrow&amp;&#10;\text{Runtime Resource}&#10;&amp;\rightarrow&amp;&#10;\text{GPU Submission}&#10;&amp;\rightarrow&#10;\\[4pt]&#10;&amp;&amp;&#10;\text{Deferred Retirement}&#10;&amp;&amp;&amp;&#10;\end{array}&#10;}&#10;" jobId="cc121bd5708cc1dd87317e0d" originalTeX="&#10;\boxed{&#10;\begin{array}{cccccc}&#10;\text{Source Asset}&#10;&amp;\rightarrow&amp;&#10;\text{Persistent AssetID}&#10;&amp;\rightarrow&amp;&#10;\text{Import Recipe}&#10;&amp;\rightarrow&#10;\\[4pt]&#10;\text{Derived Artifact}&#10;&amp;\rightarrow&amp;&#10;\text{Runtime Resource}&#10;&amp;\rightarrow&amp;&#10;\text{GPU Submission}&#10;&amp;\rightarrow&#10;\\[4pt]&#10;&amp;&amp;&#10;\text{Deferred Retirement}&#10;&amp;&amp;&amp;&#10;\end{array}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">while the software architecture around it is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f80246a2c062755d3ff35d00.svg" alt="&#10;\boxed{&#10;\text{Foundation}&#10;\leftarrow&#10;\text{Subsystems}&#10;\leftarrow&#10;\text{Integration Bridges}&#10;\leftarrow&#10;\text{Player / Editor / Game}&#10;}&#10;" jobId="f80246a2c062755d3ff35d00" originalTeX="&#10;\boxed{&#10;\text{Foundation}&#10;\leftarrow&#10;\text{Subsystems}&#10;\leftarrow&#10;\text{Integration Bridges}&#10;\leftarrow&#10;\text{Player / Editor / Game}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">with callbacks/interfaces allowing control flow to travel in the opposite direction <Strong aid:cstyle="Bold">without reversing source dependencies</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">For your current Kairo codebase, the largest concrete findings from this pass are that the high-level layering and persistent/runtime identity separation are already strong, the DDC itself is unusually careful, but the next significant correctness/performance frontier is the runtime resource layer: <Strong aid:cstyle="Bold">complete dependency-closure hashing for compound sources, dedicated shader derivation, generational loaded-resource handles, safe asynchronous GPU retirement, streaming/residency budgets, and last-known-good hot reload.</Strong>&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Pass 14 is M093 + M094, Parts 1546–1582.</Strong> That takes the next step into <Strong aid:cstyle="Bold">serialization goals and formats, text versus binary, forward/backward compatibility, endianness, checksums, object/ECS/scene references, reflection metadata/type/property IDs, safe type erasure, inspector architecture, then undo/redo transactions, autosave/recovery, project manifests, path sandboxing, symlink/traversal defense, packaging, atomic publication, and build-config versus runtime-config separation.</Strong>&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="05-engine-i-ch011-serialization-schema-evolution-compatibility-endianness-integrity-object-references-reflection-type-erasure-undoredo-transactions-recovery-autosave-sandboxed-paths-packaging-relocatable-bundles-atomic-publication-and-configuration-boundaries">Serialization, Schema Evolution, Compatibility, Endianness, Integrity, Object References, Reflection, Type Erasure, Undo/Redo, Transactions, Recovery, Autosave, Sandboxed Paths, Packaging, Relocatable Bundles, Atomic Publication, and Configuration Boundaries&#13;</Content>
+<Content aid:pstyle="Content">Pass 13 ended with:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/791a9a68a2d0dccd05e7b35b.svg" alt="&#10;\text{Source Asset}&#10;\rightarrow&#10;\text{Derived Artifact}&#10;\rightarrow&#10;\text{Runtime Resource}.&#10;" jobId="791a9a68a2d0dccd05e7b35b" originalTeX="&#10;\text{Source Asset}&#10;\rightarrow&#10;\text{Derived Artifact}&#10;\rightarrow&#10;\text{Runtime Resource}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Pass 14 asks how the <Emphasis aid:cstyle="Emphasis">meaning</Emphasis> of all that data survives time.&#13;</Content>
+<Content aid:pstyle="Content">A renderer object may live for milliseconds. A scene file may need to survive ten years, four engine versions, a CPU-architecture change, property renames, editor crashes, an interrupted save, a moved project directory, and a plugin no longer installed.&#13;</Content>
+<Content aid:pstyle="Content">So the central question becomes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/418eceb8dab22f3ce3ced4f6.svg" alt="&#10;\boxed{&#10;\text{How do we make engine state durable without making today's C++ layout tomorrow's file format?}&#10;}&#10;" jobId="418eceb8dab22f3ce3ced4f6" originalTeX="&#10;\boxed{&#10;\text{How do we make engine state durable without making today's C++ layout tomorrow's file format?}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then M094 adds the editor-side problem:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/023e6720affbfea82ccc537b.svg" alt="&#10;\boxed{&#10;\text{How do we make destructive authoring operations reversible and crash-safe?}&#10;}&#10;" jobId="023e6720affbfea82ccc537b" originalTeX="&#10;\boxed{&#10;\text{How do we make destructive authoring operations reversible and crash-safe?}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is one of the most practically important passes because many engine projects get rendering right before they get persistence right—and bad persistence eventually destroys user work.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="05-engine-i-ch011-serialization-compatibility-reflection-inspectors-and-type-erasure">SERIALIZATION, COMPATIBILITY, REFLECTION, INSPECTORS AND TYPE ERASURE&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Serialization goals</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Serialization is not merely:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Turn object into bytes.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">That definition is too weak.&#13;</Content>
+<Content aid:pstyle="Content">For an engine, serialization commonly needs to satisfy several independent properties:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea2b79dc84f1627b8a137974.svg" alt="&#10;\boxed{&#10;Persistence&#10;}&#10;" jobId="ea2b79dc84f1627b8a137974" originalTeX="&#10;\boxed{&#10;Persistence&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">The data survives process termination.&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/eaa365619dec64d7d7cb1652.svg" alt="&#10;\boxed{&#10;Portability&#10;}&#10;" jobId="eaa365619dec64d7d7cb1652" originalTeX="&#10;\boxed{&#10;Portability&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">The data can move between machines/platforms.&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ad1e9ed1c9340b7e1f946389.svg" alt="&#10;\boxed{&#10;Determinism&#10;}&#10;" jobId="ad1e9ed1c9340b7e1f946389" originalTeX="&#10;\boxed{&#10;Determinism&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Equivalent logical states preferably produce equivalent serialized representations.&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/800f6b75146876d4e9dae9c7.svg" alt="&#10;\boxed{&#10;Evolvability&#10;}&#10;" jobId="800f6b75146876d4e9dae9c7" originalTeX="&#10;\boxed{&#10;Evolvability&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Future engine versions can interpret older data or migrate it.&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/41a475bfab27944415f1c276.svg" alt="&#10;\boxed{&#10;Integrity&#10;}&#10;" jobId="41a475bfab27944415f1c276" originalTeX="&#10;\boxed{&#10;Integrity&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Corruption can be detected.&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4ec12d1ea69df8263a0d1ed7.svg" alt="&#10;\boxed{&#10;Security&#10;}&#10;" jobId="4ec12d1ea69df8263a0d1ed7" originalTeX="&#10;\boxed{&#10;Security&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Malformed input cannot request unbounded allocations, escape project roots or exploit parser assumptions.&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e3a554ca463575d3feff5ea6.svg" alt="&#10;\boxed{&#10;Performance&#10;}&#10;" jobId="e3a554ca463575d3feff5ea6" originalTeX="&#10;\boxed{&#10;Performance&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Parsing and storage costs are appropriate for the use case.&#13;</Content>
+<Content aid:pstyle="Content">Those goals conflict.&#13;</Content>
+<Content aid:pstyle="Content">A human-editable scene file optimizes differently from a GPU texture artifact.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Serialization domains</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You should not have one universal serializer for every purpose.&#13;</Content>
+<Content aid:pstyle="Content">A game engine normally has several serialization domains.&#13;</Content>
+<Code aid:pstyle="Code" language="text">Editor scene&#10;    human-readable&#10;    diff-friendly&#10;    versioned&#10;    semantic&#10;&#10;Derived asset&#10;    compact&#10;    validated&#10;    deterministic&#10;    fast to load&#10;&#10;Network packet&#10;    bandwidth-sensitive&#10;    transient&#10;    compatibility constrained&#10;&#10;Save game&#10;    durable&#10;    version-aware&#10;    player-facing&#10;&#10;Recovery snapshot&#10;    crash-resistant&#10;    redundant&#10;    checksummed&#13;</Code>
+<Content aid:pstyle="Content">All serialize information.&#13;</Content>
+<Content aid:pstyle="Content">They do not need the same format.&#13;</Content>
+<Content aid:pstyle="Content">That is a recurring lesson:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4c1fe822ff584c0464696330.svg" alt="&#10;\boxed{&#10;\text{serialization is a policy boundary, not a utility function.}&#10;}&#10;" jobId="4c1fe822ff584c0464696330" originalTeX="&#10;\boxed{&#10;\text{serialization is a policy boundary, not a utility function.}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Serialization should capture semantics, not object representation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct Camera&#10;{&#10;    ProjectionMode Mode;&#10;    float VerticalFov;&#10;    float NearPlane;&#10;    float FarPlane;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Bad persistent format:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">write(&#10;    reinterpret_cast&lt;char*&gt;(&amp;camera),&#10;    sizeof(camera));&#13;</Code>
+<Content aid:pstyle="Content">That stores whatever today’s compiler happened to choose for:&#13;</Content>
+<Code aid:pstyle="Code" language="text">padding&#10;enum representation&#10;alignment&#10;float layout assumptions&#10;member order&#10;ABI&#13;</Code>
+<Content aid:pstyle="Content">The file silently becomes coupled to one compiled object layout.&#13;</Content>
+<Content aid:pstyle="Content">Instead store meaning:&#13;</Content>
+<Code aid:pstyle="Code" language="text">camera&#10;projection perspective&#10;vertical-fov 60&#10;near-plane 0.1&#10;far-plane 1000&#13;</Code>
+<Content aid:pstyle="Content">or a binary equivalent with explicit field identifiers and numeric widths.&#13;</Content>
+<Content aid:pstyle="Content">The serializer should describe:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d44297f2f455668f73768fa2.svg" alt="&#10;\boxed{&#10;Camera\ semantics&#10;}&#10;" jobId="d44297f2f455668f73768fa2" originalTeX="&#10;\boxed{&#10;Camera\ semantics&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">rather than:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c85adef88d72788e673170a5.svg" alt="&#10;\boxed{&#10;Camera\ memory.&#10;}&#10;" jobId="c85adef88d72788e673170a5" originalTeX="&#10;\boxed{&#10;Camera\ memory.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Text versus binary serialization</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Text serialization represents logical values through characters.&#13;</Content>
+<Content aid:pstyle="Content">Examples:&#13;</Content>
+<Code aid:pstyle="Code" language="text">near-plane 0.1&#10;visible true&#10;mesh "a912..."&#13;</Code>
+<Content aid:pstyle="Content">Binary serialization stores encoded fields directly as bytes.&#13;</Content>
+<Content aid:pstyle="Content">Neither is inherently superior.&#13;</Content>
+<Content aid:pstyle="Content">They optimize different dimensions.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why text formats are powerful for authoring</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Text provides:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">easy inspection,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">source-control diffs,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">mergeability,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">manual repair,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">debugging,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">tooling with ordinary editors.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Suppose a light changes:&#13;</Content>
+<Code aid:pstyle="Code" language="diff">- intensity 1000&#10;+ intensity 1500&#13;</Code>
+<Content aid:pstyle="Content">That is excellent for source control.&#13;</Content>
+<Content aid:pstyle="Content">Compare an opaque binary diff:&#13;</Content>
+<Code aid:pstyle="Code" language="text">8 bytes changed.&#13;</Code>
+<Content aid:pstyle="Content">Far less useful to artists and programmers.&#13;</Content>
+<Content aid:pstyle="Content">This is why your current Kairo project, scene and asset-manifest formats being deterministic textual formats is a strong authoring choice.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Costs of text</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Text is usually:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">larger,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">slower to parse,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">requires numeric conversion,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">requires escaping,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">susceptible to representation ambiguity if not canonicalized.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">For example floating value:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ccbe732adce23dab29151742.svg" alt="&#10;1&#10;" jobId="ccbe732adce23dab29151742" originalTeX="&#10;1&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">could be written:&#13;</Content>
+<Code aid:pstyle="Code" language="text">1&#10;1.0&#10;1.000000&#10;1e0&#13;</Code>
+<Content aid:pstyle="Content">All are semantically equivalent.&#13;</Content>
+<Content aid:pstyle="Content">If serialized byte identity matters, choose one canonical representation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Binary serialization advantages</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Binary can provide:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">compact storage,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">faster decoding,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">direct fixed-width numeric representation,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">easier chunked random access,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">reduced parsing overhead.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">A derived mesh artifact might have:&#13;</Content>
+<Code aid:pstyle="Code" language="text">header&#10;vertex count&#10;index count&#10;vertex bytes&#10;index bytes&#13;</Code>
+<Content aid:pstyle="Content">There is no strong reason an end user needs to edit that manually.&#13;</Content>
+<Content aid:pstyle="Content">Binary is natural.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Binary does not automatically mean fast</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A bad binary format can be slower than a good textual one.&#13;</Content>
+<Content aid:pstyle="Content">For example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">millions of tiny length-prefixed heap allocations&#13;</Code>
+<Content aid:pstyle="Content">will perform poorly regardless of binary encoding.&#13;</Content>
+<Content aid:pstyle="Content">The real factors include:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea166f4fe377434a3cd2e814.svg" alt="&#10;\text{allocation count}&#10;" jobId="ea166f4fe377434a3cd2e814" originalTeX="&#10;\text{allocation count}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/05e7fb9f7a6d6c02aca8ffc2.svg" alt="&#10;\text{branching}&#10;" jobId="05e7fb9f7a6d6c02aca8ffc2" originalTeX="&#10;\text{branching}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/77f69c776574b05096f6d949.svg" alt="&#10;\text{copy count}&#10;" jobId="77f69c776574b05096f6d949" originalTeX="&#10;\text{copy count}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9ea9114fa328335a4cacfbec.svg" alt="&#10;\text{data locality}&#10;" jobId="9ea9114fa328335a4cacfbec" originalTeX="&#10;\text{data locality}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2127827863513ace1a5d739c.svg" alt="&#10;\text{compression}&#10;" jobId="2127827863513ace1a5d739c" originalTeX="&#10;\text{compression}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/21e2e876a5e8e684004dfefa.svg" alt="&#10;\text{schema complexity}.&#10;" jobId="21e2e876a5e8e684004dfefa" originalTeX="&#10;\text{schema complexity}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Binary is an encoding choice, not a performance guarantee.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Versioned file formats</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Every persistent format that may evolve should identify its schema version.&#13;</Content>
+<Content aid:pstyle="Content">Kairo does this consistently.&#13;</Content>
+<Content aid:pstyle="Content">Examples conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="text">kairo-project 2&#10;kairo-assets 1&#10;kairo-scene 5&#10;kairo-recovery 1&#10;kairo-package 1&#13;</Code>
+<Content aid:pstyle="Content">This immediately answers:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Which grammar and semantics should parse this file?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Without a version, a parser encounters an unknown structure and has no principled way to distinguish:&#13;</Content>
+<Code aid:pstyle="Code" language="text">corruption&#10;new format&#10;old format&#10;wrong file type.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Magic + version</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A robust header often carries at least:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/95f8d8066e11e82ee0350a38.svg" alt="&#10;Magic&#10;" jobId="95f8d8066e11e82ee0350a38" originalTeX="&#10;Magic&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8d49293a49a5a4d8d1a3bfdb.svg" alt="&#10;Version.&#10;" jobId="8d49293a49a5a4d8d1a3bfdb" originalTeX="&#10;Version.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Binary example:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct FileHeader&#10;{&#10;    std::uint32_t Magic;&#10;    std::uint32_t Version;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Where:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">constexpr uint32_t Magic =&#10;    0x4B414952; // illustrative "KAIR"&#13;</Code>
+<Content aid:pstyle="Content">Then parser first verifies:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Is this even my file format?&#13;</Code>
+<Content aid:pstyle="Content">before interpreting payload.&#13;</Content>
+<Content aid:pstyle="Content">Text formats achieve the same through a canonical first line.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Version numbers must correspond to semantic interpretation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Do not increment versions for arbitrary reasons.&#13;</Content>
+<Content aid:pstyle="Content">A file version means:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">The reader must potentially use different logic to interpret this representation.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">If internal C++ code is refactored but serialized semantics remain identical, the file version need not change.&#13;</Content>
+<Content aid:pstyle="Content">If field meaning changes:&#13;</Content>
+<Code aid:pstyle="Code" language="text">intensity used to mean arbitrary units&#13;</Code>
+<Content aid:pstyle="Content">and now means:&#13;</Content>
+<Code aid:pstyle="Code" language="text">candela&#13;</Code>
+<Content aid:pstyle="Content">that is a schema-semantic change.&#13;</Content>
+<Content aid:pstyle="Content">Version/migration is required.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Schema evolution</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Schema evolution is the process of changing persistent representation while preserving meaningful old data.&#13;</Content>
+<Content aid:pstyle="Content">Suppose v1:&#13;</Content>
+<Code aid:pstyle="Code" language="text">light&#10;color 1 1 1&#10;intensity 5&#13;</Code>
+<Content aid:pstyle="Content">v2 introduces unit:&#13;</Content>
+<Code aid:pstyle="Code" language="text">light&#10;color 1 1 1&#10;intensity 5&#10;unit candela&#13;</Code>
+<Content aid:pstyle="Content">Old files lack the field.&#13;</Content>
+<Content aid:pstyle="Content">Reader can assign:&#13;</Content>
+<Code aid:pstyle="Code" language="text">unit = legacy&#13;</Code>
+<Content aid:pstyle="Content">or convert according to a known v1 rule.&#13;</Content>
+<Content aid:pstyle="Content">That is migration.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Types of schema evolution</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The easiest change is adding an optional field with a default:&#13;</Content>
+<Code aid:pstyle="Code" language="text">v1:&#10;roughness&#10;&#10;v2:&#10;roughness&#10;double-sided = false&#13;</Code>
+<Content aid:pstyle="Content">More complex:&#13;</Content>
+<Code aid:pstyle="Code" language="text">v1:&#10;fov-horizontal&#10;&#10;v2:&#10;fov-vertical&#13;</Code>
+<Content aid:pstyle="Content">requires viewport/aspect assumptions.&#13;</Content>
+<Content aid:pstyle="Content">Harder:&#13;</Content>
+<Code aid:pstyle="Code" language="text">v1:&#10;Euler rotation&#10;&#10;v2:&#10;Quaternion rotation.&#13;</Code>
+<Content aid:pstyle="Content">Requires mathematical conversion.&#13;</Content>
+<Content aid:pstyle="Content">Even harder:&#13;</Content>
+<Code aid:pstyle="Code" language="text">v1:&#10;one Mesh component&#10;&#10;v2:&#10;MeshRenderer + MaterialSlot entities.&#13;</Code>
+<Content aid:pstyle="Content">Now migration changes object topology.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Migration should be semantic</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A good migration function is conceptually:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/92d0c5d769a083f9f010b18a.svg" alt="&#10;M_{v1\rightarrow v2}:&#10;Schema_{v1}&#10;\rightarrow&#10;Schema_{v2}.&#10;" jobId="92d0c5d769a083f9f010b18a" originalTeX="&#10;M_{v1\rightarrow v2}:&#10;Schema_{v1}&#10;\rightarrow&#10;Schema_{v2}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">It should not be:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">reinterpret_cast&lt;NewStruct*&gt;(oldBytes);&#13;</Code>
+<Content aid:pstyle="Content">You are converting meaning.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">CameraV2 Migrate(&#10;    const CameraV1&amp; old)&#10;{&#10;    CameraV2 result;&#10;&#10;    result.VerticalFov =&#10;        ConvertHorizontalToVertical(&#10;            old.HorizontalFov,&#10;            old.AssumedAspectRatio);&#10;&#10;    result.NearPlane =&#10;        old.NearPlane;&#10;&#10;    return result;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Forward compatibility</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Forward compatibility asks:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Can an older reader tolerate data produced by a newer writer?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Suppose reader understands:&#13;</Content>
+<Code aid:pstyle="Code" language="text">position&#10;rotation&#13;</Code>
+<Content aid:pstyle="Content">but newer writer adds:&#13;</Content>
+<Code aid:pstyle="Code" language="text">scale.&#13;</Code>
+<Content aid:pstyle="Content">If old reader can safely ignore unknown <InlineCode aid:cstyle="InlineCode">scale</InlineCode>, forward compatibility exists for that change.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Forward compatibility is difficult when semantics are required</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose newer format adds:&#13;</Content>
+<Code aid:pstyle="Code" language="text">compression zstd&#13;</Code>
+<Content aid:pstyle="Content">and old reader understands only:&#13;</Content>
+<Code aid:pstyle="Code" language="text">compression none.&#13;</Code>
+<Content aid:pstyle="Content">It cannot simply ignore the field because it cannot decode the payload.&#13;</Content>
+<Content aid:pstyle="Content">Forward compatibility is therefore not binary yes/no for a whole format.&#13;</Content>
+<Content aid:pstyle="Content">It is feature-dependent.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Backward compatibility</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Backward compatibility asks:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Can a newer reader interpret files written by an older writer?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">This is usually much more important for editor/project formats.&#13;</Content>
+<Content aid:pstyle="Content">If Kairo 0.5 loads a Kairo 0.4 project and migrates it successfully, that is backward compatibility.&#13;</Content>
+<Content aid:pstyle="Content">A mature engine often promises:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2431620eb537f9469e73087e.svg" alt="&#10;CurrentReader&#10;\rightarrow&#10;OldFiles.&#10;" jobId="2431620eb537f9469e73087e" originalTeX="&#10;CurrentReader&#10;\rightarrow&#10;OldFiles.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">It may not promise:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fd0c3b781bbf4485339a32b5.svg" alt="&#10;OldReader&#10;\rightarrow&#10;CurrentFiles.&#10;" jobId="fd0c3b781bbf4485339a32b5" originalTeX="&#10;OldReader&#10;\rightarrow&#10;CurrentFiles.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Compatibility matrix</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Imagine versions:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Reader v1&#10;Reader v2&#10;Reader v3&#10;&#10;Writer v1&#10;Writer v2&#10;Writer v3&#13;</Code>
+<Content aid:pstyle="Content">Compatibility is a matrix, not a vague adjective.&#13;</Content>
+<Content aid:pstyle="Content">For example:&#13;</Content>
+<Table aid:table="table" aid:trows="4" aid:tcols="4" sourceHeadRows="1" sourceBodyHeadRows=""><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="header"><Content aid:pstyle="Caption">Reader&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="header"><Content aid:pstyle="Caption">File v1&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="header"><Content aid:pstyle="Caption">File v2&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="header"><Content aid:pstyle="Caption">File v3&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">v1&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">maybe&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">no&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">v2&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">maybe&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">v3&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">yes&#13;</Content></Cell></Table>
+<Content aid:pstyle="Content">Document this.&#13;</Content>
+<Content aid:pstyle="Content">Testing compatibility fixtures is far more meaningful than saying:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">We support old files.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Unknown-field handling</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose new Camera file:&#13;</Content>
+<Code aid:pstyle="Code" language="text">camera&#10;fov 60&#10;near 0.1&#10;chromatic-aberration 0.2&#13;</Code>
+<Content aid:pstyle="Content">Older reader understands only first two fields.&#13;</Content>
+<Content aid:pstyle="Content">It has choices.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Strict rejection</Strong>&#13;</Content>
+<Code aid:pstyle="Code" language="text">unknown field -&gt; error&#13;</Code>
+<Content aid:pstyle="Content">Advantages:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">typo detection,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">no silent information loss,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">simple semantics.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Disadvantages:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">poor forward compatibility.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Ignore unknown field</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Advantages:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">forward extensibility.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Disadvantages:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">read/save may destroy fields it did not understand.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Preserve unknown field</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Old reader keeps opaque unknown data and writes it back unchanged.&#13;</Content>
+<Content aid:pstyle="Content">This provides much stronger round-trip compatibility.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Strictness is useful for authoring correctness</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your current Kairo parsers are deliberately strict in several inspected formats.&#13;</Content>
+<Content aid:pstyle="Content">For example <InlineCode aid:cstyle="InlineCode">AssetManifest</InlineCode> rejects:&#13;</Content>
+<Code aid:pstyle="Code" language="text">unknown statement&#10;unsupported version&#10;duplicate/nested malformed records.&#13;</Code>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">ProjectDescriptor</InlineCode> similarly rejects unknown statements.&#13;</Content>
+<Content aid:pstyle="Content">Recovery manifests also reject unknown statements.&#13;</Content>
+<Content aid:pstyle="Content">This is a valid policy because it catches:&#13;</Content>
+<Code aid:pstyle="Code" language="text">typos&#10;partial corruption&#10;unsupported newer formats&#10;ambiguous interpretation.&#13;</Code>
+<Content aid:pstyle="Content">But it means these formats do not obtain generic forward compatibility through unknown-field preservation.&#13;</Content>
+<Content aid:pstyle="Content">That is an explicit trade.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Extensible binary formats commonly use field IDs</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Instead of positional layout:&#13;</Content>
+<Code aid:pstyle="Code" language="text">field 0 = x&#10;field 1 = y&#10;field 2 = z&#13;</Code>
+<Content aid:pstyle="Content">encode:&#13;</Content>
+<Code aid:pstyle="Code" language="text">propertyID&#10;wireType&#10;length&#10;payload&#13;</Code>
+<Content aid:pstyle="Content">Unknown property ID can then be skipped using length.&#13;</Content>
+<Content aid:pstyle="Content">This is why self-describing/tagged binary formats evolve more gracefully than naive fixed struct dumps.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stable endianness</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Consider integer:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/13e0fdb5acba6bf4755e25f0.svg" alt="&#10;0x12345678.&#10;" jobId="13e0fdb5acba6bf4755e25f0" originalTeX="&#10;0x12345678.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Little-endian memory:&#13;</Content>
+<Code aid:pstyle="Code" language="text">78 56 34 12&#13;</Code>
+<Content aid:pstyle="Content">Big-endian:&#13;</Content>
+<Code aid:pstyle="Code" language="text">12 34 56 78.&#13;</Code>
+<Content aid:pstyle="Content">If you write native integer bytes and read on opposite endian architecture, value changes.&#13;</Content>
+<Content aid:pstyle="Content">Persistent binary formats must define byte order.&#13;</Content>
+<Content aid:pstyle="Content">Usually:&#13;</Content>
+<Code aid:pstyle="Code" language="text">little-endian&#13;</Code>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Code aid:pstyle="Code" language="text">network/big-endian.&#13;</Code>
+<Content aid:pstyle="Content">Then convert explicitly.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Endian-safe write</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">void WriteU32LE(&#10;    Writer&amp; out,&#10;    std::uint32_t value)&#10;{&#10;    std::byte bytes[4]&#10;    {&#10;        std::byte(value &amp; 0xff),&#10;        std::byte((value &gt;&gt; 8) &amp; 0xff),&#10;        std::byte((value &gt;&gt; 16) &amp; 0xff),&#10;        std::byte((value &gt;&gt; 24) &amp; 0xff)&#10;    };&#10;&#10;    out.Write(bytes);&#10;}&#13;</Code>
+<Content aid:pstyle="Content">This representation is independent of host endianness.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stable numeric widths</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Avoid persistent:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">size_t&#10;long&#10;unsigned long&#13;</Code>
+<Content aid:pstyle="Content">because their widths can vary by platform/compiler model.&#13;</Content>
+<Content aid:pstyle="Content">Prefer:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::uint8_t&#10;std::uint16_t&#10;std::uint32_t&#10;std::uint64_t&#10;&#10;std::int32_t&#10;std::int64_t&#13;</Code>
+<Content aid:pstyle="Content">when binary representation requires a fixed width.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Boolean representation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Do not serialize <InlineCode aid:cstyle="InlineCode">sizeof(bool)</InlineCode> bytes blindly.&#13;</Content>
+<Content aid:pstyle="Content">Define:&#13;</Content>
+<Code aid:pstyle="Code" language="text">0 = false&#10;1 = true.&#13;</Code>
+<Content aid:pstyle="Content">Reject other values unless schema intentionally allows them.&#13;</Content>
+<Content aid:pstyle="Content">Same for enums.&#13;</Content>
+<Content aid:pstyle="Content">Do not serialize underlying enum bytes unless the persistent schema explicitly defines the numeric values.&#13;</Content>
+<Content aid:pstyle="Content">Kairo frequently persists semantic enum names rather than compiler-dependent ordinals, which is stronger for textual durability.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Floating point</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If storing IEEE-754 <InlineCode aid:cstyle="InlineCode">float32</InlineCode>, say so explicitly.&#13;</Content>
+<Content aid:pstyle="Content">If format must support architectures where float representation differs, conversion is required.&#13;</Content>
+<Content aid:pstyle="Content">On modern target machines IEEE-754 is overwhelmingly common, but a durable format should still define:&#13;</Content>
+<Code aid:pstyle="Code" language="text">binary32&#10;binary64&#10;little-endian byte order.&#13;</Code>
+<Content aid:pstyle="Content">Text float parsing must also reject:&#13;</Content>
+<Code aid:pstyle="Code" language="text">NaN&#10;Infinity&#13;</Code>
+<Content aid:pstyle="Content">where they violate engine invariants.&#13;</Content>
+<Content aid:pstyle="Content">Your Kairo reflection layer explicitly rejects non-finite floating values in <InlineCode aid:cstyle="InlineCode">PropertyValue</InlineCode>, which is good defensive behavior.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Checksums and content hashes</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A checksum answers:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Are these bytes likely corrupted?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">A cryptographic/content hash can answer:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Is this exactly the same content identity?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">They are related but not identical roles.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Simple checksum</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Example CRC/FNV-style checksum:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3da03511c42fa1d587e73b36.svg" alt="&#10;C=Checksum(bytes).&#10;" jobId="3da03511c42fa1d587e73b36" originalTeX="&#10;C=Checksum(bytes).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Recovery snapshot stores:&#13;</Content>
+<Code aid:pstyle="Code" language="text">payload size&#10;payload checksum.&#13;</Code>
+<Content aid:pstyle="Content">On load:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a8dec0f27f1bdecf94ac9871.svg" alt="&#10;size_{actual}=size_{expected}&#10;" jobId="a8dec0f27f1bdecf94ac9871" originalTeX="&#10;size_{actual}=size_{expected}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3b47e46cd4b161d83cb93e49.svg" alt="&#10;Checksum(actual)=Checksum(expected).&#10;" jobId="3b47e46cd4b161d83cb93e49" originalTeX="&#10;Checksum(actual)=Checksum(expected).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If not:&#13;</Content>
+<Code aid:pstyle="Code" language="text">reject recovery point.&#13;</Code>
+<Content aid:pstyle="Content">Your current recovery system does this.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">FNV is not a security primitive</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s recovery code explicitly uses FNV-1a as a <Strong aid:cstyle="Bold">corruption detector</Strong>, not cryptographic authentication.&#13;</Content>
+<Content aid:pstyle="Content">Correct.&#13;</Content>
+<Content aid:pstyle="Content">If an attacker deliberately modifies both payload and checksum, FNV offers no meaningful tamper resistance.&#13;</Content>
+<Content aid:pstyle="Content">For untrusted distribution/integrity, use something stronger:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c53ee96148edbfa143a6850a.svg" alt="&#10;SHA\text{-}256&#10;" jobId="c53ee96148edbfa143a6850a" originalTeX="&#10;SHA\text{-}256&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">or authenticated signatures/MACs depending on threat model.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Content hash versus checksum</Strong>&#13;</Content>
+<Content aid:pstyle="Content">DDC:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c8911f890304255018d86515.svg" alt="&#10;SHA256(recipe)&#10;" jobId="c8911f890304255018d86515" originalTeX="&#10;SHA256(recipe)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">is serving identity.&#13;</Content>
+<Content aid:pstyle="Content">Recovery:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/919f33057f75e738e6a2488a.svg" alt="&#10;FNV(payload)&#10;" jobId="919f33057f75e738e6a2488a" originalTeX="&#10;FNV(payload)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">is serving accidental-corruption detection.&#13;</Content>
+<Content aid:pstyle="Content">Do not conflate these.&#13;</Content>
+<Content aid:pstyle="Content">Same mathematical tool family, different security/semantic requirements.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Chunk checksums</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Large binary artifact could contain:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Header&#10;Chunk table&#10;Mesh chunk&#10;Animation chunk&#10;Texture chunk&#13;</Code>
+<Content aid:pstyle="Content">You may checksum each chunk individually.&#13;</Content>
+<Content aid:pstyle="Content">Then corruption can be localized.&#13;</Content>
+<Content aid:pstyle="Content">You may also hash whole file.&#13;</Content>
+<Content aid:pstyle="Content">Trade-off:&#13;</Content>
+<Code aid:pstyle="Code" language="text">one global hash = simpler&#10;per-chunk hashes = better localization/streaming validation.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Serialization of object references</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Object pointers cannot be persisted.&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Material* material;&#13;</Code>
+<Content aid:pstyle="Content">At runtime address:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7b3cd6da9cab2f763a1e22f7.svg" alt="&#10;0x7fa123...&#10;" jobId="7b3cd6da9cab2f763a1e22f7" originalTeX="&#10;0x7fa123...&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">has no meaning on next launch.&#13;</Content>
+<Content aid:pstyle="Content">Serialize stable identity instead:&#13;</Content>
+<Code aid:pstyle="Code" language="text">MaterialAssetID&#13;</Code>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Code aid:pstyle="Code" language="text">SceneEntityID.&#13;</Code>
+<Content aid:pstyle="Content">On load:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0ccad896c310c8f4c8bcd030.svg" alt="&#10;ID\rightarrow object.&#10;" jobId="0ccad896c310c8f4c8bcd030" originalTeX="&#10;ID\rightarrow object.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Two-pass reference resolution</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The universal pattern is:&#13;</Content>
+<Content aid:pstyle="Content">Create every object and build:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f7f2c2e4be5f7d8377dbb93c.svg" alt="&#10;SerializedID&#10;\rightarrow&#10;RuntimeObject.&#10;" jobId="f7f2c2e4be5f7d8377dbb93c" originalTeX="&#10;SerializedID&#10;\rightarrow&#10;RuntimeObject.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Resolve references.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Entity 10 parent 4&#10;Entity 4 parent none&#13;</Code>
+<Content aid:pstyle="Content">Even if Entity 10 appears first in file, loading works.&#13;</Content>
+<Content aid:pstyle="Content">This same pattern appeared in Pass 12 for cloning and ECS extraction.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reference classes</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Not every reference has same ownership semantics.&#13;</Content>
+<Content aid:pstyle="Content">You may distinguish:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Strong reference&#10;Weak reference&#10;Optional reference&#10;External asset reference&#10;Scene-local reference&#10;Cross-scene reference.&#13;</Code>
+<Content aid:pstyle="Content">For example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">MeshRenderer -&gt; MeshAsset&#13;</Code>
+<Content aid:pstyle="Content">can remain valid when entity changes.&#13;</Content>
+<Content aid:pstyle="Content">A parent relation typically requires target in same loaded scene.&#13;</Content>
+<Content aid:pstyle="Content">A gameplay target may be optional and disappear.&#13;</Content>
+<Content aid:pstyle="Content">Serializer must understand the semantics.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">ECS entity serialization</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Never serialize:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Entity{Index=42, Generation=7}&#13;</Code>
+<Content aid:pstyle="Content">as persistent entity identity unless that runtime handle is explicitly defined as persistent—which it generally should not be.&#13;</Content>
+<Content aid:pstyle="Content">Runtime slot allocation is transient.&#13;</Content>
+<Content aid:pstyle="Content">Serialize:&#13;</Content>
+<Code aid:pstyle="Code" language="text">PersistentEntityID&#13;</Code>
+<Content aid:pstyle="Content">and create runtime entities anew on load.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Entity reference conversion</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Save:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Runtime Entity {12,4}&#10;      ↓&#10;Scene Entity 105&#13;</Code>
+<Content aid:pstyle="Content">Serialized reference:&#13;</Content>
+<Code aid:pstyle="Code" language="text">105.&#13;</Code>
+<Content aid:pstyle="Content">Load:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Scene Entity 105&#10;      ↓&#10;Runtime Entity {3,1}.&#13;</Code>
+<Content aid:pstyle="Content">The runtime representation can be completely different.&#13;</Content>
+<Content aid:pstyle="Content">That is desirable.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">ECS component schema</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A persistent ECS-like scene might encode:&#13;</Content>
+<Code aid:pstyle="Code" language="text">entity 105&#10;component Transform&#10;  position ...&#10;component Camera&#10;  fov ...&#10;end&#13;</Code>
+<Content aid:pstyle="Content">But remember Pass 12’s architecture:&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s durable <InlineCode aid:cstyle="InlineCode">EngineCore::Scene</InlineCode> and process-local <InlineCode aid:cstyle="InlineCode">KairoECS</InlineCode> are deliberately separate.&#13;</Content>
+<Content aid:pstyle="Content">That means Kairo does not need to serialize its sparse-set internal indices.&#13;</Content>
+<Content aid:pstyle="Content">It serializes authored scene semantics and extracts runtime ECS later.&#13;</Content>
+<Content aid:pstyle="Content">This is the cleaner design.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Scene-graph serialization</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A scene graph needs:&#13;</Content>
+<Code aid:pstyle="Code" language="text">entities&#10;components&#10;hierarchy&#10;stable IDs&#10;asset references.&#13;</Code>
+<Content aid:pstyle="Content">There are two common hierarchy representations.&#13;</Content>
+<Content aid:pstyle="Content">Nested:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Root&#10;{&#10;    Child&#10;    {&#10;        Grandchild&#10;    }&#10;}&#13;</Code>
+<Content aid:pstyle="Content">or flat IDs:&#13;</Content>
+<Code aid:pstyle="Code" language="text">entity 1 parent none&#10;entity 2 parent 1&#10;entity 3 parent 2.&#13;</Code>
+<Content aid:pstyle="Content">Flat ID representation is often easier for:&#13;</Content>
+<Code aid:pstyle="Code" language="text">random ordering&#10;references&#10;incremental editing&#10;streaming.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Validate hierarchy after loading</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A parser must not assume file hierarchy is valid.&#13;</Content>
+<Content aid:pstyle="Content">Check:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/27d88f6e1f02daebd43543f7.svg" alt="&#10;Parent(E)\neq E.&#10;" jobId="27d88f6e1f02daebd43543f7" originalTeX="&#10;Parent(E)\neq E.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Check parent exists.&#13;</Content>
+<Content aid:pstyle="Content">Check no cycles.&#13;</Content>
+<Content aid:pstyle="Content">Check perhaps one root policy if required.&#13;</Content>
+<Content aid:pstyle="Content">Check depth bounds if recursion is used.&#13;</Content>
+<Content aid:pstyle="Content">Malicious/corrupt file:&#13;</Content>
+<Code aid:pstyle="Code" language="text">1 parent 2&#10;2 parent 3&#10;3 parent 1&#13;</Code>
+<Content aid:pstyle="Content">must not lead to infinite traversal.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Transactional scene loading</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Do not mutate live scene as parse proceeds.&#13;</Content>
+<Content aid:pstyle="Content">Use:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Scene candidate;&#10;&#10;ParseInto(candidate);&#10;Validate(candidate);&#10;&#10;liveScene =&#10;    std::move(candidate);&#13;</Code>
+<Content aid:pstyle="Content">If parse fails at entity 997:&#13;</Content>
+<Code aid:pstyle="Code" language="text">live scene remains unchanged.&#13;</Code>
+<Content aid:pstyle="Content">Your Kairo scene/project loading architecture repeatedly follows this strong-exception pattern.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reflection metadata</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Reflection metadata describes a type in a machine-readable engine-owned way.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Type:&#10;Kairo.Engine.Camera&#10;&#10;Display:&#10;Camera&#10;&#10;Properties:&#10;VerticalFov&#10;NearPlane&#10;FarPlane&#10;Exposure&#10;Primary&#13;</Code>
+<Content aid:pstyle="Content">Each property can carry:&#13;</Content>
+<Code aid:pstyle="Code" language="text">stable key&#10;display name&#10;value kind&#10;category&#10;tooltip&#10;numeric range&#10;read-only flag&#10;enum options&#10;reference target type.&#13;</Code>
+<Content aid:pstyle="Content">KairoReflection already implements essentially this model.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Metadata is not the object’s value</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Descriptor:&#13;</Content>
+<Code aid:pstyle="Code" language="text">"near plane is a floating point value"&#13;</Code>
+<Content aid:pstyle="Content">is metadata.&#13;</Content>
+<Content aid:pstyle="Content">Instance:&#13;</Content>
+<Code aid:pstyle="Code" language="text">NearPlane = 0.1&#13;</Code>
+<Content aid:pstyle="Content">is data.&#13;</Content>
+<Content aid:pstyle="Content">Separate:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6bdad0d3d9684b84e06ac005.svg" alt="&#10;Schema&#10;" jobId="6bdad0d3d9684b84e06ac005" originalTeX="&#10;Schema&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">from:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d9263f4172c39590326bde3f.svg" alt="&#10;InstanceState.&#10;" jobId="d9263f4172c39590326bde3f" originalTeX="&#10;InstanceState.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That enables one descriptor to inspect thousands of objects.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stable reflection keys</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your reflection system uses dotted ASCII identifiers such as:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Kairo.Engine.Transform&#13;</Code>
+<Content aid:pstyle="Content">instead of compiler RTTI names.&#13;</Content>
+<Content aid:pstyle="Content">This is a very good choice.&#13;</Content>
+<Content aid:pstyle="Content">RTTI names can be:&#13;</Content>
+<Code aid:pstyle="Code" language="text">compiler-dependent&#10;mangled&#10;unstable across builds.&#13;</Code>
+<Content aid:pstyle="Content">A persistent reflection key should be designed as data schema identity.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Type IDs</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A type ID is stable identity for a reflected type.&#13;</Content>
+<Content aid:pstyle="Content">You have several implementation choices.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">String key</Strong>&#13;</Content>
+<Code aid:pstyle="Code" language="text">Kairo.Engine.Transform&#13;</Code>
+<Content aid:pstyle="Content">Advantages:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">readable,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">collision-free if uniqueness enforced,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">persistent-friendly.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Cost:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">larger comparisons/storage.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Integer ID assigned at runtime</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Fast, but registration order can make it unstable.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Hashed stable string</Strong>&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9241e6ce328e07a905b7488e.svg" alt='&#10;TypeID=Hash("Kairo.Engine.Transform").&#10;' jobId="9241e6ce328e07a905b7488e" originalTeX='&#10;TypeID=Hash("Kairo.Engine.Transform").&#10;'/>&#13;</Formula>
+<Content aid:pstyle="Content">Compact and deterministic, but collisions must be handled.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Persistent versus runtime type IDs</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A useful design is:&#13;</Content>
+<Code aid:pstyle="Code" language="text">persistent:&#10;stable string/hash&#10;&#10;runtime:&#10;dense TypeIndex&#13;</Code>
+<Content aid:pstyle="Content">At startup:&#13;</Content>
+<Code aid:pstyle="Code" language="text">"Kairo.Engine.Transform"&#10;    ↓&#10;runtime index 7.&#13;</Code>
+<Content aid:pstyle="Content">Then hot loops can use:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">uint16_t TypeIndex;&#13;</Code>
+<Content aid:pstyle="Content">while persistence remains compiler/order independent.&#13;</Content>
+<Content aid:pstyle="Content">This is the same persistent/runtime identity separation we have seen everywhere.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Hash collisions</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/01d1766fc38ea23acdbf0f82.svg" alt="&#10;TypeID=Hash(key),&#10;" jobId="01d1766fc38ea23acdbf0f82" originalTeX="&#10;TypeID=Hash(key),&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">you cannot simply assume collisions never occur.&#13;</Content>
+<Content aid:pstyle="Content">At registration:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">if (&#10;    sameHash &amp;&amp;&#10;    differentKey)&#10;{&#10;    fail loudly;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">or use sufficiently wide IDs and store canonical key for validation.&#13;</Content>
+<Content aid:pstyle="Content">A 64-bit hash makes accidental collision unlikely but not logically impossible.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Property IDs</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Within one type, every property needs stable identity.&#13;</Content>
+<Content aid:pstyle="Content">Bad identity:&#13;</Content>
+<Code aid:pstyle="Code" language="text">property index 3.&#13;</Code>
+<Content aid:pstyle="Content">Reordering fields changes meaning.&#13;</Content>
+<Content aid:pstyle="Content">Better:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Kairo.Engine.Camera.NearPlane&#13;</Code>
+<Content aid:pstyle="Content">or type-local:&#13;</Content>
+<Code aid:pstyle="Code" language="text">near-plane.&#13;</Code>
+<Content aid:pstyle="Content">Stable property ID allows:&#13;</Content>
+<Code aid:pstyle="Code" language="text">undo&#10;serialization&#10;animation binding&#10;editor presets&#10;network replication&#10;property diffing.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Property display names are not IDs</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Display text:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Near Plane&#13;</Code>
+<Content aid:pstyle="Content">may later become:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Near Clip&#13;</Code>
+<Content aid:pstyle="Content">for UI wording.&#13;</Content>
+<Content aid:pstyle="Content">That should not invalidate persistence.&#13;</Content>
+<Content aid:pstyle="Content">Your ImGui inspector uses stable reflection keys for commit callbacks rather than display labels.&#13;</Content>
+<Content aid:pstyle="Content">This is precisely correct:&#13;</Content>
+<Code aid:pstyle="Code" language="text">DisplayName = presentation&#10;Key = identity.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reflection without language runtime reflection</Strong>&#13;</Content>
+<Content aid:pstyle="Content">C++ historically does not provide Java/C#-style full runtime field enumeration.&#13;</Content>
+<Content aid:pstyle="Content">So engines build their own reflection.&#13;</Content>
+<Content aid:pstyle="Content">Kairo does not ask:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">for(auto member : typeof(Camera).members())&#13;</Code>
+<Content aid:pstyle="Content">because ordinary C++ cannot generally do that in portable production code.&#13;</Content>
+<Content aid:pstyle="Content">Instead descriptors are explicitly constructed and registered.&#13;</Content>
+<Content aid:pstyle="Content">That is entirely valid.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Explicit reflection registration</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">TypeDescriptor CameraDescriptor()&#10;{&#10;    TypeDescriptor type;&#10;&#10;    type.Key =&#10;        "Kairo.Engine.Camera";&#10;&#10;    type.DisplayName =&#10;        "Camera";&#10;&#10;    type.Properties.push_back(&#10;        MakeMemberProperty&lt;Camera&gt;(&#10;            {&#10;                .Key =&#10;                    "near-plane",&#10;                .DisplayName =&#10;                    "Near Plane"&#10;            },&#10;            &amp;Camera::NearPlane));&#10;&#10;    return type;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">The compiler validates the member pointer type.&#13;</Content>
+<Content aid:pstyle="Content">The engine owns metadata semantics.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Benefits of explicit registration</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You choose deliberately what is reflected.&#13;</Content>
+<Content aid:pstyle="Content">Private implementation details can remain invisible.&#13;</Content>
+<Content aid:pstyle="Content">You can expose a semantic property that is not literally a field.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Euler Rotation&#13;</Code>
+<Content aid:pstyle="Content">could read/write underlying Quaternion.&#13;</Content>
+<Content aid:pstyle="Content">Reflection is an abstraction layer.&#13;</Content>
+<Content aid:pstyle="Content">It does not have to mirror memory layout.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Compile-time reflection patterns</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Even without full language reflection, templates can generate descriptors.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">MakeMemberProperty&lt;Object, Member&gt;(&#10;    metadata,&#10;    memberPointer)&#13;</Code>
+<Content aid:pstyle="Content">is an example.&#13;</Content>
+<Content aid:pstyle="Content">Compile time knows:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Object type&#10;Member type&#10;pointer-to-member.&#13;</Code>
+<Content aid:pstyle="Content">Runtime descriptor stores a type-erased accessor.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Template-generated accessor</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">descriptor.Read =&#10;    [member](const void* object)&#10;    {&#10;        const Object* typed =&#10;            static_cast&lt;&#10;                const Object*&gt;(&#10;                    object);&#10;&#10;        return Encode(&#10;            typed-&gt;*member);&#10;    };&#13;</Code>
+<Content aid:pstyle="Content">Write:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">descriptor.Write =&#10;    [member](&#10;        void* object,&#10;        const PropertyValue&amp; value)&#10;    {&#10;        Object* typed =&#10;            static_cast&lt;Object*&gt;(&#10;                object);&#10;&#10;        typed-&gt;*member =&#10;            Decode&lt;Member&gt;(value);&#10;    };&#13;</Code>
+<Content aid:pstyle="Content">This bridges compile-time type safety into runtime reflection.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reflection macro pattern</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Another common design:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">REFLECT_TYPE(Camera,&#10;    PROPERTY(NearPlane),&#10;    PROPERTY(FarPlane),&#10;    PROPERTY(Exposure));&#13;</Code>
+<Content aid:pstyle="Content">Macros reduce boilerplate but have drawbacks:&#13;</Content>
+<Code aid:pstyle="Code" language="text">debuggability&#10;macro syntax&#10;tooling complexity.&#13;</Code>
+<Content aid:pstyle="Content">Modern template/constexpr code can often replace many macros.&#13;</Content>
+<Content aid:pstyle="Content">Use macros only when they improve ergonomics materially.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Static descriptor pattern</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You can make:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">template&lt;&gt;&#10;struct Reflection&lt;Camera&gt;&#10;{&#10;    static constexpr auto Key =&#10;        "Kairo.Engine.Camera";&#10;&#10;    static TypeDescriptor Build();&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Then generic registry bootstrap:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">registry.Register(&#10;    Reflection&lt;Camera&gt;::Build());&#13;</Code>
+<Content aid:pstyle="Content">This creates a strong association between C++ type and stable schema descriptor without relying on language RTTI names.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Runtime reflection registry</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A registry maps stable key to descriptor:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cb6d7eff8119ca7826b07d65.svg" alt="&#10;TypeKey&#10;\rightarrow&#10;TypeDescriptor.&#10;" jobId="cb6d7eff8119ca7826b07d65" originalTeX="&#10;TypeKey&#10;\rightarrow&#10;TypeDescriptor.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Kairo’s registry uses deterministic ordered storage:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::map&lt;std::string, TypeDescriptor&gt;&#13;</Code>
+<Content aid:pstyle="Content">and sorts properties by stable key during registration.&#13;</Content>
+<Content aid:pstyle="Content">That is a deliberate determinism choice.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Immutable descriptors after registration</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your reflection registry does not silently mutate already registered descriptors.&#13;</Content>
+<Content aid:pstyle="Content">This matters.&#13;</Content>
+<Content aid:pstyle="Content">Suppose inspector is currently showing:&#13;</Content>
+<Code aid:pstyle="Code" language="text">property key "near-plane"&#13;</Code>
+<Content aid:pstyle="Content">and a plugin reload changes its meaning underneath it.&#13;</Content>
+<Content aid:pstyle="Content">That would be dangerous.&#13;</Content>
+<Content aid:pstyle="Content">Immutable registration means descriptor semantics remain stable for that registry lifetime.&#13;</Content>
+<Content aid:pstyle="Content">Plugin reload can construct a new registry/epoch rather than mutate existing contracts unpredictably.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Registry validation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo validates:&#13;</Content>
+<Code aid:pstyle="Code" language="text">stable type keys&#10;stable property keys&#10;display names&#10;categories&#10;read accessor presence&#10;write accessor for writable properties&#10;numeric ranges&#10;enum option uniqueness&#10;reference metadata&#10;array metadata limits.&#13;</Code>
+<Content aid:pstyle="Content">This is exactly what reflection registration should do.&#13;</Content>
+<Content aid:pstyle="Content">Fail when schema is registered, not three hours later when editor opens one rare component.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Property getters and setters</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Reflection should not necessarily expose raw member addresses.&#13;</Content>
+<Content aid:pstyle="Content">Getter/setter abstraction gives control.&#13;</Content>
+<Content aid:pstyle="Content">Getter:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">PropertyValue Read(&#10;    const void*);&#13;</Code>
+<Content aid:pstyle="Content">Setter:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">void Write(&#10;    void*,&#10;    const PropertyValue&amp;);&#13;</Code>
+<Content aid:pstyle="Content">This enables validation and conversion.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why raw offset reflection is risky</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Some reflection systems store:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">offsetof(Camera, NearPlane).&#13;</Code>
+<Content aid:pstyle="Content">Then compute:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">char* base +&#10;offset.&#13;</Code>
+<Content aid:pstyle="Content">Fast, but tightly coupled to standard-layout assumptions and exact memory layout.&#13;</Content>
+<Content aid:pstyle="Content">It also bypasses semantic validation.&#13;</Content>
+<Content aid:pstyle="Content">Getter/setter reflection is more flexible.&#13;</Content>
+<Content aid:pstyle="Content">Kairo chooses getters/setters through <InlineCode aid:cstyle="InlineCode">std::function</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">That is appropriate for editor/reflection workloads where correctness and flexibility matter more than nanosecond access.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Semantic setters</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">void Camera::SetNear(float n)&#10;{&#10;    if (n &lt;= 0)&#10;        throw ...;&#10;&#10;    NearPlane = n;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">Reflection should ideally use this semantic path.&#13;</Content>
+<Content aid:pstyle="Content">Likewise quaternion write may normalize.&#13;</Content>
+<Content aid:pstyle="Content">Asset handle write may validate target type.&#13;</Content>
+<Content aid:pstyle="Content">A property setter is an invariant boundary.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Strong exception behavior</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Setter should preferably behave:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8d50a8b752d3274a0302fca5.svg" alt="&#10;\text{valid new value}&#10;\Rightarrow&#10;\text{commit}&#10;" jobId="8d50a8b752d3274a0302fca5" originalTeX="&#10;\text{valid new value}&#10;\Rightarrow&#10;\text{commit}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5964577363273499dc04ef2b.svg" alt="&#10;\text{invalid new value}&#10;\Rightarrow&#10;\text{old value unchanged}.&#10;" jobId="5964577363273499dc04ef2b" originalTeX="&#10;\text{invalid new value}&#10;\Rightarrow&#10;\text{old value unchanged}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is crucial because editor commands depend on reliable rollback/undo semantics later in M094.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Inspector adapters</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Reflection metadata should remain UI-framework neutral.&#13;</Content>
+<Content aid:pstyle="Content">It says:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Property kind = FloatingPoint&#10;Range = [0.01, 1000]&#10;DisplayName = Near Plane&#13;</Code>
+<Content aid:pstyle="Content">It should not say:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ImGui::DragFloat&#13;</Code>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Code aid:pstyle="Code" language="text">QtSlider.&#13;</Code>
+<Content aid:pstyle="Content">UI adapter interprets metadata.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kairo’s inspector boundary</Strong>&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">ImGuiReflectionInspector</InlineCode> receives:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ReflectionRegistry&#10;Scene entity&#10;commit callback.&#13;</Code>
+<Content aid:pstyle="Content">It enumerates reflected components and picks an ImGui widget from <InlineCode aid:cstyle="InlineCode">PropertyValueKind</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">That means:&#13;</Content>
+<Code aid:pstyle="Code" language="text">reflection metadata&#13;</Code>
+<Content aid:pstyle="Content">does not import ImGui.&#13;</Content>
+<Content aid:pstyle="Content">Instead:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ImGui adapter&#10;    ↓&#10;reflection.&#13;</Code>
+<Content aid:pstyle="Content">Correct dependency direction.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Widget mapping</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current logic naturally supports:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Boolean          -&gt; checkbox&#10;Signed integer   -&gt; numeric drag&#10;Unsigned integer -&gt; numeric drag&#10;Floating point   -&gt; ranged drag&#10;String           -&gt; text input&#10;Vector2/3/4      -&gt; component drag&#10;Quaternion       -&gt; 4-component editor&#10;Enumeration      -&gt; combo&#10;Reference        -&gt; reference string editor&#10;Array            -&gt; current summary/display&#13;</Code>
+<Content aid:pstyle="Content">This is the generic-inspector payoff.&#13;</Content>
+<Content aid:pstyle="Content">One UI implementation can inspect many component types.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Inspector must not own mutation semantics</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Notice Kairo’s inspector does not directly perform arbitrary scene writes.&#13;</Content>
+<Content aid:pstyle="Content">When edited value changes, it invokes:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">commit(&#10;    typeKey,&#10;    propertyKey,&#10;    edited);&#13;</Code>
+<Content aid:pstyle="Content">That callback can generate an undoable command.&#13;</Content>
+<Content aid:pstyle="Content">This is a very strong architectural separation:&#13;</Content>
+<Code aid:pstyle="Code" language="text">UI detects intent&#10;      ↓&#10;command layer performs mutation.&#13;</Code>
+<Content aid:pstyle="Content">Without this, every widget becomes a secret mutation path bypassing undo.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Serialization driven by reflection</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If reflection knows:&#13;</Content>
+<Code aid:pstyle="Code" language="text">type&#10;properties&#10;kinds&#10;getters&#13;</Code>
+<Content aid:pstyle="Content">generic serializer can do:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">for (const auto&amp; property&#10;     : descriptor.Properties)&#10;{&#10;    PropertyValue value =&#10;        registry.Read(&#10;            typeKey,&#10;            property.Key,&#10;            object);&#10;&#10;    writer.Write(&#10;        property.Key,&#10;        value);&#10;}&#13;</Code>
+<Content aid:pstyle="Content">This removes duplicate hand-written field enumeration.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Deserialization driven by reflection</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">for (SerializedField field : input)&#10;{&#10;    const PropertyDescriptor* p =&#10;        descriptor.Find(field.ID);&#10;&#10;    if (!p)&#10;    {&#10;        HandleUnknown(field);&#10;        continue;&#10;    }&#10;&#10;    PropertyValue value =&#10;        Decode(&#10;            field,&#10;            p-&gt;ValueKind);&#10;&#10;    registry.Write(&#10;        descriptor.Key,&#10;        p-&gt;Key,&#10;        object,&#10;        value);&#10;}&#13;</Code>
+<Content aid:pstyle="Content">Now reflection schema and persistence schema can share metadata.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reflection-driven serialization trade-off</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Be careful with the temptation:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Reflect everything, therefore serialize everything.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Not every reflected property should be persisted.&#13;</Content>
+<Content aid:pstyle="Content">Examples:&#13;</Content>
+<Code aid:pstyle="Code" language="text">runtime statistics&#10;computed bounds&#10;debug state&#10;cached matrix&#10;GPU handle.&#13;</Code>
+<Content aid:pstyle="Content">So reflection metadata may need flags:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Serializable&#10;Transient&#10;EditorVisible&#10;ReadOnly&#10;NetworkReplicated&#10;SaveGame&#13;</Code>
+<Content aid:pstyle="Content">depending on engine scale.&#13;</Content>
+<Content aid:pstyle="Content">Reflection is a metadata platform.&#13;</Content>
+<Content aid:pstyle="Content">Serialization is one consumer.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo design</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo currently uses reflection primarily for editor inspection and semantic values while scene serialization remains an explicit dedicated format.&#13;</Content>
+<Content aid:pstyle="Content">That is a defensible design.&#13;</Content>
+<Content aid:pstyle="Content">Explicit scene serializers give precise control over:&#13;</Content>
+<Code aid:pstyle="Code" language="text">versioning&#10;ordering&#10;validation&#10;migration.&#13;</Code>
+<Content aid:pstyle="Content">Reflection can gradually reduce boilerplate later without forcing persistence to become purely automatic.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Editor UI driven by reflection</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The generic inspector architecture is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/225d84f024e161c35488255a.svg" alt="&#10;Object&#10;\rightarrow&#10;TypeDescriptor&#10;\rightarrow&#10;PropertyDescriptors&#10;\rightarrow&#10;PropertyValue&#10;\rightarrow&#10;UIWidget.&#10;" jobId="225d84f024e161c35488255a" originalTeX="&#10;Object&#10;\rightarrow&#10;TypeDescriptor&#10;\rightarrow&#10;PropertyDescriptors&#10;\rightarrow&#10;PropertyValue&#10;\rightarrow&#10;UIWidget.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This means adding a new reflected property can automatically make it appear in the inspector.&#13;</Content>
+<Content aid:pstyle="Content">That is a massive tooling scalability improvement.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Metadata can improve UX</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Reflection property metadata can include:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Tooltip&#10;Category&#10;Advanced flag&#10;ReadOnly&#10;NumericRange&#10;Step&#10;Enum options&#10;Reference target.&#13;</Code>
+<Content aid:pstyle="Content">Then an editor gains consistent behavior across hundreds of components.&#13;</Content>
+<Content aid:pstyle="Content">Without metadata every component requires a bespoke panel.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Generic inspector versus custom inspector</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Generic reflection UI handles the common 80–90%.&#13;</Content>
+<Content aid:pstyle="Content">Some types still deserve a specialized inspector.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Material&#10;Animation graph&#10;Particle system&#10;Terrain&#10;Navigation mesh.&#13;</Code>
+<Content aid:pstyle="Content">Use generic reflection as the baseline.&#13;</Content>
+<Content aid:pstyle="Content">Allow type-specific adapters when domain UX requires them.&#13;</Content>
+<Content aid:pstyle="Content">Do not force everything through primitive widgets.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Safe type erasure</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Type erasure allows runtime code to manipulate values whose concrete C++ type is not known at compile time.&#13;</Content>
+<Content aid:pstyle="Content">Kairo reflection uses:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">const void*&#10;void*&#13;</Code>
+<Content aid:pstyle="Content">plus descriptor-specific functions.&#13;</Content>
+<Content aid:pstyle="Content">This is a classic type-erasure boundary.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold"><InlineCode aid:cstyle="InlineCode">void*</InlineCode> itself is not safe</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This is dangerous:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">void* object =&#10;    GetAnything();&#10;&#10;descriptorForCamera.Read(object);&#13;</Code>
+<Content aid:pstyle="Content">if object is actually a Light.&#13;</Content>
+<Content aid:pstyle="Content">The cast inside accessor becomes invalid.&#13;</Content>
+<Content aid:pstyle="Content">So safety comes from <Strong aid:cstyle="Bold">pairing pointer with the correct descriptor</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">The invariant is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8b1d6985e659f99a094450a4.svg" alt="&#10;\boxed{&#10;(objectAddress,TypeDescriptor)&#10;}&#10;" jobId="8b1d6985e659f99a094450a4" originalTeX="&#10;\boxed{&#10;(objectAddress,TypeDescriptor)&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">must correspond to the same concrete type.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Safer erased object view</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You can encode this:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct ReflectedObjectView&#10;{&#10;    void* Object = nullptr;&#10;    const TypeDescriptor* Type = nullptr;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Read:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">PropertyValue Read(&#10;    ReflectedObjectView object,&#10;    PropertyID property);&#13;</Code>
+<Content aid:pstyle="Content">Now the pointer and schema travel together.&#13;</Content>
+<Content aid:pstyle="Content">Still not mathematically impossible to construct incorrectly, but far harder to mix accidentally.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Runtime type token</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Stronger:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct ErasedObject&#10;{&#10;    void* Data;&#10;    TypeID Type;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Registry checks:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9d042e776b73825d1cca5af2.svg" alt="&#10;object.Type=&#10;descriptor.TypeID&#10;" jobId="9d042e776b73825d1cca5af2" originalTeX="&#10;object.Type=&#10;descriptor.TypeID&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">before accessor invocation.&#13;</Content>
+<Content aid:pstyle="Content">This converts silent undefined behavior into a deterministic runtime error.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Owned type-erased values</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s <InlineCode aid:cstyle="InlineCode">PropertyValue</InlineCode> is another safer kind of type erasure.&#13;</Content>
+<Content aid:pstyle="Content">It uses:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::variant&lt;&#10;    bool,&#10;    int64_t,&#10;    uint64_t,&#10;    double,&#10;    string,&#10;    Vector...&#10;&gt;&#13;</Code>
+<Content aid:pstyle="Content">This is significantly safer than:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">void* value;&#13;</Code>
+<Content aid:pstyle="Content">because the variant remembers its active alternative.&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">PropertyValueKind</InlineCode> can be checked against expected descriptor kind before writing.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why <InlineCode aid:cstyle="InlineCode">std::any</InlineCode> is less ideal here</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You could use:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::any.&#13;</Code>
+<Content aid:pstyle="Content">But then the reflection transport becomes dependent on concrete C++ type identities.&#13;</Content>
+<Content aid:pstyle="Content">Kairo deliberately defines a canonical, engine-neutral value model:&#13;</Content>
+<Code aid:pstyle="Code" language="text">double&#10;Vector3Value&#10;ReferenceValue&#10;EnumerationValue&#10;ArrayValue.&#13;</Code>
+<Content aid:pstyle="Content">That is much better for:&#13;</Content>
+<Code aid:pstyle="Code" language="text">editor&#10;serialization&#10;plugin boundaries&#10;potential scripting.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reflection must own values, not dangling references</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s reflected <InlineCode aid:cstyle="InlineCode">PropertyValue</InlineCode> owns strings, arrays and composite values.&#13;</Content>
+<Content aid:pstyle="Content">This is important.&#13;</Content>
+<Content aid:pstyle="Content">Returning:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::string_view&#13;</Code>
+<Content aid:pstyle="Content">into a component would create lifetime hazards.&#13;</Content>
+<Content aid:pstyle="Content">An inspector may keep the value after component storage changes.&#13;</Content>
+<Content aid:pstyle="Content">Owned values decouple reflection transport lifetime from object storage lifetime.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<!-- CHAPTER-SOURCE-END -->
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#05-engine-i-ch010">Previous chapter</Link> · <Link href="#05-engine-i-ch012">Next chapter</Link>&#13;</Content>
+</Chapter>

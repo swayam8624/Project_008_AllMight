@@ -8,7 +8,7 @@ A complete renderer makes the forward graphics model executable from camera and 
 
 **Recall question:** Which components must agree for a rendered image to test the intended forward model?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 78470–80438; source-span SHA256 a92312308b64040223dbede4936d717bedd43ae4edd61aa5a1113d2b83372026. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 79472–81440; source-span SHA256 b11b4386a4a3ac094b732b9ebe240c753a14eba92950f049a0fea89c7ff2d176. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## A complete renderer makes the forward model executable
@@ -290,9 +290,9 @@ A pose is not merely a position and quaternion. It is a transform from one named
 
 A useful XR system distinguishes view/head space, local or stage-like world spaces, floor-aligned spaces, action spaces attached to hands/controllers/gaze/tools, persistent anchors, and application world space. If a runtime reports a transform from B to A at time t, composition must preserve that meaning:
 
-\[
+$$
 {}^AT_C(t) = {}^AT_B(t)\,{}^BT_C(t).
-\]
+$$
 
 This notation prevents a destructive XR bug: multiplying matrices whose source and destination frames do not match.
 
@@ -316,15 +316,15 @@ The important quantity is the age of information at display, not CPU frame time 
 
 For a scalar or vector state,
 
-\[
+$$
 \hat{x}(t+\Delta t)=x(t)+\dot{x}(t)\Delta t.
-\]
+$$
 
 For orientation, prediction belongs on the rotation manifold:
 
-\[
+$$
 R(t+\Delta t)\approx R(t)\exp([\boldsymbol\omega]_\times\Delta t).
-\]
+$$
 
 Prediction helps only when its model error is smaller than the error from stale state. Abrupt motion can make aggressive prediction overshoot.
 
@@ -349,10 +349,10 @@ The image written to a headset panel is often not a geometrically correct flat-m
 
 A simple radial model is
 
-\[
+$$
 x_d=x(1+k_1r^2+k_2r^4+k_3r^6), \qquad
 y_d=y(1+k_1r^2+k_2r^4+k_3r^6).
-\]
+$$
 
 Real devices can use asymmetric, per-channel, mesh-based or proprietary calibration. Chromatic aberration exists because wavelengths refract differently, so one geometric warp need not align every color channel.
 
@@ -360,11 +360,11 @@ Runtime-provided view and projection data must therefore be treated as calibrati
 
 ## Display timing is more than FPS
 
-A headset display has refresh period, persistence, scanout behavior, brightness/contrast, pixel structure and optical MTF. If refresh rate is \(f_r\),
+A headset display has refresh period, persistence, scanout behavior, brightness/contrast, pixel structure and optical MTF. If refresh rate is $f_r$,
 
-\[
+$$
 T_r=\frac{1}{f_r}.
-\]
+$$
 
 At 90 Hz, one nominal refresh is about 11.11 ms, but motion-to-photon latency depends on tracking, queueing, rendering, compositor work and scanout. Reporting only 90 FPS hides the distribution that matters to head-coupled perception.
 
@@ -374,9 +374,9 @@ An IMU provides high-rate angular velocity and specific force. Cameras provide v
 
 A visual-inertial state may contain
 
-\[
+$$
 \mathbf{x}=(R,\mathbf{p},\mathbf{v},\mathbf{b}_g,\mathbf{b}_a),
-\]
+$$
 
 representing orientation, position, velocity and sensor biases. VIO propagates with inertial data and corrects with visual evidence. SLAM additionally maintains a map, loop closure and relocalization so old places can constrain drift.
 
@@ -991,13 +991,13 @@ Prediction should propagate not only a pose value but also an age/uncertainty st
 
 Calibration includes camera intrinsics, distortion, camera-to-IMU extrinsics, eye-camera geometry, display-to-eye geometry and time offsets between clocks.
 
-If a measurement timestamp is wrong by \(\delta t\), angular motion converts it into spatial error. At angular speed \(\omega\),
+If a measurement timestamp is wrong by $\delta t$, angular motion converts it into spatial error. At angular speed $\omega$,
 
-\[
+$$
 \Delta\theta\approx \omega\delta t.
-\]
+$$
 
-At \(200^\circ/s\), a 5 ms timing error is about one degree. Clock synchronization is therefore part of geometry.
+At $200^\circ/s$, a 5 ms timing error is about one degree. Clock synchronization is therefore part of geometry.
 
 ## AR and MR require a real-world reconstruction contract
 
@@ -1015,11 +1015,11 @@ Hand tracking includes self-occlusion, joint ambiguity, temporary loss, latency 
 
 ## Spatial audio and haptics complete different loops
 
-For a world-space source direction \(\mathbf d_w\) and world-to-head orientation \(R_{wh}\), head-relative direction is
+For a world-space source direction $\mathbf d_w$ and world-to-head orientation $R_{wh}$, head-relative direction is
 
-\[
+$$
 \mathbf d_h=R_{wh}^{T}\mathbf d_w.
-\]
+$$
 
 Spatial audio should use the same transform graph as vision. A stationary sound that rotates with the head breaks world stability.
 
@@ -1037,15 +1037,15 @@ XR can vary fragment shading rate, geometry detail, ray count, path depth, denoi
 
 A useful formulation is
 
-\[
+$$
 \min_{\{q_i\}}\sum_i D_i(q_i,\mathbf{s})
 \quad\text{subject to}\quad
 \sum_i C_i(q_i)\le B,
-\]
+$$
 
-where \(q_i\) is regional quality, \(D_i\) perceptual loss, \(C_i\) cost and \(\mathbf s\) contains gaze, motion and content.
+where $q_i$ is regional quality, $D_i$ perceptual loss, $C_i$ cost and $\mathbf s$ contains gaze, motion and content.
 
-Gaze is uncertain. If prediction error has covariance \(\Sigma_g\), the foveal safety margin should be related to a desired coverage probability rather than treated as one magic radius. During saccades or invalid tracking, policy can widen or fall back conservatively.
+Gaze is uncertain. If prediction error has covariance $\Sigma_g$, the foveal safety margin should be related to a desired coverage probability rather than treated as one magic radius. During saccades or invalid tracking, policy can widen or fall back conservatively.
 
 Mechanism is separate from policy. NVIDIA VRS changes fragment shading density; Varjo quad views provide focus and peripheral views; OpenXR exposes runtime-facing foveation paths; other systems may use rasterization-rate maps, density maps or software methods.
 
@@ -1070,12 +1070,12 @@ ILLIXR is valuable because tracking, perception, rendering, audio and timing can
 
 The curriculum must remain broader:
 
-\[
+$$
 \text{XR theory}\rightarrow
 \text{runtime contracts}\rightarrow
 \text{ILLIXR as research realization}\rightarrow
 \text{physical-device validation}.
-\]
+$$
 
 A replayed trace or software Vulkan path can establish algorithmic correctness and repeatability. It cannot by itself establish physical-headset latency, optical quality, human perception or hardware-VRS speedup.
 
@@ -1483,11 +1483,11 @@ Dynamic neural scenes can add time, deformation fields, trajectories, object str
 
 ## Relighting requires disentangling geometry, material and illumination
 
-Directly predicted view-dependent color can bake illumination into appearance. Inverse rendering instead seeks geometry \(G\), material \(M\) and light \(L\):
+Directly predicted view-dependent color can bake illumination into appearance. Inverse rendering instead seeks geometry $G$, material $M$ and light $L$:
 
-\[
+$$
 I\approx\mathcal R(G,M,L;\text{camera}).
-\]
+$$
 
 This is underconstrained: a dark pixel can mean dark albedo, weak light, occlusion or orientation change. Multiple lighting conditions and physical priors reduce ambiguity.
 
@@ -1575,9 +1575,9 @@ A neural shader still needs coordinate conventions, precision, LOD behavior, det
 
 Neural Radiance Caching learns an approximation to indirect radiance online while a path tracer continues to trace rays and generate training targets:
 
-\[
+$$
 \hat L_i(\mathbf x,\omega)\approx L_i(\mathbf x,\omega).
-\]
+$$
 
 The key engineering question is whether network query/training overhead is lower than the transport work it replaces, and where learned bias is acceptable.
 
@@ -1607,31 +1607,31 @@ Python does not replace the real-time renderer. It makes reconstruction, experim
 
 A useful pipeline is
 
-\[
+$$
 \text{acquire}\rightarrow\text{clean}\rightarrow\text{register}\rightarrow
 \text{represent}\rightarrow\text{analyze}\rightarrow
 \text{reconstruct}\rightarrow\text{validate}\rightarrow\text{export}.
-\]
+$$
 
 The 3D Data Science material makes conversions among point clouds, voxels, meshes, rasters and parametric models explicit. They are not lossless bookkeeping. Mesh-to-point sampling loses connectivity; voxelization quantizes space; projection loses depth unless depth is stored; point-to-mesh reconstruction imposes a surface prior.
 
 ## Spatial data structures make local geometry affordable
 
-Testing every pair of \(N\) points costs \(O(N^2)\). k-d trees, octrees and BVHs trade preprocessing/memory for faster neighborhood or intersection queries.
+Testing every pair of $N$ points costs $O(N^2)$. k-d trees, octrees and BVHs trade preprocessing/memory for faster neighborhood or intersection queries.
 
 These structures support normal estimation, ICP correspondences, radius search, point picking, collision broad phase and reconstruction.
 
 ## PCA turns a point neighborhood into local shape evidence
 
-For neighbors \(\mathbf x_i\), compute
+For neighbors $\mathbf x_i$, compute
 
-\[
+$$
 \bar{\mathbf x}=\frac1N\sum_i\mathbf x_i,
 \qquad
 C=\frac1N\sum_i(\mathbf x_i-\bar{\mathbf x})(\mathbf x_i-\bar{\mathbf x})^T.
-\]
+$$
 
-With eigenvalues \(\lambda_1\ge\lambda_2\ge\lambda_3\), the eigenvector of \(\lambda_3\) is a local normal candidate. Eigenvalue ratios indicate linear, planar or volumetric structure.
+With eigenvalues $\lambda_1\ge\lambda_2\ge\lambda_3$, the eigenvector of $\lambda_3$ is a local normal candidate. Eigenvalue ratios indicate linear, planar or volumetric structure.
 
 Neighborhood scale is part of the model. Too small follows noise; too large smooths corners and mixes surfaces.
 
@@ -1639,19 +1639,19 @@ Neighborhood scale is part of the model. Too small follows noise; too large smoo
 
 Point-to-point ICP minimizes
 
-\[
+$$
 E(R,\mathbf t)=\sum_i\|R\mathbf p_i+\mathbf t-\mathbf q_i\|^2.
-\]
+$$
 
 Point-to-plane variants use target normals and often converge faster near a correct initialization. ICP is local optimization; poor initialization, repeated geometry, outliers or partial overlap can produce a wrong local minimum.
 
 ## RANSAC separates model evidence from outliers
 
-For a minimal sample size \(s\), inlier probability \(w\) and desired success probability \(p\), the idealized iteration count is
+For a minimal sample size $s$, inlier probability $w$ and desired success probability $p$, the idealized iteration count is
 
-\[
+$$
 N\ge \frac{\log(1-p)}{\log(1-w^s)}.
-\]
+$$
 
 This explains why RANSAC becomes expensive when outliers dominate. Region growing solves a different problem: expand from seeds through neighboring points satisfying local smoothness criteria. Hybrid pipelines can use RANSAC for a model hypothesis and region growing for connected extent.
 
@@ -1730,7 +1730,7 @@ Dynamic scenes widen the representation dimension. 4D Gaussian Splatting combine
 
 The correct curriculum map is therefore not “NeRF then 3DGS.” It is:
 
-\[
+$$
 \text{dense explicit field}
 \leftrightarrow
 \text{factorized explicit field}
@@ -1740,7 +1740,7 @@ The correct curriculum map is therefore not “NeRF then 3DGS.” It is:
 \text{implicit neural field}
 \leftrightarrow
 \text{explicit learned primitives},
-\]
+$$
 
 with independent axes for surface bias, time, appearance, lighting, compression and filtering.
 
@@ -1761,12 +1761,12 @@ Worlds-in-Miniature provides another solution by giving the user a manipulable m
 
 The engineering implication is that an XR engine should not hard-code “grab = attach object to hand.” An interaction technique is a mapping
 
-\[
+$$
 \mathcal I:
 (\text{tracked state},\text{task state},\text{world state})
 \rightarrow
 (\text{selection},\text{transform command},\text{feedback}).
-\]
+$$
 
 Different tasks need different mappings. Precision placement, large-object manipulation, UI selection and game combat do not have the same error tolerance.
 
@@ -1884,12 +1884,12 @@ research question
 
 A point sound source does not become spatial merely because its left and right channel volumes differ.
 
-For headphone rendering, a head-related transfer function describes how sound arriving from a direction is filtered by the listener's head, torso and outer ears before reaching each eardrum. For source signal \(s(t)\) and direction-dependent left/right impulse responses \(h_L,h_R\),
+For headphone rendering, a head-related transfer function describes how sound arriving from a direction is filtered by the listener's head, torso and outer ears before reaching each eardrum. For source signal $s(t)$ and direction-dependent left/right impulse responses $h_L,h_R$,
 
-\[
+$$
 y_L(t)=s(t)*h_L(t),\qquad
 y_R(t)=s(t)*h_R(t).
-\]
+$$
 
 The convolution carries interaural time difference, interaural level difference and direction-dependent spectral cues. Head motion is especially valuable because the auditory scene should remain world-stable while the filters update with the listener's orientation.
 
@@ -1897,13 +1897,13 @@ Generic HRTFs do not match every listener's anatomy, which can cause front-back 
 
 The audio renderer therefore has its own approximation stack:
 
-\[
+$$
 \text{source} \rightarrow
 \text{propagation/occlusion} \rightarrow
 \text{room response} \rightarrow
 \text{spatial encoding} \rightarrow
 \text{head-relative decoding}.
-\]
+$$
 
 Visual geometry can help with acoustic occlusion, but visual material parameters are not automatically acoustic material parameters.
 

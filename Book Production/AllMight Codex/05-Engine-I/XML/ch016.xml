@@ -1,0 +1,1452 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Chapter xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/" id="05-engine-i-ch016" source="Chapter Edition/03 - Game Engine/16 - Archetypes, chunks, relationships, and transforms.md">
+<Content aid:pstyle="ChapterHeader" id="05-engine-i-ch016-archetypes-chunks-relationships-and-transforms">16 — Archetypes, chunks, relationships, and transforms&#13;</Content>
+<Content aid:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#05-engine-i-ch015">Previous chapter</Link> · <Link href="#05-engine-i-ch017">Next chapter</Link>&#13;</Content>
+<Content aid:pstyle="Content">Sparse sets make independent component stores easy to understand; archetypes group entities by shared component layout. This chapter compares the tradeoffs and then follows hierarchy, relationships, and transforms through chunked storage.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">By the end:</Strong> Compare sparse-set and archetype operations, then specify how entity migration and transform dependencies preserve identity and update order.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Recall question:</Strong> What changes physically when an entity gains a component, and how do parent changes invalidate dependent world transforms?&#13;</Content>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 31133–35178; source-span SHA256 747d734fc016075db6541714fa4be60987a2244167f3812feafbf1293cc25c4b. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<Content aid:pstyle="SubChapterSubHeading" id="05-engine-i-ch016-archetypes-chunks-layouts-relationships-and-transforms">ARCHETYPES, CHUNKS, LAYOUTS, RELATIONSHIPS AND TRANSFORMS&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Archetype ECS concept</Strong>&#13;</Content>
+<Content aid:pstyle="Content">In the sparse-set model, storage is organized by <Strong aid:cstyle="Bold">component type</Strong>.&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform pool&#10;--------------------&#10;E1 T1&#10;E2 T2&#10;E4 T4&#10;E9 T9&#10;&#10;Velocity pool&#10;--------------------&#10;E1 V1&#10;E4 V4&#10;E7 V7&#10;&#10;Health pool&#10;--------------------&#10;E1 H1&#10;E2 H2&#13;</Code>
+<Content aid:pstyle="Content">Entity 1 has:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/61a6ab258b20b45cb5ba59d4.svg" alt="&#10;\{Transform,Velocity,Health\}.&#10;" jobId="61a6ab258b20b45cb5ba59d4" originalTeX="&#10;\{Transform,Velocity,Health\}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Entity 2 has:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e32b6259f05fb1968d7e0240.svg" alt="&#10;\{Transform,Health\}.&#10;" jobId="e32b6259f05fb1968d7e0240" originalTeX="&#10;\{Transform,Health\}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Entity 4 has:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/571fca0193fea4b8f80a178a.svg" alt="&#10;\{Transform,Velocity\}.&#10;" jobId="571fca0193fea4b8f80a178a" originalTeX="&#10;\{Transform,Velocity\}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">An archetype ECS instead organizes entities by the <Strong aid:cstyle="Bold">entire set of component types they possess</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Archetype A&#10;{Transform, Velocity, Health}&#10;&#10;E1&#10;&#10;&#10;Archetype B&#10;{Transform, Health}&#10;&#10;E2&#10;&#10;&#10;Archetype C&#10;{Transform, Velocity}&#10;&#10;E4&#13;</Code>
+<Content aid:pstyle="Content">An archetype is therefore:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7dfeb25985bbfb122ed035a2.svg" alt="&#10;\boxed{&#10;A(E)=&#10;\{\text{all component types owned by E}\}&#10;}&#10;" jobId="7dfeb25985bbfb122ed035a2" originalTeX="&#10;\boxed{&#10;A(E)=&#10;\{\text{all component types owned by E}\}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and every entity with exactly the same component set belongs to the same archetype.&#13;</Content>
+<Content aid:pstyle="Content">Unity Entities uses this exact organizational idea: entities with the same component set are grouped into an archetype, and entities of an archetype are stored in chunks containing parallel arrays for those components. <Link href="https://docs.unity.cn/Packages/com.unity.entities%401.0/manual/concepts-archetypes.html?utm_source=chatgpt.com">Unity User Manual</Link>&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Archetypes are equivalence classes</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Define relation:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1d95e6c9d5c8e2e1a3f18bf0.svg" alt="&#10;E_i\sim E_j&#10;" jobId="1d95e6c9d5c8e2e1a3f18bf0" originalTeX="&#10;E_i\sim E_j&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">iff:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3c6336371b05fb93f1db7b5b.svg" alt="&#10;Components(E_i)=Components(E_j).&#10;" jobId="3c6336371b05fb93f1db7b5b" originalTeX="&#10;Components(E_i)=Components(E_j).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This relation is reflexive, symmetric and transitive, so entities partition into equivalence classes.&#13;</Content>
+<Content aid:pstyle="Content">Each equivalence class is an archetype.&#13;</Content>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a35f0aa6931ee0cd24281c0f.svg" alt="&#10;E_1=\{A,B,C\}&#10;" jobId="a35f0aa6931ee0cd24281c0f" originalTeX="&#10;E_1=\{A,B,C\}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e4878e2d7a31c2fe96c9f8f9.svg" alt="&#10;E_2=\{A,B,C\},&#10;" jobId="e4878e2d7a31c2fe96c9f8f9" originalTeX="&#10;E_2=\{A,B,C\},&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a2d7c5c4cc3a43f80d5c017c.svg" alt="&#10;E_1\sim E_2.&#10;" jobId="a2d7c5c4cc3a43f80d5c017c" originalTeX="&#10;E_1\sim E_2.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">But:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b0acd1f5ead92d6eae7a3bfa.svg" alt="&#10;E_3=\{A,B,C,D\}&#10;" jobId="b0acd1f5ead92d6eae7a3bfa" originalTeX="&#10;E_3=\{A,B,C,D\}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">belongs to another archetype even if D is only a zero-byte tag.&#13;</Content>
+<Content aid:pstyle="Content">That last point matters.&#13;</Content>
+<Content aid:pstyle="Content">The <Strong aid:cstyle="Bold">presence of a component type</Strong> defines archetype identity, not its memory size.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why this radically changes query execution</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose a system wants:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform&#10;Velocity&#10;Health&#13;</Code>
+<Content aid:pstyle="Content">Sparse-set ECS asks:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Which pool is smallest?&#10;For every entity there:&#10;    Does it also have the other components?&#13;</Code>
+<Content aid:pstyle="Content">Archetype ECS asks:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Which archetypes contain at least Transform, Velocity and Health?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Suppose the world contains:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A1 = {Transform, Velocity, Health}&#10;A2 = {Transform, Velocity, Health, AI}&#10;A3 = {Transform, Health}&#10;A4 = {Transform, Velocity}&#10;A5 = {Transform, Velocity, Health, Renderable}&#13;</Code>
+<Content aid:pstyle="Content">The query matches:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2320cea5dcc56234e20d0ff0.svg" alt="&#10;A_1,\quad A_2,\quad A_5.&#10;" jobId="2320cea5dcc56234e20d0ff0" originalTeX="&#10;A_1,\quad A_2,\quad A_5.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Once archetype matching is cached, the system iterates entire contiguous storage regions where <Strong aid:cstyle="Bold">every entity is already known to match</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">No per-entity <InlineCode aid:cstyle="InlineCode">Has&lt;Velocity&gt;()</InlineCode> check is needed.&#13;</Content>
+<Content aid:pstyle="Content">That is the great archetype advantage.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Query work moves from entities to archetypes</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Imagine:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7ffc0c3b3a1ffbf421130e09.svg" alt="&#10;N=1,000,000&#10;" jobId="7ffc0c3b3a1ffbf421130e09" originalTeX="&#10;N=1,000,000&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">entities but only:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/46a5408735426fa7737d739b.svg" alt="&#10;A=120&#10;" jobId="46a5408735426fa7737d739b" originalTeX="&#10;A=120&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">archetypes.&#13;</Content>
+<Content aid:pstyle="Content">Query matching can be performed against 120 archetype signatures rather than one million entities.&#13;</Content>
+<Content aid:pstyle="Content">If archetypes stabilize early, matched archetype lists can be cached and reused. Unity’s documentation explicitly notes that archetype sets often stabilize early, allowing queries to cache matching archetypes. <Link href="https://docs.unity.cn/Packages/com.unity.entities%401.0/manual/concepts-archetypes.html?utm_source=chatgpt.com">Unity User Manual</Link>&#13;</Content>
+<Content aid:pstyle="Content">So query setup can approach:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0abe2a393e9fbc5d98926c35.svg" alt="&#10;O(A)&#10;" jobId="0abe2a393e9fbc5d98926c35" originalTeX="&#10;O(A)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">once when cache is rebuilt,&#13;</Content>
+<Content aid:pstyle="Content">then iteration is simply:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5290632d2de4fcd976318a84.svg" alt="&#10;O(N_{\text{matching entities}}).&#10;" jobId="5290632d2de4fcd976318a84" originalTeX="&#10;O(N_{\text{matching entities}}).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kairo’s current position</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your current <InlineCode aid:cstyle="InlineCode">KairoECS</InlineCode> is <Strong aid:cstyle="Bold">not an archetype ECS</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">It currently owns independent:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">SparseSet&lt;Component&gt;&#13;</Code>
+<Content aid:pstyle="Content">pools selected through:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Pool&lt;Component&gt;.&#13;</Code>
+<Content aid:pstyle="Content">That is completely legitimate.&#13;</Content>
+<Content aid:pstyle="Content">M087 is therefore partly canonical theory and partly a design alternative you must be able to evaluate against your existing sparse-set implementation.&#13;</Content>
+<Content aid:pstyle="Content">Do <Strong aid:cstyle="Bold">not</Strong> rewrite KairoECS into archetypes merely because this chunk exists.&#13;</Content>
+<Content aid:pstyle="Content">First understand when one wins.&#13;</Content>
+<Content aid:pstyle="Content">We will compare them properly in Part 1441.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Archetype signatures</Strong>&#13;</Content>
+<Content aid:pstyle="Content">We need a canonical identity for:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/61a6ab258b20b45cb5ba59d4.svg" alt="&#10;\{Transform,Velocity,Health\}.&#10;" jobId="61a6ab258b20b45cb5ba59d4" originalTeX="&#10;\{Transform,Velocity,Health\}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">One option is a bitset:&#13;</Content>
+<Code aid:pstyle="Code" language="text">bit 0 Transform&#10;bit 1 Velocity&#10;bit 2 Health&#10;bit 3 Renderable&#10;bit 4 Light&#10;...&#13;</Code>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform + Velocity + Health&#10;&#10;00000111&#13;</Code>
+<Content aid:pstyle="Content">is the archetype signature.&#13;</Content>
+<Content aid:pstyle="Content">But with a dynamic component registry, a more general representation is a <Strong aid:cstyle="Bold">sorted list of component type IDs</Strong>.&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">using ComponentTypeID = std::uint32_t;&#10;&#10;struct ArchetypeKey&#10;{&#10;    std::vector&lt;ComponentTypeID&gt; Types;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Canonical requirement:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a1327721e48236b8faee553e.svg" alt="&#10;Types_0&lt;Types_1&lt;\dots&lt;Types_n.&#10;" jobId="a1327721e48236b8faee553e" originalTeX="&#10;Types_0&lt;Types_1&lt;\dots&lt;Types_n.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Code aid:pstyle="Code" language="text">{Velocity, Health, Transform}&#13;</Code>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Code aid:pstyle="Code" language="text">{Health, Transform, Velocity}&#13;</Code>
+<Content aid:pstyle="Content">canonicalize to the same key.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why sorted signatures are powerful</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Given sorted component IDs:&#13;</Content>
+<Code aid:pstyle="Code" language="text">[2, 5, 8, 17]&#13;</Code>
+<Content aid:pstyle="Content">adding component 11 produces:&#13;</Content>
+<Code aid:pstyle="Code" language="text">[2, 5, 8, 11, 17].&#13;</Code>
+<Content aid:pstyle="Content">Removing 5 produces:&#13;</Content>
+<Code aid:pstyle="Code" language="text">[2, 8, 17].&#13;</Code>
+<Content aid:pstyle="Content">Signature hashing becomes deterministic.&#13;</Content>
+<Content aid:pstyle="Content">Matching required components can use sorted-set containment.&#13;</Content>
+<Content aid:pstyle="Content">And unlike a fixed 64-bit mask, there is no hard 64-component ceiling.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Archetype lookup</Strong>&#13;</Content>
+<Content aid:pstyle="Content">World needs:&#13;</Content>
+<Code aid:pstyle="Code" language="text">signature → Archetype*&#13;</Code>
+<Content aid:pstyle="Content">Conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::unordered_map&lt;&#10;    ArchetypeKey,&#10;    std::unique_ptr&lt;Archetype&gt;,&#10;    ArchetypeKeyHash&#10;&gt; archetypes;&#13;</Code>
+<Content aid:pstyle="Content">When adding/removing a component:&#13;</Content>
+<Code aid:pstyle="Code" language="text">source signature&#10;      ↓&#10;derive destination signature&#10;      ↓&#10;lookup/create destination archetype&#10;      ↓&#10;migrate entity&#13;</Code>
+<Content aid:pstyle="Content">This lookup should not be repeated unnecessarily.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Archetype transition edges</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose archetype:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b9bb9a5e66b97ebf7f373386.svg" alt="&#10;A=\{Transform,Velocity\}.&#10;" jobId="b9bb9a5e66b97ebf7f373386" originalTeX="&#10;A=\{Transform,Velocity\}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Adding Health always produces:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bd51aa0a68bcbe40eb14d8c2.svg" alt="&#10;B=\{Transform,Velocity,Health\}.&#10;" jobId="bd51aa0a68bcbe40eb14d8c2" originalTeX="&#10;B=\{Transform,Velocity,Health\}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Once discovered, cache:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A&#10;  add Health&#10;      ↓&#10;      B&#13;</Code>
+<Content aid:pstyle="Content">Similarly:&#13;</Content>
+<Code aid:pstyle="Code" language="text">B&#10;  remove Health&#10;      ↓&#10;      A&#13;</Code>
+<Content aid:pstyle="Content">So archetypes themselves form a <Strong aid:cstyle="Bold">transition graph</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">A production representation might contain:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct ArchetypeTransition&#10;{&#10;    Archetype* OnAdd;&#10;    Archetype* OnRemove;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">indexed by component type.&#13;</Content>
+<Content aid:pstyle="Content">Then component add/remove avoids repeatedly rebuilding and hashing signatures.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Archetype chunks</Strong>&#13;</Content>
+<Content aid:pstyle="Content">An archetype may contain millions of entities.&#13;</Content>
+<Content aid:pstyle="Content">We usually do not allocate one gigantic ever-growing block.&#13;</Content>
+<Content aid:pstyle="Content">Instead divide storage into fixed-ish blocks called <Strong aid:cstyle="Bold">chunks</Strong>.&#13;</Content>
+<Code aid:pstyle="Code" language="text">Archetype:&#10;{Transform, Velocity, Health}&#10;&#10;Chunk 0&#10;E0..E511&#10;&#10;Chunk 1&#10;E512..E1023&#10;&#10;Chunk 2&#10;...&#13;</Code>
+<Content aid:pstyle="Content">Each chunk stores the same set of component columns.&#13;</Content>
+<Content aid:pstyle="Content">Unity Entities is one production example using fixed <Strong aid:cstyle="Bold">16 KiB chunks</Strong>; chunk capacity depends on the component sizes in the archetype. <Link href="https://docs.unity.cn/Packages/com.unity.entities%401.0/manual/concepts-archetypes.html?utm_source=chatgpt.com">Unity User Manual</Link>&#13;</Content>
+<Content aid:pstyle="Content">The specific 16 KiB number is not universal.&#13;</Content>
+<Content aid:pstyle="Content">The architectural idea is.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why chunks rather than one large array</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Chunks provide:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">bounded relocation,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">easy job partitioning,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">predictable memory blocks,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">chunk-level change versions,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">chunk-level metadata,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">easier allocation/reclamation,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">reduced giant-vector reallocation,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">locality-preserving work units.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">A chunk becomes simultaneously:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8f81f135cecb52fe5f493c8c.svg" alt="&#10;\boxed{&#10;\text{storage unit}&#10;+&#10;\text{iteration unit}&#10;+&#10;\text{job unit}&#10;+&#10;\text{change-tracking unit}.&#10;}&#10;" jobId="8f81f135cecb52fe5f493c8c" originalTeX="&#10;\boxed{&#10;\text{storage unit}&#10;+&#10;\text{iteration unit}&#10;+&#10;\text{job unit}&#10;+&#10;\text{change-tracking unit}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is enormously useful.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">A conceptual archetype chunk</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/156001b168f64cf78f27055d.svg" alt="&#10;A=\{Transform,Velocity,Health\},&#10;" jobId="156001b168f64cf78f27055d" originalTeX="&#10;A=\{Transform,Velocity,Health\},&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">chunk memory conceptually looks like:&#13;</Content>
+<Code aid:pstyle="Code" language="text">+------------------------------------------------------+&#10;| chunk header                                         |&#10;+------------------------------------------------------+&#10;| Entity[capacity]                                     |&#10;+------------------------------------------------------+&#10;| Transform[capacity]                                  |&#10;+------------------------------------------------------+&#10;| Velocity[capacity]                                   |&#10;+------------------------------------------------------+&#10;| Health[capacity]                                     |&#10;+------------------------------------------------------+&#13;</Code>
+<Content aid:pstyle="Content">Not:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Entity&#10;Transform&#10;Velocity&#10;Health&#10;Entity&#10;Transform&#10;Velocity&#10;Health&#10;...&#13;</Code>
+<Content aid:pstyle="Content">That distinction is Part 1440’s columnar storage.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Entity locations in archetype ECS</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Sparse-set ECS locates component through:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f4c57d94201aaf7e61756dd5.svg" alt="&#10;Entity\rightarrow Sparse\rightarrow Dense.&#10;" jobId="f4c57d94201aaf7e61756dd5" originalTeX="&#10;Entity\rightarrow Sparse\rightarrow Dense.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Archetype ECS needs an entity-location table:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct EntityLocation&#10;{&#10;    Archetype* Archetype;&#10;    Chunk* Chunk;&#10;    std::uint32_t Row;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b0231f8d5c00cd9cc2a86f3d.svg" alt="&#10;Entity&#10;\rightarrow&#10;(Archetype,Chunk,Row)&#10;" jobId="b0231f8d5c00cd9cc2a86f3d" originalTeX="&#10;Entity&#10;\rightarrow&#10;(Archetype,Chunk,Row)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and component T is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fc498fdc5c38a1f86d5adf02.svg" alt="&#10;Chunk.Column&lt;T&gt;()[Row].&#10;" jobId="fc498fdc5c38a1f86d5adf02" originalTeX="&#10;Chunk.Column&lt;T&gt;()[Row].&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">The entity record itself therefore points to its current <Strong aid:cstyle="Bold">storage row</Strong>, not to individual component addresses.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Entity movement between archetypes</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This is the defining structural operation.&#13;</Content>
+<Content aid:pstyle="Content">Suppose entity has:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b9bb9a5e66b97ebf7f373386.svg" alt="&#10;A=\{Transform,Velocity\}.&#10;" jobId="b9bb9a5e66b97ebf7f373386" originalTeX="&#10;A=\{Transform,Velocity\}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">We execute:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Emplace&lt;Health&gt;(entity);&#13;</Code>
+<Content aid:pstyle="Content">The entity’s component set becomes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bd51aa0a68bcbe40eb14d8c2.svg" alt="&#10;B=\{Transform,Velocity,Health\}.&#10;" jobId="bd51aa0a68bcbe40eb14d8c2" originalTeX="&#10;B=\{Transform,Velocity,Health\}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">It cannot remain in A because every row in A must have exactly the A signature.&#13;</Content>
+<Content aid:pstyle="Content">So the entity physically migrates.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Archetype migration sequence</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose source:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A = {Transform, Velocity}&#13;</Code>
+<Content aid:pstyle="Content">destination:&#13;</Content>
+<Code aid:pstyle="Code" language="text">B = {Transform, Velocity, Health}&#13;</Code>
+<Content aid:pstyle="Content">Migration is:&#13;</Content>
+<Code aid:pstyle="Code" language="text">1. Find/create B.&#10;2. Find destination chunk with free row.&#10;3. Allocate destination row.&#10;4. Move/copy Entity ID.&#10;5. Move Transform.&#10;6. Move Velocity.&#10;7. Construct Health.&#10;8. Update entity-location record.&#10;9. Remove source row.&#10;10. Repair location of entity swapped into source hole.&#13;</Code>
+<Content aid:pstyle="Content">That is a structural change.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Migration is much more expensive than changing component values</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Compare:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">velocity.x += 1.0f;&#13;</Code>
+<Content aid:pstyle="Content">with:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">registry.Emplace&lt;Health&gt;(entity);&#13;</Code>
+<Content aid:pstyle="Content">The first mutates perhaps 4 bytes.&#13;</Content>
+<Content aid:pstyle="Content">The second may:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">locate two archetypes,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">allocate chunk space,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">move several components,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">construct a component,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">destruct source components,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">swap-remove source row,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">update entity metadata,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">update chunk counts,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">potentially update query caches.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Therefore archetype ECS strongly rewards worlds where:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/77e249cbcc70ab2c472c5739.svg" alt="&#10;\boxed{&#10;\text{component sets are relatively stable}.&#10;}&#10;" jobId="77e249cbcc70ab2c472c5739" originalTeX="&#10;\boxed{&#10;\text{component sets are relatively stable}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If entities constantly add/remove components every frame, archetype migration cost can dominate.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Swap-removal inside source chunk</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose source chunk rows:&#13;</Content>
+<Code aid:pstyle="Code" language="text">row 0 E10&#10;row 1 E20&#10;row 2 E30&#10;row 3 E40&#13;</Code>
+<Content aid:pstyle="Content">Move E20 to another archetype.&#13;</Content>
+<Content aid:pstyle="Content">To keep source packed:&#13;</Content>
+<Code aid:pstyle="Code" language="text">row 1 ← E40&#13;</Code>
+<Content aid:pstyle="Content">Then source becomes:&#13;</Content>
+<Code aid:pstyle="Code" language="text">row 0 E10&#10;row 1 E40&#10;row 2 E30&#13;</Code>
+<Content aid:pstyle="Content">Now update:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Location[E40].Row = 1.&#13;</Code>
+<Content aid:pstyle="Content">Exactly the same invariant repair we learned for sparse sets appears again.&#13;</Content>
+<Content aid:pstyle="Content">Dense storage repeatedly leads to swap-remove.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Migration and exception safety</Strong>&#13;</Content>
+<Content aid:pstyle="Content">With trivial components, migration is straightforward.&#13;</Content>
+<Content aid:pstyle="Content">With:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::string&#10;unique_ptr&lt;Resource&gt;&#10;custom destructors&#10;throwing constructors&#13;</Code>
+<Content aid:pstyle="Content">it becomes substantially harder.&#13;</Content>
+<Content aid:pstyle="Content">If moving three components succeeds and the fourth throws, what is the entity’s state?&#13;</Content>
+<Content aid:pstyle="Content">That is why M089 later spends an entire chunk on nontrivial component lifetime.&#13;</Content>
+<Content aid:pstyle="Content">For now, recognize that archetype migration implicitly requires a type-erased operation table:&#13;</Content>
+<Code aid:pstyle="Code" language="text">construct&#10;move construct&#10;destroy&#10;possibly copy&#13;</Code>
+<Content aid:pstyle="Content">for every component type.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Chunk capacity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose chunk size is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f2360f5ef25b959d65d2c747.svg" alt="&#10;B.&#10;" jobId="f2360f5ef25b959d65d2c747" originalTeX="&#10;B.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Header uses:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5538dce23e139470be4a9eee.svg" alt="&#10;H.&#10;" jobId="5538dce23e139470be4a9eee" originalTeX="&#10;H.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Archetype contains columns with element sizes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/735fb905679b8effb26c2996.svg" alt="&#10;s_0,s_1,\dots,s_k.&#10;" jobId="735fb905679b8effb26c2996" originalTeX="&#10;s_0,s_1,\dots,s_k.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Capacity <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea63a9f9a03c273b93026960.svg" alt="N" jobId="ea63a9f9a03c273b93026960" originalTeX="N"/> is the largest integer satisfying:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/57f13343d28f5cfa38858124.svg" alt="&#10;\boxed{&#10;H+&#10;\sum_{i=0}^{k}&#10;AlignUp(Ns_i,a_i)&#10;\le B&#10;}&#10;" jobId="57f13343d28f5cfa38858124" originalTeX="&#10;\boxed{&#10;H+&#10;\sum_{i=0}^{k}&#10;AlignUp(Ns_i,a_i)&#10;\le B&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">where <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b60fa599c06dab1fbfb75ce1.svg" alt="a_i" jobId="b60fa599c06dab1fbfb75ce1" originalTeX="a_i"/> is required alignment for each column.&#13;</Content>
+<Content aid:pstyle="Content">Entity IDs themselves are another column.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Approximate capacity example</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Entity      8 bytes&#10;Transform  48 bytes&#10;Velocity   12 bytes&#10;Health      4 bytes&#13;</Code>
+<Content aid:pstyle="Content">Ignoring alignment/header:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2a696916ca861ea2c509d73f.svg" alt="&#10;bytes/entity&#10;=&#10;8+48+12+4&#10;=&#10;72.&#10;" jobId="2a696916ca861ea2c509d73f" originalTeX="&#10;bytes/entity&#10;=&#10;8+48+12+4&#10;=&#10;72.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For a 16 KiB chunk:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea0957fafb177b295814df0d.svg" alt="&#10;16384/72&#10;\approx227.&#10;" jobId="ea0957fafb177b295814df0d" originalTeX="&#10;16384/72&#10;\approx227.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Actual capacity is slightly lower after header and alignment.&#13;</Content>
+<Content aid:pstyle="Content">Add a 256-byte AI state component:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/eedaa46962cc6647911e9ad9.svg" alt="&#10;72+256=328.&#10;" jobId="eedaa46962cc6647911e9ad9" originalTeX="&#10;72+256=328.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Now:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/957017c4c6ce7662449569ff.svg" alt="&#10;16384/328&#10;\approx49.&#10;" jobId="957017c4c6ce7662449569ff" originalTeX="&#10;16384/328&#10;\approx49.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">A single large component can drastically reduce chunk density.&#13;</Content>
+<Content aid:pstyle="Content">This motivates hot/cold splitting.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Alignment</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose component requires:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/42ced4982b40e05bad64e83f.svg" alt="&#10;alignof(T)=16.&#10;" jobId="42ced4982b40e05bad64e83f" originalTeX="&#10;alignof(T)=16.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Its column start must be aligned accordingly.&#13;</Content>
+<Content aid:pstyle="Content">A simplistic layout:&#13;</Content>
+<Code aid:pstyle="Code" language="text">header&#10;Entity column&#10;Transform column&#10;Velocity column&#10;...&#13;</Code>
+<Content aid:pstyle="Content">must call:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/834f4717c33bde5ce41466a0.svg" alt="&#10;AlignUp(offset,alignment)&#10;" jobId="834f4717c33bde5ce41466a0" originalTeX="&#10;AlignUp(offset,alignment)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">before each column.&#13;</Content>
+<Content aid:pstyle="Content">Canonical helper:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">constexpr std::size_t AlignUp(&#10;    std::size_t value,&#10;    std::size_t alignment)&#10;{&#10;    return&#10;        (value + alignment - 1)&#10;        &amp; ~(alignment - 1);&#10;}&#13;</Code>
+<Content aid:pstyle="Content">for power-of-two alignment.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Chunk size is a systems choice</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Larger chunks:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">fewer allocations,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">more entities per job,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">lower metadata overhead,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">potentially more cache pollution,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">larger migration working set.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Smaller chunks:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">finer job granularity,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">smaller working sets,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">more chunk metadata,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">more allocations,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">potentially more fragmentation.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">There is no sacred universal chunk size.&#13;</Content>
+<Content aid:pstyle="Content">The correct number depends on:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8a079e3a47c36f8197f4ea10.svg" alt="&#10;\text{cache hierarchy}&#10;+&#10;\text{component widths}&#10;+&#10;\text{job system}&#10;+&#10;\text{allocator}&#10;+&#10;\text{workload}.&#10;" jobId="8a079e3a47c36f8197f4ea10" originalTeX="&#10;\text{cache hierarchy}&#10;+&#10;\text{component widths}&#10;+&#10;\text{job system}&#10;+&#10;\text{allocator}&#10;+&#10;\text{workload}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Unity’s 16 KiB chunks are a useful production design reference, not a universal law. <Link href="https://docs.unity.cn/Packages/com.unity.entities%401.0/manual/concepts-archetypes.html?utm_source=chatgpt.com">Unity User Manual</Link>&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Columnar storage inside chunks</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose archetype:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform&#10;Velocity&#10;Health&#13;</Code>
+<Content aid:pstyle="Content">AoS-like chunk storage would be:&#13;</Content>
+<Code aid:pstyle="Code" language="text">T0 V0 H0&#10;T1 V1 H1&#10;T2 V2 H2&#10;...&#13;</Code>
+<Content aid:pstyle="Content">Columnar storage is:&#13;</Content>
+<Code aid:pstyle="Code" language="text">T0 T1 T2 T3 ...&#10;V0 V1 V2 V3 ...&#10;H0 H1 H2 H3 ...&#13;</Code>
+<Content aid:pstyle="Content">Each system accesses only the columns it needs.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why columnar chunks are powerful</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A movement system needs:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform&#10;Velocity&#13;</Code>
+<Content aid:pstyle="Content">but not:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Health&#10;AI&#10;Renderable&#10;Audio&#10;Name&#13;</Code>
+<Content aid:pstyle="Content">Columnar layout means the CPU streams only:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform[]&#10;Velocity[]&#13;</Code>
+<Content aid:pstyle="Content">The irrelevant columns need not enter cache.&#13;</Content>
+<Content aid:pstyle="Content">That is the real data-oriented advantage.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Archetype query execution</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose query matches chunks C1, C2, C3.&#13;</Content>
+<Content aid:pstyle="Content">For each:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">auto* transforms =&#10;    chunk.Column&lt;Transform&gt;();&#10;&#10;auto* velocities =&#10;    chunk.Column&lt;Velocity&gt;();&#10;&#10;for (uint32_t i = 0;&#10;     i &lt; chunk.Count();&#10;     ++i)&#10;{&#10;    transforms[i].Position +=&#10;        velocities[i].Linear * dt;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">No <InlineCode aid:cstyle="InlineCode">Has&lt;T&gt;</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">No sparse lookup.&#13;</Content>
+<Content aid:pstyle="Content">No entity-level component discovery.&#13;</Content>
+<Content aid:pstyle="Content">Just contiguous arrays known to match.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Sparse-set versus archetype ECS</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Now the real comparison.&#13;</Content>
+<Content aid:pstyle="Content">Sparse-set ECS optimizes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1796019941621bb983af366a.svg" alt="&#10;\boxed{&#10;\text{independent component pools + flexible structural mutation}.&#10;}&#10;" jobId="1796019941621bb983af366a" originalTeX="&#10;\boxed{&#10;\text{independent component pools + flexible structural mutation}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Archetype ECS optimizes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fc809eb3192ea671bcdb1504.svg" alt="&#10;\boxed{&#10;\text{whole-component-set grouping + extremely efficient multi-component iteration}.&#10;}&#10;" jobId="fc809eb3192ea671bcdb1504" originalTeX="&#10;\boxed{&#10;\text{whole-component-set grouping + extremely efficient multi-component iteration}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Neither universally wins.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Sparse-set strengths</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Sparse sets are excellent when:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">component sets change frequently,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">random component lookup is common,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">components are very sparse,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">you want independent component pools,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">engine complexity must remain moderate,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">query component counts are small,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">entity population is not extreme.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Adding Health only inserts into:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Health pool&#13;</Code>
+<Content aid:pstyle="Content">instead of migrating every existing component.&#13;</Content>
+<Content aid:pstyle="Content">That can be much cheaper structurally.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Archetype strengths</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Archetypes excel when:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">huge populations share a few signatures,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">systems process many components together,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">component sets are comparatively stable,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">chunk-level parallelism matters,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">query cache overhead must be tiny,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">change tracking can operate at chunk granularity.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">For simulation-heavy workloads:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform + Velocity + Acceleration + Mass&#13;</Code>
+<Content aid:pstyle="Content">across hundreds of thousands of entities, archetype chunks can be extremely effective.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Sparse-set weakness versus archetypes</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A+B+C+D+E&#13;</Code>
+<Content aid:pstyle="Content">sparse-set query might scan the smallest pool and execute four sparse lookups per candidate.&#13;</Content>
+<Content aid:pstyle="Content">Those lookups jump through several sparse/dense arrays.&#13;</Content>
+<Content aid:pstyle="Content">Archetype query already knows that matching chunks contain all five components.&#13;</Content>
+<Content aid:pstyle="Content">It performs zero membership tests per entity.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Archetype weakness versus sparse sets</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Add one component to entity owning ten components.&#13;</Content>
+<Content aid:pstyle="Content">Sparse set:&#13;</Content>
+<Code aid:pstyle="Code" language="text">insert one component&#13;</Code>
+<Content aid:pstyle="Content">Archetype:&#13;</Content>
+<Code aid:pstyle="Code" language="text">move entity&#10;+ move ten common components&#10;+ construct new component&#10;+ remove source row&#13;</Code>
+<Content aid:pstyle="Content">So archetype structural mutation can be significantly more expensive.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Hybrid ECS designs</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Real engines need not choose one ideology absolutely.&#13;</Content>
+<Content aid:pstyle="Content">You could use:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">archetype chunks for hot simulation components,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">separate sparse pools for large/rare components,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">external stable storage for pointer-stable objects,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">resources outside entity storage,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">relationship indices separate from archetypes.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">The design goal is not:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">be a pure archetype ECS.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">The goal is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/63f5c6c5709c7a887c94dc94.svg" alt="&#10;\boxed{&#10;\text{put each data category where its access pattern belongs}.&#10;}&#10;" jobId="63f5c6c5709c7a887c94dc94" originalTeX="&#10;\boxed{&#10;\text{put each data category where its access pattern belongs}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">AoS component data</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Array of Structures:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct Particle&#10;{&#10;    Vec3 Position;&#10;    Vec3 Velocity;&#10;    float Mass;&#10;    float Lifetime;&#10;};&#10;&#10;std::vector&lt;Particle&gt; particles;&#13;</Code>
+<Content aid:pstyle="Content">Memory:&#13;</Content>
+<Code aid:pstyle="Code" language="text">P0 V0 M0 L0&#10;P1 V1 M1 L1&#10;P2 V2 M2 L2&#10;...&#13;</Code>
+<Content aid:pstyle="Content">This is AoS.&#13;</Content>
+<Content aid:pstyle="Content">It is convenient because all properties of one object are adjacent.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">When AoS is good</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose code does:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">for (Particle&amp; p : particles)&#10;{&#10;    RenderDebugParticle(&#10;        p.Position,&#10;        p.Velocity,&#10;        p.Mass,&#10;        p.Lifetime);&#10;}&#13;</Code>
+<Content aid:pstyle="Content">Every field is used.&#13;</Content>
+<Content aid:pstyle="Content">AoS is reasonable.&#13;</Content>
+<Content aid:pstyle="Content">Similarly, a complex component itself may be naturally treated as one logical record.&#13;</Content>
+<Content aid:pstyle="Content">AoS is not inherently bad.&#13;</Content>
+<Content aid:pstyle="Content">The question is always:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7a61d0d2f997703cec778733.svg" alt="&#10;\boxed{&#10;\text{Does the access pattern consume the whole record?}&#10;}&#10;" jobId="7a61d0d2f997703cec778733" originalTeX="&#10;\boxed{&#10;\text{Does the access pattern consume the whole record?}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">AoS waste</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose physics integration only uses:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Position&#10;Velocity&#13;</Code>
+<Content aid:pstyle="Content">but each Particle also stores:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Name&#10;Material&#10;DebugColor&#10;Lifetime&#10;CollisionHistory&#10;AssetReference&#13;</Code>
+<Content aid:pstyle="Content">The cache line fetches irrelevant bytes.&#13;</Content>
+<Content aid:pstyle="Content">Useful-byte ratio can become terrible.&#13;</Content>
+<Content aid:pstyle="Content">That is where SoA helps.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">SoA component data</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Structure of Arrays:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct Particles&#10;{&#10;    std::vector&lt;Vec3&gt; Positions;&#10;    std::vector&lt;Vec3&gt; Velocities;&#10;    std::vector&lt;float&gt; Masses;&#10;    std::vector&lt;float&gt; Lifetimes;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Memory:&#13;</Content>
+<Code aid:pstyle="Code" language="text">P0 P1 P2 P3 ...&#10;V0 V1 V2 V3 ...&#10;M0 M1 M2 M3 ...&#10;L0 L1 L2 L3 ...&#13;</Code>
+<Content aid:pstyle="Content">Now integration reads only the Position and Velocity streams.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">ECS is already partly SoA</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A sparse-set ECS with separate component pools:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform[]&#10;Velocity[]&#10;Health[]&#13;</Code>
+<Content aid:pstyle="Content">is SoA <Strong aid:cstyle="Bold">at the component level</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">But inside Transform:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct Transform&#10;{&#10;    Vec3 Position;&#10;    Quaternion Rotation;&#10;    Vec3 Scale;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">it is still AoS relative to its fields.&#13;</Content>
+<Content aid:pstyle="Content">So there are multiple layout levels:&#13;</Content>
+<Code aid:pstyle="Code" language="text">world&#10;  → component type separation&#10;      → component internal field layout&#13;</Code>
+<Content aid:pstyle="Content">You can have:&#13;</Content>
+<Code aid:pstyle="Code" language="text">SoA components&#10;with AoS fields inside each component.&#13;</Code>
+<Content aid:pstyle="Content">That is often perfectly fine.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Transform SoA example</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If a system only changes positions for one million objects, an extreme SoA might be:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct TransformColumns&#10;{&#10;    float* PosX;&#10;    float* PosY;&#10;    float* PosZ;&#10;&#10;    float* RotX;&#10;    float* RotY;&#10;    float* RotZ;&#10;    float* RotW;&#10;&#10;    float* ScaleX;&#10;    float* ScaleY;&#10;    float* ScaleZ;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">This can be wonderful for SIMD.&#13;</Content>
+<Content aid:pstyle="Content">But it substantially complicates APIs.&#13;</Content>
+<Content aid:pstyle="Content">Do not split data until profiling shows a reason.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">AoSoA</Strong>&#13;</Content>
+<Content aid:pstyle="Content">There is an intermediate pattern:&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Array of Structures of Arrays</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">For SIMD width 4:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Block 0:&#10;x[4]&#10;y[4]&#10;z[4]&#10;&#10;Block 1:&#10;x[4]&#10;y[4]&#10;z[4]&#13;</Code>
+<Content aid:pstyle="Content">This can align naturally with vector registers while preserving manageable grouping.&#13;</Content>
+<Content aid:pstyle="Content">High-performance particle, animation and physics kernels often benefit from such arrangements.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Hot-and-cold splitting</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose one component contains:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct Character&#10;{&#10;    // hot every frame&#10;    Vec3 Position;&#10;    Vec3 Velocity;&#10;    float Health;&#10;&#10;    // cold&#10;    std::string DisplayName;&#10;    AssetHandle Portrait;&#10;    std::string Biography;&#10;    DebugMetadata Debug;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Every update pulls cold bytes near hot data.&#13;</Content>
+<Content aid:pstyle="Content">Instead split:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct CharacterRuntime&#10;{&#10;    Vec3 Position;&#10;    Vec3 Velocity;&#10;    float Health;&#10;};&#10;&#10;struct CharacterMetadata&#10;{&#10;    std::string DisplayName;&#10;    AssetHandle Portrait;&#10;    std::string Biography;&#10;    DebugMetadata Debug;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Now hot loops ignore cold data entirely.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Hot/cold splitting and chunks</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Large cold components reduce archetype chunk capacity even when systems never touch them.&#13;</Content>
+<Content aid:pstyle="Content">Suppose hot data per entity is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1ce78501961d3e5aa653b461.svg" alt="&#10;64\text{ bytes}.&#10;" jobId="1ce78501961d3e5aa653b461" originalTeX="&#10;64\text{ bytes}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Cold metadata adds:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fc638964c4c3db46e23a2f09.svg" alt="&#10;512\text{ bytes}.&#10;" jobId="fc638964c4c3db46e23a2f09" originalTeX="&#10;512\text{ bytes}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If stored together:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/68329f3f7c758c525f9551ea.svg" alt="&#10;576\text{ bytes/entity}.&#10;" jobId="68329f3f7c758c525f9551ea" originalTeX="&#10;576\text{ bytes/entity}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">16 KiB chunk fits only roughly:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ac241e00b871a10d9a4d95bc.svg" alt="&#10;28&#10;" jobId="ac241e00b871a10d9a4d95bc" originalTeX="&#10;28&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">entities.&#13;</Content>
+<Content aid:pstyle="Content">If cold data is external:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/42f5e11e4a1950421f4dc199.svg" alt="&#10;16384/64&#10;\approx256.&#10;" jobId="42f5e11e4a1950421f4dc199" originalTeX="&#10;16384/64&#10;\approx256.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is almost an order of magnitude difference in chunk density.&#13;</Content>
+<Content aid:pstyle="Content">This is why hot/cold splitting is not cosmetic.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kairo-specific hot/cold example</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your authored <InlineCode aid:cstyle="InlineCode">MeshRendererComponent</InlineCode> contains persistent asset handles, material slot arrays, shadow flags and render-layer data.&#13;</Content>
+<Content aid:pstyle="Content">A runtime renderer may not want all of that in the hottest per-draw path.&#13;</Content>
+<Content aid:pstyle="Content">The renderer-facing <InlineCode aid:cstyle="InlineCode">MeshDraw</InlineCode> already represents a more runtime-specific extraction:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">MeshHandle Mesh;&#10;Mat4f Model;&#10;PBRMaterial Material;&#10;uint32_t ObjectID;&#10;bool CastShadows;&#10;bool ReceiveShadows;&#13;</Code>
+<Content aid:pstyle="Content">That is a good conceptual bridge:&#13;</Content>
+<Code aid:pstyle="Code" language="text">authored component&#10;      ↓&#10;runtime extraction&#10;      ↓&#10;hot renderer data&#13;</Code>
+<Content aid:pstyle="Content">Do not force authoring representation to be the most efficient GPU submission representation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Tag components</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A tag component has identity but no per-entity payload.&#13;</Content>
+<Content aid:pstyle="Content">Examples:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct Player {};&#10;struct Dead {};&#10;struct Frozen {};&#10;struct Static {};&#10;struct NeedsTransformUpdate {};&#13;</Code>
+<Content aid:pstyle="Content">The entity either has the tag or does not.&#13;</Content>
+<Content aid:pstyle="Content">In archetype ECS, tag presence affects signature but requires no component column.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Tags are data despite having zero bytes</Strong>&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">Dead</InlineCode> expresses state:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f9930e6d9ea4aced806ac2fc.svg" alt="&#10;Dead(E)\in\{false,true\}.&#10;" jobId="f9930e6d9ea4aced806ac2fc" originalTeX="&#10;Dead(E)\in\{false,true\}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">A system can query:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Health&#10;WITHOUT Dead&#13;</Code>
+<Content aid:pstyle="Content">The tag encodes one bit of semantic information through membership.&#13;</Content>
+<Content aid:pstyle="Content">So a zero-byte component is still meaningful data.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Tags and archetype fragmentation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Be careful.&#13;</Content>
+<Content aid:pstyle="Content">Every distinct component combination creates a distinct archetype.&#13;</Content>
+<Content aid:pstyle="Content">If you introduce many independent tags:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Selected&#10;Highlighted&#10;Sleeping&#10;Visible&#10;NetworkDirty&#10;EditorLocked&#10;QuestTarget&#10;...&#13;</Code>
+<Content aid:pstyle="Content">all combinations may theoretically generate:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/800bffdb37a9f9399d4040fb.svg" alt="&#10;2^N&#10;" jobId="800bffdb37a9f9399d4040fb" originalTeX="&#10;2^N&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">signatures.&#13;</Content>
+<Content aid:pstyle="Content">Most will never exist, but excessive dynamic tags can still create archetype proliferation.&#13;</Content>
+<Content aid:pstyle="Content">For rapidly toggled flags, sometimes one packed bitfield component is better than structural tag migration.&#13;</Content>
+<Content aid:pstyle="Content">Again:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/645197e9a96024b15185face.svg" alt="&#10;\boxed{&#10;\text{structural state}&#10;\neq&#10;\text{ordinary mutable state}.&#10;}&#10;" jobId="645197e9a96024b15185face" originalTeX="&#10;\boxed{&#10;\text{structural state}&#10;\neq&#10;\text{ordinary mutable state}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kairo’s current tags are not ECS tag components</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current <InlineCode aid:cstyle="InlineCode">EngineCore::EntitySettingsComponent</InlineCode> contains:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::vector&lt;std::string&gt; Tags;&#13;</Code>
+<Content aid:pstyle="Content">These are flexible authored string tags.&#13;</Content>
+<Content aid:pstyle="Content">Examples might be:&#13;</Content>
+<Code aid:pstyle="Code" language="text">"player"&#10;"enemy"&#10;"spawn-point"&#13;</Code>
+<Content aid:pstyle="Content">That is different from:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct Dead {};&#13;</Code>
+<Content aid:pstyle="Content">as an ECS structural tag.&#13;</Content>
+<Content aid:pstyle="Content">String tags are good for authoring/search.&#13;</Content>
+<Content aid:pstyle="Content">Compile-time or numeric ECS tags are better for hot simulation queries.&#13;</Content>
+<Content aid:pstyle="Content">Do not conflate them.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Singleton/resource components</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Some data belongs to the <Strong aid:cstyle="Bold">world</Strong>, not to each entity.&#13;</Content>
+<Content aid:pstyle="Content">Examples:&#13;</Content>
+<Code aid:pstyle="Code" language="text">DeltaTime&#10;PhysicsWorld&#10;InputState&#10;NavigationWorld&#10;RenderSettings&#10;Weather&#10;RandomGenerator&#10;ActiveCamera&#13;</Code>
+<Content aid:pstyle="Content">Duplicating these across entities is nonsense.&#13;</Content>
+<Content aid:pstyle="Content">Use a resource/singleton model.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Singleton entity versus resource storage</Strong>&#13;</Content>
+<Content aid:pstyle="Content">One pattern:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Entity WorldSettings&#10;    Time&#10;    Gravity&#10;    Environment&#13;</Code>
+<Content aid:pstyle="Content">Another:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">registry.Resource&lt;Time&gt;();&#10;registry.Resource&lt;InputState&gt;();&#13;</Code>
+<Content aid:pstyle="Content">with separate world resource storage.&#13;</Content>
+<Content aid:pstyle="Content">Resource storage often communicates intent more clearly:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/42887b8e869d2688833b815a.svg" alt="&#10;\boxed{&#10;\text{there is exactly one value per ECS world}.&#10;}&#10;" jobId="42887b8e869d2688833b815a" originalTeX="&#10;\boxed{&#10;\text{there is exactly one value per ECS world}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">A singleton entity is useful if you want ordinary entity queries/reflection/serialization.&#13;</Content>
+<Content aid:pstyle="Content">Both are valid.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Input is usually a resource first</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your current <InlineCode aid:cstyle="InlineCode">Kairo.EngineCore.Input</InlineCode> behaves like a resource/service.&#13;</Content>
+<Content aid:pstyle="Content">It stores:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">current and previous keys,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">mouse buttons,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">gamepad buttons,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">gamepad axes,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">mouse position,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">mouse delta,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">scroll delta.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">That is appropriate for raw device state.&#13;</Content>
+<Content aid:pstyle="Content">It should not be copied onto every player entity.&#13;</Content>
+<Content aid:pstyle="Content">Later a system can transform raw input into per-entity intent:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct CharacterInput&#10;{&#10;    Vec2 Move;&#10;    Vec2 Look;&#10;    bool JumpPressed;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Input resource&#10;     ↓&#10;input-mapping system&#10;     ↓&#10;CharacterInput component&#13;</Code>
+<Content aid:pstyle="Content">This distinction becomes important in Part 1458.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Relationship components</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Not all ECS data is unary.&#13;</Content>
+<Content aid:pstyle="Content">Ordinary component says:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9bba691cfbf9da3121975baa.svg" alt="&#10;Has(E,T).&#10;" jobId="9bba691cfbf9da3121975baa" originalTeX="&#10;Has(E,T).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">A relationship says:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/00eadc5701e4995f02b77a26.svg" alt="&#10;R(E_a,E_b).&#10;" jobId="00eadc5701e4995f02b77a26" originalTeX="&#10;R(E_a,E_b).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Examples:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ChildOf(child,parent)&#10;Targets(attacker,target)&#10;OwnedBy(item,player)&#10;AttachedTo(weapon,bone)&#10;Follows(camera,character)&#13;</Code>
+<Content aid:pstyle="Content">This is graph data inside an ECS.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Relationship-as-component design</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Simplest:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct Parent&#10;{&#10;    Entity Value;&#10;};&#10;&#10;struct Target&#10;{&#10;    Entity Value;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Then each entity has at most one Parent and one Target.&#13;</Content>
+<Content aid:pstyle="Content">This works extremely well for many relationships.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Relationship pairs</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Another model treats:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/64e59b039c46b295e3d3eb78.svg" alt="&#10;(RelationshipType,\TargetEntity)&#10;" jobId="64e59b039c46b295e3d3eb78" originalTeX="&#10;(RelationshipType,\TargetEntity)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">as a component-like ID.&#13;</Content>
+<Content aid:pstyle="Content">For example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">(ChildOf, Entity42)&#10;(Eats, Apple)&#10;(Likes, Entity17)&#13;</Code>
+<Content aid:pstyle="Content">Flecs provides this pair model directly, allowing relationships to participate in ECS queries. <Link href="https://www.flecs.dev/flecs/Relationships.html?utm_source=chatgpt.com">Flecs</Link>&#13;</Content>
+<Content aid:pstyle="Content">It is powerful, but it has storage implications.&#13;</Content>
+<Content aid:pstyle="Content">If target entity participates in archetype identity, many different relationship targets can fragment storage into many tables/archetypes.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Parent-as-data versus parent-as-signature</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Consider 100,000 children with 10,000 possible parents.&#13;</Content>
+<Content aid:pstyle="Content">If parent identity becomes part of archetype signature:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ChildOf Parent17&#10;ChildOf Parent18&#10;ChildOf Parent19&#10;...&#13;</Code>
+<Content aid:pstyle="Content">you may get large numbers of storage groups.&#13;</Content>
+<Content aid:pstyle="Content">If instead:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct Parent&#10;{&#10;    Entity Value;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">all children with a Parent component can share the same archetype.&#13;</Content>
+<Content aid:pstyle="Content">Flecs itself distinguishes hierarchy storage strategies for exactly this reason: its regular <InlineCode aid:cstyle="InlineCode">ChildOf</InlineCode> relationship can partition storage by parent, while a parent-component-style hierarchy can avoid fragmenting ordinary component layout. <Link href="https://www.flecs.dev/flecs/HierarchiesManual.html?utm_source=chatgpt.com">Flecs</Link>&#13;</Content>
+<Content aid:pstyle="Content">This is a deep storage consequence of relationship modeling.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Parent-child relationships</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A scene hierarchy requires:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4b3575e26984179752c26019.svg" alt="&#10;Parent(child)=parent.&#10;" jobId="4b3575e26984179752c26019" originalTeX="&#10;Parent(child)=parent.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">We often also want efficient:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/536ec1632e593854e33c71dc.svg" alt="&#10;Children(parent).&#10;" jobId="536ec1632e593854e33c71dc" originalTeX="&#10;Children(parent).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">You can store only Parent and derive children by scanning.&#13;</Content>
+<Content aid:pstyle="Content">But that is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8e9bb4b623a7bb6b42287730.svg" alt="&#10;O(N)&#10;" jobId="8e9bb4b623a7bb6b42287730" originalTeX="&#10;O(N)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">per parent query.&#13;</Content>
+<Content aid:pstyle="Content">Better maintain reverse adjacency.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Bidirectional hierarchy invariants</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If child C says:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7a4900dd5382abbf1a1c5850.svg" alt="&#10;Parent(C)=P,&#10;" jobId="7a4900dd5382abbf1a1c5850" originalTeX="&#10;Parent(C)=P,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">then P’s child index should contain C.&#13;</Content>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0c0020d90a3713b5b76754d6.svg" alt="&#10;\boxed{&#10;Parent(C)=P&#10;\iff&#10;C\in Children(P)&#10;}&#10;" jobId="0c0020d90a3713b5b76754d6" originalTeX="&#10;\boxed{&#10;Parent(C)=P&#10;\iff&#10;C\in Children(P)&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">for live hierarchy relations.&#13;</Content>
+<Content aid:pstyle="Content">This is exactly the invariant your current <InlineCode aid:cstyle="InlineCode">EngineCore::Scene</InlineCode> maintains.&#13;</Content>
+<Content aid:pstyle="Content">It stores:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::optional&lt;Entity&gt; Parent;&#10;std::vector&lt;Entity&gt; Children;&#13;</Code>
+<Content aid:pstyle="Content">and <InlineCode aid:cstyle="InlineCode">SetParent()</InlineCode> updates both sides.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Cycle prevention</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A hierarchy should be a forest/DAG, not:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A parent B&#10;B parent C&#10;C parent A&#13;</Code>
+<Content aid:pstyle="Content">Your current <InlineCode aid:cstyle="InlineCode">Scene::SetParent()</InlineCode> walks ancestors of the prospective parent and rejects if it encounters the child.&#13;</Content>
+<Content aid:pstyle="Content">That enforces:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4277caf55235830c9ae8bde4.svg" alt="&#10;child\notin Ancestors(parent).&#10;" jobId="4277caf55235830c9ae8bde4" originalTeX="&#10;child\notin Ancestors(parent).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is essential because world-transform propagation assumes acyclicity.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Destruction policy</Strong>&#13;</Content>
+<Content aid:pstyle="Content">What happens when a parent dies?&#13;</Content>
+<Content aid:pstyle="Content">Common choices:&#13;</Content>
+<List type="ordered" start="1" numberStyle="Decimal" delimiter="Period">
+<ListItem><Content aid:pstyle="Content">destroy entire subtree,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">reparent children to root,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">reparent to parent’s parent,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">reject destruction until children removed.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Your current <InlineCode aid:cstyle="InlineCode">Scene</InlineCode> chooses <Strong aid:cstyle="Bold">subtree destruction</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">It performs an iterative walk rather than recursive destruction, avoiding stack overflow on very deep hierarchies.&#13;</Content>
+<Content aid:pstyle="Content">That is a clear and coherent policy.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Scene hierarchy transforms</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Each entity has local transform:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/602abc4eb336770259d0bc59.svg" alt="&#10;L_e.&#10;" jobId="602abc4eb336770259d0bc59" originalTeX="&#10;L_e.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Root world transform:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8f04342e0fea542d9790e5a9.svg" alt="&#10;W_r=L_r.&#10;" jobId="8f04342e0fea542d9790e5a9" originalTeX="&#10;W_r=L_r.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For child C of P:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9afc314d68092287f126ca36.svg" alt="&#10;\boxed{&#10;W_C=W_P L_C&#10;}&#10;" jobId="9afc314d68092287f126ca36" originalTeX="&#10;\boxed{&#10;W_C=W_P L_C&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">assuming the engine’s transform composition convention uses parent * local.&#13;</Content>
+<Content aid:pstyle="Content">For a chain:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Root → Arm → Hand → Sword&#13;</Code>
+<Content aid:pstyle="Content">Sword world transform is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/27d6fd40aa09dcbb59ed79db.svg" alt="&#10;W_S=&#10;L_RL_AL_HL_S.&#10;" jobId="27d6fd40aa09dcbb59ed79db" originalTeX="&#10;W_S=&#10;L_RL_AL_HL_S.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo hierarchy calculation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your current <InlineCode aid:cstyle="InlineCode">Scene::WorldTransform()</InlineCode>:&#13;</Content>
+<List type="ordered" start="1" numberStyle="Decimal" delimiter="Period">
+<ListItem><Content aid:pstyle="Content">walks from entity to root collecting ancestors,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">reverses the ancestry,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">multiplies local transforms root-to-leaf.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Transform world = Identity();&#10;&#10;for (Entity e : rootToLeaf)&#10;{&#10;    world *= Local(e);&#10;}&#13;</Code>
+<Content aid:pstyle="Content">This is correct and authoritative.&#13;</Content>
+<Content aid:pstyle="Content">But its complexity is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/67e589a4921704c646572ff9.svg" alt="&#10;O(depth)&#10;" jobId="67e589a4921704c646572ff9" originalTeX="&#10;O(depth)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">per call.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why repeated on-demand hierarchy walks become expensive</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose 100,000 entities form moderate hierarchies and renderer asks for world transform of each.&#13;</Content>
+<Content aid:pstyle="Content">A parent’s transform may be recomputed separately for every descendant.&#13;</Content>
+<Content aid:pstyle="Content">If tree depth averages <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d4359f2456d8fbcc30e392f0.svg" alt="d" jobId="d4359f2456d8fbcc30e392f0" originalTeX="d"/>:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/325394bc2a96df2e1d9df357.svg" alt="&#10;O(Nd).&#10;" jobId="325394bc2a96df2e1d9df357" originalTeX="&#10;O(Nd).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">A dedicated transform system can instead traverse hierarchy once:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1443cd4b69efe1caefeab00b.svg" alt="&#10;O(N).&#10;" jobId="1443cd4b69efe1caefeab00b" originalTeX="&#10;O(N).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Each parent’s world transform is computed once and reused for its children.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Hierarchy traversal order</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You must process parent before child.&#13;</Content>
+<Content aid:pstyle="Content">One way is breadth-first:&#13;</Content>
+<Code aid:pstyle="Code" language="text">depth 0 roots&#10;depth 1 children&#10;depth 2 grandchildren&#10;...&#13;</Code>
+<Content aid:pstyle="Content">Another is depth-first pre-order.&#13;</Content>
+<Content aid:pstyle="Content">What matters is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8698ae348aee0873ad8cfdf8.svg" alt="&#10;\boxed{&#10;ParentWorld&#10;\text{ must exist before }&#10;ChildWorld.&#10;}&#10;" jobId="8698ae348aee0873ad8cfdf8" originalTeX="&#10;\boxed{&#10;ParentWorld&#10;\text{ must exist before }&#10;ChildWorld.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This introduces a dependency that ordinary flat ECS iteration does not automatically capture.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Local and world transform components</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A runtime ECS may separate:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct LocalTransform&#10;{&#10;    Vec3 Position;&#10;    Quaternion Rotation;&#10;    Vec3 Scale;&#10;};&#10;&#10;struct WorldTransform&#10;{&#10;    Mat4 Matrix;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Then hierarchy system reads:&#13;</Content>
+<Code aid:pstyle="Code" language="text">LocalTransform&#10;Parent&#10;Parent.WorldTransform&#13;</Code>
+<Content aid:pstyle="Content">and writes:&#13;</Content>
+<Code aid:pstyle="Code" language="text">WorldTransform&#13;</Code>
+<Content aid:pstyle="Content">This makes dependencies explicit.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Dirty transform propagation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Recomputing every world transform every frame is unnecessary if most entities do not move.&#13;</Content>
+<Content aid:pstyle="Content">Mark changed transforms dirty.&#13;</Content>
+<Content aid:pstyle="Content">Simple approach:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct TransformDirty {};&#13;</Code>
+<Content aid:pstyle="Content">When local transform changes:&#13;</Content>
+<Code aid:pstyle="Code" language="text">mark entity dirty&#10;mark all descendants dirty&#13;</Code>
+<Content aid:pstyle="Content">Then update only dirty subtrees.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Immediate dirty propagation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If entity A changes:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A&#10;├── B&#10;│   ├── D&#10;│   └── E&#10;└── C&#13;</Code>
+<Content aid:pstyle="Content">mark:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A B C D E dirty.&#13;</Code>
+<Content aid:pstyle="Content">Correct but modifying A may require:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fd1cdae5f13d3a5f23826cd6.svg" alt="&#10;O(size(subtree)).&#10;" jobId="fd1cdae5f13d3a5f23826cd6" originalTeX="&#10;O(size(subtree)).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If the hierarchy is huge and parents change frequently, dirty marking itself becomes expensive.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Version-based lazy propagation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A more elegant design stores:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct TransformState&#10;{&#10;    uint64_t LocalVersion;&#10;    uint64_t WorldVersion;&#10;&#10;    uint64_t CachedParentWorldVersion;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Recompute entity E if:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9fb6f945aaed0a41369547bb.svg" alt="&#10;LocalVersion_E&#10;\text{ changed}&#10;" jobId="9fb6f945aaed0a41369547bb" originalTeX="&#10;LocalVersion_E&#10;\text{ changed}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c8a0188af4181ce4d049d2de.svg" alt="&#10;WorldVersion_{Parent(E)}&#10;\neq&#10;CachedParentWorldVersion_E.&#10;" jobId="c8a0188af4181ce4d049d2de" originalTeX="&#10;WorldVersion_{Parent(E)}&#10;\neq&#10;CachedParentWorldVersion_E.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">After recomputation:&#13;</Content>
+<Code aid:pstyle="Code" language="text">CachedParentWorldVersion =&#10;    Parent.WorldVersion&#13;</Code>
+<Content aid:pstyle="Content">and increment E’s world version.&#13;</Content>
+<Content aid:pstyle="Content">Now changing a parent does not require immediately writing dirty flags through the entire subtree.&#13;</Content>
+<Content aid:pstyle="Content">Descendants discover the change during ordered traversal.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Dirty propagation and archetype tags</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You <Emphasis aid:cstyle="Emphasis">could</Emphasis> use:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct DirtyTransform {};&#13;</Code>
+<Content aid:pstyle="Content">as a tag.&#13;</Content>
+<Content aid:pstyle="Content">But if this tag is frequently added and removed every frame in an archetype ECS, entities constantly migrate between:&#13;</Content>
+<Code aid:pstyle="Code" language="text">{Transform, Parent}&#13;</Code>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Code aid:pstyle="Code" language="text">{Transform, Parent, DirtyTransform}.&#13;</Code>
+<Content aid:pstyle="Content">That is expensive.&#13;</Content>
+<Content aid:pstyle="Content">For very transient state, a bit/flag/version inside existing transform metadata can be better.&#13;</Content>
+<Content aid:pstyle="Content">This is exactly the kind of decision Part 1445 was warning about.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Previous and current transform snapshots</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Physics often runs at fixed frequency:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ed0d62628e6f251602222c27.svg" alt="&#10;dt_f=\frac1{60}.&#10;" jobId="ed0d62628e6f251602222c27" originalTeX="&#10;dt_f=\frac1{60}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Rendering may run:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7f0225172e3fe9457a5fc7e3.svg" alt="&#10;90,\ 120,\ 144,\ 240\text{ Hz}.&#10;" jobId="7f0225172e3fe9457a5fc7e3" originalTeX="&#10;90,\ 120,\ 144,\ 240\text{ Hz}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If renderer uses only latest physics state, objects visibly step at 60 Hz.&#13;</Content>
+<Content aid:pstyle="Content">Store:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9c67b8ad5ba338e6f0724b38.svg" alt="&#10;T_{prev}&#10;" jobId="9c67b8ad5ba338e6f0724b38" originalTeX="&#10;T_{prev}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ef73b7d8718623afea3ca6db.svg" alt="&#10;T_{curr}.&#10;" jobId="ef73b7d8718623afea3ca6db" originalTeX="&#10;T_{curr}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then render between them.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Fixed-step interpolation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Frame accumulator:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3e1a47ffc302a4c6afabcf48.svg" alt="&#10;accumulator.&#10;" jobId="3e1a47ffc302a4c6afabcf48" originalTeX="&#10;accumulator.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">After fixed simulation steps:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/78fcaa2432e202cc62b55e81.svg" alt="&#10;\alpha=&#10;\frac{accumulator}{dt_f}.&#10;" jobId="78fcaa2432e202cc62b55e81" originalTeX="&#10;\alpha=&#10;\frac{accumulator}{dt_f}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Where:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea0e1b0a8f9bc8aebc320620.svg" alt="&#10;0\le\alpha&lt;1.&#10;" jobId="ea0e1b0a8f9bc8aebc320620" originalTeX="&#10;0\le\alpha&lt;1.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Render position:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dd85cad4b445d5994b14d7ad.svg" alt="&#10;p_r=&#10;(1-\alpha)p_{prev}&#10;+&#10;\alpha p_{curr}.&#10;" jobId="dd85cad4b445d5994b14d7ad" originalTeX="&#10;p_r=&#10;(1-\alpha)p_{prev}&#10;+&#10;\alpha p_{curr}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Scale similarly.&#13;</Content>
+<Content aid:pstyle="Content">Rotation should use:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9089aa55b42c73d22430088b.svg" alt="&#10;q_r=&#10;Slerp(q_{prev},q_{curr},\alpha).&#10;" jobId="9089aa55b42c73d22430088b" originalTeX="&#10;q_r=&#10;Slerp(q_{prev},q_{curr},\alpha).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Do <Strong aid:cstyle="Bold">not</Strong> generally linearly interpolate complete transformation matrices.&#13;</Content>
+<Content aid:pstyle="Content">That can introduce shear/non-orthonormal rotations.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Snapshot update order</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Every physics tick:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Previous = Current;&#10;&#10;SimulateFixedStep();&#10;&#10;Current = NewSimulationTransform;&#13;</Code>
+<Content aid:pstyle="Content">Then rendering independently uses:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Interpolate(&#10;    Previous,&#10;    Current,&#10;    alpha);&#13;</Code>
+<Content aid:pstyle="Content">This decouples simulation and rendering clocks.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Teleports</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose character teleports 100 meters.&#13;</Content>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Previous = old location&#10;Current  = new location&#13;</Code>
+<Content aid:pstyle="Content">interpolation makes it fly rapidly across the map for one rendered interval.&#13;</Content>
+<Content aid:pstyle="Content">For teleport:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Previous = teleportedTransform;&#10;Current  = teleportedTransform;&#13;</Code>
+<Content aid:pstyle="Content">to suppress interpolation.&#13;</Content>
+<Content aid:pstyle="Content">This is a small but essential runtime rule.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo status for M087</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo contains:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">a sparse-set ECS rather than archetype chunks,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">authored <InlineCode aid:cstyle="InlineCode">Scene</InlineCode> parent/children hierarchy,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">cycle-safe parenting,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">on-demand world transform calculation,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">flexible string tags.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">It does <Strong aid:cstyle="Bold">not currently implement</Strong> in inspected KairoECS:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">archetypes,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">archetype chunks,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">archetype migration,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">chunk column layouts,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">archetype transition caches,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">dirty-transform propagation,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">previous/current ECS transform snapshots.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">So M087 is largely a <Strong aid:cstyle="Bold">next-level runtime architecture</Strong>, not a claim about what your sparse-set registry already does.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="05-engine-i-ch016-engine-components-bridges-events-ticks-and-parallel-system-scheduling">ENGINE COMPONENTS, BRIDGES, EVENTS, TICKS AND PARALLEL SYSTEM SCHEDULING&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Renderable component representation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A scene/ECS renderable should not own Vulkan/Metal command buffers.&#13;</Content>
+<Content aid:pstyle="Content">It should describe <Strong aid:cstyle="Bold">render intent</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">A useful authored component:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct Renderable&#10;{&#10;    MeshAssetHandle Mesh;&#10;    MaterialAssetHandle Material;&#10;&#10;    uint64_t RenderLayers;&#10;&#10;    bool Visible;&#10;    bool CastShadows;&#10;    bool ReceiveShadows;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Your current <InlineCode aid:cstyle="InlineCode">MeshRendererComponent</InlineCode> already follows this philosophy.&#13;</Content>
+<Content aid:pstyle="Content">It contains persistent typed asset handles and renderer-neutral policy.&#13;</Content>
+<Content aid:pstyle="Content">That is excellent separation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Authored renderable versus runtime renderer object</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Asset identity:&#13;</Content>
+<Code aid:pstyle="Code" language="text">MeshAssetHandle&#10;MaterialAssetHandle&#13;</Code>
+<Content aid:pstyle="Content">is not necessarily the renderer’s runtime GPU handle.&#13;</Content>
+<Content aid:pstyle="Content">The rendering bridge resolves:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ECS Entity&#10;MeshAssetHandle&#10;MaterialAssetHandle&#10;WorldTransform&#10;        ↓&#10;Renderer&#10;        ↓&#10;MeshHandle&#10;GPU buffers&#10;descriptor tables&#10;pipeline/material state&#13;</Code>
+<Content aid:pstyle="Content">Keep those domains separate.&#13;</Content>
+<Content aid:pstyle="Content">Otherwise scene files accidentally serialize GPU-process-local IDs.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Render extraction</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A good ECS/render pipeline often builds a frame-local render scene:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ECS components&#10;     ↓&#10;visibility/culling&#10;     ↓&#10;render extraction&#10;     ↓&#10;MeshDraw[]&#10;Light[]&#10;Camera&#10;     ↓&#10;renderer&#13;</Code>
+<Content aid:pstyle="Content">Your <InlineCode aid:cstyle="InlineCode">KairoRenderer::RenderScene</InlineCode> already works this way.&#13;</Content>
+<Content aid:pstyle="Content">A <InlineCode aid:cstyle="InlineCode">MeshDraw</InlineCode> is a runtime submission record rather than the authored component itself.&#13;</Content>
+<Content aid:pstyle="Content">This is precisely the architecture you want.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Physics body component</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A rigid-body ECS component describes persistent physical intent:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct RigidBody&#10;{&#10;    MotionType Motion;&#10;&#10;    float Density;&#10;    float GravityScale;&#10;    float LinearDamping;&#10;    float AngularDamping;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Your current <InlineCode aid:cstyle="InlineCode">RigidBodyComponent</InlineCode> stores exactly this kind of authoring data.&#13;</Content>
+<Content aid:pstyle="Content">Critically, its documentation says runtime body IDs belong to the physics-world adapter and are <Strong aid:cstyle="Bold">not serialized in the scene</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">That separation is correct.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why runtime physics IDs should not live in persistent authored data</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose scene file stores:&#13;</Content>
+<Code aid:pstyle="Code" language="text">BodyID = 83.&#13;</Code>
+<Content aid:pstyle="Content">Next run physics world allocates bodies in a different order.&#13;</Content>
+<Content aid:pstyle="Content">Body 83 may now be unrelated.&#13;</Content>
+<Content aid:pstyle="Content">Therefore persistent data contains:&#13;</Content>
+<Code aid:pstyle="Code" language="text">how this entity should behave physically&#13;</Code>
+<Content aid:pstyle="Content">while runtime bridge stores:&#13;</Content>
+<Code aid:pstyle="Code" language="text">which PhysicsWorld body currently implements it.&#13;</Code>
+<Content aid:pstyle="Content">Two distinct identities.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Collider component</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Collider contains geometric and filtering data:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct Collider&#10;{&#10;    Shape ShapeType;&#10;&#10;    Vec3 HalfExtents;&#10;    float Radius;&#10;    float HalfHeight;&#10;&#10;    float Friction;&#10;    float Restitution;&#10;&#10;    uint32_t BelongsTo;&#10;    uint32_t CollidesWith;&#10;&#10;    bool IsTrigger;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Your current component contains these concepts.&#13;</Content>
+<Content aid:pstyle="Content">That is a good persistent representation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Multiple colliders per entity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A simple optional:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ColliderComponent&#13;</Code>
+<Content aid:pstyle="Content">implies at most one authored collider per entity.&#13;</Content>
+<Content aid:pstyle="Content">Complex characters may need:&#13;</Content>
+<Code aid:pstyle="Code" language="text">torso capsule&#10;head sphere&#10;weapon hitbox&#10;foot sensors&#13;</Code>
+<Content aid:pstyle="Content">There are several ECS designs:&#13;</Content>
+<List type="ordered" start="1" numberStyle="Decimal" delimiter="Period">
+<ListItem><Content aid:pstyle="Content">dynamic buffer of collider descriptors,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">child entities each owning Collider,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">multiple specialized collider components,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">one external physics body with several colliders represented by a handle list.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Child-entity colliders fit naturally with entity relationships but increase entity count.&#13;</Content>
+<Content aid:pstyle="Content">A buffer is compact but makes individual collider identity trickier.&#13;</Content>
+<Content aid:pstyle="Content">Again, model according to access/lifetime needs.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Light component</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Light data should describe physical/scene intent.&#13;</Content>
+<Content aid:pstyle="Content">Your <InlineCode aid:cstyle="InlineCode">LightComponent</InlineCode> includes:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">Directional/Point/Spot/RectangleArea,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">linear RGB color,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">physically meaningful intensity,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">Lux/Candela/Nit,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">range,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">spot cone angles,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">area dimensions,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">shadow policy,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">shadow bias,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">render layers.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">This is considerably better than:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">float intensity = 5;&#13;</Code>
+<Content aid:pstyle="Content">with no unit.&#13;</Content>
+<Content aid:pstyle="Content">Explicit units make the renderer adapter deterministic.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Light transforms</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Light component does not need to duplicate world position/direction.&#13;</Content>
+<Content aid:pstyle="Content">Position and orientation should come from:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform&#13;</Code>
+<Content aid:pstyle="Content">while light stores photometric properties.&#13;</Content>
+<Content aid:pstyle="Content">That is component composition:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform + Light&#13;</Code>
+<Content aid:pstyle="Content">rather than bloating Light with unrelated transform state.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Camera component</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your current Camera contains:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">perspective/orthographic mode,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">vertical FOV,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">near/far planes,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">orthographic size,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">exposure,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">clear mode/color,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">render-layer mask,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">Primary flag.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Again, camera transform comes from Transform.&#13;</Content>
+<Content aid:pstyle="Content">Thus camera entity is:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform&#10;Camera&#13;</Code>
+<Content aid:pstyle="Content">not one monolithic camera object.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Primary camera is global state hiding in entity data</Strong>&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">CameraComponent::Primary</InlineCode> allows at most one primary camera in your current <InlineCode aid:cstyle="InlineCode">Scene</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">Another architecture would store:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct ActiveCameraResource&#10;{&#10;    Entity Camera;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Why?&#13;</Content>
+<Content aid:pstyle="Content">Because which camera is active? is really world-level state.&#13;</Content>
+<Content aid:pstyle="Content">Then cameras themselves do not need mutually exclusive <InlineCode aid:cstyle="InlineCode">Primary</InlineCode> flags.&#13;</Content>
+<Content aid:pstyle="Content">Both designs work.&#13;</Content>
+<Content aid:pstyle="Content">The resource design avoids scanning or invariant enforcement across all camera components.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Script or behavior component</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A script component should generally store:&#13;</Content>
+<Code aid:pstyle="Code" language="text">script asset/class identity&#10;enabled state&#10;serialized parameters&#13;</Code>
+<Content aid:pstyle="Content">not a raw VM pointer.&#13;</Content>
+<Content aid:pstyle="Content">Your current:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct LogicComponent&#10;{&#10;    DocumentAssetHandle Document;&#10;    bool Enabled;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">does exactly the persistent-identity part.&#13;</Content>
+<Content aid:pstyle="Content">Runtime VM instances are deliberately process-local.&#13;</Content>
+<Content aid:pstyle="Content">That is the right separation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Script runtime state</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The bridge might maintain:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Entity&#10;   ↓&#10;ScriptInstanceID&#10;   ↓&#10;VM state&#13;</Code>
+<Content aid:pstyle="Content">or a runtime component:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct ScriptRuntime&#10;{&#10;    ScriptInstanceID Instance;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">but that process-local data should not be confused with the authored Logic component.&#13;</Content>
+<Content aid:pstyle="Content">On scene load:&#13;</Content>
+<Code aid:pstyle="Code" language="text">LogicComponent&#10;    ↓&#10;compile/load bytecode&#10;    ↓&#10;create VM instance&#10;    ↓&#10;runtime bridge mapping&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Input component/state representation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">There are two different input states.&#13;</Content>
+<Content aid:pstyle="Content">Raw device state:&#13;</Content>
+<Code aid:pstyle="Code" language="text">W key down&#10;mouse dx&#10;gamepad axis 0 = 0.72&#13;</Code>
+<Content aid:pstyle="Content">Gameplay intent:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Move = (0.8,0.1)&#10;Look = (-2.1,0.4)&#10;JumpPressed = true&#10;Fire = true&#13;</Code>
+<Content aid:pstyle="Content">Raw state belongs naturally to a resource/service.&#13;</Content>
+<Content aid:pstyle="Content">Gameplay intent can belong to an entity.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why this separation matters</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Keyboard W does not inherently mean:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b9e79cbaa751583c73deb4a1.svg" alt="&#10;MoveForward.&#10;" jobId="b9e79cbaa751583c73deb4a1" originalTeX="&#10;MoveForward.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Bindings may change.&#13;</Content>
+<Content aid:pstyle="Content">A gamepad may produce the same Move action.&#13;</Content>
+<Content aid:pstyle="Content">AI may generate Move without any physical device.&#13;</Content>
+<Content aid:pstyle="Content">Networking may inject remote inputs.&#13;</Content>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Code aid:pstyle="Code" language="text">raw hardware&#10;     ↓&#10;input mapping&#10;     ↓&#10;gameplay command component&#13;</Code>
+<Content aid:pstyle="Content">allows human, AI, replay and network inputs to converge onto the same simulation interface.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Entity-to-physics ID mapping</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your PhysicsWorld has runtime IDs:&#13;</Content>
+<Code aid:pstyle="Code" language="text">BodyID&#10;ColliderID&#13;</Code>
+<Content aid:pstyle="Content">Your ECS has:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Entity(Index,Generation)&#13;</Code>
+<Content aid:pstyle="Content">These are separate identity spaces.&#13;</Content>
+<Content aid:pstyle="Content">You need a bridge.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Bidirectional physics bridge</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A useful structure:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct PhysicsEntityBridge&#10;{&#10;    std::unordered_map&lt;Entity, BodyID&gt;&#10;        EntityToBody;&#10;&#10;    std::vector&lt;Entity&gt;&#10;        BodyToEntity;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1188dc71164dab014e92770e.svg" alt="&#10;Entity\rightarrow BodyID&#10;" jobId="1188dc71164dab014e92770e" originalTeX="&#10;Entity\rightarrow BodyID&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">for writing forces/transforms,&#13;</Content>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/194ed6e8c9b8a266be95ac0b.svg" alt="&#10;BodyID\rightarrow Entity&#10;" jobId="194ed6e8c9b8a266be95ac0b" originalTeX="&#10;BodyID\rightarrow Entity&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">for collision events/raycast hits.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why reverse mapping matters</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Physics reports:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Body 17 collided with Body 43.&#13;</Code>
+<Content aid:pstyle="Content">Gameplay cares about:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Player collided with Door.&#13;</Code>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Body17&#10;   ↓&#10;Entity A&#10;&#10;Body43&#10;   ↓&#10;Entity B&#13;</Code>
+<Content aid:pstyle="Content">must be cheap.&#13;</Content>
+<Content aid:pstyle="Content">A one-way Entity→Body map is insufficient.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kairo PhysicsWorld ID behavior</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current PhysicsWorld creates body IDs as vector indices and, on destruction, deactivates records rather than compacting/reusing them immediately.&#13;</Content>
+<Content aid:pstyle="Content">That means an old BodyID does not silently alias a newly compacted body.&#13;</Content>
+<Content aid:pstyle="Content">This is a useful deletion-safety property.&#13;</Content>
+<Content aid:pstyle="Content">If you later introduce body-ID reuse, consider a generational physics handle for the same reason ECS entities use generations.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Entity-to-render-object mapping</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Renderer may have:&#13;</Content>
+<Code aid:pstyle="Code" language="text">MeshHandle&#10;MaterialHandle&#10;RenderProxyID&#10;ObjectID&#13;</Code>
+<Content aid:pstyle="Content">ECS Entity should remain independent.&#13;</Content>
+<Content aid:pstyle="Content">Bridge:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Entity&#10;  ↓&#10;render extraction&#10;  ↓&#10;frame render object&#13;</Code>
+<Content aid:pstyle="Content">Many engines do not need a permanent render object for every entity.&#13;</Content>
+<Content aid:pstyle="Content">Frame extraction can simply generate transient draws.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo <InlineCode aid:cstyle="InlineCode">MeshDraw</InlineCode></Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your renderer has:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct MeshDraw&#10;{&#10;    MeshHandle Mesh;&#10;    Mat4f Model;&#10;    PBRMaterial Material;&#10;    uint32_t ObjectID;&#10;    ...&#10;};&#13;</Code>
+<Content aid:pstyle="Content">This is already a clear separation:&#13;</Content>
+<Code aid:pstyle="Code" language="text">renderer resource MeshHandle&#13;</Code>
+<Content aid:pstyle="Content">versus:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ObjectID used to identify the scene object.&#13;</Code>
+<Content aid:pstyle="Content">Good architecture.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stable object IDs for picking</Strong>&#13;</Content>
+<Content aid:pstyle="Content">GPU picking often renders an integer ID into an offscreen attachment:&#13;</Content>
+<Code aid:pstyle="Code" language="text">pixel → object ID&#13;</Code>
+<Content aid:pstyle="Content">Then readback gives:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3d3b5723b459cad116e8980e.svg" alt="&#10;ID=1234.&#10;" jobId="3d3b5723b459cad116e8980e" originalTeX="&#10;ID=1234.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Map 1234 to scene/entity.&#13;</Content>
+<Content aid:pstyle="Content">But there is a subtle lifetime problem.&#13;</Content>
+<Content aid:pstyle="Content">GPU readback is asynchronous.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why writing ECS index directly into the pick buffer can be unsafe</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Frame N:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Entity {Index=42, Generation=7}&#10;→ pick value 42&#13;</Code>
+<Content aid:pstyle="Content">Entity dies.&#13;</Content>
+<Content aid:pstyle="Content">Before readback completes, index 42 gets reused:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Entity {42,8}.&#13;</Code>
+<Content aid:pstyle="Content">GPU reports:&#13;</Content>
+<Code aid:pstyle="Code" language="text">42.&#13;</Code>
+<Content aid:pstyle="Content">If CPU interprets only the index, it selects the wrong object.&#13;</Content>
+<Content aid:pstyle="Content">This is the same ABA problem again.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Safer GPU picking</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Option A: write persistent scene ID if it is guaranteed not to recycle during relevant lifetime.&#13;</Content>
+<Content aid:pstyle="Content">Your current authored <InlineCode aid:cstyle="InlineCode">Scene::Entity</InlineCode> uses stable scene-local <InlineCode aid:cstyle="InlineCode">uint32_t</InlineCode> IDs, and <InlineCode aid:cstyle="InlineCode">MeshDraw::ObjectID</InlineCode> can naturally carry that.&#13;</Content>
+<Content aid:pstyle="Content">Option B: use a frame-local pick table:&#13;</Content>
+<Code aid:pstyle="Code" language="text">PickID 1 -&gt; Entity{42,7}&#10;PickID 2 -&gt; Entity{97,3}&#10;...&#13;</Code>
+<Content aid:pstyle="Content">Render only PickID.&#13;</Content>
+<Content aid:pstyle="Content">Keep the table until GPU readback for that frame finishes.&#13;</Content>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Code aid:pstyle="Code" language="text">pixel PickID&#10;   ↓&#10;that frame's immutable lookup table&#10;   ↓&#10;generational Entity&#10;   ↓&#10;IsAlive()&#13;</Code>
+<Content aid:pstyle="Content">This is especially robust for runtime ECS handles.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">ECS event queues</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Not every interaction should call another system immediately.&#13;</Content>
+<Content aid:pstyle="Content">Suppose physics detects 50 collisions.&#13;</Content>
+<Content aid:pstyle="Content">Instead of recursively invoking gameplay inside solver code, produce events:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct CollisionEvent&#10;{&#10;    Entity A;&#10;    Entity B;&#10;    CollisionPhase Phase;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Push them into an event queue.&#13;</Content>
+<Content aid:pstyle="Content">Later gameplay systems consume them.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why event queues help</Strong>&#13;</Content>
+<Content aid:pstyle="Content">They decouple:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5e4e884bccb690c6be5b8473.svg" alt="&#10;\text{producer timing}&#10;" jobId="5e4e884bccb690c6be5b8473" originalTeX="&#10;\text{producer timing}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">from:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8f9b1ebb3901a7cf0c9be88c.svg" alt="&#10;\text{consumer execution}.&#10;" jobId="8f9b1ebb3901a7cf0c9be88c" originalTeX="&#10;\text{consumer execution}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Physics can finish in a clean state.&#13;</Content>
+<Content aid:pstyle="Content">Gameplay can process events afterward.&#13;</Content>
+<Content aid:pstyle="Content">Structural changes can be command-buffered.&#13;</Content>
+<Content aid:pstyle="Content">Replay can record events.&#13;</Content>
+<Content aid:pstyle="Content">Multiple listeners can consume them.&#13;</Content>
+<Content aid:pstyle="Content">This is much easier to reason about than arbitrary nested callbacks.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Double-buffered event queues</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A strong design is:&#13;</Content>
+<Code aid:pstyle="Code" language="text">WriteEvents&#10;ReadEvents&#13;</Code>
+<Content aid:pstyle="Content">During phase:&#13;</Content>
+<Code aid:pstyle="Code" language="text">producers append WriteEvents&#10;consumers read ReadEvents&#13;</Code>
+<Content aid:pstyle="Content">At synchronization:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">swap(ReadEvents, WriteEvents);&#10;WriteEvents.clear();&#13;</Code>
+<Content aid:pstyle="Content">This prevents an event handler generating another event from recursively entering the same iteration unexpectedly.&#13;</Content>
+<Content aid:pstyle="Content">It establishes clear frame/tick boundaries.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo event systems</Strong>&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">EngineCore::Event</InlineCode> currently represents platform/window events such as:&#13;</Content>
+<Code aid:pstyle="Code" language="text">WindowClose&#10;WindowResize&#10;KeyPressed&#10;MouseMoved&#10;...&#13;</Code>
+<Content aid:pstyle="Content">and supports immediate handled propagation.&#13;</Content>
+<Content aid:pstyle="Content">Separately, <InlineCode aid:cstyle="InlineCode">PhysicsWorld</InlineCode> has:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">PhysicsContactEvent&#13;</Code>
+<Content aid:pstyle="Content">with:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Begin&#10;Stay&#10;End&#13;</Code>
+<Content aid:pstyle="Content">and supports both polling and a synchronous callback.&#13;</Content>
+<Content aid:pstyle="Content">So current Kairo already has <Strong aid:cstyle="Bold">event-producing subsystems</Strong>, but not yet one generalized typed ECS event-queue layer.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Collision event delivery</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Physics emits:&#13;</Content>
+<Code aid:pstyle="Code" language="text">BodyID A&#10;BodyID B&#10;ColliderID A&#10;ColliderID B&#10;Begin/Stay/End&#10;Trigger flag&#13;</Code>
+<Content aid:pstyle="Content">ECS bridge resolves:&#13;</Content>
+<Code aid:pstyle="Code" language="text">BodyID → Entity&#13;</Code>
+<Content aid:pstyle="Content">then produces gameplay event:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct EntityCollisionEvent&#10;{&#10;    Entity A;&#10;    Entity B;&#10;&#10;    ColliderID ColliderA;&#10;    ColliderID ColliderB;&#10;&#10;    CollisionPhase Phase;&#10;    bool IsTrigger;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Now gameplay never needs to know body-table internals.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Event timing relative to physics</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo PhysicsWorld carefully dispatches contact callbacks only after solver arrays and profiling have finished.&#13;</Content>
+<Content aid:pstyle="Content">Its source explicitly avoids callback mutation while iterating live body/contact/joint storage.&#13;</Content>
+<Content aid:pstyle="Content">That is exactly the right principle.&#13;</Content>
+<Content aid:pstyle="Content">For ECS integration I would go one step further:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Physics Step&#10;    ↓&#10;capture contact events&#10;    ↓&#10;map IDs to entities&#10;    ↓&#10;enqueue ECS events&#10;    ↓&#10;finish physics phase&#10;    ↓&#10;gameplay event systems&#10;    ↓&#10;deferred structural flush&#13;</Code>
+<Content aid:pstyle="Content">This maximizes isolation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Begin-play lifecycle events</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Many components need one-time initialization.&#13;</Content>
+<Content aid:pstyle="Content">Examples:&#13;</Content>
+<Code aid:pstyle="Code" language="text">script OnStart&#10;AI initialize&#10;audio autoplay&#10;particle emitter activation&#10;runtime resource creation&#13;</Code>
+<Content aid:pstyle="Content">You need to distinguish:&#13;</Content>
+<Code aid:pstyle="Code" language="text">entity exists&#13;</Code>
+<Content aid:pstyle="Content">from:&#13;</Content>
+<Code aid:pstyle="Code" language="text">entity has entered gameplay.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Lifecycle state</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A simple component:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">enum class LifecycleState : uint8_t&#10;{&#10;    PendingBeginPlay,&#10;    Running,&#10;    PendingEndPlay&#10;};&#10;&#10;struct Lifecycle&#10;{&#10;    LifecycleState State;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Begin-play system queries:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Lifecycle == PendingBeginPlay&#13;</Code>
+<Content aid:pstyle="Content">executes initialization, then sets:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Running.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">A tag-based lifecycle alternative</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Use:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct NeedsBeginPlay {};&#13;</Code>
+<Content aid:pstyle="Content">System runs:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Logic + NeedsBeginPlay&#13;</Code>
+<Content aid:pstyle="Content">then removes tag.&#13;</Content>
+<Content aid:pstyle="Content">But in archetype ECS, removing the tag migrates the entity.&#13;</Content>
+<Content aid:pstyle="Content">For a one-time operation that occurs only once in entity lifetime, that may be entirely acceptable.&#13;</Content>
+<Content aid:pstyle="Content">For state that toggles every frame, less so.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Components added after gameplay starts</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Important semantic question.&#13;</Content>
+<Content aid:pstyle="Content">Suppose world is already running and entity receives a new:&#13;</Content>
+<Code aid:pstyle="Code" language="text">LogicComponent.&#13;</Code>
+<Content aid:pstyle="Content">Should that script receive BeginPlay?&#13;</Content>
+<Content aid:pstyle="Content">Usually yes—but define it explicitly.&#13;</Content>
+<Content aid:pstyle="Content">Lifecycle belongs not only to entity creation, but sometimes to <Strong aid:cstyle="Bold">component activation</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">You may need:&#13;</Content>
+<Code aid:pstyle="Code" language="text">OnComponentAdded&#10;OnBeginPlay&#10;OnEnable&#10;OnDisable&#10;OnDestroy&#13;</Code>
+<Content aid:pstyle="Content">as separate concepts.&#13;</Content>
+<Content aid:pstyle="Content">Do not collapse them into one vague Start.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Fixed tick versus render tick</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Physics needs stable timestep.&#13;</Content>
+<Content aid:pstyle="Content">Rendering needs actual display cadence.&#13;</Content>
+<Content aid:pstyle="Content">So maintain at least two clocks.&#13;</Content>
+<Content aid:pstyle="Content">Physics:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c53822beb524577964b6b153.svg" alt="&#10;dt_f=\frac{1}{60}.&#10;" jobId="c53822beb524577964b6b153" originalTeX="&#10;dt_f=\frac{1}{60}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Render:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a044bbb101d704b743554168.svg" alt="&#10;dt_r=&#10;\text{actual frame duration}.&#10;" jobId="a044bbb101d704b743554168" originalTeX="&#10;dt_r=&#10;\text{actual frame duration}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Fixed-step accumulator</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Canonical:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">accumulator += frameDelta;&#10;&#10;std::uint32_t substeps = 0;&#10;&#10;while (accumulator &gt;= fixedDelta &amp;&amp;&#10;       substeps &lt; maxSubsteps)&#10;{&#10;    FixedUpdate(fixedDelta);&#10;&#10;    accumulator -= fixedDelta;&#10;    ++substeps;&#10;}&#10;&#10;const float alpha =&#10;    accumulator / fixedDelta;&#10;&#10;Render(alpha);&#13;</Code>
+<Content aid:pstyle="Content">This decouples simulation stability from rendering cadence.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Spiral of death</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose simulation takes longer than real time.&#13;</Content>
+<Content aid:pstyle="Content">Frame takes 100 ms.&#13;</Content>
+<Content aid:pstyle="Content">At 60 Hz you owe:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b5471d22c9c4d4c2571e0b70.svg" alt="&#10;100/16.67\approx6&#10;" jobId="b5471d22c9c4d4c2571e0b70" originalTeX="&#10;100/16.67\approx6&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">physics steps.&#13;</Content>
+<Content aid:pstyle="Content">Those steps themselves may take another 100 ms.&#13;</Content>
+<Content aid:pstyle="Content">Now you owe more.&#13;</Content>
+<Content aid:pstyle="Content">System falls progressively behind.&#13;</Content>
+<Content aid:pstyle="Content">This is the spiral of death.&#13;</Content>
+<Content aid:pstyle="Content">Use:&#13;</Content>
+<Code aid:pstyle="Code" language="text">maximum substeps&#10;frame-time clamp&#10;adaptive degradation&#13;</Code>
+<Content aid:pstyle="Content">depending on engine requirements.&#13;</Content>
+<Content aid:pstyle="Content">Never allow an unbounded fixed-step catch-up loop.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Tick groups</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A useful high-level order:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Input sample&#10;     ↓&#10;Variable gameplay preparation&#10;     ↓&#10;Fixed gameplay&#10;     ↓&#10;Physics&#10;     ↓&#10;Collision event extraction&#10;     ↓&#10;Post-physics gameplay&#10;     ↓&#10;Animation / transform finalization&#10;     ↓&#10;Render extraction&#10;     ↓&#10;Rendering&#13;</Code>
+<Content aid:pstyle="Content">Actual engines vary, but the principle is explicit phase boundaries.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">System ordering dependencies</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Some systems depend semantically on others.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">InputMapping&#10;    ↓&#10;CharacterControl&#10;    ↓&#10;PhysicsForceApplication&#10;    ↓&#10;PhysicsStep&#10;    ↓&#10;PhysicsToTransform&#10;    ↓&#10;RenderExtraction&#13;</Code>
+<Content aid:pstyle="Content">Executing RenderExtraction before PhysicsToTransform yields one-frame-old transforms.&#13;</Content>
+<Content aid:pstyle="Content">That is not a thread race.&#13;</Content>
+<Content aid:pstyle="Content">It is a <Strong aid:cstyle="Bold">semantic ordering bug</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Explicit before/after dependencies</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A system descriptor may declare:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct SystemDescriptor&#10;{&#10;    SystemID ID;&#10;&#10;    std::vector&lt;SystemID&gt; After;&#10;    std::vector&lt;SystemID&gt; Before;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">For example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">PhysicsStep.After(CharacterController)&#10;RenderExtraction.After(PhysicsToTransform)&#13;</Code>
+<Content aid:pstyle="Content">Scheduler converts these into edges.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">System dependency graph</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Represent systems as a DAG:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/59fff6047605f69a23fb2cdc.svg" alt="&#10;G=(V,E)&#10;" jobId="59fff6047605f69a23fb2cdc" originalTeX="&#10;G=(V,E)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">where:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e7d1bf097b8745dc3cde58cc.svg" alt="&#10;A\rightarrow B&#10;" jobId="e7d1bf097b8745dc3cde58cc" originalTeX="&#10;A\rightarrow B&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">means:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">B may not execute until A finishes.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">        Animation&#10;           |&#10;           v&#10;Input -&gt; Gameplay -&gt; Physics&#10;           |           |&#10;           |           v&#10;           +------&gt; Transform&#10;                        |&#10;                        v&#10;                  RenderExtract&#13;</Code>
+<Content aid:pstyle="Content">Independent branches can execute simultaneously.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Data hazards also produce dependencies</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">System A writes Velocity&#10;System B reads Velocity&#13;</Code>
+<Content aid:pstyle="Content">They cannot overlap unless additional partition guarantees exist.&#13;</Content>
+<Content aid:pstyle="Content">Similarly:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A writes Position&#10;B writes Position&#13;</Code>
+<Content aid:pstyle="Content">conflicts.&#13;</Content>
+<Content aid:pstyle="Content">But:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A reads Position&#10;B reads Position&#13;</Code>
+<Content aid:pstyle="Content">is safe.&#13;</Content>
+<Content aid:pstyle="Content">So access declarations can generate dependency edges.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Topological scheduling</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A DAG can be executed in topological order.&#13;</Content>
+<Content aid:pstyle="Content">Kahn’s algorithm:&#13;</Content>
+<List type="ordered" start="1" numberStyle="Decimal" delimiter="Period">
+<ListItem><Content aid:pstyle="Content">compute indegree of every system,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">push zero-indegree systems into ready set,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">execute/remove ready node,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">decrement outgoing neighbor indegrees,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">newly zero-indegree nodes become ready.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">If processed count:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9a994df76afacea1ff1a288e.svg" alt="&#10;&lt;|V|,&#10;" jobId="9a994df76afacea1ff1a288e" originalTeX="&#10;&lt;|V|,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">a cycle exists.&#13;</Content>
+<Content aid:pstyle="Content">That is a configuration error.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Parallel topological scheduler</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Instead of taking one zero-indegree node at a time, take <Strong aid:cstyle="Bold">all currently ready nodes</Strong>.&#13;</Content>
+<Code aid:pstyle="Code" language="text">Wave 0:&#10;A B C&#10;&#10;Wave 1:&#10;D E&#10;&#10;Wave 2:&#10;F&#13;</Code>
+<Content aid:pstyle="Content">A/B/C can run concurrently.&#13;</Content>
+<Content aid:pstyle="Content">After they complete, D/E become available.&#13;</Content>
+<Content aid:pstyle="Content">This exposes parallelism while preserving dependencies.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo JobSystem</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your <InlineCode aid:cstyle="InlineCode">KairoEngineCore::JobSystem</InlineCode> currently provides:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">fixed worker pool,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">thread-safe job queue,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">futures,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">exception propagation,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">WaitIdle()</InlineCode>.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">It is a <Strong aid:cstyle="Bold">generic executor</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">It does not currently know:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">ECS component reads,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">ECS component writes,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">system dependencies,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">topological scheduling,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">archetype/chunk iteration.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">That is a good layering boundary.&#13;</Content>
+<Content aid:pstyle="Content">An ECS scheduler can sit <Strong aid:cstyle="Bold">above</Strong> the JobSystem.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Parallel-safe ECS iteration</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose one chunk contains:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/321cff00804f9ea75ef8782a.svg" alt="&#10;1000&#10;" jobId="321cff00804f9ea75ef8782a" originalTeX="&#10;1000&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Transform + Velocity entities.&#13;</Content>
+<Content aid:pstyle="Content">You can partition:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Thread 0 rows   0–249&#10;Thread 1 rows 250–499&#10;Thread 2 rows 500–749&#10;Thread 3 rows 750–999&#13;</Code>
+<Content aid:pstyle="Content">If every worker writes only its own rows:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9c4099201fb7f3673e4266aa.svg" alt="&#10;\text{no component element is written by two threads}.&#10;" jobId="9c4099201fb7f3673e4266aa" originalTeX="&#10;\text{no component element is written by two threads}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Safe.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Chunk-level parallelism</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Archetypes make this particularly natural:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Chunk 0 -&gt; worker A&#10;Chunk 1 -&gt; worker B&#10;Chunk 2 -&gt; worker C&#10;Chunk 3 -&gt; worker D&#13;</Code>
+<Content aid:pstyle="Content">Each chunk is an independent dense memory region.&#13;</Content>
+<Content aid:pstyle="Content">This is one of the strongest practical arguments for chunk storage.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Structural changes during parallel iteration</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Still forbidden.&#13;</Content>
+<Content aid:pstyle="Content">Thread A cannot migrate an entity out of a chunk while Thread B is iterating the same archetype storage.&#13;</Content>
+<Content aid:pstyle="Content">Use thread-local command buffers:&#13;</Content>
+<Code aid:pstyle="Code" language="text">worker 0 → commands 0&#10;worker 1 → commands 1&#10;worker 2 → commands 2&#13;</Code>
+<Content aid:pstyle="Content">merge/apply after jobs finish.&#13;</Content>
+<Content aid:pstyle="Content">Exactly the command-buffer principle from Pass 10 becomes mandatory in parallel ECS.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Read-only versus writable declarations</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A scheduler needs to know what every system intends to access.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct MovementSystemAccess&#10;{&#10;    Reads&lt;Velocity&gt; ReadsVelocity;&#10;    Writes&lt;Transform&gt; WritesTransform;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Conceptually maintain:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2588af2e2969ec3f8e04681d.svg" alt="&#10;R(S)&#10;" jobId="2588af2e2969ec3f8e04681d" originalTeX="&#10;R(S)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">read set,&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fa5a10b224fc2c179582cbda.svg" alt="&#10;W(S)&#10;" jobId="fa5a10b224fc2c179582cbda" originalTeX="&#10;W(S)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">write set.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why <InlineCode aid:cstyle="InlineCode">const</InlineCode> at callback level is not enough</Strong>&#13;</Content>
+<Content aid:pstyle="Content">C++ can enforce:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">const Velocity&amp;&#13;</Code>
+<Content aid:pstyle="Content">inside one callback.&#13;</Content>
+<Content aid:pstyle="Content">But scheduler must know access <Strong aid:cstyle="Bold">before the job runs</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">It needs metadata to decide concurrency.&#13;</Content>
+<Content aid:pstyle="Content">So access intent is part of system registration.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Resource accesses too</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Systems can also conflict through globals.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">System A writes PhysicsWorld resource&#10;System B reads PhysicsWorld resource&#13;</Code>
+<Content aid:pstyle="Content">even if their ECS component sets do not overlap.&#13;</Content>
+<Content aid:pstyle="Content">Therefore descriptor needs:&#13;</Content>
+<Code aid:pstyle="Code" language="text">component reads/writes&#10;resource reads/writes&#10;structural access&#13;</Code>
+<Content aid:pstyle="Content">All contribute to scheduling hazards.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Detecting system data hazards</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For systems A and B:&#13;</Content>
+<Content aid:pstyle="Content">No hazard if:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/722a7569ef3b80dfceae6bec.svg" alt="&#10;W(A)\cap&#10;(R(B)\cup W(B))&#10;=&#10;\varnothing&#10;" jobId="722a7569ef3b80dfceae6bec" originalTeX="&#10;W(A)\cap&#10;(R(B)\cup W(B))&#10;=&#10;\varnothing&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/01801b0c91e90abd7f9909f1.svg" alt="&#10;W(B)\cap&#10;(R(A)\cup W(A))&#10;=&#10;\varnothing.&#10;" jobId="01801b0c91e90abd7f9909f1" originalTeX="&#10;W(B)\cap&#10;(R(A)\cup W(A))&#10;=&#10;\varnothing.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Equivalently, conflict exists if one writes something the other reads or writes.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Hazard table</Strong>&#13;</Content>
+<Table aid:table="table" aid:trows="5" aid:tcols="3" sourceHeadRows="1" sourceBodyHeadRows=""><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="header"><Content aid:pstyle="Caption">A access&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="header"><Content aid:pstyle="Caption">B access&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="header"><Content aid:pstyle="Caption">Safe concurrently?&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">Read&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">Read&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">Yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">Read&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">Write&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">No&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">Write&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">Read&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">No&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">Write&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">Write&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">No&#13;</Content></Cell></Table>
+<Content aid:pstyle="Content">This is the fundamental scheduler rule.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Hazards don’t tell you direction</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A writes Velocity&#10;B reads Velocity&#13;</Code>
+<Content aid:pstyle="Content">They conflict.&#13;</Content>
+<Content aid:pstyle="Content">But should:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e7d1bf097b8745dc3cde58cc.svg" alt="&#10;A\rightarrow B&#10;" jobId="e7d1bf097b8745dc3cde58cc" originalTeX="&#10;A\rightarrow B&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a14d3cde930e27e6002ff3e9.svg" alt="&#10;B\rightarrow A?&#10;" jobId="a14d3cde930e27e6002ff3e9" originalTeX="&#10;B\rightarrow A?&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">The access sets alone cannot tell you.&#13;</Content>
+<Content aid:pstyle="Content">You still need:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">explicit before/after semantics,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">phase ordering,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">registration order as fallback,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">dataflow semantics.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Hazard detection determines <Strong aid:cstyle="Bold">cannot overlap</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">It does not automatically determine <Strong aid:cstyle="Bold">which result is desired</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">Important distinction.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Structural access as a world-wide hazard</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A system that can:&#13;</Content>
+<Code aid:pstyle="Code" language="text">create entity&#10;destroy entity&#10;add component&#10;remove component&#13;</Code>
+<Content aid:pstyle="Content">can potentially invalidate queries/storage.&#13;</Content>
+<Content aid:pstyle="Content">One conservative scheduler model marks structural access as:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e612ded461dba0390ecfe799.svg" alt="&#10;\text{exclusive world write}.&#10;" jobId="e612ded461dba0390ecfe799" originalTeX="&#10;\text{exclusive world write}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then no ordinary ECS iteration overlaps it.&#13;</Content>
+<Content aid:pstyle="Content">Better model:&#13;</Content>
+<Code aid:pstyle="Code" language="text">systems queue structural commands&#13;</Code>
+<Content aid:pstyle="Content">and actual structural flush happens at a dedicated barrier.&#13;</Content>
+<Content aid:pstyle="Content">That preserves far more parallelism.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">ECS job partitioning</Strong>&#13;</Content>
+<Content aid:pstyle="Content">One system may itself need many jobs.&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7ffc0c3b3a1ffbf421130e09.svg" alt="&#10;N=1,000,000&#10;" jobId="7ffc0c3b3a1ffbf421130e09" originalTeX="&#10;N=1,000,000&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">entities.&#13;</Content>
+<Content aid:pstyle="Content">Don’t submit one job per entity.&#13;</Content>
+<Content aid:pstyle="Content">Job scheduling overhead would dominate.&#13;</Content>
+<Content aid:pstyle="Content">Partition into ranges.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Grain size model</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Let:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8d0184933e1e5a4d0a6adbbc.svg" alt="&#10;H=&#10;\text{job scheduling overhead}&#10;" jobId="8d0184933e1e5a4d0a6adbbc" originalTeX="&#10;H=&#10;\text{job scheduling overhead}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f284439a2cbd179aa5cce4c7.svg" alt="&#10;C=&#10;\text{cost per entity}.&#10;" jobId="f284439a2cbd179aa5cce4c7" originalTeX="&#10;C=&#10;\text{cost per entity}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For grain size <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5dbabc30dd75e3a27d41481e.svg" alt="G" jobId="5dbabc30dd75e3a27d41481e" originalTeX="G"/>, useful work per job:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/73ad9dac97046d20a27a3027.svg" alt="&#10;GC.&#10;" jobId="73ad9dac97046d20a27a3027" originalTeX="&#10;GC.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">We want:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8b516204d3e87f818b9a97f1.svg" alt="&#10;\boxed{&#10;GC\gg H.&#10;}&#10;" jobId="8b516204d3e87f818b9a97f1" originalTeX="&#10;\boxed{&#10;GC\gg H.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If job costs 5 µs to schedule and 100 entities take 1 µs total, terrible.&#13;</Content>
+<Content aid:pstyle="Content">If 10,000 entities take 100 µs, scheduling overhead is small.&#13;</Content>
+<Content aid:pstyle="Content">Measure.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Static versus dynamic partitioning</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Static:&#13;</Content>
+<Code aid:pstyle="Code" language="text">thread 0 gets fixed chunk range&#10;thread 1 gets fixed chunk range&#10;...&#13;</Code>
+<Content aid:pstyle="Content">cheap but can become unbalanced if chunks differ in cost.&#13;</Content>
+<Content aid:pstyle="Content">Dynamic job queue:&#13;</Content>
+<Code aid:pstyle="Code" language="text">many medium jobs&#10;workers pull next available&#13;</Code>
+<Content aid:pstyle="Content">provides load balancing.&#13;</Content>
+<Content aid:pstyle="Content">Work stealing can improve this further.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Archetype chunk = natural job unit</Strong>&#13;</Content>
+<Content aid:pstyle="Content">One simple model:&#13;</Content>
+<Code aid:pstyle="Code" language="text">one job per chunk.&#13;</Code>
+<Content aid:pstyle="Content">But if chunks are tiny or system work cheap, overhead may be excessive.&#13;</Content>
+<Content aid:pstyle="Content">Batch several chunks per job.&#13;</Content>
+<Content aid:pstyle="Content">Conversely, one huge chunk with expensive per-entity work may be split by row range.&#13;</Content>
+<Content aid:pstyle="Content">Again, chunks are storage units, not necessarily sacred scheduling units.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">False sharing</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This is one of the most misunderstood multithreading problems.&#13;</Content>
+<Content aid:pstyle="Content">Suppose cache line contains:&#13;</Content>
+<Code aid:pstyle="Code" language="text">x0 x1 x2 x3 x4 x5 x6 x7&#13;</Code>
+<Content aid:pstyle="Content">Thread A writes x0.&#13;</Content>
+<Content aid:pstyle="Content">Thread B writes x1.&#13;</Content>
+<Content aid:pstyle="Content">They are completely different variables.&#13;</Content>
+<Content aid:pstyle="Content">There is no logical data race.&#13;</Content>
+<Content aid:pstyle="Content">But both variables occupy the same cache line.&#13;</Content>
+<Content aid:pstyle="Content">Cache coherence operates at cache-line granularity.&#13;</Content>
+<Content aid:pstyle="Content">The line repeatedly migrates between cores.&#13;</Content>
+<Content aid:pstyle="Content">That is false sharing. Intel’s optimization guidance explicitly warns that independently modified data on the same cache line can cause costly coherence traffic between cores. <Link href="https://cdrdv2-public.intel.com/814198/248966-Optimization-Reference-Manual-V1-049.pdf?utm_source=chatgpt.com">Intel CDRD</Link>&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Terrible ECS partitioning</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Do not do:&#13;</Content>
+<Code aid:pstyle="Code" language="text">thread 0 → entities 0,2,4,6,8...&#10;thread 1 → entities 1,3,5,7,9...&#13;</Code>
+<Content aid:pstyle="Content">if both write a dense component array.&#13;</Content>
+<Content aid:pstyle="Content">Adjacent elements share cache lines.&#13;</Content>
+<Content aid:pstyle="Content">Threads ping-pong those lines constantly.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Better partitioning</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Use contiguous ranges:&#13;</Content>
+<Code aid:pstyle="Code" language="text">thread 0:&#10;0 ... 2499&#10;&#10;thread 1:&#10;2500 ... 4999&#10;&#10;thread 2:&#10;5000 ... 7499&#10;&#10;thread 3:&#10;7500 ... 9999&#13;</Code>
+<Content aid:pstyle="Content">Now only the boundary lines risk sharing.&#13;</Content>
+<Content aid:pstyle="Content">Most cache lines belong exclusively to one thread during the job.&#13;</Content>
+<Content aid:pstyle="Content">Chunk-level assignment naturally encourages this.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<!-- CHAPTER-SOURCE-END -->
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#05-engine-i-ch015">Previous chapter</Link> · <Link href="#05-engine-i-ch017">Next chapter</Link>&#13;</Content>
+</Chapter>

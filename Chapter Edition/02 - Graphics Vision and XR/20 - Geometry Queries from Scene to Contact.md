@@ -8,7 +8,7 @@ A scene is only the beginning of a geometric query: transforms, representations,
 
 **Recall question:** At which stages can a scene-level query become geometrically ambiguous?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 48180–50454; source-span SHA256 02d488cf8790503423359ecb13e3cc0aed279f2b317b86c0937cc7e554620d2d. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 49182–51456; source-span SHA256 02d488cf8790503423359ecb13e3cc0aed279f2b317b86c0937cc7e554620d2d. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## From a Scene to a Collision Answer: Geometry as a Chain of Contracts

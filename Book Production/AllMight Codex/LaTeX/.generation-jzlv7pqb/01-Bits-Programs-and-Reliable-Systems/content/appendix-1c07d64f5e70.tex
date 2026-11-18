@@ -1,0 +1,59 @@
+\hypertarget{appendix-1c07d64f5e70}{}\label{referencestart:appendix-1c07d64f5e70}
+\section{Camera view and clip-space pipeline}\label{appendix-1c07d64f5e70-camera-view-and-clip-space-pipeline}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase7 · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-1c07d64f5e70-definition-and-mechanism}
+
+A camera pose maps camera coordinates to world coordinates; its inverse is the view map. Projection produces homogeneous clip coordinates, clipping applies the API-specific inequalities, and valid perspective division produces NDC. Storage order supplies none of these coordinate contracts.
+
+\textbf{Reconstruction cue:} A standard minus-Z perspective example needs a point in front of the camera and a meaningful clip w before division.
+
+\subsection{Prerequisites}\label{appendix-1c07d64f5e70-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1bae9457dbc3]{Coordinate frames and change of basis}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-1c07d64f5e70-used-by}
+
+\begin{itemize}
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations}{Phase 7 teaching and laboratory (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 2)}
+\item
+  \hyperref[appendix-97578ed97952]{Depth buffering and visibility order}
+\item
+  \hyperref[appendix-21f8456e2629]{Lens optics and depth of field}
+\item
+  \hyperref[appendix-749ba51a6c25]{GPU vertex specification}
+\item
+  \hyperref[appendix-40426e4b2103]{Homogeneous clipping and perspective interpolation}
+\item
+  \hyperref[appendix-cac01ebeeb11]{Axial depth and Euclidean range}
+\item
+  \hyperref[appendix-1bc40b08db4a]{Hardware depth-buffer linearization}
+\item
+  \hyperref[appendix-f1a6d43e80d1]{Screen-space ray generation and mouse picking}
+\item
+  \hyperref[appendix-8c40fad29462]{Ray differentials and camera sampling measures}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-1c07d64f5e70-recall-and-next-depth}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\subsection{Source and navigation}\label{appendix-1c07d64f5e70-source-and-navigation}
+
+\href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations}{Continuous explanation (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 2)} · \hyperref[appendix-fd090d982a15-phase-7---parts-601-700]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-7---source-analysis-and-verification]{Sources and verification}
+
+\subsection{University course development}\label{appendix-1c07d64f5e70-university-course-development}
+
+Extend the existing transform pipeline with the clipping and depth-precision decisions that make projection robust. A view frustum is the set of points a camera can see, bounded by near and far planes as well as image sides. Transforming the frustum into a canonical clip cube makes outside tests cheap; partially intersecting triangles must be clipped and triangulated so the rasterizer still receives triangles. The near plane also avoids geometry crossing the eye plane, while the far plane limits depth range. Floating-point depth values are unevenly distributed after perspective division, so an excessively tiny near distance paired with a huge far distance can make two nearby surfaces quantize to the same depth and produce z-fighting. Choose the narrowest useful depth interval and keep the view, clip, normalized, and screen coordinates distinct.
+
+\href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch001-a-scene-description-becomes-an-image}{A scene description becomes an image (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 8)} · \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch003-cameras-projection-and-calibration}{Cameras, projection, and calibration (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 10)} · \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=03-visual-computing-i-ch012-rasterization-coverage-and-depth}{Rasterization, coverage, and depth (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 16)}
+
+\subsection{Phase 11 camera development}\label{appendix-1c07d64f5e70-phase-11-camera-development}
+
+A raster-to-ray camera maps a pixel to a geometric sample; In a pinhole model, invert projection and view transforms to recover a camera-space direction, then transform it to world space without applying translation as if it were a point. Pixel-center convention, viewport origin, handedness, clip-depth range, and normalization all affect the result. Offset a pixel to generate differential rays and estimate the surface footprint; that footprint grows with depth and changes with surface orientation. Keep ray generation distinct from raster projection while ensuring their conventions agree. Link: \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch037-a-camera-model-must-close-the-loop}{A camera model must close the loop (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 6)}; research: \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review}{Four deeper links from the TUM lecture review (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 5)}.

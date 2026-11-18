@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch072.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-8f6a01f284a7-conditioning-and-singularity" class="level2">
+<h2>Conditioning and singularity</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C004 · <strong>Latest development:</strong> Phase7</p>
+<section id="appendix-8f6a01f284a7-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Conditioning measures sensitivity to input perturbation. <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>=</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>4</mn>
+    </mrow>
+  </msup>
+  <msub>
+    <mi>I</mi>
+    <mn>2</mn>
+  </msub>
+</math> has determinant <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>8</mn>
+    </mrow>
+  </msup>
+</math> but condition number one in the 2-norm. Uniform scaling changes determinant magnitude without changing this conditioning measure.</p>
+<p>Phase 7 develops <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>κ</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>A</mi>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <msup>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+</math>, near-parallel-column sensitivity, pivoted elimination and inverse residuals. Equal determinants can conceal very different stretch ratios: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>diag</mi>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>10</mn>
+    </mrow>
+  </msup>
+  <mo>,</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>10</mn>
+    </mrow>
+  </msup>
+  <mo stretchy="false">)</mo>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>diag</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>20</mn>
+    </mrow>
+  </msup>
+  <mo stretchy="false">)</mo>
+</math> both have determinant <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>20</mn>
+    </mrow>
+  </msup>
+</math> but conditions one and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>20</mn>
+    </mrow>
+  </msup>
+</math>. <a href="ch245.xhtml#id_01-foundations-i-ch018-an-inverse-can-exist-and-still-amplify-uncertainty" class="wikilink">Full worked sensitivity example (Mathematics for Visual Computing, Part 1, Ch. 2)</a>.</p>
+<p>Subtraction of nearby inputs exposes input uncertainty relative to a small difference. Sensitivity belongs to the problem; exact subtraction of stored operands cannot recover information lost when those inputs were rounded.</p>
+</section>
+<section id="appendix-8f6a01f284a7-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch008.xhtml#appendix-0ec599f8ba27-numerical-tolerance-policies" class="wikilink">Numerical tolerance policies</a> — An absolute numerical threshold can change with scale without measuring mathematical sensitivity.</li>
+</ul>
+</section>
+<section id="appendix-8f6a01f284a7-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch250.xhtml#appendix-48d2e66378ab-matrix-inversion-pivoting-and-residuals" class="wikilink">Matrix inversion pivoting and residuals (Mathematics for Visual Computing, Part 1, Reference notes: Matrix inversion pivoting and residuals)</a></p></li>
+<li><p><a href="ch081.xhtml#appendix-a7fbaf6d1b1c-forward-and-backward-error" class="wikilink">Forward and backward error</a> — Input sensitivity is distinct from errors an implementation introduces.</p></li>
+<li><p><a href="ch078.xhtml#appendix-a2773a6a2f9d-cancellation-and-loss-of-significance" class="wikilink">Cancellation and loss of significance</a> — Input sensitivity is distinct from errors an implementation introduces.</p></li>
+</ul>
+<p>Connect later dependent concepts here as their lessons arrive. - <a href="ch534.xhtml#appendix-f6e77f4a200f-gaussian-elimination-and-pivoting" class="wikilink">Gaussian elimination and pivoting (Vision, XR, and Playable Worlds, Part 1, Reference notes: Gaussian elimination and pivoting)</a> — Extends this foundation into linear-systems and decomposition analysis. - <a href="ch511.xhtml#appendix-c3421e6b4f2c-qr-factorization-and-least-squares" class="wikilink">QR factorization and least squares (Vision, XR, and Playable Worlds, Part 1, Reference notes: QR factorization and least squares)</a> — Extends this foundation into linear-systems and decomposition analysis. - <a href="ch338.xhtml#appendix-18eacf61a04b-ode-integration-and-stability" class="wikilink">ODE integration and stability (Light Transport and Image Synthesis, Part 1, Reference notes: ODE integration and stability)</a></p>
+<ul>
+<li><a href="ch517.xhtml#appendix-d83b0ad1be7f-a-posteriori-error-bounds-for-contractive-iteration" class="wikilink">A posteriori error bounds for contractive iteration (Vision, XR, and Playable Worlds, Part 1, Reference notes: A posteriori error bounds for contractive iteration)</a></li>
+<li><a href="ch502.xhtml#appendix-aa2bf0d79639-algorithmic-stability" class="wikilink">Algorithmic stability (Vision, XR, and Playable Worlds, Part 1, Reference notes: Algorithmic stability)</a></li>
+<li><a href="ch533.xhtml#appendix-f63eb850796d-bracketed-and-open-root-solvers" class="wikilink">Bracketed and open root solvers (Vision, XR, and Playable Worlds, Part 1, Reference notes: Bracketed and open root solvers)</a></li>
+<li><a href="ch467.xhtml#appendix-31b8c295e05f-numerical-error-budgets" class="wikilink">Numerical error budgets (Vision, XR, and Playable Worlds, Part 1, Reference notes: Numerical error budgets)</a></li>
+<li><a href="ch508.xhtml#appendix-b9afba7f63e5-stable-quadratic-root-evaluation" class="wikilink">Stable quadratic root evaluation (Vision, XR, and Playable Worlds, Part 1, Reference notes: Stable quadratic root evaluation)</a> ## Recall and next depth</li>
+</ul>
+<p>Reconstruct the concrete example in the definition and identify its validity assumptions.</p>
+<p><strong>Pending:</strong> Robust condition estimation, growth factors, advanced factorizations and application-specific error budgets extend the current inversion laboratory.</p>
+</section>
+<section id="appendix-8f6a01f284a7-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-when-arithmetic-meets-uncertainty" class="wikilink">M005 development</a></p>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">M004 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m004---parts-61-76" class="wikilink">Per-part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

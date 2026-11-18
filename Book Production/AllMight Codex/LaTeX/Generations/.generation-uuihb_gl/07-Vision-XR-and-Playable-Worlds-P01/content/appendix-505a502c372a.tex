@@ -1,0 +1,51 @@
+\hypertarget{appendix-505a502c372a}{}\label{referencestart:appendix-505a502c372a}
+\section{Projection rejection and scalar components}\label{appendix-505a502c372a-projection-rejection-and-scalar-components}
+
+\hypertarget{appendix-505a502c372a-projection-rejection-and-scalar-components}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-505a502c372a-definition-and-mechanism}
+
+\hypertarget{appendix-505a502c372a-definition-and-mechanism}{}
+
+Projection onto a nonzero axis is the along-axis vector whose remainder is orthogonal. Rejection is the remainder. Signed scalar projection measures length; the projection coefficient multiplies the target axis and need not equal that length.
+
+\end{allmightroledefinition}
+
+For input \((3,4,0)\) and target \((2,0,0)\), coefficient is \(1.5\), scalar projection \(3\), projection \((3,0,0)\) and rejection \((0,4,0)\).
+
+\subsection{Prerequisites}\label{appendix-505a502c372a-prerequisites}
+
+\hypertarget{appendix-505a502c372a-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../06-GPU-Architecture-and-Real-Time-Rendering-P02/main.pdf\#nameddest=appendix-8bc4e8fc547c}{Dot products and orthogonality (GPU Architecture and Real-Time Rendering, Part 2, Reference notes: Dot products and orthogonality)} --- Inner-product measurements supply the perpendicularity and alignment constraints.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-505a502c372a-used-by}
+
+\hypertarget{appendix-505a502c372a-used-by}{}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-e31893dec985]{Surface tangents normals and bitangents} --- Builds on this mechanism in the connected geometry story.
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#nameddest=appendix-44e00863b4d5}{Reflection refraction and shading directions (Light Transport and Image Synthesis, Part 1, Reference notes: Reflection refraction and shading directions)} --- Builds on this mechanism in the connected geometry story.
+\item
+  \hyperref[appendix-8572a4a060c1]{Linear systems and fundamental subspaces} --- Extends this foundation into linear-systems and decomposition analysis.
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#nameddest=appendix-3c73f7862157}{Exceptional projections and dimension (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Exceptional projections and dimension)} \#\# Recall and next depth
+\end{itemize}
+
+Derive the denominator, closest-point property and idempotence without assuming a unit target. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-505a502c372a-source-and-navigation}
+
+\hypertarget{appendix-505a502c372a-source-and-navigation}{}
+
+\href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#nameddest=01-foundations-i-ch017-projection-separates-useful-movement-from-sideways-movement}{Teaching narrative (Mathematics for Visual Computing, Part 1, Ch. 1)} · \hyperref[appendix-fd090d982a15-phase-6---parts-501-600]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-6---source-analysis-and-verification]{Evidence and limits} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

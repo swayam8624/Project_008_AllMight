@@ -7363,11 +7363,11 @@ This sequence has a deliberate order. The capacity check happens before construc
 
 Let `c` be the number of published entries before the call and `C` the static capacity. We maintain the invariant:
 
-\[
+$$
 0\le c\le C,\qquad
 \text{slots }[0,c)\text{ are engaged},\qquad
 \text{slots }[c,C)\text{ are disengaged}.
-\]
+$$
 
 If `c=C`, the function rejects the insertion and changes nothing. If `c<C` and the proposed construction throws, the next optional remains disengaged and the published count stays `c`. If construction succeeds, the new slot is engaged, and incrementing the count makes the published interval `[0,c+1)`. This is a short, inspectable correctness proof that depends on the container's real semantics, not merely the word "generic".
 
@@ -7414,7 +7414,7 @@ The solution is not “move everything into templates.” We must split the **st
 
 ### The pixel format is not an integer whose meaning we must rediscover
 
-Suppose the tile is an 8-by-2 image with four 8-bit channels per pixel. It has \(8\times 2=16\) pixels. Each pixel contributes four source bytes, so its uncompressed, tightly packed payload has \(16\times4=64\) bytes. For an RGB image with four rows and four columns, the source payload has \(4\times4\times3=48\) bytes. These equations arise from the representation we have chosen: width and height count pixels, while `channels` counts 8-bit source components per pixel. They do **not** automatically give the amount of device memory after alignment, row-pitch requirements, mipmaps, block compression, or backend-specific allocation overhead.
+Suppose the tile is an 8-by-2 image with four 8-bit channels per pixel. It has $8\times 2=16$ pixels. Each pixel contributes four source bytes, so its uncompressed, tightly packed payload has $16\times4=64$ bytes. For an RGB image with four rows and four columns, the source payload has $4\times4\times3=48$ bytes. These equations arise from the representation we have chosen: width and height count pixels, while `channels` counts 8-bit source components per pixel. They do **not** automatically give the amount of device memory after alignment, row-pitch requirements, mipmaps, block compression, or backend-specific allocation overhead.
 
 Our asset type already knows its format. We therefore define a finite domain:
 
@@ -7479,7 +7479,7 @@ static_assert(checked_product(8, 4) == 32);
 
 The word `constexpr` means this function is **eligible** for evaluation in a constant-expression context when the necessary conditions hold. It does not say every invocation executes during compilation. In the static assertion, `checked_product(8,4)` is evaluated as a constant expression. When we later call `checked_product(runtime_width,runtime_height)`, the same source function may execute at runtime. A compiler may also optimize a runtime call using ordinary constant propagation where it has sufficient information; that optimization is distinct from the language-level requirement to produce a constant expression.
 
-Why is the overflow check written as a division? Multiplying first would already lose the information we needed to detect overflow. For nonnegative unsigned numbers \(x,y\), a product fits in a maximum representable value \(M\) exactly when \(x\le M/y\) for \(y\ne0\). We therefore test the inequality before multiplication. The `y == 0` case needs separate handling to avoid division by zero; multiplying by zero is safe and yields zero. In the tile pipeline, we apply this function once to `width * height` and again to `pixels * channels`. This establishes a correct *count arithmetic* invariant, although it does not establish enough available memory or any GPU-specific alignment guarantee.
+Why is the overflow check written as a division? Multiplying first would already lose the information we needed to detect overflow. For nonnegative unsigned numbers $x,y$, a product fits in a maximum representable value $M$ exactly when $x\le M/y$ for $y\ne0$. We therefore test the inequality before multiplication. The `y == 0` case needs separate handling to avoid division by zero; multiplying by zero is safe and yields zero. In the tile pipeline, we apply this function once to `width * height` and again to `pixels * channels`. This establishes a correct *count arithmetic* invariant, although it does not establish enough available memory or any GPU-specific alignment guarantee.
 
 At runtime, the laboratory asks for a tile with width `SIZE_MAX` and height two. The first multiplication check throws before computing an overflowing product. The policy and recorder are not invoked after that failure, so the rejected request does not appear as a planned tile. In a compile-time constant-evaluation context, a call that attempts to evaluate the throwing path cannot produce the required constant expression; the program must reject its use as a compile-time constant. This is not an excuse to rely on exceptions in a real-time hot loop: the public engine may instead return a typed error, as Phase 2 developed. The function illustrates the distinction between the *arithmetic rule* and the *chosen error-delivery policy*.
 
@@ -7513,23 +7513,23 @@ Three terms are now distinguishable. `constexpr` enables constant evaluation of 
 
 The same engine that loads textures may divide images into small tiles and assign compact keys to neighboring positions. One common ordering scheme is **Morton order**, also called Z-order, which interleaves the binary digits of two coordinates. It is useful because coordinates that are near one another often receive nearby keys, but it does not guarantee perfect spatial locality or replace a complete spatial index.
 
-Take a four-bit coordinate \(x\). Write its bits as \(x_3x_2x_1x_0\). To make room for a second coordinate, place each bit at an even position:
+Take a four-bit coordinate $x$. Write its bits as $x_3x_2x_1x_0$. To make room for a second coordinate, place each bit at an even position:
 
-\[
+$$
 \operatorname{spread}(x)
 =\sum_{i=0}^{3} \left(\left\lfloor\frac{x}{2^i}\right\rfloor\bmod 2\right)2^{2i}.
-\]
+$$
 
-The division and remainder here simply ask for bit \(i\); in C++ we use a right shift and bitwise AND. For \(x=3\), binary `0011`, the low two bits are set, so spreading produces `00000101`, decimal five. For \(y=5\), binary `0101`, spreading produces `00010001`, decimal seventeen. Shift the spread \(y\) bits left by one and combine:
+The division and remainder here simply ask for bit $i$; in C++ we use a right shift and bitwise AND. For $x=3$, binary `0011`, the low two bits are set, so spreading produces `00000101`, decimal five. For $y=5$, binary `0101`, spreading produces `00010001`, decimal seventeen. Shift the spread $y$ bits left by one and combine:
 
-\[
+$$
 \operatorname{morton}(3,5)
 =\operatorname{spread}(3)\;|\;
 \big(\operatorname{spread}(5)\ll 1\big)
 =5\;|\;(17\ll1)
 =5\;|\;34
 =39.
-\]
+$$
 
 The bitwise OR is correct here because one spread result occupies even bit positions and the other, after shifting, occupies odd bit positions; there is no overlapping set bit to carry. If the coordinates are outside the range zero through fifteen, the four-bit function cannot represent them and must reject them or use a wider scheme. This small example is **one four-bit-per-axis tile key**, not a complete texture layout for arbitrary image dimensions.
 
@@ -7614,7 +7614,7 @@ public:
 
 The policy instance's *type* is fixed by the specialization, but its stored state, such as a 64-byte budget, can still be supplied at runtime. That distinction is important: choosing `ByteBudgetPolicy` at compile time does not mean the number 64 must be a template argument. We can change budgets between planner objects without compiling a different type for every numeric value.
 
-For the RGBA example, width eight and height two require \(8\times2\times4=64\) bytes. With a 64-byte budget, the plan is accepted and recorded. An 8-by-3 tile would require 96 bytes, so the same planner throws before recording it. A different 4-by-4 tile also requires 64 bytes, but when the verified-payload mode is used with an empty buffer, it fails the length check. Both failure paths leave the recorder's count at one. The error source and the publish boundary remain observable; policy selection does not hide them.
+For the RGBA example, width eight and height two require $8\times2\times4=64$ bytes. With a 64-byte budget, the plan is accepted and recorded. An 8-by-3 tile would require 96 bytes, so the same planner throws before recording it. A different 4-by-4 tile also requires 64 bytes, but when the verified-payload mode is used with an empty buffer, it fails the length check. Both failure paths leave the recorder's count at one. The error source and the publish boundary remain observable; policy selection does not hide them.
 
 ### The recorder is known statically; explain the CRTP rather than mystifying it
 
@@ -7735,7 +7735,7 @@ There is also a transaction boundary worth examining. The `TilePlanner::prepare`
 
 ### A mastery test that connects every mechanism without breaking the narrative
 
-You should now be able to reconstruct the following reasoning without opening the source. Start with a mesh/texture asset pipeline and explain which values are known by the compiler and which appear only at runtime. Derive the source-byte size \(W\times H\times C\) and explain why multiplication must be checked before forming the result. Design a trait whose compile-time channel count is an `integral_constant` value, then show when `if constexpr` eliminates a format-specific branch and when `constexpr` merely permits a calculation to execute during compilation.
+You should now be able to reconstruct the following reasoning without opening the source. Start with a mesh/texture asset pipeline and explain which values are known by the compiler and which appear only at runtime. Derive the source-byte size $W\times H\times C$ and explain why multiplication must be checked before forming the result. Design a trait whose compile-time channel count is an `integral_constant` value, then show when `if constexpr` eliminates a format-specific branch and when `constexpr` merely permits a calculation to execute during compilation.
 
 Build a legal compile-time tile configuration with `consteval`; explain why a runtime argument cannot replace a required constant expression. Derive a four-bit Morton table from interleaving coordinate bits and verify why (3,5) yields 39. Explain why the resulting `inline constexpr` table and the `constinit` mutable counter make different guarantees. Choose two budget policies and show why the checked arithmetic contract remains valid under both. Build a `RecorderBase<Derived>` and explain precisely why the derived cast is sound only for a genuinely appropriate object; contrast that static call with runtime type erasure. Use empty tag types to distinguish a verified payload from a metadata-only plan and explain why the latter cannot be used as proof of upload readiness. Finally draw the three policy holder layouts and state what EBO and `[[no_unique_address]]` *permit*—and what they do not promise across compilers.
 
@@ -7794,18 +7794,18 @@ One important nonstandard-looking exception to "vector is a normal contiguous ar
 
 Allocating a new block for *every* append would be expensive. If a sequence grows from zero to `n` elements, and on each append we move every existing element into a precisely sized replacement block, the total number of moved elements is:
 
-\[
+$$
 0+1+2+\cdots+(n-1)=\frac{n(n-1)}{2}.
-\]
+$$
 
 This is quadratic in `n`. It is not a reasonable growth strategy for a large asset array.
 
 A common implementation instead chooses a new capacity that is a factor `g>1` larger when the vector fills. If the capacities are approximately `1,g,g^2,\ldots,g^k`, the total number of previously stored elements copied or moved across those reallocation events is a geometric series:
 
-\[
+$$
 1+g+g^2+\cdots+g^{k-1}
 =\frac{g^k-1}{g-1}.
-\]
+$$
 
 Since the last capacity is on the order of the final element count, the total relocation work over all appends is proportional to `n` for fixed `g>1`. Divide total work by `n` appends and the *amortized* relocation cost per append is constant, even though one particular append may relocate a large existing sequence. For a factor around two, the geometric series of prior capacities is bounded by a small multiple of the final size; for a smaller growth factor the storage overhead may be lower but the number of reallocations higher. These are tradeoffs, not standardized growth factors.
 
@@ -7931,15 +7931,15 @@ Under typical hash distribution assumptions, insertion, lookup and deletion have
 
 A hash table's **load factor** is:
 
-\[
+$$
 \alpha = \frac{n}{b},
-\]
+$$
 
 where `n` is the number of elements and `b` is the number of buckets. The `max_load_factor` setting establishes the desired upper bound after applicable operations and controls when growth is needed. If we want to support at least `N` elements while targeting maximum load `m`, the bucket count needs to be at least approximately:
 
-\[
+$$
 b \ge \left\lceil \frac{N}{m} \right\rceil.
-\]
+$$
 
 In the lab we set `max_load_factor(0.5f)` and later call `reserve(96)`, requesting enough bucket capacity for that many elements under the configured maximum. This request is not the same as reserving space for 96 contiguous objects. `unordered_map::reserve` is connected to bucket reorganization, not vector's element storage. Some implementations may grow or choose a bucket count using their own policies; the exact bucket number is not a portable constant.
 
@@ -8314,9 +8314,9 @@ Partitioning is an important building block in many algorithms, from in-place fi
 
 Our owned snapshot's byte sizes are 48, 64, 16, 128 and 48. After sorting by byte count they are:
 
-\[
+$$
 [16,\ 48,\ 48,\ 64,\ 128].
-\]
+$$
 
 The editor asks for all assets whose source payload is exactly 48 bytes. A linear scan would work, but because we have *already sorted by this key*, we can search the boundaries of the equal-key range.
 
@@ -8385,9 +8385,9 @@ An overlapping input/output arrangement must satisfy the algorithm's specified i
 
 Our byte counts are:
 
-\[
+$$
 48+64+16+128+48 = 304.
-\]
+$$
 
 With integers in a sufficiently wide type, this is straightforward. The lab uses `std::accumulate` with a `std::size_t{0}` initial value:
 
@@ -8396,31 +8396,31 @@ auto total = std::accumulate(
     sizes.begin(), sizes.end(), std::size_t{0});
 ```
 
-The initial value matters twice. First, it sets the result's initial value and type. Supplying a plain `0` would commonly select an `int` accumulator, which can truncate conversions or overflow when counting a large number of bytes. Second, `accumulate` is an **ordered left fold**. For elements \(a_1,\ldots,a_n\) and initial \(z\), its grouping follows:
+The initial value matters twice. First, it sets the result's initial value and type. Supplying a plain `0` would commonly select an `int` accumulator, which can truncate conversions or overflow when counting a large number of bytes. Second, `accumulate` is an **ordered left fold**. For elements $a_1,\ldots,a_n$ and initial $z$, its grouping follows:
 
-\[
+$$
 (((z+a_1)+a_2)+\cdots)+a_n.
-\]
+$$
 
 The algorithm traverses the range from beginning to end and combines each next element with the current accumulator in that sequence. If the operation itself has side effects, they must still respect its specified use and not illegally invalidate the input range.
 
 `std::reduce` has a different semantic allowance. It may combine elements in an unspecified grouping and order rather than necessarily following that left fold. This can enable more freedom for a reduction implementation, including implementations taking advantage of parallel-friendly combinations. But there is **no guarantee that a particular call without an execution policy actually launches parallel threads**. The important difference is what order and grouping the language permits.
 
-Why does the distinction matter? Addition of *mathematical real numbers* is associative. Floating-point addition on a finite machine is not, because intermediate results are rounded. Take \(L=10^{20}\) and the sequence \(L,1,-L,3\). In the tested ordinary binary64 representation:
+Why does the distinction matter? Addition of *mathematical real numbers* is associative. Floating-point addition on a finite machine is not, because intermediate results are rounded. Take $L=10^{20}$ and the sequence $L,1,-L,3$. In the tested ordinary binary64 representation:
 
-\[
+$$
 ((L+1)-L)+3 = 3
-\]
+$$
 
-because adding one to a quantity of magnitude \(10^{20}\) loses the one at the available precision. But another grouping gives:
+because adding one to a quantity of magnitude $10^{20}$ loses the one at the available precision. But another grouping gives:
 
-\[
+$$
 (L-L)+(1+3)=4.
-\]
+$$
 
 The difference is not merely performance; it changes the numerical result. A floating-point `reduce` is allowed to group operations in ways that yield a different rounding pattern from a specified sequential `accumulate`. The lab checks two explicit groupings to demonstrate the numerical issue, rather than asserting that `std::reduce` on this compiler *must* choose one particular grouping. For the five small `std::size_t` byte counts, both accumulate and reduce yield 304 under the tested implementation, and their integer addition is exact within the chosen range.
 
-For a production engine, we must separately think about overflow and reproducibility. Unsigned integer addition can wrap if the total exceeds its range, producing an incorrect allocation budget even though it is defined modulo \(2^N\); signed overflow is an undefined-behavior risk in the wrong context. A checked sum can reject values before addition, or use a wider bounded accumulator. For floating-point statistics, we can choose a deterministic accumulation order, wider precision, pairwise summation, compensated summation such as Kahan's method when appropriate, or reproducible reduction schemes. These methods have their own numerical assumptions and performance costs; simply selecting `reduce` does not certify an accurate, deterministic total.
+For a production engine, we must separately think about overflow and reproducibility. Unsigned integer addition can wrap if the total exceeds its range, producing an incorrect allocation budget even though it is defined modulo $2^N$; signed overflow is an undefined-behavior risk in the wrong context. A checked sum can reject values before addition, or use a wider bounded accumulator. For floating-point statistics, we can choose a deterministic accumulation order, wider precision, pairwise summation, compensated summation such as Kahan's method when appropriate, or reproducible reduction schemes. These methods have their own numerical assumptions and performance costs; simply selecting `reduce` does not certify an accurate, deterministic total.
 
 ### Erasing “by algorithm” is not automatically erasing “from the container”
 
@@ -8486,7 +8486,7 @@ g++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror \
 
 The exact committed source was compiled and executed with GCC 14.2.0 and AddressSanitizer/UndefinedBehaviorSanitizer, Clang 17.0.0 with warnings as errors, and GCC 14.2.0 with `-O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror`. Each run printed `asset_query_algorithm_lab: all checks passed` and the sanitizer run reported no diagnostics. The local executed and GitHub committed source matched the same Git blob `0fa0a888b2aa0c348a52307a049bbf38527fcde1` and SHA-256 `c479bd493444d093f6c34898d4ecdf43938cdbd82de8986a7b1906a5bc374f9c`. These are witnesses for the modeled C++ semantics, not proofs of thread safety, a production asset query service or native GPU execution.
 
-To **reconstruct from a blank file**, begin by explaining why `optional<AssetHandle>` is a useful presence test but cannot say whether the input name was invalid. Build a success-or-error type, then contrast it with a three-alternative command variant and an open-ended diagnostic `any`. Give an example where a structured binding copies its pair versus borrowing it. Prove the iterator-category requirements for vector, deque, list, forward_list and input streams. Sort five asset records by bytes with an explicit tie-breaker, then use stable sort when the original order of equal-priority items matters. Partition by asset kind, locate the partition boundary, and explain why this does not satisfy the byte-count sorting precondition for binary search. From the sorted byte sequence `[16,48,48,64,128]`, derive the exact lower and upper bound indices for 48. Transform the records into sizes and derive 304 with a correctly typed initial accumulator. Show, with \(10^{20},1,-10^{20},3\), why floating-point grouping can produce 3 or 4. Finally implement both erase–remove and `std::erase_if`, and explain why deleting *report rows* is not the same as destroying *live assets*.
+To **reconstruct from a blank file**, begin by explaining why `optional<AssetHandle>` is a useful presence test but cannot say whether the input name was invalid. Build a success-or-error type, then contrast it with a three-alternative command variant and an open-ended diagnostic `any`. Give an example where a structured binding copies its pair versus borrowing it. Prove the iterator-category requirements for vector, deque, list, forward_list and input streams. Sort five asset records by bytes with an explicit tie-breaker, then use stable sort when the original order of equal-priority items matters. Partition by asset kind, locate the partition boundary, and explain why this does not satisfy the byte-count sorting precondition for binary search. From the sorted byte sequence `[16,48,48,64,128]`, derive the exact lower and upper bound indices for 48. Transform the records into sizes and derive 304 with a correctly typed initial accumulator. Show, with $10^{20},1,-10^{20},3$, why floating-point grouping can produce 3 or 4. Finally implement both erase–remove and `std::erase_if`, and explain why deleting *report rows* is not the same as destroying *live assets*.
 
 The complete coverage reference is [[Supplementary/Foundations#M016 — Parts 251–270: the asset registry becomes a query and transformation pipeline|M016's original twenty-part audit map]], supported by [[Supplementary/Sources and Code Anchors#Phase 6 additive reconstruction — M016 / Parts 251–270|the verification and provenance ledger]] and [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall#Query the registry without confusing identity and a snapshot — M016 reconstruction|the reconstruction board]]. This chapter is **authored reconstruction based on the canonical curriculum**, not a newly received M016 transcript. The current separate `KairoSpatial/BVH.cppm` and `KairoRayTracer/Scene.cppm` repositories and their specific revisions have not been inspected in this phase. No independent learner mastery test, real asset-registry concurrency proof, numerical-reproducibility benchmark, or GPU/graphics test is claimed. The next contract range, M017 / Parts 271–290, should become necessary when this query pipeline needs lazy ranges, allocators, PMR and stable modules/ABI boundaries.
 
@@ -9200,9 +9200,9 @@ The distinction between static and dynamic dimensions appears when the same math
 
 For a dot product of size n, the straightforward algorithm is
 
-\[
+$$
 s=\sum_{i=0}^{n-1}a_i b_i.
-\]
+$$
 
 It performs n multiplications and n additions in a single pass (counting the first accumulation into zero), with O(n) time and O(1) auxiliary scalar storage. Floating-point addition, however, is not associative, so a compiler's SIMD reduction or reassociation may change rounding. The mathematical formula and the machine's numerical contract must not be casually equated. For large n, error analysis, compensated summation and reduction order may matter more than whether the vector's dimension was a template parameter.
 
@@ -9354,17 +9354,17 @@ Trace a hot asset loop. One instruction loads the record's mass, another loads x
 
 A simple recurrence makes this precise. For a scalar reduction
 
-\[
+$$
 s_{i+1}=s_i+x_i m_i,
-\]
+$$
 
 every new value of s depends on the previous sum. Even if loads and multiplications overlap, the accumulation itself forms a dependency chain. Multiple independent partial accumulators can shorten that chain, but changing the grouping changes floating-point rounding. A compiler using permitted vector or fast-math transformations can choose a different evaluation tree; strict language and compiler options limit which transformations are legal. Therefore a proposed faster reduction must state **both its numerical tolerance and its reassociation policy**.
 
 Instruction-level parallelism (ILP) is the independence available among operations within one instruction stream. Superscalar issue width is a hardware upper bound on how many appropriate operations can be issued in a cycle, not a guarantee that every instruction sequence reaches that width. Execution-port conflicts, dependent chains, branch recovery, cache misses, front-end bandwidth and register pressure reduce the realized rate. A useful first model is
 
-\[
+$$
 T_{\text{CPU}}\approx \frac{I\,\mathrm{CPI}}{f},
-\]
+$$
 
 where I is the number of executed instructions, CPI the *measured average* cycles per instruction and f the frequency. CPI is an aggregate result of a workload and machine, not an intrinsic constant for one C++ expression. Instructions that retire several per cycle can produce CPI below one; stalls can make it much larger. Frequency scaling and heterogeneous core placement further invalidate naive cycle-to-wall-time assumptions.
 
@@ -9392,10 +9392,10 @@ Prefetchers may recognize predictable sequential or strided streams and begin lo
 
 We can estimate a bandwidth lower bound when the memory-bound conditions really apply:
 
-\[
+$$
 T \;\geq\; \frac{\text{bytes that must cross the limiting interface}}
                     {\text{sustainable bytes per second}}.
-\]
+$$
 
 For a purely illustrative machine capable of sustaining 20 GB/s on the relevant transfer path, moving 2 GB of indispensable data takes at least 0.1 s on that path. The estimate is only useful if the bytes and the interface are correctly identified. Cache reuse can reduce DRAM traffic; write allocation, coherence, other threads and prefetching can increase it. We should never take the structure's size and automatically equate it to memory-bus traffic.
 
@@ -9495,9 +9495,9 @@ Different ownership patterns suggest different allocation strategies. A free-lis
 
 Alignment constrains the addresses at which objects may reside. If a type needs alignment a, its address must be divisible by a under the relevant C++/ABI definition. Over-aligned allocations may require an allocation mechanism that honors the greater alignment. For a linear arena with current cursor p and power-of-two a, a familiar alignment expression is
 
-\[
+$$
 p_{\mathrm{aligned}}=(p+a-1)\mathbin{\&}\sim(a-1),
-\]
+$$
 
 but a correct implementation must ensure that p+a−1 does not overflow, that a is valid, that the aligned extent fits the backing allocation, and that the returned pointer meets the type's actual alignment. A robust arena should reason about byte spans and capacity *before* pointer arithmetic. The formulas are not license to write past a buffer.
 
@@ -9601,9 +9601,9 @@ The test first partitions a 10,000-element array into fixed chunks, submits inde
 
 A practical scheduler chooses **grain size** so each task contains enough useful work to amortize scheduling overhead but not so much that one worker remains busy after others finish. If a task costs c units of useful work and incurs overhead h, then for n tasks
 
-\[
+$$
 T_{\mathrm{overhead}}\approx n h,
-\]
+$$
 
 before accounting for contention, cache effects and critical path dependencies. Smaller tasks improve load balancing in irregular workloads but increase overhead. Coarser tasks reduce overhead but may create idle workers and poor balance. There is no universal ideal grain size expressed solely in bytes or number of particles.
 
@@ -9613,9 +9613,9 @@ A **task dependency graph** makes execution constraints explicit. If animation m
 
 For a workload with total work W and critical-path length S, the work/span model gives a conceptual lower bound
 
-\[
+$$
 T_P\;\geq\;\max\!\left(\frac{W}{P},\, S\right)
-\]
+$$
 
 for P equal-speed processors under the model. W/P expresses total work capacity; S expresses serial dependency limitations. Real systems add scheduler cost, synchronization, memory effects and heterogeneous execution. A job system with a hundred workers cannot beat a single long dependency chain.
 
@@ -9623,9 +9623,9 @@ for P equal-speed processors under the model. W/P expresses total work capacity;
 
 Parallel reductions expose an immediate determinism problem. Floating-point addition is generally not associative:
 
-\[
+$$
 (a+b)+c\neq a+(b+c)
-\]
+$$
 
 for some representable a, b, c under finite-precision rounding. If task completion order determines reduction order, two valid executions may obtain slightly different results even without a data race. For deterministic physics, reproducible experiments and binary comparison tests, the update must define its accumulation and iteration ordering (or tolerate and quantify numerical differences).
 
@@ -9643,9 +9643,9 @@ A proper microbenchmark includes warm-up and repeated runs, measures enough work
 
 A useful speedup model is **Amdahl's law**. If fraction s of the baseline execution is inherently serial and the remainder is accelerated by a factor P, then the idealized overall speedup is
 
-\[
+$$
 S(P)=\frac{1}{s+(1-s)/P}.
-\]
+$$
 
 With s=0.2 and P=4, the ideal speedup is 1/(0.2+0.8/4)=2.5, *not* four. As P grows without limit, the maximum under this fixed-fraction model approaches 1/s=5. The model assumes the work fractions and costs are meaningful and ignores many real overheads; it does not predict actual hardware utilization. It teaches us why profiling the serial fraction and the critical path matters before growing the pool.
 
@@ -9679,9 +9679,9 @@ Space complexity should identify auxiliary storage separately from input and out
 
 A dynamic array stores elements contiguously and supports amortized O(1) append under geometric growth. Suppose capacity doubles whenever it fills. At growth sizes 1,2,4,8,..., the number of elements moved over n insertions is bounded by a geometric series:
 
-\[
+$$
 1+2+4+\cdots+2^k < 2^{k+1}\leq 2n
-\]
+$$
 
 for the relevant k near the final capacity. Although one particular insertion can move Θ(n) elements, the total relocation work across n insertions is O(n), making average amortized relocation cost O(1) per insertion. This is an **aggregate analysis**, not a guarantee that every append has constant latency. A real engine may need to reserve capacity before a frame deadline to avoid an occasional large allocation/copy in a hot path.
 
@@ -9695,9 +9695,9 @@ A linked list avoids relocating existing nodes during insertion at a known posit
 
 An asset-streaming queue receives new work and processes it in FIFO order. We can represent it with a fixed array, a head index and a count. Its invariant is 0 ≤ count ≤ capacity; the next insertion position is
 
-\[
+$$
 \mathrm{tail}=(\mathrm{head}+\mathrm{count})\bmod C.
-\]
+$$
 
 When count=C, the queue is full; when count=0, it is empty. This avoids the ambiguity of a representation using only head and tail, for which head==tail can mean full *or* empty unless one slot is deliberately left unused or another state bit/count is stored. A design that leaves one slot unused has effective capacity C−1. Neither representation is universally better; the full/empty policy must be explicit to callers.
 
@@ -9725,9 +9725,9 @@ Sometimes the streaming system wants to ask whether a requested asset is *defini
 
 With n inserted keys and ideal independent uniform hashing assumptions, a familiar approximate false-positive probability is
 
-\[
+$$
 p_{\mathrm{fp}}\approx\left(1-e^{-kn/m}\right)^k.
-\]
+$$
 
 The approximation comes from estimating the probability that a bit remains zero after kn bit assignments as (1−1/m)^{kn}≈e^{-kn/m}, then requiring all k queried positions to be one. This is an approximate probabilistic model, not an exact guarantee for arbitrary poor or correlated hash functions. The choice of m and k trades memory, compute and false-positive rate.
 
@@ -9807,9 +9807,9 @@ Now assign nonnegative weights to the same navigation graph: 0→1 costs 2, 0→
 
 A relaxation computes
 
-\[
+$$
 d(v)\leftarrow\min(d(v),\,d(u)+w(u,v)).
-\]
+$$
 
 The sum must be representable. An integer implementation should guard overflow; a floating implementation should specify how NaNs, infinities and negative values are handled. The lab uses a bounded integer infinity sentinel, checks positive-distance addition before performing it, rejects negative edge weights and ignores stale heap entries. With a binary heap and adjacency lists, an implementation that inserts an improved entry rather than decreasing an existing heap key typically has a bound on the order of O((V+E)log(V+E)) in a straightforward analysis, with variations from data structure and representation. Stating simply O(E log V) without identifying the queue and update strategy can hide assumptions.
 
@@ -9817,10 +9817,10 @@ The sum must be representable. An integer implementation should guard overflow; 
 
 **Floyd–Warshall** computes all-pairs shortest paths by gradually allowing more intermediate vertices. Let D_k(i,j) be the shortest route from i to j whose intermediate vertices are drawn from the first k candidate vertices. The recurrence is
 
-\[
+$$
 D_k(i,j)=\min\!\left(D_{k-1}(i,j),
 D_{k-1}(i,k)+D_{k-1}(k,j)\right).
-\]
+$$
 
 The algorithm follows from whether an optimal path uses intermediate k or not. A direct implementation costs O(V³) time and O(V²) storage, making it attractive as a small-graph *reference oracle* even when it is too expensive for a massive world graph. Negative cycles require explicit detection and interpretation. The Phase 5 lab uses bounded nonnegative generated weights and compares each Dijkstra row against Floyd–Warshall on 48 deterministic random six-vertex graphs. This is valuable differential testing, not proof for arbitrary graph size, negative weights or overflow.
 
@@ -9828,9 +9828,9 @@ The algorithm follows from whether an optimal path uses intermediate k or not. A
 
 In a large navigation world, we often want the shortest path to one target rather than the distances to all vertices. **A*** maintains the actual best-known cost g(n) from the start and a heuristic estimate h(n) of the remaining cost to the goal, ordering exploration by
 
-\[
+$$
 f(n)=g(n)+h(n).
-\]
+$$
 
 An **admissible heuristic** never overestimates the true remaining optimal cost h*(n), so h(n) ≤ h*(n). A **consistent heuristic** satisfies h(u) ≤ w(u,v)+h(v) for each edge and h(goal)=0, under the conventional nonnegative route-cost model. Consistency is a triangle inequality on heuristic potential and implies that f values behave nondecreasingly along improvements in a way that permits particularly simple closed-set handling. Admissibility and consistency are related but not synonymous.
 
@@ -9876,10 +9876,10 @@ One of the most important bridges from CPU algorithms to GPU execution is the **
 
 Formally,
 
-\[
+$$
 o_i=\sum_{j<i}c_j,\qquad
 \mathrm{total}=\sum_{j=0}^{n-1}c_j.
-\]
+$$
 
 An **inclusive scan** instead outputs the sum through the current element, e.g. [3,3,7,9]. The two definitions differ by an index shift and identity element. Confusing them can make GPU scatter writes overlap or start one element too far into a buffer. The lab tests both the expected exclusive offsets and total and rejects unsigned-sum overflow before it can wrap. An empty input has total zero and no offsets.
 
@@ -10205,11 +10205,11 @@ Nsight Systems can correlate Vulkan API calls, command-buffer creation, GPU work
 
 The first profiling question is therefore:
 
-\[
+$$
 \boxed{
 \text{where is time absent from useful work?}
 }
-\]
+$$
 
 not “which function looks expensive?”
 
@@ -10235,7 +10235,7 @@ Shader profiling becomes useful only after evidence says the workload is shader/
 
 This gives a narrowing funnel:
 
-\[
+$$
 \boxed{
 \text{system timeline}
 \rightarrow
@@ -10245,7 +10245,7 @@ This gives a narrowing funnel:
 \rightarrow
 \text{shader/source}
 }
-\]
+$$
 
 Jumping directly to source-level micro-optimization can waste hours when the real problem is an idle gap or synchronization edge.
 
@@ -10287,9 +10287,9 @@ Profile:
 
 Performance is a function of workload and hardware:
 
-\[
+$$
 T = T(\text{scene},\text{settings},\text{hardware},\text{driver},\text{build}).
-\]
+$$
 
 Store enough metadata with captures to reproduce that tuple.
 
@@ -10309,7 +10309,7 @@ If a shader is bandwidth limited, reducing ALU may do nothing. If it is latency 
 
 Profiling is an iterative scientific loop:
 
-\[
+$$
 \boxed{
 \text{observe}
 \rightarrow
@@ -10319,7 +10319,7 @@ Profiling is an iterative scientific loop:
 \rightarrow
 \text{remeasure}
 }
-\]
+$$
 
 Tracy and engine-side timers are excellent for continuous CPU instrumentation. RenderDoc is excellent for portable frame inspection. Nsight Systems is strong for CPU/GPU scheduling correlation on supported NVIDIA systems. Nsight Graphics provides deep Vulkan/D3D graphics and shader analysis on NVIDIA hardware. Xcode GPU tools serve the analogous Apple/Metal workflow.
 
@@ -10346,7 +10346,7 @@ A large curriculum gets weaker if every source is treated as authoritative about
 
 The curriculum rule is:
 
-\[
+$$
 \boxed{
 \text{concept source}
 \rightarrow
@@ -10356,7 +10356,7 @@ The curriculum rule is:
 \rightarrow
 \text{current specification}
 }
-\]
+$$
 
 That is why this volume does not create detached “Kohi,” “Cherno,” or “CppCon” chapters. Their material is merged where the engineering pressure makes it necessary.
 
@@ -14905,6 +14905,344 @@ stable reflection schema.
 ```
 
 ---
+
+<!-- Book-completion teaching addition b60e5038067cfed4 -->
+
+### Turn shader import into a checked derivation transaction
+
+The preceding sections establish that source, compiler settings, included files, and reflection all affect the result. Put those inputs into one deterministic import procedure. This is an authored design for an engine asset pipeline, not a claim that the inspected Kairo importer already implements it. The complete commented laboratory below uses only Python's standard library and a mock compiler; it checks closure, variant keys, ABI rejection, failures, and publication order, not real GPU bytecode or a driver.
+
+A **variant** is one chosen shader configuration: stage, entry point, preprocessor defines and target settings. The **source closure** is the entry file plus every dependency actually read under that configuration. **Reflection** describes the compiled interface in machine-readable form. The shader/host **application binary interface (ABI)** is the agreed resource-binding and data-layout contract; matching names alone does not establish compatibility.
+
+#### 1. Resolve a source closure under a declared policy
+
+Start from a canonical asset identity plus stage, entry point, and a declared set of include roots. Invoke the compiler's preprocessor/include callback with the actual define set, because conditional compilation can change which files are included. For each resolved include, snapshot its bytes once and record a stable project-relative or virtual path plus digest. Reject missing files and directory escapes with the requesting include chain. Do not treat every textual dependency-graph cycle as an error: an include guard or conditional macro can terminate recursive preprocessing. Let the actual compiler preprocessor decide which include requests remain active, and diagnose an active recursion/depth failure with its include chain. Deduplicate file evidence by canonical identity while preserving the compiler's semantic expansion order. A sorted dependency manifest can be used for key encoding only if the ordered preprocessing result is also represented.
+
+A compiler interface can report includes through callbacks. For example, shaderc's includer callback receives the requested include name, include kind, requesting source, and depth; its returned source name must identify the resolved file uniquely. That makes the callback a natural place to enforce root policy and collect dependency records. DXC has its own include-handler interface. Use the selected compiler's preprocessing/dependency contract rather than substituting a regex scanner for real language semantics.
+
+#### 2. Hash the complete variant recipe
+
+After preprocessing has resolved the active closure, canonicalize a recipe such as
+
+$$
+K=H(\operatorname{encode}(\mathcal D,\mathcal V,\mathcal T,\mathcal P,\mathcal A)).
+$$
+
+Here $H$ is the chosen content digest and `encode` is the canonical recipe serialization. Define its fields before relying on the key:
+
+| Field | Contents |
+|---|---|
+| $\mathcal D$ | Actual dependency identities and snapshotted byte digests |
+| $\mathcal V$ | Shader stage, entry point and normalized define values |
+| $\mathcal T$ | Compiler/toolchain identity and digest, arguments, optimization, target/profile and enabled features |
+| $\mathcal P$ | Importer/preprocessor policy and reflection-schema versions |
+| $\mathcal A$ | Expected host/shader interface and its contract version |
+
+
+Use a canonical serialization with explicit top-level fields for source closure, normalized compiler settings, ABI contract, reflection schema version, and importer-policy version. Keep user-supplied settings nested so a key named `source_closure` cannot overwrite the real file evidence. Use stable key ordering, explicit value types, normalized paths, and no timestamps or machine-specific checkout paths. Hash the compiler executable or packaged toolchain identity as well as its display version where reproducibility matters. A change to an included byte, define, entry point, optimization mode, compiler, target, ABI contract, or importer policy must produce a different key. A debug name or source timestamp that does not affect output should not be an accidental key input. The monotonically increasing import-request revision is not part of the artifact key: it controls which completed job may become active, not what the shader binary means.
+
+#### 3. Compile a private candidate and collect reflection
+
+Run the compiler into a unique temporary directory on the same filesystem as the cache. Capture diagnostics, exit status, output bytes, and the toolchain version. Do not write over the currently active artifact. Extract reflection from the compiler output or its supported reflection API, then normalize it to a versioned schema.
+
+A useful interface record includes descriptor set and binding, descriptor kind and array length, stage visibility, push-constant byte range, uniform/storage block size and member offsets, vertex input locations and formats, specialization constants and IDs, and compute workgroup size. These are compatibility facts, not decoration: a renderer's pipeline layout must agree with statically used shader resources and stage visibility. The Vulkan descriptor-set contract, for example, requires statically used resources to correspond to bindings with appropriate descriptor types and stage flags. Other backends have their own ABI rules, so map reflection into a backend-neutral schema carefully and preserve backend-specific fields where necessary.
+
+Compare reflected interfaces with the asset's declared pipeline contract before publication. Report the first mismatch with both values: for example, “set 0 binding 3 is `storage_buffer` in the shader but `sampled_image` in the material layout,” or “member `roughness` offset is 16 bytes in the shader and 12 in the CPU contract.” Reject duplicate bindings and unsupported layout features. The ABI comparison must include layout details such as byte offsets, array strides, matrix orientation/stride, and alignment when the backend contract exposes them; matching only the resource name and type is insufficient.
+
+#### 4. Publish only a complete successful result
+
+Package bytecode, normalized reflection, recipe, dependency manifest, compiler diagnostics summary, and content digests into one immutable cache entry named by $K$. Write all files into a staging directory, close them, and atomically rename that complete directory into its immutable, recipe-keyed final name. The recipe hash identifies inputs; the output digest records produced bytes. If supposedly identical inputs produce different outputs, diagnose a nondeterministic toolchain or an omitted input rather than overwrite the existing entry. If the key already exists, verify its manifest, recipe, and binary digest before reuse; a cache directory name alone is not proof that its contents are intact. For concurrent workers, coordinate final-name creation with an exclusive lock or no-replace rename and compare the winning manifest; never expose a half-written directory.
+
+Only after the cache entry exists should the importer consider atomically replacing a small logical-asset pointer naming the new key. Tag each requested import with a monotonically increasing revision. Before pointer replacement, compare the job revision with the asset's latest requested revision. A late older job may keep its valid content-addressed cache entry, but it must not reactivate an obsolete shader after a newer request exists. A failed compile, include resolution, validation, reflection parse, cache-integrity check, or ABI check leaves the prior pointer untouched. At runtime hot reload, create/validate the backend pipeline from the candidate artifact first; switch the active GPU pipeline only after that succeeds. This separates a valid compiled cache object from a pipeline accepted by a particular device.
+
+A result that finishes late may still be a valid cache entry for its old recipe. It must not become the active asset if a newer authoring revision has been requested. Check the current request revision and switch the logical pointer under the same per-asset publication lock or transaction. Checking a revision and later renaming a pointer in separate unsynchronized operations leaves a race. The serial lab below demonstrates the state rule; it does not implement multiprocess locking or crash durability.
+
+#### Solved trace: one variant and two failures
+
+Assume `mesh.hlsl` includes `common.hlsli`, which includes `lighting.hlsli`; define `SKINNED=1`; compile entry `main` for the vertex stage with DXC `1.8.2407`, profile `vs_6_6`, DXIL output, optimization `O2`, compiler binary identity, and reflection schema 2. The include handler resolves both files under `Shaders/Shared`, records their canonical virtual paths and snapshotted SHA-256 digests, and obtains the active expansion from DXC's preprocessing path. The importer canonicalizes the closure and settings to compute key $K_1$. DXIL and its reflection are written into a staging directory. Reflection reports set 0 binding 0 as a uniform buffer with a 64-byte block; the pipeline contract expects exactly that layout, so validation passes. The importer verifies and stores the binary and manifest under `cache/K_1`, then updates the logical shader pointer to `K_1` only if this request is still the newest revision.
+
+Now change only `lighting.hlsli` bytes. The include record digest changes, so the next recipe produces $K_2$ even though `mesh.hlsl` is unchanged. If the compiler then reports set 0 binding 0 as a 48-byte block, the ABI gate rejects the candidate and leaves the pointer at $K_1$. Fix the contract or shader and rerun; only a passing compile plus matching ABI can update the pointer. Similarly, toggling `SKINNED`, upgrading DXC, changing shader profile/target, or changing optimization produces a distinct key even if root source is identical. A missing include or active unresolved recursion fails before successful publication. If request 2 has already superseded request 1, a late request-1 completion may add a verified cache entry but cannot move the active pointer back from request 2.
+
+**Solved exercise.** Add a second include used only when `SHADOWS=1`; compile once with the define off and once on. Record each actual preprocessor closure, then confirm the closures and keys differ when the additional include is active. Change the new include's bytes and confirm only the enabled variant gets a new key. Next change the expected block size from 64 to 48 while keeping the shader reflection at 64: the importer must emit an ABI mismatch and preserve the previous active-key pointer. Finally, correct the contract, deliberately make compilation fail, and verify the pointer still names the last successful artifact. The private stdlib lab is a **single-process, serial mock**. Its strict resolver rejects any recursive include and has no macro/include-guard evaluation; a production importer must honor the selected compiler's actual preprocessor semantics. The lab exercises key separation, ABI rejection, cache tampering, stale revision suppression, and same-filesystem rename with a mock reflection annotation and deterministic digest in place of GPU bytecode. It does not implement a real compiler, language preprocessor, GPU pipeline creation, crash durability, or multi-process locking.
+
+#### A complete bounded importer model
+
+Run `python3 tools/labs/shader_import_lab.py` or `python3 -O tools/labs/shader_import_lab.py`. This serial UTF-8, quoted-unconditional-include model uses annotation-based mock reflection and a deterministic digest in place of compiler output. Its checks cover keys, source snapshots, ABI rejection, cache tampering and stale requests. A real compiler's conditional preprocessing, physical shader layouts, GPU pipelines, concurrent publication and durability require their own implementation and evidence.
+
+```python
+"""Serial stdlib model of shader import inputs, ABI gate, cache checks, and publication."""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import shutil
+import tempfile
+import unittest
+from pathlib import Path
+
+INCLUDE = re.compile(r'^\s*#include\s+"([^"]+)"\s*$', re.MULTILINE)
+BINDING = re.compile(r'^\s*//\s*@binding\s+(\d+)\s+(\w+)\s*$', re.MULTILINE)
+IMPORTER_POLICY_VERSION = 1
+
+
+class ImportErrorDetail(RuntimeError):
+    pass
+
+
+def sha(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def source_closure(root: Path, entry: Path) -> tuple[str, list[dict[str, str]]]:
+    """Resolve a strict include graph; bytes are snapshotted once per canonical path."""
+    root = root.resolve()
+    visiting: list[Path] = []
+    visited: set[Path] = set()
+    snapshots: dict[Path, bytes] = {}
+    records: list[dict[str, str]] = []
+
+    def expand(path: Path) -> str:
+        path = path.resolve()
+        if root not in path.parents and path != root:
+            raise ImportErrorDetail(f"include escapes source root: {path}")
+        if path in visiting:
+            cycle = " -> ".join(p.name for p in (*visiting, path))
+            # This toy resolver has no macro/include-guard evaluation; its strict policy
+            # rejects every recursive include. A real importer asks its preprocessor.
+            raise ImportErrorDetail(f"strict include cycle: {cycle}")
+        if path not in snapshots:
+            try:
+                snapshots[path] = path.read_bytes()
+            except OSError as exc:
+                raise ImportErrorDetail(f"missing include/source: {path}") from exc
+        raw = snapshots[path]
+        if path not in visited:
+            records.append({"path": path.relative_to(root).as_posix(), "sha256": sha(raw)})
+        visiting.append(path)
+        text = raw.decode("utf-8")
+
+        def replace(match: re.Match[str]) -> str:
+            # Resolve relative includes from their requesting file, like an includer callback.
+            return expand(path.parent / match.group(1))
+
+        expanded = INCLUDE.sub(replace, text)
+        visiting.pop()
+        visited.add(path)
+        return expanded
+
+    preprocessed = expand(entry)
+    # Stable paths and snapshotted bytes define the closure, never mtimes or checkout roots.
+    records.sort(key=lambda item: item["path"])
+    return preprocessed, records
+
+
+def reflection_from(preprocessed: str) -> list[dict[str, object]]:
+    """Mock reflection reads annotations; no shader compiler or GPU ABI is involved."""
+    rows = [{"binding": int(n), "kind": kind} for n, kind in BINDING.findall(preprocessed)]
+    if len({row["binding"] for row in rows}) != len(rows):
+        raise ImportErrorDetail("duplicate reflected binding index")
+    return sorted(rows, key=lambda row: int(row["binding"]))
+
+
+def recipe_for(records: list[dict[str, str]], settings: dict[str, object],
+               expected_abi: list[dict[str, object]]) -> dict[str, object]:
+    # Keep user settings nested: a field named source_closure cannot replace file evidence.
+    return {
+        "source_closure": records,
+        "settings": settings,
+        "abi_contract": sorted(expected_abi, key=lambda row: int(row["binding"])),
+        "abi_schema_version": settings["reflection_schema"],
+        "importer_policy_version": IMPORTER_POLICY_VERSION,
+    }
+
+
+def variant_key(records: list[dict[str, str]], settings: dict[str, object],
+                expected_abi: list[dict[str, object]]) -> str:
+    recipe = recipe_for(records, settings, expected_abi)
+    encoded = json.dumps(recipe, sort_keys=True, separators=(",", ":")).encode()
+    return sha(encoded)
+
+
+def begin_request(cache: Path, revision: int) -> None:
+    """Record the newest requested revision before scheduling work for it."""
+    cache.mkdir(parents=True, exist_ok=True)
+    latest = cache / "latest-request"
+    if latest.exists() and revision <= int(latest.read_text()):
+        raise ImportErrorDetail("request revision must increase")
+    temp = cache / ".latest-request.tmp"
+    temp.write_text(f"{revision}\n")
+    os.replace(temp, latest)
+
+
+def validate_cache_entry(entry: Path, key: str, recipe: dict[str, object]) -> None:
+    """Never trust a content-addressed directory solely because its name matches."""
+    try:
+        manifest = json.loads((entry / "manifest.json").read_text())
+        binary = (entry / "shader.bin").read_bytes()
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ImportErrorDetail(f"unreadable cache entry: {key}") from exc
+    if not isinstance(manifest, dict):
+        raise ImportErrorDetail(f"cache manifest is not an object: {key}")
+    if manifest.get("key") != key or manifest.get("recipe") != recipe:
+        raise ImportErrorDetail(f"cache manifest mismatch: {key}")
+    if manifest.get("reflection") != recipe["abi_contract"]:
+        raise ImportErrorDetail(f"cache reflected interface mismatch: {key}")
+    if manifest.get("binary_sha256") != sha(binary):
+        raise ImportErrorDetail(f"cache binary digest mismatch: {key}")
+
+
+def publish_current(cache: Path, key: str, request_revision: int) -> bool:
+    """Activate only if this result still belongs to the newest requested revision."""
+    # Serial model: the caller must serialize this check and replacement.
+    # An atomic file rename alone is NOT a revision compare-and-swap. Real
+    # concurrent publication needs one per-asset lock/transaction around both.
+    latest = int((cache / "latest-request").read_text())
+    if latest != request_revision:
+        return False
+    pointer_tmp = cache / ".current.tmp"
+    pointer_tmp.write_text(json.dumps({"key": key, "request_revision": request_revision}) + "\n")
+    os.replace(pointer_tmp, cache / "current")
+    return True
+
+
+def import_shader(root: Path, entry: Path, cache: Path, settings: dict[str, object],
+                  expected_abi: list[dict[str, object]], request_revision: int) -> tuple[str, bool]:
+    """Build/reuse immutable artifact, then attempt revision-guarded pointer activation."""
+    preprocessed, records = source_closure(root, entry)
+    recipe = recipe_for(records, settings, expected_abi)
+    key = variant_key(records, settings, expected_abi)
+    reflected = reflection_from(preprocessed)
+    expected = sorted(expected_abi, key=lambda row: int(row["binding"]))
+    if reflected != expected:
+        raise ImportErrorDetail(f"reflection ABI mismatch: got {reflected}, expected {expected}")
+    if "#error" in preprocessed:
+        raise ImportErrorDetail("mock compiler rejected #error directive")
+
+    # Deterministic digest stands in for bytecode; it is not compiler output.
+    binary = hashlib.sha256((preprocessed + json.dumps(recipe, sort_keys=True)).encode()).hexdigest().encode()
+    cache.mkdir(parents=True, exist_ok=True)
+    final_entry = cache / key
+    if final_entry.exists():
+        validate_cache_entry(final_entry, key, recipe)
+    else:
+        stage = Path(tempfile.mkdtemp(prefix=".candidate-", dir=cache))
+        try:
+            (stage / "shader.bin").write_bytes(binary)
+            manifest = {"key": key, "recipe": recipe, "reflection": reflected,
+                        "binary_sha256": sha(binary)}
+            (stage / "manifest.json").write_text(json.dumps(manifest, sort_keys=True, indent=2) + "\n")
+            # Same-filesystem rename exposes the completed directory as one cache entry.
+            os.replace(stage, final_entry)
+        finally:
+            if stage.exists():
+                shutil.rmtree(stage)
+        validate_cache_entry(final_entry, key, recipe)
+    # A late older job may keep its valid cache result but cannot move the active pointer back.
+    return key, publish_current(cache, key, request_revision)
+
+
+class ShaderImportTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory()
+        self.base = Path(self.temp.name)
+        self.src = self.base / "src"
+        self.cache = self.base / "cache"
+        (self.src / "inc").mkdir(parents=True)
+        (self.src / "main.hlsl").write_text('#include "inc/common.hlsli"\nvoid main() {}\n')
+        (self.src / "inc/common.hlsli").write_text('// @binding 0 uniform_buffer\n')
+        self.settings = {"stage": "vertex", "entry": "main", "defines": {"SKINNED": 0},
+                         "compiler": "mock-dxc", "version": "1.0", "backend": "dxil",
+                         "profile": "vs_6_6", "optimization": "O2", "reflection_schema": 1,
+                         "abi_contract_version": 1}
+        self.abi = [{"binding": 0, "kind": "uniform_buffer"}]
+        self.revision = 0
+
+    def tearDown(self) -> None:
+        self.temp.cleanup()
+
+    def build(self, revision: int | None = None) -> tuple[str, bool]:
+        if revision is None:
+            self.revision += 1
+            revision = self.revision
+            begin_request(self.cache, revision)
+        return import_shader(self.src, self.src / "main.hlsl", self.cache,
+                             self.settings, self.abi, revision)
+
+    def test_closure_settings_and_abi_contract_change_key(self) -> None:
+        base, _ = self.build()
+        (self.src / "inc/common.hlsli").write_text('// @binding 0 uniform_buffer\n// changed\n')
+        self.assertNotEqual(base, self.build()[0])
+        (self.src / "inc/common.hlsli").write_text('// @binding 0 uniform_buffer\n')
+        stable_base, _ = self.build()
+        original = dict(self.settings)
+        variants = (("version", "2.0"), ("backend", "spirv"), ("profile", "vs_6_7"),
+                    ("optimization", "O0"), ("stage", "fragment"), ("entry", "shade"),
+                    ("defines", {"SKINNED": 1}), ("compiler", "mock-dxc-next"),
+                    ("abi_contract_version", 2))
+        for field, value in variants:
+            self.settings = dict(original)
+            before = self.build()[0]
+            self.settings[field] = value
+            self.assertNotEqual(before, self.build()[0], field)
+        self.settings = original
+        self.assertEqual(stable_base, self.build()[0])
+
+    def test_reserved_setting_cannot_hide_include_change(self) -> None:
+        # An ill-named user option remains nested under settings in the recipe.
+        self.settings["source_closure"] = [{"path": "forged", "sha256": "0"}]
+        base, _ = self.build()
+        (self.src / "inc/common.hlsli").write_text('// @binding 0 uniform_buffer\nchanged\n')
+        changed, _ = self.build()
+        self.assertNotEqual(base, changed)
+
+    def test_abi_or_compile_failure_keeps_last_good_pointer(self) -> None:
+        good_key, activated = self.build()
+        self.assertTrue(activated)
+        pointer = self.cache / "current"
+        self.assertEqual(json.loads(pointer.read_text())["key"], good_key)
+        self.abi = [{"binding": 1, "kind": "uniform_buffer"}]
+        with self.assertRaisesRegex(ImportErrorDetail, "ABI mismatch"):
+            self.build()
+        self.assertEqual(json.loads(pointer.read_text())["key"], good_key)
+        self.abi = [{"binding": 0, "kind": "uniform_buffer"}]
+        (self.src / "main.hlsl").write_text('#include "inc/common.hlsli"\n#error fail\n')
+        with self.assertRaisesRegex(ImportErrorDetail, "mock compiler rejected"):
+            self.build()
+        self.assertEqual(json.loads(pointer.read_text())["key"], good_key)
+
+    def test_stale_completion_caches_but_does_not_activate(self) -> None:
+        begin_request(self.cache, 1)
+        good_key, _ = self.build(revision=1)
+        begin_request(self.cache, 2)  # newer import request has superseded revision 1
+        older_key, activated = self.build(revision=1)
+        self.assertEqual(older_key, good_key)
+        self.assertFalse(activated)
+        self.assertTrue((self.cache / older_key / "manifest.json").exists())
+        self.assertEqual(json.loads((self.cache / "current").read_text())["key"], good_key)
+
+    def test_tampered_cache_is_rejected_without_pointer_change(self) -> None:
+        good_key, _ = self.build()
+        pointer = self.cache / "current"
+        (self.cache / good_key / "shader.bin").write_bytes(b"tampered")
+        with self.assertRaisesRegex(ImportErrorDetail, "cache binary digest mismatch"):
+            self.build()
+        self.assertEqual(json.loads(pointer.read_text())["key"], good_key)
+
+    def test_strict_cycle_and_missing_include_fail_before_publish(self) -> None:
+        (self.src / "inc/common.hlsli").write_text('#include "../main.hlsl"\n')
+        with self.assertRaisesRegex(ImportErrorDetail, "strict include cycle"):
+            self.build()
+        (self.src / "inc/common.hlsli").write_text('#include "absent.hlsli"\n')
+        with self.assertRaisesRegex(ImportErrorDetail, "missing include"):
+            self.build()
+        self.assertFalse((self.cache / "current").exists())
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
+```
 
 **Asset dependency graphs**
 
@@ -23510,6 +23848,160 @@ The biggest remaining upgrades from this pass are not conceptual rewrites. They 
 
 **Pass 15 is M095 + M096, Parts 1583–1600.** It closes Phase 16 with **CMake's target model; PUBLIC/PRIVATE/INTERFACE dependency propagation; imported/alias targets; presets; Ninja's build DAG; compiler toolchains; Clang/MSVC portability; C++ modules across targets; Git submodule pinning; reproducible superbuilds; CI matrices; unit/integration/smoke testing; crash reporting; structured logs/profiling hooks; portable subsystem boundaries; and finally drawing the full ownership/data flow from source asset → editor → package → player → runtime subsystem.**
 
+<!-- Book-completion teaching addition 1a6abe03521a3636 -->
+
+### Imported targets describe external artifacts; aliases provide a stable name
+
+A CMake target is a named node in the build graph, with properties describing its sources, output and usage requirements. An **imported target** describes an artifact built outside this CMake build. It creates no compile/archive rule for that artifact, but consumers can still inherit its declared include paths, definitions and link requirements. An **alias** gives the same target another name. It does not copy properties or create a wrapper library; later changes to the real target remain visible through the alias.
+
+This exercise uses CMake 3.18's documented behavior. A non-GLOBAL imported target is visible in its declaring directory and descendants. CMake 3.18 permits an alias of that imported target, with matching directory visibility. An alias cannot itself be aliased, installed or exported, and cannot be the target whose properties are modified. Modify the real target; there is no requirement that all such modifications precede creation of the alias.
+
+#### A complete project with an externally produced archive
+
+Create the files below under `tools/labs/cmake_imported_alias/`, or use the saved copy in the vault. The vendor source is included solely so this exercise can produce its own stand-in archive before CMake runs. The CMake build then treats that archive exactly as an outside artifact: it builds only the consumer. No package download or third-party library is required.
+
+**CMakeLists.txt**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/CMakeLists.txt -->
+```cmake
+# This minimum selects the documented imported-alias directory-scope behavior.
+cmake_minimum_required(VERSION 3.18)
+# Enable and identify the host C++ toolchain. No dependency is downloaded.
+project(ImportedAliasExample LANGUAGES CXX)
+
+if(NOT DEFINED VENDOR_MATH_LIBRARY OR NOT EXISTS "${VENDOR_MATH_LIBRARY}")
+  message(FATAL_ERROR "Set VENDOR_MATH_LIBRARY to the prebuilt vendor_math archive")
+endif()
+
+# The target is a build-graph description of a file produced elsewhere.
+# It contributes no compile or archive rule of its own.
+add_subdirectory(deps)
+add_subdirectory(scope_probe)
+```
+
+**deps/CMakeLists.txt**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/CMakeLists.txt -->
+```cmake
+# STATIC describes the external archive; IMPORTED means CMake will not build it.
+add_library(Vendor::Math STATIC IMPORTED)
+set_target_properties(Vendor::Math PROPERTIES
+  IMPORTED_LOCATION "${VENDOR_MATH_LIBRARY}"
+  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/include"
+  INTERFACE_COMPILE_DEFINITIONS "VENDOR_MATH_IMPORTED=1"
+)
+
+# Alias supplies this project with a stable name. It remains the same target.
+add_library(Project::Math ALIAS Vendor::Math)
+# An alias does not copy properties. Later changes to Vendor::Math are
+# observed through Project::Math too; modify the real target, not the alias.
+
+# Both imported target and its alias are visible in this child directory.
+add_subdirectory(consumer)
+```
+
+**deps/include/vendor_math.hpp**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/include/vendor_math.hpp -->
+```cpp
+#pragma once
+namespace vendor { int forty_two(); }
+```
+
+**deps/vendor_math.cpp**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/vendor_math.cpp -->
+```cpp
+#include "vendor_math.hpp"
+namespace vendor { int forty_two() { return 42; } }
+```
+
+**deps/consumer/CMakeLists.txt**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/consumer/CMakeLists.txt -->
+```cmake
+if(NOT TARGET Vendor::Math OR NOT TARGET Project::Math)
+  message(FATAL_ERROR "Imported target and alias must be visible below deps/")
+endif()
+add_executable(imported_consumer main.cpp)
+# Linking the alias carries its location and include/definition usage requirements.
+target_link_libraries(imported_consumer PRIVATE Project::Math)
+```
+
+**deps/consumer/main.cpp**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/consumer/main.cpp -->
+```cpp
+#include <vendor_math.hpp>
+int main() {
+  // This compile-time check proves INTERFACE_COMPILE_DEFINITIONS propagated.
+#ifndef VENDOR_MATH_IMPORTED
+#error expected imported target usage requirement
+#endif
+  return vendor::forty_two() == 42 ? 0 : 1;
+}
+```
+
+**scope_probe/CMakeLists.txt**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/scope_probe/CMakeLists.txt -->
+```cmake
+# The imported target was not GLOBAL; sibling directories cannot see it.
+if(TARGET Vendor::Math OR TARGET Project::Math)
+  message(FATAL_ERROR "non-GLOBAL imported target leaked outside deps/")
+endif()
+message(STATUS "PASS: non-GLOBAL imported target and alias are directory-scoped")
+```
+
+**negative/CMakeLists.txt**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/negative/CMakeLists.txt -->
+```cmake
+cmake_minimum_required(VERSION 3.18)
+project(ExpectedFailure LANGUAGES CXX)
+add_executable(missing_target main.cpp)
+target_link_libraries(missing_target PRIVATE Missing::Target)
+```
+
+**negative/main.cpp**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/negative/main.cpp -->
+```cpp
+int main() { return 0; }
+```
+
+#### Read the dependency graph, then run it
+
+The imported name and alias are declared in `deps/`. Its consumer is a descendant, so both names resolve there. The root's `scope_probe/` is a sibling, so neither non-GLOBAL name resolves there. Linking `Project::Math` carries the archive location, header directory and `VENDOR_MATH_IMPORTED` definition. The consumer never receives a hand-written include flag or macro outside the target interface, and its compile-time check fails if that interface is lost.
+
+For independent siblings that need the dependency, declare it in their common parent, intentionally use an imported GLOBAL target, or consume a package configuration that defines the target in the required scope. An alias created where the real target is invisible does not repair visibility. The `::` name is also useful: an unresolved namespaced dependency raises a configure/generate error instead of being treated as an ordinary raw linker name.
+
+From the example's directory, produce the archive outside the CMake graph and build the consumer. These shell comments explain which owner performs each step:
+
+```sh
+# The host compiler and archiver act as the external vendor for this small demo.
+c++ -std=c++11 -Ideps/include -c deps/vendor_math.cpp -o /tmp/vendor_math.o
+ar rcs /tmp/libvendor_math.a /tmp/vendor_math.o
+
+# IMPORTED_LOCATION receives an absolute path to that already-existing archive.
+cmake -S . -B /tmp/imported-alias-build -DVENDOR_MATH_LIBRARY=/tmp/libvendor_math.a
+cmake --build /tmp/imported-alias-build
+/tmp/imported-alias-build/deps/consumer/imported_consumer
+
+# This independent negative project must fail for Missing::Target, not a compiler error.
+cmake -S negative -B /tmp/imported-alias-negative
+```
+
+**Worked solution and expected results.** The positive project reports that the imported target and alias are directory-scoped, compiles the consumer with its inherited header path and definition, links the prebuilt archive, and returns zero. The negative project fails during configuration/generation because `Missing::Target` is not defined. A nonzero return alone is insufficient evidence: inspect the diagnostic to confirm the intended failure. If the positive consumer cannot find the header, inspect `INTERFACE_INCLUDE_DIRECTORIES`; if its macro check fails, inspect `INTERFACE_COMPILE_DEFINITIONS`; if linking fails, verify the archive's absolute path, architecture and symbol definition.
+
+The solution to making the target visible to a sibling is a scope change at the shared dependency declaration, not a duplicate archive or an alias of an invisible target. If a dependency's requirements are wrong, update the real imported target; the alias remains another spelling of it.
+
+A static archive uses `IMPORTED_LOCATION`. A Windows shared-library package may need both `IMPORTED_IMPLIB` for the link-time import library and `IMPORTED_LOCATION` for the runtime DLL. A header-only imported INTERFACE target has no compiled artifact. Multiple configurations may require configuration-specific locations. Those are distinct package contracts; this static host example does not test every platform layout.
+
+Source policy: the [CMake 3.18 add_library reference](https://cmake.org/cmake/help/v3.18/command/add_library.html), [target_link_libraries](https://cmake.org/cmake/help/v3.18/command/target_link_libraries.html), and [IMPORTED_LOCATION](https://cmake.org/cmake/help/v3.18/prop_tgt/IMPORTED_LOCATION.html) define the behavior used here. The completed lab verifies this one project under the recorded installed toolchain, not every CMake generator or vendor SDK.
+
+
+
 
 **Complete source→editor→runtime data and ownership flow**
 
@@ -27560,6 +28052,135 @@ m_Sparse[entity.Index] = Missing;
 The critical step is not the move itself.
 
 It is repairing sparse metadata.
+
+<!-- Book-completion teaching addition 327ca0a6bfe314a8 -->
+
+### The move must not throw after entity metadata changes
+
+The order above has one important type requirement. It writes the last `Entity` into the removed dense slot **before** assigning the moved `T` component. `Entity` is two integers, so that assignment is non-throwing. A user-defined component move assignment is not necessarily non-throwing. If `m_Components[dense] = std::move(m_Components[last])` throws, the entity row has already changed while `m_Sparse` still describes the old rows. The pool can then contain duplicate entity records and a lookup/removal can no longer repair the original invariant.
+
+The later blank-file `SparseSet<T>` example spells the exception specification as `noexcept(std::is_nothrow_move_assignable_v<T>)`. That controls whether an exception may escape or instead terminates; it does **not** make the two-array update transactional. For the shown O(1) swap-removal algorithm, make the component requirement explicit and reject unsupported types at compile time. `std::is_nothrow_move_assignable_v` requires a direct `<type_traits>` include in a standalone translation unit.
+
+```cpp
+// Inside SparseSet<T>; this policy makes the two writes below a no-throw commit.
+bool Remove(Entity entity) noexcept
+    requires std::is_nothrow_move_assignable_v<T> &&
+             std::is_nothrow_destructible_v<T>;
+```
+
+This is a deliberate storage contract: components used in a removable packed pool must be nothrow move-assignable and nothrow destructible. If an engine must accept throwing move assignment, perform the potentially throwing component operation before changing entity/sparse metadata and define the resulting basic guarantee carefully; the component value may still have changed. A strong guarantee needs a non-throwing commit step, such as constructing a copy before mutation and swapping it in with a nothrow swap, or using indirection. Do not imply that changing the order alone preserves the original component value.
+
+To rerun the exact `Entity` and `SparseSet<T>` excerpt and exercise both cases, use the [C++20 extraction check](../tools/labs/ecs_sparse_set_exception_check.py):
+
+```sh
+python3 tools/labs/ecs_sparse_set_exception_check.py \
+  "Continuous Notes/Game Engine - From First Frame to Living Worlds.md"
+```
+
+It injects the missing direct `<type_traits>` header for this standalone translation unit, compiles the extracted book blocks with warnings as errors, checks ordinary insert/lookup/swap-remove behavior, and then injects a throwing move assignment. The second case must observe the current excerpt's duplicate dense-entity row; it is a bounded counterexample to the exception-safety claim, not a test of production Kairo or of the constrained signature above.
+
+The reproducible check below reads the current full book rather than maintaining a second sparse-set implementation. Its expected failing invariant is a counterexample; the command succeeds only when ordinary behavior passes and that unsupported-type failure is reproduced.
+
+```python
+#!/usr/bin/env python3
+"""Compile exact book excerpts; prove ordinary behavior AND its throwing-move gap."""
+import argparse
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+
+# Parse the actual Markdown blocks, rather than copying a different ECS model.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from note_integrity import code_blocks
+
+ROOT = Path(__file__).resolve().parents[2]
+BOOK = ROOT / 'Continuous Notes/Game Engine - From First Frame to Living Worlds.md'
+
+DRIVER = r"""
+#include <iostream>
+struct ThrowingComponent {
+    int value;
+    inline static bool fail = false;
+    explicit ThrowingComponent(int v) : value(v) {}
+    ThrowingComponent(const ThrowingComponent&) = default;
+    ThrowingComponent(ThrowingComponent&&) noexcept = default;
+    ThrowingComponent& operator=(ThrowingComponent&& other) {
+        // Throw before touching the value, so any broken entity metadata is
+        // attributable to Remove's ordering, not a partially assigned T.
+        if (fail) throw std::runtime_error("deliberate component move failure");
+        value = other.value;
+        return *this;
+    }
+};
+
+int main() {
+    SparseSet<int> pool;
+    const Entity old{0, 1}, second{1, 1}, replacement{0, 2};
+    pool.Emplace(old, 7);
+    pool.Emplace(second, 9);
+    if (pool.Get(old) != 7 || pool.Get(second) != 9) return 1;
+    if (!pool.Remove(old)) return 2;
+    // Swap-removal must repair the surviving entity's reverse map.
+    if (pool.Contains(old) || pool.Get(second) != 9 || pool.Size() != 1) return 3;
+    pool.Emplace(replacement, 11);
+    if (pool.Contains(old) || pool.Get(replacement) != 11) return 4;
+
+    SparseSet<ThrowingComponent> unsafe;
+    unsafe.Emplace(old, 10);
+    unsafe.Emplace(second, 20);
+    ThrowingComponent::fail = true;
+    bool caught = false;
+    try { unsafe.Remove(old); }
+    catch (const std::runtime_error&) { caught = true; }
+    ThrowingComponent::fail = false;
+    // This EXPECTED counterexample is evidence of an unsupported T contract.
+    // Passing this check does not make the current generic Remove safe.
+    if (!caught || unsafe.Entities().size() != 2 ||
+        unsafe.Entities()[0] != second || unsafe.Entities()[1] != second) return 5;
+    if (unsafe.Contains(old)) return 6;
+    std::cout << "PASS: normal swap-remove and generation reuse; "
+                 "EXPECTED throwing-move invariant failure reproduced\n";
+}
+"""
+
+
+def assemble(book):
+    blocks = [b.body for b in code_blocks(book.read_text()) if b.language == 'cpp']
+    # Matching exact declarations keeps introductory sketches out of this check.
+    entities = [b for b in blocks if 'struct Entity final' in b and '#include <cstdint>' in b]
+    pools = [b for b in blocks if 'class SparseSet' in b and
+             'std::is_nothrow_move_assignable_v<T>' in b and 'EnsureSparse' in b]
+    if len(entities) != 1 or len(pools) != 1:
+        raise ValueError('Expected one exact Entity and full SparseSet excerpt')
+    # The book fragment omits a direct header; add it explicitly for this TU.
+    return '#include <type_traits>\n' + entities[0] + '\n' + pools[0] + '\n' + DRIVER
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('book', nargs='?', type=Path, default=BOOK)
+    parser.add_argument('--compiler', default='c++')
+    args = parser.parse_args()
+    compiler = shutil.which(args.compiler)
+    if not compiler:
+        parser.error('A C++20 compiler is required')
+    with tempfile.TemporaryDirectory(prefix='allmight-ecs-excerpt-') as folder:
+        source = Path(folder) / 'ecs.cpp'
+        binary = Path(folder) / 'ecs'
+        source.write_text(assemble(args.book))
+        command = [compiler, '-std=c++20', '-O2', '-DNDEBUG', '-Wall',
+                   '-Wextra', '-Wpedantic', '-Werror', str(source), '-o', str(binary)]
+        subprocess.run(command, check=True)
+        subprocess.run([str(binary)], check=True)
+
+
+if __name__ == '__main__':
+    main()
+```
+
+
 
 ---
 
@@ -34973,9 +35594,285 @@ The next bridge should translate those runtime physics IDs into ECS entities.
 
 Do not make gameplay search all bodies to discover their owner.
 
-<!-- Book-completion teaching addition 0d8e550c33bfdbb5 -->
+<!-- Book-completion teaching addition 51c09a4cfe33e3bf -->
 
-\n\n### Decide which pairs may interact, then publish overlap transitions safely\n\nThe existing `PhysicsContactEventType` has `Begin`, `Stay`, and `End`, and the event record already carries body and collider identifiers plus trigger/response flags. The missing mechanism is how the engine decides that a pair is eligible, maintains its overlap state across ticks, and delivers a transition without exposing live physics storage to gameplay mutation. These are three separate decisions: **filtering** decides whether a pair may proceed; **narrow phase and simulation** decide what actually overlaps or touches; **event delivery** tells gameplay how the relation changed. A filter pass is not a collision test, and an overlap notification is not an impulse.\n\n#### A category and mask rule is reciprocal\n\nAssign each shape a category bit set $C$ and an accepted-category mask $M$. For shapes $A$ and $B$, the ordinary rule is\n\n$$\operatorname{maskPass}(A,B) = (C_A \mathbin{\&} M_B \ne 0) \land (C_B \mathbin{\&} M_A \ne 0).$$\n\nBoth directions must agree. If a player accepts walls but a wall rejects players, the pair is rejected by this policy. Categories describe what a shape *is*; masks describe which categories that shape *accepts*. Choose bits for interaction classes, not unique instances, and keep this rule at the broad-phase candidate boundary so rejected pairs do not reach narrow phase or solver construction. Other engine rules may also reject a pair, including body-type compatibility, same-body suppression, joints that disable connected-body collision, or a custom filter. State that policy separately; passing category and mask is not a promise that the pair will contact.\n\nA small example uses `PLAYER=0x1`, `WORLD=0x2`, `ENEMY=0x4`, and `PICKUP=0x8`. Set the player's category to `PLAYER` and mask to `WORLD | ENEMY | PICKUP`. Set a pickup's category to `PICKUP` and mask to `PLAYER`. Then both intersections are nonzero, so they pass. If the pickup mask becomes zero, the first test passes but the reciprocal test fails; no pair is emitted. When a category is a bit set, one accepted shared bit suffices. A default mask must be deliberate: zero disables all ordinary pairs, while an all-bits mask accepts every category that the other shape permits.\n\n#### Same nonzero groups can override the masks\n\nBox2D's documented rule gives a same, nonzero group index priority over the category/mask test: an equal positive group forces collision eligibility, and an equal negative group forbids it. If the group indexes differ or either is zero, evaluate the reciprocal mask rule. In pseudocode:\n\n```cpp\nbool filter_allows(const Filter& a, const Filter& b) {\n    // Box2D 3.1 policy: an equal nonzero group overrides both masks.\n    if (a.group != 0 && a.group == b.group)\n        return a.group > 0;\n\n    // Each shape must accept the other shape's category.\n    return (a.category & b.mask) != 0 &&\n           (b.category & a.mask) != 0;\n}\n```\n\nFor example, two parts assigned group `+12` remain eligible even if both masks are zero; two parts assigned group `-12` are rejected even if both masks accept everything. `+12` and `-12` are different groups, so their pair falls back to masks. This group rule is an engine-specific override convention, not a universal meaning of “group.” Box2D's current versioned documentation identifies itself as **Box2D 3.1.0**: its filter categories and masks are 64-bit, and it documents the equal nonzero group override above. Box2D 2.4 uses narrower category/mask fields, despite a similar group policy. Pin the engine/library version and adapt field widths and event APIs to that version; do not copy these semantics into another physics engine without checking its contract. The 3.1 policy also includes body-type rules beyond category/mask/group.\n\n| Pair | $C_A \& M_B$ | $C_B \& M_A$ | Same nonzero group? | Result under the Box2D 3.1 filter rule |\n|---|---:|---:|---|---|\n| Player / pickup | nonzero | nonzero | no | pass |\n| Player / enemy with enemy mask zero | nonzero | zero | no | reject |\n| Two `+12` group parts, both masks zero | zero | zero | positive override | pass |\n| Two `-12` group parts, both masks all bits | nonzero | nonzero | negative override | reject |\n| `+12` part / `-12` part with reciprocal bits | nonzero | nonzero | indexes differ | pass |\n\nA filter edit changes which pairs are eligible; it may invalidate contacts and generate end transitions. Treat it as a state change that needs reconciliation at a defined simulation boundary. Avoid changing filters in the middle of narrow-phase iteration or from a callback that is walking physics-owned arrays.\n\n#### A sensor detects overlap and skips physical response\n\nA **sensor** uses the collision pipeline to ask whether shapes overlap, but it contributes no collision impulse or physical blocking response. A plate sensor can therefore register a crate without stopping it. A sensor still needs a geometry test and normally uses the same pair-filter policy; “sensor” does not mean “ignore all masks.” Its event path is conceptually:\n\n```text\nconservative pair candidates\n    -> category/mask/group and engine-rule filters\n    -> exact overlap test\n    -> record sensor overlap transition\n    -> do not create a physical response row for this sensor pair\n```\n\nThe Box2D 3.1 reference separates sensor events from contact events and requires sensor-event generation to be enabled on both involved shapes. Its buffered sensor API reports begin/end overlaps after the step. Fast-moving sensors can still miss an overlap under discrete sampling; use a suitable shape cast or continuous query if the gameplay rule requires detecting a crossing between samples. A trigger used only for gameplay should not be presented as a solid contact, and a physical contact may be relevant even when the game has no trigger behavior.\n\n#### Derive begin, stay, and end from stable pair sets\n\nStore the set of logical overlaps from the last completed fixed step as $P_k$ and the freshly validated overlap set for the new step as $P_{k+1}$. Give each collider a stable identity that includes a slot or index and a generation, such as `ColliderId{slot, generation}`. Form each unordered pair in canonical order, so `(A,B)` and `(B,A)` hash to the same key. Then:\n\n$$\begin{aligned}\mathrm{Begin}_{k+1} &= P_{k+1} \setminus P_k,\\\mathrm{Stay}_{k+1} &= P_{k+1} \cap P_k,\\\mathrm{End}_{k+1} &= P_k \setminus P_{k+1}.\end{aligned}$$\n\nThese set equations avoid firing `Begin` every frame an object remains in a trigger. The existing Kairo event enum calls the continuing state `Stay`; that is an application-level policy derived from set intersection. Box2D 3.1 documents buffered sensor/contact begin and end events (and contact hit events), not a universal stay callback. An engine may omit `Stay` to reduce event volume; if gameplay needs it, derive it from persistent state rather than assuming the physics library emits it.\n\nA complete plate trace makes the transitions concrete. Let the plate be `ColliderId{5,7}`, category `PICKUP`, mask `PLAYER`; let the crate be `ColliderId{2,4}`, category `PLAYER`, mask `PICKUP`. Their reciprocal mask checks pass.\n\n| Fixed tick | Validated overlap set | Derived event | Gameplay effect\n|---:|---|---|---|\n| 40 | empty | none | door remains closed |\n| 41 | `{(2:4, 5:7)}` | `Begin` | add crate 2:4 to plate occupancy; door begins opening |\n| 42 | `{(2:4, 5:7)}` | `Stay` | keep occupancy; do not add a duplicate |\n| 43 | `{(2:4, 5:7)}` | `Stay` | no repeated begin-side sound or reward |\n| 44 | empty because the crate leaves | `End(Separated)` | remove crate 2:4; close if the plate is now empty |\n\nNow replace tick 44 with a filter edit or destruction while overlapping. Reconciliation still emits an `End`, with a reason such as `FilterChanged` or `Destroyed`. That reason lets the consumer distinguish ordinary motion from forced invalidation if its gameplay policy cares. Do not silently erase the pair from the saved set: that leaves a door count, pickup state, or audio loop latched. If a collider goes to sleep, sleep alone is not an overlap exit. Preserve its logical pair state; when it wakes or moves, revalidate geometry and filters, emitting a transition only if the relation actually changed. If an engine destroys contacts as part of sleep/wake or filter changes, normalize those implementation events back into logical pair state to avoid duplicate `Begin` events.\n\n#### Queue copied events, then resolve at a safe boundary\n\nPhysics may run worker tasks or traverse internal arrays while producing contacts. Do not destroy a body, edit a collider, or mutate ECS structure from inside a narrow-phase, solver, or worker callback. During the physics step, collect compact event values (pair IDs, event kind, reason, and any small immutable measurement the consumer needs). Once the step and its storage traversal finish, map physics IDs to gameplay entities, dispatch read-only gameplay responses, and queue structural changes for an explicit synchronization point:\n\n```text\nfixed-step input and forces\n    -> physics step and pair reconciliation\n    -> copy contact/sensor event values\n    -> resolve generation-checked collider-to-entity mappings\n    -> gameplay event systems\n    -> deferred create/destroy/component/filter commands\n    -> structural commit at the declared boundary\n```\n\nThe event queue owns its values. Never retain a pointer into a physics library's transient event arrays; Box2D documents its event arrays as invalidated by later world changes and warns that end events may refer to shapes or contacts already destroyed. If an end handler needs information after deletion, copy the stable gameplay owner ID and the small required payload into the event before processing the structural change. On resolution, check that the collider/entity generation still matches. If the old entity has already died, run cleanup using the copied old owner identity or discard according to explicit policy; never look up the slot alone and deliver the event to a new occupant.\n\nA wake, deletion, teleport, body-type change, or filter edit can invalidate cached pair state. Reconcile at the fixed-step boundary and label forced end reasons when known. Deletion must emit or synthesize the end transition before removing the old pair from the logical set. A slot reused afterward increments its generation, so an old `(slot=2,generation=4)` event cannot resolve to the new `(slot=2,generation=5)` entity. This is the same identity rule used by generational registries: a memory slot is a location, not a lasting object identity.\n\n#### Exercise with a complete solution\n\nA sensor gate has category `GATE=0x10`, mask `PLAYER | KEY = 0x21`, and group zero. A player has category `PLAYER=0x1`, mask `GATE=0x10`, group zero. A key has category `KEY=0x20`, mask `GATE=0x10`, group zero. A decoration has category `DECOR=0x40`, mask all bits, group zero. A pair of moving platform shapes both use group `-5`; a player/platform pair uses group indices `-5` and `+5`. Determine eligible pairs, then process the following gate observations: step 0 none; step 1 player overlaps gate; step 2 same overlap; step 3 player is destroyed; slot 3 is immediately reused for a decoration with a higher generation before queued gameplay events dispatch.\n\n**Solution.** Gate/player passes because `GATE & player.mask = 0x10` and `PLAYER & gate.mask = 0x1`; gate/key passes because `GATE & key.mask = 0x10` and `KEY & gate.mask = 0x20`. Gate/decoration fails because `DECOR & gate.mask = 0`, even though decoration accepts all categories. Two platform shapes with matching group `-5` are rejected regardless of masks. Player/platform groups `-5` and `+5` differ, so group override does not apply; use both reciprocal mask tests. If those bits are set, they pass this filter stage.\n\nFor the gate trace, step 0 has no event. Step 1 adds the stable pair `(player slot 3, generation g; gate ID)`, so emit exactly one `Begin` and insert that generation-qualified player into the gate's occupancy set. Step 2 intersects the previous and current sets, so emit `Stay` only if this engine's gameplay layer requests it; do not emit another `Begin`. At step 3 destruction removes the old pair and produces `End(Destroyed)` carrying the old generation and copied gameplay owner ID. The slot reuse creates a different identity `(3,g+1)`. When the deferred queue drains, generation validation rejects the stale physics handle as a reference to the new decoration; cleanup uses the copied old owner data. The new decoration receives no gate event. The listener does not mutate the physics world while the event arrays or solver are being traversed.\n\n#### Bounded executable witness\n\nThe adjacent private C++20 laboratory implements the reciprocal bit test, positive/negative same-group overrides, differing-group fallback, begin/stay/end set transitions, filter-change/destruction reasons, and slot reuse with generation validation. Compile it with `c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror collision_filter_event_lab.cpp -o collision_filter_event_lab` and run `./collision_filter_event_lab`; all nine bounded assertions pass. The code comments state the policy represented and exclusions. This is a teaching model, not an integration test for Kairo, Box2D, broad-phase traversal, multithreaded dispatch, or production event delivery.\n\n**Versioned source policy.** The filter precedence and 64-bit widths above follow the official [Box2D 3.1.0 simulation documentation](https://box2d.org/documentation/md_simulation.html) and its [3.1.0 release notes](https://box2d.org/documentation/md_release__notes__v310.html). The event-array lifetime and invalidation details follow its [3.1.0 events reference](https://box2d.org/documentation/group__events.html). These are a named reference policy for this example; a consuming project must pin and verify its actual engine version, because category widths, default event settings, same-body/body-type rules, sensor event enablement, callback constraints, and lifecycle APIs differ across releases and engines.\n
+### Decide which pairs may interact, then publish overlap transitions safely
+
+The existing `PhysicsContactEventType` has `Begin`, `Stay`, and `End`, and the event record already carries body and collider identifiers plus trigger/response flags. The missing mechanism is how the engine decides that a pair is eligible, maintains its overlap state across ticks, and delivers a transition without exposing live physics storage to gameplay mutation. These are three separate decisions: **filtering** decides whether a pair may proceed; **narrow phase and simulation** decide what actually overlaps or touches; **event delivery** tells gameplay how the relation changed. A filter pass is not a collision test, and an overlap notification is not an impulse.
+
+#### A category and mask rule is reciprocal
+
+Assign each shape a category bit set $C$ and an accepted-category mask $M$. For shapes $A$ and $B$, the ordinary rule is
+
+$$
+\operatorname{maskPass}(A,B) = (C_A \mathbin{\&} M_B \ne 0) \land (C_B \mathbin{\&} M_A \ne 0).
+$$
+
+Both directions must agree. If a player accepts walls but a wall rejects players, the pair is rejected by this policy. Categories describe what a shape *is*; masks describe which categories that shape *accepts*. Choose bits for interaction classes, not unique instances, and keep this rule at the broad-phase candidate boundary so rejected pairs do not reach narrow phase or solver construction. Other engine rules may also reject a pair, including body-type compatibility, same-body suppression, joints that disable connected-body collision, or a custom filter. State that policy separately; passing category and mask is not a promise that the pair will contact.
+
+A small example uses `PLAYER=0x1`, `WORLD=0x2`, `ENEMY=0x4`, and `PICKUP=0x8`. Set the player's category to `PLAYER` and mask to `WORLD | ENEMY | PICKUP`. Set a pickup's category to `PICKUP` and mask to `PLAYER`. Then both intersections are nonzero, so they pass. If the pickup mask becomes zero, the first intersection becomes zero while the second still passes; no pair is emitted. When a category is a bit set, one accepted shared bit suffices. A default mask must be deliberate: zero disables all ordinary pairs, while an all-bits mask accepts every category that the other shape permits.
+
+#### Same nonzero groups can override the masks
+
+Box2D's documented rule gives a same, nonzero group index priority over the category/mask test: an equal positive group forces collision eligibility, and an equal negative group forbids it. If the group indexes differ or either is zero, evaluate the reciprocal mask rule. In pseudocode:
+
+```cpp
+bool filter_allows(const Filter& a, const Filter& b) {
+    // Box2D 3.1 policy: an equal nonzero group overrides both masks.
+    if (a.group != 0 && a.group == b.group)
+        return a.group > 0;
+
+    // Each shape must accept the other shape's category.
+    return (a.category & b.mask) != 0 &&
+           (b.category & a.mask) != 0;
+}
+```
+
+For example, two parts assigned group `+12` remain eligible even if both masks are zero; two parts assigned group `-12` are rejected even if both masks accept everything. `+12` and `-12` are different groups, so their pair falls back to masks. This group rule is an engine-specific override convention, not a universal meaning of “group.” This example pins **Box2D 3.1.0** as a reference policy: its filter categories and masks are 64-bit, and it documents the equal nonzero group override above. Box2D 2.4 uses narrower category/mask fields, despite a similar group policy. Pin the engine/library version and adapt field widths and event APIs to that version; do not copy these semantics into another physics engine without checking its contract. The 3.1 policy also includes body-type rules beyond category/mask/group.
+
+| Pair | $C_A \& M_B$ | $C_B \& M_A$ | Same nonzero group? | Result under the Box2D 3.1 filter rule |
+|---|---:|---:|---|---|
+| Player / pickup | nonzero | nonzero | no | pass |
+| Player / enemy with enemy mask zero | zero | nonzero | no | reject |
+| Two `+12` group parts, both masks zero | zero | zero | positive override | pass |
+| Two `-12` group parts, both masks all bits | nonzero | nonzero | negative override | reject |
+| `+12` part / `-12` part with reciprocal bits | nonzero | nonzero | indexes differ | pass |
+
+A filter edit changes which pairs are eligible; it may invalidate contacts and generate end transitions. Treat it as a state change that needs reconciliation at a defined simulation boundary. Avoid changing filters in the middle of narrow-phase iteration or from a callback that is walking physics-owned arrays.
+
+#### A sensor detects overlap and skips physical response
+
+A **sensor** uses the collision pipeline to ask whether shapes overlap, but it contributes no collision impulse or physical blocking response. A plate sensor can therefore register a crate without stopping it. A sensor still needs a geometry test and normally uses the same pair-filter policy; “sensor” does not mean “ignore all masks.” In the pinned v3.1.0 reference, sensor-event generation is disabled by default; enable it on the participating shape definitions according to that API. Its event path is conceptually:
+
+```text
+conservative pair candidates
+    -> category/mask/group and engine-rule filters
+    -> exact overlap test
+    -> record sensor overlap transition
+    -> do not create a physical response row for this sensor pair
+```
+
+The pinned Box2D 3.1.0 simulation documentation separates sensor events from contact events, disables sensor-event generation by default, and explicitly states sensors do not detect shapes that pass through them within one step. For a fast object or small sensor, it recommends a ray or shape cast. Do not generalize those CCD limits to later releases without checking their versioned contract. A trigger used only for gameplay should not be presented as a solid contact, and a physical contact may be relevant even when the game has no trigger behavior.
+
+#### Derive begin, stay, and end from stable pair sets
+
+Store the set of logical overlaps from the last completed fixed step as $P_k$ and the freshly validated overlap set for the new step as $P_{k+1}$. Give each collider a stable identity that includes a slot or index and a generation, such as `ColliderId{slot, generation}`. Form each unordered pair in canonical order, so `(A,B)` and `(B,A)` hash to the same key. Then:
+
+$$
+\begin{aligned}\mathrm{Begin}_{k+1} &= P_{k+1} \setminus P_k,\\\mathrm{Stay}_{k+1} &= P_{k+1} \cap P_k,\\\mathrm{End}_{k+1} &= P_k \setminus P_{k+1}.\end{aligned}
+$$
+
+These set equations avoid firing `Begin` every frame an object remains in a trigger. The existing Kairo event enum calls the continuing state `Stay`; that is an application-level policy derived from set intersection. Box2D 3.1 documents buffered sensor/contact begin and end events (and contact hit events), not a universal stay callback. An engine may omit `Stay` to reduce event volume; if gameplay needs it, derive it from persistent state rather than assuming the physics library emits it.
+
+A complete plate trace makes the transitions concrete. Let the plate be `ColliderId{5,7}`, category `PICKUP`, mask `PLAYER`; let the crate be `ColliderId{2,4}`, category `PLAYER`, mask `PICKUP`. Their reciprocal mask checks pass.
+
+| Fixed tick | Validated overlap set | Derived event | Gameplay effect
+|---:|---|---|---|
+| 40 | empty | none | door remains closed |
+| 41 | `{(2:4, 5:7)}` | `Begin` | add crate 2:4 to plate occupancy; door begins opening |
+| 42 | `{(2:4, 5:7)}` | `Stay` | keep occupancy; do not add a duplicate |
+| 43 | `{(2:4, 5:7)}` | `Stay` | no repeated begin-side sound or reward |
+| 44 | empty because the crate leaves | `End(Separated)` | remove crate 2:4; close if the plate is now empty |
+
+Now replace tick 44 with a filter edit or destruction while overlapping. Reconciliation still emits an `End`, with a reason such as `FilterChanged` or `Destroyed`. That reason lets the consumer distinguish ordinary motion from forced invalidation if its gameplay policy cares. Do not silently erase the pair from the saved set: that leaves a door count, pickup state, or audio loop latched. If a collider goes to sleep, sleep alone is not an overlap exit. Preserve its logical pair state; when it wakes or moves, revalidate geometry and filters, emitting a transition only if the relation actually changed. If an engine destroys contacts as part of sleep/wake or filter changes, normalize those implementation events back into logical pair state to avoid duplicate `Begin` events.
+
+#### Queue copied events, then resolve at a safe boundary
+
+Physics may run worker tasks or traverse internal arrays while producing contacts. Do not destroy a body, edit a collider, or mutate ECS structure from inside a narrow-phase, solver, or worker callback. During the physics step, collect compact event values (pair IDs, event kind, reason, and any small immutable measurement the consumer needs). Once the step and its storage traversal finish, map physics IDs to gameplay entities, dispatch read-only gameplay responses, and queue structural changes for an explicit synchronization point:
+
+```text
+fixed-step input and forces
+    -> physics step and pair reconciliation
+    -> copy contact/sensor event values
+    -> resolve generation-checked collider-to-entity mappings
+    -> gameplay event systems
+    -> deferred create/destroy/component/filter commands
+    -> structural commit at the declared boundary
+```
+
+The event queue owns its values. Never retain a pointer into a physics library's transient event arrays; Box2D documents its event arrays as invalidated by later world changes and warns that end events may refer to shapes or contacts already destroyed. If an end handler needs information after deletion, copy the stable gameplay owner ID and the small required payload into the event before processing the structural change. On resolution, check that the collider/entity generation still matches. If the old entity has already died, run cleanup using the copied old owner identity or discard according to explicit policy; never look up the slot alone and deliver the event to a new occupant.
+
+A wake, deletion, teleport, body-type change, or filter edit can invalidate cached pair state. Reconcile at the fixed-step boundary and label forced end reasons when known. Deletion must emit or synthesize the end transition before removing the old pair from the logical set. A slot reused afterward increments its generation, so an old `(slot=2,generation=4)` event cannot resolve to the new `(slot=2,generation=5)` entity. This is the same identity rule used by generational registries: a memory slot is a location, not a lasting object identity.
+
+#### Exercise with a complete solution
+
+A sensor gate has category `GATE=0x10`, mask `PLAYER | KEY = 0x21`, and group zero. A player has category `PLAYER=0x1`, mask `GATE=0x10`, group zero. A key has category `KEY=0x20`, mask `GATE=0x10`, group zero. A decoration has category `DECOR=0x40`, mask all bits, group zero. A pair of moving platform shapes both use group `-5`; a player/platform pair uses group indices `-5` and `+5`. Determine eligible pairs, then process the following gate observations: step 0 none; step 1 player overlaps gate; step 2 same overlap; step 3 player is destroyed; slot 3 is immediately reused for a decoration with a higher generation before queued gameplay events dispatch.
+
+**Solution.** Gate/player passes because `GATE & player.mask = 0x10` and `PLAYER & gate.mask = 0x1`; gate/key passes because `GATE & key.mask = 0x10` and `KEY & gate.mask = 0x20`. Gate/decoration fails because `DECOR & gate.mask = 0`, even though decoration accepts all categories. Two platform shapes with matching group `-5` are rejected regardless of masks. Player/platform groups `-5` and `+5` differ, so group override does not apply; use both reciprocal mask tests. If those bits are set, they pass this filter stage.
+
+For the gate trace, step 0 has no event. Step 1 adds the stable pair `(player slot 3, generation g; gate ID)`, so emit exactly one `Begin` and insert that generation-qualified player into the gate's occupancy set. Step 2 intersects the previous and current sets, so emit `Stay` only if this engine's gameplay layer requests it; do not emit another `Begin`. At step 3 destruction removes the old pair and produces `End(Destroyed)` carrying the old generation and copied gameplay owner ID. The slot reuse creates a different identity `(3,g+1)`. When the deferred queue drains, generation validation rejects the stale physics handle as a reference to the new decoration; cleanup uses the copied old owner data. The new decoration receives no gate event. The listener does not mutate the physics world while the event arrays or solver are being traversed.
+
+#### Bounded executable witness
+
+The complete C++20 laboratory below implements this bounded filter policy, stable pair transitions, forced-end reasons and generation validation. Its checks remain active with `-DNDEBUG`; they also exercise a high category bit to detect unintended field narrowing. Compile from the vault root with `c++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror tools/labs/collision_filter_event_lab.cpp -o /tmp/collision_filter_event_lab`, then run `/tmp/collision_filter_event_lab`. This is a deterministic policy model, not an actual Box2D/Kairo integration, a broad phase, a threaded dispatcher or a complete sleeping system. Implementation explanations are in the code comments.
+
+```cpp
+// Bounded teaching witness for reciprocal category/mask filtering, same-group
+// overrides, set-difference lifecycle events, and generation-safe event IDs.
+// Compile: c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror \
+//   tools/labs/collision_filter_event_lab.cpp -o /tmp/collision_filter_event_lab
+// Run: /tmp/collision_filter_event_lab
+#include <algorithm>
+#include <stdexcept>
+#include <string>
+#include <cstdint>
+#include <iostream>
+#include <map>
+#include <set>
+#include <tuple>
+#include <vector>
+
+// These checks remain active in release builds; NDEBUG must not erase the lab.
+static unsigned checks = 0;
+void check(bool condition) {
+    ++checks;
+    if (!condition) throw std::runtime_error("failed check " + std::to_string(checks));
+}
+
+struct Filter {
+    std::uint64_t category;
+    std::uint64_t mask;
+    std::int32_t group;
+};
+
+// This models the Box2D 3.1 category/mask/group rule only.
+// It does not include body-type, same-body, joint, or custom filtering rules.
+bool should_collide(const Filter& a, const Filter& b) {
+    if (a.group != 0 && a.group == b.group) {
+        return a.group > 0; // Equal positive forces; equal negative forbids.
+    }
+    return (a.category & b.mask) != 0 && (b.category & a.mask) != 0;
+}
+
+struct ShapeId {
+    std::uint32_t slot;
+    std::uint32_t generation;
+    friend bool operator==(ShapeId, ShapeId) = default;
+    friend bool operator<(ShapeId a, ShapeId b) {
+        return std::tie(a.slot, a.generation) < std::tie(b.slot, b.generation);
+    }
+};
+
+struct Pair {
+    ShapeId a;
+    ShapeId b;
+    static Pair canonical(ShapeId x, ShapeId y) {
+        return y < x ? Pair{y, x} : Pair{x, y};
+    }
+    friend bool operator<(const Pair& x, const Pair& y) {
+        return std::tie(x.a, x.b) < std::tie(y.a, y.b);
+    }
+};
+
+enum class Kind { Begin, Stay, End };
+enum class EndReason { Separated, FilterChanged, Destroyed, DiscontinuousMove };
+struct Event {
+    Kind kind;
+    Pair pair;
+    EndReason reason = EndReason::Separated;
+};
+
+// `previous` is logical touching state. Sleep does not erase it; a wake must
+// revalidate geometry and filters before this function receives `current`.
+std::vector<Event> transitions(const std::set<Pair>& previous,
+                               const std::set<Pair>& current,
+                               const std::map<Pair, EndReason>& forcedEnds = {}) {
+    std::vector<Event> out;
+    for (const Pair& p : current) {
+        out.push_back({previous.contains(p) ? Kind::Stay : Kind::Begin, p});
+    }
+    for (const Pair& p : previous) {
+        if (!current.contains(p)) {
+            const auto it = forcedEnds.find(p);
+            out.push_back({Kind::End, p, it == forcedEnds.end()
+                                               ? EndReason::Separated
+                                               : it->second});
+        }
+    }
+    return out;
+}
+
+struct Slot {
+    std::uint32_t generation = 1;
+    bool alive = false;
+};
+bool valid(const std::vector<Slot>& slots, ShapeId id) {
+    return id.slot < slots.size() && slots[id.slot].alive &&
+           slots[id.slot].generation == id.generation;
+}
+
+int main() {
+    constexpr std::uint64_t PLAYER = 1, ENEMY = 2, PLATE = 4, DEBRIS = 8;
+    const Filter player{PLAYER, ENEMY | PLATE, 0};
+    const Filter enemy{ENEMY, PLAYER, 0};
+    const Filter plate{PLATE, PLAYER, 0};
+    const Filter debris{DEBRIS, 0, 0};
+    check(should_collide(player, enemy));        // both masks agree
+    check(should_collide(player, plate));        // sensor-like category still filters
+    check(!should_collide(player, debris));      // neither side accepts the other
+    check(!should_collide(player, Filter{ENEMY, 0, 0})); // enemy rejects player
+    check(should_collide(Filter{PLAYER, 0, 7}, Filter{ENEMY, 0, 7}));
+    check(!should_collide(Filter{PLAYER, ~0ULL, -7}, Filter{ENEMY, ~0ULL, -7}));
+    check(should_collide(Filter{PLAYER, ENEMY, 3}, Filter{ENEMY, PLAYER, -3}));
+    check(should_collide(Filter{PLAYER, ENEMY, 3}, Filter{ENEMY, PLAYER, 0}));
+
+    // A high category bit catches accidental narrowing to a 16/32-bit field.
+    constexpr std::uint64_t HIGH = std::uint64_t{1} << 63;
+    check(should_collide(Filter{HIGH, PLAYER, 0}, Filter{PLAYER, HIGH, 0}));
+    check(transitions({}, {}).empty()); // no spurious event before any overlap
+
+    const ShapeId oldActor{2, 4};
+    const ShapeId sensor{5, 7};
+    const Pair oldPair = Pair::canonical(oldActor, sensor);
+    std::set<Pair> previous;
+    std::set<Pair> current{oldPair};
+    auto e = transitions(previous, current);
+    check(e.size() == 1 && e[0].kind == Kind::Begin);
+    previous = current;
+
+    // Persisting overlap yields one application-level Stay; Box2D's buffered
+    // event API documents begin/end and hit events, not a universal Stay event.
+    e = transitions(previous, current);
+    check(e.size() == 1 && e[0].kind == Kind::Stay);
+
+    // A filter edit invalidates the old overlap and records why it ended.
+    current.clear();
+    e = transitions(previous, current, {{oldPair, EndReason::FilterChanged}});
+    check(e.size() == 1 && e[0].kind == Kind::End &&
+           e[0].reason == EndReason::FilterChanged);
+    previous = current;
+
+    // Re-enter, then destroy while overlapping. Copy the event IDs before any
+    // structural mutation or callback; never keep engine-owned event pointers.
+    current.insert(oldPair);
+    e = transitions(previous, current);
+    check(e.size() == 1 && e[0].kind == Kind::Begin);
+    previous = current;
+    current.clear();
+    e = transitions(previous, current, {{oldPair, EndReason::Destroyed}});
+    check(e.size() == 1 && e[0].pair.a == oldPair.a &&
+           e[0].pair.b == oldPair.b && e[0].reason == EndReason::Destroyed);
+
+    std::vector<Slot> slots(6);
+    slots[2] = {4, true};
+    slots[5] = {7, true};
+    check(valid(slots, oldActor));
+    // Deferred destruction runs at the safe structural boundary. Reusing slot
+    // 2 changes generation, so an old event cannot target its new occupant.
+    slots[2].alive = false;
+    ++slots[2].generation;
+    const ShapeId newActor{2, 5};
+    slots[2].alive = true;
+    check(!valid(slots, oldActor) && valid(slots, newActor));
+    check(e[0].pair.a == oldPair.a && e[0].pair.a != newActor);
+
+    std::cout << "collision filter/event lifecycle: " << checks << " checks PASS\n";
+}
+```
+
+**Versioned source policy.** The filter precedence and 64-bit widths above follow the official [Box2D 3.1.0 simulation documentation](https://raw.githubusercontent.com/erincatto/box2d/v3.1.0/docs/simulation.md) and its [tagged filter/type declarations](https://raw.githubusercontent.com/erincatto/box2d/v3.1.0/include/box2d/types.h). The event-array lifetime and invalidation details follow its [3.1.0 events reference](https://raw.githubusercontent.com/erincatto/box2d/v3.1.0/include/box2d/box2d.h). These are a named reference policy for this example; a consuming project must pin and verify its actual engine version, because category widths, default event settings, same-body/body-type rules, sensor event enablement, callback constraints, and lifecycle APIs differ across releases and engines.
+
+
 
 
 
@@ -55185,11 +56082,11 @@ submit
 
 The invariant is:
 
-\[
+$$
 \boxed{
 \text{never reset command storage while GPU work can still reference it}
 }
-\]
+$$
 
 That invariant belongs in frame-lifetime management, not in ad-hoc rendering calls.
 
@@ -55199,7 +56096,7 @@ Old Metal code often creates one short-lived command buffer per frame. Metal 4 a
 
 So distinguish:
 
-\[
+$$
 \boxed{
 \text{command-buffer object identity}
 \neq
@@ -55207,7 +56104,7 @@ So distinguish:
 \neq
 \text{GPU completion epoch}
 }
-\]
+$$
 
 A persistent C++ wrapper must not imply that the commands inside the object are persistent.
 
@@ -55280,7 +56177,7 @@ This becomes important for large streamed scenes, ray-tracing acceleration struc
 
 The cross-backend truth is:
 
-\[
+$$
 \boxed{
 \text{producer access}
 \rightarrow
@@ -55288,7 +56185,7 @@ The cross-backend truth is:
 \rightarrow
 \text{consumer access}
 }
-\]
+$$
 
 If ComputeCull writes VisibleDraws and GraphicsMain reads it, the render graph owns that fact. Vulkan and Metal encode it differently. The engine should not own a function named “insert Metal barrier because Metal needs one”; it should own the producer/consumer relation.
 
@@ -55311,11 +56208,11 @@ The tensor additions matter because rendering, reconstruction, denoising and ML 
 
 An ordinary tensor represents multidimensional data with extents/strides. A cooperative tensor partitions its elements across participating threads according to a device-oriented layout. The correct mental model is therefore a collective data structure:
 
-\[
+$$
 \boxed{
 \text{one logical tensor operation distributed across lanes}
 }
-\]
+$$
 
 not “every thread owns a complete little matrix.”
 
@@ -55373,7 +56270,7 @@ The first Metal 4 section establishes the new objects. The deeper architectural 
 
 The useful way to read the Metal 4 core API is as four linked questions:
 
-\[
+$$
 \boxed{
 \begin{aligned}
 &\text{Where are commands stored?} &&\rightarrow \text{command allocator}\\
@@ -55382,7 +56279,7 @@ The useful way to read the Metal 4 core API is as four linked questions:
 &\text{What earlier work must precede later work?} &&\rightarrow \text{barrier/dependency}
 \end{aligned}
 }
-\]
+$$
 
 A renderer that answers only one of those questions is incomplete.
 
@@ -55424,11 +56321,11 @@ However, argument tables should not be interpreted as permission to place every 
 
 A good table hierarchy reflects lifetime domains.
 
-\[
+$$
 \boxed{
 \text{binding domain should usually follow resource lifetime/update domain}
 }
-\]
+$$
 
 This is the same reason a frame table, material table and scene table are often better than one mutable mega-table.
 
@@ -55461,13 +56358,13 @@ GPU table slot:
 
 The deferred-reuse rule is:
 
-\[
+$$
 \boxed{
 \text{recycle slot only after completedEpoch}
 \ge
 \text{lastEpochThatCanReadSlot}
 }
-\]
+$$
 
 That same invariant applies to Vulkan descriptor arrays, descriptor buffers, Metal argument tables, and custom GPU-visible heaps.
 
@@ -55560,9 +56457,9 @@ Pass B:
 
 That edge carries four pieces of information:
 
-\[
+$$
 (\text{resource},\text{producer access},\text{consumer access},\text{execution order})
-\]
+$$
 
 The Metal backend maps the edge to the appropriate Metal 4 dependency mechanism.
 
@@ -55589,7 +56486,7 @@ A barrier between two passes does not mean the CPU can destroy the resource afte
 
 The correct chain is:
 
-\[
+$$
 \boxed{
 \text{hazard ordering}
 \neq
@@ -55597,7 +56494,7 @@ The correct chain is:
 \neq
 \text{resource retirement}
 }
-\]
+$$
 
 This distinction should appear in backend abstractions. Otherwise one generic word such as sync ends up hiding three different problems.
 
@@ -55702,11 +56599,11 @@ A view pool reduces repeated allocation pressure.
 
 Placement sparse resources go deeper: they separate virtual resource shape from physical backing. The useful mental model is:
 
-\[
+$$
 \text{virtual texture address space}
 \quad\neq\quad
 \text{currently backed physical pages}
-\]
+$$
 
 This is valuable for huge textures, streamed worlds, and memory-budgeted content, but it means the engine must track residency at subresource/page granularity when it chooses to exploit sparsity.
 
@@ -55758,7 +56655,7 @@ Metal 4:
 
 The portable engine abstraction should therefore not try to make one API look like the other. It should preserve the shared truths:
 
-\[
+$$
 \boxed{
 \text{resource identity}
 +
@@ -55772,7 +56669,7 @@ The portable engine abstraction should therefore not try to make one API look li
 +
 \text{retirement}
 }
-\]
+$$
 
 Then each backend can express those truths using its native mechanisms.
 
@@ -55838,7 +56735,7 @@ The original Vulkan object model above remains valuable because the API is delib
 
 The durable mental model is
 
-\[
+$$
 \boxed{
 \text{resource lifetime}
 +
@@ -55850,7 +56747,7 @@ The durable mental model is
 +
 \text{submission order}
 }
-\]
+$$
 
 Everything else is a concrete mechanism for expressing those five things.
 
@@ -55887,13 +56784,13 @@ The real question is never “which barrier function do I call?” It is:
 
 A dependency is conceptually
 
-\[
+$$
 \boxed{
 (\text{source stage},\text{source access})
 \rightarrow
 (\text{destination stage},\text{destination access})
 }
-\]
+$$
 
 plus any layout transition or queue-family ownership transfer.
 
@@ -55923,7 +56820,7 @@ submission C waits 42, signals 43
 
 That maps naturally to deferred destruction:
 
-\[
+$$
 \boxed{
 \text{resource last used at epoch }E
 \rightarrow
@@ -55931,7 +56828,7 @@ That maps naturally to deferred destruction:
 \rightarrow
 \text{resource may be recycled}
 }
-\]
+$$
 
 The same epoch model can drive staging-ring reuse, upload completion, transient-resource retirement and frame-slot reuse.
 
@@ -55994,13 +56891,13 @@ graphics:
 
 The transformation is
 
-\[
+$$
 \boxed{
 \text{CPU decides once per object}
 \rightarrow
 \text{CPU submits coarse work + data; GPU resolves many decisions}
 }
-\]
+$$
 
 This can reduce CPU/driver overhead, but debugging now spans extraction, culling, compaction, indirect arguments, descriptor indices and the draw itself. Complexity is relocated, not erased.
 
@@ -56014,7 +56911,7 @@ The official Khronos guide/specification supplies current contract truth: featur
 
 The synthesis is
 
-\[
+$$
 \boxed{
 \text{tutorial sequence}
 +
@@ -56022,7 +56919,7 @@ The synthesis is
 +
 \text{current specification}
 }
-\]
+$$
 
 The older Vulkan Programming Guide remains excellent for the architectural reason Vulkan exists: application code takes ownership of synchronization, scheduling, memory strategy and command construction that older APIs often hid. Its concrete examples come from an earlier Vulkan generation, so keep the architecture and refresh the mechanisms.
 
@@ -56072,13 +56969,13 @@ That is why code must query layout sizes and offsets instead of multiplying a de
 
 The deeper lesson is:
 
-\[
+$$
 \boxed{
 \text{descriptor buffer removes a management abstraction}
 \quad
 \text{but not the shader-interface contract}
 }
-\]
+$$
 
 #### Descriptor-buffer writes are ordinary memory hazards
 
@@ -56108,13 +57005,13 @@ A device-written descriptor buffer needs an explicit GPU dependency before shade
 
 The general rule is:
 
-\[
+$$
 \boxed{
 \text{same logical update}
 \not\Rightarrow
 \text{same synchronization path}
 }
-\]
+$$
 
 because the producer domain changed.
 
@@ -56172,13 +57069,13 @@ This can reduce pipeline-permutation pressure for highly dynamic applications, b
 
 The architectural trade is:
 
-\[
+$$
 \boxed{
 \text{less precompiled state bundle}
 \Rightarrow
 \text{more explicit command-time state responsibility}
 }
-\]
+$$
 
 It is not automatically simpler.
 
@@ -56249,11 +57146,11 @@ But legal scheduling is not automatically good frame pacing.
 
 If the CPU submits far ahead:
 
-\[
+$$
 \text{queue depth}\uparrow
 \Rightarrow
 \text{input-to-photon latency may rise}
-\]
+$$
 
 even if GPU throughput remains high.
 
@@ -56289,13 +57186,13 @@ descriptor update occurs at safe point
 
 The critical idea is not the exact descriptor-set mechanism. It is that publishing a new resource binding must happen when both conditions are true:
 
-\[
+$$
 \boxed{
 \text{resource contents ready}
 \land
 \text{binding storage safe to mutate}
 }
-\]
+$$
 
 If either condition is false, the renderer risks sampling incomplete data or mutating state still consumed by an in-flight frame.
 
@@ -56399,13 +57296,13 @@ The Vulkan samples include fragment-shading-rate paths, including dynamic genera
 
 For XR/foveated rendering and adaptive shading, the key conceptual mapping is:
 
-\[
+$$
 \text{importance/frequency field}
 \rightarrow
 \text{shading-rate field}
 \rightarrow
 \text{fragment invocation density}
-\]
+$$
 
 A gaze-driven foveated renderer adds another temporal problem: the shading-rate field is only useful if gaze prediction, display timing, and frame scheduling keep the high-quality region aligned with perception.
 
@@ -79461,51 +80358,51 @@ The cross term matters because the inertia tensor rotates with the body. The sim
 
 ## Generalized coordinates describe the configuration the mechanism can actually have
 
-The Newtonian state above is written in ambient Cartesian coordinates because a free rigid body naturally lives in three-dimensional space. A constrained mechanism often has fewer independent degrees of freedom. A pendulum bob occupies \(\mathbb R^3\), but once its rod length is fixed its allowed positions lie on a sphere; a planar pendulum needs only one angle. A door has thousands of mesh vertices but one hinge angle. **Generalized coordinates** \(q=(q_1,\ldots,q_n)\) parameterize the configuration manifold rather than storing every constrained Cartesian coordinate as independent state.
+The Newtonian state above is written in ambient Cartesian coordinates because a free rigid body naturally lives in three-dimensional space. A constrained mechanism often has fewer independent degrees of freedom. A pendulum bob occupies $\mathbb R^3$, but once its rod length is fixed its allowed positions lie on a sphere; a planar pendulum needs only one angle. A door has thousands of mesh vertices but one hinge angle. **Generalized coordinates** $q=(q_1,\ldots,q_n)$ parameterize the configuration manifold rather than storing every constrained Cartesian coordinate as independent state.
 
 This is not merely a memory optimization. It changes the mathematical form of the dynamics. Let the Cartesian configuration be a smooth map
 
-\[
+$$
 x=x(q).
-\]
+$$
 
 Then velocity is obtained by the chain rule,
 
-\[
+$$
 \dot x
 =
 J(q)\dot q,
 \qquad
 J(q)=\frac{\partial x}{\partial q}.
-\]
+$$
 
 The kinetic energy becomes a quadratic form in generalized velocity,
 
-\[
+$$
 T(q,\dot q)
 =
 \frac12
 \dot q^T M(q)\dot q,
-\]
+$$
 
-where \(M(q)\) is the generalized mass matrix induced by the embedding and physical masses/inertias. Potential energy is \(U(q)\). Define the Lagrangian
+where $M(q)$ is the generalized mass matrix induced by the embedding and physical masses/inertias. Potential energy is $U(q)$. Define the Lagrangian
 
-\[
+$$
 L(q,\dot q,t)=T-U.
-\]
+$$
 
 Hamilton's principle states that the physical motion between fixed endpoint configurations is a stationary curve of the action
 
-\[
+$$
 \mathcal S[q]
 =
 \int_{t_0}^{t_1}
 L(q,\dot q,t)\,dt.
-\]
+$$
 
-Vary the path by \(q(t)+\varepsilon\eta(t)\) with \(\eta(t_0)=\eta(t_1)=0\). Differentiating the action with respect to \(\varepsilon\), integrating the \(\partial L/\partial\dot q\) term by parts, and requiring the first variation to vanish for arbitrary \(\eta\) yields
+Vary the path by $q(t)+\varepsilon\eta(t)$ with $\eta(t_0)=\eta(t_1)=0$. Differentiating the action with respect to $\varepsilon$, integrating the $\partial L/\partial\dot q$ term by parts, and requiring the first variation to vanish for arbitrary $\eta$ yields
 
-\[
+$$
 \boxed{
 \frac{d}{dt}
 \frac{\partial L}{\partial\dot q_i}
@@ -79514,35 +80411,35 @@ Vary the path by \(q(t)+\varepsilon\eta(t)\) with \(\eta(t_0)=\eta(t_1)=0\). Dif
 =
 0
 }
-\]
+$$
 
 for every generalized coordinate.
 
-Arnold emphasizes a structural advantage that is easy to miss in component derivations: the extremal condition does not depend on whether the same curve is described in Cartesian, polar, or another smooth coordinate system. The formula for \(L\) changes with coordinates, but the physical extremal does not. That is the right reason to use generalized coordinates—not because angles are somehow more “physical,” but because coordinates should follow the configuration manifold.
+Arnold emphasizes a structural advantage that is easy to miss in component derivations: the extremal condition does not depend on whether the same curve is described in Cartesian, polar, or another smooth coordinate system. The formula for $L$ changes with coordinates, but the physical extremal does not. That is the right reason to use generalized coordinates—not because angles are somehow more “physical,” but because coordinates should follow the configuration manifold.
 
-For a simple planar pendulum with length \(\ell\), mass \(m\), and angle \(\theta\),
+For a simple planar pendulum with length $\ell$, mass $m$, and angle $\theta$,
 
-\[
+$$
 T=\frac12m\ell^2\dot\theta^2,
 \qquad
 U=mg\ell(1-\cos\theta).
-\]
+$$
 
 The Euler–Lagrange equation gives
 
-\[
+$$
 m\ell^2\ddot\theta
 +
 mg\ell\sin\theta
 =
 0,
-\]
+$$
 
 or
 
-\[
+$$
 \ddot\theta+\frac{g}{\ell}\sin\theta=0.
-\]
+$$
 
 The rod-length constraint never appears as a multiplier because the coordinate already lives on the allowed one-dimensional configuration space. This is a **reduced-coordinate** model. The contact solver later in this chapter instead uses full body coordinates and imposes transient constraints through impulses. Both are legitimate; they solve different structural problems.
 
@@ -79552,11 +80449,11 @@ Source basis: V. I. Arnold, *Mathematical Methods of Classical Mechanics*, Part 
 
 ## D'Alembert's principle says ideal constraint reactions do no virtual work
 
-A holonomic constraint restricts configuration to a submanifold \(M\). In Cartesian coordinates, the body may feel reaction forces that enforce the restriction. D'Alembert's principle characterizes an **ideal** constraint by saying the reaction has no component along any allowed virtual displacement.
+A holonomic constraint restricts configuration to a submanifold $M$. In Cartesian coordinates, the body may feel reaction forces that enforce the restriction. D'Alembert's principle characterizes an **ideal** constraint by saying the reaction has no component along any allowed virtual displacement.
 
-Let \(x(t)\in M\), and let \(\xi\in T_xM\) be any tangent vector to the constraint manifold at the current configuration. For a unit-mass natural mechanical system with potential \(U(x)\), Arnold writes the constrained equation in the form
+Let $x(t)\in M$, and let $\xi\in T_xM$ be any tangent vector to the constraint manifold at the current configuration. For a unit-mass natural mechanical system with potential $U(x)$, Arnold writes the constrained equation in the form
 
-\[
+$$
 \left(
 \ddot x+\nabla U(x),
 \xi
@@ -79565,45 +80462,45 @@ Let \(x(t)\in M\), and let \(\xi\in T_xM\) be any tangent vector to the constrai
 0
 \qquad
 \forall \xi\in T_xM.
-\]
+$$
 
 Equivalently, the residual
 
-\[
+$$
 \ddot x+\nabla U(x)
-\]
+$$
 
 is normal to the allowed tangent space. That normal component is supplied by the constraint reaction.
 
 This is the geometric reason Lagrange multipliers appear. Suppose constraints are
 
-\[
+$$
 g_a(x)=0.
-\]
+$$
 
-Their gradients \(\nabla g_a\) span normal directions under regularity assumptions, so the Cartesian equation can be written
+Their gradients $\nabla g_a$ span normal directions under regularity assumptions, so the Cartesian equation can be written
 
-\[
+$$
 M\ddot x
 =
 F_{\mathrm{applied}}
 +
 J_g(x)^T\lambda,
-\]
+$$
 
-where \(J_g\) is the constraint Jacobian and \(\lambda\) contains reaction magnitudes. Multiplying by an allowed virtual displacement \(\delta x\) satisfying \(J_g\delta x=0\) makes the constraint term vanish:
+where $J_g$ is the constraint Jacobian and $\lambda$ contains reaction magnitudes. Multiplying by an allowed virtual displacement $\delta x$ satisfying $J_g\delta x=0$ makes the constraint term vanish:
 
-\[
+$$
 \delta x^T J_g^T\lambda
 =
 (J_g\delta x)^T\lambda
 =
 0.
-\]
+$$
 
 The reaction enforces geometry without doing first-order work along permitted motion.
 
-Do not overextend this idealization. Dry friction, motors, damping, joint limits with impacts, and compliant contacts can perform or dissipate work. A rolling-without-slip condition may be nonholonomic and cannot always be represented as a position-level manifold \(g(q)=0\). Game-engine joints often add stabilization terms because discrete integration drifts away from the ideal manifold. Those numerical terms should be identified separately from the physical constraint.
+Do not overextend this idealization. Dry friction, motors, damping, joint limits with impacts, and compliant contacts can perform or dissipate work. A rolling-without-slip condition may be nonholonomic and cannot always be represented as a position-level manifold $g(q)=0$. Game-engine joints often add stabilization terms because discrete integration drifts away from the ideal manifold. Those numerical terms should be identified separately from the physical constraint.
 
 The contact constraint later in this chapter is unilateral rather than an equality manifold: bodies may separate but may not interpenetrate. Its multiplier/impulse must satisfy a nonnegativity/complementarity condition. D'Alembert's tangent/normal picture still helps: the normal reaction acts in the forbidden direction, while tangential motion is free until friction introduces another constraint law.
 
@@ -79613,15 +80510,15 @@ Source basis: Arnold, Part II, §21 on D'Alembert's principle and constrained ex
 
 A nonlinear mechanical system can be difficult globally and simple locally. Arnold begins the theory of oscillations by linearizing near an equilibrium because the linearized system often explains frequencies, stability, resonance, and the first visible response to small disturbances.
 
-Let \(q_0\) be a stable equilibrium and write
+Let $q_0$ be a stable equilibrium and write
 
-\[
+$$
 q=q_0+\eta.
-\]
+$$
 
 For a natural Lagrangian, expand the potential:
 
-\[
+$$
 U(q_0+\eta)
 =
 U(q_0)
@@ -79629,94 +80526,94 @@ U(q_0)
 \frac12\eta^T K\eta
 +
 O(\|\eta\|^3),
-\]
+$$
 
-because the first derivative vanishes at equilibrium. Here \(K\) is the Hessian of the potential at \(q_0\). Freeze the mass matrix to first order,
+because the first derivative vanishes at equilibrium. Here $K$ is the Hessian of the potential at $q_0$. Freeze the mass matrix to first order,
 
-\[
+$$
 T
 \approx
 \frac12\dot\eta^T M\dot\eta.
-\]
+$$
 
 The linearized Euler–Lagrange equations are
 
-\[
+$$
 M\ddot\eta+K\eta=0.
-\]
+$$
 
 Seek a harmonic mode
 
-\[
+$$
 \eta(t)=\phi e^{i\omega t}.
-\]
+$$
 
 Then
 
-\[
+$$
 (K-\omega^2M)\phi=0,
-\]
+$$
 
 or
 
-\[
+$$
 \boxed{
 K\phi=\omega^2M\phi.
 }
-\]
+$$
 
-This is a generalized eigenvalue problem. Eigenvectors \(\phi_j\) are mode shapes; \(\omega_j\) are natural angular frequencies. Under the usual symmetric positive-definite mass matrix and stable stiffness assumptions, modes can be chosen \(M\)-orthogonal:
+This is a generalized eigenvalue problem. Eigenvectors $\phi_j$ are mode shapes; $\omega_j$ are natural angular frequencies. Under the usual symmetric positive-definite mass matrix and stable stiffness assumptions, modes can be chosen $M$-orthogonal:
 
-\[
+$$
 \phi_i^T M\phi_j=0
 \qquad i\neq j.
-\]
+$$
 
 Expand displacement as
 
-\[
+$$
 \eta(t)=\sum_j a_j(t)\phi_j.
-\]
+$$
 
 The coupled system then decouples into scalar oscillators,
 
-\[
+$$
 \ddot a_j+\omega_j^2a_j=0,
-\]
+$$
 
 until damping, forcing, nonlinearities, or mode truncation are added.
 
 This is the mechanics counterpart of PCA/SVD and Laplacian eigenmodes elsewhere in the curriculum: a basis is chosen that diagonalizes the important quadratic forms. Modal animation and reduced deformable simulation exploit exactly this structure. Keeping the lowest modes can reproduce large-scale compliant motion at much lower cost, but mode truncation cannot represent arbitrary local deformation or topology change.
 
-Stability also depends on the Hessian. If \(K\) has a negative generalized eigenvalue relative to \(M\), then \(\omega^2<0\) for that direction and the linearized solution grows exponentially rather than oscillating. A zero mode can correspond to a symmetry or unconstrained rigid motion. Thus an eigenanalysis is also a local stability diagnostic.
+Stability also depends on the Hessian. If $K$ has a negative generalized eigenvalue relative to $M$, then $\omega^2<0$ for that direction and the linearized solution grows exponentially rather than oscillating. A zero mode can correspond to a symmetry or unconstrained rigid motion. Thus an eigenanalysis is also a local stability diagnostic.
 
-Numerical stepping must respect the highest retained frequency. Explicit methods can become unstable when \(h\omega_{\max}\) is too large. A reduced model with fewer high-frequency modes can therefore be cheaper not only because it has fewer coordinates but because it may permit a larger stable timestep—though that changes the represented physics.
+Numerical stepping must respect the highest retained frequency. Explicit methods can become unstable when $h\omega_{\max}$ is too large. A reduced model with fewer high-frequency modes can therefore be cheaper not only because it has fewer coordinates but because it may permit a larger stable timestep—though that changes the represented physics.
 
 Source basis: Arnold, Chapter 5 on linearization and oscillations; the generalized mass/stiffness eigenproblem is also the normal-mode framework developed in Riley, Hobson, and Bence, *Mathematical Methods for Physics and Engineering*, Chapter 9.
 
 ## The Legendre transform turns configuration-space dynamics into phase-space dynamics
 
-The Lagrangian formulation evolves \(q\) through a second-order differential equation. Hamiltonian mechanics introduces canonical momentum
+The Lagrangian formulation evolves $q$ through a second-order differential equation. Hamiltonian mechanics introduces canonical momentum
 
-\[
+$$
 p_i
 =
 \frac{\partial L}{\partial\dot q_i}
-\]
+$$
 
-and, when the velocity-to-momentum map is invertible, uses \((q,p)\) as independent phase-space coordinates.
+and, when the velocity-to-momentum map is invertible, uses $(q,p)$ as independent phase-space coordinates.
 
 Define the Hamiltonian by the Legendre transform in the velocity variables,
 
-\[
+$$
 H(q,p,t)
 =
 p^T\dot q-L(q,\dot q,t),
-\]
+$$
 
-where \(\dot q\) is expressed as a function of \((q,p,t)\). Differentiating,
+where $\dot q$ is expressed as a function of $(q,p,t)$. Differentiating,
 
-\[
+$$
 dH
 =
 \dot q^Tdp
@@ -79724,11 +80621,11 @@ dH
 \frac{\partial L}{\partial q}^Tdq
 -
 \frac{\partial L}{\partial t}dt,
-\]
+$$
 
-after the \(p^Td\dot q\) terms cancel using \(p=\partial L/\partial\dot q\). The Euler–Lagrange equation gives \(\dot p=\partial L/\partial q\), so
+after the $p^Td\dot q$ terms cancel using $p=\partial L/\partial\dot q$. The Euler–Lagrange equation gives $\dot p=\partial L/\partial q$, so
 
-\[
+$$
 \boxed{
 \dot q=
 \frac{\partial H}{\partial p},
@@ -79736,37 +80633,37 @@ after the \(p^Td\dot q\) terms cancel using \(p=\partial L/\partial\dot q\). The
 \dot p=
 -\frac{\partial H}{\partial q}.
 }
-\]
+$$
 
-A second-order system in \(q\) has become a first-order system in twice as many variables.
+A second-order system in $q$ has become a first-order system in twice as many variables.
 
 For a standard particle with
 
-\[
+$$
 L(q,\dot q)
 =
 \frac12\dot q^TM\dot q-U(q)
-\]
+$$
 
-and constant positive-definite \(M\),
+and constant positive-definite $M$,
 
-\[
+$$
 p=M\dot q,
-\]
+$$
 
 and
 
-\[
+$$
 H(q,p)
 =
 \frac12p^TM^{-1}p+U(q).
-\]
+$$
 
-Here \(H\) equals total mechanical energy. That equality is common but not the definition of a Hamiltonian; generalized velocity-dependent potentials, time-dependent coordinates, or other Lagrangians require more care.
+Here $H$ equals total mechanical energy. That equality is common but not the definition of a Hamiltonian; generalized velocity-dependent potentials, time-dependent coordinates, or other Lagrangians require more care.
 
-If \(H\) has no explicit time dependence, then along a Hamiltonian trajectory
+If $H$ has no explicit time dependence, then along a Hamiltonian trajectory
 
-\[
+$$
 \frac{dH}{dt}
 =
 \nabla_qH^T\dot q
@@ -79778,7 +80675,7 @@ If \(H\) has no explicit time dependence, then along a Hamiltonian trajectory
 \nabla_pH^T\nabla_qH
 =
 0.
-\]
+$$
 
 Energy conservation follows directly from the canonical equations. In a numerical engine this exact continuous invariant need not be exactly preserved by a discrete integrator. That distinction is why energy drift is a property of the time-stepping method, not proof that Hamiltonian mechanics itself is dissipative or explosive.
 
@@ -79788,7 +80685,7 @@ Source basis: Arnold, Chapter 3 §§14–15 on Legendre transforms and Hamilton'
 
 Write canonical phase state as
 
-\[
+$$
 z=
 \begin{bmatrix}
 q\\p
@@ -79799,27 +80696,27 @@ J=
 0&I\\
 -I&0
 \end{bmatrix}.
-\]
+$$
 
 Hamilton's equations are
 
-\[
+$$
 \dot z
 =
 J\nabla H(z).
-\]
+$$
 
-The canonical symplectic two-form is represented locally by \(J\). A smooth map \(\Phi\) is symplectic when its Jacobian satisfies
+The canonical symplectic two-form is represented locally by $J$. A smooth map $\Phi$ is symplectic when its Jacobian satisfies
 
-\[
+$$
 D\Phi(z)^T J D\Phi(z)=J.
-\]
+$$
 
 This condition is stronger than ordinary volume preservation. Taking determinants implies
 
-\[
+$$
 |\det D\Phi|=1,
-\]
+$$
 
 so a symplectic map preserves phase volume, but many volume-preserving maps are not symplectic. Arnold develops both ideas: Liouville's theorem states that Hamiltonian phase flow preserves phase volume, while the symplectic formulation identifies the closed nondegenerate two-form preserved by Hamiltonian flow.
 
@@ -79827,43 +80724,43 @@ The distinction matters numerically. A generic high-order integrator can have ex
 
 For the separable Hamiltonian
 
-\[
+$$
 H(q,p)=T(p)+U(q),
-\]
+$$
 
 symplectic Euler can be written in one variant as
 
-\[
+$$
 p_{n+1}
 =
 p_n-h\nabla U(q_n),
-\]
+$$
 
-\[
+$$
 q_{n+1}
 =
 q_n+h\nabla T(p_{n+1}).
-\]
+$$
 
-For \(T=p^2/(2m)\), this is the familiar velocity-first/semi-implicit Euler update already used earlier in the engine curriculum. Its value is not that it is magically exact. Its update order gives a symplectic map for this Hamiltonian form, which often produces much better long-time qualitative behavior than explicit Euler.
+For $T=p^2/(2m)$, this is the familiar velocity-first/semi-implicit Euler update already used earlier in the engine curriculum. Its value is not that it is magically exact. Its update order gives a symplectic map for this Hamiltonian form, which often produces much better long-time qualitative behavior than explicit Euler.
 
 Hamiltonian mechanics also introduces the **Poisson bracket**
 
-\[
+$$
 \{f,g\}
 =
 \nabla f^T J\nabla g.
-\]
+$$
 
 Along an autonomous Hamiltonian trajectory,
 
-\[
+$$
 \frac{df}{dt}
 =
 \{f,H\}.
-\]
+$$
 
-A quantity \(f\) is conserved when its Poisson bracket with \(H\) vanishes. This gives a compact algebraic language for invariants and canonical transformations. In a game engine one does not need to implement a Poisson-bracket type to benefit from the concept: it explains why position and momentum are paired, why canonical transforms preserve dynamics, and why integrator structure can matter beyond local truncation order.
+A quantity $f$ is conserved when its Poisson bracket with $H$ vanishes. This gives a compact algebraic language for invariants and canonical transformations. In a game engine one does not need to implement a Poisson-bracket type to benefit from the concept: it explains why position and momentum are paired, why canonical transforms preserve dynamics, and why integrator structure can matter beyond local truncation order.
 
 Do not confuse this with contact/constraint projection. A collision impulse makes the trajectory nonsmooth and can intentionally dissipate energy through restitution/friction. A projected constraint solver can also destroy exact symplecticity. Structure-preserving free-flight integration is still useful, but the full engine is a hybrid dynamical system containing smooth Hamiltonian segments, external forces, constraints, impacts, sleeps, and authored corrections. Each layer should state which invariants it preserves or intentionally breaks.
 
@@ -80037,6 +80934,236 @@ $$
 $$
 
 With the earlier normal from A to B, apply $\Delta\mathbf x_A=-w_A\mathbf n\Delta\lambda$ and $\Delta\mathbf x_B=w_B\mathbf n\Delta\lambda$. Setting $\alpha=0$ recovers the hard distance correction when the denominator is nonzero. Positive compliance permits extension; it is a different physical model, not merely a slower hard rod. A cable additionally needs an inequality and an admissible tension multiplier. [XPBD](https://mmacklin.com/xpbd.pdf) addresses the stiffness dependence of ordinary PBD on timestep and iteration count; finite convergence error still depends on the solver budget. Multiplier initialization, inter-step warm starting, contact handling and velocity reconstruction remain explicit implementation choices.
+
+<!-- Book-completion teaching addition 4fcab2c176def371 -->
+
+### A joint removes selected relative motion, not every motion
+
+A contact is created and may disappear as two shapes move. A **joint** instead preserves an authored relationship between bodies across simulation steps. The type names are shorthand for the motions they allow. A distance joint keeps two anchors at a chosen distance; a cable permits separation only up to a maximum. A 2D revolute joint (hinge or pin) keeps one point on each body coincident while allowing relative rotation. A 2D prismatic joint (slider) permits translation along one declared axis and prevents sideways translation and relative rotation. A weld/fixed joint also prevents relative rotation. In 3D, a ball-and-socket joint keeps two anchors coincident but leaves all three relative rotations free. These descriptions count allowed motion; they do not say how a discrete solver will correct error. Box2D's current joint reference distinguishes revolute, prismatic, distance, motor and weld contracts, while Catto's constraint notes derive the reusable Jacobian recipe. [Box2D Joint Reference](https://box2d.org/documentation/group__joint.html) · [Catto, Iterative Dynamics with Temporal Coherence](https://box2d.org/files/ErinCatto_IterativeDynamicsSlides_GDC2005.pdf)
+
+Use local anchor points because they belong to each body's authored frame. For body $i$, let its centre of mass be $x_i$, orientation be $R_i$, and local anchor relative to the body-local centre of mass be $a_i$. If the authored anchor is measured from another origin, subtract the local centre-of-mass offset before forming $a_i$. The world lever arm and anchor are $r_i=R_i a_i$ and $p_i=x_i+r_i$. For a planar rigid body, the anchor velocity is $v_i+\omega_i\times r_i$. A revolute joint between A and B requires the two anchor positions to agree, so define the vector error $C=p_B-p_A$. Its velocity constraint is
+
+$$
+\dot C=(v_B+\omega_B\times r_B)-(v_A+\omega_A\times r_A)=JV.
+$$
+
+Here $V=(v_{Ax},v_{Ay},\omega_A,v_{Bx},v_{By},\omega_B)^T$. For each world axis $e_k$, one row of $J$ is $(-e_k^T,-(r_A\times e_k),e_k^T,(r_B\times e_k))$. These two rows remove relative x and y motion of the anchors; they leave the bodies' relative angle free. Do not form a zero or unnormalized slider axis: validate its length, normalize it once, and derive the perpendicular from the same orientation convention. A zero-length or nonfinite axis makes the constraint definition invalid, not merely a difficult solve.
+
+For this planar state, $M^{-1}=\operatorname{diag}(w_A,w_A,I_A^{-1},w_B,w_B,I_B^{-1})$, where $w_i$ is inverse mass and $I_i^{-1}$ is inverse planar inertia. The impulse-space effective-mass matrix is $K=JM^{-1}J^T$. It maps a vector of row impulses into changes in the constrained anchor speeds. For a joint with position error, a simple stabilization target is $v_{target}=-\beta C/h$, where $h>0$ is the step and $0\le\beta\le1$. A finite $\beta$ does not bound the correction speed for arbitrarily large $C$; cap the bias magnitude at a declared correction-speed limit when needed. The bilateral anchor solve is $K\lambda=v_{target}-JV$; its impulses may have either sign because an anchor can pull or push. Check that $K$ is finite and sufficiently full rank before solving. If both bodies are fixed, or rows are redundant, the solver must report/skip an unsolvable row set under an explicit policy rather than invert a singular matrix. A contact differs here: its normal multiplier is unilateral and cannot pull. Reuse the matrix method only after writing the joint's actual allowed-motion equations.
+
+**Worked planar hinge.** Fix body A. Body B has mass $2\,\mathrm{kg}$, moment of inertia $0.5\,\mathrm{kg\,m^2}$, and anchor lever arm $r_B=(0,0.5)\,\mathrm m$. The two anchor rows give $K=\operatorname{diag}(1,0.5)\,\mathrm{kg}^{-1}$: the x row has translational inverse mass $0.5$ plus rotational term $2(0.5)^2=0.5$; the y row has no rotational arm and has inverse mass $0.5$. Suppose the measured anchor error is $C=(0.02,-0.01)\,\mathrm m$ and current anchor velocity is $(1,-0.5)\,\mathrm{m/s}$. With $\beta=0.2$ and $h=1/60\,\mathrm s$, the desired velocity is $-\beta C/h=(-0.24,0.12)\,\mathrm{m/s}$. Thus the required velocity change is $(-1.24,0.62)\,\mathrm{m/s}$ and the row impulse is $\lambda=K^{-1}(-1.24,0.62)^T=(-1.24,1.24)\,\mathrm{N\,s}$. It changes B's centre velocity by $(-0.62,0.62)\,\mathrm{m/s}$ and angular velocity by $+1.24\,\mathrm{rad/s}$; the rotational point-velocity change is $(-0.62,0)$, so the anchor changes by exactly $(-1.24,0.62)\,\mathrm{m/s}$. The corrected anchor speed is the stated target. The negative x impulse is valid because these rows are bilateral.
+
+A rotational motor adds a different row, not a new joint type. For relative angular speed $\omega_B-\omega_A$, a desired speed $\omega^*$, and inverse rotational effective mass $k_\omega=I_A^{-1}+I_B^{-1}$, the unconstrained increment is $\Delta\lambda=(\omega^*-(\omega_B-\omega_A))/k_\omega$. Accumulate the motor impulse and clamp its total to $[-h\tau_{max},+h\tau_{max}]$, where $\tau_{max}$ is the allowed torque; apply only the change from the prior total. At a lower angular limit, a unilateral row can only push the angle upward when motion would cross below the bound; the upper limit has the opposite sign. A limit row is inactive away from its boundary when the predicted motion also remains inside the permitted interval. Fast motion may need a speculative activation test or substeps so the solver does not wait until the angle has crossed the limit. Motors and limits must not be allowed to override one another by applying unbounded impulses in different solve phases. Box2D documents motor speed, max torque, angular limits, and spring settings as explicit joint fields; exact units and defaults are versioned API facts, not universal mechanical laws. [Box2D Revolute Joint](https://box2d.org/documentation/group__revolute__joint.html)
+
+**Solved checks.** (1) If the hinge's current anchor error is zero and anchor velocity is already $(0,0)$, both anchor-row impulses are zero. (2) If the body is fixed and has zero inverse mass and inertia, then $K=0$ and no division is permitted. (3) Starting from zero accumulated motor impulse, if its unconstrained impulse is $4\,\mathrm{N\,m\,s}$ but $h=0.01\,\mathrm s$ and $\tau_{max}=100\,\mathrm{N\,m}$, the total impulse cap is $h\tau_{max}=1\,\mathrm{N\,m\,s}$; the projected total is 1. With a nonzero previous total, apply the difference between projected new and previous totals; an individual iteration delta may exceed the absolute cap while the final accumulated total remains within it. (4) If the lower limit is $-0.5$ rad and the joint is at $-0.6$ rad moving farther negative, activate the lower-limit row; if it moves back toward the interval, do not apply a pulling impulse.
+
+#### Count the rows before extending the solver to three dimensions
+
+Two unconstrained bodies have three relative degrees of freedom in the plane and six in space. At a regular configuration, each independent scalar equality row removes one. Limits and motors are additional conditional or driven rows, so they should not be counted as permanent locks.
+
+| Relationship | Planar equality rows | Spatial equality rows | Remaining spatial relative motion |
+|---|---:|---:|---|
+| Fixed-length distance | 1 | 1 | Five relative motions, subject to the distance |
+| Coincident anchors / ball-and-socket | 2 | 3 | Three rotations |
+| Hinge / revolute | 2 | 5 | Rotation about its common axis |
+| Slider / prismatic | 2 | 5 | Translation along its common axis |
+| Weld / fixed | 3 | 6 | None |
+
+For a spatial ball-and-socket joint use $C=p_B-p_A\in\mathbb R^3$. Along any world unit direction $t$, the velocity row is $(-t^T,-(r_A\times t)^T,t^T,(r_B\times t)^T)$ on state $(v_A,\omega_A,v_B,\omega_B)$. Three independent directions give the three anchor rows. World-space inverse inertia is now a $3\times3$ tensor, so the planar scalar formula cannot be copied unchanged.
+
+A spatial hinge adds two angular rows that suppress relative angular velocity perpendicular to the common unit axis $a$. Construct orthonormal directions $t_1,t_2$ perpendicular to $a$; their angular rows are $(-t_j^T,t_j^T)$ on $(\omega_A,\omega_B)$. The component along $a$ stays free. A cross-product alignment error vanishes for both parallel and opposite axes, so a finite-error implementation must disambiguate those cases and maintain the authored reference frames. These velocity rows describe a regular aligned configuration, not an arbitrary-angle orientation-error solver.
+
+A spatial slider keeps two transverse anchor coordinates zero and keeps the authored relative orientation fixed. Its basis moves with body A: put $q=p_B-p_A$, $a=R_Aa_{local}$, and choose transverse directions $t_j=R_At_{j,local}$. Differentiating $C_j=t_j^Tq$ includes a moving-basis term:
+
+$$
+\dot C_j=t_j^T(v_{Bp}-v_{Ap})+(\omega_A\times t_j)^Tq.
+$$
+
+Therefore the angular-A block is $-(r_A\times t_j)^T+(t_j\times q)^T$, not merely the projected ball-joint block. Omitting it gives incorrect behavior when the slider frame rotates while its anchors are separated. Three relative-orientation rows suppress angular motion, leaving translation along $a$ free. A weld instead uses all three anchor rows and all three orientation rows. Finite orientation correction needs a consistent rotation error and its Jacobian, such as the SO(3) logarithm developed in the foundations; subtracting arbitrary Euler angles is not a general replacement.
+
+These row counts agree with the fixed, spherical, revolute and prismatic contracts in the versioned [PhysX 5.4 joint documentation](https://nvidia-omniverse.github.io/PhysX/physx/5.4.0/docs/Joints.html). The row derivations here explain their kinematic structure; they do not claim that a complete spatial joint solver has been implemented or tested.
+
+
+#### Verify the planar rows independently
+
+The following complete Python lab checks the analytic anchor Jacobian against 360 finite differences, solves the worked hinge, checks body-order invariance, distinguishes total motor impulse from its iteration delta, and rejects singular/nonfinite inputs. Run `python3 tools/labs/planar_joint_rows_lab.py` or `python3 -O tools/labs/planar_joint_rows_lab.py`. It implements a bounded planar velocity solve, not world integration, spatial joints, a persistent joint cache or a ragdoll. The comments teach the implementation beside each operation.
+
+```python
+#!/usr/bin/env python3
+"""Planar anchor Jacobian/impulse and motor-bound witness; not a world solver."""
+import math
+import random
+
+
+def require(condition, message):
+    # Remains active with python -O; a lesson check must not silently disappear.
+    if not condition:
+        raise AssertionError(message)
+
+
+def rotate(angle, point):
+    c, s = math.cos(angle), math.sin(angle)
+    return c*point[0]-s*point[1], s*point[0]+c*point[1]
+
+
+def constraint_and_rows(q, anchors):
+    # q stores (COM x, COM y, angle) for A followed by B. Each anchor is
+    # measured from its body's LOCAL COM, not an unrelated mesh pivot.
+    if not all(math.isfinite(v) for v in (*q, *anchors[0], *anchors[1])):
+        raise ValueError('Finite body poses and local anchors required')
+    ra = rotate(q[2], anchors[0])
+    rb = rotate(q[5], anchors[1])
+    error = (q[3]+rb[0]-q[0]-ra[0], q[4]+rb[1]-q[1]-ra[1])
+    if not all(math.isfinite(v) for v in error):
+        raise ValueError("Anchor separation overflow")
+    # d(R*a)/d(angle) = (-r_y,r_x). The negative A contribution reverses
+    # those signs. Rows map generalized body velocity into anchor velocity.
+    rows = ((-1., 0., ra[1], 1., 0., -rb[1]),
+            (0., -1., -ra[0], 0., 1., rb[0]))
+    return error, rows
+
+
+def solve_symmetric_two(k00, k01, k11, rhs):
+    # Both rows constrain distance, so they have compatible units. Normalize
+    # to avoid forming an unscaled determinant. This tolerance is an explicit
+    # singularity policy, not a general condition estimator or sparse solver.
+    if not all(math.isfinite(v) for v in (k00, k01, k11, *rhs)):
+        raise ValueError("Finite matrix and right-hand side required")
+    scale = max(abs(k00), abs(k01), abs(k11))
+    if not math.isfinite(scale) or scale == 0:
+        raise ValueError('Both-fixed or invalid constraint block')
+    a, b, d = k00/scale, k01/scale, k11/scale
+    determinant = a*d-b*b
+    if a <= 0 or d <= 0 or determinant <= 1e-12:
+        raise ValueError('Singular, redundant or ill-conditioned anchor rows')
+    u, v = rhs[0]/scale, rhs[1]/scale
+    result = ((d*u-b*v)/determinant, (a*v-b*u)/determinant)
+    if not all(math.isfinite(x) for x in result):
+        raise ValueError('Unrepresentable impulse')
+    return result
+
+
+def solve_anchor(q, anchors, inverse_mass, velocity, target):
+    if not all(math.isfinite(w) and w >= 0 for w in inverse_mass):
+        raise ValueError('Nonnegative finite inverse masses/inertias required')
+    if not all(math.isfinite(v) for v in (*velocity, *target)):
+        raise ValueError('Finite velocities required')
+    _, rows = constraint_and_rows(q, anchors)
+    # K = J M^-1 J^T. The angular inverse inertia occupies the third component
+    # of each body block, so lever-arm effects enter without a special case.
+    def k(i, j):
+        return sum(rows[i][n]*inverse_mass[n]*rows[j][n] for n in range(6))
+    current = tuple(sum(row[n]*velocity[n] for n in range(6)) for row in rows)
+    impulse = solve_symmetric_two(k(0, 0), k(0, 1), k(1, 1),
+                                 tuple(target[i]-current[i] for i in range(2)))
+    delta = tuple(inverse_mass[n]*sum(rows[i][n]*impulse[i] for i in range(2))
+                  for n in range(6))
+    # This applies a velocity correction only. Position integration, contacts,
+    # warm starting, sleep, breakage and frame-to-frame joint state are absent.
+    return tuple(velocity[n]+delta[n] for n in range(6)), impulse
+
+
+def bias_velocity(error, beta, step, speed_cap):
+    if not (math.isfinite(step) and step > 0 and 0 <= beta <= 1
+            and math.isfinite(speed_cap) and speed_cap >= 0):
+        raise ValueError('Positive step, valid beta and finite nonnegative cap required')
+    if not all(math.isfinite(c) for c in error):
+        raise ValueError("Finite positional error required")
+    target = tuple(-beta*c/step for c in error)
+    if not all(math.isfinite(c) for c in target):
+        raise ValueError("Bias arithmetic overflow before capping")
+    length = math.hypot(*target)
+    factor = min(1., speed_cap/length) if length else 1.
+    return tuple(x*factor for x in target)
+
+
+def motor_update(previous, increment, max_torque, step):
+    if not all(math.isfinite(x) for x in (previous, increment, max_torque, step)):
+        raise ValueError('Finite motor data required')
+    if max_torque < 0 or step <= 0:
+        raise ValueError('Motor cap nonnegative and timestep positive required')
+    cap = step*max_torque
+    if not math.isfinite(cap):
+        raise ValueError("Motor cap overflow")
+    total = max(-cap, min(cap, previous+increment))
+    # Bound the ACCUMULATED impulse. The corrective increment can exceed cap
+    # when it cancels a previously applied impulse with the opposite sign.
+    return total, total-previous
+
+
+def run():
+    q = (0., 0., 0., .02, -.51, 0.)
+    anchors = ((0., 0.), (0., .5))
+    weights = (0., 0., 0., .5, .5, 2.)
+    velocity = (0., 0., 0., 1., -.5, 0.)
+    error, rows = constraint_and_rows(q, anchors)
+    target = bias_velocity(error, .2, 1/60, 10.)
+    after, impulse = solve_anchor(q, anchors, weights, velocity, target)
+    require(all(math.isclose(x, y, abs_tol=1e-12)
+                for x, y in zip(impulse, (-1.24, 1.24))), 'Worked hinge impulse')
+    require(math.isclose(after[5], 1.24, abs_tol=1e-12), 'Angular response')
+    actual = tuple(sum(row[i]*after[i] for i in range(6)) for row in rows)
+    require(all(math.isclose(x, y, abs_tol=1e-12) for x, y in zip(actual, target)),
+            'Post-solve anchor speed equals bias target')
+
+    # Swapping A/B reverses error and row impulse, but preserves each actual
+    # body's resulting velocity. This catches a body-order sign mistake.
+    swapped, _ = solve_anchor(q[3:]+q[:3], anchors[::-1], weights[3:]+weights[:3],
+                              velocity[3:]+velocity[:3], tuple(-x for x in target))
+    require(all(math.isclose(x, y, abs_tol=1e-12)
+                for x, y in zip(swapped[3:]+swapped[:3], after)), 'Body swap invariance')
+
+    rng = random.Random(920)
+    for _ in range(30):
+        pose = tuple(rng.uniform(-2, 2) for _ in range(6))
+        points = ((.2, -.4), (-.1, .6))
+        _, analytic = constraint_and_rows(pose, points)
+        for axis in range(6):
+            lo, hi = list(pose), list(pose)
+            lo[axis] -= 1e-6
+            hi[axis] += 1e-6
+            left, _ = constraint_and_rows(lo, points)
+            right, _ = constraint_and_rows(hi, points)
+            for row in range(2):
+                derivative = (right[row]-left[row])/2e-6
+                require(math.isclose(derivative, analytic[row][axis], abs_tol=1e-8),
+                        'Independent finite-difference anchor Jacobian')
+    total, delta = motor_update(-.8, 1.7, 100., .01)
+    require(math.isclose(total, .9) and math.isclose(delta, 1.7), 'Total versus delta cap')
+    require(math.isclose(math.hypot(*bias_velocity((100., 100.), .2, .01, 3.)), 3.),
+            'Large positional error respects declared bias-speed cap')
+    try:
+        solve_anchor(q, anchors, (0.,)*6, velocity, target)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('Both-fixed singular block accepted')
+    try:
+        solve_symmetric_two(1., 1., 1., (1., 1.))
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('Redundant rows accepted')
+    for call in (lambda: bias_velocity((math.nan, 0), .2, .01, 3),
+                 lambda: motor_update(0., 1., math.inf, .01),
+                 lambda: solve_symmetric_two(1., 0., 1., (math.nan, 0.))):
+        try:
+            call()
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('Nonfinite solver input accepted')
+    print('PASS: planar hinge trace, 360 finite differences, body swap, motor total cap, '
+          'bias cap and singular cases; no spatial joint/world-solver claim')
+
+
+if __name__ == '__main__':
+    run()
+```
+
+Before implementing another joint, write four items: its allowed degrees of freedom; the constraint equation in authored local frames; the Jacobian rows and units; and the feasible sign/range for each accumulated impulse. Then test anchor coincidence, allowed motion, limit activation on both sides, motor saturation, swapped body order, a zero axis, both-fixed bodies, redundant rows, and a large initial error. A planar hinge has two bilateral anchor rows plus an optional angle row; it does not validate a 3D ball-and-socket solver, a 3D hinge, a general articulated ragdoll, coupled compliant joints, or a production engine. The adjacent executable witness verifies planar anchor rows, their velocity solve and a bounded motor-impulse policy. Spatial joint implementations, iterative world integration and a production joint runtime remain outside that witness.
+
+
 
 
 
@@ -101538,10 +102665,10 @@ A runtime may request two views, four views or asymmetric view configurations. V
 
 Represent each view as data:
 
-\[
+$$
 V_i=\{\text{pose},\text{projection},\text{viewport},
 \text{color},\text{depth},\text{quality policy}\}.
-\]
+$$
 
 The render graph can share view-independent work and instance view-dependent work when the backend supports multiview.
 
@@ -101601,9 +102728,9 @@ A clean boundary is native runtime plus Python tooling plus stable file/CLI/FFI 
 
 A trace can contain
 
-\[
+$$
 (timestamp,\ head\ pose,\ gaze,\ input,\ view\ config,\ scene\ event).
-\]
+$$
 
 Replay under a controlled clock should measure predicted-versus-truth pose error, gaze error in degrees, fovea miss rate, CPU/GPU stage durations, frame misses/reprojection mode, image metrics and memory/bandwidth counters when available.
 
@@ -101619,7 +102746,7 @@ Cloud rendering moves some or all graphics work to a remote GPU, encodes the res
 
 The end-to-end motion-to-photon path becomes roughly
 
-\[
+$$
 T =
 T_{sensor}
 +T_{uplink}
@@ -101629,7 +102756,7 @@ T_{sensor}
 +T_{decode}
 +T_{client-compose}
 +T_{scanout}.
-\]
+$$
 
 These terms overlap in real pipelines, so the equation is an accounting model rather than a claim that every stage runs strictly serially. It is still valuable because moving rendering to a server adds latency and jitter sources that a local engine does not have.
 
@@ -102234,7 +103361,7 @@ A *logical resource* is an identified array, texture or buffer with an agreed co
 
 Suppose pass A writes the HDR image and pass B reads it. B needs A's output, a **read-after-write** (RAW) ordering dependency. If B reads a prior image version and C later replaces it, C must wait until B has finished reading: this is **write-after-read** (WAR). If A clears a target and C then draws into that same target, the writes must follow the specified ordering: this is **write-after-write** (WAW). RAW protects the validity of a newly produced value; WAR protects access to an old value; WAW protects the chosen order of replacements. A diagram containing only “written here, read there” omits two of these important obligations.
 
-Represent a dependency as a directed edge between pass indices: \(A\to B\) means A must precede B. The graph defines a *partial order*: independent passes may run in either order, but lighting must follow the passes that produce G-buffer attributes and shadow data. The compilation rule in the laboratory uses the submitted pass sequence as the required order for accesses to the **same** resource. It does not claim to infer an artist's intended ordering from arbitrary names. If the author wants to reorder two writes safely, they must specify the intended versions and dependencies.
+Represent a dependency as a directed edge between pass indices: $A\to B$ means A must precede B. The graph defines a *partial order*: independent passes may run in either order, but lighting must follow the passes that produce G-buffer attributes and shadow data. The compilation rule in the laboratory uses the submitted pass sequence as the required order for accesses to the **same** resource. It does not claim to infer an artist's intended ordering from arbitrary names. If the author wants to reorder two writes safely, they must specify the intended versions and dependencies.
 
 Maintain, per resource, the last writer, the readers of its current version, and the imported-initialization flag. For each read, add a RAW dependency from the last writer or reject a transient read without a writer. For each write, add WAW from the previous writer and WAR from every outstanding reader, then clear that reader set and record the new writer. Deduplicate pass-to-pass adjacencies before computing indegrees: two separate RAW reasons between the same passes create one predecessor relationship, not two required predecessor executions. Finally, topologically sort by repeatedly scheduling a zero-indegree pass and deleting its outgoing constraints. If passes remain, a cycle makes the declared ordering impossible.
 
@@ -102658,7 +103785,7 @@ Build and run with `g++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror
 
 Trace the actual resource values. Pass 0 (G-buffer) writes `albedo` and `depth`. Pass 1 writes `shadow`. Pass 2 (lighting) reads all three and writes `hdr`. Pass 3 reads `hdr` and imported `history`, writing `history_next`. Pass 4 tone-maps the new history into `ldr`; pass 5 reads `ldr` for presentation. The compiler records 0→2 twice with distinct reasons (albedo RAW and depth RAW), 1→2 (shadow RAW), 2→3 (HDR RAW), 3→4 (history-next RAW), and 4→5 (display RAW). Passes 0 and 1 are independent, although the stable ready queue chooses 0 first. When `history` is marked non-imported, pass 3 becomes an illegal first read. A separate scenario reads an imported history before overwriting it, proving WAR; another scenario clears then writes a target, proving WAW. The remaining cases must reject a dependency cycle, same-pass feedback, duplicates and uninitialized resources.
 
-With \(P\) passes and \(E\) unique pass-to-pass edges, a min-priority-queue topological sort costs \(O((P+E)\log P)\) as a conservative upper bound. The complete program also has ordered-map/set lookup costs, and generating WAR edges may be quadratic in the number of readers of one resource. Before optimizing, measure a representative workload and distinguish unique pass edges from multiple hazard reasons.
+With $P$ passes and $E$ unique pass-to-pass edges, a min-priority-queue topological sort costs $O((P+E)\log P)$ as a conservative upper bound. The complete program also has ordered-map/set lookup costs, and generating WAR edges may be quadratic in the number of readers of one resource. Before optimizing, measure a representative workload and distinguish unique pass edges from multiple hazard reasons.
 
 ### The essential missing GPU contract, and how to implement it next
 
@@ -112930,7 +114057,7 @@ Do not concatenate these two files into one translation unit: they intentionally
 
 For a single rigid-body contact, world coordinates contain more information than the normal collision rule needs. Millington constructs a **contact coordinate frame** whose origin is the contact point and whose first axis follows the contact normal; two perpendicular tangent axes complete an orthonormal basis. The point is not cosmetic. In that frame, the frictionless impulse has only a normal component, while friction lives in the tangent plane. A basis change lets the solver express the rule in coordinates aligned with the constraint, then transform the resulting impulse back to world space for application.
 
-The complete impulse calculation must include both translation and rotation. An impulse \(\mathbf{J}\) changes linear velocity by \(m^{-1}\mathbf{J}\). Applied at a world-space offset \(\mathbf{r}\) from the center of mass, it changes angular velocity through the world inverse-inertia tensor and the torque impulse \(\mathbf{r}\times\mathbf{J}\). Therefore the velocity of the actual contact point changes by a combination of the linear response and the angular response. A light object struck near its center and the same object struck near its edge can require different impulses to achieve the same normal separating-velocity target because the edge strike spends part of the response on rotation.
+The complete impulse calculation must include both translation and rotation. An impulse $\mathbf{J}$ changes linear velocity by $m^{-1}\mathbf{J}$. Applied at a world-space offset $\mathbf{r}$ from the center of mass, it changes angular velocity through the world inverse-inertia tensor and the torque impulse $\mathbf{r}\times\mathbf{J}$. Therefore the velocity of the actual contact point changes by a combination of the linear response and the angular response. A light object struck near its center and the same object struck near its edge can require different impulses to achieve the same normal separating-velocity target because the edge strike spends part of the response on rotation.
 
 A useful way to reconstruct Millington’s six-stage logic is: build and validate the contact basis; compute how a unit impulse changes each body’s contact-point velocity including angular response; combine the two bodies into an effective contact response; compute the desired change in relative contact velocity from current closing velocity, restitution, and resting-contact policy; solve for the contact-space impulse, adding bounded tangential components when friction is enabled; then transform the impulse to world space and apply equal-and-opposite linear/angular changes to the participating dynamic bodies.
 
@@ -114878,7 +116005,7 @@ Once sliding begins, kinetic friction opposes the relative tangential velocity. 
 
 The common Coulomb model above is **isotropic** when the same tangential limit applies in every direction along the contact surface. Millington explicitly distinguishes this from **anisotropic friction**, where resistance depends on tangent direction. Real examples include a tire that strongly resists sideways sliding while allowing rolling, brushed or grooved materials, skis, conveyor-like surfaces, or game mechanics that deliberately make travel easier along one axis.
 
-In a three-dimensional contact, choose two orthogonal tangent directions \(\mathbf{t}_1,\mathbf{t}_2\). An isotropic friction cone bounds the tangential impulse magnitude by a circular condition such as \(\|\boldsymbol{\lambda}_t\|\le\mu\lambda_n\). Directional friction can instead use different limits along the tangent axes, producing an elliptical admissible region in the simplest model. If \(\mu_1\) and \(\mu_2\) are the directional coefficients, an explanatory normalized form is \((\lambda_{t1}/(\mu_1\lambda_n))^2+(\lambda_{t2}/(\mu_2\lambda_n))^2\le1\) for positive normal impulse and nonzero limits. This is a teaching model, not a claim that every engine should implement an ellipse. A tire model may need slip ratio, load, wheel angular speed, suspension, and a nonlinear force curve rather than a Coulomb ellipse.
+In a three-dimensional contact, choose two orthogonal tangent directions $\mathbf{t}_1,\mathbf{t}_2$. An isotropic friction cone bounds the tangential impulse magnitude by a circular condition such as $\|\boldsymbol{\lambda}_t\|\le\mu\lambda_n$. Directional friction can instead use different limits along the tangent axes, producing an elliptical admissible region in the simplest model. If $\mu_1$ and $\mu_2$ are the directional coefficients, an explanatory normalized form is $(\lambda_{t1}/(\mu_1\lambda_n))^2+(\lambda_{t2}/(\mu_2\lambda_n))^2\le1$ for positive normal impulse and nonzero limits. This is a teaching model, not a claim that every engine should implement an ellipse. A tire model may need slip ratio, load, wheel angular speed, suspension, and a nonlinear force curve rather than a Coulomb ellipse.
 
 Directional friction introduces a representation question absent from scalar materials: **which frame defines the preferred direction?** A wood grain direction may belong to the surface local frame. A tire’s longitudinal/lateral directions belong to the wheel orientation projected into the contact plane. If tangent axes are reconstructed arbitrarily every frame, merely rotating that basis can change the apparent material response. Store or derive a meaningful material direction and transform it consistently into the current contact frame.
 

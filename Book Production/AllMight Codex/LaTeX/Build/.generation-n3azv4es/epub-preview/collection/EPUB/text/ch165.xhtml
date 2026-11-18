@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch165.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-cc0909a7ef14-page-faults-and-demand-paging" class="level2">
+<h2>Page faults and demand paging</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-cc0909a7ef14-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A memory fault requires OS intervention when current translation/protection state cannot satisfy access. Valid demand loading, zero-fill, or copy-on-write may install/alter mapping then retry. Invalid addresses or denied permissions may fail instead. A fault need not perform disk I/O; a TLB miss need not fault at all.</p>
+</section>
+<section id="appendix-cc0909a7ef14-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch125.xhtml#appendix-01e5905165c4-page-tables-and-mmu" class="wikilink">Page tables and MMU</a> — Cached or faulting translation starts from the mapping/protection mechanism.</li>
+</ul>
+</section>
+<section id="appendix-cc0909a7ef14-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch149.xhtml#appendix-7a06e5baac04-copy-on-write" class="wikilink">Copy-on-write</a> — uses this mechanism as stated in its prerequisites.</li>
+<li><a href="ch134.xhtml#appendix-313ee7a0ba7b-memory-mapped-files" class="wikilink">Memory-mapped files</a> — uses this mechanism as stated in its prerequisites.</li>
+</ul>
+</section>
+<section id="appendix-cc0909a7ef14-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Trace successful first-touch recovery versus denied access.</p>
+<p><strong>Pending:</strong> Minor/major faults, working sets, swapping, and platform terminology.</p>
+</section>
+<section id="appendix-cc0909a7ef14-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

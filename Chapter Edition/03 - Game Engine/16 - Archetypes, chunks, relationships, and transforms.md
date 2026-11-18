@@ -8,7 +8,7 @@ Sparse sets make independent component stores easy to understand; archetypes gro
 
 **Recall question:** What changes physically when an entity gains a component, and how do parent changes invalidate dependent world transforms?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 30486–34531; source-span SHA256 747d734fc016075db6541714fa4be60987a2244167f3812feafbf1293cc25c4b. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 31133–35178; source-span SHA256 747d734fc016075db6541714fa4be60987a2244167f3812feafbf1293cc25c4b. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### ARCHETYPES, CHUNKS, LAYOUTS, RELATIONSHIPS AND TRANSFORMS

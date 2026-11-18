@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch465.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-2c2df8345991-nonlinear-least-squares-gauss-newton-and-levenberg-marquardt" class="level2">
+<h2>Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 9 · <strong>Latest development:</strong> Phase 9</p>
+<section id="appendix-2c2df8345991-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Nonlinear least squares minimizes one half the squared norm of a residual vector. Its gradient and Hessian involve the residual Jacobian; the exact Hessian also contains second derivatives of each residual. Gauss–Newton drops those latter terms, producing a positive-semidefinite normal matrix and an efficient local step when residuals are small or the model is close to linear. Levenberg–Marquardt adds damping to control ill-conditioned or overly aggressive steps, blending Gauss–Newton with gradient descent. These algorithms are useful for camera calibration, bundle adjustment, and geometric fitting. Residual scaling, parameter units, rank deficiency, and gauge freedoms influence the solution. Normal equations can square the condition number, so QR or other structured solves may be safer. A small residual does not prove parameters are identifiable or physically correct.</p>
+</section>
+<section id="appendix-2c2df8345991-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch518.xhtml#appendix-d8a7ddb675eb-jacobians-pushforwards-and-pullbacks" class="wikilink">Jacobians, pushforwards, and pullbacks</a></li>
+<li><a href="ch488.xhtml#appendix-6ac071f8b50c-hessians-and-local-curvature" class="wikilink">Hessians and local curvature</a></li>
+<li><a href="ch480.xhtml#appendix-50d2ea3c9b26-symmetric-positive-definite-matrices-and-cholesky" class="wikilink">Symmetric positive-definite matrices and Cholesky</a></li>
+<li><a href="ch342.xhtml#appendix-29f4bea4c2bb-constrained-optimization-and-inverse-kinematics" class="wikilink">Constrained optimization and inverse kinematics (Light Transport and Image Synthesis, Part 1, Reference notes: Constrained optimization and inverse kinematics)</a></li>
+</ul>
+</section>
+<section id="appendix-2c2df8345991-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li>This node is a current endpoint in the supplied Phase 9–10 path.</li>
+</ul>
+</section>
+<section id="appendix-2c2df8345991-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch270.xhtml#id_02-foundations-ii-ch026-optimization-and-inverse-problems" class="wikilink">Phase 9 teaching section (Mathematics for Visual Computing, Part 2, Ch. 10)</a></li>
+<li><a href="ch084.xhtml#appendix-adf48f5dc5c1-calculus-and-optimization-visual-recall" class="wikilink">Visual Recall/09 - Calculus and Optimization - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 09 - Calculus and Optimization - Visual Recall)</a> · visual recall</li>
+</ul>
+</section>
+<section id="appendix-2c2df8345991-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 877 (T02 · M053), 878 (T02 · M053), 879 (T02 · M053), 880 (T02 · M053).</p>
+</section>
+</section>
+</body>
+</html>

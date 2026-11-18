@@ -8,7 +8,7 @@ Support mapping reduces a convex shape to an extreme point in a requested direct
 
 **Recall question:** Why can an extreme-point query represent many different convex shapes uniformly?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 53176–56087; source-span SHA256 cff52aa0cd684f710b80da20f913d8e2a7f7e837d28e5c26f3e3e059df489022. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 54178–57089; source-span SHA256 cff52aa0cd684f710b80da20f913d8e2a7f7e837d28e5c26f3e3e059df489022. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Support Mapping

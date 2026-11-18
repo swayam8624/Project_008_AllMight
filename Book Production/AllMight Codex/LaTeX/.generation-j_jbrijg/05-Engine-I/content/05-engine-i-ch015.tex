@@ -1,0 +1,3967 @@
+\hypertarget{05-engine-i-ch015}{}
+\chapter{15 --- Sparse-set components and generational entity handles}\label{05-engine-i-ch015-sparse-set-components-and-generational-entity-handles}
+
+\hyperref[volume-reading-map]{Reading map} · \hyperref[05-engine-i-ch014]{Previous chapter} · \hyperref[05-engine-i-ch016]{Next chapter}
+
+As the world grows, storing every entity as a separate object becomes costly and references can outlive their occupants. This chapter derives dense component pools, sparse lookup, and generation checks from those constraints.
+
+\textbf{By the end:} Implement component membership and entity identity while accounting for swap removal, slot reuse, and stale handles.
+
+\textbf{Recall question:} After an entity is removed and its slot reused, what check proves that an old handle cannot refer to the new entity?
+
+\subsection{COMPONENT POOLS AND SPARSE SETS}\label{05-engine-i-ch015-component-pools-and-sparse-sets}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Component pools}
+
+A sparse-set ECS usually stores one pool per component type:
+
+\begin{verbatim}
+Transform Pool
+----------------
+entities
+components
+
+Velocity Pool
+----------------
+entities
+components
+
+Health Pool
+----------------
+entities
+components
+\end{verbatim}
+
+An entity with Transform and Health exists in both corresponding pools.
+
+There is no requirement that pools have equal sizes.
+
+Example:
+
+\begin{verbatim}
+100,000 entities total
+100,000 transforms
+ 20,000 velocities
+    300 bosses
+     12 directional lights
+\end{verbatim}
+
+That density difference is what later makes smallest-pool queries powerful.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Type erasure in Kairo pools}
+
+Your registry needs to do this during entity destruction:
+
+\begin{verbatim}
+for (every component pool)
+    remove(entity);
+\end{verbatim}
+
+But the registry does not statically know every component type.
+
+So Kairo uses:
+
+\begin{verbatim}
+struct StorageBase
+{
+    virtual ~StorageBase() = default;
+
+    virtual bool Remove(
+        Entity entity) noexcept = 0;
+};
+\end{verbatim}
+
+and:
+
+\begin{verbatim}
+template<typename Component>
+struct Pool final : StorageBase
+{
+    SparseSet<Component> Set;
+
+    bool Remove(
+        Entity entity) noexcept override
+    {
+        return Set.Remove(entity);
+    }
+};
+\end{verbatim}
+
+This is type erasure.
+
+At typed access time:
+
+\begin{verbatim}
+Pool<Transform>
+\end{verbatim}
+
+is known.
+
+At generic destruction time:
+
+\begin{verbatim}
+StorageBase*
+\end{verbatim}
+
+is enough.
+
+That is a clean division.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why Kairo keeps both \texttt{m\_Pools} and \texttt{m\_Storages}}
+
+You have:
+
+\begin{verbatim}
+unordered_map<type_index, unique_ptr<StorageBase>>
+    m_Pools;
+\end{verbatim}
+
+and:
+
+\begin{verbatim}
+vector<StorageBase*>
+    m_Storages;
+\end{verbatim}
+
+The map answers:
+
+\begin{quote}
+give me the pool for type T.
+\end{quote}
+
+The vector answers:
+
+\begin{quote}
+iterate every existing pool quickly.
+\end{quote}
+
+The unique ownership remains in \texttt{m\_Pools}.
+
+\texttt{m\_Storages} contains non-owning pointers.
+
+This avoids traversing an unordered map when bulk iterating all storages.
+
+However, entity destruction still has complexity:
+
+\[
+O(T)
+\]
+
+where \(T\) is the total number of registered component types, because it asks every pool whether the entity is present.
+
+Later signatures or per-entity component lists can reduce that.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Sparse-set concept}
+
+Suppose entities owning Position are:
+
+\begin{verbatim}
+Entity indices:
+2, 7, 100
+\end{verbatim}
+
+We want:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \(O(1)\) membership lookup by entity,
+\item
+  dense contiguous component iteration.
+\end{enumerate}
+
+A sparse set combines two representations.
+
+\begin{verbatim}
+SPARSE ARRAY
+indexed by entity index
+
+entity index:
+0 1 2 3 4 5 6 7 8 ... 100
+    . 0 . . . . 1 . ...  2
+
+
+DENSE ENTITY ARRAY
+
+dense index:
+0   1    2
+
+entity:
+2   7   100
+
+
+DENSE COMPONENT ARRAY
+
+dense index:
+0       1       2
+
+Position:
+P2      P7      P100
+\end{verbatim}
+
+The sparse array maps:
+
+\[
+entityIndex\rightarrow denseIndex.
+\]
+
+The dense arrays map:
+
+\[
+denseIndex\rightarrow entity/component.
+\]
+
+This exact sparse-to-packed architecture is also the core model documented by EnTT: its component pools are specialized sparse sets with packed entity/component storage; modern EnTT additionally pages sparse and component storage to control memory and pointer stability. \href{https://skypjack.github.io/entt/md_docs_2md_2entity.html?utm_source=chatgpt.com}{skypjack.github.io}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The fundamental sparse-set invariant}
+
+For every dense slot \(d\):
+
+\[
+\boxed{
+Sparse[DenseEntity[d].Index]=d.
+}
+\]
+
+And for entity E claiming membership:
+
+\[
+d=Sparse[E.Index].
+\]
+
+Then membership is valid only if:
+
+\[
+d<Dense.size
+\]
+
+and:
+
+\[
+DenseEntity[d]=E.
+\]
+
+That last equality is where generations enter.
+
+This invariant is the heart of the entire data structure.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Sparse index array}
+
+Kairo stores:
+
+\begin{verbatim}
+std::vector<std::uint32_t> m_Sparse;
+\end{verbatim}
+
+Missing slots contain:
+
+\begin{verbatim}
+Missing =
+    std::numeric_limits<uint32_t>::max();
+\end{verbatim}
+
+So:
+
+\begin{verbatim}
+entity index 0 -> Missing
+entity index 1 -> Missing
+entity index 2 -> 0
+entity index 3 -> Missing
+entity index 7 -> 1
+\end{verbatim}
+
+Lookup does not search.
+
+It indexes directly:
+
+\[
+dense=Sparse[E.Index].
+\]
+
+That's why membership is \(O(1)\).
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Sparse-array memory cost}
+
+Suppose highest entity index is:
+
+\[
+10,000,000.
+\]
+
+Even if this component exists on only 3 entities, a flat \texttt{uint32\_t} sparse array may require about:
+
+\[
+10,000,001\times4
+\approx40\text{ MB}.
+\]
+
+For \textbf{one component type}.
+
+If dozens of sparse components independently allocate huge sparse arrays, memory explodes.
+
+Kairo's current flat sparse vector therefore works especially well when:
+
+\[
+\text{entity indices are reasonably dense}.
+\]
+
+Production ECS libraries often page sparse arrays precisely to avoid allocating the entire index range for every pool. EnTT's current storage documentation explicitly notes paged sparse arrays for this reason. \href{https://skypjack.github.io/entt/md_docs_2md_2entity.html?utm_source=chatgpt.com}{skypjack.github.io}
+
+A paged sparse set might allocate only pages touched by entities.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dense entity array}
+
+Kairo stores:
+
+\begin{verbatim}
+std::vector<Entity> m_Entities;
+\end{verbatim}
+
+This array tells us:
+
+\begin{quote}
+Which entity owns component at dense index \(d\)?
+\end{quote}
+
+Example:
+
+\begin{verbatim}
+dense 0 -> Entity {42,3}
+dense 1 -> Entity {7,1}
+dense 2 -> Entity {921,8}
+\end{verbatim}
+
+Dense order has no requirement to match entity index order.
+
+That is important.
+
+We trade ordering for compactness.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dense component array}
+
+Kairo stores:
+
+\begin{verbatim}
+std::vector<Component> m_Components;
+\end{verbatim}
+
+with exact positional correspondence:
+
+\[
+m_Entities[d]
+\leftrightarrow
+m_Components[d].
+\]
+
+So:
+
+\begin{verbatim}
+DenseEntities[5] = Entity 73
+DenseComponents[5] = Transform of Entity 73
+\end{verbatim}
+
+The invariant:
+
+\[
+|Entities|=|Components|.
+\]
+
+This is why iteration can simply walk:
+
+\begin{verbatim}
+for (size_t i = 0;
+     i < components.size();
+     ++i)
+{
+    Entity e = entities[i];
+    Component& c = components[i];
+}
+\end{verbatim}
+
+No pointer chasing.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Sparse-set membership lookup}
+
+Current Kairo:
+
+\begin{verbatim}
+bool Contains(Entity entity) const noexcept
+{
+    if (!entity.IsValid() ||
+        entity.Index >= m_Sparse.size())
+    {
+        return false;
+    }
+
+    const std::uint32_t dense =
+        m_Sparse[entity.Index];
+
+    return
+        dense != Missing &&
+        dense < m_Entities.size() &&
+        m_Entities[dense] == entity;
+}
+\end{verbatim}
+
+Let's derive every check.
+
+\textbf{Valid index sentinel}
+
+Reject null-like handles.
+
+\textbf{Sparse bounds}
+
+Avoid out-of-bounds indexing.
+
+\textbf{Missing sentinel}
+
+Entity index has no dense mapping.
+
+\textbf{Dense bounds}
+
+Defensive corruption check.
+
+\textbf{Full entity equality}
+
+Protect against stale generations.
+
+Every line has a purpose.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why sparse index alone is insufficient}
+
+Suppose:
+
+\begin{verbatim}
+old entity = {42,1}
+new entity = {42,2}
+\end{verbatim}
+
+Sparse array says:
+
+\begin{verbatim}
+Sparse[42] = 7
+\end{verbatim}
+
+If membership checked only:
+
+\begin{verbatim}
+Sparse[42] != Missing
+\end{verbatim}
+
+then both generations would appear to own the component.
+
+Generation comparison prevents that:
+
+\begin{verbatim}
+DenseEntities[7] == Entity{42,2}
+\end{verbatim}
+
+means old handle \texttt{\{42,1\}} fails.
+
+This makes the sparse set generation-aware.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Sparse-set component lookup}
+
+Once membership is known:
+
+\[
+dense=Sparse[E.Index].
+\]
+
+Then:
+
+\[
+component=DenseComponents[dense].
+\]
+
+Kairo:
+
+\begin{verbatim}
+Component* TryGet(Entity entity) noexcept
+{
+    return Contains(entity)
+        ? &m_Components[
+              m_Sparse[entity.Index]]
+        : nullptr;
+}
+\end{verbatim}
+
+So successful lookup involves roughly:
+
+\begin{verbatim}
+entity index
+  ↓
+sparse array load
+  ↓
+dense entity validation
+  ↓
+dense component access
+\end{verbatim}
+
+No hash table is needed per entity/component lookup.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why this can outperform entity→component hash maps}
+
+An alternative would be:
+
+\begin{verbatim}
+unordered_map<Entity, Transform>
+\end{verbatim}
+
+for every component.
+
+That introduces:
+
+\begin{itemize}
+\tightlist
+\item
+  hash calculation,
+\item
+  bucket lookup,
+\item
+  pointer chasing,
+\item
+  bucket metadata,
+\item
+  poor iteration locality.
+\end{itemize}
+
+Sparse set uses direct indexing and contiguous packed data.
+
+The tradeoff is sparse-array memory.
+
+This is a classic space/time/layout trade.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Sparse-set component insertion}
+
+Insertion needs to preserve the invariant:
+
+\[
+Sparse[Entity.Index]=DensePosition.
+\]
+
+Kairo first ensures sparse capacity:
+
+\begin{verbatim}
+EnsureSparseIndex(entity.Index);
+\end{verbatim}
+
+Then verifies that entity does not already exist.
+
+It also checks something subtle:
+
+\begin{verbatim}
+if (m_Sparse[entity.Index] != Missing)
+{
+    throw ...
+}
+\end{verbatim}
+
+even after \texttt{Contains(entity)} returned false.
+
+Why?
+
+Because the slot could belong to a \textbf{different generation}.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The different-generation insertion hazard}
+
+Suppose:
+
+\begin{verbatim}
+dense entities:
+[ Entity{42,1} ]
+
+Sparse[42] = 0
+\end{verbatim}
+
+Now caller attempts:
+
+\begin{verbatim}
+Emplace(Entity{42,2}, ...)
+\end{verbatim}
+
+\texttt{Contains(\{42,2\})} returns false because generation differs.
+
+If insertion blindly proceeded:
+
+\begin{verbatim}
+dense:
+0 -> {42,1}
+1 -> {42,2}
+
+Sparse[42] = 1
+\end{verbatim}
+
+Now old dense entry 0 exists but no sparse mapping can reach it.
+
+It became an \textbf{orphan component}.
+
+Your implementation detects this and rejects insertion until old generation is removed.
+
+That is a genuinely important invariant defense.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dense insertion algorithm}
+
+Let:
+
+\[
+d=|Dense|.
+\]
+
+Then:
+
+\begin{verbatim}
+DenseEntities.push(E)
+DenseComponents.emplace(component)
+Sparse[E.Index] = d
+\end{verbatim}
+
+Kairo does:
+
+\begin{verbatim}
+const std::uint32_t dense =
+    CheckedDenseIndex();
+
+m_Entities.push_back(entity);
+
+try
+{
+    m_Components.emplace_back(
+        std::forward<Arguments>(arguments)...);
+}
+catch (...)
+{
+    m_Entities.pop_back();
+    throw;
+}
+
+m_Sparse[entity.Index] = dense;
+\end{verbatim}
+
+Note that sparse mapping is assigned last.
+
+That is crucial for exception safety.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why sparse mapping must be updated last}
+
+Suppose component construction throws.
+
+If code had already done:
+
+\begin{verbatim}
+Sparse[e.Index] = newDense;
+\end{verbatim}
+
+then sparse would point to a component that never successfully existed.
+
+Instead Kairo leaves sparse untouched until both dense arrays are successfully extended.
+
+If component construction throws:
+
+\begin{verbatim}
+entity push -> rolled back
+component -> never exists
+sparse -> still Missing
+\end{verbatim}
+
+Internal state remains valid.
+
+Good container engineering again.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Swap-and-pop removal}
+
+Removing an element from the middle of \texttt{std::vector} normally shifts everything after it:
+
+\[
+O(N).
+\]
+
+ECS pools generally do not require stable order.
+
+So swap with the last dense element, then pop.
+
+Suppose:
+
+\begin{verbatim}
+dense index:
+
+0   1   2   3   4
+
+A   B   C   D   E
+\end{verbatim}
+
+Remove B at index 1.
+
+Move E into slot 1:
+
+\begin{verbatim}
+0   1   2   3
+
+A   E   C   D
+\end{verbatim}
+
+Then pop old last slot.
+
+Complexity:
+
+\[
+O(1).
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo removal code}
+
+\begin{verbatim}
+const uint32_t dense =
+    m_Sparse[entity.Index];
+
+const uint32_t last =
+    static_cast<uint32_t>(
+        m_Entities.size() - 1u);
+
+if (dense != last)
+{
+    m_Entities[dense] =
+        std::move(m_Entities[last]);
+
+    m_Components[dense] =
+        std::move(m_Components[last]);
+
+    m_Sparse[
+        m_Entities[dense].Index
+    ] = dense;
+}
+
+m_Entities.pop_back();
+m_Components.pop_back();
+
+m_Sparse[entity.Index] = Missing;
+\end{verbatim}
+
+The critical step is not the move itself.
+
+It is repairing sparse metadata.
+
+\subsection{The move must not throw after entity metadata changes}\label{05-engine-i-ch015-the-move-must-not-throw-after-entity-metadata-changes}
+
+The order above has one important type requirement. It writes the last \texttt{Entity} into the removed dense slot \textbf{before} assigning the moved \texttt{T} component. \texttt{Entity} is two integers, so that assignment is non-throwing. A user-defined component move assignment is not necessarily non-throwing. If \texttt{m\_Components{[}dense{]}\ =\ std::move(m\_Components{[}last{]})} throws, the entity row has already changed while \texttt{m\_Sparse} still describes the old rows. The pool can then contain duplicate entity records and a lookup/removal can no longer repair the original invariant.
+
+The later blank-file \texttt{SparseSet\textless{}T\textgreater{}} example spells the exception specification as \texttt{noexcept(std::is\_nothrow\_move\_assignable\_v\textless{}T\textgreater{})}. That controls whether an exception may escape or instead terminates; it does \textbf{not} make the two-array update transactional. For the shown O(1) swap-removal algorithm, make the component requirement explicit and reject unsupported types at compile time. \texttt{std::is\_nothrow\_move\_assignable\_v} requires a direct \texttt{\textless{}type\_traits\textgreater{}} include in a standalone translation unit.
+
+\begin{verbatim}
+// Inside SparseSet<T>; this policy makes the two writes below a no-throw commit.
+bool Remove(Entity entity) noexcept
+    requires std::is_nothrow_move_assignable_v<T> &&
+             std::is_nothrow_destructible_v<T>;
+\end{verbatim}
+
+This is a deliberate storage contract: components used in a removable packed pool must be nothrow move-assignable and nothrow destructible. If an engine must accept throwing move assignment, perform the potentially throwing component operation before changing entity/sparse metadata and define the resulting basic guarantee carefully; the component value may still have changed. A strong guarantee needs a non-throwing commit step, such as constructing a copy before mutation and swapping it in with a nothrow swap, or using indirection. Do not imply that changing the order alone preserves the original component value.
+
+To rerun the exact \texttt{Entity} and \texttt{SparseSet\textless{}T\textgreater{}} excerpt and exercise both cases, use the \href{../../tools/labs/ecs_sparse_set_exception_check.py}{C++20 extraction check}:
+
+\begin{verbatim}
+python3 tools/labs/ecs_sparse_set_exception_check.py \
+  "Continuous Notes/Game Engine - From First Frame to Living Worlds.md"
+\end{verbatim}
+
+It injects the missing direct \texttt{\textless{}type\_traits\textgreater{}} header for this standalone translation unit, compiles the extracted book blocks with warnings as errors, checks ordinary insert/lookup/swap-remove behavior, and then injects a throwing move assignment. The second case must observe the current excerpt's duplicate dense-entity row; it is a bounded counterexample to the exception-safety claim, not a test of production Kairo or of the constrained signature above.
+
+The reproducible check below reads the current full book rather than maintaining a second sparse-set implementation. Its expected failing invariant is a counterexample; the command succeeds only when ordinary behavior passes and that unsupported-type failure is reproduced.
+
+\begin{verbatim}
+#!/usr/bin/env python3
+"""Compile exact book excerpts; prove ordinary behavior AND its throwing-move gap."""
+import argparse
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+
+# Parse the actual Markdown blocks, rather than copying a different ECS model.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from note_integrity import code_blocks
+
+ROOT = Path(__file__).resolve().parents[2]
+BOOK = ROOT / 'Continuous Notes/Game Engine - From First Frame to Living Worlds.md'
+
+DRIVER = r"""
+#include <iostream>
+struct ThrowingComponent {
+    int value;
+    inline static bool fail = false;
+    explicit ThrowingComponent(int v) : value(v) {}
+    ThrowingComponent(const ThrowingComponent&) = default;
+    ThrowingComponent(ThrowingComponent&&) noexcept = default;
+    ThrowingComponent& operator=(ThrowingComponent&& other) {
+        // Throw before touching the value, so any broken entity metadata is
+        // attributable to Remove's ordering, not a partially assigned T.
+        if (fail) throw std::runtime_error("deliberate component move failure");
+        value = other.value;
+        return *this;
+    }
+};
+
+int main() {
+    SparseSet<int> pool;
+    const Entity old{0, 1}, second{1, 1}, replacement{0, 2};
+    pool.Emplace(old, 7);
+    pool.Emplace(second, 9);
+    if (pool.Get(old) != 7 || pool.Get(second) != 9) return 1;
+    if (!pool.Remove(old)) return 2;
+    // Swap-removal must repair the surviving entity's reverse map.
+    if (pool.Contains(old) || pool.Get(second) != 9 || pool.Size() != 1) return 3;
+    pool.Emplace(replacement, 11);
+    if (pool.Contains(old) || pool.Get(replacement) != 11) return 4;
+
+    SparseSet<ThrowingComponent> unsafe;
+    unsafe.Emplace(old, 10);
+    unsafe.Emplace(second, 20);
+    ThrowingComponent::fail = true;
+    bool caught = false;
+    try { unsafe.Remove(old); }
+    catch (const std::runtime_error&) { caught = true; }
+    ThrowingComponent::fail = false;
+    // This EXPECTED counterexample is evidence of an unsupported T contract.
+    // Passing this check does not make the current generic Remove safe.
+    if (!caught || unsafe.Entities().size() != 2 ||
+        unsafe.Entities()[0] != second || unsafe.Entities()[1] != second) return 5;
+    if (unsafe.Contains(old)) return 6;
+    std::cout << "PASS: normal swap-remove and generation reuse; "
+                 "EXPECTED throwing-move invariant failure reproduced\n";
+}
+"""
+
+
+def assemble(book):
+    blocks = [b.body for b in code_blocks(book.read_text()) if b.language == 'cpp']
+    # Matching exact declarations keeps introductory sketches out of this check.
+    entities = [b for b in blocks if 'struct Entity final' in b and '#include <cstdint>' in b]
+    pools = [b for b in blocks if 'class SparseSet' in b and
+             'std::is_nothrow_move_assignable_v<T>' in b and 'EnsureSparse' in b]
+    if len(entities) != 1 or len(pools) != 1:
+        raise ValueError('Expected one exact Entity and full SparseSet excerpt')
+    # The book fragment omits a direct header; add it explicitly for this TU.
+    return '#include <type_traits>\n' + entities[0] + '\n' + pools[0] + '\n' + DRIVER
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('book', nargs='?', type=Path, default=BOOK)
+    parser.add_argument('--compiler', default='c++')
+    args = parser.parse_args()
+    compiler = shutil.which(args.compiler)
+    if not compiler:
+        parser.error('A C++20 compiler is required')
+    with tempfile.TemporaryDirectory(prefix='allmight-ecs-excerpt-') as folder:
+        source = Path(folder) / 'ecs.cpp'
+        binary = Path(folder) / 'ecs'
+        source.write_text(assemble(args.book))
+        command = [compiler, '-std=c++20', '-O2', '-DNDEBUG', '-Wall',
+                   '-Wextra', '-Wpedantic', '-Werror', str(source), '-o', str(binary)]
+        subprocess.run(command, check=True)
+        subprocess.run([str(binary)], check=True)
+
+
+if __name__ == '__main__':
+    main()
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Repairing sparse indices}
+
+Before removal:
+
+\begin{verbatim}
+Sparse[A] = 0
+Sparse[B] = 1
+Sparse[C] = 2
+Sparse[D] = 3
+Sparse[E] = 4
+
+Dense:
+0 A
+1 B
+2 C
+3 D
+4 E
+\end{verbatim}
+
+Move E:
+
+\begin{verbatim}
+Dense:
+0 A
+1 E
+2 C
+3 D
+\end{verbatim}
+
+If we forget to change:
+
+\[
+Sparse[E],
+\]
+
+it remains:
+
+\[
+4.
+\]
+
+But dense slot 4 no longer exists.
+
+So after moving:
+
+\[
+\boxed{
+Sparse[E.Index]\leftarrow1.
+}
+\]
+
+Finally:
+
+\[
+Sparse[B.Index]\leftarrow Missing.
+\]
+
+This restores the sparse-set invariant.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The removal invariant proof}
+
+Let removed entity be \(R\), dense index \(d\), and final entity be \(M\), previous last index \(l\).
+
+Before:
+
+\[
+Sparse[M.Index]=l.
+\]
+
+After move:
+
+\[
+DenseEntity[d]=M.
+\]
+
+Therefore invariant requires:
+
+\[
+Sparse[M.Index]=d.
+\]
+
+Then R no longer exists:
+
+\[
+Sparse[R.Index]=Missing.
+\]
+
+All other entries remain unchanged.
+
+Hence invariant holds globally.
+
+That is the entire correctness proof of swap-remove.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Component address invalidation}
+
+This is where many ECS APIs become dangerous.
+
+Suppose:
+
+\begin{verbatim}
+Transform* t =
+    registry.TryGet<Transform>(entity);
+\end{verbatim}
+
+You keep \texttt{t}.
+
+Then another Transform is inserted.
+
+If:
+
+\begin{verbatim}
+m_Components.push_back(...)
+\end{verbatim}
+
+causes \texttt{std::vector} reallocation, \textbf{every component pointer/reference in that vector becomes invalid}.
+
+So even insertion can invalidate references.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Removal has an even nastier hazard}
+
+Suppose:
+
+\begin{verbatim}
+dense:
+0 A
+1 B
+2 C
+3 D
+\end{verbatim}
+
+You hold:
+
+\begin{verbatim}
+Transform* ptrD =
+    &components[3];
+
+Transform* ptrB =
+    &components[1];
+\end{verbatim}
+
+Remove B.
+
+D moves:
+
+\begin{verbatim}
+0 A
+1 D
+2 C
+\end{verbatim}
+
+Now:
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{ptrB} points to memory now representing D,
+\item
+  \texttt{ptrD} points into the popped tail slot and is invalid.
+\end{itemize}
+
+The first case is especially dangerous.
+
+The pointer may still point to valid memory.
+
+It simply refers to a \textbf{different logical entity}.
+
+That can create silent corruption rather than an immediate crash.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{ECS references require explicit lifetime contracts}
+
+A safe rule is:
+
+\[
+\boxed{
+\text{component references are temporary views, not stable handles}.
+}
+\]
+
+Use them during one known-safe operation:
+
+\begin{verbatim}
+auto& transform =
+    registry.Get<Transform>(e);
+
+transform.position += delta;
+\end{verbatim}
+
+Do not casually cache them across structural changes.
+
+If long-lived access is needed, keep:
+
+\begin{verbatim}
+Entity
+\end{verbatim}
+
+and call:
+
+\begin{verbatim}
+TryGet<T>(entity)
+\end{verbatim}
+
+again when needed.
+
+Identity is stable.
+
+Component addresses are not necessarily stable.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{\texttt{Reserve()} helps but does not solve removal invalidation}
+
+Kairo supports:
+
+\begin{verbatim}
+registry.Reserve<Transform>(100000);
+\end{verbatim}
+
+which reserves dense vector capacity.
+
+That can prevent reallocation during expected insertions.
+
+Therefore component addresses may remain stable \textbf{under insertion until capacity is exceeded}.
+
+But swap-removal can still move components.
+
+So reserve reduces one invalidation mechanism.
+
+It does not create a stable-address guarantee.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stable-component storage alternatives}
+
+If components must keep stable addresses, several strategies exist.
+
+\textbf{Paged storage}
+
+Allocate components in fixed pages:
+
+\begin{verbatim}
+page 0
+[ ][ ][ ][ ]
+
+page 1
+[ ][ ][ ][ ]
+
+page 2
+[ ][ ][ ][ ]
+\end{verbatim}
+
+Adding a page does not relocate old pages.
+
+Lookup becomes:
+
+\[
+page=i/P
+\]
+
+\[
+offset=i\bmod P.
+\]
+
+This preserves pointer stability across growth.
+
+Modern EnTT explicitly uses paged component storage to provide pointer stability on additions, while retaining packed entity arrangements and optional in-place deletion policies. \href{https://skypjack.github.io/entt/md_docs_2md_2entity.html?utm_source=chatgpt.com}{skypjack.github.io}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Tombstones / in-place deletion}
+
+Instead of swapping the last component into the removed slot:
+
+\begin{verbatim}
+before:
+A B C D
+
+remove B:
+
+A [hole] C D
+\end{verbatim}
+
+Address of C and D remains stable.
+
+But now iteration encounters holes.
+
+You need:
+
+\begin{itemize}
+\tightlist
+\item
+  tombstone checks,
+\item
+  free-slot reuse,
+\item
+  periodic compaction,
+\item
+  more complex indexing.
+\end{itemize}
+
+Stable addresses and perfectly dense iteration are opposing goals.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Indirection storage}
+
+Another option:
+
+\begin{verbatim}
+dense entity list
+      |
+      v
+component handles/pointers
+      |
+      v
+stable component allocation
+\end{verbatim}
+
+Then ECS can reorder handles without moving components.
+
+But every component access introduces another pointer chase.
+
+You sacrifice locality.
+
+Again:
+
+\[
+\boxed{
+\text{there is no free stability}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dense component iteration}
+
+The payoff for sparse sets is here.
+
+Suppose system updates every Position:
+
+\begin{verbatim}
+for (Position& p :
+     positionPool.Components())
+{
+    p.x += ...;
+}
+\end{verbatim}
+
+Components are contiguous.
+
+CPU sees approximately:
+
+\begin{verbatim}
+P0 P1 P2 P3 P4 P5 P6 P7 ...
+\end{verbatim}
+
+rather than:
+
+\begin{verbatim}
+pointer -> object
+pointer -> object
+pointer -> object
+\end{verbatim}
+
+Hardware prefetchers can predict sequential access.
+
+Cache lines deliver several components at once.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why contiguous iteration is so powerful}
+
+Assume a hypothetical 64-byte cache line and a 12-byte Position:
+
+\begin{verbatim}
+struct Position
+{
+    float x, y, z;
+};
+\end{verbatim}
+
+One line contains roughly five Positions worth of useful data, ignoring boundary effects.
+
+A pointer-heavy object hierarchy might load an entire 128-byte or 256-byte object even when the system only needs 12 bytes of position.
+
+Data-oriented design asks:
+
+\[
+\boxed{
+\text{what data does this loop actually consume?}
+}
+\]
+
+and stores that data accordingly.
+
+This is the philosophical center of ECS performance.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current \texttt{Registry::Each\textless{}T\textgreater{}}}
+
+Kairo does:
+
+\begin{verbatim}
+const auto& entities =
+    pool->Set.Entities();
+
+auto& components =
+    pool->Set.Components();
+
+for (std::size_t index = 0;
+     index < count;
+     ++index)
+{
+    const Entity entity =
+        entities[index];
+
+    if (IsAlive(entity))
+    {
+        std::invoke(
+            callable,
+            entity,
+            components[index]);
+    }
+}
+\end{verbatim}
+
+This is a dense linear traversal.
+
+The \texttt{IsAlive()} check should normally always succeed if registry invariants hold, because destroying entities removes their components.
+
+It is an extra safety check.
+
+Potential optimization in highly tuned code would be to rely on invariants and omit redundant liveness checks from hot loops, but only after proving registry mutation rules prevent stale dense entries.
+
+Correctness first.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Multi-component query}
+
+Suppose system needs:
+
+\begin{verbatim}
+Position
+Velocity
+Health
+\end{verbatim}
+
+with pool sizes:
+
+\[
+|P|=1,000,000
+\]
+
+\[
+|V|=400,000
+\]
+
+\[
+|H|=10,000.
+\]
+
+You could scan every Position and ask:
+
+\begin{verbatim}
+Has Velocity?
+Has Health?
+\end{verbatim}
+
+That performs around one million primary iterations.
+
+Or scan Health:
+
+\[
+10,000
+\]
+
+and test:
+
+\begin{verbatim}
+Has Position?
+Has Velocity?
+\end{verbatim}
+
+Much cheaper.
+
+Therefore:
+
+\[
+\boxed{
+\text{iterate the smallest required pool}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Complexity of smallest-pool joins}
+
+Query requires \(k\) component types.
+
+Let smallest pool size be:
+
+\[
+m.
+\]
+
+Each candidate performs approximately:
+
+\[
+k-1
+\]
+
+constant-time sparse membership tests.
+
+Complexity:
+
+\[
+\boxed{
+O(m(k-1)).
+}
+\]
+
+For fixed small \(k\):
+
+\[
+O(m).
+\]
+
+This is one of the strongest features of sparse-set ECS.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo two-component join}
+
+Your registry explicitly chooses the smaller pool.
+
+If:
+
+\begin{verbatim}
+first->Set.Size()
+<=
+second->Set.Size()
+\end{verbatim}
+
+scan first and sparse-lookup second.
+
+Otherwise scan second.
+
+Yet callback order remains:
+
+\begin{verbatim}
+Entity, First&, Second&
+\end{verbatim}
+
+regardless of which pool drives iteration.
+
+That is excellent API behavior.
+
+Storage optimization does not leak into callback semantics.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current three-component join}
+
+The same strategy is manually expanded for three pools.
+
+It identifies minimum of:
+
+\begin{verbatim}
+First
+Second
+Third
+\end{verbatim}
+
+and scans it.
+
+Then performs \texttt{TryGet} on the other two.
+
+Your tests explicitly construct:
+
+\begin{verbatim}
+Position = 128
+Velocity = 64
+Health   = 8
+\end{verbatim}
+
+and verify the join visits only the eight entities satisfying all components.
+
+That is exactly the workload where smallest-pool iteration shines.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Multi-pool membership tests}
+
+For entity E and query:
+
+\[
+Q=\{A,B,C\},
+\]
+
+if A drives iteration:
+
+\begin{verbatim}
+if (poolB.Contains(E) &&
+    poolC.Contains(E))
+{
+    execute(E);
+}
+\end{verbatim}
+
+Each membership lookup is:
+
+\begin{verbatim}
+entity index
+    ↓
+sparse index
+    ↓
+dense owner validation
+\end{verbatim}
+
+roughly constant-time.
+
+This is an intersection operation:
+
+\[
+A\cap B\cap C.
+\]
+
+The sparse set turns set intersection into direct indexed membership tests rather than sorting/merging IDs every frame.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Required versus excluded components}
+
+Production queries often include exclusions.
+
+Example:
+
+\begin{verbatim}
+Position
+Velocity
+WITHOUT Frozen
+WITHOUT Dead
+\end{verbatim}
+
+The condition is:
+
+\[
+E\in Position
+\land
+E\in Velocity
+\land
+E\notin Frozen
+\land
+E\notin Dead.
+\]
+
+Smallest required pool can still drive the query.
+
+Then membership tests evaluate positive and negative constraints.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Component signatures / bit masks}
+
+Suppose there are at most 64 component types.
+
+Assign each a bit:
+
+\begin{verbatim}
+Transform = bit 0
+Velocity  = bit 1
+Health    = bit 2
+Light     = bit 3
+\end{verbatim}
+
+Entity signature:
+
+\begin{verbatim}
+Transform + Health
+
+000...0101
+\end{verbatim}
+
+Query requiring Transform + Health:
+
+\begin{verbatim}
+required = 0101
+\end{verbatim}
+
+Entity matches if:
+
+\[
+\boxed{
+(signature\ \&\ required)=required.
+}
+\]
+
+Excluded mask:
+
+\[
+(signature\ \&\ excluded)=0.
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Example signature code}
+
+\begin{verbatim}
+using Signature = std::uint64_t;
+
+constexpr Signature Bit(
+    std::uint32_t componentID)
+{
+    return
+        Signature{1}
+        << componentID;
+}
+
+bool Matches(
+    Signature entity,
+    Signature required,
+    Signature excluded)
+{
+    return
+        (entity & required) == required
+        &&
+        (entity & excluded) == 0;
+}
+\end{verbatim}
+
+This makes set-membership predicates extremely cheap.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Signatures do not replace component pools}
+
+A signature can answer:
+
+\begin{quote}
+Does entity 42 conceptually own Transform?
+\end{quote}
+
+It does not tell you where Transform is stored.
+
+You still need:
+
+\[
+SparseSet<Transform>
+\]
+
+or another storage backend.
+
+Signatures are metadata.
+
+Sparse sets are storage/index structures.
+
+They complement each other.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Signatures can accelerate entity destruction}
+
+Current Kairo destruction does:
+
+\begin{verbatim}
+for (every registered component pool)
+    pool.Remove(entity);
+\end{verbatim}
+
+If there are 200 component types but entity owns 4, this checks 196 irrelevant pools.
+
+With entity signature:
+
+\begin{verbatim}
+bits set:
+3, 19, 77, 91
+\end{verbatim}
+
+you can iterate only those four component storages.
+
+That changes destruction work from roughly:
+
+\[
+O(T)
+\]
+
+to:
+
+\[
+O(C_e),
+\]
+
+where \(C_e\) is number of components actually owned.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The problem with a fixed 64-bit signature}
+
+Once component count exceeds 64:
+
+\begin{verbatim}
+uint64_t
+\end{verbatim}
+
+is insufficient.
+
+Could use:
+
+\begin{verbatim}
+std::bitset<256>
+\end{verbatim}
+
+if maximum is known at compile time.
+
+But a plugin architecture may not know component count in advance.
+
+Then we need dynamic bitsets.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dynamic bitsets}
+
+Represent bitset as:
+
+\begin{verbatim}
+std::vector<std::uint64_t> words;
+\end{verbatim}
+
+For component ID \(c\):
+
+\[
+word=c/64
+\]
+
+\[
+bit=c\bmod64.
+\]
+
+Set:
+
+\begin{verbatim}
+words[word] |=
+    uint64_t{1} << bit;
+\end{verbatim}
+
+Test:
+
+\begin{verbatim}
+(words[word] &
+ (uint64_t{1} << bit))
+!= 0;
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dynamic signature matching}
+
+Required query signature contains multiple words.
+
+Entity matches if for every word \(i\):
+
+\[
+(E_i\ \&\ R_i)=R_i.
+\]
+
+C++:
+
+\begin{verbatim}
+bool ContainsAll(
+    std::span<const uint64_t> entity,
+    std::span<const uint64_t> required)
+{
+    for (std::size_t i = 0;
+         i < required.size();
+         ++i)
+    {
+        const uint64_t e =
+            i < entity.size()
+                ? entity[i]
+                : 0;
+
+        if ((e & required[i])
+            != required[i])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dynamic bitsets can become expensive}
+
+Suppose:
+
+\[
+256
+\]
+
+possible component types.
+
+That requires:
+
+\[
+256/8=32\text{ bytes}
+\]
+
+of signature per entity.
+
+For one million entities:
+
+\[
+32\text{ MB}
+\]
+
+just for signatures.
+
+And most entities may use only a handful of those component types.
+
+This is one motivation for archetype systems, where a signature belongs to a \textbf{group/archetype} rather than being duplicated per entity.
+
+That is Pass 11 territory, but you should already see why it emerges.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo currently has no component signature layer}
+
+Current membership is inferred through sparse-set ownership.
+
+There is no:
+
+\begin{verbatim}
+entity component mask
+dynamic bitset
+component signature
+\end{verbatim}
+
+in the current \texttt{Registry}.
+
+That is perfectly valid for a sparse-set ECS.
+
+EnTT itself deliberately describes its registry model as sparse-set based and bitset-free, demonstrating that signatures are an optional architecture choice rather than an ECS requirement. \href{https://skypjack.github.io/entt/md_docs_2md_2entity.html?utm_source=chatgpt.com}{skypjack.github.io}
+
+The curriculum requires understanding signatures because they become especially important in archetype matching, query caching and generic tooling.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Query caching}
+
+Suppose every frame you run:
+
+\begin{verbatim}
+Position + Velocity + Health
+\end{verbatim}
+
+The naive query setup repeatedly does:
+
+\begin{verbatim}
+find Position pool
+find Velocity pool
+find Health pool
+determine smallest pool
+\end{verbatim}
+
+before iteration.
+
+That work is avoidable.
+
+A query object can cache:
+
+\begin{verbatim}
+struct CachedQuery
+{
+    Pool<Position>* PositionPool;
+    Pool<Velocity>* VelocityPool;
+    Pool<Health>* HealthPool;
+
+    DriverKind Driver;
+};
+\end{verbatim}
+
+Then the query can run directly.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Level 1 query cache: cache storage lookup}
+
+This is safest.
+
+Cache:
+
+\begin{verbatim}
+type -> pool pointers
+driver pool
+\end{verbatim}
+
+but still determine membership live.
+
+Structural changes do not invalidate the pool objects themselves as long as pool addresses remain stable.
+
+In Kairo, pools are heap-allocated under \texttt{unique\_ptr}, so \texttt{unordered\_map} rehashing moves \texttt{unique\_ptr} objects but does not move the allocated Pool object.
+
+Thus cached raw \texttt{Pool\textless{}T\textgreater{}*} can remain valid until a pool is explicitly destroyed---which current Registry never does.
+
+That makes this caching strategy attractive.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Level 2 query cache: cache matching entities}
+
+You could cache:
+
+\begin{verbatim}
+entities currently matching
+Position + Velocity + Health
+\end{verbatim}
+
+Then iteration becomes extremely cheap.
+
+But adding/removing a component changes membership.
+
+Now cache requires invalidation.
+
+Use a structural version:
+
+\begin{verbatim}
+uint64_t m_StructureVersion;
+\end{verbatim}
+
+Increment on:
+
+\begin{verbatim}
+entity create
+entity destroy
+component add
+component remove
+\end{verbatim}
+
+Query stores:
+
+\begin{verbatim}
+uint64_t CachedVersion;
+\end{verbatim}
+
+If:
+
+\[
+CachedVersion\neq RegistryVersion,
+\]
+
+rebuild matching set.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Global structural versions can over-invalidate}
+
+Suppose query requires:
+
+\begin{verbatim}
+Position + Velocity
+\end{verbatim}
+
+and someone adds:
+
+\begin{verbatim}
+AudioEmitter
+\end{verbatim}
+
+to unrelated entity.
+
+A global version invalidates the Position+Velocity cache unnecessarily.
+
+More granular solution:
+
+\begin{verbatim}
+Position pool version
+Velocity pool version
+Health pool version
+...
+\end{verbatim}
+
+Cache records versions only for pools it depends on.
+
+Or maintain event-driven incremental query membership.
+
+That is more complex but can scale better.
+
+Current ECS libraries often have explicit cached query mechanisms and change/version tracking for exactly this reason; Flecs, for example, distinguishes cached queries and tracks structural/component changes to determine whether matched data changed. \href{https://www.flecs.dev/flecs/Queries.html?utm_source=chatgpt.com}{Flecs}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Cached entity lists versus sparse-set joins}
+
+Do not assume caching all result entities is automatically faster.
+
+Suppose structure changes frequently:
+
+\begin{verbatim}
+thousands of add/remove operations every frame
+\end{verbatim}
+
+Then maintaining query membership may cost more than simply scanning the smallest pool.
+
+The decision is workload-dependent:
+
+\[
+C_{\text{cache}}
+=
+C_{\text{maintenance}}
++
+C_{\text{iteration}}.
+\]
+
+Compare with:
+
+\[
+C_{\text{uncached}}
+=
+C_{\text{pool lookup}}
++
+m(k-1)\cdot C_{\text{sparse lookup}}.
+\]
+
+Benchmark.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Structural changes}
+
+A structural change modifies \textbf{which components/entities exist or where they are stored}.
+
+Examples:
+
+\begin{verbatim}
+Create entity
+Destroy entity
+Add component
+Remove component
+\end{verbatim}
+
+Changing:
+
+\begin{verbatim}
+position.x += 1;
+\end{verbatim}
+
+is not structural.
+
+The component stays in the same pool.
+
+Adding:
+
+\begin{verbatim}
+registry.Emplace<Velocity>(entity);
+\end{verbatim}
+
+is structural because the Velocity pool changes.
+
+Removing Transform is structural because dense storage can reorder.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why structural mutation during iteration is dangerous}
+
+Suppose:
+
+\begin{verbatim}
+registry.Each<Health>(
+    [&](Entity e, Health& health)
+    {
+        if (health.Value <= 0)
+            registry.Destroy(e);
+    });
+\end{verbatim}
+
+Assume dense Health pool:
+
+\begin{verbatim}
+index
+0 A
+1 B
+2 C
+3 D
+\end{verbatim}
+
+Loop currently at:
+
+\[
+i=1
+\]
+
+on B.
+
+Destroy B.
+
+Swap-remove moves D into index 1:
+
+\begin{verbatim}
+0 A
+1 D
+2 C
+\end{verbatim}
+
+Loop increments:
+
+\[
+i=2.
+\]
+
+D is never visited.
+
+The structural mutation changed iteration order under the iterator.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{It can be worse than skipping an element}
+
+If insertion reallocates:
+
+\begin{verbatim}
+m_Components.emplace_back(...)
+\end{verbatim}
+
+then references currently held by the loop may become dangling.
+
+If entity destruction removes components from the primary pool, loop size changes.
+
+If another callback stores \texttt{Component\&} and later structural change swap-moves that slot, the reference may now denote a different entity.
+
+Thus ``don't mutate while iterating'' is not stylistic.
+
+It is an ownership/invalidation rule.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo explicitly documents the restriction}
+
+Your \texttt{Registry::Each} says, in effect:
+
+\begin{quote}
+do not add/remove the primary component or destroy entities during this call because dense storage may reorder.
+\end{quote}
+
+That is correct.
+
+But the next question is inevitable:
+
+\begin{quote}
+What if gameplay logically needs to destroy an entity inside a system?
+\end{quote}
+
+Answer:
+
+\[
+\boxed{
+\text{defer the structural change}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Deferred entity creation}
+
+Suppose during projectile update:
+
+\begin{verbatim}
+if (exploded)
+{
+    CreateExplosionEntity();
+}
+\end{verbatim}
+
+Creating immediately may mutate multiple component pools.
+
+Instead record:
+
+\begin{verbatim}
+Create entity command
+\end{verbatim}
+
+and execute it after iteration.
+
+Problem:
+
+\begin{quote}
+How do later commands refer to an entity that does not exist yet?
+\end{quote}
+
+Use a temporary token.
+
+\begin{verbatim}
+struct DeferredEntity
+{
+    uint32_t Token;
+};
+\end{verbatim}
+
+Then:
+
+\begin{verbatim}
+DeferredEntity explosion =
+    commands.Create();
+
+commands.Emplace<Transform>(
+    explosion,
+    transform);
+
+commands.Emplace<Explosion>(
+    explosion,
+    explosionData);
+\end{verbatim}
+
+At flush time:
+
+\begin{verbatim}
+token 7 -> real Entity{241,6}
+\end{verbatim}
+
+Subsequent commands resolve token 7 to that entity.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Alternative: reserve identity immediately}
+
+Another architecture is:
+
+\begin{verbatim}
+allocate entity ID now
+defer only storage mutation
+\end{verbatim}
+
+Then systems immediately obtain a normal \texttt{Entity}.
+
+This simplifies references between queued commands.
+
+But now ``creation is deferred'' only partially; registry entity metadata changed immediately.
+
+Whether that is safe depends on threading and iteration model.
+
+In a fully readonly multithreaded stage, you may want \textbf{no world mutation at all} until merge.
+
+Hence temporary deferred tokens are the stronger general model.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Deferred entity destruction}
+
+Instead of:
+
+\begin{verbatim}
+registry.Destroy(entity);
+\end{verbatim}
+
+inside a system:
+
+\begin{verbatim}
+commands.Destroy(entity);
+\end{verbatim}
+
+Physical destruction occurs later.
+
+But now you need to define semantics.
+
+During the remainder of this system pass, is the entity considered alive?
+
+Two common models:
+
+\textbf{Fully deferred semantics}
+
+Until flush:
+
+\begin{verbatim}
+registry.IsAlive(entity) == true;
+\end{verbatim}
+
+Other systems in the same stage can still observe it.
+
+\textbf{Logical tombstone semantics}
+
+Mark entity:
+
+\begin{verbatim}
+PendingDestroy
+\end{verbatim}
+
+immediately for query/filter purposes, but delay actual pool mutation.
+
+This provides more intuitive ``dead now'' behavior but adds complexity.
+
+A command buffer must define this explicitly.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Deferred component add/remove}
+
+Same principle:
+
+\begin{verbatim}
+commands.Emplace<Velocity>(
+    entity,
+    velocity);
+
+commands.Remove<Health>(
+    entity);
+\end{verbatim}
+
+Nothing touches dense arrays until flush.
+
+During the iteration:
+
+\begin{verbatim}
+Position pool
+Velocity pool
+Health pool
+\end{verbatim}
+
+remain structurally stable.
+
+That is what makes current pointers/iterators safe.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Command buffers}
+
+A command buffer is not merely:
+
+\begin{verbatim}
+vector<enum Command>
+\end{verbatim}
+
+It is a \textbf{transaction log of deferred structural intent}.
+
+Conceptually:
+
+\begin{verbatim}
+CommandBuffer
+
+0 Create token #0
+1 Add Transform to token #0
+2 Add Explosion to token #0
+3 Remove Health from Entity A
+4 Destroy Entity B
+5 Add Velocity to Entity C
+\end{verbatim}
+
+At a synchronization point:
+
+\begin{verbatim}
+finish iteration
+      ↓
+flush commands in defined order
+      ↓
+registry becomes mutable
+      ↓
+apply structural mutations
+\end{verbatim}
+
+Then next systems observe the new structure.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{A practical C++23 command-buffer skeleton}
+
+Since Kairo is C++23, a useful implementation can use \texttt{std::move\_only\_function}.
+
+\begin{verbatim}
+#include <cstdint>
+#include <functional>
+#include <tuple>
+#include <utility>
+#include <variant>
+#include <vector>
+
+struct DeferredEntity
+{
+    std::uint32_t Token = 0;
+};
+
+using EntityReference =
+    std::variant<Entity, DeferredEntity>;
+
+class ECSCommandBuffer
+{
+public:
+    DeferredEntity Create()
+    {
+        DeferredEntity token{
+            static_cast<std::uint32_t>(
+                m_DeferredEntities.size())
+        };
+
+        m_DeferredEntities.push_back(Entity{});
+
+        // Creation itself is executed in stream order.
+        m_Commands.emplace_back(
+            [token](
+                Registry& registry,
+                std::vector<Entity>& resolved)
+            {
+                resolved[token.Token] =
+                    registry.Create();
+            });
+
+        return token;
+    }
+
+    void Destroy(EntityReference reference)
+    {
+        m_Commands.emplace_back(
+            [reference](
+                Registry& registry,
+                std::vector<Entity>& resolved)
+            {
+                registry.Destroy(
+                    Resolve(reference, resolved));
+            });
+    }
+
+    template<
+        typename Component,
+        typename... Arguments>
+    void Emplace(
+        EntityReference reference,
+        Arguments&&... arguments)
+    {
+        // Store arguments inside the command.
+        // decay_t makes the command own its payload.
+        auto values =
+            std::tuple<
+                std::decay_t<Arguments>...
+            >(
+                std::forward<Arguments>(
+                    arguments)...);
+
+        m_Commands.emplace_back(
+            [
+                reference,
+                values = std::move(values)
+            ](
+                Registry& registry,
+                std::vector<Entity>& resolved
+            ) mutable
+            {
+                Entity entity =
+                    Resolve(reference, resolved);
+
+                std::apply(
+                    [&](auto&&... unpacked)
+                    {
+                        registry.Emplace<Component>(
+                            entity,
+                            std::forward<
+                                decltype(unpacked)
+                            >(unpacked)...);
+                    },
+                    std::move(values));
+            });
+    }
+
+    template<typename Component>
+    void Remove(EntityReference reference)
+    {
+        m_Commands.emplace_back(
+            [reference](
+                Registry& registry,
+                std::vector<Entity>& resolved)
+            {
+                registry.Remove<Component>(
+                    Resolve(reference, resolved));
+            });
+    }
+
+    void Flush(Registry& registry)
+    {
+        for (auto& command : m_Commands)
+        {
+            command(
+                registry,
+                m_DeferredEntities);
+        }
+
+        Clear();
+    }
+
+    void Clear()
+    {
+        m_Commands.clear();
+        m_DeferredEntities.clear();
+    }
+
+private:
+    using Command =
+        std::move_only_function<
+            void(
+                Registry&,
+                std::vector<Entity>&)>;
+
+    std::vector<Command> m_Commands;
+    std::vector<Entity> m_DeferredEntities;
+
+    static Entity Resolve(
+        const EntityReference& reference,
+        const std::vector<Entity>& resolved)
+    {
+        if (const Entity* entity =
+                std::get_if<Entity>(
+                    &reference))
+        {
+            return *entity;
+        }
+
+        const DeferredEntity token =
+            std::get<DeferredEntity>(
+                reference);
+
+        return resolved.at(token.Token);
+    }
+};
+\end{verbatim}
+
+This is not the only design, but notice what it solves:
+
+\begin{itemize}
+\tightlist
+\item
+  mutations happen later,
+\item
+  command payload is owned,
+\item
+  move-only payloads can be supported,
+\item
+  newly created entities can be referenced by later commands,
+\item
+  command order is explicit.
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Safe gameplay usage}
+
+Now:
+
+\begin{verbatim}
+ECSCommandBuffer commands;
+
+registry.Each<Health>(
+    [&](Entity entity, Health& health)
+    {
+        if (health.Value <= 0)
+        {
+            commands.Destroy(entity);
+        }
+    });
+
+// Iteration is over.
+// Dense pools can now change.
+commands.Flush(registry);
+\end{verbatim}
+
+The primary component array remains stable during \texttt{Each}.
+
+This is the correct structural-mutation model.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Command order is observable}
+
+Suppose command stream says:
+
+\begin{verbatim}
+1 Remove Health from A
+2 Destroy A
+\end{verbatim}
+
+versus:
+
+\begin{verbatim}
+1 Destroy A
+2 Remove Health from A
+\end{verbatim}
+
+Those are not necessarily equivalent from the API's perspective.
+
+First ordering:
+
+\begin{verbatim}
+Remove succeeds
+Destroy succeeds
+\end{verbatim}
+
+Second:
+
+\begin{verbatim}
+Destroy succeeds
+Remove sees dead entity and returns false
+\end{verbatim}
+
+Therefore command buffer must define whether it:
+
+\begin{itemize}
+\tightlist
+\item
+  preserves issue order,
+\item
+  canonicalizes commands,
+\item
+  coalesces them,
+\item
+  sorts by entity/type,
+\item
+  exposes unspecified order.
+\end{itemize}
+
+For a first implementation, \textbf{preserve issue order}.
+
+It is easiest to reason about.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Command coalescing is possible later}
+
+Suppose same system produces:
+
+\begin{verbatim}
+Add Velocity E
+Remove Velocity E
+Add Velocity E
+\end{verbatim}
+
+The final state may be simplified.
+
+But coalescing is complicated by:
+
+\begin{itemize}
+\tightlist
+\item
+  constructors/destructors,
+\item
+  events,
+\item
+  observers,
+\item
+  side effects,
+\item
+  component values,
+\item
+  replication logs.
+\end{itemize}
+
+Do not optimize command sequences until semantics are completely specified.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Multithreaded command buffers}
+
+This becomes even more powerful with jobs.
+
+Give each worker thread:
+
+\begin{verbatim}
+its own command buffer
+\end{verbatim}
+
+while registry storage is readonly for structural operations.
+
+Workers can safely iterate:
+
+\begin{verbatim}
+Thread 0 -> commands0
+Thread 1 -> commands1
+Thread 2 -> commands2
+Thread 3 -> commands3
+\end{verbatim}
+
+At synchronization:
+
+\begin{verbatim}
+merge command buffers
+     ↓
+apply structure changes
+\end{verbatim}
+
+No worker needs to mutate component pool layout concurrently.
+
+Flecs uses essentially this staging model: while systems iterate readonly world storage, add/remove/set/delete operations can be queued into command buffers, and thread-specific stages are merged at synchronization points. The reason is exactly that direct structural changes can reallocate component arrays and invalidate ongoing iteration. \href{https://www.flecs.dev/flecs/Systems.html?utm_source=chatgpt.com}{Flecs}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Deterministic multithreaded merging}
+
+If deterministic simulation matters, do not merge thread buffers in whichever thread finishes first.
+
+That gives scheduling-dependent command order.
+
+Instead define something such as:
+
+\begin{verbatim}
+system execution order
+then worker index
+then local command sequence
+\end{verbatim}
+
+So global sequence is deterministic:
+
+\[
+(systemID,\ workerID,\ localSequence).
+\]
+
+This becomes important for:
+
+\begin{itemize}
+\tightlist
+\item
+  lockstep games,
+\item
+  deterministic replay,
+\item
+  simulation tests,
+\item
+  reproducible bugs.
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Command-buffer exception semantics}
+
+Suppose flush executes:
+
+\begin{verbatim}
+command 0 succeeds
+command 1 succeeds
+command 2 component constructor throws
+\end{verbatim}
+
+What happens to commands 3--10?
+
+You must decide.
+
+Options include:
+
+\textbf{Fail-fast partial commit}
+
+Commands 0--1 remain applied.
+
+Flush throws.
+
+Simple, but not transactional.
+
+\textbf{Validate-then-apply}
+
+Perform as much validation as possible before mutation.
+
+Cannot protect against arbitrary user component constructor failures completely.
+
+\textbf{Full transactional rollback}
+
+Extremely complicated and expensive for arbitrary component types.
+
+Most game ECS systems choose well-defined partial/fail-fast semantics and design component construction to avoid exceptions.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The current Kairo structural journal is }not** a command buffer**
+
+Kairo currently records:
+
+\begin{verbatim}
+enum class StructuralChangeKind
+{
+    Created,
+    Destroyed,
+    ComponentAdded,
+    ComponentRemoved
+};
+\end{verbatim}
+
+and:
+
+\begin{verbatim}
+struct StructuralChange
+{
+    uint64_t Sequence;
+    StructuralChangeKind Kind;
+    Entity Subject;
+};
+\end{verbatim}
+
+That is a \textbf{journal of changes that already happened}.
+
+Flow:
+
+\begin{verbatim}
+mutation occurs
+     ↓
+AppendChange(...)
+\end{verbatim}
+
+A command buffer does:
+
+\begin{verbatim}
+request mutation
+     ↓
+store command
+     ↓
+apply mutation later
+\end{verbatim}
+
+They solve different problems.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why both systems are useful}
+
+Command buffer answers:
+
+\begin{quote}
+How do I safely schedule structural changes?
+\end{quote}
+
+Structural journal answers:
+
+\begin{quote}
+What structural changes happened?
+\end{quote}
+
+Journal can support:
+
+\begin{itemize}
+\tightlist
+\item
+  editor tooling,
+\item
+  replication,
+\item
+  incremental scene bridges,
+\item
+  debugging,
+\item
+  event processing,
+\item
+  recording/replay.
+\end{itemize}
+
+Command buffer supports:
+
+\begin{itemize}
+\tightlist
+\item
+  safe iteration,
+\item
+  staging,
+\item
+  parallelism,
+\item
+  deterministic structural commits.
+\end{itemize}
+
+A mature ECS can contain both.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo journal performance issue}
+
+The journal has fixed logical capacity.
+
+When full:
+
+\begin{verbatim}
+if (m_Changes.size()
+    == m_JournalCapacity)
+{
+    m_Changes.erase(
+        m_Changes.begin());
+}
+\end{verbatim}
+
+\texttt{vector::erase(begin)} shifts every remaining event left.
+
+For capacity \(C\):
+
+\[
+O(C)
+\]
+
+per new structural event once full.
+
+At:
+
+\[
+C=4096,
+\]
+
+each additional event can move roughly 4095 records.
+
+Under heavy entity churn, that becomes unnecessary work.
+
+A ring buffer is a much better representation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Ring-buffer journal}
+
+Keep:
+
+\begin{verbatim}
+buffer[C]
+head
+count
+\end{verbatim}
+
+When full:
+
+\begin{verbatim}
+overwrite oldest
+advance head
+\end{verbatim}
+
+Appending remains:
+
+\[
+O(1).
+\]
+
+Logical sequence numbers already exist:
+
+\begin{verbatim}
+m_NextChangeSequence
+\end{verbatim}
+
+so chronological meaning does not require physical vector ordering.
+
+This is a concrete improvement for current KairoECS.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Another current Kairo storage contract: move assignment}
+
+Your sparse-set removal does:
+
+\begin{verbatim}
+m_Components[dense] =
+    std::move(m_Components[last]);
+\end{verbatim}
+
+Therefore \texttt{Component} must be move-assignable.
+
+README already states this.
+
+There is an additional subtlety:
+
+\begin{verbatim}
+SparseSet::Remove(...)
+\end{verbatim}
+
+is declared:
+
+\begin{verbatim}
+noexcept
+\end{verbatim}
+
+but component move assignment is called inside it.
+
+If a component's move assignment throws, the program invokes:
+
+\[
+std::terminate.
+\]
+
+Therefore the effective current Kairo contract is stronger than merely:
+
+\[
+MoveAssignable.
+\]
+
+For safe removal it should effectively be:
+
+\[
+\boxed{
+\text{nothrow move-assignable}
+}
+\]
+
+or the implementation must stop declaring removal \texttt{noexcept}.
+
+We will go much deeper into non-trivial component lifetime in M089, but this is already an important current-code constraint.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo M085/M086 implementation map}
+
+Here is where your actual code stands after the audit:
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Curriculum concept & Current Kairo status \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Entity identity as data & Implemented \\
+Entity index & Implemented \\
+Generations & Implemented \\
+Packed entity integer & \textbf{Not packed; stored as two \texttt{uint32\_t}s} \\
+Free list & Implemented with \texttt{vector\textless{}uint32\_t\textgreater{}} \\
+Recycled creation & Implemented \\
+Generation increment on destruction & Implemented \\
+Generation wrap defense & \textbf{Strong: retires max-generation slots} \\
+Handle validation & Implemented \\
+Component type identity & RTTI / \texttt{std::type\_index} \\
+Static numeric component IDs & Not implemented \\
+Rich runtime component registry & Not implemented \\
+Component pools & Implemented \\
+Sparse-set storage & Implemented \\
+Sparse array & Implemented \\
+Dense entity array & Implemented \\
+Dense component array & Implemented \\
+Membership lookup & Implemented with generation validation \\
+Component lookup & Implemented \\
+Component insertion & Implemented with rollback \\
+Swap-and-pop removal & Implemented \\
+Sparse-index repair & Implemented \\
+Address invalidation contract & Documented \\
+Stable-address alternative & Not implemented \\
+Dense iteration & Implemented \\
+Smallest-pool multi-query & Implemented for 2 and 3 component types \\
+Multi-pool sparse tests & Implemented \\
+Component signatures & Not implemented \\
+Dynamic masks & Not implemented \\
+Query caching & Not implemented \\
+Structural-change restrictions & Documented \\
+Deferred creation & Not implemented \\
+Deferred destruction & Not implemented \\
+Deferred component changes & Not implemented \\
+Structural command buffer & Not implemented \\
+Structural journal & Implemented, but it is a different mechanism \\
+\end{longtable}
+}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The complete memory model}
+
+Now combine everything.
+
+Entity metadata:
+
+\begin{verbatim}
+Generations:
+[1][5][8][2][...]
+
+Alive:
+[1][0][1][1][...]
+
+Free indices:
+[1][...]
+\end{verbatim}
+
+Transform sparse set:
+
+\begin{verbatim}
+Sparse:
+entity index -> dense index
+
+[ . ][ . ][ 1 ][ . ][ 0 ][ ... ]
+\end{verbatim}
+
+Transform dense entities:
+
+\begin{verbatim}
+dense index
+0 -> Entity{4,2}
+1 -> Entity{2,8}
+\end{verbatim}
+
+Transform dense components:
+
+\begin{verbatim}
+dense index
+0 -> Transform for {4,2}
+1 -> Transform for {2,8}
+\end{verbatim}
+
+Velocity sparse set may contain completely different entities.
+
+The registry is not one giant object array.
+
+It is a federation of independently packed data columns keyed by safe generational identities.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Lookup pipeline from an entity to a component}
+
+Suppose:
+
+\begin{verbatim}
+registry.Get<Transform>(
+    Entity{42,7});
+\end{verbatim}
+
+Conceptually:
+
+\begin{verbatim}
+1. Is Index != InvalidIndex?
+2. Is 42 inside registry metadata?
+3. Is slot 42 alive?
+4. Is current generation == 7?
+5. Find Pool<Transform>
+6. Is sparse index 42 inside Transform sparse array?
+7. dense = Sparse[42]
+8. Is dense valid?
+9. Does DenseEntities[dense] == {42,7}?
+10. Return DenseComponents[dense]
+\end{verbatim}
+
+Each layer protects a different invariant.
+
+This is why a properly built ECS is far more than \texttt{unordered\_map\textless{}Entity,\ Component\textgreater{}}.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Destruction pipeline}
+
+For:
+
+\begin{verbatim}
+registry.Destroy(
+    Entity{42,7});
+\end{verbatim}
+
+conceptually:
+
+\begin{verbatim}
+Validate entity
+     ↓
+Remove Transform{42,7}
+     ↓
+Remove Velocity{42,7}
+     ↓
+Remove any other owned components
+     ↓
+Alive[42] = false
+     ↓
+Generation[42] = 8
+     ↓
+FreeIndices.push(42)
+\end{verbatim}
+
+Now:
+
+\begin{verbatim}
+{42,7} invalid forever
+\end{verbatim}
+
+and future:
+
+\begin{verbatim}
+{42,8}
+\end{verbatim}
+
+may reuse the slot safely.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Query pipeline}
+
+System:
+
+\begin{verbatim}
+Transform + Velocity + Health
+\end{verbatim}
+
+Pool counts:
+
+\begin{verbatim}
+Transform 100000
+Velocity   40000
+Health      2000
+\end{verbatim}
+
+Choose Health as driver.
+
+For each:
+
+\begin{verbatim}
+Health dense entry
+     ↓
+entity
+     ↓
+Transform sparse membership
+     ↓
+Velocity sparse membership
+     ↓
+if both exist:
+    obtain dense component references
+     ↓
+execute system
+\end{verbatim}
+
+Thus runtime is proportional primarily to the rarest component.
+
+That is the algorithmic strength of sparse-set joins.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why Kairo's current registry is genuinely data-oriented}
+
+``Data-oriented'' does not simply mean:
+
+\begin{quote}
+we use vectors.
+\end{quote}
+
+It means organization follows the operations that dominate runtime.
+
+Your registry does several things correctly:
+
+\begin{itemize}
+\tightlist
+\item
+  component values of one type are contiguous,
+\item
+  entity IDs are tiny,
+\item
+  membership uses direct indexing,
+\item
+  iteration is dense,
+\item
+  queries choose the rarest pool,
+\item
+  entity reuse does not compromise safety,
+\item
+  component storage is independent of scene hierarchy.
+\end{itemize}
+
+Those are actual data-oriented decisions.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{What it still lacks before becoming a stronger production ECS}
+
+The highest-value next additions from this pass are:
+
+\begin{verbatim}
+1. Dense numeric runtime component IDs
+2. Persistent schema IDs kept separate from runtime IDs
+3. Paged sparse storage if entity index extent becomes large
+4. Explicit storage invalidation policy
+5. Component/query structural version counters
+6. Generic variadic sparse-set queries
+7. Deferred structural command buffer
+8. Thread-local command staging
+9. Ring-buffer structural journal
+10. Stronger component move/noexcept constraints
+\end{verbatim}
+
+I would prioritize \textbf{command buffering} before signatures.
+
+Why?
+
+Because signatures mostly optimize metadata/query organization.
+
+Command buffering fixes a correctness and scalability boundary:
+
+\[
+\boxed{
+\text{systems currently cannot safely perform arbitrary structural changes during iteration}.
+}
+\]
+
+That limitation will matter more and more when parallel scheduling arrives.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{A generic variadic query direction}
+
+Current Kairo manually implements:
+
+\begin{verbatim}
+Each<A>
+Each<A,B>
+Each<A,B,C>
+\end{verbatim}
+
+This becomes unmanageable for:
+
+\begin{verbatim}
+4 components
+5 components
+6 components
+...
+\end{verbatim}
+
+A future query abstraction should accept:
+
+\begin{verbatim}
+registry.Each<
+    Transform,
+    Velocity,
+    Health,
+    PhysicsBody
+>(callback);
+\end{verbatim}
+
+Internally:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  collect pool pointers,
+\item
+  determine smallest pool,
+\item
+  iterate that pool,
+\item
+  test all other pools,
+\item
+  invoke callback in template argument order.
+\end{enumerate}
+
+The challenge is preserving typed references while the driver pool type varies.
+
+This is where tuples, compile-time indices and fold expressions become useful.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Generic membership fold}
+
+Conceptually:
+
+\begin{verbatim}
+bool matches =
+    (pool<ComponentTypes>()
+         .Contains(entity)
+     && ...);
+\end{verbatim}
+
+In a real implementation you avoid rechecking the driver's membership.
+
+But the fold-expression concept is:
+
+\[
+\bigwedge_{T\in Q}
+Contains_T(E).
+\]
+
+Then fetch:
+
+\begin{verbatim}
+callback(
+    entity,
+    *pool<ComponentTypes>()
+         .TryGet(entity)...
+);
+\end{verbatim}
+
+The compile-time type list provides callback ordering.
+
+The runtime pool-size comparison chooses the driver.
+
+This gives both genericity and sparse-set efficiency.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why query caching will eventually become more important}
+
+Today:
+
+\begin{verbatim}
+Each<Transform,Velocity>
+\end{verbatim}
+
+does two \texttt{type\_index} hash lookups to retrieve pools each call.
+
+If hundreds of systems invoke similar queries every frame, those pool lookups become unnecessary overhead.
+
+A persistent query:
+
+\begin{verbatim}
+auto moving =
+    registry.Query<
+        Transform,
+        Velocity>();
+\end{verbatim}
+
+could cache storage pointers once.
+
+Then per frame:
+
+\begin{verbatim}
+moving.Each(...);
+\end{verbatim}
+
+does only join work.
+
+This is the natural next step without yet requiring archetypes.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The ownership rule you should memorize}
+
+The ECS owns components.
+
+Systems borrow them.
+
+So:
+
+\[
+\boxed{
+Registry
+\rightarrow
+\text{owns entity metadata and component storage}
+}
+\]
+
+while:
+
+\[
+\boxed{
+System
+\rightarrow
+\text{temporarily borrows component references}
+}
+\]
+
+and:
+
+\[
+\boxed{
+Entity handle
+\rightarrow
+\text{stable logical reference}
+}
+\]
+
+but:
+
+\[
+\boxed{
+Component*
+\rightarrow
+\text{potentially unstable physical reference}.
+}
+\]
+
+This one mental model prevents a huge class of engine bugs.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Identity versus location}
+
+This also connects to everything we learned earlier.
+
+A BVH node index can change if hierarchy rebuilt.
+
+A component's dense index can change if another component is removed.
+
+A vector address can change if reallocated.
+
+Therefore:
+
+\[
+\text{physical storage location}
+\]
+
+should usually not be identity.
+
+Instead:
+
+\[
+\text{stable logical handle}
+\rightarrow
+\text{current storage location}.
+\]
+
+For ECS:
+
+\[
+Entity(Index,Generation)
+\rightarrow
+Sparse[Index]
+\rightarrow
+DenseIndex
+\rightarrow
+Component.
+\]
+
+That extra indirection buys storage freedom.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why this architecture scales better than pointers between objects}
+
+Imagine one million entities.
+
+If gameplay systems store raw pointers between components, then any compaction/migration invalidates relationships.
+
+With entity handles:
+
+\begin{verbatim}
+struct Target
+{
+    Entity TargetEntity;
+};
+\end{verbatim}
+
+the target remains logical.
+
+On use:
+
+\begin{verbatim}
+if (registry.IsAlive(target.TargetEntity))
+{
+    ...
+}
+\end{verbatim}
+
+The target entity's components may have moved ten times.
+
+Relationship remains valid because it does not encode a component address.
+
+This becomes essential in archetype migration next pass.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Entity handles are not globally persistent IDs}
+
+Another critical distinction.
+
+Your Kairo Entity is documented as:
+
+\begin{quote}
+process-local.
+\end{quote}
+
+That is right.
+
+Do not serialize:
+
+\begin{verbatim}
+Index = 27
+Generation = 4
+\end{verbatim}
+
+and assume it identifies the same game object after loading tomorrow.
+
+Index allocation depends on runtime lifecycle.
+
+For persistent scene identity, use another ID:
+
+\begin{verbatim}
+UUID
+SceneEntityID
+AssetObjectID
+NetworkID
+\end{verbatim}
+
+Then loading constructs fresh ECS entities and maps persistent IDs to runtime handles.
+
+This separation will matter heavily in scene serialization later.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Sparse-set memory complexity}
+
+For one pool:
+
+Let:
+
+\[
+E_{\max}
+=
+\text{largest entity index extent},
+\]
+
+\[
+N_C
+=
+\text{number of entities owning component C}.
+\]
+
+With Kairo's flat sparse array:
+
+\[
+M_C
+\approx
+4E_{\max}
++
+sizeof(Entity)N_C
++
+sizeof(Component)N_C.
+\]
+
+The sparse portion depends on \textbf{entity extent}, not component population.
+
+This is why rare components can still consume large sparse metadata if entity IDs grow very high.
+
+Paged sparse arrays change this toward allocated-page occupancy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Time complexity summary}
+
+For current Kairo sparse-set registry, ignoring allocation effects:
+
+\[
+IsAlive(E)=O(1)
+\]
+
+\[
+Has<T>(E)=O(1)
+\]
+
+\[
+Get<T>(E)=O(1)
+\]
+
+\[
+Emplace<T>(E)=O(1)
+\]
+
+amortized,
+
+\[
+Remove<T>(E)=O(1)
+\]
+
+assuming movable component,
+
+\[
+Each<T>=O(|T|)
+\]
+
+and for query \(T_1,\dots,T_k\):
+
+\[
+Each<T_1,\dots,T_k>
+=
+O(
+\min_i|T_i|
+\cdot(k-1)
+).
+\]
+
+Entity destruction is currently:
+
+\[
+O(T)
+\]
+
+over number of registered component types because every pool is checked.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- build a generational registry from blank memory}
+
+You should be able to derive the minimum entity allocator yourself.
+
+State:
+
+\begin{verbatim}
+vector<uint32_t> generations;
+vector<bool> alive;
+vector<uint32_t> free;
+\end{verbatim}
+
+Create:
+
+\begin{verbatim}
+if free nonempty:
+    pop index
+else:
+    append metadata
+
+alive[index] = true
+
+return {index, generation[index]}
+\end{verbatim}
+
+Destroy:
+
+\begin{verbatim}
+validate
+remove components
+alive[index] = false
+
+if generation not max:
+    generation++
+    free.push(index)
+else:
+    retire slot
+\end{verbatim}
+
+Validate:
+
+\[
+IndexValid
+\land
+Bounds
+\land
+Alive
+\land
+GenerationMatch.
+\]
+
+If you cannot derive this without remembering code, revisit M085.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- sparse set}
+
+You should be able to draw this from memory:
+
+\begin{verbatim}
+Sparse
+entity index → dense index
+
+DenseEntities
+dense index → entity
+
+DenseComponents
+dense index → component
+\end{verbatim}
+
+Then state invariant:
+
+\[
+Sparse[DenseEntities[d].Index]=d.
+\]
+
+Membership:
+
+\[
+d=Sparse[E.Index]
+\]
+
+and:
+
+\[
+d\neq Missing
+\land
+d<DenseSize
+\land
+DenseEntities[d]=E.
+\]
+
+Removal:
+
+\begin{verbatim}
+move last into hole
+repair sparse[lastEntity.Index]
+pop dense arrays
+Sparse[removed.Index] = Missing
+\end{verbatim}
+
+That is the entire sparse-set mechanism.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- invalidation}
+
+You should know immediately:
+
+\textbf{Component insertion may invalidate}
+
+\[
+\text{all component references}
+\]
+
+if vector reallocates.
+
+\textbf{Swap-remove invalidates}
+
+the removed component,
+
+the old address of the moved last component,
+
+and changes the logical entity represented at the removed slot address.
+
+Therefore:
+
+\[
+\boxed{
+\text{never promise pointer stability unless storage policy explicitly provides it}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reconstruction challenge --- command buffering}
+
+If a system wants:
+
+\begin{verbatim}
+for every Health:
+    if health <= 0:
+        destroy entity
+\end{verbatim}
+
+do not mutate the primary pool.
+
+Instead:
+
+\begin{verbatim}
+iteration
+     ↓
+record Destroy commands
+     ↓
+finish iteration
+     ↓
+flush command buffer
+\end{verbatim}
+
+For deferred creation:
+
+\begin{verbatim}
+temporary token
+     ↓
+Create command
+     ↓
+later AddComponent commands reference token
+     ↓
+flush resolves token → real Entity
+\end{verbatim}
+
+That is Part 1431--1434 in one coherent mechanism.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Exact coverage --- M085 + M086}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}rll@{}}
+\toprule\noalign{}
+Part & Required topic & Covered \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1401 & Entity identity as data rather than object hierarchy & ✓ \\
+1402 & Entity index representation & ✓ \\
+1403 & Generation counters & ✓ \\
+1404 & Packing index/generation into one integer & ✓ \\
+1405 & Entity free lists & ✓ \\
+1406 & Creation from free-list slot & ✓ \\
+1407 & Destruction and generation increments & ✓ \\
+1408 & Validating entity handle & ✓ \\
+1409 & Component type identity & ✓ \\
+1410 & Static component type IDs & ✓ \\
+1411 & Runtime component type registries & ✓ \\
+1412 & Component pools & ✓ \\
+1413 & Sparse-set concept & ✓ \\
+1414 & Sparse index array & ✓ \\
+1415 & Dense entity array & ✓ \\
+1416 & Dense component array & ✓ \\
+1417 & Sparse-set membership lookup & ✓ \\
+1418 & Sparse-set component lookup & ✓ \\
+1419 & Sparse-set component insertion & ✓ \\
+1420 & Swap-and-pop removal & ✓ \\
+1421 & Sparse-index repair after removal & ✓ \\
+1422 & Component-address invalidation & ✓ \\
+1423 & Stable-storage alternatives & ✓ \\
+1424 & Dense component iteration & ✓ \\
+1425 & Smallest-pool iteration & ✓ \\
+1426 & Multi-pool membership tests & ✓ \\
+1427 & Component signatures / masks & ✓ \\
+1428 & Dynamic bitsets & ✓ \\
+1429 & Query caching & ✓ \\
+1430 & Structural changes / iterator invalidation & ✓ \\
+1431 & Deferred entity creation & ✓ \\
+1432 & Deferred entity destruction & ✓ \\
+1433 & Deferred component add/remove & ✓ \\
+1434 & ECS command buffers & ✓ \\
+\end{longtable}
+}
+
+The important result is that you should no longer think of ECS as ``entities + components + systems.''
+
+You should now see this chain:
+
+\[
+\boxed{
+\text{generational identity}
+\rightarrow
+\text{slot reuse}
+\rightarrow
+\text{typed pools}
+\rightarrow
+\text{sparse indirection}
+\rightarrow
+\text{dense storage}
+\rightarrow
+\text{constant-time membership}
+\rightarrow
+\text{smallest-pool joins}
+\rightarrow
+\text{invalidation rules}
+\rightarrow
+\text{deferred structural mutation}.
+}
+\]
+
+And this sets up \textbf{Pass 11 --- M087 + M088, Parts 1435--1474}, where the architecture becomes substantially more advanced: \textbf{archetype signatures, chunks, entity migration between archetypes, chunk capacity/alignment, columnar SoA storage, sparse-set vs archetype ECS, hot/cold splitting, tags, resources, relationships, scene hierarchies, transform dirty propagation, concrete render/physics/light/camera/script/input components, entity↔subsystem ID bridges, events, tick models, dependency graphs, parallel system execution, synchronization hazards, false sharing and prefetch behavior.}
+
+\subsection{Archetype ECS, Chunks, Migration, AoS/SoA, Hot--Cold Layouts, Tags, Resources, Relationships, Transform Hierarchies, Engine Components, Subsystem ID Bridges, Events, Tick Models, System DAGs, Parallel ECS Scheduling, Hazards, False Sharing and Prefetch}\label{05-engine-i-ch015-archetype-ecs-chunks-migration-aossoa-hotcold-layouts-tags-resources-relationships-transform-hierarchies-engine-components-subsystem-id-bridges-events-tick-models-system-dags-parallel-ecs-scheduling-hazards-false-sharing-and-prefetch}
+
+\textbf{Coverage:} M087 owns \textbf{Parts 1435--1451} and M088 owns \textbf{Parts 1452--1474}, with every atom in both ranges required. Graphics\_Engine\_Mastery\_Integra\ldots{}
+
+Pass 10 established a sparse-set ECS:
+
+\[
+Entity(Index,Generation)
+\rightarrow
+Sparse
+\rightarrow
+DenseIndex
+\rightarrow
+Component.
+\]
+
+That is already a powerful runtime model. Pass 11 asks a different question:
+
+\[
+\boxed{
+\text{What if the dominant workload is not random component lookup, but processing huge groups of identically shaped entities?}
+}
+\]
+
+That is where \textbf{archetypes and chunks} appear.
+
+Then the second half asks the larger engine question:
+
+\[
+\boxed{
+\text{How do rendering, physics, input, scripts, events and jobs actually attach to this ECS without destroying its data-oriented properties?}
+}
+\]
+
+This is one of the most architecturally important passes in the entire curriculum.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hyperref[volume-reading-map]{Reading map} · \hyperref[05-engine-i-ch014]{Previous chapter} · \hyperref[05-engine-i-ch016]{Next chapter}

@@ -1,0 +1,24 @@
+\hypertarget{appendix-c3421e6b4f2c}{}\label{referencestart:appendix-c3421e6b4f2c}
+\section{QR factorization and least squares}\label{appendix-c3421e6b4f2c-qr-factorization-and-least-squares}
+
+\hypertarget{appendix-c3421e6b4f2c-qr-factorization-and-least-squares}{}
+
+QR writes \(A=QR\) with orthonormal columns in \(Q\) and triangular \(R\). Orthogonal coordinates preserve Euclidean lengths, so least squares reduces to a triangular solve and a perpendicular residual. Householder QR is a stable dense method; Gram--Schmidt explains the geometry but can lose orthogonality.
+
+\textbf{Use it when:} fitting overdetermined data with known full column rank.
+
+\textbf{Developed in Phase 8:} Orthogonal transformations change coordinates without changing Euclidean lengths. QR therefore separates the fitted component, solved through triangular \(R\), from the constant perpendicular residual; the Householder construction is the stable dense route, with Gram--Schmidt retained to make the geometry visible. \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#01-foundations-i-ch020-reflections-and-plane-rotations-build-qr-without-losing-lengths}{Householder and Givens construction (Mathematics for Visual Computing, Part 1, Ch. 4)} · \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#01-foundations-i-ch020-qr-turns-least-squares-into-a-triangular-solve-plus-an-irreducible-residual}{least squares and its residual (Mathematics for Visual Computing, Part 1, Ch. 4)}
+
+\subsection{Prerequisites}\label{appendix-c3421e6b4f2c-prerequisites}
+
+\hypertarget{appendix-c3421e6b4f2c-prerequisites}{}
+
+\hyperref[appendix-8572a4a060c1]{Linear systems and fundamental subspaces}, \href{../06-GPU-Architecture-and-Real-Time-Rendering-P02/main.pdf\#appendix-8bc4e8fc547c}{Dot products and orthogonality (GPU Architecture and Real-Time Rendering, Part 2, Reference notes: Dot products and orthogonality)}, \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-8f6a01f284a7}{Conditioning and singularity (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Conditioning and singularity)}.
+
+\subsection{Used by}\label{appendix-c3421e6b4f2c-used-by}
+
+\hypertarget{appendix-c3421e6b4f2c-used-by}{}
+
+\hyperref[appendix-221a483bec2d]{Matrix factorization choices}, \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#appendix-1fad5e7f36fa}{Singular value decomposition (Light Transport and Image Synthesis, Part 1, Reference notes: Singular value decomposition)}, \hyperref[appendix-ad175ef3c5bf]{PCA and covariance eigensystems}.
+
+\textbf{Teaching path:} \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#01-foundations-i-ch020-structure-makes-a-decomposition-a-better-tool-than-generic-elimination}{QR and fitting (Mathematics for Visual Computing, Part 1, Ch. 4)}.

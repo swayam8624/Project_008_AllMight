@@ -1,0 +1,62 @@
+\hypertarget{appendix-47c51ea026fb}{}\label{referencestart:appendix-47c51ea026fb}
+\section{Learned image features and CNNs}\label{appendix-47c51ea026fb-learned-image-features-and-cnns}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-47c51ea026fb-definition-and-mechanism}
+
+A convolutional neural network (CNN) learns filters that detect useful image patterns from data. A convolution layer applies the same small kernel at many image locations, so a feature such as an edge can be recognized wherever it appears. Early layers often respond to local contrast or texture; later layers combine these responses into task-specific patterns. Stride and pooling reduce spatial resolution, trading detail for computation and larger receptive fields. Training adjusts filter values by gradient descent using backpropagation and labeled or self-supervised objectives. Weight sharing gives translation equivariance: shifting an input shifts the feature map, but does not guarantee full translation invariance or robustness to scale, viewpoint, lighting, or distribution change. Padding and stride determine border behavior and output size; too much downsampling can erase small objects. A learned feature is a representation useful for a training objective, not a human-interpretable semantic guarantee. Performance depends on data coverage, augmentation, architecture, optimization, and honest held-out evaluation.
+
+\subsection{Prerequisites}\label{appendix-47c51ea026fb-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=appendix-d5b3c692d9f0}{Convolution and filter footprints (Geometry, Cameras, and Image Formation, Reference notes: Convolution and filter footprints)}
+\item
+  \hyperref[appendix-6a7869dd79a6]{Sampling aliasing and reconstruction}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-65788587ef78}{Research validity and ablation (Vision, XR, and Playable Worlds, Reference notes: Research validity and ablation)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-7281c15ac44a}{Retinal encoding and receptive fields (Vision, XR, and Playable Worlds, Reference notes: Retinal encoding and receptive fields)}
+\item
+  \hyperref[appendix-40df0855b4a7]{Automatic differentiation and backpropagation}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-47c51ea026fb-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch031-convolutional-models-preserve-image-neighborhoods}{Convolutional models preserve image neighborhoods (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 2)}
+\item
+  \hyperref[appendix-a9d5dfdd164a]{Attention and visual transformers}
+\item
+  \hyperref[appendix-772f1fd96148]{Contrastive vision and image-language alignment}
+\item
+  \hyperref[appendix-b0c42da325f1]{Perception feedback and robot learning}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-47c51ea026fb-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch031-convolutional-models-preserve-image-neighborhoods}{Convolutional models preserve image neighborhoods (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 2)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-47c51ea026fb-recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  Follow how one shared kernel creates a feature map and how stride changes its resolution.
+\item
+  What property does convolution provide under translation, and what transformations does it not make invariant?
+\end{itemize}
+
+\subsection{Source and navigation}\label{appendix-47c51ea026fb-source-and-navigation}
+
+Teaching narrative: \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch031-convolutional-models-preserve-image-neighborhoods}{open the main explanation (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 2)}. Browse the \hyperref[appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series]{University graphics and vision index}. Additional chapter connections: \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch003-sampling-continuous-signals-and-image-formation}{Sampling continuous signals and image formation (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 10)}; \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch004-image-sampling-filtering-and-efficient-reconstruction}{Image sampling, filtering, and efficient reconstruction (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 11)}; \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch030-edges-contours-and-subpixel-localization}{Edges, contours, and subpixel localization (Spatial Worlds, Engine State, and Simulation, Spatial Worlds, Engine State, and Simulation, Chapter 11)}.
+
+Caption/source records: \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch036-sc-05---stanford-cs231n-spring-2025-lecture-5-image-classification-with-cnns}{SC-05 (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 5)}, \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch036-sc-06---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-6-cnn-architectures}{SC-06 (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 5)}, \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch036-sc-07---stanford-cs231n-spring-2025-lecture-7-recurrent-neural-networks}{SC-07 (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 5)}.

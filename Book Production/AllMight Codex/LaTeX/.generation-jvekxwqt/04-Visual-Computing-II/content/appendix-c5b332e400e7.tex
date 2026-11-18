@@ -1,0 +1,61 @@
+\hypertarget{appendix-c5b332e400e7}{}
+\section*{Radiance fields and Gaussian splatting}
+\section{Radiance fields and Gaussian splatting}\label{appendix-c5b332e400e7-radiance-fields-and-gaussian-splatting}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-c5b332e400e7-definition-and-mechanism}
+
+A radiance field represents a scene by the color and density seen along each 3D viewing ray. NeRF maps a position and viewing direction through a learned function, then volume-renders samples using transmittance and opacity weights; multiple calibrated photographs supervise the result. This representation handles view-dependent appearance but can require many ray samples and careful camera alignment. 3D Gaussian splatting instead stores anisotropic colored Gaussian primitives in space and projects them to screen, sorting and blending their footprints for fast interactive views. 2D Gaussian splatting uses oriented surface-like splats to improve geometric consistency. These methods trade continuous function evaluation for explicit primitives and rasterization. Sparse or biased views leave unseen regions unconstrained; floaters, blur, aliasing, incorrect transparency ordering, or poor geometry can remain even when training views look convincing. Novel-view quality is not equivalent to a watertight mesh or physically correct material. Reconstruction quality depends on camera poses, coverage, calibration, and the scene's changing illumination.
+
+\subsection{Prerequisites}\label{appendix-c5b332e400e7-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-3ee9861904d5]{Camera calibration and bundle adjustment}
+\item
+  \hyperref[appendix-6a7869dd79a6]{Sampling aliasing and reconstruction}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-4815cd87ab8b}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)}
+\item
+  \hyperref[appendix-0b426c47dd78]{Bounding volume hierarchies}
+\item
+  \hyperref[appendix-47ac1bd6d144]{Ray-triangle intersection}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-40df0855b4a7}{Automatic differentiation and backpropagation (03-Visual-Computing-I, appendix-40df0855b4a7)}
+\item
+  \hyperref[appendix-2c568f05ee34]{Latent-variable models and generative flows}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-c5b332e400e7-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[04-visual-computing-ii-ch034-learned-representations-of-3d-shape-and-scenes]{Learned representations of 3D shape and scenes}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-c5b332e400e7-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[04-visual-computing-ii-ch034-learned-representations-of-3d-shape-and-scenes]{Learned representations of 3D shape and scenes}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-c5b332e400e7-recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  Contrast ray-sampled density compositing with projected Gaussian primitive blending.
+\item
+  What can excellent training-view synthesis fail to establish about unseen geometry?
+\end{itemize}
+
+\subsection{Source and navigation}\label{appendix-c5b332e400e7-source-and-navigation}
+
+Teaching narrative: \hyperref[04-visual-computing-ii-ch034-learned-representations-of-3d-shape-and-scenes]{open the main explanation}. Browse the \href{../02-Foundations-II/main.pdf\#nameddest=appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series}{University graphics and vision index (02-Foundations-II, appendix-a6d556a4ef50-university-graphics-vision-and-photography-\/-\/-independent-series)}. Additional chapter connections: \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch003-cameras-projection-and-calibration}{Cameras, projection, and calibration (03-Visual-Computing-I, 03-visual-computing-i-ch003-cameras-projection-and-calibration)}; \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch007-the-rendering-equation-and-light-transport}{The rendering equation and light transport (03-Visual-Computing-I, 03-visual-computing-i-ch007-the-rendering-equation-and-light-transport)}; \hyperref[04-visual-computing-ii-ch028-visibility-queries-and-ray-intersections-1]{Visibility queries and ray intersections}; \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing}{Meshes, connectivity, and geometry processing (03-Visual-Computing-I, 03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing)}.
+
+Caption/source records: \hyperref[04-visual-computing-ii-ch036-sc-15---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-15-3d-vision]{SC-15}, \hyperref[04-visual-computing-ii-ch036-p3-13---curves-and-surfaces]{P3-13}, \hyperref[04-visual-computing-ii-ch036-p3-15---ray-tracing]{P3-15}.

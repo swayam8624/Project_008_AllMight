@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch531.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-f1a6d43e80d1-screen-space-ray-generation-and-mouse-picking" class="level2">
+<h2>Screen-space ray generation and mouse picking</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 11 · <strong>Latest development:</strong> Phase 11</p>
+<section id="appendix-f1a6d43e80d1-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A screen ray begins with a pixel location mapped through the viewport to NDC, then through inverse projection and camera pose into a world-space origin and direction. For perspective cameras, rays usually share the eye origin; orthographic rays have parallel directions but different origins across the image. Mouse picking must use the same high-DPI scaling, viewport offset, origin, and Y convention as rendering. Near and far unprojection can define a ray segment, but a point at infinity or an infinite far plane needs an explicit direction construction. Picking then intersects that ray with scene geometry or uses an object-ID buffer.</p>
+</section>
+<section id="appendix-f1a6d43e80d1-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch328.xhtml#appendix-1c07d64f5e70-camera-view-and-clip-space-pipeline" class="wikilink">Camera view and clip-space pipeline (Light Transport and Image Synthesis, Part 1, Reference notes: Camera view and clip-space pipeline)</a></li>
+<li><a href="ch535.xhtml#appendix-f744e41b95b4-unit-directions-and-safe-normalization" class="wikilink">Unit directions and safe normalization</a></li>
+<li><a href="ch561.xhtml#appendix-7d356c396d1a-visual-angle-and-calibrated-rays" class="wikilink">Visual angle and calibrated rays (Vision, XR, and Playable Worlds, Part 2, Reference notes: Visual angle and calibrated rays)</a></li>
+</ul>
+</section>
+<section id="appendix-f1a6d43e80d1-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li>No downstream concept node is added in this stage.</li>
+</ul>
+</section>
+<section id="appendix-f1a6d43e80d1-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch288.xhtml#id_02-foundations-ii-ch035-recover-geometry-from-depth-and-construct-screen-space-rays" class="wikilink">Recover geometry from depth and construct screen-space rays (Geometry, Cameras, and Image Formation, Part 1, Ch. 4)</a></li>
+</ul>
+</section>
+<section id="appendix-f1a6d43e80d1-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 1082–1083.</p>
+</section>
+<section id="appendix-f1a6d43e80d1-future-keywords" class="level3">
+<h3>Future keywords</h3>
+<p>inverse projection, viewport mapping, picking ray</p>
+</section>
+</section>
+</body>
+</html>

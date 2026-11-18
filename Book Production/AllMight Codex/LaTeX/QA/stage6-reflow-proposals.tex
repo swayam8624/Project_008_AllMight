@@ -1,0 +1,62 @@
+\documentclass[11pt,twoside]{article}
+\usepackage{amsmath,geometry}
+\geometry{paperwidth=576pt,paperheight=720pt,top=72pt,bottom=72pt,inner=51.84pt,outer=76.32pt}
+\setlength{\textwidth}{448.16pt}
+\begin{document}
+\section*{Stage6 GPU Reflow Proof}
+\noindent Proposal 1.
+\[
+\begin{gathered}\text{project Gaussian}\rightarrow\text{tile-overlap count}\rightarrow\text{exclusive scan}\\\rightarrow\text{generate depth/tile key-value entries}\rightarrow\text{stable radix sort}\\\rightarrow\text{tile ranges}\rightarrow\text{sorted compositing}.\end{gathered}
+\]
+\clearpage
+\noindent Proposal 2.
+\[
+\begin{gathered}\text{project Gaussian}\rightarrow\text{tile-overlap count}\rightarrow\text{exclusive scan}\\\rightarrow\text{generate depth/tile key-value entries}\rightarrow\text{stable radix sort}\\\rightarrow\text{tile ranges}\rightarrow\text{sorted compositing}.\end{gathered}
+\]
+\clearpage
+\noindent Proposal 3.
+\[
+\begin{gathered}\text{asset mips}\rightarrow\text{mapped staging buffer}\\\rightarrow\text{UNDEFINED}\rightarrow\text{TRANSFER\_DST}\\\rightarrow\text{vkCmdCopyBufferToImage}\rightarrow\text{SHADER\_READ\_ONLY}.\end{gathered}
+\]
+\clearpage
+\noindent Proposal 4.
+\[
+\begin{gathered}\text{shader(set,binding)}\rightarrow\text{descriptor-set layout}\\\rightarrow\text{descriptor pool}\rightarrow\text{descriptor set}\\\rightarrow\text{vkUpdateDescriptorSets}\rightarrow\text{pipeline layout}.\end{gathered}
+\]
+\clearpage
+\noindent Proposal 5.
+\[
+\begin{gathered}\text{projection}\rightarrow\text{tile counts}\rightarrow\text{scan}\\\rightarrow\text{key generation}\rightarrow\text{radix histogram}\rightarrow\text{prefix}\\\rightarrow\text{scatter}\rightarrow\text{tile ranges}\rightarrow\text{composite}.\end{gathered}
+\]
+\clearpage
+\noindent Proposal 6.
+\[
+\begin{gathered}\text{project}\rightarrow\text{count tile references}\rightarrow\text{parallel scan}\\\rightarrow\text{GPU-generated indirect count}\rightarrow\text{generate key/value records}\\\rightarrow\text{subgroup histogram}\rightarrow\text{prefix}\rightarrow\text{stable radix scatter}\\\rightarrow\text{tile ranges}\rightarrow\text{composite}.\end{gathered}
+\]
+\clearpage
+\noindent Proposal 7.
+\[
+\boxed{\begin{gathered}\text{how do real assets encode it, how does CPU memory reach GPU memory}\\\text{correctly, how do thousands of materials scale, and how do we prove}\\\text{the resulting renderer is actually correct?}\end{gathered}}
+\]
+\clearpage
+\noindent Proposal 8.
+\[
+\begin{gathered}\text{camera}\rightarrow\text{closest hit}\rightarrow\text{emission}\\\rightarrow\text{NEE}\rightarrow\text{BSDF event}\rightarrow\text{throughput}\\\rightarrow\text{medium update}\rightarrow\text{roulette}\rightarrow\text{next ray}.\end{gathered}
+\]
+\clearpage
+\noindent Proposal 9.
+\[
+\begin{gathered}\text{pixel sample}\rightarrow\text{camera ray}\rightarrow\text{BVH}\\\rightarrow\text{surface}\rightarrow\text{emission/NEE}\rightarrow\text{BSDF sample}\\\rightarrow\frac{f\cos}{p}\rightarrow\text{MIS}\rightarrow\text{medium transition}\\\rightarrow\text{roulette}\rightarrow\text{next bounce}\rightarrow\text{linear film}\\\rightarrow\text{HDR/tone mapping}.\end{gathered}
+\]
+\clearpage
+\noindent Proposal 10.
+\[
+\begin{gathered}\text{SwiftUI}\rightarrow\text{AetherViewport}\rightarrow\text{AetherViewportView}\\\rightarrow\text{AetherViewportDelegate}\rightarrow\text{std::unique\_ptr<Renderer>}\\\rightarrow\text{MetalPtr<MTLResource>}.\end{gathered}
+\]
+\clearpage
+\noindent Proposal 11.
+\[
+\boxed{\begin{gathered}\text{PLY}\rightarrow\text{Gaussian field}\rightarrow\text{semantic entity correspondence}\\\rightarrow\text{physical support embedding}\rightarrow\text{physical deformation}\\\rightarrow F\Sigma F^T\rightarrow\text{updated Gaussian rendering}\\\rightarrow\text{image verification}\end{gathered}}
+\]
+\clearpage
+\end{document}

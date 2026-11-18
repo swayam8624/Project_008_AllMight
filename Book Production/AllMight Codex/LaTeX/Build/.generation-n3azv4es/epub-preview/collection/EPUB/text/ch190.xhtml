@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch190.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-aea529eb5175-deferred-captures-and-borrowed-views" class="level2">
+<h2>Deferred captures and borrowed views</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C008 · <strong>Latest development:</strong> C008</p>
+<section id="appendix-aea529eb5175-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A span or string_view describes data without owning it. Copying a view copies its descriptor, not its backing storage. Reference captures and captured this pointers can outlive their referents; copying an owning string into the closure creates a separate owned snapshot.</p>
+</section>
+<section id="appendix-aea529eb5175-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch167.xhtml#appendix-d52e4486f527-ownership-and-non-owning-views" class="wikilink">Ownership and non-owning views</a> — Copying a descriptor does not copy or own its data.</li>
+<li><a href="ch187.xhtml#appendix-a978b29bbbb0-temporary-lifetime-extension" class="wikilink">Temporary lifetime extension</a> — Temporary deadlines constrain returned paths and deferred access.</li>
+<li><a href="ch202.xhtml#appendix-f9b8b9188c7f-borrow-invalidation-and-logical-identity" class="wikilink">Borrow invalidation and logical identity</a> — Invalidating mutations define the deadlines a saved epoch or deferred borrow must respect.</li>
+</ul>
+</section>
+<section id="appendix-aea529eb5175-used-by" class="level3">
+<h3>Used by</h3>
+<p>Later sources will deepen this same node; no empty dependent nodes are created.</p>
+</section>
+<section id="appendix-aea529eb5175-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Contrast capturing string versus string_view by value. Pending: scheduling, cancellation and ownership-pinning policies. Written coverage does not establish learner mastery.</p>
+</section>
+<section id="appendix-aea529eb5175-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch173.xhtml#id_01-foundations-i-ch003-borrowed-views-and-deferred-work-need-an-owner-story" class="wikilink">Teaching explanation and examples</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m008---parts-113-126" class="wikilink">Exact coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

@@ -8,7 +8,7 @@ A vertex shader moves positions through a sequence of coordinate spaces before c
 
 **Recall question:** Why can perspective projection not be represented by a 3×3 affine transform in 3D?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 28320–31769; source-span SHA256 cfb093b9ae71f87be0582e488bddba421a963189da090b4c068283090e5435cd. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 28351–31800; source-span SHA256 cfb093b9ae71f87be0582e488bddba421a963189da090b4c068283090e5435cd. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### View → clip

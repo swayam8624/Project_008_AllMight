@@ -1,0 +1,72 @@
+\hypertarget{appendix-cc04044b5782}{}\label{referencestart:appendix-cc04044b5782}
+\section{Fixed-width integer types}\label{appendix-cc04044b5782-fixed-width-integer-types}
+
+\hypertarget{appendix-cc04044b5782-fixed-width-integer-types}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C002 · \textbf{Latest development:} C008
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-cc04044b5782-definition-and-mechanism}
+
+\hypertarget{appendix-cc04044b5782-definition-and-mechanism}{}
+
+Native bool is not a portable wire/GPU field; validate an explicit zero/one encoding. Floating type names do not guarantee exact IEEE formats; is\_iec559 alone does not identify binary32.
+
+\end{allmightroledefinition}
+
+int need not be32 bits; sizeof(char)==1 measures a C++ byte and CHAR\_BIT is at least8. Plain char is distinct from signed/unsigned char and its signedness is implementation-defined. size\_t represents object sizes, not a stable serialized field. Query numeric\_limits for digits, lowest, max and floating capabilities. A container's size\_type is not universally required to be exactly size\_t.
+
+\BookInlineCode{{\textless{}}{c}{s}{t}{d}{i}{n}{t}{\textgreater{}}}{\textless{}cstdint\textgreater{}} exact-width types express binary layout contracts; \BookInlineCode{{l}{e}{a}{s}{t}}{least} and \BookInlineCode{{f}{a}{s}{t}}{fast} families have different portability goals.
+
+When supplied, std::uint32\_t has exactly 32 bits; uint\_least32\_t has at least 32; uint\_fast32\_t is chosen for speed with at least 32. Exact-width typedefs are optional on implementations lacking suitable types. size\_t represents object sizes and ptrdiff\_t differences.
+
+\subsection{Prerequisites}\label{appendix-cc04044b5782-prerequisites}
+
+\hypertarget{appendix-cc04044b5782-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-d67a19507dc5]{Machine word} --- A processor's natural integer processing width is often called its word width, but the term is architecture dependent.
+\item
+  \hyperref[appendix-5bee2df85484]{Byte and octet} --- An octet is exactly eight bits.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-cc04044b5782-used-by}
+
+\hypertarget{appendix-cc04044b5782-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-23640fcee147}{Scoped enums and validated domains (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Scoped enums and validated domains)} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-34ee45f161c1}{Bit casting and representation (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Bit casting and representation)} --- uses fixed-width integer types to establish this mechanism's representation or policy.
+\item
+  \hyperref[appendix-45303d03796a]{Integral promotion} --- uses fixed-width integer types as part of its representation or reasoning.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-91d09ebed979}{Serialization (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Serialization)} --- uses fixed-width integer types as part of its representation or reasoning.
+\item
+  \hyperref[appendix-33e7a011b684]{Guest and host integer domains} --- uses fixed-width integer types as part of its representation or reasoning.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-11ba36693aa2}{Byte swapping and network order (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Byte swapping and network order)} --- depends on this concept; see its prerequisite explanation.
+\item
+  \hyperref[appendix-c4ac6bb0fff8]{ABI and object layout} --- depends on this concept; see its prerequisite explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-cc04044b5782-recall-and-next-depth}
+
+\hypertarget{appendix-cc04044b5782-recall-and-next-depth}{}
+
+Explain fixed-width integer types without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} Full lifetime replacement, ownership/concurrency policies and cross-target ABI experiments; the opening examples do not establish those later guarantees.
+
+\subsection{Source and navigation}\label{appendix-cc04044b5782-source-and-navigation}
+
+\hypertarget{appendix-cc04044b5782-source-and-navigation}{}
+
+\hyperref[appendix-fd090d982a15-m008---parts-113-126]{C008 development and corrections}
+
+\hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)} · \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=01-foundations-i-ch002-choose-a-type-for-its-promise-not-its-familiar-size}{C007 development (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)}

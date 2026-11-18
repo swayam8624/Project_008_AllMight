@@ -8,7 +8,7 @@ Recorded command buffers and semaphores express dependencies whose completion mu
 
 **Recall question:** Why does a frame fence alone fail to prove that every presentation semaphore or resource use has completed?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 30268–34646; source-span SHA256 57b3efd89da1037c6548fba942f9bd170f7c6bf5697294ec2b417cdc54b81c57. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 30449–34827; source-span SHA256 57b3efd89da1037c6548fba942f9bd170f7c6bf5697294ec2b417cdc54b81c57. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Record, synchronize and retire explicit work

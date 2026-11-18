@@ -8,7 +8,7 @@ A collision result needs contact locations and normals, not merely an overlap bo
 
 **Recall question:** Why can a boolean overlap test not provide enough information to resolve a collision?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 64644–67889; source-span SHA256 cbdb3ae0a1c943608f988c7406a11d4805ad8f84c6789f36d77c0eb971d34566. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 65646–68891; source-span SHA256 cbdb3ae0a1c943608f988c7406a11d4805ad8f84c6789f36d77c0eb971d34566. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Contact Features and Manifolds

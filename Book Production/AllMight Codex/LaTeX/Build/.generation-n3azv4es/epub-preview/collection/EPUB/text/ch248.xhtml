@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch248.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-26d8da71f6c4-quaternion-matrix-and-axis-angle-conversion" class="level2">
+<h2>Quaternion matrix and axis-angle conversion</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> Phase7 · <strong>Latest development:</strong> Phase7</p>
+<section id="appendix-26d8da71f6c4-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A unit axis and angle give q=(cos(theta/2),axis sin(theta/2)). A quaternion rotation matrix is assembled by rotating basis axes. Converting back uses trace or largest-diagonal branches and assumes a proper orthogonal input; scale, shear and reflection require separate treatment.</p>
+<p><strong>Reconstruction cue:</strong> Near a half turn, avoid dividing by a scalar component that approaches zero.</p>
+</section>
+<section id="appendix-26d8da71f6c4-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch252.xhtml#appendix-8e61ab68f6b2-quaternion-rotation-and-double-cover" class="wikilink">Quaternion rotation and double cover</a></li>
+<li><a href="ch256.xhtml#appendix-bd39c3bf5d64-matrices-as-linear-maps-and-basis-images" class="wikilink">Matrices as linear maps and basis images</a></li>
+</ul>
+</section>
+<section id="appendix-26d8da71f6c4-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch251.xhtml#appendix-5f723fbd0593-euler-angles-and-gimbal-singularity" class="wikilink">Euler angles and gimbal singularity</a></li>
+<li><a href="ch249.xhtml#appendix-292c061cd47c-transform-hierarchies-trs-and-shear" class="wikilink">Transform hierarchies TRS and shear</a></li>
+</ul>
+</section>
+<section id="appendix-26d8da71f6c4-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.</p>
+</section>
+<section id="appendix-26d8da71f6c4-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch245.xhtml#id_01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations" class="wikilink">Continuous explanation</a> · <a href="ch207.xhtml#appendix-fd090d982a15-phase-7---parts-601-700" class="wikilink">Coverage and source gap</a> · <a href="ch155.xhtml#appendix-a103e7846d21-phase-7---source-analysis-and-verification" class="wikilink">Sources and verification</a></p>
+</section>
+</section>
+</body>
+</html>

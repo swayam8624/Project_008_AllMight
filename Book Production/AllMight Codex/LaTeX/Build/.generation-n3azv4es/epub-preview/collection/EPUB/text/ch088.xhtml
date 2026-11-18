@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch088.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-bc44f7b42f42-unit-roundoff" class="level2">
+<h2>Unit roundoff</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C004 · <strong>Latest development:</strong> C005</p>
+<section id="appendix-bc44f7b42f42-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Under nearest binary rounding the conventional relative bound for normal-range results is u=2^-p, half upward epsilon. For binary32 this is 2^-24. The bound has range/rounding assumptions.</p>
+<p>Repeated-rounding bounds use <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>γ</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>n</mi>
+  <mi>u</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>n</mi>
+  <mi>u</mi>
+  <mo stretchy="false">)</mo>
+</math> when <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+  <mi>u</mi>
+  <mo>&lt;</mo>
+  <mn>1</mn>
+</math>, under the stated rounding and range assumptions. Summation error also depends on operand magnitudes; this is not a universal relative-error guarantee.</p>
+</section>
+<section id="appendix-bc44f7b42f42-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch010.xhtml#appendix-14bab4cab9d4-ulp-and-representable-spacing" class="wikilink">ULP and representable spacing</a> — Adjacent representable points define rounding candidates, errors and step distances.</li>
+<li><a href="ch056.xhtml#appendix-614afe1de592-rounding-to-nearest-ties-to-even" class="wikilink">Rounding to nearest ties to even</a> — Midpoint parity determines discarded-tail decisions and the normal relative-error bound.</li>
+</ul>
+</section>
+<section id="appendix-bc44f7b42f42-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch039.xhtml#appendix-3ae74e89b4e6-absolute-and-relative-error" class="wikilink">Absolute and relative error</a> — The local normal-rounding bound supplies the error-analysis scale.</li>
+<li><a href="ch121.xhtml#appendix-f82e270791c8-accumulated-rounding-error" class="wikilink">Accumulated rounding error</a> — The local normal-rounding bound supplies the error-analysis scale.</li>
+</ul>
+<p>Connect later dependent concepts here as their lessons arrive.</p>
+<ul>
+<li><a href="ch516.xhtml#appendix-d580b422240f-stable-probability-normalization-and-log-sum-exp" class="wikilink">Stable probability normalization and log-sum-exp (Vision, XR, and Playable Worlds, Part 1, Reference notes: Stable probability normalization and log-sum-exp)</a></li>
+<li><a href="ch508.xhtml#appendix-b9afba7f63e5-stable-quadratic-root-evaluation" class="wikilink">Stable quadratic root evaluation (Vision, XR, and Playable Worlds, Part 1, Reference notes: Stable quadratic root evaluation)</a> ## Recall and next depth</li>
+</ul>
+<p>Reconstruct the concrete example in the definition and identify its validity assumptions.</p>
+<p><strong>Pending:</strong> Subnormal absolute-error models and target-specific arithmetic require separate treatment; do not extend the normal relative bound to arbitrarily tiny results.</p>
+</section>
+<section id="appendix-bc44f7b42f42-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-when-arithmetic-meets-uncertainty" class="wikilink">M005 development</a></p>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">M004 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m004---parts-61-76" class="wikilink">Per-part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

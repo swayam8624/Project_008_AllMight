@@ -1,0 +1,18 @@
+\hypertarget{appendix-55e4b5b0a1e6}{}\label{referencestart:appendix-55e4b5b0a1e6}
+\section{LU factorization and reusable solves}\label{appendix-55e4b5b0a1e6-lu-factorization-and-reusable-solves}
+
+LU stores elimination as triangular factors. With row pivoting in this vault's convention, \(PA=LU\); apply the same permutation to each right-hand side, then solve one lower- and one upper-triangular system. Factorization cost is amortized across repeated solves.
+
+\textbf{Use it when:} solving square general systems, especially with multiple right-hand sides.
+
+\textbf{Developed in Phase 8:} The multipliers used to eliminate entries become the lower factor, while the remaining upper triangle records the reduced system; with row exchanges the convention is \(PA=LU\). The runnable pivoted LU reference traces permutation, factor storage, status, and repeated forward/back substitution on actual values. \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-a-runnable-pivoted-lu-reference-preserves-the-elimination-history}{runnable pivoted LU lab (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)} · \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-triangular-solves-perform-the-cheap-second-half}{forward and backward solves (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)}
+
+\subsection{Prerequisites}\label{appendix-55e4b5b0a1e6-prerequisites}
+
+\hyperref[appendix-f6e77f4a200f]{Gaussian elimination and pivoting}, \hyperref[appendix-ffdc1d4e5350]{Matrix storage indexing and strides}.
+
+\subsection{Used by}\label{appendix-55e4b5b0a1e6-used-by}
+
+\hyperref[appendix-221a483bec2d]{Matrix factorization choices}, \hyperref[appendix-67c87a3d9e94]{Sparse and iterative solvers}.
+
+\textbf{Teaching path:} \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-elimination-turns-the-geometry-into-an-auditable-calculation}{factor and solve (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)}.

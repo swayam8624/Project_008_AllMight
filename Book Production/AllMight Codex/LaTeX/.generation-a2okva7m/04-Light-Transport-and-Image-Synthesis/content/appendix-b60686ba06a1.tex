@@ -1,0 +1,47 @@
+\hypertarget{appendix-b60686ba06a1}{}\label{referencestart:appendix-b60686ba06a1}
+\section{Fourier analysis and spectral phase}\label{appendix-b60686ba06a1-fourier-analysis-and-spectral-phase}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} XR01 · \textbf{Latest development:} University courses
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-b60686ba06a1-definition-and-mechanism}
+
+Fourier coordinates encode frequency magnitude and phase; phase places structure. DFT analyzes a finite periodic block, FFT computes that transform efficiently, and finite-window leakage differs from bin spacing. Interior one-sided amplitude bins need conjugate-pair normalization.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-b60686ba06a1-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-1077ea8fc737}{Continuous signals and discrete samples (Vision, XR, and Playable Worlds, Reference notes: Continuous signals and discrete samples)} --- Filtering/frequency analysis operates on a declared domain and its samples.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-b60686ba06a1-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-6a7869dd79a6]{Sampling aliasing and reconstruction}
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=appendix-d5b3c692d9f0}{Convolution and filter footprints (Geometry, Cameras, and Image Formation, Reference notes: Convolution and filter footprints)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-8b76b0efd27f}{PSF OTF and MTF (Vision, XR, and Playable Worlds, Reference notes: PSF OTF and MTF)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-b2c1846508bf}{Perceptual metrics and display calibration (Vision, XR, and Playable Worlds, Reference notes: Perceptual metrics and display calibration)}
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=appendix-3c73f7862157}{Exceptional projections and dimension (Geometry, Cameras, and Image Formation, Reference notes: Exceptional projections and dimension)} \#\# Recall and next depth
+\end{itemize}
+
+Recover the two tested sinusoid amplitudes and explain leakage. Pending: FFT implementations, windows and finite-boundary estimates. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.
+
+\subsection{Source and navigation}\label{appendix-b60686ba06a1-source-and-navigation}
+
+\href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch042-fourier-coordinates-reveal-what-a-filter-removes}{Expanded teaching explanation (Vision, XR, and Playable Worlds, Ch. 9)} · \hyperref[appendix-fd090d982a15-xr01---independent-seeing-and-representation-source]{Independent coverage} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}
+
+\subsection{University course development}\label{appendix-b60686ba06a1-university-course-development}
+
+Extend the existing frequency-domain treatment with visual interpretation and filtering consequences. A Fourier coefficient records how strongly a sinusoidal basis function occurs at a given frequency and phase. In images, the origin of a two-dimensional spectrum represents slow spatial variation; moving farther from it corresponds to finer variation. A broad bright center indicates low-frequency structure, while energy far from the center often represents edges and texture. Filtering multiplies each frequency by the filter response: a low-pass response suppresses fine detail, and a high-pass response emphasizes it. Aliasing folds unresolved high frequencies into lower ones because sampled sinusoids can share identical sample values. This explains moiré patterns and animated shimmer, and shows why a spectrum is useful for diagnosing sampling problems rather than only for theoretical signal processing.
+
+\href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch003-sampling-continuous-signals-and-image-formation}{Sampling continuous signals and image formation (Geometry, Cameras, and Image Formation, Ch. 10)} · \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch004-image-sampling-filtering-and-efficient-reconstruction}{Image sampling, filtering, and efficient reconstruction (Geometry, Cameras, and Image Formation, Ch. 11)} · \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch030-edges-contours-and-subpixel-localization}{Edges, contours, and subpixel localization (Spatial Worlds, Engine State, and Simulation, Ch. 11)}

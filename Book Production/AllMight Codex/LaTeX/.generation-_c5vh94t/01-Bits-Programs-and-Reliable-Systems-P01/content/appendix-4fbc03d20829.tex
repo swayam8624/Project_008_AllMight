@@ -1,0 +1,61 @@
+\hypertarget{appendix-4fbc03d20829}{}\label{referencestart:appendix-4fbc03d20829}
+\section{Two's complement}\label{appendix-4fbc03d20829-twos-complement}
+
+\hypertarget{appendix-4fbc03d20829-twos-complement}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C002
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-4fbc03d20829-definition-and-mechanism}
+
+\hypertarget{appendix-4fbc03d20829-definition-and-mechanism}{}
+
+An \(N\)-bit negative \(-x\) is residue \(2^N-x=\sim x+1\); the signed high-bit weight is \(-2^{N-1}\), giving one zero and an asymmetric range.
+
+\end{allmightroledefinition}
+
+For raw unsigned value u in N bits, signed decoding is u when u\textless2ᴺ⁻¹, otherwise u−2ᴺ. Thus \texttt{0xAD} means 173−256=−83. Negation uses width-limited complement plus one modulo 2ᴺ. Signed interpretation and unsigned residue share bits but have different language arithmetic contracts.
+
+\subsection{Prerequisites}\label{appendix-4fbc03d20829-prerequisites}
+
+\hypertarget{appendix-4fbc03d20829-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c99977d88b33]{Unsigned modular arithmetic} --- Modulo m retains the remainder class after division by m.
+\item
+  \hyperref[appendix-8f38927cfc54]{Bitwise NOT} --- Complement must specify width: eight-bit complement of \texttt{0x0F} is \texttt{0xF0}, while sixteen-bit complement is \texttt{0xFFF0}.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-4fbc03d20829-used-by}
+
+\hypertarget{appendix-4fbc03d20829-used-by}{}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-1d0dbe8924cc]{Fixed-point representation} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-05f39b10364d]{Minimum signed value} --- uses two's complement as part of its representation or reasoning.
+\item
+  \hyperref[appendix-8d687c9c08ab]{Carry, overflow, negative, and zero flags} --- uses two's complement as part of its representation or reasoning.
+\item
+  \hyperref[appendix-1c7df340573e]{Subtraction through addition} --- uses two's complement as part of its representation or reasoning.
+\item
+  \hyperref[appendix-2ed044358b82]{Arithmetic policies} --- uses two's complement as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-4fbc03d20829-recall-and-next-depth}
+
+\hypertarget{appendix-4fbc03d20829-recall-and-next-depth}{}
+
+Explain two's complement without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} signed shifts, instruction semantics, overflow intrinsics, and wider arithmetic.
+
+\subsection{Source and navigation}\label{appendix-4fbc03d20829-source-and-navigation}
+
+\hypertarget{appendix-4fbc03d20829-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 development} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

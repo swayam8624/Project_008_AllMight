@@ -1,0 +1,1473 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Chapter xmlns:ns0="http://ns.adobe.com/AdobeInDesign/4.0/" id="01-foundations-i-ch015" source="Chapter Edition/01 - Computing Foundations/15 - Execute and Measure a Metal Frame.md">
+<Content ns0:pstyle="ChapterHeader" id="01-foundations-i-ch015-execute-and-measure-a-metal-frame">15 — Execute and Measure a Metal Frame</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/01 - Computing Foundations/00 - Reading Map">Reading map</Link> · <Link href="#01-foundations-i-ch014">Previous chapter</Link> · <Link href="#01-foundations-i-ch016">Next chapter</Link></Content>
+<Content ns0:pstyle="Content">Metal uses its own command, storage, presentation, and synchronization contracts, with Apple GPU tile behavior affecting practical choices. This chapter treats a Metal frame as an execution pipeline whose correctness and performance need separate evidence.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">By the end:</Strong> Map Metal device, command, storage, drawable, and synchronization concepts onto a measured frame without importing Vulkan assumptions blindly.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Recall question:</Strong> Which measurements distinguish CPU command encoding cost from GPU execution and presentation delay?</Content>
+
+
+<Content ns0:pstyle="SubchapterHeader" id="01-foundations-i-ch015-execute-and-measure-a-metal-frame-1">Execute and measure a Metal frame</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="01-foundations-i-ch015-m141">+ M141</Content>
+<Content ns0:pstyle="Content">Pass 13 begins <Strong ns0:cstyle="Bold">Phase 24 — Metal, Render Graphs, Resource Lifetimes, Apple GPU Concerns, and Multi-Backend Rendering</Strong>. The exact boundary is important: M139 owns <Strong ns0:cstyle="Bold">2301–2316</Strong>, Metal’s core execution/resource/shader model; M140 owns <Strong ns0:cstyle="Bold">2317–2340</Strong>, storage modes, tile-memory implications, drawable/presentation, frames in flight, heaps and synchronization; and M141 owns <Strong ns0:cstyle="Bold">2341–2350</Strong>, profiling/debugging plus Objective-C++/Swift ownership and threading boundaries. Render-graph construction itself begins later at Part 2361, so that belongs to Pass 14.</Content>
+<Content ns0:pstyle="Content">This phase is especially useful for you because we now have three concrete implementation levels to compare:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fa7708ef1a0c3c407e6fe9d1.svg" alt="&#10;\boxed{&#10;\text{Kairo Metal}&#10;\rightarrow&#10;\text{small explicit Metal backend}&#10;}&#10;" jobId="fa7708ef1a0c3c407e6fe9d1" originalTeX="&#10;\boxed{&#10;\text{Kairo Metal}&#10;\rightarrow&#10;\text{small explicit Metal backend}&#10;}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f2fa09a15acf5665da1724c7.svg" alt="&#10;\boxed{&#10;\text{Maveb Metal}&#10;\rightarrow&#10;\text{multi-pass, triple-buffered production-style renderer}&#10;}&#10;" jobId="f2fa09a15acf5665da1724c7" originalTeX="&#10;\boxed{&#10;\text{Maveb Metal}&#10;\rightarrow&#10;\text{multi-pass, triple-buffered production-style renderer}&#10;}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/92b69aca416ee592d658d2b3.svg" alt="&#10;\boxed{&#10;\text{AetherStudio bridge}&#10;\rightarrow&#10;\text{C++ Metal core}\leftrightarrow\text{Objective-C++}\leftrightarrow\text{SwiftUI}&#10;}&#10;" jobId="92b69aca416ee592d658d2b3" originalTeX="&#10;\boxed{&#10;\text{AetherStudio bridge}&#10;\rightarrow&#10;\text{C++ Metal core}\leftrightarrow\text{Objective-C++}\leftrightarrow\text{SwiftUI}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">The important conceptual shift from Vulkan is not that Metal is “less explicit.” It is that Metal chooses <Strong ns0:cstyle="Bold">different explicit boundaries</Strong>.</Content>
+<Content ns0:pstyle="Content">Vulkan makes state transitions, access scopes and synchronization extraordinarily visible.</Content>
+<Content ns0:pstyle="Content">Metal exposes a somewhat higher-level execution model around:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e6e51526ebea7a1d2a0c3705.svg" alt="&#10;\text{device}&#10;\rightarrow&#10;\text{queue}&#10;\rightarrow&#10;\text{command buffer}&#10;\rightarrow&#10;\text{encoder}&#10;" jobId="e6e51526ebea7a1d2a0c3705" originalTeX="&#10;\text{device}&#10;\rightarrow&#10;\text{queue}&#10;\rightarrow&#10;\text{command buffer}&#10;\rightarrow&#10;\text{encoder}&#10;" /></Formula>
+<Content ns0:pstyle="Content">while still giving you direct control over memory placement, render-pass semantics, heaps, hazards and GPU scheduling.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="01-foundations-i-ch015-metals-core-execution-model">METAL’S CORE EXECUTION MODEL</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Metal design philosophy</Strong></Content>
+<Content ns0:pstyle="Content">Metal is Apple’s low-overhead GPU API.</Content>
+<Content ns0:pstyle="Content">Its design goal is approximately:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5a5620b209f83e2d8c376a15.svg" alt="&#10;\boxed{&#10;\text{minimal driver ambiguity}&#10;+&#10;\text{low CPU submission overhead}&#10;+&#10;\text{explicit resource ownership}&#10;+&#10;\text{tight mapping to Apple GPU architecture}&#10;}&#10;" jobId="5a5620b209f83e2d8c376a15" originalTeX="&#10;\boxed{&#10;\text{minimal driver ambiguity}&#10;+&#10;\text{low CPU submission overhead}&#10;+&#10;\text{explicit resource ownership}&#10;+&#10;\text{tight mapping to Apple GPU architecture}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">but it intentionally exposes fewer low-level synchronization permutations than Vulkan.</Content>
+<Content ns0:pstyle="Content">A useful comparison is:</Content>
+<Table ns0:table="table" ns0:trows="12" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Vulkan</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Metal</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">VkDevice</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">MTLDevice</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">VkQueue</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">MTLCommandQueue</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">VkCommandBuffer</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">MTLCommandBuffer</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">command recording directly into buffer</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">commands grouped through encoders</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">graphics pipeline</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">MTLRenderPipelineState</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">compute pipeline</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">MTLComputePipelineState</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">descriptor sets</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">direct resource binding / argument buffers</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">image layouts</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">no direct equivalent exposed in same form</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">explicit pipeline barriers</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">hazard tracking + barriers/fences/events</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">swapchain</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell"><InlineCode ns0:cstyle="InlineCode">CAMetalLayer</InlineCode> / <InlineCode ns0:cstyle="InlineCode">CAMetalDrawable</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content ns0:pstyle="TableCell">SPIR-V</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content ns0:pstyle="TableCell">Metal library / MSL functions</Content></Cell></Table>
+<Content ns0:pstyle="Content">The biggest conceptual difference is the <Strong ns0:cstyle="Bold">encoder model</Strong>.</Content>
+<Content ns0:pstyle="Content">In Vulkan, one command buffer can directly contain:</Content>
+<Code ns0:pstyle="Code" language="text">vkCmdDraw
+vkCmdDispatch
+vkCmdCopyBuffer
+...</Code>
+<Content ns0:pstyle="Content">Metal groups commands by operation family:</Content>
+<Code ns0:pstyle="Code" language="text">MTLRenderCommandEncoder
+MTLComputeCommandEncoder
+MTLBlitCommandEncoder</Code>
+<Content ns0:pstyle="Content">That is not merely cosmetic.</Content>
+<Content ns0:pstyle="Content">It gives Metal a strong phase structure.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">MTLDevice</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">MTLDevice</InlineCode> represents a GPU and its Metal capabilities.</Content>
+<Content ns0:pstyle="Content">Objective-C:</Content>
+<Code ns0:pstyle="Code" language="objectivec">id&lt;MTLDevice&gt; device =
+    MTLCreateSystemDefaultDevice();</Code>
+<Content ns0:pstyle="Content">metal-cpp equivalent:</Content>
+<Code ns0:pstyle="Code" language="cpp">MTL::Device* device =
+    MTL::CreateSystemDefaultDevice();</Code>
+<Content ns0:pstyle="Content">depending on wrapper/API style.</Content>
+<Content ns0:pstyle="Content">The device creates most GPU resources:</Content>
+<Code ns0:pstyle="Code" language="text">buffers
+textures
+samplers
+pipeline states
+heaps
+command queues
+libraries</Code>
+<Content ns0:pstyle="Content">It also exposes hardware capabilities.</Content>
+<Content ns0:pstyle="Content">Maveb explicitly queries Apple GPU family support and capabilities such as:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/df9581072f29047532769f58.svg" alt="&#10;\text{ray tracing}&#10;" jobId="df9581072f29047532769f58" originalTeX="&#10;\text{ray tracing}&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7ffec9bc668277f03b558e6e.svg" alt="&#10;\text{dynamic libraries}.&#10;" jobId="7ffec9bc668277f03b558e6e" originalTeX="&#10;\text{dynamic libraries}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Its current capability inspection iterates Apple GPU family support and records the highest family exposed.</Content>
+<Content ns0:pstyle="Content">That is preferable to saying:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">I am on an M-series Mac, therefore feature X exists.</Content></BlockQuote>
+<Content ns0:pstyle="Content">Query actual capabilities.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo’s device ownership</Strong></Content>
+<Content ns0:pstyle="Content">Kairo’s Metal backend creates:</Content>
+<Code ns0:pstyle="Code" language="objectivec">Device =
+    MTLCreateSystemDefaultDevice();</Code>
+<Content ns0:pstyle="Content">and throws if no device exists.</Content>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="objectivec">Queue =
+    [Device newCommandQueue];</Code>
+<Content ns0:pstyle="Content">That gives the backend a single default device and one primary command queue.</Content>
+<Content ns0:pstyle="Content">Maveb instead receives/retains a device from its MetalKit bridge and creates its queue internally.</Content>
+<Content ns0:pstyle="Content">Both designs are legitimate.</Content>
+<Content ns0:pstyle="Content">The latter is especially useful when UI layer already owns an <InlineCode ns0:cstyle="InlineCode">MTKView</InlineCode> with a selected device.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Device identity versus rendering context</Strong></Content>
+<Content ns0:pstyle="Content">Unlike legacy OpenGL, there is no giant implicit global rendering context.</Content>
+<Content ns0:pstyle="Content">A Metal resource carries device association.</Content>
+<Content ns0:pstyle="Content">The application can have references to:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ffcbc485efc75ee9c93d38ec.svg" alt="&#10;device_A,&#10;device_B&#10;" jobId="ffcbc485efc75ee9c93d38ec" originalTeX="&#10;device_A,&#10;device_B&#10;" /></Formula>
+<Content ns0:pstyle="Content">although Apple systems commonly expose one integrated/default GPU in modern Apple-silicon environments.</Content>
+<Content ns0:pstyle="Content">The important architectural idea is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/077b751a99131c37efacc300.svg" alt="&#10;\boxed{&#10;\text{GPU ownership is object-based, not implicit-context-based}.&#10;}&#10;" jobId="077b751a99131c37efacc300" originalTeX="&#10;\boxed{&#10;\text{GPU ownership is object-based, not implicit-context-based}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">MTLCommandQueue</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content">A command queue receives command buffers.</Content>
+<Content ns0:pstyle="Content">Creation:</Content>
+<Code ns0:pstyle="Code" language="objectivec">id&lt;MTLCommandQueue&gt; queue =
+    [device newCommandQueue];</Code>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">CPU
+ ↓
+command buffer 0
+command buffer 1
+command buffer 2
+ ↓
+MTLCommandQueue
+ ↓
+GPU scheduling</Code>
+<Content ns0:pstyle="Content">Command buffers submitted to one queue have ordered queue semantics.</Content>
+<Content ns0:pstyle="Content">That does not mean every GPU instruction from one command buffer must completely finish before any useful work from the next can exist internally.</Content>
+<Content ns0:pstyle="Content">The implementation may pipeline work where legal.</Content>
+<Content ns0:pstyle="Content">But command dependencies/order must remain semantically correct.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Maveb’s queue</Strong></Content>
+<Content ns0:pstyle="Content">Maveb:</Content>
+<Code ns0:pstyle="Code" language="cpp">commandQueue_ =
+    adopt(
+        device-&gt;newCommandQueue());</Code>
+<Content ns0:pstyle="Content">and labels it:</Content>
+<Code ns0:pstyle="Code" language="text">AETHER Primary Queue</Code>
+<Content ns0:pstyle="Content">This is good instrumentation.</Content>
+<Content ns0:pstyle="Content">The label becomes visible in GPU tools.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">One queue is often enough on Apple GPUs</Strong></Content>
+<Content ns0:pstyle="Content">Do not import desktop Vulkan thinking too literally.</Content>
+<Content ns0:pstyle="Content">You might imagine:</Content>
+<Code ns0:pstyle="Code" language="text">graphics queue
+compute queue
+copy queue</Code>
+<Content ns0:pstyle="Content">as mandatory architecture.</Content>
+<Content ns0:pstyle="Content">Metal supports multiple command queues, but Apple GPU execution and unified memory architecture mean more queues do not inherently mean more physical parallelism.</Content>
+<Content ns0:pstyle="Content">A single well-scheduled command queue can already provide excellent throughput.</Content>
+<Content ns0:pstyle="Content">Use additional queues where dependency structure and measurement justify them.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">MTLCommandBuffer</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content">A command buffer is a package of GPU work destined for a command queue.</Content>
+<Content ns0:pstyle="Content">Creation:</Content>
+<Code ns0:pstyle="Code" language="objectivec">id&lt;MTLCommandBuffer&gt; command =
+    [queue commandBuffer];</Code>
+<Content ns0:pstyle="Content">or metal-cpp:</Content>
+<Code ns0:pstyle="Code" language="cpp">MTL::CommandBuffer* commandBuffer =
+    commandQueue_-&gt;commandBuffer();</Code>
+<Content ns0:pstyle="Content">You create encoders from it.</Content>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="cpp">encoder-&gt;endEncoding();
+
+commandBuffer-&gt;commit();</Code>
+<Content ns0:pstyle="Content">After commit, the GPU can execute it.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Command-buffer lifecycle</Strong></Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">Created
+    ↓
+Encoding
+    ↓
+Committed
+    ↓
+Scheduled
+    ↓
+Completed</Code>
+<Content ns0:pstyle="Content">or:</Content>
+<Code ns0:pstyle="Code" language="text">Completed with error</Code>
+<Content ns0:pstyle="Content">You cannot keep appending commands after committing.</Content>
+<Content ns0:pstyle="Content">This is analogous to Vulkan’s command recording/submission model but without the same reusable command-buffer reset model exposed to the application.</Content>
+<Content ns0:pstyle="Content">Metal command buffers are normally short-lived command objects.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo’s one-command-per-frame model</Strong></Content>
+<Content ns0:pstyle="Content">Kairo does:</Content>
+<Code ns0:pstyle="Code" language="objectivec">id&lt;MTLCommandBuffer&gt; command =
+    [Queue commandBuffer];
+
+EncodeScene(
+    command,
+    frame);
+
+Present(command);
+
+[command commit];
+
+LastCommand =
+    command;</Code>
+<Content ns0:pstyle="Content">So each frame produces a fresh command buffer.</Content>
+<Content ns0:pstyle="Content">That is idiomatic Metal.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Maveb does the same at a larger scale</Strong></Content>
+<Content ns0:pstyle="Content">At frame start:</Content>
+<Code ns0:pstyle="Code" language="cpp">MTL::CommandBuffer* commandBuffer =
+    commandQueue_-&gt;commandBuffer();</Code>
+<Content ns0:pstyle="Content">Then that one frame command buffer accumulates numerous passes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1ded4f64054aa078360e5634.svg" alt="&#10;\text{Gaussian work},&#10;" jobId="1ded4f64054aa078360e5634" originalTeX="&#10;\text{Gaussian work},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6db64dedcd08e2123a254b64.svg" alt="&#10;\text{shadows},&#10;" jobId="6db64dedcd08e2123a254b64" originalTeX="&#10;\text{shadows},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/89cf82db5d0e9222b4abc571.svg" alt="&#10;\text{mesh scene},&#10;" jobId="89cf82db5d0e9222b4abc571" originalTeX="&#10;\text{mesh scene},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/58f2b5ed5b0b47de6c88cb7b.svg" alt="&#10;\text{TAA},&#10;" jobId="58f2b5ed5b0b47de6c88cb7b" originalTeX="&#10;\text{TAA},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bade45494d56f35fad8f4ddc.svg" alt="&#10;\text{bloom},&#10;" jobId="bade45494d56f35fad8f4ddc" originalTeX="&#10;\text{bloom},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f89c615feb504c79e36b7631.svg" alt="&#10;\text{presentation},&#10;" jobId="f89c615feb504c79e36b7631" originalTeX="&#10;\text{presentation},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c673aa99fb096121edfa9b59.svg" alt="&#10;\text{optional readback}.&#10;" jobId="c673aa99fb096121edfa9b59" originalTeX="&#10;\text{optional readback}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="cpp">commandBuffer-&gt;presentDrawable(
+    drawable);
+
+commandBuffer-&gt;commit();</Code>
+<Content ns0:pstyle="Content">That is a much richer example of the same execution model.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">One active encoder at a time</Strong></Content>
+<Content ns0:pstyle="Content">Metal command buffers are generally structured as sequential encoding regions.</Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">command buffer
+
+    RenderEncoder A
+        ...
+    endEncoding
+
+    ComputeEncoder B
+        ...
+    endEncoding
+
+    BlitEncoder C
+        ...
+    endEncoding</Code>
+<Content ns0:pstyle="Content">You do not arbitrarily interleave commands from multiple normal encoders into the same command stream.</Content>
+<Content ns0:pstyle="Content">Each encoder defines a GPU operation domain.</Content>
+<Content ns0:pstyle="Content">This structure makes resource/hazard reasoning easier.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">MTLRenderCommandEncoder</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content">A render encoder records rasterization work.</Content>
+<Content ns0:pstyle="Content">Creation:</Content>
+<Code ns0:pstyle="Code" language="objectivec">id&lt;MTLRenderCommandEncoder&gt; encoder =
+    [command
+        renderCommandEncoderWithDescriptor:
+            renderPass];</Code>
+<Content ns0:pstyle="Content">The descriptor specifies attachments and their load/store semantics.</Content>
+<Content ns0:pstyle="Content">Inside encoder you bind:</Content>
+<Code ns0:pstyle="Code" language="text">render pipeline
+depth/stencil state
+vertex buffers
+fragment buffers
+textures
+samplers
+viewport
+scissor
+culling state</Code>
+<Content ns0:pstyle="Content">then issue:</Content>
+<Code ns0:pstyle="Code" language="text">drawPrimitives
+drawIndexedPrimitives</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo render encoder</Strong></Content>
+<Content ns0:pstyle="Content">Kairo’s scene pass creates:</Content>
+<Code ns0:pstyle="Code" language="objectivec">id&lt;MTLRenderCommandEncoder&gt; encoder =
+    [command
+        renderCommandEncoderWithDescriptor:
+            pass];</Code>
+<Content ns0:pstyle="Content">and binds:</Content>
+<Code ns0:pstyle="Code" language="text">DepthState
+CullMode
+FrontFacingWinding
+frame uniforms
+shadow map
+material textures
+mesh buffers</Code>
+<Content ns0:pstyle="Content">Then draws its opaque and transparent objects.</Content>
+<Content ns0:pstyle="Content">This maps closely to its Vulkan backend semantically.</Content>
+<Content ns0:pstyle="Content">The API details differ.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Metal separates pipeline state from many dynamic states</Strong></Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">MTLRenderPipelineState</InlineCode> contains compiled shader/pipeline configuration, but states such as:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a5467c60fcc9c6f4c2ce453c.svg" alt="&#10;cullMode,&#10;" jobId="a5467c60fcc9c6f4c2ce453c" originalTeX="&#10;cullMode,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/20e38beaccaba2c0d05ad768.svg" alt="&#10;frontFacingWinding,&#10;" jobId="20e38beaccaba2c0d05ad768" originalTeX="&#10;frontFacingWinding,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b3eed0fed10a756e62030cbb.svg" alt="&#10;viewport,&#10;" jobId="b3eed0fed10a756e62030cbb" originalTeX="&#10;viewport,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fd0a58c5f1e0675ec0c8a5eb.svg" alt="&#10;scissor,&#10;" jobId="fd0a58c5f1e0675ec0c8a5eb" originalTeX="&#10;scissor,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/61dc9397519cd03aa0c649bc.svg" alt="&#10;depthStencilState&#10;" jobId="61dc9397519cd03aa0c649bc" originalTeX="&#10;depthStencilState&#10;" /></Formula>
+<Content ns0:pstyle="Content">are bound independently on encoder.</Content>
+<Content ns0:pstyle="Content">Compare Vulkan’s more aggressively baked pipeline-state object.</Content>
+<Content ns0:pstyle="Content">Metal’s split makes certain state changes less pipeline-permutation-heavy.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">MTLComputeCommandEncoder</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content">Compute encoder records general compute kernels.</Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="cpp">auto* encoder =
+    commandBuffer-&gt;
+        computeCommandEncoder();
+
+encoder-&gt;
+    setComputePipelineState(
+        pipeline);
+
+encoder-&gt;
+    setBuffer(
+        buffer,
+        offset,
+        slot);
+
+encoder-&gt;
+    dispatchThreads(
+        grid,
+        group);
+
+encoder-&gt;
+    endEncoding();</Code>
+<Content ns0:pstyle="Content">This is where Maveb’s Gaussian scan/radix pipeline from Pass 9 lives.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Compute dispatch mapping</Strong></Content>
+<Content ns0:pstyle="Content">If:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c0563fd9ade1786d9e5312bd.svg" alt="&#10;N&#10;" jobId="c0563fd9ade1786d9e5312bd" originalTeX="&#10;N&#10;" /></Formula>
+<Content ns0:pstyle="Content">threads are needed and group size:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ec73ab4db532394f1f3dc7c4.svg" alt="&#10;G,&#10;" jobId="ec73ab4db532394f1f3dc7c4" originalTeX="&#10;G,&#10;" /></Formula>
+<Content ns0:pstyle="Content">you can issue:</Content>
+<Code ns0:pstyle="Code" language="cpp">dispatchThreads(
+    MTL::Size(N,1,1),
+    MTL::Size(G,1,1));</Code>
+<Content ns0:pstyle="Content">Metal generates enough threadgroups to cover the logical grid.</Content>
+<Content ns0:pstyle="Content">Or explicitly dispatch threadgroups.</Content>
+<Content ns0:pstyle="Content">The MSL kernel receives IDs such as:</Content>
+<Code ns0:pstyle="Code" language="metal">uint id
+    [[thread_position_in_grid]]</Code>
+<Content ns0:pstyle="Content">exactly as we discussed in GPU architecture.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Compute pipeline properties</Strong></Content>
+<Content ns0:pstyle="Content">A <InlineCode ns0:cstyle="InlineCode">MTLComputePipelineState</InlineCode> can expose:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/457e2323dc73d6ca3d940e5a.svg" alt="&#10;threadExecutionWidth&#10;" jobId="457e2323dc73d6ca3d940e5a" originalTeX="&#10;threadExecutionWidth&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4afd95dc9b1fe253d20c391a.svg" alt="&#10;maxTotalThreadsPerThreadgroup.&#10;" jobId="4afd95dc9b1fe253d20c391a" originalTeX="&#10;maxTotalThreadsPerThreadgroup.&#10;" /></Formula>
+<Content ns0:pstyle="Content">These matter for choosing good workgroup sizes.</Content>
+<Content ns0:pstyle="Content">Recall Pass 9:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5d90605645b4ca4cb4a0487e.svg" alt="&#10;\boxed{&#10;\text{workgroup size should respect subgroup/execution width}.&#10;}&#10;" jobId="5d90605645b4ca4cb4a0487e" originalTeX="&#10;\boxed{&#10;\text{workgroup size should respect subgroup/execution width}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Metal gives you implementation data for this rather than requiring you to assume a 32-lane warp.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">MTLBlitCommandEncoder</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content">Blit encoder handles data movement and utility transfer operations.</Content>
+<Content ns0:pstyle="Content">Examples include:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/986cfb6efdac92bf16113c45.svg" alt="&#10;buffer\rightarrow buffer,&#10;" jobId="986cfb6efdac92bf16113c45" originalTeX="&#10;buffer\rightarrow buffer,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/286d0e4b84152ec9986889e0.svg" alt="&#10;texture\rightarrow buffer,&#10;" jobId="286d0e4b84152ec9986889e0" originalTeX="&#10;texture\rightarrow buffer,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/89d10d2c92f421cbcfc6063e.svg" alt="&#10;buffer\rightarrow texture,&#10;" jobId="89d10d2c92f421cbcfc6063e" originalTeX="&#10;buffer\rightarrow texture,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9477640e9cb64f6603c57bcd.svg" alt="&#10;texture\rightarrow texture,&#10;" jobId="9477640e9cb64f6603c57bcd" originalTeX="&#10;texture\rightarrow texture,&#10;" /></Formula>
+<Content ns0:pstyle="Content">mipmap generation and synchronization/copy operations depending on resource/storage mode.</Content>
+<Content ns0:pstyle="Content">Maveb uses a blit encoder to generate mipmaps:</Content>
+<Code ns0:pstyle="Code" language="cpp">blit-&gt;generateMipmaps(
+    texture);</Code>
+<Content ns0:pstyle="Content">and to copy a presented drawable into a CPU-readable buffer for frame capture.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why use a blit encoder rather than a compute shader for copies?</Strong></Content>
+<Content ns0:pstyle="Content">A compute shader can copy bytes.</Content>
+<Content ns0:pstyle="Content">But dedicated copy/blit hardware and driver paths may be more efficient.</Content>
+<Content ns0:pstyle="Content">Blit commands also clearly communicate intent:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/234ec5c0149af673b0257ede.svg" alt="&#10;\boxed{&#10;\text{this operation moves data}&#10;}&#10;" jobId="234ec5c0149af673b0257ede" originalTeX="&#10;\boxed{&#10;\text{this operation moves data}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">rather than:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8e3524e14996a65a318db003.svg" alt="&#10;\text{this is arbitrary shader computation}.&#10;" jobId="8e3524e14996a65a318db003" originalTeX="&#10;\text{this is arbitrary shader computation}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That can improve scheduling and optimization.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Maveb frame capture</Strong></Content>
+<Content ns0:pstyle="Content">Maveb creates a shared buffer and records:</Content>
+<Code ns0:pstyle="Code" language="cpp">captureEncoder-&gt;
+    copyFromTexture(
+        drawableTexture,
+        ...
+        captureBuffer,
+        ...);</Code>
+<Content ns0:pstyle="Content">Then completion handler reads <InlineCode ns0:cstyle="InlineCode">captureBuffer-&gt;contents()</InlineCode> only after command buffer has completed.</Content>
+<Content ns0:pstyle="Content">That is the correct asynchronous readback pattern.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">MTLBuffer</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content">A Metal buffer is a linear byte allocation.</Content>
+<Content ns0:pstyle="Content">Creation can be:</Content>
+<Code ns0:pstyle="Code" language="objectivec">id&lt;MTLBuffer&gt; b =
+    [device
+        newBufferWithLength:
+            size
+        options:
+            MTLResourceStorageModeShared];</Code>
+<Content ns0:pstyle="Content">or from initial bytes:</Content>
+<Code ns0:pstyle="Code" language="objectivec">newBufferWithBytes:
+    data
+length:
+    bytes
+options:
+    ...</Code>
+<Content ns0:pstyle="Content">Like Vulkan buffer, interpretation comes from binding context.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Buffer offset binding</Strong></Content>
+<Content ns0:pstyle="Content">You can bind one buffer at different offsets:</Content>
+<Code ns0:pstyle="Code" language="cpp">encoder-&gt;setVertexBuffer(
+    frameBuffer,
+    frameOffset,
+    0);</Code>
+<Content ns0:pstyle="Content">Thus one giant upload arena can hold:</Content>
+<Code ns0:pstyle="Code" language="text">camera
+draw constants
+skin palette
+lights
+cluster data
+...</Code>
+<Content ns0:pstyle="Content">without creating a new Metal buffer for each allocation.</Content>
+<Content ns0:pstyle="Content">Maveb’s <InlineCode ns0:cstyle="InlineCode">FrameContext</InlineCode> is explicitly designed around this.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">MTLTexture</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content">Texture stores structured image data.</Content>
+<Content ns0:pstyle="Content">Descriptor specifies:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/07fdf95ad7759acd718b487f.svg" alt="&#10;type,&#10;format,&#10;width,&#10;height,&#10;depth,&#10;mipCount,&#10;arrayLength,&#10;sampleCount,&#10;storageMode,&#10;usage.&#10;" jobId="07fdf95ad7759acd718b487f" originalTeX="&#10;type,&#10;format,&#10;width,&#10;height,&#10;depth,&#10;mipCount,&#10;arrayLength,&#10;sampleCount,&#10;storageMode,&#10;usage.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Maveb’s scene HDR texture:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cfb1f8f89a80b11d30983232.svg" alt="&#10;RGBA16Float&#10;" jobId="cfb1f8f89a80b11d30983232" originalTeX="&#10;RGBA16Float&#10;" /></Formula>
+<Content ns0:pstyle="Content">with:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4273a03f9c4b2a709c81b50a.svg" alt="&#10;StorageModePrivate&#10;" jobId="4273a03f9c4b2a709c81b50a" originalTeX="&#10;StorageModePrivate&#10;" /></Formula>
+<Content ns0:pstyle="Content">and usage:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/48e183449461caf6a0069259.svg" alt="&#10;RenderTarget&#10;|&#10;ShaderRead.&#10;" jobId="48e183449461caf6a0069259" originalTeX="&#10;RenderTarget&#10;|&#10;ShaderRead.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is exactly the right shape for a GPU-only HDR render target later sampled by post-processing.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Texture usage flags matter</Strong></Content>
+<Content ns0:pstyle="Content">Examples:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7e9a20d49120fe5b026eb97d.svg" alt="&#10;ShaderRead,&#10;" jobId="7e9a20d49120fe5b026eb97d" originalTeX="&#10;ShaderRead,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1c6ad169df07404e3109f8dc.svg" alt="&#10;ShaderWrite,&#10;" jobId="1c6ad169df07404e3109f8dc" originalTeX="&#10;ShaderWrite,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0e2c590ef1486fca60a3af76.svg" alt="&#10;RenderTarget,&#10;" jobId="0e2c590ef1486fca60a3af76" originalTeX="&#10;RenderTarget,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bf84719737db176bedf6caba.svg" alt="&#10;PixelFormatView.&#10;" jobId="bf84719737db176bedf6caba" originalTeX="&#10;PixelFormatView.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Declaring correct usage lets Metal optimize resource placement/layout internally.</Content>
+<Content ns0:pstyle="Content">This is conceptually similar to Vulkan image usage flags, although Metal hides explicit image layouts from you.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">MTLSamplerState</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content">Sampler state controls:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3ffeaf578e58fea7bc4f9c4e.svg" alt="&#10;minification,&#10;magnification,&#10;mip filtering,&#10;addressing,&#10;comparison sampling,&#10;anisotropy,&#10;LOD range.&#10;" jobId="3ffeaf578e58fea7bc4f9c4e" originalTeX="&#10;minification,&#10;magnification,&#10;mip filtering,&#10;addressing,&#10;comparison sampling,&#10;anisotropy,&#10;LOD range.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Creation:</Content>
+<Code ns0:pstyle="Code" language="objectivec">MTLSamplerDescriptor* d =
+    [MTLSamplerDescriptor new];
+
+d.minFilter =
+    MTLSamplerMinMagFilterLinear;
+
+d.magFilter =
+    MTLSamplerMinMagFilterLinear;
+
+id&lt;MTLSamplerState&gt; sampler =
+    [device
+        newSamplerStateWithDescriptor:d];</Code>
+<Content ns0:pstyle="Content">Kairo binds texture and sampler separately, unlike Vulkan’s commonly used combined-image-sampler descriptor.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Comparison samplers</Strong></Content>
+<Content ns0:pstyle="Content">Maveb’s shadow sampler uses:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/70cd6f90be6418f966964ebf.svg" alt="&#10;CompareFunctionLessEqual.&#10;" jobId="70cd6f90be6418f966964ebf" originalTeX="&#10;CompareFunctionLessEqual.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Shader sampling can perform depth comparison directly.</Content>
+<Content ns0:pstyle="Content">This is useful for:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">PCF shadows,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">hardware comparison filtering.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Sampler state therefore has semantic impact beyond visual filtering.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">MTLRenderPipelineState</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content">This is a compiled render pipeline.</Content>
+<Content ns0:pstyle="Content">Descriptor includes:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">vertex function,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">fragment function,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">color formats,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">blend state,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">depth/stencil attachment formats,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">sample count,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">vertex descriptor where required.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="objectivec">id&lt;MTLRenderPipelineState&gt;
+pipeline =
+    [device
+        newRenderPipelineStateWithDescriptor:
+            descriptor
+        error:
+            &amp;error];</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo pipeline construction</Strong></Content>
+<Content ns0:pstyle="Content">Kairo builds runtime Metal source into a library.</Content>
+<Content ns0:pstyle="Content">Then obtains:</Content>
+<Code ns0:pstyle="Code" language="text">mesh_vertex
+mesh_fragment
+skinned_mesh_vertex
+shadow_vertex
+debug_vertex
+...</Code>
+<Content ns0:pstyle="Content">and creates pipeline variants.</Content>
+<Content ns0:pstyle="Content">It configures:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6a93ad8c5ab154cbbff6c77d.svg" alt="&#10;ViewportColorFormat=RGBA16Float&#10;" jobId="6a93ad8c5ab154cbbff6c77d" originalTeX="&#10;ViewportColorFormat=RGBA16Float&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8696dbdf2380ac8abb282ba5.svg" alt="&#10;ViewportIDFormat=R32Uint.&#10;" jobId="8696dbdf2380ac8abb282ba5" originalTeX="&#10;ViewportIDFormat=R32Uint.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The same semantic attachments exist in its Vulkan backend.</Content>
+<Content ns0:pstyle="Content">This is good backend agreement.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Blend state belongs to pipeline descriptor</Strong></Content>
+<Content ns0:pstyle="Content">For transparent pipeline Kairo sets:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/062d82b81b824a43d2cfae41.svg" alt="&#10;sourceRGB=&#10;SourceAlpha,&#10;" jobId="062d82b81b824a43d2cfae41" originalTeX="&#10;sourceRGB=&#10;SourceAlpha,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/942073cf4b942afad5573723.svg" alt="&#10;destinationRGB=&#10;OneMinusSourceAlpha.&#10;" jobId="942073cf4b942afad5573723" originalTeX="&#10;destinationRGB=&#10;OneMinusSourceAlpha.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Exactly the same blend equation as Vulkan:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3b39a9ba3fb15d3250de9ae8.svg" alt="&#10;C_o=&#10;\alpha_s C_s&#10;+&#10;(1-\alpha_s)C_d.&#10;" jobId="3b39a9ba3fb15d3250de9ae8" originalTeX="&#10;C_o=&#10;\alpha_s C_s&#10;+&#10;(1-\alpha_s)C_d.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This demonstrates an important multi-backend principle:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ecf70d28d8806723274851e3.svg" alt="&#10;\boxed{&#10;\text{rendering semantics can match even when API object models differ}.&#10;}&#10;" jobId="ecf70d28d8806723274851e3" originalTeX="&#10;\boxed{&#10;\text{rendering semantics can match even when API object models differ}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">MTLComputePipelineState</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content">Compute state is built from an MSL <InlineCode ns0:cstyle="InlineCode">kernel</InlineCode> function.</Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="cpp">auto function =
+    library-&gt;
+        newFunction(
+            "scan");
+
+auto pipeline =
+    device-&gt;
+        newComputePipelineState(
+            function,
+            &amp;error);</Code>
+<Content ns0:pstyle="Content">Then bind:</Content>
+<Code ns0:pstyle="Code" language="cpp">encoder-&gt;
+    setComputePipelineState(
+        pipeline);</Code>
+<Content ns0:pstyle="Content">Maveb’s Gaussian system contains multiple pipelines for:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">projection,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">counting,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">scan,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">key generation,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">radix histogram,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">radix scatter,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">compositing.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Each represents a specialized compute stage.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why compute pipeline state is separate</Strong></Content>
+<Content ns0:pstyle="Content">Compute has no:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">rasterizer,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">blend state,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">color attachments,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">vertex assembly.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">So its pipeline object is simpler.</Content>
+<Content ns0:pstyle="Content">It still contains compiled executable metadata and execution-width/resource usage relevant to dispatch.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">shader libraries</Strong></Content>
+<Content ns0:pstyle="Content">Metal shader functions live inside a:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fbe177742ecd87765999a228.svg" alt="&#10;MTLLibrary.&#10;" jobId="fbe177742ecd87765999a228" originalTeX="&#10;MTLLibrary.&#10;" /></Formula>
+<Content ns0:pstyle="Content">There are two major workflows.</Content>
+<Content ns0:pstyle="Content">Runtime source compilation:</Content>
+<Code ns0:pstyle="Code" language="objectivec">newLibraryWithSource</Code>
+<Content ns0:pstyle="Content">and offline compiled:</Content>
+<Code ns0:pstyle="Code" language="text">.metal
+↓
+Metal compiler
+↓
+.metallib</Code>
+<Content ns0:pstyle="Content">loaded with:</Content>
+<Code ns0:pstyle="Code" language="cpp">device-&gt;newLibrary(
+    path,
+    &amp;error);</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo versus Maveb shader strategy</Strong></Content>
+<Content ns0:pstyle="Content">Kairo currently stores MSL source in its backend and performs:</Content>
+<Code ns0:pstyle="Code" language="objectivec">newLibraryWithSource</Code>
+<Content ns0:pstyle="Content">during initialization.</Content>
+<Content ns0:pstyle="Content">Excellent for:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">simplicity,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">rapid testing,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">self-contained backend.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Maveb loads:</Content>
+<Code ns0:pstyle="Code" language="text">AetherShaders.metallib</Code>
+<Content ns0:pstyle="Content">from its app bundle.</Content>
+<Content ns0:pstyle="Content">That is the more production-oriented approach because shader compilation moves out of the normal runtime path.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Offline shader compilation advantages</Strong></Content>
+<Content ns0:pstyle="Content">It reduces runtime pipeline startup cost.</Content>
+<Content ns0:pstyle="Content">It allows build-time validation.</Content>
+<Content ns0:pstyle="Content">It makes application binaries less dependent on runtime source compilation.</Content>
+<Content ns0:pstyle="Content">It enables better build-system integration.</Content>
+<Content ns0:pstyle="Content">For an engine like Kairo, you can eventually keep source in repository but compile to metallib during asset/build pipeline.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">MSL vertex functions</Strong></Content>
+<Content ns0:pstyle="Content">A Metal vertex function looks conceptually like:</Content>
+<Code ns0:pstyle="Code" language="metal">struct VertexOut
+{
+    float4 position
+        [[position]];
+
+    float2 uv;
+};
+
+vertex VertexOut vertexMain(
+    uint vertexID
+        [[vertex_id]],
+
+    const device Vertex* vertices
+        [[buffer(0)]])
+{
+    VertexOut out;
+
+    const Vertex v =
+        vertices[vertexID];
+
+    out.position =
+        ...;
+
+    out.uv =
+        v.uv;
+
+    return out;
+}</Code>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">vertex</InlineCode> is the stage qualifier.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">MSL address spaces</Strong></Content>
+<Content ns0:pstyle="Content">MSL makes memory domains explicit.</Content>
+<Content ns0:pstyle="Content">Common qualifiers:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0b04aec4294952db59505209.svg" alt="&#10;device,&#10;" jobId="0b04aec4294952db59505209" originalTeX="&#10;device,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ce7f55734b1b40774f565553.svg" alt="&#10;constant,&#10;" jobId="ce7f55734b1b40774f565553" originalTeX="&#10;constant,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/702c5cdbc2027ba2a38a3613.svg" alt="&#10;threadgroup,&#10;" jobId="702c5cdbc2027ba2a38a3613" originalTeX="&#10;threadgroup,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2d87f0b34a5ea5af8a1d2432.svg" alt="&#10;thread.&#10;" jobId="2d87f0b34a5ea5af8a1d2432" originalTeX="&#10;thread.&#10;" /></Formula>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">device</InlineCode> refers to GPU-accessible device memory.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">constant</InlineCode> is read-only uniform-ish memory.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">threadgroup</InlineCode> is workgroup-shared on-chip memory.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">thread</InlineCode> is private per invocation.</Content>
+<Content ns0:pstyle="Content">These map directly to the GPU memory hierarchy from Pass 9.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Vertex input can use buffer pointers or stage-in attributes</Strong></Content>
+<Content ns0:pstyle="Content">Metal supports different vertex-input styles.</Content>
+<Content ns0:pstyle="Content">You can use a vertex descriptor and:</Content>
+<Code ns0:pstyle="Code" language="metal">[[stage_in]]</Code>
+<Content ns0:pstyle="Content">or manually index a device buffer using:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d6b490f709aef030af3f709b.svg" alt="&#10;vertex_id.&#10;" jobId="d6b490f709aef030af3f709b" originalTeX="&#10;vertex_id.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Both are valid.</Content>
+<Content ns0:pstyle="Content">Explicit buffer access can be useful when building custom geometry pipelines.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">MSL fragment functions</Strong></Content>
+<Content ns0:pstyle="Content">Fragment:</Content>
+<Code ns0:pstyle="Code" language="metal">fragment float4 fragmentMain(
+    VertexOut in
+        [[stage_in]],
+
+    texture2d&lt;float&gt; albedo
+        [[texture(0)]],
+
+    sampler s
+        [[sampler(0)]])
+{
+    return albedo.sample(
+        s,
+        in.uv);
+}</Code>
+<Content ns0:pstyle="Content">Fragment function runs for generated fragment/sample work.</Content>
+<Content ns0:pstyle="Content">It can access:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">interpolated stage data,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">buffers,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">textures,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">samplers.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Metal texture/sampler separation</Strong></Content>
+<Content ns0:pstyle="Content">MSL:</Content>
+<Code ns0:pstyle="Code" language="metal">texture2d&lt;float&gt;
+    texture [[texture(0)]]
+
+sampler
+    sampler0 [[sampler(0)]]</Code>
+<Content ns0:pstyle="Content">lets same texture be used with different samplers.</Content>
+<Content ns0:pstyle="Content">This differs from Vulkan’s commonly used:</Content>
+<Code ns0:pstyle="Code" language="text">combined image sampler</Code>
+<Content ns0:pstyle="Content">although Vulkan can also bind images and samplers separately.</Content>
+<Content ns0:pstyle="Content">API abstraction should therefore not assume that:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d49b7956274ae5d45693ac11.svg" alt="&#10;TextureHandle&#10;=&#10;Texture+Sampler&#10;" jobId="d49b7956274ae5d45693ac11" originalTeX="&#10;TextureHandle&#10;=&#10;Texture+Sampler&#10;" /></Formula>
+<Content ns0:pstyle="Content">is always the best universal representation.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">MSL compute kernels</Strong></Content>
+<Content ns0:pstyle="Content">Compute functions use:</Content>
+<Code ns0:pstyle="Code" language="metal">kernel</Code>
+<Content ns0:pstyle="Content">rather than <InlineCode ns0:cstyle="InlineCode">vertex</InlineCode> or <InlineCode ns0:cstyle="InlineCode">fragment</InlineCode>.</Content>
+<Content ns0:pstyle="Content">Example:</Content>
+<Code ns0:pstyle="Code" language="metal">kernel void multiply(
+    const device float* lhs
+        [[buffer(0)]],
+
+    const device float* rhs
+        [[buffer(1)]],
+
+    device float* output
+        [[buffer(2)]],
+
+    uint id
+        [[thread_position_in_grid]])
+{
+    output[id] =
+        lhs[id] *
+        rhs[id];
+}</Code>
+<Content ns0:pstyle="Content">This is essentially the exact execution model we derived in Pass 9.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Threadgroup memory in MSL</Strong></Content>
+<Content ns0:pstyle="Content">Example reduction:</Content>
+<Code ns0:pstyle="Code" language="metal">kernel void reduce(
+    const device float* input
+        [[buffer(0)]],
+
+    device float* output
+        [[buffer(1)]],
+
+    uint local
+        [[thread_index_in_threadgroup]],
+
+    uint group
+        [[threadgroup_position_in_grid]])
+{
+    threadgroup float
+        scratch[256];
+
+    scratch[local] =
+        input[
+            group * 256 +
+            local];
+
+    threadgroup_barrier(
+        mem_flags::mem_threadgroup);
+
+    ...
+}</Code>
+<Content ns0:pstyle="Content">The keyword <InlineCode ns0:cstyle="InlineCode">threadgroup</InlineCode> is the concrete Metal spelling of shared-memory concepts from Phase 22.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="01-foundations-i-ch015-storage-modes-tile-memory-drawables-frames-in-flight-heaps-synchronization">STORAGE MODES, TILE MEMORY, DRAWABLES, FRAMES IN FLIGHT, HEAPS &amp; SYNCHRONIZATION</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Metal storage modes</Strong></Content>
+<Content ns0:pstyle="Content">Metal’s storage modes describe where/how a resource’s backing storage is accessible.</Content>
+<Content ns0:pstyle="Content">The major conceptual modes are:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/96ed6447887cd3e3fd6918bc.svg" alt="&#10;Shared,&#10;" jobId="96ed6447887cd3e3fd6918bc" originalTeX="&#10;Shared,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/30884b393d1bc7fbcbbd415b.svg" alt="&#10;Private,&#10;" jobId="30884b393d1bc7fbcbbd415b" originalTeX="&#10;Private,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c6e9e59ee5a23975970cc37d.svg" alt="&#10;Managed,&#10;" jobId="c6e9e59ee5a23975970cc37d" originalTeX="&#10;Managed,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/46dbe9d831c45b3e414c508f.svg" alt="&#10;Memoryless.&#10;" jobId="46dbe9d831c45b3e414c508f" originalTeX="&#10;Memoryless.&#10;" /></Formula>
+<Content ns0:pstyle="Content">These are not merely performance hints.</Content>
+<Content ns0:pstyle="Content">They define CPU/GPU access rules.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">Shared</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content">Shared storage is directly CPU and GPU accessible.</Content>
+<Content ns0:pstyle="Content">For buffer:</Content>
+<Code ns0:pstyle="Code" language="cpp">auto* b =
+    device-&gt;
+        newBuffer(
+            bytes,
+            MTL::ResourceStorageModeShared);</Code>
+<Content ns0:pstyle="Content">CPU pointer:</Content>
+<Code ns0:pstyle="Code" language="cpp">void* p =
+    b-&gt;contents();</Code>
+<Content ns0:pstyle="Content">Then CPU can write directly.</Content>
+<Content ns0:pstyle="Content">On Apple unified-memory architectures this maps very naturally to physical unified memory.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Best uses of shared memory</Strong></Content>
+<Content ns0:pstyle="Content">Typical:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d39c7ef7d7954bb39f90d0bc.svg" alt="&#10;\text{per-frame constants},&#10;" jobId="d39c7ef7d7954bb39f90d0bc" originalTeX="&#10;\text{per-frame constants},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e3108d21959f0bfd3ef3f5f6.svg" alt="&#10;\text{dynamic geometry},&#10;" jobId="e3108d21959f0bfd3ef3f5f6" originalTeX="&#10;\text{dynamic geometry},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/80c6a1d2f6244f7eddadf6a8.svg" alt="&#10;\text{upload staging},&#10;" jobId="80c6a1d2f6244f7eddadf6a8" originalTeX="&#10;\text{upload staging},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9079e30fd4673a09723c6454.svg" alt="&#10;\text{readback}.&#10;" jobId="9079e30fd4673a09723c6454" originalTeX="&#10;\text{readback}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">But shared does not mean:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">use it for every large GPU resource.</Content></BlockQuote>
+<Content ns0:pstyle="Content">GPU-only textures and large static compute buffers may be better as private resources because Metal can optimize them for GPU use.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Maveb frame uploads</Strong></Content>
+<Content ns0:pstyle="Content">Each <InlineCode ns0:cstyle="InlineCode">FrameContext</InlineCode> creates:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3fa5fd05f6d82bb51c55dd2b.svg" alt="&#10;8\text{ MiB}&#10;" jobId="3fa5fd05f6d82bb51c55dd2b" originalTeX="&#10;8\text{ MiB}&#10;" /></Formula>
+<Content ns0:pstyle="Content">shared upload buffer.</Content>
+<Content ns0:pstyle="Content">It also creates:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9deb95aeb1c6d8480aa33966.svg" alt="&#10;256\text{ KiB}&#10;" jobId="9deb95aeb1c6d8480aa33966" originalTeX="&#10;256\text{ KiB}&#10;" /></Formula>
+<Content ns0:pstyle="Content">shared readback buffer.</Content>
+<Content ns0:pstyle="Content">Allocation is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5da00a940824c490fd71ec3f.svg" alt="&#10;offset=&#10;alignUp(cursor,alignment).&#10;" jobId="5da00a940824c490fd71ec3f" originalTeX="&#10;offset=&#10;alignUp(cursor,alignment).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Current default alignment:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4180b997dde22c5411eb8919.svg" alt="&#10;256.&#10;" jobId="4180b997dde22c5411eb8919" originalTeX="&#10;256.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="cpp">cpuAddress =
+    buffer-&gt;contents()
+    + offset;</Code>
+<Content ns0:pstyle="Content">This is a clean per-frame arena.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why shared memory still needs lifetime synchronization</Strong></Content>
+<Content ns0:pstyle="Content">Unified physical memory does not remove races.</Content>
+<Content ns0:pstyle="Content">Suppose CPU writes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/39af51a9bd2cd73c2cda055c.svg" alt="&#10;cameraFrame1&#10;" jobId="39af51a9bd2cd73c2cda055c" originalTeX="&#10;cameraFrame1&#10;" /></Formula>
+<Content ns0:pstyle="Content">into the same bytes while GPU is still reading:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bc906b59ab643d55390a8a63.svg" alt="&#10;cameraFrame0.&#10;" jobId="bc906b59ab643d55390a8a63" originalTeX="&#10;cameraFrame0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Physical memory is shared.</Content>
+<Content ns0:pstyle="Content">That makes the race more direct, not less real.</Content>
+<Content ns0:pstyle="Content">You still need frame-slot ownership.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">Private</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content">Private resources are GPU-access-only from ordinary CPU perspective.</Content>
+<Content ns0:pstyle="Content">CPU does not obtain meaningful direct pointer to resource data.</Content>
+<Content ns0:pstyle="Content">Use for:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1054d812a64a65d5a2da058a.svg" alt="&#10;\text{render targets},&#10;" jobId="1054d812a64a65d5a2da058a" originalTeX="&#10;\text{render targets},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/11e1f139fede6509df18eab6.svg" alt="&#10;\text{static geometry},&#10;" jobId="11e1f139fede6509df18eab6" originalTeX="&#10;\text{static geometry},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0410fd3c79a6493119c81c98.svg" alt="&#10;\text{large compute buffers},&#10;" jobId="0410fd3c79a6493119c81c98" originalTeX="&#10;\text{large compute buffers},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/420950b0be672855505233e9.svg" alt="&#10;\text{GPU-only intermediate textures}.&#10;" jobId="420950b0be672855505233e9" originalTeX="&#10;\text{GPU-only intermediate textures}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Upload normally goes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cff22313ed61cfa2e2e997a6.svg" alt="&#10;Shared\ staging&#10;\rightarrow&#10;Blit&#10;\rightarrow&#10;Private.&#10;" jobId="cff22313ed61cfa2e2e997a6" originalTeX="&#10;Shared\ staging&#10;\rightarrow&#10;Blit&#10;\rightarrow&#10;Private.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Maveb uses private render targets</Strong></Content>
+<Content ns0:pstyle="Content">Its:</Content>
+<Code ns0:pstyle="Code" language="text">Scene HDR Color
+Scene Reverse-Z Depth
+Scene Entity IDs
+Scene Motion Vectors
+Bloom textures
+TAA histories
+Gaussian Color/Depth/IDs
+Shadow arrays</Code>
+<Content ns0:pstyle="Content">are allocated with:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fe96f952b82ecb1edb84cfaa.svg" alt="&#10;MTL::StorageModePrivate.&#10;" jobId="fe96f952b82ecb1edb84cfaa" originalTeX="&#10;MTL::StorageModePrivate.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is exactly the right architecture for GPU-resident working data.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo currently makes a different simplification</Strong></Content>
+<Content ns0:pstyle="Content">Kairo’s smaller Metal backend creates viewport textures with:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/78ff4b622f1e28bfb25dd7a3.svg" alt="&#10;MTLStorageModeShared.&#10;" jobId="78ff4b622f1e28bfb25dd7a3" originalTeX="&#10;MTLStorageModeShared.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That allows simple synchronous:</Content>
+<Code ns0:pstyle="Code" language="objectivec">getBytes:</Code>
+<Content ns0:pstyle="Content">readback for picking/capture.</Content>
+<Content ns0:pstyle="Content">This favors code simplicity.</Content>
+<Content ns0:pstyle="Content">Maveb’s private targets plus explicit blit readback are the more scalable production architecture.</Content>
+<Content ns0:pstyle="Content">This is a good example of why architecture evolves with engine maturity.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">Managed</InlineCode> storage concept</Strong></Content>
+<Content ns0:pstyle="Content">Managed storage is primarily a macOS-oriented concept for systems where CPU and GPU may maintain distinct copies.</Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">CPU-visible copy
+↕ synchronization
+GPU-visible copy</Code>
+<Content ns0:pstyle="Content">CPU writes may require notifying Metal that a range changed.</Content>
+<Content ns0:pstyle="Content">GPU-produced data may need synchronization back toward the CPU copy before CPU reads.</Content>
+<Content ns0:pstyle="Content">The exact availability/behavior is platform-dependent, so query/use it only where appropriate.</Content>
+<Content ns0:pstyle="Content">On Apple-silicon unified-memory engines, <InlineCode ns0:cstyle="InlineCode">Shared</InlineCode> and <InlineCode ns0:cstyle="InlineCode">Private</InlineCode> are usually the more central choices.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why Managed exists historically</Strong></Content>
+<Content ns0:pstyle="Content">Discrete GPU memory architecture:</Content>
+<Code ns0:pstyle="Code" language="text">CPU RAM
+     ↕
+interconnect
+     ↕
+GPU VRAM</Code>
+<Content ns0:pstyle="Content">A resource that both CPU and GPU use may have two copies.</Content>
+<Content ns0:pstyle="Content">Managed mode helps Metal track/coherently synchronize those representations.</Content>
+<Content ns0:pstyle="Content">This is fundamentally different from physically shared Apple-silicon DRAM.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Memoryless resources</Strong></Content>
+<Content ns0:pstyle="Content">A memoryless render target need not have persistent backing storage outside on-chip tile memory.</Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">tile begins
+    ↓
+temporary depth/color data lives on-chip
+    ↓
+tile processing ends
+    ↓
+data discarded</Code>
+<Content ns0:pstyle="Content">No need to write the entire attachment to system memory if nobody needs it afterward.</Content>
+<Content ns0:pstyle="Content">This is powerful on tile-based GPUs.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">When memoryless is valid</Strong></Content>
+<Content ns0:pstyle="Content">Suppose depth exists only for depth testing during one render pass.</Content>
+<Content ns0:pstyle="Content">No later pass samples depth.</Content>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/eea6cba6050f354664449e38.svg" alt="&#10;\boxed{&#10;\text{depth data is temporally local to the pass}.&#10;}&#10;" jobId="eea6cba6050f354664449e38" originalTeX="&#10;\boxed{&#10;\text{depth data is temporally local to the pass}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">A memoryless depth attachment may be ideal where supported.</Content>
+<Content ns0:pstyle="Content">But if later TAA/SSAO/Hi-Z needs depth:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/26e785bce1d5dde55510c058.svg" alt="&#10;\boxed{&#10;\text{depth must survive}.&#10;}&#10;" jobId="26e785bce1d5dde55510c058" originalTeX="&#10;\boxed{&#10;\text{depth must survive}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then memoryless would be wrong.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Apple tile-based deferred rendering intuition</Strong></Content>
+<Content ns0:pstyle="Content">This is one of the most important Apple GPU concepts.</Content>
+<Content ns0:pstyle="Content">A conventional immediate mental model says:</Content>
+<Code ns0:pstyle="Code" language="text">triangle
+↓
+rasterize
+↓
+write every fragment result to framebuffer memory</Code>
+<Content ns0:pstyle="Content">A tile-based renderer instead divides the framebuffer into screen tiles.</Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">geometry processing
+      ↓
+bin primitives into tiles
+      ↓
+
+Tile 0:
+    load/clear tile attachments
+    rasterize relevant primitives
+    blend/depth test in on-chip tile memory
+    store needed results
+
+Tile 1:
+    same
+...</Code>
+<Content ns0:pstyle="Content">The crucial resource is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3980fd3bea88d6a32244c7da.svg" alt="&#10;\boxed{&#10;\text{fast on-chip tile memory}.&#10;}&#10;" jobId="3980fd3bea88d6a32244c7da" originalTeX="&#10;\boxed{&#10;\text{fast on-chip tile memory}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why tile rendering saves bandwidth</Strong></Content>
+<Content ns0:pstyle="Content">Suppose the same pixel is written by 20 overlapping fragments.</Content>
+<Content ns0:pstyle="Content">Immediate external-memory mental model might imply repeated:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b439fbc3a0026f4784069e82.svg" alt="&#10;read\ depth,&#10;write\ depth,&#10;read\ color,&#10;write\ color.&#10;" jobId="b439fbc3a0026f4784069e82" originalTeX="&#10;read\ depth,&#10;write\ depth,&#10;read\ color,&#10;write\ color.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Tile memory lets many of those operations remain on-chip.</Content>
+<Content ns0:pstyle="Content">Only the final attachment result may need to be written to system memory.</Content>
+<Content ns0:pstyle="Content">This is why attachment <InlineCode ns0:cstyle="InlineCode">loadAction</InlineCode> and <InlineCode ns0:cstyle="InlineCode">storeAction</InlineCode> matter so much on Apple GPUs.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Bandwidth is expensive</Strong></Content>
+<Content ns0:pstyle="Content">Apple GPUs operate under power and memory-bandwidth constraints.</Content>
+<Content ns0:pstyle="Content">On-chip tile operations are much cheaper than repeatedly hitting DRAM.</Content>
+<Content ns0:pstyle="Content">Therefore one of the most important Metal performance principles is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fc2f80a123f742720c261d9b.svg" alt="&#10;\boxed{&#10;\text{avoid unnecessary attachment loads and stores}.&#10;}&#10;" jobId="fc2f80a123f742720c261d9b" originalTeX="&#10;\boxed{&#10;\text{avoid unnecessary attachment loads and stores}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Metal load/store actions</Strong></Content>
+<Content ns0:pstyle="Content">At start of render pass, an attachment has a load action.</Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fa5e544707d8c547c213dad3.svg" alt="&#10;Load,&#10;Clear,&#10;DontCare.&#10;" jobId="fa5e544707d8c547c213dad3" originalTeX="&#10;Load,&#10;Clear,&#10;DontCare.&#10;" /></Formula>
+<Content ns0:pstyle="Content">At end:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f54f09cd194cbe38ccd62761.svg" alt="&#10;Store,&#10;DontCare&#10;" jobId="f54f09cd194cbe38ccd62761" originalTeX="&#10;Store,&#10;DontCare&#10;" /></Formula>
+<Content ns0:pstyle="Content">plus resolve variants for multisampling.</Content>
+<Content ns0:pstyle="Content">Same semantic idea as Vulkan Pass 11.</Content>
+<Content ns0:pstyle="Content">But on tile-based GPUs the bandwidth consequences become especially tangible.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">LoadActionClear</Strong></Content>
+<Content ns0:pstyle="Content">If pass overwrites entire target and old contents are irrelevant:</Content>
+<Code ns0:pstyle="Code" language="cpp">attachment-&gt;
+    setLoadAction(
+        MTL::LoadActionClear);</Code>
+<Content ns0:pstyle="Content">GPU can initialize tile memory directly.</Content>
+<Content ns0:pstyle="Content">It need not load old attachment data from system memory.</Content>
+<Content ns0:pstyle="Content">This is often significantly better than:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d1ae440e75772b2e45d9f4f7.svg" alt="&#10;Load&#10;" jobId="d1ae440e75772b2e45d9f4f7" originalTeX="&#10;Load&#10;" /></Formula>
+<Content ns0:pstyle="Content">followed by shader overwrite.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">LoadActionDontCare</Strong></Content>
+<Content ns0:pstyle="Content">If every relevant pixel will definitely be overwritten and you do not even require a defined initial clear:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fa7a1a69eb30ff46bd1939b5.svg" alt="&#10;DontCare.&#10;" jobId="fa7a1a69eb30ff46bd1939b5" originalTeX="&#10;DontCare.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The GPU may skip initialization entirely.</Content>
+<Content ns0:pstyle="Content">Only use it when shader/render coverage guarantees old values are never semantically observed.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">StoreActionDontCare</Strong></Content>
+<Content ns0:pstyle="Content">If attachment is only temporary:</Content>
+<Code ns0:pstyle="Code" language="cpp">depthAttachment-&gt;
+    setStoreAction(
+        MTL::StoreActionDontCare);</Code>
+<Content ns0:pstyle="Content">Metal does not need to preserve tile result after render pass.</Content>
+<Content ns0:pstyle="Content">For a transient depth buffer, this can avoid large memory writeback.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo’s depth target</Strong></Content>
+<Content ns0:pstyle="Content">Kairo’s viewport scene pass sets:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ab4ff91e16147150d16ec8a7.svg" alt="&#10;depth.loadAction=Clear&#10;" jobId="ab4ff91e16147150d16ec8a7" originalTeX="&#10;depth.loadAction=Clear&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/440fc4a4d1ecf6f5a1a3a27a.svg" alt="&#10;depth.storeAction=DontCare.&#10;" jobId="440fc4a4d1ecf6f5a1a3a27a" originalTeX="&#10;depth.storeAction=DontCare.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is ideal if depth is used only for that pass.</Content>
+<Content ns0:pstyle="Content">It says:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">I need a fresh depth buffer during rasterization, but I do not care about its value afterward.</Content></BlockQuote>
+<Content ns0:pstyle="Content">This is exactly how you should reason on a tile GPU.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Maveb differs because it uses depth later</Strong></Content>
+<Content ns0:pstyle="Content">Maveb’s scene depth participates in later temporal/postprocessing logic.</Content>
+<Content ns0:pstyle="Content">Therefore it cannot universally throw it away at the end of the geometry pass.</Content>
+<Content ns0:pstyle="Content">Resource lifetime determines store action.</Content>
+<Content ns0:pstyle="Content">This is precisely the kind of decision a future render graph can infer.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Color attachments</Strong></Content>
+<Content ns0:pstyle="Content">A Metal render pass color attachment specifies:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6cdda5286f2ddf0df4db72e0.svg" alt="&#10;texture,&#10;" jobId="6cdda5286f2ddf0df4db72e0" originalTeX="&#10;texture,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4265b7a838e4b1485279c158.svg" alt="&#10;loadAction,&#10;" jobId="4265b7a838e4b1485279c158" originalTeX="&#10;loadAction,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/93b875f1603f5e6b0aeb4288.svg" alt="&#10;storeAction,&#10;" jobId="93b875f1603f5e6b0aeb4288" originalTeX="&#10;storeAction,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/280fa4aecd2d4515294448be.svg" alt="&#10;clearColor.&#10;" jobId="280fa4aecd2d4515294448be" originalTeX="&#10;clearColor.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For MSAA there may also be resolve texture.</Content>
+<Content ns0:pstyle="Content">Maveb temporal pass:</Content>
+<Code ns0:pstyle="Code" language="text">destination = TAA history output
+load = DontCare
+store = Store</Code>
+<Content ns0:pstyle="Content">Correct because every result is newly written, but later presentation/bloom needs it.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Multiple render targets</Strong></Content>
+<Content ns0:pstyle="Content">Kairo/Maveb can attach multiple color targets:</Content>
+<Code ns0:pstyle="Code" language="text">HDR color
+Object ID
+Motion vector
+Normal/confidence</Code>
+<Content ns0:pstyle="Content">One fragment shader may output different values to different attachments.</Content>
+<Content ns0:pstyle="Content">This is Metal’s equivalent of MRT.</Content>
+<Content ns0:pstyle="Content">Formats are baked into render pipeline state.</Content>
+<Content ns0:pstyle="Content">Therefore pipeline must match attachment formats.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Depth attachments</Strong></Content>
+<Content ns0:pstyle="Content">Depth attachment descriptor contains:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/767e0f6aabc55bb2f922dfe8.svg" alt="&#10;texture,&#10;loadAction,&#10;storeAction,&#10;clearDepth.&#10;" jobId="767e0f6aabc55bb2f922dfe8" originalTeX="&#10;texture,&#10;loadAction,&#10;storeAction,&#10;clearDepth.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Depth compare/write behavior itself lives in:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/12b918c6245b8af2628c66cf.svg" alt="&#10;MTLDepthStencilState.&#10;" jobId="12b918c6245b8af2628c66cf" originalTeX="&#10;MTLDepthStencilState.&#10;" /></Formula>
+<Content ns0:pstyle="Content">These are separate.</Content>
+<Content ns0:pstyle="Content">Render pass says:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">Which depth texture exists and how its lifetime begins/ends.</Content></BlockQuote>
+<Content ns0:pstyle="Content">Depth state says:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">How fragments compare/write depth.</Content></BlockQuote>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Maveb reverse-Z</Strong></Content>
+<Content ns0:pstyle="Content">Maveb explicitly labels scene depth:</Content>
+<Code ns0:pstyle="Code" language="text">Scene Reverse-Z Depth</Code>
+<Content ns0:pstyle="Content">and uses reverse-Z states.</Content>
+<Content ns0:pstyle="Content">With reverse-Z:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8a00d5050cb0626ffb2cd64c.svg" alt="&#10;near\rightarrow1,&#10;" jobId="8a00d5050cb0626ffb2cd64c" originalTeX="&#10;near\rightarrow1,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a32d3ef0b21af57d37f44047.svg" alt="&#10;far\rightarrow0.&#10;" jobId="a32d3ef0b21af57d37f44047" originalTeX="&#10;far\rightarrow0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So clear depth commonly becomes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/56946dfacdccb88d7ea1ee73.svg" alt="&#10;0.&#10;" jobId="56946dfacdccb88d7ea1ee73" originalTeX="&#10;0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Depth comparison becomes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3c08f4ae9aafcdab69367539.svg" alt="&#10;Greater&#10;" jobId="3c08f4ae9aafcdab69367539" originalTeX="&#10;Greater&#10;" /></Formula>
+<Content ns0:pstyle="Content">or equivalent.</Content>
+<Content ns0:pstyle="Content">This contrasts with Kairo’s conventional depth path.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Drawable acquisition</Strong></Content>
+<Content ns0:pstyle="Content">To present to a screen, Metal gives you a drawable.</Content>
+<Content ns0:pstyle="Content">With <InlineCode ns0:cstyle="InlineCode">MTKView</InlineCode>:</Content>
+<Code ns0:pstyle="Code" language="cpp">auto* drawable =
+    view-&gt;
+        currentDrawable();</Code>
+<Content ns0:pstyle="Content">or Objective-C:</Content>
+<Code ns0:pstyle="Code" language="objectivec">id&lt;CAMetalDrawable&gt;
+drawable =
+    layer.nextDrawable;</Code>
+<Content ns0:pstyle="Content">This drawable owns/presents a texture.</Content>
+<Content ns0:pstyle="Content">You render into that texture.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Acquire drawable as late as practical</Strong></Content>
+<Content ns0:pstyle="Content">Drawable pools are finite.</Content>
+<Content ns0:pstyle="Content">Once you call:</Content>
+<Code ns0:pstyle="Code" language="text">nextDrawable</Code>
+<Content ns0:pstyle="Content">you hold one presentation resource.</Content>
+<Content ns0:pstyle="Content">Acquiring far earlier than needed can reduce presentation pipeline flexibility and potentially block if drawable pool is exhausted.</Content>
+<Content ns0:pstyle="Content">A good rule:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0d965a33757175945e535c1e.svg" alt="&#10;\boxed{&#10;\text{acquire presentation resource near the point it becomes necessary}.&#10;}&#10;" jobId="0d965a33757175945e535c1e" originalTeX="&#10;\boxed{&#10;\text{acquire presentation resource near the point it becomes necessary}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Maveb MetalKit acquisition</Strong></Content>
+<Content ns0:pstyle="Content">Maveb obtains:</Content>
+<Code ns0:pstyle="Code" language="cpp">renderPass =
+    view-&gt;
+        currentRenderPassDescriptor();
+
+drawable =
+    view-&gt;
+        currentDrawable();</Code>
+<Content ns0:pstyle="Content">and immediately validates them.</Content>
+<Content ns0:pstyle="Content">If window is unavailable/minimized and drawable is nil:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1258511233ac2dc940000cf0.svg" alt="&#10;\boxed{&#10;\text{skip frame cleanly}.&#10;}&#10;" jobId="1258511233ac2dc940000cf0" originalTeX="&#10;\boxed{&#10;\text{skip frame cleanly}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Correct.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">CAMetalLayer</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">CAMetalLayer</InlineCode> is the lower-level Core Animation layer that supplies Metal drawables.</Content>
+<Content ns0:pstyle="Content">Kairo constructs one directly:</Content>
+<Code ns0:pstyle="Code" language="objectivec">Layer =
+    [CAMetalLayer layer];
+
+Layer.device =
+    Device;
+
+Layer.pixelFormat =
+    MTLPixelFormatBGRA8Unorm_sRGB;
+
+Layer.framebufferOnly =
+    YES;
+
+Layer.displaySyncEnabled =
+    YES;</Code>
+<Content ns0:pstyle="Content">then attaches it to the Cocoa window’s content view.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">framebufferOnly</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content">If true, drawable texture is optimized for render-target presentation and restricted from broader shader/readback use.</Content>
+<Content ns0:pstyle="Content">This can improve performance.</Content>
+<Content ns0:pstyle="Content">Maveb temporarily sets its MetalKit view’s framebuffer-only behavior differently when frame capture is required because it needs to copy/read the drawable.</Content>
+<Content ns0:pstyle="Content">That demonstrates the real tradeoff:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6c1e68c40f3bba67dbff56ec.svg" alt="&#10;\boxed{&#10;\text{narrow usage permits stronger optimization}.&#10;}&#10;" jobId="6c1e68c40f3bba67dbff56ec" originalTeX="&#10;\boxed{&#10;\text{narrow usage permits stronger optimization}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Drawable size</Strong></Content>
+<Content ns0:pstyle="Content">Kairo updates:</Content>
+<Code ns0:pstyle="Code" language="objectivec">Layer.drawableSize =
+    CGSizeMake(
+        width,
+        height);</Code>
+<Content ns0:pstyle="Content">with physical framebuffer dimensions.</Content>
+<Content ns0:pstyle="Content">As with Vulkan, retina logical points are not necessarily framebuffer pixels.</Content>
+<Content ns0:pstyle="Content">Renderer must work in drawable pixel dimensions.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">presenting drawables</Strong></Content>
+<Content ns0:pstyle="Content">You do not immediately display the drawable when you finish encoding.</Content>
+<Content ns0:pstyle="Content">You schedule presentation on a command buffer:</Content>
+<Code ns0:pstyle="Code" language="objectivec">[command
+    presentDrawable:
+        drawable];
+
+[command commit];</Code>
+<Content ns0:pstyle="Content">Presentation occurs after command buffer reaches appropriate point.</Content>
+<Content ns0:pstyle="Content">Maveb metal-cpp:</Content>
+<Code ns0:pstyle="Code" language="cpp">commandBuffer-&gt;
+    presentDrawable(
+        drawable);
+
+commandBuffer-&gt;
+    commit();</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why presentation belongs to command buffer</Strong></Content>
+<Content ns0:pstyle="Content">The GPU must finish rendering the drawable before display consumes it.</Content>
+<Content ns0:pstyle="Content">By encoding presentation into the command stream, Metal naturally associates presentation with rendering completion.</Content>
+<Content ns0:pstyle="Content">This is conceptually similar to Vulkan:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6cc9e5ff7571d99102fa9739.svg" alt="&#10;renderFinished&#10;\rightarrow&#10;vkQueuePresentKHR,&#10;" jobId="6cc9e5ff7571d99102fa9739" originalTeX="&#10;renderFinished&#10;\rightarrow&#10;vkQueuePresentKHR,&#10;" /></Formula>
+<Content ns0:pstyle="Content">but Metal makes the common dependency more integrated.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">command-buffer completion handlers</Strong></Content>
+<Content ns0:pstyle="Content">Metal allows:</Content>
+<Code ns0:pstyle="Code" language="cpp">commandBuffer-&gt;
+    addCompletedHandler(
+        [](MTL::CommandBuffer* cb)
+        {
+            ...
+        });</Code>
+<Content ns0:pstyle="Content">Handler executes after GPU finishes command buffer.</Content>
+<Content ns0:pstyle="Content">This is useful for:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">releasing frame slot,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">processing readback,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">statistics,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">deferred cleanup,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">error inspection.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Completion handlers are asynchronous</Strong></Content>
+<Content ns0:pstyle="Content">Do not assume completion handler runs on:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e686ca611b0d9616580ea5af.svg" alt="&#10;\text{main UI thread}.&#10;" jobId="e686ca611b0d9616580ea5af" originalTeX="&#10;\text{main UI thread}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Treat it as arbitrary asynchronous callback context.</Content>
+<Content ns0:pstyle="Content">Therefore it should not directly mutate AppKit/SwiftUI UI state unless explicitly marshalled to main thread.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Maveb completion handler</Strong></Content>
+<Content ns0:pstyle="Content">Maveb:</Content>
+<Code ns0:pstyle="Code" language="cpp">commandBuffer-&gt;
+    addCompletedHandler(
+        [this,semaphore](...)
+        {
+            ...
+            dispatch_semaphore_signal(
+                semaphore);
+        });</Code>
+<Content ns0:pstyle="Content">It computes coarse GPU duration:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/464a9f2c9fa7dabec07fdaac.svg" alt="&#10;GPUEndTime-GPUStartTime&#10;" jobId="464a9f2c9fa7dabec07fdaac" originalTeX="&#10;GPUEndTime-GPUStartTime&#10;" /></Formula>
+<Content ns0:pstyle="Content">stores it atomically, increments completed-frame count and releases one frame-in-flight slot.</Content>
+<Content ns0:pstyle="Content">That is excellent use of completion handler.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Frame capture completion</Strong></Content>
+<Content ns0:pstyle="Content">Another handler copies data out of shared readback buffer only after GPU is finished.</Content>
+<Content ns0:pstyle="Content">It protects completed capture with:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::lock_guard</Code>
+<Content ns0:pstyle="Content">because completion occurs asynchronously from app/UI thread.</Content>
+<Content ns0:pstyle="Content">Again, correct cross-thread ownership.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">frames-in-flight semaphore limiting</Strong></Content>
+<Content ns0:pstyle="Content">Maveb creates:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b80654dc34575ee248b3cd74.svg" alt="&#10;dispatch_semaphore_create(3).&#10;" jobId="b80654dc34575ee248b3cd74" originalTeX="&#10;dispatch_semaphore_create(3).&#10;" /></Formula>
+<Content ns0:pstyle="Content">At frame start:</Content>
+<Code ns0:pstyle="Code" language="cpp">dispatch_semaphore_wait(
+    frameSemaphore_,
+    FOREVER);</Code>
+<Content ns0:pstyle="Content">At command completion:</Content>
+<Code ns0:pstyle="Code" language="cpp">dispatch_semaphore_signal(
+    frameSemaphore_);</Code>
+<Content ns0:pstyle="Content">So maximum submitted-not-completed frames is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e3923bf13e1b19ee5963fce9.svg" alt="&#10;\boxed{3}.&#10;" jobId="e3923bf13e1b19ee5963fce9" originalTeX="&#10;\boxed{3}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why this prevents overwrite</Strong></Content>
+<Content ns0:pstyle="Content">Frame slot:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3b36a6f0eaf3b49e90edfeea.svg" alt="&#10;slot=&#10;frameNumber\bmod3.&#10;" jobId="3b36a6f0eaf3b49e90edfeea" originalTeX="&#10;slot=&#10;frameNumber\bmod3.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Because semaphore guarantees no more than three incomplete frames, by the time CPU cycles back to same slot, earlier GPU work using that slot must have completed.</Content>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="cpp">frame.beginFrame();</Code>
+<Content ns0:pstyle="Content">can reset upload/readback cursors safely.</Content>
+<Content ns0:pstyle="Content">This is the Metal analogue of multi-frame fence slots in Vulkan.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Triple buffering latency tradeoff</Strong></Content>
+<Content ns0:pstyle="Content">More frames in flight improve CPU/GPU overlap.</Content>
+<Content ns0:pstyle="Content">But worst-case input-to-display latency can increase.</Content>
+<Content ns0:pstyle="Content">If CPU gets three frames ahead:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/553f15ab5a96d4dc2680740d.svg" alt="&#10;Input_N&#10;" jobId="553f15ab5a96d4dc2680740d" originalTeX="&#10;Input_N&#10;" /></Formula>
+<Content ns0:pstyle="Content">may not be visible until several queued frames execute.</Content>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/72abe5e84017cc89b56630e1.svg" alt="&#10;\boxed{&#10;\text{throughput}&#10;\neq&#10;\text{latency}.&#10;}&#10;" jobId="72abe5e84017cc89b56630e1" originalTeX="&#10;\boxed{&#10;\text{throughput}&#10;\neq&#10;\text{latency}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Competitive interactive applications may deliberately cap frames in flight lower.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">per-frame upload buffers</Strong></Content>
+<Content ns0:pstyle="Content">Maveb has one:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3fa5fd05f6d82bb51c55dd2b.svg" alt="&#10;8\text{ MiB}&#10;" jobId="3fa5fd05f6d82bb51c55dd2b" originalTeX="&#10;8\text{ MiB}&#10;" /></Formula>
+<Content ns0:pstyle="Content">shared upload arena per frame context.</Content>
+<Content ns0:pstyle="Content">At frame start:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ec0ab13f781c140b91ed79b2.svg" alt="&#10;cursor=0.&#10;" jobId="ec0ab13f781c140b91ed79b2" originalTeX="&#10;cursor=0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Each upload:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/08dd23f21f575fd7056d7249.svg" alt="&#10;offset=&#10;alignUp(cursor,a).&#10;" jobId="08dd23f21f575fd7056d7249" originalTeX="&#10;offset=&#10;alignUp(cursor,a).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8b842c19ae1b89c38a71e378.svg" alt="&#10;cursor=&#10;offset+size.&#10;" jobId="8b842c19ae1b89c38a71e378" originalTeX="&#10;cursor=&#10;offset+size.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This avoids hundreds/thousands of tiny allocations.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Example frame allocation</Strong></Content>
+<Content ns0:pstyle="Content">Suppose frame needs:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3ef52dffc8f06eecc362eb68.svg" alt="&#10;320\text{ byte camera}&#10;" jobId="3ef52dffc8f06eecc362eb68" originalTeX="&#10;320\text{ byte camera}&#10;" /></Formula>
+<Content ns0:pstyle="Content">with:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/87626322c344552071a9075c.svg" alt="&#10;256\text{ byte alignment}.&#10;" jobId="87626322c344552071a9075c" originalTeX="&#10;256\text{ byte alignment}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Allocate at:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/56946dfacdccb88d7ea1ee73.svg" alt="&#10;0.&#10;" jobId="56946dfacdccb88d7ea1ee73" originalTeX="&#10;0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Next 80-byte material data:</Content>
+<Content ns0:pstyle="Content">current cursor:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bd9d16284555259158aa7eac.svg" alt="&#10;320.&#10;" jobId="bd9d16284555259158aa7eac" originalTeX="&#10;320.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Aligned:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7346c2a77bbf4601ccb7ce8f.svg" alt="&#10;512.&#10;" jobId="7346c2a77bbf4601ccb7ce8f" originalTeX="&#10;512.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8962cfa3de27259222a9387d.svg" alt="&#10;offset=512.&#10;" jobId="8962cfa3de27259222a9387d" originalTeX="&#10;offset=512.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Next cursor:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c2b386337ab044b418ee7a88.svg" alt="&#10;592.&#10;" jobId="c2b386337ab044b418ee7a88" originalTeX="&#10;592.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That wasted padding is the cost of alignment.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Metal buffer offsets and alignment</Strong></Content>
+<Content ns0:pstyle="Content">Binding:</Content>
+<Code ns0:pstyle="Code" language="cpp">encoder-&gt;
+    setVertexBuffer(
+        buffer,
+        offset,
+        index);</Code>
+<Content ns0:pstyle="Content">requires offset satisfying relevant alignment requirements.</Content>
+<Content ns0:pstyle="Content">Different resource usages have different constraints.</Content>
+<Content ns0:pstyle="Content">The safe architecture is to centralize allocation alignment rules rather than scatter magic padding throughout shaders/render code.</Content>
+<Content ns0:pstyle="Content">Maveb defaults its frame arena allocations to:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/365e7e52c5051b5bce927d10.svg" alt="&#10;256&#10;" jobId="365e7e52c5051b5bce927d10" originalTeX="&#10;256&#10;" /></Formula>
+<Content ns0:pstyle="Content">byte alignment, which is conservative and convenient for uniform-like data.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Alignment formula</Strong></Content>
+<Content ns0:pstyle="Content">For power-of-two alignment:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/38bb0976fe654dc63ee3019f.svg" alt="&#10;\boxed{&#10;alignUp(x,a)&#10;=&#10;(x+a-1)\&amp;&#10;\sim(a-1)&#10;}&#10;" jobId="38bb0976fe654dc63ee3019f" originalTeX="&#10;\boxed{&#10;alignUp(x,a)&#10;=&#10;(x+a-1)\&amp;&#10;\sim(a-1)&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Maveb uses exactly:</Content>
+<Code ns0:pstyle="Code" language="cpp">(value + alignment - 1)
+&amp;
+~(alignment - 1)</Code>
+<Content ns0:pstyle="Content">and validates alignment is power of two.</Content>
+<Content ns0:pstyle="Content">Good allocator hygiene.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">argument buffers</Strong></Content>
+<Content ns0:pstyle="Content">Direct binding:</Content>
+<Code ns0:pstyle="Code" language="text">setBuffer slot 0
+setBuffer slot 1
+setTexture slot 0
+setTexture slot 1
+setSampler slot 0
+...</Code>
+<Content ns0:pstyle="Content">can become expensive for large material/resource sets.</Content>
+<Content ns0:pstyle="Content">Argument buffers package references to multiple resources into a buffer-backed structure.</Content>
+<Content ns0:pstyle="Content">MSL concept:</Content>
+<Code ns0:pstyle="Code" language="metal">struct MaterialArguments
+{
+    texture2d&lt;float&gt;
+        baseColor
+        [[id(0)]];
+
+    texture2d&lt;float&gt;
+        normal
+        [[id(1)]];
+
+    sampler
+        samplerState
+        [[id(2)]];
+};</Code>
+<Content ns0:pstyle="Content">Shader receives argument-buffer structure at one buffer slot.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Argument buffers are Metal’s route toward bindless-style resource indexing</Strong></Content>
+<Content ns0:pstyle="Content">Instead of rebinding every texture per draw, you can build arrays/tables of:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ca42a08d2917b874c7dee5c5.svg" alt="&#10;textures,&#10;samplers,&#10;buffers.&#10;" jobId="ca42a08d2917b874c7dee5c5" originalTeX="&#10;textures,&#10;samplers,&#10;buffers.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Material stores indices.</Content>
+<Content ns0:pstyle="Content">GPU selects appropriate resources.</Content>
+<Content ns0:pstyle="Content">This aligns extremely well with:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">GPU-driven rendering,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">large material databases,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">indirect draws.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Conceptually it corresponds to Vulkan descriptor indexing/bindless architectures.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Argument buffers do not erase residency/hazard concerns</Strong></Content>
+<Content ns0:pstyle="Content">A buffer containing references to resources does not mean Metal automatically knows all intended indirect resource usage in every configuration.</Content>
+<Content ns0:pstyle="Content">Depending on argument-buffer tier/resource model, you may need to explicitly declare resource/heap usage to an encoder.</Content>
+<Content ns0:pstyle="Content">This is analogous to the principle:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/04581c3f979bafaaf8d96816.svg" alt="&#10;\boxed{&#10;\text{indirect reference}&#10;\neq&#10;\text{resource lifetime magically solved}.&#10;}&#10;" jobId="04581c3f979bafaaf8d96816" originalTeX="&#10;\boxed{&#10;\text{indirect reference}&#10;\neq&#10;\text{resource lifetime magically solved}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Current repository state</Strong></Content>
+<Content ns0:pstyle="Content">The inspected Kairo/Maveb source paths use direct:</Content>
+<Code ns0:pstyle="Code" language="text">setVertexBuffer
+setFragmentBuffer
+setFragmentTexture
+setFragmentSamplerState</Code>
+<Content ns0:pstyle="Content">binding extensively.</Content>
+<Content ns0:pstyle="Content">I did not find an established argument-buffer architecture in the inspected paths.</Content>
+<Content ns0:pstyle="Content">So argument buffers are a future scalability tool, not something I will pretend is already implemented.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Metal heaps</Strong></Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">MTLHeap</InlineCode> is a large resource-memory pool from which buffers/textures can be created.</Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">MTLHeap
+    ↓
+Texture A
+Texture B
+Buffer C
+...</Code>
+<Content ns0:pstyle="Content">Benefits include:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">reduced allocation overhead,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">memory control,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">resource aliasing potential,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">predictable transient allocation.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Maveb frame heap</Strong></Content>
+<Content ns0:pstyle="Content">Each frame context creates:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0dd5319363b6f269ece7a596.svg" alt="&#10;64\text{ MiB}&#10;" jobId="0dd5319363b6f269ece7a596" originalTeX="&#10;64\text{ MiB}&#10;" /></Formula>
+<Content ns0:pstyle="Content">private heap.</Content>
+<Content ns0:pstyle="Content">Descriptor:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4273a03f9c4b2a709c81b50a.svg" alt="&#10;StorageModePrivate&#10;" jobId="4273a03f9c4b2a709c81b50a" originalTeX="&#10;StorageModePrivate&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/23e6357ef93ef387f2eed094.svg" alt="&#10;HazardTrackingModeTracked.&#10;" jobId="23e6357ef93ef387f2eed094" originalTeX="&#10;HazardTrackingModeTracked.&#10;" /></Formula>
+<Content ns0:pstyle="Content">It is labelled:</Content>
+<Code ns0:pstyle="Code" language="text">Frame N Transient Heap</Code>
+<Content ns0:pstyle="Content">That is exactly the infrastructure you want for short-lived GPU resources.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">heap suballocation</Strong></Content>
+<Content ns0:pstyle="Content">When resources are allocated from a heap, Metal manages placement within heap according to resource size/alignment requirements.</Content>
+<Content ns0:pstyle="Content">The engine still needs to reason about:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6e0999cb32dfb6d944ebc5d8.svg" alt="&#10;\text{heap capacity},&#10;" jobId="6e0999cb32dfb6d944ebc5d8" originalTeX="&#10;\text{heap capacity},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b59ad9ba858fe13addf7e89d.svg" alt="&#10;\text{resource lifetime},&#10;" jobId="b59ad9ba858fe13addf7e89d" originalTeX="&#10;\text{resource lifetime},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7b8642376e9ccc61a8ab8613.svg" alt="&#10;\text{reuse}.&#10;" jobId="7b8642376e9ccc61a8ab8613" originalTeX="&#10;\text{reuse}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For advanced aliasing, logically non-overlapping resources can reuse backing heap space where API/resource rules allow.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Heap aliasing intuition</Strong></Content>
+<Content ns0:pstyle="Content">Suppose:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/426d6d7dda6dbc966fdf685e.svg" alt="&#10;Texture_A&#10;" jobId="426d6d7dda6dbc966fdf685e" originalTeX="&#10;Texture_A&#10;" /></Formula>
+<Content ns0:pstyle="Content">exists during passes 1–3.</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2e3a016b327ceef9a1ba4527.svg" alt="&#10;Texture_B&#10;" jobId="2e3a016b327ceef9a1ba4527" originalTeX="&#10;Texture_B&#10;" /></Formula>
+<Content ns0:pstyle="Content">exists during passes 5–7.</Content>
+<Content ns0:pstyle="Content">Their lifetimes do not overlap.</Content>
+<Content ns0:pstyle="Content">Instead of reserving:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/793476197db4ce43bf86f44d.svg" alt="&#10;memory(A)+memory(B),&#10;" jobId="793476197db4ce43bf86f44d" originalTeX="&#10;memory(A)+memory(B),&#10;" /></Formula>
+<Content ns0:pstyle="Content">they can conceptually reuse:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/98258c32665ede3635d6101a.svg" alt="&#10;\max(memory(A),memory(B))&#10;" jobId="98258c32665ede3635d6101a" originalTeX="&#10;\max(memory(A),memory(B))&#10;" /></Formula>
+<Content ns0:pstyle="Content">of physical storage.</Content>
+<Content ns0:pstyle="Content">This will become explicit render-graph lifetime analysis in Pass 14.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Heaps do not automatically give optimal aliasing</Strong></Content>
+<Content ns0:pstyle="Content">Creating a heap does not mean:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">all resources magically share memory efficiently.</Content></BlockQuote>
+<Content ns0:pstyle="Content">Engine still needs lifetime knowledge and appropriate resource creation/reuse strategy.</Content>
+<Content ns0:pstyle="Content">Maveb has the per-frame heap infrastructure, but I would not claim its current renderer already performs a full graph-driven interval alias plan.</Content>
+<Content ns0:pstyle="Content">That belongs to the next architecture stage.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">hazard tracking</Strong></Content>
+<Content ns0:pstyle="Content">A hazard occurs when memory accesses overlap in an unsafe way.</Content>
+<Content ns0:pstyle="Content">Same familiar classes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/22d097f9f780e9ce95277146.svg" alt="&#10;RAW,&#10;WAR,&#10;WAW.&#10;" jobId="22d097f9f780e9ce95277146" originalTeX="&#10;RAW,&#10;WAR,&#10;WAW.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Metal can automatically track many hazards for tracked resources.</Content>
+<Content ns0:pstyle="Content">This is an important difference from Vulkan’s normal explicit synchronization philosophy.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Tracked resources</Strong></Content>
+<Content ns0:pstyle="Content">With:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/096d99544a6480be7a09a544.svg" alt="&#10;MTLHazardTrackingModeTracked,&#10;" jobId="096d99544a6480be7a09a544" originalTeX="&#10;MTLHazardTrackingModeTracked,&#10;" /></Formula>
+<Content ns0:pstyle="Content">Metal tracks usage dependencies and inserts required synchronization where needed across relevant encoders/command buffers according to its model.</Content>
+<Content ns0:pstyle="Content">This greatly simplifies application code.</Content>
+<Content ns0:pstyle="Content">Maveb’s transient heap explicitly uses:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b71ea61e8340bd41b1fa1bcf.svg" alt="&#10;\boxed{HazardTrackingModeTracked}.&#10;" jobId="b71ea61e8340bd41b1fa1bcf" originalTeX="&#10;\boxed{HazardTrackingModeTracked}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is a deliberate correctness-first choice.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">explicit versus implicit hazard tracking</Strong></Content>
+<Content ns0:pstyle="Content">Tracked mode:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/554e2f8f348102ff3324a584.svg" alt="&#10;\boxed{&#10;\text{driver/runtime tracks dependencies}&#10;}&#10;" jobId="554e2f8f348102ff3324a584" originalTeX="&#10;\boxed{&#10;\text{driver/runtime tracks dependencies}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Untracked mode:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/779015e0ba9d9074b025e090.svg" alt="&#10;\boxed{&#10;\text{application promises to synchronize correctly}&#10;}&#10;" jobId="779015e0ba9d9074b025e090" originalTeX="&#10;\boxed{&#10;\text{application promises to synchronize correctly}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Why ever use untracked?</Content>
+<Content ns0:pstyle="Content">Because automatic tracking has overhead.</Content>
+<Content ns0:pstyle="Content">A sophisticated render graph that already knows every producer/consumer may be able to emit precise synchronization itself.</Content>
+<Content ns0:pstyle="Content">But if the graph is wrong:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fdf3ac61cda83d31afe1f217.svg" alt="&#10;\boxed{&#10;\text{untracked resource can race silently}.&#10;}&#10;" jobId="fdf3ac61cda83d31afe1f217" originalTeX="&#10;\boxed{&#10;\text{untracked resource can race silently}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">This is analogous to Vulkan philosophy</Strong></Content>
+<Content ns0:pstyle="Content">Vulkan effectively expects you to own synchronization semantics.</Content>
+<Content ns0:pstyle="Content">Metal lets you choose a more automatic path for many resources.</Content>
+<Content ns0:pstyle="Content">A mature multi-backend renderer can have high-level resource graph semantics, then map:</Content>
+<Code ns0:pstyle="Code" language="text">Vulkan:
+    explicit barrier
+
+Metal tracked resource:
+    maybe no manual action
+
+Metal untracked:
+    fence/barrier/event as required</Code>
+<Content ns0:pstyle="Content">Same engine-level dependency.</Content>
+<Content ns0:pstyle="Content">Different backend mechanism.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">resource barriers in Metal</Strong></Content>
+<Content ns0:pstyle="Content">Within compute/render encoders, Metal exposes memory barrier mechanisms for ordering shader/resource memory accesses where needed.</Content>
+<Content ns0:pstyle="Content">Exact APIs depend on encoder/resource scope and Metal version.</Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3bc73c7ef7d26f201f776737.svg" alt="&#10;write&#10;\rightarrow&#10;memoryBarrier&#10;\rightarrow&#10;read.&#10;" jobId="3bc73c7ef7d26f201f776737" originalTeX="&#10;write&#10;\rightarrow&#10;memoryBarrier&#10;\rightarrow&#10;read.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is especially relevant when one dispatch/stage writes data that a later dispatch/stage inside the same encoder reads.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Barrier versus encoder boundary</Strong></Content>
+<Content ns0:pstyle="Content">Ending one encoder and beginning another can establish certain ordering/hazard behavior, especially for tracked resources.</Content>
+<Content ns0:pstyle="Content">But do not use encoder splitting as random “synchronization superstition.”</Content>
+<Content ns0:pstyle="Content">You need to know:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">which resource is written,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">where read occurs,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">whether automatic tracking covers it,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">whether same/different command buffer/queue is involved.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Same conceptual discipline as Vulkan remains.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">fences and events</Strong></Content>
+<Content ns0:pstyle="Content">Metal exposes multiple synchronization primitives.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">MTLFence</InlineCode> is a GPU synchronization primitive suited to expressing dependencies between command encoders on a device/queue timeline.</Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">encoder A
+    updateFence(F)
+
+encoder B
+    waitForFence(F)</Code>
+<Content ns0:pstyle="Content">This is useful especially with untracked resources/heaps.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Metal fence versus Vulkan fence</Strong></Content>
+<Content ns0:pstyle="Content">They are <Strong ns0:cstyle="Bold">not semantically equivalent despite the name</Strong>.</Content>
+<Content ns0:pstyle="Content">Vulkan:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1f6e6b70af60c4185b8fb084.svg" alt="&#10;VkFence&#10;" jobId="1f6e6b70af60c4185b8fb084" originalTeX="&#10;VkFence&#10;" /></Formula>
+<Content ns0:pstyle="Content">is mainly CPU-visible submission completion.</Content>
+<Content ns0:pstyle="Content">Metal:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/97266df2541479e7f4ef5b39.svg" alt="&#10;MTLFence&#10;" jobId="97266df2541479e7f4ef5b39" originalTeX="&#10;MTLFence&#10;" /></Formula>
+<Content ns0:pstyle="Content">is GPU-side synchronization between encoded work.</Content>
+<Content ns0:pstyle="Content">Always translate semantics, not names.</Content>
+<Content ns0:pstyle="Content">This will matter massively in multi-backend abstraction.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Events</Strong></Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">MTLEvent</InlineCode> and especially:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/180acb99a055b4d8bee598c4.svg" alt="&#10;MTLSharedEvent&#10;" jobId="180acb99a055b4d8bee598c4" originalTeX="&#10;MTLSharedEvent&#10;" /></Formula>
+<Content ns0:pstyle="Content">support synchronization across command buffers/queues.</Content>
+<Content ns0:pstyle="Content">Events are more timeline-like than fences.</Content>
+<Content ns0:pstyle="Content">They can express signal/wait operations between asynchronous work streams.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">shared events as timeline synchronization</Strong></Content>
+<Content ns0:pstyle="Content">Shared event has a:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bd4032c77d0f095b99efdb3d.svg" alt="&#10;64\text{-bit value}&#10;" jobId="bd4032c77d0f095b99efdb3d" originalTeX="&#10;64\text{-bit value}&#10;" /></Formula>
+<Content ns0:pstyle="Content">conceptually similar to Vulkan timeline semaphore values.</Content>
+<Content ns0:pstyle="Content">GPU can encode:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/37fc3f3d3392c9cb931d91ce.svg" alt="&#10;signal(event,v)&#10;" jobId="37fc3f3d3392c9cb931d91ce" originalTeX="&#10;signal(event,v)&#10;" /></Formula>
+<Content ns0:pstyle="Content">and later:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/13b46a0aa2b8be3cf6bb7b86.svg" alt="&#10;wait(event,v).&#10;" jobId="13b46a0aa2b8be3cf6bb7b86" originalTeX="&#10;wait(event,v).&#10;" /></Formula>
+<Content ns0:pstyle="Content">CPU can also observe/signal shared event state under its API semantics.</Content>
+<Content ns0:pstyle="Content">Thus you can build:</Content>
+<Code ns0:pstyle="Code" language="text">Upload queue:
+    signal 52
+
+Render queue:
+    wait 52
+    consume uploaded resource
+
+Render:
+    signal 53
+
+CPU retirement:
+    when completed &gt;= 53
+        free resource</Code>
+<Content ns0:pstyle="Content">This is much closer to Vulkan timeline semaphore thinking than <InlineCode ns0:cstyle="InlineCode">MTLFence</InlineCode>.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why monotonically increasing values are powerful</Strong></Content>
+<Content ns0:pstyle="Content">With binary synchronization:</Content>
+<Code ns0:pstyle="Code" language="text">Semaphore A
+Semaphore B
+Semaphore C
+...</Code>
+<Content ns0:pstyle="Content">With a timeline:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/91477544ba29af2b84278119.svg" alt="&#10;1,2,3,\dots&#10;" jobId="91477544ba29af2b84278119" originalTeX="&#10;1,2,3,\dots&#10;" /></Formula>
+<Content ns0:pstyle="Content">one object can describe a long execution history.</Content>
+<Content ns0:pstyle="Content">Resource retirement becomes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c15860042128f9de97448cfd.svg" alt="&#10;lastUseValue&#10;\le&#10;completedValue.&#10;" jobId="c15860042128f9de97448cfd" originalTeX="&#10;lastUseValue&#10;\le&#10;completedValue.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Exactly the model from Pass 12.</Content>
+<Content ns0:pstyle="Content">—</Content>
+
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/01 - Computing Foundations/00 - Reading Map">Reading map</Link> · <Link href="#01-foundations-i-ch014">Previous chapter</Link> · <Link href="#01-foundations-i-ch016">Next chapter</Link></Content>
+</Chapter>

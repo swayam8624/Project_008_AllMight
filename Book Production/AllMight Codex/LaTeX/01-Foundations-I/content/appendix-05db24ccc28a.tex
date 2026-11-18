@@ -1,0 +1,35 @@
+\hypertarget{appendix-05db24ccc28a}{}
+\section*{Exhaustive finite-state testing}
+\section{Exhaustive finite-state testing}\label{exhaustive-finite-state-testing}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Small fixed domains can be enumerated completely; eight-bit add-with-carry has \(256\times256\times2=131{,}072\) inputs.
+
+Exhaustive testing enumerates every input in a chosen finite domain. Two bytes and carry give 256×256×2=131072 inputs. Use an independent signed-range oracle instead of restating the same overflow formula; complete arithmetic inputs do not cover all emulator state.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-f414bd4ed05c]{Interpretation contract} --- For \texttt{0xAD}, unsigned interpretation gives 173; eight-bit two's complement gives −83.
+\item
+  \hyperref[appendix-24475e1596a8]{Boolean algebra} --- The logical domain is false/true.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+Connect later chunks here when they use this concept.
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Explain exhaustive finite-state testing without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} Apply and reconstruct this concept independently.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Arithmetic\%20becomes\%20a\%20policy}{C002 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch518.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-d8a7ddb675eb-jacobians-pushforwards-and-pullbacks" class="level2">
+<h2>Jacobians, pushforwards, and pullbacks</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 9 · <strong>Latest development:</strong> Phase 9</p>
+<section id="appendix-d8a7ddb675eb-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>The Jacobian is the matrix of first derivatives of a vector-valued function. It maps a small input displacement to a first-order output displacement, a forward sensitivity often called a pushforward or Jacobian-vector product. Gradients transform in the reverse direction by the transpose Jacobian, the pullback used in reverse-mode differentiation. These operations differ because vectors and covectors have different transformation rules. Jacobians compose by matrix multiplication and their determinants describe local volume changes. A Jacobian is local: it does not replace a nonlinear transformation globally. At singular points it can lose rank or become ill-conditioned, affecting inverse sensitivity, uncertainty propagation, and optimizer steps. State coordinate ordering and column-vector conventions before interpreting signs or multiplication order.</p>
+</section>
+<section id="appendix-d8a7ddb675eb-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch491.xhtml#appendix-7bc181935c42-derivative-as-a-local-linear-map" class="wikilink">Derivative as a local linear map</a></li>
+<li><a href="ch503.xhtml#appendix-ab31ef447dbf-matrix-multiplication-and-composition-order" class="wikilink">Matrix multiplication and composition order</a></li>
+<li><a href="ch281.xhtml#appendix-4815cd87ab8b-probability-density-and-change-of-measure" class="wikilink">Probability density and change of measure (Mathematics for Visual Computing, Part 2, Reference notes: Probability density and change of measure)</a></li>
+</ul>
+</section>
+<section id="appendix-d8a7ddb675eb-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch346.xhtml#appendix-40df0855b4a7-automatic-differentiation-and-backpropagation" class="wikilink">Automatic differentiation and backpropagation (Light Transport and Image Synthesis, Part 1, Reference notes: Automatic differentiation and backpropagation)</a></li>
+<li><a href="ch488.xhtml#appendix-6ac071f8b50c-hessians-and-local-curvature" class="wikilink">Hessians and local curvature</a></li>
+<li><a href="ch465.xhtml#appendix-2c2df8345991-nonlinear-least-squares-gauss-newton-and-levenberg-marquardt" class="wikilink">Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt</a></li>
+</ul>
+</section>
+<section id="appendix-d8a7ddb675eb-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch263.xhtml#id_02-foundations-ii-ch021-jacobians-curvature-and-local-approximation" class="wikilink">Phase 9 teaching section (Mathematics for Visual Computing, Part 1, Ch. 5)</a></li>
+<li><a href="ch084.xhtml#appendix-adf48f5dc5c1-calculus-and-optimization-visual-recall" class="wikilink">Visual Recall/09 - Calculus and Optimization - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 09 - Calculus and Optimization - Visual Recall)</a> · visual recall</li>
+</ul>
+</section>
+<section id="appendix-d8a7ddb675eb-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 822 (T04 · M050), 823 (T04 · M050), 824 (T04 · M050), 825 (T04 · M050).</p>
+</section>
+</section>
+</body>
+</html>

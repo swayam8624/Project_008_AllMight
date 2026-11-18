@@ -1,0 +1,4171 @@
+\chapter{Dynamic spatial indices for moving worlds}\label{06-engine-ii-ch029-dynamic-spatial-indices-for-moving-worlds}\phantomsection\hypertarget{06-engine-ii-ch029}{}\label{stagechapter:06-engine-ii-ch029}
+
+\hyperref[volume-reading-map]{Reading map} · \hyperref[06-engine-ii-ch028-bvh-traversal-refitting-and-simd]{Previous chapter} · \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=06-engine-ii-ch030-depth-projection-and-shadow-map-precision}{Next chapter (Geometry, Cameras, and Image Formation, Ch. 13)}
+
+A static hierarchy is not the only answer when objects move or appear in clusters. This chapter compares dynamic trees, sweep-and-prune, spatial hashing, and grids by update and query cost.
+
+\textbf{By the end:} Choose a dynamic broad-phase structure for a stated motion and density workload, including duplicate suppression and update rules.
+
+\textbf{Recall question:} What scene change makes this structure expensive, and how would you measure candidate quality as well as update time?
+
+\subsection{Dynamic AABB Trees, Sweep-and-Prune, Spatial Hashes and Uniform Grids}\label{06-engine-ii-ch029-dynamic-aabb-trees-sweep-and-prune-spatial-hashes-and-uniform-grids}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dynamic AABB tree node representation}
+
+A static BVH answers:
+
+\begin{quote}
+Given a fixed set of primitives, what tree should I build?
+\end{quote}
+
+A dynamic AABB tree answers:
+
+\begin{quote}
+How can I preserve a useful hierarchy while objects continually enter, leave and move?
+\end{quote}
+
+The tree remains binary:
+
+\begin{verbatim}
+                         ROOT
+                        /    \
+                       /      \
+                  Internal    Leaf D
+                  /      \
+               Leaf A   Internal
+                        /      \
+                     Leaf B   Leaf C
+\end{verbatim}
+
+But leaves now need stable proxy identities, because objects can be updated independently.
+
+A conceptual node is:
+
+\begin{verbatim}
+struct DynamicNode
+{
+    AABB bounds;
+
+    uint32_t parent;
+    uint32_t left;
+    uint32_t right;
+
+    uint32_t height;
+
+    ObjectID object;
+};
+\end{verbatim}
+
+Your actual \texttt{KairoSpatial/DynamicAABBTree.cppm} goes further:
+
+\begin{verbatim}
+struct DynamicAABBTreeNode final
+{
+    SpatialAABB TightBounds = SpatialAABB::Empty();
+    SpatialAABB FatBounds = SpatialAABB::Empty();
+
+    SpatialIndex Parent = SpatialInvalidIndex;
+    SpatialIndex Left = SpatialInvalidIndex;
+    SpatialIndex Right = SpatialInvalidIndex;
+
+    SpatialIndex NextFree = SpatialInvalidIndex;
+
+    std::uint32_t Height = 0;
+
+    SpatialID UserID = SpatialInvalidID;
+    SpatialLayerMask LayerMask = 1u;
+
+    bool Allocated = false;
+
+    constexpr bool IsLeaf() const noexcept
+    {
+        return Left == SpatialInvalidIndex;
+    }
+};
+\end{verbatim}
+
+There are two bounds per leaf:
+
+\[
+B_{\text{tight}}
+\]
+
+and
+
+\[
+B_{\text{fat}}.
+\]
+
+That distinction is the defining feature of the dynamic-tree strategy.
+
+Internal nodes only really need conservative hierarchy bounds. Leaves additionally retain the object's actual current bound.
+
+The tree returns a \texttt{SpatialIndex} when inserting an object. That is a \textbf{proxy handle}:
+
+\begin{verbatim}
+SpatialIndex proxy =
+    tree.Insert(id, bounds);
+\end{verbatim}
+
+Updates then address the leaf directly:
+
+\begin{verbatim}
+tree.Update(proxy, newBounds);
+\end{verbatim}
+
+This matters enormously.
+
+Without a proxy, updating one object might require searching for it.
+
+With a proxy:
+
+\[
+\text{object update}
+\rightarrow
+\text{direct node index}.
+\]
+
+Box2D uses the same general architecture: its dynamic tree is a binary AABB hierarchy whose leaves are externally managed proxies and whose nodes use relocatable indices rather than arbitrary object-tree pointers. \href{https://box2d.org/documentation/group__tree.html?utm_source=chatgpt.com}{Box2D}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Tight bounds versus fat bounds}
+
+Suppose an object's current exact AABB is:
+
+\[
+B_t=
+[\mathbf m,\mathbf M].
+\]
+
+If the object moves by an extremely small distance every frame and we store only \(B_t\), its leaf may need reinsertion every frame.
+
+That defeats much of the point of maintaining the tree.
+
+Instead create a larger box:
+
+\[
+B_f=B_t\oplus \delta
+\]
+
+where \(\delta\) is a spatial margin.
+
+For isotropic margin \(f\):
+
+\[
+B_{f,\min}
+=
+B_{t,\min}-(f,f,f)
+\]
+
+and
+
+\[
+B_{f,\max}
+=
+B_{t,\max}+(f,f,f).
+\]
+
+Now the object can move around inside its fat box without modifying tree topology.
+
+\begin{verbatim}
+Fat AABB
+
++----------------------------+
+|                            |
+|       Tight AABB           |
+|       +----------+         |
+|       | object   |         |
+|       +----------+         |
+|                            |
++----------------------------+
+\end{verbatim}
+
+The update rule becomes:
+
+\[
+B_{\text{new}}\subseteq B_f
+\quad\Longrightarrow\quad
+\text{no tree reinsertion}.
+\]
+
+Only when the new tight bound escapes:
+
+\[
+B_{\text{new}}\not\subseteq B_f
+\]
+
+do we remove and reinsert the leaf.
+
+This trades two costs.
+
+A larger fat margin decreases:
+
+\[
+\text{reinsertion frequency}
+\]
+
+but increases:
+
+\[
+\text{false-positive overlap}.
+\]
+
+A smaller fat margin does the reverse.
+
+That is an important general pattern:
+
+\[
+\boxed{
+\text{spatial slack}
+\leftrightarrow
+\text{update frequency}.
+}
+\]
+
+Your implementation currently uses a fixed isotropic margin:
+
+\begin{verbatim}
+node.TightBounds = bounds;
+node.FatBounds =
+    Expanded(bounds, m_FattenAmount);
+\end{verbatim}
+
+with default:
+
+\begin{verbatim}
+float m_FattenAmount = 0.1f;
+\end{verbatim}
+
+and update:
+
+\begin{verbatim}
+if (m_Nodes[proxy].FatBounds.ContainsAABB(newBounds))
+{
+    m_Nodes[proxy].TightBounds = newBounds;
+    return false;
+}
+\end{verbatim}
+
+Returning \texttt{false} means no reinsertion occurred.
+
+That is exactly the intended dynamic-tree optimization.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Predictive fattening}
+
+A fixed margin assumes all objects have similar motion.
+
+But suppose object A moves at:
+
+\[
+0.01\,m/s
+\]
+
+and object B at:
+
+\[
+100\,m/s.
+\]
+
+Giving both the same spatial margin is crude.
+
+A stronger approach incorporates displacement.
+
+Let frame displacement be
+
+\[
+\Delta x=v\Delta t.
+\]
+
+Then the future-motion bound could be extended toward motion direction.
+
+For X:
+
+\[
+\Delta x>0
+\Rightarrow
+M_x'=M_x+f+k\Delta x
+\]
+
+while
+
+\[
+\Delta x<0
+\Rightarrow
+m_x'=m_x-f+k\Delta x.
+\]
+
+This creates an asymmetric predictive fat box.
+
+Conceptually:
+
+\begin{verbatim}
+stationary padding
+
+       +------------+
+       |   object   |
+       +------------+
+
+
+object moving right --->
+
+       +-------------------------------+
+       | object   predicted region     |
+       +-------------------------------+
+\end{verbatim}
+
+Older Box2D documentation describes both a fixed AABB extension and a displacement multiplier for predictive fattening; its dynamic tree reinserted proxies only after they escaped their fat AABB. \href{https://box2d.org/doc_version_2_4/classb2_dynamic_tree.html?utm_source=chatgpt.com}{Box2D}
+
+Your current Kairo tree does \textbf{not} use displacement prediction.
+
+That is not incorrect; it is simply a simpler policy.
+
+For fast physics objects, a velocity-aware fattening mode would be a natural extension.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dynamic-tree insertion heuristic}
+
+When inserting a new leaf, where should it go?
+
+A completely naïve strategy could descend left/right randomly.
+
+Correctness would survive because ancestor bounds could always be expanded.
+
+Performance would become terrible.
+
+We instead want to choose a sibling such that the additional bounding-box area introduced is small.
+
+Suppose candidate child \(C\) has bound \(B_C\), and new leaf has bound \(B_L\).
+
+After combining them:
+
+\[
+B'=
+B_C\cup B_L.
+\]
+
+The surface-area increase is:
+
+\[
+\boxed{
+\Delta A_C
+=
+A(B_C\cup B_L)-A(B_C)
+}
+\]
+
+The greedy insertion rule chooses the child with smaller \(\Delta A\).
+
+Your implementation does exactly this:
+
+\begin{verbatim}
+const float leftCost =
+    Union(
+        m_Nodes[left].FatBounds,
+        m_Nodes[leaf].FatBounds
+    ).SurfaceArea()
+    -
+    m_Nodes[left].FatBounds.SurfaceArea();
+
+const float rightCost =
+    Union(
+        m_Nodes[right].FatBounds,
+        m_Nodes[leaf].FatBounds
+    ).SurfaceArea()
+    -
+    m_Nodes[right].FatBounds.SurfaceArea();
+
+sibling =
+    leftCost < rightCost
+        ? left
+        : right;
+\end{verbatim}
+
+This continues until a leaf is found.
+
+Then a new internal parent is created:
+
+\begin{verbatim}
+before
+
+         oldParent
+             |
+          sibling
+
+
+after
+
+         oldParent
+             |
+          newParent
+          /      \
+     sibling    newLeaf
+\end{verbatim}
+
+and
+
+\[
+B_{\text{newParent}}
+=
+B_{\text{sibling}}
+\cup
+B_{\text{leaf}}.
+\]
+
+Ancestors are refitted upward.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The stronger insertion-cost model}
+
+The simple greedy test only considers:
+
+\[
+\text{local child area increase}.
+\]
+
+But enlarging a child can force all of its ancestors to enlarge too.
+
+A more complete heuristic considers \textbf{inherited cost}.
+
+Suppose current node has area \(A_N\), and inserting the leaf causes:
+
+\[
+A_N'
+=
+A(B_N\cup B_L).
+\]
+
+The parent-area increase is:
+
+\[
+\Delta A_N=A_N'-A_N.
+\]
+
+If we descend into one child, that extra area may propagate through several levels.
+
+A stronger descent cost therefore resembles:
+
+\[
+C_L
+=
+\Delta A_{\text{left local}}
++
+C_{\text{inherit}}
+\]
+
+and
+
+\[
+C_R
+=
+\Delta A_{\text{right local}}
++
+C_{\text{inherit}}.
+\]
+
+You can also compare against making the new leaf a sibling of the \textbf{current} node immediately.
+
+This turns insertion into a small local SAH problem.
+
+Your current Kairo implementation uses the simpler greedy local increase.
+
+It is cheap and understandable, but it can choose a locally attractive child that is globally poor.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dynamic-tree leaf removal}
+
+Consider:
+
+\begin{verbatim}
+        G
+        |
+        P
+       / \
+      L   S
+\end{verbatim}
+
+where:
+
+\begin{itemize}
+\tightlist
+\item
+  \(L\) = leaf being removed,
+\item
+  \(S\) = its sibling,
+\item
+  \(P\) = their parent,
+\item
+  \(G\) = grandparent.
+\end{itemize}
+
+After removing \(L\), parent \(P\) is unnecessary.
+
+So replace \(P\) with \(S\):
+
+\begin{verbatim}
+before                 after
+
+      G                      G
+      |                      |
+      P                      S
+     / \
+    L   S
+\end{verbatim}
+
+Then refit ancestors of G.
+
+Your implementation follows this exactly:
+
+\begin{verbatim}
+const SpatialIndex parent =
+    m_Nodes[leaf].Parent;
+
+const SpatialIndex grandParent =
+    m_Nodes[parent].Parent;
+
+const SpatialIndex sibling =
+    m_Nodes[parent].Left == leaf
+        ? m_Nodes[parent].Right
+        : m_Nodes[parent].Left;
+\end{verbatim}
+
+Then if grandparent exists:
+
+\begin{verbatim}
+grandParent.child = sibling;
+sibling.Parent = grandParent;
+
+RefitAncestors(grandParent);
+\end{verbatim}
+
+Finally:
+
+\begin{verbatim}
+FreeNode(parent);
+\end{verbatim}
+
+If the removed leaf was the root, the tree simply becomes empty.
+
+If its parent was the root, its sibling becomes the new root.
+
+Those edge cases are essential.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{A current node-pool issue in Kairo}
+
+Your node representation contains:
+
+\begin{verbatim}
+SpatialIndex NextFree;
+\end{verbatim}
+
+which strongly suggests a free-list node pool was intended.
+
+But current allocation does:
+
+\begin{verbatim}
+SpatialIndex AllocateNode()
+{
+    const SpatialIndex index =
+        static_cast<SpatialIndex>(m_Nodes.size());
+
+    m_Nodes.push_back(DynamicAABBTreeNode{});
+    ...
+    return index;
+}
+\end{verbatim}
+
+and freeing does:
+
+\begin{verbatim}
+m_Nodes[index] =
+    DynamicAABBTreeNode{};
+\end{verbatim}
+
+There is currently no free-list reuse.
+
+Therefore repeated insertion/removal can produce:
+
+\begin{verbatim}
+[allocated][free][free][allocated][free] ... new nodes appended forever
+\end{verbatim}
+
+\texttt{NextFree} is presently unused.
+
+For a long-running physics world with high churn, the vector can grow according to historical maximum allocation traffic rather than current live node count.
+
+A node pool should instead maintain:
+
+\begin{verbatim}
+freeHead -> free node -> free node -> ...
+\end{verbatim}
+
+Then:
+
+\begin{verbatim}
+SpatialIndex AllocateNode()
+{
+    if (freeHead != Invalid)
+    {
+        const auto index = freeHead;
+        freeHead = nodes[index].NextFree;
+
+        nodes[index] = Node{};
+        nodes[index].Allocated = true;
+
+        return index;
+    }
+
+    ...
+}
+\end{verbatim}
+
+and \texttt{FreeNode} should push the index back onto the free list.
+
+That is a concrete improvement available directly from the fields already present.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dynamic proxy updates}
+
+A dynamic update has two possible paths.
+
+\textbf{Cheap path}
+
+\[
+B_{\text{new}}\subseteq B_{\text{fat}}.
+\]
+
+Only:
+
+\begin{verbatim}
+TightBounds = newBounds;
+\end{verbatim}
+
+changes.
+
+Tree topology remains untouched.
+
+\textbf{Expensive path}
+
+\[
+B_{\text{new}}\not\subseteq B_{\text{fat}}.
+\]
+
+Then:
+
+\begin{verbatim}
+remove leaf
+    ↓
+update tight bound
+    ↓
+create new fat bound
+    ↓
+reinsert leaf
+    ↓
+refit ancestors
+\end{verbatim}
+
+Your implementation:
+
+\begin{verbatim}
+RemoveLeaf(proxy);
+
+m_Nodes[proxy].TightBounds =
+    newBounds;
+
+m_Nodes[proxy].FatBounds =
+    Expanded(
+        newBounds,
+        m_FattenAmount);
+
+InsertLeaf(proxy);
+\end{verbatim}
+
+The proxy index remains stable because only its tree location changes.
+
+That is useful for physics systems holding collider-to-proxy mappings.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why not simply change the leaf bound in place?}
+
+Suppose a leaf originally belongs in the far-left portion of the tree:
+
+\begin{verbatim}
+LEFT WORLD                        RIGHT WORLD
+
+[leaf]
+\end{verbatim}
+
+Then the object teleports to the right.
+
+If we merely change its bound and refit ancestors:
+
+\begin{verbatim}
+left subtree bound
++---------------------------------------------+
+|                                             |
+|                                      [leaf] |
++---------------------------------------------+
+\end{verbatim}
+
+The tree is correct but spatially awful.
+
+The object's hierarchy location no longer corresponds to spatial proximity.
+
+Remove/reinsert lets the insertion heuristic choose a more suitable sibling.
+
+So:
+
+\[
+\boxed{
+\text{refit handles small motion;}
+\quad
+\text{reinsert handles topological relocation.}
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Rotations and balancing}
+
+A dynamic tree can become unbalanced.
+
+Imagine inserting objects in monotonically increasing X order with an unlucky insertion strategy:
+
+\begin{verbatim}
+root
+  \
+   A
+    \
+     B
+      \
+       C
+        \
+         D
+\end{verbatim}
+
+Depth becomes approximately:
+
+\[
+O(N)
+\]
+
+instead of:
+
+\[
+O(\log N).
+\]
+
+We need rotations.
+
+The concept resembles AVL-tree rotations, but a spatial tree's quality objective is not merely key ordering.
+
+There is no strict binary-search ordering constraint.
+
+We care about:
+
+\[
+\text{height}
+\]
+
+and:
+
+\[
+\text{bounding-volume cost}.
+\]
+
+Consider:
+
+\begin{verbatim}
+              A
+             / \
+            B   C
+               / \
+              F   G
+\end{verbatim}
+
+If C becomes much taller than B, rotate C upward:
+
+\begin{verbatim}
+              C
+             / \
+            A   G
+           / \
+          B   F
+\end{verbatim}
+
+Then recompute:
+
+\[
+B_A=B_B\cup B_F
+\]
+
+and
+
+\[
+B_C=B_A\cup B_G.
+\]
+
+Also recompute heights:
+
+\[
+h_A=1+\max(h_B,h_F)
+\]
+
+\[
+h_C=1+\max(h_A,h_G).
+\]
+
+The spatial variant can choose whether F or G moves based on resulting area.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{What balancing should optimize}
+
+A simple policy minimizes height:
+
+\[
+|h_L-h_R|.
+\]
+
+A more spatially aware policy estimates area cost:
+
+\[
+A(B_{\text{new child}})
++
+A(B_{\text{new parent}}).
+\]
+
+The best rotation may be the one reducing traversal cost, even if height does not become perfectly balanced.
+
+This is why dynamic AABB trees are related to balanced binary trees but are not ordinary AVL search trees.
+
+Current Box2D documentation explicitly notes that its dynamic tree uses rotations to maintain balance, including degenerate insertion sequences. \href{https://box2d.org/doc_version_2_4/md__e_1_2github_2box2d__24_2docs_2collision.html?utm_source=chatgpt.com}{Box2D}
+
+\textbf{Current Kairo status}
+
+Your tree tracks:
+
+\begin{verbatim}
+Height
+\end{verbatim}
+
+and computes diagnostic:
+
+\begin{verbatim}
+MaxBalance
+\end{verbatim}
+
+where balance is child-height difference.
+
+But there is currently \textbf{no rotation/balance operation} in \texttt{DynamicAABBTree.cppm}.
+
+So:
+
+\[
+\boxed{
+\text{imbalance is measured but not actively repaired}.
+}
+\]
+
+That is an important Part 1342 implementation gap.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dynamic-tree overlap queries}
+
+Traversal uses fat bounds for hierarchy pruning:
+
+\begin{verbatim}
+if (!Intersects(node.FatBounds, query))
+    continue;
+\end{verbatim}
+
+Why fat bounds?
+
+Because internal hierarchy bounds are constructed from fat leaves.
+
+If query misses a fat internal node, it certainly misses every tight object underneath.
+
+At a leaf, however, your tree performs:
+
+\begin{verbatim}
+Intersects(node.TightBounds, query)
+\end{verbatim}
+
+before returning the object.
+
+That is excellent.
+
+It means fat bounds cause additional traversal but do not necessarily leak false-positive AABB results to the caller.
+
+The pipeline is:
+
+\begin{verbatim}
+query
+  |
+  v
+fat hierarchy bounds
+  |
+  v
+candidate leaf
+  |
+  v
+tight leaf bound
+  |
+  v
+return ID
+\end{verbatim}
+
+That mirrors broadphase/narrower broadphase reasoning.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Pair generation in a dynamic tree}
+
+Physics broadphase wants candidate pairs:
+
+\[
+(A,B)
+\]
+
+whose bounds overlap.
+
+Your current implementation iterates every leaf, executes a tree query using that leaf's tight bound, adds every other returned ID, orders pairs, sorts them, then removes duplicates.
+
+That is correct for tested AABB overlap.
+
+But observe the work.
+
+If A overlaps B:
+
+\begin{verbatim}
+query A finds B
+query B finds A
+\end{verbatim}
+
+so the pair appears twice before deduplication.
+
+A more simulation-oriented broadphase often tracks \textbf{moved proxies}.
+
+Only objects that moved enough to invalidate their previous broadphase relationship need fresh queries.
+
+Then:
+
+\begin{verbatim}
+moved proxy
+    |
+query fat/tight tree
+    |
+generate new candidate pairs
+\end{verbatim}
+
+instead of querying every object every frame.
+
+This exploits another form of temporal coherence.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{\texttt{RebuildBottomUp()} is currently not really a bottom-up optimal rebuild}
+
+Your function:
+
+\begin{verbatim}
+void RebuildBottomUp()
+{
+    collect live leaves;
+    Clear();
+
+    for (leaf : leaves)
+        Insert(...);
+}
+\end{verbatim}
+
+rebuilds through repeated ordinary insertion.
+
+It does \textbf{not} perform the traditional expensive bottom-up algorithm that repeatedly chooses node pairs whose union produces the best cost.
+
+So its name currently means:
+
+\begin{quote}
+discard hierarchy and reinsert everything
+\end{quote}
+
+rather than:
+
+\begin{quote}
+construct an optimized hierarchy bottom-up.
+\end{quote}
+
+Your tests correctly verify an important property: repeated rebuilds do not accidentally fatten already-fat bounds again.
+
+That is good.
+
+But tree quality remains determined by the normal greedy insertion heuristic.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dynamic-tree quality metrics}
+
+Your tree exposes:
+
+\begin{verbatim}
+Height
+MaxBalance
+AreaRatio
+AllocatedNodeCount
+LeafCount
+\end{verbatim}
+
+The most interesting is:
+
+\[
+\boxed{
+\text{AreaRatio}
+=
+\frac{
+\sum_i A(B_i)
+}{
+A(B_{\text{root}})
+}
+}
+\]
+
+roughly speaking.
+
+If many internal bounds overlap heavily or become inflated, total node area rises.
+
+High area ratio often correlates with poorer pruning.
+
+Box2D exposes similar tree metrics, including tree height and area ratio, specifically to evaluate hierarchy quality. \href{https://box2d.org/documentation/group__tree.html?utm_source=chatgpt.com}{Box2D}
+
+These metrics can drive automatic rebuild logic.
+
+For example:
+
+\[
+\text{if AreaRatio}>\tau_A
+\]
+
+or:
+
+\[
+\text{MaxBalance}>\tau_B
+\]
+
+or:
+
+\[
+\frac{
+\text{visited nodes/query}
+}{
+\text{historical baseline}
+}>\tau_Q,
+\]
+
+schedule rebuild or local rotations.
+
+The last metric is usually the most directly relevant: measure actual workload cost.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Sweep-and-prune endpoints}
+
+Now consider an entirely different strategy.
+
+Every AABB projects onto X as an interval:
+
+\[
+I_i=[x_i^{\min},x_i^{\max}].
+\]
+
+Two 3D AABBs cannot intersect unless their X intervals overlap.
+
+Therefore, sort interval endpoints along X.
+
+Object A:
+
+\begin{verbatim}
+Amin ---------------- Amax
+\end{verbatim}
+
+Object B:
+
+\begin{verbatim}
+       Bmin ---------------- Bmax
+\end{verbatim}
+
+A and B overlap on X because:
+
+\[
+B_{\min}\le A_{\max}.
+\]
+
+A canonical sweep-and-prune system stores endpoints:
+
+\begin{verbatim}
+struct Endpoint
+{
+    float value;
+    ObjectID object;
+    bool isMin;
+};
+\end{verbatim}
+
+Each AABB contributes:
+
+\begin{verbatim}
+[min, max]
+\end{verbatim}
+
+for each chosen axis.
+
+Interestingly, your repository already defines:
+
+\begin{verbatim}
+struct SAPEndpoint final
+{
+    float Value;
+    SpatialID ID;
+    bool IsMin;
+};
+\end{verbatim}
+
+but the current algorithm does \textbf{not use it}.
+
+That will matter shortly.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Active sets}
+
+Sort endpoints left-to-right.
+
+Maintain an active set.
+
+When encountering a minimum endpoint, the object begins overlapping the sweep position.
+
+Every object already active overlaps this object along the sweep axis.
+
+When encountering a maximum endpoint, remove the object.
+
+Example:
+
+\begin{verbatim}
+position →
+
+Amin     Bmin     Amax       Cmin     Bmax      Cmax
+ |        |         |          |        |         |
+
+active:
+{A}
+{A,B}      => candidate A-B
+{B}
+{B,C}      => candidate B-C
+{C}
+{}
+\end{verbatim}
+
+Canonical pseudocode:
+
+\begin{verbatim}
+sort(endpoints);
+
+ActiveSet active;
+
+for (const Endpoint& e : endpoints)
+{
+    if (e.isMin)
+    {
+        for (ObjectID other : active)
+            candidates.emplace(e.id, other);
+
+        active.insert(e.id);
+    }
+    else
+    {
+        active.erase(e.id);
+    }
+}
+\end{verbatim}
+
+This only proves overlap on one axis.
+
+Then Y/Z can confirm.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Endpoint tie ordering}
+
+Suppose:
+
+\[
+A_{\max}=B_{\min}.
+\]
+
+Do touching boxes count as overlap?
+
+Your AABB intersection convention uses inclusive comparisons, so touching should count.
+
+Therefore when coordinates are equal, the \textbf{minimum endpoint should be processed before the maximum endpoint}.
+
+Otherwise A may be removed before B is inserted and the touching pair is missed.
+
+So endpoint comparator should be something like:
+
+\begin{verbatim}
+if (a.value != b.value)
+    return a.value < b.value;
+
+// Inclusive contact: starts before ends.
+if (a.isMin != b.isMin)
+    return a.isMin && !b.isMin;
+
+return a.id < b.id;
+\end{verbatim}
+
+This is an example of topology hiding inside sorting semantics.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Temporal coherence in sweep-and-prune}
+
+The real power of sweep-and-prune is not merely sorting intervals.
+
+It is that dynamic scenes are usually temporally coherent.
+
+Between adjacent frames:
+
+\[
+x_i(t+\Delta t)
+\approx
+x_i(t).
+\]
+
+Therefore the endpoint array from the previous frame is already \emph{almost sorted}.
+
+Instead of sorting from scratch:
+
+\[
+O(N\log N),
+\]
+
+maintain the endpoint array across frames.
+
+When objects move slightly, only a few endpoints cross neighbors.
+
+If the number of inversions is \(K\), insertion-sort-like maintenance costs roughly:
+
+\[
+O(N+K).
+\]
+
+When \(K\ll N\):
+
+\[
+O(N+K)\approx O(N).
+\]
+
+That is why sweep-and-prune can be extremely effective in smoothly moving physics worlds.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Insertion sort for nearly sorted endpoints}
+
+Insertion sort's worst-case complexity is:
+
+\[
+O(N^2).
+\]
+
+So why use it?
+
+Because for nearly sorted arrays its cost is:
+
+\[
+O(N+K)
+\]
+
+where \(K\) is the number of inversions.
+
+A local endpoint movement looks like:
+
+\begin{verbatim}
+before
+
+Amin Bmin Cmin Amax Bmax Cmax
+
+
+after objects move slightly
+
+Amin Cmin Bmin Amax Bmax Cmax
+          ^
+only one local inversion
+\end{verbatim}
+
+Insertion sort fixes this with one small shift.
+
+A more advanced SAP implementation can generate overlap begin/end events as endpoints swap.
+
+For example, when a min endpoint crosses another object's max endpoint, an overlap can begin or end depending on crossing direction.
+
+This means pair maintenance and endpoint sorting can be integrated.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo sweep-and-prune is actually sort-and-sweep}
+
+Your current \texttt{SweepAndPrune::ComputePairs()} does:
+
+\begin{verbatim}
+std::stable_sort(
+    sorted.begin(),
+    sorted.end(),
+    [](const SAPProxy* lhs,
+       const SAPProxy* rhs)
+    {
+        return lhs->Bounds.Min.x <
+               rhs->Bounds.Min.x;
+    });
+\end{verbatim}
+
+Then:
+
+\begin{verbatim}
+for each A:
+    for each later B:
+        if B.minX > A.maxX:
+            break
+
+        if Intersects(A.Bounds, B.Bounds):
+            pair
+\end{verbatim}
+
+This is a valid sweep broadphase.
+
+But it does \textbf{not} currently implement:
+
+\begin{itemize}
+\tightlist
+\item
+  persistent endpoint arrays,
+\item
+  active-set endpoint processing,
+\item
+  temporal-coherence sorting,
+\item
+  insertion sort.
+\end{itemize}
+
+\texttt{SAPEndpoint} exists but is not wired into the current algorithm.
+
+Every \texttt{ComputePairs()} performs a fresh \texttt{stable\_sort}.
+
+So Part 1344--1347 represent meaningful future optimization work.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Complexity of the current Kairo SAP}
+
+Sorting active proxies:
+
+\[
+O(N\log N).
+\]
+
+Then candidate scanning depends on X overlap.
+
+Best case, intervals rarely overlap:
+
+\[
+O(N)
+\]
+
+after sorting.
+
+Worst case, every X interval overlaps every other:
+
+\[
+O(N^2).
+\]
+
+For example, if all boxes span:
+
+\[
+x\in[-1000,1000],
+\]
+
+the X sweep rejects nothing.
+
+The full 3D \texttt{Intersects} test may still eliminate pairs on Y/Z, but those candidate tests have already been generated.
+
+This motivates multi-axis SAP.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Multi-axis sweep-and-prune}
+
+For two AABBs to overlap:
+
+\[
+X_A\cap X_B\ne\varnothing
+\]
+
+and:
+
+\[
+Y_A\cap Y_B\ne\varnothing
+\]
+
+and:
+
+\[
+Z_A\cap Z_B\ne\varnothing.
+\]
+
+A multi-axis system can maintain candidate sets independently:
+
+\[
+S_x,\quad S_y,\quad S_z.
+\]
+
+Final candidates are:
+
+\[
+\boxed{
+S=S_x\cap S_y\cap S_z.
+}
+\]
+
+A practical implementation may maintain a pair overlap counter.
+
+For each pair:
+
+\begin{verbatim}
+X overlap -> bit 0
+Y overlap -> bit 1
+Z overlap -> bit 2
+\end{verbatim}
+
+If mask becomes:
+
+\begin{verbatim}
+111₂
+\end{verbatim}
+
+the pair overlaps on all axes.
+
+This works nicely with endpoint crossing events.
+
+When endpoints change order, update the appropriate axis bit.
+
+Then full candidate pairs can be maintained incrementally rather than regenerated every frame.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Choosing the best SAP axis}
+
+Single-axis sweep should prefer an axis that creates few candidate overlaps.
+
+A common heuristic is largest variance or scene extent.
+
+But the optimal axis is the one minimizing interval overlap.
+
+Imagine a corridor:
+
+\begin{verbatim}
+X axis:
+
+[A][B][C][D][E][F]
+
+Y axis:
+
+[------ every object overlaps ------]
+\end{verbatim}
+
+Sweep X is excellent.
+
+Sweep Y is terrible.
+
+A dynamic system can measure active-set size or pair generation per axis and choose whichever axis is currently most discriminating.
+
+This connects directly to the adaptive spatial-policy research direction already present in your repository.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Spatial hash grid coordinates}
+
+A spatial hash divides space into uniform cells of size \(h\).
+
+For world point:
+
+\[
+p=(x,y,z),
+\]
+
+cell coordinates are:
+
+\[
+\boxed{
+c_x=\left\lfloor\frac{x}{h}\right\rfloor
+}
+\]
+
+\[
+c_y=\left\lfloor\frac{y}{h}\right\rfloor
+\]
+
+\[
+c_z=\left\lfloor\frac{z}{h}\right\rfloor.
+\]
+
+Why \textbf{floor}, rather than integer truncation?
+
+Consider:
+
+\[
+x=-0.2,\quad h=1.
+\]
+
+Mathematically:
+
+\[
+\lfloor-0.2\rfloor=-1.
+\]
+
+But C++ integer truncation:
+
+\begin{verbatim}
+static_cast<int>(-0.2f)
+\end{verbatim}
+
+produces:
+
+\[
+0.
+\]
+
+That would place negative positions in the wrong cell.
+
+Your implementation correctly uses:
+
+\begin{verbatim}
+std::floor(position.x / m_CellSize)
+\end{verbatim}
+
+before converting to integer.
+
+That is exactly what we want.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Mapping an AABB to hash cells}
+
+For AABB:
+
+\[
+B=[B_{\min},B_{\max}],
+\]
+
+calculate:
+
+\[
+C_{\min}
+=
+\operatorname{Cell}(B_{\min})
+\]
+
+and:
+
+\[
+C_{\max}
+=
+\operatorname{Cell}(B_{\max}).
+\]
+
+Then enumerate:
+
+\[
+x\in[C_{\min,x},C_{\max,x}]
+\]
+
+\[
+y\in[C_{\min,y},C_{\max,y}]
+\]
+
+\[
+z\in[C_{\min,z},C_{\max,z}].
+\]
+
+Your implementation:
+
+\begin{verbatim}
+for (int z = minCell.z;
+     z <= maxCell.z;
+     ++z)
+{
+    for (int y = minCell.y;
+         y <= maxCell.y;
+         ++y)
+    {
+        for (int x = minCell.x;
+             x <= maxCell.x;
+             ++x)
+        {
+            ...
+        }
+    }
+}
+\end{verbatim}
+
+If an object spans:
+
+\[
+n_x
+\]
+
+cells in X,
+
+\[
+n_y
+\]
+
+in Y, and
+
+\[
+n_z
+\]
+
+in Z, insertion costs approximately:
+
+\[
+\boxed{
+O(n_xn_yn_z).
+}
+\]
+
+This is the spatial hash's most important weakness.
+
+A giant object can occupy thousands or millions of cells.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Boundary semantics in hash cells}
+
+Suppose cell size is 1 and an AABB is:
+
+\[
+x\in[0,1].
+\]
+
+Then:
+
+\[
+\operatorname{Cell}(0)=0,
+\]
+
+\[
+\operatorname{Cell}(1)=1.
+\]
+
+So the box is inserted into cells 0 and 1.
+
+Is that wrong?
+
+Not necessarily.
+
+Your AABB overlap convention treats touching boundaries as intersection.
+
+The point at \(x=1\) belongs geometrically to the closed box.
+
+So inserting into the next cell is conservative.
+
+It increases duplication but avoids missing boundary-touching queries.
+
+If instead the engine used half-open intervals:
+
+\[
+[min,max)
+\]
+
+the max mapping policy could differ.
+
+Again, representation conventions propagate into spatial indexing.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hashing integer coordinates}
+
+An infinite conceptual grid has coordinates:
+
+\[
+(x,y,z)\in\mathbb Z^3.
+\]
+
+We do not want a gigantic dense array.
+
+So map cell coordinate to a hash value.
+
+Your implementation uses:
+
+\[
+h(x,y,z)
+=
+(73856093x)
+\oplus
+(19349663y)
+\oplus
+(83492791z).
+\]
+
+In code:
+
+\begin{verbatim}
+const std::int64_t x =
+    static_cast<std::int64_t>(coord.x)
+    * 73856093;
+
+const std::int64_t y =
+    static_cast<std::int64_t>(coord.y)
+    * 19349663;
+
+const std::int64_t z =
+    static_cast<std::int64_t>(coord.z)
+    * 83492791;
+
+return static_cast<std::size_t>(
+    x ^ y ^ z);
+\end{verbatim}
+
+The large distinct multipliers scramble regular grid patterns before XOR.
+
+A good hash aims for roughly uniform bucket distribution.
+
+It does \textbf{not} need to be collision-free.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Two completely different meanings of ``collision''}
+
+This topic is worth making explicit.
+
+A \textbf{spatial collision} means:
+
+\begin{quote}
+two objects occupy the same spatial region/cell.
+\end{quote}
+
+A \textbf{hash collision} means:
+
+\begin{quote}
+two different integer keys produce the same hash bucket.
+\end{quote}
+
+For example:
+
+\begin{verbatim}
+cell (1,2,3)
+cell (92,-4,17)
+
+different cells
+same hash bucket possible
+\end{verbatim}
+
+That must not make them semantically the same cell.
+
+\texttt{std::unordered\_map\textless{}GridCoord3,...\textgreater{}} solves this by storing the actual key and using equality after hashing.
+
+The hash only selects a bucket.
+
+The full coordinate determines identity.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Bucket collision handling}
+
+Conceptually a hash table implements something like:
+
+\begin{verbatim}
+hash(key) -> bucket
+
+bucket:
+    key A -> value
+    key B -> value
+    key C -> value
+\end{verbatim}
+
+Different keys may occupy the same bucket.
+
+The table searches the bucket and verifies:
+
+\[
+key_{\text{stored}}==key_{\text{query}}.
+\]
+
+Your \texttt{unordered\_map} handles this automatically.
+
+But there is another bucket issue at the \textbf{spatial} level.
+
+One cell can contain many object IDs:
+
+\begin{verbatim}
+unordered_map<
+    GridCoord3,
+    vector<SpatialID>
+> m_Cells;
+\end{verbatim}
+
+If a cell contains \(K\) objects, scanning it costs:
+
+\[
+O(K).
+\]
+
+Therefore hash-table lookup can be \(O(1)\) average while spatial-query cost is still terrible because one cell contains 10,000 objects.
+
+Cell-size choice is critical.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Inserting moving objects}
+
+When object moves from cells:
+
+\[
+S_{\text{old}}
+\]
+
+to:
+
+\[
+S_{\text{new}},
+\]
+
+we need to remove it from old cells and add it to new cells.
+
+Your implementation retains a reverse map:
+
+\begin{verbatim}
+unordered_map<
+    SpatialID,
+    vector<GridCoord3>
+> m_IDCells;
+\end{verbatim}
+
+This is very useful.
+
+Without it, removing object 42 would require searching the entire grid.
+
+Instead:
+
+\begin{verbatim}
+object ID 42
+   |
+   v
+list of occupied cells
+   |
+remove 42 from those buckets
+\end{verbatim}
+
+Your \texttt{Insert()} currently calls:
+
+\begin{verbatim}
+Remove(id);
+\end{verbatim}
+
+then completely reinserts the object's new bounds.
+
+That is simple and correct.
+
+A more incremental update can calculate:
+
+\[
+S_{\text{remove}}
+=
+S_{\text{old}}-S_{\text{new}}
+\]
+
+and:
+
+\[
+S_{\text{add}}
+=
+S_{\text{new}}-S_{\text{old}}.
+\]
+
+Cells in the intersection remain unchanged.
+
+That can save work for slowly moving large objects.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Neighbor-cell range queries}
+
+Suppose we want all objects within radius \(r\) of point \(p\).
+
+First find a conservative query box:
+
+\[
+Q=
+[p-(r,r,r),\,
+ p+(r,r,r)].
+\]
+
+Map Q to a cell range.
+
+Visit each cell in that range.
+
+Because an object can occupy several cells, the same ID can appear multiple times.
+
+Therefore deduplicate.
+
+Your implementation uses:
+
+\begin{verbatim}
+std::unordered_set<SpatialID> unique;
+\end{verbatim}
+
+Then performs actual bounds intersection before accepting the ID.
+
+For radius query it further checks:
+
+\begin{verbatim}
+OverlapsSphere(
+    m_Bounds.at(id),
+    center,
+    radius);
+\end{verbatim}
+
+So the pipeline is:
+
+\begin{verbatim}
+sphere
+  |
+  v
+sphere AABB
+  |
+  v
+candidate grid cells
+  |
+  v
+candidate IDs
+  |
+  v
+deduplicate
+  |
+  v
+AABB/sphere check
+\end{verbatim}
+
+Again, spatial indexing narrows work; it does not automatically constitute final shape collision.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Query complexity in a spatial hash}
+
+Suppose a query spans:
+
+\[
+n_x\times n_y\times n_z
+\]
+
+cells.
+
+Cell enumeration costs:
+
+\[
+O(n_xn_yn_z).
+\]
+
+Then if cell \(i\) contains \(K_i\) entries:
+
+\[
+O\left(
+n_xn_yn_z
++
+\sum_iK_i
+\right)
+\]
+
+before deduplication overhead.
+
+Thus performance depends on:
+
+\[
+\boxed{
+\text{cell size}
++
+\text{object size distribution}
++
+\text{density}
++
+\text{query size}.
+}
+\]
+
+There is no magic \(O(1)\) spatial hash query independent of the scene.
+
+Hashing only makes cell lookup approximately constant-time.
+
+It does not make the number of cells or objects constant.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Uniform grids for broadphase}
+
+A uniform grid is conceptually simpler than a hierarchy.
+
+Divide space:
+
+\begin{verbatim}
++---+---+---+---+
+|   | A | A |   |
++---+---+---+---+
+| B | A | A |   |
++---+---+---+---+
+| B |   | C | C |
++---+---+---+---+
+\end{verbatim}
+
+Objects sharing a cell become broadphase candidates.
+
+If the characteristic object diameter is approximately \(d\), a common starting cell-size choice is:
+
+\[
+h\approx d.
+\]
+
+If:
+
+\[
+h\ll d,
+\]
+
+each object occupies many cells.
+
+If:
+
+\[
+h\gg d,
+\]
+
+each cell contains many unrelated objects.
+
+Both increase cost.
+
+A useful simplified expected-work model is:
+
+\[
+C(h)
+=
+C_{\text{cell enumeration}}(h)
++
+C_{\text{bucket candidate}}(h).
+\]
+
+Decreasing \(h\) raises the first term.
+
+Increasing \(h\) raises the second.
+
+Optimal \(h\) lies somewhere between.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Multi-level grids and heterogeneous object sizes}
+
+Suppose a world contains:
+
+\begin{verbatim}
+dust particle:   1 cm
+human:           2 m
+building:       50 m
+mountain:     1000 m
+\end{verbatim}
+
+One cell size cannot serve all four efficiently.
+
+A common solution is hierarchical grids:
+
+\begin{verbatim}
+fine grid     -> tiny objects
+medium grid   -> ordinary objects
+coarse grid   -> huge objects
+\end{verbatim}
+
+or assign giant objects to a separate acceleration structure.
+
+This is why grids work particularly well for relatively uniform-size populations such as:
+
+\begin{itemize}
+\tightlist
+\item
+  particle systems,
+\item
+  boids,
+\item
+  cloth nodes,
+\item
+  fluid neighborhoods,
+\item
+  many similar rigid bodies.
+\end{itemize}
+
+They become less attractive for extremely heterogeneous scenes.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dense grids versus hashed grids}
+
+A dense grid explicitly allocates every cell.
+
+For dimensions:
+
+\[
+N_x\times N_y\times N_z,
+\]
+
+cell count is:
+
+\[
+N_xN_yN_z.
+\]
+
+Example:
+
+\[
+1024^3
+=
+1,073,741,824
+\]
+
+cells.
+
+Even four bytes per cell costs roughly 4 GiB before object lists.
+
+But dense grids have important advantages:
+
+\[
+\text{index}
+=
+x+N_x(y+N_yz)
+\]
+
+is extremely cheap.
+
+Cells are contiguous.
+
+Cache behavior can be excellent.
+
+GPU mapping is straightforward.
+
+A hashed grid stores only occupied cells.
+
+Memory becomes related to:
+
+\[
+N_{\text{occupied}}
+\]
+
+rather than world volume.
+
+That makes it suitable for sparse or effectively unbounded scenes.
+
+But you pay for:
+
+\begin{itemize}
+\tightlist
+\item
+  hashing,
+\item
+  hash-table metadata,
+\item
+  poorer locality,
+\item
+  bucket allocations,
+\item
+  collision handling.
+\end{itemize}
+
+Your \texttt{SpatialHash} is a hashed sparse grid.
+
+The right choice depends on occupancy:
+
+\[
+\rho=
+\frac{N_{\text{occupied}}}
+{N_{\text{possible}}}.
+\]
+
+When \(\rho\) is high and the domain is bounded, dense arrays can dominate.
+
+When \(\rho\) is tiny, dense allocation is wasteful.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Octrees, Quadtrees, KD-Trees, BSP, Sphere Hierarchies, Scene Graphs, Portals/PVS and Hi-Z}\label{06-engine-ii-ch029-octrees-quadtrees-kd-trees-bsp-sphere-hierarchies-scene-graphs-portalspvs-and-hi-z}
+
+M081 focused on dynamic broadphase structures.
+
+M082 broadens the picture to explicit spatial decomposition and visibility structures.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Octree node representation}
+
+An octree recursively subdivides 3D space into eight octants.
+
+A node represents one spatial region:
+
+\[
+B=[B_{\min},B_{\max}].
+\]
+
+Its center is:
+
+\[
+C=\frac{B_{\min}+B_{\max}}2.
+\]
+
+The three splitting planes are:
+
+\[
+x=C_x,\qquad
+y=C_y,\qquad
+z=C_z.
+\]
+
+Together they produce:
+
+\[
+2\times2\times2=8
+\]
+
+children.
+
+Your current node is:
+
+\begin{verbatim}
+struct Node final
+{
+    SpatialAABB Bounds;
+    SpatialAABB LooseBounds;
+
+    std::uint32_t Depth = 0;
+
+    std::vector<OctreeItem> Items;
+
+    std::array<
+        std::unique_ptr<Node>,
+        8
+    > Children;
+};
+\end{verbatim}
+
+This is a genuine octree implementation.
+
+Unlike your flat BVH arrays, it is pointer-based.
+
+Every subdivision allocates eight child nodes separately.
+
+That is simple but less compact/cache-friendly than a node pool.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Octree subdivision}
+
+Child number can be encoded using three bits:
+
+\begin{verbatim}
+bit 0 -> high X?
+bit 1 -> high Y?
+bit 2 -> high Z?
+\end{verbatim}
+
+For child \(i\):
+
+\[
+i\&1
+\]
+
+selects X half,
+
+\[
+i\&2
+\]
+
+selects Y,
+
+\[
+i\&4
+\]
+
+selects Z.
+
+Your implementation:
+
+\begin{verbatim}
+const Vec3f childMin
+{
+    (i & 1)
+        ? center.x
+        : node.Bounds.Min.x,
+
+    (i & 2)
+        ? center.y
+        : node.Bounds.Min.y,
+
+    (i & 4)
+        ? center.z
+        : node.Bounds.Min.z
+};
+\end{verbatim}
+
+and similarly for max.
+
+This is compact and deterministic.
+
+The eight combinations correspond to all octants.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Octree insertion}
+
+A typical insertion policy is:
+
+\begin{verbatim}
+insert item at node
+
+if item completely fits child:
+    descend
+
+else:
+    store in current node
+\end{verbatim}
+
+Why not assign by centroid?
+
+Suppose a huge object crosses the node center.
+
+Its centroid may lie in one child, but the object itself overlaps several children.
+
+Putting it only in the centroid's strict child could make queries through neighboring children miss it.
+
+Therefore either:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  store it at the ancestor that fully contains it, or
+\item
+  duplicate it into every overlapping child.
+\end{enumerate}
+
+Your Kairo octree chooses ancestor storage.
+
+When capacity is exceeded:
+
+\begin{verbatim}
+if (!node.HasChildren() &&
+    node.Items.size() >=
+        MaxItemsPerNode)
+{
+    Subdivide(node);
+
+    reinsert old items;
+}
+\end{verbatim}
+
+Then:
+
+\begin{verbatim}
+if (Node* child =
+        ChildContaining(node, item.Bounds))
+{
+    Insert(*child, item);
+    return;
+}
+
+node.Items.push_back(item);
+\end{verbatim}
+
+That is a standard containment-based octree policy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why ancestor storage matters}
+
+Consider:
+
+\begin{verbatim}
++-------------------------------+
+|             |                 |
+|       +--------------+        |
+|       | BIG OBJECT   |        |
+|-------|--------------|--------|
+|       |              |        |
+|       +--------------+        |
+|             |                 |
++-------------------------------+
+\end{verbatim}
+
+The object overlaps four or eight children.
+
+If duplicated, one logical object may appear many times.
+
+If stored in current node, it is tested once whenever that node is visited.
+
+So:
+
+\[
+\boxed{
+\text{small contained items descend;}
+\quad
+\text{large cross-boundary items stay high}.
+}
+\]
+
+If many giant objects stay at the root, queries still test them frequently.
+
+Again, heterogeneous object scale hurts regular spatial subdivision.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Octree range query}
+
+For query region Q:
+
+\[
+Q\cap B_N=\varnothing
+\Rightarrow
+\text{prune node}.
+\]
+
+Otherwise:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  test objects stored directly in node,
+\item
+  recurse into children intersecting Q.
+\end{enumerate}
+
+Your implementation does:
+
+\begin{verbatim}
+if (!Intersects(
+        node.LooseBounds,
+        query))
+{
+    return;
+}
+
+for (const OctreeItem& item :
+     node.Items)
+{
+    if (Intersects(
+            item.Bounds,
+            query))
+    {
+        result.push_back(item.ID);
+    }
+}
+\end{verbatim}
+
+then recursively queries children.
+
+The same structure supports sphere and frustum queries.
+
+This is precisely why spatial hierarchies are reusable: only the bound-vs-query predicate changes.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Loose octrees}
+
+Strict octree child cells do not overlap.
+
+That is elegant for points, but awkward for extended moving objects.
+
+A loose octree gives each child an enlarged effective bound.
+
+Suppose strict child half-size is \(e\).
+
+Loose factor \(\lambda\ge1\) gives:
+
+\[
+e_{\text{loose}}
+=
+\lambda e.
+\]
+
+For:
+
+\[
+\lambda=1.5,
+\]
+
+the effective child region is 50\% larger in each half-extent.
+
+Sibling loose bounds overlap.
+
+\begin{verbatim}
+strict children
+
++-------+-------+
+|       |       |
+|   A   |   B   |
+|       |       |
++-------+-------+
+
+
+loose children
+
++----------+
+| A loose  |
+|     +----------+
++-----| B loose  |
+      +----------+
+\end{verbatim}
+
+Why deliberately introduce overlap?
+
+Because an object near a splitting plane can remain assigned to one child while moving slightly across the strict boundary.
+
+This is analogous to fat AABBs in dynamic trees.
+
+Again we trade:
+
+\[
+\text{fewer relocations}
+\leftrightarrow
+\text{more query overlap}.
+\]
+
+Your default:
+
+\begin{verbatim}
+LooseFactor = 1.5f;
+\end{verbatim}
+
+implements this.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{How Kairo constructs loose bounds}
+
+Your code computes:
+
+\begin{verbatim}
+const Vec3f amount =
+    bounds.Extent()
+    * (LooseFactor - 1.0f);
+
+loose.Expand(amount);
+\end{verbatim}
+
+With \texttt{Extent()} representing AABB half-extents, if strict half extent is \(e\):
+
+\[
+amount=e(\lambda-1).
+\]
+
+After expanding both sides, new half extent is:
+
+\[
+e+e(\lambda-1)
+=
+\lambda e.
+\]
+
+So it implements the usual multiplicative loose factor.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{A subtle loose-octree consequence}
+
+Because loose siblings overlap, one item may be completely contained by more than one child's loose bounds.
+
+Your \texttt{ChildContaining()} loops children and returns the \textbf{first} matching child.
+
+So assignment can depend on child iteration order.
+
+Correctness can still hold because the item is stored exactly once and queries test all loose child bounds.
+
+But the chosen placement may not be optimal.
+
+A stronger policy might choose:
+
+\begin{itemize}
+\tightlist
+\item
+  child whose strict region contains the object's center,
+\item
+  child producing smallest loose-bound relation,
+\item
+  deepest fitting child using deterministic spatial bits.
+\end{itemize}
+
+Loose hierarchies trade unique geometric partitioning for update flexibility.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{A concrete current octree correctness hazard}
+
+Your public \texttt{Octree::Insert()} validates:
+
+\begin{verbatim}
+bounds.IsValid()
+\end{verbatim}
+
+but does \textbf{not} currently require:
+
+\[
+m_{\text{WorldBounds}}
+\supseteq
+bounds.
+\]
+
+Now suppose world root is:
+
+\[
+[-10,10]^3
+\]
+
+but an item is inserted at:
+
+\[
+[100,101]^3.
+\]
+
+No child contains it, so it remains in the root's \texttt{Items}.
+
+But a query around \([100,101]^3\) begins with:
+
+\begin{verbatim}
+if (!Intersects(
+        node.LooseBounds,
+        query))
+{
+    return;
+}
+\end{verbatim}
+
+The root loose bounds do not intersect the query.
+
+Therefore the root returns \textbf{before testing the root-stored out-of-world item}.
+
+That creates a false negative.
+
+So the current API needs one of these contracts:
+
+\[
+\boxed{
+\text{require every inserted item inside root bounds}
+}
+\]
+
+or:
+
+\[
+\boxed{
+\text{dynamically expand/rebuild the root}
+}
+\]
+
+or a special overflow collection tested separately.
+
+At present, the containment precondition is not enforced.
+
+That is an important real repository issue.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Octree update/removal considerations}
+
+Your \texttt{Insert(id,bounds)} first calls:
+
+\begin{verbatim}
+Remove(id);
+\end{verbatim}
+
+\texttt{Remove()} recursively searches the octree.
+
+Without a map:
+
+\[
+ID\rightarrow Node*
+\]
+
+removal can cost:
+
+\[
+O(N_{\text{nodes}}+N_{\text{items}})
+\]
+
+in the worst case.
+
+For mostly-static scene indexing this may be acceptable.
+
+For thousands of moving objects every frame, it is not.
+
+A production dynamic loose octree typically benefits from proxy handles similar to the dynamic AABB tree:
+
+\begin{verbatim}
+object -> owning node
+\end{verbatim}
+
+Then relocation can directly remove from its old node.
+
+Also note \texttt{CollapseIfEmpty()} only destroys children when \textbf{all} child subtrees are empty.
+
+It does not merge children when their combined population drops below a threshold.
+
+A more complete tree may use:
+
+\begin{verbatim}
+split when count > high threshold
+merge when count < low threshold
+\end{verbatim}
+
+with different thresholds to avoid split/merge oscillation.
+
+That is hysteresis.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Octree ray traversal}
+
+Your current raycast checks:
+
+\begin{verbatim}
+node.LooseBounds
+\end{verbatim}
+
+then every item and recursively every child.
+
+However it passes the original:
+
+\begin{verbatim}
+maxDistance
+\end{verbatim}
+
+throughout traversal.
+
+It does not shrink the node-test interval to:
+
+\[
+result.Closest.Distance.
+\]
+
+It also does not visit children near-to-far.
+
+Therefore if it finds a close hit, distant subtrees are still traversed whenever they intersect the original ray interval.
+
+The BVH traversal from Pass 07 is more optimized in this respect.
+
+A better octree raycast would maintain:
+
+\[
+t_{\text{closest}}
+\]
+
+and prune:
+
+\[
+t_{\text{nodeNear}}>
+t_{\text{closest}}.
+\]
+
+So the underlying acceleration principle is shared across hierarchy types.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Quadtree representation}
+
+A quadtree is the 2D equivalent of an octree.
+
+Each node splits into four quadrants:
+
+\begin{verbatim}
++---------+---------+
+|         |         |
+|   NW    |   NE    |
+|         |         |
++---------+---------+
+|         |         |
+|   SW    |   SE    |
+|         |         |
++---------+---------+
+\end{verbatim}
+
+A canonical node:
+
+\begin{verbatim}
+struct QuadNode
+{
+    Rect bounds;
+
+    std::vector<Item> items;
+
+    std::array<
+        std::unique_ptr<QuadNode>,
+        4
+    > children;
+
+    uint32_t depth;
+};
+\end{verbatim}
+
+Its center:
+
+\[
+C=
+\frac{Min+Max}{2}
+\]
+
+generates two splitting lines:
+
+\[
+x=C_x,
+\qquad
+y=C_y.
+\]
+
+This gives four children.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Important Kairo status: \texttt{Quadtree.cppm} is currently not a quadtree}
+
+Your current file defines:
+
+\begin{verbatim}
+class Quadtree
+{
+    SpatialRect m_WorldBounds;
+    std::vector<QuadtreeItem> m_Items;
+};
+\end{verbatim}
+
+Insertion:
+
+\begin{verbatim}
+m_Items.push_back(...)
+\end{verbatim}
+
+and query:
+
+\begin{verbatim}
+for (const QuadtreeItem& item :
+     m_Items)
+{
+    if (item.Bounds.Intersects(query))
+        result.push_back(item.ID);
+}
+\end{verbatim}
+
+There are:
+
+\begin{itemize}
+\tightlist
+\item
+  no nodes,
+\item
+  no subdivision,
+\item
+  no four children,
+\item
+  no depth,
+\item
+  no hierarchical pruning.
+\end{itemize}
+
+So the current class is effectively:
+
+\[
+\boxed{
+\text{flat 2D spatial collection with linear query}
+}
+\]
+
+with API shape resembling a future quadtree.
+
+It is correct for the test cases, but complexity is:
+
+\[
+O(N)
+\]
+
+per query.
+
+Part 1362--1363 therefore remains a genuine implementation gap.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Quadtree insertion and subdivision}
+
+Canonical insertion is almost identical to octree insertion.
+
+\begin{verbatim}
+void insert(
+    QuadNode& node,
+    Item item)
+{
+    // If children exist and one completely
+    // contains the item, descend.
+    if (node.hasChildren())
+    {
+        if (QuadNode* child =
+                containingChild(
+                    node,
+                    item.bounds))
+        {
+            insert(*child, item);
+            return;
+        }
+    }
+
+    node.items.push_back(item);
+
+    // Split only after capacity is exceeded
+    // and maximum depth is not reached.
+    if (node.items.size() >
+            MaxItemsPerNode &&
+        node.depth < MaxDepth)
+    {
+        if (!node.hasChildren())
+            subdivide(node);
+
+        redistributeItems(node);
+    }
+}
+\end{verbatim}
+
+A quadtree is particularly useful for worlds where Y/elevation is not important to the broadphase:
+
+\begin{itemize}
+\tightlist
+\item
+  2D games,
+\item
+  map editors,
+\item
+  top-down strategy games,
+\item
+  terrain tiles,
+\item
+  geographic data,
+\item
+  UI/canvas partitioning.
+\end{itemize}
+
+Using a 3D octree for essentially 2D content wastes subdivisions.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{KD-tree splitting planes}
+
+A KD-tree recursively partitions \(k\)-dimensional space using axis-aligned hyperplanes.
+
+In 3D, node split is:
+
+\[
+x=s
+\]
+
+or:
+
+\[
+y=s
+\]
+
+or:
+
+\[
+z=s.
+\]
+
+Example:
+
+\begin{verbatim}
+           x = 5
+             |
+      LEFT   |   RIGHT
+             |
+\end{verbatim}
+
+A point goes left if:
+
+\[
+p_x<5
+\]
+
+and right otherwise, depending on tie convention.
+
+Unlike a BVH, a KD-tree node fundamentally defines a \textbf{partition plane}, not merely a bounding group.
+
+Your KD-tree stores:
+
+\begin{verbatim}
+struct Node final
+{
+    SpatialIndex PointIndex;
+    SpatialIndex Left;
+    SpatialIndex Right;
+    std::uint32_t Axis;
+};
+\end{verbatim}
+
+Each node stores one point and its splitting axis.
+
+The splitting coordinate is simply that point's coordinate on the axis.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Median KD-tree construction}
+
+Your build chooses:
+
+\[
+axis=depth\bmod3.
+\]
+
+So:
+
+\begin{verbatim}
+depth 0 -> X
+depth 1 -> Y
+depth 2 -> Z
+depth 3 -> X
+...
+\end{verbatim}
+
+Then it finds the median point along that axis using:
+
+\begin{verbatim}
+std::nth_element(...)
+\end{verbatim}
+
+If range size is \(N\), choose:
+
+\[
+m=\left\lfloor\frac N2\right\rfloor.
+\]
+
+The median becomes current node.
+
+Left subrange recursively forms left child.
+
+Right subrange forms right child.
+
+Because median splitting keeps point counts approximately balanced:
+
+\[
+depth\approx O(\log N)
+\]
+
+for ordinary inputs.
+
+Using \texttt{nth\_element} avoids fully sorting every node range.
+
+Expected work per level is linear in the total number of points across that level, giving an expected build on the order of:
+
+\[
+O(N\log N)
+\]
+
+for this straightforward recursive construction.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Axis selection alternatives}
+
+Cycling X/Y/Z is cheap and simple.
+
+But suppose all points lie along X:
+
+\begin{verbatim}
+------------------------------ points -------------------->
+\end{verbatim}
+
+Y and Z splits convey almost no spatial information.
+
+A stronger builder can choose:
+
+\[
+axis=
+\arg\max(
+\text{point spread}
+).
+\]
+
+That is analogous to longest-centroid-axis BVH construction.
+
+Or use variance:
+
+\[
+axis=
+\arg\max
+\operatorname{Var}(p_a).
+\]
+
+For point clouds from reconstruction, PCA-like axis selection can go even further, although then the tree stops being a classical axis-aligned KD-tree.
+
+Your current Kairo implementation deliberately uses the simpler cyclic strategy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{KD-tree nearest-neighbor search}
+
+This is where KD-trees become beautiful.
+
+Suppose query point is \(Q\), and current node stores point \(P\) with splitting axis \(a\).
+
+Calculate:
+
+\[
+d^2=\|Q-P\|^2.
+\]
+
+If:
+
+\[
+d^2<d^2_{\text{best}},
+\]
+
+update best.
+
+Now calculate distance from query to splitting plane:
+
+\[
+\delta=Q_a-P_a.
+\]
+
+Visit the near child first.
+
+After returning, ask:
+
+\begin{quote}
+Could the far side contain a point closer than current best?
+\end{quote}
+
+The minimum possible distance to any point on the far side is at least:
+
+\[
+|\delta|.
+\]
+
+So if:
+
+\[
+\delta^2>d^2_{\text{best}},
+\]
+
+the far side cannot improve the answer.
+
+Prune it.
+
+Thus:
+
+\[
+\boxed{
+\delta^2
+\le
+d^2_{\text{best}}
+\Rightarrow
+\text{far side might matter}.
+}
+\]
+
+Your \texttt{SearchNearest()} implements exactly this.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Manual KD nearest-neighbor trace}
+
+Suppose node splits X at:
+
+\[
+x=5.
+\]
+
+Query:
+
+\[
+Q=(3,2).
+\]
+
+Current best distance:
+
+\[
+d_{\text{best}}=1.5.
+\]
+
+Distance to split plane:
+
+\[
+|3-5|=2.
+\]
+
+Since:
+
+\[
+2>1.5,
+\]
+
+no point across the X=5 plane can be closer.
+
+Far branch is eliminated.
+
+Graphically:
+
+\begin{verbatim}
+                 split x=5
+
+ query Q *
+       |<-- 2 -->|
+
+-----------------|-----------------------
+                 |
+                 |
+       near      |       far
+                 |
+\end{verbatim}
+
+The closest sphere around Q has radius 1.5.
+
+It does not cross the splitting plane.
+
+Therefore the far half-space is irrelevant.
+
+This is exactly analogous to BVH closest-hit pruning:
+
+\[
+\text{lower bound}>
+\text{best known answer}
+\Rightarrow
+\text{prune}.
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{K-nearest neighbors}
+
+For \(k>1\), keep the best \(k\) points.
+
+A max-heap is ideal.
+
+Why max-heap?
+
+Because among the current accepted points, we repeatedly need the \textbf{worst} one.
+
+Let:
+
+\[
+d^2_{\max}
+\]
+
+be distance of heap top.
+
+If new point has:
+
+\[
+d^2<d^2_{\max},
+\]
+
+remove worst and insert new point.
+
+For pruning, if heap already contains \(k\) points:
+
+\[
+\delta^2>
+d^2_{\max}
+\]
+
+means far branch cannot contain a point better than any member required to replace the current set.
+
+Your \texttt{KNearest()} implementation does precisely this.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{KD-tree radius search}
+
+Given radius \(r\), accept points satisfying:
+
+\[
+\|Q-P\|^2\le r^2.
+\]
+
+The far side needs exploring only if:
+
+\[
+\delta^2\le r^2.
+\]
+
+This is your current \texttt{RadiusSearch()} logic.
+
+Using squared distances avoids repeated square roots:
+
+\[
+d^2\le r^2
+\]
+
+is equivalent to:
+
+\[
+d\le r
+\]
+
+for nonnegative distances.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{KD-tree range queries}
+
+The curriculum's range-query topic extends beyond the current Kairo API.
+
+Suppose query AABB is:
+
+\[
+Q=[Q_{\min},Q_{\max}].
+\]
+
+At node point \(P\) with splitting axis \(a\):
+
+Accept point if:
+
+\[
+Q_{\min}\le P\le Q_{\max}
+\]
+
+componentwise.
+
+For child traversal:
+
+If:
+
+\[
+Q_{\min,a}\le P_a,
+\]
+
+the query extends into the left half-space.
+
+If:
+
+\[
+Q_{\max,a}\ge P_a,
+\]
+
+it extends into right.
+
+Canonical code:
+
+\begin{verbatim}
+void rangeSearch(
+    NodeIndex nodeIndex,
+    const AABB& query,
+    std::vector<PointID>& output)
+{
+    if (nodeIndex == Invalid)
+        return;
+
+    const Node& node =
+        nodes[nodeIndex];
+
+    const Point& p =
+        points[node.pointIndex];
+
+    if (query.contains(p.position))
+        output.push_back(p.id);
+
+    const float split =
+        p.position[node.axis];
+
+    if (query.min[node.axis] <= split)
+    {
+        rangeSearch(
+            node.left,
+            query,
+            output);
+    }
+
+    if (query.max[node.axis] >= split)
+    {
+        rangeSearch(
+            node.right,
+            query,
+            output);
+    }
+}
+\end{verbatim}
+
+Your current KD-tree exposes radius and nearest queries, but not an AABB range query.
+
+That is a small, natural addition.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{KD-tree versus BVH}
+
+This is worth understanding deeply rather than memorizing ``KD good for points, BVH good for objects.''
+
+\subsection{KD-tree}\label{06-engine-ii-ch029-kd-tree}
+
+The tree partitions \textbf{space}:
+
+\[
+\text{left half-space}
+\cup
+\text{right half-space}.
+\]
+
+A point belongs naturally to one side.
+
+Excellent for:
+
+\begin{itemize}
+\tightlist
+\item
+  nearest neighbors,
+\item
+  radius search,
+\item
+  point clouds,
+\item
+  multidimensional records.
+\end{itemize}
+
+Extended geometry complicates things because a triangle can cross a split plane.
+
+You must either duplicate it, split it, or store it at a higher node.
+
+\subsection{BVH}\label{06-engine-ii-ch029-bvh}
+
+The tree partitions \textbf{primitive references into groups}.
+
+Child bounds may overlap.
+
+Extended primitives fit naturally.
+
+Transforms/refits are straightforward.
+
+Excellent for:
+
+\begin{itemize}
+\tightlist
+\item
+  ray tracing,
+\item
+  collision geometry,
+\item
+  arbitrary bounded objects.
+\end{itemize}
+
+A useful summary is:
+
+\[
+\boxed{
+KD:
+\text{partition space}
+}
+\]
+
+versus:
+
+\[
+\boxed{
+BVH:
+\text{partition objects}.
+}
+\]
+
+Neither universally dominates.
+
+For Maveb-style point neighborhoods, KD-tree can be natural.
+
+For ray tracing reconstructed triangles, BVH is usually much more natural.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{BSP trees}
+
+A Binary Space Partitioning tree generalizes KD-trees.
+
+A KD-tree uses axis-aligned split planes.
+
+A BSP tree can use arbitrary planes:
+
+\[
+n\cdot x+d=0.
+\]
+
+Geometry is classified as:
+
+\[
+n\cdot x+d>0
+\]
+
+front,
+
+\[
+<0
+\]
+
+back,
+
+or intersecting the plane.
+
+Intersecting polygons may be split.
+
+Conceptually:
+
+\begin{verbatim}
+                     Plane P0
+                     /      \
+                  front      back
+                  /            \
+              Plane P1        Plane P2
+\end{verbatim}
+
+Why permit arbitrary planes?
+
+Because architectural geometry often already contains useful partition planes:
+
+\begin{itemize}
+\tightlist
+\item
+  walls,
+\item
+  floors,
+\item
+  ceilings.
+\end{itemize}
+
+A BSP can align partitions with scene structure.
+
+Historically this made BSP trees powerful for indoor rendering, constructive solid geometry and visibility.
+
+The price is complicated preprocessing and polygon splitting.
+
+Unlike dynamic AABB trees, BSP trees are generally much more suited to mostly-static geometry.
+
+There is currently no dedicated BSP implementation in \texttt{KairoSpatial}.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{BSP front-to-back traversal}
+
+A nice property of BSP is viewpoint-relative ordering.
+
+At split plane:
+
+\[
+d=n\cdot C+d_0
+\]
+
+for camera position C.
+
+If camera lies on front side:
+
+\begin{verbatim}
+visit front subtree
+then plane geometry
+then back subtree
+\end{verbatim}
+
+for front-to-back.
+
+Reverse for back-to-front.
+
+This was historically useful for painter-style visibility and transparency ordering.
+
+Modern depth buffers reduce the need for BSP purely for polygon sorting, but BSP/cell decomposition remains conceptually important for portal/PVS systems.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Bounding-sphere hierarchies}
+
+A bounding-sphere hierarchy is like a BVH but uses spheres.
+
+Node:
+
+\[
+S=(C,r).
+\]
+
+Parent sphere contains all descendant geometry.
+
+Sphere-ray, sphere-sphere and frustum-sphere tests are cheap.
+
+Spheres have one enormous advantage under rigid rotation:
+
+\[
+\text{rotation does not change a sphere}.
+\]
+
+If an object rotates, its local bounding sphere remains exactly the same radius.
+
+A world-space AABB often changes with rotation.
+
+This can make sphere hierarchies useful for highly rotating objects.
+
+But spheres fit elongated geometry badly.
+
+Imagine a sword:
+
+\begin{verbatim}
+--------------------------------
+\end{verbatim}
+
+Its bounding sphere:
+
+\begin{verbatim}
+             ___________
+          .-'           '-.
+        .'                 '.
+       / ------------------- \
+       \                     /
+        '.                 .'
+          '-.___________.-'
+\end{verbatim}
+
+Most of the sphere contains empty space.
+
+That causes false positives.
+
+An AABB/OBB may fit it much more tightly.
+
+Thus:
+
+\[
+\text{spheres}
+=
+\text{cheap + rotation invariant + loose fit}
+\]
+
+while:
+
+\[
+\text{boxes}
+=
+\text{tighter fit + slightly more complex}.
+\]
+
+A sphere hierarchy therefore represents a different point in the fit-vs-test-cost tradeoff.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Constructing a sphere parent}
+
+For two child spheres:
+
+\[
+S_1=(C_1,r_1),
+\qquad
+S_2=(C_2,r_2),
+\]
+
+let:
+
+\[
+d=\|C_2-C_1\|.
+\]
+
+If:
+
+\[
+r_1\ge d+r_2,
+\]
+
+sphere 1 already contains sphere 2.
+
+Return sphere 1.
+
+Similarly for sphere 2.
+
+Otherwise minimal enclosing sphere along the center line has radius:
+
+\[
+\boxed{
+r=
+\frac{d+r_1+r_2}{2}
+}
+\]
+
+and its center lies from \(C_1\) toward \(C_2\) by:
+
+\[
+r-r_1.
+\]
+
+Let:
+
+\[
+u=
+\frac{C_2-C_1}{d}.
+\]
+
+Then:
+
+\[
+\boxed{
+C=C_1+u(r-r_1).
+}
+\]
+
+This gives a simple pairwise merge operation.
+
+Repeated merging is not guaranteed to produce globally minimal enclosing spheres for many primitives, but it is useful for hierarchical construction.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Scene graphs versus spatial indices}
+
+This is one of the most important architectural distinctions in the entire graphics curriculum.
+
+A \textbf{scene graph} answers:
+
+\begin{quote}
+What is related to what semantically or transform-wise?
+\end{quote}
+
+A \textbf{spatial index} answers:
+
+\begin{quote}
+What is near/intersecting/visible in this region?
+\end{quote}
+
+Suppose:
+
+\begin{verbatim}
+Car
+├── chassis
+├── leftFrontWheel
+├── rightFrontWheel
+├── leftRearWheel
+└── rightRearWheel
+\end{verbatim}
+
+This is a natural scene graph.
+
+A wheel transform is relative to the car.
+
+But now suppose the car is parked beside a tree.
+
+Spatially:
+
+\begin{verbatim}
+wheel
+tree branch
+lamp post
+another car
+\end{verbatim}
+
+may be closer than other nodes in the car hierarchy.
+
+Scene-graph parenting does not imply spatial adjacency.
+
+Therefore:
+
+\[
+\boxed{
+\text{transform hierarchy}
+\neq
+\text{spatial hierarchy}.
+}
+\]
+
+You often need both.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why using the scene graph as the only culling hierarchy can fail}
+
+Imagine root:
+
+\begin{verbatim}
+World
+├── Enemies
+│   ├── enemy on west side
+│   ├── enemy on east side
+│   └── enemy underground
+├── Buildings
+│   ├── building west
+│   └── building east
+└── Effects
+\end{verbatim}
+
+\texttt{Enemies} is semantically meaningful.
+
+Its world-space bound could encompass almost the entire map.
+
+Frustum testing that parent gives little pruning.
+
+A BVH might instead group:
+
+\begin{verbatim}
+west-side enemy
+west building
+west props
+\end{verbatim}
+
+together because they are spatially close.
+
+That may have no semantic relationship at all.
+
+Hence engines typically separate:
+
+\begin{verbatim}
+Entity/scene hierarchy
+          |
+          +---- transforms
+          +---- ownership
+          +---- activation
+          +---- logical grouping
+
+Spatial structures
+          |
+          +---- culling
+          +---- collision
+          +---- raycasts
+          +---- neighborhoods
+\end{verbatim}
+
+Objects register their world bounds with one or more spatial systems.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Portal and cell visibility}
+
+Some worlds have strong architectural structure.
+
+Think of:
+
+\begin{verbatim}
+Room A ---- doorway ---- Room B ---- doorway ---- Room C
+\end{verbatim}
+
+Rooms become \textbf{cells}.
+
+Doors/windows/openings become \textbf{portals}.
+
+The cell connectivity forms a graph:
+
+\begin{verbatim}
+[A] -- portal P0 -- [B] -- portal P1 -- [C]
+ |
+ P2
+ |
+[D]
+\end{verbatim}
+
+If the camera is in A, visibility into B can only pass through P0.
+
+Instead of rendering the entire world, recursively traverse visible portals.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Portal traversal with clipped frusta}
+
+Start with camera frustum \(F_0\).
+
+For portal P from current cell:
+
+\[
+F_1=
+F_0\cap
+\text{portal visibility cone}.
+\]
+
+Traverse neighboring cell using \(F_1\).
+
+For its portal Q:
+
+\[
+F_2=
+F_1\cap
+\text{cone through Q}.
+\]
+
+Each portal narrows the visible region.
+
+Conceptually:
+
+\begin{verbatim}
+Camera
+   \
+    \       portal 1
+     \      |   |
+      \_____|   |____________
+             \             portal 2
+              \             | |
+               \____________| |
+\end{verbatim}
+
+A cell may be connected but not visible through the current sequence of openings.
+
+Portal clipping exploits exactly that.
+
+It is particularly powerful in indoor architecture where walls create strong occlusion.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Portals are a graph, not necessarily a tree}
+
+A room may connect back to a previously visited room through another corridor.
+
+Therefore portal traversal needs visited-state logic or recursion guards.
+
+You may need state based not only on:
+
+\begin{verbatim}
+visited cell
+\end{verbatim}
+
+but on:
+
+\begin{verbatim}
+cell + current visibility region
+\end{verbatim}
+
+because the same cell could be visible through two portals with different clipped frusta.
+
+This is why portal visibility becomes more involved than ordinary graph traversal.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dynamic objects in portal systems}
+
+Static walls and portals fit naturally.
+
+Dynamic objects still need handling.
+
+A character moving between rooms can be associated with current cell.
+
+A large object crossing a doorway may belong to multiple cells.
+
+A moving door can change portal openness.
+
+This is where portal systems and generic spatial indices complement one another.
+
+For example:
+
+\begin{verbatim}
+PVS/portals
+     ↓
+which cells might matter?
+     ↓
+dynamic tree inside those cells
+     ↓
+which moving objects matter?
+\end{verbatim}
+
+Combining structures is often better than forcing one structure to solve everything.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Potentially Visible Sets}
+
+A portal system can determine visibility at runtime.
+
+A \textbf{Potentially Visible Set}, or PVS, pushes some work offline.
+
+For each cell \(C_i\), precompute:
+
+\[
+PVS(C_i)
+=
+\{
+C_j
+\mid
+C_j
+\text{ might be visible from }C_i
+\}.
+\]
+
+The keyword is \textbf{might}.
+
+A correct PVS is conservative:
+
+\[
+\text{actually visible}
+\Rightarrow
+\text{member of PVS}.
+\]
+
+It is allowed to include cells that are not actually visible from the current camera position.
+
+It must not omit a cell that can be visible.
+
+Classical cell/PVS systems precompute a conservative superset for each view region so runtime rendering can skip regions known to be impossible to see; portal-based PVS is especially suited to static indoor environments and trades preprocessing/storage for cheap runtime rejection. \href{https://pure.tue.nl/ws/files/46823201/556098-1.pdf?utm_source=chatgpt.com}{TU/e Pure}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{PVS as bitsets}
+
+Suppose there are 8 cells.
+
+For cell A:
+
+\begin{verbatim}
+cell:  A B C D E F G H
+PVS :  1 1 0 1 0 0 0 0
+\end{verbatim}
+
+This can be stored as:
+
+\begin{verbatim}
+11010000₂
+\end{verbatim}
+
+Then runtime:
+
+\begin{verbatim}
+if (!pvs[currentCell].test(objectCell))
+    rejectObject();
+\end{verbatim}
+
+A thousand cells require:
+
+\[
+1000\text{ bits}
+=
+125\text{ bytes}
+\]
+
+per uncompressed PVS row.
+
+For 1000 cells:
+
+\[
+125\,000\text{ bytes}
+\]
+
+about 122 KiB.
+
+For 100,000 cells:
+
+\[
+\frac{10^{10}}8
+\approx1.25\text{ GiB}
+\]
+
+if storing a complete dense matrix.
+
+Thus compression and hierarchy become important at large scale.
+
+Classical Quake-style PVS implementations famously store cluster visibility as bit vectors and exploit the fact that many rows contain long runs of invisible clusters. \href{https://vrarwiki.com/wiki/Potentially_visible_set?utm_source=chatgpt.com}{VR \& AR Wiki}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{PVS is not exact visibility}
+
+Suppose cell B is potentially visible from A through some viewpoint.
+
+Then B must remain in:
+
+\[
+PVS(A)
+\]
+
+even if from the player's current location inside A a pillar hides B completely.
+
+So runtime can be:
+
+\begin{verbatim}
+PVS rejection
+      |
+      v
+portal/frustum culling
+      |
+      v
+occlusion culling
+      |
+      v
+render
+\end{verbatim}
+
+Each stage gets more expensive and more precise.
+
+This is a recurring rendering principle:
+
+\[
+\boxed{
+\text{cheap conservative rejectors first;}
+\quad
+\text{expensive precise work later}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hierarchical Z occlusion}
+
+This final topic moves from world-space spatial indexing to \textbf{image-space spatial testing}.
+
+Suppose the camera already has a depth buffer.
+
+At full resolution:
+
+\begin{verbatim}
+level 0
+
++---+---+---+---+
+| z | z | z | z |
++---+---+---+---+
+| z | z | z | z |
++---+---+---+---+
+| z | z | z | z |
++---+---+---+---+
+| z | z | z | z |
++---+---+---+---+
+\end{verbatim}
+
+Construct progressively smaller depth levels:
+
+\begin{verbatim}
+level 1
+
++-------+-------+
+| depth | depth |
++-------+-------+
+| depth | depth |
++-------+-------+
+
+
+level 2
+
++---------------+
+|     depth     |
++---------------+
+\end{verbatim}
+
+This is a depth pyramid / hierarchical Z representation.
+
+A coarse texel summarizes a larger screen-space region.
+
+Now a large object's projected bounding rectangle can be tested using only a few coarse texels instead of every covered pixel.
+
+That converts occlusion into a hierarchical spatial test.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The conservative depth reduction rule}
+
+We must derive this carefully.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hyperref[volume-reading-map]{Reading map} · \hyperref[06-engine-ii-ch028-bvh-traversal-refitting-and-simd]{Previous chapter} · \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=06-engine-ii-ch030-depth-projection-and-shadow-map-precision}{Next chapter (Geometry, Cameras, and Image Formation, Ch. 13)}

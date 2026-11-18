@@ -1,0 +1,81 @@
+\hypertarget{appendix-40df0855b4a7}{}
+\section*{Automatic differentiation and backpropagation}
+\section{Automatic differentiation and backpropagation}\label{appendix-40df0855b4a7-automatic-differentiation-and-backpropagation}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} Phase 9
+
+\subsection{Definition and mechanism}\label{appendix-40df0855b4a7-definition-and-mechanism}
+
+Automatic differentiation evaluates derivatives by applying the chain rule to the operations in a program. Each operation has a local derivative rule; composing the rules gives the derivative of the complete computation without symbolically expanding it or approximating it by finite differences. Forward mode propagates a tangent perturbation and computes a Jacobian-vector product (JVP), useful when there are few inputs. Reverse mode propagates sensitivities from outputs back to inputs and computes a vector-Jacobian product (VJP), making gradients of one scalar loss with respect to millions of parameters practical. Backpropagation is reverse-mode differentiation through a neural network's computation graph. It does not remove numerical problems: nondifferentiable operations require conventions, saturated activations can yield tiny gradients, and an incorrect graph or reduction yields an incorrect gradient. Gradients are local sensitivity information, not proof of a global optimum. Finite differences remain a useful small-scale check, but cancellation and step-size tradeoffs make them a poor training method.
+
+\subsubsection{Phase 9--10 development}\label{appendix-40df0855b4a7-phase-910-development}
+
+Forward mode propagates an input tangent through local derivatives and computes a Jacobian-vector product. Reverse mode propagates an output sensitivity backward and computes a vector-Jacobian product. These are chain-rule evaluations on the operation graph, distinct from finite differences, which perturb inputs and can suffer cancellation. The reverse pass requires a valid reverse-topological order and storage that remains alive until propagation finishes. Differentiating a converged solution uses an implicit equation and its local Jacobian; it is not automatically the same as differentiating every solver iteration.
+
+\subsection{Prerequisites}\label{appendix-40df0855b4a7-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-29f4bea4c2bb}{Constrained optimization and inverse kinematics (04-Visual-Computing-II, appendix-29f4bea4c2bb)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-ab31ef447dbf}{Matrix multiplication and composition order (02-Foundations-II, appendix-ab31ef447dbf)}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-c2ac4a84c283}{Floating-point reassociation (01-Foundations-I, appendix-c2ac4a84c283)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-7bc181935c42}{Derivative as a local linear map (02-Foundations-II, appendix-7bc181935c42)}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-d8a7ddb675eb}{Jacobians, pushforwards, and pullbacks (01-Foundations-I, appendix-d8a7ddb675eb)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-40df0855b4a7-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch031-learning-a-visual-classifier-from-examples}{Learning a visual classifier from examples (04-Visual-Computing-II, 04-visual-computing-ii-ch031-learning-a-visual-classifier-from-examples)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics}{Optimization, constraints, and inverse kinematics (04-Visual-Computing-II, 04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-47c51ea026fb}{Learned image features and CNNs (04-Visual-Computing-II, appendix-47c51ea026fb)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-a9d5dfdd164a}{Attention and visual transformers (04-Visual-Computing-II, appendix-a9d5dfdd164a)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-2c568f05ee34}{Latent-variable models and generative flows (04-Visual-Computing-II, appendix-2c568f05ee34)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-c5b332e400e7}{Radiance fields and Gaussian splatting (04-Visual-Computing-II, appendix-c5b332e400e7)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-b0c42da325f1}{Perception feedback and robot learning (04-Visual-Computing-II, appendix-b0c42da325f1)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-8836553d56fc}{Implicit differentiation and parameter sensitivities (02-Foundations-II, appendix-8836553d56fc)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-40df0855b4a7-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch031-learning-a-visual-classifier-from-examples}{Learning a visual classifier from examples (04-Visual-Computing-II, 04-visual-computing-ii-ch031-learning-a-visual-classifier-from-examples)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics}{Optimization, constraints, and inverse kinematics (04-Visual-Computing-II, 04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=02-foundations-ii-ch022-numerical-differentiation-and-automatic-differentiation}{Phase 9 teaching section (02-Foundations-II, 02-foundations-ii-ch022-numerical-differentiation-and-automatic-differentiation)}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-adf48f5dc5c1}{Visual Recall/09 - Calculus and Optimization - Visual Recall.md (01-Foundations-I, appendix-adf48f5dc5c1)} · Phase 9 visual recall
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-40df0855b4a7-recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  Compare a JVP and VJP by naming the direction propagated and the Jacobian multiplication performed.
+\item
+  Why does a correct gradient still fail to guarantee a global minimum?
+\end{itemize}
+
+\subsection{Source and navigation}\label{appendix-40df0855b4a7-source-and-navigation}
+
+Teaching narrative: \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch031-learning-a-visual-classifier-from-examples}{open the main explanation (04-Visual-Computing-II, 04-visual-computing-ii-ch031-learning-a-visual-classifier-from-examples)}. Browse the \href{../02-Foundations-II/main.pdf\#nameddest=appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series}{University graphics and vision index (02-Foundations-II, appendix-a6d556a4ef50-university-graphics-vision-and-photography-\/-\/-independent-series)}. Additional chapter connections: \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics}{Optimization, constraints, and inverse kinematics (04-Visual-Computing-II, 04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics)}; \href{../01-Foundations-I/main.pdf\#nameddest=01-foundations-i-ch020-qr-turns-least-squares-into-a-triangular-solve-plus-an-irreducible-residual}{QR turns least squares into a triangular solve plus an irreducible residual (01-Foundations-I, 01-foundations-i-ch020-qr-turns-least-squares-into-a-triangular-solve-plus-an-irreducible-residual)}; \href{../01-Foundations-I/main.pdf\#nameddest=01-foundations-i-ch002-a-compiled-interface-rather-than-repeated-text}{A compiled interface rather than repeated text (01-Foundations-I, 01-foundations-i-ch002-a-compiled-interface-rather-than-repeated-text)}.
+
+Caption/source records: \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch036-sc-02---stanford-cs231n-spring-2025-lecture-2-image-classification-with-linear-classifiers}{SC-02 (04-Visual-Computing-II, 04-visual-computing-ii-ch036-sc-02-\/-\/-stanford-cs231n-spring-2025-lecture-2-image-classification-with-linear-classifiers)}, \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch036-sc-03---stanford-cs231n-spring-2025-lecture-3-regularization-and-optimization}{SC-03 (04-Visual-Computing-II, 04-visual-computing-ii-ch036-sc-03-\/-\/-stanford-cs231n-spring-2025-lecture-3-regularization-and-optimization)}, \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch036-sc-04---stanford-cs231n-spring-2025-lecture-4-neural-networks-and-backpropagation}{SC-04 (04-Visual-Computing-II, 04-visual-computing-ii-ch036-sc-04-\/-\/-stanford-cs231n-spring-2025-lecture-4-neural-networks-and-backpropagation)}.

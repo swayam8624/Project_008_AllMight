@@ -1,0 +1,53 @@
+\hypertarget{appendix-367b6abf460e}{}
+\section*{Little endian}
+\section{Little endian}\label{little-endian}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+The lowest address holds the least-significant octet. For 0x12345678, offsets 0--3 hold 78/56/34/12. Writer byte i selects bits 8i through 8i+7; a matching reader restores the same weights. This is byte order, not bit reversal.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-bc07c3d25b18]{Endianness} --- Byte order tells how digit significance maps to sequence positions.
+\item
+  \hyperref[appendix-73425b25118e]{Shift operations} --- Shifts relocate a selected byte or address field to its significance position.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+Update downstream uses when later chunks build on this concept.
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Write and decode four bytes, including leading zero bytes.
+
+\textbf{Pending:} Mixed-endian cases and protocol integration.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Where\%20the\%20bytes\%20live}{C003 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\subsection{Reconstruction depth}\label{reconstruction-depth}
+
+Little-endian byte order stores the least-significant byte first. The 32-bit integer
+
+\[
+0x12345678
+\]
+
+appears in increasing memory addresses as
+
+\[
+78\;56\;34\;12.
+\]
+
+That layout is useful only after the interpretation contract is known: the same four bytes could be part of an integer, float, packed header or text. Endianness never supplies the type by itself.
+
+Most contemporary desktop CPUs are little-endian, but that is not permission to encode a durable binary format with raw object bytes. A format needs explicit field widths, byte order, versioning and bounds checks. If a file is defined little-endian, decode each field as little-endian even on a little-endian host; the explicit operation documents the contract and preserves portability.
+
+Tests should use byte arrays whose numeric values are obvious, include unaligned offsets, and verify both read and write paths. For floating point, byte order and IEEE-754 representation are separate assumptions.

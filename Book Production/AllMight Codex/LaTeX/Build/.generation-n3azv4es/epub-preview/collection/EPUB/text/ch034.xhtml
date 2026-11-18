@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch034.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-34443cec7170-binary16" class="level2">
+<h2>Binary16</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C006 · <strong>Latest development:</strong> C006</p>
+<section id="appendix-34443cec7170-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>IEEE binary16 has 1/5/10 fields, bias15 and11 normal precision bits. Word3E00 is1.5; maximum finite65504; normal minimum2^-14 and subnormal minimum2^-24.</p>
+</section>
+<section id="appendix-34443cec7170-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch033.xhtml#appendix-343615f49ddf-ieee-754-floating-point" class="wikilink">IEEE-754 floating point</a> — supplies the representation or validity rule used above.</li>
+<li><a href="ch056.xhtml#appendix-614afe1de592-rounding-to-nearest-ties-to-even" class="wikilink">Rounding to nearest ties to even</a> — supplies the representation or validity rule used above.</li>
+</ul>
+</section>
+<section id="appendix-34443cec7170-used-by" class="level3">
+<h3>Used by</h3>
+<p>Connect later dependent concepts here when their explanations use this mechanism.</p>
+</section>
+<section id="appendix-34443cec7170-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the example and identify the condition that would invalidate it.</p>
+<p><strong>Pending:</strong> Actual GPU arithmetic and conversion support are not tested by the scalar codec.</p>
+</section>
+<section id="appendix-34443cec7170-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-choosing-what-information-to-keep" class="wikilink">Continuous teaching story</a> · <span>Source coverage ledger</span> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-34443cec7170-reconstruction-depth" class="level3">
+<h3>Reconstruction depth</h3>
+<p>IEEE binary16 uses 1 sign bit, 5 exponent bits and 10 stored fraction bits. Normal numbers have an implicit leading one, giving 11 bits of significand precision. The narrow exponent and significand make half precision cheaper to store and move than binary32, but not a drop-in replacement for every intermediate.</p>
+<p>Around magnitude 1, adjacent normal values are roughly <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>10</mn>
+    </mrow>
+  </msup>
+</math> apart. As magnitude grows, spacing grows with the exponent. Subnormals extend representable values toward zero with reduced precision, while exponent all-ones encodes infinities and NaNs.</p>
+<p>A graphics or ML pipeline should distinguish storage precision from accumulation precision. Vertex attributes, textures or weights may be stored as binary16 while dot products and reductions accumulate in binary32. This often preserves bandwidth savings without accepting catastrophic accumulation error.</p>
+<p>Tests should include exact endpoints around 1, overflow to infinity according to conversion rules, underflow and subnormals, signed zero and NaN propagation policy. Hardware may flush subnormals or use mixed-precision instructions, so performance behavior requires target-specific evidence.</p>
+</section>
+</section>
+</body>
+</html>

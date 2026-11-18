@@ -1,0 +1,51 @@
+\hypertarget{appendix-ce0341f7ea0d}{}\label{referencestart:appendix-ce0341f7ea0d}
+\section{Basis coordinates and dimension}\label{appendix-ce0341f7ea0d-basis-coordinates-and-dimension}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase7
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-ce0341f7ea0d-definition-and-mechanism}
+
+Phase 7 stores basis images as matrix columns and derives coordinate conversion \([v]_C=C^{-1}B[v]_B\). The endpoint bases and whether motion is active or passive determine the product; row-major storage does not. \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-coordinates-can-change-while-the-geometric-object-stays-still}{Reconstruction and active/passive example (Mathematics for Visual Computing, Ch. 3)}.
+
+\end{allmightroledefinition}
+
+A basis is an ordered independent spanning set. Independence makes coordinates unique; spanning makes every vector reachable. Dimension counts basis elements over the chosen field, not stored components or bytes. A basis change alters coordinates without necessarily moving the physical vector.
+
+\((3,2)=1(1,0)+2(1,1)\), so its slanted-basis coordinates are \((1,2)\). A plane inside three-dimensional coordinates still has dimension two.
+
+\subsection{Prerequisites}\label{appendix-ce0341f7ea0d-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-173b52c063ae]{Vector spaces subspaces and span} --- Reachability and closure establish the spanning and independence questions.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-ce0341f7ea0d-used-by}
+
+\begin{itemize}
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=appendix-bd39c3bf5d64}{Matrices as linear maps and basis images (Mathematics for Visual Computing, Reference notes: Matrices as linear maps and basis images)}
+\item
+  \hyperref[appendix-49933872bb51]{Norms lengths and induced distances} --- Builds on this mechanism in the connected geometry story.
+\item
+  \hyperref[appendix-3b863809f82a]{Gram matrices and coordinate metrics} --- Builds on this mechanism in the connected geometry story.
+\item
+  \hyperref[appendix-46da295c6787]{Covectors linear functionals and normal transforms} --- Builds on this mechanism in the connected geometry story.
+\item
+  \hyperref[appendix-8572a4a060c1]{Linear systems and fundamental subspaces} --- Extends this foundation into linear-systems and decomposition analysis.
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=appendix-f28eeec97a3d}{Spline bases and curve evaluation (Geometry, Cameras, and Image Formation, Reference notes: Spline bases and curve evaluation)}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-b0732b22e7d6}{Additive energy and approximate structure (Light Transport and Image Synthesis, Reference notes: Additive energy and approximate structure)}
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=appendix-3c73f7862157}{Exceptional projections and dimension (Geometry, Cameras, and Image Formation, Reference notes: Exceptional projections and dimension)} \#\# Recall and next depth
+\end{itemize}
+
+Separate passive coordinate change from active transformation and explain near-dependent basis sensitivity. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-ce0341f7ea0d-source-and-navigation}
+
+\href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch017-a-basis-is-a-measuring-arrangement-not-the-vector-itself}{Teaching narrative (Mathematics for Visual Computing, Ch. 1)} · \hyperref[appendix-fd090d982a15-phase-6---parts-501-600]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-6---source-analysis-and-verification]{Evidence and limits} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

@@ -1,0 +1,36 @@
+\hypertarget{appendix-cc0909a7ef14}{}\label{referencestart:appendix-cc0909a7ef14}
+\section{Page faults and demand paging}\label{appendix-cc0909a7ef14-page-faults-and-demand-paging}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\subsection{Definition and mechanism}\label{appendix-cc0909a7ef14-definition-and-mechanism}
+
+A memory fault requires OS intervention when current translation/protection state cannot satisfy access. Valid demand loading, zero-fill, or copy-on-write may install/alter mapping then retry. Invalid addresses or denied permissions may fail instead. A fault need not perform disk I/O; a TLB miss need not fault at all.
+
+\subsection{Prerequisites}\label{appendix-cc0909a7ef14-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-01e5905165c4]{Page tables and MMU} --- Cached or faulting translation starts from the mapping/protection mechanism.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-cc0909a7ef14-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-7a06e5baac04]{Copy-on-write} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-313ee7a0ba7b]{Memory-mapped files} --- uses this mechanism as stated in its prerequisites.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-cc0909a7ef14-recall-and-next-depth}
+
+Trace successful first-touch recovery versus denied access.
+
+\textbf{Pending:} Minor/major faults, working sets, swapping, and platform terminology.
+
+\subsection{Source and navigation}\label{appendix-cc0909a7ef14-source-and-navigation}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

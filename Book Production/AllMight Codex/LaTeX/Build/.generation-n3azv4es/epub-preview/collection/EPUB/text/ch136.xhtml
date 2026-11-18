@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch136.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-34ee45f161c1-bit-casting-and-representation" class="level2">
+<h2>Bit casting and representation</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C004 · <strong>Latest development:</strong> C006</p>
+<section id="appendix-34ee45f161c1-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A same-size eligible bit_cast transfers representation, not numeric value. On the checked binary32 host, bit_cast&lt;uint32_t&gt;(1.0f)=3F800000, whereas a numeric cast gives 1. Pointer punning is not an equivalent legal operation.</p>
+<p>M006 separates representation copying, numeric conversion and endian coding. Eligibility does not validate arbitrary padding/target representations or establish a typed object in file-mapped bytes. Use initialized compatible scalars and explicit external encoding.</p>
+</section>
+<section id="appendix-34ee45f161c1-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch095.xhtml#appendix-cc04044b5782-fixed-width-integer-types" class="wikilink">Fixed-width integer types (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Fixed-width integer types)</a> — A same-size unsigned carrier holds the specified interchange representation.</li>
+<li><a href="ch119.xhtml#appendix-f414bd4ed05c-interpretation-contract" class="wikilink">Interpretation contract (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Interpretation contract)</a> — A bit transfer and a numeric conversion interpret the same carrier differently.</li>
+<li><a href="ch033.xhtml#appendix-343615f49ddf-ieee-754-floating-point" class="wikilink">IEEE-754 floating point (Bits, Programs, and Reliable Systems, Part 1, Reference notes: IEEE-754 floating point)</a> — The format/arithmetic contract gives these bits their numerical domain.</li>
+</ul>
+</section>
+<section id="appendix-34ee45f161c1-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch142.xhtml#appendix-590bbb2424c1-binary-format-contracts" class="wikilink">Binary format contracts</a> — uses this mechanism to define its representation, error or validation contract.</p></li>
+<li><p><a href="ch132.xhtml#appendix-230b59c0676b-memory-dump-interpretation" class="wikilink">Memory dump interpretation</a> — uses this mechanism to define its representation, error or validation contract.</p></li>
+<li><p><a href="ch112.xhtml#appendix-e90053a4b201-floating-point-canonicalization" class="wikilink">Floating-point canonicalization (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Floating-point canonicalization)</a> — uses this mechanism in its explanation.</p></li>
+</ul>
+</section>
+<section id="appendix-34ee45f161c1-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the concrete example in the definition and identify its validity assumptions.</p>
+<p><strong>Pending:</strong> Format checks, object-model validity, byte order, and payload transport are separate constraints.</p>
+</section>
+<section id="appendix-34ee45f161c1-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-bytes-become-a-durable-agreement" class="wikilink">Narrative development</a></p>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">M004 teaching chapter (Bits, Programs, and Reliable Systems, Part 1, Ch. 1)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m004---parts-61-76" class="wikilink">Per-part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

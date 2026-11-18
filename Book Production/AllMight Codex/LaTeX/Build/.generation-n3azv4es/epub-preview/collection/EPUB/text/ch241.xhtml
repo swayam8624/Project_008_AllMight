@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch241.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-cebadf3106d1-tensor-runtime-layout-and-views" class="level2">
+<h2>Tensor runtime layout and views</h2>
+<p>A tensor runtime does not begin with neural-network vocabulary. It begins with a byte-addressing contract. A tensor value needs an element type, a rank, a shape, a mapping from logical indices to storage offsets, and an ownership/lifetime rule for the backing storage. If any of those are implicit, later operations such as broadcasting, transposition, slicing, matrix multiplication, device transfer, or quantized kernels can silently disagree about what the same bytes mean.</p>
+<p>For a contiguous row-major tensor with shape</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>d</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>d</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>d</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>r</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>the canonical stride of axis <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>s</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <munderover>
+    <mo data-mjx-texclass="OP">∏</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>=</mo>
+      <mi>i</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mi>r</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </munderover>
+  <msub>
+    <mi>d</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>so an index <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>i</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>i</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>r</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math> addresses</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>offset</mi>
+  <mo>=</mo>
+  <munderover>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mo>=</mo>
+      <mn>0</mn>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mi>r</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </munderover>
+  <msub>
+    <mi>i</mi>
+    <mi>k</mi>
+  </msub>
+  <msub>
+    <mi>s</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Shape describes the logical domain while strides describe the storage map. A transposed or sliced view may have the same elements without being contiguous. A runtime that assumes offset = row × width + column for every two-dimensional tensor will eventually misread a view.</p>
+<p>A rank-zero tensor is a scalar and has shape []; it is not the same object shape as a rank-one tensor of shape [1]. A zero-sized dimension is also meaningful: shape [4,0,8] has zero elements but still has rank three. These distinctions matter when importing external graph formats because shape information is part of the interface contract rather than decoration.</p>
+<section id="appendix-cebadf3106d1-broadcasting-is-an-index-transformation" class="level3">
+<h3>Broadcasting is an index transformation</h3>
+<p>Broadcasting does not physically duplicate the smaller tensor. Align the input and output shapes at the trailing axes. For every aligned axis, the input size must either equal the output size or equal one. If the input size is one, every output index on that axis maps to input index zero.</p>
+<p>For a bias of shape [3] applied to a matrix [2,3], output coordinates across both rows map back to bias indices 0,1,2 repeatedly. This is why some runtimes can represent a broadcast axis with a zero stride: advancing the logical output coordinate does not advance the input address.</p>
+</section>
+<section id="appendix-cebadf3106d1-views-aliases-and-mutation" class="level3">
+<h3>Views, aliases, and mutation</h3>
+<p>A view is cheap because it shares storage. That also means it shares lifetime and mutation hazards. A runtime must decide whether an operation accepts arbitrary strided inputs, requests a contiguous materialization, or dispatches to separate kernels. Reshape is metadata-only only when the requested logical order can be represented by the existing storage arrangement; otherwise it requires a copy.</p>
+<p>The same question appears on the GPU. A kernel receiving shape and stride metadata can support arbitrary views, but the extra integer arithmetic and irregular memory access can cost more than making a compact copy. The correct choice is workload-dependent and should be measured.</p>
+</section>
+<section id="appendix-cebadf3106d1-executable-reconstruction" class="level3">
+<h3>Executable reconstruction</h3>
+<p>tools/labs/phase29_ml_runtime_lab.cpp contains a standalone C++20 tensor representation with checked element counts, contiguous strides, multi-index addressing, and trailing-axis broadcasting. Its negative test rejects incompatible shapes rather than allowing an accidental indexing interpretation.</p>
+<p>The witness is intentionally small enough to rebuild from memory. It does not claim to implement a production tensor allocator, autograd engine, sparse tensor representation, or GPU device-memory manager.</p>
+</section>
+<section id="appendix-cebadf3106d1-external-contract" class="level3">
+<h3>External contract</h3>
+<p>The ONNX IR specification defines tensors by values plus shape, distinguishes scalar shape [] from a one-element vector, and requires top-level graph inputs and outputs to carry rank information even when individual dimensions are symbolic. When an ONNX model is imported, the internal tensor representation must preserve those distinctions instead of flattening everything into an untyped byte blob.</p>
+<p>Primary reference: https://onnx.ai/onnx/repo-docs/IR.html</p>
+</section>
+<section id="appendix-cebadf3106d1-failure-probes" class="level3">
+<h3>Failure probes</h3>
+<p>A tensor-runtime implementation should deliberately test integer overflow while multiplying dimensions, out-of-range indexing, zero-sized dimensions, rank-zero scalars, incompatible broadcasting, views whose strides are not contiguous, aliased mutation, negative or unsupported strides if the API exposes them, and CPU/GPU disagreement over element size or alignment.</p>
+<p>The central reconstruction question is: given only shape, strides, element size and an index tuple, can you prove which byte is being accessed and whether that byte remains alive?</p>
+<p>Related: <a href="ch330.xhtml#appendix-749048795dbb-shader-buffer-abi" class="wikilink">Shader buffer ABI (Light Transport and Image Synthesis, Part 1, Reference notes: Shader buffer ABI)</a>, <a href="ch570.xhtml#appendix-fdc7879e8bf2-quantization-and-compressed-weights" class="wikilink">Quantization and compressed weights (Vision, XR, and Playable Worlds, Part 2, Reference notes: Quantization and compressed weights)</a>, <a href="ch240.xhtml#appendix-a87217e3af2b-onnx-graph-import-and-lowering" class="wikilink">ONNX graph import and lowering</a>, <a href="ch243.xhtml#appendix-ea2dadd21ce5-transformer-attention-and-kv-cache-runtime" class="wikilink">Transformer attention and KV cache runtime</a>.</p>
+</section>
+</section>
+</body>
+</html>

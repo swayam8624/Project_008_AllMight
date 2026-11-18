@@ -1,0 +1,48 @@
+\hypertarget{appendix-5f9e5e2f0a5e}{}\label{referencestart:appendix-5f9e5e2f0a5e}
+\section{Read-only data and code}\label{appendix-5f9e5e2f0a5e-read-only-data-and-code}
+
+\hypertarget{appendix-5f9e5e2f0a5e-read-only-data-and-code}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-5f9e5e2f0a5e-definition-and-mechanism}
+
+\hypertarget{appendix-5f9e5e2f0a5e-definition-and-mechanism}{}
+
+Executable text commonly holds machine instructions; read-only mappings often hold literals/constants. W\^{}X (writable or executable) policy discourages simultaneously writable executable storage, with platform/JIT qualifications. Modifying a string literal is undefined behavior regardless of whether hardware protection catches it. const automatic objects need not be in read-only mappings.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-5f9e5e2f0a5e-prerequisites}
+
+\hypertarget{appendix-5f9e5e2f0a5e-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0b104bcba06b]{Storage duration and object lifetime} --- Access requires an object and backing storage that are still valid.
+\item
+  \hyperref[appendix-c2a9ad1e2b49]{Process isolation and page permissions} --- The mapping context and permissions constrain which accesses proceed.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-5f9e5e2f0a5e-used-by}
+
+\hypertarget{appendix-5f9e5e2f0a5e-used-by}{}
+
+Update downstream uses when later chunks build on this concept.
+
+\subsection{Recall and next depth}\label{appendix-5f9e5e2f0a5e-recall-and-next-depth}
+
+\hypertarget{appendix-5f9e5e2f0a5e-recall-and-next-depth}{}
+
+Separate C++ constness, literal lifetime, and page permissions.
+
+\textbf{Pending:} Executable formats, loader protections, relocations and JIT transitions.
+
+\subsection{Source and navigation}\label{appendix-5f9e5e2f0a5e-source-and-navigation}
+
+\hypertarget{appendix-5f9e5e2f0a5e-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

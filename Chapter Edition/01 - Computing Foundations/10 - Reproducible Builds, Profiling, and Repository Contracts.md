@@ -8,7 +8,7 @@ A system is only reproducible when its build graph, dependencies, tests, diagnos
 
 **Recall question:** What evidence would let another engineer distinguish a successful build from a reproducible runtime result?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 16175–20192; source-span SHA256 2d674841a3d0f56d6591af78daf9bc1ed06b6e6cf5cd0e0afa5333e60389f1ba. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 16356–20373; source-span SHA256 2d674841a3d0f56d6591af78daf9bc1ed06b6e6cf5cd0e0afa5333e60389f1ba. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Build, document, measure, and reproduce the program

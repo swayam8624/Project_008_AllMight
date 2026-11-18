@@ -1,0 +1,32 @@
+\hypertarget{appendix-313ee7a0ba7b}{}\label{referencestart:appendix-313ee7a0ba7b}
+\section{Memory-mapped files}\label{appendix-313ee7a0ba7b-memory-mapped-files}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\subsection{Definition and mechanism}\label{appendix-313ee7a0ba7b-definition-and-mechanism}
+
+A file mapping makes file-backed bytes accessible through a virtual region. Fault handling can supply pages lazily; ownership, access flags, mapping length, and synchronization still matter. A mapped byte buffer is not automatically a set of live aligned C++ objects. File persistence and virtual access are separate mechanisms.
+
+\subsection{Prerequisites}\label{appendix-313ee7a0ba7b-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-cc0909a7ef14]{Page faults and demand paging} --- Deferred private copying is implemented through a recoverable write fault.
+\item
+  \hyperref[appendix-d52e4486f527]{Ownership and non-owning views} --- A mapping or publication pipeline must keep referenced bytes valid.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-313ee7a0ba7b-used-by}
+
+Update downstream uses when later chunks build on this concept.
+
+\subsection{Recall and next depth}\label{appendix-313ee7a0ba7b-recall-and-next-depth}
+
+Separate mapping setup, first-touch loading, typed parsing and persistence.
+
+\textbf{Pending:} Platform mapping APIs, sharing modes, truncation and synchronization.
+
+\subsection{Source and navigation}\label{appendix-313ee7a0ba7b-source-and-navigation}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

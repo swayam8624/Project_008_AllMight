@@ -8,7 +8,7 @@ The GPU’s memory spaces and execution model shape performance and correctness 
 
 **Recall question:** Why can a memory model that appears unified still require explicit reasoning about access cost and visibility?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 12838–16174; source-span SHA256 97747b6c97e94bf083c6a849b1d49ce42a8620679d0c96f200ff99ada6dbc21d. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 13019–16355; source-span SHA256 97747b6c97e94bf083c6a849b1d49ce42a8620679d0c96f200ff99ada6dbc21d. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS & ORDERING

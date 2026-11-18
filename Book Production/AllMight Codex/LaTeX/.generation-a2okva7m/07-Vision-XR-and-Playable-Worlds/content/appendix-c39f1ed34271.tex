@@ -1,0 +1,36 @@
+\hypertarget{appendix-c39f1ed34271}{}\label{referencestart:appendix-c39f1ed34271}
+\section{Orthonormal frames and Gram-Schmidt}\label{appendix-c39f1ed34271-orthonormal-frames-and-gram-schmidt}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-c39f1ed34271-definition-and-mechanism}
+
+An orthonormal frame has unit perpendicular axes, so its Gram matrix is identity. Gram--Schmidt constructs axes by repeated rejection. Modified order uses the updated residual and changes rounding behavior. Frame existence, numerical reliability and output continuity are distinct questions.
+
+\end{allmightroledefinition}
+
+For \((1,1,0)\) and \((1,0,0)\), rejection produces \((1/2,-1/2,0)\). A least-aligned helper axis avoids a near-parallel cross but can switch discontinuously.
+
+\subsection{Prerequisites}\label{appendix-c39f1ed34271-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-e31893dec985]{Surface tangents normals and bitangents} --- The surface tangent plane gives the axes that orthogonalization must preserve.
+\item
+  \hyperref[appendix-3b863809f82a]{Gram matrices and coordinate metrics} --- Pairwise basis measurements define the systems and metric used in reconstruction.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-c39f1ed34271-used-by}
+
+Later curriculum sources can deepen this same node; no future coverage is marked complete.
+
+\subsection{Recall and next depth}\label{appendix-c39f1ed34271-recall-and-next-depth}
+
+Check reconstruction and orthogonality separately; know when a QR-based method is the next step. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-c39f1ed34271-source-and-navigation}
+
+\href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch017-orthonormal-frames-make-reconstruction-simple}{Teaching narrative (Mathematics for Visual Computing, Ch. 1)} · \hyperref[appendix-fd090d982a15-phase-6---parts-501-600]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-6---source-analysis-and-verification]{Evidence and limits} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

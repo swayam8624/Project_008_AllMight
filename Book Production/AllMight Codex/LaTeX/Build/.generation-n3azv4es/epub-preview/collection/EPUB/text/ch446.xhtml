@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch446.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-0976e86e5b9f-off-axis-stereo-projection-and-disparity" class="level2">
+<h2>Off-axis stereo projection and disparity</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 11 · <strong>Latest development:</strong> Phase 11</p>
+<section id="appendix-0976e86e5b9f-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Stereo cameras use two eye centres separated by a baseline, while each projection frustum is shifted so a chosen zero-parallax plane aligns in the images. Parallel eye orientations with asymmetric frusta avoid the vertical mismatch and discomfort often introduced by toe-in cameras. For rectified pinhole cameras, disparity is approximately <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>x</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>x</mi>
+  </msub>
+  <mi>B</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>Z</mi>
+</math>, so inferred depth is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Z</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>x</mi>
+  </msub>
+  <mi>B</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>x</mi>
+</math> under the calibration and rectification assumptions. Depth uncertainty grows roughly with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>Z</mi>
+    <mn>2</mn>
+  </msup>
+</math> for fixed pixel disparity error. Distinguish interpupillary distance from lens and display-centre spacing; the rendered baseline is an optical/comfort design decision. Use consistent pixel units for focal length, baseline, and disparity before computing metric depth.</p>
+</section>
+<section id="appendix-0976e86e5b9f-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch295.xhtml#appendix-c4e98b6e4001-stereo-correspondence-and-epipolar-geometry" class="wikilink">Stereo correspondence and epipolar geometry (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Stereo correspondence and epipolar geometry)</a></li>
+<li><a href="ch345.xhtml#appendix-3ee9861904d5-camera-calibration-and-bundle-adjustment" class="wikilink">Camera calibration and bundle adjustment (Light Transport and Image Synthesis, Part 1, Reference notes: Camera calibration and bundle adjustment)</a></li>
+<li><a href="ch514.xhtml#appendix-cac01ebeeb11-axial-depth-and-euclidean-range" class="wikilink">Axial depth and Euclidean range</a></li>
+</ul>
+</section>
+<section id="appendix-0976e86e5b9f-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li>No downstream concept node is added in this stage.</li>
+</ul>
+</section>
+<section id="appendix-0976e86e5b9f-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch288.xhtml#id_02-foundations-ii-ch035-build-projection-and-stereo-geometry-around-real-camera-baselines" class="wikilink">Build projection and stereo geometry around real camera baselines (Geometry, Cameras, and Image Formation, Part 1, Ch. 4)</a></li>
+</ul>
+</section>
+<section id="appendix-0976e86e5b9f-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 1084–1088.</p>
+</section>
+<section id="appendix-0976e86e5b9f-future-keywords" class="level3">
+<h3>Future keywords</h3>
+<p>zero-parallax plane, baseline, disparity uncertainty</p>
+</section>
+</section>
+</body>
+</html>

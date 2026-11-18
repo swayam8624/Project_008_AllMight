@@ -1,0 +1,2420 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch074.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-92ff77d4dfdc-worked-traces" class="level2">
+<h2>Worked Traces</h2>
+<section id="appendix-92ff77d4dfdc-phase-9-10-worked-trace-navigation" class="level3">
+<h3>Phase 9-10 worked-trace navigation</h3>
+<p>The full numerical traces remain in the continuous volumes; this page does not duplicate their calculations:</p>
+<p><a href="ch263.xhtml#id_02-foundations-ii-ch021-jacobians-curvature-and-local-approximation" class="wikilink">Phase 9 Jacobian trace (Mathematics for Visual Computing, Part 1, Ch. 5)</a> · <a href="ch266.xhtml#id_02-foundations-ii-ch022-integration-and-quadrature" class="wikilink">Phase 9 integral and quadrature traces (Mathematics for Visual Computing, Part 1, Ch. 6)</a> · <a href="ch269.xhtml#id_02-foundations-ii-ch025-odes-and-numerical-simulation" class="wikilink">Phase 9 oscillator and stability traces (Mathematics for Visual Computing, Part 2, Ch. 9)</a> · <a href="ch270.xhtml#id_02-foundations-ii-ch026-optimization-and-inverse-problems" class="wikilink">Phase 9 optimization traces (Mathematics for Visual Computing, Part 2, Ch. 10)</a> · <a href="ch267.xhtml#id_02-foundations-ii-ch023-a-probability-model-begins-with-possible-outcomes" class="wikilink">Phase 10 outcomes and Bayes trace (Mathematics for Visual Computing, Part 1, Ch. 7)</a> · <a href="ch275.xhtml#id_02-foundations-ii-ch030-monte-carlo-estimates-trade-computation-for-uncertainty" class="wikilink">Phase 10 Monte Carlo trace (Mathematics for Visual Computing, Part 2, Ch. 14)</a> · <a href="ch275.xhtml#id_02-foundations-ii-ch030-finite-samples-need-stable-descriptive-statistics" class="wikilink">Phase 10 online statistics (Mathematics for Visual Computing, Part 2, Ch. 14)</a> · <a href="ch275.xhtml#id_02-foundations-ii-ch030-inference-and-error-metrics-need-explicit-assumptions" class="wikilink">Phase 10 uncertainty and error metrics (Mathematics for Visual Computing, Part 2, Ch. 14)</a></p>
+</section>
+<section id="appendix-92ff77d4dfdc-phase-8---from-constraints-to-a-stable-svd-contract" class="level3">
+<h3>Phase 8 - From constraints to a stable SVD contract</h3>
+<p>Follow one small rank-deficient fit through its geometry, answer, and checks. This supplements <a href="ch261.xhtml#id_01-foundations-i-ch019-the-graphics-problem-hiding-inside-a-matrix-equation" class="wikilink">the Phase 8 story (Mathematics for Visual Computing, Part 1, Ch. 3)</a>.</p>
+<p>Let</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>3</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>b</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>6</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>5</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>The first row observes <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>x</mi>
+    <mn>1</mn>
+  </msub>
+</math> with gain three. The second row has zero coefficients, so it cannot produce the requested measurement five. The rank is one, the column space is the horizontal axis, and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> lies outside it. The null space is the vertical axis: changing <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msub>
+</math> is invisible to the map.</p>
+<p>The SVD is already diagonal: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>U</mi>
+  <mo>=</mo>
+  <mi>V</mi>
+  <mo>=</mo>
+  <mi>I</mi>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Σ</mi>
+  <mo>=</mo>
+  <mi>A</mi>
+</math>. The pseudoinverse is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>A</mi>
+    <mo>+</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>diag</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. Therefore <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>A</mi>
+    <mo>+</mo>
+  </msup>
+  <mi>b</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. Every <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+</math> has the same residual <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+</math>; <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math> is its minimum-norm choice. This trace separately answers consistency, rank, nullity, residual, and the pseudoinverse policy.</p>
+<p>For <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+</math> truncation, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>A</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>diag</mi>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. Here the input already has rank one, so the approximation is exact. If instead <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mi>diag</mi>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+</math>, then keeping only the first singular direction gives <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>A</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>diag</mi>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>, spectral error <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>2</mn>
+</math>, and Frobenius error <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>2</mn>
+</math>. The norm names state which reconstruction discrepancy is being reported.</p>
+<p>Now use centered planar samples <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. Their sample covariance with divisor <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+</math> is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>diag</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. The first component follows the horizontal line; the zero second eigenvalue says the observed samples have no vertical spread. Add small measurement noise and that zero becomes small, making the rank or PCA cutoff a scale-aware modeling decision.</p>
+<p>An SVD routine should return dimensions and status, not just three arrays. Check <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>U</mi>
+  <mi mathvariant="normal">Σ</mi>
+  <msup>
+    <mi>V</mi>
+    <mi>T</mi>
+  </msup>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+</math> relative to a declared input scale; check <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>U</mi>
+    <mi>T</mi>
+  </msup>
+  <mi>U</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>V</mi>
+    <mi>T</mi>
+  </msup>
+  <mi>V</mi>
+</math> separately, with identity sizes matching full/thin conventions; verify descending nonnegative singular values; enforce a maximum iteration count and surface nonconvergence. Passing these checks establishes those measured properties at the tested scale; it does not certify every singular value or guarantee an accurate solution for an ill-conditioned application.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-phase-7---the-moving-panel-tracebook" class="level3">
+<h3>Phase 7 - The moving-panel tracebook</h3>
+<p>Use active right-handed rotations, column vectors, radians in code, and the <a href="ch261.xhtml#id_01-foundations-i-ch019-figure-m6---follow-one-point-through-named-spaces" class="wikilink">declared illustrative minus-Z projection (Mathematics for Visual Computing, Part 1, Ch. 3)</a> with near 1, far 10 and NDC depth <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">[</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>.</p>
+<section id="appendix-92ff77d4dfdc-one-local-point-reaches-a-screen-relative-description" class="level4">
+<h4>One local point reaches a screen-relative description</h4>
+<p>Let local scale be <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>, orientation a positive-Z quarter turn, translation <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>10</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>, and point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. The camera sits at world <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>10</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+</math> with identity orientation.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Value</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Scale local point</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math></td>
+<td>Scaling occurs in the declared local axes.</td>
+</tr>
+<tr>
+<td>Rotate</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math></td>
+<td>Right-hand positive Z maps X toward Y.</td>
+</tr>
+<tr>
+<td>Translate</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>10</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math></td>
+<td>World location; <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>M</mi>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mi>R</mi>
+  <mi>S</mi>
+</math>.</td>
+</tr>
+<tr>
+<td>Inverse camera pose</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+</math></td>
+<td>Camera is five units above the world plane and looks along <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mi>Z</mi>
+</math>.</td>
+</tr>
+<tr>
+<td>Projection to clip</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>35</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>9</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+</math></td>
+<td>Keep all four homogeneous coordinates.</td>
+</tr>
+<tr>
+<td>Perspective divide</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mn>7</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>9</mn>
+  <mo stretchy="false">)</mo>
+</math></td>
+<td>Finite nonzero divisor; this point is within the selected clip volume.</td>
+</tr>
+</tbody>
+</table>
+<p>Reconstructing local coordinates undoes translation, then rotation, then scale. Applying the inverse orientation with a guessed untranslated offset would mix frames. The same row-major scalar array could implement every operation if logical access and upload conventions remain correct.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-the-tangent-and-normal-take-different-paths" class="level4">
+<h4>The tangent and normal take different paths</h4>
+<p>Take local tangent <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>u</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> and local normal <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. Scale then rotate gives <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>u</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. Reciprocal-scale then rotate gives <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. Their dot is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>. Normalizing <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+</math> for shading changes its length, not the perpendicularity. Neither vector receives translation. A mirrored model additionally needs an explicit winding/orientation policy.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-diagnose-interpolation-using-a-quarter-point" class="level4">
+<h4>Diagnose interpolation using a quarter point</h4>
+<p>Interpolate identity to a positive-Z <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>120</mn>
+    <mo>∘</mo>
+  </msup>
+</math> orientation. At <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>4</mn>
+</math>, ideal SLERP gives a <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>30</mn>
+    <mo>∘</mo>
+  </msup>
+</math> turn. NLERP normalizes coefficients <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>7</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>8</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <msqrt>
+    <mn>3</mn>
+  </msqrt>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>8</mn>
+  <mo stretchy="false">)</mo>
+</math>, yielding about <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>27.795772496</mn>
+    <mo>∘</mo>
+  </msup>
+</math>. The midpoint alone would not expose this speed difference. With endpoints <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mi>q</mi>
+</math>, sign-aligning first avoids a zero midpoint and preserves the common orientation.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-a-parent-edit-invalidates-only-actual-dependencies" class="level4">
+<h4>A parent edit invalidates only actual dependencies</h4>
+<p>For car → door → mirror, editing the door’s local transform makes door-local and door-world caches stale, along with mirror-world and derived inverse/normal caches. Mirror-local and car caches remain valid. Reparenting the mirror changes its world dependency even if its local coefficients remain identical. Preserving world pose during reparenting instead requires solving the new local map and checking whether the result still fits the allowed TRS representation.</p>
+</section>
+</section>
+<section id="appendix-92ff77d4dfdc-phase-6---the-robot-panel-tracebook" class="level3">
+<h3>Phase 6 - The robot panel tracebook</h3>
+<p>This cumulative trace extends <a href="ch236.xhtml#id_01-foundations-i-ch017-the-panel-gives-us-a-reason-to-learn" class="wikilink">the self-contained Phase 6 volume (Mathematics for Visual Computing, Part 1, Ch. 1)</a>. The numbers are illustrative laboratory inputs, not observations from a real robot or renderer.</p>
+<section id="appendix-92ff77d4dfdc-one-physical-object-through-six-representations" class="level4">
+<h4>One physical object through six representations</h4>
+<p>Start with metre-valued workcell points <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> and sensor point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Intermediate value</th>
+<th>Meaning and check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Edge subtraction</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>e</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>e</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math></td>
+<td>Point differences, not new point locations.</td>
+</tr>
+<tr>
+<td>Dot and Gram</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>g</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>11</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>16</mn>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>g</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>12</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>g</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>22</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>9</mn>
+</math></td>
+<td>Perpendicular but non-unit edge basis.</td>
+</tr>
+<tr>
+<td>Cross</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>e</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>×</mo>
+  <msub>
+    <mi>e</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>12</mn>
+  <mo stretchy="false">)</mo>
+</math></td>
+<td>Oriented area vector in square metres.</td>
+</tr>
+<tr>
+<td>Normalization</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math></td>
+<td>Finite unit front normal; triangle area is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>6</mn>
+</math>.</td>
+</tr>
+<tr>
+<td>Sensor coordinates</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>β</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>4</mn>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>γ</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>3</mn>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>α</mi>
+  <mo>=</mo>
+  <mn>5</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>12</mn>
+</math></td>
+<td>Sum is one and all weights are positive.</td>
+</tr>
+<tr>
+<td>Attribute interpolation</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>5</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>12</mn>
+  <mo stretchy="false">)</mo>
+  <mn>20</mn>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>4</mn>
+  <mo stretchy="false">)</mo>
+  <mn>40</mn>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+  <mn>50</mn>
+  <mo>=</mo>
+  <mn>35</mn>
+</math></td>
+<td>Affine temperature model, not an asserted physical heat solution.</td>
+</tr>
+</tbody>
+</table>
+<p>Move a point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+</math> above the panel. The area normal dotted with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+</math> is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>24</mn>
+</math>, yielding tetrahedron volume <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>4</mn>
+</math>. Swap <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+  <mo>,</mo>
+  <mi>C</mi>
+</math> and both signs reverse; ordinary area and volume do not.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-a-mirror-changes-orientation-not-all-measurements" class="level4">
+<h4>A mirror changes orientation, not all measurements</h4>
+<p>Mirror horizontal coordinates with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+  <mo>=</mo>
+  <mi>diag</mi>
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>. New first edge is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> and second edge remains <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. Their cross becomes <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>12</mn>
+  <mo stretchy="false">)</mo>
+</math>. All edge lengths and all original pairwise dot products remain unchanged. The Gram matrix cannot tell us that the orientation flipped.</p>
+<p>The ordinary transformed normal direction <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+  <mi>n</mi>
+</math> is still <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>. The cross-derived oriented normal gains the additional factor <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo data-mjx-texclass="OP" movablelimits="true">det</mo>
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+</math>. This is why a mesh pipeline needs a consistent front-face and mirror policy rather than one generic “transform vector” call.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-nonuniform-scaling-exposes-a-hidden-normal-bug" class="level4">
+<h4>Nonuniform scaling exposes a hidden normal bug</h4>
+<p>For tangent <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> and normal <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>, double only the horizontal scale. Tangent becomes <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. A naively transformed normal <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> gives dot <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>3</mn>
+</math>, not zero. The inverse-transpose normal <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> gives dot zero. Normalize the latter only after deriving its correct direction.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-a-frame-can-be-valid-without-being-continuous" class="level4">
+<h4>A frame can be valid without being continuous</h4>
+<p>With normal <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>, a least-aligned horizontal helper produces tangent <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> and bitangent <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. All axes are unit and perpendicular, and the frame is positive. Perturb the normal through a helper-selection tie: a different helper can become preferred abruptly. Correct axes do not establish smooth frame evolution. Animated systems must decide whether continuity or a texture reference is required.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-perspective-correct-attribute-trace" class="level4">
+<h4>Perspective-correct attribute trace</h4>
+<p>For two projected endpoints with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>w</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <msub>
+    <mi>w</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>2</mn>
+</math>, equal screen weights <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+</math> produce reciprocal-weight denominator <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>3</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>4</mn>
+</math>. Surface weights become <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>2</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>3</mn>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>3</mn>
+</math>. If endpoint attributes are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0</mn>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+</math>, affine surface interpolation at that screen location gives <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>3</mn>
+</math>, not the naive <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+</math>.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-the-first-lost-quantity-can-precede-every-formula" class="level4">
+<h4>The first lost quantity can precede every formula</h4>
+<p>Store intended horizontal coordinates <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mn>8</mn>
+  </msup>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mn>8</mn>
+  </msup>
+  <mo>+</mo>
+  <mn>1</mn>
+</math> in binary32. Near that scale, one unit is below the local representable spacing, so both can round to the same value. Subtraction then yields zero. Promoting those already-rounded values to binary64 does not recover their difference. Retain a wider global representation or subtract in an appropriately local frame before narrowing.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-collision-difference-without-an-explicit-shape" class="level4">
+<h4>Collision difference without an explicit shape</h4>
+<p>Take intervals <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo stretchy="false">]</mo>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">]</mo>
+</math>. In positive direction, the difference support is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>4</mn>
+  <mo>−</mo>
+  <mn>3</mn>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>. In negative direction, choose <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>2</mn>
+  <mo>−</mo>
+  <mn>5</mn>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mn>3</mn>
+</math>. The origin lies between them, consistent with overlap. For <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo stretchy="false">]</mo>
+</math>, the extrema are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>2</mn>
+</math>, both negative; the intervals do not overlap. A full higher-dimensional collision algorithm must manage its simplex and stopping policies separately.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-what-the-executed-lab-actually-demonstrates" class="level4">
+<h4>What the executed lab actually demonstrates</h4>
+<p>The inline scalar program checks the panel weights, area, frame, projection, rejection, reflection, finite-state rejection, huge/tiny scaled normalization, angles, transmission and total internal reflection. It also runs 2,000 deterministic moderate-range cases for decomposition, orthogonality, projection idempotence, reflected length and cross antisymmetry/perpendicularity. None of these tests certify all floating-point inputs, performance, a robust orientation implementation, or human understanding.</p>
+</section>
+</section>
+<section id="appendix-92ff77d4dfdc-xr---from-geometry-to-sample-loss-and-evidence" class="level3">
+<h3>XR - From geometry to sample loss and evidence</h3>
+<p>The complete explanations and code remain in <span>the independent XR story</span>.</p>
+<p>Use this table to follow the quantities from one step to the next:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Step</th>
+<th>Numerical witness</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Convert screen geometry to angles</td>
+<td>FOV <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>47.658899</mn>
+    <mo>∘</mo>
+  </msup>
+</math>; average 40.286285 PPD; center 37.936213 PPD</td>
+<td>Average and local density differ under the planar projection.</td>
+</tr>
+<tr>
+<td>Downsample without filtering</td>
+<td>Alternating zero/one; take even samples; obtain all zeros</td>
+<td>Decimation can turn a pattern into a misleading constant.</td>
+</tr>
+<tr>
+<td>Filter before downsampling</td>
+<td>Average each pair; obtain 0.5</td>
+<td>This declared alternating sequence gives its intended mean. The filter is not an ideal universal cutoff.</td>
+</tr>
+<tr>
+<td>Analyze aligned frequencies</td>
+<td>DFT bins 7 and 29 give one-sided amplitudes 0.3 and 0.1</td>
+<td>The stated amplitude normalization separates the two components.</td>
+</tr>
+<tr>
+<td>Apply the Gaussian optics model</td>
+<td>Gains 0.951850 and 0.291213 at 0.05 and 0.25 cycles per pixel</td>
+<td>Higher-frequency contrast is reduced more strongly.</td>
+</tr>
+<tr>
+<td>Average light, then encode</td>
+<td>Linear 0.5 encodes to 0.735357 in sRGB</td>
+<td>Encoded 0.5 instead decodes to 0.214041. The arithmetic domain matters.</td>
+</tr>
+<tr>
+<td>Change allocation with the same true-gaze metric</td>
+<td>Fixed weighted MSE 0.00610803; gaze-following 0.00378445</td>
+<td>This is one toy-model result, not a human threshold or saved GPU work.</td>
+</tr>
+<tr>
+<td>Check threshold algebra</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="-0.167em"></mspace>
+  </mstyle>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <mi>λ</mi>
+    <mo stretchy="false">(</mo>
+    <mi>ln</mi>
+    <mo data-mjx-texclass="NONE">⁡</mo>
+    <mn>2</mn>
+    <msup>
+      <mo stretchy="false">)</mo>
+      <mrow data-mjx-texclass="ORD">
+        <mn>1</mn>
+        <mrow data-mjx-texclass="ORD">
+          <mo>/</mo>
+        </mrow>
+        <mi>k</mi>
+      </mrow>
+    </msup>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mo>=</mo>
+  <mn>0.75</mn>
+</math></td>
+<td>The formula matches the selected criterion for the illustrative parameters.</td>
+</tr>
+</tbody>
+</table>
+<section id="appendix-92ff77d4dfdc-frame-history-can-be-clean-and-wrong" class="level4">
+<h4>Frame history can be clean and wrong</h4>
+<p>Follow a moving character:</p>
+<ol type="1">
+<li>The previous frame sees the character at a pixel.</li>
+<li>The character moves, exposing the background.</li>
+<li>Incorrect reprojection brings the old character color into that background.</li>
+<li>Accumulation reduces random noise but retains a ghost.</li>
+</ol>
+<p>A depth or identity mismatch can justify rejecting that history.</p>
+<p>A gaze-region change creates a second problem. An old peripheral sample may belong to the correct surface but lack the detail required now.</p>
+<p>Lower MSE or lower variance alone does not establish that the reused information is correct.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-an-allocation-claim-and-a-runtime-claim-are-different" class="level4">
+<h4>An allocation claim and a runtime claim are different</h4>
+<p>Normalize the original frame time to one:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi data-mjx-auto-op="false">old</mi>
+      </mrow>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>0.6</mn>
+  <mo>+</mo>
+  <mn>0.4</mn>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>Only the second component benefits. If its work becomes 70% cheaper:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi data-mjx-auto-op="false">new</mi>
+      </mrow>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>0.6</mn>
+  <mo>+</mo>
+  <mn>0.4</mn>
+  <mo stretchy="false">(</mo>
+  <mn>0.3</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0.72</mn>
+  <mo>.</mo>
+</math>
+<p>The speedup is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>0.72</mn>
+  </mfrac>
+  <mo>≈</mo>
+  <mn>1.3889</mn>
+  <mo>.</mo>
+</math>
+<p>The calculation assumes additive, non-overlapping costs. A real GPU may have overlap, bandwidth limits, occupancy changes, or synchronization costs.</p>
+<p>A post-filtered full reference does not establish that any original shading work was skipped.</p>
+</section>
+</section>
+<section id="appendix-92ff77d4dfdc-c---value-transfer-and-cleanup-board-traces" class="level3">
+<h3>C++ - Value-transfer and cleanup board traces</h3>
+<p>Essential code and traces remain inline in <a href="ch173.xhtml#id_01-foundations-i-ch003-trace-one-payload-from-decode-to-cache" class="wikilink">the payload journey (Bits, Programs, and Reliable Systems, Part 2, Ch. 3)</a> and <a href="ch203.xhtml#id_01-foundations-i-ch004-observe-construction-failure-and-reverse-cleanup" class="wikilink">the event laboratory (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)</a>.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Recorded events</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ordinary constructor body throws</td>
+<td>1,2,3,-2,-1</td>
+<td>Both members completed; complete Whole did not. No destructor-body -3 event.</td>
+</tr>
+<tr>
+<td>Whole completes, then leaves scope</td>
+<td>1,2,3,-3,-2,-1</td>
+<td>Destructor body precedes reverse member cleanup.</td>
+</tr>
+<tr>
+<td>Delegating target completes, delegating body throws</td>
+<td>4,5,6,-5,-4</td>
+<td>Complete target established object; cleanup invokes its destructor then member destruction.</td>
+</tr>
+</tbody>
+</table>
+<p>Positive IDs mean construction/body entry, negatives mean destruction. The fixed recorder does not allocate from destructors. Exception traces establish the tested lifetime rules, not a policy for every subsystem’s error handling.</p>
+<section id="appendix-92ff77d4dfdc-assignment-failure-versus-successful-ownership-transfer" class="level4">
+<h4>Assignment failure versus successful ownership transfer</h4>
+<p>Start A with byte7 and B with byte9 in separate buffers. Prepare B=A with an injected allocation failure: B still holds byte9 at the same live buffer, A still byte7, and allocation count is unchanged. Move-construct C from A: C owns byte7, A is documented empty. Copy-construct from empty A: new owner is empty without traversing a null range. Move-assign C into B: B’s byte9 allocation is released, B takes byte7, C becomes empty. Self-move B through its alias preserves its value under this particular owner’s contract. Reset B to empty and end scope: live allocation count0.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-the-aliased-update-does-not-behave-like-two-copies" class="level4">
+<h4>The aliased update does not behave like two copies</h4>
+<p>For destination+=source; source*=0.5, starting with distinct source4/destination4 gives destination8/source2. If both parameters designate one float, its state is4→8→4. The second statement sees the first statement’s write. Passing scalar values instead creates independent parameter values; no caller mutation is implied.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-observation-is-not-a-mandatory-nrvo-count" class="level4">
+<h4>Observation is not a mandatory NRVO count</h4>
+<p>On the recorded Clang C++23 build, the named Probe return observed zero moves ordinarily and one with optional elision disabled. The immovable same-type prvalue result remained valid in both. This differentiates language-required direct construction from a compiler-selected named-local elision. Do not substitute these observed counts for a timing or allocation benchmark.</p>
+</section>
+</section>
+<section id="appendix-92ff77d4dfdc-c---borrow-deadlines-and-dense-pool-identity" class="level3">
+<h3>C++ - Borrow deadlines and dense-pool identity</h3>
+<p>The essential explanation remains inline in <a href="ch173.xhtml#id_01-foundations-i-ch003-when-a-valid-borrow-stops-naming-the-intended-thing" class="wikilink">the borrow story (Bits, Programs, and Reliable Systems, Part 2, Ch. 3)</a>. This deeper board exercise separates the targets of three paths. Assume a vector with three live Slot objects, enough capacity, and assignments that do not end the destination Slot lifetime.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Event</th>
+<th>First-slot borrow</th>
+<th>Last-slot borrow</th>
+<th>Entity-11 handle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Initial owners [11,22,33]</td>
+<td>Live object representing 11</td>
+<td>Live object representing 33</td>
+<td>Must be checked against registry</td>
+</tr>
+<tr>
+<td>Move-assign last into first</td>
+<td>Same live Slot now represents 33</td>
+<td>Still live until pop; moved-from state</td>
+<td>Not a location guarantee</td>
+</tr>
+<tr>
+<td>Pop last</td>
+<td>Live but wrong original association</td>
+<td>Referent lifetime ended</td>
+<td>Must be invalidated for removal under registry policy</td>
+</tr>
+<tr>
+<td>Reallocate remaining elements</td>
+<td>Old storage path invalidated</td>
+<td>Already invalid</td>
+<td>Can still identify other live entities if registry validates them</td>
+</tr>
+<tr>
+<td>Validate entity33 and reacquire</td>
+<td>New valid path to current owner33</td>
+<td>Do not reuse old path</td>
+<td>Lookup binds identity to current location</td>
+</tr>
+</tbody>
+</table>
+<p>Do not read a moved-from value without its type’s specified contract; this example’s integer members and Slot assignment make the first-slot result explicit. Not every pool implementation uses this algorithm. The source-reported Kairo anchors remain To verify.</p>
+<section id="appendix-92ff77d4dfdc-direct-alias-versus-converted-snapshot" class="level4">
+<h4>Direct alias versus converted snapshot</h4>
+<p>Start <code>count=10</code>, bind <code>const int&amp; live=count</code> and <code>const double&amp; snapshot=count</code>. The first referent is count; the second is a new converted double containing10.0. After <code>count=50</code>, live observes50 and snapshot observes10.0. At the end of their enclosing scope the extended double temporary dies; no separate double was owned by count.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-a-function-call-does-not-renew-the-deadline" class="level4">
+<h4>A function call does not renew the deadline</h4>
+<p>Construct temporary string → bind call parameter → return that same path → bind caller’s receiving reference → complete full-expression → destroy temporary. The receiver’s longer lifetime is irrelevant. Contrast direct local binding, which specifies extension, with returning <code>std::string</code> by value, which establishes an owning result. The complete rule is in <a href="ch187.xhtml#appendix-a978b29bbbb0-temporary-lifetime-extension" class="wikilink">Temporary lifetime extension (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Temporary lifetime extension)</a>, not “references make temporaries live longer.”</p>
+</section>
+<section id="appendix-92ff77d4dfdc-cache-invalidation-without-exposed-storage" class="level4">
+<h4>Cache invalidation without exposed storage</h4>
+<p>Source3/cache-empty → Get holds mutex, computes9, copies9, unlocks → Set holds mutex, replaces source with4, clears cache, unlocks → Get computes16 and copies it under mutex. The earlier returned9 remains a valid independent snapshot. If Get had exposed a reference, clearing the optional could end that referenced integer’s lifetime. Locking only while obtaining the reference does not protect its later use.</p>
+</section>
+</section>
+<section id="appendix-92ff77d4dfdc-c---build-and-occupant-trace-navigation" class="level3">
+<h3>C++ - Build and occupant trace navigation</h3>
+<p>Essential traces stay inside <a href="ch173.xhtml#id_01-foundations-i-ch003-following-one-call-through-the-build" class="wikilink">the build story (Bits, Programs, and Reliable Systems, Part 2, Ch. 3)</a> and <a href="ch173.xhtml#id_01-foundations-i-ch003-following-an-escaped-address-through-time" class="wikilink">the escaped-address story (Bits, Programs, and Reliable Systems, Part 2, Ch. 3)</a>. The complete inline laboratory supplies observable constructions/destructions without executing stale access.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Event</th>
+<th>Storage</th>
+<th>Object or logical occupant</th>
+<th>Valid access</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aligned byte array exists</td>
+<td>Reserved through its enclosing scope</td>
+<td>Byte storage; no explicit Tracked occupant yet</td>
+<td>Construct at a suitable location</td>
+</tr>
+<tr>
+<td>construct_at(…,7) returns</td>
+<td>Same buffer</td>
+<td>First Tracked initialized, count1</td>
+<td>Returned pointer can access value7</td>
+</tr>
+<tr>
+<td>destroy_at(first) completes</td>
+<td>Buffer remains</td>
+<td>First lifetime ended, destruction count1</td>
+<td>Do not access its members</td>
+</tr>
+<tr>
+<td>construct_at(…,8) returns</td>
+<td>Same location</td>
+<td>Second occupant, construction count2</td>
+<td>Use returned second pointer</td>
+</tr>
+<tr>
+<td>destroy_at(second) completes</td>
+<td>Buffer remains until scope exit</td>
+<td>Second lifetime ended, destruction count2</td>
+<td>No further Tracked access</td>
+</tr>
+<tr>
+<td>Registry slot0 changes generation7→8</td>
+<td>Registry slot retained</td>
+<td>Old handle no longer names live occupant</td>
+<td>Compare against live registry generation</td>
+</tr>
+</tbody>
+</table>
+<p>This deliberate reuse is not the same as dereferencing a pointer to an automatic object after its storage duration ended. Transparent replacement has specific rules; std::launder is not a universal cure for stale pointers.</p>
+<p>Longer hand traces live here. Organize by mechanism so later chunks can extend the same trace with deeper representation, math, implementation, or hardware behavior.</p>
+<p>A trace should include a concrete input, every state transition that matters, the final output, one invariant check, and one deliberately failing or boundary input when useful.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-m001---the-0xad-control-byte" class="level3">
+<h3>M001 - The 0xAD control byte</h3>
+<p><strong>Introduced by:</strong> <a href="ch002.xhtml#id_01-foundations-i-ch001-from-a-signal-to-an-interpretation" class="wikilink">C001 / M001</a></p>
+<section id="appendix-92ff77d4dfdc-input-and-conventions" class="level4">
+<h4>Input and conventions</h4>
+<p>Schema, from least to most significant position:</p>
+<pre class="text"><code>bits 0-2 mode | bit 3 visible | bits 4-5 quality | bit 6 locked | bit 7 dirty</code></pre>
+<p>Input: <code>{mode=5, visible=1, quality=2, locked=0, dirty=1}</code>. Field zero occupies the least-significant available bits.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-state-by-state-trace" class="level4">
+<h4>State-by-state trace</h4>
+<pre class="text"><code>mode       5 &lt;&lt; 0 = 00000101
+visible    1 &lt;&lt; 3 = 00001000
+quality    2 &lt;&lt; 4 = 00100000
+locked     0 &lt;&lt; 6 = 00000000
+dirty      1 &lt;&lt; 7 = 10000000
+OR result           10101101 = 0xAD</code></pre>
+<p>Base interpretations:</p>
+<pre class="text"><code>binary 10101101 = 128 + 32 + 8 + 4 + 1 = decimal 173
+hex    1010 1101 = A D                    = 0xAD
+octal  010 101 101 = 2 5 5                = 0255</code></pre>
+<p>Quality extraction:</p>
+<pre class="text"><code>10101101 &gt;&gt; 4 = 00001010
+00001010 &amp; 03 = 00000010 = 2</code></pre>
+<p>LSB-first bit-array packing of <code>[1,0,1,1,0,1,0,1]</code> accumulates <code>01</code>, <code>05</code>, <code>0D</code>, <code>2D</code>, then <code>AD</code>; unpacking index 5 computes <code>(0xAD &gt;&gt; 5) &amp; 1 = 1</code>.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-result-and-invariant-checks" class="level4">
+<h4>Result and invariant checks</h4>
+<ul>
+<li>Every field round-trips to its input value.</li>
+<li>The five fields occupy eight non-overlapping bits exactly.</li>
+<li>Changing quality to 3 clears <code>0x30</code>, writes <code>0x30</code>, and yields <code>0xBD</code>; all non-quality bits remain unchanged.</li>
+</ul>
+</section>
+<section id="appendix-92ff77d4dfdc-boundary-or-failure-trace" class="level4">
+<h4>Boundary or failure trace</h4>
+<p>OR-only replacement fails when a new value needs to clear an old 1. For example, replacing quality <code>3</code> with <code>1</code> via <code>word | (1 &lt;&lt; 4)</code> leaves the old high field bit set and still decodes as <code>3</code>. Clear-before-OR produces the intended <code>1</code>.</p>
+</section>
+</section>
+<section id="appendix-92ff77d4dfdc-m002---carry-and-overflow-are-different-questions" class="level3">
+<h3>M002 - Carry and overflow are different questions</h3>
+<p><strong>Introduced by:</strong> <a href="ch002.xhtml#id_01-foundations-i-ch001-arithmetic-becomes-a-policy" class="wikilink">C002 / M002</a></p>
+<section id="appendix-92ff77d4dfdc-input-and-conventions-1" class="level4">
+<h4>Input and conventions</h4>
+<p>Use eight-bit result storage. <code>C</code> is the ninth unsigned bit, <code>V</code> reports signed two’s-complement range failure, <code>N</code> copies result bit 7, and <code>Z</code> tests whether the low result byte is zero.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-state-by-state-trace-1" class="level4">
+<h4>State-by-state trace</h4>
+<p>Case 1 - signed overflow without carry:</p>
+<pre class="text"><code>  01111111  unsigned 127, signed 127
++ 00000001  unsigned   1, signed   1
+----------
+  10000000  unsigned 128, signed -128
+
+C=0: no ninth bit; unsigned 128 fits
+V=1: signed mathematical 128 does not fit [-128,127]
+N=1: result high bit is set
+Z=0: result is nonzero</code></pre>
+<p>Case 2 - carry without signed overflow:</p>
+<pre class="text"><code>  11111111  unsigned 255, signed -1
++ 00000001  unsigned   1, signed  1
+----------
+1 00000000
+
+C=1: unsigned mathematical 256 needs a ninth bit
+V=0: signed mathematical result is valid zero
+N=0: low result high bit is clear
+Z=1: low result byte is zero</code></pre>
+<p>Subtraction example:</p>
+<pre class="text"><code>13 - 5 = 13 + (~5 + 1)
+00001101 + 11111011 = 1 00001000 -&gt; low byte 8</code></pre>
+</section>
+<section id="appendix-92ff77d4dfdc-result-and-invariant-checks-1" class="level4">
+<h4>Result and invariant checks</h4>
+<ul>
+<li><code>C</code> and <code>V</code> are independent; neither can replace the other.</li>
+<li><code>N</code> reports the stored sign bit, not whether a signed overflow occurred.</li>
+<li>An eight-bit emulator must retain a wider temporary long enough to compute <code>C</code>, then mask the architectural result.</li>
+</ul>
+</section>
+<section id="appendix-92ff77d4dfdc-boundary-or-failure-trace-1" class="level4">
+<h4>Boundary or failure trace</h4>
+<p><code>10000000</code> represents <code>-128</code>. Complement-plus-one returns <code>10000000</code> because mathematical <code>+128</code> cannot fit. At the fixed-bit residue level the pattern is stable; evaluating same-type signed negation in C++ overflows and is undefined.</p>
+</section>
+</section>
+<section id="appendix-92ff77d4dfdc-reconstructing-each-state-change" class="level3">
+<h3>Reconstructing each state change</h3>
+<section id="appendix-92ff77d4dfdc-decimal-to-binary-and-back" class="level4">
+<h4>Decimal to binary and back</h4>
+<p>For 173, successive quotient/remainder pairs are (86,1), (43,0), (21,1), (10,1), (5,0), (2,1), (1,0), (0,1). The remainders are low bits first, so reverse them to get 10101101. Horner accumulators while reading this result are 1,2,5,10,21,43,86,173. This checks both directions without assuming that the displayed order equals array order.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-replacing-a-field-while-preserving-neighbors" class="level4">
+<h4>Replacing a field while preserving neighbors</h4>
+<p>Replace quality 2 with 1 in AD:</p>
+<pre class="text"><code>field width w=2, offset s=4
+low mask L=03; positioned mask M=30
+eight-bit NOT(M)=CF
+clear: AD &amp; CF = 8D
+encode new value: (01 &amp; 03) &lt;&lt; 4 = 10
+write: 8D | 10 = 9D
+read back: (9D &gt;&gt; 4) &amp; 03 = 01
+outside field: AD &amp; CF = 9D &amp; CF = 8D</code></pre>
+<p>The last equality proves preservation rather than only checking the new field value.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-multiplication-by-selected-partial-products" class="level4">
+<h4>Multiplication by selected partial products</h4>
+<p>Multiply 13 by 11. Start result=0, partial=13, multiplier=11. A low multiplier bit of 1 includes the partial product; shift the multiplier right and the widened partial left between stages.</p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Multiplier</th>
+<th>Low bit</th>
+<th>Partial</th>
+<th>Result after inclusion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>1011</td>
+<td>1</td>
+<td>13</td>
+<td>13</td>
+</tr>
+<tr>
+<td>1</td>
+<td>0101</td>
+<td>1</td>
+<td>26</td>
+<td>39</td>
+</tr>
+<tr>
+<td>2</td>
+<td>0010</td>
+<td>0</td>
+<td>52</td>
+<td>39</td>
+</tr>
+<tr>
+<td>3</td>
+<td>0001</td>
+<td>1</td>
+<td>104</td>
+<td>143</td>
+</tr>
+</tbody>
+</table>
+<p>Check 13×11=143. The widened partial is essential: if it were retained in a narrow original operand, shifts could lose bits before the accumulator sees them.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-division-by-shifting-the-remainder" class="level4">
+<h4>Division by shifting the remainder</h4>
+<p>Divide binary 1101 (13) by 3, reading dividend bits from most to least significant. At each stage append the next bit to the partial remainder, compare with 3, subtract if possible, and append the quotient decision.</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr>
+<th>Incoming bit</th>
+<th>Remainder before compare</th>
+<th>Subtract 3?</th>
+<th>New remainder</th>
+<th>Quotient prefix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>no</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr>
+<td>1</td>
+<td>3</td>
+<td>yes</td>
+<td>0</td>
+<td>01</td>
+</tr>
+<tr>
+<td>0</td>
+<td>0</td>
+<td>no</td>
+<td>0</td>
+<td>010</td>
+</tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>no</td>
+<td>1</td>
+<td>0100</td>
+</tr>
+</tbody>
+</table>
+<p>Quotient 4 and remainder 1 satisfy 13=4×3+1, with 0≤1&lt;3.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-c-expression-types-and-a-safe-index" class="level4">
+<h4>C++ expression types and a safe index</h4>
+<p>For <code>uint8_t a=250,b=10</code> on the host used here:</p>
+<ol type="1">
+<li>Stored operands are eight-bit unsigned values.</li>
+<li>Integral promotion converts each to int because int represents 0–255.</li>
+<li>Addition executes as int arithmetic, producing int 260.</li>
+<li><code>auto</code> keeps int 260; explicit conversion to uint8_t stores residue 4.</li>
+</ol>
+<p>For int index=−1 and unsigned size=10, an ordinary mixed-sign comparison may convert −1 to a large unsigned value. <code>std::cmp_less(-1,10u)</code> correctly returns true mathematically, but that alone does not authorize indexing. The valid condition is <code>index&gt;=0 &amp;&amp; std::cmp_less(index,size)</code>.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-binary-subtraction-and-incoming-borrow" class="level4">
+<h4>Binary subtraction and incoming borrow</h4>
+<p>Take A=5, B=3. With carry C=1, compute 5+NOT₈(3)+1=5+252+1=258: result=2, carry-out=1 (no borrow). With C=0, compute 257: result=1, since an incoming borrow subtracts one extra. For A=3,B=5,C=1, exact unsigned difference is −2: low result=254, carry-out=0 (borrow). This is the binary SBC convention, independent of any repository implementation claim.</p>
+</section>
+</section>
+<section id="appendix-92ff77d4dfdc-m003---bytes-to-physical-memory" class="level3">
+<h3>M003 - Bytes to physical memory</h3>
+<section id="appendix-92ff77d4dfdc-a-matching-and-mismatching-endian-decode" class="level4">
+<h4>A matching and mismatching endian decode</h4>
+<table>
+<thead>
+<tr>
+<th>Offset</th>
+<th>LE byte</th>
+<th>BE byte</th>
+<th>LE reader accumulator after byte</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>78</td>
+<td>12</td>
+<td>00000078</td>
+</tr>
+<tr>
+<td>1</td>
+<td>56</td>
+<td>34</td>
+<td>00005678</td>
+</tr>
+<tr>
+<td>2</td>
+<td>34</td>
+<td>56</td>
+<td>00345678</td>
+</tr>
+<tr>
+<td>3</td>
+<td>12</td>
+<td>78</td>
+<td>12345678</td>
+</tr>
+</tbody>
+</table>
+<p>Bytes are hexadecimal. Reading LE bytes as BE produces 78563412; no intra-octet bit reversal occurs. A schema version=1, count=0x12345678, payloadSize=9, written U8/U32-LE/U64-LE, yields:</p>
+<pre class="text"><code>01 78 56 34 12 09 00 00 00 00 00 00 00</code></pre>
+<p>Field offsets are 0/1/5, length 13. A typical native record places fields at 0/4/8, size 16. Packing may resemble the schema length but does not define its byte order or version contract.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-struct-layout-and-an-aligned-array" class="level4">
+<h4>Struct layout and an aligned array</h4>
+<p>Assume member size/alignment pairs 1/1, 8/8, 2/2, 4/4.</p>
+<table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Previous end</th>
+<th>Aligned start</th>
+<th>Occupied offsets</th>
+<th>New end</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>flags</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>id</td>
+<td>1</td>
+<td>8</td>
+<td>8-15</td>
+<td>16</td>
+</tr>
+<tr>
+<td>layer</td>
+<td>16</td>
+<td>16</td>
+<td>16-17</td>
+<td>18</td>
+</tr>
+<tr>
+<td>color</td>
+<td>18</td>
+<td>20</td>
+<td>20-23</td>
+<td>24</td>
+</tr>
+</tbody>
+</table>
+<p>Holes are seven plus two bytes; payload 15, size 24. Reordering id/color/layer/flags gives 0-7/8-11/12-13/14 plus one tail byte: size 16. Verify on the target ABI.</p>
+<p>A 1/4/1 record ends at nine but has size 12. At base 0x1000, next object starts 0x100C and its integer at 0x1010. A fictitious stride nine would put that integer at 0x100D, breaking alignment.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-page-translation-with-an-unchanged-offset" class="level4">
+<h4>Page translation with an unchanged offset</h4>
+<p>Assume 4-KiB pages and an allowed resident mapping.</p>
+<pre class="text"><code>VA                  0x12345ABC
+P                   0x1000 = 4096
+VPN = VA / P        0x12345
+offset = VA % P     0xABC
+mapping             VPN 0x12345 -&gt; PFN 0x987
+frame start         0x987000
+PA = start + offset 0x987ABC</code></pre>
+<p>Process B may map the same VPN to another PFN; adjacent virtual pages may map distant frames. These are address-space mappings, not endian conversions.</p>
+<p>Four bytes starting at offset FFE occupy FFE/FFF in page one and 000/001 in page two. A valid first mapping does not prove the second readable. Four bytes at cache-line offset 62 similarly span two 64-byte lines.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-one-member-load-separated-by-mechanism" class="level4">
+<h4>One member load, separated by mechanism</h4>
+<p>Assume active at offset zero, IEEE-754 32-bit float at offset four, object VA 0x12345000, valid alignment, and 4-KiB pages.</p>
+<ol type="1">
+<li>Member offset produces VA 0x12345004.</li>
+<li>Split into VPN 0x12345 and offset 004.</li>
+<li>TLB/page-table lookup supplies allowed PFN 0x5A7.</li>
+<li>PA=0x5A7004; cache/memory supplies bytes.</li>
+<li>With stated little-endian float representation, 00 00 80 3F corresponds to bits 3F800000 and float 1.0; <a href="ch033.xhtml#appendix-343615f49ddf-ieee-754-floating-point" class="wikilink">IEEE-754 floating point</a> develops why later.</li>
+</ol>
+<p>A TLB miss can walk valid tables without OS faulting. A nonresident valid page can fault, acquire backing, and resume. A forbidden access may fail. Real processors overlap this conceptual sequence.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-ownership-and-lifetime-not-geography" class="level4">
+<h4>Ownership and lifetime, not geography</h4>
+<p>A local vector object commonly occupies a frame; elements occupy its separate dynamic buffer. A copied span points to elements, not vector metadata. Returning that span after destroying the vector dangles it; reallocation can also invalidate views. Keeping an owner alive is necessary but not always sufficient.</p>
+<p>Static locals retain storage across calls; automatic const locals need not use read-only mappings; string literals have static storage and must not be modified. Old numeric addresses or remaining bytes do not extend lifetime.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-fault-recovery-and-copy-on-write" class="level4">
+<h4>Fault recovery and copy-on-write</h4>
+<p>Two mappings share frame F read-only. For a permitted private COW write, OS allocates F2, copies F, changes the writer’s mapping to F2 with write permission, and restarts. Not every protection violation is repairable.</p>
+<p><strong>Diagnosis:</strong> absurd decoded value→byte order; second array element misaligned→stride/tail padding; released vector span→lifetime; first-touch latency→fault/commitment; allocation fails amid holes→fragmentation; published file lost after crash→publication versus durability.</p>
+<p><a href="ch212.xhtml#id_01-foundations-i-ch011-m003---byte-order-layout-and-translation" class="wikilink">Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#M003 - Byte order, layout, and translation (Bits, Programs, and Reliable Systems, Part 3, Ch. 9)</a> · <a href="ch167.xhtml#appendix-d52e4486f527-ownership-and-non-owning-views" class="wikilink">Ownership and non-owning views (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Ownership and non-owning views)</a> · <a href="ch168.xhtml#appendix-e89a8f290ef5-atomic-publication-and-durability" class="wikilink">Atomic publication and durability (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Atomic publication and durability)</a></p>
+</section>
+</section>
+<section id="appendix-92ff77d4dfdc-m004---from-fields-to-values-and-failure-paths" class="level3">
+<h3>M004 - From fields to values and failure paths</h3>
+<section id="appendix-92ff77d4dfdc-encode-decode-board-trace" class="level4">
+<h4>Encode / decode board trace</h4>
+<p>For 10.625: integer 10→<code>1010</code>; fractional repeated doubling emits 1,0,1; normalize <code>1010.101</code> to <code>1.010101×2³</code>. Sign 0, stored exponent 130, fraction <code>0x2A0000</code>. OR contributions <code>0x00000000</code>, <code>0x41000000</code>, <code>0x002A0000</code> to obtain <code>0x412A0000</code>. Little-endian bytes are <code>00 00 2A 41</code>.</p>
+<p>For <code>0xC1540000</code>: sign contribution <code>0x80000000</code>, exponent contribution <code>0x41000000</code>, fraction <code>0x00540000</code>. Restore <code>1.10101₂</code>, value <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>8</mn>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>32</mn>
+  <mo>=</mo>
+  <mn>1.65625</mn>
+</math>; scale by 8 and negate → −13.25.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-boundary-corpus-and-expected-words" class="level4">
+<h4>Boundary corpus and expected words</h4>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Word</th>
+<th>Expected class</th>
+<th>Exact finite value or meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>00000000</code></td>
+<td>zero</td>
+<td>positive zero</td>
+</tr>
+<tr>
+<td><code>80000000</code></td>
+<td>zero</td>
+<td>negative zero</td>
+</tr>
+<tr>
+<td><code>00000001</code></td>
+<td>subnormal</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>149</mn>
+    </mrow>
+  </msup>
+</math></td>
+</tr>
+<tr>
+<td><code>007FFFFF</code></td>
+<td>subnormal</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>126</mn>
+    </mrow>
+  </msup>
+  <mo>−</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>149</mn>
+    </mrow>
+  </msup>
+</math></td>
+</tr>
+<tr>
+<td><code>00800000</code></td>
+<td>normal</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>126</mn>
+    </mrow>
+  </msup>
+</math></td>
+</tr>
+<tr>
+<td><code>3F7FFFFF</code></td>
+<td>normal</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mo>−</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>24</mn>
+    </mrow>
+  </msup>
+</math></td>
+</tr>
+<tr>
+<td><code>3F800000</code></td>
+<td>normal</td>
+<td>1</td>
+</tr>
+<tr>
+<td><code>3F800001</code></td>
+<td>normal</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mo>+</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>23</mn>
+    </mrow>
+  </msup>
+</math></td>
+</tr>
+<tr>
+<td><code>7F7FFFFF</code></td>
+<td>normal</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>−</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>23</mn>
+    </mrow>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>127</mn>
+    </mrow>
+  </msup>
+</math></td>
+</tr>
+<tr>
+<td><code>7F800000</code></td>
+<td>infinity</td>
+<td>positive infinity</td>
+</tr>
+<tr>
+<td><code>FF800000</code></td>
+<td>infinity</td>
+<td>negative infinity</td>
+</tr>
+<tr>
+<td><code>7FC00001</code></td>
+<td>quiet NaN</td>
+<td>diagnostic raw payload; not a real value</td>
+</tr>
+<tr>
+<td><code>7F800001</code></td>
+<td>signaling NaN</td>
+<td>classify raw integer; do not use in arithmetic</td>
+</tr>
+</tbody>
+</table>
+<p>Largest finite upward nextafter gives infinity; do not label that difference a finite ULP step. Finite exact reconstruction must preserve zero sign, but generating a generic numerical NaN does not preserve the raw payload.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-rounding-trace" class="level4">
+<h4>Rounding trace</h4>
+<p>At toy precision three bits, 1.125 lies between retained integers 4 (<code>1.00</code>) and 5 (<code>1.01</code>): choose 4. At 1.375, choose integer 6 (<code>1.10</code>) over 5. Tail <code>1000…</code> gives G=1,R=0,T=0; retain even low bit, increment odd. Tail <code>1010…</code> gives G=1,R=0,T=1; increment regardless of retained parity.</p>
+<p>Actual binary32 tie above 1: exact double value <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mo>+</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>24</mn>
+    </mrow>
+  </msup>
+</math> lies midway between <code>3F800000</code> and <code>3F800001</code>. Strict nearest conversion chooses <code>3F800000</code>. Next tie <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mo>+</mo>
+  <mn>3</mn>
+  <mo>⋅</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>24</mn>
+    </mrow>
+  </msup>
+</math> chooses <code>3F800002</code>. The lab forces runtime conversion and verifies both.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-two-normalization-failures-are-not-the-same" class="level4">
+<h4>Two normalization failures are not the same</h4>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Input</th>
+<th>Intermediate trace</th>
+<th>Policy/mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>8</mn>
+    </mrow>
+  </msup>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math></td>
+<td>finite norm near <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>8</mn>
+    </mrow>
+  </msup>
+</math>; norm ≤ float epsilon</td>
+<td>absolute cutoff returns zero despite nonzero representability</td>
+</tr>
+<tr>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>20</mn>
+    </mrow>
+  </msup>
+  <mo>,</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>20</mn>
+    </mrow>
+  </msup>
+  <mo stretchy="false">)</mo>
+</math></td>
+<td>component squares overflow → infinity; norm infinity; each finite component / infinity → zero</td>
+<td>intermediate-range failure</td>
+</tr>
+<tr>
+<td>Same huge finite input, hypot</td>
+<td>range-aware norm near <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1.4142</mn>
+  <mo>×</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>20</mn>
+    </mrow>
+  </msup>
+</math></td>
+<td>finite norm; no unnecessary squared overflow</td>
+</tr>
+</tbody>
+</table>
+<p>These are source-formula reproductions, not live Kairo API tests.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-infinity-exposes-more-than-an-equal-infinity-edge-case" class="level4">
+<h4>Infinity exposes more than an equal-infinity edge case</h4>
+<p>For the supplied hybrid scalar formula, policy <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>10</mn>
+  <msub>
+    <mi>ϵ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>32</mn>
+    </mrow>
+  </msub>
+</math>:</p>
+<table>
+<thead>
+<tr>
+<th>Pair</th>
+<th>Difference</th>
+<th>Scale / allowed difference</th>
+<th>Final result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>+inf, +inf</td>
+<td>NaN</td>
+<td>inf / inf</td>
+<td>false: NaN comparison</td>
+</tr>
+<tr>
+<td>1, +inf</td>
+<td>inf</td>
+<td>inf / inf</td>
+<td>true: inf ≤ inf</td>
+</tr>
+<tr>
+<td>+inf, −inf</td>
+<td>inf</td>
+<td>inf / inf</td>
+<td>true: inf ≤ inf</td>
+</tr>
+</tbody>
+</table>
+<p>An exact-equality branch followed by a non-finite rejection branch makes an alternative policy explicit. For finite inputs, widened arithmetic and independently validated absolute/relative tolerances prevent accidental comparison overflow in the float-specific teaching implementation.</p>
+<p>The supplied matrix inversion excerpt asserts determinant magnitude &gt; epsilon before its identity fallback. For <code>diag(1e-4f,1e-4f)</code>, the threshold fails; debug assertions may stop execution, whereas a build without that assertion may reach the fallback. Neither behavior establishes mathematical singularity.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-serialization-policy-trace" class="level4">
+<h4>Serialization policy trace</h4>
+<p><code>1.0f</code>→raw <code>3F800000</code>→LE <code>00 00 80 3F</code>. Negative zero→<code>80000000</code>→<code>00 00 00 80</code>. A raw quiet-NaN word <code>7FC00001</code>→<code>01 00 C0 7F</code>. These golden bytes are checked independently of round trips.</p>
+<p>Canonicalization at the raw-word level maps either zero to <code>00000000</code> and any NaN to chosen <code>7FC00000</code>; all other words remain unchanged. This avoids consuming a signaling NaN as a float but deliberately discards its payload/class distinction. No existing asset format was changed.</p>
+<p><a href="ch212.xhtml#id_01-foundations-i-ch011-m004---floating-point-fields-spacing-and-rounding" class="wikilink">Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#M004 - Floating-point fields, spacing, and rounding (Bits, Programs, and Reliable Systems, Part 3, Ch. 9)</a> · <a href="ch045.xhtml#appendix-4e2236f53445-m004---binary-interchange-inspection-and-strict-rounding-laboratory" class="wikilink">Supplementary/Code Snippets#M004 - Binary interchange inspection and strict rounding laboratory</a></p>
+</section>
+</section>
+<section id="appendix-92ff77d4dfdc-m005---rounding-paths-and-update-history" class="level3">
+<h3>M005 - Rounding paths and update history</h3>
+<section id="appendix-92ff77d4dfdc-runtime-witness-sheet" class="level4">
+<h4>Runtime witness sheet</h4>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Experiment under strict nearest arithmetic</th>
+<th>Expected observation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>binary32 0.1</td>
+<td>word 3DCCCCCD; exact rational 13421773/2^27</td>
+</tr>
+<tr>
+<td>binary64 0.1+0.2 versus 0.3</td>
+<td>words 3FD3333333333334 and 3FD3333333333333</td>
+</tr>
+<tr>
+<td>1.5+0.15625</td>
+<td>align exponents by 3; result 1.65625</td>
+</tr>
+<tr>
+<td>2^24+1</td>
+<td>midpoint absorbed to 2^24</td>
+</tr>
+<tr>
+<td>2^24+2</td>
+<td>next float, exactly 16777218</td>
+</tr>
+<tr>
+<td>1753/1024−1751/1024</td>
+<td>exact 2^-9</td>
+</tr>
+<tr>
+<td>stored binary32 1.00000006−1</td>
+<td>exact 2^-23, not desired 6e-8</td>
+</tr>
+<tr>
+<td>sqrt(1e16+1)−sqrt(1e16) in double</td>
+<td>zero after absorption/rounded roots</td>
+</tr>
+<tr>
+<td>reciprocal conjugate form</td>
+<td>useful nonzero value near 5e-9</td>
+</tr>
+<tr>
+<td>max float × 2</td>
+<td>infinity; overflow/inexact flags on tested host</td>
+</tr>
+<tr>
+<td>min normal × 0.5</td>
+<td>exact subnormal; no underflow/inexact on tested host</td>
+</tr>
+<tr>
+<td>min subnormal × 0.5</td>
+<td>zero tie; underflow/inexact on tested host</td>
+</tr>
+<tr>
+<td>FMA witness</td>
+<td>separate 0, fused 2^-46</td>
+</tr>
+<tr>
+<td>1e20,−1e20,3.14 regrouped</td>
+<td>3.14f versus zero</td>
+</tr>
+<tr>
+<td>distributive witness</td>
+<td>1192.0928955078125 versus 1024</td>
+</tr>
+</tbody>
+</table>
+<p>The integer remainder loop for 1/10 emits 00011, then returns to remainder numerator 2, proving periodicity without using an already-approximate decimal float as the conversion reference.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-kahan-trace-at-binary32-precision" class="level4">
+<h4>Kahan trace at binary32 precision</h4>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Adjusted y</th>
+<th>New sum</th>
+<th>Compensation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2^24</td>
+<td>2^24</td>
+<td>2^24</td>
+<td>0</td>
+</tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>2^24</td>
+<td>−1</td>
+</tr>
+<tr>
+<td>1</td>
+<td>2</td>
+<td>2^24+2</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>Naive loses both ones in this order. Kahan preserves this particular aggregate; it is not a universal order-independent sum. Pairwise on [2^24,1,1] splits one item from two, adds the ones first, and also reaches 2^24+2.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-precision-lost-on-input-cannot-be-recovered-later" class="level4">
+<h4>Precision lost on input cannot be recovered later</h4>
+<p>Intended component 100000001 becomes binary32 100000000. Promoting that stored float gives exact binary64 100000000, not the intended integer. Directly converting the original integer to double preserves it. The cross-product example must distinguish input loss from later multiplication/subtraction error.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-a-minimal-repeated-storage-witness" class="level4">
+<h4>A minimal repeated-storage witness</h4>
+<p>Two values <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.5</mn>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.5</mn>
+  <mo>+</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>24</mn>
+    </mrow>
+  </msup>
+</math> average to exact midpoint <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.5</mn>
+  <mo>+</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>25</mn>
+    </mrow>
+  </msup>
+</math>. Float persistent state rounds that mean to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.5</mn>
+</math> under nearest-even. Updating with a third value <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.5</mn>
+  <mo>+</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>24</mn>
+    </mrow>
+  </msup>
+</math> then gives a different rounded float than preserving the exact/wider mean through all three samples. Double intermediates in the next update cannot recover the midpoint already discarded. These samples stay inside the laboratory’s normalized interval <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">[</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-capped-weighted-mean-trace" class="level4">
+<h4>Capped weighted mean trace</h4>
+<p>Cap=2, all observation weights=1:</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr>
+<th>Step</th>
+<th>Sequence A sample</th>
+<th>A distance/weight</th>
+<th>Sequence B sample</th>
+<th>B distance/weight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>0</td>
+<td>0 / 1</td>
+<td>0</td>
+<td>0 / 1</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1</td>
+<td>0.5 / 2</td>
+<td>−1</td>
+<td>−0.5 / 2</td>
+</tr>
+<tr>
+<td>3</td>
+<td>−1</td>
+<td>−0.25 / 2</td>
+<td>1</td>
+<td>+0.25 / 2</td>
+</tr>
+</tbody>
+</table>
+<p>These exact results differ by 0.5 with no arithmetic approximation needed. Source-reported Maveb state narrowing is an additional mechanism; this is a toy formula reproduction, not a live volume reconstruction test.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-discrete-decisions" class="level4">
+<h4>Discrete decisions</h4>
+<p>nextafter(2.5,−infinity) rounds to pixel 2 via llround; nextafter(2.5,+infinity) rounds to 3. The exact midpoint rounds to 3 by the halfway-away-from-zero rule. A small perturbation crossing this boundary changes which observation is sampled.</p>
+<p>A scalar field value changing sign near zero can change a surface-extraction case. Scalar RMS error, sign-change count, vertex displacement and topology measure different consequences; none was measured on real reconstruction data in this merge.</p>
+<p><a href="ch045.xhtml#appendix-4e2236f53445-m005---strict-arithmetic-and-state-update-laboratory" class="wikilink">Supplementary/Code Snippets#M005 - Strict arithmetic and state-update laboratory</a> · <a href="ch212.xhtml#id_01-foundations-i-ch011-m005---representation-error-cancellation-and-rounding-graphs" class="wikilink">Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#M005 - Representation error, cancellation, and rounding graphs (Bits, Programs, and Reliable Systems, Part 3, Ch. 9)</a></p>
+</section>
+</section>
+<section id="appendix-92ff77d4dfdc-representation-choice---one-quantity-through-several-contracts" class="level3">
+<h3>Representation choice - One quantity through several contracts</h3>
+<section id="appendix-92ff77d4dfdc-exact-choices-and-irreversible-approximations" class="level4">
+<h4>Exact choices and irreversible approximations</h4>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Quantity/contract</th>
+<th>Stored representation</th>
+<th>Reconstructed result</th>
+<th>What this demonstrates</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Signed32,F16, value3.25</td>
+<td>raw212992, word00034000</td>
+<td>exactly3.25</td>
+<td>fixed scale is part of interpretation</td>
+</tr>
+<tr>
+<td>Signed32,F8, values1.5 and2.25</td>
+<td>raw384 and576; wide product221184</td>
+<td>raw864, value3.375</td>
+<td>product scale must be reduced from256²</td>
+</tr>
+<tr>
+<td>INT4 group[-7,-3.2,0,2.9,6.8],s=1</td>
+<td>levels[-7,-3,0,3,7]</td>
+<td>same levels at scale1</td>
+<td>quantization is lossy before packing</td>
+</tr>
+<tr>
+<td>Offset nibble codes</td>
+<td>[1,5,8,11,15]</td>
+<td>unpack identical codes</td>
+<td>codes are not two’s-complement nibbles</td>
+</tr>
+<tr>
+<td>Low-first packed bytes</td>
+<td>51 B8 0F</td>
+<td>five codes, unused high nibble zero</td>
+<td>count is needed to distinguish padding</td>
+</tr>
+<tr>
+<td>UNORM8 code128</td>
+<td>80 hexadecimal</td>
+<td>128/255</td>
+<td>normalized midpoint is not exactly0.5</td>
+</tr>
+<tr>
+<td>Binary16 value1.5</td>
+<td>3E00</td>
+<td>exactly1.5</td>
+<td>hidden one and exponent bias reused</td>
+</tr>
+<tr>
+<td>BF16 tie input3F808000</td>
+<td>3F80</td>
+<td>1.0</td>
+<td>finite nearest-even conversion</td>
+</tr>
+<tr>
+<td>BF16 next tie3F818000</td>
+<td>3F82</td>
+<td>1.015625</td>
+<td>even choice can round upward</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-92ff77d4dfdc-fixed-negative-rounding-trace" class="level4">
+<h4>Fixed negative rounding trace</h4>
+<p>At divisor2, numerator−5 has magnitude5=2·2+1. The remainder is exactly half and quotient2 is even; nearest-even gives−2. Numerator−7 gives magnitude7=3·2+1, odd quotient3; increment to4 and restore sign, giving−4. Integer division−7/2 instead gives−3, and arithmetic right shift gives−4. Agreement on one example does not prove identical policies.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-reconstruct-the-centroid-row" class="level4">
+<h4>Reconstruct the centroid row</h4>
+<p>Input[-1,-3,2,4] gives negative sum−4/count2 and positive sum6/count2. Centroids are−2 and3. The sign labels select[-2,-2,3,3]. Reference-minus-reconstruction errors[1,−1,−1,1] square to four ones, so RMSE=1; absolute errors also give MAE=1 and max1.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-the-byte-image-keeps-meaning-outside-the-bytes" class="level4">
+<h4>The byte image keeps meaning outside the bytes</h4>
+<p>The continuous story displays every header/payload offset. The golden total is52 bytes:28 header plus24 data. Decode the image at byte-buffer offset1 using a subspan: the schema’s offset zero moves with the subspan; no typed pointer alignment is assumed.</p>
+<p>Change byte at file offset1E from80 to00. Payload word3F800000 becomes3F000000; value1 becomes0.5. Shape, magic, version and total size remain valid. The declared CRC over complete original bytes changes; parsing success alone did not protect the numeric data.</p>
+<p>Raw image words80000000,7F800000,7FC00001,7F800001 round-trip through the word codec unchanged. This tests raw bytes, not signaling-NaN arithmetic or payload-preserving float transport.</p>
+</section>
+<section id="appendix-92ff77d4dfdc-three-failure-paths-that-must-not-be-confused" class="level4">
+<h4>Three failure paths that must not be confused</h4>
+<ul>
+<li>A code outside0–15 fails the nibble contract before packing.</li>
+<li>A huge claimed shape fails checked size arithmetic/resource policy before allocation.</li>
+<li>A same-size changed payload can pass structure checks while failing an independent integrity comparison.</li>
+</ul>
+<p><span>Teach the complete journey</span> · <a href="ch045.xhtml#appendix-4e2236f53445-representation-codecs-and-bounded-file-laboratory" class="wikilink">Run the regressions</a></p>
+</section>
+</section>
+<section id="appendix-92ff77d4dfdc-received-completion-through-part-1100" class="level3">
+<h3>Received completion through Part 1100</h3>
+<p>Follow the numerical summation/root/interpolation witnesses in <a href="ch094.xhtml#appendix-cb5af353ef77-numerical-reliability-figures-and-their-explanations" class="wikilink">the numerical figure index</a>, and the frame/depth/stereo/optics traces in <a href="ch285.xhtml#appendix-a2b71a18f5a2-figures-and-their-full-explanations" class="wikilink">the camera figure index</a>. Essential trace explanations remain in the continuous books.</p>
+</section>
+</section>
+</body>
+</html>

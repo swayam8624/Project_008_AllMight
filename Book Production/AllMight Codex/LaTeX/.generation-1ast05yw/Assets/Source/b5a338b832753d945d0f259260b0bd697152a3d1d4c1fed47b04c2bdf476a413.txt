@@ -1,0 +1,4964 @@
+According to the canonical curriculum, we have finished Phase 5 at Part 500 and are now entering **Phase 6 — Scalars, Vectors, Vector Spaces, Norms, and Geometric Algebra Foundations**. The exact next three parts are **501. Scalars as elements of a number field**, **502. Real numbers and the properties graphics relies on**, and **503. Complex numbers and two-dimensional rotation intuition**. Project_Sheldon_Master_Curricul…
+
+I will treat them as three separate canonical Parts, not collapse them into one topic. I’ll also follow the supplied mastery contract: meaning before formulas, derivation rather than assertion, representation and implementation, numerical reality, failure modes, and reconstruction checks. Pasted markdown
+
+---
+
+# PART 501 — SCALARS AS ELEMENTS OF A NUMBER FIELD
+
+## 501.1 What this Part is actually about
+
+You have probably used the word **scalar** hundreds of times:
+
+```cpp
+float speed;
+double mass;
+float roughness;
+float t;
+```
+
+and perhaps thought:
+
+> scalar = a single number.
+
+That is useful programming intuition, but mathematically it is incomplete.
+
+The deeper statement is:
+
+\[
+\boxed{\text{A scalar is an element of the field over which a mathematical structure is defined.}}
+\]
+
+For example, when we eventually say
+
+\[
+\mathbf v \in \mathbb R^3
+\]
+
+the entries of that vector are **real scalars** because the underlying field is \(\mathbb R\).
+
+If instead we had a structure defined over complex numbers,
+
+\[
+\mathbb C^n,
+\]
+
+then the scalars would be complex numbers.
+
+So **scalar is a role**, not one particular numeric type.
+
+This distinction is going to matter enormously later.
+
+---
+
+# 501.2 Why do we need a special word at all?
+
+Imagine we eventually have some geometric object \(\mathbf v\), and we write
+
+\[
+3\mathbf v.
+\]
+
+There are two very different kinds of things here:
+
+\[
+3
+\]
+
+is one object, while
+
+\[
+\mathbf v
+\]
+
+is another kind of object.
+
+The \(3\) **scales** the other object.
+
+Hence the word:
+
+\[
+\boxed{\text{scalar}}
+\]
+
+from the idea of **scaling**.
+
+But what are we allowed to use as scalars?
+
+Could we use integers?
+
+Fractions?
+
+Real numbers?
+
+Complex numbers?
+
+Matrices?
+
+Strings?
+
+The answer depends on what algebraic rules our system requires.
+
+This leads us to the concept of a **field**.
+
+---
+
+# 501.3 First principles: what problem does a field solve?
+
+Suppose we want ordinary algebra to work.
+
+We want to be able to perform things like
+
+\[
+a+b
+\]
+
+\[
+a-b
+\]
+
+\[
+ab
+\]
+
+\[
+\frac ab
+\]
+
+and manipulate equations predictably.
+
+For example,
+
+\[
+ax=b
+\]
+
+should give
+
+\[
+x=\frac ba
+\]
+
+provided \(a\neq 0\).
+
+That seemingly innocent manipulation assumes several properties.
+
+For example, dividing by \(a\) assumes that \(a\) has a multiplicative inverse:
+
+\[
+a^{-1}
+\]
+
+such that
+
+\[
+aa^{-1}=1.
+\]
+
+A **field** is a set of elements together with addition and multiplication that obey enough rules for ordinary algebra to behave consistently.
+
+---
+
+# 501.4 Set first
+
+A **set** is a collection of objects.
+
+Examples:
+
+\[
+\mathbb Z=\{\ldots,-2,-1,0,1,2,\ldots\}
+\]
+
+is the set of integers.
+
+\[
+\mathbb Q
+\]
+
+is the set of rational numbers.
+
+\[
+\mathbb R
+\]
+
+is the set of real numbers.
+
+\[
+\mathbb C
+\]
+
+is the set of complex numbers.
+
+A field is not merely the elements.
+
+It consists conceptually of
+
+\[
+(F,+,\times)
+\]
+
+where:
+
+- \(F\) is the set,
+- \(+\) is addition,
+- \(\times\) is multiplication,
+
+and those operations satisfy particular laws.
+
+---
+
+# 501.5 Closure
+
+Take two elements of a field:
+
+\[
+a,b\in F.
+\]
+
+After addition:
+
+\[
+a+b
+\]
+
+we must still have
+
+\[
+a+b\in F.
+\]
+
+Likewise,
+
+\[
+ab\in F.
+\]
+
+This property is called **closure**.
+
+For real numbers:
+
+\[
+3.5+7.2=10.7\in\mathbb R.
+\]
+
+For integers:
+
+\[
+3+7=10\in\mathbb Z.
+\]
+
+and
+
+\[
+3\cdot7=21\in\mathbb Z.
+\]
+
+So integers are closed under addition and multiplication.
+
+But that does **not** yet make integers a field.
+
+---
+
+# 501.6 Associativity
+
+Addition satisfies:
+
+\[
+(a+b)+c=a+(b+c).
+\]
+
+Multiplication satisfies:
+
+\[
+(ab)c=a(bc).
+\]
+
+For mathematical real numbers, these are exact laws.
+
+For example:
+
+\[
+(2+3)+4
+=
+5+4
+=
+9
+\]
+
+and
+
+\[
+2+(3+4)
+=
+2+7
+=
+9.
+\]
+
+Why do we care?
+
+Because otherwise the meaning of
+
+\[
+a+b+c
+\]
+
+would depend fundamentally on how we placed parentheses.
+
+Later there is an important machine-level caveat:
+
+**floating-point arithmetic is not exactly associative.**
+
+You already encountered this in the earlier floating-point Parts.
+
+Mathematically:
+
+\[
+(a+b)+c=a+(b+c)
+\]
+
+for real numbers.
+
+Computationally:
+
+```cpp
+(a + b) + c
+```
+
+may differ from
+
+```cpp
+a + (b + c)
+```
+
+because each floating-point operation rounds.
+
+That means:
+
+\[
+\boxed{\texttt{float} \neq \mathbb R}
+\]
+
+in a strict mathematical sense.
+
+More on that shortly.
+
+---
+
+# 501.7 Commutativity
+
+For addition:
+
+\[
+a+b=b+a.
+\]
+
+For multiplication:
+
+\[
+ab=ba.
+\]
+
+Thus:
+
+\[
+5+8=8+5
+\]
+
+and
+
+\[
+5\cdot8=8\cdot5.
+\]
+
+This is not a universal property of every mathematical operation.
+
+Later, matrix multiplication usually satisfies
+
+\[
+AB\neq BA.
+\]
+
+Quaternion multiplication usually satisfies
+
+\[
+pq\neq qp.
+\]
+
+But scalar multiplication inside the familiar fields
+
+\[
+\mathbb R,\mathbb C
+\]
+
+is commutative.
+
+That distinction will become important later.
+
+---
+
+# 501.8 Additive identity
+
+We require an element \(0\) such that
+
+\[
+a+0=a.
+\]
+
+The number zero is therefore the **additive identity**.
+
+Why call it an identity?
+
+Because applying the operation with it leaves the original element unchanged.
+
+---
+
+# 501.9 Additive inverses
+
+For every
+
+\[
+a\in F
+\]
+
+there must be an element
+
+\[
+-a
+\]
+
+such that
+
+\[
+a+(-a)=0.
+\]
+
+Example:
+
+\[
+7+(-7)=0.
+\]
+
+This is what makes subtraction possible:
+
+\[
+a-b
+\]
+
+can be understood as
+
+\[
+a+(-b).
+\]
+
+So subtraction does not fundamentally need to be a new primitive mathematical operation.
+
+It can be derived from addition plus additive inverse.
+
+---
+
+# 501.10 Multiplicative identity
+
+There must be an element \(1\) such that
+
+\[
+a\cdot 1=a.
+\]
+
+Hence \(1\) is the multiplicative identity.
+
+---
+
+# 501.11 Multiplicative inverse
+
+For every nonzero scalar
+
+\[
+a\neq0
+\]
+
+there must be some element
+
+\[
+a^{-1}
+\]
+
+such that
+
+\[
+aa^{-1}=1.
+\]
+
+For ordinary numbers,
+
+\[
+a^{-1}=\frac1a.
+\]
+
+For example,
+
+\[
+5^{-1}=\frac15.
+\]
+
+Therefore
+
+\[
+5\cdot\frac15=1.
+\]
+
+This is the requirement that eliminates the integers from being a field.
+
+Take
+
+\[
+2\in\mathbb Z.
+\]
+
+Its inverse is
+
+\[
+\frac12.
+\]
+
+But
+
+\[
+\frac12\notin\mathbb Z.
+\]
+
+Therefore integers do not contain multiplicative inverses for all nonzero elements.
+
+Thus:
+
+\[
+\boxed{\mathbb Z\text{ is not a field.}}
+\]
+
+---
+
+# 501.12 Why zero cannot have a multiplicative inverse
+
+Could there be some number \(x\) satisfying
+
+\[
+0x=1?
+\]
+
+No.
+
+For every ordinary number \(x\),
+
+\[
+0x=0.
+\]
+
+We can actually derive that fact.
+
+Start from
+
+\[
+0+0=0.
+\]
+
+Multiply by \(x\):
+
+\[
+x(0+0)=x0.
+\]
+
+Distribute:
+
+\[
+x0+x0=x0.
+\]
+
+Subtract \(x0\) from both sides:
+
+\[
+x0=0.
+\]
+
+Therefore no \(x\) can satisfy
+
+\[
+0x=1.
+\]
+
+So zero necessarily has no multiplicative inverse.
+
+Hence division by zero is excluded by the field axioms.
+
+---
+
+# 501.13 Distributivity
+
+The two operations must interact through
+
+\[
+a(b+c)=ab+ac.
+\]
+
+Example:
+
+\[
+3(4+5)
+=
+3(9)
+=
+27
+\]
+
+while
+
+\[
+3\cdot4+3\cdot5
+=
+12+15
+=
+27.
+\]
+
+This law looks elementary but is foundational.
+
+Huge parts of:
+
+- algebra,
+- linear algebra,
+- polynomial manipulation,
+- coordinate transformations,
+- optimization,
+- physics derivations
+
+depend on distributivity.
+
+---
+
+# 501.14 Collecting the field laws
+
+For scalars
+
+\[
+a,b,c\in F,
+\]
+
+a field supports approximately this algebraic structure:
+
+### Addition
+
+\[
+a+b\in F
+\]
+
+\[
+a+b=b+a
+\]
+
+\[
+(a+b)+c=a+(b+c)
+\]
+
+\[
+a+0=a
+\]
+
+\[
+a+(-a)=0
+\]
+
+### Multiplication
+
+\[
+ab\in F
+\]
+
+\[
+ab=ba
+\]
+
+\[
+(ab)c=a(bc)
+\]
+
+\[
+a1=a
+\]
+
+and for
+
+\[
+a\neq0,
+\]
+
+\[
+aa^{-1}=1.
+\]
+
+### Interaction
+
+\[
+a(b+c)=ab+ac.
+\]
+
+These rules are why algebraic manipulation works.
+
+---
+
+# 501.15 Examples of fields
+
+Three particularly important ones are
+
+\[
+\boxed{\mathbb Q,\quad \mathbb R,\quad \mathbb C}
+\]
+
+where
+
+\[
+\mathbb Q=\text{rational numbers}
+\]
+
+\[
+\mathbb R=\text{real numbers}
+\]
+
+\[
+\mathbb C=\text{complex numbers}.
+\]
+
+All satisfy the field axioms.
+
+Integers do not.
+
+Natural numbers do not.
+
+---
+
+# 501.16 Why `float` is NOT mathematically a field
+
+This is extremely important for graphics.
+
+You will very frequently model real scalars using
+
+```cpp
+float
+```
+
+but IEEE-754 floating-point values do not form the mathematical field \(\mathbb R\).
+
+Consider associativity.
+
+Let approximately
+
+\[
+a=10^{20},\qquad
+b=-10^{20},\qquad
+c=3.
+\]
+
+Mathematically:
+
+\[
+(a+b)+c=0+3=3.
+\]
+
+But another order:
+
+\[
+a+(b+c)
+\]
+
+requires computing
+
+\[
+-10^{20}+3.
+\]
+
+At that magnitude, `3` may be too small to alter the represented floating-point value.
+
+So approximately:
+
+\[
+b+c\approx -10^{20}.
+\]
+
+Then
+
+\[
+a+(b+c)
+\approx
+10^{20}-10^{20}
+=
+0.
+\]
+
+Hence computationally:
+
+\[
+(a+b)+c\neq a+(b+c).
+\]
+
+There are other violations too:
+
+- overflow creates infinity,
+- NaNs break normal equality behavior,
+- finite precision means many mathematical inverses cannot be exactly represented,
+- underflow changes behavior,
+- signed zero exists,
+- rounding makes results representation-dependent.
+
+So think:
+
+```text
+Mathematical scalar:
+    real number ∈ ℝ
+
+Machine representation:
+    float approximating a subset of ℝ
+```
+
+Never silently identify the two.
+
+---
+
+# 501.17 Representation in C++
+
+At Level 1 — pure mathematics:
+
+\[
+s\in\mathbb R.
+\]
+
+At Level 2 — common engine implementation:
+
+```cpp
+using Scalar = float;
+```
+
+or perhaps
+
+```cpp
+using Scalar = double;
+```
+
+depending on the library.
+
+A generic math library might instead write:
+
+```cpp
+template<class T>
+struct Vec3;
+```
+
+where `T` is intended to play the role of scalar.
+
+Later we might instantiate:
+
+```cpp
+Vec3<float>
+Vec3<double>
+```
+
+But there is a subtle point:
+
+```cpp
+template<class T>
+```
+
+does **not** guarantee that `T` behaves like a mathematical field.
+
+Someone could instantiate:
+
+```cpp
+Vec3<int>
+```
+
+and now division behaves very differently.
+
+This is why generic mathematical APIs sometimes constrain scalar types.
+
+Conceptually:
+
+```cpp
+template<typename T>
+concept FloatingScalar =
+    std::floating_point<T>;
+```
+
+This still does not make machine floating point a perfect mathematical field, but it restricts the implementation to the numeric family the API expects.
+
+---
+
+# 501.18 Scalar does not mean dimensionless
+
+Another common misconception:
+
+> scalar means a pure dimensionless number.
+
+No.
+
+Mass can be scalar:
+
+\[
+m=5\text{ kg}.
+\]
+
+Temperature can be scalar:
+
+\[
+T=300\text{ K}.
+\]
+
+Time can be scalar:
+
+\[
+t=2.5\text{ s}.
+\]
+
+Opacity can be scalar:
+
+\[
+\alpha=0.7.
+\]
+
+A scalar can carry **physical units**.
+
+Its defining mathematical feature is not "has no units."
+
+Its defining role is that it belongs to the underlying scalar field.
+
+Units are another semantic layer.
+
+---
+
+# 501.19 Scalar does not necessarily mean one machine word
+
+Consider a complex number
+
+\[
+3+4i.
+\]
+
+It may require two machine floating-point values:
+
+```text
+real = 3
+imag = 4
+```
+
+Yet if our mathematical space is defined over
+
+\[
+\mathbb C,
+\]
+
+then
+
+\[
+3+4i
+\]
+
+is one scalar.
+
+Therefore:
+
+\[
+\boxed{\text{scalar is a mathematical role, not a memory-size statement.}}
+\]
+
+---
+
+# 501.20 Scalar versus component
+
+Later, suppose you see:
+
+\[
+(x,y,z).
+\]
+
+The three values
+
+\[
+x,y,z
+\]
+
+are **components** of the represented object relative to some basis.
+
+Each component is normally a scalar.
+
+So:
+
+```text
+scalar
+    ↓
+can serve as a component
+
+component
+    ↓
+is a scalar associated with one coordinate direction
+```
+
+But not every scalar in an engine is a vector component.
+
+Examples:
+
+```cpp
+float roughness;
+float metallic;
+float mass;
+float time;
+```
+
+are scalars without being vector components.
+
+---
+
+# 501.21 Complexity and hardware
+
+Mathematically, elementary scalar arithmetic is treated as constant-time:
+
+\[
+O(1).
+\]
+
+At hardware level the operations are not equal-cost.
+
+For example:
+
+```text
+addition        relatively cheap
+multiplication  relatively cheap
+division        noticeably more expensive
+sqrt            relatively expensive
+sin/cos         substantially more machinery
+```
+
+Exact latency depends on architecture and instruction.
+
+Even something mathematically described as one operation can become multiple instructions.
+
+This distinction:
+
+\[
+\text{mathematical operation}
+\neq
+\text{machine cost}
+\]
+
+will appear constantly throughout graphics.
+
+---
+
+# 501.22 Part 501 reconstruction gate
+
+You should be able to explain from memory:
+
+1. Why a scalar means more than "one number."
+2. What a mathematical field is.
+3. Why \(\mathbb Z\) is not a field.
+4. Why \(\mathbb Q,\mathbb R,\mathbb C\) are fields.
+5. Why zero cannot have a multiplicative inverse.
+6. What distributivity means.
+7. Why `float` is not literally the field \(\mathbb R\).
+8. Why a complex number can be one scalar despite containing two real machine values.
+
+The central statement to own is:
+
+\[
+\boxed{
+\text{A scalar is an element of the underlying field used by the mathematical structure.}
+}
+\]
+
+---
+
+# PART 502 — REAL NUMBERS AND THE PROPERTIES GRAPHICS RELIES ON
+
+Now we narrow the scalar field to the one used by most classical graphics mathematics:
+
+\[
+\boxed{\mathbb R}
+\]
+
+the real numbers.
+
+---
+
+# 502.1 Why aren't rational numbers enough?
+
+A rational number can be expressed as
+
+\[
+\frac pq
+\]
+
+where
+
+\[
+p,q\in\mathbb Z,\qquad q\neq0.
+\]
+
+Examples:
+
+\[
+\frac12,\quad
+-\frac73,\quad
+5=\frac51.
+\]
+
+At first this seems enormous.
+
+Perhaps every geometric quantity could be rational.
+
+But consider a square whose side length is
+
+\[
+1.
+\]
+
+By geometry, its diagonal has length \(d\) satisfying
+
+\[
+d^2=1^2+1^2=2.
+\]
+
+Therefore
+
+\[
+d=\sqrt2.
+\]
+
+Can
+
+\[
+\sqrt2
+\]
+
+be expressed as a ratio of two integers?
+
+No.
+
+Let's prove it.
+
+---
+
+# 502.2 Proof that \(\sqrt2\) is irrational
+
+Suppose, for contradiction, that
+
+\[
+\sqrt2=\frac pq
+\]
+
+where \(p\) and \(q\) share no common factor.
+
+Square both sides:
+
+\[
+2=\frac{p^2}{q^2}.
+\]
+
+Therefore
+
+\[
+p^2=2q^2.
+\]
+
+So \(p^2\) is even.
+
+If \(p^2\) is even, \(p\) must be even.
+
+Write
+
+\[
+p=2k.
+\]
+
+Then
+
+\[
+p^2=4k^2.
+\]
+
+Substitute:
+
+\[
+4k^2=2q^2.
+\]
+
+Divide by two:
+
+\[
+2k^2=q^2.
+\]
+
+Therefore \(q^2\) is even, so \(q\) is even.
+
+Thus both \(p\) and \(q\) are even.
+
+But we assumed the fraction was reduced and shared no common factor.
+
+Contradiction.
+
+Therefore:
+
+\[
+\boxed{\sqrt2\notin\mathbb Q.}
+\]
+
+Geometry itself forced us outside the rationals.
+
+---
+
+# 502.3 The number hierarchy
+
+A useful hierarchy is:
+
+\[
+\mathbb N
+\subset
+\mathbb Z
+\subset
+\mathbb Q
+\subset
+\mathbb R
+\subset
+\mathbb C.
+\]
+
+Conceptually:
+
+```text
+Natural numbers
+0, 1, 2, 3, ...
+
+        ↓ include negatives
+
+Integers
+..., -2, -1, 0, 1, 2, ...
+
+        ↓ include ratios
+
+Rationals
+1/2, -7/3, ...
+
+        ↓ fill irrational gaps
+
+Reals
+√2, π, e, ...
+
+        ↓ add imaginary dimension
+
+Complex numbers
+a + bi
+```
+
+The exact convention of whether \(0\in\mathbb N\) varies by author; it is not important here.
+
+---
+
+# 502.4 What is a real number geometrically?
+
+The most useful intuition for graphics is:
+
+\[
+\boxed{\text{Every point on an ideal continuous number line corresponds to a real number.}}
+\]
+
+Imagine:
+
+```text
+←────────────────────────────────────────→
+     -2       -1        0       1       2
+```
+
+But between every pair of distinct real numbers there are infinitely many others.
+
+Between \(0\) and \(1\):
+
+\[
+0.5
+\]
+
+exists.
+
+Between \(0\) and \(0.5\):
+
+\[
+0.25
+\]
+
+exists.
+
+And this never terminates.
+
+The continuum has no smallest positive step.
+
+That is radically different from floating point.
+
+---
+
+# 502.5 Real numbers are an ordered field
+
+Part 501 gave us the field structure.
+
+Reals additionally have a consistent **ordering**.
+
+We can say
+
+\[
+a<b,
+\qquad
+a=b,
+\qquad
+a>b.
+\]
+
+For distinct \(a,b\), one of
+
+\[
+a<b
+\]
+
+or
+
+\[
+a>b
+\]
+
+holds.
+
+This order interacts consistently with arithmetic.
+
+If
+
+\[
+a<b,
+\]
+
+then adding the same \(c\) to both sides preserves order:
+
+\[
+a+c<b+c.
+\]
+
+If additionally
+
+\[
+c>0,
+\]
+
+then
+
+\[
+ac<bc.
+\]
+
+This matters constantly in graphics code.
+
+Consider:
+
+```cpp
+if (t >= tMin && t <= tMax)
+```
+
+or
+
+```cpp
+depth < currentDepth
+```
+
+or
+
+```cpp
+distance <= radius
+```
+
+These geometric tests assume ordered quantities.
+
+---
+
+# 502.6 Why complex numbers cannot replace real numbers everywhere
+
+Complex numbers are a field, but they do not have an ordering compatible with field arithmetic in the way real numbers do.
+
+There is no ordinary meaningful field ordering like
+
+\[
+3+2i < 5-i.
+\]
+
+Which one is "smaller"?
+
+You can order complex numbers artificially for sorting—lexicographically, for example—but that is not the same thing as the natural ordered-field structure of \(\mathbb R\).
+
+Hence things like:
+
+```cpp
+if (distance < radius)
+```
+
+naturally involve real quantities.
+
+---
+
+# 502.7 The genuinely special property: completeness
+
+Being an ordered field still does not fully characterize the real numbers.
+
+The rationals are also an ordered field.
+
+What crucial thing do the reals possess that rationals lack?
+
+\[
+\boxed{\text{completeness}}
+\]
+
+This is one of the deepest properties underpinning analysis, calculus, numerical methods, and continuous graphics mathematics.
+
+---
+
+# 502.8 Why completeness exists
+
+Suppose we approximate
+
+\[
+\sqrt2
+\]
+
+using rationals:
+
+\[
+1
+\]
+
+\[
+1.4
+\]
+
+\[
+1.41
+\]
+
+\[
+1.414
+\]
+
+\[
+1.4142
+\]
+
+\[
+1.41421
+\]
+
+and so on.
+
+All of these approximations are rational.
+
+They are trying to approach some limiting value.
+
+But that limit is
+
+\[
+\sqrt2,
+\]
+
+which is not rational.
+
+So within \(\mathbb Q\), the sequence appears to approach a "hole."
+
+The real numbers fill those holes.
+
+Very informally:
+
+\[
+\boxed{\mathbb R\text{ contains the limits that continuous real analysis expects to exist.}}
+\]
+
+---
+
+# 502.9 Least-upper-bound property
+
+One rigorous expression of completeness is the **least upper bound property**.
+
+Suppose some nonempty set
+
+\[
+S\subseteq\mathbb R
+\]
+
+has an upper bound.
+
+An upper bound \(u\) means:
+
+\[
+x\le u
+\]
+
+for every
+
+\[
+x\in S.
+\]
+
+The completeness property says there exists a **smallest upper bound**, called the supremum:
+
+\[
+\sup S.
+\]
+
+For example:
+
+\[
+S=\{x\in\mathbb R\mid x^2<2,\ x>0\}.
+\]
+
+Values such as
+
+\[
+1,\quad1.4,\quad1.41
+\]
+
+belong to this set.
+
+Numbers like
+
+\[
+2
+\]
+
+are upper bounds.
+
+But the least upper bound is
+
+\[
+\sqrt2.
+\]
+
+The existence of that real boundary is a manifestation of completeness.
+
+We will revisit this idea much later when calculus begins around Part 801.
+
+For now, you need to understand why continuous mathematics requires a number system without rational "holes."
+
+---
+
+# 502.10 Graphics depends on real-number structure everywhere
+
+Consider the quantity
+
+\[
+t\in[0,1].
+\]
+
+You will encounter this constantly.
+
+It may mean:
+
+- position along a segment,
+- interpolation parameter,
+- normalized time,
+- barycentric weight,
+- ray parameter,
+- blend factor.
+
+The notation
+
+\[
+[0,1]
+\]
+
+means every real value satisfying
+
+\[
+0\le t\le1.
+\]
+
+This is not a finite lookup table.
+
+Mathematically it is a continuum.
+
+---
+
+# 502.11 Real multiplication models continuous scaling
+
+Suppose some quantity has value \(x\).
+
+Scaling by \(s\in\mathbb R\) gives
+
+\[
+sx.
+\]
+
+If
+
+\[
+s=2,
+\]
+
+we double it.
+
+If
+
+\[
+s=\frac12,
+\]
+
+we halve it.
+
+If
+
+\[
+s=-1,
+\]
+
+we reverse its sign.
+
+If
+
+\[
+s=0,
+\]
+
+we collapse it to zero.
+
+Real scalars therefore give us continuously variable scaling factors.
+
+Later this becomes the mathematical basis for vector scalar multiplication.
+
+---
+
+# 502.12 Absolute value
+
+For
+
+\[
+x\in\mathbb R,
+\]
+
+define
+
+\[
+|x|=
+\begin{cases}
+x,&x\ge0\\
+-x,&x<0.
+\end{cases}
+\]
+
+Example:
+
+\[
+|5|=5
+\]
+
+and
+
+\[
+|-5|=5.
+\]
+
+Absolute value measures distance from zero on the real number line.
+
+Why?
+
+The distance between \(x\) and zero must be nonnegative.
+
+If \(x=-5\), its distance from zero is still \(5\).
+
+This becomes the seed of a broader idea:
+
+\[
+|a-b|
+\]
+
+measures the real-line distance between \(a\) and \(b\).
+
+Example:
+
+\[
+|-3-5|
+=
+|-8|
+=
+8.
+\]
+
+The later concept of vector norms generalizes this kind of size measurement.
+
+---
+
+# 502.13 Positive, negative, and zero
+
+Real numbers divide naturally into:
+
+\[
+x>0
+\]
+
+positive,
+
+\[
+x=0
+\]
+
+zero,
+
+and
+
+\[
+x<0
+\]
+
+negative.
+
+This sign information becomes geometrically meaningful constantly.
+
+Examples later include:
+
+```text
+distance < 0
+signed distance says "other side"
+
+dot product < 0
+directions exceed 90° separation
+
+determinant < 0
+orientation reversal
+
+barycentric coordinate < 0
+point outside corresponding triangle half-space
+```
+
+All of that depends on the ordered-field behavior of real numbers.
+
+---
+
+# 502.14 Intervals
+
+Graphics algorithms constantly reason over real intervals.
+
+Closed interval:
+
+\[
+[a,b]
+=
+\{x\in\mathbb R\mid a\le x\le b\}.
+\]
+
+Open interval:
+
+\[
+(a,b)
+=
+\{x\in\mathbb R\mid a<x<b\}.
+\]
+
+Half-open examples:
+
+\[
+[a,b)
+\]
+
+or
+
+\[
+(a,b].
+\]
+
+This distinction becomes surprisingly important in computational systems.
+
+Imagine pixel coverage, array subdivision, ray intervals, bounding-volume slabs, time intervals.
+
+Mathematics may say:
+
+\[
+t\in[0,1].
+\]
+
+Implementation needs to decide exactly whether endpoints count.
+
+For example:
+
+```cpp
+bool inside = (t >= 0.0f && t <= 1.0f);
+```
+
+includes both endpoints.
+
+---
+
+# 502.15 Density of the reals
+
+Between any two distinct real numbers
+
+\[
+a<b,
+\]
+
+there exists another real number between them.
+
+For example choose
+
+\[
+m=\frac{a+b}{2}.
+\]
+
+Since
+
+\[
+a<b,
+\]
+
+we get
+
+\[
+a<m<b.
+\]
+
+Then another exists between \(a\) and \(m\), and another, indefinitely.
+
+Hence there is no "next real number."
+
+This statement is true mathematically.
+
+It is **false for machine floating point**.
+
+---
+
+# 502.16 Floating point has neighboring values
+
+Suppose we store a real-like quantity as `float`.
+
+The bit pattern has finite width.
+
+Therefore only finitely many distinct bit patterns exist.
+
+Consequently, for a particular finite `float`, there generally exists a representable next-higher float.
+
+C++ exposes this concept:
+
+```cpp
+#include <cmath>
+
+float next = std::nextafter(x, INFINITY);
+```
+
+Mathematical reals:
+
+```text
+x
+├─ infinitely many numbers before any other y > x
+```
+
+Floating point:
+
+```text
+x
+↓
+next representable float
+↓
+next one
+↓
+...
+```
+
+This distinction explains many numerical phenomena from Phase 1.
+
+---
+
+# 502.17 `0.1` revisited from a mathematical perspective
+
+The mathematical real
+
+\[
+0.1
+\]
+
+exists exactly.
+
+But binary floating point normally approximates it because
+
+\[
+0.1_{10}
+\]
+
+has a repeating binary expansion.
+
+So when code says:
+
+```cpp
+float x = 0.1f;
+```
+
+the actual stored object is not the exact mathematical real \(0.1\).
+
+It is a nearby representable binary floating-point value.
+
+That means there are always two layers:
+
+```text
+Mathematical model
+      ℝ
+
+      ↓ approximate encoding
+
+Machine model
+IEEE-754 float/double
+```
+
+Keeping those layers separate is one of the central habits of numerical programming.
+
+---
+
+# 502.18 Mathematical equality versus approximate computation
+
+Mathematically, if
+
+\[
+x=y,
+\]
+
+they are exactly equal.
+
+But machine calculations can yield:
+
+```cpp
+float a = 0.1f + 0.2f;
+float b = 0.3f;
+```
+
+and there is no general guarantee that independently rounded computations produce exactly the same bit pattern.
+
+Therefore numerical code often asks a different question:
+
+\[
+|a-b|\le\text{tolerance}.
+\]
+
+But even tolerance testing has scale problems, which you already studied in Parts 83–84.
+
+The important conceptual distinction is:
+
+\[
+\boxed{
+\text{Approximate equality is a computational strategy, not a new definition of real equality.}
+}
+\]
+
+---
+
+# 502.19 Real-valued functions
+
+Graphics is full of mappings such as
+
+\[
+f:\mathbb R\to\mathbb R.
+\]
+
+This means:
+
+> give the function one real number, receive one real number.
+
+Example:
+
+\[
+f(x)=x^2.
+\]
+
+If
+
+\[
+x=3,
+\]
+
+then
+
+\[
+f(3)=9.
+\]
+
+Later, we will work with mappings like:
+
+\[
+f:\mathbb R^3\to\mathbb R
+\]
+
+and
+
+\[
+f:\mathbb R^3\to\mathbb R^3.
+\]
+
+Do not worry about those spaces yet; Part 507 will formalize vector spaces.
+
+The key point here is that real numbers provide the domain and codomain for a huge fraction of graphics mathematics.
+
+---
+
+# 502.20 Real values in an actual engine
+
+Canonical examples:
+
+```cpp
+float elapsedTime;
+float roughness;
+float metallic;
+float opacity;
+float depth;
+float nearPlane;
+float farPlane;
+float fieldOfView;
+float radius;
+float mass;
+float exposure;
+```
+
+All of these are generally intended to represent mathematical quantities in or derived from \(\mathbb R\).
+
+But their **semantics** differ.
+
+For instance:
+
+```cpp
+float roughness;
+```
+
+might be restricted to
+
+\[
+[0,1].
+\]
+
+Mass might require
+
+\[
+m>0.
+\]
+
+Opacity might require
+
+\[
+0\le\alpha\le1.
+\]
+
+So the machine type alone does not define the valid mathematical domain.
+
+---
+
+# 502.21 Domain invariants
+
+Consider:
+
+```cpp
+struct Material {
+    float roughness;
+};
+```
+
+This representation admits values like:
+
+```cpp
+roughness = -100.0f;
+roughness = 93.0f;
+roughness = NAN;
+roughness = INFINITY;
+```
+
+But the intended mathematical domain might be:
+
+\[
+r\in[0,1].
+\]
+
+Therefore there is a difference between:
+
+```text
+Representable values
+```
+
+and
+
+```text
+Valid semantic values
+```
+
+This is a recurring engine-design principle.
+
+A type's bit representation may permit far more states than the algorithm considers valid.
+
+---
+
+# 502.22 Why graphics mostly starts with \(\mathbb R\)
+
+Classical geometry uses quantities such as:
+
+- coordinates,
+- lengths,
+- angles,
+- times,
+- radiance values,
+- barycentric parameters,
+- masses,
+- velocities,
+- probabilities.
+
+These are generally modeled using real numbers because we need some combination of:
+
+- continuous variation,
+- ordering,
+- negative/positive values,
+- fractions,
+- square roots,
+- trigonometric quantities,
+- limiting processes.
+
+So the overwhelming amount of conventional graphics mathematics begins with
+
+\[
+\mathbb R.
+\]
+
+---
+
+# 502.23 Reals versus floats: the mental model you must retain
+
+Never say:
+
+> floats are real numbers.
+
+Instead say:
+
+> floating-point values are finite machine representations used to approximate real-valued computations.
+
+Mathematics:
+
+\[
+x\in\mathbb R.
+\]
+
+Implementation:
+
+```cpp
+float x;
+```
+
+The first has ideal algebraic properties.
+
+The second has:
+
+- finite precision,
+- finite range,
+- rounding,
+- NaN,
+- infinities,
+- signed zero,
+- subnormals,
+- non-associativity.
+
+---
+
+# 502.24 Part 502 mastery gate
+
+From a blank page, you should be able to explain:
+
+1. Why rationals are insufficient for geometry.
+2. Why \(\sqrt2\) is irrational.
+3. The hierarchy
+
+\[
+\mathbb N\subset\mathbb Z\subset\mathbb Q\subset\mathbb R\subset\mathbb C.
+\]
+
+4. Why \(\mathbb R\) is an ordered field.
+5. What completeness means at an intuitive level.
+6. Why continuous geometry uses real numbers.
+7. What an interval such as \([0,1]\) means.
+8. Why there is no "next real number."
+9. Why there *is* effectively a next representable floating-point value.
+10. Why `float` approximates \(\mathbb R\) rather than being \(\mathbb R\).
+
+The critical conceptual statement is:
+
+\[
+\boxed{
+\mathbb R
+\text{ is a complete ordered field used as the mathematical foundation of continuous graphics quantities.}
+}
+\]
+
+---
+
+# PART 503 — COMPLEX NUMBERS AND TWO-DIMENSIONAL ROTATION INTUITION
+
+Now we deliberately move outside the real numbers.
+
+This Part matters because it gives you your first glimpse of a powerful recurring engineering pattern:
+
+\[
+\boxed{
+\text{invent a richer number system in which a difficult transformation becomes ordinary multiplication.}
+}
+\]
+
+For complex numbers, that transformation is planar rotation.
+
+Much later, quaternions will play a related role for 3D rotations.
+
+---
+
+# 503.1 The problem that creates complex numbers
+
+Consider:
+
+\[
+x^2=-1.
+\]
+
+Can any real number satisfy this?
+
+If
+
+\[
+x>0,
+\]
+
+then
+
+\[
+x^2>0.
+\]
+
+If
+
+\[
+x<0,
+\]
+
+then
+
+\[
+x^2>0
+\]
+
+because a negative times a negative is positive.
+
+If
+
+\[
+x=0,
+\]
+
+then
+
+\[
+x^2=0.
+\]
+
+Therefore no real number satisfies
+
+\[
+x^2=-1.
+\]
+
+Mathematicians extend the number system with a new element \(i\) defined by
+
+\[
+\boxed{i^2=-1.}
+\]
+
+This is the imaginary unit.
+
+---
+
+# 503.2 Building complex numbers
+
+A complex number has the form
+
+\[
+\boxed{z=a+bi}
+\]
+
+where
+
+\[
+a,b\in\mathbb R.
+\]
+
+Here:
+
+\[
+a=\operatorname{Re}(z)
+\]
+
+is the real part,
+
+and
+
+\[
+b=\operatorname{Im}(z)
+\]
+
+is the imaginary coefficient.
+
+Example:
+
+\[
+z=3+4i.
+\]
+
+Then
+
+\[
+\operatorname{Re}(z)=3
+\]
+
+and
+
+\[
+\operatorname{Im}(z)=4.
+\]
+
+---
+
+# 503.3 Complex numbers have a two-real representation
+
+We can associate
+
+\[
+a+bi
+\]
+
+with the ordered pair
+
+\[
+(a,b).
+\]
+
+For example:
+
+\[
+3+4i
+\longleftrightarrow
+(3,4).
+\]
+
+Graphically:
+
+```text
+imaginary axis
+      ↑
+      |
+  4   |          ● 3 + 4i
+      |
+      |
+------|----------------------→ real axis
+      0          3
+```
+
+This gives us the **complex plane**.
+
+The horizontal axis stores the real part.
+
+The vertical axis stores the imaginary coefficient.
+
+Important:
+
+We have **not yet formally defined geometric vectors**. That begins in Part 504.
+
+At this point, think of this as the coordinate representation of a complex number.
+
+---
+
+# 503.4 Complex addition
+
+Let
+
+\[
+z_1=a+bi
+\]
+
+and
+
+\[
+z_2=c+di.
+\]
+
+Then
+
+\[
+z_1+z_2
+=
+(a+c)+(b+d)i.
+\]
+
+So components add independently.
+
+Example:
+
+\[
+(3+4i)+(2-i)
+\]
+
+gives
+
+\[
+(3+2)+(4-1)i
+\]
+
+thus
+
+\[
+\boxed{5+3i}.
+\]
+
+In pair form:
+
+\[
+(3,4)+(2,-1)=(5,3).
+\]
+
+Nothing particularly surprising yet.
+
+The magic appears in multiplication.
+
+---
+
+# 503.5 Deriving complex multiplication
+
+Take
+
+\[
+(a+bi)(c+di).
+\]
+
+Use distributivity:
+
+\[
+=ac+adi+bci+bd\,i^2.
+\]
+
+But
+
+\[
+i^2=-1.
+\]
+
+Therefore:
+
+\[
+=ac+adi+bci-bd.
+\]
+
+Collect real and imaginary parts:
+
+\[
+\boxed{
+(a+bi)(c+di)
+=
+(ac-bd)+(ad+bc)i
+}
+\]
+
+This formula must not be memorized blindly.
+
+You should be able to regenerate it by ordinary expansion plus
+
+\[
+i^2=-1.
+\]
+
+---
+
+# 503.6 Worked multiplication
+
+Let
+
+\[
+z_1=2+3i
+\]
+
+and
+
+\[
+z_2=4+5i.
+\]
+
+Then:
+
+\[
+(2+3i)(4+5i)
+\]
+
+expand:
+
+\[
+=8+10i+12i+15i^2.
+\]
+
+Since
+
+\[
+i^2=-1,
+\]
+
+we get
+
+\[
+=8+22i-15.
+\]
+
+Therefore
+
+\[
+\boxed{-7+22i}.
+\]
+
+Using the pair formula:
+
+\[
+(a,b)=(2,3)
+\]
+
+\[
+(c,d)=(4,5)
+\]
+
+then:
+
+\[
+ac-bd
+=
+2(4)-3(5)
+=
+8-15
+=
+-7
+\]
+
+and
+
+\[
+ad+bc
+=
+2(5)+3(4)
+=
+10+12
+=
+22.
+\]
+
+Same result.
+
+---
+
+# 503.7 Why multiplication by \(i\) is geometrically extraordinary
+
+Take arbitrary:
+
+\[
+z=x+yi.
+\]
+
+Multiply it by \(i\):
+
+\[
+iz=i(x+yi).
+\]
+
+Distribute:
+
+\[
+=xi+y i^2.
+\]
+
+Since
+
+\[
+i^2=-1,
+\]
+
+\[
+=-y+xi.
+\]
+
+Therefore the pair
+
+\[
+(x,y)
+\]
+
+becomes
+
+\[
+\boxed{(-y,x)}.
+\]
+
+Now examine what this transformation does.
+
+Take
+
+\[
+(1,0).
+\]
+
+After multiplication by \(i\):
+
+\[
+(1,0)\rightarrow(0,1).
+\]
+
+Again:
+
+\[
+(0,1)\rightarrow(-1,0).
+\]
+
+Again:
+
+\[
+(-1,0)\rightarrow(0,-1).
+\]
+
+Again:
+
+\[
+(0,-1)\rightarrow(1,0).
+\]
+
+Visualized:
+
+```text
+          (0,1)
+            ↑
+            |
+(-1,0) ←----+----→ (1,0)
+            |
+            ↓
+          (0,-1)
+```
+
+Each multiplication by \(i\) rotates the coordinate pair by:
+
+\[
+\boxed{90^\circ}
+\]
+
+counterclockwise.
+
+And four applications return to the original position:
+
+\[
+i^4=1.
+\]
+
+Let's verify:
+
+\[
+i^2=-1
+\]
+
+\[
+i^3=-i
+\]
+
+\[
+i^4=1.
+\]
+
+This cycle corresponds exactly to repeated quarter-turn rotation.
+
+---
+
+# 503.8 This is not a coincidence
+
+We did not bolt rotation onto complex numbers after the fact.
+
+The multiplication rule itself contains rotation geometry.
+
+That is the key intellectual insight of Part 503.
+
+Ordinary complex multiplication combines:
+
+1. scaling, and
+2. rotation.
+
+We now derive that.
+
+---
+
+# 503.9 Complex magnitude
+
+For
+
+\[
+z=a+bi,
+\]
+
+its distance from the origin in the complex plane is
+
+\[
+|z|=\sqrt{a^2+b^2}.
+\]
+
+This is called the **modulus** or magnitude of the complex number.
+
+For:
+
+\[
+z=3+4i,
+\]
+
+\[
+|z|
+=
+\sqrt{3^2+4^2}
+=
+\sqrt{9+16}
+=
+5.
+\]
+
+Thus:
+
+\[
+|3+4i|=5.
+\]
+
+Later, Part 526 will formalize the analogous Euclidean magnitude for vectors.
+
+Here we need it because complex magnitude tells us how multiplication scales.
+
+---
+
+# 503.10 Unit complex numbers
+
+Suppose
+
+\[
+|z|=1.
+\]
+
+Then \(z\) lies on the unit circle:
+
+\[
+a^2+b^2=1.
+\]
+
+Any point on the unit circle can be written as
+
+\[
+\boxed{\cos\theta+i\sin\theta}
+\]
+
+because
+
+\[
+\cos^2\theta+\sin^2\theta=1.
+\]
+
+So define
+
+\[
+r_\theta=\cos\theta+i\sin\theta.
+\]
+
+This will be our rotation number.
+
+---
+
+# 503.11 Deriving arbitrary 2D rotation through complex multiplication
+
+Let our coordinate pair be represented as
+
+\[
+z=x+yi.
+\]
+
+Multiply it by
+
+\[
+r_\theta
+=
+\cos\theta+i\sin\theta.
+\]
+
+Thus:
+
+\[
+z'
+=
+r_\theta z.
+\]
+
+Expand:
+
+\[
+z'
+=
+(\cos\theta+i\sin\theta)(x+yi).
+\]
+
+Distribute:
+
+\[
+=
+x\cos\theta
++
+y i\cos\theta
++
+ix\sin\theta
++
+i^2y\sin\theta.
+\]
+
+Since
+
+\[
+i^2=-1,
+\]
+
+\[
+=
+x\cos\theta
+-
+y\sin\theta
++
+i(x\sin\theta+y\cos\theta).
+\]
+
+Therefore the new coordinate pair is:
+
+\[
+\boxed{
+x'=x\cos\theta-y\sin\theta
+}
+\]
+
+\[
+\boxed{
+y'=x\sin\theta+y\cos\theta
+}
+\]
+
+This is exactly the standard 2D rotation rule.
+
+We have derived it from complex multiplication.
+
+Do not memorize the coordinate formulas independently if you can avoid it.
+
+Understand where they came from.
+
+---
+
+# 503.12 Numerical example: rotate \((1,0)\) by \(90^\circ\)
+
+Let
+
+\[
+\theta=90^\circ=\frac\pi2.
+\]
+
+Then:
+
+\[
+\cos\frac\pi2=0
+\]
+
+and
+
+\[
+\sin\frac\pi2=1.
+\]
+
+Therefore the rotation complex number is
+
+\[
+r=i.
+\]
+
+Original:
+
+\[
+z=1+0i.
+\]
+
+Multiply:
+
+\[
+z'=iz=i.
+\]
+
+Thus:
+
+\[
+(1,0)\rightarrow(0,1).
+\]
+
+Exactly as expected.
+
+---
+
+# 503.13 Rotate \((1,0)\) by \(45^\circ\)
+
+For
+
+\[
+\theta=45^\circ=\frac\pi4,
+\]
+
+\[
+\cos\theta=\frac{\sqrt2}{2}
+\]
+
+and
+
+\[
+\sin\theta=\frac{\sqrt2}{2}.
+\]
+
+Thus:
+
+\[
+r=
+\frac{\sqrt2}{2}
++
+i\frac{\sqrt2}{2}.
+\]
+
+Multiply:
+
+\[
+r(1+0i)
+=
+\frac{\sqrt2}{2}
++
+i\frac{\sqrt2}{2}.
+\]
+
+So:
+
+\[
+x'=\frac{\sqrt2}{2}
+\]
+
+\[
+y'=\frac{\sqrt2}{2}.
+\]
+
+Approximately:
+
+\[
+(1,0)
+\rightarrow
+(0.7071,0.7071).
+\]
+
+---
+
+# 503.14 Rotate a non-axis-aligned point
+
+Take:
+
+\[
+z=2+i.
+\]
+
+Thus:
+
+\[
+(x,y)=(2,1).
+\]
+
+Rotate by \(90^\circ\).
+
+Multiply by \(i\):
+
+\[
+i(2+i)
+=
+2i+i^2
+=
+-1+2i.
+\]
+
+Therefore:
+
+\[
+(2,1)\rightarrow(-1,2).
+\]
+
+Notice what happened:
+
+```text
+(x, y)
+   ↓ 90° CCW
+(-y, x)
+```
+
+Exactly:
+
+\[
+(2,1)\rightarrow(-1,2).
+\]
+
+---
+
+# 503.15 Why magnitude is preserved for unit-complex multiplication
+
+Let:
+
+\[
+z=x+yi.
+\]
+
+Let:
+
+\[
+r=c+si
+\]
+
+where
+
+\[
+c=\cos\theta,
+\qquad
+s=\sin\theta.
+\]
+
+After multiplication:
+
+\[
+x'=cx-sy
+\]
+
+\[
+y'=sx+cy.
+\]
+
+Compute squared magnitude:
+
+\[
+x'^2+y'^2.
+\]
+
+Substitute:
+
+\[
+(cx-sy)^2+(sx+cy)^2.
+\]
+
+Expand:
+
+\[
+c^2x^2
+-2csxy
++s^2y^2
++
+s^2x^2
++2scxy
++c^2y^2.
+\]
+
+The cross terms cancel:
+
+\[
+-2csxy+2scxy=0.
+\]
+
+So:
+
+\[
+=(c^2+s^2)x^2+(c^2+s^2)y^2.
+\]
+
+Because
+
+\[
+c^2+s^2=1,
+\]
+
+we obtain:
+
+\[
+=x^2+y^2.
+\]
+
+Therefore:
+
+\[
+\boxed{|z'|=|z|}.
+\]
+
+Unit-complex multiplication rotates without changing magnitude.
+
+That is what makes it a pure rotation rather than rotation-plus-scaling.
+
+---
+
+# 503.16 What if the complex multiplier is not unit length?
+
+Suppose:
+
+\[
+q=a+bi
+\]
+
+has magnitude
+
+\[
+|q|=r.
+\]
+
+Then multiplication by \(q\) generally does two things:
+
+```text
+input
+  ↓
+rotate by angle of q
+  ↓
+scale by |q|
+```
+
+So if
+
+\[
+|q|=2,
+\]
+
+the result has twice the magnitude.
+
+If you want a pure rotation:
+
+\[
+\boxed{|q|=1}
+\]
+
+must hold.
+
+This is analogous to the future requirement that rotation quaternions be unit quaternions.
+
+---
+
+# 503.17 Rotation composition falls out of multiplication
+
+Suppose:
+
+\[
+r_\alpha
+=
+\cos\alpha+i\sin\alpha
+\]
+
+and
+
+\[
+r_\beta
+=
+\cos\beta+i\sin\beta.
+\]
+
+Multiply:
+
+\[
+r_\alpha r_\beta.
+\]
+
+Expanding gives:
+
+\[
+(\cos\alpha\cos\beta-\sin\alpha\sin\beta)
+\]
+
+\[
++i(\sin\alpha\cos\beta+\cos\alpha\sin\beta).
+\]
+
+Using the angle-addition identities:
+
+\[
+\cos(\alpha+\beta)
+=
+\cos\alpha\cos\beta-\sin\alpha\sin\beta
+\]
+
+and
+
+\[
+\sin(\alpha+\beta)
+=
+\sin\alpha\cos\beta+\cos\alpha\sin\beta,
+\]
+
+we obtain:
+
+\[
+\boxed{
+r_\alpha r_\beta
+=
+r_{\alpha+\beta}
+}
+\]
+
+Therefore complex multiplication automatically composes planar rotations by adding their angles.
+
+Example:
+
+\[
+30^\circ+60^\circ=90^\circ.
+\]
+
+So:
+
+\[
+r_{30^\circ}r_{60^\circ}
+=
+r_{90^\circ}.
+\]
+
+This is an extremely powerful representation property.
+
+---
+
+# 503.18 Inverse rotations
+
+If
+
+\[
+r_\theta
+=
+\cos\theta+i\sin\theta,
+\]
+
+then reversing the rotation should use angle
+
+\[
+-\theta.
+\]
+
+Thus:
+
+\[
+r_{-\theta}
+=
+\cos(-\theta)+i\sin(-\theta).
+\]
+
+Since:
+
+\[
+\cos(-\theta)=\cos\theta
+\]
+
+and
+
+\[
+\sin(-\theta)=-\sin\theta,
+\]
+
+we get:
+
+\[
+r_{-\theta}
+=
+\cos\theta-i\sin\theta.
+\]
+
+This is the **complex conjugate**.
+
+---
+
+# 503.19 Complex conjugate
+
+For
+
+\[
+z=a+bi,
+\]
+
+define:
+
+\[
+\boxed{\bar z=a-bi}.
+\]
+
+Example:
+
+\[
+z=3+4i
+\]
+
+has conjugate:
+
+\[
+\bar z=3-4i.
+\]
+
+Multiply:
+
+\[
+z\bar z
+=
+(a+bi)(a-bi).
+\]
+
+Expand:
+
+\[
+=a^2-abi+abi-b^2i^2.
+\]
+
+Since
+
+\[
+i^2=-1,
+\]
+
+\[
+=a^2+b^2.
+\]
+
+Therefore:
+
+\[
+\boxed{
+z\bar z=|z|^2
+}
+\]
+
+This identity gives us complex division and inversion.
+
+---
+
+# 503.20 Deriving the inverse of a complex number
+
+Suppose
+
+\[
+z=a+bi\neq0.
+\]
+
+We want
+
+\[
+z^{-1}
+\]
+
+such that
+
+\[
+zz^{-1}=1.
+\]
+
+Start with:
+
+\[
+\frac1{a+bi}.
+\]
+
+Multiply numerator and denominator by the conjugate:
+
+\[
+\frac1{a+bi}
+\frac{a-bi}{a-bi}.
+\]
+
+Then:
+
+\[
+=
+\frac{a-bi}{(a+bi)(a-bi)}.
+\]
+
+But:
+
+\[
+(a+bi)(a-bi)=a^2+b^2.
+\]
+
+Therefore:
+
+\[
+\boxed{
+z^{-1}
+=
+\frac{a-bi}{a^2+b^2}
+}
+\]
+
+provided:
+
+\[
+a^2+b^2\neq0.
+\]
+
+That denominator is zero only when
+
+\[
+a=0,\qquad b=0.
+\]
+
+Hence every nonzero complex number has an inverse.
+
+This is one reason
+
+\[
+\mathbb C
+\]
+
+is a field.
+
+---
+
+# 503.21 Special simplification for unit complex numbers
+
+If
+
+\[
+|r|=1,
+\]
+
+then
+
+\[
+r\bar r=1.
+\]
+
+Therefore:
+
+\[
+\boxed{
+r^{-1}=\bar r
+}
+\]
+
+for unit complex numbers.
+
+So the inverse rotation requires only changing the sign of the imaginary part.
+
+If:
+
+\[
+r=(c,s),
+\]
+
+then inverse rotation is represented by:
+
+\[
+(c,-s).
+\]
+
+No matrix inversion is necessary.
+
+---
+
+# 503.22 Representation in memory
+
+A very ordinary C++ representation is:
+
+```cpp
+struct Complex {
+    float real;
+    float imag;
+};
+```
+
+Typical memory:
+
+```text
+address +0   real   4 bytes
+address +4   imag   4 bytes
+```
+
+So commonly:
+
+```text
+Complex
+┌──────────────┬──────────────┐
+│ real : float │ imag : float │
+└──────────────┴──────────────┘
+      4 B             4 B
+```
+
+Likely total:
+
+\[
+8\text{ bytes}
+\]
+
+for two IEEE-754 binary32 values, though C++ layout should never be inferred blindly without considering the actual type and implementation.
+
+---
+
+# 503.23 Canonical C++ implementation
+
+```cpp
+#include <cmath>
+#include <cassert>
+
+struct Complex {
+    float real {};
+    float imag {};
+
+    constexpr Complex operator+(const Complex& rhs) const noexcept {
+        return {
+            real + rhs.real,
+            imag + rhs.imag
+        };
+    }
+
+    constexpr Complex operator-(const Complex& rhs) const noexcept {
+        return {
+            real - rhs.real,
+            imag - rhs.imag
+        };
+    }
+
+    constexpr Complex operator*(const Complex& rhs) const noexcept {
+        return {
+            real * rhs.real - imag * rhs.imag,
+            real * rhs.imag + imag * rhs.real
+        };
+    }
+
+    [[nodiscard]]
+    constexpr Complex conjugate() const noexcept {
+        return { real, -imag };
+    }
+
+    [[nodiscard]]
+    constexpr float magnitudeSquared() const noexcept {
+        return real * real + imag * imag;
+    }
+
+    [[nodiscard]]
+    float magnitude() const noexcept {
+        return std::sqrt(magnitudeSquared());
+    }
+};
+```
+
+The multiplication line:
+
+```cpp
+real * rhs.real - imag * rhs.imag
+```
+
+is:
+
+\[
+ac-bd.
+\]
+
+The imaginary result:
+
+```cpp
+real * rhs.imag + imag * rhs.real
+```
+
+is:
+
+\[
+ad+bc.
+\]
+
+Nothing is arbitrary.
+
+Every operator maps directly to the algebra we derived.
+
+---
+
+# 503.24 A rotation-specific representation
+
+If the only use is 2D rotation, we could communicate the invariant more strongly:
+
+```cpp
+struct Rotation2D {
+    float c; // cos(theta)
+    float s; // sin(theta)
+};
+```
+
+The invariant is:
+
+\[
+c^2+s^2\approx1.
+\]
+
+Construction from angle:
+
+```cpp
+Rotation2D fromAngle(float radians) {
+    return {
+        std::cos(radians),
+        std::sin(radians)
+    };
+}
+```
+
+Then rotate a 2D coordinate pair:
+
+```cpp
+struct Pair2 {
+    float x;
+    float y;
+};
+
+Pair2 rotate(Pair2 p, Rotation2D r) {
+    return {
+        r.c * p.x - r.s * p.y,
+        r.s * p.x + r.c * p.y
+    };
+}
+```
+
+The code is precisely:
+
+\[
+x'=cx-sy
+\]
+
+\[
+y'=sx+cy.
+\]
+
+---
+
+# 503.25 Rotation composition in C++
+
+```cpp
+Rotation2D compose(Rotation2D a, Rotation2D b) {
+    return {
+        a.c * b.c - a.s * b.s,
+        a.s * b.c + a.c * b.s
+    };
+}
+```
+
+Notice that this is literally complex multiplication.
+
+If:
+
+```text
+a = rotation α
+b = rotation β
+```
+
+then:
+
+```text
+compose(a, b)
+```
+
+represents:
+
+\[
+\alpha+\beta.
+\]
+
+---
+
+# 503.26 Why store cosine and sine instead of an angle?
+
+Suppose rotation is represented as one angle:
+
+```cpp
+float angle;
+```
+
+Then every time you rotate a point you might do:
+
+```cpp
+float c = std::cos(angle);
+float s = std::sin(angle);
+```
+
+Trig functions are relatively expensive.
+
+If many points use the same rotation, it can be better to precompute:
+
+```cpp
+c = cos(angle)
+s = sin(angle)
+```
+
+once.
+
+Then every rotation uses only multiplies and additions.
+
+So:
+
+```text
+angle representation
+    1 float storage
+    trig needed when applying
+
+unit-complex representation
+    2 floats storage
+    rotation uses arithmetic directly
+```
+
+That is an actual representation trade-off.
+
+---
+
+# 503.27 Operation count
+
+For:
+
+\[
+(a+bi)(c+di),
+\]
+
+the direct formula requires:
+
+\[
+ac-bd
+\]
+
+and
+
+\[
+ad+bc.
+\]
+
+That is ordinarily:
+
+- 4 real multiplications,
+- 2 real additions/subtractions.
+
+For 2D rotation:
+
+\[
+x'=cx-sy
+\]
+
+\[
+y'=sx+cy
+\]
+
+same count:
+
+- 4 multiplications,
+- 2 adds/subtracts.
+
+Hardware may fuse operations using FMA instructions.
+
+For instance conceptually:
+
+```cpp
+xPrime = std::fma(c, x, -s * y);
+```
+
+could perform the multiply-add with one rounding for the fused part.
+
+---
+
+# 503.28 Why not use matrices already?
+
+A future 2D rotation matrix will look like:
+
+\[
+\begin{bmatrix}
+\cos\theta&-\sin\theta\\
+\sin\theta&\cos\theta
+\end{bmatrix}.
+\]
+
+Applying it gives:
+
+\[
+\begin{bmatrix}
+x'\\
+y'
+\end{bmatrix}
+=
+\begin{bmatrix}
+\cos\theta&-\sin\theta\\
+\sin\theta&\cos\theta
+\end{bmatrix}
+\begin{bmatrix}
+x\\
+y
+\end{bmatrix}.
+\]
+
+Expanding:
+
+\[
+x'=x\cos\theta-y\sin\theta
+\]
+
+\[
+y'=x\sin\theta+y\cos\theta.
+\]
+
+Exactly the same equations.
+
+But matrices are Parts 601 onward, so do **not** treat this as matrix mastery yet.
+
+The point here is merely the connection:
+
+```text
+unit complex multiplication
+       ↓
+same planar rotation
+       ↓
+2×2 rotation matrix representation later
+```
+
+---
+
+# 503.29 Why this matters for future quaternions
+
+Later, a quaternion can be written schematically as:
+
+\[
+q=w+xi+yj+zk.
+\]
+
+There are several imaginary basis elements rather than only one.
+
+You should not yet try to learn quaternion algebra.
+
+But there is a conceptual bridge:
+
+```text
+Complex numbers
+2D rotations
+2 real components
+unit complex numbers
+
+        ↓ conceptual cousin
+
+Quaternions
+3D rotations
+4 real components
+unit quaternions
+```
+
+There is also a major difference:
+
+Complex multiplication is commutative:
+
+\[
+z_1z_2=z_2z_1.
+\]
+
+Quaternion multiplication generally is not:
+
+\[
+q_1q_2\neq q_2q_1.
+\]
+
+This corresponds beautifully to geometry.
+
+In 2D, rotations effectively add angles:
+
+\[
+\alpha+\beta=\beta+\alpha.
+\]
+
+In 3D, changing rotation order can change the result.
+
+That connection will become crucial around Parts 667–700.
+
+---
+
+# 503.30 Numerical failure mode: drift
+
+Mathematically, if
+
+\[
+c^2+s^2=1,
+\]
+
+the complex number represents a pure rotation.
+
+But suppose repeated floating-point multiplication produces:
+
+\[
+c^2+s^2=1.000004.
+\]
+
+Now the representation is very slightly longer than one.
+
+Repeatedly using it can introduce small scaling.
+
+Instead of:
+
+```text
+rotate
+rotate
+rotate
+```
+
+you slowly get:
+
+```text
+rotate + tiny scale
+rotate + tiny scale
+rotate + tiny scale
+```
+
+The error may accumulate.
+
+A production implementation may occasionally renormalize:
+
+\[
+m=\sqrt{c^2+s^2}
+\]
+
+then:
+
+\[
+c\leftarrow\frac c m
+\]
+
+\[
+s\leftarrow\frac s m.
+\]
+
+This restores:
+
+\[
+c^2+s^2\approx1.
+\]
+
+The broader concept of normalization is Part 528; here the reason is simply maintaining the unit-complex invariant.
+
+---
+
+# 503.31 Dangerous case: zero complex rotation representation
+
+Suppose someone stores:
+
+\[
+r=0+0i.
+\]
+
+Its magnitude is:
+
+\[
+0.
+\]
+
+It cannot represent a rotation.
+
+Applying it:
+
+\[
+rz=0
+\]
+
+collapses every input to the origin.
+
+Attempting to normalize it requires dividing by zero.
+
+Thus:
+
+```text
+Rotation representation invariant:
+
+c² + s² > 0
+
+Pure rotation invariant:
+
+c² + s² ≈ 1
+```
+
+Zero is an invalid rotation representation.
+
+---
+
+# 503.32 Complex inverse numerical danger
+
+The naive inverse computes:
+
+\[
+\frac{a-bi}{a^2+b^2}.
+\]
+
+If \(a\) and \(b\) are enormous, then:
+
+\[
+a^2+b^2
+\]
+
+may overflow even when the final inverse is representable.
+
+Example conceptually:
+
+\[
+a\approx10^{30}.
+\]
+
+Then:
+
+\[
+a^2\approx10^{60},
+\]
+
+well beyond `float` range.
+
+Likewise very tiny values may underflow.
+
+Numerically robust complex division algorithms therefore sometimes scale the calculation.
+
+This is another recurring lesson:
+
+\[
+\boxed{
+\text{An algebraically correct formula can still be a numerically poor implementation.}
+}
+\]
+
+---
+
+# 503.33 Complex numbers are not "fake" numbers
+
+The word *imaginary* historically makes them sound somehow less legitimate.
+
+That interpretation is misleading.
+
+Complex numbers are a perfectly rigorous algebraic extension of the reals.
+
+They support:
+
+- addition,
+- subtraction,
+- multiplication,
+- division by nonzero values.
+
+And they solve equations impossible in the real numbers.
+
+For instance:
+
+\[
+x^2+1=0
+\]
+
+has:
+
+\[
+x=\pm i.
+\]
+
+They are ubiquitous in:
+
+- Fourier analysis,
+- signal processing,
+- wave mechanics,
+- electrical engineering,
+- quantum mechanics,
+- control theory,
+- 2D rotation,
+- polynomial root analysis.
+
+---
+
+# 503.34 Real numbers embedded inside complex numbers
+
+Every real number can be viewed as a complex number whose imaginary component is zero.
+
+For example:
+
+\[
+5
+=
+5+0i.
+\]
+
+Hence:
+
+\[
+\mathbb R\subset\mathbb C.
+\]
+
+This agrees with our hierarchy:
+
+\[
+\mathbb Q
+\subset
+\mathbb R
+\subset
+\mathbb C.
+\]
+
+Complex arithmetic therefore extends real arithmetic rather than replacing it.
+
+---
+
+# 503.35 Complex numbers are a field
+
+We can now connect directly back to Part 501.
+
+For
+
+\[
+z_1,z_2\in\mathbb C,
+\]
+
+addition remains in \(\mathbb C\).
+
+Multiplication remains in \(\mathbb C\).
+
+There is additive identity:
+
+\[
+0+0i.
+\]
+
+There is multiplicative identity:
+
+\[
+1+0i.
+\]
+
+Every complex number has an additive inverse:
+
+\[
+-(a+bi)=-a-bi.
+\]
+
+Every nonzero complex number has multiplicative inverse:
+
+\[
+(a+bi)^{-1}
+=
+\frac{a-bi}{a^2+b^2}.
+\]
+
+Thus:
+
+\[
+\boxed{\mathbb C\text{ is a field.}}
+\]
+
+---
+
+# 503.36 Why complex numbers are especially elegant for 2D rotations
+
+Suppose you represent rotation only as an angle:
+
+```text
+θ
+```
+
+Composition means:
+
+\[
+\theta_3=\theta_1+\theta_2.
+\]
+
+Applying it requires trig evaluation or cached trig values.
+
+If you represent rotation as unit complex:
+
+\[
+r=(\cos\theta,\sin\theta),
+\]
+
+then:
+
+### Apply rotation
+
+ordinary complex multiplication.
+
+### Compose rotations
+
+ordinary complex multiplication.
+
+### Invert rotation
+
+complex conjugation.
+
+### Identity rotation
+
+\[
+1+0i.
+\]
+
+### Preserve length
+
+maintain unit magnitude.
+
+The algebra maps remarkably cleanly onto the transformation.
+
+This is exactly the type of representation engineers look for.
+
+---
+
+# 503.37 Identity rotation
+
+What complex number should mean:
+
+> rotate by zero degrees?
+
+Take:
+
+\[
+\theta=0.
+\]
+
+Then:
+
+\[
+\cos0=1
+\]
+
+and
+
+\[
+\sin0=0.
+\]
+
+Therefore:
+
+\[
+r_0=1+0i.
+\]
+
+Multiply:
+
+\[
+(1+0i)z=z.
+\]
+
+So the multiplicative identity of the field is simultaneously the identity rotation.
+
+That is not accidental convenience.
+
+It is another sign that multiplication and rotation composition are aligned algebraically.
+
+---
+
+# 503.38 Negative angles
+
+For clockwise rotation:
+
+\[
+-\theta.
+\]
+
+The representation becomes:
+
+\[
+\cos\theta-i\sin\theta.
+\]
+
+So changing:
+
+```cpp
+s
+```
+
+to
+
+```cpp
+-s
+```
+
+reverses the rotation.
+
+For a unit complex representation:
+
+```cpp
+Rotation2D inverse(Rotation2D r) {
+    return { r.c, -r.s };
+}
+```
+
+No general-purpose inverse computation required.
+
+---
+
+# 503.39 Coordinate-system convention warning
+
+We have interpreted:
+
+\[
+(x,y)\rightarrow(-y,x)
+\]
+
+as a \(90^\circ\) counterclockwise rotation because we assumed a mathematical coordinate plane where:
+
+```text
++x → right
++y → up
+```
+
+But some screen coordinate systems use:
+
+```text
++x → right
++y → down
+```
+
+Then the visual meaning of the same coordinate transformation appears reversed.
+
+This is your first tiny encounter with a rule that will become fundamental later:
+
+\[
+\boxed{\text{Always state the coordinate convention.}}
+\]
+
+The algebra did not change.
+
+The interpretation of "clockwise" versus "counterclockwise" can.
+
+---
+
+# 503.40 Complex rotation execution trace
+
+Let's manually execute a rotation of
+
+\[
+(3,1)
+\]
+
+by
+
+\[
+60^\circ.
+\]
+
+We know:
+
+\[
+\cos60^\circ=\frac12
+\]
+
+and
+
+\[
+\sin60^\circ=\frac{\sqrt3}{2}\approx0.8660254.
+\]
+
+So:
+
+\[
+r=0.5+0.8660254i.
+\]
+
+Input:
+
+\[
+z=3+i.
+\]
+
+Multiply:
+
+\[
+z'=rz.
+\]
+
+Real component:
+
+\[
+x'
+=
+0.5(3)-0.8660254(1).
+\]
+
+Therefore:
+
+\[
+x'
+=
+1.5-0.8660254
+\]
+
+\[
+x'
+\approx0.6339746.
+\]
+
+Imaginary component:
+
+\[
+y'
+=
+0.8660254(3)+0.5(1).
+\]
+
+Thus:
+
+\[
+y'
+=
+2.5980762+0.5
+\]
+
+\[
+y'
+\approx3.0980762.
+\]
+
+So:
+
+\[
+\boxed{
+(3,1)
+\rightarrow
+(0.633975,\;3.098076)
+}
+\]
+
+Check magnitude before:
+
+\[
+\sqrt{3^2+1^2}
+=
+\sqrt{10}.
+\]
+
+Squared magnitude:
+
+\[
+10.
+\]
+
+After:
+
+\[
+0.633975^2+3.098076^2
+\approx
+0.4019+9.5981
+\approx10.
+\]
+
+The magnitude remained constant, within floating-point rounding.
+
+That is exactly what a pure rotation must do.
+
+---
+
+# 503.41 Debugging scenarios
+
+### Bug 1 — rotation scales objects over time
+
+You repeatedly compose rotations and eventually objects slightly grow or shrink.
+
+Likely cause:
+
+\[
+c^2+s^2
+\]
+
+has drifted away from \(1\).
+
+Check:
+
+```cpp
+float len2 = c*c + s*s;
+```
+
+If it gradually becomes something like:
+
+```text
+1.00003
+0.99991
+1.00012
+```
+
+renormalization or a better rotation-update strategy may be needed.
+
+---
+
+### Bug 2 — rotation direction is backward
+
+Possible causes:
+
+- sign error:
+
+\[
+x'=cx+sy
+\]
+
+instead of
+
+\[
+x'=cx-sy,
+\]
+
+- using
+
+\[
+\cos\theta-i\sin\theta
+\]
+
+instead of
+
+\[
+\cos\theta+i\sin\theta,
+\]
+
+- screen Y axis points downward,
+- angle sign convention differs.
+
+---
+
+### Bug 3 — \(90^\circ\) rotation of `(1,0)` gives `(0,-1)`
+
+That may not actually be wrong.
+
+Check whether the system defines positive rotation as clockwise, or whether Y increases downward.
+
+This is why conventions must be explicit before debugging mathematics.
+
+---
+
+### Bug 4 — all points collapse toward zero
+
+Check the stored complex multiplier.
+
+If it accidentally became something like:
+
+\[
+0.99(\cos\theta+i\sin\theta),
+\]
+
+then every application multiplies magnitude by \(0.99\).
+
+After \(N\) applications:
+
+\[
+|z_N|
+=
+0.99^N|z_0|.
+\]
+
+After 1000 iterations:
+
+\[
+0.99^{1000}
+\]
+
+is extremely small.
+
+A tiny scale error repeated many times becomes catastrophic.
+
+---
+
+# 503.42 Production reality
+
+For a tiny 2D engine, rotations may be stored as:
+
+```cpp
+float angle;
+```
+
+because it is convenient and easy to inspect.
+
+For frequently applied transformations, one might cache:
+
+```cpp
+cosAngle
+sinAngle
+```
+
+or use a unit-complex-style representation.
+
+A production implementation also has to answer:
+
+```text
+What are the angle units?
+Radians or degrees?
+
+Which direction is positive?
+Clockwise or counterclockwise?
+
+Which axis direction is positive Y?
+
+Do we normalize after composition?
+
+How is invalid state detected?
+
+Are rotations interpolated?
+```
+
+The pure mathematics does not answer those API-policy questions automatically.
+
+---
+
+# 503.43 Complexity
+
+Complex arithmetic involves a constant number of scalar operations.
+
+Therefore:
+
+\[
+O(1)
+\]
+
+time and
+
+\[
+O(1)
+\]
+
+storage for one number.
+
+But again hardware cost is more useful than asymptotic complexity here.
+
+### Addition
+
+\[
+(a,b)+(c,d)
+\]
+
+requires approximately:
+
+- 2 real additions.
+
+### Multiplication
+
+requires approximately:
+
+- 4 real multiplications,
+- 2 real additions/subtractions.
+
+### Conjugation
+
+requires:
+
+- one sign change.
+
+### Magnitude squared
+
+requires:
+
+- 2 multiplications,
+- 1 addition.
+
+### Magnitude
+
+adds a square root.
+
+### Inverse
+
+requires magnitude squared, division, and sign change.
+
+---
+
+# 503.44 SIMD implications
+
+Suppose you rotate millions of 2D coordinates with one common rotation.
+
+The arithmetic is highly data parallel.
+
+For points
+
+```text
+x0 y0
+x1 y1
+x2 y2
+...
+```
+
+you repeatedly perform:
+
+\[
+x'_k=cx_k-sy_k
+\]
+
+\[
+y'_k=sx_k+cy_k.
+\]
+
+A CPU SIMD implementation can process multiple \(x_k\) values and \(y_k\) values together.
+
+A GPU can assign one thread invocation per coordinate pair.
+
+So even this elementary algebra already has a direct path to massively parallel transformation.
+
+We will leave full SIMD/GPU treatment to later canonical Parts.
+
+---
+
+# 503.45 Complex numbers versus two-component geometric vectors
+
+This distinction is critical before Part 504.
+
+Suppose we store:
+
+```cpp
+struct Pair {
+    float a;
+    float b;
+};
+```
+
+The same **memory representation** could represent either:
+
+```text
+complex number
+```
+
+or later:
+
+```text
+2D vector coordinates
+```
+
+But the algebra is different.
+
+For complex numbers, multiplication is defined:
+
+\[
+(a+bi)(c+di)
+=
+(ac-bd)+(ad+bc)i.
+\]
+
+For ordinary geometric vectors, there is no corresponding universally defined "vector times vector" operation that means this.
+
+This teaches an important general lesson:
+
+\[
+\boxed{
+\text{Memory layout alone does not determine mathematical semantics.}
+}
+\]
+
+Two things can both occupy eight bytes and still obey completely different mathematical rules.
+
+---
+
+# 503.46 Cross-connection map
+
+These three Parts form the first foundation of Phase 6:
+
+```text
+Part 501
+Scalar
+"What numbers are allowed to scale things?"
+        ↓
+Field structure
+        ↓
+ℚ, ℝ, ℂ
+
+Part 502
+Real numbers
+"Why does continuous geometry mostly use ℝ?"
+        ↓
+ordered field
+completeness
+continuous quantities
+        ↓
+real-valued graphics mathematics
+
+Part 503
+Complex numbers
+"What if ℝ cannot solve x² = -1?"
+        ↓
+a + bi
+        ↓
+complex multiplication
+        ↓
+unit complex numbers
+        ↓
+2D rotation
+```
+
+Now we are finally prepared for the next conceptual jump:
+
+```text
+scalar
+      ↓
+multiple scalars arranged as coordinates
+      ↓
+geometric displacement
+```
+
+which is exactly where Part 504 begins.
+
+---
+
+# Combined Interview Attack Tree — Parts 501–503
+
+### Level 1
+
+What is a scalar?
+
+A scalar is an element of the underlying field over which the mathematical structure is defined.
+
+---
+
+### Level 2
+
+Why isn't an integer automatically an appropriate scalar field?
+
+Because \(\mathbb Z\) is not a field: nonzero integers generally do not possess multiplicative inverses within \(\mathbb Z\).
+
+For example:
+
+\[
+2^{-1}=\frac12\notin\mathbb Z.
+\]
+
+---
+
+### Level 3
+
+Why isn't a C++ `float` literally a real number?
+
+Because it is one value from a finite IEEE-754 representation and does not satisfy all real-field behavior exactly. Rounding breaks associativity; finite range introduces overflow, NaNs, infinities, underflow, etc.
+
+---
+
+### Level 4
+
+What property distinguishes \(\mathbb R\) from \(\mathbb Q\) beyond both being ordered fields?
+
+Completeness.
+
+The reals contain limits that would correspond to gaps in the rationals.
+
+---
+
+### Level 5
+
+Give a geometric reason rationals are insufficient.
+
+A unit square has diagonal:
+
+\[
+\sqrt{1^2+1^2}=\sqrt2
+\]
+
+and \(\sqrt2\) is irrational.
+
+---
+
+### Level 6
+
+Why does multiplying \(x+yi\) by \(i\) rotate it \(90^\circ\)?
+
+Because:
+
+\[
+i(x+yi)
+=
+xi+y i^2
+=
+-y+xi,
+\]
+
+so:
+
+\[
+(x,y)\rightarrow(-y,x),
+\]
+
+which is a \(90^\circ\) counterclockwise rotation under the conventional \(+x\)-right, \(+y\)-up coordinate system.
+
+---
+
+### Level 7
+
+Derive arbitrary 2D rotation from complex multiplication.
+
+Multiply:
+
+\[
+(x+yi)(\cos\theta+i\sin\theta).
+\]
+
+The result is:
+
+\[
+(x\cos\theta-y\sin\theta)
++
+i(x\sin\theta+y\cos\theta),
+\]
+
+therefore:
+
+\[
+x'=x\cos\theta-y\sin\theta
+\]
+
+\[
+y'=x\sin\theta+y\cos\theta.
+\]
+
+---
+
+### Level 8
+
+Why must the rotation complex number have unit magnitude?
+
+Otherwise multiplication changes magnitude as well as angle.
+
+Pure rotation requires:
+
+\[
+c^2+s^2=1.
+\]
+
+---
+
+### Level 9
+
+How do you invert a unit-complex rotation?
+
+Take its conjugate:
+
+\[
+(c+si)^{-1}=c-si.
+\]
+
+Because for unit magnitude:
+
+\[
+(c+si)(c-si)=c^2+s^2=1.
+\]
+
+---
+
+### Level 10
+
+Why can repeated floating-point composition break a mathematically valid unit-complex rotation?
+
+Because rounding error means the computed values may no longer satisfy
+
+\[
+c^2+s^2=1
+\]
+
+exactly. That introduces unwanted scale, so production code may occasionally restore the unit-length invariant.
+
+---
+
+# Blank-screen reconstruction exercise
+
+Without rereading the lesson, try to reconstruct these five derivations.
+
+First derive why integers are not a field using the number \(2\). Then prove \(\sqrt2\notin\mathbb Q\). Next expand
+
+\[
+(a+bi)(c+di)
+\]
+
+from distributivity and \(i^2=-1\). After that, start with
+
+\[
+(x+yi)(\cos\theta+i\sin\theta)
+\]
+
+and derive the 2D rotation equations. Finally prove that the rotation preserves
+
+\[
+x^2+y^2.
+\]
+
+If you can reconstruct all five rather than merely recognize the answers, these three Parts are beginning to become owned knowledge rather than vocabulary.
+
+**Completed Part 501 — Scalars as elements of a number field**  
+**Completed Part 502 — Real numbers and the properties graphics relies on**  
+**Completed Part 503 — Complex numbers and two-dimensional rotation intuition**
+
+**Next Core Part 504 — Vectors as geometric displacements.**

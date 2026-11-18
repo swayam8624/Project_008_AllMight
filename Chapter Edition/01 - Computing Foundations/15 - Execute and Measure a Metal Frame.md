@@ -8,7 +8,7 @@ Metal uses its own command, storage, presentation, and synchronization contracts
 
 **Recall question:** Which measurements distinguish CPU command encoding cost from GPU execution and presentation delay?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 34647–37688; source-span SHA256 71e4bac8a630df75ca628f0e92faaadf94348d3efbc86b1f781ed0c597ace587. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 34828–37869; source-span SHA256 71e4bac8a630df75ca628f0e92faaadf94348d3efbc86b1f781ed0c597ace587. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Execute and measure a Metal frame

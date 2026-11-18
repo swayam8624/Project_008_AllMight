@@ -1,0 +1,5515 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch380.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_04-visual-computing-ii-ch025-sat-for-triangle-and-convex-polygon-tests" class="level2">
+<h2>SAT for Triangle and Convex Polygon Tests</h2>
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch379.xhtml#id_04-visual-computing-ii-ch024-raytriangle-intersection" class="wikilink">Previous chapter</a> · <a href="ch381.xhtml#id_04-visual-computing-ii-ch026-contact-features-and-manifolds" class="wikilink">Next chapter</a></p>
+<p>Separating axis tests turn overlap into a search for a projection axis with disjoint intervals. Triangle–box and convex polygon cases reveal how candidate axes arise from geometry.</p>
+<p><strong>By the end:</strong> Apply SAT to triangle–AABB and convex polygon intersection.</p>
+<p><strong>Recall question:</strong> Why can triangle vertices all lie outside a box even when the triangle intersects it?</p>
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 62973–65645; source-span SHA256 9bf0db86e9647d07edd2f6254dad19b3576ab6b7edfbee1088565f1e1ca8fe22. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_04-visual-computing-ii-ch025-part-vii-triangle-aabb-sat-and-convex-polygon-sat" class="level4">
+<h4>PART VII — Triangle-AABB SAT and Convex Polygon SAT</h4>
+<p>Original Parts 1238–1239</p>
+<p><strong>Part 1238 — Triangle-AABB intersection using SAT</strong></p>
+<p>This is an extremely important intersection test for mesh BVHs, voxelization, spatial partitioning, physics broadphases, and reconstruction.</p>
+<p>Suppose we have a triangle and an axis-aligned box.</p>
+<p>We want to determine whether their closed geometric regions intersect.</p>
+<p>A triangle is a convex polygon embedded in 3D.</p>
+<p>An AABB is a convex polyhedron.</p>
+<p>Therefore SAT applies.</p>
+<p><strong>Why checking triangle vertices is insufficient</strong></p>
+<p>One tempting approach is to test whether any triangle vertex lies inside the box.</p>
+<p>But imagine a large triangle passing directly through a small box.</p>
+<p>All three triangle vertices can lie outside the box while the triangle intersects it.</p>
+<p>The reverse is also possible: all eight box corners can lie outside the triangle’s supporting plane while the box crosses the triangle.</p>
+<p>Thus vertex containment alone cannot solve triangle-box overlap.</p>
+<p>We need a complete separating-axis test.</p>
+<p><strong>The 13 candidate axes</strong></p>
+<p>For a nondegenerate triangle and a three-dimensional AABB, the standard finite candidate set contains:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mn>3</mn>
+          <mo>+</mo>
+          <mn>1</mn>
+          <mo>+</mo>
+          <mn>9</mn>
+          <mo>=</mo>
+          <mn>13</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<table>
+<thead>
+<tr>
+<th>Candidate family</th>
+<th>Number</th>
+<th>Origin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AABB coordinate axes</td>
+<td>3</td>
+<td>Box face normals</td>
+</tr>
+<tr>
+<td>Triangle face normal</td>
+<td>1</td>
+<td>Triangle’s supporting plane</td>
+</tr>
+<tr>
+<td>Triangle-edge × box-axis</td>
+<td>9</td>
+<td>Edge-edge separation directions</td>
+</tr>
+</tbody>
+</table>
+<p>Let the triangle vertices be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>V</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>V</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>V</mi>
+    <mn>2</mn>
+  </msub>
+</math>
+<p>and its edge vectors:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>V</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>V</mi>
+    <mn>0</mn>
+  </msub>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>V</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>V</mi>
+    <mn>1</mn>
+  </msub>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>V</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>V</mi>
+    <mn>2</mn>
+  </msub>
+</math>
+<p>The three box axes are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>X</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>Y</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>Z</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>The triangle normal is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>N</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>E</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>×</mo>
+          <msub>
+            <mi>E</mi>
+            <mn>1</mn>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The nine remaining axes are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>×</mo>
+  <mi>X</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>E</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>×</mo>
+  <mi>Y</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>E</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>×</mo>
+  <mi>Z</mi>
+</math>
+<p>for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mo>∈</mo>
+  <mspace linebreak="newline"></mspace>
+  <mrow data-mjx-texclass="ORD">
+    <mn>0</mn>
+    <mo>,</mo>
+    <mn>1</mn>
+    <mo>,</mo>
+    <mn>2</mn>
+    <mspace linebreak="newline"></mspace>
+  </mrow>
+</math>
+<p><strong>Transform to box-centred coordinates</strong></p>
+<p>Let the AABB have centre <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math> and half-extents:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>h</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>h</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>h</mi>
+    <mi>z</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Translate the triangle vertices:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>P</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>V</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>−</mo>
+          <mi>C</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The box now becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mo>−</mo>
+  <mi>H</mi>
+  <mo>,</mo>
+  <mi>H</mi>
+  <mo stretchy="false">]</mo>
+</math>
+<p>This simplifies projections because the box’s projected interval is symmetric about zero.</p>
+<p><strong>Projecting the triangle</strong></p>
+<p>For any candidate axis <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>L</mi>
+  <mo>⋅</mo>
+  <msub>
+    <mi>P</mi>
+    <mi>i</mi>
+  </msub>
+</math>
+<p>The triangle’s projection interval is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>p</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>p</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>p</mi>
+            <mn>2</mn>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>p</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>p</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>p</mi>
+            <mn>2</mn>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p><strong>Projecting the box</strong></p>
+<p>Since the box is centred at the origin, its projected interval is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mo>−</mo>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>r</mi>
+  <mo stretchy="false">]</mo>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>r</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>h</mi>
+            <mi>x</mi>
+          </msub>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <msub>
+            <mi>L</mi>
+            <mi>x</mi>
+          </msub>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mo>+</mo>
+          <msub>
+            <mi>h</mi>
+            <mi>y</mi>
+          </msub>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <msub>
+            <mi>L</mi>
+            <mi>y</mi>
+          </msub>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mo>+</mo>
+          <msub>
+            <mi>h</mi>
+            <mi>z</mi>
+          </msub>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <msub>
+            <mi>L</mi>
+            <mi>z</mi>
+          </msub>
+          <mo stretchy="false">|</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is the box support-radius formula from earlier.</p>
+<p>The axis separates the triangle and box if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+            </mrow>
+          </msub>
+          <mo>&gt;</mo>
+          <mi>r</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            </mrow>
+          </msub>
+          <mo>&lt;</mo>
+          <mo>−</mo>
+          <mi>r</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If either condition holds, return false immediately.</p>
+<p>If all thirteen candidate axes overlap, the nondegenerate triangle and box intersect in exact arithmetic.</p>
+<p><strong>Worked example</strong></p>
+<p>Let the box be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">]</mo>
+</math>
+<p>and triangle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>V</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>V</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>V</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>The triangle lies in the XY plane.</p>
+<p>Its first vertex is inside the box, so intersection is immediately evident.</p>
+<p>But consider instead a large triangle whose vertices all lie outside the box while its face passes across the box’s interior.</p>
+<p>The SAT algorithm still succeeds because its projection intervals overlap on every required axis.</p>
+<p>This demonstrates why SAT is more general than vertex containment.</p>
+<p><strong>Degenerate triangles</strong></p>
+<p>If the triangle has zero area:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>×</mo>
+  <msub>
+    <mi>E</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>its face normal is undefined.</p>
+<p>The triangle geometrically degenerates into a segment or point.</p>
+<p>A robust implementation should handle that lower-dimensional case deliberately.</p>
+<p>For example, calculate whether any surviving triangle edge segment intersects the AABB.</p>
+<p>This avoids depending on a normal computed from a zero cross product.</p>
+<p><strong>Numerical robustness</strong></p>
+<p>The standard 13-axis algorithm is exact in real arithmetic for valid nondegenerate inputs.</p>
+<p>In floating-point arithmetic, near-parallel axes, very thin triangles, and large translated coordinates can create rounding sensitivity.</p>
+<p>If the test is used as conservative broadphase rejection, a small tolerance may be acceptable, provided it does not generate false negatives.</p>
+<p>If used for an exact topology-changing decision, a more rigorous numerical approach may be required.</p>
+<p><strong>KairoGeometry implementation</strong></p>
+<p>Your <a href="https://github.com/swayam8624/KairoGeometry/blob/master/Intersection.cppm?utm_source=chatgpt.com">Intersection.cppm</a> contains a <code>TriangleAABBOverlap()</code> helper that constructs thirteen candidate axes: the three coordinate axes, the triangle normal, and nine edge-cross axes.</p>
+<p>It then applies a projection-overlap test to each axis.</p>
+<p>This matches the standard mathematical structure.</p>
+<p>The next validation questions should concern degenerate-triangle semantics, tolerance scaling, and agreement with independently implemented reference tests.</p>
+<p>For Maveb-style local geometry updates and spatial queries, this type of test can be used to identify triangle regions potentially interacting with voxel blocks or other axis-aligned spatial cells.</p>
+<p><strong>Part 1239 — Convex polygon SAT in 2D</strong></p>
+<p>Now consider two convex polygons in two-dimensional space.</p>
+<p>Unlike the 3D OBB case, we do not need edge-cross-product axes.</p>
+<p>For two convex polygons, testing the normals of all polygon edges is sufficient.</p>
+<p><strong>Why edge normals suffice in 2D</strong></p>
+<p>The separating line between two disjoint convex polygons can be positioned as a supporting line of at least one relevant polygon feature.</p>
+<p>For polygonal geometry, the corresponding separating direction can be chosen perpendicular to a polygon edge.</p>
+<p>Thus the finite set of candidate axes is obtained from every edge of both polygons.</p>
+<p>Suppose polygon A has <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+</math> edges and polygon B has <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> edges.</p>
+<p>We need at most:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>m</mi>
+          <mo>+</mo>
+          <mi>n</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>candidate axes, before removing duplicates or parallel directions.</p>
+<p><strong>Constructing an edge normal</strong></p>
+<p>For a directed edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>e</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>e</mi>
+    <mi>y</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>a perpendicular vector is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>N</mi>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mo>−</mo>
+          <msub>
+            <mi>e</mi>
+            <mi>y</mi>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>e</mi>
+            <mi>x</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The opposite perpendicular is also valid.</p>
+<p>For Boolean SAT, the sign of the candidate axis does not change whether projected intervals are separated.</p>
+<p>Therefore either perpendicular direction works.</p>
+<p><strong>Project both polygons</strong></p>
+<p>For polygon A:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>a</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    <mi>i</mi>
+  </munder>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <msub>
+    <mi>A</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>a</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    <mi>i</mi>
+  </munder>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <msub>
+    <mi>A</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>For polygon B:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>b</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    <mi>j</mi>
+  </munder>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>j</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>b</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    <mi>j</mi>
+  </munder>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>j</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Reject intersection if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>a</mi><mi mathvariant="normal">max</mi></msub><mo>&lt;</mo><msub><mi>b</mi><mi mathvariant="normal">min</mi></msub></mrow><annotation encoding="application/x-tex">
+a_{\max}&lt;b_{\min}
+</annotation></semantics></math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>b</mi><mi mathvariant="normal">max</mi></msub><mo>&lt;</mo><msub><mi>a</mi><mi mathvariant="normal">min</mi></msub></mrow><annotation encoding="application/x-tex">
+b_{\max}&lt;a_{\min}
+</annotation></semantics></math>
+<p>If no edge normal separates the polygons, they overlap or touch.</p>
+<p><strong>Worked example</strong></p>
+<p>Consider square A:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">]</mo>
+</math>
+<p>and square B:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">]</mo>
+</math>
+<p>Take the X-axis direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>The projection intervals are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<p>Because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mo>&lt;</mo>
+  <mn>3</mn>
+</math>
+<p>the axis separates the squares.</p>
+<p>There is no need to test any remaining axes.</p>
+<p><strong>Overlap example</strong></p>
+<p>Move square B left by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1.5</mn>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1.5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>3.5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>3.5</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1.5</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">]</mo>
+</math>
+<p>Now:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>1.5</mn>
+  <mo>,</mo>
+  <mn>3.5</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<p>These intervals overlap.</p>
+<p>The Y intervals also overlap:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<p>Because the shapes are axis-aligned rectangles, the X and Y axes suffice.</p>
+<p>For arbitrarily rotated convex polygons, the normals of all edges from both polygons must be considered.</p>
+<p><strong>Algorithmic complexity</strong></p>
+<p>A straightforward implementation scans every vertex of both polygons for every candidate axis.</p>
+<p>There are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mo>+</mo>
+  <mi>n</mi>
+</math>
+<p>candidate axes.</p>
+<p>Each projection test costs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>m</mi>
+  <mo>+</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Therefore the straightforward total complexity is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>O</mi>
+          <mo stretchy="false">(</mo>
+          <mo stretchy="false">(</mo>
+          <mi>m</mi>
+          <mo>+</mo>
+          <mi>n</mi>
+          <msup>
+            <mo stretchy="false">)</mo>
+            <mn>2</mn>
+          </msup>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>When both polygons have roughly <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> vertices:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>n</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+</math>
+<p>But the convex ordering of vertices can be exploited.</p>
+<p>For suitable convex polygon representations, rotating-calipers or coherent-support techniques can reduce redundant scanning and potentially provide linear-time intersection or separation algorithms.</p>
+<p>For small collider polygons, the simple SAT implementation may still be preferable because it is easy to verify and has modest constant costs.</p>
+<p><strong>Convexity precondition</strong></p>
+<p>A critical API requirement is that the input polygons are convex.</p>
+<p>Applying this algorithm directly to arbitrary concave polygons is not generally a complete intersection test.</p>
+<p>One solution is to decompose the concave polygon into convex pieces and test those pieces.</p>
+<p>Another is to use a more general polygon intersection algorithm.</p>
+<p>The chosen approach depends on whether the geometry is static, dynamic, simple, self-intersecting, or represented with holes.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch025-part-viii-complete-c23-reference-lab" class="level4">
+<h4>PART VIII — Complete C++23 Reference Lab</h4>
+<p><strong>Executable implementation</strong></p>
+<p>The reference lab for Pass 04 is now compiled and tested.</p>
+<p>Geometry Pass 04 — complete C++23 reference</p>
+<p>Independent source · 450+ lines · Full intersection and SAT reference implementations</p>
+<p>The file includes the intersection algorithms from M073 and the primitive-overlap and SAT operations from M074.</p>
+<p>It contains documented implementations of ray-plane, stable ray-sphere, Möller–Trumbore ray-triangle, slab-based ray-AABB, transformed ray-OBB, finite-cylinder-plus-hemisphere ray-capsule, segment-plane, and segment-triangle queries.</p>
+<p>It also implements sphere-sphere and sphere-box contacts, capsule overlap, AABB containment-aware penetration, OBB SAT with fifteen candidate axes, triangle-AABB SAT, and 2D convex-polygon SAT.</p>
+<p><strong>Test results</strong></p>
+<p>C++23 compilation passed</p>
+<p>36 deterministic reference assertions passed</p>
+<p>UndefinedBehaviorSanitizer run passed</p>
+<p>Compiled with GCC using <code>-std=c++23</code>, warning flags, and separately tested with UndefinedBehaviorSanitizer. These results validate the included cases, not every possible floating-point input or topology configuration.</p>
+<p><strong>Adversarial cases included</strong></p>
+<p>The important tests are not only conventional surface intersections.</p>
+<p>The reference includes a ray originating inside an AABB, a ray parallel to a slab boundary, a ray originating inside a capsule and exiting through its end, a tangent sphere-ray intersection, a contained sphere requiring box-face penetration depth, a contained AABB whose minimum translation exceeds its overlap width, and rotated OBBs separated only by an edge-cross axis.</p>
+<p>These specifically target algorithmic assumptions that ordinary examples may not reveal.</p>
+<p><strong>Limitations of the reference</strong></p>
+<p>The implementation assumes finite valid geometry, nonnegative radii and extents, and orthonormal OBB axes.</p>
+<p>It uses double-precision arithmetic and scale-sensitive heuristics in some cases. It does not implement exact predicates, certified interval error bounds, a watertight triangle-ray algorithm, a general polygon-clipping contact manifold, or a continuous collision detector.</p>
+<p>The algorithms are intended as readable, independently testable references rather than as a drop-in certified production kernel.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch025-part-ix-actual-kairogeometry-and-kairophysicsengine-review" class="level4">
+<h4>PART IX — Actual KairoGeometry and KairoPhysicsEngine Review</h4>
+<p><strong>Current implementation comparison</strong></p>
+<table>
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 42%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr>
+<th>Area</th>
+<th>Verified current implementation</th>
+<th>Recommended validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ray-plane</td>
+<td>Analytic intersection with epsilon parallelism test</td>
+<td>Coplanar versus distinct-parallel classification</td>
+</tr>
+<tr>
+<td>Ray-sphere</td>
+<td>Conventional quadratic roots</td>
+<td>Stable roots, tangent and extreme-scale cases</td>
+</tr>
+<tr>
+<td>Ray-triangle</td>
+<td>Two-sided Möller–Trumbore with ray-opposing normal</td>
+<td>Watertight edges, backface flag, near-degenerate tests</td>
+</tr>
+<tr>
+<td>Ray-AABB</td>
+<td>Slab method with zero-direction handling</td>
+<td>Inside-ray surface-exit semantics</td>
+</tr>
+<tr>
+<td>Ray-OBB</td>
+<td>Transform to local AABB and back</td>
+<td>Parameter consistency and valid OBB basis</td>
+</tr>
+<tr>
+<td>Ray-capsule</td>
+<td>Cylinder and complete endpoint spheres</td>
+<td>Hemisphere filtering</td>
+</tr>
+<tr>
+<td>Primitive overlaps</td>
+<td>Sphere, capsule, box, plane and triangle combinations</td>
+<td>Tangency, containment, degenerate feature cases</td>
+</tr>
+<tr>
+<td>OBB SAT</td>
+<td>Full fifteen-axis structure in KairoGeometry</td>
+<td>Differential tests and robust tolerances</td>
+</tr>
+<tr>
+<td>Physics box SAT</td>
+<td>Fifteen candidate axes, overlap-based normal/depth</td>
+<td>Containment and edge-edge manifolds</td>
+</tr>
+<tr>
+<td>Physics sphere-box</td>
+<td>Closest-point contact and fallback normal</td>
+<td>Contained-sphere minimum translation depth</td>
+</tr>
+</tbody>
+</table>
+<p>These are grounded in the current repository files:</p>
+<p><a href="https://github.com/swayam8624/KairoGeometry/blob/master/Intersection.cppm?utm_source=chatgpt.com">KairoGeometry intersection implementation</a><a href="https://github.com/swayam8624/KairoPhysicsEngine/blob/main/Narrowphase.cppm?utm_source=chatgpt.com">KairoPhysicsEngine narrowphase implementation</a></p>
+<p><strong>Three priority regression tests</strong></p>
+<p>The first concerns a ray beginning inside an AABB. Under first-boundary-hit semantics, the hit should be the forward exit surface, not the ray origin.</p>
+<p>The second concerns a capsule ray travelling along the capsule axis. Endpoint-sphere roots that lie inside the cylindrical body must not be reported as external surface hits.</p>
+<p>The third concerns penetration depth when one shape contains another. Ordinary overlap-width calculations may underestimate the required separation translation.</p>
+<p>These are strong candidates for tests because they are mathematically specific, reproducible, and directly connected to the existing code.</p>
+<p><strong>Contact manifold limitations</strong></p>
+<p>Your KairoPhysicsEngine already contains a box-box contact-building stage following SAT.</p>
+<p>It considers box vertices lying inside the opposing box and includes a fallback based on support points.</p>
+<p>That is a reasonable starting architecture, but it does not automatically provide all the feature-clipping behaviour needed for robust face-face and edge-edge manifolds.</p>
+<p>A dedicated feature-clipping implementation can provide more consistent contact positions in configurations where neither box has vertices strictly inside the other, or where the actual overlap patch is better represented by clipped incident geometry.</p>
+<p>We will cover this fully in M076.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch025-part-x-numerical-robustness-performance-and-research" class="level4">
+<h4>PART X — Numerical Robustness, Performance, and Research</h4>
+<p><strong>Numerical robustness across the complete collision layer</strong></p>
+<p>We have encountered several different numerical hazards in this pass.</p>
+<p>The ray-plane problem becomes unstable when the ray direction is nearly parallel to the plane.</p>
+<p>The ray-sphere problem can suffer catastrophic cancellation in quadratic-root evaluation.</p>
+<p>Ray-triangle intersection can produce inconsistent edge classifications between adjacent triangles.</p>
+<p>Ray-AABB calculations can encounter NaN when zero direction components are combined with reciprocal multiplication at exact slab boundaries.</p>
+<p>Ray-capsule queries can select mathematically valid roots belonging to surfaces internal to the composite shape.</p>
+<p>SAT can become uncertain when candidate axes are nearly degenerate or when projected intervals are almost tangent.</p>
+<p>These problems have different causes and cannot all be solved by one globally increased epsilon.</p>
+<p><strong>Tolerance policies should reflect mathematical meaning</strong></p>
+<p>For plane parallelism, an angular measure is natural.</p>
+<p>For ray-intersection endpoints, the parameter interval and direction scale matter.</p>
+<p>For collision slop, a world-space distance tolerance may be appropriate.</p>
+<p>For near-zero triangle area, an area-relative or scale-relative criterion can help detect poorly conditioned geometry.</p>
+<p>For topology-changing orientation decisions, certified predicates may be necessary.</p>
+<p>For broadphase overlap, deliberately conservative bounds can be acceptable.</p>
+<p>The correct numerical policy depends on whether the operation must avoid false negatives, avoid false positives, preserve exact topology, or produce a physically stable approximate contact.</p>
+<p><strong>CPU, SIMD, and GPU considerations</strong></p>
+<p>A Boolean collision test often benefits from early exit.</p>
+<p>SAT can return false as soon as it finds one separating axis.</p>
+<p>On a CPU, this may save substantial work when most shape pairs are disjoint.</p>
+<p>On a GPU executing groups of threads together, early exits may lead to divergence if different lanes exit at different times.</p>
+<p>A fixed-axis batch implementation may sometimes perform better despite executing additional arithmetic.</p>
+<p>Likewise, a branch-heavy ray-capsule implementation may be appropriate for occasional character-controller queries but less attractive for millions of independent GPU queries.</p>
+<p>For high-throughput workloads, consider data layout, coherence, vectorization, memory access, numerical behaviour, and the cost of constructing query inputs.</p>
+<p>This is where the performance and data-oriented programming concepts from earlier mastery phases become relevant.</p>
+<p><strong>Research bridge — Collision correctness as a measurable system property</strong></p>
+<p>A meaningful research direction is to investigate how numerical robustness policies affect both collision correctness and simulation cost across deformable and reconstructed geometry.</p>
+<p>Consider a physical simulation with many thin triangles, capsules, and convex proxies.</p>
+<p>A broadphase creates candidate pairs. A narrowphase classifies their geometric relationship. Contact generation provides constraints. The solver updates motion.</p>
+<p>If an early classification is incorrect, its effects can propagate through the entire pipeline.</p>
+<p>A missed collision may cause penetration.</p>
+<p>An unnecessary false-positive contact may create forces where none should exist.</p>
+<p>A poorly oriented normal may push two colliders further into one another.</p>
+<p>A penetration depth computed for the wrong feature direction may lead to persistent overlap or unstable correction.</p>
+<p>A useful experiment would compare baseline fixed-epsilon geometry, scale-aware approximate geometry, and certified predicates at critical decisions.</p>
+<p>The workloads could include nearly tangent primitives, thin rotated boxes, nearly parallel capsule axes, deforming triangle meshes, and changing spatial scales.</p>
+<p>Measure classification disagreement against an independent reference, contact-depth error, invalid normal frequency, pair throughput, solver stability, and downstream trajectory divergence.</p>
+<p>This could form part of a broader physical-validation investigation, particularly when comparing the behaviour of independent implementations rather than merely showing that one engine executes a demo successfully.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch025-part-xi-reconstruction-exercises" class="level4">
+<h4>PART XI — Reconstruction Exercises</h4>
+<p><strong>Mastery questions</strong></p>
+<p>To demonstrate that the ideas have become reconstructible rather than merely recognizable, work through these problems without referring to the formulas above.</p>
+<p>1. Starting with a ray and an implicit plane equation, derive the intersection parameter. Explain distinct-parallel, coplanar, near-parallel, and finite-ray-interval cases, including which are mathematical distinctions and which are numerical policies.</p>
+<p>2. Expand the ray-sphere equation into a quadratic and derive its discriminant. Explain the geometric meaning of the discriminant using the line’s closest point to the sphere centre. Then derive the stable-root formula from Vieta’s relation.</p>
+<p>3. Derive Möller–Trumbore from the equation equating ray and barycentric triangle positions. Explain the determinant’s sign, backface culling, barycentric constraints, and why adjacent triangles may require more robust shared-edge handling.</p>
+<p>4. Derive ray-AABB slab intersection from coordinate inequalities. Explain why a zero ray-direction component must be handled deliberately and how inside-ray volume semantics differ from first-boundary-hit semantics.</p>
+<p>5. Derive the ray-capsule cylinder quadratic by decomposing the ray into components parallel and perpendicular to the capsule axis. Explain why complete endpoint-sphere testing is insufficient.</p>
+<p>6. Derive sphere-sphere, sphere-plane, sphere-box, sphere-OBB, capsule-sphere, and capsule-capsule overlap conditions from distance and projection principles. Distinguish each Boolean result from the corresponding contact-generation problem.</p>
+<p>7. Explain why the overlap width of contained intervals is smaller than the minimum separation translation. Extend the corrected formula from AABBs to OBB projection intervals.</p>
+<p>8. Prove the Separating Axis Theorem using convex closest-point optimality. Then explain why the OBB test has fifteen axes and why the triangle-AABB test has thirteen.</p>
+<p>9. Derive the OBB relative-rotation matrix <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>R</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>A</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>⋅</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>j</mi>
+  </msub>
+</math> and obtain one face-axis inequality and one edge-cross-product inequality. Explain the numerical hazards of almost-parallel cross axes.</p>
+<p>10. Implement two independent OBB SAT routines: a generic projected-radius version and a specialized matrix version. Differential-test them with random orientations, near-tangent configurations, containment, and adversarial edge-edge separation.</p>
+<p>The final reconstruction challenge is to take the reference code, remove the ray and SAT implementations, and reproduce them using only their mathematical contracts. Verify the results against the original reference and introduce at least five additional adversarial configurations.</p>
+<p><strong>Pass 04 recall sheet</strong></p>
+<p>M073 — Ray and segment intersections</p>
+<p>Ray-plane:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>t</mi>
+          <mo>=</mo>
+          <mo>−</mo>
+          <mfrac>
+            <mrow>
+              <mi>N</mi>
+              <mo>⋅</mo>
+              <mi>O</mi>
+              <mo>+</mo>
+              <mi>d</mi>
+            </mrow>
+            <mrow>
+              <mi>N</mi>
+              <mo>⋅</mo>
+              <mi>D</mi>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Ray-sphere:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <msup>
+    <mi>t</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mi>t</mi>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo>=</mo>
+  <mi>D</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mo stretchy="false">(</mo>
+  <mi>O</mi>
+  <mo>−</mo>
+  <mi>C</mi>
+  <mo stretchy="false">)</mo>
+  <mo>⋅</mo>
+  <mi>D</mi>
+</math>, and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>O</mi>
+  <mo>−</mo>
+  <mi>C</mi>
+  <msup>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>−</mo>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+</math>.</p>
+<p>Stable quadratic roots:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>2</mn>
+  </mfrac>
+  <mo stretchy="false">(</mo>
+  <mi>b</mi>
+  <mo>+</mo>
+  <mi>copysign</mi>
+  <mo stretchy="false">(</mo>
+  <msqrt>
+    <mi mathvariant="normal">Δ</mi>
+  </msqrt>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>q</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>a</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>t</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>q</mi>
+</math>
+<p>with special-case handling.</p>
+<p>Ray-triangle: Solve the ray/barycentric linear system using cross products and a scalar triple product.</p>
+<p>Ray-AABB: Intersect three slab parameter intervals.</p>
+<p>Ray-OBB: Transform the ray to the box’s orthonormal local frame.</p>
+<p>Ray-capsule: Intersect the finite cylindrical body and two outward hemispheres.</p>
+<p>Segment queries: Restrict ray parameter to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>; handle coplanarity separately.</p>
+<p>M074 — Primitive overlap and SAT</p>
+<p>Sphere-sphere:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <msub>
+            <mi>C</mi>
+            <mi>B</mi>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>C</mi>
+            <mi>A</mi>
+          </msub>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <mo>≤</mo>
+          <msub>
+            <mi>r</mi>
+            <mi>A</mi>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>r</mi>
+            <mi>B</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Sphere-box: Compare sphere radius against centre-to-solid-box distance.</p>
+<p>Capsule-capsule: Compare central segment distance against summed radii.</p>
+<p>SAT projection interval:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>I</mi>
+            <mi>K</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mo stretchy="false">[</mo>
+          <mo>−</mo>
+          <msub>
+            <mi>h</mi>
+            <mi>K</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mo>−</mo>
+          <mi>n</mi>
+          <mo stretchy="false">)</mo>
+          <mo>,</mo>
+          <msub>
+            <mi>h</mi>
+            <mi>K</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">]</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>OBB projected radius:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>r</mi>
+          <mo>=</mo>
+          <munderover>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mo>=</mo>
+              <mn>0</mn>
+            </mrow>
+            <mrow data-mjx-texclass="ORD">
+              <mn>2</mn>
+            </mrow>
+          </munderover>
+          <msub>
+            <mi>e</mi>
+            <mi>i</mi>
+          </msub>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mi>n</mi>
+          <mo>⋅</mo>
+          <msub>
+            <mi>U</mi>
+            <mi>i</mi>
+          </msub>
+          <mo stretchy="false">|</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>OBB SAT: Six face axes and nine edge-cross axes.</p>
+<p>Triangle-AABB SAT: Three box axes, one triangle normal, nine edge-cross axes.</p>
+<p>2D polygon SAT: Test edge normals from both convex polygons.</p>
+<p>Minimum translation: Use signed interval separation distances, not merely shared interval width when containment is possible.</p>
+<table>
+<colgroup>
+<col style="width: 42%" />
+<col style="width: 27%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr>
+<th>Mastery unit</th>
+<th>Original parts</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M073 — Rays, segments, primitives and stable intersections</td>
+<td>1201–1216</td>
+<td>Mathematical derivations, code, edge cases</td>
+</tr>
+<tr>
+<td>M074 — Primitive overlaps, contacts and SAT</td>
+<td>1217–1239</td>
+<td>Mathematical derivations, code, edge cases</td>
+</tr>
+<tr>
+<td>C++23 reference lab</td>
+<td>36 assertions</td>
+<td>Compiled and passed</td>
+</tr>
+<tr>
+<td>Repository comparisons</td>
+<td>Geometry + Physics</td>
+<td>Current implementations inspected</td>
+</tr>
+<tr>
+<td>Advanced production work</td>
+<td>Exact predicates, full manifolds, CCD</td>
+<td>Scheduled in subsequent mastery units</td>
+</tr>
+</tbody>
+</table>
+<p>Pass 04 covers all 39 original parts, 1201–1239. The reference implementation demonstrates the core algorithms, while the numerical caveats and the more elaborate contact-manifold cases remain explicit rather than being hidden behind a claim of production completeness.</p>
+<p>Next — Pass 05: M075 + M076, Parts 1240–1270.</p>
+<p>This is where the collision system advances beyond primitive-specific tests and SAT into Minkowski differences, GJK simplex evolution, termination conditions, EPA penetration recovery, contact feature generation, manifold clipping, persistent contacts, continuous collision detection, swept volumes, time of impact, and conservative advancement.</p>
+<p>Phase 13 · Minkowski Geometry, GJK, EPA, Contact Manifolds, and Continuous Collision Detection</p>
+<p>This pass connects convex geometry to an operational physics engine. We will derive how GJK determines whether two arbitrary support-mapped convex shapes intersect, how its distance formulation produces closest points, how EPA estimates penetration from an intersecting simplex, how contact clipping creates stable solver constraints, and how continuous collision detection prevents objects from passing through one another between simulation steps.</p>
+<p>The main repository references are <a href="https://github.com/swayam8624/KairoPhysicsEngine/blob/main/ConvexCollision.cppm?utm_source=chatgpt.com">KairoPhysicsEngine/ConvexCollision.cppm</a>, <a href="https://github.com/swayam8624/KairoPhysicsEngine/blob/main/Narrowphase.cppm?utm_source=chatgpt.com">Narrowphase.cppm</a>, and <a href="https://github.com/swayam8624/KairoPhysicsEngine/blob/main/PhysicsWorld.cppm?utm_source=chatgpt.com">PhysicsWorld.cppm</a>.</p>
+<p>The distinction to remember from Pass 04 is that intersecting, calculating separation distance, recovering penetration, generating contact points, and calculating first time of impact are separate mathematical problems. They can share geometry infrastructure, but they do not return interchangeable results.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch025-from-minkowski-geometry-to-gjk" class="level4">
+<h4>From Minkowski Geometry to GJK</h4>
+<p><strong>Parts 1240–1241 — Minkowski difference and origin containment</strong></p>
+<p>Suppose two convex shapes <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo>⊂</mo>
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="double-struck">R</mi>
+    </mrow>
+    <mn>3</mn>
+  </msup>
+</math> occupy the same scene. We want to know whether they intersect.</p>
+<p>A traditional approach would examine their individual faces, edges, and vertices. But this would require specialized handling for different shape representations.</p>
+<p>A sphere has no polygonal faces. A capsule has curved surfaces. A convex hull may contain an arbitrary number of vertices. An oriented box has a finite set of orthogonal faces.</p>
+<p>GJK exploits a remarkable geometric transformation: rather than test these two shapes directly, it constructs information about their Minkowski difference.</p>
+<p><strong>Definition</strong></p>
+<p>The Minkowski sum of two sets is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>⊕</mo>
+  <mi>B</mi>
+  <mo>=</mo>
+  <mspace linebreak="newline"></mspace>
+  <mrow data-mjx-texclass="ORD">
+    <mi>a</mi>
+    <mo>+</mo>
+    <mi>b</mi>
+    <mo>∣</mo>
+    <mi>a</mi>
+    <mo>∈</mo>
+    <mi>A</mi>
+    <mo>,</mo>
+    <mtext> </mtext>
+    <mi>b</mi>
+    <mo>∈</mo>
+    <mi>B</mi>
+    <mspace linebreak="newline"></mspace>
+  </mrow>
+</math>
+<p>The Minkowski difference used in collision detection is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>C</mi>
+          <mo>=</mo>
+          <mi>A</mi>
+          <mo>−</mo>
+          <mi>B</mi>
+          <mo>=</mo>
+          <mi>A</mi>
+          <mo>⊕</mo>
+          <mo stretchy="false">(</mo>
+          <mo>−</mo>
+          <mi>B</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mspace linebreak="newline"></mspace>
+          <mrow data-mjx-texclass="ORD">
+            <mi>a</mi>
+            <mo>−</mo>
+            <mi>b</mi>
+            <mo>∣</mo>
+            <mi>a</mi>
+            <mo>∈</mo>
+            <mi>A</mi>
+            <mo>,</mo>
+            <mtext> </mtext>
+            <mi>b</mi>
+            <mo>∈</mo>
+            <mi>B</mi>
+            <mspace linebreak="newline"></mspace>
+          </mrow>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Here <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mi>B</mi>
+</math> means the set containing the negation of every point of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math>.</p>
+<p>It is not the ordinary set-theoretic difference <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>∖</mo>
+  <mi>B</mi>
+</math>.</p>
+<p>The construction considers every possible displacement from a point of B to a point of A.</p>
+<p><strong>Why intersection becomes origin containment</strong></p>
+<p>Assume the two shapes share a point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math>.</p>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>∈</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>p</mi>
+  <mo>∈</mo>
+  <mi>B</mi>
+</math>
+<p>Choose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>b</mi>
+  <mo>=</mo>
+  <mi>p</mi>
+</math>
+<p>The corresponding Minkowski difference point is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>−</mo>
+  <mi>b</mi>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mo>−</mo>
+  <mi>p</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>∩</mo>
+  <mi>B</mi>
+  <mo>≠</mo>
+  <mi data-mjx-alternate="1">∅</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <mo stretchy="false">⟹</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <mn>0</mn>
+  <mo>∈</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+</math>
+<p>Conversely, suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>∈</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+</math>
+<p>By definition there must exist points <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo>∈</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo>∈</mo>
+  <mi>B</mi>
+</math> such that:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>−</mo>
+  <mi>b</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>=</mo>
+  <mi>b</mi>
+</math>
+<p>That point belongs to both original shapes.</p>
+<p>Consequently:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>A</mi>
+          <mo>∩</mo>
+          <mi>B</mi>
+          <mo>≠</mo>
+          <mi data-mjx-alternate="1">∅</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.278em"></mspace>
+          </mstyle>
+          <mo stretchy="false">⟺</mo>
+          <mstyle scriptlevel="0">
+            <mspace width="0.278em"></mspace>
+          </mstyle>
+          <mn>0</mn>
+          <mo>∈</mo>
+          <mi>A</mi>
+          <mo>−</mo>
+          <mi>B</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This equivalence is exact for arbitrary sets, not only convex ones. Convexity becomes important for efficient support-based searching.</p>
+<p>GJK converts the original two-shape intersection problem into the question of whether a single convex set contains the origin.</p>
+<p><strong>Why the Minkowski difference remains convex</strong></p>
+<p>Suppose A and B are convex.</p>
+<p>Choose two points from their Minkowski difference:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>a</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>b</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>c</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>a</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>b</mi>
+    <mn>2</mn>
+  </msub>
+</math>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<p>their convex combination is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>c</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>+</mo>
+  <mi>t</mi>
+  <msub>
+    <mi>c</mi>
+    <mn>2</mn>
+  </msub>
+</math>
+<p>Substitute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>a</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>b</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>a</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>b</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Rearrange:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>a</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>+</mo>
+  <mi>t</mi>
+  <msub>
+    <mi>a</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>−</mo>
+  <mo stretchy="false">[</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>b</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>+</mo>
+  <mi>t</mi>
+  <msub>
+    <mi>b</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">]</mo>
+</math>
+<p>Since A and B are convex, the two bracketed terms belong to A and B respectively.</p>
+<p>Therefore their difference belongs to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+</math>.</p>
+<p>Hence:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>A</mi>
+          <mo>,</mo>
+          <mi>B</mi>
+          <mtext> convex</mtext>
+          <mstyle scriptlevel="0">
+            <mspace width="0.278em"></mspace>
+          </mstyle>
+          <mo stretchy="false">⟹</mo>
+          <mstyle scriptlevel="0">
+            <mspace width="0.278em"></mspace>
+          </mstyle>
+          <mi>A</mi>
+          <mo>−</mo>
+          <mi>B</mi>
+          <mtext> convex</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This property allows GJK to exploit nearest-point reasoning, supporting planes, and simplices.</p>
+<p><strong>Worked one-dimensional example</strong></p>
+<p>Let:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<p>Every difference <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo>−</mo>
+  <mi>b</mi>
+</math> lies between:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>−</mo>
+  <mn>5</mn>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mn>5</mn>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <mo>−</mo>
+  <mn>2</mn>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mo>−</mo>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<p>The origin is inside this interval, so A and B intersect. Their original intersection is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>∩</mo>
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<p>Now move B to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>6</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<p>The Minkowski difference becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mo>−</mo>
+  <mn>6</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<p>The origin is outside, so the intervals do not intersect.</p>
+<p>This simple example captures the entire idea behind GJK.</p>
+<p><strong>The configuration-space interpretation</strong></p>
+<p>Suppose B is translated by a vector <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math>.</p>
+<p>The translated set is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mspace linebreak="newline"></mspace>
+  <mrow data-mjx-texclass="ORD">
+    <mi>b</mi>
+    <mo>+</mo>
+    <mi>t</mi>
+    <mo>:</mo>
+    <mi>b</mi>
+    <mo>∈</mo>
+    <mi>B</mi>
+    <mspace linebreak="newline"></mspace>
+  </mrow>
+</math>
+<p>A collision occurs when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>∩</mo>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≠</mo>
+  <mi data-mjx-alternate="1">∅</mi>
+</math>
+<p>Equivalently, there exist <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo>∈</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo>∈</mo>
+  <mi>B</mi>
+</math> such that:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>=</mo>
+  <mi>b</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>a</mi>
+  <mo>−</mo>
+  <mi>b</mi>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>A</mi>
+          <mo>∩</mo>
+          <mo stretchy="false">(</mo>
+          <mi>B</mi>
+          <mo>+</mo>
+          <mi>t</mi>
+          <mo stretchy="false">)</mo>
+          <mo>≠</mo>
+          <mi data-mjx-alternate="1">∅</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.278em"></mspace>
+          </mstyle>
+          <mo stretchy="false">⟺</mo>
+          <mstyle scriptlevel="0">
+            <mspace width="0.278em"></mspace>
+          </mstyle>
+          <mi>t</mi>
+          <mo>∈</mo>
+          <mi>A</mi>
+          <mo>−</mo>
+          <mi>B</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This gives the configuration-space obstacle interpretation. The Minkowski difference describes the translations of B that cause collision with A.</p>
+<p>It also explains why penetration depth can be recovered by finding the nearest boundary of the Minkowski difference to the origin.</p>
+<p><strong>Part 1242 — GJK support mapping</strong></p>
+<p>Constructing the entire Minkowski difference explicitly would often be expensive or impossible.</p>
+<p>For two complex convex polyhedra, it could have many faces and vertices. For a sphere or capsule, its boundary can be curved.</p>
+<p>GJK avoids constructing it.</p>
+<p>Instead, GJK asks for the extreme point of the Minkowski difference in a chosen direction.</p>
+<p><strong>Support function versus support point</strong></p>
+<p>For a compact convex shape <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>K</mi>
+</math>, define the support function:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>h</mi>
+            <mi>K</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>d</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <munder>
+            <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>x</mi>
+              <mo>∈</mo>
+              <mi>K</mi>
+            </mrow>
+          </munder>
+          <mi>d</mi>
+          <mo>⋅</mo>
+          <mi>x</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The support point is any point realizing this maximum:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>S</mi>
+            <mi>K</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>d</mi>
+          <mo stretchy="false">)</mo>
+          <mo>∈</mo>
+          <mi>arg</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <munder>
+            <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>x</mi>
+              <mo>∈</mo>
+              <mi>K</mi>
+            </mrow>
+          </munder>
+          <mi>d</mi>
+          <mo>⋅</mo>
+          <mi>x</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The direction <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math> does not need to be normalized to identify an extreme feature, but some primitive-specific formulas normalize it to construct the returned point.</p>
+<p><strong>Deriving the Minkowski support identity</strong></p>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+</math>
+<p>we want to maximize:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo>⋅</mo>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>−</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Expand:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo>⋅</mo>
+  <mi>a</mi>
+  <mo>−</mo>
+  <mi>d</mi>
+  <mo>⋅</mo>
+  <mi>b</mi>
+</math>
+<p>The maximizing choice of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>a</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo>=</mo>
+  <msub>
+    <mi>S</mi>
+    <mi>A</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>To maximize the negative contribution:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>−</mo>
+  <mi>d</mi>
+  <mo>⋅</mo>
+  <mi>b</mi>
+</math>
+<p>we choose the point maximizing the projection along <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mi>d</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>b</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo>=</mo>
+  <msub>
+    <mi>S</mi>
+    <mi>B</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>S</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>A</mi>
+              <mo>−</mo>
+              <mi>B</mi>
+            </mrow>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>d</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <msub>
+            <mi>S</mi>
+            <mi>A</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>d</mi>
+          <mo stretchy="false">)</mo>
+          <mo>−</mo>
+          <msub>
+            <mi>S</mi>
+            <mi>B</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mo>−</mo>
+          <mi>d</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is the mathematical engine of GJK.</p>
+<p>We can sample the Minkowski difference’s boundary without constructing its mesh.</p>
+<p><strong>Examples from previous passes</strong></p>
+<p>For a sphere:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi data-mjx-auto-op="false">sphere</mi>
+      </mrow>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mo>+</mo>
+  <mi>r</mi>
+  <mfrac>
+    <mi>d</mi>
+    <mrow>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+      <mi>d</mi>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    </mrow>
+  </mfrac>
+</math>
+<p>For an AABB:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">{</mo>
+    <mtable columnalign="left left" columnspacing="1em" rowspacing=".2em">
+      <mtr>
+        <mtd>
+          <msub>
+            <mrow data-mjx-texclass="ORD">
+              <mi data-mjx-auto-op="false">Max</mi>
+            </mrow>
+            <mi>i</mi>
+          </msub>
+          <mo>,</mo>
+        </mtd>
+        <mtd>
+          <msub>
+            <mi>d</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>≥</mo>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mtext> </mtext>
+          <msub>
+            <mrow data-mjx-texclass="ORD">
+              <mi data-mjx-auto-op="false">Min</mi>
+            </mrow>
+            <mi>i</mi>
+          </msub>
+          <mo>,</mo>
+        </mtd>
+        <mtd>
+          <msub>
+            <mi>d</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>&lt;</mo>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE" fence="true" stretchy="true" symmetric="true"></mo>
+  </mrow>
+</math>
+<p>For an OBB:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi data-mjx-auto-op="false">OBB</mi>
+      </mrow>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mo>+</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>u</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>e</mi>
+    <mi>i</mi>
+  </msub>
+  <mi>sgn</mi>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mo>⋅</mo>
+  <msub>
+    <mi>u</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>For a capsule:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi data-mjx-auto-op="false">capsule</mi>
+      </mrow>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>argmax</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>p</mi>
+      <mo>∈</mo>
+      <mspace linebreak="newline"></mspace>
+      <mrow data-mjx-texclass="ORD">
+        <mi>a</mi>
+        <mo>,</mo>
+        <mi>b</mi>
+        <mspace linebreak="newline"></mspace>
+      </mrow>
+    </mrow>
+  </msub>
+  <mi>d</mi>
+  <mo>⋅</mo>
+  <mi>p</mi>
+  <mo>+</mo>
+  <mi>r</mi>
+  <mfrac>
+    <mi>d</mi>
+    <mrow>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+      <mi>d</mi>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    </mrow>
+  </mfrac>
+</math>
+<p>For a convex hull represented by vertices:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi data-mjx-auto-op="false">hull</mi>
+      </mrow>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <munder>
+    <mi>argmax</mi>
+    <msub>
+      <mi>v</mi>
+      <mi>i</mi>
+    </msub>
+  </munder>
+  <mtext> </mtext>
+  <mi>d</mi>
+  <mo>⋅</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+</math>
+<p>The last operation is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math> for a full scan of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> vertices. Sphere, AABB, OBB, and capsule support queries are constant-time.</p>
+<p><strong>Retaining witness points</strong></p>
+<p>A production GJK support point should preserve the original support points, not merely their difference.</p>
+<pre><code>struct SupportVertex {
+    Vec3 minkowski;  // pointA - pointB
+
+    Vec3 pointA;     // support point on original shape A
+    Vec3 pointB;     // support point on original shape B
+
+    uint32_t featureA;
+    uint32_t featureB;
+};</code></pre>
+<p>Why preserve both points?</p>
+<p>Because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mo>=</mo>
+  <mi>a</mi>
+  <mo>−</mo>
+  <mi>b</mi>
+</math>
+<p>does not uniquely identify <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> after the subtraction has discarded them.</p>
+<p>But the original witnesses are needed later for closest-point reconstruction and EPA contact generation.</p>
+<p>A support query can construct the record as follows:</p>
+<pre><code>SupportVertex supportMinkowski(
+    const Shape&amp; A,
+    const Shape&amp; B,
+    Vec3 direction)
+{
+    // Extreme point of A in the search direction.
+    const SupportResult a = support(A, direction);
+
+    // Extreme point of B in the opposite direction.
+    const SupportResult b = support(B, -direction);
+
+    // Preserve both original witnesses and their difference.
+    return {
+        .minkowski = a.position - b.position,
+        .pointA = a.position,
+        .pointB = b.position,
+        .featureA = a.featureId,
+        .featureB = b.featureId
+    };
+}</code></pre>
+<p>This is an interface sketch; the standalone reference lab provides concrete types and implementations.</p>
+<p><strong>Zero search directions</strong></p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>every shape point has the same dot-product projection, zero.</p>
+<p>The support point is not unique.</p>
+<p>A geometry API may return a deterministic point, but GJK usually needs to interpret a near-zero search direction as a special algorithmic state.</p>
+<p>It may indicate that the origin lies on the current simplex, that a degeneracy occurred, or that arithmetic has stalled.</p>
+<p>Blindly replacing a zero direction with an arbitrary axis can change the geometric meaning of the current simplex step.</p>
+<p><strong>GJK’s fundamental loop</strong></p>
+<p>A simplex is the convex hull of a small number of affinely independent points.</p>
+<p>In three dimensions, GJK uses simplices consisting of one point, two points, three points, or four points.</p>
+<p>These correspond to a point, segment, triangle, and tetrahedron.</p>
+<p>The algorithm maintains a simplex in Minkowski-difference space, not in the coordinate system of either original collider.</p>
+<p>A high-level intersection procedure is:</p>
+<ol type="1">
+<li>Choose an initial search direction.</li>
+<li>Request a Minkowski support point.</li>
+<li>Add it to the simplex.</li>
+<li>Calculate a direction toward the origin from the current nearest simplex feature.</li>
+<li>Request another support point in that direction.</li>
+<li>If the support geometry proves the origin cannot be enclosed, report separation.</li>
+<li>Otherwise update the simplex and repeat.</li>
+<li>If the simplex contains the origin, report intersection.</li>
+</ol>
+<p>The original GJK family also includes a distance formulation, in which nearest-point calculations are central rather than incidental. A useful technical treatment connects the simplex closest-point operation to Johnson’s distance subalgorithm. </p>
+<p><a href="https://www.google.com/s2/favicons?domain=https://uu.diva-portal.org&amp;sz=32">image</a></p>
+<p>uu.diva-portal.org+1</p>
+<p><strong>Part 1243 — GJK simplex update for a line</strong></p>
+<p>Suppose the current simplex contains two points <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math> in Minkowski-difference space.</p>
+<p>Let A be the most recently added support point.</p>
+<p>Define:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>B</mi>
+  <mo>=</mo>
+  <mi>B</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>O</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mi>A</mi>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> is the origin.</p>
+<p>We need to determine which feature of the segment is closest to the origin.</p>
+<p><strong>Vertex-A region</strong></p>
+<p>Consider the projection of the origin onto the infinite line through AB.</p>
+<p>The unconstrained segment parameter is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>t</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>A</mi>
+      <mi>O</mi>
+      <mo>⋅</mo>
+      <mi>A</mi>
+      <mi>B</mi>
+    </mrow>
+    <mrow>
+      <mi>A</mi>
+      <mi>B</mi>
+      <mo>⋅</mo>
+      <mi>A</mi>
+      <mi>B</mi>
+    </mrow>
+  </mfrac>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>O</mi>
+  <mo>⋅</mo>
+  <mi>A</mi>
+  <mi>B</mi>
+  <mo>≤</mo>
+  <mn>0</mn>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>t</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo>≤</mo>
+  <mn>0</mn>
+</math>
+<p>The closest point on the segment is A.</p>
+<p>Therefore B is unnecessary.</p>
+<p>Reduce the simplex to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mspace linebreak="newline"></mspace>
+  <mrow data-mjx-texclass="ORD">
+    <mi>A</mi>
+    <mspace linebreak="newline"></mspace>
+  </mrow>
+</math>
+<p>and choose the new search direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mo>=</mo>
+          <mi>A</mi>
+          <mi>O</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p><strong>Edge region</strong></p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>O</mi>
+  <mo>⋅</mo>
+  <mi>A</mi>
+  <mi>B</mi>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>
+<p>the origin lies in the forward half-space from A along AB.</p>
+<p>The origin may project onto the segment interior or beyond B. In the usual GJK intersection update, prior simplex invariants help determine the relevant region, but a general closest-simplex implementation should still handle both endpoints.</p>
+<p>For the line-feature case, the desired search direction is perpendicular to AB and points toward the origin.</p>
+<p>Take:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>B</mi>
+  <mo>×</mo>
+  <mi>A</mi>
+  <mi>O</mi>
+</math>
+<p>This is perpendicular to both AB and AO.</p>
+<p>Then cross again with AB:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mi>A</mi>
+          <mi>B</mi>
+          <mo>×</mo>
+          <mi>A</mi>
+          <mi>O</mi>
+          <mo stretchy="false">)</mo>
+          <mo>×</mo>
+          <mi>A</mi>
+          <mi>B</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Using the vector triple-product identity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>×</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+  <mo>×</mo>
+  <mi>c</mi>
+  <mo>=</mo>
+  <mi>b</mi>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>⋅</mo>
+  <mi>c</mi>
+  <mo stretchy="false">)</mo>
+  <mo>−</mo>
+  <mi>a</mi>
+  <mo stretchy="false">(</mo>
+  <mi>b</mi>
+  <mo>⋅</mo>
+  <mi>c</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>we obtain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mi>B</mi>
+  <mo>⋅</mo>
+  <mi>A</mi>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mi>A</mi>
+  <mi>O</mi>
+  <mo>−</mo>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mi>O</mi>
+  <mo>⋅</mo>
+  <mi>A</mi>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mi>A</mi>
+  <mi>B</mi>
+</math>
+<p>Factor:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mo>=</mo>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <mi>A</mi>
+          <mi>B</mi>
+          <msup>
+            <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+            <mn>2</mn>
+          </msup>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">(</mo>
+            <mi>A</mi>
+            <mi>O</mi>
+            <mo>−</mo>
+            <mfrac>
+              <mrow>
+                <mi>A</mi>
+                <mi>O</mi>
+                <mo>⋅</mo>
+                <mi>A</mi>
+                <mi>B</mi>
+              </mrow>
+              <mrow>
+                <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+                <mi>A</mi>
+                <mi>B</mi>
+                <msup>
+                  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+                  <mn>2</mn>
+                </msup>
+              </mrow>
+            </mfrac>
+            <mi>A</mi>
+            <mi>B</mi>
+            <mo data-mjx-texclass="CLOSE">)</mo>
+          </mrow>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The expression in parentheses is exactly the component of AO perpendicular to AB.</p>
+<p>Thus the triple-cross direction is the nearest-feature residual multiplied by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>A</mi>
+  <mi>B</mi>
+  <msup>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mn>2</mn>
+  </msup>
+</math>.</p>
+<p><strong>Why the triple cross can vanish</strong></p>
+<p>If the origin lies on the line AB:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>O</mi>
+  <mo>∥</mo>
+  <mi>A</mi>
+  <mi>B</mi>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>B</mi>
+  <mo>×</mo>
+  <mi>A</mi>
+  <mi>O</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>and therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>If the origin lies within the segment, the current simplex already contains it.</p>
+<p>But this does not automatically mean that the simplex is a suitable three-dimensional EPA seed.</p>
+<p>For overlapping convex bodies, the origin can be contained by a lower-dimensional simplex even though the full Minkowski difference has a nonzero three-dimensional interior.</p>
+<p>For touching bodies, the origin can lie on the boundary of the Minkowski difference.</p>
+<p>A correct implementation must distinguish these possibilities or report an ambiguous/touching state until additional geometry resolves them.</p>
+<p>This is one of the practical traps in collision-oriented GJK implementations.</p>
+<p><strong>Part 1244 — GJK simplex update for a triangle</strong></p>
+<p>Now suppose the simplex contains three points:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mi>C</mi>
+</math>
+<p>Again, A is the newest support point.</p>
+<p>Define:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>B</mi>
+  <mo>=</mo>
+  <mi>B</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>A</mi>
+  <mi>C</mi>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>A</mi>
+  <mi>O</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mi>A</mi>
+</math>
+<p>The oriented triangle normal is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>A</mi>
+          <mi>B</mi>
+          <mi>C</mi>
+          <mo>=</mo>
+          <mi>A</mi>
+          <mi>B</mi>
+          <mo>×</mo>
+          <mi>A</mi>
+          <mi>C</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>We must determine whether the origin lies closest to a vertex, an edge, or the triangular face.</p>
+<p>This is the Voronoi-region problem from M068, now applied to the origin instead of an arbitrary query point.</p>
+<p><strong>Outside the AC edge</strong></p>
+<p>The vector:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>B</mi>
+  <mi>C</mi>
+  <mo>×</mo>
+  <mi>A</mi>
+  <mi>C</mi>
+</math>
+<p>lies in the triangle’s plane and points across the AC edge under the chosen winding.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">(</mo>
+          <mi>A</mi>
+          <mi>B</mi>
+          <mi>C</mi>
+          <mo>×</mo>
+          <mi>A</mi>
+          <mi>C</mi>
+          <mo stretchy="false">)</mo>
+          <mo>⋅</mo>
+          <mi>A</mi>
+          <mi>O</mi>
+          <mo>&gt;</mo>
+          <mn>0</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>the origin lies on the exterior side of AC.</p>
+<p>We then determine whether the closest feature is AC or the vertex A, using the associated dot-product region tests.</p>
+<p>If AC is retained, reduce the simplex to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mspace linebreak="newline"></mspace>
+  <mrow data-mjx-texclass="ORD">
+    <mi>A</mi>
+    <mo>,</mo>
+    <mi>C</mi>
+    <mspace linebreak="newline"></mspace>
+  </mrow>
+</math>
+<p>and calculate a direction perpendicular to AC toward the origin.</p>
+<p><strong>Outside the AB edge</strong></p>
+<p>Similarly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>B</mi>
+  <mo>×</mo>
+  <mi>A</mi>
+  <mi>B</mi>
+  <mi>C</mi>
+</math>
+<p>points across the AB boundary.</p>
+<p>When:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">(</mo>
+          <mi>A</mi>
+          <mi>B</mi>
+          <mo>×</mo>
+          <mi>A</mi>
+          <mi>B</mi>
+          <mi>C</mi>
+          <mo stretchy="false">)</mo>
+          <mo>⋅</mo>
+          <mi>A</mi>
+          <mi>O</mi>
+          <mo>&gt;</mo>
+          <mn>0</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>the origin belongs to the corresponding exterior half-plane.</p>
+<p>The simplex can be reduced to AB or to a vertex, depending on the full closest-feature conditions.</p>
+<p><strong>Face region</strong></p>
+<p>If neither outside-edge condition applies, the origin projects within the triangle’s interior under the intended simplex invariant.</p>
+<p>The search direction is parallel to its normal.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>B</mi>
+  <mi>C</mi>
+  <mo>⋅</mo>
+  <mi>A</mi>
+  <mi>O</mi>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>
+<p>choose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mo>=</mo>
+          <mi>A</mi>
+          <mi>B</mi>
+          <mi>C</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Otherwise:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mo>=</mo>
+          <mo>−</mo>
+          <mi>A</mi>
+          <mi>B</mi>
+          <mi>C</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Reversing the triangle’s winding can maintain a consistent ordering with the chosen search direction.</p>
+<p>The next Minkowski support point is requested along <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math>.</p>
+<p>This searches for geometry capable of extending the simplex toward the origin from the triangle’s current supporting plane.</p>
+<p><strong>A numerical degeneracy</strong></p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>B</mi>
+  <mo>×</mo>
+  <mi>A</mi>
+  <mi>C</mi>
+  <mo>≈</mo>
+  <mn>0</mn>
+</math>
+<p>the simplex triangle has nearly zero area.</p>
+<p>The face direction becomes unreliable.</p>
+<p>A robust nearest-simplex algorithm can reduce the degenerate triangle to its surviving segment or vertex features.</p>
+<p>That is preferable to treating an invalid normal as evidence of collision.</p>
+<p><strong>Connection to barycentric coordinates</strong></p>
+<p>The origin belongs to the triangle’s filled region if it can be represented as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>=</mo>
+  <msub>
+    <mi>λ</mi>
+    <mi>A</mi>
+  </msub>
+  <mi>A</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>λ</mi>
+    <mi>B</mi>
+  </msub>
+  <mi>B</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>λ</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>C</mi>
+</math>
+<p>with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>≥</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>λ</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>λ</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>λ</mi>
+    <mi>C</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>
+<p>For a nondegenerate triangle whose plane passes through the origin, this condition establishes origin containment in the triangle simplex.</p>
+<p>For a triangle whose plane does not pass through the origin, its barycentric coordinates describe the projection of the origin onto the plane.</p>
+<p>The corresponding nearest point has residual normal to the face.</p>
+<p>This links the GJK triangle update directly to the barycentric derivations from earlier passes.</p>
+<p><strong>Part 1245 — GJK simplex update for a tetrahedron</strong></p>
+<p>A tetrahedron is the first simplex capable of enclosing a three-dimensional neighbourhood.</p>
+<p>Let its vertices be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mi>C</mi>
+  <mo>,</mo>
+  <mi>D</mi>
+</math>
+<p>Its four triangular faces are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>B</mi>
+  <mi>C</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>A</mi>
+  <mi>B</mi>
+  <mi>D</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>A</mi>
+  <mi>C</mi>
+  <mi>D</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>B</mi>
+  <mi>C</mi>
+  <mi>D</mi>
+</math>
+<p>To determine whether the tetrahedron contains the origin, we need to test whether the origin lies on the interior side of each face.</p>
+<p><strong>Outward face normals</strong></p>
+<p>Consider face ABC, opposite vertex D.</p>
+<p>Calculate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>×</mo>
+  <mo stretchy="false">(</mo>
+  <mi>C</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>This normal might point toward D or away from D.</p>
+<p>To orient it outward from the tetrahedron, check:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mo stretchy="false">(</mo>
+  <mi>D</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>If this is positive, N points toward the opposite vertex and therefore inward for that face.</p>
+<p>Reverse it:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo stretchy="false">←</mo>
+  <mo>−</mo>
+  <mi>N</mi>
+</math>
+<p>Then N points outward.</p>
+<p><strong>Test the origin relative to the face</strong></p>
+<p>With outward normal N, the origin is outside face ABC when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mo stretchy="false">(</mo>
+  <mi>O</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>
+<p>Since <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>N</mi>
+          <mo>⋅</mo>
+          <mo stretchy="false">(</mo>
+          <mo>−</mo>
+          <mi>A</mi>
+          <mo stretchy="false">)</mo>
+          <mo>&gt;</mo>
+          <mn>0</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If this occurs, the origin cannot lie inside the tetrahedron.</p>
+<p>The closest simplex feature must lie on the exterior-facing boundary of the tetrahedron, and the algorithm can reduce to a suitable face or its subfeatures.</p>
+<p>A general nearest-simplex solver can examine all four faces and choose the closest feasible feature.</p>
+<p><strong>Origin containment</strong></p>
+<p>If the origin lies on the interior side of all four oriented faces, then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mn>0</mn>
+          <mo>∈</mo>
+          <mi>conv</mi>
+          <mspace linebreak="newline"></mspace>
+          <mrow data-mjx-texclass="ORD">
+            <mi>A</mi>
+            <mo>,</mo>
+            <mi>B</mi>
+            <mo>,</mo>
+            <mi>C</mi>
+            <mo>,</mo>
+            <mi>D</mi>
+            <mspace linebreak="newline"></mspace>
+          </mrow>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Equivalently, there exist barycentric weights:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>λ</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>λ</mi>
+    <mi>C</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>λ</mi>
+    <mi>D</mi>
+  </msub>
+  <mo>≥</mo>
+  <mn>0</mn>
+</math>
+<p>summing to one such that:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mn>0</mn>
+          <mo>=</mo>
+          <msub>
+            <mi>λ</mi>
+            <mi>A</mi>
+          </msub>
+          <mi>A</mi>
+          <mo>+</mo>
+          <msub>
+            <mi>λ</mi>
+            <mi>B</mi>
+          </msub>
+          <mi>B</mi>
+          <mo>+</mo>
+          <msub>
+            <mi>λ</mi>
+            <mi>C</mi>
+          </msub>
+          <mi>C</mi>
+          <mo>+</mo>
+          <msub>
+            <mi>λ</mi>
+            <mi>D</mi>
+          </msub>
+          <mi>D</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If all weights are strictly positive, the origin lies in the tetrahedron interior.</p>
+<p>If one or more weights are zero, it may lie on its boundary.</p>
+<p>This distinction will matter when initializing EPA.</p>
+<p><strong>Signed volume and determinant tests</strong></p>
+<p>From Pass 03, the tetrahedron’s orientation is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>⋅</mo>
+  <mo stretchy="false">[</mo>
+  <mo stretchy="false">(</mo>
+  <mi>C</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>×</mo>
+  <mo stretchy="false">(</mo>
+  <mi>D</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">]</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>the tetrahedron is degenerate, and its vertices do not span three-dimensional volume.</p>
+<p>A GJK routine should not treat a degenerate four-point simplex as a valid origin-enclosing tetrahedron merely because some face tests happen to pass.</p>
+<p>For robust implementation, tetrahedral volume and face orientation must be handled together.</p>
+<p><strong>Why four vertices suffice</strong></p>
+<p>In <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="double-struck">R</mi>
+    </mrow>
+    <mn>3</mn>
+  </msup>
+</math>, Carathéodory’s theorem states that a point in a convex hull can be represented as a convex combination of at most four of its points.</p>
+<p>Thus, if the origin belongs to the Minkowski difference of two compact convex shapes, it can be represented using at most four Minkowski support points in an appropriate convex-hull representation.</p>
+<p>This motivates the tetrahedral simplex structure.</p>
+<p>It does not mean an arbitrary four support points will enclose the origin, or that the algorithm will be numerically reliable without appropriate simplex selection.</p>
+<p><strong>Part 1246 — Choosing the GJK search direction</strong></p>
+<p>The search direction is not arbitrary once the algorithm has begun.</p>
+<p>Its job is to identify a supporting point that could improve the current simplex’s relationship to the origin.</p>
+<p>For a nearest-simplex formulation, let:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <munder>
+    <mrow>
+      <mi>arg</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+    <mrow>
+      <mi>x</mi>
+      <mo>∈</mo>
+      <mi>conv</mi>
+      <mo stretchy="false">(</mo>
+      <mi>S</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </munder>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>x</mi>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math> is the current simplex.</p>
+<p>Then the natural direction toward the origin is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mo>=</mo>
+          <mo>−</mo>
+          <mi>q</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Why is this a useful direction?</p>
+<p>If <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+  <mo>≠</mo>
+  <mn>0</mn>
+</math>, the nearest point on the simplex lies in the direction from the origin toward <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math>.</p>
+<p>The vector <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mi>q</mi>
+</math> points from that nearest point toward the origin.</p>
+<p>Requesting support in direction <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mi>q</mi>
+</math> asks whether the full Minkowski difference extends farther toward the origin than the current simplex.</p>
+<p>If it does, the simplex can potentially improve.</p>
+<p>If it does not, the current simplex may already provide the closest point of the entire Minkowski difference.</p>
+<p><strong>Initial direction</strong></p>
+<p>The first direction may be chosen from the relative centres:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>d</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>A</mi>
+  </msub>
+</math>
+<p>This is often useful because it roughly points toward the other body.</p>
+<p>But centre-based directions can be zero when the centres coincide, even if the shapes have different orientations or extents.</p>
+<p>A fixed nonzero fallback axis is therefore common.</p>
+<p>The initial direction primarily affects performance and numerical behaviour, not the mathematical definition of the collision problem.</p>
+<p><strong>Direction normalization</strong></p>
+<p>A support query only depends on direction, not positive direction magnitude.</p>
+<p>Therefore normalizing <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math> is mathematically permissible when <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+  <mo>≠</mo>
+  <mn>0</mn>
+</math>.</p>
+<p>However, the scale of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math> can carry useful information for convergence checks.</p>
+<p>Many GJK distance algorithms retain the unnormalized nearest-point residual because its squared magnitude represents the current squared separation estimate.</p>
+<p>Normalizing it prematurely can erase useful scale information.</p>
+<p><strong>Part 1247 — GJK termination criteria</strong></p>
+<p>A GJK implementation needs more than one termination condition.</p>
+<p>The mathematical algorithm makes progress toward a geometric answer. The numerical algorithm must also handle finite precision, repeated support points, and limited iteration budgets.</p>
+<p><strong>Separation certificate</strong></p>
+<p>Suppose the current search direction is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math>, pointing toward the origin.</p>
+<p>Request:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>S</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>A</mi>
+      <mo>−</mo>
+      <mi>B</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>w</mi>
+          <mo>⋅</mo>
+          <mi>d</mi>
+          <mo>&lt;</mo>
+          <mn>0</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>then even the most extreme point of the Minkowski difference along <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math> lies strictly on the negative side of the plane through the origin.</p>
+<p>Since:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <munder>
+    <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>x</mi>
+      <mo>∈</mo>
+      <mi>A</mi>
+      <mo>−</mo>
+      <mi>B</mi>
+    </mrow>
+  </munder>
+  <mi>d</mi>
+  <mo>⋅</mo>
+  <mi>x</mi>
+  <mo>=</mo>
+  <mi>w</mi>
+  <mo>⋅</mo>
+  <mi>d</mi>
+  <mo>&lt;</mo>
+  <mn>0</mn>
+</math>
+<p>the origin cannot belong to the Minkowski difference.</p>
+<p>Therefore the original shapes are disjoint.</p>
+<p>This is a mathematically valid separating-plane certificate in exact arithmetic.</p>
+<p><strong>Tangency and equality</strong></p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mo>⋅</mo>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>the supporting plane passes through the origin.</p>
+<p>This does not, by itself, establish strict separation.</p>
+<p>The shapes may touch.</p>
+<p>Treating equality as an ordinary miss can violate a closed-solid intersection contract.</p>
+<p>A tolerance-based implementation may report <code>Touching</code>, <code>Uncertain</code>, or a conservative overlap depending on its intended use.</p>
+<p><strong>Origin-containing simplex</strong></p>
+<p>If the simplex contains the origin, we have established:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>∈</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+</math>
+<p>and therefore intersection.</p>
+<p>But the simplex may contain the origin on its boundary or interior.</p>
+<p>A full-dimensional interior simplex is useful for starting EPA.</p>
+<p>A lower-dimensional origin-containing simplex may be enough to establish Boolean intersection but is not automatically sufficient to initialize a three-dimensional EPA polytope.</p>
+<p><strong>Duplicate support points</strong></p>
+<p>Suppose a new support query returns a point already present in the simplex.</p>
+<p>Repeatedly adding the same point cannot expand its convex hull.</p>
+<p>This may indicate convergence, an exact finite-polytope extremum, a poor search direction, or numerical stagnation.</p>
+<p>A duplicate-point test should be part of the algorithm, but the correct result is not always “no collision.”</p>
+<p>The routine should distinguish convergence from unresolved degeneracy.</p>
+<p><strong>Maximum iterations</strong></p>
+<p>A production implementation needs a maximum iteration count to guarantee bounded work.</p>
+<p>But reaching the iteration limit is not proof of separation.</p>
+<p>Returning <code>false</code> merely because the algorithm exhausted its budget converts a computational failure into a geometric assertion.</p>
+<p>A richer result is:</p>
+<pre><code>enum class GJKStatus {
+    Separated,
+    TouchingOrOverlapping,
+    Intersecting,
+    Degenerate,
+    IterationLimit
+};</code></pre>
+<p>A Boolean query can then apply an explicit policy to uncertain results.</p>
+<p><strong>Part 1248 — Numerical degeneracy and simplex cycling</strong></p>
+<p>GJK is compact in principle, but numerical robustness is one of its most difficult implementation concerns.</p>
+<p><strong>Duplicate and nearly duplicate supports</strong></p>
+<p>For smooth shapes, nearby support directions may produce extremely close support points.</p>
+<p>For polyhedra, a range of nearby directions can select the same vertex.</p>
+<p>A naïve algorithm may repeatedly request essentially the same support and fail to improve its simplex.</p>
+<p>Comparing points by an absolute fixed squared-distance epsilon can also behave inconsistently when shape scales vary.</p>
+<p><strong>Degenerate simplex features</strong></p>
+<p>A line simplex can have coincident endpoints.</p>
+<p>A triangle simplex can have collinear vertices.</p>
+<p>A tetrahedron can have coplanar vertices.</p>
+<p>Each case invalidates part of the corresponding geometric derivation.</p>
+<p>The algorithm should reduce to a valid lower-dimensional feature where possible.</p>
+<p><strong>False origin containment</strong></p>
+<p>Near the origin, rounding can change the sign of simplex face tests.</p>
+<p>A nearly coplanar tetrahedron may appear to contain the origin even though the exact orientation tests disagree.</p>
+<p>Conversely, a genuinely enclosing simplex may be rejected because one determinant is evaluated with an incorrect sign.</p>
+<p>This is one place where robust orientation predicates can improve reliability.</p>
+<p><strong>Scale-dependent stopping thresholds</strong></p>
+<p>A fixed tolerance such as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>d</mi>
+  <msup>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>&lt;</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>14</mn>
+    </mrow>
+  </msup>
+</math>
+<p>has squared-distance units if <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math> is a displacement vector.</p>
+<p>It is therefore not scale invariant.</p>
+<p>For a simulation involving both centimetre-sized objects and kilometre-sized worlds, one fixed threshold may not be appropriate.</p>
+<p>A more deliberate policy can combine absolute world-space tolerances, relative geometry scales, and dimensionless improvement criteria.</p>
+<p><strong>Symmetry tests</strong></p>
+<p>For any two shapes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Intersects</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>Intersects</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>The same Boolean result should be obtained when the argument order is reversed.</p>
+<p>For separated shapes, the distance should satisfy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>The witness points should exchange roles.</p>
+<p>Numerical differences are possible, but large disagreement indicates an algorithmic problem.</p>
+<p><strong>What your implementation currently does</strong></p>
+<p>I inspected <a href="https://github.com/swayam8624/KairoPhysicsEngine/blob/main/ConvexCollision.cppm?utm_source=chatgpt.com">ConvexCollision.cppm</a>.</p>
+<p>Your implementation already contains a meaningful GJK pipeline with a <code>ConvexSupportVertex</code> preserving Minkowski and original witness points, a four-element <code>ConvexSimplex</code>, line/triangle/tetrahedron update routines, and explicit iteration limits.</p>
+<p>It also perturbs the initial search direction slightly and uses fixed thresholds for very short directions, duplicate supports, and insufficient support progress.</p>
+<p>These are practical attempts to handle degeneracy, but they require validation over shape scale and near-tangent configurations.</p>
+<p>One particularly important implementation detail is that the current routine only proceeds to EPA when GJK reports intersection through a four-point simplex.</p>
+<p>An origin-containing segment or triangle can therefore lead to no returned penetration result.</p>
+<p>That may be acceptable when the chosen API deliberately excludes tangency or degenerate contact, but it can also exclude some true overlapping configurations in which the simplex reaches the origin before becoming a tetrahedron.</p>
+<p>A correct treatment requires distinguishing the collision classification from the ability to construct an EPA initialization polytope.</p>
+<p><strong>Part 1249 — GJK’s distance formulation</strong></p>
+<p>The original GJK method is fundamentally a convex-distance algorithm, although many game-engine implementations emphasize its Boolean intersection variant.</p>
+<p>The distance between shapes A and B is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mo stretchy="false">(</mo>
+          <mi>A</mi>
+          <mo>,</mo>
+          <mi>B</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <munder>
+            <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>a</mi>
+              <mo>∈</mo>
+              <mi>A</mi>
+              <mo>,</mo>
+              <mi>b</mi>
+              <mo>∈</mo>
+              <mi>B</mi>
+            </mrow>
+          </munder>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <mi>a</mi>
+          <mo>−</mo>
+          <mi>b</mi>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>But:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>−</mo>
+  <mi>b</mi>
+  <mo>∈</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mo stretchy="false">(</mo>
+          <mi>A</mi>
+          <mo>,</mo>
+          <mi>B</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <munder>
+            <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>x</mi>
+              <mo>∈</mo>
+              <mi>A</mi>
+              <mo>−</mo>
+              <mi>B</mi>
+            </mrow>
+          </munder>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <mi>x</mi>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This gives us an elegant result:</p>
+<p>The minimum distance between two convex shapes equals the distance from the origin to their Minkowski difference.</p>
+<p><strong>Closest point on the simplex</strong></p>
+<p>Let the current simplex contain Minkowski vertices:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>w</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+</math>
+<p>The closest point on its convex hull to the origin solves:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <munder>
+            <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>λ</mi>
+            </mrow>
+          </munder>
+          <msup>
+            <mrow data-mjx-texclass="INNER">
+              <mo data-mjx-texclass="OPEN" symmetric="true">‖</mo>
+              <munder>
+                <mo data-mjx-texclass="OP">∑</mo>
+                <mi>i</mi>
+              </munder>
+              <msub>
+                <mi>λ</mi>
+                <mi>i</mi>
+              </msub>
+              <msub>
+                <mi>w</mi>
+                <mi>i</mi>
+              </msub>
+              <mo data-mjx-texclass="CLOSE" symmetric="true">‖</mo>
+            </mrow>
+            <mn>2</mn>
+          </msup>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>subject to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>≥</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>
+<p>This is a small convex quadratic program.</p>
+<p>For a simplex with up to four vertices, we can solve it by examining active faces and their affine projections or by specialized Voronoi-region formulas.</p>
+<p>The active barycentric weights identify the nearest simplex feature.</p>
+<p><strong>Recovering original witness points</strong></p>
+<p>Each Minkowski vertex preserves:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>a</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>b</mi>
+    <mi>i</mi>
+  </msub>
+</math>
+<p>If the closest point is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>a</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>b</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Rearrange:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <munder>
+      <mo data-mjx-texclass="OP">∑</mo>
+      <mi>i</mi>
+    </munder>
+    <msub>
+      <mi>λ</mi>
+      <mi>i</mi>
+    </msub>
+    <msub>
+      <mi>a</mi>
+      <mi>i</mi>
+    </msub>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mo>−</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <munder>
+      <mo data-mjx-texclass="OP">∑</mo>
+      <mi>i</mi>
+    </munder>
+    <msub>
+      <mi>λ</mi>
+      <mi>i</mi>
+    </msub>
+    <msub>
+      <mi>b</mi>
+      <mi>i</mi>
+    </msub>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+</math>
+<p>Define:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>P</mi>
+            <mi>A</mi>
+          </msub>
+          <mo>=</mo>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mi>i</mi>
+          </munder>
+          <msub>
+            <mi>λ</mi>
+            <mi>i</mi>
+          </msub>
+          <msub>
+            <mi>a</mi>
+            <mi>i</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>P</mi>
+            <mi>B</mi>
+          </msub>
+          <mo>=</mo>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mi>i</mi>
+          </munder>
+          <msub>
+            <mi>λ</mi>
+            <mi>i</mi>
+          </msub>
+          <msub>
+            <mi>b</mi>
+            <mi>i</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>q</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>P</mi>
+            <mi>A</mi>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>P</mi>
+            <mi>B</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Therefore, at convergence:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mo stretchy="false">(</mo>
+          <mi>A</mi>
+          <mo>,</mo>
+          <mi>B</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <msub>
+            <mi>P</mi>
+            <mi>A</mi>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>P</mi>
+            <mi>B</mi>
+          </msub>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The original witness points are reconstructed from the same barycentric weights that locate the nearest Minkowski point.</p>
+<p>This is why preserving the original support points is so important.</p>
+<p><strong>A convergence criterion derived from optimality</strong></p>
+<p>Let <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math> be the current simplex point nearest the origin.</p>
+<p>Choose search direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mi>q</mi>
+</math>
+<p>and obtain the support point:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>S</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>A</mi>
+      <mo>−</mo>
+      <mi>B</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mi>q</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>At the true nearest point of the complete convex Minkowski difference, the projection optimality condition requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>⋅</mo>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>−</mo>
+  <mi>q</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≥</mo>
+  <mn>0</mn>
+</math>
+<p>for every <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+  <mo>∈</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+</math>.</p>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>⋅</mo>
+  <mi>x</mi>
+  <mo>≥</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>q</mi>
+  <msup>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mn>2</mn>
+  </msup>
+</math>
+<p>The most challenging point is the one minimizing <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+  <mo>⋅</mo>
+  <mi>x</mi>
+</math>, which is the support point in direction <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mi>q</mi>
+</math>.</p>
+<p>Therefore a global optimality condition is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>q</mi>
+          <mo>⋅</mo>
+          <mi>w</mi>
+          <mo>≥</mo>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <mi>q</mi>
+          <msup>
+            <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+            <mn>2</mn>
+          </msup>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Equivalently, define the progress gap:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>g</mi>
+          <mo>=</mo>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <mi>q</mi>
+          <msup>
+            <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+            <mn>2</mn>
+          </msup>
+          <mo>−</mo>
+          <mi>q</mi>
+          <mo>⋅</mo>
+          <mi>w</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>At convergence in exact arithmetic:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo>≤</mo>
+  <mn>0</mn>
+</math>
+<p>In floating-point arithmetic, the algorithm uses a carefully selected tolerance.</p>
+<p>This criterion is more informative than terminating only because the distance change between successive iterations is small.</p>
+<p><strong>Why distance GJK matters for CCD</strong></p>
+<p>Suppose two shapes are currently separated by distance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>
+<p>If they move, the distance gives us a geometric margin before collision.</p>
+<p>We can use motion bounds to advance the simulation through intervals that are guaranteed not to contain contact.</p>
+<p>This is the foundation of conservative advancement, which we will derive in M076.</p>
+<p>GJK distance therefore connects static geometry to continuous collision detection.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch025-epa-and-penetration-recovery" class="level4">
+<h4>EPA and Penetration Recovery</h4>
+<p><strong>Part 1250 — Why EPA is needed after GJK</strong></p>
+<p>Suppose GJK determines that two convex bodies intersect.</p>
+<p>We know:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>∈</mo>
+  <mi>C</mi>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+</math>
+<p>But an intersection Boolean does not tell us how to separate them.</p>
+<p>For a physics solver, we generally want a translation direction <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> and a magnitude <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>δ</mi>
+</math> such that moving B away from A by approximately <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>δ</mi>
+  <mi>n</mi>
+</math> resolves the overlap.</p>
+<p>That problem is closely related to the boundary of the Minkowski difference.</p>
+<p><strong>Penetration as a configuration-space problem</strong></p>
+<p>Recall that translating B by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math> causes collision exactly when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>∈</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+</math>
+<p>Suppose the bodies currently overlap, so:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>∈</mo>
+  <mi>C</mi>
+</math>
+<p>To remove the overlap, the translation must move outside C.</p>
+<p>The smallest translation magnitude needed to reach its boundary is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>δ</mi>
+          <mo>=</mo>
+          <munder>
+            <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>q</mi>
+              <mo>∈</mo>
+              <mi>∂</mi>
+              <mi>C</mi>
+            </mrow>
+          </munder>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <mi>q</mi>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>∂</mi>
+  <mi>C</mi>
+</math> denotes the boundary of the Minkowski difference.</p>
+<p>For the usual convention of allowing tangency as the final nonpenetrating configuration, the corresponding direction is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>n</mi>
+          <mo>=</mo>
+          <mfrac>
+            <msup>
+              <mi>q</mi>
+              <mo>∗</mo>
+            </msup>
+            <mrow>
+              <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+              <msup>
+                <mi>q</mi>
+                <mo>∗</mo>
+              </msup>
+              <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>q</mi>
+    <mo>∗</mo>
+  </msup>
+</math> a nearest boundary point.</p>
+<p>Then the translation of B is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>t</mi>
+          <mo>=</mo>
+          <mi>δ</mi>
+          <mi>n</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>under the convention <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+</math>.</p>
+<p>The difference <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math> shifts to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+  <mo>−</mo>
+  <mi>t</mi>
+</math> when B is translated by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math>, so the selected boundary point reaches the origin.</p>
+<p><strong>GJK distance versus EPA penetration</strong></p>
+<p>For separated objects, the origin lies outside C.</p>
+<p>GJK distance attempts to find the closest point of the filled convex set C to the origin.</p>
+<p>For overlapping objects, the origin lies inside C, so:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <munder>
+    <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>q</mi>
+      <mo>∈</mo>
+      <mi>C</mi>
+    </mrow>
+  </munder>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>q</mi>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>That tells us nothing about the distance to the boundary.</p>
+<p>EPA — the Expanding Polytope Algorithm — addresses this by constructing and expanding a polyhedral approximation of the boundary of C around the origin.</p>
+<p>Its goal is to find a boundary feature nearest the origin and recover its supporting direction and penetration depth.</p>
+<p>The essential distinction is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtable displaystyle="true" columnalign="right left" columnspacing="0em" rowspacing="3pt">
+            <mtr>
+              <mtd>
+                <mtext>GJK distance:</mtext>
+              </mtd>
+              <mtd>
+                <mstyle scriptlevel="0">
+                  <mspace width="1em"></mspace>
+                </mstyle>
+                <munder>
+                  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+                  <mrow data-mjx-texclass="ORD">
+                    <mi>q</mi>
+                    <mo>∈</mo>
+                    <mi>C</mi>
+                  </mrow>
+                </munder>
+                <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+                <mi>q</mi>
+                <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd>
+                <mtext> </mtext>
+                <mtext>EPA penetration:</mtext>
+              </mtd>
+              <mtd>
+                <mstyle scriptlevel="0">
+                  <mspace width="1em"></mspace>
+                </mstyle>
+                <munder>
+                  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+                  <mrow data-mjx-texclass="ORD">
+                    <mi>q</mi>
+                    <mo>∈</mo>
+                    <mi>∂</mi>
+                    <mi>C</mi>
+                  </mrow>
+                </munder>
+                <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+                <mi>q</mi>
+                <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+              </mtd>
+            </mtr>
+          </mtable>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>EPA assumes a suitable origin-containing initial polytope and uses additional support queries to refine it.</p>
+<p><strong>Why an origin-containing tetrahedron is required</strong></p>
+<p>In 3D, EPA commonly begins with a nondegenerate tetrahedron containing the origin in its interior.</p>
+<p>A segment or triangle has no three-dimensional interior, so it cannot directly form the closed volumetric boundary EPA expects.</p>
+<p>If GJK detects overlap through an origin-containing segment, EPA needs an initialization procedure that expands the simplex into a full-dimensional enclosing polytope.</p>
+<p>That procedure is not trivial when the Minkowski difference is very thin, tangent, nearly degenerate, or itself lower-dimensional.</p>
+<p>One possible approach is to sample additional support directions, construct a candidate tetrahedron, and verify strict origin containment.</p>
+<p>The reference lab includes a deliberately simple version of this idea, but its limitations will be discussed in the validation section.</p>
+<p><strong>Part 1251 — EPA polytope expansion</strong></p>
+<p>EPA maintains a convex polytope <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+</math> built from support points of the Minkowski difference.</p>
+<p>Initially:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>⊆</mo>
+  <mi>C</mi>
+</math>
+<p>and the origin must lie inside <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>0</mn>
+  </msub>
+</math>.</p>
+<p>The algorithm repeatedly expands P toward the actual boundary of C.</p>
+<p><strong>The initial faces</strong></p>
+<p>A tetrahedron has four triangular faces.</p>
+<p>Each EPA face stores three vertex indices, an outward-facing unit normal, and a distance from its supporting plane to the origin.</p>
+<p>A useful representation is:</p>
+<pre><code>struct EPAFace {
+    std::array&lt;std::uint32_t, 3&gt; indices;
+
+    // Outward-facing unit normal of the Minkowski polytope.
+    Vec3 normal;
+
+    // Positive distance from the origin to the face plane.
+    double distance;
+};</code></pre>
+<p>The polytope also stores the support vertices, including their witnesses on A and B.</p>
+<p><strong>Why outward orientation matters</strong></p>
+<p>For face vertices <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mi>C</mi>
+</math>, calculate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>×</mo>
+  <mo stretchy="false">(</mo>
+  <mi>C</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Normalize:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mi>N</mi>
+    <mrow>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+      <mi>N</mi>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    </mrow>
+  </mfrac>
+</math>
+<p>For a polytope containing the origin, an outward normal should satisfy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>⋅</mo>
+  <mi>A</mi>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>
+<p>when the face is strictly separated from the origin.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>⋅</mo>
+  <mi>A</mi>
+  <mo>&lt;</mo>
+  <mn>0</mn>
+</math>
+<p>reverse the face winding and normal.</p>
+<p>Its positive face distance is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>d</mi>
+            <mi>f</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>n</mi>
+          <mo>⋅</mo>
+          <mi>A</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For a correctly oriented convex polytope enclosing the origin, every supporting face distance is nonnegative.</p>
+<p>This is a critical invariant.</p>
+<p>An incorrectly oriented face can make EPA expand inward, select the wrong face, or calculate a meaningless penetration direction.</p>
+<p><strong>The expansion step</strong></p>
+<p>Choose the polytope face nearest the origin.</p>
+<p>Let its normal be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>n</mi>
+    <mi>f</mi>
+  </msub>
+</math>
+<p>and its plane distance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>d</mi>
+    <mi>f</mi>
+  </msub>
+</math>
+<p>Request a Minkowski support point in the outward normal direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>w</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>S</mi>
+            <mi>C</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>n</mi>
+            <mi>f</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Its projection is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>d</mi>
+            <mi>w</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>n</mi>
+            <mi>f</mi>
+          </msub>
+          <mo>⋅</mo>
+          <mi>w</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Because the current polytope is contained in C, the support point should lie at least as far along <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>n</mi>
+    <mi>f</mi>
+  </msub>
+</math> as the existing supporting face, ignoring numerical error.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>d</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>&gt;</mo>
+  <msub>
+    <mi>d</mi>
+    <mi>f</mi>
+  </msub>
+</math>
+<p>the current face does not yet reach the actual shape boundary in that direction.</p>
+<p>We can expand the polytope by adding <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+</math>.</p>
+<p>Conceptual 2D projection of polytope expansion. A new support point extends the approximation toward the true Minkowski-difference boundary.</p>
+<p><strong>Visible faces</strong></p>
+<p>The new support point may lie outside several existing polytope faces.</p>
+<p>For each face with outward normal <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>n</mi>
+    <mi>i</mi>
+  </msub>
+</math> and vertex <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+</math>, evaluate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>n</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>⋅</mo>
+          <mo stretchy="false">(</mo>
+          <mi>w</mi>
+          <mo>−</mo>
+          <msub>
+            <mi>p</mi>
+            <mi>i</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>When this is positive, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+</math> lies beyond that face’s outward half-space.</p>
+<p>The face is visible from the new support point and should be removed from the expanding polytope.</p>
+<p>In finite precision, the comparison requires an explicit tolerance or orientation policy.</p>
+<p><strong>The horizon</strong></p>
+<p>Removing visible faces leaves a boundary separating removed faces from retained faces.</p>
+<p>This boundary is the horizon.</p>
+<p>Each horizon edge belongs to one removed face and one retained face in a valid closed manifold polytope.</p>
+<p>The algorithm connects the new support point to every horizon edge, creating new triangular faces.</p>
+<p>The updated polytope now encloses a larger region.</p>
+<p><strong>Detecting the horizon using directed edges</strong></p>
+<p>Suppose a removed visible face contributes oriented edges:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mo stretchy="false">(</mo>
+  <mi>b</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mo stretchy="false">(</mo>
+  <mi>c</mi>
+  <mo>,</mo>
+  <mi>a</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Add these edges to a temporary boundary collection.</p>
+<p>If a later removed face contributes the reverse edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>b</mi>
+  <mo>,</mo>
+  <mi>a</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>the two edges cancel.</p>
+<p>Why?</p>
+<p>The edge is shared internally by two removed faces, so it is not part of the final horizon.</p>
+<p>Edges that survive cancellation lie between removed and retained faces.</p>
+<p>A simple educational implementation can use a vector of directed edges and remove reversed pairs.</p>
+<p>A production implementation often uses adjacency, half-edge connectivity, or more efficient indexed structures.</p>
+<p><strong>Polytope invariants</strong></p>
+<p>After expansion, a valid EPA polytope should remain closed, convex, consistently oriented, and origin-enclosing.</p>
+<p>Every internal polytope edge should have exactly two incident faces.</p>
+<p>Every face should have a valid outward normal.</p>
+<p>The horizon should form a coherent boundary cycle, or a valid set of cycles under the algorithm’s geometric assumptions.</p>
+<p>A newly added point should not coincide with an existing point in a way that creates zero-area faces.</p>
+<p>These invariants are not merely implementation hygiene. EPA’s convergence argument depends on the polytope remaining a valid approximation of the convex Minkowski difference.</p>
+<p><strong>Part 1252 — Why EPA chooses the closest face</strong></p>
+<p>For every face <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>, define its positive distance from the origin:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>d</mi>
+    <mi>f</mi>
+  </msub>
+</math>
+<p>EPA selects:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>f</mi>
+            <mo>∗</mo>
+          </msup>
+          <mo>=</mo>
+          <mi>arg</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <munder>
+            <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+            <mi>f</mi>
+          </munder>
+          <msub>
+            <mi>d</mi>
+            <mi>f</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Why prioritize the nearest face?</p>
+<p>Because we want the nearest boundary direction from the origin.</p>
+<p>The polytope is currently an inner approximation of the Minkowski difference. Its nearest face identifies a direction in which its current boundary is closest to the origin.</p>
+<p>Expanding that face helps refine the currently most restrictive part of the approximation.</p>
+<p><strong>Face distance is not vertex distance</strong></p>
+<p>A face’s closest plane point is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>q</mi>
+            <mi>f</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>n</mi>
+            <mi>f</mi>
+          </msub>
+          <msub>
+            <mi>d</mi>
+            <mi>f</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is the perpendicular projection of the origin onto the face’s supporting plane.</p>
+<p>It may lie in the face interior, edge, or vertex region depending on geometry.</p>
+<p>For a well-formed convex polytope containing the origin, the face with globally minimum positive supporting-plane distance has a closest-plane point compatible with the polytope’s nearest boundary distance. But intermediate numerical degeneracy or invalid face geometry can break assumptions used by a naïve implementation.</p>
+<p>This is why an EPA result should verify the selected face and barycentric reconstruction rather than assume that a small plane distance is sufficient.</p>
+<p><strong>Face selection complexity</strong></p>
+<p>If there are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math> current faces, scanning all faces costs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>F</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>per iteration.</p>
+<p>A min-heap keyed by face distance can improve face selection in some implementations, but polytope updates invalidate or remove faces, so heap maintenance and stale entries must be managed.</p>
+<p>For small EPA polytopes, a linear scan is often simple and practical.</p>
+<p>For high-throughput or complex shapes, the complete cost includes support queries, visibility classification, horizon construction, face allocation, and termination checks.</p>
+<p>Optimizing only the minimum-face lookup may not improve total performance.</p>
+<p><strong>Part 1253 — Recovering penetration normal, depth, and contact witnesses</strong></p>
+<p>Suppose EPA converges on a face with outward normal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+</math>
+<p>and positive distance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+</math>
+<p>The corresponding approximate minimum translation vector for B relative to A is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="ORD">
+            <mi data-mjx-auto-op="false">MTV</mi>
+          </mrow>
+          <mo>=</mo>
+          <mi>d</mi>
+          <mi>n</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>under the convention:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+</math>
+<p>The penetration depth is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>δ</mi>
+          <mo>=</mo>
+          <mi>d</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The normal is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>n</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mrow data-mjx-texclass="ORD">
+                <mi data-mjx-auto-op="false">EPA</mi>
+              </mrow>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mi>n</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For a valid full-dimensional polytope and a correctly oriented face, this vector points toward a locally minimal translation direction of the original B shape.</p>
+<p><strong>Why normal orientation must not be arbitrary</strong></p>
+<p>Remember:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+</math>
+<p>If B is translated by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math>, then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>C</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mo>−</mo>
+  <mi>t</mi>
+</math>
+<p>If the closest Minkowski boundary point is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi>n</mi>
+</math>
+<p>translating B by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi>n</mi>
+</math>
+<p>moves the difference shape by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mi>d</mi>
+  <mi>n</mi>
+</math>, bringing that boundary point to the origin.</p>
+<p>This derivation fixes the translation convention.</p>
+<p>The normal should not be flipped merely to point toward whichever object centre happens to be nearer.</p>
+<p>For asymmetric convex bodies, the minimum translation direction need not align with their centre displacement.</p>
+<p>If a solver uses a different convention, the conversion must be mathematically explicit.</p>
+<p><strong>Recovering original contact points using barycentrics</strong></p>
+<p>Let the selected EPA face have Minkowski vertices:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>w</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>w</mi>
+    <mn>2</mn>
+  </msub>
+</math>
+<p>Each stores:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>a</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>b</mi>
+    <mi>i</mi>
+  </msub>
+</math>
+<p>The closest point on its plane is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi>n</mi>
+</math>
+<p>Find barycentric weights:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>λ</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>λ</mi>
+    <mn>2</mn>
+  </msub>
+</math>
+<p>such that:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>q</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>λ</mi>
+            <mn>0</mn>
+          </msub>
+          <msub>
+            <mi>w</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>λ</mi>
+            <mn>1</mn>
+          </msub>
+          <msub>
+            <mi>w</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>λ</mi>
+            <mn>2</mn>
+          </msub>
+          <msub>
+            <mi>w</mi>
+            <mn>2</mn>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>λ</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>λ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>
+<p>and ideally nonnegative weights for a point on the triangular face.</p>
+<p>Now reconstruct the witnesses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>P</mi>
+            <mi>A</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>λ</mi>
+            <mn>0</mn>
+          </msub>
+          <msub>
+            <mi>a</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>λ</mi>
+            <mn>1</mn>
+          </msub>
+          <msub>
+            <mi>a</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>λ</mi>
+            <mn>2</mn>
+          </msub>
+          <msub>
+            <mi>a</mi>
+            <mn>2</mn>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>P</mi>
+            <mi>B</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>λ</mi>
+            <mn>0</mn>
+          </msub>
+          <msub>
+            <mi>b</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>λ</mi>
+            <mn>1</mn>
+          </msub>
+          <msub>
+            <mi>b</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>λ</mi>
+            <mn>2</mn>
+          </msub>
+          <msub>
+            <mi>b</mi>
+            <mn>2</mn>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Their difference is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>P</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>a</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>b</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>P</mi>
+            <mi>A</mi>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>P</mi>
+            <mi>B</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>q</mi>
+          <mo>=</mo>
+          <mi>d</mi>
+          <mi>n</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is the bridge from a mathematical point in Minkowski space back to physical positions on the original objects.</p>
+<p><strong>Worked sphere example</strong></p>
+<p>Take two spheres:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>r</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1.5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>r</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>
+<p>Their penetration depth is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>δ</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mn>1.5</mn>
+  <mo>=</mo>
+  <mn>0.5</mn>
+</math>
+<p>The normal from A to B is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>The corresponding surface witnesses are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>P</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>which equals:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>δ</mi>
+  <mi>n</mi>
+</math>
+<p>The same geometric relationship is what EPA attempts to reconstruct for arbitrary convex shapes.</p>
+<p>For spheres, the analytic formula is simpler, so EPA would usually be unnecessary.</p>
+<p><strong>Contact midpoint</strong></p>
+<p>A narrowphase may choose a representative contact position:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>P</mi>
+            <mi>c</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>P</mi>
+                <mi>A</mi>
+              </msub>
+              <mo>+</mo>
+              <msub>
+                <mi>P</mi>
+                <mi>B</mi>
+              </msub>
+            </mrow>
+            <mn>2</mn>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>In our sphere example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.75</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>This is useful for calculating lever arms and contact impulses.</p>
+<p>But the midpoint alone loses the distinction between the two body-surface witnesses.</p>
+<p>A robust contact representation may store both local anchors and reconstruct the world-space separation during each solver iteration.</p>
+<p><strong>Part 1254 — EPA convergence, tolerances, and failure modes</strong></p>
+<p>EPA usually terminates when the newly requested support point is sufficiently close to the current selected face along its normal.</p>
+<p>Let:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>S</mi>
+    <mi>C</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>d</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>n</mi>
+  <mo>⋅</mo>
+  <mi>w</mi>
+</math>
+<p>The current face distance is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>d</mi>
+    <mi>f</mi>
+  </msub>
+</math>
+<p>Define the support gap:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>g</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>d</mi>
+            <mi>w</mi>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>d</mi>
+            <mi>f</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo>≤</mo>
+  <mi>ϵ</mi>
+</math>
+<p>the current face is sufficiently close to the actual supporting boundary in that direction under the chosen approximation policy.</p>
+<p><strong>What the gap means</strong></p>
+<p>The current polytope is contained in C.</p>
+<p>Its face lies at <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>d</mi>
+    <mi>f</mi>
+  </msub>
+</math> from the origin.</p>
+<p>The support point of the actual shape lies at <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>d</mi>
+    <mi>w</mi>
+  </msub>
+</math> along the same normal.</p>
+<p>Thus <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+</math> measures how much farther the actual Minkowski shape extends in this direction beyond the current polytope face.</p>
+<p>A small gap means that particular supporting plane has been approximated closely.</p>
+<p>A rigorous global error guarantee requires additional assumptions about the validity of the polytope, the selected nearest face, the geometry and the support oracle.</p>
+<p><strong>Absolute versus relative convergence</strong></p>
+<p>The gap has distance units when the direction is normalized.</p>
+<p>An absolute termination test is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo>≤</mo>
+  <msub>
+    <mi>ϵ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi data-mjx-auto-op="false">abs</mi>
+      </mrow>
+    </mrow>
+  </msub>
+</math>
+<p>A combined policy might use:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>g</mi>
+          <mo>≤</mo>
+          <msub>
+            <mi>ϵ</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mrow data-mjx-texclass="ORD">
+                <mi data-mjx-auto-op="false">abs</mi>
+              </mrow>
+            </mrow>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>ϵ</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mrow data-mjx-texclass="ORD">
+                <mi data-mjx-auto-op="false">rel</mi>
+              </mrow>
+            </mrow>
+          </msub>
+          <mi>L</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+</math> is a characteristic geometric length.</p>
+<p>This is preferable to assuming that one fixed absolute epsilon works equally well for microscopic geometry and very large worlds.</p>
+<p><strong>Duplicate support points</strong></p>
+<p>If a newly requested support point is identical or effectively identical to an existing polytope vertex, the algorithm cannot expand normally.</p>
+<p>That may indicate convergence.</p>
+<p>But if the support gap remains substantial, it may indicate numerical stagnation or an inconsistent support oracle.</p>
+<p>A robust implementation should not automatically report success in every duplicate-point case.</p>
+<p><strong>Nonmanifold horizons</strong></p>
+<p>When visible-face classification is numerically inconsistent, the horizon may become disconnected or contain invalid edge incidences.</p>
+<p>The algorithm may then generate overlapping faces, nonmanifold connectivity, or incorrectly oriented triangles.</p>
+<p>This is a topological failure, not merely an inaccurate penetration depth.</p>
+<p>It connects EPA directly to the half-edge and manifold-validation concepts in Pass 03.</p>
+<p><strong>Failure states</strong></p>
+<p>A production EPA implementation should distinguish at least:</p>
+<table>
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 82%" />
+</colgroup>
+<thead>
+<tr>
+<th>Outcome</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Converged</td>
+<td>A penetration approximation satisfying the configured tolerance was obtained</td>
+</tr>
+<tr>
+<td>Invalid seed</td>
+<td>No suitable full-dimensional origin-containing initial polytope</td>
+</tr>
+<tr>
+<td>Degenerate face</td>
+<td>A face normal or barycentric construction is undefined</td>
+</tr>
+<tr>
+<td>Stalled</td>
+<td>Duplicate support or no meaningful expansion without convergence</td>
+</tr>
+<tr>
+<td>Invalid topology</td>
+<td>Horizon or face connectivity violates required invariants</td>
+</tr>
+<tr>
+<td>Iteration limit</td>
+<td>Maximum permitted work reached before convergence</td>
+</tr>
+</tbody>
+</table>
+<p>These are algorithmic results, not all geometric misses.</p>
+<p><strong>Actual implementation and test evidence</strong></p>
+<p>Your <code>KairoPhysicsEngine::CollideConvex()</code> already implements EPA face expansion, closest-face selection, support-gap termination, witness interpolation, and a fixed 64-iteration EPA limit.</p>
+<p>The current code uses an absolute gap threshold and returns <code>std::nullopt</code> for several failure conditions. That keeps the public interface simple, but conflates separation, degenerate initialization, stagnation, and iteration-limit failure.</p>
+<p>In the independent teaching lab created for this pass, I implemented a separate GJK distance stage and an EPA initialization search over sampled support directions. The lab then expands the selected polytope and reconstructs witnesses.</p>
+<p>The deterministic overlapping-box test produces:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>δ</mi>
+          <mo>=</mo>
+          <mn>0.5</mn>
+          <mo>,</mo>
+          <mstyle scriptlevel="0">
+            <mspace width="2em"></mspace>
+          </mstyle>
+          <mi>n</mi>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mn>1</mn>
+          <mo>,</mo>
+          <mn>0</mn>
+          <mo>,</mo>
+          <mn>0</mn>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>with the expected witness separation.</p>
+<p>However, in additional randomized penetrating AABB tests, this educational EPA implementation produced usable results for 50 of 59 sampled cases. It therefore has not demonstrated production-level reliability. The seed construction and expansion topology require further work, particularly for less favourable geometric configurations.</p>
+<p>This is why an iteration cap and an optional result are insufficient by themselves to establish robustness.</p>
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch379.xhtml#id_04-visual-computing-ii-ch024-raytriangle-intersection" class="wikilink">Previous chapter</a> · <a href="ch381.xhtml#id_04-visual-computing-ii-ch026-contact-features-and-manifolds" class="wikilink">Next chapter</a></p>
+</section>
+</section>
+</body>
+</html>

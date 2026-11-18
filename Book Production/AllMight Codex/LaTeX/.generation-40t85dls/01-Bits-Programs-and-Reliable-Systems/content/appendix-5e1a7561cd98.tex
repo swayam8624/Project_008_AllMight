@@ -1,0 +1,54 @@
+\hypertarget{appendix-5e1a7561cd98}{}\label{referencestart:appendix-5e1a7561cd98}
+\section{Multilevel pointer qualification}\label{appendix-5e1a7561cd98-multilevel-pointer-qualification}
+
+\hypertarget{appendix-5e1a7561cd98-multilevel-pointer-qualification}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-5e1a7561cd98-definition-and-mechanism}
+
+\hypertarget{appendix-5e1a7561cd98-definition-and-mechanism}{}
+
+int** cannot implicitly become const int**: that would permit injection of an actually const object's address into an original int*. int** can become const int* const*, whose intermediate read-only pointer blocks that assignment.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-5e1a7561cd98-prerequisites}
+
+\hypertarget{appendix-5e1a7561cd98-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c25d60fed375]{Const qualification and shallow constness} --- Access-path qualification constrains nested conversions and member writes.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-5e1a7561cd98-used-by}
+
+\hypertarget{appendix-5e1a7561cd98-used-by}{}
+
+Later sources will deepen this same node; no empty dependent nodes are created.
+
+\subsection{Recall and next depth}\label{appendix-5e1a7561cd98-recall-and-next-depth}
+
+\hypertarget{appendix-5e1a7561cd98-recall-and-next-depth}{}
+
+Rebuild the hypothetical pointer injection step by step. Pending: qualification decomposition at further levels. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{appendix-5e1a7561cd98-source-and-navigation}
+
+\hypertarget{appendix-5e1a7561cd98-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch003-read-only-is-a-path-not-an-ownership-or-synchronization-promise]{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}
+
+\subsection{Const applies at each indirection level}\label{appendix-5e1a7561cd98-const-applies-at-each-indirection-level}
+
+\hypertarget{appendix-5e1a7561cd98-const-applies-at-each-indirection-level}{}
+
+For a pointer chain, qualification is attached to a particular level rather than to the whole expression. \texttt{const\ T*} means the pointed-to \texttt{T} is not writable through that path; \texttt{T*\ const} means the pointer object itself cannot be reseated; \texttt{const\ T*\ const} combines both.
+
+The distinction becomes safety-critical at multiple levels. Converting \texttt{T**} to \texttt{const\ T**} is not generally safe: if it were allowed, code could store a pointer-to-const object into the outer pointer and later write through the original \texttt{T*}, violating const protection. Qualification conversions therefore follow stricter rules than the familiar \texttt{T*\ -\textgreater{}\ const\ T*} case.
+
+Engine APIs should avoid raw multi-level pointer mutation unless the ownership/indirection contract truly requires it. Spans, references to containers, output wrappers or typed handle arrays often express the real intent more clearly. A reconstruction exercise should explain each const position and demonstrate the classic unsafe hypothetical conversion.

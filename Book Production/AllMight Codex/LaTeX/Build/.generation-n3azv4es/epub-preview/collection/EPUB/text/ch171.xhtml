@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch171.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-f52f8c5a3afd-internal-and-tail-padding" class="level2">
+<h2>Internal and tail padding</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-f52f8c5a3afd-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Internal padding fills holes before members to satisfy alignment. Tail padding follows the final member so array stride preserves complete-object alignment. Under 1/4/1 rules, byte–uint32–byte occupies offsets 0/4/8 with end nine and size 12. Padding is not a semantic format field and cannot be relied on as stable encoded content.</p>
+</section>
+<section id="appendix-f52f8c5a3afd-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch156.xhtml#appendix-a1f7c53b4742-alignment-and-padding" class="wikilink">Alignment and padding</a> — Address divisibility determines legal placement and layout holes.</li>
+</ul>
+</section>
+<section id="appendix-f52f8c5a3afd-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch141.xhtml#appendix-5522ad176ca0-field-reordering-and-aos-versus-soa" class="wikilink">Field reordering and AoS versus SoA</a> — uses this mechanism as stated in its prerequisites.</li>
+<li><a href="ch126.xhtml#appendix-0682dbfc5f0e-packed-structures-and-misaligned-access" class="wikilink">Packed structures and misaligned access</a> — uses this mechanism as stated in its prerequisites.</li>
+</ul>
+</section>
+<section id="appendix-f52f8c5a3afd-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain why stride nine breaks the second element’s integer alignment.</p>
+<p><strong>Pending:</strong> Special member overlap, inheritance, and padding-safe comparisons.</p>
+</section>
+<section id="appendix-f52f8c5a3afd-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

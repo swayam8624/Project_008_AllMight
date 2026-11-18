@@ -1,0 +1,3467 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch418.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_01-foundations-i-ch016-profile-gpus-and-respect-apple-ownership-boundaries" class="level2">
+<h2>Profile GPUs and Respect Apple Ownership Boundaries</h2>
+<p><a href="ch410.xhtml#id_06-GPU-Architecture-and-Real-Time-Rendering" class="wikilink">Reading map</a> · <a href="ch417.xhtml#id_01-foundations-i-ch015-execute-and-measure-a-metal-frame" class="wikilink">Previous chapter</a> · <a href="ch420.xhtml#id_03-visual-computing-i-ch006-from-material-data-to-gpu-bindings" class="wikilink">Next chapter</a></p>
+<p>Counters and timing tools reveal different parts of a frame, while Objective-C++, Swift, SwiftUI, and threading introduce ownership boundaries around native objects. The chapter connects measurement to safe cross-language and operating-system lifetimes.</p>
+<p><strong>By the end:</strong> Interpret GPU profiling evidence and define ownership, threading, and file/network boundaries across Apple platform APIs.</p>
+<p><strong>Recall question:</strong> What does a GPU counter establish, and what does it leave unknown about the full user-visible frame?</p>
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 37870–40317; source-span SHA256 13faebd39dbf30ebc015d30042cfe4cf02c2b2a84bd06204f0b7a175e0329a0a. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_01-foundations-i-ch016-profiling-objective-c-ownership-swiftui-thread-boundaries" class="level4">
+<h4>PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI &amp; THREAD BOUNDARIES</h4>
+<p><strong>GPU counters and Metal profiling</strong></p>
+<p>You should distinguish at least three kinds of performance measurements.</p>
+<p>CPU encoding time:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>how long CPU spent building commands</mtext>
+  <mo>.</mo>
+</math>
+<p>Command-buffer GPU duration:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>how long GPU command buffer occupied GPU timeline</mtext>
+  <mo>.</mo>
+</math>
+<p>Detailed GPU counters:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>what hardware was doing inside that duration</mtext>
+  <mo>.</mo>
+</math>
+<p>Those answer different questions.</p>
+<hr />
+<p><strong>Maveb’s current coarse GPU timing</strong></p>
+<p>Completion handler reads:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>completed<span class="op">-&gt;</span>GPUEndTime<span class="op">()</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="op">-</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>completed<span class="op">-&gt;</span>GPUStartTime<span class="op">()</span></span></code></pre></div>
+<p>then converts to milliseconds.</p>
+<p>This gives whole-command-buffer GPU duration.</p>
+<p>Useful for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>frame GPU ms</mtext>
+  <mo>.</mo>
+</math>
+<p>But not sufficient to tell whether:</p>
+<pre class="text"><code>Gaussian sort
+shadow
+TAA
+bloom
+presentation</code></pre>
+<p>is slow.</p>
+<hr />
+<p><strong>Counter sample buffers</strong></p>
+<p>Modern Metal profiling can use counter sampling mechanisms where supported.</p>
+<p>Conceptually record counter samples at boundaries:</p>
+<pre class="text"><code>sample 0
+Gaussian projection
+sample 1
+Radix
+sample 2
+Composite
+sample 3</code></pre>
+<p>Then resolve/read results after GPU completion.</p>
+<p>Counters can expose architecture-dependent metrics such as timestamps and other supported statistics.</p>
+<p>Capabilities must be queried.</p>
+<hr />
+<p><strong>Profiling should not stall</strong></p>
+<p>Bad profiler:</p>
+<pre class="text"><code>commit
+waitUntilCompleted
+read counters</code></pre>
+<p>every frame.</p>
+<p>That destroys CPU/GPU overlap.</p>
+<p>Better:</p>
+<pre class="text"><code>frame N records counters
+frame N+2 reads frame N when already completed</code></pre>
+<p>This is the same latency-hiding principle as Vulkan query pools.</p>
+<hr />
+<p><strong>Xcode GPU capture</strong></p>
+<p>Xcode’s Metal GPU capture can inspect:</p>
+<ul>
+<li>command buffers,</li>
+<li>encoders,</li>
+<li>resources,</li>
+<li>pipeline state,</li>
+<li>textures,</li>
+<li>draw calls,</li>
+<li>shader execution,</li>
+<li>performance.</li>
+</ul>
+<p>This is the Metal equivalent of the workflow you might use RenderDoc for Vulkan, though Apple’s integration can expose Apple-specific GPU details.</p>
+<hr />
+<p><strong>Capture tells you execution reality</strong></p>
+<p>Your source might say:</p>
+<pre class="text"><code>Render scene</code></pre>
+<p>but GPU capture may reveal:</p>
+<ul>
+<li>five unexpected render passes,</li>
+<li>attachment stored and reloaded repeatedly,</li>
+<li>gigantic intermediate texture,</li>
+<li>redundant state binding,</li>
+<li>unexpected shader variant.</li>
+</ul>
+<p>Performance optimization should eventually inspect the executed GPU workload, not merely source code.</p>
+<hr />
+<p><strong>Metal labels</strong></p>
+<p>Metal resources and command objects expose labels.</p>
+<p>Maveb labels extensively:</p>
+<pre class="text"><code>AETHER Primary Queue
+AETHER Frame
+Scene HDR Color
+Scene Reverse-Z Depth
+Gaussian HDR Color
+Temporal Resolve Pass
+Presentation Tone Map Pass
+Mesh Upload
+Presented Frame Capture</code></pre>
+<p>This is excellent.</p>
+<p>It means GPU capture shows semantic engine names rather than anonymous resources.</p>
+<hr />
+<p><strong>Encoder labels</strong></p>
+<p>For every meaningful pass:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>encoder<span class="op">-&gt;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    setLabel<span class="op">(</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;Gaussian Radix Histogram&quot;</span><span class="op">);</span></span></code></pre></div>
+<p>or equivalent.</p>
+<p>You can also use debug groups where useful:</p>
+<pre class="text"><code>Frame
+    Shadow
+    Scene
+    Gaussian
+        Project
+        Sort
+        Composite
+    TAA
+    Bloom
+    Present</code></pre>
+<p>A profiler/capture should reflect your engine’s conceptual hierarchy.</p>
+<hr />
+<p><strong>Why labels are not optional fluff</strong></p>
+<p>When debugging a 200-pass renderer, names save enormous time.</p>
+<p>Compare:</p>
+<pre class="text"><code>Texture 0x173902
+Encoder 0x77193</code></pre>
+<p>with:</p>
+<pre class="text"><code>Scene Motion Vectors
+Temporal Resolve Pass</code></pre>
+<p>Labels are part of engine observability.</p>
+<hr />
+<p><strong>Objective-C retain/release intuition under ARC</strong></p>
+<p>Objective-C objects use reference counting.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mo stretchy="false">⇒</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mo stretchy="false">⇒</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>−</mo>
+  <mn>1.</mn>
+</math>
+<p>When count reaches zero:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>b</mi>
+  <mi>j</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mtext> </mtext>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>y</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>ARC automatically inserts many retain/release operations based on ownership semantics.</p>
+<hr />
+<p><strong>Strong ownership</strong></p>
+<p>A strong reference keeps object alive.</p>
+<p>Objective-C property:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>@property<span class="op">(</span>strong<span class="op">)</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>id<span class="op">&lt;</span>MTLDevice<span class="op">&gt;</span> device<span class="op">;</span></span></code></pre></div>
+<p>means owner retains it.</p>
+<p>When owner releases property, reference count can fall.</p>
+<p>This is analogous conceptually to <code>shared_ptr</code>, but implementations and semantics are not identical.</p>
+<hr />
+<p><strong>Weak references</strong></p>
+<p>Weak reference:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>does not keep object alive</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and is automatically zeroed when referenced Objective-C object dies.</p>
+<p>Useful for delegate relationships to avoid retain cycles.</p>
+<p>Again, this is Objective-C object lifetime, not GPU completion lifetime.</p>
+<p>A Metal object can be strongly alive while GPU work is unfinished, and command-buffer/resource retention semantics matter too.</p>
+<hr />
+<p><strong>Autorelease pools</strong></p>
+<p>Some Objective-C APIs return autoreleased temporary objects.</p>
+<p>A tight render loop without a local autorelease pool can accumulate temporary objects until outer pool drains.</p>
+<p>Therefore render code frequently uses:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>@autoreleasepool</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Kairo does this in Metal draw calls.</p>
+<p>Maveb’s C++ Metal renderer explicitly creates/releases an autorelease pool per frame.</p>
+<p>That is correct.</p>
+<hr />
+<p><strong>ARC does not manage C++ objects</strong></p>
+<p>Suppose Objective-C++ object contains:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>unique_ptr<span class="op">&lt;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    aether<span class="op">::</span>metal<span class="op">::</span>Renderer<span class="op">&gt;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    _renderer<span class="op">;</span></span></code></pre></div>
+<p>ARC does not manage that pointer.</p>
+<p>C++ RAII does.</p>
+<p>So in Objective-C++ source you have <strong>two ownership systems simultaneously</strong>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>ARC for Objective-C objects</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>C++ RAII for C++ objects</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>You must understand which system owns each object.</p>
+<hr />
+<p><strong>metal-cpp adds a third-looking syntax, but same ownership reality</strong></p>
+<p>Maveb uses C++ wrappers around Objective-C Metal objects.</p>
+<p>Its helper pattern distinguishes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Conceptually:</p>
+<p><code>adopt()</code> means:</p>
+<blockquote>
+<p>this newly created object already carries ownership; wrap it without adding another retain.</p>
+</blockquote>
+<p><code>retain()</code> means:</p>
+<blockquote>
+<p>borrowed object must be retained because wrapper will own it.</p>
+</blockquote>
+<p>Mix those incorrectly and you get:</p>
+<ul>
+<li>leaks,</li>
+<li>double releases,</li>
+<li>dangling pointers.</li>
+</ul>
+<hr />
+<p><strong>Objective-C++ <code>.mm</code> translation units</strong></p>
+<p>A <code>.mm</code> file can contain both:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>id<span class="op">&lt;</span>MTLDevice<span class="op">&gt;</span></span></code></pre></div>
+<p>and:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>Renderer<span class="op">&gt;</span></span></code></pre></div>
+<p>and Objective-C message syntax:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="op">[</span>object method<span class="op">]</span></span></code></pre></div>
+<p>plus ordinary modern C++.</p>
+<p>This is the ideal bridge layer between:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>C++ engine core</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>AppKit/Metal/Objective-C APIs</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Why not put Objective-C in all C++ files?</strong></p>
+<p>It infects portability.</p>
+<p>If core engine headers contain:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#import </span><span class="im">&lt;Metal/Metal.h&gt;</span></span></code></pre></div>
+<p>or Objective-C object syntax, Linux/Windows compilers cannot parse them.</p>
+<p>Better architecture:</p>
+<pre class="text"><code>portable C++ headers
+        ↓
+Objective-C++ implementation bridge (.mm)
+        ↓
+Metal / AppKit</code></pre>
+<p>This keeps platform code localized.</p>
+<hr />
+<p><strong>Kairo follows this idea</strong></p>
+<p>Public module:</p>
+<pre class="text"><code>MetalRenderer.cppm</code></pre>
+<p>talks through:</p>
+<pre class="text"><code>detail::MetalBackend</code></pre>
+<p>while raw Objective-C Metal implementation lives in:</p>
+<pre class="text"><code>detail/MetalBackend.mm.</code></pre>
+<p>That is a good boundary.</p>
+<p>The public renderer-neutral host does not need Objective-C syntax leaking through every module.</p>
+<hr />
+<p><strong>C++ ownership across Objective-C++ bridges</strong></p>
+<p>AetherStudio’s bridge contains:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>unique_ptr<span class="op">&lt;</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    aether<span class="op">::</span>metal<span class="op">::</span>Renderer<span class="op">&gt;</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    _renderer<span class="op">;</span></span></code></pre></div>
+<p>inside:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">@implementation</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>AetherViewportDelegate</span></code></pre></div>
+<p>This is a very clean boundary.</p>
+<p>Objective-C object owns a C++ unique pointer.</p>
+<p>When delegate dies, C++ renderer destructor executes.</p>
+<p>Renderer then releases its own Metal C++ wrapper resources through its RAII mechanisms.</p>
+<hr />
+<p><strong>Passing an Objective-C Metal device into C++</strong></p>
+<p>Aether bridge:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>id<span class="op">&lt;</span>MTLDevice<span class="op">&gt;</span> device</span></code></pre></div>
+<p>is converted to metal-cpp representation with a non-owning bridge cast.</p>
+<p>Then:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>Renderer<span class="op">::</span>create<span class="op">(</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">reinterpret_cast</span><span class="op">&lt;</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>        MTL<span class="op">::</span>Device<span class="op">*&gt;(</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">(</span>__bridge <span class="dt">void</span><span class="op">*)</span>device<span class="op">));</span></span></code></pre></div>
+<p>The <code>__bridge</code> cast does not transfer Objective-C ownership.</p>
+<p>Therefore C++ renderer must establish its own ownership if it stores the device.</p>
+<p>Maveb constructor does:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="va">device_</span><span class="op">(</span>retain<span class="op">(</span>device<span class="op">))</span></span></code></pre></div>
+<p>which is exactly what you want.</p>
+<hr />
+<p><strong>Ownership equation</strong></p>
+<p>At bridge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>borrow ObjC device</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>then inside persistent C++ renderer:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>retain device for C++ lifetime</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If it merely stored borrowed pointer, Objective-C owner could disappear and leave dangling C++ Metal pointer.</p>
+<p>The retain is the lifetime bridge.</p>
+<hr />
+<p><strong>error bridging C++ → Objective-C/Swift</strong></p>
+<p>Never casually allow C++ exceptions to cross into Swift/Objective-C API boundaries.</p>
+<p>Different exception runtimes/ABI semantics make that unsafe architecture.</p>
+<p>Instead transform:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>+</mo>
+  <mo>+</mo>
+  <mtext> </mtext>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>t</mi>
+  <mo>&lt;</mo>
+  <mi>T</mi>
+  <mo>,</mo>
+  <mi>E</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>&gt;</mo>
+</math>
+<p>into:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mi>b</mi>
+  <mi>j</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mtext>-</mtext>
+  <mi>C</mi>
+  <mtext> </mtext>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>n</mi>
+  <mtext> </mtext>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mo>+</mo>
+  <mi>N</mi>
+  <mi>S</mi>
+  <mi>E</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Example bridge</strong></p>
+<p>C++:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>Result<span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>SaveThing<span class="op">(...);</span></span></code></pre></div>
+<p>Objective-C++:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>BOOL SaveThingBridge<span class="op">(</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    NSURL<span class="op">*</span> destination<span class="op">,</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    NSError<span class="op">**</span> error<span class="op">)</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">auto</span> result <span class="op">=</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>        SaveThing<span class="op">(...);</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> <span class="op">(!</span>result<span class="op">)</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">if</span> <span class="op">(</span>error<span class="op">)</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>            <span class="op">*</span>error <span class="op">=</span></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>                <span class="op">[</span>NSError</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>                    errorWithDomain<span class="op">:</span></span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>                        <span class="st">@&quot;com.engine&quot;</span></span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>                    code<span class="op">:</span></span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>                        <span class="dv">1</span></span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>                    userInfo<span class="op">:</span></span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>                        @<span class="op">{</span></span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>                          NSLocalizedDescriptionKey<span class="op">:</span></span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>                            <span class="op">...</span></span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>                        <span class="op">}];</span></span>
+<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a>        <span class="kw">return</span> NO<span class="op">;</span></span>
+<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb29-27"><a href="#cb29-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-28"><a href="#cb29-28" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> YES<span class="op">;</span></span>
+<span id="cb29-29"><a href="#cb29-29" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This is exactly the pattern Aether uses in <code>AetherWriteDiagnostics</code>.</p>
+<hr />
+<p><strong>Current Aether error bridge has multiple levels</strong></p>
+<p><code>AetherWriteDiagnostics()</code> converts failures into:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mi>S</mi>
+  <mi>E</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>∗</mo>
+  <mo>∗</mo>
+  <mo>.</mo>
+</math>
+<p>Many viewport operations currently instead:</p>
+<ul>
+<li>return <code>BOOL</code>,</li>
+<li>return <code>nil</code>,</li>
+<li>return empty arrays,</li>
+<li>log engine error.</li>
+</ul>
+<p>That is acceptable for internal editor operations.</p>
+<p>For APIs where caller must distinguish failure reasons, promote them to structured <code>NSError</code>/Swift <code>Error</code>.</p>
+<hr />
+<p><strong>Preserve error semantics</strong></p>
+<p>Do not reduce:</p>
+<pre class="text"><code>resource exhausted
+invalid argument
+file not found
+corrupt data
+Metal command failure</code></pre>
+<p>into:</p>
+<pre class="text"><code>&quot;something failed&quot;</code></pre>
+<p>A bridge should preserve:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mtext> </mtext>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Maveb’s internal errors already carry:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>That is useful information to carry upward.</p>
+<hr />
+<p><strong>SwiftUI view versus rendering-core responsibility</strong></p>
+<p>This separation is extremely important.</p>
+<p>SwiftUI should own:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>application/UI state</mtext>
+  <mo>.</mo>
+</math>
+<p>Renderer should own:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>GPU resources and frame execution</mtext>
+  <mo>.</mo>
+</math>
+<p>Bridge translates between them.</p>
+<p>Do not let SwiftUI understand:</p>
+<pre class="text"><code>MTLBuffer
+MTLTexture
+command encoders
+Gaussian radix buffers
+BVH nodes</code></pre>
+<p>and do not make render core understand:</p>
+<pre class="text"><code>@Binding
+@State
+@AppStorage
+NSViewRepresentable</code></pre>
+<hr />
+<p><strong>Aether’s architecture</strong></p>
+<p>SwiftUI:</p>
+<pre class="text"><code>AetherViewport</code></pre>
+<p>contains bindings:</p>
+<pre class="text"><code>selectedGaussianId
+selectedMeshId
+camera
+materials
+lights
+playback
+debug settings</code></pre>
+<p>It creates:</p>
+<pre class="text"><code>AetherViewportView</code></pre>
+<p>through <code>NSViewRepresentable</code>.</p>
+<p>Objective-C++ view owns:</p>
+<pre class="text"><code>MTKView
+AetherViewportDelegate</code></pre>
+<p>Delegate owns:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>unique_ptr<span class="op">&lt;</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    aether<span class="op">::</span>metal<span class="op">::</span>Renderer<span class="op">&gt;</span></span></code></pre></div>
+<p>This is a strong layered architecture.</p>
+<hr />
+<p><strong>The responsibility chain</strong></p>
+<pre class="text"><code>SwiftUI
+    declarative editor state
+
+        ↓
+
+NSViewRepresentable
+    lifecycle/update synchronization
+
+        ↓
+
+AetherViewportView
+    AppKit input/window/view integration
+
+        ↓
+
+AetherViewportDelegate
+    Objective-C++ conversion boundary
+
+        ↓
+
+aether::metal::Renderer
+    C++ rendering system
+
+        ↓
+
+Metal</code></pre>
+<p>Every layer speaks its natural language.</p>
+<p>That is what good platform integration looks like.</p>
+<hr />
+<p><strong>Why SwiftUI should not issue GPU commands</strong></p>
+<p>SwiftUI body/update execution is driven by declarative state changes.</p>
+<p>It is not a stable real-time rendering loop.</p>
+<p>GPU frame execution needs:</p>
+<ul>
+<li>consistent timing,</li>
+<li>resource lifetimes,</li>
+<li>command-buffer scheduling,</li>
+<li>frames in flight.</li>
+</ul>
+<p><code>MTKView</code>/renderer handles that.</p>
+<p>SwiftUI configures it.</p>
+<hr />
+<p><strong><code>NSViewRepresentable</code></strong></p>
+<p>Aether:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode swift"><code class="sourceCode swift"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> AetherViewport<span class="op">:</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">NSViewRepresentable</span></span></code></pre></div>
+<p>implements:</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode swift"><code class="sourceCode swift"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>makeNSView<span class="op">(...)</span></span></code></pre></div>
+<p>and:</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode swift"><code class="sourceCode swift"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>updateNSView<span class="op">(...)</span></span></code></pre></div>
+<p><code>makeNSView</code> constructs native Metal-backed view once.</p>
+<p><code>updateNSView</code> propagates changes in Swift state into existing native renderer/view.</p>
+<p>That is exactly how a long-lived renderer should integrate with SwiftUI.</p>
+<hr />
+<p><strong>Coordinator prevents redundant work</strong></p>
+<p>Aether’s <code>Coordinator</code> caches previously applied:</p>
+<pre class="text"><code>scenePath
+dynamicMeshPath
+transform overrides
+materials
+lights
+camera
+playback</code></pre>
+<p>Then <code>updateNSView</code> compares.</p>
+<p>Only changed values are pushed into renderer.</p>
+<p>This matters because SwiftUI may call update many times.</p>
+<p>You do not want to reload a scene or re-upload every material because some unrelated UI state changed.</p>
+<hr />
+<p><strong>main-thread UI constraints</strong></p>
+<p>AppKit and SwiftUI state/view operations generally belong on the main thread.</p>
+<p>Examples:</p>
+<pre class="text"><code>creating/changing NSView hierarchy
+mutating SwiftUI-observed UI state
+handling many AppKit events</code></pre>
+<p>GPU completion handlers, worker threads and asset loaders may run elsewhere.</p>
+<p>The rule becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>renderer thread may produce data</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>main thread consumes UI-facing result</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Why this matters with Metal completion handlers</strong></p>
+<p>Completion handler might do:</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="va">completedFrameCapture_</span> <span class="op">=</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>    capture<span class="op">;</span></span></code></pre></div>
+<p>under mutex.</p>
+<p>Good.</p>
+<p>It should not directly do:</p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode swift"><code class="sourceCode swift"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>selectedImage <span class="op">=</span> capture</span></code></pre></div>
+<p>or manipulate <code>NSView</code> from unknown callback thread.</p>
+<p>Instead:</p>
+<pre class="text"><code>GPU callback
+    ↓
+thread-safe result queue/state
+    ↓
+DispatchQueue.main
+    ↓
+UI update</code></pre>
+<hr />
+<p><strong>Aether Swift code already uses main dispatch for deferred state updates</strong></p>
+<p>Examples in <code>updateNSView</code>:</p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode swift"><code class="sourceCode swift"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>DispatchQueue<span class="op">.</span>main<span class="op">.</span><span class="cf">async</span> <span class="op">{</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>    selectedMeshTransform <span class="op">=</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>        snapshot</span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>and similar material/selection updates.</p>
+<p>This avoids mutating SwiftUI binding synchronously in problematic update cycles and keeps UI mutation on main.</p>
+<hr />
+<p><strong>cross-thread renderer callbacks</strong></p>
+<p>Once renderer becomes asynchronous, events can originate from:</p>
+<pre class="text"><code>GPU completion
+asset loader
+simulation
+network
+background reconstruction</code></pre>
+<p>while UI exists on main thread.</p>
+<p>A callback boundary therefore needs an explicit threading contract.</p>
+<p>For every callback answer:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>What thread invokes it?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Who owns captured data?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>May receiver outlive sender?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Must callback be marshalled to main thread?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Bad cross-thread callback</strong></p>
+<p>Imagine:</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>commandBuffer<span class="op">-&gt;</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>    addCompletedHandler<span class="op">(</span></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>        <span class="op">[</span><span class="kw">this</span><span class="op">]</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>            uiView<span class="op">-&gt;</span></span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>                setProgress<span class="op">(</span><span class="fl">1.0</span><span class="op">);</span></span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">});</span></span></code></pre></div>
+<p>Problems:</p>
+<p><code>uiView</code> may have been destroyed.</p>
+<p>Callback thread may not be main.</p>
+<p><code>this</code> may have died.</p>
+<p>UI state may race.</p>
+<p>This is several bugs hidden in five lines.</p>
+<hr />
+<p><strong>Safer architecture</strong></p>
+<p>GPU callback produces plain data:</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> CompletedFrameInfo</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> Frame<span class="op">;</span></span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> GpuMs<span class="op">;</span></span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then places it into thread-safe storage.</p>
+<p>Main/UI side polls or receives main-thread dispatch.</p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb52"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>commandBuffer<span class="op">-&gt;</span>addCompletedHandler<span class="op">(</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">[</span>weakState<span class="op">](...)</span></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span><span class="kw">auto</span> state <span class="op">=</span></span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>                weakState<span class="op">.</span>lock<span class="op">())</span></span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>            state<span class="op">-&gt;</span></span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>                PushCompleted<span class="op">(...);</span></span>
+<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">});</span></span></code></pre></div>
+<p>Then UI:</p>
+<div class="sourceCode" id="cb53"><pre class="sourceCode swift"><code class="sourceCode swift"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>DispatchQueue<span class="op">.</span>main<span class="op">.</span><span class="cf">async</span> <span class="op">{</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>    consumeResult<span class="op">()</span></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Ownership and threading are explicit.</p>
+<hr />
+<p><strong>Completion handlers and renderer destruction</strong></p>
+<p>Maveb’s renderer destructor drains its three frame-semaphore tokens.</p>
+<p>Conceptually it waits until all submitted frames have completed before destruction continues.</p>
+<p>That protects callbacks/resources referencing renderer state.</p>
+<p>This is the Metal analogue of waiting/retiring in-flight frames before Vulkan teardown.</p>
+<hr />
+<p><strong>Deferred cleanup in Maveb FrameContext</strong></p>
+<p>Each frame context contains:</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="va">deferredCleanup_</span></span></code></pre></div>
+<p>and:</p>
+<div class="sourceCode" id="cb55"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>deferUntilReusable<span class="op">(...)</span></span></code></pre></div>
+<p>At:</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>beginFrame<span class="op">()</span></span></code></pre></div>
+<p>it runs those cleanup functions.</p>
+<p>Because frame slot is only reusable after semaphore completion discipline, this provides a simple frame-retirement mechanism.</p>
+<p>Same idea as Vulkan deferred destruction.</p>
+<p>Different synchronization primitive.</p>
+<hr />
+<p><strong>This is the recurring cross-API pattern</strong></p>
+<p>Vulkan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>F</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Metal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">→</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>The high-level engine concept is identical:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>destroy only when last GPU use has completed</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is precisely why the upcoming multi-backend abstraction must model <strong>intent</strong>, not API object names.</p>
+<hr />
+<p><strong>Kairo Metal versus Maveb Metal</strong></p>
+<p>The two backends represent two maturity points.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Kairo Metal</th>
+<th>Maveb Metal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Device</td>
+<td>default Metal device</td>
+<td>supplied/retained device</td>
+</tr>
+<tr>
+<td>Queue</td>
+<td>one command queue</td>
+<td>one labelled primary queue</td>
+</tr>
+<tr>
+<td>Shader library</td>
+<td>runtime source compilation</td>
+<td>offline <code>.metallib</code></td>
+</tr>
+<tr>
+<td>Frame command buffer</td>
+<td>one/frame</td>
+<td>one complex command buffer/frame</td>
+</tr>
+<tr>
+<td>Frames in flight</td>
+<td>effectively simple/last-command model</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Frame limiting</td>
+<td>waits where needed</td>
+<td>semaphore count 3</td>
+</tr>
+<tr>
+<td>Uploads</td>
+<td>direct/shared buffers</td>
+<td>per-frame 8 MiB shared arena</td>
+</tr>
+<tr>
+<td>Readback</td>
+<td>direct/shared + waits for simple operations</td>
+<td>256 KiB frame readback + async capture</td>
+</tr>
+<tr>
+<td>Render targets</td>
+<td>shared in simple backend</td>
+<td>private</td>
+</tr>
+<tr>
+<td>Transient heap</td>
+<td>none in simple backend</td>
+<td>64 MiB private/frame</td>
+</tr>
+<tr>
+<td>Hazard mode</td>
+<td>default</td>
+<td>tracked transient heap</td>
+</tr>
+<tr>
+<td>Presentation</td>
+<td>direct <code>CAMetalLayer</code></td>
+<td><code>MTKView</code> drawable</td>
+</tr>
+<tr>
+<td>Capture</td>
+<td>waits on <code>LastCommand</code></td>
+<td>asynchronous blit + completion callback</td>
+</tr>
+<tr>
+<td>GPU timing</td>
+<td>not central</td>
+<td><code>GPUStartTime/GPUEndTime</code></td>
+</tr>
+<tr>
+<td>Labels</td>
+<td>limited</td>
+<td>extensive</td>
+</tr>
+<tr>
+<td>UI bridge</td>
+<td>renderer-neutral runtime</td>
+<td>Objective-C++ + SwiftUI editor bridge</td>
+</tr>
+</tbody>
+</table>
+<p>Neither codebase is “wrong.”</p>
+<p>Kairo prioritizes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>small comprehensible backend</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>while Maveb prioritizes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>overlapped multi-pass production behavior</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>A more production-oriented Kairo Metal evolution</strong></p>
+<p>The most useful progression would be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>single LastCommand wait</mtext>
+</math>
+<p>to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>FrameContext[2 or 3]</mtext>
+  <mo>.</mo>
+</math>
+<p>Each frame context gets:</p>
+<div class="sourceCode" id="cb57"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> MetalFrameContext</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>    id<span class="op">&lt;</span>MTLBuffer<span class="op">&gt;</span> Upload<span class="op">;</span></span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> UploadCursor<span class="op">;</span></span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span></span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>function<span class="op">&lt;</span><span class="dt">void</span><span class="op">()&gt;&gt;</span></span>
+<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>        DeferredCleanup<span class="op">;</span></span>
+<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>At frame begin, wait only if rotating into a still-busy slot.</p>
+<p>Then encode/commit.</p>
+<p>Completion handler releases slot.</p>
+<p>Exactly the model Maveb proves works.</p>
+<hr />
+<p><strong>Kairo static meshes should eventually become private</strong></p>
+<p>Current Metal mesh buffers are created with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>For static geometry:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mi>w</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>s</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>l</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<p>Better architecture:</p>
+<pre class="text"><code>shared upload buffer
+    ↓
+blit
+    ↓
+private vertex/index buffer</code></pre>
+<p>Whether this materially improves Apple-silicon performance should be benchmarked, but it is the more general GPU-local architecture and mirrors Maveb’s static upload path.</p>
+<hr />
+<p><strong>Maveb’s upload path demonstrates this</strong></p>
+<p>Its static mesh upload creates destination and staging buffers.</p>
+<p>Then:</p>
+<div class="sourceCode" id="cb59"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>blit<span class="op">-&gt;</span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>    copyFromBuffer<span class="op">(</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>        staging<span class="op">,</span></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>        destination<span class="op">);</span></span></code></pre></div>
+<p>Completion handler keeps staging object alive until copy finishes.</p>
+<p>This is a subtle but important lifetime technique.</p>
+<p>The lambda captures <code>staging</code>.</p>
+<p>Therefore staging cannot be destroyed before GPU finishes copy.</p>
+<p>Very elegant.</p>
+<hr />
+<p><strong>Command-buffer retention of resources</strong></p>
+<p>Metal generally retains resources referenced by encoded commands sufficiently for execution semantics, but your wrapper/application ownership still matters around buffers not directly retained in the same way, indirect pointers, callbacks and CPU-side state.</p>
+<p>Do not treat command-buffer retention as an excuse to forget logical resource lifetime.</p>
+<p>The engine still needs a coherent ownership model.</p>
+<hr />
+<p><strong>Apple GPU thinking versus desktop immediate thinking</strong></p>
+<p>The biggest practical mental shift is this:</p>
+<p>Desktop-style intuition often optimizes around:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>VRAM bandwidth + large caches + immediate framebuffer writes</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Apple GPU intuition should additionally prioritize:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>tile locality</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>attachment lifetime</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>load/store elimination</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>unified-memory traffic</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>render-pass grouping</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This does not mean every Apple GPU is identical.</p>
+<p>It means the tile-based architecture strongly affects good rendering structure.</p>
+<hr />
+<p><strong>Why unnecessary pass splitting can hurt</strong></p>
+<p>Imagine:</p>
+<pre class="text"><code>Pass A
+    render color
+    STORE to memory
+
+Pass B
+    LOAD color
+    modify
+    STORE
+
+Pass C
+    LOAD
+    modify
+    STORE</code></pre>
+<p>Each pass boundary can force memory traffic.</p>
+<p>If operations could legally remain in one rendering scope or use tile-local mechanisms, you may save enormous bandwidth.</p>
+<p>This is one motivation behind render-pass/subpass/tile-aware graph optimization.</p>
+<hr />
+<p><strong>Why over-fusing can also hurt</strong></p>
+<p>One giant pass can:</p>
+<ul>
+<li>require too many attachments,</li>
+<li>increase shader complexity,</li>
+<li>force resources to remain live,</li>
+<li>prevent async compute,</li>
+<li>reduce modularity.</li>
+</ul>
+<p>Again, the objective is not:</p>
+<blockquote>
+<p>fewer passes at any cost.</p>
+</blockquote>
+<p>It is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>minimize unnecessary external memory traffic while preserving useful execution structure</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Attachment lifetime equation</strong></p>
+<p>For attachment <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+</math>:</p>
+<p>If previous content is irrelevant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>using Clear/DontCare semantics.</p>
+<p>If result never needed after pass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Ideal transient attachment:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>L</mi>
+          <mi>o</mi>
+          <mi>a</mi>
+          <mi>d</mi>
+          <mo>=</mo>
+          <mi>D</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>C</mi>
+          <mi>a</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <mi>C</mi>
+          <mi>l</mi>
+          <mi>e</mi>
+          <mi>a</mi>
+          <mi>r</mi>
+          <mo>,</mo>
+          <mstyle scriptlevel="0">
+            <mspace width="1em"></mspace>
+          </mstyle>
+          <mi>S</mi>
+          <mi>t</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mo>=</mo>
+          <mi>D</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>C</mi>
+          <mi>a</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and memoryless where supported.</p>
+<p>That resource can conceptually live entirely inside tile execution.</p>
+<hr />
+<p><strong>Why temporal buffers cannot be transient</strong></p>
+<p>TAA history:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>H</mi>
+    <mi>t</mi>
+  </msub>
+</math>
+<p>must be consumed by frame:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>+</mo>
+  <mn>1.</mn>
+</math>
+<p>Therefore its lifetime crosses frame boundary.</p>
+<p>It must:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+</math>
+<p>and remain allocated.</p>
+<p>This is the opposite of memoryless.</p>
+<p>The renderer must distinguish:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>transient frame-local resource</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>history/persistent resource</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<section id="id_01-foundations-i-ch016-first-use-completion-lifetime-analysis-for-a-frame-local-attachment-and-a-history-image" class="level5">
+<h5>First-use completion — lifetime analysis for a frame-local attachment and a history image</h5>
+<p>Here is the actual render-graph reasoning now, while transient and persistent storage first affect the result. Consider four operations: <strong>geometry</strong> writes a screen-space normal attachment <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>N</mi>
+    <mi>k</mi>
+  </msub>
+</math>; <strong>lighting</strong> reads <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>N</mi>
+    <mi>k</mi>
+  </msub>
+</math> and writes a linear HDR image <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>C</mi>
+    <mi>k</mi>
+  </msub>
+</math>; <strong>temporal accumulation</strong> reads <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>C</mi>
+    <mi>k</mi>
+  </msub>
+</math> and the preceding history <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>H</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+</math> and writes new history <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>H</mi>
+    <mi>k</mi>
+  </msub>
+</math>; <strong>presentation</strong> reads <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>H</mi>
+    <mi>k</mi>
+  </msub>
+</math>. These are logical resource <em>versions</em>. The graph edges are </p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>geometry</mtext>
+  <mo accent="false" stretchy="false">→</mo>
+  <mtext>lighting</mtext>
+  <mo accent="false" stretchy="false">→</mo>
+  <mtext>temporal</mtext>
+  <mo accent="false" stretchy="false">→</mo>
+  <mtext>present</mtext>
+</math>
+<p> with another edge <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>H</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo accent="false" stretchy="false">→</mo>
+  <mtext>temporal</mtext>
+</math> arriving from the preceding frame. An edge describes both the required execution ordering and the visibility of the producer’s writes to the consumer, using the exact API’s synchronization mechanisms. A memory allocation remaining alive is not proof that this happens-before relationship exists.</p>
+<p>The graph can find a resource’s logical <strong>live interval</strong> by recording the first writing pass and the last pass that must read it. The normal attachment <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>N</mi>
+    <mi>k</mi>
+  </msub>
+</math> is needed from geometry through lighting but does not have to survive the frame when no later pass samples it. In a compatible tile-local rendering scope, and only where the platform/API supports the requested attachment usage, that can permit clear/dont-care load/store decisions or memoryless storage. The HDR image <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>C</mi>
+    <mi>k</mi>
+  </msub>
+</math> must survive until the temporal pass reads it, so the compiler cannot discard it immediately after lighting. The history <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>H</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+</math> must survive from its previous producer through <em>this</em> temporal read, and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>H</mi>
+    <mi>k</mi>
+  </msub>
+</math> must survive until the following frame’s temporal pass. Memoryless storage cannot fulfill that cross-frame read contract.</p>
+<p>For an ordinary RGBA16F history, each pixel stores four 16-bit channels: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>4</mn>
+  <mo>×</mo>
+  <mn>2</mn>
+  <mo>=</mo>
+  <mn>8</mn>
+</math> bytes. At <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1920</mn>
+  <mo>×</mo>
+  <mn>1080</mn>
+</math> pixels one history uses <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1920</mn>
+  <mo stretchy="false">(</mo>
+  <mn>1080</mn>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <mn>8</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>16,588,800</mn>
+</math> bytes, about <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>15.82</mn>
+</math> MiB, before alignment, tiling or additional metadata. Two such images alone account for about <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>31.64</mn>
+</math> MiB. The word <strong>persistent</strong> does not say they must always live in dedicated physical allocations, but it says that their contents cannot be thrown away while future work still needs them.</p>
+<p>Two history versions are also not automatically sufficient for safe frames-in-flight. Frame <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math> can read image A and write B. Frame <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+</math> may read B and intend to write A, but A can be recycled only after the last asynchronous read that uses A has completed. A ring of physical images plus completion-aware retirement may be necessary. The distinction is between a <strong>logical version</strong> (the meaning of a frame’s history) and a <strong>physical allocation</strong> (memory that can carry one version when no overlapping use forbids it). Conversely, allocating a separate texture for every named graph version may waste large amounts of memory if two transient versions have provably disjoint lifetimes and compatible usage.</p>
+<pre class="text"><code>geometry:
+    WRITE N[k]                   # valid normal/color encoding, declared format
+lighting:
+    READ  N[k]                   # require producer-write visibility
+    WRITE C[k]
+temporal:
+    READ  C[k]
+    READ  H[k-1]                 # prior-frame content, not memoryless
+    WRITE H[k]                   # new version, not an alias of a live input
+present:
+    READ H[k]
+
+# The compiler can alias physical storage only if lifetime/schedule
+# non-overlap, format/usage restrictions and synchronization all hold.</code></pre>
+<p>One important qualification is that a linear list of passes does <strong>not</strong> automatically establish safe aliasing. With asynchronous compute or multiple command queues, two apparently non-overlapping entries in a textual schedule may actually execute concurrently. Aliasing is safe only after the compiler proves no overlapping physical access in the <em>scheduled</em> dependency graph and establishes the required reuse barrier or completion. If a pass writes a resource and the next reads it, aliasing does not fix a missing visibility edge; if a pass reads a resource after its allocation has been reused, a correct barrier elsewhere does not restore the lost contents.</p>
+<p>Temporal <strong>validity</strong> adds a second, semantic condition. Keeping <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>H</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+</math> allocated and synchronized does not make its pixels meaningful after a camera teleport, resolution change, projection-convention change, material edit, estimator change or discontinuity in object identity. A history epoch should identify which camera/scene state produced the previous estimate; reset or deliberately reproject according to documented validity rules. A renderer that displays a stable but ghosted image can have perfectly correct GPU lifetime synchronization and still have incorrect history semantics.</p>
+<p>At first use, therefore, a render-graph resource requires five answers: <strong>who creates this version, who last consumes it, which operation makes writes visible, what completion permits storage reuse, and what semantic state makes its contents valid?</strong> A test should intentionally delay one GPU submission and verify no buffer is recycled early; another should change the camera and verify history invalidation. Those are different tests. This is the complete reasoning needed here, not a placeholder for a later render-graph pass.</p>
+<hr />
+<p><strong>Metal resource synchronization mental model</strong></p>
+<p>You can now think in four levels.</p>
+<p>Same encoder:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>use barriers where shader memory dependency requires</mtext>
+  <mo>.</mo>
+</math>
+<p>Different encoders, tracked resource:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Metal hazard tracking commonly orders required use</mtext>
+  <mo>.</mo>
+</math>
+<p>Different encoders, untracked resource:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>explicit fence/barrier semantics may be necessary</mtext>
+  <mo>.</mo>
+</math>
+<p>Different queues/command streams:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>events/shared events encode inter-stream dependency</mtext>
+  <mo>.</mo>
+</math>
+<p>This hierarchy prevents treating all Metal synchronization as one thing.</p>
+<hr />
+<p><strong>Metal/Vulkan naming trap</strong></p>
+<p>Never build a cross-platform abstraction by matching names:</p>
+<pre class="text"><code>VkFence ↔ MTLFence</code></pre>
+<p>because semantics are different.</p>
+<p>Instead map concepts:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Engine concept</th>
+<th>Vulkan</th>
+<th>Metal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU knows GPU submission completed</td>
+<td><code>VkFence</code> / timeline value</td>
+<td>completion handler / shared event value</td>
+</tr>
+<tr>
+<td>GPU queue-to-queue timeline</td>
+<td>timeline semaphore</td>
+<td>shared event</td>
+</tr>
+<tr>
+<td>encoder-local GPU dependency</td>
+<td>barrier</td>
+<td>memory barrier</td>
+</tr>
+<tr>
+<td>resource dependency between phases</td>
+<td>pipeline/image/buffer barrier</td>
+<td>tracked hazard / fence / event depending scope</td>
+</tr>
+<tr>
+<td>presentation image</td>
+<td>swapchain image</td>
+<td>drawable texture</td>
+</tr>
+</tbody>
+</table>
+<p>This is the beginning of correct multi-backend thinking.</p>
+<p>Pass 14 will formalize it.</p>
+<hr />
+<p><strong>ARC versus GPU lifetime</strong></p>
+<p>ARC answers:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Is the Objective-C object alive?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>It does not answer:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Has GPU stopped using the object&#39;s underlying resource?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Those are different questions.</p>
+<p>Likewise C++ <code>unique_ptr</code> answers CPU ownership.</p>
+<p>GPU completion remains another dimension.</p>
+<p>Same lesson as Vulkan RAII.</p>
+<hr />
+<p><strong>A robust bridge lifetime diagram</strong></p>
+<pre class="text"><code>SwiftUI AetherViewport
+       ↓ owns
+AetherViewportView
+       ↓ owns
+AetherViewportDelegate
+       ↓ C++ unique_ptr owns
+aether::metal::Renderer
+       ↓ MetalPtr owns
+MTL resources
+
+GPU command buffer
+       ↓ temporarily uses
+MTL resources
+
+completion
+       ↓
+frame slot becomes reusable</code></pre>
+<p>Every arrow has a different ownership/synchronization meaning.</p>
+<p>Understanding those arrows is much more valuable than memorizing ARC syntax.</p>
+<hr />
+<p><strong>Swift closure lifetime</strong></p>
+<p>A view property such as:</p>
+<div class="sourceCode" id="cb64"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>@property<span class="op">(</span>copy<span class="op">)</span></span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="op">(^</span>onEntityPicked<span class="op">)(...);</span></span></code></pre></div>
+<p>owns a copied block.</p>
+<p>Swift closure assigned to it can capture values/objects.</p>
+<p>If it strongly captures the same object that strongly owns the view, you can form a retain cycle.</p>
+<p>Therefore class-heavy bridges often use:</p>
+<div class="sourceCode" id="cb65"><pre class="sourceCode swift"><code class="sourceCode swift"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="op">[</span><span class="kw">weak</span> <span class="kw">self</span><span class="op">]</span></span></code></pre></div>
+<p>when appropriate.</p>
+<p>In Aether’s current <code>NSViewRepresentable</code> closures, the bindings/value context differs from a typical view-controller retain cycle, but the general rule remains:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>inspect closure capture graph explicitly</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Thread ownership is part of API design</strong></p>
+<p>Instead of documentation:</p>
+<blockquote>
+<p>callback occurs later.</p>
+</blockquote>
+<p>Write:</p>
+<blockquote>
+<p>callback may execute on a Metal completion thread; callback must be nonblocking and may not access AppKit. Results are marshalled to main thread.</p>
+</blockquote>
+<p>That is a real API contract.</p>
+<p>Similarly:</p>
+<blockquote>
+<p><code>draw()</code> is invoked by MTKView frame lifecycle.</p>
+</blockquote>
+<blockquote>
+<p><code>setCameraState()</code> must be called from UI/main integration layer.</p>
+</blockquote>
+<p>Threading assumptions should be first-class.</p>
+<hr />
+<p><strong>Avoid holding locks in GPU completion handlers</strong></p>
+<p>Completion handlers should be quick.</p>
+<p>A callback that blocks on:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>v</mi>
+  <mi>y</mi>
+  <mtext> </mtext>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>k</mi>
+  <mtext> </mtext>
+  <mi>I</mi>
+  <mi>O</mi>
+</math>
+<p>or a contended mutex can delay callback processing.</p>
+<p>Good handler:</p>
+<pre class="text"><code>copy minimal metadata
+move finished payload
+atomic counter
+signal semaphore
+enqueue lightweight task</code></pre>
+<p>Then larger work occurs elsewhere.</p>
+<p>Maveb’s handler mostly follows this pattern.</p>
+<hr />
+<p><strong>Synchronous picking caveat in Maveb</strong></p>
+<p>Some current picking paths create a command buffer, blit one pixel and call:</p>
+<div class="sourceCode" id="cb67"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>waitUntilCompleted<span class="op">();</span></span></code></pre></div>
+<p>This is simple and correct.</p>
+<p>But it stalls caller until GPU finishes.</p>
+<p>For occasional editor clicks that may be acceptable.</p>
+<p>For continuous hover picking at 60–120 Hz, convert to asynchronous frame readback just like Kairo’s Vulkan pick path.</p>
+<p>This is exactly the kind of design decision that depends on workload frequency.</p>
+<hr />
+<p><strong>Kairo Metal’s <code>WaitForLastCommand()</code></strong></p>
+<p>Kairo’s destruction/pick/capture path waits for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>simple and correct</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>but it serializes.</p>
+<p>Its next maturity step is not “remove the wait.”</p>
+<p>It is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>replace global wait with explicit frame/resource retirement</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Never remove synchronization without adding an ownership model.</p>
+<hr />
+<p><strong>The three Metal memory questions</strong></p>
+<p>For every resource ask:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Does CPU need direct access?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If yes, Shared/Managed may be appropriate.</p>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Does data need survive the render pass/frame?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If no, memoryless/transient strategy may apply.</p>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Who synchronizes hazards?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Tracked mode or explicit synchronization.</p>
+<p>These three questions often determine the correct Metal resource architecture.</p>
+<hr />
+<p><strong>The three encoder questions</strong></p>
+<p>Before adding an encoder ask:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Is this rasterization, compute, or transfer?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>What resources does it read/write?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Can its work remain on-chip or does it force resource store/load?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This prevents accidental pass fragmentation.</p>
+<hr />
+<p><strong>Practical Maveb optimization candidates revealed by M140</strong></p>
+<p>Your current architecture already does many strong things:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mtext> </mtext>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <mtext> </mtext>
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mtext> </mtext>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mtext> </mtext>
+  <mi>f</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mtext> </mtext>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>−</mo>
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mtext> </mtext>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>b</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mtext> </mtext>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mtext> </mtext>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>z</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>d</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>b</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>y</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mtext> </mtext>
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>The next questions are therefore not basic Metal correctness.</p>
+<p>They are more advanced:</p>
+<p>Can some strictly transient attachments become memoryless where supported?</p>
+<p>Can graph lifetime analysis allocate actual temporary resources from the per-frame heap and alias them?</p>
+<p>Can direct bindings become argument-buffer/resource-table architecture where material scale demands it?</p>
+<p>Can synchronous pick commands become asynchronous if interaction frequency rises?</p>
+<p>Can detailed counter sampling show whether Gaussian work is compute-, bandwidth- or tile-pressure-limited?</p>
+<p>Those are mature optimization questions.</p>
+<hr />
+<p><strong>PASS 13 RECONSTRUCTION TABLE</strong></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Reconstruction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MTLDevice</code></td>
+<td>GPU/capability/resource factory</td>
+</tr>
+<tr>
+<td><code>MTLCommandQueue</code></td>
+<td>ordered command-buffer submission stream</td>
+</tr>
+<tr>
+<td><code>MTLCommandBuffer</code></td>
+<td>one asynchronously executed GPU work package</td>
+</tr>
+<tr>
+<td>Render encoder</td>
+<td>rasterization commands</td>
+</tr>
+<tr>
+<td>Compute encoder</td>
+<td>general thread-grid kernels</td>
+</tr>
+<tr>
+<td>Blit encoder</td>
+<td>copies/mip generation/transfer work</td>
+</tr>
+<tr>
+<td><code>MTLBuffer</code></td>
+<td>linear byte resource</td>
+</tr>
+<tr>
+<td><code>MTLTexture</code></td>
+<td>structured image resource</td>
+</tr>
+<tr>
+<td><code>MTLSamplerState</code></td>
+<td>filtering/addressing/comparison</td>
+</tr>
+<tr>
+<td>Render pipeline</td>
+<td>compiled vertex+fragment and attachment-format/blend contract</td>
+</tr>
+<tr>
+<td>Compute pipeline</td>
+<td>compiled <code>kernel</code> state + execution properties</td>
+</tr>
+<tr>
+<td>Metal library</td>
+<td>container of compiled/runtime MSL functions</td>
+</tr>
+<tr>
+<td>MSL vertex</td>
+<td><code>vertex</code> function producing <code>[[position]]</code></td>
+</tr>
+<tr>
+<td>MSL fragment</td>
+<td><code>fragment</code> function consuming interpolants/resources</td>
+</tr>
+<tr>
+<td>MSL compute</td>
+<td><code>kernel</code> over thread grid</td>
+</tr>
+<tr>
+<td>Shared</td>
+<td>CPU+GPU accessible</td>
+</tr>
+<tr>
+<td>Private</td>
+<td>GPU-only optimized resource</td>
+</tr>
+<tr>
+<td>Managed</td>
+<td>CPU/GPU copies synchronized on applicable macOS configurations</td>
+</tr>
+<tr>
+<td>Memoryless</td>
+<td>transient tile-only attachment where supported</td>
+</tr>
+<tr>
+<td>TBDR</td>
+<td>bin geometry, rasterize per tile in on-chip memory</td>
+</tr>
+<tr>
+<td>Load action</td>
+<td>how attachment begins</td>
+</tr>
+<tr>
+<td>Store action</td>
+<td>whether tile result survives pass</td>
+</tr>
+<tr>
+<td>Drawable</td>
+<td>presentable texture instance</td>
+</tr>
+<tr>
+<td><code>CAMetalLayer</code></td>
+<td>drawable provider / Core Animation presentation layer</td>
+</tr>
+<tr>
+<td><code>presentDrawable</code></td>
+<td>schedule presentation through command buffer</td>
+</tr>
+<tr>
+<td>Completion handler</td>
+<td>asynchronous post-GPU callback</td>
+</tr>
+<tr>
+<td>Frame semaphore</td>
+<td>cap frames in flight</td>
+</tr>
+<tr>
+<td>Upload arena</td>
+<td>one shared per-frame buffer + aligned slices</td>
+</tr>
+<tr>
+<td>Argument buffer</td>
+<td>table of indirectly bound resources</td>
+</tr>
+<tr>
+<td>Heap</td>
+<td>pooled resource memory</td>
+</tr>
+<tr>
+<td>Hazard tracking</td>
+<td>automatic dependency tracking</td>
+</tr>
+<tr>
+<td>Untracked resource</td>
+<td>application owns synchronization</td>
+</tr>
+<tr>
+<td>Memory barrier</td>
+<td>shader/resource ordering within relevant execution scope</td>
+</tr>
+<tr>
+<td><code>MTLFence</code></td>
+<td>GPU encoder dependency primitive</td>
+</tr>
+<tr>
+<td>Shared event</td>
+<td>timeline-style inter-command/queue/CPU synchronization</td>
+</tr>
+<tr>
+<td>GPU counters</td>
+<td>hardware/timestamp measurements</td>
+</tr>
+<tr>
+<td>Xcode capture</td>
+<td>GPU workload inspection</td>
+</tr>
+<tr>
+<td>Labels</td>
+<td>semantic names for GPU tools</td>
+</tr>
+<tr>
+<td>ARC</td>
+<td>Objective-C reference-count automation</td>
+</tr>
+<tr>
+<td><code>.mm</code></td>
+<td>Objective-C++ translation unit</td>
+</tr>
+<tr>
+<td>C++ bridge ownership</td>
+<td>RAII and ARC coexist</td>
+</tr>
+<tr>
+<td>Error bridge</td>
+<td>C++ Result → NSError/BOOL/nil/etc.</td>
+</tr>
+<tr>
+<td>SwiftUI role</td>
+<td>declarative application/editor state</td>
+</tr>
+<tr>
+<td>Renderer role</td>
+<td>GPU resources/execution</td>
+</tr>
+<tr>
+<td>Main-thread rule</td>
+<td>UI work stays on UI thread</td>
+</tr>
+<tr>
+<td>Renderer callback rule</td>
+<td>thread and ownership contract must be explicit</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Blank-page mastery gate</strong></p>
+<p>Reconstruct a Metal frame from nothing.</p>
+<p>Start with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+</math>
+<p>then create:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>Q</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>At frame <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math>, acquire one frame context:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>F</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>N</mi>
+      <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+      <mn>3</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Explain why the frame semaphore must guarantee that <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math>’s previous GPU use has completed before resetting:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>C</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Then create:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>B</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>Encode a shadow render encoder.</p>
+<p>End it.</p>
+<p>Encode a compute encoder.</p>
+<p>End it.</p>
+<p>Encode the scene render encoder.</p>
+<p>End it.</p>
+<p>Encode TAA/bloom.</p>
+<p>Acquire drawable.</p>
+<p>Encode final presentation pass.</p>
+<p>Schedule:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>D</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>w</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Add completion handler.</p>
+<p>Commit.</p>
+<p>Then explain why the CPU can immediately begin preparing a future frame without waiting for current GPU completion.</p>
+<p>From there, derive why this resource:</p>
+<pre class="text"><code>CPU updates every frame
+small
+GPU reads</code></pre>
+<p>should usually be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Why this:</p>
+<pre class="text"><code>large HDR render target
+CPU never directly reads it</code></pre>
+<p>should usually be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Why this:</p>
+<pre class="text"><code>depth used only during one tile-local pass
+never sampled later</code></pre>
+<p>can potentially be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Then explain exactly why:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>C</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+</math>
+<p>can save external memory bandwidth relative to <code>Load</code>, and why:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>D</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+</math>
+<p>can eliminate writeback.</p>
+<p>If you cannot connect load/store actions to Apple’s tile memory, you do not yet understand Metal performance.</p>
+<p>Then compare:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>F</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+</math>
+<p>against:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>F</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Explain why mapping them by name would be wrong.</p>
+<p>Then compare:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>E</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>T</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>S</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then reconstruct Maveb’s <code>FrameContext</code>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mtext> MiB Shared Upload</mtext>
+  <mo>+</mo>
+  <mn>256</mn>
+  <mtext> KiB Shared Readback</mtext>
+  <mo>+</mo>
+  <mn>64</mn>
+  <mtext> MiB Private Tracked Heap</mtext>
+  <mo>.</mo>
+</math>
+<p>Explain why:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mo>+</mo>
+  <mi>a</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mi mathvariant="normal">&amp;</mi>
+  <mo>∼</mo>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>requires <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> to be a power of two.</p>
+<p>Then explain why:</p>
+<div class="sourceCode" id="cb71"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>frame<span class="op">.</span>beginFrame<span class="op">();</span></span></code></pre></div>
+<p>is safe only after that frame slot has retired.</p>
+<p>Then reconstruct the ownership boundary:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics>
+  <mtable displaystyle="true" columnspacing="1em" rowspacing="3pt">
+    <mtr>
+      <mtd>
+        <mi>S</mi>
+        <mi>w</mi>
+        <mi>i</mi>
+        <mi>f</mi>
+        <mi>t</mi>
+        <mi>U</mi>
+        <mi>I</mi>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>A</mi>
+        <mi>e</mi>
+        <mi>t</mi>
+        <mi>h</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mi>V</mi>
+        <mi>i</mi>
+        <mi>e</mi>
+        <mi>w</mi>
+        <mi>p</mi>
+        <mi>o</mi>
+        <mi>r</mi>
+        <mi>t</mi>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>A</mi>
+        <mi>e</mi>
+        <mi>t</mi>
+        <mi>h</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mi>V</mi>
+        <mi>i</mi>
+        <mi>e</mi>
+        <mi>w</mi>
+        <mi>p</mi>
+        <mi>o</mi>
+        <mi>r</mi>
+        <mi>t</mi>
+        <mi>V</mi>
+        <mi>i</mi>
+        <mi>e</mi>
+        <mi>w</mi>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>A</mi>
+        <mi>e</mi>
+        <mi>t</mi>
+        <mi>h</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mi>V</mi>
+        <mi>i</mi>
+        <mi>e</mi>
+        <mi>w</mi>
+        <mi>p</mi>
+        <mi>o</mi>
+        <mi>r</mi>
+        <mi>t</mi>
+        <mi>D</mi>
+        <mi>e</mi>
+        <mi>l</mi>
+        <mi>e</mi>
+        <mi>g</mi>
+        <mi>a</mi>
+        <mi>t</mi>
+        <mi>e</mi>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>s</mi>
+        <mi>t</mi>
+        <mi>d</mi>
+        <mo>::</mo>
+        <mi>u</mi>
+        <mi>n</mi>
+        <mi>i</mi>
+        <mi>q</mi>
+        <mi>u</mi>
+        <msub>
+          <mi>e</mi>
+          <mi>p</mi>
+        </msub>
+        <mi>t</mi>
+        <mi>r</mi>
+        <mo>&lt;</mo>
+        <mi>R</mi>
+        <mi>e</mi>
+        <mi>n</mi>
+        <mi>d</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mo stretchy="false">&gt;→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>M</mi>
+        <mi>e</mi>
+        <mi>t</mi>
+        <mi>a</mi>
+        <mi>l</mi>
+        <mi>P</mi>
+        <mi>t</mi>
+        <mi>r</mi>
+        <mo>&lt;</mo>
+        <mi>M</mi>
+        <mi>T</mi>
+        <mi>L</mi>
+        <mi>R</mi>
+        <mi>e</mi>
+        <mi>s</mi>
+        <mi>o</mi>
+        <mi>u</mi>
+        <mi>r</mi>
+        <mi>c</mi>
+        <mi>e</mi>
+        <mo>&gt;</mo>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+<annotation encoding="application/x-tex">
+SwiftUI
+\rightarrow
+AetherViewport
+\rightarrow
+AetherViewportView
+\rightarrow
+AetherViewportDelegate
+\rightarrow
+std::unique_ptr&lt;Renderer&gt;
+\rightarrow
+MetalPtr&lt;MTLResource&gt;.
+</annotation></semantics></math>
+<p>Explain where ARC is responsible.</p>
+<p>Explain where C++ RAII is responsible.</p>
+<p>Explain why neither one by itself proves GPU completion.</p>
+<p>Then explain why this bridge cast:</p>
+<div class="sourceCode" id="cb72"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="op">(</span>__bridge <span class="dt">void</span><span class="op">*)</span>device</span></code></pre></div>
+<p>does not transfer ownership, and why the persistent C++ renderer must retain the device if it stores it.</p>
+<p>Then explain why a Metal completion handler must not blindly mutate SwiftUI state.</p>
+<p>Correct chain is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mtext> </mtext>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo stretchy="false">→</mo>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mtext>-</mtext>
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>t</mi>
+  <mo stretchy="false">→</mo>
+  <mi>D</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>Q</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mo stretchy="false">→</mo>
+  <mi>U</mi>
+  <mi>I</mi>
+  <mo>.</mo>
+</math>
+<p>Finally compare your two implementations.</p>
+<p>Kairo Metal currently chooses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>shared resources + simple last-command waiting</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for clarity.</p>
+<p>Maveb chooses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>private GPU resources + triple buffering + per-frame arenas + async completion</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for throughput.</p>
+<p>The difference is not API knowledge.</p>
+<p>It is <strong>lifetime and scheduling architecture</strong>.</p>
+<p>Once you can see that, Metal stops looking like a collection of Objective-C calls and becomes a coherent execution machine:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>resources</mtext>
+          <mo>+</mo>
+          <mtext>encoder phases</mtext>
+          <mo>+</mo>
+          <mtext>tile locality</mtext>
+          <mo>+</mo>
+          <mtext>frame ownership</mtext>
+          <mo>+</mo>
+          <mtext>async lifetime</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+  <mo>.</mo>
+</math>
+<p>This is where Phase 24 becomes genuinely engine-architectural: <strong>backend-neutral handles and resource descriptions without lowest-common-denominator design; feature/capability contracts and backend escape hatches; then the complete render-graph system—resources, passes, reads/writes, dependency inference, cycle detection, topological scheduling, lifetime intervals, transient allocation and aliasing, barrier/state inference, cross-queue dependencies, pass culling, imported/history/swapchain resources and graph debugging—followed by Metal↔︎Vulkan conversion boundaries, portable mesh/material/scene extraction, private native handles, shader/reflection/layout strategy, coordinate/depth convention adaptation, backend visual agreement, and designing a multi-backend renderer that shares engine intent without pretending Vulkan and Metal are identical.</strong></p>
+<p>Graph connections: <a href="ch419.xhtml#appendix-f662b5b1773b-gpu-workgroups-and-synchronization" class="wikilink">GPU workgroups and synchronization</a> and <a href="ch332.xhtml#appendix-f2ee4d086415-prefix-scan-and-stream-compaction" class="wikilink">Prefix scan and stream compaction (Light Transport and Image Synthesis, Part 1, Reference notes: Prefix scan and stream compaction)</a>. The shared spatial/order/lifetime visual is <a href="ch548.xhtml#id_04-visual-computing-ii-ch037-figure-er1---footprint-compositing-order-and-storage-lifetime" class="wikilink">Figure ER1 (Vision, XR, and Playable Worlds, Part 1, Ch. 6)</a>.</p>
+</section>
+</section>
+<section id="id_01-foundations-i-ch016-distinguish-host-allocation-callbacks-from-device-memory-allocation" class="level4">
+<h4>Distinguish host allocation callbacks from device-memory allocation</h4>
+<p>There are two allocator conversations inside a Vulkan renderer. An application allocates and binds device memory for buffers and images. Separately, Vulkan implementation code may need host memory for its own internal bookkeeping. <code>VkAllocationCallbacks</code> lets the application supply functions for that second purpose. A host allocation callback is not a replacement for <code>vkAllocateMemory</code>, and a counter attached to that callback is not a measurement of all resident graphics memory.</p>
+<p>The allocation function receives a requested byte count and an address alignment. <strong>Size</strong> answers how many usable bytes must exist. <strong>Alignment</strong> answers which addresses are permitted for the returned pointer. A request for 37 bytes at 16-byte alignment does not require a 64-byte logical size: the returned address must be divisible by 16 and the block must contain at least 37 usable bytes. An allocator may round its internal consumption upward, but that is its storage policy. In particular, the power-of-two requirement belongs to alignment. An extracted caption claim that assigns it to the byte count must be corrected; the original subtitle text explicitly refers to alignment.</p>
+<p>Reallocation asks to change a block while retaining the shared prefix of its contents. If an old 37-byte block becomes a 70-byte block, its first 37 bytes must remain. If it shrinks to 20 bytes, its first 20 remain. A replacement strategy can allocate the new block, copy the smaller byte count, then free the old block. It must not free the old block before it knows replacement succeeded. Otherwise failure destroys the caller’s only valid copy.</p>
+<p>Three boundary cases deserve explicit branches. A null original pointer requests allocation behavior. A zero requested size requests free behavior. When a non-null original block cannot be reallocated, the application must leave the old allocation intact. The requested alignment for reallocation of an existing block must agree with the alignment originally used. Free must also accept a null pointer safely. These are callback semantics, rather than a reason to guess at an apparent documentation typo. They are defined in the <a href="https://docs.vulkan.org/spec/latest/chapters/memory.html">Khronos allocation-callback specification</a>.</p>
+<p>A useful trace begins with a 37-byte block containing an identifier and payload. A request for 70 bytes fails: the returned replacement is null, the original pointer still owns the same 37 bytes, and the caller can retry or report failure. A later successful request returns a valid aligned block with the prefix intact; only then does ownership move and the original block cease to be valid. Finally a zero-size request releases that allocation through the specified free behavior. An adapter must preserve these cases even if its underlying allocator uses a different convention.</p>
+<p>The source episode also distinguishes internal-allocation notifications from application-supplied allocation/free callbacks. A notification reports an event for accounting; it does not hand the engine a new memory block to destroy. Mixing those paths can double-free memory or make diagnostics look more complete than they are. Keep each counter’s measured scope beside its display: hooked host requests, application device allocations, driver estimates, and resident hardware usage answer different questions.</p>
+<p>This clarification resolves the uncertainty noted in <a href="ch390.xhtml#id_05-engine-i-ch014-bridge-vulkan-allocation-callbacks-to-an-engine-allocator" class="wikilink">the engine allocator walkthrough (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 14)</a>. It checks the interface contract against primary documentation; it does not certify the episode’s implementation or every allocation path in Kohi.</p>
+</section>
+<section id="id_01-foundations-i-ch016-a-generated-binding-is-still-an-api-boundary" class="level3">
+<h3>A generated binding is still an API boundary</h3>
+<p>A code generator can remove repetitive wrapper work, but it does not erase the difference between languages. The Sparky branch in this devlog experiments with exposing selected C++ engine operations through C++/CLI. C++/CLI is a C++ extension for working with the .NET managed runtime while interoperating with native C++ code. The language extension is not a language-neutral ABI. Its wrapper calls the native API and converts values at the boundary—for example, a managed string must be converted into the representation expected by the native C++ method. The episode also describes limiting exposure to public or protected operations and says that the branch is a learning project with substantial work remaining. Treat this as a prototype snapshot rather than a production generator or complete C# integration (Sparky Engine Dev Log #12, 00:29:20–00:30:03; source <code>src-a539341c398d4c55cdb1</code>, unit <code>u-486c51f3035705147bf6ac71</code>, with the branch status in <code>u-461e47c9ea075d3a77cdba67</code>).</p>
+<p>This small example exposes the actual generator contract. The native API has types, ownership rules, error behavior, and lifetimes. The target language has its own strings, arrays, exceptions, and object model. A wrapper must decide which native operations are visible, how each type is represented, who owns the converted value, how errors cross the boundary, and whether callbacks can safely outlive the wrapper object. Generating a method signature is easy compared with preserving those semantics.</p>
+<p>A reliable binding workflow starts from a narrow API surface and an explicit mapping table. For each supported native type, define its target-language form and conversion, including ownership and nullability. For each function, identify which side allocates and releases memory, how errors are reported, and whether references are borrowed or retained. Generate a small wrapper, compile it, and exercise one call in both directions where callbacks are involved. Keep generated output reproducible from the declared source and tool version; inspect representative generated code during development so an accidental mapping does not become hundreds of opaque failures.</p>
+<p>The devlog’s filesystem section offers a parallel lesson: a virtual path such as <code>/models/hero</code> decouples an asset reference from a workstation’s physical directory, while ordered mounts determine where a request resolves. Both mechanisms insert a stable vocabulary between a client and an implementation. The vocabulary is useful only when its resolution and ownership rules are explicit. The source says packed-asset support is future work, so no archive format or package performance is implied here (00:04:01–00:05:40, unit <code>u-700ebba84bd2d2a5f5cabfeb</code>, and future-plan point <code>p-000011</code>).</p>
+<p>A generator does not bypass C++ access control: protected native operations still need a valid class/access context and a deliberate exposure policy. A managed string conversion must specify encoding and temporary-buffer lifetime, not merely make the types compile. A generated signature is evidence of a proposed interface; a compiled wrapper, a successful call and a correct ownership/error path are separate verification steps.</p>
+<section id="id_01-foundations-i-ch016-choose-the-language-boundary-before-choosing-a-generator" class="level4">
+<h4>Choose the language boundary before choosing a generator</h4>
+<p><strong>Managed code</strong> runs with a runtime’s type and execution model; <strong>native code</strong> follows its compiled platform’s binary interface and its own ownership contracts. C++/CLI can combine managed and native operations in a .NET bridge. That does not make a native pointer a garbage-collected owner or define how long a borrowed buffer remains valid. Microsoft documents mixed managed/native interoperability and describes C++/CLI as a Windows bridge retained primarily for existing systems. The old Sparky experiment is useful for understanding the boundary, rather than as a default architecture for every new engine. <a href="https://learn.microsoft.com/en-us/cpp/dotnet/native-and-dotnet-interoperability">Microsoft native/.NET interoperability</a>, <a href="https://learn.microsoft.com/en-us/cpp/dotnet/">C++/CLI scope</a>.</p>
+<p>For a cross-language engine interface, another design exposes a narrow C-compatible boundary: create an opaque engine handle, perform operations through functions, return explicit status/results, and destroy the handle through its owning module. Keep C++ object layouts, exceptions and allocator assumptions behind that boundary. This does not make one binary portable across all operating systems; each target still has a platform ABI. It does make the supported calling surface easier to specify and bind. Microsoft’s .NET guidance recommends a C-style boundary for ordinary C++ interoperability because C++ has no single consistent ABI across its supported compilers and platforms. Choose the actual runtime, platforms, callback needs and ownership model first; then select tooling that can preserve that contract. <a href="https://learn.microsoft.com/dotnet/standard/native-interop/abi-support">Microsoft native interoperability ABI guidance</a>.</p>
+</section>
+<section id="id_01-foundations-i-ch016-a-visual-description-does-not-identify-a-shader-operator" class="level4">
+<h4>A visual description does not identify a shader operator</h4>
+<p>The 2D-API narration describes leaving a red control at one and lowering green and blue controls to 0.9. It calls the effect “subtracting” those channels “in a way.” That language describes the visible suppression of green and blue; it does not identify the arithmetic operator in an uninspected shader. A standard multiplicative tint is fully compatible with the explanation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>o</mi>
+      <mi>u</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mi>e</mi>
+      <mi>x</mi>
+      <mi>t</mi>
+      <mi>u</mi>
+      <mi>r</mi>
+      <mi>e</mi>
+    </mrow>
+  </msub>
+  <mo>⊙</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0.9</mn>
+  <mo>,</mo>
+  <mn>0.9</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>⊙</mo>
+</math> means component-wise multiplication in the declared shader working space. The red component is unchanged and the others are reduced. White factors <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math> are neutral for multiplication. A literal subtraction of those control values would have a very different neutral point, while subtraction of a separately computed offset could again look similar for a particular image.</p>
+<p>To distinguish models, use known input texels and inspect the shader or measured output. For a channel value of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.5</mn>
+</math>, multiplying by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.9</mn>
+</math> yields <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.45</mn>
+</math>, whereas subtracting an offset of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.1</mn>
+</math> yields <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.4</mn>
+</math>. A saturated white input may hide that difference. This small witness explains why visual similarity and casual words are weak evidence about implementation. It does not prove what the historical episode’s shader executed. Preserve the mathematical teaching model and label the exact episode operation unverified until its code or a controlled test establishes it.</p>
+</section>
+</section>
+<section id="id_01-foundations-i-ch016-a-platform-escape-hatch-must-also-restore-process-wide-state" class="level3">
+<h3>A platform escape hatch must also restore process-wide state</h3>
+<p>The Linux-windowing episode gives a concrete example of why a backend boundary needs to include side effects, not only function signatures. The Kohi #005 Linux platform episode uses Xlib and XCB together for an X11 window. It calls Xlib to disable key-repeat events because repeated key presses would complicate the engine’s input handling. The presenter explicitly warns that the call is global to the X server/session rather than scoped to this window. If the process exits without turning repeat back on, the user may continue to experience changed keyboard behavior outside the game. The same episode therefore adds an explicit shutdown action to re-enable repeat before destroying its window. (Kohi #005, source <code>src-994a368b666ebd1bf250</code>, units <code>u-81fe6c39aad8fdcf8055e768</code>, <code>u-f4883a4974cbd13730aea658</code>.)</p>
+<p>The transferable engineering lesson is to model a platform call as a resource or state transition with a matching cleanup obligation. Record: what state is changed, who else can observe it, how the change is scoped, and what cleanup runs on normal close and failure. A platform adapter that exposes only <code>disable_key_repeat()</code> hides the important contract. A safer boundary either avoids changing global behavior, uses a window-scoped mechanism where available, or makes acquisition and restoration explicit and testable. If initialization fails after changing the setting, rollback still needs to occur. This is proposed API design based on the tutorial’s warning, not a claim about all X11 input systems.</p>
+<p>The episode’s choice to use both Xlib and XCB is also a reminder to distinguish protocol concepts from bindings and libraries. It demonstrates one historically specific implementation path; its remarks about documentation and deprecation are the speaker’s assessment at recording time, not current Linux platform guidance. A modern engine should first identify the presentation and input contracts it needs, then select and verify supported platform APIs for its target environments. The supplied source does not establish present-day X11 recommendations or behavior under Wayland.</p>
+<section id="id_01-foundations-i-ch016-restore-the-state-that-existed-before-the-adapter-changed-it" class="level4">
+<h4>Restore the state that existed before the adapter changed it</h4>
+<p>Unconditionally enabling repeat on close is not the same as restoring the user’s previous setting. Xlib exposes the current keyboard controls, including global auto-repeat mode, through <code>XGetKeyboardControl</code>; its global repeat calls affect the keyboard for the selected display. Record the initial state before a deliberate global change and restore that state on the supported cleanup paths. <a href="https://www.x.org/releases/X11R7.6/doc/libX11/specs/libX11/libX11.html">X.Org Xlib keyboard controls</a>.</p>
+<p>A destructor or rollback handler can organize normal cleanup, but it cannot guarantee restoration after every abrupt process termination. Global state can also be changed by another client while the application runs. These limitations strengthen the case for an input design that avoids changing shared session preferences. If a platform workaround must change them, its scope, rollback and competing-user assumptions belong in the adapter contract alongside its function signatures. This is a design qualification of the historical tutorial, not a native X11 test on this machine.</p>
+</section>
+<section id="id_01-foundations-i-ch016-range-count-byte-capacity-and-api-guarantees-are-different-quantities" class="level4">
+<h4>Range count, byte capacity and API guarantees are different quantities</h4>
+<p>An array containing 32 <code>VkPushConstantRange</code> records stores 32 descriptions in host memory. It does not create 128 bytes of push-constant capacity on a device. Each record describes a byte offset, a byte size and the shader stages that use that range. Counting records and counting bytes answer different questions.</p>
+<p>For a declared range, its end offset must fit the queried <code>maxPushConstantsSize</code>. For example, offset 64 and size 96 end at byte 160: this fails a 128-byte device limit and passes that particular extent check against 256 bytes. Alignment, stage flags and the pipeline’s interface still have their own requirements. Passing one byte-count check does not validate an entire pipeline layout. <a href="https://docs.vulkan.org/spec/latest/chapters/limits.html">Khronos physical-device limits</a>.</p>
+<p>The name <code>maxPushConstantsSize</code> reports this device’s supported maximum; the specification separately defines a minimum capability that an implementation must provide. Vulkan 1.0 through 1.3 guarantee at least 128 bytes, while Vulkan 1.4 raises that required minimum to 256 bytes. A device can report more than its baseline minimum. Query the actual property and state the application’s supported baseline before designing a block layout. A tutorial’s 128-byte example is a useful portable baseline for its version, not a universal maximum for all Vulkan devices. <a href="https://docs.vulkan.org/guide/latest/versions.html">Khronos versions and limit changes</a>.</p>
+<p>This distinction applies far beyond push constants: a wrapper’s array length, an allocation’s host byte size, an API version’s guaranteed floor and a device’s advertised limit are four separate facts. Keep their units and owners beside their names so a local implementation constant cannot quietly become a claimed hardware rule.</p>
+<hr />
+</section>
+</section>
+<section id="id_01-foundations-i-ch016-integrated-systems-continuation-from-machine-state-to-reproducible-execution" class="level3">
+<h3>Integrated Systems Continuation — From Machine State to Reproducible Execution</h3>
+<p>The systems material that previously lived in its own continuous note belongs here because the C++ and systems-API story does not end when code compiles. Bytes become machine state, machine state becomes execution, and useful execution must eventually become observable, serializable, reproducible, and debuggable. The following material is retained from the former standalone systems narrative and now continues this volume directly.</p>
+<p>A saved game state is not just a file, and a functioning emulator is not just a switch statement. The same intellectual task connects a bytecode interpreter, a GPU command stream, an operating-system file, and a remote game server: define an observable machine, preserve its state and ownership, and explain why a given sequence of bytes causes precisely the observed transition.</p>
+<p>This new subject volume opens Phase 28, the original 2701–2800 interval, at the real boundary after graphics and engine implementation. It begins with M163–M164 (Parts 2701–2744): CPU/6502 emulation and NES cartridge/PPU/APU timing foundations. Later M165–M168 (OS, file systems, networking, cryptography and trusted low-level systems) belong to the same volume rather than to 56 disconnected notes. Original part numbers remain recorded in <a href="ch207.xhtml#appendix-fd090d982a15-phase-28-m163m168-parts-27012800-deterministic-and-trusted-low-level-systems" class="wikilink">the coverage ledger</a>. The fully documented <a href="ch610.xhtml#source-source-file-552a9e2296dc984412c8f06d" class="wikilink">CPU/bus reference (Bits, Programs, and Reliable Systems, Part 1, Ch. 1)</a> is an executable teaching witness, not a complete NES emulator or a source audit of an existing NESEmulator repository.</p>
+</section>
+<section id="id_01-foundations-i-ch016-an-executable-byte-acquires-meaning-only-inside-a-machine" class="level3">
+<h3>An executable byte acquires meaning only inside a machine</h3>
+<p>Imagine the user selecting a cartridge image. The file begins with identifying header bytes and some ROM banks. When the emulator is started, the CPU reads an instruction from the address indicated by its program counter. That byte has no meaning by itself: it becomes an instruction only under the chosen instruction-set specification and the device map that determines which memory owns the address. The state-transition view is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>S</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mi data-mjx-auto-op="false">input</mi>
+    </mrow>
+    <mi>t</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>where the architectural state may contain the accumulator A, index registers X and Y, stack pointer SP, program counter PC, processor flags P, CPU memory, device registers, mapper state, cycle counters, interrupt requests and controller state. Determinism means that <em>all machine-observable state</em> plus the same input sequence produces the same observable transition, under a fixed machine implementation. Saving A and PC while omitting the mapper’s currently selected ROM bank does not preserve the machine state.</p>
+<p>The Nintendo Entertainment System CPU is derived from the 6502 family. A, X, Y, SP and P are 8-bit registers, while PC is 16-bit. A fetch normally reads at PC and advances PC. Decode identifies the instruction and its addressing mode, execution reads or writes operands, updates registers and flags, and assigns timing. A straightforward interpreter can implement this with a switch. A dispatch table can map opcode values to handlers. A generated micro-operation interpreter can model individual bus reads and writes. The implementation style does not guarantee accuracy; the contract is that the resulting effects and timing match the specified CPU variant. In particular, a generic 6502 and the NES Ricoh 2A03 are not interchangeable for decimal arithmetic.</p>
+<p>A reset vector is an excellent first test of whether we understand the bus. The CPU constructs PC from the two bytes visible at addresses <code>$FFFC</code> and <code>$FFFD</code>, low byte first. Those addresses are mapped by the cartridge. On an NROM cartridge with one 16-KiB PRG bank, the bank appears twice in CPU space from <code>$8000</code> to <code>$FFFF</code>. The reset vector stored near the end of that bank can direct execution to <code>$8000</code>. A test that always hard-codes PC=<code>$8000</code> could appear to work on a toy ROM while being architecturally wrong for a cartridge whose reset vector points elsewhere.</p>
+<p>A stack pointer does not magically reference host language call frames. The 6502 stack lives on CPU page <code>$0100</code>–<code>$01FF</code> and grows downward as SP changes. Subroutine call JSR stores a return address using the emulated stack and jumps to the callee; RTS pulls the saved address and adds one to resume after the call. This differs from a typical high-level program’s description of calling a function. Interrupt entry similarly saves a return context and jumps to an interrupt vector. The saved status byte must respect the 6502-specific break/unused-bit conventions; they are not simply independent physical flags that can be blindly copied.</p>
+<section id="id_01-foundations-i-ch016-addressing-is-an-algorithm-for-finding-a-value-not-a-suffix" class="level4">
+<h4>Addressing is an algorithm for finding a value, not a suffix</h4>
+<p>Immediate addressing obtains the operand directly from the instruction stream. Zero-page addressing takes an 8-bit address from the stream and reads at that address within <code>$0000</code>–<code>$00FF</code>. Absolute addressing combines two operand bytes into a 16-bit little-endian address. Zero-page-indexed addressing adds X or Y with 8-bit wraparound, while absolute-indexed modes add to a 16-bit base and may cross a 256-byte page. Indexed-indirect means the index is applied to a zero-page pointer location <em>before</em> fetching the target address. Indirect-indexed obtains the pointer first and adds the index to the fetched address. Confusing these yields a program that may execute correctly for one set of values and fail as soon as a pointer crosses a page.</p>
+<p>Relative branches interpret an 8-bit displacement as signed. The displacement is added to PC <em>after</em> fetching the branch operand. A taken conditional branch normally adds a cycle over the two-cycle not-taken path, and crossing a 256-byte page adds another. Returning the correct resulting PC is not the whole execution contract when an instruction interacts with a device that changes every cycle. For each opcode, an implementation should record its instruction bytes, addressing mode, conditional cycle penalties, bus reads/writes and changed status bits. A complete cycle-accurate emulator also needs correct ordering of the individual memory accesses; a total-cycle counter is useful but is not sufficient to reproduce all hardware behavior.</p>
+</section>
+<section id="id_01-foundations-i-ch016-unsigned-carry-is-not-signed-overflow" class="level4">
+<h4>Unsigned carry is not signed overflow</h4>
+<p>For ADC, let A be the accumulator’s original 8-bit unsigned value, M the operand and C the incoming carry bit. Form the full integer sum <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>u</mi>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mo>+</mo>
+  <mi>M</mi>
+  <mo>+</mo>
+  <mi>C</mi>
+</math> and the 8-bit result <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mi>u</mi>
+  <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+  <mn>256</mn>
+</math>. Set carry if <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>u</mi>
+  <mo>&gt;</mo>
+  <mn>255</mn>
+</math>, zero if <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>, and negative from result bit 7. Signed overflow is a different condition: the sum of two same-sign two’s-complement operands cannot be represented in the signed 8-bit range. One bitwise expression for overflow is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">(</mo>
+  <mi mathvariant="normal">¬</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo>⊕</mo>
+  <mi>M</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="BIN">
+    <mi mathvariant="normal">&amp;</mi>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo>⊕</mo>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="BIN">
+    <mi mathvariant="normal">&amp;</mi>
+  </mrow>
+  <mn>0</mn>
+  <mi>x</mi>
+  <mn>80</mn>
+  <mo stretchy="false">)</mo>
+  <mo>≠</mo>
+  <mn>0.</mn>
+</math>
+<p>A=<code>$7F</code>, M=<code>$01</code>, C=0 produces <code>$80</code>: signed overflow V=1, N=1, and unsigned carry C=0. By contrast <code>$FF</code>+<code>$01</code> produces <code>$00</code> with C=1 and Z=1 but V=0. These two independently testable cases prove why a CPU interpreter must not use one generic overflow boolean for both flags. The NES 2A03 does not perform BCD decimal ADC even if the decimal-status bit is set. An apparently minor misunderstanding here breaks arithmetic, conditional branches and some game logic.</p>
+<p>The CPU status also includes interrupt disable I and decimal D; B and the always-set status bit have nuanced behavior when a byte is pushed or pulled. Branches read flags generated by earlier instructions. Therefore a bug in a flag update can remain latent until a much later branch, making deterministic instruction traces invaluable. A useful trace row contains old PC, opcode and operands, old/new registers, old/new P, bus side effects and consumed cycles, not just the mnemonic.</p>
+</section>
+</section>
+<section id="id_01-foundations-i-ch016-the-memory-bus-is-a-device-router-not-one-enormous-ram-array" class="level3">
+<h3>The memory bus is a device router, not one enormous RAM array</h3>
+<p>An NES CPU address is a request to the bus, and the address decoder decides which hardware responds. The 2 KiB internal RAM occupies <code>$0000</code>–<code>$07FF</code>, mirrored through <code>$1FFF</code>. CPU addresses <code>$2000</code>–<code>$2007</code> correspond to PPU registers, mirrored across <code>$2008</code>–<code>$3FFF</code>. Selected APU and controller registers occur around <code>$4000</code>–<code>$4017</code>, while cartridge-controlled space usually includes <code>$4020</code>–<code>$FFFF</code> and, on common NROM boards, PRG ROM from <code>$8000</code> upward.</p>
+<p>This matters because a read can have effects. Reading a controller register can advance its shift position. Reading PPU status can clear or otherwise affect status/latch state under hardware timing rules. Writing a mapper register can change what later CPU ROM reads mean at the same address. Writing <code>$4014</code> requests a DMA transfer into PPU sprite OAM; an actual transfer and CPU stall must obey the hardware cycle schedule. Representing every device register as a plain mutable byte array cannot reproduce those observable behaviors.</p>
+<p>The reference CPU bus intentionally implements only 2-KiB RAM mirroring, NROM PRG read mapping, a controller serial interface and a simplified OAM copy. Reads from the unimplemented PPU registers return a placeholder; mapper/APU/open-bus behavior is not simulated. This is an explicit boundary, not an accidental omission hidden behind a broad claim of NES support. The CPU code increments total CPU cycles and a notional three PPU dots per CPU cycle. Such a counter can help explain relative timebases, but it cannot itself model device events at each dot.</p>
+<p>A controller is itself a small state machine. With strobe asserted, reads return the current first-button state. After the appropriate strobe transition, reads return successive button bits, with defined behavior after the eighth read. An emulator that samples host keyboard state on every CPU read rather than latching at the prescribed event can produce non-deterministic playback even when the recorded button presses were identical.</p>
+<section id="id_01-foundations-i-ch016-an-ines-file-describes-cartridge-memory-it-is-not-executable-code-itself" class="level4">
+<h4>An iNES file describes cartridge memory; it is not executable code itself</h4>
+<p>The iNES header occupies 16 bytes and begins with the bytes <code>$4E</code> <code>$45</code> <code>$53</code> <code>$1A</code>. A classic header records PRG ROM size in 16-KiB units, CHR ROM size in 8-KiB units and flags encoding mapper number, mirroring and optional features. A 16-KiB PRG NROM bank mirrors in CPU space; a 32-KiB bank maps directly. CHR size zero commonly selects CHR RAM, not necessarily an error. The mapper determines how cartridge circuitry maps CPU and PPU addresses, including bank switching. NROM or mapper 0 is only the simplest case; a real emulator cannot accept every mapper value and treat it as NROM.</p>
+<p>A robust parser first validates the header and supported format, then performs checked size/offset arithmetic before copying or mapping any data. If a trainer is present, its 512 bytes shift subsequent bank offsets. NES 2.0 headers encode some metadata differently from iNES 1.0, and treating one as the other can misinterpret bank size or mapper IDs. The lab deliberately rejects NES 2.0, nonzero mappers and trainers instead of guessing; it supports one or two PRG banks and zero or one CHR bank. That behavior is far preferable to silently loading a malformed image whose pointer arithmetic could exceed the file.</p>
+<p>A parser should also distinguish content validation from ROM compatibility. Passing its supported-format checks proves that the byte layout can be interpreted as the selected subset, not that the ROM will execute under the few opcodes the test interpreter understands. The executable test uses a tiny synthetic PRG, sets its reset vector and confirms that <code>$C000</code> aliases <code>$8000</code> for a one-bank NROM fixture.</p>
+</section>
+</section>
+<section id="id_01-foundations-i-ch016-rendering-time-is-not-the-same-clock-as-cpu-time" class="level3">
+<h3>Rendering time is not the same clock as CPU time</h3>
+<p>The PPU is a separate video-processing machine. Pattern tables supply graphics patterns; nametables refer to tile placements and attribute regions; cartridge mirroring determines how logical nametable addresses map to physical memory. Object attribute memory (OAM) describes sprites. During visible scanlines the PPU fetches background and sprite data in an order that influences pixels and can trigger status conditions. A simplified framebuffer routine cannot reproduce the same mid-frame register effects as a dot-based emulator.</p>
+<p>For NTSC operation, a PPU scanline has 341 dots and a nominal frame has 262 scanlines. The PPU runs three dots per CPU clock, but rendering-enabled odd frames have a documented skipped PPU clock. VBlank is a precisely timed condition, and an enabled NMI can arrive near its start. Reads of PPU status near this boundary can produce edge cases that cannot be modeled by sending one event every 16.67 milliseconds from the host application.</p>
+<p>Sprite evaluation examines OAM during specific dot windows, selects sprites intersecting the relevant scanline and has behavior such as sprite limits, overflow and sprite-zero interactions. OAM DMA transfers 256 bytes from a CPU memory page and stalls the CPU for a phase-dependent interval commonly described as 513/514 CPU cycles, with further bus arbitration nuance. The test bus copies 256 bytes but does not emulate its stall; the CPU clock counter therefore cannot be used as a real timing reference for OAM DMA. APU channels similarly derive timing from emulated CPU/APU clocks and hardware state. Merely producing audio samples at the host device’s sample rate does not emulate those channels.</p>
+<p>An accurate PPU/APU is a substantial further implementation project, with visual test ROMs, traces and timing regressions. Nothing in the CPU-only test should imply that a commercial game can render or play audio. The distinction between reference teaching and completed software is part of the curriculum’s research discipline.</p>
+</section>
+<section id="id_01-foundations-i-ch016-deterministic-replay-requires-an-explicit-state-contract" class="level3">
+<h3>Deterministic replay requires an explicit state contract</h3>
+<p>An emulator save-state is not safe to write by copying the native bytes of a C++ object. A struct may contain padding, references, pointers, compiler-dependent alignment or host-endian values. Restoring those bytes on another executable or after a code change can corrupt state or silently change meaning.</p>
+<p>Define a durable format with signature and version, explicit byte order, validated lengths, known field order, device-state versioning and cartridge identity. A snapshot must include <strong>every state element that affects subsequent transitions</strong>: CPU registers, memory, mapper banks, pending interrupt state, PPU timing/latches, APU phases, controller shift position, DMA state and synchronized input history as relevant. Recording only memory and CPU registers is insufficient when the program later touches an omitted device.</p>
+<p>The reference laboratory demonstrates a limited but inspectable step. It writes a versioned little-endian sequence containing CPU registers, PC, cycle counters, RAM and OAM. It rejects an invalid version before mutating the target CPU. It saves a state, executes another instruction, restores, repeats the instruction and checks identical PC/cycle behavior. That is reproducibility for the modeled subset; the controller, PPU, APU, mapper and interrupt state are not fully serialized, so the result must <strong>not</strong> be marketed as a general NES save-state implementation.</p>
+<p>A higher-integrity replay system would include exact cartridge content hash, emulator implementation version and feature support, a monotonic input-event stream with tick timestamps, deterministic startup state, selected architecture policies, and golden traces. Compare not just the final score or one screenshot but architectural registers, RAM mutations, bus transactions, frame hashes and audio checksums at known boundaries. Most importantly, identify whether differences are expected due to an explicitly different model or are evidence of a bug.</p>
+</section>
+<section id="id_01-foundations-i-ch016-reference-implementation-and-evidence-gate" class="level3">
+<h3>Reference implementation and evidence gate</h3>
+<p>The standalone <a href="ch610.xhtml#source-source-file-552a9e2296dc984412c8f06d" class="wikilink">C++20 machine oracle (Bits, Programs, and Reliable Systems, Part 1, Ch. 1)</a> executes selected instructions (LDA, ADC, STA, INX, conditional BNE, CLC/SEC, CMP, JMP, JSR, RTS and NOP), reads the reset vector, tracks nominal instruction cycle costs, tests arithmetic flags, mirrors RAM/PRG, decodes a small iNES NROM fixture, latches/shifts controller input, copies a simple OAM page and serializes a narrow versioned snapshot. It is automatically picked up by the existing C++20 multi-compiler laboratory CI because its filename ends in _lab.cpp. Tests use active throwing checks, so GCC optimized -DNDEBUG does not silently disable them.</p>
+<p>What it does <strong>not</strong> implement is equally important: most 6502 opcodes, interrupt entry/RTI, precise bus-cycle sequencing, other mapper types, PPU rendering, accurate sprite evaluation, APU generation, DMA stalls, open-bus electrical behavior, full save-state completeness or commercial ROM compatibility. The original curriculum references the user’s NESEmulator sources; that external repository has not been fetched or audited here.</p>
+<p>For authoritative technical distinctions, the original source route is <a href="https://www.nesdev.org/wiki/CPU_memory_map">NESdev CPU memory map</a>, <a href="https://www.nesdev.org/wiki/Addressing_modes">CPU addressing modes</a>, <a href="https://www.nesdev.org/wiki/Status_flag">status flags</a>, <a href="https://www.nesdev.org/wiki/INES">iNES format</a>, <a href="https://www.nesdev.org/wiki/PPU_frame_timing">PPU frame timing</a> and <a href="https://www.nesdev.org/wiki/PPU_sprite_evaluation">PPU sprite evaluation</a>. This chapter records them as current documentary references, not a claim that their every example was reproduced in code. The next systems chapters extend this same state-and-byte contract to OS files, networks and security. Their existence is not silently inferred from the first emulator laboratory.</p>
+</section>
+<section id="id_01-foundations-i-ch016-from-a-deterministic-emulator-state-to-an-operating-system-file" class="level3">
+<h3>From a deterministic emulator state to an operating-system file</h3>
+<p>The CPU program can now produce a versioned snapshot. To retain the snapshot after the interpreter exits, we must make a stronger promise: bytes become durable state even if a process terminates during writing. This continues the exact same problem rather than introducing an unrelated operating-systems glossary.</p>
+<p>A process runs in its own virtual address space and operating-system resource context. Threads in the same process share that address space but each has its own execution stack and scheduling state. A system call crosses the user/kernel boundary to request services such as opening a file or allocating mappings. A file descriptor is a process-local reference to an open file description or resource, not a universal stable identity for a pathname. Duplicated descriptors may share file offsets; two separate opens of a path need not. Closing a descriptor releases that process reference but does not necessarily remove the named file or invalidate another process’s open descriptor.</p>
+<p>Suppose our emulator snapshot is 2,324 bytes. A low-level write may transfer fewer bytes than requested. Repeating a write operation requires accounting for how many were actually consumed, with explicit treatment of interrupted calls, zero progress, errors and cancellation. Buffered standard-library streams may accumulate bytes before sending them to the kernel; unbuffered system calls can reduce intermediate buffering but increase syscall count. Neither the presence of a buffer nor the successful return of a single write guarantees that the bytes survive sudden power loss.</p>
+<p>Random access involves an explicit offset. A seek changes the offset used for subsequent reads/writes on certain open-file descriptions; positional I/O can name the offset per operation. File offsets and file size must be checked in types wide enough to represent the full range. Memory mapping connects a file region to process virtual memory. It can avoid an explicit copy but introduces page-fault costs, alignment requirements, mapping lifetime and risks when files are truncated or replaced. An mmap view is borrowed and must not be mistaken for an owning vector; dereferencing it after unmapping is invalid. A mapped file should not be written by arbitrary raw pointer mutation if the application assumes transactional semantics.</p>
+<p>For a published save state, use a temporary file in the target filesystem and an explicit <strong>commit point</strong>. Prepare and validate the entire versioned state first; open a unique temporary path with collision-safe creation and appropriate permissions; write and handle partial writes; flush user buffers; synchronize file content if required; close or otherwise establish the chosen durability preconditions; atomically rename/replace in the supported filesystem; and, on systems that require it for crash durability, synchronize the containing directory. Atomic rename provides a visibility property under particular filesystems. It is not automatically equivalent to durable persistence after power loss.</p>
+<p>A loader should read a completed file, never a partially published temporary. It verifies magic, format version, declared lengths and integrity before mutating the live world. If parsing fails, keep the current world unchanged. The same transactional publication idea appeared in the C++ asset registry: prepare before changing the visible owner. Here the failure boundary is a crash, not just a thrown exception.</p>
+<p>Directory traversal is another trust boundary. A save or archive that includes paths such as parent-directory components cannot be allowed to escape a designated root. String prefix comparisons alone are insufficient when symlinks, case folding, canonicalization and concurrent filesystem changes exist. Directory-relative, handle-based operations and appropriate no-follow policies can reduce race windows, but must be matched to the target OS. File locks can coordinate cooperating writers yet may be advisory and have filesystem-specific rules; they are not a substitute for atomic publication.</p>
+<p>This section develops Parts 2745–2755, including processes, threads, system calls, descriptors, buffered/unbuffered I/O, mmap, offsets, directory traversal, atomic rename, temporary publication and locking. No filesystem fault injection has been executed in the CPU emulator lab, so these are architectural, specification-grounded teaching claims awaiting an independent OS laboratory.</p>
+</section>
+<section id="id_01-foundations-i-ch016-from-a-file-to-a-message-on-an-unreliable-network" class="level3">
+<h3>From a file to a message on an unreliable network</h3>
+<p>A remote editor or emulator cannot transmit a pointer to its local C++ object and expect it to identify equivalent memory on another machine. It must serialize a message with a precisely stated binary format. An IP address identifies a network-layer endpoint; a transport port identifies a service endpoint within the host’s networking stack. A socket is a process-facing interface whose lifetime and errors are managed separately from any application messages.</p>
+<p>A UDP send produces a datagram, preserving a message boundary in the receiving interface, but UDP provides no general guarantee that the packet is delivered exactly once, in order or at all. Packet loss, duplication, delay and reordering must be considered if the application wants ordered reliable state updates. TCP provides an ordered reliable byte stream while the connection remains healthy; it does not preserve application message boundaries. One send of 1,000 bytes may arrive through several reads, and multiple sends may be coalesced into one read.</p>
+<p>A practical protocol therefore defines its own framing. For example, a frame could contain a four-byte big-endian payload length followed by a versioned message body. The receiver reads the entire length field, validates the bound before allocating memory, and then repeatedly reads until the declared body length has arrived or the stream fails. Never trust an attacker-controlled length that could overflow arithmetic or allocate gigabytes. Declare the maximum frame size, permitted message types, byte order, header validation, deadline and cancellation semantics. A disconnected peer in the middle of a frame is not a valid empty message.</p>
+<p>Network byte order conventionally means big-endian for the relevant transport header fields; application formats must still declare their own endianness. Packet serialization must avoid copying host struct padding or raw pointers. A transport checksum can detect certain accidental corruption but does not authenticate the sender or prevent an attacker from altering data and recomputing the checksum. Any integrity and authenticity requirement must be addressed separately.</p>
+<p>Latency and bandwidth measure different things. For payload size B and sustainable throughput R, B/R is a lower-bound transfer component, while round-trip delay, queueing, flow control, sender/receiver CPU work and serialization all contribute. A 1-KiB control message can feel slow on a high-bandwidth network if it must wait for multiple round trips. A giant snapshot can take substantial transfer time on a low-bandwidth connection despite low propagation latency. Benchmark end-to-end response under representative network conditions, not just a link’s nominal speed.</p>
+<p>When networking an interactive simulation, the client may predict local motion to hide round-trip delay. The server’s authoritative state can later differ from the client’s prediction. Reconciliation requires a common tick counter, acknowledgment of processed inputs, a retained input history, restoration of the authoritative state and replay of unacknowledged inputs. Physics solver ordering, floating-point modes, source revisions and time step become visible networking design choices. Smooth visual interpolation can hide corrections, but cannot make inconsistent state transitions mathematically identical.</p>
+<p>Parts 2756–2770 therefore emerge from the need to transfer and reconcile an emulator or world snapshot. There is no tested socket, UDP-loss harness or TCP partial-read implementation in the current lab; those have been authored as contracts, not certified as completed network code.</p>
+</section>
+<section id="id_01-foundations-i-ch016-from-received-bytes-to-a-trust-decision" class="level3">
+<h3>From received bytes to a trust decision</h3>
+<p>Once a remote peer sends a snapshot, parser validity alone is insufficient. We must answer whether the bytes were altered, whether the sender is authorized, whether the snapshot may be replayed, and whether the application should expose its contents. Cryptography helps with some of these questions, but secure system design also depends on identities, access policies and key custody.</p>
+<p>A cryptographic hash deterministically maps an input byte sequence to a fixed-length digest. SHA-256 produces 256 bits, but different security properties should not be collapsed into one vague ‘secure hash’ label. <strong>Preimage resistance</strong> concerns finding an input for a given digest, <strong>second-preimage resistance</strong> concerns finding another message matching a given message’s digest, and <strong>collision resistance</strong> concerns finding any pair of messages with the same digest. A random accidental collision estimate is not itself a proof against a targeted cryptanalytic attack. A bare SHA-256 checksum of a downloaded file does not authenticate the file if an attacker can replace both the file and its expected checksum.</p>
+<p>An HMAC uses a secret key with an underlying hash to authenticate a message. It does not hide message contents. A key derivation function turns suitable initial key material into new keys for defined purposes. HKDF, specified by RFC 5869, separates an extract stage from an expand stage. Given input key material IKM and a salt, it derives PRK using HMAC. To expand, it generates blocks</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable displaystyle="true" columnalign="right left" columnspacing="0em" rowspacing="3pt">
+    <mtr>
+      <mtd>
+        <mi>T</mi>
+        <mo stretchy="false">(</mo>
+        <mn>0</mn>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>=</mo>
+        <mi>ϵ</mi>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>T</mi>
+        <mo stretchy="false">(</mo>
+        <mi>i</mi>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>=</mo>
+        <msub>
+          <mi>HMAC</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mrow data-mjx-texclass="ORD">
+              <mi data-mjx-auto-op="false">PRK</mi>
+            </mrow>
+          </mrow>
+        </msub>
+        <mrow data-mjx-texclass="OPEN">
+          <mo minsize="1.2em" maxsize="1.2em">(</mo>
+        </mrow>
+        <mi>T</mi>
+        <mo stretchy="false">(</mo>
+        <mi>i</mi>
+        <mo>−</mo>
+        <mn>1</mn>
+        <mo stretchy="false">)</mo>
+        <mo>∥</mo>
+        <mrow data-mjx-texclass="ORD">
+          <mi data-mjx-auto-op="false">info</mi>
+        </mrow>
+        <mo>∥</mo>
+        <mi>byte</mi>
+        <mo stretchy="false">(</mo>
+        <mi>i</mi>
+        <mo stretchy="false">)</mo>
+        <mrow data-mjx-texclass="CLOSE">
+          <mo minsize="1.2em" maxsize="1.2em">)</mo>
+        </mrow>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math>
+<p>then concatenates blocks until reaching the requested length. Here epsilon denotes the empty byte string, and byte(i) is one counter octet for i from 1 through 255, not the decimal text of i. RFC 5869 limits the requested output to 255 times the hash-output length in bytes. <a href="https://www.rfc-editor.org/rfc/rfc5869.html#section-2.3">HKDF expansion specification</a>. The information string helps separate cryptographic contexts, so a key intended for snapshot authentication need not coincide with one intended for a different protocol purpose. This is not a substitute for a password-hardening KDF or sufficient entropy in initial key material.</p>
+<p>A symmetric encryption key protects confidentiality under an appropriate scheme. AES is a block cipher, while GCM defines authenticated encryption using counter-mode encryption and a polynomial tag. An AES-GCM application must ensure nonce uniqueness for a given key, validate authentication tags and apply the associated authenticated data (AAD) consistently. Reusing the same nonce under the same GCM key can expose relationships between plaintexts and undermine authenticity. A process-local nonce counter reset to zero at every restart is unsafe unless rekeying and global uniqueness are properly designed. AAD can authenticate metadata such as protocol version, message type or resource identifier even when those fields are not encrypted.</p>
+<p>Authenticated decryption must not be turned into ‘decrypt, parse, execute, then check the tag.’ The appropriate API’s authentication success must be established before untrusted plaintext is treated as authoritative. Error paths must not disclose keys or sensitive payloads in logs, and nonce/key lifecycle must survive crashes. Established cryptographic libraries and protocols are required; writing a fresh AES-GCM algorithm inside an educational game-engine repository would create unnecessary security risk.</p>
+<p>Public-key methods solve different problems. A verified signature can authenticate a message relative to a trusted public key; key exchange can establish shared secrets to feed through a KDF; public-key encryption can provide confidentiality under a recipient’s key. None automatically proves that the public key itself belongs to the claimed person. Trust establishment, certificate identity, revocation, replay prevention and authorization remain separate.</p>
+<p>A Shamir secret-sharing threshold scheme places a secret s as the constant term in a random degree-(t−1) polynomial over a finite field:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>s</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>a</mi>
+    <mn>1</mn>
+  </msub>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mo>⋯</mo>
+  <mo>+</mo>
+  <msub>
+    <mi>a</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <msup>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mspace width="1em"></mspace>
+  <mo stretchy="false">(</mo>
+  <mi>mod</mi>
+  <mspace width="0.333em"></mspace>
+  <mi>p</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Each share is a distinct pair (x_i,f(x_i)). Any t valid shares can reconstruct s by polynomial interpolation; under the ideal model fewer than t reveal no information about the secret. This requires secure random coefficients, distinct nonzero x values, a suitable field and correct encoding. Authentication of shares and handling of dishonest participants are additional system concerns. Floating-point polynomial fitting is not a substitute for finite-field threshold cryptography.</p>
+<p>A Merkle tree recursively hashes encoded leaves and internal nodes to commit to a set or ordered sequence of records. An inclusion proof contains the necessary sibling hashes and left/right positions to recompute the root. Verifying the proof establishes membership <em>relative to a trusted root</em>, not that the root was issued by the right authority, is current, or contains truthful records. Append-only audit logs need further protection against rollback and split-view attacks.</p>
+<p>A token vault maps sensitive values to surrogates under explicit authorization and retention policies. Format-preserving encryption retains syntactic structure under its own security assumptions but can leak structural information through permitted domains. Redaction must propagate through all views and storage that expose the sensitive value; hiding characters in a UI while retaining the value in logs or search indexes is not comprehensive redaction. A trust engine can return allow, redact or deny with an auditable reason, a default policy and a clear identity boundary.</p>
+<p>The last interface is often between implementation languages. Rust-to-Python FFI through PyO3 changes who may borrow memory, which interpreter state must be held, how errors cross the boundary and whether a panic may unwind through foreign code. A Rust raw pointer crossing into Python or C++ does not automatically inherit Rust’s ordinary borrow-checker protections. Define allocation/free responsibility, string encoding, object lifetime, thread rules and exception conversion. A Python wrapper can be memory-safe on its own side while still calling a native library after the referenced buffer has been freed.</p>
+<p>Security threat modeling ties the pieces together. Identify attackers, assets, entry points and trust boundaries. A correct cryptographic primitive does not prevent arbitrary path traversal, bad access control, unsafe plugin loading, unbounded allocation, replayed authorization or accidental logging of secrets. Conversely, a safe parser does not by itself authenticate a received packet.</p>
+<p>Parts 2771–2800 cover SHA-256/HMAC/HKDF, AES/GCM and nonce discipline, public keys, Shamir shares, Merkle proofs, tokenization, FFI, trust policy and a deterministic low-level-systems capstone. <strong>Their present state is fully connected authored explanation, not a tested encryption engine or a security certification.</strong> The CPU-only C++ lab does not claim those operations were executed.</p>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch410.xhtml#id_06-GPU-Architecture-and-Real-Time-Rendering" class="wikilink">Reading map</a> · <a href="ch417.xhtml#id_01-foundations-i-ch015-execute-and-measure-a-metal-frame" class="wikilink">Previous chapter</a> · <a href="ch236.xhtml#id_01-foundations-i-ch017-python-and-numerical-tools-for-graphics-systems" class="wikilink">Next chapter (Mathematics for Visual Computing, Part 1, Ch. 1)</a></p>
+</section>
+</section>
+</body>
+</html>

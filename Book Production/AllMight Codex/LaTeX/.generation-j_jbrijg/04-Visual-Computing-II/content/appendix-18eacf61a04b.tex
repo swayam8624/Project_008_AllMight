@@ -1,0 +1,41 @@
+\hypertarget{appendix-18eacf61a04b}{}
+\section*{ODE integration and stability}
+\chapter{ODE integration and stability}\label{appendix-18eacf61a04b-ode-integration-and-stability}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} Phase 9
+
+\section{Definition and mechanism}\label{appendix-18eacf61a04b-definition-and-mechanism}
+
+An ordinary differential equation gives the rate of change of a state over time. Forward Euler uses the current derivative: \(q_{k+1}=q_k+h f(q_k,t_k)\), where \(h\) is the time step. For decay \(\dot u=-au\), it multiplies each step by \(1-ah\); if the magnitude exceeds one, the numerical solution grows even though the true solution decays. Spring systems can be stiff because high-frequency modes force very small stable steps. Backward Euler evaluates the rate at the unknown new state and is more stable for decay but requires solving an equation and may add numerical damping. Symplectic Euler updates velocity then position and often keeps energy bounded for conservative mechanics. Choose an integrator according to stability, accuracy, conservation, and runtime rather than displayed frame rate alone.
+
+\subsection{Phase 9--10 development}\label{appendix-18eacf61a04b-phase-910-development}
+
+An initial-value problem consists of a differential equation and a specified starting state. A numerical integrator replaces continuous evolution with finite updates, so accuracy and stability depend on both method and step size. Consistency concerns local approximation, stability concerns error growth under repeated steps, and convergence concerns the limiting solution as the step is refined. Stiff systems can force explicit methods to take very small steps even when the visible trajectory changes slowly. Symplectic methods preserve Hamiltonian structure but do not generally preserve exact energy at each step.
+
+\section{Prerequisites}\label{appendix-18eacf61a04b-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-3ae74e89b4e6}{Absolute and relative error (01-Foundations-I, appendix-3ae74e89b4e6)}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-8f6a01f284a7}{Conditioning and singularity (01-Foundations-I, appendix-8f6a01f284a7)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-e8ab9836882e}{ODE initial-value problems and stiffness (02-Foundations-II, appendix-e8ab9836882e)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-8f96f9c4d5bc}{Time integrators and symplectic updates (02-Foundations-II, appendix-8f96f9c4d5bc)}
+\end{itemize}
+
+\section{Used by}\label{appendix-18eacf61a04b-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography}{Worlds, Images and Inference}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-8836553d56fc}{Implicit differentiation and parameter sensitivities (02-Foundations-II, appendix-8836553d56fc)}
+\end{itemize}
+
+\section{Full teaching explanation}\label{appendix-18eacf61a04b-full-teaching-explanation}
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Dynamics,\%20forces,\%20and\%20numerical\%20integration}{Dynamics, forces, and numerical integration} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Animation\%20curves\%20and\%20motion\%20paths}{Animation curves and motion paths} - \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#ODEs\%20and\%20numerical\%20simulation}{Phase 9 teaching section} - \href{../01-Foundations-I/main.pdf\#nameddest=appendix-adf48f5dc5c1}{Visual Recall/09 - Calculus and Optimization - Visual Recall.md (01-Foundations-I, appendix-adf48f5dc5c1)} · Phase 9 visual recall

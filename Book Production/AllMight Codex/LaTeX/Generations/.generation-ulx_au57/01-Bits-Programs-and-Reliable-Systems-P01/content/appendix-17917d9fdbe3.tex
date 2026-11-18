@@ -1,0 +1,52 @@
+\hypertarget{appendix-17917d9fdbe3}{}\label{referencestart:appendix-17917d9fdbe3}
+\section{Ripple-carry addition}\label{appendix-17917d9fdbe3-ripple-carry-addition}
+
+\hypertarget{appendix-17917d9fdbe3-ripple-carry-addition}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-17917d9fdbe3-definition-and-mechanism}
+
+\hypertarget{appendix-17917d9fdbe3-definition-and-mechanism}{}
+
+Each full adder feeds its carry to the next position, making worst-case circuit propagation depth grow with word width.
+
+\end{allmightroledefinition}
+
+Connect carry-out at bit i to carry-in at i+1. For \BookInlineCode{{0}{1}{1}{1}{1}{1}{1}{1}{\ }{+}{\ }{1}}{01111111\ +\ 1}, a carry traverses the low seven stages. Circuit delay grows with width in this simple design; fixed-width software addition still counts as O(1) with respect to input size.
+
+\subsection{Prerequisites}\label{appendix-17917d9fdbe3-prerequisites}
+
+\hypertarget{appendix-17917d9fdbe3-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-d1a5b1e520c2]{Full adder} --- A full adder adds A, B, and carry-in.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-17917d9fdbe3-used-by}
+
+\hypertarget{appendix-17917d9fdbe3-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-b5c46b2d94ff]{Carry-lookahead and parallel-prefix adders} --- uses ripple-carry addition as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-17917d9fdbe3-recall-and-next-depth}
+
+\hypertarget{appendix-17917d9fdbe3-recall-and-next-depth}{}
+
+Explain ripple-carry addition without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} physical timing, layout, and faster carry networks.
+
+\subsection{Source and navigation}\label{appendix-17917d9fdbe3-source-and-navigation}
+
+\hypertarget{appendix-17917d9fdbe3-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

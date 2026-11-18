@@ -1,0 +1,39 @@
+\hypertarget{appendix-5f723fbd0593}{}
+\section*{Euler angles and gimbal singularity}
+\section{Euler angles and gimbal singularity}\label{appendix-5f723fbd0593-euler-angles-and-gimbal-singularity}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase7 · \textbf{Latest development:} Phase7
+
+\subsection{Definition and mechanism}\label{appendix-5f723fbd0593-definition-and-mechanism}
+
+Euler/Tait-Bryan angles are coordinates for rotation with a specified axis/order convention. Some orientations make two parameter directions dependent. Quaternions represent the orientation smoothly, but converting to singular Euler coordinates still requires a branch and cannot recover unique original angles.
+
+\textbf{Reconstruction cue:} For Rz(yaw)Ry(pitch)Rx(roll) at pitch pi/2, only yaw minus roll is observable.
+
+\subsection{Prerequisites}\label{appendix-5f723fbd0593-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-26d8da71f6c4]{Quaternion matrix and axis-angle conversion}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-ab31ef447dbf}{Matrix multiplication and composition order (02-Foundations-II, appendix-ab31ef447dbf)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-5f723fbd0593-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations]{Phase 7 teaching and laboratory}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-5f723fbd0593-recall-and-next-depth}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\subsection{Source and navigation}\label{appendix-5f723fbd0593-source-and-navigation}
+
+\hyperref[01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations]{Continuous explanation} · \hyperref[appendix-fd090d982a15-phase-7---parts-601-700]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-7---source-analysis-and-verification]{Sources and verification}
+
+Expanded direct teaching: \hyperref[01-foundations-i-ch019-angle-rates-are-not-three-components-of-angular-velocity]{Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Angle rates are not three components of angular velocity}.

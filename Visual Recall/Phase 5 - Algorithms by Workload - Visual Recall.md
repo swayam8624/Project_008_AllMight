@@ -67,3 +67,21 @@ Show why choosing the largest denomination first fails for {1,3,4} and target si
 Given the same asset count and query/update workload, compare an open-addressed table, balanced tree, sorted vector, sparse set and direct-index table. Record correctness invariants and whether iteration pointers survive mutation. Design benchmark distributions over n, hash collisions, hit/miss ratios, entity churn, graph density and memory pressure. Profile before naming a winner. An example-only test is not evidence of expected-case performance for arbitrary production input.
 
 **Independent mastery gate:** reproduce a FIFO, tombstone probe, heap priority rule, Dijkstra relaxation, topological Kahn step, DSU union and exclusive scan without looking up the source; then explain exactly what breaks when the preconditions fail. The source-to-claim chain should remain inspectable, and no current Kairo code is claimed verified unless actually read.
+
+## Recall the recursive cost before naming its theorem
+
+```mermaid
+flowchart LR
+    A["Count calls: a"] --> D["Level i: a^i f(n/b^i)"]
+    B["Shrink size: divide by b"] --> D
+    D --> L["Height: log_b n"]
+    L --> C["Compare root work with leaf mass"]
+    C --> R["Check case assumptions or sum directly"]
+```
+
+| Recall prompt | Short answer | Return to the teaching |
+|---|---|---|
+| What must a recurrence include? | Recursive-call costs, work outside the calls, and a base cost. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A recurrence turns recursive calls into a cost equation|Definitions and recursion tree]] |
+| Why does mergesort gain a logarithm? | Each of $\log_2 n$ non-leaf levels costs $n$; leaves add $n$. With $T(1)=1$, $T(8)=32$. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A recurrence turns recursive calls into a cost equation|Three solved recurrences]] |
+| Can every smaller-than-$n$ term use Case 1? | No. $n/\log n$ is not polynomially smaller. Its tree gives $\Theta(n\log\log n)$. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A recurrence turns recursive calls into a cost equation|Boundary case and solved exercise]] |
+| What is the extra Case 3 check? | For some $c<1$, $a f(n/b)\le c f(n)$ eventually. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A recurrence turns recursive calls into a cost equation|All three conditional cases]] |

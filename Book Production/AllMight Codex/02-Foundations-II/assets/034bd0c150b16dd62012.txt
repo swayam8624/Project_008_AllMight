@@ -1,0 +1,5426 @@
+Yes. **526–533 is one of the blocks where compressing would damage everything that follows.** Dot products, projections, angles, normals, orthonormal bases, distance queries, collision geometry, numerical tolerances, physics, rays, SDFs, BVHs, and optimization all lean on what “length” and “distance” actually mean.
+
+I checked the canonical sequence. The eight Parts are exactly:
+
+**526. Euclidean vector magnitude**  
+**527. Squared magnitude and why graphics often avoids square roots**  
+**528. Normalizing a vector**  
+**529. Zero-vector normalization and robust handling**  
+**530. L1 norm**  
+**531. L2 norm**  
+**532. L-infinity norm**  
+**533. Distance induced by a norm** Project_Sheldon_Master_Curricul…
+
+I am following the required standard here: derive the mathematics, connect it to representation and actual code, expose numerical failure, distinguish textbook from production behavior, and make the material reconstructible rather than memorable only as formulas. Pasted markdown
+
+---
+
+# THE MAP OF 526–533
+
+Before diving in, understand why these are eight separate Parts.
+
+We currently know what a vector is:
+
+\[
+\vec v=(v_1,v_2,\ldots,v_n).
+\]
+
+But that tuple by itself doesn't answer:
+
+> How large is this vector?
+
+There are actually **multiple valid answers**, depending on what definition of "size" we choose.
+
+The familiar geometric answer is Euclidean length:
+
+\[
+\sqrt{x^2+y^2+z^2}.
+\]
+
+That becomes the **L2 norm**.
+
+But we can define other legitimate notions of size:
+
+\[
+|x|+|y|+|z|
+\]
+
+or:
+
+\[
+\max(|x|,|y|,|z|).
+\]
+
+Those are L1 and L∞.
+
+Then once we know how to measure the size of a vector difference, we automatically obtain a way to measure distance between two points:
+
+\[
+d(P,Q)=\|Q-P\|.
+\]
+
+So the dependency chain is:
+
+\[
+\boxed{
+\text{vector}
+\rightarrow
+\text{magnitude}
+\rightarrow
+\text{squared magnitude}
+\rightarrow
+\text{normalization}
+\rightarrow
+\text{robust normalization}
+\rightarrow
+\text{general norm}
+\rightarrow
+L_1,L_2,L_\infty
+\rightarrow
+\text{distance}
+}
+\]
+
+---
+
+# PART 526 — EUCLIDEAN VECTOR MAGNITUDE
+
+# 526.1 The problem
+
+Consider:
+
+\[
+\vec v=(3,4).
+\]
+
+The vector tells us:
+
+```text
+3 units along X
+4 units along Y
+```
+
+But suppose I ask:
+
+> What is the actual straight-line amount of displacement?
+
+It is not:
+
+\[
+3+4=7.
+\]
+
+If you physically move three metres east and four metres north, your direct displacement from start to finish is five metres.
+
+Why five?
+
+We need geometry.
+
+---
+
+# 526.2 Start from a right triangle
+
+Take:
+
+\[
+\vec v=(x,y).
+\]
+
+Draw its components:
+
+```text
+             ●
+             |\
+             | \
+           y |  \  ?
+             |   \
+             |    \
+             ●-----●
+                x
+```
+
+The horizontal component and vertical component form perpendicular sides of a right triangle.
+
+The vector itself forms the hypotenuse.
+
+By the Pythagorean theorem:
+
+\[
+c^2=x^2+y^2.
+\]
+
+Therefore:
+
+\[
+c=\sqrt{x^2+y^2}.
+\]
+
+So the Euclidean magnitude of a two-dimensional vector is:
+
+\[
+\boxed{
+\|\vec v\|
+=
+\sqrt{x^2+y^2}
+}
+\]
+
+where the double bars
+
+\[
+\|\vec v\|
+\]
+
+mean the magnitude or norm of the vector.
+
+---
+
+# 526.3 Why the positive square root?
+
+From:
+
+\[
+c^2=x^2+y^2
+\]
+
+algebraically we might write:
+
+\[
+c=\pm\sqrt{x^2+y^2}.
+\]
+
+But length is defined to be nonnegative.
+
+Therefore:
+
+\[
+\boxed{
+c=\sqrt{x^2+y^2}\ge0.
+}
+\]
+
+A vector can point negatively along coordinates.
+
+Its **length cannot be negative**.
+
+For example:
+
+\[
+\vec v=(-3,-4).
+\]
+
+Magnitude:
+
+\[
+\sqrt{(-3)^2+(-4)^2}
+=
+\sqrt{9+16}
+=
+5.
+\]
+
+The signs describe orientation.
+
+Length describes amount.
+
+---
+
+# 526.4 Deriving 3D magnitude
+
+Now take:
+
+\[
+\vec v=(x,y,z).
+\]
+
+First combine the X and Y displacement.
+
+Its projected length in the \(xy\)-plane is:
+
+\[
+r=\sqrt{x^2+y^2}.
+\]
+
+Now \(r\) and \(z\) form another perpendicular right triangle.
+
+Therefore:
+
+\[
+\|\vec v\|^2
+=
+r^2+z^2.
+\]
+
+Substitute:
+
+\[
+r^2=x^2+y^2.
+\]
+
+So:
+
+\[
+\|\vec v\|^2
+=
+x^2+y^2+z^2.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\|\vec v\|
+=
+\sqrt{x^2+y^2+z^2}.
+}
+\]
+
+---
+
+# 526.5 Generalization to \(\mathbb R^n\)
+
+For:
+
+\[
+\vec v=
+(v_1,v_2,\ldots,v_n),
+\]
+
+the Euclidean magnitude is:
+
+\[
+\boxed{
+\|\vec v\|_2
+=
+\sqrt{
+v_1^2+
+v_2^2+
+\cdots+
+v_n^2
+}.
+}
+\]
+
+Equivalently:
+
+\[
+\boxed{
+\|\vec v\|_2
+=
+\sqrt{
+\sum_{i=1}^{n}v_i^2
+}.
+}
+\]
+
+Here:
+
+- \(n\) is dimension;
+- \(i\) indexes components;
+- \(v_i\) is component \(i\);
+- \(\sum\) means add the indicated terms.
+
+The subscript \(2\) will matter when we distinguish different norms later.
+
+---
+
+# 526.6 There is an extremely important hidden assumption
+
+Why was:
+
+\[
+\sqrt{x^2+y^2}
+\]
+
+valid?
+
+Because X and Y represented **perpendicular unit basis directions**.
+
+We implicitly assumed an **orthonormal basis**.
+
+"Orthonormal" means:
+
+1. basis directions are mutually perpendicular;
+2. each basis direction has unit length.
+
+Detailed orthonormal-basis theory is Part 559, but the warning belongs here.
+
+Suppose your basis is:
+
+\[
+\vec b_1=(1,0)
+\]
+
+and:
+
+\[
+\vec b_2=(1,1).
+\]
+
+Coordinates:
+
+\[
+(1,1)_B
+\]
+
+mean the geometric vector:
+
+\[
+\vec v
+=
+1\vec b_1+1\vec b_2
+\]
+
+so:
+
+\[
+\vec v
+=
+(1,0)+(1,1)
+=
+(2,1)
+\]
+
+in standard coordinates.
+
+Its Euclidean length is:
+
+\[
+\sqrt{2^2+1^2}
+=
+\sqrt5.
+\]
+
+But naively applying:
+
+\[
+\sqrt{1^2+1^2}
+\]
+
+to its basis-\(B\) coordinates gives:
+
+\[
+\sqrt2.
+\]
+
+Wrong.
+
+Therefore:
+
+\[
+\boxed{
+\sqrt{\sum_i v_i^2}
+}
+\]
+
+equals geometric Euclidean length only when those coordinates are expressed relative to an appropriate orthonormal Euclidean basis.
+
+This point becomes extremely important once transformations and nonorthogonal coordinate systems appear.
+
+---
+
+# 526.7 Why squaring every component?
+
+Suppose components are:
+
+\[
+(-3,4).
+\]
+
+The component \(-3\) means motion opposite the positive X basis direction.
+
+Magnitude must not become smaller merely because the component points left instead of right.
+
+Squaring removes sign:
+
+\[
+(-3)^2=9.
+\]
+
+More deeply, Pythagorean length measures contributions from mutually perpendicular directions using squares.
+
+It is not arbitrary sign removal.
+
+---
+
+# 526.8 Magnitude properties
+
+For Euclidean magnitude:
+
+### Non-negativity
+
+\[
+\|\vec v\|\ge0.
+\]
+
+### Zero only for the zero vector
+
+If:
+
+\[
+\|\vec v\|=0,
+\]
+
+then:
+
+\[
+v_1^2+\cdots+v_n^2=0.
+\]
+
+Every term is nonnegative.
+
+For their sum to equal zero, every term must equal zero:
+
+\[
+v_i=0
+\]
+
+for every \(i\).
+
+Therefore:
+
+\[
+\boxed{
+\|\vec v\|=0
+\iff
+\vec v=\vec0.
+}
+\]
+
+---
+
+# 526.9 Negation does not change magnitude
+
+Take:
+
+\[
+-\vec v=(-v_1,\ldots,-v_n).
+\]
+
+Then:
+
+\[
+\|-\vec v\|
+=
+\sqrt{
+(-v_1)^2+\cdots+(-v_n)^2
+}.
+\]
+
+Since:
+
+\[
+(-v_i)^2=v_i^2,
+\]
+
+we get:
+
+\[
+\boxed{
+\|-\vec v\|=\|\vec v\|.
+}
+\]
+
+Opposite direction.
+
+Same length.
+
+---
+
+# 526.10 Scaling and magnitude
+
+For scalar \(a\):
+
+\[
+a\vec v
+=
+(av_1,\ldots,av_n).
+\]
+
+Magnitude:
+
+\[
+\|a\vec v\|
+=
+\sqrt{
+a^2v_1^2+\cdots+a^2v_n^2
+}.
+\]
+
+Factor:
+
+\[
+=
+\sqrt{
+a^2
+(v_1^2+\cdots+v_n^2)
+}.
+\]
+
+Since:
+
+\[
+\sqrt{a^2}=|a|,
+\]
+
+we obtain:
+
+\[
+\boxed{
+\|a\vec v\|
+=
+|a|\|\vec v\|.
+}
+\]
+
+Why absolute value?
+
+If:
+
+\[
+a=-2,
+\]
+
+the vector reverses direction and doubles in length.
+
+Its length is \(2\), not \(-2\), times the original.
+
+---
+
+# 526.11 Units
+
+Suppose:
+
+\[
+x,y,z
+\]
+
+are measured in metres.
+
+Then:
+
+\[
+x^2
+\]
+
+has units:
+
+\[
+m^2.
+\]
+
+Therefore:
+
+\[
+x^2+y^2+z^2
+\]
+
+has units:
+
+\[
+m^2.
+\]
+
+Square root returns:
+
+\[
+m.
+\]
+
+So:
+
+\[
+\boxed{
+\|\vec v\|
+}
+\]
+
+has the same physical unit as \(\vec v\).
+
+This matters.
+
+A displacement magnitude is metres.
+
+A velocity magnitude is:
+
+\[
+m/s.
+\]
+
+Acceleration magnitude:
+
+\[
+m/s^2.
+\]
+
+---
+
+# 526.12 Worked example: 3–4–12
+
+Take:
+
+\[
+\vec v=(3,4,12).
+\]
+
+Calculate:
+
+\[
+\|\vec v\|
+=
+\sqrt{3^2+4^2+12^2}.
+\]
+
+Squares:
+
+\[
+9,\quad16,\quad144.
+\]
+
+Sum:
+
+\[
+9+16+144=169.
+\]
+
+Square root:
+
+\[
+\boxed{
+\|\vec v\|=13.
+}
+\]
+
+---
+
+# 526.13 Canonical C++ implementation
+
+A direct implementation:
+
+```cpp
+#include <cmath>
+
+struct Vec3 {
+    float x{};
+    float y{};
+    float z{};
+};
+
+[[nodiscard]]
+float length(Vec3 v) noexcept
+{
+    return std::sqrt(
+        v.x * v.x +
+        v.y * v.y +
+        v.z * v.z
+    );
+}
+```
+
+Execution for:
+
+```cpp
+Vec3 v{3.0f, 4.0f, 12.0f};
+```
+
+is conceptually:
+
+```text
+x*x       → 9
+y*y       → 16
+z*z       → 144
+
+9+16      → 25
+25+144    → 169
+
+sqrt(169) → 13
+```
+
+---
+
+# 526.14 A more numerically robust implementation
+
+The direct formula has a numerical weakness.
+
+Consider enormous values:
+
+\[
+x=10^{308},
+\qquad
+y=10^{308}
+\]
+
+in `double`.
+
+The actual length is approximately:
+
+\[
+1.414\times10^{308},
+\]
+
+which still fits inside a finite `double`.
+
+But computing:
+
+\[
+x^2
+\]
+
+requires approximately:
+
+\[
+10^{616},
+\]
+
+which overflows.
+
+So the intermediate result becomes infinity even though the final answer is representable.
+
+The standard library provides:
+
+```cpp
+std::hypot(...)
+```
+
+which implementations are designed to evaluate hypotenuse-like expressions more robustly.
+
+For three dimensions:
+
+```cpp
+[[nodiscard]]
+double robustLength(double x,
+                    double y,
+                    double z) noexcept
+{
+    return std::hypot(x, y, z);
+}
+```
+
+A common underlying principle is scaling.
+
+Let:
+
+\[
+m=\max(|x|,|y|,|z|).
+\]
+
+Then:
+
+\[
+\sqrt{x^2+y^2+z^2}
+=
+m
+\sqrt{
+(x/m)^2+
+(y/m)^2+
+(z/m)^2
+}.
+\]
+
+After division by the largest component, every magnitude is at most one, greatly reducing overflow risk.
+
+---
+
+# 526.15 Why not always use `std::hypot`?
+
+Because robustness has a potential cost.
+
+A direct:
+
+```cpp
+sqrt(x*x + y*y + z*z)
+```
+
+is extremely simple.
+
+A robust implementation may require:
+
+- absolute values;
+- comparisons;
+- scaling;
+- additional divisions;
+- special-case handling.
+
+If an engine already guarantees values remain safely scaled, direct arithmetic may be faster.
+
+So production engineering asks:
+
+\[
+\boxed{
+\text{What numeric range does this subsystem actually need?}
+}
+\]
+
+before automatically choosing either implementation.
+
+---
+
+# PART 527 — SQUARED MAGNITUDE AND WHY GRAPHICS OFTEN AVOIDS SQUARE ROOTS
+
+This Part is deceptively important.
+
+A huge amount of geometry code does **not** need the actual length.
+
+It only needs to compare lengths.
+
+---
+
+# 527.1 Start from magnitude
+
+Euclidean magnitude:
+
+\[
+\|\vec v\|
+=
+\sqrt{
+x^2+y^2+z^2
+}.
+\]
+
+Square both sides:
+
+\[
+\boxed{
+\|\vec v\|^2
+=
+x^2+y^2+z^2.
+}
+\]
+
+This is the **squared magnitude**, often called:
+
+```text
+length squared
+squared length
+length2
+norm squared
+```
+
+depending on codebase.
+
+---
+
+# 527.2 Why can we compare squared magnitudes?
+
+Suppose:
+
+\[
+a\ge0,\qquad b\ge0.
+\]
+
+The square-root function is strictly increasing on nonnegative numbers.
+
+Therefore:
+
+\[
+a<b
+\]
+
+if and only if:
+
+\[
+\sqrt a<\sqrt b.
+\]
+
+So if:
+
+\[
+\|\vec u\|^2
+<
+\|\vec v\|^2,
+\]
+
+then:
+
+\[
+\boxed{
+\|\vec u\|
+<
+\|\vec v\|.
+}
+\]
+
+Therefore if the only question is:
+
+> which vector is shorter?
+
+we do not need either square root.
+
+---
+
+# 527.3 Example
+
+Take:
+
+\[
+\vec a=(3,4)
+\]
+
+and:
+
+\[
+\vec b=(6,1).
+\]
+
+Squared magnitudes:
+
+\[
+\|\vec a\|^2
+=
+9+16=25.
+\]
+
+\[
+\|\vec b\|^2
+=
+36+1=37.
+\]
+
+Since:
+
+\[
+25<37,
+\]
+
+we immediately know:
+
+\[
+\|\vec a\|<\|\vec b\|.
+\]
+
+No need to calculate:
+
+\[
+5
+\]
+
+and:
+
+\[
+\sqrt{37}.
+\]
+
+---
+
+# 527.4 Radius testing
+
+Suppose an enemy triggers when player distance is less than:
+
+\[
+r=10.
+\]
+
+Naive code:
+
+```cpp
+if (length(enemy - player) < 10.0f) {
+    trigger();
+}
+```
+
+This computes a square root.
+
+Instead:
+
+\[
+\|enemy-player\|<10.
+\]
+
+Both sides are nonnegative, so square:
+
+\[
+\|enemy-player\|^2<100.
+\]
+
+Code:
+
+```cpp
+if (lengthSquared(enemy - player) < 100.0f) {
+    trigger();
+}
+```
+
+No square root.
+
+---
+
+# 527.5 Correct API
+
+```cpp
+[[nodiscard]]
+constexpr float lengthSquared(Vec3 v) noexcept
+{
+    return
+        v.x * v.x +
+        v.y * v.y +
+        v.z * v.z;
+}
+```
+
+Then:
+
+```cpp
+[[nodiscard]]
+float length(Vec3 v) noexcept
+{
+    return std::sqrt(lengthSquared(v));
+}
+```
+
+This is a good layering:
+
+```text
+component squares
+       ↓
+lengthSquared
+       ↓
+sqrt only when needed
+       ↓
+length
+```
+
+---
+
+# 527.6 Hardware reason
+
+Addition and multiplication are fundamental floating-point operations.
+
+Square root is a more specialized operation and generally carries higher latency/throughput cost than an ordinary multiply or add, although exact behavior varies by CPU/GPU architecture.
+
+So avoiding unnecessary square roots is a valid optimization when:
+
+1. you genuinely need only ordering or a squared threshold;
+2. profiling shows the code executes enough to matter.
+
+Do not mechanically eliminate every `sqrt`.
+
+---
+
+# 527.7 When you CANNOT use squared magnitude as a substitute
+
+Suppose velocity is:
+
+\[
+\vec v=(3,4)\ m/s.
+\]
+
+Speed is:
+
+\[
+5\ m/s.
+\]
+
+Squared speed is:
+
+\[
+25\ m^2/s^2.
+\]
+
+Those have different dimensions.
+
+If UI asks:
+
+```text
+Player speed: ?
+```
+
+you cannot display 25.
+
+The required quantity is 5.
+
+Likewise:
+
+```cpp
+distanceTravelled += length(delta);
+```
+
+cannot be replaced by:
+
+```cpp
+distanceTravelled += lengthSquared(delta);
+```
+
+because that changes the mathematical quantity.
+
+---
+
+# 527.8 Squared magnitude is not itself a norm
+
+Remember one norm property is:
+
+\[
+\|a\vec v\|
+=
+|a|\|\vec v\|.
+\]
+
+Squared magnitude instead satisfies:
+
+\[
+\|a\vec v\|^2
+=
+a^2\|\vec v\|^2.
+\]
+
+For example:
+
+\[
+\vec v=(1,0).
+\]
+
+Squared magnitude:
+
+\[
+1.
+\]
+
+Scale by 2:
+
+\[
+2\vec v=(2,0).
+\]
+
+Squared magnitude:
+
+\[
+4.
+\]
+
+If squared magnitude were a norm, scaling by 2 should produce:
+
+\[
+2\cdot1=2.
+\]
+
+It produces 4.
+
+Therefore:
+
+\[
+\boxed{
+\|\vec v\|^2
+\text{ is not a norm}.
+}
+\]
+
+---
+
+# 527.9 Squared Euclidean distance is not a metric
+
+Similarly:
+
+\[
+d^2(P,Q)=\|Q-P\|^2
+\]
+
+is extremely useful computationally.
+
+But it is not a true mathematical distance metric because it fails the triangle inequality.
+
+Take points on a line:
+
+\[
+A=0,\quad B=1,\quad C=2.
+\]
+
+Then:
+
+\[
+d^2(A,C)=4.
+\]
+
+But:
+
+\[
+d^2(A,B)+d^2(B,C)
+=
+1+1
+=
+2.
+\]
+
+A metric would require:
+
+\[
+4\le2,
+\]
+
+which is false.
+
+Therefore:
+
+\[
+\boxed{
+\text{squared distance is useful for comparison but is not itself a metric}.
+}
+\]
+
+---
+
+# 527.10 Squaring can overflow
+
+Avoiding the square root does **not** automatically make the computation numerically safer.
+
+For huge:
+
+\[
+x,
+\]
+
+the term:
+
+\[
+x^2
+\]
+
+can overflow.
+
+So:
+
+```cpp
+lengthSquared(v)
+```
+
+may return infinity even when:
+
+```cpp
+length(v)
+```
+
+implemented robustly with scaling could return a finite result.
+
+This is an important production distinction.
+
+---
+
+# 527.11 Tiny values can underflow
+
+For very small floating-point values:
+
+\[
+x^2
+\]
+
+can become too small to represent normally or even round to zero.
+
+Then:
+
+\[
+lengthSquared(v)
+\]
+
+can incorrectly appear zero.
+
+This becomes particularly dangerous when normalization code does:
+
+```cpp
+float invLength =
+    1.0f / std::sqrt(lengthSquared(v));
+```
+
+because an underflowed zero becomes division by zero.
+
+Part 529 will address this properly.
+
+---
+
+# PART 528 — NORMALIZING A VECTOR
+
+Now we answer:
+
+> Given a nonzero vector that contains both direction and magnitude, how do I remove the magnitude and retain only direction?
+
+That operation is **normalization**.
+
+---
+
+# 528.1 Desired output
+
+Given:
+
+\[
+\vec v\neq\vec0,
+\]
+
+we want a vector:
+
+\[
+\hat v
+\]
+
+that:
+
+1. points in the same direction;
+2. has magnitude 1.
+
+So we want:
+
+\[
+\|\hat v\|=1.
+\]
+
+---
+
+# 528.2 Derive the formula instead of memorizing it
+
+We know scalar multiplication obeys:
+
+\[
+\|a\vec v\|
+=
+|a|\|\vec v\|.
+\]
+
+We want:
+
+\[
+\|a\vec v\|=1.
+\]
+
+Therefore:
+
+\[
+|a|\|\vec v\|=1.
+\]
+
+To preserve the same direction rather than reverse it, choose positive \(a\).
+
+Then:
+
+\[
+a=\frac1{\|\vec v\|}.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\hat v
+=
+\frac{\vec v}{\|\vec v\|}
+}
+\]
+
+for:
+
+\[
+\vec v\neq\vec0.
+\]
+
+That is normalization.
+
+---
+
+# 528.3 Prove the output has unit length
+
+Take:
+
+\[
+\hat v=
+\frac{\vec v}{\|\vec v\|}.
+\]
+
+Magnitude:
+
+\[
+\|\hat v\|
+=
+\left\|
+\frac1{\|\vec v\|}
+\vec v
+\right\|.
+\]
+
+Using scalar homogeneity:
+
+\[
+=
+\left|
+\frac1{\|\vec v\|}
+\right|
+\|\vec v\|.
+\]
+
+Since magnitude is positive for nonzero \(\vec v\):
+
+\[
+=
+\frac1{\|\vec v\|}
+\|\vec v\|.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\|\hat v\|=1.
+}
+\]
+
+---
+
+# 528.4 Example: \((3,4)\)
+
+Magnitude:
+
+\[
+\|\vec v\|
+=
+5.
+\]
+
+Therefore:
+
+\[
+\hat v
+=
+\frac{(3,4)}{5}
+\]
+
+so:
+
+\[
+\boxed{
+\hat v=(0.6,0.8).
+}
+\]
+
+Check:
+
+\[
+\sqrt{0.6^2+0.8^2}
+=
+\sqrt{0.36+0.64}
+=
+1.
+\]
+
+---
+
+# 528.5 Normalization loses information
+
+This is important.
+
+Both:
+
+\[
+(3,4)
+\]
+
+and:
+
+\[
+(30,40)
+\]
+
+normalize to:
+
+\[
+(0.6,0.8).
+\]
+
+Therefore normalization discards original magnitude.
+
+It is **not invertible** unless you separately store the magnitude.
+
+Conceptually:
+
+```text
+vector
+├── magnitude
+└── direction
+
+normalize
+    ↓
+
+direction only
+```
+
+If you retain:
+
+\[
+m=\|\vec v\|
+\]
+
+and:
+
+\[
+\hat v=\vec v/m,
+\]
+
+then:
+
+\[
+\vec v=m\hat v.
+\]
+
+So magnitude + normalized direction reconstructs the original vector.
+
+---
+
+# 528.6 Normalization is not linear
+
+A linear operation would need:
+
+\[
+N(\vec u+\vec v)
+=
+N(\vec u)+N(\vec v).
+\]
+
+Normalization does not satisfy this.
+
+Take:
+
+\[
+\vec u=(1,0)
+\]
+
+and:
+
+\[
+\vec v=(0,1).
+\]
+
+Then:
+
+\[
+N(\vec u)=\vec u
+\]
+
+and:
+
+\[
+N(\vec v)=\vec v.
+\]
+
+So:
+
+\[
+N(\vec u)+N(\vec v)
+=
+(1,1).
+\]
+
+But:
+
+\[
+N(\vec u+\vec v)
+=
+N(1,1)
+=
+\left(
+\frac1{\sqrt2},
+\frac1{\sqrt2}
+\right).
+\]
+
+Not equal.
+
+So normalization is a **nonlinear operation**.
+
+---
+
+# 528.7 Positive and negative scaling
+
+If:
+
+\[
+a>0,
+\]
+
+then:
+
+\[
+N(a\vec v)=N(\vec v).
+\]
+
+Positive scaling changes magnitude but not direction.
+
+If:
+
+\[
+a<0,
+\]
+
+then:
+
+\[
+N(a\vec v)=-N(\vec v).
+\]
+
+Negative scaling reverses orientation.
+
+---
+
+# 528.8 Units disappear
+
+Suppose:
+
+\[
+\vec v=(3,4)\text{ metres}.
+\]
+
+Magnitude:
+
+\[
+5\text{ metres}.
+\]
+
+Then:
+
+\[
+\frac{\vec v}{\|\vec v\|}
+\]
+
+has units:
+
+\[
+\frac{\text m}{\text m}=1.
+\]
+
+So a normalized direction is dimensionless.
+
+That is exactly what we want when representing pure orientation.
+
+---
+
+# 528.9 Straight implementation
+
+```cpp
+[[nodiscard]]
+Vec3 normalize(Vec3 v) noexcept
+{
+    const float len = std::sqrt(
+        v.x * v.x +
+        v.y * v.y +
+        v.z * v.z
+    );
+
+    return {
+        v.x / len,
+        v.y / len,
+        v.z / len
+    };
+}
+```
+
+Mathematically correct for nonzero finite values within safe numerical ranges.
+
+But we can improve its arithmetic structure.
+
+---
+
+# 528.10 Reciprocal once, multiply three times
+
+Instead of three divisions:
+
+```cpp
+v.x / len
+v.y / len
+v.z / len
+```
+
+compute:
+
+\[
+\frac1{len}
+\]
+
+once.
+
+```cpp
+[[nodiscard]]
+Vec3 normalizeUnchecked(Vec3 v) noexcept
+{
+    const float lenSquared =
+        v.x * v.x +
+        v.y * v.y +
+        v.z * v.z;
+
+    const float invLen =
+        1.0f / std::sqrt(lenSquared);
+
+    return {
+        v.x * invLen,
+        v.y * invLen,
+        v.z * invLen
+    };
+}
+```
+
+The conceptual sequence:
+
+```text
+x²+y²+z²
+     ↓
+sqrt
+     ↓
+length
+     ↓
+1 / length
+     ↓
+multiply every component
+```
+
+---
+
+# 528.11 Why GPUs often expose inverse square root
+
+Since:
+
+\[
+\frac1{\|\vec v\|}
+=
+\frac1{\sqrt{x^2+y^2+z^2}},
+\]
+
+normalization naturally involves inverse square root.
+
+Shader languages and GPU hardware commonly support operations corresponding to `sqrt` and/or reciprocal square root.
+
+This can make normalization efficient.
+
+But do not assume an approximate inverse square root is always acceptable.
+
+Accuracy requirements vary.
+
+---
+
+# 528.12 The famous fast inverse square root
+
+You may encounter the old Quake-style "fast inverse square root."
+
+Its historical importance is real.
+
+But treating it as automatically superior on modern hardware is a mistake.
+
+Modern CPUs/GPUs may have hardware-supported square root or reciprocal-square-root instructions, and compilers may optimize mathematical expressions appropriately.
+
+Use approximations only when:
+
+- error tolerance is understood;
+- target hardware benefits;
+- profiling demonstrates value.
+
+Do not cargo-cult a historical trick.
+
+---
+
+# 528.13 Where normalization appears
+
+Later you will normalize:
+
+- camera directions;
+- light directions;
+- surface normals;
+- ray directions in some formulations;
+- reflection directions;
+- tangent-frame axes;
+- axes of rotation;
+- constraint directions;
+- vectors before measuring angular relationships.
+
+Normalization is therefore an important **invariant-establishing operation**.
+
+---
+
+# PART 529 — ZERO-VECTOR NORMALIZATION AND ROBUST HANDLING
+
+This Part is where textbook math becomes engine engineering.
+
+The textbook writes:
+
+\[
+\hat v=\frac{\vec v}{\|\vec v\|}
+\]
+
+and then quietly says:
+
+\[
+\vec v\neq0.
+\]
+
+Production code cannot quietly assume that.
+
+---
+
+# 529.1 What happens for the zero vector?
+
+Take:
+
+\[
+\vec v=(0,0,0).
+\]
+
+Magnitude:
+
+\[
+\|\vec v\|=0.
+\]
+
+Normalization asks for:
+
+\[
+\frac{\vec0}{0}.
+\]
+
+Every component requires:
+
+\[
+\frac00.
+\]
+
+That is undefined mathematically.
+
+Therefore:
+
+\[
+\boxed{
+\text{the zero vector has no normalized direction}.
+}
+\]
+
+This makes conceptual sense.
+
+Zero displacement points nowhere.
+
+---
+
+# 529.2 IEEE-754 consequence
+
+With floating-point arithmetic:
+
+```cpp
+0.0f / 0.0f
+```
+
+typically yields NaN under normal IEEE-754 behavior.
+
+So naive:
+
+```cpp
+normalize(Vec3{0,0,0})
+```
+
+can produce:
+
+```text
+(NaN, NaN, NaN)
+```
+
+Those NaNs can propagate:
+
+```text
+direction
+   ↓
+camera matrix
+   ↓
+world transform
+   ↓
+vertex transform
+   ↓
+entire scene becomes invalid
+```
+
+A single failed normalization can therefore create spectacular downstream corruption.
+
+---
+
+# 529.3 Where zero vectors arise naturally
+
+This is not a pathological input.
+
+Suppose:
+
+```cpp
+direction = target - position;
+```
+
+If:
+
+```text
+target == position
+```
+
+then:
+
+\[
+target-position=\vec0.
+\]
+
+Or:
+
+```cpp
+velocity
+```
+
+can legitimately become zero.
+
+Or two identical contact points may produce zero displacement.
+
+So robust normalization must deliberately define behavior.
+
+---
+
+# 529.4 Exact zero versus near zero
+
+Mathematically only:
+
+\[
+\vec0
+\]
+
+is invalid.
+
+A tiny nonzero vector such as:
+
+\[
+(10^{-30},0,0)
+\]
+
+has a perfectly valid mathematical direction:
+
+\[
+(1,0,0).
+\]
+
+But finite-precision arithmetic creates a practical question.
+
+The length computation may:
+
+- underflow;
+- lose precision;
+- produce unstable reciprocal;
+- amplify noise.
+
+So engines often define a **minimum usable length**.
+
+That is an engineering policy, not a mathematical theorem.
+
+---
+
+# 529.5 Why `epsilon` needs thought
+
+You might see:
+
+```cpp
+if (lengthSquared(v) < 1e-8f)
+    ...
+```
+
+But ask:
+
+> 1e-8 of what unit?
+
+If \(\vec v\) is metres, then:
+
+\[
+\|\vec v\|^2
+\]
+
+has units:
+
+\[
+m^2.
+\]
+
+So the threshold must also represent squared metres.
+
+If your world units are kilometres or micrometres, the same numerical epsilon means something completely different.
+
+Therefore:
+
+\[
+\boxed{
+\text{epsilon is part of a domain policy, not a magical universal constant}.
+}
+\]
+
+---
+
+# 529.6 Comparing squared length to threshold
+
+If your minimum acceptable length is:
+
+\[
+\varepsilon,
+\]
+
+then you can compare:
+
+\[
+\|\vec v\|^2
+\le
+\varepsilon^2
+\]
+
+rather than computing a square root.
+
+Example:
+
+```cpp
+constexpr float minimumLength = 1e-5f;
+constexpr float minimumLengthSquared =
+    minimumLength * minimumLength;
+
+if (lengthSquared(v) <= minimumLengthSquared) {
+    // Too small to normalize under this policy.
+}
+```
+
+This avoids `sqrt`, but remember the squared computation itself may overflow/underflow for extreme values.
+
+---
+
+# 529.7 Several valid API policies
+
+There is no single correct answer to invalid normalization.
+
+### Policy A: precondition / assertion
+
+```cpp
+Vec3 normalize(Vec3 v)
+{
+    assert(lengthSquared(v) > 0.0f);
+    ...
+}
+```
+
+Good when zero indicates a programmer bug.
+
+Bad when zero is an expected runtime state.
+
+---
+
+### Policy B: return zero
+
+```cpp
+Vec3 normalizeOrZero(Vec3 v);
+```
+
+If input is unusable:
+
+\[
+\vec0\rightarrow\vec0.
+\]
+
+Convenient.
+
+But mathematically dangerous because the output is not unit length.
+
+A caller expecting a guaranteed direction can silently receive an invalid one.
+
+---
+
+### Policy C: return fallback
+
+```cpp
+Vec3 normalizeOr(Vec3 v, Vec3 fallback);
+```
+
+For example, camera direction might retain previous direction.
+
+Useful when the application has a sensible fallback.
+
+---
+
+### Policy D: signal failure
+
+```cpp
+std::optional<UnitVec3> tryNormalize(Vec3 v);
+```
+
+This represents reality accurately:
+
+> a direction either exists or does not.
+
+For semantic APIs this is often excellent.
+
+---
+
+# 529.8 Robust finite checking
+
+We should also reject NaN and infinity.
+
+```cpp
+#include <cmath>
+
+[[nodiscard]]
+bool isFinite(Vec3 v) noexcept
+{
+    return
+        std::isfinite(v.x) &&
+        std::isfinite(v.y) &&
+        std::isfinite(v.z);
+}
+```
+
+Why?
+
+Consider:
+
+\[
+(+\infty,1,0).
+\]
+
+Normalization involves expressions such as:
+
+\[
+\frac{\infty}{\infty},
+\]
+
+which can become NaN.
+
+A production direction type should usually not silently accept nonfinite components.
+
+---
+
+# 529.9 Robust scaling normalization
+
+We can do even better than the naive square-sum approach.
+
+Let:
+
+\[
+m=
+\max(|x|,|y|,|z|).
+\]
+
+If:
+
+\[
+m=0,
+\]
+
+all components are zero.
+
+Otherwise scale:
+
+\[
+\vec s=\frac{\vec v}{m}.
+\]
+
+Every component of \(\vec s\) now has magnitude at most 1.
+
+Compute:
+
+\[
+\ell_s=
+\sqrt{
+s_x^2+s_y^2+s_z^2
+}.
+\]
+
+Then normalize:
+
+\[
+\hat v=
+\frac{\vec s}{\ell_s}.
+\]
+
+Notice we never need to construct:
+
+\[
+x^2
+\]
+
+for huge \(x\).
+
+---
+
+# 529.10 Robust implementation
+
+```cpp
+#include <algorithm>
+#include <cmath>
+#include <optional>
+
+struct Vec3 {
+    double x{};
+    double y{};
+    double z{};
+};
+
+[[nodiscard]]
+std::optional<Vec3>
+tryNormalize(Vec3 v) noexcept
+{
+    if (!std::isfinite(v.x) ||
+        !std::isfinite(v.y) ||
+        !std::isfinite(v.z))
+    {
+        return std::nullopt;
+    }
+
+    const double scale =
+        std::max({
+            std::abs(v.x),
+            std::abs(v.y),
+            std::abs(v.z)
+        });
+
+    if (scale == 0.0) {
+        return std::nullopt;
+    }
+
+    const Vec3 scaled{
+        v.x / scale,
+        v.y / scale,
+        v.z / scale
+    };
+
+    const double scaledLength =
+        std::sqrt(
+            scaled.x * scaled.x +
+            scaled.y * scaled.y +
+            scaled.z * scaled.z
+        );
+
+    return Vec3{
+        scaled.x / scaledLength,
+        scaled.y / scaledLength,
+        scaled.z / scaledLength
+    };
+}
+```
+
+---
+
+# 529.11 Trace huge input
+
+Suppose:
+
+\[
+\vec v=(10^{300},10^{300},0).
+\]
+
+Naive:
+
+\[
+(10^{300})^2=10^{600}
+\]
+
+overflows `double`.
+
+Robust version chooses:
+
+\[
+scale=10^{300}.
+\]
+
+Then:
+
+\[
+scaled=(1,1,0).
+\]
+
+Length:
+
+\[
+\sqrt2.
+\]
+
+Output:
+
+\[
+\left(
+\frac1{\sqrt2},
+\frac1{\sqrt2},
+0
+\right).
+\]
+
+Correct direction, without ever calculating \(10^{600}\).
+
+---
+
+# 529.12 What about tiny input?
+
+Suppose:
+
+\[
+\vec v=(10^{-300},0,0).
+\]
+
+Naive square:
+
+\[
+10^{-600}
+\]
+
+underflows.
+
+Scaling method:
+
+\[
+scale=10^{-300}.
+\]
+
+So:
+
+\[
+scaled=(1,0,0).
+\]
+
+Length:
+
+\[
+1.
+\]
+
+Result:
+
+\[
+(1,0,0).
+\]
+
+Again, mathematically correct.
+
+---
+
+# 529.13 But production may still reject tiny input
+
+Numerically *being able* to recover its direction doesn't mean the direction is semantically trustworthy.
+
+Suppose the vector came from:
+
+```text
+measured position difference
+```
+
+and its magnitude is close to the system's error/noise scale.
+
+Then its direction may be mostly numerical noise.
+
+So an application may still say:
+
+\[
+\|\vec v\|<\varepsilon
+\Rightarrow
+\text{no reliable direction}.
+\]
+
+That is a semantic decision.
+
+---
+
+# PART 530 — L1 NORM
+
+Now we broaden the concept.
+
+Euclidean magnitude is one way of measuring vector size.
+
+A **norm** is a mathematical abstraction specifying what a valid notion of vector size must satisfy.
+
+---
+
+# 530.1 General norm definition
+
+A norm is a function:
+
+\[
+\|\cdot\|:V\rightarrow\mathbb R
+\]
+
+that assigns each vector a real number and satisfies four essential properties.
+
+For vectors \(\vec u,\vec v\) and scalar \(a\):
+
+### 1. Non-negativity
+
+\[
+\boxed{
+\|\vec v\|\ge0.
+}
+\]
+
+### 2. Definiteness
+
+\[
+\boxed{
+\|\vec v\|=0
+\iff
+\vec v=\vec0.
+}
+\]
+
+### 3. Absolute homogeneity
+
+\[
+\boxed{
+\|a\vec v\|
+=
+|a|\|\vec v\|.
+}
+\]
+
+### 4. Triangle inequality
+
+\[
+\boxed{
+\|\vec u+\vec v\|
+\le
+\|\vec u\|+\|\vec v\|.
+}
+\]
+
+These rules capture the structural behavior expected from "size."
+
+---
+
+# 530.2 Why triangle inequality?
+
+Suppose:
+
+\[
+\vec u
+\]
+
+takes you from A to B, and:
+
+\[
+\vec v
+\]
+
+takes you from B to C.
+
+Then:
+
+\[
+\vec u+\vec v
+\]
+
+takes you directly A to C.
+
+A sane notion of length should not say the direct route is longer than the sum of the two legs:
+
+\[
+\boxed{
+\|\vec u+\vec v\|
+\le
+\|\vec u\|+\|\vec v\|.
+}
+\]
+
+That is the triangle inequality.
+
+---
+
+# 530.3 Definition of the L1 norm
+
+For:
+
+\[
+\vec v=(v_1,\ldots,v_n),
+\]
+
+define:
+
+\[
+\boxed{
+\|\vec v\|_1
+=
+\sum_{i=1}^{n}|v_i|.
+}
+\]
+
+In 2D:
+
+\[
+\boxed{
+\|(x,y)\|_1
+=
+|x|+|y|.
+}
+\]
+
+In 3D:
+
+\[
+\boxed{
+\|(x,y,z)\|_1
+=
+|x|+|y|+|z|.
+}
+\]
+
+---
+
+# 530.4 Example
+
+Take:
+
+\[
+\vec v=(-3,4,-2).
+\]
+
+Then:
+
+\[
+\|\vec v\|_1
+=
+|-3|+|4|+|-2|.
+\]
+
+Therefore:
+
+\[
+3+4+2=9.
+\]
+
+So:
+
+\[
+\boxed{
+\|\vec v\|_1=9.
+}
+\]
+
+---
+
+# 530.5 Why call it L1?
+
+The exponent "1" comes from a larger family:
+
+\[
+\|\vec v\|_p
+=
+\left(
+\sum_i |v_i|^p
+\right)^{1/p}.
+\]
+
+Setting:
+
+\[
+p=1
+\]
+
+gives:
+
+\[
+\sum_i |v_i|.
+\]
+
+We are not turning this into a separate \(L_p\) lesson; the expression only explains where the naming comes from.
+
+---
+
+# 530.6 Prove L1 is a norm
+
+## Non-negativity
+
+Every:
+
+\[
+|v_i|\ge0.
+\]
+
+A sum of nonnegative values is nonnegative:
+
+\[
+\|\vec v\|_1\ge0.
+\]
+
+---
+
+## Definiteness
+
+If:
+
+\[
+\sum_i|v_i|=0,
+\]
+
+then every nonnegative term must be zero.
+
+So:
+
+\[
+|v_i|=0
+\Rightarrow
+v_i=0.
+\]
+
+Therefore:
+
+\[
+\vec v=\vec0.
+\]
+
+---
+
+## Homogeneity
+
+\[
+\|a\vec v\|_1
+=
+\sum_i|av_i|.
+\]
+
+Since:
+
+\[
+|ab|=|a||b|,
+\]
+
+we get:
+
+\[
+=
+\sum_i|a||v_i|
+\]
+
+\[
+=
+|a|\sum_i|v_i|.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\|a\vec v\|_1
+=
+|a|\|\vec v\|_1.
+}
+\]
+
+---
+
+# 530.7 Triangle inequality for L1
+
+Start with:
+
+\[
+\|\vec u+\vec v\|_1
+=
+\sum_i|u_i+v_i|.
+\]
+
+Scalar absolute value obeys:
+
+\[
+|a+b|
+\le
+|a|+|b|.
+\]
+
+Therefore:
+
+\[
+|u_i+v_i|
+\le
+|u_i|+|v_i|.
+\]
+
+Sum all components:
+
+\[
+\sum_i|u_i+v_i|
+\le
+\sum_i|u_i|
++
+\sum_i|v_i|.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\|\vec u+\vec v\|_1
+\le
+\|\vec u\|_1+\|\vec v\|_1.
+}
+\]
+
+So L1 satisfies all norm axioms.
+
+---
+
+# 530.8 Geometry of the L1 unit ball
+
+Consider every 2D vector satisfying:
+
+\[
+\|\vec v\|_1\le1.
+\]
+
+So:
+
+\[
+|x|+|y|\le1.
+\]
+
+The boundary goes through:
+
+\[
+(1,0),
+\quad
+(0,1),
+\quad
+(-1,0),
+\quad
+(0,-1).
+\]
+
+Shape:
+
+```text
+        (0,1)
+          ●
+         / \
+        /   \
+(-1,0)●     ●(1,0)
+        \   /
+         \ /
+          ●
+        (0,-1)
+```
+
+A diamond.
+
+Compare that to the circular Euclidean unit ball.
+
+Different norm → different geometry.
+
+---
+
+# 530.9 Why L1 is called Manhattan distance in coordinate geometry
+
+Imagine city streets arranged in an orthogonal grid.
+
+To move from:
+
+\[
+(0,0)
+\]
+
+to:
+
+\[
+(3,4),
+\]
+
+if you can move only horizontally and vertically:
+
+\[
+3+4=7.
+\]
+
+That corresponds to:
+
+\[
+\|(3,4)\|_1=7.
+\]
+
+Hence:
+
+```text
+Manhattan norm / Manhattan distance
+taxicab geometry
+```
+
+---
+
+# 530.10 L1 is not rotationally invariant
+
+Take:
+
+\[
+\vec v=(1,0).
+\]
+
+Then:
+
+\[
+\|\vec v\|_1=1.
+\]
+
+Rotate by \(45^\circ\):
+
+\[
+\vec v'
+=
+\left(
+\frac1{\sqrt2},
+\frac1{\sqrt2}
+\right).
+\]
+
+Its L1 norm is:
+
+\[
+\frac1{\sqrt2}
++
+\frac1{\sqrt2}
+=
+\sqrt2.
+\]
+
+So rotating the vector changed its L1 norm.
+
+Therefore:
+
+\[
+\boxed{
+L_1
+\text{ depends on the orientation of the coordinate axes}.
+}
+\]
+
+This is a major difference from Euclidean length.
+
+---
+
+# 530.11 Implementation
+
+```cpp
+[[nodiscard]]
+constexpr float l1Norm(Vec3 v) noexcept
+{
+    return
+        std::abs(v.x) +
+        std::abs(v.y) +
+        std::abs(v.z);
+}
+```
+
+No square root.
+
+Computational structure:
+
+```text
+3 absolute values
+2 additions
+```
+
+for `Vec3`.
+
+Highly straightforward to vectorize in batch processing.
+
+---
+
+# PART 531 — L2 NORM
+
+Now we formally identify our familiar Euclidean magnitude as the **L2 norm**.
+
+---
+
+# 531.1 Definition
+
+For:
+
+\[
+\vec v=(v_1,\ldots,v_n),
+\]
+
+define:
+
+\[
+\boxed{
+\|\vec v\|_2
+=
+\left(
+\sum_i |v_i|^2
+\right)^{1/2}.
+}
+\]
+
+Because:
+
+\[
+|v_i|^2=v_i^2
+\]
+
+for real numbers:
+
+\[
+\boxed{
+\|\vec v\|_2
+=
+\sqrt{\sum_i v_i^2}.
+}
+\]
+
+This is exactly Part 526's Euclidean magnitude.
+
+So:
+
+\[
+\boxed{
+\text{ordinary Euclidean magnitude}=L_2\text{ norm}.
+}
+\]
+
+---
+
+# 531.2 We already proved three norm properties
+
+Non-negativity:
+
+\[
+\|\vec v\|_2\ge0.
+\]
+
+Definiteness:
+
+\[
+\|\vec v\|_2=0
+\iff
+\vec v=0.
+\]
+
+Homogeneity:
+
+\[
+\|a\vec v\|_2
+=
+|a|\|\vec v\|_2.
+\]
+
+The difficult property is the triangle inequality.
+
+Let's actually prove it.
+
+---
+
+# 531.3 A scalar inequality we need
+
+We need to show:
+
+\[
+\|\vec x+\vec y\|_2
+\le
+\|\vec x\|_2+\|\vec y\|_2.
+\]
+
+An important intermediate result is:
+
+\[
+\boxed{
+\left|
+\sum_i x_i y_i
+\right|
+\le
+\sqrt{\sum_i x_i^2}
+\sqrt{\sum_i y_i^2}.
+}
+\]
+
+Later you will recognize this as the **Cauchy–Schwarz inequality** expressed through what Part 534 will call the dot product.
+
+We can derive it without assuming dot-product theory.
+
+---
+
+# 531.4 Deriving the scalar-sum inequality
+
+Consider for any real \(t\):
+
+\[
+\sum_i(tx_i-y_i)^2.
+\]
+
+Every squared term is nonnegative, so:
+
+\[
+\sum_i(tx_i-y_i)^2\ge0.
+\]
+
+Expand:
+
+\[
+\sum_i
+(t^2x_i^2-2tx_iy_i+y_i^2).
+\]
+
+Group:
+
+\[
+t^2\sum_i x_i^2
+-
+2t\sum_i x_iy_i
++
+\sum_i y_i^2
+\ge0.
+\]
+
+Define:
+
+\[
+A=\sum_i x_i^2,
+\]
+
+\[
+B=\sum_i x_iy_i,
+\]
+
+\[
+C=\sum_i y_i^2.
+\]
+
+Then:
+
+\[
+At^2-2Bt+C\ge0
+\]
+
+for every real \(t\).
+
+A quadratic that is never negative cannot have two distinct real roots, so its discriminant must satisfy:
+
+\[
+(-2B)^2-4AC\le0.
+\]
+
+Thus:
+
+\[
+4B^2\le4AC.
+\]
+
+Divide by 4:
+
+\[
+B^2\le AC.
+\]
+
+Substitute definitions:
+
+\[
+\left(
+\sum_i x_i y_i
+\right)^2
+\le
+\left(
+\sum_i x_i^2
+\right)
+\left(
+\sum_i y_i^2
+\right).
+\]
+
+Take nonnegative square roots:
+
+\[
+\boxed{
+\left|
+\sum_i x_i y_i
+\right|
+\le
+\|\vec x\|_2\|\vec y\|_2.
+}
+\]
+
+We now have what we need.
+
+---
+
+# 531.5 Prove L2 triangle inequality
+
+Start:
+
+\[
+\|\vec x+\vec y\|_2^2
+=
+\sum_i(x_i+y_i)^2.
+\]
+
+Expand:
+
+\[
+=
+\sum_i
+(x_i^2+2x_iy_i+y_i^2).
+\]
+
+Regroup:
+
+\[
+=
+\sum_i x_i^2
++
+2\sum_i x_iy_i
++
+\sum_i y_i^2.
+\]
+
+Using the inequality above:
+
+\[
+\sum_i x_i y_i
+\le
+\|\vec x\|_2\|\vec y\|_2.
+\]
+
+Therefore:
+
+\[
+\|\vec x+\vec y\|_2^2
+\le
+\|\vec x\|_2^2
++
+2\|\vec x\|_2\|\vec y\|_2
++
+\|\vec y\|_2^2.
+\]
+
+Right side factors:
+
+\[
+=
+(
+\|\vec x\|_2+
+\|\vec y\|_2
+)^2.
+\]
+
+Both sides are nonnegative, so taking square roots preserves ordering:
+
+\[
+\boxed{
+\|\vec x+\vec y\|_2
+\le
+\|\vec x\|_2+\|\vec y\|_2.
+}
+\]
+
+Thus L2 satisfies the fourth norm axiom.
+
+---
+
+# 531.6 Geometry
+
+In 2D:
+
+\[
+\|\vec v\|_2=1
+\]
+
+means:
+
+\[
+x^2+y^2=1.
+\]
+
+That is a circle.
+
+In 3D:
+
+\[
+x^2+y^2+z^2=1
+\]
+
+is a sphere.
+
+So the L2 unit ball is:
+
+```text
+2D → disk
+3D → sphere interior
+nD → hypersphere interior
+```
+
+---
+
+# 531.7 Why Euclidean geometry prefers L2
+
+L2 treats all orthonormal directions isotropically.
+
+"Isotropic" here means:
+
+> no preferred spatial direction.
+
+A Euclidean rotation does not change Euclidean magnitude.
+
+In 2D, Part 503 already showed that a proper rotation preserves:
+
+\[
+x^2+y^2.
+\]
+
+L1 did not have that property.
+
+L∞ will not either.
+
+That rotational symmetry is why L2 corresponds naturally to ordinary physical straight-line geometry.
+
+---
+
+# 531.8 Implementation
+
+```cpp
+[[nodiscard]]
+float l2Norm(Vec3 v) noexcept
+{
+    return std::sqrt(
+        v.x * v.x +
+        v.y * v.y +
+        v.z * v.z
+    );
+}
+```
+
+Or robustly:
+
+```cpp
+[[nodiscard]]
+double l2Norm(Vec3d v) noexcept
+{
+    return std::hypot(v.x, v.y, v.z);
+}
+```
+
+Part 526 and Part 531 therefore describe the same formula from two different levels:
+
+**526:** geometric magnitude.  
+**531:** that magnitude as one member of the general norm concept.
+
+---
+
+# PART 532 — L-INFINITY NORM
+
+The third important norm asks:
+
+> What is the largest absolute component?
+
+---
+
+# 532.1 Formal definition
+
+For:
+
+\[
+\vec v=(v_1,\ldots,v_n),
+\]
+
+define:
+
+\[
+\boxed{
+\|\vec v\|_\infty
+=
+\max_i |v_i|.
+}
+\]
+
+In 3D:
+
+\[
+\boxed{
+\|(x,y,z)\|_\infty
+=
+\max(|x|,|y|,|z|).
+}
+\]
+
+---
+
+# 532.2 Example
+
+Take:
+
+\[
+\vec v=(-3,8,-5).
+\]
+
+Absolute values:
+
+\[
+3,\quad8,\quad5.
+\]
+
+Largest:
+
+\[
+8.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\|\vec v\|_\infty=8.
+}
+\]
+
+---
+
+# 532.3 Why is it called infinity norm?
+
+This name is not arbitrary.
+
+Recall the \(p\)-norm expression:
+
+\[
+\|\vec v\|_p
+=
+\left(
+\sum_i|v_i|^p
+\right)^{1/p}.
+\]
+
+Let:
+
+\[
+M=\max_i|v_i|.
+\]
+
+At least one component has magnitude \(M\), so:
+
+\[
+M^p
+\le
+\sum_i|v_i|^p.
+\]
+
+Taking \(1/p\) power:
+
+\[
+M
+\le
+\|\vec v\|_p.
+\]
+
+Also every:
+
+\[
+|v_i|\le M.
+\]
+
+Therefore:
+
+\[
+\sum_i|v_i|^p
+\le
+nM^p.
+\]
+
+Take \(1/p\) power:
+
+\[
+\|\vec v\|_p
+\le
+n^{1/p}M.
+\]
+
+So:
+
+\[
+M
+\le
+\|\vec v\|_p
+\le
+n^{1/p}M.
+\]
+
+As:
+
+\[
+p\rightarrow\infty,
+\]
+
+we have:
+
+\[
+n^{1/p}\rightarrow1.
+\]
+
+The lower and upper bounds both approach \(M\).
+
+Therefore:
+
+\[
+\boxed{
+\lim_{p\to\infty}\|\vec v\|_p
+=
+M
+=
+\max_i|v_i|.
+}
+\]
+
+That is why the notation is:
+
+\[
+L_\infty.
+\]
+
+---
+
+# 532.4 Prove it is a norm
+
+### Non-negativity
+
+Absolute values are nonnegative, so their maximum is nonnegative.
+
+### Definiteness
+
+If:
+
+\[
+\max_i|v_i|=0,
+\]
+
+then every:
+
+\[
+|v_i|=0.
+\]
+
+Therefore:
+
+\[
+\vec v=\vec0.
+\]
+
+### Homogeneity
+
+\[
+\|a\vec v\|_\infty
+=
+\max_i|av_i|
+\]
+
+\[
+=
+\max_i
+(|a||v_i|)
+\]
+
+\[
+=
+|a|\max_i|v_i|.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\|a\vec v\|_\infty
+=
+|a|\|\vec v\|_\infty.
+}
+\]
+
+---
+
+# 532.5 Triangle inequality
+
+For every component:
+
+\[
+|u_i+v_i|
+\le
+|u_i|+|v_i|.
+\]
+
+Also:
+
+\[
+|u_i|
+\le
+\|\vec u\|_\infty
+\]
+
+and:
+
+\[
+|v_i|
+\le
+\|\vec v\|_\infty.
+\]
+
+Therefore:
+
+\[
+|u_i+v_i|
+\le
+\|\vec u\|_\infty+
+\|\vec v\|_\infty.
+\]
+
+Since this holds for every component, their maximum also satisfies:
+
+\[
+\boxed{
+\|\vec u+\vec v\|_\infty
+\le
+\|\vec u\|_\infty+
+\|\vec v\|_\infty.
+}
+\]
+
+Thus L∞ is a valid norm.
+
+---
+
+# 532.6 Geometry of the unit ball
+
+In 2D:
+
+\[
+\|(x,y)\|_\infty\le1
+\]
+
+means:
+
+\[
+\max(|x|,|y|)\le1.
+\]
+
+Therefore:
+
+\[
+|x|\le1
+\]
+
+and:
+
+\[
+|y|\le1.
+\]
+
+That is the square:
+
+```text
+(-1,1) ┌─────────┐ (1,1)
+       │         │
+       │         │
+       │         │
+(-1,-1)└─────────┘ (1,-1)
+```
+
+In 3D the unit ball is an axis-aligned cube.
+
+This is a beautiful connection to graphics:
+
+\[
+\boxed{
+L_\infty\text{ balls are axis-aligned boxes}.
+}
+\]
+
+---
+
+# 532.7 Grid interpretation
+
+Suppose a chess king can move one square horizontally, vertically, or diagonally per move.
+
+From:
+
+\[
+(0,0)
+\]
+
+to:
+
+\[
+(3,5),
+\]
+
+the king can move diagonally for three steps:
+
+\[
+(0,0)\rightarrow(1,1)\rightarrow(2,2)\rightarrow(3,3)
+\]
+
+then two steps vertically:
+
+\[
+(3,4)\rightarrow(3,5).
+\]
+
+Total:
+
+\[
+5.
+\]
+
+And:
+
+\[
+\|(3,5)\|_\infty
+=
+\max(3,5)
+=
+5.
+\]
+
+That is why L∞ distance is also called **Chebyshev distance** in grid contexts.
+
+---
+
+# 532.8 L∞ is coordinate-axis dependent
+
+As with L1, L∞ is not rotationally invariant.
+
+Take:
+
+\[
+(1,0).
+\]
+
+Then:
+
+\[
+\|(1,0)\|_\infty=1.
+\]
+
+Rotate \(45^\circ\):
+
+\[
+\left(
+\frac1{\sqrt2},
+\frac1{\sqrt2}
+\right).
+\]
+
+Then:
+
+\[
+\|\cdot\|_\infty
+=
+\frac1{\sqrt2}
+\approx0.707.
+\]
+
+So the norm changed.
+
+Again, the coordinate axes matter.
+
+---
+
+# 532.9 Implementation
+
+```cpp
+[[nodiscard]]
+constexpr float lInfinityNorm(Vec3 v) noexcept
+{
+    return std::max({
+        std::abs(v.x),
+        std::abs(v.y),
+        std::abs(v.z)
+    });
+}
+```
+
+For three components:
+
+```text
+3 absolute values
+2 max operations
+```
+
+No square root.
+
+---
+
+# PART 533 — DISTANCE INDUCED BY A NORM
+
+Now the entire block comes together.
+
+A norm measures the size of a **vector**.
+
+Points are not vectors.
+
+But Part 521 taught us that subtracting two points gives a displacement vector:
+
+\[
+Q-P.
+\]
+
+So define distance between points as the norm of their displacement.
+
+---
+
+# 533.1 Formal definition
+
+Given norm:
+
+\[
+\|\cdot\|,
+\]
+
+define:
+
+\[
+\boxed{
+d(P,Q)
+=
+\|Q-P\|.
+}
+\]
+
+This is called the **distance induced by the norm**.
+
+---
+
+# 533.2 Why the subtraction appears
+
+A point has location.
+
+A norm expects a vector.
+
+Therefore we cannot directly write:
+
+\[
+\|P\|
+\]
+
+as an intrinsic point operation unless an origin has been chosen.
+
+But:
+
+\[
+Q-P
+\]
+
+is intrinsically the displacement from P to Q.
+
+So:
+
+\[
+\boxed{
+\text{point}
+-
+\text{point}
+\rightarrow
+\text{vector}
+\rightarrow
+\text{norm}
+\rightarrow
+\text{distance}.
+}
+\]
+
+That is the correct semantic chain.
+
+---
+
+# 533.3 Euclidean distance
+
+Using L2:
+
+\[
+d_2(P,Q)
+=
+\|Q-P\|_2.
+\]
+
+For:
+
+\[
+P=(p_x,p_y)
+\]
+
+and:
+
+\[
+Q=(q_x,q_y),
+\]
+
+displacement:
+
+\[
+Q-P
+=
+(q_x-p_x,q_y-p_y).
+\]
+
+Therefore:
+
+\[
+\boxed{
+d_2(P,Q)
+=
+\sqrt{
+(q_x-p_x)^2+
+(q_y-p_y)^2
+}.
+}
+\]
+
+In 3D:
+
+\[
+\boxed{
+d_2(P,Q)
+=
+\sqrt{
+(q_x-p_x)^2+
+(q_y-p_y)^2+
+(q_z-p_z)^2
+}.
+}
+\]
+
+---
+
+# 533.4 L1 distance
+
+Using L1:
+
+\[
+\boxed{
+d_1(P,Q)
+=
+\sum_i|q_i-p_i|.
+}
+\]
+
+For:
+
+\[
+P=(1,2),
+\quad
+Q=(4,6),
+\]
+
+difference:
+
+\[
+(3,4).
+\]
+
+L1 distance:
+
+\[
+3+4=7.
+\]
+
+---
+
+# 533.5 L∞ distance
+
+Using L∞:
+
+\[
+\boxed{
+d_\infty(P,Q)
+=
+\max_i|q_i-p_i|.
+}
+\]
+
+Same example:
+
+\[
+Q-P=(3,4).
+\]
+
+Therefore:
+
+\[
+d_\infty(P,Q)=4.
+\]
+
+And Euclidean:
+
+\[
+d_2(P,Q)=5.
+\]
+
+So the same two points have:
+
+\[
+\boxed{
+d_1=7,\qquad
+d_2=5,\qquad
+d_\infty=4.
+}
+\]
+
+There is no contradiction.
+
+We changed the geometry by changing the norm.
+
+---
+
+# 533.6 A proper metric
+
+A mathematical distance function, called a **metric**, needs several properties.
+
+For points \(P,Q,R\):
+
+### Non-negativity
+
+\[
+d(P,Q)\ge0.
+\]
+
+### Identity of indiscernibles
+
+\[
+d(P,Q)=0
+\iff
+P=Q.
+\]
+
+### Symmetry
+
+\[
+d(P,Q)=d(Q,P).
+\]
+
+### Triangle inequality
+
+\[
+d(P,R)
+\le
+d(P,Q)+d(Q,R).
+\]
+
+Let's derive all four from the norm axioms.
+
+---
+
+# 533.7 Non-negativity
+
+\[
+d(P,Q)=\|Q-P\|.
+\]
+
+A norm is nonnegative.
+
+Therefore:
+
+\[
+\boxed{
+d(P,Q)\ge0.
+}
+\]
+
+---
+
+# 533.8 Distance zero iff points coincide
+
+\[
+d(P,Q)=0
+\]
+
+means:
+
+\[
+\|Q-P\|=0.
+\]
+
+Norm definiteness says:
+
+\[
+Q-P=\vec0.
+\]
+
+Therefore:
+
+\[
+Q=P.
+\]
+
+So:
+
+\[
+\boxed{
+d(P,Q)=0
+\iff
+P=Q.
+}
+\]
+
+---
+
+# 533.9 Symmetry
+
+\[
+d(P,Q)
+=
+\|Q-P\|.
+\]
+
+But:
+
+\[
+P-Q=-(Q-P).
+\]
+
+A norm satisfies:
+
+\[
+\|-\vec v\|
+=
+|-1|\|\vec v\|
+=
+\|\vec v\|.
+\]
+
+Therefore:
+
+\[
+\|Q-P\|
+=
+\|P-Q\|.
+\]
+
+Thus:
+
+\[
+\boxed{
+d(P,Q)=d(Q,P).
+}
+\]
+
+---
+
+# 533.10 Triangle inequality
+
+Point differences obey:
+
+\[
+R-P
+=
+(R-Q)+(Q-P).
+\]
+
+Take norm:
+
+\[
+\|R-P\|
+=
+\|(R-Q)+(Q-P)\|.
+\]
+
+Norm triangle inequality gives:
+
+\[
+\le
+\|R-Q\|+\|Q-P\|.
+\]
+
+Therefore:
+
+\[
+\boxed{
+d(P,R)
+\le
+d(P,Q)+d(Q,R).
+}
+\]
+
+So every norm automatically induces a valid metric through vector differences.
+
+---
+
+# 533.11 Translation invariance
+
+Shift every point by the same displacement:
+
+\[
+P'=P+\vec t
+\]
+
+and:
+
+\[
+Q'=Q+\vec t.
+\]
+
+Then:
+
+\[
+Q'-P'
+=
+(Q+\vec t)-(P+\vec t)
+=
+Q-P.
+\]
+
+Therefore:
+
+\[
+d(P',Q')
+=
+\|Q-P\|
+=
+d(P,Q).
+\]
+
+So:
+
+\[
+\boxed{
+\text{norm-induced distances are translation invariant}.
+}
+\]
+
+This connects directly back to affine geometry.
+
+---
+
+# 533.12 Different norms can change which object is "nearest"
+
+This matters tremendously.
+
+Let query point:
+
+\[
+O=(0,0).
+\]
+
+Candidate A:
+
+\[
+A=(3,0).
+\]
+
+Candidate B:
+
+\[
+B=(2,2).
+\]
+
+### L2
+
+\[
+d_2(O,A)=3.
+\]
+
+\[
+d_2(O,B)=\sqrt8\approx2.828.
+\]
+
+So under Euclidean distance:
+
+\[
+B\text{ is closer}.
+\]
+
+### L1
+
+\[
+d_1(O,A)=3.
+\]
+
+\[
+d_1(O,B)=4.
+\]
+
+So under L1:
+
+\[
+A\text{ is closer}.
+\]
+
+### L∞
+
+\[
+d_\infty(O,A)=3.
+\]
+
+\[
+d_\infty(O,B)=2.
+\]
+
+So under L∞:
+
+\[
+B\text{ is closer}.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\text{"nearest" has no meaning until the distance metric is specified}.
+}
+\]
+
+---
+
+# 533.13 Distance balls
+
+A radius-\(r\) neighborhood around point \(P\) means:
+
+\[
+\{Q:d(P,Q)\le r\}.
+\]
+
+With L2 in 2D:
+
+```text
+circle
+```
+
+With L1:
+
+```text
+diamond
+```
+
+With L∞:
+
+```text
+axis-aligned square
+```
+
+In 3D:
+
+```text
+L2 → sphere
+L1 → octahedral shape
+L∞ → cube
+```
+
+So selecting a norm changes the shape of "within radius."
+
+---
+
+# 533.14 This directly affects algorithms
+
+Suppose your code says:
+
+```cpp
+if (distance(player, object) < radius)
+```
+
+You must ask:
+
+> Which distance?
+
+For ordinary physical proximity:
+
+\[
+L_2
+\]
+
+is usually intended.
+
+For grid movement with horizontal/vertical cost:
+
+\[
+L_1
+\]
+
+may model the problem better.
+
+For maximum coordinate error or axis-aligned neighborhoods:
+
+\[
+L_\infty
+\]
+
+may be natural.
+
+The algorithm should use a metric matching the domain geometry.
+
+---
+
+# 533.15 Coordinate spaces must match
+
+This is invalid:
+
+```cpp
+distance(worldPoint, localPoint);
+```
+
+unless one point is first transformed into the other's coordinate space.
+
+Why?
+
+Because:
+
+\[
+Q-P
+\]
+
+only has geometric meaning when the coordinates describe positions relative to compatible frames.
+
+So before distance:
+
+```text
+same semantic quantity?
+        ↓
+same coordinate space?
+        ↓
+same units?
+        ↓
+subtract
+        ↓
+norm
+```
+
+---
+
+# 533.16 Units must match
+
+Imagine vector:
+
+\[
+(x,y)
+\]
+
+where:
+
+```text
+x = metres
+y = seconds
+```
+
+Then:
+
+\[
+\sqrt{x^2+y^2}
+\]
+
+attempts to add:
+
+\[
+m^2+s^2,
+\]
+
+which is physically meaningless.
+
+This can occur in optimization/state vectors where components represent different physical quantities.
+
+Such systems often need:
+
+- nondimensionalization;
+- scaling;
+- weighted norms;
+- domain-specific metrics.
+
+Never blindly apply Euclidean norm to heterogeneous units.
+
+---
+
+# 533.17 Canonical C++ implementation
+
+```cpp
+struct Vec3 {
+    float x{};
+    float y{};
+    float z{};
+};
+
+[[nodiscard]]
+constexpr Vec3 operator-(Vec3 a, Vec3 b) noexcept
+{
+    return {
+        a.x - b.x,
+        a.y - b.y,
+        a.z - b.z
+    };
+}
+
+[[nodiscard]]
+constexpr float l1Norm(Vec3 v) noexcept
+{
+    return
+        std::abs(v.x) +
+        std::abs(v.y) +
+        std::abs(v.z);
+}
+
+[[nodiscard]]
+float l2Norm(Vec3 v) noexcept
+{
+    return std::sqrt(
+        v.x * v.x +
+        v.y * v.y +
+        v.z * v.z
+    );
+}
+
+[[nodiscard]]
+constexpr float lInfinityNorm(Vec3 v) noexcept
+{
+    return std::max({
+        std::abs(v.x),
+        std::abs(v.y),
+        std::abs(v.z)
+    });
+}
+```
+
+Then:
+
+```cpp
+[[nodiscard]]
+float euclideanDistance(Vec3 a, Vec3 b) noexcept
+{
+    return l2Norm(b - a);
+}
+```
+
+Likewise:
+
+```cpp
+[[nodiscard]]
+float manhattanDistance(Vec3 a, Vec3 b) noexcept
+{
+    return l1Norm(b - a);
+}
+```
+
+and:
+
+```cpp
+[[nodiscard]]
+float chebyshevDistance(Vec3 a, Vec3 b) noexcept
+{
+    return lInfinityNorm(b - a);
+}
+```
+
+---
+
+# HOW THE THREE NORMS RELATE
+
+For any finite-dimensional vector:
+
+\[
+\boxed{
+\|\vec v\|_\infty
+\le
+\|\vec v\|_2
+\le
+\|\vec v\|_1.
+}
+\]
+
+Let's understand why.
+
+---
+
+## Why \(L_\infty\le L_2\)
+
+Let:
+
+\[
+M=\max_i|v_i|.
+\]
+
+One component has squared magnitude:
+
+\[
+M^2.
+\]
+
+And:
+
+\[
+\sum_i v_i^2
+\]
+
+contains that term plus other nonnegative terms.
+
+So:
+
+\[
+M^2
+\le
+\sum_i v_i^2.
+\]
+
+Taking square roots:
+
+\[
+\boxed{
+\|\vec v\|_\infty
+\le
+\|\vec v\|_2.
+}
+\]
+
+---
+
+## Why \(L_2\le L_1\)
+
+We have:
+
+\[
+\left(
+\sum_i|v_i|
+\right)^2
+\]
+
+which expands into:
+
+\[
+\sum_i v_i^2
++
+2\sum_{i<j}|v_i||v_j|.
+\]
+
+Every cross term is nonnegative.
+
+Therefore:
+
+\[
+\left(
+\sum_i|v_i|
+\right)^2
+\ge
+\sum_i v_i^2.
+\]
+
+Take square roots:
+
+\[
+\boxed{
+\|\vec v\|_1
+\ge
+\|\vec v\|_2.
+}
+\]
+
+---
+
+# Stronger finite-dimensional bounds
+
+For dimension \(n\):
+
+\[
+\boxed{
+\|\vec v\|_1
+\le
+\sqrt n\,\|\vec v\|_2
+}
+\]
+
+and:
+
+\[
+\boxed{
+\|\vec v\|_2
+\le
+\sqrt n\,\|\vec v\|_\infty.
+}
+\]
+
+Also:
+
+\[
+\boxed{
+\|\vec v\|_1
+\le
+n\|\vec v\|_\infty.
+}
+\]
+
+These relationships tell us that while the norms define different geometry, in fixed finite dimension they bound one another.
+
+---
+
+# ONE VECTOR UNDER ALL THREE NORMS
+
+Take:
+
+\[
+\vec v=(3,-4,12).
+\]
+
+### L1
+
+\[
+\|\vec v\|_1
+=
+3+4+12
+=
+\boxed{19}.
+\]
+
+### L2
+
+\[
+\|\vec v\|_2
+=
+\sqrt{9+16+144}
+=
+\boxed{13}.
+\]
+
+### L∞
+
+\[
+\|\vec v\|_\infty
+=
+\max(3,4,12)
+=
+\boxed{12}.
+\]
+
+And indeed:
+
+\[
+12\le13\le19.
+\]
+
+Exactly as expected.
+
+---
+
+# PERFORMANCE COMPARISON
+
+For a `Vec3`, ignoring loads:
+
+| Operation | Typical scalar work |
+|---|---|
+| L1 | 3 abs + 2 adds |
+| L2 squared | 3 mul + 2 adds |
+| L2 | 3 mul + 2 adds + sqrt |
+| L∞ | 3 abs + 2 max |
+| normalize | L2 work + reciprocal + 3 mul |
+| L2 distance | 3 subtract + L2 |
+| L2 squared distance | 3 subtract + L2 squared |
+
+This does **not** automatically imply L∞ is always faster than L2 in meaningful application code.
+
+Real performance depends on:
+
+- instruction throughput;
+- compiler optimization;
+- vectorization;
+- memory bandwidth;
+- batching;
+- surrounding algorithm;
+- target CPU/GPU.
+
+At millions of vectors, memory layout can dominate the arithmetic itself.
+
+---
+
+# SIMD / GPU VIEW
+
+Suppose we have millions of vectors:
+
+```text
+v0
+v1
+v2
+v3
+...
+```
+
+Each norm operation is independent.
+
+That means batch evaluation is highly parallelizable.
+
+CPU SIMD can process multiple components/vectors together.
+
+GPU threads/invocations can each process separate vectors.
+
+There are generally no:
+
+- heap allocations;
+- synchronization requirements;
+- pointer chasing;
+- branches in the happy path.
+
+This is ideal data-parallel arithmetic.
+
+For large arrays, however, moving vector data from memory may cost as much or more than the few arithmetic instructions.
+
+---
+
+# MEMORY MODEL
+
+None of these norms require permanent extra memory.
+
+A vector remains:
+
+```text
+Vec3
+┌────────────┐
+│ x : float  │
+├────────────┤
+│ y : float  │
+├────────────┤
+│ z : float  │
+└────────────┘
+```
+
+The norm is derived transiently:
+
+```text
+load x
+load y
+load z
+    ↓
+arithmetic
+    ↓
+one scalar output
+```
+
+Normalization produces another vector:
+
+```text
+input Vec3
+    ↓
+calculate norm
+    ↓
+calculate inverse length
+    ↓
+scale components
+    ↓
+output Vec3
+```
+
+No heap ownership is involved.
+
+---
+
+# TEXTBOOK VERSUS PRODUCTION IMPLEMENTATION
+
+A textbook implementation might be:
+
+```cpp
+return v / std::sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+```
+
+A production engine may need decisions about:
+
+```text
+What happens for zero?
+What happens for almost-zero?
+What happens for NaN?
+What happens for infinity?
+Is direct length or robust hypot used?
+Are vectors float or double?
+Are directions required to stay normalized?
+Should invalid input assert?
+Should failure return optional?
+Should we normalize every frame?
+Can squared length avoid sqrt?
+Are values bounded enough that overflow cannot occur?
+Does coordinate scale make the epsilon sensible?
+```
+
+Those are not "extra details."
+
+Those are what separate mathematical literacy from implementation ownership.
+
+---
+
+# A STRONG SEMANTIC DIRECTION TYPE
+
+A canonical/reference design could enforce unit length:
+
+```cpp
+#include <optional>
+
+struct UnitVec3 {
+private:
+    Vec3 value_;
+
+    explicit UnitVec3(Vec3 v) noexcept
+        : value_(v)
+    {}
+
+public:
+    [[nodiscard]]
+    static std::optional<UnitVec3>
+    from(Vec3 v) noexcept
+    {
+        auto normalized = tryNormalize(v);
+
+        if (!normalized) {
+            return std::nullopt;
+        }
+
+        return UnitVec3{*normalized};
+    }
+
+    [[nodiscard]]
+    Vec3 value() const noexcept
+    {
+        return value_;
+    }
+};
+```
+
+Then functions requiring a direction can state their invariant through the type:
+
+```cpp
+void setCameraForward(UnitVec3 forward);
+```
+
+instead of:
+
+```cpp
+void setCameraForward(Vec3 forward);
+```
+
+The latter cannot tell the caller whether zero or non-unit input is legal.
+
+This is a **canonical design pattern**, not a claim about any specific project implementation.
+
+---
+
+# TESTING THIS MATH LIBRARY
+
+A serious vector math library should test much more than:
+
+```cpp
+length({3,4,0}) == 5
+```
+
+You want structured cases.
+
+For example:
+
+```cpp
+// Axis vectors.
+assert(length(Vec3{1,0,0}) == 1.0f);
+
+// 3-4-5.
+assert(length(Vec3{3,4,0}) == 5.0f);
+
+// Negation preserves magnitude.
+assert(length(Vec3{-3,-4,0}) == 5.0f);
+
+// Squared magnitude.
+assert(lengthSquared(Vec3{3,4,0}) == 25.0f);
+
+// L1.
+assert(l1Norm(Vec3{-3,4,-2}) == 9.0f);
+
+// L-infinity.
+assert(lInfinityNorm(Vec3{-3,8,-5}) == 8.0f);
+```
+
+Normalization:
+
+```cpp
+auto u = tryNormalize(Vec3{3,4,0});
+
+assert(u.has_value());
+
+const float ls = lengthSquared(*u);
+
+// Approximate check required because of floating point.
+assert(std::abs(ls - 1.0f) < tolerance);
+```
+
+Zero:
+
+```cpp
+assert(!tryNormalize(Vec3{0,0,0}));
+```
+
+Nonfinite:
+
+```cpp
+assert(!tryNormalize(
+    Vec3{
+        std::numeric_limits<double>::infinity(),
+        0,
+        0
+    }
+));
+```
+
+And robust implementations should be tested with extremely large and tiny finite inputs.
+
+---
+
+# DEBUGGING ATTACK TREE
+
+Suppose a direction becomes NaN.
+
+Do not start randomly inserting epsilons.
+
+Trace:
+
+```text
+Where was direction created?
+        ↓
+Was it produced by normalization?
+        ↓
+What was the input vector?
+        ↓
+Was it zero?
+        ↓
+Was it nearly zero?
+        ↓
+Were any components already NaN/Inf?
+        ↓
+Did lengthSquared overflow?
+        ↓
+Did lengthSquared underflow?
+        ↓
+Did sqrt receive invalid data?
+        ↓
+Was division by zero performed?
+        ↓
+What policy should the caller actually use?
+```
+
+That is systematic debugging.
+
+---
+
+# A GRAPHICS EXAMPLE FROM START TO FINISH
+
+Suppose camera position:
+
+\[
+C=(100,20,-30)
+\]
+
+and target:
+
+\[
+T=(106,28,-30).
+\]
+
+First obtain displacement:
+
+\[
+\vec d=T-C.
+\]
+
+So:
+
+\[
+\vec d=(6,8,0).
+\]
+
+Squared magnitude:
+
+\[
+\|\vec d\|_2^2
+=
+36+64
+=
+100.
+\]
+
+Actual distance:
+
+\[
+\|\vec d\|_2=10.
+\]
+
+Direction:
+
+\[
+\hat d
+=
+\frac{(6,8,0)}{10}
+\]
+
+so:
+
+\[
+\boxed{
+\hat d=(0.6,0.8,0).
+}
+\]
+
+Now you have separated:
+
+```text
+distance = 10
+
+direction = (0.6,0.8,0)
+```
+
+and can reconstruct:
+
+\[
+10(0.6,0.8,0)
+=
+(6,8,0).
+\]
+
+That decomposition:
+
+\[
+\boxed{
+\vec v
+=
+\|\vec v\|
+\hat v
+}
+\]
+
+is conceptually fundamental.
+
+---
+
+# WHY THE DISTINCTION BETWEEN MAGNITUDE, NORM, AND DISTANCE MATTERS
+
+These three words are related but not identical.
+
+A **norm** is a function satisfying the norm axioms:
+
+\[
+\|\cdot\|.
+\]
+
+The **magnitude** of a vector usually refers to its size under the chosen norm, and in ordinary graphics almost always means Euclidean/L2 magnitude unless otherwise specified.
+
+A **distance** compares two points:
+
+\[
+d(P,Q)=\|Q-P\|.
+\]
+
+So:
+
+```text
+vector
+    ↓ norm
+scalar magnitude
+
+point - point
+    ↓
+vector displacement
+    ↓ norm
+scalar distance
+```
+
+That chain should now be automatic.
+
+---
+
+# WHAT THE SHAPES SHOULD LOOK LIKE IN YOUR HEAD
+
+For radius \(1\) around the origin in 2D:
+
+```text
+L1
+
+      /\
+     /  \
+    /    \
+    \    /
+     \  /
+      \/
+
+
+L2
+
+     ****
+   **    **
+  *        *
+  *        *
+   **    **
+     ****
+
+
+L∞
+
+  ┌────────┐
+  │        │
+  │        │
+  │        │
+  └────────┘
+```
+
+They are three legitimate definitions of "one unit away."
+
+This is not cosmetic.
+
+It changes:
+
+- neighborhood shape;
+- nearest point;
+- path cost;
+- optimization behavior;
+- algorithm semantics.
+
+---
+
+# DO NOT CONFUSE THESE EIGHT IDEAS
+
+\[
+\|\vec v\|
+\]
+
+is magnitude.
+
+\[
+\|\vec v\|^2
+\]
+
+is squared magnitude.
+
+\[
+\frac{\vec v}{\|\vec v\|}
+\]
+
+is normalization.
+
+\[
+\vec0/\|\vec0\|
+\]
+
+is undefined.
+
+\[
+\|\vec v\|_1
+\]
+
+is sum of absolute components.
+
+\[
+\|\vec v\|_2
+\]
+
+is Euclidean magnitude.
+
+\[
+\|\vec v\|_\infty
+\]
+
+is maximum absolute component.
+
+And:
+
+\[
+\|Q-P\|
+\]
+
+is distance induced by a norm.
+
+If these collapse into "some vector length stuff," Parts 534 onward become fragile.
+
+---
+
+# MASTER RECONSTRUCTION EXERCISE
+
+On a blank sheet, do all of this without looking.
+
+Start from a 2D right triangle and derive:
+
+\[
+\|\vec v\|_2
+=
+\sqrt{x^2+y^2}.
+\]
+
+Extend it to:
+
+\[
+\sqrt{x^2+y^2+z^2}.
+\]
+
+Then prove:
+
+\[
+\|a\vec v\|_2
+=
+|a|\|\vec v\|_2.
+\]
+
+Explain exactly why the absolute value is necessary.
+
+Then derive:
+
+\[
+\|\vec v\|_2^2
+=
+\sum_i v_i^2
+\]
+
+and explain why comparing squared lengths gives the same ordering as comparing actual lengths.
+
+Then explain **three cases where squared magnitude cannot replace magnitude**.
+
+Next derive normalization from the requirement:
+
+\[
+\|\hat v\|=1.
+\]
+
+You should obtain:
+
+\[
+\hat v=\frac{\vec v}{\|\vec v\|}.
+\]
+
+Prove its magnitude is one.
+
+Then explain why normalization is undefined for:
+
+\[
+\vec0.
+\]
+
+Explain what naive IEEE floating-point normalization can produce.
+
+Then reconstruct a robust normalization strategy based on:
+
+\[
+m=\max_i|v_i|.
+\]
+
+Next write the four norm axioms:
+
+\[
+\|\vec v\|\ge0
+\]
+
+\[
+\|\vec v\|=0\iff\vec v=0
+\]
+
+\[
+\|a\vec v\|=|a|\|\vec v\|
+\]
+
+\[
+\|\vec u+\vec v\|
+\le
+\|\vec u\|+\|\vec v\|.
+\]
+
+Then define from memory:
+
+\[
+\|\vec v\|_1
+\]
+
+\[
+\|\vec v\|_2
+\]
+
+\[
+\|\vec v\|_\infty.
+\]
+
+Draw their two-dimensional unit balls.
+
+Then prove:
+
+\[
+\|\vec v\|_\infty
+\le
+\|\vec v\|_2
+\le
+\|\vec v\|_1.
+\]
+
+Finally derive:
+
+\[
+d(P,Q)=\|Q-P\|
+\]
+
+and prove:
+
+\[
+d(P,Q)=d(Q,P)
+\]
+
+and:
+
+\[
+d(P,R)
+\le
+d(P,Q)+d(Q,R).
+\]
+
+If you can reconstruct all of that, this block is genuinely becoming yours.
+
+---
+
+# FINAL ENGINE MENTAL MODEL
+
+When you see:
+
+```cpp
+Vec3 delta = target - position;
+```
+
+think:
+
+\[
+\text{two affine points}
+\rightarrow
+\text{free displacement vector}.
+\]
+
+When you see:
+
+```cpp
+float d2 = lengthSquared(delta);
+```
+
+think:
+
+\[
+\text{squared L2 magnitude}
+\]
+
+with units squared, useful for ordering and threshold comparison.
+
+When you see:
+
+```cpp
+float d = length(delta);
+```
+
+think:
+
+\[
+\text{Euclidean/L2 magnitude}
+\]
+
+and, because `delta` is a point difference:
+
+\[
+\text{Euclidean distance}.
+\]
+
+When you see:
+
+```cpp
+Vec3 dir = normalize(delta);
+```
+
+think:
+
+\[
+\text{remove magnitude}
+\rightarrow
+\text{preserve direction}
+\]
+
+but immediately ask:
+
+```text
+Can delta be zero?
+Can it be near zero?
+Can its square overflow?
+Are the coordinates finite?
+Which coordinate space?
+Which unit?
+What invalid-input policy does this API guarantee?
+```
+
+And when someone says:
+
+> "distance"
+
+you should now instinctively ask:
+
+\[
+\boxed{\text{under which norm?}}
+\]
+
+That is the level of understanding we need before moving into the dot product.
+
+**Completed Part 526 — Euclidean vector magnitude**  
+**Completed Part 527 — Squared magnitude and why graphics often avoids square roots**  
+**Completed Part 528 — Normalizing a vector**  
+**Completed Part 529 — Zero-vector normalization and robust handling**  
+**Completed Part 530 — L1 norm**  
+**Completed Part 531 — L2 norm**  
+**Completed Part 532 — L-infinity norm**  
+**Completed Part 533 — Distance induced by a norm**
+
+**Next Core Part 534 — Dot product algebraic definition.**

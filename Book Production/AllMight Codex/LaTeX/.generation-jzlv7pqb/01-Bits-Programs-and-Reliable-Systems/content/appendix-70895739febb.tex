@@ -1,0 +1,36 @@
+\hypertarget{appendix-70895739febb}{}\label{referencestart:appendix-70895739febb}
+\section{Spatiotemporal sampling and retinal motion}\label{appendix-70895739febb-spatiotemporal-sampling-and-retinal-motion}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} XR01 · \textbf{Latest development:} XR01
+
+\subsection{Definition and mechanism}\label{appendix-70895739febb-definition-and-mechanism}
+
+Motion turns spatial variation into temporal variation: a scalar moving grating has frequency \textbar v\textbar f.~Retinal velocity depends on scene and eye motion in a common frame. Frame Nyquist limits and human flicker thresholds are different questions.
+
+\subsection{Prerequisites}\label{appendix-70895739febb-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-6a7869dd79a6]{Sampling aliasing and reconstruction} --- Allocation/filtering must respect what reduced samples can distinguish.
+\item
+  \hyperref[appendix-a6f2c4fe1996]{Eye movements and display-time gaze} --- Time-aligned gaze/motion defines the retinal and allocation context.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-70895739febb-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0727340a4428]{Temporal reprojection and history validation}
+\item
+  \hyperref[appendix-e2e73f8cd93e]{Optical flow and time to contact}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-70895739febb-recall-and-next-depth}
+
+Compute 10 cycles/degree at 20 degrees/second, then distinguish screen/retinal motion. Pending: emission timing and measured visual sensitivity. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.
+
+\subsection{Source and navigation}\label{appendix-70895739febb-source-and-navigation}
+
+\href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch042-a-gaze-sample-needs-a-time-as-well-as-a-direction}{Expanded teaching explanation (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 9)} · \hyperref[appendix-fd090d982a15-xr01---independent-seeing-and-representation-source]{Independent coverage} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

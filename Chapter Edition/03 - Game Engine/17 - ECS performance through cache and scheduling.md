@@ -8,7 +8,7 @@ Data layout affects both memory traffic and parallel ownership, not just the num
 
 **Recall question:** How can two workers update different entities yet still contend on one cache line, and what layout or partition change would test that cause?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 34532–38364; source-span SHA256 ec2be08410e1f6dee1325c54058b84fd0ee1d92798faa933c75183d8f1c52df6. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 35179–39293; source-span SHA256 50bf0950a6c59af1479b2de24ac79c9bd14e1e9983a2b53edc80b4a1dfd348ef. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 **False sharing in metadata**
@@ -428,6 +428,288 @@ This is already a strong subsystem-neutral event representation.
 The next bridge should translate those runtime physics IDs into ECS entities.
 
 Do not make gameplay search all bodies to discover their owner.
+
+<!-- Book-completion teaching addition 51c09a4cfe33e3bf -->
+
+### Decide which pairs may interact, then publish overlap transitions safely
+
+The existing `PhysicsContactEventType` has `Begin`, `Stay`, and `End`, and the event record already carries body and collider identifiers plus trigger/response flags. The missing mechanism is how the engine decides that a pair is eligible, maintains its overlap state across ticks, and delivers a transition without exposing live physics storage to gameplay mutation. These are three separate decisions: **filtering** decides whether a pair may proceed; **narrow phase and simulation** decide what actually overlaps or touches; **event delivery** tells gameplay how the relation changed. A filter pass is not a collision test, and an overlap notification is not an impulse.
+
+#### A category and mask rule is reciprocal
+
+Assign each shape a category bit set $C$ and an accepted-category mask $M$. For shapes $A$ and $B$, the ordinary rule is
+
+$$
+\operatorname{maskPass}(A,B) = (C_A \mathbin{\&} M_B \ne 0) \land (C_B \mathbin{\&} M_A \ne 0).
+$$
+
+Both directions must agree. If a player accepts walls but a wall rejects players, the pair is rejected by this policy. Categories describe what a shape *is*; masks describe which categories that shape *accepts*. Choose bits for interaction classes, not unique instances, and keep this rule at the broad-phase candidate boundary so rejected pairs do not reach narrow phase or solver construction. Other engine rules may also reject a pair, including body-type compatibility, same-body suppression, joints that disable connected-body collision, or a custom filter. State that policy separately; passing category and mask is not a promise that the pair will contact.
+
+A small example uses `PLAYER=0x1`, `WORLD=0x2`, `ENEMY=0x4`, and `PICKUP=0x8`. Set the player's category to `PLAYER` and mask to `WORLD | ENEMY | PICKUP`. Set a pickup's category to `PICKUP` and mask to `PLAYER`. Then both intersections are nonzero, so they pass. If the pickup mask becomes zero, the first intersection becomes zero while the second still passes; no pair is emitted. When a category is a bit set, one accepted shared bit suffices. A default mask must be deliberate: zero disables all ordinary pairs, while an all-bits mask accepts every category that the other shape permits.
+
+#### Same nonzero groups can override the masks
+
+Box2D's documented rule gives a same, nonzero group index priority over the category/mask test: an equal positive group forces collision eligibility, and an equal negative group forbids it. If the group indexes differ or either is zero, evaluate the reciprocal mask rule. In pseudocode:
+
+```cpp
+bool filter_allows(const Filter& a, const Filter& b) {
+    // Box2D 3.1 policy: an equal nonzero group overrides both masks.
+    if (a.group != 0 && a.group == b.group)
+        return a.group > 0;
+
+    // Each shape must accept the other shape's category.
+    return (a.category & b.mask) != 0 &&
+           (b.category & a.mask) != 0;
+}
+```
+
+For example, two parts assigned group `+12` remain eligible even if both masks are zero; two parts assigned group `-12` are rejected even if both masks accept everything. `+12` and `-12` are different groups, so their pair falls back to masks. This group rule is an engine-specific override convention, not a universal meaning of “group.” This example pins **Box2D 3.1.0** as a reference policy: its filter categories and masks are 64-bit, and it documents the equal nonzero group override above. Box2D 2.4 uses narrower category/mask fields, despite a similar group policy. Pin the engine/library version and adapt field widths and event APIs to that version; do not copy these semantics into another physics engine without checking its contract. The 3.1 policy also includes body-type rules beyond category/mask/group.
+
+| Pair | $C_A \& M_B$ | $C_B \& M_A$ | Same nonzero group? | Result under the Box2D 3.1 filter rule |
+|---|---:|---:|---|---|
+| Player / pickup | nonzero | nonzero | no | pass |
+| Player / enemy with enemy mask zero | zero | nonzero | no | reject |
+| Two `+12` group parts, both masks zero | zero | zero | positive override | pass |
+| Two `-12` group parts, both masks all bits | nonzero | nonzero | negative override | reject |
+| `+12` part / `-12` part with reciprocal bits | nonzero | nonzero | indexes differ | pass |
+
+A filter edit changes which pairs are eligible; it may invalidate contacts and generate end transitions. Treat it as a state change that needs reconciliation at a defined simulation boundary. Avoid changing filters in the middle of narrow-phase iteration or from a callback that is walking physics-owned arrays.
+
+#### A sensor detects overlap and skips physical response
+
+A **sensor** uses the collision pipeline to ask whether shapes overlap, but it contributes no collision impulse or physical blocking response. A plate sensor can therefore register a crate without stopping it. A sensor still needs a geometry test and normally uses the same pair-filter policy; “sensor” does not mean “ignore all masks.” In the pinned v3.1.0 reference, sensor-event generation is disabled by default; enable it on the participating shape definitions according to that API. Its event path is conceptually:
+
+```text
+conservative pair candidates
+    -> category/mask/group and engine-rule filters
+    -> exact overlap test
+    -> record sensor overlap transition
+    -> do not create a physical response row for this sensor pair
+```
+
+The pinned Box2D 3.1.0 simulation documentation separates sensor events from contact events, disables sensor-event generation by default, and explicitly states sensors do not detect shapes that pass through them within one step. For a fast object or small sensor, it recommends a ray or shape cast. Do not generalize those CCD limits to later releases without checking their versioned contract. A trigger used only for gameplay should not be presented as a solid contact, and a physical contact may be relevant even when the game has no trigger behavior.
+
+#### Derive begin, stay, and end from stable pair sets
+
+Store the set of logical overlaps from the last completed fixed step as $P_k$ and the freshly validated overlap set for the new step as $P_{k+1}$. Give each collider a stable identity that includes a slot or index and a generation, such as `ColliderId{slot, generation}`. Form each unordered pair in canonical order, so `(A,B)` and `(B,A)` hash to the same key. Then:
+
+$$
+\begin{aligned}\mathrm{Begin}_{k+1} &= P_{k+1} \setminus P_k,\\\mathrm{Stay}_{k+1} &= P_{k+1} \cap P_k,\\\mathrm{End}_{k+1} &= P_k \setminus P_{k+1}.\end{aligned}
+$$
+
+These set equations avoid firing `Begin` every frame an object remains in a trigger. The existing Kairo event enum calls the continuing state `Stay`; that is an application-level policy derived from set intersection. Box2D 3.1 documents buffered sensor/contact begin and end events (and contact hit events), not a universal stay callback. An engine may omit `Stay` to reduce event volume; if gameplay needs it, derive it from persistent state rather than assuming the physics library emits it.
+
+A complete plate trace makes the transitions concrete. Let the plate be `ColliderId{5,7}`, category `PICKUP`, mask `PLAYER`; let the crate be `ColliderId{2,4}`, category `PLAYER`, mask `PICKUP`. Their reciprocal mask checks pass.
+
+| Fixed tick | Validated overlap set | Derived event | Gameplay effect
+|---:|---|---|---|
+| 40 | empty | none | door remains closed |
+| 41 | `{(2:4, 5:7)}` | `Begin` | add crate 2:4 to plate occupancy; door begins opening |
+| 42 | `{(2:4, 5:7)}` | `Stay` | keep occupancy; do not add a duplicate |
+| 43 | `{(2:4, 5:7)}` | `Stay` | no repeated begin-side sound or reward |
+| 44 | empty because the crate leaves | `End(Separated)` | remove crate 2:4; close if the plate is now empty |
+
+Now replace tick 44 with a filter edit or destruction while overlapping. Reconciliation still emits an `End`, with a reason such as `FilterChanged` or `Destroyed`. That reason lets the consumer distinguish ordinary motion from forced invalidation if its gameplay policy cares. Do not silently erase the pair from the saved set: that leaves a door count, pickup state, or audio loop latched. If a collider goes to sleep, sleep alone is not an overlap exit. Preserve its logical pair state; when it wakes or moves, revalidate geometry and filters, emitting a transition only if the relation actually changed. If an engine destroys contacts as part of sleep/wake or filter changes, normalize those implementation events back into logical pair state to avoid duplicate `Begin` events.
+
+#### Queue copied events, then resolve at a safe boundary
+
+Physics may run worker tasks or traverse internal arrays while producing contacts. Do not destroy a body, edit a collider, or mutate ECS structure from inside a narrow-phase, solver, or worker callback. During the physics step, collect compact event values (pair IDs, event kind, reason, and any small immutable measurement the consumer needs). Once the step and its storage traversal finish, map physics IDs to gameplay entities, dispatch read-only gameplay responses, and queue structural changes for an explicit synchronization point:
+
+```text
+fixed-step input and forces
+    -> physics step and pair reconciliation
+    -> copy contact/sensor event values
+    -> resolve generation-checked collider-to-entity mappings
+    -> gameplay event systems
+    -> deferred create/destroy/component/filter commands
+    -> structural commit at the declared boundary
+```
+
+The event queue owns its values. Never retain a pointer into a physics library's transient event arrays; Box2D documents its event arrays as invalidated by later world changes and warns that end events may refer to shapes or contacts already destroyed. If an end handler needs information after deletion, copy the stable gameplay owner ID and the small required payload into the event before processing the structural change. On resolution, check that the collider/entity generation still matches. If the old entity has already died, run cleanup using the copied old owner identity or discard according to explicit policy; never look up the slot alone and deliver the event to a new occupant.
+
+A wake, deletion, teleport, body-type change, or filter edit can invalidate cached pair state. Reconcile at the fixed-step boundary and label forced end reasons when known. Deletion must emit or synthesize the end transition before removing the old pair from the logical set. A slot reused afterward increments its generation, so an old `(slot=2,generation=4)` event cannot resolve to the new `(slot=2,generation=5)` entity. This is the same identity rule used by generational registries: a memory slot is a location, not a lasting object identity.
+
+#### Exercise with a complete solution
+
+A sensor gate has category `GATE=0x10`, mask `PLAYER | KEY = 0x21`, and group zero. A player has category `PLAYER=0x1`, mask `GATE=0x10`, group zero. A key has category `KEY=0x20`, mask `GATE=0x10`, group zero. A decoration has category `DECOR=0x40`, mask all bits, group zero. A pair of moving platform shapes both use group `-5`; a player/platform pair uses group indices `-5` and `+5`. Determine eligible pairs, then process the following gate observations: step 0 none; step 1 player overlaps gate; step 2 same overlap; step 3 player is destroyed; slot 3 is immediately reused for a decoration with a higher generation before queued gameplay events dispatch.
+
+**Solution.** Gate/player passes because `GATE & player.mask = 0x10` and `PLAYER & gate.mask = 0x1`; gate/key passes because `GATE & key.mask = 0x10` and `KEY & gate.mask = 0x20`. Gate/decoration fails because `DECOR & gate.mask = 0`, even though decoration accepts all categories. Two platform shapes with matching group `-5` are rejected regardless of masks. Player/platform groups `-5` and `+5` differ, so group override does not apply; use both reciprocal mask tests. If those bits are set, they pass this filter stage.
+
+For the gate trace, step 0 has no event. Step 1 adds the stable pair `(player slot 3, generation g; gate ID)`, so emit exactly one `Begin` and insert that generation-qualified player into the gate's occupancy set. Step 2 intersects the previous and current sets, so emit `Stay` only if this engine's gameplay layer requests it; do not emit another `Begin`. At step 3 destruction removes the old pair and produces `End(Destroyed)` carrying the old generation and copied gameplay owner ID. The slot reuse creates a different identity `(3,g+1)`. When the deferred queue drains, generation validation rejects the stale physics handle as a reference to the new decoration; cleanup uses the copied old owner data. The new decoration receives no gate event. The listener does not mutate the physics world while the event arrays or solver are being traversed.
+
+#### Bounded executable witness
+
+The complete C++20 laboratory below implements this bounded filter policy, stable pair transitions, forced-end reasons and generation validation. Its checks remain active with `-DNDEBUG`; they also exercise a high category bit to detect unintended field narrowing. Compile from the vault root with `c++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror tools/labs/collision_filter_event_lab.cpp -o /tmp/collision_filter_event_lab`, then run `/tmp/collision_filter_event_lab`. This is a deterministic policy model, not an actual Box2D/Kairo integration, a broad phase, a threaded dispatcher or a complete sleeping system. Implementation explanations are in the code comments.
+
+```cpp
+// Bounded teaching witness for reciprocal category/mask filtering, same-group
+// overrides, set-difference lifecycle events, and generation-safe event IDs.
+// Compile: c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror \
+//   tools/labs/collision_filter_event_lab.cpp -o /tmp/collision_filter_event_lab
+// Run: /tmp/collision_filter_event_lab
+#include <algorithm>
+#include <stdexcept>
+#include <string>
+#include <cstdint>
+#include <iostream>
+#include <map>
+#include <set>
+#include <tuple>
+#include <vector>
+
+// These checks remain active in release builds; NDEBUG must not erase the lab.
+static unsigned checks = 0;
+void check(bool condition) {
+    ++checks;
+    if (!condition) throw std::runtime_error("failed check " + std::to_string(checks));
+}
+
+struct Filter {
+    std::uint64_t category;
+    std::uint64_t mask;
+    std::int32_t group;
+};
+
+// This models the Box2D 3.1 category/mask/group rule only.
+// It does not include body-type, same-body, joint, or custom filtering rules.
+bool should_collide(const Filter& a, const Filter& b) {
+    if (a.group != 0 && a.group == b.group) {
+        return a.group > 0; // Equal positive forces; equal negative forbids.
+    }
+    return (a.category & b.mask) != 0 && (b.category & a.mask) != 0;
+}
+
+struct ShapeId {
+    std::uint32_t slot;
+    std::uint32_t generation;
+    friend bool operator==(ShapeId, ShapeId) = default;
+    friend bool operator<(ShapeId a, ShapeId b) {
+        return std::tie(a.slot, a.generation) < std::tie(b.slot, b.generation);
+    }
+};
+
+struct Pair {
+    ShapeId a;
+    ShapeId b;
+    static Pair canonical(ShapeId x, ShapeId y) {
+        return y < x ? Pair{y, x} : Pair{x, y};
+    }
+    friend bool operator<(const Pair& x, const Pair& y) {
+        return std::tie(x.a, x.b) < std::tie(y.a, y.b);
+    }
+};
+
+enum class Kind { Begin, Stay, End };
+enum class EndReason { Separated, FilterChanged, Destroyed, DiscontinuousMove };
+struct Event {
+    Kind kind;
+    Pair pair;
+    EndReason reason = EndReason::Separated;
+};
+
+// `previous` is logical touching state. Sleep does not erase it; a wake must
+// revalidate geometry and filters before this function receives `current`.
+std::vector<Event> transitions(const std::set<Pair>& previous,
+                               const std::set<Pair>& current,
+                               const std::map<Pair, EndReason>& forcedEnds = {}) {
+    std::vector<Event> out;
+    for (const Pair& p : current) {
+        out.push_back({previous.contains(p) ? Kind::Stay : Kind::Begin, p});
+    }
+    for (const Pair& p : previous) {
+        if (!current.contains(p)) {
+            const auto it = forcedEnds.find(p);
+            out.push_back({Kind::End, p, it == forcedEnds.end()
+                                               ? EndReason::Separated
+                                               : it->second});
+        }
+    }
+    return out;
+}
+
+struct Slot {
+    std::uint32_t generation = 1;
+    bool alive = false;
+};
+bool valid(const std::vector<Slot>& slots, ShapeId id) {
+    return id.slot < slots.size() && slots[id.slot].alive &&
+           slots[id.slot].generation == id.generation;
+}
+
+int main() {
+    constexpr std::uint64_t PLAYER = 1, ENEMY = 2, PLATE = 4, DEBRIS = 8;
+    const Filter player{PLAYER, ENEMY | PLATE, 0};
+    const Filter enemy{ENEMY, PLAYER, 0};
+    const Filter plate{PLATE, PLAYER, 0};
+    const Filter debris{DEBRIS, 0, 0};
+    check(should_collide(player, enemy));        // both masks agree
+    check(should_collide(player, plate));        // sensor-like category still filters
+    check(!should_collide(player, debris));      // neither side accepts the other
+    check(!should_collide(player, Filter{ENEMY, 0, 0})); // enemy rejects player
+    check(should_collide(Filter{PLAYER, 0, 7}, Filter{ENEMY, 0, 7}));
+    check(!should_collide(Filter{PLAYER, ~0ULL, -7}, Filter{ENEMY, ~0ULL, -7}));
+    check(should_collide(Filter{PLAYER, ENEMY, 3}, Filter{ENEMY, PLAYER, -3}));
+    check(should_collide(Filter{PLAYER, ENEMY, 3}, Filter{ENEMY, PLAYER, 0}));
+
+    // A high category bit catches accidental narrowing to a 16/32-bit field.
+    constexpr std::uint64_t HIGH = std::uint64_t{1} << 63;
+    check(should_collide(Filter{HIGH, PLAYER, 0}, Filter{PLAYER, HIGH, 0}));
+    check(transitions({}, {}).empty()); // no spurious event before any overlap
+
+    const ShapeId oldActor{2, 4};
+    const ShapeId sensor{5, 7};
+    const Pair oldPair = Pair::canonical(oldActor, sensor);
+    std::set<Pair> previous;
+    std::set<Pair> current{oldPair};
+    auto e = transitions(previous, current);
+    check(e.size() == 1 && e[0].kind == Kind::Begin);
+    previous = current;
+
+    // Persisting overlap yields one application-level Stay; Box2D's buffered
+    // event API documents begin/end and hit events, not a universal Stay event.
+    e = transitions(previous, current);
+    check(e.size() == 1 && e[0].kind == Kind::Stay);
+
+    // A filter edit invalidates the old overlap and records why it ended.
+    current.clear();
+    e = transitions(previous, current, {{oldPair, EndReason::FilterChanged}});
+    check(e.size() == 1 && e[0].kind == Kind::End &&
+           e[0].reason == EndReason::FilterChanged);
+    previous = current;
+
+    // Re-enter, then destroy while overlapping. Copy the event IDs before any
+    // structural mutation or callback; never keep engine-owned event pointers.
+    current.insert(oldPair);
+    e = transitions(previous, current);
+    check(e.size() == 1 && e[0].kind == Kind::Begin);
+    previous = current;
+    current.clear();
+    e = transitions(previous, current, {{oldPair, EndReason::Destroyed}});
+    check(e.size() == 1 && e[0].pair.a == oldPair.a &&
+           e[0].pair.b == oldPair.b && e[0].reason == EndReason::Destroyed);
+
+    std::vector<Slot> slots(6);
+    slots[2] = {4, true};
+    slots[5] = {7, true};
+    check(valid(slots, oldActor));
+    // Deferred destruction runs at the safe structural boundary. Reusing slot
+    // 2 changes generation, so an old event cannot target its new occupant.
+    slots[2].alive = false;
+    ++slots[2].generation;
+    const ShapeId newActor{2, 5};
+    slots[2].alive = true;
+    check(!valid(slots, oldActor) && valid(slots, newActor));
+    check(e[0].pair.a == oldPair.a && e[0].pair.a != newActor);
+
+    std::cout << "collision filter/event lifecycle: " << checks << " checks PASS\n";
+}
+```
+
+**Versioned source policy.** The filter precedence and 64-bit widths above follow the official [Box2D 3.1.0 simulation documentation](https://raw.githubusercontent.com/erincatto/box2d/v3.1.0/docs/simulation.md) and its [tagged filter/type declarations](https://raw.githubusercontent.com/erincatto/box2d/v3.1.0/include/box2d/types.h). The event-array lifetime and invalidation details follow its [3.1.0 events reference](https://raw.githubusercontent.com/erincatto/box2d/v3.1.0/include/box2d/box2d.h). These are a named reference policy for this example; a consuming project must pin and verify its actual engine version, because category widths, default event settings, same-body/body-type rules, sensor event enablement, callback constraints, and lifecycle APIs differ across releases and engines.
+
+
+
+
 
 ---
 

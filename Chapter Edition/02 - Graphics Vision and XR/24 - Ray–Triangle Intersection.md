@@ -8,7 +8,7 @@ A ray first meets the triangle’s plane, then the candidate point must pass a b
 
 **Recall question:** Why is a plane hit insufficient to establish a triangle hit?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 58761–61970; source-span SHA256 3ffa6980cdf14c6007237c740d88381cfe177214e26ca62f815836135e6fde94. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 59763–62972; source-span SHA256 3ffa6980cdf14c6007237c740d88381cfe177214e26ca62f815836135e6fde94. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### PART III — Ray-Triangle Intersection

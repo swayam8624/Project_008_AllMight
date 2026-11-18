@@ -1,0 +1,85 @@
+\hypertarget{appendix-3ae74e89b4e6}{}\label{referencestart:appendix-3ae74e89b4e6}
+\section{Absolute and relative error}\label{appendix-3ae74e89b4e6-absolute-and-relative-error}
+
+\hypertarget{appendix-3ae74e89b4e6-absolute-and-relative-error}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C005 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-3ae74e89b4e6-definition-and-mechanism}
+
+\hypertarget{appendix-3ae74e89b4e6-definition-and-mechanism}{}
+
+Absolute error \textbar computed−reference\textbar{} has the reference's units. Relative error divides by nonzero reference magnitude and is dimensionless; it is undefined at true zero. A 1e-12 absolute error can be 100\% of a 1e-12 value.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-3ae74e89b4e6-prerequisites}
+
+\hypertarget{appendix-3ae74e89b4e6-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-bc44f7b42f42]{Unit roundoff} --- The local normal-rounding bound supplies the error-analysis scale.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-3ae74e89b4e6-used-by}
+
+\hypertarget{appendix-3ae74e89b4e6-used-by}{}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-d5da3eaabaef]{Affine quantization and zero point} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-537171d69d27]{Quantization error metrics} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-a7fbaf6d1b1c]{Forward and backward error} --- uses this mechanism to establish its numerical contract.
+\item
+  \hyperref[appendix-f82e270791c8]{Accumulated rounding error} --- uses this mechanism to establish its numerical contract.
+\item
+  \hyperref[appendix-a2773a6a2f9d]{Cancellation and loss of significance} --- uses this mechanism to establish its numerical contract.
+\item
+  \hyperref[appendix-c80db39080be]{Numerical decision boundaries} --- uses this mechanism to establish its numerical contract.
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#nameddest=appendix-18eacf61a04b}{ODE integration and stability (Light Transport and Image Synthesis, Part 1, Reference notes: ODE integration and stability)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-e2d7b4f2161d}{Finite differences and step-size balance (Vision, XR, and Playable Worlds, Part 1, Reference notes: Finite differences and step-size balance)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-80521eae6b71}{Numerical quadrature and error (Vision, XR, and Playable Worlds, Part 1, Reference notes: Numerical quadrature and error)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-e8ab9836882e}{ODE initial-value problems and stiffness (Vision, XR, and Playable Worlds, Part 1, Reference notes: ODE initial-value problems and stiffness)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-bcc44e9d3d02}{Robust summaries and error metrics (Vision, XR, and Playable Worlds, Part 1, Reference notes: Robust summaries and error metrics)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-3ae74e89b4e6-recall-and-next-depth}
+
+\hypertarget{appendix-3ae74e89b4e6-recall-and-next-depth}{}
+
+Reconstruct the definition's example and name the assumptions that make it valid.
+
+\textbf{Pending:} Choose an independent reference and handle near-zero/error-budget decisions explicitly.
+
+\subsection{Source and navigation}\label{appendix-3ae74e89b4e6-source-and-navigation}
+
+\hypertarget{appendix-3ae74e89b4e6-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-when-arithmetic-meets-uncertainty]{M005 teaching chapter} · \hyperref[appendix-fd090d982a15-m005---parts-77-88]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}
+
+\subsection{Full teaching explanation}\label{appendix-3ae74e89b4e6-full-teaching-explanation}
+
+\hypertarget{appendix-3ae74e89b4e6-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#nameddest=02-foundations-ii-ch022-numerical-differentiation-and-automatic-differentiation}{Phase 9 teaching section (Mathematics for Visual Computing, Part 1, Ch. 6)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#nameddest=02-foundations-ii-ch030-inference-and-error-metrics-need-explicit-assumptions}{Phase 10 teaching section (Mathematics for Visual Computing, Part 2, Ch. 14)}
+\item
+  \hyperref[appendix-adf48f5dc5c1]{Visual Recall/09 - Calculus and Optimization - Visual Recall.md} · Phase 9 visual recall
+\item
+  \hyperref[appendix-cb5af353ef77]{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md} · Phase 10 visual recall
+\end{itemize}

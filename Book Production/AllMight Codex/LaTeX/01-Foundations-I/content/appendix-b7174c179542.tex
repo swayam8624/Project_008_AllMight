@@ -1,0 +1,31 @@
+\hypertarget{appendix-b7174c179542}{}
+\section*{Aggregate initialization}
+\section{Aggregate initialization}\label{aggregate-initialization}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C007 · \textbf{Latest development:} C007
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+C++20/23 aggregates include arrays and eligible classes without user-declared/inherited constructors or prohibited access/virtual features. Public member functions and default member initializers do not alone disqualify them. C++ designated initializers name direct members in declaration order; omitted members use applicable defaults or empty-list initialization.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-2e4d494c2d94]{Declarations and definitions} --- The defined class's members and constructors determine whether aggregate element initialization applies.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+Later chunks extend this same node; dependent concepts are listed here as they are integrated.
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} Deeper ownership, pointer/reference, generic programming and module rules from later sources. This is written coverage, not demonstrated personal mastery.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Records\%20acquire\%20their\%20initial\%20state}{C007 teaching chapter} · \hyperref[appendix-fd090d982a15]{Source coverage} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

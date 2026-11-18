@@ -8,7 +8,7 @@ An ECS needs evidence for its identity, query, and memory promises before render
 
 **Recall question:** Which ECS invariant would you inspect first when a rendered object is stale, duplicated, or associated with the wrong entity?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 38365–41220; source-span SHA256 2ecbedf31698c5c218155465870cd46220538733edb6ad7fa0a48b4b95f8bbad. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 39294–42149; source-span SHA256 2ecbedf31698c5c218155465870cd46220538733edb6ad7fa0a48b4b95f8bbad. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### DIAGNOSTICS, MEMORY, COMPLEXITY, API CONTRACTS AND COMPLETE ECS DEFENSE

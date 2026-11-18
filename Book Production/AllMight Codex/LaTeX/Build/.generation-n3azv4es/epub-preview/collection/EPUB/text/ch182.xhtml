@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch182.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-5e1a7561cd98-multilevel-pointer-qualification" class="level2">
+<h2>Multilevel pointer qualification</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C008 · <strong>Latest development:</strong> C008</p>
+<section id="appendix-5e1a7561cd98-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>int** cannot implicitly become const int**: that would permit injection of an actually const object’s address into an original int*. int** can become const int* const*, whose intermediate read-only pointer blocks that assignment.</p>
+</section>
+<section id="appendix-5e1a7561cd98-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch196.xhtml#appendix-c25d60fed375-const-qualification-and-shallow-constness" class="wikilink">Const qualification and shallow constness</a> — Access-path qualification constrains nested conversions and member writes.</li>
+</ul>
+</section>
+<section id="appendix-5e1a7561cd98-used-by" class="level3">
+<h3>Used by</h3>
+<p>Later sources will deepen this same node; no empty dependent nodes are created.</p>
+</section>
+<section id="appendix-5e1a7561cd98-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Rebuild the hypothetical pointer injection step by step. Pending: qualification decomposition at further levels. Written coverage does not establish learner mastery.</p>
+</section>
+<section id="appendix-5e1a7561cd98-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch173.xhtml#id_01-foundations-i-ch003-read-only-is-a-path-not-an-ownership-or-synchronization-promise" class="wikilink">Teaching explanation and examples</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m008---parts-113-126" class="wikilink">Exact coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-5e1a7561cd98-const-applies-at-each-indirection-level" class="level3">
+<h3>Const applies at each indirection level</h3>
+<p>For a pointer chain, qualification is attached to a particular level rather than to the whole expression. <code>const T*</code> means the pointed-to <code>T</code> is not writable through that path; <code>T* const</code> means the pointer object itself cannot be reseated; <code>const T* const</code> combines both.</p>
+<p>The distinction becomes safety-critical at multiple levels. Converting <code>T**</code> to <code>const T**</code> is not generally safe: if it were allowed, code could store a pointer-to-const object into the outer pointer and later write through the original <code>T*</code>, violating const protection. Qualification conversions therefore follow stricter rules than the familiar <code>T* -&gt; const T*</code> case.</p>
+<p>Engine APIs should avoid raw multi-level pointer mutation unless the ownership/indirection contract truly requires it. Spans, references to containers, output wrappers or typed handle arrays often express the real intent more clearly. A reconstruction exercise should explain each const position and demonstrate the classic unsafe hypothetical conversion.</p>
+</section>
+</section>
+</body>
+</html>

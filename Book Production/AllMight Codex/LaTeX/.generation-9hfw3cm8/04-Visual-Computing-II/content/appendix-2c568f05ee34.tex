@@ -1,0 +1,56 @@
+\hypertarget{appendix-2c568f05ee34}{}
+\section{Latent-variable models and generative flows}\label{appendix-2c568f05ee34-latent-variable-models-and-generative-flows}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-2c568f05ee34-definition-and-mechanism}
+
+Generative models describe how data could be produced, often by first sampling a latent variable \(z\) and mapping it to an observation \(x\). A variational autoencoder (VAE) learns an encoder distribution \(q(z|x)\) and decoder \(p(x|z)\); its evidence lower bound balances reconstruction likelihood against a KL penalty that keeps the latent distribution tractable. A generative adversarial network (GAN) trains a generator against a discriminator, creating a game that can produce sharp samples but may be unstable or collapse to limited modes. Normalizing flows use invertible transformations so the data density can be computed with a change-of-variables Jacobian determinant. These methods solve different tradeoffs among likelihood, sample quality, latent structure, and optimization stability. Their assumptions matter: a VAE's posterior family may be too simple, a GAN score is not a calibrated density, and a flow's invertibility constrains architecture. Generated samples are not evidence that the model has learned the true causal process.
+
+\subsection{Prerequisites}\label{appendix-2c568f05ee34-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-4815cd87ab8b}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)}
+\item
+  \hyperref[appendix-29f4bea4c2bb]{Constrained optimization and inverse kinematics}
+\item
+  \hyperref[appendix-65788587ef78]{Research validity and ablation}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-40df0855b4a7}{Automatic differentiation and backpropagation (03-Visual-Computing-I, appendix-40df0855b4a7)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-2c568f05ee34-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[04-visual-computing-ii-ch031-generative-models-learn-distributions-and-samplers]{Generative models learn distributions and samplers}
+\item
+  \hyperref[appendix-c5b332e400e7]{Radiance fields and Gaussian splatting}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-2c568f05ee34-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[04-visual-computing-ii-ch031-generative-models-learn-distributions-and-samplers]{Generative models learn distributions and samplers}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-2c568f05ee34-recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  State the VAE reconstruction/KL tradeoff, GAN adversarial objective, and flow change-of-variables role.
+\item
+  Which assumption or training failure distinguishes each family?
+\end{itemize}
+
+\subsection{Source and navigation}\label{appendix-2c568f05ee34-source-and-navigation}
+
+Teaching narrative: \hyperref[04-visual-computing-ii-ch031-generative-models-learn-distributions-and-samplers]{open the main explanation}. Browse the \href{../02-Foundations-II/main.pdf\#nameddest=appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series}{University graphics and vision index (02-Foundations-II, appendix-a6d556a4ef50-university-graphics-vision-and-photography-\/-\/-independent-series)}. Additional chapter connections: \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation}{Numerical integration and Monte Carlo estimation (03-Visual-Computing-I, 03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation)}; \hyperref[04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics]{Optimization, constraints, and inverse kinematics}; \href{../01-Foundations-I/main.pdf\#nameddest=01-foundations-i-ch019-a-linear-equation-is-a-measurement-and-several-equations-are-geometry}{A linear equation is a measurement, and several equations are geometry (01-Foundations-I, 01-foundations-i-ch019-a-linear-equation-is-a-measurement-and-several-equations-are-geometry)}.
+
+Caption/source records: \hyperref[04-visual-computing-ii-ch036-sc-13---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-13-generative-models-1]{SC-13}, \hyperref[04-visual-computing-ii-ch036-sc-14---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-14-generative-models-2]{SC-14}.

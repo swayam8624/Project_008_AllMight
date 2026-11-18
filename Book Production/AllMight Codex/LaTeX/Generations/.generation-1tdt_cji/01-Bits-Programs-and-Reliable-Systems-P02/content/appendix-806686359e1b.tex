@@ -1,0 +1,55 @@
+\hypertarget{appendix-806686359e1b}{}\label{referencestart:appendix-806686359e1b}
+\section{Translation units and linking}\label{appendix-806686359e1b-translation-units-and-linking}
+
+\hypertarget{appendix-806686359e1b-translation-units-and-linking}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C007 · \textbf{Latest development:} C007
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-806686359e1b-definition-and-mechanism}
+
+\hypertarget{appendix-806686359e1b-definition-and-mechanism}{}
+
+A translation unit is source after preprocessing together with its included material; module units add ownership and dependency rules. Compilation checks meaning and emits code/interface information; linking resolves implementation references. An unknown type is a frontend error, while a declared but undefined odr-used function commonly fails linking.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-806686359e1b-prerequisites}
+
+\hypertarget{appendix-806686359e1b-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#nameddest=appendix-942ad41afb30}{Compiler IR and machine instructions (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Compiler IR and machine instructions)} --- Compilation and emitted code explain why separately translated units need a link step.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-806686359e1b-used-by}
+
+\hypertarget{appendix-806686359e1b-used-by}{}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-33c0a92ce855]{Preprocessing and macro boundaries} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \hyperref[appendix-410a611a5b8d]{C++ modules and reachability} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#nameddest=appendix-2e4d494c2d94}{Declarations and definitions (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Declarations and definitions)} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\end{itemize}
+
+Later chunks extend this same node; dependent concepts are listed here as they are integrated.
+
+\subsection{Recall and next depth}\label{appendix-806686359e1b-recall-and-next-depth}
+
+\hypertarget{appendix-806686359e1b-recall-and-next-depth}{}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} Deeper ownership, pointer/reference, generic programming and module rules from later sources. This is written coverage, not demonstrated personal mastery.
+
+\subsection{Source and navigation}\label{appendix-806686359e1b-source-and-navigation}
+
+\hypertarget{appendix-806686359e1b-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch002-giving-a-program-a-buildable-shape]{C007 teaching chapter} · \hyperref[appendix-fd090d982a15-m007---parts-101-112]{Source coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

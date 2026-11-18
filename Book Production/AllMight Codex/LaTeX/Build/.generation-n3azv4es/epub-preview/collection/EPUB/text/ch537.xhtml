@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch537.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-fc99ad39f351-omnidirectional-camera-projections" class="level2">
+<h2>Omnidirectional camera projections</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 11 · <strong>Latest development:</strong> Phase 11</p>
+<section id="appendix-fc99ad39f351-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Cubemaps, equirectangular panoramas, and fisheye lenses map unit directions onto different image domains. A cubemap selects one of six faces and projects two direction components; equirectangular coordinates map longitude and latitude to a rectangle; fisheye mappings use a radial function of angular distance. These parameterizations are not equal-area: uniform pixel sampling does not imply uniform solid-angle sampling. Choose the mapping that matches capture or rendering needs, define face orientation and seam rules, and measure reconstruction with angular error between unit vectors. Fisheye formulas also differ (equidistant, equisolid, orthographic, stereographic), so name the model before interpreting pixels. At the poles, longitude is undefined, so seam and pole handling need explicit sampling rules.</p>
+</section>
+<section id="appendix-fc99ad39f351-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch561.xhtml#appendix-7d356c396d1a-visual-angle-and-calibrated-rays" class="wikilink">Visual angle and calibrated rays (Vision, XR, and Playable Worlds, Part 2, Reference notes: Visual angle and calibrated rays)</a></li>
+<li><a href="ch345.xhtml#appendix-3ee9861904d5-camera-calibration-and-bundle-adjustment" class="wikilink">Camera calibration and bundle adjustment (Light Transport and Image Synthesis, Part 1, Reference notes: Camera calibration and bundle adjustment)</a></li>
+<li><a href="ch535.xhtml#appendix-f744e41b95b4-unit-directions-and-safe-normalization" class="wikilink">Unit directions and safe normalization</a></li>
+</ul>
+</section>
+<section id="appendix-fc99ad39f351-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li>No downstream concept node is added in this stage.</li>
+</ul>
+</section>
+<section id="appendix-fc99ad39f351-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch288.xhtml#id_02-foundations-ii-ch035-represent-directions-over-the-full-sphere" class="wikilink">Represent directions over the full sphere (Geometry, Cameras, and Image Formation, Part 1, Ch. 4)</a></li>
+</ul>
+</section>
+<section id="appendix-fc99ad39f351-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 1089–1091.</p>
+</section>
+<section id="appendix-fc99ad39f351-future-keywords" class="level3">
+<h3>Future keywords</h3>
+<p>cubemap seams, equirectangular map, fisheye model</p>
+</section>
+</section>
+</body>
+</html>

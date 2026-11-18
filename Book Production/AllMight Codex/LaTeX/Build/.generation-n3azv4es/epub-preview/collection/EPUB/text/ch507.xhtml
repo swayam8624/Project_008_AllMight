@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch507.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-b5b83329215b-vector-tolerances-and-finite-state-diagnostics" class="level2">
+<h2>Vector tolerances and finite-state diagnostics</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> Phase6 · <strong>Latest development:</strong> Phase6</p>
+<section id="appendix-b5b83329215b-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Closeness depends on a declared distance or angular criterion. Combined absolute/relative scalar rules differ from component boxes and Euclidean balls. NaN/infinity policies are explicit. Diagnose the first invalid stage rather than only the final visible symptom.</p>
+<p>Errors <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0.09</mn>
+  <mo>,</mo>
+  <mn>0.09</mn>
+  <mo stretchy="false">)</mo>
+</math> pass component tolerance <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.1</mn>
+</math> but fail Euclidean tolerance <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.1</mn>
+</math>. Near <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mn>8</mn>
+  </msup>
+</math>, binary32 can lose a one-unit displacement at storage.</p>
+</section>
+<section id="appendix-b5b83329215b-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch008.xhtml#appendix-0ec599f8ba27-numerical-tolerance-policies" class="wikilink">Numerical tolerance policies (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Numerical tolerance policies)</a> — A declared scale and domain make closeness and rejection thresholds meaningful.</li>
+<li><a href="ch238.xhtml#appendix-5aef4f13483a-dot-and-cross-product-rounding" class="wikilink">Dot and cross-product rounding (Mathematics for Visual Computing, Part 1, Reference notes: Dot and cross-product rounding)</a> — Cancellation and rounded inputs explain when a determinant sign or finite measurement is uncertain.</li>
+</ul>
+</section>
+<section id="appendix-b5b83329215b-used-by" class="level3">
+<h3>Used by</h3>
+<p>Later curriculum sources can deepen this same node; no future coverage is marked complete.</p>
+</section>
+<section id="appendix-b5b83329215b-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Show nontransitivity; separate measurement noise, arithmetic error and input quantization. Full production proofs, target-specific integration and learner mastery require further evidence.</p>
+</section>
+<section id="appendix-b5b83329215b-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch290.xhtml#id_02-foundations-ii-ch037-reliability-begins-at-the-boundary-of-the-calculation" class="wikilink">Teaching narrative (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-phase-6---parts-501-600" class="wikilink">Coverage and source gap</a> · <a href="ch155.xhtml#appendix-a103e7846d21-phase-6---source-analysis-and-verification" class="wikilink">Evidence and limits</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map</a></p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,100 @@
+\hypertarget{appendix-40426e4b2103}{}\label{referencestart:appendix-40426e4b2103}
+\section{Homogeneous clipping and perspective interpolation}\label{appendix-40426e4b2103-homogeneous-clipping-and-perspective-interpolation}
+
+\hypertarget{appendix-40426e4b2103-homogeneous-clipping-and-perspective-interpolation}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-40426e4b2103-definition-and-mechanism}
+
+\hypertarget{appendix-40426e4b2103-definition-and-mechanism}{}
+
+After a vertex is transformed, its clip-space coordinate is \((x_c,y_c,z_c,w_c)\). Clip primitives against the view volume before perspective division; under the conventional OpenGL clip convention the inequalities are \(-w_c\le x_c,y_c,z_c\le w_c\). A crossing edge is split by interpolating its homogeneous endpoints, which preserves the projective line and avoids dividing by a small or negative \(w\) too early. Only surviving points are divided by \(w_c\) to enter normalized device coordinates. Attributes then need perspective-correct interpolation: screen-space barycentric weights interpolate \(a/w\) and \(1/w\), and the fragment value is their ratio. For a triangle with weights \(\lambda_i\), \(a=(\sum_i\lambda_i a_i/w_i)/(\sum_i\lambda_i/w_i)\). Direct linear interpolation in screen space is correct only for affine quantities or equal depth; otherwise textures warp. Clip-space depth conventions and the near/far interval vary by API and projection setup, so the inequalities must match the active pipeline.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-40426e4b2103-prerequisites}
+
+\hypertarget{appendix-40426e4b2103-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#nameddest=appendix-cb3b26862282}{Homogeneous coordinates and perspective division (Light Transport and Image Synthesis, Part 1, Reference notes: Homogeneous coordinates and perspective division)}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#nameddest=appendix-1c07d64f5e70}{Camera view and clip-space pipeline (Light Transport and Image Synthesis, Part 1, Reference notes: Camera view and clip-space pipeline)}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#nameddest=appendix-02b9d9a81dca}{Barycentric coordinates and interpolation (Light Transport and Image Synthesis, Part 1, Reference notes: Barycentric coordinates and interpolation)}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#nameddest=appendix-ed3f9bc298fe}{Triangle rasterization and coverage tests (Light Transport and Image Synthesis, Part 1, Reference notes: Triangle rasterization and coverage tests)}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#nameddest=appendix-97578ed97952}{Depth buffering and visibility order (Light Transport and Image Synthesis, Part 1, Reference notes: Depth buffering and visibility order)}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#nameddest=appendix-749ba51a6c25}{GPU vertex specification (Light Transport and Image Synthesis, Part 1, Reference notes: GPU vertex specification)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-40426e4b2103-used-by}
+
+\hypertarget{appendix-40426e4b2103-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#nameddest=03-visual-computing-i-ch012-rasterization-coverage-and-depth}{Rasterization, coverage, and depth (Mathematics for Visual Computing, Part 2, Ch. 16)}
+\item
+  \hyperref[03-visual-computing-i-ch003-cameras-projection-and-calibration]{Cameras, projection, and calibration}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-40426e4b2103-full-teaching-explanation}
+
+\hypertarget{appendix-40426e4b2103-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#nameddest=03-visual-computing-i-ch012-rasterization-coverage-and-depth}{Rasterization, coverage, and depth (Mathematics for Visual Computing, Part 2, Ch. 16)}
+\item
+  \hyperref[03-visual-computing-i-ch003-cameras-projection-and-calibration]{Cameras, projection, and calibration}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-40426e4b2103-recall-and-next-depth}
+
+\hypertarget{appendix-40426e4b2103-recall-and-next-depth}{}
+
+\begin{itemize}
+\tightlist
+\item
+  Derive the clip-space edge intersection and perspective-correct attribute ratio.
+\item
+  Why must clipping happen before divide by w, and why is linear screen interpolation wrong for texture coordinates?
+\end{itemize}
+
+\subsection{Source and navigation}\label{appendix-40426e4b2103-source-and-navigation}
+
+\hypertarget{appendix-40426e4b2103-source-and-navigation}{}
+
+Teaching narrative: \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#nameddest=03-visual-computing-i-ch012-rasterization-coverage-and-depth}{open the main explanation (Mathematics for Visual Computing, Part 2, Ch. 16)}. Browse the \hyperref[appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series]{University graphics and vision index}. Additional chapter connections: \hyperref[03-visual-computing-i-ch003-cameras-projection-and-calibration]{Cameras, projection, and calibration}; \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#nameddest=03-visual-computing-i-ch012-rasterization-coverage-and-depth}{Rasterization, coverage, and depth (Mathematics for Visual Computing, Part 2, Ch. 16)}; \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#nameddest=01-foundations-i-ch018-homogeneous-coordinates-preserve-the-role-of-a-location}{Homogeneous coordinates preserve the role of a location (Mathematics for Visual Computing, Part 1, Ch. 2)}; \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#nameddest=01-foundations-i-ch019-a-camera-is-another-frame-so-viewing-uses-its-inverse}{A camera is another frame, so viewing uses its inverse (Mathematics for Visual Computing, Part 1, Ch. 3)}.
+
+Caption/source records: \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=04-visual-computing-ii-ch036-p1-02---module-1.2-course-intro-administrivia-part-2-graphics-visual-computing-2026}{P1-02 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)}, \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=04-visual-computing-ii-ch036-p3-05---the-camera-transform}{P3-05 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)}, \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=04-visual-computing-ii-ch036-p3-06---clipping}{P3-06 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)}, \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=04-visual-computing-ii-ch036-p3-12---scan-conversion}{P3-12 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)}.
+
+\subsection{Phase 11 camera development}\label{appendix-40426e4b2103-phase-11-camera-development}
+
+\hypertarget{appendix-40426e4b2103-phase-11-camera-development}{}
+
+Clipping and perspective-correct interpolation preserve projective geometry, while texture filtering asks how much surface area maps to a pixel. Neighboring camera rays approximate the image-to-surface footprint. At grazing angles one pixel can cover a long, thin region; a center-only texel lookup may alias detail even when attributes interpolate correctly. Use footprint estimates to select mip levels or anisotropic filters, while respecting visibility edges where derivatives jump. Ray differentials aid sampling but do not replace clipping or multisample coverage. Source basis: PBRT differential-ray texture filtering. Link: \hyperref[02-foundations-ii-ch037-a-camera-model-must-close-the-loop]{A camera model must close the loop}; research: \hyperref[02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review]{Four deeper links from the TUM lecture review}.
+
+\subsection{Worked clip-plane trace beside the shader explanation}\label{appendix-40426e4b2103-worked-clip-plane-trace-beside-the-shader-explanation}
+
+\hypertarget{appendix-40426e4b2103-worked-clip-plane-trace-beside-the-shader-explanation}{}
+
+For clip endpoints \((0,0,0,1)\) and \((6,0,0,2)\), the right-plane intersection uses homogeneous edge parameter \(1/5\); interpolating the already divided endpoints would use \(1/3\). \href{../06-GPU-Architecture-and-Real-Time-Rendering-P02/main.pdf\#nameddest=06-engine-ii-ch025-clip-coordinates-are-not-normalized-device-coordinates}{The worked trace and pipeline figure (GPU Architecture and Real-Time Rendering, Part 2, Ch. 16)} also explain negative fourth components, the zero-divisor limit and declared depth conventions. This is used by the shader-stage teaching before program compilation and linking are discussed.
+
+\subsection{Executable raster-state continuation}\label{appendix-40426e4b2103-executable-raster-state-continuation}
+
+\hypertarget{appendix-40426e4b2103-executable-raster-state-continuation}{}
+
+The project now carries two complementary CPU witnesses. \BookInlineCode{tools/labs/raster\_reference\_lab.cpp} owns edge coverage, barycentrics, perspective-correct interpolation and depth ordering. \BookInlineCode{tools/labs/raster\_pipeline\_state\_lab.cpp} continues the same pipeline through a homogeneous clip-plane intersection, an explicit four-sample coverage mask, stencil compare/pass update and premultiplied source-over blending.
+
+That separation is deliberate: clipping happens in homogeneous coordinates before divide-by-\(w\); sample ownership happens after screen mapping; stencil/depth are stateful per-fragment/sample decisions; blending combines a surviving source with an existing destination. Treating all of them as ``rasterization'' without preserving these boundaries makes debugging nearly impossible.

@@ -1,0 +1,34 @@
+\hypertarget{appendix-9b4b8254f26b}{}
+\section{Quaternion interpolation and shortest paths}\label{appendix-9b4b8254f26b-quaternion-interpolation-and-shortest-paths}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase7 · \textbf{Latest development:} Phase7
+
+\subsection{Definition and mechanism}\label{appendix-9b4b8254f26b-definition-and-mechanism}
+
+Quaternion interpolation must account for the double cover. Flip one endpoint when their dot is negative for the usual shortest rotational path, then use NLERP or SLERP. NLERP changes angular speed; SLERP follows a great-circle arc with a small-angle fallback.
+
+\textbf{Reconstruction cue:} Interpolating q and minus q without sign handling can pass through a zero quaternion.
+
+\subsection{Prerequisites}\label{appendix-9b4b8254f26b-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-8e61ab68f6b2]{Quaternion rotation and double cover}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-9b4b8254f26b-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations]{Phase 7 teaching and laboratory}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-9b4b8254f26b-recall-and-next-depth}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\subsection{Source and navigation}\label{appendix-9b4b8254f26b-source-and-navigation}
+
+\hyperref[01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations]{Continuous explanation} · \hyperref[appendix-fd090d982a15-phase-7---parts-601-700]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-7---source-analysis-and-verification]{Sources and verification}

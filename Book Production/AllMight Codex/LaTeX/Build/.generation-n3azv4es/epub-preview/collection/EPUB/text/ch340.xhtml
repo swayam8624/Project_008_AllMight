@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch340.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-1dd4ad54ca57-quadric-error-mesh-simplification" class="level2">
+<h2>Quadric error mesh simplification</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-1dd4ad54ca57-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Quadric error simplification greedily collapses the edge with the least predicted geometric error. For each triangle plane with unit normal <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> and offset <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math>, form <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>d</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mi>T</mi>
+  </msup>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>K</mi>
+  <mo>=</mo>
+  <mi>v</mi>
+  <msup>
+    <mi>v</mi>
+    <mi>T</mi>
+  </msup>
+</math>. A homogeneous point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>U</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+  <mo>,</mo>
+  <mn>1</mn>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mi>T</mi>
+  </msup>
+</math> has squared point-to-plane error <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>U</mi>
+    <mi>T</mi>
+  </msup>
+  <mi>K</mi>
+  <mi>U</mi>
+</math>. Sum the matrices of incident planes at each vertex; an edge candidate combines endpoint matrices. Partitioning the combined quadratic gives <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msup>
+    <mi>x</mi>
+    <mi>T</mi>
+  </msup>
+  <mi>A</mi>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mn>2</mn>
+  <msup>
+    <mi>b</mi>
+    <mi>T</mi>
+  </msup>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mi>c</mi>
+</math>, whose stationary point solves <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mi>x</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mi>b</mi>
+</math>. If the system is singular or indefinite, test endpoints and midpoint and keep the least-cost candidate. After selecting a location, reject collapses that flip incident face normals. The metric is a local approximation, so topology preconditions and orientation checks remain necessary.</p>
+</section>
+<section id="appendix-1dd4ad54ca57-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch339.xhtml#appendix-1aea26b2307f-half-edge-mesh-connectivity" class="wikilink">Half-edge mesh connectivity</a></li>
+<li><a href="ch366.xhtml#appendix-fab348609369-manifold-polygon-meshes-and-boundary-structure" class="wikilink">Manifold polygon meshes and boundary structure</a></li>
+</ul>
+</section>
+<section id="appendix-1dd4ad54ca57-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><span>Worlds, Images and Inference</span></li>
+</ul>
+</section>
+<section id="appendix-1dd4ad54ca57-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<p><a href="ch296.xhtml#id_03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing" class="wikilink">Meshes, connectivity, and geometry processing (Geometry, Cameras, and Image Formation, Part 1, Ch. 9)</a></p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,902 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch117.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-ef4d27797a92-bits-numbers-and-memory---visual-recall" class="level2">
+<h2>Bits, Numbers and Memory - Visual Recall</h2>
+<p><strong>Scope:</strong> Parts 1–100 only, M001–M006. Companion to <span>From Signals to Meaning</span>. No C++ Volume 02 material is included. This is a retrieval desk, not another textbook.</p>
+<section id="appendix-ef4d27797a92-how-to-use-this-desk" class="level3">
+<h3>How to use this desk</h3>
+<p>Cover the visual, sketch it from memory, answer the numbered prompts, then expand the answer key. Score each prompt <strong>0</strong> (missing/wrong), <strong>1</strong> (correct label but weak explanation), or <strong>2</strong> (can reconstruct an example and its limits). Revisit weak prompts in the linked teaching section. Do not turn recognition of a diagram into a mastery claim.</p>
+<p>Mermaid shows relationships; byte strips show placement; tables show exact distinctions; state/sequence diagrams show what changes over time. Diagrams are conceptual models, not fixed CPU/OS layouts. Answer keys use collapsible Obsidian callouts.</p>
+</section>
+<section id="appendix-ef4d27797a92-short-form-recall-the-whole-route" class="level3">
+<h3>Short-form recall — the whole route</h3>
+<p><strong>Pattern is not meaning.</strong> A representation contract assigns weights and interpretation. → <strong>Bits become decisions.</strong> Masks select fields; packing needs widths, ranges, and a policy. → <strong>Arithmetic is finite.</strong> Choose wrap, saturation, rejection, or widening before calculation. → <strong>Real values use a ruler.</strong> Floating point trades spacing against range; fixed point chooses a scale. → <strong>Operations expose error.</strong> Rounding, cancellation, conditioning, and reproducibility matter. → <strong>Keep the needed information.</strong> Quantization/codebooks spend precision deliberately. → <strong>Bytes occupy places.</strong> Alignment, lifetime, ownership, and virtual mapping are distinct. → <strong>Files are agreements.</strong> Define schema, validate lengths, then decode and check integrity.</p>
+<p><img src="../media/file24.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Caption:</strong> Follow one value from physical signal to stored bytes and back. At every transition ask: <em>Which bits? What meaning? What range/error policy? Where and during which lifetime? What format contract?</em> For the end-to-end laboratory, see <span>the complete journey</span>.</p>
+<blockquote>
+<p>[!abstract] Compact teaching notes <strong>Represent:</strong> bits are patterns; interpretation supplies meaning. <a href="ch002.xhtml#id_01-foundations-i-ch001-one-bit-several-bits-and-an-interpretation" class="wikilink">Bit-pattern example</a> · <a href="ch002.xhtml#id_01-foundations-i-ch001-why-invert-and-add-one-works" class="wikilink">Two's-complement derivation</a></p>
+<p><strong>Select and compute:</strong> mask = select; shift = reposition; pack = preserve neighbors plus insert validated fields. Arithmetic needs an explicit overflow policy. <a href="ch002.xhtml#id_01-foundations-i-ch001-fields-select-normalize-replace" class="wikilink">Field figure/formulas</a> · <a href="ch002.xhtml#id_01-foundations-i-ch001-test-the-packed-meaning" class="wikilink">Packing lab</a> · <a href="ch002.xhtml#id_01-foundations-i-ch001-choose-the-overflow-policy-before-calculating" class="wikilink">Overflow choices</a></p>
+<p><strong>Approximate:</strong> floating point has nonuniform spacing; fixed point has a chosen scale. Rounding is part of each operation; tolerance is a domain rule, not a universal epsilon. <a href="ch002.xhtml#id_01-foundations-i-ch001-encode-10.625-then-decode-13.25" class="wikilink">Worked encoding</a> · <a href="ch002.xhtml#id_01-foundations-i-ch001-cancellation-can-expose-errors-made-earlier" class="wikilink">Cancellation figure</a> · <a href="ch002.xhtml#id_01-foundations-i-ch001-a-fixed-ruler-for-fractional-values" class="wikilink">Fixed-point example</a></p>
+<p><strong>Store and exchange:</strong> address alone does not prove valid access; alignment, lifetime, ownership, and permissions are separate. A file needs an explicit schema and checked lengths. <a href="ch124.xhtml#id_01-foundations-i-ch002-virtual-memory-translates-page-identity" class="wikilink">Address translation (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)</a> · <a href="ch124.xhtml#id_01-foundations-i-ch002-storage-lifetime-ownership-and-placement-are-different-axes" class="wikilink">Memory model (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)</a> · <a href="ch124.xhtml#id_01-foundations-i-ch002-validate-lengths-before-performing-the-arithmetic-they-request" class="wikilink">Parser safety lab (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)</a> · <a href="ch124.xhtml#id_01-foundations-i-ch002-read-a-dump-by-reversing-the-contract" class="wikilink">Hex-dump lab (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)</a></p>
+</blockquote>
+</section>
+<section id="appendix-ef4d27797a92-figure-linked-pocket-notes" class="level3">
+<h3>Figure-linked pocket notes</h3>
+<p>Read one row, reconstruct its example, then follow the <strong>figure</strong> for the diagram and caption or <strong>explanation</strong> for the full teaching account. These four figures also live inside the continuous chapter, so the teaching text and recall desk share one reference. Each figure is a separate compact horizontal panel; the complete volume covers more than one printable page.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Smallest useful note</th>
+<th>Return to the teaching chapter</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Interpretation</td>
+<td>Same bits, different weights: <code>AD</code> is unsigned 173 or signed −83. State width and encoding first.</td>
+<td><a href="ch002.xhtml#id_01-foundations-i-ch001-figure-b1---one-pattern-two-integer-readings" class="wikilink">Figure B1</a> · <a href="ch002.xhtml#id_01-foundations-i-ch001-the-same-bits-can-mean-different-integers" class="wikilink">Explanation</a></td>
+</tr>
+<tr>
+<td>Field replacement</td>
+<td>Validate → clear → position → OR. <code>AD→9D</code> changes quality 2→1; outside-mask bits remain <code>8D</code>.</td>
+<td><a href="ch002.xhtml#id_01-foundations-i-ch001-figure-b2---replace-a-field-without-damaging-its-neighbors" class="wikilink">Figure B2</a> · <a href="ch002.xhtml#id_01-foundations-i-ch001-fields-select-normalize-replace" class="wikilink">Formulas and trace</a></td>
+</tr>
+<tr>
+<td>Finite arithmetic</td>
+<td>Exact <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>250</mn>
+  <mo>+</mo>
+  <mn>20</mn>
+  <mo>=</mo>
+  <mn>270</mn>
+</math>: eight-bit wrap gives 14, saturation 255, rejection no value. Widen before evaluating.</td>
+<td><a href="ch002.xhtml#id_01-foundations-i-ch001-choose-the-overflow-policy-before-calculating" class="wikilink">Policy table</a></td>
+</tr>
+<tr>
+<td>Floating fields</td>
+<td>Classify exponent/fraction first; normal binary32 has 24 precision bits, including its implicit leading one.</td>
+<td><a href="ch002.xhtml#id_01-foundations-i-ch001-the-two-formats-and-their-interpretation" class="wikilink">Field table</a> · <a href="ch002.xhtml#id_01-foundations-i-ch001-encode-10.625-then-decode-13.25" class="wikilink">Encoding trace</a></td>
+</tr>
+<tr>
+<td>Rounding graph</td>
+<td>FMA rounds once; separate multiply/add rounds twice. For the stated example: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>46</mn>
+    </mrow>
+  </msup>
+</math> versus zero.</td>
+<td><a href="ch002.xhtml#id_01-foundations-i-ch001-figure-b3---rounding-points-change-the-answer" class="wikilink">Figure B3</a> · <a href="ch002.xhtml#id_01-foundations-i-ch001-one-rounding-rather-than-two" class="wikilink">Explanation</a></td>
+</tr>
+<tr>
+<td>Error</td>
+<td>Cancellation can expose previous input errors even when subtraction of stored operands is exact. Tolerance needs units and a policy.</td>
+<td><a href="ch002.xhtml#id_01-foundations-i-ch001-cancellation-can-expose-errors-made-earlier" class="wikilink">Worked trace</a> · <a href="ch002.xhtml#id_01-foundations-i-ch001-epsilon-is-one-spacing-not-a-tolerance" class="wikilink">Spacing table</a></td>
+</tr>
+<tr>
+<td>Representation choice</td>
+<td>Fixed point chooses a constant step; floats choose a changing step; quantization chooses a finite codebook. Packing valid codes loses no further information.</td>
+<td><a href="ch002.xhtml#id_01-foundations-i-ch001-choose-the-contract-before-choosing-the-type" class="wikilink">Comparison</a> · <a href="ch002.xhtml#id_01-foundations-i-ch001-an-int4-group-from-numbers-to-nibbles-and-back" class="wikilink">Nibble trace</a></td>
+</tr>
+<tr>
+<td>Translation</td>
+<td>Mapping changes page identity and preserves offset: <code>12345ABC→987ABC</code> under the example 4-KiB mapping.</td>
+<td><a href="ch124.xhtml#id_01-foundations-i-ch002-figure-b4---translation-preserves-the-offset" class="wikilink">Figure B4 (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)</a> · <a href="ch124.xhtml#id_01-foundations-i-ch002-virtual-memory-translates-page-identity" class="wikilink">Explanation (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)</a></td>
+</tr>
+<tr>
+<td>Valid access</td>
+<td>Bounds, alignment, lifetime, permitted access and mapping are separate obligations; old bytes prove none alone.</td>
+<td><a href="ch124.xhtml#id_01-foundations-i-ch002-storage-lifetime-ownership-and-placement-are-different-axes" class="wikilink">Lifetime/ownership table (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)</a></td>
+</tr>
+<tr>
+<td>External bytes</td>
+<td>Specify schema → validate arithmetic/limits → decode. Integrity, authenticity and durability require their own contracts.</td>
+<td><a href="ch124.xhtml#id_01-foundations-i-ch002-validate-lengths-before-performing-the-arithmetic-they-request" class="wikilink">Bounds rules (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)</a> · <a href="ch124.xhtml#id_01-foundations-i-ch002-read-a-dump-by-reversing-the-contract" class="wikilink">Full dump (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)</a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recall checkpoint:</strong> draw B1–B4 without looking. Label one assumption and one failure in each. For example: decoding <code>AD</code> as a float is the wrong contract; OR-only insertion cannot clear a field; contraction can erase the intended two-rounding path; a valid address translation does not establish a live C++ object.</p>
+</section>
+<section id="appendix-ef4d27797a92-the-entire-story-on-one-board-archived-original" class="level3">
+<h3>The entire story on one board — archived original</h3>
+<p>The original vertical overview is retained here for comparison; use the horizontal map above for the one-page route.</p>
+<p><img src="../media/file25.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Opening challenge:</strong> Explain each arrow without using “it just works.” At every stage ask: <strong>Which bits? Which meaning? Where? Valid to access?</strong></p>
+</section>
+<section id="appendix-ef4d27797a92-a-pattern-does-not-announce-its-meaning" class="level3">
+<h3>1 - A pattern does not announce its meaning</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-from-a-signal-to-an-interpretation" class="wikilink">Repair this foundation</a> · <a href="ch119.xhtml#appendix-f414bd4ed05c-interpretation-contract" class="wikilink">Interpretation contract</a> · <a href="ch046.xhtml#appendix-4fbc03d20829-twos-complement" class="wikilink">Two's complement</a></p>
+<pre class="text"><code>bit index       7    6    5    4    3    2    1    0
+pattern         1    0    1    0    1    1    0    1
+unsigned weight 128  64   32   16    8    4    2    1
+signed weight  -128  64   32   16    8    4    2    1
+
+same pattern:   binary 10101101 = hex AD = octal 255
+unsigned:       128 + 32 + 8 + 4 + 1 = 173
+two&#39;s complement: -128 + 32 + 8 + 4 + 1 = -83</code></pre>
+<table>
+<thead>
+<tr>
+<th>Eight-bit interpretation</th>
+<th style="text-align: right;">Zero patterns</th>
+<th>Range</th>
+<th>−5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Unsigned</td>
+<td style="text-align: right;">1</td>
+<td>0…255</td>
+<td>Not in domain</td>
+</tr>
+<tr>
+<td>Signed magnitude</td>
+<td style="text-align: right;">2</td>
+<td>−127…127</td>
+<td>10000101</td>
+</tr>
+<tr>
+<td>One’s complement</td>
+<td style="text-align: right;">2</td>
+<td>−127…127</td>
+<td>11111010</td>
+</tr>
+<tr>
+<td>Two’s complement</td>
+<td style="text-align: right;">1</td>
+<td>−128…127</td>
+<td>11111011</td>
+</tr>
+</tbody>
+</table>
+<p>For <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> independent bits: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mi>N</mi>
+  </msup>
+</math> patterns. Unsigned maximum is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mi>N</mi>
+  </msup>
+  <mo>−</mo>
+  <mn>1</mn>
+</math>, not <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mi>N</mi>
+  </msup>
+</math>. Two’s-complement decode subtracts <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mi>N</mi>
+  </msup>
+</math> when the top bit is set.</p>
+<p><strong>Recall</strong></p>
+<ol type="1">
+<li>Why can imperfect voltage ranges represent a stable bit? Distinguish noise margin, bit, byte, octet, word and character.</li>
+<li>Encode 13 by repeated division; decode 1101 using Horner steps. Why do hex and octal group four and three bits?</li>
+<li>Derive invert-plus-one rather than reciting it. Why is the signed minimum asymmetric and unsafe to negate in its own signed type?</li>
+</ol>
+<blockquote>
+<p>[!answer]- Reveal 1–3 Noise margin tolerates disturbances within a logical range. A bit has two logical states; octet means exactly eight bits; C++ byte has CHAR_BIT bits and sizeof(char)=1. A word is architecture-specific; a character can need multiple bytes. Historical byte sizes varied.</p>
+<p>13→6 remainder1→3 remainder0→1 remainder1→0 remainder1; reverse gives1101. Horner states1→3→6→13. Bases16 and8 are powers2^4 and2^3.</p>
+<p><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mi>N</mi>
+  </msup>
+  <mo>−</mo>
+  <mi>x</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mn>2</mn>
+    <mi>N</mi>
+  </msup>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mn>1</mn>
+</math>: width-limited complement plus one. Zero negates back to zero after the carry is discarded. The positive counterpart of −128 is128, outside the signed eight-bit range. Promotion can change the actual C++ operation type; inspect it first.</p>
+</blockquote>
+</section>
+<section id="appendix-ef4d27797a92-select-move-replace" class="level3">
+<h3>2 - Select, move, replace</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-bits-become-decisions-and-compact-fields" class="wikilink">Repair decisions and fields</a> · <a href="ch105.xhtml#appendix-dbe5905163c2-bit-mask" class="wikilink">Bit mask</a> · <a href="ch020.xhtml#appendix-1f9963e1a5d1-bit-packing" class="wikilink">Bit packing</a></p>
+<p><img src="../media/file26.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Eight-bit cue</th>
+<th>Reconstruct the purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AND</td>
+<td>AD &amp; 07 = 05</td>
+<td>Keep selected bits</td>
+</tr>
+<tr>
+<td>OR</td>
+<td>AD OR 40 = ED</td>
+<td>Set selected bits</td>
+</tr>
+<tr>
+<td>XOR</td>
+<td>AD XOR 08 = A5</td>
+<td>Toggle; repeat restores AD</td>
+</tr>
+<tr>
+<td>NOT</td>
+<td>NOT₈(0F) = F0</td>
+<td>Invert at a stated width</td>
+</tr>
+<tr>
+<td>Extract</td>
+<td>(AD &gt;&gt; 4) &amp; 03 = 2</td>
+<td>Move then isolate</td>
+</tr>
+<tr>
+<td>Replace</td>
+<td>quality2→1: AD→9D</td>
+<td>Clear then insert; preserve other bits</td>
+</tr>
+</tbody>
+</table>
+<p>For width <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+</math>, offset <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+</math>, carrier <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math>: require <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0</mn>
+  <mo>&lt;</mo>
+  <mi>w</mi>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+  <mo>+</mo>
+  <mi>w</mi>
+  <mo>≤</mo>
+  <mi>N</mi>
+</math>, valid shift counts, and a declared reject/truncate policy. The full-width low-mask case needs care in executable code: shifting 1 by the carrier width is invalid.</p>
+<p><strong>Recall</strong></p>
+<ol start="4" type="1">
+<li>Prove both De Morgan identities from four input pairs. Why is built-in logical AND not interchangeable with bitwise AND?</li>
+<li>Reconstruct extraction/insertion formulas. Explain any-selected versus all-selected flags and how to test a packer beyond a round trip.</li>
+<li>On the C++23 baseline, why can −3/2 and −3&gt;&gt;1 differ? What changes when a byte operand is promoted?</li>
+</ol>
+<blockquote>
+<p>[!answer]- Reveal 4–6 NOT(A AND B)=NOT A OR NOT B; NOT(A OR B)=NOT A AND NOT B. Logical operators test truth and built-in AND/OR short-circuit; bitwise operators transform every bit.</p>
+<p>Low mask <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+  <mo>=</mo>
+  <msup>
+    <mn>2</mn>
+    <mi>w</mi>
+  </msup>
+  <mo>−</mo>
+  <mn>1</mn>
+</math>, positioned mask <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>M</mi>
+  <mo>=</mo>
+  <mi>L</mi>
+  <msup>
+    <mn>2</mn>
+    <mi>s</mi>
+  </msup>
+</math>. Extract is right-shift then AND L; insert clears M and ORs the shifted valid field. Any tests nonzero; all compares with the whole mask. Use independent golden bytes, preservation/range checks and boundary/invalid cases: encoder and decoder can share one bug.</p>
+<p>Integer division truncates toward zero (−1); arithmetic right shift rounds downward (−2). Promotions determine the operation width, including the width of NOT; a narrow stored type does not force a narrow expression.</p>
+</blockquote>
+</section>
+<section id="appendix-ef4d27797a92-the-adder-is-simple-the-policy-is-not" class="level3">
+<h3>3 - The adder is simple; the policy is not</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-arithmetic-becomes-a-policy" class="wikilink">Repair finite arithmetic</a> · <a href="ch098.xhtml#appendix-d1a5b1e520c2-full-adder" class="wikilink">Full adder</a> · <a href="ch029.xhtml#appendix-2ed044358b82-arithmetic-policies" class="wikilink">Arithmetic policies</a></p>
+<p><img src="../media/file27.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<table>
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 40%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr>
+<th>Calculation</th>
+<th style="text-align: right;">Exact/wide result</th>
+<th>Eight-bit destination policy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>250+20</td>
+<td style="text-align: right;">270</td>
+<td>Wrap14 / saturate255 / reject</td>
+</tr>
+<tr>
+<td>127+1</td>
+<td style="text-align: right;">128</td>
+<td>Signed eight-bit overflow; no legal wrapping assumption</td>
+</tr>
+<tr>
+<td>0−1 unsigned</td>
+<td style="text-align: right;">−1 mathematically</td>
+<td>Residue255</td>
+</tr>
+<tr>
+<td>13×11</td>
+<td style="text-align: right;">13+26+104</td>
+<td>143</td>
+</tr>
+<tr>
+<td>13÷3</td>
+<td style="text-align: right;"><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>13</mn>
+  <mo>=</mo>
+  <mn>4</mn>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mn>1</mn>
+</math></td>
+<td>Quotient4, remainder1</td>
+</tr>
+</tbody>
+</table>
+<pre class="text"><code>stored type → promotion → common operation type → calculation → destination conversion
+uint8 + uint8       commonly becomes int arithmetic before narrowing
+signed overflow    must be prevented BEFORE evaluating the expression</code></pre>
+<p><strong>Recall</strong></p>
+<ol start="7" type="1">
+<li>Derive a half adder, add carry-in, and explain ripple delay versus generate/propagate carry networks. Distinguish carry, overflow, negative and zero flags.</li>
+<li>Rebuild shift-and-add multiplication and long division. What intermediate width and invalid inputs must be handled?</li>
+<li>Choose wrap/saturate/reject/widen for a counter, image sample and size calculation. Why can saturation break associativity?</li>
+<li>Explain signed minimum/−1, unsigned reverse-loop failure, plain-char signedness, exact/least/fast widths, and mixed-sign comparisons.</li>
+</ol>
+<blockquote>
+<p>[!answer]- Reveal 7–10 Half-adder sum=A XOR B, carry=A AND B. Full-adder carry is true when at least two of its three inputs are true. Ripple chains carry dependencies; prefix designs combine generate/propagate information. Carry answers an unsigned question; overflow a signed-range question; N observes a result sign bit; Z observes all-zero result. Borrow conventions vary: binary6502 SBC uses A−B−(1−C), with C=1 meaning no borrow.</p>
+<p>Set multiplier bits select shifted partial products. Division shifts bits into a remainder, conditionally subtracts, and satisfies D=Qd+R with0≤R&lt;d. Prove partial/intermediate ranges. Reject division by0 and same-type signed-min/−1.</p>
+<p>Policies follow meaning: bounded samples may clamp, modular counters may wrap, sizes usually need checked arithmetic. Signed overflow remains undefined behavior; widening after the overflowing expression is too late. Saturation and capped updates are order-dependent.</p>
+<p>An unsigned i≥0 never terminates a reverse loop. char signedness varies; exact-width aliases are optional, least/fast may be wider. Promotions/common-type conversions can turn a negative operand into a large unsigned value. Track all five stages, not only storage width.</p>
+</blockquote>
+</section>
+<section id="appendix-ef4d27797a92-a-stretching-ruler-with-special-regions" class="level3">
+<h3>4 - A stretching ruler with special regions</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">Repair floating representation</a> · <a href="ch033.xhtml#appendix-343615f49ddf-ieee-754-floating-point" class="wikilink">IEEE-754 floating point</a></p>
+<pre class="text"><code>binary32: [ sign:1 ][ stored exponent:8 ][ fraction:23 ]  normal precision24
+binary64: [ sign:1 ][ stored exponent:11][ fraction:52 ]  normal precision53</code></pre>
+<p><img src="../media/file28.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p>Binary32 normal value, for <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mo>≤</mo>
+  <mi>E</mi>
+  <mo>≤</mo>
+  <mn>254</mn>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mi>S</mi>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>+</mo>
+  <mi>F</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>23</mn>
+    </mrow>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mi>E</mi>
+      <mo>−</mo>
+      <mn>127</mn>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Here S is sign0/1, E stored exponent, F the unsigned23-bit fraction. Subnormal value is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mi>S</mi>
+  </msup>
+  <mi>F</mi>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>149</mn>
+    </mrow>
+  </msup>
+</math>.</p>
+<table>
+<thead>
+<tr>
+<th>Visual checkpoint</th>
+<th>Reconstruct</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10.625</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mn>1.010101</mn>
+    <mn>2</mn>
+  </msub>
+  <mo>×</mo>
+  <msup>
+    <mn>2</mn>
+    <mn>3</mn>
+  </msup>
+</math> → word412A0000</td>
+</tr>
+<tr>
+<td>C1540000</td>
+<td>Sign1, exponent130, significand1.65625 → −13.25</td>
+</tr>
+<tr>
+<td>Above1</td>
+<td>binary32 spacing <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>23</mn>
+    </mrow>
+  </msup>
+</math></td>
+</tr>
+<tr>
+<td>Immediately below1</td>
+<td>gap <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>24</mn>
+    </mrow>
+  </msup>
+</math></td>
+</tr>
+<tr>
+<td>Subnormal grid</td>
+<td>step <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>149</mn>
+    </mrow>
+  </msup>
+</math>, not a hidden-one format</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recall</strong></p>
+<ol start="11" type="1">
+<li>Decode the class before the normal formula. Why do +0 and −0 compare equal but differ as representations?</li>
+<li>Reconstruct both words above and explain bias127/1023 and hidden precision24/53.</li>
+<li>Distinguish epsilon, min-normal, min-subnormal and local ULP. Explain guard/round/sticky and all four rounding directions.</li>
+</ol>
+<blockquote>
+<p>[!answer]- Reveal 11–13 Reserved exponent fields alter the interpretation. Zero has E=F=0 and a separate sign; infinities have all-one E,F=0; NaNs have all-one E,F≠0. Signed-zero reciprocals can differ under IEEE behavior; signbit sees the sign even when x&lt;0 does not. NaN comparisons are unordered; payload/signaling behavior needs a declared policy.</p>
+<p>Normal exponent is E−bias and significand is1+F/2^fractionBits. Subnormals remove the hidden one and keep a fixed tiny grid. A C++ float is not universally required to be binary32.</p>
+<p>Epsilon is spacing above1, not a universal comparison tolerance. Binary32 min-normal=<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>126</mn>
+    </mrow>
+  </msup>
+</math>; min-subnormal=<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>149</mn>
+    </mrow>
+  </msup>
+</math>. Normal binade exponent e gives step <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mi>e</mi>
+      <mo>−</mo>
+      <mn>23</mn>
+    </mrow>
+  </msup>
+</math>. Guard/round/sticky summarize discarded information. Nearest-even picks the even retained significand at an exact tie; upward/downward/toward-zero are signed directions. Check and restore runtime rounding state.</p>
+</blockquote>
+</section>
+<section id="appendix-ef4d27797a92-follow-the-rounding-points-not-algebra-alone" class="level3">
+<h3>5 - Follow the rounding points, not algebra alone</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-when-arithmetic-meets-uncertainty" class="wikilink">Repair numerical reasoning</a> · <a href="ch078.xhtml#appendix-a2773a6a2f9d-cancellation-and-loss-of-significance" class="wikilink">Cancellation and loss of significance</a> · <a href="ch055.xhtml#appendix-5f1a2c3f97ff-numerical-reproducibility" class="wikilink">Numerical reproducibility</a></p>
+<p><img src="../media/file29.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Witness</th>
+<th>What it exposes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.1</td>
+<td>Reduced denominator10 is not a power of two: repeating binary fraction</td>
+</tr>
+<tr>
+<td>binary32 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>24</mn>
+    </mrow>
+  </msup>
+  <mo>+</mo>
+  <mn>1</mn>
+</math></td>
+<td>Nearest-even stores <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>24</mn>
+    </mrow>
+  </msup>
+</math>: absorption</td>
+</tr>
+<tr>
+<td>Nearby stored x−y</td>
+<td>Subtraction can be exact while intended inputs remain uncertain</td>
+</tr>
+<tr>
+<td>min-normal/2</td>
+<td>Exact subnormal is not automatically an underflow flag</td>
+</tr>
+<tr>
+<td>FMA versus multiply then add</td>
+<td>One final rounding versus two rounding points</td>
+</tr>
+<tr>
+<td>Atomic floating sum</td>
+<td>Race-free update does not fix update order</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recall</strong></p>
+<ol start="14" type="1">
+<li>When does a rational terminate in binary? Why can cancellation magnify relative input error even when subtraction itself is exact?</li>
+<li>Classify overflow, tiny exact results, tiny inexact results, invalid operations and division-by-zero flags.</li>
+<li>Distinguish absolute/relative and forward/backward error; stability versus conditioning. Why is approximate closeness not equality?</li>
+<li>Draw factored/distributed and FMA/unfused evaluation graphs. What do pairwise/compensated sums, wider accumulation and fixed order solve—and not solve?</li>
+</ol>
+<blockquote>
+<p>[!answer]- Reveal 14–17 A reduced rational terminates iff its denominator is a power of two. Sterbenz’s nearby-float condition x/2≤y≤2x for nonnegative stored values can give exact subtraction under the stated gradual-underflow conditions. A small difference can still expose earlier input uncertainty; sensitivity scales with (|x|+|y|)/|x−y|.</p>
+<p>Tiny and underflow are not synonyms. Flags also include inexact, overflow, divide-by-zero and invalid; classify the actual operation/environment.</p>
+<p>Absolute error has units; relative error needs a nonzero reference. Forward error measures output discrepancy; backward error asks how perturbed inputs explain the output. Conditioning belongs to the problem, stability to the algorithm. Validate tolerances and non-finite inputs first; pairwise closeness need not be transitive.</p>
+<p>FMA rounds ab+c once; unfused arithmetic rounds the product too. Reassociation/distribution move rounding points. Pairwise and compensated algorithms can reduce error but do not reconstruct lost input bits or guarantee identical cross-platform execution. Wider transient arithmetic does not preserve a repeatedly narrowed state. Determinism needs order, precision, compiler/environment and algorithm contracts; capped TSDF-style weighted updates can remain history-dependent mathematically.</p>
+</blockquote>
+</section>
+<section id="appendix-ef4d27797a92-choose-what-information-to-keep" class="level3">
+<h3>6 - Choose what information to keep</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-choosing-what-information-to-keep" class="wikilink">Repair representation choices</a> · <a href="ch018.xhtml#appendix-1d0dbe8924cc-fixed-point-representation" class="wikilink">Fixed-point representation</a> · <a href="ch101.xhtml#appendix-d5da3eaabaef-affine-quantization-and-zero-point" class="wikilink">Affine quantization and zero point</a></p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Format</th>
+<th>What it buys</th>
+<th>What remains</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fixed point I/S</td>
+<td>Constant absolute step1/S</td>
+<td>Bounded range; rescale/overflow policy</td>
+</tr>
+<tr>
+<td>FP16 fields1/5/10</td>
+<td>11-bit normal precision</td>
+<td>Maximum65504; narrow range</td>
+</tr>
+<tr>
+<td>BF16 fields1/8/7</td>
+<td>Wide exponent range,8-bit precision</td>
+<td>Coarse spacing; NaN/rounding policy</td>
+</tr>
+<tr>
+<td>Groupwise INT4</td>
+<td>Small local codebook</td>
+<td>Clipping, scales, padding, task error</td>
+</tr>
+<tr>
+<td>UNORM8</td>
+<td>256 codes in0…1</td>
+<td>Step1/255; 128 is not exactly0.5</td>
+</tr>
+<tr>
+<td>SNORM8</td>
+<td>Normalized signed range</td>
+<td>−128 and−127 both decode−1</td>
+</tr>
+</tbody>
+</table>
+<pre class="text"><code>fixed F=8:    1.5 → raw384     2.25 → raw576
+multiply:    384×576 =221184  (scale256²)
+rescale:     221184/256=864   (scale256)
+decode:      864/256=3.375
+
+offset INT4 codes:  [1,5,8,11,15]
+low nibble first:  [5|1] [11|8] [padding0|15] → 51 B8 0F
+quantization loses information; packing valid codes does not.</code></pre>
+<p><strong>Recall</strong></p>
+<ol start="18" type="1">
+<li>Choose F for a signed32-bit fixed domain ±10^6 with step≤0.001. Derive multiply/divide rescaling and nearest unclipped error.</li>
+<li>Encode1.5 in FP16; compare FP16/BF16 near1 and at large magnitude. Why can truncating a NaN payload accidentally produce infinity?</li>
+<li>Explain affine q/z/scale, outlier effects, group metadata, learned one-bit centroids, RMSE/MAE and normalized graphics/color-space distinctions.</li>
+</ol>
+<blockquote>
+<p>[!answer]- Reveal 18–20 Require <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mi>F</mi>
+    </mrow>
+  </msup>
+  <mo>≤</mo>
+  <mn>0.001</mn>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+  <msup>
+    <mn>2</mn>
+    <mi>F</mi>
+  </msup>
+  <mo>≤</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>31</mn>
+    </mrow>
+  </msup>
+  <mo>−</mo>
+  <mn>1</mn>
+</math>: F=10 or11. Multiply raw operands at scale S² then round AB/S; quotient rounds AS/B for B≠0. Prove intermediate capacity before calculating, check destination range, and define negative ties. Nearest unclipped error≤1/(2S); relative error can explode nearzero.</p>
+<p>FP16 1.5→3E00; bias15, normal min2^-14, subnormal min2^-24. BF16 bias127, normal spacing above1 is2^-7 versus FP16’s2^-10. Dropping a nonzero discarded NaN fraction can leave all-one exponent and zero fraction: infinity. Classify first; canonicalization is a policy.</p>
+<p>Affine reconstruction is scale×(q−z), with positive valid scale; nearest unclipped ideal error≤scale/2. A max-absolute outlier can erase small values. INT4 payload costs ceil(N/2)+4ceil(N/G) bytes with float32 scales, not four bits/value universally. At N=5,G=32 it costs7 bytes. One-bit labels can select learned means rather than±1. RMSE squares errors; MAE takes magnitudes; neither proves application quality. UNORM is not sRGB; quantized normals may need safe renormalization and still lose direction.</p>
+</blockquote>
+</section>
+<section id="appendix-ef4d27797a92-placement-translation-and-lifetime-are-separate" class="level3">
+<h3>7 - Placement, translation and lifetime are separate</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">Repair memory reasoning (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)</a> · <a href="ch161.xhtml#appendix-bc07c3d25b18-endianness" class="wikilink">Endianness (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Endianness)</a> · <a href="ch156.xhtml#appendix-a1f7c53b4742-alignment-and-padding" class="wikilink">Alignment and padding (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Alignment and padding)</a> · <a href="ch125.xhtml#appendix-01e5905165c4-page-tables-and-mmu" class="wikilink">Page tables and MMU (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Page tables and MMU)</a></p>
+<pre class="text"><code>value 12345678 hex     increasing byte addresses →
+little endian         78 56 34 12
+big endian            12 34 56 78
+
+ordinary ABI example: char / uint32 / char, alignments1/4/1
+offset 0: [a][pad][pad][pad][b b b b][c][tail][tail][tail]
+member offsets0,4,8; size12; alignment4; array stride12</code></pre>
+<p><img src="../media/file30.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p>Example4-KiB pages: VA12345ABC → VPN12345, offsetABC → PFN987 → PA987ABC. A TLB miss is not automatically a fault; a fault is not automatically disk I/O or a crash.</p>
+<p><img src="../media/file31.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Recall</strong></p>
+<ol start="21" type="1">
+<li>Why does swapping bytes not reverse bits? Derive aligned offsets and tail padding; compare packing, reordering, AoS/SoA and CPU/GPU layouts.</li>
+<li>Reconstruct the address translation. Distinguish process isolation, shared mappings, TLB/data-cache misses, faults, COW, virtual/physical contiguity and huge-page tradeoffs.</li>
+<li>Separate stack/heap/static regions from storage duration and object lifetime. Explain fragmentation, dangling views, mapped files, const, W^X and ASLR.</li>
+</ol>
+<blockquote>
+<p>[!answer]- Reveal 21–23 Endianness orders significance bytes, not bits within an octet. Align each member under stated ABI requirements; round total extent for aligned array stride. Reordering can reduce holes but change ABI. Packing may misalign; smaller is not automatically faster. AoS groups records, SoA fields; hot access patterns and backend layout contracts decide.</p>
+<p>For page size P, VPN=floor(VA/P), offset=VA mod P; PA=PFN×P+offset. Context/permissions matter. TLB caches translations; data cache caches contents. COW copies a shared backing page when a permitted write needs a private copy. Consecutive virtual pages may use scattered frames. Larger pages increase simplified TLB reach entries×pageSize but reduce granularity/flexibility.</p>
+<p>Automatic objects often use stack frames, but optimization/ABI can differ; heap allocation manages variable-lifetime blocks. Static duration can still need runtime initialization. Internal fragmentation is allocated slack; external fragmentation is separated holes. A span does not own/extend backing life. A mapped file needs bounds, permissions and access/lifetime validity. const does not force a read-only segment; W^X concerns mapping permissions; ASLR varies locations. Old bytes do not prove a live object.</p>
+</blockquote>
+</section>
+<section id="appendix-ef4d27797a92-external-bytes-need-a-complete-agreement" class="level3">
+<h3>8 - External bytes need a complete agreement</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-bytes-become-a-durable-agreement" class="wikilink">Repair external bytes (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)</a> · <a href="ch144.xhtml#appendix-652d81568de9-checked-binary-parsing" class="wikilink">Checked binary parsing (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Checked binary parsing)</a> · <a href="ch164.xhtml#appendix-cbe594d1ab0a-integrity-and-authenticity" class="wikilink">Integrity and authenticity (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Integrity and authenticity)</a></p>
+<p><span class="diagram-panels"><img src="../media/file32.svg" class="allmight-diagram-panel" data-panel-index="1" data-panel-count="2" alt="Diagram" /><img src="../media/file33.svg" alt="" /></span><img src="../media/file34.png" class="allmight-diagram-panel" data-panel-index="2" data-panel-count="2" alt="" /></p>
+<table>
+<thead>
+<tr>
+<th>Same binary32-compatible value1</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Numeric conversion to uint32</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Representation bit-cast</td>
+<td>Word3F800000</td>
+</tr>
+<tr>
+<td>Little-endian encoding</td>
+<td>Bytes00 00 80 3F</td>
+</tr>
+<tr>
+<td>Big-endian encoding</td>
+<td>Bytes3F 80 00 00</td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Defense</th>
+<th>Answers</th>
+<th>Does not establish</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Magic/version</td>
+<td>Which proposed format/revision?</td>
+<td>Valid dimensions or trusted sender</td>
+</tr>
+<tr>
+<td>Checked schema</td>
+<td>Structurally permitted content?</td>
+<td>Unchanged payload</td>
+</tr>
+<tr>
+<td>CRC/checksum</td>
+<td>Matches stated error-detection reference?</td>
+<td>Adversarial authenticity</td>
+</tr>
+<tr>
+<td>Cryptographic hash</td>
+<td>Matches trusted digest?</td>
+<td>Trust if attacker replaces digest too</td>
+</tr>
+<tr>
+<td>MAC/signature</td>
+<td>Authenticated under trusted key policy?</td>
+<td>Semantic correctness</td>
+</tr>
+<tr>
+<td>Atomic publication</td>
+<td>Replacement visibility contract?</td>
+<td>Crash durability</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recall</strong></p>
+<ol start="24" type="1">
+<li>State bit-cast preconditions; distinguish native ABI from external schema. Give safe multiplication and range checks before parsing.</li>
+<li>Explain checksum blind spots, specified CRC parameters, hash collisions, authenticity and durability. Decode the mini-dump below.</li>
+</ol>
+<blockquote>
+<p>[!answer]- Reveal 24–25 Bit-cast needs same size, trivially copyable types and valid initialized representations under the applicable rules. It is not numeric conversion, endian conversion or permission for arbitrary typed access.</p>
+<p>Before unsigned a×b check a=0 or b≤MAX/a. Before reading n bytes at o in length L, check o≤L then n≤L−o. Check header≤length, exact payload length, size_t representability and practical resource limits before allocation.</p>
+<p>Additive byte sums miss reorderings. A CRC needs polynomial, initial/final operations, reflection/order and covered range. CRC-32/ISO-HDLC check string123456789 gives CBF43926. Finite digests necessarily have collisions over unrestricted messages. A hostile replacement requires trusted digest/key policy; valid decoding, integrity, authenticity, publication and durability are different claims.</p>
+</blockquote>
+<section id="appendix-ef4d27797a92-mini-dump---reconstruct-before-revealing" class="level4">
+<h4>Mini-dump - Reconstruct before revealing</h4>
+<pre class="text"><code>0000  4E 51 54 4E 53 52 30 31   magic
+0008  01 00 00 00               version
+000C  02 00 00 00 00 00 00 00   rows
+0014  03 00 00 00 00 00 00 00   columns
+001C  00 00 80 3F               first payload word</code></pre>
+<p>Assume explicit little-endian uint32 version, uint64 dimensions and IEEE binary32 payload. What are shape, header size, payload size and total size? What changes if payload byte80 becomes00?</p>
+<blockquote>
+<p>[!answer]- Reveal the dump Shape2×3; header28 bytes; payload24 bytes; total52 bytes. First word3F800000 decodes1. Flipping80→00 gives3F000000, value0.5. Magic, dimensions and file length can remain plausible; structural validation alone misses this substitution. This is a teaching schema, not a freshly verified production format.</p>
+</blockquote>
+</section>
+</section>
+<section id="appendix-ef4d27797a92-final-blank-board-test" class="level3">
+<h3>Final blank-board test</h3>
+<p>Without looking above, draw: interpretation fork → mask/extract/replace → adder with two flag questions → floating classifier → rounding graph → precision-choice table → byte/alignment strip → virtual translation → live-object state → safe reader.</p>
+<p>For every diagram supply <strong>one numeric example, one invariant, one failure case and one assumption</strong>. Then explain the same stored bytes under two interpretations. A round trip is only one test: demand independent golden bytes and invalid-input checks too.</p>
+</section>
+<section id="appendix-ef4d27797a92-coverage-map---no-source-parts-dropped" class="level3">
+<h3>Coverage map - No source parts dropped</h3>
+<p>This map is navigation, not partwise lesson segmentation. Overlapping examples may revisit a concept; the listed coverage ranges assign each of1–100 exactly once.</p>
+<table>
+<thead>
+<tr>
+<th>Source parts</th>
+<th>Recall panel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1–7; 21–27</td>
+<td><a href="ch117.xhtml#appendix-ef4d27797a92-a-pattern-does-not-announce-its-meaning" class="wikilink">#1 - A pattern does not announce its meaning</a></td>
+</tr>
+<tr>
+<td>8–20</td>
+<td><a href="ch117.xhtml#appendix-ef4d27797a92-select-move-replace" class="wikilink">#2 - Select, move, replace</a></td>
+</tr>
+<tr>
+<td>28–40</td>
+<td><a href="ch117.xhtml#appendix-ef4d27797a92-the-adder-is-simple-the-policy-is-not" class="wikilink">#3 - The adder is simple; the policy is not</a></td>
+</tr>
+<tr>
+<td>61–76</td>
+<td><a href="ch117.xhtml#appendix-ef4d27797a92-a-stretching-ruler-with-special-regions" class="wikilink">#4 - A stretching ruler with special regions</a></td>
+</tr>
+<tr>
+<td>77–88</td>
+<td><a href="ch117.xhtml#appendix-ef4d27797a92-follow-the-rounding-points-not-algebra-alone" class="wikilink">#5 - Follow the rounding points, not algebra alone</a></td>
+</tr>
+<tr>
+<td>89–96</td>
+<td><a href="ch117.xhtml#appendix-ef4d27797a92-choose-what-information-to-keep" class="wikilink">#6 - Choose what information to keep</a></td>
+</tr>
+<tr>
+<td>41–60</td>
+<td><a href="ch117.xhtml#appendix-ef4d27797a92-placement-translation-and-lifetime-are-separate" class="wikilink">#7 - Placement, translation and lifetime are separate</a></td>
+</tr>
+<tr>
+<td>97–100</td>
+<td><a href="ch117.xhtml#appendix-ef4d27797a92-external-bytes-need-a-complete-agreement" class="wikilink">#8 - External bytes need a complete agreement</a></td>
+</tr>
+</tbody>
+</table>
+<p>Repair exact definitions in <a href="ch207.xhtml#appendix-fd090d982a15-foundations" class="wikilink">Supplementary/Foundations (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)</a>; longer proofs in <a href="ch211.xhtml#id_01-foundations-i-ch010-reconstruct-the-representation-and-lifetime-proofs" class="wikilink">Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Reconstruct the representation and lifetime proofs (Bits, Programs, and Reliable Systems, Part 3, Ch. 8)</a>; extended experiments in <a href="ch045.xhtml#appendix-4e2236f53445-code-snippets" class="wikilink">Supplementary/Code Snippets</a> and <a href="ch074.xhtml#appendix-92ff77d4dfdc-worked-traces" class="wikilink">Supplementary/Worked Traces</a>. The full teaching explanations remain in Volume01. Future recall companions should reuse this one-per-volume structure; none is created for C++ in this request.</p>
+</section>
+</section>
+</body>
+</html>

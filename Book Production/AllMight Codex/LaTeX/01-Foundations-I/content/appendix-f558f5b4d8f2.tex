@@ -1,0 +1,38 @@
+\hypertarget{appendix-f558f5b4d8f2}{}
+\section*{Undefined behavior}
+\section{Undefined behavior}\label{undefined-behavior}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C002
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Invalid shifts, out-of-bounds access, signed overflow, division by zero, and \texttt{INT\_MIN\ /\ -1} provide no valid C++ execution result; optimizers may assume they never occur.
+
+The C++ language imposes no requirements on an execution that invokes undefined behavior. It is not an error value or a guaranteed trap. Signed overflow, division by zero, invalid shift counts, and out-of-bounds accesses are examples. Check preconditions before performing the operation.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-f414bd4ed05c]{Interpretation contract} --- For \texttt{0xAD}, unsigned interpretation gives 173; eight-bit two's complement gives −83.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-1a599c924a4e]{Signed integer overflow} --- uses undefined behavior as part of its representation or reasoning.
+\item
+  \hyperref[appendix-0682dbfc5f0e]{Packed structures and misaligned access} --- depends on this concept; see its prerequisite explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Explain undefined behavior without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} formal categories, provenance, optimizer proofs, and sanitizers.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#From\%20a\%20signal\%20to\%20an\%20interpretation}{C001 teaching chapter} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Arithmetic\%20becomes\%20a\%20policy}{C002 development} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

@@ -8,7 +8,7 @@ The rendering equation expresses outgoing radiance as an integral over incoming 
 
 **Recall question:** Why must the probability density accompany a sampled light-transport path?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 13372–16534; source-span SHA256 27d7e68f96a5b28c127ee0bc5089f16ea4f07496b55d08f017ecc90fb07f965f. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 13403–16565; source-span SHA256 27d7e68f96a5b28c127ee0bc5089f16ea4f07496b55d08f017ecc90fb07f965f. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## The rendering equation and light transport

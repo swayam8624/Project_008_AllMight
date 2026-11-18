@@ -1,0 +1,4099 @@
+Yes. **553–558 is another block where I do not want formula-only knowledge.** These six Parts are the bridge from abstract vector algebra into the actual local geometry used by reflection/refraction, lighting, surface frames, mesh shading, normal mapping, ray tracing, and later physically based rendering.
+
+The canonical sequence is **553. Reflection of a direction across a normal**, **554. Refraction geometry from Snell's law**, **555. Half-vector construction in shading**, **556. Tangent vectors on a surface**, **557. Normal vectors on a surface**, and **558. Bitangent vectors**. The curriculum requires derivation, concrete representation, code, worked traces, numerical failure modes, and production interpretation rather than a glossary treatment. Graphics_Engine_Mastery_3000_Ma…
+
+A useful dependency picture before we begin is:
+
+\[
+\boxed{
+\text{projection/rejection}
+\rightarrow
+\text{reflection}
+}
+\]
+
+\[
+\boxed{
+\text{dot + decomposition + Snell}
+\rightarrow
+\text{refraction}
+}
+\]
+
+\[
+\boxed{
+\text{two directions}
+\rightarrow
+\text{half vector}
+}
+\]
+
+and then:
+
+\[
+\boxed{
+\text{surface}
+\rightarrow
+\text{tangent plane}
+\rightarrow
+T,N,B
+\rightarrow
+\text{local surface coordinate frame}
+}
+\]
+
+---
+
+# PART 553 — REFLECTION OF A DIRECTION ACROSS A NORMAL
+
+## 553.1 The problem
+
+Imagine an incoming ray striking a perfectly reflecting surface.
+
+We know:
+
+- the incoming direction;
+- the surface orientation;
+- we want the outgoing reflected direction.
+
+The physically familiar law is:
+
+\[
+\boxed{
+\theta_i=\theta_r
+}
+\]
+
+where the two angles are measured relative to the surface normal.
+
+But implementing reflection by explicitly calculating angles would be wasteful. Dot products and projection let us derive the reflected vector directly.
+
+---
+
+## 553.2 Fix the convention first
+
+This matters enormously because reflection formulas often look "wrong" only because two codebases define their directions differently.
+
+We will define:
+
+\[
+\hat n
+\]
+
+as a **unit surface normal**, and:
+
+\[
+\vec i
+\]
+
+as the **incident direction pointing in the direction the ray is travelling toward the surface**.
+
+For a ray approaching the front side of the surface, usually:
+
+\[
+\vec i\cdot\hat n<0.
+\]
+
+For example, horizontal surface:
+
+\[
+\hat n=(0,1).
+\]
+
+A ray travelling down-right toward it might be:
+
+\[
+\vec i=
+\left(
+\frac1{\sqrt2},
+-\frac1{\sqrt2}
+\right).
+\]
+
+We seek reflected direction:
+
+\[
+\vec r.
+\]
+
+---
+
+# 553.3 Decompose the incident vector
+
+Part 538 taught us projection.
+
+The component of \(\vec i\) along unit normal \(\hat n\) is:
+
+\[
+\operatorname{proj}_{\hat n}\vec i
+=
+(\vec i\cdot\hat n)\hat n.
+\]
+
+Call it:
+
+\[
+\vec i_n.
+\]
+
+Thus:
+
+\[
+\boxed{
+\vec i_n
+=
+(\vec i\cdot\hat n)\hat n.
+}
+\]
+
+The tangent component is the rejection:
+
+\[
+\vec i_t
+=
+\vec i-\vec i_n.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\vec i
+=
+\vec i_t+\vec i_n.
+}
+\]
+
+Picture:
+
+```text
+                     n
+                     ↑
+                     │
+        reflected   /│
+                  /  │
+                /    │
+──────────────●──────────── surface
+               \    │
+                \   │
+                 \  │
+                  \ ↓
+                  incoming
+```
+
+Reflection keeps the tangent component and flips the normal component.
+
+That is the entire operation.
+
+---
+
+# 553.4 Reflect by negating only the normal component
+
+Incoming:
+
+\[
+\vec i
+=
+\vec i_t+\vec i_n.
+\]
+
+Reflected:
+
+\[
+\vec r
+=
+\vec i_t-\vec i_n.
+\]
+
+But:
+
+\[
+\vec i_t
+=
+\vec i-\vec i_n.
+\]
+
+Therefore:
+
+\[
+\vec r
+=
+(\vec i-\vec i_n)-\vec i_n.
+\]
+
+So:
+
+\[
+\vec r
+=
+\vec i-2\vec i_n.
+\]
+
+Substitute:
+
+\[
+\vec i_n
+=
+(\vec i\cdot\hat n)\hat n.
+\]
+
+We obtain:
+
+\[
+\boxed{
+\vec r
+=
+\vec i
+-
+2(\vec i\cdot\hat n)\hat n
+}
+\]
+
+when:
+
+\[
+\|\hat n\|=1.
+\]
+
+That is the reflection formula.
+
+You now know why the factor **2** exists.
+
+We are not merely removing the normal component once. We remove the original normal component and then add an equal component on the opposite side.
+
+---
+
+# 553.5 Non-unit normal formula
+
+If \(n\) is not normalized, projection onto \(n\) is:
+
+\[
+\operatorname{proj}_n i
+=
+\frac{i\cdot n}{n\cdot n}n.
+\]
+
+Therefore:
+
+\[
+\boxed{
+r
+=
+i-
+2
+\frac{i\cdot n}{n\cdot n}n
+}
+\]
+
+for nonzero \(n\).
+
+This is mathematically valid.
+
+Nevertheless, graphics pipelines often maintain unit normals because many other formulas become simpler.
+
+---
+
+# 553.6 Hand-worked example
+
+Let:
+
+\[
+i=
+\left(
+\frac1{\sqrt2},
+-\frac1{\sqrt2}
+\right)
+\]
+
+and:
+
+\[
+n=(0,1).
+\]
+
+Dot:
+
+\[
+i\cdot n
+=
+-\frac1{\sqrt2}.
+\]
+
+Then:
+
+\[
+2(i\cdot n)n
+=
+2
+\left(-\frac1{\sqrt2}\right)
+(0,1).
+\]
+
+So:
+
+\[
+=
+\left(
+0,-\sqrt2
+\right).
+\]
+
+Now:
+
+\[
+r
+=
+\left(
+\frac1{\sqrt2},
+-\frac1{\sqrt2}
+\right)
+-
+\left(
+0,-\sqrt2
+\right).
+\]
+
+Hence:
+
+\[
+\boxed{
+r=
+\left(
+\frac1{\sqrt2},
+\frac1{\sqrt2}
+\right).
+}
+\]
+
+The X/tangent component stayed unchanged.
+
+The Y/normal component flipped sign.
+
+Exactly what reflection should do.
+
+---
+
+# 553.7 Prove reflection preserves magnitude
+
+For a perfect reflection:
+
+\[
+\|r\|=\|i\|.
+\]
+
+Let's prove it.
+
+Let:
+
+\[
+d=i\cdot n
+\]
+
+with unit \(n\).
+
+Then:
+
+\[
+r=i-2dn.
+\]
+
+Self-dot:
+
+\[
+r\cdot r
+=
+(i-2dn)\cdot(i-2dn).
+\]
+
+Expand:
+
+\[
+=
+i\cdot i
+-
+4d(i\cdot n)
++
+4d^2(n\cdot n).
+\]
+
+But:
+
+\[
+i\cdot n=d
+\]
+
+and:
+
+\[
+n\cdot n=1.
+\]
+
+Therefore:
+
+\[
+r\cdot r
+=
+i\cdot i
+-
+4d^2
++
+4d^2.
+\]
+
+So:
+
+\[
+\boxed{
+r\cdot r=i\cdot i.
+}
+\]
+
+Hence:
+
+\[
+\boxed{
+\|r\|=\|i\|.
+}
+\]
+
+Reflection changes orientation, not vector magnitude.
+
+---
+
+# 553.8 Prove the normal component reverses
+
+Dot reflected vector with \(n\):
+
+\[
+r\cdot n
+=
+[i-2(i\cdot n)n]\cdot n.
+\]
+
+Expand:
+
+\[
+=
+i\cdot n
+-
+2(i\cdot n)(n\cdot n).
+\]
+
+Unit normal:
+
+\[
+n\cdot n=1.
+\]
+
+Therefore:
+
+\[
+r\cdot n
+=
+i\cdot n-2i\cdot n.
+\]
+
+Thus:
+
+\[
+\boxed{
+r\cdot n
+=
+-(i\cdot n).
+}
+\]
+
+The signed normal projection reverses perfectly.
+
+That is the algebraic form of:
+
+\[
+\theta_i=\theta_r.
+\]
+
+---
+
+# 553.9 Tangent component is unchanged
+
+Projecting onto the normal accounts for the part that flips. The rejection from the normal is:
+
+\[
+i_t=i-(i\cdot n)n.
+\]
+
+For \(r\):
+
+\[
+r_t=r-(r\cdot n)n.
+\]
+
+Substitute:
+
+\[
+r=i-2dn
+\]
+
+and:
+
+\[
+r\cdot n=-d.
+\]
+
+Then:
+
+\[
+r_t
+=
+i-2dn+d n.
+\]
+
+Therefore:
+
+\[
+r_t=i-dn.
+\]
+
+But:
+
+\[
+i_t=i-dn.
+\]
+
+Hence:
+
+\[
+\boxed{
+r_t=i_t.
+}
+\]
+
+So reflection can be summarized exactly as:
+
+\[
+\boxed{
+\text{tangent component unchanged,
+normal component sign reversed}.
+}
+\]
+
+---
+
+# 553.10 Limiting cases
+
+If \(i\) is tangent to the surface:
+
+\[
+i\cdot n=0.
+\]
+
+Then:
+
+\[
+r=i.
+\]
+
+No normal component exists to flip.
+
+If \(i\) is directly opposite the normal:
+
+\[
+i=-n,
+\]
+
+then:
+
+\[
+r=-n-2(-1)n=n.
+\]
+
+It reverses completely.
+
+Those two cases should always be sanity tests.
+
+---
+
+# 553.11 Reflection is an involution
+
+An **involution** is an operation whose second application undoes the first.
+
+Reflect \(i\) to obtain \(r\).
+
+Then reflect \(r\) across the same plane.
+
+Because the normal component has already been flipped, the second reflection flips it back.
+
+Therefore:
+
+\[
+\boxed{
+R_n(R_n(i))=i.
+}
+\]
+
+This is useful when reasoning about reflection transformations later.
+
+---
+
+# 553.12 Reflection is linear for a fixed normal
+
+For fixed unit \(n\):
+
+\[
+R_n(i)
+=
+i-2(i\cdot n)n.
+\]
+
+Since dotting with fixed \(n\) is linear:
+
+\[
+R_n(ai+bj)
+=
+aR_n(i)+bR_n(j).
+\]
+
+So reflection across a plane through the origin is a linear transformation.
+
+Later, using matrices, it becomes a **Householder reflection**:
+
+\[
+R=I-2nn^T.
+\]
+
+Do not worry about matrix mechanics yet. The important point is that the formula you derived becomes an entire reflection matrix later.
+
+---
+
+# 553.13 Implementation
+
+```cpp
+[[nodiscard]]
+constexpr Vec3 reflect(
+    Vec3 incident,
+    Vec3 unitNormal) noexcept
+{
+    return incident
+         - unitNormal
+         * (2.0f * dot(incident, unitNormal));
+}
+```
+
+A more explicit API would make the invariant visible:
+
+```cpp
+Vec3 reflect(
+    Vec3 incident,
+    UnitVec3 normal);
+```
+
+If the normal is not unit, either normalize it first or use the denominator form.
+
+---
+
+# 553.14 Production failure modes
+
+A zero normal defines no reflection plane. A non-unit normal passed to the simplified formula changes the result incorrectly. Mixing world-space incident direction with tangent-space normal is mathematically meaningless even though the code compiles.
+
+Direction convention is another major source of bugs. Some shading code uses a vector **from the surface toward the viewer**, whereas `incident` here points **toward the surface**. Negating one convention changes the formula's apparent sign.
+
+Always draw the arrows before blaming the algebra.
+
+---
+
+# PART 554 — REFRACTION GEOMETRY FROM SNELL'S LAW
+
+Reflection stays in the original medium.
+
+Refraction happens when a ray crosses from one medium into another and its propagation direction bends because the propagation speed changes.
+
+Examples include:
+
+\[
+\text{air}\rightarrow\text{glass},
+\]
+
+\[
+\text{air}\rightarrow\text{water},
+\]
+
+\[
+\text{glass}\rightarrow\text{air}.
+\]
+
+The governing geometric law is **Snell's law**.
+
+---
+
+# 554.1 Index of refraction
+
+Each optical medium has an index of refraction:
+
+\[
+n.
+\]
+
+Conceptually:
+
+\[
+n=\frac{c}{v}
+\]
+
+where:
+
+- \(c\) is speed of light in vacuum;
+- \(v\) is phase velocity of light in that medium.
+
+The index is dimensionless.
+
+For our geometry, we need two values:
+
+\[
+n_1
+\]
+
+for the incident medium and:
+
+\[
+n_2
+\]
+
+for the transmitted medium.
+
+Define:
+
+\[
+\boxed{
+\eta=\frac{n_1}{n_2}.
+}
+\]
+
+---
+
+# 554.2 Snell's law
+
+If:
+
+\[
+\theta_i
+\]
+
+is the incident angle relative to the normal and:
+
+\[
+\theta_t
+\]
+
+is the transmitted/refracted angle, then:
+
+\[
+\boxed{
+n_1\sin\theta_i
+=
+n_2\sin\theta_t.
+}
+\]
+
+Thus:
+
+\[
+\sin\theta_t
+=
+\frac{n_1}{n_2}
+\sin\theta_i.
+\]
+
+So:
+
+\[
+\boxed{
+\sin\theta_t=\eta\sin\theta_i.
+}
+\]
+
+This equation determines how much the tangent component changes.
+
+---
+
+# 554.3 Direction convention
+
+We need a precise convention again.
+
+Let:
+
+\[
+I
+\]
+
+be a **unit incident vector pointing in the direction of travel toward the interface**.
+
+Let:
+
+\[
+N
+\]
+
+be a unit normal pointing from medium 2 back toward medium 1.
+
+For ordinary front-face incidence:
+
+\[
+I\cdot N\le0.
+\]
+
+Define:
+
+\[
+c_i=\cos\theta_i.
+\]
+
+Because of our arrow convention:
+
+\[
+\boxed{
+c_i=-I\cdot N.
+}
+\]
+
+For a ray directly into the surface:
+
+\[
+I=-N
+\]
+
+so:
+
+\[
+c_i=1.
+\]
+
+Correct.
+
+---
+
+# 554.4 Decompose the incident vector
+
+The component along the normal is:
+
+\[
+(I\cdot N)N.
+\]
+
+Since:
+
+\[
+I\cdot N=-c_i,
+\]
+
+normal component is:
+
+\[
+-c_iN.
+\]
+
+Therefore incident vector can be written:
+
+\[
+\boxed{
+I=I_t-c_iN
+}
+\]
+
+where:
+
+\[
+I_t=I+c_iN
+\]
+
+is tangent to the surface.
+
+Check:
+
+\[
+I_t\cdot N
+=
+I\cdot N+c_i
+=
+-c_i+c_i
+=
+0.
+\]
+
+So \(I_t\) lies in the interface tangent plane.
+
+---
+
+# 554.5 How large is the tangent component?
+
+Because \(I\) is unit:
+
+\[
+\|I\|=1.
+\]
+
+The normal component magnitude is:
+
+\[
+c_i=\cos\theta_i.
+\]
+
+By Pythagoras:
+
+\[
+\|I_t\|^2+c_i^2=1.
+\]
+
+Thus:
+
+\[
+\|I_t\|
+=
+\sqrt{1-c_i^2}.
+\]
+
+And:
+
+\[
+\boxed{
+\|I_t\|=\sin\theta_i.
+}
+\]
+
+Excellent.
+
+Snell tells us what the transmitted tangent magnitude must become:
+
+\[
+\sin\theta_t
+=
+\eta\sin\theta_i.
+\]
+
+Therefore the transmitted tangent vector is:
+
+\[
+\boxed{
+T_t=\eta I_t.
+}
+\]
+
+---
+
+# 554.6 Determine the refracted normal component
+
+The transmitted direction \(T\) should also be unit.
+
+Let:
+
+\[
+c_t=\cos\theta_t.
+\]
+
+Then:
+
+\[
+c_t^2
+=
+1-\sin^2\theta_t.
+\]
+
+But:
+
+\[
+\sin\theta_t
+=
+\eta\sin\theta_i.
+\]
+
+Therefore:
+
+\[
+c_t^2
+=
+1-\eta^2\sin^2\theta_i.
+\]
+
+And:
+
+\[
+\sin^2\theta_i
+=
+1-c_i^2.
+\]
+
+Hence:
+
+\[
+\boxed{
+c_t
+=
+\sqrt{
+1-\eta^2(1-c_i^2)
+}.
+}
+\]
+
+The transmitted ray travels into medium 2, which is opposite \(N\), so its normal component is:
+
+\[
+-c_tN.
+\]
+
+Therefore:
+
+\[
+\boxed{
+T=T_t-c_tN.
+}
+\]
+
+Substitute \(T_t=\eta I_t\):
+
+\[
+T
+=
+\eta(I+c_iN)-c_tN.
+\]
+
+So:
+
+\[
+\boxed{
+T
+=
+\eta I+
+(\eta c_i-c_t)N.
+}
+\]
+
+That is the refracted-direction formula.
+
+---
+
+# 554.7 Common dot-product form
+
+Since:
+
+\[
+c_i=-I\cdot N,
+\]
+
+let:
+
+\[
+d=I\cdot N.
+\]
+
+Then:
+
+\[
+c_i=-d.
+\]
+
+Define:
+
+\[
+k=
+1-\eta^2(1-d^2).
+\]
+
+Then:
+
+\[
+c_t=\sqrt{k}.
+\]
+
+Substituting gives:
+
+\[
+\boxed{
+T
+=
+\eta I
+-
+(\eta d+\sqrt{k})N
+}
+\]
+
+where:
+
+\[
+\boxed{
+k=
+1-\eta^2(1-(I\cdot N)^2).
+}
+\]
+
+This is the form commonly implemented in graphics math libraries.
+
+---
+
+# 554.8 Normal incidence test
+
+Take:
+
+\[
+I=-N.
+\]
+
+Then:
+
+\[
+d=I\cdot N=-1.
+\]
+
+So:
+
+\[
+k=
+1-\eta^2(1-1)
+=
+1.
+\]
+
+Then:
+
+\[
+T
+=
+\eta(-N)
+-
+[\eta(-1)+1]N.
+\]
+
+Simplify:
+
+\[
+=-\eta N+\eta N-N.
+\]
+
+Therefore:
+
+\[
+\boxed{
+T=-N=I.
+}
+\]
+
+At normal incidence there is no bending.
+
+Correct.
+
+---
+
+# 554.9 Same refractive index test
+
+If:
+
+\[
+n_1=n_2,
+\]
+
+then:
+
+\[
+\eta=1.
+\]
+
+Snell says:
+
+\[
+\theta_t=\theta_i.
+\]
+
+The refracted direction should be identical to the incident direction.
+
+Using the formula indeed gives:
+
+\[
+\boxed{T=I.}
+\]
+
+Another mandatory sanity test.
+
+---
+
+# 554.10 Bend toward versus away from normal
+
+If medium 2 has **larger** refractive index:
+
+\[
+n_2>n_1.
+\]
+
+Then:
+
+\[
+\eta<1.
+\]
+
+Therefore:
+
+\[
+\sin\theta_t
+<
+\sin\theta_i.
+\]
+
+Within the usual \(0^\circ\)–\(90^\circ\) range:
+
+\[
+\theta_t<\theta_i.
+\]
+
+So the ray bends **toward the normal**.
+
+Conversely, if:
+
+\[
+n_2<n_1,
+\]
+
+then:
+
+\[
+\eta>1
+\]
+
+and the ray bends **away from the normal**—until a critical point where transmission becomes impossible.
+
+---
+
+# 554.11 Total internal reflection
+
+Look at:
+
+\[
+k=
+1-\eta^2(1-c_i^2).
+\]
+
+For a real transmitted direction, we require:
+
+\[
+k\ge0.
+\]
+
+If:
+
+\[
+k<0,
+\]
+
+then:
+
+\[
+\sqrt{k}
+\]
+
+would require the square root of a negative real number.
+
+Physically this means **no refracted ray exists**.
+
+Instead, we get total internal reflection.
+
+So:
+
+\[
+\boxed{
+k<0
+\Rightarrow
+\text{total internal reflection}.
+}
+\]
+
+---
+
+# 554.12 Derive the critical angle
+
+Snell:
+
+\[
+n_1\sin\theta_i
+=
+n_2\sin\theta_t.
+\]
+
+Maximum possible transmitted sine is:
+
+\[
+\sin\theta_t=1.
+\]
+
+Therefore at the critical angle:
+
+\[
+n_1\sin\theta_c=n_2.
+\]
+
+So:
+
+\[
+\boxed{
+\sin\theta_c
+=
+\frac{n_2}{n_1}.
+}
+\]
+
+This only produces a value below or equal to one when:
+
+\[
+n_1\ge n_2.
+\]
+
+Thus total internal reflection occurs when travelling from a **higher-index** medium toward a **lower-index** medium with sufficiently oblique incidence.
+
+---
+
+# 554.13 Worked example: air into glass
+
+Use approximate:
+
+\[
+n_1=1,
+\qquad
+n_2=1.5.
+\]
+
+Then:
+
+\[
+\eta=\frac1{1.5}\approx0.6667.
+\]
+
+Suppose:
+
+\[
+\theta_i=45^\circ.
+\]
+
+Then:
+
+\[
+\sin\theta_t
+=
+0.6667
+\sin45^\circ.
+\]
+
+\[
+\approx
+0.6667(0.7071)
+\approx0.4714.
+\]
+
+Therefore:
+
+\[
+\theta_t
+\approx
+28.1^\circ.
+\]
+
+The transmitted angle is smaller.
+
+The ray bent toward the normal.
+
+---
+
+# 554.14 Entering versus leaving a surface
+
+A single geometric surface normally has one stored outward normal, but rays can strike from either side.
+
+Suppose `outwardNormal` points from inside material to outside.
+
+Then a ray has:
+
+\[
+frontFace
+=
+I\cdot outwardNormal<0.
+\]
+
+If entering:
+
+\[
+N=outwardNormal,
+\qquad
+\eta=\frac{n_{\text{outside}}}{n_{\text{inside}}}.
+\]
+
+If exiting:
+
+\[
+N=-outwardNormal,
+\qquad
+\eta=\frac{n_{\text{inside}}}{n_{\text{outside}}}.
+\]
+
+This reorients \(N\) so it always opposes the incident direction.
+
+That enormously simplifies the refract formula.
+
+---
+
+# 554.15 C++ reference implementation
+
+```cpp
+[[nodiscard]]
+std::optional<Vec3> refract(
+    Vec3 unitIncident,
+    Vec3 unitNormal,
+    float eta) noexcept
+{
+    const float d =
+        dot(unitIncident, unitNormal);
+
+    const float k =
+        1.0f
+        - eta * eta
+        * (1.0f - d * d);
+
+    if (k < 0.0f) {
+        // Total internal reflection.
+        return std::nullopt;
+    }
+
+    return
+        eta * unitIncident
+        - (eta * d + std::sqrt(k))
+        * unitNormal;
+}
+```
+
+The function's contract should state that both input directions are normalized and that the normal has been oriented to oppose the incident ray.
+
+---
+
+# 554.16 Numerical edge near the critical angle
+
+At the exact mathematical threshold:
+
+\[
+k=0.
+\]
+
+Floating-point evaluation might produce:
+
+\[
+k=-10^{-8}
+\]
+
+for a case theoretically just transmissive, or:
+
+\[
++10^{-8}
+\]
+
+for a case theoretically just beyond critical.
+
+So production code needs a clear policy. A tiny negative value may be clamped to zero if it is attributable to rounding, whereas a meaningfully negative value represents real total internal reflection.
+
+Do not blindly write:
+
+```cpp
+sqrt(max(k, 0.0f))
+```
+
+unless the caller separately knows whether it needs to distinguish TIR from numerical boundary error.
+
+---
+
+# 554.17 Snell only determines direction
+
+Another important distinction:
+
+Snell's law tells us the **transmitted direction**.
+
+It does not tell us:
+
+- what fraction of light reflects;
+- what fraction transmits;
+- polarization behavior;
+- spectral dispersion;
+- absorption.
+
+Those are additional optical phenomena.
+
+Later shading sections introduce Fresnel terms and physically based material models.
+
+So refraction direction alone is not a complete glass shader.
+
+---
+
+# PART 555 — HALF-VECTOR CONSTRUCTION IN SHADING
+
+Reflection gives us a mirror direction.
+
+But many shading models prefer a different geometric object:
+
+\[
+\boxed{\text{the direction halfway between light and view directions}.}
+\]
+
+That is the **half vector**.
+
+---
+
+# 555.1 Fix shading direction conventions
+
+At a surface point \(P\), define unit vectors:
+
+\[
+L
+\]
+
+pointing **from the surface toward the light**, and:
+
+\[
+V
+\]
+
+pointing **from the surface toward the viewer/camera**.
+
+This is crucial.
+
+The physical incoming light propagation direction is:
+
+\[
+-L.
+\]
+
+But shading formulas often store \(L\) pointing outward toward the light because that makes:
+
+\[
+N\cdot L
+\]
+
+convenient.
+
+Given unit \(L,V\), define:
+
+\[
+\boxed{
+H=
+\frac{L+V}{\|L+V\|}
+}
+\]
+
+provided:
+
+\[
+L\neq -V.
+\]
+
+This is the half vector.
+
+---
+
+# 555.2 Why does adding directions produce the bisector?
+
+Suppose \(L,V\) are unit.
+
+Let:
+
+\[
+S=L+V.
+\]
+
+We want to show \(S\) forms equal angles with both.
+
+Compute:
+
+\[
+S\cdot L
+=
+(L+V)\cdot L.
+\]
+
+Expand:
+
+\[
+=L\cdot L+V\cdot L.
+\]
+
+Because \(L\) is unit:
+
+\[
+L\cdot L=1.
+\]
+
+So:
+
+\[
+S\cdot L
+=
+1+L\cdot V.
+\]
+
+Similarly:
+
+\[
+S\cdot V
+=
+L\cdot V+V\cdot V
+=
+L\cdot V+1.
+\]
+
+Therefore:
+
+\[
+\boxed{
+S\cdot L=S\cdot V.
+}
+\]
+
+Since \(L,V\) have equal magnitude, \(S\) forms the same cosine angle with both.
+
+Thus its normalized form \(H\) is their angular bisector.
+
+---
+
+# 555.3 Derive the half-angle relation
+
+Let angle between \(L\) and \(V\) be:
+
+\[
+\theta.
+\]
+
+Then:
+
+\[
+L\cdot V=\cos\theta
+\]
+
+because both are unit.
+
+Now:
+
+\[
+\|L+V\|^2
+=
+(L+V)\cdot(L+V).
+\]
+
+Expand:
+
+\[
+=
+1+2L\cdot V+1.
+\]
+
+Thus:
+
+\[
+=
+2+2\cos\theta.
+\]
+
+Using:
+
+\[
+1+\cos\theta
+=
+2\cos^2\frac\theta2,
+\]
+
+we get:
+
+\[
+2+2\cos\theta
+=
+4\cos^2\frac\theta2.
+\]
+
+Hence:
+
+\[
+\boxed{
+\|L+V\|
+=
+2\cos\frac\theta2
+}
+\]
+
+for the principal range.
+
+Now:
+
+\[
+L\cdot H
+=
+\frac{L\cdot(L+V)}
+{\|L+V\|}.
+\]
+
+Numerator:
+
+\[
+1+\cos\theta
+=
+2\cos^2\frac\theta2.
+\]
+
+Denominator:
+
+\[
+2\cos\frac\theta2.
+\]
+
+Therefore:
+
+\[
+\boxed{
+L\cdot H
+=
+\cos\frac\theta2.
+}
+\]
+
+Same for \(V\).
+
+So \(H\) is literally halfway in angular space.
+
+---
+
+# 555.4 Why the half vector appears in specular reflection
+
+The physical incoming light direction is:
+
+\[
+I=-L.
+\]
+
+Perfect reflection about unit normal \(N\) gives:
+
+\[
+R
+=
+-L
+-
+2((-L)\cdot N)N.
+\]
+
+Therefore:
+
+\[
+R
+=
+-L+2(L\cdot N)N.
+\]
+
+Under exact mirror reflection toward the viewer:
+
+\[
+R=V.
+\]
+
+Then:
+
+\[
+V
+=
+-L+2(L\cdot N)N.
+\]
+
+Move \(L\):
+
+\[
+L+V
+=
+2(L\cdot N)N.
+\]
+
+Therefore the sum \(L+V\) is parallel to \(N\).
+
+So:
+
+\[
+\boxed{
+H=N
+}
+\]
+
+under perfect mirror alignment, assuming the front-facing hemisphere gives a positive scale.
+
+This is the key shading interpretation:
+
+> the surface normal produces perfect specular alignment when it matches the half vector between light and view directions.
+
+---
+
+# 555.5 Why use \(N\cdot H\)?
+
+Suppose a micro-surface orientation were exactly:
+
+\[
+H.
+\]
+
+Then incoming light from \(L\) would reflect toward \(V\).
+
+So microfacet shading models care strongly about how likely it is to find microscopic normals aligned with:
+
+\[
+H.
+\]
+
+This is why \(N\cdot H\) appears constantly in physically based shading.
+
+The complete microfacet BRDF belongs much later. Here, the point is to understand **why the half vector is geometrically natural**.
+
+---
+
+# 555.6 Why \(L\) and \(V\) must be normalized first
+
+Suppose directions are geometrically the same but magnitudes differ:
+
+\[
+L=(100,0),
+\]
+
+\[
+V=(0,1).
+\]
+
+Then:
+
+\[
+L+V=(100,1),
+\]
+
+which points almost entirely along L.
+
+That is not the angular bisector.
+
+The sum bisects the angle only when the contributing direction vectors have equal magnitude—conventionally unit magnitude.
+
+So:
+
+\[
+\boxed{
+H=\operatorname{normalize}
+(
+\hat L+\hat V
+).
+}
+\]
+
+---
+
+# 555.7 The antiparallel failure
+
+If:
+
+\[
+L=-V,
+\]
+
+then:
+
+\[
+L+V=0.
+\]
+
+There is no unique half vector.
+
+Geometrically, two opposite directions have infinitely many directions lying \(90^\circ\) from each.
+
+No unique angular bisector plane direction exists.
+
+So:
+
+```cpp
+normalize(L + V);
+```
+
+is invalid in this case.
+
+A shading implementation must know whether such configurations are excluded by hemisphere tests or need a fallback.
+
+---
+
+# 555.8 C++ implementation
+
+```cpp
+[[nodiscard]]
+std::optional<Vec3> halfVector(
+    Vec3 unitLight,
+    Vec3 unitView) noexcept
+{
+    const Vec3 sum =
+        unitLight + unitView;
+
+    return tryNormalize(sum);
+}
+```
+
+A strongly typed version would accept unit-direction types.
+
+The operation is cheap but includes normalization, hence a dot/square root or reciprocal-square-root path.
+
+---
+
+# 555.9 Half vector versus reflection vector
+
+These are not the same thing.
+
+\[
+R
+\]
+
+is produced by reflecting the incoming propagation direction around the normal.
+
+\[
+H
+\]
+
+is generated from the light and view directions:
+
+\[
+H=\operatorname{normalize}(L+V).
+\]
+
+At perfect specular alignment:
+
+\[
+H=N.
+\]
+
+Meanwhile:
+
+\[
+R=V.
+\]
+
+Do not confuse:
+
+```text
+R = where reflected light travels
+
+H = normal orientation that would reflect L into V
+```
+
+That distinction becomes critical in shading.
+
+---
+
+# PART 556 — TANGENT VECTORS ON A SURFACE
+
+We now move from ray directions to surface-local geometry.
+
+A surface in 3D generally has two independent directions along which you can move **while remaining locally on the surface**.
+
+Those are tangent directions.
+
+---
+
+# 556.1 What does "tangent" actually mean?
+
+Consider standing on a surface.
+
+A displacement straight away from it leaves the surface.
+
+A tangent displacement moves sideways along it.
+
+At a point \(P\), a tangent vector represents an infinitesimal/first-order movement that stays on the surface.
+
+For a flat plane, this is easy.
+
+If plane normal is:
+
+\[
+N,
+\]
+
+then vector \(T\) lies in the plane exactly when:
+
+\[
+\boxed{
+T\cdot N=0.
+}
+\]
+
+So every vector orthogonal to the normal is tangent to the plane.
+
+---
+
+# 556.2 There is usually not one tangent
+
+A smooth two-dimensional surface embedded in 3D has a **two-dimensional tangent plane**.
+
+Therefore infinitely many tangent vectors exist.
+
+If \(T_1\) and \(T_2\) are independent tangent directions, then any:
+
+\[
+aT_1+bT_2
+\]
+
+is also tangent.
+
+So when an engine stores a field named:
+
+```cpp
+Vec3 tangent;
+```
+
+it does not mean:
+
+> the mathematically unique tangent direction.
+
+There generally isn't one.
+
+It means the engine has selected **one preferred tangent direction**, often because texture coordinates provide a natural choice.
+
+---
+
+# 556.3 Triangle example
+
+For triangle points:
+
+\[
+P_0,P_1,P_2,
+\]
+
+construct edges:
+
+\[
+E_1=P_1-P_0,
+\]
+
+\[
+E_2=P_2-P_0.
+\]
+
+Both lie in the triangle plane.
+
+So both are tangent vectors to the flat triangle surface.
+
+Their cross product:
+
+\[
+N=E_1\times E_2
+\]
+
+is normal to that plane.
+
+Thus:
+
+\[
+N\cdot E_1=0,
+\]
+
+\[
+N\cdot E_2=0.
+\]
+
+This is the fundamental tangent-plane relationship.
+
+---
+
+# 556.4 Curved surface example: sphere
+
+Consider a sphere centered at \(C\) with radius \(r\).
+
+For surface point \(P\):
+
+\[
+\|P-C\|=r.
+\]
+
+The radial direction:
+
+\[
+N=P-C
+\]
+
+points normal to the sphere.
+
+Why must a tangent direction \(T\) satisfy:
+
+\[
+(P-C)\cdot T=0?
+\]
+
+Consider a tiny attempted displacement:
+
+\[
+P' = P+\varepsilon T.
+\]
+
+Then:
+
+\[
+P'-C
+=
+(P-C)+\varepsilon T.
+\]
+
+Squared radius:
+
+\[
+\|(P-C)+\varepsilon T\|^2.
+\]
+
+Expand:
+
+\[
+=
+\|P-C\|^2
++
+2\varepsilon(P-C)\cdot T
++
+\varepsilon^2\|T\|^2.
+\]
+
+Original squared radius is:
+
+\[
+r^2.
+\]
+
+For the displacement to stay on the sphere **to first order**, the term proportional to \(\varepsilon\) must vanish:
+
+\[
+2(P-C)\cdot T=0.
+\]
+
+Therefore:
+
+\[
+\boxed{
+(P-C)\cdot T=0.
+}
+\]
+
+So tangent directions are perpendicular to the radial normal.
+
+This is already the local differential geometry idea without requiring us to fully teach calculus yet.
+
+---
+
+# 556.5 Parameterized surfaces
+
+A surface can be described by two parameters:
+
+\[
+P(u,v).
+\]
+
+Changing \(u\) slightly moves along one surface direction.
+
+Changing \(v\) slightly moves along another.
+
+The corresponding differential directions are:
+
+\[
+\frac{\partial P}{\partial u},
+\qquad
+\frac{\partial P}{\partial v}.
+\]
+
+These are tangent vectors.
+
+Full derivative theory belongs in Phase 9, so for now treat them conceptually as:
+
+> directions of surface change caused by changing one parameter while holding the other fixed.
+
+Texture mapping gives us a practical instance of this idea.
+
+---
+
+# 556.6 Texture tangent
+
+A mesh vertex may have 2D UV coordinates:
+
+\[
+(u,v).
+\]
+
+The **texture tangent** \(T\) usually represents the 3D direction corresponding locally to increasing \(u\).
+
+The bitangent \(B\), Part 558, corresponds locally to increasing \(v\).
+
+So:
+
+```text
+T → surface direction of increasing texture U
+B → surface direction of increasing texture V
+N → away from the surface
+```
+
+These form a local surface frame.
+
+This is why normal maps can store directions in a 2D texture's local coordinate system.
+
+---
+
+# 556.7 Tangent magnitude can contain information
+
+Mathematically a tangent vector does not have to be unit length.
+
+For a parameterized surface:
+
+\[
+\frac{\partial P}{\partial u}
+\]
+
+can have magnitude representing:
+
+> how much physical distance changes for one unit change in \(u\).
+
+If texture coordinates are stretched, this derivative may be large.
+
+Therefore normalizing a tangent removes scale information.
+
+For shading frames, engines often want only the direction and normalize it. For differential geometry or texture-footprint calculations, that magnitude may matter.
+
+Do not equate:
+
+\[
+\text{tangent vector}
+\]
+
+with:
+
+\[
+\text{unit tangent direction}.
+\]
+
+---
+
+# 556.8 Construct a tangent from a normal when no preferred U exists
+
+Suppose only a unit normal \(N\) is known.
+
+We need *some* tangent direction.
+
+Choose any vector \(A\) not parallel to \(N\), then remove its normal component:
+
+\[
+T'
+=
+A-(A\cdot N)N.
+\]
+
+This is rejection from Part 539.
+
+Then:
+
+\[
+T=
+\frac{T'}{\|T'\|}
+\]
+
+if \(T'\neq0\).
+
+Why is it tangent?
+
+\[
+T'\cdot N
+=
+A\cdot N-(A\cdot N)(N\cdot N).
+\]
+
+For unit \(N\):
+
+\[
+= A\cdot N-A\cdot N=0.
+\]
+
+So:
+
+\[
+\boxed{
+T\cdot N=0.
+}
+\]
+
+This provides a valid tangent.
+
+Part 560 will teach constructing an entire orthonormal basis from one direction systematically; we are only using the local surface interpretation here.
+
+---
+
+# 556.9 Robust helper-axis choice
+
+If you choose:
+
+\[
+A=(1,0,0)
+\]
+
+but:
+
+\[
+N\approx(1,0,0),
+\]
+
+then rejection:
+
+\[
+A-(A\cdot N)N
+\]
+
+becomes nearly zero.
+
+Normalizing it becomes unstable.
+
+So a robust algorithm chooses an auxiliary axis poorly aligned with \(N\).
+
+Conceptually, choose the coordinate axis corresponding to a small absolute component of \(N\), because that axis cannot be close to parallel with \(N\).
+
+This is a general numerical rule:
+
+\[
+\boxed{
+\text{do not construct perpendicular directions from nearly parallel seeds}.
+}
+\]
+
+---
+
+# PART 557 — NORMAL VECTORS ON A SURFACE
+
+The tangent plane tells us all directions along the surface.
+
+A **normal vector** points perpendicular to that tangent plane.
+
+---
+
+# 557.1 Formal local definition
+
+At surface point \(P\), let tangent plane be:
+
+\[
+T_P.
+\]
+
+A nonzero vector \(N\) is normal if:
+
+\[
+\boxed{
+N\cdot T=0
+}
+\]
+
+for every tangent vector \(T\in T_P\).
+
+For a 2D surface embedded in 3D, the tangent plane is 2D and its perpendicular complement is 1D.
+
+Therefore normals occur along one axis:
+
+\[
+N
+\]
+
+or:
+
+\[
+-N.
+\]
+
+The geometry alone gives a normal line.
+
+An **orientation convention** chooses which side is positive.
+
+---
+
+# 557.2 Triangle geometric normal
+
+For triangle:
+
+\[
+P_0,P_1,P_2,
+\]
+
+construct:
+
+\[
+E_1=P_1-P_0,
+\]
+
+\[
+E_2=P_2-P_0.
+\]
+
+Then:
+
+\[
+\boxed{
+N_g=E_1\times E_2.
+}
+\]
+
+The cross product is perpendicular to both edges, therefore perpendicular to the triangle plane.
+
+So it is a valid geometric normal.
+
+---
+
+# 557.3 But the raw cross product is not a unit normal
+
+From Part 545:
+
+\[
+\|E_1\times E_2\|
+\]
+
+equals parallelogram area.
+
+Triangle area is:
+
+\[
+\frac12\|E_1\times E_2\|.
+\]
+
+Therefore the raw triangle normal has magnitude:
+
+\[
+\boxed{
+\|N_g\|
+=
+2A_\triangle.
+}
+\]
+
+That magnitude contains useful geometric information.
+
+To obtain only orientation:
+
+\[
+\boxed{
+\hat N_g
+=
+\frac{E_1\times E_2}
+{\|E_1\times E_2\|}.
+}
+\]
+
+Only valid for nondegenerate triangles.
+
+---
+
+# 557.4 Why a degenerate triangle has no stable normal
+
+If vertices are collinear:
+
+\[
+E_1\times E_2=0.
+\]
+
+The triangle has zero area.
+
+There is no uniquely defined triangle plane.
+
+Therefore:
+
+\[
+\operatorname{normalize}(E_1\times E_2)
+\]
+
+is undefined.
+
+Again, zero cross is not an irritating numerical corner case.
+
+It represents a real geometric loss of information.
+
+---
+
+# 557.5 Plane equation from a normal
+
+Given point \(P_0\) on a plane and normal \(N\), any point \(X\) in the plane has displacement:
+
+\[
+X-P_0
+\]
+
+tangent to the plane.
+
+Therefore:
+
+\[
+\boxed{
+N\cdot(X-P_0)=0.
+}
+\]
+
+Expand:
+
+\[
+N\cdot X-N\cdot P_0=0.
+\]
+
+Thus:
+
+\[
+\boxed{
+N\cdot X=d
+}
+\]
+
+where:
+
+\[
+d=N\cdot P_0.
+\]
+
+This is the seed of plane equations used throughout collision, clipping, frustum tests, and ray intersection.
+
+---
+
+# 557.6 Normals are not inherently unit length
+
+A vector only needs to satisfy perpendicularity to be normal.
+
+If:
+
+\[
+N
+\]
+
+is normal, then for any nonzero scalar \(c\):
+
+\[
+cN
+\]
+
+is also normal.
+
+Because:
+
+\[
+(cN)\cdot T
+=
+c(N\cdot T)
+=
+0.
+\]
+
+So "normal" describes geometric orientation, not length.
+
+A **unit normal** adds the invariant:
+
+\[
+\|N\|=1.
+\]
+
+Shading formulas commonly assume unit normals.
+
+---
+
+# 557.7 Geometric normals versus shading normals
+
+This distinction is essential.
+
+A **geometric normal** follows directly from actual surface geometry.
+
+For a triangle:
+
+\[
+N_g
+\propto
+(P_1-P_0)\times(P_2-P_0).
+\]
+
+A **shading normal** may be different.
+
+For smooth shading, meshes often store a normal at each vertex. These normals may be averaged or artist-authored to make a faceted polygonal surface appear smooth.
+
+Thus a fragment on a triangle can use a shading normal that is **not exactly perpendicular to that triangle's geometric plane**.
+
+That is intentional.
+
+So:
+
+\[
+\boxed{
+\text{geometric normal}
+\neq
+\text{shading normal}
+}
+\]
+
+in general.
+
+---
+
+# 557.8 Why interpolated normals need renormalization
+
+Suppose two unit vertex normals:
+
+\[
+N_0,
+N_1.
+\]
+
+Linear interpolation:
+
+\[
+N(t)
+=
+(1-t)N_0+tN_1.
+\]
+
+Even though each endpoint has length one, the interior generally does not.
+
+Example:
+
+\[
+N_0=(1,0),
+\]
+
+\[
+N_1=(0,1).
+\]
+
+At:
+
+\[
+t=\frac12,
+\]
+
+we get:
+
+\[
+N=
+\left(
+\frac12,\frac12
+\right).
+\]
+
+Magnitude:
+
+\[
+\sqrt{\frac14+\frac14}
+=
+\frac1{\sqrt2}.
+\]
+
+Not 1.
+
+So shading normally performs:
+
+\[
+\boxed{
+\hat N=
+\operatorname{normalize}(N_{\text{interpolated}}).
+}
+\]
+
+This is one of the most common normalization operations in raster graphics.
+
+---
+
+# 557.9 Normal direction and winding
+
+For triangle:
+
+\[
+N=(P_1-P_0)\times(P_2-P_0).
+\]
+
+Swap \(P_1,P_2\):
+
+\[
+N'=(P_2-P_0)\times(P_1-P_0).
+\]
+
+Cross anti-commutativity gives:
+
+\[
+N'=-N.
+\]
+
+Therefore winding determines orientation.
+
+A mesh's notion of "outward" normal must remain consistent with its vertex-order convention.
+
+---
+
+# 557.10 A normal is not generally transformed like an ordinary direction
+
+This is important enough to warn about now, but Part 582 is dedicated to proving it.
+
+Under rotation or uniform scale, treating a normal like an ordinary direction appears to work.
+
+Under nonuniform scale or shear, that can break perpendicularity.
+
+Why?
+
+Because the defining property of a normal is not merely:
+
+> an arrow pointing somewhere.
+
+It is:
+
+\[
+\boxed{
+N\cdot T=0
+\quad
+\text{for every tangent }T.
+}
+\]
+
+After transforming the surface tangents, the transformed normal must remain perpendicular to them.
+
+Transforming it with the same matrix does not generally preserve that relation under nonuniform scaling.
+
+Full inverse-transpose/covector derivation waits until Part 582.
+
+For now remember:
+
+\[
+\boxed{
+\text{normal semantics are stronger than ordinary direction semantics}.
+}
+\]
+
+---
+
+# 557.11 Surface normal of a sphere
+
+Sphere centered at \(C\):
+
+\[
+\|P-C\|=r.
+\]
+
+The radial vector:
+
+\[
+P-C
+\]
+
+is perpendicular to the tangent plane.
+
+Therefore unit outward normal is:
+
+\[
+\boxed{
+N=
+\frac{P-C}{r}
+}
+\]
+
+or equivalently:
+
+\[
+\operatorname{normalize}(P-C).
+\]
+
+This is why ray tracers can compute sphere normals so cheaply.
+
+---
+
+# PART 558 — BITANGENT VECTORS
+
+A surface tangent plane is two-dimensional.
+
+One tangent \(T\) does not span it completely.
+
+We need a second independent tangent direction.
+
+In rendering this is usually called the **bitangent**:
+
+\[
+B.
+\]
+
+You may also encounter the older term **binormal**, though "bitangent" is often more descriptive because the vector is tangent to the surface rather than normal to something.
+
+---
+
+# 558.1 Desired TBN frame
+
+We want three local directions:
+
+\[
+T
+\]
+
+tangent,
+
+\[
+B
+\]
+
+bitangent,
+
+\[
+N
+\]
+
+normal.
+
+For an ideal orthonormal tangent frame:
+
+\[
+T\cdot N=0,
+\]
+
+\[
+B\cdot N=0,
+\]
+
+\[
+T\cdot B=0,
+\]
+
+and:
+
+\[
+\|T\|=\|B\|=\|N\|=1.
+\]
+
+Part 559 is specifically about orthonormal bases, so we will not turn this into its full theory yet.
+
+But this is the target surface-frame structure.
+
+---
+
+# 558.2 Construct bitangent from normal and tangent
+
+Suppose \(N,T\) are unit and perpendicular.
+
+Then:
+
+\[
+\boxed{
+B=N\times T
+}
+\]
+
+is perpendicular to both.
+
+Cross magnitude:
+
+\[
+\|N\times T\|
+=
+\|N\|
+\|T\|
+\sin90^\circ
+=
+1.
+\]
+
+So \(B\) is automatically unit.
+
+Thus:
+
+\[
+\boxed{
+B=N\times T
+}
+\]
+
+constructs the third axis of one particular handed frame.
+
+But swapping the cross order gives:
+
+\[
+T\times N=-B.
+\]
+
+So the exact convention matters.
+
+There is no universal law saying every engine must use `cross(N,T)` rather than `cross(T,N)`.
+
+---
+
+# 558.3 Why bitangent is tangent to the surface
+
+Because:
+
+\[
+B=N\times T,
+\]
+
+we know:
+
+\[
+B\cdot N=0.
+\]
+
+Anything perpendicular to surface normal lies in the tangent plane.
+
+Therefore:
+
+\[
+\boxed{
+B\text{ is itself tangent}.
+}
+\]
+
+Hence the name **bitangent**: the second chosen tangent direction.
+
+---
+
+# 558.4 UV geometry gives a preferred tangent and bitangent
+
+Suppose triangle positions:
+
+\[
+P_0,P_1,P_2
+\]
+
+have texture coordinates:
+
+\[
+UV_0=(u_0,v_0),
+\]
+
+\[
+UV_1=(u_1,v_1),
+\]
+
+\[
+UV_2=(u_2,v_2).
+\]
+
+Define spatial edges:
+
+\[
+E_1=P_1-P_0,
+\]
+
+\[
+E_2=P_2-P_0.
+\]
+
+Define UV differences:
+
+\[
+\Delta UV_1=
+(\Delta u_1,\Delta v_1)
+\]
+
+with:
+
+\[
+\Delta u_1=u_1-u_0,
+\qquad
+\Delta v_1=v_1-v_0,
+\]
+
+and similarly:
+
+\[
+\Delta UV_2=
+(\Delta u_2,\Delta v_2).
+\]
+
+Locally we want:
+
+\[
+T
+\]
+
+to correspond to increasing \(u\), and:
+
+\[
+B
+\]
+
+to increasing \(v\).
+
+---
+
+# 558.5 Derive the tangent-space edge equations
+
+A UV displacement:
+
+\[
+(\Delta u,\Delta v)
+\]
+
+corresponds approximately across the triangle to 3D displacement:
+
+\[
+\Delta u\,T+\Delta v\,B.
+\]
+
+Therefore:
+
+\[
+\boxed{
+E_1
+=
+\Delta u_1 T+
+\Delta v_1 B
+}
+\]
+
+and:
+
+\[
+\boxed{
+E_2
+=
+\Delta u_2 T+
+\Delta v_2 B.
+}
+\]
+
+This is a two-equation system whose unknowns are the 3D vectors \(T,B\).
+
+The scalar coefficients come from UV differences.
+
+---
+
+# 558.6 Solve for \(T\)
+
+Multiply the first equation by:
+
+\[
+\Delta v_2:
+\]
+
+\[
+\Delta v_2E_1
+=
+\Delta u_1\Delta v_2T
++
+\Delta v_1\Delta v_2B.
+\]
+
+Multiply the second by:
+
+\[
+\Delta v_1:
+\]
+
+\[
+\Delta v_1E_2
+=
+\Delta u_2\Delta v_1T
++
+\Delta v_2\Delta v_1B.
+\]
+
+Subtract.
+
+The \(B\) terms cancel:
+
+\[
+\Delta v_2E_1-\Delta v_1E_2
+=
+(\Delta u_1\Delta v_2-
+\Delta u_2\Delta v_1)T.
+\]
+
+Define:
+
+\[
+\boxed{
+D=
+\Delta u_1\Delta v_2
+-
+\Delta u_2\Delta v_1.
+}
+\]
+
+Then:
+
+\[
+\boxed{
+T
+=
+\frac{
+\Delta v_2E_1-\Delta v_1E_2
+}{
+D
+}.
+}
+\]
+
+---
+
+# 558.7 Solve for \(B\)
+
+Multiply the second edge equation by:
+
+\[
+\Delta u_1
+\]
+
+and the first by:
+
+\[
+\Delta u_2.
+\]
+
+Subtract to eliminate \(T\).
+
+Result:
+
+\[
+\boxed{
+B
+=
+\frac{
+-\Delta u_2E_1+
+\Delta u_1E_2
+}{
+D
+}.
+}
+\]
+
+Equivalently:
+
+\[
+\boxed{
+B
+=
+\frac{
+\Delta u_1E_2-\Delta u_2E_1
+}{
+D
+}.
+}
+\]
+
+This is the standard tangent/bitangent construction derived from the triangle's spatial and UV edges.
+
+---
+
+# 558.8 Worked UV example
+
+Take:
+
+\[
+P_0=(0,0,0),
+\]
+
+\[
+P_1=(2,0,0),
+\]
+
+\[
+P_2=(0,3,0).
+\]
+
+UV coordinates:
+
+\[
+UV_0=(0,0),
+\]
+
+\[
+UV_1=(1,0),
+\]
+
+\[
+UV_2=(0,1).
+\]
+
+Then:
+
+\[
+E_1=(2,0,0),
+\]
+
+\[
+E_2=(0,3,0).
+\]
+
+UV differences:
+
+\[
+\Delta u_1=1,
+\quad
+\Delta v_1=0,
+\]
+
+\[
+\Delta u_2=0,
+\quad
+\Delta v_2=1.
+\]
+
+Therefore:
+
+\[
+D=(1)(1)-(0)(0)=1.
+\]
+
+Tangent:
+
+\[
+T
+=
+1E_1-0E_2.
+\]
+
+Thus:
+
+\[
+\boxed{
+T=(2,0,0).
+}
+\]
+
+Bitangent:
+
+\[
+B
+=
+1E_2-0E_1.
+\]
+
+Thus:
+
+\[
+\boxed{
+B=(0,3,0).
+}
+\]
+
+Notice they are not unit.
+
+Their magnitudes encode how physical geometry stretches relative to UV parameter distance.
+
+Normalize them for a direction-only shading frame:
+
+\[
+\hat T=(1,0,0),
+\]
+
+\[
+\hat B=(0,1,0).
+\]
+
+Normal:
+
+\[
+\hat N=(0,0,1).
+\]
+
+---
+
+# 558.9 What does \(D=0\) mean?
+
+Recall:
+
+\[
+D
+=
+\Delta u_1\Delta v_2
+-
+\Delta u_2\Delta v_1.
+\]
+
+This is the signed 2D area scale of the UV triangle.
+
+If:
+
+\[
+D=0,
+\]
+
+then the UV edges are linearly dependent.
+
+The UV triangle has collapsed to a line or point.
+
+Therefore the texture coordinates do not contain enough two-dimensional information to distinguish U from V directions.
+
+So dividing by \(D\) is impossible because:
+
+\[
+\boxed{
+\text{a valid tangent frame cannot be recovered uniquely from degenerate UVs}.
+}
+\]
+
+Again, division by zero corresponds to real geometric degeneracy.
+
+---
+
+# 558.10 Mirrored UVs
+
+\(D\) can be negative.
+
+That means the UV parameterization has reversed orientation relative to the triangle geometry.
+
+In practice, mirrored UV islands are common.
+
+This creates a tangent-frame handedness flip.
+
+Therefore storing only \(T,N\) is sometimes insufficient unless you also know whether the corresponding \(B\) should be:
+
+\[
+N\times T
+\]
+
+or:
+
+\[
+-(N\times T).
+\]
+
+A common representation is conceptually:
+
+```cpp
+struct Tangent {
+    Vec3 direction;
+    float handedness;
+};
+```
+
+with:
+
+\[
+handedness\in\{-1,+1\}.
+\]
+
+Then:
+
+\[
+\boxed{
+B
+=
+handedness\,
+(N\times T)
+}
+\]
+
+for the chosen convention.
+
+Different asset pipelines may encode this sign differently, so the convention must be documented.
+
+---
+
+# 558.11 Derive the handedness sign
+
+Suppose we already computed a raw UV bitangent:
+
+\[
+B_{\text{raw}}.
+\]
+
+And we have cleaned unit:
+
+\[
+N,T.
+\]
+
+Candidate frame bitangent:
+
+\[
+B_c=N\times T.
+\]
+
+Compare it to raw UV bitangent:
+
+\[
+B_c\cdot B_{\text{raw}}.
+\]
+
+If positive, they point to the same hemisphere.
+
+If negative, they oppose.
+
+So:
+
+\[
+\boxed{
+s=
+\operatorname{sign}
+[
+(N\times T)\cdot B_{\text{raw}}
+].
+}
+\]
+
+Then:
+
+\[
+\boxed{
+B=s(N\times T).
+}
+\]
+
+This lets us compress the third frame direction into one sign when \(N\) and \(T\) are already available.
+
+---
+
+# 558.12 Why tangent often needs orthogonalization against the normal
+
+The tangent accumulated from neighboring triangles or interpolated from vertices may not satisfy exactly:
+
+\[
+T\cdot N=0.
+\]
+
+Remove its normal component:
+
+\[
+T'
+=
+T-(T\cdot N)N
+\]
+
+assuming unit \(N\).
+
+Then normalize:
+
+\[
+\hat T
+=
+\frac{T'}{\|T'\|}.
+\]
+
+This is exactly the rejection operation from Part 539.
+
+After that:
+
+\[
+B=s(N\times\hat T).
+\]
+
+This construction produces a clean local frame if the inputs are nondegenerate.
+
+You will recognize the deeper generalized procedure in Parts 559–561.
+
+---
+
+# 558.13 Why tangent space matters for normal mapping
+
+Suppose a normal map stores local direction:
+
+\[
+n_t=
+(n_x,n_y,n_z).
+\]
+
+Those numbers are coordinates relative to the local surface basis:
+
+\[
+T,B,N.
+\]
+
+Therefore the corresponding world-space vector is reconstructed by:
+
+\[
+\boxed{
+n_w
+=
+n_xT+n_yB+n_zN.
+}
+\]
+
+This is exactly Part 514's basis-coordinate interpretation.
+
+The texture's RGB-ish vector is not automatically world-space.
+
+It is a coordinate tuple relative to the tangent frame.
+
+So tangent-space normal mapping is fundamentally:
+
+\[
+\boxed{
+\text{basis reconstruction}.
+}
+\]
+
+That connection is extremely important.
+
+---
+
+# 558.14 A full tangent-frame implementation skeleton
+
+```cpp
+struct TangentFrame {
+    Vec3 tangent;
+    Vec3 bitangent;
+    Vec3 normal;
+};
+
+[[nodiscard]]
+std::optional<TangentFrame>
+buildTangentFrame(
+    Vec3 normal,
+    Vec3 rawTangent,
+    Vec3 rawBitangent) noexcept
+{
+    auto nOpt = tryNormalize(normal);
+
+    if (!nOpt) {
+        return std::nullopt;
+    }
+
+    const Vec3 n = *nOpt;
+
+    // Remove normal contamination from tangent.
+    Vec3 t =
+        rawTangent
+        - n * dot(rawTangent, n);
+
+    auto tOpt = tryNormalize(t);
+
+    if (!tOpt) {
+        return std::nullopt;
+    }
+
+    t = *tOpt;
+
+    const Vec3 candidateB =
+        cross(n, t);
+
+    const float sign =
+        dot(candidateB, rawBitangent) < 0.0f
+        ? -1.0f
+        : 1.0f;
+
+    const Vec3 b =
+        candidateB * sign;
+
+    return TangentFrame{
+        t,
+        b,
+        n
+    };
+}
+```
+
+This is a canonical/reference construction, not a claim about any specific engine repository.
+
+---
+
+# HOW 553–558 CONNECT
+
+These Parts form two related halves.
+
+Reflection/refraction/half-vector operate on directions around a surface normal:
+
+\[
+I,N
+\rightarrow
+R
+\]
+
+\[
+I,N,n_1,n_2
+\rightarrow
+T_{\text{refracted}}
+\]
+
+\[
+L,V
+\rightarrow
+H.
+\]
+
+Tangents/normals/bitangents describe the local surface geometry in which those directions are interpreted:
+
+\[
+\boxed{
+T,B
+\text{ span the tangent plane}
+}
+\]
+
+and:
+
+\[
+\boxed{
+N\perp T,B.
+}
+\]
+
+Thus shading eventually operates on relationships such as:
+
+\[
+N\cdot L,
+\]
+
+\[
+N\cdot V,
+\]
+
+\[
+N\cdot H,
+\]
+
+and tangent-space coordinates relative to:
+
+\[
+(T,B,N).
+\]
+
+These are not arbitrary shader variables. Every one has now been built from geometric first principles.
+
+---
+
+# SEMANTIC DISTINCTIONS YOU MUST KEEP
+
+| Object | Meaning | Zero valid? | Usually unit? |
+|---|---|---:|---:|
+| Incident direction \(I\) | direction of ray propagation | No | Often yes |
+| Reflection \(R\) | outgoing mirror direction | No if input valid | Same length as \(I\) |
+| Refraction \(T_r\) | transmitted propagation direction | No | Usually yes |
+| Half vector \(H\) | angular bisector of unit \(L,V\) | Undefined if \(L=-V\) | Yes |
+| Tangent \(T\) | direction lying along surface | Can be zero mathematically as vector, but useless as frame axis | Often |
+| Normal \(N\) | perpendicular to tangent plane | Zero is not useful as normal | Often |
+| Bitangent \(B\) | second tangent-frame direction | Zero invalid for usable frame | Often |
+
+The storage may still be three floats for every row.
+
+The semantics are radically different.
+
+---
+
+# PERFORMANCE AND HARDWARE
+
+All per-vector operations in Parts 553–558 are fixed-size:
+
+\[
+O(1).
+\]
+
+Reflection is particularly cheap: one dot, one scalar multiply, one vector scale, one subtraction.
+
+Refraction adds several multiplies plus a square root and a total-internal-reflection decision. On highly parallel GPU workloads, the TIR branch can create divergent execution if neighboring invocations take different paths, although whether this matters depends on architecture and workload.
+
+Half-vector construction requires addition plus normalization.
+
+Triangle tangent generation is different because it is usually performed over an entire indexed mesh. For \(F\) faces it is approximately:
+
+\[
+O(F)
+\]
+
+triangle work, often followed by accumulation into vertices and normalization/orthogonalization. In real asset processing, index access, memory locality, vertex sharing, and seam duplication may matter more than the arithmetic itself.
+
+---
+
+# NUMERICAL FAILURE TREE
+
+When reflection looks wrong, check the direction convention, normal length, coordinate space, and normal orientation.
+
+When refraction looks wrong, additionally check whether \(n_1/n_2\) was reversed, whether the ray is entering or exiting, whether the normal was flipped consistently, and whether total internal reflection should occur.
+
+When half-vector calculations produce NaNs, inspect whether:
+
+\[
+L\approx -V.
+\]
+
+When tangent frames explode, inspect:
+
+\[
+D=
+\Delta u_1\Delta v_2-
+\Delta u_2\Delta v_1.
+\]
+
+A tiny \(D\) means the UV mapping is degenerate or nearly degenerate.
+
+When normals become NaN, inspect triangle area before normalization.
+
+When normal maps appear mirrored, inspect tangent-frame handedness and the exact cross-product order.
+
+Those are geometric debugging questions, not merely arithmetic ones.
+
+---
+
+# MASTERY GATE — PART 553
+
+From a blank page, decompose:
+
+\[
+I=I_t+I_n.
+\]
+
+Derive:
+
+\[
+I_n=(I\cdot N)N
+\]
+
+for unit \(N\).
+
+Then reflect by keeping \(I_t\) and negating \(I_n\) to obtain:
+
+\[
+\boxed{
+R=I-2(I\cdot N)N.
+}
+\]
+
+Prove:
+
+\[
+\|R\|=\|I\|,
+\]
+
+\[
+R\cdot N=-(I\cdot N),
+\]
+
+and explain why tangent motion is unchanged.
+
+---
+
+# MASTERY GATE — PART 554
+
+Start from:
+
+\[
+n_1\sin\theta_i
+=
+n_2\sin\theta_t.
+\]
+
+Define:
+
+\[
+\eta=\frac{n_1}{n_2}
+\]
+
+and:
+
+\[
+c_i=-I\cdot N.
+\]
+
+Derive:
+
+\[
+I_t=I+c_iN,
+\]
+
+then:
+
+\[
+T_t=\eta I_t,
+\]
+
+then:
+
+\[
+c_t=
+\sqrt{
+1-\eta^2(1-c_i^2)
+}.
+\]
+
+Finally reconstruct:
+
+\[
+\boxed{
+T
+=
+\eta I+
+(\eta c_i-c_t)N.
+}
+\]
+
+You must also derive why:
+
+\[
+k<0
+\]
+
+means total internal reflection and derive:
+
+\[
+\sin\theta_c=\frac{n_2}{n_1}.
+\]
+
+---
+
+# MASTERY GATE — PART 555
+
+Prove that for unit \(L,V\):
+
+\[
+L+V
+\]
+
+makes the same angle with both.
+
+Then show:
+
+\[
+\boxed{
+H=
+\frac{L+V}{\|L+V\|}.
+}
+\]
+
+Derive:
+
+\[
+L\cdot H
+=
+V\cdot H
+=
+\cos\frac{\theta}{2}.
+\]
+
+Then begin from the reflection equation and prove that under perfect mirror reflection:
+
+\[
+\boxed{
+H=N.
+}
+\]
+
+Finally explain why \(H\) is undefined for:
+
+\[
+L=-V.
+\]
+
+---
+
+# MASTERY GATE — PART 556
+
+Explain why a 3D surface generally has an entire 2D tangent plane rather than one tangent vector.
+
+For a plane, derive:
+
+\[
+T\cdot N=0.
+\]
+
+For the sphere, use:
+
+\[
+\|(P-C)+\varepsilon T\|^2
+\]
+
+to derive the first-order condition:
+
+\[
+\boxed{
+(P-C)\cdot T=0.
+}
+\]
+
+Then construct a tangent from arbitrary seed \(A\):
+
+\[
+T'
+=
+A-(A\cdot N)N
+\]
+
+and prove it is orthogonal to \(N\).
+
+---
+
+# MASTERY GATE — PART 557
+
+Given triangle \(P_0,P_1,P_2\), derive:
+
+\[
+\boxed{
+N_g
+=
+(P_1-P_0)\times(P_2-P_0).
+}
+\]
+
+Explain why:
+
+\[
+\|N_g\|
+=
+2A_{\triangle}.
+\]
+
+Explain why zero-area triangles cannot supply stable normals.
+
+Then distinguish:
+
+\[
+\text{geometric normal}
+\]
+
+from:
+
+\[
+\text{shading normal}.
+\]
+
+Finally derive the plane condition:
+
+\[
+\boxed{
+N\cdot(X-P_0)=0.
+}
+\]
+
+---
+
+# MASTERY GATE — PART 558
+
+Start from:
+
+\[
+E_1
+=
+\Delta u_1T+\Delta v_1B
+\]
+
+and:
+
+\[
+E_2
+=
+\Delta u_2T+\Delta v_2B.
+\]
+
+Without memorizing a formula, eliminate \(B\) to obtain:
+
+\[
+\boxed{
+T
+=
+\frac{
+\Delta v_2E_1-\Delta v_1E_2
+}{
+\Delta u_1\Delta v_2-\Delta u_2\Delta v_1
+}.
+}
+\]
+
+Then eliminate \(T\) and obtain:
+
+\[
+\boxed{
+B
+=
+\frac{
+\Delta u_1E_2-\Delta u_2E_1
+}{
+\Delta u_1\Delta v_2-\Delta u_2\Delta v_1
+}.
+}
+\]
+
+Explain geometrically why a zero denominator means UV-space degeneracy.
+
+Then explain why mirrored UVs require a handedness sign and how:
+
+\[
+\boxed{
+B=s(N\times T)
+}
+\]
+
+can reconstruct the bitangent.
+
+---
+
+# THE MODEL YOU SHOULD NOW HAVE
+
+You should no longer see a shader-like collection:
+
+```cpp
+normal
+tangent
+bitangent
+lightDir
+viewDir
+halfDir
+reflectDir
+refractDir
+```
+
+as seven arbitrary `Vec3`s.
+
+You should mentally unfold them:
+
+\[
+\boxed{
+N
+}
+\]
+
+defines the local orientation perpendicular to the surface.
+
+\[
+\boxed{
+T,B
+}
+\]
+
+span the local surface plane.
+
+Together:
+
+\[
+\boxed{
+(T,B,N)
+}
+\]
+
+form a local surface-coordinate frame.
+
+Incoming propagation \(I\) can be decomposed relative to \(N\).
+
+Flip its normal component:
+
+\[
+\boxed{
+R=I-2(I\cdot N)N
+}
+\]
+
+and you obtain reflection.
+
+Rescale its tangent component according to:
+
+\[
+\boxed{
+n_1\sin\theta_i=n_2\sin\theta_t
+}
+\]
+
+and rebuild the normal component, and you obtain refraction.
+
+Given outward light/view directions:
+
+\[
+L,V,
+\]
+
+their normalized sum:
+
+\[
+\boxed{
+H=\operatorname{normalize}(L+V)
+}
+\]
+
+is the surface orientation that bisects them.
+
+Finally, tangent-space coordinates:
+
+\[
+(x,y,z)
+\]
+
+mean:
+
+\[
+\boxed{
+xT+yB+zN.
+}
+\]
+
+That is the local geometric machinery on which a huge amount of graphics is eventually built.
+
+**Completed Part 553 — Reflection of a direction across a normal**  
+**Completed Part 554 — Refraction geometry from Snell's law**  
+**Completed Part 555 — Half-vector construction in shading**  
+**Completed Part 556 — Tangent vectors on a surface**  
+**Completed Part 557 — Normal vectors on a surface**  
+**Completed Part 558 — Bitangent vectors**
+
+**Next Core Part 559 — Orthonormal bases.**

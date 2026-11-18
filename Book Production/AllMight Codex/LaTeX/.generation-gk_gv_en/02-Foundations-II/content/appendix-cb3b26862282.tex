@@ -1,0 +1,59 @@
+\hypertarget{appendix-cb3b26862282}{}
+\section*{Homogeneous coordinates and perspective division}
+\chapter{Homogeneous coordinates and perspective division}\label{appendix-cb3b26862282-homogeneous-coordinates-and-perspective-division}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase6 · \textbf{Latest development:} University courses
+
+\section{Definition and mechanism}\label{appendix-cb3b26862282-definition-and-mechanism}
+
+Phase 7 derives the affine block matrix, distinguishes a singular affine map from an invertible frame, and traces model → view → homogeneous clip → NDC using a declared projection. \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Figure\%20M6\%20-\%20Follow\%20one\%20point\%20through\%20named\%20spaces}{The worked figure} keeps the divisor visible and checks the chosen near/far depth endpoints.
+
+An affine homogeneous point has last coordinate one; a direction has zero. Nonzero common scale defines projective equivalence, while dehomogenization divides by a nonzero final component. Clip representatives and projective classes have related but distinct semantics.
+
+\((2,4,6,2)\) and \((1,2,3,1)\) describe one finite projective point. NDC normalization standardizes ranges, not vector length.
+
+\section{Prerequisites}\label{appendix-cb3b26862282-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0659864c0aa3]{Vectors coordinates and affine points} --- Point, displacement and coordinate roles determine which geometric operations are meaningful.
+\end{itemize}
+
+\section{Used by}\label{appendix-cb3b26862282-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-0bf0ca73f735}{Linear affine and projective transformations (01-Foundations-I, appendix-0bf0ca73f735)}
+\end{itemize}
+
+Later curriculum sources can deepen this same node; no future coverage is marked complete. - \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-47ac1bd6d144}{Ray-triangle intersection (04-Visual-Computing-II, appendix-47ac1bd6d144)} - \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-3ee9861904d5}{Camera calibration and bundle adjustment (04-Visual-Computing-II, appendix-3ee9861904d5)}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-40426e4b2103}{Homogeneous clipping and perspective interpolation (03-Visual-Computing-I, appendix-40426e4b2103)}
+\item
+  \hyperref[appendix-2cbf2968e866]{Position reconstruction from depth}
+\item
+  \hyperref[appendix-113f0267e5f4]{Camera gauge freedoms and observability}
+\end{itemize}
+
+\section{Recall and next depth}\label{appendix-cb3b26862282-recall-and-next-depth}
+
+Explain why perspective division is nonlinear and why clipping must precede casual division. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\section{Source and navigation}\label{appendix-cb3b26862282-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Homogeneous\%20coordinates\%20preserve\%20the\%20role\%20of\%20a\%20location}{Teaching narrative} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-fd090d982a15-phase-6---parts-501-600}{Coverage and source gap (01-Foundations-I, appendix-fd090d982a15-phase-6-\/-\/-parts-501-600)} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-a103e7846d21-phase-6---source-analysis-and-verification}{Evidence and limits (01-Foundations-I, appendix-a103e7846d21-phase-6-\/-\/-source-analysis-and-verification)} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}
+
+\section{University course development}\label{appendix-cb3b26862282-university-course-development}
+
+Extend the existing account with the geometric reason for the final divide. A 3D point is stored as \((x,y,z,1)\); after multiplying by a projective matrix it becomes \((X,Y,Z,W)\). Dividing the first three components by \(W\) maps the homogeneous representative to ordinary coordinates. Any nonzero scalar multiple of a homogeneous vector represents the same point, which is why this division is meaningful. For a perspective camera, \(W\) is chosen to depend on depth, so apparent size shrinks with distance. A direction has homogeneous coordinate zero and is not translated like a point. Projection matrices encode the camera frustum before division; afterward, a viewport transform scales and shifts normalized coordinates to pixels and commonly flips the vertical axis because image rows increase downward. Keep clipping before division to avoid unstable behavior around \(W=0\).
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Coordinate\%20frames,\%20transformations,\%20and\%20pose}{Coordinate frames, transformations, and pose} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Cameras,\%20projection,\%20and\%20calibration}{Cameras, projection, and calibration}
+
+\section{Phase 11 camera development}\label{appendix-cb3b26862282-phase-11-camera-development}
+
+Homogeneous image coordinates represent a ray up to nonzero scale; perspective division produces normalized image coordinates. Monocular reconstruction has a separate physical scale gauge: multiplying all scene points and camera translations by the same positive factor preserves projections. Do not confuse representational scale with unknown metric scale. A known object dimension, baseline, or depth measurement can anchor metres; normalizing a homogeneous vector cannot. This assumes calibrated perspective projection without an external scale prior. The distinction explains why a numerically precise reconstruction can still lack physical units. Link: \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20camera\%20model\%20must\%20close\%20the\%20loop}{A camera model must close the loop}; research: \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Four\%20deeper\%20links\%20from\%20the\%20TUM\%20lecture\%20review}{Four deeper links from the TUM lecture review}.

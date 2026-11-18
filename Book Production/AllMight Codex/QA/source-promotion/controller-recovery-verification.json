@@ -1,0 +1,33 @@
+{
+  "schema": "production-controller-recovery-qa-v1",
+  "status": "restored-tested-and-durably-packaged",
+  "source_sha256": "3514e0f42d6411567ff119f4cbcd16152da788a8f14e318bcfc30706f544c422",
+  "source_bytes": 50336,
+  "durable_source_copy": "Tools/Production/production_controller.py",
+  "durable_source_sha256": "3514e0f42d6411567ff119f4cbcd16152da788a8f14e318bcfc30706f544c422",
+  "recovery_provenance": "Tools/Production/provenance/production-controller-recovery.json",
+  "recovery_provenance_sha256": "e2dc015cbc9057234498572b8d4e63609b62045f2edd38f35d3a63f1556a00e0",
+  "reconstruction_verification_sha256": "858bd5326867b79de2d1f0707a4f33d5972bdaf801d7ad7c8fedf3ffab0138f0",
+  "preserved_overwritten_json_sha256": "a60b6e1b8ec3bf019596ec444443f156da670079a9b44779a43cb1c38dec269d",
+  "preserved_pyc_snapshot_sha256": "36510b9ea154b12bfd26e2034ea676adce718cf06084f59e3ff34c64fc5d8418",
+  "fixture_commands": [
+    {
+      "command": "python3 -m py_compile production_controller.py",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "command": "python3 -m unittest discover -s test-fixtures/production_controller -v",
+      "exit_code": 0,
+      "tests_run": 32,
+      "result": "passed"
+    },
+    {
+      "command": "python3 -m unittest test_production_controller_native_scope -v",
+      "exit_code": 0,
+      "tests_run": 2,
+      "result": "passed"
+    }
+  ],
+  "scope": "Source restoration, compilation, fixture QA, and durable source/provenance package only; no pipeline stages or native jobs launched."
+}

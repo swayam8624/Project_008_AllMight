@@ -8,7 +8,7 @@ Logical resource indices must fit the shader’s representation and the selected
 
 **Recall question:** How do you prove that every material slot fits both the backend limit and the shader’s index type?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 62567–63428; source-span SHA256 d783791a0d1b3e74635308c27f4dcd7360fb7a0f85c1f4495a208170088901ae. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 63496–64357; source-span SHA256 d783791a0d1b3e74635308c27f4dcd7360fb7a0f85c1f4495a208170088901ae. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Model descriptor arrays as indexed data, and keep backend limits at the backend boundary

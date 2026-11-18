@@ -1,0 +1,40 @@
+\hypertarget{appendix-031e02bf28af}{}
+\section*{Monte Carlo rendering estimators and variance}
+\chapter{Monte Carlo rendering estimators and variance}\label{appendix-031e02bf28af-monte-carlo-rendering-estimators-and-variance}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} Phase 10
+
+\section{Definition and mechanism}\label{appendix-031e02bf28af-definition-and-mechanism}
+
+Monte Carlo integration estimates an integral by averaging random samples with importance weights. For target integral \(I=\int f(x)dx\) and samples drawn from density \(p(x)\), the estimator is \(\hat I=N^{-1}\sum_{k=1}^N f(x_k)/p(x_k)\). It is unbiased when samples cover every region where \(f\) is nonzero and the density is correct. Its variance falls approximately as \(1/N\), so halving standard error takes about four times as many samples. Importance sampling chooses \(p\) to follow the magnitude of the integrand; multiple importance sampling combines strategies such as light sampling and BSDF sampling with weights that avoid overtrusting a strategy that rarely finds a contribution. Path tracing applies these estimators to light paths, while rare caustics and narrow visibility openings remain high-variance cases.
+
+\subsection{Phase 9--10 development}\label{appendix-031e02bf28af-phase-910-development}
+
+For independent samples from density \(p\), the sample average estimates the integral using terms \(f(X_i)/p(X_i)\) where \(p\) is positive on the integrand support. Unbiasedness requires the support condition and integrability; finite variance additionally requires a finite second moment of \(f/p\). A variance estimate describes sampling spread, not systematic bias. Dependent samples add covariance terms, and multiple-importance weights combine proposal densities while preserving mixture support. A confidence interval is justified only when its sampling and moment assumptions are stated.
+
+\section{Prerequisites}\label{appendix-031e02bf28af-prerequisites}
+
+\begin{itemize}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-4815cd87ab8b}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)}
+\item
+  \hyperref[appendix-96da0b153b77]{Reflectance and rendering equation}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-8d863ed954d0}{Inverse, rejection, and importance sampling (02-Foundations-II, appendix-8d863ed954d0)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-54c383df9992}{Expectation, covariance, and dependence (02-Foundations-II, appendix-54c383df9992)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-d580b422240f}{Stable probability normalization and log-sum-exp (02-Foundations-II, appendix-d580b422240f)} \#\# Used by
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography}{Worlds, Images and Inference}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-68be451b78b1}{Reservoir resampling and ReSTIR (03-Visual-Computing-I, appendix-68be451b78b1)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-c83016554b1e}{Confidence intervals and sequential evidence (02-Foundations-II, appendix-c83016554b1e)}
+\item
+  \hyperref[appendix-4192b2bdd21e]{Antialiasing and sample allocation}
+\end{itemize}
+
+\section{Full teaching explanation}\label{appendix-031e02bf28af-full-teaching-explanation}
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Numerical\%20integration\%20and\%20Monte\%20Carlo\%20estimation}{Numerical integration and Monte Carlo estimation} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#The\%20rendering\%20equation\%20and\%20light\%20transport}{The rendering equation and light transport} - \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#8.\%20Monte\%20Carlo\%20estimates\%20trade\%20computation\%20for\%20uncertainty}{Phase 10 teaching section} - \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#7.\%20Transformations\%20turn\%20simple\%20inputs\%20into\%20useful\%20samples}{Phase 10 teaching section} - \href{../01-Foundations-I/main.pdf\#nameddest=appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (01-Foundations-I, appendix-cb5af353ef77)} · Phase 10 visual recall

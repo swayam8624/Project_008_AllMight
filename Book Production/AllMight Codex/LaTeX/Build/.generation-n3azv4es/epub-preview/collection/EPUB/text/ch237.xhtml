@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch237.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-241c0e42ac2d-quantized-matvec-and-dequantization" class="level2">
+<h2>Quantized matvec and dequantization</h2>
+<p>Quantization trades representation precision for storage and bandwidth. The runtime question is not merely “how many bits per weight?” It is what mathematical value each stored code represents, where its scale or zero-point metadata lives, and how the dot product is accumulated without silently changing the model.</p>
+<p>For a simple symmetric per-row signed 8-bit scheme,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <munder>
+        <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+        <mi>i</mi>
+      </munder>
+      <mrow data-mjx-texclass="ORD">
+        <mo stretchy="false">|</mo>
+      </mrow>
+      <msub>
+        <mi>w</mi>
+        <mi>i</mi>
+      </msub>
+      <mo stretchy="false">|</mo>
+    </mrow>
+    <mn>127</mn>
+  </mfrac>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>q</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>round</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="-0.167em"></mspace>
+  </mstyle>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <mfrac>
+      <msub>
+        <mi>w</mi>
+        <mi>i</mi>
+      </msub>
+      <mi>s</mi>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<p>with clamping to the representable range. The reconstructed value is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>w</mi>
+        <mo stretchy="false">^</mo>
+      </mover>
+    </mrow>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>s</mi>
+  <msub>
+    <mi>q</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>A reference matrix-vector product can therefore compute</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <mo stretchy="false">(</mo>
+  <mi>s</mi>
+  <msub>
+    <mi>q</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>That scalar implementation is not necessarily fast, but it creates an oracle for SIMD or GPU fused dequantization-and-dot kernels.</p>
+<p>Before clamping, the scalar reconstruction error for ordinary round-to-nearest is bounded by roughly half a quantization step. The output error is workload-dependent because the dot product combines weight errors with input magnitudes. An accuracy report therefore needs representative activations or a model-level metric, not only weight reconstruction error.</p>
+<section id="appendix-241c0e42ac2d-zero-rows-and-exceptional-values" class="level3">
+<h3>Zero rows and exceptional values</h3>
+<p>When all weights in a block are zero, dividing by the maximum absolute value would produce an invalid scale. The format and runtime need an explicit zero-block representation. Non-finite input weights should be rejected or handled by a documented conversion policy instead of entering integer casts accidentally.</p>
+<p>Groupwise 4-bit formats add another trade-off. Smaller groups let the scale adapt more locally but spend more bytes on metadata and may increase metadata bandwidth. Larger groups reduce metadata overhead but make each scale describe a wider distribution.</p>
+</section>
+<section id="appendix-241c0e42ac2d-reference-versus-optimized-execution" class="level3">
+<h3>Reference versus optimized execution</h3>
+<p>tools/labs/phase29_ml_runtime_lab.cpp implements a checked per-row Q8 reference and compares its dot product against the original floating-point row under a stated error budget. The point is not to advertise Q8 as the final format; it is to establish the proof pattern:</p>
+<p>stored codes plus metadata → scalar interpretation → reference result → optimized kernel → measured error and performance.</p>
+<p>A Metal or SIMD kernel should be judged against that reference on adversarial widths, tails, zero blocks, extreme scales and random vectors. SIMD lane packing is an implementation detail; the dequantized mathematical contract remains the same.</p>
+<p>Related: <a href="ch570.xhtml#appendix-fdc7879e8bf2-quantization-and-compressed-weights" class="wikilink">Quantization and compressed weights (Vision, XR, and Playable Worlds, Part 2, Reference notes: Quantization and compressed weights)</a>, <a href="ch244.xhtml#appendix-fef72dd246f2-gguf-binary-model-loading" class="wikilink">GGUF binary model loading</a>, <a href="ch241.xhtml#appendix-cebadf3106d1-tensor-runtime-layout-and-views" class="wikilink">Tensor runtime layout and views</a>.</p>
+</section>
+</section>
+</body>
+</html>

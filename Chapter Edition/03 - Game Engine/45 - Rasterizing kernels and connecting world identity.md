@@ -8,7 +8,7 @@ A rendered kernel is a projected footprint, but editing and world reconstruction
 
 **Recall question:** How does a changed kernel affect later transmittance, and what evidence connects its rendered footprint to a world-space object?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 108499–112054; source-span SHA256 39e2f801fc0e3b6a74db8fafeffd8e67737366aff333d0deef17faf5ad7d5034. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 109762–113317; source-span SHA256 39e2f801fc0e3b6a74db8fafeffd8e67737366aff333d0deef17faf5ad7d5034. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Rasterize kernels at scale and connect their identities — world correspondence

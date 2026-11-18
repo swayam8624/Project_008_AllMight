@@ -1,0 +1,52 @@
+\hypertarget{appendix-0026ec42c9d5}{}\label{referencestart:appendix-0026ec42c9d5}
+\section{Convex combinations and convex hulls}\label{appendix-0026ec42c9d5-convex-combinations-and-convex-hulls}
+
+\hypertarget{appendix-0026ec42c9d5-convex-combinations-and-convex-hulls}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-0026ec42c9d5-definition-and-mechanism}
+
+\hypertarget{appendix-0026ec42c9d5-definition-and-mechanism}{}
+
+Affine point combinations have weights summing to one. Convex combinations additionally have nonnegative weights. A convex set contains every segment between its members; a convex hull is the smallest such set containing supplied points.
+
+\end{allmightroledefinition}
+
+The panel is the convex hull of its corners. A filled disk is convex; its boundary alone is not.
+
+\subsection{Prerequisites}\label{appendix-0026ec42c9d5-prerequisites}
+
+\hypertarget{appendix-0026ec42c9d5-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#appendix-02b9d9a81dca}{Barycentric coordinates and interpolation (Light Transport and Image Synthesis, Part 1, Reference notes: Barycentric coordinates and interpolation)} --- Affine weights establish origin-independent combinations and inside-hull restrictions.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-0026ec42c9d5-used-by}
+
+\hypertarget{appendix-0026ec42c9d5-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-215ac7099a82]{Minkowski sums and support mappings} --- Builds on this mechanism in the connected geometry story.
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#appendix-0234ab7f86b1}{Subdivision surface masks (Light Transport and Image Synthesis, Part 1, Reference notes: Subdivision surface masks)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-0026ec42c9d5-recall-and-next-depth}
+
+\hypertarget{appendix-0026ec42c9d5-recall-and-next-depth}{}
+
+Show origin invariance and explain why a hull can fill holes absent from the source object. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-0026ec42c9d5-source-and-navigation}
+
+\hypertarget{appendix-0026ec42c9d5-source-and-navigation}{}
+
+\href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#01-foundations-i-ch018-weighted-points-lead-from-affine-geometry-to-collision-shapes}{Teaching narrative (Mathematics for Visual Computing, Part 1, Ch. 2)} · \hyperref[appendix-fd090d982a15-phase-6---parts-501-600]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-6---source-analysis-and-verification]{Evidence and limits} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

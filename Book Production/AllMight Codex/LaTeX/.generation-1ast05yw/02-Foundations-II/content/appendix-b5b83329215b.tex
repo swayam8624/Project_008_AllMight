@@ -1,0 +1,33 @@
+\hypertarget{appendix-b5b83329215b}{}
+\section*{Vector tolerances and finite-state diagnostics}
+\section{Vector tolerances and finite-state diagnostics}\label{appendix-b5b83329215b-vector-tolerances-and-finite-state-diagnostics}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\subsection{Definition and mechanism}\label{appendix-b5b83329215b-definition-and-mechanism}
+
+Closeness depends on a declared distance or angular criterion. Combined absolute/relative scalar rules differ from component boxes and Euclidean balls. NaN/infinity policies are explicit. Diagnose the first invalid stage rather than only the final visible symptom.
+
+Errors \((0.09,0.09)\) pass component tolerance \(0.1\) but fail Euclidean tolerance \(0.1\). Near \(10^8\), binary32 can lose a one-unit displacement at storage.
+
+\subsection{Prerequisites}\label{appendix-b5b83329215b-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-0ec599f8ba27}{Numerical tolerance policies (01-Foundations-I, appendix-0ec599f8ba27)} --- A declared scale and domain make closeness and rejection thresholds meaningful.
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-5aef4f13483a}{Dot and cross-product rounding (01-Foundations-I, appendix-5aef4f13483a)} --- Cancellation and rounded inputs explain when a determinant sign or finite measurement is uncertain.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-b5b83329215b-used-by}
+
+Later curriculum sources can deepen this same node; no future coverage is marked complete.
+
+\subsection{Recall and next depth}\label{appendix-b5b83329215b-recall-and-next-depth}
+
+Show nontransitivity; separate measurement noise, arithmetic error and input quantization. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-b5b83329215b-source-and-navigation}
+
+\hyperref[02-foundations-ii-ch037-reliability-begins-at-the-boundary-of-the-calculation]{Teaching narrative} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-fd090d982a15-phase-6---parts-501-600}{Coverage and source gap (01-Foundations-I, appendix-fd090d982a15-phase-6-\/-\/-parts-501-600)} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-a103e7846d21-phase-6---source-analysis-and-verification}{Evidence and limits (01-Foundations-I, appendix-a103e7846d21-phase-6-\/-\/-source-analysis-and-verification)} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

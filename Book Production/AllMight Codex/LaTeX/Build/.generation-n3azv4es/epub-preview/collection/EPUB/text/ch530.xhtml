@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch530.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-f0437ea55a47-conditional-gaussians-and-schur-complements" class="level2">
+<h2>Conditional Gaussians and Schur complements</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 10 · <strong>Latest development:</strong> Phase 10</p>
+<section id="appendix-f0437ea55a47-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Conditioning one block of a jointly Gaussian vector on another produces a Gaussian conditional law under the usual nonsingular assumptions. Its mean shifts by the cross-covariance times the inverse observed-block covariance, while its covariance is the Schur complement Σbb−ΣbaΣaa⁻¹Σab. That conditional covariance is positive semidefinite: insert the vector (−Σaa⁻¹Σabv,v) into the joint covariance quadratic form. If the joint covariance is positive definite, the Schur complement is positive definite. The conditional covariance does not depend on the observed value, although the conditional mean does. This formula links Bayesian updating, Gaussian elimination, and block linear systems. Singular observed blocks require a compatible degenerate-Gaussian treatment or a rank-revealing method; blindly applying an inverse is invalid.</p>
+</section>
+<section id="appendix-f0437ea55a47-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch452.xhtml#appendix-12bbe185dbe5-multivariate-gaussian-distributions-and-whitening" class="wikilink">Multivariate Gaussian distributions and whitening</a></li>
+<li><a href="ch534.xhtml#appendix-f6e77f4a200f-gaussian-elimination-and-pivoting" class="wikilink">Gaussian elimination and pivoting</a></li>
+</ul>
+</section>
+<section id="appendix-f0437ea55a47-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li>This node is a current endpoint in the supplied Phase 9–10 path.</li>
+</ul>
+</section>
+<section id="appendix-f0437ea55a47-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch268.xhtml#id_02-foundations-ii-ch024-waiting-times-event-counts-and-covariance-geometry" class="wikilink">Phase 10 teaching section (Mathematics for Visual Computing, Part 1, Ch. 8)</a></li>
+<li><a href="ch094.xhtml#appendix-cb5af353ef77-probability-and-uncertainty-visual-recall" class="wikilink">Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)</a> · visual recall</li>
+</ul>
+</section>
+<section id="appendix-f0437ea55a47-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 920 (T01 · M055), 928 (T01 · M056), 929 (T01 · M056), 930 (T01 · M056).</p>
+</section>
+</section>
+</body>
+</html>

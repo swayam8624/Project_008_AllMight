@@ -1,0 +1,44 @@
+\hypertarget{appendix-5f4b2e24c3f6}{}
+\section{Gaussian alpha compositing and order}\label{appendix-5f4b2e24c3f6-gaussian-alpha-compositing-and-order}
+
+A splat rasterizer typically evaluates an opacity contribution for each projected Gaussian and composites visible contributors in depth order. Front-to-back compositing keeps a running transmittance
+
+\[
+T_0=1,
+\]
+
+and for layer \(i\) with opacity \(\alpha_i\),
+
+\[
+w_i=T_i\alpha_i,
+\qquad
+C \leftarrow C+w_i c_i,
+\qquad
+T_{i+1}=T_i(1-\alpha_i).
+\]
+
+After all layers, accumulated opacity is
+
+\[
+A=1-T
+=
+1-\prod_i(1-\alpha_i).
+\]
+
+Opacity accumulation is commutative under this formula, but color is generally \textbf{not} because earlier colors receive larger transmittance weights. Therefore sorting or another order-correct method is part of the image definition, not just an optimization.
+
+\subsection{Early termination}\label{appendix-5f4b2e24c3f6-early-termination}
+
+When \(T\) becomes small, later layers can contribute at most a small amount if color values are bounded. An early-out threshold is therefore an approximation with a measurable error bound. The threshold should not be mixed into the layer before deciding whether that layer contributes; candidate-transmittance and post-accumulation stopping can differ by one visible contributor.
+
+\subsection{Numerical stability}\label{appendix-5f4b2e24c3f6-numerical-stability}
+
+Large numbers of tiny alpha values can accumulate rounding error. Clamping alpha should follow a stated kernel/model rule rather than hide negative or greater-than-one values produced by an earlier bug.
+
+Sorting precision also matters. If depth keys quantize several splats to the same value, the tie policy should be deterministic if reproducible images are required.
+
+\subsection{Executable witness}\label{appendix-5f4b2e24c3f6-executable-witness}
+
+tools/labs/gaussian\_projection\_reference\_lab.cpp composites two colored layers in both orders. It proves equal final opacity but different color, making the ordering dependency observable.
+
+Related: \hyperref[appendix-24269cb6977c]{Gaussian covariance projection and footprint}, \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-10308c3d753e}{Sampling support and missing strata (03-Visual-Computing-I, appendix-10308c3d753e)}.

@@ -1,0 +1,40 @@
+\hypertarget{appendix-8e5214819615}{}
+\section{Class access and invariants}\label{appendix-8e5214819615-class-access-and-invariants}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C007 · \textbf{Latest development:} C009
+
+\subsection{Definition and mechanism}\label{appendix-8e5214819615-definition-and-mechanism}
+
+Constructors establish externally usable state before publication; failed ordinary construction destroys completed subobjects. Generated memberwise moves do not automatically preserve relations such as extent-to-buffer consistency.
+
+struct and class differ in default member and base-class access: public versus private. Either supports methods, inheritance, constructors and hidden data. The record-versus-invariant distinction is design convention; an invariant is a condition each public operation must preserve.
+
+\subsection{Prerequisites}\label{appendix-8e5214819615-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-2e4d494c2d94]{Declarations and definitions} --- Class declarations establish members and bases whose access must be public or controlled.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-8e5214819615-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-f5593256bcaf]{Logical constness and mutable caches}
+\item
+  \hyperref[appendix-7f8ec83d0886]{Constructors and invariant establishment}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-8e5214819615-recall-and-next-depth}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} polymorphic invariants and subsystem-level failure policies.
+
+\subsection{Source and navigation}\label{appendix-8e5214819615-source-and-navigation}
+
+\hyperref[appendix-fd090d982a15-m009---parts-127-147]{C009 development}
+
+\hyperref[01-foundations-i-ch003-public-records-and-protected-invariants]{C007 teaching chapter} · \hyperref[appendix-fd090d982a15-m007---parts-101-112]{Source coverage} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

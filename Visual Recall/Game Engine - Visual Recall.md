@@ -128,3 +128,12 @@ flowchart LR
 | What repairs a wrong predicted tick? | Restore retained state and replay the corrected input sequence; reject corrections older than the declared history policy. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Prediction hides latency; rollback repairs a wrong prediction|Rollback trace and reference]] |
 | What does an audio voice own? | One playback cursor and policy state; it borrows clip data under an explicit lifetime. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Turn the audio front end into a real-time voice and mixing system|Voice pool and mixing contract]] |
 | What question comes before navigation? | Which action or goal to pursue; behavior trees, utility and planning express different decisions. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Navigation answers how to move; the decision layer answers what to do|Decision-model comparison]] |
+
+## Recall the contract before trusting the result
+
+| Recall prompt | Short answer | Complete teaching and witness |
+|---|---|---|
+| Which motions should a joint remove? | Only its constrained relative degrees of freedom. Derive velocity rows before solving effective mass. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#A joint removes selected relative motion, not every motion|Planar anchor trace, motors, limits and 3D boundaries]] |
+| Is a sensor event a body pointer to retain? | Queue stable IDs and generation checks; consume after the step with an explicit destruction policy. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Decide which pairs may interact, then publish overlap transitions safely|Masks, groups, Begin/Stay/End and stale handles]] |
+| Does an alias copy a CMake target? | No. It is another name; modify the real target. Imported target metadata describes an external artifact. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Imported targets describe external artifacts; aliases provide a stable name|All nine project files and negative configuration]] |
+| May an older shader job replace a newer edit? | Cache its result if valid; activate only the expected current revision. A real concurrent publisher needs a transaction or lock. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Turn shader import into a checked derivation transaction|Dependency closure, ABI, corruption and stale-result tests]] |

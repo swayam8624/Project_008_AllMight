@@ -1,0 +1,140 @@
+\documentclass[11pt,twoside,openany]{book}
+\usepackage[print]{allmight-book}
+\usepackage{tikz}
+\SetBookStage{1}{Bits, Programs, and Reliable Systems}
+\title{A Working Technical Book Interior}
+\author{AllMight Codex}
+\date{}
+\begin{document}
+\frontmatter
+\maketitle
+\tableofcontents
+\mainmatter
+\chapter{Numbers, Models, and Evidence}
+\section{A table that remains a table}
+A table should preserve relationships among each input and its rounding rule. The five columns fit at book size, the header repeats on a continued page, and row labels stay attached to values. These cases compare nearest-even, directed upward, directed downward, and toward-zero results for exact half-way inputs.
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.17\textwidth}*{4}{>{\centering\arraybackslash}p{0.18\textwidth}}@{}}
+\caption{Directed rounding results for exact half-way values.}\label{tab:rounding}\\
+\toprule Input & Nearest-even & Upward & Downward & Toward zero \\
+\midrule\endfirsthead
+\toprule Input & Nearest-even & Upward & Downward & Toward zero \\
+\midrule\endhead
+$2.5$ & $2$ & $3$ & $2$ & $2$ \\
+$3.5$ & $4$ & $4$ & $3$ & $3$ \\
+$-2.5$ & $-2$ & $-2$ & $-3$ & $-2$ \\
+$-3.5$ & $-4$ & $-3$ & $-4$ & $-3$ \\
+\bottomrule
+\end{longtable}
+
+\section{Native mathematics}
+A displayed derivation stays native, selectable mathematics:
+\begin{align*}
+\mathbf{A}\mathbf{x} &= \mathbf{b},\\
+\mathbf{x} &= \mathbf{A}^{-1}\mathbf{b}
+= \begin{bmatrix} 2 & -1 \\ 1 & 3 \end{bmatrix}^{-1}
+  \begin{bmatrix} 5 \\ 7 \end{bmatrix}.
+\end{align*}
+For a scalar function $f(x)=x^2+3x$, the derivative is $f'(x)=2x+3$.
+
+\begin{allmightdefinition}[Invertible matrix]
+A square matrix $\mathbf{A}$ is invertible when there is a matrix $\mathbf{A}^{-1}$ such that $\mathbf{A}^{-1}\mathbf{A}=\mathbf{I}$.
+\end{allmightdefinition}
+
+\begin{allmighttheorem}[Product rule]
+If $f$ and $g$ are differentiable, then $(fg)'=f'g+fg'$.
+\end{allmighttheorem}
+
+\begin{allmightexample}[Differentiate a product]
+Let $h(x)=x^2\sin x$. Then
+\[h'(x)=2x\sin x+x^2\cos x.\]
+The rule keeps the two changing factors explicit.
+\end{allmightexample}
+
+\section{Seven-stage color system and exercise treatment}
+\begin{tabularx}{\textwidth}{@{}p{0.12\textwidth}X p{0.12\textwidth}X@{}}
+\AllMightStageMark{1}{} & Bits, Programs, and Reliable Systems &
+\AllMightStageMark{2}{} & Mathematics for Visual Computing \\[-2pt]
+\AllMightStageMark{3}{} & Geometry, Cameras, and Image Formation &
+\AllMightStageMark{4}{} & Light Transport and Image Synthesis \\[-2pt]
+\AllMightStageMark{5}{} & Spatial Worlds, Engine State, and Simulation &
+\AllMightStageMark{6}{} & GPU Architecture and Real-Time Rendering \\[-2pt]
+\AllMightStageMark{7}{} & Vision, XR, and Playable Worlds & & \\
+\end{tabularx}
+
+\begin{allmightexercise}[Check the boundary]
+For $x=2.5$, compare nearest-even with directed upward rounding. State the
+result under each rule and explain why the rules differ.
+\end{allmightexercise}
+
+\begin{center}
+\begin{tabular}{@{}*{7}{c}@{}}
+\colorbox{AMStageOne}{\rule{0pt}{12pt}\hspace{15pt}} &
+\colorbox{AMStageTwo}{\rule{0pt}{12pt}\hspace{15pt}} &
+\colorbox{AMStageThree}{\rule{0pt}{12pt}\hspace{15pt}} &
+\colorbox{AMStageFour}{\rule{0pt}{12pt}\hspace{15pt}} &
+\colorbox{AMStageFive}{\rule{0pt}{12pt}\hspace{15pt}} &
+\colorbox{AMStageSix}{\rule{0pt}{12pt}\hspace{15pt}} &
+\colorbox{AMStageSeven}{\rule{0pt}{12pt}\hspace{15pt}} \\
+\scriptsize Stage 1 & \scriptsize Stage 2 & \scriptsize Stage 3 &
+\scriptsize Stage 4 & \scriptsize Stage 5 & \scriptsize Stage 6 &
+\scriptsize Stage 7
+\end{tabular}
+\end{center}
+
+\section{Code with readable line spacing}
+The code face is distinct from the text and compact without being squeezed:
+\begin{Shaded}
+\begin{Verbatim}[fontsize=\small]
+Matrix inverse(const Matrix& A) {
+    if (!isSquare(A)) throw ShapeError{};
+    return factor(A).solve(identity(A.rows()));
+}
+\end{Verbatim}
+\end{Shaded}
+
+\section{A bounded vector figure}
+The short vector diagram remains within the text measure. The ordinary graphic cap remains conservative. For a separately authored, compact semantic panel, \texttt{\string\BookDiagramPanel} allows nearly the full text width and a larger height budget. A wide summary can use \texttt{\string\BookDiagramWide}; neither helper enlarges beyond its cap.
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[>=stealth,node distance=2.5cm,every node/.style={font=\small}]
+  \node[draw,rounded corners,fill=AMWash,inner sep=7pt] (source) {Input $x$};
+  \node[draw,rounded corners,fill=AMWash,inner sep=7pt,right of=source] (map) {Transform $f$};
+  \node[draw,rounded corners,fill=AMWash,inner sep=7pt,right of=map] (result) {Result $y$};
+  \draw[->,thick,color=AMAccent] (source) -- (map);
+  \draw[->,thick,color=AMAccent] (map) -- (result);
+\end{tikzpicture}
+\caption{A short semantic flow that remains legible at the text measure.}
+\end{figure}
+
+\section{A table that continues across a page}
+This deliberately long table exercises repeated headings and multipage layout. Rows remain intact whenever they fit, and the relationships remain in a semantic table.
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.20\textwidth}>{\raggedright\arraybackslash}p{0.34\textwidth}>{\raggedright\arraybackslash}p{0.34\textwidth}@{}}
+\caption{A continued comparison of coordinate conventions.}\label{tab:continued}\\
+\toprule Convention & Meaning & Practical check \\
+\midrule\endfirsthead
+\toprule Convention & Meaning & Practical check \\
+\midrule\endhead
+World & Position in the shared scene coordinate system. & Transform one known landmark and compare its expected coordinates. \\
+View & Position relative to the camera frame. & Confirm the camera origin maps to $(0,0,0)$. \\
+Clip & Homogeneous position before division by $w$. & Check near and far plane signs for the selected graphics API. \\
+Normalized device & Position after perspective division. & Verify the visible interval on every axis. \\
+Screen & Pixel location after viewport mapping. & Check origin convention and pixel-center rule. \\
+Texture & Address in an image or volume. & Confirm wrap, clamp, or border behavior at the boundary. \\
+Object & Position in the local coordinate system of one model. & Move the model transform and keep the authored coordinates stable. \\
+Tangent & Direction along a surface at a point. & Check normalization and handedness together with the normal. \\
+Bitangent & The second surface direction perpendicular to tangent and normal. & Confirm the basis remains orthogonal after transformation. \\
+Normal & Direction perpendicular to a surface. & Use the inverse-transpose transform when the model matrix is nonuniform. \\
+Eye ray & Direction from the camera origin through a sample. & Compare one center ray with the camera forward axis. \\
+Light ray & Direction along light transport. & State whether the vector points toward or away from the source. \\
+Reflection & Direction mirrored about a surface normal. & Verify that the incident and reflected angles match. \\
+Refraction & Direction changed by a boundary between media. & Check the index ratio and total internal reflection case. \\
+Voxel & Integer-addressed sample in a three-dimensional grid. & Keep index order consistent with storage layout. \\
+UV & Two-dimensional texture coordinates on a surface. & Check seam placement and vertical image origin. \\
+Clip plane & Boundary in homogeneous clip coordinates. & Use the selected API's depth interval and handedness. \\
+Viewport & Mapping from normalized device coordinates to pixels. & Confirm the viewport origin and y-axis direction. \\
+World normal & Surface normal after transformation to world space. & Normalize after the inverse-transpose transform. \\
+Screen derivative & Change in a quantity per pixel. & Check units before comparing with a world-space derivative. \\
+\bottomrule
+\end{longtable}
+\end{document}

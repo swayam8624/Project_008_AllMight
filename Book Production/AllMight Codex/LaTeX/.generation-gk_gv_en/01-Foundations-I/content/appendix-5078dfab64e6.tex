@@ -1,0 +1,47 @@
+\hypertarget{appendix-5078dfab64e6}{}
+\section*{Binary64}
+\chapter{Binary64}\label{appendix-5078dfab64e6-binary64}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C004 · \textbf{Latest development:} C004
+
+\section{Definition and mechanism}\label{appendix-5078dfab64e6-definition-and-mechanism}
+
+A 64-bit binary interchange format with 1/11/52 fields, 53 significant normal bits and bias 1023. Normal exponent range is −1022 through 1023. Word 3FF0000000000000 means 1.
+
+\section{Prerequisites}\label{appendix-5078dfab64e6-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5057f9ad327f]{Binary32} --- The concrete fields provide the representation used in this mechanism.
+\end{itemize}
+
+\section{Used by}\label{appendix-5078dfab64e6-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-260182e617b7]{Mixed-precision state updates} --- A wider format can represent finite binary32 values exactly but not recover earlier loss.
+\end{itemize}
+
+Connect later dependent concepts here as their lessons arrive.
+
+\section{Recall and next depth}\label{appendix-5078dfab64e6-recall-and-next-depth}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Apply the class rules using exponent 2047; long double is not automatically this format.
+
+\section{Source and navigation}\label{appendix-5078dfab64e6-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20stretching\%20ruler\%20for\%20real-valued\%20quantities}{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\section{Precision, exponent range, and the integer-exact region}\label{appendix-5078dfab64e6-precision-exponent-range-and-the-integer-exact-region}
+
+IEEE-754 binary64 uses 1 sign bit, 11 exponent bits, and 52 stored fraction bits. Normal values have an implicit leading one, giving 53 bits of significand precision. Around magnitude one, the gap between adjacent values is \(2^{-52}\).
+
+Every integer with magnitude up to \(2^{53}\) is exactly representable, but beyond that boundary adjacent integers begin sharing the same floating representation. This matters when timestamps, IDs, byte counts or large counters are moved through a double-based API: an integer may be within the exponent range yet still lose unit precision.
+
+Binary64 dramatically reduces rounding error compared with binary32 but doubles storage/bandwidth and does not cure unstable algorithms. Coordinate systems for large worlds often use double on the CPU and camera-relative float on the GPU, making the conversion boundary part of the design.
+
+Tests should cover adjacent values around \(2^{53}\), normal/subnormal transitions, overflow, signed zero, infinities/NaNs, and cancellation cases that remain ill-conditioned even at 64-bit precision.

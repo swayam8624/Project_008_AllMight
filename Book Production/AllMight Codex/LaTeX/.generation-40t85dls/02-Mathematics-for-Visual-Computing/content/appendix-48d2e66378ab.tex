@@ -1,0 +1,52 @@
+\hypertarget{appendix-48d2e66378ab}{}\label{referencestart:appendix-48d2e66378ab}
+\section{Matrix inversion pivoting and residuals}\label{appendix-48d2e66378ab-matrix-inversion-pivoting-and-residuals}
+
+\hypertarget{appendix-48d2e66378ab-matrix-inversion-pivoting-and-residuals}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase7 · \textbf{Latest development:} Phase7
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-48d2e66378ab-definition-and-mechanism}
+
+\hypertarget{appendix-48d2e66378ab-definition-and-mechanism}{}
+
+Inversion reconstructs input coordinates from output for an invertible square map. Pivoted elimination tracks row operations on an augmented system. A residual checks a computed answer; conditioning determines how strongly input errors can affect it. Prefer solving a system when an explicit inverse is unnecessary.
+
+\end{allmightroledefinition}
+
+\textbf{Reconstruction cue:} Check both A times computed inverse and the inverse times A against identity, with scale-aware residuals.
+
+\subsection{Prerequisites}\label{appendix-48d2e66378ab-prerequisites}
+
+\hypertarget{appendix-48d2e66378ab-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-da478be01d02]{Determinants orientation and volume}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-8f6a01f284a7}{Conditioning and singularity (Bits, Programs, and Reliable Systems, Reference notes: Conditioning and singularity)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-48d2e66378ab-used-by}
+
+\hypertarget{appendix-48d2e66378ab-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-1bae9457dbc3}{Coordinate frames and change of basis (Vision, XR, and Playable Worlds, Reference notes: Coordinate frames and change of basis)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-48d2e66378ab-recall-and-next-depth}
+
+\hypertarget{appendix-48d2e66378ab-recall-and-next-depth}{}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\subsection{Source and navigation}\label{appendix-48d2e66378ab-source-and-navigation}
+
+\hypertarget{appendix-48d2e66378ab-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations]{Continuous explanation} · \hyperref[appendix-fd090d982a15-phase-7---parts-601-700]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-7---source-analysis-and-verification]{Sources and verification}

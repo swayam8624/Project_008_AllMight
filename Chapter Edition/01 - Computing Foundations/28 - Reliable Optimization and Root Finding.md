@@ -8,7 +8,7 @@ A practical optimizer must report why it stopped, whether derivatives agree with
 
 **Recall question:** What evidence distinguishes true convergence from a tiny step, failed line search, or inaccurate derivative?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 66237–69719; source-span SHA256 3d25a4f2f3817ceaecfe61e6825d7467cf99feaca3333d4a92974bc19d84b4aa. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 66484–69966; source-span SHA256 3574ce4f7228e487c9ff136c1d91177184bbd4ea77aeb8c5a3462a4a79ef18a2. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Reliable optimization in practice
@@ -167,19 +167,19 @@ The code evaluates these derivatives for every observation, forming gradient and
 For each residual $r_i$ with Jacobian row:
 
 $$
-J_i= \begin{bmatrix} j\_{ix}&j\_{iz} \end{bmatrix},
+J_i= \begin{bmatrix} j_{ix}&j_{iz} \end{bmatrix},
 $$
 
 the gradient contribution is:
 
 $$
-J_i^Tr_i= \begin{bmatrix} j\_{ix}r_i\\ j\_{iz}r_i \end{bmatrix}.
+J_i^Tr_i= \begin{bmatrix} j_{ix}r_i\\ j_{iz}r_i \end{bmatrix}.
 $$
 
 The normal-matrix contribution is:
 
 $$
-J_i^TJ_i= \begin{bmatrix} j\_{ix}^2&j\_{ix}j\_{iz}\\ j\_{ix}j\_{iz}&j\_{iz}^2 \end{bmatrix}.
+J_i^TJ_i= \begin{bmatrix} j_{ix}^2&j_{ix}j_{iz}\\ j_{ix}j_{iz}&j_{iz}^2 \end{bmatrix}.
 $$
 
 Accumulate these over all observations:
@@ -189,13 +189,13 @@ $$
 $$
 
 $$
-H\_{\mathrm{GN}}=\sum_iJ_i^TJ_i.
+H_{\mathrm{GN}}=\sum_iJ_i^TJ_i.
 $$
 
 Then solve:
 
 $$
-(H\_{\mathrm{GN}}+\lambda D)\Delta\mathbf x=-\mathbf g.
+(H_{\mathrm{GN}}+\lambda D)\Delta\mathbf x=-\mathbf g.
 $$
 
 The implementation uses a diagonal scaling matrix $D$ and a small positive-definite linear solve tailored to the two-parameter teaching example.
@@ -524,13 +524,13 @@ A robust loss reduces the influence of sufficiently large residuals.
 For example, Huber loss with threshold $\delta>0$ is:
 
 $$
-\rho\_\delta(r)= \begin{cases} \frac12r^2,&|r|\le\delta,\\ \delta(|r|-\frac12\delta),&|r|>\delta. \end{cases}
+\rho_\delta(r)= \begin{cases} \frac12r^2,&|r|\le\delta,\\ \delta(|r|-\frac12\delta),&|r|>\delta. \end{cases}
 $$
 
 Its derivative is:
 
 $$
-\rho\_\delta'(r)= \begin{cases} r,&|r|\le\delta,\\ \delta\\,\operatorname{sign}(r),&|r|>\delta. \end{cases}
+\rho_\delta'(r)= \begin{cases} r,&|r|\le\delta,\\ \delta\,\operatorname{sign}(r),&|r|>\delta. \end{cases}
 $$
 
 Small residuals receive quadratic treatment. Large residuals receive a linear penalty, limiting their influence.
@@ -618,38 +618,38 @@ Suppose the unknowns are divided into camera variables $\mathbf c$ and 3D point 
 A linearized normal system may have block structure:
 
 $$
-\begin{bmatrix} H\_{cc}&H\_{cp}\\ H\_{pc}&H\_{pp} \end{bmatrix} \begin{bmatrix} \Delta\mathbf c\\ \Delta\mathbf p \end{bmatrix} = - \begin{bmatrix} \mathbf g_c\\ \mathbf g_p \end{bmatrix}.
+\begin{bmatrix} H_{cc}&H_{cp}\\ H_{pc}&H_{pp} \end{bmatrix} \begin{bmatrix} \Delta\mathbf c\\ \Delta\mathbf p \end{bmatrix} = - \begin{bmatrix} \mathbf g_c\\ \mathbf g_p \end{bmatrix}.
 $$
 
-If the point block $H\_{pp}$ can be solved efficiently, eliminate $\Delta\mathbf p$.
+If the point block $H_{pp}$ can be solved efficiently, eliminate $\Delta\mathbf p$.
 
 From the second equation:
 
 $$
-H\_{pc}\Delta\mathbf c+ H\_{pp}\Delta\mathbf p=-\mathbf g_p.
+H_{pc}\Delta\mathbf c+ H_{pp}\Delta\mathbf p=-\mathbf g_p.
 $$
 
 Thus:
 
 $$
-\Delta\mathbf p= -H\_{pp}^{-1} (\mathbf g_p+H\_{pc}\Delta\mathbf c).
+\Delta\mathbf p= -H_{pp}^{-1} (\mathbf g_p+H_{pc}\Delta\mathbf c).
 $$
 
 Substitute into the first equation:
 
 $$
-\boxed{ \left( H\_{cc}-H\_{cp}H\_{pp}^{-1}H\_{pc} \right) \Delta\mathbf c = -\mathbf g_c+ H\_{cp}H\_{pp}^{-1}\mathbf g_p }.
+\boxed{ \left( H_{cc}-H_{cp}H_{pp}^{-1}H_{pc} \right) \Delta\mathbf c = -\mathbf g_c+ H_{cp}H_{pp}^{-1}\mathbf g_p }.
 $$
 
 The matrix:
 
 $$
-\boxed{ S=H\_{cc}-H\_{cp}H\_{pp}^{-1}H\_{pc} }
+\boxed{ S=H_{cc}-H_{cp}H_{pp}^{-1}H_{pc} }
 $$
 
 is the Schur complement.
 
-The implementation should use solves involving $H\_{pp}$, not necessarily explicit inverse matrices.
+The implementation should use solves involving $H_{pp}$, not necessarily explicit inverse matrices.
 
 This block reduction is fundamental in large-scale bundle adjustment and similar problems where some variable blocks can be eliminated efficiently.
 

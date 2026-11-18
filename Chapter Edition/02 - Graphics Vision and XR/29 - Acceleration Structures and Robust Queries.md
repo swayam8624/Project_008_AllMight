@@ -8,7 +8,7 @@ Acceleration structures reduce work only when their bounds and traversal rules p
 
 **Recall question:** How can a bounding-volume hierarchy speed up a query without changing its result?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 73707–74455; source-span SHA256 9083775d28488cff20db24e36749a3ebbba967df818f0b4fac9a330d26ae94ca. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 74709–75457; source-span SHA256 9083775d28488cff20db24e36749a3ebbba967df818f0b4fac9a330d26ae94ca. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Acceleration structures and robust queries

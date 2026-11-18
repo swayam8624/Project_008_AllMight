@@ -8,7 +8,7 @@ A project becomes interactive only after platform resources and application serv
 
 **Recall question:** How does a close request travel from the platform into orderly shutdown, and how does a key press become a tick-stamped game action?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 24192–24924; source-span SHA256 e374ba097624e6a4280ef5a3cd65e4d7420687cb599b6f9a1db6750484f2ecff. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 24710–25442; source-span SHA256 e374ba097624e6a4280ef5a3cd65e4d7420687cb599b6f9a1db6750484f2ecff. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Turn the application into a portable working foundation

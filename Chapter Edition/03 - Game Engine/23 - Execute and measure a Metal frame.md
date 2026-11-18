@@ -8,7 +8,7 @@ The previous API contracts now meet in a complete frame that must be recorded, s
 
 **Recall question:** Which operation records work, which submits it, and what evidence shows that the measured interval matches the intended GPU work?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 55750–59391; source-span SHA256 19954dc3a4f963e477d125e7042dfeabbf36e726aedb64e647287ae45975394f. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 56679–60320; source-span SHA256 69be82dc8bfd6db892b9cecfa2d76f25446f21541e7475577d58e269306216a3. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Execute and measure a Metal frame
@@ -70,7 +70,7 @@ The original Vulkan object model above remains valuable because the API is delib
 
 The durable mental model is
 
-\[
+$$
 \boxed{
 \text{resource lifetime}
 +
@@ -82,7 +82,7 @@ The durable mental model is
 +
 \text{submission order}
 }
-\]
+$$
 
 Everything else is a concrete mechanism for expressing those five things.
 
@@ -119,13 +119,13 @@ The real question is never “which barrier function do I call?” It is:
 
 A dependency is conceptually
 
-\[
+$$
 \boxed{
 (\text{source stage},\text{source access})
 \rightarrow
 (\text{destination stage},\text{destination access})
 }
-\]
+$$
 
 plus any layout transition or queue-family ownership transfer.
 
@@ -155,7 +155,7 @@ submission C waits 42, signals 43
 
 That maps naturally to deferred destruction:
 
-\[
+$$
 \boxed{
 \text{resource last used at epoch }E
 \rightarrow
@@ -163,7 +163,7 @@ That maps naturally to deferred destruction:
 \rightarrow
 \text{resource may be recycled}
 }
-\]
+$$
 
 The same epoch model can drive staging-ring reuse, upload completion, transient-resource retirement and frame-slot reuse.
 
@@ -226,13 +226,13 @@ graphics:
 
 The transformation is
 
-\[
+$$
 \boxed{
 \text{CPU decides once per object}
 \rightarrow
 \text{CPU submits coarse work + data; GPU resolves many decisions}
 }
-\]
+$$
 
 This can reduce CPU/driver overhead, but debugging now spans extraction, culling, compaction, indirect arguments, descriptor indices and the draw itself. Complexity is relocated, not erased.
 
@@ -246,7 +246,7 @@ The official Khronos guide/specification supplies current contract truth: featur
 
 The synthesis is
 
-\[
+$$
 \boxed{
 \text{tutorial sequence}
 +
@@ -254,7 +254,7 @@ The synthesis is
 +
 \text{current specification}
 }
-\]
+$$
 
 The older Vulkan Programming Guide remains excellent for the architectural reason Vulkan exists: application code takes ownership of synchronization, scheduling, memory strategy and command construction that older APIs often hid. Its concrete examples come from an earlier Vulkan generation, so keep the architecture and refresh the mechanisms.
 
@@ -304,13 +304,13 @@ That is why code must query layout sizes and offsets instead of multiplying a de
 
 The deeper lesson is:
 
-\[
+$$
 \boxed{
 \text{descriptor buffer removes a management abstraction}
 \quad
 \text{but not the shader-interface contract}
 }
-\]
+$$
 
 #### Descriptor-buffer writes are ordinary memory hazards
 
@@ -340,13 +340,13 @@ A device-written descriptor buffer needs an explicit GPU dependency before shade
 
 The general rule is:
 
-\[
+$$
 \boxed{
 \text{same logical update}
 \not\Rightarrow
 \text{same synchronization path}
 }
-\]
+$$
 
 because the producer domain changed.
 
@@ -404,13 +404,13 @@ This can reduce pipeline-permutation pressure for highly dynamic applications, b
 
 The architectural trade is:
 
-\[
+$$
 \boxed{
 \text{less precompiled state bundle}
 \Rightarrow
 \text{more explicit command-time state responsibility}
 }
-\]
+$$
 
 It is not automatically simpler.
 
@@ -481,11 +481,11 @@ But legal scheduling is not automatically good frame pacing.
 
 If the CPU submits far ahead:
 
-\[
+$$
 \text{queue depth}\uparrow
 \Rightarrow
 \text{input-to-photon latency may rise}
-\]
+$$
 
 even if GPU throughput remains high.
 
@@ -521,13 +521,13 @@ descriptor update occurs at safe point
 
 The critical idea is not the exact descriptor-set mechanism. It is that publishing a new resource binding must happen when both conditions are true:
 
-\[
+$$
 \boxed{
 \text{resource contents ready}
 \land
 \text{binding storage safe to mutate}
 }
-\]
+$$
 
 If either condition is false, the renderer risks sampling incomplete data or mutating state still consumed by an in-flight frame.
 
@@ -631,13 +631,13 @@ The Vulkan samples include fragment-shading-rate paths, including dynamic genera
 
 For XR/foveated rendering and adaptive shading, the key conceptual mapping is:
 
-\[
+$$
 \text{importance/frequency field}
 \rightarrow
 \text{shading-rate field}
 \rightarrow
 \text{fragment invocation density}
-\]
+$$
 
 A gaze-driven foveated renderer adds another temporal problem: the shading-rate field is only useful if gaze prediction, display timing, and frame scheduling keep the high-quality region aligned with perception.
 

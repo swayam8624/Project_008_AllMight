@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch581.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-f682275acbdf-incremental-contact-penetration-refresh" class="level2">
+<h2>Incremental contact penetration refresh</h2>
+<p>Position correction moves every contact point attached to the corrected bodies. For a small rotation, its first-order point displacement is translation plus rotation vector crossed with the pre-correction world-space lever arm. Project the difference of the two point movements onto the frozen contact normal, using the declared normal and penetration signs.</p>
+<p>Refresh each known contact once for the correction just applied, then reconsider the worst penetration. Reusing an old correction counts movement twice. This local estimate cannot discover new contacts or replace geometry refresh after substantial rotation or a feature change.</p>
+<section id="appendix-f682275acbdf-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch463.xhtml#appendix-2391db8052b1-cross-products-and-oriented-area" class="wikilink">Concepts/Cross products and oriented area (Vision, XR, and Playable Worlds, Part 1, Reference notes: Cross products and oriented area)</a></li>
+<li><a href="ch535.xhtml#appendix-f744e41b95b4-unit-directions-and-safe-normalization" class="wikilink">Concepts/Unit directions and safe normalization (Vision, XR, and Playable Worlds, Part 1, Reference notes: Unit directions and safe normalization)</a></li>
+</ul>
+</section>
+<section id="appendix-f682275acbdf-full-teaching-and-executable-evidence" class="level3">
+<h3>Full teaching and executable evidence</h3>
+<ul>
+<li><a href="ch580.xhtml#id_06-engine-ii-ch046-refresh-neighboring-penetrations-after-position-correction" class="wikilink">Derivation, three-contact ranking trace and complexity limits</a></li>
+<li><a href="ch580.xhtml#id_06-engine-ii-ch046-a-planar-penetration-refresh-witness" class="wikilink">Complete planar C++20 reference</a></li>
+</ul>
+</section>
+<section id="appendix-f682275acbdf-used-by" class="level3">
+<h3>Used by</h3>
+<p>Iterative position correction and contact-priority updates. The reference is a frozen-feature updater, not a full collision detector or rigid-body solver.</p>
+</section>
+</section>
+</body>
+</html>

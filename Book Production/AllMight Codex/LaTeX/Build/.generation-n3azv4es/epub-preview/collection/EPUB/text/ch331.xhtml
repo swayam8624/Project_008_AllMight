@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch331.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-97578ed97952-depth-buffering-and-visibility-order" class="level2">
+<h2>Depth buffering and visibility order</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-97578ed97952-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A depth buffer stores the nearest depth seen so far for each image sample. When rasterizing a fragment, compare its depth with the stored value; if it is closer, update both depth and color, otherwise discard it. This per-sample test resolves opaque visibility without sorting all triangles. Perspective projection maps view-space depth nonlinearly, so the near and far clipping planes affect how floating-point precision is distributed. If they span an unnecessarily huge ratio, nearly coplanar surfaces may quantize to equal or inconsistent depths and flicker as the camera moves; this is z-fighting. Alpha-blended surfaces need additional ordering or order-independent methods because color composition is not commutative. Depth establishes visibility, while transparency determines how multiple visible layers contribute.</p>
+</section>
+<section id="appendix-97578ed97952-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch365.xhtml#appendix-ed3f9bc298fe-triangle-rasterization-and-coverage-tests" class="wikilink">Triangle rasterization and coverage tests</a></li>
+<li><a href="ch328.xhtml#appendix-1c07d64f5e70-camera-view-and-clip-space-pipeline" class="wikilink">Camera view and clip-space pipeline</a></li>
+</ul>
+</section>
+<section id="appendix-97578ed97952-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><span>Worlds, Images and Inference</span></p></li>
+<li><p><a href="ch307.xhtml#appendix-40426e4b2103-homogeneous-clipping-and-perspective-interpolation" class="wikilink">Homogeneous clipping and perspective interpolation (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Homogeneous clipping and perspective interpolation)</a></p></li>
+<li><p><a href="ch458.xhtml#appendix-1bc40b08db4a-hardware-depth-buffer-linearization" class="wikilink">Hardware depth-buffer linearization (Vision, XR, and Playable Worlds, Part 1, Reference notes: Hardware depth-buffer linearization)</a> ## Full teaching explanation</p></li>
+</ul>
+<p><a href="ch277.xhtml#id_03-visual-computing-i-ch012-rasterization-coverage-and-depth" class="wikilink">Rasterization, coverage, and depth (Mathematics for Visual Computing, Part 2, Ch. 16)</a> · <a href="ch333.xhtml#id_03-visual-computing-i-ch019-textures-and-surface-detail" class="wikilink">Textures and surface detail</a></p>
+</section>
+<section id="appendix-97578ed97952-phase-11-camera-development" class="level3">
+<h3>Phase 11 camera development</h3>
+<p>Depth gives ordering or camera-relative distance under a specific projection convention; it does not identify the surface that produced a sample. Reprojecting old color and depth can place history behind a newly visible surface. Validate with current depth, normal, object identity, or neighborhood checks; reject disocclusions and large reprojection errors. Reversed-Z and nonlinear perspective depth require consistent reconstruction before threshold comparisons. Valid visibility does not guarantee photometric stability after lighting, exposure, or material changes. Link depth semantics to temporal history validation. Link: <a href="ch290.xhtml#id_02-foundations-ii-ch037-a-camera-model-must-close-the-loop" class="wikilink">A camera model must close the loop (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)</a>; research: <a href="ch289.xhtml#id_02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review" class="wikilink">Four deeper links from the TUM lecture review (Geometry, Cameras, and Image Formation, Part 1, Ch. 5)</a>.</p>
+</section>
+</section>
+</body>
+</html>

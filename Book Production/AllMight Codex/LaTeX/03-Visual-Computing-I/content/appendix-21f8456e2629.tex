@@ -1,0 +1,38 @@
+\hypertarget{appendix-21f8456e2629}{}
+\section*{Lens optics and depth of field}
+\section{Lens optics and depth of field}\label{lens-optics-and-depth-of-field}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A pinhole camera maps every scene point to one image point through a single center, but a real lens has a finite aperture. Rays from one object point pass through different parts of the aperture and meet at a focused image point only for the chosen focus distance. Points nearer or farther from that plane form a blur disk called the circle of confusion. Stopping down the aperture narrows the cone of rays and increases depth of field, but reduces collected light and may require longer exposure or higher sensor gain. Focal length and focus distance also affect field of view and perspective magnification. A thin-lens model is an approximation; real lenses add aberrations and vignetting. The model helps explain why depth of field is both an optical effect and a sampling/integration process over aperture positions.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Camera view and clip-space pipeline (04-Visual-Computing-II, appendix-1c07d64f5e70)}
+\item
+  \href{}{Reflection refraction and shading directions (02-Foundations-II, appendix-44e00863b4d5)}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography}{Worlds, Images and Inference}
+\item
+  \hyperref[appendix-92d45cdf2afc]{Exposure and sensor response}
+\item
+  \href{}{Ray differentials and camera sampling measures (02-Foundations-II, appendix-8c40fad29462)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{full-teaching-explanation}
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Lens\%20optics,\%20focus,\%20and\%20image\%20formation}{Lens optics, focus, and image formation} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Photographic\%20composition,\%20history,\%20and\%20communication}{Photographic composition, history, and communication} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Photographic\%20workflow\%20and\%20integrated\%20decisions}{Photographic workflow and integrated decisions}
+
+\subsection{Phase 11 camera development}\label{phase-11-camera-development}
+
+A pinhole camera emits one ideal ray per image location. A finite-aperture lens samples a family of rays whose intersections form a blur disk away from the focal plane. A thin-lens camera therefore samples film and lens position, then aims through a focal point. Differentials from film offsets alone omit aperture variation unless the model includes it. Monte Carlo PDFs and camera weights must match the sampled film/aperture measure. The thin-lens model approximates real optics; aberrations and bokeh shape require richer models. Link: \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20camera\%20model\%20must\%20close\%20the\%20loop}{A camera model must close the loop}; research: \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Four\%20deeper\%20links\%20from\%20the\%20TUM\%20lecture\%20review}{Four deeper links from the TUM lecture review}.

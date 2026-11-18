@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch162.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-c2a9ad1e2b49-process-isolation-and-page-permissions" class="level2">
+<h2>Process isolation and page permissions</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-c2a9ad1e2b49-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>An address-space mapping context determines which physical frame a virtual number names and whether read/write/execute access is permitted. Two processes may use VA 0x400000 for different frames; shared mappings can deliberately use one frame. Permission checks belong to mapping state, not to the apparent numerical validity of a pointer.</p>
+</section>
+<section id="appendix-c2a9ad1e2b49-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch131.xhtml#appendix-18ee4f913c3c-addresses-and-virtual-memory" class="wikilink">Addresses and virtual memory</a> — Mappings give numeric locations their process-specific storage identity.</li>
+</ul>
+</section>
+<section id="appendix-c2a9ad1e2b49-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch125.xhtml#appendix-01e5905165c4-page-tables-and-mmu" class="wikilink">Page tables and MMU</a> — uses this mechanism as stated in its prerequisites.</li>
+<li><a href="ch159.xhtml#appendix-b081b7abe193-call-stack-and-stack-frames" class="wikilink">Call stack and stack frames</a> — uses this mechanism as stated in its prerequisites.</li>
+<li><a href="ch143.xhtml#appendix-5f9e5e2f0a5e-read-only-data-and-code" class="wikilink">Read-only data and code</a> — uses this mechanism as stated in its prerequisites.</li>
+<li><a href="ch148.xhtml#appendix-78cb248c8355-aslr" class="wikilink">ASLR</a> — uses this mechanism as stated in its prerequisites.</li>
+</ul>
+</section>
+<section id="appendix-c2a9ad1e2b49-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Give private and deliberately shared mapping examples.</p>
+<p><strong>Pending:</strong> Kernel/user isolation and architecture-specific protection.</p>
+</section>
+<section id="appendix-c2a9ad1e2b49-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

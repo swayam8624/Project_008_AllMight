@@ -1,0 +1,32 @@
+\hypertarget{appendix-9f693ffd82bc}{}
+\section*{Sampling quality: stratification, quasi-Monte Carlo, and blue noise}
+\section{Sampling quality: stratification, quasi-Monte Carlo, and blue noise}\label{sampling-quality-stratification-quasi-monte-carlo-and-blue-noise}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Sampling quality concerns the arrangement of points across dimensions used by an estimator, not only each coordinate's one-dimensional histogram. Stratification partitions a domain and allocates points across cells, reducing large gaps for suitable integrands. Quasi-Monte Carlo sequences such as Sobol aim for low discrepancy and often improve integration of smooth, structured functions, though their samples are dependent and error estimates differ from IID Monte Carlo. Blue-noise point sets suppress low-frequency clumping while retaining local separation; they are useful in image sampling and spatial placement but do not automatically minimize every integral's variance. Scrambling, domain mapping, dimensional ordering, and discontinuities affect performance. Compare methods against a clear target function and measure. The supplied probability narrative introduces stratification and Sobol but not blue-noise constructions; that part is an explicit teaching addition, not a received source claim.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-daaf25bfd3a0]{Stateless keyed sampling and reproducibility}
+\item
+  \href{}{Sampling aliasing and reconstruction (04-Visual-Computing-II, appendix-6a7869dd79a6)}
+\item
+  \hyperref[appendix-184fcc411663]{Uniform shuffling without replacement} \#\# Used by
+\item
+  \href{}{Antialiasing and sample allocation (04-Visual-Computing-II, appendix-4192b2bdd21e)}
+\item
+  \hyperref[appendix-1c5e85693a06]{Latin-hypercube sampling} \#\# Full teaching explanation
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#6.\%20A\%20computer\%20produces\%20deterministic\%20pseudorandom\%20sequences}{Phase 10 teaching section}
+\item
+  \href{}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (01-Foundations-I, appendix-cb5af353ef77)} · visual recall
+\end{itemize}
+
+\subsection{Source coverage}\label{source-coverage}
+
+Supplied lesson parts: 939 (T06 · M057).

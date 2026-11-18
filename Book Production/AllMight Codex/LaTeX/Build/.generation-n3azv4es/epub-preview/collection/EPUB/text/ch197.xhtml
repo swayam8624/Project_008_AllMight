@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch197.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-c746afaa47d1-noexcept-and-transfer-selection" class="level2">
+<h2>Noexcept and transfer selection</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C009 · <strong>Latest development:</strong> C009</p>
+<section id="appendix-c746afaa47d1-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>noexcept is an escaping-exception contract; violation terminates. move_if_noexcept selects const T&amp; when a throwing move and usable copy make rollback safer, otherwise T&amp;&amp;. It casts rather than transfers, and non-copyable throwing moves may weaken operation-specific guarantees.</p>
+</section>
+<section id="appendix-c746afaa47d1-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch180.xhtml#appendix-5636651017c2-move-operations-and-moved-from-states" class="wikilink">Move operations and moved-from states</a> — Traits, failure policy and relocation must distinguish source survival from source destruction.</li>
+<li><a href="ch195.xhtml#appendix-bea6beb5350f-assignment-and-exception-guarantees" class="wikilink">Assignment and exception guarantees</a> — A type’s transfer declarations must support its chosen failure transaction.</li>
+<li><a href="ch179.xhtml#appendix-42e02a12c694-special-member-generation-and-traits" class="wikilink">Special member generation and traits</a> — The actual usable construction expression determines trait-controlled transfer selection.</li>
+</ul>
+</section>
+<section id="appendix-c746afaa47d1-used-by" class="level3">
+<h3>Used by</h3>
+<p>Later sources will extend this node when their guarantees are developed.</p>
+</section>
+<section id="appendix-c746afaa47d1-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Derive both tested helper result types and the rollback limitation. Pending: exact per-container exceptional effects and allocator propagation. Written coverage does not demonstrate personal mastery.</p>
+</section>
+<section id="appendix-c746afaa47d1-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch173.xhtml#id_01-foundations-i-ch003-failure-guarantees-shape-the-transfer-algorithm" class="wikilink">Teaching mechanism and examples</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m009---parts-127-147" class="wikilink">Exact coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch384.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-f8657bac66e5-matrix-norms-and-numerical-error" class="level2">
+<h2>Matrix norms and numerical error</h2>
+<p>The spectral norm is the largest 2-norm stretch and equals the largest singular value. The Frobenius norm measures aggregate squared entry energy. Residuals, orthogonality errors, and condition numbers need a declared norm and scale; a small residual alone need not imply a sensitive solution is accurate.</p>
+<p><strong>Use it when:</strong> setting scaled tolerances or interpreting numerical diagnostics.</p>
+<p><strong>Developed in Phase 8:</strong> The spectral norm measures worst-case amplification, while the Frobenius norm accumulates squared energy across entries. The chapter uses them to scale residuals, reconstruction errors, and orthogonality defects, and separates backward error in a nearby problem from forward error in the requested answer. <a href="ch261.xhtml#id_01-foundations-i-ch019-matrix-norms-put-scale-into-error-statements" class="wikilink">norms and scale (Mathematics for Visual Computing, Part 1, Ch. 3)</a> · <a href="ch262.xhtml#id_01-foundations-i-ch020-residuals-distinguish-backward-accuracy-from-forward-certainty" class="wikilink">residuals and error interpretation (Mathematics for Visual Computing, Part 1, Ch. 4)</a></p>
+<section id="appendix-f8657bac66e5-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<p><a href="ch476.xhtml#appendix-49933872bb51-norms-lengths-and-induced-distances" class="wikilink">Norms lengths and induced distances (Vision, XR, and Playable Worlds, Part 1, Reference notes: Norms lengths and induced distances)</a>, <a href="ch329.xhtml#appendix-1fad5e7f36fa-singular-value-decomposition" class="wikilink">Singular value decomposition (Light Transport and Image Synthesis, Part 1, Reference notes: Singular value decomposition)</a>, <a href="ch081.xhtml#appendix-a7fbaf6d1b1c-forward-and-backward-error" class="wikilink">Forward and backward error (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Forward and backward error)</a>.</p>
+</section>
+<section id="appendix-f8657bac66e5-used-by" class="level3">
+<h3>Used by</h3>
+<p><a href="ch482.xhtml#appendix-541306fdbc1b-moore-penrose-pseudoinverse" class="wikilink">Moore-Penrose pseudoinverse (Vision, XR, and Playable Worlds, Part 1, Reference notes: Moore-Penrose pseudoinverse)</a>, <a href="ch450.xhtml#appendix-0f4bc2bf2b1f-matrix-functions" class="wikilink">Matrix functions (Vision, XR, and Playable Worlds, Part 1, Reference notes: Matrix functions)</a>, <a href="ch487.xhtml#appendix-67c87a3d9e94-sparse-and-iterative-solvers" class="wikilink">Sparse and iterative solvers (Vision, XR, and Playable Worlds, Part 1, Reference notes: Sparse and iterative solvers)</a>.</p>
+<p><strong>Teaching path:</strong> <a href="ch261.xhtml#id_01-foundations-i-ch019-matrix-norms-give-scale-to-residuals-and-error-claims" class="wikilink">norms and error (Mathematics for Visual Computing, Part 1, Ch. 3)</a>.</p>
+</section>
+<section id="appendix-f8657bac66e5-a-matrix-norm-can-protect-a-geometry-bound" class="level3">
+<h3>A matrix norm can protect a geometry bound</h3>
+<p>A local sphere under a linear transform is generally an ellipsoid. The Frobenius norm times its original radius gives a safe, possibly loose enclosing radius. Taking only the longest matrix column can fail under shear. <a href="ch383.xhtml#id_04-visual-computing-ii-ch028-a-line-corridor-can-be-a-cheap-prefilter-for-shadow-caster-work" class="wikilink">The culling example</a> derives the bound, demonstrates the shear counterexample, and links its geometric figure. This connects numerical matrix norms to conservative rejection decisions.</p>
+</section>
+</section>
+</body>
+</html>

@@ -8,7 +8,7 @@ A geometric object stays fixed while its coordinate tuple changes with basis, ca
 
 **Recall question:** How can two coordinate tuples differ while describing the same geometric vector, and how does a linear solve preserve that distinction?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 43227–44574; source-span SHA256 86b692fbcd3525c37495127a52b261822698773c67f6df8fe2040779b4487014. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 43408–44755; source-span SHA256 86b692fbcd3525c37495127a52b261822698773c67f6df8fe2040779b4487014. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Coordinates can change while the geometric object stays still

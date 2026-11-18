@@ -1,0 +1,47 @@
+\hypertarget{appendix-fdc7879e8bf2}{}
+\section*{Quantization and compressed weights}
+\section{Quantization and compressed weights}\label{quantization-and-compressed-weights}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C006
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Low-precision values and packed model weights reuse field-width, mask, shift, and bandwidth trade-offs.
+
+Quantization maps a larger numeric domain to a smaller discrete set, usually with information loss. Packing stores those discrete codes compactly; dequantization reconstructs approximations. Bit packing alone is lossless for valid codes, whereas quantization changes represented precision.
+
+M006 develops affine scales and zero points, local group calibration, offset-coded INT4, one-bit row centroids, metadata overhead and error metrics. Packing preserves discrete codes; quantization deliberately loses information. See the worked five-value group in the continuous story.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Bit packing (01-Foundations-I, appendix-1f9963e1a5d1)} --- Packing places several constrained values into a carrier.
+\item
+  \href{}{Arithmetic policies (01-Foundations-I, appendix-2ed044358b82)} --- A policy states the intended response to an unrepresentable answer: wrap modulo a base, report checked failure, widen storage, clamp to an endpoint, or grow arbitrary precision.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{One-bit centroid quantization (01-Foundations-I, appendix-4ccd7a775813)} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \href{}{Quantization error metrics (01-Foundations-I, appendix-537171d69d27)} --- uses this mechanism to define its representation, error or validation contract.
+\end{itemize}
+
+Connect later chunks here when they use this concept.
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Explain quantization and compressed weights without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} task-level accuracy and throughput experiments, alternative calibration objectives and target kernels; these were not measured in the teaching merge.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Choosing\%20what\%20information\%20to\%20keep}{Narrative development}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#From\%20a\%20signal\%20to\%20an\%20interpretation}{C001 teaching chapter} · \href{}{Part definitions and mechanisms (01-Foundations-I, appendix-fd090d982a15)} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

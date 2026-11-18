@@ -1,0 +1,4474 @@
+The canonical block is:
+
+**564. Right-handed coordinate systems**  
+**565. Left-handed coordinate systems**  
+**566. Orientation tests in 2D using signed area**  
+**567. Orientation tests in 3D using triple products**  
+**568. Barycentric coordinates as affine weights**  
+**569. Deriving barycentric coordinates for a triangle**  
+**570. Interpolating attributes with barycentric coordinates**. Project_Sheldon_Master_Curricul…
+
+This block is much more unified than the titles initially look. **Handedness is orientation of an ordered basis. Signed area and signed volume are ways to measure orientation. Barycentric coordinates then use oriented/affine geometry to describe a point relative to a triangle.** By Part 570, those same weights become the mechanism that carries colors, UVs, normals, depth-related quantities, and other vertex data across a triangle.
+
+---
+
+# PART 564 — RIGHT-HANDED COORDINATE SYSTEMS
+
+## 564.1 What "right-handed" actually means
+
+From Part 563, take an ordered independent basis:
+
+\[
+B=(b_1,b_2,b_3).
+\]
+
+Its orientation can be tested through the scalar triple product:
+
+\[
+H=(b_1\times b_2)\cdot b_3.
+\]
+
+Using the standard right-hand-oriented cross product, if:
+
+\[
+\boxed{H>0}
+\]
+
+the ordered basis is **right-handed**.
+
+For an orthonormal basis, the magnitude must be exactly one mathematically:
+
+\[
+H=+1.
+\]
+
+For the standard Cartesian basis:
+
+\[
+e_x=(1,0,0),
+\]
+
+\[
+e_y=(0,1,0),
+\]
+
+\[
+e_z=(0,0,1),
+\]
+
+we have:
+
+\[
+e_x\times e_y=e_z.
+\]
+
+Therefore:
+
+\[
+(e_x\times e_y)\cdot e_z
+=
+e_z\cdot e_z
+=
+1.
+\]
+
+So:
+
+\[
+\boxed{(e_x,e_y,e_z)\text{ is right-handed}.}
+\]
+
+---
+
+# 564.2 The hand mnemonic is not the definition
+
+You can use your right hand:
+
+```text
+index  → +X
+middle → +Y
+thumb  → +Z
+```
+
+depending on the physical mnemonic you prefer.
+
+But the actual mathematical test is stronger:
+
+\[
+\boxed{
+b_1\times b_2
+\text{ points toward }b_3
+}
+\]
+
+or equivalently:
+
+\[
+\boxed{
+(b_1\times b_2)\cdot b_3>0.
+}
+\]
+
+The hand gesture helps you remember the orientation relation.
+
+It does not replace the relation.
+
+---
+
+# 564.3 Handedness belongs to an ordered basis
+
+This matters.
+
+Take the set:
+
+\[
+\{e_x,e_y,e_z\}.
+\]
+
+Now order it:
+
+\[
+(e_x,e_y,e_z).
+\]
+
+Right-handed.
+
+Swap the first two:
+
+\[
+(e_y,e_x,e_z).
+\]
+
+Then:
+
+\[
+e_y\times e_x=-e_z.
+\]
+
+So:
+
+\[
+(e_y\times e_x)\cdot e_z=-1.
+\]
+
+That ordered basis is left-handed.
+
+Same three geometric axes.
+
+Different ordering.
+
+Therefore:
+
+\[
+\boxed{
+\text{handedness is not merely a property of three unlabeled lines}.
+}
+\]
+
+It depends on their ordered orientation.
+
+---
+
+# 564.4 Cyclic permutations preserve handedness
+
+Start:
+
+\[
+(e_x,e_y,e_z).
+\]
+
+Cycle:
+
+\[
+(e_y,e_z,e_x).
+\]
+
+Check:
+
+\[
+e_y\times e_z=e_x.
+\]
+
+Still positive.
+
+Cycle again:
+
+\[
+(e_z,e_x,e_y).
+\]
+
+And:
+
+\[
+e_z\times e_x=e_y.
+\]
+
+Still positive.
+
+Thus cyclic permutations preserve orientation.
+
+But swapping any single pair reverses it.
+
+This mirrors the scalar triple product properties from Parts 548–549.
+
+---
+
+# 564.5 Right-handed does not mean "Y is up"
+
+This misconception causes endless confusion.
+
+Consider one right-handed system where:
+
+\[
++Y
+\]
+
+is called "up."
+
+You can also construct a perfectly valid right-handed system where:
+
+\[
++Z
+\]
+
+is called "up."
+
+Handedness says nothing by itself about which semantic role is assigned to an axis.
+
+You need separate answers to questions such as:
+
+\[
+\text{Which axis is up?}
+\]
+
+\[
+\text{Which axis is forward?}
+\]
+
+\[
+\text{Which axis is right?}
+\]
+
+and:
+
+\[
+\text{What is their orientation order?}
+\]
+
+So:
+
+\[
+\boxed{
+\text{up-axis convention}
+\neq
+\text{handedness}.
+}
+\]
+
+---
+
+# 564.6 Right-handed does not uniquely determine "forward"
+
+Suppose world basis is standard:
+
+\[
+X=\text{right},
+\qquad
+Y=\text{up},
+\qquad
+Z=\text{some third axis}.
+\]
+
+The basis may be right-handed.
+
+A camera system can nevertheless choose its *viewing direction* to be either \(+Z\) or \(-Z\), provided all camera-space conventions are built consistently.
+
+So statements such as:
+
+> right-handed means forward must be \(-Z\)
+
+are too crude.
+
+What may be true is that a **specific camera convention** uses:
+
+\[
++X=\text{camera right},
+\quad
++Y=\text{camera up},
+\quad
+-Z=\text{camera forward}.
+\]
+
+Then the positive third coordinate axis is actually camera **backward**:
+
+\[
++Z=\text{backward}.
+\]
+
+The underlying ordered coordinate basis:
+
+\[
+(+X,+Y,+Z)
+\]
+
+can still be right-handed.
+
+That distinction is essential.
+
+---
+
+# 564.7 Coordinates are not the physical arrows themselves
+
+Suppose a point has coordinates:
+
+\[
+(2,3,5).
+\]
+
+Those numbers mean:
+
+\[
+P-O
+=
+2b_x+3b_y+5b_z.
+\]
+
+If the basis changes handedness, the same tuple can represent a different geometric displacement.
+
+For example, define:
+
+\[
+b_x'=b_x,
+\]
+
+\[
+b_y'=b_y,
+\]
+
+\[
+b_z'=-b_z.
+\]
+
+Then tuple:
+
+\[
+(2,3,5)_{B'}
+\]
+
+represents:
+
+\[
+2b_x+3b_y-5b_z
+\]
+
+in the original basis.
+
+Thus converting handedness is not:
+
+> relabel the same numbers and hope.
+
+You must understand which basis direction was reflected.
+
+---
+
+# 564.8 A handedness change requires orientation reversal
+
+Can a pure rotation convert a right-handed frame into a left-handed frame?
+
+No.
+
+A rotation preserves orientation.
+
+Imagine physically rotating your coordinate tripod.
+
+No matter how you turn it, the X-Y-Z handed relationship remains the same.
+
+To reverse handedness, you need an **orientation-reversing operation**, such as reflecting one axis:
+
+\[
+(x,y,z)
+\mapsto
+(x,y,-z).
+\]
+
+This corresponds to scaling one basis direction by \(-1\).
+
+Its geometric effect is a mirror reflection.
+
+Thus:
+
+\[
+\boxed{
+\text{right-handed}\rightarrow\text{left-handed}
+}
+\]
+
+cannot be accomplished by a proper rotation alone.
+
+---
+
+# 564.9 What happens to the cross product under a mirrored basis?
+
+This is subtle.
+
+Suppose original basis is right-handed:
+
+\[
+e_x\times e_y=e_z.
+\]
+
+Now define mirrored basis:
+
+\[
+e_x'=e_x,
+\]
+
+\[
+e_y'=e_y,
+\]
+
+\[
+e_z'=-e_z.
+\]
+
+Then physically:
+
+\[
+e_x'\times e_y'
+=
+e_z
+=
+-e_z'.
+\]
+
+So relative to the new ordered basis:
+
+\[
+\boxed{
+e_x'\times e_y'=-e_z'.
+}
+\]
+
+That is exactly the signature of a left-handed basis.
+
+The geometric cross product did not "break."
+
+The orientation of the basis changed.
+
+---
+
+# 564.10 Cross-product component formulas contain an orientation convention
+
+The formula:
+
+\[
+a\times b
+=
+(
+a_yb_z-a_zb_y,\;
+a_zb_x-a_xb_z,\;
+a_xb_y-a_yb_x
+)
+\]
+
+is normally written relative to a positively oriented/right-handed orthonormal basis.
+
+This matters enormously.
+
+If you simply move the same symbolic component formula into a coordinate basis of opposite orientation while pretending it represents the same geometric cross product, you have silently changed an orientation convention.
+
+In engine code, people often avoid this philosophical distinction by establishing one internal cross-product convention and explicitly converting coordinate spaces at boundaries.
+
+That is usually saner.
+
+---
+
+# 564.11 Mesh normals and a right-handed frame
+
+Suppose triangle vertices are:
+
+\[
+A,B,C.
+\]
+
+Edges:
+
+\[
+e_1=B-A,
+\]
+
+\[
+e_2=C-A.
+\]
+
+Normal:
+
+\[
+N=e_1\times e_2.
+\]
+
+The output orientation depends on:
+
+1. the vertex order;
+2. the cross-product convention;
+3. the coordinate-basis orientation.
+
+Flip one of these orientation choices and the normal may reverse.
+
+This is why "my normals point inward" can arise from several different mismatches.
+
+---
+
+# 564.12 Right-handed TBN example
+
+Suppose:
+
+\[
+T=(1,0,0),
+\]
+
+\[
+B=(0,1,0),
+\]
+
+\[
+N=(0,0,1).
+\]
+
+Then:
+
+\[
+T\times B=N.
+\]
+
+So ordered tangent basis:
+
+\[
+(T,B,N)
+\]
+
+is right-handed.
+
+If your shader reconstructs:
+
+\[
+B=N\times T,
+\]
+
+then:
+
+\[
+T\times(N\times T)=N
+\]
+
+for unit perpendicular \(T,N\), as shown in Part 563.
+
+So this convention produces a positively oriented TBN frame.
+
+Mirrored UVs may deliberately require a sign flip.
+
+---
+
+# PART 565 — LEFT-HANDED COORDINATE SYSTEMS
+
+A left-handed basis is not "wrong geometry."
+
+It is simply the opposite orientation class.
+
+---
+
+# 565.1 Mathematical definition
+
+For ordered independent basis:
+
+\[
+B=(b_1,b_2,b_3),
+\]
+
+under our standard right-handed geometric cross product, define:
+
+\[
+H=(b_1\times b_2)\cdot b_3.
+\]
+
+If:
+
+\[
+\boxed{H<0},
+\]
+
+the basis is left-handed.
+
+For an orthonormal left-handed frame:
+
+\[
+\boxed{H=-1.}
+\]
+
+---
+
+# 565.2 Concrete construction
+
+Start from standard right-handed:
+
+\[
+e_x=(1,0,0),
+\]
+
+\[
+e_y=(0,1,0),
+\]
+
+\[
+e_z=(0,0,1).
+\]
+
+Flip the third direction:
+
+\[
+f_x=e_x,
+\]
+
+\[
+f_y=e_y,
+\]
+
+\[
+f_z=-e_z.
+\]
+
+Then:
+
+\[
+f_x\times f_y
+=
+e_x\times e_y
+=
+e_z.
+\]
+
+But:
+
+\[
+f_z=-e_z.
+\]
+
+Therefore:
+
+\[
+f_x\times f_y=-f_z.
+\]
+
+And:
+
+\[
+(f_x\times f_y)\cdot f_z
+=
+e_z\cdot(-e_z)
+=
+-1.
+\]
+
+So:
+
+\[
+\boxed{
+(f_x,f_y,f_z)
+\text{ is left-handed}.
+}
+\]
+
+---
+
+# 565.3 The mirror analogy
+
+Put your right hand and left hand in front of you.
+
+They are mirror images.
+
+You can rotate your right hand however you want, but you cannot make it coincide perfectly with your left hand without reflecting it.
+
+That is the geometric intuition behind opposite handedness.
+
+They are congruent under reflection but not under proper rotation.
+
+This is also why the word **chirality** sometimes appears in mathematics and physics.
+
+---
+
+# 565.4 Metric geometry survives a handedness flip
+
+Suppose transform:
+
+\[
+M(x,y,z)=(x,y,-z).
+\]
+
+Take vectors:
+
+\[
+a=(a_x,a_y,a_z),
+\]
+
+\[
+b=(b_x,b_y,b_z).
+\]
+
+After reflection:
+
+\[
+a'=(a_x,a_y,-a_z),
+\]
+
+\[
+b'=(b_x,b_y,-b_z).
+\]
+
+Dot:
+
+\[
+a'\cdot b'
+=
+a_xb_x+a_yb_y+(-a_z)(-b_z).
+\]
+
+Thus:
+
+\[
+=
+a_xb_x+a_yb_y+a_zb_z.
+\]
+
+So:
+
+\[
+\boxed{
+a'\cdot b'=a\cdot b.
+}
+\]
+
+Therefore lengths are preserved:
+
+\[
+\|a'\|=\|a\|.
+\]
+
+Angles are preserved.
+
+Distances are preserved.
+
+What changes is **orientation**, not ordinary Euclidean metric structure.
+
+That distinction is extremely important.
+
+---
+
+# 565.5 Why a mirrored object still has the same shape
+
+A reflection preserves:
+
+\[
+\text{distance},
+\]
+
+\[
+\text{angle},
+\]
+
+\[
+\text{area magnitude},
+\]
+
+\[
+\text{volume magnitude}.
+\]
+
+But it reverses signed orientation quantities.
+
+For example, signed volume:
+
+\[
+(a\times b)\cdot c
+\]
+
+changes sign under an odd number of axis reflections.
+
+So a mirrored mesh looks geometrically congruent, but its winding/orientation may reverse.
+
+---
+
+# 565.6 Converting coordinate tuples between a simple RH/LH pair
+
+Suppose the two spaces differ only by Z reflection.
+
+Then a point:
+
+\[
+P_R=(x,y,z)
+\]
+
+in right-handed coordinates corresponds to:
+
+\[
+\boxed{
+P_L=(x,y,-z)
+}
+\]
+
+in the reflected convention, assuming origins/scales and axis meanings otherwise match.
+
+Similarly for ordinary direction vectors:
+
+\[
+D_L=(d_x,d_y,-d_z).
+\]
+
+But beware: normals, cross-derived orientations, triangle winding and transform matrices may require more thought because orientation-sensitive objects do not behave like arbitrary vectors under reflection.
+
+---
+
+# 565.7 Why triangle winding flips under a mirror
+
+Consider triangle in XY plane:
+
+\[
+A=(0,0,0),
+\]
+
+\[
+B=(1,0,1),
+\]
+
+\[
+C=(0,1,0).
+\]
+
+Reflect Z.
+
+Geometric orientation of the embedded triangle relative to the 3D basis changes.
+
+More generally, any orientation-reversing transform changes the sign of oriented volume/area tests associated with the transformed frame.
+
+This is why a handedness conversion may require reversing triangle index order if you want to preserve the intended concept of "front face."
+
+For one triangle:
+
+```cpp
+i0, i1, i2
+```
+
+reversal can be:
+
+```cpp
+i0, i2, i1
+```
+
+which flips cross-product normal orientation.
+
+---
+
+# 565.8 Do not memorize graphics APIs as "the handedness"
+
+A graphics API can support data and matrices built under many conventions.
+
+An application, math library, camera system, asset format and projection setup may each adopt particular coordinate conventions.
+
+So it is safer to document concrete facts:
+
+```text
+world +Y is up
+world +Z is forward
+basis orientation is left-handed
+camera looks along ...
+front-face winding is ...
+matrix convention is ...
+```
+
+rather than using one vague label and assuming everything else follows from it.
+
+That will save you enormous debugging time later.
+
+---
+
+# RIGHT VS LEFT: WHAT ACTUALLY CHANGES?
+
+| Property | Handedness flip |
+|---|---|
+| Vector length | preserved |
+| Dot product | preserved under reflection |
+| Angle magnitude | preserved |
+| Distance | preserved |
+| Orthogonality | preserved |
+| Triangle area magnitude | preserved |
+| Volume magnitude | preserved |
+| Signed orientation | reversed |
+| Scalar triple-product sign | reversed |
+| Winding interpretation | may reverse |
+| Cross-product orientation relative to basis | reversed |
+
+This is the distinction to own.
+
+---
+
+# PART 566 — ORIENTATION TESTS IN 2D USING SIGNED AREA
+
+Now we turn handedness into a practical geometric predicate.
+
+Given three 2D points:
+
+\[
+A,\quad B,\quad C,
+\]
+
+we want to answer:
+
+> Does \(A\rightarrow B\rightarrow C\) make a left turn, right turn, or remain collinear?
+
+This primitive is everywhere in computational geometry.
+
+---
+
+# 566.1 Build two edge vectors
+
+Let:
+
+\[
+u=B-A
+\]
+
+and:
+
+\[
+v=C-A.
+\]
+
+In coordinates:
+
+\[
+u=(u_x,u_y),
+\]
+
+\[
+v=(v_x,v_y).
+\]
+
+Embed them conceptually in the XY plane of 3D:
+
+\[
+(u_x,u_y,0),
+\]
+
+\[
+(v_x,v_y,0).
+\]
+
+Their cross product has only Z component:
+
+\[
+u\times v
+=
+(0,0,u_xv_y-u_yv_x).
+\]
+
+Define the 2D cross scalar:
+
+\[
+\boxed{
+\operatorname{cross2}(u,v)
+=
+u_xv_y-u_yv_x.
+}
+\]
+
+This is the fundamental 2D orientation determinant.
+
+---
+
+# 566.2 Signed doubled triangle area
+
+The magnitude of the 3D cross is parallelogram area:
+
+\[
+|u_xv_y-u_yv_x|.
+\]
+
+Triangle area is half:
+
+\[
+\boxed{
+A_\triangle
+=
+\frac12
+\left|
+u_xv_y-u_yv_x
+\right|.
+}
+\]
+
+Therefore define signed doubled area:
+
+\[
+\boxed{
+A_2(A,B,C)
+=
+(B_x-A_x)(C_y-A_y)
+-
+(B_y-A_y)(C_x-A_x).
+}
+\]
+
+Then:
+
+\[
+\boxed{
+A_{\triangle,\text{signed}}
+=
+\frac12 A_2.
+}
+\]
+
+The factor \(1/2\) is irrelevant if we only care about sign, so orientation algorithms often use the doubled area directly.
+
+---
+
+# 566.3 Interpreting the sign
+
+Under the conventional 2D orientation where \(+X\) points right and \(+Y\) points upward:
+
+\[
+A_2>0
+\]
+
+means:
+
+\[
+A\rightarrow B\rightarrow C
+\]
+
+is counterclockwise.
+
+\[
+A_2<0
+\]
+
+means clockwise.
+
+\[
+A_2=0
+\]
+
+means collinear.
+
+So:
+
+\[
+\boxed{
+\operatorname{orient2D}(A,B,C)
+=
+\operatorname{sign}(A_2).
+}
+\]
+
+---
+
+# 566.4 Worked counterclockwise example
+
+Take:
+
+\[
+A=(0,0),
+\]
+
+\[
+B=(4,0),
+\]
+
+\[
+C=(1,3).
+\]
+
+Then:
+
+\[
+B-A=(4,0),
+\]
+
+\[
+C-A=(1,3).
+\]
+
+Compute:
+
+\[
+A_2
+=
+4(3)-0(1)
+=
+12.
+\]
+
+Positive.
+
+Therefore:
+
+\[
+\boxed{
+A,B,C\text{ are counterclockwise}.
+}
+\]
+
+Actual triangle area:
+
+\[
+\frac{12}{2}=6.
+\]
+
+---
+
+# 566.5 Reverse two vertices
+
+Use:
+
+\[
+A,C,B.
+\]
+
+Now:
+
+\[
+C-A=(1,3),
+\]
+
+\[
+B-A=(4,0).
+\]
+
+Cross scalar:
+
+\[
+1(0)-3(4)=-12.
+\]
+
+Same area magnitude.
+
+Opposite orientation.
+
+Exactly like cross anti-commutativity.
+
+---
+
+# 566.6 Collinearity
+
+Take:
+
+\[
+A=(0,0),
+\]
+
+\[
+B=(2,2),
+\]
+
+\[
+C=(5,5).
+\]
+
+Then:
+
+\[
+B-A=(2,2),
+\]
+
+\[
+C-A=(5,5).
+\]
+
+Compute:
+
+\[
+2(5)-2(5)=0.
+\]
+
+Thus:
+
+\[
+\boxed{
+A,B,C\text{ are collinear}.
+}
+\]
+
+The triangle has zero area.
+
+---
+
+# 566.7 Why orientation is translation invariant
+
+Translate every point by vector \(t\):
+
+\[
+A'=A+t,
+\]
+
+\[
+B'=B+t,
+\]
+
+\[
+C'=C+t.
+\]
+
+Then:
+
+\[
+B'-A'
+=
+(B+t)-(A+t)
+=
+B-A.
+\]
+
+Similarly:
+
+\[
+C'-A'=C-A.
+\]
+
+So signed area does not change.
+
+Thus orientation is a property of relative geometry, not absolute position.
+
+---
+
+# 566.8 Positive scaling versus reflection
+
+Uniform scale \(s>0\):
+
+\[
+u\rightarrow su,
+\qquad
+v\rightarrow sv.
+\]
+
+Then:
+
+\[
+\operatorname{cross2}(su,sv)
+=
+s^2\operatorname{cross2}(u,v).
+\]
+
+Sign stays same.
+
+But reflect X:
+
+\[
+(x,y)\mapsto(-x,y).
+\]
+
+The determinant changes sign.
+
+Thus:
+
+\[
+\boxed{
+\text{2D reflection reverses orientation}.
+}
+\]
+
+This is the 2D analogue of handedness reversal in 3D.
+
+---
+
+# 566.9 Screen coordinates can reverse your intuition
+
+Many screen-space coordinate conventions use Y increasing downward.
+
+If:
+
+\[
++X=\text{right},
+\qquad
++Y=\text{down},
+\]
+
+then the screen basis has opposite orientation from conventional mathematical XY with Y up.
+
+A triangle that *looks clockwise on the screen* can produce the sign you mentally associate with counterclockwise mathematical coordinates, depending on the convention.
+
+So never say:
+
+> positive determinant means visually counterclockwise
+
+without specifying coordinate orientation.
+
+The formula is objective.
+
+The English label "clockwise" depends on how axes are drawn.
+
+---
+
+# 566.10 C++ implementation
+
+```cpp
+struct Vec2 {
+    double x;
+    double y;
+};
+
+[[nodiscard]]
+constexpr double orient2D(
+    Vec2 a,
+    Vec2 b,
+    Vec2 c) noexcept
+{
+    return
+        (b.x - a.x) * (c.y - a.y)
+      - (b.y - a.y) * (c.x - a.x);
+}
+```
+
+Then conceptual classification:
+
+```cpp
+const double s = orient2D(a, b, c);
+
+if (s > 0.0) {
+    // Positive orientation.
+}
+else if (s < 0.0) {
+    // Negative orientation.
+}
+else {
+    // Collinear in exact arithmetic.
+}
+```
+
+---
+
+# 566.11 Why exact `== 0` becomes dangerous
+
+For integer coordinates within a safe integer range, orientation can sometimes be evaluated exactly using sufficiently wide integer arithmetic.
+
+For floating-point coordinates, near-collinear points may produce a tiny residual:
+
+\[
+1.2\times10^{-15}
+\]
+
+instead of zero.
+
+But a universal epsilon is also problematic because the determinant scales like area.
+
+If coordinates scale by \(s\):
+
+\[
+A_2\rightarrow s^2A_2.
+\]
+
+A tolerance meaningful for coordinates around \(1\) may be nonsense around \(10^9\).
+
+Robust computational geometry often uses adaptive/exact orientation predicates when correctness of the sign is critical.
+
+This becomes especially important in:
+
+- convex hulls;
+- triangulation;
+- intersection algorithms;
+- topology construction.
+
+For gameplay approximations, a scale-aware tolerance may be sufficient.
+
+---
+
+# 566.12 Why orientation tests are predicates, not measurements
+
+Sometimes we care about area magnitude.
+
+Sometimes only sign matters.
+
+If the algorithm asks:
+
+> which side of directed edge \(AB\) does \(C\) lie on?
+
+then:
+
+\[
+\operatorname{sign}
+\left(
+\operatorname{orient2D}(A,B,C)
+\right)
+\]
+
+is the required information.
+
+Computing:
+
+\[
+\sqrt{\cdot}
+\]
+
+or normalized distances would be unnecessary.
+
+Good geometry algorithms compute the quantity actually needed.
+
+---
+
+# PART 567 — ORIENTATION TESTS IN 3D USING TRIPLE PRODUCTS
+
+2D orientation used signed area.
+
+In 3D, the corresponding primitive is **signed volume**.
+
+---
+
+# 567.1 Four points are needed
+
+In 2D, three points can define orientation because:
+
+\[
+B-A,\ C-A
+\]
+
+are two vectors that can span the plane.
+
+In 3D, three points define only a triangle plane.
+
+To determine which side of that plane a fourth point occupies, we need:
+
+\[
+A,B,C,D.
+\]
+
+Construct:
+
+\[
+u=B-A,
+\]
+
+\[
+v=C-A,
+\]
+
+\[
+w=D-A.
+\]
+
+Then evaluate scalar triple product:
+
+\[
+\boxed{
+\operatorname{orient3D}(A,B,C,D)
+=
+[(B-A)\times(C-A)]\cdot(D-A).
+}
+\]
+
+Equivalent cyclic arrangement:
+
+\[
+(B-A)\cdot[(C-A)\times(D-A)].
+\]
+
+The first form makes the plane-side interpretation clearer.
+
+---
+
+# 567.2 Interpret it geometrically
+
+First:
+
+\[
+N=(B-A)\times(C-A).
+\]
+
+This is an oriented normal to triangle plane \(ABC\).
+
+Then:
+
+\[
+N\cdot(D-A)
+\]
+
+measures the signed component of \(D-A\) along that normal, multiplied by the base's parallelogram area.
+
+Therefore:
+
+\[
+\operatorname{orient3D}>0
+\]
+
+means \(D\) lies on the positive-normal side of oriented plane \(ABC\).
+
+Negative means the opposite side.
+
+Zero means:
+
+\[
+D
+\]
+
+lies in the same plane as \(A,B,C\), or the base triangle itself is degenerate.
+
+---
+
+# 567.3 Signed tetrahedral volume
+
+The scalar triple product equals parallelepiped signed volume.
+
+The tetrahedron with vertices:
+
+\[
+A,B,C,D
+\]
+
+has one-sixth that volume.
+
+Therefore:
+
+\[
+\boxed{
+V_{\text{tet,signed}}
+=
+\frac16
+\operatorname{orient3D}(A,B,C,D).
+}
+\]
+
+The factor \(1/6\) is irrelevant for a sign predicate.
+
+---
+
+# 567.4 Worked example
+
+Take:
+
+\[
+A=(0,0,0),
+\]
+
+\[
+B=(1,0,0),
+\]
+
+\[
+C=(0,1,0),
+\]
+
+\[
+D=(0,0,2).
+\]
+
+Then:
+
+\[
+B-A=e_x,
+\]
+
+\[
+C-A=e_y.
+\]
+
+Cross:
+
+\[
+e_x\times e_y=e_z.
+\]
+
+Dot with:
+
+\[
+D-A=(0,0,2).
+\]
+
+Result:
+
+\[
+2.
+\]
+
+Therefore \(D\) lies on the positive side of oriented triangle \(ABC\).
+
+Tetrahedron volume:
+
+\[
+\frac{2}{6}
+=
+\frac13.
+\]
+
+---
+
+# 567.5 Move \(D\) below the plane
+
+Take:
+
+\[
+D=(0,0,-2).
+\]
+
+Then:
+
+\[
+e_z\cdot(0,0,-2)=-2.
+\]
+
+Same volume magnitude.
+
+Opposite orientation.
+
+Thus:
+
+\[
+\boxed{
+\text{orient3D sign tells plane side}.
+}
+\]
+
+---
+
+# 567.6 Reverse triangle winding
+
+Swap:
+
+\[
+B,C.
+\]
+
+Then base normal becomes:
+
+\[
+(C-A)\times(B-A)
+=
+-
+[(B-A)\times(C-A)].
+\]
+
+So every orient3D result changes sign.
+
+The geometric position of \(D\) did not change.
+
+The **orientation of the reference plane** changed.
+
+This is exactly the same logic as reversing triangle normals.
+
+---
+
+# 567.7 Coplanarity
+
+If:
+
+\[
+\operatorname{orient3D}=0,
+\]
+
+then the four points have zero signed tetrahedron volume.
+
+For nondegenerate \(ABC\), this means \(D\) lies in their plane.
+
+So orient3D is also a coplanarity predicate.
+
+---
+
+# 567.8 Scale behavior
+
+If all coordinates are scaled uniformly by \(s\), each displacement scales by \(s\).
+
+Cross:
+
+\[
+s^2.
+\]
+
+Dot with third displacement:
+
+\[
+s^3.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\operatorname{orient3D}
+\text{ scales cubically}.
+}
+\]
+
+Again, this makes fixed absolute epsilons dangerous.
+
+---
+
+# 567.9 C++ implementation
+
+```cpp
+[[nodiscard]]
+double orient3D(
+    Vec3d a,
+    Vec3d b,
+    Vec3d c,
+    Vec3d d) noexcept
+{
+    return dot(
+        cross(b - a, c - a),
+        d - a
+    );
+}
+```
+
+Conceptually:
+
+```text
+triangle ABC
+      ↓
+oriented normal-area vector
+      ↓
+dot against D-A
+      ↓
+signed volume / side test
+```
+
+---
+
+# 567.10 Why robust orientation predicates matter so much
+
+Imagine building a tetrahedralization or deciding whether triangles intersect.
+
+A wrong sign can change algorithmic topology:
+
+```text
+point classified above plane
+instead of below plane
+```
+
+may cause an edge to be inserted on the wrong side.
+
+Unlike a small shading error, this can corrupt the entire combinatorial structure.
+
+This is why computational geometry distinguishes between approximate numeric quantities and robust **predicate signs**.
+
+---
+
+# ORIENTATION UNIFICATION
+
+At this point 2D and 3D should look like the same idea at different dimensions.
+
+In 2D:
+
+\[
+\boxed{
+\det(B-A,C-A)
+}
+\]
+
+gives signed area and turn orientation.
+
+In 3D:
+
+\[
+\boxed{
+\det(B-A,C-A,D-A)
+}
+\]
+
+gives signed volume and side orientation.
+
+This pattern generalizes through determinants.
+
+The determinant Part later will make that structure explicit.
+
+---
+
+# PART 568 — BARYCENTRIC COORDINATES AS AFFINE WEIGHTS
+
+Now we enter barycentric coordinates.
+
+Do not begin by memorizing a formula with \(d_{00},d_{01}\) or triangle areas.
+
+First understand what problem barycentrics solve.
+
+---
+
+# 568.1 Ordinary Cartesian coordinates depend on an external origin/basis
+
+Suppose point:
+
+\[
+P=(3,4).
+\]
+
+Those coordinates tell you where \(P\) lies relative to a selected Cartesian frame.
+
+But suppose what we actually care about is a triangle:
+
+\[
+A,B,C.
+\]
+
+Can we describe \(P\) **using the triangle itself as the reference object**?
+
+Yes.
+
+Write:
+
+\[
+\boxed{
+P=
+\alpha A+\beta B+\gamma C
+}
+\]
+
+with:
+
+\[
+\boxed{
+\alpha+\beta+\gamma=1.
+}
+\]
+
+The scalars:
+
+\[
+(\alpha,\beta,\gamma)
+\]
+
+are the barycentric coordinates of \(P\) relative to triangle \(ABC\).
+
+---
+
+# 568.2 Why must the weights sum to one?
+
+This is not arbitrary.
+
+Remember points live in an affine space.
+
+Suppose all points are translated by vector \(t\):
+
+\[
+A'=A+t,
+\]
+
+\[
+B'=B+t,
+\]
+
+\[
+C'=C+t.
+\]
+
+Use the same weights:
+
+\[
+P'
+=
+\alpha A'+\beta B'+\gamma C'.
+\]
+
+Substitute:
+
+\[
+=
+\alpha(A+t)
++
+\beta(B+t)
++
+\gamma(C+t).
+\]
+
+Expand:
+
+\[
+=
+\alpha A+\beta B+\gamma C
++
+(\alpha+\beta+\gamma)t.
+\]
+
+If:
+
+\[
+\alpha+\beta+\gamma=1,
+\]
+
+then:
+
+\[
+P'=P+t.
+\]
+
+Perfect.
+
+The represented point translates exactly with the triangle.
+
+So:
+
+\[
+\boxed{
+\sum\text{weights}=1
+}
+\]
+
+is what makes the combination **affine** rather than origin-dependent.
+
+---
+
+# 568.3 What goes wrong if the weights do not sum to one?
+
+Suppose:
+
+\[
+\alpha+\beta+\gamma=2.
+\]
+
+Translate all vertices by \(t\).
+
+Then represented point moves by:
+
+\[
+2t
+\]
+
+instead of:
+
+\[
+t.
+\]
+
+So its meaning depends incorrectly on the chosen origin.
+
+That is why barycentric coordinates use affine weights.
+
+Part 571 will formally compare affine and linear combinations; here we need the barycentric consequence.
+
+---
+
+# 568.4 Vertex coordinates are trivial
+
+At vertex \(A\):
+
+\[
+\boxed{
+(\alpha,\beta,\gamma)
+=
+(1,0,0).
+}
+\]
+
+Because:
+
+\[
+1A+0B+0C=A.
+\]
+
+At \(B\):
+
+\[
+\boxed{(0,1,0)}.
+\]
+
+At \(C\):
+
+\[
+\boxed{(0,0,1)}.
+\]
+
+This should already give you intuition:
+
+> each weight tells how strongly that vertex contributes.
+
+---
+
+# 568.5 Along an edge
+
+Suppose point lies halfway between \(A\) and \(B\):
+
+\[
+P=\frac12A+\frac12B.
+\]
+
+Then:
+
+\[
+\boxed{
+(\alpha,\beta,\gamma)
+=
+\left(
+\frac12,\frac12,0
+\right).
+}
+\]
+
+The coordinate opposite vertex \(C\) is zero.
+
+In general:
+
+\[
+\boxed{
+P\in AB
+\Rightarrow
+\gamma=0.
+}
+\]
+
+Similarly:
+
+\[
+P\in BC
+\Rightarrow
+\alpha=0,
+\]
+
+and:
+
+\[
+P\in CA
+\Rightarrow
+\beta=0.
+\]
+
+This property is enormously useful.
+
+---
+
+# 568.6 Interior points
+
+If triangle is nondegenerate and:
+
+\[
+\alpha>0,
+\quad
+\beta>0,
+\quad
+\gamma>0,
+\]
+
+with:
+
+\[
+\alpha+\beta+\gamma=1,
+\]
+
+then \(P\) lies strictly inside the triangle.
+
+If zero values are allowed:
+
+\[
+\alpha,\beta,\gamma\ge0,
+\]
+
+then \(P\) lies inside **or on the boundary**.
+
+Thus:
+
+\[
+\boxed{
+P\in\triangle ABC
+\iff
+\alpha,\beta,\gamma\ge0
+}
+\]
+
+subject to numerical tolerance and a nondegenerate triangle.
+
+This gives a point-in-triangle test.
+
+---
+
+# 568.7 Outside points require negative weights
+
+Example in 1D first.
+
+Take points:
+
+\[
+A=0,
+\qquad
+B=1.
+\]
+
+A point beyond \(B\), say:
+
+\[
+P=2,
+\]
+
+can be represented as:
+
+\[
+P=-1A+2B.
+\]
+
+Weights:
+
+\[
+(-1,2)
+\]
+
+sum to one.
+
+One is negative.
+
+The same phenomenon occurs for triangles.
+
+Negative barycentric weights indicate the point lies outside the triangle's convex region.
+
+---
+
+# 568.8 Barycentric weights are not distances
+
+This is important.
+
+If:
+
+\[
+\alpha=0.8,
+\]
+
+that does not generally mean:
+
+> P is 80% of some Euclidean distance from A.
+
+It means:
+
+> A contributes affine weight 0.8 to the point.
+
+For a particular edge interpolation, weights correspond directly to one-dimensional interpolation fractions.
+
+Inside a 2D triangle, the geometry involves all three vertices simultaneously.
+
+---
+
+# 568.9 The centroid / barycenter
+
+The triangle's centroid is:
+
+\[
+G=
+\frac{A+B+C}{3}.
+\]
+
+So its barycentric coordinates are:
+
+\[
+\boxed{
+\left(
+\frac13,\frac13,\frac13
+\right).
+}
+\]
+
+This is where the word "barycentric" gets its center-of-mass flavor.
+
+If equal masses are placed at the three vertices, the balance point is their average.
+
+More generally, normalized positive masses act like barycentric weights.
+
+---
+
+# 568.10 Mass interpretation
+
+Imagine masses:
+
+\[
+m_A,m_B,m_C
+\]
+
+at vertices.
+
+Center of mass:
+
+\[
+P=
+\frac{
+m_AA+m_BB+m_CC
+}{
+m_A+m_B+m_C
+}.
+\]
+
+Define:
+
+\[
+\alpha=
+\frac{m_A}{M},
+\]
+
+\[
+\beta=
+\frac{m_B}{M},
+\]
+
+\[
+\gamma=
+\frac{m_C}{M},
+\]
+
+where:
+
+\[
+M=m_A+m_B+m_C.
+\]
+
+Then:
+
+\[
+\alpha+\beta+\gamma=1
+\]
+
+and:
+
+\[
+P=\alpha A+\beta B+\gamma C.
+\]
+
+So barycentric coordinates can be viewed as normalized balance weights.
+
+---
+
+# 568.11 Uniqueness requires a nondegenerate triangle
+
+Suppose:
+
+\[
+A,B,C
+\]
+
+are not collinear.
+
+Then they are **affinely independent**.
+
+A point in their plane has unique barycentric coordinates.
+
+But if the triangle collapses:
+
+\[
+A,B,C
+\]
+
+collinear, the same point may admit multiple barycentric triples.
+
+Why?
+
+Because the three vertices no longer provide two independent affine directions.
+
+So:
+
+\[
+\boxed{
+\text{nonzero triangle area is required for unique triangle barycentrics}.
+}
+\]
+
+---
+
+# PART 569 — DERIVING BARYCENTRIC COORDINATES FOR A TRIANGLE
+
+Now we compute the weights.
+
+We will derive them in several ways because each method exposes a different geometric fact.
+
+---
+
+# 569.1 Start from the affine equation
+
+We want:
+
+\[
+P=
+\alpha A+\beta B+\gamma C
+\]
+
+with:
+
+\[
+\alpha+\beta+\gamma=1.
+\]
+
+Use:
+
+\[
+\alpha=1-\beta-\gamma.
+\]
+
+Then:
+
+\[
+P
+=
+(1-\beta-\gamma)A
++
+\beta B+
+\gamma C.
+\]
+
+Expand:
+
+\[
+P
+=
+A
++
+\beta(B-A)
++
+\gamma(C-A).
+\]
+
+Therefore:
+
+\[
+\boxed{
+P-A
+=
+\beta(B-A)
++
+\gamma(C-A).
+}
+\]
+
+This is the key reduction.
+
+We transformed a point/affine problem into a vector-basis problem.
+
+Define:
+
+\[
+v_0=B-A,
+\]
+
+\[
+v_1=C-A,
+\]
+
+\[
+v_2=P-A.
+\]
+
+Then solve:
+
+\[
+\boxed{
+v_2=\beta v_0+\gamma v_1.
+}
+\]
+
+Once \(\beta,\gamma\) are known:
+
+\[
+\boxed{
+\alpha=1-\beta-\gamma.
+}
+\]
+
+---
+
+# 569.2 Derivation using dot products
+
+Take:
+
+\[
+v_2=\beta v_0+\gamma v_1.
+\]
+
+Dot both sides with \(v_0\):
+
+\[
+v_2\cdot v_0
+=
+\beta(v_0\cdot v_0)
++
+\gamma(v_1\cdot v_0).
+\]
+
+Dot with \(v_1\):
+
+\[
+v_2\cdot v_1
+=
+\beta(v_0\cdot v_1)
++
+\gamma(v_1\cdot v_1).
+\]
+
+Define:
+
+\[
+d_{00}=v_0\cdot v_0,
+\]
+
+\[
+d_{01}=v_0\cdot v_1,
+\]
+
+\[
+d_{11}=v_1\cdot v_1,
+\]
+
+\[
+d_{20}=v_2\cdot v_0,
+\]
+
+\[
+d_{21}=v_2\cdot v_1.
+\]
+
+Then:
+
+\[
+d_{20}
+=
+\beta d_{00}
++
+\gamma d_{01},
+\]
+
+\[
+d_{21}
+=
+\beta d_{01}
++
+\gamma d_{11}.
+\]
+
+This is a \(2\times2\) linear system.
+
+---
+
+# 569.3 Solve the system
+
+Write:
+
+\[
+\begin{bmatrix}
+d_{00}&d_{01}\\
+d_{01}&d_{11}
+\end{bmatrix}
+\begin{bmatrix}
+\beta\\
+\gamma
+\end{bmatrix}
+=
+\begin{bmatrix}
+d_{20}\\
+d_{21}
+\end{bmatrix}.
+\]
+
+Notice the matrix:
+
+\[
+\begin{bmatrix}
+v_0\cdot v_0&v_0\cdot v_1\\
+v_1\cdot v_0&v_1\cdot v_1
+\end{bmatrix}
+\]
+
+is exactly the **Gram matrix** from Part 541.
+
+So barycentric solving is directly connected to nonorthogonal basis coordinates.
+
+Its determinant-like denominator is:
+
+\[
+\boxed{
+D=d_{00}d_{11}-d_{01}^2.
+}
+\]
+
+Then:
+
+\[
+\boxed{
+\beta=
+\frac{
+d_{11}d_{20}-d_{01}d_{21}
+}{
+D
+}
+}
+\]
+
+and:
+
+\[
+\boxed{
+\gamma=
+\frac{
+d_{00}d_{21}-d_{01}d_{20}
+}{
+D
+}.
+}
+\]
+
+Finally:
+
+\[
+\boxed{
+\alpha=1-\beta-\gamma.
+}
+\]
+
+---
+
+# 569.4 What is the denominator geometrically?
+
+Recall the Gram determinant identity:
+
+\[
+\|v_0\times v_1\|^2
+=
+\|v_0\|^2\|v_1\|^2
+-
+(v_0\cdot v_1)^2.
+\]
+
+But:
+
+\[
+d_{00}=\|v_0\|^2,
+\]
+
+\[
+d_{11}=\|v_1\|^2,
+\]
+
+\[
+d_{01}=v_0\cdot v_1.
+\]
+
+Therefore:
+
+\[
+\boxed{
+D
+=
+\|v_0\times v_1\|^2.
+}
+\]
+
+That is **parallelogram area squared**.
+
+So when:
+
+\[
+D=0,
+\]
+
+triangle area is zero.
+
+The barycentric solve fails exactly when the triangle is degenerate.
+
+Again, algebraic singularity corresponds directly to geometric degeneracy.
+
+---
+
+# 569.5 Worked dot-product example
+
+Take:
+
+\[
+A=(0,0),
+\]
+
+\[
+B=(4,0),
+\]
+
+\[
+C=(0,2),
+\]
+
+and:
+
+\[
+P=(1,0.5).
+\]
+
+Embed in 2D directly.
+
+Then:
+
+\[
+v_0=B-A=(4,0),
+\]
+
+\[
+v_1=C-A=(0,2),
+\]
+
+\[
+v_2=P-A=(1,0.5).
+\]
+
+Dots:
+
+\[
+d_{00}=16,
+\]
+
+\[
+d_{01}=0,
+\]
+
+\[
+d_{11}=4,
+\]
+
+\[
+d_{20}=4,
+\]
+
+\[
+d_{21}=1.
+\]
+
+Denominator:
+
+\[
+D=16(4)-0=64.
+\]
+
+Then:
+
+\[
+\beta
+=
+\frac{4(4)}{64}
+=
+\frac14.
+\]
+
+And:
+
+\[
+\gamma
+=
+\frac{16(1)}{64}
+=
+\frac14.
+\]
+
+Therefore:
+
+\[
+\alpha
+=
+1-\frac14-\frac14
+=
+\frac12.
+\]
+
+So:
+
+\[
+\boxed{
+(\alpha,\beta,\gamma)
+=
+\left(
+\frac12,\frac14,\frac14
+\right).
+}
+\]
+
+Verify:
+
+\[
+\frac12(0,0)
++
+\frac14(4,0)
++
+\frac14(0,2)
+=
+(1,0.5).
+\]
+
+Correct.
+
+---
+
+# 569.6 Area-coordinate derivation
+
+There is a beautiful geometric method.
+
+For point \(P\) in the plane of triangle \(ABC\), define signed subtriangle areas.
+
+Let:
+
+\[
+A_{ABC}
+\]
+
+be signed area of the whole triangle.
+
+Then:
+
+\[
+\boxed{
+\alpha
+=
+\frac{
+A_{PBC}
+}{
+A_{ABC}
+}
+}
+\]
+
+\[
+\boxed{
+\beta
+=
+\frac{
+A_{APC}
+}{
+A_{ABC}
+}
+}
+\]
+
+\[
+\boxed{
+\gamma
+=
+\frac{
+A_{ABP}
+}{
+A_{ABC}
+}.
+}
+\]
+
+The orientation/order in each signed-area expression must be chosen consistently.
+
+---
+
+# 569.7 Why area ratio equals barycentric weight
+
+Focus on \(\alpha\), the coefficient of \(A\).
+
+Consider edge \(BC\) as a fixed base.
+
+Triangles:
+
+\[
+ABC
+\]
+
+and:
+
+\[
+PBC
+\]
+
+share the same base \(BC\).
+
+Their area ratio is therefore the ratio of their signed heights above line \(BC\).
+
+At \(P=A\), the ratio is 1.
+
+At any point \(P\) on \(BC\), the height is zero, so the ratio is 0.
+
+And the signed height varies linearly as \(P\) moves perpendicular to \(BC\).
+
+That is exactly the affine behavior required of the coordinate associated with vertex \(A\).
+
+Similarly for the other vertices.
+
+So barycentric coordinates are literally normalized opposite-subtriangle areas.
+
+---
+
+# 569.8 Verify with our example
+
+Triangle:
+
+\[
+A=(0,0),
+\quad
+B=(4,0),
+\quad
+C=(0,2).
+\]
+
+Whole doubled area:
+
+\[
+A_2(A,B,C)
+=
+4(2)=8.
+\]
+
+Actual area:
+
+\[
+4.
+\]
+
+Point:
+
+\[
+P=(1,0.5).
+\]
+
+For \(\gamma\), triangle \(ABP\):
+
+base \(AB=4\), height \(0.5\).
+
+Area:
+
+\[
+1.
+\]
+
+Whole area:
+
+\[
+4.
+\]
+
+Thus:
+
+\[
+\gamma=\frac14.
+\]
+
+Similarly \(\beta=\frac14\) and \(\alpha=\frac12\).
+
+Perfect.
+
+---
+
+# 569.9 2D signed-area implementation
+
+Define:
+
+```cpp
+double orient2D(Vec2 a, Vec2 b, Vec2 c);
+```
+
+Then for nondegenerate triangle:
+
+\[
+D=\operatorname{orient2D}(A,B,C).
+\]
+
+A consistent barycentric form is:
+
+\[
+\boxed{
+\alpha=
+\frac{
+\operatorname{orient2D}(P,B,C)
+}{
+D
+}
+}
+\]
+
+\[
+\boxed{
+\beta=
+\frac{
+\operatorname{orient2D}(A,P,C)
+}{
+D
+}
+}
+\]
+
+\[
+\boxed{
+\gamma=
+\frac{
+\operatorname{orient2D}(A,B,P)
+}{
+D
+}.
+}
+\]
+
+If you reverse all orientation conventions consistently, numerator and denominator signs both reverse, leaving the weights unchanged.
+
+---
+
+# 569.10 Why the weights sum to one geometrically
+
+The oriented subtriangles partition the oriented whole triangle algebraically:
+
+\[
+A_{PBC}
++
+A_{APC}
++
+A_{ABP}
+=
+A_{ABC}.
+\]
+
+Divide by:
+
+\[
+A_{ABC}.
+\]
+
+Then:
+
+\[
+\alpha+\beta+\gamma=1.
+\]
+
+This remains true algebraically even when \(P\) is outside and some signed subareas become negative.
+
+That is why signed areas are superior to taking absolute values during barycentric computation.
+
+If you use absolute areas, outside-point relationships break.
+
+---
+
+# 569.11 Point-in-triangle test via barycentrics
+
+For a nondegenerate triangle:
+
+\[
+P\text{ inside or on boundary}
+\]
+
+iff:
+
+\[
+\boxed{
+\alpha\ge0,\quad
+\beta\ge0,\quad
+\gamma\ge0
+}
+\]
+
+with:
+
+\[
+\alpha+\beta+\gamma=1.
+\]
+
+Strictly inside requires:
+
+\[
+\alpha>0,\quad
+\beta>0,\quad
+\gamma>0.
+\]
+
+On edge \(BC\):
+
+\[
+\alpha=0.
+\]
+
+At vertex \(A\):
+
+\[
+\alpha=1,\quad\beta=\gamma=0.
+\]
+
+So a single coordinate system gives classification information almost for free.
+
+---
+
+# 569.12 Outside classification
+
+Suppose:
+
+\[
+\alpha<0.
+\]
+
+Then \(P\) lies outside the triangle across the edge opposite \(A\), namely edge \(BC\), under consistent orientation.
+
+Likewise:
+
+\[
+\beta<0
+\]
+
+indicates outside across edge \(CA\), and:
+
+\[
+\gamma<0
+\]
+
+across edge \(AB\).
+
+This becomes useful for closest-point algorithms and collision routines later.
+
+---
+
+# 569.13 Degenerate triangles
+
+If:
+
+\[
+A,B,C
+\]
+
+are collinear, then:
+
+\[
+\operatorname{orient2D}(A,B,C)=0
+\]
+
+and:
+
+\[
+D=0.
+\]
+
+The barycentric coordinate map loses uniqueness.
+
+This is unavoidable.
+
+Any API computing triangle barycentrics must therefore have an explicit degenerate-triangle policy:
+
+```text
+return failure
+assert precondition
+fallback to segment logic
+use application-specific tolerance
+```
+
+Silently dividing by tiny area is not robust geometry.
+
+---
+
+# 569.14 A 3D triangle does not require projecting to XY if using the dot method
+
+If:
+
+\[
+A,B,C,P\in\mathbb R^3
+\]
+
+and \(P\) lies in the triangle plane, the Gram/dot derivation works directly in 3D.
+
+You do not need to decide whether to drop X, Y or Z.
+
+That is a major advantage of the dot-product formulation.
+
+The area-coordinate version can also be performed in 3D using oriented normals/areas, but the dot form is often convenient.
+
+---
+
+# 569.15 What if P is not exactly in the triangle plane?
+
+The equation:
+
+\[
+P-A
+=
+\beta(B-A)+\gamma(C-A)
+\]
+
+has no exact solution if \(P\) has a nonzero normal component.
+
+The dot/Gram equations effectively recover the coefficients of the **orthogonal projection of \(P\)** onto the triangle's span.
+
+Why?
+
+Because solving via inner products finds the least-squares in-plane component.
+
+This is useful, but the semantics must be understood.
+
+If you require true point-on-triangle membership, also test distance to the triangle plane.
+
+---
+
+# PART 570 — INTERPOLATING ATTRIBUTES WITH BARYCENTRIC COORDINATES
+
+This is where barycentrics become foundational graphics machinery.
+
+Suppose each triangle vertex has an attribute:
+
+\[
+q_A,
+\quad
+q_B,
+\quad
+q_C.
+\]
+
+At a point with barycentric coordinates:
+
+\[
+(\alpha,\beta,\gamma),
+\]
+
+define interpolated attribute:
+
+\[
+\boxed{
+q(P)
+=
+\alpha q_A+
+\beta q_B+
+\gamma q_C.
+}
+\]
+
+This works for any attribute living in a space where affine/linear interpolation makes sense.
+
+---
+
+# 570.1 Scalar example
+
+Suppose vertex temperatures:
+
+\[
+t_A=10,
+\]
+
+\[
+t_B=30,
+\]
+
+\[
+t_C=50.
+\]
+
+At barycentrics:
+
+\[
+\left(
+\frac12,\frac14,\frac14
+\right),
+\]
+
+we get:
+
+\[
+t(P)
+=
+\frac12(10)
++
+\frac14(30)
++
+\frac14(50).
+\]
+
+Calculate:
+
+\[
+5+7.5+12.5=25.
+\]
+
+So:
+
+\[
+\boxed{t(P)=25.}
+\]
+
+---
+
+# 570.2 Color interpolation
+
+Let:
+
+\[
+C_A=(1,0,0)
+\]
+
+red,
+
+\[
+C_B=(0,1,0)
+\]
+
+green,
+
+\[
+C_C=(0,0,1)
+\]
+
+blue.
+
+At:
+
+\[
+(\alpha,\beta,\gamma)
+=
+\left(
+\frac12,\frac14,\frac14
+\right),
+\]
+
+interpolated color:
+
+\[
+C(P)
+=
+\frac12C_A+
+\frac14C_B+
+\frac14C_C.
+\]
+
+Therefore:
+
+\[
+\boxed{
+C(P)=
+\left(
+0.5,0.25,0.25
+\right).
+}
+\]
+
+The exact same weights that locate the point interpolate its attributes.
+
+That is the key graphics insight.
+
+---
+
+# 570.3 Why using the same weights is geometrically natural
+
+Imagine attribute \(q\) is itself an affine function across the triangle.
+
+At vertices it takes:
+
+\[
+q_A,q_B,q_C.
+\]
+
+Because:
+
+\[
+P=\alpha A+\beta B+\gamma C
+\]
+
+and affine maps preserve affine combinations, we expect:
+
+\[
+\boxed{
+q(P)
+=
+\alpha q(A)
++
+\beta q(B)
++
+\gamma q(C).
+}
+\]
+
+This is why linear variation over a triangle is represented exactly by barycentric interpolation.
+
+---
+
+# 570.4 Edge behavior is automatically correct
+
+Suppose \(P\) lies on edge \(AB\).
+
+Then:
+
+\[
+\gamma=0.
+\]
+
+So:
+
+\[
+q(P)
+=
+\alpha q_A+\beta q_B.
+\]
+
+Vertex \(C\) contributes nothing.
+
+Thus the triangle interpolation reduces naturally to ordinary line interpolation on its edges.
+
+This is crucial for continuity between adjacent triangles.
+
+---
+
+# 570.5 Vertex behavior is automatically correct
+
+At \(A\):
+
+\[
+(\alpha,\beta,\gamma)=(1,0,0).
+\]
+
+Therefore:
+
+\[
+q(A)=q_A.
+\]
+
+Likewise at the other vertices.
+
+No special-case code is necessary.
+
+---
+
+# 570.6 UV interpolation
+
+If vertices have texture coordinates:
+
+\[
+UV_A,
+\quad
+UV_B,
+\quad
+UV_C,
+\]
+
+then:
+
+\[
+\boxed{
+UV(P)
+=
+\alpha UV_A+
+\beta UV_B+
+\gamma UV_C.
+}
+\]
+
+This determines where on a texture the interior point corresponds.
+
+At the affine-geometry level this is straightforward.
+
+There is, however, an important rasterization complication involving perspective, which we will discuss shortly.
+
+---
+
+# 570.7 Normal interpolation
+
+Suppose vertex normals:
+
+\[
+N_A,
+N_B,
+N_C.
+\]
+
+Compute:
+
+\[
+N_{\text{raw}}
+=
+\alpha N_A+
+\beta N_B+\gamma N_C.
+\]
+
+But even if each vertex normal is unit length, the interpolated vector generally is not.
+
+Therefore shading commonly uses:
+
+\[
+\boxed{
+N(P)
+=
+\operatorname{normalize}
+(
+\alpha N_A+
+\beta N_B+
+\gamma N_C
+).
+}
+\]
+
+This is exactly the issue from Part 557.
+
+Interpolation happens in vector coordinates.
+
+The unit-normal invariant must be re-established afterward.
+
+---
+
+# 570.8 Tangents can have the same issue
+
+If you interpolate tangent vectors:
+
+\[
+T_{\text{raw}}
+=
+\alpha T_A+
+\beta T_B+\gamma T_C,
+\]
+
+the result may no longer be:
+
+- unit length;
+- exactly perpendicular to interpolated normal.
+
+A shading frame may therefore need re-normalization and re-orthogonalization.
+
+Interpolation preserves affine combinations.
+
+It does not automatically preserve nonlinear constraints such as:
+
+\[
+\|T\|=1
+\]
+
+or:
+
+\[
+T\cdot N=0.
+\]
+
+This distinction is fundamental.
+
+---
+
+# 570.9 Interpolation preserves linear constraints, not nonlinear ones
+
+Suppose all vertex values satisfy a linear equation:
+
+\[
+L(q)=c
+\]
+
+and weights sum to one.
+
+Then:
+
+\[
+L(
+\alpha q_A+\beta q_B+\gamma q_C
+)
+\]
+
+becomes:
+
+\[
+\alpha L(q_A)+
+\beta L(q_B)+
+\gamma L(q_C).
+\]
+
+If every:
+
+\[
+L(q_i)=c,
+\]
+
+then:
+
+\[
+=
+(\alpha+\beta+\gamma)c
+=
+c.
+\]
+
+So affine constraints survive.
+
+But unit length is:
+
+\[
+q\cdot q=1,
+\]
+
+which is quadratic/nonlinear.
+
+Therefore it does not survive ordinary interpolation.
+
+This is why normals need renormalization.
+
+---
+
+# 570.10 Interpolating positions reconstructs P itself
+
+If the attribute is position:
+
+\[
+q_A=A,
+\]
+
+\[
+q_B=B,
+\]
+
+\[
+q_C=C,
+\]
+
+then barycentric interpolation gives:
+
+\[
+q(P)
+=
+\alpha A+\beta B+\gamma C.
+\]
+
+But that equals:
+
+\[
+P.
+\]
+
+So the geometry itself is one instance of the same interpolation rule.
+
+---
+
+# 570.11 Interpolating arbitrary `VecN`
+
+A generic implementation might look like:
+
+```cpp
+template<typename T>
+[[nodiscard]]
+constexpr T baryLerp(
+    T const& a,
+    T const& b,
+    T const& c,
+    double alpha,
+    double beta,
+    double gamma)
+{
+    return
+        a * alpha
+      + b * beta
+      + c * gamma;
+}
+```
+
+This assumes type `T` supports scalar multiplication and addition with appropriate semantics.
+
+But that does **not** mean every type should be interpolated this way.
+
+For example:
+
+- raw unit quaternions need more careful rotational interpolation;
+- categorical IDs should not be blended;
+- booleans have no sensible affine interpolation;
+- material indices usually should not be interpolated.
+
+Type shape alone does not establish mathematical legitimacy.
+
+---
+
+# 570.12 Barycentric derivatives are constant over an affine triangle
+
+This is a powerful fact.
+
+For a nondegenerate triangle in a flat coordinate plane, each barycentric coordinate:
+
+\[
+\alpha(P),
+\quad
+\beta(P),
+\quad
+\gamma(P)
+\]
+
+is an affine-linear function of position.
+
+Therefore its gradient is constant across the triangle.
+
+That is why linearly interpolated vertex attributes have constant screen-space/object-space derivatives across a triangle before perspective correction.
+
+This later connects to:
+
+- rasterization;
+- texture derivatives;
+- gradients;
+- finite elements;
+- interpolation hardware.
+
+We are not teaching derivative machinery fully here, but the structural fact matters.
+
+---
+
+# 570.13 The critical graphics caveat: perspective interpolation
+
+Suppose 3D vertices are projected through a perspective camera.
+
+Screen-space barycentric coordinates are affine in **screen coordinates**.
+
+But a 3D attribute that was affine across the original triangle generally does **not** remain affine after perspective division.
+
+So this naive procedure can be wrong:
+
+```text
+compute screen-space barycentrics
+use them directly on original UVs
+```
+
+for perspective-projected geometry.
+
+This produces the classic "affine texture mapping" distortion.
+
+Modern rasterization uses **perspective-correct interpolation**.
+
+The conceptual correction involves interpolating quantities weighted by reciprocal homogeneous depth, often expressed using \(1/w\), then dividing appropriately.
+
+The full homogeneous/perspective machinery comes later, so do not memorize a correction formula out of context yet.
+
+For Part 570, retain this distinction:
+
+\[
+\boxed{
+\text{barycentric interpolation is affine;
+perspective projection is not affine after division}.
+}
+\]
+
+Therefore screen-space barycentric weights require perspective correction for most 3D vertex attributes.
+
+That is not a failure of barycentrics.
+
+It is a consequence of projective geometry.
+
+---
+
+# 570.14 Rasterization connection
+
+A rasterizer conceptually has a triangle in screen coordinates.
+
+For each candidate sample/pixel center:
+
+\[
+P=(x,y),
+\]
+
+it can evaluate oriented edge functions.
+
+Those edge functions are closely related to the signed areas from Part 566.
+
+Normalized appropriately, they become barycentric coordinates.
+
+Then the rasterizer can answer both:
+
+\[
+\text{Is the sample inside the triangle?}
+\]
+
+and:
+
+\[
+\text{What are its interpolation weights?}
+\]
+
+with closely related arithmetic.
+
+This is why orientation tests, signed areas and barycentrics appear next to each other in the curriculum.
+
+They are literally the mathematical core of triangle rasterization.
+
+---
+
+# 570.15 Edge functions
+
+For directed edge \(A\rightarrow B\), define:
+
+\[
+E_{AB}(P)
+=
+\operatorname{orient2D}(A,B,P).
+\]
+
+This tells which side of edge AB the point occupies.
+
+For a consistently wound triangle, a point lies inside if the three edge-function signs are compatible.
+
+Now notice:
+
+\[
+\gamma
+=
+\frac{
+\operatorname{orient2D}(A,B,P)
+}{
+\operatorname{orient2D}(A,B,C)
+}.
+\]
+
+So:
+
+\[
+\boxed{
+\gamma=
+\frac{E_{AB}(P)}{E_{AB}(C)}.
+}
+\]
+
+Likewise the other barycentric coordinates correspond to normalized edge functions for their opposite edges.
+
+This is a huge connection:
+
+\[
+\boxed{
+\text{edge test}
+\rightarrow
+\text{signed area}
+\rightarrow
+\text{barycentric weight}
+}
+\]
+
+using essentially the same determinant structure.
+
+---
+
+# ONE COMPLETE EXAMPLE: ORIENTATION → BARYCENTRIC → ATTRIBUTE
+
+Take:
+
+\[
+A=(0,0),
+\]
+
+\[
+B=(4,0),
+\]
+
+\[
+C=(0,4).
+\]
+
+The triangle has:
+
+\[
+D=
+\operatorname{orient2D}(A,B,C)
+=
+4(4)
+=
+16.
+\]
+
+Positive orientation.
+
+Take point:
+
+\[
+P=(1,2).
+\]
+
+Compute \(\alpha\):
+
+\[
+\operatorname{orient2D}(P,B,C).
+\]
+
+Vectors from \(P\):
+
+\[
+B-P=(3,-2),
+\]
+
+\[
+C-P=(-1,2).
+\]
+
+Cross scalar:
+
+\[
+3(2)-(-2)(-1)
+=
+6-2
+=
+4.
+\]
+
+Thus:
+
+\[
+\alpha=\frac4{16}=\frac14.
+\]
+
+Now \(\beta\):
+
+\[
+\operatorname{orient2D}(A,P,C).
+\]
+
+Vectors:
+
+\[
+P-A=(1,2),
+\]
+
+\[
+C-A=(0,4).
+\]
+
+Cross:
+
+\[
+1(4)-2(0)=4.
+\]
+
+Thus:
+
+\[
+\beta=\frac14.
+\]
+
+Finally:
+
+\[
+\gamma=1-\alpha-\beta
+=
+\frac12.
+\]
+
+So:
+
+\[
+\boxed{
+(\alpha,\beta,\gamma)
+=
+\left(
+\frac14,\frac14,\frac12
+\right).
+}
+\]
+
+Check point reconstruction:
+
+\[
+\frac14(0,0)
++
+\frac14(4,0)
++
+\frac12(0,4).
+\]
+
+This gives:
+
+\[
+(1,2).
+\]
+
+Correct.
+
+Now assign colors:
+
+\[
+C_A=(1,0,0),
+\]
+
+\[
+C_B=(0,1,0),
+\]
+
+\[
+C_C=(0,0,1).
+\]
+
+Interpolate:
+
+\[
+C(P)
+=
+\frac14C_A
++
+\frac14C_B
++
+\frac12C_C.
+\]
+
+Therefore:
+
+\[
+\boxed{
+C(P)
+=
+(0.25,0.25,0.5).
+}
+\]
+
+One chain produced:
+
+```text
+triangle orientation
+      ↓
+signed area denominator
+
+sample point edge areas
+      ↓
+barycentric coordinates
+
+same barycentric coordinates
+      ↓
+position reconstruction
+color interpolation
+UV interpolation
+normal interpolation
+...
+```
+
+That is why these Parts belong together.
+
+---
+
+# HANDEDNESS AND BARYCENTRICS: DO BARYCENTRICS CHANGE UNDER A MIRROR?
+
+This is worth deriving.
+
+Suppose the triangle and point are all transformed by the same invertible affine transformation, including a mirror.
+
+Barycentric relation:
+
+\[
+P=\alpha A+\beta B+\gamma C,
+\]
+
+with:
+
+\[
+\alpha+\beta+\gamma=1.
+\]
+
+Apply affine transform:
+
+\[
+F(X)=MX+t.
+\]
+
+Then:
+
+\[
+F(P)
+=
+M(
+\alpha A+\beta B+\gamma C
+)+t.
+\]
+
+Distribute:
+
+\[
+=
+\alpha MA+
+\beta MB+
+\gamma MC+t.
+\]
+
+Because weights sum to one:
+
+\[
+t=
+(\alpha+\beta+\gamma)t.
+\]
+
+So:
+
+\[
+F(P)
+=
+\alpha(MA+t)
++
+\beta(MB+t)
++
+\gamma(MC+t).
+\]
+
+Therefore:
+
+\[
+\boxed{
+F(P)
+=
+\alpha F(A)
++
+\beta F(B)
++
+\gamma F(C).
+}
+\]
+
+The barycentric weights are unchanged.
+
+Even under a reflection.
+
+What changes under handedness reversal?
+
+The signed-area numerators and denominator can all flip orientation sign.
+
+But because the same orientation factor appears in numerator and denominator:
+
+\[
+\boxed{
+\text{the barycentric ratios remain the same}.
+}
+\]
+
+This is a beautiful separation:
+
+\[
+\boxed{
+\text{orientation sign may flip;
+affine coordinates survive}.
+}
+\]
+
+---
+
+# NUMERICAL STABILITY OF BARYCENTRICS
+
+The dangerous case is a skinny or nearly degenerate triangle.
+
+Suppose:
+
+\[
+C
+\]
+
+lies almost on line \(AB\).
+
+Then total area:
+
+\[
+D
+\]
+
+is tiny.
+
+Barycentric formulas divide by \(D\).
+
+A tiny denominator means a small geometric perturbation can produce a large change in barycentric coordinates.
+
+This is not only floating-point trouble.
+
+The underlying coordinate system is ill-conditioned.
+
+Imagine a triangle:
+
+```text
+A ---------------- B
+         C almost on AB
+```
+
+There is almost no two-dimensional region left.
+
+Trying to represent arbitrary nearby positions using that triangle is inherently unstable.
+
+So again:
+
+\[
+\boxed{
+\text{numerical instability reflects geometric degeneracy}.
+}
+\]
+
+---
+
+# A PRODUCTION BARYCENTRIC API
+
+A reference implementation using dot products for `Vec3` could be:
+
+```cpp
+struct Barycentric3 {
+    double a;
+    double b;
+    double c;
+};
+
+[[nodiscard]]
+std::optional<Barycentric3>
+barycentric(
+    Vec3d A,
+    Vec3d B,
+    Vec3d C,
+    Vec3d P,
+    double degeneracyThreshold)
+{
+    const Vec3d v0 = B - A;
+    const Vec3d v1 = C - A;
+    const Vec3d v2 = P - A;
+
+    const double d00 = dot(v0, v0);
+    const double d01 = dot(v0, v1);
+    const double d11 = dot(v1, v1);
+    const double d20 = dot(v2, v0);
+    const double d21 = dot(v2, v1);
+
+    const double denom =
+        d00 * d11 - d01 * d01;
+
+    if (std::abs(denom) <= degeneracyThreshold) {
+        return std::nullopt;
+    }
+
+    const double beta =
+        (d11 * d20 - d01 * d21)
+        / denom;
+
+    const double gamma =
+        (d00 * d21 - d01 * d20)
+        / denom;
+
+    const double alpha =
+        1.0 - beta - gamma;
+
+    return Barycentric3{
+        alpha,
+        beta,
+        gamma
+    };
+}
+```
+
+But a serious implementation should not pretend one globally fixed `degeneracyThreshold` works for every world scale.
+
+A scale-aware policy can compare area squared against quantities derived from edge lengths, or higher-precision/robust predicates can be used where topology depends on the result.
+
+---
+
+# COMPLEXITY AND HARDWARE
+
+Every individual 2D/3D orientation or triangle-barycentric query is fixed-size arithmetic:
+
+\[
+O(1).
+\]
+
+For 2D orientation:
+
+\[
+2
+\]
+
+multiplications plus subtraction after coordinate differences.
+
+For a dot-product barycentric solve in 3D, several dot products plus a handful of scalar arithmetic operations.
+
+No dynamic allocation is intrinsically needed.
+
+In a rasterizer, however, millions of sample evaluations make constant factors significant.
+
+The important performance insight is that **edge functions vary linearly across screen space**. When moving one pixel horizontally or vertically, they can be updated incrementally rather than recomputed from scratch.
+
+That later becomes a major rasterization optimization.
+
+The current Part's job is to make you understand why such incremental edge arithmetic is possible: edge functions are affine-linear functions.
+
+---
+
+# DEBUGGING ATTACK TREE
+
+Suppose a triangle appears back-facing unexpectedly. First inspect the actual coordinate convention and whether screen Y orientation differs from world/math Y. Then inspect triangle index winding and whether a handedness-reflecting transform occurred.
+
+Suppose point-in-triangle tests fail only near edges. Inspect floating-point predicate tolerance and whether your algorithm requires robust orientation signs.
+
+Suppose barycentrics do not sum to one. That usually indicates an algebra/implementation error or severe numerical corruption.
+
+Suppose barycentrics become enormous. Inspect triangle area: the triangle may be nearly degenerate.
+
+Suppose colors interpolate correctly but texture coordinates warp under perspective. The barycentric computation itself may be correct; the missing step is perspective-correct interpolation.
+
+Suppose interpolated normals darken lighting. Check whether they were renormalized after interpolation.
+
+Suppose a mirrored model's barycentric interpolation is correct but its culling/normals are reversed. That is exactly possible: affine barycentric weights survive the mirror, while orientation-sensitive quantities flip.
+
+That separation is an important debugging skill.
+
+---
+
+# MASTER RECONSTRUCTION — PART 564
+
+From a blank page, define right-handedness using:
+
+\[
+\boxed{
+(b_1\times b_2)\cdot b_3>0.
+}
+\]
+
+For an orthonormal basis, explain why the value is \(+1\).
+
+Prove that cyclic permutations preserve the sign and swapping two axes reverses it.
+
+Then explain why Y-up/Z-up and +Z/-Z camera-forward conventions do not by themselves define handedness.
+
+Finally explain why a proper rotation cannot change handedness but a one-axis reflection can.
+
+---
+
+# MASTER RECONSTRUCTION — PART 565
+
+Construct a left-handed basis by replacing:
+
+\[
+e_z\rightarrow-e_z.
+\]
+
+Show:
+
+\[
+(e_x\times e_y)\cdot(-e_z)=-1.
+\]
+
+Prove a reflection preserves dot products, lengths and angles while reversing orientation.
+
+Then explain why a handedness conversion can affect winding, normals and cross-product orientation even though the shape remains metrically unchanged.
+
+---
+
+# MASTER RECONSTRUCTION — PART 566
+
+Given:
+
+\[
+A=(A_x,A_y),
+\quad
+B=(B_x,B_y),
+\quad
+C=(C_x,C_y),
+\]
+
+derive:
+
+\[
+\boxed{
+\operatorname{orient2D}
+=
+(B_x-A_x)(C_y-A_y)
+-
+(B_y-A_y)(C_x-A_x).
+}
+\]
+
+Explain why its magnitude is twice triangle area.
+
+Under standard \(+X\) right, \(+Y\) up coordinates, explain the positive/negative orientation convention.
+
+Then show translation invariance and explain why a coordinate reflection flips the sign.
+
+---
+
+# MASTER RECONSTRUCTION — PART 567
+
+Given four 3D points, derive:
+
+\[
+\boxed{
+\operatorname{orient3D}(A,B,C,D)
+=
+[(B-A)\times(C-A)]\cdot(D-A).
+}
+\]
+
+Explain why it is signed six-times tetrahedron volume.
+
+Show how its sign classifies \(D\) relative to oriented plane \(ABC\).
+
+Explain why reversing \(B,C\) flips the sign and why zero implies coplanarity or degeneracy.
+
+---
+
+# MASTER RECONSTRUCTION — PART 568
+
+Start with:
+
+\[
+\boxed{
+P=
+\alpha A+\beta B+\gamma C.
+}
+\]
+
+Derive why:
+
+\[
+\boxed{
+\alpha+\beta+\gamma=1
+}
+\]
+
+is required for translation invariance.
+
+Know the barycentrics at all three vertices, on each edge, at the centroid, and explain why all nonnegative weights characterize the closed triangle.
+
+Most importantly:
+
+\[
+\boxed{
+\text{barycentrics are affine coordinates, not arbitrary percentages}.
+}
+\]
+
+---
+
+# MASTER RECONSTRUCTION — PART 569
+
+Use:
+
+\[
+\alpha=1-\beta-\gamma
+\]
+
+to derive:
+
+\[
+\boxed{
+P-A
+=
+\beta(B-A)
++
+\gamma(C-A).
+}
+\]
+
+Then derive the Gram-system equations and solve:
+
+\[
+\boxed{
+\beta=
+\frac{
+d_{11}d_{20}-d_{01}d_{21}
+}{
+d_{00}d_{11}-d_{01}^2
+}
+}
+\]
+
+\[
+\boxed{
+\gamma=
+\frac{
+d_{00}d_{21}-d_{01}d_{20}
+}{
+d_{00}d_{11}-d_{01}^2
+}
+}
+\]
+
+\[
+\boxed{
+\alpha=1-\beta-\gamma.
+}
+\]
+
+Then prove the denominator equals:
+
+\[
+\boxed{
+\|(B-A)\times(C-A)\|^2.
+}
+\]
+
+Separately reconstruct the signed-area formulas and explain why taking absolute area in the numerators destroys useful outside-point sign information.
+
+---
+
+# MASTER RECONSTRUCTION — PART 570
+
+Given barycentric weights, reconstruct:
+
+\[
+\boxed{
+q(P)
+=
+\alpha q_A+
+\beta q_B+
+\gamma q_C.
+}
+\]
+
+Explain why this reproduces exact vertex values and reduces to ordinary two-point interpolation on edges.
+
+Explain which invariants survive interpolation and which do not.
+
+In particular, explain why unit normals must be renormalized.
+
+Then connect edge functions to barycentric coordinates:
+
+\[
+\boxed{
+\gamma
+=
+\frac{
+\operatorname{orient2D}(A,B,P)
+}{
+\operatorname{orient2D}(A,B,C)
+}.
+}
+\]
+
+Finally, explain why naïvely applying screen-space barycentrics directly to pre-projection 3D attributes produces perspective interpolation errors.
+
+---
+
+# THE ENTIRE 564–570 MODEL
+
+You should now see one continuous structure:
+
+\[
+\boxed{
+\text{ordered basis}
+}
+\]
+
+has an orientation:
+
+\[
+\boxed{
+\text{right-handed or left-handed}.
+}
+\]
+
+Orientation in 2D becomes:
+
+\[
+\boxed{
+\text{signed area}.
+}
+\]
+
+Orientation in 3D becomes:
+
+\[
+\boxed{
+\text{signed volume}.
+}
+\]
+
+For a triangle, those signed areas can then be normalized:
+
+\[
+\boxed{
+\frac{\text{sub-area}}{\text{whole area}}
+}
+\]
+
+to produce:
+
+\[
+\boxed{
+(\alpha,\beta,\gamma)
+}
+\]
+
+with:
+
+\[
+\alpha+\beta+\gamma=1.
+\]
+
+Those weights locate a point:
+
+\[
+\boxed{
+P=\alpha A+\beta B+\gamma C
+}
+\]
+
+and then propagate any affine attribute:
+
+\[
+\boxed{
+q(P)=\alpha q_A+\beta q_B+\gamma q_C.
+}
+\]
+
+This is the bridge from **orientation mathematics** to the inner machinery of a triangle rasterizer.
+
+**Completed Part 564 — Right-handed coordinate systems**  
+**Completed Part 565 — Left-handed coordinate systems**  
+**Completed Part 566 — Orientation tests in 2D using signed area**  
+**Completed Part 567 — Orientation tests in 3D using triple products**  
+**Completed Part 568 — Barycentric coordinates as affine weights**  
+**Completed Part 569 — Deriving barycentric coordinates for a triangle**  
+**Completed Part 570 — Interpolating attributes with barycentric coordinates**
+
+**Next Core Part 571 — Affine combinations versus linear combinations.**

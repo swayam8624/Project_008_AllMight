@@ -1,0 +1,54 @@
+\hypertarget{appendix-b12b31759da1}{}\label{referencestart:appendix-b12b31759da1}
+\section{Scopes and name lookup}\label{appendix-b12b31759da1-scopes-and-name-lookup}
+
+\hypertarget{appendix-b12b31759da1-scopes-and-name-lookup}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C007 · \textbf{Latest development:} C008
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-b12b31759da1-definition-and-mechanism}
+
+\hypertarget{appendix-b12b31759da1-definition-and-mechanism}{}
+
+Lookup precedes overload resolution. A derived overload can hide base overloads; using Base::name restores candidates. A local int x=x reads the newly declared uninitialized local, not an outer integer.
+
+\end{allmightroledefinition}
+
+Scope locates a name's binding; lookup resolves a spelling to declarations. A local x can hide ::x without destroying it. A block-scope static has a local name but persistent storage. Qualified lookup names a namespace or class explicitly.
+
+\subsection{Prerequisites}\label{appendix-b12b31759da1-prerequisites}
+
+\hypertarget{appendix-b12b31759da1-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-2e4d494c2d94]{Declarations and definitions} --- A declaration binds a name before scope and lookup can determine which binding is found.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-b12b31759da1-used-by}
+
+\hypertarget{appendix-b12b31759da1-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-7863714aa97f]{Argument-dependent lookup} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-b12b31759da1-recall-and-next-depth}
+
+\hypertarget{appendix-b12b31759da1-recall-and-next-depth}{}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} Deeper ownership, pointer/reference, generic programming and module rules from later sources. This is written coverage, not demonstrated personal mastery.
+
+\subsection{Source and navigation}\label{appendix-b12b31759da1-source-and-navigation}
+
+\hypertarget{appendix-b12b31759da1-source-and-navigation}{}
+
+\hyperref[appendix-fd090d982a15-m008---parts-113-126]{C008 development and corrections}
+
+\hyperref[01-foundations-i-ch002-a-spelling-needs-a-place-and-a-meaning]{C007 teaching chapter} · \hyperref[appendix-fd090d982a15-m007---parts-101-112]{Source coverage} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

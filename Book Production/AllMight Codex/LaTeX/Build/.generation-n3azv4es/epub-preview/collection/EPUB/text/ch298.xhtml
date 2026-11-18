@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch298.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-7107009c505b-local-rigidity-and-mesh-orientation-fields" class="level2">
+<h2>Local rigidity and mesh orientation fields</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-7107009c505b-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>As-Rigid-As-Possible (ARAP) deformation seeks vertex positions that change as little as possible from a preferred local rigid transform. For each vertex neighborhood, fit a rotation to the deformed edge vectors, then minimize residuals between transformed rest edges and current edges. Alternating between local rotations and a global position solve makes a nonlinear shape-editing problem tractable, but the result depends on constraints, initialization, mesh quality, and rotation fitting. Instant Meshes uses direction or orientation fields over a surface to guide a quad-dominant remeshing; field singularities encode where a globally consistent direction cannot exist. A mesh’s half-edge connectivity, boundary structure, and orientation determine valid neighborhoods and field transport. Poor triangles, seams, boundary conditions, or inconsistent orientation can create artifacts. ARAP is a local preservation objective, not exact rigidity of the whole shape; a direction field guides topology but does not uniquely determine a good mesh without sizing and feature constraints.</p>
+</section>
+<section id="appendix-7107009c505b-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch339.xhtml#appendix-1aea26b2307f-half-edge-mesh-connectivity" class="wikilink">Half-edge mesh connectivity (Light Transport and Image Synthesis, Part 1, Reference notes: Half-edge mesh connectivity)</a></li>
+<li><a href="ch366.xhtml#appendix-fab348609369-manifold-polygon-meshes-and-boundary-structure" class="wikilink">Manifold polygon meshes and boundary structure (Light Transport and Image Synthesis, Part 1, Reference notes: Manifold polygon meshes and boundary structure)</a></li>
+<li><a href="ch335.xhtml#appendix-0234ab7f86b1-subdivision-surface-masks" class="wikilink">Subdivision surface masks (Light Transport and Image Synthesis, Part 1, Reference notes: Subdivision surface masks)</a></li>
+<li><a href="ch342.xhtml#appendix-29f4bea4c2bb-constrained-optimization-and-inverse-kinematics" class="wikilink">Constrained optimization and inverse kinematics (Light Transport and Image Synthesis, Part 1, Reference notes: Constrained optimization and inverse kinematics)</a></li>
+<li><a href="ch463.xhtml#appendix-2391db8052b1-cross-products-and-oriented-area" class="wikilink">Cross products and oriented area (Vision, XR, and Playable Worlds, Part 1, Reference notes: Cross products and oriented area)</a></li>
+</ul>
+</section>
+<section id="appendix-7107009c505b-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch296.xhtml#id_03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing" class="wikilink">Meshes, connectivity, and geometry processing</a></li>
+</ul>
+</section>
+<section id="appendix-7107009c505b-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch296.xhtml#id_03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing" class="wikilink">Meshes, connectivity, and geometry processing</a></li>
+</ul>
+</section>
+<section id="appendix-7107009c505b-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<ul>
+<li>Describe one local rotation/global solve step of ARAP and the role of a field singularity in remeshing.</li>
+<li>Why can low local deformation energy fail to ensure a globally rigid shape?</li>
+</ul>
+</section>
+<section id="appendix-7107009c505b-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p>Teaching narrative: <a href="ch296.xhtml#id_03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing" class="wikilink">open the main explanation</a>. Browse the <a href="ch547.xhtml#appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series" class="wikilink">University graphics and vision index</a>. Additional chapter connections: <a href="ch296.xhtml#id_03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing" class="wikilink">Meshes, connectivity, and geometry processing</a>; <a href="ch296.xhtml#id_03-visual-computing-i-ch002-surfaces-patches-topology-and-parameterization" class="wikilink">Surfaces, patches, topology, and parameterization</a>; <a href="ch262.xhtml#id_01-foundations-i-ch020-put-the-algorithms-in-a-graphics-context" class="wikilink">Put the algorithms in a graphics context (Mathematics for Visual Computing, Part 1, Ch. 4)</a>.</p>
+<p>Caption/source records: <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-p3-16---subdivision-surfaces-part-1" class="wikilink">P3-16 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>, <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-p3-17---subdivision-surfaces-part-2" class="wikilink">P3-17 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>, <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-sc-15---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-15-3d-vision" class="wikilink">SC-15 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>.</p>
+</section>
+</section>
+</body>
+</html>

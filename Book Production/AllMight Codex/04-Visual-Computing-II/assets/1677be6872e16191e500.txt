@@ -1,0 +1,4658 @@
+The curriculum deliberately places these four parts together at the opening of Phase 6, but they are **four different conceptual layers**:
+
+**504** asks what a vector *is geometrically*.  
+**505** asks how we *write/store one using numbers*.  
+**506** asks why those numbers are *not the vector itself*.  
+**507** abstracts the whole idea and asks what properties an object must satisfy before mathematics is allowed to call it a **vector space**. Project_Sheldon_Master_Curricul…
+
+I am merging only the delivery. I am **not compressing the concepts**. We will preserve the first-principles → representation → implementation → failure → reconstruction standard from the mastery contract. Pasted markdown
+
+---
+
+# PART 504 — VECTORS AS GEOMETRIC DISPLACEMENTS
+
+## 504.1 Forget `(x, y, z)` for a moment
+
+Before we touch this:
+
+```cpp
+Vec3 v{1.0f, 2.0f, 3.0f};
+```
+
+we need to answer a more fundamental question:
+
+**What physical/geometrical thing are those three numbers eventually trying to describe?**
+
+The answer is a **displacement**.
+
+Suppose there are two locations:
+
+```text
+A ● --------------------> ● B
+```
+
+Going from \(A\) to \(B\) requires a certain movement.
+
+That movement has two essential geometric properties:
+
+- how far you move;
+- which way you move.
+
+That movement is a geometric vector.
+
+We can denote it
+
+\[
+\vec v.
+\]
+
+At this stage, do **not** think
+
+\[
+\vec v=(3,2).
+\]
+
+That will be Part 505.
+
+For now:
+
+\[
+\boxed{\vec v=\text{a geometric displacement}}
+\]
+
+is the important idea.
+
+---
+
+# 504.2 Position and displacement are different concepts
+
+Imagine standing at some location \(A\).
+
+You walk:
+
+```text
+5 m east
+```
+
+That is a displacement.
+
+Now suppose somebody else starts 100 metres away and also walks:
+
+```text
+5 m east
+```
+
+Their starting point differs.
+
+But the displacement is the same.
+
+Graphically:
+
+```text
+A ●──────→ B
+
+               C ●──────→ D
+```
+
+If both arrows have the same direction and the same length, they represent the same **free vector**.
+
+So the geometric vector is not inherently tied to one location.
+
+This gives an important idea:
+
+\[
+\boxed{
+\text{A geometric vector can be translated without changing the vector.}
+}
+\]
+
+The arrow is being used to visualize the displacement.
+
+The location where we draw the arrow is not part of the displacement itself.
+
+---
+
+# 504.3 A more rigorous geometric definition
+
+A directed line segment has:
+
+- a tail;
+- a head.
+
+For example:
+
+\[
+\overrightarrow{AB}.
+\]
+
+Another directed segment
+
+\[
+\overrightarrow{CD}
+\]
+
+represents the same free vector if it has the same geometric displacement.
+
+Informally:
+
+\[
+\overrightarrow{AB}
+=
+\overrightarrow{CD}
+\]
+
+when both have the same length and direction.
+
+So one rigorous way to think about a free vector is:
+
+\[
+\boxed{
+\text{an equivalence class of directed line segments under translation}
+}
+\]
+
+That phrase deserves unpacking.
+
+An **equivalence class** means we collect many visually different arrows and declare them equivalent because they describe the same displacement.
+
+For example:
+
+```text
+       ─────→
+
+                     ─────→
+
+ ─────→
+```
+
+Their absolute locations differ.
+
+Their displacement does not.
+
+All three drawings can represent one vector \(\vec v\).
+
+This is deeper than:
+
+> a vector is an arrow.
+
+The arrow is a **representative drawing** of the underlying displacement.
+
+---
+
+# 504.4 Why did mathematics need this object?
+
+Suppose an object moves through a scene.
+
+At time \(t_0\), it occupies location \(P\).
+
+Later, it occupies location \(Q\).
+
+We want to describe:
+
+> what motion took us from \(P\) to \(Q\)?
+
+The answer should not depend on where the coordinate origin happened to be placed.
+
+Suppose I shift the entire coordinate system ten kilometres east.
+
+The object's coordinates change.
+
+But its actual movement should not suddenly change.
+
+That means we want something that describes **relative movement**, rather than absolute location.
+
+That thing is displacement.
+
+And geometric vectors give us precisely that.
+
+---
+
+# 504.5 Translation invariance
+
+This property is fundamental.
+
+Suppose an arrow goes from \(A\) to \(B\).
+
+Now translate both endpoints by the same amount.
+
+You obtain:
+
+\[
+A'\rightarrow B'.
+\]
+
+The absolute locations changed.
+
+But the relative movement from tail to head did not.
+
+Therefore:
+
+\[
+\overrightarrow{AB}
+=
+\overrightarrow{A'B'}.
+\]
+
+This is called **translation invariance** of free vectors.
+
+It is why vectors are so useful for:
+
+- velocities;
+- accelerations;
+- forces;
+- surface directions;
+- ray directions;
+- geometric offsets;
+- movement commands.
+
+Those quantities describe directional relationships rather than absolute places.
+
+---
+
+# 504.6 Vector addition comes naturally from displacement
+
+Suppose you first move using displacement \(\vec u\).
+
+Then, from your new location, you move by \(\vec v\).
+
+```text
+A ●────u────>● B
+             \
+              \
+               v
+                \
+                 ▼
+                 ● C
+```
+
+There must be one displacement that moves directly from \(A\) to \(C\).
+
+Call it:
+
+\[
+\vec u+\vec v.
+\]
+
+So:
+
+\[
+\boxed{
+\vec u+\vec v
+=
+\text{the displacement produced by performing }\vec u\text{ followed by }\vec v
+}
+\]
+
+Graphically:
+
+```text
+A ●────u────>● B
+ \            |
+  \           |
+   \ u + v    | v
+    \         |
+     \        ▼
+      ───────>● C
+```
+
+This is the **head-to-tail rule**.
+
+It is not an arbitrary algebra rule someone invented.
+
+It arises directly from composing motions.
+
+---
+
+# 504.7 Why vector addition is commutative geometrically
+
+Interestingly,
+
+\[
+\vec u+\vec v
+=
+\vec v+\vec u.
+\]
+
+We can see this using the parallelogram construction.
+
+```text
+          ●
+         /|
+        / |
+      v/  |u
+      /   |
+     ●----●
+        u
+```
+
+Starting from the same point:
+
+- move by \(\vec u\), then \(\vec v\);
+- or move by \(\vec v\), then \(\vec u\).
+
+Both reach the opposite corner of the same parallelogram.
+
+Thus the total displacement is identical.
+
+This eventually becomes one of the vector-space axioms in Part 507:
+
+\[
+\vec u+\vec v=\vec v+\vec u.
+\]
+
+Notice the teaching direction:
+
+```text
+geometry
+   ↓
+observed structural rule
+   ↓
+later abstracted into an axiom
+```
+
+rather than starting by memorizing axioms.
+
+---
+
+# 504.8 Associativity also comes from composing movement
+
+Consider three movements:
+
+\[
+\vec u,\quad\vec v,\quad\vec w.
+\]
+
+Whether we conceptually group the first two:
+
+\[
+(\vec u+\vec v)+\vec w
+\]
+
+or the last two:
+
+\[
+\vec u+(\vec v+\vec w)
+\]
+
+the physical final displacement is unchanged.
+
+Thus:
+
+\[
+\boxed{
+(\vec u+\vec v)+\vec w
+=
+\vec u+(\vec v+\vec w)
+}
+\]
+
+Again, geometry motivates a vector-space axiom.
+
+---
+
+# 504.9 The zero vector
+
+What displacement means:
+
+> do not move at all?
+
+That is the **zero vector**:
+
+\[
+\vec 0.
+\]
+
+It has zero displacement.
+
+Therefore:
+
+\[
+\vec v+\vec 0=\vec v.
+\]
+
+Geometrically:
+
+```text
+perform v
+then perform no movement
+```
+
+obviously gives the same total displacement as performing \(\vec v\).
+
+The zero vector is not merely "the vector whose components are zero."
+
+That will be its coordinate representation later.
+
+Its deeper meaning is:
+
+\[
+\boxed{\vec0=\text{identity displacement}}
+\]
+
+---
+
+# 504.10 Opposite vectors
+
+Suppose \(\vec v\) takes you from \(A\) to \(B\).
+
+There must be a displacement that takes you directly back.
+
+Call it
+
+\[
+-\vec v.
+\]
+
+Then:
+
+\[
+\vec v+(-\vec v)=\vec0.
+\]
+
+Geometrically:
+
+```text
+A ●────v────>● B
+A ●<───-v────● B
+```
+
+Same size of displacement.
+
+Opposite direction.
+
+This is the **additive inverse**.
+
+Again, Part 507 will abstract this requirement.
+
+---
+
+# 504.11 Scalar multiplication geometrically
+
+Part 519 will give scalar multiplication its own dedicated treatment, so we will not steal that Part.
+
+But Part 504 cannot be understood without at least seeing its meaning.
+
+Suppose:
+
+\[
+2\vec v.
+\]
+
+That means a displacement in the same direction but twice as large.
+
+Similarly:
+
+\[
+\frac12\vec v
+\]
+
+is half the displacement.
+
+And:
+
+\[
+-\vec v
+\]
+
+reverses it.
+
+Conceptually:
+
+```text
+v     : ────→
+
+2v    : ────────→
+
+0.5v  : ──→
+
+-v    : ←────
+```
+
+So the scalar changes the **amount and potentially orientation sign** of the displacement.
+
+The exact quantitative ideas of vector magnitude and normalization come later in Parts 526–529.
+
+---
+
+# 504.12 Direction is not the same thing as vector
+
+Suppose:
+
+```text
+v1 = 1 metre east
+v2 = 100 metres east
+```
+
+They point in the same direction.
+
+But:
+
+\[
+\vec v_1\neq\vec v_2.
+\]
+
+Direction is only one property of a vector.
+
+A displacement also carries an amount.
+
+This is why saying:
+
+> a vector is a direction
+
+is incomplete.
+
+A better statement is:
+
+\[
+\boxed{
+\text{A geometric vector represents directed displacement.}
+}
+\]
+
+Later we can normalize a nonzero vector to isolate direction, but that is a separate operation.
+
+---
+
+# 504.13 A vector is also not a position
+
+Imagine a game character is at:
+
+```text
+position = 10 metres east of world origin
+```
+
+and its velocity corresponds to:
+
+```text
+movement direction = 10 metres per second east
+```
+
+Both might eventually be stored using three floating-point values.
+
+But mathematically they are not the same type of object.
+
+A position tells you **where something is**.
+
+A displacement tells you **how to move from one position to another**.
+
+Full treatment of this distinction is intentionally deferred to Parts 521–522:
+
+- affine points versus free vectors;
+- position vectors and why points are not mathematically vectors.
+
+For now retain:
+
+\[
+\boxed{
+\text{same storage shape does not imply same geometric meaning}
+}
+\]
+
+That principle becomes extremely important in engine math.
+
+---
+
+# 504.14 The arrow's tail is irrelevant for a free vector
+
+Suppose:
+
+```text
+arrow A:
+(near a tree) ───→
+
+arrow B:
+(inside a spaceship) ───→
+```
+
+If they represent equal displacements, then:
+
+\[
+\vec a=\vec b.
+\]
+
+This means a vector does **not** remember:
+
+```text
+where it started
+```
+
+unless we explicitly attach it to a location.
+
+A normal vector at a surface is sometimes conceptually attached to that surface point, for example, but the vector's algebraic identity is still the displacement/direction object.
+
+Later geometry makes distinctions between free, bound, tangent and other vector roles.
+
+---
+
+# 504.15 First implementation glimpse
+
+The mathematical object exists independently of implementation.
+
+But an engine needs bytes.
+
+A semantic API might eventually contain:
+
+```cpp
+struct Displacement3 {
+    float dx;
+    float dy;
+    float dz;
+};
+```
+
+Notice the names:
+
+```text
+dx
+dy
+dz
+```
+
+rather than merely
+
+```text
+x
+y
+z
+```
+
+They emphasize that these are changes along coordinate directions.
+
+For example:
+
+```cpp
+Displacement3 walkForward {
+    0.0f,
+    0.0f,
+    -5.0f
+};
+```
+
+But those numbers already assume we have chosen coordinate directions.
+
+That transition is precisely Part 505.
+
+The key architecture is:
+
+```text
+geometric displacement
+        ↓
+choose coordinate system
+        ↓
+obtain scalar components
+        ↓
+store components in memory
+```
+
+Never reverse that chain mentally into:
+
+```text
+three floats
+therefore vector
+```
+
+because three floats could represent almost anything.
+
+---
+
+# 504.16 Complexity
+
+A geometric concept does not inherently have computational complexity.
+
+But once represented in fixed-dimensional coordinates, operations like addition become constant-sized arithmetic.
+
+For 3D:
+
+\[
+\vec u+\vec v
+\]
+
+requires three component additions.
+
+So for fixed dimension 3:
+
+\[
+O(1).
+\]
+
+For a general \(n\)-dimensional representation:
+
+\[
+O(n).
+\]
+
+That distinction matters.
+
+"Vector addition is \(O(1)\)" is only true when the dimension is a compile-time/fixed constant such as 2, 3 or 4.
+
+---
+
+# 504.17 What goes wrong if you don't internalize this Part?
+
+You end up thinking of vectors merely as structs.
+
+Then engine code becomes:
+
+```cpp
+Vec3 thing;
+```
+
+and you stop asking:
+
+> What does `thing` mean?
+
+That leads to bugs such as:
+
+```cpp
+worldPosition += cameraPosition;
+```
+
+when the operation makes no geometric sense.
+
+Or:
+
+```cpp
+velocity = normalize(position);
+```
+
+because both happen to be `Vec3`.
+
+A good graphics engineer asks:
+
+```text
+What geometric object does this value represent?
+```
+
+before asking:
+
+```text
+What C++ type contains it?
+```
+
+---
+
+# PART 505 — VECTORS AS COORDINATE TUPLES
+
+Now we solve the computational problem.
+
+A geometric displacement is abstract.
+
+A computer cannot directly store:
+
+> move somewhat northeast and upward.
+
+It stores numbers.
+
+We therefore need a numerical representation.
+
+---
+
+# 505.1 What is a tuple?
+
+A **tuple** is an ordered collection of elements.
+
+For example:
+
+\[
+(3,5)
+\]
+
+is a 2-tuple.
+
+\[
+(3,5,7)
+\]
+
+is a 3-tuple.
+
+The word **ordered** matters.
+
+\[
+(3,5)\neq(5,3)
+\]
+
+in general.
+
+The first position and second position have different roles.
+
+This differs from an unordered mathematical set such as
+
+\[
+\{3,5\},
+\]
+
+where ordering is not the defining feature.
+
+So:
+
+\[
+\boxed{\text{tuple = ordered sequence of components}}
+\]
+
+---
+
+# 505.2 Components
+
+Consider:
+
+\[
+\vec v=(v_x,v_y,v_z).
+\]
+
+The individual scalars
+
+\[
+v_x,\quad v_y,\quad v_z
+\]
+
+are called **components** or **coordinates**.
+
+Each tells us how much of the displacement occurs along one chosen reference direction.
+
+For conventional Cartesian 3D coordinates:
+
+```text
+x component → amount along X direction
+y component → amount along Y direction
+z component → amount along Z direction
+```
+
+Suppose:
+
+\[
+\vec v=(3,2).
+\]
+
+This can mean:
+
+```text
+3 units along the chosen X direction
++
+2 units along the chosen Y direction
+```
+
+Geometrically:
+
+```text
+         ● destination
+        /|
+       / |
+      /  | 2
+     /   |
+    /    |
+   ●-----●
+      3
+```
+
+The diagonal displacement is the vector.
+
+The numbers \(3\) and \(2\) describe that vector relative to our chosen axes.
+
+---
+
+# 505.3 Why order matters
+
+Compare:
+
+\[
+(3,2)
+\]
+
+and
+
+\[
+(2,3).
+\]
+
+The first means:
+
+```text
+3 along X
+2 along Y
+```
+
+The second means:
+
+```text
+2 along X
+3 along Y
+```
+
+Those generally describe different displacements.
+
+So coordinate tuples are not bags of numbers.
+
+Component position carries semantic meaning.
+
+In memory:
+
+```text
+index 0 → X
+index 1 → Y
+index 2 → Z
+```
+
+must remain a stable contract.
+
+If some code interprets:
+
+```text
+[x, y, z]
+```
+
+while another interprets:
+
+```text
+[z, y, x]
+```
+
+you have changed the mathematical representation.
+
+---
+
+# 505.4 \(\mathbb R^2\) and \(\mathbb R^3\)
+
+Because graphics usually uses real scalars, a 2D coordinate tuple is often an element of:
+
+\[
+\mathbb R^2.
+\]
+
+Meaning:
+
+\[
+\mathbb R^2
+=
+\{(x,y)\mid x,y\in\mathbb R\}.
+\]
+
+Likewise:
+
+\[
+\mathbb R^3
+=
+\{(x,y,z)\mid x,y,z\in\mathbb R\}.
+\]
+
+And in general:
+
+\[
+\mathbb R^n
+=
+\{
+(x_1,x_2,\ldots,x_n)
+\mid
+x_i\in\mathbb R
+\}.
+\]
+
+The superscript does **not** mean exponentiation here.
+
+\[
+\mathbb R^3
+\]
+
+means roughly:
+
+> ordered triples of real numbers.
+
+---
+
+# 505.5 Coordinate-wise vector addition
+
+Suppose:
+
+\[
+\vec u=(u_x,u_y)
+\]
+
+and
+
+\[
+\vec v=(v_x,v_y).
+\]
+
+Geometrically, we know vector addition means composing displacements.
+
+If the first movement contributes \(u_x\) horizontally and the second contributes \(v_x\), then total horizontal displacement must be:
+
+\[
+u_x+v_x.
+\]
+
+Likewise vertically:
+
+\[
+u_y+v_y.
+\]
+
+Therefore:
+
+\[
+\boxed{
+(u_x,u_y)+(v_x,v_y)
+=
+(u_x+v_x,\;u_y+v_y)
+}
+\]
+
+This is why vector addition becomes **component-wise addition**.
+
+It is not merely a programming convention.
+
+It follows from the fact that each coordinate records displacement along one independent reference direction.
+
+---
+
+# 505.6 Worked addition
+
+Take:
+
+\[
+\vec u=(3,2)
+\]
+
+and:
+
+\[
+\vec v=(-1,4).
+\]
+
+Then:
+
+\[
+\vec u+\vec v
+=
+(3+(-1),\;2+4)
+\]
+
+so:
+
+\[
+\boxed{(2,6)}.
+\]
+
+Interpretation:
+
+First movement:
+
+```text
++3 X
++2 Y
+```
+
+Second:
+
+```text
+-1 X
++4 Y
+```
+
+Total:
+
+```text
++2 X
++6 Y
+```
+
+The machine operation is precisely the geometric bookkeeping.
+
+---
+
+# 505.7 Scalar multiplication in coordinates
+
+Suppose:
+
+\[
+\vec v=(x,y)
+\]
+
+and scalar:
+
+\[
+s\in\mathbb R.
+\]
+
+Scaling the entire displacement by \(s\) must scale every directional contribution by \(s\).
+
+Thus:
+
+\[
+\boxed{
+s(x,y)
+=
+(sx,sy)
+}
+\]
+
+and in 3D:
+
+\[
+s(x,y,z)
+=
+(sx,sy,sz).
+\]
+
+Example:
+
+\[
+3(2,-1)
+=
+(6,-3).
+\]
+
+Again, Part 519 later focuses specifically on this operation; we are establishing only the coordinate rule necessary here.
+
+---
+
+# 505.8 Negation in coordinates
+
+Set:
+
+\[
+s=-1.
+\]
+
+Then:
+
+\[
+-\vec v
+=
+(-x,-y,-z).
+\]
+
+Example:
+
+\[
+-(3,-2,5)
+=
+(-3,2,-5).
+\]
+
+Every component reverses.
+
+That corresponds geometrically to reversing the whole displacement.
+
+---
+
+# 505.9 The zero vector in coordinates
+
+The identity displacement from Part 504 becomes:
+
+\[
+\boxed{
+\vec0=(0,0,\ldots,0)
+}
+\]
+
+because it must contribute zero displacement along every coordinate direction.
+
+In 3D:
+
+\[
+\vec0=(0,0,0).
+\]
+
+Then:
+
+\[
+(x,y,z)+(0,0,0)
+=
+(x,y,z).
+\]
+
+So the coordinate representation matches the geometric identity.
+
+---
+
+# 505.10 Actual C++ representation
+
+A canonical 3D implementation might be:
+
+```cpp
+struct Vec3 {
+    float x {};
+    float y {};
+    float z {};
+};
+```
+
+Conceptual memory layout:
+
+```text
+Vec3
+address +0
+┌───────────────┐
+│ x : float     │ 4 bytes
+├───────────────┤
+│ y : float     │ 4 bytes
+├───────────────┤
+│ z : float     │ 4 bytes
+└───────────────┘
+```
+
+Logically this contains:
+
+\[
+3\times32=96\text{ bits}
+\]
+
+of payload when `float` is IEEE-754 binary32.
+
+A plain, naturally aligned `struct` of three `float`s is commonly 12 bytes on many C++ ABIs.
+
+But do **not** turn that into a universal law.
+
+Alignment annotations, SIMD wrappers, GPU layout rules, or library-specific types can produce a 16-byte physical representation.
+
+The dedicated packed-versus-aligned `Vec3` issue belongs later in Parts 593–594.
+
+For now:
+
+\[
+\boxed{
+\text{logical components and physical struct size are related but not identical concepts}
+}
+\]
+
+---
+
+# 505.11 Implementing arithmetic
+
+```cpp
+struct Vec3 {
+    float x {};
+    float y {};
+    float z {};
+
+    constexpr Vec3 operator+(const Vec3& rhs) const noexcept {
+        return {
+            x + rhs.x,
+            y + rhs.y,
+            z + rhs.z
+        };
+    }
+
+    constexpr Vec3 operator-() const noexcept {
+        return {
+            -x,
+            -y,
+            -z
+        };
+    }
+
+    constexpr Vec3 operator-(const Vec3& rhs) const noexcept {
+        return {
+            x - rhs.x,
+            y - rhs.y,
+            z - rhs.z
+        };
+    }
+
+    constexpr Vec3 operator*(float s) const noexcept {
+        return {
+            x * s,
+            y * s,
+            z * s
+        };
+    }
+};
+```
+
+Look at:
+
+```cpp
+x + rhs.x
+```
+
+Mathematically it is adding the two displacements' contributions along the first reference direction.
+
+Likewise:
+
+```cpp
+y + rhs.y
+```
+
+adds the contributions along the second.
+
+The code is not manipulating arbitrary struct fields.
+
+It is implementing the coordinate form of geometric addition.
+
+---
+
+# 505.12 A generic \(n\)-dimensional representation
+
+For dimensions not known semantically as X/Y/Z, we could use:
+
+```cpp
+template<std::size_t N>
+struct Vector {
+    std::array<float, N> component {};
+};
+```
+
+Then addition:
+
+```cpp
+template<std::size_t N>
+Vector<N> operator+(const Vector<N>& a,
+                    const Vector<N>& b) noexcept {
+    Vector<N> result;
+
+    for (std::size_t i = 0; i < N; ++i) {
+        result.component[i] =
+            a.component[i] + b.component[i];
+    }
+
+    return result;
+}
+```
+
+This has time cost:
+
+\[
+O(N).
+\]
+
+Memory:
+
+\[
+O(N).
+\]
+
+A fixed `Vec3` version executes only three additions, so practical compilers typically unroll it entirely.
+
+---
+
+# 505.13 Why dimensions must match
+
+What would this mean?
+
+\[
+(1,2)+(3,4,5)
+\]
+
+There is no component-to-component correspondence for the third coordinate.
+
+So ordinary vector addition is only defined between vectors in the same vector space/dimension.
+
+A type system can enforce this:
+
+```cpp
+Vector<2> a;
+Vector<3> b;
+
+// no matching operator+
+```
+
+This is more than convenience.
+
+It encodes a mathematical invariant:
+
+\[
+\boxed{
+\text{vector addition requires both operands to belong to the same space}
+}
+\]
+
+---
+
+# 505.14 Memory representation versus mathematical dimension
+
+Consider:
+
+```cpp
+struct Vec3 {
+    float x;
+    float y;
+    float z;
+};
+```
+
+Mathematically this models a point in the coordinate set:
+
+\[
+\mathbb R^3.
+\]
+
+Machine representation, however, contains only finitely many floating-point values.
+
+So the actual representable set is something like:
+
+\[
+F^3
+\]
+
+where \(F\) is the finite set of IEEE floating-point patterns—not literally \(\mathbb R^3\).
+
+This is the same mathematical-versus-machine distinction from Parts 501–502.
+
+Conceptually:
+
+```text
+ideal math
+   (x,y,z) ∈ ℝ³
+       ↓ approximation
+machine
+   3 × floating-point values
+```
+
+---
+
+# 505.15 Tuple does not automatically mean geometric vector
+
+This is a subtle but crucial software-engineering point.
+
+These all occupy three numbers:
+
+```cpp
+Vec3 position;
+Vec3 velocity;
+Vec3 color;
+Vec3 scale;
+Vec3 normal;
+```
+
+But they represent dramatically different things.
+
+Even:
+
+```cpp
+struct RGB {
+    float r;
+    float g;
+    float b;
+};
+```
+
+is an ordered triple.
+
+That does not automatically make it a geometric displacement.
+
+Similarly:
+
+```text
+temperature samples:
+(20.1, 21.3, 19.8)
+```
+
+is a 3-tuple.
+
+Tuple is representation structure.
+
+Vector is mathematical semantics.
+
+`\mathbb R^n` itself *can* be treated as a vector space under componentwise operations, which Part 507 will show, but not every tuple-valued application should semantically be treated as unrestricted geometric vector algebra.
+
+---
+
+# 505.16 Indexing
+
+A generalized vector might expose:
+
+```cpp
+float& operator[](std::size_t i);
+```
+
+so:
+
+```cpp
+v[0]
+v[1]
+v[2]
+```
+
+map to:
+
+```text
+v[0] → x
+v[1] → y
+v[2] → z
+```
+
+The implementation must define behavior for invalid indices.
+
+This is dangerous:
+
+```cpp
+v[7]
+```
+
+for a 3-component vector.
+
+Possible strategies include assertions, checked accessors, or relying on caller correctness in performance-sensitive code.
+
+A debug implementation might use:
+
+```cpp
+float& operator[](std::size_t i) noexcept {
+    assert(i < 3);
+    return (&x)[i];
+}
+```
+
+However, pointer arithmetic through separate struct members deserves C++ object-layout care. A safer generic representation is:
+
+```cpp
+std::array<float, 3> data;
+```
+
+when array-style indexing is a primary requirement.
+
+That illustrates an implementation lesson:
+
+\[
+\boxed{
+\text{mathematically equivalent representations can have different language-level safety properties}
+}
+\]
+
+---
+
+# 505.17 AoS versus SoA glimpse
+
+Suppose one million vectors are stored:
+
+```cpp
+std::vector<Vec3> positions;
+```
+
+Memory conceptually resembles:
+
+```text
+x0 y0 z0 | x1 y1 z1 | x2 y2 z2 | ...
+```
+
+That is an **Array of Structures** arrangement.
+
+Another representation could store:
+
+```text
+x0 x1 x2 ...
+y0 y1 y2 ...
+z0 z1 z2 ...
+```
+
+which is Structure of Arrays.
+
+You learned those memory-layout ideas earlier in Phase 4.
+
+For ordinary object transforms, `Vec3` AoS is convenient.
+
+For wide SIMD processing of only X components, SoA can be superior.
+
+The geometry has not changed.
+
+Only storage has.
+
+Again:
+
+\[
+\boxed{\text{mathematical representation }\neq\text{physical memory layout}}
+\]
+
+---
+
+# 505.18 Floating-point component failure cases
+
+A `Vec3<float>` can contain:
+
+\[
+(+\infty, 3, 4)
+\]
+
+or
+
+\[
+(\text{NaN},0,1)
+\]
+
+because each component is an IEEE-754 value.
+
+Then:
+
+```cpp
+a + b
+```
+
+may propagate NaNs.
+
+For example:
+
+\[
+\text{NaN}+4=\text{NaN}.
+\]
+
+So although mathematically vectors in \(\mathbb R^3\) have real components, the machine representation can enter states that do not correspond cleanly to ordinary real-valued geometry.
+
+Production math libraries often add debug checks such as:
+
+```cpp
+bool isFinite(Vec3 v) noexcept {
+    return std::isfinite(v.x)
+        && std::isfinite(v.y)
+        && std::isfinite(v.z);
+}
+```
+
+This can be extremely valuable during engine development.
+
+---
+
+# PART 506 — THE DISTINCTION BETWEEN A VECTOR AND ITS COORDINATES
+
+This is one of the most important conceptual lessons in the entire mathematics sequence.
+
+Many programmers unknowingly collapse these two things:
+
+\[
+\boxed{\vec v}
+\]
+
+and
+
+\[
+\boxed{(v_x,v_y,v_z)}.
+\]
+
+They are related.
+
+They are **not identical concepts**.
+
+---
+
+# 506.1 The core statement
+
+A geometric vector exists independently of whatever coordinate system we choose to describe it.
+
+The tuple:
+
+\[
+(v_x,v_y,v_z)
+\]
+
+is a **representation of that vector relative to chosen reference directions**.
+
+Formally, once basis notation is introduced later, we will write something like:
+
+\[
+[\vec v]_{\mathcal B}
+\]
+
+meaning:
+
+> coordinates of vector \(\vec v\) relative to basis \(\mathcal B\).
+
+The complete basis theory belongs to Parts 512–515.
+
+For this Part, you only need the minimal concept:
+
+A coordinate system chooses reference directions against which we measure the vector.
+
+---
+
+# 506.2 Physical analogy: an address versus a place
+
+Imagine a physical building.
+
+The building exists.
+
+Its GPS coordinates are a description of where the building is within one coordinate convention.
+
+If we change the geographic coordinate system, the numbers may change.
+
+The building did not move.
+
+Likewise:
+
+```text
+vector itself
+      ≠
+coordinates used to describe it
+```
+
+Changing representation does not necessarily change the geometric object.
+
+---
+
+# 506.3 A simple 2D example
+
+Suppose our reference directions are:
+
+```text
+X → east
+Y → north
+```
+
+Consider a displacement:
+
+```text
+1 metre east
+1 metre north
+```
+
+Its coordinates are:
+
+\[
+(1,1)
+\]
+
+in that coordinate system.
+
+Now imagine choosing a new first axis that points northeast.
+
+Call that direction \(X'\).
+
+The same physical displacement is directly along \(X'\).
+
+Its new coordinates could therefore look like:
+
+\[
+(\sqrt2,0)
+\]
+
+if the new reference directions are unit length and rotated appropriately.
+
+Compare:
+
+\[
+(1,1)
+\]
+
+versus
+
+\[
+(\sqrt2,0).
+\]
+
+Those tuples are different.
+
+But the physical displacement is the same.
+
+Therefore:
+
+\[
+\boxed{
+\vec v\text{ fixed}
+\quad\not\Rightarrow\quad
+\text{coordinates fixed}
+}
+\]
+
+---
+
+# 506.4 Let's verify that example geometrically
+
+Original vector has horizontal displacement:
+
+\[
+1
+\]
+
+and vertical displacement:
+
+\[
+1.
+\]
+
+Its length will later be derived as:
+
+\[
+\sqrt{1^2+1^2}
+=
+\sqrt2.
+\]
+
+It points at \(45^\circ\).
+
+If the new coordinate system's first axis points exactly at \(45^\circ\), then the entire displacement lies along that axis.
+
+Therefore its contribution along the new second axis is zero.
+
+So relative to the rotated coordinates:
+
+\[
+(\sqrt2,0).
+\]
+
+Nothing happened to the vector.
+
+Only our description changed.
+
+---
+
+# 506.5 Coordinates depend on reference directions
+
+This immediately explains why a tuple such as:
+
+\[
+(1,0,0)
+\]
+
+does not have universal geometric meaning.
+
+What does the first coordinate direction represent?
+
+It might be:
+
+```text
+world east
+```
+
+or:
+
+```text
+camera right
+```
+
+or:
+
+```text
+object-local right
+```
+
+or:
+
+```text
+tangent direction on a surface
+```
+
+Thus:
+
+\[
+(1,0,0)
+\]
+
+could refer to different physical directions depending on the coordinate frame.
+
+This is why graphics spends enormous effort tracking spaces.
+
+Later you will repeatedly see:
+
+```text
+object space
+world space
+view space
+tangent space
+clip space
+```
+
+The bytes:
+
+```text
+1.0f, 0.0f, 0.0f
+```
+
+do not tell you which one you have.
+
+---
+
+# 506.6 Same coordinates do not imply same geometric vector
+
+Suppose:
+
+\[
+\vec a=(1,0,0)_{\text{world}}
+\]
+
+and:
+
+\[
+\vec b=(1,0,0)_{\text{camera}}.
+\]
+
+Numerically:
+
+```text
+a bytes: 1 0 0
+b bytes: 1 0 0
+```
+
+Yet if the camera is rotated, camera-right may not point world-right.
+
+Therefore:
+
+\[
+\vec a\neq\vec b
+\]
+
+geometrically despite identical numbers.
+
+This is a huge source of graphics bugs.
+
+---
+
+# 506.7 Conversely, same vector can have different coordinates
+
+Suppose one physical world-space direction is being described.
+
+World coordinates:
+
+\[
+(1,1,0).
+\]
+
+Camera rotates.
+
+In camera coordinates, perhaps the same vector becomes:
+
+\[
+(\sqrt2,0,0).
+\]
+
+So:
+
+```text
+different numbers
+same geometric vector
+```
+
+and the previous section showed:
+
+```text
+same numbers
+different geometric vectors
+```
+
+This destroys the naive identification:
+
+\[
+\vec v=(x,y,z)
+\]
+
+as a universal statement.
+
+A more accurate idea is:
+
+\[
+\boxed{
+\vec v
+\;\xrightarrow{\text{choose frame/basis}}\;
+(v_1,v_2,v_3)
+}
+\]
+
+---
+
+# 506.8 Units also affect coordinates
+
+Suppose a physical displacement is:
+
+```text
+one metre east
+```
+
+If coordinates are expressed in metres:
+
+\[
+(1,0).
+\]
+
+If expressed in centimetres:
+
+\[
+(100,0).
+\]
+
+The physical vector did not become 100 times longer.
+
+The numerical representation changed because the measurement unit changed.
+
+Therefore components depend on:
+
+- reference directions;
+- scale/unit conventions.
+
+This is another reason numerical tuples should never be interpreted without metadata or conventions.
+
+---
+
+# 506.9 Mathematical object versus encoding
+
+Think of three layers:
+
+```text
+LAYER 1
+Geometric object
+v
+
+        ↓ choose coordinate frame
+
+LAYER 2
+Coordinate representation
+(vx, vy, vz)
+
+        ↓ choose machine scalar format/layout
+
+LAYER 3
+Bytes
+float x
+float y
+float z
+```
+
+Each transition throws in additional conventions.
+
+Layer 1 does not care whether your engine uses:
+
+```cpp
+float
+```
+
+or:
+
+```cpp
+double
+```
+
+Layer 2 does not necessarily care whether the struct is 12 or 16 bytes.
+
+Layer 3 absolutely does.
+
+A strong engine programmer keeps these layers mentally distinct.
+
+---
+
+# 506.10 Why this matters when debugging transformations
+
+Suppose a normal points correctly in model space but looks wrong after rendering.
+
+A novice may inspect:
+
+```cpp
+normal = {0, 1, 0};
+```
+
+and think:
+
+> the vector looks correct.
+
+But `0,1,0` is only meaningful relative to a space.
+
+The real debugging questions are:
+
+```text
+Which space is this expressed in?
+
+Which space does the consumer expect?
+
+What transformation occurred between them?
+```
+
+That debugging discipline begins here.
+
+---
+
+# 506.11 The same C++ type hides coordinate-space semantics
+
+Typical engine code often uses:
+
+```cpp
+using Vec3 = ...;
+```
+
+for everything:
+
+```cpp
+Vec3 localPosition;
+Vec3 worldPosition;
+Vec3 viewDirection;
+Vec3 tangentNormal;
+Vec3 worldNormal;
+```
+
+The compiler sees all five as identical types.
+
+Therefore this compiles:
+
+```cpp
+worldNormal += localPosition;
+```
+
+even though the operation is geometrically nonsensical.
+
+This is a **type-system weakness**, not mathematical legitimacy.
+
+---
+
+# 506.12 Strong coordinate-space types
+
+A stricter math API could encode space:
+
+```cpp
+struct LocalSpace {};
+struct WorldSpace {};
+struct ViewSpace {};
+
+template<typename Space>
+struct Vec3 {
+    float x;
+    float y;
+    float z;
+};
+
+using LocalVec3 = Vec3<LocalSpace>;
+using WorldVec3 = Vec3<WorldSpace>;
+using ViewVec3  = Vec3<ViewSpace>;
+```
+
+Then:
+
+```cpp
+LocalVec3  a;
+WorldVec3  b;
+```
+
+cannot automatically be added unless an explicit conversion/transformation exists.
+
+This moves an important invariant:
+
+```text
+"These vectors must belong to the same coordinate space"
+```
+
+from programmer memory into the type system.
+
+That is excellent API design when complexity permits.
+
+---
+
+# 506.13 A transformation changes coordinates according to a rule
+
+Suppose we have coordinates:
+
+\[
+[\vec v]_A.
+\]
+
+We want coordinates of the same vector in another coordinate system:
+
+\[
+[\vec v]_B.
+\]
+
+Some mapping must convert between them:
+
+\[
+[\vec v]_A
+\longrightarrow
+[\vec v]_B.
+\]
+
+Later, matrices will perform this job:
+
+\[
+[\vec v]_B=M[\vec v]_A.
+\]
+
+But matrix transformation is Phase 7.
+
+At this stage, understand only:
+
+\[
+\boxed{
+\text{coordinate conversion is a representation change governed by the relation between coordinate frames}
+}
+\]
+
+Do not yet memorize a matrix formula.
+
+---
+
+# 506.14 Active versus passive intuition
+
+There are two very different situations that often produce similar-looking numbers.
+
+### Situation A — the vector actually rotates
+
+The coordinate system stays fixed.
+
+The physical geometric vector changes.
+
+### Situation B — the coordinate system rotates
+
+The physical vector stays fixed.
+
+Its coordinates change.
+
+Those are conceptually different operations.
+
+Later this becomes the distinction between active and passive transformations in Part 654.
+
+For now:
+
+```text
+rotate object
+≠
+rotate measuring axes
+```
+
+even though related equations can appear.
+
+This distinction prevents a lot of sign/order confusion.
+
+---
+
+# 506.15 A concrete coordinate-space bug
+
+Imagine:
+
+```cpp
+Vec3 lightDirectionWorld;
+Vec3 normalTangent;
+```
+
+Then somebody writes:
+
+```cpp
+float lighting = dot(lightDirectionWorld, normalTangent);
+```
+
+The code compiles.
+
+The arithmetic runs.
+
+The GPU happily calculates a number.
+
+But geometrically it is meaningless because the two coordinate representations refer to different bases.
+
+The correct operation requires transforming one into the other's coordinate space first.
+
+Later dot products are Parts 534–536.
+
+The bug is worth seeing now because it reveals the importance of Part 506:
+
+\[
+\boxed{
+\text{coordinate-compatible arithmetic is a semantic precondition}
+}
+\]
+
+Hardware cannot infer this from three floats.
+
+---
+
+# 506.16 Representation does not determine semantics
+
+Consider these identical bytes:
+
+```text
+3F800000 00000000 00000000
+```
+
+Interpreted as three `float`s:
+
+```text
+1.0 0.0 0.0
+```
+
+They might represent:
+
+```text
+local direction
+world direction
+RGB red
+scale factor
+angular axis
+normal
+position
+velocity
+```
+
+The bits contain numbers.
+
+The surrounding program supplies meaning.
+
+This general principle extends far beyond vectors:
+
+\[
+\boxed{
+\text{data representation is not equivalent to domain semantics}
+}
+\]
+
+---
+
+# 506.17 API design consequence
+
+Instead of:
+
+```cpp
+void setNormal(Vec3 n);
+```
+
+an engine might conceptually prefer:
+
+```cpp
+void setWorldNormal(WorldNormal n);
+```
+
+Instead of:
+
+```cpp
+Vec3 transform(Vec3 v);
+```
+
+a stronger API could express:
+
+```cpp
+WorldVector transform(LocalVector v,
+                      LocalToWorld transform);
+```
+
+The more mathematical meaning your types carry, the harder it becomes to accidentally combine incompatible data.
+
+The trade-off is more type complexity and conversion machinery.
+
+Production engines choose different points along that spectrum.
+
+---
+
+# 506.18 Debugging checklist for a suspicious vector
+
+When a vector-looking value appears wrong, a useful reasoning sequence is:
+
+```text
+What geometric quantity does this represent?
+        ↓
+Which coordinate space/frame?
+        ↓
+Which units?
+        ↓
+Is it a point, displacement, direction, normal, etc.?
+        ↓
+Which operation produced it?
+        ↓
+Did that operation preserve/change space?
+        ↓
+Does the consumer expect the same representation?
+```
+
+Notice we are debugging **meaning before numbers**.
+
+That is the habit Part 506 is intended to establish.
+
+---
+
+# PART 507 — VECTOR SPACES AND THEIR AXIOMS
+
+Parts 504–506 were heavily geometric.
+
+Now we make a surprising leap.
+
+Mathematics asks:
+
+> Which properties of geometric vectors actually mattered?
+
+If we identify those properties, perhaps many completely different objects obey the same rules.
+
+Then every theorem proved using only those rules would apply to **all** such objects.
+
+That abstraction is the **vector space**.
+
+This is one of the conceptual turning points of linear algebra.
+
+---
+
+# 507.1 Vector no longer means arrow
+
+After this Part, the word **vector** becomes broader than geometric arrows.
+
+Examples of things that can form vector spaces include:
+
+\[
+(x_1,\ldots,x_n)
+\]
+
+ordinary coordinate tuples,
+
+but also:
+
+\[
+\text{polynomials}
+\]
+
+\[
+\text{matrices}
+\]
+
+\[
+\text{functions}
+\]
+
+\[
+\text{signals}
+\]
+
+under appropriate operations.
+
+This can initially feel strange.
+
+How could a polynomial be a vector?
+
+Because in modern linear algebra:
+
+\[
+\boxed{
+\text{an object is a vector when it belongs to a vector space}
+}
+\]
+
+and the vector-space axioms define what structural behavior matters.
+
+The arrow is one important example—not the definition of all vectors.
+
+---
+
+# 507.2 What ingredients do we need?
+
+We need:
+
+\[
+V
+\]
+
+a set of objects we intend to call vectors.
+
+We also need a scalar field:
+
+\[
+F.
+\]
+
+From Part 501, a field provides scalars supporting ordinary algebra.
+
+In graphics we usually have:
+
+\[
+F=\mathbb R.
+\]
+
+We then define two operations.
+
+Vector addition:
+
+\[
++:V\times V\rightarrow V.
+\]
+
+Read this as:
+
+> give addition two vectors from \(V\), and it produces another vector in \(V\).
+
+And scalar multiplication:
+
+\[
+\cdot:F\times V\rightarrow V.
+\]
+
+Read:
+
+> give a scalar from \(F\) and vector from \(V\), and it produces another vector in \(V\).
+
+That is the machinery.
+
+But arbitrary operations are not enough.
+
+They must obey particular laws.
+
+---
+
+# 507.3 Formal definition of a vector space
+
+A vector space \(V\) over field \(F\) is a set equipped with vector addition and scalar multiplication satisfying the following laws for all:
+
+\[
+\vec u,\vec v,\vec w\in V
+\]
+
+and:
+
+\[
+a,b\in F.
+\]
+
+| Law | Equation | Meaning |
+|---|---|---|
+| Addition commutativity | \(\vec u+\vec v=\vec v+\vec u\) | order of adding displacements does not matter |
+| Addition associativity | \((\vec u+\vec v)+\vec w=\vec u+(\vec v+\vec w)\) | grouping does not matter |
+| Additive identity | \(\exists\vec0:\vec v+\vec0=\vec v\) | there is a zero vector |
+| Additive inverse | \(\forall\vec v,\exists-\vec v:\vec v+(-\vec v)=\vec0\) | every vector can be cancelled |
+| Scalar identity | \(1\vec v=\vec v\) | multiplying by field identity changes nothing |
+| Scalar compatibility | \(a(b\vec v)=(ab)\vec v\) | nested scaling agrees with scalar multiplication |
+| Scalar distributes over vector addition | \(a(\vec u+\vec v)=a\vec u+a\vec v\) | scaling a sum equals summing scaled vectors |
+| Vector distributes over scalar addition | \((a+b)\vec v=a\vec v+b\vec v\) | adding scale factors behaves consistently |
+
+Closure is built into the operation signatures:
+
+\[
+V\times V\to V
+\]
+
+and:
+
+\[
+F\times V\to V.
+\]
+
+Some textbooks list closure separately and therefore present ten conditions rather than eight axioms plus closure.
+
+The mathematics is the same.
+
+---
+
+# 507.4 Why are these axioms here?
+
+They are not random bureaucracy.
+
+They capture the algebraic behavior we observed from displacement.
+
+For geometric displacements:
+
+\[
+\vec u+\vec v
+\]
+
+must itself be another displacement.
+
+Reordering two displacements gives the same resulting displacement.
+
+There is a "do nothing" displacement.
+
+Every displacement can be reversed.
+
+Scaling twice by \(b\) then \(a\) should be equivalent to scaling once by \(ab\).
+
+And scaling a composed displacement should be equivalent to scaling the pieces.
+
+The axioms preserve these intuitions while removing dependency on geometry.
+
+That is abstraction.
+
+---
+
+# 507.5 Closure
+
+Suppose:
+
+\[
+\vec u,\vec v\in V.
+\]
+
+Then:
+
+\[
+\vec u+\vec v
+\]
+
+must also belong to \(V\).
+
+Similarly if:
+
+\[
+a\in F
+\]
+
+and:
+
+\[
+\vec v\in V,
+\]
+
+then:
+
+\[
+a\vec v\in V.
+\]
+
+Why?
+
+Because otherwise the operation can throw you outside the mathematical object you're trying to study.
+
+For example, consider only positive real numbers:
+
+\[
+V=\{x\in\mathbb R:x>0\}.
+\]
+
+Take:
+
+\[
+v=2.
+\]
+
+Scale by:
+
+\[
+a=-1.
+\]
+
+Then:
+
+\[
+av=-2.
+\]
+
+But:
+
+\[
+-2\notin V.
+\]
+
+Therefore positive real numbers are not a real vector space under ordinary scalar multiplication.
+
+Closure fails.
+
+---
+
+# 507.6 Additive commutativity
+
+\[
+\vec u+\vec v=\vec v+\vec u.
+\]
+
+For coordinate tuples:
+
+\[
+(u_1,u_2)+(v_1,v_2)
+=
+(u_1+v_1,u_2+v_2).
+\]
+
+Because real addition is commutative:
+
+\[
+u_1+v_1=v_1+u_1
+\]
+
+and:
+
+\[
+u_2+v_2=v_2+u_2.
+\]
+
+Therefore:
+
+\[
+\vec u+\vec v=\vec v+\vec u.
+\]
+
+The vector property is inherited from scalar arithmetic.
+
+---
+
+# 507.7 Additive associativity
+
+For:
+
+\[
+\vec u=(u_1,\ldots,u_n),
+\]
+
+\[
+\vec v=(v_1,\ldots,v_n),
+\]
+
+\[
+\vec w=(w_1,\ldots,w_n),
+\]
+
+we compare:
+
+\[
+(\vec u+\vec v)+\vec w
+\]
+
+with:
+
+\[
+\vec u+(\vec v+\vec w).
+\]
+
+Each component reduces to:
+
+\[
+(u_i+v_i)+w_i
+\]
+
+versus:
+
+\[
+u_i+(v_i+w_i).
+\]
+
+Real-number associativity makes them equal mathematically.
+
+Therefore coordinate vector addition is associative.
+
+And here we encounter machine reality again:
+
+IEEE floating-point addition is not perfectly associative.
+
+Therefore a `Vec3<float>` implementation is only an **approximation of real vector-space arithmetic**.
+
+Mathematical:
+
+\[
+(\vec u+\vec v)+\vec w
+=
+\vec u+(\vec v+\vec w).
+\]
+
+Machine:
+
+```cpp
+(u + v) + w
+```
+
+can differ slightly from:
+
+```cpp
+u + (v + w);
+```
+
+That distinction matters later for deterministic physics, parallel reductions and numerical algorithms.
+
+---
+
+# 507.8 Additive identity
+
+There must exist:
+
+\[
+\vec0\in V
+\]
+
+such that:
+
+\[
+\vec v+\vec0=\vec v
+\]
+
+for every:
+
+\[
+\vec v\in V.
+\]
+
+For:
+
+\[
+V=\mathbb R^3,
+\]
+
+the zero vector is:
+
+\[
+(0,0,0).
+\]
+
+Because:
+
+\[
+(x,y,z)+(0,0,0)
+=
+(x,y,z).
+\]
+
+---
+
+# 507.9 Additive inverse
+
+For each:
+
+\[
+\vec v\in V
+\]
+
+there must exist:
+
+\[
+-\vec v
+\]
+
+with:
+
+\[
+\vec v+(-\vec v)=\vec0.
+\]
+
+In \(\mathbb R^3\):
+
+\[
+-(x,y,z)
+=
+(-x,-y,-z).
+\]
+
+Then:
+
+\[
+(x,y,z)+(-x,-y,-z)
+=
+(0,0,0).
+\]
+
+Again, this requirement eliminates many intuitive-looking sets from being vector spaces.
+
+---
+
+# 507.10 Unit-length vectors are NOT a vector space
+
+Suppose:
+
+\[
+U=
+\{
+\vec v\in\mathbb R^3:
+\|\vec v\|=1
+\}.
+\]
+
+You have not formally studied norms yet, but conceptually this means vectors of length one.
+
+Take:
+
+\[
+\vec v\in U.
+\]
+
+Multiply by:
+
+\[
+2.
+\]
+
+Then:
+
+\[
+2\vec v
+\]
+
+has length two, not one.
+
+Therefore:
+
+\[
+2\vec v\notin U.
+\]
+
+Closure under scalar multiplication fails.
+
+Also the zero vector is not unit length.
+
+So unit directions are not a vector space.
+
+This becomes important later when normals and directions are normalized.
+
+---
+
+# 507.11 Scalar identity
+
+The field \(F\) has multiplicative identity:
+
+\[
+1.
+\]
+
+Vector-space arithmetic requires:
+
+\[
+\boxed{
+1\vec v=\vec v
+}
+\]
+
+because scaling by one should leave the vector unchanged.
+
+For coordinates:
+
+\[
+1(x,y,z)
+=
+(1x,1y,1z)
+=
+(x,y,z).
+\]
+
+---
+
+# 507.12 Compatibility of scalar multiplication
+
+We require:
+
+\[
+\boxed{
+a(b\vec v)
+=
+(ab)\vec v
+}
+\]
+
+Meaning:
+
+```text
+scale by b
+then scale by a
+```
+
+must be equivalent to:
+
+```text
+scale once by a × b
+```
+
+Example:
+
+\[
+2(3\vec v)=6\vec v.
+\]
+
+Without this law, scalar multiplication would not behave like coherent scaling.
+
+---
+
+# 507.13 Distributivity over vector addition
+
+We require:
+
+\[
+\boxed{
+a(\vec u+\vec v)
+=
+a\vec u+a\vec v
+}
+\]
+
+Let's verify in 2D.
+
+Let:
+
+\[
+\vec u=(u_x,u_y)
+\]
+
+and:
+
+\[
+\vec v=(v_x,v_y).
+\]
+
+Left side:
+
+\[
+a(\vec u+\vec v)
+\]
+
+becomes:
+
+\[
+a(u_x+v_x,\;u_y+v_y)
+\]
+
+therefore:
+
+\[
+(a(u_x+v_x),\;a(u_y+v_y)).
+\]
+
+Using scalar distributivity:
+
+\[
+(au_x+av_x,\;au_y+av_y).
+\]
+
+Right side:
+
+\[
+a\vec u+a\vec v
+\]
+
+equals:
+
+\[
+(au_x,au_y)+(av_x,av_y)
+\]
+
+which becomes:
+
+\[
+(au_x+av_x,\;au_y+av_y).
+\]
+
+Both match.
+
+So the vector-space law follows from field distributivity.
+
+---
+
+# 507.14 Distributivity over scalar addition
+
+We also require:
+
+\[
+\boxed{
+(a+b)\vec v
+=
+a\vec v+b\vec v
+}
+\]
+
+Example:
+
+\[
+(2+3)\vec v=5\vec v.
+\]
+
+Other side:
+
+\[
+2\vec v+3\vec v.
+\]
+
+Both represent five copies' worth of scaling.
+
+For coordinates:
+
+\[
+(a+b)(x,y)
+\]
+
+equals:
+
+\[
+((a+b)x,(a+b)y).
+\]
+
+Scalar distributivity gives:
+
+\[
+(ax+bx,ay+by).
+\]
+
+And:
+
+\[
+a(x,y)+b(x,y)
+\]
+
+gives exactly the same result.
+
+---
+
+# 507.15 Why these axioms are powerful
+
+Suppose you prove some theorem using only the eight vector-space laws.
+
+Then the theorem is not merely true for arrows in 3D.
+
+It is automatically true for every vector space.
+
+That might include:
+
+```text
+R² coordinate vectors
+R³ coordinate vectors
+Rⁿ vectors
+polynomials
+matrices
+functions
+signals
+```
+
+This is why abstraction is so powerful.
+
+You prove structure once.
+
+Then reuse the result everywhere the structure exists.
+
+---
+
+# 507.16 Example 1 — \(\mathbb R^n\)
+
+The most familiar example is:
+
+\[
+V=\mathbb R^n.
+\]
+
+Vectors:
+
+\[
+(x_1,\ldots,x_n).
+\]
+
+Addition:
+
+\[
+(x_1,\ldots,x_n)
++
+(y_1,\ldots,y_n)
+=
+(x_1+y_1,\ldots,x_n+y_n).
+\]
+
+Scalar multiplication:
+
+\[
+a(x_1,\ldots,x_n)
+=
+(ax_1,\ldots,ax_n).
+\]
+
+All vector-space axioms follow from the corresponding field properties of real numbers.
+
+Thus:
+
+\[
+\boxed{
+\mathbb R^n
+\text{ is a vector space over }\mathbb R.
+}
+\]
+
+---
+
+# 507.17 Example 2 — complex coordinates as a real vector space
+
+Consider:
+
+\[
+\mathbb C.
+\]
+
+You already know \(\mathbb C\) is itself a field.
+
+So \(\mathbb C\) is certainly a vector space over \(\mathbb C\).
+
+But interestingly, it can also be considered a vector space over \(\mathbb R\).
+
+A complex number:
+
+\[
+a+bi
+\]
+
+has two real degrees of freedom.
+
+Over the real scalars, it behaves analogously to a two-dimensional vector space.
+
+This foreshadows an important idea:
+
+\[
+\boxed{
+\text{dimension depends partly on which scalar field you choose}
+}
+\]
+
+Dimension is formally Part 513, so we will not develop this further yet.
+
+---
+
+# 507.18 Example 3 — polynomials
+
+Consider all real polynomials such as:
+
+\[
+p(x)=2+3x-x^2.
+\]
+
+Another:
+
+\[
+q(x)=5-7x+4x^2.
+\]
+
+We can add them:
+
+\[
+(p+q)(x)
+=
+7-4x+3x^2.
+\]
+
+We can scale them:
+
+\[
+2p(x)
+=
+4+6x-2x^2.
+\]
+
+There is a zero polynomial:
+
+\[
+0.
+\]
+
+Every polynomial has an additive inverse:
+
+\[
+-p(x).
+\]
+
+All vector-space laws hold.
+
+Therefore polynomial sets of appropriate form can be vector spaces.
+
+Notice:
+
+```text
+no arrow
+no X/Y/Z spatial displacement
+```
+
+yet mathematically they are vectors.
+
+This is where "vector" stops meaning merely geometric arrow.
+
+---
+
+# 507.19 Example 4 — matrices
+
+Take all real \(2\times2\) matrices.
+
+Example:
+
+\[
+A=
+\begin{bmatrix}
+1&2\\
+3&4
+\end{bmatrix}.
+\]
+
+We can add matrices component-wise.
+
+We can multiply every entry by a real scalar.
+
+There is a zero matrix.
+
+Every matrix has an additive inverse.
+
+Therefore:
+
+\[
+M_{2\times2}(\mathbb R)
+\]
+
+forms a vector space over \(\mathbb R\).
+
+Again:
+
+\[
+\boxed{\text{matrices themselves can be vectors in an abstract vector space}}
+\]
+
+even though later matrices will also act as transformations between vector spaces.
+
+Context determines the role.
+
+---
+
+# 507.20 Example 5 — functions
+
+Consider real-valued functions:
+
+\[
+f:\mathbb R\rightarrow\mathbb R.
+\]
+
+Define addition pointwise:
+
+\[
+(f+g)(x)=f(x)+g(x).
+\]
+
+Define scalar multiplication:
+
+\[
+(af)(x)=a\,f(x).
+\]
+
+The zero vector is the zero function:
+
+\[
+0(x)=0.
+\]
+
+The inverse of \(f\) is:
+
+\[
+(-f)(x)=-f(x).
+\]
+
+Under suitable choice of function set, these form a vector space.
+
+So one "vector" can be an entire function.
+
+This becomes important in advanced graphics and numerical methods because signals, basis functions and approximations are frequently treated vector-space-theoretically.
+
+---
+
+# 507.21 Non-example — points
+
+Geometric points do not naturally form the same vector space as displacements.
+
+Why?
+
+Ask:
+
+> What is twice the location Paris?
+
+Or:
+
+> What is New York + Tokyo?
+
+Those operations do not naturally have the same geometric meaning as doubling or adding displacements.
+
+You can assign coordinates to positions and numerically manipulate them, but that does not mean the underlying geometric points naturally possess vector-space structure.
+
+This leads later to **affine spaces**, Parts 521–522 and 571.
+
+The important preview:
+
+```text
+vector + vector      → vector
+point + vector       → point
+point - point        → vector
+point + point        → generally not geometrically meaningful
+```
+
+Do not treat this as the full affine-space lesson yet, but remember the distinction.
+
+---
+
+# 507.22 Non-example — positive RGB light values
+
+Suppose physically valid radiance values must satisfy:
+
+\[
+r,g,b\ge0.
+\]
+
+Take:
+
+\[
+(1,0,0).
+\]
+
+Multiply by:
+
+\[
+-1.
+\]
+
+You obtain:
+
+\[
+(-1,0,0),
+\]
+
+which is outside the physical nonnegative domain.
+
+Therefore the restricted set of physically valid nonnegative RGB values is not a vector space over \(\mathbb R\).
+
+Yet the surrounding unrestricted numerical space:
+
+\[
+\mathbb R^3
+\]
+
+is.
+
+This distinction appears everywhere:
+
+\[
+\boxed{
+\text{an underlying vector space may contain a physically valid subset that is not itself a vector space}
+}
+\]
+
+---
+
+# 507.23 Deriving facts from the axioms
+
+Now comes the important part.
+
+Once we have axioms, we do **not** need to declare every familiar property separately.
+
+We can prove new ones.
+
+This is what it means to own the structure rather than memorize a list.
+
+---
+
+# 507.24 Proof that \(0\vec v=\vec0\)
+
+There are two different zeroes here.
+
+\[
+0
+\]
+
+on the left is the scalar zero from the field.
+
+\[
+\vec0
+\]
+
+on the right is the vector zero.
+
+We want to prove:
+
+\[
+\boxed{
+0\vec v=\vec0.
+}
+\]
+
+Start with:
+
+\[
+0=0+0.
+\]
+
+Multiply \(\vec v\):
+
+\[
+0\vec v=(0+0)\vec v.
+\]
+
+Using distributivity:
+
+\[
+0\vec v
+=
+0\vec v+0\vec v.
+\]
+
+Now add the additive inverse of \(0\vec v\) to both sides.
+
+Left:
+
+\[
+0\vec v-(0\vec v)=\vec0.
+\]
+
+Right:
+
+\[
+0\vec v+0\vec v-(0\vec v)
+=
+0\vec v.
+\]
+
+Therefore:
+
+\[
+\boxed{
+0\vec v=\vec0.
+}
+\]
+
+This was **derived**.
+
+It did not need to be an axiom.
+
+---
+
+# 507.25 Proof that \(a\vec0=\vec0\)
+
+Now take the vector zero.
+
+Because:
+
+\[
+\vec0+\vec0=\vec0,
+\]
+
+multiply by scalar \(a\):
+
+\[
+a\vec0
+=
+a(\vec0+\vec0).
+\]
+
+Distributivity gives:
+
+\[
+a\vec0
+=
+a\vec0+a\vec0.
+\]
+
+Subtract \(a\vec0\) from both sides:
+
+\[
+\boxed{
+a\vec0=\vec0.
+}
+\]
+
+Again, derived from the axioms.
+
+---
+
+# 507.26 Proof that \((-1)\vec v=-\vec v\)
+
+We know:
+
+\[
+1+(-1)=0.
+\]
+
+Multiply \(\vec v\):
+
+\[
+(1+(-1))\vec v
+=
+0\vec v.
+\]
+
+Distribute:
+
+\[
+1\vec v+(-1)\vec v
+=
+\vec0.
+\]
+
+Using scalar identity:
+
+\[
+\vec v+(-1)\vec v
+=
+\vec0.
+\]
+
+But \(-\vec v\) is defined as the unique additive inverse satisfying:
+
+\[
+\vec v+(-\vec v)=\vec0.
+\]
+
+Therefore:
+
+\[
+\boxed{
+(-1)\vec v=-\vec v.
+}
+\]
+
+So even vector negation follows naturally from scalar multiplication.
+
+---
+
+# 507.27 Why the zero vector is unique
+
+Suppose two zero vectors existed:
+
+\[
+\vec0_A
+\]
+
+and:
+
+\[
+\vec0_B.
+\]
+
+Because \(\vec0_A\) is an additive identity:
+
+\[
+\vec0_A+\vec0_B=\vec0_B.
+\]
+
+Because \(\vec0_B\) is also an additive identity:
+
+\[
+\vec0_A+\vec0_B=\vec0_A.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\vec0_A=\vec0_B.
+}
+\]
+
+So a vector space cannot have two distinct additive identities.
+
+The zero vector is unique.
+
+---
+
+# 507.28 Why additive inverses are unique
+
+Suppose both:
+
+\[
+\vec a
+\]
+
+and:
+
+\[
+\vec b
+\]
+
+are additive inverses of \(\vec v\).
+
+Thus:
+
+\[
+\vec v+\vec a=\vec0
+\]
+
+and:
+
+\[
+\vec v+\vec b=\vec0.
+\]
+
+Start with:
+
+\[
+\vec a.
+\]
+
+Insert the identity:
+
+\[
+\vec a
+=
+\vec a+\vec0.
+\]
+
+Since:
+
+\[
+\vec v+\vec b=\vec0,
+\]
+
+replace \(\vec0\):
+
+\[
+\vec a
+=
+\vec a+(\vec v+\vec b).
+\]
+
+Associativity:
+
+\[
+=
+(\vec a+\vec v)+\vec b.
+\]
+
+Commutativity:
+
+\[
+=
+(\vec v+\vec a)+\vec b.
+\]
+
+But:
+
+\[
+\vec v+\vec a=\vec0.
+\]
+
+So:
+
+\[
+=
+\vec0+\vec b
+=
+\vec b.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\vec a=\vec b.
+}
+\]
+
+Every vector has exactly one additive inverse.
+
+---
+
+# 507.29 If \(a\vec v=\vec0\), what can we infer?
+
+Suppose:
+
+\[
+a\vec v=\vec0.
+\]
+
+If:
+
+\[
+a=0,
+\]
+
+this is automatically true.
+
+But suppose:
+
+\[
+a\neq0.
+\]
+
+Because \(F\) is a field, \(a\) has inverse:
+
+\[
+a^{-1}.
+\]
+
+Multiply both sides by \(a^{-1}\):
+
+\[
+a^{-1}(a\vec v)
+=
+a^{-1}\vec0.
+\]
+
+Compatibility gives:
+
+\[
+(a^{-1}a)\vec v
+=
+\vec0.
+\]
+
+Since:
+
+\[
+a^{-1}a=1,
+\]
+
+we get:
+
+\[
+1\vec v=\vec0.
+\]
+
+Therefore:
+
+\[
+\vec v=\vec0.
+\]
+
+Thus:
+
+\[
+\boxed{
+a\vec v=\vec0
+\quad\Rightarrow\quad
+a=0\text{ or }\vec v=\vec0.
+}
+\]
+
+That resembles the zero-product property of field scalars and is extremely useful algebraically.
+
+---
+
+# 507.30 Why integers create trouble as scalars
+
+Suppose someone wants a vector space "over integers."
+
+The standard vector-space definition requires the scalars to form a field.
+
+But:
+
+\[
+\mathbb Z
+\]
+
+is not a field because, for example, \(2\) has no multiplicative inverse in \(\mathbb Z\).
+
+Without inverses, many linear-algebra results stop working.
+
+Structures using integer scalars do exist, but mathematically they are generally studied under other names such as **modules**, not ordinary vector spaces over a field.
+
+That distinction matters later if you use integer coordinate grids.
+
+---
+
+# 507.31 C++ cannot enforce vector-space axioms automatically
+
+We might write:
+
+```cpp
+template<typename V, typename S>
+concept VectorLike =
+    requires(V a, V b, S s) {
+        { a + b } -> std::same_as<V>;
+        { s * a } -> std::same_as<V>;
+    };
+```
+
+This checks that the operations exist.
+
+But it cannot prove:
+
+\[
+a+b=b+a
+\]
+
+for every possible value.
+
+Nor can it prove:
+
+\[
+s(a+b)=sa+sb.
+\]
+
+These are **semantic laws**.
+
+A type may satisfy the syntactic interface while violating the mathematical contract.
+
+This is an important generic-programming principle:
+
+\[
+\boxed{
+\text{an API signature can enforce operation availability but not automatically prove algebraic laws}
+}
+\]
+
+---
+
+# 507.32 Property testing
+
+Although C++ cannot generally prove the laws, tests can sample them.
+
+For exact integer-like toy arithmetic:
+
+```cpp
+assert((u + v) == (v + u));
+```
+
+For floating-point vectors, exact equality is dangerous.
+
+You might instead test approximately:
+
+```cpp
+bool approx(float a, float b, float eps = 1e-5f) {
+    return std::abs(a - b) <= eps;
+}
+```
+
+and component-wise for vectors.
+
+Then sample random values and test properties such as:
+
+```cpp
+approxVec(a + b, b + a);
+approxVec(s * (a + b), s * a + s * b);
+```
+
+But this does **not prove** the axioms.
+
+And floating-point associativity can genuinely fail beyond tolerance for badly scaled inputs.
+
+So property tests verify your implementation's expected numerical behavior, not mathematical truth.
+
+---
+
+# 507.33 Machine vectors are imperfect algebraic models
+
+Mathematically:
+
+\[
+\mathbb R^3
+\]
+
+is a vector space.
+
+Machine:
+
+```cpp
+struct Vec3 {
+    float x, y, z;
+};
+```
+
+is not literally \(\mathbb R^3\).
+
+Why?
+
+Because `float` itself is not \(\mathbb R\).
+
+For example:
+
+\[
+(\vec a+\vec b)+\vec c
+\]
+
+may not have identical bits to:
+
+\[
+\vec a+(\vec b+\vec c).
+\]
+
+NaNs also create pathological behavior.
+
+So in engineering language we usually say:
+
+> `Vec3<float>` implements real-vector arithmetic approximately.
+
+This distinction becomes critical in:
+
+- numerical solvers;
+- physics determinism;
+- large-world rendering;
+- geometric predicates;
+- optimization;
+- parallel reductions.
+
+---
+
+# 507.34 Vector-space laws and optimization
+
+Compilers sometimes want to rewrite:
+
+\[
+a(\vec u+\vec v)
+\]
+
+into:
+
+\[
+a\vec u+a\vec v.
+\]
+
+Mathematically these are equal.
+
+Floating-point arithmetic may produce slightly different rounded results.
+
+This is exactly why aggressive `fast-math` optimizations can change numerical behavior.
+
+The compiler may use mathematical algebraic identities that floating-point arithmetic does not satisfy exactly.
+
+This connects directly back to your Phase 1 study of floating-point reassociation.
+
+---
+
+# 507.35 Why graphics needs vector-space abstraction
+
+Once you recognize vector-space structure, many later concepts become one unified story.
+
+Soon you will study:
+
+```text
+linear combinations
+span
+linear independence
+basis
+dimension
+coordinates
+linear transformations
+matrices
+eigenvectors
+```
+
+These are not random topics.
+
+They are consequences of asking:
+
+> Given a vector space, how can its elements be constructed, represented, related and transformed while respecting addition and scalar multiplication?
+
+The conceptual path is:
+
+```text
+scalar field
+        ↓
+vector space
+        ↓
+linear combinations
+        ↓
+span
+        ↓
+independence
+        ↓
+basis
+        ↓
+coordinates
+        ↓
+linear transformations
+        ↓
+matrices
+```
+
+That is the backbone of linear algebra.
+
+---
+
+# 504–507: THE ENTIRE CONNECTION
+
+We can now reconstruct why these four Parts were sequenced exactly this way.
+
+Start with physical movement:
+
+```text
+geometric displacement
+```
+
+That is Part 504.
+
+Computers need numbers, so choose reference axes and record:
+
+```text
+(vx, vy, vz)
+```
+
+That is Part 505.
+
+Then realize:
+
+```text
+the tuple depends on the chosen coordinate system
+```
+
+while the underlying displacement does not.
+
+That is Part 506.
+
+Finally ask:
+
+> Which algebraic properties did these displacement objects obey?
+
+Extract those rules and define:
+
+```text
+vector space
+```
+
+That is Part 507.
+
+The complete conceptual chain is:
+
+```text
+REAL SCALARS
+Part 502
+       │
+       ▼
+GEOMETRIC DISPLACEMENT
+Part 504
+       │
+       │ choose coordinate directions
+       ▼
+COORDINATE TUPLE
+Part 505
+       │
+       │ realize representation ≠ object
+       ▼
+VECTOR VS COORDINATES
+Part 506
+       │
+       │ abstract the algebraic behavior
+       ▼
+VECTOR SPACE
+Part 507
+       │
+       ▼
+linear combinations
+span
+basis
+dimension
+transformations
+matrices
+...
+```
+
+---
+
+# A DEEP WORKED EXAMPLE
+
+Suppose a spacecraft issues two movement commands.
+
+First:
+
+```text
+3 units east
+2 units north
+```
+
+Second:
+
+```text
+-1 unit east
+4 units north
+```
+
+At the pure geometric level, these are two displacements:
+
+\[
+\vec u,\vec v.
+\]
+
+They exist conceptually before coordinates.
+
+Choose coordinate directions:
+
+```text
+X = east
+Y = north
+```
+
+Then:
+
+\[
+[\vec u]=(3,2)
+\]
+
+and:
+
+\[
+[\vec v]=(-1,4).
+\]
+
+Their total displacement is:
+
+\[
+\vec w=\vec u+\vec v.
+\]
+
+Coordinates:
+
+\[
+[\vec w]
+=
+(3,2)+(-1,4)
+\]
+
+\[
+=
+(2,6).
+\]
+
+Now rotate our measuring axes so the first axis points northeast.
+
+The spacecraft did not move again.
+
+Therefore:
+
+\[
+\vec w
+\]
+
+is unchanged.
+
+But its coordinate tuple will change.
+
+This demonstrates Part 506.
+
+Yet whatever coordinates we choose, addition and scalar multiplication continue obeying the vector-space laws.
+
+That demonstrates Part 507.
+
+The same event can therefore be understood at four levels:
+
+```text
+physics/geometric meaning
+       ↓
+displacement
+
+representation
+       ↓
+tuple
+
+representation theory
+       ↓
+coordinates depend on frame
+
+algebraic abstraction
+       ↓
+vector-space element
+```
+
+That layered thinking is exactly what later graphics mathematics requires.
+
+---
+
+# IMPLEMENTATION: A SEMANTICALLY STRONGER VECTOR TYPE
+
+A canonical implementation might begin:
+
+```cpp
+#include <cmath>
+#include <cassert>
+
+template<typename Space>
+struct Vec3 {
+    float x {};
+    float y {};
+    float z {};
+
+    constexpr Vec3 operator+(const Vec3& rhs) const noexcept {
+        return {
+            x + rhs.x,
+            y + rhs.y,
+            z + rhs.z
+        };
+    }
+
+    constexpr Vec3 operator-(const Vec3& rhs) const noexcept {
+        return {
+            x - rhs.x,
+            y - rhs.y,
+            z - rhs.z
+        };
+    }
+
+    constexpr Vec3 operator-() const noexcept {
+        return {-x, -y, -z};
+    }
+
+    constexpr Vec3 operator*(float s) const noexcept {
+        return {
+            x * s,
+            y * s,
+            z * s
+        };
+    }
+
+    constexpr Vec3& operator+=(const Vec3& rhs) noexcept {
+        x += rhs.x;
+        y += rhs.y;
+        z += rhs.z;
+        return *this;
+    }
+};
+```
+
+And spaces:
+
+```cpp
+struct LocalSpace {};
+struct WorldSpace {};
+struct ViewSpace {};
+
+using LocalVec3 = Vec3<LocalSpace>;
+using WorldVec3 = Vec3<WorldSpace>;
+using ViewVec3  = Vec3<ViewSpace>;
+```
+
+Notice what this architecture achieves.
+
+This compiles:
+
+```cpp
+WorldVec3 a;
+WorldVec3 b;
+
+WorldVec3 c = a + b;
+```
+
+because the coordinate representations belong to the same space.
+
+But this does not:
+
+```cpp
+WorldVec3 world;
+LocalVec3 local;
+
+// error: different types
+auto wrong = world + local;
+```
+
+The type system now helps preserve Part 506's semantic distinction.
+
+Actual conversion requires an explicit transformation.
+
+That transformation belongs to later Parts.
+
+---
+
+# HARDWARE VIEW
+
+For millions of `Vec3<float>` values, the mathematics may say:
+
+\[
+\vec r_i=\vec a_i+\vec b_i.
+\]
+
+At machine level that becomes repeated scalar loads, arithmetic and stores.
+
+Conceptually:
+
+```text
+load ax ay az
+load bx by bz
+
+add ax + bx
+add ay + by
+add az + bz
+
+store rx ry rz
+```
+
+For \(N\) vectors:
+
+\[
+3N
+\]
+
+component additions are required mathematically.
+
+A SIMD implementation can process multiple components/vectors simultaneously.
+
+A GPU can assign separate invocations to different vectors.
+
+But the parallel implementation does not alter the vector-space law being computed.
+
+This is the pattern you should increasingly recognize:
+
+\[
+\boxed{
+\text{same mathematics, many possible physical executions}
+}
+\]
+
+---
+
+# NUMERICAL REALITY
+
+Suppose:
+
+\[
+\vec a=(10^{20},0,0)
+\]
+
+\[
+\vec b=(-10^{20},0,0)
+\]
+
+\[
+\vec c=(3,0,0).
+\]
+
+Mathematically:
+
+\[
+(\vec a+\vec b)+\vec c
+=
+(3,0,0).
+\]
+
+But with limited floating-point precision:
+
+\[
+\vec b+\vec c
+\]
+
+may round back to approximately:
+
+\[
+(-10^{20},0,0).
+\]
+
+Then:
+
+\[
+\vec a+(\vec b+\vec c)
+\]
+
+may become:
+
+\[
+(0,0,0).
+\]
+
+So:
+
+\[
+(\vec a+\vec b)+\vec c
+\neq
+\vec a+(\vec b+\vec c)
+\]
+
+at the machine level.
+
+This does not invalidate vector-space mathematics.
+
+It tells us:
+
+```text
+real vector space
+        ↓ modeled approximately by
+floating-point vector implementation
+```
+
+An engine programmer must know which layer a proof belongs to.
+
+---
+
+# COMMON FAILURE MODES ACROSS 504–507
+
+The most dangerous conceptual bug is treating any three floats as interchangeable because the machine type is identical. A world-space velocity, local-space normal, position coordinate and RGB color may all occupy twelve bytes yet obey different semantic rules.
+
+Another failure is believing the coordinates *are* the geometric vector. Rotate the coordinate frame and the components change although the vector can remain fixed.
+
+Another is assuming every collection of vector-looking objects is a vector space. Unit vectors, physically positive RGB values, fixed-length normals and many constrained state spaces fail closure or the zero/inverse requirements.
+
+And another is assuming mathematical vector-space identities hold bit-for-bit under floating-point arithmetic. They often hold only approximately because real algebra and IEEE-754 arithmetic are different structures.
+
+---
+
+# INTERVIEW ATTACK TREE
+
+### Level 1 — What is a vector?
+
+At the geometric level relevant to Part 504, a vector is a free displacement: a directed amount of movement independent of absolute placement.
+
+At the abstract linear-algebra level, a vector is an element of a vector space.
+
+Those are compatible descriptions at different abstraction levels.
+
+---
+
+### Level 2 — Is a vector just `(x,y,z)`?
+
+No.
+
+\[
+(x,y,z)
+\]
+
+is a coordinate representation of a vector relative to chosen reference directions.
+
+The same vector can have different coordinates in different bases.
+
+---
+
+### Level 3 — Then why can `Vec3` represent a vector?
+
+Because the program has chosen a coordinate system and maps the abstract/geometric vector to three scalar components stored in the struct.
+
+The struct stores the representation, not the geometric object independently of convention.
+
+---
+
+### Level 4 — Can two identical `Vec3` values represent different vectors?
+
+Yes.
+
+For example:
+
+\[
+(1,0,0)_{\text{world}}
+\]
+
+and:
+
+\[
+(1,0,0)_{\text{camera}}
+\]
+
+can describe different physical directions if the camera basis is rotated.
+
+---
+
+### Level 5 — Can one vector have two different coordinate tuples?
+
+Yes.
+
+Changing the coordinate basis changes the tuple representing the same underlying vector.
+
+For example, a northeast displacement might be:
+
+\[
+(1,1)
+\]
+
+in east/north coordinates but:
+
+\[
+(\sqrt2,0)
+\]
+
+in a coordinate system whose first axis points northeast.
+
+---
+
+### Level 6 — What exactly is a vector space?
+
+A set \(V\) over scalar field \(F\), equipped with vector addition and scalar multiplication satisfying the vector-space axioms: additive commutativity, associativity, identity and inverses; scalar identity and compatibility; and the two distributive laws.
+
+---
+
+### Level 7 — Why must the scalars come from a field?
+
+Because field inverses and algebraic laws support linear algebra's manipulation of scalar coefficients. Using something like integers removes multiplicative inverses and produces a different algebraic structure.
+
+---
+
+### Level 8 — Are unit vectors a vector space?
+
+No.
+
+Scalar closure fails:
+
+\[
+2\vec v
+\]
+
+is not unit length.
+
+The zero vector is also absent.
+
+---
+
+### Level 9 — Prove \(0\vec v=\vec0\) without assuming it.
+
+Use:
+
+\[
+0=0+0.
+\]
+
+Then:
+
+\[
+0\vec v
+=
+(0+0)\vec v
+=
+0\vec v+0\vec v.
+\]
+
+Subtract \(0\vec v\) from both sides:
+
+\[
+0\vec v=\vec0.
+\]
+
+---
+
+### Level 10 — Why isn't `Vec3<float>` literally a vector space over \(\mathbb R\)?
+
+Because its components are finite IEEE-754 values rather than real numbers, and floating-point arithmetic violates exact real-field properties such as associativity.
+
+It is a computational approximation to real-vector arithmetic.
+
+---
+
+# BLANK-SCREEN MASTERY GATE
+
+Do not consider these four Parts owned until you can reconstruct the following without looking.
+
+Start with two locations and explain why their relative movement suggests the concept of displacement. Explain why the same arrow can be translated anywhere without changing a free vector. Derive head-to-tail addition and explain the zero and opposite displacement geometrically.
+
+Then choose coordinate axes and derive why vector addition becomes component-wise addition:
+
+\[
+(u_x,u_y)+(v_x,v_y)
+=
+(u_x+v_x,u_y+v_y).
+\]
+
+Explain why tuple ordering matters and what \(\mathbb R^n\) actually means.
+
+Then explain, without hand-waving, why:
+
+\[
+\vec v
+\]
+
+and:
+
+\[
+(v_x,v_y,v_z)
+\]
+
+are not identical concepts. Give one example where the same vector has different coordinates and another where identical coordinates describe different vectors because the spaces differ.
+
+Finally, write the vector-space axioms from memory and derive all four of these rather than merely quote them:
+
+\[
+0\vec v=\vec0
+\]
+
+\[
+a\vec0=\vec0
+\]
+
+\[
+(-1)\vec v=-\vec v
+\]
+
+and:
+
+\[
+a\vec v=\vec0
+\Rightarrow
+a=0\text{ or }\vec v=\vec0.
+\]
+
+If you can do all of that, you are no longer at:
+
+> "vector = arrow with x y z."
+
+You have reached the much stronger model:
+
+\[
+\boxed{
+\text{geometric object}
+\;\neq\;
+\text{coordinate representation}
+\;\neq\;
+\text{machine encoding}
+}
+\]
+
+while also understanding that the familiar geometric rules are instances of the much more general structure called a **vector space**.
+
+**Completed Part 504 — Vectors as geometric displacements**  
+**Completed Part 505 — Vectors as coordinate tuples**  
+**Completed Part 506 — The distinction between a vector and its coordinates**  
+**Completed Part 507 — Vector spaces and their axioms**
+
+**Next Core Part 508 — Subspaces.**

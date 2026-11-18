@@ -1,0 +1,681 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\providecommand \oddpage@label [2]{}
+\@writefile{toc}{\contentsline {chapter}{\numberline {1}Geometry Queries from Scene to Contact}{1}{chapter.1}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{03-visual-computing-i-ch020-geometry-queries-from-scene-to-contact}{{1}{1}{Geometry Queries from Scene to Contact}{chapter.1}{}}
+\newlabel{stagechapter:03-visual-computing-i-ch020}{{1}{1}{Geometry Queries from Scene to Contact}{section*.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.1}From a Scene to a Collision Answer: Geometry as a Chain of Contracts}{1}{section.1.1}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch020-from-a-scene-to-a-collision-answer-geometry-as-a-chain-of-contracts}{{1.1}{1}{From a Scene to a Collision Answer: Geometry as a Chain of Contracts}{section.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.1}The scene is not yet geometry}{2}{subsection.1.1.1}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch020-the-scene-is-not-yet-geometry}{{1.1.1}{2}{The scene is not yet geometry}{subsection.1.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.2}Predicates are the decision points}{3}{subsection.1.1.2}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch020-predicates-are-the-decision-points}{{1.1.2}{3}{Predicates are the decision points}{subsection.1.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.3}Bounds preserve possibilities}{4}{subsection.1.1.3}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch020-bounds-preserve-possibilities}{{1.1.3}{4}{Bounds preserve possibilities}{subsection.1.1.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.4}Queries turn geometry into answers}{5}{subsection.1.1.4}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch020-queries-turn-geometry-into-answers}{{1.1.4}{5}{Queries turn geometry into answers}{subsection.1.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.5}Minkowski difference turns two shapes into one}{6}{subsection.1.1.5}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch020-minkowski-difference-turns-two-shapes-into-one}{{1.1.5}{6}{Minkowski difference turns two shapes into one}{subsection.1.1.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Numeric witness: a complete 2D GJK separation trace}{6}{subsubsection*.5}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch020-numeric-witness-a-complete-2d-gjk-separation-trace}{{1.1.5}{6}{Numeric witness: a complete 2D GJK separation trace}{subsubsection*.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.6}EPA converts overlap into a displacement estimate}{7}{subsection.1.1.6}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch020-epa-converts-overlap-into-a-displacement-estimate}{{1.1.6}{7}{EPA converts overlap into a displacement estimate}{subsection.1.1.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.7}Motion changes the question}{8}{subsection.1.1.7}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch020-motion-changes-the-question}{{1.1.7}{8}{Motion changes the question}{subsection.1.1.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.8}The final contract is observable}{8}{subsection.1.1.8}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch020-the-final-contract-is-observable}{{1.1.8}{8}{The final contract is observable}{subsection.1.1.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.9}A short laboratory for the contracts}{9}{subsection.1.1.9}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch020-a-short-laboratory-for-the-contracts}{{1.1.9}{9}{A short laboratory for the contracts}{subsection.1.1.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1.1}{\ignorespaces Visual Recall/Integrated Geometry and Engine/triangle-nearest-edge.png}}{10}{figure.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.10}Geometric Predicates, Rays, Lines, Segments, and Planes}{11}{subsection.1.1.10}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch020-geometric-predicates-rays-lines-segments-and-planes}{{1.1.10}{11}{Geometric Predicates, Rays, Lines, Segments, and Planes}{subsection.1.1.10}{}}
+\gdef \LT@i {\LT@entry 
+    {1}{204.76085pt}\LT@entry 
+    {1}{244.75864pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.11}Spheres and Triangles}{23}{subsection.1.1.11}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch020-spheres-and-triangles}{{1.1.11}{23}{Spheres and Triangles}{subsection.1.1.11}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {2}Collision Implementations and Repository Comparison}{44}{chapter.2}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{03-visual-computing-i-ch021-collision-implementations-and-repository-comparison}{{2}{44}{Collision Implementations and Repository Comparison}{chapter.2}{}}
+\newlabel{stagechapter:03-visual-computing-i-ch021}{{2}{44}{Collision Implementations and Repository Comparison}{section*.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.1}Canonical C++23 implementation and repository comparison}{44}{subsection.2.0.1}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch021-canonical-c23-implementation-and-repository-comparison}{{2.0.1}{44}{Canonical C++23 implementation and repository comparison}{subsection.2.0.1}{}}
+\gdef \LT@ii {\LT@entry 
+    {1}{206.82881pt}\LT@entry 
+    {1}{137.65123pt}\LT@entry 
+    {1}{105.0329pt}}
+\gdef \LT@iii {\LT@entry 
+    {1}{107.23442pt}\LT@entry 
+    {1}{342.28506pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.2}Research bridge and validation}{48}{subsection.2.0.2}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch021-research-bridge-and-validation}{{2.0.2}{48}{Research bridge and validation}{subsection.2.0.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.3}Axis-Aligned Bounding Boxes}{50}{subsection.2.0.3}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch021-axis-aligned-bounding-boxes}{{2.0.3}{50}{Axis-Aligned Bounding Boxes}{subsection.2.0.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.4}Oriented Bounding Boxes}{62}{subsection.2.0.4}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch021-oriented-bounding-boxes}{{2.0.4}{62}{Oriented Bounding Boxes}{subsection.2.0.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.5}Capsules}{67}{subsection.2.0.5}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch021-capsules}{{2.0.5}{67}{Capsules}{subsection.2.0.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.6}Frusta, Planes, and Visibility Classification}{71}{subsection.2.0.6}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch021-frusta-planes-and-visibility-classification}{{2.0.6}{71}{Frusta, Planes, and Visibility Classification}{subsection.2.0.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.7}Convex Polygons, Winding, Area, and Centroids}{81}{subsection.2.0.7}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch021-convex-polygons-winding-area-and-centroids}{{2.0.7}{81}{Convex Polygons, Winding, Area, and Centroids}{subsection.2.0.7}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {3}Convex Support Mapping and Distance}{89}{chapter.3}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{04-visual-computing-ii-ch022-convex-support-mapping-and-distance}{{3}{89}{Convex Support Mapping and Distance}{chapter.3}{}}
+\newlabel{stagechapter:04-visual-computing-ii-ch022}{{3}{89}{Convex Support Mapping and Distance}{section*.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.0.1}Support Mapping}{89}{subsection.3.0.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch022-support-mapping}{{3.0.1}{89}{Support Mapping}{subsection.3.0.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.0.2}Convex Hulls}{93}{subsection.3.0.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch022-convex-hulls}{{3.0.2}{93}{Convex Hulls}{subsection.3.0.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.0.3}C++23 Reference Lab and Verification}{104}{subsection.3.0.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch022-c23-reference-lab-and-verification}{{3.0.3}{104}{C++23 Reference Lab and Verification}{subsection.3.0.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.0.4}Production Reliability and Research}{105}{subsection.3.0.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch022-production-reliability-and-research}{{3.0.4}{105}{Production Reliability and Research}{subsection.3.0.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.0.5}Reconstruction and Mastery Gate}{106}{subsection.3.0.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch022-reconstruction-and-mastery-gate}{{3.0.5}{106}{Reconstruction and Mastery Gate}{subsection.3.0.5}{}}
+\gdef \LT@iv {\LT@entry 
+    {1}{183.2477pt}\LT@entry 
+    {1}{144.39523pt}\LT@entry 
+    {1}{121.86998pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.0.6}PART I --- M071: Voronoi Regions and Simplex Geometry}{108}{subsection.3.0.6}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch022-part-i-m071-voronoi-regions-and-simplex-geometry}{{3.0.6}{108}{PART I --- M071: Voronoi Regions and Simplex Geometry}{subsection.3.0.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.0.7}PART II --- Closest Approaches Between Lines and Segments}{118}{subsection.3.0.7}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch022-part-ii-closest-approaches-between-lines-and-segments}{{3.0.7}{118}{PART II --- Closest Approaches Between Lines and Segments}{subsection.3.0.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.0.8}PART III --- Intersections of Planes}{129}{subsection.3.0.8}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch022-part-iii-intersections-of-planes}{{3.0.8}{129}{PART III --- Intersections of Planes}{subsection.3.0.8}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Mesh Topology and Connectivity}{136}{chapter.4}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{04-visual-computing-ii-ch023-mesh-topology-and-connectivity}{{4}{136}{Mesh Topology and Connectivity}{chapter.4}{}}
+\newlabel{stagechapter:04-visual-computing-ii-ch023}{{4}{136}{Mesh Topology and Connectivity}{section*.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.0.1}PART IV --- M071: Mesh Topology and Connectivity}{136}{subsection.4.0.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch023-part-iv-m071-mesh-topology-and-connectivity}{{4.0.1}{136}{PART IV --- M071: Mesh Topology and Connectivity}{subsection.4.0.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.0.2}PART V --- M072: Boundary Geometry and Adjacency}{146}{subsection.4.0.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch023-part-v-m072-boundary-geometry-and-adjacency}{{4.0.2}{146}{PART V --- M072: Boundary Geometry and Adjacency}{subsection.4.0.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.0.3}PART VI --- Numerical Robustness and the Geometry Contract}{151}{subsection.4.0.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch023-part-vi-numerical-robustness-and-the-geometry-contract}{{4.0.3}{151}{PART VI --- Numerical Robustness and the Geometry Contract}{subsection.4.0.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.0.4}PART VII --- Building a Production Geometry Library}{158}{subsection.4.0.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch023-part-vii-building-a-production-geometry-library}{{4.0.4}{158}{PART VII --- Building a Production Geometry Library}{subsection.4.0.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.0.5}PART VIII --- Reference Implementation and Repository Verification}{161}{subsection.4.0.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch023-part-viii-reference-implementation-and-repository-verification}{{4.0.5}{161}{PART VIII --- Reference Implementation and Repository Verification}{subsection.4.0.5}{}}
+\gdef \LT@v {\LT@entry 
+    {1}{231.70103pt}\LT@entry 
+    {1}{119.097pt}\LT@entry 
+    {1}{98.76732pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.0.6}PART IX --- Research Bridge}{163}{subsection.4.0.6}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch023-part-ix-research-bridge}{{4.0.6}{163}{PART IX --- Research Bridge}{subsection.4.0.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.0.7}PART X --- Reconstruction Challenge}{163}{subsection.4.0.7}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch023-part-x-reconstruction-challenge}{{4.0.7}{163}{PART X --- Reconstruction Challenge}{subsection.4.0.7}{}}
+\gdef \LT@vi {\LT@entry 
+    {1}{274.99641pt}\LT@entry 
+    {1}{65.23666pt}\LT@entry 
+    {1}{109.33228pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.0.8}Phase 12 completion status}{165}{subsection.4.0.8}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch023-phase-12-completion-status}{{4.0.8}{165}{Phase 12 completion status}{subsection.4.0.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.0.9}PART I --- M073: Intersection and Collision Query Fundamentals}{165}{subsection.4.0.9}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch023-part-i-m073-intersection-and-collision-query-fundamentals}{{4.0.9}{165}{PART I --- M073: Intersection and Collision Query Fundamentals}{subsection.4.0.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.0.10}PART II --- Ray Intersections with Planes and Spheres}{169}{subsection.4.0.10}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch023-part-ii-ray-intersections-with-planes-and-spheres}{{4.0.10}{169}{PART II --- Ray Intersections with Planes and Spheres}{subsection.4.0.10}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Ray--Triangle Intersection}{180}{chapter.5}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{04-visual-computing-ii-ch024-raytriangle-intersection}{{5}{180}{Ray--Triangle Intersection}{chapter.5}{}}
+\newlabel{stagechapter:04-visual-computing-ii-ch024}{{5}{180}{Ray--Triangle Intersection}{section*.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.0.1}PART III --- Ray-Triangle Intersection}{180}{subsection.5.0.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch024-part-iii-ray-triangle-intersection}{{5.0.1}{180}{PART III --- Ray-Triangle Intersection}{subsection.5.0.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.0.2}PART IV --- Ray-Box and Ray-Capsule Intersections}{187}{subsection.5.0.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch024-part-iv-ray-box-and-ray-capsule-intersections}{{5.0.2}{187}{PART IV --- Ray-Box and Ray-Capsule Intersections}{subsection.5.0.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.0.3}PART V --- M074: Primitive Overlap and Contact Geometry}{200}{subsection.5.0.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch024-part-v-m074-primitive-overlap-and-contact-geometry}{{5.0.3}{200}{PART V --- M074: Primitive Overlap and Contact Geometry}{subsection.5.0.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.0.4}PART VI --- The Separating Axis Theorem}{213}{subsection.5.0.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch024-part-vi-the-separating-axis-theorem}{{5.0.4}{213}{PART VI --- The Separating Axis Theorem}{subsection.5.0.4}{}}
+\gdef \LT@vii {\LT@entry 
+    {3}{118.90399pt}\LT@entry 
+    {1}{48.89201pt}\LT@entry 
+    {3}{153.90048pt}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}SAT for Triangle and Convex Polygon Tests}{228}{chapter.6}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{04-visual-computing-ii-ch025-sat-for-triangle-and-convex-polygon-tests}{{6}{228}{SAT for Triangle and Convex Polygon Tests}{chapter.6}{}}
+\newlabel{stagechapter:04-visual-computing-ii-ch025}{{6}{228}{SAT for Triangle and Convex Polygon Tests}{section*.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.0.1}PART VII --- Triangle-AABB SAT and Convex Polygon SAT}{228}{subsection.6.0.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch025-part-vii-triangle-aabb-sat-and-convex-polygon-sat}{{6.0.1}{228}{PART VII --- Triangle-AABB SAT and Convex Polygon SAT}{subsection.6.0.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.0.2}PART VIII --- Complete C++23 Reference Lab}{234}{subsection.6.0.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch025-part-viii-complete-c23-reference-lab}{{6.0.2}{234}{PART VIII --- Complete C++23 Reference Lab}{subsection.6.0.2}{}}
+\gdef \LT@viii {\LT@entry 
+    {1}{66.8496pt}\LT@entry 
+    {1}{192.11453pt}\LT@entry 
+    {1}{190.55536pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.0.3}PART IX --- Actual KairoGeometry and KairoPhysicsEngine Review}{235}{subsection.6.0.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch025-part-ix-actual-kairogeometry-and-kairophysicsengine-review}{{6.0.3}{235}{PART IX --- Actual KairoGeometry and KairoPhysicsEngine Review}{subsection.6.0.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.0.4}PART X --- Numerical Robustness, Performance, and Research}{236}{subsection.6.0.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch025-part-x-numerical-robustness-performance-and-research}{{6.0.4}{236}{PART X --- Numerical Robustness, Performance, and Research}{subsection.6.0.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.0.5}PART XI --- Reconstruction Exercises}{237}{subsection.6.0.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch025-part-xi-reconstruction-exercises}{{6.0.5}{237}{PART XI --- Reconstruction Exercises}{subsection.6.0.5}{}}
+\gdef \LT@ix {\LT@entry 
+    {1}{186.85893pt}\LT@entry 
+    {1}{126.01141pt}\LT@entry 
+    {1}{136.68846pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.0.6}From Minkowski Geometry to GJK}{240}{subsection.6.0.6}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch025-from-minkowski-geometry-to-gjk}{{6.0.6}{240}{From Minkowski Geometry to GJK}{subsection.6.0.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.0.7}EPA and Penetration Recovery}{259}{subsection.6.0.7}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch025-epa-and-penetration-recovery}{{6.0.7}{259}{EPA and Penetration Recovery}{subsection.6.0.7}{}}
+\gdef \LT@x {\LT@entry 
+    {1}{81.43437pt}\LT@entry 
+    {1}{368.08511pt}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {7}Contact Features and Manifolds}{271}{chapter.7}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{04-visual-computing-ii-ch026-contact-features-and-manifolds}{{7}{271}{Contact Features and Manifolds}{chapter.7}{}}
+\newlabel{stagechapter:04-visual-computing-ii-ch026}{{7}{271}{Contact Features and Manifolds}{section*.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.1}Contact Features and Manifolds}{271}{subsection.7.0.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-contact-features-and-manifolds-1}{{7.0.1}{271}{Contact Features and Manifolds}{subsection.7.0.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Construct contact geometry that a solver can actually consume}{289}{subsubsection*.12}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-construct-contact-geometry-that-a-solver-can-actually-consume}{{7.0.1}{289}{Construct contact geometry that a solver can actually consume}{subsubsection*.12}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Why continuous collision detection requires motion geometry}{290}{subsubsection*.13}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-why-continuous-collision-detection-requires-motion-geometry}{{7.0.1}{290}{Why continuous collision detection requires motion geometry}{subsubsection*.13}{}}
+\@writefile{toc}{\contentsline {subsubsection}{From swept regions to a broad phase with no missing candidates}{290}{subsubsection*.14}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-from-swept-regions-to-a-broad-phase-with-no-missing-candidates}{{7.0.1}{290}{From swept regions to a broad phase with no missing candidates}{subsubsection*.14}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Proving candidate generation, connecting the collision stages, and debugging misses}{291}{subsubsection*.15}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-proving-candidate-generation-connecting-the-collision-stages-and-debugging-misses}{{7.0.1}{291}{Proving candidate generation, connecting the collision stages, and debugging misses}{subsubsection*.15}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A numerical debugging trace: find the stage that lost the collision}{292}{subsubsection*.16}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-a-numerical-debugging-trace-find-the-stage-that-lost-the-collision}{{7.0.1}{292}{A numerical debugging trace: find the stage that lost the collision}{subsubsection*.16}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Finite precision and the cost of a seemingly harmless comparison}{292}{subsubsection*.17}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-finite-precision-and-the-cost-of-a-seemingly-harmless-comparison}{{7.0.1}{292}{Finite precision and the cost of a seemingly harmless comparison}{subsubsection*.17}{}}
+\@writefile{toc}{\contentsline {subsubsection}{How to reconstruct this for an engine or GPU backend}{293}{subsubsection*.18}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-how-to-reconstruct-this-for-an-engine-or-gpu-backend}{{7.0.1}{293}{How to reconstruct this for an engine or GPU backend}{subsubsection*.18}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Executable segment clipping and feature geometry}{293}{subsubsection*.19}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-executable-segment-clipping-and-feature-geometry}{{7.0.1}{293}{Executable segment clipping and feature geometry}{subsubsection*.19}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Full implementation: disk TOI and conservative swept candidate generation}{294}{subsubsection*.20}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-full-implementation-disk-toi-and-conservative-swept-candidate-generation}{{7.0.1}{294}{Full implementation: disk TOI and conservative swept candidate generation}{subsubsection*.20}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Implementation laboratory and debugging contract}{300}{subsubsection*.21}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-implementation-laboratory-and-debugging-contract}{{7.0.1}{300}{Implementation laboratory and debugging contract}{subsubsection*.21}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.2}Continuous Collision Detection}{300}{subsection.7.0.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-continuous-collision-detection}{{7.0.2}{300}{Continuous Collision Detection}{subsection.7.0.2}{}}
+\gdef \LT@xi {\LT@entry 
+    {1}{138.74843pt}\LT@entry 
+    {1}{310.77106pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.3}KairoPhysicsEngine: Verified Current State}{321}{subsection.7.0.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-kairophysicsengine-verified-current-state}{{7.0.3}{321}{KairoPhysicsEngine: Verified Current State}{subsection.7.0.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.4}The C++23 Reference Lab}{322}{subsection.7.0.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-the-c23-reference-lab}{{7.0.4}{322}{The C++23 Reference Lab}{subsection.7.0.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.5}What Full Production Readiness Requires}{324}{subsection.7.0.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-what-full-production-readiness-requires}{{7.0.5}{324}{What Full Production Readiness Requires}{subsection.7.0.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.6}Research Connection to KairoPhysics, Vulkax, and Deformable Geometry}{325}{subsection.7.0.6}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-research-connection-to-kairophysics-vulkax-and-deformable-geometry}{{7.0.6}{325}{Research Connection to KairoPhysics, Vulkax, and Deformable Geometry}{subsection.7.0.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.7}Reconstruction and Mastery Gate}{325}{subsection.7.0.7}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch026-reconstruction-and-mastery-gate}{{7.0.7}{325}{Reconstruction and Mastery Gate}{subsection.7.0.7}{}}
+\gdef \LT@xii {\LT@entry 
+    {1}{128.18799pt}\LT@entry 
+    {1}{119.87036pt}\LT@entry 
+    {1}{201.46112pt}}
+\gdef \LT@xiii {\LT@entry 
+    {1}{48.47176pt}\LT@entry 
+    {1}{401.04773pt}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {8}Mesh Queries, Classification and Clipping}{330}{chapter.8}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{04-visual-computing-ii-ch027-mesh-queries-classification-and-clipping}{{8}{330}{Mesh Queries, Classification and Clipping}{chapter.8}{}}
+\newlabel{stagechapter:04-visual-computing-ii-ch027}{{8}{330}{Mesh Queries, Classification and Clipping}{section*.22}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.0.1}Mesh Ray, Overlap, Containment, Classification and Clipping}{330}{subsection.8.0.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch027-mesh-ray-overlap-containment-classification-and-clipping}{{8.0.1}{330}{Mesh Ray, Overlap, Containment, Classification and Clipping}{subsection.8.0.1}{}}
+\gdef \LT@xiv {\LT@entry 
+    {1}{55.846pt}\LT@entry 
+    {1}{118.06775pt}\LT@entry 
+    {1}{118.06775pt}\LT@entry 
+    {1}{157.538pt}}
+\gdef \LT@xv {\LT@entry 
+    {3}{41.91801pt}\LT@entry 
+    {3}{46.91801pt}\LT@entry 
+    {3}{143.29549pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.0.2}Numerical Robustness, Collision API Design, SIMD, Fuzzing and Library Engineering}{362}{subsection.8.0.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch027-numerical-robustness-collision-api-design-simd-fuzzing-and-library-engineering}{{8.0.2}{362}{Numerical Robustness, Collision API Design, SIMD, Fuzzing and Library Engineering}{subsection.8.0.2}{}}
+\gdef \LT@xvi {\LT@entry 
+    {1}{364.61783pt}\LT@entry 
+    {1}{84.90166pt}}
+\gdef \LT@xvii {\LT@entry 
+    {1}{86.64906pt}\LT@entry 
+    {1}{151.99782pt}\LT@entry 
+    {1}{210.86604pt}}
+\gdef \LT@xviii {\LT@entry 
+    {1}{239.00214pt}\LT@entry 
+    {1}{114.15532pt}\LT@entry 
+    {1}{96.36201pt}}
+\gdef \LT@xix {\LT@entry 
+    {1}{190.9588pt}\LT@entry 
+    {1}{258.56068pt}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {9}Visibility Queries and Ray Intersections}{391}{chapter.9}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{04-visual-computing-ii-ch028-visibility-queries-and-ray-intersections}{{9}{391}{Visibility Queries and Ray Intersections}{chapter.9}{}}
+\newlabel{stagechapter:04-visual-computing-ii-ch028}{{9}{391}{Visibility Queries and Ray Intersections}{section*.23}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {9.1}Visibility queries and ray intersections}{391}{section.9.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-visibility-queries-and-ray-intersections-1}{{9.1}{391}{Visibility queries and ray intersections}{section.9.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.1}Let a visibility query carry an interval and a surface contract}{391}{subsection.9.1.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-let-a-visibility-query-carry-an-interval-and-a-surface-contract}{{9.1.1}{391}{Let a visibility query carry an interval and a surface contract}{subsection.9.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.2}PARTS 2001--2013}{392}{subsection.9.1.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-parts-20012013}{{9.1.2}{392}{PARTS 2001--2013}{subsection.9.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.3}Rays as geometric visibility queries}{392}{subsection.9.1.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-rays-as-geometric-visibility-queries}{{9.1.3}{392}{Rays as geometric visibility queries}{subsection.9.1.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.4}PARTS 2014--2030}{426}{subsection.9.1.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-parts-20142030}{{9.1.4}{426}{PARTS 2014--2030}{subsection.9.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.5}Whitted transport → rendering equation → Monte Carlo}{426}{subsection.9.1.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-whitted-transport-rendering-equation-monte-carlo}{{9.1.5}{426}{Whitted transport → rendering equation → Monte Carlo}{subsection.9.1.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.6}Query contracts}{427}{subsection.9.1.6}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-query-contracts}{{9.1.6}{427}{Query contracts}{subsection.9.1.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.7}A ray answers the visibility question}{427}{subsection.9.1.7}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-a-ray-answers-the-visibility-question}{{9.1.7}{427}{A ray answers the visibility question}{subsection.9.1.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.8}From the camera to a surface: the ray is a query, not a line segment}{428}{subsection.9.1.8}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-from-the-camera-to-a-surface-the-ray-is-a-query-not-a-line-segment}{{9.1.8}{428}{From the camera to a surface: the ray is a query, not a line segment}{subsection.9.1.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.9}A triangle hit has coordinates inside the triangle}{430}{subsection.9.1.9}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-a-triangle-hit-has-coordinates-inside-the-triangle}{{9.1.9}{430}{A triangle hit has coordinates inside the triangle}{subsection.9.1.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.10}Boolean solids can be intersected without building their boundary mesh}{431}{subsection.9.1.10}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-boolean-solids-can-be-intersected-without-building-their-boundary-mesh}{{9.1.10}{431}{Boolean solids can be intersected without building their boundary mesh}{subsection.9.1.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.11}Shadows are visibility from a second viewpoint}{431}{subsection.9.1.11}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-shadows-are-visibility-from-a-second-viewpoint}{{9.1.11}{431}{Shadows are visibility from a second viewpoint}{subsection.9.1.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.12}A line corridor can be a cheap prefilter for shadow-caster work}{432}{subsection.9.1.12}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-a-line-corridor-can-be-a-cheap-prefilter-for-shadow-caster-work}{{9.1.12}{432}{A line corridor can be a cheap prefilter for shadow-caster work}{subsection.9.1.12}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Compute pass inputs before gathering objects}{434}{subsubsection*.24}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-compute-pass-inputs-before-gathering-objects}{{9.1.12}{434}{Compute pass inputs before gathering objects}{subsubsection*.24}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9.1}{\ignorespaces Visual Recall/Game Engine/corridor-and-shear.png}}{435}{figure.9.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.13}Shadow maps reuse visibility from the light's viewpoint}{436}{subsection.9.1.13}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch028-shadow-maps-reuse-visibility-from-the-lights-viewpoint}{{9.1.13}{436}{Shadow maps reuse visibility from the light's viewpoint}{subsection.9.1.13}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {10}Acceleration Structures and Robust Queries}{438}{chapter.10}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{04-visual-computing-ii-ch029-acceleration-structures-and-robust-queries}{{10}{438}{Acceleration Structures and Robust Queries}{chapter.10}{}}
+\newlabel{stagechapter:04-visual-computing-ii-ch029}{{10}{438}{Acceleration Structures and Robust Queries}{section*.25}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {10.1}Acceleration structures and robust queries}{438}{section.10.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-acceleration-structures-and-robust-queries-1}{{10.1}{438}{Acceleration structures and robust queries}{section.10.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.1}Geometric queries and acceleration structures}{438}{subsection.10.1.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-geometric-queries-and-acceleration-structures}{{10.1.1}{438}{Geometric queries and acceleration structures}{subsection.10.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.2}Bounding-volume hierarchy invariants}{439}{subsection.10.1.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-bounding-volume-hierarchy-invariants}{{10.1.2}{439}{Bounding-volume hierarchy invariants}{subsection.10.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.3}Data structures shape the algorithm}{439}{subsection.10.1.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-data-structures-shape-the-algorithm}{{10.1.3}{439}{Data structures shape the algorithm}{subsection.10.1.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.4}Robustness and conditioning are related but different}{439}{subsection.10.1.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-robustness-and-conditioning-are-related-but-different}{{10.1.4}{439}{Robustness and conditioning are related but different}{subsection.10.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.5}Acceleration: spend scene work once so each ray can skip most geometry}{440}{subsection.10.1.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-acceleration-spend-scene-work-once-so-each-ray-can-skip-most-geometry}{{10.1.5}{440}{Acceleration: spend scene work once so each ray can skip most geometry}{subsection.10.1.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.6}Additional geometry notes for rasterization}{442}{subsection.10.1.6}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-additional-geometry-notes-for-rasterization}{{10.1.6}{442}{Additional geometry notes for rasterization}{subsection.10.1.6}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Visibility: compare depth locally or trace paths}{442}{subsubsection*.26}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-visibility-compare-depth-locally-or-trace-paths}{{10.1.6}{442}{Visibility: compare depth locally or trace paths}{subsubsection*.26}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Choose visibility algorithms by their ordering and data needs}{442}{subsubsection*.27}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-choose-visibility-algorithms-by-their-ordering-and-data-needs}{{10.1.6}{442}{Choose visibility algorithms by their ordering and data needs}{subsubsection*.27}{}}
+\gdef \LT@xx {\LT@entry 
+    {1}{109.87987pt}\LT@entry 
+    {1}{114.87987pt}\LT@entry 
+    {1}{114.87987pt}\LT@entry 
+    {1}{109.87987pt}}
+\@writefile{toc}{\contentsline {subsubsection}{Ray intersection, recursive paths, and acceleration}{444}{subsubsection*.28}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-ray-intersection-recursive-paths-and-acceleration}{{10.1.6}{444}{Ray intersection, recursive paths, and acceleration}{subsubsection*.28}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {10.2}Scene graphs and articulated geometry}{445}{section.10.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-scene-graphs-and-articulated-geometry}{{10.2}{445}{Scene graphs and articulated geometry}{section.10.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2.1}Forward kinematics makes inverse kinematics differentiable}{445}{subsection.10.2.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-forward-kinematics-makes-inverse-kinematics-differentiable}{{10.2.1}{445}{Forward kinematics makes inverse kinematics differentiable}{subsection.10.2.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2.2}Why linear blends can twist a character limb}{446}{subsection.10.2.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-why-linear-blends-can-twist-a-character-limb}{{10.2.2}{446}{Why linear blends can twist a character limb}{subsection.10.2.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2.3}Scene graphs: reuse local structure, compute global pose}{446}{subsection.10.2.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-scene-graphs-reuse-local-structure-compute-global-pose}{{10.2.3}{446}{Scene graphs: reuse local structure, compute global pose}{subsection.10.2.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2.4}Skinning: attach a surface to a moving skeleton}{448}{subsection.10.2.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-skinning-attach-a-surface-to-a-moving-skeleton}{{10.2.4}{448}{Skinning: attach a surface to a moving skeleton}{subsection.10.2.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2.5}Additional geometry notes for acceleration structures}{450}{subsection.10.2.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-additional-geometry-notes-for-acceleration-structures}{{10.2.5}{450}{Additional geometry notes for acceleration structures}{subsection.10.2.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Hierarchical modeling: reuse geometry through transforms}{450}{subsubsection*.29}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-hierarchical-modeling-reuse-geometry-through-transforms}{{10.2.5}{450}{Hierarchical modeling: reuse geometry through transforms}{subsubsection*.29}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {10.3}Animation curves and motion paths}{450}{section.10.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-animation-curves-and-motion-paths}{{10.3}{450}{Animation curves and motion paths}{section.10.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3.1}A camera path is animation plus a frame choice}{450}{subsection.10.3.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-a-camera-path-is-animation-plus-a-frame-choice}{{10.3.1}{450}{A camera path is animation plus a frame choice}{subsection.10.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3.2}Camera orientation continuity along a spline path}{451}{subsection.10.3.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-camera-orientation-continuity-along-a-spline-path}{{10.3.2}{451}{Camera orientation continuity along a spline path}{subsection.10.3.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3.3}Additional geometry notes for scene graphs}{451}{subsection.10.3.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-additional-geometry-notes-for-scene-graphs}{{10.3.3}{451}{Additional geometry notes for scene graphs}{subsection.10.3.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Smooth interpolating paths and camera motion}{451}{subsubsection*.30}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-smooth-interpolating-paths-and-camera-motion}{{10.3.3}{451}{Smooth interpolating paths and camera motion}{subsubsection*.30}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {10.4}Dynamics, forces, and numerical integration}{452}{section.10.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-dynamics-forces-and-numerical-integration}{{10.4}{452}{Dynamics, forces, and numerical integration}{section.10.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.1}Animation, dynamics, optimization, and PDEs}{452}{subsection.10.4.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-animation-dynamics-optimization-and-pdes}{{10.4.1}{452}{Animation, dynamics, optimization, and PDEs}{subsection.10.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.2}ODE integration and stability}{454}{subsection.10.4.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-ode-integration-and-stability}{{10.4.2}{454}{ODE integration and stability}{subsection.10.4.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.3}Motion models from a tossed rock to crowds}{455}{subsection.10.4.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-motion-models-from-a-tossed-rock-to-crowds}{{10.4.3}{455}{Motion models from a tossed rock to crowds}{subsection.10.4.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.4}Keep physical and numerical error separate}{455}{subsection.10.4.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-keep-physical-and-numerical-error-separate}{{10.4.4}{455}{Keep physical and numerical error separate}{subsection.10.4.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.5}Crowd bottlenecks and particle models}{455}{subsection.10.4.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-crowd-bottlenecks-and-particle-models}{{10.4.5}{455}{Crowd bottlenecks and particle models}{subsection.10.4.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.6}First-order state formulation}{456}{subsection.10.4.6}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-first-order-state-formulation}{{10.4.6}{456}{First-order state formulation}{subsection.10.4.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.7}Lagrangian mechanics and generalized coordinates}{456}{subsection.10.4.7}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-lagrangian-mechanics-and-generalized-coordinates}{{10.4.7}{456}{Lagrangian mechanics and generalized coordinates}{subsection.10.4.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.8}Reduce constraints with a coordinate that fits the motion}{456}{subsection.10.4.8}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-reduce-constraints-with-a-coordinate-that-fits-the-motion}{{10.4.8}{456}{Reduce constraints with a coordinate that fits the motion}{subsection.10.4.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.9}A model can be simple locally and rich globally}{457}{subsection.10.4.9}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-a-model-can-be-simple-locally-and-rich-globally}{{10.4.9}{457}{A model can be simple locally and rich globally}{subsection.10.4.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.10}Time steps change the behavior of a simulated system}{457}{subsection.10.4.10}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-time-steps-change-the-behavior-of-a-simulated-system}{{10.4.10}{457}{Time steps change the behavior of a simulated system}{subsection.10.4.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.11}A short coupled-simulation example}{458}{subsection.10.4.11}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-a-short-coupled-simulation-example}{{10.4.11}{458}{A short coupled-simulation example}{subsection.10.4.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.12}Simulation: from forces to trajectories}{459}{subsection.10.4.12}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-simulation-from-forces-to-trajectories}{{10.4.12}{459}{Simulation: from forces to trajectories}{subsection.10.4.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.13}Particle rules, state vectors, and a stability calculation}{460}{subsection.10.4.13}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-particle-rules-state-vectors-and-a-stability-calculation}{{10.4.13}{460}{Particle rules, state vectors, and a stability calculation}{subsection.10.4.13}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.14}A spring is a force derived from an energy}{462}{subsection.10.4.14}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-a-spring-is-a-force-derived-from-an-energy}{{10.4.14}{462}{A spring is a force derived from an energy}{subsection.10.4.14}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.15}A cloth mesh needs more than the visible triangle edges}{463}{subsection.10.4.15}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-a-cloth-mesh-needs-more-than-the-visible-triangle-edges}{{10.4.15}{463}{A cloth mesh needs more than the visible triangle edges}{subsection.10.4.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.16}Contact dynamics with a nonintersection guarantee}{464}{subsection.10.4.16}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-contact-dynamics-with-a-nonintersection-guarantee}{{10.4.16}{464}{Contact dynamics with a nonintersection guarantee}{subsection.10.4.16}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Friction inside the same solve}{465}{subsubsection*.31}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-friction-inside-the-same-solve}{{10.4.16}{465}{Friction inside the same solve}{subsubsection*.31}{}}
+\@writefile{toc}{\contentsline {subsubsection}{What the paper tests}{466}{subsubsection*.32}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-what-the-paper-tests}{{10.4.16}{466}{What the paper tests}{subsubsection*.32}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.17}Friction and empirical tests for contact dynamics}{466}{subsection.10.4.17}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-friction-and-empirical-tests-for-contact-dynamics}{{10.4.17}{466}{Friction and empirical tests for contact dynamics}{subsection.10.4.17}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Friction inside the same solve}{466}{subsubsection*.33}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-friction-inside-the-same-solve-1}{{10.4.17}{466}{Friction inside the same solve}{subsubsection*.33}{}}
+\@writefile{toc}{\contentsline {subsubsection}{What the paper tests}{467}{subsubsection*.34}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-what-the-paper-tests-1}{{10.4.17}{467}{What the paper tests}{subsubsection*.34}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4.18}Figure U15 - The contact barrier grows near zero separation}{467}{subsection.10.4.18}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-figure-u15---the-contact-barrier-grows-near-zero-separation}{{10.4.18}{467}{Figure U15 - The contact barrier grows near zero separation}{subsection.10.4.18}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {10.5}Optimization, constraints, and inverse kinematics}{467}{section.10.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics}{{10.5}{467}{Optimization, constraints, and inverse kinematics}{section.10.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5.1}Inverse kinematics as constrained optimization}{467}{subsection.10.5.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-inverse-kinematics-as-constrained-optimization}{{10.5.1}{467}{Inverse kinematics as constrained optimization}{subsection.10.5.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10.1}{\ignorespaces Visual Recall/University Graphics and Vision/contact-barrier.png}}{468}{figure.10.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5.2}Feasibility, constraints, and optimality}{468}{subsection.10.5.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-feasibility-constraints-and-optimality}{{10.5.2}{468}{Feasibility, constraints, and optimality}{subsection.10.5.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5.3}Quadratic objectives and linear systems}{468}{subsection.10.5.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-quadratic-objectives-and-linear-systems}{{10.5.3}{468}{Quadratic objectives and linear systems}{subsection.10.5.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5.4}Differentiating through a graphics pipeline}{469}{subsection.10.5.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-differentiating-through-a-graphics-pipeline}{{10.5.4}{469}{Differentiating through a graphics pipeline}{subsection.10.5.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5.5}Feasible sets, existence, and the difference between local and global}{469}{subsection.10.5.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-feasible-sets-existence-and-the-difference-between-local-and-global}{{10.5.5}{469}{Feasible sets, existence, and the difference between local and global}{subsection.10.5.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5.6}Convexity and why quadratic energy often reduces to linear algebra}{470}{subsection.10.5.6}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-convexity-and-why-quadratic-energy-often-reduces-to-linear-algebra}{{10.5.6}{470}{Convexity and why quadratic energy often reduces to linear algebra}{subsection.10.5.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5.7}Gradient descent, step control, and curvature}{470}{subsection.10.5.7}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-gradient-descent-step-control-and-curvature}{{10.5.7}{470}{Gradient descent, step control, and curvature}{subsection.10.5.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5.8}Function spaces and image error}{471}{subsection.10.5.8}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-function-spaces-and-image-error}{{10.5.8}{471}{Function spaces and image error}{subsection.10.5.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5.9}Automatic differentiation}{471}{subsection.10.5.9}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-automatic-differentiation}{{10.5.9}{471}{Automatic differentiation}{subsection.10.5.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5.10}Computing derivatives: four different contracts}{471}{subsection.10.5.10}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch029-computing-derivatives-four-different-contracts}{{10.5.10}{471}{Computing derivatives: four different contracts}{subsection.10.5.10}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {11}Mesh Operators, Boundaries and Diffusion}{473}{chapter.11}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{04-visual-computing-ii-ch030-mesh-operators-boundaries-and-diffusion}{{11}{473}{Mesh Operators, Boundaries and Diffusion}{chapter.11}{}}
+\newlabel{stagechapter:04-visual-computing-ii-ch030}{{11}{473}{Mesh Operators, Boundaries and Diffusion}{section*.35}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {11.1}Heat on a rod: why boundaries, modes, and mesh operators belong together}{473}{section.11.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-heat-on-a-rod-why-boundaries-modes-and-mesh-operators-belong-together}{{11.1}{473}{Heat on a rod: why boundaries, modes, and mesh operators belong together}{section.11.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1.1}Boundary conditions choose the modes}{474}{subsection.11.1.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-boundary-conditions-choose-the-modes}{{11.1.1}{474}{Boundary conditions choose the modes}{subsection.11.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1.2}Derivatives act on modes by multiplying their frequency}{475}{subsection.11.1.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-derivatives-act-on-modes-by-multiplying-their-frequency}{{11.1.2}{475}{Derivatives act on modes by multiplying their frequency}{subsection.11.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1.3}From a mesh Laplacian to a heat operator}{476}{subsection.11.1.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-from-a-mesh-laplacian-to-a-heat-operator}{{11.1.3}{476}{From a mesh Laplacian to a heat operator}{subsection.11.1.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1.4}Explicit steps have a mesh-dependent stability limit}{477}{subsection.11.1.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-explicit-steps-have-a-mesh-dependent-stability-limit}{{11.1.4}{477}{Explicit steps have a mesh-dependent stability limit}{subsection.11.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1.5}A Green function is an impulse response}{478}{subsection.11.1.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-a-green-function-is-an-impulse-response}{{11.1.5}{478}{A Green function is an impulse response}{subsection.11.1.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1.6}Sampling, truncation, and ringing}{479}{subsection.11.1.6}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-sampling-truncation-and-ringing}{{11.1.6}{479}{Sampling, truncation, and ringing}{subsection.11.1.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1.7}Manufactured fields make the solver testable}{479}{subsection.11.1.7}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-manufactured-fields-make-the-solver-testable}{{11.1.7}{479}{Manufactured fields make the solver testable}{subsection.11.1.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1.8}What the boundary means to the discrete solver}{480}{subsection.11.1.8}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-what-the-boundary-means-to-the-discrete-solver}{{11.1.8}{480}{What the boundary means to the discrete solver}{subsection.11.1.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1.9}Spatial and temporal error have different signatures}{481}{subsection.11.1.9}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-spatial-and-temporal-error-have-different-signatures}{{11.1.9}{481}{Spatial and temporal error have different signatures}{subsection.11.1.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {11.2}PDEs, fields, and discrete solvers}{482}{section.11.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-pdes-fields-and-discrete-solvers}{{11.2}{482}{PDEs, fields, and discrete solvers}{section.11.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.2.1}PDE discretization and variational structure}{482}{subsection.11.2.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-pde-discretization-and-variational-structure}{{11.2.1}{482}{PDE discretization and variational structure}{subsection.11.2.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.2.2}The same field equation can describe very different behavior}{483}{subsection.11.2.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-the-same-field-equation-can-describe-very-different-behavior}{{11.2.2}{483}{The same field equation can describe very different behavior}{subsection.11.2.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.2.3}Discretize the space with a representation that fits}{483}{subsection.11.2.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-discretize-the-space-with-a-representation-that-fits}{{11.2.3}{483}{Discretize the space with a representation that fits}{subsection.11.2.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.2.4}Boundary data is part of the equation}{484}{subsection.11.2.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-boundary-data-is-part-of-the-equation}{{11.2.4}{484}{Boundary data is part of the equation}{subsection.11.2.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.2.5}Turn the discretized equations into a solver}{485}{subsection.11.2.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-turn-the-discretized-equations-into-a-solver}{{11.2.5}{485}{Turn the discretized equations into a solver}{subsection.11.2.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.2.6}Discrete field equations and their stability conditions}{486}{subsection.11.2.6}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-discrete-field-equations-and-their-stability-conditions}{{11.2.6}{486}{Discrete field equations and their stability conditions}{subsection.11.2.6}{}}
+\@writefile{toc}{\contentsline {subsubsection}{From a PDE to a sparse system and a stable update}{486}{subsubsection*.36}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-from-a-pde-to-a-sparse-system-and-a-stable-update}{{11.2.6}{486}{From a PDE to a sparse system and a stable update}{subsubsection*.36}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Derive the five-point grid stencil}{486}{subsubsection*.37}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-derive-the-five-point-grid-stencil}{{11.2.6}{486}{Derive the five-point grid stencil}{subsubsection*.37}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Poisson and Laplace equations become sparse linear systems}{486}{subsubsection*.38}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-poisson-and-laplace-equations-become-sparse-linear-systems}{{11.2.6}{486}{Poisson and Laplace equations become sparse linear systems}{subsubsection*.38}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Explicit heat flow and its stability limit}{488}{subsubsection*.39}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-explicit-heat-flow-and-its-stability-limit}{{11.2.6}{488}{Explicit heat flow and its stability limit}{subsubsection*.39}{}}
+\@writefile{toc}{\contentsline {subsubsection}{The cotangent mesh Laplacian and what ``positive'' means}{488}{subsubsection*.40}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-the-cotangent-mesh-laplacian-and-what-positive-means}{{11.2.6}{488}{The cotangent mesh Laplacian and what ``positive'' means}{subsubsection*.40}{}}
+\@writefile{toc}{\contentsline {subsubsection}{One spatial operator, different simulations}{490}{subsubsection*.41}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-one-spatial-operator-different-simulations}{{11.2.6}{490}{One spatial operator, different simulations}{subsubsection*.41}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A wave needs two initial conditions and a different time update}{490}{subsubsection*.42}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-a-wave-needs-two-initial-conditions-and-a-different-time-update}{{11.2.6}{490}{A wave needs two initial conditions and a different time update}{subsubsection*.42}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {11.3}Optical flow and motion from images}{491}{section.11.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-optical-flow-and-motion-from-images}{{11.3}{491}{Optical flow and motion from images}{section.11.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3.1}Brightness constancy is a measurement equation, not a universal law}{491}{subsection.11.3.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-brightness-constancy-is-a-measurement-equation-not-a-universal-law}{{11.3.1}{491}{Brightness constancy is a measurement equation, not a universal law}{subsection.11.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3.2}Noise gain and the shape of a good measurement}{492}{subsection.11.3.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-noise-gain-and-the-shape-of-a-good-measurement}{{11.3.2}{492}{Noise gain and the shape of a good measurement}{subsection.11.3.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3.3}The brightness equation has one constraint per pixel}{492}{subsection.11.3.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-the-brightness-equation-has-one-constraint-per-pixel}{{11.3.3}{492}{The brightness equation has one constraint per pixel}{subsection.11.3.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3.4}Eigenvectors expose directional noise gain}{493}{subsection.11.3.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-eigenvectors-expose-directional-noise-gain}{{11.3.4}{493}{Eigenvectors expose directional noise gain}{subsection.11.3.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3.5}B. Is the optical-flow estimate constrained?}{494}{subsection.11.3.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-b.-is-the-optical-flow-estimate-constrained}{{11.3.5}{494}{B. Is the optical-flow estimate constrained?}{subsection.11.3.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3.6}Flow: why one bright edge cannot reveal full motion}{494}{subsection.11.3.6}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-flow-why-one-bright-edge-cannot-reveal-full-motion}{{11.3.6}{494}{Flow: why one bright edge cannot reveal full motion}{subsection.11.3.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3.7}A compact focus-of-expansion calculation}{494}{subsection.11.3.7}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-a-compact-focus-of-expansion-calculation}{{11.3.7}{494}{A compact focus-of-expansion calculation}{subsection.11.3.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3.8}Lecture 3's practical TTC estimator and its failure near impact}{495}{subsection.11.3.8}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-lecture-3s-practical-ttc-estimator-and-its-failure-near-impact}{{11.3.8}{495}{Lecture 3's practical TTC estimator and its failure near impact}{subsection.11.3.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11.1}{\ignorespaces Visual Recall/University Graphics and Vision/flow-aperture-constraints.png}}{497}{figure.11.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3.9}Figure U7 - Independent gradients resolve the aperture ambiguity}{497}{subsection.11.3.9}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-figure-u7---independent-gradients-resolve-the-aperture-ambiguity}{{11.3.9}{497}{Figure U7 - Independent gradients resolve the aperture ambiguity}{subsection.11.3.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {11.4}Edges, contours, and subpixel localization}{498}{section.11.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-edges-contours-and-subpixel-localization}{{11.4}{498}{Edges, contours, and subpixel localization}{section.11.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.4.1}Edges and blobs: image geometry without a full 3-D model}{498}{subsection.11.4.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-edges-and-blobs-image-geometry-without-a-full-3-d-model}{{11.4.1}{498}{Edges and blobs: image geometry without a full 3-D model}{subsection.11.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.4.2}Worked blob example from a rectangular contour}{499}{subsection.11.4.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-worked-blob-example-from-a-rectangular-contour}{{11.4.2}{499}{Worked blob example from a rectangular contour}{subsection.11.4.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.4.3}Subpixel edge localization as a complete industrial pipeline}{499}{subsection.11.4.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-subpixel-edge-localization-as-a-complete-industrial-pipeline}{{11.4.3}{499}{Subpixel edge localization as a complete industrial pipeline}{subsection.11.4.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.4.4}What defocus does to an edge, and where interpolation bias comes from}{501}{subsection.11.4.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-what-defocus-does-to-an-edge-and-where-interpolation-bias-comes-from}{{11.4.4}{501}{What defocus does to an edge, and where interpolation bias comes from}{subsection.11.4.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.4.5}Hough voting turns weak local evidence into a global hypothesis}{502}{subsection.11.4.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-hough-voting-turns-weak-local-evidence-into-a-global-hypothesis}{{11.4.5}{502}{Hough voting turns weak local evidence into a global hypothesis}{subsection.11.4.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.4.6}Orthogonal line fitting is the right geometry for edge fragments}{503}{subsection.11.4.6}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-orthogonal-line-fitting-is-the-right-geometry-for-edge-fragments}{{11.4.6}{503}{Orthogonal line fitting is the right geometry for edge fragments}{subsection.11.4.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {11.5}Recognition, templates, and industrial matching}{504}{section.11.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-recognition-templates-and-industrial-matching}{{11.5}{504}{Recognition, templates, and industrial matching}{section.11.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.5.1}Industrial recognition: templates, transforms, and tolerances}{504}{subsection.11.5.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-industrial-recognition-templates-transforms-and-tolerances}{{11.5.1}{504}{Industrial recognition: templates, transforms, and tolerances}{subsection.11.5.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.5.2}From correlation to sparse, multidimensional pattern matching}{506}{subsection.11.5.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-from-correlation-to-sparse-multidimensional-pattern-matching}{{11.5.2}{506}{From correlation to sparse, multidimensional pattern matching}{subsection.11.5.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.5.3}The score is a design choice, and affine transforms act on normals}{508}{subsection.11.5.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-the-score-is-a-design-choice-and-affine-transforms-act-on-normals}{{11.5.3}{508}{The score is a design choice, and affine transforms act on normals}{subsection.11.5.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.5.4}PatMax: continuous pose refinement after coarse localization}{509}{subsection.11.5.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-patmax-continuous-pose-refinement-after-coarse-localization}{{11.5.4}{509}{PatMax: continuous pose refinement after coarse localization}{subsection.11.5.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.5.5}C. How should an edge alignment score behave?}{510}{subsection.11.5.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch030-c.-how-should-an-edge-alignment-score-behave}{{11.5.5}{510}{C. How should an edge alignment score behave?}{subsection.11.5.5}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {12}Per-Vertex and Per-Corner Mesh Attributes}{511}{chapter.12}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{04-visual-computing-ii-ch041-per-vertex-and-per-corner-mesh-attributes}{{12}{511}{Per-Vertex and Per-Corner Mesh Attributes}{chapter.12}{}}
+\newlabel{stagechapter:04-visual-computing-ii-ch041}{{12}{511}{Per-Vertex and Per-Corner Mesh Attributes}{section*.43}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.1}Per-vertex vs per-corner}{511}{subsection.12.0.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-per-vertex-vs-per-corner}{{12.0.1}{511}{Per-vertex vs per-corner}{subsection.12.0.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.2}Index sharing}{511}{subsection.12.0.2}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-index-sharing}{{12.0.2}{511}{Index sharing}{subsection.12.0.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.3}Topology vs geometry}{512}{subsection.12.0.3}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-topology-vs-geometry}{{12.0.3}{512}{Topology vs geometry}{subsection.12.0.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.4}Boundary edges}{512}{subsection.12.0.4}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-boundary-edges}{{12.0.4}{512}{Boundary edges}{subsection.12.0.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.5}Manifold and non-manifold}{512}{subsection.12.0.5}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-manifold-and-non-manifold}{{12.0.5}{512}{Manifold and non-manifold}{subsection.12.0.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.6}Connected components}{513}{subsection.12.0.6}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-connected-components}{{12.0.6}{513}{Connected components}{subsection.12.0.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.7}Face adjacency}{513}{subsection.12.0.7}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-face-adjacency}{{12.0.7}{513}{Face adjacency}{subsection.12.0.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.8}Vertex adjacency}{514}{subsection.12.0.8}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-vertex-adjacency}{{12.0.8}{514}{Vertex adjacency}{subsection.12.0.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.9}Half-edge}{514}{subsection.12.0.9}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-half-edge}{{12.0.9}{514}{Half-edge}{subsection.12.0.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.10}One-ring traversal}{515}{subsection.12.0.10}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-one-ring-traversal}{{12.0.10}{515}{One-ring traversal}{subsection.12.0.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.11}Current Kairo representation}{515}{subsection.12.0.11}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-current-kairo-representation}{{12.0.11}{515}{Current Kairo representation}{subsection.12.0.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.12}NORMALS, TANGENTS, BOUNDS AND OBJ}{515}{subsection.12.0.12}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-normals-tangents-bounds-and-obj}{{12.0.12}{515}{NORMALS, TANGENTS, BOUNDS AND OBJ}{subsection.12.0.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.13}Flat face normal}{516}{subsection.12.0.13}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-flat-face-normal}{{12.0.13}{516}{Flat face normal}{subsection.12.0.13}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.14}Smooth normals}{516}{subsection.12.0.14}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-smooth-normals}{{12.0.14}{516}{Smooth normals}{subsection.12.0.14}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.15}Area-weighted normals}{517}{subsection.12.0.15}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-area-weighted-normals}{{12.0.15}{517}{Area-weighted normals}{subsection.12.0.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.16}Angle-weighted normals}{517}{subsection.12.0.16}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-angle-weighted-normals}{{12.0.16}{517}{Angle-weighted normals}{subsection.12.0.16}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.17}Tangent generation}{517}{subsection.12.0.17}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-tangent-generation}{{12.0.17}{517}{Tangent generation}{subsection.12.0.17}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.18}Orthogonalize tangent}{518}{subsection.12.0.18}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-orthogonalize-tangent}{{12.0.18}{518}{Orthogonalize tangent}{subsection.12.0.18}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.19}Handedness}{518}{subsection.12.0.19}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-handedness}{{12.0.19}{518}{Handedness}{subsection.12.0.19}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.20}Degenerate UVs}{519}{subsection.12.0.20}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-degenerate-uvs}{{12.0.20}{519}{Degenerate UVs}{subsection.12.0.20}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.21}Bounds}{519}{subsection.12.0.21}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-bounds}{{12.0.21}{519}{Bounds}{subsection.12.0.21}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.22}OBJ}{520}{subsection.12.0.22}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-obj}{{12.0.22}{520}{OBJ}{subsection.12.0.22}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.23}OBJ negative indices}{520}{subsection.12.0.23}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-obj-negative-indices}{{12.0.23}{520}{OBJ negative indices}{subsection.12.0.23}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.24}Polygon triangulation}{521}{subsection.12.0.24}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-polygon-triangulation}{{12.0.24}{521}{Polygon triangulation}{subsection.12.0.24}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.25}Tuple deduplication}{521}{subsection.12.0.25}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-tuple-deduplication}{{12.0.25}{521}{Tuple deduplication}{subsection.12.0.25}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.26}glTF FROM BYTES TO PORTABLE SCENE}{521}{subsection.12.0.26}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-gltf-from-bytes-to-portable-scene}{{12.0.26}{521}{glTF FROM BYTES TO PORTABLE SCENE}{subsection.12.0.26}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.27}Buffers}{522}{subsection.12.0.27}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-buffers}{{12.0.27}{522}{Buffers}{subsection.12.0.27}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.28}bufferView}{522}{subsection.12.0.28}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-bufferview}{{12.0.28}{522}{bufferView}{subsection.12.0.28}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.29}Accessor}{522}{subsection.12.0.29}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-accessor}{{12.0.29}{522}{Accessor}{subsection.12.0.29}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.30}Primitive attributes}{523}{subsection.12.0.30}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-primitive-attributes}{{12.0.30}{523}{Primitive attributes}{subsection.12.0.30}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.31}Indices}{523}{subsection.12.0.31}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-indices}{{12.0.31}{523}{Indices}{subsection.12.0.31}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.32}Nodes}{523}{subsection.12.0.32}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-nodes}{{12.0.32}{523}{Nodes}{subsection.12.0.32}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.33}Kairo's matrix conversion}{524}{subsection.12.0.33}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-kairos-matrix-conversion}{{12.0.33}{524}{Kairo's matrix conversion}{subsection.12.0.33}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.34}Materials}{524}{subsection.12.0.34}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-materials}{{12.0.34}{524}{Materials}{subsection.12.0.34}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.35}Images/textures/samplers}{524}{subsection.12.0.35}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-imagestexturessamplers}{{12.0.35}{524}{Images/textures/samplers}{subsection.12.0.35}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.36}Animation structures}{525}{subsection.12.0.36}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-animation-structures}{{12.0.36}{525}{Animation structures}{subsection.12.0.36}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.37}Skins}{525}{subsection.12.0.37}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-skins}{{12.0.37}{525}{Skins}{subsection.12.0.37}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.38}Morph targets}{526}{subsection.12.0.38}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-morph-targets}{{12.0.38}{526}{Morph targets}{subsection.12.0.38}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.39}SIMPLIFICATION, SUBDIVISION, SMOOTHING AND PARAMETERIZATION}{526}{subsection.12.0.39}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-simplification-subdivision-smoothing-and-parameterization}{{12.0.39}{526}{SIMPLIFICATION, SUBDIVISION, SMOOTHING AND PARAMETERIZATION}{subsection.12.0.39}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.40}Edge collapse}{526}{subsection.12.0.40}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-edge-collapse}{{12.0.40}{526}{Edge collapse}{subsection.12.0.40}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.41}Quadric Error Metrics}{527}{subsection.12.0.41}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-quadric-error-metrics}{{12.0.41}{527}{Quadric Error Metrics}{subsection.12.0.41}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.42}Solve optimal collapse position}{528}{subsection.12.0.42}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-solve-optimal-collapse-position}{{12.0.42}{528}{Solve optimal collapse position}{subsection.12.0.42}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.43}Topology constraints}{528}{subsection.12.0.43}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-topology-constraints}{{12.0.43}{528}{Topology constraints}{subsection.12.0.43}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.44}Subdivision}{528}{subsection.12.0.44}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-subdivision}{{12.0.44}{528}{Subdivision}{subsection.12.0.44}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.45}Existing Loop vertex}{529}{subsection.12.0.45}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-existing-loop-vertex}{{12.0.45}{529}{Existing Loop vertex}{subsection.12.0.45}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.46}Laplacian smoothing}{529}{subsection.12.0.46}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-laplacian-smoothing}{{12.0.46}{529}{Laplacian smoothing}{subsection.12.0.46}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.47}Cotangent Laplacian}{530}{subsection.12.0.47}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-cotangent-laplacian}{{12.0.47}{530}{Cotangent Laplacian}{subsection.12.0.47}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.48}Parameterization}{530}{subsection.12.0.48}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-parameterization}{{12.0.48}{530}{Parameterization}{subsection.12.0.48}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.49}UV seams}{531}{subsection.12.0.49}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-uv-seams}{{12.0.49}{531}{UV seams}{subsection.12.0.49}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.50}SKELETONS, SKINNING AND ANIMATION}{531}{subsection.12.0.50}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-skeletons-skinning-and-animation}{{12.0.50}{531}{SKELETONS, SKINNING AND ANIMATION}{subsection.12.0.50}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.51}Skeleton hierarchy}{531}{subsection.12.0.51}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-skeleton-hierarchy}{{12.0.51}{531}{Skeleton hierarchy}{subsection.12.0.51}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.52}Local transforms}{532}{subsection.12.0.52}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-local-transforms}{{12.0.52}{532}{Local transforms}{subsection.12.0.52}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.53}Bind pose}{532}{subsection.12.0.53}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-bind-pose}{{12.0.53}{532}{Bind pose}{subsection.12.0.53}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.54}glTF inverse-bind matrices}{533}{subsection.12.0.54}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-gltf-inverse-bind-matrices}{{12.0.54}{533}{glTF inverse-bind matrices}{subsection.12.0.54}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.55}Linear Blend Skinning}{533}{subsection.12.0.55}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-linear-blend-skinning}{{12.0.55}{533}{Linear Blend Skinning}{subsection.12.0.55}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.56}Weight normalization}{534}{subsection.12.0.56}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-weight-normalization}{{12.0.56}{534}{Weight normalization}{subsection.12.0.56}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.57}Skinning normals/tangents}{534}{subsection.12.0.57}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-skinning-normalstangents}{{12.0.57}{534}{Skinning normals/tangents}{subsection.12.0.57}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.58}Candy-wrapper artifact}{535}{subsection.12.0.58}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-candy-wrapper-artifact}{{12.0.58}{535}{Candy-wrapper artifact}{subsection.12.0.58}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.59}Dual-quaternion skinning}{535}{subsection.12.0.59}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-dual-quaternion-skinning}{{12.0.59}{535}{Dual-quaternion skinning}{subsection.12.0.59}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.60}Animation clips/channels/samplers}{535}{subsection.12.0.60}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-animation-clipschannelssamplers}{{12.0.60}{535}{Animation clips/channels/samplers}{subsection.12.0.60}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.61}Translation interpolation}{535}{subsection.12.0.61}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-translation-interpolation}{{12.0.61}{535}{Translation interpolation}{subsection.12.0.61}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.62}Scale interpolation}{536}{subsection.12.0.62}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-scale-interpolation}{{12.0.62}{536}{Scale interpolation}{subsection.12.0.62}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.63}Quaternion interpolation}{536}{subsection.12.0.63}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-quaternion-interpolation}{{12.0.63}{536}{Quaternion interpolation}{subsection.12.0.63}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.64}Step interpolation}{537}{subsection.12.0.64}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-step-interpolation}{{12.0.64}{537}{Step interpolation}{subsection.12.0.64}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.65}Cubic spline}{537}{subsection.12.0.65}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-cubic-spline}{{12.0.65}{537}{Cubic spline}{subsection.12.0.65}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.66}Pose evaluation}{538}{subsection.12.0.66}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-pose-evaluation}{{12.0.66}{538}{Pose evaluation}{subsection.12.0.66}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.67}Animation blending}{538}{subsection.12.0.67}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-animation-blending}{{12.0.67}{538}{Animation blending}{subsection.12.0.67}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.68}Crossfade}{538}{subsection.12.0.68}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-crossfade}{{12.0.68}{538}{Crossfade}{subsection.12.0.68}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.69}Additive animation}{539}{subsection.12.0.69}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-additive-animation}{{12.0.69}{539}{Additive animation}{subsection.12.0.69}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.70}Root motion}{539}{subsection.12.0.70}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-root-motion}{{12.0.70}{539}{Root motion}{subsection.12.0.70}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.71}MORPHS, ANIMATED BOUNDS, COMPRESSION AND COMPLETE TRACE}{540}{subsection.12.0.71}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-morphs-animated-bounds-compression-and-complete-trace}{{12.0.71}{540}{MORPHS, ANIMATED BOUNDS, COMPRESSION AND COMPLETE TRACE}{subsection.12.0.71}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.72}Morph position deltas}{540}{subsection.12.0.72}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-morph-position-deltas}{{12.0.72}{540}{Morph position deltas}{subsection.12.0.72}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.73}Morph normal deltas}{540}{subsection.12.0.73}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-morph-normal-deltas}{{12.0.73}{540}{Morph normal deltas}{subsection.12.0.73}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.74}Morph weights}{541}{subsection.12.0.74}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-morph-weights}{{12.0.74}{541}{Morph weights}{subsection.12.0.74}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.75}Morph before or after skinning}{541}{subsection.12.0.75}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-morph-before-or-after-skinning}{{12.0.75}{541}{Morph before or after skinning}{subsection.12.0.75}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.76}Animated bounds}{541}{subsection.12.0.76}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-animated-bounds}{{12.0.76}{541}{Animated bounds}{subsection.12.0.76}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.77}CPU vs GPU skinning}{542}{subsection.12.0.77}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-cpu-vs-gpu-skinning}{{12.0.77}{542}{CPU vs GPU skinning}{subsection.12.0.77}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.78}Animation compression}{542}{subsection.12.0.78}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-animation-compression}{{12.0.78}{542}{Animation compression}{subsection.12.0.78}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.79}Coordinate-convention conversion}{542}{subsection.12.0.79}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-coordinate-convention-conversion}{{12.0.79}{542}{Coordinate-convention conversion}{subsection.12.0.79}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.80}Asset validation}{543}{subsection.12.0.80}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-asset-validation}{{12.0.80}{543}{Asset validation}{subsection.12.0.80}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {12.1}\begin {linenomath}\[ = (0.2,1.05,0.0,1). \]\end  {linenomath}}{545}{section.12.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-section}{{12.1}{545}{\texorpdfstring {\[ = (0.2,1.05,0.0,1). \]}{ = (0.2,1.05,0.0,1). }}{section.12.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.1.1}Skin influence}{545}{subsection.12.1.1}\protected@file@percent }
+\newlabel{04-visual-computing-ii-ch041-skin-influence}{{12.1.1}{545}{Skin influence}{subsection.12.1.1}{}}
+\@writefile{toc}{\contentsli

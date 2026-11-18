@@ -1,0 +1,37 @@
+\hypertarget{appendix-d1ea57347893}{}
+\section*{Dual quaternions and rigid motion}
+\section{Dual quaternions and rigid motion}\label{appendix-d1ea57347893-dual-quaternions-and-rigid-motion}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase7 · \textbf{Latest development:} Phase7
+
+\subsection{Definition and mechanism}\label{appendix-d1ea57347893-definition-and-mechanism}
+
+A rigid dual quaternion consists of a unit real quaternion and a dual quaternion part satisfying real dot dual equals zero. Encoding dual=(0,t)real/2 combines rotation and translation; composition follows the Hamilton convention. It does not represent arbitrary scale or shear.
+
+\textbf{Reconstruction cue:} Recover translation with twice dual times conjugate(real); normalization must preserve the coupled constraint.
+
+\subsection{Prerequisites}\label{appendix-d1ea57347893-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-965d9260eeab]{Quaternion algebra and Hamilton product}
+\item
+  \hyperref[appendix-0bf0ca73f735]{Linear affine and projective transformations}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-d1ea57347893-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-292c061cd47c]{Transform hierarchies TRS and shear}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-d1ea57347893-recall-and-next-depth}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\subsection{Source and navigation}\label{appendix-d1ea57347893-source-and-navigation}
+
+\hyperref[01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations]{Continuous explanation} · \hyperref[appendix-fd090d982a15-phase-7---parts-601-700]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-7---source-analysis-and-verification]{Sources and verification}

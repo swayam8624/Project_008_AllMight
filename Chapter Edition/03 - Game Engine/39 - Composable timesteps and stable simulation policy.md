@@ -8,7 +8,7 @@ A simulation often subdivides or combines work under frame deadlines, but the re
 
 **Recall question:** If a step is split into two halves, which position, velocity, and damping results should match, and what assumptions make them differ?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 95878–99260; source-span SHA256 6a95d25e7c677e3626e6b5c9bd09678c94c2536fb3e1aff0d5984b4394d2677a. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 97059–100441; source-span SHA256 6a95d25e7c677e3626e6b5c9bd09678c94c2536fb3e1aff0d5984b4394d2677a. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Timestep composability

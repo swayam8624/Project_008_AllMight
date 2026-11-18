@@ -1,0 +1,47 @@
+\hypertarget{appendix-cac01ebeeb11}{}
+\section*{Axial depth and Euclidean range}
+\chapter{Axial depth and Euclidean range}\label{appendix-cac01ebeeb11-axial-depth-and-euclidean-range}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 11 · \textbf{Latest development:} Phase 11
+
+\section{Definition and mechanism}\label{appendix-cac01ebeeb11-definition-and-mechanism}
+
+Axial depth measures distance along the camera's forward axis; Euclidean range measures distance from the camera centre along the viewing ray. With a right-handed view frame looking along \(-Z\), positive axial depth is \(d=-z\), while range is \(r=\sqrt{x^2+y^2+z^2}\). They agree only on the optical axis. For a unit ray direction \(q\) with \(q_z<0\), a range measurement converts to axial depth as \(d=-rq_z\). A range sensor and a perspective depth buffer may therefore encode different quantities. Applying a depth-buffer formula directly to a range image distorts reconstructed geometry away from the image centre. At view point \((3,4,-12)\), axial depth is \(12\) while range is \(13\), a visible distinction off-axis.
+
+\section{Prerequisites}\label{appendix-cac01ebeeb11-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-1c07d64f5e70}{Camera view and clip-space pipeline (04-Visual-Computing-II, appendix-1c07d64f5e70)}
+\item
+  \hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization}
+\end{itemize}
+
+\section{Used by}\label{appendix-cac01ebeeb11-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1bc40b08db4a]{Hardware depth-buffer linearization}
+\item
+  \hyperref[appendix-2cbf2968e866]{Position reconstruction from depth}
+\item
+  \hyperref[appendix-0976e86e5b9f]{Off-axis stereo projection and disparity}
+\end{itemize}
+
+\section{Full teaching explanation}\label{appendix-cac01ebeeb11-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Recover\%20geometry\%20from\%20depth\%20and\%20construct\%20screen-space\%20rays}{Recover geometry from depth and construct screen-space rays}
+\end{itemize}
+
+\section{Source coverage}\label{appendix-cac01ebeeb11-source-coverage}
+
+Supplied lesson parts: 1078.
+
+\section{Future keywords}\label{appendix-cac01ebeeb11-future-keywords}
+
+range image, optical axis, axial distance

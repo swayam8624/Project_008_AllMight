@@ -1,0 +1,62 @@
+\hypertarget{appendix-eb336149c00a}{}\label{referencestart:appendix-eb336149c00a}
+\section{Floating-point infinities}\label{appendix-eb336149c00a-floating-point-infinities}
+
+\hypertarget{appendix-eb336149c00a-floating-point-infinities}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C004 · \textbf{Latest development:} C004
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-eb336149c00a-definition-and-mechanism}
+
+\hypertarget{appendix-eb336149c00a-definition-and-mechanism}{}
+
+All-one exponent and zero fraction encode signed infinity. This is not maximum finite. Infinity minus itself is NaN; overflow's result also depends on rounding direction.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-eb336149c00a-prerequisites}
+
+\hypertarget{appendix-eb336149c00a-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5057f9ad327f]{Binary32} --- The concrete fields provide the representation used in this mechanism.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-eb336149c00a-used-by}
+
+\hypertarget{appendix-eb336149c00a-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0ec599f8ba27]{Numerical tolerance policies} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-7f1e17dcafb1]{Robust norm and intermediate range} --- uses this mechanism in its explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-eb336149c00a-recall-and-next-depth}
+
+\hypertarget{appendix-eb336149c00a-recall-and-next-depth}{}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Define non-finite input policy before applying a relative tolerance formula.
+
+\subsection{Source and navigation}\label{appendix-eb336149c00a-source-and-navigation}
+
+\hypertarget{appendix-eb336149c00a-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}
+
+\subsection{Reconstruction depth}\label{appendix-eb336149c00a-reconstruction-depth}
+
+\hypertarget{appendix-eb336149c00a-reconstruction-depth}{}
+
+IEEE-754 infinities represent values beyond the finite exponent range and results such as nonzero finite division by signed zero. They participate in arithmetic according to defined extended-real-like rules. Adding a finite value to positive infinity stays positive infinity, while indeterminate forms such as infinity minus infinity produce NaN.
+
+Infinity can be useful as a sentinel in algorithms, such as an initial shortest-path distance, because comparisons with finite positive values behave naturally. But it is not automatically a valid physical or engine state. A transform position, mass, texture coordinate or timestamp becoming infinite usually signals overflow or invalid input and should be caught at a subsystem boundary.
+
+A robust numeric API distinguishes ``the floating type can encode infinity'' from ``this domain accepts infinity.'' Tests should exercise overflow, division by zero under the active floating environment, comparisons, finite-value validation and serialization behavior. Fast-math modes may weaken exceptional-value assumptions, so production guarantees must match compile configuration.

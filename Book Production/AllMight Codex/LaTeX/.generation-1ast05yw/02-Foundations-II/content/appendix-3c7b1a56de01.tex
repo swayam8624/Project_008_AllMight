@@ -1,0 +1,47 @@
+\hypertarget{appendix-3c7b1a56de01}{}
+\section*{SIMD and GPU data layouts}
+\section{SIMD and GPU data layouts}\label{appendix-3c7b1a56de01-simd-and-gpu-data-layouts}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C003
+
+\subsection{Definition and mechanism}\label{appendix-3c7b1a56de01-definition-and-mechanism}
+
+Wider words, lanes, buffers, pixels, and vertex formats reuse exact-width representation and packing principles.
+
+SIMD applies an operation across multiple data lanes; GPU buffers and formats specify how values are arranged for parallel access. Packing can reduce traffic but adds decoding and alignment constraints. Lane layout, alignment, and access grouping require later treatment.
+
+\subsection{Prerequisites}\label{appendix-3c7b1a56de01-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-d67a19507dc5}{Machine word (01-Foundations-I, appendix-d67a19507dc5)} --- A processor's natural integer processing width is often called its word width, but the term is architecture dependent.
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-a1f7c53b4742}{Alignment and padding (01-Foundations-I, appendix-a1f7c53b4742)} --- Alignment is a required address multiple for an object.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-3c7b1a56de01-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-26bf6bf2fb8b]{Vector storage SIMD and boundary layouts} --- Phase 6 uses this established foundation in its geometry narrative.
+\end{itemize}
+
+Connect later chunks here when they use this concept.
+
+\subsection{M003 development}\label{appendix-3c7b1a56de01-m003-development}
+
+Alignment of vector loads and buffer offsets is a separate requirement from endian order. \href{../01-Foundations-I/main.pdf\#nameddest=appendix-0682dbfc5f0e}{Packed structures and misaligned access (01-Foundations-I, appendix-0682dbfc5f0e)} may save space but introduce boundary crossings; \href{../05-Engine-I/main.pdf\#nameddest=appendix-5522ad176ca0}{Field reordering and AoS versus SoA (05-Engine-I, appendix-5522ad176ca0)} can improve fieldwise access. CPU ABI layout is not automatically a GPU buffer schema.
+
+\subsection{Recall and next depth}\label{appendix-3c7b1a56de01-recall-and-next-depth}
+
+Explain simd and gpu data layouts without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} vector lanes, alignment, coalescing, and resource formats.
+
+\subsection{Source and navigation}\label{appendix-3c7b1a56de01-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#From\%20a\%20signal\%20to\%20an\%20interpretation}{C001 teaching chapter} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (01-Foundations-I, appendix-fd090d982a15)} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Where\%20the\%20bytes\%20live}{C003 development}

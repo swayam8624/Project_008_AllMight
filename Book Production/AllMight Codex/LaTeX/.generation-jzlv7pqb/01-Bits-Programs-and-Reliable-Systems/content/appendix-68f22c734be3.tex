@@ -1,0 +1,82 @@
+\hypertarget{appendix-68f22c734be3}{}\label{referencestart:appendix-68f22c734be3}
+\section{Matrices, Transforms and Quaternions --- Visual Recall}\label{appendix-68f22c734be3-matrices-transforms-and-quaternions-visual-recall}
+
+Companion to \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations}{the Phase 7 teaching story (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 2)}. Start with the short route, reconstruct a worked figure, then follow its link when an assumption or definition is missing. Six excerpts supply 84 numbered lessons; the affine bridge is reconstruction, and Parts 635--650 remain source gaps.
+
+\subsection{The short route}\label{appendix-68f22c734be3-the-short-route}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{../current/Assets/Print/0a2f8e988a4c807d4b8cc160976fee222390c95b84931cd742b72ba4faedd11a.pdf}}
+
+\textbf{Convention card:} active right-handed rotations; column vectors; \(y=Mx\); rightmost operation first; code angles in radians; Hamilton quaternion components \((w,x,y,z)\). Row-major storage does not choose any of those mathematical conventions.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Topic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Shortest useful rule
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Figure or explanation
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Meaning & A rectangular table becomes a map only after input/output bases and roles are fixed. Columns are input-basis images. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch018-figure-m1---coordinates-weight-the-new-basis-directions}{M1: weighted columns (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 2)} \\
+Shape & \((m\times k)(k\times n)\) yields \(m\times n\); shared dimensions must match. Addition needs equal shape. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch018-combining-rules-explains-the-multiplication-law}{Derive the product (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 2)} \\
+Composition & \(ABx\) applies \(B\) first. Noncommutative order is separate from associative grouping; floating-point regrouping can change bits. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch018-figure-m2---the-same-operations-give-different-results-in-different-orders}{M2: two orders (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 2)} \\
+Rotations & Derive columns from rotated axes. For \(R_y\), rotate the oriented pair \((z,x)\), then restore \((x,y,z)\) order. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch018-the-oriented-plane-explains-the-y-rotation-signs}{Axis derivation and values (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 2)} \\
+Structure & \((AB)^T=B^TA^T\); \(A=(A+A^T)/2+(A-A^T)/2\). Trace is similarity-invariant, not a full map identifier. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch018-transpose-lets-us-compare-measurements-and-structure}{Transpose, symmetry and trace (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 2)} \\
+Determinant & Magnitude = volume scale; sign = orientation; zero = rank loss for square maps. It does not measure conditioning alone. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch018-figure-m3---three-different-questions-answered-by-one-determinant}{M3: determinant questions (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 2)} \\
+Inversion & Cofactors explain a formula; pivoted elimination explains an algorithm. Solve directly when the inverse itself is unnecessary. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch018-row-reduction-makes-the-inverse-observable}{Full elimination trace (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 2)} \\
+Sensitivity & \(\kappa(A)=\|A\|\|A^{-1}\|\) in a compatible norm. Stable code cannot restore information lost to input uncertainty. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch018-figure-m4---uncertainty-can-be-amplified-by-a-reversible-map}{M4: perturbed observation (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 2)} \\
+Point/vector & Affine points receive \(Ap+t\); displacements receive \(Av\). Homogeneous \(w=1\) and \(w=0\) expose the distinction. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch018-figure-m5---the-same-frame-moves-a-point-and-redirects-a-displacement}{M5: two roles (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 2)} \\
+Frames & \(F_C^{-1}F_B\) converts B-coordinates to C-coordinates. The camera view is the inverse camera pose. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-coordinates-can-change-while-the-geometric-object-stays-still}{Active/passive and frame conversion (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)} \\
+Projection & Clip retains \(w\); NDC divides by valid \(w\). Clipping, depth range and backend conventions remain explicit. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-figure-m6---follow-one-point-through-named-spaces}{M6: complete point walk (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)} \\
+Normals & \(n'=A^{-T}n\) preserves zero action on transformed tangents. Normalize only after a valid transformation. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-a-normal-transforms-as-a-measurement-that-must-still-vanish-on-tangents}{Proof and counterexample (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)} \\
+Layout & Logical width is not physical stride. Real arrays provide array bounds; views borrow both layout and lifetime. & \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch038-figure-m7---a-submatrix-keeps-the-parents-physical-stride}{M7: subview addresses (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 7)} \\
+Performance & SIMD, loop order and tiling change reuse and rounding. Measure hardware/workload; algebra alone supplies no speedup. & \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch038-simd-and-loop-order-change-the-execution-schedule-not-the-matrix-question}{Reuse and loop trace (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 7)} \\
+Quaternion & Hamilton product = scalar/dot part + weighted vectors/cross part. Unit \(q\) permits inverse-by-conjugate. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-figure-m8---one-orientation-several-checkable-actions}{M8: axis to action (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)} \\
+Half-angle & \(q=(\cos(\theta/2),a\sin(\theta/2))\) for unit axis. Two-sided action produces the full angle; \(q\) and \(-q\) share orientation. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-derive-the-axis-angle-mapping-by-deriving-its-action}{Sandwich derivation (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)} \\
+Conversion & Quaternion↔matrix tests compare basis actions; near \(180^\circ\) recover a large component. Reject scale/shear/reflection as rotation inputs. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-recover-a-large-component-instead-of-dividing-by-a-nearly-zero-one}{Stable branches (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)} \\
+Interpolation & Sign-align endpoints. NLERP normalizes the chord; SLERP advances on the great circle. Small-angle fallback needs a policy. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-figure-m9---choose-a-representative-before-choosing-a-path}{M9: path selection (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)} \\
+Euler & Axis sequence is part of the type contract. Gimbal lock is a singular coordinate chart; original angle history cannot be recovered. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-euler-coordinates-remain-useful-when-their-chart-is-explicit}{Substitute the singular pitch (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)} \\
+Rigid dual & \(q_d=(0,t)q_r/2\); require \(\|q_r\|=1\) and \(q_r\cdot q_d=0\). Do not normalize the two halves independently. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-two-coupled-constraints-make-the-eight-coefficients-a-rigid-motion}{Study constraint and recovery (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)} \\
+TRS/cache & Local TRS is useful authoring data; full affine world products may contain shear. Dirty flags record dependency invalidation. & \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-figure-m10---representation-follows-the-permitted-operation}{M10: choose representation (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)} · \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-figure-m11---invalidate-the-values-that-actually-depend-on-the-edit}{M11: cache dependencies (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)} \\
+\end{longtable}
+}
+
+\subsection{Four experiments to reconstruct without the chapter}\label{appendix-68f22c734be3-four-experiments-to-reconstruct-without-the-chapter}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Send \((4,2)\) through columns \((2,1)\) and \((-1,3)\). Obtain \((6,10)\) by column contributions and row sums. Explain why changing storage cannot change that answer.
+\item
+  Compare observations \((2,2.001)\) and \((2,2.002)\) for \(A=\begin{bmatrix}1&1\\1&1.001\end{bmatrix}\). Recover \((1,1)\) versus \((0,2)\) and identify the source of uncertainty.
+\item
+  For \(q_Z=(\sqrt2/2,0,0,\sqrt2/2)\), rotate X to Y. Then use \(2q_Z\): true inverse still gives Y, conjugate sandwich gives four times Y, and the unit-optimized formula is outside its contract.
+\item
+  Compare the columns of \(S R_{45^\circ}\) with \(S=\operatorname{diag}(2,1)\). Their dot is \(-3/2\), proving that the result is not an orthogonal rotation times diagonal scale.
+\end{enumerate}
+
+\textbf{Teaching check:} explain every coefficient, space and failure result before running \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch038-a-complete-scalar-laboratory-makes-the-contracts-observable}{the standalone C++ laboratory (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 7)}. Written coverage and successful tests do not measure personal mastery.
+
+\hyperref[appendix-fd090d982a15-phase-7---parts-601-700]{Source ledger and gap} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=02-foundations-ii-ch039-phase-7---transform-reconstruction-proofs}{Derivations (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 1)} · \hyperref[appendix-92ff77d4dfdc-phase-7---the-moving-panel-tracebook]{Tracebook} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}
+
+\subsection{Added retrieval prompt}\label{appendix-68f22c734be3-added-retrieval-prompt}
+
+Project onto y=x: standard matrix \texttt{{[}{[}1/2,1/2{]},{[}1/2,1/2{]}{]}}, aligned-basis matrix diag(1,0); explain why P squared equals P. {Rebuild both descriptions}.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Visual Recall/Math Foundations/M07-1\_rotated-coordinate-chart.png}]{../current/Assets/Print/f5495fd0ca3aa58a8fe7f24a25c0a2b126be97b2df9b9ae4946dda4112c9e9fa.png}}
+\caption{Visual Recall/Math Foundations/M07-1\_rotated-coordinate-chart.png}
+\end{figure}
+
+\textbf{M07-1. A point expressed in a rotated local chart.} For the quarter-turn basis at (1,1), point (3,2) has local coordinates (1,-2) and reconstructs the original point.

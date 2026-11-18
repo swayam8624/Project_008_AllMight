@@ -1,0 +1,37 @@
+\hypertarget{appendix-32f39e9a3738}{}
+\section{Taylor models and approximation error}\label{appendix-32f39e9a3738-taylor-models-and-approximation-error}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 9 · \textbf{Latest development:} Phase 9
+
+\subsection{Definition and mechanism}\label{appendix-32f39e9a3738-definition-and-mechanism}
+
+A Taylor model approximates a smooth function near a reference point using its value, derivatives, and higher-order terms. The first-order model is the derivative's linear map; the second-order model adds curvature through the Hessian. A remainder term describes what the finite truncation omits, so local accuracy depends on step size and higher derivatives over the region. Big-O notation gives an asymptotic scale, while a concrete error bound needs assumptions such as bounded derivatives. Taylor models power local optimization, camera Jacobian updates, uncertainty propagation, and numerical error analysis. They are not reliable far from the expansion point merely because the polynomial is easy to evaluate. When the input distribution is broad or crosses a singularity, first-order covariance propagation can miss bias and tail behavior; validate or replace the local model.
+
+\subsection{Prerequisites}\label{appendix-32f39e9a3738-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-7bc181935c42]{Derivative as a local linear map}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-6ac071f8b50c}{Hessians and local curvature (01-Foundations-I, appendix-6ac071f8b50c)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-32f39e9a3738-used-by}
+
+\begin{itemize}
+\item
+  This node is a current endpoint in the supplied Phase 9--10 path.
+\item
+  \hyperref[appendix-6b0648b2b8e8]{Discretization, truncation, and roundoff}
+\item
+  \hyperref[appendix-0c2a5f69851e]{Interpolation versus approximation} \#\# Full teaching explanation
+\item
+  \hyperref[02-foundations-ii-ch021-jacobians-curvature-and-local-approximation]{Phase 9 teaching section}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-adf48f5dc5c1}{Visual Recall/09 - Calculus and Optimization - Visual Recall.md (01-Foundations-I, appendix-adf48f5dc5c1)} · visual recall
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-32f39e9a3738-source-coverage}
+
+Supplied lesson parts: 828 (T04 · M050), 829 (T04 · M050), 830 (T04 · M050), 831 (T04 · M050).

@@ -1,0 +1,237 @@
+{
+  "schema": "allmight-held-panels-review-jobs-v1",
+  "assets": [
+    {
+      "id": "0afe9d09c4fc80ae1bff5d38-panel-01",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TB\n  A[\"Mesh / Texture / CheckedShader\"] --> B{\"Uploadable<T> satisfied?\"}\n  B -->|no| X[\"Constrained API unavailable at compile time\"]\n  B -->|yes| T[\"AssetTraits<T> selects size policy\"]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0afe9d09c4fc80ae1bff5d38-panel-01.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "0afe9d09c4fc80ae1bff5d38-panel-02",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TB\n  T --> F[\"Args&&... + std::forward preserve caller's argument category\"]\n  F --> C{\"Construct next unpublished slot\"}\n  C -->|throws| R[\"Published prefix unchanged\"]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0afe9d09c4fc80ae1bff5d38-panel-02.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "0afe9d09c4fc80ae1bff5d38-panel-03",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TB\n  C -->|succeeds| P[\"Increment published count; AssetId returned\"]\n  P --> S[\"Checked heterogeneous batch accounting\"]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0afe9d09c4fc80ae1bff5d38-panel-03.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "0b0e76bfeca07fcd2864142a-panel-01",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}, 'diagramMarginX': 24, 'diagramMarginY': 8}}%%\nsequenceDiagram\n    participant W as Writer\n    participant B as Byte image\n    participant R as Reader\n    W->>B: Encode widths, order,<br/>representation, version\n    R->>B: Check header and declared<br/>dimensions\n    R->>R: Check products, bounds and<br/>resource limits",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0b0e76bfeca07fcd2864142a-panel-01.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/01 - Bits, Numbers and Memory - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "0b0e76bfeca07fcd2864142a-panel-02",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n    participant W as Writer\n    participant B as Byte image\n    participant R as Reader\n    R->>B: Verify specified integrity<br/>coverage\n    R->>R: Decode only validated fields\n    Note over W,R: Authenticity and crash<br/>durability require separate<br/>contracts",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/0b0e76bfeca07fcd2864142a-panel-02.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/01 - Bits, Numbers and Memory - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "2ce7218d89da9386836a7652-panel-01",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TB\n    A[\"Owned snapshot: five live + one retired\"] --> B[\"Custom forward iterator skips tombstone\"]\n    B --> C[\"Lazy filter | transform view\"]\n    C --> D[\"Borrowed or owning view?\"]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/2ce7218d89da9386836a7652-panel-01.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "2ce7218d89da9386836a7652-panel-02",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TB\n    D --> E[\"Ranges algorithms with projections\"]\n    E --> F[\"Owned output: custom allocator / PMR\"]\n    F --> G[\"Monotonic arena lifetime and overflow\"]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/2ce7218d89da9386836a7652-panel-02.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "2ce7218d89da9386836a7652-panel-03",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TB\n    G --> H[\"Named C++ module interface and partition\"]\n    H --> I[\"Separate implementation and importers\"]\n    I --> J[\"Versioned C ABI wrapper for C11 caller\"]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/2ce7218d89da9386836a7652-panel-03.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "ae23cbd6aa6c6b535c2ab7a2-panel-01",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TB\n    A[\"PixelFormat chosen in type\"] --> B[\"PixelTraits: channels as compile-time value\"]\n    B --> C[\"checked width \u00d7 height \u00d7 channels\"]\n    C --> D{\"Policy budget allows bytes?\"}",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/ae23cbd6aa6c6b535c2ab7a2-panel-01.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "ae23cbd6aa6c6b535c2ab7a2-panel-02",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TB\n    D -->|no| R[\"Reject; recorder unchanged\"]\n    D -->|yes| E{\"Payload tag\"}\n    E -->|Verify| F[\"Require exact source span length\"]\n    E -->|Metadata only| G[\"Mark plan, not ready resource\"]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/ae23cbd6aa6c6b535c2ab7a2-panel-02.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "ae23cbd6aa6c6b535c2ab7a2-panel-03",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TB\n    F --> H[\"Alpha branch + Morton table\"]\n    G --> H\n    H --> I[\"CRTP recorder accepts plan\"]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/ae23cbd6aa6c6b535c2ab7a2-panel-03.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "4587c34d178f477c59c8cb55-panel-01",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n    participant F as Function\n    participant O as RAII owner\n    participant R as Resource\n    F->>R: acquire\n    R-->>F: handle\n    F->>O: immediately adopt handle",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/4587c34d178f477c59c8cb55-panel-01.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "4587c34d178f477c59c8cb55-panel-02",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n    participant F as Function\n    participant O as RAII owner\n    participant R as Resource\n    alt normal return\n        F->>O: scope ends\n    else early return or exception\n        F->>O: scope unwinds\n    end\n    O->>R: matching release exactly<br/>once",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/4587c34d178f477c59c8cb55-panel-02.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "cf7ccfbe05510be35f986d5b-panel-01",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TD\n    X[Input components] --> F{finite?}\n    F -- no --> E[Reject / report invalid input]\n    F -- yes --> Z{zero or near-degenerate?}",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cf7ccfbe05510be35f986d5b-panel-01.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/06 - Geometry and Vector Implementation - Visual Recall.md",
+      "volume": "02-Foundations-II"
+    },
+    {
+      "id": "cf7ccfbe05510be35f986d5b-panel-02",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TD\n    Z -- yes --> D[Use explicit degenerate policy]\n    Z -- no --> S[Scale to safe range]\n    S --> C[Compute with declared precision]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cf7ccfbe05510be35f986d5b-panel-02.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/06 - Geometry and Vector Implementation - Visual Recall.md",
+      "volume": "02-Foundations-II"
+    },
+    {
+      "id": "cf7ccfbe05510be35f986d5b-panel-03",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TD\n    C --> Q{decision sign / tolerance reliable?}\n    Q -- no --> U[Return uncertain or robust fallback]\n    Q -- yes --> O[Use result]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cf7ccfbe05510be35f986d5b-panel-03.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/06 - Geometry and Vector Implementation - Visual Recall.md",
+      "volume": "02-Foundations-II"
+    },
+    {
+      "id": "fb9dffc7a9c985e55f55150e-panel-01",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nstateDiagram-v2\n    [*] --> StorageReserved\n    StorageReserved --> ObjectAAlive: construct A / construct_at\n    ObjectAAlive --> StorageReserved: destroy A / destroy_at",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/fb9dffc7a9c985e55f55150e-panel-01.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "fb9dffc7a9c985e55f55150e-panel-02",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nstateDiagram-v2\n    StorageReserved --> ObjectBAlive: construct B in same suitable storage\n    ObjectBAlive --> StorageReserved: destroy B\n    StorageReserved --> StorageReleased: allocator releases bytes\n    StorageReleased --> [*]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/fb9dffc7a9c985e55f55150e-panel-02.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "8e675126df1a1b1854a18b23-panel-01",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n  participant U as User or Player\n  participant P as Parser\n  participant C as Candidate Scene\n  U->>P: Open scene bytes\n  P->>C: Parse authored records",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/8e675126df1a1b1854a18b23-panel-01.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/08 - Algorithms, application boundaries, and a first playable.md",
+      "volume": "05-Engine-I"
+    },
+    {
+      "id": "8e675126df1a1b1854a18b23-panel-02",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n  participant C as Candidate Scene\n  participant R as Resolver\n  C->>R: Validate assets and saved<br/>IDs\n  R->>C: Resolve references in second<br/>pass\n  C->>C: Check hierarchy and<br/>component invariants",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/8e675126df1a1b1854a18b23-panel-02.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/08 - Algorithms, application boundaries, and a first playable.md",
+      "volume": "05-Engine-I"
+    },
+    {
+      "id": "8e675126df1a1b1854a18b23-panel-03",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n  participant U as User or Player\n  participant C as Candidate Scene\n  participant W as Active World\n  alt every check succeeds\n    C->>W: Publish candidate world\n    W-->>U: New scene active\n  else parse, resolve, or validation fails\n    C-->>U: Diagnostic and keep active<br/>world unchanged\n  end",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/8e675126df1a1b1854a18b23-panel-03.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/08 - Algorithms, application boundaries, and a first playable.md",
+      "volume": "05-Engine-I"
+    },
+    {
+      "id": "12f60b7ab1e672dd10535591-panel-01",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n  participant W as File watcher\n  participant C as Compiler/loader\n  participant P as Candidate pipeline\n  W->>C: Change event\n  C->>C: Read stable file and compile\n  C->>P: Create candidate<br/>modules/pipeline",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-01.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/41 - Evidence, tools, and revisable design.md",
+      "volume": "06-Engine-II"
+    },
+    {
+      "id": "12f60b7ab1e672dd10535591-panel-02",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n  participant P as Candidate pipeline\n  participant R as Renderer clients\n  participant G as GPU work in flight\n  alt compile and compatibility checks succeed\n    P->>R: Publish new version at safe<br/>boundary\n    R->>G: Submit commands referencing<br/>new version\n  end",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-02.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/41 - Evidence, tools, and revisable design.md",
+      "volume": "06-Engine-II"
+    },
+    {
+      "id": "12f60b7ab1e672dd10535591-panel-03",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n  participant P as Candidate pipeline\n  participant R as Renderer clients\n  participant G as GPU work in flight\n  alt compile and compatibility checks succeed\n    G-->>R: Old work completes\n    R->>P: Retire old pipeline and<br/>module\n  end",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-03.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/41 - Evidence, tools, and revisable design.md",
+      "volume": "06-Engine-II"
+    },
+    {
+      "id": "12f60b7ab1e672dd10535591-panel-04",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n  participant C as Compiler/loader\n  participant R as Renderer clients\n  alt compile and compatibility checks succeed\n  else compile or compatibility fails\n    C-->>R: Keep previous version and<br/>report diagnostic\n  end",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/12f60b7ab1e672dd10535591-panel-04.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/41 - Evidence, tools, and revisable design.md",
+      "volume": "06-Engine-II"
+    },
+    {
+      "id": "cc5b9ccaf7c8fa11a4b0ea16-panel-01",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n    participant CPU\n    participant Queue\n    participant GPU\n    CPU->>CPU: Fill slot 0\n    CPU->>Queue: Commit C0(slot 0)\n    Queue->>GPU: Schedule C0\n    CPU->>CPU: Fill slot 1 while C0 runs",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cc5b9ccaf7c8fa11a4b0ea16-panel-01.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/01 - Computing Foundations/11 - C++ Const, Borrowing, and CPU\u2013GPU Buffering.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "cc5b9ccaf7c8fa11a4b0ea16-panel-02",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'sequence': {'actorFontSize': 12, 'messageFontSize': 12, 'noteFontSize': 12, 'actorMargin': 4, 'messageMargin': 5, 'diagramMarginX': 2, 'diagramMarginY': 2}}}%%\nsequenceDiagram\n    participant CPU\n    participant Queue\n    participant GPU\n    CPU->>Queue: Commit C1(slot 1)\n    GPU-->>CPU: C0 completion: slot 0<br/>reusable\n    CPU->>CPU: Refill slot 0",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/cc5b9ccaf7c8fa11a4b0ea16-panel-02.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/01 - Computing Foundations/11 - C++ Const, Borrowing, and CPU\u2013GPU Buffering.md",
+      "volume": "01-Foundations-I"
+    },
+    {
+      "id": "3c3f8693bed9a50626badd2c-panel-01",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TB\n  A[\"Active player chooses robot combat and moves a robot or fires\"] --> C{\"Has a player just met either win condition?\"}\n  B[\"Active player chooses scholarly connection and places a stone, or moves one if unable to place\"] --> C\n  C -- \"Yes\" --> D[\"That player wins the whole game immediately\"]\n  C -- \"No\" --> E[\"Opponent chooses and makes a legal move for the active player in the other contest\"]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/3c3f8693bed9a50626badd2c-panel-01.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/09 - Player choices, rules, and readable feedback.md",
+      "volume": "05-Engine-I"
+    },
+    {
+      "id": "3c3f8693bed9a50626badd2c-panel-02",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 14, 'rankSpacing': 18, 'padding': 4, 'wrappingWidth': 132, 'htmlLabels': false}}}%%\nflowchart TB\n  E --> F{\"Has a player just met either win condition?\"}\n  F -- \"Yes\" --> D\n  F -- \"No\" --> G[\"Continue the alternating turn sequence\"]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Panels-Review-next/3c3f8693bed9a50626badd2c-panel-02.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/09 - Player choices, rules, and readable feedback.md",
+      "volume": "05-Engine-I"
+    }
+  ]
+}

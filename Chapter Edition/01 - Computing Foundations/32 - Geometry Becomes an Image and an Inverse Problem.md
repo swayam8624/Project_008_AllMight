@@ -8,7 +8,7 @@ The chapter begins a continuous camera journey from geometric frames through pro
 
 **Recall question:** Which information is lost at projection, and what additional observation is needed to recover depth?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 78258–80693; source-span SHA256 47065f3eba66be05eb316ce5cc54acdd45eb5da3962043b362a293ae65ebc2e5. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 78505–80940; source-span SHA256 340c3f3eab22b702f8d250fbf0fdb8bd0a1e0b2e848681aa23ee77df8dacef80. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 # Geometry becomes an image and an inverse problem
@@ -78,7 +78,7 @@ The most foundational idea is that a coordinate tuple is not a geometric object 
 Consider the tuple:
 
 $$
- \begin{bmatrix}2\\1\\0\end{bmatrix}. 
+ \begin{bmatrix}2\\1\\0\end{bmatrix}.
 $$
 
 What does it represent?
@@ -90,7 +90,7 @@ A coordinate frame consists of an origin and basis vectors.
 Let:
 
 $$
- \mathcal F=(\mathbf o,\mathbf b_1,\mathbf b_2,\mathbf b_3). 
+ \mathcal F=(\mathbf o,\mathbf b_1,\mathbf b_2,\mathbf b_3).
 $$
 
 Here $\mathbf o$ is the frame's origin, while $\mathbf b_1,\mathbf b_2,\mathbf b_3$ identify its coordinate directions.
@@ -98,13 +98,13 @@ Here $\mathbf o$ is the frame's origin, while $\mathbf b_1,\mathbf b_2,\mathbf b
 A point with coordinates:
 
 $$
- \mathbf p_{\mathcal F}= \begin{bmatrix}x\\y\\z\end{bmatrix} 
+ \mathbf p_{\mathcal F}= \begin{bmatrix}x\\y\\z\end{bmatrix}
 $$
 
 represents the geometric point:
 
 $$
- \boxed{ \mathbf p= \mathbf o+x\mathbf b_1+y\mathbf b_2+z\mathbf b_3 }. 
+ \boxed{ \mathbf p= \mathbf o+x\mathbf b_1+y\mathbf b_2+z\mathbf b_3 }.
 $$
 
 This equation is the actual meaning of a coordinate system.
@@ -114,19 +114,19 @@ This equation is the actual meaning of a coordinate system.
 Arrange the basis vectors as columns:
 
 $$
- B= \begin{bmatrix} |&|&|\\ \mathbf b_1&\mathbf b_2&\mathbf b_3\\ |&|&| \end{bmatrix}. 
+ B= \begin{bmatrix} |&|&|\\ \mathbf b_1&\mathbf b_2&\mathbf b_3\\ |&|&| \end{bmatrix}.
 $$
 
 Then:
 
 $$
- B\mathbf p_{\mathcal F} = x\mathbf b_1+y\mathbf b_2+z\mathbf b_3. 
+ B\mathbf p_{\mathcal F} = x\mathbf b_1+y\mathbf b_2+z\mathbf b_3.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf p=\mathbf o+B\mathbf p_{\mathcal F} }. 
+ \boxed{ \mathbf p=\mathbf o+B\mathbf p_{\mathcal F} }.
 $$
 
 The basis matrix must be invertible if we want a unique coordinate representation for every point in the space.
@@ -138,37 +138,37 @@ If two basis vectors are linearly dependent, coordinates cannot uniquely describ
 Suppose a frame has origin:
 
 $$
- \mathbf o= \begin{bmatrix}10\\2\\0\end{bmatrix} 
+ \mathbf o= \begin{bmatrix}10\\2\\0\end{bmatrix}
 $$
 
 and basis:
 
 $$
- \mathbf b_1= \begin{bmatrix}0\\1\\0\end{bmatrix},\quad \mathbf b_2= \begin{bmatrix}-1\\0\\0\end{bmatrix},\quad \mathbf b_3= \begin{bmatrix}0\\0\\1\end{bmatrix}. 
+ \mathbf b_1= \begin{bmatrix}0\\1\\0\end{bmatrix},\quad \mathbf b_2= \begin{bmatrix}-1\\0\\0\end{bmatrix},\quad \mathbf b_3= \begin{bmatrix}0\\0\\1\end{bmatrix}.
 $$
 
 Its basis matrix is:
 
 $$
- B= \begin{bmatrix} 0&-1&0\\ 1&0&0\\ 0&0&1 \end{bmatrix}. 
+ B= \begin{bmatrix} 0&-1&0\\ 1&0&0\\ 0&0&1 \end{bmatrix}.
 $$
 
 Consider the local coordinates:
 
 $$
- \mathbf p_{\mathcal F}= \begin{bmatrix}2\\1\\3\end{bmatrix}. 
+ \mathbf p_{\mathcal F}= \begin{bmatrix}2\\1\\3\end{bmatrix}.
 $$
 
 Then:
 
 $$
- B\mathbf p_{\mathcal F} = \begin{bmatrix}-1\\2\\3\end{bmatrix}. 
+ B\mathbf p_{\mathcal F} = \begin{bmatrix}-1\\2\\3\end{bmatrix}.
 $$
 
 Add the frame origin:
 
 $$
- \boxed{ \mathbf p= \begin{bmatrix}9\\4\\3\end{bmatrix} }. 
+ \boxed{ \mathbf p= \begin{bmatrix}9\\4\\3\end{bmatrix} }.
 $$
 
 Thus the local tuple $(2,1,3)$ and the global tuple $(9,4,3)$ describe the same geometric point in different frames.
@@ -180,25 +180,25 @@ A basis need not be perpendicular or have unit-length vectors.
 If $B$ is a general invertible matrix, recovering local coordinates requires:
 
 $$
- \boxed{ \mathbf p_{\mathcal F} = B^{-1}(\mathbf p-\mathbf o) }. 
+ \boxed{ \mathbf p_{\mathcal F} = B^{-1}(\mathbf p-\mathbf o) }.
 $$
 
 If the basis is orthonormal:
 
 $$
- B^TB=I. 
+ B^TB=I.
 $$
 
 Therefore:
 
 $$
- B^{-1}=B^T. 
+ B^{-1}=B^T.
 $$
 
 The inverse becomes:
 
 $$
- \boxed{ \mathbf p_{\mathcal F} = B^T(\mathbf p-\mathbf o) }. 
+ \boxed{ \mathbf p_{\mathcal F} = B^T(\mathbf p-\mathbf o) }.
 $$
 
 This is much cheaper and simpler than a general inverse.
@@ -214,7 +214,7 @@ Local space describes geometry relative to an object's own coordinate frame.
 Suppose you create a cube centred at its local origin:
 
 $$
- (-1,-1,-1),\quad (1,-1,-1),\quad\ldots 
+ (-1,-1,-1),\quad (1,-1,-1),\quad\ldots
 $$
 
 The vertices do not know where the cube is placed in the game world.
@@ -228,13 +228,13 @@ Let the object have scale $S$, rotation $R$, and translation $\mathbf t$.
 Then:
 
 $$
- \boxed{ \mathbf p_{\mathrm{world}} = \mathbf t+RS\mathbf p_{\mathrm{local}} }. 
+ \boxed{ \mathbf p_{\mathrm{world}} = \mathbf t+RS\mathbf p_{\mathrm{local}} }.
 $$
 
 With homogeneous matrices:
 
 $$
- \boxed{ M=TRS }. 
+ \boxed{ M=TRS }.
 $$
 
 The rightmost operation happens first:
@@ -250,43 +250,43 @@ This order is not arbitrary.
 Consider:
 
 $$
- \mathbf p= \begin{bmatrix}1\\0\\0\end{bmatrix}. 
+ \mathbf p= \begin{bmatrix}1\\0\\0\end{bmatrix}.
 $$
 
 Let $R$ rotate 90° counterclockwise about $Z$, and let translation be:
 
 $$
- \mathbf t= \begin{bmatrix}3\\0\\0\end{bmatrix}. 
+ \mathbf t= \begin{bmatrix}3\\0\\0\end{bmatrix}.
 $$
 
 Rotate first:
 
 $$
- R\mathbf p= \begin{bmatrix}0\\1\\0\end{bmatrix}. 
+ R\mathbf p= \begin{bmatrix}0\\1\\0\end{bmatrix}.
 $$
 
 Then translate:
 
 $$
- \mathbf t+R\mathbf p= \begin{bmatrix}3\\1\\0\end{bmatrix}. 
+ \mathbf t+R\mathbf p= \begin{bmatrix}3\\1\\0\end{bmatrix}.
 $$
 
 But translate first:
 
 $$
- \mathbf p+\mathbf t= \begin{bmatrix}4\\0\\0\end{bmatrix}. 
+ \mathbf p+\mathbf t= \begin{bmatrix}4\\0\\0\end{bmatrix}.
 $$
 
 Then rotate:
 
 $$
- R(\mathbf p+\mathbf t)= \begin{bmatrix}0\\4\\0\end{bmatrix}. 
+ R(\mathbf p+\mathbf t)= \begin{bmatrix}0\\4\\0\end{bmatrix}.
 $$
 
 Thus:
 
 $$
- \boxed{TR\mathbf p\ne RT\mathbf p} 
+ \boxed{TR\mathbf p\ne RT\mathbf p}
 $$
 
 in general.
@@ -298,13 +298,13 @@ A very common engine bug is applying translation, rotation, and scale in the wro
 For a child object attached to a parent, the world matrix is:
 
 $$
- \boxed{ M_{\mathrm{child,world}} = M_{\mathrm{parent,world}} M_{\mathrm{child,local}} }. 
+ \boxed{ M_{\mathrm{child,world}} = M_{\mathrm{parent,world}} M_{\mathrm{child,local}} }.
 $$
 
 For a deeper hierarchy:
 
 $$
- M_{\mathrm{world}} = M_0M_1\cdots M_k. 
+ M_{\mathrm{world}} = M_0M_1\cdots M_k.
 $$
 
 The transformations compose from the root toward the child.
@@ -320,13 +320,13 @@ World space is a shared reference frame used to place scene objects relative to 
 If a mesh has a local vertex:
 
 $$
- \mathbf p_L, 
+ \mathbf p_L,
 $$
 
 its world position is:
 
 $$
- \mathbf p_W=M\mathbf p_L 
+ \mathbf p_W=M\mathbf p_L
 $$
 
 using homogeneous coordinates.
@@ -352,7 +352,7 @@ A coordinate conversion between conventions can include axis permutations, sign 
 For example, converting centimetres to metres requires multiplication by:
 
 $$
- 0.01. 
+ 0.01.
 $$
 
 If one subsystem treats positions as metres and another as centimetres, a matrix may be algebraically correct yet physically wrong.
@@ -362,7 +362,7 @@ If one subsystem treats positions as metres and another as centimetres, a matrix
 Suppose a player is far from the world origin, with coordinates near:
 
 $$
- (10^8,0,10^8). 
+ (10^8,0,10^8).
 $$
 
 Single-precision arithmetic loses fine local positional resolution at such magnitudes.
@@ -397,13 +397,13 @@ In our reference convention:
 Therefore a point directly in front of the camera has:
 
 $$
- z_{\mathrm{view}}<0. 
+ z_{\mathrm{view}}<0.
 $$
 
 For example:
 
 $$
- \boxed{ \mathbf p_{\mathrm{view}}= \begin{bmatrix}0\\0\\-5\end{bmatrix} } 
+ \boxed{ \mathbf p_{\mathrm{view}}= \begin{bmatrix}0\\0\\-5\end{bmatrix} }
 $$
 
 describes a point five units in front of a camera located at the view-space origin.
@@ -423,7 +423,7 @@ Then every scene point can be projected using the same matrix.
 This is the purpose of the view matrix:
 
 $$
- \boxed{ \mathbf p_V=V\mathbf p_W }. 
+ \boxed{ \mathbf p_V=V\mathbf p_W }.
 $$
 
 The actual camera does not need to move physically. We are changing coordinates.
@@ -433,13 +433,13 @@ The actual camera does not need to move physically. We are changing coordinates.
 Clip space is produced by applying the projection matrix:
 
 $$
- \boxed{ \mathbf p_C=P\mathbf p_V }. 
+ \boxed{ \mathbf p_C=P\mathbf p_V }.
 $$
 
 A projected vertex is represented as a homogeneous four-vector:
 
 $$
- \mathbf p_C= \begin{bmatrix} x_c\\y_c\\z_c\\w_c \end{bmatrix}. 
+ \mathbf p_C= \begin{bmatrix} x_c\\y_c\\z_c\\w_c \end{bmatrix}.
 $$
 
 Clip space is not yet normalized device coordinates.
@@ -451,23 +451,23 @@ Instead, the visibility boundaries depend on $w_c$.
 For the conventional symmetric clip volume:
 
 $$
- -w_c\le x_c\le w_c, 
+ -w_c\le x_c\le w_c,
 $$
 
 $$
- -w_c\le y_c\le w_c. 
+ -w_c\le y_c\le w_c.
 $$
 
 For OpenGL's default clip-depth convention:
 
 $$
- -w_c\le z_c\le w_c. 
+ -w_c\le z_c\le w_c.
 $$
 
 For Vulkan's ordinary zero-to-one depth convention:
 
 $$
- 0\le z_c\le w_c. 
+ 0\le z_c\le w_c.
 $$
 
 The role of $w_c$ becomes essential during homogeneous clipping and perspective division.
@@ -489,23 +489,23 @@ Hardware performs clipping according to the active graphics pipeline's clip conv
 For a valid homogeneous clip coordinate with:
 
 $$
- w_c\ne0, 
+ w_c\ne0,
 $$
 
 normalized device coordinates, or NDC, are obtained by:
 
 $$
- \boxed{ x_n=\frac{x_c}{w_c}, \qquad y_n=\frac{y_c}{w_c}, \qquad z_n=\frac{z_c}{w_c} }. 
+ \boxed{ x_n=\frac{x_c}{w_c}, \qquad y_n=\frac{y_c}{w_c}, \qquad z_n=\frac{z_c}{w_c} }.
 $$
 
 For visible geometry under a conventional symmetric XY clip volume:
 
 $$
- -1\le x_n\le1, 
+ -1\le x_n\le1,
 $$
 
 $$
- -1\le y_n\le1. 
+ -1\le y_n\le1.
 $$
 
 The depth range depends on API conventions.
@@ -524,7 +524,7 @@ Modern OpenGL can also use zero-to-one clip depth through `glClipControl`. Thus 
 A point at:
 
 $$
- (x_n,y_n)=(0,0) 
+ (x_n,y_n)=(0,0)
 $$
 
 lies at the centre of normalized device space.
@@ -542,41 +542,41 @@ Assume a viewport with top-left origin, width $W$, height $H$, and $Y$ increasin
 If NDC $Y$ increases upward, a typical mapping is:
 
 $$
- \boxed{ x_p=\frac{x_n+1}{2}W } 
+ \boxed{ x_p=\frac{x_n+1}{2}W }
 $$
 
 and:
 
 $$
- \boxed{ y_p=\frac{1-y_n}{2}H }. 
+ \boxed{ y_p=\frac{1-y_n}{2}H }.
 $$
 
 For:
 
 $$
- W=1920,\quad H=1080, 
+ W=1920,\quad H=1080,
 $$
 
 consider:
 
 $$
- x_n=0.5,\qquad y_n=0.5. 
+ x_n=0.5,\qquad y_n=0.5.
 $$
 
 Then:
 
 $$
- x_p=\frac{1.5}{2}(1920)=1440, 
+ x_p=\frac{1.5}{2}(1920)=1440,
 $$
 
 $$
- y_p=\frac{0.5}{2}(1080)=270. 
+ y_p=\frac{0.5}{2}(1080)=270.
 $$
 
 Thus the continuous raster coordinate is:
 
 $$
- \boxed{(1440,270)}. 
+ \boxed{(1440,270)}.
 $$
 
 ### Continuous raster positions versus discrete pixel indices
@@ -588,7 +588,7 @@ The framebuffer contains discrete pixels indexed by integers.
 Under the common convention in which pixel centres are at:
 
 $$
- (i+0.5,j+0.5), 
+ (i+0.5,j+0.5),
 $$
 
 a raster coordinate of $(1440,270)$ lies on grid boundaries rather than at the centre of a unique pixel.
@@ -602,7 +602,7 @@ This distinction matters for texture sampling, picking, camera rays, antialiasin
 Texture coordinates, often written:
 
 $$
- (u,v), 
+ (u,v),
 $$
 
 identify positions in texture parameter space.
@@ -612,7 +612,7 @@ They are not necessarily world-space or raster-space coordinates.
 A typical normalized texture mapping uses:
 
 $$
- 0\le u\le1,\qquad0\le v\le1. 
+ 0\le u\le1,\qquad0\le v\le1.
 $$
 
 But texture coordinates may extend outside this interval to support wrapping, repetition, and mirroring.
@@ -622,13 +622,13 @@ But texture coordinates may extend outside this interval to support wrapping, re
 A triangle has three positions:
 
 $$
- \mathbf p_0,\mathbf p_1,\mathbf p_2 
+ \mathbf p_0,\mathbf p_1,\mathbf p_2
 $$
 
 and three associated texture coordinates:
 
 $$
- \mathbf t_0,\mathbf t_1,\mathbf t_2. 
+ \mathbf t_0,\mathbf t_1,\mathbf t_2.
 $$
 
 Rasterization interpolates the texture coordinates across the projected triangle according to the shader interpolation mode.
@@ -674,19 +674,19 @@ A typical tangent frame contains:
 Together these form the TBN matrix:
 
 $$
- \boxed{ TBN= \begin{bmatrix} |&|&|\\ \mathbf T&\mathbf B&\mathbf N\\ |&|&| \end{bmatrix} }. 
+ \boxed{ TBN= \begin{bmatrix} |&|&|\\ \mathbf T&\mathbf B&\mathbf N\\ |&|&| \end{bmatrix} }.
 $$
 
 A tangent-space normal:
 
 $$
- \mathbf n_t 
+ \mathbf n_t
 $$
 
 can be transformed into world space:
 
 $$
- \boxed{ \mathbf n_W= \operatorname{normalize}(TBN\,\mathbf n_t) }. 
+ \boxed{ \mathbf n_W= \operatorname{normalize}(TBN\,\mathbf n_t) }.
 $$
 
 ### Deriving surface tangents from UV coordinates
@@ -694,57 +694,57 @@ $$
 Consider a triangle with world-space edges:
 
 $$
- \mathbf e_1=\mathbf p_1-\mathbf p_0, \qquad \mathbf e_2=\mathbf p_2-\mathbf p_0. 
+ \mathbf e_1=\mathbf p_1-\mathbf p_0, \qquad \mathbf e_2=\mathbf p_2-\mathbf p_0.
 $$
 
 Let its UV differences be:
 
 $$
- (\Delta u_1,\Delta v_1), 
+ (\Delta u_1,\Delta v_1),
 $$
 
 $$
- (\Delta u_2,\Delta v_2). 
+ (\Delta u_2,\Delta v_2).
 $$
 
 Assume the local surface displacement satisfies:
 
 $$
- \mathbf e_1=\mathbf T\Delta u_1+\mathbf B\Delta v_1, 
+ \mathbf e_1=\mathbf T\Delta u_1+\mathbf B\Delta v_1,
 $$
 
 $$
- \mathbf e_2=\mathbf T\Delta u_2+\mathbf B\Delta v_2. 
+ \mathbf e_2=\mathbf T\Delta u_2+\mathbf B\Delta v_2.
 $$
 
 Write this as a matrix equation:
 
 $$
- \begin{bmatrix} |&|\\ \mathbf e_1&\mathbf e_2\\ |&| \end{bmatrix} = \begin{bmatrix} |&|\\ \mathbf T&\mathbf B\\ |&| \end{bmatrix} \begin{bmatrix} \Delta u_1&\Delta u_2\\ \Delta v_1&\Delta v_2 \end{bmatrix}. 
+ \begin{bmatrix} |&|\\ \mathbf e_1&\mathbf e_2\\ |&| \end{bmatrix} = \begin{bmatrix} |&|\\ \mathbf T&\mathbf B\\ |&| \end{bmatrix} \begin{bmatrix} \Delta u_1&\Delta u_2\\ \Delta v_1&\Delta v_2 \end{bmatrix}.
 $$
 
 If the UV matrix is invertible, then:
 
 $$
- \boxed{ [\mathbf T\ \mathbf B] = [\mathbf e_1\ \mathbf e_2] \begin{bmatrix} \Delta u_1&\Delta u_2\\ \Delta v_1&\Delta v_2 \end{bmatrix}^{-1} }. 
+ \boxed{ [\mathbf T\ \mathbf B] = [\mathbf e_1\ \mathbf e_2] \begin{bmatrix} \Delta u_1&\Delta u_2\\ \Delta v_1&\Delta v_2 \end{bmatrix}^{-1} }.
 $$
 
 For the $2\times2$ UV matrix, define:
 
 $$
- D=\Delta u_1\Delta v_2-\Delta u_2\Delta v_1. 
+ D=\Delta u_1\Delta v_2-\Delta u_2\Delta v_1.
 $$
 
 Then:
 
 $$
- \boxed{ \mathbf T= \frac{ \Delta v_2\mathbf e_1-\Delta v_1\mathbf e_2 }{D} } 
+ \boxed{ \mathbf T= \frac{ \Delta v_2\mathbf e_1-\Delta v_1\mathbf e_2 }{D} }
 $$
 
 and:
 
 $$
- \boxed{ \mathbf B= \frac{ -\Delta u_2\mathbf e_1+\Delta u_1\mathbf e_2 }{D} }. 
+ \boxed{ \mathbf B= \frac{ -\Delta u_2\mathbf e_1+\Delta u_1\mathbf e_2 }{D} }.
 $$
 
 If $D=0$, the UV mapping is locally degenerate and the tangent basis cannot be constructed by this inverse.
@@ -756,13 +756,13 @@ The calculated tangent may not be exactly perpendicular to the vertex normal.
 A common correction uses Gram–Schmidt orthogonalization:
 
 $$
- \boxed{ \mathbf T'= \operatorname{normalize} \left[ \mathbf T-\mathbf N(\mathbf N\cdot\mathbf T) \right] }. 
+ \boxed{ \mathbf T'= \operatorname{normalize} \left[ \mathbf T-\mathbf N(\mathbf N\cdot\mathbf T) \right] }.
 $$
 
 The bitangent can be reconstructed using:
 
 $$
- \boxed{ \mathbf B'=h(\mathbf N\times\mathbf T') } 
+ \boxed{ \mathbf B'=h(\mathbf N\times\mathbf T') }
 $$
 
 where $h\in\\{-1,+1\\}$ encodes tangent-frame handedness.
@@ -778,7 +778,7 @@ Surface normals do not generally transform using the same $3\times3$ matrix as p
 For a general invertible linear transform $A$:
 
 $$
- \boxed{ \mathbf n'\propto(A^{-1})^T\mathbf n }. 
+ \boxed{ \mathbf n'\propto(A^{-1})^T\mathbf n }.
 $$
 
 Why?
@@ -788,31 +788,31 @@ A normal must remain perpendicular to every transformed tangent.
 If:
 
 $$
- \mathbf n\cdot\mathbf t=0 
+ \mathbf n\cdot\mathbf t=0
 $$
 
 and the transformed tangent is:
 
 $$
- \mathbf t'=A\mathbf t, 
+ \mathbf t'=A\mathbf t,
 $$
 
 we need:
 
 $$
- \mathbf n'\cdot A\mathbf t=0. 
+ \mathbf n'\cdot A\mathbf t=0.
 $$
 
 Choose:
 
 $$
- \mathbf n'=(A^{-1})^T\mathbf n. 
+ \mathbf n'=(A^{-1})^T\mathbf n.
 $$
 
 Then:
 
 $$
- \mathbf n'^TA\mathbf t = \mathbf n^TA^{-1}A\mathbf t = \mathbf n^T\mathbf t=0. 
+ \mathbf n'^TA\mathbf t = \mathbf n^TA^{-1}A\mathbf t = \mathbf n^T\mathbf t=0.
 $$
 
 This proves the inverse-transpose rule.
@@ -828,19 +828,19 @@ A point has position relative to an origin.
 For a rigid transform with rotation $R$ and translation $\mathbf t$:
 
 $$
- \boxed{ \mathbf p_W=R\mathbf p_L+\mathbf t }. 
+ \boxed{ \mathbf p_W=R\mathbf p_L+\mathbf t }.
 $$
 
 To convert backward:
 
 $$
- \mathbf p_W-\mathbf t=R\mathbf p_L. 
+ \mathbf p_W-\mathbf t=R\mathbf p_L.
 $$
 
 Multiply by $R^T$, using $R^{-1}=R^T$:
 
 $$
- \boxed{ \mathbf p_L=R^T(\mathbf p_W-\mathbf t) }. 
+ \boxed{ \mathbf p_L=R^T(\mathbf p_W-\mathbf t) }.
 $$
 
 ### Numerical example · V11.02.12
@@ -848,43 +848,43 @@ $$
 Suppose a local point is:
 
 $$
- \mathbf p_L= \begin{bmatrix}2\\0\\0\end{bmatrix}. 
+ \mathbf p_L= \begin{bmatrix}2\\0\\0\end{bmatrix}.
 $$
 
 Rotate it by +90° about $Z$:
 
 $$
- R= \begin{bmatrix} 0&-1&0\\ 1&0&0\\ 0&0&1 \end{bmatrix}. 
+ R= \begin{bmatrix} 0&-1&0\\ 1&0&0\\ 0&0&1 \end{bmatrix}.
 $$
 
 Then:
 
 $$
- R\mathbf p_L= \begin{bmatrix}0\\2\\0\end{bmatrix}. 
+ R\mathbf p_L= \begin{bmatrix}0\\2\\0\end{bmatrix}.
 $$
 
 Translate by:
 
 $$
- \mathbf t= \begin{bmatrix}3\\4\\0\end{bmatrix}. 
+ \mathbf t= \begin{bmatrix}3\\4\\0\end{bmatrix}.
 $$
 
 The world point is:
 
 $$
- \boxed{ \mathbf p_W= \begin{bmatrix}3\\6\\0\end{bmatrix} }. 
+ \boxed{ \mathbf p_W= \begin{bmatrix}3\\6\\0\end{bmatrix} }.
 $$
 
 Convert it back:
 
 $$
- \mathbf p_W-\mathbf t= \begin{bmatrix}0\\2\\0\end{bmatrix}. 
+ \mathbf p_W-\mathbf t= \begin{bmatrix}0\\2\\0\end{bmatrix}.
 $$
 
 Then:
 
 $$
- R^T \begin{bmatrix}0\\2\\0\end{bmatrix} = \begin{bmatrix}2\\0\\0\end{bmatrix}. 
+ R^T \begin{bmatrix}0\\2\\0\end{bmatrix} = \begin{bmatrix}2\\0\\0\end{bmatrix}.
 $$
 
 We recover the original coordinates.
@@ -894,19 +894,19 @@ We recover the original coordinates.
 A point is represented as:
 
 $$
- \boxed{ \tilde{\mathbf p}= \begin{bmatrix}x\\y\\z\\1\end{bmatrix} }. 
+ \boxed{ \tilde{\mathbf p}= \begin{bmatrix}x\\y\\z\\1\end{bmatrix} }.
 $$
 
 An affine matrix is:
 
 $$
- M= \begin{bmatrix} A&\mathbf t\\ 0&1 \end{bmatrix}. 
+ M= \begin{bmatrix} A&\mathbf t\\ 0&1 \end{bmatrix}.
 $$
 
 Multiplication gives:
 
 $$
- M\tilde{\mathbf p}= \begin{bmatrix} A\mathbf p+\mathbf t\\1 \end{bmatrix}. 
+ M\tilde{\mathbf p}= \begin{bmatrix} A\mathbf p+\mathbf t\\1 \end{bmatrix}.
 $$
 
 The final coordinate of one allows translation to affect the point.
@@ -920,7 +920,7 @@ It represents a displacement, not a location relative to an origin.
 For a rigid transform:
 
 $$
- \boxed{ \mathbf d_W=R\mathbf d_L }. 
+ \boxed{ \mathbf d_W=R\mathbf d_L }.
 $$
 
 There is no translation term.
@@ -928,19 +928,19 @@ There is no translation term.
 Its homogeneous representation is:
 
 $$
- \boxed{ \tilde{\mathbf d}= \begin{bmatrix}x\\y\\z\\0\end{bmatrix} }. 
+ \boxed{ \tilde{\mathbf d}= \begin{bmatrix}x\\y\\z\\0\end{bmatrix} }.
 $$
 
 Multiply by the same affine matrix:
 
 $$
- \begin{bmatrix} A&\mathbf t\\ 0&1 \end{bmatrix} \begin{bmatrix} \mathbf d\\0 \end{bmatrix} = \begin{bmatrix} A\mathbf d\\0 \end{bmatrix}. 
+ \begin{bmatrix} A&\mathbf t\\ 0&1 \end{bmatrix} \begin{bmatrix} \mathbf d\\0 \end{bmatrix} = \begin{bmatrix} A\mathbf d\\0 \end{bmatrix}.
 $$
 
 Translation disappears because:
 
 $$
- \mathbf t\cdot0=0. 
+ \mathbf t\cdot0=0.
 $$
 
 This is why homogeneous points use $w=1$ and affine direction vectors use $w=0$.
@@ -950,19 +950,19 @@ This is why homogeneous points use $w=1$ and affine direction vectors use $w=0$.
 A camera ray has an origin:
 
 $$
- \mathbf o 
+ \mathbf o
 $$
 
 and direction:
 
 $$
- \mathbf d. 
+ \mathbf d.
 $$
 
 Under an affine transform:
 
 $$
- \boxed{ \mathbf o'=A\mathbf o+\mathbf t, \qquad \mathbf d'=A\mathbf d }. 
+ \boxed{ \mathbf o'=A\mathbf o+\mathbf t, \qquad \mathbf d'=A\mathbf d }.
 $$
 
 Do not add translation to the direction.
@@ -978,7 +978,7 @@ An affine frame combines an origin with a basis, allowing us to describe points 
 An affine transform has the form:
 
 $$
- \boxed{ f(\mathbf p)=A\mathbf p+\mathbf t } 
+ \boxed{ f(\mathbf p)=A\mathbf p+\mathbf t }
 $$
 
 where $A$ is linear.
@@ -988,19 +988,19 @@ Such a transformation preserves collinearity and affine combinations.
 If:
 
 $$
- \mathbf p=(1-\alpha)\mathbf p_0+\alpha\mathbf p_1, 
+ \mathbf p=(1-\alpha)\mathbf p_0+\alpha\mathbf p_1,
 $$
 
 then:
 
 $$
- \begin{aligned} f(\mathbf p) &= A[(1-\alpha)\mathbf p_0+\alpha\mathbf p_1]+\mathbf t\\ &=(1-\alpha)(A\mathbf p_0+\mathbf t) +\alpha(A\mathbf p_1+\mathbf t). \end{aligned} 
+ \begin{aligned} f(\mathbf p) &= A[(1-\alpha)\mathbf p_0+\alpha\mathbf p_1]+\mathbf t\\ &=(1-\alpha)(A\mathbf p_0+\mathbf t) +\alpha(A\mathbf p_1+\mathbf t). \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{ f((1-\alpha)\mathbf p_0+\alpha\mathbf p_1) = (1-\alpha)f(\mathbf p_0)+\alpha f(\mathbf p_1) }. 
+ \boxed{ f((1-\alpha)\mathbf p_0+\alpha\mathbf p_1) = (1-\alpha)f(\mathbf p_0)+\alpha f(\mathbf p_1) }.
 $$
 
 Straight lines remain straight.
@@ -1014,13 +1014,13 @@ But affine transforms do not necessarily preserve lengths, angles, areas, or vol
 For an invertible linear transformation $A$, a volume element transforms as:
 
 $$
- \boxed{ dV'=|\det A|\,dV }. 
+ \boxed{ dV'=|\det A|\,dV }.
 $$
 
 For a pure rotation:
 
 $$
- \det R=1, 
+ \det R=1,
 $$
 
 so volume is preserved.
@@ -1028,25 +1028,25 @@ so volume is preserved.
 For uniform scale $s$ in three dimensions:
 
 $$
- A=sI, 
+ A=sI,
 $$
 
 so:
 
 $$
- \det A=s^3. 
+ \det A=s^3.
 $$
 
 Volume scales by:
 
 $$
- |s|^3. 
+ |s|^3.
 $$
 
 For a reflection:
 
 $$
- \det A<0, 
+ \det A<0,
 $$
 
 orientation reverses.
@@ -1070,7 +1070,7 @@ A camera API should generally separate pose from object scaling or explicitly de
 A camera pose has two principal components:
 
 $$
- \boxed{ \text{Pose}=(\mathbf c,R) } 
+ \boxed{ \text{Pose}=(\mathbf c,R) }
 $$
 
 where $\mathbf c$ is the camera's world position and $R$ describes its orientation.
@@ -1095,13 +1095,13 @@ Euler angles may be convenient for user controls but can suffer parameterization
 For a rigid camera pose:
 
 $$
- \boxed{ C= \begin{bmatrix} R&\mathbf c\\ 0&1 \end{bmatrix} }. 
+ \boxed{ C= \begin{bmatrix} R&\mathbf c\\ 0&1 \end{bmatrix} }.
 $$
 
 It converts camera-local points into world space:
 
 $$
- \mathbf p_W=C\mathbf p_C. 
+ \mathbf p_W=C\mathbf p_C.
 $$
 
 This is called the camera-to-world transform.
@@ -1111,7 +1111,7 @@ This is called the camera-to-world transform.
 The view transform is the inverse:
 
 $$
- \boxed{V=C^{-1}}. 
+ \boxed{V=C^{-1}}.
 $$
 
 It converts world-space points into camera space.
@@ -1126,7 +1126,7 @@ The distinction is fundamental:
 For our right-handed convention, the camera's local axes are:
 
 $$
- \mathbf e_x= \begin{bmatrix}1\\0\\0\end{bmatrix}, \qquad \mathbf e_y= \begin{bmatrix}0\\1\\0\end{bmatrix}, \qquad \mathbf e_z= \begin{bmatrix}0\\0\\1\end{bmatrix}. 
+ \mathbf e_x= \begin{bmatrix}1\\0\\0\end{bmatrix}, \qquad \mathbf e_y= \begin{bmatrix}0\\1\\0\end{bmatrix}, \qquad \mathbf e_z= \begin{bmatrix}0\\0\\1\end{bmatrix}.
 $$
 
 The camera looks toward local $-Z$.
@@ -1134,7 +1134,7 @@ The camera looks toward local $-Z$.
 Thus its local forward direction is:
 
 $$
- \boxed{ \mathbf f_C= \begin{bmatrix}0\\0\\-1\end{bmatrix} }. 
+ \boxed{ \mathbf f_C= \begin{bmatrix}0\\0\\-1\end{bmatrix} }.
 $$
 
 Let $R$ be the camera-to-world rotation.
@@ -1142,19 +1142,19 @@ Let $R$ be the camera-to-world rotation.
 The world-space right vector is:
 
 $$
- \boxed{ \mathbf r_W=R\mathbf e_x }. 
+ \boxed{ \mathbf r_W=R\mathbf e_x }.
 $$
 
 The world-space up vector is:
 
 $$
- \boxed{ \mathbf u_W=R\mathbf e_y }. 
+ \boxed{ \mathbf u_W=R\mathbf e_y }.
 $$
 
 The world-space forward vector is:
 
 $$
- \boxed{ \mathbf f_W=-R\mathbf e_z }. 
+ \boxed{ \mathbf f_W=-R\mathbf e_z }.
 $$
 
 The third column of $R$ points backward, not forward.
@@ -1166,33 +1166,33 @@ This distinction causes many sign mistakes in view-matrix implementations.
 For a rigid camera basis:
 
 $$
- \\|\mathbf r\\|=\\|\mathbf u\\|=\\|\mathbf f\\|=1. 
+ \|\mathbf r\|=\|\mathbf u\|=\|\mathbf f\|=1.
 $$
 
 Also:
 
 $$
- \mathbf r\cdot\mathbf u=0, 
+ \mathbf r\cdot\mathbf u=0,
 $$
 
 $$
- \mathbf r\cdot\mathbf f=0, 
+ \mathbf r\cdot\mathbf f=0,
 $$
 
 $$
- \mathbf u\cdot\mathbf f=0. 
+ \mathbf u\cdot\mathbf f=0.
 $$
 
 For the chosen convention, right and up and backward form a right-handed basis:
 
 $$
- \mathbf r\times\mathbf u=-\mathbf f. 
+ \mathbf r\times\mathbf u=-\mathbf f.
 $$
 
 Equivalently:
 
 $$
- \mathbf r=\mathbf f\times\mathbf u 
+ \mathbf r=\mathbf f\times\mathbf u
 $$
 
 for an orthonormal camera basis with our stated forward convention.
@@ -1200,13 +1200,13 @@ for an orthonormal camera basis with our stated forward convention.
 To verify the identity, take the canonical case:
 
 $$
- \mathbf f=(0,0,-1),\quad \mathbf u=(0,1,0). 
+ \mathbf f=(0,0,-1),\quad \mathbf u=(0,1,0).
 $$
 
 Then:
 
 $$
- \mathbf f\times\mathbf u=(1,0,0)=\mathbf r. 
+ \mathbf f\times\mathbf u=(1,0,0)=\mathbf r.
 $$
 
 ### Why the basis must be recomputed carefully
@@ -1222,19 +1222,19 @@ A robust look-at function performs this construction.
 Suppose the camera position is:
 
 $$
- \mathbf c 
+ \mathbf c
 $$
 
 and the target point is:
 
 $$
- \mathbf t. 
+ \mathbf t.
 $$
 
 We also have an approximate world-up direction:
 
 $$
- \mathbf u_0. 
+ \mathbf u_0.
 $$
 
 We want a camera aimed at the target.
@@ -1244,13 +1244,13 @@ We want a camera aimed at the target.
 The direction from camera to target is:
 
 $$
- \mathbf t-\mathbf c. 
+ \mathbf t-\mathbf c.
 $$
 
 Normalize:
 
 $$
- \boxed{ \mathbf f= \frac{\mathbf t-\mathbf c} {\\|\mathbf t-\mathbf c\\|} }. 
+ \boxed{ \mathbf f= \frac{\mathbf t-\mathbf c} {\|\mathbf t-\mathbf c\|} }.
 $$
 
 The target must not coincide with the camera position.
@@ -1258,7 +1258,7 @@ The target must not coincide with the camera position.
 If:
 
 $$
- \mathbf t=\mathbf c, 
+ \mathbf t=\mathbf c,
 $$
 
 the forward direction is undefined.
@@ -1268,7 +1268,7 @@ the forward direction is undefined.
 Under our reference convention:
 
 $$
- \boxed{ \mathbf r= \frac{\mathbf f\times\mathbf u_0} {\\|\mathbf f\times\mathbf u_0\\|} }. 
+ \boxed{ \mathbf r= \frac{\mathbf f\times\mathbf u_0} {\|\mathbf f\times\mathbf u_0\|} }.
 $$
 
 Why this cross-product order?
@@ -1284,7 +1284,7 @@ The supplied up vector may not be exactly perpendicular to forward.
 Construct:
 
 $$
- \boxed{ \mathbf u=\mathbf r\times\mathbf f }. 
+ \boxed{ \mathbf u=\mathbf r\times\mathbf f }.
 $$
 
 Now $\mathbf r,\mathbf u,-\mathbf f$ form an orthonormal right-handed camera basis.
@@ -1294,13 +1294,13 @@ Now $\mathbf r,\mathbf u,-\mathbf f$ form an orthonormal right-handed camera bas
 Arrange the local camera axes expressed in world coordinates as columns:
 
 $$
- \boxed{ R= \begin{bmatrix} |&|&|\\ \mathbf r&\mathbf u&-\mathbf f\\ |&|&| \end{bmatrix} }. 
+ \boxed{ R= \begin{bmatrix} |&|&|\\ \mathbf r&\mathbf u&-\mathbf f\\ |&|&| \end{bmatrix} }.
 $$
 
 Then:
 
 $$
- R \begin{bmatrix}0\\0\\-1\end{bmatrix} = \mathbf f. 
+ R \begin{bmatrix}0\\0\\-1\end{bmatrix} = \mathbf f.
 $$
 
 This confirms that the camera's local forward direction maps to the intended world forward direction.
@@ -1318,7 +1318,7 @@ Suppose the forward direction is parallel to the supplied world-up vector.
 Then:
 
 $$
- \mathbf f\times\mathbf u_0=\mathbf0. 
+ \mathbf f\times\mathbf u_0=\mathbf0.
 $$
 
 Right is undefined.
@@ -1334,39 +1334,39 @@ The fallback policy can cause an orientation discontinuity when the chosen refer
 Let:
 
 $$
- \mathbf c=(0,0,5), 
+ \mathbf c=(0,0,5),
 $$
 
 $$
- \mathbf t=(0,0,0), 
+ \mathbf t=(0,0,0),
 $$
 
 $$
- \mathbf u_0=(0,1,0). 
+ \mathbf u_0=(0,1,0).
 $$
 
 The forward direction is:
 
 $$
- \mathbf f= \frac{(0,0,-5)}5 = (0,0,-1). 
+ \mathbf f= \frac{(0,0,-5)}5 = (0,0,-1).
 $$
 
 Right:
 
 $$
- \mathbf r=(0,0,-1)\times(0,1,0) =(1,0,0). 
+ \mathbf r=(0,0,-1)\times(0,1,0) =(1,0,0).
 $$
 
 Up:
 
 $$
- \mathbf u=(1,0,0)\times(0,0,-1) =(0,1,0). 
+ \mathbf u=(1,0,0)\times(0,0,-1) =(0,1,0).
 $$
 
 Thus:
 
 $$
- R=I. 
+ R=I.
 $$
 
 The camera has no rotation relative to our canonical axes.
@@ -1378,61 +1378,61 @@ It is simply translated five units along world $+Z$.
 We have the camera-to-world matrix:
 
 $$
- C= \begin{bmatrix} R&\mathbf c\\ 0&1 \end{bmatrix}. 
+ C= \begin{bmatrix} R&\mathbf c\\ 0&1 \end{bmatrix}.
 $$
 
 Because the camera rotation is orthonormal:
 
 $$
- R^{-1}=R^T. 
+ R^{-1}=R^T.
 $$
 
 We seek:
 
 $$
- V=C^{-1}. 
+ V=C^{-1}.
 $$
 
 Suppose:
 
 $$
- V= \begin{bmatrix} R^T&\mathbf q\\ 0&1 \end{bmatrix}. 
+ V= \begin{bmatrix} R^T&\mathbf q\\ 0&1 \end{bmatrix}.
 $$
 
 Require:
 
 $$
- VC=I. 
+ VC=I.
 $$
 
 Multiply:
 
 $$
- VC= \begin{bmatrix} R^TR&R^T\mathbf c+\mathbf q\\ 0&1 \end{bmatrix}. 
+ VC= \begin{bmatrix} R^TR&R^T\mathbf c+\mathbf q\\ 0&1 \end{bmatrix}.
 $$
 
 Because:
 
 $$
- R^TR=I, 
+ R^TR=I,
 $$
 
 the translation block must satisfy:
 
 $$
- R^T\mathbf c+\mathbf q=0. 
+ R^T\mathbf c+\mathbf q=0.
 $$
 
 Therefore:
 
 $$
- \mathbf q=-R^T\mathbf c. 
+ \mathbf q=-R^T\mathbf c.
 $$
 
 Thus:
 
 $$
- \boxed{ V= \begin{bmatrix} R^T&-R^T\mathbf c\\ 0&1 \end{bmatrix} }. 
+ \boxed{ V= \begin{bmatrix} R^T&-R^T\mathbf c\\ 0&1 \end{bmatrix} }.
 $$
 
 This is the exact inverse of a rigid camera transform.
@@ -1442,19 +1442,19 @@ This is the exact inverse of a rigid camera transform.
 Recall:
 
 $$
- R=[\mathbf r\ \mathbf u\ -\mathbf f]. 
+ R=[\mathbf r\ \mathbf u\ -\mathbf f].
 $$
 
 Therefore:
 
 $$
- R^T= \begin{bmatrix} \mathbf r^T\\ \mathbf u^T\\ -\mathbf f^T \end{bmatrix}. 
+ R^T= \begin{bmatrix} \mathbf r^T\\ \mathbf u^T\\ -\mathbf f^T \end{bmatrix}.
 $$
 
 The view matrix is:
 
 $$
- \boxed{ V= \begin{bmatrix} r_x&r_y&r_z&-\mathbf r\cdot\mathbf c\\ u_x&u_y&u_z&-\mathbf u\cdot\mathbf c\\ -f_x&-f_y&-f_z&\mathbf f\cdot\mathbf c\\ 0&0&0&1 \end{bmatrix} }. 
+ \boxed{ V= \begin{bmatrix} r_x&r_y&r_z&-\mathbf r\cdot\mathbf c\\ u_x&u_y&u_z&-\mathbf u\cdot\mathbf c\\ -f_x&-f_y&-f_z&\mathbf f\cdot\mathbf c\\ 0&0&0&1 \end{bmatrix} }.
 $$
 
 This is a row-by-row mathematical display for column-vector multiplication. It does not prescribe whether the 16 numbers are stored row-major or column-major in CPU memory.
@@ -1464,19 +1464,19 @@ This is a row-by-row mathematical display for column-vector multiplication. It d
 Apply $V$ to the camera's own world position:
 
 $$
- \mathbf p_W=\mathbf c. 
+ \mathbf p_W=\mathbf c.
 $$
 
 Then:
 
 $$
- \mathbf p_V=R^T(\mathbf c-\mathbf c)=0. 
+ \mathbf p_V=R^T(\mathbf c-\mathbf c)=0.
 $$
 
 So:
 
 $$
- \boxed{ V\begin{bmatrix}\mathbf c\\1\end{bmatrix} = \begin{bmatrix}0\\0\\0\\1\end{bmatrix} }. 
+ \boxed{ V\begin{bmatrix}\mathbf c\\1\end{bmatrix} = \begin{bmatrix}0\\0\\0\\1\end{bmatrix} }.
 $$
 
 A correct view matrix must put the camera at the origin of view space.
@@ -1486,7 +1486,7 @@ A correct view matrix must put the camera at the origin of view space.
 Let:
 
 $$
- \mathbf t=\mathbf c+d\mathbf f 
+ \mathbf t=\mathbf c+d\mathbf f
 $$
 
 for $d>0$.
@@ -1494,25 +1494,25 @@ for $d>0$.
 Then:
 
 $$
- \mathbf t-\mathbf c=d\mathbf f. 
+ \mathbf t-\mathbf c=d\mathbf f.
 $$
 
 Transform:
 
 $$
- R^T(d\mathbf f). 
+ R^T(d\mathbf f).
 $$
 
 Because $\mathbf f=-R\mathbf e_z$:
 
 $$
- R^T(d\mathbf f) = -d\mathbf e_z. 
+ R^T(d\mathbf f) = -d\mathbf e_z.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf t_V=(0,0,-d) }. 
+ \boxed{ \mathbf t_V=(0,0,-d) }.
 $$
 
 The look-at target lies on the view-space negative-Z axis.
@@ -1524,25 +1524,25 @@ This is an excellent property-based test.
 For:
 
 $$
- \mathbf c=(0,0,5) 
+ \mathbf c=(0,0,5)
 $$
 
 with identity orientation:
 
 $$
- \boxed{ V= \begin{bmatrix} 1&0&0&0\\ 0&1&0&0\\ 0&0&1&-5\\ 0&0&0&1 \end{bmatrix} }. 
+ \boxed{ V= \begin{bmatrix} 1&0&0&0\\ 0&1&0&0\\ 0&0&1&-5\\ 0&0&0&1 \end{bmatrix} }.
 $$
 
 The world origin:
 
 $$
- (0,0,0,1)^T 
+ (0,0,0,1)^T
 $$
 
 transforms to:
 
 $$
- \boxed{(0,0,-5,1)^T}. 
+ \boxed{(0,0,-5,1)^T}.
 $$
 
 The point is five units in front of the camera, exactly as intended.
@@ -1560,25 +1560,25 @@ In one dimension, the world position of an object is $x_W$, while the camera pos
 Its camera-relative position is:
 
 $$
- \boxed{x_C=x_W-c}. 
+ \boxed{x_C=x_W-c}.
 $$
 
 If the camera moves right by $\Delta c$:
 
 $$
- c'=c+\Delta c. 
+ c'=c+\Delta c.
 $$
 
 The new camera-relative coordinate is:
 
 $$
- x_C'=x_W-(c+\Delta c). 
+ x_C'=x_W-(c+\Delta c).
 $$
 
 Therefore:
 
 $$
- \boxed{x_C'=x_C-\Delta c}. 
+ \boxed{x_C'=x_C-\Delta c}.
 $$
 
 Moving the camera right makes world points shift left in camera coordinates.
@@ -1590,7 +1590,7 @@ Suppose the camera rotates by a world-space rotation $R$.
 The view-space transformation uses:
 
 $$
- R^T=R^{-1}. 
+ R^T=R^{-1}.
 $$
 
 If the camera rotates left, the coordinates of stationary world objects rotate right relative to the camera.
@@ -1620,7 +1620,7 @@ In robotics, camera calibration, SLAM, and reconstruction, transform names must 
 For example, define:
 
 $$
- T_{W\leftarrow C} 
+ T_{W\leftarrow C}
 $$
 
 to mean camera coordinates converted into world coordinates.
@@ -1628,7 +1628,7 @@ to mean camera coordinates converted into world coordinates.
 Then:
 
 $$
- T_{C\leftarrow W} = T_{W\leftarrow C}^{-1}. 
+ T_{C\leftarrow W} = T_{W\leftarrow C}^{-1}.
 $$
 
 This arrow convention avoids ambiguous names such as `cameraTransform`, which might mean either camera-to-world or world-to-camera.
@@ -1674,19 +1674,19 @@ The answer is that perspective projection is not an affine transformation.
 An affine transformation has the form:
 
 $$
- \boxed{ \mathbf y=A\mathbf x+\mathbf t }. 
+ \boxed{ \mathbf y=A\mathbf x+\mathbf t }.
 $$
 
 Take a straight line:
 
 $$
- \mathbf x(\lambda)=\mathbf p+\lambda\mathbf d. 
+ \mathbf x(\lambda)=\mathbf p+\lambda\mathbf d.
 $$
 
 Apply the affine transform:
 
 $$
- \begin{aligned} \mathbf y(\lambda) &= A(\mathbf p+\lambda\mathbf d)+\mathbf t\\ &= (A\mathbf p+\mathbf t)+\lambda A\mathbf d. \end{aligned} 
+ \begin{aligned} \mathbf y(\lambda) &= A(\mathbf p+\lambda\mathbf d)+\mathbf t\\ &= (A\mathbf p+\mathbf t)+\lambda A\mathbf d. \end{aligned}
 $$
 
 The image is another straight line with direction $A\mathbf d$.
@@ -1700,45 +1700,45 @@ Thus nonsingular affine transformations preserve parallelism.
 For a pinhole camera looking along the positive optical Z direction, normalized projection is:
 
 $$
- \boxed{ x'=\frac XZ,\qquad y'=\frac YZ }. 
+ \boxed{ x'=\frac XZ,\qquad y'=\frac YZ }.
 $$
 
 Consider a 3D line:
 
 $$
- \mathbf X(t)= \begin{bmatrix} a+tv_x\\ b+tv_y\\ c+tv_z \end{bmatrix}. 
+ \mathbf X(t)= \begin{bmatrix} a+tv_x\\ b+tv_y\\ c+tv_z \end{bmatrix}.
 $$
 
 Its projected coordinates are:
 
 $$
- x'(t)=\frac{a+tv_x}{c+tv_z}, 
+ x'(t)=\frac{a+tv_x}{c+tv_z},
 $$
 
 $$
- y'(t)=\frac{b+tv_y}{c+tv_z}. 
+ y'(t)=\frac{b+tv_y}{c+tv_z}.
 $$
 
 If:
 
 $$
- v_z\ne0, 
+ v_z\ne0,
 $$
 
 take the limit as $t\to\infty$:
 
 $$
- \lim_{t\to\infty}x'(t)=\frac{v_x}{v_z}, 
+ \lim_{t\to\infty}x'(t)=\frac{v_x}{v_z},
 $$
 
 $$
- \lim_{t\to\infty}y'(t)=\frac{v_y}{v_z}. 
+ \lim_{t\to\infty}y'(t)=\frac{v_y}{v_z}.
 $$
 
 Thus the projected line approaches:
 
 $$
- \boxed{ \left( \frac{v_x}{v_z}, \frac{v_y}{v_z} \right) }. 
+ \boxed{ \left( \frac{v_x}{v_z}, \frac{v_y}{v_z} \right) }.
 $$
 
 This limiting image point depends on the line's direction, not its starting position.
@@ -1762,25 +1762,25 @@ That uniformity is extremely useful for camera geometry, calibration, image rect
 In two-dimensional projective geometry, a homogeneous point is represented by a nonzero triple:
 
 $$
- \boxed{ \mathbf p= \begin{bmatrix} x\\y\\w \end{bmatrix} }. 
+ \boxed{ \mathbf p= \begin{bmatrix} x\\y\\w \end{bmatrix} }.
 $$
 
 If:
 
 $$
- w\ne0, 
+ w\ne0,
 $$
 
 the corresponding finite Cartesian point is:
 
 $$
- \boxed{ \left(\frac xw,\frac yw\right) }. 
+ \boxed{ \left(\frac xw,\frac yw\right) }.
 $$
 
 But if:
 
 $$
- \boxed{w=0}, 
+ \boxed{w=0},
 $$
 
 we cannot convert the representation to a finite Cartesian point.
@@ -1792,25 +1792,25 @@ Instead, the homogeneous point represents a point at infinity.
 Consider the homogeneous point:
 
 $$
- \boxed{ \mathbf p_\infty= \begin{bmatrix} d_x\\d_y\\0 \end{bmatrix} }. 
+ \boxed{ \mathbf p_\infty= \begin{bmatrix} d_x\\d_y\\0 \end{bmatrix} }.
 $$
 
 It represents the ideal point associated with direction:
 
 $$
- (d_x,d_y). 
+ (d_x,d_y).
 $$
 
 Because homogeneous coordinates are defined only up to nonzero scale, the representations:
 
 $$
- (d_x,d_y,0) 
+ (d_x,d_y,0)
 $$
 
 and:
 
 $$
- (2d_x,2d_y,0) 
+ (2d_x,2d_y,0)
 $$
 
 represent the same projective point.
@@ -1824,13 +1824,13 @@ Its orientation is the important feature.
 Consider two horizontal lines:
 
 $$
- y=1 
+ y=1
 $$
 
 and:
 
 $$
- y=2. 
+ y=2.
 $$
 
 They have no finite Euclidean intersection.
@@ -1838,11 +1838,11 @@ They have no finite Euclidean intersection.
 In homogeneous line form, their equations are:
 
 $$
- y-w=0, 
+ y-w=0,
 $$
 
 $$
- y-2w=0. 
+ y-2w=0.
 $$
 
 An intersection must satisfy both.
@@ -1850,13 +1850,13 @@ An intersection must satisfy both.
 Subtract the equations:
 
 $$
- w=0. 
+ w=0.
 $$
 
 Then:
 
 $$
- y=0. 
+ y=0.
 $$
 
 The remaining nonzero homogeneous coordinate may be $x$.
@@ -1864,7 +1864,7 @@ The remaining nonzero homogeneous coordinate may be $x$.
 Thus the intersection is:
 
 $$
- \boxed{ (1,0,0) }. 
+ \boxed{ (1,0,0) }.
 $$
 
 This is the point at infinity in the horizontal direction.
@@ -1874,19 +1874,19 @@ This is the point at infinity in the horizontal direction.
 In the projective plane, all points at infinity satisfy:
 
 $$
- w=0. 
+ w=0.
 $$
 
 That is itself a projective line, called the line at infinity:
 
 $$
- \boxed{ \ell_\infty=(0,0,1) }. 
+ \boxed{ \ell_\infty=(0,0,1) }.
 $$
 
 Its equation is:
 
 $$
- 0x+0y+1w=0. 
+ 0x+0y+1w=0.
 $$
 
 The line at infinity contains the ideal points associated with all directions in the affine plane.
@@ -1898,19 +1898,19 @@ A general projective transformation need not preserve the chosen line at infinit
 In projective 3D, a point has homogeneous representation:
 
 $$
- \boxed{ (X,Y,Z,W) }. 
+ \boxed{ (X,Y,Z,W) }.
 $$
 
 Finite points have:
 
 $$
- W\ne0. 
+ W\ne0.
 $$
 
 Points at infinity have:
 
 $$
- \boxed{W=0}. 
+ \boxed{W=0}.
 $$
 
 The ideal points form a plane at infinity in projective 3D.
@@ -1928,31 +1928,31 @@ It represents an equivalence class of nonzero vectors.
 The relation is:
 
 $$
- \boxed{ \mathbf p\sim\lambda\mathbf p } 
+ \boxed{ \mathbf p\sim\lambda\mathbf p }
 $$
 
 for:
 
 $$
- \lambda\ne0. 
+ \lambda\ne0.
 $$
 
 In projective 2D:
 
 $$
- (2,4,2)\sim(1,2,1). 
+ (2,4,2)\sim(1,2,1).
 $$
 
 Both represent Cartesian point:
 
 $$
- (1,2). 
+ (1,2).
 $$
 
 Similarly:
 
 $$
- (4,8,0)\sim(1,2,0). 
+ (4,8,0)\sim(1,2,0).
 $$
 
 Both represent the same point at infinity.
@@ -1962,7 +1962,7 @@ Both represent the same point at infinity.
 If we permitted:
 
 $$
- \lambda=0, 
+ \lambda=0,
 $$
 
 every homogeneous vector could become the zero vector.
@@ -1978,25 +1978,25 @@ Let $H$ be an invertible projective transformation matrix.
 Suppose two homogeneous vectors represent the same projective point:
 
 $$
- \mathbf q=\lambda\mathbf p. 
+ \mathbf q=\lambda\mathbf p.
 $$
 
 Then:
 
 $$
- H\mathbf q=H(\lambda\mathbf p). 
+ H\mathbf q=H(\lambda\mathbf p).
 $$
 
 By linearity:
 
 $$
- H\mathbf q=\lambda H\mathbf p. 
+ H\mathbf q=\lambda H\mathbf p.
 $$
 
 Therefore:
 
 $$
- \boxed{ H\mathbf q\sim H\mathbf p }. 
+ \boxed{ H\mathbf q\sim H\mathbf p }.
 $$
 
 The transformation is well-defined on projective equivalence classes.
@@ -2008,37 +2008,37 @@ This is one of the reasons matrix algebra fits projective geometry so naturally.
 A projective point transforms as:
 
 $$
- \boxed{ \mathbf p'=H\mathbf p }. 
+ \boxed{ \mathbf p'=H\mathbf p }.
 $$
 
 A plane is represented by a covector $\boldsymbol\pi$ satisfying:
 
 $$
- \boldsymbol\pi^T\mathbf p=0. 
+ \boldsymbol\pi^T\mathbf p=0.
 $$
 
 We want incidence to remain valid after transformation:
 
 $$
- \boldsymbol\pi'^T\mathbf p'=0. 
+ \boldsymbol\pi'^T\mathbf p'=0.
 $$
 
 Substitute:
 
 $$
- \boldsymbol\pi'^TH\mathbf p=0. 
+ \boldsymbol\pi'^TH\mathbf p=0.
 $$
 
 To preserve the original plane equation for all points on the plane, choose:
 
 $$
- \boldsymbol\pi'^TH=\boldsymbol\pi^T. 
+ \boldsymbol\pi'^TH=\boldsymbol\pi^T.
 $$
 
 Therefore:
 
 $$
- \boxed{ \boldsymbol\pi'=H^{-T}\boldsymbol\pi }. 
+ \boxed{ \boldsymbol\pi'=H^{-T}\boldsymbol\pi }.
 $$
 
 This is the same inverse-transpose rule used to transform geometric planes.
@@ -2064,31 +2064,31 @@ A robust projective geometry API should distinguish finite points from ideal poi
 A line in the projective plane has homogeneous coefficients:
 
 $$
- \boxed{ \boldsymbol\ell= \begin{bmatrix} a\\b\\c \end{bmatrix} }. 
+ \boxed{ \boldsymbol\ell= \begin{bmatrix} a\\b\\c \end{bmatrix} }.
 $$
 
 A homogeneous point:
 
 $$
- \mathbf p= \begin{bmatrix} x\\y\\w \end{bmatrix} 
+ \mathbf p= \begin{bmatrix} x\\y\\w \end{bmatrix}
 $$
 
 lies on the line if:
 
 $$
- \boxed{ \boldsymbol\ell^T\mathbf p=0 }. 
+ \boxed{ \boldsymbol\ell^T\mathbf p=0 }.
 $$
 
 Expanded:
 
 $$
- \boxed{ ax+by+cw=0 }. 
+ \boxed{ ax+by+cw=0 }.
 $$
 
 For finite points with $w=1$, this becomes the ordinary Cartesian line:
 
 $$
- ax+by+c=0. 
+ ax+by+c=0.
 $$
 
 ### Construct a line from two points
@@ -2096,17 +2096,17 @@ $$
 Take two homogeneous points:
 
 $$
- \mathbf p,\mathbf q. 
+ \mathbf p,\mathbf q.
 $$
 
 We want a line whose coefficients are perpendicular to both homogeneous vectors:
 
 $$
- \boldsymbol\ell^T\mathbf p=0, 
+ \boldsymbol\ell^T\mathbf p=0,
 $$
 
 $$
- \boldsymbol\ell^T\mathbf q=0. 
+ \boldsymbol\ell^T\mathbf q=0.
 $$
 
 In three dimensions, the cross product produces a vector orthogonal to both inputs.
@@ -2114,7 +2114,7 @@ In three dimensions, the cross product produces a vector orthogonal to both inpu
 Therefore:
 
 $$
- \boxed{ \boldsymbol\ell=\mathbf p\times\mathbf q }. 
+ \boxed{ \boldsymbol\ell=\mathbf p\times\mathbf q }.
 $$
 
 This is the join operation in the projective plane.
@@ -2124,47 +2124,47 @@ This is the join operation in the projective plane.
 Take Cartesian points:
 
 $$
- P=(1,2) 
+ P=(1,2)
 $$
 
 and:
 
 $$
- Q=(3,6). 
+ Q=(3,6).
 $$
 
 Their homogeneous representations are:
 
 $$
- \mathbf p=(1,2,1), 
+ \mathbf p=(1,2,1),
 $$
 
 $$
- \mathbf q=(3,6,1). 
+ \mathbf q=(3,6,1).
 $$
 
 Compute:
 
 $$
- \mathbf p\times\mathbf q= \begin{bmatrix} 2(1)-1(6)\\ 1(3)-1(1)\\ 1(6)-2(3) \end{bmatrix}. 
+ \mathbf p\times\mathbf q= \begin{bmatrix} 2(1)-1(6)\\ 1(3)-1(1)\\ 1(6)-2(3) \end{bmatrix}.
 $$
 
 Thus:
 
 $$
- \boxed{ \boldsymbol\ell=(-4,2,0) }. 
+ \boxed{ \boldsymbol\ell=(-4,2,0) }.
 $$
 
 The line equation is:
 
 $$
- -4x+2y=0. 
+ -4x+2y=0.
 $$
 
 Simplify:
 
 $$
- \boxed{y=2x}. 
+ \boxed{y=2x}.
 $$
 
 Both points satisfy it.
@@ -2174,7 +2174,7 @@ Both points satisfy it.
 Suppose two projective lines have coefficient vectors:
 
 $$
- \boldsymbol\ell_1,\boldsymbol\ell_2. 
+ \boldsymbol\ell_1,\boldsymbol\ell_2.
 $$
 
 Their intersection is a point orthogonal to both line vectors.
@@ -2182,7 +2182,7 @@ Their intersection is a point orthogonal to both line vectors.
 Therefore:
 
 $$
- \boxed{ \mathbf p=\boldsymbol\ell_1\times\boldsymbol\ell_2 }. 
+ \boxed{ \mathbf p=\boldsymbol\ell_1\times\boldsymbol\ell_2 }.
 $$
 
 This is the meet operation.
@@ -2192,35 +2192,35 @@ This is the meet operation.
 Consider:
 
 $$
- x=1 
+ x=1
 $$
 
 and:
 
 $$
- y=2. 
+ y=2.
 $$
 
 In homogeneous form:
 
 $$
- \boldsymbol\ell_1=(1,0,-1), 
+ \boldsymbol\ell_1=(1,0,-1),
 $$
 
 $$
- \boldsymbol\ell_2=(0,1,-2). 
+ \boldsymbol\ell_2=(0,1,-2).
 $$
 
 Their cross product is:
 
 $$
- \boldsymbol\ell_1\times\boldsymbol\ell_2 = \begin{bmatrix} 1\\2\\1 \end{bmatrix}. 
+ \boldsymbol\ell_1\times\boldsymbol\ell_2 = \begin{bmatrix} 1\\2\\1 \end{bmatrix}.
 $$
 
 Thus the intersection is:
 
 $$
- \boxed{(1,2)}. 
+ \boxed{(1,2)}.
 $$
 
 The exact same operation also handles parallel lines, producing a homogeneous point at infinity when appropriate.
@@ -2230,13 +2230,13 @@ The exact same operation also handles parallel lines, producing a homogeneous po
 Let image points transform by a homography:
 
 $$
- \mathbf p'=H\mathbf p. 
+ \mathbf p'=H\mathbf p.
 $$
 
 The corresponding line transforms as:
 
 $$
- \boxed{ \boldsymbol\ell'=H^{-T}\boldsymbol\ell }. 
+ \boxed{ \boldsymbol\ell'=H^{-T}\boldsymbol\ell }.
 $$
 
 This follows from the same incidence-preservation derivation used for planes.
@@ -2256,31 +2256,31 @@ A Euclidean distance formula is not needed for the basic intersection operation.
 A plane in projective three-dimensional space is represented by four homogeneous coefficients:
 
 $$
- \boxed{ \boldsymbol\pi= \begin{bmatrix} a\\b\\c\\d \end{bmatrix} }. 
+ \boxed{ \boldsymbol\pi= \begin{bmatrix} a\\b\\c\\d \end{bmatrix} }.
 $$
 
 A homogeneous 3D point:
 
 $$
- \mathbf p= \begin{bmatrix} X\\Y\\Z\\W \end{bmatrix} 
+ \mathbf p= \begin{bmatrix} X\\Y\\Z\\W \end{bmatrix}
 $$
 
 lies on the plane when:
 
 $$
- \boxed{ \boldsymbol\pi^T\mathbf p=0 }. 
+ \boxed{ \boldsymbol\pi^T\mathbf p=0 }.
 $$
 
 Expanded:
 
 $$
- \boxed{ aX+bY+cZ+dW=0 }. 
+ \boxed{ aX+bY+cZ+dW=0 }.
 $$
 
 For an ordinary Cartesian point represented with $W=1$:
 
 $$
- aX+bY+cZ+d=0. 
+ aX+bY+cZ+d=0.
 $$
 
 ### Plane through three points
@@ -2288,47 +2288,47 @@ $$
 Suppose three noncollinear finite points are:
 
 $$
- P_0,\quad P_1,\quad P_2. 
+ P_0,\quad P_1,\quad P_2.
 $$
 
 Construct edges:
 
 $$
- \mathbf e_1=P_1-P_0, 
+ \mathbf e_1=P_1-P_0,
 $$
 
 $$
- \mathbf e_2=P_2-P_0. 
+ \mathbf e_2=P_2-P_0.
 $$
 
 The Euclidean normal is:
 
 $$
- \boxed{ \mathbf n=\mathbf e_1\times\mathbf e_2 }. 
+ \boxed{ \mathbf n=\mathbf e_1\times\mathbf e_2 }.
 $$
 
 The plane equation must satisfy:
 
 $$
- \mathbf n\cdot(P-P_0)=0. 
+ \mathbf n\cdot(P-P_0)=0.
 $$
 
 Expand:
 
 $$
- \mathbf n\cdot P-\mathbf n\cdot P_0=0. 
+ \mathbf n\cdot P-\mathbf n\cdot P_0=0.
 $$
 
 Thus the plane offset is:
 
 $$
- \boxed{ d=-\mathbf n\cdot P_0 }. 
+ \boxed{ d=-\mathbf n\cdot P_0 }.
 $$
 
 The homogeneous plane is:
 
 $$
- \boxed{ \boldsymbol\pi= (n_x,n_y,n_z,d) }. 
+ \boxed{ \boldsymbol\pi= (n_x,n_y,n_z,d) }.
 $$
 
 ### Example
@@ -2336,49 +2336,49 @@ $$
 Take:
 
 $$
- P_0=(0,0,2), 
+ P_0=(0,0,2),
 $$
 
 $$
- P_1=(1,0,2), 
+ P_1=(1,0,2),
 $$
 
 $$
- P_2=(0,1,2). 
+ P_2=(0,1,2).
 $$
 
 The edges are:
 
 $$
- \mathbf e_1=(1,0,0), 
+ \mathbf e_1=(1,0,0),
 $$
 
 $$
- \mathbf e_2=(0,1,0). 
+ \mathbf e_2=(0,1,0).
 $$
 
 Their cross product is:
 
 $$
- \mathbf n=(0,0,1). 
+ \mathbf n=(0,0,1).
 $$
 
 The offset is:
 
 $$
- d=-\mathbf n\cdot P_0=-2. 
+ d=-\mathbf n\cdot P_0=-2.
 $$
 
 Thus:
 
 $$
- \boxed{ \boldsymbol\pi=(0,0,1,-2) }. 
+ \boxed{ \boldsymbol\pi=(0,0,1,-2) }.
 $$
 
 Its Cartesian equation is:
 
 $$
- \boxed{z=2}. 
+ \boxed{z=2}.
 $$
 
 ### Three planes can determine a point
@@ -2386,13 +2386,13 @@ $$
 For three independent planes:
 
 $$
- \boldsymbol\pi_1,\boldsymbol\pi_2,\boldsymbol\pi_3, 
+ \boldsymbol\pi_1,\boldsymbol\pi_2,\boldsymbol\pi_3,
 $$
 
 a point at their intersection satisfies:
 
 $$
- \boldsymbol\pi_i^T\mathbf p=0 
+ \boldsymbol\pi_i^T\mathbf p=0
 $$
 
 for all three planes.
@@ -2410,19 +2410,19 @@ This is a projective version of solving three simultaneous plane equations.
 If points transform as:
 
 $$
- \mathbf p'=H\mathbf p, 
+ \mathbf p'=H\mathbf p,
 $$
 
 then planes transform as:
 
 $$
- \boxed{ \boldsymbol\pi'=H^{-T}\boldsymbol\pi }. 
+ \boxed{ \boldsymbol\pi'=H^{-T}\boldsymbol\pi }.
 $$
 
 This preserves the incidence relationship:
 
 $$
- \boldsymbol\pi^T\mathbf p=0. 
+ \boldsymbol\pi^T\mathbf p=0.
 $$
 
 A crucial practical consequence is that you should not generally transform a plane by multiplying its coefficient vector directly by the point transformation matrix.

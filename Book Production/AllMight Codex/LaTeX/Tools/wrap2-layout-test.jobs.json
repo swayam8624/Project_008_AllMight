@@ -1,0 +1,12 @@
+{
+  "schema": "allmight-wrap2-test-v1",
+  "assets": [
+    {
+      "id": "d21d21b04281361cfda13e69-wrap2",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 16, 'rankSpacing': 16, 'padding': 4, 'wrappingWidth': 104, 'htmlLabels': false}}}%%\nflowchart TB\n  subgraph RowTop\n    direction LR\n    A[Stored bytes] --> B[Decode and validate]\n    B --> C[Construct a typed object]\n    C --> D[Publish a usable resource]\n  end\n  subgraph RowBottom\n    direction RL\n    E[Use through an API] --> F[Wait for the last consumer]\n    F --> G[Destroy the object and release storage]\n  end\n  D --> E",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Review-v1/d21d21b04281361cfda13e69-wrap2.svg",
+      "source": "canonical d21d21b04281361cfda13e69"
+    }
+  ]
+}

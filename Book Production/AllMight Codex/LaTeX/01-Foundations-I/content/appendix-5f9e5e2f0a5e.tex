@@ -1,0 +1,33 @@
+\hypertarget{appendix-5f9e5e2f0a5e}{}
+\section*{Read-only data and code}
+\section{Read-only data and code}\label{read-only-data-and-code}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Executable text commonly holds machine instructions; read-only mappings often hold literals/constants. W\^{}X (writable or executable) policy discourages simultaneously writable executable storage, with platform/JIT qualifications. Modifying a string literal is undefined behavior regardless of whether hardware protection catches it. const automatic objects need not be in read-only mappings.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)} --- Access requires an object and backing storage that are still valid.
+\item
+  \hyperref[appendix-c2a9ad1e2b49]{Process isolation and page permissions} --- The mapping context and permissions constrain which accesses proceed.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+Update downstream uses when later chunks build on this concept.
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Separate C++ constness, literal lifetime, and page permissions.
+
+\textbf{Pending:} Executable formats, loader protections, relocations and JIT transitions.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Where\%20the\%20bytes\%20live}{C003 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

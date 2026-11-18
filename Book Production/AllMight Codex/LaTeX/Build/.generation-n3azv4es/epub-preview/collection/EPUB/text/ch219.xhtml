@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch219.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-877738f6f4d2-batch-008-group-c-coverage-map" class="level2">
+<h2>Batch-008 group C coverage map</h2>
+<p>This map points to existing headings in <code>Continuous Notes/Game Engine - From First Frame to Living Worlds.md</code>. It records overlap or a possible local addition; it does not claim exhaustive coverage of any video. Batch-specific receipts are in <code>reviews-c.json</code>; proposed teaching prose is in <code>additions-c.md</code>.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Group-C source contribution</th>
+<th>Existing heading(s)</th>
+<th>Relationship / possible integration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hazel/Sparky Q&amp;A: feature priorities, code ownership, editor and scripting costs, physics motivation, language choices, beginner workflow</td>
+<td><code>#### Add a feature by following its data across the engine</code>; <code>## Reconstruct the working loop and test its contracts</code>; <code>### Make tools support short edit-test loops</code>; <code>### Build boundaries: library choice, runtime assumptions, and warning scope</code></td>
+<td>Add the concrete tradeoff that feature value depends on the intended game and team capacity; note creator’s historical opinion versus general guidance.</td>
+</tr>
+<tr>
+<td>Sparky March 2016 release and later development logs: PBR prototype, rendering abstractions, model import, memory tracking, incomplete deferred/shadow paths</td>
+<td><code>#### Rendering features emerge through visible experiments</code>; <code>### Keep the renderer frontend useful without pretending backends are identical</code>; <code>### Treat a material file as a versioned contract between authoring data and shader inputs</code>; <code>### Read the debug view as evidence, not as a finished quality claim</code></td>
+<td>Reinforces prototype/release distinction and API/backend boundaries. Preserve the dated status and lack of benchmark evidence.</td>
+</tr>
+<tr>
+<td>Sparky SPM build log: FBX conversion, packed vertex/index layout, required tangent data, import demo</td>
+<td><code>#### Importing a readable mesh format, then caching it</code>; <code>### Treat assets as references plus a pipeline</code>; <code>#### Loading different asset types through resource loaders</code>; <code>#### Treat vertex data as an agreement between CPU and GPU</code></td>
+<td>Add the source/runtime representation distinction and importer validation example. Historical format/API only.</td>
+</tr>
+<tr>
+<td>Feature implementation/devlog: thumbnails, preproduction, asset system clarity, cache bug diagnostics</td>
+<td><code>### A content browser starts with a root and a navigation rule</code>; <code>### Resource and asset systems are about reliable identity and lifetime</code>; <code>### Make tools support short edit-test loops</code>; <code>### Debug by finding the earliest broken contract</code>; <code>#### Let a focused test reveal the bug</code></td>
+<td>Supports feature triage and staged diagnostics, with thumbnail cache as an illustrative trace through disk, memory, and GPU data.</td>
+</tr>
+<tr>
+<td>Hazel asset-handle bug: file watcher delete/create sequence changed identity and broke references after restart</td>
+<td><code>### Resource and asset systems are about reliable identity and lifetime</code>; <code>### Asset reload should follow file identity and dependency edges</code>; <code>### Keep identity, storage, and ownership in agreement</code></td>
+<td>Strong specific failure sequence for identity-preserving reload; recommendations in addition are labeled as deductions, not claimed fixes.</td>
+</tr>
+<tr>
+<td>Animation IBL bug walkthrough: bone matrices omitted from world-space positions/normals</td>
+<td><code>#### Camera and coordinate spaces</code>; <code>### Diagnose a frame as a pipeline</code>; <code>#### Debugging lighting and surface direction</code>; <code>### Keep renderer contracts small while the backend grows</code></td>
+<td>Concrete debugging example for tracing transform-space data to a shader. Add caveat that transcript does not cover general inverse-transpose handling under nonuniform scale.</td>
+</tr>
+<tr>
+<td>Hazel multiple-scene/asset viewer and viewports</td>
+<td><code>#### Let render views assemble frame-specific work</code>; <code>### Give each editor view its own projection and visibility policy</code>; <code>### Keep camera identity separate from a render view</code>; <code>### Main-thread work and threads</code></td>
+<td>Provides a historical motivation for render-view boundaries and potential command reuse; no performance claim without profiling.</td>
+</tr>
+<tr>
+<td>Space Invaders case study: prefab, dynamic mesh, scene loading, packaging, save habits</td>
+<td><code>### Model a scene as data, then make it executable</code>; <code>### Add scenes only after the lower path can display an object</code>; <code>### Let the editor change a document, then let the world run it</code>; <code>### Shipping is another consumer of the same data</code></td>
+<td>Game prototype identifies engine gaps. Clarify prefab benefit as reusable setup, not automatic runtime compute savings (the source corrects itself).</td>
+</tr>
+<tr>
+<td>Hazel 2023.1 release overview: release branch, thread split, asset packs, audio graphs, tools, debug renderer</td>
+<td><code>### Keep engine lifecycle separate from game-specific frame work</code>; <code>#### Main-thread work and threads</code>; <code>## Prepare and publish content before promising it is ready</code>; <code>### Keep a rendering boundary between games and graphics APIs</code>; <code>### Release claims need distinct evidence layers</code></td>
+<td>Useful release-level example but historical; claimed twofold CPU ceiling is unmeasured and thumbnails were explicitly deferred.</td>
+</tr>
+<tr>
+<td>Sparky Android-support announcement and long-term roadmap</td>
+<td><code>### Generate platform projects from one configuration, then verify each target</code>; <code>#### Make platform and lifecycle assumptions visible</code>; <code>### Put operating-system differences behind a narrow platform boundary</code></td>
+<td>The video is only a planned livestream, not a port guide or proof of Android support.</td>
+</tr>
+<tr>
+<td>Creator reactions: UNRECORD, Ratchet &amp; Clank trailers/gameplay, Halo Infinite reveal</td>
+<td><code>#### Rendering features emerge through visible experiments</code>; <code>### Read the debug view as evidence, not as a finished quality claim</code>; <code>### Evidence boundary and route through the material</code></td>
+<td>Adds a disciplined visual-review distinction: describe observed frame cues, then mark technique as confirmed, inferred, or unknown. These are subjective reviews, not code/capture verification.</td>
+</tr>
+<tr>
+<td>Hazel animation-system history: Ozz integration, glTF decision, later rewrite; blending/IK/physics listed as future work</td>
+<td><code>#### Importing a readable mesh format, then caching it</code>; <code>### Diagnose a frame as a pipeline</code>; <code>### Integrate physics without surrendering the scene model</code>; <code>### Separate a renderer plan from an implemented command queue</code></td>
+<td>Historical design evolution and workflow challenges; do not claim planned features were shipped.</td>
+</tr>
+<tr>
+<td>Cross-cutting creator workflow: experiments, roadmap, stable releases, volunteer ownership and task capture</td>
+<td><code>### Make build and source organization part of maintenance</code>; <code>### Debugging and profiling are design features</code>; <code>### Release claims need distinct evidence layers</code>; <code>### Playtesting is a measurement practice</code></td>
+<td>Supports evidence-led scope setting. Keep personal recollections distinct from transferable engineering recommendations.</td>
+</tr>
+</tbody>
+</table>
+<section id="appendix-877738f6f4d2-source-boundaries-1" class="level3">
+<h3>Source boundaries</h3>
+<p>The videos range from 2016 Sparky prototypes to Hazel 2023.1, plus subjective reactions to game trailers. No source code, current SDK documentation, runtime behavior, platform build, or independent performance benchmark was checked for this caption pass. Exact source readings, counts, and cleaned-text hashes are recorded per video in <code>reviews-c.json</code>. Several helper token counts differ from the canonical cleaned-manifest count by one to three tokens; those discrepancies are preserved in the individual receipts.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Book</th>
+<th>PDF pages read</th>
+<th>PDF pages visually inspected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Game Engine Architecture</td>
+<td>700-711 inclusive (12 pages)</td>
+<td>702</td>
+</tr>
+<tr>
+<td>Game Physics Engine Development</td>
+<td>184-195 inclusive (12 pages)</td>
+<td>189, 193, 195</td>
+</tr>
+<tr>
+<td>2-game-design-theory-and-practice</td>
+<td>549-560 inclusive (12 pages)</td>
+<td>none</td>
+</tr>
+<tr>
+<td>Game Design Fundamentals Rules of Play</td>
+<td>193-204 inclusive (12 pages)</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Full-reading sources in this batch (each count derives from its receipt, not URL presence):</p>
+<ul>
+<li><a href="https://www.youtube.com/watch?v=4w9NYltdaew">Goodbye Game Engine series. 👋</a></li>
+<li><a href="https://www.youtube.com/watch?v=HPZo1oFESYQ">The Story of Animation in Hazel // Game Engine Dev Log</a></li>
+<li><a href="https://www.youtube.com/watch?v=Q4wHOx5av0w">Game Engine Series Week!</a></li>
+<li><a href="https://www.youtube.com/watch?v=skBXS9cFknc">Sparky Engine Android Support LIVESTREAM!</a></li>
+<li><a href="https://www.youtube.com/watch?v=Y4J4ZdQGEgo">Do you want to make GAMES or game ENGINES?</a></li>
+<li><a href="https://www.youtube.com/watch?v=L_XLGmG2Ct8">Our biggest release ever… Hazel 2023.1</a></li>
+<li><a href="https://www.youtube.com/watch?v=ZyfFCIFHYuk">GAME ENGINE DEV REACTS to Cyberpunk 2077 — Official Trailer — The Gig</a></li>
+<li><a href="https://www.youtube.com/watch?v=bS9CiTFNvWc">Hazel Engine - 2D or 3D FIRST??</a></li>
+<li><a href="https://www.youtube.com/watch?v=8-wAi--vW1o">Skeletal Animation! // Hazel Engine Dev Log</a></li>
+<li><a href="https://www.youtube.com/watch?v=U2JrxdeezHU">NEW SERIES! - Graphics/OpenGL/Game Engine (Update Vlog)</a></li>
+<li><a href="https://www.youtube.com/watch?v=OVGqZP9BJ6s">GAME ENGINE DEV REACTS to Microsoft Flight Simulator - Pre-Order Launch Trailer</a></li>
+<li><a href="https://www.youtube.com/watch?v=HWtEcbiuLBQ">GAME ENGINE DEV REACTS to Halo Infinite | Campaign Gameplay Trailer</a></li>
+<li><a href="https://www.youtube.com/watch?v=H2Z6SmPTFSU">Sparky Engine Dev Log #9 - Skybox and FPS Camera</a></li>
+<li><a href="https://www.youtube.com/watch?v=AsNE-eGmGxs">Sparky Engine Dev Log #6 - The Start of Direct3D 11</a></li>
+<li><a href="https://www.youtube.com/watch?v=tQ_pjZDfm-0">How We Made a Game in 72 HOURS using OUR OWN GAME ENGINE</a></li>
+<li><a href="https://www.youtube.com/watch?v=56ISmbJE9S4">He MADE A GAME using my GAME ENGINE</a></li>
+<li><a href="https://www.youtube.com/watch?v=fs9ChRr4VHM">Fixing Skeletal Animation Image-Based Lighting in Hazel</a></li>
+<li><a href="https://www.youtube.com/watch?v=d5_9EEfN-Mw">GAME ENGINE DEV REVIEWS Ratchet &amp; Clank: Rift Apart GAMEPLAY</a></li>
+<li><a href="https://www.youtube.com/watch?v=QQ9MTzrsldo">Why you NEED to use a GAME ENGINE!</a></li>
+<li><a href="https://www.youtube.com/watch?v=VjlKwQoKluI">TWO MAJOR NEW HAZEL ENGINE FEATURES shipped in our latest game</a></li>
+<li><a href="https://www.youtube.com/watch?v=OsnwKYxPX1A">The Importance of LONG-TERM PLANNING (Hazel Roadmap)</a></li>
+<li><a href="https://www.youtube.com/watch?v=XGYEk9rbGjU">What tools I use to manage Game Engine Development</a></li>
+<li><a href="https://www.youtube.com/watch?v=kucQm2pWYeU">fixing my old game engine that apparently doesn’t work</a></li>
+<li><a href="https://www.youtube.com/watch?v=ahrdtYwBLTk">We Made a Game About Delivering Coffee in a War Zone in Hazel in 72 Hours!</a></li>
+<li><a href="https://www.youtube.com/watch?v=qCSyy5BTDuc">GAME ENGINE DEVELOPER Reacts to Ratchet &amp; Clank: Rift Apart</a></li>
+<li><a href="https://www.youtube.com/watch?v=p4aAMPtNIsQ">Is this TOO REALISTIC? Unreal Engine 5 UNRECORD Gameplay Trailer // Game Engine Dev Reacts</a></li>
+<li><a href="https://www.youtube.com/watch?v=wv6KQWrV4KA">What it Takes to Release a Game Engine</a></li>
+<li><a href="https://www.youtube.com/watch?v=x5dy8T9dRPk">The WORST BUG in my Game Engine</a></li>
+<li><a href="https://www.youtube.com/watch?v=hUFHzuIyK0g">GPU Particle System, Real-time Global Illumination and More: The Future of Hazel - My Game Engine</a></li>
+<li><a href="https://www.youtube.com/watch?v=cimYa67cR-U">Sparky Engine Dev Log #11 - Profiling and Planning</a></li>
+<li><a href="https://www.youtube.com/watch?v=Tz3rnKVOGv8">Game Engine Architecture 101 // Code Review</a></li>
+<li><a href="https://www.youtube.com/watch?v=bTAiINeDyUA">Sparky Engine Dev Log #10 - Preparing for Release</a></li>
+<li><a href="https://www.youtube.com/watch?v=0IGLWhLgxns">The Future of the Sparky Game Engine</a></li>
+<li><a href="https://www.youtube.com/watch?v=YRd2F1JDGlg">Sparky Engine Dev Log #3 - The Start of Physically Based Rendering</a></li>
+<li><a href="https://www.youtube.com/watch?v=Dr6ly-PO9nM">Another Week of Game Engine Development</a></li>
+<li><a href="https://www.youtube.com/watch?v=yMRp9DVZYnI">I ACCIDENTALLY Created Hazel’s Greatest Feature</a></li>
+<li><a href="https://www.youtube.com/watch?v=jbEfCcl7gOw">THE MOST PHOTOREALISTIC Unreal Engine 5 Demo So Far! // Game Engine Dev Reacts</a></li>
+<li><a href="https://www.youtube.com/watch?v=Y3-p6MlTjLA">Game Engine Dev Plays Horror Game - Deppart Prototype</a></li>
+<li><a href="https://www.youtube.com/watch?v=I4TQI7st0pc">Hazel Engine ON LINUX!</a></li>
+<li><a href="https://www.youtube.com/watch?v=10OVd1VHEZ4">Hazel 2024.1 - Our New Biggest Release Ever</a></li>
+<li><a href="https://www.youtube.com/watch?v=0RDI41oBcmQ">Automatically Testing Hazel - My Game Engine</a></li>
+<li><a href="https://www.youtube.com/watch?v=EUy8G3uMitI">Sparky Engine Dev Log #4 - Sparky Model Format</a></li>
+<li><a href="https://www.youtube.com/watch?v=z1O6AZWuWm4">How New Game Engine Features are Implemented</a></li>
+<li><a href="https://www.youtube.com/watch?v=tJDof3nrfHU">How I made a DOCUMENTATION WEBSITE for my Game Engine</a></li>
+<li><a href="https://www.youtube.com/watch?v=4PLF6Gfl0yc">Sparky Engine Dev Log #8 - 2D in DirectX and Memory</a></li>
+<li><a href="https://www.youtube.com/watch?v=o4_tPhgslcU">Sparky Engine March 2016 Release!</a></li>
+<li><a href="https://www.youtube.com/watch?v=dBCadmP2lIs">Unreal Engine 5.2 - Next-Gen Graphics Tech Demo // Game Engine Dev Reacts</a></li>
+<li><a href="https://www.youtube.com/watch?v=h8AmScYcyVA">Answering questions about Hazel - My Game Engine</a></li>
+<li><a href="https://www.youtube.com/watch?v=Z2U-S3fxAg8">From Editor to Runtime - The Hazel Engine Workflow</a></li>
+<li><a href="https://www.youtube.com/watch?v=njTgcayfhJU">Sparky Engine Dev Log #13 - Text Alignment, Debug Menu Directories + More!</a></li>
+<li><a href="https://www.youtube.com/watch?v=jWKVb_QdSNM">Kohi #017: Vulkan Swapchain, Images and Depth Buffer (Vulkan Game Engine Series)</a> — separate local ASR; technical tokens unverified against audio.</li>
+</ul>
+</section>
+<section id="appendix-877738f6f4d2-batch-009-expanded-reading-and-integration" class="level3">
+<h3>batch-009 — expanded reading and integration</h3>
+<p>34 saved caption tracks were read in full (254,592 canonical spoken words); no new ASR reading is claimed in this batch. No new YouTube caption track is claimed. Full transcript reading is distinct from checking video frames, source code or runtime behavior.</p>
+<p>48 selected PDF pages were read; 13 source pages were visually inspected. Exact source hashes, page locators, reading findings and visual limits remain in this batch’s receipts. This is not a whole-book coverage claim.</p>
+</section>
+</section>
+</body>
+</html>

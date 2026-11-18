@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch148.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-78cb248c8355-aslr" class="level2">
+<h2>ASLR</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-78cb248c8355-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Address-space layout randomization varies mapping locations to make fixed-address assumptions less reliable and support exploitation resistance. It does not alter C++ member offsets or grant pointer validity. A pedagogical stack/heap/data/text ordering is not a guaranteed live map.</p>
+</section>
+<section id="appendix-78cb248c8355-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch162.xhtml#appendix-c2a9ad1e2b49-process-isolation-and-page-permissions" class="wikilink">Process isolation and page permissions</a> — The mapping context and permissions constrain which accesses proceed.</li>
+</ul>
+</section>
+<section id="appendix-78cb248c8355-used-by" class="level3">
+<h3>Used by</h3>
+<p>Update downstream uses when later chunks build on this concept.</p>
+</section>
+<section id="appendix-78cb248c8355-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Distinguish randomized mapping base from fixed member-relative offset.</p>
+<p><strong>Pending:</strong> Entropy, loader/ABI rules and platform security limits.</p>
+</section>
+<section id="appendix-78cb248c8355-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-78cb248c8355-reconstruction-depth" class="level3">
+<h3>Reconstruction depth</h3>
+<p>Address Space Layout Randomization changes where executable images, shared libraries, stacks, heaps and other mappings are placed between process runs. The security goal is to make an attacker’s guessed code or data address less reliable; it is not memory encryption and it does not prevent a program from using valid pointers after the loader establishes mappings.</p>
+<p>For engine code, the important consequence is that a virtual address is process-instance state, not durable identity. Serializing a raw pointer, hashing it as an asset identifier, or expecting the same module base across runs is invalid even before ASLR is considered; ASLR makes the mistake obvious.</p>
+<p>Position-independent code and relocation machinery allow code and data references to work when the loader chooses a different base. Debuggers and crash reports therefore resolve addresses against the exact module build and load map rather than treating an absolute address as a universal source location.</p>
+<p>A practical test is to run a tiny program multiple times and record stack, heap, function and shared-library addresses while keeping the binary unchanged. Values may vary, while relationships required by the program remain valid. ASLR strength and platform policy are operating-system evidence, not something portable C++ can infer from one run.</p>
+</section>
+</section>
+</body>
+</html>

@@ -8,7 +8,7 @@ Learned 3D systems depend on how shape and scene information are represented. Th
 
 **Recall question:** How does the chosen 3D representation constrain the learning problem?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 77559–78469; source-span SHA256 82fb2193cb9627611c0b2754398c75529739a400d13e80c24155c9c474bcb3dc. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 78561–79471; source-span SHA256 82fb2193cb9627611c0b2754398c75529739a400d13e80c24155c9c474bcb3dc. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Learned representations of 3D shape and scenes

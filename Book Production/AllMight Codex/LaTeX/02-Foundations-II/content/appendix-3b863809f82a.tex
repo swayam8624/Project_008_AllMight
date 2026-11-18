@@ -1,0 +1,41 @@
+\hypertarget{appendix-3b863809f82a}{}
+\section*{Gram matrices and coordinate metrics}
+\section{Gram matrices and coordinate metrics}\label{gram-matrices-and-coordinate-metrics}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A Gram matrix stores pairwise basis inner products. Coordinate vectors measure physical dot products through \(c^\mathsf TGd\). It is positive semidefinite, and positive definite for independent generators. It records metric geometry but not orientation.
+
+The basis \((1,0),(1,1)\) has \(G=\begin{pmatrix}1&1\\1&2\end{pmatrix}\). Coordinates \((1,2)\) give squared length \(13\), not \(5\).
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Basis coordinates and dimension (01-Foundations-I, appendix-ce0341f7ea0d)} --- An ordered basis fixes coordinate meaning and the space whose geometry is measured.
+\item
+  \hyperref[appendix-8bc4e8fc547c]{Dot products and orthogonality} --- Inner-product measurements supply the perpendicularity and alignment constraints.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c39f1ed34271]{Orthonormal frames and Gram-Schmidt} --- Builds on this mechanism in the connected geometry story.
+\item
+  \hyperref[appendix-02b9d9a81dca]{Barycentric coordinates and interpolation} --- Builds on this mechanism in the connected geometry story.
+\item
+  \hyperref[appendix-50d2ea3c9b26]{Symmetric positive-definite matrices and Cholesky} --- Extends this foundation into linear-systems and decomposition analysis. \#\# Recall and next depth
+\end{itemize}
+
+Explain the residual equations for span projection and why normal equations can worsen conditioning. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20Gram\%20matrix\%20remembers\%20the\%20geometry\%20of\%20a\%20slanted\%20basis}{Teaching narrative} · \href{}{Coverage and source gap (01-Foundations-I, appendix-fd090d982a15 § Phase 6 - Parts 501-600)} · \href{}{Evidence and limits (01-Foundations-I, appendix-a103e7846d21 § Phase 6 - Source analysis and verification)} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}
+
+Expanded direct teaching: \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Choose\%20what\%20a\%20length\%20is\%20meant\%20to\%20measure}{Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Choose what a length is meant to measure}.

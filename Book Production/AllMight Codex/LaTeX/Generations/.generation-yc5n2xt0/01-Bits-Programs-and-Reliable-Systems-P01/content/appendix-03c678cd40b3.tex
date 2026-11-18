@@ -1,0 +1,50 @@
+\hypertarget{appendix-03c678cd40b3}{}\label{referencestart:appendix-03c678cd40b3}
+\section{One's complement}\label{appendix-03c678cd40b3-ones-complement}
+
+\hypertarget{appendix-03c678cd40b3-ones-complement}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-03c678cd40b3-definition-and-mechanism}
+
+\hypertarget{appendix-03c678cd40b3-definition-and-mechanism}{}
+
+Negation inverts every bit, leaving two zeros and requiring end-around carry for ordinary addition.
+
+\end{allmightroledefinition}
+
+Negative x is the N-bit complement of positive x. Eight-bit −5 is \BookInlineCode{11111010}; zeros are all zeros and all ones. Adding 5 and encoded −3 gives a carry plus low value 1; end-around carry adds that carry back to yield 2.
+
+\subsection{Prerequisites}\label{appendix-03c678cd40b3-prerequisites}
+
+\hypertarget{appendix-03c678cd40b3-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-8f38927cfc54]{Bitwise NOT} --- Complement must specify width: eight-bit complement of \BookInlineCode{0x0F} is \BookInlineCode{0xF0}, while sixteen-bit complement is \BookInlineCode{0xFFF0}.
+\item
+  \hyperref[appendix-ce20506c8532]{Signed magnitude} --- The high bit holds sign and the remaining bits hold magnitude.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-03c678cd40b3-used-by}
+
+\hypertarget{appendix-03c678cd40b3-used-by}{}
+
+Connect later chunks here when they use this concept.
+
+\subsection{Recall and next depth}\label{appendix-03c678cd40b3-recall-and-next-depth}
+
+\hypertarget{appendix-03c678cd40b3-recall-and-next-depth}{}
+
+Explain one's complement without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} Internet checksums and historical machines.
+
+\subsection{Source and navigation}\label{appendix-03c678cd40b3-source-and-navigation}
+
+\hypertarget{appendix-03c678cd40b3-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

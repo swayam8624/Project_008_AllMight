@@ -8,7 +8,7 @@ A shared decomposition of a vector into normal and tangent components explains r
 
 **Recall question:** Which component changes under reflection, and how does refraction change the tangent component?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 41804–43226; source-span SHA256 32eec0ce560b794c9b06b3077e1b89dd484af5c4e58f165878bbe54f9f2dbe97. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 41985–43407; source-span SHA256 32eec0ce560b794c9b06b3077e1b89dd484af5c4e58f165878bbe54f9f2dbe97. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Light uses the same decomposition in a new role

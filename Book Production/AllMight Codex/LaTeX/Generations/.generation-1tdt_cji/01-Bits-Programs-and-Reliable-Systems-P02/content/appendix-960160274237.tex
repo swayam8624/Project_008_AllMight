@@ -1,0 +1,514 @@
+\hypertarget{appendix-960160274237}{}\label{referencestart:appendix-960160274237}
+\section{C++: Objects, Ownership and Lifetime --- Visual Recall}\label{appendix-960160274237-c-objects-ownership-and-lifetime-visual-recall}
+
+\hypertarget{appendix-960160274237-c-objects-ownership-and-lifetime-visual-recall}{}
+
+\textbf{Scope:} Companion to {Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs}. A compact teaching board, not a substitute for the worked chapter. Draw each model from memory; explain every arrow and state its preconditions.
+
+\subsection{One-page short notes}\label{appendix-960160274237-one-page-short-notes}
+
+\hypertarget{appendix-960160274237-one-page-short-notes}{}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Story stop
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Shortest useful note
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Open the explanation / figure
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Build & Translation makes declarations visible, definitions executable, and linking joins program pieces. & \hyperref[01-foundations-i-ch002-the-journey-from-text-to-a-live-object]{Build pipeline} · \hyperref[01-foundations-i-ch002-a-compiled-interface-rather-than-repeated-text]{Modules} \\
+Object & Storage is the place; lifetime is the interval; identity is the occupant. Same address does not promise same object. & \hyperref[01-foundations-i-ch002-storage-is-a-place-an-object-is-its-occupant]{Storage/object figure} · \hyperref[01-foundations-i-ch002-a-handle-remembers-which-occupant-was-intended]{Generation handle} \\
+Borrow & A pointer/reference/view grants access, not ownership. Validity depends on the referent, lifetime, mutation, and invalidation contract. & \hyperref[01-foundations-i-ch003-when-a-valid-borrow-stops-naming-the-intended-thing]{Borrow hazards} · \hyperref[01-foundations-i-ch003-borrowed-views-and-deferred-work-need-an-owner-story]{Deferred views} \\
+Value & Construction creates; assignment replaces; move may transfer responsibility while source remains alive. Rule of Zero composes tested owners. & \hyperref[01-foundations-i-ch003-construction-establishes-a-usable-state]{Construction/destruction} · \hyperref[01-foundations-i-ch003-from-three-repairs-to-five-decisions-to-zero-boilerplate]{Rule of Zero} \\
+Resource & RAII binds cleanup to an owner lifetime; external users may require deferred release. & \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch004-from-a-live-object-to-responsible-resource-ownership}{Four-lifetime figure and full story (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)} \\
+Smart owner & \BookInlineCode{{u}{n}{i}{q}{u}{e}{\_}{p}{t}{r}}{unique\_ptr} = one duty; \BookInlineCode{{s}{h}{a}{r}{e}{d}{\_}{p}{t}{r}}{shared\_ptr} = shared lifetime; \BookInlineCode{{w}{e}{a}{k}{\_}{p}{t}{r}}{weak\_ptr} = observe, then \BookInlineCode{{l}{o}{c}{k}{(}{)}}{lock()} to try. Shared ownership does not synchronize the pointee. & \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch004-exclusive-ownership-unique_ptr-makes-transfer-visible}{Exclusive ownership (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch004-shared-ownership-one-object-a-group-of-owners-and-a-separate-control-block}{Shared ownership (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch004-weak-observation-breaks-cycles-without-pretending-an-object-is-alive}{Weak observation (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)} \\
+Raw storage & Allocation obtains bytes; construction starts an object; destruction ends its life; deallocation returns bytes. Placement construction does not allocate. & \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch004-custom-allocation-separates-obtaining-bytes-from-constructing-objects}{Allocation versus construction (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch004-placement-construction-reuses-storage-it-does-not-allocate-it}{Placement/lifetime figure (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)} \\
+\end{longtable}
+}
+
+\textbf{Board in one breath:} source → object → borrow/owner → value transfer → RAII cleanup → safe external reclamation. At every arrow ask: \textbf{who owns it, how long is it valid, and what ends use?}
+
+The notes above target a single landscape page when rendered at ordinary study-note scale. The diagrams and answer keys below remain the linked detail, not required reading for every review pass.
+
+\subsection{One story: from source text to responsibly released resource}\label{appendix-960160274237-one-story-from-source-text-to-responsibly-released-resource}
+
+\hypertarget{appendix-960160274237-one-story-from-source-text-to-responsibly-released-resource}{}
+
+\BookDiagramPanel{../current/Assets/Print/5b899e8eacb2f339e9e21b7f53548ec35b766681b657816ab424e5e688a41928.pdf}
+
+\textbf{Caption:} Resource safety starts with the object model but ends only when the external-use contract permits release. A C++ destructor is not a GPU completion fence.
+
+\subsection{Four figure briefs}\label{appendix-960160274237-four-figure-briefs}
+
+\hypertarget{appendix-960160274237-four-figure-briefs}{}
+
+Use one row as a small revision card. Open its figure to see the caption and the surrounding worked example. The four cards supplement the existing notes and ownership boards.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Card
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short note
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Figure and explanation
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Check yourself
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Build & Declare to compile a call; supply the definition to link it. Header guards act inside one translation unit. & \hyperref[01-foundations-i-ch002-figure-cpp-01---two-build-lanes-meet-at-the-linker]{CPP-01 · two build lanes} & Why can a call compile yet fail at link time? \\
+Borrow & Reallocation can dangle a path; slot assignment can keep it live while changing the entity. Validate, then reacquire. & \hyperref[01-foundations-i-ch003-figure-cpp-02---a-borrow-can-fail-in-two-different-ways]{CPP-02 · lifetime versus identity} & Can the same address still reach the wrong entity? \\
+Move & Construction creates a destination; a move operation may transfer duty. The source remains alive under its type's contract. & \hyperref[01-foundations-i-ch003-figure-cpp-03---move-the-duty-keep-both-object-lifetimes]{CPP-03 · two live objects, one duty} & Why does \BookInlineCode{{s}{t}{d}{:}{:}{m}{o}{v}{e}{(}{x}{)}}{std::move(x)} alone release nothing? \\
+GPU release & RAII triggers the selected cleanup protocol; GPU completion governs when native release is safe. & \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch004-figure-cpp-04---cpu-cleanup-can-precede-gpu-reclamation}{CPP-04 · deferred reclamation (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)} & Which owner keeps the device and pending release queue alive? \\
+\end{longtable}
+}
+
+\textbf{Answers:} translation sees a usable declaration but linking still needs the definition; yes, semantic invalidation can preserve a live slot; \BookInlineCode{{s}{t}{d}{:}{:}{m}{o}{v}{e}}{std::move} changes expression category and requires a consuming operation; the renderer must explicitly own the queue/device until all pending duties complete.
+
+\subsection{Ownership decision board}\label{appendix-960160274237-ownership-decision-board}
+
+\hypertarget{appendix-960160274237-ownership-decision-board}{}
+
+\BookDiagramPanel{../current/Assets/Print/6e44b2e06409978a99f8cc26c4bcd9b2ade7e137c76caf48c0b72f67ea60a9cb.pdf}
+
+\textbf{Caption:} Pick semantics first, syntax second. A raw pointer usually borrows; it does not extend lifetime. Shared ownership is a relationship, not a generic safety upgrade.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Need
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Recall
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Common trap
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Borrow briefly & \BookInlineCode{{T}{\&}}{T\&}, \BookInlineCode{{T}{*}}{T*}, \BookInlineCode{{s}{p}{a}{n}}{span} & Caller must preserve lifetime and validity. \\
+Own exclusively & \BookInlineCode{{u}{n}{i}{q}{u}{e}{\_}{p}{t}{r}{\textless{}}{T}{\textgreater{}}}{unique\_ptr\textless{}T\textgreater{}} & \BookInlineCode{{g}{e}{t}{(}{)}}{get()} borrows; \BookInlineCode{{r}{e}{l}{e}{a}{s}{e}{(}{)}}{release()} transfers the duty. \\
+Own jointly & \BookInlineCode{{s}{h}{a}{r}{e}{d}{\_}{p}{t}{r}{\textless{}}{T}{\textgreater{}}}{shared\_ptr\textless{}T\textgreater{}} & Control-block safety does not synchronize \BookInlineCode{{T}}{T}. \\
+Observe jointly owned object & \BookInlineCode{{w}{e}{a}{k}{\_}{p}{t}{r}{\textless{}}{T}{\textgreater{}}{:}{:}{l}{o}{c}{k}{(}{)}}{weak\_ptr\textless{}T\textgreater{}::lock()} & Check the returned owner; \BookInlineCode{{e}{x}{p}{i}{r}{e}{d}{(}{)}}{expired()} then use is a race. \\
+Release a native handle & Custom/domain deleter & Match the API, device/context, and allocator. \\
+\end{longtable}
+}
+
+\subsection{RAII: move cleanup from branches into scope}\label{appendix-960160274237-raii-move-cleanup-from-branches-into-scope}
+
+\hypertarget{appendix-960160274237-raii-move-cleanup-from-branches-into-scope}{}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{../current/Assets/Print/6b8c325c1bab6b4011674a329baa7820084a0c074cd73a9aa46c8ce9e6828b7d.pdf}}
+
+\textbf{Caption:} Partial construction is safe only for responsibilities already held by fully constructed members/guards. A naked raw handle between acquire and adoption is a leak window.
+
+\subsection{Storage, object and occupant are different states}\label{appendix-960160274237-storage-object-and-occupant-are-different-states}
+
+\hypertarget{appendix-960160274237-storage-object-and-occupant-are-different-states}{}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{../current/Assets/Print/1cf3e2a0a7a207a855c030df95e03570811a2a5c35a3a4fc4084ff462e52e89f.pdf}}
+
+\textbf{Caption:} Destroying an occupant does not necessarily free its storage. Same address does not mean same object. Correct alignment, size, construction, destruction and replacement rules still apply; \BookInlineCode{{s}{t}{d}{:}{:}{l}{a}{u}{n}{d}{e}{r}}{std::launder} does not construct or revive anything.
+
+\subsection{The four questions to ask at a resource boundary}\label{appendix-960160274237-the-four-questions-to-ask-at-a-resource-boundary}
+
+\hypertarget{appendix-960160274237-the-four-questions-to-ask-at-a-resource-boundary}{}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Layer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Ask
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Example
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Storage & Which bytes, with what size/alignment? & Arena slot large and aligned enough for \BookInlineCode{{W}{i}{d}{g}{e}{t}}{Widget}. \\
+Object & Which live typed occupant? & \BookInlineCode{{W}{i}{d}{g}{e}{t}}{Widget} has completed construction. \\
+Ownership & Who ends its lifetime/releases the handle? & Move-only \BookInlineCode{{G}{p}{u}{B}{u}{f}{f}{e}{r}}{GpuBuffer} owner. \\
+External use & When is reclamation safe? & GPU completion fence/timeline. \\
+\end{longtable}
+}
+
+\subsection{Retrieval prompts}\label{appendix-960160274237-retrieval-prompts}
+
+\hypertarget{appendix-960160274237-retrieval-prompts}{}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Why can a stack object own heap or GPU resources?
+\item
+  What does RAII automate, and what release timing must a GPU wrapper still know?
+\item
+  Why is \BookInlineCode{{s}{h}{a}{r}{e}{d}{\_}{p}{t}{r}}{shared\_ptr} copying not a synchronization policy for the pointed-to object?
+\item
+  Why does \BookInlineCode{{w}{e}{a}{k}{\_}{p}{t}{r}{:}{:}{l}{o}{c}{k}{(}{)}}{weak\_ptr::lock()} give a stronger test than checking \BookInlineCode{{e}{x}{p}{i}{r}{e}{d}{(}{)}}{expired()} first?
+\item
+  How can a \BookInlineCode{{w}{e}{a}{k}{\_}{p}{t}{r}}{weak\_ptr} keep control-block storage allocated after object destruction?
+\item
+  What is the difference among \BookInlineCode{{n}{e}{w}{\ }{T}}{new\ T}, \BookInlineCode{{:}{:}{o}{p}{e}{r}{a}{t}{o}{r}{\ }{n}{e}{w}}{::operator\ new}, \BookInlineCode{{c}{o}{n}{s}{t}{r}{u}{c}{t}{\_}{a}{t}}{construct\_at}, \BookInlineCode{{d}{e}{s}{t}{r}{o}{y}{\_}{a}{t}}{destroy\_at}, and deallocation?
+\item
+  Why does \BookInlineCode{{u}{n}{i}{q}{u}{e}{\_}{p}{t}{r}{\textless{}}{D}{e}{r}{i}{v}{e}{d}{\textgreater{}}}{unique\_ptr\textless{}Derived\textgreater{}} converting to \BookInlineCode{{u}{n}{i}{q}{u}{e}{\_}{p}{t}{r}{\textless{}}{B}{a}{s}{e}{\textgreater{}}}{unique\_ptr\textless{}Base\textgreater{}} require a correct base destruction contract?
+\item
+  What exactly does \BookInlineCode{{s}{t}{d}{:}{:}{l}{a}{u}{n}{d}{e}{r}}{std::launder} not do?
+\end{enumerate}
+
+\begin{quote}
+{[}!answer{]}- Compact key Scope-based owners run cleanup on normal exit and unwinding. External completion is a separate condition. Shared-pointer thread safety concerns ownership bookkeeping, not arbitrary pointee mutation. \BookInlineCode{{l}{o}{c}{k}{(}{)}}{lock()} atomically attempts to obtain a strong owner. Weak observers can keep the control block, but not the managed object's lifetime, alive. A new-expression combines storage allocation and initialization; allocation functions alone only acquire storage; construction starts an object lifetime; destruction ends it; deallocation returns storage. Base deletion needs a valid virtual destructor or a deleter retaining the concrete type. \BookInlineCode{{l}{a}{u}{n}{d}{e}{r}}{launder} can obtain a pointer to an already-live object only under its rules; it is no general repair tool.
+\end{quote}
+
+\href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch004-from-a-live-object-to-responsible-resource-ownership}{Teach the full ownership story (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)} · \hyperref[appendix-fd090d982a15-m010---parts-148-160]{Part coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}
+
+\subsection{Added retrieval prompt}\label{appendix-960160274237-added-retrieval-prompt}
+
+\hypertarget{appendix-960160274237-added-retrieval-prompt}{}
+
+Borrow: T\& or const T\&. Consume: unique\_ptr\textless T\textgreater{} by value. Retain shared lifetime: shared\_ptr\textless T\textgreater{} by value. Borrow an existing shared handle: const shared\_ptr\textless T\textgreater{}\& only for that call. Use a matching deleter for non-memory resources. \hyperref[01-foundations-i-ch003-worked-api-choice-borrow-consume-retain-or-copy-a-value]{Rebuild the API lab}.
+
+\subsection{Requests and replaceable backends --- M011 retrieval experiment}\label{appendix-960160274237-requests-and-replaceable-backends-m011-retrieval-experiment}
+
+\hypertarget{appendix-960160274237-requests-and-replaceable-backends-m011-retrieval-experiment}{}
+
+A renderer's command is \textbf{one of several known shapes}; the runtime backend is \textbf{one implementation of a common contract}. These are two different decisions, so redraw the story without looking: command value → active alternative → borrowed submit call → virtual override → checked visitor → logical result → correctly destroyed owner. Then explain what remains separate from the story: the GPU's completion and native-resource release rules.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+From memory, reconstruct the situation
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+What the answer must account for
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Why can a union's storage not be treated as several simultaneously live objects? & One active member and the correct lifetime transitions; a byte pattern is not a type tag. \\
+How does a request prove its form? & \BookInlineCode{{v}{a}{r}{i}{a}{n}{t}}{variant} discriminant, checked \BookInlineCode{{g}{e}{t}{\_}{i}{f}}{get\_if} / \BookInlineCode{{v}{i}{s}{i}{t}}{visit}, and possible exceptional valueless state. \\
+Why does a base reference call the derived implementation but a copied base value not preserve it? & Static type, dynamic type, subobjects, virtual dispatch and slicing. \\
+Why is the interface destructor virtual? & Destruction through an owning base pointer must reach the derived destructor; external GPU use has its own completion rule. \\
+What does a diamond with a virtual common base mean? & Two inheritance paths reach one most-derived common-base subobject, not a mandated memory offset. \\
+What can each cast prove? & \BookInlineCode{{s}{t}{a}{t}{i}{c}{\_}{c}{a}{s}{t}}{static\_cast} follows a statically permitted conversion; \BookInlineCode{{d}{y}{n}{a}{m}{i}{c}{\_}{c}{a}{s}{t}}{dynamic\_cast} can runtime-check polymorphic relationships; \BookInlineCode{{r}{e}{i}{n}{t}{e}{r}{p}{r}{e}{t}{\_}{c}{a}{s}{t}}{reinterpret\_cast} does not create objects; \BookInlineCode{{c}{o}{n}{s}{t}{\_}{c}{a}{s}{t}}{const\_cast} does not legalize writing to genuinely const storage. \\
+Why must two handles with the same slot but different generations compare unequal? & Identity includes the occupant generation; equality still does not prove current liveness. \\
+Why does the overridden \BookInlineCode{{r}{e}{s}{e}{r}{v}{e}}{reserve} body see 2 through a base view but 7 through a derived view? & Default argument from static type; virtual body from dynamic type. \\
+Can \BookInlineCode{{\textless{}}{=}{\textgreater{}}}{\textless{}=\textgreater{}} always produce a total order? & Integer ID fields can support strong ordering; NaN yields unordered floating comparisons and demands an explicit container key policy. \\
+Can we claim this is the fastest dispatch architecture? & No: compare allocation, memory layout, branch behavior and optimizer effects on the same workload. \\
+\end{longtable}
+}
+
+\textbf{Blank-file reconstruction:} Recreate \BookInlineCode{{C}{l}{e}{a}{r}}{Clear}, \BookInlineCode{{D}{r}{a}{w}{M}{e}{s}{h}}{DrawMesh}, \BookInlineCode{{U}{p}{l}{o}{a}{d}}{Upload}, \BookInlineCode{{R}{e}{q}{u}{e}{s}{t}}{Request}, \BookInlineCode{{B}{a}{c}{k}{e}{n}{d}}{Backend} and \BookInlineCode{{C}{o}{u}{n}{t}{i}{n}{g}{B}{a}{c}{k}{e}{n}{d}}{CountingBackend} with a single exclusive owner; verify command counts, derived destructor execution, failed runtime cast, slicing, shared virtual base, generation-aware equality, NaN's unordered comparison, overload selection and static default-argument binding. Full code and the checked build command are in \hyperref[source-file-9e5ff4ba88e6efabc938832a]{the M011 C++20 laboratory}; complete derivations and failure explanations are in \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch004-from-one-owned-resource-to-many-requests-and-a-replaceable-backend}{the continuous narrative (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)}. Do not infer Kairo or GPU execution from this standalone test.
+
+\subsection{One request, one transaction, callbacks that may outlive their caller --- M012 reconstruction}\label{appendix-960160274237-one-request-one-transaction-callbacks-that-may-outlive-their-caller-m012-reconstruction}
+
+\hypertarget{appendix-960160274237-one-request-one-transaction-callbacks-that-may-outlive-their-caller-m012-reconstruction}{}
+
+Read the complete \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch004-from-an-accepted-render-request-to-a-resource-that-survives-failures-and-callbacks}{M012 narrative (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)} only \emph{after} attempting this recall route. The important picture begins with an editor requesting a resource and ends with either a fully published asset or the original published store unchanged.
+
+\BookDiagramPanel{../current/Assets/Print/6d46aa970f72da31b2df0931e93df24134664c5996b5a7c513bc65a21080d6da.pdf}
+
+The first thing to reconstruct is \emph{why each arrow is necessary}. The request's count must be distinct from an asset index, because identical raw integer types do not carry the same domain meaning. The file must be decoded as checked bytes, not by assuming any pointer cast creates a live \BookInlineCode{{W}{i}{r}{e}{H}{e}{a}{d}{e}{r}}{WireHeader}. Preparation must be private because callbacks or render systems must never observe half-constructed state. Every acquired handle must have one owner before a throwing operation can intervene. Publication needs a precise boundary: an exception before the commit must not modify existing records under the stated guarantee; a callback that throws afterward is a different event requiring its own policy.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Reconstruction question
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Minimum evidence the reader must produce
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Why is a raw \BookInlineCode{{s}{t}{d}{:}{:}{s}{i}{z}{e}{\_}{t}}{std::size\_t} a dangerous API for bytes? & Show accidental unit mixing; write \BookInlineCode{{e}{x}{p}{l}{i}{c}{i}{t}{\ }{B}{y}{t}{e}{C}{o}{u}{n}{t}}{explicit\ ByteCount} with explicit conversion back. \\
+Can a function pointer close over a local variable? & No: a plain pointer carries a callable identity; extra state needs a context, whose lifetime is separately guaranteed. \\
+Why is a member-function pointer not an ordinary callback address? & Explain the required instance and demonstrate \BookInlineCode{{o}{b}{j}{e}{c}{t}{.}{*}{m}{e}{m}{b}{e}{r}}{object.*member} invocation. \\
+What does a functor or lambda actually store? & Draw state fields or references; contrast capture of an integer, pointer, view and \BookInlineCode{{t}{h}{i}{s}}{this}. \\
+How do value and reference captures differ after mutation? & Predict snapshot 10 and live view 20; explain why a deferred reference may dangle. \\
+What changes when a lambda is stored in \BookInlineCode{{s}{t}{d}{:}{:}{f}{u}{n}{c}{t}{i}{o}{n}}{std::function}? & Type erasure, copyable target, possible storage cost, empty-call error; no guaranteed inline capacity. \\
+Which exceptions cause cleanup, and what cannot be rolled back? & Distinguish stack unwinding/local RAII from preexisting external side effects. \\
+What are the basic, strong and no-throw guarantees? & State valid-but-changed, unchanged observable state, and non-escaping exceptions; give each an example. \\
+Why must the native resource move be non-throwing? & Trace vector growth, element relocation, and the relevant strong-guarantee conditions. \\
+Why can't input validation live only in \BookInlineCode{{a}{s}{s}{e}{r}{t}}{assert}? & \BookInlineCode{{N}{D}{E}{B}{U}{G}}{NDEBUG} can remove it; show typed invalid-input errors separately from programmer invariant failures. \\
+What do \BookInlineCode{{b}{i}{t}{\_}{c}{a}{s}{t}}{bit\_cast} and trivially copyable prove? & A constrained representation-value operation, not a portable six-byte disk schema. \\
+Why is a typed pointer into an arbitrary file unsafe? & Length, alignment, lifetime, alias rules, endian and padding are independent checks. \\
+How do we demonstrate rollback? & Reproduce counts: (0,0,0), (1,1,0), (1,2,1), (2,3,1), then 0 live at destruction. \\
+\end{longtable}
+}
+
+\textbf{Blank-file laboratory:} Rebuild \BookInlineCode{{B}{y}{t}{e}{C}{o}{u}{n}{t}}{ByteCount}; the fake device; the move-only \BookInlineCode{{R}{e}{s}{o}{u}{r}{c}{e}}{Resource}; the private \BookInlineCode{{A}{s}{s}{e}{t}{R}{e}{c}{o}{r}{d}}{AssetRecord}; \BookInlineCode{{A}{s}{s}{e}{t}{S}{t}{o}{r}{e}{:}{:}{u}{p}{l}{o}{a}{d}}{AssetStore::upload} returning a typed result; function/member/functor callbacks; value/reference and owning-lifetime lambda captures; and a six-byte little-endian serializer. Compile under C++20 and warnings as errors, execute the deliberate failure after handle acquisition, then repeat under \BookInlineCode{{-}{D}{N}{D}{E}{B}{U}{G}}{-DNDEBUG}. The tested reference and exact commands are in \hyperref[source-file-32e93bc026677e074aaa7771]{the M012 lab} and the source/evidence record. Do not classify this exercise as complete learner mastery until it can be reconstructed and explained independently.
+
+\subsection{One asset pipeline, many types --- M013 retrieval}\label{appendix-960160274237-one-asset-pipeline-many-types-m013-retrieval}
+
+\hypertarget{appendix-960160274237-one-asset-pipeline-many-types-m013-retrieval}{}
+
+The preceding recall exercise ended with a safe, published asset. Now the editor wants \emph{the same preparation and publication guarantees} for meshes, textures with different channel counts, and shader records. We must avoid duplicating stores without erasing type safety. Redraw this path from memory, then justify every boundary rather than reciting template vocabulary:
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{../current/Assets/Print/cb1a138343e9131ce362b6bfbc307b356350eabddd681deb247106b29473845a.pdf}}
+
+Imagine one \BookInlineCode{{M}{e}{s}{h}}{Mesh} containing three unsigned indices, one \BookInlineCode{{T}{e}{x}{t}{u}{r}{e}{\textless{}}{4}{\textgreater{}}}{Texture\textless{}4\textgreater{}} containing twelve texels, and one \BookInlineCode{{T}{e}{x}{t}{u}{r}{e}{\textless{}}{3}{\textgreater{}}}{Texture\textless{}3\textgreater{}} containing five texels. Explain why a trait gives 12, 48 and 15 source bytes, then derive why the checked batch accumulator returns 75. Show why a bound such as \BookInlineCode{{t}{e}{x}{e}{l}{\_}{c}{o}{u}{n}{t}{\ }{\textgreater{}}{\ }{m}{a}{x}{/}{C}{h}{a}{n}{n}{e}{l}{s}}{texel\_count\ \textgreater{}\ max/Channels} must be checked \emph{before} multiplication. Finally explain why none of these counts establishes the actual GPU allocation size.
+
+Now reconstruct the implementation without opening the reference. Start with \BookInlineCode{{t}{e}{m}{p}{l}{a}{t}{e}{\textless{}}{c}{l}{a}{s}{s}{\ }{T}{\textgreater{}}}{template\textless{}class\ T\textgreater{}} function-template deduction. Build \BookInlineCode{{t}{e}{m}{p}{l}{a}{t}{e}{\textless{}}{c}{l}{a}{s}{s}{\ }{T}{,}{\ }{s}{i}{z}{e}{\_}{t}{\ }{C}{a}{p}{a}{c}{i}{t}{y}{\textgreater{}}}{template\textless{}class\ T,\ size\_t\ Capacity\textgreater{}} with fixed optional slots and explain why the non-type capacity changes the class specialization. Provide the full \BookInlineCode{{A}{s}{s}{e}{t}{T}{r}{a}{i}{t}{s}{\textless{}}{M}{e}{s}{h}{\textgreater{}}}{AssetTraits\textless{}Mesh\textgreater{}} specialization and the partial \BookInlineCode{{A}{s}{s}{e}{t}{T}{r}{a}{i}{t}{s}{\textless{}}{T}{e}{x}{t}{u}{r}{e}{\textless{}}{C}{h}{a}{n}{n}{e}{l}{s}{\textgreater{}}{\textgreater{}}}{AssetTraits\textless{}Texture\textless{}Channels\textgreater{}\textgreater{}} specialization, then contrast class-template specialization with function overloading. Derive \BookInlineCode{{U}{\&}{\ }{\&}{\ }{→}{\ }{U}{\&}}{U\&\ \&\ →\ U\&}, \BookInlineCode{{U}{\&}{\ }{\&}{\&}{\ }{→}{\ }{U}{\&}}{U\&\ \&\&\ →\ U\&}, \BookInlineCode{{U}{\&}{\&}{\ }{\&}{\ }{→}{\ }{U}{\&}}{U\&\&\ \&\ →\ U\&}, and \BookInlineCode{{U}{\&}{\&}{\ }{\&}{\&}{\ }{→}{\ }{U}{\&}{\&}}{U\&\&\ \&\&\ →\ U\&\&}. Use those results to show why \BookInlineCode{{m}{e}{s}{h}{e}{s}{.}{e}{m}{p}{l}{a}{c}{e}{(}{i}{n}{p}{u}{t}{)}}{meshes.emplace(input)} makes a copy while \BookInlineCode{{m}{e}{s}{h}{e}{s}{.}{e}{m}{p}{l}{a}{c}{e}{(}{s}{t}{d}{:}{:}{m}{o}{v}{e}{(}{i}{n}{p}{u}{t}{)}{)}}{meshes.emplace(std::move(input))} selects a move path; do not assume the moved-from vector must be empty.
+
+The next reconstruction must connect a heterogeneous parameter pack to a checked fold. Show what happens for zero arguments and why a fold's grouping is not itself a universal left-to-right side-effect guarantee. Then implement the earlier \BookInlineCode{{s}{t}{d}{:}{:}{v}{o}{i}{d}{\_}{t}}{std::void\_t} SFINAE detection pattern and a clearer \BookInlineCode{{U}{p}{l}{o}{a}{d}{a}{b}{l}{e}}{Uploadable} concept with compound requirements. State exactly what a \BookInlineCode{{r}{e}{q}{u}{i}{r}{e}{s}}{requires} expression checks and what it \emph{does not} execute. Constrain \BookInlineCode{{e}{m}{p}{l}{a}{c}{e}}{emplace} with \BookInlineCode{{s}{t}{d}{:}{:}{c}{o}{n}{s}{t}{r}{u}{c}{t}{i}{b}{l}{e}{\_}{f}{r}{o}{m}}{std::constructible\_from} and show why the overload \BookInlineCode{{r}{o}{u}{t}{e}{(}{c}{o}{n}{s}{t}{\ }{T}{\&}{)}}{route(const\ T\&)} selects the constrained path for supported assets and the generic fallback for \BookInlineCode{{U}{n}{k}{n}{o}{w}{n}{A}{s}{s}{e}{t}}{UnknownAsset}.
+
+Finally prove publication. If the published count is \BookInlineCode{{c}}{c}, slots \BookInlineCode{{{[}}{0}{,}{c}{)}}{{[}0,c)} are live and slots \BookInlineCode{{{[}}{c}{,}{C}{a}{p}{a}{c}{i}{t}{y}{)}}{{[}c,Capacity)} are empty. When the constructor throws in slot \BookInlineCode{{c}}{c}, the count is not incremented. Reconstruct the deliberately failed \BookInlineCode{{C}{h}{e}{c}{k}{e}{d}{S}{h}{a}{d}{e}{r}{(}{-}{1}{)}}{CheckedShader(-1)} attempt and show why the previously published version 3 remains valid and version 4 can use the next slot. Explain what would break if we supported deletion, stored raw references after the depot's lifetime, invoked the API concurrently or replaced the CPU-only record with an asynchronously used GPU buffer without retirement bookkeeping.
+
+\textbf{Evidence and full explanation:} \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch005-one-asset-pipeline-many-asset-types-generic-code-without-accidental-promises}{the M013 narrative (Bits, Programs, and Reliable Systems, Part 3, Ch. 5)}, \hyperref[source-file-a5db53514d74ae247b4ac42f]{the tested C++20 laboratory} and \hyperref[appendix-fd090d982a15-m013-parts-201216-generic-asset-preparation-with-constrained-apis]{the 16-part coverage map}. The test checks representative semantics, not the learner's independent ability to reconstruct these decisions or current Kairo implementation details.
+
+\subsection{The tile planner makes a choice --- M014 reconstruction}\label{appendix-960160274237-the-tile-planner-makes-a-choice-m014-reconstruction}
+
+\hypertarget{appendix-960160274237-the-tile-planner-makes-a-choice-m014-reconstruction}{}
+
+This recall path belongs after \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch005-a-texture-tile-that-chooses-its-work-before-the-frame-begins}{the full M014 narrative (Bits, Programs, and Reliable Systems, Part 3, Ch. 5)} and the \hyperref[source-file-f5eb017280bb6b2ae6b1475d]{C++20 lab}. Its purpose is to rebuild the decision chain from memory, not to duplicate an encyclopedia of template keywords.
+
+Picture one 8×2 RGBA texture tile, a budget of 64 bytes, a 64-byte CPU buffer, and a counting recorder. Before the renderer tries to use it, the planning layer must establish what is known from the type and what still depends on the incoming data. Draw this path, then explain each transition and its failure condition:
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{../current/Assets/Print/c324d5eda85d8350b896694ea72dba0e158520ac5f315a4ea4d064f7890bc6c9.pdf}}
+
+A correct reconstruction should derive \(8\times2\times4=64\) bytes from the uncompressed source representation, then explain why \(8\times3\times4=96\) fails the budget. It should show why a 4×4 RGBA request with no buffer fails \textbf{only when the verification tag demands a real payload}. The metadata-only 4×4 RGB path may report 48 planned bytes, but it has not proved any upload complete. Show how overflow is rejected by checking \(x > \mathrm{max}/y\) \emph{before multiplication}, not by multiplying and inspecting the wrapped result.
+
+Rebuild \BookInlineCode{{P}{i}{x}{e}{l}{T}{r}{a}{i}{t}{s}{\textless{}}{F}{o}{r}{m}{a}{t}{\textgreater{}}}{PixelTraits\textless{}Format\textgreater{}} using \BookInlineCode{{s}{t}{d}{:}{:}{i}{n}{t}{e}{g}{r}{a}{l}{\_}{c}{o}{n}{s}{t}{a}{n}{t}}{std::integral\_constant} and distinguish the fact that a type is empty from an assertion that it costs zero bytes in every containing object. Demonstrate an \BookInlineCode{{i}{f}{\ }{c}{o}{n}{s}{t}{e}{x}{p}{r}}{if\ constexpr} RGBA branch and contrast it with a normal runtime \BookInlineCode{{i}{f}}{if}. Write a \BookInlineCode{{c}{o}{n}{s}{t}{e}{x}{p}{r}}{constexpr} function that accepts either compile-time or runtime arguments; then change the problem so that a \BookInlineCode{{c}{o}{n}{s}{t}{e}{v}{a}{l}}{consteval} function demands a valid compile-time tile definition. Explain why \BookInlineCode{{c}{o}{n}{s}{t}{i}{n}{i}{t}}{constinit} permits a mutable, single-threaded diagnostic counter but does not make it \BookInlineCode{{c}{o}{n}{s}{t}}{const} or atomic.
+
+Derive the four-bit Morton lookup without memorizing its answer. Spread \(x=3\) to binary \BookInlineCode{{0}{0}{0}{0}{0}{1}{0}{1}}{00000101} and \(y=5\) to \BookInlineCode{{0}{0}{0}{1}{0}{0}{0}{1}}{00010001}. Shift the second pattern and OR the results to recover decimal 39. Construct the sixteen-entry table during constant evaluation. Then explain when a small lookup table might lose to shift/mask arithmetic because memory traffic and locality matter.
+
+From that setup, implement a stateless policy and a stateful budget policy with the same \BookInlineCode{{v}{a}{l}{i}{d}{a}{t}{e}}{validate} operation. Use \BookInlineCode{{T}{i}{l}{e}{P}{l}{a}{n}{n}{e}{r}{\textless{}}{F}{o}{r}{m}{a}{t}{,}{P}{o}{l}{i}{c}{y}{,}{R}{e}{c}{o}{r}{d}{e}{r}{\textgreater{}}}{TilePlanner\textless{}Format,Policy,Recorder\textgreater{}} to compose the behavior without a runtime backend switch. Show why \BookInlineCode{{R}{e}{c}{o}{r}{d}{e}{r}{B}{a}{s}{e}{\textless{}}{D}{e}{r}{i}{v}{e}{d}{\textgreater{}}}{RecorderBase\textless{}Derived\textgreater{}} may call \BookInlineCode{{D}{e}{r}{i}{v}{e}{d}{:}{:}{r}{e}{c}{o}{r}{d}{\_}{i}{m}{p}{l}}{Derived::record\_impl} only when it is genuinely part of an appropriately derived object; compare this static dispatch with a runtime-selected \BookInlineCode{{s}{t}{d}{:}{:}{f}{u}{n}{c}{t}{i}{o}{n}}{std::function} target. Construct \BookInlineCode{{V}{e}{r}{i}{f}{y}{P}{a}{y}{l}{o}{a}{d}{T}{a}{g}}{VerifyPayloadTag} and \BookInlineCode{{M}{e}{t}{a}{d}{a}{t}{a}{O}{n}{l}{y}{T}{a}{g}}{MetadataOnlyTag} and explain exactly how overload resolution chooses a validation path from the caller's tag type. Finally compare normal empty-policy membership, private empty-base inheritance, and \BookInlineCode{{{[}}{{[}}{n}{o}{\_}{u}{n}{i}{q}{u}{e}{\_}{a}{d}{d}{r}{e}{s}{s}{{]}}{{]}}}{{[}{[}no\_unique\_address{]}{]}} membership. On the tested Linux compilers their respective sizes were 16, 8 and 8 bytes; the rule is \textbf{a permitted optimization}, not a universal numeric contract, and compilers can treat the attribute differently.
+
+A complete blank-screen test recreates the accepted 64-byte RGBA plan, rejected 96-byte budget attempt, rejected empty verified payload, accepted 48-byte metadata-only RGB plan, and rejected overflowing extent. The recorder receives exactly two plans in the demonstrated sequence; failed requests do not reach it. Then state why this is \textbf{not} a real GPU resource, performance benchmark, atomic transaction for arbitrary throwing recorders, or proof of thread safety. The evidence ledger preserves the exact compiled commands and original fourteen-part mapping: \hyperref[appendix-fd090d982a15-m014-parts-217230-one-tile-planner-and-its-compile-time-policy-decisions]{M014 traceability} · \hyperref[appendix-a103e7846d21-phase-4-additive-reconstruction-m014-parts-217230]{verification record}.
+
+\subsection{A growing asset store must preserve its promises --- M015 retrieval}\label{appendix-960160274237-a-growing-asset-store-must-preserve-its-promises-m015-retrieval}
+
+\hypertarget{appendix-960160274237-a-growing-asset-store-must-preserve-its-promises-m015-retrieval}{}
+
+A previously working fixed-capacity asset depot now grows, removes assets, accepts work in different scheduling orders, and lets the editor find items by name. \textbf{Do not use the following as a replacement for the derivations} in \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch006-an-asset-registry-grows-while-its-handles-must-not-change}{the complete M015 chapter (Bits, Programs, and Reliable Systems, Part 3, Ch. 6)}. Start with this diagram and explain why its arrows and lifetime boundaries exist:
+
+\BookDiagramPanel{../current/Assets/Print/bb6d58c6324cf5fd0ce9e36aaed3f902d2a58d4984c6d1b93cc9b3dce3bba337.pdf}
+
+First distinguish \BookInlineCode{{s}{i}{z}{e}}{size} from \BookInlineCode{{c}{a}{p}{a}{c}{i}{t}{y}}{capacity}, and prove why \BookInlineCode{{r}{e}{s}{e}{r}{v}{e}{(}{2}{)}}{reserve(2)} creates \textbf{zero} live elements whereas \BookInlineCode{{r}{e}{s}{i}{z}{e}{(}{5}{)}}{resize(5)} creates five. With a geometric capacity sequence \BookInlineCode{{1}{,}{g}{,}{g}{²}{,}{.}{.}{.}}{1,g,g²,...}, derive the sum of relocation work and explain why an individual append can still have linear latency while amortized append cost remains constant. State the operations that invalidate vector pointers and the difference between an append with spare capacity, one requiring reallocation, a middle erase and \BookInlineCode{{r}{e}{s}{e}{r}{v}{e}}{reserve} that does or does not change capacity. A pointer does not move itself when the vector relocates.
+
+Then reconstruct the identity protocol. Slot zero holds generation one; a handle \BookInlineCode{{\{}{0}{,}{1}{\}}}{\{0,1\}} reaches it. After erase, that occupant is destroyed, its generation advances, and a new asset occupies slot zero at generation two. Draw why \BookInlineCode{{\{}{0}{,}{1}{\}}}{\{0,1\}} no longer resolves. Explain what happens if generation wraps, if a raw \BookInlineCode{{A}{s}{s}{e}{t}{*}}{Asset*} or span was retained across reallocation, or if the renderer still has an asynchronous GPU read in flight. Distinguish a CPU identity check from the device-completion requirement.
+
+Show the two injected publication failures: one before any slot change, another after a new slot has been populated but before the name index becomes discoverable. Prove why the rollback resets the candidate and removes a newly appended unpublished slot; explain why the test's successful outcome is not an unrestricted claim about arbitrary throwing user callbacks or all allocator behaviors.
+
+Now change the workload. A fixed-size channel array needs \BookInlineCode{{s}{t}{d}{:}{:}{a}{r}{r}{a}{y}}{std::array}, not vector growth. A front/back event stream makes \BookInlineCode{{d}{e}{q}{u}{e}}{deque} attractive, but its iterator stability differs from that of its existing element references. A \BookInlineCode{{l}{i}{s}{t}}{list} can transfer a node with \BookInlineCode{{s}{p}{l}{i}{c}{e}}{splice} while keeping an iterator to an unaffected node; a \BookInlineCode{{f}{o}{r}{w}{a}{r}{d}{\_}{l}{i}{s}{t}}{forward\_list} needs the predecessor for \BookInlineCode{{e}{r}{a}{s}{e}{\_}{a}{f}{t}{e}{r}}{erase\_after}. Explain what those guarantees cost in nodes, pointer chasing and cache locality compared with a contiguous vector scan.
+
+Next give two lookup problems. For ordered traversal and range queries, consider \BookInlineCode{{s}{t}{d}{:}{:}{m}{a}{p}}{std::map} / \BookInlineCode{{s}{t}{d}{:}{:}{s}{e}{t}}{std::set}, with logarithmic comparison-based behavior. For name-to-handle lookup or membership, use \BookInlineCode{{s}{t}{d}{:}{:}{u}{n}{o}{r}{d}{e}{r}{e}{d}{\_}{m}{a}{p}}{std::unordered\_map} / \BookInlineCode{{s}{t}{d}{:}{:}{u}{n}{o}{r}{d}{e}{r}{e}{d}{\_}{s}{e}{t}}{std::unordered\_set} and explain expected versus worst-case complexity. Write a hash that returns zero for every string; twenty-four distinct names now collide in the same bucket without becoming equal. Derive \BookInlineCode{{l}{o}{a}{d}{\_}{f}{a}{c}{t}{o}{r}{\ }{=}{\ }{s}{i}{z}{e}{/}{b}{u}{c}{k}{e}{t}{\_}{c}{o}{u}{n}{t}}{load\_factor\ =\ size/bucket\_count}, explain what \BookInlineCode{{m}{a}{x}{\_}{l}{o}{a}{d}{\_}{f}{a}{c}{t}{o}{r}{(}{0}{.}{5}{)}}{max\_load\_factor(0.5)} and \BookInlineCode{{r}{e}{s}{e}{r}{v}{e}{(}{9}{6}{)}}{reserve(96)} request, and state why rehash invalidates unordered iterators but does not generally invalidate references to surviving elements.
+
+Finally build the scheduling choices from user needs: a FIFO \BookInlineCode{{q}{u}{e}{u}{e}}{queue}, LIFO \BookInlineCode{{s}{t}{a}{c}{k}}{stack}, and a \BookInlineCode{{p}{r}{i}{o}{r}{i}{t}{y}{\_}{q}{u}{e}{u}{e}}{priority\_queue} whose comparator orders priority 3 before priority 1 and earlier sequence numbers before later ones within equal priority. Explain why priority\_queue does not promise tie stability unless the comparator defines it.
+
+Finish by distinguishing \textbf{borrow} from \textbf{ownership}. A \BookInlineCode{{s}{p}{a}{n}{\textless{}}{c}{o}{n}{s}{t}{\ }{u}{i}{n}{t}{8}{\_}{t}{\textgreater{}}}{span\textless{}const\ uint8\_t\textgreater{}} carries a range while its byte vector remains alive and stable; it does not own the bytes. A \BookInlineCode{{s}{t}{r}{i}{n}{g}{\_}{v}{i}{e}{w}}{string\_view} may point into only the middle of a stored string and need not be NUL-terminated at its end. Copy \BookInlineCode{{"}{s}{t}{o}{n}{e}{"}}{"stone"} into \BookInlineCode{{s}{t}{d}{:}{:}{s}{t}{r}{i}{n}{g}}{std::string} before destroying or modifying the source. Describe why the local observed short-string capacity of 15 cannot be advertised as a portable SSO specification.
+
+\textbf{Actual reconstruction witness:} \hyperref[source-file-e829cf731b17419e282775cf]{M015 C++20 lab}, compiled and run with GCC sanitizers, Clang, and a GCC release-style build. A learner should be able to recreate the sequence of checks without the reference and explain every failure. \hyperref[appendix-fd090d982a15-m015-parts-231250-growing-the-asset-registry-without-losing-identities]{Original 20-part mapping} · \hyperref[appendix-a103e7846d21-phase-5-additive-reconstruction-m015-parts-231250]{Exact test and provenance ledger}. Do not claim personal mastery or real Kairo/GPU verification merely because this standalone model passes.
+
+\subsection{Query the registry without confusing identity and a snapshot --- M016 reconstruction}\label{appendix-960160274237-query-the-registry-without-confusing-identity-and-a-snapshot-m016-reconstruction}
+
+\hypertarget{appendix-960160274237-query-the-registry-without-confusing-identity-and-a-snapshot-m016-reconstruction}{}
+
+The previous M015 exercise produced a generation-checked asset registry. The new problem is to report on assets without changing their live ownership and without assuming that a handle stays current forever. Read the \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch006-from-a-living-asset-registry-to-reliable-queries-and-transformations}{full M016 narrative (Bits, Programs, and Reliable Systems, Part 3, Ch. 6)} before testing recall; the questions below should be reconstructed as \emph{one processing story}, not as twenty memorized API names.
+
+\BookDiagramPanel{../current/Assets/Print/b0c29959a87053acf6b1daad4b24de4380d0b5b34cd89f0a222db1717d3c18ff.pdf}
+
+Starting with the five records \BookInlineCode{{b}{r}{i}{c}{k}{.}{m}{e}{s}{h}}{brick.mesh} (48 bytes, priority 2), \BookInlineCode{{s}{k}{y}{.}{t}{e}{x}}{sky.tex} (64, priority 3), \BookInlineCode{{u}{i}{.}{t}{e}{x}}{ui.tex} (16, priority 3), \BookInlineCode{{t}{e}{r}{r}{a}{i}{n}{.}{m}{e}{s}{h}}{terrain.mesh} (128, priority 1) and \BookInlineCode{{r}{o}{c}{k}{.}{m}{e}{s}{h}}{rock.mesh} (48, priority 2), answer each part in coherent explanations:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Describe each result's meaning.} Why does \BookInlineCode{{o}{p}{t}{i}{o}{n}{a}{l}{\textless{}}{A}{s}{s}{e}{t}{H}{a}{n}{d}{l}{e}{\textgreater{}}}{optional\textless{}AssetHandle\textgreater{}} mean ``possibly absent'' but fail to distinguish an empty query from a missing name? Build \BookInlineCode{{E}{x}{p}{e}{c}{t}{e}{d}{L}{i}{k}{e}{\textless{}}{A}{s}{s}{e}{t}{H}{a}{n}{d}{l}{e}{,}{L}{o}{o}{k}{u}{p}{E}{r}{r}{o}{r}{\textgreater{}}}{ExpectedLike\textless{}AssetHandle,LookupError\textgreater{}} as a C++20 model. Explain exactly what its \BookInlineCode{{h}{a}{s}{\_}{v}{a}{l}{u}{e}{(}{)}}{has\_value()} contract requires before \BookInlineCode{{v}{a}{l}{u}{e}{(}{)}}{value()} is accessed and why it is not a full replacement for C++23 \BookInlineCode{{s}{t}{d}{:}{:}{e}{x}{p}{e}{c}{t}{e}{d}}{std::expected}. Then distinguish that result from an Inspect/Upload/Evict \BookInlineCode{{v}{a}{r}{i}{a}{n}{t}}{variant} and from a diagnostic \BookInlineCode{{a}{n}{y}}{any}. Predict a wrong \BookInlineCode{{a}{n}{y}{\_}{c}{a}{s}{t}}{any\_cast}.
+\item
+  \textbf{Rebuild the report shape.} Group count and error count in a \BookInlineCode{{p}{a}{i}{r}}{pair} and three report fields in a \BookInlineCode{{t}{u}{p}{l}{e}}{tuple}. Show that \BookInlineCode{{a}{u}{t}{o}{\ }{{[}}{a}{,}{b}{{]}}{\ }{=}{\ }{p}{a}{i}{r}}{auto\ {[}a,b{]}\ =\ pair} copies this pair, while \BookInlineCode{{a}{u}{t}{o}{\&}{\ }{{[}}{a}{,}{b}{{]}}{\ }{=}{\ }{p}{a}{i}{r}}{auto\&\ {[}a,b{]}\ =\ pair} aliases it. Explain why a named struct can be clearer at a long-lived public API boundary and why a borrowed structured binding needs an owner that outlives it.
+\item
+  \textbf{Prove the traversal capabilities before selecting the algorithm.} Classify \BookInlineCode{{i}{s}{t}{r}{e}{a}{m}{\_}{i}{t}{e}{r}{a}{t}{o}{r}{\textless{}}{i}{n}{t}{\textgreater{}}}{istream\_iterator\textless{}int\textgreater{}}, \BookInlineCode{{f}{o}{r}{w}{a}{r}{d}{\_}{l}{i}{s}{t}{\textless{}}{i}{n}{t}{\textgreater{}}{:}{:}{i}{t}{e}{r}{a}{t}{o}{r}}{forward\_list\textless{}int\textgreater{}::iterator}, \BookInlineCode{{l}{i}{s}{t}{\textless{}}{i}{n}{t}{\textgreater{}}{:}{:}{i}{t}{e}{r}{a}{t}{o}{r}}{list\textless{}int\textgreater{}::iterator}, \BookInlineCode{{d}{e}{q}{u}{e}{\textless{}}{i}{n}{t}{\textgreater{}}{:}{:}{i}{t}{e}{r}{a}{t}{o}{r}}{deque\textless{}int\textgreater{}::iterator} and \BookInlineCode{{v}{e}{c}{t}{o}{r}{\textless{}}{i}{n}{t}{\textgreater{}}{:}{:}{i}{t}{e}{r}{a}{t}{o}{r}}{vector\textless{}int\textgreater{}::iterator} according to input, forward, bidirectional, random-access and contiguous iterator concepts. Why can \BookInlineCode{{s}{t}{d}{:}{:}{s}{o}{r}{t}}{std::sort} operate on the vector's random-access iterators but not directly on \BookInlineCode{{l}{i}{s}{t}}{list} iterators? Why may binary search over forward iterators have logarithmic comparison count but linear iterator advances?
+\item
+  \textbf{Choose ordering by what the editor needs.} Write a comparator that first orders byte counts, then asset names so equal byte counts have deterministic tie breaking. Explain why \BookInlineCode{{s}{t}{d}{:}{:}{s}{o}{r}{t}}{std::sort} need not preserve the order of comparator-equivalent records and why common introsort-like implementations are not mandated by the C++ standard. For descending priorities, write \BookInlineCode{{s}{t}{a}{b}{l}{e}{\_}{s}{o}{r}{t}}{stable\_sort} and predict the relative order of \BookInlineCode{{s}{k}{y}{.}{t}{e}{x}}{sky.tex} vs \BookInlineCode{{u}{i}{.}{t}{e}{x}}{ui.tex} and \BookInlineCode{{b}{r}{i}{c}{k}{.}{m}{e}{s}{h}}{brick.mesh} vs \BookInlineCode{{r}{o}{c}{k}{.}{m}{e}{s}{h}}{rock.mesh}. State the strict-weak-ordering requirements the comparator must satisfy.
+\item
+  \textbf{Partition only when the task is binary membership.} Use \BookInlineCode{{s}{t}{d}{:}{:}{p}{a}{r}{t}{i}{t}{i}{o}{n}}{std::partition} to put mesh records before non-mesh records; verify both halves and use \BookInlineCode{{p}{a}{r}{t}{i}{t}{i}{o}{n}{\_}{p}{o}{i}{n}{t}}{partition\_point} on the resulting already-partitioned range. Explain why the two groups are not automatically sorted and why partitioning does not promise to retain original relative order. Say when \BookInlineCode{{s}{t}{a}{b}{l}{e}{\_}{p}{a}{r}{t}{i}{t}{i}{o}{n}}{stable\_partition} would be appropriate.
+\item
+  \textbf{Derive the binary-search boundaries.} Once the byte-count ordering is \BookInlineCode{{{[}}{1}{6}{,}{4}{8}{,}{4}{8}{,}{6}{4}{,}{1}{2}{8}{{]}}}{{[}16,48,48,64,128{]}}, prove that \BookInlineCode{{l}{o}{w}{e}{r}{\_}{b}{o}{u}{n}{d}{(}{4}{8}{)}}{lower\_bound(48)} returns index 1 and \BookInlineCode{{u}{p}{p}{e}{r}{\_}{b}{o}{u}{n}{d}{(}{4}{8}{)}}{upper\_bound(48)} returns index 3. Explain why \BookInlineCode{{e}{q}{u}{a}{l}{\_}{r}{a}{n}{g}{e}}{equal\_range} gives \BookInlineCode{{{[}}{1}{,}{3}{)}}{{[}1,3)} and why \BookInlineCode{{l}{o}{w}{e}{r}{\_}{b}{o}{u}{n}{d}{(}{5}{0}{)}}{lower\_bound(50)} points to index 3 despite having no match. Supply comparator overloads in both element/value and value/element orders. Describe why using a priority-sorted sequence here would violate the precondition.
+\item
+  \textbf{Compare one-off scanning with a maintained index.} Use \BookInlineCode{{s}{t}{d}{:}{:}{f}{i}{n}{d}}{std::find} to look for \BookInlineCode{{s}{k}{y}{.}{t}{e}{x}}{sky.tex} in an unsorted name snapshot. Explain when this simple linear scan is preferable to building a fresh hash index, and when repeated lookups should instead use the registry's already maintained name index.
+\item
+  \textbf{Transform and reduce with the correct numeric meaning.} Derive \BookInlineCode{{{[}}{4}{8}{,}{6}{4}{,}{1}{6}{,}{1}{2}{8}{,}{4}{8}{{]}}}{{[}48,64,16,128,48{]}} using \BookInlineCode{{s}{t}{d}{:}{:}{t}{r}{a}{n}{s}{f}{o}{r}{m}}{std::transform} and an output back inserter, then calculate \BookInlineCode{{3}{0}{4}}{304} using an explicit \BookInlineCode{{s}{t}{d}{:}{:}{s}{i}{z}{e}{\_}{t}{\{}{0}{\}}}{std::size\_t\{0\}} initial accumulator. Write the ordered \BookInlineCode{{s}{t}{d}{:}{:}{a}{c}{c}{u}{m}{u}{l}{a}{t}{e}}{std::accumulate} fold and explain why \BookInlineCode{{s}{t}{d}{:}{:}{r}{e}{d}{u}{c}{e}}{std::reduce} may regroup operations, even if a particular run happens to use one thread. Use \(10^{20},1,-10^{20},3\) to derive both 3 and 4 from different floating-point groupings. State separate overflow, accuracy and deterministic-reproducibility policies.
+\item
+  \textbf{Erase at the correct ownership boundary.} Starting with \BookInlineCode{{\{}{1}{,}{2}{,}{3}{,}{4}{,}{5}{,}{6}{\}}}{\{1,2,3,4,5,6\}}, use \BookInlineCode{{r}{e}{m}{o}{v}{e}{\_}{i}{f}}{remove\_if} to keep odd IDs but demonstrate that the vector still reports size six until \BookInlineCode{{e}{r}{a}{s}{e}}{erase} destroys the suffix. Then use C++20 \BookInlineCode{{s}{t}{d}{:}{:}{e}{r}{a}{s}{e}{\_}{i}{f}}{std::erase\_if} to remove the two texture records from an \textbf{owned report snapshot}, leaving three rows. Explain why the live asset registry has not evicted those assets and what additional generation validation, index cleanup and GPU retirement a real eviction would require.
+\end{enumerate}
+
+\textbf{Blank-file witness:} reconstruct the program in \hyperref[source-file-c479bd493444d093f6c34898]{asset\_query\_algorithm\_lab.cpp} with active failure checks, compile under C++20 with warnings as errors, then rerun with \BookInlineCode{{-}{D}{N}{D}{E}{B}{U}{G}}{-DNDEBUG} and sanitizers. The reference was actually run with GCC 14.2 ASan/UBSan, Clang 17 and GCC release flags. Reconstruct the expected values before running it; a passing executable is not a substitute for understanding the data/iterator/lifetime contracts.
+
+\textbf{Audit:} \hyperref[appendix-fd090d982a15-m016-parts-251270-the-asset-registry-becomes-a-query-and-transformation-pipeline]{the original 20-part mapping} and \hyperref[appendix-a103e7846d21-phase-6-additive-reconstruction-m016-parts-251270]{the source and verification ledger}. The registry's \emph{live} concurrency, the separately named Kairo implementations and the learner's independent reconstruction remain unverified here.
+
+\subsection{From borrowed reports to module boundaries --- M017 reconstruction}\label{appendix-960160274237-from-borrowed-reports-to-module-boundaries-m017-reconstruction}
+
+\hypertarget{appendix-960160274237-from-borrowed-reports-to-module-boundaries-m017-reconstruction}{}
+
+The Phase 6 report used an owned snapshot so that sorting and erasing metadata did not mutate live engine state. The next problem is making that report \emph{composable} without accidentally copying intermediates, choosing where its scratch allocations live, and sharing its API with separately compiled consumers. The full explanation is \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch006-from-copying-every-asset-report-to-a-lazy-allocatable-separately-compiled-query-service}{the M017 continuous chapter (Bits, Programs, and Reliable Systems, Part 3, Ch. 6)}. Reconstruct the mechanism below \textbf{from the problem}, not by reciting the names of its twenty C++ features.
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{../current/Assets/Print/c09ddea85f9b39727fd91f55316c1249148638383eca70405cb81d3b7de7ccdf.pdf}}
+
+\textbf{First reconstruct what the loop means.} Draw the hidden range variable, begin iterator, end sentinel and increment/compare/dereference sequence behind a range-for. Define a cursor that holds a borrowed pointer to the snapshot vector and a numeric index, and makes \BookInlineCode{{o}{p}{e}{r}{a}{t}{o}{r}{+}{+}}{operator++} skip retired slots. State the invariants for normal, end and default-created iterators; do not dereference the end. Explain why your cursor models \BookInlineCode{{s}{t}{d}{:}{:}{f}{o}{r}{w}{a}{r}{d}{\_}{i}{t}{e}{r}{a}{t}{o}{r}}{std::forward\_iterator} and why it does not model random access or contiguity. With one 512-byte retired texture and live byte counts 48,64,16,128,48, predict exactly five visits and total 304.
+
+\textbf{Next reconstruct laziness and lifetime.} Compose \BookInlineCode{{v}{i}{e}{w}{s}{:}{:}{a}{l}{l}{(}{r}{o}{w}{s}{)}{\ }{\textbar{}}{\ }{v}{i}{e}{w}{s}{:}{:}{f}{i}{l}{t}{e}{r}{(}{.}{.}{.}{)}{\ }{\textbar{}}{\ }{v}{i}{e}{w}{s}{:}{:}{t}{r}{a}{n}{s}{f}{o}{r}{m}{(}{.}{.}{.}{)}}{views::all(rows)\ \textbar{}\ views::filter(...)\ \textbar{}\ views::transform(...)} to obtain four names from those live rows with at least 48 bytes. Explain why merely forming the pipeline does not copy all four names into a vector and why iterating it later can call the predicate again. Predict why it is wrong to rely on a precise predicate invocation count for arbitrary repeat traversals. Compare \BookInlineCode{{v}{i}{e}{w}{s}{:}{:}{a}{l}{l}{(}{l}{v}{a}{l}{u}{e}{\_}{v}{e}{c}{t}{o}{r}{)}}{views::all(lvalue\_vector)} with \BookInlineCode{{v}{i}{e}{w}{s}{:}{:}{a}{l}{l}{(}{r}{v}{a}{l}{u}{e}{\_}{v}{e}{c}{t}{o}{r}{)}}{views::all(rvalue\_vector)} and explain how a \BookInlineCode{{r}{e}{f}{\_}{v}{i}{e}{w}}{ref\_view} can satisfy \BookInlineCode{{b}{o}{r}{r}{o}{w}{e}{d}{\_}{r}{a}{n}{g}{e}}{borrowed\_range} without keeping the vector itself alive. Conversely, explain why an owning view storing the vector need not qualify as a borrowed range when the view's own destruction destroys the data.
+
+\textbf{Use a projection only when the search needs one property.} Without constructing a separate names vector, use \BookInlineCode{{s}{t}{d}{:}{:}{r}{a}{n}{g}{e}{s}{:}{:}{f}{i}{n}{d}{(}{r}{o}{w}{s}{,}{\ }{"}{s}{k}{y}{.}{t}{e}{x}{"}{,}{\ }{\&}{R}{o}{w}{:}{:}{n}{a}{m}{e}{)}}{std::ranges::find(rows,\ "sky.tex",\ \&Row::name)} and predict the record's byte count. Sort an \emph{owned copy} by \BookInlineCode{{\&}{R}{o}{w}{:}{:}{b}{y}{t}{e}{s}}{\&Row::bytes} and state why the 512-byte retired row will still appear at the end unless you filtered it first. Discuss why the source vector's contiguity does not make a filter view a writable random-access container. Compare \BookInlineCode{{A}{t}{L}{e}{a}{s}{t}{B}{y}{t}{e}{s}{\{}{4}{8}{\}}}{AtLeastBytes\{48\}} against an equivalent threshold-capturing lambda, giving a plan for benchmarking actual instruction and allocation costs instead of asserting one form is always faster.
+
+\textbf{Now choose who owns allocation.} Build a typed \BookInlineCode{{T}{r}{a}{c}{k}{i}{n}{g}{A}{l}{l}{o}{c}{a}{t}{o}{r}{\textless{}}{T}{\textgreater{}}}{TrackingAllocator\textless{}T\textgreater{}} that shares statistics across copies and rebindings, uses proper alignment and pairs successful storage acquisitions with deallocation. Explain why allocation is not the same as constructing a \BookInlineCode{{T}}{T} object, and why allocator equality/propagation matter when a container moves or swaps. Then replace the compile-time allocator type with a \BookInlineCode{{s}{t}{d}{:}{:}{p}{m}{r}{:}{:}{v}{e}{c}{t}{o}{r}}{std::pmr::vector} and a \BookInlineCode{{s}{t}{d}{:}{:}{p}{m}{r}{:}{:}{u}{n}{o}{r}{d}{e}{r}{e}{d}{\_}{m}{a}{p}}{std::pmr::unordered\_map}, both pointing to a counting \BookInlineCode{{m}{e}{m}{o}{r}{y}{\_}{r}{e}{s}{o}{u}{r}{c}{e}}{memory\_resource}. Explain how unordered buckets/nodes and nested PMR strings may require allocator propagation, and why the resource must outlive both containers.
+
+\textbf{Derive the arena lifetime, not just its common-case speed.} Give a 128-byte aligned scratch buffer to a monotonic resource, then allocate 2,048 64-bit values. Explain why the initial buffer cannot contain the entire request; the resource must obtain upstream blocks. Predict why destroying the vector does not immediately free those blocks and why destroying/releasing the arena later can. Repeat with a 64-byte buffer and \BookInlineCode{{n}{u}{l}{l}{\_}{m}{e}{m}{o}{r}{y}{\_}{r}{e}{s}{o}{u}{r}{c}{e}}{null\_memory\_resource} upstream and predict \BookInlineCode{{s}{t}{d}{:}{:}{b}{a}{d}{\_}{a}{l}{l}{o}{c}}{std::bad\_alloc}. State the difference between a frame scratch lifetime and staging memory still held by an asynchronous GPU operation; neither the presence of PMR nor a move-only vector resolves the missing completion fence.
+
+\textbf{Finally build an actual module graph.} In separate files, put a \BookInlineCode{{:}{r}{u}{l}{e}{s}}{:rules} partition containing an exported 1,024-byte preview budget, a primary \BookInlineCode{{e}{x}{p}{o}{r}{t}{\ }{m}{o}{d}{u}{l}{e}{\ }{a}{l}{l}{m}{i}{g}{h}{t}{.}{a}{s}{s}{e}{t}{\_}{q}{u}{e}{r}{y}}{export\ module\ allmight.asset\_query} interface that re-exports that partition, and a \BookInlineCode{{m}{o}{d}{u}{l}{e}{\ }{a}{l}{l}{m}{i}{g}{h}{t}{.}{a}{s}{s}{e}{t}{\_}{q}{u}{e}{r}{y}{;}}{module\ allmight.asset\_query;} implementation unit defining \BookInlineCode{{m}{a}{k}{e}{\_}{p}{r}{e}{v}{i}{e}{w}}{make\_preview}. Compile in dependency order. Write two \emph{separate importing translation units} that use an exported inline function, link them with the implementation, and explain which declarations are exported and why that is distinct from C++ namespace naming or C language linkage. Build \BookInlineCode{{a}{s}{s}{e}{t}{\_}{q}{u}{e}{r}{y}{\_}{i}{n}{t}{e}{r}{o}{p}{.}{h}{p}{p}}{asset\_query\_interop.hpp} as a header unit before using \BookInlineCode{{i}{m}{p}{o}{r}{t}{\ }{"}{a}{s}{s}{e}{t}{\_}{q}{u}{e}{r}{y}{\_}{i}{n}{t}{e}{r}{o}{p}{.}{h}{p}{p}{"}{;}}{import\ "asset\_query\_interop.hpp";}; compare this with an ordinary \BookInlineCode{{\#}{i}{n}{c}{l}{u}{d}{e}}{\#include} and explain macro/toolchain implications. Then expose a small versioned C header declaring \BookInlineCode{{i}{n}{t}{\ }{a}{l}{l}{m}{i}{g}{h}{t}{\_}{a}{s}{s}{e}{t}{\_}{a}{p}{p}{r}{o}{v}{e}{d}{\_}{v}{1}{(}{u}{i}{n}{t}{6}{4}{\_}{t}{)}}{int\ allmight\_asset\_approved\_v1(uint64\_t)}; build a C11 consumer using \BookInlineCode{{g}{c}{c}}{gcc} and link it with the C++ wrapper and module objects. Explain exactly what this test establishes about the chosen GCC14 toolchain, and why it does not certify ABI stability across unrelated compilers or plugin versions.
+
+The real sources are \hyperref[source-file-a1c76c44bc377537c732f5c4]{the tested C++20 CPU lab} and \hyperref[source-file-e1b7c3e4f52da0e7c9c36a41]{the executable module graph script}. The local runtime lab passed GCC14 ASan/UBSan, Clang17 and GCC14 release; the module graph passed GCC14's ordered module/header-unit build with three linked consumers. The original \hyperref[appendix-fd090d982a15-m017-parts-271290-lazy-asset-queries-allocation-lifetimes-and-compiled-api-boundaries]{twenty-title coverage map} and \hyperref[appendix-a103e7846d21-phase-7-additive-reconstruction-m017-parts-271290]{verification ledger} distinguish that evidence from external Kairo audits and unmeasured performance. Personal mastery is earned only after independent explanation, tests and failure-case reconstruction; the authored lesson and one passing lab cannot grant it automatically.
+
+\subsection{Preserve an asset while the engine changes --- M018 reconstruction}\label{appendix-960160274237-preserve-an-asset-while-the-engine-changes-m018-reconstruction}
+
+\hypertarget{appendix-960160274237-preserve-an-asset-while-the-engine-changes-m018-reconstruction}{}
+
+The editor selected a teapot before the asset service started deleting, reallocating and reusing storage. The renderer has independently compiled clients, several classes of resource handles and mathematical values from different coordinate frames. Reconstruct the API by starting with the event, \textbf{not} with a memorized list of PIMPL, concepts and expression templates. The complete reasoning lives in \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=01-foundations-i-ch007-a-registry-crosses-its-last-c-boundary-hidden-implementation-typed-identity-and-measured-abstraction-cost}{the M018 continuous chapter (Bits, Programs, and Reliable Systems, Part 3, Ch. 7)}. The actually compiled service and its test program are in \hyperref[source-file-8aedc3fdcd10c91971507448]{the test laboratory} and \hyperref[source-file-c936569afa19be638ec87991]{the multi-TU build}.
+
+\textbf{Reconstruction 1 --- identity, storage, and ABI.} A mesh occupies slot zero in catalog A at generation one, and the client retains a handle. The vector reallocates, the mesh is erased, and a second mesh occupies the same slot. Explain precisely why a pointer might become invalid on reallocation, why a stale index could identify the wrong mesh, why a generation alone does not distinguish two separate catalogs, and why a MeshTag prevents a texture handle being silently passed to a mesh operation. The correct handle is a value containing a type-level kind and catalog/slot/generation runtime identity. A valid lookup compares all required fields and checks that the slot still holds a live value. After erase, the old generation must fail even when the slot is reused. The returned optional MeshInfo is a copy, so keeping it after erase cannot dangle, although its description is now stale. Confirm with the executable's delete/reuse and cross-catalog tests.
+
+\textbf{Reconstruction 2 --- the public header is not the implementation.} Write a declaration of an asset service that contains only an incomplete Impl and a unique pointer to that implementation. Explain why the destructor and move assignment must be defined where Impl is complete. Identify which client recompilations PIMPL can avoid and which ABI questions remain. Then identify the \emph{actual costs}: one implementation allocation in the constructed design, pointer indirection and possible out-of-line call overhead. PIMPL is appropriate for a relatively cold service boundary, not automatically for every inner-loop vector, task or splat. Name the deep-const hazard: an owning pointer stored in a const public object does not in itself make the pointee immutable.
+
+\textbf{Reconstruction 3 --- three floats are not automatically the same mathematical value.} Demonstrate why a world-space displacement and a camera-space displacement must be different C++ types, while also explaining the actual linear or affine transform that converts between them. Show why a point requires translation but a direction does not, why a normal may require inverse-transpose transformation, and why a quantity in meters cannot simply be added to a quantity in seconds. The phantom marker constrains type checking without adding a stored tag field; the underlying numeric representation does not perform a coordinate transform. Compare a fixed-size Vector\textless float,3,WorldSpace\textgreater{} with a runtime span requiring an explicit extent check. Explain why the supplied RealScalar concept intentionally rejects integers and user-defined autodiff scalars.
+
+\textbf{Reconstruction 4 --- materialization is both a performance and a lifetime decision.} Trace eager a+b+c.~Then trace a SumExpr storing references and evaluating operator\BookInlineCode{{{[}}{{]}}{(}{i}{)}}{{[}{]}(i)} on demand. Construct the dangerous saved outer expression that refers to a destroyed temporary inner node, and explain why its later evaluation is undefined behavior. Rewrite the example so the inner expression outlives evaluation. Explain how aliasing, SIMD, floating-point reassociation and compiler optimization affect the claim that lazy evaluation must be faster. The tested vectors produce (12,15,18); matching output is necessary but cannot alone establish absence of hidden allocations or the safety of every expression tree.
+
+\textbf{Reconstruction 5 --- own storage or embed links?} Compare an intrusive task stack, where the task contains its next pointer and must outlive its membership, against a forward\_list owning its elements. Show what breaks when a linked Task is destroyed, moved or inserted twice. The tested stack rejects duplicate membership and unlinks on pop. That is not a safe general-purpose ownership scheme for arbitrary user destruction. Predict how allocation, locality and mutation patterns could make either representation preferable.
+
+\textbf{Reconstruction 6 --- interrogate the machine rather than assuming zero cost.} Compile the assembly probe with optimized GCC and Clang. Find the named externally visible function. Decide whether the templated addition was inlined and whether there are calls or unnecessary transfers \emph{on that compiler/target}. Explain why a different ISA, link-time optimization, compiler flags or fast-math setting can produce different machine code and numerical results. State a fair baseline and define actual comparable workloads before declaring one catalog representation faster. A successful presence check for an assembly symbol is a build witness, not a timing benchmark.
+
+\textbf{Final synthesis.} Draw the lifetime sequence from editor selection to catalog erase and eventual GPU retirement. Distinguish three independently necessary guarantees: the CPU logical handle remains validated, the public C++ representation remains insulated as promised, and a GPU resource stays alive while submitted work may still read it. The M018 sample tests the first two in a limited CPU setting and does \textbf{not} implement the third. Compile under release -DNDEBUG and explain why the test program uses throwing checks instead of ordinary asserts. Then independently implement an asset handle with one additional version or session policy, state its invariants and design negative tests that could falsify those invariants.
+
+\textbf{Mastery criterion:} without looking up the code, reconstruct the public header, its out-of-line implementation, the validation predicate, an exception-safe reuse transition, a typed fixed/dynamic math interface, a lifetime-safe lazy expression evaluation, and a falsifiable compiler-cost experiment. Reading the answers is not evidence of independent reconstruction.
+
+\subsection{Make the rejected operation part of the lesson}\label{appendix-960160274237-make-the-rejected-operation-part-of-the-lesson}
+
+\hypertarget{appendix-960160274237-make-the-rejected-operation-part-of-the-lesson}{}
+
+\BookDiagramPanel{../current/Assets/Print/178dcbcccc461f21165c83fdae72d55e5d07769ff299448dacfe637f52fe5078.pdf}
+
+\textbf{Read the figure:} type checks decide whether the operation has the right meaning; lifetime checks decide whether its borrowed objects still exist. Both must hold. A successful type check does not extend an operand's lifetime.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Full explanation
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Two vector types differ; is mixing prevented? & Test the actual eager, lazy and materialization operations. Every path needs the same scalar/space/extent restrictions. & {[}{[}Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#The delayed path must preserve the same mathematical contract \\
+Does a named inner expression become constexpr? & Naming extends this node's usable lifetime; it does not make references to automatic locals valid in that constexpr initializer. The saved lab uses const. & {[}{[}Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Expression templates: delaying evaluation can remove an intermediate and create a lifetime bug \\
+Why forbid copying this intrusive stack? & Two head pointers can share hooks; popping one clears membership while the other still points at that node. & {[}{[}Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Intrusive storage exposes a different ownership contract \\
+Who survives stack destruction? & Caller-owned linked tasks must survive at stable addresses; the destructor clears hooks without deleting tasks. & {[}{[}tools/m018/m018\_lab.cpp \\
+\end{longtable}
+}
+
+\textbf{Reconstruct:} predict the sequence A.push(task), copy A to B, B.pop(), A.push(task). Explain the duplicate-pop failure in the unchecked design and why the current stack rejects copying before execution. Then draw task/stack destruction order and show a valid unlink-and-reuse sequence.
+
+\subsection{GPU interfaces and cooperation --- shortest useful recall}\label{appendix-960160274237-gpu-interfaces-and-cooperation-shortest-useful-recall}
+
+\hypertarget{appendix-960160274237-gpu-interfaces-and-cooperation-shortest-useful-recall}{}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Recall answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Expand immediately
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Size, alignment, stride? & Payload extent, legal start addresses, distance between elements. A 12-byte \BookInlineCode{{v}{e}{c}{3}}{vec3} can require 16-byte start alignment. & {[}{[}Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Make a shader record an explicit binary contract \\
+Is a texture-table index ownership? & No.~Keep its referenced generation and allocation alive through pending uses. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Let a renderer evolve without losing resource ownership \\
+Workgroup versus subgroup? & Workgroups cooperate with shared storage and barriers; subgroups expose a smaller execution collective. Width is not universally 32. & {[}{[}Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Let many invocations cooperate without inventing a global clock \\
+What does scan allocate? & Nonoverlapping output ranges: counts \((2,0,3,1)\) become offsets \((0,2,2,5)\). & {[}{[}Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Scan turns local counts into nonoverlapping output regions \\
+Atomic, ordering, barrier? & Protect an operation; govern visibility/order; rendezvous with specified memory effects. These are different contracts. & {[}{[}Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Scan turns local counts into nonoverlapping output regions \\
+Can out-of-range lanes return before a required group barrier? & Generally no. Supply neutral values while preserving the barrier participation contract. & {[}{[}Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Scan turns local counts into nonoverlapping output regions \\
+\end{longtable}
+}
+
+Explain the two barriers in tiled matrix multiplication: one protects complete tile loading; one protects reuse after every consumer finishes. Explain why a later dispatch still needs the API's execution and memory dependency, rather than assuming a dispatch boundary flushes everything.
+
+\subsection{API resource stages}\label{appendix-960160274237-api-resource-stages}
+
+\hypertarget{appendix-960160274237-api-resource-stages}{}
+
+A name, initialized API object, allocated storage, initialized bytes and completed use are different states. glCreateBuffers establishes the object; a storage command establishes capacity; null initial data does not mean zero-filled bytes. \href{../06-GPU-Architecture-and-Real-Time-Rendering-P01/main.pdf\#nameddest=01-foundations-i-ch008-a-buffer-name-an-api-object-and-its-storage-are-separate}{Open the worked API distinction (GPU Architecture and Real-Time Rendering, Part 1, Ch. 1)}. A nonzero integer alone proves neither a safe draw range nor safe retirement.
+
+\subsection{Temporary objects --- retrieve the lifetime boundary}\label{appendix-960160274237-temporary-objects-retrieve-the-lifetime-boundary}
+
+\hypertarget{appendix-960160274237-temporary-objects-retrieve-the-lifetime-boundary}{}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Full commented witness
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Does every reference extend a temporary's lifetime? & No.~The binding context matters; a borrowed view never owns its source. & {[}{[}Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Turn the lifetime rule into a scope trace \\
+\end{longtable}
+}

@@ -1,0 +1,60 @@
+\hypertarget{appendix-2c2df8345991}{}\label{referencestart:appendix-2c2df8345991}
+\section{Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt}\label{appendix-2c2df8345991-nonlinear-least-squares-gauss-newton-and-levenberg-marquardt}
+
+\hypertarget{appendix-2c2df8345991-nonlinear-least-squares-gauss-newton-and-levenberg-marquardt}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 9 · \textbf{Latest development:} Phase 9
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-2c2df8345991-definition-and-mechanism}
+
+\hypertarget{appendix-2c2df8345991-definition-and-mechanism}{}
+
+Nonlinear least squares minimizes one half the squared norm of a residual vector. Its gradient and Hessian involve the residual Jacobian; the exact Hessian also contains second derivatives of each residual. Gauss--Newton drops those latter terms, producing a positive-semidefinite normal matrix and an efficient local step when residuals are small or the model is close to linear. Levenberg--Marquardt adds damping to control ill-conditioned or overly aggressive steps, blending Gauss--Newton with gradient descent. These algorithms are useful for camera calibration, bundle adjustment, and geometric fitting. Residual scaling, parameter units, rank deficiency, and gauge freedoms influence the solution. Normal equations can square the condition number, so QR or other structured solves may be safer. A small residual does not prove parameters are identifiable or physically correct.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-2c2df8345991-prerequisites}
+
+\hypertarget{appendix-2c2df8345991-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-d8a7ddb675eb]{Jacobians, pushforwards, and pullbacks}
+\item
+  \hyperref[appendix-6ac071f8b50c]{Hessians and local curvature}
+\item
+  \hyperref[appendix-50d2ea3c9b26]{Symmetric positive-definite matrices and Cholesky}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-29f4bea4c2bb}{Constrained optimization and inverse kinematics (Light Transport and Image Synthesis, Reference notes: Constrained optimization and inverse kinematics)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-2c2df8345991-used-by}
+
+\hypertarget{appendix-2c2df8345991-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  This node is a current endpoint in the supplied Phase 9--10 path.
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-2c2df8345991-full-teaching-explanation}
+
+\hypertarget{appendix-2c2df8345991-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch026-optimization-and-inverse-problems}{Phase 9 teaching section (Mathematics for Visual Computing, Ch. 10)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-adf48f5dc5c1}{Visual Recall/09 - Calculus and Optimization - Visual Recall.md (Bits, Programs, and Reliable Systems, Reference notes: 09 - Calculus and Optimization - Visual Recall)} · visual recall
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-2c2df8345991-source-coverage}
+
+\hypertarget{appendix-2c2df8345991-source-coverage}{}
+
+Supplied lesson parts: 877 (T02 · M053), 878 (T02 · M053), 879 (T02 · M053), 880 (T02 · M053).

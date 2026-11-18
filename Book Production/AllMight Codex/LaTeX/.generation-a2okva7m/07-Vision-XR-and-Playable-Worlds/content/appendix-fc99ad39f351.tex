@@ -1,0 +1,48 @@
+\hypertarget{appendix-fc99ad39f351}{}\label{referencestart:appendix-fc99ad39f351}
+\section{Omnidirectional camera projections}\label{appendix-fc99ad39f351-omnidirectional-camera-projections}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 11 · \textbf{Latest development:} Phase 11
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-fc99ad39f351-definition-and-mechanism}
+
+Cubemaps, equirectangular panoramas, and fisheye lenses map unit directions onto different image domains. A cubemap selects one of six faces and projects two direction components; equirectangular coordinates map longitude and latitude to a rectangle; fisheye mappings use a radial function of angular distance. These parameterizations are not equal-area: uniform pixel sampling does not imply uniform solid-angle sampling. Choose the mapping that matches capture or rendering needs, define face orientation and seam rules, and measure reconstruction with angular error between unit vectors. Fisheye formulas also differ (equidistant, equisolid, orthographic, stereographic), so name the model before interpreting pixels. At the poles, longitude is undefined, so seam and pole handling need explicit sampling rules.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-fc99ad39f351-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-7d356c396d1a]{Visual angle and calibrated rays}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-3ee9861904d5}{Camera calibration and bundle adjustment (Light Transport and Image Synthesis, Reference notes: Camera calibration and bundle adjustment)}
+\item
+  \hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-fc99ad39f351-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  No downstream concept node is added in this stage.
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-fc99ad39f351-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch035-represent-directions-over-the-full-sphere}{Represent directions over the full sphere (Geometry, Cameras, and Image Formation, Ch. 4)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-fc99ad39f351-source-coverage}
+
+Supplied lesson parts: 1089--1091.
+
+\subsection{Future keywords}\label{appendix-fc99ad39f351-future-keywords}
+
+cubemap seams, equirectangular map, fisheye model

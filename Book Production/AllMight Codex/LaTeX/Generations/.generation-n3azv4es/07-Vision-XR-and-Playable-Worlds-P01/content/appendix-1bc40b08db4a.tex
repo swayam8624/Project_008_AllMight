@@ -1,0 +1,62 @@
+\hypertarget{appendix-1bc40b08db4a}{}\label{referencestart:appendix-1bc40b08db4a}
+\section{Hardware depth-buffer linearization}\label{appendix-1bc40b08db4a-hardware-depth-buffer-linearization}
+
+\hypertarget{appendix-1bc40b08db4a-hardware-depth-buffer-linearization}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 11 · \textbf{Latest development:} Phase 11
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-1bc40b08db4a-definition-and-mechanism}
+
+\hypertarget{appendix-1bc40b08db4a-definition-and-mechanism}{}
+
+Perspective projection maps axial distance nonlinearly into NDC depth. For a declared projection depth row \(q=-A+B/d\), solve \(d=B/(q+A)\); finite conventional, finite reversed, infinite reversed, and OpenGL-style conventions have different coefficients or NDC conversions. The depth sample must first be interpreted in the same range and direction used by the projection matrix. This is why a single generic formula without an API and projection contract is unsafe. Verify near and far endpoints, test round trips over a range of distances, and handle an infinite-far endpoint such as reversed depth \(q=0\) explicitly. Near/far endpoint checks catch sign mistakes immediately; interior round trips then test scaling and finite precision.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-1bc40b08db4a-prerequisites}
+
+\hypertarget{appendix-1bc40b08db4a-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#appendix-1c07d64f5e70}{Camera view and clip-space pipeline (Light Transport and Image Synthesis, Part 1, Reference notes: Camera view and clip-space pipeline)}
+\item
+  \hyperref[appendix-cac01ebeeb11]{Axial depth and Euclidean range}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#appendix-97578ed97952}{Depth buffering and visibility order (Light Transport and Image Synthesis, Part 1, Reference notes: Depth buffering and visibility order)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-1bc40b08db4a-used-by}
+
+\hypertarget{appendix-1bc40b08db4a-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-2cbf2968e866]{Position reconstruction from depth}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-1bc40b08db4a-full-teaching-explanation}
+
+\hypertarget{appendix-1bc40b08db4a-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#02-foundations-ii-ch035-recover-geometry-from-depth-and-construct-screen-space-rays}{Recover geometry from depth and construct screen-space rays (Geometry, Cameras, and Image Formation, Part 1, Ch. 4)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-1bc40b08db4a-source-coverage}
+
+\hypertarget{appendix-1bc40b08db4a-source-coverage}{}
+
+Supplied lesson parts: 1079.
+
+\subsection{Future keywords}\label{appendix-1bc40b08db4a-future-keywords}
+
+\hypertarget{appendix-1bc40b08db4a-future-keywords}{}
+
+standard depth, reversed-Z, infinite far plane

@@ -1,0 +1,64 @@
+\hypertarget{appendix-aa2bf0d79639}{}\label{referencestart:appendix-aa2bf0d79639}
+\section{Algorithmic stability}\label{appendix-aa2bf0d79639-algorithmic-stability}
+
+\hypertarget{appendix-aa2bf0d79639-algorithmic-stability}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-aa2bf0d79639-definition-and-mechanism}
+
+\hypertarget{appendix-aa2bf0d79639-definition-and-mechanism}{}
+
+A numerical problem can be sensitive even when an algorithm handles it well. Stability describes whether the finite-precision algorithm introduces only the error expected from rounding, often by showing that its output exactly solves a nearby problem. Backward stability is one useful form; forward stability asks directly how close the computed answer is to the exact answer for the original input. The claim must name its assumptions, arithmetic model, and problem class. For example, a stable linear solver can still have a large forward error on an ill-conditioned matrix. Stability therefore belongs beside conditioning, not in its place. A dot product with a small residual can still conceal an ill-conditioned problem, so report which notion of stability is actually supported.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-aa2bf0d79639-prerequisites}
+
+\hypertarget{appendix-aa2bf0d79639-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#nameddest=appendix-a7fbaf6d1b1c}{Forward and backward error (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Forward and backward error)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#nameddest=appendix-8f6a01f284a7}{Conditioning and singularity (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Conditioning and singularity)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-aa2bf0d79639-used-by}
+
+\hypertarget{appendix-aa2bf0d79639-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-b9afba7f63e5]{Stable quadratic root evaluation}
+\item
+  \hyperref[appendix-f63eb850796d]{Bracketed and open root solvers}
+\item
+  \hyperref[appendix-31b8c295e05f]{Numerical error budgets}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-aa2bf0d79639-full-teaching-explanation}
+
+\hypertarget{appendix-aa2bf0d79639-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#nameddest=02-foundations-ii-ch028-floating-point-answers-error-conditioning-stability-and-stable-arithmetic}{Floating-point answers: error, conditioning, stability, and stable arithmetic (Mathematics for Visual Computing, Part 2, Ch. 12)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-aa2bf0d79639-source-coverage}
+
+\hypertarget{appendix-aa2bf0d79639-source-coverage}{}
+
+Supplied lesson parts: 966--975.
+
+\subsection{Future keywords}\label{appendix-aa2bf0d79639-future-keywords}
+
+\hypertarget{appendix-aa2bf0d79639-future-keywords}{}
+
+backward stability, mixed stability, componentwise stability

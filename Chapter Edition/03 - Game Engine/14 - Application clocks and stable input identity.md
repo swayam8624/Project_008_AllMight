@@ -8,7 +8,7 @@ Input and timing must agree on which state transition belongs to which simulatio
 
 **Recall question:** How do you measure a frame without confusing it with a simulation tick, and what data lets an input be replayed at the correct tick?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 24925–26786; source-span SHA256 24b9b0f0f8f5149af61d211cb836157cd24fab0273a4c7d80590eb3a8c65182a. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 25443–27304; source-span SHA256 24b9b0f0f8f5149af61d211cb836157cd24fab0273a4c7d80590eb3a8c65182a. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Keep application key names independent of a windowing library

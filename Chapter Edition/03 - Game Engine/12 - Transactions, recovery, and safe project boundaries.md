@@ -8,7 +8,7 @@ Interactive tools need edits that can be undone and projects that can be reopene
 
 **Recall question:** Which state is authoritative before and after a failed save, and how does the system prove that the published project is complete?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 20056–24191; source-span SHA256 20157c1d83676d7f803a28e9d2f441eb5d630a317cfd607ae1734913dddc41fb. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 20420–24709; source-span SHA256 92d825554ec3ec68c9a64a4357481a4f61ed46201d275c8ccef881791b1ca3f8. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### UNDO, TRANSACTIONS, RECOVERY, PROJECT BOUNDARIES, PATH SECURITY, PACKAGING AND ATOMIC PUBLICATION
@@ -3441,6 +3441,160 @@ And the Kairo-specific architecture is already substantially aligned with that m
 The biggest remaining upgrades from this pass are not conceptual rewrites. They are production hardening: **runtime-checked reflected object/type pairing, reflection serialization-policy flags and schema aliases, automatic recovery scheduling, stronger fsync-level durability where required, and dependency-closure/platform-cooked runtime packages.**
 
 **Pass 15 is M095 + M096, Parts 1583–1600.** It closes Phase 16 with **CMake's target model; PUBLIC/PRIVATE/INTERFACE dependency propagation; imported/alias targets; presets; Ninja's build DAG; compiler toolchains; Clang/MSVC portability; C++ modules across targets; Git submodule pinning; reproducible superbuilds; CI matrices; unit/integration/smoke testing; crash reporting; structured logs/profiling hooks; portable subsystem boundaries; and finally drawing the full ownership/data flow from source asset → editor → package → player → runtime subsystem.**
+
+<!-- Book-completion teaching addition 1a6abe03521a3636 -->
+
+### Imported targets describe external artifacts; aliases provide a stable name
+
+A CMake target is a named node in the build graph, with properties describing its sources, output and usage requirements. An **imported target** describes an artifact built outside this CMake build. It creates no compile/archive rule for that artifact, but consumers can still inherit its declared include paths, definitions and link requirements. An **alias** gives the same target another name. It does not copy properties or create a wrapper library; later changes to the real target remain visible through the alias.
+
+This exercise uses CMake 3.18's documented behavior. A non-GLOBAL imported target is visible in its declaring directory and descendants. CMake 3.18 permits an alias of that imported target, with matching directory visibility. An alias cannot itself be aliased, installed or exported, and cannot be the target whose properties are modified. Modify the real target; there is no requirement that all such modifications precede creation of the alias.
+
+#### A complete project with an externally produced archive
+
+Create the files below under `tools/labs/cmake_imported_alias/`, or use the saved copy in the vault. The vendor source is included solely so this exercise can produce its own stand-in archive before CMake runs. The CMake build then treats that archive exactly as an outside artifact: it builds only the consumer. No package download or third-party library is required.
+
+**CMakeLists.txt**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/CMakeLists.txt -->
+```cmake
+# This minimum selects the documented imported-alias directory-scope behavior.
+cmake_minimum_required(VERSION 3.18)
+# Enable and identify the host C++ toolchain. No dependency is downloaded.
+project(ImportedAliasExample LANGUAGES CXX)
+
+if(NOT DEFINED VENDOR_MATH_LIBRARY OR NOT EXISTS "${VENDOR_MATH_LIBRARY}")
+  message(FATAL_ERROR "Set VENDOR_MATH_LIBRARY to the prebuilt vendor_math archive")
+endif()
+
+# The target is a build-graph description of a file produced elsewhere.
+# It contributes no compile or archive rule of its own.
+add_subdirectory(deps)
+add_subdirectory(scope_probe)
+```
+
+**deps/CMakeLists.txt**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/CMakeLists.txt -->
+```cmake
+# STATIC describes the external archive; IMPORTED means CMake will not build it.
+add_library(Vendor::Math STATIC IMPORTED)
+set_target_properties(Vendor::Math PROPERTIES
+  IMPORTED_LOCATION "${VENDOR_MATH_LIBRARY}"
+  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/include"
+  INTERFACE_COMPILE_DEFINITIONS "VENDOR_MATH_IMPORTED=1"
+)
+
+# Alias supplies this project with a stable name. It remains the same target.
+add_library(Project::Math ALIAS Vendor::Math)
+# An alias does not copy properties. Later changes to Vendor::Math are
+# observed through Project::Math too; modify the real target, not the alias.
+
+# Both imported target and its alias are visible in this child directory.
+add_subdirectory(consumer)
+```
+
+**deps/include/vendor_math.hpp**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/include/vendor_math.hpp -->
+```cpp
+#pragma once
+namespace vendor { int forty_two(); }
+```
+
+**deps/vendor_math.cpp**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/vendor_math.cpp -->
+```cpp
+#include "vendor_math.hpp"
+namespace vendor { int forty_two() { return 42; } }
+```
+
+**deps/consumer/CMakeLists.txt**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/consumer/CMakeLists.txt -->
+```cmake
+if(NOT TARGET Vendor::Math OR NOT TARGET Project::Math)
+  message(FATAL_ERROR "Imported target and alias must be visible below deps/")
+endif()
+add_executable(imported_consumer main.cpp)
+# Linking the alias carries its location and include/definition usage requirements.
+target_link_libraries(imported_consumer PRIVATE Project::Math)
+```
+
+**deps/consumer/main.cpp**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/consumer/main.cpp -->
+```cpp
+#include <vendor_math.hpp>
+int main() {
+  // This compile-time check proves INTERFACE_COMPILE_DEFINITIONS propagated.
+#ifndef VENDOR_MATH_IMPORTED
+#error expected imported target usage requirement
+#endif
+  return vendor::forty_two() == 42 ? 0 : 1;
+}
+```
+
+**scope_probe/CMakeLists.txt**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/scope_probe/CMakeLists.txt -->
+```cmake
+# The imported target was not GLOBAL; sibling directories cannot see it.
+if(TARGET Vendor::Math OR TARGET Project::Math)
+  message(FATAL_ERROR "non-GLOBAL imported target leaked outside deps/")
+endif()
+message(STATUS "PASS: non-GLOBAL imported target and alias are directory-scoped")
+```
+
+**negative/CMakeLists.txt**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/negative/CMakeLists.txt -->
+```cmake
+cmake_minimum_required(VERSION 3.18)
+project(ExpectedFailure LANGUAGES CXX)
+add_executable(missing_target main.cpp)
+target_link_libraries(missing_target PRIVATE Missing::Target)
+```
+
+**negative/main.cpp**
+
+<!-- exact-source: tools/labs/cmake_imported_alias/negative/main.cpp -->
+```cpp
+int main() { return 0; }
+```
+
+#### Read the dependency graph, then run it
+
+The imported name and alias are declared in `deps/`. Its consumer is a descendant, so both names resolve there. The root's `scope_probe/` is a sibling, so neither non-GLOBAL name resolves there. Linking `Project::Math` carries the archive location, header directory and `VENDOR_MATH_IMPORTED` definition. The consumer never receives a hand-written include flag or macro outside the target interface, and its compile-time check fails if that interface is lost.
+
+For independent siblings that need the dependency, declare it in their common parent, intentionally use an imported GLOBAL target, or consume a package configuration that defines the target in the required scope. An alias created where the real target is invisible does not repair visibility. The `::` name is also useful: an unresolved namespaced dependency raises a configure/generate error instead of being treated as an ordinary raw linker name.
+
+From the example's directory, produce the archive outside the CMake graph and build the consumer. These shell comments explain which owner performs each step:
+
+```sh
+# The host compiler and archiver act as the external vendor for this small demo.
+c++ -std=c++11 -Ideps/include -c deps/vendor_math.cpp -o /tmp/vendor_math.o
+ar rcs /tmp/libvendor_math.a /tmp/vendor_math.o
+
+# IMPORTED_LOCATION receives an absolute path to that already-existing archive.
+cmake -S . -B /tmp/imported-alias-build -DVENDOR_MATH_LIBRARY=/tmp/libvendor_math.a
+cmake --build /tmp/imported-alias-build
+/tmp/imported-alias-build/deps/consumer/imported_consumer
+
+# This independent negative project must fail for Missing::Target, not a compiler error.
+cmake -S negative -B /tmp/imported-alias-negative
+```
+
+**Worked solution and expected results.** The positive project reports that the imported target and alias are directory-scoped, compiles the consumer with its inherited header path and definition, links the prebuilt archive, and returns zero. The negative project fails during configuration/generation because `Missing::Target` is not defined. A nonzero return alone is insufficient evidence: inspect the diagnostic to confirm the intended failure. If the positive consumer cannot find the header, inspect `INTERFACE_INCLUDE_DIRECTORIES`; if its macro check fails, inspect `INTERFACE_COMPILE_DEFINITIONS`; if linking fails, verify the archive's absolute path, architecture and symbol definition.
+
+The solution to making the target visible to a sibling is a scope change at the shared dependency declaration, not a duplicate archive or an alias of an invisible target. If a dependency's requirements are wrong, update the real imported target; the alias remains another spelling of it.
+
+A static archive uses `IMPORTED_LOCATION`. A Windows shared-library package may need both `IMPORTED_IMPLIB` for the link-time import library and `IMPORTED_LOCATION` for the runtime DLL. A header-only imported INTERFACE target has no compiled artifact. Multiple configurations may require configuration-specific locations. Those are distinct package contracts; this static host example does not test every platform layout.
+
+Source policy: the [CMake 3.18 add_library reference](https://cmake.org/cmake/help/v3.18/command/add_library.html), [target_link_libraries](https://cmake.org/cmake/help/v3.18/command/target_link_libraries.html), and [IMPORTED_LOCATION](https://cmake.org/cmake/help/v3.18/prop_tgt/IMPORTED_LOCATION.html) define the behavior used here. The completed lab verifies this one project under the recorded installed toolchain, not every CMake generator or vendor SDK.
+
+
 
 
 **Complete source→editor→runtime data and ownership flow**

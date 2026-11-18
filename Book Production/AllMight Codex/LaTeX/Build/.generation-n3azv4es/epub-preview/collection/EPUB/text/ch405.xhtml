@@ -1,0 +1,5964 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch405.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_06-engine-ii-ch036-auditing-capsule-mass-properties-and-collision-formulas" class="level2">
+<h2>Auditing capsule mass properties and collision formulas</h2>
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch404.xhtml#id_06-engine-ii-ch035-a-complete-rigid-body-state-before-the-formula-audit" class="wikilink">Previous chapter</a> · <a href="ch406.xhtml#id_06-engine-ii-ch037-physical-examples-and-state-validation" class="wikilink">Next chapter</a></p>
+<p>A working formula can still fail because its units, shape assumptions, or contact conventions were copied incorrectly. This chapter audits capsule geometry and related cases to expose those assumptions.</p>
+<p><strong>By the end:</strong> Check capsule mass and inertia formulas dimensionally and geometrically before treating them as an engine implementation.</p>
+<p><strong>Recall question:</strong> Which limiting shape or numeric witness would falsify this formula, and what independent computation would confirm the correction?</p>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 86301–89809; source-span SHA256 c919cfa2491225331b695fc68fec261840abaae8c638c5bfbfc9458580125701. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_06-engine-ii-ch036-kairo-audit-4-capsule-formula" class="level4">
+<h4>KAIRO AUDIT 4 — CAPSULE FORMULA</h4>
+<p>Current formula is deliberately approximate.</p>
+<p>That is fine for a game-engine V1.</p>
+<p>What matters is that you understand the hierarchy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>sphere/box formulas</mtext>
+</math>
+<p>are exact analytic formulas under their assumptions.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>current capsule formula</mtext>
+</math>
+<p>is an engineering approximation.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>compound arbitrary shape</mtext>
+</math>
+<p>requires actual mass integration or carefully combined primitives.</p>
+<p>Never flatten those into “all are exact.”</p>
+<hr />
+<p><strong>Dimensional sanity checking</strong></p>
+<p>You should become obsessive about units.</p>
+<p>Mass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>m</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>k</mi>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>Position:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>x</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>m</mi>
+  <mo>.</mo>
+</math>
+<p>Velocity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>v</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>m</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Acceleration:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>a</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>m</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Force:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>F</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>k</mi>
+  <mi>g</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>m</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Torque:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>τ</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>k</mi>
+  <mi>g</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <msup>
+    <mi>m</mi>
+    <mn>2</mn>
+  </msup>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Moment of inertia:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>I</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>k</mi>
+  <mi>g</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <msup>
+    <mi>m</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Angular velocity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>ω</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>s</mi>
+</math>
+<p>because radians are dimensionless.</p>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>ω</mi>
+</math>
+<p>has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mi>g</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <msup>
+    <mi>m</mi>
+    <mn>2</mn>
+  </msup>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>s</mi>
+  <mo>,</mo>
+</math>
+<p>which is angular momentum.</p>
+<p>And:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi>τ</mi>
+</math>
+<p>has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <mi>k</mi>
+      <mi>g</mi>
+      <mstyle scriptlevel="0">
+        <mspace width="0.167em"></mspace>
+      </mstyle>
+      <msup>
+        <mi>m</mi>
+        <mn>2</mn>
+      </msup>
+    </mrow>
+  </mfrac>
+  <mfrac>
+    <mrow>
+      <mi>k</mi>
+      <mi>g</mi>
+      <mstyle scriptlevel="0">
+        <mspace width="0.167em"></mspace>
+      </mstyle>
+      <msup>
+        <mi>m</mi>
+        <mn>2</mn>
+      </msup>
+    </mrow>
+    <msup>
+      <mi>s</mi>
+      <mn>2</mn>
+    </msup>
+  </mfrac>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>,</mo>
+</math>
+<p>which is angular acceleration.</p>
+<p>If an equation fails dimensions, it is wrong.</p>
+<hr />
+<p><strong>Scaling sanity checks</strong></p>
+<p>Sphere:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mo>∼</mo>
+  <msup>
+    <mi>r</mi>
+    <mn>3</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Sphere inertia:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>∼</mo>
+  <mi>m</mi>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>∼</mo>
+  <msup>
+    <mi>r</mi>
+    <mn>5</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Double radius:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>m</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mn>8</mn>
+  <mi>m</mi>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>I</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mn>8</mn>
+  <mi>m</mi>
+  <mo>⋅</mo>
+  <mn>4</mn>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <mn>32</mn>
+  <mi>I</mi>
+  <mo>.</mo>
+</math>
+<p>So a geometrically doubled sphere at same density has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mn>32</mn>
+          <mo>×</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>the moment of inertia.</p>
+<p>This is a fantastic check for a mass-properties implementation.</p>
+<hr />
+<p><strong>Translation/rotation analogy — but know where it breaks</strong></p>
+<p>You can remember:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo stretchy="false">↔</mo>
+  <mi>τ</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mo stretchy="false">↔</mo>
+  <mi>I</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mo stretchy="false">↔</mo>
+  <mi>ω</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo stretchy="false">↔</mo>
+  <mi>L</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo stretchy="false">↔</mo>
+  <mi>α</mi>
+  <mo>.</mo>
+</math>
+<p>But the rotational side is harder because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+</math>
+<p>is a tensor and rotates with the body.</p>
+<p>That is the source of almost every extra complication.</p>
+<hr />
+<p><strong>A physically coherent force application path</strong></p>
+<p>A robust physics body path can look like:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> RigidBodyState</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// World-space center of mass.</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    Vec3f CenterOfMassPosition <span class="op">=</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        Vec3f<span class="op">::</span>Zero<span class="op">();</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    Quaternionf Orientation <span class="op">=</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        Quaternionf<span class="op">::</span>Identity<span class="op">();</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    Vec3f LinearVelocity <span class="op">=</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        Vec3f<span class="op">::</span>Zero<span class="op">();</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    Vec3f AngularVelocity <span class="op">=</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        Vec3f<span class="op">::</span>Zero<span class="op">();</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> RigidBodyMass</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Mass <span class="op">=</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> InverseMass <span class="op">=</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">;</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Inertia about COM in the body&#39;s local frame.</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    Matrix3f LocalInertia <span class="op">=</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>        Matrix3f<span class="op">::</span>Zero<span class="op">();</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    Matrix3f LocalInverseInertia <span class="op">=</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>        Matrix3f<span class="op">::</span>Zero<span class="op">();</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> RigidBodyForces</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    Vec3f Force <span class="op">=</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>        Vec3f<span class="op">::</span>Zero<span class="op">();</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    Vec3f Torque <span class="op">=</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>        Vec3f<span class="op">::</span>Zero<span class="op">();</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> AddForceAtWorldPoint<span class="op">(</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    RigidBodyState<span class="op">&amp;</span> state<span class="op">,</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    RigidBodyForces<span class="op">&amp;</span> forces<span class="op">,</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f<span class="op">&amp;</span> force<span class="op">,</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f<span class="op">&amp;</span> worldPoint<span class="op">)</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Continuous force accelerates the center of mass.</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    forces<span class="op">.</span>Force <span class="op">+=</span> force<span class="op">;</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    <span class="co">// The same force produces rotational influence according</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    <span class="co">// to its lever arm from the center of mass.</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f r <span class="op">=</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>        worldPoint <span class="op">-</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>        state<span class="op">.</span>CenterOfMassPosition<span class="op">;</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    forces<span class="op">.</span>Torque <span class="op">+=</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>        Cross<span class="op">(</span>r<span class="op">,</span> force<span class="op">);</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This representation makes the physical origin explicit and prevents the COM/body-origin ambiguity.</p>
+<hr />
+<p><strong>Full force integration with gyroscopic term</strong></p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> IntegrateForces<span class="op">(</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    RigidBodyState<span class="op">&amp;</span> state<span class="op">,</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> RigidBodyMass<span class="op">&amp;</span> mass<span class="op">,</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> RigidBodyForces<span class="op">&amp;</span> forces<span class="op">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f<span class="op">&amp;</span> gravity<span class="op">,</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> dt<span class="op">)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Linear Newton:</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">//</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">// dv/dt = g + F / m</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f linearAcceleration <span class="op">=</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        gravity <span class="op">+</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        forces<span class="op">.</span>Force <span class="op">*</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>            mass<span class="op">.</span>InverseMass<span class="op">;</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    state<span class="op">.</span>LinearVelocity <span class="op">+=</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        linearAcceleration <span class="op">*</span> dt<span class="op">;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Convert body-space inertia to world coordinates.</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Matrix3f R <span class="op">=</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        ToMatrix3<span class="op">(</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>            state<span class="op">.</span>Orientation<span class="op">);</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Matrix3f worldInertia <span class="op">=</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>        R <span class="op">*</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>        mass<span class="op">.</span>LocalInertia <span class="op">*</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>        Transpose<span class="op">(</span>R<span class="op">);</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Matrix3f worldInverseInertia <span class="op">=</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>        R <span class="op">*</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>        mass<span class="op">.</span>LocalInverseInertia <span class="op">*</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>        Transpose<span class="op">(</span>R<span class="op">);</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Full rotational Newton-Euler equation:</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    <span class="co">//</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    <span class="co">// τ = Iα + ω × (Iω)</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f angularMomentum <span class="op">=</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>        worldInertia <span class="op">*</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>        state<span class="op">.</span>AngularVelocity<span class="op">;</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f gyroscopicTorque <span class="op">=</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>        Cross<span class="op">(</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>            state<span class="op">.</span>AngularVelocity<span class="op">,</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>            angularMomentum<span class="op">);</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f angularAcceleration <span class="op">=</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>        worldInverseInertia <span class="op">*</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>        <span class="op">(</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>            forces<span class="op">.</span>Torque <span class="op">-</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>            gyroscopicTorque</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>        <span class="op">);</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>    state<span class="op">.</span>AngularVelocity <span class="op">+=</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>        angularAcceleration <span class="op">*</span> dt<span class="op">;</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>That gives you the full conceptual model.</p>
+<p>Whether a gameplay engine chooses the full gyroscopic term is a separate engineering decision.</p>
+<hr />
+<p><strong>Why many engines omit the gyroscopic term</strong></p>
+<p>The term can create:</p>
+<pre class="text"><code>precession
+wobble
+intermediate-axis instability
+high-spin stiffness.</code></pre>
+<p>Those are physically real.</p>
+<p>But many games prioritize:</p>
+<pre class="text"><code>stability
+predictability
+designer control
+solver robustness</code></pre>
+<p>over exact free rigid-body dynamics.</p>
+<p>So simplifying:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi>τ</mi>
+</math>
+<p>can be intentional.</p>
+<p>For a research-oriented simulator, however, you need to document the approximation.</p>
+<p>That is especially important if experimental conclusions depend on dynamic trajectories.</p>
+<hr />
+<p><strong>Force versus torque accumulator ordering</strong></p>
+<p>Continuous external effects:</p>
+<pre class="text"><code>gravity
+drag
+thrusters
+springs
+motors</code></pre>
+<p>populate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo>,</mo>
+  <mi>τ</mi>
+  <mo>.</mo>
+</math>
+<p>Then velocity integration updates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mo>,</mo>
+  <mi>ω</mi>
+  <mo>.</mo>
+</math>
+<p>Then constraints/collisions can update velocity through impulses.</p>
+<p>Then positions/orientation advance.</p>
+<p>Very roughly:</p>
+<pre class="text"><code>accumulate continuous forces
+        ↓
+integrate v and ω
+        ↓
+collision/constraint solver
+        ↓
+integrate x and q
+        ↓
+clear forces</code></pre>
+<p>Kairo currently follows this broad structure.</p>
+<p>Passes 17/18 will go much deeper into impulses and contact solving.</p>
+<hr />
+<p><strong>A force should usually not directly alter position</strong></p>
+<p>Bad conceptual API:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>AddForce<span class="op">(...)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    position <span class="op">+=</span> force<span class="op">;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Force changes momentum/velocity.</p>
+<p>Then integration changes position.</p>
+<p>The chain is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo stretchy="false">→</mo>
+  <mi>a</mi>
+  <mo stretchy="false">→</mo>
+  <mi>v</mi>
+  <mo stretchy="false">→</mo>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>Similarly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>τ</mi>
+  <mo stretchy="false">→</mo>
+  <mi>α</mi>
+  <mo stretchy="false">→</mo>
+  <mi>ω</mi>
+  <mo stretchy="false">→</mo>
+  <mi>q</mi>
+  <mo>.</mo>
+</math>
+<p>Keeping these stages separate makes simulation understandable.</p>
+<hr />
+<p><strong>COM and collision geometry</strong></p>
+<p>Suppose asymmetric body has local COM:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>l</mi>
+      <mi>o</mi>
+      <mi>c</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>A collider vertex is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>l</mi>
+      <mi>o</mi>
+      <mi>c</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If simulation <code>State.Position</code> is COM, local offset from COM is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>l</mi>
+      <mi>o</mi>
+      <mi>c</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>c</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>l</mi>
+      <mi>o</mi>
+      <mi>c</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1.5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>World vertex:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>M</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>R</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1.5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This is the transformation you need for non-centered mass distributions.</p>
+<p>If you instead transform by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>M</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>R</mi>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>you have implicitly assumed local COM = origin.</p>
+<hr />
+<p><strong>COM and authored transforms</strong></p>
+<p>This often surprises engine developers.</p>
+<p>Artists want:</p>
+<pre class="text"><code>object origin</code></pre>
+<p>where it is convenient for editing.</p>
+<p>Physics wants:</p>
+<pre class="text"><code>center of mass</code></pre>
+<p>because equations are simplest there.</p>
+<p>Those need not be identical.</p>
+<p>So you may need:</p>
+<pre class="text"><code>AuthoringTransform
+        |
+        | + LocalCOM offset
+        v
+PhysicsCOMTransform</code></pre>
+<p>and reverse synchronization after simulation.</p>
+<p>This is not a physics nuisance.</p>
+<p>It is the correct separation of authoring and dynamics coordinate frames.</p>
+<hr />
+<p><strong>Center of mass and torque invariance caveat</strong></p>
+<p>Torque depends on reference point.</p>
+<p>Torque about origin O:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>τ</mi>
+    <mi>O</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Torque about COM C differs by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>τ</mi>
+    <mi>C</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>τ</mi>
+    <mi>O</mi>
+  </msub>
+  <mo>−</mo>
+  <mo stretchy="false">(</mo>
+  <mi>c</mi>
+  <mo>−</mo>
+  <mi>o</mi>
+  <mo stretchy="false">)</mo>
+  <mo>×</mo>
+  <msub>
+    <mi>F</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mi>e</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Therefore when writing:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>τ</mi>
+  <mo>=</mo>
+  <mi>r</mi>
+  <mo>×</mo>
+  <mi>F</mi>
+  <mo>,</mo>
+</math>
+<p>you must know <strong>about which point</strong> torque is being computed.</p>
+<p>Rigid-body rotational equations are cleanest about the COM.</p>
+<p>That is why all contact-force lever arms use:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mo>−</mo>
+  <msub>
+    <mi>c</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>C</mi>
+      <mi>O</mi>
+      <mi>M</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Angular momentum also depends on reference point</strong></p>
+<p>Angular momentum:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>O</mi>
+  </msub>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP">∑</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>−</mo>
+  <mi>O</mi>
+  <mo stretchy="false">)</mo>
+  <mo>×</mo>
+  <msub>
+    <mi>m</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Around COM, translational and rotational momentum separate nicely.</p>
+<p>Total angular momentum about arbitrary origin O can be decomposed:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>L</mi>
+            <mi>O</mi>
+          </msub>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mi>c</mi>
+          <mo>−</mo>
+          <mi>O</mi>
+          <mo stretchy="false">)</mo>
+          <mo>×</mo>
+          <mi>M</mi>
+          <msub>
+            <mi>v</mi>
+            <mi>C</mi>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>L</mi>
+            <mi>C</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is another reason COM is the preferred simulation reference.</p>
+<hr />
+<p><strong>Principal axes are not necessarily geometric bounding-box axes</strong></p>
+<p>For arbitrary mesh:</p>
+<pre class="text"><code>local X/Y/Z</code></pre>
+<p>chosen by artist are not automatically principal inertia axes.</p>
+<p>The true principal axes come from eigenvectors of the inertia tensor.</p>
+<p>For a strangely shaped mesh, they may be rotated relative to model axes.</p>
+<p>If you want a diagonal inertia representation, you may need to compute that eigensystem.</p>
+<hr />
+<p><strong>Convex hull / mesh mass properties</strong></p>
+<p>For arbitrary closed mesh, a production engine can compute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+</math>
+<p>volume,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+</math>
+<p>center of mass,</p>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+</math>
+<p>through tetrahedral decomposition/integration.</p>
+<p>One common method decomposes the closed triangle mesh into signed tetrahedra with a common origin, accumulating volume and polynomial moments.</p>
+<p>That would be the natural future extension beyond sphere/box/capsule primitives.</p>
+<p>Do not approximate arbitrary mesh inertia from its AABB unless you intentionally accept a coarse approximation.</p>
+<hr />
+<p><strong>Static triangle meshes and mass</strong></p>
+<p>Current Kairo only allows triangle-mesh colliders on static bodies.</p>
+<p>That is a sensible restriction.</p>
+<p>Static body has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>m</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>So you do not need robust dynamic triangle-mesh mass properties or rotational response.</p>
+<p>Dynamic concave triangle meshes are expensive and troublesome for both inertia and collision.</p>
+<hr />
+<p><strong>Why inverse inertia should belong to mass properties</strong></p>
+<p>Collision solving repeatedly computes terms like:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mo>×</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Computing matrix inverse during every contact would be wasteful.</p>
+<p>So precompute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>b</mi>
+      <mi>o</mi>
+      <mi>d</mi>
+      <mi>y</mi>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+</math>
+<p>once when mass properties change.</p>
+<p>Then transform into world each step/query:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>I</mi>
+    <mi>w</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>=</mo>
+  <mi>R</mi>
+  <msubsup>
+    <mi>I</mi>
+    <mi>b</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Excellent data-oriented design.</p>
+<hr />
+<p><strong>When mass properties must be recomputed</strong></p>
+<p>If any of these change:</p>
+<pre class="text"><code>shape geometry
+density
+mass override
+compound-child geometry
+compound-child transform
+center of mass
+locked rotation axes</code></pre>
+<p>mass properties become dirty.</p>
+<p>Then recompute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>c</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>I</mi>
+    <mi>b</mi>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msubsup>
+    <mi>I</mi>
+    <mi>b</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>Do not recompute every frame when geometry is unchanged.</p>
+<hr />
+<p><strong>Dynamic mass changes</strong></p>
+<p>Changing mass while body is moving raises semantics.</p>
+<p>If velocity stays fixed while mass changes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>=</mo>
+  <mi>m</mi>
+  <mi>v</mi>
+</math>
+<p>changes instantly.</p>
+<p>If you intend momentum conservation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>m</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>o</mi>
+      <mi>l</mi>
+      <mi>d</mi>
+    </mrow>
+  </msub>
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>o</mi>
+      <mi>l</mi>
+      <mi>d</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>m</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mi>e</mi>
+      <mi>w</mi>
+    </mrow>
+  </msub>
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mi>e</mi>
+      <mi>w</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mi>e</mi>
+      <mi>w</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msub>
+      <mi>m</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi>o</mi>
+        <mi>l</mi>
+        <mi>d</mi>
+      </mrow>
+    </msub>
+    <msub>
+      <mi>m</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi>n</mi>
+        <mi>e</mi>
+        <mi>w</mi>
+      </mrow>
+    </msub>
+  </mfrac>
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>o</mi>
+      <mi>l</mi>
+      <mi>d</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Most game engines simply let designer mass changes alter momentum because mass editing is a gameplay operation.</p>
+<p>But know the physical distinction.</p>
+<hr />
+<p><strong>Force accumulation versus direct gravity in Kairo</strong></p>
+<p>Kairo contains both:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>GravityForce<span class="op">(</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    mass<span class="op">,</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    gravity<span class="op">);</span></span></code></pre></div>
+<p>and the world-level acceleration path.</p>
+<p>That is not contradictory.</p>
+<p><code>GravityForce()</code> is reusable physical math.</p>
+<p><code>PhysicsWorld</code> chooses a more efficient integration convention:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>a</mi>
+    <mi>g</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>The important thing is not to apply both simultaneously or gravity doubles.</p>
+<hr />
+<p><strong>Mass zero edge case</strong></p>
+<p><code>SphereMassProperties(radius, density)</code> permits:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>and inverse mass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.</mn>
+</math>
+<p>The returned mass properties look static.</p>
+<p>But <code>MakeRigidBody()</code> rejects them for dynamic bodies.</p>
+<p>That is a reasonable layered design:</p>
+<pre class="text"><code>math library can represent zero-mass mass properties
+engine body semantics decide whether dynamic zero mass is valid.</code></pre>
+<hr />
+<p><strong>Numerical range considerations</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mo>=</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>30</mn>
+    </mrow>
+  </msup>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>m</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo>=</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>30</mn>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>A modest force can create enormous acceleration.</p>
+<p>Likewise enormous masses produce inverse masses near zero.</p>
+<p>A production engine should define supported physical scales.</p>
+<p>Later M101 explicitly covers unit/scale choices.</p>
+<p>For now remember:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>f</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mtext> </mtext>
+          <mi>f</mi>
+          <mi>l</mi>
+          <mi>o</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mo>≠</mo>
+          <mi>n</mi>
+          <mi>u</mi>
+          <mi>m</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>i</mi>
+          <mi>c</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mi>l</mi>
+          <mi>y</mi>
+          <mtext> </mtext>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>a</mi>
+          <mi>s</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mi>a</mi>
+          <mi>b</mi>
+          <mi>l</mi>
+          <mi>e</mi>
+          <mtext> </mtext>
+          <mi>p</mi>
+          <mi>h</mi>
+          <mi>y</mi>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>c</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mtext> </mtext>
+          <mi>s</mi>
+          <mi>t</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Input validation eventually needs scale policy, not only <code>isfinite()</code>.</p>
+<hr />
+<p><strong>Why Kairo certification tests are useful but incomplete</strong></p>
+<p>Current certification verifies hundreds of sphere configurations remain finite and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <msup>
+    <mi>m</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo>≈</mo>
+  <mn>1.</mn>
+</math>
+<p>Good.</p>
+<p>It tests identity/rotated world inverse inertia.</p>
+<p>Good.</p>
+<p>It tests parallel-axis shift along x.</p>
+<p>Good.</p>
+<p>But for this M098 audit, an important missing regression test would be a <strong>non-axis-aligned compound</strong> that produces off-diagonal inertia.</p>
+<p>That would immediately reveal the diagonal-inverse issue.</p>
+<hr />
+<p><strong>Test we should add conceptually</strong></p>
+<p>Two equal point-like parts at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>COM:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.</mn>
+</math>
+<p>Combined tensor has nonzero:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>x</mi>
+      <mi>y</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then verify:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <msup>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo>≈</mo>
+  <msub>
+    <mi>I</mi>
+    <mn>3</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>If <code>InverseDiagonalInertia()</code> is used, that test fails.</p>
+<p>That is precisely the regression test the generic mass-property path needs.</p>
+<hr />
+<p><strong>World inertia transform test</strong></p>
+<p>Choose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mi>b</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Rotate 90° about z.</p>
+<p>x and y axes swap.</p>
+<p>Therefore world inertia becomes approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Current Kairo test does the corresponding check for inverse inertia.</p>
+<p>That is a good test because it proves tensor rotation rather than only identity orientation.</p>
+<hr />
+<p><strong>Symmetry test</strong></p>
+<p>For arbitrary valid inertia:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mi>i</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Test:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>REQUIRE<span class="op">(</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    Near<span class="op">(</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>        I<span class="op">(</span><span class="dv">0</span><span class="op">,</span><span class="dv">1</span><span class="op">),</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>        I<span class="op">(</span><span class="dv">1</span><span class="op">,</span><span class="dv">0</span><span class="op">)));</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>REQUIRE<span class="op">(</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    Near<span class="op">(</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>        I<span class="op">(</span><span class="dv">0</span><span class="op">,</span><span class="dv">2</span><span class="op">),</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>        I<span class="op">(</span><span class="dv">2</span><span class="op">,</span><span class="dv">0</span><span class="op">)));</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>REQUIRE<span class="op">(</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    Near<span class="op">(</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>        I<span class="op">(</span><span class="dv">1</span><span class="op">,</span><span class="dv">2</span><span class="op">),</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>        I<span class="op">(</span><span class="dv">2</span><span class="op">,</span><span class="dv">1</span><span class="op">)));</span></span></code></pre></div>
+<p>Mass-property operations should preserve symmetry within tolerance.</p>
+<p>Parallel-axis formula does.</p>
+<p>Rotation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>I</mi>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+</math>
+<p>does too.</p>
+<hr />
+<p><strong>Positive-definiteness test</strong></p>
+<p>For a dynamic body, test several vectors n:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>n</mi>
+    <mi>T</mi>
+  </msup>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>
+<p>for nonzero n.</p>
+<p>A stronger mathematical check is Cholesky decomposition or eigenvalues:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>&gt;</mo>
+  <mn>0.</mn>
+</math>
+<p>If one principal moment is negative:</p>
+<p>mass properties are physically invalid.</p>
+<hr />
+<p><strong>Triangle inequalities for principal inertia</strong></p>
+<p>For any physical rigid body about its COM, principal moments obey relationships like:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>≤</mo>
+  <msub>
+    <mi>I</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>I</mi>
+    <mn>3</mn>
+  </msub>
+</math>
+<p>and cyclic permutations.</p>
+<p>Reason:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP">∫</mo>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>y</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <msup>
+    <mi>z</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mi>d</mi>
+  <mi>m</mi>
+</math>
+<p>while:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>I</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP">∫</mo>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <msup>
+    <mi>z</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <msup>
+    <mi>y</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mi>d</mi>
+  <mi>m</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <msub>
+    <mi>I</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>+</mo>
+  <mn>2</mn>
+  <mo data-mjx-texclass="OP">∫</mo>
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+  <mi>d</mi>
+  <mi>m</mi>
+  <mo>≥</mo>
+  <msub>
+    <mi>I</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>I</mi>
+            <mi>x</mi>
+          </msub>
+          <mo>≤</mo>
+          <msub>
+            <mi>I</mi>
+            <mi>y</mi>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>I</mi>
+            <mi>z</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>These are useful mass-property sanity checks.</p>
+<hr />
+<p><strong>Rigid body as reduced particle system</strong></p>
+<p>Here is the deepest perspective.</p>
+<p>Imagine N particles.</p>
+<p>State would be roughly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <mi>N</mi>
+</math>
+<p>positions and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <mi>N</mi>
+</math>
+<p>velocities.</p>
+<p>Rigid constraints remove almost all independent degrees of freedom.</p>
+<p>Because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mo>+</mo>
+  <mi>R</mi>
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>all positions reduce to:</p>
+<pre class="text"><code>one COM
+one orientation.</code></pre>
+<p>And all velocities reduce to:</p>
+<pre class="text"><code>one linear velocity
+one angular velocity.</code></pre>
+<p>So the body becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">(</mo>
+          <mi>c</mi>
+          <mo>,</mo>
+          <mi>q</mi>
+          <mo>,</mo>
+          <mi>v</mi>
+          <mo>,</mo>
+          <mi>ω</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>plus mass properties.</p>
+<p>This is why rigid-body physics is computationally tractable.</p>
+<hr />
+<p><strong>Everything mass distribution contributes can be compressed</strong></p>
+<p>For translation, the entire distribution reduces to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mo>.</mo>
+</math>
+<p>For rotation around COM, the entire distribution reduces to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>.</mo>
+</math>
+<p>That is profound.</p>
+<p>Millions of particles are replaced by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mtext> scalar</mtext>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mtext> symmetric 3×3 matrix</mtext>
+  <mo>.</mo>
+</math>
+<p>A symmetric 3×3 matrix contains only six unique values.</p>
+<p>In principal axes, only three.</p>
+<p>That is the mathematical compression enabling a rigid-body engine.</p>
+<hr />
+<p><strong>Why COM and inertia are coupled</strong></p>
+<p>If you compute inertia about a point that is not COM, translational and rotational dynamics become coupled more awkwardly.</p>
+<p>Choosing COM creates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP">∑</mo>
+  <msub>
+    <mi>m</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>This annihilates cross terms.</p>
+<p>So the preferred state:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mi>o</mi>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mo>=</mo>
+          <mi>C</mi>
+          <mi>O</mi>
+          <mi>M</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>is not merely convention.</p>
+<p>It diagonalizes the conceptual separation between translation and rotation.</p>
+<hr />
+<p><strong>Newton-Euler equations</strong></p>
+<p>The complete free rigid-body dynamics can now be summarized as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>x</mi>
+              <mo>˙</mo>
+            </mover>
+          </mrow>
+          <mo>=</mo>
+          <mi>v</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>p</mi>
+              <mo>˙</mo>
+            </mover>
+          </mrow>
+          <mo>=</mo>
+          <mi>F</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>p</mi>
+          <mo>=</mo>
+          <mi>m</mi>
+          <mi>v</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>L</mi>
+              <mo>˙</mo>
+            </mover>
+          </mrow>
+          <mo>=</mo>
+          <mi>τ</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>L</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>I</mi>
+            <mi>w</mi>
+          </msub>
+          <mi>ω</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>plus orientation evolution:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>R</mi>
+      <mo>˙</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mi>ω</mi>
+  <msub>
+    <mo stretchy="false">]</mo>
+    <mo>×</mo>
+  </msub>
+  <mi>R</mi>
+</math>
+<p>under one common convention, or equivalent quaternion equation.</p>
+<p>This coupled set is the true core of rigid-body simulation.</p>
+<p>M100 will turn it into discrete integration code.</p>
+<hr />
+<p><strong>Translation is unusually simple</strong></p>
+<p>For constant mass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>v</mi>
+      <mo>˙</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <msup>
+    <mi>m</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi>F</mi>
+  <mo>.</mo>
+</math>
+<p>Nothing about orientation affects translational mass.</p>
+<p>Mass is isotropic scalar.</p>
+<p>Rotation is more complicated:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>ω</mi>
+      <mo>˙</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <msubsup>
+    <mi>I</mi>
+    <mi>w</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo stretchy="false">[</mo>
+  <mi>τ</mi>
+  <mo>−</mo>
+  <mi>ω</mi>
+  <mo>×</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>I</mi>
+    <mi>w</mi>
+  </msub>
+  <mi>ω</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>And:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mi>w</mi>
+  </msub>
+</math>
+<p>depends on orientation.</p>
+<p>That is why rotational physics occupies so much more machinery.</p>
+<hr />
+<p><strong>Do not confuse local inertia with current world inertia</strong></p>
+<p>Local:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mi>b</mi>
+  </msub>
+</math>
+<p>is fixed to body.</p>
+<p>World:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>R</mi>
+  <msub>
+    <mi>I</mi>
+    <mi>b</mi>
+  </msub>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Suppose long rod rotates 90°.</p>
+<p>Its resistance to world-x torque changes because its long axis moved.</p>
+<p>If you use local diagonal inertia directly with world torque:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>=</mo>
+  <msubsup>
+    <mi>I</mi>
+    <mi>b</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <msub>
+    <mi>τ</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>you mix coordinate spaces.</p>
+<p>Wrong.</p>
+<p>You must either:</p>
+<pre class="text"><code>convert torque to body space
+solve
+convert alpha back</code></pre>
+<p>or use world inverse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>I</mi>
+    <mi>w</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>Kairo uses world inverse correctly.</p>
+<hr />
+<p><strong>Equivalent body-space solve</strong></p>
+<p>World torque:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>τ</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Convert:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>τ</mi>
+    <mi>b</mi>
+  </msub>
+  <mo>=</mo>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+  <msub>
+    <mi>τ</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>α</mi>
+    <mi>b</mi>
+  </msub>
+  <mo>=</mo>
+  <msubsup>
+    <mi>I</mi>
+    <mi>b</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <msub>
+    <mi>τ</mi>
+    <mi>b</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Back:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>α</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>R</mi>
+  <msub>
+    <mi>α</mi>
+    <mi>b</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>α</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>R</mi>
+  <msubsup>
+    <mi>I</mi>
+    <mi>b</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+  <msub>
+    <mi>τ</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>I</mi>
+    <mi>w</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>=</mo>
+  <mi>R</mi>
+  <msubsup>
+    <mi>I</mi>
+    <mi>b</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Same formula derived from another angle.</p>
+<p>You should be able to derive it both ways.</p>
+<hr />
+<p><strong>Why no scale matrix appears</strong></p>
+<p>Rigid bodies assume fixed geometry.</p>
+<p>Orientation transformation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+</math>
+<p>is orthogonal.</p>
+<p>A non-uniform scale:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+</math>
+<p>changes mass distribution.</p>
+<p>You cannot simply use:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>S</mi>
+</math>
+<p>inside inertia transform and expect correct physics.</p>
+<p>If object scale changes, recompute mass/inertia for scaled geometry.</p>
+<p>Rigid-body transform should conceptually contain:</p>
+<pre class="text"><code>translation + rotation</code></pre>
+<p>while scale belongs to shape construction/mass recomputation.</p>
+<hr />
+<p><strong>Coordinate handedness</strong></p>
+<p>Cross products depend on handedness conventions.</p>
+<p>Kairo’s tests establish its practical convention.</p>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>10</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>it expects:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>τ</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>10</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>That is conventional right-handed cross-product behavior:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>×</mo>
+  <mi>y</mi>
+  <mo>=</mo>
+  <mi>z</mi>
+  <mo>.</mo>
+</math>
+<p>When integrating with rendering or imported assets, preserve coordinate-system conversion consistency.</p>
+<hr />
+<p><strong>Torque is an axial vector</strong></p>
+<p>Under ordinary rotations, torque behaves like a vector.</p>
+<p>Under mirror/reflection transformation, it behaves differently from a polar vector.</p>
+<p>So strictly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>τ</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ω</mi>
+</math>
+<p>are axial/pseudovectors.</p>
+<p>This becomes relevant in coordinate-system handedness conversions.</p>
+<p>If you mirror one axis while importing geometry, blindly treating angular quantities as ordinary positions can introduce sign errors.</p>
+<hr />
+<p><strong>Center-of-mass transform for scene synchronization</strong></p>
+<p>Suppose editor stores object-origin world transform:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>o</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>R</mi>
+  <mo>.</mo>
+</math>
+<p>Local COM:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>l</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Physics COM:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>o</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>R</mi>
+  <msub>
+    <mi>c</mi>
+    <mi>l</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>So converting scene→physics:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>x</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>p</mi>
+              <mi>h</mi>
+              <mi>y</mi>
+              <mi>s</mi>
+              <mi>i</mi>
+              <mi>c</mi>
+              <mi>s</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>x</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>s</mi>
+              <mi>c</mi>
+              <mi>e</mi>
+              <mi>n</mi>
+              <mi>e</mi>
+            </mrow>
+          </msub>
+          <mo>+</mo>
+          <mi>R</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <msub>
+            <mi>c</mi>
+            <mi>l</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Converting physics→scene:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>x</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>s</mi>
+              <mi>c</mi>
+              <mi>e</mi>
+              <mi>n</mi>
+              <mi>e</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>x</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>p</mi>
+              <mi>h</mi>
+              <mi>y</mi>
+              <mi>s</mi>
+              <mi>i</mi>
+              <mi>c</mi>
+              <mi>s</mi>
+            </mrow>
+          </msub>
+          <mo>−</mo>
+          <mi>R</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <msub>
+            <mi>c</mi>
+            <mi>l</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This will matter when M100 reaches scene/kinematic synchronization.</p>
+<hr />
+<p><strong>A complete mass-property builder for compounds</strong></p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> CompoundMassPart</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Mass <span class="op">=</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">;</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Position of this child&#39;s COM in body-local coordinates.</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    Vec3f Center <span class="op">=</span> Vec3f<span class="op">::</span>Zero<span class="op">();</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Child&#39;s orientation relative to body local frame.</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    Quaternionf Rotation <span class="op">=</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>        Quaternionf<span class="op">::</span>Identity<span class="op">();</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Tensor about the child&#39;s own COM,</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">// expressed in child&#39;s principal/local axes.</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>    Matrix3f Inertia <span class="op">=</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>        Matrix3f<span class="op">::</span>Zero<span class="op">();</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>MassProperties BuildCompound<span class="op">(</span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>span<span class="op">&lt;</span><span class="at">const</span> CompoundMassPart<span class="op">&gt;</span> parts<span class="op">)</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> totalMass <span class="op">=</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">;</span></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>    Vec3f weightedCenter <span class="op">=</span></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>        Vec3f<span class="op">::</span>Zero<span class="op">();</span></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="at">const</span> <span class="kw">auto</span><span class="op">&amp;</span> part <span class="op">:</span> parts<span class="op">)</span></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>        totalMass <span class="op">+=</span> part<span class="op">.</span>Mass<span class="op">;</span></span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>        weightedCenter <span class="op">+=</span></span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>            part<span class="op">.</span>Center <span class="op">*</span></span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>            part<span class="op">.</span>Mass<span class="op">;</span></span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>totalMass <span class="op">&lt;=</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> StaticMassProperties<span class="op">();</span></span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f center <span class="op">=</span></span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a>        weightedCenter <span class="op">/</span></span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a>        totalMass<span class="op">;</span></span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a>    Matrix3f totalInertia <span class="op">=</span></span>
+<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a>        Matrix3f<span class="op">::</span>Zero<span class="op">();</span></span>
+<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="at">const</span> <span class="kw">auto</span><span class="op">&amp;</span> part <span class="op">:</span> parts<span class="op">)</span></span>
+<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a>        <span class="co">// First orient each child&#39;s tensor into the common</span></span>
+<span id="cb20-49"><a href="#cb20-49" aria-hidden="true" tabindex="-1"></a>        <span class="co">// aggregate-body coordinate frame.</span></span>
+<span id="cb20-50"><a href="#cb20-50" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> Matrix3f R <span class="op">=</span></span>
+<span id="cb20-51"><a href="#cb20-51" aria-hidden="true" tabindex="-1"></a>            ToMatrix3<span class="op">(</span></span>
+<span id="cb20-52"><a href="#cb20-52" aria-hidden="true" tabindex="-1"></a>                part<span class="op">.</span>Rotation<span class="op">);</span></span>
+<span id="cb20-53"><a href="#cb20-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-54"><a href="#cb20-54" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> Matrix3f oriented <span class="op">=</span></span>
+<span id="cb20-55"><a href="#cb20-55" aria-hidden="true" tabindex="-1"></a>            R <span class="op">*</span></span>
+<span id="cb20-56"><a href="#cb20-56" aria-hidden="true" tabindex="-1"></a>            part<span class="op">.</span>Inertia <span class="op">*</span></span>
+<span id="cb20-57"><a href="#cb20-57" aria-hidden="true" tabindex="-1"></a>            Transpose<span class="op">(</span>R<span class="op">);</span></span>
+<span id="cb20-58"><a href="#cb20-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-59"><a href="#cb20-59" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Then shift from the child&#39;s COM to aggregate COM.</span></span>
+<span id="cb20-60"><a href="#cb20-60" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> Vec3f d <span class="op">=</span></span>
+<span id="cb20-61"><a href="#cb20-61" aria-hidden="true" tabindex="-1"></a>            part<span class="op">.</span>Center <span class="op">-</span></span>
+<span id="cb20-62"><a href="#cb20-62" aria-hidden="true" tabindex="-1"></a>            center<span class="op">;</span></span>
+<span id="cb20-63"><a href="#cb20-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-64"><a href="#cb20-64" aria-hidden="true" tabindex="-1"></a>        totalInertia <span class="op">+=</span></span>
+<span id="cb20-65"><a href="#cb20-65" aria-hidden="true" tabindex="-1"></a>            ParallelAxisTheorem<span class="op">(</span></span>
+<span id="cb20-66"><a href="#cb20-66" aria-hidden="true" tabindex="-1"></a>                oriented<span class="op">,</span></span>
+<span id="cb20-67"><a href="#cb20-67" aria-hidden="true" tabindex="-1"></a>                part<span class="op">.</span>Mass<span class="op">,</span></span>
+<span id="cb20-68"><a href="#cb20-68" aria-hidden="true" tabindex="-1"></a>                d<span class="op">);</span></span>
+<span id="cb20-69"><a href="#cb20-69" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb20-70"><a href="#cb20-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-71"><a href="#cb20-71" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> MakeMassPropertiesWithFullInverse<span class="op">(</span></span>
+<span id="cb20-72"><a href="#cb20-72" aria-hidden="true" tabindex="-1"></a>        totalMass<span class="op">,</span></span>
+<span id="cb20-73"><a href="#cb20-73" aria-hidden="true" tabindex="-1"></a>        center<span class="op">,</span></span>
+<span id="cb20-74"><a href="#cb20-74" aria-hidden="true" tabindex="-1"></a>        totalInertia<span class="op">);</span></span>
+<span id="cb20-75"><a href="#cb20-75" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>That is the general architecture Kairo’s current simpler implementation is moving toward.</p>
+<hr />
+<p><strong>Cache principal representation if compounds are static</strong></p>
+<p>Compound mass-property calculation is authoring/build-time or body-construction work.</p>
+<p>Do not perform:</p>
+<pre class="text"><code>eigendecomposition
+full mass integration
+compound composition</code></pre>
+<p>per physics frame.</p>
+<p>Once body geometry is stable:</p>
+<pre class="text"><code>compute once
+store local COM
+store local inertia
+store inverse.</code></pre>
+<p>Per frame only rotate inverse tensor.</p>
+<hr />
+<p><strong>Engine debugging view you will eventually want</strong></p>
+<p>For each body visualize:</p>
+<pre class="text"><code>COM point
+principal axes
+principal inertia magnitudes
+force vector
+torque vector
+linear velocity
+angular velocity.</code></pre>
+<p>A principal-axis visualization can draw three colored axes scaled approximately by inverse rotational resistance.</p>
+<p>This is scheduled formally in M102, but understanding why it helps belongs here.</p>
+<p>If COM is wrong, torque behavior becomes immediately obvious.</p>
+<p>If principal axes look nonsensical, mass properties are wrong.</p>
+<hr />
+<p><strong>Physics research sanity checks</strong></p>
+<p>For research-quality simulation, build tests around conservation quantities.</p>
+<p>No external force:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mi>o</mi>
+      <mi>t</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP">∑</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+</math>
+<p>should remain approximately constant.</p>
+<p>No external torque:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mi>o</mi>
+      <mi>t</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+</math>
+<p>should remain approximately conserved.</p>
+<p>No damping and perfectly conservative forces:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+</math>
+<p>should remain approximately conserved, subject to integration error.</p>
+<p>These invariants reveal mistakes that “it looks okay” cannot.</p>
+<hr />
+<p><strong>Simple gravity sanity check</strong></p>
+<p>Start:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Constant gravity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>Analytic:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Position:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>+</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>2</mn>
+  </mfrac>
+  <mi>g</mi>
+  <msup>
+    <mi>t</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Your numerical engine should converge toward this as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo stretchy="false">→</mo>
+  <mn>0.</mn>
+</math>
+<p>This will become crucial when comparing explicit vs semi-implicit integration.</p>
+<hr />
+<p><strong>Spring analytic sanity check</strong></p>
+<p>Undamped one-dimensional spring:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>x</mi>
+      <mo>¨</mo>
+    </mover>
+  </mrow>
+  <mo>+</mo>
+  <mi>k</mi>
+  <mi>x</mi>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Natural frequency:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ω</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>=</mo>
+  <msqrt>
+    <mfrac>
+      <mi>k</mi>
+      <mi>m</mi>
+    </mfrac>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>Solution:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>n</mi>
+  </msub>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>B</mi>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>n</mi>
+  </msub>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Numerical integrator should reproduce this approximately.</p>
+<p>If amplitude explodes uncontrollably under apparently reasonable dt, integrator/stiffness combination is unstable.</p>
+<hr />
+<p><strong>Torque sanity check</strong></p>
+<p>A body with scalar principal inertia:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+</math>
+<p>under constant torque:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>τ</mi>
+</math>
+<p>starting from rest gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mi>τ</mi>
+    <mi>I</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ω</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <mi>τ</mi>
+    <mi>I</mi>
+  </mfrac>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>This gives you a trivial angular regression test.</p>
+<hr />
+<p><strong>Parallel-axis sanity check</strong></p>
+<p>Move an entire body farther from a rotational axis.</p>
+<p>Moment must increase.</p>
+<p>Since:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>I</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>I</mi>
+  <mo>+</mo>
+  <mi>m</mi>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>d</mi>
+    <mn>2</mn>
+  </msup>
+  <mi>I</mi>
+  <mo>−</mo>
+  <mi>d</mi>
+  <msup>
+    <mi>d</mi>
+    <mi>T</mi>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>for any unit rotation axis n:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>I</mi>
+    <mi>n</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>=</mo>
+  <msup>
+    <mi>n</mi>
+    <mi>T</mi>
+  </msup>
+  <msup>
+    <mi>I</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>The added scalar moment becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>d</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>−</mo>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo>⋅</mo>
+  <mi>d</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>But:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>d</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>−</mo>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo>⋅</mo>
+  <mi>d</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <msubsup>
+    <mi>d</mi>
+    <mo>⊥</mo>
+    <mn>2</mn>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msubsup>
+            <mi>I</mi>
+            <mi>n</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msubsup>
+          <mo>=</mo>
+          <msub>
+            <mi>I</mi>
+            <mi>n</mi>
+          </msub>
+          <mo>+</mo>
+          <mi>m</mi>
+          <msubsup>
+            <mi>d</mi>
+            <mo>⊥</mo>
+            <mn>2</mn>
+          </msubsup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Exactly the scalar parallel-axis theorem.</p>
+<p>The matrix equation correctly generalizes it.</p>
+<hr />
+<p><strong>Principal-axis sanity check</strong></p>
+<p>If tensor is diagonal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>then unit x torque gives simplified:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>τ</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>But rotate body 45° relative world.</p>
+<p>World tensor develops off-diagonals.</p>
+<p>A world-axis torque can now create angular acceleration with multiple world components.</p>
+<p>That is not a bug.</p>
+<p>That is the tensor doing its job.</p>
+<hr />
+<p><strong>Why inertia tensor is stored about COM, not object origin</strong></p>
+<p>If you store inertia about arbitrary authoring origin, then moving the authoring pivot changes physics inertia despite geometry/mass being physically unchanged.</p>
+<p>That is undesirable.</p>
+<p>Store canonical:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>C</mi>
+      <mi>O</mi>
+      <mi>M</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Authoring pivot remains metadata/transforming convenience.</p>
+<p>Physics should not depend on where Maya/Blender pivot happens to be.</p>
+<hr />
+<p><strong>Rigid body versus collider</strong></p>
+<p>Another architecture distinction:</p>
+<pre class="text"><code>RigidBody</code></pre>
+<p>owns:</p>
+<pre class="text"><code>mass
+COM
+motion
+forces</code></pre>
+<p>Collider owns:</p>
+<pre class="text"><code>shape
+local transform
+material
+filtering.</code></pre>
+<p>One rigid body may have multiple colliders.</p>
+<p>Mass properties can be derived from them, but they are not conceptually the same object.</p>
+<p>That distinction becomes crucial for compound bodies.</p>
+<hr />
+<p><strong>Multiple colliders and one COM</strong></p>
+<p>Suppose rigid body has:</p>
+<pre class="text"><code>box collider on left
+sphere collider on right.</code></pre>
+<p>Their combined geometry determines:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>O</mi>
+  <mi>M</mi>
+  <mo>.</mo>
+</math>
+<p>But solver still has:</p>
+<pre class="text"><code>one rigid body
+one v
+one ω
+one q.</code></pre>
+<p>All collider points move according to that body’s rigid transform.</p>
+<p>That is the exact meaning of “compound rigid body.”</p>
+<hr />
+<p><strong>What current Kairo already does particularly well</strong></p>
+<p>The physics math layer has several strong architectural properties.</p>
+<p><code>Force.cppm</code>, <code>MassProperties.cppm</code>, <code>InertiaTensor.cppm</code>, and <code>RigidBodyMath.cppm</code> are largely <strong>stateless mathematical utilities</strong>.</p>
+<p>They do not own:</p>
+<pre class="text"><code>world
+broadphase
+colliders
+renderer
+scene.</code></pre>
+<p>That is good module layering.</p>
+<p>The engine layer then owns:</p>
+<pre class="text"><code>RigidBody
+PhysicsWorld
+sleeping
+collision modes
+integration
+solver.</code></pre>
+<p>This is exactly the mechanism/policy separation from Phase 16 appearing inside physics.</p>
+<hr />
+<p><strong>Exact M097/M098 Kairo gap map</strong></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Area</th>
+<th>Current Kairo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Particle→rigid-body state model</td>
+<td>Correct conceptual representation</td>
+</tr>
+<tr>
+<td>Position/orientation/linear/angular velocity</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Force + torque accumulation</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Gravity</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Linear drag helper</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Hooke spring helper</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Exponential body damping</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Primitive sphere mass/inertia</td>
+<td>Implemented, exact</td>
+</tr>
+<tr>
+<td>Primitive box mass/inertia</td>
+<td>Implemented, exact</td>
+</tr>
+<tr>
+<td>Capsule mass</td>
+<td>Exact volume</td>
+</tr>
+<tr>
+<td>Capsule inertia</td>
+<td>Explicit approximation</td>
+</tr>
+<tr>
+<td>Parallel-axis theorem</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Composite COM</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Composite shifted inertia</td>
+<td>Implemented for same-frame child tensors</td>
+</tr>
+<tr>
+<td>Child relative inertia orientation</td>
+<td>Not represented by current combine API</td>
+</tr>
+<tr>
+<td>Local inverse inertia</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Full non-diagonal inverse</td>
+<td>Missing in generic builder</td>
+</tr>
+<tr>
+<td>World inverse inertia <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+  <msup>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+</math></td>
+<td>Implemented correctly</td>
+</tr>
+<tr>
+<td>Nonzero COM offset through runtime transforms</td>
+<td>Not fully propagated</td>
+</tr>
+<tr>
+<td>Full gyroscopic angular equation</td>
+<td>Simplified/omitted</td>
+</tr>
+<tr>
+<td>Finite-value validation</td>
+<td>Strong</td>
+</tr>
+<tr>
+<td>Non-axis-aligned compound regression</td>
+<td>Missing from inspected tests</td>
+</tr>
+</tbody>
+</table>
+<p>Those are the important findings to carry forward.</p>
+<hr />
+<p><strong>Whiteboard derivation you should be able to reproduce</strong></p>
+<p>Start with point masses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mo>+</mo>
+  <mi>R</mi>
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Differentiate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>ω</mi>
+  <mo>×</mo>
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Total momentum:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>m</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Substitute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>m</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>v</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>+</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>m</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">[</mo>
+  <mi>ω</mi>
+  <mo>×</mo>
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>First:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>m</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>v</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>M</mi>
+  <msub>
+    <mi>v</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Second:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ω</mi>
+  <mo>×</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>m</mi>
+    <mi>i</mi>
+  </msub>
+  <mi>R</mi>
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>But relative coordinates about COM satisfy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>m</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mo>=</mo>
+          <mi>M</mi>
+          <msub>
+            <mi>v</mi>
+            <mi>c</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is why COM translation separates cleanly.</p>
+<hr />
+<p><strong>Angular-momentum derivation</strong></p>
+<p>Angular momentum around COM:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msubsup>
+    <mi>r</mi>
+    <mi>i</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>w</mi>
+      <mi>o</mi>
+      <mi>r</mi>
+      <mi>l</mi>
+      <mi>d</mi>
+    </mrow>
+  </msubsup>
+  <mo>×</mo>
+  <msub>
+    <mi>m</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>ω</mi>
+  <mo>×</mo>
+  <msubsup>
+    <mi>r</mi>
+    <mi>i</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>w</mi>
+      <mi>o</mi>
+      <mi>r</mi>
+      <mi>l</mi>
+      <mi>d</mi>
+    </mrow>
+  </msubsup>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Using vector triple product:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>×</mo>
+  <mo stretchy="false">(</mo>
+  <mi>ω</mi>
+  <mo>×</mo>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mo>⋅</mo>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+  <mi>ω</mi>
+  <mo>−</mo>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mo>⋅</mo>
+  <mi>ω</mi>
+  <mo stretchy="false">)</mo>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>m</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">[</mo>
+  <msubsup>
+    <mi>r</mi>
+    <mi>i</mi>
+    <mn>2</mn>
+  </msubsup>
+  <mi>I</mi>
+  <mo>−</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+  <msubsup>
+    <mi>r</mi>
+    <mi>i</mi>
+    <mi>T</mi>
+  </msubsup>
+  <mo stretchy="false">]</mo>
+  <mi>ω</mi>
+  <mo>.</mo>
+</math>
+<p>Factor ω:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mo>=</mo>
+  <mi>I</mi>
+  <mi>ω</mi>
+  <mo>.</mo>
+</math>
+<p>And inertia tensor emerges naturally:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>I</mi>
+          <mo>=</mo>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mi>i</mi>
+          </munder>
+          <msub>
+            <mi>m</mi>
+            <mi>i</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <msubsup>
+            <mi>r</mi>
+            <mi>i</mi>
+            <mn>2</mn>
+          </msubsup>
+          <mi>I</mi>
+          <mo>−</mo>
+          <msub>
+            <mi>r</mi>
+            <mi>i</mi>
+          </msub>
+          <msubsup>
+            <mi>r</mi>
+            <mi>i</mi>
+            <mi>T</mi>
+          </msubsup>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>So the inertia tensor is not arbitrary mathematical machinery.</p>
+<p>It falls directly out of angular momentum of a rigid collection of point masses.</p>
+<hr />
+<p><strong>That is the conceptual bridge of this whole pass</strong></p>
+<p>From rigid constraints:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mo>+</mo>
+  <mi>R</mi>
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+</math>
+<p>we derived:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo>=</mo>
+  <mi>M</mi>
+  <mi>v</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mo>=</mo>
+  <mi>I</mi>
+  <mi>ω</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore millions of particle dynamics collapse into:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>F</mi>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>P</mi>
+              <mo>˙</mo>
+            </mover>
+          </mrow>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>τ</mi>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>L</mi>
+              <mo>˙</mo>
+            </mover>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is Newton-Euler rigid-body mechanics.</p>
+<p>Everything else in Phase 17 is numerical implementation of those equations.</p>
+<hr />
+<p><strong>Reconstruction challenge — M097</strong></p>
+<p>Given a 2 kg body with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>6</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mi>N</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>0.5</mn>
+  <mi>s</mi>
+  <mo>,</mo>
+</math>
+<p>inverse mass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.5</mn>
+  <mo>.</mo>
+</math>
+<p>Acceleration:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>=</mo>
+  <mi>F</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>m</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mi>m</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Velocity change:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>v</mi>
+  <mo>=</mo>
+  <mi>a</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1.5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mi>m</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>You should be able to derive this immediately from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mi>e</mi>
+      <mi>w</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>v</mi>
+  <mo>+</mo>
+  <mi>F</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <msup>
+    <mi>m</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Reconstruction challenge — gravity</strong></p>
+<p>Body A:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mi>k</mi>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>Body B:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mo>=</mo>
+  <mn>100</mn>
+  <mi>k</mi>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>Gravity forces:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>F</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mi>g</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>F</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>100</mn>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>Accelerations:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>a</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>F</mi>
+    <mi>A</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>1</mn>
+  <mo>=</mo>
+  <mi>g</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>a</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>F</mi>
+    <mi>B</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>100</mn>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore ideal gravity acceleration is mass-independent.</p>
+<hr />
+<p><strong>Reconstruction challenge — torque</strong></p>
+<p>COM:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Point:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Force:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Torque:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>τ</mi>
+  <mo>=</mo>
+  <mi>r</mi>
+  <mo>×</mo>
+  <mi>F</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>6</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Units:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>m</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Reconstruction challenge — box inertia</strong></p>
+<p>Box half-extents:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>mass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>24.</mn>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>x</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>24</mn>
+    <mn>3</mn>
+  </mfrac>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mn>2</mn>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <msup>
+    <mn>3</mn>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <mn>8</mn>
+  <mo stretchy="false">(</mo>
+  <mn>4</mn>
+  <mo>+</mo>
+  <mn>9</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <mn>104.</mn>
+</math>
+<p>Exactly the value Kairo’s current test checks.</p>
+<hr />
+<p><strong>Reconstruction challenge — world tensor</strong></p>
+<p>Local inverse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>I</mi>
+    <mi>b</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Rotate body 90° around z.</p>
+<p>x and y principal axes swap.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>I</mi>
+    <mi>w</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This is precisely what:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <msubsup>
+    <mi>I</mi>
+    <mi>b</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+</math>
+<p>should produce.</p>
+<hr />
+<p><strong>Reconstruction challenge — parallel axis</strong></p>
+<p>Point-like mass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mo>=</mo>
+  <mn>2.</mn>
+</math>
+<p>Offset:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Its local inertia at its own position is zero for the conceptual point.</p>
+<p>Shift:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <mi>m</mi>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>d</mi>
+    <mn>2</mn>
+  </msup>
+  <mi>I</mi>
+  <mo>−</mo>
+  <mi>d</mi>
+  <msup>
+    <mi>d</mi>
+    <mi>T</mi>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Here:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>d</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <msup>
+    <mi>d</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>because point lies exactly on x-axis.</p>
+<p>But:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>I</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>2.</mn>
+</math>
+<p>Current Kairo test verifies this exact case.</p>
+<hr />
+<p><strong>Reconstruction challenge — why tensor is symmetric</strong></p>
+<p>Write:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <msup>
+    <mi>r</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Transpose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <msup>
+    <mi>r</mi>
+    <mi>T</mi>
+  </msup>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mi>T</mi>
+  </msup>
+  <mo>=</mo>
+  <mi>r</mi>
+  <msup>
+    <mi>r</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Identity is symmetric.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+  <mi>I</mi>
+  <mo>−</mo>
+  <mi>r</mi>
+  <msup>
+    <mi>r</mi>
+    <mi>T</mi>
+  </msup>
+</math>
+<p>is symmetric.</p>
+<p>Integrate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+</math>
+<p>remains symmetric.</p>
+<p>No memorization required.</p>
+<hr />
+<p><strong>Reconstruction challenge — why principal axes exist</strong></p>
+<p>Physical inertia tensor is real symmetric.</p>
+<p>Spectral theorem:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <mi>Q</mi>
+  <mi>D</mi>
+  <msup>
+    <mi>Q</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Columns of Q:</p>
+<p>principal axes.</p>
+<p>Diagonal entries D:</p>
+<p>principal moments.</p>
+<p>This means there is always an orthonormal local basis where inertia becomes diagonal.</p>
+<p>That is the deep reason diagonal local inertia is not merely a convenient special case—it is always possible if you choose principal coordinates.</p>
+<hr />
+<p><strong>But principal axes and visual body frame can differ</strong></p>
+<p>If Kairo eventually diagonalizes arbitrary compound inertia, it must remember orientation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Q</mi>
+  <mo>.</mo>
+</math>
+<p>Otherwise you cannot transform from body visual/local coordinates into principal inertia coordinates.</p>
+<p>So simply replacing a full tensor with:</p>
+<pre class="text"><code>three diagonal numbers</code></pre>
+<p>without retaining Q loses information.</p>
+<p>This is another reason the data model must be designed carefully.</p>
+<hr />
+<p><strong>Exact coverage — M097 + M098</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Part</th>
+<th>Topic</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1601</td>
+<td>Particles versus rigid bodies</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1602</td>
+<td>Fixed internal-distance rigid-body assumption</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1603</td>
+<td>Translational rigid-body state</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1604</td>
+<td>Rotational rigid-body state</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1605</td>
+<td>Center of mass</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1606</td>
+<td>COM from point masses</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1607</td>
+<td>COM from uniform shapes</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1608</td>
+<td>Mass versus inverse mass</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1609</td>
+<td>Infinite mass through inverse mass zero</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1610</td>
+<td>Density and mass from volume</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1611</td>
+<td>Linear momentum</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1612</td>
+<td>Newton’s first law</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1613</td>
+<td>Newton’s second law in force form</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1614</td>
+<td>Newton’s second law in momentum form</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1615</td>
+<td>Newton’s third law</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1616</td>
+<td>Force accumulation</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1617</td>
+<td>Gravity as force/acceleration</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1618</td>
+<td>Drag-force concepts</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1619</td>
+<td>Springs and Hooke’s law</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1620</td>
+<td>Damping forces</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1621</td>
+<td>Torque from off-center force</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1622</td>
+<td>Lever-arm vectors</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1623</td>
+<td>Angular velocity</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1624</td>
+<td>Angular acceleration</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1625</td>
+<td>Angular momentum</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1626</td>
+<td>Moment of inertia as rotational mass</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1627</td>
+<td>Inertia-tensor motivation</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1628</td>
+<td>Inertia-tensor matrix representation</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1629</td>
+<td>Principal moments</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1630</td>
+<td>Principal axes</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1631</td>
+<td>Point-mass inertia tensor</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1632</td>
+<td>Solid-sphere inertia</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1633</td>
+<td>Solid-box inertia</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1634</td>
+<td>Solid-cylinder inertia concept</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1635</td>
+<td>Capsule inertia concept</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1636</td>
+<td>Parallel-axis theorem</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1637</td>
+<td>Composite mass properties</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1638</td>
+<td>Local-space inertia</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1639</td>
+<td>Inverse inertia tensor</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1640</td>
+<td>Rotating inertia into world space</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1641</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+  <msup>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+</math> world inverse formula</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1642</td>
+<td>Why inertia tensors are symmetric</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<p>The equation chain you should now be able to derive from nothing is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>x</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>c</mi>
+          <mo>+</mo>
+          <mi>R</mi>
+          <msub>
+            <mi>r</mi>
+            <mi>i</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>which gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>v</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>v</mi>
+            <mi>c</mi>
+          </msub>
+          <mo>+</mo>
+          <mi>ω</mi>
+          <mo>×</mo>
+          <msub>
+            <mi>r</mi>
+            <mi>i</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mo>=</mo>
+          <mi>M</mi>
+          <msub>
+            <mi>v</mi>
+            <mi>c</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>L</mi>
+          <mo>=</mo>
+          <mi>I</mi>
+          <mi>ω</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>F</mi>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>P</mi>
+              <mo>˙</mo>
+            </mover>
+          </mrow>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>τ</mi>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>L</mi>
+              <mo>˙</mo>
+            </mover>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The mass distribution itself compresses into:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>M</mi>
+          <mo>,</mo>
+          <mstyle scriptlevel="0">
+            <mspace width="1em"></mspace>
+          </mstyle>
+          <mi>c</mi>
+          <mo>,</mo>
+          <mstyle scriptlevel="0">
+            <mspace width="1em"></mspace>
+          </mstyle>
+          <mi>I</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The runtime solver primarily wants:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>M</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msup>
+          <mo>,</mo>
+          <mstyle scriptlevel="0">
+            <mspace width="1em"></mspace>
+          </mstyle>
+          <msup>
+            <mi>I</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>And because the body’s inertia rotates with orientation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msubsup>
+            <mi>I</mi>
+            <mi>w</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msubsup>
+          <mo>=</mo>
+          <mi>R</mi>
+          <msubsup>
+            <mi>I</mi>
+            <mi>b</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msubsup>
+          <msup>
+            <mi>R</mi>
+            <mi>T</mi>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The three most important Kairo-specific findings from this pass are also now clear. First, <strong><code>State.Position</code> should have an explicit COM convention</strong>, because the existing <code>LocalCenterOfMass</code> field is not yet fully propagated when it becomes nonzero. Second, <strong>generic compound inertia must not use <code>InverseDiagonalInertia()</code> after parallel-axis operations have produced off-diagonal terms</strong> unless the tensor has first been diagonalized into principal coordinates. Third, Kairo’s current angular force integration uses the common gameplay approximation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>ω</mi>
+      <mo>˙</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <msup>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi>τ</mi>
+</math>
+<p>rather than the full Euler rigid-body equation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>ω</mi>
+              <mo>˙</mo>
+            </mover>
+          </mrow>
+          <mo>=</mo>
+          <msup>
+            <mi>I</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msup>
+          <mo stretchy="false">[</mo>
+          <mi>τ</mi>
+          <mo>−</mo>
+          <mi>ω</mi>
+          <mo>×</mo>
+          <mo stretchy="false">(</mo>
+          <mi>I</mi>
+          <mi>ω</mi>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">]</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For ordinary game physics this can be deliberate. For physically controlled research replication, that approximation must be measured and documented.</p>
+<p><strong>Pass 17 is M099 + M100, Parts 1643–1681.</strong> That is where all of today’s state becomes an actual simulator: <strong>linear and angular impulses, off-center impulse response, force-versus-impulse distinctions, rigid-body memory state, sleeping/activity, static/kinematic/dynamic semantics, explicit and semi-implicit Euler, quaternion derivative and exponential-map orientation updates, renormalization, fixed-step accumulators, multiple substeps, spiral-of-death handling, snapshots, and scene↔︎physics synchronization.</strong></p>
+</section>
+<section id="id_06-engine-ii-ch036-impulses-off-center-response-rigid-body-runtime-state-sleeping-statickinematicdynamic-semantics-euler-integration-quaternion-dynamics-exponential-maps-fixed-timestep-substeps-spiral-of-death-control-physics-snapshots-render-interpolation-and-scene-synchronization" class="level4">
+<h4>Impulses, Off-Center Response, Rigid-Body Runtime State, Sleeping, Static/Kinematic/Dynamic Semantics, Euler Integration, Quaternion Dynamics, Exponential Maps, Fixed Timestep, Substeps, Spiral-of-Death Control, Physics Snapshots, Render Interpolation, and Scene Synchronization</h4>
+<p>Pass 16 gave us the continuous rigid-body equations:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">F</mi>
+  </mrow>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>d</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="bold">p</mi>
+      </mrow>
+    </mrow>
+    <mrow>
+      <mi>d</mi>
+      <mi>t</mi>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi mathvariant="bold-italic">τ</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>d</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="bold">L</mi>
+      </mrow>
+    </mrow>
+    <mrow>
+      <mi>d</mi>
+      <mi>t</mi>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+</math>
+<p>with</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">p</mi>
+  </mrow>
+  <mo>=</mo>
+  <mi>m</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">v</mi>
+  </mrow>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">L</mi>
+  </mrow>
+  <mo>=</mo>
+  <mi>I</mi>
+  <mi mathvariant="bold-italic">ω</mi>
+  <mo>.</mo>
+</math>
+<p>Pass 17 now answers two engine questions:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>How does a finite event change velocity instantly?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>How do we turn continuous differential equations into discrete frames without destroying stability?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The first question gives us <strong>impulses</strong>.</p>
+<p>The second gives us <strong>integration and fixed timesteps</strong>.</p>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch036-impulse-response-and-the-actual-rigid-body-object" class="level4">
+<h4>IMPULSE RESPONSE AND THE ACTUAL RIGID-BODY OBJECT</h4>
+</section>
+<section id="id_06-engine-ii-ch036-part-1643-linear-impulse" class="level4">
+<h4>Part 1643 — Linear impulse</h4>
+<p>Force is an instantaneous rate of momentum change:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">F</mi>
+  </mrow>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>d</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="bold">p</mi>
+      </mrow>
+    </mrow>
+    <mrow>
+      <mi>d</mi>
+      <mi>t</mi>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Integrate both sides over a finite interval:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mo data-mjx-texclass="OP">∫</mo>
+    <mrow data-mjx-texclass="ORD">
+      <msub>
+        <mi>t</mi>
+        <mn>0</mn>
+      </msub>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <msub>
+        <mi>t</mi>
+        <mn>1</mn>
+      </msub>
+    </mrow>
+  </msubsup>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">F</mi>
+  </mrow>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <msubsup>
+    <mo data-mjx-texclass="OP">∫</mo>
+    <mrow data-mjx-texclass="ORD">
+      <msub>
+        <mi>t</mi>
+        <mn>0</mn>
+      </msub>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <msub>
+        <mi>t</mi>
+        <mn>1</mn>
+      </msub>
+    </mrow>
+  </msubsup>
+  <mfrac>
+    <mrow>
+      <mi>d</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="bold">p</mi>
+      </mrow>
+    </mrow>
+    <mrow>
+      <mi>d</mi>
+      <mi>t</mi>
+    </mrow>
+  </mfrac>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">J</mi>
+          </mrow>
+          <mo>=</mo>
+          <mi mathvariant="normal">Δ</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">p</mi>
+          </mrow>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">J</mi>
+          </mrow>
+          <mo>=</mo>
+          <mo data-mjx-texclass="OP">∫</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">F</mi>
+          </mrow>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <mi>d</mi>
+          <mi>t</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>is <strong>impulse</strong>.</p>
+<p>Units:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">J</mi>
+  </mrow>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>N</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mi>k</mi>
+  <mi>g</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>m</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>That is exactly the same unit as momentum.</p>
+<p>This is not a coincidence. Impulse literally <em>is momentum transfer</em>.</p>
+<p>If a constant force <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math> acts for <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">J</mi>
+  </mrow>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">F</mi>
+  </mrow>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>A collision, explosion, bullet impact, solver contact correction, or jump impulse is usually better represented through <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">J</mi>
+  </mrow>
+</math> than through a huge force applied for an arbitrarily chosen frame.</p>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch036-part-1644-linear-velocity-change-from-impulse" class="level4">
+<h4>Part 1644 — Linear velocity change from impulse</h4>
+<p>For constant body mass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">p</mi>
+  </mrow>
+  <mo>=</mo>
+  <mi>m</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">v</mi>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Apply impulse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">p</mi>
+    </mrow>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">p</mi>
+  </mrow>
+  <mo>+</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">J</mi>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">v</mi>
+    </mrow>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>m</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">v</mi>
+  </mrow>
+  <mo>+</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">J</mi>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Divide by mass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mrow data-mjx-texclass="ORD">
+              <mi mathvariant="bold">v</mi>
+            </mrow>
+            <mo data-mjx-alternate="1">′</mo>
+          </msup>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">v</mi>
+          </mrow>
+          <mo>+</mo>
+          <mfrac>
+            <mrow data-mjx-texclass="ORD">
+              <mi mathvariant="bold">J</mi>
+            </mrow>
+            <mi>m</mi>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Using inverse mass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>m</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo>,</mo>
+</math>
+<p>we obtain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="normal">Δ</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">v</mi>
+          </mrow>
+          <mo>=</mo>
+          <mi>w</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">J</mi>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Kairo already implements precisely this operation:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">inline</span> <span class="dt">void</span> ApplyLinearImpulse<span class="op">(</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    Vec3f<span class="op">&amp;</span> linearVelocity<span class="op">,</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> inverseMass<span class="op">,</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f<span class="op">&amp;</span> impulse<span class="op">)</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// J changes momentum instantly.</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Since p = m v:</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">//</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Δv = J / m = J * inverseMass.</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>    linearVelocity <span class="op">+=</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>        impulse <span class="op">*</span> inverseMass<span class="op">;</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Notice the absence of:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>dt</span></code></pre></div>
+<p>That is the critical distinction.</p>
+<p>A force must be integrated through time.</p>
+<p>An impulse has already been integrated over time.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Impulse application must not multiply by </mtext>
+          <mi>d</mi>
+          <mi>t</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch036-static-body-consequence" class="level4">
+<h4>Static-body consequence</h4>
+<p>For a static body:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>m</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>v</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">J</mi>
+  </mrow>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>This gives us immovable bodies almost automatically.</p>
+<p>This same “inverse quantity zero means infinite resistance” pattern applies to inverse inertia.</p>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch036-part-1645-angular-impulse" class="level4">
+<h4>Part 1645 — Angular impulse</h4>
+<p>The rotational equivalent follows the same logic.</p>
+<p>Torque satisfies:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="bold-italic">τ</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>d</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="bold">L</mi>
+      </mrow>
+    </mrow>
+    <mrow>
+      <mi>d</mi>
+      <mi>t</mi>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Integrate over time:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP">∫</mo>
+  <mi mathvariant="bold-italic">τ</mi>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">L</mi>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Define angular impulse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mrow data-mjx-texclass="ORD">
+              <mi mathvariant="bold">J</mi>
+            </mrow>
+            <mi>ω</mi>
+          </msub>
+          <mo>=</mo>
+          <mo data-mjx-texclass="OP">∫</mo>
+          <mi mathvariant="bold-italic">τ</mi>
+          <mi>d</mi>
+          <mi>t</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mrow data-mjx-texclass="ORD">
+              <mi mathvariant="bold">L</mi>
+            </mrow>
+            <mo data-mjx-alternate="1">′</mo>
+          </msup>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">L</mi>
+          </mrow>
+          <mo>+</mo>
+          <msub>
+            <mrow data-mjx-texclass="ORD">
+              <mi mathvariant="bold">J</mi>
+            </mrow>
+            <mi>ω</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Using:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">L</mi>
+  </mrow>
+  <mo>=</mo>
+  <mi>I</mi>
+  <mi mathvariant="bold-italic">ω</mi>
+  <mo>,</mo>
+</math>
+<p>we obtain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <msup>
+    <mi mathvariant="bold-italic">ω</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>I</mi>
+  <mi mathvariant="bold-italic">ω</mi>
+  <mo>+</mo>
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">J</mi>
+    </mrow>
+    <mi>ω</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi mathvariant="bold-italic">ω</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msup>
+          <mo>=</mo>
+          <mi mathvariant="bold-italic">ω</mi>
+          <mo>+</mo>
+          <msup>
+            <mi>I</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msup>
+          <msub>
+            <mrow data-mjx-texclass="ORD">
+              <mi mathvariant="bold">J</mi>
+            </mrow>
+            <mi>ω</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Kairo’s direct angular-impulse helper mirrors this exactly:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">inline</span> <span class="dt">void</span> ApplyAngularImpulse<span class="op">(</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    Vec3f<span class="op">&amp;</span> angularVelocity<span class="op">,</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Matrix3f<span class="op">&amp;</span> worldInverseInertia<span class="op">,</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f<span class="op">&amp;</span> angularImpulse<span class="op">)</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    angularVelocity <span class="op">+=</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>        worldInverseInertia <span class="op">*</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>        angularImpulse<span class="op">;</span></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>t</mi>
+</math>
+<p>does not appear.</p>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch036-part-1646-angular-velocity-change-from-an-off-center-impulse" class="level4">
+<h4>Part 1646 — Angular velocity change from an off-center impulse</h4>
+<p>Suppose a linear impulse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">J</mi>
+  </mrow>
+</math>
+<p>is applied at world point:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">p</mi>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Let body center of mass be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">c</mi>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Lever arm:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">r</mi>
+  </mrow>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">p</mi>
+  </mrow>
+  <mo>−</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">c</mi>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>The corresponding angular impulse is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mrow data-mjx-texclass="ORD">
+              <mi mathvariant="bold">J</mi>
+            </mrow>
+            <mi>ω</mi>
+          </msub>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">r</mi>
+          </mrow>
+          <mo>×</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">J</mi>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="normal">Δ</mi>
+          <mi mathvariant="bold-italic">ω</mi>
+          <mo>=</mo>
+          <msubsup>
+            <mi>I</mi>
+            <mi>w</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msubsup>
+          <mo stretchy="false">(</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">r</mi>
+          </mrow>
+          <mo>×</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">J</mi>
+          </mrow>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>At the same time the body’s COM receives linear velocity change:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="normal">Δ</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">v</mi>
+          </mrow>
+          <mo>=</mo>
+          <msup>
+            <mi>m</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msup>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">J</mi>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>So one off-center collision impulse modifies <strong>both</strong> translation and rotation.</p>
+<p>That is the fundamental contact-response operation.</p>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch036-example" class="level4">
+<h4>Example</h4>
+<p>Let:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>k</mi>
+  <mi>g</mi>
+</math>
+<p>so:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>m</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo>=</mo>
+  <mn>0.5</mn>
+  <mo>.</mo>
+</math>
+<p>Impulse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">J</mi>
+  </mrow>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Applied one metre right of COM:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">r</mi>
+  </mrow>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Linear change:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>v</mi>
+  <mo>=</mo>
+  <mn>0.5</mn>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Angular impulse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>×</mo>
+  <mi>J</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>×</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>I</mi>
+    <mi>w</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>0.5</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>One event produced both:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>v</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch036-part-1647-applying-an-impulse-at-a-world-space-point" class="level4">
+<h4>Part 1647 — Applying an impulse at a world-space point</h4>
+<p>The complete algorithm is therefore:</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> ApplyImpulseAtWorldPoint<span class="op">(</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    MotionState<span class="op">&amp;</span> state<span class="op">,</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> inverseMass<span class="op">,</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Matrix3f<span class="op">&amp;</span> worldInverseInertia<span class="op">,</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f<span class="op">&amp;</span> impulse<span class="op">,</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f<span class="op">&amp;</span> worldPoint<span class="op">)</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 1. Linear response acts at the body&#39;s center of mass.</span></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    state<span class="op">.</span>LinearVelocity <span class="op">+=</span></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>        impulse <span class="op">*</span> inverseMass<span class="op">;</span></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 2. Measure the application point relative to COM.</span></span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f r <span class="op">=</span></span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>        worldPoint <span class="op">-</span></span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>        state<span class="op">.</span>Position<span class="op">;</span></span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 3. Linear impulse creates angular impulse r × J.</span></span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3f angularImpulse <span class="op">=</span></span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>        Cross<span class="op">(</span>r<span class="op">,</span> impulse<span class="op">);</span></span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 4. Convert angular momentum change into angular velocity.</span></span>
+<span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a>    state<span class="op">.</span>AngularVelocity <span class="op">+=</span></span>
+<span id="cb35-23"><a href="#cb35-23" aria-hidden="true" tabindex="-1"></a>        worldInverseInertia <span class="op">*</span></span>
+<span id="cb35-24"><a href="#cb35-24" aria-hidden="true" tabindex="-1"></a>        angularImpulse<span class="op">;</span></span>
+<span id="cb35-25"><a href="#cb35-25" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This is essentially what Kairo’s <code>ApplyImpulseAtPoint()</code> already performs.</p>
+<p>The important assumption, as established in Pass 16, is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>S</mi>
+          <mi>t</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mo>.</mo>
+          <mi>P</mi>
+          <mi>o</mi>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mo>=</mo>
+          <mi>W</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>l</mi>
+          <mi>d</mi>
+          <mi>C</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>O</mi>
+          <mi>f</mi>
+          <mi>M</mi>
+          <mi>a</mi>
+          <mi>s</mi>
+          <mi>s</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Otherwise:</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>worldPoint <span class="op">-</span> state<span class="op">.</span>Position</span></code></pre></div>
+<p>is not the correct torque arm.</p>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch036-part-1648-applying-an-impulse-at-center-of-mass" class="level4">
+<h4>Part 1648 — Applying an impulse at center of mass</h4>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">p</mi>
+  </mrow>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">c</mi>
+  </mrow>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">r</mi>
+  </mrow>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">r</mi>
+  </mrow>
+  <mo>×</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">J</mi>
+  </mrow>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Only translation changes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="normal">Δ</mi>
+          <mi>v</mi>
+          <mo>=</mo>
+          <msup>
+            <mi>m</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msup>
+          <mi>J</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Kairo’s <code>RuntimePhysicsBridge::ApplyEntityImpulse()</code> deliberately gets:</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="kw">auto</span> point <span class="op">=</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    body<span class="op">.</span>State<span class="op">.</span>Position<span class="op">;</span></span></code></pre></div>
+<p>then calls:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>ApplyBodyImpulseAtPoint<span class="op">(</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    body<span class="op">,</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    impulse<span class="op">,</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    point<span class="op">);</span></span></code></pre></div>
+<p>so the player-facing entity impulse is explicitly a <strong>center-of-mass impulse</strong>.</p>
+<p>That is a clean semantic API.</p>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch036-part-1649-force-versus-impulse" class="level4">
+<h4>Part 1649 — Force versus impulse</h4>
+<p>This distinction must become automatic.</p>
+<p>Force:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">F</mi>
+          </mrow>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mi>d</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mi mathvariant="bold">p</mi>
+              </mrow>
+            </mrow>
+            <mrow>
+              <mi>d</mi>
+              <mi>t</mi>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>has units:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>.</mo>
+</math>
+<p>Impulse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">J</mi>
+          </mrow>
+          <mo>=</mo>
+          <mi mathvariant="normal">Δ</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">p</mi>
+          </mrow>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>has units:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>For a force over one fixed simulation step:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">J</mi>
+  </mrow>
+  <mo>≈</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">F</mi>
+  </mrow>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>v</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>m</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">F</mi>
+  </mrow>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>For an impulse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>v</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>m</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">J</mi>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>The distinction in code should therefore be:</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Continuous influence.</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>AddForce<span class="op">(</span>body<span class="op">,</span> force<span class="op">);</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Instantaneous momentum change.</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>ApplyImpulse<span class="op">(</span>body<span class="op">,</span> impulse<span class="op">);</span></span></code></pre></div>
+<p>not:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>AddForce<span class="op">(</span>body<span class="op">,</span> giantNumber<span class="op">);</span></span></code></pre></div>
+<p>to fake a collision.</p>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch036-why-collisions-use-impulses" class="level4">
+<h4>Why collisions use impulses</h4>
+<p>Collision contact is conceptually very short in time.</p>
+<p>Real material collision involves extremely large forces over tiny intervals.</p>
+<p>A real force-time curve might look like:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>with peak force enormous.</p>
+<p>But the body-level quantity we care about is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP">∫</mo>
+  <mi>F</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>That is exactly impulse.</p>
+<p>So rigid-body collision solvers skip modelling microscopic contact deformation and solve directly for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>J</mi>
+  <mo>.</mo>
+</math>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch036-force-is-frame-duration-sensitive-impulse-is-not" class="level4">
+<h4>Force is frame-duration sensitive; impulse is not</h4>
+<p>Suppose you incorrectly implement a jump as:</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>AddForce<span class="op">(</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    body<span class="op">,</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    Vec3f<span class="op">{</span><span class="dv">0</span><span class="op">,</span> <span class="dv">500</span><span class="op">,</span> <span class="dv">0</span><span class="op">});</span></span></code></pre></div>
+<p>for exactly one frame.</p>
+<p>At:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>60</mn>
+</math>
+<p>the momentum change is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>J</mi>
+  <mo>=</mo>
+  <mn>500</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>60</mn>
+  <mo>≈</mo>
+  <mn>8.33</mn>
+  <mo>.</mo>
+</math>
+<p>At:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>120</mn>
+</math>
+<p>it becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>J</mi>
+  <mo>≈</mo>
+  <mn>4.17</mn>
+  <mo>.</mo>
+</math>
+<p>Your jump height changes with physics frequency.</p>
+<p>A jump intended as instantaneous velocity change should usually be impulse-based.</p>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch036-part-1650-torque-impulse-versus-continuous-torque" class="level4">
+<h4>Part 1650 — Torque impulse versus continuous torque</h4>
+<p>Continuous torque:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="bold-italic">τ</mi>
+</math>
+<p>changes angular momentum according to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mi>d</mi>
+      <mi>L</mi>
+    </mrow>
+    <mrow>
+      <mi>d</mi>
+      <mi>t</mi>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mi>τ</mi>
+  <mo>.</mo>
+</math>
+<p>Over one time step:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>L</mi>
+  <mo>≈</mo>
+  <mi>τ</mi>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Angular impulse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">J</mi>
+    </mrow>
+    <mi>ω</mi>
+  </msub>
+</math>
+<p>directly states:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>L</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>J</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi>τ</mi>
+  <mi>d</mi>
+  <mi>t</mi>
+</math>
+<p>for torque,</p>
+<p>whereas:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <msub>
+    <mi>J</mi>
+    <mi>ω</mi>
+  </msub>
+</math>
+<p>for angular impulse.</p>
+<p>Again the difference is the factor:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch404.xhtml#id_06-engine-ii-ch035-a-complete-rigid-body-state-before-the-formula-audit" class="wikilink">Previous chapter</a> · <a href="ch406.xhtml#id_06-engine-ii-ch037-physical-examples-and-state-validation" class="wikilink">Next chapter</a></p>
+</section>
+</section>
+</body>
+</html>

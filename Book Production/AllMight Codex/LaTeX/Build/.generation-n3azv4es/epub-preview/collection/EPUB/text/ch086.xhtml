@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch086.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-b572b631069b-guard-round-and-sticky-bits" class="level2">
+<h2>Guard round and sticky bits</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C004 · <strong>Latest development:</strong> C004</p>
+<section id="appendix-b572b631069b-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Guard is first discarded bit, round the next, sticky ORs all remaining bits. With retained low bit L, nearest-even increments when G AND (R OR sticky OR L). Sticky summarizes any nonzero tail.</p>
+</section>
+<section id="appendix-b572b631069b-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch021.xhtml#appendix-24475e1596a8-boolean-algebra" class="wikilink">Boolean algebra</a> — The rounding increment condition combines one-bit guard, round, sticky and parity inputs.</li>
+<li><a href="ch056.xhtml#appendix-614afe1de592-rounding-to-nearest-ties-to-even" class="wikilink">Rounding to nearest ties to even</a> — Midpoint parity determines discarded-tail decisions and the normal relative-error bound.</li>
+</ul>
+</section>
+<section id="appendix-b572b631069b-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch076.xhtml#appendix-a1b1b4580dfd-floating-point-addition-and-absorption" class="wikilink">Floating-point addition and absorption</a> — Aligned-away information must survive sufficiently to choose the correct rounded neighbor.</li>
+</ul>
+<p>Connect later dependent concepts here as their lessons arrive.</p>
+</section>
+<section id="appendix-b572b631069b-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the concrete example in the definition and identify its validity assumptions.</p>
+<p><strong>Pending:</strong> Directed rounding additionally depends on sign; renormalization may follow an increment.</p>
+</section>
+<section id="appendix-b572b631069b-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">M004 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m004---parts-61-76" class="wikilink">Per-part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

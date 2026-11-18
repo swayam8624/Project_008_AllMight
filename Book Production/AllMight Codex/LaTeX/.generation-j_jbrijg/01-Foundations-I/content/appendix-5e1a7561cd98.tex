@@ -1,0 +1,37 @@
+\hypertarget{appendix-5e1a7561cd98}{}
+\section*{Multilevel pointer qualification}
+\chapter{Multilevel pointer qualification}\label{appendix-5e1a7561cd98-multilevel-pointer-qualification}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\section{Definition and mechanism}\label{appendix-5e1a7561cd98-definition-and-mechanism}
+
+int** cannot implicitly become const int**: that would permit injection of an actually const object's address into an original int*. int** can become const int* const*, whose intermediate read-only pointer blocks that assignment.
+
+\section{Prerequisites}\label{appendix-5e1a7561cd98-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c25d60fed375]{Const qualification and shallow constness} --- Access-path qualification constrains nested conversions and member writes.
+\end{itemize}
+
+\section{Used by}\label{appendix-5e1a7561cd98-used-by}
+
+Later sources will deepen this same node; no empty dependent nodes are created.
+
+\section{Recall and next depth}\label{appendix-5e1a7561cd98-recall-and-next-depth}
+
+Rebuild the hypothetical pointer injection step by step. Pending: qualification decomposition at further levels. Written coverage does not establish learner mastery.
+
+\section{Source and navigation}\label{appendix-5e1a7561cd98-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Read-only\%20is\%20a\%20path,\%20not\%20an\%20ownership\%20or\%20synchronization\%20promise}{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\section{Const applies at each indirection level}\label{appendix-5e1a7561cd98-const-applies-at-each-indirection-level}
+
+For a pointer chain, qualification is attached to a particular level rather than to the whole expression. \texttt{const\ T*} means the pointed-to \texttt{T} is not writable through that path; \texttt{T*\ const} means the pointer object itself cannot be reseated; \texttt{const\ T*\ const} combines both.
+
+The distinction becomes safety-critical at multiple levels. Converting \texttt{T**} to \texttt{const\ T**} is not generally safe: if it were allowed, code could store a pointer-to-const object into the outer pointer and later write through the original \texttt{T*}, violating const protection. Qualification conversions therefore follow stricter rules than the familiar \texttt{T*\ -\textgreater{}\ const\ T*} case.
+
+Engine APIs should avoid raw multi-level pointer mutation unless the ownership/indirection contract truly requires it. Spans, references to containers, output wrappers or typed handle arrays often express the real intent more clearly. A reconstruction exercise should explain each const position and demonstrate the classic unsafe hypothetical conversion.

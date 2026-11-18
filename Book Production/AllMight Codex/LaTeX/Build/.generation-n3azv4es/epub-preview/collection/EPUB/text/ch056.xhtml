@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch056.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-614afe1de592-rounding-to-nearest-ties-to-even" class="level2">
+<h2>Rounding to nearest ties to even</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C004 · <strong>Latest development:</strong> C004</p>
+<section id="appendix-614afe1de592-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Choose the nearest representable value; exactly halfway choose the even retained significand integer. At toy precision three bits, 1.125→1 and 1.375→1.5. std::round uses halfway-away-from-zero instead.</p>
+</section>
+<section id="appendix-614afe1de592-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch010.xhtml#appendix-14bab4cab9d4-ulp-and-representable-spacing" class="wikilink">ULP and representable spacing</a> — Adjacent representable points define rounding candidates, errors and step distances.</li>
+</ul>
+</section>
+<section id="appendix-614afe1de592-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch034.xhtml#appendix-34443cec7170-binary16" class="wikilink">Binary16</a> — uses this mechanism to define its representation, error or validation contract.</p></li>
+<li><p><a href="ch015.xhtml#appendix-18b8dd966b5d-bfloat16" class="wikilink">Bfloat16</a> — uses this mechanism to define its representation, error or validation contract.</p></li>
+<li><p><a href="ch041.xhtml#appendix-41e8ef22a21e-fused-multiply-add" class="wikilink">Fused multiply-add</a> — Midpoint decisions determine separate/fused results and narrowed persistent state.</p></li>
+<li><p><a href="ch023.xhtml#appendix-260182e617b7-mixed-precision-state-updates" class="wikilink">Mixed-precision state updates</a> — Midpoint decisions determine separate/fused results and narrowed persistent state.</p></li>
+<li><p><a href="ch088.xhtml#appendix-bc44f7b42f42-unit-roundoff" class="wikilink">Unit roundoff</a> — uses this mechanism in its explanation.</p></li>
+<li><p><a href="ch086.xhtml#appendix-b572b631069b-guard-round-and-sticky-bits" class="wikilink">Guard round and sticky bits</a> — uses this mechanism in its explanation.</p></li>
+<li><p><a href="ch057.xhtml#appendix-637d164ae5ca-directed-rounding-modes" class="wikilink">Directed rounding modes</a> — uses this mechanism in its explanation.</p></li>
+</ul>
+</section>
+<section id="appendix-614afe1de592-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the concrete example in the definition and identify its validity assumptions.</p>
+<p><strong>Pending:</strong> Carry from rounding can renormalize; full arithmetic rounding awaits M005.</p>
+</section>
+<section id="appendix-614afe1de592-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">M004 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m004---parts-61-76" class="wikilink">Per-part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

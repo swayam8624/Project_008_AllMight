@@ -1,0 +1,52 @@
+\hypertarget{appendix-f56c3e43fd4e}{}\label{referencestart:appendix-f56c3e43fd4e}
+\section{Placement construction and explicit lifetime management}\label{appendix-f56c3e43fd4e-placement-construction-and-explicit-lifetime-management}
+
+\hypertarget{appendix-f56c3e43fd4e-placement-construction-and-explicit-lifetime-management}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C010 · \textbf{Latest development:} C010
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-f56c3e43fd4e-definition-and-mechanism}
+
+\hypertarget{appendix-f56c3e43fd4e-definition-and-mechanism}{}
+
+Placement new or \BookInlineCode{{s}{t}{d}{:}{:}{c}{o}{n}{s}{t}{r}{u}{c}{t}{\_}{a}{t}}{std::construct\_at} initializes an object in storage already provided by the caller; it does not allocate that backing storage. The storage must have adequate size and alignment. \BookInlineCode{{s}{t}{d}{:}{:}{d}{e}{s}{t}{r}{o}{y}{\_}{a}{t}}{std::destroy\_at} ends an object's lifetime but does not release the storage. A pool/container must track occupancy, partial construction, exactly-once destruction, and when reuse is permitted. Transparent replacement and \BookInlineCode{{s}{t}{d}{:}{:}{l}{a}{u}{n}{d}{e}{r}}{std::launder} have detailed preconditions; launder neither constructs nor revives an object.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-f56c3e43fd4e-prerequisites}
+
+\hypertarget{appendix-f56c3e43fd4e-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-a82f9c438857}{Object construction and storage reuse (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Object construction and storage reuse)} --- An object's lifetime is not the same as backing storage availability.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#nameddest=appendix-69739d3ab49b}{RAII and resource handles (Bits, Programs, and Reliable Systems, Part 1, Reference notes: RAII and resource handles)} --- Low-level storage protocols still need one responsible owner.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-f56c3e43fd4e-used-by}
+
+\hypertarget{appendix-f56c3e43fd4e-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-a82f9c438857}{Object construction and storage reuse (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Object construction and storage reuse)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-f1581457d322}{Object identity and generation handles (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Object identity and generation handles)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-f56c3e43fd4e-recall-and-next-depth}
+
+\hypertarget{appendix-f56c3e43fd4e-recall-and-next-depth}{}
+
+Sketch Empty → Live(A) → Empty → Live(B) → Released. State the operation and precondition on every edge. Pending: implicit-lifetime operations, allocator traits, and container exception guarantees.
+
+\subsection{Source and navigation}\label{appendix-f56c3e43fd4e-source-and-navigation}
+
+\hypertarget{appendix-f56c3e43fd4e-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch004-placement-construction-reuses-storage-it-does-not-allocate-it]{M010 teaching narrative} · \hyperref[appendix-fd090d982a15-m010---parts-148-160]{Source coverage}

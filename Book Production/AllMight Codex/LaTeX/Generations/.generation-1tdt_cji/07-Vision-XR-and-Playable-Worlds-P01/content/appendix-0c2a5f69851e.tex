@@ -1,0 +1,64 @@
+\hypertarget{appendix-0c2a5f69851e}{}\label{referencestart:appendix-0c2a5f69851e}
+\section{Interpolation versus approximation}\label{appendix-0c2a5f69851e-interpolation-versus-approximation}
+
+\hypertarget{appendix-0c2a5f69851e-interpolation-versus-approximation}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-0c2a5f69851e-definition-and-mechanism}
+
+\hypertarget{appendix-0c2a5f69851e-definition-and-mechanism}{}
+
+Interpolation reproduces every prescribed sample exactly, while approximation minimizes or controls an error criterion and may miss the observations. The distinction matters when data are noisy: a high-degree interpolant can fit measurement noise and oscillate between samples, while a lower-complexity approximation can better represent the underlying trend. In texture reconstruction, the samples themselves often define the represented signal, so interpolation is an appropriate reconstruction rule. In calibration, observations have uncertainty, so fitting a model may be more defensible. Neither method is automatically superior; choose based on the meaning of the data, the error measure, and whether evaluation stays within or extrapolates beyond the sampled domain.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-0c2a5f69851e-prerequisites}
+
+\hypertarget{appendix-0c2a5f69851e-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-32f39e9a3738]{Taylor models and approximation error}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#nameddest=appendix-02b9d9a81dca}{Barycentric coordinates and interpolation (Light Transport and Image Synthesis, Part 1, Reference notes: Barycentric coordinates and interpolation)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-0c2a5f69851e-used-by}
+
+\hypertarget{appendix-0c2a5f69851e-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0a09b6dfdc86]{Tensor-product interpolation}
+\item
+  \hyperref[appendix-db3aef8f2fd6]{Cubic Hermite interpolation}
+\item
+  \hyperref[appendix-ddbec701898c]{Bézier curves and De Casteljau evaluation}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-0c2a5f69851e-full-teaching-explanation}
+
+\hypertarget{appendix-0c2a5f69851e-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#nameddest=02-foundations-ii-ch028-reconstructing-values-and-curves-between-samples}{Reconstructing values and curves between samples (Mathematics for Visual Computing, Part 2, Ch. 12)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-0c2a5f69851e-source-coverage}
+
+\hypertarget{appendix-0c2a5f69851e-source-coverage}{}
+
+Supplied lesson parts: 976.
+
+\subsection{Future keywords}\label{appendix-0c2a5f69851e-future-keywords}
+
+\hypertarget{appendix-0c2a5f69851e-future-keywords}{}
+
+interpolation nodes, extrapolation, Runge phenomenon

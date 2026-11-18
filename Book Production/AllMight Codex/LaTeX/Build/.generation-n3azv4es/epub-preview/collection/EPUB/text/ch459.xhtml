@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch459.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-1c5e85693a06-latin-hypercube-sampling" class="level2">
+<h2>Latin-hypercube sampling</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 10 · <strong>Latest development:</strong> Phase 10</p>
+<section id="appendix-1c5e85693a06-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Latin-hypercube sampling divides each coordinate axis into <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> equal strata and uses a permutation so every sample occupies one stratum per dimension. With randomized within-stratum positions and randomized permutations, each sample has uniform marginal coordinates; samples are dependent by design. This can improve coverage for some integrands at arbitrary sample counts, including counts that do not form a square grid. It does not guarantee lower variance for every function, and IID variance formulas cannot be applied without accounting for dependence. Test exact stratum coverage deterministically, then compare estimator error over repeated randomized trials for the intended integrand. For <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>5</mn>
+</math>, each axis still receives five strata, avoiding the missing-cell bias of taking five cells from a <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>3</mn>
+  <mo>×</mo>
+  <mn>3</mn>
+</math> grid.</p>
+</section>
+<section id="appendix-1c5e85693a06-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch455.xhtml#appendix-184fcc411663-uniform-shuffling-without-replacement" class="wikilink">Uniform shuffling without replacement</a></li>
+<li><a href="ch499.xhtml#appendix-9f693ffd82bc-sampling-quality-stratification-quasi-monte-carlo-and-blue-noise" class="wikilink">Sampling quality: stratification, quasi-Monte Carlo, and blue noise</a></li>
+<li><a href="ch281.xhtml#appendix-4815cd87ab8b-probability-density-and-change-of-measure" class="wikilink">Probability density and change of measure (Mathematics for Visual Computing, Part 2, Reference notes: Probability density and change of measure)</a></li>
+</ul>
+</section>
+<section id="appendix-1c5e85693a06-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch509.xhtml#appendix-b9db93e28371-reproducible-numerical-benchmarking" class="wikilink">Reproducible numerical benchmarking</a></li>
+</ul>
+</section>
+<section id="appendix-1c5e85693a06-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch276.xhtml#id_02-foundations-ii-ch031-design-samples-without-replacement-stratified-and-low-discrepancy" class="wikilink">Design samples: without replacement, stratified, and low-discrepancy (Mathematics for Visual Computing, Part 2, Ch. 15)</a></li>
+</ul>
+</section>
+<section id="appendix-1c5e85693a06-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 997.</p>
+</section>
+<section id="appendix-1c5e85693a06-future-keywords" class="level3">
+<h3>Future keywords</h3>
+<p>marginal stratification, randomized Latin hypercube, dependence</p>
+</section>
+</section>
+</body>
+</html>

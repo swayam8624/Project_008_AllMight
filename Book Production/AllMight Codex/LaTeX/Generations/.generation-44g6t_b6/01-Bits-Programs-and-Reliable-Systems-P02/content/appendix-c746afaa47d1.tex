@@ -1,0 +1,48 @@
+\hypertarget{appendix-c746afaa47d1}{}\label{referencestart:appendix-c746afaa47d1}
+\section{Noexcept and transfer selection}\label{appendix-c746afaa47d1-noexcept-and-transfer-selection}
+
+\hypertarget{appendix-c746afaa47d1-noexcept-and-transfer-selection}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C009 · \textbf{Latest development:} C009
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-c746afaa47d1-definition-and-mechanism}
+
+\hypertarget{appendix-c746afaa47d1-definition-and-mechanism}{}
+
+noexcept is an escaping-exception contract; violation terminates. move\_if\_noexcept selects const T\& when a throwing move and usable copy make rollback safer, otherwise T\&\&. It casts rather than transfers, and non-copyable throwing moves may weaken operation-specific guarantees.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-c746afaa47d1-prerequisites}
+
+\hypertarget{appendix-c746afaa47d1-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5636651017c2]{Move operations and moved-from states} --- Traits, failure policy and relocation must distinguish source survival from source destruction.
+\item
+  \hyperref[appendix-bea6beb5350f]{Assignment and exception guarantees} --- A type's transfer declarations must support its chosen failure transaction.
+\item
+  \hyperref[appendix-42e02a12c694]{Special member generation and traits} --- The actual usable construction expression determines trait-controlled transfer selection.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-c746afaa47d1-used-by}
+
+\hypertarget{appendix-c746afaa47d1-used-by}{}
+
+Later sources will extend this node when their guarantees are developed.
+
+\subsection{Recall and next depth}\label{appendix-c746afaa47d1-recall-and-next-depth}
+
+\hypertarget{appendix-c746afaa47d1-recall-and-next-depth}{}
+
+Derive both tested helper result types and the rollback limitation. Pending: exact per-container exceptional effects and allocator propagation. Written coverage does not demonstrate personal mastery.
+
+\subsection{Source and navigation}\label{appendix-c746afaa47d1-source-and-navigation}
+
+\hypertarget{appendix-c746afaa47d1-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch003-failure-guarantees-shape-the-transfer-algorithm]{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15-m009---parts-127-147]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

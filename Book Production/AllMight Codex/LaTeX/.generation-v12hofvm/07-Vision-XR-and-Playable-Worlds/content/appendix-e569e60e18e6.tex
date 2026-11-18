@@ -1,0 +1,32 @@
+\hypertarget{appendix-e569e60e18e6}{}\label{referencestart:appendix-e569e60e18e6}
+\section{Robust vector angles}\label{appendix-e569e60e18e6-robust-vector-angles}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\subsection{Definition and mechanism}\label{appendix-e569e60e18e6-definition-and-mechanism}
+
+The unsigned angle uses nonzero finite directions. An atan2 expression combines cross magnitude and dot, retaining sine- and cosine-like information. Scale inputs before evaluating to reduce range failures. A signed angle requires a specified oriented plane.
+
+Parallel directions give zero, antiparallel directions give \(\pi\), and perpendicular directions give \(\pi/2\). Zero input has no angle.
+
+\subsection{Prerequisites}\label{appendix-e569e60e18e6-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-2391db8052b1]{Cross products and oriented area} --- Oriented area supplies face normals, frame signs and geometric determinants.
+\item
+  \hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization} --- Validated finite unit directions establish the preconditions for simplified geometry formulas.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-e569e60e18e6-used-by}
+
+Later curriculum sources can deepen this same node; no future coverage is marked complete.
+
+\subsection{Recall and next depth}\label{appendix-e569e60e18e6-recall-and-next-depth}
+
+Separate acos domain clamping from input validation, and explain when no angle needs computing. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-e569e60e18e6-source-and-navigation}
+
+\href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch017-an-angle-is-a-question-with-a-domain}{Teaching narrative (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 1)} · \hyperref[appendix-fd090d982a15-phase-6---parts-501-600]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-6---source-analysis-and-verification]{Evidence and limits} · \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Bits, Programs, and Reliable Systems, Reference notes: Dependency Map)}

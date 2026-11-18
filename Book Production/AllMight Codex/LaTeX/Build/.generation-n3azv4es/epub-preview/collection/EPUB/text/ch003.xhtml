@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch003.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-00a6e044c437-subnormals-and-gradual-underflow" class="level2">
+<h2>Subnormals and gradual underflow</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C004 · <strong>Latest development:</strong> C004</p>
+<section id="appendix-00a6e044c437-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Exponent zero and nonzero fraction remove the hidden one and hold the effective exponent at the normal minimum. Binary32 values are F×2^-149, connecting smoothly to 2^-126. Absolute spacing stays fixed while relative precision degrades.</p>
+</section>
+<section id="appendix-00a6e044c437-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch030.xhtml#appendix-2fae058c82e1-exponent-bias" class="wikilink">Exponent bias</a> — Stored exponents must be translated to effective powers before reconstructing value or spacing.</li>
+<li><a href="ch077.xhtml#appendix-a24fd710cf67-significand-and-hidden-bit" class="wikilink">Significand and hidden bit</a> — Fraction weights and effective precision determine value and the smallest retained position.</li>
+</ul>
+</section>
+<section id="appendix-00a6e044c437-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch037.xhtml#appendix-399b7ad53f39-sterbenz-lemma" class="wikilink">Sterbenz lemma</a> — An exact tiny difference may need gradual-underflow representability.</p></li>
+<li><p><a href="ch010.xhtml#appendix-14bab4cab9d4-ulp-and-representable-spacing" class="wikilink">ULP and representable spacing</a> — uses this mechanism in its explanation.</p></li>
+<li><p><a href="ch116.xhtml#appendix-ed8531b46754-floating-point-exception-flags" class="wikilink">Floating-point exception flags</a> — uses this mechanism in its explanation.</p></li>
+<li><p><a href="ch113.xhtml#appendix-e979eb012782-flush-to-zero-and-denormals-are-zero" class="wikilink">Flush-to-zero and denormals-are-zero</a> — uses this mechanism in its explanation.</p></li>
+</ul>
+</section>
+<section id="appendix-00a6e044c437-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the concrete example in the definition and identify its validity assumptions.</p>
+<p><strong>Pending:</strong> A subnormal value alone does not imply an underflow flag; distinguish tininess from inexactness.</p>
+</section>
+<section id="appendix-00a6e044c437-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">M004 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m004---parts-61-76" class="wikilink">Per-part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

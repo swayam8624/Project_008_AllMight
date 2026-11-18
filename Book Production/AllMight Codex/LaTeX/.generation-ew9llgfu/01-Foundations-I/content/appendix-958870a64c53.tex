@@ -1,0 +1,35 @@
+\hypertarget{appendix-958870a64c53}{}
+\section*{Standard-layout and trivial copyability}
+\section{Standard-layout and trivial copyability}\label{appendix-958870a64c53-standard-layout-and-trivial-copyability}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C007 · \textbf{Latest development:} C009
+
+\subsection{Definition and mechanism}\label{appendix-958870a64c53-definition-and-mechanism}
+
+Rule-Zero composition is not itself a trivially-copyable, standard-layout or serialization promise. Hand-written/defaulted special functions can change triviality, and relocation is not generic permission to memmove a nontrivial owner.
+
+Standard-layout is a structural language property supporting useful low-level layout reasoning; it does not promise no padding or a portable ABI. Trivial copyability permits particular byte-copy operations on valid objects/representations, not arbitrary byte validity or serialization. Aggregate, trivial and trivially-copyable are separate traits.
+
+\subsection{Prerequisites}\label{appendix-958870a64c53-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c4ac6bb0fff8]{ABI and object layout} --- ABI offsets and padding must be separated from standard-layout and byte-copy language eligibility.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-958870a64c53-used-by}
+
+Later chunks extend this same node; dependent concepts are listed here as they are integrated.
+
+\subsection{Recall and next depth}\label{appendix-958870a64c53-recall-and-next-depth}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} versioned relocation facilities and measured cross-target ABI properties.
+
+\subsection{Source and navigation}\label{appendix-958870a64c53-source-and-navigation}
+
+\hyperref[appendix-fd090d982a15-m009---parts-127-147]{C009 development}
+
+\hyperref[01-foundations-i-ch003-bringing-the-object-model-back-to-bytes]{C007 teaching chapter} · \hyperref[appendix-fd090d982a15-m007---parts-101-112]{Source coverage} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

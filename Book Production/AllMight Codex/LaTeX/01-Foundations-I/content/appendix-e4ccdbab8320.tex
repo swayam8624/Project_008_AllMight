@@ -1,0 +1,45 @@
+\hypertarget{appendix-e4ccdbab8320}{}
+\section*{Cache lines and memory bandwidth}
+\section{Cache lines and memory bandwidth}\label{cache-lines-and-memory-bandwidth}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C003
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Packing can place more logical values in each transferred cache line, trading arithmetic for lower footprint and traffic.
+
+A cache line is the block moved between cache levels; memory bandwidth is bytes transferred per unit time. With an illustrative 64-byte line, byte-per-bit data stores 64 logical bits, while packed data stores 512. Real line sizes and performance must be measured for the target.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5bee2df85484]{Byte and octet} --- An octet is exactly eight bits.
+\item
+  \hyperref[appendix-18ee4f913c3c]{Addresses and virtual memory} --- An address names a storage location in an address space.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Field reordering and AoS versus SoA (05-Engine-I, appendix-5522ad176ca0)} --- depends on this concept; see its prerequisite explanation.
+\end{itemize}
+
+\subsection{M003 development}\label{m003-development}
+
+A four-byte load at line offset 62 crosses two 64-byte lines; a page crossing also requires a second translation. Reordering 24→16-byte records reduces footprint, not necessarily measured traffic or speed. \href{}{Field reordering and AoS versus SoA (05-Engine-I, appendix-5522ad176ca0)} separates hot field arrays from full records; \hyperref[appendix-7a2d9c5ce511]{TLB} caches translations rather than contents.
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Explain cache lines and memory bandwidth without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} measurement, locality, hierarchy levels, and prefetch behavior.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#From\%20a\%20signal\%20to\%20an\%20interpretation}{C001 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Where\%20the\%20bytes\%20live}{C003 development}

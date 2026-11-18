@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch167.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-d52e4486f527-ownership-and-non-owning-views" class="level2">
+<h2>Ownership and non-owning views</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C010</p>
+<section id="appendix-d52e4486f527-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>By-value copies use member semantics, not recursive deep cloning. Rule-Zero composition delegates ownership to members; raw owners must coordinate transfer and release. Copying a pointer/view/handle is not acquiring ownership.</p>
+<p>Copying span/string_view or capturing a view by value copies only a descriptor. An owning string capture supplies independent storage; a view or handle does not automatically pin a deferred resource.</p>
+<p>The inline C++ laboratory distinguishes NamedVector::to_array, which copies values into a new array, from ArrayVector::view, which aliases actual array elements without owning them. Neither span nor pointer extends backing lifetime. Ownership and RAII are introduced as next-depth connections, not yet a full exception-safety treatment.</p>
+<p>M010 makes the distinction operational: an owner is responsible for release; a borrow only accesses. <code>std::unique_ptr</code> expresses exclusive ownership, <code>std::shared_ptr</code> retains a shared lifetime, and <code>std::weak_ptr</code> observes without extending that lifetime. Smart pointers do not remove the borrow/invalidation rules of raw pointers obtained from them. See <a href="ch061.xhtml#appendix-69739d3ab49b-raii-and-resource-handles" class="wikilink">RAII and resource handles (Bits, Programs, and Reliable Systems, Part 1, Reference notes: RAII and resource handles)</a> and <a href="ch204.xhtml#appendix-51602cabe815-exclusive-and-shared-smart-pointer-ownership" class="wikilink">Exclusive and shared smart-pointer ownership (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Exclusive and shared smart-pointer ownership)</a>.</p>
+<p>An owner controls a resource’s validity and release; a view merely refers to it. Vector owns its element buffer; span does not copy or prolong that buffer’s life. Owner destruction or invalidating reallocation can dangle the span. A reader retaining a span needs stable live backing for every read, not only at construction.</p>
+</section>
+<section id="appendix-d52e4486f527-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch127.xhtml#appendix-0b104bcba06b-storage-duration-and-object-lifetime" class="wikilink">Storage duration and object lifetime</a> — Access requires an object and backing storage that are still valid.</li>
+<li><a href="ch163.xhtml#appendix-c3480f7d9ff3-dynamic-allocation-and-heap" class="wikilink">Dynamic allocation and heap</a> — Allocated buffers/blocks supply the storage whose ownership and fragmentation matter.</li>
+</ul>
+</section>
+<section id="appendix-d52e4486f527-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch134.xhtml#appendix-313ee7a0ba7b-memory-mapped-files" class="wikilink">Memory-mapped files</a> — uses this mechanism as stated in its prerequisites.</li>
+<li><a href="ch168.xhtml#appendix-e89a8f290ef5-atomic-publication-and-durability" class="wikilink">Atomic publication and durability</a> — uses this mechanism as stated in its prerequisites.</li>
+<li><a href="ch190.xhtml#appendix-aea529eb5175-deferred-captures-and-borrowed-views" class="wikilink">Deferred captures and borrowed views</a></li>
+<li><a href="ch176.xhtml#appendix-1340cd1ce582-copy-semantics-and-resource-identity" class="wikilink">Copy semantics and resource identity</a></li>
+<li><a href="ch183.xhtml#appendix-7679107d057e-rules-of-three-five-and-zero" class="wikilink">Rules of Three Five and Zero</a></li>
+<li><a href="ch061.xhtml#appendix-69739d3ab49b-raii-and-resource-handles" class="wikilink">RAII and resource handles (Bits, Programs, and Reliable Systems, Part 1, Reference notes: RAII and resource handles)</a></li>
+<li><a href="ch204.xhtml#appendix-51602cabe815-exclusive-and-shared-smart-pointer-ownership" class="wikilink">Exclusive and shared smart-pointer ownership (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Exclusive and shared smart-pointer ownership)</a></li>
+</ul>
+</section>
+<section id="appendix-d52e4486f527-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain why returning a view into a local vector fails.</p>
+<p><strong>Pending:</strong> smart owners, shared immutable data and scheduling/resource pinning.</p>
+</section>
+<section id="appendix-d52e4486f527-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch207.xhtml#appendix-fd090d982a15-m009---parts-127-147" class="wikilink">C009 development</a></p>
+<p><a href="ch207.xhtml#appendix-fd090d982a15-m008---parts-113-126" class="wikilink">C008 development and corrections</a></p>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a> · <a href="ch173.xhtml#id_01-foundations-i-ch003-bringing-the-object-model-back-to-bytes" class="wikilink">C007 development</a></p>
+</section>
+</section>
+</body>
+</html>

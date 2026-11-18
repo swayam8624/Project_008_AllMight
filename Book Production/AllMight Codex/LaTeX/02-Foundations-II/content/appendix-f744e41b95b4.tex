@@ -1,0 +1,46 @@
+\hypertarget{appendix-f744e41b95b4}{}
+\section*{Unit directions and safe normalization}
+\section{Unit directions and safe normalization}\label{unit-directions-and-safe-normalization}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A unit direction is finite, nonzero input scaled to approximate length one. Scale by the largest absolute component before measuring to avoid unnecessary squared overflow or underflow. Zero has no direction; application noise thresholds are distinct from numerical existence.
+
+For finite nonzero input, scaled squared length lies between \(1\) and \(3\). A vector of huge components can have a computable unit direction even when its original length does not fit.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-49933872bb51]{Norms lengths and induced distances} --- Lengths and their domains are needed before unit directions or angular measurements.
+\item
+  \href{}{Robust norm and intermediate range (01-Foundations-I, appendix-7f1e17dcafb1)} --- Range-safe scaling avoids losing a valid direction to unnecessary squared intermediates.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-e569e60e18e6]{Robust vector angles} --- Builds on this mechanism in the connected geometry story.
+\item
+  \hyperref[appendix-e31893dec985]{Surface tangents normals and bitangents} --- Builds on this mechanism in the connected geometry story.
+\item
+  \hyperref[appendix-44e00863b4d5]{Reflection refraction and shading directions} --- Builds on this mechanism in the connected geometry story.
+\item
+  \hyperref[appendix-380a220e2529]{Coordinate-space types and validated invariants} --- Builds on this mechanism in the connected geometry story.
+\item
+  \hyperref[appendix-cac01ebeeb11]{Axial depth and Euclidean range}
+\item
+  \hyperref[appendix-fc99ad39f351]{Omnidirectional camera projections}
+\item
+  \hyperref[appendix-f1a6d43e80d1]{Screen-space ray generation and mouse picking} \#\# Recall and next depth
+\end{itemize}
+
+Reconstruct the bounds and distinguish rejection, a caller fallback, and a validated wrapper. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20direction\%20can\%20exist\%20even\%20when\%20the\%20naive\%20length\%20overflows}{Teaching narrative} · \href{}{Coverage and source gap (01-Foundations-I, appendix-fd090d982a15 § Phase 6 - Parts 501-600)} · \href{}{Evidence and limits (01-Foundations-I, appendix-a103e7846d21 § Phase 6 - Source analysis and verification)} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

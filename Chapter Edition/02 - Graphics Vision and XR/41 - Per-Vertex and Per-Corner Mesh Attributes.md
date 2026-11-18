@@ -8,7 +8,7 @@ A mesh vertex can carry a single shared value, while a corner can carry values t
 
 **Recall question:** When should two triangles share a vertex position but keep separate corner attributes?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 94606–97863; source-span SHA256 c8d8b33f6c039e15153ca041dae1dd9fdbdecdebf8e8bea1c5148b831d7a5ad9. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 95949–99206; source-span SHA256 c8d8b33f6c039e15153ca041dae1dd9fdbdecdebf8e8bea1c5148b831d7a5ad9. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Per-vertex vs per-corner

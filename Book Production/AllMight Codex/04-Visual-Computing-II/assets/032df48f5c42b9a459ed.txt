@@ -1,0 +1,3099 @@
+The next five canonical parts are **521. Affine points versus free vectors**, **522. Position vectors and why points are not mathematically vectors**, **523. Direction vectors**, **524. Displacement vectors**, and **525. Unit vectors**. Project_Sheldon_Master_Curricul…
+
+I am treating the merge only as a presentation convenience. I am not compressing the individual concepts. These five are actually one of the most important semantic blocks in graphics mathematics because they answer a question that plain `Vec3` APIs usually hide: **when three numbers describe a location, when do they describe movement, when do they describe only orientation, and which operations are actually legal?** The mastery contract specifically requires us to distinguish mathematical meaning from storage and implementation, so that distinction will stay explicit throughout. Pasted markdown
+
+---
+
+# PART 521 — AFFINE POINTS VERSUS FREE VECTORS
+
+## 521.1 The problem with pretending everything is a vector
+
+Up to now, we have used things like
+
+\[
+(x,y,z)
+\]
+
+to represent vectors.
+
+But graphics programs also represent **points** using exactly three numbers:
+
+```cpp
+Vec3 position;
+Vec3 velocity;
+Vec3 normal;
+Vec3 direction;
+```
+
+At the byte level these may all be identical:
+
+```text
+float
+float
+float
+```
+
+Yet the mathematics is not identical.
+
+Suppose:
+
+\[
+P=(3,4,2)
+\]
+
+is a point in space.
+
+What should this mean?
+
+It means:
+
+> there is a location \(P\).
+
+Now suppose:
+
+\[
+\vec v=(3,4,2)
+\]
+
+is a vector.
+
+That means:
+
+> there is a displacement containing those components relative to some basis.
+
+Those are different kinds of objects.
+
+The most important semantic distinction is:
+
+\[
+\boxed{
+\text{point}=\text{location}
+}
+\]
+
+while
+
+\[
+\boxed{
+\text{vector}=\text{displacement}
+}
+\]
+
+and merely giving both three coordinates does not erase that distinction.
+
+---
+
+# 521.2 Why a point should not have vector-space operations
+
+Think physically.
+
+Suppose London and Paris are represented as points.
+
+What does this mean?
+
+\[
+\text{London}+\text{Paris}
+\]
+
+There is no naturally defined geometric location produced by "adding two locations."
+
+Likewise:
+
+\[
+2\cdot\text{Paris}
+\]
+
+is meaningless unless we first introduce an arbitrary origin and interpret the point as a position vector.
+
+But suppose we have two displacement vectors:
+
+\[
+\vec u,\vec v.
+\]
+
+Then:
+
+\[
+\vec u+\vec v
+\]
+
+has a natural meaning: perform one displacement followed by the other.
+
+And:
+
+\[
+2\vec u
+\]
+
+means twice the displacement.
+
+Therefore points do **not** naturally satisfy the vector-space operations.
+
+This is why geometric points are not fundamentally vectors.
+
+---
+
+# 521.3 But subtraction of points makes perfect sense
+
+Let:
+
+\[
+A
+\]
+
+and:
+
+\[
+B
+\]
+
+be points.
+
+What is:
+
+\[
+B-A?
+\]
+
+That has a natural interpretation:
+
+> the displacement required to travel from \(A\) to \(B\).
+
+So:
+
+\[
+\boxed{
+B-A=\overrightarrow{AB}
+}
+\]
+
+is a vector.
+
+This is extremely important.
+
+The operation types are:
+
+\[
+\boxed{
+\text{point}-\text{point}=\text{vector}
+}
+\]
+
+not point.
+
+For example:
+
+\[
+A=(2,3)
+\]
+
+and:
+
+\[
+B=(7,5).
+\]
+
+Then:
+
+\[
+B-A=(5,2).
+\]
+
+The output does not mean the location \((5,2)\).
+
+It means:
+
+> move +5 along the first basis direction and +2 along the second.
+
+Same numbers, different semantic object.
+
+---
+
+# 521.4 Point plus vector also makes sense
+
+If:
+
+\[
+P
+\]
+
+is a point and:
+
+\[
+\vec d
+\]
+
+is a displacement, then:
+
+\[
+P+\vec d
+\]
+
+means:
+
+> start at point \(P\), then perform displacement \(\vec d\).
+
+The result is another point.
+
+Thus:
+
+\[
+\boxed{
+\text{point}+\text{vector}=\text{point}.
+}
+\]
+
+Example:
+
+\[
+P=(10,5)
+\]
+
+and:
+
+\[
+\vec d=(3,-2).
+\]
+
+Then:
+
+\[
+P+\vec d=(13,3).
+\]
+
+This has direct physical meaning.
+
+---
+
+# 521.5 Vector plus point
+
+Mathematically, because the translation action can be written either way in informal engineering notation, one sometimes sees:
+
+\[
+\vec d+P.
+\]
+
+But semantically it is better to think:
+
+\[
+P+\vec d.
+\]
+
+Why?
+
+Because the operation conceptually says:
+
+> translate the point by this vector.
+
+A strongly typed library may therefore support:
+
+```cpp
+Point3 operator+(Point3 p, Vec3 d);
+```
+
+and optionally:
+
+```cpp
+Point3 operator+(Vec3 d, Point3 p);
+```
+
+But the first spelling exposes the geometry more naturally.
+
+---
+
+# 521.6 Point minus vector
+
+Similarly:
+
+\[
+P-\vec d
+\]
+
+means:
+
+> translate \(P\) in the opposite direction.
+
+Since:
+
+\[
+P-\vec d
+=
+P+(-\vec d),
+\]
+
+the result is another point.
+
+So:
+
+\[
+\boxed{
+\text{point}-\text{vector}=\text{point}.
+}
+\]
+
+---
+
+# 521.7 The legal affine operations
+
+The fundamental pattern is:
+
+\[
+\boxed{
+P-Q=\vec v
+}
+\]
+
+\[
+\boxed{
+P+\vec v=Q
+}
+\]
+
+\[
+\boxed{
+\vec u+\vec v=\vec w.
+}
+\]
+
+But generally:
+
+\[
+\boxed{
+P+Q
+}
+\]
+
+is not a geometrically fundamental operation.
+
+Nor is:
+
+\[
+\boxed{
+aP
+}
+\]
+
+for arbitrary scalar \(a\).
+
+That distinction is the beginning of **affine geometry**.
+
+---
+
+# 521.8 What is an affine space?
+
+We can now define the idea more carefully.
+
+A vector space has:
+
+\[
+\vec0
+\]
+
+a distinguished zero vector.
+
+An affine space does not inherently have a distinguished origin.
+
+It contains **points**, and there is an associated vector space of translations.
+
+If \(A\) and \(B\) are points, then:
+
+\[
+B-A
+\]
+
+is a vector.
+
+If \(A\) is a point and \(\vec v\) is a vector, then:
+
+\[
+A+\vec v
+\]
+
+is another point.
+
+This is enough structure to describe geometry without declaring one point to be "the zero point."
+
+That is the key idea.
+
+---
+
+# 521.9 Why an affine space deliberately lacks a preferred origin
+
+Imagine ordinary physical space.
+
+Is there some mathematically privileged location that the universe itself declares:
+
+\[
+(0,0,0)?
+\]
+
+No.
+
+We choose an origin for convenience.
+
+For an engine it might be:
+
+```text
+world origin
+scene origin
+camera origin
+object origin
+```
+
+but these are conventions imposed by us.
+
+Physical locations exist independently of which origin we choose.
+
+So affine geometry models the idea:
+
+\[
+\boxed{
+\text{locations have meaningful differences even when there is no intrinsically meaningful zero location.}
+}
+\]
+
+Vectors do have an intrinsic zero:
+
+\[
+\vec0
+=
+\text{no displacement}.
+\]
+
+Points do not.
+
+This is one of the deepest reasons points and vectors are different.
+
+---
+
+# 521.10 A useful analogy
+
+Temperature differences versus absolute thermometer readings are not a perfect mathematical analogy, but they capture part of the intuition.
+
+If one reading is \(30^\circ\) and another \(20^\circ\), their difference is meaningful:
+
+\[
+30-20=10.
+\]
+
+But changing the chosen zero convention alters absolute coordinate values.
+
+Likewise spatial coordinates depend on an origin.
+
+Displacements between points do not.
+
+---
+
+# 521.11 Translation of the entire coordinate origin
+
+Suppose point \(P\) has world coordinates:
+
+\[
+P=(10,4).
+\]
+
+Now move the coordinate origin by:
+
+\[
+(7,1).
+\]
+
+The physical point has not moved.
+
+Its new coordinates become:
+
+\[
+P'=(3,3).
+\]
+
+So the coordinates of the point changed.
+
+But suppose another point:
+
+\[
+Q=(14,6).
+\]
+
+Originally:
+
+\[
+Q-P=(4,2).
+\]
+
+After origin shift:
+
+\[
+Q'=(7,5).
+\]
+
+Now:
+
+\[
+Q'-P'
+=
+(7,5)-(3,3)
+=
+(4,2).
+\]
+
+The displacement is unchanged.
+
+This is a central affine property:
+
+\[
+\boxed{
+\text{point coordinates depend on origin;
+point differences do not.}
+}
+\]
+
+---
+
+# 521.12 Why vectors are called free vectors
+
+A **free vector** is not bound to one specific location.
+
+If:
+
+\[
+\vec v=(3,2),
+\]
+
+we can draw it anywhere:
+
+```text
+●───→
+
+               ●───→
+
+       ●───→
+```
+
+and each arrow may represent the same vector.
+
+Only the displacement matters.
+
+The tail location is not part of the free vector.
+
+A point, by contrast, fundamentally represents location.
+
+---
+
+# 521.13 C++ representation
+
+A weak math library may do:
+
+```cpp
+using Point3 = Vec3;
+```
+
+which gives no semantic protection.
+
+A stronger design:
+
+```cpp
+struct Vec3 {
+    float x;
+    float y;
+    float z;
+};
+
+struct Point3 {
+    float x;
+    float y;
+    float z;
+};
+```
+
+Even though both commonly occupy 12 bytes, the type distinction lets us encode valid operations.
+
+```cpp
+constexpr Vec3 operator-(Point3 b, Point3 a) noexcept
+{
+    return {
+        b.x - a.x,
+        b.y - a.y,
+        b.z - a.z
+    };
+}
+```
+
+Point translated by vector:
+
+```cpp
+constexpr Point3 operator+(Point3 p, Vec3 v) noexcept
+{
+    return {
+        p.x + v.x,
+        p.y + v.y,
+        p.z + v.z
+    };
+}
+```
+
+Point minus displacement:
+
+```cpp
+constexpr Point3 operator-(Point3 p, Vec3 v) noexcept
+{
+    return {
+        p.x - v.x,
+        p.y - v.y,
+        p.z - v.z
+    };
+}
+```
+
+But deliberately no:
+
+```cpp
+Point3 operator+(Point3, Point3);
+```
+
+The compiler can now prevent nonsense.
+
+---
+
+# 521.14 Zero-cost semantic typing
+
+Importantly, strong types do not necessarily make runtime code slower.
+
+Both:
+
+```cpp
+Vec3
+```
+
+and:
+
+```cpp
+Point3
+```
+
+can still compile to three floats.
+
+The distinction may exist only at compile time.
+
+So we can obtain:
+
+\[
+\boxed{
+\text{stronger correctness with essentially zero runtime overhead}.
+}
+\]
+
+That is an excellent example of a zero-cost abstraction.
+
+---
+
+# PART 522 — POSITION VECTORS AND WHY POINTS ARE NOT MATHEMATICALLY VECTORS
+
+Now we confront something potentially confusing.
+
+Engine code frequently calls:
+
+```cpp
+Vec3 position;
+```
+
+and mathematics often writes a point \(P\) using something that looks exactly like a vector.
+
+How can we say:
+
+> points are not vectors
+
+while also discussing a **position vector**?
+
+The answer is that a position vector is created **after choosing an origin**.
+
+---
+
+# 522.1 Creating a position vector
+
+Choose an origin:
+
+\[
+O.
+\]
+
+For point:
+
+\[
+P,
+\]
+
+define the vector:
+
+\[
+\boxed{
+\overrightarrow{OP}
+}
+\]
+
+from the origin to \(P\).
+
+That vector is called the **position vector of \(P\) relative to \(O\)**.
+
+This is what ordinary coordinate tuples often actually store.
+
+If:
+
+\[
+P=(3,4)
+\]
+
+relative to origin \(O\), what that really says is:
+
+\[
+\overrightarrow{OP}
+=
+3\vec e_x+4\vec e_y.
+\]
+
+---
+
+# 522.2 The position vector depends on the origin
+
+This is the essential caveat.
+
+Point \(P\) is the same geometric point regardless of which origin we choose.
+
+But:
+
+\[
+\overrightarrow{OP}
+\]
+
+changes when \(O\) changes.
+
+Suppose:
+
+\[
+O=(0,0)
+\]
+
+and:
+
+\[
+P=(10,5).
+\]
+
+Then:
+
+\[
+\overrightarrow{OP}=(10,5).
+\]
+
+Choose new origin:
+
+\[
+O'=(7,2).
+\]
+
+Then:
+
+\[
+\overrightarrow{O'P}
+=
+(3,3).
+\]
+
+The point \(P\) did not move.
+
+The position vector changed.
+
+Therefore:
+
+\[
+\boxed{
+P
+\neq
+\overrightarrow{OP}
+}
+\]
+
+as fundamental mathematical objects.
+
+The latter depends on an arbitrary choice of origin.
+
+---
+
+# 522.3 Why programmers often blur the distinction
+
+Because once an engine chooses a world origin, every point can be encoded by one vector from that origin.
+
+Then:
+
+```cpp
+Vec3 position;
+```
+
+works very conveniently.
+
+If the origin never changes, it can feel as if:
+
+\[
+\text{point}
+=
+\text{vector}.
+\]
+
+But mathematically we have merely selected an affine origin and identified each point with a vector relative to that origin.
+
+The distinction is hidden—not eliminated.
+
+---
+
+# 522.4 Why this distinction matters in real engine systems
+
+Consider large-world rendering.
+
+Suppose an object is physically located at:
+
+\[
+(1{,}000{,}000,\ 0,\ 0)
+\]
+
+and another nearby object at:
+
+\[
+(1{,}000{,}000.1,\ 0,\ 0).
+\]
+
+If stored as float position vectors relative to a very distant world origin, precision becomes poor.
+
+One solution is camera-relative rendering or origin rebasing.
+
+The physical points do not change.
+
+But their position vectors relative to the selected origin do.
+
+This is exactly the distinction Part 522 is trying to establish.
+
+---
+
+# 522.5 Deriving point difference through position vectors
+
+Choose common origin \(O\).
+
+Let:
+
+\[
+\vec p=\overrightarrow{OP}
+\]
+
+and:
+
+\[
+\vec q=\overrightarrow{OQ}.
+\]
+
+We want the displacement:
+
+\[
+\overrightarrow{PQ}.
+\]
+
+Travel:
+
+\[
+O\rightarrow P
+\]
+
+then:
+
+\[
+P\rightarrow Q.
+\]
+
+That must equal:
+
+\[
+O\rightarrow Q.
+\]
+
+Therefore:
+
+\[
+\vec p+\overrightarrow{PQ}
+=
+\vec q.
+\]
+
+Hence:
+
+\[
+\boxed{
+\overrightarrow{PQ}
+=
+\vec q-\vec p.
+}
+\]
+
+That is why subtracting position coordinates produces displacement.
+
+---
+
+# 522.6 Why translating the origin cancels in differences
+
+Suppose coordinates are changed by common offset \(\vec t\):
+
+\[
+\vec p'=\vec p-\vec t
+\]
+
+\[
+\vec q'=\vec q-\vec t.
+\]
+
+Then:
+
+\[
+\vec q'-\vec p'
+\]
+
+becomes:
+
+\[
+(\vec q-\vec t)-(\vec p-\vec t).
+\]
+
+Rearrange:
+
+\[
+\vec q-\vec t-\vec p+\vec t.
+\]
+
+The translation terms cancel:
+
+\[
+-\vec t+\vec t=\vec0.
+\]
+
+So:
+
+\[
+\boxed{
+\vec q'-\vec p'
+=
+\vec q-\vec p.
+}
+\]
+
+This algebraically proves why displacements are translation invariant.
+
+---
+
+# 522.7 Why point scaling is origin-dependent
+
+Take a point \(P\).
+
+Suppose we write:
+
+\[
+2P.
+\]
+
+If we secretly mean:
+
+\[
+2\overrightarrow{OP},
+\]
+
+then the result depends on origin \(O\).
+
+Change the origin and "twice the point" produces a different location.
+
+Therefore scalar multiplication is not intrinsic to the point itself.
+
+That's why points do not naturally form a vector space.
+
+---
+
+# 522.8 Why the zero point is not intrinsic
+
+A vector space contains:
+
+\[
+\vec0.
+\]
+
+This means:
+
+> no displacement.
+
+That is intrinsic.
+
+But what would the "zero point" mean geometrically?
+
+There is no universal one.
+
+An engine chooses:
+
+```text
+world origin = some point
+```
+
+and represents it as:
+
+\[
+(0,0,0).
+\]
+
+Another coordinate frame may choose a completely different point as:
+
+\[
+(0,0,0).
+\]
+
+So:
+
+\[
+\boxed{
+\text{zero vector is intrinsic;
+zero point is conventional}.
+}
+\]
+
+---
+
+# 522.9 Local position versus world position
+
+Suppose a child object is 2 metres to the right of its parent.
+
+Local position might be:
+
+\[
+(2,0,0)_{\text{local}}.
+\]
+
+If the parent is rotated and translated, the child's world position may be:
+
+\[
+(35,7,-9)_{\text{world}}.
+\]
+
+These are two position-vector representations associated with different origins/bases.
+
+The geometric point occupied by the child is one location.
+
+Its coordinate representation depends on frame.
+
+This distinction becomes central in transform hierarchies later.
+
+---
+
+# 522.10 Strong types for positions
+
+A richer implementation could tag coordinate space:
+
+```cpp
+struct WorldSpace {};
+struct LocalSpace {};
+struct ViewSpace {};
+
+template<typename Space>
+struct Point3 {
+    float x;
+    float y;
+    float z;
+};
+
+template<typename Space>
+struct Vec3 {
+    float x;
+    float y;
+    float z;
+};
+```
+
+Then:
+
+```cpp
+Point3<WorldSpace> worldPosition;
+Point3<LocalSpace> localPosition;
+```
+
+cannot accidentally be subtracted without an explicit transform.
+
+This encodes both:
+
+1. point versus vector semantics;
+2. coordinate-space semantics.
+
+That is far stronger than one universal `Vec3`.
+
+---
+
+# PART 523 — DIRECTION VECTORS
+
+Now we distinguish another vector role.
+
+Suppose we do not care about:
+
+> how far to move.
+
+We only care about:
+
+> which way?
+
+That is the role of a **direction vector**.
+
+---
+
+# 523.1 Direction versus displacement
+
+Consider:
+
+\[
+\vec d=(1,0,0).
+\]
+
+As a displacement, it may mean:
+
+> move one metre along X.
+
+As a direction, it may mean:
+
+> point along positive X.
+
+Now consider:
+
+\[
+(100,0,0).
+\]
+
+As a displacement it is 100 times larger.
+
+But as a direction, it points the same way.
+
+So direction often treats positive scalar multiples as representing the same orientation:
+
+\[
+\vec d
+\]
+
+and:
+
+\[
+a\vec d,\qquad a>0
+\]
+
+have the same directional orientation.
+
+This is why direction vectors are often normalized.
+
+---
+
+# 523.2 A direction vector should usually be nonzero
+
+Can:
+
+\[
+\vec0
+\]
+
+represent a direction?
+
+No.
+
+The zero vector has no preferred orientation.
+
+It says:
+
+> no displacement at all.
+
+There is no "way" associated with it.
+
+Therefore a direction semantic often has the invariant:
+
+\[
+\boxed{
+\vec d\neq\vec0.
+}
+\]
+
+A normalized direction has the stronger invariant:
+
+\[
+\|\vec d\|=1.
+\]
+
+Unit vectors are Part 525.
+
+---
+
+# 523.3 A direction is not a point
+
+Suppose camera forward direction is:
+
+\[
+(0,0,-1).
+\]
+
+This does not mean the camera is located at:
+
+\[
+(0,0,-1).
+\]
+
+The tuple's meaning depends on type semantics.
+
+That is exactly why declarations such as:
+
+```cpp
+Vec3 cameraPosition;
+Vec3 cameraForward;
+```
+
+carry much more semantic information in the variable names than in the raw `Vec3` type itself.
+
+---
+
+# 523.4 Translation should not affect a direction
+
+This is critical.
+
+Suppose an object points east.
+
+Translate the object 100 metres upward.
+
+Did its direction change?
+
+No.
+
+Translation changes positions.
+
+It does not change free direction vectors.
+
+Therefore:
+
+\[
+\boxed{
+\text{directions are translation-invariant}.
+}
+\]
+
+Later homogeneous coordinates encode this elegantly using different \(w\)-values, but that is Part 579.
+
+For now, the conceptual rule is enough.
+
+---
+
+# 523.5 Rotation does affect a direction
+
+Suppose:
+
+\[
+\vec d=(1,0)
+\]
+
+points east.
+
+Rotate the object \(90^\circ\).
+
+Its direction becomes:
+
+\[
+(0,1)
+\]
+
+under the conventional mathematical coordinate plane.
+
+So:
+
+```text
+translation → direction unchanged
+rotation    → direction changes
+scaling     → depends on semantics
+```
+
+Uniform positive scale changes magnitude but not orientation.
+
+Negative scale may flip orientation.
+
+Nonuniform scale requires more care because it can alter the direction after transformation.
+
+That topic is handled later with matrices.
+
+---
+
+# 523.6 Direction of a line
+
+A line can be conceptually described by:
+
+\[
+P+t\vec d
+\]
+
+where:
+
+\[
+P
+\]
+
+is a point and:
+
+\[
+\vec d
+\]
+
+is a nonzero direction vector.
+
+Changing \(t\) moves along the line.
+
+If we replace \(\vec d\) with:
+
+\[
+2\vec d,
+\]
+
+the same geometric line is described—we merely change how quickly the parameter \(t\) traverses it.
+
+This shows why direction magnitude often does not matter geometrically.
+
+Full parametric-line/ray equations are later Parts 1104–1107; this is only the conceptual connection.
+
+---
+
+# 523.7 Opposite directions
+
+Be careful:
+
+\[
+\vec d
+\]
+
+and:
+
+\[
+-\vec d
+\]
+
+do **not** represent the same oriented direction.
+
+They lie along the same line but point oppositely.
+
+Thus:
+
+```text
+parallel orientation without sign
+```
+
+and:
+
+```text
+directed orientation
+```
+
+are different concepts.
+
+For rays, camera forward vectors, normals, velocities, and lighting directions, the sign usually matters.
+
+---
+
+# 523.8 Direction versus unit direction
+
+A direction vector does not mathematically have to have unit length.
+
+These both point the same way:
+
+\[
+(1,2,0)
+\]
+
+and:
+
+\[
+(10,20,0).
+\]
+
+But algorithms often want magnitude removed so direction alone remains.
+
+Then we use a unit direction:
+
+\[
+\hat d.
+\]
+
+The hat notation often indicates unit length.
+
+Do not assume every direction variable is automatically normalized unless the API guarantees it.
+
+---
+
+# 523.9 Direction invariants in C++
+
+A weak representation:
+
+```cpp
+using Direction3 = Vec3;
+```
+
+allows zero vectors.
+
+A stronger wrapper:
+
+```cpp
+class Direction3 {
+public:
+    static std::optional<Direction3> fromNonZero(Vec3 v) noexcept;
+
+    Vec3 value() const noexcept {
+        return value_;
+    }
+
+private:
+    explicit Direction3(Vec3 v) noexcept
+        : value_(v) {}
+
+    Vec3 value_;
+};
+```
+
+can enforce:
+
+\[
+\vec d\neq0.
+\]
+
+An even stronger `UnitDirection3` could enforce unit length.
+
+This makes invalid state harder to construct.
+
+---
+
+# 523.10 Direction-space bugs
+
+Suppose:
+
+```cpp
+Vec3 lightDirWorld;
+Vec3 normalTangent;
+```
+
+and code computes:
+
+```cpp
+dot(lightDirWorld, normalTangent);
+```
+
+The vectors may both be nonzero and perfectly normalized.
+
+The result is still meaningless because they are expressed in different bases.
+
+Direction semantics do not eliminate coordinate-space semantics.
+
+We always need both.
+
+---
+
+# PART 524 — DISPLACEMENT VECTORS
+
+A displacement vector answers:
+
+\[
+\boxed{
+\text{how do I move from one point to another?}
+}
+\]
+
+This is related to direction, but not identical.
+
+---
+
+# 524.1 Formal geometric meaning
+
+Given points:
+
+\[
+A,\quad B,
+\]
+
+define displacement:
+
+\[
+\boxed{
+\vec d=\overrightarrow{AB}=B-A.
+}
+\]
+
+This vector contains both:
+
+1. orientation;
+2. amount.
+
+Unlike a pure direction role, its magnitude is meaningful.
+
+If:
+
+\[
+\vec d=(3,4),
+\]
+
+then the displacement is different from:
+
+\[
+2\vec d=(6,8).
+\]
+
+They point in the same direction but correspond to different movements.
+
+---
+
+# 524.2 Displacement versus direction
+
+Suppose:
+
+\[
+B-A=(30,40).
+\]
+
+This displacement may represent movement of a particular size.
+
+Its direction can be extracted from that displacement later by normalization.
+
+So conceptually:
+
+```text
+point A
+   ↓
+point B
+
+B - A
+   ↓
+displacement
+   ↓ remove magnitude
+direction
+```
+
+That distinction matters constantly.
+
+---
+
+# 524.3 Zero displacement is valid
+
+Unlike a direction, displacement:
+
+\[
+\vec0
+\]
+
+is perfectly valid.
+
+It means:
+
+> source and destination coincide.
+
+If:
+
+\[
+A=B,
+\]
+
+then:
+
+\[
+B-A=\vec0.
+\]
+
+So the invariants differ:
+
+```text
+Displacement:
+zero allowed
+
+Direction:
+zero generally invalid
+```
+
+This is one reason they should not always share the exact same semantic type.
+
+---
+
+# 524.4 Composition of displacements
+
+Suppose:
+
+\[
+A\rightarrow B
+\]
+
+has displacement:
+
+\[
+\vec d_1=B-A.
+\]
+
+And:
+
+\[
+B\rightarrow C
+\]
+
+has:
+
+\[
+\vec d_2=C-B.
+\]
+
+Then total displacement:
+
+\[
+A\rightarrow C
+\]
+
+is:
+
+\[
+\vec d_1+\vec d_2.
+\]
+
+Let's prove it.
+
+\[
+(B-A)+(C-B)
+\]
+
+rearrange:
+
+\[
+B-A+C-B.
+\]
+
+The \(B\) terms cancel:
+
+\[
+=C-A.
+\]
+
+Therefore:
+
+\[
+\boxed{
+(B-A)+(C-B)=C-A.
+}
+\]
+
+This is a beautiful algebraic expression of head-to-tail movement composition.
+
+---
+
+# 524.5 Translation invariance of displacement
+
+Shift both points by same vector \(\vec t\):
+
+\[
+A'=A+\vec t
+\]
+
+\[
+B'=B+\vec t.
+\]
+
+Then:
+
+\[
+B'-A'
+\]
+
+becomes:
+
+\[
+(B+\vec t)-(A+\vec t).
+\]
+
+Cancel:
+
+\[
+=B-A.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\text{displacement is unaffected by common translation}.
+}
+\]
+
+This is exactly what a free vector should do.
+
+---
+
+# 524.6 Units matter
+
+If points represent metres, then:
+
+\[
+B-A
+\]
+
+also represents metres.
+
+If:
+
+\[
+A=(2,0,0)\text{ m}
+\]
+
+and:
+
+\[
+B=(5,4,0)\text{ m},
+\]
+
+then:
+
+\[
+\vec d=(3,4,0)\text{ m}.
+\]
+
+Displacement is a spatial difference, not a velocity.
+
+Velocity includes time:
+
+\[
+\frac{\text{distance}}{\text{time}}.
+\]
+
+Acceleration adds another time dimension:
+
+\[
+\frac{\text{distance}}{\text{time}^2}.
+\]
+
+All can use vector storage but have different units and semantics.
+
+---
+
+# 524.7 Displacement update
+
+Suppose:
+
+\[
+P
+\]
+
+is current point and:
+
+\[
+\Delta\vec x
+\]
+
+is displacement over one simulation step.
+
+Then:
+
+\[
+P_{\text{new}}
+=
+P+\Delta\vec x.
+\]
+
+This is an affine operation:
+
+\[
+\text{point}+\text{vector}=\text{point}.
+\]
+
+It appears everywhere in physics:
+
+```cpp
+position += velocity * dt;
+```
+
+where:
+
+\[
+\text{velocity}\times\text{time}
+=
+\text{displacement}.
+\]
+
+---
+
+# 524.8 Difference of displacements
+
+Suppose:
+
+\[
+\vec d_1
+\]
+
+and:
+
+\[
+\vec d_2
+\]
+
+are displacement vectors.
+
+Then:
+
+\[
+\vec d_1-\vec d_2
+\]
+
+is another vector representing how the first displacement differs from the second.
+
+This is ordinary vector-space subtraction because both operands are vectors.
+
+---
+
+# 524.9 Strong representation
+
+```cpp
+template<typename Space>
+struct Displacement3 {
+    float x;
+    float y;
+    float z;
+};
+
+template<typename Space>
+struct Point3 {
+    float x;
+    float y;
+    float z;
+};
+```
+
+Then:
+
+```cpp
+template<typename Space>
+constexpr Displacement3<Space>
+operator-(Point3<Space> b, Point3<Space> a) noexcept
+{
+    return {
+        b.x - a.x,
+        b.y - a.y,
+        b.z - a.z
+    };
+}
+```
+
+And:
+
+```cpp
+template<typename Space>
+constexpr Point3<Space>
+operator+(Point3<Space> p,
+          Displacement3<Space> d) noexcept
+{
+    return {
+        p.x + d.x,
+        p.y + d.y,
+        p.z + d.z
+    };
+}
+```
+
+Now two invariants are encoded simultaneously:
+
+- geometry type;
+- coordinate space.
+
+---
+
+# 524.10 Large-coordinate cancellation
+
+This operation is mathematically perfect:
+
+\[
+B-A.
+\]
+
+But machine arithmetic may fail to preserve small displacement when both points are huge.
+
+Suppose binary32 stores approximately:
+
+\[
+A=100000000
+\]
+
+and intended:
+
+\[
+B=100000001.
+\]
+
+At that scale, those values may round to the same representable float.
+
+Then:
+
+\[
+B-A
+\]
+
+becomes zero.
+
+The displacement was lost **before subtraction even happened**.
+
+This is important.
+
+The subtraction instruction is not necessarily defective.
+
+The inputs already lacked the distinction.
+
+This motivates later:
+
+- double-precision transforms;
+- camera-relative rendering;
+- origin rebasing.
+
+---
+
+# PART 525 — UNIT VECTORS
+
+Now suppose we want to represent direction while deliberately removing magnitude.
+
+That produces one of the most widely used objects in graphics:
+
+\[
+\boxed{\text{unit vector}}.
+\]
+
+---
+
+# 525.1 Formal definition
+
+A unit vector is a vector whose length is exactly one:
+
+\[
+\boxed{
+\|\hat u\|=1.
+}
+\]
+
+The notation:
+
+\[
+\hat u
+\]
+
+often indicates a unit vector.
+
+The symbol:
+
+\[
+\|\cdot\|
+\]
+
+means a vector norm—a measure of vector size.
+
+The rigorous derivation of Euclidean magnitude is **Part 526**, so we are not going to steal that lesson here.
+
+For the familiar Euclidean vectors, the relevant preview is:
+
+\[
+\|(x,y)\|
+=
+\sqrt{x^2+y^2}
+\]
+
+and:
+
+\[
+\|(x,y,z)\|
+=
+\sqrt{x^2+y^2+z^2}.
+\]
+
+Therefore unit vectors satisfy:
+
+\[
+x^2+y^2=1
+\]
+
+in ordinary 2D Euclidean geometry, or:
+
+\[
+x^2+y^2+z^2=1
+\]
+
+in 3D.
+
+The derivation of those formulas belongs next.
+
+---
+
+# 525.2 Why unit vectors exist
+
+Suppose:
+
+\[
+\vec v=(30,40).
+\]
+
+This vector carries:
+
+- direction;
+- magnitude.
+
+Sometimes we only want orientation.
+
+If we produce another vector pointing the same way but with length one, then the magnitude has been factored out.
+
+Conceptually:
+
+```text
+arbitrary vector
+       ↓
+contains direction + magnitude
+       ↓
+unit vector
+       ↓
+contains direction with standardized magnitude 1
+```
+
+This makes algorithms easier because scale has a known value.
+
+---
+
+# 525.3 Standard basis vectors are unit vectors
+
+In Euclidean geometry:
+
+\[
+\vec e_x=(1,0)
+\]
+
+has length:
+
+\[
+1.
+\]
+
+Likewise:
+
+\[
+\vec e_y=(0,1).
+\]
+
+In 3D:
+
+\[
+(1,0,0),
+\quad
+(0,1,0),
+\quad
+(0,0,1)
+\]
+
+are all unit vectors.
+
+But remember:
+
+\[
+\boxed{
+\text{basis vector does not necessarily mean unit vector}.
+}
+\]
+
+For example:
+
+\[
+(2,0),(0,3)
+\]
+
+can form a valid basis of \(\mathbb R^2\) even though neither has unit length.
+
+---
+
+# 525.4 Unit vector versus direction vector
+
+A direction vector may be:
+
+\[
+(10,20,0).
+\]
+
+A unit direction pointing the same way would have length one.
+
+Thus:
+
+\[
+\boxed{
+\text{every unit nonzero vector can represent a direction}
+}
+\]
+
+but:
+
+\[
+\boxed{
+\text{not every direction vector is already unit length}.
+}
+\]
+
+This distinction matters enormously in shaders and physics.
+
+---
+
+# 525.5 Why algorithms like unit directions
+
+Suppose a ray is:
+
+\[
+P+t\hat d
+\]
+
+where:
+
+\[
+\|\hat d\|=1.
+\]
+
+Then increasing \(t\) by one corresponds to moving one spatial unit along the ray.
+
+If the direction instead has magnitude \(5\), then:
+
+\[
+t=1
+\]
+
+moves five spatial units.
+
+So unit direction can give parameters an intuitive physical interpretation.
+
+This is not always required, but it is often convenient.
+
+---
+
+# 525.6 Surface normals
+
+A surface normal commonly represents orientation perpendicular to a surface.
+
+Many shading equations assume:
+
+\[
+\|\vec n\|=1.
+\]
+
+Why?
+
+Because later dot products involving unit directions produce clean cosine relationships.
+
+If the normal accidentally has length 10, many lighting values become scaled incorrectly.
+
+Full normal semantics appear later around Parts 557 and 582, but the unit-length invariant begins here.
+
+---
+
+# 525.7 Camera axes
+
+A camera frame often contains:
+
+\[
+\vec r,\quad\vec u,\quad\vec f
+\]
+
+for right, up and forward.
+
+For a clean orthonormal camera basis, each satisfies:
+
+\[
+\|\vec r\|=\|\vec u\|=\|\vec f\|=1.
+\]
+
+And later they are also mutually perpendicular.
+
+That is an **orthonormal basis**, Part 559.
+
+So unit vectors are a prerequisite for robust camera frames.
+
+---
+
+# 525.8 What unit vectors look like geometrically
+
+In 2D, all unit vectors lie on the unit circle:
+
+\[
+x^2+y^2=1.
+\]
+
+In 3D, all unit vectors lie on the unit sphere:
+
+\[
+x^2+y^2+z^2=1.
+\]
+
+This is an important conceptual difference.
+
+The set of all unit vectors is **not a vector space**.
+
+Why?
+
+Take a unit vector:
+
+\[
+\hat u.
+\]
+
+Multiply by 2:
+
+\[
+2\hat u.
+\]
+
+Its length becomes 2.
+
+So:
+
+\[
+2\hat u
+\]
+
+is outside the unit-vector set.
+
+Scalar closure fails.
+
+Also:
+
+\[
+\vec0
+\]
+
+is not unit.
+
+Thus:
+
+\[
+\boxed{
+\{\vec v:\|\vec v\|=1\}
+\text{ is not a vector subspace}.
+}
+\]
+
+---
+
+# 525.9 There is no zero unit vector
+
+This deserves emphasis.
+
+A direction abstraction may require unit length.
+
+But:
+
+\[
+\vec0
+\]
+
+has magnitude zero.
+
+Therefore it cannot be converted into a unit vector by ordinary scaling.
+
+Producing a unit vector from an arbitrary vector is called **normalization**, Part 528.
+
+The zero-vector failure is explicitly Part 529.
+
+So for now:
+
+\[
+\boxed{
+\text{unit-vector construction requires a nonzero input}.
+}
+\]
+
+---
+
+# 525.10 Floating-point reality: unit rarely means exactly one
+
+Mathematically:
+
+\[
+\|\hat u\|=1.
+\]
+
+In floating-point code you may get:
+
+\[
+0.99999994
+\]
+
+or:
+
+\[
+1.00000012.
+\]
+
+That does not necessarily indicate a bug.
+
+A production API usually interprets the invariant numerically:
+
+\[
+\|\hat u\|\approx1.
+\]
+
+But the appropriate tolerance depends on the algorithm, scalar precision, and how the vector was produced.
+
+This is the same mathematical-versus-machine distinction we have maintained throughout.
+
+---
+
+# 525.11 Repeated transformations can destroy unit length
+
+Suppose a direction is repeatedly transformed using floating-point operations.
+
+Even if mathematically the transformation preserves length, rounding can cause drift:
+
+\[
+1
+\rightarrow
+0.9999999
+\rightarrow
+1.0000002
+\rightarrow\cdots
+\]
+
+Certain systems periodically renormalize important vectors.
+
+Examples include:
+
+- camera basis vectors;
+- normal vectors;
+- quaternion-related axes;
+- physics constraint directions.
+
+Again, actual normalization mechanics are Part 528.
+
+---
+
+# 525.12 Type-safe unit vectors
+
+A production math library could distinguish:
+
+```cpp
+struct Vec3;
+```
+
+from:
+
+```cpp
+class UnitVec3;
+```
+
+where `UnitVec3` has an invariant:
+
+\[
+\|\vec u\|\approx1.
+\]
+
+Conceptually:
+
+```cpp
+class UnitVec3 {
+public:
+    static std::optional<UnitVec3>
+    from(Vec3 v);
+
+    Vec3 value() const noexcept {
+        return value_;
+    }
+
+private:
+    explicit UnitVec3(Vec3 v) noexcept
+        : value_(v) {}
+
+    Vec3 value_;
+};
+```
+
+Then a function requiring a normalized normal could accept:
+
+```cpp
+float diffuse(UnitVec3 normal,
+              UnitVec3 lightDirection);
+```
+
+instead of arbitrary:
+
+```cpp
+float diffuse(Vec3 normal,
+              Vec3 lightDirection);
+```
+
+The API now communicates and can enforce more of its mathematical preconditions.
+
+---
+
+# THE MOST IMPORTANT DISTINCTION ACROSS 521–525
+
+We now have several objects that can all be stored using the same three floats:
+
+```text
+Point3
+Position vector
+Direction vector
+Displacement vector
+Unit vector
+```
+
+They are **not interchangeable concepts**.
+
+A point is a location.
+
+A position vector is the displacement from a chosen origin to that point.
+
+A direction vector represents orientation; its magnitude may be irrelevant.
+
+A displacement vector represents a specific movement, so magnitude matters.
+
+A unit vector is any vector constrained to length one and is commonly used to represent pure direction.
+
+At memory level they might all be:
+
+```text
+float x
+float y
+float z
+```
+
+but semantics and legal operations differ.
+
+---
+
+# A COMPLETE GEOMETRIC EXECUTION TRACE
+
+Suppose a player is at point:
+
+\[
+P=(10,2,5).
+\]
+
+An enemy is at:
+
+\[
+E=(13,6,5).
+\]
+
+Both are world-space points.
+
+The displacement from player to enemy is:
+
+\[
+\vec d=E-P.
+\]
+
+Calculate:
+
+\[
+(13,6,5)-(10,2,5)
+\]
+
+giving:
+
+\[
+\boxed{
+\vec d=(3,4,0).
+}
+\]
+
+That is a **displacement vector**.
+
+Its magnitude is meaningful: it tells us how far apart the points are.
+
+If instead we only want:
+
+> which way should the player face?
+
+we want a **direction** derived from \(\vec d\).
+
+Eventually we normalize it.
+
+Since this is a familiar \(3\)-\(4\)-\(5\) triangle, the unit direction will be:
+
+\[
+\hat d=
+\left(
+\frac35,
+\frac45,
+0
+\right)
+=
+(0.6,0.8,0).
+\]
+
+Now suppose the player moves two metres toward the enemy.
+
+The new displacement is:
+
+\[
+2\hat d
+=
+(1.2,1.6,0).
+\]
+
+Add this displacement to the player's point:
+
+\[
+P'
+=
+P+2\hat d.
+\]
+
+Therefore:
+
+\[
+P'
+=
+(10,2,5)+(1.2,1.6,0)
+\]
+
+giving:
+
+\[
+\boxed{
+P'=(11.2,3.6,5).
+}
+\]
+
+Observe the semantic chain:
+
+```text
+player position
+Point
+
+enemy position
+Point
+
+enemy - player
+↓
+Displacement
+
+remove magnitude
+↓
+Unit direction
+
+unit direction × movement distance
+↓
+Displacement
+
+position + displacement
+↓
+new Point
+```
+
+That is how a type-safe mathematical model of ordinary game movement looks.
+
+---
+
+# MEMORY MODEL
+
+A conventional implementation might physically contain:
+
+```text
+Point3
+┌────────┬────────┬────────┐
+│   x    │   y    │   z    │
+│ float  │ float  │ float  │
+└────────┴────────┴────────┘
+
+Displacement3
+┌────────┬────────┬────────┐
+│   x    │   y    │   z    │
+│ float  │ float  │ float  │
+└────────┴────────┴────────┘
+
+Direction3
+┌────────┬────────┬────────┐
+│   x    │   y    │   z    │
+│ float  │ float  │ float  │
+└────────┴────────┴────────┘
+```
+
+The physical bytes may be indistinguishable.
+
+The C++ type and surrounding coordinate-space contract provide semantic meaning.
+
+This is exactly why reading a struct layout alone is not enough to understand an engine.
+
+You also need the invariants.
+
+---
+
+# IMPORTANT INVARIANTS
+
+For a point:
+
+\[
+\text{any finite coordinate may represent a location}
+\]
+
+subject to application/world limits.
+
+For a displacement:
+
+\[
+\vec0
+\]
+
+is valid.
+
+For a direction:
+
+\[
+\vec0
+\]
+
+is normally invalid.
+
+For a unit vector:
+
+\[
+\|\vec u\|\approx1
+\]
+
+must remain true.
+
+For all of them:
+
+\[
+\text{components should usually be finite}
+\]
+
+rather than NaN or infinity.
+
+And any arithmetic combining objects must respect coordinate space.
+
+A perfect unit direction in local space cannot be directly combined with a world-space point.
+
+---
+
+# PRODUCTION ENGINE DESIGN
+
+A minimal engine often chooses:
+
+```cpp
+using Point3 = Vec3;
+using Direction3 = Vec3;
+```
+
+because one universal vector class is convenient.
+
+This reduces type complexity but pushes correctness obligations onto programmers.
+
+A stricter math layer might use:
+
+```cpp
+Point3<WorldSpace>
+Direction3<WorldSpace>
+Displacement3<WorldSpace>
+UnitDirection3<WorldSpace>
+```
+
+The latter catches more bugs at compile time but creates more templates, conversions, and API surface.
+
+Neither choice is universally correct.
+
+The trade-off is:
+
+```text
+simple generic Vec3
+→ simpler APIs
+→ easier interoperability
+→ more semantic bugs possible
+
+strong semantic math types
+→ more compile-time correctness
+→ clearer contracts
+→ greater type-system complexity
+```
+
+For foundational engine/math libraries, strong types can be extremely valuable.
+
+For shader languages and hot data structures, projects often use simpler underlying representations and enforce semantics through naming and conventions.
+
+---
+
+# HARDWARE AND PERFORMANCE
+
+None of these semantic distinctions inherently require additional runtime data.
+
+A compiler can represent:
+
+```cpp
+Point3
+Displacement3
+Direction3
+```
+
+using exactly the same register and memory representation.
+
+Subtracting two points still compiles to roughly three scalar floating-point subtractions.
+
+Adding displacement to a point still becomes roughly three additions.
+
+Unit-vector operations only become more expensive when checking or establishing the unit-length invariant requires magnitude computation.
+
+So there is no reason to assume mathematically stronger types must imply slower arithmetic.
+
+---
+
+# NUMERICAL FAILURE MODES
+
+The first major failure is **space mismatch**. A local-space displacement subtracted from a world-space position can produce numbers that look reasonable while being geometrically meaningless.
+
+The second is **large-coordinate precision loss**. Two nearby points far from the origin can round to values that lose their small difference.
+
+The third is **zero-direction construction**. If two points coincide:
+
+\[
+B-A=\vec0,
+\]
+
+then asking for a direction from \(A\) to \(B\) is undefined because the displacement has no orientation.
+
+The fourth is **unit-length drift**. Floating-point transformations can gradually violate:
+
+\[
+\|\hat d\|=1.
+\]
+
+The fifth is **NaN contamination**. A failed normalization or invalid calculation can create one NaN component, and later vector arithmetic can spread it through positions, matrices, physics, and rendering.
+
+These are not theoretical curiosities. They are some of the most common sources of "everything suddenly disappeared" bugs in graphics engines.
+
+---
+
+# DEBUGGING ATTACK EXAMPLE
+
+Suppose a camera suddenly points incorrectly after receiving a target position.
+
+You inspect:
+
+```cpp
+Vec3 direction = target - cameraPosition;
+```
+
+That line is only correct if:
+
+\[
+\text{target}
+\]
+
+and:
+
+\[
+\text{cameraPosition}
+\]
+
+are points in the same coordinate space.
+
+Then:
+
+\[
+target-cameraPosition
+\]
+
+is a displacement.
+
+If a later system expects a unit direction, you must also establish:
+
+\[
+\|\vec d\|=1.
+\]
+
+And if:
+
+\[
+target=cameraPosition,
+\]
+
+direction construction fails entirely.
+
+So the debugging tree is:
+
+```text
+Are both operands points?
+        ↓
+Are they in the same space?
+        ↓
+Subtract
+        ↓
+Is displacement zero?
+        ↓
+If direction required, normalize
+        ↓
+Is result finite and unit length?
+```
+
+That is much more powerful than staring at three float values.
+
+---
+
+# INTERVIEW ATTACK TREE
+
+**Level 1 — What is the difference between a point and a vector?**
+
+A point represents a location in an affine space. A vector represents displacement in an associated vector space.
+
+**Level 2 — What operations are naturally valid?**
+
+\[
+P-Q=\vec v
+\]
+
+\[
+P+\vec v=Q
+\]
+
+\[
+\vec u+\vec v=\vec w.
+\]
+
+Point plus point is not a fundamental affine operation.
+
+**Level 3 — Why aren't points mathematically vectors?**
+
+Because points have no intrinsic zero location and do not naturally support arbitrary point addition or scalar multiplication. Those operations become defined only after arbitrarily choosing an origin and identifying each point with a position vector.
+
+**Level 4 — What is a position vector?**
+
+For chosen origin \(O\), the position vector of point \(P\) is:
+
+\[
+\overrightarrow{OP}.
+\]
+
+It depends on the chosen origin.
+
+**Level 5 — Why is displacement origin-independent?**
+
+If both point coordinates shift by \(\vec t\),
+
+\[
+(Q-\vec t)-(P-\vec t)=Q-P.
+\]
+
+The common translation cancels.
+
+**Level 6 — Direction versus displacement?**
+
+Displacement represents a particular movement and therefore carries meaningful magnitude. A direction represents orientation; positive scalar multiples point the same way.
+
+**Level 7 — Can zero be a displacement?**
+
+Yes. It means no movement.
+
+**Level 8 — Can zero be a direction?**
+
+No. The zero vector contains no directional orientation.
+
+**Level 9 — What is a unit vector?**
+
+A vector satisfying:
+
+\[
+\|\vec u\|=1.
+\]
+
+It standardizes magnitude and is frequently used to encode pure direction.
+
+**Level 10 — Why can two `Vec3`s with identical bytes still mean different things?**
+
+Because machine representation contains scalar coordinates but not the complete mathematical semantics. One may be a point, displacement, direction, normal, color, or another quantity, possibly expressed in different spaces.
+
+---
+
+# MASTERY GATE — 521
+
+From a blank page, you should be able to explain why physical space is better modeled as affine rather than automatically as a vector space.
+
+You should derive:
+
+\[
+P-Q=\vec v
+\]
+
+and:
+
+\[
+P+\vec v=Q
+\]
+
+and explain why:
+
+\[
+P+Q
+\]
+
+is not naturally defined.
+
+You should also explain the difference between:
+
+\[
+\vec0
+\]
+
+and a coordinate-system origin.
+
+The zero vector means no displacement and is intrinsic.
+
+The origin is a point we chose.
+
+---
+
+# MASTERY GATE — 522
+
+You should be able to explain precisely why:
+
+\[
+P
+\]
+
+and:
+
+\[
+\overrightarrow{OP}
+\]
+
+are different concepts.
+
+Change the origin and show numerically that the point remains fixed but the position vector changes.
+
+Then prove:
+
+\[
+\overrightarrow{PQ}
+=
+\overrightarrow{OQ}
+-
+\overrightarrow{OP}.
+\]
+
+If you cannot derive this from the geometry, revisit the Part.
+
+---
+
+# MASTERY GATE — 523
+
+You should be able to explain why:
+
+\[
+(1,2,0)
+\]
+
+and:
+
+\[
+(10,20,0)
+\]
+
+can represent the same orientation but different displacement magnitudes.
+
+You should know that:
+
+\[
+\vec0
+\]
+
+cannot define a direction.
+
+And you should explain why translating an object changes its point but not its direction vector.
+
+---
+
+# MASTERY GATE — 524
+
+Given three points:
+
+\[
+A,\quad B,\quad C,
+\]
+
+derive:
+
+\[
+(B-A)+(C-B)=C-A.
+\]
+
+Explain what every term means geometrically.
+
+Then prove displacement translation invariance:
+
+\[
+(B+\vec t)-(A+\vec t)=B-A.
+\]
+
+You should also be able to explain why displacement may be zero while a direction may not.
+
+---
+
+# MASTERY GATE — 525
+
+You should be able to define a unit vector without saying merely:
+
+> a normalized vector.
+
+The definition is:
+
+\[
+\boxed{\|\vec u\|=1.}
+\]
+
+Normalization is the **process** of producing one; unit-vector status is the **property**.
+
+You should know why standard Euclidean basis vectors are unit, why not every basis vector must be unit, why the set of unit vectors is not a vector subspace, and why zero can never be a unit vector.
+
+---
+
+# THE MASTER MODEL YOU SHOULD NOW HAVE
+
+At this point your mental model should no longer be:
+
+```text
+everything with x y z = vector
+```
+
+It should be:
+
+```text
+AFFINE SPACE
+contains Points
+    │
+    │ subtract two points
+    ▼
+VECTOR SPACE
+contains Displacements
+    │
+    ├── magnitude meaningful
+    │
+    ├── may be zero
+    │
+    └── can compose through addition
+            │
+            │ remove magnitude conceptually
+            ▼
+        Direction
+            │
+            │ impose length = 1
+            ▼
+        Unit Direction
+```
+
+And separately:
+
+```text
+Choose origin O
+      │
+      ▼
+Point P
+      │
+      ▼
+Position vector OP
+```
+
+The point is not magically transformed into a vector as a mathematical object. We have **chosen an origin and used a vector to represent its location**.
+
+That distinction is foundational to almost everything coming later: transformations, homogeneous coordinates, camera systems, normal handling, ray equations, collision geometry, physics state, large-world precision, scene graphs, and shader coordinate spaces.
+
+**Completed Part 521 — Affine points versus free vectors**  
+**Completed Part 522 — Position vectors and why points are not mathematically vectors**  
+**Completed Part 523 — Direction vectors**  
+**Completed Part 524 — Displacement vectors**  
+**Completed Part 525 — Unit vectors**
+
+**Next Core Part 526 — Euclidean vector magnitude.**

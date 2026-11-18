@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch461.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-221a483bec2d-matrix-factorization-choices" class="level2">
+<h2>Matrix factorization choices</h2>
+<p>Choose a solver from the matrix promises and task: pivoted LU for general square systems, Cholesky for SPD systems, QR for full-rank least squares, SVD or rank-revealing methods when weak directions matter, and iterative methods for suitable large sparse workloads. Reuse factors for repeated right-hand sides.</p>
+<p><strong>Use it when:</strong> choosing an algorithm before implementing or calling a numerical routine.</p>
+<p><strong>Developed in Phase 8:</strong> The factorization should follow the matrix structure and the requested result: LU handles general square systems, Cholesky exploits positive definiteness, QR fits full-rank least squares, and SVD handles uncertain rank and spectral questions. The comparison also weighs sparsity, reuse, memory, and whether an iterative tolerance is acceptable. <a href="ch292.xhtml#id_02-foundations-ii-ch038-choose-a-factorization-from-structure-and-the-requested-answer" class="wikilink">factorization selection (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a> · <a href="ch261.xhtml#id_01-foundations-i-ch019-a-runnable-pivoted-lu-reference-preserves-the-elimination-history" class="wikilink">the runnable LU example (Mathematics for Visual Computing, Part 1, Ch. 3)</a></p>
+<section id="appendix-221a483bec2d-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<p><a href="ch534.xhtml#appendix-f6e77f4a200f-gaussian-elimination-and-pivoting" class="wikilink">Gaussian elimination and pivoting</a>, <a href="ch484.xhtml#appendix-55e4b5b0a1e6-lu-factorization-and-reusable-solves" class="wikilink">LU factorization and reusable solves</a>, <a href="ch480.xhtml#appendix-50d2ea3c9b26-symmetric-positive-definite-matrices-and-cholesky" class="wikilink">Symmetric positive-definite matrices and Cholesky</a>, <a href="ch511.xhtml#appendix-c3421e6b4f2c-qr-factorization-and-least-squares" class="wikilink">QR factorization and least squares</a>, <a href="ch329.xhtml#appendix-1fad5e7f36fa-singular-value-decomposition" class="wikilink">Singular value decomposition (Light Transport and Image Synthesis, Part 1, Reference notes: Singular value decomposition)</a>, <a href="ch487.xhtml#appendix-67c87a3d9e94-sparse-and-iterative-solvers" class="wikilink">Sparse and iterative solvers</a>.</p>
+</section>
+<section id="appendix-221a483bec2d-used-by" class="level3">
+<h3>Used by</h3>
+<p><a href="ch487.xhtml#appendix-67c87a3d9e94-sparse-and-iterative-solvers" class="wikilink">Sparse and iterative solvers</a>, <a href="ch450.xhtml#appendix-0f4bc2bf2b1f-matrix-functions" class="wikilink">Matrix functions</a>.</p>
+<p><strong>Teaching path:</strong> <a href="ch292.xhtml#id_02-foundations-ii-ch038-close-the-journey-with-an-algorithm-selection-conversation" class="wikilink">selection conversation (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a>.</p>
+</section>
+</section>
+</body>
+</html>

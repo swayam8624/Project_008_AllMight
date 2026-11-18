@@ -8,7 +8,7 @@ New rendering paths should reuse proven ownership rules rather than introduce hi
 
 **Recall question:** If a view is removed while its command is in flight, which owner retains its data until the last consumer completes?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 61668–62566; source-span SHA256 99505551c57e6760f7b7aec1b9330135b6ff45fa589f86f3c9c8cf49a0aa269a. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 62597–63495; source-span SHA256 99505551c57e6760f7b7aec1b9330135b6ff45fa589f86f3c9c8cf49a0aa269a. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Let a renderer evolve without losing resource ownership

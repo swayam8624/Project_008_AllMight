@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch145.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-6af5921bc853-pointer-arithmetic-and-provenance" class="level2">
+<h2>Pointer arithmetic and provenance</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C008</p>
+<section id="appendix-6af5921bc853-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>M008 adds null/object/one-past distinctions, same-array representable subtraction and round-trip limits. Provenance proposals are research, not adopted C++23 rules; byte inspection differs from arbitrary typed access.</p>
+<p>A scalar member behaves as a one-element array for pointer arithmetic, not as an array containing adjacent sibling members. &amp;x+1 can be a one-past pointer but cannot be dereferenced to access y. Actual array storage supports traversal; a span only views an already-valid range. Layout/size assertions do not authorize sibling traversal.</p>
+<p>A pointer is a typed access path constrained by array bounds, alignment, and object lifetime, not merely an integer. Within an array, p+i advances i elements; one-past is permitted for traversal but not dereference. Byte views inspect representations; uintptr_t, when provided, is an integer conversion facility, not permission to access arbitrary storage.</p>
+</section>
+<section id="appendix-6af5921bc853-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch131.xhtml#appendix-18ee4f913c3c-addresses-and-virtual-memory" class="wikilink">Addresses and virtual memory</a> — Mappings give numeric locations their process-specific storage identity.</li>
+<li><a href="ch127.xhtml#appendix-0b104bcba06b-storage-duration-and-object-lifetime" class="wikilink">Storage duration and object lifetime</a> — Access requires an object and backing storage that are still valid.</li>
+</ul>
+</section>
+<section id="appendix-6af5921bc853-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch260.xhtml#appendix-ffdc1d4e5350-matrix-storage-indexing-and-strides" class="wikilink">Matrix storage indexing and strides (Mathematics for Visual Computing, Part 1, Reference notes: Matrix storage indexing and strides)</a></p></li>
+<li><p><a href="ch040.xhtml#appendix-3f7e15effba6-named-members-versus-array-elements" class="wikilink">Named members versus array elements (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Named members versus array elements)</a> — uses this prerequisite to establish its entity, lifetime, representation or lookup contract.</p></li>
+<li><p><a href="ch191.xhtml#appendix-afae48c31800-null-pointers-and-optional-access" class="wikilink">Null pointers and optional access</a></p></li>
+<li><p><a href="ch202.xhtml#appendix-f9b8b9188c7f-borrow-invalidation-and-logical-identity" class="wikilink">Borrow invalidation and logical identity</a></p></li>
+<li><p><a href="ch352.xhtml#appendix-749ba51a6c25-gpu-vertex-specification" class="wikilink">GPU vertex specification (Light Transport and Image Synthesis, Part 1, Reference notes: GPU vertex specification)</a> ## Recall and next depth</p></li>
+</ul>
+<p>Explain p+1 for int versus byte and why a numeric address is insufficient.</p>
+<p><strong>Pending:</strong> Full lifetime replacement, ownership/concurrency policies and cross-target ABI experiments; the opening examples do not establish those later guarantees.</p>
+</section>
+<section id="appendix-6af5921bc853-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch207.xhtml#appendix-fd090d982a15-m008---parts-113-126" class="wikilink">C008 development and corrections</a></p>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a> · <a href="ch173.xhtml#id_01-foundations-i-ch003-bringing-the-object-model-back-to-bytes" class="wikilink">C007 development</a></p>
+</section>
+</section>
+</body>
+</html>

@@ -8,7 +8,7 @@ Probability and covariance implementations must preserve the mathematical differ
 
 **Recall question:** How can a randomized routine be tested deterministically without claiming that one seed proves its statistical behavior?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 75692–78257; source-span SHA256 9af1918d5ef4d23b1620773377e15ed44d16de26e2d97e9f196dba9b1cd7bb90. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 75939–78504; source-span SHA256 9bca1615ed4555b2814049a44eec02299357cdf55b524821367fb77f53ae9302. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## 11. Implement probability without losing its numerical contracts
@@ -26,19 +26,19 @@ But these types have different domains.
 A Bernoulli probability must satisfy:
 
 $$
- 0\le p\le1. 
+ 0\le p\le1.
 $$
 
 A normal standard deviation must satisfy:
 
 $$
- \sigma>0. 
+ \sigma>0.
 $$
 
 An exponential rate must satisfy:
 
 $$
- \lambda>0. 
+ \lambda>0.
 $$
 
 A nonsingular multivariate Gaussian covariance must be symmetric positive definite.
@@ -108,7 +108,7 @@ Why should a normal distribution expose both `cdf()` and `survival()`?
 Mathematically:
 
 $$
- S(x)=1-F(x). 
+ S(x)=1-F(x).
 $$
 
 But in floating-point arithmetic, if $F(x)$ is extremely close to one, the subtraction can lose many significant digits.
@@ -118,7 +118,7 @@ For example, the upper tail of a standard normal at a large positive $z$ is tiny
 Using:
 
 $$
- S(z)=\frac12\operatorname{erfc}(z/\sqrt2) 
+ S(z)=\frac12\operatorname{erfc}(z/\sqrt2)
 $$
 
 allows the implementation to calculate that tail more directly.
@@ -132,7 +132,7 @@ Mathematical equivalence does not guarantee numerical equivalence.
 The binomial PMF contains:
 
 $$
- \binom nk= \frac{n!}{k!(n-k)!}. 
+ \binom nk= \frac{n!}{k!(n-k)!}.
 $$
 
 A naive factorial-based implementation becomes problematic for large $n$.
@@ -211,7 +211,7 @@ double poisson_pmf(unsigned k, double lambda) {
 It uses:
 
 $$
- \log P(K=k) = k\log\lambda-\lambda-\log(k!). 
+ \log P(K=k) = k\log\lambda-\lambda-\log(k!).
 $$
 
 Again, we do not calculate a large factorial explicitly.
@@ -221,7 +221,7 @@ This is a recurring numerical principle: when probabilities are represented as p
 For distributions with extremely small probabilities, log probabilities also make multiplication into addition:
 
 $$
- \log(p_1p_2)=\log p_1+\log p_2. 
+ \log(p_1p_2)=\log p_1+\log p_2.
 $$
 
 The reverse transformation, summing probabilities represented in log space, requires care and motivates the log-sum-exp technique covered later in Phase 10.
@@ -231,13 +231,13 @@ The reverse transformation, summing probabilities represented in log space, requ
 The mathematical PDF contains:
 
 $$
- \Sigma^{-1} 
+ \Sigma^{-1}
 $$
 
 and:
 
 $$
- \det\Sigma. 
+ \det\Sigma.
 $$
 
 A naive implementation might construct the inverse, calculate its determinant, and evaluate the quadratic form directly.
@@ -247,49 +247,49 @@ But matrix inversion is often unnecessary and can be numerically undesirable.
 For a symmetric positive-definite covariance, Cholesky factorization gives:
 
 $$
- \boxed{\Sigma=LL^T}. 
+ \boxed{\Sigma=LL^T}.
 $$
 
 Define:
 
 $$
- \mathbf d=\mathbf x-\boldsymbol\mu. 
+ \mathbf d=\mathbf x-\boldsymbol\mu.
 $$
 
 The squared Mahalanobis distance is:
 
 $$
- d_M^2=\mathbf d^T\Sigma^{-1}\mathbf d. 
+ d_M^2=\mathbf d^T\Sigma^{-1}\mathbf d.
 $$
 
 Since:
 
 $$
- \Sigma^{-1}=L^{-T}L^{-1}, 
+ \Sigma^{-1}=L^{-T}L^{-1},
 $$
 
 we have:
 
 $$
- d_M^2= \mathbf d^TL^{-T}L^{-1}\mathbf d. 
+ d_M^2= \mathbf d^TL^{-T}L^{-1}\mathbf d.
 $$
 
 Let:
 
 $$
- \mathbf y=L^{-1}\mathbf d. 
+ \mathbf y=L^{-1}\mathbf d.
 $$
 
 Then:
 
 $$
- \boxed{d_M^2=\mathbf y^T\mathbf y}. 
+ \boxed{d_M^2=\mathbf y^T\mathbf y}.
 $$
 
 We obtain $\mathbf y$ by solving the lower-triangular system:
 
 $$
- L\mathbf y=\mathbf d. 
+ L\mathbf y=\mathbf d.
 $$
 
 No explicit inverse is required.
@@ -297,25 +297,25 @@ No explicit inverse is required.
 Likewise:
 
 $$
- \det\Sigma=(\det L)^2. 
+ \det\Sigma=(\det L)^2.
 $$
 
 Because $L$ is triangular:
 
 $$
- \det L=\prod_iL\_{ii}. 
+ \det L=\prod_iL_{ii}.
 $$
 
 Therefore:
 
 $$
- \boxed{ \log\det\Sigma = 2\sum_i\log L\_{ii} }. 
+ \boxed{ \log\det\Sigma = 2\sum_i\log L_{ii} }.
 $$
 
 These identities lead to the stable log-density expression:
 
 $$
- \boxed{ \log p(\mathbf x)= -\frac n2\log(2\pi) -\frac12\log\det\Sigma -\frac12\mathbf y^T\mathbf y }. 
+ \boxed{ \log p(\mathbf x)= -\frac n2\log(2\pi) -\frac12\log\det\Sigma -\frac12\mathbf y^T\mathbf y }.
 $$
 
 #### 1 The 2D implementation
@@ -426,37 +426,37 @@ Instead, we can maintain streaming statistics.
 For sample $n$, maintain the current mean:
 
 $$
- \boldsymbol\mu_n 
+ \boldsymbol\mu_n
 $$
 
 and centred scatter matrix:
 
 $$
- S_n= \sum\_{i=1}^{n} (\mathbf x_i-\boldsymbol\mu_n) (\mathbf x_i-\boldsymbol\mu_n)^T. 
+ S_n= \sum_{i=1}^{n} (\mathbf x_i-\boldsymbol\mu_n) (\mathbf x_i-\boldsymbol\mu_n)^T.
 $$
 
 When a new sample $\mathbf x$ arrives, define:
 
 $$
- \boldsymbol\delta=\mathbf x-\boldsymbol\mu_n. 
+ \boldsymbol\delta=\mathbf x-\boldsymbol\mu_n.
 $$
 
 Update the mean:
 
 $$
- \boxed{ \boldsymbol\mu\_{n+1} = \boldsymbol\mu_n+ \frac{\boldsymbol\delta}{n+1} }. 
+ \boxed{ \boldsymbol\mu_{n+1} = \boldsymbol\mu_n+ \frac{\boldsymbol\delta}{n+1} }.
 $$
 
 The scatter update is:
 
 $$
- \boxed{ S\_{n+1} = S_n+ \boldsymbol\delta (\mathbf x-\boldsymbol\mu\_{n+1})^T }. 
+ \boxed{ S_{n+1} = S_n+ \boldsymbol\delta (\mathbf x-\boldsymbol\mu_{n+1})^T }.
 $$
 
 The sample covariance estimate is:
 
 $$
- \boxed{ \widehat\Sigma= \frac{S_n}{n-1} } 
+ \boxed{ \widehat\Sigma= \frac{S_n}{n-1} }
 $$
 
 for $n\ge2$.
@@ -468,67 +468,67 @@ The corresponding population-normalized empirical covariance divides by $n$.
 Take three observations:
 
 $$
- \mathbf x_1= \begin{bmatrix}1\\1\end{bmatrix}, 
+ \mathbf x_1= \begin{bmatrix}1\\1\end{bmatrix},
 $$
 
 $$
- \mathbf x_2= \begin{bmatrix}2\\3\end{bmatrix}, 
+ \mathbf x_2= \begin{bmatrix}2\\3\end{bmatrix},
 $$
 
 $$
- \mathbf x_3= \begin{bmatrix}3\\5\end{bmatrix}. 
+ \mathbf x_3= \begin{bmatrix}3\\5\end{bmatrix}.
 $$
 
 The sample mean is:
 
 $$
- \boldsymbol\mu= \begin{bmatrix}2\\3\end{bmatrix}. 
+ \boldsymbol\mu= \begin{bmatrix}2\\3\end{bmatrix}.
 $$
 
 The centred observations are:
 
 $$
- \mathbf d_1= \begin{bmatrix}-1\\-2\end{bmatrix}, 
+ \mathbf d_1= \begin{bmatrix}-1\\-2\end{bmatrix},
 $$
 
 $$
- \mathbf d_2= \begin{bmatrix}0\\0\end{bmatrix}, 
+ \mathbf d_2= \begin{bmatrix}0\\0\end{bmatrix},
 $$
 
 $$
- \mathbf d_3= \begin{bmatrix}1\\2\end{bmatrix}. 
+ \mathbf d_3= \begin{bmatrix}1\\2\end{bmatrix}.
 $$
 
 Compute outer products:
 
 $$
- \mathbf d_1\mathbf d_1^T= \begin{bmatrix}1&2\\2&4\end{bmatrix}, 
+ \mathbf d_1\mathbf d_1^T= \begin{bmatrix}1&2\\2&4\end{bmatrix},
 $$
 
 $$
- \mathbf d_2\mathbf d_2^T=0, 
+ \mathbf d_2\mathbf d_2^T=0,
 $$
 
 $$
- \mathbf d_3\mathbf d_3^T= \begin{bmatrix}1&2\\2&4\end{bmatrix}. 
+ \mathbf d_3\mathbf d_3^T= \begin{bmatrix}1&2\\2&4\end{bmatrix}.
 $$
 
 Sum:
 
 $$
- S= \begin{bmatrix} 2&4\\4&8 \end{bmatrix}. 
+ S= \begin{bmatrix} 2&4\\4&8 \end{bmatrix}.
 $$
 
 Divide by:
 
 $$
- n-1=2. 
+ n-1=2.
 $$
 
 Therefore:
 
 $$
- \boxed{ \widehat\Sigma= \begin{bmatrix} 1&2\\ 2&4 \end{bmatrix} }. 
+ \boxed{ \widehat\Sigma= \begin{bmatrix} 1&2\\ 2&4 \end{bmatrix} }.
 $$
 
 This is exactly the singular PSD covariance we analyzed earlier.
@@ -587,7 +587,7 @@ struct OnlineCovariance2D {
 
 The off-diagonal value is stored once and copied symmetrically into the resulting matrix.
 
-This prevents a trivial asymmetry caused by independently accumulating $\Sigma\_{01}$ and $\Sigma\_{10}$ in different arithmetic orders.
+This prevents a trivial asymmetry caused by independently accumulating $\Sigma_{01}$ and $\Sigma_{10}$ in different arithmetic orders.
 
 The update requires constant storage independent of the number of samples.
 
@@ -610,7 +610,7 @@ Suppose we want to estimate an unknown scalar $x$.
 Before receiving a measurement, our uncertainty is:
 
 $$
- X\sim\mathcal N(\mu_0,\sigma_0^2). 
+ X\sim\mathcal N(\mu_0,\sigma_0^2).
 $$
 
 This is the prior.
@@ -618,13 +618,13 @@ This is the prior.
 Now observe:
 
 $$
- Y=x+\varepsilon, 
+ Y=x+\varepsilon,
 $$
 
 where measurement noise is:
 
 $$
- \varepsilon\sim\mathcal N(0,\tau^2) 
+ \varepsilon\sim\mathcal N(0,\tau^2)
 $$
 
 and is independent of $X$.
@@ -632,31 +632,31 @@ and is independent of $X$.
 The likelihood of observation $y$ given $x$ is:
 
 $$
- p(y\mid x) \propto \exp\left( -\frac{(y-x)^2}{2\tau^2} \right). 
+ p(y\mid x) \propto \exp\left( -\frac{(y-x)^2}{2\tau^2} \right).
 $$
 
 The prior density is:
 
 $$
- p(x)\propto \exp\left( -\frac{(x-\mu_0)^2}{2\sigma_0^2} \right). 
+ p(x)\propto \exp\left( -\frac{(x-\mu_0)^2}{2\sigma_0^2} \right).
 $$
 
 Bayes gives:
 
 $$
- p(x\mid y)\propto p(y\mid x)p(x). 
+ p(x\mid y)\propto p(y\mid x)p(x).
 $$
 
 Multiply the two exponential expressions:
 
 $$
- p(x\mid y) \propto \exp\left[ -\frac12 \left( \frac{(y-x)^2}{\tau^2} + \frac{(x-\mu_0)^2}{\sigma_0^2} \right) \right]. 
+ p(x\mid y) \propto \exp\left[ -\frac12 \left( \frac{(y-x)^2}{\tau^2} + \frac{(x-\mu_0)^2}{\sigma_0^2} \right) \right].
 $$
 
 Therefore maximizing the posterior is equivalent to minimizing:
 
 $$
- \boxed{ E(x)= \frac{(y-x)^2}{2\tau^2} + \frac{(x-\mu_0)^2}{2\sigma_0^2} }. 
+ \boxed{ E(x)= \frac{(y-x)^2}{2\tau^2} + \frac{(x-\mu_0)^2}{2\sigma_0^2} }.
 $$
 
 The first term fits the measurement.
@@ -670,31 +670,31 @@ This is exactly the structure of a regularized least-squares objective.
 Differentiate:
 
 $$
- E'(x)= \frac{x-y}{\tau^2} + \frac{x-\mu_0}{\sigma_0^2}. 
+ E'(x)= \frac{x-y}{\tau^2} + \frac{x-\mu_0}{\sigma_0^2}.
 $$
 
 Set equal to zero:
 
 $$
- \frac{x-y}{\tau^2} + \frac{x-\mu_0}{\sigma_0^2} =0. 
+ \frac{x-y}{\tau^2} + \frac{x-\mu_0}{\sigma_0^2} =0.
 $$
 
 Collect $x$:
 
 $$
- x\left( \frac1{\tau^2} +\frac1{\sigma_0^2} \right) = \frac y{\tau^2} +\frac{\mu_0}{\sigma_0^2}. 
+ x\left( \frac1{\tau^2} +\frac1{\sigma_0^2} \right) = \frac y{\tau^2} +\frac{\mu_0}{\sigma_0^2}.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mu\_{\mathrm{post}} = \frac{ y/\tau^2+\mu_0/\sigma_0^2 }{ 1/\tau^2+1/\sigma_0^2 } }. 
+ \boxed{ \mu_{\mathrm{post}} = \frac{ y/\tau^2+\mu_0/\sigma_0^2 }{ 1/\tau^2+1/\sigma_0^2 } }.
 $$
 
 The posterior variance is:
 
 $$
- \boxed{ \sigma\_{\mathrm{post}}^2 = \left( \frac1{\sigma_0^2} +\frac1{\tau^2} \right)^{-1} }. 
+ \boxed{ \sigma_{\mathrm{post}}^2 = \left( \frac1{\sigma_0^2} +\frac1{\tau^2} \right)^{-1} }.
 $$
 
 Notice that inverse variance acts like information or precision.
@@ -708,31 +708,31 @@ A highly uncertain prior receives smaller weight.
 Let:
 
 $$
- \mu_0=0,\qquad \sigma_0^2=4. 
+ \mu_0=0,\qquad \sigma_0^2=4.
 $$
 
 We observe:
 
 $$
- y=3 
+ y=3
 $$
 
 with measurement variance:
 
 $$
- \tau^2=1. 
+ \tau^2=1.
 $$
 
 The posterior variance is:
 
 $$
- \sigma\_{\mathrm{post}}^2= \left(\frac14+1\right)^{-1} =\boxed{0.8}. 
+ \sigma_{\mathrm{post}}^2= \left(\frac14+1\right)^{-1} =\boxed{0.8}.
 $$
 
 The posterior mean is:
 
 $$
- \mu\_{\mathrm{post}} = 0.8\left(0+\frac31\right) =\boxed{2.4}. 
+ \mu_{\mathrm{post}} = 0.8\left(0+\frac31\right) =\boxed{2.4}.
 $$
 
 The observation says three, but the prior was centered at zero.
@@ -742,7 +742,7 @@ The posterior compromise is $2.4$, weighted according to the two uncertainties.
 The posterior standard deviation is:
 
 $$
- \sqrt{0.8}\approx0.894427. 
+ \sqrt{0.8}\approx0.894427.
 $$
 
 This is smaller than either the prior standard deviation of two or the measurement noise standard deviation of one.
@@ -782,7 +782,7 @@ Vary their mean depth, depth variance, anisotropy, orientation, and position rel
 For each configuration, calculate the first-order projected covariance:
 
 $$
- \Sigma\_{\mathrm{predicted}} = J\_\pi\Sigma\_{3D}J\_\pi^T. 
+ \Sigma_{\mathrm{predicted}} = J_\pi\Sigma_{3D}J_\pi^T.
 $$
 
 Then generate samples from the 3D distribution, project samples satisfying a defined visibility and clipping policy, and estimate their empirical image-space covariance.
@@ -833,15 +833,15 @@ We can connect the sampling transformations and Monte Carlo sections directly to
 At a surface point, outgoing radiance in direction $\omega_o$ can be expressed as:
 
 $$
- \boxed{ L_o(\omega_o) = \int_H f_r(\omega_i,\omega_o) L_i(\omega_i) (\mathbf n\cdot\omega_i)\\,d\omega_i } 
+ \boxed{ L_o(\omega_o) = \int_H f_r(\omega_i,\omega_o) L_i(\omega_i) (\mathbf n\cdot\omega_i)\,d\omega_i }
 $$
 
 where $H$ is the surface hemisphere, $f_r$ is the BRDF, $L_i$ is incoming radiance, $\mathbf n$ is the surface normal, and the cosine factor accounts for projected area.
 
-For a direction sampled from a solid-angle PDF $p\_\omega$, a one-sample Monte Carlo contribution is:
+For a direction sampled from a solid-angle PDF $p_\omega$, a one-sample Monte Carlo contribution is:
 
 $$
- \boxed{ Y= \frac{ f_r(\omega_i,\omega_o) L_i(\omega_i) (\mathbf n\cdot\omega_i) }{ p\_\omega(\omega_i) } }. 
+ \boxed{ Y= \frac{ f_r(\omega_i,\omega_o) L_i(\omega_i) (\mathbf n\cdot\omega_i) }{ p_\omega(\omega_i) } }.
 $$
 
 This assumes the integrand and PDF are expressed using compatible measures.
@@ -851,13 +851,13 @@ This assumes the integrand and PDF are expressed using compatible measures.
 For a uniform hemisphere:
 
 $$
- p\_\omega=\frac1{2\pi}. 
+ p_\omega=\frac1{2\pi}.
 $$
 
 Let:
 
 $$
- z=\cos\theta. 
+ z=\cos\theta.
 $$
 
 Under a uniform hemisphere distribution, $z\sim U(0,1)$.
@@ -865,31 +865,31 @@ Under a uniform hemisphere distribution, $z\sim U(0,1)$.
 For the test integral:
 
 $$
- I=\int_H\cos\theta\\,d\omega, 
+ I=\int_H\cos\theta\,d\omega,
 $$
 
 the Monte Carlo contribution becomes:
 
 $$
- Y\_{\mathrm{uniform}} = \frac z{1/(2\pi)} =2\pi z. 
+ Y_{\mathrm{uniform}} = \frac z{1/(2\pi)} =2\pi z.
 $$
 
 The expected contribution is:
 
 $$
- \mathbb E[Y\_{\mathrm{uniform}}] = 2\pi\mathbb E[z] =2\pi\frac12 =\pi. 
+ \mathbb E[Y_{\mathrm{uniform}}] = 2\pi\mathbb E[z] =2\pi\frac12 =\pi.
 $$
 
 Its variance is:
 
 $$
- \operatorname{Var}(Y\_{\mathrm{uniform}}) = (2\pi)^2\operatorname{Var}(z). 
+ \operatorname{Var}(Y_{\mathrm{uniform}}) = (2\pi)^2\operatorname{Var}(z).
 $$
 
 Because a uniform $[0,1]$ variable has variance $1/12$:
 
 $$
- \boxed{ \operatorname{Var}(Y\_{\mathrm{uniform}}) = \frac{\pi^2}{3} }. 
+ \boxed{ \operatorname{Var}(Y_{\mathrm{uniform}}) = \frac{\pi^2}{3} }.
 $$
 
 #### 2 Cosine-weighted hemisphere sampling
@@ -897,19 +897,19 @@ $$
 Instead, choose:
 
 $$
- \boxed{ p\_\omega(\omega)=\frac{\cos\theta}{\pi} }. 
+ \boxed{ p_\omega(\omega)=\frac{\cos\theta}{\pi} }.
 $$
 
 It is normalized because:
 
 $$
- \int_H\frac{\cos\theta}{\pi}\\,d\omega=1. 
+ \int_H\frac{\cos\theta}{\pi}\,d\omega=1.
 $$
 
 The weighted contribution becomes:
 
 $$
- Y\_{\mathrm{cosine}} = \frac{\cos\theta}{\cos\theta/\pi} =\boxed{\pi} 
+ Y_{\mathrm{cosine}} = \frac{\cos\theta}{\cos\theta/\pi} =\boxed{\pi}
 $$
 
 where the PDF is positive.
@@ -919,7 +919,7 @@ Every ideal sample gives exactly $\pi$.
 Therefore:
 
 $$
- \boxed{ \operatorname{Var}(Y\_{\mathrm{cosine}})=0 }. 
+ \boxed{ \operatorname{Var}(Y_{\mathrm{cosine}})=0 }.
 $$
 
 That explains the program output of $3.141592654$.
@@ -929,19 +929,19 @@ That explains the program output of $3.141592654$.
 Take two uniform random numbers:
 
 $$
- u_1,u_2\in[0,1). 
+ u_1,u_2\in[0,1).
 $$
 
 Construct:
 
 $$
- r=\sqrt{u_1}, \qquad \phi=2\pi u_2. 
+ r=\sqrt{u_1}, \qquad \phi=2\pi u_2.
 $$
 
 Then:
 
 $$
- \boxed{ \omega= \begin{bmatrix} r\cos\phi\\ r\sin\phi\\ \sqrt{1-u_1} \end{bmatrix} }. 
+ \boxed{ \omega= \begin{bmatrix} r\cos\phi\\ r\sin\phi\\ \sqrt{1-u_1} \end{bmatrix} }.
 $$
 
 This first samples a uniform point on the unit disk, then lifts it onto the upper hemisphere.
@@ -949,7 +949,7 @@ This first samples a uniform point on the unit disk, then lifts it onto the uppe
 The resulting solid-angle PDF is:
 
 $$
- \boxed{ p\_\omega=\frac{\omega_z}{\pi} }. 
+ \boxed{ p_\omega=\frac{\omega_z}{\pi} }.
 $$
 
 The complete reference implementation includes this sampling map.
@@ -959,37 +959,37 @@ The complete reference implementation includes this sampling map.
 For a Lambertian surface of reflectance $\rho$:
 
 $$
- f_r=\frac\rho\pi. 
+ f_r=\frac\rho\pi.
 $$
 
 Suppose incoming radiance is constant:
 
 $$
- L_i(\omega)=L. 
+ L_i(\omega)=L.
 $$
 
 The outgoing radiance becomes:
 
 $$
- L_o= \int_H \frac\rho\pi L\cos\theta\\,d\omega. 
+ L_o= \int_H \frac\rho\pi L\cos\theta\,d\omega.
 $$
 
 Because:
 
 $$
- \int_H\cos\theta\\,d\omega=\pi, 
+ \int_H\cos\theta\,d\omega=\pi,
 $$
 
 we obtain:
 
 $$
- \boxed{L_o=\rho L}. 
+ \boxed{L_o=\rho L}.
 $$
 
 A cosine-weighted importance sample gives contribution:
 
 $$
- Y= \frac{ (\rho/\pi)L\cos\theta }{ \cos\theta/\pi } =\rho L. 
+ Y= \frac{ (\rho/\pi)L\cos\theta }{ \cos\theta/\pi } =\rho L.
 $$
 
 The estimator has zero variance for this idealized constant-radiance Lambertian case.
@@ -1017,13 +1017,13 @@ Suppose technique $j$ draws $n_j$ samples from $p_j(x)$.
 A general MIS estimator is:
 
 $$
- \boxed{ \widehat I= \sum_j\frac1{n_j} \sum\_{i=1}^{n_j} w_j(X\_{ji}) \frac{f(X\_{ji})}{p_j(X\_{ji})} }. 
+ \boxed{ \widehat I= \sum_j\frac1{n_j} \sum_{i=1}^{n_j} w_j(X_{ji}) \frac{f(X_{ji})}{p_j(X_{ji})} }.
 $$
 
 The weights must satisfy suitable conditions, including:
 
 $$
- \sum_jw_j(x)=1 
+ \sum_jw_j(x)=1
 $$
 
 where the integrand contributes and the combined sampling techniques provide coverage.
@@ -1033,7 +1033,7 @@ One common weighting scheme is the balance heuristic:
 
 
 $$
- \boxed{ w_j(x)= \frac{n_jp_j(x)} {\sum_kn_kp_k(x)} }. 
+ \boxed{ w_j(x)= \frac{n_jp_j(x)} {\sum_kn_kp_k(x)} }.
 $$
 
 These weights favor techniques that assign relatively high sampling probability to the evaluated point.
@@ -1055,25 +1055,25 @@ Suppose the remaining path contribution would be $Y$.
 Let the survival probability be:
 
 $$
- q\in(0,1]. 
+ q\in(0,1].
 $$
 
 Define:
 
 $$
- \widehat Y= \begin{cases} Y/q,&\text{with probability }q,\\ 0,&\text{with probability }1-q. \end{cases} 
+ \widehat Y= \begin{cases} Y/q,&\text{with probability }q,\\ 0,&\text{with probability }1-q. \end{cases}
 $$
 
 Then:
 
 $$
- \mathbb E[\widehat Y\mid Y] = q\frac Yq+(1-q)0 =Y. 
+ \mathbb E[\widehat Y\mid Y] = q\frac Yq+(1-q)0 =Y.
 $$
 
 Thus:
 
 $$
- \boxed{ \mathbb E[\widehat Y]=\mathbb E[Y] }. 
+ \boxed{ \mathbb E[\widehat Y]=\mathbb E[Y] }.
 $$
 
 Proper Russian-roulette termination can preserve unbiasedness while reducing expected computational work.
@@ -1089,25 +1089,25 @@ Deterministically truncating paths after a fixed depth is generally a different 
 Suppose we want:
 
 $$
- I=\mathbb E[Y]. 
+ I=\mathbb E[Y].
 $$
 
 Assume we also have a correlated variable $C$ with known expectation:
 
 $$
- \mathbb E[C]=\mu_C. 
+ \mathbb E[C]=\mu_C.
 $$
 
 Construct:
 
 $$
- \boxed{ Z=Y-\beta(C-\mu_C) }. 
+ \boxed{ Z=Y-\beta(C-\mu_C) }.
 $$
 
 Its expectation is:
 
 $$
- \mathbb E[Z] = \mathbb E[Y]-\beta(\mathbb E[C]-\mu_C) =I. 
+ \mathbb E[Z] = \mathbb E[Y]-\beta(\mathbb E[C]-\mu_C) =I.
 $$
 
 So the estimator remains unbiased for any fixed $\beta$ under the assumptions.
@@ -1115,19 +1115,19 @@ So the estimator remains unbiased for any fixed $\beta$ under the assumptions.
 Its variance is:
 
 $$
- \begin{aligned} \operatorname{Var}(Z) &= \operatorname{Var}(Y) +\beta^2\operatorname{Var}(C)\\ &\quad-2\beta\operatorname{Cov}(Y,C). \end{aligned} 
+ \begin{aligned} \operatorname{Var}(Z) &= \operatorname{Var}(Y) +\beta^2\operatorname{Var}(C)\\ &\quad-2\beta\operatorname{Cov}(Y,C). \end{aligned}
 $$
 
 Differentiate with respect to $\beta$:
 
 $$
- 2\beta\operatorname{Var}(C) -2\operatorname{Cov}(Y,C)=0. 
+ 2\beta\operatorname{Var}(C) -2\operatorname{Cov}(Y,C)=0.
 $$
 
 Therefore the variance-minimizing coefficient is:
 
 $$
- \boxed{ \beta^\star= \frac{\operatorname{Cov}(Y,C)} {\operatorname{Var}(C)} } 
+ \boxed{ \beta^\star= \frac{\operatorname{Cov}(Y,C)} {\operatorname{Var}(C)} }
 $$
 
 when $\operatorname{Var}(C)>0$.
@@ -1171,7 +1171,7 @@ This can directly test whether the current partial-grid design introduces system
 the sampling and Monte Carlo chapters and the statistical validation chapters should now form one continuous chain in your mental model:
 
 $$
- \boxed{ \text{Generator} \rightarrow \text{Sample distribution} \rightarrow \text{Weighted contribution} \rightarrow \text{Estimator} \rightarrow \text{Statistical evidence} } 
+ \boxed{ \text{Generator} \rightarrow \text{Sample distribution} \rightarrow \text{Weighted contribution} \rightarrow \text{Estimator} \rightarrow \text{Statistical evidence} }
 $$
 
 Every arrow has assumptions.

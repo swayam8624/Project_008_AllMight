@@ -8,7 +8,7 @@ Point lights are discrete directional events while environment illumination occu
 
 **Recall question:** What makes a point light a delta distribution, and how does MIS use competing PDFs?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 19361–22205; source-span SHA256 16b6d00e3ebc5af580eefb93c84fdf8ec1efee1705d4fc8c8338215452502337. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 19392–22236; source-span SHA256 16b6d00e3ebc5af580eefb93c84fdf8ec1efee1705d4fc8c8338215452502337. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 **Point-light sampling**

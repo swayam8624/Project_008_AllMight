@@ -14,12 +14,13 @@ EMBEDDED = {
     "Computing Foundations - From Bits to C++ and Systems APIs.md": (
         "basis_measurement_lab.cpp", "math_contact_toi_lab.cpp",
         "temporary_lifetime_lab.cpp", "se3_exp_log_lab.cpp",
-        "research_inference_lab.py",
+        "research_inference_lab.py", "packed_arithmetic_lab.cpp",
     ),
     "University - Worlds, Images and Inference - Graphics, Vision and Photography.md": (
         "disk_ccd_lab.cpp", "swept_broadphase_lab.cpp",
         "xr_planar_vio_ekf_lab.py", "xr_3d_imu_preintegration_lab.py",
         "nerf_volume_rendering_lab.py", "gaussian_training_step_lab.py",
+        "gpu_structure_reference_lab.cpp", "gpu_budget_precision_lab.py",
     ),
     "Game Engine - From First Frame to Living Worlds.md": (
         "disk_event_pipeline_lab.cpp", "persistent_contact_lab.cpp",
@@ -30,8 +31,30 @@ EMBEDDED = {
         "threaded_asset_publication_lab.cpp", "resource_state_plan_lab.cpp",
         "rollback_netcode_lab.cpp", "audio_voice_mixer_lab.cpp",
         "ai_decision_models_lab.cpp", "scene_persistence_lab.cpp",
+        "collision_filter_event_lab.cpp", "planar_joint_rows_lab.py",
+        "shader_import_lab.py", "ecs_sparse_set_exception_check.py",
     ),
 }
+
+
+PROJECT_FILES = {
+    "Game Engine - From First Frame to Living Worlds.md": tuple(
+        "cmake_imported_alias/" + name for name in (
+            "CMakeLists.txt", "deps/CMakeLists.txt", "deps/include/vendor_math.hpp",
+            "deps/vendor_math.cpp", "deps/consumer/CMakeLists.txt", "deps/consumer/main.cpp",
+            "scope_probe/CMakeLists.txt", "negative/CMakeLists.txt", "negative/main.cpp",
+        )
+    ),
+}
+
+
+def exact_labeled_source_count(text, blocks, source, filename, language):
+    # Tiny source files can have identical bodies. Their explicit path labels
+    # distinguish a real file copy from an unrelated matching example.
+    lines = text.splitlines()
+    marker = "<!-- exact-source: tools/labs/" + filename + " -->"
+    return sum(block.language == language and block.body == source.rstrip("\r\n")
+               and block.start >= 2 and lines[block.start-2] == marker for block in blocks)
 
 
 def exact_program_count(blocks, source, language):
@@ -44,6 +67,7 @@ def exact_program_count(blocks, source, language):
 def verify():
     failed = False
     checked = 0
+    project_checked = 0
     for name, filenames in EMBEDDED.items():
         path = CONTINUOUS / name
         text = path.read_text(encoding="utf-8")
@@ -69,7 +93,17 @@ def verify():
                 failed = True
             else:
                 print(f"SYNC {filename}: exact full source and comments match")
-    print(f"Continuous volume source sync: {'FAIL' if failed else 'PASS'} ({checked} declared programs; mechanical only)")
+        for filename in PROJECT_FILES.get(name, ()):
+            source = (ROOT / "tools/labs" / filename).read_text(encoding="utf-8")
+            language = "cmake" if filename.endswith(".txt") else "cpp"
+            count = exact_labeled_source_count(text, blocks, source, filename, language)
+            project_checked += 1
+            if count != 1:
+                print(f"FAIL {filename}: expected one labeled full file, found {count}")
+                failed = True
+            else:
+                print(f"SYNC {filename}: exact labeled source and comments match")
+    print(f"Continuous volume source sync: {'FAIL' if failed else 'PASS'} ({checked} declared programs; {project_checked} project source files; mechanical only)")
     return 1 if failed else 0
 
 

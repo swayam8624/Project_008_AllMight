@@ -1,0 +1,2099 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Chapter xmlns:ns0="http://ns.adobe.com/AdobeInDesign/4.0/" id="05-engine-i-ch011" source="Chapter Edition/03 - Game Engine/11 - Streaming resources through explicit states.md">
+<Content ns0:pstyle="ChapterHeader" id="05-engine-i-ch011-streaming-resources-through-explicit-states">11 — Streaming resources through explicit states</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#05-engine-i-ch010">Previous chapter</Link> · <Link href="#05-engine-i-ch012">Next chapter</Link></Content>
+<Content ns0:pstyle="Content">Large worlds cannot load every resource before play begins, so readiness becomes a state transition with owners and versions. This chapter develops asynchronous work, publication, residency, and safe replacement as one resource lifecycle.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">By the end:</Strong> Model streaming as request, decode, validation, upload, publication, use, and retirement, including stale completion and memory-budget cases.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Recall question:</Strong> When an older load finishes after a newer request, what prevents the stale result from becoming visible or freeing a resource still in use?</Content>
+
+
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">A streaming state machine</Strong></Content>
+<Content ns0:pstyle="Content">A useful state model:</Content>
+<Code ns0:pstyle="Code" language="text">Unloaded
+   |
+   v
+Requested
+   |
+   v
+LoadingCPU
+   |
+   v
+CPUReady
+   |
+   v
+UploadQueued
+   |
+   v
+Resident
+   |
+   v
+EvictPending
+   |
+   v
+Unloaded</Code>
+<Content ns0:pstyle="Content">With separate:</Content>
+<Code ns0:pstyle="Code" language="text">Failed</Code>
+<Content ns0:pstyle="Content">state.</Content>
+<Content ns0:pstyle="Content">Do not represent all of this as:</Content>
+<Code ns0:pstyle="Code" language="cpp">bool loaded;</Code>
+<Content ns0:pstyle="Content">There are many intermediate states with different ownership.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Asset identity during streaming</Strong></Content>
+<Content ns0:pstyle="Content">Asset handle remains:</Content>
+<Code ns0:pstyle="Code" language="text">valid</Code>
+<Content ns0:pstyle="Content">while asset is Unloaded.</Content>
+<Content ns0:pstyle="Content">Queries may return:</Content>
+<Code ns0:pstyle="Code" language="text">placeholder
+fallback
+pending future
+not resident status.</Code>
+<Content ns0:pstyle="Content">Thus again:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/03367b2455f36ddcf3db27ec.svg" alt="&#10;AssetExistence&#10;\neq&#10;CPUResidency&#10;\neq&#10;GPUResidency.&#10;" jobId="03367b2455f36ddcf3db27ec" originalTeX="&#10;AssetExistence&#10;\neq&#10;CPUResidency&#10;\neq&#10;GPUResidency.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Async request object</Strong></Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct AssetRequest
+{
+    AssetID Asset;
+    ResidencyPriority Priority;
+};</Code>
+<Content ns0:pstyle="Content">Asset runtime deduplicates multiple requests for same asset.</Content>
+<Content ns0:pstyle="Content">If ten entities request the same texture:</Content>
+<Code ns0:pstyle="Code" language="text">one load
+ten consumers.</Code>
+<Content ns0:pstyle="Content">Do not launch ten disk reads.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Streaming priorities</Strong></Content>
+<Content ns0:pstyle="Content">Useful priority inputs include:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/690f31a0f760420ba3b1a37f.svg" alt="&#10;\text{camera distance}&#10;" jobId="690f31a0f760420ba3b1a37f" originalTeX="&#10;\text{camera distance}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/089c83e4843b34d6fa02cb43.svg" alt="&#10;\text{screen-space size}&#10;" jobId="089c83e4843b34d6fa02cb43" originalTeX="&#10;\text{screen-space size}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/57c272f8b1c15d65eea766d0.svg" alt="&#10;\text{gameplay criticality}&#10;" jobId="57c272f8b1c15d65eea766d0" originalTeX="&#10;\text{gameplay criticality}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e674031c75a570909f566a0a.svg" alt="&#10;\text{predicted future visibility}&#10;" jobId="e674031c75a570909f566a0a" originalTeX="&#10;\text{predicted future visibility}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/24d9f1571263d8610cba52e9.svg" alt="&#10;\text{explicit preload priority}.&#10;" jobId="24d9f1571263d8610cba52e9" originalTeX="&#10;\text{explicit preload priority}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">A hero character texture should beat a distant optional prop when budgets are constrained.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Partial residency</Strong></Content>
+<Content ns0:pstyle="Content">Residency need not be all-or-nothing.</Content>
+<Content ns0:pstyle="Content">Textures:</Content>
+<Code ns0:pstyle="Code" language="text">coarse mip resident
+high mips streaming.</Code>
+<Content ns0:pstyle="Content">Meshes:</Content>
+<Code ns0:pstyle="Code" language="text">low LOD resident
+high LOD requested.</Code>
+<Content ns0:pstyle="Content">Worlds:</Content>
+<Code ns0:pstyle="Code" language="text">near cells resident
+far cells absent.</Code>
+<Content ns0:pstyle="Content">This makes residency a level rather than a bool.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Residency state</Strong></Content>
+<Content ns0:pstyle="Content">A richer resource entry:</Content>
+<Code ns0:pstyle="Code" language="cpp">enum class ResidencyState
+{
+    Unloaded,
+    Loading,
+    CPUResident,
+    Uploading,
+    GPUResident,
+    EvictPending,
+    Failed
+};
+
+struct AssetRuntimeEntry
+{
+    AssetID Asset;
+    ResidencyState State;
+
+    std::size_t CPUBytes;
+    std::size_t GPUBytes;
+
+    std::uint64_t LastUsedFrame;
+    std::uint32_t PinCount;
+};</Code>
+<Content ns0:pstyle="Content">Now resource manager can make budget decisions.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">CPU and GPU residency are independent</Strong></Content>
+<Content ns0:pstyle="Content">A texture may be:</Content>
+<Code ns0:pstyle="Code" language="text">CPU artifact present
+GPU resource absent</Code>
+<Content ns0:pstyle="Content">during upload or after GPU eviction.</Content>
+<Content ns0:pstyle="Content">It may also be:</Content>
+<Code ns0:pstyle="Code" language="text">GPU resident
+CPU source artifact discarded</Code>
+<Content ns0:pstyle="Content">if the runtime no longer needs CPU pixels.</Content>
+<Content ns0:pstyle="Content">Therefore track separately where useful:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5898cf6b0b1871a312541f07.svg" alt="&#10;R_{CPU},&#10;R_{GPU}.&#10;" jobId="5898cf6b0b1871a312541f07" originalTeX="&#10;R_{CPU},&#10;R_{GPU}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Memory budgeting</Strong></Content>
+<Content ns0:pstyle="Content">Suppose GPU texture budget:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/31246471c93b5ccb734e4444.svg" alt="&#10;B=4\text{ GiB}.&#10;" jobId="31246471c93b5ccb734e4444" originalTeX="&#10;B=4\text{ GiB}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Current resident textures consume:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/18ed45266fb7bea4321a2f76.svg" alt="&#10;3.9\text{ GiB}.&#10;" jobId="18ed45266fb7bea4321a2f76" originalTeX="&#10;3.9\text{ GiB}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">New request requires:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cebb0fea246f71289e5a09fd.svg" alt="&#10;500\text{ MiB}.&#10;" jobId="cebb0fea246f71289e5a09fd" originalTeX="&#10;500\text{ MiB}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Resource manager must evict approximately:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8e3fb63137232a102d9ff5aa.svg" alt="&#10;400\text{ MiB}&#10;" jobId="8e3fb63137232a102d9ff5aa" originalTeX="&#10;400\text{ MiB}&#10;" /></Formula>
+<Content ns0:pstyle="Content">plus safety margin.</Content>
+<Content ns0:pstyle="Content">Candidates might be ranked by:</Content>
+<Code ns0:pstyle="Code" language="text">unpinned
+oldest use
+lowest priority
+largest reclaim value.</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Residency is policy</Strong></Content>
+<Content ns0:pstyle="Content">Low-level GPU API should not decide:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">unload distant mountain.</Content></BlockQuote>
+<Content ns0:pstyle="Content">It only knows allocation.</Content>
+<Content ns0:pstyle="Content">High-level streaming system has scene/game knowledge.</Content>
+<Content ns0:pstyle="Content">Thus:</Content>
+<Code ns0:pstyle="Code" language="text">Streaming policy
+      ↓
+Residency manager
+      ↓
+Renderer/GPU allocator</Code>
+<Content ns0:pstyle="Content">preserves proper dependency direction.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Reference counting versus explicit residency</Strong></Content>
+<Content ns0:pstyle="Content">Reference counting says:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1208296415409749b0c37115.svg" alt="&#10;resource\ stays\ alive&#10;\iff&#10;refcount&gt;0.&#10;" jobId="1208296415409749b0c37115" originalTeX="&#10;resource\ stays\ alive&#10;\iff&#10;refcount&gt;0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This works well for ordinary CPU object ownership.</Content>
+<Content ns0:pstyle="Content">It is often insufficient for streaming.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why references do not equal residency need</Strong></Content>
+<Content ns0:pstyle="Content">Suppose a Scene contains references to 50,000 textures.</Content>
+<Content ns0:pstyle="Content">If each reference increments a strong runtime refcount:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f6f5877a2de64a5ec73266fa.svg" alt="&#10;all\ 50,000&#10;" jobId="f6f5877a2de64a5ec73266fa" originalTeX="&#10;all\ 50,000&#10;" /></Formula>
+<Content ns0:pstyle="Content">may remain resident forever.</Content>
+<Content ns0:pstyle="Content">But many are currently:</Content>
+<Code ns0:pstyle="Code" language="text">off-screen
+far away
+inactive level
+low-priority.</Code>
+<Content ns0:pstyle="Content">The fact that an asset is <Strong ns0:cstyle="Bold">logically referenced</Strong> does not mean its heavy runtime payload must remain resident.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Three concepts should be separated</Strong></Content>
+<Content ns0:pstyle="Content">A good model distinguishes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/82d3c883e9860b9f5f2b32c9.svg" alt="&#10;\boxed{&#10;Reference&#10;}&#10;" jobId="82d3c883e9860b9f5f2b32c9" originalTeX="&#10;\boxed{&#10;Reference&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">meaning:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">some durable object names this asset.</Content></BlockQuote>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/696c3c18f4977eff7e531c8b.svg" alt="&#10;\boxed{&#10;Request&#10;}&#10;" jobId="696c3c18f4977eff7e531c8b" originalTeX="&#10;\boxed{&#10;Request&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">meaning:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">some runtime consumer currently wants it available.</Content></BlockQuote>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/052bb7eb2ad2cd23555595fd.svg" alt="&#10;\boxed{&#10;Pin&#10;}&#10;" jobId="052bb7eb2ad2cd23555595fd" originalTeX="&#10;\boxed{&#10;Pin&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">meaning:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">do not evict it yet.</Content></BlockQuote>
+<Content ns0:pstyle="Content">These are different.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Explicit residency leases</Strong></Content>
+<Content ns0:pstyle="Content">Example:</Content>
+<Code ns0:pstyle="Code" language="cpp">class ResidencyLease
+{
+public:
+    ~ResidencyLease()
+    {
+        manager.Release(asset);
+    }
+};</Code>
+<Content ns0:pstyle="Content">A system can acquire:</Content>
+<Code ns0:pstyle="Code" language="cpp">auto lease =
+    assets.Acquire(texture);</Code>
+<Content ns0:pstyle="Content">while it requires residency.</Content>
+<Content ns0:pstyle="Content">But simple counts still need budget/priority semantics.</Content>
+<Content ns0:pstyle="Content">So:</Content>
+<Code ns0:pstyle="Code" language="text">pin count
+priority
+last use
+budget</Code>
+<Content ns0:pstyle="Content">often work together.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Weak persistent handles</Strong></Content>
+<Content ns0:pstyle="Content">An authored:</Content>
+<Code ns0:pstyle="Code" language="cpp">TextureAssetHandle</Code>
+<Content ns0:pstyle="Content">is effectively a weak persistent reference to identity.</Content>
+<Content ns0:pstyle="Content">It should not force runtime GPU residency merely because a material exists somewhere in a project file.</Content>
+<Content ns0:pstyle="Content">This is another benefit of Kairo’s AssetHandle containing only <InlineCode ns0:cstyle="InlineCode">AssetID</InlineCode>, not a shared_ptr to runtime texture.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Resource lifetime across frames in flight</Strong></Content>
+<Content ns0:pstyle="Content">This closes M092.</Content>
+<Content ns0:pstyle="Content">A resource may have several overlapping lifetimes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5dcdd40b6c118bd3c92cba9f.svg" alt="&#10;L_{\text{AssetID}}&#10;" jobId="5dcdd40b6c118bd3c92cba9f" originalTeX="&#10;L_{\text{AssetID}}&#10;" /></Formula>
+<Content ns0:pstyle="Content">persistent project lifetime,</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b49c26820da1f4bbd1ff97d9.svg" alt="&#10;L_{\text{DerivedArtifact}}&#10;" jobId="b49c26820da1f4bbd1ff97d9" originalTeX="&#10;L_{\text{DerivedArtifact}}&#10;" /></Formula>
+<Content ns0:pstyle="Content">cache/runtime CPU lifetime,</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d4cb2cc443e21fb530e22ce9.svg" alt="&#10;L_{\text{RuntimeHandle}}&#10;" jobId="d4cb2cc443e21fb530e22ce9" originalTeX="&#10;L_{\text{RuntimeHandle}}&#10;" /></Formula>
+<Content ns0:pstyle="Content">process resource lifetime,</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c494f8119ff155ee109545c7.svg" alt="&#10;L_{\text{GPUUse}}&#10;" jobId="c494f8119ff155ee109545c7" originalTeX="&#10;L_{\text{GPUUse}}&#10;" /></Formula>
+<Content ns0:pstyle="Content">asynchronous submission lifetime.</Content>
+<Content ns0:pstyle="Content">These are not equal.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">The key inequality</Strong></Content>
+<Content ns0:pstyle="Content">For resource R submitted to GPU at work item <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/114c2fc1c980af2b47cfc64a.svg" alt="S" jobId="114c2fc1c980af2b47cfc64a" originalTeX="S" />:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0400a6157964a63adc225575.svg" alt="&#10;\boxed{&#10;L_R&#10;&gt;&#10;Completion(S).&#10;}&#10;" jobId="0400a6157964a63adc225575" originalTeX="&#10;\boxed{&#10;L_R&#10;&gt;&#10;Completion(S).&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">CPU saying:</Content>
+<Code ns0:pstyle="Code" language="text">"I don't need it anymore"</Code>
+<Content ns0:pstyle="Content">is not enough if GPU still does.</Content>
+<Content ns0:pstyle="Content">This is conceptually identical to deferred reclamation in concurrent data structures.</Content>
+<Content ns0:pstyle="Content">A resource is retired logically first, physically freed later.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Example three-frame timeline</Strong></Content>
+<Content ns0:pstyle="Content">Imagine CPU:</Content>
+<Code ns0:pstyle="Code" language="text">CPU frame 10 submitted using Texture A
+CPU frame 11 reloads and publishes Texture B
+CPU frame 12 uses B</Code>
+<Content ns0:pstyle="Content">GPU:</Content>
+<Code ns0:pstyle="Code" language="text">currently executing frame 9.</Code>
+<Content ns0:pstyle="Content">Texture A must remain alive for frame 10 even though no future CPU frame will reference it.</Content>
+<Content ns0:pstyle="Content">So:</Content>
+<Code ns0:pstyle="Code" language="text">Asset mapping:
+A -&gt; B immediately for future work
+
+GPU memory:
+old A remains until frame 10 fence signals.</Code>
+<Content ns0:pstyle="Content">Logical replacement and physical destruction are separate operations.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Hot-reload publication model</Strong></Content>
+<Content ns0:pstyle="Content">A robust runtime entry can be:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct TextureEntry
+{
+    AssetID Asset;
+
+    std::uint64_t Revision;
+
+    TextureRuntimeHandle Current;
+};
+
+void PublishReplacement(
+    TextureEntry&amp; entry,
+    TextureRuntimeHandle replacement)
+{
+    TextureRuntimeHandle old =
+        entry.Current;
+
+    entry.Current = replacement;
+    ++entry.Revision;
+
+    RetireAfterGPUCompletion(old);
+}</Code>
+<Content ns0:pstyle="Content">That is the core operation.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Material/mesh transitive hot reload</Strong></Content>
+<Content ns0:pstyle="Content">Suppose:</Content>
+<Code ns0:pstyle="Code" language="text">Material
+  ↓
+Texture</Code>
+<Content ns0:pstyle="Content">Texture reload may not require rebuilding Material if material only stores stable AssetID/descriptor binding.</Content>
+<Content ns0:pstyle="Content">It may only require rebinding the new runtime texture.</Content>
+<Content ns0:pstyle="Content">But if a shader changes resource layout:</Content>
+<Code ns0:pstyle="Code" language="text">descriptor layout changed</Code>
+<Content ns0:pstyle="Content">dependent pipelines/material bindings may need rebuilding.</Content>
+<Content ns0:pstyle="Content">The dependency graph must distinguish such relationships.</Content>
+<Content ns0:pstyle="Content">Hot reload is not always “replace one object.”</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Failure during hot reload</Strong></Content>
+<Content ns0:pstyle="Content">If replacement shader fails to compile:</Content>
+<Code ns0:pstyle="Code" language="text">keep old pipeline
+report error</Code>
+<Content ns0:pstyle="Content">Do not replace working runtime state with null merely because source file is temporarily invalid while the user types.</Content>
+<Content ns0:pstyle="Content">Editor hot reload especially needs <Strong ns0:cstyle="Bold">last-known-good semantics</Strong>.</Content>
+<Content ns0:pstyle="Content">This drastically improves authoring UX.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Current Kairo M092 architecture map</Strong></Content>
+<Content ns0:pstyle="Content">Your code currently has a particularly strong split:</Content>
+<Code ns0:pstyle="Code" language="text">AssetID
+    persistent UUID
+
+AssetMetadata
+    path/type/origin/importer/revision/deps
+
+AssetRegistry
+    ID/path topology authority
+
+ImportDatabase
+    source fingerprint +
+    importer/version/settings provenance
+
+AssetImporter
+    source -&gt; derived artifact
+
+ImporterRegistry
+    exact importer ID/version registry
+
+DerivedDataCache
+    immutable recipe-addressed artifacts
+
+SourceWatcher
+    portable source-change observation
+
+KairoRenderer
+    artifact -&gt; runtime GPU representation</Code>
+<Content ns0:pstyle="Content">That is a coherent pipeline.</Content>
+<Content ns0:pstyle="Content">It is not one monolithic asset manager.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">The current asset pipeline end-to-end</Strong></Content>
+<Content ns0:pstyle="Content">For a texture:</Content>
+<Code ns0:pstyle="Code" language="text">Textures/Wall.png
+        |
+        | AssetID identifies it persistently
+        v
+AssetRegistry metadata
+        |
+        v
+ImportRecord
+        |
+        | source fingerprint
+        | importer = kairo.texture.stb
+        | importer version
+        | canonical settings
+        v
+DerivedDataKey
+        |
+      cache?
+      /    \
+    yes     no
+     |       |
+     |   StbTextureImporter
+     |       |
+     |    mip chain
+     |       |
+     +--- TextureArtifact
+              |
+              v
+       Renderer adapter
+              |
+              v
+       VulkanTexture2D
+              |
+              v
+          VkImage</Code>
+<Content ns0:pstyle="Content">This is the mental model to keep.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Three kinds of hashes in an asset system</Strong></Content>
+<Content ns0:pstyle="Content">Do not conflate:</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Persistent asset identity</Strong></Content>
+<Content ns0:pstyle="Content">Kairo:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/07fe78a6ef59319753c4e63d.svg" alt="&#10;UUID.&#10;" jobId="07fe78a6ef59319753c4e63d" originalTeX="&#10;UUID.&#10;" /></Formula>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Source content fingerprint</Strong></Content>
+<Content ns0:pstyle="Content">Answers:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">are source bytes the same?</Content></BlockQuote>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Derived cache key</Strong></Content>
+<Content ns0:pstyle="Content">Answers:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">is the entire derivation recipe identical?</Content></BlockQuote>
+<Content ns0:pstyle="Content">These serve different roles.</Content>
+<Content ns0:pstyle="Content">A robust asset system may use all three simultaneously.</Content>
+<Content ns0:pstyle="Content">Kairo does.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Three kinds of versions</Strong></Content>
+<Content ns0:pstyle="Content">Similarly distinguish:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/95f1a7d5ba2e30874e2c5ebd.svg" alt="&#10;MetadataRevision&#10;" jobId="95f1a7d5ba2e30874e2c5ebd" originalTeX="&#10;MetadataRevision&#10;" /></Formula>
+<Content ns0:pstyle="Content">for registry metadata changes,</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f283e8d1fd3f13dff48a6100.svg" alt="&#10;ImporterVersion&#10;" jobId="f283e8d1fd3f13dff48a6100" originalTeX="&#10;ImporterVersion&#10;" /></Formula>
+<Content ns0:pstyle="Content">for derivation implementation,</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2c9ba0f21f2ab543dcc3be98.svg" alt="&#10;RuntimeRevision&#10;" jobId="2c9ba0f21f2ab543dcc3be98" originalTeX="&#10;RuntimeRevision&#10;" /></Formula>
+<Content ns0:pstyle="Content">for currently published runtime resource generation/hot reload.</Content>
+<Content ns0:pstyle="Content">One vague <InlineCode ns0:cstyle="InlineCode">version</InlineCode> field cannot express all three cleanly.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Asset deletion</Strong></Content>
+<Content ns0:pstyle="Content">Current AssetRegistry refuses to remove an asset while another registered asset depends on it.</Content>
+<Content ns0:pstyle="Content">That is a very good invariant.</Content>
+<Content ns0:pstyle="Content">Without this:</Content>
+<Code ns0:pstyle="Code" language="text">Material -&gt; Texture</Code>
+<Content ns0:pstyle="Content">could become silently dangling.</Content>
+<Content ns0:pstyle="Content">A higher-level editor may support:</Content>
+<Code ns0:pstyle="Code" language="text">Delete anyway and clear references</Code>
+<Content ns0:pstyle="Content">or:</Content>
+<Code ns0:pstyle="Code" language="text">Delete with dependency replacement.</Code>
+<Content ns0:pstyle="Content">But those should be explicit transactions.</Content>
+<Content ns0:pstyle="Content">Registry-level safety should remain strict.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Asset move</Strong></Content>
+<Content ns0:pstyle="Content">Moving asset path should not affect AssetID.</Content>
+<Content ns0:pstyle="Content">Kairo’s registry updates:</Content>
+<Code ns0:pstyle="Code" language="text">ID -&gt; new path
+path index
+metadata revision</Code>
+<Content ns0:pstyle="Content">atomically enough to avoid leaving an asset with no path mapping if allocation fails.</Content>
+<Content ns0:pstyle="Content">This demonstrates an important principle:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f511afd03517684269525775.svg" alt="&#10;\boxed{&#10;\text{metadata operations deserve strong exception guarantees too}.&#10;}&#10;" jobId="f511afd03517684269525775" originalTeX="&#10;\boxed{&#10;\text{metadata operations deserve strong exception guarantees too}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Asset databases are persistent state, not disposable scratch memory.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Dependency graph complexity</Strong></Content>
+<Content ns0:pstyle="Content">Let:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e79cf100e20b52892f7a028e.svg" alt="&#10;V=&#10;\text{asset count}&#10;" jobId="e79cf100e20b52892f7a028e" originalTeX="&#10;V=&#10;\text{asset count}&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7d85f1836c251b9d1f46c94d.svg" alt="&#10;E=&#10;\text{dependency count}.&#10;" jobId="7d85f1836c251b9d1f46c94d" originalTeX="&#10;E=&#10;\text{dependency count}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Cycle detection through full reachability per mutation may cost:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/afbc44b753791d1058497f0b.svg" alt="&#10;O(V+E)&#10;" jobId="afbc44b753791d1058497f0b" originalTeX="&#10;O(V+E)&#10;" /></Formula>
+<Content ns0:pstyle="Content">in worst case.</Content>
+<Content ns0:pstyle="Content">For editor-scale graphs this is usually acceptable.</Content>
+<Content ns0:pstyle="Content">If asset graphs become enormous and mutations frequent, maintain additional topological information or use more sophisticated incremental DAG algorithms.</Content>
+<Content ns0:pstyle="Content">Correctness first.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">DDC size management</Strong></Content>
+<Content ns0:pstyle="Content">Content-addressed invalidation produces old unreachable entries.</Content>
+<Content ns0:pstyle="Content">Therefore DDC eventually needs garbage collection.</Content>
+<Content ns0:pstyle="Content">Possible policy:</Content>
+<Code ns0:pstyle="Code" language="text">size budget
+LRU
+age threshold
+workspace manifest reachability</Code>
+<Content ns0:pstyle="Content">Importantly, deleting DDC is safe.</Content>
+<Content ns0:pstyle="Content">All entries should be reproducible from source + tools.</Content>
+<Content ns0:pstyle="Content">That is the criterion for calling it a cache.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">DDC versus packaged build artifacts</Strong></Content>
+<Content ns0:pstyle="Content">A local DDC may contain many historical/unused entries.</Content>
+<Content ns0:pstyle="Content">A shipping package should contain only the dependency closure of the chosen build/startup content.</Content>
+<Content ns0:pstyle="Content">Pipeline:</Content>
+<Code ns0:pstyle="Code" language="text">project
+    ↓
+resolve package roots
+    ↓
+dependency closure
+    ↓
+resolve current derived artifacts
+    ↓
+copy/cook package manifest + payloads.</Code>
+<Content ns0:pstyle="Content">Do not simply ship the entire developer cache.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Reproducibility</Strong></Content>
+<Content ns0:pstyle="Content">For a derivation to be reproducible:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2e019e2f7c7a1eaabec58032.svg" alt="&#10;Artifact&#10;=&#10;F(&#10;Source,&#10;Dependencies,&#10;Settings,&#10;ImporterVersion,&#10;Target&#10;).&#10;" jobId="2e019e2f7c7a1eaabec58032" originalTeX="&#10;Artifact&#10;=&#10;F(&#10;Source,&#10;Dependencies,&#10;Settings,&#10;ImporterVersion,&#10;Target&#10;).&#10;" /></Formula>
+<Content ns0:pstyle="Content">There must be no hidden dependency on:</Content>
+<Code ns0:pstyle="Code" language="text">current directory
+wall-clock time
+random seed
+machine locale
+unordered-map iteration
+untracked tool version.</Code>
+<Content ns0:pstyle="Content">Any hidden input undermines the cache.</Content>
+<Content ns0:pstyle="Content">This is why canonical settings, exact importer version and deterministic manifests matter.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Locale</Strong></Content>
+<Content ns0:pstyle="Content">Parsing:</Content>
+<Code ns0:pstyle="Code" language="text">1.25</Code>
+<Content ns0:pstyle="Content">must mean the same thing on systems whose locale expects commas.</Content>
+<Content ns0:pstyle="Content">Asset formats should use locale-independent numeric parsing/serialization.</Content>
+<Content ns0:pstyle="Content">Kairo consistently uses explicit classic/character-based parsing in several persistence systems, which is the right philosophy.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Deterministic dependency ordering</Strong></Content>
+<Content ns0:pstyle="Content">Even if dependency vector semantics are unordered, writing them in arbitrary hash-table iteration order can produce different artifact bytes.</Content>
+<Content ns0:pstyle="Content">Canonicalize:</Content>
+<Code ns0:pstyle="Code" language="text">sort by stable ID</Code>
+<Content ns0:pstyle="Content">before serialization/hashing unless order itself is meaningful.</Content>
+<Content ns0:pstyle="Content">Deterministic representation helps:</Content>
+<Code ns0:pstyle="Code" language="text">cache hits
+diffs
+reproducible builds
+tests.</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Asset importer error boundaries</Strong></Content>
+<Content ns0:pstyle="Content">Importer errors should say:</Content>
+<Code ns0:pstyle="Code" language="text">asset
+source
+importer
+location if known
+reason.</Code>
+<Content ns0:pstyle="Content">But importer failure should not partially mutate registry or runtime.</Content>
+<Content ns0:pstyle="Content">Your current functional boundary:</Content>
+<Code ns0:pstyle="Code" language="text">Importer returns artifact or throws</Code>
+<Content ns0:pstyle="Content">is excellent for this.</Content>
+<Content ns0:pstyle="Content">Transaction owner can decide whether to:</Content>
+<Code ns0:pstyle="Code" language="text">keep old artifact
+mark source dirty
+show error
+retry.</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Build versus runtime import</Strong></Content>
+<Content ns0:pstyle="Content">Editor:</Content>
+<Code ns0:pstyle="Code" language="text">source watcher detects change
+    ↓
+import
+    ↓
+DDC
+    ↓
+hot reload.</Code>
+<Content ns0:pstyle="Content">Shipping runtime:</Content>
+<Code ns0:pstyle="Code" language="text">manifest
+    ↓
+prebuilt artifact
+    ↓
+runtime resource.</Code>
+<Content ns0:pstyle="Content">Ideally shipped game does not need source file import paths.</Content>
+<Content ns0:pstyle="Content">This is Part 1518 and M092 working together.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Cross-platform artifacts</Strong></Content>
+<Content ns0:pstyle="Content">Some artifacts can be backend-neutral:</Content>
+<Code ns0:pstyle="Code" language="text">canonical mesh vertices/indices
+animation tracks
+scene hierarchy.</Code>
+<Content ns0:pstyle="Content">Others should be target-specific:</Content>
+<Code ns0:pstyle="Code" language="text">BC7/ASTC textures
+shader binaries
+pipeline libraries.</Code>
+<Content ns0:pstyle="Content">So the asset pipeline may have two derivation stages:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cf2be77ea0c83e01dcc7c6fa.svg" alt="&#10;Source&#10;\rightarrow&#10;CanonicalArtifact&#10;\rightarrow&#10;PlatformArtifact.&#10;" jobId="cf2be77ea0c83e01dcc7c6fa" originalTeX="&#10;Source&#10;\rightarrow&#10;CanonicalArtifact&#10;\rightarrow&#10;PlatformArtifact.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This avoids re-parsing expensive source while still producing platform-specific output.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">The complete future Kairo asset runtime</Strong></Content>
+<Content ns0:pstyle="Content">A strong next-generation runtime could be:</Content>
+<Code ns0:pstyle="Code" language="text">AssetRegistry
+    persistent metadata
+
+Import pipeline / DDC
+    authoring/build side
+
+RuntimeAssetManager
+    AssetID -&gt; RuntimeEntry
+                |
+                +-- artifact state
+                +-- residency
+                +-- revision
+                +-- current resource handle
+                +-- load future
+                +-- last GPU use
+
+RendererResourceManager
+    generational runtime handles
+    deferred destruction
+    memory budgeting</Code>
+<Content ns0:pstyle="Content">This preserves every lifetime boundary.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Runtime asset entry design</Strong></Content>
+<Content ns0:pstyle="Content">For example:</Content>
+<Code ns0:pstyle="Code" language="cpp">enum class AssetLoadState
+{
+    Unloaded,
+    LoadingCPU,
+    CPUReady,
+    UploadQueued,
+    Resident,
+    Failed
+};
+
+struct RuntimeTextureEntry
+{
+    AssetID PersistentID;
+
+    std::uint64_t PublishedRevision = 0;
+
+    AssetLoadState State =
+        AssetLoadState::Unloaded;
+
+    TextureRuntimeHandle Current{};
+
+    std::size_t ResidentGPUBytes = 0;
+
+    std::uint64_t LastUsedSubmission = 0;
+
+    std::uint32_t PinCount = 0;
+};</Code>
+<Content ns0:pstyle="Content">Notice what is <Strong ns0:cstyle="Bold">not</Strong> here:</Content>
+<Code ns0:pstyle="Code" language="text">source path as identity
+raw VkImage exposed to scene
+shared_ptr forcing residency.</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Safe reload algorithm</Strong></Content>
+<Code ns0:pstyle="Code" language="cpp">void ReloadTexture(
+    AssetID asset)
+{
+    // 1. Re-import or fetch new derived artifact.
+    TextureArtifact artifact =
+        BuildCurrentArtifact(asset);
+
+    // 2. Build replacement completely.
+    TextureRuntimeHandle replacement =
+        renderer.CreateTexture(artifact);
+
+    // 3. Publish only after success.
+    auto&amp; entry =
+        runtimeAssets.Texture(asset);
+
+    const auto old =
+        entry.Current;
+
+    entry.Current = replacement;
+    ++entry.PublishedRevision;
+    entry.State =
+        AssetLoadState::Resident;
+
+    // 4. Old resource is logically dead,
+    //    but may remain physically alive.
+    if (old.IsValid())
+    {
+        renderer.RetireTexture(
+            old,
+            renderer.LastSubmittedTimeline());
+    }
+}</Code>
+<Content ns0:pstyle="Content">This combines Parts 1540, 1541 and 1545 into one coherent runtime operation.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Current Kairo gap priorities</Strong></Content>
+<Content ns0:pstyle="Content">If I were extending the codebase specifically from this pass, the most valuable next work would be:</Content>
+<List type="ordered" start="1" numberStyle="Decimal" delimiter="Period">
+<ListItem><Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">External-source closure hashing</Strong> for glTF and shader include-style dependencies, because a DDC key must include every input that can change output.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">A dedicated <Strong ns0:cstyle="Bold">shader import/compiler pipeline</Strong>, because <InlineCode ns0:cstyle="InlineCode">AssetType::Shader</InlineCode> exists but no built-in shader compiler was found.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">A <Strong ns0:cstyle="Bold">runtime asset/resource manager</Strong> separating AssetID from loaded CPU/GPU resource state.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Generational renderer resource handles</Strong> if slot reuse is introduced.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">GPU deferred destruction/timeline retirement</Strong>, required for safe hot reload and streaming.</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">Explicit <Strong ns0:cstyle="Bold">residency/budget management</Strong> rather than letting persistent references imply residency.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">That order moves from correctness first to runtime sophistication.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Architecture issue to watch in current umbrella linking</Strong></Content>
+<Content ns0:pstyle="Content">Your top-level:</Content>
+<Code ns0:pstyle="Code" language="cmake">KairoGameEngine INTERFACE</Code>
+<Content ns0:pstyle="Content">links a broad collection of engine targets.</Content>
+<Content ns0:pstyle="Content">That is fine as an application-facing convenience target.</Content>
+<Content ns0:pstyle="Content">But lower-level runtime libraries should still link the narrowest targets they truly need whenever practical.</Content>
+<Content ns0:pstyle="Content">Otherwise everything importing the umbrella can gradually acquire transitive access to:</Content>
+<Code ns0:pstyle="Code" language="text">renderer
+physics
+assets
+ECS
+reflection</Code>
+<Content ns0:pstyle="Content">even when it should conceptually depend on only one or two.</Content>
+<Content ns0:pstyle="Content">An umbrella is useful at the composition boundary.</Content>
+<Content ns0:pstyle="Content">It should not become the default dependency of foundational modules.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">EngineCore’s current direction is good</Strong></Content>
+<Content ns0:pstyle="Content">Several of your current Core modules demonstrate the right principle.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">ProjectDescriptor</InlineCode> stores renderer policy without importing renderer.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">Application</InlineCode> owns generic layers rather than concrete rendering/physics.</Content>
+<Content ns0:pstyle="Content">Scene data stores persistent asset handles, not GPU handles.</Content>
+<Content ns0:pstyle="Content">Runtime VM IDs are not serialized.</Content>
+<Content ns0:pstyle="Content">Physics IDs are runtime-only.</Content>
+<Content ns0:pstyle="Content">Scene→ECS conversion lives in a bridge.</Content>
+<Content ns0:pstyle="Content">Those are not isolated coding details.</Content>
+<Content ns0:pstyle="Content">They are repeated applications of:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea1551454e78cc9acb957160.svg" alt="&#10;\boxed{&#10;\text{persistent data knows stable contracts;&#10;runtime adapters know concrete implementations}.&#10;}&#10;" jobId="ea1551454e78cc9acb957160" originalTeX="&#10;\boxed{&#10;\text{persistent data knows stable contracts;&#10;runtime adapters know concrete implementations}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Dependency reconstruction challenge</Strong></Content>
+<Content ns0:pstyle="Content">Suppose you need to render physics debug shapes.</Content>
+<Content ns0:pstyle="Content">Bad:</Content>
+<Code ns0:pstyle="Code" language="text">KairoPhysicsEngine
+       ↓
+KairoRenderer</Code>
+<Content ns0:pstyle="Content">if Physics is intended to remain renderer-neutral.</Content>
+<Content ns0:pstyle="Content">Design instead:</Content>
+<Code ns0:pstyle="Code" language="text">KairoPhysicsEngine
+   exposes DebugShape[]
+          |
+          v
+PhysicsRenderBridge
+          |
+          v
+KairoRenderer.</Code>
+<Content ns0:pstyle="Content">Now answer:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">Which module owns the bridge?</Content></BlockQuote>
+<Content ns0:pstyle="Content">The highest-level integration module that is allowed to depend on both.</Content>
+<Content ns0:pstyle="Content">If you can derive this without memorization, you understand dependency inversion.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Cycle reconstruction challenge</Strong></Content>
+<Content ns0:pstyle="Content">Given:</Content>
+<Code ns0:pstyle="Code" language="text">Scene → Renderer
+Renderer → Scene</Code>
+<Content ns0:pstyle="Content">extract:</Content>
+<Code ns0:pstyle="Code" language="text">RenderScene
+MeshDraw
+CameraPose
+LightDraw</Code>
+<Content ns0:pstyle="Content">as a rendering contract.</Content>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="text">Scene
+   |
+   v
+SceneRenderExtraction
+   |
+   v
+RenderScene
+   |
+   v
+Renderer.</Code>
+<Content ns0:pstyle="Content">Remove Renderer dependency from Scene.</Content>
+<Content ns0:pstyle="Content">That is architectural cycle removal through directional data extraction.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Service reconstruction challenge</Strong></Content>
+<Content ns0:pstyle="Content">Compare:</Content>
+<Code ns0:pstyle="Code" language="cpp">void AI::Update()
+{
+    auto&amp; physics =
+        Services::Get&lt;PhysicsWorld&gt;();
+}</Code>
+<Content ns0:pstyle="Content">against:</Content>
+<Code ns0:pstyle="Code" language="cpp">AI::AI(
+    PhysicsQuery&amp; physics)
+    : m_Physics(physics)
+{}</Code>
+<Content ns0:pstyle="Content">Explain why the second provides:</Content>
+<Code ns0:pstyle="Code" language="text">visible dependencies
+testability
+instance isolation
+explicit lifetime.</Code>
+<Content ns0:pstyle="Content">Then explain why a narrow:</Content>
+<Code ns0:pstyle="Code" language="cpp">AISystemContext</Code>
+<Content ns0:pstyle="Content">may be useful when several related services are needed.</Content>
+<Content ns0:pstyle="Content">But reject a god <InlineCode ns0:cstyle="InlineCode">EngineContext</InlineCode>.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Lifecycle reconstruction challenge</Strong></Content>
+<Content ns0:pstyle="Content">Given:</Content>
+<Code ns0:pstyle="Code" language="text">Platform
+Device
+Renderer
+RenderBridge
+World</Code>
+<Content ns0:pstyle="Content">if:</Content>
+<Code ns0:pstyle="Code" language="text">Renderer uses Device
+RenderBridge uses Renderer + World</Code>
+<Content ns0:pstyle="Content">initialize:</Content>
+<Code ns0:pstyle="Code" language="text">Platform
+Device
+Renderer
+World
+RenderBridge.</Code>
+<Content ns0:pstyle="Content">Shutdown dependency-safe:</Content>
+<Code ns0:pstyle="Code" language="text">RenderBridge
+World/runtime users
+Renderer resources
+Renderer
+Device
+Platform.</Code>
+<Content ns0:pstyle="Content">If jobs or GPU submissions exist, quiesce them before destroying dependencies.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Asset-identity reconstruction challenge</Strong></Content>
+<Content ns0:pstyle="Content">Given a texture that moves path and later changes pixels, identify the correct changing/stable values.</Content>
+<Content ns0:pstyle="Content">Rename:</Content>
+<Code ns0:pstyle="Code" language="text">Textures/A.png
+→ Environment/A.png</Code>
+<Content ns0:pstyle="Content">Persistent:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/54b93aa9f2cf0a46da3650e0.svg" alt="&#10;AssetID:&#10;\text{unchanged}.&#10;" jobId="54b93aa9f2cf0a46da3650e0" originalTeX="&#10;AssetID:&#10;\text{unchanged}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Path:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/db312c50174edbc6197ef522.svg" alt="&#10;\text{changed}.&#10;" jobId="db312c50174edbc6197ef522" originalTeX="&#10;\text{changed}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Metadata revision:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/db312c50174edbc6197ef522.svg" alt="&#10;\text{changed}.&#10;" jobId="db312c50174edbc6197ef522" originalTeX="&#10;\text{changed}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Source bytes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/56f7fee0b11882940aaf8411.svg" alt="&#10;\text{same}.&#10;" jobId="56f7fee0b11882940aaf8411" originalTeX="&#10;\text{same}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Source fingerprint:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/56f7fee0b11882940aaf8411.svg" alt="&#10;\text{same}.&#10;" jobId="56f7fee0b11882940aaf8411" originalTeX="&#10;\text{same}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Derived key:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/afd5702bf034983acbb5eabe.svg" alt="&#10;\text{same}&#10;" jobId="afd5702bf034983acbb5eabe" originalTeX="&#10;\text{same}&#10;" /></Formula>
+<Content ns0:pstyle="Content">if path is intentionally not a semantic importer input.</Content>
+<Content ns0:pstyle="Content">Now edit pixels.</Content>
+<Content ns0:pstyle="Content">AssetID:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/87e08e9bb4b73f0e6e951232.svg" alt="&#10;\text{unchanged}.&#10;" jobId="87e08e9bb4b73f0e6e951232" originalTeX="&#10;\text{unchanged}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Source fingerprint:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/db312c50174edbc6197ef522.svg" alt="&#10;\text{changed}.&#10;" jobId="db312c50174edbc6197ef522" originalTeX="&#10;\text{changed}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Derived key:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/db312c50174edbc6197ef522.svg" alt="&#10;\text{changed}.&#10;" jobId="db312c50174edbc6197ef522" originalTeX="&#10;\text{changed}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is the identity model.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">DDC reconstruction challenge</Strong></Content>
+<Content ns0:pstyle="Content">You should be able to derive:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ccd6c43c5d6ccb87b4b8d9e6.svg" alt="&#10;K=&#10;H(&#10;SourceFingerprint,&#10;AssetType,&#10;ImporterID,&#10;ImporterVersion,&#10;CanonicalSettings,&#10;DependencyFingerprints,&#10;Target&#10;).&#10;" jobId="ccd6c43c5d6ccb87b4b8d9e6" originalTeX="&#10;K=&#10;H(&#10;SourceFingerprint,&#10;AssetType,&#10;ImporterID,&#10;ImporterVersion,&#10;CanonicalSettings,&#10;DependencyFingerprints,&#10;Target&#10;).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Some of those fields may be omitted only if they provably do not influence the artifact.</Content>
+<Content ns0:pstyle="Content">Then state the cache invariant:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d5b8bb2459d8ad697a105391.svg" alt="&#10;\boxed{&#10;K_1=K_2&#10;\Rightarrow&#10;ArtifactBytes_1=ArtifactBytes_2.&#10;}&#10;" jobId="d5b8bb2459d8ad697a105391" originalTeX="&#10;\boxed{&#10;K_1=K_2&#10;\Rightarrow&#10;ArtifactBytes_1=ArtifactBytes_2.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">If this is false, the cache key is incomplete or the importer is nondeterministic.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Hot-reload reconstruction challenge</Strong></Content>
+<Content ns0:pstyle="Content">Given Texture A currently in use:</Content>
+<Code ns0:pstyle="Code" language="text">detect source change</Code>
+<Content ns0:pstyle="Content">Do <Strong ns0:cstyle="Bold">not</Strong> destroy A.</Content>
+<Content ns0:pstyle="Content">Perform:</Content>
+<Code ns0:pstyle="Code" language="text">build artifact B
+create GPU resource B
+validate B
+publish B for future frames
+retire A at its last GPU-use timeline
+destroy A only after completion.</Code>
+<Content ns0:pstyle="Content">If any step before publication fails:</Content>
+<Code ns0:pstyle="Code" language="text">A stays current.</Code>
+<Content ns0:pstyle="Content">That is safe hot reload.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Streaming reconstruction challenge</Strong></Content>
+<Content ns0:pstyle="Content">Explain why this is wrong:</Content>
+<Code ns0:pstyle="Code" language="cpp">if (material.TextureHandle.IsValid())
+{
+    // therefore texture exists on GPU
+}</Code>
+<Content ns0:pstyle="Content">A valid persistent handle only means the asset is referenced.</Content>
+<Content ns0:pstyle="Content">Correct flow:</Content>
+<Code ns0:pstyle="Code" language="text">AssetHandle
+    ↓
+RuntimeAssetManager
+    ↓
+ResidencyState
+    ↓
+Resident?
+   /     \
+ yes      no
+ |        |
+use      request/fallback.</Code>
+<Content ns0:pstyle="Content">That distinction is central to any scalable asset system.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Frames-in-flight reconstruction challenge</Strong></Content>
+<Content ns0:pstyle="Content">CPU replaced resource at frame 20.</Content>
+<Content ns0:pstyle="Content">GPU still executing frame 18 and frame 19/20 are queued.</Content>
+<Content ns0:pstyle="Content">Question:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">Can old resource be destroyed immediately?</Content></BlockQuote>
+<Content ns0:pstyle="Content">No.</Content>
+<Content ns0:pstyle="Content">Destroy only after the last submission that references it completes.</Content>
+<Content ns0:pstyle="Content">The relevant condition is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/70dcf4f04f12092f8d133083.svg" alt="&#10;CompletedTimeline&#10;\ge&#10;LastUseTimeline(oldResource).&#10;" jobId="70dcf4f04f12092f8d133083" originalTeX="&#10;CompletedTimeline&#10;\ge&#10;LastUseTimeline(oldResource).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Not:</Content>
+<Code ns0:pstyle="Code" language="text">CPU has moved on.</Code>
+<Content ns0:pstyle="Content">That is Part 1545.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Exact coverage — M091 + M092</Strong></Content>
+<Table ns0:table="table" ns0:trows="46" ns0:tcols="3" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Part</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Topic</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="header"><Content ns0:pstyle="Caption">Status</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">1501</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">Game-engine architecture as dependency management</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">1502</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Foundation versus runtime responsibilities</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">1503</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Dependency inversion in engine modules</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">1504</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">Avoiding cyclic module dependencies</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">1505</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">Static versus shared libraries</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">1506</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">Header-only versus compiled libraries</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">1507</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">Stable runtime interfaces</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">1508</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">Backend-specific implementation boundaries</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">1509</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">Platform abstraction layers</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">1510</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">Service locators and trade-offs</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="10"><Content ns0:pstyle="TableCell">1511</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="10"><Content ns0:pstyle="TableCell">Dependency injection</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="10"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="11"><Content ns0:pstyle="TableCell">1512</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="11"><Content ns0:pstyle="TableCell">Global state and hidden coupling</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="11"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="12"><Content ns0:pstyle="TableCell">1513</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="12"><Content ns0:pstyle="TableCell">Engine contexts/service bundles</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="12"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="13"><Content ns0:pstyle="TableCell">1514</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="13"><Content ns0:pstyle="TableCell">Application lifecycle</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="13"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="14"><Content ns0:pstyle="TableCell">1515</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="14"><Content ns0:pstyle="TableCell">Initialization order</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="14"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="15"><Content ns0:pstyle="TableCell">1516</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="15"><Content ns0:pstyle="TableCell">Shutdown order</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="15"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="16"><Content ns0:pstyle="TableCell">1517</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="16"><Content ns0:pstyle="TableCell">Runtime versus editor process concerns</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="16"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="17"><Content ns0:pstyle="TableCell">1518</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="17"><Content ns0:pstyle="TableCell">Authoring versus shipped runtime</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="17"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="18"><Content ns0:pstyle="TableCell">1519</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="18"><Content ns0:pstyle="TableCell">Standalone player architecture</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="18"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="19"><Content ns0:pstyle="TableCell">1520</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="19"><Content ns0:pstyle="TableCell">Headless validation paths</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="19"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="20"><Content ns0:pstyle="TableCell">1521</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="20"><Content ns0:pstyle="TableCell">Asset identity</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="20"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="21"><Content ns0:pstyle="TableCell">1522</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="21"><Content ns0:pstyle="TableCell">Path-based asset identity</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="21"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="22"><Content ns0:pstyle="TableCell">1523</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="22"><Content ns0:pstyle="TableCell">UUID-based asset identity</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="22"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="23"><Content ns0:pstyle="TableCell">1524</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="23"><Content ns0:pstyle="TableCell">Content-addressed asset identity</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="23"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="24"><Content ns0:pstyle="TableCell">1525</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="24"><Content ns0:pstyle="TableCell">Asset handles</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="24"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="25"><Content ns0:pstyle="TableCell">1526</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="25"><Content ns0:pstyle="TableCell">Generational asset handles</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="25"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="26"><Content ns0:pstyle="TableCell">1527</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="26"><Content ns0:pstyle="TableCell">Asset registry</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="26"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="27"><Content ns0:pstyle="TableCell">1528</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="27"><Content ns0:pstyle="TableCell">Asset metadata</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="27"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="28"><Content ns0:pstyle="TableCell">1529</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="28"><Content ns0:pstyle="TableCell">Source versus derived runtime assets</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="28"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="29"><Content ns0:pstyle="TableCell">1530</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="29"><Content ns0:pstyle="TableCell">Importer interfaces</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="29"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="30"><Content ns0:pstyle="TableCell">1531</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="30"><Content ns0:pstyle="TableCell">OBJ import pipeline boundaries</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="30"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="31"><Content ns0:pstyle="TableCell">1532</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="31"><Content ns0:pstyle="TableCell">glTF import pipeline boundaries</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="31"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="32"><Content ns0:pstyle="TableCell">1533</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="32"><Content ns0:pstyle="TableCell">Texture import pipeline boundaries</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="32"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="33"><Content ns0:pstyle="TableCell">1534</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="33"><Content ns0:pstyle="TableCell">Shader import/compilation pipeline</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="33"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="34"><Content ns0:pstyle="TableCell">1535</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="34"><Content ns0:pstyle="TableCell">Asset dependency graphs</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="34"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="35"><Content ns0:pstyle="TableCell">1536</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="35"><Content ns0:pstyle="TableCell">Asset-cache keys</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="35"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="36"><Content ns0:pstyle="TableCell">1537</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="36"><Content ns0:pstyle="TableCell">Derived-data caches</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="36"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="37"><Content ns0:pstyle="TableCell">1538</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="37"><Content ns0:pstyle="TableCell">Cache invalidation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="37"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="38"><Content ns0:pstyle="TableCell">1539</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="38"><Content ns0:pstyle="TableCell">Incremental asset builds</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="38"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="39"><Content ns0:pstyle="TableCell">1540</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="39"><Content ns0:pstyle="TableCell">Asset hot reloading</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="39"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="40"><Content ns0:pstyle="TableCell">1541</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="40"><Content ns0:pstyle="TableCell">Safe GPU-resource replacement during hot reload</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="40"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="41"><Content ns0:pstyle="TableCell">1542</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="41"><Content ns0:pstyle="TableCell">Asset streaming</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="41"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="42"><Content ns0:pstyle="TableCell">1543</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="42"><Content ns0:pstyle="TableCell">Residency state</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="42"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="43"><Content ns0:pstyle="TableCell">1544</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="43"><Content ns0:pstyle="TableCell">Reference counting versus explicit residency</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="43"><Content ns0:pstyle="TableCell">✓</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="44"><Content ns0:pstyle="TableCell">1545</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="44"><Content ns0:pstyle="TableCell">Resource lifetime across frames in flight</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="132" sourceRowKind="data" sourceRow="44"><Content ns0:pstyle="TableCell">✓</Content></Cell></Table>
+<Content ns0:pstyle="Content">The main architecture you should retain is this:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cc121bd5708cc1dd87317e0d.svg" alt="&#10;\boxed{&#10;\begin{array}{cccccc}&#10;\text{Source Asset}&#10;&amp;\rightarrow&amp;&#10;\text{Persistent AssetID}&#10;&amp;\rightarrow&amp;&#10;\text{Import Recipe}&#10;&amp;\rightarrow&#10;\\[4pt]&#10;\text{Derived Artifact}&#10;&amp;\rightarrow&amp;&#10;\text{Runtime Resource}&#10;&amp;\rightarrow&amp;&#10;\text{GPU Submission}&#10;&amp;\rightarrow&#10;\\[4pt]&#10;&amp;&amp;&#10;\text{Deferred Retirement}&#10;&amp;&amp;&amp;&#10;\end{array}&#10;}&#10;" jobId="cc121bd5708cc1dd87317e0d" originalTeX="&#10;\boxed{&#10;\begin{array}{cccccc}&#10;\text{Source Asset}&#10;&amp;\rightarrow&amp;&#10;\text{Persistent AssetID}&#10;&amp;\rightarrow&amp;&#10;\text{Import Recipe}&#10;&amp;\rightarrow&#10;\\[4pt]&#10;\text{Derived Artifact}&#10;&amp;\rightarrow&amp;&#10;\text{Runtime Resource}&#10;&amp;\rightarrow&amp;&#10;\text{GPU Submission}&#10;&amp;\rightarrow&#10;\\[4pt]&#10;&amp;&amp;&#10;\text{Deferred Retirement}&#10;&amp;&amp;&amp;&#10;\end{array}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">while the software architecture around it is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f80246a2c062755d3ff35d00.svg" alt="&#10;\boxed{&#10;\text{Foundation}&#10;\leftarrow&#10;\text{Subsystems}&#10;\leftarrow&#10;\text{Integration Bridges}&#10;\leftarrow&#10;\text{Player / Editor / Game}&#10;}&#10;" jobId="f80246a2c062755d3ff35d00" originalTeX="&#10;\boxed{&#10;\text{Foundation}&#10;\leftarrow&#10;\text{Subsystems}&#10;\leftarrow&#10;\text{Integration Bridges}&#10;\leftarrow&#10;\text{Player / Editor / Game}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">with callbacks/interfaces allowing control flow to travel in the opposite direction <Strong ns0:cstyle="Bold">without reversing source dependencies</Strong>.</Content>
+<Content ns0:pstyle="Content">For your current Kairo codebase, the largest concrete findings from this pass are that the high-level layering and persistent/runtime identity separation are already strong, the DDC itself is unusually careful, but the next significant correctness/performance frontier is the runtime resource layer: <Strong ns0:cstyle="Bold">complete dependency-closure hashing for compound sources, dedicated shader derivation, generational loaded-resource handles, safe asynchronous GPU retirement, streaming/residency budgets, and last-known-good hot reload.</Strong></Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Pass 14 is M093 + M094, Parts 1546–1582.</Strong> That takes the next step into <Strong ns0:cstyle="Bold">serialization goals and formats, text versus binary, forward/backward compatibility, endianness, checksums, object/ECS/scene references, reflection metadata/type/property IDs, safe type erasure, inspector architecture, then undo/redo transactions, autosave/recovery, project manifests, path sandboxing, symlink/traversal defense, packaging, atomic publication, and build-config versus runtime-config separation.</Strong></Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch011-serialization-schema-evolution-compatibility-endianness-integrity-object-references-reflection-type-erasure-undoredo-transactions-recovery-autosave-sandboxed-paths-packaging-relocatable-bundles-atomic-publication-and-configuration-boundaries">Serialization, Schema Evolution, Compatibility, Endianness, Integrity, Object References, Reflection, Type Erasure, Undo/Redo, Transactions, Recovery, Autosave, Sandboxed Paths, Packaging, Relocatable Bundles, Atomic Publication, and Configuration Boundaries</Content>
+<Content ns0:pstyle="Content">Pass 13 ended with:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/791a9a68a2d0dccd05e7b35b.svg" alt="&#10;\text{Source Asset}&#10;\rightarrow&#10;\text{Derived Artifact}&#10;\rightarrow&#10;\text{Runtime Resource}.&#10;" jobId="791a9a68a2d0dccd05e7b35b" originalTeX="&#10;\text{Source Asset}&#10;\rightarrow&#10;\text{Derived Artifact}&#10;\rightarrow&#10;\text{Runtime Resource}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Pass 14 asks how the <Emphasis ns0:cstyle="Emphasis">meaning</Emphasis> of all that data survives time.</Content>
+<Content ns0:pstyle="Content">A renderer object may live for milliseconds. A scene file may need to survive ten years, four engine versions, a CPU-architecture change, property renames, editor crashes, an interrupted save, a moved project directory, and a plugin no longer installed.</Content>
+<Content ns0:pstyle="Content">So the central question becomes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/418eceb8dab22f3ce3ced4f6.svg" alt="&#10;\boxed{&#10;\text{How do we make engine state durable without making today's C++ layout tomorrow's file format?}&#10;}&#10;" jobId="418eceb8dab22f3ce3ced4f6" originalTeX="&#10;\boxed{&#10;\text{How do we make engine state durable without making today's C++ layout tomorrow's file format?}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then M094 adds the editor-side problem:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/023e6720affbfea82ccc537b.svg" alt="&#10;\boxed{&#10;\text{How do we make destructive authoring operations reversible and crash-safe?}&#10;}&#10;" jobId="023e6720affbfea82ccc537b" originalTeX="&#10;\boxed{&#10;\text{How do we make destructive authoring operations reversible and crash-safe?}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is one of the most practically important passes because many engine projects get rendering right before they get persistence right—and bad persistence eventually destroys user work.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="05-engine-i-ch011-serialization-compatibility-reflection-inspectors-and-type-erasure">SERIALIZATION, COMPATIBILITY, REFLECTION, INSPECTORS AND TYPE ERASURE</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Serialization goals</Strong></Content>
+<Content ns0:pstyle="Content">Serialization is not merely:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">Turn object into bytes.</Content></BlockQuote>
+<Content ns0:pstyle="Content">That definition is too weak.</Content>
+<Content ns0:pstyle="Content">For an engine, serialization commonly needs to satisfy several independent properties:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea2b79dc84f1627b8a137974.svg" alt="&#10;\boxed{&#10;Persistence&#10;}&#10;" jobId="ea2b79dc84f1627b8a137974" originalTeX="&#10;\boxed{&#10;Persistence&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">The data survives process termination.</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/eaa365619dec64d7d7cb1652.svg" alt="&#10;\boxed{&#10;Portability&#10;}&#10;" jobId="eaa365619dec64d7d7cb1652" originalTeX="&#10;\boxed{&#10;Portability&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">The data can move between machines/platforms.</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ad1e9ed1c9340b7e1f946389.svg" alt="&#10;\boxed{&#10;Determinism&#10;}&#10;" jobId="ad1e9ed1c9340b7e1f946389" originalTeX="&#10;\boxed{&#10;Determinism&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Equivalent logical states preferably produce equivalent serialized representations.</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/800f6b75146876d4e9dae9c7.svg" alt="&#10;\boxed{&#10;Evolvability&#10;}&#10;" jobId="800f6b75146876d4e9dae9c7" originalTeX="&#10;\boxed{&#10;Evolvability&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Future engine versions can interpret older data or migrate it.</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/41a475bfab27944415f1c276.svg" alt="&#10;\boxed{&#10;Integrity&#10;}&#10;" jobId="41a475bfab27944415f1c276" originalTeX="&#10;\boxed{&#10;Integrity&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Corruption can be detected.</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4ec12d1ea69df8263a0d1ed7.svg" alt="&#10;\boxed{&#10;Security&#10;}&#10;" jobId="4ec12d1ea69df8263a0d1ed7" originalTeX="&#10;\boxed{&#10;Security&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Malformed input cannot request unbounded allocations, escape project roots or exploit parser assumptions.</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e3a554ca463575d3feff5ea6.svg" alt="&#10;\boxed{&#10;Performance&#10;}&#10;" jobId="e3a554ca463575d3feff5ea6" originalTeX="&#10;\boxed{&#10;Performance&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Parsing and storage costs are appropriate for the use case.</Content>
+<Content ns0:pstyle="Content">Those goals conflict.</Content>
+<Content ns0:pstyle="Content">A human-editable scene file optimizes differently from a GPU texture artifact.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Serialization domains</Strong></Content>
+<Content ns0:pstyle="Content">You should not have one universal serializer for every purpose.</Content>
+<Content ns0:pstyle="Content">A game engine normally has several serialization domains.</Content>
+<Code ns0:pstyle="Code" language="text">Editor scene
+    human-readable
+    diff-friendly
+    versioned
+    semantic
+
+Derived asset
+    compact
+    validated
+    deterministic
+    fast to load
+
+Network packet
+    bandwidth-sensitive
+    transient
+    compatibility constrained
+
+Save game
+    durable
+    version-aware
+    player-facing
+
+Recovery snapshot
+    crash-resistant
+    redundant
+    checksummed</Code>
+<Content ns0:pstyle="Content">All serialize information.</Content>
+<Content ns0:pstyle="Content">They do not need the same format.</Content>
+<Content ns0:pstyle="Content">That is a recurring lesson:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4c1fe822ff584c0464696330.svg" alt="&#10;\boxed{&#10;\text{serialization is a policy boundary, not a utility function.}&#10;}&#10;" jobId="4c1fe822ff584c0464696330" originalTeX="&#10;\boxed{&#10;\text{serialization is a policy boundary, not a utility function.}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Serialization should capture semantics, not object representation</Strong></Content>
+<Content ns0:pstyle="Content">Suppose:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Camera
+{
+    ProjectionMode Mode;
+    float VerticalFov;
+    float NearPlane;
+    float FarPlane;
+};</Code>
+<Content ns0:pstyle="Content">Bad persistent format:</Content>
+<Code ns0:pstyle="Code" language="cpp">write(
+    reinterpret_cast&lt;char*&gt;(&amp;camera),
+    sizeof(camera));</Code>
+<Content ns0:pstyle="Content">That stores whatever today’s compiler happened to choose for:</Content>
+<Code ns0:pstyle="Code" language="text">padding
+enum representation
+alignment
+float layout assumptions
+member order
+ABI</Code>
+<Content ns0:pstyle="Content">The file silently becomes coupled to one compiled object layout.</Content>
+<Content ns0:pstyle="Content">Instead store meaning:</Content>
+<Code ns0:pstyle="Code" language="text">camera
+projection perspective
+vertical-fov 60
+near-plane 0.1
+far-plane 1000</Code>
+<Content ns0:pstyle="Content">or a binary equivalent with explicit field identifiers and numeric widths.</Content>
+<Content ns0:pstyle="Content">The serializer should describe:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d44297f2f455668f73768fa2.svg" alt="&#10;\boxed{&#10;Camera\ semantics&#10;}&#10;" jobId="d44297f2f455668f73768fa2" originalTeX="&#10;\boxed{&#10;Camera\ semantics&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">rather than:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c85adef88d72788e673170a5.svg" alt="&#10;\boxed{&#10;Camera\ memory.&#10;}&#10;" jobId="c85adef88d72788e673170a5" originalTeX="&#10;\boxed{&#10;Camera\ memory.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Text versus binary serialization</Strong></Content>
+<Content ns0:pstyle="Content">Text serialization represents logical values through characters.</Content>
+<Content ns0:pstyle="Content">Examples:</Content>
+<Code ns0:pstyle="Code" language="text">near-plane 0.1
+visible true
+mesh "a912..."</Code>
+<Content ns0:pstyle="Content">Binary serialization stores encoded fields directly as bytes.</Content>
+<Content ns0:pstyle="Content">Neither is inherently superior.</Content>
+<Content ns0:pstyle="Content">They optimize different dimensions.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why text formats are powerful for authoring</Strong></Content>
+<Content ns0:pstyle="Content">Text provides:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">easy inspection,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">source-control diffs,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">mergeability,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">manual repair,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">debugging,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">tooling with ordinary editors.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Suppose a light changes:</Content>
+<Code ns0:pstyle="Code" language="diff">- intensity 1000
++ intensity 1500</Code>
+<Content ns0:pstyle="Content">That is excellent for source control.</Content>
+<Content ns0:pstyle="Content">Compare an opaque binary diff:</Content>
+<Code ns0:pstyle="Code" language="text">8 bytes changed.</Code>
+<Content ns0:pstyle="Content">Far less useful to artists and programmers.</Content>
+<Content ns0:pstyle="Content">This is why your current Kairo project, scene and asset-manifest formats being deterministic textual formats is a strong authoring choice.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Costs of text</Strong></Content>
+<Content ns0:pstyle="Content">Text is usually:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">larger,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">slower to parse,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">requires numeric conversion,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">requires escaping,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">susceptible to representation ambiguity if not canonicalized.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">For example floating value:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ccbe732adce23dab29151742.svg" alt="&#10;1&#10;" jobId="ccbe732adce23dab29151742" originalTeX="&#10;1&#10;" /></Formula>
+<Content ns0:pstyle="Content">could be written:</Content>
+<Code ns0:pstyle="Code" language="text">1
+1.0
+1.000000
+1e0</Code>
+<Content ns0:pstyle="Content">All are semantically equivalent.</Content>
+<Content ns0:pstyle="Content">If serialized byte identity matters, choose one canonical representation.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Binary serialization advantages</Strong></Content>
+<Content ns0:pstyle="Content">Binary can provide:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">compact storage,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">faster decoding,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">direct fixed-width numeric representation,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">easier chunked random access,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">reduced parsing overhead.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">A derived mesh artifact might have:</Content>
+<Code ns0:pstyle="Code" language="text">header
+vertex count
+index count
+vertex bytes
+index bytes</Code>
+<Content ns0:pstyle="Content">There is no strong reason an end user needs to edit that manually.</Content>
+<Content ns0:pstyle="Content">Binary is natural.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Binary does not automatically mean fast</Strong></Content>
+<Content ns0:pstyle="Content">A bad binary format can be slower than a good textual one.</Content>
+<Content ns0:pstyle="Content">For example:</Content>
+<Code ns0:pstyle="Code" language="text">millions of tiny length-prefixed heap allocations</Code>
+<Content ns0:pstyle="Content">will perform poorly regardless of binary encoding.</Content>
+<Content ns0:pstyle="Content">The real factors include:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea166f4fe377434a3cd2e814.svg" alt="&#10;\text{allocation count}&#10;" jobId="ea166f4fe377434a3cd2e814" originalTeX="&#10;\text{allocation count}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/05e7fb9f7a6d6c02aca8ffc2.svg" alt="&#10;\text{branching}&#10;" jobId="05e7fb9f7a6d6c02aca8ffc2" originalTeX="&#10;\text{branching}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/77f69c776574b05096f6d949.svg" alt="&#10;\text{copy count}&#10;" jobId="77f69c776574b05096f6d949" originalTeX="&#10;\text{copy count}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9ea9114fa328335a4cacfbec.svg" alt="&#10;\text{data locality}&#10;" jobId="9ea9114fa328335a4cacfbec" originalTeX="&#10;\text{data locality}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2127827863513ace1a5d739c.svg" alt="&#10;\text{compression}&#10;" jobId="2127827863513ace1a5d739c" originalTeX="&#10;\text{compression}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/21e2e876a5e8e684004dfefa.svg" alt="&#10;\text{schema complexity}.&#10;" jobId="21e2e876a5e8e684004dfefa" originalTeX="&#10;\text{schema complexity}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Binary is an encoding choice, not a performance guarantee.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Versioned file formats</Strong></Content>
+<Content ns0:pstyle="Content">Every persistent format that may evolve should identify its schema version.</Content>
+<Content ns0:pstyle="Content">Kairo does this consistently.</Content>
+<Content ns0:pstyle="Content">Examples conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">kairo-project 2
+kairo-assets 1
+kairo-scene 5
+kairo-recovery 1
+kairo-package 1</Code>
+<Content ns0:pstyle="Content">This immediately answers:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">Which grammar and semantics should parse this file?</Content></BlockQuote>
+<Content ns0:pstyle="Content">Without a version, a parser encounters an unknown structure and has no principled way to distinguish:</Content>
+<Code ns0:pstyle="Code" language="text">corruption
+new format
+old format
+wrong file type.</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Magic + version</Strong></Content>
+<Content ns0:pstyle="Content">A robust header often carries at least:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/95f8d8066e11e82ee0350a38.svg" alt="&#10;Magic&#10;" jobId="95f8d8066e11e82ee0350a38" originalTeX="&#10;Magic&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8d49293a49a5a4d8d1a3bfdb.svg" alt="&#10;Version.&#10;" jobId="8d49293a49a5a4d8d1a3bfdb" originalTeX="&#10;Version.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Binary example:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct FileHeader
+{
+    std::uint32_t Magic;
+    std::uint32_t Version;
+};</Code>
+<Content ns0:pstyle="Content">Where:</Content>
+<Code ns0:pstyle="Code" language="cpp">constexpr uint32_t Magic =
+    0x4B414952; // illustrative "KAIR"</Code>
+<Content ns0:pstyle="Content">Then parser first verifies:</Content>
+<Code ns0:pstyle="Code" language="text">Is this even my file format?</Code>
+<Content ns0:pstyle="Content">before interpreting payload.</Content>
+<Content ns0:pstyle="Content">Text formats achieve the same through a canonical first line.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Version numbers must correspond to semantic interpretation</Strong></Content>
+<Content ns0:pstyle="Content">Do not increment versions for arbitrary reasons.</Content>
+<Content ns0:pstyle="Content">A file version means:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">The reader must potentially use different logic to interpret this representation.</Content></BlockQuote>
+<Content ns0:pstyle="Content">If internal C++ code is refactored but serialized semantics remain identical, the file version need not change.</Content>
+<Content ns0:pstyle="Content">If field meaning changes:</Content>
+<Code ns0:pstyle="Code" language="text">intensity used to mean arbitrary units</Code>
+<Content ns0:pstyle="Content">and now means:</Content>
+<Code ns0:pstyle="Code" language="text">candela</Code>
+<Content ns0:pstyle="Content">that is a schema-semantic change.</Content>
+<Content ns0:pstyle="Content">Version/migration is required.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Schema evolution</Strong></Content>
+<Content ns0:pstyle="Content">Schema evolution is the process of changing persistent representation while preserving meaningful old data.</Content>
+<Content ns0:pstyle="Content">Suppose v1:</Content>
+<Code ns0:pstyle="Code" language="text">light
+color 1 1 1
+intensity 5</Code>
+<Content ns0:pstyle="Content">v2 introduces unit:</Content>
+<Code ns0:pstyle="Code" language="text">light
+color 1 1 1
+intensity 5
+unit candela</Code>
+<Content ns0:pstyle="Content">Old files lack the field.</Content>
+<Content ns0:pstyle="Content">Reader can assign:</Content>
+<Code ns0:pstyle="Code" language="text">unit = legacy</Code>
+<Content ns0:pstyle="Content">or convert according to a known v1 rule.</Content>
+<Content ns0:pstyle="Content">That is migration.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Types of schema evolution</Strong></Content>
+<Content ns0:pstyle="Content">The easiest change is adding an optional field with a default:</Content>
+<Code ns0:pstyle="Code" language="text">v1:
+roughness
+
+v2:
+roughness
+double-sided = false</Code>
+<Content ns0:pstyle="Content">More complex:</Content>
+<Code ns0:pstyle="Code" language="text">v1:
+fov-horizontal
+
+v2:
+fov-vertical</Code>
+<Content ns0:pstyle="Content">requires viewport/aspect assumptions.</Content>
+<Content ns0:pstyle="Content">Harder:</Content>
+<Code ns0:pstyle="Code" language="text">v1:
+Euler rotation
+
+v2:
+Quaternion rotation.</Code>
+<Content ns0:pstyle="Content">Requires mathematical conversion.</Content>
+<Content ns0:pstyle="Content">Even harder:</Content>
+<Code ns0:pstyle="Code" language="text">v1:
+one Mesh component
+
+v2:
+MeshRenderer + MaterialSlot entities.</Code>
+<Content ns0:pstyle="Content">Now migration changes object topology.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Migration should be semantic</Strong></Content>
+<Content ns0:pstyle="Content">A good migration function is conceptually:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/92d0c5d769a083f9f010b18a.svg" alt="&#10;M_{v1\rightarrow v2}:&#10;Schema_{v1}&#10;\rightarrow&#10;Schema_{v2}.&#10;" jobId="92d0c5d769a083f9f010b18a" originalTeX="&#10;M_{v1\rightarrow v2}:&#10;Schema_{v1}&#10;\rightarrow&#10;Schema_{v2}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">It should not be:</Content>
+<Code ns0:pstyle="Code" language="cpp">reinterpret_cast&lt;NewStruct*&gt;(oldBytes);</Code>
+<Content ns0:pstyle="Content">You are converting meaning.</Content>
+<Content ns0:pstyle="Content">Example:</Content>
+<Code ns0:pstyle="Code" language="cpp">CameraV2 Migrate(
+    const CameraV1&amp; old)
+{
+    CameraV2 result;
+
+    result.VerticalFov =
+        ConvertHorizontalToVertical(
+            old.HorizontalFov,
+            old.AssumedAspectRatio);
+
+    result.NearPlane =
+        old.NearPlane;
+
+    return result;
+}</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Forward compatibility</Strong></Content>
+<Content ns0:pstyle="Content">Forward compatibility asks:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">Can an older reader tolerate data produced by a newer writer?</Content></BlockQuote>
+<Content ns0:pstyle="Content">Suppose reader understands:</Content>
+<Code ns0:pstyle="Code" language="text">position
+rotation</Code>
+<Content ns0:pstyle="Content">but newer writer adds:</Content>
+<Code ns0:pstyle="Code" language="text">scale.</Code>
+<Content ns0:pstyle="Content">If old reader can safely ignore unknown <InlineCode ns0:cstyle="InlineCode">scale</InlineCode>, forward compatibility exists for that change.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Forward compatibility is difficult when semantics are required</Strong></Content>
+<Content ns0:pstyle="Content">Suppose newer format adds:</Content>
+<Code ns0:pstyle="Code" language="text">compression zstd</Code>
+<Content ns0:pstyle="Content">and old reader understands only:</Content>
+<Code ns0:pstyle="Code" language="text">compression none.</Code>
+<Content ns0:pstyle="Content">It cannot simply ignore the field because it cannot decode the payload.</Content>
+<Content ns0:pstyle="Content">Forward compatibility is therefore not binary yes/no for a whole format.</Content>
+<Content ns0:pstyle="Content">It is feature-dependent.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Backward compatibility</Strong></Content>
+<Content ns0:pstyle="Content">Backward compatibility asks:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">Can a newer reader interpret files written by an older writer?</Content></BlockQuote>
+<Content ns0:pstyle="Content">This is usually much more important for editor/project formats.</Content>
+<Content ns0:pstyle="Content">If Kairo 0.5 loads a Kairo 0.4 project and migrates it successfully, that is backward compatibility.</Content>
+<Content ns0:pstyle="Content">A mature engine often promises:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2431620eb537f9469e73087e.svg" alt="&#10;CurrentReader&#10;\rightarrow&#10;OldFiles.&#10;" jobId="2431620eb537f9469e73087e" originalTeX="&#10;CurrentReader&#10;\rightarrow&#10;OldFiles.&#10;" /></Formula>
+<Content ns0:pstyle="Content">It may not promise:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fd0c3b781bbf4485339a32b5.svg" alt="&#10;OldReader&#10;\rightarrow&#10;CurrentFiles.&#10;" jobId="fd0c3b781bbf4485339a32b5" originalTeX="&#10;OldReader&#10;\rightarrow&#10;CurrentFiles.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Compatibility matrix</Strong></Content>
+<Content ns0:pstyle="Content">Imagine versions:</Content>
+<Code ns0:pstyle="Code" language="text">Reader v1
+Reader v2
+Reader v3
+
+Writer v1
+Writer v2
+Writer v3</Code>
+<Content ns0:pstyle="Content">Compatibility is a matrix, not a vague adjective.</Content>
+<Content ns0:pstyle="Content">For example:</Content>
+<Table ns0:table="table" ns0:trows="4" ns0:tcols="4" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">Reader</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">File v1</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">File v2</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="header"><Content ns0:pstyle="Caption">File v3</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">v1</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">maybe</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">no</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">v2</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">maybe</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">v3</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="99" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">yes</Content></Cell></Table>
+<Content ns0:pstyle="Content">Document this.</Content>
+<Content ns0:pstyle="Content">Testing compatibility fixtures is far more meaningful than saying:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">We support old files.</Content></BlockQuote>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Unknown-field handling</Strong></Content>
+<Content ns0:pstyle="Content">Suppose new Camera file:</Content>
+<Code ns0:pstyle="Code" language="text">camera
+fov 60
+near 0.1
+chromatic-aberration 0.2</Code>
+<Content ns0:pstyle="Content">Older reader understands only first two fields.</Content>
+<Content ns0:pstyle="Content">It has choices.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Strict rejection</Strong></Content>
+<Code ns0:pstyle="Code" language="text">unknown field -&gt; error</Code>
+<Content ns0:pstyle="Content">Advantages:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">typo detection,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">no silent information loss,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">simple semantics.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Disadvantages:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">poor forward compatibility.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Ignore unknown field</Strong></Content>
+<Content ns0:pstyle="Content">Advantages:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">forward extensibility.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Disadvantages:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">read/save may destroy fields it did not understand.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Preserve unknown field</Strong></Content>
+<Content ns0:pstyle="Content">Old reader keeps opaque unknown data and writes it back unchanged.</Content>
+<Content ns0:pstyle="Content">This provides much stronger round-trip compatibility.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Strictness is useful for authoring correctness</Strong></Content>
+<Content ns0:pstyle="Content">Your current Kairo parsers are deliberately strict in several inspected formats.</Content>
+<Content ns0:pstyle="Content">For example <InlineCode ns0:cstyle="InlineCode">AssetManifest</InlineCode> rejects:</Content>
+<Code ns0:pstyle="Code" language="text">unknown statement
+unsupported version
+duplicate/nested malformed records.</Code>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">ProjectDescriptor</InlineCode> similarly rejects unknown statements.</Content>
+<Content ns0:pstyle="Content">Recovery manifests also reject unknown statements.</Content>
+<Content ns0:pstyle="Content">This is a valid policy because it catches:</Content>
+<Code ns0:pstyle="Code" language="text">typos
+partial corruption
+unsupported newer formats
+ambiguous interpretation.</Code>
+<Content ns0:pstyle="Content">But it means these formats do not obtain generic forward compatibility through unknown-field preservation.</Content>
+<Content ns0:pstyle="Content">That is an explicit trade.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Extensible binary formats commonly use field IDs</Strong></Content>
+<Content ns0:pstyle="Content">Instead of positional layout:</Content>
+<Code ns0:pstyle="Code" language="text">field 0 = x
+field 1 = y
+field 2 = z</Code>
+<Content ns0:pstyle="Content">encode:</Content>
+<Code ns0:pstyle="Code" language="text">propertyID
+wireType
+length
+payload</Code>
+<Content ns0:pstyle="Content">Unknown property ID can then be skipped using length.</Content>
+<Content ns0:pstyle="Content">This is why self-describing/tagged binary formats evolve more gracefully than naive fixed struct dumps.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Stable endianness</Strong></Content>
+<Content ns0:pstyle="Content">Consider integer:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/13e0fdb5acba6bf4755e25f0.svg" alt="&#10;0x12345678.&#10;" jobId="13e0fdb5acba6bf4755e25f0" originalTeX="&#10;0x12345678.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Little-endian memory:</Content>
+<Code ns0:pstyle="Code" language="text">78 56 34 12</Code>
+<Content ns0:pstyle="Content">Big-endian:</Content>
+<Code ns0:pstyle="Code" language="text">12 34 56 78.</Code>
+<Content ns0:pstyle="Content">If you write native integer bytes and read on opposite endian architecture, value changes.</Content>
+<Content ns0:pstyle="Content">Persistent binary formats must define byte order.</Content>
+<Content ns0:pstyle="Content">Usually:</Content>
+<Code ns0:pstyle="Code" language="text">little-endian</Code>
+<Content ns0:pstyle="Content">or:</Content>
+<Code ns0:pstyle="Code" language="text">network/big-endian.</Code>
+<Content ns0:pstyle="Content">Then convert explicitly.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Endian-safe write</Strong></Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="cpp">void WriteU32LE(
+    Writer&amp; out,
+    std::uint32_t value)
+{
+    std::byte bytes[4]
+    {
+        std::byte(value &amp; 0xff),
+        std::byte((value &gt;&gt; 8) &amp; 0xff),
+        std::byte((value &gt;&gt; 16) &amp; 0xff),
+        std::byte((value &gt;&gt; 24) &amp; 0xff)
+    };
+
+    out.Write(bytes);
+}</Code>
+<Content ns0:pstyle="Content">This representation is independent of host endianness.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Stable numeric widths</Strong></Content>
+<Content ns0:pstyle="Content">Avoid persistent:</Content>
+<Code ns0:pstyle="Code" language="cpp">size_t
+long
+unsigned long</Code>
+<Content ns0:pstyle="Content">because their widths can vary by platform/compiler model.</Content>
+<Content ns0:pstyle="Content">Prefer:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::uint8_t
+std::uint16_t
+std::uint32_t
+std::uint64_t
+
+std::int32_t
+std::int64_t</Code>
+<Content ns0:pstyle="Content">when binary representation requires a fixed width.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Boolean representation</Strong></Content>
+<Content ns0:pstyle="Content">Do not serialize <InlineCode ns0:cstyle="InlineCode">sizeof(bool)</InlineCode> bytes blindly.</Content>
+<Content ns0:pstyle="Content">Define:</Content>
+<Code ns0:pstyle="Code" language="text">0 = false
+1 = true.</Code>
+<Content ns0:pstyle="Content">Reject other values unless schema intentionally allows them.</Content>
+<Content ns0:pstyle="Content">Same for enums.</Content>
+<Content ns0:pstyle="Content">Do not serialize underlying enum bytes unless the persistent schema explicitly defines the numeric values.</Content>
+<Content ns0:pstyle="Content">Kairo frequently persists semantic enum names rather than compiler-dependent ordinals, which is stronger for textual durability.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Floating point</Strong></Content>
+<Content ns0:pstyle="Content">If storing IEEE-754 <InlineCode ns0:cstyle="InlineCode">float32</InlineCode>, say so explicitly.</Content>
+<Content ns0:pstyle="Content">If format must support architectures where float representation differs, conversion is required.</Content>
+<Content ns0:pstyle="Content">On modern target machines IEEE-754 is overwhelmingly common, but a durable format should still define:</Content>
+<Code ns0:pstyle="Code" language="text">binary32
+binary64
+little-endian byte order.</Code>
+<Content ns0:pstyle="Content">Text float parsing must also reject:</Content>
+<Code ns0:pstyle="Code" language="text">NaN
+Infinity</Code>
+<Content ns0:pstyle="Content">where they violate engine invariants.</Content>
+<Content ns0:pstyle="Content">Your Kairo reflection layer explicitly rejects non-finite floating values in <InlineCode ns0:cstyle="InlineCode">PropertyValue</InlineCode>, which is good defensive behavior.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Checksums and content hashes</Strong></Content>
+<Content ns0:pstyle="Content">A checksum answers:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">Are these bytes likely corrupted?</Content></BlockQuote>
+<Content ns0:pstyle="Content">A cryptographic/content hash can answer:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">Is this exactly the same content identity?</Content></BlockQuote>
+<Content ns0:pstyle="Content">They are related but not identical roles.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Simple checksum</Strong></Content>
+<Content ns0:pstyle="Content">Example CRC/FNV-style checksum:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3da03511c42fa1d587e73b36.svg" alt="&#10;C=Checksum(bytes).&#10;" jobId="3da03511c42fa1d587e73b36" originalTeX="&#10;C=Checksum(bytes).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Recovery snapshot stores:</Content>
+<Code ns0:pstyle="Code" language="text">payload size
+payload checksum.</Code>
+<Content ns0:pstyle="Content">On load:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a8dec0f27f1bdecf94ac9871.svg" alt="&#10;size_{actual}=size_{expected}&#10;" jobId="a8dec0f27f1bdecf94ac9871" originalTeX="&#10;size_{actual}=size_{expected}&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3b47e46cd4b161d83cb93e49.svg" alt="&#10;Checksum(actual)=Checksum(expected).&#10;" jobId="3b47e46cd4b161d83cb93e49" originalTeX="&#10;Checksum(actual)=Checksum(expected).&#10;" /></Formula>
+<Content ns0:pstyle="Content">If not:</Content>
+<Code ns0:pstyle="Code" language="text">reject recovery point.</Code>
+<Content ns0:pstyle="Content">Your current recovery system does this.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">FNV is not a security primitive</Strong></Content>
+<Content ns0:pstyle="Content">Kairo’s recovery code explicitly uses FNV-1a as a <Strong ns0:cstyle="Bold">corruption detector</Strong>, not cryptographic authentication.</Content>
+<Content ns0:pstyle="Content">Correct.</Content>
+<Content ns0:pstyle="Content">If an attacker deliberately modifies both payload and checksum, FNV offers no meaningful tamper resistance.</Content>
+<Content ns0:pstyle="Content">For untrusted distribution/integrity, use something stronger:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c53ee96148edbfa143a6850a.svg" alt="&#10;SHA\text{-}256&#10;" jobId="c53ee96148edbfa143a6850a" originalTeX="&#10;SHA\text{-}256&#10;" /></Formula>
+<Content ns0:pstyle="Content">or authenticated signatures/MACs depending on threat model.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Content hash versus checksum</Strong></Content>
+<Content ns0:pstyle="Content">DDC:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c8911f890304255018d86515.svg" alt="&#10;SHA256(recipe)&#10;" jobId="c8911f890304255018d86515" originalTeX="&#10;SHA256(recipe)&#10;" /></Formula>
+<Content ns0:pstyle="Content">is serving identity.</Content>
+<Content ns0:pstyle="Content">Recovery:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/919f33057f75e738e6a2488a.svg" alt="&#10;FNV(payload)&#10;" jobId="919f33057f75e738e6a2488a" originalTeX="&#10;FNV(payload)&#10;" /></Formula>
+<Content ns0:pstyle="Content">is serving accidental-corruption detection.</Content>
+<Content ns0:pstyle="Content">Do not conflate these.</Content>
+<Content ns0:pstyle="Content">Same mathematical tool family, different security/semantic requirements.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Chunk checksums</Strong></Content>
+<Content ns0:pstyle="Content">Large binary artifact could contain:</Content>
+<Code ns0:pstyle="Code" language="text">Header
+Chunk table
+Mesh chunk
+Animation chunk
+Texture chunk</Code>
+<Content ns0:pstyle="Content">You may checksum each chunk individually.</Content>
+<Content ns0:pstyle="Content">Then corruption can be localized.</Content>
+<Content ns0:pstyle="Content">You may also hash whole file.</Content>
+<Content ns0:pstyle="Content">Trade-off:</Content>
+<Code ns0:pstyle="Code" language="text">one global hash = simpler
+per-chunk hashes = better localization/streaming validation.</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Serialization of object references</Strong></Content>
+<Content ns0:pstyle="Content">Object pointers cannot be persisted.</Content>
+<Content ns0:pstyle="Content">Suppose:</Content>
+<Code ns0:pstyle="Code" language="cpp">Material* material;</Code>
+<Content ns0:pstyle="Content">At runtime address:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7b3cd6da9cab2f763a1e22f7.svg" alt="&#10;0x7fa123...&#10;" jobId="7b3cd6da9cab2f763a1e22f7" originalTeX="&#10;0x7fa123...&#10;" /></Formula>
+<Content ns0:pstyle="Content">has no meaning on next launch.</Content>
+<Content ns0:pstyle="Content">Serialize stable identity instead:</Content>
+<Code ns0:pstyle="Code" language="text">MaterialAssetID</Code>
+<Content ns0:pstyle="Content">or:</Content>
+<Code ns0:pstyle="Code" language="text">SceneEntityID.</Code>
+<Content ns0:pstyle="Content">On load:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0ccad896c310c8f4c8bcd030.svg" alt="&#10;ID\rightarrow object.&#10;" jobId="0ccad896c310c8f4c8bcd030" originalTeX="&#10;ID\rightarrow object.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Two-pass reference resolution</Strong></Content>
+<Content ns0:pstyle="Content">The universal pattern is:</Content>
+<Content ns0:pstyle="Content">Create every object and build:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f7f2c2e4be5f7d8377dbb93c.svg" alt="&#10;SerializedID&#10;\rightarrow&#10;RuntimeObject.&#10;" jobId="f7f2c2e4be5f7d8377dbb93c" originalTeX="&#10;SerializedID&#10;\rightarrow&#10;RuntimeObject.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Resolve references.</Content>
+<Content ns0:pstyle="Content">Example:</Content>
+<Code ns0:pstyle="Code" language="text">Entity 10 parent 4
+Entity 4 parent none</Code>
+<Content ns0:pstyle="Content">Even if Entity 10 appears first in file, loading works.</Content>
+<Content ns0:pstyle="Content">This same pattern appeared in Pass 12 for cloning and ECS extraction.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Reference classes</Strong></Content>
+<Content ns0:pstyle="Content">Not every reference has same ownership semantics.</Content>
+<Content ns0:pstyle="Content">You may distinguish:</Content>
+<Code ns0:pstyle="Code" language="text">Strong reference
+Weak reference
+Optional reference
+External asset reference
+Scene-local reference
+Cross-scene reference.</Code>
+<Content ns0:pstyle="Content">For example:</Content>
+<Code ns0:pstyle="Code" language="text">MeshRenderer -&gt; MeshAsset</Code>
+<Content ns0:pstyle="Content">can remain valid when entity changes.</Content>
+<Content ns0:pstyle="Content">A parent relation typically requires target in same loaded scene.</Content>
+<Content ns0:pstyle="Content">A gameplay target may be optional and disappear.</Content>
+<Content ns0:pstyle="Content">Serializer must understand the semantics.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">ECS entity serialization</Strong></Content>
+<Content ns0:pstyle="Content">Never serialize:</Content>
+<Code ns0:pstyle="Code" language="cpp">Entity{Index=42, Generation=7}</Code>
+<Content ns0:pstyle="Content">as persistent entity identity unless that runtime handle is explicitly defined as persistent—which it generally should not be.</Content>
+<Content ns0:pstyle="Content">Runtime slot allocation is transient.</Content>
+<Content ns0:pstyle="Content">Serialize:</Content>
+<Code ns0:pstyle="Code" language="text">PersistentEntityID</Code>
+<Content ns0:pstyle="Content">and create runtime entities anew on load.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Entity reference conversion</Strong></Content>
+<Content ns0:pstyle="Content">Save:</Content>
+<Code ns0:pstyle="Code" language="text">Runtime Entity {12,4}
+      ↓
+Scene Entity 105</Code>
+<Content ns0:pstyle="Content">Serialized reference:</Content>
+<Code ns0:pstyle="Code" language="text">105.</Code>
+<Content ns0:pstyle="Content">Load:</Content>
+<Code ns0:pstyle="Code" language="text">Scene Entity 105
+      ↓
+Runtime Entity {3,1}.</Code>
+<Content ns0:pstyle="Content">The runtime representation can be completely different.</Content>
+<Content ns0:pstyle="Content">That is desirable.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">ECS component schema</Strong></Content>
+<Content ns0:pstyle="Content">A persistent ECS-like scene might encode:</Content>
+<Code ns0:pstyle="Code" language="text">entity 105
+component Transform
+  position ...
+component Camera
+  fov ...
+end</Code>
+<Content ns0:pstyle="Content">But remember Pass 12’s architecture:</Content>
+<Content ns0:pstyle="Content">Kairo’s durable <InlineCode ns0:cstyle="InlineCode">EngineCore::Scene</InlineCode> and process-local <InlineCode ns0:cstyle="InlineCode">KairoECS</InlineCode> are deliberately separate.</Content>
+<Content ns0:pstyle="Content">That means Kairo does not need to serialize its sparse-set internal indices.</Content>
+<Content ns0:pstyle="Content">It serializes authored scene semantics and extracts runtime ECS later.</Content>
+<Content ns0:pstyle="Content">This is the cleaner design.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Scene-graph serialization</Strong></Content>
+<Content ns0:pstyle="Content">A scene graph needs:</Content>
+<Code ns0:pstyle="Code" language="text">entities
+components
+hierarchy
+stable IDs
+asset references.</Code>
+<Content ns0:pstyle="Content">There are two common hierarchy representations.</Content>
+<Content ns0:pstyle="Content">Nested:</Content>
+<Code ns0:pstyle="Code" language="text">Root
+{
+    Child
+    {
+        Grandchild
+    }
+}</Code>
+<Content ns0:pstyle="Content">or flat IDs:</Content>
+<Code ns0:pstyle="Code" language="text">entity 1 parent none
+entity 2 parent 1
+entity 3 parent 2.</Code>
+<Content ns0:pstyle="Content">Flat ID representation is often easier for:</Content>
+<Code ns0:pstyle="Code" language="text">random ordering
+references
+incremental editing
+streaming.</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Validate hierarchy after loading</Strong></Content>
+<Content ns0:pstyle="Content">A parser must not assume file hierarchy is valid.</Content>
+<Content ns0:pstyle="Content">Check:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/27d88f6e1f02daebd43543f7.svg" alt="&#10;Parent(E)\neq E.&#10;" jobId="27d88f6e1f02daebd43543f7" originalTeX="&#10;Parent(E)\neq E.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Check parent exists.</Content>
+<Content ns0:pstyle="Content">Check no cycles.</Content>
+<Content ns0:pstyle="Content">Check perhaps one root policy if required.</Content>
+<Content ns0:pstyle="Content">Check depth bounds if recursion is used.</Content>
+<Content ns0:pstyle="Content">Malicious/corrupt file:</Content>
+<Code ns0:pstyle="Code" language="text">1 parent 2
+2 parent 3
+3 parent 1</Code>
+<Content ns0:pstyle="Content">must not lead to infinite traversal.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Transactional scene loading</Strong></Content>
+<Content ns0:pstyle="Content">Do not mutate live scene as parse proceeds.</Content>
+<Content ns0:pstyle="Content">Use:</Content>
+<Code ns0:pstyle="Code" language="cpp">Scene candidate;
+
+ParseInto(candidate);
+Validate(candidate);
+
+liveScene =
+    std::move(candidate);</Code>
+<Content ns0:pstyle="Content">If parse fails at entity 997:</Content>
+<Code ns0:pstyle="Code" language="text">live scene remains unchanged.</Code>
+<Content ns0:pstyle="Content">Your Kairo scene/project loading architecture repeatedly follows this strong-exception pattern.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Reflection metadata</Strong></Content>
+<Content ns0:pstyle="Content">Reflection metadata describes a type in a machine-readable engine-owned way.</Content>
+<Content ns0:pstyle="Content">Example:</Content>
+<Code ns0:pstyle="Code" language="text">Type:
+Kairo.Engine.Camera
+
+Display:
+Camera
+
+Properties:
+VerticalFov
+NearPlane
+FarPlane
+Exposure
+Primary</Code>
+<Content ns0:pstyle="Content">Each property can carry:</Content>
+<Code ns0:pstyle="Code" language="text">stable key
+display name
+value kind
+category
+tooltip
+numeric range
+read-only flag
+enum options
+reference target type.</Code>
+<Content ns0:pstyle="Content">KairoReflection already implements essentially this model.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Metadata is not the object’s value</Strong></Content>
+<Content ns0:pstyle="Content">Descriptor:</Content>
+<Code ns0:pstyle="Code" language="text">"near plane is a floating point value"</Code>
+<Content ns0:pstyle="Content">is metadata.</Content>
+<Content ns0:pstyle="Content">Instance:</Content>
+<Code ns0:pstyle="Code" language="text">NearPlane = 0.1</Code>
+<Content ns0:pstyle="Content">is data.</Content>
+<Content ns0:pstyle="Content">Separate:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6bdad0d3d9684b84e06ac005.svg" alt="&#10;Schema&#10;" jobId="6bdad0d3d9684b84e06ac005" originalTeX="&#10;Schema&#10;" /></Formula>
+<Content ns0:pstyle="Content">from:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d9263f4172c39590326bde3f.svg" alt="&#10;InstanceState.&#10;" jobId="d9263f4172c39590326bde3f" originalTeX="&#10;InstanceState.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That enables one descriptor to inspect thousands of objects.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Stable reflection keys</Strong></Content>
+<Content ns0:pstyle="Content">Your reflection system uses dotted ASCII identifiers such as:</Content>
+<Code ns0:pstyle="Code" language="text">Kairo.Engine.Transform</Code>
+<Content ns0:pstyle="Content">instead of compiler RTTI names.</Content>
+<Content ns0:pstyle="Content">This is a very good choice.</Content>
+<Content ns0:pstyle="Content">RTTI names can be:</Content>
+<Code ns0:pstyle="Code" language="text">compiler-dependent
+mangled
+unstable across builds.</Code>
+<Content ns0:pstyle="Content">A persistent reflection key should be designed as data schema identity.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Type IDs</Strong></Content>
+<Content ns0:pstyle="Content">A type ID is stable identity for a reflected type.</Content>
+<Content ns0:pstyle="Content">You have several implementation choices.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">String key</Strong></Content>
+<Code ns0:pstyle="Code" language="text">Kairo.Engine.Transform</Code>
+<Content ns0:pstyle="Content">Advantages:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">readable,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">collision-free if uniqueness enforced,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">persistent-friendly.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Cost:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">larger comparisons/storage.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Integer ID assigned at runtime</Strong></Content>
+<Content ns0:pstyle="Content">Fast, but registration order can make it unstable.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Hashed stable string</Strong></Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9241e6ce328e07a905b7488e.svg" alt="&#10;TypeID=Hash(&quot;Kairo.Engine.Transform&quot;).&#10;" jobId="9241e6ce328e07a905b7488e" originalTeX="&#10;TypeID=Hash(&quot;Kairo.Engine.Transform&quot;).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Compact and deterministic, but collisions must be handled.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Persistent versus runtime type IDs</Strong></Content>
+<Content ns0:pstyle="Content">A useful design is:</Content>
+<Code ns0:pstyle="Code" language="text">persistent:
+stable string/hash
+
+runtime:
+dense TypeIndex</Code>
+<Content ns0:pstyle="Content">At startup:</Content>
+<Code ns0:pstyle="Code" language="text">"Kairo.Engine.Transform"
+    ↓
+runtime index 7.</Code>
+<Content ns0:pstyle="Content">Then hot loops can use:</Content>
+<Code ns0:pstyle="Code" language="cpp">uint16_t TypeIndex;</Code>
+<Content ns0:pstyle="Content">while persistence remains compiler/order independent.</Content>
+<Content ns0:pstyle="Content">This is the same persistent/runtime identity separation we have seen everywhere.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Hash collisions</Strong></Content>
+<Content ns0:pstyle="Content">If:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/01d1766fc38ea23acdbf0f82.svg" alt="&#10;TypeID=Hash(key),&#10;" jobId="01d1766fc38ea23acdbf0f82" originalTeX="&#10;TypeID=Hash(key),&#10;" /></Formula>
+<Content ns0:pstyle="Content">you cannot simply assume collisions never occur.</Content>
+<Content ns0:pstyle="Content">At registration:</Content>
+<Code ns0:pstyle="Code" language="cpp">if (
+    sameHash &amp;&amp;
+    differentKey)
+{
+    fail loudly;
+}</Code>
+<Content ns0:pstyle="Content">or use sufficiently wide IDs and store canonical key for validation.</Content>
+<Content ns0:pstyle="Content">A 64-bit hash makes accidental collision unlikely but not logically impossible.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Property IDs</Strong></Content>
+<Content ns0:pstyle="Content">Within one type, every property needs stable identity.</Content>
+<Content ns0:pstyle="Content">Bad identity:</Content>
+<Code ns0:pstyle="Code" language="text">property index 3.</Code>
+<Content ns0:pstyle="Content">Reordering fields changes meaning.</Content>
+<Content ns0:pstyle="Content">Better:</Content>
+<Code ns0:pstyle="Code" language="text">Kairo.Engine.Camera.NearPlane</Code>
+<Content ns0:pstyle="Content">or type-local:</Content>
+<Code ns0:pstyle="Code" language="text">near-plane.</Code>
+<Content ns0:pstyle="Content">Stable property ID allows:</Content>
+<Code ns0:pstyle="Code" language="text">undo
+serialization
+animation binding
+editor presets
+network replication
+property diffing.</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Property display names are not IDs</Strong></Content>
+<Content ns0:pstyle="Content">Display text:</Content>
+<Code ns0:pstyle="Code" language="text">Near Plane</Code>
+<Content ns0:pstyle="Content">may later become:</Content>
+<Code ns0:pstyle="Code" language="text">Near Clip</Code>
+<Content ns0:pstyle="Content">for UI wording.</Content>
+<Content ns0:pstyle="Content">That should not invalidate persistence.</Content>
+<Content ns0:pstyle="Content">Your ImGui inspector uses stable reflection keys for commit callbacks rather than display labels.</Content>
+<Content ns0:pstyle="Content">This is precisely correct:</Content>
+<Code ns0:pstyle="Code" language="text">DisplayName = presentation
+Key = identity.</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Reflection without language runtime reflection</Strong></Content>
+<Content ns0:pstyle="Content">C++ historically does not provide Java/C#-style full runtime field enumeration.</Content>
+<Content ns0:pstyle="Content">So engines build their own reflection.</Content>
+<Content ns0:pstyle="Content">Kairo does not ask:</Content>
+<Code ns0:pstyle="Code" language="cpp">for(auto member : typeof(Camera).members())</Code>
+<Content ns0:pstyle="Content">because ordinary C++ cannot generally do that in portable production code.</Content>
+<Content ns0:pstyle="Content">Instead descriptors are explicitly constructed and registered.</Content>
+<Content ns0:pstyle="Content">That is entirely valid.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Explicit reflection registration</Strong></Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="cpp">TypeDescriptor CameraDescriptor()
+{
+    TypeDescriptor type;
+
+    type.Key =
+        "Kairo.Engine.Camera";
+
+    type.DisplayName =
+        "Camera";
+
+    type.Properties.push_back(
+        MakeMemberProperty&lt;Camera&gt;(
+            {
+                .Key =
+                    "near-plane",
+                .DisplayName =
+                    "Near Plane"
+            },
+            &amp;Camera::NearPlane));
+
+    return type;
+}</Code>
+<Content ns0:pstyle="Content">The compiler validates the member pointer type.</Content>
+<Content ns0:pstyle="Content">The engine owns metadata semantics.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Benefits of explicit registration</Strong></Content>
+<Content ns0:pstyle="Content">You choose deliberately what is reflected.</Content>
+<Content ns0:pstyle="Content">Private implementation details can remain invisible.</Content>
+<Content ns0:pstyle="Content">You can expose a semantic property that is not literally a field.</Content>
+<Content ns0:pstyle="Content">Example:</Content>
+<Code ns0:pstyle="Code" language="text">Euler Rotation</Code>
+<Content ns0:pstyle="Content">could read/write underlying Quaternion.</Content>
+<Content ns0:pstyle="Content">Reflection is an abstraction layer.</Content>
+<Content ns0:pstyle="Content">It does not have to mirror memory layout.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Compile-time reflection patterns</Strong></Content>
+<Content ns0:pstyle="Content">Even without full language reflection, templates can generate descriptors.</Content>
+<Content ns0:pstyle="Content">Kairo’s:</Content>
+<Code ns0:pstyle="Code" language="cpp">MakeMemberProperty&lt;Object, Member&gt;(
+    metadata,
+    memberPointer)</Code>
+<Content ns0:pstyle="Content">is an example.</Content>
+<Content ns0:pstyle="Content">Compile time knows:</Content>
+<Code ns0:pstyle="Code" language="text">Object type
+Member type
+pointer-to-member.</Code>
+<Content ns0:pstyle="Content">Runtime descriptor stores a type-erased accessor.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Template-generated accessor</Strong></Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="cpp">descriptor.Read =
+    [member](const void* object)
+    {
+        const Object* typed =
+            static_cast&lt;
+                const Object*&gt;(
+                    object);
+
+        return Encode(
+            typed-&gt;*member);
+    };</Code>
+<Content ns0:pstyle="Content">Write:</Content>
+<Code ns0:pstyle="Code" language="cpp">descriptor.Write =
+    [member](
+        void* object,
+        const PropertyValue&amp; value)
+    {
+        Object* typed =
+            static_cast&lt;Object*&gt;(
+                object);
+
+        typed-&gt;*member =
+            Decode&lt;Member&gt;(value);
+    };</Code>
+<Content ns0:pstyle="Content">This bridges compile-time type safety into runtime reflection.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Reflection macro pattern</Strong></Content>
+<Content ns0:pstyle="Content">Another common design:</Content>
+<Code ns0:pstyle="Code" language="cpp">REFLECT_TYPE(Camera,
+    PROPERTY(NearPlane),
+    PROPERTY(FarPlane),
+    PROPERTY(Exposure));</Code>
+<Content ns0:pstyle="Content">Macros reduce boilerplate but have drawbacks:</Content>
+<Code ns0:pstyle="Code" language="text">debuggability
+macro syntax
+tooling complexity.</Code>
+<Content ns0:pstyle="Content">Modern template/constexpr code can often replace many macros.</Content>
+<Content ns0:pstyle="Content">Use macros only when they improve ergonomics materially.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Static descriptor pattern</Strong></Content>
+<Content ns0:pstyle="Content">You can make:</Content>
+<Code ns0:pstyle="Code" language="cpp">template&lt;&gt;
+struct Reflection&lt;Camera&gt;
+{
+    static constexpr auto Key =
+        "Kairo.Engine.Camera";
+
+    static TypeDescriptor Build();
+};</Code>
+<Content ns0:pstyle="Content">Then generic registry bootstrap:</Content>
+<Code ns0:pstyle="Code" language="cpp">registry.Register(
+    Reflection&lt;Camera&gt;::Build());</Code>
+<Content ns0:pstyle="Content">This creates a strong association between C++ type and stable schema descriptor without relying on language RTTI names.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Runtime reflection registry</Strong></Content>
+<Content ns0:pstyle="Content">A registry maps stable key to descriptor:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cb6d7eff8119ca7826b07d65.svg" alt="&#10;TypeKey&#10;\rightarrow&#10;TypeDescriptor.&#10;" jobId="cb6d7eff8119ca7826b07d65" originalTeX="&#10;TypeKey&#10;\rightarrow&#10;TypeDescriptor.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Kairo’s registry uses deterministic ordered storage:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::map&lt;std::string, TypeDescriptor&gt;</Code>
+<Content ns0:pstyle="Content">and sorts properties by stable key during registration.</Content>
+<Content ns0:pstyle="Content">That is a deliberate determinism choice.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Immutable descriptors after registration</Strong></Content>
+<Content ns0:pstyle="Content">Your reflection registry does not silently mutate already registered descriptors.</Content>
+<Content ns0:pstyle="Content">This matters.</Content>
+<Content ns0:pstyle="Content">Suppose inspector is currently showing:</Content>
+<Code ns0:pstyle="Code" language="text">property key "near-plane"</Code>
+<Content ns0:pstyle="Content">and a plugin reload changes its meaning underneath it.</Content>
+<Content ns0:pstyle="Content">That would be dangerous.</Content>
+<Content ns0:pstyle="Content">Immutable registration means descriptor semantics remain stable for that registry lifetime.</Content>
+<Content ns0:pstyle="Content">Plugin reload can construct a new registry/epoch rather than mutate existing contracts unpredictably.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Registry validation</Strong></Content>
+<Content ns0:pstyle="Content">Kairo validates:</Content>
+<Code ns0:pstyle="Code" language="text">stable type keys
+stable property keys
+display names
+categories
+read accessor presence
+write accessor for writable properties
+numeric ranges
+enum option uniqueness
+reference metadata
+array metadata limits.</Code>
+<Content ns0:pstyle="Content">This is exactly what reflection registration should do.</Content>
+<Content ns0:pstyle="Content">Fail when schema is registered, not three hours later when editor opens one rare component.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Property getters and setters</Strong></Content>
+<Content ns0:pstyle="Content">Reflection should not necessarily expose raw member addresses.</Content>
+<Content ns0:pstyle="Content">Getter/setter abstraction gives control.</Content>
+<Content ns0:pstyle="Content">Getter:</Content>
+<Code ns0:pstyle="Code" language="cpp">PropertyValue Read(
+    const void*);</Code>
+<Content ns0:pstyle="Content">Setter:</Content>
+<Code ns0:pstyle="Code" language="cpp">void Write(
+    void*,
+    const PropertyValue&amp;);</Code>
+<Content ns0:pstyle="Content">This enables validation and conversion.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why raw offset reflection is risky</Strong></Content>
+<Content ns0:pstyle="Content">Some reflection systems store:</Content>
+<Code ns0:pstyle="Code" language="cpp">offsetof(Camera, NearPlane).</Code>
+<Content ns0:pstyle="Content">Then compute:</Content>
+<Code ns0:pstyle="Code" language="cpp">char* base +
+offset.</Code>
+<Content ns0:pstyle="Content">Fast, but tightly coupled to standard-layout assumptions and exact memory layout.</Content>
+<Content ns0:pstyle="Content">It also bypasses semantic validation.</Content>
+<Content ns0:pstyle="Content">Getter/setter reflection is more flexible.</Content>
+<Content ns0:pstyle="Content">Kairo chooses getters/setters through <InlineCode ns0:cstyle="InlineCode">std::function</InlineCode>.</Content>
+<Content ns0:pstyle="Content">That is appropriate for editor/reflection workloads where correctness and flexibility matter more than nanosecond access.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Semantic setters</Strong></Content>
+<Content ns0:pstyle="Content">Suppose:</Content>
+<Code ns0:pstyle="Code" language="cpp">void Camera::SetNear(float n)
+{
+    if (n &lt;= 0)
+        throw ...;
+
+    NearPlane = n;
+}</Code>
+<Content ns0:pstyle="Content">Reflection should ideally use this semantic path.</Content>
+<Content ns0:pstyle="Content">Likewise quaternion write may normalize.</Content>
+<Content ns0:pstyle="Content">Asset handle write may validate target type.</Content>
+<Content ns0:pstyle="Content">A property setter is an invariant boundary.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Strong exception behavior</Strong></Content>
+<Content ns0:pstyle="Content">Setter should preferably behave:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8d50a8b752d3274a0302fca5.svg" alt="&#10;\text{valid new value}&#10;\Rightarrow&#10;\text{commit}&#10;" jobId="8d50a8b752d3274a0302fca5" originalTeX="&#10;\text{valid new value}&#10;\Rightarrow&#10;\text{commit}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5964577363273499dc04ef2b.svg" alt="&#10;\text{invalid new value}&#10;\Rightarrow&#10;\text{old value unchanged}.&#10;" jobId="5964577363273499dc04ef2b" originalTeX="&#10;\text{invalid new value}&#10;\Rightarrow&#10;\text{old value unchanged}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is crucial because editor commands depend on reliable rollback/undo semantics later in M094.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Inspector adapters</Strong></Content>
+<Content ns0:pstyle="Content">Reflection metadata should remain UI-framework neutral.</Content>
+<Content ns0:pstyle="Content">It says:</Content>
+<Code ns0:pstyle="Code" language="text">Property kind = FloatingPoint
+Range = [0.01, 1000]
+DisplayName = Near Plane</Code>
+<Content ns0:pstyle="Content">It should not say:</Content>
+<Code ns0:pstyle="Code" language="text">ImGui::DragFloat</Code>
+<Content ns0:pstyle="Content">or:</Content>
+<Code ns0:pstyle="Code" language="text">QtSlider.</Code>
+<Content ns0:pstyle="Content">UI adapter interprets metadata.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo’s inspector boundary</Strong></Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">ImGuiReflectionInspector</InlineCode> receives:</Content>
+<Code ns0:pstyle="Code" language="text">ReflectionRegistry
+Scene entity
+commit callback.</Code>
+<Content ns0:pstyle="Content">It enumerates reflected components and picks an ImGui widget from <InlineCode ns0:cstyle="InlineCode">PropertyValueKind</InlineCode>.</Content>
+<Content ns0:pstyle="Content">That means:</Content>
+<Code ns0:pstyle="Code" language="text">reflection metadata</Code>
+<Content ns0:pstyle="Content">does not import ImGui.</Content>
+<Content ns0:pstyle="Content">Instead:</Content>
+<Code ns0:pstyle="Code" language="text">ImGui adapter
+    ↓
+reflection.</Code>
+<Content ns0:pstyle="Content">Correct dependency direction.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Widget mapping</Strong></Content>
+<Content ns0:pstyle="Content">Current logic naturally supports:</Content>
+<Code ns0:pstyle="Code" language="text">Boolean          -&gt; checkbox
+Signed integer   -&gt; numeric drag
+Unsigned integer -&gt; numeric drag
+Floating point   -&gt; ranged drag
+String           -&gt; text input
+Vector2/3/4      -&gt; component drag
+Quaternion       -&gt; 4-component editor
+Enumeration      -&gt; combo
+Reference        -&gt; reference string editor
+Array            -&gt; current summary/display</Code>
+<Content ns0:pstyle="Content">This is the generic-inspector payoff.</Content>
+<Content ns0:pstyle="Content">One UI implementation can inspect many component types.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Inspector must not own mutation semantics</Strong></Content>
+<Content ns0:pstyle="Content">Notice Kairo’s inspector does not directly perform arbitrary scene writes.</Content>
+<Content ns0:pstyle="Content">When edited value changes, it invokes:</Content>
+<Code ns0:pstyle="Code" language="cpp">commit(
+    typeKey,
+    propertyKey,
+    edited);</Code>
+<Content ns0:pstyle="Content">That callback can generate an undoable command.</Content>
+<Content ns0:pstyle="Content">This is a very strong architectural separation:</Content>
+<Code ns0:pstyle="Code" language="text">UI detects intent
+      ↓
+command layer performs mutation.</Code>
+<Content ns0:pstyle="Content">Without this, every widget becomes a secret mutation path bypassing undo.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Serialization driven by reflection</Strong></Content>
+<Content ns0:pstyle="Content">If reflection knows:</Content>
+<Code ns0:pstyle="Code" language="text">type
+properties
+kinds
+getters</Code>
+<Content ns0:pstyle="Content">generic serializer can do:</Content>
+<Code ns0:pstyle="Code" language="cpp">for (const auto&amp; property
+     : descriptor.Properties)
+{
+    PropertyValue value =
+        registry.Read(
+            typeKey,
+            property.Key,
+            object);
+
+    writer.Write(
+        property.Key,
+        value);
+}</Code>
+<Content ns0:pstyle="Content">This removes duplicate hand-written field enumeration.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Deserialization driven by reflection</Strong></Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="cpp">for (SerializedField field : input)
+{
+    const PropertyDescriptor* p =
+        descriptor.Find(field.ID);
+
+    if (!p)
+    {
+        HandleUnknown(field);
+        continue;
+    }
+
+    PropertyValue value =
+        Decode(
+            field,
+            p-&gt;ValueKind);
+
+    registry.Write(
+        descriptor.Key,
+        p-&gt;Key,
+        object,
+        value);
+}</Code>
+<Content ns0:pstyle="Content">Now reflection schema and persistence schema can share metadata.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Reflection-driven serialization trade-off</Strong></Content>
+<Content ns0:pstyle="Content">Be careful with the temptation:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">Reflect everything, therefore serialize everything.</Content></BlockQuote>
+<Content ns0:pstyle="Content">Not every reflected property should be persisted.</Content>
+<Content ns0:pstyle="Content">Examples:</Content>
+<Code ns0:pstyle="Code" language="text">runtime statistics
+computed bounds
+debug state
+cached matrix
+GPU handle.</Code>
+<Content ns0:pstyle="Content">So reflection metadata may need flags:</Content>
+<Code ns0:pstyle="Code" language="cpp">Serializable
+Transient
+EditorVisible
+ReadOnly
+NetworkReplicated
+SaveGame</Code>
+<Content ns0:pstyle="Content">depending on engine scale.</Content>
+<Content ns0:pstyle="Content">Reflection is a metadata platform.</Content>
+<Content ns0:pstyle="Content">Serialization is one consumer.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Current Kairo design</Strong></Content>
+<Content ns0:pstyle="Content">Kairo currently uses reflection primarily for editor inspection and semantic values while scene serialization remains an explicit dedicated format.</Content>
+<Content ns0:pstyle="Content">That is a defensible design.</Content>
+<Content ns0:pstyle="Content">Explicit scene serializers give precise control over:</Content>
+<Code ns0:pstyle="Code" language="text">versioning
+ordering
+validation
+migration.</Code>
+<Content ns0:pstyle="Content">Reflection can gradually reduce boilerplate later without forcing persistence to become purely automatic.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Editor UI driven by reflection</Strong></Content>
+<Content ns0:pstyle="Content">The generic inspector architecture is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/225d84f024e161c35488255a.svg" alt="&#10;Object&#10;\rightarrow&#10;TypeDescriptor&#10;\rightarrow&#10;PropertyDescriptors&#10;\rightarrow&#10;PropertyValue&#10;\rightarrow&#10;UIWidget.&#10;" jobId="225d84f024e161c35488255a" originalTeX="&#10;Object&#10;\rightarrow&#10;TypeDescriptor&#10;\rightarrow&#10;PropertyDescriptors&#10;\rightarrow&#10;PropertyValue&#10;\rightarrow&#10;UIWidget.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This means adding a new reflected property can automatically make it appear in the inspector.</Content>
+<Content ns0:pstyle="Content">That is a massive tooling scalability improvement.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Metadata can improve UX</Strong></Content>
+<Content ns0:pstyle="Content">Reflection property metadata can include:</Content>
+<Code ns0:pstyle="Code" language="text">Tooltip
+Category
+Advanced flag
+ReadOnly
+NumericRange
+Step
+Enum options
+Reference target.</Code>
+<Content ns0:pstyle="Content">Then an editor gains consistent behavior across hundreds of components.</Content>
+<Content ns0:pstyle="Content">Without metadata every component requires a bespoke panel.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Generic inspector versus custom inspector</Strong></Content>
+<Content ns0:pstyle="Content">Generic reflection UI handles the common 80–90%.</Content>
+<Content ns0:pstyle="Content">Some types still deserve a specialized inspector.</Content>
+<Content ns0:pstyle="Content">Example:</Content>
+<Code ns0:pstyle="Code" language="text">Material
+Animation graph
+Particle system
+Terrain
+Navigation mesh.</Code>
+<Content ns0:pstyle="Content">Use generic reflection as the baseline.</Content>
+<Content ns0:pstyle="Content">Allow type-specific adapters when domain UX requires them.</Content>
+<Content ns0:pstyle="Content">Do not force everything through primitive widgets.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Safe type erasure</Strong></Content>
+<Content ns0:pstyle="Content">Type erasure allows runtime code to manipulate values whose concrete C++ type is not known at compile time.</Content>
+<Content ns0:pstyle="Content">Kairo reflection uses:</Content>
+<Code ns0:pstyle="Code" language="cpp">const void*
+void*</Code>
+<Content ns0:pstyle="Content">plus descriptor-specific functions.</Content>
+<Content ns0:pstyle="Content">This is a classic type-erasure boundary.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold"><InlineCode ns0:cstyle="InlineCode">void*</InlineCode> itself is not safe</Strong></Content>
+<Content ns0:pstyle="Content">This is dangerous:</Content>
+<Code ns0:pstyle="Code" language="cpp">void* object =
+    GetAnything();
+
+descriptorForCamera.Read(object);</Code>
+<Content ns0:pstyle="Content">if object is actually a Light.</Content>
+<Content ns0:pstyle="Content">The cast inside accessor becomes invalid.</Content>
+<Content ns0:pstyle="Content">So safety comes from <Strong ns0:cstyle="Bold">pairing pointer with the correct descriptor</Strong>.</Content>
+<Content ns0:pstyle="Content">The invariant is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8b1d6985e659f99a094450a4.svg" alt="&#10;\boxed{&#10;(objectAddress,TypeDescriptor)&#10;}&#10;" jobId="8b1d6985e659f99a094450a4" originalTeX="&#10;\boxed{&#10;(objectAddress,TypeDescriptor)&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">must correspond to the same concrete type.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Safer erased object view</Strong></Content>
+<Content ns0:pstyle="Content">You can encode this:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct ReflectedObjectView
+{
+    void* Object = nullptr;
+    const TypeDescriptor* Type = nullptr;
+};</Code>
+<Content ns0:pstyle="Content">Read:</Content>
+<Code ns0:pstyle="Code" language="cpp">PropertyValue Read(
+    ReflectedObjectView object,
+    PropertyID property);</Code>
+<Content ns0:pstyle="Content">Now the pointer and schema travel together.</Content>
+<Content ns0:pstyle="Content">Still not mathematically impossible to construct incorrectly, but far harder to mix accidentally.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Runtime type token</Strong></Content>
+<Content ns0:pstyle="Content">Stronger:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct ErasedObject
+{
+    void* Data;
+    TypeID Type;
+};</Code>
+<Content ns0:pstyle="Content">Registry checks:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9d042e776b73825d1cca5af2.svg" alt="&#10;object.Type=&#10;descriptor.TypeID&#10;" jobId="9d042e776b73825d1cca5af2" originalTeX="&#10;object.Type=&#10;descriptor.TypeID&#10;" /></Formula>
+<Content ns0:pstyle="Content">before accessor invocation.</Content>
+<Content ns0:pstyle="Content">This converts silent undefined behavior into a deterministic runtime error.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Owned type-erased values</Strong></Content>
+<Content ns0:pstyle="Content">Kairo’s <InlineCode ns0:cstyle="InlineCode">PropertyValue</InlineCode> is another safer kind of type erasure.</Content>
+<Content ns0:pstyle="Content">It uses:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::variant&lt;
+    bool,
+    int64_t,
+    uint64_t,
+    double,
+    string,
+    Vector...
+&gt;</Code>
+<Content ns0:pstyle="Content">This is significantly safer than:</Content>
+<Code ns0:pstyle="Code" language="cpp">void* value;</Code>
+<Content ns0:pstyle="Content">because the variant remembers its active alternative.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">PropertyValueKind</InlineCode> can be checked against expected descriptor kind before writing.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why <InlineCode ns0:cstyle="InlineCode">std::any</InlineCode> is less ideal here</Strong></Content>
+<Content ns0:pstyle="Content">You could use:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::any.</Code>
+<Content ns0:pstyle="Content">But then the reflection transport becomes dependent on concrete C++ type identities.</Content>
+<Content ns0:pstyle="Content">Kairo deliberately defines a canonical, engine-neutral value model:</Content>
+<Code ns0:pstyle="Code" language="text">double
+Vector3Value
+ReferenceValue
+EnumerationValue
+ArrayValue.</Code>
+<Content ns0:pstyle="Content">That is much better for:</Content>
+<Code ns0:pstyle="Code" language="text">editor
+serialization
+plugin boundaries
+potential scripting.</Code>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Reflection must own values, not dangling references</Strong></Content>
+<Content ns0:pstyle="Content">Kairo’s reflected <InlineCode ns0:cstyle="InlineCode">PropertyValue</InlineCode> owns strings, arrays and composite values.</Content>
+<Content ns0:pstyle="Content">This is important.</Content>
+<Content ns0:pstyle="Content">Returning:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::string_view</Code>
+<Content ns0:pstyle="Content">into a component would create lifetime hazards.</Content>
+<Content ns0:pstyle="Content">An inspector may keep the value after component storage changes.</Content>
+<Content ns0:pstyle="Content">Owned values decouple reflection transport lifetime from object storage lifetime.</Content>
+<Content ns0:pstyle="Content">—</Content>
+
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#05-engine-i-ch010">Previous chapter</Link> · <Link href="#05-engine-i-ch012">Next chapter</Link></Content>
+</Chapter>

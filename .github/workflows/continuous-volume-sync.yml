@@ -14,6 +14,9 @@ on:
       - 'tools/note_integrity.py'
       - 'tools/check_vault_links.py'
       - 'tools/tests/test_note_integrity.py'
+      - 'tools/check_book_completion.py'
+      - 'tools/book_completion/**'
+      - 'tools/tests/test_book_completion.py'
       - 'Concepts/**'
       - 'Supplementary/**'
       - 'Visual Recall/**'
@@ -32,6 +35,9 @@ on:
       - 'tools/note_integrity.py'
       - 'tools/check_vault_links.py'
       - 'tools/tests/test_note_integrity.py'
+      - 'tools/check_book_completion.py'
+      - 'tools/book_completion/**'
+      - 'tools/tests/test_book_completion.py'
       - 'Concepts/**'
       - 'Supplementary/**'
       - 'Visual Recall/**'
@@ -61,3 +67,20 @@ jobs:
         run: python3 tools/check_vault_links.py
       - name: Compile selected examples from the canonical engine volume
         run: python3 tools/m018/check_note_examples.py --compiler g++
+      - name: Validate canonical numbering and evidence boundaries
+        run: |
+          python3 -m unittest discover -s tools/tests -p test_book_completion.py
+          python3 tools/check_book_completion.py
+      - name: Run bounded scalar and import-transaction witnesses
+        run: |
+          set -euo pipefail
+          for lab in gaussian_training_step_lab planar_joint_rows_lab shader_import_lab gpu_budget_precision_lab; do
+            python3 "tools/labs/$lab.py"
+            python3 -O "tools/labs/$lab.py"
+          done
+          for lab in packed_arithmetic_lab collision_filter_event_lab gpu_structure_reference_lab; do
+            c++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror "tools/labs/$lab.cpp" -o "$RUNNER_TEMP/$lab"
+            "$RUNNER_TEMP/$lab"
+          done
+      - name: Reproduce the exact sparse-set excerpt and unsupported-type counterexample
+        run: python3 tools/labs/ecs_sparse_set_exception_check.py

@@ -8,7 +8,7 @@ C++ correctness relies on representation invariants, ownership and object lifeti
 
 **Recall question:** Why can a no-throw move change the safety of container growth?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 44665–45445; source-span SHA256 02c64ed1f03854b67f708e34753401453e8946582a515357e52e9f34bf66da0f. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 45667–46447; source-span SHA256 02c64ed1f03854b67f708e34753401453e8946582a515357e52e9f34bf66da0f. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Reconstruct the representation and lifetime proofs

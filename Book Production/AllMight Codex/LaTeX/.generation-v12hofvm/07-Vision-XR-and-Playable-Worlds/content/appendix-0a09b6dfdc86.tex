@@ -1,0 +1,42 @@
+\hypertarget{appendix-0a09b6dfdc86}{}\label{referencestart:appendix-0a09b6dfdc86}
+\section{Tensor-product interpolation}\label{appendix-0a09b6dfdc86-tensor-product-interpolation}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{appendix-0a09b6dfdc86-definition-and-mechanism}
+
+Bilinear and trilinear interpolation apply one-dimensional linear weights independently along each coordinate axis. In a rectangular cell, each corner contributes the product of its axis weights; the weights are nonnegative and sum to one for coordinates inside the cell. This preserves the range of scalar corner values, but the interpolated surface can be twisted rather than planar, and derivatives may jump across cell boundaries. For a voxel field, trilinear interpolation provides a continuous in-cell estimate; differentiating it yields a local gradient, which need not have unit length even when samples approximate signed distance. Keep coordinates normalized to the cell and define behavior outside the sampled grid explicitly.
+
+\subsection{Prerequisites}\label{appendix-0a09b6dfdc86-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0c2a5f69851e]{Interpolation versus approximation}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-6a7869dd79a6}{Sampling aliasing and reconstruction (Light Transport and Image Synthesis, Reference notes: Sampling aliasing and reconstruction)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-0a09b6dfdc86-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  No downstream concept node is added in this stage.
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-0a09b6dfdc86-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch028-reconstructing-values-and-curves-between-samples}{Reconstructing values and curves between samples (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 12)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-0a09b6dfdc86-source-coverage}
+
+Supplied lesson parts: 978--979.
+
+\subsection{Future keywords}\label{appendix-0a09b6dfdc86-future-keywords}
+
+bilinear weights, trilinear fields, tensor-product basis

@@ -1,0 +1,4250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch378.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_04-visual-computing-ii-ch023-mesh-topology-and-connectivity" class="level2">
+<h2>Mesh Topology and Connectivity</h2>
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch377.xhtml#id_04-visual-computing-ii-ch022-convex-support-mapping-and-distance" class="wikilink">Previous chapter</a> · <a href="ch379.xhtml#id_04-visual-computing-ii-ch024-raytriangle-intersection" class="wikilink">Next chapter</a></p>
+<p>Mesh vertices, edges and faces describe connectivity in addition to position. The chapter uses that distinction to reason about adjacency, boundaries and operations on a surface.</p>
+<p><strong>By the end:</strong> Explain how mesh connectivity differs from a set of geometric positions.</p>
+<p><strong>Recall question:</strong> What information is lost when a mesh is represented only by independent triangles?</p>
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 57090–59762; source-span SHA256 527e67cd9bc0edb8249c4bdc2df4b7befbdafe310af89d9dd833bbcf50cac8c8. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_04-visual-computing-ii-ch023-part-iv-m071-mesh-topology-and-connectivity" class="level4">
+<h4>PART IV — M071: Mesh Topology and Connectivity</h4>
+<p><strong>Part 1189 — Mesh vertices, edges, and faces are not merely geometric positions</strong></p>
+<p>A triangle mesh contains geometric data and topological data.</p>
+<p>These must be understood separately.</p>
+<p>Geometry describes where something is located: coordinates, normals, areas, lengths, curvature, and distances.</p>
+<p>Topology describes how elements are connected: which vertices form an edge, which edges bound a face, which faces share an edge, and whether the resulting surface has a coherent neighbourhood structure.</p>
+<p>Two different meshes can occupy exactly the same geometric positions while having completely different connectivity.</p>
+<p>For example, two triangles may visually meet along the same line but have duplicated vertex indices. A renderer may show no visible gap, while a topology algorithm considers the triangles disconnected.</p>
+<p>Conversely, two faces might reference the same edge indices but have incompatible winding or degenerate geometric positions.</p>
+<p>This difference is particularly important in mesh reconstruction, cloth simulation, collision processing, subdivision, remeshing, and manifold repair.</p>
+<p><strong>Vertices, edges, and faces</strong></p>
+<p>A vertex is a topological element associated with a position and possibly other attributes.</p>
+<p>An edge connects two vertices.</p>
+<p>A face is a bounded surface element, often a triangle, defined by an ordered sequence of vertices or edges.</p>
+<p>For an indexed triangle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>i</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>i</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>i</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>its directed boundary is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>i</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>i</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>i</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>i</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>i</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>i</mi>
+    <mn>0</mn>
+  </msub>
+</math>
+<p>The ordering defines its orientation.</p>
+<p>An undirected edge is identified by the unordered endpoint pair:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mspace linebreak="newline"></mspace>
+  <mrow data-mjx-texclass="ORD">
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mspace linebreak="newline"></mspace>
+  </mrow>
+</math>
+<p>A useful canonical edge key is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>k</mi>
+          <mo stretchy="false">(</mo>
+          <mi>i</mi>
+          <mo>,</mo>
+          <mi>j</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          <mo stretchy="false">(</mo>
+          <mi>i</mi>
+          <mo>,</mo>
+          <mi>j</mi>
+          <mo stretchy="false">)</mo>
+          <mo>,</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+          <mo stretchy="false">(</mo>
+          <mi>i</mi>
+          <mo>,</mo>
+          <mi>j</mi>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This allows us to find faces incident to the same undirected edge.</p>
+<p><strong>Incidence and adjacency</strong></p>
+<p>Two elements are incident if one is part of the other. A vertex is incident to an edge that uses it; an edge is incident to a face that contains it.</p>
+<p>Two elements are adjacent if they share a relevant incidence relationship.</p>
+<p>But the precise definition depends on the query.</p>
+<p>Two faces may be edge-adjacent because they share an entire edge.</p>
+<p>They may be vertex-adjacent because they share only one vertex.</p>
+<p>Those relationships are not interchangeable.</p>
+<p>For a cloth simulation or mesh-traversal algorithm, confusing vertex adjacency and edge adjacency can produce incorrect contact exclusions or neighbourhood queries.</p>
+<p><strong>A concrete two-triangle mesh</strong></p>
+<p>Consider four vertices:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable displaystyle="true" columnalign="right left" columnspacing="0em" rowspacing="3pt">
+    <mtr>
+      <mtd>
+        <msub>
+          <mi>V</mi>
+          <mn>0</mn>
+        </msub>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>=</mo>
+        <mo stretchy="false">(</mo>
+        <mn>0</mn>
+        <mo>,</mo>
+        <mn>0</mn>
+        <mo>,</mo>
+        <mn>0</mn>
+        <mo stretchy="false">)</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext> </mtext>
+        <msub>
+          <mi>V</mi>
+          <mn>1</mn>
+        </msub>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>=</mo>
+        <mo stretchy="false">(</mo>
+        <mn>1</mn>
+        <mo>,</mo>
+        <mn>0</mn>
+        <mo>,</mo>
+        <mn>0</mn>
+        <mo stretchy="false">)</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext> </mtext>
+        <msub>
+          <mi>V</mi>
+          <mn>2</mn>
+        </msub>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>=</mo>
+        <mo stretchy="false">(</mo>
+        <mn>1</mn>
+        <mo>,</mo>
+        <mn>1</mn>
+        <mo>,</mo>
+        <mn>0</mn>
+        <mo stretchy="false">)</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext> </mtext>
+        <msub>
+          <mi>V</mi>
+          <mn>3</mn>
+        </msub>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>=</mo>
+        <mo stretchy="false">(</mo>
+        <mn>0</mn>
+        <mo>,</mo>
+        <mn>1</mn>
+        <mo>,</mo>
+        <mn>0</mn>
+        <mo stretchy="false">)</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math>
+<p>Define two triangles:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>F</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>F</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Both triangles share the undirected edge 2. Its directed orientation is opposite in the two consistently wound faces.</p>
+<p>The shared undirected edge is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mspace linebreak="newline"></mspace>
+  <mrow data-mjx-texclass="ORD">
+    <mn>0</mn>
+    <mo>,</mo>
+    <mn>2</mn>
+    <mspace linebreak="newline"></mspace>
+  </mrow>
+</math>
+<p>In <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>F</mi>
+    <mn>0</mn>
+  </msub>
+</math>, the directed boundary traverses it as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mo stretchy="false">→</mo>
+  <mn>0</mn>
+</math>
+<p>In <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>F</mi>
+    <mn>1</mn>
+  </msub>
+</math>, it traverses it as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo stretchy="false">→</mo>
+  <mn>2</mn>
+</math>
+<p>This opposite orientation is what we expect for a consistently oriented surface.</p>
+<p>The example has four vertices, five undirected edges, and two faces.</p>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mo>=</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>E</mi>
+  <mo>=</mo>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>F</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+</math>
+<p>Its Euler characteristic is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>χ</mi>
+  <mo>=</mo>
+  <mi>V</mi>
+  <mo>−</mo>
+  <mi>E</mi>
+  <mo>+</mo>
+  <mi>F</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>
+<p>That is appropriate for a connected topological disk.</p>
+<p><strong>Part 1190 — Indexed triangle meshes</strong></p>
+<p>A common triangle-mesh representation contains a vertex array and an index array.</p>
+<p>For example:</p>
+<pre><code>struct Vertex {
+    Vec3 position;
+    Vec3 normal;
+    Vec2 uv;
+};
+
+std::vector&lt;Vertex&gt; vertices;
+
+std::vector&lt;std::uint32_t&gt; indices = {
+    0, 1, 2,
+    0, 2, 3
+};</code></pre>
+<p>Every consecutive group of three indices defines one triangle.</p>
+<p>For triangle number <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>, its three indices are stored at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <mi>f</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mn>3</mn>
+  <mi>f</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mn>3</mn>
+  <mi>f</mi>
+  <mo>+</mo>
+  <mn>2</mn>
+</math>
+<p>The representation is compact and maps naturally to GPU indexed drawing.</p>
+<p><strong>Why indexing saves memory</strong></p>
+<p>If every triangle explicitly stores three full vertex records, shared vertices are duplicated.</p>
+<p>For a large mesh containing many adjacent triangles, this can be expensive.</p>
+<p>An indexed representation allows multiple faces to reference the same vertex data.</p>
+<p>Suppose each vertex occupies 32 bytes and a mesh contains 100,000 triangles.</p>
+<p>A completely unindexed representation requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>300</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>×</mo>
+  <mn>32</mn>
+  <mo>=</mo>
+  <mn>9</mn>
+  <mo>,</mo>
+  <mn>600</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mtext> bytes</mtext>
+</math>
+<p>of vertex records.</p>
+<p>If an indexed representation uses 60,000 unique vertex records, that requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>60</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>×</mo>
+  <mn>32</mn>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>920</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>bytes of vertex data.</p>
+<p>With 300,000 indices of four bytes each:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>300</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>200</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>additional bytes.</p>
+<p>The total is approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>120</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mtext> bytes</mtext>
+</math>
+<p>instead of 9,600,000 bytes, excluding container overhead and other data.</p>
+<p>The actual savings depend on sharing, vertex format, index width, and mesh structure.</p>
+<p><strong>Indexed rendering versus topological identity</strong></p>
+<p>A subtle problem appears when an object has hard normal boundaries or UV seams.</p>
+<p>A single geometric position may need different shading normals or texture coordinates on different faces.</p>
+<p>For example, two faces may share a position but require different UV coordinates.</p>
+<p>If a rendering vertex record contains position, normal, and UV, those faces often need distinct vertex records.</p>
+<p>This can produce two vertex indices with identical positions.</p>
+<p>Geometrically, the surface may remain continuous.</p>
+<p>Topologically, the indexed rendering mesh may appear disconnected along the seam unless another connectivity representation records that the vertices correspond to the same underlying geometric or topological vertex.</p>
+<p>This motivates separating a rendering vertex from a topological vertex in some advanced mesh-processing systems.</p>
+<p>A production DCC pipeline may need multiple attribute domains: per-vertex position, per-corner UV, per-face material, and per-corner normal.</p>
+<p><strong>Memory locality and GPU considerations</strong></p>
+<p>An indexed triangle mesh fits graphics APIs well because the index buffer specifies which vertex records are fetched.</p>
+<p>The GPU may reuse recently transformed vertex results through post-transform vertex caching, depending on hardware and pipeline behaviour.</p>
+<p>Triangle ordering and index locality can therefore affect performance.</p>
+<p>A mesh optimized purely for topological editing may not provide the same memory-access patterns as a mesh optimized for rendering.</p>
+<p>This is one reason engines often maintain separate authoring, processing, and runtime mesh representations.</p>
+<p><strong>Part 1191 — Half-edge data structure</strong></p>
+<p>The indexed mesh representation tells us which vertices form each face.</p>
+<p>But it does not directly answer questions such as:</p>
+<ul>
+<li>Which face lies across this edge?</li>
+<li>Which edges surround a vertex?</li>
+<li>What is the next edge around a face?</li>
+<li>Which faces form the one-ring neighbourhood of this vertex?</li>
+<li>Which edges are on the mesh boundary?</li>
+</ul>
+<p>These questions can be answered by scanning indices, but repeated scanning becomes expensive.</p>
+<p>The half-edge data structure stores the missing connectivity explicitly.</p>
+<p><strong>The directed-edge idea</strong></p>
+<p>An undirected mesh edge shared by two faces can be represented as two oppositely directed half-edges.</p>
+<p>Suppose two faces share edge <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mspace linebreak="newline"></mspace>
+  <mrow data-mjx-texclass="ORD">
+    <mi>A</mi>
+    <mo>,</mo>
+    <mi>B</mi>
+    <mspace linebreak="newline"></mspace>
+  </mrow>
+</math>.</p>
+<p>One half-edge runs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">→</mo>
+  <mi>B</mi>
+</math>
+<p>and the other runs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo stretchy="false">→</mo>
+  <mi>A</mi>
+</math>
+<p>These form a twin pair.</p>
+<p>Each half-edge belongs to an oriented face boundary.</p>
+<p><a href="https://images.openai.com/static-rsc-4/LdXoMoReUJDWQboTFXVax9msgYiH4uAONkFXepPt9uBAax1LtEbQnjRwODfP4xjW6xhyN2dqUlCjk4_q5ugu0OYA8ggDScUVP5zv9ajTYRBc4W7Y_7wK4JjygNR75J6KtdaA5pZ5rI45muKmzksWb0_Y8eLucg-e4t2K7mYP_l0?purpose=inline">CS184/284A: Lecture Slides</a></p>
+<p><a href="https://cs184.eecs.berkeley.edu/sp24/lecture/8-24/mesh-processing-and-geometry-pro?utm_source=chatgpt.com">cs184.eecs.berkeley.edu</a></p>
+<p>Half-edge structure from UC Berkeley’s CS184/284A teaching material. Directed half-edges connect face-local traversal with cross-face adjacency.</p>
+<p>A typical half-edge stores references to its origin vertex, incident face, next half-edge in the face, previous half-edge, and opposite half-edge.</p>
+<p>One compact indexed representation is:</p>
+<pre><code>struct Halfedge {
+    uint32_t origin;
+    uint32_t target;
+    uint32_t face;
+    uint32_t next;
+    uint32_t previous;
+    uint32_t twin;
+};</code></pre>
+<p>An implementation may omit some fields if they can be derived from other fields.</p>
+<p>For instance, if the origin and next link are available, the target can often be obtained from the origin of the next half-edge in a consistently constructed face loop.</p>
+<p>Likewise, explicit <code>previous</code> pointers trade memory for faster backward traversal.</p>
+<p><strong>Traversal invariants</strong></p>
+<p>For a triangle face, the three half-edges form a directed cycle.</p>
+<p>If <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>h</mi>
+</math> is any half-edge on the face:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>next</mi>
+            <mn>3</mn>
+          </msup>
+          <mo stretchy="false">(</mo>
+          <mi>h</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mi>h</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For a nondegenerate triangular face, the three successive half-edges must be distinct.</p>
+<p>The previous and next links are inverses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>prev</mi>
+          <mo stretchy="false">(</mo>
+          <mi>next</mi>
+          <mo stretchy="false">(</mo>
+          <mi>h</mi>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mi>h</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>When an opposite half-edge exists:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>twin</mi>
+          <mo stretchy="false">(</mo>
+          <mi>twin</mi>
+          <mo stretchy="false">(</mo>
+          <mi>h</mi>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mi>h</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The twin reverses the directed endpoints:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>origin</mi>
+  <mo stretchy="false">(</mo>
+  <mi>twin</mi>
+  <mo stretchy="false">(</mo>
+  <mi>h</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>target</mi>
+  <mo stretchy="false">(</mo>
+  <mi>h</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>target</mi>
+  <mo stretchy="false">(</mo>
+  <mi>twin</mi>
+  <mo stretchy="false">(</mo>
+  <mi>h</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>origin</mi>
+  <mo stretchy="false">(</mo>
+  <mi>h</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>For a consistently oriented two-manifold surface, its two incident faces traverse a shared edge in opposite directions.</p>
+<p>These are structural invariants that a debug validator should enforce.</p>
+<p><strong>Face traversal</strong></p>
+<p>Start from a face’s stored half-edge.</p>
+<p>Process it, move to <code>next</code>, and repeat until returning to the starting half-edge.</p>
+<p>For a triangle, this visits three half-edges.</p>
+<p>For a general polygon face, it visits its complete boundary cycle.</p>
+<p>This operation costs time proportional to the number of edges bounding the face.</p>
+<p><strong>Cross-face traversal</strong></p>
+<p>Suppose a half-edge belongs to face <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>F</mi>
+    <mn>0</mn>
+  </msub>
+</math>, and its twin belongs to adjacent face <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>F</mi>
+    <mn>1</mn>
+  </msub>
+</math>.</p>
+<p>Following <code>twin</code> crosses the shared geometric edge into the neighbouring face.</p>
+<p>This provides constant-time edge-adjacent face lookup when the twin is available.</p>
+<p><strong>Vertex one-ring traversal</strong></p>
+<p>A particularly useful operation walks all faces or neighbouring vertices incident to one vertex.</p>
+<p>If half-edges store their origin vertices and the mesh is consistently oriented, consider an outgoing half-edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo>:</mo>
+  <mi>v</mi>
+  <mo stretchy="false">→</mo>
+  <mi>w</mi>
+</math>
+<p>The opposite half-edge runs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>twin</mi>
+  <mo stretchy="false">(</mo>
+  <mi>h</mi>
+  <mo stretchy="false">)</mo>
+  <mo>:</mo>
+  <mi>w</mi>
+  <mo stretchy="false">→</mo>
+  <mi>v</mi>
+</math>
+<p>Following <code>next</code> on that twin advances to the next outgoing edge from <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math> in the adjacent face.</p>
+<p>Thus a typical rotation operator around an interior vertex is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>h</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mrow data-mjx-texclass="ORD">
+                <mi data-mjx-auto-op="false">nextAroundVertex</mi>
+              </mrow>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mi>next</mi>
+          <mo stretchy="false">(</mo>
+          <mi>twin</mi>
+          <mo stretchy="false">(</mo>
+          <mi>h</mi>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The exact expression depends on whether the implementation stores origin or destination vertices and how its face cycles are oriented.</p>
+<p>An equivalent rotation in the opposite direction can use the previous half-edge and then its twin.</p>
+<p>Boundary vertices require special handling because an opposite half-edge may be absent or represented by a boundary half-edge with no incident face.</p>
+<p><strong>Boundary representation choices</strong></p>
+<p>There are two common conventions.</p>
+<p>One convention stores only face half-edges and represents an absent twin using an invalid handle.</p>
+<p>The other explicitly creates an opposite boundary half-edge, assigning it a null face and linking boundary half-edges into oriented boundary cycles.</p>
+<p>The second approach is more convenient for walking boundaries uniformly, but requires additional connectivity construction and maintenance.</p>
+<p>CGAL’s indexed <code>Surface_mesh</code> uses two half-edges per edge and represents border status through a half-edge incident to a null face. It also stores connectivity in indexed arrays rather than requiring raw pointer-based nodes. </p>
+<p><a href="https://www.google.com/s2/favicons?domain=https://doc.cgal.org&amp;sz=32">image</a></p>
+<p>Surface Mesh: User Manual</p>
+<p><strong>Building half-edge connectivity from triangles</strong></p>
+<p>Given an indexed triangle mesh, we can construct connectivity in the following way.</p>
+<p>For every face, create three directed half-edges corresponding to its ordered edges and connect their <code>next</code>/<code>prev</code> links.</p>
+<p>Then construct a lookup keyed by undirected edge endpoint pairs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>j</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>j</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+</math>
+<p>For every undirected edge with exactly two incident directed half-edges, verify that the directed endpoints oppose each other.</p>
+<p>If so, connect the twin handles.</p>
+<p>For an edge with one incident face, classify it as a boundary edge.</p>
+<p>For an edge with more than two incident faces, report a nonmanifold edge.</p>
+<p>The expected complexity of a hash-based implementation is approximately <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>F</mi>
+  <mo stretchy="false">)</mo>
+</math> for <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math> triangle faces, assuming expected constant-time hash operations.</p>
+<p>A map-based implementation using a balanced tree typically costs <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>F</mi>
+  <mi>log</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>F</mi>
+  <mo stretchy="false">)</mo>
+</math>.</p>
+<p>This construction is included in the executable reference lab accompanying the pass.</p>
+<p><strong>Pointers versus integer indices</strong></p>
+<p>Pointer-based half-edge structures are convenient to traverse and mutate, but can produce scattered memory allocation and pointer-chasing overhead.</p>
+<p>Index-based structures allow connectivity to be stored contiguously in vectors.</p>
+<p>This can improve compactness, serialization, and cache behaviour, though the actual performance depends on access patterns and field layout.</p>
+<p>Index-based designs also need to manage invalidation when topology changes.</p>
+<p>If an element is deleted and its array slot is reused, an old index might accidentally refer to a different element.</p>
+<p>Generation counters, free lists, stable indices, or explicit rebuild boundaries can help manage this issue.</p>
+<p>This is a direct connection to the generational-handle and data-oriented engine architecture material from earlier phases.</p>
+<p><strong>Part 1192 — Winged-edge data structure</strong></p>
+<p>The winged-edge structure is another classical representation of polygon-mesh topology.</p>
+<p>Like half-edge, it stores connectivity so adjacency queries do not require repeatedly scanning the entire index buffer.</p>
+<p>The major conceptual difference is that winged-edge places the primary connectivity record on an edge rather than on a directed half-edge.</p>
+<p>A traditional winged-edge record contains:</p>
+<ul>
+<li>The edge’s two endpoint vertices.</li>
+<li>Its left and right incident faces relative to a chosen edge orientation.</li>
+<li>The preceding and succeeding boundary edges on the left face.</li>
+<li>The preceding and succeeding boundary edges on the right face.</li>
+</ul>
+<p>The four neighbouring boundary edges are its “wings.”</p>
+<p><strong>Why left and right depend on orientation</strong></p>
+<p>Suppose an edge is oriented from <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math>.</p>
+<p>The two incident faces are identified as left and right using the chosen surface orientation convention.</p>
+<p>If we reverse the edge direction, left and right exchange their roles.</p>
+<p>The predecessor/successor relationships must also be interpreted consistently.</p>
+<p>This means edge orientation is part of the winged-edge record’s semantic contract.</p>
+<p><strong>A conceptual data structure</strong></p>
+<pre><code>struct WingedEdge {
+    EdgeId edge;
+
+    VertexId start;
+    VertexId end;
+
+    FaceId leftFace;
+    FaceId rightFace;
+
+    EdgeId leftPrevious;
+    EdgeId leftNext;
+
+    EdgeId rightPrevious;
+    EdgeId rightNext;
+};</code></pre>
+<p>This is conceptual code illustrating the traditional fields, not a verified Kairo implementation.</p>
+<p>The reference demonstrates what must be stored for face traversal and edge neighbourhood queries.</p>
+<p>A production implementation may store equivalent relationships more compactly or use different pointer conventions.</p>
+<p>Winged-edge can make edge-centred modelling operations natural, but the larger connectivity record introduces memory and update complexity.</p>
+<p>Half-edge often offers a convenient directed traversal model, while winged-edge emphasizes the edge as a shared topological entity. </p>
+<p><a href="https://www.google.com/s2/favicons?domain=https://www.clear.rice.edu&amp;sz=32">image</a></p>
+<p>clear.rice.edu</p>
+<p><strong>Comparison with half-edge</strong></p>
+<p>Consider a mesh edge shared by two triangles.</p>
+<p>In half-edge, the edge has two directed records linked through <code>twin</code>.</p>
+<p>In winged-edge, the edge has one central record containing both sides and the connectivity needed to traverse their boundaries.</p>
+<p>Both can represent the same manifold mesh.</p>
+<p>The best choice depends on the editing operations, mesh type, desired memory layout, boundary support, and API ergonomics.</p>
+<p>For a primarily static rendering mesh, neither representation may be necessary at runtime.</p>
+<p>For an interactive modelling tool performing edge splits, collapses, extrusions, and local neighbourhood operations, explicit topology becomes much more valuable.</p>
+<p><strong>Part 1193 — Manifold versus nonmanifold meshes</strong></p>
+<p>This is one of the most important conceptual topics in the phase.</p>
+<p>A two-dimensional surface is locally a manifold if a sufficiently small neighbourhood around each interior point resembles an open disk.</p>
+<p>At a boundary point of a manifold-with-boundary, the neighbourhood resembles a half-disk.</p>
+<p>This is a local topological condition.</p>
+<p>It cannot be established merely by checking whether each edge is shared by at most two faces.</p>
+<p><strong>Edge manifoldness</strong></p>
+<p>In a conventional triangular two-manifold surface:</p>
+<ul>
+<li>An interior edge is incident to exactly two faces.</li>
+<li>A boundary edge is incident to exactly one face.</li>
+</ul>
+<p>An edge incident to three or more faces is nonmanifold under this surface model.</p>
+<p>For example, imagine three triangular sheets attached along the same geometric edge.</p>
+<p>No neighbourhood of an interior point of that edge resembles an ordinary disk or half-disk.</p>
+<p>The surface branches.</p>
+<p><strong>The bow-tie vertex problem</strong></p>
+<p>Now consider two triangles sharing exactly one vertex but no edge.</p>
+<p>Every edge may have only one incident face.</p>
+<p>An edge-incidence validator therefore finds no edge with more than two incident faces.</p>
+<p>Nevertheless, the shared vertex is nonmanifold, because its neighbourhood consists of two disconnected surface sectors meeting only at that point.</p>
+<p>The triangles share vertex V but form two disconnected incident fans. Edge-incidence checks alone do not detect this nonmanifold vertex.</p>
+<p><strong>The vertex link</strong></p>
+<p>A powerful way to understand local topology is to examine the link of a vertex.</p>
+<p>For a triangulated surface, the link of vertex <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math> consists of the edges opposite <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math> in all triangles incident to it, together with their connectivity.</p>
+<p>For an interior manifold vertex, the link forms one closed cycle.</p>
+<p>For a boundary manifold vertex, the link forms one connected path.</p>
+<p>For a bow-tie vertex, the link contains multiple disconnected components.</p>
+<p>For a branching nonmanifold configuration, its link may contain a vertex of degree greater than two.</p>
+<p>Thus a vertex-manifoldness validator can examine both connectivity and link degrees.</p>
+<p>The conditions are, under the ordinary simplicial surface assumptions:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Interior vertex: link is a single cycle</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Boundary vertex: link is a single path</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p><strong>Why this matters in geometry processing</strong></p>
+<p>Many mesh operations assume an ordinary manifold neighbourhood.</p>
+<p>For example, computing an area-weighted vertex normal usually traverses all incident faces.</p>
+<p>If the vertex has two disconnected incident fans, averaging their normals may create an artificial smoothing connection between unrelated surfaces.</p>
+<p>Similarly, Laplacian smoothing, subdivision, curvature estimation, geodesic propagation, and mesh parameterization may assume a coherent one-ring neighbourhood.</p>
+<p>When that assumption fails, the mathematical operator may no longer have its intended meaning.</p>
+<p><strong>Combinatorial versus geometric manifoldness</strong></p>
+<p>There is another distinction.</p>
+<p>Two separate surface components may occupy identical geometric coordinates while using different vertex indices.</p>
+<p>The indexed mesh may be combinatorially manifold, with separate valid surface components.</p>
+<p>But the geometric embedding may self-intersect or coincide.</p>
+<p>Conversely, merging those coincident vertices can turn a combinatorially valid mesh into a nonmanifold one.</p>
+<p>CGAL’s polygon-mesh repair documentation explicitly distinguishes combinatorial manifoldness repair from geometric manifoldness when duplicated vertices share positions. </p>
+<p><a href="https://www.google.com/s2/favicons?domain=https://doc.cgal.org&amp;sz=32">image</a></p>
+<p>Polygon Mesh Processing: User Manual</p>
+<p>This is particularly important for reconstructed meshes, imported CAD models, and cloth simulation.</p>
+<p>Two visually overlapping surfaces are not necessarily topologically connected, and two topologically connected regions are not necessarily geometrically well behaved.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch023-part-v-m072-boundary-geometry-and-adjacency" class="level4">
+<h4>PART V — M072: Boundary Geometry and Adjacency</h4>
+<p>Original Parts 1194–1200</p>
+<p>M071 established what a coherent mesh is. M072 deals with verifying and manipulating that coherence, especially when source geometry is imperfect.</p>
+<p>This matters because real geometry is rarely ideal.</p>
+<p>CAD importers can produce disconnected shells. Photogrammetry can produce nonmanifold junctions. Reconstruction pipelines may leave holes. Mesh decimation can collapse faces. Geometry from different applications may use incompatible winding and indexing conventions.</p>
+<p>A reliable geometry engine must detect these conditions and make deliberate decisions rather than assume that every imported triangle belongs to a perfect closed surface.</p>
+<p><strong>Part 1194 — Boundary edges and boundary loops</strong></p>
+<p>A boundary edge is an edge incident to exactly one surface face, assuming an ordinary indexed triangulated surface with no dangling standalone edges.</p>
+<p>In a half-edge structure that stores only face half-edges, this can be recognized by an absent opposite half-edge.</p>
+<p>In a half-edge structure that also stores boundary half-edges, the opposite half-edge exists but has no incident surface face.</p>
+<p>The latter is the convention used in CGAL’s indexed surface-mesh representation. </p>
+<p><a href="https://www.google.com/s2/favicons?domain=https://doc.cgal.org&amp;sz=32">image</a></p>
+<p>Surface Mesh: User Manual</p>
+<p><strong>Edge-incidence classification</strong></p>
+<p>Construct an undirected edge key:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>j</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>j</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>j</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Then count how many face boundaries use that key.</p>
+<p>For a valid triangle-surface representation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>incidence</mi>
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">{</mo>
+    <mtable columnalign="left left" columnspacing="1em" rowspacing=".2em">
+      <mtr>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+        <mtd>
+          <mtext>boundary candidate</mtext>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mtext> </mtext>
+          <mn>2</mn>
+        </mtd>
+        <mtd>
+          <mtext>interior edge candidate</mtext>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mtext> </mtext>
+          <mo>&gt;</mo>
+          <mn>2</mn>
+        </mtd>
+        <mtd>
+          <mtext>nonmanifold edge</mtext>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE" fence="true" stretchy="true" symmetric="true"></mo>
+  </mrow>
+</math>
+<p>An incidence of two still requires checking face orientation if the mesh must be consistently oriented.</p>
+<p>If both incident faces traverse the edge in the same direction, the adjacency is not correctly oriented.</p>
+<p><strong>Boundary loops</strong></p>
+<p>For a compact orientable two-manifold surface with boundary, boundary edges form one or more disjoint closed cycles.</p>
+<p>A disk-shaped mesh has one boundary cycle.</p>
+<p>A mesh shaped like an annulus has two.</p>
+<p>A closed sphere-like mesh has none.</p>
+<p>An open reconstructed surface may have many boundary cycles corresponding to holes, scanning gaps, or intentional open regions.</p>
+<p>To extract boundary cycles, we can walk around the boundary from one boundary half-edge to the next, marking visited half-edges until the traversal returns to its start.</p>
+<p>However, that process depends on having coherent boundary orientation and connectivity.</p>
+<p><strong>Why edge incidence alone is insufficient for loops</strong></p>
+<p>Consider a vertex at which two separate boundary loops meet only at a shared vertex.</p>
+<p>Every edge may still have exactly one or two incident faces.</p>
+<p>Nevertheless, the boundary graph branches at that vertex and the surface is nonmanifold there.</p>
+<p>A boundary-loop extractor that assumes each boundary vertex has one incoming and one outgoing boundary half-edge may encounter multiple valid-looking candidates and choose an arbitrary continuation.</p>
+<p>Thus boundary-loop extraction should be preceded by a vertex-link or manifoldness check, or explicitly support nonmanifold branching as a separate case.</p>
+<p><strong>Applications to mesh reconstruction</strong></p>
+<p>Suppose Maveb reconstructs a surface with a missing patch.</p>
+<p>One way to identify candidate hole regions is to locate the mesh’s boundary edges and group them into loops.</p>
+<p>Those loops can provide information about hole perimeter, shape, local curvature, nearby surface normals, and possible patch triangulations.</p>
+<p>But not every boundary loop is necessarily an accidental hole.</p>
+<p>A reconstructed open sheet may intentionally have a boundary. A scanner may never have observed the underside of an object.</p>
+<p>A geometry repair system therefore needs more than topology to decide whether a region should be filled.</p>
+<p>Topology tells us where the surface ends. It does not, by itself, tell us whether completing that region would accurately represent the underlying object.</p>
+<p><strong>Part 1195 — Face adjacency</strong></p>
+<p>Two triangle faces are edge-adjacent when they share an undirected topological edge.</p>
+<p>For the mesh:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>F</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>F</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>the faces are adjacent through edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mspace linebreak="newline"></mspace>
+  <mrow data-mjx-texclass="ORD">
+    <mn>0</mn>
+    <mo>,</mo>
+    <mn>2</mn>
+    <mspace linebreak="newline"></mspace>
+  </mrow>
+</math>
+<p><strong>Face adjacency table</strong></p>
+<p>For a triangle mesh, a useful representation is:</p>
+<pre><code>struct FaceAdjacency {
+    // One neighbouring face per directed edge of the triangle.
+    // INVALID means the corresponding edge is on the boundary.
+    std::array&lt;uint32_t, 3&gt; neighbours;
+};</code></pre>
+<p>For each face, entry <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>j</mi>
+</math> refers to the edge from its <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>j</mi>
+</math>-th vertex to the next vertex cyclically.</p>
+<p>A manifold triangular surface can have at most one neighbouring face across each edge.</p>
+<p>Thus a face can have at most three distinct edge-adjacent neighbours.</p>
+<p>This representation is compact and useful for many algorithms that traverse triangles rather than individual half-edges.</p>
+<p><strong>Building adjacency</strong></p>
+<p>For every triangle edge, build a canonical undirected edge key.</p>
+<p>Store the face index and local edge index associated with that key.</p>
+<p>When a second incident face is found, connect the two face adjacency entries if their orientations are consistent.</p>
+<p>If a third face appears, the edge is nonmanifold and cannot be represented by a single ordinary neighbour entry without losing information.</p>
+<p>This is an important interface design issue: a fixed one-neighbour-per-edge representation implicitly assumes edge-manifold connectivity.</p>
+<p>If arbitrary nonmanifold meshes must be supported, a more general incidence list is required.</p>
+<p><strong>Connected components</strong></p>
+<p>Once face adjacency is available, we can find connected surface components using graph traversal.</p>
+<p>Treat each face as a graph node.</p>
+<p>Create an edge between two graph nodes when the faces share a topological edge.</p>
+<p>A breadth-first search (BFS) or depth-first search (DFS) labels connected components.</p>
+<p>For a mesh with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math> faces and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>E</mi>
+    <mi>a</mi>
+  </msub>
+</math> adjacency relationships, traversal costs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>O</mi>
+          <mo stretchy="false">(</mo>
+          <mi>F</mi>
+          <mo>+</mo>
+          <msub>
+            <mi>E</mi>
+            <mi>a</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For a manifold triangle mesh, each face has at most three edge neighbours, so:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mi>a</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>F</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and connected-component discovery is linear in the number of faces.</p>
+<p><strong>Applications</strong></p>
+<p>Face adjacency supports connected-component extraction, flood filling, material-region selection, normal-orientation propagation, local remeshing, region growing, and certain collision filtering operations.</p>
+<p>In a cloth simulation, adjacency may help identify local topological neighbours that should not be treated as ordinary self-collision candidates.</p>
+<p>But the filtering policy requires care.</p>
+<p>Excluding every pair of faces that share any nearby topological relationship can suppress real folds or contacts. A broad adjacency exclusion may remove legitimate self-collision interactions, especially as cloth bends and folds.</p>
+<p>Thus the topological adjacency relation and the physical contact-exclusion policy should be separate.</p>
+<p><strong>Part 1196 — Vertex adjacency and one-ring neighbourhoods</strong></p>
+<p>For a vertex <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math>, its one-ring vertex neighbourhood consists of the vertices connected to it by edges.</p>
+<p>Denote it:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mspace linebreak="newline"></mspace>
+  <mrow data-mjx-texclass="ORD">
+    <mi>u</mi>
+    <mo>:</mo>
+    <mspace linebreak="newline"></mspace>
+    <mrow data-mjx-texclass="ORD">
+      <mi>u</mi>
+      <mo>,</mo>
+      <mi>v</mi>
+      <mspace linebreak="newline"></mspace>
+    </mrow>
+    <mo>∈</mo>
+    <mi>E</mi>
+    <mspace linebreak="newline"></mspace>
+  </mrow>
+</math>
+<p>The one-ring face neighbourhood contains all faces incident to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math>.</p>
+<p>These are related but distinct sets.</p>
+<p><strong>Representing vertex adjacency</strong></p>
+<p>A straightforward structure is:</p>
+<pre><code>std::vector&lt;std::vector&lt;uint32_t&gt;&gt; vertexNeighbours;</code></pre>
+<p>where:</p>
+<pre><code>vertexNeighbours[v]</code></pre>
+<p>contains the indices of vertices connected to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math>.</p>
+<p>This is convenient for algorithms, but allocates a separate dynamic vector for each vertex.</p>
+<p>For large static meshes, compressed sparse row (CSR) storage can be more compact.</p>
+<p>CSR uses one flat neighbour array and an offsets array.</p>
+<p>For example:</p>
+<pre><code>offsets = [0, 2, 5, 7, 9]
+
+neighbours = [
+    1, 2,       // neighbours of vertex 0
+    0, 2, 3,    // neighbours of vertex 1
+    0, 1,       // neighbours of vertex 2
+    1, 2        // neighbours of vertex 3
+]</code></pre>
+<p>The neighbours of vertex <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math> occupy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>offsets</mi>
+  <mo stretchy="false">[</mo>
+  <mi>v</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+  <mi>offsets</mi>
+  <mo stretchy="false">[</mo>
+  <mi>v</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mo stretchy="false">)</mo>
+</math>
+<p>This is the same representation principle used in sparse matrices and compressed adjacency graphs.</p>
+<p>It is efficient for sequential neighbourhood traversal and reduces per-vertex allocation overhead.</p>
+<p>However, dynamically inserting or removing edges can be expensive because the flat adjacency array may need rebuilding.</p>
+<p><strong>Deriving the graph Laplacian</strong></p>
+<p>Vertex adjacency is not only about navigation. It defines discrete operators on the mesh.</p>
+<p>Let <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+</math> be a scalar associated with vertex <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math>.</p>
+<p>A simple uniform graph Laplacian is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">(</mo>
+          <mi>L</mi>
+          <mi>x</mi>
+          <msub>
+            <mo stretchy="false">)</mo>
+            <mi>i</mi>
+          </msub>
+          <mo>=</mo>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>j</mi>
+              <mo>∈</mo>
+              <mi>N</mi>
+              <mo stretchy="false">(</mo>
+              <mi>i</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </munder>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>x</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>x</mi>
+            <mi>j</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This corresponds to the unnormalized graph Laplacian:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mo>=</mo>
+  <mi>D</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+</math> is the vertex-degree diagonal matrix and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> is the graph adjacency matrix.</p>
+<p>For vertex positions <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mi>i</mi>
+  </msub>
+</math>, a simple smoothing update might be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>P</mi>
+    <mi>i</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>=</mo>
+  <msub>
+    <mi>P</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>−</mo>
+  <mi>λ</mi>
+  <mo stretchy="false">(</mo>
+  <mi>L</mi>
+  <mi>P</mi>
+  <msub>
+    <mo stretchy="false">)</mo>
+    <mi>i</mi>
+  </msub>
+</math>
+<p>or use a degree-normalized variant.</p>
+<p>But mesh geometry processing commonly needs more sophisticated weights, such as cotangent weights, to approximate differential surface operators more faithfully.</p>
+<p>We will derive these in the geometry-processing phase.</p>
+<p>The key connection for now is that mesh connectivity determines which vertices participate in a discrete differential operator.</p>
+<p>A wrong adjacency list changes the mathematical operator itself.</p>
+<p><strong>Degree and valence</strong></p>
+<p>The valence of vertex <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math> is the number of distinct adjacent vertices:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>deg</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <mo stretchy="false">(</mo>
+          <mi>v</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mi>N</mi>
+          <mo stretchy="false">(</mo>
+          <mi>v</mi>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">|</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For an interior vertex in a regular triangular grid, the valence is commonly six.</p>
+<p>For boundary vertices or irregular triangulations, it may differ.</p>
+<p>High or low valence affects local geometry quality, subdivision behaviour, numerical conditioning, and neighbourhood traversal cost.</p>
+<p>An isolated vertex has valence zero. It may exist in an indexed mesh but is not part of any face.</p>
+<p>A validator must decide whether isolated vertices are permitted, ignored, or treated as invalid for a specific operation.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch023-part-vi-numerical-robustness-and-the-geometry-contract" class="level4">
+<h4>PART VI — Numerical Robustness and the Geometry Contract</h4>
+<p><strong>Part 1197 — Geometric degeneracy and exact-zero assumptions</strong></p>
+<p>We have repeatedly encountered degeneracy, but now we need to unify its treatment.</p>
+<p>A degenerate geometric object fails to have the dimension or properties expected by a particular algorithm.</p>
+<p>The definition depends on the object and operation.</p>
+<p>For a line, a zero direction prevents a unique line from being defined.</p>
+<p>For a triangle, collinear vertices prevent a unique supporting plane.</p>
+<p>For a tetrahedron, coplanar vertices prevent a nonzero enclosed volume.</p>
+<p>For three planes, linearly dependent normals prevent a unique intersection point.</p>
+<p>For a mesh, a collapsed edge or invalid face may break topological and geometric operations.</p>
+<p><strong>Exact degeneracy is not approximate degeneracy</strong></p>
+<p>Mathematically, a triangle is degenerate if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>×</mo>
+  <mo stretchy="false">(</mo>
+  <mi>C</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>But in floating-point arithmetic, calculating a very small cross product can produce significant relative error.</p>
+<p>A numerical routine must decide what it means by “too degenerate to process.”</p>
+<p>That threshold should be linked to the physical dimensions and numerical conditioning of the operation.</p>
+<p>For a triangle, the cross-product squared magnitude has units of length to the fourth power.</p>
+<p>For a tetrahedron, the signed-volume determinant has units of length cubed.</p>
+<p>Using one dimensionless epsilon across these quantities is inconsistent.</p>
+<p><strong>Conditioning versus rounding error</strong></p>
+<p>Conditioning describes the sensitivity of the mathematical problem to small input changes.</p>
+<p>Rounding error describes numerical error introduced by representing and computing the problem in finite precision.</p>
+<p>These are different issues.</p>
+<p>Suppose a tetrahedron is nearly flat.</p>
+<p>Even an algorithm that performs its arithmetic extremely accurately may produce large changes in barycentric coordinates when its vertices are perturbed slightly.</p>
+<p>That is an ill-conditioned mathematical problem.</p>
+<p>Separately, an unstable implementation may add significant rounding error beyond the sensitivity inherent in the problem.</p>
+<p>A good numerical method seeks to avoid unnecessary instability, but it cannot eliminate the ill-conditioning of the underlying geometry.</p>
+<p><strong>Translation and scale</strong></p>
+<p>A robust computational geometry routine should be tested under transformations that preserve the intended mathematical answer.</p>
+<p>For example, translating every point involved in a closest-point problem by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math> should translate the result by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math>, without changing the distance.</p>
+<p>For uniform scale <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>, distances should scale by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+</math>, and squared distances by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+</math>.</p>
+<p>Triangle areas should scale by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+</math>.</p>
+<p>Tetrahedron volumes should scale by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>s</mi>
+    <mn>3</mn>
+  </msup>
+</math>.</p>
+<p>Barycentric coordinates should remain invariant under any invertible affine transformation.</p>
+<p>These are examples of metamorphic properties, which will become useful in Part 1199.</p>
+<p>However, finite floating-point representations may fail to preserve very small differences after very large translations.</p>
+<p>That is not necessarily evidence of an incorrect formula; it may reflect information that was lost when input coordinates were rounded.</p>
+<p><strong>Avoiding a universal epsilon</strong></p>
+<p>Consider the following conceptual API:</p>
+<pre><code>bool nearlyZero(double value, double epsilon = 1e-6);</code></pre>
+<p>This has no understanding of the mathematical meaning of the value.</p>
+<p>Is it a distance in metres?</p>
+<p>A squared distance?</p>
+<p>An area?</p>
+<p>A determinant?</p>
+<p>An angle?</p>
+<p>A dimensionless residual?</p>
+<p>Those quantities require different error policies.</p>
+<p>A better geometry library separates numerical concerns by operation and dimension.</p>
+<p>For example, it might define a world-space contact slop in length units, a dimensionless relative angular tolerance, and a separate certified orientation predicate.</p>
+<p>These should not be represented as one globally reused threshold.</p>
+<p><strong>Part 1198 — Robust orientation predicates</strong></p>
+<p>The orientation predicates from Pass 01 become critical once mesh topology is involved.</p>
+<p>A wrong orientation decision can cause a convex-hull builder to retain the wrong point, a triangulation to produce an invalid edge, or a tetrahedral classifier to choose the wrong side of a face.</p>
+<p><strong>Orientation in two dimensions</strong></p>
+<p>For points <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mi>C</mi>
+</math>, define:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="OP">
+            <mi>orient</mi>
+            <mn>2</mn>
+            <mi mathvariant="normal">D</mi>
+          </mrow>
+          <mo stretchy="false">(</mo>
+          <mi>A</mi>
+          <mo>,</mo>
+          <mi>B</mi>
+          <mo>,</mo>
+          <mi>C</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>B</mi>
+            <mi>x</mi>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>A</mi>
+            <mi>x</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>C</mi>
+            <mi>y</mi>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>A</mi>
+            <mi>y</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>−</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>B</mi>
+            <mi>y</mi>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>A</mi>
+            <mi>y</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>C</mi>
+            <mi>x</mi>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>A</mi>
+            <mi>x</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Its sign determines the orientation of the ordered point triple.</p>
+<p>In exact arithmetic:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable displaystyle="true" columnalign="right left" columnspacing="0em" rowspacing="3pt">
+    <mtr>
+      <mtd>
+        <mrow data-mjx-texclass="OP">
+          <mi>orient</mi>
+          <mn>2</mn>
+          <mi mathvariant="normal">D</mi>
+        </mrow>
+        <mo>&gt;</mo>
+        <mn>0</mn>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>:</mo>
+        <mtext>counterclockwise</mtext>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext> </mtext>
+        <mrow data-mjx-texclass="OP">
+          <mi>orient</mi>
+          <mn>2</mn>
+          <mi mathvariant="normal">D</mi>
+        </mrow>
+        <mo>&lt;</mo>
+        <mn>0</mn>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>:</mo>
+        <mtext>clockwise</mtext>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext> </mtext>
+        <mrow data-mjx-texclass="OP">
+          <mi>orient</mi>
+          <mn>2</mn>
+          <mi mathvariant="normal">D</mi>
+        </mrow>
+        <mo>=</mo>
+        <mn>0</mn>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>:</mo>
+        <mtext>collinear</mtext>
+      </mtd>
+    </mtr>
+  </mtable>
+</math>
+<p><strong>Orientation in three dimensions</strong></p>
+<p>For points <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mi>C</mi>
+  <mo>,</mo>
+  <mi>D</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="OP">
+            <mi>orient</mi>
+            <mn>3</mn>
+            <mi mathvariant="normal">D</mi>
+          </mrow>
+          <mo stretchy="false">(</mo>
+          <mi>A</mi>
+          <mo>,</mo>
+          <mi>B</mi>
+          <mo>,</mo>
+          <mi>C</mi>
+          <mo>,</mo>
+          <mi>D</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">det</mo>
+          <mo stretchy="false">[</mo>
+          <mi>B</mi>
+          <mo>−</mo>
+          <mi>A</mi>
+          <mo>,</mo>
+          <mi>C</mi>
+          <mo>−</mo>
+          <mi>A</mi>
+          <mo>,</mo>
+          <mi>D</mi>
+          <mo>−</mo>
+          <mi>A</mi>
+          <mo stretchy="false">]</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Its sign identifies the orientation of the ordered tetrahedron, under the chosen determinant convention.</p>
+<p>Its zero value identifies coplanarity in exact arithmetic.</p>
+<p><strong>Why a naïve epsilon predicate is dangerous</strong></p>
+<p>Suppose an orientation routine returns:</p>
+<pre><code>if (determinant &gt; epsilon) return Positive;
+if (determinant &lt; -epsilon) return Negative;
+return Zero;</code></pre>
+<p>This merges three different situations:</p>
+<ol type="1">
+<li>The points are exactly collinear.</li>
+<li>The points are not collinear but the determinant is small.</li>
+<li>The determinant has been inaccurately evaluated due to rounding.</li>
+</ol>
+<p>Calling all three “zero” can damage topological algorithms.</p>
+<p>For example, a convex-hull algorithm may discard a real hull vertex if it treats a small but genuinely positive determinant as zero.</p>
+<p>For ordinary tolerance-based geometric proximity, this may be acceptable. For exact topological orientation, it is not.</p>
+<p><strong>Adaptive-predicate architecture</strong></p>
+<p>A robust filtered predicate uses a layered approach.</p>
+<p>First, compute a fast floating-point determinant approximation.</p>
+<p>Second, calculate an error bound for that evaluation.</p>
+<p>If the approximate determinant lies safely outside the error interval, its sign is certified.</p>
+<p>If not, perform more precise arithmetic until the sign is determined.</p>
+<p>Schematically:</p>
+<pre><code>Orientation orient2D(Point2 a, Point2 b, Point2 c) {
+    // Compute the ordinary floating-point determinant.
+    const double estimate = fastDeterminant(a, b, c);
+
+    // This error bound must be mathematically derived for the
+    // exact sequence of floating-point operations used above.
+    const double bound = certifiedErrorBound(a, b, c);
+
+    if (estimate &gt; bound)
+        return Orientation::Positive;
+
+    if (estimate &lt; -bound)
+        return Orientation::Negative;
+
+    // The fast evaluation cannot certify the sign.
+    // Use an exact/adaptive predicate implementation.
+    return exactOrientation2D(a, b, c);
+}</code></pre>
+<p>This is architectural pseudocode: the <code>certifiedErrorBound</code> and <code>exactOrientation2D</code> functions are not supplied by the snippet.</p>
+<p>A real implementation must correctly implement the arithmetic and its assumptions.</p>
+<p>Shewchuk’s adaptive predicates use carefully constructed floating-point expansions for this purpose. </p>
+<p><a href="https://www.google.com/s2/favicons?domain=https://people.eecs.berkeley.edu&amp;sz=32">image</a></p>
+<p>people.eecs.berkeley.edu</p>
+<p><strong>Expansion arithmetic</strong></p>
+<p>A floating-point expansion represents a number as an unevaluated sum of floating-point components arranged to preserve additional precision.</p>
+<p>Rather than rounding a complicated determinant immediately into one floating-point result, an expansion can retain information in multiple components.</p>
+<p>For example, a sum:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>+</mo>
+  <mi>y</mi>
+</math>
+<p>may be decomposed into a rounded high component and an error component through an error-free transformation under the required floating-point assumptions.</p>
+<p>Likewise, products can be decomposed to preserve the exact product of floating-point operands in multiple floating-point terms.</p>
+<p>By combining these operations, an adaptive predicate can determine the exact sign of a determinant formed from finite floating-point input coordinates.</p>
+<p>This does not recover information already lost when the original real-world coordinates were rounded to floating point.</p>
+<p>It evaluates the predicate exactly with respect to the represented input numbers.</p>
+<p><strong>Exact predicates versus exact constructions</strong></p>
+<p>A geometry library may use exact predicates but inexact coordinate constructions.</p>
+<p>For example, it may classify whether points are clockwise or counterclockwise using certified arithmetic while calculating an intersection location using ordinary double precision.</p>
+<p>This is a meaningful design choice.</p>
+<p>Exact predicates improve the reliability of branch decisions.</p>
+<p>Exact constructions address the accuracy and consistency of newly created coordinates.</p>
+<p>A system requiring exact topology but only approximate output geometry may be able to use a filtered-predicate/inexact-construction approach.</p>
+<p>Other algorithms require exact constructions or additional safeguards because errors in constructed points can later alter predicate relationships.</p>
+<p>This is one reason computational geometry libraries distinguish the numerical kernel from the algorithms built on top of it.</p>
+<p><strong>Part 1199 — Testing geometry with adversarial configurations</strong></p>
+<p>Ordinary unit tests often check mathematically convenient inputs.</p>
+<p>For example, testing line intersection using perpendicular unit-length lines is useful, but it does not stress the cases most likely to break a production geometry algorithm.</p>
+<p>Real failures often occur near branch boundaries and degeneracies.</p>
+<p>Therefore geometry testing should combine known-answer cases, randomized cases, metamorphic properties, high-precision references, and adversarial inputs.</p>
+<p><strong>Tests for line and segment distance</strong></p>
+<p>A segment-segment closest-point test suite should include perpendicular crossing segments, skew segments, parallel disjoint segments, collinear overlapping segments, endpoint-to-endpoint nearest pairs, endpoint-to-interior nearest pairs, both segments degenerated to points, and very small or large segment lengths.</p>
+<p>We should also test configurations where the unconstrained line-line closest parameters lie outside both segment domains.</p>
+<p>A common error is to clamp one parameter without recomputing the other.</p>
+<p>Another is to classify nearly parallel segments incorrectly because a dimensionful Gram determinant was compared with a fixed epsilon.</p>
+<p><strong>Metamorphic testing</strong></p>
+<p>A metamorphic test transforms a known input in a way that preserves a mathematical relationship.</p>
+<p>For segment distance, translating both segments by the same vector should preserve their distance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>S</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>+</mo>
+  <mi>T</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>S</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>+</mo>
+  <mi>T</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>S</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>S</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Swapping the segments should preserve squared distance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>d</mi>
+            <mn>2</mn>
+          </msup>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>S</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>S</mi>
+            <mn>2</mn>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <msup>
+            <mi>d</mi>
+            <mn>2</mn>
+          </msup>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>S</mi>
+            <mn>2</mn>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>S</mi>
+            <mn>1</mn>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Reversing either segment’s endpoints should not change the minimum distance.</p>
+<p>Uniform scaling by factor <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+</math> should produce:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>d</mi>
+            <mn>2</mn>
+          </msup>
+          <mo stretchy="false">(</mo>
+          <mi>s</mi>
+          <msub>
+            <mi>S</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>,</mo>
+          <mi>s</mi>
+          <msub>
+            <mi>S</mi>
+            <mn>2</mn>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <msup>
+            <mi>s</mi>
+            <mn>2</mn>
+          </msup>
+          <msup>
+            <mi>d</mi>
+            <mn>2</mn>
+          </msup>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>S</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>S</mi>
+            <mn>2</mn>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>These properties do not require manually computing the correct answer for every random input.</p>
+<p>They compare different formulations of the same mathematical problem.</p>
+<p><strong>Tetrahedral barycentric tests</strong></p>
+<p>For a nondegenerate tetrahedron, barycentric coordinates should sum to one:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mi>i</mi>
+          </munder>
+          <msub>
+            <mi>λ</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>=</mo>
+          <mn>1</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Reconstructing the query should give:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mo>≈</mo>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mi>i</mi>
+          </munder>
+          <msub>
+            <mi>λ</mi>
+            <mi>i</mi>
+          </msub>
+          <msub>
+            <mi>V</mi>
+            <mi>i</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Under an invertible affine transformation <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math>, the barycentric coordinates should remain unchanged in exact arithmetic:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>P</mi>
+  <mo>;</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mi>C</mi>
+  <mo>,</mo>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>T</mi>
+  <mi>P</mi>
+  <mo>;</mo>
+  <mi>T</mi>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>T</mi>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mi>T</mi>
+  <mi>C</mi>
+  <mo>,</mo>
+  <mi>T</mi>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>We should test vertices, face interiors, edge interiors, tetrahedron interiors, outside points, and nearly flat tetrahedra.</p>
+<p>For orientation, exchanging two vertices should reverse the signed determinant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="OP">
+    <mi>orient</mi>
+    <mn>3</mn>
+    <mi mathvariant="normal">D</mi>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>C</mi>
+  <mo>,</mo>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mrow data-mjx-texclass="OP">
+    <mi>orient</mi>
+    <mn>3</mn>
+    <mi mathvariant="normal">D</mi>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mi>C</mi>
+  <mo>,</mo>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>The absolute volume should remain unchanged.</p>
+<p><strong>Half-edge invariant tests</strong></p>
+<p>For every half-edge <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>h</mi>
+</math>, check:</p>
+<pre><code>next(previous(h)) == h
+previous(next(h)) == h</code></pre>
+<p>For every valid twin pair:</p>
+<pre><code>twin(twin(h)) == h</code></pre>
+<p>The endpoints must be reversed across twins.</p>
+<p>For a triangular face, following <code>next</code> three times must return to the starting half-edge.</p>
+<p>For a consistently oriented interior edge, exactly two incident face half-edges must traverse it in opposite directions.</p>
+<p>For a boundary edge, the boundary convention must be satisfied.</p>
+<p>For vertex-manifoldness, the vertex link must form one path or one cycle under the ordinary manifold-surface assumptions.</p>
+<p>These tests catch connectivity corruption that ordinary vertex-position checks cannot detect.</p>
+<p><strong>Adversarial topology</strong></p>
+<p>Construct explicit invalid meshes.</p>
+<p>A bow-tie vertex tests whether the implementation detects nonmanifold vertices even when all edges have at most two incident faces.</p>
+<p>An edge shared by three triangles tests nonmanifold edge detection.</p>
+<p>Two triangles with the same shared edge direction test inconsistent face winding.</p>
+<p>Repeated faces test duplicate or overlapping topology.</p>
+<p>A triangle containing repeated indices tests collapsed connectivity.</p>
+<p>A mesh containing coincident positions but separate vertex IDs tests whether geometric welding is being confused with topological identity.</p>
+<p>A hole in an otherwise closed mesh tests boundary extraction.</p>
+<p>A pinched boundary tests whether boundary traversal assumes a manifold vertex neighbourhood.</p>
+<p><strong>Property-based geometry testing</strong></p>
+<p>A powerful testing approach is to generate geometry from known mathematical constructions.</p>
+<p>For example, begin with two segments that are guaranteed to intersect.</p>
+<p>Apply a rigid transformation to both segments.</p>
+<p>The transformed segments must still intersect.</p>
+<p>Then add controlled perturbations to move them from intersecting to separated configurations.</p>
+<p>This directly targets the classification boundary.</p>
+<p>For tetrahedra, begin with a valid tetrahedron and progressively move one vertex toward the opposing face.</p>
+<p>Its volume approaches zero, and the barycentric system becomes increasingly ill-conditioned.</p>
+<p>Log the determinant, condition estimate, classification, and reconstructed point error.</p>
+<p>This produces more informative evidence than only counting whether a random test passes.</p>
+<p><strong>Differential testing against a reference</strong></p>
+<p>For a numerical geometry implementation, one of the strongest techniques is differential testing.</p>
+<p>Implement an independent high-precision reference.</p>
+<p>Run the same inputs through both the production routine and the reference.</p>
+<p>Compare not only numerical outputs but also semantic classifications.</p>
+<p>For a closest-point routine, compare squared distance, returned parameters, and feasibility of the returned points.</p>
+<p>For an orientation predicate, compare signs against an exact-predicate oracle.</p>
+<p>For topology construction, compare reconstructed adjacency and boundary counts against an independent graph-based implementation.</p>
+<p>Importantly, using a second floating-point implementation of the same formula is not necessarily an independent correctness oracle.</p>
+<p>It may reproduce the same numerical error.</p>
+<p><strong>What your existing certification tests establish</strong></p>
+<p>The inspected <code>KairoGeometry/tests/CertificationTests.cpp</code> uses a deterministic pseudorandom sequence and performs 25,000 iterations.</p>
+<p>It checks selected intersection symmetries and verifies that an AABB’s closest-point result lies inside the source box.</p>
+<p>This is useful because it catches inconsistency across API orderings and checks geometric invariants.</p>
+<p>But bounded random sampling does not guarantee that rare numerical degeneracies will occur.</p>
+<p>A stronger test system would add deterministic adversarial families, explicit scale sweeps, topology validation, high-precision reference comparisons, and property-based testing.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch023-part-vii-building-a-production-geometry-library" class="level4">
+<h4>PART VII — Building a Production Geometry Library</h4>
+<p><strong>Part 1200 — Explicit invariants and coordinate-space types</strong></p>
+<p>This final part combines all the concepts from Phase 12 into a practical engineering architecture.</p>
+<p>A production geometry library should make mathematical assumptions visible in its types, constructors, return values, and tests.</p>
+<p>Its API should not silently depend on callers remembering hidden conventions.</p>
+<p><strong>Distinguishing points from direction vectors</strong></p>
+<p>A point represents a location in an affine space.</p>
+<p>A vector represents a displacement or direction.</p>
+<p>Although they may both contain three floating-point values, their valid operations differ.</p>
+<p>For example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Point</mtext>
+  <mo>−</mo>
+  <mtext>Point</mtext>
+  <mo>=</mo>
+  <mtext>Vector</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Point</mtext>
+  <mo>+</mo>
+  <mtext>Vector</mtext>
+  <mo>=</mo>
+  <mtext>Point</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Vector</mtext>
+  <mo>+</mo>
+  <mtext>Vector</mtext>
+  <mo>=</mo>
+  <mtext>Vector</mtext>
+</math>
+<p>But adding two points has no ordinary coordinate-independent affine meaning.</p>
+<p>A strongly typed API can enforce these distinctions.</p>
+<p><strong>Coordinate-space tags</strong></p>
+<p>Even two points may be incompatible if one belongs to world space and the other to view space.</p>
+<p>Consider:</p>
+<pre><code>struct WorldSpace {};
+struct ObjectSpace {};
+struct ViewSpace {};</code></pre>
+<p>A generic type system can distinguish coordinates using a template parameter:</p>
+<pre><code>template&lt;class Space&gt;
+struct Point3 {
+    double x, y, z;
+};
+
+template&lt;class Space&gt;
+struct Direction3 {
+    double x, y, z;
+};</code></pre>
+<p>Then functions can demand compatible types.</p>
+<p>For example:</p>
+<pre><code>Direction3&lt;WorldSpace&gt; displacement(
+    Point3&lt;WorldSpace&gt; a,
+    Point3&lt;WorldSpace&gt; b);</code></pre>
+<p>A corresponding transformation might have the interface:</p>
+<pre><code>Point3&lt;WorldSpace&gt; toWorld(
+    const Transform&lt;ObjectSpace, WorldSpace&gt;&amp; transform,
+    Point3&lt;ObjectSpace&gt; point);</code></pre>
+<p>This is conceptual API design, not a complete compilable replacement for your existing KairoMath types.</p>
+<p>Its benefit is that a world-space point cannot accidentally be passed to a function expecting an object-space point without an explicit conversion.</p>
+<p>Such mistakes are particularly difficult to debug in graphics engines because the erroneous coordinates may remain finite and appear plausible.</p>
+<p><strong>Invariants should be enforced or explicitly documented</strong></p>
+<p>Consider a plane type.</p>
+<p>If its signed-distance method assumes a unit normal, the type should enforce that invariant or clearly represent the result as an algebraic residual rather than Euclidean distance.</p>
+<p>For a ray, decide whether its direction is always normalized or arbitrary nonzero.</p>
+<p>For an OBB, the local axes must be orthonormal if queries rely on transpose-as-inverse mathematics.</p>
+<p>For a triangle, the API should define what happens when the vertices are collinear.</p>
+<p>For a tetrahedron, barycentric calculation should report rank deficiency or an unusable numerical configuration.</p>
+<p>For a mesh, the topology layer should define whether nonmanifold edges, nonmanifold vertices, duplicated faces, and boundary loops are supported.</p>
+<p>These are not optional documentation details. They determine what the algorithms are permitted to assume.</p>
+<p><strong>Explicit error-returning APIs</strong></p>
+<p>A geometric construction may not have a unique valid answer.</p>
+<p>For example, two parallel planes do not have one unique intersection line.</p>
+<p>A degenerate triangle does not define a unique normal.</p>
+<p>Three linearly dependent plane equations do not determine one unique intersection point.</p>
+<p>An API returning an ordinary vector in all situations can hide these failures.</p>
+<p>C++23 provides <code>std::expected</code> for functions that return either a result or an error.</p>
+<p>For example:</p>
+<pre><code>enum class GeometryError {
+    InvalidInput,
+    DegenerateDirection,
+    SingularSystem,
+    IllConditioned,
+    NonManifoldTopology
+};
+
+struct PlaneIntersection {
+    Vec3 point;
+    Vec3 direction;
+};
+
+std::expected&lt;PlaneIntersection, GeometryError&gt;
+intersectPlanes(const Plane&amp; a, const Plane&amp; b);</code></pre>
+<p>The particular API may need richer result categories, such as distinguishing coincident planes from distinct parallel planes.</p>
+<p>The important principle is to keep failure states representable.</p>
+<p><strong>Numerical policies as a separate layer</strong></p>
+<p>Consider organizing the numerical system around the questions it answers.</p>
+<p>An exact orientation predicate should answer the sign of a determinant for the represented input coordinates.</p>
+<p>A nearly-parallel test may use a dimensionless angular tolerance.</p>
+<p>A collision contact test may use an application-specific spatial slop.</p>
+<p>A high-precision closest-point solver may need an explicit conditioning policy.</p>
+<p>These are different numerical contracts.</p>
+<p>Keeping them separate prevents the engine from confusing exact mathematical classification, approximate geometric proximity, and physically motivated tolerance regions.</p>
+<p><strong>Topology handles and lifetime</strong></p>
+<p>Mesh topology involves references among vertices, edges, half-edges, and faces.</p>
+<p>A raw index is convenient, but it can become stale after deletion, compaction, or rebuilding.</p>
+<p>For a frequently edited mesh, a generational handle may be appropriate:</p>
+<pre><code>struct VertexHandle {
+    uint32_t index;
+    uint32_t generation;
+};</code></pre>
+<p>The index identifies a storage slot.</p>
+<p>The generation helps distinguish the current occupant of that slot from an element that existed there previously.</p>
+<p>For a static mesh rebuilt in batches, simpler indexed handles may be sufficient.</p>
+<p>The choice should reflect the actual mutation model.</p>
+<p><strong>Representations for different workloads</strong></p>
+<p>A geometry system used by a renderer has different constraints from a geometry system used by a modelling tool.</p>
+<p>A renderer prioritizes compact vertex buffers, efficient indexed drawing, spatial acceleration, and predictable GPU access.</p>
+<p>A modelling tool prioritizes topology queries, local edits, adjacency, manifold validation, and connectivity preservation.</p>
+<p>A physics engine prioritizes collision queries, conservative broadphase bounds, support mappings, persistent features, and stable numerical behaviour.</p>
+<p>A reconstruction system may need confidence values, uncertain regions, topology repair, and incremental mesh updates.</p>
+<p>These systems should share mathematical foundations where useful, but they need not share one universal mesh-storage representation.</p>
+<p>An effective engine architecture separates canonical geometry and predicates from workload-specific storage and traversal layers.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch023-part-viii-reference-implementation-and-repository-verification" class="level4">
+<h4>PART VIII — Reference Implementation and Repository Verification</h4>
+<p><strong>Complete C++23 reference lab</strong></p>
+<p>I’ve created and compiled a standalone implementation for the major algorithms from this pass.</p>
+<p>Geometry Pass 03 — C++23 reference source</p>
+<p>245 lines · Compilable C++23 · Includes assertions and mesh-topology validation</p>
+<p>It implements tetrahedral signed volume and barycentric coordinates, infinite-line closest points, finite-segment closest points, two- and three-plane intersection constructions, indexed triangle-mesh adjacency, half-edge-style connectivity, boundary-edge classification, edge-manifoldness checks, and vertex-link manifoldness verification.</p>
+<p>The source is fully commented around the mathematical operations and the important topological invariants.</p>
+<p><strong>Tested results</strong></p>
+<p>C++23 compilation passed</p>
+<p>Reference assertions passed</p>
+<p>UndefinedBehaviorSanitizer test run passed</p>
+<p>These checks establish that the included examples execute successfully. They do not establish formal correctness, numerical robustness for arbitrary inputs, or the absence of every possible undefined behaviour.</p>
+<p><strong>Particularly important code: vertex-link validation</strong></p>
+<p>The reference lab includes:</p>
+<pre><code>bool vertexHasManifoldLink(const Topology&amp; mesh, Index vertex);</code></pre>
+<p>Its conceptual algorithm is:</p>
+<ol type="1">
+<li>Collect all triangles incident to the vertex.</li>
+<li>For each triangle, construct the link edge between the two other triangle vertices.</li>
+<li>Build the link graph.</li>
+<li>Check whether the link forms one connected component.</li>
+<li>Check whether vertex degrees describe one path or one cycle.</li>
+</ol>
+<p>This detects a bow-tie vertex even when the simpler edge-incidence check reports that every edge belongs to at most two faces.</p>
+<p>The reference tests explicitly construct two triangles sharing only one vertex and verify that this vertex is identified as nonmanifold.</p>
+<p><strong>What the reference code does not claim</strong></p>
+<p>The code uses ordinary floating-point arithmetic and, for tetrahedral determinant evaluation, widens intermediate calculations to <code>long double</code>.</p>
+<p>Widening intermediate arithmetic can improve precision on platforms where <code>long double</code> has greater precision than <code>double</code>, but it does not provide exact-predicate guarantees.</p>
+<p>The code does not implement Shewchuk’s adaptive expansions, a complete 3D convex-hull builder, or a general-purpose mutable half-edge editing system with boundary half-edge cycles.</p>
+<p>Those require independent implementations and validation.</p>
+<p>The supplied code is intended as a clear mathematical and structural reference that can be compared against the production engine.</p>
+<p><strong>Your repository — what is implemented and what remains separate</strong></p>
+<p>I inspected the current <code>KairoGeometry</code> default branch and relevant tests.</p>
+<table>
+<colgroup>
+<col style="width: 52%" />
+<col style="width: 25%" />
+<col style="width: 21%" />
+</colgroup>
+<thead>
+<tr>
+<th>Relevant file</th>
+<th>Verified functionality</th>
+<th>Main concern or extension</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/swayam8624/KairoGeometry/blob/master/Distance.cppm?utm_source=chatgpt.com">Distance.cppm</a></td>
+<td>Point and primitive distance helpers, including ray-ray distance</td>
+<td>Near-parallel numerical behaviour and scale-aware tests</td>
+</tr>
+<tr>
+<td><a href="https://github.com/swayam8624/KairoGeometry/blob/master/Segment.cppm?utm_source=chatgpt.com">Segment.cppm</a></td>
+<td>Segment-segment closest points and squared distance</td>
+<td>Gram determinant threshold and degeneracies</td>
+</tr>
+<tr>
+<td><a href="https://github.com/swayam8624/KairoGeometry/blob/master/Triangle.cppm?utm_source=chatgpt.com">Triangle.cppm</a></td>
+<td>Triangle area, normals, barycentric coordinates, containment</td>
+<td>Degeneracy and conditioned barycentric computation</td>
+</tr>
+<tr>
+<td><a href="https://github.com/swayam8624/KairoGeometry/blob/master/tests/GeometryTests.cpp?utm_source=chatgpt.com">GeometryTests.cpp</a></td>
+<td>Deterministic known-answer geometry tests</td>
+<td>More adversarial and metamorphic coverage</td>
+</tr>
+<tr>
+<td><a href="https://github.com/swayam8624/KairoGeometry/blob/master/tests/CertificationTests.cpp?utm_source=chatgpt.com">CertificationTests.cpp</a></td>
+<td>Randomized selected geometry invariants</td>
+<td>Exact-oracle comparisons and boundary cases</td>
+</tr>
+</tbody>
+</table>
+<p>The current <code>KairoGeometry</code> repository directory does not expose a dedicated half-edge, winged-edge, or general mesh-topology module.</p>
+<p>That does not prove these structures are absent from every other project. It means they were not verified as existing implementations in this geometry repository.</p>
+<p>The topology code in the downloadable reference is therefore a new independent teaching example, not a description of an already-existing KairoGeometry module.</p>
+<p>A reasonable future organization would separate <code>KairoGeometry</code> mathematical primitives and predicates from a topology module that owns vertices, edges, faces, half-edges, and connectivity mutation.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch023-part-ix-research-bridge" class="level4">
+<h4>PART IX — Research Bridge</h4>
+<p><strong>A worthwhile experiment: Robust geometry under deformation and reconstruction</strong></p>
+<p>For your graphics, reconstruction, and physical-simulation research, the strongest connection from this pass is the relationship between numerical classification, mesh topology, and reliable spatial queries.</p>
+<p>Consider a system that repeatedly updates mesh vertices as geometry moves, deforms, or is reconstructed.</p>
+<p>The implementation must preserve or deliberately update topology, detect degenerate elements, calculate closest points, and maintain valid adjacency.</p>
+<p>A fixed numerical threshold may behave differently as local geometric scale changes.</p>
+<p>Meanwhile, a topology repair method may introduce or remove connectivity based on approximate geometric coincidence.</p>
+<p>A useful research hypothesis is:</p>
+<blockquote>
+<p>Separating exact topological predicates from scale-aware approximate geometric decisions can reduce incorrect connectivity changes and unstable nearest-feature classifications in dynamic mesh workloads, without unacceptable performance overhead.</p>
+</blockquote>
+<p>The experiment would compare a baseline fixed-epsilon geometry system with a system using more explicit numerical policies and certified orientation predicates at topology-changing decisions.</p>
+<p>Useful workloads would include nearly coplanar tetrahedra, thin triangles, high-aspect-ratio meshes, repeated remeshing, deformable cloth, and reconstructed surface regions with incomplete or noisy geometry.</p>
+<p>Measure incorrect orientation signs, invalid topology incidents, closest-point disagreement, query time, mesh-update time, and downstream simulation or reconstruction failures.</p>
+<p>To establish causality, the experiment should isolate predicate accuracy from other changes such as altered mesh resolution, filtering, solver iteration counts, or changed collision slop.</p>
+<p>This is especially relevant to Maveb-style local reconstruction and Vulkax-style geometry/physics validation because a numerical geometry failure can masquerade as a rendering or physics failure.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch023-part-x-reconstruction-challenge" class="level4">
+<h4>PART X — Reconstruction Challenge</h4>
+<p><strong>Rebuild the mechanisms from memory</strong></p>
+<p>For this pass, the reconstruction test should verify more than the ability to remember formulas.</p>
+<p>First, derive the tetrahedral barycentric system from the affine-combination definition. Show why the determinant denominator equals six times the signed volume and why negative weights identify exterior points.</p>
+<p>Next, derive line-line closest points by minimizing the squared separation over two free parameters. Explain the Gram determinant and the geometric meaning of parallelism.</p>
+<p>Then extend the result to finite segments. Explain why independently clamping the unconstrained parameters is incorrect and reconstruct either a coupled-clamping algorithm or the boundary-candidate proof.</p>
+<p>For plane intersections, derive the line direction using the cross product and the three-plane intersection using the scalar triple product.</p>
+<p>For topology, take an indexed mesh with two triangles. Construct the directed half-edges, assign their next/previous links, locate their twins, and identify boundary edges.</p>
+<p>Then construct a bow-tie mesh and explain why edge-incidence validation alone fails to detect its nonmanifold vertex.</p>
+<p>Finally, design a geometry predicate API that can distinguish exact orientation decisions from approximate distance tolerances and invalid constructions.</p>
+<p>A full implementation exercise would be to build a tiny mesh-topology verifier that accepts arbitrary indexed triangles, reports invalid indices and collapsed faces, identifies nonmanifold edges and vertices, checks winding consistency, and outputs connected components and boundary loops.</p>
+<p><strong>Final Phase 12 recall sheet</strong></p>
+<p>Geometry from representation to reliable systems</p>
+<p>Nearest-point geometry: Minimize squared distance over a constrained geometric set. For convex sets, the nearest point is unique and satisfies a projection optimality condition.</p>
+<p>Simplex: The convex hull of affinely independent vertices. A 3-simplex is a tetrahedron.</p>
+<p>Tetrahedral barycentrics:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>λ</mi>
+    <mi>A</mi>
+  </msub>
+  <mi>A</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>λ</mi>
+    <mi>B</mi>
+  </msub>
+  <mi>B</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>λ</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>C</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>λ</mi>
+    <mi>D</mi>
+  </msub>
+  <mi>D</mi>
+</math>
+<p>with weights summing to one.</p>
+<p>Signed tetrahedral volume:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>6</mn>
+  <msub>
+    <mi>V</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>⋅</mo>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">(</mo>
+  <mi>C</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>×</mo>
+  <mo stretchy="false">(</mo>
+  <mi>D</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Line-line closest approach: Solve a <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>2</mn>
+  <mo>×</mo>
+  <mn>2</mn>
+</math> Gram-system stationary condition.</p>
+<p>Segment-segment distance: Solve the constrained quadratic over the parameter square, accounting for boundaries and parallel directions.</p>
+<p>Plane intersections: Cross products determine intersection directions; scalar triple products determine rank and unique points.</p>
+<p>Mesh topology: Coordinates do not determine connectivity. Indexed faces, edges, half-edges, and vertex links define the combinatorial structure.</p>
+<p>Manifoldness: For an ordinary triangulated surface, a vertex’s link must form one cycle (interior) or one path (boundary).</p>
+<p>Robustness: Numerical tolerances, exact predicate signs, degeneracy classifications, and construction errors are distinct concepts.</p>
+<p>Production invariants: Coordinate spaces, ownership, topology validity, orientation, finite values, and error states must be explicit.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch023-phase-12-completion-status" class="level4">
+<h4>Phase 12 completion status</h4>
+<table>
+<colgroup>
+<col style="width: 62%" />
+<col style="width: 12%" />
+<col style="width: 24%" />
+</colgroup>
+<thead>
+<tr>
+<th>Mastery chunk</th>
+<th>Parts</th>
+<th>Teaching coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M067 — Geometric primitives and predicates</td>
+<td>1101–1118</td>
+<td>Pass 01</td>
+</tr>
+<tr>
+<td>M068 — Spheres, triangles and closest points</td>
+<td>1119–1132</td>
+<td>Pass 01</td>
+</tr>
+<tr>
+<td>M069 — AABBs, OBBs and capsules</td>
+<td>1133–1157</td>
+<td>Pass 02</td>
+</tr>
+<tr>
+<td>M070 — Frusta and convex geometry</td>
+<td>1158–1178</td>
+<td>Pass 02</td>
+</tr>
+<tr>
+<td>M071 — Simplex, distance and topology</td>
+<td>1179–1193</td>
+<td>Pass 03</td>
+</tr>
+<tr>
+<td>M072 — Adjacency, robustness and invariants</td>
+<td>1194–1200</td>
+<td>Pass 03</td>
+</tr>
+</tbody>
+</table>
+<p>All six Phase 12 mastery chunks have now received their planned teaching coverage, with derivations, examples, implementations and repository connections. The remaining distinction is between taught coverage and demonstrated mastery: production numerical validation, a complete mutable topology library, and independent reconstruction exercises are still deeper implementation work.</p>
+<p>Phase 13 · Intersection, Collision Detection, SAT, and Contact Geometry</p>
+<p>M073 + M074</p>
+<p>Parts 1201–1239</p>
+<p>M073 — Parts 1201–1216: Ray and segment intersections with planes, spheres, triangles, AABBs, OBBs, and capsules; stable quadratic solutions; backface culling; and intersection semantics.</p>
+<p>M074 — Parts 1217–1239: Primitive overlap, collision normals and penetration, sphere/box/capsule contact geometry, Separating Axis Theorem, all 15 OBB candidate axes, triangle-AABB SAT, and 2D convex-polygon SAT.</p>
+<p>Repository targets: <code>KairoGeometry/Intersection.cppm</code>, <code>KairoPhysicsEngine/Narrowphase.cppm</code>, and the existing geometry and physics tests.</p>
+<p>Research foundations: Möller–Trumbore ray-triangle intersection, slab-based ray-box intersection, convex separation, and Real-Time Collision Detection principles.</p>
+<p>The central question of Phase 12 was:</p>
+<p>How do we represent geometry and calculate distances reliably?</p>
+<p>Phase 13 introduces a different question:</p>
+<p>Given two geometric objects, do they intersect, where do they intersect, how much do they overlap, and what information does the physics or rendering system need from that interaction?</p>
+<p>Those questions sound similar, but they are not interchangeable. Their algorithms have different mathematical outputs, numerical requirements, and computational costs.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch023-part-i-m073-intersection-and-collision-query-fundamentals" class="level4">
+<h4>PART I — M073: Intersection and Collision Query Fundamentals</h4>
+<p><strong>Part 1201 — Intersection tests versus contact-generation algorithms</strong></p>
+<p>Consider two spheres moving toward each other.</p>
+<p>A renderer may only need to know whether a ray intersects either sphere.</p>
+<p>A collision broadphase may only need to decide whether the spheres are potentially overlapping.</p>
+<p>A narrowphase may need the precise overlap state.</p>
+<p>A rigid-body solver additionally needs a contact normal, penetration information, contact points, material parameters, and persistent contact data.</p>
+<p>These are different layers of computation.</p>
+<p>Broadphase candidate generation</p>
+<p>Could these objects intersect?</p>
+<p>Narrowphase intersection</p>
+<p>Does the actual geometry overlap?</p>
+<p>Contact generation</p>
+<p>Where and in what direction should constraints act?</p>
+<p>Constraint solving</p>
+<p>What impulses or positional corrections are appropriate?</p>
+<p>A Boolean intersection test answers:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Intersects</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo>∈</mo>
+  <mspace linebreak="newline"></mspace>
+  <mrow data-mjx-texclass="ORD">
+    <mrow data-mjx-texclass="ORD">
+      <mi data-mjx-auto-op="false">true</mi>
+    </mrow>
+    <mo>,</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi data-mjx-auto-op="false">false</mi>
+    </mrow>
+    <mspace linebreak="newline"></mspace>
+  </mrow>
+</math>
+<p>It might be implemented with a single squared-distance comparison.</p>
+<p>A contact-generation routine might return a structure such as:</p>
+<pre><code>struct ContactPoint {
+    Vec3 positionOnA;
+    Vec3 positionOnB;
+
+    // Convention: normal points from object A toward object B.
+    Vec3 normal;
+
+    double penetrationDepth;
+
+    // Stable identifiers for caching contacts across simulation steps.
+    std::uint64_t featureA;
+    std::uint64_t featureB;
+};</code></pre>
+<p>The exact representation varies across engines. Some store one representative contact position, others store separate witness points on the two objects, and some store local anchors to reconstruct world-space contacts as bodies move.</p>
+<p><strong>Why Boolean overlap does not imply a usable contact</strong></p>
+<p>Suppose two capsules intersect and their central segments cross at the same point.</p>
+<p>The capsule-overlap test can return <code>true</code> by comparing segment distance against the combined radii.</p>
+<p>But if we attempt to calculate the contact normal by normalizing the vector between the closest segment points, we encounter:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mn>0</mn>
+    <mn>0</mn>
+  </mfrac>
+</math>
+<p>The Boolean result was correct; the normal construction was undefined.</p>
+<p>Even when a normal can be computed, a single point may be insufficient for a stable contact manifold.</p>
+<p>A box resting on a floor typically needs several contact constraints to resist unwanted rotation and sinking. Treating the entire face contact as one arbitrary point may produce unstable behaviour.</p>
+<p>Therefore:</p>
+<p>An overlap test proves a geometric relationship. Contact generation converts that relationship into information suitable for a particular solver.</p>
+<p>This distinction is fundamental to understanding KairoPhysicsEngine.</p>
+<p><strong>Part 1202 — Boolean overlap, distance, penetration, and time of impact</strong></p>
+<p>We must distinguish at least four quantities.</p>
+<p>Consider two closed solid objects <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math>.</p>
+<p><strong>Separation distance</strong></p>
+<p>The Euclidean distance between the sets is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mo stretchy="false">(</mo>
+          <mi>A</mi>
+          <mo>,</mo>
+          <mi>B</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <munder>
+            <mo data-mjx-texclass="OP" movablelimits="true">inf</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>a</mi>
+              <mo>∈</mo>
+              <mi>A</mi>
+              <mo>,</mo>
+              <mi>b</mi>
+              <mo>∈</mo>
+              <mi>B</mi>
+            </mrow>
+          </munder>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <mi>a</mi>
+          <mo>−</mo>
+          <mi>b</mi>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For compact sets, the infimum is attained.</p>
+<p>When the objects are disjoint, the distance is positive.</p>
+<p>When they intersect or touch:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>But zero distance does not tell us whether the objects merely touch or penetrate deeply.</p>
+<p><strong>Boolean overlap</strong></p>
+<p>For closed solid geometry:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>A</mi>
+          <mo>∩</mo>
+          <mi>B</mi>
+          <mo>≠</mo>
+          <mi data-mjx-alternate="1">∅</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>means the sets have at least one common point.</p>
+<p>Under this definition, tangency counts as intersection.</p>
+<p>A physics engine may use a strict positive-penetration condition for generating some constraints, while a collision query may include tangency.</p>
+<p>The endpoint convention belongs to the API.</p>
+<p><strong>Penetration depth</strong></p>
+<p>For intersecting objects, translational penetration depth is commonly defined as the magnitude of the smallest translation that brings them to a nonpenetrating configuration with boundary contact.</p>
+<p>Schematically:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>δ</mi>
+          <mo stretchy="false">(</mo>
+          <mi>A</mi>
+          <mo>,</mo>
+          <mi>B</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <munder>
+            <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi mathvariant="normal">Δ</mi>
+            </mrow>
+          </munder>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <mi mathvariant="normal">Δ</mi>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>subject to translating one object by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Δ</mi>
+</math> until interior overlap is eliminated.</p>
+<p>This requires a convention for touch-versus-separation and careful treatment of containment.</p>
+<p>Penetration depth is not the ordinary set distance: overlapping shapes have zero set distance but may have positive penetration depth.</p>
+<p>For two partially overlapping spheres, penetration depth has a simple formula.</p>
+<p>For arbitrary convex polytopes, computing the minimum translation direction and depth is more involved.</p>
+<p>For nonconvex objects, the global minimum translation problem is more complicated still.</p>
+<p><strong>Time of impact</strong></p>
+<p>A discrete overlap test answers a question about one instant.</p>
+<p>Continuous collision detection asks whether two moving shapes contact each other during an interval.</p>
+<p>Let:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>t</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo stretchy="false">]</mo>
+</math>
+<p>Then the earliest time of contact is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>t</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mrow data-mjx-texclass="ORD">
+                <mi data-mjx-auto-op="false">TOI</mi>
+              </mrow>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">inf</mo>
+          <mspace linebreak="newline"></mspace>
+          <mrow data-mjx-texclass="ORD">
+            <mi>t</mi>
+            <mo>∈</mo>
+            <mo stretchy="false">[</mo>
+            <mn>0</mn>
+            <mo>,</mo>
+            <mi mathvariant="normal">Δ</mi>
+            <mi>t</mi>
+            <mo stretchy="false">]</mo>
+            <mo>:</mo>
+            <mi>A</mi>
+            <mo stretchy="false">(</mo>
+            <mi>t</mi>
+            <mo stretchy="false">)</mo>
+            <mo>∩</mo>
+            <mi>B</mi>
+            <mo stretchy="false">(</mo>
+            <mi>t</mi>
+            <mo stretchy="false">)</mo>
+            <mo>≠</mo>
+            <mi data-mjx-alternate="1">∅</mi>
+            <mspace linebreak="newline"></mspace>
+          </mrow>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>when that set is nonempty.</p>
+<p>A collision may occur even if the bodies are disjoint at both ends of a simulation step.</p>
+<p>This is tunnelling.</p>
+<p>We will derive swept collision and conservative advancement in M076. For now, the important point is that instantaneous intersection and continuous intersection are different problems.</p>
+<p><strong>API implications</strong></p>
+<p>A well-designed collision library can expose separate operations:</p>
+<pre><code>bool overlaps(const Shape&amp; a, const Shape&amp; b);
+
+double distance(const Shape&amp; a, const Shape&amp; b);
+
+std::optional&lt;ContactManifold&gt;
+generateContacts(const Shape&amp; a, const Shape&amp; b);
+
+std::optional&lt;TimeOfImpact&gt;
+sweep(const MovingShape&amp; a, const MovingShape&amp; b);</code></pre>
+<p>The reason for separate interfaces is not simply style.</p>
+<p>A Boolean test can often terminate as soon as it finds enough information to reject or confirm overlap. A distance query needs witness points or a minimum value. A contact query must determine geometric features and normal orientation. A continuous query needs motion information and a temporal domain.</p>
+<p>Conflating them can force unnecessary computation or produce misleading results.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch023-part-ii-ray-intersections-with-planes-and-spheres" class="level4">
+<h4>PART II — Ray Intersections with Planes and Spheres</h4>
+<p><strong>Part 1203 — Deriving ray-plane intersection</strong></p>
+<p>A ray is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>R</mi>
+          <mo stretchy="false">(</mo>
+          <mi>t</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mi>O</mi>
+          <mo>+</mo>
+          <mi>t</mi>
+          <mi>D</mi>
+          <mo>,</mo>
+          <mstyle scriptlevel="0">
+            <mspace width="1em"></mspace>
+          </mstyle>
+          <mi>t</mi>
+          <mo>≥</mo>
+          <mn>0</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+</math> is the ray origin, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+</math> is a nonzero direction, and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math> is its parameter.</p>
+<p>A plane is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>N</mi>
+          <mo>⋅</mo>
+          <mi>X</mi>
+          <mo>+</mo>
+          <mi>d</mi>
+          <mo>=</mo>
+          <mn>0</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> is a nonzero normal vector.</p>
+<p>We want to find a parameter <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math> such that the ray point lies on the plane.</p>
+<p>Substitute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mo stretchy="false">(</mo>
+  <mi>O</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>Distribute the dot product:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>O</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>Rearrange:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>O</mi>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>t</mi>
+          <mo>=</mo>
+          <mo>−</mo>
+          <mfrac>
+            <mrow>
+              <mi>N</mi>
+              <mo>⋅</mo>
+              <mi>O</mi>
+              <mo>+</mo>
+              <mi>d</mi>
+            </mrow>
+            <mrow>
+              <mi>N</mi>
+              <mo>⋅</mo>
+              <mi>D</mi>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>provided:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo>≠</mo>
+  <mn>0</mn>
+</math>
+<p>This is the complete analytic solution for a nonparallel line and plane.</p>
+<p><strong>Geometric meaning of the numerator</strong></p>
+<p>The numerator:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>O</mi>
+  <mo>+</mo>
+  <mi>d</mi>
+</math>
+<p>is the plane equation evaluated at the ray origin.</p>
+<p>If <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> has unit length, it is the signed distance from the ray origin to the plane.</p>
+<p>If <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> is not normalized, it is the corresponding algebraic plane residual.</p>
+<p><strong>Geometric meaning of the denominator</strong></p>
+<p>The denominator:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+</math>
+<p>measures how quickly the plane residual changes as we move along the ray.</p>
+<p>Indeed:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>R</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>O</mi>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Its derivative with respect to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math> is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mi>d</mi>
+    <mrow>
+      <mi>d</mi>
+      <mi>t</mi>
+    </mrow>
+  </mfrac>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>R</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+</math>
+<p>If the denominator is positive, the ray travels toward the plane’s positive side.</p>
+<p>If negative, it travels toward the negative side.</p>
+<p>If zero, the ray travels parallel to the plane.</p>
+<p><strong>Worked example</strong></p>
+<p>Take:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>D</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and plane:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+</math>
+<p>Its coefficients are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mn>2</mn>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>O</mi>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mn>5</mn>
+  <mo>−</mo>
+  <mn>2</mn>
+  <mo>=</mo>
+  <mn>3</mn>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mfrac>
+    <mn>3</mn>
+    <mrow>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mn>3</mn>
+</math>
+<p>The intersection point is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mn>3</mn>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mn>2</mn>
+          <mo>,</mo>
+          <mn>2</mn>
+          <mo>,</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If the ray direction were <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>, the same physical point would occur at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>1.5</mn>
+</math>
+<p>This reminds us that ray parameter and Euclidean distance are equivalent only for unit-length directions.</p>
+<p><strong>Intersection interval</strong></p>
+<p>In a practical renderer, the ray may have a valid interval:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo stretchy="false">]</mo>
+</math>
+<p>A computed intersection is accepted only when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>t</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+            </mrow>
+          </msub>
+          <mo>≤</mo>
+          <mi>t</mi>
+          <mo>≤</mo>
+          <msub>
+            <mi>t</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            </mrow>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This lets us implement shadow rays, closest-hit queries, segment-limited rays, and explicit self-intersection exclusion policies.</p>
+<p>The ray-plane equation alone knows nothing about those application constraints.</p>
+<p><strong>Part 1204 — Parallel rays, coplanarity, and near-parallel instability</strong></p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>we cannot divide by the denominator.</p>
+<p>But there are two mathematically distinct cases.</p>
+<p><strong>Parallel and distinct</strong></p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>O</mi>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo>≠</mo>
+  <mn>0</mn>
+</math>
+<p>the ray travels parallel to the plane without lying on it.</p>
+<p>There is no intersection.</p>
+<p><strong>Coplanar ray</strong></p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>O</mi>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>every point on the ray lies in the plane.</p>
+<p>There are infinitely many intersection points.</p>
+<p>An API expecting one unique hit cannot represent this situation with an ordinary scalar <code>t</code>.</p>
+<p>A richer result might classify it as <code>Coplanar</code>, rather than merely returning a miss.</p>
+<p><strong>Near-parallel rays</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">|</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo stretchy="false">|</mo>
+</math>
+<p>is extremely small but nonzero.</p>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mfrac>
+    <mrow>
+      <mi>N</mi>
+      <mo>⋅</mo>
+      <mi>O</mi>
+      <mo>+</mo>
+      <mi>d</mi>
+    </mrow>
+    <mrow>
+      <mi>N</mi>
+      <mo>⋅</mo>
+      <mi>D</mi>
+    </mrow>
+  </mfrac>
+</math>
+<p>may be very large.</p>
+<p>Small input errors can produce large changes in the computed intersection parameter.</p>
+<p>For example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>O</mi>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>10</mn>
+    </mrow>
+  </msup>
+</math>
+<p>give:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>=</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>10</mn>
+    </mrow>
+  </msup>
+</math>
+<p>A tiny change in the denominator may produce a large change in the result.</p>
+<p>This is numerical conditioning, not necessarily an implementation bug.</p>
+<p><strong>Dimensionally meaningful parallelism</strong></p>
+<p>Comparing the denominator directly with one fixed epsilon is problematic when the normal or ray direction may have arbitrary length.</p>
+<p>A dimensionless angular measure is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>μ</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mo stretchy="false">|</mo>
+              <mi>N</mi>
+              <mo>⋅</mo>
+              <mi>D</mi>
+              <mo stretchy="false">|</mo>
+            </mrow>
+            <mrow>
+              <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+              <mi>N</mi>
+              <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+              <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+              <mi>D</mi>
+              <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For nonzero vectors:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>μ</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo stretchy="false">|</mo>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>θ</mi>
+</math> is the angle between the normal and direction.</p>
+<p>A ray parallel to the plane has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>θ</mi>
+  <mo>=</mo>
+  <msup>
+    <mn>90</mn>
+    <mo>∘</mo>
+  </msup>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>μ</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>An approximate parallelism policy can compare <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>μ</mi>
+</math> with a deliberately chosen angular tolerance.</p>
+<p>For exact topology-sensitive decisions, we need more careful arithmetic or predicates.</p>
+<p>A correct API should also distinguish a coplanar origin from a noncoplanar origin, with its own distance or residual policy.</p>
+<p><strong>KairoGeometry implementation</strong></p>
+<p>Your <a href="https://github.com/swayam8624/KairoGeometry/blob/master/Intersection.cppm?utm_source=chatgpt.com">KairoGeometry/Intersection.cppm</a> has <code>RayPlane()</code> near the start of the module.</p>
+<p>It follows the derived formula, checks the denominator against an epsilon, rejects negative parameters, and returns a hit containing distance, point, and plane normal.</p>
+<p>This is suitable as a straightforward ray-plane routine.</p>
+<p>Its notable limitation is semantic rather than algebraic: coplanar rays, distinct parallel rays, and sufficiently near-parallel rays all return <code>std::nullopt</code>.</p>
+<p>For an editor picking API, that may be acceptable. For a geometry kernel requiring complete intersection classification, these are different outcomes.</p>
+<p><strong>Part 1205 — Ray-sphere intersection from the quadratic equation</strong></p>
+<p>Now consider a sphere with centre <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math> and radius <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+</math>.</p>
+<p>Its surface satisfies:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <mi>X</mi>
+          <mo>−</mo>
+          <mi>C</mi>
+          <msup>
+            <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+            <mn>2</mn>
+          </msup>
+          <mo>=</mo>
+          <msup>
+            <mi>r</mi>
+            <mn>2</mn>
+          </msup>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The ray is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mi>D</mi>
+</math>
+<p>We want the ray parameter values for which the ray lies on the spherical surface.</p>
+<p><strong>Substitute the ray equation</strong></p>
+<p>Set:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>O</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mi>D</mi>
+  <mo>−</mo>
+  <mi>C</mi>
+  <msup>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+</math>
+<p>Define:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mo>−</mo>
+  <mi>C</mi>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>M</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mi>D</mi>
+  <msup>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+</math>
+<p>Expand:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>M</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+  <mo>⋅</mo>
+  <mo stretchy="false">(</mo>
+  <mi>M</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mo>⋅</mo>
+  <mi>M</mi>
+  <mo>+</mo>
+  <mn>2</mn>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>M</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <msup>
+    <mi>t</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mi>D</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+</math>
+<p>Rearrange:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>t</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mi>D</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mn>2</mn>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>M</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mi>M</mi>
+  <mo>⋅</mo>
+  <mi>M</mi>
+  <mo>−</mo>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>This has the standard quadratic form:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>a</mi>
+          <msup>
+            <mi>t</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>+</mo>
+          <mi>b</mi>
+          <mi>t</mi>
+          <mo>+</mo>
+          <mi>c</mi>
+          <mo>=</mo>
+          <mn>0</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>a</mi>
+          <mo>=</mo>
+          <mi>D</mi>
+          <mo>⋅</mo>
+          <mi>D</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>b</mi>
+          <mo>=</mo>
+          <mn>2</mn>
+          <mi>M</mi>
+          <mo>⋅</mo>
+          <mi>D</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>c</mi>
+          <mo>=</mo>
+          <mi>M</mi>
+          <mo>⋅</mo>
+          <mi>M</mi>
+          <mo>−</mo>
+          <msup>
+            <mi>r</mi>
+            <mn>2</mn>
+          </msup>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Since <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+</math> is nonzero:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>
+<p><strong>The discriminant</strong></p>
+<p>The quadratic discriminant is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="normal">Δ</mi>
+          <mo>=</mo>
+          <msup>
+            <mi>b</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>−</mo>
+          <mn>4</mn>
+          <mi>a</mi>
+          <mi>c</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Its sign determines the relationship between the supporting infinite line and the spherical surface.</p>
+<p>When:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mo>&lt;</mo>
+  <mn>0</mn>
+</math>
+<p>the supporting line misses the sphere.</p>
+<p>When:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>the supporting line is tangent to the sphere.</p>
+<p>When:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>
+<p>the supporting line intersects the sphere at two distinct parameters.</p>
+<p>The roots are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>t</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mn>0</mn>
+              <mo>,</mo>
+              <mn>1</mn>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mo>−</mo>
+              <mi>b</mi>
+              <mo>∓</mo>
+              <msqrt>
+                <mi mathvariant="normal">Δ</mi>
+              </msqrt>
+            </mrow>
+            <mrow>
+              <mn>2</mn>
+              <mi>a</mi>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A ray must additionally reject roots outside its valid parameter interval.</p>
+<p><strong>Geometric meaning of the discriminant</strong></p>
+<p>The point on the supporting line closest to the sphere centre occurs at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mfrac>
+    <mrow>
+      <mi>M</mi>
+      <mo>⋅</mo>
+      <mi>D</mi>
+    </mrow>
+    <mrow>
+      <mi>D</mi>
+      <mo>⋅</mo>
+      <mi>D</mi>
+    </mrow>
+  </mfrac>
+</math>
+<p>Its squared distance from the centre is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>d</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+    <mn>2</mn>
+  </msubsup>
+  <mo>=</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>M</mi>
+  <msup>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>−</mo>
+  <mfrac>
+    <mrow>
+      <mo stretchy="false">(</mo>
+      <mi>M</mi>
+      <mo>⋅</mo>
+      <mi>D</mi>
+      <msup>
+        <mo stretchy="false">)</mo>
+        <mn>2</mn>
+      </msup>
+    </mrow>
+    <mrow>
+      <mi>D</mi>
+      <mo>⋅</mo>
+      <mi>D</mi>
+    </mrow>
+  </mfrac>
+</math>
+<p>Substitute the quadratic coefficients into the discriminant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mo>=</mo>
+  <mn>4</mn>
+  <mo stretchy="false">(</mo>
+  <mi>M</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>−</mo>
+  <mn>4</mn>
+  <mo stretchy="false">(</mo>
+  <mi>D</mi>
+  <mo>⋅</mo>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>M</mi>
+  <msup>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>−</mo>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Factor:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="normal">Δ</mi>
+          <mo>=</mo>
+          <mn>4</mn>
+          <mi>a</mi>
+          <mo stretchy="false">(</mo>
+          <msup>
+            <mi>r</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>−</mo>
+          <msubsup>
+            <mi>d</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+            </mrow>
+            <mn>2</mn>
+          </msubsup>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This explains the three cases geometrically.</p>
+<p>If the closest point of the infinite line is farther from the centre than the radius, the discriminant is negative.</p>
+<p>If the closest distance equals the radius, the line is tangent.</p>
+<p>If the closest distance is smaller, the line passes through the sphere.</p>
+<p><strong>Worked example: ray entering a sphere</strong></p>
+<p>Let:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>D</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and sphere:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>Compute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mn>10</mn>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo>=</mo>
+  <mn>25</mn>
+  <mo>−</mo>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>21</mn>
+</math>
+<p>The discriminant is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mo>=</mo>
+  <mn>100</mn>
+  <mo>−</mo>
+  <mn>84</mn>
+  <mo>=</mo>
+  <mn>16</mn>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mn>10</mn>
+      <mo>−</mo>
+      <mn>4</mn>
+    </mrow>
+    <mn>2</mn>
+  </mfrac>
+  <mo>=</mo>
+  <mn>3</mn>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mn>10</mn>
+      <mo>+</mo>
+      <mn>4</mn>
+    </mrow>
+    <mn>2</mn>
+  </mfrac>
+  <mo>=</mo>
+  <mn>7</mn>
+</math>
+<p>The ray enters the sphere at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and exits at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo stretchy="false">(</mo>
+  <mn>7</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>For an ordinary nearest-surface-hit query, return <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>3</mn>
+</math>.</p>
+<p>For a query that needs the ray’s interval inside the sphere, return both entry and exit parameters.</p>
+<p><strong>Ray starting inside a sphere</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>D</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+</math>
+<p>The roots are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>t</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>2</mn>
+</math>
+<p>The negative root lies behind the origin.</p>
+<p>The positive root gives the exit surface intersection.</p>
+<p>Therefore a nearest forward surface hit returns:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+</math>
+<p>However, a solid-volume intersection test may instead report that the ray begins inside the volume at <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>.</p>
+<p>These are different query semantics.</p>
+<p>A robust engine should distinguish first boundary crossing from first point belonging to the solid.</p>
+<p><strong>Part 1206 — Numerically stable quadratic roots</strong></p>
+<p>The textbook formula is mathematically correct, but its direct floating-point evaluation can be unstable.</p>
+<p>Consider:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mo>−</mo>
+      <mi>b</mi>
+      <mo>±</mo>
+      <msqrt>
+        <mi mathvariant="normal">Δ</mi>
+      </msqrt>
+    </mrow>
+    <mrow>
+      <mn>2</mn>
+      <mi>a</mi>
+    </mrow>
+  </mfrac>
+</math>
+<p>Suppose <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> is large and positive and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msqrt>
+    <mi mathvariant="normal">Δ</mi>
+  </msqrt>
+  <mo>≈</mo>
+  <mi>b</mi>
+</math>
+<p>Then the numerator of one root is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>−</mo>
+  <mi>b</mi>
+  <mo>+</mo>
+  <msqrt>
+    <mi mathvariant="normal">Δ</mi>
+  </msqrt>
+</math>
+<p>This subtracts two nearly equal large quantities.</p>
+<p>The result may contain far fewer reliable significant digits than either operand.</p>
+<p>This is catastrophic cancellation.</p>
+<p><strong>Deriving a stable alternative</strong></p>
+<p>Define:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>q</mi>
+          <mo>=</mo>
+          <mo>−</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mn>2</mn>
+          </mfrac>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">(</mo>
+            <mi>b</mi>
+            <mo>+</mo>
+            <mi>copysign</mi>
+            <mo stretchy="false">(</mo>
+            <msqrt>
+              <mi mathvariant="normal">Δ</mi>
+            </msqrt>
+            <mo>,</mo>
+            <mi>b</mi>
+            <mo stretchy="false">)</mo>
+            <mo data-mjx-texclass="CLOSE">)</mo>
+          </mrow>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then the roots are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>t</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mi>q</mi>
+            <mi>a</mi>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>t</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mi>c</mi>
+            <mi>q</mi>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>when <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+  <mo>≠</mo>
+  <mn>0</mn>
+</math>.</p>
+<p>Why does the second expression work?</p>
+<p>For a quadratic:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <msup>
+    <mi>t</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mi>t</mi>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>Vieta’s relation gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mn>0</mn>
+  </msub>
+  <msub>
+    <mi>t</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mi>c</mi>
+    <mi>a</mi>
+  </mfrac>
+</math>
+<p>If we calculate one root as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mi>q</mi>
+    <mi>a</mi>
+  </mfrac>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>c</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mi>a</mi>
+    </mrow>
+    <mrow>
+      <mi>q</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mi>a</mi>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mfrac>
+    <mi>c</mi>
+    <mi>q</mi>
+  </mfrac>
+</math>
+<p>The stable formulation deliberately chooses the root whose numerator adds quantities with compatible signs, avoiding the dangerous subtraction for that root.</p>
+<p>The other root is recovered through the root product.</p>
+<p><strong>Example of cancellation</strong></p>
+<p>Consider:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>t</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>−</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>16</mn>
+    </mrow>
+  </msup>
+  <mi>t</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>The roots are approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi data-mjx-auto-op="false">large</mi>
+      </mrow>
+    </mrow>
+  </msub>
+  <mo>≈</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>16</mn>
+    </mrow>
+  </msup>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi data-mjx-auto-op="false">small</mi>
+      </mrow>
+    </mrow>
+  </msub>
+  <mo>≈</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>16</mn>
+    </mrow>
+  </msup>
+</math>
+<p>Naïve evaluation of the small root computes a difference between two values close to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>16</mn>
+    </mrow>
+  </msup>
+</math>.</p>
+<p>The stable method computes the large root without catastrophic cancellation, then obtains the small root using:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi data-mjx-auto-op="false">small</mi>
+      </mrow>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mi>c</mi>
+    <mi>q</mi>
+  </mfrac>
+</math>
+<p>This preserves the small root much more reliably.</p>
+<p><strong>Edge cases</strong></p>
+<p>If the discriminant is negative, there are no real roots.</p>
+<p>If it is exactly zero, the roots coincide:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mfrac>
+    <mi>b</mi>
+    <mrow>
+      <mn>2</mn>
+      <mi>a</mi>
+    </mrow>
+  </mfrac>
+</math>
+<p>If <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>, the expression <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>q</mi>
+</math> is invalid, so the repeated-root or zero-coefficient case must be handled separately.</p>
+<p>If <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>, the equation is not quadratic.</p>
+<p>For a ray-sphere problem, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math> corresponds to a zero direction vector, which should be rejected or treated using explicitly defined point-query semantics.</p>
+<p><strong>Stability is not only about the quadratic formula</strong></p>
+<p>Computing:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>b</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>−</mo>
+  <mn>4</mn>
+  <mi>a</mi>
+  <mi>c</mi>
+</math>
+<p>can itself suffer overflow or cancellation.</p>
+<p>A stable-root formula does not automatically fix an inaccurately computed discriminant.</p>
+<p>For floating-point geometry, we should also consider coefficient scaling, fused multiply-add where appropriate, input coordinate magnitude, and the desired treatment of near-tangency.</p>
+<p>A small negative discriminant should not automatically be clamped to zero without a defined tolerance policy. Such clamping can transform a genuine miss into an artificial tangent hit.</p>
+<p><strong>KairoGeometry observation</strong></p>
+<p>Your current <code>RaySphere()</code> uses the standard roots:</p>
+<pre><code>const T t0 = (-b - sqrtDiscriminant) / (T(2) * a);
+const T t1 = (-b + sqrtDiscriminant) / (T(2) * a);</code></pre>
+<p>It checks the discriminant and a denominator threshold, then chooses the first nonnegative root.</p>
+<p>For ordinary rays, this is straightforward.</p>
+<p>The stable-<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math> formulation is a worthwhile improvement to evaluate because it reduces one known source of numerical error, especially when the two roots differ greatly in magnitude.</p>
+<p>It should be accompanied by tangency and extreme-scale tests rather than changed purely on theoretical preference.</p>
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch377.xhtml#id_04-visual-computing-ii-ch022-convex-support-mapping-and-distance" class="wikilink">Previous chapter</a> · <a href="ch379.xhtml#id_04-visual-computing-ii-ch024-raytriangle-intersection" class="wikilink">Next chapter</a></p>
+</section>
+</section>
+</body>
+</html>

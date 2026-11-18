@@ -1,0 +1,34 @@
+\hypertarget{appendix-b7174c179542}{}\label{referencestart:appendix-b7174c179542}
+\section{Aggregate initialization}\label{appendix-b7174c179542-aggregate-initialization}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C007 · \textbf{Latest development:} C007
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-b7174c179542-definition-and-mechanism}
+
+C++20/23 aggregates include arrays and eligible classes without user-declared/inherited constructors or prohibited access/virtual features. Public member functions and default member initializers do not alone disqualify them. C++ designated initializers name direct members in declaration order; omitted members use applicable defaults or empty-list initialization.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-b7174c179542-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-2e4d494c2d94]{Declarations and definitions} --- The defined class's members and constructors determine whether aggregate element initialization applies.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-b7174c179542-used-by}
+
+Later chunks extend this same node; dependent concepts are listed here as they are integrated.
+
+\subsection{Recall and next depth}\label{appendix-b7174c179542-recall-and-next-depth}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} Deeper ownership, pointer/reference, generic programming and module rules from later sources. This is written coverage, not demonstrated personal mastery.
+
+\subsection{Source and navigation}\label{appendix-b7174c179542-source-and-navigation}
+
+\hyperref[01-foundations-i-ch003-records-acquire-their-initial-state]{C007 teaching chapter} · \hyperref[appendix-fd090d982a15-m007---parts-101-112]{Source coverage} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

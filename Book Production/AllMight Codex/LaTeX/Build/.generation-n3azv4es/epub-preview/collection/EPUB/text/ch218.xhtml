@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch218.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-877738f6f4d2-batch-008-group-b-coverage-map" class="level2">
+<h2>Batch-008 group B coverage map</h2>
+<p>Existing headings below are copied exactly from <code>Continuous Notes/Game Engine - From First Frame to Living Worlds.md</code>. This map identifies specific overlaps and gaps for integration; it does not claim exhaustive coverage of any video. Receipts are in <code>reviews-b.json</code>; proposed narrative teaching is in <code>additions-b.md</code>.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Group-B contribution</th>
+<th>Existing exact heading(s)</th>
+<th>Integration note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Work backward from a representative game; distinguish game-making from engine-making</td>
+<td><code>### Make the first game ask the architecture a question</code>; <code>### Decide what the first game must be able to do</code>; <code>### Build a minimal application before building game systems</code></td>
+<td>Add the Mario-like roadmap and Space Invaders workflow as concrete requirement-discovery examples; preserve source-specific distinction between technology as the goal and technology as a means.</td>
+</tr>
+<tr>
+<td>Small-team roadmap, scope, feature owners and avoiding duplicate volunteer work</td>
+<td><code>### Add a feature by following its data across the engine</code>; <code>### Make build and source organization part of maintenance</code></td>
+<td>Add roadmap-as-dependency/ownership practice; label the creator’s preferred schedule as personal rather than universal.</td>
+</tr>
+<tr>
+<td>Source mesh versus engine metadata and choice of static/dynamic, hierarchy, materials, colliders</td>
+<td><code>### Treat source assets, import choices, and runtime packages distinct</code>; <code>#### Importing a readable mesh format, then caching it</code>; <code>#### Loading different asset types through resource loaders</code></td>
+<td>Add <code>.hsmesh</code> example to explain that a small metadata asset can reference source geometry. Do not imply this remains Hazel’s current format.</td>
+</tr>
+<tr>
+<td>File replacement changes asset registry identity and breaks scene references</td>
+<td><code>### Asset reload should follow file identity and dependency edges</code>; <code>### Resource and asset systems are about reliable identity and lifetime</code>; <code>### Keep identity, storage, and ownership in agreement</code></td>
+<td>Include the delete-then-create watcher sequence and delayed restart symptom as a focused failure case; possible mitigations in additions are explicitly deductions.</td>
+</tr>
+<tr>
+<td>Thumbnail regeneration triggers asset reload; editor should reflect changed disk assets</td>
+<td><code>### Make tools support short edit-test loops</code>; <code>### A content browser starts with a root and a navigation rule</code>; <code>### Resource and asset systems are about reliable identity and lifetime</code></td>
+<td>Explain the accidental coupling and development-time scope. Distinguish editor reload from runtime disk sampling.</td>
+</tr>
+<tr>
+<td>Build project, package assets/shaders, select runtime project and scene UUID; missing-resource failures</td>
+<td><code>### Shipping is another consumer of the same data</code>; <code>### Keep source assets, import choices, and runtime packages distinct</code>; <code>### Release claims need distinct evidence layers</code></td>
+<td>Add the staged failure path and later Build All overview; make explicit that a single local launch does not prove clean-machine distribution.</td>
+</tr>
+<tr>
+<td>FBX-to-SPM offline model conversion; packed attributes; missing FBX SDK dependency</td>
+<td><code>#### Importing a readable mesh format, then caching it</code>; <code>#### Treat vertex data as an agreement between CPU and GPU</code>; <code>### Build boundaries: library choice, runtime assumptions, and warning scope</code></td>
+<td>Explain authoring/runtime representations and importer validation; retain historical maturity and unbenchmarked performance caveats.</td>
+</tr>
+<tr>
+<td>GPU particle system and path-tracing experiments; editor undo and test gaps</td>
+<td><code>#### Rendering features emerge through visible experiments</code>; <code>### Debugging and profiling are design features</code>; <code>### Turn engine features into headless tests</code>; <code>### Make tools support short edit-test loops</code></td>
+<td>Distinguish standalone proof-of-concept from Hazel integration; show why runtime tests do not cover editor tooling.</td>
+</tr>
+<tr>
+<td>Animated reflection bug from missing bone transforms in shader inputs</td>
+<td><code>### Diagnose a frame as a pipeline</code>; <code>#### Debugging lighting and surface direction</code>; <code>### Render the state the simulation actually produced</code>; <code>#### Camera and coordinate spaces</code></td>
+<td>Add the pose-scrub → vertex shader → fragment shader investigation; caveat normal transforms under nonuniform scale.</td>
+</tr>
+<tr>
+<td>Animation import and incomplete playback/picking workflows</td>
+<td><code>### Keep source assets, import choices, and runtime packages distinct</code>; <code>### Diagnose a frame as a pipeline</code>; <code>### Make tools support short edit-test loops</code></td>
+<td>Separate working deformation from authoring controls and pose-aware picking; don’t promote planned features to shipped status.</td>
+</tr>
+<tr>
+<td>Vulkan procedural/vehicle demo and Substrate; Lumen/Nanite interpretations</td>
+<td><code>#### Rendering features emerge through visible experiments</code>; <code>### Read the debug view as evidence, not as a finished quality claim</code>; <code>### Measure the renderer, then choose a batch boundary</code></td>
+<td>Treat Epic presenter statements as claims from the demo, and the reviewer’s descriptions as inference. Hardware and experimental status belong beside observations.</td>
+</tr>
+<tr>
+<td>Reactions to UE5 station, Ratchet &amp; Clank, Flight Simulator, Halo Infinite</td>
+<td><code>### Read the debug view as evidence, not as a finished quality claim</code>; <code>### Evidence boundary and route through the material</code>; <code>### Rendering features emerge through visible experiments</code></td>
+<td>Teach observation versus implementation inference; retain limits from trailer compression, offline rendering, camera motion, and reviewer preference.</td>
+</tr>
+<tr>
+<td>mdBook/Markdown documentation publishing via webhook</td>
+<td><code>### Make build and source organization part of maintenance</code>; <code>### Build boundaries: library choice, runtime assumptions, and warning scope</code>; <code>### Release claims need distinct evidence layers</code></td>
+<td>Add the source-list/build/permissions/logging contract. Mark deployment details historical and incomplete as a security/production guide.</td>
+</tr>
+<tr>
+<td>Long-term engine and tutorial-roadmap separation</td>
+<td><code>### Make the first game ask the architecture a question</code>; <code>### Add a feature by following its data across the engine</code>; <code>### Evidence boundary and route through the material</code></td>
+<td>Add the practice of building/testing ahead, then teaching from a known implementation. Do not imply creator’s dated roadmap was completed.</td>
+</tr>
+<tr>
+<td>Existing-engine advice versus custom technology</td>
+<td><code>### Build a minimal application before building game systems</code>; <code>### Decide what the first game must be able to do</code>; <code>### Separate a renderer plan from an implemented command queue</code></td>
+<td>Place as creator opinion about opportunity cost and skill goals; licensing comments are explicitly memory-based and excluded as current facts.</td>
+</tr>
+</tbody>
+</table>
+<section id="appendix-877738f6f4d2-source-boundaries" class="level3">
+<h3>Source boundaries</h3>
+<p>The 16 sources span old Sparky experiments, multiple Hazel development/release periods, and reactions to third-party demos. No current SDK documentation, source tree, build, clean distribution, benchmark, or independent visual capture was checked. Per-source full-read extent, canonical cleaned-manifest count, hash, chunk acknowledgments, and findings are in <code>reviews-b.json</code>. Helper-emitted token counts differing from canonical counts are recorded explicitly in each receipt.</p>
+</section>
+</section>
+</body>
+</html>

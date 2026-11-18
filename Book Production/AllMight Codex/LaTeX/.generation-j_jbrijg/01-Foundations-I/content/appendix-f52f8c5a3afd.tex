@@ -1,0 +1,37 @@
+\hypertarget{appendix-f52f8c5a3afd}{}
+\section*{Internal and tail padding}
+\chapter{Internal and tail padding}\label{appendix-f52f8c5a3afd-internal-and-tail-padding}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\section{Definition and mechanism}\label{appendix-f52f8c5a3afd-definition-and-mechanism}
+
+Internal padding fills holes before members to satisfy alignment. Tail padding follows the final member so array stride preserves complete-object alignment. Under 1/4/1 rules, byte--uint32--byte occupies offsets 0/4/8 with end nine and size 12. Padding is not a semantic format field and cannot be relied on as stable encoded content.
+
+\section{Prerequisites}\label{appendix-f52f8c5a3afd-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a1f7c53b4742]{Alignment and padding} --- Address divisibility determines legal placement and layout holes.
+\end{itemize}
+
+\section{Used by}\label{appendix-f52f8c5a3afd-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../05-Engine-I/main.pdf\#nameddest=appendix-5522ad176ca0}{Field reordering and AoS versus SoA (05-Engine-I, appendix-5522ad176ca0)} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-0682dbfc5f0e]{Packed structures and misaligned access} --- uses this mechanism as stated in its prerequisites.
+\end{itemize}
+
+\section{Recall and next depth}\label{appendix-f52f8c5a3afd-recall-and-next-depth}
+
+Explain why stride nine breaks the second element's integer alignment.
+
+\textbf{Pending:} Special member overlap, inheritance, and padding-safe comparisons.
+
+\section{Source and navigation}\label{appendix-f52f8c5a3afd-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Where\%20the\%20bytes\%20live}{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

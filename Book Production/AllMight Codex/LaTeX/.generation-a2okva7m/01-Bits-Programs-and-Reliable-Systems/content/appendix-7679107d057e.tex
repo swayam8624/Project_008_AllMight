@@ -1,0 +1,36 @@
+\hypertarget{appendix-7679107d057e}{}\label{referencestart:appendix-7679107d057e}
+\section{Rules of Three Five and Zero}\label{appendix-7679107d057e-rules-of-three-five-and-zero}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C009 · \textbf{Latest development:} C009
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-7679107d057e-definition-and-mechanism}
+
+Three coordinates destruction/copy construction/copy assignment; Five adds both moves. These are semantic design decisions, not requirements to implement copying. Zero composes members with correct ownership so enclosing classes avoid custom transfer/cleanup boilerplate; domain invariants still need design.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-7679107d057e-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-42e02a12c694]{Special member generation and traits} --- The actual usable construction expression determines trait-controlled transfer selection.
+\item
+  \hyperref[appendix-bea6beb5350f]{Assignment and exception guarantees} --- A type's transfer declarations must support its chosen failure transaction.
+\item
+  \hyperref[appendix-d52e4486f527]{Ownership and non-owning views} --- The owner/view distinction determines whether copying duplicates resources or descriptors.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-7679107d057e-used-by}
+
+Later sources will extend this node when their guarantees are developed.
+
+\subsection{Recall and next depth}\label{appendix-7679107d057e-recall-and-next-depth}
+
+Replace the teaching raw byte owner with a vector and identify remaining invariant obligations. Pending: reusable unique GPU/OS owners and error policies. Written coverage does not demonstrate personal mastery.
+
+\subsection{Source and navigation}\label{appendix-7679107d057e-source-and-navigation}
+
+\hyperref[01-foundations-i-ch003-from-three-repairs-to-five-decisions-to-zero-boilerplate]{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15-m009---parts-127-147]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

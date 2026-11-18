@@ -8,7 +8,7 @@ A spatial index must be saved, inspected, and compared against a reference query
 
 **Recall question:** What reference result validates the index, and what measurements separate serialization, update, and query costs?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 76642–78476; source-span SHA256 d47bec240cb50e8b811461d0159c27b4dcf12c862428c365d2c1d9b3bc2bd99a. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 77571–79405; source-span SHA256 d47bec240cb50e8b811461d0159c27b4dcf12c862428c365d2c1d9b3bc2bd99a. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### SERIALIZATION, VISUALIZATION, BENCHMARKING, STRUCTURE SELECTION, UNIFIED QUERY DESIGN

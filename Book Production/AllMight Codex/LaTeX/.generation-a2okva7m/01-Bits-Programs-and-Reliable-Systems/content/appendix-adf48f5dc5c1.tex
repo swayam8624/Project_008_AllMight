@@ -1,0 +1,178 @@
+\hypertarget{appendix-adf48f5dc5c1}{}\label{referencestart:appendix-adf48f5dc5c1}
+\section{Calculus and optimization --- visual recall}\label{appendix-adf48f5dc5c1-calculus-and-optimization-visual-recall}
+
+\subsection{One-page quick recall}\label{appendix-adf48f5dc5c1-one-page-quick-recall}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Scalar change:} \(f(a+h)=f(a)+f'(a)h+o(|h|)\).
+\item
+  \textbf{Vector output:} \(F(x+h)=F(x)+J_F(x)h+o(\|h\|)\); \(J\) has output rows and input columns.
+\item
+  \textbf{Scalar curvature:} \(f(x+h)\approx f(x)+\nabla f^T h+\tfrac12h^THh\).
+\item
+  \textbf{Accumulation:} \(y(t)=y_0+\int_{t_0}^t f(s,y(s))\,ds\); a numerical solver approximates this evolution.
+\item
+  \textbf{Forward sensitivity:} \(Jv\); \textbf{reverse sensitivity:} \(J^T\lambda\).
+\item
+  \textbf{Least squares:} \(E=\tfrac12\|r\|^2\), \(\nabla E=J^Tr\), \(H_E=J^TJ+\sum_i r_iH_{r_i}\).
+\item
+  \textbf{Gauss--Newton:} \(J^TJp=-J^Tr\); \textbf{LM:} \((J^TJ+\lambda D)p=-J^Tr\).
+\item
+  \textbf{Constrained stationarity:} use KKT/projected-gradient conditions, not a raw zero-gradient test.
+\item
+  \textbf{Always diagnose:} domains, units/scales, coordinate frames, conditioning, nonfinite values, line-search/solver status, and whether the derivative exists.
+\end{itemize}
+
+\subsection{Figure guide}\label{appendix-adf48f5dc5c1-figure-guide}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Local change ladder (horizontal):} secant slopes converge to derivative; derivative defines tangent prediction; multivariate derivative becomes \(J\Delta x\); Hessian adds quadratic curvature. Annotate the remainder orders and assumptions.
+\item
+  \textbf{Camera differential frame map:} object-space perturbation → world → camera → perspective projection → pixel change, with multiplication order \(J_\pi R A\) and a coordinate-convention callout. Include the ideal positive-forward projection Jacobian only as a declared convention.
+\item
+  \textbf{Integration comparison strip:} left/right rectangle, midpoint, trapezoid, Simpson over \(x^2\) on \([0,2]\), showing the exact \(8/3\) and the four-subinterval estimates.
+\item
+  \textbf{\href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-e8ab9836882e}{ODE stability (Vision, XR, and Playable Worlds, Reference notes: ODE initial-value problems and stiffness)} plane:} Euler amplification \(R(z)=1+z\) disk, damped scalar eigenvalue on negative real axis, oscillator eigenvalues on imaginary axis; contrast explicit Euler growth and semi-implicit bounded regime.
+\item
+  \textbf{AD graph:} forward primal/tangent arrows and reverse adjoint arrows for \((xy+\sin x)^2\); shared \(x\) paths merge by addition.
+\item
+  \textbf{Solver decision map:} objective/residual structure → gradient descent, Newton/BFGS, Gauss--Newton/LM; wrap each with scaling, globalization, constraints and explicit termination statuses.
+\item
+  \textbf{Optimization path figures:} narrow quadratic valley and projected-bound optimum. Show Euclidean steepest direction changes under parameter scaling and why active-bound gradients need not vanish.
+\end{enumerate}
+
+The six figure assets have been rendered as PNG and SVG files and embedded in the staged volume above. Final vault link resolution remains for the parent integration pass.
+
+\subsection{Topic route}\label{appendix-adf48f5dc5c1-topic-route}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch020-functions-limits-continuity-and-scalar-change}{Functions and local change (Mathematics for Visual Computing, Ch. 4)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch021-jacobians-curvature-and-local-approximation}{Jacobians and curvature (Mathematics for Visual Computing, Ch. 5)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch022-integration-and-quadrature}{Integration (Mathematics for Visual Computing, Ch. 6)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch025-odes-and-numerical-simulation}{Simulation (Mathematics for Visual Computing, Ch. 9)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch022-numerical-differentiation-and-automatic-differentiation}{Automatic differentiation (Mathematics for Visual Computing, Ch. 6)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch026-optimization-and-inverse-problems}{Optimization (Mathematics for Visual Computing, Ch. 10)}
+\end{itemize}
+
+\subsection{Six figures}\label{appendix-adf48f5dc5c1-six-figures}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Visual Recall/Math Foundations/F09-1\_tangent-linearization.png}]{../current/Assets/Print/49aff0f566229019a2d501bdaf79122eaec8bec2a28d03b11b95ec6125528a8f.png}}
+\caption{Visual Recall/Math Foundations/F09-1\_tangent-linearization.png}
+\end{figure}
+
+\textbf{F09-1. Tangent prediction and local residual.} At h=0.2, the exact residual for the shown exponential is about 0.03529 and the quadratic leading term about 0.03297; this illustrates local-order behavior.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Visual Recall/Math Foundations/F09-2\_ftc-accumulation.png}]{../current/Assets/Print/bb0c8271ad7e58cd9ba7b5627c671eba74b152a4c05708291db915b674402900.png}}
+\caption{Visual Recall/Math Foundations/F09-2\_ftc-accumulation.png}
+\end{figure}
+
+\textbf{F09-2. Accumulated area and the derivative that recovers the integrand.} For A(x)=x cubed/3 at x=1.8, A=1.944 and A prime=3.24=x squared.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Visual Recall/Math Foundations/F09-3\_quadrature-convergence.png}]{../current/Assets/Print/68273cf85d8c50b912826c0266fa65675723b9527762f46a1ba26efdca046299.png}}
+\caption{Visual Recall/Math Foundations/F09-3\_quadrature-convergence.png}
+\end{figure}
+
+\textbf{F09-3. Quadrature error as sample intervals increase.} For exp(x) on {[}0,1{]} at N=16, left-rule error is about 0.053137, trapezoid error 5.593e-4, and Simpson error 1.456e-7; Simpson uses an even interval count.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Visual Recall/Math Foundations/F09-4\_oscillator-energy.png}]{../current/Assets/Print/29a27e523c6c86d5a86a4bfe06c66722c6cb178f4767a999cae520acc11b6ba9.png}}
+\caption{Visual Recall/Math Foundations/F09-4\_oscillator-energy.png}
+\end{figure}
+
+\textbf{F09-4. Energy behavior for the stated harmonic-oscillator step size.} At h=0.1 for 80 periods, explicit Euler energy reaches about 2.62e21, \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-8f96f9c4d5bc}{semi-implicit Euler (Vision, XR, and Playable Worlds, Reference notes: Time integrators and symplectic updates)} stays in {[}0.47619,0.526316{]}, and RK4 ends near 0.499965. This is the plotted setup, not a universal ranking.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Visual Recall/Math Foundations/F09-5\_damped-newton.png}]{../current/Assets/Print/a7892eb1c1abdfe56b16fcb87147edad148a22e2911aae7cb684f8b2ccd84021.png}}
+\caption{Visual Recall/Math Foundations/F09-5\_damped-newton.png}
+\end{figure}
+
+\textbf{F09-5. Full Newton step versus Armijo backtracking for the plotted log-cosh example.} At x=3, the full step is about -100.8566; backtracking first accepts alpha=0.03125 in this setup.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Visual Recall/Math Foundations/F09-6\_finite-difference-error.png}]{../current/Assets/Print/616d7ef2ae45639c687781725b4850060946e46b1ba44b55c93fc2b5aa201d4b.png}}
+\caption{Visual Recall/Math Foundations/F09-6\_finite-difference-error.png}
+\end{figure}
+
+\textbf{F09-6. Central-difference truncation and roundoff for sin(x) at x=0.7.} The analytic derivative is cos(0.7), about 0.7648422; the best sampled step has error about 8.94e-13. Guide curves are qualitative.
+
+\subsection{Phase 9 concept key map}\label{appendix-adf48f5dc5c1-phase-9-concept-key-map}
+
+Use each keyword for the concept note and the adjacent section link for the full derivation or example.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Concept keyword
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Full teaching section
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+{[}{[}Function contracts: domains, codomains, and images & domain and codomain{]}{]} \\
+{[}{[}Limits and continuity & epsilon-delta limit{]}{]} \\
+{[}{[}Derivative as a local linear map & differential{]}{]} \\
+{[}{[}Differentiation rules and chain rule & product rule{]}{]} \\
+{[}{[}Partial derivatives and gradients & gradient vector{]}{]} \\
+{[}{[}Directional and total derivatives & directional derivative{]}{]} \\
+{[}{[}Jacobians, pushforwards, and pullbacks & Jacobian matrix{]}{]} \\
+{[}{[}Hessians and local curvature & second derivative matrix{]}{]} \\
+{[}{[}Taylor models and approximation error & Taylor polynomial{]}{]} \\
+{[}{[}Finite differences and step-size balance & finite-difference derivative{]}{]} \\
+{[}{[}Definite integrals and the fundamental theorem & Riemann integral{]}{]} \\
+{[}{[}Numerical quadrature and error & integration rule{]}{]} \\
+{[}{[}ODE initial-value problems and stiffness & initial-value problem{]}{]} \\
+{[}{[}Time integrators and symplectic updates & symplectic integrator{]}{]} \\
+{[}{[}Newton and quasi-Newton optimization & Newton method{]}{]} \\
+{[}{[}Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt & Gauss-Newton{]}{]} \\
+{[}{[}Implicit differentiation and parameter sensitivities & implicit differentiation{]}{]} \\
+\end{longtable}
+}
+
+\subsection{Pose increments --- retrieve the convention}\label{appendix-adf48f5dc5c1-pose-increments-retrieve-the-convention}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Full commented witness
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Why does a six-number pose increment need exp/log? & Translation and rotation compose through a declared rigid-transform convention; tiny-angle and near-pi branches need explicit policies. & {[}{[}Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#From a six-number pose update to an actual rigid transform \\
+\end{longtable}
+}

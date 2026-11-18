@@ -1,0 +1,34 @@
+\hypertarget{appendix-b08d3788c5c6}{}\label{referencestart:appendix-b08d3788c5c6}
+\section{Return values and copy elision}\label{appendix-b08d3788c5c6-return-values-and-copy-elision}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C009 · \textbf{Latest development:} C009
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-b08d3788c5c6-definition-and-mechanism}
+
+Appropriate same-type prvalues directly initialize result objects since C++17. NRVO for eligible named locals is optional in C++23 and needs a usable fallback. Move-eligible local/parameter return expressions have special xvalue treatment; return std::move(local) loses the ordinary NRVO form.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-b08d3788c5c6-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1121b30eaeb0]{Value categories and materialization} --- The return expression category distinguishes result construction from a bound path or move candidate.
+\item
+  \hyperref[appendix-a82f9c438857]{Object construction and storage reuse} --- A new destination requires a valid lifetime, independently of available bytes.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-b08d3788c5c6-used-by}
+
+Later sources will extend this node when their guarantees are developed.
+
+\subsection{Recall and next depth}\label{appendix-b08d3788c5c6-recall-and-next-depth}
+
+Return an immovable type directly, then explain why a named-local return fails. Pending: overlapping-subobject cases and detailed return deduction. Written coverage does not demonstrate personal mastery.
+
+\subsection{Source and navigation}\label{appendix-b08d3788c5c6-source-and-navigation}
+
+\hyperref[01-foundations-i-ch003-return-a-result-without-handing-out-a-lifetime-problem]{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15-m009---parts-127-147]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

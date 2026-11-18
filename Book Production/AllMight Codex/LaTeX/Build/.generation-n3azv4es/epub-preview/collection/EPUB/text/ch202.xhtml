@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch202.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-f9b8b9188c7f-borrow-invalidation-and-logical-identity" class="level2">
+<h2>Borrow invalidation and logical identity</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C008 · <strong>Latest development:</strong> C008</p>
+<section id="appendix-f9b8b9188c7f-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A borrow relies on an external lifetime/mutation contract. Vector reallocation invalidates element paths; destruction ends a referent’s lifetime. Move-assigning a final dense-pool element into a live earlier slot may preserve that C++ object while changing its logical entity association.</p>
+</section>
+<section id="appendix-f9b8b9188c7f-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch145.xhtml#appendix-6af5921bc853-pointer-arithmetic-and-provenance" class="wikilink">Pointer arithmetic and provenance</a> — Storage relationships, bounds and lifetime distinguish valid access from a non-null value.</li>
+<li><a href="ch170.xhtml#appendix-f1581457d322-object-identity-and-generation-handles" class="wikilink">Object identity and generation handles</a> — Live C++ objects and application entities can diverge when pool slots are repurposed.</li>
+</ul>
+</section>
+<section id="appendix-f9b8b9188c7f-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch188.xhtml#appendix-aa405b7c3903-borrow-contracts-and-pool-epochs" class="wikilink">Borrow contracts and pool epochs</a></li>
+<li><a href="ch190.xhtml#appendix-aea529eb5175-deferred-captures-and-borrowed-views" class="wikilink">Deferred captures and borrowed views</a></li>
+</ul>
+</section>
+<section id="appendix-f9b8b9188c7f-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Trace owner11 becoming owner33 without first-slot destruction. Pending: per-container invalidation guarantees and stable-storage designs. Written coverage does not establish learner mastery.</p>
+</section>
+<section id="appendix-f9b8b9188c7f-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch173.xhtml#id_01-foundations-i-ch003-when-a-valid-borrow-stops-naming-the-intended-thing" class="wikilink">Teaching explanation and examples</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m008---parts-113-126" class="wikilink">Exact coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

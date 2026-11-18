@@ -8,7 +8,7 @@ The first playable exposes repeated needs, and those needs become engine boundar
 
 **Recall question:** If a feature changes its asset format or runtime service, which identities, callers, caches, and tests must change together?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 11690–15914; source-span SHA256 15f54478436af6d322d8e47e3a732298e806f2986d4f717b882dd195bd6c541b. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 11716–16278; source-span SHA256 c7361b817076268ad543a319bf48ec413699e06f1fd6349635c2ade1177a37d3. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Make a change cross the engine without breaking its promises
@@ -3203,6 +3203,344 @@ stable reflection schema.
 ```
 
 ---
+
+<!-- Book-completion teaching addition b60e5038067cfed4 -->
+
+### Turn shader import into a checked derivation transaction
+
+The preceding sections establish that source, compiler settings, included files, and reflection all affect the result. Put those inputs into one deterministic import procedure. This is an authored design for an engine asset pipeline, not a claim that the inspected Kairo importer already implements it. The complete commented laboratory below uses only Python's standard library and a mock compiler; it checks closure, variant keys, ABI rejection, failures, and publication order, not real GPU bytecode or a driver.
+
+A **variant** is one chosen shader configuration: stage, entry point, preprocessor defines and target settings. The **source closure** is the entry file plus every dependency actually read under that configuration. **Reflection** describes the compiled interface in machine-readable form. The shader/host **application binary interface (ABI)** is the agreed resource-binding and data-layout contract; matching names alone does not establish compatibility.
+
+#### 1. Resolve a source closure under a declared policy
+
+Start from a canonical asset identity plus stage, entry point, and a declared set of include roots. Invoke the compiler's preprocessor/include callback with the actual define set, because conditional compilation can change which files are included. For each resolved include, snapshot its bytes once and record a stable project-relative or virtual path plus digest. Reject missing files and directory escapes with the requesting include chain. Do not treat every textual dependency-graph cycle as an error: an include guard or conditional macro can terminate recursive preprocessing. Let the actual compiler preprocessor decide which include requests remain active, and diagnose an active recursion/depth failure with its include chain. Deduplicate file evidence by canonical identity while preserving the compiler's semantic expansion order. A sorted dependency manifest can be used for key encoding only if the ordered preprocessing result is also represented.
+
+A compiler interface can report includes through callbacks. For example, shaderc's includer callback receives the requested include name, include kind, requesting source, and depth; its returned source name must identify the resolved file uniquely. That makes the callback a natural place to enforce root policy and collect dependency records. DXC has its own include-handler interface. Use the selected compiler's preprocessing/dependency contract rather than substituting a regex scanner for real language semantics.
+
+#### 2. Hash the complete variant recipe
+
+After preprocessing has resolved the active closure, canonicalize a recipe such as
+
+$$
+K=H(\operatorname{encode}(\mathcal D,\mathcal V,\mathcal T,\mathcal P,\mathcal A)).
+$$
+
+Here $H$ is the chosen content digest and `encode` is the canonical recipe serialization. Define its fields before relying on the key:
+
+| Field | Contents |
+|---|---|
+| $\mathcal D$ | Actual dependency identities and snapshotted byte digests |
+| $\mathcal V$ | Shader stage, entry point and normalized define values |
+| $\mathcal T$ | Compiler/toolchain identity and digest, arguments, optimization, target/profile and enabled features |
+| $\mathcal P$ | Importer/preprocessor policy and reflection-schema versions |
+| $\mathcal A$ | Expected host/shader interface and its contract version |
+
+
+Use a canonical serialization with explicit top-level fields for source closure, normalized compiler settings, ABI contract, reflection schema version, and importer-policy version. Keep user-supplied settings nested so a key named `source_closure` cannot overwrite the real file evidence. Use stable key ordering, explicit value types, normalized paths, and no timestamps or machine-specific checkout paths. Hash the compiler executable or packaged toolchain identity as well as its display version where reproducibility matters. A change to an included byte, define, entry point, optimization mode, compiler, target, ABI contract, or importer policy must produce a different key. A debug name or source timestamp that does not affect output should not be an accidental key input. The monotonically increasing import-request revision is not part of the artifact key: it controls which completed job may become active, not what the shader binary means.
+
+#### 3. Compile a private candidate and collect reflection
+
+Run the compiler into a unique temporary directory on the same filesystem as the cache. Capture diagnostics, exit status, output bytes, and the toolchain version. Do not write over the currently active artifact. Extract reflection from the compiler output or its supported reflection API, then normalize it to a versioned schema.
+
+A useful interface record includes descriptor set and binding, descriptor kind and array length, stage visibility, push-constant byte range, uniform/storage block size and member offsets, vertex input locations and formats, specialization constants and IDs, and compute workgroup size. These are compatibility facts, not decoration: a renderer's pipeline layout must agree with statically used shader resources and stage visibility. The Vulkan descriptor-set contract, for example, requires statically used resources to correspond to bindings with appropriate descriptor types and stage flags. Other backends have their own ABI rules, so map reflection into a backend-neutral schema carefully and preserve backend-specific fields where necessary.
+
+Compare reflected interfaces with the asset's declared pipeline contract before publication. Report the first mismatch with both values: for example, “set 0 binding 3 is `storage_buffer` in the shader but `sampled_image` in the material layout,” or “member `roughness` offset is 16 bytes in the shader and 12 in the CPU contract.” Reject duplicate bindings and unsupported layout features. The ABI comparison must include layout details such as byte offsets, array strides, matrix orientation/stride, and alignment when the backend contract exposes them; matching only the resource name and type is insufficient.
+
+#### 4. Publish only a complete successful result
+
+Package bytecode, normalized reflection, recipe, dependency manifest, compiler diagnostics summary, and content digests into one immutable cache entry named by $K$. Write all files into a staging directory, close them, and atomically rename that complete directory into its immutable, recipe-keyed final name. The recipe hash identifies inputs; the output digest records produced bytes. If supposedly identical inputs produce different outputs, diagnose a nondeterministic toolchain or an omitted input rather than overwrite the existing entry. If the key already exists, verify its manifest, recipe, and binary digest before reuse; a cache directory name alone is not proof that its contents are intact. For concurrent workers, coordinate final-name creation with an exclusive lock or no-replace rename and compare the winning manifest; never expose a half-written directory.
+
+Only after the cache entry exists should the importer consider atomically replacing a small logical-asset pointer naming the new key. Tag each requested import with a monotonically increasing revision. Before pointer replacement, compare the job revision with the asset's latest requested revision. A late older job may keep its valid content-addressed cache entry, but it must not reactivate an obsolete shader after a newer request exists. A failed compile, include resolution, validation, reflection parse, cache-integrity check, or ABI check leaves the prior pointer untouched. At runtime hot reload, create/validate the backend pipeline from the candidate artifact first; switch the active GPU pipeline only after that succeeds. This separates a valid compiled cache object from a pipeline accepted by a particular device.
+
+A result that finishes late may still be a valid cache entry for its old recipe. It must not become the active asset if a newer authoring revision has been requested. Check the current request revision and switch the logical pointer under the same per-asset publication lock or transaction. Checking a revision and later renaming a pointer in separate unsynchronized operations leaves a race. The serial lab below demonstrates the state rule; it does not implement multiprocess locking or crash durability.
+
+#### Solved trace: one variant and two failures
+
+Assume `mesh.hlsl` includes `common.hlsli`, which includes `lighting.hlsli`; define `SKINNED=1`; compile entry `main` for the vertex stage with DXC `1.8.2407`, profile `vs_6_6`, DXIL output, optimization `O2`, compiler binary identity, and reflection schema 2. The include handler resolves both files under `Shaders/Shared`, records their canonical virtual paths and snapshotted SHA-256 digests, and obtains the active expansion from DXC's preprocessing path. The importer canonicalizes the closure and settings to compute key $K_1$. DXIL and its reflection are written into a staging directory. Reflection reports set 0 binding 0 as a uniform buffer with a 64-byte block; the pipeline contract expects exactly that layout, so validation passes. The importer verifies and stores the binary and manifest under `cache/K_1`, then updates the logical shader pointer to `K_1` only if this request is still the newest revision.
+
+Now change only `lighting.hlsli` bytes. The include record digest changes, so the next recipe produces $K_2$ even though `mesh.hlsl` is unchanged. If the compiler then reports set 0 binding 0 as a 48-byte block, the ABI gate rejects the candidate and leaves the pointer at $K_1$. Fix the contract or shader and rerun; only a passing compile plus matching ABI can update the pointer. Similarly, toggling `SKINNED`, upgrading DXC, changing shader profile/target, or changing optimization produces a distinct key even if root source is identical. A missing include or active unresolved recursion fails before successful publication. If request 2 has already superseded request 1, a late request-1 completion may add a verified cache entry but cannot move the active pointer back from request 2.
+
+**Solved exercise.** Add a second include used only when `SHADOWS=1`; compile once with the define off and once on. Record each actual preprocessor closure, then confirm the closures and keys differ when the additional include is active. Change the new include's bytes and confirm only the enabled variant gets a new key. Next change the expected block size from 64 to 48 while keeping the shader reflection at 64: the importer must emit an ABI mismatch and preserve the previous active-key pointer. Finally, correct the contract, deliberately make compilation fail, and verify the pointer still names the last successful artifact. The private stdlib lab is a **single-process, serial mock**. Its strict resolver rejects any recursive include and has no macro/include-guard evaluation; a production importer must honor the selected compiler's actual preprocessor semantics. The lab exercises key separation, ABI rejection, cache tampering, stale revision suppression, and same-filesystem rename with a mock reflection annotation and deterministic digest in place of GPU bytecode. It does not implement a real compiler, language preprocessor, GPU pipeline creation, crash durability, or multi-process locking.
+
+#### A complete bounded importer model
+
+Run `python3 tools/labs/shader_import_lab.py` or `python3 -O tools/labs/shader_import_lab.py`. This serial UTF-8, quoted-unconditional-include model uses annotation-based mock reflection and a deterministic digest in place of compiler output. Its checks cover keys, source snapshots, ABI rejection, cache tampering and stale requests. A real compiler's conditional preprocessing, physical shader layouts, GPU pipelines, concurrent publication and durability require their own implementation and evidence.
+
+```python
+"""Serial stdlib model of shader import inputs, ABI gate, cache checks, and publication."""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import shutil
+import tempfile
+import unittest
+from pathlib import Path
+
+INCLUDE = re.compile(r'^\s*#include\s+"([^"]+)"\s*$', re.MULTILINE)
+BINDING = re.compile(r'^\s*//\s*@binding\s+(\d+)\s+(\w+)\s*$', re.MULTILINE)
+IMPORTER_POLICY_VERSION = 1
+
+
+class ImportErrorDetail(RuntimeError):
+    pass
+
+
+def sha(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def source_closure(root: Path, entry: Path) -> tuple[str, list[dict[str, str]]]:
+    """Resolve a strict include graph; bytes are snapshotted once per canonical path."""
+    root = root.resolve()
+    visiting: list[Path] = []
+    visited: set[Path] = set()
+    snapshots: dict[Path, bytes] = {}
+    records: list[dict[str, str]] = []
+
+    def expand(path: Path) -> str:
+        path = path.resolve()
+        if root not in path.parents and path != root:
+            raise ImportErrorDetail(f"include escapes source root: {path}")
+        if path in visiting:
+            cycle = " -> ".join(p.name for p in (*visiting, path))
+            # This toy resolver has no macro/include-guard evaluation; its strict policy
+            # rejects every recursive include. A real importer asks its preprocessor.
+            raise ImportErrorDetail(f"strict include cycle: {cycle}")
+        if path not in snapshots:
+            try:
+                snapshots[path] = path.read_bytes()
+            except OSError as exc:
+                raise ImportErrorDetail(f"missing include/source: {path}") from exc
+        raw = snapshots[path]
+        if path not in visited:
+            records.append({"path": path.relative_to(root).as_posix(), "sha256": sha(raw)})
+        visiting.append(path)
+        text = raw.decode("utf-8")
+
+        def replace(match: re.Match[str]) -> str:
+            # Resolve relative includes from their requesting file, like an includer callback.
+            return expand(path.parent / match.group(1))
+
+        expanded = INCLUDE.sub(replace, text)
+        visiting.pop()
+        visited.add(path)
+        return expanded
+
+    preprocessed = expand(entry)
+    # Stable paths and snapshotted bytes define the closure, never mtimes or checkout roots.
+    records.sort(key=lambda item: item["path"])
+    return preprocessed, records
+
+
+def reflection_from(preprocessed: str) -> list[dict[str, object]]:
+    """Mock reflection reads annotations; no shader compiler or GPU ABI is involved."""
+    rows = [{"binding": int(n), "kind": kind} for n, kind in BINDING.findall(preprocessed)]
+    if len({row["binding"] for row in rows}) != len(rows):
+        raise ImportErrorDetail("duplicate reflected binding index")
+    return sorted(rows, key=lambda row: int(row["binding"]))
+
+
+def recipe_for(records: list[dict[str, str]], settings: dict[str, object],
+               expected_abi: list[dict[str, object]]) -> dict[str, object]:
+    # Keep user settings nested: a field named source_closure cannot replace file evidence.
+    return {
+        "source_closure": records,
+        "settings": settings,
+        "abi_contract": sorted(expected_abi, key=lambda row: int(row["binding"])),
+        "abi_schema_version": settings["reflection_schema"],
+        "importer_policy_version": IMPORTER_POLICY_VERSION,
+    }
+
+
+def variant_key(records: list[dict[str, str]], settings: dict[str, object],
+                expected_abi: list[dict[str, object]]) -> str:
+    recipe = recipe_for(records, settings, expected_abi)
+    encoded = json.dumps(recipe, sort_keys=True, separators=(",", ":")).encode()
+    return sha(encoded)
+
+
+def begin_request(cache: Path, revision: int) -> None:
+    """Record the newest requested revision before scheduling work for it."""
+    cache.mkdir(parents=True, exist_ok=True)
+    latest = cache / "latest-request"
+    if latest.exists() and revision <= int(latest.read_text()):
+        raise ImportErrorDetail("request revision must increase")
+    temp = cache / ".latest-request.tmp"
+    temp.write_text(f"{revision}\n")
+    os.replace(temp, latest)
+
+
+def validate_cache_entry(entry: Path, key: str, recipe: dict[str, object]) -> None:
+    """Never trust a content-addressed directory solely because its name matches."""
+    try:
+        manifest = json.loads((entry / "manifest.json").read_text())
+        binary = (entry / "shader.bin").read_bytes()
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ImportErrorDetail(f"unreadable cache entry: {key}") from exc
+    if not isinstance(manifest, dict):
+        raise ImportErrorDetail(f"cache manifest is not an object: {key}")
+    if manifest.get("key") != key or manifest.get("recipe") != recipe:
+        raise ImportErrorDetail(f"cache manifest mismatch: {key}")
+    if manifest.get("reflection") != recipe["abi_contract"]:
+        raise ImportErrorDetail(f"cache reflected interface mismatch: {key}")
+    if manifest.get("binary_sha256") != sha(binary):
+        raise ImportErrorDetail(f"cache binary digest mismatch: {key}")
+
+
+def publish_current(cache: Path, key: str, request_revision: int) -> bool:
+    """Activate only if this result still belongs to the newest requested revision."""
+    # Serial model: the caller must serialize this check and replacement.
+    # An atomic file rename alone is NOT a revision compare-and-swap. Real
+    # concurrent publication needs one per-asset lock/transaction around both.
+    latest = int((cache / "latest-request").read_text())
+    if latest != request_revision:
+        return False
+    pointer_tmp = cache / ".current.tmp"
+    pointer_tmp.write_text(json.dumps({"key": key, "request_revision": request_revision}) + "\n")
+    os.replace(pointer_tmp, cache / "current")
+    return True
+
+
+def import_shader(root: Path, entry: Path, cache: Path, settings: dict[str, object],
+                  expected_abi: list[dict[str, object]], request_revision: int) -> tuple[str, bool]:
+    """Build/reuse immutable artifact, then attempt revision-guarded pointer activation."""
+    preprocessed, records = source_closure(root, entry)
+    recipe = recipe_for(records, settings, expected_abi)
+    key = variant_key(records, settings, expected_abi)
+    reflected = reflection_from(preprocessed)
+    expected = sorted(expected_abi, key=lambda row: int(row["binding"]))
+    if reflected != expected:
+        raise ImportErrorDetail(f"reflection ABI mismatch: got {reflected}, expected {expected}")
+    if "#error" in preprocessed:
+        raise ImportErrorDetail("mock compiler rejected #error directive")
+
+    # Deterministic digest stands in for bytecode; it is not compiler output.
+    binary = hashlib.sha256((preprocessed + json.dumps(recipe, sort_keys=True)).encode()).hexdigest().encode()
+    cache.mkdir(parents=True, exist_ok=True)
+    final_entry = cache / key
+    if final_entry.exists():
+        validate_cache_entry(final_entry, key, recipe)
+    else:
+        stage = Path(tempfile.mkdtemp(prefix=".candidate-", dir=cache))
+        try:
+            (stage / "shader.bin").write_bytes(binary)
+            manifest = {"key": key, "recipe": recipe, "reflection": reflected,
+                        "binary_sha256": sha(binary)}
+            (stage / "manifest.json").write_text(json.dumps(manifest, sort_keys=True, indent=2) + "\n")
+            # Same-filesystem rename exposes the completed directory as one cache entry.
+            os.replace(stage, final_entry)
+        finally:
+            if stage.exists():
+                shutil.rmtree(stage)
+        validate_cache_entry(final_entry, key, recipe)
+    # A late older job may keep its valid cache result but cannot move the active pointer back.
+    return key, publish_current(cache, key, request_revision)
+
+
+class ShaderImportTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory()
+        self.base = Path(self.temp.name)
+        self.src = self.base / "src"
+        self.cache = self.base / "cache"
+        (self.src / "inc").mkdir(parents=True)
+        (self.src / "main.hlsl").write_text('#include "inc/common.hlsli"\nvoid main() {}\n')
+        (self.src / "inc/common.hlsli").write_text('// @binding 0 uniform_buffer\n')
+        self.settings = {"stage": "vertex", "entry": "main", "defines": {"SKINNED": 0},
+                         "compiler": "mock-dxc", "version": "1.0", "backend": "dxil",
+                         "profile": "vs_6_6", "optimization": "O2", "reflection_schema": 1,
+                         "abi_contract_version": 1}
+        self.abi = [{"binding": 0, "kind": "uniform_buffer"}]
+        self.revision = 0
+
+    def tearDown(self) -> None:
+        self.temp.cleanup()
+
+    def build(self, revision: int | None = None) -> tuple[str, bool]:
+        if revision is None:
+            self.revision += 1
+            revision = self.revision
+            begin_request(self.cache, revision)
+        return import_shader(self.src, self.src / "main.hlsl", self.cache,
+                             self.settings, self.abi, revision)
+
+    def test_closure_settings_and_abi_contract_change_key(self) -> None:
+        base, _ = self.build()
+        (self.src / "inc/common.hlsli").write_text('// @binding 0 uniform_buffer\n// changed\n')
+        self.assertNotEqual(base, self.build()[0])
+        (self.src / "inc/common.hlsli").write_text('// @binding 0 uniform_buffer\n')
+        stable_base, _ = self.build()
+        original = dict(self.settings)
+        variants = (("version", "2.0"), ("backend", "spirv"), ("profile", "vs_6_7"),
+                    ("optimization", "O0"), ("stage", "fragment"), ("entry", "shade"),
+                    ("defines", {"SKINNED": 1}), ("compiler", "mock-dxc-next"),
+                    ("abi_contract_version", 2))
+        for field, value in variants:
+            self.settings = dict(original)
+            before = self.build()[0]
+            self.settings[field] = value
+            self.assertNotEqual(before, self.build()[0], field)
+        self.settings = original
+        self.assertEqual(stable_base, self.build()[0])
+
+    def test_reserved_setting_cannot_hide_include_change(self) -> None:
+        # An ill-named user option remains nested under settings in the recipe.
+        self.settings["source_closure"] = [{"path": "forged", "sha256": "0"}]
+        base, _ = self.build()
+        (self.src / "inc/common.hlsli").write_text('// @binding 0 uniform_buffer\nchanged\n')
+        changed, _ = self.build()
+        self.assertNotEqual(base, changed)
+
+    def test_abi_or_compile_failure_keeps_last_good_pointer(self) -> None:
+        good_key, activated = self.build()
+        self.assertTrue(activated)
+        pointer = self.cache / "current"
+        self.assertEqual(json.loads(pointer.read_text())["key"], good_key)
+        self.abi = [{"binding": 1, "kind": "uniform_buffer"}]
+        with self.assertRaisesRegex(ImportErrorDetail, "ABI mismatch"):
+            self.build()
+        self.assertEqual(json.loads(pointer.read_text())["key"], good_key)
+        self.abi = [{"binding": 0, "kind": "uniform_buffer"}]
+        (self.src / "main.hlsl").write_text('#include "inc/common.hlsli"\n#error fail\n')
+        with self.assertRaisesRegex(ImportErrorDetail, "mock compiler rejected"):
+            self.build()
+        self.assertEqual(json.loads(pointer.read_text())["key"], good_key)
+
+    def test_stale_completion_caches_but_does_not_activate(self) -> None:
+        begin_request(self.cache, 1)
+        good_key, _ = self.build(revision=1)
+        begin_request(self.cache, 2)  # newer import request has superseded revision 1
+        older_key, activated = self.build(revision=1)
+        self.assertEqual(older_key, good_key)
+        self.assertFalse(activated)
+        self.assertTrue((self.cache / older_key / "manifest.json").exists())
+        self.assertEqual(json.loads((self.cache / "current").read_text())["key"], good_key)
+
+    def test_tampered_cache_is_rejected_without_pointer_change(self) -> None:
+        good_key, _ = self.build()
+        pointer = self.cache / "current"
+        (self.cache / good_key / "shader.bin").write_bytes(b"tampered")
+        with self.assertRaisesRegex(ImportErrorDetail, "cache binary digest mismatch"):
+            self.build()
+        self.assertEqual(json.loads(pointer.read_text())["key"], good_key)
+
+    def test_strict_cycle_and_missing_include_fail_before_publish(self) -> None:
+        (self.src / "inc/common.hlsli").write_text('#include "../main.hlsl"\n')
+        with self.assertRaisesRegex(ImportErrorDetail, "strict include cycle"):
+            self.build()
+        (self.src / "inc/common.hlsli").write_text('#include "absent.hlsli"\n')
+        with self.assertRaisesRegex(ImportErrorDetail, "missing include"):
+            self.build()
+        self.assertFalse((self.cache / "current").exists())
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
+```
 
 **Asset dependency graphs**
 

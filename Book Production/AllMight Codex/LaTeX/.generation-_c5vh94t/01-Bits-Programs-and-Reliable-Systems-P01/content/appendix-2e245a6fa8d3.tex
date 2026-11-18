@@ -1,0 +1,54 @@
+\hypertarget{appendix-2e245a6fa8d3}{}\label{referencestart:appendix-2e245a6fa8d3}
+\section{Short-circuit evaluation}\label{appendix-2e245a6fa8d3-short-circuit-evaluation}
+
+\hypertarget{appendix-2e245a6fa8d3-short-circuit-evaluation}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C001 · \textbf{Latest development:} C001
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-2e245a6fa8d3-definition-and-mechanism}
+
+\hypertarget{appendix-2e245a6fa8d3-definition-and-mechanism}{}
+
+\texttt{\&\&} may skip its right operand after false; \texttt{\textbar{}\textbar{}} may skip it after true, so evaluation safety is part of semantics.
+
+\end{allmightroledefinition}
+
+Built-in logical AND skips its right operand after false; logical OR skips it after true. \texttt{ptr\ \&\&\ ptr-\textgreater{}ready()} guards the dereference. A bitwise \texttt{\&} evaluates both operands. Operator spelling therefore determines both result meaning and whether a dangerous expression is evaluated.
+
+\subsection{Prerequisites}\label{appendix-2e245a6fa8d3-prerequisites}
+
+\hypertarget{appendix-2e245a6fa8d3-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-fe6b457d68d8]{Logical versus bitwise operators} --- Built-in \texttt{\&\&}, \texttt{\textbar{}\textbar{}}, and \texttt{!} convert operands to truth conditions.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-2e245a6fa8d3-used-by}
+
+\hypertarget{appendix-2e245a6fa8d3-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-652d81568de9}{Checked binary parsing (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Checked binary parsing)} --- uses this mechanism to define its representation, error or validation contract.
+\end{itemize}
+
+Connect later chunks here when they use this concept.
+
+\subsection{Recall and next depth}\label{appendix-2e245a6fa8d3-recall-and-next-depth}
+
+\hypertarget{appendix-2e245a6fa8d3-recall-and-next-depth}{}
+
+Explain short-circuit evaluation without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} sequencing, side effects, and optimizer control flow.
+
+\subsection{Source and navigation}\label{appendix-2e245a6fa8d3-source-and-navigation}
+
+\hypertarget{appendix-2e245a6fa8d3-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

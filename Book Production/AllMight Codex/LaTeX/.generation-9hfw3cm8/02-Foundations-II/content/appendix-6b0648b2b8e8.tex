@@ -1,0 +1,46 @@
+\hypertarget{appendix-6b0648b2b8e8}{}
+\section{Discretization, truncation, and roundoff}\label{appendix-6b0648b2b8e8-discretization-truncation-and-roundoff}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{appendix-6b0648b2b8e8-definition-and-mechanism}
+
+Discretization replaces a continuous object or domain with a finite grid; truncation omits terms or limits an iterative expansion; roundoff comes from finite-precision arithmetic. They have different causes and respond to different changes. Refining a spatial grid may reduce discretization error while increasing computation. Adding more terms can reduce truncation error. Increasing precision or reformulating arithmetic can reduce roundoff, though a poor algorithm may still dominate. A signed-distance field sampled too coarsely can lose a thin feature entirely, while an ODE's Euler step has a local truncation error even under exact arithmetic. An error budget should distinguish these mechanisms instead of calling every disagreement ``numerical error.''
+
+\subsection{Prerequisites}\label{appendix-6b0648b2b8e8-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-f82e270791c8}{Accumulated rounding error (01-Foundations-I, appendix-f82e270791c8)}
+\item
+  \hyperref[appendix-32f39e9a3738]{Taylor models and approximation error}
+\item
+  \hyperref[appendix-80521eae6b71]{Numerical quadrature and error}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-6b0648b2b8e8-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-aca80b6bf17a]{Convergence order and Richardson extrapolation}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-31b8c295e05f}{Numerical error budgets (01-Foundations-I, appendix-31b8c295e05f)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-6b0648b2b8e8-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[02-foundations-ii-ch029-separate-discretization-truncation-and-roundoff-measure-convergence]{Separate discretization, truncation, and roundoff; measure convergence}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-6b0648b2b8e8-source-coverage}
+
+Supplied lesson parts: 989--991.
+
+\subsection{Future keywords}\label{appendix-6b0648b2b8e8-future-keywords}
+
+grid resolution, truncation remainder, finite precision

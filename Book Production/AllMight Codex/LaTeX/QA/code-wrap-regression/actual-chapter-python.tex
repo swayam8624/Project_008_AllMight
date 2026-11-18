@@ -1,0 +1,181 @@
+\documentclass[11pt,twoside,openany]{book}
+\usepackage[print]{allmight-book}
+\title{Lowercase verbatim source proof}
+\begin{document}
+\maketitle
+\begin{verbatim}
+#!/usr/bin/env python3
+"""A deterministic, direct-lighting teaching renderer. Standard library only."""
+import argparse
+import math
+import random
+PI = math.pi
+EPS = 1.0e-4  # Scene units; scene spans roughly six units.
+
+def add(a, b): return (a[0] + b[0], a[1] + b[1], a[2] + b[2])
+def sub(a, b): return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
+def mul(a, s): return (a[0] * s, a[1] * s, a[2] * s)
+def dot(a, b): return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+def cross(a, b):
+    return (a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0])
+def length(a): return math.sqrt(dot(a, a))
+def unit(a):
+    n = length(a)
+    if n == 0.0: raise ValueError("cannot normalize a zero vector")
+    return mul(a, 1.0 / n)
+
+# Sphere tuple: (center, radius, diffuse RGB reflectance). Plane is y=0.
+SPHERES = [
+    ((-0.68, 0.72, 0.05), 0.72, (0.78, 0.20, 0.10)),
+    ((0.62, 0.48, -0.36), 0.48, (0.12, 0.38, 0.82)),
+]
+FLOOR_ALBEDO = (0.62, 0.64, 0.67)
+LIGHT_CENTER = (0.0, 3.25, -0.10)
+LIGHT_HALF_U = (1.25, 0.0, 0.0)
+LIGHT_HALF_V = (0.0, 0.0, 0.90)
+LIGHT_NORMAL = unit(cross(LIGHT_HALF_U, LIGHT_HALF_V))  # Faces down.
+LIGHT_AREA = 4.0 * length(LIGHT_HALF_U) * length(LIGHT_HALF_V)
+LIGHT_RADIANCE = (5.5, 4.8, 4.0)  # Linear RGB radiance, relative units.
+
+def sphere_hit(origin, direction, sphere, t_max=float("inf")):
+    center, radius, _ = sphere
+    oc = sub(origin, center)
+    half_b = dot(oc, direction)  # Direction is normalized, so a=1.
+    c = dot(oc, oc) - radius * radius
+    disc = half_b * half_b - c
+    if disc < 0.0: return None
+    root = math.sqrt(disc)
+    # Test the entry root, then the exit root: rays may start inside a sphere.
+    for t in (-half_b - root, -half_b + root):
+        if EPS < t < t_max:
+            point = add(origin, mul(direction, t))
+            return (t, point, unit(sub(point, center)), sphere[2])
+    return None
+
+def plane_hit(origin, direction, t_max=float("inf")):
+    if abs(direction[1]) < 1.0e-10: return None  # Parallel to y=0.
+    t = -origin[1] / direction[1]
+    if EPS < t < t_max:
+        point = add(origin, mul(direction, t))
+        return (t, point, (0.0, 1.0, 0.0), FLOOR_ALBEDO)
+    return None
+
+def scene_hit(origin, direction, t_max=float("inf")):
+    nearest = None
+    for sphere in SPHERES:
+        hit = sphere_hit(origin, direction, sphere, t_max)
+        if hit and (nearest is None or hit[0] < nearest[0]): nearest = hit
+    hit = plane_hit(origin, direction, t_max)
+    if hit and (nearest is None or hit[0] < nearest[0]): nearest = hit
+    return nearest
+
+def occluded(origin, direction, distance):
+    # A finite segment ends just before the sampled emitter point.
+    return scene_hit(origin, direction, max(EPS, distance - 2.0 * EPS)) is not None
+
+def sample_area_light(rng):
+    # Uniform area PDF = 1/A: independent uniform coordinates on the rectangle.
+    a, b = rng.uniform(-1.0, 1.0), rng.uniform(-1.0, 1.0)
+    return add(LIGHT_CENTER, add(mul(LIGHT_HALF_U, a), mul(LIGHT_HALF_V, b)))
+
+def direct_radiance(point, normal, albedo, rng, light_samples):
+    total = [0.0, 0.0, 0.0]
+    shadow_origin = add(point, mul(normal, EPS))
+    for _ in range(light_samples):
+        light_point = sample_area_light(rng)
+        delta = sub(light_point, point)
+        distance2 = dot(delta, delta)
+        distance = math.sqrt(distance2)
+        wi = mul(delta, 1.0 / distance)
+        cos_surface = max(0.0, dot(normal, wi))
+        cos_emitter = max(0.0, dot(LIGHT_NORMAL, mul(wi, -1.0)))
+        if cos_surface == 0.0 or cos_emitter == 0.0: continue
+        shadow_delta = sub(light_point, shadow_origin)
+        shadow_distance = length(shadow_delta)
+        shadow_direction = mul(shadow_delta, 1.0 / shadow_distance)
+        if occluded(shadow_origin, shadow_direction, shadow_distance): continue
+        # Uniform-area Monte Carlo estimate of the Lambertian area integral.
+        weight = (LIGHT_AREA * cos_surface * cos_emitter / distance2
+                  / (PI * light_samples))
+        for k in range(3): total[k] += albedo[k] * LIGHT_RADIANCE[k] * weight
+    return tuple(total)
+
+def camera_ray(x, y, width, height):
+    origin = (0.0, 1.35, 4.55)
+    forward = unit(sub((0.0, 0.72, 0.0), origin))
+    right = unit(cross(forward, (0.0, 1.0, 0.0)))
+    up = unit(cross(right, forward))
+    aspect = width / height
+    scale = math.tan(math.radians(48.0) / 2.0)
+    sx = (2.0 * x / width - 1.0) * aspect * scale
+    sy = (1.0 - 2.0 * y / height) * scale
+    return origin, unit(add(forward, add(mul(right, sx), mul(up, sy))))
+
+def linear_to_srgb(v):
+    v = max(0.0, v)
+    return 12.92 * v if v <= 0.0031308 else 1.055 * (v ** (1.0 / 2.4)) - 0.055
+
+def render(width, height, spp, light_samples, seed):
+    rng = random.Random(seed)
+    pixels = bytearray()
+    for y in range(height):
+        for x in range(width):
+            average = [0.0, 0.0, 0.0]
+            for _ in range(spp):
+                # Jittered primary rays supersample each pixel.
+                origin, direction = camera_ray(x + rng.random(), y + rng.random(), width, height)
+                hit = scene_hit(origin, direction)
+                radiance = direct_radiance(hit[1], hit[2], hit[3], rng, light_samples) if hit else (0, 0, 0)
+                for k in range(3): average[k] += radiance[k] / spp
+            # Average in linear light, apply 2x Reinhard exposure, then encode sRGB.
+            for value in average:
+                exposed = 2.0 * value
+                mapped = exposed / (1.0 + exposed)
+                encoded = linear_to_srgb(mapped)
+                if not math.isfinite(encoded): raise ArithmeticError("non-finite pixel")
+                pixels.append(max(0, min(255, int(encoded * 255.0 + 0.5))))
+    return bytes(pixels)
+
+def checks():
+    inside = sphere_hit((0, 0, 0), (1, 0, 0), ((0, 0, 0), 1, (1, 1, 1)))
+    assert inside is not None and abs(inside[0] - 1.0) < 1e-9  # Exit root.
+    ray = unit((0, -0.2, -1))
+    front = sphere_hit((0, 1, 3), ray, ((0, 0.7, 0), 0.5, (1, 1, 1)))
+    floor = plane_hit((0, 1, 3), ray)
+    assert front is not None and floor is not None and front[0] < floor[0]  # Nearest hit.
+    blocker = ((0, 0, 0), 0.4, (1, 1, 1))
+    SPHERES.append(blocker)
+    assert not occluded((0, 0, 2), (0, 0, -1), 1.0)  # Blocker beyond segment.
+    assert occluded((0, 0, 2), (0, 0, -1), 3.0)  # Same ray reaches blocker.
+    SPHERES.pop()
+    start, end = (0.1, 0.0, 2.0), (0.0, 0.0, 0.0)
+    delta = sub(end, start); distance = length(delta); direction = unit(delta)
+    assert length(sub(add(start, mul(direction, distance)), end)) < 1e-12
+    assert linear_to_srgb(0.0) == 0.0 and abs(linear_to_srgb(1.0) - 1.0) < 1e-12
+
+def positive_int(value):
+    result = int(value)
+    if result < 1: raise argparse.ArgumentTypeError("must be a positive integer")
+    return result
+
+def main():
+    checks()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--width", type=positive_int, default=96)
+    parser.add_argument("--height", type=positive_int, default=64)
+    parser.add_argument("--spp", type=positive_int, default=4, help="camera supersamples per pixel")
+    parser.add_argument("--light-samples", type=positive_int, default=16)
+    parser.add_argument("--seed", type=int, default=178)
+    parser.add_argument("--output", default="renderer-lab.ppm")
+    args = parser.parse_args()
+    payload = render(args.width, args.height, args.spp, args.light_samples, args.seed)
+    assert len(payload) == args.width * args.height * 3
+    with open(args.output, "wb") as image:
+        image.write(f"P6\n{args.width} {args.height}\n255\n".encode("ascii"))
+        image.write(payload)
+    print(f"wrote {args.output} ({args.width}x{args.height}, {args.spp} camera spp, {args.light_samples} light spp)")
+
+if __name__ == "__main__": main()
+\end{verbatim}
+
+\end{document}

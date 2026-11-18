@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch330.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-749048795dbb-shader-buffer-abi" class="level2">
+<h2>Shader buffer ABI</h2>
+<p>A shader buffer is a binary interface between independently compiled code. CPU and shader code must agree on member offsets, element widths, alignment, array stride, matrix layout, and total record stride. “These structs have the same fields” is not enough.</p>
+<p>Suppose a record logically contains a 3-vector followed by a scalar. The mathematical payload is four floats, but the ABI may impose an alignment boundary for the vector or the containing record. The only safe statement is the one established by the layout rules and, ideally, reflection/compiled shader metadata.</p>
+<section id="appendix-749048795dbb-layout-is-a-function-of-context" class="level3">
+<h3>Layout is a function of context</h3>
+<p>Different interfaces can have different rules: vertex attributes, constant/uniform buffers, storage buffers, argument buffers and push/root constants are not interchangeable contracts. Matrix row/column-major convention is another independent dimension.</p>
+<p>On the CPU side, standard C++ object layout also has rules about padding and alignment. Copying bytes from a native struct into a shader buffer is valid only when the native representation is deliberately made compatible or explicit serialization writes the expected offsets.</p>
+</section>
+<section id="appendix-749048795dbb-verify-rather-than-guess" class="level3">
+<h3>Verify rather than guess</h3>
+<p>A robust pipeline should generate or reflect a machine-readable layout description and compare it with CPU declarations:</p>
+<ul>
+<li>expected offset for every member;</li>
+<li>expected array stride;</li>
+<li>matrix stride and orientation;</li>
+<li>record size/alignment;</li>
+<li>scalar widths and signedness.</li>
+</ul>
+<p>Static assertions can catch CPU layout changes. Shader reflection or compiler metadata catches shader-side changes. A golden byte dump can test the complete bridge.</p>
+</section>
+<section id="appendix-749048795dbb-failure-modes" class="level3">
+<h3>Failure modes</h3>
+<p>Common failures include using a 12-byte mental model for a vector type whose ABI slot is 16 bytes, mixing bool widths, assuming packed enums, copying pointer-containing structs, row/column-major disagreement, and updating one side of the interface without rebuilding the other.</p>
+<p>Teach and reconstruct: <a href="ch411.xhtml#id_01-foundations-i-ch008-make-a-shader-record-an-explicit-binary-contract" class="wikilink">Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Make a shader record an explicit binary contract (GPU Architecture and Real-Time Rendering, Part 1, Ch. 1)</a>.</p>
+<p>Related: <a href="ch156.xhtml#appendix-a1f7c53b4742-alignment-and-padding" class="wikilink">Alignment and padding (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Alignment and padding)</a>, <a href="ch352.xhtml#appendix-749ba51a6c25-gpu-vertex-specification" class="wikilink">GPU vertex specification</a>, <a href="ch241.xhtml#appendix-cebadf3106d1-tensor-runtime-layout-and-views" class="wikilink">Tensor runtime layout and views (Mathematics for Visual Computing, Part 1, Reference notes: Tensor runtime layout and views)</a>.</p>
+</section>
+</section>
+</body>
+</html>

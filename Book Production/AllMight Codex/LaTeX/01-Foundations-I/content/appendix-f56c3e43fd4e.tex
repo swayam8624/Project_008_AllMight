@@ -1,0 +1,37 @@
+\hypertarget{appendix-f56c3e43fd4e}{}
+\section*{Placement construction and explicit lifetime management}
+\section{Placement construction and explicit lifetime management}\label{placement-construction-and-explicit-lifetime-management}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C010 · \textbf{Latest development:} C010
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Placement new or \texttt{std::construct\_at} initializes an object in storage already provided by the caller; it does not allocate that backing storage. The storage must have adequate size and alignment. \texttt{std::destroy\_at} ends an object's lifetime but does not release the storage. A pool/container must track occupancy, partial construction, exactly-once destruction, and when reuse is permitted. Transparent replacement and \texttt{std::launder} have detailed preconditions; launder neither constructs nor revives an object.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a82f9c438857]{Object construction and storage reuse} --- An object's lifetime is not the same as backing storage availability.
+\item
+  \hyperref[appendix-69739d3ab49b]{RAII and resource handles} --- Low-level storage protocols still need one responsible owner.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a82f9c438857]{Object construction and storage reuse}
+\item
+  \href{}{Object identity and generation handles (05-Engine-I, appendix-f1581457d322)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Sketch Empty → Live(A) → Empty → Live(B) → Released. State the operation and precondition on every edge. Pending: implicit-lifetime operations, allocator traits, and container exception guarantees.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Placement\%20construction\%20reuses\%20storage;\%20it\%20does\%20not\%20allocate\%20it}{M010 teaching narrative} · \hyperref[appendix-fd090d982a15]{Source coverage}

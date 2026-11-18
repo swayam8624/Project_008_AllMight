@@ -1,0 +1,3644 @@
+# Part 600 — Reconstructing a Production-Ready `Vec3` Library from First Principles
+
+This is the capstone of **Phase 6: Scalars, Vectors, Vector Spaces, Norms, and Geometric Algebra Foundations**. The curriculum deliberately ends the phase by forcing us to reconstruct the object we have been using for almost 100 Parts rather than merely recognizing formulas. Project_Sheldon_Master_Curricul…
+
+The target is not:
+
+```cpp
+struct Vec3 {
+    float x, y, z;
+};
+```
+
+with 40 random operators attached.
+
+The target is understanding the entire chain:
+
+\[
+\boxed{
+\text{geometry}
+\rightarrow
+\text{mathematical contract}
+\rightarrow
+\text{API}
+\rightarrow
+\text{floating point}
+\rightarrow
+\text{memory}
+\rightarrow
+\text{CPU execution}
+}
+\]
+
+so that if every math library disappeared tomorrow, you could rebuild the essential vector layer yourself.
+
+---
+
+# 600.1 Start with the problem, not the class
+
+Imagine we are implementing a game engine.
+
+A character has:
+
+\[
+P=(10,3,-5)
+\]
+
+as a position.
+
+Its velocity is:
+
+\[
+V=(2,0,1).
+\]
+
+A surface has normal:
+
+\[
+N=(0,1,0).
+\]
+
+A light direction might be:
+
+\[
+L=(0.3,0.8,-0.5).
+\]
+
+A triangle supplies edges:
+
+\[
+E_1=B-A,
+\qquad
+E_2=C-A.
+\]
+
+Every subsystem repeatedly needs:
+
+\[
+a+b,
+\]
+
+\[
+a-b,
+\]
+
+\[
+\lambda a,
+\]
+
+\[
+a\cdot b,
+\]
+
+\[
+a\times b,
+\]
+
+\[
+\|a\|,
+\]
+
+\[
+\hat a,
+\]
+
+projection, rejection, reflection, angles, finite checks, and so on.
+
+Without a reusable vector abstraction, every system starts writing:
+
+```cpp
+float dx = bx - ax;
+float dy = by - ay;
+float dz = bz - az;
+```
+
+over and over.
+
+Then one system computes magnitude correctly.
+
+Another forgets Z.
+
+Another normalizes zero.
+
+Another mixes local and world coordinates.
+
+Another treats a normal as a position.
+
+The purpose of the vector library is therefore not merely code reuse.
+
+It creates a **central mathematical contract** for the engine.
+
+---
+
+# 600.2 First establish what the core type represents
+
+We need a numeric carrier for coordinates:
+
+\[
+v=(x,y,z).
+\]
+
+The most basic representation is:
+
+```cpp
+template<class T>
+struct Vec3T
+{
+    T x{};
+    T y{};
+    T z{};
+};
+```
+
+For graphics:
+
+```cpp
+using Vec3f = Vec3T<float>;
+using Vec3d = Vec3T<double>;
+```
+
+But unrestricted `T` is questionable.
+
+What would this mean?
+
+```cpp
+Vec3T<std::string>
+```
+
+Nothing useful.
+
+So constrain it.
+
+With C++20:
+
+```cpp
+#include <concepts>
+
+template<std::floating_point T>
+struct Vec3T
+{
+    T x{};
+    T y{};
+    T z{};
+};
+```
+
+Now our base type explicitly models floating-point Euclidean coordinates.
+
+We could separately create integer vector types if needed.
+
+---
+
+# 600.3 Why not make only `Vec3f`?
+
+Because the scalar type is an independent engineering decision.
+
+A renderer may use:
+
+```cpp
+Vec3f
+```
+
+for normals, local positions, colors and GPU-bound data.
+
+A large-world simulation might use:
+
+```cpp
+Vec3d
+```
+
+for authoritative world positions.
+
+The same algebra applies.
+
+So:
+
+\[
+\boxed{
+\text{dimension}
+}
+\]
+
+and:
+
+\[
+\boxed{
+\text{scalar precision}
+}
+\]
+
+should not necessarily be welded together.
+
+---
+
+# 600.4 Our first complete object
+
+```cpp
+template<std::floating_point T>
+struct Vec3T
+{
+    T x{};
+    T y{};
+    T z{};
+
+    constexpr Vec3T() noexcept = default;
+
+    constexpr Vec3T(
+        T x_,
+        T y_,
+        T z_) noexcept
+        : x{x_},
+          y{y_},
+          z{z_}
+    {
+    }
+
+    explicit constexpr Vec3T(T s) noexcept
+        : x{s},
+          y{s},
+          z{s}
+    {
+    }
+};
+```
+
+Now:
+
+```cpp
+Vec3f a{1.0f, 2.0f, 3.0f};
+```
+
+means:
+
+\[
+a=(1,2,3).
+\]
+
+And explicit broadcast:
+
+```cpp
+Vec3f ones{1.0f};
+```
+
+means:
+
+\[
+(1,1,1).
+\]
+
+Because the scalar constructor is `explicit`, this does not silently happen:
+
+```cpp
+void foo(Vec3f);
+
+foo(5.0f); // should not implicitly become (5,5,5)
+```
+
+That is deliberate API hygiene.
+
+---
+
+# 600.5 Memory representation
+
+Assume the common case:
+
+\[
+sizeof(float)=4.
+\]
+
+Then mathematical payload:
+
+\[
+3\times4=12\text{ bytes}.
+\]
+
+Conceptually:
+
+```text
+Vec3f
+
+address +0
+┌──────────────┐
+│      x       │ 4 bytes
+├──────────────┤
+│      y       │ 4 bytes
+├──────────────┤
+│      z       │ 4 bytes
+└──────────────┘
+```
+
+We do **not** force:
+
+```cpp
+alignas(16)
+```
+
+on the fundamental type.
+
+Why?
+
+Because Part 594 showed that the best storage representation is workload dependent.
+
+A million 12-byte vectors:
+
+\[
+12\text{ MB}.
+\]
+
+A million 16-byte vectors:
+
+\[
+16\text{ MB}.
+\]
+
+A 33% increase.
+
+So our canonical numeric type begins compact.
+
+If a SIMD subsystem wants another layout, it can use one.
+
+---
+
+# 600.6 Verify assumptions rather than imagining them
+
+Tests/build assertions can inspect properties:
+
+```cpp
+#include <type_traits>
+
+using Vec3f = Vec3T<float>;
+
+static_assert(
+    std::is_trivially_copyable_v<Vec3f>
+);
+
+static_assert(
+    std::is_standard_layout_v<Vec3f>
+);
+```
+
+On a target where your engine contract requires 12-byte packed storage:
+
+```cpp
+static_assert(sizeof(Vec3f) == 12);
+```
+
+But only make that assertion if it is genuinely an engine ABI requirement.
+
+Do not turn incidental platform behavior into a universal mathematical requirement.
+
+---
+
+# 600.7 Why trivial copyability is desirable
+
+Our vector owns no resources.
+
+No heap allocation.
+
+No file handles.
+
+No pointer ownership.
+
+No custom destruction.
+
+So:
+
+```cpp
+Vec3f b = a;
+```
+
+should simply copy the scalar values.
+
+A vector is a canonical **value type**.
+
+Its lifetime should be boring.
+
+That is a feature.
+
+---
+
+# 600.8 Component indexing
+
+Named access is great:
+
+```cpp
+v.x
+v.y
+v.z
+```
+
+Generic algorithms also need:
+
+```cpp
+v[i]
+```
+
+Implement explicitly:
+
+```cpp
+constexpr T& operator[](
+    std::size_t i) noexcept
+{
+    assert(i < 3);
+
+    switch (i)
+    {
+        case 0: return x;
+        case 1: return y;
+        default: return z;
+    }
+}
+
+constexpr T const& operator[](
+    std::size_t i) const noexcept
+{
+    assert(i < 3);
+
+    switch (i)
+    {
+        case 0: return x;
+        case 1: return y;
+        default: return z;
+    }
+}
+```
+
+We avoid clever object-layout tricks merely to save a three-case switch that the compiler will typically optimize aggressively.
+
+---
+
+# 600.9 Constants
+
+Useful named constructors:
+
+```cpp
+static constexpr Vec3T zero() noexcept
+{
+    return {T(0), T(0), T(0)};
+}
+
+static constexpr Vec3T one() noexcept
+{
+    return {T(1), T(1), T(1)};
+}
+
+static constexpr Vec3T xAxis() noexcept
+{
+    return {T(1), T(0), T(0)};
+}
+
+static constexpr Vec3T yAxis() noexcept
+{
+    return {T(0), T(1), T(0)};
+}
+
+static constexpr Vec3T zAxis() noexcept
+{
+    return {T(0), T(0), T(1)};
+}
+```
+
+But note:
+
+\[
+(0,1,0)
+\]
+
+is the second coordinate axis.
+
+It is not intrinsically:
+
+> world up.
+
+That convention belongs above the generic math layer.
+
+---
+
+# 600.10 Arithmetic begins from vector-space axioms
+
+We need componentwise addition because:
+
+\[
+(a_x,a_y,a_z)
++
+(b_x,b_y,b_z)
+=
+(a_x+b_x,a_y+b_y,a_z+b_z).
+\]
+
+Implement compound assignment first:
+
+```cpp
+template<std::floating_point T>
+constexpr Vec3T<T>& operator+=(
+    Vec3T<T>& a,
+    Vec3T<T> b) noexcept
+{
+    a.x += b.x;
+    a.y += b.y;
+    a.z += b.z;
+    return a;
+}
+```
+
+Then:
+
+```cpp
+template<std::floating_point T>
+constexpr Vec3T<T> operator+(
+    Vec3T<T> a,
+    Vec3T<T> b) noexcept
+{
+    a += b;
+    return a;
+}
+```
+
+Subtraction similarly:
+
+```cpp
+template<std::floating_point T>
+constexpr Vec3T<T>& operator-=(
+    Vec3T<T>& a,
+    Vec3T<T> b) noexcept
+{
+    a.x -= b.x;
+    a.y -= b.y;
+    a.z -= b.z;
+    return a;
+}
+```
+
+---
+
+# 600.11 Scalar multiplication
+
+Vector-space scalar multiplication:
+
+\[
+\lambda(x,y,z)
+=
+(\lambda x,\lambda y,\lambda z).
+\]
+
+```cpp
+template<std::floating_point T>
+constexpr Vec3T<T> operator*(
+    Vec3T<T> v,
+    T s) noexcept
+{
+    return {
+        v.x * s,
+        v.y * s,
+        v.z * s
+    };
+}
+
+template<std::floating_point T>
+constexpr Vec3T<T> operator*(
+    T s,
+    Vec3T<T> v) noexcept
+{
+    return v * s;
+}
+```
+
+Division:
+
+```cpp
+template<std::floating_point T>
+constexpr Vec3T<T> operator/(
+    Vec3T<T> v,
+    T s) noexcept
+{
+    return {
+        v.x / s,
+        v.y / s,
+        v.z / s
+    };
+}
+```
+
+The primitive operator follows floating-point arithmetic.
+
+Higher-level functions enforce geometric preconditions.
+
+---
+
+# 600.12 What we deliberately do NOT define
+
+We do not define:
+
+```cpp
+Vec3 * Vec3
+```
+
+because there are too many plausible meanings:
+
+\[
+\text{dot product},
+\]
+
+\[
+\text{Hadamard product}.
+\]
+
+Use explicit operations:
+
+```cpp
+dot(a, b);
+hadamard(a, b);
+cross(a, b);
+```
+
+When mathematics contains multiple multiplication concepts, the code should say which one.
+
+---
+
+# 600.13 Dot product
+
+From Parts 534–536:
+
+\[
+\boxed{
+a\cdot b
+=
+a_xb_x+a_yb_y+a_zb_z.
+}
+\]
+
+```cpp
+template<std::floating_point T>
+constexpr T dot(
+    Vec3T<T> a,
+    Vec3T<T> b) noexcept
+{
+    return
+        a.x * b.x +
+        a.y * b.y +
+        a.z * b.z;
+}
+```
+
+Its meaning depends on context.
+
+For Euclidean vectors in the same orthonormal coordinate space it measures:
+
+\[
+\|a\|\|b\|\cos\theta.
+\]
+
+If coordinate spaces differ, the numeric operation still runs but the geometry is meaningless.
+
+We will address that semantic layer shortly.
+
+---
+
+# 600.14 Cross product
+
+\[
+\boxed{
+a\times b
+=
+(
+a_yb_z-a_zb_y,\;
+a_zb_x-a_xb_z,\;
+a_xb_y-a_yb_x
+).
+}
+\]
+
+```cpp
+template<std::floating_point T>
+constexpr Vec3T<T> cross(
+    Vec3T<T> a,
+    Vec3T<T> b) noexcept
+{
+    return {
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    };
+}
+```
+
+Properties we can test:
+
+\[
+a\cdot(a\times b)\approx0
+\]
+
+and:
+
+\[
+b\cdot(a\times b)\approx0.
+\]
+
+Also:
+
+\[
+a\times b=-(b\times a).
+\]
+
+---
+
+# 600.15 Squared length
+
+Do not invoke `sqrt` unless needed.
+
+\[
+\boxed{
+\|v\|^2=v\cdot v.
+}
+\]
+
+```cpp
+template<std::floating_point T>
+constexpr T lengthSquared(
+    Vec3T<T> v) noexcept
+{
+    return dot(v, v);
+}
+```
+
+Useful for:
+
+```cpp
+if (lengthSquared(delta)
+    < radius * radius)
+{
+    ...
+}
+```
+
+instead of:
+
+```cpp
+if (length(delta) < radius)
+```
+
+when only comparison is needed.
+
+---
+
+# 600.16 Length deserves more thought
+
+The naïve implementation:
+
+```cpp
+return std::sqrt(dot(v, v));
+```
+
+can overflow during intermediate squaring even if we want a numerically careful norm.
+
+Example with very large components:
+
+\[
+v=(10^{30},10^{30},0).
+\]
+
+Binary32 can represent approximately \(10^{30}\).
+
+But:
+
+\[
+10^{60}
+\]
+
+cannot fit in binary32.
+
+So:
+
+\[
+v\cdot v
+\]
+
+may overflow to infinity even though the actual length:
+
+\[
+\sqrt2\times10^{30}
+\]
+
+is still within float's exponent range.
+
+This is why robust norm implementations scale.
+
+---
+
+# 600.17 Robust length derivation
+
+Let:
+
+\[
+m=
+\max(|x|,|y|,|z|).
+\]
+
+If:
+
+\[
+m=0,
+\]
+
+length is zero.
+
+Otherwise write:
+
+\[
+v=m\,u
+\]
+
+where:
+
+\[
+u=
+\left(
+\frac{x}{m},
+\frac{y}{m},
+\frac{z}{m}
+\right).
+\]
+
+Every component of \(u\) has magnitude at most 1.
+
+Then:
+
+\[
+\|v\|
+=
+m\|u\|.
+\]
+
+And:
+
+\[
+1\le\|u\|\le\sqrt3
+\]
+
+for nonzero v with max component normalized to magnitude one.
+
+Intermediate squaring is now safe from the original huge dynamic range.
+
+Implementation:
+
+```cpp
+template<std::floating_point T>
+T length(Vec3T<T> v) noexcept
+{
+    const T ax = std::abs(v.x);
+    const T ay = std::abs(v.y);
+    const T az = std::abs(v.z);
+
+    const T m =
+        std::max({ax, ay, az});
+
+    if (m == T(0))
+        return T(0);
+
+    const Vec3T<T> u = v / m;
+
+    return m *
+        std::sqrt(dot(u, u));
+}
+```
+
+Alternatively, standard-library `hypot` implementations are designed specifically for robust Euclidean norms.
+
+---
+
+# 600.18 Finite-state validation
+
+Geometry generally expects finite coordinates.
+
+```cpp
+template<std::floating_point T>
+bool isFinite(Vec3T<T> v) noexcept
+{
+    return
+        std::isfinite(v.x) &&
+        std::isfinite(v.y) &&
+        std::isfinite(v.z);
+}
+```
+
+Also useful:
+
+```cpp
+template<std::floating_point T>
+bool hasNaN(Vec3T<T> v) noexcept
+{
+    return
+        std::isnan(v.x) ||
+        std::isnan(v.y) ||
+        std::isnan(v.z);
+}
+```
+
+Do not wait until rendering explodes.
+
+Validate at important subsystem boundaries.
+
+---
+
+# 600.19 Normalization: the textbook version
+
+Mathematically:
+
+\[
+\hat v=
+\frac{v}{\|v\|}.
+\]
+
+The naïve implementation:
+
+```cpp
+return v / length(v);
+```
+
+fails for:
+
+\[
+v=0.
+\]
+
+And a poorly implemented length can underflow/overflow.
+
+So normalization should represent failure.
+
+---
+
+# 600.20 Robust normalization without giant/small intermediate values
+
+Again define:
+
+\[
+m=\max(|x|,|y|,|z|).
+\]
+
+If:
+
+\[
+m=0
+\]
+
+there is no direction.
+
+If any component is nonfinite, reject it.
+
+Otherwise:
+
+\[
+u=\frac vm.
+\]
+
+Then normalize u:
+
+\[
+\hat v=
+\frac{u}{\sqrt{u\cdot u}}.
+\]
+
+Notice we do **not need to multiply back by \(m\)**.
+
+Scaling a vector by positive scalar does not change direction.
+
+This handles extremely large and tiny finite components much better than naïvely squaring the original vector.
+
+---
+
+# 600.21 Introduce `UnitVec3`
+
+This is where the Phase 6 theory becomes API design.
+
+```cpp
+template<std::floating_point T>
+class UnitVec3T
+{
+public:
+    constexpr Vec3T<T> value() const noexcept
+    {
+        return value_;
+    }
+
+    constexpr T x() const noexcept { return value_.x; }
+    constexpr T y() const noexcept { return value_.y; }
+    constexpr T z() const noexcept { return value_.z; }
+
+private:
+    explicit constexpr UnitVec3T(
+        Vec3T<T> normalized) noexcept
+        : value_{normalized}
+    {
+    }
+
+    Vec3T<T> value_;
+
+    template<std::floating_point U>
+    friend std::optional<UnitVec3T<U>>
+    tryNormalize(Vec3T<U>) noexcept;
+};
+```
+
+The constructor is private.
+
+Therefore arbitrary code cannot write:
+
+```cpp
+UnitVec3f{3,4,0};
+```
+
+and lie about the invariant.
+
+---
+
+# 600.22 Safe constructor
+
+```cpp
+template<std::floating_point T>
+std::optional<UnitVec3T<T>>
+tryNormalize(Vec3T<T> v) noexcept
+{
+    if (!isFinite(v))
+        return std::nullopt;
+
+    const T m =
+        std::max({
+            std::abs(v.x),
+            std::abs(v.y),
+            std::abs(v.z)
+        });
+
+    if (m == T(0))
+        return std::nullopt;
+
+    const Vec3T<T> scaled = v / m;
+
+    const T scaledLength =
+        std::sqrt(dot(scaled, scaled));
+
+    if (!std::isfinite(scaledLength) ||
+        scaledLength == T(0))
+    {
+        return std::nullopt;
+    }
+
+    return UnitVec3T<T>{
+        scaled / scaledLength
+    };
+}
+```
+
+Now:
+
+```cpp
+auto dir = tryNormalize(v);
+
+if (!dir)
+{
+    // No valid direction exists.
+}
+```
+
+The caller must acknowledge the degeneracy.
+
+---
+
+# 600.23 Why not silently return zero?
+
+Suppose:
+
+```cpp
+normalize(Vec3{0,0,0})
+```
+
+returns:
+
+\[
+(0,0,0).
+\]
+
+That avoids NaN.
+
+But now a function claiming to return a unit vector returned length zero.
+
+The invariant is broken.
+
+Worse, later code may assume:
+
+\[
+u\cdot u=1.
+\]
+
+So returning zero can hide the bug more effectively than NaN.
+
+Use explicit policies:
+
+```cpp
+tryNormalize(...)
+normalizeOr(v, fallback)
+normalizeChecked(...)
+```
+
+depending on the domain.
+
+---
+
+# 600.24 Approximate equality
+
+Keep exact `==` semantically exact:
+
+```cpp
+template<std::floating_point T>
+constexpr bool operator==(
+    Vec3T<T> a,
+    Vec3T<T> b) noexcept
+{
+    return
+        a.x == b.x &&
+        a.y == b.y &&
+        a.z == b.z;
+}
+```
+
+Then provide named closeness.
+
+Scalar helper:
+
+\[
+|a-b|
+\le
+\max
+\left(
+\epsilon_a,
+\epsilon_r\max(|a|,|b|)
+\right).
+\]
+
+```cpp
+template<std::floating_point T>
+bool almostEqualScalar(
+    T a,
+    T b,
+    T absTol,
+    T relTol) noexcept
+{
+    if (a == b)
+        return true;
+
+    if (!std::isfinite(a) ||
+        !std::isfinite(b))
+    {
+        return false;
+    }
+
+    const T diff =
+        std::abs(a - b);
+
+    const T scale =
+        std::max(
+            std::abs(a),
+            std::abs(b));
+
+    return diff <=
+        std::max(
+            absTol,
+            relTol * scale);
+}
+```
+
+Then componentwise vector form.
+
+---
+
+# 600.25 But geometrical distance may be better
+
+Sometimes the question is:
+
+> Are these positions within 1 mm?
+
+Then don't use arbitrary per-component epsilon.
+
+Use:
+
+\[
+\boxed{
+\|a-b\|^2\le(0.001)^2.
+}
+\]
+
+```cpp
+template<std::floating_point T>
+bool nearPosition(
+    Vec3T<T> a,
+    Vec3T<T> b,
+    T distanceTol) noexcept
+{
+    const Vec3T<T> d = a - b;
+
+    return lengthSquared(d)
+        <= distanceTol * distanceTol;
+}
+```
+
+Assuming numeric range is appropriate.
+
+For world-scale extremes, use a robust distance/norm implementation.
+
+The lesson is:
+
+\[
+\boxed{
+\text{comparison policy belongs to the physical question}.
+}
+\]
+
+---
+
+# 600.26 Projection
+
+For arbitrary nonzero target:
+
+\[
+\boxed{
+\operatorname{proj}_b a
+=
+\frac{a\cdot b}{b\cdot b}b.
+}
+\]
+
+Return optional because:
+
+\[
+b=0
+\]
+
+defines no projection direction.
+
+```cpp
+template<std::floating_point T>
+std::optional<Vec3T<T>>
+projectOnto(
+    Vec3T<T> a,
+    Vec3T<T> b) noexcept
+{
+    const T denom = dot(b, b);
+
+    if (!std::isfinite(denom) ||
+        denom == T(0))
+    {
+        return std::nullopt;
+    }
+
+    const T k =
+        dot(a, b) / denom;
+
+    return b * k;
+}
+```
+
+For a unit axis:
+
+\[
+\boxed{
+\operatorname{proj}_u a
+=
+(a\cdot u)u.
+}
+\]
+
+```cpp
+template<std::floating_point T>
+constexpr Vec3T<T>
+projectOnto(
+    Vec3T<T> a,
+    UnitVec3T<T> u) noexcept
+{
+    const Vec3T<T> axis = u.value();
+
+    return axis * dot(a, axis);
+}
+```
+
+This is an example of an invariant eliminating work.
+
+---
+
+# 600.27 Rejection
+
+\[
+\boxed{
+\operatorname{rej}_b a
+=
+a-\operatorname{proj}_b a.
+}
+\]
+
+For unit axis:
+
+```cpp
+template<std::floating_point T>
+constexpr Vec3T<T>
+rejectFrom(
+    Vec3T<T> a,
+    UnitVec3T<T> axis) noexcept
+{
+    return
+        a - projectOnto(a, axis);
+}
+```
+
+Real-life example: remove vertical velocity from a movement vector to get movement along a ground plane.
+
+---
+
+# 600.28 Reflection
+
+For unit normal:
+
+\[
+\boxed{
+R=I-2(I\cdot N)N.
+}
+\]
+
+API:
+
+```cpp
+template<std::floating_point T>
+constexpr Vec3T<T>
+reflect(
+    Vec3T<T> incident,
+    UnitVec3T<T> normal) noexcept
+{
+    const Vec3T<T> n =
+        normal.value();
+
+    return incident -
+        n * (T(2) * dot(incident, n));
+}
+```
+
+Because the function requires `UnitVec3T`, it cannot accidentally use the simplified formula with a non-unit normal.
+
+This is how **types can encode derivations**.
+
+---
+
+# 600.29 Refraction
+
+Given normalized incident and normal plus:
+
+\[
+\eta=\frac{n_1}{n_2},
+\]
+
+we derived:
+
+\[
+k=
+1-\eta^2
+\left[
+1-(I\cdot N)^2
+\right].
+\]
+
+If:
+
+\[
+k<0,
+\]
+
+total internal reflection occurs.
+
+So return optional:
+
+```cpp
+template<std::floating_point T>
+std::optional<UnitVec3T<T>>
+refract(
+    UnitVec3T<T> incident,
+    UnitVec3T<T> normal,
+    T eta) noexcept
+{
+    const Vec3T<T> i =
+        incident.value();
+
+    const Vec3T<T> n =
+        normal.value();
+
+    const T d = dot(i, n);
+
+    T k =
+        T(1)
+        - eta * eta *
+          (T(1) - d * d);
+
+    if (k < T(0))
+        return std::nullopt;
+
+    const Vec3T<T> result =
+        eta * i
+        -
+        (eta * d +
+         std::sqrt(k)) * n;
+
+    return tryNormalize(result);
+}
+```
+
+Production code may need a tiny-boundary policy around \(k=0\).
+
+---
+
+# 600.30 Robust angle
+
+Naïve:
+
+\[
+\theta=
+\arccos
+\frac{a\cdot b}{\|a\|\|b\|}.
+\]
+
+More robust:
+
+\[
+\boxed{
+\theta=
+\operatorname{atan2}
+(
+\|a\times b\|,
+a\cdot b
+).
+}
+\]
+
+For unit inputs:
+
+```cpp
+template<std::floating_point T>
+T angleBetween(
+    UnitVec3T<T> a,
+    UnitVec3T<T> b) noexcept
+{
+    const Vec3T<T> av = a.value();
+    const Vec3T<T> bv = b.value();
+
+    const T sinLike =
+        length(cross(av, bv));
+
+    const T cosLike =
+        dot(av, bv);
+
+    return std::atan2(
+        sinLike,
+        cosLike);
+}
+```
+
+Range:
+
+\[
+[0,\pi].
+\]
+
+No `acos` domain clamp required.
+
+---
+
+# 600.31 Hadamard product
+
+Componentwise product is still useful:
+
+\[
+a\odot b
+=
+(a_xb_x,a_yb_y,a_zb_z).
+\]
+
+For example RGB modulation or componentwise scale.
+
+```cpp
+template<std::floating_point T>
+constexpr Vec3T<T>
+hadamard(
+    Vec3T<T> a,
+    Vec3T<T> b) noexcept
+{
+    return {
+        a.x * b.x,
+        a.y * b.y,
+        a.z * b.z
+    };
+}
+```
+
+We named it because:
+
+\[
+\boxed{
+\text{Hadamard}
+\neq
+\text{dot}
+\neq
+\text{cross}.
+}
+\]
+
+---
+
+# 600.32 A useful `min`/`max` layer
+
+For bounding boxes:
+
+```cpp
+template<std::floating_point T>
+constexpr Vec3T<T>
+componentMin(
+    Vec3T<T> a,
+    Vec3T<T> b) noexcept
+{
+    return {
+        std::min(a.x, b.x),
+        std::min(a.y, b.y),
+        std::min(a.z, b.z)
+    };
+}
+```
+
+Likewise max.
+
+These are not vector-space operations.
+
+They are componentwise utility operations.
+
+Naming that distinction is healthy.
+
+---
+
+# 600.33 `lerp`
+
+Linear interpolation:
+
+\[
+\operatorname{lerp}(a,b,t)
+=
+(1-t)a+tb.
+\]
+
+```cpp
+template<std::floating_point T>
+constexpr Vec3T<T>
+lerp(
+    Vec3T<T> a,
+    Vec3T<T> b,
+    T t) noexcept
+{
+    return
+        a * (T(1) - t)
+        + b * t;
+}
+```
+
+For:
+
+\[
+0\le t\le1,
+\]
+
+this is a convex combination.
+
+For:
+
+\[
+t<0
+\]
+
+or:
+
+\[
+t>1,
+\]
+
+it extrapolates.
+
+Notice how Part 572 reappears directly in API code.
+
+---
+
+# 600.34 `lerp` of unit directions does not stay unit
+
+Suppose:
+
+\[
+a=(1,0,0),
+\]
+
+\[
+b=(0,1,0).
+\]
+
+At:
+
+\[
+t=0.5,
+\]
+
+lerp gives:
+
+\[
+(0.5,0.5,0).
+\]
+
+Length:
+
+\[
+\sqrt{0.5}
+\neq1.
+\]
+
+Therefore:
+
+```cpp
+lerp(UnitVec3, UnitVec3)
+```
+
+should not naturally return `UnitVec3`.
+
+It returns a raw vector unless explicitly renormalized.
+
+Again:
+
+\[
+\boxed{
+\text{return type follows mathematical invariant}.
+}
+\]
+
+---
+
+# 600.35 Point and vector should not necessarily be the same public type
+
+Our core numeric type is `Vec3T`.
+
+At the engine-semantic layer:
+
+```cpp
+struct LocalSpace {};
+struct WorldSpace {};
+struct ViewSpace {};
+```
+
+Define:
+
+```cpp
+template<class Space, std::floating_point T>
+struct Vector3T
+{
+    Vec3T<T> value;
+};
+
+template<class Space, std::floating_point T>
+struct Point3T
+{
+    Vec3T<T> value;
+};
+```
+
+Now we can encode affine arithmetic.
+
+---
+
+# 600.36 Point minus point
+
+\[
+B-A
+\]
+
+returns displacement.
+
+```cpp
+template<class S, std::floating_point T>
+constexpr Vector3T<S,T>
+operator-(
+    Point3T<S,T> b,
+    Point3T<S,T> a) noexcept
+{
+    return {
+        b.value - a.value
+    };
+}
+```
+
+---
+
+# 600.37 Point plus vector
+
+\[
+P+v
+\]
+
+returns point.
+
+```cpp
+template<class S, std::floating_point T>
+constexpr Point3T<S,T>
+operator+(
+    Point3T<S,T> p,
+    Vector3T<S,T> v) noexcept
+{
+    return {
+        p.value + v.value
+    };
+}
+```
+
+But we simply do not provide:
+
+```cpp
+Point3 + Point3
+```
+
+because the mathematical operation is not intrinsic.
+
+---
+
+# 600.38 Coordinate-space safety
+
+Now this fails:
+
+```cpp
+Point3T<LocalSpace,float> local;
+Point3T<WorldSpace,float> world;
+
+auto x = world - local;
+```
+
+No matching operator.
+
+The compiler catches:
+
+\[
+\boxed{
+\text{coordinate-space mismatch}.
+}
+\]
+
+There is zero extra runtime data from the empty tag types.
+
+This is one of the strongest design improvements a graphics math layer can make.
+
+---
+
+# 600.39 Directions versus normals
+
+Part 582 showed they transform differently.
+
+Therefore an even stronger layer might have:
+
+```cpp
+template<class Space, class T>
+struct Direction3T;
+
+template<class Space, class T>
+struct Normal3T;
+```
+
+A transform exposes different operations:
+
+```cpp
+transformPoint(...)
+transformDirection(...)
+transformNormal(...)
+```
+
+instead of one ambiguous:
+
+```cpp
+transform(Vec3)
+```
+
+This matters under nonuniform scale.
+
+---
+
+# 600.40 Do not make every semantic distinction the core `Vec3`
+
+There is a danger in the opposite direction.
+
+If we create:
+
+```text
+WorldUnitNormal3f
+WorldUnitDirection3f
+LocalUnitNormal3f
+LocalVelocity3f
+LocalForce3f
+ViewDirection3f
+...
+```
+
+the library can become unbearable.
+
+So use layers:
+
+```text
+LOW LEVEL
+Vec3f
+    ↓
+mathematical operations
+
+SEMANTIC GEOMETRY
+Point3<Space>
+Direction3<Space>
+Normal3<Space>
+
+DOMAIN LAYER
+Velocity
+Force
+Color
+etc. where truly useful
+```
+
+The goal is not maximal type count.
+
+The goal is protecting dangerous boundaries.
+
+---
+
+# 600.41 Storage representation versus compute representation
+
+Our semantic Vec3 does not have to dictate GPU or SIMD format.
+
+CPU core type:
+
+```text
+12-byte Vec3f
+```
+
+Bulk SIMD kernel might temporarily use:
+
+```text
+[x0 x1 x2 x3]
+[y0 y1 y2 y3]
+[z0 z1 z2 z3]
+```
+
+SoA.
+
+GPU vertex representation might use:
+
+```text
+packed float3
+compressed normal
+```
+
+Different representations can coexist.
+
+The library should provide explicit conversion boundaries.
+
+---
+
+# 600.42 SIMD implementation is an optimization layer
+
+Do **not** begin your vector library with intrinsics.
+
+Begin with mathematical correctness.
+
+Reference implementation:
+
+```cpp
+constexpr Vec3f operator+(
+    Vec3f a,
+    Vec3f b)
+{
+    return {
+        a.x+b.x,
+        a.y+b.y,
+        a.z+b.z
+    };
+}
+```
+
+Then benchmark.
+
+If a hotspot exists, optimized implementation may use:
+
+```text
+SIMD
+SoA
+AoSoA
+batch transforms
+```
+
+The scalar implementation becomes your correctness oracle.
+
+This is an extremely useful engineering pattern:
+
+\[
+\boxed{
+\text{simple reference implementation}
+\rightarrow
+\text{optimized implementation}
+\rightarrow
+\text{cross-check tests}.
+}
+\]
+
+---
+
+# 600.43 A production library needs tests, not faith
+
+For vector operations, tests should be divided into **identities**, **edge cases**, and **numerical contracts**.
+
+Examples:
+
+```cpp
+TEST(Vec3, Addition)
+{
+    Vec3f a{1,2,3};
+    Vec3f b{4,5,6};
+
+    EXPECT_EQ(
+        a + b,
+        Vec3f(5,7,9));
+}
+```
+
+Cross:
+
+```cpp
+TEST(Vec3, CrossBasis)
+{
+    EXPECT_EQ(
+        cross(
+            Vec3f::xAxis(),
+            Vec3f::yAxis()),
+        Vec3f::zAxis());
+}
+```
+
+---
+
+# 600.44 Property tests are stronger
+
+Rather than only hard-coded inputs:
+
+For random finite vectors \(a,b\), check:
+
+\[
+a+b=b+a
+\]
+
+approximately, acknowledging floating-point evaluation.
+
+Check:
+
+\[
+a\times b\approx-(b\times a).
+\]
+
+Check:
+
+\[
+a\cdot(a\times b)\approx0.
+\]
+
+Check normalized vectors:
+
+\[
+\|\hat a\|\approx1.
+\]
+
+Check reflection:
+
+\[
+\|R\|\approx\|I\|
+\]
+
+for unit normal.
+
+These tests validate structural mathematics rather than a handful of examples.
+
+---
+
+# 600.45 But floating point breaks some exact algebraic laws
+
+Do not test:
+
+\[
+(a+b)+c=a+(b+c)
+\]
+
+with exact equality and declare vector addition broken when it fails.
+
+Floating-point addition is not associative.
+
+Likewise distributivity can fail bitwise.
+
+Your tests must distinguish:
+
+\[
+\boxed{
+\text{mathematical law}
+}
+\]
+
+from:
+
+\[
+\boxed{
+\text{finite machine approximation}.
+}
+\]
+
+---
+
+# 600.46 Edge-case test matrix
+
+A serious vector library should deliberately test values such as:
+
+\[
+0,
+\]
+
+\[
+-0,
+\]
+
+very small subnormals,
+
+very large finite floats,
+
+\[
++\infty,
+\]
+
+\[
+-\infty,
+\]
+
+NaN,
+
+parallel vectors,
+
+antiparallel vectors,
+
+nearly parallel vectors,
+
+orthogonal vectors.
+
+These are not weird academic values.
+
+They are exactly where numerical APIs expose weaknesses.
+
+---
+
+# 600.47 Manual execution trace
+
+Let's run one vector through several functions.
+
+Take:
+
+\[
+v=(3,4,0).
+\]
+
+### Squared length
+
+\[
+v\cdot v
+=
+3^2+4^2
+=
+25.
+\]
+
+### Length
+
+\[
+\sqrt{25}=5.
+\]
+
+### Normalize
+
+\[
+\hat v=
+\left(
+\frac35,\frac45,0
+\right)
+=
+(0.6,0.8,0).
+\]
+
+Check:
+
+\[
+0.6^2+0.8^2
+=
+0.36+0.64
+=
+1.
+\]
+
+---
+
+# 600.48 Projection trace
+
+Project:
+
+\[
+a=(4,3,0)
+\]
+
+onto:
+
+\[
+b=(2,1,0).
+\]
+
+Dot:
+
+\[
+a\cdot b
+=
+8+3
+=
+11.
+\]
+
+Denominator:
+
+\[
+b\cdot b
+=
+4+1
+=
+5.
+\]
+
+Coefficient:
+
+\[
+\frac{11}{5}=2.2.
+\]
+
+Projection:
+
+\[
+2.2(2,1,0)
+=
+(4.4,2.2,0).
+\]
+
+Rejection:
+
+\[
+a-p
+=
+(-0.4,0.8,0).
+\]
+
+Check orthogonality:
+
+\[
+(-0.4)(2)+(0.8)(1)=0.
+\]
+
+Our code should reproduce this within floating-point tolerance.
+
+---
+
+# 600.49 Cross trace
+
+Take:
+
+\[
+a=(1,0,0)
+\]
+
+and:
+
+\[
+b=(0,1,0).
+\]
+
+Cross:
+
+\[
+a\times b=(0,0,1).
+\]
+
+Swap:
+
+\[
+b\times a=(0,0,-1).
+\]
+
+That test simultaneously validates:
+
+- coordinate formula;
+- right-handed convention;
+- antisymmetry.
+
+---
+
+# 600.50 Angle trace
+
+Take unit:
+
+\[
+a=(1,0,0)
+\]
+
+and:
+
+\[
+b=(0,1,0).
+\]
+
+Cross magnitude:
+
+\[
+1.
+\]
+
+Dot:
+
+\[
+0.
+\]
+
+Therefore:
+
+\[
+\theta=
+\operatorname{atan2}(1,0)
+=
+\frac{\pi}{2}.
+\]
+
+Perfect.
+
+---
+
+# 600.51 Complexity
+
+Every ordinary `Vec3` operation is fixed dimension.
+
+So asymptotically:
+
+\[
+\boxed{O(1)}.
+\]
+
+But that statement is almost useless for performance engineering.
+
+Actual costs differ:
+
+```text
+addition            ~3 scalar adds
+scalar multiply     ~3 multiplies
+dot                 ~3 multiplies + reduction
+cross               ~6 multiplies + 3 subtracts
+normalize           dot/norm + sqrt/divide
+angle               dot + cross + norm + atan2
+```
+
+`atan2` is far more expensive than addition.
+
+So "both are O(1)" does not mean equal cost.
+
+---
+
+# 600.52 Allocation
+
+A correct basic Vec3 operation should allocate:
+
+\[
+\boxed{0\text{ heap bytes}.}
+\]
+
+This:
+
+```cpp
+Vec3f c = a + b;
+```
+
+should create a small value, typically registers/stack as required by optimization and ABI.
+
+If basic vector addition causes dynamic allocation, your design has gone badly wrong.
+
+---
+
+# 600.53 Cache and bandwidth
+
+For one vector, irrelevant.
+
+For:
+
+\[
+10^7
+\]
+
+vectors, dominant.
+
+A 12-byte position stream is roughly:
+
+\[
+120\text{ MB}
+\]
+
+for ten million positions.
+
+Reading and writing several such streams can easily become memory-bandwidth dominated.
+
+At scale, memory layout becomes as important as arithmetic.
+
+That is why our library should not hide storage assumptions.
+
+---
+
+# 600.54 Thread safety
+
+A Vec3 value itself has no global state.
+
+Two threads operating on separate vectors are independent.
+
+But:
+
+```cpp
+sharedVelocity += impulse;
+```
+
+from multiple threads without synchronization is a race.
+
+The math type should not contain internal locks.
+
+Synchronization belongs to the system owning shared state.
+
+Tiny numeric values should remain cheap and composable.
+
+---
+
+# 600.55 Serialization
+
+Never assume:
+
+```cpp
+file.write(
+    reinterpret_cast<char*>(&v),
+    sizeof(v));
+```
+
+defines a permanent portable format.
+
+Questions include:
+
+- float representation;
+- endianness;
+- padding;
+- versioning;
+- precision;
+- platform ABI.
+
+A file format should explicitly define components:
+
+```text
+x: IEEE binary32 little-endian
+y: IEEE binary32 little-endian
+z: IEEE binary32 little-endian
+```
+
+if that is the chosen format.
+
+Object representation and serialization format are separate contracts.
+
+---
+
+# 600.56 GPU upload
+
+Likewise, CPU:
+
+```cpp
+struct Vec3f
+```
+
+does not automatically match every GPU buffer layout.
+
+The GPU-side format may expect specific:
+
+- alignment;
+- stride;
+- packing.
+
+Always define the buffer contract explicitly.
+
+This is where many "math bugs" are actually memory-layout bugs.
+
+---
+
+# 600.57 Debug-build invariant checks
+
+Useful debugging macro:
+
+```cpp
+#ifndef NDEBUG
+
+#define ASSERT_FINITE_VEC3(v) \
+    assert(isFinite(v))
+
+#else
+
+#define ASSERT_FINITE_VEC3(v) \
+    ((void)0)
+
+#endif
+```
+
+Then strategic boundaries:
+
+```cpp
+ASSERT_FINITE_VEC3(position);
+ASSERT_FINITE_VEC3(velocity);
+```
+
+Do not necessarily put the check into every addition.
+
+Catch corruption close to subsystem boundaries.
+
+---
+
+# 600.58 Production `Vec3` should be boring
+
+This is important.
+
+A high-quality foundational math type should not:
+
+- allocate;
+- log;
+- touch global state;
+- call virtual functions;
+- hide expensive conversions;
+- silently normalize;
+- silently clamp NaNs;
+- silently change coordinate spaces.
+
+It should behave predictably.
+
+Complex policies belong in named functions or higher-level semantic types.
+
+---
+
+# 600.59 What about fast-math?
+
+Compilers can enable transformations that assume things such as:
+
+- no NaNs;
+- no infinities;
+- reassociation allowed.
+
+This may improve vector math throughput.
+
+It can also invalidate debugging assumptions and bitwise determinism.
+
+Therefore build policy matters.
+
+A math library compiled under aggressive floating-point assumptions may behave differently from the reference semantics you expect.
+
+Production engineering includes compiler configuration.
+
+---
+
+# 600.60 One sensible canonical header
+
+Putting the core ideas together:
+
+```cpp
+#pragma once
+
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <concepts>
+#include <cstddef>
+#include <optional>
+#include <type_traits>
+
+namespace kairo::math
+{
+
+template<std::floating_point T>
+struct Vec3T
+{
+    T x{};
+    T y{};
+    T z{};
+
+    constexpr Vec3T() noexcept = default;
+
+    constexpr Vec3T(
+        T x_,
+        T y_,
+        T z_) noexcept
+        : x{x_}, y{y_}, z{z_}
+    {
+    }
+
+    explicit constexpr Vec3T(T s) noexcept
+        : x{s}, y{s}, z{s}
+    {
+    }
+
+    constexpr T& operator[](
+        std::size_t i) noexcept
+    {
+        assert(i < 3);
+
+        switch (i)
+        {
+            case 0: return x;
+            case 1: return y;
+            default: return z;
+        }
+    }
+
+    constexpr T const& operator[](
+        std::size_t i) const noexcept
+    {
+        assert(i < 3);
+
+        switch (i)
+        {
+            case 0: return x;
+            case 1: return y;
+            default: return z;
+        }
+    }
+
+    static constexpr Vec3T zero() noexcept
+    {
+        return {T(0), T(0), T(0)};
+    }
+
+    static constexpr Vec3T xAxis() noexcept
+    {
+        return {T(1), T(0), T(0)};
+    }
+
+    static constexpr Vec3T yAxis() noexcept
+    {
+        return {T(0), T(1), T(0)};
+    }
+
+    static constexpr Vec3T zAxis() noexcept
+    {
+        return {T(0), T(0), T(1)};
+    }
+};
+
+template<std::floating_point T>
+constexpr bool operator==(
+    Vec3T<T> a,
+    Vec3T<T> b) noexcept
+{
+    return
+        a.x == b.x &&
+        a.y == b.y &&
+        a.z == b.z;
+}
+
+template<std::floating_point T>
+constexpr Vec3T<T> operator-(
+    Vec3T<T> v) noexcept
+{
+    return {-v.x, -v.y, -v.z};
+}
+
+template<std::floating_point T>
+constexpr Vec3T<T>& operator+=(
+    Vec3T<T>& a,
+    Vec3T<T> b) noexcept
+{
+    a.x += b.x;
+    a.y += b.y;
+    a.z += b.z;
+    return a;
+}
+
+template<std::floating_point T>
+constexpr Vec3T<T>& operator-=(
+    Vec3T<T>& a,
+    Vec3T<T> b) noexcept
+{
+    a.x -= b.x;
+    a.y -= b.y;
+    a.z -= b.z;
+    return a;
+}
+
+template<std::floating_point T>
+constexpr Vec3T<T> operator+(
+    Vec3T<T> a,
+    Vec3T<T> b) noexcept
+{
+    a += b;
+    return a;
+}
+
+template<std::floating_point T>
+constexpr Vec3T<T> operator-(
+    Vec3T<T> a,
+    Vec3T<T> b) noexcept
+{
+    a -= b;
+    return a;
+}
+
+template<std::floating_point T>
+constexpr Vec3T<T> operator*(
+    Vec3T<T> v,
+    T s) noexcept
+{
+    return {
+        v.x * s,
+        v.y * s,
+        v.z * s
+    };
+}
+
+template<std::floating_point T>
+constexpr Vec3T<T> operator*(
+    T s,
+    Vec3T<T> v) noexcept
+{
+    return v * s;
+}
+
+template<std::floating_point T>
+constexpr Vec3T<T> operator/(
+    Vec3T<T> v,
+    T s) noexcept
+{
+    return {
+        v.x / s,
+        v.y / s,
+        v.z / s
+    };
+}
+
+template<std::floating_point T>
+constexpr T dot(
+    Vec3T<T> a,
+    Vec3T<T> b) noexcept
+{
+    return
+        a.x * b.x +
+        a.y * b.y +
+        a.z * b.z;
+}
+
+template<std::floating_point T>
+constexpr Vec3T<T> cross(
+    Vec3T<T> a,
+    Vec3T<T> b) noexcept
+{
+    return {
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    };
+}
+
+template<std::floating_point T>
+constexpr T lengthSquared(
+    Vec3T<T> v) noexcept
+{
+    return dot(v, v);
+}
+
+template<std::floating_point T>
+T length(Vec3T<T> v) noexcept
+{
+    return std::hypot(v.x, v.y, v.z);
+}
+
+template<std::floating_point T>
+bool isFinite(Vec3T<T> v) noexcept
+{
+    return
+        std::isfinite(v.x) &&
+        std::isfinite(v.y) &&
+        std::isfinite(v.z);
+}
+
+template<std::floating_point T>
+class UnitVec3T
+{
+public:
+    constexpr Vec3T<T>
+    value() const noexcept
+    {
+        return value_;
+    }
+
+private:
+    explicit constexpr UnitVec3T(
+        Vec3T<T> v) noexcept
+        : value_{v}
+    {
+    }
+
+    Vec3T<T> value_;
+
+    template<std::floating_point U>
+    friend std::optional<UnitVec3T<U>>
+    tryNormalize(Vec3T<U>) noexcept;
+};
+
+template<std::floating_point T>
+std::optional<UnitVec3T<T>>
+tryNormalize(Vec3T<T> v) noexcept
+{
+    if (!isFinite(v))
+        return std::nullopt;
+
+    const T scale = std::max({
+        std::abs(v.x),
+        std::abs(v.y),
+        std::abs(v.z)
+    });
+
+    if (scale == T(0))
+        return std::nullopt;
+
+    Vec3T<T> u = v / scale;
+
+    const T len =
+        std::sqrt(dot(u, u));
+
+    if (!std::isfinite(len) ||
+        len == T(0))
+    {
+        return std::nullopt;
+    }
+
+    return UnitVec3T<T>{u / len};
+}
+
+template<std::floating_point T>
+constexpr Vec3T<T> projectOnto(
+    Vec3T<T> v,
+    UnitVec3T<T> axis) noexcept
+{
+    const Vec3T<T> u = axis.value();
+
+    return u * dot(v, u);
+}
+
+template<std::floating_point T>
+constexpr Vec3T<T> rejectFrom(
+    Vec3T<T> v,
+    UnitVec3T<T> axis) noexcept
+{
+    return v - projectOnto(v, axis);
+}
+
+template<std::floating_point T>
+constexpr Vec3T<T> reflect(
+    Vec3T<T> incident,
+    UnitVec3T<T> normal) noexcept
+{
+    const Vec3T<T> n =
+        normal.value();
+
+    return incident
+        - n * (T(2) * dot(incident, n));
+}
+
+template<std::floating_point T>
+constexpr Vec3T<T> lerp(
+    Vec3T<T> a,
+    Vec3T<T> b,
+    T t) noexcept
+{
+    return
+        a * (T(1) - t)
+        + b * t;
+}
+
+using Vec3f = Vec3T<float>;
+using Vec3d = Vec3T<double>;
+
+static_assert(
+    std::is_trivially_copyable_v<Vec3f>);
+
+static_assert(
+    std::is_standard_layout_v<Vec3f>);
+
+} // namespace kairo::math
+```
+
+This is not the only valid production design.
+
+It is a **defensible canonical baseline** whose decisions we can explain.
+
+That is what matters.
+
+---
+
+# 600.61 What intentionally is NOT inside this header
+
+Notice we did not dump everything imaginable into `Vec3`.
+
+No:
+
+```text
+matrix transforms
+quaternions
+random generation
+noise
+color conversion
+ray intersections
+physics forces
+serialization
+GPU upload
+```
+
+Those belong to other layers.
+
+A foundational type becomes worse when every subsystem attaches unrelated convenience functions to it.
+
+Keep the primitive coherent.
+
+---
+
+# 600.62 Test the memory assumptions separately
+
+For a build targeting a packed float3 ABI:
+
+```cpp
+static_assert(sizeof(float) == 4);
+static_assert(sizeof(Vec3f) == 12);
+static_assert(alignof(Vec3f) == alignof(float));
+```
+
+But if SIMD build uses a separate aligned compute type:
+
+```cpp
+struct alignas(16) SimdVec3
+{
+    float x, y, z, pad;
+};
+```
+
+do not pretend it has the same external binary representation.
+
+Explicit conversion:
+
+```cpp
+SimdVec3 load(Vec3f v);
+Vec3f store(SimdVec3 v);
+```
+
+is clearer.
+
+---
+
+# 600.63 Scalar reference versus SIMD optimized implementation
+
+Suppose later you write:
+
+```cpp
+SimdVec3 crossSimd(...);
+```
+
+Your test should compare:
+
+\[
+crossSimd(a,b)
+\]
+
+against:
+
+\[
+cross(a,b)
+\]
+
+over thousands/millions of representative random inputs.
+
+The scalar implementation is the oracle.
+
+If results differ slightly due to FMA/reordering, establish an explicit tolerance.
+
+Optimization should have evidence.
+
+---
+
+# 600.64 Reconstruct the entire library from its mathematics
+
+If you lose the code, you should be able to derive everything.
+
+### Addition
+
+Vector-space axiom:
+
+\[
+(x,y,z)+(a,b,c)
+=
+(x+a,y+b,z+c).
+\]
+
+### Dot
+
+Euclidean inner product:
+
+\[
+xa+yb+zc.
+\]
+
+### Cross
+
+Oriented 3D area:
+
+\[
+(yc-zb,\;za-xc,\;xb-ya).
+\]
+
+### Squared norm
+
+\[
+v\cdot v.
+\]
+
+### Normalize
+
+\[
+v/\|v\|.
+\]
+
+### Projection
+
+\[
+\frac{v\cdot b}{b\cdot b}b.
+\]
+
+### Rejection
+
+\[
+v-\operatorname{proj}_b(v).
+\]
+
+### Reflection
+
+\[
+v-2\operatorname{proj}_n(v)
+\]
+
+for a unit normal.
+
+### Angle
+
+\[
+\operatorname{atan2}
+(
+\|a\times b\|,
+a\cdot b
+).
+\]
+
+None of these need memorized C++.
+
+The C++ merely represents the mathematics.
+
+---
+
+# 600.65 And reconstruct the safety from the failure modes
+
+Why optional normalization?
+
+Because:
+
+\[
+0
+\]
+
+has no direction.
+
+Why `UnitVec3`?
+
+Because many formulas simplify only if:
+
+\[
+\|u\|=1.
+\]
+
+Why finite checks?
+
+Because NaN/Inf poison geometry.
+
+Why exact `operator==` plus named approximation?
+
+Because approximate equality is context-dependent and non-transitive.
+
+Why space tags?
+
+Because identical tuples in different bases can represent different geometric objects.
+
+Why point/direction distinction?
+
+Because:
+
+\[
+P-P=V
+\]
+
+and:
+
+\[
+P+V=P,
+\]
+
+not arbitrary vector-space point arithmetic.
+
+Why packed versus aligned separation?
+
+Because memory and compute have different optimization goals.
+
+Every design decision should trace backward to a reason.
+
+---
+
+# 600.66 Interview attack tree
+
+Suppose an interviewer asks:
+
+> Implement Vec3.
+
+Do not immediately dump three floats.
+
+Start:
+
+> I'll make it a small trivially-copyable value type with three floating components. Then I'll distinguish raw arithmetic from operations with geometric preconditions, such as normalization.
+
+Then they ask:
+
+> Why does normalization fail?
+
+Because:
+
+\[
+v/\|v\|
+\]
+
+requires:
+
+\[
+\|v\|\neq0.
+\]
+
+Then:
+
+> Why not return zero?
+
+Because zero does not satisfy the unit-vector invariant.
+
+Then:
+
+> Why not always normalize inputs automatically?
+
+Because it changes magnitude, costs a square root/division, hides caller bugs, and is wrong for displacement/velocity vectors where magnitude carries meaning.
+
+Then:
+
+> Why not `Vec3 * Vec3` for dot product?
+
+Because componentwise multiplication is an equally plausible interpretation; named operations communicate intent.
+
+Then:
+
+> Why not `epsilon = 1e-5` everywhere?
+
+Because floating-point error and meaningful physical tolerance depend on scale/domain.
+
+Then:
+
+> Why use 12 bytes instead of 16?
+
+Because packed storage improves bandwidth; SIMD compute representation can be separate.
+
+Then:
+
+> Why not use one Vec3 for positions and directions?
+
+You *can* at the numeric layer, but a stronger geometry layer should distinguish affine roles and coordinate spaces to prevent invalid arithmetic.
+
+If you can follow that chain without memorized interview answers, you understand the library.
+
+---
+
+# 600.67 Debugging scenario 1 — object disappears
+
+You find:
+
+```text
+position = (NaN, NaN, NaN)
+```
+
+Do not patch:
+
+```cpp
+if (!finite(position))
+    position = {};
+```
+
+Trace backward.
+
+Suppose:
+
+```text
+position
+↑ velocity integration
+↑ velocity
+↑ collision response
+↑ contact normal
+↑ normalize(cross(edge1, edge2))
+↑ degenerate triangle
+```
+
+The actual bug is a zero-area triangle producing no valid normal.
+
+The vector library's `tryNormalize` helps expose that failure where it occurs.
+
+That is better architecture.
+
+---
+
+# 600.68 Debugging scenario 2 — lighting breaks only after scaling
+
+Geometry appears fine.
+
+Lighting works until object gets:
+
+```text
+scale = (3,1,0.5)
+```
+
+Then highlights skew.
+
+Raw Vec3 math is probably fine.
+
+Check semantic operation:
+
+Did code transform a normal using:
+
+\[
+A n
+\]
+
+instead of:
+
+\[
+A^{-T}n?
+\]
+
+This is not a Vec3 arithmetic bug.
+
+It is a **normal semantics** bug.
+
+A `Normal3` API can make the difference visible.
+
+---
+
+# 600.69 Debugging scenario 3 — physics works near origin, jitters far away
+
+Near:
+
+\[
+(0,0,0)
+\]
+
+everything works.
+
+At:
+
+\[
+(10^7,0,0)
+\]
+
+small motion vanishes.
+
+Cause:
+
+binary32 absolute spacing grows with magnitude.
+
+Solutions might include:
+
+- `Vec3d` authoritative positions;
+- floating origin;
+- region/local coordinates;
+- camera-relative representation.
+
+Again, not an addition formula bug.
+
+It is representation precision.
+
+---
+
+# 600.70 Debugging scenario 4 — GPU vertices explode
+
+CPU positions look valid.
+
+First GPU vertex is correct.
+
+Subsequent ones shift.
+
+Investigate:
+
+```text
+CPU sizeof(Vec3) = 12
+GPU expected stride = 16
+```
+
+or vice versa.
+
+The numbers are fine.
+
+The ABI/layout is not.
+
+---
+
+# 600.71 Real-life full engine trace
+
+Suppose local spaceship vertex:
+
+\[
+P_L=(2,0,0).
+\]
+
+Its local normal:
+
+\[
+N_L=(0,1,0).
+\]
+
+Ship has world transform.
+
+At semantic layer:
+
+```cpp
+Point3<LocalSpace> pLocal;
+Normal3<LocalSpace> nLocal;
+```
+
+Transform:
+
+```text
+point:
+Local → World
+using affine transform including translation
+
+normal:
+Local → World
+using inverse transpose
+```
+
+Now light position:
+
+```cpp
+Point3<WorldSpace> light;
+```
+
+Compute:
+
+\[
+L=
+light-P_W.
+\]
+
+Because:
+
+\[
+Point-Point=Vector.
+\]
+
+Try normalize:
+
+```cpp
+auto lightDir = tryNormalize(L);
+```
+
+If success, compute:
+
+\[
+N_W\cdot L_W.
+\]
+
+Both are now:
+
+```text
+world-space
+unit directions/normal
+finite
+```
+
+A raw three-float library supplied the arithmetic.
+
+The semantic layer guaranteed the geometry.
+
+That is what a real engine vector stack should look like conceptually.
+
+---
+
+# 600.72 What "production-ready" really means here
+
+It does **not** mean:
+
+> this single header contains every feature every AAA engine will ever need.
+
+It means the design is built around production concerns:
+
+\[
+\boxed{
+\text{correct mathematical contracts}
+}
+\]
+
+\[
+\boxed{
+\text{defined failure behavior}
+}
+\]
+
+\[
+\boxed{
+\text{finite floating-point reality}
+}
+\]
+
+\[
+\boxed{
+\text{cheap value semantics}
+}
+\]
+
+\[
+\boxed{
+\text{memory-layout awareness}
+}
+\]
+
+\[
+\boxed{
+\text{optimization boundaries}
+}
+\]
+
+\[
+\boxed{
+\text{semantic space/invariant safety}
+}
+\]
+
+\[
+\boxed{
+\text{testability/debuggability}.
+}
+\]
+
+That is vastly different from a tutorial Vec3 with ten operators.
+
+---
+
+# 600.73 What not to put into the core type
+
+A useful final rule is:
+
+```text
+If an operation depends only on the mathematical Vec3,
+it can belong near Vec3.
+
+If it depends on a semantic domain,
+put it in that domain layer.
+```
+
+For example:
+
+\[
+dot(a,b)
+\]
+
+belongs to vector math.
+
+But:
+
+```cpp
+applyGravity(Vec3 velocity)
+```
+
+belongs to physics.
+
+Likewise:
+
+```cpp
+toSRGB(Vec3 color)
+```
+
+belongs to color processing.
+
+And:
+
+```cpp
+transformNormal(...)
+```
+
+belongs with transformations/geometry semantics.
+
+This prevents your math library from becoming a junk drawer.
+
+---
+
+# 600.74 THE PHASE-6 CLOSED-BOOK RECONSTRUCTION
+
+You started this phase with:
+
+> What is a scalar?
+
+You should now be able to move through the entire chain.
+
+A vector is not fundamentally three floats.
+
+It is an element of a vector space.
+
+Its coordinates depend on a basis.
+
+Points are affine objects, not free vectors.
+
+Norms measure size.
+
+The dot product measures inner-product alignment.
+
+Projection decomposes vectors.
+
+Cross products encode 3D oriented area through a pseudovector.
+
+Triple products encode oriented volume.
+
+Tangents span a surface.
+
+Normals annihilate the tangent plane and transform covector-like.
+
+Orthonormal bases make coordinate extraction easy.
+
+Handedness records basis orientation.
+
+Barycentric coordinates are affine weights.
+
+Convex combinations generate convex geometry.
+
+Minkowski differences convert collision into origin containment.
+
+Support mappings find extreme convex points.
+
+Homogeneous coordinates distinguish points and directions through \(w\).
+
+Exterior algebra recognizes that two vectors fundamentally span an oriented plane element:
+
+\[
+a\wedge b.
+\]
+
+Geometric algebra combines:
+
+\[
+a\cdot b
+\]
+
+and:
+
+\[
+a\wedge b
+\]
+
+inside one product.
+
+Then all of that finally becomes:
+
+```text
+float x
+float y
+float z
+```
+
+in memory.
+
+But now you know that those twelve bytes might semantically mean:
+
+```text
+a local displacement
+a world-space unit direction
+a surface normal
+a velocity
+an RGB triplet
+a triangle edge
+```
+
+and that the machine cannot distinguish these meanings unless **you design the API to do so**.
+
+That is the entire point of Phase 6.
+
+---
+
+# Part 600 Mastery Gate
+
+You own this Part if, from a blank C++ file, you can reconstruct a core `Vec3` and defend every design decision.
+
+You should be able to implement without copying:
+
+```cpp
+Vec3
+operator+
+operator-
+scalar *
+scalar /
+dot
+cross
+lengthSquared
+length
+tryNormalize
+project
+reject
+reflect
+almostEqual
+isFinite
+```
+
+and explain the mathematics behind every one.
+
+Then you must be able to answer these without guessing:
+
+**Why doesn't zero normalize?**
+
+Because it has no direction and division requires nonzero norm.
+
+**Why isn't a normal merely another direction?**
+
+Because its defining property is orthogonality to tangent space, so under general transforms it follows inverse-transpose behavior.
+
+**Why doesn't approximate equality belong blindly in `operator==`?**
+
+Because tolerance is domain-dependent and approximate comparison lacks clean equivalence properties such as transitivity.
+
+**Why isn't 16-byte Vec3 always better than 12-byte Vec3?**
+
+Because alignment/SIMD convenience competes against storage and bandwidth.
+
+**Why is local `(1,0,0)` not necessarily the same geometric direction as world `(1,0,0)`?**
+
+Because coordinates are coefficients relative to different bases.
+
+**Why should unit vectors be a stronger type?**
+
+Because the invariant:
+
+\[
+u\cdot u=1
+\]
+
+allows simpler formulas and catches invalid inputs at construction.
+
+**Why should the core implementation remain simple?**
+
+Because correctness, portability and testability come first; storage and SIMD optimizations can be specialized around measured workloads.
+
+And the final blank-board proof:
+
+\[
+\boxed{
+\text{Derive it. Represent it. Implement it. Defend it.}
+}
+\]
+
+If you can do that for `Vec3`, Phase 6 has succeeded. The curriculum explicitly defines that reconstruction-level standard as the mastery criterion. Project_Sheldon_Master_Curricul…
+
+---
+
+# PHASE 6 COMPLETE
+
+**Completed Part 600 — Reconstructing a production-ready Vec3 library from first principles.**
+
+That closes:
+
+\[
+\boxed{\textbf{Parts 501–600}}
+\]
+
+**Scalars, Vectors, Vector Spaces, Norms, and Geometric Algebra Foundations.**
+
+We are done with the vector phase.
+
+The next phase is where all of this starts moving entire coordinate systems and objects instead of individual vectors:
+
+# Phase 7 — Matrices, Linear Transforms, Affine Transforms, Coordinate Frames, and Quaternions
+
+**Next Core Part 601 — Matrices as rectangular arrays of scalars.** Project_Sheldon_Master_Curricul…

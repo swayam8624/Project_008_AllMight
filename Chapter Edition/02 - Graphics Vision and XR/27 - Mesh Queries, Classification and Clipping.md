@@ -8,7 +8,7 @@ A primitive intersection test and a scene query solve different problems; meshes
 
 **Recall question:** What extra work is required to turn a ray–triangle test into a mesh containment query?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 67890–70958; source-span SHA256 e7a6dba6ac80dd93ac1fc24c080cf25f2d60526c6a27b90ac043ee0164bb3394. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 68892–71960; source-span SHA256 e7a6dba6ac80dd93ac1fc24c080cf25f2d60526c6a27b90ac043ee0164bb3394. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Mesh Ray, Overlap, Containment, Classification and Clipping

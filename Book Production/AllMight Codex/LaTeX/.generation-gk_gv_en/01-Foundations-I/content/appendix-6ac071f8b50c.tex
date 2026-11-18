@@ -1,0 +1,45 @@
+\hypertarget{appendix-6ac071f8b50c}{}
+\section*{Hessians and local curvature}
+\chapter{Hessians and local curvature}\label{appendix-6ac071f8b50c-hessians-and-local-curvature}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 9 · \textbf{Latest development:} Phase 9
+
+\section{Definition and mechanism}\label{appendix-6ac071f8b50c-definition-and-mechanism}
+
+The Hessian collects second partial derivatives of a scalar objective. It describes how the gradient changes and supplies the quadratic term in a local Taylor model. For a smooth scalar field, the Hessian is symmetric under the usual equality-of-mixed-partials assumptions. Its eigenvectors indicate local curvature directions: positive eigenvalues give upward curvature, negative values downward curvature, and near-zero values weakly constrained directions. A positive-definite Hessian supports a strict local minimum in the unconstrained setting, while an indefinite Hessian signals a saddle-like local model. The Hessian is not the same as the curvature of an embedded geometric surface, though both involve second-order change. In optimization, exact Newton steps solve with the Hessian; practical methods may regularize or approximate it because conditioning, cost, or indefiniteness can make direct steps unreliable.
+
+\section{Prerequisites}\label{appendix-6ac071f8b50c-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-d8a7ddb675eb]{Jacobians, pushforwards, and pullbacks}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-50d2ea3c9b26}{Symmetric positive-definite matrices and Cholesky (02-Foundations-II, appendix-50d2ea3c9b26)}
+\end{itemize}
+
+\section{Used by}\label{appendix-6ac071f8b50c-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-54c8f5828387}{Newton and quasi-Newton optimization (02-Foundations-II, appendix-54c8f5828387)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-2c2df8345991}{Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt (02-Foundations-II, appendix-2c2df8345991)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-32f39e9a3738}{Taylor models and approximation error (02-Foundations-II, appendix-32f39e9a3738)}
+\end{itemize}
+
+\section{Full teaching explanation}\label{appendix-6ac071f8b50c-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Jacobians,\%20curvature,\%20and\%20local\%20approximation}{Phase 9 teaching section}
+\item
+  \hyperref[appendix-adf48f5dc5c1]{Visual Recall/09 - Calculus and Optimization - Visual Recall.md} · visual recall
+\end{itemize}
+
+\section{Source coverage}\label{appendix-6ac071f8b50c-source-coverage}
+
+Supplied lesson parts: 826 (T04 · M050), 827 (T04 · M050).

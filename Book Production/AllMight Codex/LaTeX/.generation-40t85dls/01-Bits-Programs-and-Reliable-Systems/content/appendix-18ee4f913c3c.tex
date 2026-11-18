@@ -1,0 +1,57 @@
+\hypertarget{appendix-18ee4f913c3c}{}\label{referencestart:appendix-18ee4f913c3c}
+\section{Addresses and virtual memory}\label{appendix-18ee4f913c3c-addresses-and-virtual-memory}
+
+\hypertarget{appendix-18ee4f913c3c-addresses-and-virtual-memory}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C002 · \textbf{Latest development:} C003
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-18ee4f913c3c-definition-and-mechanism}
+
+\hypertarget{appendix-18ee4f913c3c-definition-and-mechanism}{}
+
+An address identifies a location in an address space. User-space object addresses are normally virtual, translated through per-process mappings to physical frames with permissions. A page translation preserves offset; VA 12345ABC mapping VPN 12345 to PFN 987 yields PA 987ABC with 4-KiB pages. Adjacent virtual pages may have scattered physical backing. Numeric address, object lifetime, and access legality are separate.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-18ee4f913c3c-prerequisites}
+
+\hypertarget{appendix-18ee4f913c3c-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5bee2df85484]{Byte and octet} --- Byte units define both storage offsets and significance digits.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-18ee4f913c3c-used-by}
+
+\hypertarget{appendix-18ee4f913c3c-used-by}{}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-6af5921bc853]{Pointer arithmetic and provenance} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-0c67cd5bf30a]{Pages and page offsets} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-c2a9ad1e2b49]{Process isolation and page permissions} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-a1f7c53b4742]{Alignment and padding} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-e4ccdbab8320]{Cache lines and memory bandwidth} --- depends on this concept; see its prerequisite explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-18ee4f913c3c-recall-and-next-depth}
+
+\hypertarget{appendix-18ee4f913c3c-recall-and-next-depth}{}
+
+Follow member offset to VA, page decomposition, permissions, and physical byte.
+
+\textbf{Pending:} Architecture translation formats, residency and memory hierarchy.
+
+\subsection{Source and navigation}\label{appendix-18ee4f913c3c-source-and-navigation}
+
+\hypertarget{appendix-18ee4f913c3c-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch496.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-8c40fad29462-ray-differentials-and-camera-sampling-measures" class="level2">
+<h2>Ray differentials and camera sampling measures</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 11</p>
+<section id="appendix-8c40fad29462-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A camera sample selects a film location and usually a shutter time, then maps that sample to a weighted ray or path contribution. Ray differentials approximate how neighboring pixel samples change the generated ray; after intersection they estimate the surface footprint covered by a pixel and help choose a texture filter level. A sampling measure states which quantity is sampled and therefore which probability density belongs in a Monte Carlo estimator; area, solid angle, image-plane area, and discrete pixel measures are not interchangeable without a Jacobian. Example: two adjacent pixels generate rays whose intersection points span a large patch on a distant oblique surface, so filtering should average that footprint rather than use a single high-frequency texel. Differential rays are local first-order approximations and can fail at discontinuities or complex lens mappings; the weight and PDF must match the camera model and chosen measure.</p>
+<p><strong>Example:</strong> For a pinhole camera, offset the raster sample by one pixel in x and y, generate neighboring rays, and intersect them with a textured plane; the resulting parallelogram estimates the pixel footprint for texture filtering.</p>
+<p><strong>Assumptions:</strong> Differentials approximate nearby rays locally and are not exact at visibility or lens discontinuities.; Importance weights/PDFs are valid only when defined in the same measure as the estimator.</p>
+</section>
+<section id="appendix-8c40fad29462-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch328.xhtml#appendix-1c07d64f5e70-camera-view-and-clip-space-pipeline" class="wikilink">Camera view and clip-space pipeline (Light Transport and Image Synthesis, Part 1, Reference notes: Camera view and clip-space pipeline)</a></li>
+<li><a href="ch561.xhtml#appendix-7d356c396d1a-visual-angle-and-calibrated-rays" class="wikilink">Visual angle and calibrated rays (Vision, XR, and Playable Worlds, Part 2, Reference notes: Visual angle and calibrated rays)</a></li>
+<li><a href="ch306.xhtml#appendix-21f8456e2629-lens-optics-and-depth-of-field" class="wikilink">Lens optics and depth of field (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Lens optics and depth of field)</a></li>
+</ul>
+</section>
+<section id="appendix-8c40fad29462-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch290.xhtml#id_02-foundations-ii-ch037-a-camera-model-must-close-the-loop" class="wikilink">A camera model must close the loop (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)</a></li>
+<li><a href="ch289.xhtml#id_02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review" class="wikilink">Four deeper links from the TUM lecture review (Geometry, Cameras, and Image Formation, Part 1, Ch. 5)</a></li>
+</ul>
+</section>
+<section id="appendix-8c40fad29462-future-depth" class="level3">
+<h3>Future depth</h3>
+<p>r; a; y; ; d; i; f; f; e; r; e; n; t; i; a; l; s; ,; ; p; i; x; e; l; ; f; o; o; t; p; r; i; n; t; ,; ; c; a; m; e; r; a; ; i; m; p; o; r; t; a; n; c; e; ,; ; s; o; l; i; d; -; a; n; g; l; e; ; P; D; F; ,; ; m; e; a; s; u; r; e; ; c; o; n; v; e; r; s; i; o; n</p>
+</section>
+</section>
+</body>
+</html>

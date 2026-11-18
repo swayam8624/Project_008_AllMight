@@ -1,0 +1,46 @@
+\hypertarget{appendix-f5593256bcaf}{}\label{referencestart:appendix-f5593256bcaf}
+\section{Logical constness and mutable caches}\label{appendix-f5593256bcaf-logical-constness-and-mutable-caches}
+
+\hypertarget{appendix-f5593256bcaf-logical-constness-and-mutable-caches}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-f5593256bcaf-definition-and-mechanism}
+
+\hypertarget{appendix-f5593256bcaf-definition-and-mechanism}{}
+
+Logical constness preserves public meaning while eligible mutable data members may change private state. A cache needs source/cache synchronization and invalidation. Copy a snapshot under protection rather than returning a reference that can outlive the lock. Mutable lambda captures are private closure state, not automatically thread-safe.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-f5593256bcaf-prerequisites}
+
+\hypertarget{appendix-f5593256bcaf-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c25d60fed375]{Const qualification and shallow constness} --- Access-path qualification constrains nested conversions and member writes.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-8e5214819615}{Class access and invariants (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Class access and invariants)} --- Internal cache changes must preserve the public invariant.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-f5593256bcaf-used-by}
+
+\hypertarget{appendix-f5593256bcaf-used-by}{}
+
+Later sources will deepen this same node; no empty dependent nodes are created.
+
+\subsection{Recall and next depth}\label{appendix-f5593256bcaf-recall-and-next-depth}
+
+\hypertarget{appendix-f5593256bcaf-recall-and-next-depth}{}
+
+State the cache invariant and show how Set invalidates it. Pending: versioned publication, atomics and copy/move policy for mutex-bearing classes. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{appendix-f5593256bcaf-source-and-navigation}
+
+\hypertarget{appendix-f5593256bcaf-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch003-a-cache-may-change-bits-without-changing-meaning]{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

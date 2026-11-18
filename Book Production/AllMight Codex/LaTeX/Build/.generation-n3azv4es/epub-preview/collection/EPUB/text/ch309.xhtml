@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch309.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-d5b3c692d9f0-convolution-and-filter-footprints" class="level2">
+<h2>Convolution and filter footprints</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> XR01 · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-d5b3c692d9f0-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Convolution combines shifted values with a weighting kernel; its spectrum multiplies transfer functions. Pixel footprints and boundary policies define what is averaged. A separable Gaussian uses two 1D passes; unpadded DFT filtering wraps circularly.</p>
+</section>
+<section id="appendix-d5b3c692d9f0-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch553.xhtml#appendix-1077ea8fc737-continuous-signals-and-discrete-samples" class="wikilink">Continuous signals and discrete samples (Vision, XR, and Playable Worlds, Part 2, Reference notes: Continuous signals and discrete samples)</a> — Filtering/frequency analysis operates on a declared domain and its samples.</li>
+<li><a href="ch361.xhtml#appendix-b60686ba06a1-fourier-analysis-and-spectral-phase" class="wikilink">Fourier analysis and spectral phase (Light Transport and Image Synthesis, Part 1, Reference notes: Fourier analysis and spectral phase)</a> — Frequency and phase reveal transfer, sampling ambiguity and structural loss.</li>
+</ul>
+</section>
+<section id="appendix-d5b3c692d9f0-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch562.xhtml#appendix-8b76b0efd27f-psf-otf-and-mtf" class="wikilink">PSF OTF and MTF (Vision, XR, and Playable Worlds, Part 2, Reference notes: PSF OTF and MTF)</a></p></li>
+<li><p><a href="ch568.xhtml#appendix-b677a85ba76f-multiscale-texture-filtering" class="wikilink">Multiscale texture filtering (Vision, XR, and Playable Worlds, Part 2, Reference notes: Multiscale texture filtering)</a></p></li>
+<li><p><a href="ch364.xhtml#appendix-e2e73f8cd93e-optical-flow-and-time-to-contact" class="wikilink">Optical flow and time to contact (Light Transport and Image Synthesis, Part 1, Reference notes: Optical flow and time to contact)</a></p></li>
+<li><p><a href="ch344.xhtml#appendix-36022286b03e-edge-localization-and-subpixel-contours" class="wikilink">Edge localization and subpixel contours (Light Transport and Image Synthesis, Part 1, Reference notes: Edge localization and subpixel contours)</a></p></li>
+<li><p><a href="ch350.xhtml#appendix-5fb4af80d1c7-template-matching-and-distance-transforms" class="wikilink">Template matching and distance transforms (Light Transport and Image Synthesis, Part 1, Reference notes: Template matching and distance transforms)</a></p></li>
+<li><p><a href="ch297.xhtml#appendix-1988d465c119-pde-fields-and-discrete-laplacians" class="wikilink">PDE fields and discrete Laplacians</a></p></li>
+<li><p><a href="ch358.xhtml#appendix-a9d5dfdd164a-attention-and-visual-transformers" class="wikilink">Attention and visual transformers (Light Transport and Image Synthesis, Part 1, Reference notes: Attention and visual transformers)</a></p></li>
+<li><p><a href="ch349.xhtml#appendix-47c51ea026fb-learned-image-features-and-cnns" class="wikilink">Learned image features and CNNs (Light Transport and Image Synthesis, Part 1, Reference notes: Learned image features and CNNs)</a> ## Recall and next depth</p></li>
+</ul>
+<p>Derive the three-tap filter’s gain and constant preservation. Pending: implementation cost, padding and spatially varying kernels. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.</p>
+</section>
+<section id="appendix-d5b3c692d9f0-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-a-footprint-is-more-meaningful-than-an-isolated-pixel-center" class="wikilink">Expanded teaching explanation (Vision, XR, and Playable Worlds, Part 2, Ch. 9)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-xr01---independent-seeing-and-representation-source" class="wikilink">Independent coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-d5b3c692d9f0-university-course-development" class="level3">
+<h3>University course development</h3>
+<p>Extend the current convolution note from a sliding kernel to image formation and resampling. A pixel integrates incoming image energy over a finite footprint; point sampling is only an approximation to that area integral. Convolution combines nearby values with weights whose spatial support is the kernel footprint, and its Fourier transform describes which spatial frequencies survive. Before reducing resolution, low-pass filtering suppresses frequencies the coarser grid cannot represent. In texture mapping, the screen-to-texture Jacobian maps a nearly square screen pixel to a texture-space parallelogram. If the two singular directions have very different lengths, an isotropic mip level blurs one direction too much; anisotropic filters take extra samples along the long axis. This same footprint reasoning links pixel reconstruction, antialiasing, texture filtering, and sensor blur without treating them as unrelated tricks.</p>
+<p><a href="ch305.xhtml#id_03-visual-computing-i-ch003-sampling-continuous-signals-and-image-formation" class="wikilink">Sampling continuous signals and image formation</a> · <a href="ch310.xhtml#id_03-visual-computing-i-ch004-image-sampling-filtering-and-efficient-reconstruction" class="wikilink">Image sampling, filtering, and efficient reconstruction</a> · <a href="ch333.xhtml#id_03-visual-computing-i-ch019-textures-and-surface-detail" class="wikilink">Textures and surface detail (Light Transport and Image Synthesis, Part 1, Ch. 8)</a></p>
+</section>
+</section>
+</body>
+</html>

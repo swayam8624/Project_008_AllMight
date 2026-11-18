@@ -1,0 +1,48 @@
+\hypertarget{appendix-b5b83329215b}{}\label{referencestart:appendix-b5b83329215b}
+\section{Vector tolerances and finite-state diagnostics}\label{appendix-b5b83329215b-vector-tolerances-and-finite-state-diagnostics}
+
+\hypertarget{appendix-b5b83329215b-vector-tolerances-and-finite-state-diagnostics}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-b5b83329215b-definition-and-mechanism}
+
+\hypertarget{appendix-b5b83329215b-definition-and-mechanism}{}
+
+Closeness depends on a declared distance or angular criterion. Combined absolute/relative scalar rules differ from component boxes and Euclidean balls. NaN/infinity policies are explicit. Diagnose the first invalid stage rather than only the final visible symptom.
+
+\end{allmightroledefinition}
+
+Errors \((0.09,0.09)\) pass component tolerance \(0.1\) but fail Euclidean tolerance \(0.1\). Near \(10^8\), binary32 can lose a one-unit displacement at storage.
+
+\subsection{Prerequisites}\label{appendix-b5b83329215b-prerequisites}
+
+\hypertarget{appendix-b5b83329215b-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#nameddest=appendix-0ec599f8ba27}{Numerical tolerance policies (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Numerical tolerance policies)} --- A declared scale and domain make closeness and rejection thresholds meaningful.
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#nameddest=appendix-5aef4f13483a}{Dot and cross-product rounding (Mathematics for Visual Computing, Part 1, Reference notes: Dot and cross-product rounding)} --- Cancellation and rounded inputs explain when a determinant sign or finite measurement is uncertain.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-b5b83329215b-used-by}
+
+\hypertarget{appendix-b5b83329215b-used-by}{}
+
+Later curriculum sources can deepen this same node; no future coverage is marked complete.
+
+\subsection{Recall and next depth}\label{appendix-b5b83329215b-recall-and-next-depth}
+
+\hypertarget{appendix-b5b83329215b-recall-and-next-depth}{}
+
+Show nontransitivity; separate measurement noise, arithmetic error and input quantization. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-b5b83329215b-source-and-navigation}
+
+\hypertarget{appendix-b5b83329215b-source-and-navigation}{}
+
+\href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#nameddest=02-foundations-ii-ch037-reliability-begins-at-the-boundary-of-the-calculation}{Teaching narrative (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)} · \hyperref[appendix-fd090d982a15-phase-6---parts-501-600]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-6---source-analysis-and-verification]{Evidence and limits} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

@@ -1,0 +1,919 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Chapter xmlns:ns0="http://ns.adobe.com/AdobeInDesign/4.0/" id="06-engine-ii-ch035" source="Chapter Edition/03 - Game Engine/35 - A complete rigid-body state before the formula audit.md">
+<Content ns0:pstyle="ChapterHeader" id="06-engine-ii-ch035-a-complete-rigid-body-state-before-the-formula-audit">35 — A complete rigid-body state before the formula audit</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#06-engine-ii-ch034">Previous chapter</Link> · <Link href="#06-engine-ii-ch036">Next chapter</Link></Content>
+<Content ns0:pstyle="Content">A simulator becomes inspectable when position, orientation, linear and angular velocity, mass properties, and force accumulators have explicit owners and update rules. This chapter consolidates the engine state reached so far, then uses it as the reference for checking individual formulas.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">By the end:</Strong> Describe the rigid-body state and its update responsibilities, including body-local force points, world transforms, and the distinction between stored state and derived values.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Recall question:</Strong> Which values are authoritative state, which are derived, and how does a body-local force point become a world-space torque each step?</Content>
+
+
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-the-complete-kairo-state-so-far">THE COMPLETE KAIRO STATE SO FAR</Content>
+<Content ns0:pstyle="Content">Current <InlineCode ns0:cstyle="InlineCode">RigidBody</InlineCode> contains essentially:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct RigidBody
+{
+    BodyID ID;
+
+    BodyType Type;
+
+    MotionState State;
+
+    MassProperties Mass;
+
+    ForceAccumulation Forces;
+
+    bool EnableGravity;
+
+    float GravityScale;
+
+    float LinearDamping;
+    float AngularDamping;
+
+    ...
+};</Code>
+<Content ns0:pstyle="Content">That is already enough to express:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9ae07aae89655d44cc1e80de.svg" alt="&#10;\boxed{&#10;\text{translational Newtonian dynamics}&#10;+&#10;\text{rotational dynamics}.&#10;}&#10;" jobId="9ae07aae89655d44cc1e80de" originalTeX="&#10;\boxed{&#10;\text{translational Newtonian dynamics}&#10;+&#10;\text{rotational dynamics}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Now M098 explains the rotational half.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-torque-and-inertia-from-first-principles">TORQUE AND INERTIA FROM FIRST PRINCIPLES</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1621-torque-from-an-off-center-force">Part 1621 — Torque from an off-center force</Content>
+<Content ns0:pstyle="Content">Suppose force:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/32c0afac6e59cc52bd9d4b30.svg" alt="&#10;\mathbf{F}&#10;" jobId="32c0afac6e59cc52bd9d4b30" originalTeX="&#10;\mathbf{F}&#10;" /></Formula>
+<Content ns0:pstyle="Content">is applied at point:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8c6685c068086a9a21201533.svg" alt="&#10;\mathbf{p}.&#10;" jobId="8c6685c068086a9a21201533" originalTeX="&#10;\mathbf{p}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Let COM be:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a1f1ee12a5f2eff2d5a2c8cd.svg" alt="&#10;\mathbf{c}.&#10;" jobId="a1f1ee12a5f2eff2d5a2c8cd" originalTeX="&#10;\mathbf{c}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Define lever arm:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e612604a9c17ed5070c5861c.svg" alt="&#10;\boxed{&#10;\mathbf{r}&#10;=&#10;\mathbf{p}-\mathbf{c}.&#10;}&#10;" jobId="e612604a9c17ed5070c5861c" originalTeX="&#10;\boxed{&#10;\mathbf{r}&#10;=&#10;\mathbf{p}-\mathbf{c}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Torque:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f947fd8a7ae6ce3b722a74fa.svg" alt="&#10;\boxed{&#10;\boldsymbol{\tau}&#10;=&#10;\mathbf{r}\times\mathbf{F}.&#10;}&#10;" jobId="f947fd8a7ae6ce3b722a74fa" originalTeX="&#10;\boxed{&#10;\boldsymbol{\tau}&#10;=&#10;\mathbf{r}\times\mathbf{F}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is the rotational effect of force.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Magnitude of torque</Strong></Content>
+<Content ns0:pstyle="Content">Cross-product magnitude:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6d63f323217a4ab37bd18dd1.svg" alt="&#10;\|\tau\|&#10;=&#10;\|r\|\|F\|\sin\theta.&#10;" jobId="6d63f323217a4ab37bd18dd1" originalTeX="&#10;\|\tau\|&#10;=&#10;\|r\|\|F\|\sin\theta.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore torque increases when:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6320e661ab9487373ba1a3ac.svg" alt="&#10;r&#10;" jobId="6320e661ab9487373ba1a3ac" originalTeX="&#10;r&#10;" /></Formula>
+<Content ns0:pstyle="Content">is longer,</Content>
+<Content ns0:pstyle="Content">or:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/92a63a0b8219c741df246178.svg" alt="&#10;F&#10;" jobId="92a63a0b8219c741df246178" originalTeX="&#10;F&#10;" /></Formula>
+<Content ns0:pstyle="Content">is larger,</Content>
+<Content ns0:pstyle="Content">or force is more perpendicular to lever arm.</Content>
+<Content ns0:pstyle="Content">Maximum:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f3fc4954765a8998f4b32d64.svg" alt="&#10;\theta=90^\circ.&#10;" jobId="f3fc4954765a8998f4b32d64" originalTeX="&#10;\theta=90^\circ.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Zero:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/df99b214f78fc73aa22a59b1.svg" alt="&#10;\theta=0^\circ&#10;" jobId="df99b214f78fc73aa22a59b1" originalTeX="&#10;\theta=0^\circ&#10;" /></Formula>
+<Content ns0:pstyle="Content">or:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/87c3a9ae079a43bb4f0aaf88.svg" alt="&#10;180^\circ.&#10;" jobId="87c3a9ae079a43bb4f0aaf88" originalTeX="&#10;180^\circ.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Force through COM</Strong></Content>
+<Content ns0:pstyle="Content">If application point is COM:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0a2564b853374c4b436a4bcd.svg" alt="&#10;r=0.&#10;" jobId="0a2564b853374c4b436a4bcd" originalTeX="&#10;r=0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/afda6006f357d88fcc436ca8.svg" alt="&#10;\tau=0.&#10;" jobId="afda6006f357d88fcc436ca8" originalTeX="&#10;\tau=0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The body gets linear acceleration but no rotation.</Content>
+<Content ns0:pstyle="Content">Likewise if F’s line of action passes through COM:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/96a5626d2b75f357b1b51b1e.svg" alt="&#10;r\times F=0.&#10;" jobId="96a5626d2b75f357b1b51b1e" originalTeX="&#10;r\times F=0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Again no rotational effect.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo’s implementation</Strong></Content>
+<Code ns0:pstyle="Code" language="cpp">accumulation.Force += force;
+
+accumulation.Torque +=
+    Cross(
+        worldPoint -
+        worldCenterOfMass,
+        force);</Code>
+<Content ns0:pstyle="Content">Perfect form.</Content>
+<Content ns0:pstyle="Content">The subtle question is:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">What exactly is <InlineCode ns0:cstyle="InlineCode">worldCenterOfMass</InlineCode>?</Content></BlockQuote>
+<Content ns0:pstyle="Content">We will return to this in the Kairo audit because that convention currently deserves tightening.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1622-lever-arm-vectors">Part 1622 — Lever arm vectors</Content>
+<Content ns0:pstyle="Content">Lever arm is not merely distance from COM.</Content>
+<Content ns0:pstyle="Content">It is the full vector:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/002bc24122e68ac6311c667f.svg" alt="&#10;\mathbf{r}.&#10;" jobId="002bc24122e68ac6311c667f" originalTeX="&#10;\mathbf{r}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Direction matters because torque is a cross product.</Content>
+<Content ns0:pstyle="Content">Example:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f6dce1667d402999c572136f.svg" alt="&#10;r=(1,0,0)&#10;" jobId="f6dce1667d402999c572136f" originalTeX="&#10;r=(1,0,0)&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1f1a881dd5fa762ea05c9065.svg" alt="&#10;F=(0,10,0).&#10;" jobId="1f1a881dd5fa762ea05c9065" originalTeX="&#10;F=(0,10,0).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f6b0395b9102095074b0d8ab.svg" alt="&#10;\tau&#10;=&#10;(1,0,0)&#10;\times&#10;(0,10,0)&#10;=&#10;(0,0,10).&#10;" jobId="f6b0395b9102095074b0d8ab" originalTeX="&#10;\tau&#10;=&#10;(1,0,0)&#10;\times&#10;(0,10,0)&#10;=&#10;(0,0,10).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Kairo’s test explicitly verifies this case.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Units of torque</Strong></Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/42cfe1b449538bc653972e1b.svg" alt="&#10;[Nm]&#10;=&#10;kg\cdot m^2/s^2.&#10;" jobId="42cfe1b449538bc653972e1b" originalTeX="&#10;[Nm]&#10;=&#10;kg\cdot m^2/s^2.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Torque and energy both have dimensional units of Newton-metres, but they are not the same physical quantity.</Content>
+<Content ns0:pstyle="Content">Torque is a pseudovector.</Content>
+<Content ns0:pstyle="Content">Energy is scalar.</Content>
+<Content ns0:pstyle="Content">Do not conflate them because units happen to match.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1623-angular-velocity">Part 1623 — Angular velocity</Content>
+<Content ns0:pstyle="Content">Angular velocity:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fec70cf3e5e04471020351ea.svg" alt="&#10;\boldsymbol{\omega}.&#10;" jobId="fec70cf3e5e04471020351ea" originalTeX="&#10;\boldsymbol{\omega}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Magnitude:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/79fc9d3216ae0608934cbee5.svg" alt="&#10;\|\omega\|&#10;" jobId="79fc9d3216ae0608934cbee5" originalTeX="&#10;\|\omega\|&#10;" /></Formula>
+<Content ns0:pstyle="Content">is angular rate in:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ccb16b22b0a83abafd02c2b5.svg" alt="&#10;rad/s.&#10;" jobId="ccb16b22b0a83abafd02c2b5" originalTeX="&#10;rad/s.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Direction follows right-hand rule and gives instantaneous rotation axis.</Content>
+<Content ns0:pstyle="Content">For a body point:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6734721f20f8e407a06ef28e.svg" alt="&#10;\boxed{&#10;\mathbf{v}_{rot}&#10;=&#10;\boldsymbol{\omega}\times\mathbf{r}.&#10;}&#10;" jobId="6734721f20f8e407a06ef28e" originalTeX="&#10;\boxed{&#10;\mathbf{v}_{rot}&#10;=&#10;\boldsymbol{\omega}\times\mathbf{r}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">This equation is more fundamental than thinking of <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/82ee62b8683ba9884082d2d9.svg" alt="\omega" jobId="82ee62b8683ba9884082d2d9" originalTeX="\omega" /> as Euler rotation speed.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Angular velocity is not Euler-angle derivative</Strong></Content>
+<Content ns0:pstyle="Content">Suppose orientation is stored as Euler:</Content>
+<Code ns0:pstyle="Code" language="text">yaw
+pitch
+roll</Code>
+<Content ns0:pstyle="Content">It is tempting to assume:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/62c373f38a91812ba50bf693.svg" alt="&#10;\omega&#10;=&#10;(\dot{roll},\dot{pitch},\dot{yaw}).&#10;" jobId="62c373f38a91812ba50bf693" originalTeX="&#10;\omega&#10;=&#10;(\dot{roll},\dot{pitch},\dot{yaw}).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Generally false.</Content>
+<Content ns0:pstyle="Content">Euler-angle derivatives depend on current orientation and chosen rotation order.</Content>
+<Content ns0:pstyle="Content">This is one reason physics engines store:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/eff3b5e04c80644b59f85c5b.svg" alt="&#10;\boldsymbol{\omega}\in\mathbb{R}^3&#10;" jobId="eff3b5e04c80644b59f85c5b" originalTeX="&#10;\boldsymbol{\omega}\in\mathbb{R}^3&#10;" /></Formula>
+<Content ns0:pstyle="Content">directly.</Content>
+<Content ns0:pstyle="Content">Orientation integration then updates quaternion from <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/82ee62b8683ba9884082d2d9.svg" alt="\omega" jobId="82ee62b8683ba9884082d2d9" originalTeX="\omega" />.</Content>
+<Content ns0:pstyle="Content">That arrives in M100.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1624-angular-acceleration">Part 1624 — Angular acceleration</Content>
+<Content ns0:pstyle="Content">Angular acceleration:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5d9fe987b8aa52b8ab95f62b.svg" alt="&#10;\boxed{&#10;\boldsymbol{\alpha}&#10;=&#10;\frac{d\boldsymbol{\omega}}{dt}.&#10;}&#10;" jobId="5d9fe987b8aa52b8ab95f62b" originalTeX="&#10;\boxed{&#10;\boldsymbol{\alpha}&#10;=&#10;\frac{d\boldsymbol{\omega}}{dt}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">For a simple rotation about one fixed principal axis:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/54b3b001d12537390a4e6646.svg" alt="&#10;\tau=I\alpha.&#10;" jobId="54b3b001d12537390a4e6646" originalTeX="&#10;\tau=I\alpha.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b197c5654efe4ed422e15161.svg" alt="&#10;\alpha&#10;=&#10;\frac{\tau}{I}.&#10;" jobId="b197c5654efe4ed422e15161" originalTeX="&#10;\alpha&#10;=&#10;\frac{\tau}{I}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">But in general 3D:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4dc24e56f8fd0f2c292d896a.svg" alt="&#10;I&#10;" jobId="4dc24e56f8fd0f2c292d896a" originalTeX="&#10;I&#10;" /></Formula>
+<Content ns0:pstyle="Content">is a tensor.</Content>
+<Content ns0:pstyle="Content">And there is an additional gyroscopic term for asymmetric rotating bodies.</Content>
+<Content ns0:pstyle="Content">We’ll derive that shortly.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1625-angular-momentum">Part 1625 — Angular momentum</Content>
+<Content ns0:pstyle="Content">For one point mass relative to origin:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b202a8b9f32124bb3d6f0a03.svg" alt="&#10;\boxed{&#10;\mathbf{L}&#10;=&#10;\mathbf{r}\times\mathbf{p}.&#10;}&#10;" jobId="b202a8b9f32124bb3d6f0a03" originalTeX="&#10;\boxed{&#10;\mathbf{L}&#10;=&#10;\mathbf{r}\times\mathbf{p}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Since:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3962487603765ab88704a9e6.svg" alt="&#10;\mathbf{p}=m\mathbf{v},&#10;" jobId="3962487603765ab88704a9e6" originalTeX="&#10;\mathbf{p}=m\mathbf{v},&#10;" /></Formula>
+<Content ns0:pstyle="Content">then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bb1649093cfa18c02534c59b.svg" alt="&#10;\mathbf{L}&#10;=&#10;\mathbf{r}\times&#10;m\mathbf{v}.&#10;" jobId="bb1649093cfa18c02534c59b" originalTeX="&#10;\mathbf{L}&#10;=&#10;\mathbf{r}\times&#10;m\mathbf{v}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For a rigid body rotating around its COM:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b5eb4481ec4afc85d7d710df.svg" alt="&#10;\boxed{&#10;\mathbf{L}&#10;=&#10;I\boldsymbol{\omega}.&#10;}&#10;" jobId="b5eb4481ec4afc85d7d710df" originalTeX="&#10;\boxed{&#10;\mathbf{L}&#10;=&#10;I\boldsymbol{\omega}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">But note:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3c1593ad53b20a12c3684705.svg" alt="&#10;\mathbf{L}&#10;" jobId="3c1593ad53b20a12c3684705" originalTeX="&#10;\mathbf{L}&#10;" /></Formula>
+<Content ns0:pstyle="Content">need not point in the same direction as:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fec70cf3e5e04471020351ea.svg" alt="&#10;\boldsymbol{\omega}.&#10;" jobId="fec70cf3e5e04471020351ea" originalTeX="&#10;\boldsymbol{\omega}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is exactly why <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9e3efbb15574573a4d3dc298.svg" alt="I" jobId="9e3efbb15574573a4d3dc298" originalTeX="I" /> is a matrix.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Rotational Newton’s second law</Strong></Content>
+<Content ns0:pstyle="Content">The fundamental rotational law is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d3a3dd07dc1066521f7d0014.svg" alt="&#10;\boxed{&#10;\boldsymbol{\tau}&#10;=&#10;\frac{d\mathbf{L}}{dt}.&#10;}&#10;" jobId="d3a3dd07dc1066521f7d0014" originalTeX="&#10;\boxed{&#10;\boldsymbol{\tau}&#10;=&#10;\frac{d\mathbf{L}}{dt}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is the rotational analogue of:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/74da080e843093a68166dee3.svg" alt="&#10;\mathbf{F}&#10;=&#10;\frac{d\mathbf{p}}{dt}.&#10;" jobId="74da080e843093a68166dee3" originalTeX="&#10;\mathbf{F}&#10;=&#10;\frac{d\mathbf{p}}{dt}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Now because:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/66f30abf5a86a655db4fbba7.svg" alt="&#10;L=I\omega,&#10;" jobId="66f30abf5a86a655db4fbba7" originalTeX="&#10;L=I\omega,&#10;" /></Formula>
+<Content ns0:pstyle="Content">things become subtle because the body’s world-space inertia changes as it rotates.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1626-moment-of-inertia-as-rotational-mass">Part 1626 — Moment of inertia as rotational mass</Content>
+<Content ns0:pstyle="Content">For rotation around a fixed scalar axis:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6cfd50623c5b5e10060261ce.svg" alt="&#10;\boxed{&#10;I&#10;=&#10;\sum_i&#10;m_ir_i^2.&#10;}&#10;" jobId="6cfd50623c5b5e10060261ce" originalTeX="&#10;\boxed{&#10;I&#10;=&#10;\sum_i&#10;m_ir_i^2.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">For continuous body:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9e482e3ed7a11ed868ff4998.svg" alt="&#10;\boxed{&#10;I&#10;=&#10;\int&#10;r_\perp^2\,dm.&#10;}&#10;" jobId="9e482e3ed7a11ed868ff4998" originalTeX="&#10;\boxed{&#10;I&#10;=&#10;\int&#10;r_\perp^2\,dm.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Here:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/26c56d9c04e77b183a6ab716.svg" alt="&#10;r_\perp&#10;" jobId="26c56d9c04e77b183a6ab716" originalTeX="&#10;r_\perp&#10;" /></Formula>
+<Content ns0:pstyle="Content">is perpendicular distance from the chosen axis.</Content>
+<Content ns0:pstyle="Content">This is why mass farther from axis contributes dramatically more.</Content>
+<Content ns0:pstyle="Content">Distance appears squared.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Compare two masses</Strong></Content>
+<Content ns0:pstyle="Content">Two objects both have:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e495742a77fbce5b7de4a0da.svg" alt="&#10;m=1kg.&#10;" jobId="e495742a77fbce5b7de4a0da" originalTeX="&#10;m=1kg.&#10;" /></Formula>
+<Content ns0:pstyle="Content">One mass is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c53ce87e44f88906c22c314e.svg" alt="&#10;r=1m&#10;" jobId="c53ce87e44f88906c22c314e" originalTeX="&#10;r=1m&#10;" /></Formula>
+<Content ns0:pstyle="Content">from axis:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/263e22a6ffa3effd334edc6c.svg" alt="&#10;I_1=1.&#10;" jobId="263e22a6ffa3effd334edc6c" originalTeX="&#10;I_1=1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The other:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3ce33ece351291276eb5f634.svg" alt="&#10;r=2m:&#10;" jobId="3ce33ece351291276eb5f634" originalTeX="&#10;r=2m:&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d294d882bebfb1b9427d6cab.svg" alt="&#10;I_2=4.&#10;" jobId="d294d882bebfb1b9427d6cab" originalTeX="&#10;I_2=4.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Same mass.</Content>
+<Content ns0:pstyle="Content">Four times the rotational inertia.</Content>
+<Content ns0:pstyle="Content">That is why a dumbbell is harder to rotate when weights are farther apart.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Rotational kinetic energy</Strong></Content>
+<Content ns0:pstyle="Content">For scalar axis:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ac6a2ea8711244b370196398.svg" alt="&#10;E_r&#10;=&#10;\frac12I\omega^2.&#10;" jobId="ac6a2ea8711244b370196398" originalTeX="&#10;E_r&#10;=&#10;\frac12I\omega^2.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For full 3D:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/49608cb87574fb5a0fce4da4.svg" alt="&#10;\boxed{&#10;E_r&#10;=&#10;\frac12&#10;\boldsymbol{\omega}^T&#10;I&#10;\boldsymbol{\omega}.&#10;}&#10;" jobId="49608cb87574fb5a0fce4da4" originalTeX="&#10;\boxed{&#10;E_r&#10;=&#10;\frac12&#10;\boldsymbol{\omega}^T&#10;I&#10;\boldsymbol{\omega}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Kairo’s:</Content>
+<Code ns0:pstyle="Code" language="cpp">0.5f *
+Dot(
+    angularVelocity,
+    worldInertia *
+    angularVelocity);</Code>
+<Content ns0:pstyle="Content">is exactly this.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1627-why-an-inertia-tensor-exists">Part 1627 — Why an inertia tensor exists</Content>
+<Content ns0:pstyle="Content">Suppose an irregular object.</Content>
+<Content ns0:pstyle="Content">Apply torque along x.</Content>
+<Content ns0:pstyle="Content">Its angular acceleration may not be purely along x.</Content>
+<Content ns0:pstyle="Content">A scalar inertia cannot express this coupling.</Content>
+<Content ns0:pstyle="Content">Need a linear map:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b5eb4481ec4afc85d7d710df.svg" alt="&#10;\boxed{&#10;\mathbf{L}&#10;=&#10;I\boldsymbol{\omega}.&#10;}&#10;" jobId="b5eb4481ec4afc85d7d710df" originalTeX="&#10;\boxed{&#10;\mathbf{L}&#10;=&#10;I\boldsymbol{\omega}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">where:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/62d046bcfab23c167431cc23.svg" alt="&#10;I=&#10;\begin{bmatrix}&#10;I_{xx}&amp;I_{xy}&amp;I_{xz}\\&#10;I_{yx}&amp;I_{yy}&amp;I_{yz}\\&#10;I_{zx}&amp;I_{zy}&amp;I_{zz}&#10;\end{bmatrix}.&#10;" jobId="62d046bcfab23c167431cc23" originalTeX="&#10;I=&#10;\begin{bmatrix}&#10;I_{xx}&amp;I_{xy}&amp;I_{xz}\\&#10;I_{yx}&amp;I_{yy}&amp;I_{yz}\\&#10;I_{zx}&amp;I_{zy}&amp;I_{zz}&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Diagonal entries represent resistance around coordinate axes.</Content>
+<Content ns0:pstyle="Content">Off-diagonal entries are <Strong ns0:cstyle="Bold">products of inertia</Strong> describing rotational coupling.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1628-inertia-tensor-representation">Part 1628 — Inertia tensor representation</Content>
+<Content ns0:pstyle="Content">For a mass distribution relative to COM:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ce812cd6a0ef694f2a03dde7.svg" alt="&#10;\boxed{&#10;I&#10;=&#10;\int&#10;\left(&#10;\|\mathbf{r}\|^2I_3&#10;-&#10;\mathbf{r}\mathbf{r}^T&#10;\right)&#10;dm.&#10;}&#10;" jobId="ce812cd6a0ef694f2a03dde7" originalTeX="&#10;\boxed{&#10;I&#10;=&#10;\int&#10;\left(&#10;\|\mathbf{r}\|^2I_3&#10;-&#10;\mathbf{r}\mathbf{r}^T&#10;\right)&#10;dm.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">This equation is worth understanding rather than memorizing.</Content>
+<Content ns0:pstyle="Content">Let:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/60532c72f37aaf07ee57d820.svg" alt="&#10;\mathbf{r}&#10;=&#10;\begin{bmatrix}&#10;x\\y\\z&#10;\end{bmatrix}.&#10;" jobId="60532c72f37aaf07ee57d820" originalTeX="&#10;\mathbf{r}&#10;=&#10;\begin{bmatrix}&#10;x\\y\\z&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ced13df68a45a5963a4a69a9.svg" alt="&#10;\|\mathbf{r}\|^2I_3&#10;=&#10;\begin{bmatrix}&#10;x^2+y^2+z^2 &amp;0&amp;0\\&#10;0&amp;x^2+y^2+z^2&amp;0\\&#10;0&amp;0&amp;x^2+y^2+z^2&#10;\end{bmatrix}.&#10;" jobId="ced13df68a45a5963a4a69a9" originalTeX="&#10;\|\mathbf{r}\|^2I_3&#10;=&#10;\begin{bmatrix}&#10;x^2+y^2+z^2 &amp;0&amp;0\\&#10;0&amp;x^2+y^2+z^2&amp;0\\&#10;0&amp;0&amp;x^2+y^2+z^2&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">And:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b68c2d2eeaf0806247ce86ae.svg" alt="&#10;rr^T&#10;=&#10;\begin{bmatrix}&#10;x^2&amp;xy&amp;xz\\&#10;xy&amp;y^2&amp;yz\\&#10;xz&amp;yz&amp;z^2&#10;\end{bmatrix}.&#10;" jobId="b68c2d2eeaf0806247ce86ae" originalTeX="&#10;rr^T&#10;=&#10;\begin{bmatrix}&#10;x^2&amp;xy&amp;xz\\&#10;xy&amp;y^2&amp;yz\\&#10;xz&amp;yz&amp;z^2&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Subtract:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b6c3fa029bf515f42736119f.svg" alt="&#10;I=&#10;\int&#10;\begin{bmatrix}&#10;y^2+z^2&amp;-xy&amp;-xz\\&#10;-xy&amp;x^2+z^2&amp;-yz\\&#10;-xz&amp;-yz&amp;x^2+y^2&#10;\end{bmatrix}&#10;dm.&#10;" jobId="b6c3fa029bf515f42736119f" originalTeX="&#10;I=&#10;\int&#10;\begin{bmatrix}&#10;y^2+z^2&amp;-xy&amp;-xz\\&#10;-xy&amp;x^2+z^2&amp;-yz\\&#10;-xz&amp;-yz&amp;x^2+y^2&#10;\end{bmatrix}&#10;dm.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3f6700d036b5a02673e7c7c7.svg" alt="&#10;I_{xx}&#10;=&#10;\int(y^2+z^2)dm.&#10;" jobId="3f6700d036b5a02673e7c7c7" originalTeX="&#10;I_{xx}&#10;=&#10;\int(y^2+z^2)dm.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This exactly matches scalar moment of inertia about x-axis.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1629-principal-moments">Part 1629 — Principal moments</Content>
+<Content ns0:pstyle="Content">Because physical inertia tensor is real and symmetric, it has real eigenvalues and orthogonal eigenvectors.</Content>
+<Content ns0:pstyle="Content">Solve:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5bdefa36aca8a8a70e4f7e85.svg" alt="&#10;I\mathbf{e}_i&#10;=&#10;\lambda_i\mathbf{e}_i.&#10;" jobId="5bdefa36aca8a8a70e4f7e85" originalTeX="&#10;I\mathbf{e}_i&#10;=&#10;\lambda_i\mathbf{e}_i.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The eigenvalues:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e232380cf38d57cb1d4cd85a.svg" alt="&#10;\boxed{&#10;I_1,I_2,I_3&#10;}&#10;" jobId="e232380cf38d57cb1d4cd85a" originalTeX="&#10;\boxed{&#10;I_1,I_2,I_3&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">are the <Strong ns0:cstyle="Bold">principal moments of inertia</Strong>.</Content>
+<Content ns0:pstyle="Content">In the principal-axis basis:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/28a6470bc6bf9ed91de69164.svg" alt="&#10;I_{principal}&#10;=&#10;\begin{bmatrix}&#10;I_1&amp;0&amp;0\\&#10;0&amp;I_2&amp;0\\&#10;0&amp;0&amp;I_3&#10;\end{bmatrix}.&#10;" jobId="28a6470bc6bf9ed91de69164" originalTeX="&#10;I_{principal}&#10;=&#10;\begin{bmatrix}&#10;I_1&amp;0&amp;0\\&#10;0&amp;I_2&amp;0\\&#10;0&amp;0&amp;I_3&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is why diagonal inertia representations are so powerful.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1630-principal-axes">Part 1630 — Principal axes</Content>
+<Content ns0:pstyle="Content">The eigenvectors:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/77885444463233429c28952d.svg" alt="&#10;\mathbf{e}_1,\mathbf{e}_2,\mathbf{e}_3&#10;" jobId="77885444463233429c28952d" originalTeX="&#10;\mathbf{e}_1,\mathbf{e}_2,\mathbf{e}_3&#10;" /></Formula>
+<Content ns0:pstyle="Content">are the <Strong ns0:cstyle="Bold">principal axes</Strong>.</Content>
+<Content ns0:pstyle="Content">Because inertia tensor is symmetric, those eigenvectors can be chosen orthonormal.</Content>
+<Content ns0:pstyle="Content">Build matrix:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b7a9cc1f5cd1f38254ea21c2.svg" alt="&#10;Q=&#10;[&#10;\mathbf{e}_1\&#10;\mathbf{e}_2\&#10;\mathbf{e}_3&#10;].&#10;" jobId="b7a9cc1f5cd1f38254ea21c2" originalTeX="&#10;Q=&#10;[&#10;\mathbf{e}_1\&#10;\mathbf{e}_2\&#10;\mathbf{e}_3&#10;].&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/76afe6191d129abc067aefb5.svg" alt="&#10;\boxed{&#10;I&#10;=&#10;Q&#10;\begin{bmatrix}&#10;I_1&amp;0&amp;0\\&#10;0&amp;I_2&amp;0\\&#10;0&amp;0&amp;I_3&#10;\end{bmatrix}&#10;Q^T.&#10;}&#10;" jobId="76afe6191d129abc067aefb5" originalTeX="&#10;\boxed{&#10;I&#10;=&#10;Q&#10;\begin{bmatrix}&#10;I_1&amp;0&amp;0\\&#10;0&amp;I_2&amp;0\\&#10;0&amp;0&amp;I_3&#10;\end{bmatrix}&#10;Q^T.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">For highly symmetric shapes, obvious geometric axes are principal axes.</Content>
+<Content ns0:pstyle="Content">Sphere:</Content>
+<Content ns0:pstyle="Content">every axis is principal.</Content>
+<Content ns0:pstyle="Content">Centered box:</Content>
+<Content ns0:pstyle="Content">local x/y/z.</Content>
+<Content ns0:pstyle="Content">Cylinder:</Content>
+<Content ns0:pstyle="Content">central symmetry axis and any orthogonal radial pair.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1631-point-mass-inertia-tensor">Part 1631 — Point-mass inertia tensor</Content>
+<Content ns0:pstyle="Content">For one point mass:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9d75eec6082073f9c24bd930.svg" alt="&#10;m&#10;" jobId="9d75eec6082073f9c24bd930" originalTeX="&#10;m&#10;" /></Formula>
+<Content ns0:pstyle="Content">at:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2728312ea35a04f34ac76417.svg" alt="&#10;r=(x,y,z),&#10;" jobId="2728312ea35a04f34ac76417" originalTeX="&#10;r=(x,y,z),&#10;" /></Formula>
+<Content ns0:pstyle="Content">tensor:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a383fd7cf44eb04d9a3ce53d.svg" alt="&#10;\boxed{&#10;I&#10;=&#10;m&#10;(&#10;\|r\|^2I-r r^T&#10;).&#10;}&#10;" jobId="a383fd7cf44eb04d9a3ce53d" originalTeX="&#10;\boxed{&#10;I&#10;=&#10;m&#10;(&#10;\|r\|^2I-r r^T&#10;).&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Explicitly:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3107f649a052be88a18852c5.svg" alt="&#10;I&#10;=&#10;m&#10;\begin{bmatrix}&#10;y^2+z^2&amp;-xy&amp;-xz\\&#10;-xy&amp;x^2+z^2&amp;-yz\\&#10;-xz&amp;-yz&amp;x^2+y^2&#10;\end{bmatrix}.&#10;" jobId="3107f649a052be88a18852c5" originalTeX="&#10;I&#10;=&#10;m&#10;\begin{bmatrix}&#10;y^2+z^2&amp;-xy&amp;-xz\\&#10;-xy&amp;x^2+z^2&amp;-yz\\&#10;-xz&amp;-yz&amp;x^2+y^2&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This formula is the building block from which continuous formulas arise through integration.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1632-solid-sphere-inertia">Part 1632 — Solid sphere inertia</Content>
+<Content ns0:pstyle="Content">Uniform solid sphere of radius:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6320e661ab9487373ba1a3ac.svg" alt="&#10;r&#10;" jobId="6320e661ab9487373ba1a3ac" originalTeX="&#10;r&#10;" /></Formula>
+<Content ns0:pstyle="Content">about center:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/72b6f8212c169cb3853a395c.svg" alt="&#10;\boxed{&#10;I&#10;=&#10;\frac25mr^2I_3.&#10;}&#10;" jobId="72b6f8212c169cb3853a395c" originalTeX="&#10;\boxed{&#10;I&#10;=&#10;\frac25mr^2I_3.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Thus:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cb6287b1f4922c8c347ce70a.svg" alt="&#10;I_{xx}&#10;=&#10;I_{yy}&#10;=&#10;I_{zz}&#10;=&#10;\frac25mr^2.&#10;" jobId="cb6287b1f4922c8c347ce70a" originalTeX="&#10;I_{xx}&#10;=&#10;I_{yy}&#10;=&#10;I_{zz}&#10;=&#10;\frac25mr^2.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Kairo uses:</Content>
+<Code ns0:pstyle="Code" language="cpp">const float value =
+    0.4f *
+    mass *
+    radius *
+    radius;</Code>
+<Content ns0:pstyle="Content">Correct.</Content>
+<Content ns0:pstyle="Content">Because all three moments are identical, orientation does not change the tensor:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/365915a7e02f90f0b589ac44.svg" alt="&#10;RI R^T=I.&#10;" jobId="365915a7e02f90f0b589ac44" originalTeX="&#10;RI R^T=I.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is rotational isotropy.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1633-solid-box-inertia">Part 1633 — Solid box inertia</Content>
+<Content ns0:pstyle="Content">For full dimensions:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6991451548387813742a6352.svg" alt="&#10;w,h,d,&#10;" jobId="6991451548387813742a6352" originalTeX="&#10;w,h,d,&#10;" /></Formula>
+<Content ns0:pstyle="Content">centered uniform box:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/441756b0b0b7812a31d04e3f.svg" alt="&#10;I_{xx}&#10;=&#10;\frac{1}{12}m(h^2+d^2)&#10;" jobId="441756b0b0b7812a31d04e3f" originalTeX="&#10;I_{xx}&#10;=&#10;\frac{1}{12}m(h^2+d^2)&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3daf2e96a123000c226ce60b.svg" alt="&#10;I_{yy}&#10;=&#10;\frac{1}{12}m(w^2+d^2)&#10;" jobId="3daf2e96a123000c226ce60b" originalTeX="&#10;I_{yy}&#10;=&#10;\frac{1}{12}m(w^2+d^2)&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ae9fc3595cf5cddd94c46779.svg" alt="&#10;I_{zz}&#10;=&#10;\frac{1}{12}m(w^2+h^2).&#10;" jobId="ae9fc3595cf5cddd94c46779" originalTeX="&#10;I_{zz}&#10;=&#10;\frac{1}{12}m(w^2+h^2).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Kairo uses half-extents:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/48fe0411208ce54aafb8c85e.svg" alt="&#10;a=\frac w2,\quad&#10;b=\frac h2,\quad&#10;c=\frac d2.&#10;" jobId="48fe0411208ce54aafb8c85e" originalTeX="&#10;a=\frac w2,\quad&#10;b=\frac h2,\quad&#10;c=\frac d2.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2f54d2af01da5948e2086f32.svg" alt="&#10;h^2=4b^2,\qquad&#10;d^2=4c^2.&#10;" jobId="2f54d2af01da5948e2086f32" originalTeX="&#10;h^2=4b^2,\qquad&#10;d^2=4c^2.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Thus:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c82411e1c9eeca97734c7be0.svg" alt="&#10;I_{xx}&#10;=&#10;\frac{1}{12}m(4b^2+4c^2)&#10;=&#10;\frac13m(b^2+c^2).&#10;" jobId="c82411e1c9eeca97734c7be0" originalTeX="&#10;I_{xx}&#10;=&#10;\frac{1}{12}m(4b^2+4c^2)&#10;=&#10;\frac13m(b^2+c^2).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Kairo:</Content>
+<Code ns0:pstyle="Code" language="cpp">const float scale =
+    mass / 3.0f;
+
+return DiagonalInertia(
+    scale * (y2 + z2),
+    scale * (x2 + z2),
+    scale * (x2 + y2));</Code>
+<Content ns0:pstyle="Content">Correct.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1634-cylinder-inertia">Part 1634 — Cylinder inertia</Content>
+<Content ns0:pstyle="Content">For uniform solid cylinder aligned with y-axis, radius r and total cylinder height h:</Content>
+<Content ns0:pstyle="Content">Around symmetry axis:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d0290ceea7adb9bf5afbf9e9.svg" alt="&#10;\boxed{&#10;I_y&#10;=&#10;\frac12mr^2.&#10;}&#10;" jobId="d0290ceea7adb9bf5afbf9e9" originalTeX="&#10;\boxed{&#10;I_y&#10;=&#10;\frac12mr^2.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Around x and z:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c5123801700c3674850f2125.svg" alt="&#10;\boxed{&#10;I_x=I_z&#10;=&#10;\frac{1}{12}&#10;m(3r^2+h^2).&#10;}&#10;" jobId="c5123801700c3674850f2125" originalTeX="&#10;\boxed{&#10;I_x=I_z&#10;=&#10;\frac{1}{12}&#10;m(3r^2+h^2).&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">So:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/76e3d169e0b13ec0fad4d053.svg" alt="&#10;I=&#10;\begin{bmatrix}&#10;I_x&amp;0&amp;0\\&#10;0&amp;I_y&amp;0\\&#10;0&amp;0&amp;I_x&#10;\end{bmatrix}.&#10;" jobId="76e3d169e0b13ec0fad4d053" originalTeX="&#10;I=&#10;\begin{bmatrix}&#10;I_x&amp;0&amp;0\\&#10;0&amp;I_y&amp;0\\&#10;0&amp;0&amp;I_x&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Again local geometric axes are principal axes.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1635-capsule-inertia-concept">Part 1635 — Capsule inertia concept</Content>
+<Content ns0:pstyle="Content">A capsule is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/67f9d889add9dd2abf8718b9.svg" alt="&#10;\text{cylinder}&#10;+&#10;\text{two hemispherical caps}.&#10;" jobId="67f9d889add9dd2abf8718b9" originalTeX="&#10;\text{cylinder}&#10;+&#10;\text{two hemispherical caps}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The accurate analytic solution requires:</Content>
+<List type="ordered" start="1" numberStyle="Decimal" delimiter="Period">
+<ListItem><Content ns0:pstyle="Content">determine cylinder mass,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">determine each hemisphere mass,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">determine each part’s own COM,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">compute each part’s inertia about its own COM,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">shift each to capsule COM using parallel-axis theorem,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">sum.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">That is more involved than pretending the caps are one sphere at the center.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo’s capsule model</Strong></Content>
+<Content ns0:pstyle="Content">Kairo explicitly labels its formula an <Strong ns0:cstyle="Bold">approximation for gameplay stability rather than CAD-grade analytic precision</Strong>.</Content>
+<Content ns0:pstyle="Content">It computes cylinder and sphere-equivalent masses based on volume fractions, then constructs:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/94d91aa54bddbeb0c412bcb9.svg" alt="&#10;I_y&#10;" jobId="94d91aa54bddbeb0c412bcb9" originalTeX="&#10;I_y&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0ef1b986f4227234e29798b2.svg" alt="&#10;I_x=I_z&#10;" jobId="0ef1b986f4227234e29798b2" originalTeX="&#10;I_x=I_z&#10;" /></Formula>
+<Content ns0:pstyle="Content">with a stable approximation.</Content>
+<Content ns0:pstyle="Content">That is completely reasonable for an early engine, provided the contract remains explicit.</Content>
+<Content ns0:pstyle="Content">Do not call it an exact capsule inertia tensor.</Content>
+<Content ns0:pstyle="Content">That would be incorrect.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1636-parallel-axis-theorem">Part 1636 — Parallel-axis theorem</Content>
+<Content ns0:pstyle="Content">Suppose you know inertia about COM:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/591c3f2b63d2aa7a1db29463.svg" alt="&#10;I_C.&#10;" jobId="591c3f2b63d2aa7a1db29463" originalTeX="&#10;I_C.&#10;" /></Formula>
+<Content ns0:pstyle="Content">You want inertia about a parallel axis displaced by:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fd05335f10321512edd292d6.svg" alt="&#10;\mathbf{d}.&#10;" jobId="fd05335f10321512edd292d6" originalTeX="&#10;\mathbf{d}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/20e99005cdcc978c72da5440.svg" alt="&#10;\boxed{&#10;I_P&#10;=&#10;I_C&#10;+&#10;m&#10;\left(&#10;\|\mathbf{d}\|^2I_3&#10;-&#10;\mathbf{d}\mathbf{d}^T&#10;\right).&#10;}&#10;" jobId="20e99005cdcc978c72da5440" originalTeX="&#10;\boxed{&#10;I_P&#10;=&#10;I_C&#10;+&#10;m&#10;\left(&#10;\|\mathbf{d}\|^2I_3&#10;-&#10;\mathbf{d}\mathbf{d}^T&#10;\right).&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Kairo implements exactly this.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Derivation of parallel-axis theorem</Strong></Content>
+<Content ns0:pstyle="Content">Let point relative to COM be:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/002bc24122e68ac6311c667f.svg" alt="&#10;\mathbf{r}.&#10;" jobId="002bc24122e68ac6311c667f" originalTeX="&#10;\mathbf{r}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Relative to new origin:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f33c918d0eba5e943c3714ea.svg" alt="&#10;\mathbf{r}'&#10;=&#10;\mathbf{r}+\mathbf{d}.&#10;" jobId="f33c918d0eba5e943c3714ea" originalTeX="&#10;\mathbf{r}'&#10;=&#10;\mathbf{r}+\mathbf{d}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Tensor:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cfa47c1d098f88d853677f7f.svg" alt="&#10;I'&#10;=&#10;\int&#10;[&#10;\|r+d\|^2I&#10;-&#10;(r+d)(r+d)^T&#10;]&#10;dm.&#10;" jobId="cfa47c1d098f88d853677f7f" originalTeX="&#10;I'&#10;=&#10;\int&#10;[&#10;\|r+d\|^2I&#10;-&#10;(r+d)(r+d)^T&#10;]&#10;dm.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Expand:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6e9c0eff5cb790765d524536.svg" alt="&#10;\|r+d\|^2&#10;=&#10;r^2+2r\cdot d+d^2.&#10;" jobId="6e9c0eff5cb790765d524536" originalTeX="&#10;\|r+d\|^2&#10;=&#10;r^2+2r\cdot d+d^2.&#10;" /></Formula>
+<Content ns0:pstyle="Content">And:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c6f6f7f03442158862a44a2f.svg" alt="&#10;(r+d)(r+d)^T&#10;=&#10;rr^T+rd^T+dr^T+dd^T.&#10;" jobId="c6f6f7f03442158862a44a2f" originalTeX="&#10;(r+d)(r+d)^T&#10;=&#10;rr^T+rd^T+dr^T+dd^T.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Terms involving r integrate to zero because coordinates are measured from COM:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7fa783c40f0e80bf93111969.svg" alt="&#10;\int r\,dm=0.&#10;" jobId="7fa783c40f0e80bf93111969" originalTeX="&#10;\int r\,dm=0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Remaining:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a4fb97a12cea16b2c6be6d7a.svg" alt="&#10;I'&#10;=&#10;I_C+&#10;m(d^2I-dd^T).&#10;" jobId="a4fb97a12cea16b2c6be6d7a" originalTeX="&#10;I'&#10;=&#10;I_C+&#10;m(d^2I-dd^T).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Done.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Important off-diagonal consequence</Strong></Content>
+<Content ns0:pstyle="Content">Let:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7511d010c035a24f259d3e0e.svg" alt="&#10;d=(1,1,0).&#10;" jobId="7511d010c035a24f259d3e0e" originalTeX="&#10;d=(1,1,0).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f61652159e3b9ea2c149807e.svg" alt="&#10;dd^T&#10;=&#10;\begin{bmatrix}&#10;1&amp;1&amp;0\\&#10;1&amp;1&amp;0\\&#10;0&amp;0&amp;0&#10;\end{bmatrix}.&#10;" jobId="f61652159e3b9ea2c149807e" originalTeX="&#10;dd^T&#10;=&#10;\begin{bmatrix}&#10;1&amp;1&amp;0\\&#10;1&amp;1&amp;0\\&#10;0&amp;0&amp;0&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">And:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2011ac1d9a3a2b54c45d9127.svg" alt="&#10;d^2=2.&#10;" jobId="2011ac1d9a3a2b54c45d9127" originalTeX="&#10;d^2=2.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ebb04ea7e46f4e034c7c3015.svg" alt="&#10;d^2I-dd^T&#10;=&#10;\begin{bmatrix}&#10;1&amp;-1&amp;0\\&#10;-1&amp;1&amp;0\\&#10;0&amp;0&amp;2&#10;\end{bmatrix}.&#10;" jobId="ebb04ea7e46f4e034c7c3015" originalTeX="&#10;d^2I-dd^T&#10;=&#10;\begin{bmatrix}&#10;1&amp;-1&amp;0\\&#10;-1&amp;1&amp;0\\&#10;0&amp;0&amp;2&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Notice the off-diagonal:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f57f723ea1883dbaa86cec31.svg" alt="&#10;-1.&#10;" jobId="f57f723ea1883dbaa86cec31" originalTeX="&#10;-1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is extremely important for the Kairo implementation audit.</Content>
+<Content ns0:pstyle="Content">Parallel-axis shifting can turn an initially diagonal tensor into a <Strong ns0:cstyle="Bold">non-diagonal tensor</Strong> in the chosen aggregate coordinate frame.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1637-composite-body-mass-properties">Part 1637 — Composite-body mass properties</Content>
+<Content ns0:pstyle="Content">Suppose children:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3b55196cfca6a166c9c198a0.svg" alt="&#10;i=1,\dots,n.&#10;" jobId="3b55196cfca6a166c9c198a0" originalTeX="&#10;i=1,\dots,n.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Each has:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a0a743194ffedd7873c05d7a.svg" alt="&#10;m_i&#10;" jobId="a0a743194ffedd7873c05d7a" originalTeX="&#10;m_i&#10;" /></Formula>
+<Content ns0:pstyle="Content">COM:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4d56939d34d8d5082ca37fd0.svg" alt="&#10;c_i&#10;" jobId="4d56939d34d8d5082ca37fd0" originalTeX="&#10;c_i&#10;" /></Formula>
+<Content ns0:pstyle="Content">and inertia tensor around its own COM:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f2d4e2b2187c68348802caf7.svg" alt="&#10;I_i.&#10;" jobId="f2d4e2b2187c68348802caf7" originalTeX="&#10;I_i.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Total mass:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3ebb1de20bdf1073440db288.svg" alt="&#10;\boxed{&#10;M=\sum_i m_i.&#10;}&#10;" jobId="3ebb1de20bdf1073440db288" originalTeX="&#10;\boxed{&#10;M=\sum_i m_i.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Combined COM:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0193237b9e1a34e92a4aa9ef.svg" alt="&#10;\boxed{&#10;c=&#10;\frac{&#10;\sum_i m_ic_i&#10;}{&#10;M&#10;}.&#10;}&#10;" jobId="0193237b9e1a34e92a4aa9ef" originalTeX="&#10;\boxed{&#10;c=&#10;\frac{&#10;\sum_i m_ic_i&#10;}{&#10;M&#10;}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Let:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/11c50f477b19cf8e4a635d27.svg" alt="&#10;d_i=c_i-c.&#10;" jobId="11c50f477b19cf8e4a635d27" originalTeX="&#10;d_i=c_i-c.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then if each child tensor is already expressed in the same aggregate orientation basis:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/64bada1e83b3f2ee4e7e4eed.svg" alt="&#10;\boxed{&#10;I_{total}&#10;=&#10;\sum_i&#10;\left[&#10;I_i+&#10;m_i&#10;(&#10;\|d_i\|^2I-d_id_i^T&#10;)&#10;\right].&#10;}&#10;" jobId="64bada1e83b3f2ee4e7e4eed" originalTeX="&#10;\boxed{&#10;I_{total}&#10;=&#10;\sum_i&#10;\left[&#10;I_i+&#10;m_i&#10;(&#10;\|d_i\|^2I-d_id_i^T&#10;)&#10;\right].&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is exactly what Kairo’s <InlineCode ns0:cstyle="InlineCode">CombineMassProperties()</InlineCode> is attempting.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Rotated child shapes</Strong></Content>
+<Content ns0:pstyle="Content">If child inertia is defined in its own local axes and child has relative orientation:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e1349cc53d656773ed9daebe.svg" alt="&#10;R_i,&#10;" jobId="e1349cc53d656773ed9daebe" originalTeX="&#10;R_i,&#10;" /></Formula>
+<Content ns0:pstyle="Content">first rotate it into aggregate body frame:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2724188ac17f591d06dc813c.svg" alt="&#10;I_i^{body}&#10;=&#10;R_i&#10;I_i^{child}&#10;R_i^T.&#10;" jobId="2724188ac17f591d06dc813c" originalTeX="&#10;I_i^{body}&#10;=&#10;R_i&#10;I_i^{child}&#10;R_i^T.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then shift:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c45263431cf044d834225281.svg" alt="&#10;I_i^{shifted}&#10;=&#10;I_i^{body}&#10;+&#10;m_i&#10;(&#10;d_i^2I-d_id_i^T&#10;).&#10;" jobId="c45263431cf044d834225281" originalTeX="&#10;I_i^{shifted}&#10;=&#10;I_i^{body}&#10;+&#10;m_i&#10;(&#10;d_i^2I-d_id_i^T&#10;).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore complete compound formula:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2f106e3db458e60145a3ee27.svg" alt="&#10;\boxed{&#10;I_{total}&#10;=&#10;\sum_i&#10;\left[&#10;R_iI_iR_i^T&#10;+&#10;m_i&#10;(&#10;d_i^2I-d_id_i^T&#10;)&#10;\right].&#10;}&#10;" jobId="2f106e3db458e60145a3ee27" originalTeX="&#10;\boxed{&#10;I_{total}&#10;=&#10;\sum_i&#10;\left[&#10;R_iI_iR_i^T&#10;+&#10;m_i&#10;(&#10;d_i^2I-d_id_i^T&#10;)&#10;\right].&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Current <InlineCode ns0:cstyle="InlineCode">MassProperties</InlineCode> children do not carry a child rotation in <InlineCode ns0:cstyle="InlineCode">CombineMassProperties()</InlineCode>, so the current helper assumes all part inertia tensors are already expressed in the same local frame.</Content>
+<Content ns0:pstyle="Content">That is a legitimate restricted contract, but it should be stated explicitly.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1638-local-space-inertia-tensor">Part 1638 — Local-space inertia tensor</Content>
+<Content ns0:pstyle="Content">Why store inertia in local/body space?</Content>
+<Content ns0:pstyle="Content">Because the body’s mass distribution relative to itself does not change.</Content>
+<Content ns0:pstyle="Content">A box remains a box while rotating.</Content>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7f096db5b22fb8e707cf90ce.svg" alt="&#10;I_{body}&#10;" jobId="7f096db5b22fb8e707cf90ce" originalTeX="&#10;I_{body}&#10;" /></Formula>
+<Content ns0:pstyle="Content">is constant.</Content>
+<Content ns0:pstyle="Content">If you stored only world-space tensor:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4bec8cb78cebf370cea89dfa.svg" alt="&#10;I_{world}&#10;" jobId="4bec8cb78cebf370cea89dfa" originalTeX="&#10;I_{world}&#10;" /></Formula>
+<Content ns0:pstyle="Content">you would need to recompute/transform it as orientation changes.</Content>
+<Content ns0:pstyle="Content">Better:</Content>
+<Code ns0:pstyle="Code" language="text">store local inertia once</Code>
+<Content ns0:pstyle="Content">and each frame compute:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8f6133ae099af6c554376391.svg" alt="&#10;I_{world}&#10;=&#10;RI_{body}R^T.&#10;" jobId="8f6133ae099af6c554376391" originalTeX="&#10;I_{world}&#10;=&#10;RI_{body}R^T.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is what engines normally do.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1639-inverse-inertia-tensor">Part 1639 — Inverse inertia tensor</Content>
+<Content ns0:pstyle="Content">Solvers usually need:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/986533f96d6ac18d8659cd34.svg" alt="&#10;I^{-1}&#10;" jobId="986533f96d6ac18d8659cd34" originalTeX="&#10;I^{-1}&#10;" /></Formula>
+<Content ns0:pstyle="Content">more often than:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fc56343b1e034e14b652f4c2.svg" alt="&#10;I.&#10;" jobId="fc56343b1e034e14b652f4c2" originalTeX="&#10;I.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Analogous to inverse mass.</Content>
+<Content ns0:pstyle="Content">For diagonal tensor:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3fb8d2ba4d104c2a3dbfc9b1.svg" alt="&#10;I=&#10;\begin{bmatrix}&#10;I_x&amp;0&amp;0\\&#10;0&amp;I_y&amp;0\\&#10;0&amp;0&amp;I_z&#10;\end{bmatrix}&#10;" jobId="3fb8d2ba4d104c2a3dbfc9b1" originalTeX="&#10;I=&#10;\begin{bmatrix}&#10;I_x&amp;0&amp;0\\&#10;0&amp;I_y&amp;0\\&#10;0&amp;0&amp;I_z&#10;\end{bmatrix}&#10;" /></Formula>
+<Content ns0:pstyle="Content">then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1deeff422daace1eb0189bef.svg" alt="&#10;\boxed{&#10;I^{-1}&#10;=&#10;\begin{bmatrix}&#10;1/I_x&amp;0&amp;0\\&#10;0&amp;1/I_y&amp;0\\&#10;0&amp;0&amp;1/I_z&#10;\end{bmatrix}.&#10;}&#10;" jobId="1deeff422daace1eb0189bef" originalTeX="&#10;\boxed{&#10;I^{-1}&#10;=&#10;\begin{bmatrix}&#10;1/I_x&amp;0&amp;0\\&#10;0&amp;1/I_y&amp;0\\&#10;0&amp;0&amp;1/I_z&#10;\end{bmatrix}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Kairo’s <InlineCode ns0:cstyle="InlineCode">InverseDiagonalInertia()</InlineCode> performs this.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Locked rotational axis</Strong></Content>
+<Content ns0:pstyle="Content">Suppose rotation around x should be forbidden.</Content>
+<Content ns0:pstyle="Content">Interpret:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/68d075ed546d46e97117975e.svg" alt="&#10;I_x\rightarrow\infty.&#10;" jobId="68d075ed546d46e97117975e" originalTeX="&#10;I_x\rightarrow\infty.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/df93365b3f743ce448f6c8a9.svg" alt="&#10;I_x^{-1}\rightarrow0.&#10;" jobId="df93365b3f743ce448f6c8a9" originalTeX="&#10;I_x^{-1}\rightarrow0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So engines can encode a locked axis as:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/91533d3e3ca4543111ea4999.svg" alt="&#10;I_x^{-1}=0.&#10;" jobId="91533d3e3ca4543111ea4999" originalTeX="&#10;I_x^{-1}=0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Again inverse quantities elegantly represent infinite resistance.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Full tensor inversion</Strong></Content>
+<Content ns0:pstyle="Content">For a non-diagonal tensor:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e807e7e1826d66b8441e6d01.svg" alt="&#10;I=&#10;\begin{bmatrix}&#10;a&amp;b&amp;c\\&#10;b&amp;d&amp;e\\&#10;c&amp;e&amp;f&#10;\end{bmatrix},&#10;" jobId="e807e7e1826d66b8441e6d01" originalTeX="&#10;I=&#10;\begin{bmatrix}&#10;a&amp;b&amp;c\\&#10;b&amp;d&amp;e\\&#10;c&amp;e&amp;f&#10;\end{bmatrix},&#10;" /></Formula>
+<Content ns0:pstyle="Content">you cannot invert it by taking only reciprocal diagonal entries.</Content>
+<Content ns0:pstyle="Content">The determinant is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2323a81bfc7645faa5862c25.svg" alt="&#10;\det(I)&#10;=&#10;a(df-e^2)&#10;-&#10;b(bf-ce)&#10;+&#10;c(be-cd).&#10;" jobId="2323a81bfc7645faa5862c25" originalTeX="&#10;\det(I)&#10;=&#10;a(df-e^2)&#10;-&#10;b(bf-ce)&#10;+&#10;c(be-cd).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Inverse:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/608ba93acda78cf393ab6749.svg" alt="&#10;I^{-1}&#10;=&#10;\frac1{\det I}&#10;\begin{bmatrix}&#10;df-e^2 &amp; ce-bf &amp; be-cd\\&#10;ce-bf &amp; af-c^2 &amp; bc-ae\\&#10;be-cd &amp; bc-ae &amp; ad-b^2&#10;\end{bmatrix}.&#10;" jobId="608ba93acda78cf393ab6749" originalTeX="&#10;I^{-1}&#10;=&#10;\frac1{\det I}&#10;\begin{bmatrix}&#10;df-e^2 &amp; ce-bf &amp; be-cd\\&#10;ce-bf &amp; af-c^2 &amp; bc-ae\\&#10;be-cd &amp; bc-ae &amp; ad-b^2&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For a physically valid full 3D dynamic inertia tensor it should normally be symmetric positive definite.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Better principal-axis approach</Strong></Content>
+<Content ns0:pstyle="Content">Since I is symmetric:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/16c8e63fa65b9be74109a4ef.svg" alt="&#10;I=QDQ^T.&#10;" jobId="16c8e63fa65b9be74109a4ef" originalTeX="&#10;I=QDQ^T.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4c241de7cc86897c5d77c99b.svg" alt="&#10;I^{-1}&#10;=&#10;QD^{-1}Q^T.&#10;" jobId="4c241de7cc86897c5d77c99b" originalTeX="&#10;I^{-1}&#10;=&#10;QD^{-1}Q^T.&#10;" /></Formula>
+<Content ns0:pstyle="Content">If:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f0c3a0b4bbcfd8cc15dd8d42.svg" alt="&#10;D=&#10;diag(\lambda_1,\lambda_2,\lambda_3),&#10;" jobId="f0c3a0b4bbcfd8cc15dd8d42" originalTeX="&#10;D=&#10;diag(\lambda_1,\lambda_2,\lambda_3),&#10;" /></Formula>
+<Content ns0:pstyle="Content">then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/14a172ea58ebcdd60892a19f.svg" alt="&#10;D^{-1}&#10;=&#10;diag(&#10;1/\lambda_1,&#10;1/\lambda_2,&#10;1/\lambda_3&#10;).&#10;" jobId="14a172ea58ebcdd60892a19f" originalTeX="&#10;D^{-1}&#10;=&#10;diag(&#10;1/\lambda_1,&#10;1/\lambda_2,&#10;1/\lambda_3&#10;).&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is numerically and conceptually elegant.</Content>
+<Content ns0:pstyle="Content">It also permits a pseudoinverse convention:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0eef7eee3bd1b232a8046663.svg" alt="&#10;\lambda_i^{-1}=0&#10;" jobId="0eef7eee3bd1b232a8046663" originalTeX="&#10;\lambda_i^{-1}=0&#10;" /></Formula>
+<Content ns0:pstyle="Content">for intentionally locked axes.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1640-rotating-inertia-into-world-space">Part 1640 — Rotating inertia into world space</Content>
+<Content ns0:pstyle="Content">Let:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ac1394edb170b8d46e1163b8.svg" alt="&#10;R&#10;" jobId="ac1394edb170b8d46e1163b8" originalTeX="&#10;R&#10;" /></Formula>
+<Content ns0:pstyle="Content">map body-space vectors to world-space vectors.</Content>
+<Content ns0:pstyle="Content">Body inertia:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f26ccb39059f8f0856fad34b.svg" alt="&#10;I_b.&#10;" jobId="f26ccb39059f8f0856fad34b" originalTeX="&#10;I_b.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/32a3cf8e9f473a3cae1a77b2.svg" alt="&#10;\boxed{&#10;I_w&#10;=&#10;RI_bR^T.&#10;}&#10;" jobId="32a3cf8e9f473a3cae1a77b2" originalTeX="&#10;\boxed{&#10;I_w&#10;=&#10;RI_bR^T.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Why?</Content>
+<Content ns0:pstyle="Content">Angular velocity transforms:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8f054742fcee4661b0ab1902.svg" alt="&#10;\omega_w=&#10;R\omega_b.&#10;" jobId="8f054742fcee4661b0ab1902" originalTeX="&#10;\omega_w=&#10;R\omega_b.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Angular momentum:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/40f269a4ebd67f18b41f22fb.svg" alt="&#10;L_b=&#10;I_b\omega_b.&#10;" jobId="40f269a4ebd67f18b41f22fb" originalTeX="&#10;L_b=&#10;I_b\omega_b.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Transform to world:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/828abd8222976fc94cd4f44c.svg" alt="&#10;L_w=&#10;RL_b.&#10;" jobId="828abd8222976fc94cd4f44c" originalTeX="&#10;L_w=&#10;RL_b.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Thus:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ce6439d454fe98ba92b61be1.svg" alt="&#10;L_w=&#10;RI_b\omega_b.&#10;" jobId="ce6439d454fe98ba92b61be1" originalTeX="&#10;L_w=&#10;RI_b\omega_b.&#10;" /></Formula>
+<Content ns0:pstyle="Content">But:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ac550a58b4beea96ea82ac04.svg" alt="&#10;\omega_b=&#10;R^T\omega_w&#10;" jobId="ac550a58b4beea96ea82ac04" originalTeX="&#10;\omega_b=&#10;R^T\omega_w&#10;" /></Formula>
+<Content ns0:pstyle="Content">because rotation matrices are orthogonal:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b000df0b21c45afb77d7644e.svg" alt="&#10;R^{-1}=R^T.&#10;" jobId="b000df0b21c45afb77d7644e" originalTeX="&#10;R^{-1}=R^T.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5b7f49d0f649ed1978d93ec6.svg" alt="&#10;L_w=&#10;RI_bR^T\omega_w.&#10;" jobId="5b7f49d0f649ed1978d93ec6" originalTeX="&#10;L_w=&#10;RI_bR^T\omega_w.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e6c0f826ac954fb40eab79d2.svg" alt="&#10;I_w=&#10;RI_bR^T.&#10;" jobId="e6c0f826ac954fb40eab79d2" originalTeX="&#10;I_w=&#10;RI_bR^T.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1641-world-space-inverse-inertia">Part 1641 — World-space inverse inertia</Content>
+<Content ns0:pstyle="Content">Start:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/456352b57dcadbd12853fa89.svg" alt="&#10;I_w&#10;=&#10;RI_bR^T.&#10;" jobId="456352b57dcadbd12853fa89" originalTeX="&#10;I_w&#10;=&#10;RI_bR^T.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Take inverse:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/28f73b8b57e10a2873a6e312.svg" alt="&#10;I_w^{-1}&#10;=&#10;(RI_bR^T)^{-1}.&#10;" jobId="28f73b8b57e10a2873a6e312" originalTeX="&#10;I_w^{-1}&#10;=&#10;(RI_bR^T)^{-1}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Using:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5218ebb02d9630bb27e6d0e0.svg" alt="&#10;(ABC)^{-1}&#10;=&#10;C^{-1}B^{-1}A^{-1},&#10;" jobId="5218ebb02d9630bb27e6d0e0" originalTeX="&#10;(ABC)^{-1}&#10;=&#10;C^{-1}B^{-1}A^{-1},&#10;" /></Formula>
+<Content ns0:pstyle="Content">we get:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1805dc4aab7fc2024df53a9d.svg" alt="&#10;I_w^{-1}&#10;=&#10;(R^T)^{-1}&#10;I_b^{-1}&#10;R^{-1}.&#10;" jobId="1805dc4aab7fc2024df53a9d" originalTeX="&#10;I_w^{-1}&#10;=&#10;(R^T)^{-1}&#10;I_b^{-1}&#10;R^{-1}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For orthogonal R:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b000df0b21c45afb77d7644e.svg" alt="&#10;R^{-1}=R^T.&#10;" jobId="b000df0b21c45afb77d7644e" originalTeX="&#10;R^{-1}=R^T.&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ff6d6f274dcf98278f43b43e.svg" alt="&#10;(R^T)^{-1}=R.&#10;" jobId="ff6d6f274dcf98278f43b43e" originalTeX="&#10;(R^T)^{-1}=R.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c27529f5b1fa3abb0dd45435.svg" alt="&#10;\boxed{&#10;I_w^{-1}&#10;=&#10;R&#10;I_b^{-1}&#10;R^T.&#10;}&#10;" jobId="c27529f5b1fa3abb0dd45435" originalTeX="&#10;\boxed{&#10;I_w^{-1}&#10;=&#10;R&#10;I_b^{-1}&#10;R^T.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is exactly Kairo’s implementation:</Content>
+<Code ns0:pstyle="Code" language="cpp">const Matrix3f r =
+    ToMatrix3(rotation);
+
+return
+    r *
+    localInverseInertia *
+    Transpose(r);</Code>
+<Content ns0:pstyle="Content">Correct.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why transform inverse directly</Strong></Content>
+<Content ns0:pstyle="Content">You could compute:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/94cf49d93a6bf71eb25284c6.svg" alt="&#10;I_w&#10;" jobId="94cf49d93a6bf71eb25284c6" originalTeX="&#10;I_w&#10;" /></Formula>
+<Content ns0:pstyle="Content">then invert it every frame.</Content>
+<Content ns0:pstyle="Content">Wasteful.</Content>
+<Content ns0:pstyle="Content">If:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0d2b9b8a5e6f4896707b8fca.svg" alt="&#10;I_b^{-1}&#10;" jobId="0d2b9b8a5e6f4896707b8fca" originalTeX="&#10;I_b^{-1}&#10;" /></Formula>
+<Content ns0:pstyle="Content">is precomputed once:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bdbf5d99ec59469be0d70000.svg" alt="&#10;I_w^{-1}&#10;=&#10;RI_b^{-1}R^T.&#10;" jobId="bdbf5d99ec59469be0d70000" originalTeX="&#10;I_w^{-1}&#10;=&#10;RI_b^{-1}R^T.&#10;" /></Formula>
+<Content ns0:pstyle="Content">No matrix inversion per body per frame.</Content>
+<Content ns0:pstyle="Content">Only matrix multiplications.</Content>
+<Content ns0:pstyle="Content">That is exactly the right runtime design.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-part-1642-why-inertia-tensors-are-symmetric">Part 1642 — Why inertia tensors are symmetric</Content>
+<Content ns0:pstyle="Content">From definition:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0d0531cfd41644b0f5d19db4.svg" alt="&#10;I&#10;=&#10;\int&#10;(&#10;r^2I_3&#10;-&#10;rr^T&#10;)&#10;dm.&#10;" jobId="0d0531cfd41644b0f5d19db4" originalTeX="&#10;I&#10;=&#10;\int&#10;(&#10;r^2I_3&#10;-&#10;rr^T&#10;)&#10;dm.&#10;" /></Formula>
+<Content ns0:pstyle="Content"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f63e90194d212ed53bc820d2.svg" alt="r^2I_3" jobId="f63e90194d212ed53bc820d2" originalTeX="r^2I_3" /> is symmetric.</Content>
+<Content ns0:pstyle="Content">And:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0437fcb0eb40867ed914466e.svg" alt="&#10;(rr^T)^T&#10;=&#10;rr^T.&#10;" jobId="0437fcb0eb40867ed914466e" originalTeX="&#10;(rr^T)^T&#10;=&#10;rr^T.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore integrand is symmetric.</Content>
+<Content ns0:pstyle="Content">An integral/sum of symmetric matrices remains symmetric.</Content>
+<Content ns0:pstyle="Content">Thus:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8a4381851f9473d434aa8946.svg" alt="&#10;\boxed{&#10;I^T=I.&#10;}&#10;" jobId="8a4381851f9473d434aa8946" originalTeX="&#10;\boxed{&#10;I^T=I.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Component-wise:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1b0619bd1b0e80fc4d309051.svg" alt="&#10;I_{xy}=I_{yx}&#10;" jobId="1b0619bd1b0e80fc4d309051" originalTeX="&#10;I_{xy}=I_{yx}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f87282a05c9ac19ff85e70dc.svg" alt="&#10;I_{xz}=I_{zx}&#10;" jobId="f87282a05c9ac19ff85e70dc" originalTeX="&#10;I_{xz}=I_{zx}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5a70191681f9b8804dd16a91.svg" alt="&#10;I_{yz}=I_{zy}.&#10;" jobId="5a70191681f9b8804dd16a91" originalTeX="&#10;I_{yz}=I_{zy}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Symmetry is not just mathematical trivia</Strong></Content>
+<Content ns0:pstyle="Content">A real symmetric matrix has powerful properties.</Content>
+<Content ns0:pstyle="Content">Its eigenvalues are real.</Content>
+<Content ns0:pstyle="Content">Eigenvectors belonging to distinct eigenvalues are orthogonal.</Content>
+<Content ns0:pstyle="Content">It can be diagonalized by an orthogonal matrix:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/16c8e63fa65b9be74109a4ef.svg" alt="&#10;I=QDQ^T.&#10;" jobId="16c8e63fa65b9be74109a4ef" originalTeX="&#10;I=QDQ^T.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is exactly the mathematical foundation of principal axes.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Positive semidefiniteness</Strong></Content>
+<Content ns0:pstyle="Content">For any vector:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/60c7e0f39750193a61f2c0f1.svg" alt="&#10;u,&#10;" jobId="60c7e0f39750193a61f2c0f1" originalTeX="&#10;u,&#10;" /></Formula>
+<Content ns0:pstyle="Content">consider:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/084add89134379393599d069.svg" alt="&#10;u^TIu.&#10;" jobId="084add89134379393599d069" originalTeX="&#10;u^TIu.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Using tensor definition:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/837ea62bdb6b549cd9de3419.svg" alt="&#10;u^TIu&#10;=&#10;\int&#10;u^T&#10;(r^2I-rr^T)&#10;u\,dm.&#10;" jobId="837ea62bdb6b549cd9de3419" originalTeX="&#10;u^TIu&#10;=&#10;\int&#10;u^T&#10;(r^2I-rr^T)&#10;u\,dm.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This becomes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5f8e4b1fae36ca273d48d502.svg" alt="&#10;\int&#10;(&#10;r^2u^2-(r\cdot u)^2&#10;)&#10;dm.&#10;" jobId="5f8e4b1fae36ca273d48d502" originalTeX="&#10;\int&#10;(&#10;r^2u^2-(r\cdot u)^2&#10;)&#10;dm.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Using vector identity:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e7d5c4e2108e953dc3736baf.svg" alt="&#10;\|u\times r\|^2&#10;=&#10;u^2r^2-(u\cdot r)^2.&#10;" jobId="e7d5c4e2108e953dc3736baf" originalTeX="&#10;\|u\times r\|^2&#10;=&#10;u^2r^2-(u\cdot r)^2.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/205444b78719cc5aaeca9826.svg" alt="&#10;\boxed{&#10;u^TIu&#10;=&#10;\int&#10;\|u\times r\|^2dm&#10;\ge0.&#10;}&#10;" jobId="205444b78719cc5aaeca9826" originalTeX="&#10;\boxed{&#10;u^TIu&#10;=&#10;\int&#10;\|u\times r\|^2dm&#10;\ge0.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">So inertia is positive semidefinite.</Content>
+<Content ns0:pstyle="Content">For a proper 3D mass distribution it is positive definite.</Content>
+<Content ns0:pstyle="Content">That means all principal moments are positive.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Axis-specific moment from tensor</Strong></Content>
+<Content ns0:pstyle="Content">For unit axis:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fc3a8ca90fe2df56da063179.svg" alt="&#10;n,&#10;" jobId="fc3a8ca90fe2df56da063179" originalTeX="&#10;n,&#10;" /></Formula>
+<Content ns0:pstyle="Content">moment of inertia about n:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f2cf6ff683d1287b77a91704.svg" alt="&#10;\boxed{&#10;I_n&#10;=&#10;n^TIn.&#10;}&#10;" jobId="f2cf6ff683d1287b77a91704" originalTeX="&#10;\boxed{&#10;I_n&#10;=&#10;n^TIn.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is enormously useful.</Content>
+<Content ns0:pstyle="Content">Tensor contains the rotational inertia for <Strong ns0:cstyle="Bold">every possible axis through the chosen origin</Strong>.</Content>
+<Content ns0:pstyle="Content">You don’t need to store an inertia value for infinitely many axes.</Content>
+<Content ns0:pstyle="Content">The matrix encodes them all.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Angular dynamics: the subtle part most tutorials skip</Strong></Content>
+<Content ns0:pstyle="Content">You will often see:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3ee40847cf285fdbe52dcf49.svg" alt="&#10;\alpha&#10;=&#10;I^{-1}\tau.&#10;" jobId="3ee40847cf285fdbe52dcf49" originalTeX="&#10;\alpha&#10;=&#10;I^{-1}\tau.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is exactly correct in certain common situations:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">rotation along fixed principal axis,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">spherical inertia,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">certain approximations,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">when using the simplified game-engine angular update.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">But the full 3D rigid-body equation is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/77ab9d4c33e411d245ce7e09.svg" alt="&#10;\boxed{&#10;\tau&#10;=&#10;\frac{dL}{dt}.&#10;}&#10;" jobId="77ab9d4c33e411d245ce7e09" originalTeX="&#10;\boxed{&#10;\tau&#10;=&#10;\frac{dL}{dt}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">And:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/529a4e7206deddb44398addb.svg" alt="&#10;L=I_w\omega.&#10;" jobId="529a4e7206deddb44398addb" originalTeX="&#10;L=I_w\omega.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Differentiate:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cb116ef5d8400b6e1e1b0f9e.svg" alt="&#10;\tau&#10;=&#10;I_w\dot\omega&#10;+&#10;\dot I_w\omega.&#10;" jobId="cb116ef5d8400b6e1e1b0f9e" originalTeX="&#10;\tau&#10;=&#10;I_w\dot\omega&#10;+&#10;\dot I_w\omega.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Since world inertia changes as the body rotates:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/eeedc1049a7b80297557113b.svg" alt="&#10;\dot I_w\omega&#10;=&#10;\omega\times(I_w\omega).&#10;" jobId="eeedc1049a7b80297557113b" originalTeX="&#10;\dot I_w\omega&#10;=&#10;\omega\times(I_w\omega).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1b4039bb7a7651485b5263ae.svg" alt="&#10;\boxed{&#10;\tau&#10;=&#10;I_w\alpha&#10;+&#10;\omega\times(I_w\omega).&#10;}&#10;" jobId="1b4039bb7a7651485b5263ae" originalTeX="&#10;\boxed{&#10;\tau&#10;=&#10;I_w\alpha&#10;+&#10;\omega\times(I_w\omega).&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Rearrange:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/506fa929132a87874fe51fff.svg" alt="&#10;\boxed{&#10;\alpha&#10;=&#10;I_w^{-1}&#10;\left[&#10;\tau&#10;-&#10;\omega\times(I_w\omega)&#10;\right].&#10;}&#10;" jobId="506fa929132a87874fe51fff" originalTeX="&#10;\boxed{&#10;\alpha&#10;=&#10;I_w^{-1}&#10;\left[&#10;\tau&#10;-&#10;\omega\times(I_w\omega)&#10;\right].&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">The extra:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/da74f5218a5468ed534b3ffe.svg" alt="&#10;\omega\times L&#10;" jobId="da74f5218a5468ed534b3ffe" originalTeX="&#10;\omega\times L&#10;" /></Formula>
+<Content ns0:pstyle="Content">term is the <Strong ns0:cstyle="Bold">gyroscopic term</Strong>.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why gyroscopic motion exists</Strong></Content>
+<Content ns0:pstyle="Content">Imagine a freely rotating asymmetric rigid body with:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/afda6006f357d88fcc436ca8.svg" alt="&#10;\tau=0.&#10;" jobId="afda6006f357d88fcc436ca8" originalTeX="&#10;\tau=0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Naive formula:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/73cd9d875a04c78a8851e431.svg" alt="&#10;\alpha=I^{-1}\tau=0&#10;" jobId="73cd9d875a04c78a8851e431" originalTeX="&#10;\alpha=I^{-1}\tau=0&#10;" /></Formula>
+<Content ns0:pstyle="Content">would imply angular velocity never changes.</Content>
+<Content ns0:pstyle="Content">But a torque-free asymmetric rigid body can have changing angular velocity vector in body coordinates while conserving angular momentum.</Content>
+<Content ns0:pstyle="Content">That is Euler’s rigid-body dynamics.</Content>
+<Content ns0:pstyle="Content">The behavior behind:</Content>
+<Code ns0:pstyle="Code" language="text">tennis-racket theorem
+intermediate-axis instability</Code>
+<Content ns0:pstyle="Content">comes from this structure.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Kairo currently uses the common simplified angular integration</Strong></Content>
+<Content ns0:pstyle="Content">Current <InlineCode ns0:cstyle="InlineCode">PhysicsWorld</InlineCode> computes:</Content>
+<Code ns0:pstyle="Code" language="cpp">body.State.AngularVelocity +=
+    WorldInverseInertia(body) *
+    body.Forces.Torque *
+    dt;</Code>
+<Content ns0:pstyle="Content">which corresponds to:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/390f79f15ea8252e77735bbf.svg" alt="&#10;\dot\omega&#10;\approx&#10;I_w^{-1}\tau.&#10;" jobId="390f79f15ea8252e77735bbf" originalTeX="&#10;\dot\omega&#10;\approx&#10;I_w^{-1}\tau.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The gyroscopic term:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4788b6997fb385e7d26c9617.svg" alt="&#10;-I_w^{-1}&#10;[&#10;\omega\times(I_w\omega)&#10;]&#10;" jobId="4788b6997fb385e7d26c9617" originalTeX="&#10;-I_w^{-1}&#10;[&#10;\omega\times(I_w\omega)&#10;]&#10;" /></Formula>
+<Content ns0:pstyle="Content">is not present.</Content>
+<Content ns0:pstyle="Content">That is a common game-engine simplification, especially for stability and ordinary gameplay rigid bodies.</Content>
+<Content ns0:pstyle="Content">But if you are using the engine for <Strong ns0:cstyle="Bold">Reality Probe / physical-replication experiments</Strong>, this distinction becomes scientifically relevant.</Content>
+<Content ns0:pstyle="Content">For high-spin asymmetric bodies, the simplified model does not reproduce full torque-free rigid-body dynamics.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Full angular acceleration helper</Strong></Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="cpp">Vec3f ComputeAngularAcceleration(
+    const Matrix3f&amp; worldInertia,
+    const Matrix3f&amp; worldInverseInertia,
+    const Vec3f&amp; angularVelocity,
+    const Vec3f&amp; torque)
+{
+    // Angular momentum in world coordinates.
+    const Vec3f angularMomentum =
+        worldInertia *
+        angularVelocity;
+
+    // Full Euler rigid-body equation:
+    //
+    // τ = I α + ω × (I ω)
+    //
+    // therefore:
+    //
+    // α = I^-1 [τ - ω × (Iω)]
+    return worldInverseInertia *
+        (
+            torque -
+            Cross(
+                angularVelocity,
+                angularMomentum)
+        );
+}</Code>
+<Content ns0:pstyle="Content">For a sphere:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7c4720a9df344e0bb77cd1fa.svg" alt="&#10;I=cI_3.&#10;" jobId="7c4720a9df344e0bb77cd1fa" originalTeX="&#10;I=cI_3.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5ce73ae0fc8f3bb0cd2d4b27.svg" alt="&#10;I\omega=c\omega.&#10;" jobId="5ce73ae0fc8f3bb0cd2d4b27" originalTeX="&#10;I\omega=c\omega.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9e7ec6b6e1f7b3059900472d.svg" alt="&#10;\omega\times I\omega&#10;=&#10;c(\omega\times\omega)&#10;=&#10;0.&#10;" jobId="9e7ec6b6e1f7b3059900472d" originalTeX="&#10;\omega\times I\omega&#10;=&#10;c(\omega\times\omega)&#10;=&#10;0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So the simplified and full equations coincide.</Content>
+<Content ns0:pstyle="Content">That is why the issue often goes unnoticed with spheres.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-kairo-audit-1-makemassproperties-and-non-diagonal-inertia">KAIRO AUDIT 1 — <InlineCode ns0:cstyle="InlineCode">MakeMassProperties()</InlineCode> AND NON-DIAGONAL INERTIA</Content>
+<Content ns0:pstyle="Content">This is the strongest implementation finding in this pass.</Content>
+<Content ns0:pstyle="Content">Current:</Content>
+<Code ns0:pstyle="Code" language="cpp">return
+{
+    mass,
+    InverseMassFor(mass),
+    localCenterOfMass,
+    localInertiaTensor,
+    mass &gt; 0.0f
+        ? InverseDiagonalInertia(
+            localInertiaTensor)
+        : Matrix3f::Zero()
+};</Code>
+<Content ns0:pstyle="Content">The function is named:</Content>
+<Code ns0:pstyle="Code" language="text">MakeMassProperties</Code>
+<Content ns0:pstyle="Content">and accepts arbitrary:</Content>
+<Code ns0:pstyle="Code" language="text">Matrix3f localInertiaTensor.</Code>
+<Content ns0:pstyle="Content">But then computes inverse assuming diagonal.</Content>
+<Content ns0:pstyle="Content">That is valid only if:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5472523b9c1bbf39f8584d62.svg" alt="&#10;I_{xy}=I_{xz}=I_{yz}=0.&#10;" jobId="5472523b9c1bbf39f8584d62" originalTeX="&#10;I_{xy}=I_{xz}=I_{yz}=0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For sphere/centered box/capsule local principal-frame tensors:</Content>
+<Content ns0:pstyle="Content">correct.</Content>
+<Content ns0:pstyle="Content">For a generic custom tensor:</Content>
+<Content ns0:pstyle="Content">potentially wrong.</Content>
+<Content ns0:pstyle="Content">For an off-axis compound tensor:</Content>
+<Content ns0:pstyle="Content">potentially wrong.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Concrete counterexample</Strong></Content>
+<Content ns0:pstyle="Content">Suppose after a parallel-axis shift:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e399775f54efe14b9dca5cad.svg" alt="&#10;I=&#10;\begin{bmatrix}&#10;2&amp;-1&amp;0\\&#10;-1&amp;2&amp;0\\&#10;0&amp;0&amp;4&#10;\end{bmatrix}.&#10;" jobId="e399775f54efe14b9dca5cad" originalTeX="&#10;I=&#10;\begin{bmatrix}&#10;2&amp;-1&amp;0\\&#10;-1&amp;2&amp;0\\&#10;0&amp;0&amp;4&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Kairo diagonal reciprocal gives:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b996b78cf8a3edfb3bce6014.svg" alt="&#10;I^{-1}_{wrong}&#10;=&#10;\begin{bmatrix}&#10;0.5&amp;0&amp;0\\&#10;0&amp;0.5&amp;0\\&#10;0&amp;0&amp;0.25&#10;\end{bmatrix}.&#10;" jobId="b996b78cf8a3edfb3bce6014" originalTeX="&#10;I^{-1}_{wrong}&#10;=&#10;\begin{bmatrix}&#10;0.5&amp;0&amp;0\\&#10;0&amp;0.5&amp;0\\&#10;0&amp;0&amp;0.25&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Actual inverse of upper 2×2 block:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/508c3534b45a1c5c478bb960.svg" alt="&#10;\begin{bmatrix}&#10;2&amp;-1\\&#10;-1&amp;2&#10;\end{bmatrix}^{-1}&#10;=&#10;\frac13&#10;\begin{bmatrix}&#10;2&amp;1\\&#10;1&amp;2&#10;\end{bmatrix}.&#10;" jobId="508c3534b45a1c5c478bb960" originalTeX="&#10;\begin{bmatrix}&#10;2&amp;-1\\&#10;-1&amp;2&#10;\end{bmatrix}^{-1}&#10;=&#10;\frac13&#10;\begin{bmatrix}&#10;2&amp;1\\&#10;1&amp;2&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So true inverse:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c0c5f365ec16ed438f9be633.svg" alt="&#10;I^{-1}&#10;=&#10;\begin{bmatrix}&#10;0.6667&amp;0.3333&amp;0\\&#10;0.3333&amp;0.6667&amp;0\\&#10;0&amp;0&amp;0.25&#10;\end{bmatrix}.&#10;" jobId="c0c5f365ec16ed438f9be633" originalTeX="&#10;I^{-1}&#10;=&#10;\begin{bmatrix}&#10;0.6667&amp;0.3333&amp;0\\&#10;0.3333&amp;0.6667&amp;0\\&#10;0&amp;0&amp;0.25&#10;\end{bmatrix}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The difference is significant.</Content>
+<Content ns0:pstyle="Content">Torque along x can generate angular acceleration with y component.</Content>
+<Content ns0:pstyle="Content">The diagonal approximation cannot express that.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Correct design options</Strong></Content>
+<Content ns0:pstyle="Content">You have three clean approaches.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Option A — restrict the API</Strong></Content>
+<Content ns0:pstyle="Content">Rename/constrain:</Content>
+<Code ns0:pstyle="Code" language="text">MakePrincipalAxisMassProperties</Code>
+<Content ns0:pstyle="Content">and explicitly require diagonal inertia.</Content>
+<Content ns0:pstyle="Content">Then compound builder must diagonalize into principal axes before storing.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Option B — implement full symmetric inverse</Strong></Content>
+<Content ns0:pstyle="Content">Accept general symmetric positive-definite tensor and compute full inverse.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Option C — store principal inertia + principal orientation</Strong></Content>
+<Content ns0:pstyle="Content">Store:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct MassProperties
+{
+    float Mass;
+    Vec3f LocalCenterOfMass;
+
+    Vec3f PrincipalInertia;
+    Quaternionf PrincipalRotation;
+};</Code>
+<Content ns0:pstyle="Content">Then reconstruct:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c8a7e61bf8a044ec036dfb9d.svg" alt="&#10;I^{-1}&#10;=&#10;R_p&#10;diag(&#10;1/I_1,&#10;1/I_2,&#10;1/I_3)&#10;R_p^T.&#10;" jobId="c8a7e61bf8a044ec036dfb9d" originalTeX="&#10;I^{-1}&#10;=&#10;R_p&#10;diag(&#10;1/I_1,&#10;1/I_2,&#10;1/I_3)&#10;R_p^T.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Option C is particularly elegant for rigid-body engines.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">A coherent full-tensor inverse helper</Strong></Content>
+<Content ns0:pstyle="Content">For positive-definite dynamic inertia:</Content>
+<Code ns0:pstyle="Code" language="cpp">Matrix3f InverseSymmetricInertia(
+    const Matrix3f&amp; I)
+{
+    // A physical inertia tensor is symmetric:
+    //
+    // [ a b c ]
+    // [ b d e ]
+    // [ c e f ]
+    const float a = I(0, 0);
+    const float b = I(0, 1);
+    const float c = I(0, 2);
+    const float d = I(1, 1);
+    const float e = I(1, 2);
+    const float f = I(2, 2);
+
+    const float determinant =
+        a * (d * f - e * e)
+        - b * (b * f - c * e)
+        + c * (b * e - c * d);
+
+    // For a dynamic full-3D rigid body the inertia should
+    // be positive definite, therefore determinant &gt; 0.
+    // A production engine should use a scale-aware threshold.
+    if (determinant &lt;= 1.0e-10f)
+    {
+        throw std::invalid_argument(
+            "Dynamic inertia tensor is singular "
+            "or not positive definite.");
+    }
+
+    const float invDet =
+        1.0f / determinant;
+
+    return Matrix3f
+    {
+        (d * f - e * e) * invDet,
+        (c * e - b * f) * invDet,
+        (b * e - c * d) * invDet,
+
+        (c * e - b * f) * invDet,
+        (a * f - c * c) * invDet,
+        (b * c - a * e) * invDet,
+
+        (b * e - c * d) * invDet,
+        (b * c - a * e) * invDet,
+        (a * d - b * b) * invDet
+    };
+}</Code>
+<Content ns0:pstyle="Content">For locked rotational axes, I would rather use principal-axis representation/pseudoinverse than attempt to overload singular general matrices with ambiguous semantics.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-kairo-audit-2-center-of-mass-convention">KAIRO AUDIT 2 — CENTER-OF-MASS CONVENTION</Content>
+<Content ns0:pstyle="Content">Current <InlineCode ns0:cstyle="InlineCode">MassProperties</InlineCode> stores:</Content>
+<Code ns0:pstyle="Code" language="cpp">Vec3f LocalCenterOfMass;</Code>
+<Content ns0:pstyle="Content">which implies body origin and COM can differ.</Content>
+<Content ns0:pstyle="Content">But <InlineCode ns0:cstyle="InlineCode">AddBodyForceAtPoint()</InlineCode> currently passes:</Content>
+<Code ns0:pstyle="Code" language="cpp">record.State.Position</Code>
+<Content ns0:pstyle="Content">as:</Content>
+<Code ns0:pstyle="Code" language="text">worldCenterOfMass.</Code>
+<Content ns0:pstyle="Content">At the same time collider world position is:</Content>
+<Code ns0:pstyle="Code" language="cpp">body.State.Position +
+Rotate(
+    body.State.Rotation,
+    collider.LocalCenter);</Code>
+<Content ns0:pstyle="Content">So current physics code effectively treats:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9042a4ef7696e8b2ca8a18b9.svg" alt="&#10;State.Position&#10;" jobId="9042a4ef7696e8b2ca8a18b9" originalTeX="&#10;State.Position&#10;" /></Formula>
+<Content ns0:pstyle="Content">as both:</Content>
+<Code ns0:pstyle="Code" language="text">body transform origin</Code>
+<Content ns0:pstyle="Content">and:</Content>
+<Code ns0:pstyle="Code" language="text">world center of mass.</Code>
+<Content ns0:pstyle="Content">Those are only the same when:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/40b6d63d9a3c6772ee8c6d6d.svg" alt="&#10;LocalCenterOfMass=0.&#10;" jobId="40b6d63d9a3c6772ee8c6d6d" originalTeX="&#10;LocalCenterOfMass=0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For current symmetric primitive shapes:</Content>
+<Content ns0:pstyle="Content">that is true.</Content>
+<Content ns0:pstyle="Content">For a future asymmetric compound:</Content>
+<Content ns0:pstyle="Content">not necessarily.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Two valid conventions</Strong></Content>
+<Content ns0:pstyle="Content">You should choose one explicitly.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Convention A — simulation position is COM</Strong></Content>
+<Content ns0:pstyle="Content">Store:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a0b87ad42024b651be084949.svg" alt="&#10;State.Position&#10;=&#10;WorldCOM.&#10;" jobId="a0b87ad42024b651be084949" originalTeX="&#10;State.Position&#10;=&#10;WorldCOM.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then geometry/collider origin must be offset from COM.</Content>
+<Content ns0:pstyle="Content">If authoring body origin has local COM:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b60cd24bfb1e31db210eb786.svg" alt="&#10;c_{local},&#10;" jobId="b60cd24bfb1e31db210eb786" originalTeX="&#10;c_{local},&#10;" /></Formula>
+<Content ns0:pstyle="Content">world point from local body coordinates x becomes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5732cf798ef7a486f2922c3a.svg" alt="&#10;x_w&#10;=&#10;COM_w&#10;+&#10;R(x_{local}-c_{local}).&#10;" jobId="5732cf798ef7a486f2922c3a" originalTeX="&#10;x_w&#10;=&#10;COM_w&#10;+&#10;R(x_{local}-c_{local}).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Collider center therefore becomes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/54cfff288bd301d21e553bfa.svg" alt="&#10;COM_w&#10;+&#10;R(&#10;ColliderLocalCenter-&#10;LocalCOM).&#10;" jobId="54cfff288bd301d21e553bfa" originalTeX="&#10;COM_w&#10;+&#10;R(&#10;ColliderLocalCenter-&#10;LocalCOM).&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is mathematically clean for dynamics.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Convention B — simulation position is body origin</Strong></Content>
+<Content ns0:pstyle="Content">Then world COM is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f09c76872f0618f0a435df8c.svg" alt="&#10;\boxed{&#10;c_w&#10;=&#10;x_{origin}&#10;+&#10;Rc_{local}.&#10;}&#10;" jobId="f09c76872f0618f0a435df8c" originalTeX="&#10;\boxed{&#10;c_w&#10;=&#10;x_{origin}&#10;+&#10;Rc_{local}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Force lever arm uses:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2ff793c9aaa4617918a4ef11.svg" alt="&#10;r=&#10;p-c_w.&#10;" jobId="2ff793c9aaa4617918a4ef11" originalTeX="&#10;r=&#10;p-c_w.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The integration of origin becomes more complicated because COM is what naturally follows Newton’s equations.</Content>
+<Content ns0:pstyle="Content">Most rigid-body solvers strongly prefer convention A internally.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Recommended Kairo direction</Strong></Content>
+<Content ns0:pstyle="Content">For physics internals:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ee273f52b1e40477a2273c13.svg" alt="&#10;\boxed{&#10;State.Position&#10;=&#10;WorldCenterOfMass.&#10;}&#10;" jobId="ee273f52b1e40477a2273c13" originalTeX="&#10;\boxed{&#10;State.Position&#10;=&#10;WorldCenterOfMass.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then keep:</Content>
+<Code ns0:pstyle="Code" language="text">authoring transform origin</Code>
+<Content ns0:pstyle="Content">separate through an offset.</Content>
+<Content ns0:pstyle="Content">Collider world center:</Content>
+<Code ns0:pstyle="Code" language="cpp">Vec3f WorldColliderCenter(
+    const RigidBody&amp; body,
+    const Collider&amp; collider)
+{
+    const Vec3f colliderFromCOM =
+        collider.LocalCenter -
+        body.Mass.LocalCenterOfMass;
+
+    return body.State.Position +
+        Rotate(
+            body.State.Rotation,
+            colliderFromCOM);
+}</Code>
+<Content ns0:pstyle="Content">Now all force, impulse and solver formulas naturally use:</Content>
+<Code ns0:pstyle="Code" language="cpp">State.Position</Code>
+<Content ns0:pstyle="Content">as COM.</Content>
+<Content ns0:pstyle="Content">And <InlineCode ns0:cstyle="InlineCode">LocalCenterOfMass</InlineCode> has a real role.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch035-kairo-audit-3-compound-child-rotation">KAIRO AUDIT 3 — COMPOUND CHILD ROTATION</Content>
+<Content ns0:pstyle="Content">Current compound function receives:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::vector&lt;MassProperties&gt;</Code>
+<Content ns0:pstyle="Content">but no child orientation.</Content>
+<Content ns0:pstyle="Content">Therefore it can only correctly combine arbitrary shapes if each child tensor has already been transformed into the common body-local coordinate frame.</Content>
+<Content ns0:pstyle="Content">A more explicit part structure would be:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct MassPropertyPart
+{
+    float Mass;
+
+    Vec3f LocalCenterOfMass;
+
+    Quaternionf LocalRotation;
+
+    Matrix3f InertiaAboutOwnCOM;
+};</Code>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="cpp">Matrix3f childRotation =
+    ToMatrix3(
+        part.LocalRotation);
+
+Matrix3f orientedInertia =
+    childRotation *
+    part.InertiaAboutOwnCOM *
+    Transpose(childRotation);
+
+Matrix3f shifted =
+    ParallelAxisTheorem(
+        orientedInertia,
+        part.Mass,
+        part.LocalCenterOfMass -
+            combinedCOM);</Code>
+<Content ns0:pstyle="Content">Now arbitrary compound geometry works.</Content>
+<Content ns0:pstyle="Content">—</Content>
+
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#06-engine-ii-ch034">Previous chapter</Link> · <Link href="#06-engine-ii-ch036">Next chapter</Link></Content>
+</Chapter>

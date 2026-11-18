@@ -1,0 +1,64 @@
+\hypertarget{appendix-a9d5dfdd164a}{}\label{referencestart:appendix-a9d5dfdd164a}
+\section{Attention and visual transformers}\label{appendix-a9d5dfdd164a-attention-and-visual-transformers}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-a9d5dfdd164a-definition-and-mechanism}
+
+Self-attention lets each token build a context-dependent mixture of other tokens. A learned linear map produces queries \(Q\), keys \(K\), and values \(V\); scaled dot products compare each query with all keys, softmax converts scores to weights, and those weights combine values. Multiple heads learn different relationships, while positional information tells the model where patches or words came from. Vision transformers split an image into patches, embed them as tokens, and process the sequence with attention and feed-forward blocks. Unlike a small convolution, global attention can relate distant regions in one layer, but its pairwise score matrix grows roughly as the square of token count. Patch size trades spatial detail for compute; positional encodings and training data affect transfer. Attention weights are a mechanism for mixing information, not an explanation of causal importance. A transformer still needs a task objective, data, optimization, and validation, and can fail under distribution shift or poor spatial grounding.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-a9d5dfdd164a-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=appendix-d5b3c692d9f0}{Convolution and filter footprints (Geometry, Cameras, and Image Formation, Reference notes: Convolution and filter footprints)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=appendix-4815cd87ab8b}{Probability density and change of measure (Mathematics for Visual Computing, Reference notes: Probability density and change of measure)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-65788587ef78}{Research validity and ablation (Vision, XR, and Playable Worlds, Reference notes: Research validity and ablation)}
+\item
+  \hyperref[appendix-40df0855b4a7]{Automatic differentiation and backpropagation}
+\item
+  \hyperref[appendix-47c51ea026fb]{Learned image features and CNNs}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-a9d5dfdd164a-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch031-sequence-models-and-attention}{Sequence models and attention (Vision, XR, and Playable Worlds, Ch. 2)}
+\item
+  \hyperref[appendix-772f1fd96148]{Contrastive vision and image-language alignment}
+\item
+  \hyperref[appendix-b0c42da325f1]{Perception feedback and robot learning}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-a9d5dfdd164a-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch031-sequence-models-and-attention}{Sequence models and attention (Vision, XR, and Playable Worlds, Ch. 2)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-a9d5dfdd164a-recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  Compute the role of Q, K, and V in one self-attention layer.
+\item
+  What makes global attention expensive as the image patch count grows?
+\end{itemize}
+
+\subsection{Source and navigation}\label{appendix-a9d5dfdd164a-source-and-navigation}
+
+Teaching narrative: \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch031-sequence-models-and-attention}{open the main explanation (Vision, XR, and Playable Worlds, Ch. 2)}. Browse the \hyperref[appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series]{University graphics and vision index}. Additional chapter connections: \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch004-image-sampling-filtering-and-efficient-reconstruction}{Image sampling, filtering, and efficient reconstruction (Geometry, Cameras, and Image Formation, Ch. 11)}; \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch030-optical-flow-and-motion-from-images}{Optical flow and motion from images (Spatial Worlds, Engine State, and Simulation, Ch. 11)}; \hyperref[04-visual-computing-ii-ch035-a-complete-renderer-makes-the-forward-model-executable]{A complete renderer makes the forward model executable}.
+
+Caption/source records: \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch036-sc-08---stanford-cs231n-spring-2025-lecture-8-attention-and-transformers}{SC-08 (Vision, XR, and Playable Worlds, Ch. 5)}, \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch036-sc-16---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-16-vision-and-language}{SC-16 (Vision, XR, and Playable Worlds, Ch. 5)}.

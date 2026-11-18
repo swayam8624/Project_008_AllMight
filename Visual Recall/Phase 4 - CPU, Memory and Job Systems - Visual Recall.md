@@ -49,3 +49,9 @@ Starting from a hypothetical 16-ms frame breakdown, form one falsifiable hypothe
 Reconstruct the entire asset-to-frame chain without looking at the book: a typed catalog retains an owned resource; a hot loop chooses AoS or SoA from actual accesses; the compiler emits an instruction schedule; threads share memory only through defined synchronization; a persistent pool executes independent jobs while dependencies constrain progress; scratch memory remains alive through its users; GPU resources cannot retire before completion; a profiler establishes whether the optimization truly improves the frame. Name every assumption, uncertainty and failure path. If the real Kairo/Maveb code is uninspected, say so rather than claiming correspondence.
 
 **Research and source bridge:** [MIT 6.172](https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/video_galleries/lecture-videos/), [Agner Fog's manuals](https://www.agner.org/optimize/), [cppreference atomics](https://en.cppreference.com/w/cpp/atomic/memory_order), and [Amdahl's 1967 paper](https://doi.org/10.1145/1465482.1465560). These references establish concepts and comparison methods; they do not establish the current engine's measured results.
+
+## One lane, three arithmetic contracts
+
+For unsigned eight-bit lanes, $250+10=260$: **wrap → 4; saturate → 255; widen → 260**. A lane's discarded carry never increments the next lane. A portable scalar loop can verify these values without proving SIMD instruction selection or speed.
+
+**Recall:** why can ordinary signed C++ overflow not be justified by a hardware wrapping instruction? The language expression's promoted type and range still govern it. Work the second four-lane exercise, then check [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Three lane-arithmetic contracts: wrap, saturate and widen|the complete trace, solution and commented scalar oracle]].

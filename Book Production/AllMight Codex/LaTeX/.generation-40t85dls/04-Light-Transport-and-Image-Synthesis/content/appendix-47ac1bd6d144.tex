@@ -1,0 +1,43 @@
+\hypertarget{appendix-47ac1bd6d144}{}\label{referencestart:appendix-47ac1bd6d144}
+\section{Ray-triangle intersection}\label{appendix-47ac1bd6d144-ray-triangle-intersection}
+
+\hypertarget{appendix-47ac1bd6d144-ray-triangle-intersection}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-47ac1bd6d144-definition-and-mechanism}
+
+\hypertarget{appendix-47ac1bd6d144-definition-and-mechanism}{}
+
+A ray is a parametric half-line \(r(t)=o+td\), where \(o\) is its origin, \(d\) is its direction, and only \(t\ge0\) lies ahead of the ray. To intersect a triangle, first intersect the ray with its plane, then express the hit point in barycentric coordinates and accept it only if the weights lie inside the triangle. An equivalent determinant test solves for ray distance and two barycentric coordinates together. The hit record should state whether the result is nearest, any, or all intersections; those are different query contracts. Parallel or nearly parallel rays, degenerate triangles, and hits near edges require care because small floating-point errors can change classification. Scale-aware tolerances and consistent orientation predicates reduce cracks and self-intersection artifacts.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-47ac1bd6d144-prerequisites}
+
+\hypertarget{appendix-47ac1bd6d144-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-02b9d9a81dca]{Barycentric coordinates and interpolation}
+\item
+  \hyperref[appendix-cb3b26862282]{Homogeneous coordinates and perspective division}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-47ac1bd6d144-used-by}
+
+\hypertarget{appendix-47ac1bd6d144-used-by}{}
+
+\begin{itemize}
+\item
+  {Worlds, Images and Inference}
+\item
+  \hyperref[appendix-0b426c47dd78]{Bounding volume hierarchies}
+\item
+  \hyperref[appendix-c5b332e400e7]{Radiance fields and Gaussian splatting} \#\# Full teaching explanation
+\end{itemize}
+
+\href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch028-visibility-queries-and-ray-intersections-1}{Visibility queries and ray intersections (Spatial Worlds, Engine State, and Simulation, Ch. 9)} · \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch029-acceleration-structures-and-robust-queries-1}{Acceleration structures and robust queries (Spatial Worlds, Engine State, and Simulation, Ch. 10)}

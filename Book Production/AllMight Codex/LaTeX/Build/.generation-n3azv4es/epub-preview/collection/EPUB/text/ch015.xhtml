@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch015.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-18b8dd966b5d-bfloat16" class="level2">
+<h2>Bfloat16</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C006 · <strong>Latest development:</strong> C006</p>
+<section id="appendix-18b8dd966b5d-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>BF16 has1/8/7 fields, bias127 and8 normal precision bits. It keeps broad exponent range at coarse spacing2^-7 above1. A nearest-even conversion must handle NaNs separately from finite rounding.</p>
+</section>
+<section id="appendix-18b8dd966b5d-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch033.xhtml#appendix-343615f49ddf-ieee-754-floating-point" class="wikilink">IEEE-754 floating point</a> — supplies the representation or validity rule used above.</li>
+<li><a href="ch056.xhtml#appendix-614afe1de592-rounding-to-nearest-ties-to-even" class="wikilink">Rounding to nearest ties to even</a> — supplies the representation or validity rule used above.</li>
+</ul>
+</section>
+<section id="appendix-18b8dd966b5d-used-by" class="level3">
+<h3>Used by</h3>
+<p>Connect later dependent concepts here when their explanations use this mechanism.</p>
+</section>
+<section id="appendix-18b8dd966b5d-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the example and identify the condition that would invalidate it.</p>
+<p><strong>Pending:</strong> Target flushing, payload conventions and accumulation instructions require independent checks.</p>
+</section>
+<section id="appendix-18b8dd966b5d-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-choosing-what-information-to-keep" class="wikilink">Continuous teaching story</a> · <span>Source coverage ledger</span> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-18b8dd966b5d-range-is-preserved-more-than-precision" class="level3">
+<h3>Range is preserved more than precision</h3>
+<p>Bfloat16 keeps the 8-bit exponent width of binary32 but stores only 7 explicit fraction bits. A normal value therefore has 8 bits of significand precision including the hidden leading one. Compared with IEEE binary16, bfloat16 sacrifices substantial local precision to retain a binary32-like exponent range.</p>
+<p>That trade is useful for ML tensors whose dynamic range matters more than fine per-value precision. It is poor for algorithms where small relative changes accumulate over many steps. Common mixed-precision kernels store operands in bfloat16 but accumulate products in binary32.</p>
+<p>Conversion is not merely truncation if the implementation promises round-to-nearest behavior. Correct rounding must account for discarded bits and tie policy; NaN payloads and infinities need explicit handling. Tests should inspect bit-level round trips, halfway cases, overflow/underflow, NaNs, and error growth in dot products accumulated in bfloat16 versus binary32.</p>
+</section>
+</section>
+</body>
+</html>

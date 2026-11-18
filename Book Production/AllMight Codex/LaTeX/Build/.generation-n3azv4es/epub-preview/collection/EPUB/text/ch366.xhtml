@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch366.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-fab348609369-manifold-polygon-meshes-and-boundary-structure" class="level2">
+<h2>Manifold polygon meshes and boundary structure</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-fab348609369-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A polygon mesh is a combinatorial surface made of vertices, edges, and faces plus an embedding that assigns each vertex a position. Manifoldness is a local connectivity condition: an interior edge belongs to two faces, and the faces around each interior vertex form one cycle or fan. At a boundary, an edge belongs to one face and the vertex neighborhood forms one open chain; each boundary component closes into a loop. A bow-tie vertex with two disconnected fans is nonmanifold even if every face is an ordinary triangle. These conditions let algorithms define an unambiguous local tangent neighborhood, traversal, and surface orientation. Connectivity validity does not guarantee good geometry: valid topology can still self-intersect, collapse to a point, or contain poor skinny triangles. Keep topological and geometric quality checks separate.</p>
+</section>
+<section id="appendix-fab348609369-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch457.xhtml#appendix-1bae9457dbc3-coordinate-frames-and-change-of-basis" class="wikilink">Coordinate frames and change of basis (Vision, XR, and Playable Worlds, Part 1, Reference notes: Coordinate frames and change of basis)</a></li>
+</ul>
+</section>
+<section id="appendix-fab348609369-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><span>Worlds, Images and Inference</span></p></li>
+<li><p><a href="ch339.xhtml#appendix-1aea26b2307f-half-edge-mesh-connectivity" class="wikilink">Half-edge mesh connectivity</a></p></li>
+<li><p><a href="ch340.xhtml#appendix-1dd4ad54ca57-quadric-error-mesh-simplification" class="wikilink">Quadric error mesh simplification</a></p></li>
+<li><p><a href="ch337.xhtml#appendix-0b426c47dd78-bounding-volume-hierarchies" class="wikilink">Bounding volume hierarchies</a></p></li>
+<li><p><a href="ch357.xhtml#appendix-a9ba01fa72a6-collision-barriers-and-continuous-detection" class="wikilink">Collision barriers and continuous detection</a></p></li>
+<li><p><a href="ch298.xhtml#appendix-7107009c505b-local-rigidity-and-mesh-orientation-fields" class="wikilink">Local rigidity and mesh orientation fields (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Local rigidity and mesh orientation fields)</a> ## Full teaching explanation</p></li>
+</ul>
+<p><a href="ch296.xhtml#id_03-visual-computing-i-ch002-surfaces-patches-topology-and-parameterization" class="wikilink">Surfaces, patches, topology, and parameterization (Geometry, Cameras, and Image Formation, Part 1, Ch. 9)</a> · <a href="ch296.xhtml#id_03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing" class="wikilink">Meshes, connectivity, and geometry processing (Geometry, Cameras, and Image Formation, Part 1, Ch. 9)</a> · <a href="ch540.xhtml#id_04-visual-computing-ii-ch032-surface-descriptions-and-gaussian-images" class="wikilink">Surface descriptions and Gaussian images (Vision, XR, and Playable Worlds, Part 1, Ch. 3)</a></p>
+</section>
+</section>
+</body>
+</html>

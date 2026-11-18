@@ -1,0 +1,46 @@
+\hypertarget{appendix-2cbf2968e866}{}\label{referencestart:appendix-2cbf2968e866}
+\section{Position reconstruction from depth}\label{appendix-2cbf2968e866-position-reconstruction-from-depth}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 11 · \textbf{Latest development:} Phase 11
+
+\subsection{Definition and mechanism}\label{appendix-2cbf2968e866-definition-and-mechanism}
+
+Given a pixel and an axial depth value, reconstruct a view-space point by converting the pixel to NDC, forming its camera ray, and scaling that ray so its forward-axis component equals the measured depth. Alternatively, transform the corresponding homogeneous clip point through an inverse projection matrix and divide by its resulting homogeneous coordinate. To obtain world position, apply the inverse view transform. These routes must share the actual viewport, pixel-centre, NDC-depth, and projection conventions used to render the image. In large worlds, subtract camera-relative origins before reducing precision; converting an already-rounded coordinate cannot restore lost detail. In a camera-relative renderer, reconstruct near the camera origin before adding a large global offset.
+
+\subsection{Prerequisites}\label{appendix-2cbf2968e866-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-cac01ebeeb11]{Axial depth and Euclidean range}
+\item
+  \hyperref[appendix-1bc40b08db4a]{Hardware depth-buffer linearization}
+\item
+  \hyperref[appendix-3ee9861904d5]{Camera calibration and bundle adjustment}
+\item
+  \hyperref[appendix-cb3b26862282]{Homogeneous coordinates and perspective division}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-2cbf2968e866-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-31b8c295e05f]{Numerical error budgets}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-2cbf2968e866-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch035-recover-geometry-from-depth-and-construct-screen-space-rays}{Recover geometry from depth and construct screen-space rays (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 4)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-2cbf2968e866-source-coverage}
+
+Supplied lesson parts: 1080--1081.
+
+\subsection{Future keywords}\label{appendix-2cbf2968e866-future-keywords}
+
+unprojection, inverse projection, world reconstruction

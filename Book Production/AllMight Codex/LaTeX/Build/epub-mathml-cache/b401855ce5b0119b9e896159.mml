@@ -1,0 +1,191 @@
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable displaystyle="true" columnalign="right left" columnspacing="0em" rowspacing="3pt">
+    <mtr>
+      <mtd>
+        <msub>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">F</mi>
+          </mrow>
+          <mrow data-mjx-texclass="ORD">
+            <mi>n</mi>
+            <mi>e</mi>
+            <mi>t</mi>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>=</mo>
+        <msub>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">F</mi>
+          </mrow>
+          <mrow data-mjx-texclass="ORD">
+            <mi>a</mi>
+            <mi>c</mi>
+            <mi>c</mi>
+          </mrow>
+        </msub>
+        <mo>+</mo>
+        <mi>m</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="bold">g</mi>
+        </mrow>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <msup>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">v</mi>
+          </mrow>
+          <mo>&#x2217;</mo>
+        </msup>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>=</mo>
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="bold">v</mi>
+        </mrow>
+        <mo>+</mo>
+        <mi>h</mi>
+        <msub>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">F</mi>
+          </mrow>
+          <mrow data-mjx-texclass="ORD">
+            <mi>n</mi>
+            <mi>e</mi>
+            <mi>t</mi>
+          </mrow>
+        </msub>
+        <mrow data-mjx-texclass="ORD">
+          <mo>/</mo>
+        </mrow>
+        <mi>m</mi>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <msup>
+          <mi mathvariant="bold-italic">&#x3C9;</mi>
+          <mo>&#x2217;</mo>
+        </msup>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>=</mo>
+        <mtext>rotationalUpdate</mtext>
+        <mo stretchy="false">(</mo>
+        <mi mathvariant="bold-italic">&#x3C9;</mi>
+        <mo>,</mo>
+        <mi>&#x3C4;</mi>
+        <mo>,</mo>
+        <mi>I</mi>
+        <mo>,</mo>
+        <mi>R</mi>
+        <mo>,</mo>
+        <mi>h</mi>
+        <mo stretchy="false">)</mo>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msup>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">v</mi>
+          </mrow>
+          <mo>+</mo>
+        </msup>
+        <mo>,</mo>
+        <msup>
+          <mi mathvariant="bold-italic">&#x3C9;</mi>
+          <mo>+</mo>
+        </msup>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>=</mo>
+        <mtext>solveContactsAndConstraints</mtext>
+        <mo stretchy="false">(</mo>
+        <msup>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">v</mi>
+          </mrow>
+          <mo>&#x2217;</mo>
+        </msup>
+        <mo>,</mo>
+        <msup>
+          <mi mathvariant="bold-italic">&#x3C9;</mi>
+          <mo>&#x2217;</mo>
+        </msup>
+        <mo stretchy="false">)</mo>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <msub>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">c</mi>
+          </mrow>
+          <mrow data-mjx-texclass="ORD">
+            <mi>n</mi>
+            <mi>e</mi>
+            <mi>w</mi>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>=</mo>
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="bold">c</mi>
+        </mrow>
+        <mo>+</mo>
+        <mi>h</mi>
+        <msup>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">v</mi>
+          </mrow>
+          <mo>+</mo>
+        </msup>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <msub>
+          <mi>q</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mi>n</mi>
+            <mi>e</mi>
+            <mi>w</mi>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <mi></mi>
+        <mo>=</mo>
+        <mtext>integrateOrientation</mtext>
+        <mo stretchy="false">(</mo>
+        <mi>q</mi>
+        <mo>,</mo>
+        <msup>
+          <mi mathvariant="bold-italic">&#x3C9;</mi>
+          <mo>+</mo>
+        </msup>
+        <mo>,</mo>
+        <mi>h</mi>
+        <mo stretchy="false">)</mo>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math>

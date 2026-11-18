@@ -1,0 +1,60 @@
+\hypertarget{appendix-1c07d64f5e70}{}
+\section*{Camera view and clip-space pipeline}
+\chapter{Camera view and clip-space pipeline}\label{appendix-1c07d64f5e70-camera-view-and-clip-space-pipeline}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase7 · \textbf{Latest development:} University courses
+
+\section{Definition and mechanism}\label{appendix-1c07d64f5e70-definition-and-mechanism}
+
+A camera pose maps camera coordinates to world coordinates; its inverse is the view map. Projection produces homogeneous clip coordinates, clipping applies the API-specific inequalities, and valid perspective division produces NDC. Storage order supplies none of these coordinate contracts.
+
+\textbf{Reconstruction cue:} A standard minus-Z perspective example needs a point in front of the camera and a meaningful clip w before division.
+
+\section{Prerequisites}\label{appendix-1c07d64f5e70-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-1bae9457dbc3}{Coordinate frames and change of basis (02-Foundations-II, appendix-1bae9457dbc3)}
+\end{itemize}
+
+\section{Used by}\label{appendix-1c07d64f5e70-used-by}
+
+\begin{itemize}
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Keep\%20the\%20promises\%20visible\%20while\%20moving\%20between\%20representations}{Phase 7 teaching and laboratory}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-97578ed97952}{Depth buffering and visibility order (03-Visual-Computing-I, appendix-97578ed97952)}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-21f8456e2629}{Lens optics and depth of field (03-Visual-Computing-I, appendix-21f8456e2629)}
+\item
+  \hyperref[appendix-749ba51a6c25]{GPU vertex specification}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-40426e4b2103}{Homogeneous clipping and perspective interpolation (03-Visual-Computing-I, appendix-40426e4b2103)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-cac01ebeeb11}{Axial depth and Euclidean range (02-Foundations-II, appendix-cac01ebeeb11)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-1bc40b08db4a}{Hardware depth-buffer linearization (02-Foundations-II, appendix-1bc40b08db4a)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-f1a6d43e80d1}{Screen-space ray generation and mouse picking (02-Foundations-II, appendix-f1a6d43e80d1)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-8c40fad29462}{Ray differentials and camera sampling measures (02-Foundations-II, appendix-8c40fad29462)}
+\end{itemize}
+
+\section{Recall and next depth}\label{appendix-1c07d64f5e70-recall-and-next-depth}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\section{Source and navigation}\label{appendix-1c07d64f5e70-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Keep\%20the\%20promises\%20visible\%20while\%20moving\%20between\%20representations}{Continuous explanation} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-fd090d982a15-phase-7---parts-601-700}{Coverage and source gap (01-Foundations-I, appendix-fd090d982a15-phase-7-\/-\/-parts-601-700)} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-a103e7846d21-phase-7---source-analysis-and-verification}{Sources and verification (01-Foundations-I, appendix-a103e7846d21-phase-7-\/-\/-source-analysis-and-verification)}
+
+\section{University course development}\label{appendix-1c07d64f5e70-university-course-development}
+
+Extend the existing transform pipeline with the clipping and depth-precision decisions that make projection robust. A view frustum is the set of points a camera can see, bounded by near and far planes as well as image sides. Transforming the frustum into a canonical clip cube makes outside tests cheap; partially intersecting triangles must be clipped and triangulated so the rasterizer still receives triangles. The near plane also avoids geometry crossing the eye plane, while the far plane limits depth range. Floating-point depth values are unevenly distributed after perspective division, so an excessively tiny near distance paired with a huge far distance can make two nearby surfaces quantize to the same depth and produce z-fighting. Choose the narrowest useful depth interval and keep the view, clip, normalized, and screen coordinates distinct.
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#A\%20scene\%20description\%20becomes\%20an\%20image}{A scene description becomes an image} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Cameras,\%20projection,\%20and\%20calibration}{Cameras, projection, and calibration} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Rasterization,\%20coverage,\%20and\%20depth}{Rasterization, coverage, and depth}
+
+\section{Phase 11 camera development}\label{appendix-1c07d64f5e70-phase-11-camera-development}
+
+A raster-to-ray camera maps a pixel to a geometric sample; In a pinhole model, invert projection and view transforms to recover a camera-space direction, then transform it to world space without applying translation as if it were a point. Pixel-center convention, viewport origin, handedness, clip-depth range, and normalization all affect the result. Offset a pixel to generate differential rays and estimate the surface footprint; that footprint grows with depth and changes with surface orientation. Keep ray generation distinct from raster projection while ensuring their conventions agree. Link: \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20camera\%20model\%20must\%20close\%20the\%20loop}{A camera model must close the loop}; research: \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Four\%20deeper\%20links\%20from\%20the\%20TUM\%20lecture\%20review}{Four deeper links from the TUM lecture review}.

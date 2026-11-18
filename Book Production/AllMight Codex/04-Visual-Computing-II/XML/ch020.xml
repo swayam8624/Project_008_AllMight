@@ -1,0 +1,1069 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Chapter xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/" id="04-visual-computing-ii-ch041" source="Chapter Edition/02 - Graphics Vision and XR/41 - Per-Vertex and Per-Corner Mesh Attributes.md">
+<Content aid:pstyle="ChapterHeader" id="04-visual-computing-ii-ch041-per-vertex-and-per-corner-mesh-attributes">41 — Per-Vertex and Per-Corner Mesh Attributes&#13;</Content>
+<Content aid:pstyle="Content"><Link href="Chapter Edition/02 - Graphics Vision and XR/00 - Reading Map">Reading map</Link> · <Link href="#04-visual-computing-ii-ch040">Previous chapter</Link> · <Link href="#04-visual-computing-ii-ch042">Next chapter</Link>&#13;</Content>
+<Content aid:pstyle="Content">A mesh vertex can carry a single shared value, while a corner can carry values that differ across incident faces. This distinction explains seams, normals, UVs and the relationship between topology and shading.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">By the end:</Strong> Choose per-vertex or per-corner attributes based on mesh continuity.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Recall question:</Strong> When should two triangles share a vertex position but keep separate corner attributes?&#13;</Content>
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 95949–99206; source-span SHA256 c8d8b33f6c039e15153ca041dae1dd9fdbdecdebf8e8bea1c5148b831d7a5ad9. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-per-vertex-vs-per-corner">Per-vertex vs per-corner&#13;</Content>
+<Content aid:pstyle="Content">Consider cube corner shared by three faces.&#13;</Content>
+<Content aid:pstyle="Content">Geometric vertex position:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b02f2f6cf62a0d13e5167811.svg" alt="&#10;p&#10;" jobId="b02f2f6cf62a0d13e5167811" originalTeX="&#10;p&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">is one point.&#13;</Content>
+<Content aid:pstyle="Content">But face normals:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d3d6f1e28798cbe3aea6f659.svg" alt="&#10;n_x,n_y,n_z&#10;" jobId="d3d6f1e28798cbe3aea6f659" originalTeX="&#10;n_x,n_y,n_z&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">are three different values.&#13;</Content>
+<Content aid:pstyle="Content">A GPU vertex typically has one normal.&#13;</Content>
+<Content aid:pstyle="Content">Therefore same topological vertex must be duplicated:&#13;</Content>
+<Code aid:pstyle="Code" language="text">position identical&#10;normal different&#13;</Code>
+<Content aid:pstyle="Content">Likewise UV seam.&#13;</Content>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f424bc53ccc8643d8a03be29.svg" alt="&#10;\boxed{&#10;\text{GPU vertex}&#10;\neq&#10;\text{topological vertex}.&#10;}&#10;" jobId="f424bc53ccc8643d8a03be29" originalTeX="&#10;\boxed{&#10;\text{GPU vertex}&#10;\neq&#10;\text{topological vertex}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">A GPU vertex is usually a unique tuple of all active corner attributes.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-index-sharing">Index sharing&#13;</Content>
+<Content aid:pstyle="Content">You may share two corners only if every indexed attribute agrees:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f8850272e1f3fcd2390fdfcf.svg" alt="&#10;(position,normal,uv,tangent,\ldots).&#10;" jobId="f8850272e1f3fcd2390fdfcf" originalTeX="&#10;(position,normal,uv,tangent,\ldots).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If position same but UV differs:&#13;</Content>
+<Content aid:pstyle="Content">duplicate.&#13;</Content>
+<Content aid:pstyle="Content">If position+UV same but normal differs:&#13;</Content>
+<Content aid:pstyle="Content">duplicate.&#13;</Content>
+<Content aid:pstyle="Content">This becomes crucial in OBJ importer later.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-topology-vs-geometry">Topology vs geometry&#13;</Content>
+<Content aid:pstyle="Content">Two meshes can have identical positions but different topology.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Content aid:pstyle="Content">Two triangles sharing coordinates.&#13;</Content>
+<Content aid:pstyle="Content">Mesh A:&#13;</Content>
+<Content aid:pstyle="Content">indices share edge vertices.&#13;</Content>
+<Content aid:pstyle="Content">Mesh B:&#13;</Content>
+<Content aid:pstyle="Content">duplicates vertices along edge.&#13;</Content>
+<Content aid:pstyle="Content">Visually identical in flat render.&#13;</Content>
+<Content aid:pstyle="Content">Topologically:&#13;</Content>
+<Content aid:pstyle="Content">A connected.&#13;</Content>
+<Content aid:pstyle="Content">B disconnected.&#13;</Content>
+<Content aid:pstyle="Content">Algorithms like smoothing, subdivision, simulation and adjacency behave differently.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-boundary-edges">Boundary edges&#13;</Content>
+<Content aid:pstyle="Content">For triangle mesh edge:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/30420a857037a5015c9f830b.svg" alt="&#10;e=(v_i,v_j).&#10;" jobId="30420a857037a5015c9f830b" originalTeX="&#10;e=(v_i,v_j).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Count incident faces.&#13;</Content>
+<Content aid:pstyle="Content">Boundary if:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b611a294141f87fd509b8fe3.svg" alt="&#10;\boxed{&#10;|F(e)|=1.&#10;}&#10;" jobId="b611a294141f87fd509b8fe3" originalTeX="&#10;\boxed{&#10;|F(e)|=1.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Interior manifold edge:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/96324f0a8d1c12219365b183.svg" alt="&#10;|F(e)|=2.&#10;" jobId="96324f0a8d1c12219365b183" originalTeX="&#10;|F(e)|=2.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-manifold-and-non-manifold">Manifold and non-manifold&#13;</Content>
+<Content aid:pstyle="Content">A 2-manifold interior edge has exactly two incident faces.&#13;</Content>
+<Content aid:pstyle="Content">Non-manifold if:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5074b9c1d1c12187f9d87096.svg" alt="&#10;|F(e)|&gt;2.&#10;" jobId="5074b9c1d1c12187f9d87096" originalTeX="&#10;|F(e)|&gt;2.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Example three triangles sharing one edge.&#13;</Content>
+<Content aid:pstyle="Content">Vertex can also be non-manifold if incident faces form disconnected fans.&#13;</Content>
+<Content aid:pstyle="Content">Why care?&#13;</Content>
+<Content aid:pstyle="Content">Many algorithms assume local disk topology.&#13;</Content>
+<Content aid:pstyle="Content">Half-edge traversal, subdivision, normals and simplification can fail on non-manifold data.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo <InlineCode aid:cstyle="InlineCode">EditableMesh::Validate()</InlineCode> explicitly counts canonical edges and rejects any edge used by more than two faces.&#13;</Content>
+<Content aid:pstyle="Content">That is a strong invariant.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-connected-components">Connected components&#13;</Content>
+<Content aid:pstyle="Content">Construct graph where faces are nodes.&#13;</Content>
+<Content aid:pstyle="Content">Two faces adjacent if sharing edge.&#13;</Content>
+<Content aid:pstyle="Content">Run DFS/BFS.&#13;</Content>
+<Content aid:pstyle="Content">Each traversal produces one connected component.&#13;</Content>
+<Content aid:pstyle="Content">Complexity:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bec6205fc400f33bd5b95956.svg" alt="&#10;O(V+E+F).&#10;" jobId="bec6205fc400f33bd5b95956" originalTeX="&#10;O(V+E+F).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Useful for:&#13;</Content>
+<Content aid:pstyle="Content">isolating objects, cleanup, import diagnostics, topology repair.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-face-adjacency">Face adjacency&#13;</Content>
+<Content aid:pstyle="Content">Map canonical edge:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bd3a6d5c27bd6be785359a8b.svg" alt="&#10;\{\min(v_i,v_j),\max(v_i,v_j)\}&#10;" jobId="bd3a6d5c27bd6be785359a8b" originalTeX="&#10;\{\min(v_i,v_j),\max(v_i,v_j)\}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">to incident face list.&#13;</Content>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Code aid:pstyle="Code" language="text">edge -&gt; [faceA,faceB]&#13;</Code>
+<Content aid:pstyle="Content">gives face adjacency.&#13;</Content>
+<Content aid:pstyle="Content">For manifold interior edge:&#13;</Content>
+<Content aid:pstyle="Content">two faces.&#13;</Content>
+<Content aid:pstyle="Content">Boundary:&#13;</Content>
+<Content aid:pstyle="Content">one.&#13;</Content>
+<Content aid:pstyle="Content">Non-manifold:&#13;</Content>
+<Content aid:pstyle="Content">more than two.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-vertex-adjacency">Vertex adjacency&#13;</Content>
+<Content aid:pstyle="Content">For every edge:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fa271561deb1f45680d576b0.svg" alt="&#10;(v_i,v_j)&#10;" jobId="fa271561deb1f45680d576b0" originalTeX="&#10;(v_i,v_j)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">add:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/06020e19982ff921dd87f128.svg" alt="&#10;v_j\in N(v_i)&#10;" jobId="06020e19982ff921dd87f128" originalTeX="&#10;v_j\in N(v_i)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/15aefe8fe04610e05af7bb3e.svg" alt="&#10;v_i\in N(v_j).&#10;" jobId="15aefe8fe04610e05af7bb3e" originalTeX="&#10;v_i\in N(v_j).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">One-ring:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c57d9bc2af267f5a38475739.svg" alt="&#10;\boxed{&#10;N(v)&#10;=&#10;\text{vertices directly connected to }v.&#10;}&#10;" jobId="c57d9bc2af267f5a38475739" originalTeX="&#10;\boxed{&#10;N(v)&#10;=&#10;\text{vertices directly connected to }v.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This neighborhood drives smoothing, curvature, subdivision, local editing.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-half-edge">Half-edge&#13;</Content>
+<Content aid:pstyle="Content">Each undirected edge becomes two directed half-edges.&#13;</Content>
+<Content aid:pstyle="Content">A canonical half-edge record:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct HalfEdge&#10;{&#10;    VertexID origin;&#10;    FaceID face;&#10;&#10;    HalfEdgeID twin;&#10;    HalfEdgeID next;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f5b7b0f2c6211473cebdb615.svg" alt="&#10;h=(a\rightarrow b),&#10;" jobId="f5b7b0f2c6211473cebdb615" originalTeX="&#10;h=(a\rightarrow b),&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9c48fd0f1b35f2d849588f85.svg" alt="&#10;twin(h)&#10;=&#10;(b\rightarrow a).&#10;" jobId="9c48fd0f1b35f2d849588f85" originalTeX="&#10;twin(h)&#10;=&#10;(b\rightarrow a).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Within a face:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e6bbf434bfdc9f732e4e7e34.svg" alt="&#10;next(h)&#10;" jobId="e6bbf434bfdc9f732e4e7e34" originalTeX="&#10;next(h)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">moves around boundary.&#13;</Content>
+<Content aid:pstyle="Content">For triangle:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/251b24d96e7672556a4c55fb.svg" alt="&#10;h_0\rightarrow h_1\rightarrow h_2\rightarrow h_0.&#10;" jobId="251b24d96e7672556a4c55fb" originalTeX="&#10;h_0\rightarrow h_1\rightarrow h_2\rightarrow h_0.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-one-ring-traversal">One-ring traversal&#13;</Content>
+<Content aid:pstyle="Content">Suppose outgoing half-edge:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9a9032c70ff177fb4f750787.svg" alt="&#10;h_0&#10;" jobId="9a9032c70ff177fb4f750787" originalTeX="&#10;h_0&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">from vertex <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2fcbea892005065b4056ec09.svg" alt="v" jobId="2fcbea892005065b4056ec09" originalTeX="v"/>.&#13;</Content>
+<Content aid:pstyle="Content">A common manifold traversal:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4ddc90eae69218049c958709.svg" alt="&#10;\boxed{&#10;h_{next}&#10;=&#10;twin(next(h))&#10;}&#10;" jobId="4ddc90eae69218049c958709" originalTeX="&#10;\boxed{&#10;h_{next}&#10;=&#10;twin(next(h))&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">or variant depending whether half-edge stores origin/destination convention.&#13;</Content>
+<Content aid:pstyle="Content">Repeated application walks neighboring faces around vertex.&#13;</Content>
+<Content aid:pstyle="Content">This gives ordered ring, not merely unordered adjacency set.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-current-kairo-representation">Current Kairo representation&#13;</Content>
+<Content aid:pstyle="Content">Kairo <InlineCode aid:cstyle="InlineCode">EditableHalfEdge</InlineCode> currently stores:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">From&#10;To&#10;Face&#10;Corner&#10;optional&lt;Twin&gt;&#13;</Code>
+<Content aid:pstyle="Content">It does not store an explicit <InlineCode aid:cstyle="InlineCode">Next</InlineCode> index.&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">next</InlineCode> is implicit from the face’s corner sequence:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/785535e4d05a2d16bce2cca0.svg" alt="&#10;corner+1\pmod{faceVertexCount}.&#10;" jobId="785535e4d05a2d16bce2cca0" originalTeX="&#10;corner+1\pmod{faceVertexCount}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is perfectly workable.&#13;</Content>
+<Content aid:pstyle="Content">Its topology representation also uses persistent 64-bit editable vertex and face IDs rather than raw vector indices—good for editor operations.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-normals-tangents-bounds-and-obj">NORMALS, TANGENTS, BOUNDS AND OBJ&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-flat-face-normal">Flat face normal&#13;</Content>
+<Content aid:pstyle="Content">Triangle:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ce98d709a514b996ebfab338.svg" alt="&#10;p_0,p_1,p_2.&#10;" jobId="ce98d709a514b996ebfab338" originalTeX="&#10;p_0,p_1,p_2.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Edges:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f9b73c97e151c86fd2b0a4c3.svg" alt="&#10;e_1=p_1-p_0,&#10;" jobId="f9b73c97e151c86fd2b0a4c3" originalTeX="&#10;e_1=p_1-p_0,&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9b05dd285a87e2fa48012a2f.svg" alt="&#10;e_2=p_2-p_0.&#10;" jobId="9b05dd285a87e2fa48012a2f" originalTeX="&#10;e_2=p_2-p_0.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Unnormalized normal:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3cf70f7bd8d5cfea04c41881.svg" alt="&#10;\tilde n=&#10;e_1\times e_2.&#10;" jobId="3cf70f7bd8d5cfea04c41881" originalTeX="&#10;\tilde n=&#10;e_1\times e_2.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Normalized:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fe37a15126e0de7fe47fdf4e.svg" alt="&#10;\boxed{&#10;n=&#10;\frac{&#10;e_1\times e_2&#10;}{&#10;\|e_1\times e_2\|&#10;}.&#10;}&#10;" jobId="fe37a15126e0de7fe47fdf4e" originalTeX="&#10;\boxed{&#10;n=&#10;\frac{&#10;e_1\times e_2&#10;}{&#10;\|e_1\times e_2\|&#10;}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Magnitude:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0dc1cdd0891571d43ed87ef9.svg" alt="&#10;\|e_1\times e_2\|&#10;=&#10;2A_{triangle}.&#10;" jobId="0dc1cdd0891571d43ed87ef9" originalTeX="&#10;\|e_1\times e_2\|&#10;=&#10;2A_{triangle}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">So cross product naturally contains area weight.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo’s <InlineCode aid:cstyle="InlineCode">FaceNormal()</InlineCode> computes exactly this.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-smooth-normals">Smooth normals&#13;</Content>
+<Content aid:pstyle="Content">Simplest:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b63a5060e662649f28afa92c.svg" alt="&#10;n_v=&#10;normalize&#10;\left(&#10;\sum_{f\ni v}&#10;n_f&#10;\right).&#10;" jobId="b63a5060e662649f28afa92c" originalTeX="&#10;n_v=&#10;normalize&#10;\left(&#10;\sum_{f\ni v}&#10;n_f&#10;\right).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This gives equal face weight.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo <InlineCode aid:cstyle="InlineCode">RecalculateSmoothNormals</InlineCode> uses this simple equal-normal accumulation.&#13;</Content>
+<Content aid:pstyle="Content">But a large triangle and tiny triangle count equally.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-area-weighted-normals">Area-weighted normals&#13;</Content>
+<Content aid:pstyle="Content">Use unnormalized face cross products:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d9d9d618d8e15cceb5841a9a.svg" alt="&#10;\boxed{&#10;n_v&#10;=&#10;normalize&#10;\left(&#10;\sum_{f\ni v}&#10;(e_1\times e_2)&#10;\right).&#10;}&#10;" jobId="d9d9d618d8e15cceb5841a9a" originalTeX="&#10;\boxed{&#10;n_v&#10;=&#10;normalize&#10;\left(&#10;\sum_{f\ni v}&#10;(e_1\times e_2)&#10;\right).&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Since magnitude:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ead5ec3faa232a55a5187801.svg" alt="&#10;2A_f,&#10;" jobId="ead5ec3faa232a55a5187801" originalTeX="&#10;2A_f,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">large faces contribute more.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-angle-weighted-normals">Angle-weighted normals&#13;</Content>
+<Content aid:pstyle="Content">At vertex <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2fcbea892005065b4056ec09.svg" alt="v" jobId="2fcbea892005065b4056ec09" originalTeX="v"/>, face corner angle:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f4a4f51e9d1afd8c9fa59172.svg" alt="&#10;\theta_f.&#10;" jobId="f4a4f51e9d1afd8c9fa59172" originalTeX="&#10;\theta_f.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f34721957283363b19e2f4f3.svg" alt="&#10;\boxed{&#10;n_v=&#10;normalize&#10;\left(&#10;\sum_f&#10;\theta_fn_f&#10;\right).&#10;}&#10;" jobId="f34721957283363b19e2f4f3" originalTeX="&#10;\boxed{&#10;n_v=&#10;normalize&#10;\left(&#10;\sum_f&#10;\theta_fn_f&#10;\right).&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This often better approximates smooth surface normals under irregular triangulation because contribution depends on wedge angle rather than triangle area.&#13;</Content>
+<Content aid:pstyle="Content">Hard edges require separate normals/corner vertices rather than averaging everything.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-tangent-generation">Tangent generation&#13;</Content>
+<Content aid:pstyle="Content">Triangle position edges:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f9b73c97e151c86fd2b0a4c3.svg" alt="&#10;e_1=p_1-p_0,&#10;" jobId="f9b73c97e151c86fd2b0a4c3" originalTeX="&#10;e_1=p_1-p_0,&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9b05dd285a87e2fa48012a2f.svg" alt="&#10;e_2=p_2-p_0.&#10;" jobId="9b05dd285a87e2fa48012a2f" originalTeX="&#10;e_2=p_2-p_0.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">UV deltas:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/67a89e1124b63ce8972cd210.svg" alt="&#10;\Delta uv_1=&#10;(u_1-u_0,v_1-v_0),&#10;" jobId="67a89e1124b63ce8972cd210" originalTeX="&#10;\Delta uv_1=&#10;(u_1-u_0,v_1-v_0),&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3321d7e9bd0bd7cd0f399538.svg" alt="&#10;\Delta uv_2=&#10;(u_2-u_0,v_2-v_0).&#10;" jobId="3321d7e9bd0bd7cd0f399538" originalTeX="&#10;\Delta uv_2=&#10;(u_2-u_0,v_2-v_0).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">We assume:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/acc4b88c515f1209dfa38cdf.svg" alt="&#10;e_1=&#10;T\Delta u_1+&#10;B\Delta v_1,&#10;" jobId="acc4b88c515f1209dfa38cdf" originalTeX="&#10;e_1=&#10;T\Delta u_1+&#10;B\Delta v_1,&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/35cb9cf55e55619e094cd70a.svg" alt="&#10;e_2=&#10;T\Delta u_2+&#10;B\Delta v_2.&#10;" jobId="35cb9cf55e55619e094cd70a" originalTeX="&#10;e_2=&#10;T\Delta u_2+&#10;B\Delta v_2.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Solve:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6b75bcae60c4f7af67ab66c2.svg" alt="&#10;D=&#10;\Delta u_1\Delta v_2&#10;-&#10;\Delta v_1\Delta u_2.&#10;" jobId="6b75bcae60c4f7af67ab66c2" originalTeX="&#10;D=&#10;\Delta u_1\Delta v_2&#10;-&#10;\Delta v_1\Delta u_2.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6c43e381ceff4dea525a82ac.svg" alt="&#10;\boxed{&#10;T=&#10;\frac{&#10;e_1\Delta v_2-&#10;e_2\Delta v_1&#10;}{D}&#10;}&#10;" jobId="6c43e381ceff4dea525a82ac" originalTeX="&#10;\boxed{&#10;T=&#10;\frac{&#10;e_1\Delta v_2-&#10;e_2\Delta v_1&#10;}{D}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9b39a235a12ebe418df4dbfd.svg" alt="&#10;\boxed{&#10;B=&#10;\frac{&#10;e_2\Delta u_1-&#10;e_1\Delta u_2&#10;}{D}.&#10;}&#10;" jobId="9b39a235a12ebe418df4dbfd" originalTeX="&#10;\boxed{&#10;B=&#10;\frac{&#10;e_2\Delta u_1-&#10;e_1\Delta u_2&#10;}{D}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Maveb’s glTF loader generates tangents using exactly this formula when authored tangents are absent.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-orthogonalize-tangent">Orthogonalize tangent&#13;</Content>
+<Content aid:pstyle="Content">After accumulating tangents:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/96905018d9387ad9eb3ebaae.svg" alt="&#10;T'&#10;=&#10;T-N(N\cdot T).&#10;" jobId="96905018d9387ad9eb3ebaae" originalTeX="&#10;T'&#10;=&#10;T-N(N\cdot T).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Normalize:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0fc112adccc74d09f7a99bb6.svg" alt="&#10;\boxed{&#10;\hat T=&#10;normalize(T').&#10;}&#10;" jobId="0fc112adccc74d09f7a99bb6" originalTeX="&#10;\boxed{&#10;\hat T=&#10;normalize(T').&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is Gram-Schmidt.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-handedness">Handedness&#13;</Content>
+<Content aid:pstyle="Content">Reconstructed bitangent:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6182b6da7801687beff4658e.svg" alt="&#10;B'&#10;=&#10;s(N\times T)&#10;" jobId="6182b6da7801687beff4658e" originalTeX="&#10;B'&#10;=&#10;s(N\times T)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">where:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b57e9dbe80a69c88e38ce815.svg" alt="&#10;s\in\{-1,+1\}.&#10;" jobId="b57e9dbe80a69c88e38ce815" originalTeX="&#10;s\in\{-1,+1\}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Compute:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/606ccd2bcd27b9ca386f20b1.svg" alt="&#10;\boxed{&#10;s=&#10;sign(&#10;(N\times T)\cdot B&#10;).&#10;}&#10;" jobId="606ccd2bcd27b9ca386f20b1" originalTeX="&#10;\boxed{&#10;s=&#10;sign(&#10;(N\times T)\cdot B&#10;).&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Store tangent:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2cb922aef6281035a18be3c2.svg" alt="&#10;(T_x,T_y,T_z,s).&#10;" jobId="2cb922aef6281035a18be3c2" originalTeX="&#10;(T_x,T_y,T_z,s).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Maveb does exactly this.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-degenerate-uvs">Degenerate UVs&#13;</Content>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/be55c191c58ef325db13373b.svg" alt="&#10;D&#10;=&#10;\Delta u_1\Delta v_2-&#10;\Delta v_1\Delta u_2&#10;\approx0,&#10;" jobId="be55c191c58ef325db13373b" originalTeX="&#10;D&#10;=&#10;\Delta u_1\Delta v_2-&#10;\Delta v_1\Delta u_2&#10;\approx0,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">UV mapping has zero/near-zero area.&#13;</Content>
+<Content aid:pstyle="Content">Cannot invert.&#13;</Content>
+<Content aid:pstyle="Content">Do not divide.&#13;</Content>
+<Content aid:pstyle="Content">Fallback tangent can be generated from normal and arbitrary nonparallel axis.&#13;</Content>
+<Content aid:pstyle="Content">Maveb skips degenerate UV triangle accumulation and later constructs fallback tangent.&#13;</Content>
+<Content aid:pstyle="Content">Correct.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-bounds">Bounds&#13;</Content>
+<Content aid:pstyle="Content">AABB:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e2e69d05afdba2a09176173a.svg" alt="&#10;min=&#10;(\min x,\min y,\min z),&#10;" jobId="e2e69d05afdba2a09176173a" originalTeX="&#10;min=&#10;(\min x,\min y,\min z),&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c7b4c21b8596b1fe6b763c07.svg" alt="&#10;max=&#10;(\max x,\max y,\max z).&#10;" jobId="c7b4c21b8596b1fe6b763c07" originalTeX="&#10;max=&#10;(\max x,\max y,\max z).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Cheap and tight in fixed coordinate frame.&#13;</Content>
+<Content aid:pstyle="Content">Bounding sphere simple center:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f184f159477fae24b561d022.svg" alt="&#10;c=&#10;\frac{min+max}{2}&#10;" jobId="f184f159477fae24b561d022" originalTeX="&#10;c=&#10;\frac{min+max}{2}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4edbe58df25f484a94eb0813.svg" alt="&#10;r=&#10;\max_i\|p_i-c\|.&#10;" jobId="4edbe58df25f484a94eb0813" originalTeX="&#10;r=&#10;\max_i\|p_i-c\|.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Ritter algorithm often produces tighter sphere cheaply.&#13;</Content>
+<Content aid:pstyle="Content">Exact minimum enclosing sphere is more expensive.&#13;</Content>
+<Content aid:pstyle="Content">Bounds drive:&#13;</Content>
+<Content aid:pstyle="Content">culling, BVH, picking, LOD, shadow fitting, animated bounds.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-obj">OBJ&#13;</Content>
+<Content aid:pstyle="Content">OBJ positions:&#13;</Content>
+<Code aid:pstyle="Code" language="text">v x y z&#13;</Code>
+<Content aid:pstyle="Content">UV:&#13;</Content>
+<Code aid:pstyle="Code" language="text">vt u v&#13;</Code>
+<Content aid:pstyle="Content">normal:&#13;</Content>
+<Code aid:pstyle="Code" language="text">vn x y z&#13;</Code>
+<Content aid:pstyle="Content">face:&#13;</Content>
+<Code aid:pstyle="Code" language="text">f v/vt/vn v/vt/vn v/vt/vn&#13;</Code>
+<Content aid:pstyle="Content">Important: OBJ uses separate index streams.&#13;</Content>
+<Content aid:pstyle="Content">A face corner can reference:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5332b538eefae18f07d3161a.svg" alt="&#10;(positionIndex,&#10;uvIndex,&#10;normalIndex).&#10;" jobId="5332b538eefae18f07d3161a" originalTeX="&#10;(positionIndex,&#10;uvIndex,&#10;normalIndex).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">GPU usually wants one unified vertex index.&#13;</Content>
+<Content aid:pstyle="Content">Therefore importer must deduplicate <Strong aid:cstyle="Bold">tuples</Strong>, not positions alone.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-obj-negative-indices">OBJ negative indices&#13;</Content>
+<Content aid:pstyle="Content">Positive:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ccbe732adce23dab29151742.svg" alt="&#10;1&#10;" jobId="ccbe732adce23dab29151742" originalTeX="&#10;1&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">means first element.&#13;</Content>
+<Content aid:pstyle="Content">OBJ is one-based.&#13;</Content>
+<Content aid:pstyle="Content">Negative:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dd4935fdf546f5f8bd56ece5.svg" alt="&#10;-1&#10;" jobId="dd4935fdf546f5f8bd56ece5" originalTeX="&#10;-1&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">means most recently defined element.&#13;</Content>
+<Content aid:pstyle="Content">For count <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea63a9f9a03c273b93026960.svg" alt="N" jobId="ea63a9f9a03c273b93026960" originalTeX="N"/>, negative <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c9a9aab9bd49b5120a91abe6.svg" alt="i" jobId="c9a9aab9bd49b5120a91abe6" originalTeX="i"/>:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4867f0a5349528dc844caa47.svg" alt="&#10;\boxed{&#10;index_{0based}&#10;=&#10;N+i.&#10;}&#10;" jobId="4867f0a5349528dc844caa47" originalTeX="&#10;\boxed{&#10;index_{0based}&#10;=&#10;N+i.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Example <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/892f3003cbd7d396dc82524d.svg" alt="N=10" jobId="892f3003cbd7d396dc82524d" originalTeX="N=10"/>:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2c80db0bf79e6035152ce4be.svg" alt="&#10;-1\rightarrow9,&#10;" jobId="2c80db0bf79e6035152ce4be" originalTeX="&#10;-1\rightarrow9,&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bc64bba61f9e8f5ec7704e85.svg" alt="&#10;-2\rightarrow8.&#10;" jobId="bc64bba61f9e8f5ec7704e85" originalTeX="&#10;-2\rightarrow8.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-polygon-triangulation">Polygon triangulation&#13;</Content>
+<Content aid:pstyle="Content">OBJ faces can have <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7a402e3d6dbd3a2af6180038.svg" alt="n&gt;3" jobId="7a402e3d6dbd3a2af6180038" originalTeX="n&gt;3"/> vertices.&#13;</Content>
+<Content aid:pstyle="Content">Simple fan:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/eca5b44a91a7cde5f716a3fb.svg" alt="&#10;(v_0,v_1,v_2),&#10;" jobId="eca5b44a91a7cde5f716a3fb" originalTeX="&#10;(v_0,v_1,v_2),&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2db1ab4f7981060e379a5005.svg" alt="&#10;(v_0,v_2,v_3),&#10;" jobId="2db1ab4f7981060e379a5005" originalTeX="&#10;(v_0,v_2,v_3),&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">…&#13;</Content>
+<Content aid:pstyle="Content">works for convex polygons.&#13;</Content>
+<Content aid:pstyle="Content">It can fail for concave polygons.&#13;</Content>
+<Content aid:pstyle="Content">Robust importer can use ear clipping after projecting polygon to plane.&#13;</Content>
+<Content aid:pstyle="Content">Do not silently claim fan triangulation supports arbitrary polygons.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-tuple-deduplication">Tuple deduplication&#13;</Content>
+<Content aid:pstyle="Content">Hash key:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct ObjVertexKey&#10;{&#10;    int Position;&#10;    int UV;&#10;    int Normal;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Map:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/443d81a946a27e762c79c7ac.svg" alt="&#10;key\rightarrow GPUVertexIndex.&#10;" jobId="443d81a946a27e762c79c7ac" originalTeX="&#10;key\rightarrow GPUVertexIndex.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">When corner tuple first seen, create GPU vertex.&#13;</Content>
+<Content aid:pstyle="Content">When repeated, reuse index.&#13;</Content>
+<Content aid:pstyle="Content">This preserves seams and hard normals.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-gltf-from-bytes-to-portable-scene">glTF FROM BYTES TO PORTABLE SCENE&#13;</Content>
+<Content aid:pstyle="Content">glTF is fundamentally a structured graph of metadata pointing into binary data.&#13;</Content>
+<Content aid:pstyle="Content">The hierarchy:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6fe99d4ec6a204bac9582805.svg" alt="&#10;\boxed{&#10;buffer&#10;\rightarrow&#10;bufferView&#10;\rightarrow&#10;accessor&#10;\rightarrow&#10;attribute&#10;}&#10;" jobId="6fe99d4ec6a204bac9582805" originalTeX="&#10;\boxed{&#10;buffer&#10;\rightarrow&#10;bufferView&#10;\rightarrow&#10;accessor&#10;\rightarrow&#10;attribute&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">must be deeply understood.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-buffers">Buffers&#13;</Content>
+<Content aid:pstyle="Content">Buffer is raw bytes.&#13;</Content>
+<Content aid:pstyle="Content">Could be:&#13;</Content>
+<Content aid:pstyle="Content">external <InlineCode aid:cstyle="InlineCode">.bin</InlineCode>, embedded GLB chunk, data URI.&#13;</Content>
+<Content aid:pstyle="Content">No semantic type yet.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-bufferview">bufferView&#13;</Content>
+<Content aid:pstyle="Content">A bufferView selects a byte range:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/959d60a9601c473f1801a7cd.svg" alt="&#10;bufferIndex,&#10;byteOffset,&#10;byteLength,&#10;byteStride.&#10;" jobId="959d60a9601c473f1801a7cd" originalTeX="&#10;bufferIndex,&#10;byteOffset,&#10;byteLength,&#10;byteStride.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Think:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e6ac653286d392fdc6e83d75.svg" alt="&#10;\boxed{&#10;\text{raw byte slice}.&#10;}&#10;" jobId="e6ac653286d392fdc6e83d75" originalTeX="&#10;\boxed{&#10;\text{raw byte slice}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">It may represent interleaved vertex data or index stream.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-accessor">Accessor&#13;</Content>
+<Content aid:pstyle="Content">Accessor adds typed interpretation:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/09ee8987ec4df745dc0c6cd0.svg" alt="&#10;componentType,&#10;type,&#10;count,&#10;offset,&#10;normalized.&#10;" jobId="09ee8987ec4df745dc0c6cd0" originalTeX="&#10;componentType,&#10;type,&#10;count,&#10;offset,&#10;normalized.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">componentType = FLOAT&#10;type = VEC3&#10;count = 1000&#13;</Code>
+<Content aid:pstyle="Content">means:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/321cff00804f9ea75ef8782a.svg" alt="&#10;1000&#10;" jobId="321cff00804f9ea75ef8782a" originalTeX="&#10;1000&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">three-component float vectors.&#13;</Content>
+<Content aid:pstyle="Content">Effective address:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2422ed9855488f25550e3cd1.svg" alt="&#10;\boxed{&#10;bufferBase&#10;+&#10;bufferView.byteOffset&#10;+&#10;accessor.byteOffset&#10;+&#10;i\times stride.&#10;}&#10;" jobId="2422ed9855488f25550e3cd1" originalTeX="&#10;\boxed{&#10;bufferBase&#10;+&#10;bufferView.byteOffset&#10;+&#10;accessor.byteOffset&#10;+&#10;i\times stride.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Never forget both offsets.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-primitive-attributes">Primitive attributes&#13;</Content>
+<Content aid:pstyle="Content">glTF primitive may map:&#13;</Content>
+<Code aid:pstyle="Code" language="text">POSITION -&gt; accessor 4&#10;NORMAL   -&gt; accessor 7&#10;TEXCOORD_0 -&gt; accessor 9&#10;JOINTS_0 -&gt; accessor 11&#10;WEIGHTS_0 -&gt; accessor 12&#13;</Code>
+<Content aid:pstyle="Content">Semantic names drive interpretation.&#13;</Content>
+<Content aid:pstyle="Content">Position required for rendering primitive.&#13;</Content>
+<Content aid:pstyle="Content">Normals/tangents optional.&#13;</Content>
+<Content aid:pstyle="Content">Joint/weights appear for skinning.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-indices">Indices&#13;</Content>
+<Content aid:pstyle="Content">Index accessor uses scalar unsigned integer component type.&#13;</Content>
+<Content aid:pstyle="Content">Could be:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4cddee89aa12d673e7fe5d9f.svg" alt="&#10;uint8,uint16,uint32.&#10;" jobId="4cddee89aa12d673e7fe5d9f" originalTeX="&#10;uint8,uint16,uint32.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Convert into engine index type, often <InlineCode aid:cstyle="InlineCode">uint32_t</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">Validate:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/29836c97efb7916bd16a4785.svg" alt="&#10;index&lt;vertexCount.&#10;" jobId="29836c97efb7916bd16a4785" originalTeX="&#10;index&lt;vertexCount.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Maveb and Kairo both perform strict count/bounds validation rather than trusting source.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-nodes">Nodes&#13;</Content>
+<Content aid:pstyle="Content">A glTF node can contain:&#13;</Content>
+<Content aid:pstyle="Content">mesh, camera, skin, children and transform.&#13;</Content>
+<Content aid:pstyle="Content">Transform either:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c0568689b6c1494591b72c3a.svg" alt="&#10;matrix&#10;" jobId="c0568689b6c1494591b72c3a" originalTeX="&#10;matrix&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">or decomposed:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e371dec978a8a52cf55edc5d.svg" alt="&#10;T,R,S.&#10;" jobId="e371dec978a8a52cf55edc5d" originalTeX="&#10;T,R,S.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Local:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/71633bc28265717450d79a4d.svg" alt="&#10;M_{local}&#10;=&#10;T&#10;R&#10;S&#10;" jobId="71633bc28265717450d79a4d" originalTeX="&#10;M_{local}&#10;=&#10;T&#10;R&#10;S&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">under glTF convention.&#13;</Content>
+<Content aid:pstyle="Content">World:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5129e4e462f0661f7d56d899.svg" alt="&#10;\boxed{&#10;M_{world,node}&#10;=&#10;M_{world,parent}&#10;M_{local,node}.&#10;}&#10;" jobId="5129e4e462f0661f7d56d899" originalTeX="&#10;\boxed{&#10;M_{world,node}&#10;=&#10;M_{world,parent}&#10;M_{local,node}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Scene contains root node indices.&#13;</Content>
+<Content aid:pstyle="Content">Not every node in file must belong to active scene.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-kairos-matrix-conversion">Kairo’s matrix conversion&#13;</Content>
+<Content aid:pstyle="Content">glTF matrices stored column-major.&#13;</Content>
+<Content aid:pstyle="Content">Kairo math stores row-major but uses column-vector multiplication.&#13;</Content>
+<Content aid:pstyle="Content">Current runtime copies:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dc53fa1586a72c5460402196.svg" alt="&#10;result(row,column)&#10;=&#10;source[column\times4+row].&#10;" jobId="dc53fa1586a72c5460402196" originalTeX="&#10;result(row,column)&#10;=&#10;source[column\times4+row].&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is storage conversion preserving same mathematical transform, not an arbitrary geometric transpose.&#13;</Content>
+<Content aid:pstyle="Content">This distinction is extremely important.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-materials">Materials&#13;</Content>
+<Content aid:pstyle="Content">Primitive references material index.&#13;</Content>
+<Content aid:pstyle="Content">Material contains glTF PBR metallic-roughness data:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e511822940720628a17459ab.svg" alt="&#10;baseColorFactor,&#10;metallicFactor,&#10;roughnessFactor,&#10;textures,&#10;normal,&#10;occlusion,&#10;emissive,&#10;alphaMode,&#10;doubleSided.&#10;" jobId="e511822940720628a17459ab" originalTeX="&#10;baseColorFactor,&#10;metallicFactor,&#10;roughnessFactor,&#10;textures,&#10;normal,&#10;occlusion,&#10;emissive,&#10;alphaMode,&#10;doubleSided.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">We already covered its shading semantics in M119.&#13;</Content>
+<Content aid:pstyle="Content">Importer must preserve semantic defaults and texture color spaces.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-imagestexturessamplers">Images/textures/samplers&#13;</Content>
+<Content aid:pstyle="Content">Image:&#13;</Content>
+<Content aid:pstyle="Content">actual image payload/source.&#13;</Content>
+<Content aid:pstyle="Content">Texture:&#13;</Content>
+<Content aid:pstyle="Content">links image plus sampler.&#13;</Content>
+<Content aid:pstyle="Content">Sampler:&#13;</Content>
+<Content aid:pstyle="Content">mag/min filters and wrap modes.&#13;</Content>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4226704889cb0b79b513c8c6.svg" alt="&#10;\boxed{&#10;Image&#10;\neq&#10;Texture&#10;\neq&#10;Sampler.&#10;}&#10;" jobId="4226704889cb0b79b513c8c6" originalTeX="&#10;\boxed{&#10;Image&#10;\neq&#10;Texture&#10;\neq&#10;Sampler.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Current Maveb loader resolves wrap modes and all glTF minification/mipmap filter combinations into portable enums.&#13;</Content>
+<Content aid:pstyle="Content">It currently requires texture coordinate set:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7ad710ff7a310a446d2a3282.svg" alt="&#10;TEXCOORD_0&#10;" jobId="7ad710ff7a310a446d2a3282" originalTeX="&#10;TEXCOORD_0&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">for its supported material bindings; other coordinate sets are rejected as unsupported rather than misinterpreted.&#13;</Content>
+<Content aid:pstyle="Content">Good.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-animation-structures">Animation structures&#13;</Content>
+<Content aid:pstyle="Content">A glTF animation has:&#13;</Content>
+<Content aid:pstyle="Content">samplers and channels.&#13;</Content>
+<Content aid:pstyle="Content">Animation sampler defines:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cf3cb4571fa92693d4ebc325.svg" alt="&#10;input=timeAccessor,&#10;" jobId="cf3cb4571fa92693d4ebc325" originalTeX="&#10;input=timeAccessor,&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2746b0390a0e1e52dfcdf6ed.svg" alt="&#10;output=valueAccessor,&#10;" jobId="2746b0390a0e1e52dfcdf6ed" originalTeX="&#10;output=valueAccessor,&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4d4593541fd038ebe5993238.svg" alt="&#10;interpolation.&#10;" jobId="4d4593541fd038ebe5993238" originalTeX="&#10;interpolation.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Channel maps sampler to:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c17185515f6565046a66486d.svg" alt="&#10;targetNode&#10;" jobId="c17185515f6565046a66486d" originalTeX="&#10;targetNode&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and path:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/07966e256fb27b4f71d3c7ed.svg" alt="&#10;translation,&#10;rotation,&#10;scale,&#10;weights.&#10;" jobId="07966e256fb27b4f71d3c7ed" originalTeX="&#10;translation,&#10;rotation,&#10;scale,&#10;weights.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Kairo’s imported animation representation follows this model.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-skins">Skins&#13;</Content>
+<Content aid:pstyle="Content">Skin stores ordered joint node list:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/035372a0e8e654f8d40c9003.svg" alt="&#10;J_0,\dots,J_{n-1}&#10;" jobId="035372a0e8e654f8d40c9003" originalTeX="&#10;J_0,\dots,J_{n-1}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and inverse-bind matrices.&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">JOINTS_0</InlineCode> vertex values index into <Strong aid:cstyle="Bold">this ordered skin joint array</Strong>, not global node indices directly.&#13;</Content>
+<Content aid:pstyle="Content">That distinction is critical.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-morph-targets">Morph targets&#13;</Content>
+<Content aid:pstyle="Content">Primitive target may contain delta accessors:&#13;</Content>
+<Code aid:pstyle="Code" language="text">POSITION&#10;NORMAL&#10;TANGENT&#13;</Code>
+<Content aid:pstyle="Content">These are deltas, not complete replacement geometry.&#13;</Content>
+<Content aid:pstyle="Content">For target <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d2884c0481e0eb7ae5d428e3.svg" alt="k" jobId="d2884c0481e0eb7ae5d428e3" originalTeX="k"/>:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d8d294e39c564e28ea5ffa82.svg" alt="&#10;\Delta p_k.&#10;" jobId="d8d294e39c564e28ea5ffa82" originalTeX="&#10;\Delta p_k.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Final morph position:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d836a6e56f41f9c2290e72ac.svg" alt="&#10;p'=p+\sum_k w_k\Delta p_k.&#10;" jobId="d836a6e56f41f9c2290e72ac" originalTeX="&#10;p'=p+\sum_k w_k\Delta p_k.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">More later.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-simplification-subdivision-smoothing-and-parameterization">SIMPLIFICATION, SUBDIVISION, SMOOTHING AND PARAMETERIZATION&#13;</Content>
+<Content aid:pstyle="Content">Current repository boundary first: the inspected KairoAssets code has real editable topology, split/inset/extrude/dissolve/loop-cut and subdivision-modifier infrastructure, but I did <Strong aid:cstyle="Bold">not</Strong> find an implemented QEM simplifier, cotangent Laplacian or UV parameterization system in the current repo. So the theory below is curriculum-level, not a claim about current implementation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-edge-collapse">Edge collapse&#13;</Content>
+<Content aid:pstyle="Content">Simplification reduces triangle count while minimizing visual/geometric error.&#13;</Content>
+<Content aid:pstyle="Content">Edge:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/269ef090f95c7e921f3b85b7.svg" alt="&#10;(v_a,v_b)&#10;" jobId="269ef090f95c7e921f3b85b7" originalTeX="&#10;(v_a,v_b)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">collapsed to:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9f1d3848bc5b87a6c9329521.svg" alt="&#10;v'.&#10;" jobId="9f1d3848bc5b87a6c9329521" originalTeX="&#10;v'.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">All faces referencing either endpoint now reference <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5dd8dec4370dcc44f358b8af.svg" alt="v'" jobId="5dd8dec4370dcc44f358b8af" originalTeX="v'"/>.&#13;</Content>
+<Content aid:pstyle="Content">Degenerate faces removed.&#13;</Content>
+<Content aid:pstyle="Content">But collapse can change topology, normals and UVs.&#13;</Content>
+<Content aid:pstyle="Content">Choosing which edge and new position is the problem.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-quadric-error-metrics">Quadric Error Metrics&#13;</Content>
+<Content aid:pstyle="Content">For plane:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b66b94143976046747fddc63.svg" alt="&#10;ax+by+cz+d=0,&#10;" jobId="b66b94143976046747fddc63" originalTeX="&#10;ax+by+cz+d=0,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">normalized plane vector:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8bcfe375e2e497f883c82eb3.svg" alt="&#10;p=&#10;[a,b,c,d]^T.&#10;" jobId="8bcfe375e2e497f883c82eb3" originalTeX="&#10;p=&#10;[a,b,c,d]^T.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For homogeneous vertex:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9428704c6ff668b2bcd869c1.svg" alt="&#10;\hat v=&#10;[x,y,z,1]^T,&#10;" jobId="9428704c6ff668b2bcd869c1" originalTeX="&#10;\hat v=&#10;[x,y,z,1]^T,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">signed plane equation:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6df68148dac3560a6ef52490.svg" alt="&#10;p^T\hat v.&#10;" jobId="6df68148dac3560a6ef52490" originalTeX="&#10;p^T\hat v.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Squared distance-like error:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b15c02f43ccb1f5a64de9bf9.svg" alt="&#10;(p^T\hat v)^2.&#10;" jobId="b15c02f43ccb1f5a64de9bf9" originalTeX="&#10;(p^T\hat v)^2.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Rewrite:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/924a6ea5760081e367833406.svg" alt="&#10;\boxed{&#10;(p^T\hat v)^2&#10;=&#10;\hat v^T&#10;(pp^T)&#10;\hat v.&#10;}&#10;" jobId="924a6ea5760081e367833406" originalTeX="&#10;\boxed{&#10;(p^T\hat v)^2&#10;=&#10;\hat v^T&#10;(pp^T)&#10;\hat v.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Define plane quadric:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/28dca278822bdf6cd811efa2.svg" alt="&#10;Q_p=pp^T.&#10;" jobId="28dca278822bdf6cd811efa2" originalTeX="&#10;Q_p=pp^T.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For vertex adjacent to planes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6b31a313bcd9021d16ca109f.svg" alt="&#10;\boxed{&#10;Q_v=&#10;\sum_{p\ni v}&#10;Q_p.&#10;}&#10;" jobId="6b31a313bcd9021d16ca109f" originalTeX="&#10;\boxed{&#10;Q_v=&#10;\sum_{p\ni v}&#10;Q_p.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For collapsing edge:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7affc509fec5423bd4c26b84.svg" alt="&#10;Q=&#10;Q_a+Q_b.&#10;" jobId="7affc509fec5423bd4c26b84" originalTeX="&#10;Q=&#10;Q_a+Q_b.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Candidate cost:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7fd7258b8b665a956dd48e00.svg" alt="&#10;\boxed{&#10;E(v')&#10;=&#10;\hat v'^TQ\hat v'.&#10;}&#10;" jobId="7fd7258b8b665a956dd48e00" originalTeX="&#10;\boxed{&#10;E(v')&#10;=&#10;\hat v'^TQ\hat v'.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Choose position minimizing this.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-solve-optimal-collapse-position">Solve optimal collapse position&#13;</Content>
+<Content aid:pstyle="Content">Partition:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f694839f82d7f5b3228e8858.svg" alt="&#10;Q=&#10;\begin{bmatrix}&#10;A&amp;b\\&#10;b^T&amp;c&#10;\end{bmatrix}&#10;" jobId="f694839f82d7f5b3228e8858" originalTeX="&#10;Q=&#10;\begin{bmatrix}&#10;A&amp;b\\&#10;b^T&amp;c&#10;\end{bmatrix}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">with <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6372fce2b4dc5c2cf6a13715.svg" alt="A" jobId="6372fce2b4dc5c2cf6a13715" originalTeX="A"/> 3×3.&#13;</Content>
+<Content aid:pstyle="Content">For:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cbaaf7ad5393308afeeb1d4f.svg" alt="&#10;E(x)=x^TAx+2b^Tx+c.&#10;" jobId="cbaaf7ad5393308afeeb1d4f" originalTeX="&#10;E(x)=x^TAx+2b^Tx+c.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Gradient:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6ad2e3ff0f1c92aeceb5a5da.svg" alt="&#10;\nabla E=&#10;2Ax+2b.&#10;" jobId="6ad2e3ff0f1c92aeceb5a5da" originalTeX="&#10;\nabla E=&#10;2Ax+2b.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Set zero:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/21f3fcec574ca42df704dd2b.svg" alt="&#10;\boxed{&#10;Ax=-b.&#10;}&#10;" jobId="21f3fcec574ca42df704dd2b" originalTeX="&#10;\boxed{&#10;Ax=-b.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6372fce2b4dc5c2cf6a13715.svg" alt="A" jobId="6372fce2b4dc5c2cf6a13715" originalTeX="A"/> invertible:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9536913a83f72871019297b9.svg" alt="&#10;x=-A^{-1}b.&#10;" jobId="9536913a83f72871019297b9" originalTeX="&#10;x=-A^{-1}b.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If singular, test endpoints and midpoint.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-topology-constraints">Topology constraints&#13;</Content>
+<Content aid:pstyle="Content">Do not collapse if it:&#13;</Content>
+<Content aid:pstyle="Content">inverts triangle orientation, creates duplicate faces, creates non-manifold edge, collapses boundary incorrectly, crosses material/UV seam, destroys protected feature edge.&#13;</Content>
+<Content aid:pstyle="Content">A common manifold test is link condition.&#13;</Content>
+<Content aid:pstyle="Content">For edge <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cf33318f495a1ee52efca2eb.svg" alt="(u,v)" jobId="cf33318f495a1ee52efca2eb" originalTeX="(u,v)"/>, one-ring intersection should match edge link.&#13;</Content>
+<Content aid:pstyle="Content">Topology preservation matters as much as geometric QEM cost.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-subdivision">Subdivision&#13;</Content>
+<Content aid:pstyle="Content">Subdivision increases mesh resolution and smooths surface.&#13;</Content>
+<Content aid:pstyle="Content">Loop subdivision for triangles.&#13;</Content>
+<Content aid:pstyle="Content">Interior edge new vertex with endpoints:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e9673a04d9b4ed2007f866a9.svg" alt="&#10;v_0,v_1&#10;" jobId="e9673a04d9b4ed2007f866a9" originalTeX="&#10;v_0,v_1&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and opposite vertices:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2279483001eb16116d928376.svg" alt="&#10;v_2,v_3:&#10;" jobId="2279483001eb16116d928376" originalTeX="&#10;v_2,v_3:&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/43d200c71199b462e4c12168.svg" alt="&#10;\boxed{&#10;v_e&#10;=&#10;\frac38(v_0+v_1)&#10;+&#10;\frac18(v_2+v_3).&#10;}&#10;" jobId="43d200c71199b462e4c12168" originalTeX="&#10;\boxed{&#10;v_e&#10;=&#10;\frac38(v_0+v_1)&#10;+&#10;\frac18(v_2+v_3).&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Boundary edge typically:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b4fb14f57ef6275f250462a0.svg" alt="&#10;v_e=&#10;\frac12(v_0+v_1).&#10;" jobId="b4fb14f57ef6275f250462a0" originalTeX="&#10;v_e=&#10;\frac12(v_0+v_1).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-existing-loop-vertex">Existing Loop vertex&#13;</Content>
+<Content aid:pstyle="Content">For interior valence <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7e0169371fd671a4ffc5c604.svg" alt="n" jobId="7e0169371fd671a4ffc5c604" originalTeX="n"/>, one exact Loop weight formulation:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9bb1f5fc2954fad10735fcdb.svg" alt="&#10;\beta&#10;=&#10;\frac1n&#10;\left[&#10;\frac58-&#10;\left(&#10;\frac38+&#10;\frac14\cos\frac{2\pi}{n}&#10;\right)^2&#10;\right].&#10;" jobId="9bb1f5fc2954fad10735fcdb" originalTeX="&#10;\beta&#10;=&#10;\frac1n&#10;\left[&#10;\frac58-&#10;\left(&#10;\frac38+&#10;\frac14\cos\frac{2\pi}{n}&#10;\right)^2&#10;\right].&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ad8e366cb7ac67630acd6352.svg" alt="&#10;\boxed{&#10;v'&#10;=&#10;(1-n\beta)v&#10;+&#10;\beta&#10;\sum_{j=1}^{n}v_j.&#10;}&#10;" jobId="ad8e366cb7ac67630acd6352" originalTeX="&#10;\boxed{&#10;v'&#10;=&#10;(1-n\beta)v&#10;+&#10;\beta&#10;\sum_{j=1}^{n}v_j.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Common simplified rules exist, but the above captures canonical valence dependence.&#13;</Content>
+<Content aid:pstyle="Content">Each old triangle becomes four.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-laplacian-smoothing">Laplacian smoothing&#13;</Content>
+<Content aid:pstyle="Content">Uniform Laplacian:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e1312d0a41cfa24e6f647c67.svg" alt="&#10;\bar v_i=&#10;\frac1{|N(i)|}&#10;\sum_{j\in N(i)}&#10;v_j.&#10;" jobId="e1312d0a41cfa24e6f647c67" originalTeX="&#10;\bar v_i=&#10;\frac1{|N(i)|}&#10;\sum_{j\in N(i)}&#10;v_j.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Laplacian:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4c55f3788823e69c2dd07387.svg" alt="&#10;\Delta v_i=&#10;\bar v_i-v_i.&#10;" jobId="4c55f3788823e69c2dd07387" originalTeX="&#10;\Delta v_i=&#10;\bar v_i-v_i.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Update:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/113c84edb1b89d32e18e1a55.svg" alt="&#10;\boxed{&#10;v_i'&#10;=&#10;v_i+&#10;\lambda\Delta v_i.&#10;}&#10;" jobId="113c84edb1b89d32e18e1a55" originalTeX="&#10;\boxed{&#10;v_i'&#10;=&#10;v_i+&#10;\lambda\Delta v_i.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Problem:&#13;</Content>
+<Content aid:pstyle="Content">mesh shrinkage.&#13;</Content>
+<Content aid:pstyle="Content">Repeated averaging moves vertices toward center.&#13;</Content>
+<Content aid:pstyle="Content">Taubin smoothing uses positive/negative passes to reduce shrinkage.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-cotangent-laplacian">Cotangent Laplacian&#13;</Content>
+<Content aid:pstyle="Content">For edge <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/615a9fe78fd16ab2fe8fc3cb.svg" alt="ij" jobId="615a9fe78fd16ab2fe8fc3cb" originalTeX="ij"/>, opposite angles:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c9e4786fb41e49375d812b29.svg" alt="&#10;\alpha_{ij},\beta_{ij}.&#10;" jobId="c9e4786fb41e49375d812b29" originalTeX="&#10;\alpha_{ij},\beta_{ij}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Weight:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cbc6d5a305807e77b0b719be.svg" alt="&#10;\boxed{&#10;w_{ij}&#10;=&#10;\frac12&#10;(&#10;\cot\alpha_{ij}&#10;+&#10;\cot\beta_{ij}&#10;).&#10;}&#10;" jobId="cbc6d5a305807e77b0b719be" originalTeX="&#10;\boxed{&#10;w_{ij}&#10;=&#10;\frac12&#10;(&#10;\cot\alpha_{ij}&#10;+&#10;\cot\beta_{ij}&#10;).&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Discrete Laplacian:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/74235cb4fde635181960fc95.svg" alt="&#10;\Delta v_i&#10;=&#10;\frac1{A_i}&#10;\sum_{j}&#10;w_{ij}(v_j-v_i)&#10;" jobId="74235cb4fde635181960fc95" originalTeX="&#10;\Delta v_i&#10;=&#10;\frac1{A_i}&#10;\sum_{j}&#10;w_{ij}(v_j-v_i)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">with appropriate area normalization.&#13;</Content>
+<Content aid:pstyle="Content">This reflects local surface geometry better than uniform neighbor average.&#13;</Content>
+<Content aid:pstyle="Content">Used in:&#13;</Content>
+<Content aid:pstyle="Content">smoothing, curvature, parameterization, deformation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-parameterization">Parameterization&#13;</Content>
+<Content aid:pstyle="Content">Map surface mesh:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/085cb936fa83f324e1e9b9b1.svg" alt="&#10;(x,y,z)&#10;" jobId="085cb936fa83f324e1e9b9b1" originalTeX="&#10;(x,y,z)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">to UV:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1d17110cf278173b0e4ed78f.svg" alt="&#10;(u,v).&#10;" jobId="1d17110cf278173b0e4ed78f" originalTeX="&#10;(u,v).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Want low angular/stretch distortion and no overlap.&#13;</Content>
+<Content aid:pstyle="Content">For disk-like mesh, fix boundary to 2D curve, solve interior harmonic equations:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/093978d353b93de1d996b5cb.svg" alt="&#10;\boxed{&#10;\sum_j&#10;w_{ij}&#10;(u_i-u_j)=0&#10;}&#10;" jobId="093978d353b93de1d996b5cb" originalTeX="&#10;\boxed{&#10;\sum_j&#10;w_{ij}&#10;(u_i-u_j)=0&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and same for v.&#13;</Content>
+<Content aid:pstyle="Content">Cotangent weights yield conformal-ish harmonic maps but can fold depending boundary/topology.&#13;</Content>
+<Content aid:pstyle="Content">LSCM minimizes conformal distortion.&#13;</Content>
+<Content aid:pstyle="Content">ABF optimizes angles.&#13;</Content>
+<Content aid:pstyle="Content">Complex topology requires cuts.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-uv-seams">UV seams&#13;</Content>
+<Content aid:pstyle="Content">Closed surface cannot generally flatten to plane without seams/distortion.&#13;</Content>
+<Content aid:pstyle="Content">A seam duplicates a topological vertex in UV domain.&#13;</Content>
+<Content aid:pstyle="Content">Same position:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5f6e51d4e894862576e94b31.svg" alt="&#10;p.&#10;" jobId="5f6e51d4e894862576e94b31" originalTeX="&#10;p.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Different UVs:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d559f7164df9d63f42cef93a.svg" alt="&#10;uv_A\ne uv_B.&#10;" jobId="d559f7164df9d63f42cef93a" originalTeX="&#10;uv_A\ne uv_B.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Therefore GPU mesh duplication is required.&#13;</Content>
+<Content aid:pstyle="Content">This loops directly back to Part 2608:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f349e9e97d6118d2631b982f.svg" alt="&#10;\boxed{&#10;\text{corner attributes create vertex splits}.&#10;}&#10;" jobId="f349e9e97d6118d2631b982f" originalTeX="&#10;\boxed{&#10;\text{corner attributes create vertex splits}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-skeletons-skinning-and-animation">SKELETONS, SKINNING AND ANIMATION&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-skeleton-hierarchy">Skeleton hierarchy&#13;</Content>
+<Content aid:pstyle="Content">Skeleton is tree/forest of joints.&#13;</Content>
+<Content aid:pstyle="Content">Each joint:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5072625ee9a91a3500f46b54.svg" alt="&#10;j&#10;" jobId="5072625ee9a91a3500f46b54" originalTeX="&#10;j&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">has parent:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8fcd435f1f245125838d1d6b.svg" alt="&#10;parent(j).&#10;" jobId="8fcd435f1f245125838d1d6b" originalTeX="&#10;parent(j).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Local transform relative parent:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d04100f7b846cf3b96423619.svg" alt="&#10;L_j.&#10;" jobId="d04100f7b846cf3b96423619" originalTeX="&#10;L_j.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">World/global:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/abfc084ff5d9878a424edc10.svg" alt="&#10;\boxed{&#10;G_j&#10;=&#10;G_{parent(j)}&#10;L_j.&#10;}&#10;" jobId="abfc084ff5d9878a424edc10" originalTeX="&#10;\boxed{&#10;G_j&#10;=&#10;G_{parent(j)}&#10;L_j.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Root:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/471bc9dd129d60b6c6e32d98.svg" alt="&#10;G_{root}=L_{root}.&#10;" jobId="471bc9dd129d60b6c6e32d98" originalTeX="&#10;G_{root}=L_{root}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Current Kairo animation runtime resolves this recursively and detects hierarchy cycles defensively.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-local-transforms">Local transforms&#13;</Content>
+<Content aid:pstyle="Content">Usually TRS:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/83e11f189d6584451794e330.svg" alt="&#10;L=&#10;T(t)&#10;R(q)&#10;S(s).&#10;" jobId="83e11f189d6584451794e330" originalTeX="&#10;L=&#10;T(t)&#10;R(q)&#10;S(s).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Animation channels update components.&#13;</Content>
+<Content aid:pstyle="Content">Matrix-authored static glTF nodes may remain exact matrices rather than forcing lossy decomposition.&#13;</Content>
+<Content aid:pstyle="Content">Kairo explicitly preserves this distinction.&#13;</Content>
+<Content aid:pstyle="Content">That is good engineering.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-bind-pose">Bind pose&#13;</Content>
+<Content aid:pstyle="Content">Bind pose is skeleton configuration in which mesh was authored/attached.&#13;</Content>
+<Content aid:pstyle="Content">Let joint bind global:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/369ee81a1833b3a9ed1342d8.svg" alt="&#10;B_j.&#10;" jobId="369ee81a1833b3a9ed1342d8" originalTeX="&#10;B_j.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">We want vertex transformed from bind coordinate into current joint coordinate.&#13;</Content>
+<Content aid:pstyle="Content">First undo bind:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6af7816452ba46386ec0ccba.svg" alt="&#10;B_j^{-1}.&#10;" jobId="6af7816452ba46386ec0ccba" originalTeX="&#10;B_j^{-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then apply current:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8f1c35644389206ea52cc88f.svg" alt="&#10;G_j(t).&#10;" jobId="8f1c35644389206ea52cc88f" originalTeX="&#10;G_j(t).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Skin transform:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5ea548b8c23dde0965627ffd.svg" alt="&#10;\boxed{&#10;S_j(t)&#10;=&#10;G_j(t)&#10;B_j^{-1}.&#10;}&#10;" jobId="5ea548b8c23dde0965627ffd" originalTeX="&#10;\boxed{&#10;S_j(t)&#10;=&#10;G_j(t)&#10;B_j^{-1}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">At bind pose:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c0ae5de2573c4794225533f2.svg" alt="&#10;G_j=B_j,&#10;" jobId="c0ae5de2573c4794225533f2" originalTeX="&#10;G_j=B_j,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">so:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a686345288d0b92c7ad54164.svg" alt="&#10;S_j=&#10;I.&#10;" jobId="a686345288d0b92c7ad54164" originalTeX="&#10;S_j=&#10;I.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is the key sanity check.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-gltf-inverse-bind-matrices">glTF inverse-bind matrices&#13;</Content>
+<Content aid:pstyle="Content">glTF stores:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/526592263a0c76d9de3d518b.svg" alt="&#10;IBM_j&#10;" jobId="526592263a0c76d9de3d518b" originalTeX="&#10;IBM_j&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">directly.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo EngineCore builds palette:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/320a64eb5ffac879cc68131d.svg" alt="&#10;\boxed{&#10;JointMatrix_j&#10;=&#10;WorldJoint_j&#10;\cdot&#10;InverseBind_j.&#10;}&#10;" jobId="320a64eb5ffac879cc68131d" originalTeX="&#10;\boxed{&#10;JointMatrix_j&#10;=&#10;WorldJoint_j&#10;\cdot&#10;InverseBind_j.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">It intentionally keeps this in asset space and applies outer scene/entity transform later in renderer.&#13;</Content>
+<Content aid:pstyle="Content">That avoids requiring inverse of mesh-node transform, which may contain zero scale.&#13;</Content>
+<Content aid:pstyle="Content">This is a thoughtful design choice.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-linear-blend-skinning">Linear Blend Skinning&#13;</Content>
+<Content aid:pstyle="Content">Vertex has joint indices:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/12cf3531a51b14de43dd93e0.svg" alt="&#10;j_0,\dots,j_3&#10;" jobId="12cf3531a51b14de43dd93e0" originalTeX="&#10;j_0,\dots,j_3&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and weights:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/73bbf53880f2bccdc0f662c3.svg" alt="&#10;w_0,\dots,w_3.&#10;" jobId="73bbf53880f2bccdc0f662c3" originalTeX="&#10;w_0,\dots,w_3.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Weights:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/09c5da1447c53ea08bc07b1d.svg" alt="&#10;w_i\ge0,&#10;" jobId="09c5da1447c53ea08bc07b1d" originalTeX="&#10;w_i\ge0,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and ideally:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d082c0578699cee357bbac87.svg" alt="&#10;\boxed{&#10;\sum_iw_i=1.&#10;}&#10;" jobId="d082c0578699cee357bbac87" originalTeX="&#10;\boxed{&#10;\sum_iw_i=1.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Skinned position:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0eb44a316f928796add52543.svg" alt="&#10;\boxed{&#10;p'&#10;=&#10;\sum_{i=0}^{3}&#10;w_i&#10;S_{j_i}&#10;\begin{bmatrix}&#10;p\\1&#10;\end{bmatrix}.&#10;}&#10;" jobId="0eb44a316f928796add52543" originalTeX="&#10;\boxed{&#10;p'&#10;=&#10;\sum_{i=0}^{3}&#10;w_i&#10;S_{j_i}&#10;\begin{bmatrix}&#10;p\\1&#10;\end{bmatrix}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Equivalently blended skin matrix:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4fa84bab46e3c0675f5acd23.svg" alt="&#10;S=&#10;\sum_iw_iS_{j_i}.&#10;" jobId="4fa84bab46e3c0675f5acd23" originalTeX="&#10;S=&#10;\sum_iw_iS_{j_i}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a81fb08a7c7ac57b7deb9c60.svg" alt="&#10;p'=Sp.&#10;" jobId="a81fb08a7c7ac57b7deb9c60" originalTeX="&#10;p'=Sp.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-weight-normalization">Weight normalization&#13;</Content>
+<Content aid:pstyle="Content">Input may not sum exactly one due quantization.&#13;</Content>
+<Content aid:pstyle="Content">Compute:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9715c6430a219e2cc709e7c4.svg" alt="&#10;s=&#10;\sum_iw_i.&#10;" jobId="9715c6430a219e2cc709e7c4" originalTeX="&#10;s=&#10;\sum_iw_i.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bac1c550f6844ae975fcee62.svg" alt="&#10;s&gt;0&#10;" jobId="bac1c550f6844ae975fcee62" originalTeX="&#10;s&gt;0&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">normalize:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e6f2781e5ad7d5e5c68743d0.svg" alt="&#10;w_i'=w_i/s.&#10;" jobId="e6f2781e5ad7d5e5c68743d0" originalTeX="&#10;w_i'=w_i/s.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If all zero, importer must define fallback or reject.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo renderer validates that four weights sum to one within:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/900b45679914b28590e5d809.svg" alt="&#10;10^{-3}.&#10;" jobId="900b45679914b28590e5d809" originalTeX="&#10;10^{-3}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">It also caps portable palette at:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b0eaa69d8cbffbd2b25efa9a.svg" alt="&#10;255&#10;" jobId="b0eaa69d8cbffbd2b25efa9a" originalTeX="&#10;255&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">joints because 255 mat4 values fit its 16 KiB baseline uniform-buffer portability target.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-skinning-normalstangents">Skinning normals/tangents&#13;</Content>
+<Content aid:pstyle="Content">Position uses <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e125ab74219f7366f2a32820.svg" alt="w=1" jobId="e125ab74219f7366f2a32820" originalTeX="w=1"/>.&#13;</Content>
+<Content aid:pstyle="Content">Direction uses <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a407222fce91a105c58d52ba.svg" alt="w=0" jobId="a407222fce91a105c58d52ba" originalTeX="w=0"/>.&#13;</Content>
+<Content aid:pstyle="Content">For purely rigid joint matrices, blend upper 3×3 and normalize.&#13;</Content>
+<Content aid:pstyle="Content">With nonuniform scale, correct normal transformation is inverse transpose.&#13;</Content>
+<Content aid:pstyle="Content">But:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c5c811feee983650f13412e8.svg" alt="&#10;inverseTranspose&#10;\left(&#10;\sum_iw_iS_i&#10;\right)&#10;" jobId="c5c811feee983650f13412e8" originalTeX="&#10;inverseTranspose&#10;\left(&#10;\sum_iw_iS_i&#10;\right)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">is not generally equal to:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7c6129fb48e898d88b79e08c.svg" alt="&#10;\sum_iw_i&#10;inverseTranspose(S_i).&#10;" jobId="7c6129fb48e898d88b79e08c" originalTeX="&#10;\sum_iw_i&#10;inverseTranspose(S_i).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">There is no perfect simple LBS normal rule under arbitrary nonrigid blended transforms.&#13;</Content>
+<Content aid:pstyle="Content">Many engines assume joint transforms are rigid/uniform-scale and use weighted 3×3 then normalize.&#13;</Content>
+<Content aid:pstyle="Content">Tangents similarly.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-candy-wrapper-artifact">Candy-wrapper artifact&#13;</Content>
+<Content aid:pstyle="Content">Consider cylinder arm twisting 180° between two bones.&#13;</Content>
+<Content aid:pstyle="Content">LBS linearly blends matrices.&#13;</Content>
+<Content aid:pstyle="Content">Linear interpolation of rotations is not a rotation.&#13;</Content>
+<Content aid:pstyle="Content">At midpoint, opposite rotations can partially cancel, shrinking cross-section.&#13;</Content>
+<Content aid:pstyle="Content">Result:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/99b6912ea710b0d2efda7a5f.svg" alt="&#10;\boxed{&#10;\text{volume collapse / candy-wrapper twist}.&#10;}&#10;" jobId="99b6912ea710b0d2efda7a5f" originalTeX="&#10;\boxed{&#10;\text{volume collapse / candy-wrapper twist}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-dual-quaternion-skinning">Dual-quaternion skinning&#13;</Content>
+<Content aid:pstyle="Content">Rigid transform represented by dual quaternion:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b574bda1a4756179fbe1b2eb.svg" alt="&#10;\hat q=&#10;q_r+&#10;\epsilon q_d.&#10;" jobId="b574bda1a4756179fbe1b2eb" originalTeX="&#10;\hat q=&#10;q_r+&#10;\epsilon q_d.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Blend dual quaternions then normalize.&#13;</Content>
+<Content aid:pstyle="Content">This better interpolates rotations/translations and preserves volume under twisting.&#13;</Content>
+<Content aid:pstyle="Content">It does not naturally handle arbitrary nonuniform scale; hybrid methods are needed.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-animation-clipschannelssamplers">Animation clips/channels/samplers&#13;</Content>
+<Content aid:pstyle="Content">Clip:&#13;</Content>
+<Content aid:pstyle="Content">collection of animation channels over duration.&#13;</Content>
+<Content aid:pstyle="Content">Channel:&#13;</Content>
+<Content aid:pstyle="Content">target node/property.&#13;</Content>
+<Content aid:pstyle="Content">Sampler:&#13;</Content>
+<Content aid:pstyle="Content">key times + values + interpolation.&#13;</Content>
+<Content aid:pstyle="Content">Key times:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/804b1d8fad65048d7ba1801c.svg" alt="&#10;t_0&lt;t_1&lt;\cdots&lt;t_n.&#10;" jobId="804b1d8fad65048d7ba1801c" originalTeX="&#10;t_0&lt;t_1&lt;\cdots&lt;t_n.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Current Maveb loader explicitly rejects non-finite, unsorted or duplicate animation times.&#13;</Content>
+<Content aid:pstyle="Content">Excellent malformed-data defense.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-translation-interpolation">Translation interpolation&#13;</Content>
+<Content aid:pstyle="Content">For segment:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/682c48f339bf2d72a9bb9a73.svg" alt="&#10;t\in[t_0,t_1].&#10;" jobId="682c48f339bf2d72a9bb9a73" originalTeX="&#10;t\in[t_0,t_1].&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Normalized:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0348698ced27a02b82df67e6.svg" alt="&#10;u=&#10;\frac{t-t_0}{t_1-t_0}.&#10;" jobId="0348698ced27a02b82df67e6" originalTeX="&#10;u=&#10;\frac{t-t_0}{t_1-t_0}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Translation:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/17ddf643d018f28fc35aff14.svg" alt="&#10;\boxed{&#10;T(u)&#10;=&#10;(1-u)T_0+uT_1.&#10;}&#10;" jobId="17ddf643d018f28fc35aff14" originalTeX="&#10;\boxed{&#10;T(u)&#10;=&#10;(1-u)T_0+uT_1.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-scale-interpolation">Scale interpolation&#13;</Content>
+<Content aid:pstyle="Content">Similarly:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6353211afcfa54e3be5cc8ef.svg" alt="&#10;\boxed{&#10;S(u)&#10;=&#10;(1-u)S_0+uS_1.&#10;}&#10;" jobId="6353211afcfa54e3be5cc8ef" originalTeX="&#10;\boxed{&#10;S(u)&#10;=&#10;(1-u)S_0+uS_1.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Usually component-wise.&#13;</Content>
+<Content aid:pstyle="Content">Negative scales complicate interpolation but glTF permits scale values that can be negative.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-quaternion-interpolation">Quaternion interpolation&#13;</Content>
+<Content aid:pstyle="Content">Given normalized quaternions:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/faa260ca6c074405a8f760a0.svg" alt="&#10;q_0,q_1.&#10;" jobId="faa260ca6c074405a8f760a0" originalTeX="&#10;q_0,q_1.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Cosine:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/19a23a60b84947717e294d59.svg" alt="&#10;d=q_0\cdot q_1.&#10;" jobId="19a23a60b84947717e294d59" originalTeX="&#10;d=q_0\cdot q_1.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/312adb28e8e82558e13e2dbe.svg" alt="&#10;d&lt;0&#10;" jobId="312adb28e8e82558e13e2dbe" originalTeX="&#10;d&lt;0&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">negate one quaternion because:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5a06df0fbb397872b80878a7.svg" alt="&#10;q&#10;" jobId="5a06df0fbb397872b80878a7" originalTeX="&#10;q&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a41b8b6e1a67fa2061738eee.svg" alt="&#10;-q&#10;" jobId="a41b8b6e1a67fa2061738eee" originalTeX="&#10;-q&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">represent same rotation, but we want shortest path.&#13;</Content>
+<Content aid:pstyle="Content">Slerp:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/72b85a3ac3659b8a82442967.svg" alt="&#10;\boxed{&#10;q(u)&#10;=&#10;\frac{&#10;\sin((1-u)\theta)&#10;}{&#10;\sin\theta&#10;}&#10;q_0&#10;+&#10;\frac{&#10;\sin(u\theta)&#10;}{&#10;\sin\theta&#10;}&#10;q_1&#10;}&#10;" jobId="72b85a3ac3659b8a82442967" originalTeX="&#10;\boxed{&#10;q(u)&#10;=&#10;\frac{&#10;\sin((1-u)\theta)&#10;}{&#10;\sin\theta&#10;}&#10;q_0&#10;+&#10;\frac{&#10;\sin(u\theta)&#10;}{&#10;\sin\theta&#10;}&#10;q_1&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">where:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d8e0e2cbeba59a8604433cb6.svg" alt="&#10;\cos\theta=d.&#10;" jobId="d8e0e2cbeba59a8604433cb6" originalTeX="&#10;\cos\theta=d.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For small angle, normalized lerp is numerically better.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo uses <InlineCode aid:cstyle="InlineCode">SLerp</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-step-interpolation">Step interpolation&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e4514463d1d71e3e64c3c99d.svg" alt="&#10;value(t)=value_i&#10;" jobId="e4514463d1d71e3e64c3c99d" originalTeX="&#10;value(t)=value_i&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">until next key.&#13;</Content>
+<Content aid:pstyle="Content">No interpolation.&#13;</Content>
+<Content aid:pstyle="Content">Useful for discrete state or intentionally stepped animation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-cubic-spline">Cubic spline&#13;</Content>
+<Content aid:pstyle="Content">glTF cubic spline stores:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/991aa0b2aea1bb242b392024.svg" alt="&#10;inTangent,&#10;value,&#10;outTangent&#10;" jobId="991aa0b2aea1bb242b392024" originalTeX="&#10;inTangent,&#10;value,&#10;outTangent&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">per key.&#13;</Content>
+<Content aid:pstyle="Content">For interval <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5941b1dd145b321153d009cc.svg" alt="\Delta t" jobId="5941b1dd145b321153d009cc" originalTeX="\Delta t"/>, Hermite:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6b45c8dcc89e3e4aa6a0328d.svg" alt="&#10;P(u)&#10;=&#10;h_{00}P_0&#10;+&#10;h_{10}\Delta t M_0&#10;+&#10;h_{01}P_1&#10;+&#10;h_{11}\Delta t M_1&#10;" jobId="6b45c8dcc89e3e4aa6a0328d" originalTeX="&#10;P(u)&#10;=&#10;h_{00}P_0&#10;+&#10;h_{10}\Delta t M_0&#10;+&#10;h_{01}P_1&#10;+&#10;h_{11}\Delta t M_1&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">with:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5516b70f67311bfdcca55635.svg" alt="&#10;h_{00}=2u^3-3u^2+1,&#10;" jobId="5516b70f67311bfdcca55635" originalTeX="&#10;h_{00}=2u^3-3u^2+1,&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f127b0e6b3008879595afbc5.svg" alt="&#10;h_{10}=u^3-2u^2+u,&#10;" jobId="f127b0e6b3008879595afbc5" originalTeX="&#10;h_{10}=u^3-2u^2+u,&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1909e59b4037aad44363fd0c.svg" alt="&#10;h_{01}=-2u^3+3u^2,&#10;" jobId="1909e59b4037aad44363fd0c" originalTeX="&#10;h_{01}=-2u^3+3u^2,&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fb7480a83107bdeb1672f9f3.svg" alt="&#10;h_{11}=u^3-u^2.&#10;" jobId="fb7480a83107bdeb1672f9f3" originalTeX="&#10;h_{11}=u^3-u^2.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Note tangent multiplication by:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9b93e3a0029052c0915fff1e.svg" alt="&#10;\Delta t.&#10;" jobId="9b93e3a0029052c0915fff1e" originalTeX="&#10;\Delta t.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Current Kairo animation runtime implements Hermite sampling and renormalizes quaternion result for rotation channels.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-pose-evaluation">Pose evaluation&#13;</Content>
+<Content aid:pstyle="Content">Algorithm:&#13;</Content>
+<Content aid:pstyle="Content">Start rest pose.&#13;</Content>
+<Content aid:pstyle="Content">Sample each active channel at time <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c0e9c136f0f850d8b55a01b3.svg" alt="t" jobId="c0e9c136f0f850d8b55a01b3" originalTeX="t"/>.&#13;</Content>
+<Content aid:pstyle="Content">Override corresponding local TRS component.&#13;</Content>
+<Content aid:pstyle="Content">Rebuild local matrices.&#13;</Content>
+<Content aid:pstyle="Content">Resolve hierarchy:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7838efb778b6399937881566.svg" alt="&#10;G_j=&#10;G_{parent}L_j.&#10;" jobId="7838efb778b6399937881566" originalTeX="&#10;G_j=&#10;G_{parent}L_j.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Build skin palette:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8e9a23177d6a839ee7b3b6cc.svg" alt="&#10;S_j=&#10;G_jB_j^{-1}.&#10;" jobId="8e9a23177d6a839ee7b3b6cc" originalTeX="&#10;S_j=&#10;G_jB_j^{-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then render.&#13;</Content>
+<Content aid:pstyle="Content">That is the complete pose path.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-animation-blending">Animation blending&#13;</Content>
+<Content aid:pstyle="Content">Two local poses A/B.&#13;</Content>
+<Content aid:pstyle="Content">Translation:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/010fd49145ac0e28a09ff7aa.svg" alt="&#10;T=&#10;lerp(T_A,T_B,\alpha).&#10;" jobId="010fd49145ac0e28a09ff7aa" originalTeX="&#10;T=&#10;lerp(T_A,T_B,\alpha).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Scale:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d2e4e4706287e2a9daeea844.svg" alt="&#10;S=&#10;lerp(S_A,S_B,\alpha).&#10;" jobId="d2e4e4706287e2a9daeea844" originalTeX="&#10;S=&#10;lerp(S_A,S_B,\alpha).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Rotation:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6f888a0c6da11cee96e22151.svg" alt="&#10;R=&#10;slerp(R_A,R_B,\alpha).&#10;" jobId="6f888a0c6da11cee96e22151" originalTeX="&#10;R=&#10;slerp(R_A,R_B,\alpha).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then reconstruct local transform.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo <InlineCode aid:cstyle="InlineCode">BlendGltfAnimationPoses()</InlineCode> does exactly this.&#13;</Content>
+<Content aid:pstyle="Content">Do not linearly blend arbitrary 4×4 matrices if you want meaningful rotations/scales.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-crossfade">Crossfade&#13;</Content>
+<Content aid:pstyle="Content">Fade from clip A to B over duration <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5b363c68243bec966508bab7.svg" alt="D" jobId="5b363c68243bec966508bab7" originalTeX="D"/>:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d365ad050825baaff2dea793.svg" alt="&#10;\alpha=&#10;clamp(&#10;(t-t_0)/D,&#10;0,1&#10;).&#10;" jobId="d365ad050825baaff2dea793" originalTeX="&#10;\alpha=&#10;clamp(&#10;(t-t_0)/D,&#10;0,1&#10;).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Evaluate both clips at their own times.&#13;</Content>
+<Content aid:pstyle="Content">Blend resulting poses.&#13;</Content>
+<Content aid:pstyle="Content">Once:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a7ebe11c46bb67ccb60beaba.svg" alt="&#10;\alpha=1,&#10;" jobId="a7ebe11c46bb67ccb60beaba" originalTeX="&#10;\alpha=1,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">drop A.&#13;</Content>
+<Content aid:pstyle="Content">For locomotion, phase synchronization may improve transition.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-additive-animation">Additive animation&#13;</Content>
+<Content aid:pstyle="Content">Additive pose stores delta relative reference pose.&#13;</Content>
+<Content aid:pstyle="Content">Translation:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a3e07647275275f9f2873da5.svg" alt="&#10;\Delta T=&#10;T_{anim}-T_{ref}.&#10;" jobId="a3e07647275275f9f2873da5" originalTeX="&#10;\Delta T=&#10;T_{anim}-T_{ref}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Scale can be ratio or delta.&#13;</Content>
+<Content aid:pstyle="Content">Rotation:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/df3edf9d79a528039b3485d7.svg" alt="&#10;\Delta R=&#10;R_{anim}R_{ref}^{-1}.&#10;" jobId="df3edf9d79a528039b3485d7" originalTeX="&#10;\Delta R=&#10;R_{anim}R_{ref}^{-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Apply weighted:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/255390880e43a38ae5c8fbec.svg" alt="&#10;R_{out}&#10;=&#10;slerp(&#10;I,&#10;\Delta R,&#10;w&#10;)&#10;R_{base}&#10;" jobId="255390880e43a38ae5c8fbec" originalTeX="&#10;R_{out}&#10;=&#10;slerp(&#10;I,&#10;\Delta R,&#10;w&#10;)&#10;R_{base}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">with convention-dependent multiplication order.&#13;</Content>
+<Content aid:pstyle="Content">Useful for:&#13;</Content>
+<Content aid:pstyle="Content">breathing, recoil, aim offsets, facial layers.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-root-motion">Root motion&#13;</Content>
+<Content aid:pstyle="Content">Animation root may translate character forward.&#13;</Content>
+<Content aid:pstyle="Content">If renderer applies root animation while game object also moves, double motion can happen.&#13;</Content>
+<Content aid:pstyle="Content">Root-motion system extracts root delta:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f9934b7bc12f553efd0f68fa.svg" alt="&#10;\Delta T=&#10;T_{root}(t_1)&#10;-&#10;T_{root}(t_0)&#10;" jobId="f9934b7bc12f553efd0f68fa" originalTeX="&#10;\Delta T=&#10;T_{root}(t_1)&#10;-&#10;T_{root}(t_0)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and rotation delta.&#13;</Content>
+<Content aid:pstyle="Content">Apply to entity/world locomotion.&#13;</Content>
+<Content aid:pstyle="Content">Then remove that motion from local skeleton root as appropriate.&#13;</Content>
+<Content aid:pstyle="Content">This synchronizes gameplay position with authored movement.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-morphs-animated-bounds-compression-and-complete-trace">MORPHS, ANIMATED BOUNDS, COMPRESSION AND COMPLETE TRACE&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-morph-position-deltas">Morph position deltas&#13;</Content>
+<Content aid:pstyle="Content">Base position:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5f6e51d4e894862576e94b31.svg" alt="&#10;p.&#10;" jobId="5f6e51d4e894862576e94b31" originalTeX="&#10;p.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Target k delta:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d8d294e39c564e28ea5ffa82.svg" alt="&#10;\Delta p_k.&#10;" jobId="d8d294e39c564e28ea5ffa82" originalTeX="&#10;\Delta p_k.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Weight:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/44d538ee56e0d0108eb4f5e9.svg" alt="&#10;w_k.&#10;" jobId="44d538ee56e0d0108eb4f5e9" originalTeX="&#10;w_k.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Result:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0336317af4ef198e00d4179f.svg" alt="&#10;\boxed{&#10;p_m&#10;=&#10;p+&#10;\sum_kw_k\Delta p_k.&#10;}&#10;" jobId="0336317af4ef198e00d4179f" originalTeX="&#10;\boxed{&#10;p_m&#10;=&#10;p+&#10;\sum_kw_k\Delta p_k.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Targets can represent:&#13;</Content>
+<Content aid:pstyle="Content">facial expression, corrective shape, muscle bulge, damage deformation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-morph-normal-deltas">Morph normal deltas&#13;</Content>
+<Content aid:pstyle="Content">Similarly:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2fce630212b9dd3dd1f07c16.svg" alt="&#10;n_m=&#10;n+&#10;\sum_kw_k\Delta n_k.&#10;" jobId="2fce630212b9dd3dd1f07c16" originalTeX="&#10;n_m=&#10;n+&#10;\sum_kw_k\Delta n_k.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then normalize:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5baef25c44bc59c291003758.svg" alt="&#10;\boxed{&#10;n_m\leftarrow&#10;normalize(n_m).&#10;}&#10;" jobId="5baef25c44bc59c291003758" originalTeX="&#10;\boxed{&#10;n_m\leftarrow&#10;normalize(n_m).&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Morph normals are not unit after linear addition.&#13;</Content>
+<Content aid:pstyle="Content">Tangents may also have deltas.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-morph-weights">Morph weights&#13;</Content>
+<Content aid:pstyle="Content">Multiple targets combine linearly:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f43006646b77b381ea3a5bca.svg" alt="&#10;p'&#10;=&#10;p+&#10;w_0\Delta p_0&#10;+&#10;w_1\Delta p_1&#10;+\cdots.&#10;" jobId="f43006646b77b381ea3a5bca" originalTeX="&#10;p'&#10;=&#10;p+&#10;w_0\Delta p_0&#10;+&#10;w_1\Delta p_1&#10;+\cdots.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Weights need not necessarily sum to one.&#13;</Content>
+<Content aid:pstyle="Content">This is not barycentric blending between full shapes.&#13;</Content>
+<Content aid:pstyle="Content">It is additive delta composition.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-morph-before-or-after-skinning">Morph before or after skinning&#13;</Content>
+<Content aid:pstyle="Content">For glTF semantics, morph target displacements are applied to base mesh in object/local space <Strong aid:cstyle="Bold">before skinning</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c9ed51565a4b0204af29fd90.svg" alt="&#10;\boxed{&#10;p_m=&#10;p+&#10;\sum_kw_k\Delta p_k&#10;}&#10;" jobId="c9ed51565a4b0204af29fd90" originalTeX="&#10;\boxed{&#10;p_m=&#10;p+&#10;\sum_kw_k\Delta p_k&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2277e8c7a835e21fb9f6fbb9.svg" alt="&#10;\boxed{&#10;p_{skin}&#10;=&#10;\sum_j&#10;w_j^{skin}&#10;S_j&#10;p_m.&#10;}&#10;" jobId="2277e8c7a835e21fb9f6fbb9" originalTeX="&#10;\boxed{&#10;p_{skin}&#10;=&#10;\sum_j&#10;w_j^{skin}&#10;S_j&#10;p_m.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If you skin first and then add object-space morph delta, result is wrong because delta does not follow bones.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-animated-bounds">Animated bounds&#13;</Content>
+<Content aid:pstyle="Content">Static mesh bounds no longer valid under:&#13;</Content>
+<Content aid:pstyle="Content">skinning, morphing, procedural animation.&#13;</Content>
+<Content aid:pstyle="Content">Options:&#13;</Content>
+<Content aid:pstyle="Content">Conservative offline bound over all animation samples.&#13;</Content>
+<Content aid:pstyle="Content">Per-bone bounds transformed each frame.&#13;</Content>
+<Content aid:pstyle="Content">CPU-evaluate bounds.&#13;</Content>
+<Content aid:pstyle="Content">GPU reduction.&#13;</Content>
+<Content aid:pstyle="Content">Inflated rest bound.&#13;</Content>
+<Content aid:pstyle="Content">Exact per-frame vertex reduction is expensive.&#13;</Content>
+<Content aid:pstyle="Content">Bone bounds are common compromise.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-cpu-vs-gpu-skinning">CPU vs GPU skinning&#13;</Content>
+<Content aid:pstyle="Content">CPU skinning:&#13;</Content>
+<Content aid:pstyle="Content">Compute transformed vertices on CPU.&#13;</Content>
+<Content aid:pstyle="Content">Upload dynamic vertex buffer.&#13;</Content>
+<Content aid:pstyle="Content">Pros: easy CPU collision/picking, simple shaders.&#13;</Content>
+<Content aid:pstyle="Content">Cons: CPU work + upload bandwidth.&#13;</Content>
+<Content aid:pstyle="Content">GPU skinning:&#13;</Content>
+<Content aid:pstyle="Content">Upload base vertices once.&#13;</Content>
+<Content aid:pstyle="Content">Upload joint palette every frame.&#13;</Content>
+<Content aid:pstyle="Content">Vertex shader computes skin.&#13;</Content>
+<Content aid:pstyle="Content">Pros: scalable, low upload bandwidth.&#13;</Content>
+<Content aid:pstyle="Content">Cons: deformed vertices unavailable to CPU unless replicated/read back.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo is architected for GPU skinning: EngineCore computes palette, renderer receives four-weight influence stream + palette.&#13;</Content>
+<Content aid:pstyle="Content">This separation is good.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-animation-compression">Animation compression&#13;</Content>
+<Content aid:pstyle="Content">Raw animation can be large.&#13;</Content>
+<Content aid:pstyle="Content">Compression dimensions:&#13;</Content>
+<Content aid:pstyle="Content">quantize times, quantize translation/scale, quaternion smallest-three encoding, remove redundant constant tracks, reduce keys by error threshold.&#13;</Content>
+<Content aid:pstyle="Content">Quaternion unit constraint means four floats are redundant.&#13;</Content>
+<Content aid:pstyle="Content">Store largest component index and sign, encode remaining three.&#13;</Content>
+<Content aid:pstyle="Content">Reconstruct fourth:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5c5567e411a7dcae9a8b7c6a.svg" alt="&#10;q_m=&#10;\sqrt{&#10;1-&#10;q_a^2-&#10;q_b^2-&#10;q_c^2&#10;}.&#10;" jobId="5c5567e411a7dcae9a8b7c6a" originalTeX="&#10;q_m=&#10;\sqrt{&#10;1-&#10;q_a^2-&#10;q_b^2-&#10;q_c^2&#10;}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Key reduction removes key <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c9a9aab9bd49b5120a91abe6.svg" alt="i" jobId="c9a9aab9bd49b5120a91abe6" originalTeX="i"/> if interpolation between neighbors stays under error tolerance.&#13;</Content>
+<Content aid:pstyle="Content">Error should be measured after hierarchical effect when possible, not only local component difference.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-coordinate-convention-conversion">Coordinate-convention conversion&#13;</Content>
+<Content aid:pstyle="Content">Importers must reconcile:&#13;</Content>
+<Content aid:pstyle="Content">handedness, up axis, forward axis, matrix storage, texture UV conventions, winding.&#13;</Content>
+<Content aid:pstyle="Content">Never sprinkle conversions randomly.&#13;</Content>
+<Content aid:pstyle="Content">Define canonical engine convention.&#13;</Content>
+<Content aid:pstyle="Content">Construct conversion transform:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f89b894db7e2fd413cc98b2e.svg" alt="&#10;C.&#10;" jobId="f89b894db7e2fd413cc98b2e" originalTeX="&#10;C.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Positions:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1b1c047f08054ffa1d289cc3.svg" alt="&#10;p_e=&#10;Cp_s.&#10;" jobId="1b1c047f08054ffa1d289cc3" originalTeX="&#10;p_e=&#10;Cp_s.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Transforms:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0c0fba90bfe44caed2e933b3.svg" alt="&#10;\boxed{&#10;M_e=&#10;CM_sC^{-1}.&#10;}&#10;" jobId="0c0fba90bfe44caed2e933b3" originalTeX="&#10;\boxed{&#10;M_e=&#10;CM_sC^{-1}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Normals use corresponding linear inverse-transpose where needed.&#13;</Content>
+<Content aid:pstyle="Content">If conversion changes handedness:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4837a7493702d2b05f390595.svg" alt="&#10;det(C)&lt;0,&#10;" jobId="4837a7493702d2b05f390595" originalTeX="&#10;det(C)&lt;0,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">triangle winding flips.&#13;</Content>
+<Content aid:pstyle="Content">Tangent handedness may need sign adjustment.&#13;</Content>
+<Content aid:pstyle="Content">Animation transforms and inverse-bind matrices must be converted consistently with mesh.&#13;</Content>
+<Content aid:pstyle="Content">Converting only vertices but not skeleton is catastrophic.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-asset-validation">Asset validation&#13;</Content>
+<Content aid:pstyle="Content">Treat glTF/OBJ as hostile input.&#13;</Content>
+<Content aid:pstyle="Content">Validate:&#13;</Content>
+<Content aid:pstyle="Content">counts within budgets, finite floats, accessor byte ranges, stride, component type, indices in range, node hierarchy acyclic, skin joints valid, inverse-bind count matches joint count, weights finite/nonnegative, animation times increasing, quaternion nonzero, morph target counts match base, texture/material indices valid.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo and Maveb both do substantial validation.&#13;</Content>
+<Content aid:pstyle="Content">Maveb explicitly checks file-size budgets, primitive counts, vertex/index growth, finite animation data, increasing key times and nonzero rotation quaternions.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s scene validator also rejects malformed hierarchy and inconsistent skin data before runtime palette building.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content">A strong pipeline is:&#13;</Content>
+<Code aid:pstyle="Code" language="text">glTF bytes&#10;↓&#10;JSON/GLB parser&#10;↓&#10;buffers / bufferViews / accessors&#10;↓&#10;validated typed attribute streams&#10;↓&#10;portable MeshArtifact&#10;    positions&#10;    normals&#10;    tangents&#10;    UVs&#10;    indices&#10;    morph targets&#10;    joints/weights&#10;↓&#10;portable Materials / Textures&#10;↓&#10;portable node hierarchy&#10;↓&#10;skins + inverse binds&#10;↓&#10;animation clips/channels&#10;↓&#10;EngineCore runtime pose&#10;↓&#10;skin palette&#10;↓&#10;Renderer GPU buffers&#13;</Code>
+<Content aid:pstyle="Content">The important architectural boundary:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b71642fd664bbba0cd21e36c.svg" alt="&#10;\boxed{&#10;\text{renderer should not know glTF parsing details}.&#10;}&#10;" jobId="b71642fd664bbba0cd21e36c" originalTeX="&#10;\boxed{&#10;\text{renderer should not know glTF parsing details}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Assets owns file semantics.&#13;</Content>
+<Content aid:pstyle="Content">EngineCore owns animation semantics.&#13;</Content>
+<Content aid:pstyle="Content">Renderer owns GPU execution.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo architecture follows this separation remarkably well.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content">This is the final mastery trace.&#13;</Content>
+<Content aid:pstyle="Content">Assume glTF contains one mesh vertex.&#13;</Content>
+<Content aid:pstyle="Content">POSITION accessor eventually decodes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0a8e559a195fd531b5c31692.svg" alt="&#10;p=&#10;(0.2,1.0,0.0,1).&#10;" jobId="0a8e559a195fd531b5c31692" originalTeX="&#10;p=&#10;(0.2,1.0,0.0,1).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Morph target 0:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7ba00bc53a4652bb56c3f5e9.svg" alt="&#10;\Delta p_0=&#10;(0.0,0.1,0.0,0).&#10;" jobId="7ba00bc53a4652bb56c3f5e9" originalTeX="&#10;\Delta p_0=&#10;(0.0,0.1,0.0,0).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Morph weight:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/65dcd952dbf0df94fb8bb176.svg" alt="&#10;m_0=0.5.&#10;" jobId="65dcd952dbf0df94fb8bb176" originalTeX="&#10;m_0=0.5.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">First morph:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bf77a13896376fc1c21f3c6e.svg" alt="&#10;p_m&#10;=&#10;p+&#10;0.5\Delta p_0&#10;" jobId="bf77a13896376fc1c21f3c6e" originalTeX="&#10;p_m&#10;=&#10;p+&#10;0.5\Delta p_0&#10;"/>&#13;</Formula>
+<Content aid:pstyle="SubchapterHeader" id="04-visual-computing-ii-ch041-section"><Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/66ac5eee594e4b4f5bfd2573.svg" alt="&#10;=&#10;(0.2,1.05,0.0,1).&#10;" jobId="66ac5eee594e4b4f5bfd2573" originalTeX="&#10;=&#10;(0.2,1.05,0.0,1).&#10;"/>&#13;</Formula>&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-skin-influence">Skin influence&#13;</Content>
+<Content aid:pstyle="Content">Vertex:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/41f956a2e89ff32bfad29a91.svg" alt="&#10;joints=&#10;(3,7,0,0)&#10;" jobId="41f956a2e89ff32bfad29a91" originalTeX="&#10;joints=&#10;(3,7,0,0)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8702523c3e824ad4a7949145.svg" alt="&#10;weights=&#10;(0.7,0.3,0,0).&#10;" jobId="8702523c3e824ad4a7949145" originalTeX="&#10;weights=&#10;(0.7,0.3,0,0).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Skin joint index 3 maps to node:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6a8bef7616f34c283167cf03.svg" alt="&#10;J_3&#10;" jobId="6a8bef7616f34c283167cf03" originalTeX="&#10;J_3&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">in skin’s ordered joint array.&#13;</Content>
+<Content aid:pstyle="Content">Palette:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c757bf776fb167e9e03c0b98.svg" alt="&#10;S_3=&#10;G_{J_3}(t)&#10;B_{J_3}^{-1}&#10;" jobId="c757bf776fb167e9e03c0b98" originalTeX="&#10;S_3=&#10;G_{J_3}(t)&#10;B_{J_3}^{-1}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/65e15d7d6afc482e52545e73.svg" alt="&#10;S_7=&#10;G_{J_7}(t)&#10;B_{J_7}^{-1}.&#10;" jobId="65e15d7d6afc482e52545e73" originalTeX="&#10;S_7=&#10;G_{J_7}(t)&#10;B_{J_7}^{-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Skin:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9f23dc88cf51b94562e722b7.svg" alt="&#10;\boxed{&#10;p_s&#10;=&#10;0.7S_3p_m&#10;+&#10;0.3S_7p_m.&#10;}&#10;" jobId="9f23dc88cf51b94562e722b7" originalTeX="&#10;\boxed{&#10;p_s&#10;=&#10;0.7S_3p_m&#10;+&#10;0.3S_7p_m.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-entityworld-transform">Entity/world transform&#13;</Content>
+<Content aid:pstyle="Content">If asset-space result belongs to entity:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/65ab3b366e23f989963acacb.svg" alt="&#10;M_{entity},&#10;" jobId="65ab3b366e23f989963acacb" originalTeX="&#10;M_{entity},&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">world:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dccbd54c5bb18ad8fba2f7c7.svg" alt="&#10;\boxed{&#10;p_w=&#10;M_{entity}p_s.&#10;}&#10;" jobId="dccbd54c5bb18ad8fba2f7c7" originalTeX="&#10;\boxed{&#10;p_w=&#10;M_{entity}p_s.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then camera:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3d065ea6d725eb5f5362260f.svg" alt="&#10;p_v=&#10;Vp_w.&#10;" jobId="3d065ea6d725eb5f5362260f" originalTeX="&#10;p_v=&#10;Vp_w.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Clip:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f808628df6dc1455b53abe27.svg" alt="&#10;\boxed{&#10;p_c=&#10;Pp_v.&#10;}&#10;" jobId="f808628df6dc1455b53abe27" originalTeX="&#10;\boxed{&#10;p_c=&#10;Pp_v.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">NDC:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7cb0ce427cd89b0949d23a95.svg" alt="&#10;p_{ndc}&#10;=&#10;p_c.xyz/p_c.w.&#10;" jobId="7cb0ce427cd89b0949d23a95" originalTeX="&#10;p_{ndc}&#10;=&#10;p_c.xyz/p_c.w.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Viewport maps to pixel.&#13;</Content>
+<Content aid:pstyle="Content">That is the final rendered position.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-previous-frame-version-for-taa">Previous-frame version for TAA&#13;</Content>
+<Content aid:pstyle="Content">Now connect Pass 18 back to Pass 17.&#13;</Content>
+<Content aid:pstyle="Content">Previous morph:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/aa18876f3c57d4633a6a2320.svg" alt="&#10;m_{0,t-1}.&#10;" jobId="aa18876f3c57d4633a6a2320" originalTeX="&#10;m_{0,t-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Previous joint globals:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/511da53b8ccfb733c32fbd1b.svg" alt="&#10;G_{J,t-1}.&#10;" jobId="511da53b8ccfb733c32fbd1b" originalTeX="&#10;G_{J,t-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Previous entity matrix:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a09fa905ac480692f68be266.svg" alt="&#10;M_{entity,t-1}.&#10;" jobId="a09fa905ac480692f68be266" originalTeX="&#10;M_{entity,t-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Previous camera:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8db0af7aee55e7ede67e383f.svg" alt="&#10;P_{t-1}V_{t-1}.&#10;" jobId="8db0af7aee55e7ede67e383f" originalTeX="&#10;P_{t-1}V_{t-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Compute:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/784ab4ed467e29fb6cda5679.svg" alt="&#10;p_{c,t-1}.&#10;" jobId="784ab4ed467e29fb6cda5679" originalTeX="&#10;p_{c,t-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Current:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/db4e59371b4a7ce8765f37ba.svg" alt="&#10;p_{c,t}.&#10;" jobId="db4e59371b4a7ce8765f37ba" originalTeX="&#10;p_{c,t}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then motion vector:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0418ce33eb53da99b1363d2b.svg" alt="&#10;v=&#10;NDC_t-NDC_{t-1}.&#10;" jobId="0418ce33eb53da99b1363d2b" originalTeX="&#10;v=&#10;NDC_t-NDC_{t-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">So correct TAA motion for animated character requires every layer of the animation stack.&#13;</Content>
+<Content aid:pstyle="Content">This is why rendering systems cannot treat animation as an unrelated subsystem.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-a-coherent-end-to-end-c-model">A COHERENT END-TO-END C++ MODEL&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">// -----------------------------------------------------------------------------&#10;// One portable animated-vertex evaluation.&#10;// This is intentionally explicit to show the ordering of morphing, skinning,&#10;// entity/world transforms, and camera projection.&#10;// -----------------------------------------------------------------------------&#10;&#10;struct SkinInfluence&#10;{&#10;    std::array&lt;uint32_t, 4&gt; Joint;&#10;    std::array&lt;float, 4&gt; Weight;&#10;};&#10;&#10;Vec4 EvaluateAnimatedVertex(&#10;    const Vec3&amp; basePosition,&#10;    std::span&lt;const Vec3&gt; morphPositionDeltas,&#10;    std::span&lt;const float&gt; morphWeights,&#10;    const SkinInfluence&amp; influence,&#10;    std::span&lt;const Mat4&gt; jointPalette,&#10;    const Mat4&amp; entityWorld,&#10;    const Mat4&amp; view,&#10;    const Mat4&amp; projection)&#10;{&#10;    // Start in mesh/object space.&#10;    Vec3 morphed = basePosition;&#10;&#10;    // glTF morph targets are additive deltas and are applied before skinning.&#10;    const std::size_t targetCount =&#10;        std::min(&#10;            morphPositionDeltas.size(),&#10;            morphWeights.size());&#10;&#10;    for (std::size_t target = 0;&#10;         target &lt; targetCount;&#10;         ++target)&#10;    {&#10;        morphed +=&#10;            morphPositionDeltas[target]&#10;            * morphWeights[target];&#10;    }&#10;&#10;    // Four-weight linear blend skinning.&#10;    Vec4 skinned{0.0f};&#10;&#10;    for (std::size_t slot = 0;&#10;         slot &lt; 4;&#10;         ++slot)&#10;    {&#10;        const float weight =&#10;            influence.Weight[slot];&#10;&#10;        if (weight == 0.0f)&#10;            continue;&#10;&#10;        const uint32_t joint =&#10;            influence.Joint[slot];&#10;&#10;        if (joint &gt;=&#10;            jointPalette.size())&#10;        {&#10;            throw std::out_of_range(&#10;                "Vertex references "&#10;                "missing skin joint.");&#10;        }&#10;&#10;        skinned +=&#10;            weight *&#10;            (&#10;                jointPalette[joint]&#10;                *&#10;                Vec4{&#10;                    morphed,&#10;                    1.0f&#10;                }&#10;            );&#10;    }&#10;&#10;    // The skin palette is asset-space in Kairo's current architecture.&#10;    // The owning entity/world transform is applied outside it.&#10;    const Vec4 world =&#10;        entityWorld *&#10;        skinned;&#10;&#10;    const Vec4 viewPosition =&#10;        view *&#10;        world;&#10;&#10;    const Vec4 clip =&#10;        projection *&#10;        viewPosition;&#10;&#10;    return clip;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">The joint palette generation feeding this function is:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">for each joint j:&#10;{&#10;    // Global animated joint transform obtained by walking the node hierarchy.&#10;    Mat4 currentJointWorld =&#10;        ResolveWorldTransform(&#10;            jointNode[j],&#10;            sampledPose);&#10;&#10;    // Imported inverse-bind takes bind-space vertices into joint-local bind space.&#10;    Mat4 skinMatrix =&#10;        currentJointWorld&#10;        *&#10;        inverseBind[j];&#10;&#10;    palette[j] =&#10;        skinMatrix;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">That is essentially Kairo EngineCore’s current contract.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content">KairoAssets’ editable mesh currently has stable vertex/face IDs, face polygons, edge validation, transactional editing, twin half-edge construction and non-manifold-edge rejection. Its half-edge <InlineCode aid:cstyle="InlineCode">next</InlineCode> relationship is implicit through face corner order rather than stored explicitly.&#13;</Content>
+<Content aid:pstyle="Content">Its current modeling stack includes real split/extrude/inset/dissolve/quad-strip operations and basic subdivision infrastructure. The current repo does <Strong aid:cstyle="Bold">not</Strong> yet contain a QEM simplifier, cotangent Laplacian or production UV parameterization implementation, so those remain future implementation opportunities.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s glTF importer already separates file representation from portable runtime artifacts and handles materials, textures, images, nodes, skins, animation and morph structures. EngineCore evaluates animation and computes asset-space skin palettes; Renderer only needs portable influence streams and matrices. That separation is exactly what a scalable engine should do.&#13;</Content>
+<Content aid:pstyle="Content">Maveb’s glTF path similarly performs strict validation and has a useful tangent generator with explicit UV degeneracy handling and tangent handedness reconstruction. Its animation importer validates time monotonicity and quaternion norms rather than accepting malformed animation silently.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-the-connection-between-pass-17-and-pass-18">THE CONNECTION BETWEEN PASS 17 AND PASS 18&#13;</Content>
+<Content aid:pstyle="Content">These phases are not separate islands.&#13;</Content>
+<Content aid:pstyle="Content">Animation generates:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/70f7b2ca9e819bc256136c63.svg" alt="&#10;current\ geometry&#10;" jobId="70f7b2ca9e819bc256136c63" originalTeX="&#10;current\ geometry&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5ab71ae4e6f20fc67e133475.svg" alt="&#10;previous\ geometry.&#10;" jobId="5ab71ae4e6f20fc67e133475" originalTeX="&#10;previous\ geometry.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Those generate:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/55fe1fa5fc4f5a661aba19a8.svg" alt="&#10;motion\ vectors.&#10;" jobId="55fe1fa5fc4f5a661aba19a8" originalTeX="&#10;motion\ vectors.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Motion vectors feed:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/15dff95d16700926d751e86a.svg" alt="&#10;TAA,\ motion\ blur,\ temporal\ upscaling.&#10;" jobId="15dff95d16700926d751e86a" originalTeX="&#10;TAA,\ motion\ blur,\ temporal\ upscaling.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Animated bounds feed:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/962c9461601200c16b622fc9.svg" alt="&#10;frustum\ culling,\ Hi-Z,\ shadow\ cascades,\ clustered\ light relevance.&#10;" jobId="962c9461601200c16b622fc9" originalTeX="&#10;frustum\ culling,\ Hi-Z,\ shadow\ cascades,\ clustered\ light relevance.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Morph/skinning changes shadow caster geometry.&#13;</Content>
+<Content aid:pstyle="Content">Material/mesh import determines tangent frames used by PBR.&#13;</Content>
+<Content aid:pstyle="Content">Entity transforms determine light-space positions.&#13;</Content>
+<Content aid:pstyle="Content">So the real frame dependency is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cee82c74a716945b5e8169aa.svg" alt="&#10;\boxed{&#10;Assets&#10;\rightarrow&#10;Animation&#10;\rightarrow&#10;Deformation&#10;\rightarrow&#10;Bounds&#10;\rightarrow&#10;Visibility&#10;\rightarrow&#10;Lighting/Shadows&#10;\rightarrow&#10;Post/Temporal&#10;}&#10;" jobId="cee82c74a716945b5e8169aa" originalTeX="&#10;\boxed{&#10;Assets&#10;\rightarrow&#10;Animation&#10;\rightarrow&#10;Deformation&#10;\rightarrow&#10;Bounds&#10;\rightarrow&#10;Visibility&#10;\rightarrow&#10;Lighting/Shadows&#10;\rightarrow&#10;Post/Temporal&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">not separate unrelated systems.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-reconstruction-gate-pass-17">RECONSTRUCTION GATE — PASS 17&#13;</Content>
+<Content aid:pstyle="Content">From blank paper, derive a clustered renderer.&#13;</Content>
+<Content aid:pstyle="Content">Starting with:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ef5c80d3e594a760bffccb04.svg" alt="&#10;W,H,T_x,T_y,N_z,n,f&#10;" jobId="ef5c80d3e594a760bffccb04" originalTeX="&#10;W,H,T_x,T_y,N_z,n,f&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">derive tile count, linear and logarithmic z slicing.&#13;</Content>
+<Content aid:pstyle="Content">Show:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/932ecd423221af71be2d0e43.svg" alt="&#10;slice(z)&#10;=&#10;N_z&#10;\frac{&#10;\ln(z/n)&#10;}{&#10;\ln(f/n)&#10;}.&#10;" jobId="932ecd423221af71be2d0e43" originalTeX="&#10;slice(z)&#10;=&#10;N_z&#10;\frac{&#10;\ln(z/n)&#10;}{&#10;\ln(f/n)&#10;}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Construct cluster volume.&#13;</Content>
+<Content aid:pstyle="Content">Derive point-sphere vs AABB test.&#13;</Content>
+<Content aid:pstyle="Content">Explain conservative spot-light bounding.&#13;</Content>
+<Content aid:pstyle="Content">Compare dense:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d52189da7103f690b163246d.svg" alt="&#10;C\times L_{max}&#10;" jobId="d52189da7103f690b163246d" originalTeX="&#10;C\times L_{max}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">memory against CSR:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2fd3fc3518e64e0a8ccd4820.svg" alt="&#10;C\times range+&#10;R\times index.&#10;" jobId="2fd3fc3518e64e0a8ccd4820" originalTeX="&#10;C\times range+&#10;R\times index.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Derive count/scan/scatter.&#13;</Content>
+<Content aid:pstyle="Content">Explain overflow.&#13;</Content>
+<Content aid:pstyle="Content">Then design adaptive controller using:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cab4ebeb736a24c654bf9bbf.svg" alt="&#10;benefit/cost.&#10;" jobId="cab4ebeb736a24c654bf9bbf" originalTeX="&#10;benefit/cost.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Explain hysteresis:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/10bfd6ecba0b37aa91428a38.svg" alt="&#10;T_{enter}&gt;T_{exit}.&#10;" jobId="10bfd6ecba0b37aa91428a38" originalTeX="&#10;T_{enter}&gt;T_{exit}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then derive Hi-Z semantics for conventional and reversed-Z.&#13;</Content>
+<Content aid:pstyle="Content">Then derive shadow map comparison, constant/slope bias, Peter-panning and PCF.&#13;</Content>
+<Content aid:pstyle="Content">Derive CSM practical split:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fa6240085536e2462bf08d37.svg" alt="&#10;s_i=&#10;\lambda&#10;n(f/n)^{i/N}&#10;+&#10;(1-\lambda)&#10;[n+(f-n)i/N].&#10;" jobId="fa6240085536e2462bf08d37" originalTeX="&#10;s_i=&#10;\lambda&#10;n(f/n)^{i/N}&#10;+&#10;(1-\lambda)&#10;[n+(f-n)i/N].&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Explain stabilization by texel snapping.&#13;</Content>
+<Content aid:pstyle="Content">Explain VSM moments.&#13;</Content>
+<Content aid:pstyle="Content">Then distinguish AO from GI.&#13;</Content>
+<Content aid:pstyle="Content">Explain probe leakage and visibility.&#13;</Content>
+<Content aid:pstyle="Content">Explain SSR missing-data problem.&#13;</Content>
+<Content aid:pstyle="Content">Explain radiance-cascade spatial/angular tradeoff.&#13;</Content>
+<Content aid:pstyle="Content">Then derive motion vector:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a991c8faf03e29344d96b67d.svg" alt="&#10;NDC_t-NDC_{t-1}.&#10;" jobId="a991c8faf03e29344d96b67d" originalTeX="&#10;NDC_t-NDC_{t-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Show why previous joint palette is mandatory for skinned TAA.&#13;</Content>
+<Content aid:pstyle="Content">Derive reprojection.&#13;</Content>
+<Content aid:pstyle="Content">Explain depth/normal/ID rejection and neighborhood clamp.&#13;</Content>
+<Content aid:pstyle="Content">Then explain bloom in HDR before tone map.&#13;</Content>
+<Content aid:pstyle="Content">Finally derive a particle alive/dead compaction and a soft-particle depth fade.&#13;</Content>
+<Content aid:pstyle="Content">If you can reconstruct that, Phase 26 is mastered.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-reconstruction-gate-pass-18">RECONSTRUCTION GATE — PASS 18&#13;</Content>
+<Content aid:pstyle="Content">From blank paper, define the distinction:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b7f5f1c886c98a37ead982d9.svg" alt="&#10;\text{topological vertex}&#10;\neq&#10;\text{GPU vertex}.&#10;" jobId="b7f5f1c886c98a37ead982d9" originalTeX="&#10;\text{topological vertex}&#10;\neq&#10;\text{GPU vertex}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Explain UV seam/hard-normal duplication.&#13;</Content>
+<Content aid:pstyle="Content">Classify:&#13;</Content>
+<Content aid:pstyle="Content">boundary, manifold, non-manifold edge.&#13;</Content>
+<Content aid:pstyle="Content">Construct half-edge twin and next.&#13;</Content>
+<Content aid:pstyle="Content">Traverse one-ring.&#13;</Content>
+<Content aid:pstyle="Content">Derive:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4b7aa9e9a53b3141ffc90d0b.svg" alt="&#10;n_f=&#10;normalize(&#10;(p_1-p_0)\times(p_2-p_0)&#10;).&#10;" jobId="4b7aa9e9a53b3141ffc90d0b" originalTeX="&#10;n_f=&#10;normalize(&#10;(p_1-p_0)\times(p_2-p_0)&#10;).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Compare equal, area and angle-weighted smooth normals.&#13;</Content>
+<Content aid:pstyle="Content">Derive tangent from UV Jacobian and tangent handedness.&#13;</Content>
+<Content aid:pstyle="Content">Parse OBJ negative indices and deduplicate tuple:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5c3f0583bd3ce8a8094f13db.svg" alt="&#10;(v,vt,vn).&#10;" jobId="5c3f0583bd3ce8a8094f13db" originalTeX="&#10;(v,vt,vn).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then reconstruct glTF:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/45bbe40096d2cbf918588539.svg" alt="&#10;buffer&#10;\rightarrow&#10;bufferView&#10;\rightarrow&#10;accessor&#10;\rightarrow&#10;primitive.&#10;" jobId="45bbe40096d2cbf918588539" originalTeX="&#10;buffer&#10;\rightarrow&#10;bufferView&#10;\rightarrow&#10;accessor&#10;\rightarrow&#10;primitive.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Explain scene node hierarchy.&#13;</Content>
+<Content aid:pstyle="Content">Explain skin joint indexing.&#13;</Content>
+<Content aid:pstyle="Content">Derive QEM:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/702198dad9f55fbcfe048878.svg" alt="&#10;Q=&#10;\sum pp^T&#10;" jobId="702198dad9f55fbcfe048878" originalTeX="&#10;Q=&#10;\sum pp^T&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/535fa52320cf92a8e258bf8e.svg" alt="&#10;E(v)=v^TQv.&#10;" jobId="535fa52320cf92a8e258bf8e" originalTeX="&#10;E(v)=v^TQv.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Derive optimal collapse:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bc93594f88f83fd7716d521c.svg" alt="&#10;Ax=-b.&#10;" jobId="bc93594f88f83fd7716d521c" originalTeX="&#10;Ax=-b.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Explain Loop weights, Laplacian and cotangent Laplacian.&#13;</Content>
+<Content aid:pstyle="Content">Then derive skeleton globals:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/781e6c5ea4be478252ce9c21.svg" alt="&#10;G_j=&#10;G_pL_j.&#10;" jobId="781e6c5ea4be478252ce9c21" originalTeX="&#10;G_j=&#10;G_pL_j.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Derive:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8e9a23177d6a839ee7b3b6cc.svg" alt="&#10;S_j=&#10;G_jB_j^{-1}.&#10;" jobId="8e9a23177d6a839ee7b3b6cc" originalTeX="&#10;S_j=&#10;G_jB_j^{-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Derive four-weight LBS.&#13;</Content>
+<Content aid:pstyle="Content">Explain candy-wrapper failure and DQS.&#13;</Content>
+<Content aid:pstyle="Content">Derive lerp, slerp and cubic Hermite animation.&#13;</Content>
+<Content aid:pstyle="Content">Explain crossfade, additive animation and root motion.&#13;</Content>
+<Content aid:pstyle="Content">Then derive:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8636b19f4d04fcad0d579cff.svg" alt="&#10;p_m=&#10;p+&#10;\sum_km_k\Delta p_k.&#10;" jobId="8636b19f4d04fcad0d579cff" originalTeX="&#10;p_m=&#10;p+&#10;\sum_km_k\Delta p_k.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Explain why morphing precedes skinning.&#13;</Content>
+<Content aid:pstyle="Content">Finally trace:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/37728f1741b26a60856bb5c7.svg" alt="&#10;\boxed{&#10;glTF\ bytes&#10;\rightarrow&#10;accessor&#10;\rightarrow&#10;base\ vertex&#10;\rightarrow&#10;morph&#10;\rightarrow&#10;skin&#10;\rightarrow&#10;entity\ world&#10;\rightarrow&#10;camera&#10;\rightarrow&#10;clip&#10;\rightarrow&#10;pixel&#10;}&#10;" jobId="37728f1741b26a60856bb5c7" originalTeX="&#10;\boxed{&#10;glTF\ bytes&#10;\rightarrow&#10;accessor&#10;\rightarrow&#10;base\ vertex&#10;\rightarrow&#10;morph&#10;\rightarrow&#10;skin&#10;\rightarrow&#10;entity\ world&#10;\rightarrow&#10;camera&#10;\rightarrow&#10;clip&#10;\rightarrow&#10;pixel&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and repeat it for previous frame to obtain the TAA motion vector.&#13;</Content>
+<Content aid:pstyle="Content">If you can do that without a reference, you understand the entire asset-to-rendered-motion path.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-status">STATUS&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Pass 17 complete — M151–M156, Parts 2501–2600.</Strong>&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Pass 18 complete — M157–M162, Parts 2601–2700.</Strong>&#13;</Content>
+<Content aid:pstyle="Content">That means the complete <Strong aid:cstyle="Bold">1801–2700 sequence we planned across the 18 passes is now finished</Strong>, including Phase 21 ray/path tracing, Phase 22 GPU architecture, Phase 23/24 modern API and multi-backend/render-graph design, Phase 25 Gaussian captured worlds, Phase 26 advanced real-time rendering, and Phase 27 mesh/asset/animation systems.&#13;</Content>
+<Content aid:pstyle="Content">Graph connections: <Link href="#appendix-c5b332e400e7">Radiance fields and Gaussian splatting</Link>, <Link href="#appendix-54c383df9992">Expectation, covariance, and dependence</Link>, and <Link href="#appendix-f2ee4d086415">Prefix scan and stream compaction</Link>. These link nodes supplement the inline derivations; the equations and examples remain in this book.&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="04-visual-computing-ii-ch041-check-which-transmittance-the-stopping-test-actually-uses">Check which transmittance the stopping test actually uses&#13;</Content>
+<Content aid:pstyle="Content">The residual bound above assumes that the <Strong aid:cstyle="Bold">actual unprocessed remainder</Strong> has transmittance below the stated cutoff. A test on the next candidate value is different. In the inspected <Link href="https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu">Graphdeco forward CUDA kernel</Link>, the code computes a candidate transmittance, checks it against the cutoff, and can stop before accumulating that candidate layer or assigning the candidate transmittance. The stored transmittance can therefore remain above the cutoff. Reading the numeric constant alone does not establish the omitted-energy bound.&#13;</Content>
+<Content aid:pstyle="Content">For example, let current transmittance be <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/98c1768784dc8daef578d481.svg" alt="T=0.009" jobId="98c1768784dc8daef578d481" originalTeX="T=0.009"/> and the next opacity be <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3f29e655dad8a5abc1c2bd76.svg" alt="0.99" jobId="3f29e655dad8a5abc1c2bd76" originalTeX="0.99"/>. The candidate is <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cca22e1c7deb450b3bc2ca82.svg" alt="0.00009" jobId="cca22e1c7deb450b3bc2ca82" originalTeX="0.00009"/>, below <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5aac46c43dc22920d97e2aa5.svg" alt="10^{-4}" jobId="5aac46c43dc22920d97e2aa5" originalTeX="10^{-4}"/>. If this layer is skipped when that test succeeds, a red layer over black loses a contribution of <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c5bfe5762c68b5c08f2d715a.svg" alt="0.00891" jobId="c5bfe5762c68b5c08f2d715a" originalTeX="0.00891"/>, which is much larger than <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5aac46c43dc22920d97e2aa5.svg" alt="10^{-4}" jobId="5aac46c43dc22920d97e2aa5" originalTeX="10^{-4}"/>. This is an arithmetic counterexample to applying the after-accumulation remainder bound to a before-accumulation stopping policy; it is not a measured artifact in a trained scene.&#13;</Content>
+<Content aid:pstyle="Content">If candidate-based stopping uses <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5c07292d42236258db89a965.svg" alt="T(1-\alpha)&lt;\tau" jobId="5c07292d42236258db89a965" originalTeX="T(1-\alpha)&lt;\tau"/> and a proven opacity cap <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/852638e70865baa85420fd9b.svg" alt="\alpha\le a_{max}&lt;1" jobId="852638e70865baa85420fd9b" originalTeX="\alpha\le a_{max}&lt;1"/>, then the discarded current remainder instead satisfies&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1166104fca7c38d8a792ee21.svg" alt="&#10;T&lt;\frac{\tau}{1-a_{max}}.&#10;" jobId="1166104fca7c38d8a792ee21" originalTeX="&#10;T&lt;\frac{\tau}{1-a_{max}}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">With <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d1e87705b1342a50db60eed6.svg" alt="a_{max}=0.99" jobId="d1e87705b1342a50db60eed6" originalTeX="a_{max}=0.99"/>, that worst-case bound is one hundred times the cutoff. It is loose but follows from the actual branch condition. A tighter implementation-specific bound must inspect the actual discarded layer and remainder. Footprint truncation and small-alpha rejection are additional approximation policies; they are not automatically covered by an early-termination allowance. Define whether the comparison target is an ideal untruncated compositor or the same renderer with a particular stop rule disabled.&#13;</Content>
+<Content aid:pstyle="Content">For color edits, changing order and a complete fixed-order derivation, see <Link href="../06-Engine-II/06-Engine-II.epub#06-engine-ii-ch045-an-image-change-certificate-must-name-the-edits-it-covers">the image-change certificate contract</Link>.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubchapterHeader" id="04-visual-computing-ii-ch041-from-a-rendered-frame-to-a-viewers-experience">From a rendered frame to a viewer’s experience&#13;</Content>
+<Content aid:pstyle="Content">The renderer now gives us a concrete image-formation and execution model. We can ask the next question: which parts of that image survive display sampling, optics, motion and perception? The following foundation develops those mechanisms using the mathematical and rendering tools already introduced. It is the preserved perceptual/XR section, relocated here so its prerequisites come first.&#13;</Content>
+<Content aid:pstyle="SubchapterHeader" id="04-visual-computing-ii-ch041-a-correct-image-must-survive-the-viewer-perceptual-rendering-and-xr">A correct image must survive the viewer — perceptual rendering and XR&#13;</Content>
+<Content aid:pstyle="Content">The workshop image is only the beginning of the measurement. Light passes through a camera or display, reaches an eye and is interpreted under changing gaze, contrast and motion. This full XR foundation is integrated here before later camera and rendering algorithms. Source claims remain explicitly distinguished from measured or implemented results.&#13;</Content>
+<!-- CHAPTER-SOURCE-END -->
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Link href="Chapter Edition/02 - Graphics Vision and XR/00 - Reading Map">Reading map</Link> · <Link href="#04-visual-computing-ii-ch040">Previous chapter</Link> · <Link href="#04-visual-computing-ii-ch042">Next chapter</Link>&#13;</Content>
+</Chapter>

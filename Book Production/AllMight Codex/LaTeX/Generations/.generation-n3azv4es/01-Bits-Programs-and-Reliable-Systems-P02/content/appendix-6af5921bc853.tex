@@ -1,0 +1,61 @@
+\hypertarget{appendix-6af5921bc853}{}\label{referencestart:appendix-6af5921bc853}
+\section{Pointer arithmetic and provenance}\label{appendix-6af5921bc853-pointer-arithmetic-and-provenance}
+
+\hypertarget{appendix-6af5921bc853-pointer-arithmetic-and-provenance}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C003 · \textbf{Latest development:} C008
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-6af5921bc853-definition-and-mechanism}
+
+\hypertarget{appendix-6af5921bc853-definition-and-mechanism}{}
+
+M008 adds null/object/one-past distinctions, same-array representable subtraction and round-trip limits. Provenance proposals are research, not adopted C++23 rules; byte inspection differs from arbitrary typed access.
+
+\end{allmightroledefinition}
+
+A scalar member behaves as a one-element array for pointer arithmetic, not as an array containing adjacent sibling members. \&x+1 can be a one-past pointer but cannot be dereferenced to access y. Actual array storage supports traversal; a span only views an already-valid range. Layout/size assertions do not authorize sibling traversal.
+
+A pointer is a typed access path constrained by array bounds, alignment, and object lifetime, not merely an integer. Within an array, p+i advances i elements; one-past is permitted for traversal but not dereference. Byte views inspect representations; uintptr\_t, when provided, is an integer conversion facility, not permission to access arbitrary storage.
+
+\subsection{Prerequisites}\label{appendix-6af5921bc853-prerequisites}
+
+\hypertarget{appendix-6af5921bc853-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-18ee4f913c3c]{Addresses and virtual memory} --- Mappings give numeric locations their process-specific storage identity.
+\item
+  \hyperref[appendix-0b104bcba06b]{Storage duration and object lifetime} --- Access requires an object and backing storage that are still valid.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-6af5921bc853-used-by}
+
+\hypertarget{appendix-6af5921bc853-used-by}{}
+
+\begin{itemize}
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#appendix-ffdc1d4e5350}{Matrix storage indexing and strides (Mathematics for Visual Computing, Part 1, Reference notes: Matrix storage indexing and strides)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-3f7e15effba6}{Named members versus array elements (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Named members versus array elements)} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \hyperref[appendix-afae48c31800]{Null pointers and optional access}
+\item
+  \hyperref[appendix-f9b8b9188c7f]{Borrow invalidation and logical identity}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#appendix-749ba51a6c25}{GPU vertex specification (Light Transport and Image Synthesis, Part 1, Reference notes: GPU vertex specification)} \#\# Recall and next depth
+\end{itemize}
+
+Explain p+1 for int versus byte and why a numeric address is insufficient.
+
+\textbf{Pending:} Full lifetime replacement, ownership/concurrency policies and cross-target ABI experiments; the opening examples do not establish those later guarantees.
+
+\subsection{Source and navigation}\label{appendix-6af5921bc853-source-and-navigation}
+
+\hypertarget{appendix-6af5921bc853-source-and-navigation}{}
+
+\hyperref[appendix-fd090d982a15-m008---parts-113-126]{C008 development and corrections}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)} · \hyperref[01-foundations-i-ch003-bringing-the-object-model-back-to-bytes]{C007 development}

@@ -1,0 +1,19 @@
+\hypertarget{appendix-8572a4a060c1}{}
+\section*{Linear systems and fundamental subspaces}
+\chapter{Linear systems and fundamental subspaces}\label{appendix-8572a4a060c1-linear-systems-and-fundamental-subspaces}
+
+A linear system \(A\mathbf x=\mathbf b\) asks which inputs satisfy all row measurements at once. It is consistent exactly when \(\mathbf b\) lies in the column space. The null space contains input changes invisible to every measurement; rank-nullity counts observable versus free directions.
+
+\textbf{Use it when:} explaining consistency, underdetermination, least squares, parameter observability, or constraints in geometry.
+
+\textbf{Developed in Phase 8:} The expanded treatment connects each row to a hyperplane and the complete matrix to a map: consistency asks whether the target lies in the column space, while the null space describes every invisible change to a solution. Rank then counts constrained directions and determines the dimension of the solution family. \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20system\%20is\%20an\%20intersection\%20of\%20constraints}{constraint geometry} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Rank,\%20the\%20four\%20spaces,\%20and\%20the\%20shape\%20of\%20the\%20answer}{rank and solution families}
+
+\section{Prerequisites}\label{appendix-8572a4a060c1-prerequisites}
+
+\href{../01-Foundations-I/main.pdf\#nameddest=appendix-bd39c3bf5d64}{Matrices as linear maps and basis images (01-Foundations-I, appendix-bd39c3bf5d64)}, \href{../01-Foundations-I/main.pdf\#nameddest=appendix-ce0341f7ea0d}{Basis coordinates and dimension (01-Foundations-I, appendix-ce0341f7ea0d)}, \hyperref[appendix-505a502c372a]{Projection rejection and scalar components}.
+
+\section{Used by}\label{appendix-8572a4a060c1-used-by}
+
+\hyperref[appendix-f6e77f4a200f]{Gaussian elimination and pivoting}, \hyperref[appendix-c3421e6b4f2c]{QR factorization and least squares}, \hyperref[appendix-1fad5e7f36fa]{Singular value decomposition}, \hyperref[appendix-541306fdbc1b]{Moore-Penrose pseudoinverse}, \hyperref[appendix-67c87a3d9e94]{Sparse and iterative solvers}.
+
+\textbf{Teaching path:} \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20linear\%20equation\%20is\%20a\%20measurement,\%20and\%20several\%20equations\%20are\%20geometry}{constraint geometry} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Rank\%20separates\%20what\%20the\%20measurements\%20determine\%20from\%20what\%20they\%20leave\%20free}{four spaces}. - \hyperref[appendix-0b3be18411f9]{Eigenvalues and eigenspaces} --- Extends this foundation into the Phase 8 dependency spine.

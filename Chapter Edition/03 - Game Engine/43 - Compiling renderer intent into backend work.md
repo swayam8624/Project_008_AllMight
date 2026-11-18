@@ -8,7 +8,7 @@ A renderer should express what a frame needs before translating it into API-spec
 
 **Recall question:** What logical dependency does this command represent, and where is it enforced in the selected backend?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 102536–105761; source-span SHA256 4825e8a42f5356f7c060e728c1c9a7e563f7ac3edfd1255c7f569076609bed16. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 103799–107024; source-span SHA256 4825e8a42f5356f7c060e728c1c9a7e563f7ac3edfd1255c7f569076609bed16. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Compile renderer intent into backend work

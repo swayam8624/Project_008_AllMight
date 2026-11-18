@@ -1,0 +1,961 @@
+\hypertarget{appendix-92ff77d4dfdc}{}
+\section*{Worked Traces}
+\section{Worked Traces}\label{appendix-92ff77d4dfdc-worked-traces}
+
+\subsection{Phase 9-10 worked-trace navigation}\label{appendix-92ff77d4dfdc-phase-9-10-worked-trace-navigation}
+
+The full numerical traces remain in the continuous volumes; this page does not duplicate their calculations:
+
+\href{../02-Foundations-II/main.pdf\#nameddest=02-foundations-ii-ch021-jacobians-curvature-and-local-approximation}{Phase 9 Jacobian trace (02-Foundations-II, 02-foundations-ii-ch021-jacobians-curvature-and-local-approximation)} · \href{../02-Foundations-II/main.pdf\#nameddest=02-foundations-ii-ch022-integration-and-quadrature}{Phase 9 integral and quadrature traces (02-Foundations-II, 02-foundations-ii-ch022-integration-and-quadrature)} · \href{../02-Foundations-II/main.pdf\#nameddest=02-foundations-ii-ch025-odes-and-numerical-simulation}{Phase 9 oscillator and stability traces (02-Foundations-II, 02-foundations-ii-ch025-odes-and-numerical-simulation)} · \href{../02-Foundations-II/main.pdf\#nameddest=02-foundations-ii-ch026-optimization-and-inverse-problems}{Phase 9 optimization traces (02-Foundations-II, 02-foundations-ii-ch026-optimization-and-inverse-problems)} · \href{../02-Foundations-II/main.pdf\#nameddest=02-foundations-ii-ch023-a-probability-model-begins-with-possible-outcomes}{Phase 10 outcomes and Bayes trace (02-Foundations-II, 02-foundations-ii-ch023-a-probability-model-begins-with-possible-outcomes)} · \href{../02-Foundations-II/main.pdf\#nameddest=02-foundations-ii-ch030-monte-carlo-estimates-trade-computation-for-uncertainty}{Phase 10 Monte Carlo trace (02-Foundations-II, 02-foundations-ii-ch030-monte-carlo-estimates-trade-computation-for-uncertainty)} · \href{../02-Foundations-II/main.pdf\#nameddest=02-foundations-ii-ch030-finite-samples-need-stable-descriptive-statistics}{Phase 10 online statistics (02-Foundations-II, 02-foundations-ii-ch030-finite-samples-need-stable-descriptive-statistics)} · \href{../02-Foundations-II/main.pdf\#nameddest=02-foundations-ii-ch030-inference-and-error-metrics-need-explicit-assumptions}{Phase 10 uncertainty and error metrics (02-Foundations-II, 02-foundations-ii-ch030-inference-and-error-metrics-need-explicit-assumptions)}
+
+\subsection{Phase 8 - From constraints to a stable SVD contract}\label{appendix-92ff77d4dfdc-phase-8---from-constraints-to-a-stable-svd-contract}
+
+Follow one small rank-deficient fit through its geometry, answer, and checks. This supplements \hyperref[01-foundations-i-ch019-the-graphics-problem-hiding-inside-a-matrix-equation]{the Phase 8 story}.
+
+Let
+
+\[
+A=\begin{bmatrix}3&0\\0&0\end{bmatrix},\qquad
+b=\begin{bmatrix}6\\5\end{bmatrix}.
+\]
+
+The first row observes \(x_1\) with gain three. The second row has zero coefficients, so it cannot produce the requested measurement five. The rank is one, the column space is the horizontal axis, and \(b\) lies outside it. The null space is the vertical axis: changing \(x_2\) is invisible to the map.
+
+The SVD is already diagonal: \(U=V=I\), \(\Sigma=A\). The pseudoinverse is \(A^+=\operatorname{diag}(1/3,0)\). Therefore \(A^+b=(2,0)\). Every \((2,t)\) has the same residual \((0,-5)\); \(t=0\) is its minimum-norm choice. This trace separately answers consistency, rank, nullity, residual, and the pseudoinverse policy.
+
+For \(k=1\) truncation, \(A_1=\operatorname{diag}(3,0)\). Here the input already has rank one, so the approximation is exact. If instead \(A=\operatorname{diag}(3,2)\), then keeping only the first singular direction gives \(A_1=\operatorname{diag}(3,0)\), spectral error \(2\), and Frobenius error \(2\). The norm names state which reconstruction discrepancy is being reported.
+
+Now use centered planar samples \((-1,0),(0,0),(1,0)\). Their sample covariance with divisor \(N-1\) is \(\operatorname{diag}(1,0)\). The first component follows the horizontal line; the zero second eigenvalue says the observed samples have no vertical spread. Add small measurement noise and that zero becomes small, making the rank or PCA cutoff a scale-aware modeling decision.
+
+An SVD routine should return dimensions and status, not just three arrays. Check \(\|A-U\Sigma V^T\|\) relative to a declared input scale; check \(U^TU\) and \(V^TV\) separately, with identity sizes matching full/thin conventions; verify descending nonnegative singular values; enforce a maximum iteration count and surface nonconvergence. Passing these checks establishes those measured properties at the tested scale; it does not certify every singular value or guarantee an accurate solution for an ill-conditioned application.
+
+\subsection{Phase 7 - The moving-panel tracebook}\label{appendix-92ff77d4dfdc-phase-7---the-moving-panel-tracebook}
+
+Use active right-handed rotations, column vectors, radians in code, and the \hyperref[01-foundations-i-ch019-figure-m6---follow-one-point-through-named-spaces]{declared illustrative minus-Z projection} with near 1, far 10 and NDC depth \([-1,1]\).
+
+\subsubsection{One local point reaches a screen-relative description}\label{appendix-92ff77d4dfdc-one-local-point-reaches-a-screen-relative-description}
+
+Let local scale be \((2,1,1)\), orientation a positive-Z quarter turn, translation \((10,0,0)\), and point \(p=(1,0,0)\). The camera sits at world \((10,0,5)\) with identity orientation.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Stage
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Check
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Scale local point & \((2,0,0)\) & Scaling occurs in the declared local axes. \\
+Rotate & \((0,2,0)\) & Right-hand positive Z maps X toward Y. \\
+Translate & \((10,2,0)\) & World location; \(M=TRS\). \\
+Inverse camera pose & \((0,2,-5)\) & Camera is five units above the world plane and looks along \(-Z\). \\
+Projection to clip & \((0,2,35/9,5)\) & Keep all four homogeneous coordinates. \\
+Perspective divide & \((0,2/5,7/9)\) & Finite nonzero divisor; this point is within the selected clip volume. \\
+\end{longtable}
+}
+
+Reconstructing local coordinates undoes translation, then rotation, then scale. Applying the inverse orientation with a guessed untranslated offset would mix frames. The same row-major scalar array could implement every operation if logical access and upload conventions remain correct.
+
+\subsubsection{The tangent and normal take different paths}\label{appendix-92ff77d4dfdc-the-tangent-and-normal-take-different-paths}
+
+Take local tangent \(u=(1,1,0)\) and local normal \(n=(1,-1,0)\). Scale then rotate gives \(u'=(-1,2,0)\). Reciprocal-scale then rotate gives \(n'=(1,1/2,0)\). Their dot is \(-1+1=0\). Normalizing \(n'\) for shading changes its length, not the perpendicularity. Neither vector receives translation. A mirrored model additionally needs an explicit winding/orientation policy.
+
+\subsubsection{Diagnose interpolation using a quarter point}\label{appendix-92ff77d4dfdc-diagnose-interpolation-using-a-quarter-point}
+
+Interpolate identity to a positive-Z \(120^\circ\) orientation. At \(t=1/4\), ideal SLERP gives a \(30^\circ\) turn. NLERP normalizes coefficients \((7/8,0,0,\sqrt3/8)\), yielding about \(27.795772496^\circ\). The midpoint alone would not expose this speed difference. With endpoints \(q\) and \(-q\), sign-aligning first avoids a zero midpoint and preserves the common orientation.
+
+\subsubsection{A parent edit invalidates only actual dependencies}\label{appendix-92ff77d4dfdc-a-parent-edit-invalidates-only-actual-dependencies}
+
+For car → door → mirror, editing the door's local transform makes door-local and door-world caches stale, along with mirror-world and derived inverse/normal caches. Mirror-local and car caches remain valid. Reparenting the mirror changes its world dependency even if its local coefficients remain identical. Preserving world pose during reparenting instead requires solving the new local map and checking whether the result still fits the allowed TRS representation.
+
+\subsection{Phase 6 - The robot panel tracebook}\label{appendix-92ff77d4dfdc-phase-6---the-robot-panel-tracebook}
+
+This cumulative trace extends \hyperref[01-foundations-i-ch017-the-panel-gives-us-a-reason-to-learn]{the self-contained Phase 6 volume}. The numbers are illustrative laboratory inputs, not observations from a real robot or renderer.
+
+\subsubsection{One physical object through six representations}\label{appendix-92ff77d4dfdc-one-physical-object-through-six-representations}
+
+Start with metre-valued workcell points \(A=(0,0,0)\), \(B=(4,0,0)\), \(C=(0,3,0)\) and sensor point \(P=(1,1,0)\).
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Stage
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Intermediate value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Meaning and check
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Edge subtraction & \(e_1=(4,0,0)\), \(e_2=(0,3,0)\) & Point differences, not new point locations. \\
+Dot and Gram & \(g_{11}=16\), \(g_{12}=0\), \(g_{22}=9\) & Perpendicular but non-unit edge basis. \\
+Cross & \(e_1\times e_2=(0,0,12)\) & Oriented area vector in square metres. \\
+Normalization & \(n=(0,0,1)\) & Finite unit front normal; triangle area is \(6\). \\
+Sensor coordinates & \(\beta=1/4\), \(\gamma=1/3\), \(\alpha=5/12\) & Sum is one and all weights are positive. \\
+Attribute interpolation & \((5/12)20+(1/4)40+(1/3)50=35\) & Affine temperature model, not an asserted physical heat solution. \\
+\end{longtable}
+}
+
+Move a point \(D=(0,0,2)\) above the panel. The area normal dotted with \(D-A\) is \(24\), yielding tetrahedron volume \(4\). Swap \(B,C\) and both signs reverse; ordinary area and volume do not.
+
+\subsubsection{A mirror changes orientation, not all measurements}\label{appendix-92ff77d4dfdc-a-mirror-changes-orientation-not-all-measurements}
+
+Mirror horizontal coordinates with \(R=\operatorname{diag}(-1,1,1)\). New first edge is \((-4,0,0)\) and second edge remains \((0,3,0)\). Their cross becomes \((0,0,-12)\). All edge lengths and all original pairwise dot products remain unchanged. The Gram matrix cannot tell us that the orientation flipped.
+
+The ordinary transformed normal direction \(Rn\) is still \((0,0,1)\). The cross-derived oriented normal gains the additional factor \(\det(R)=-1\). This is why a mesh pipeline needs a consistent front-face and mirror policy rather than one generic ``transform vector'' call.
+
+\subsubsection{Nonuniform scaling exposes a hidden normal bug}\label{appendix-92ff77d4dfdc-nonuniform-scaling-exposes-a-hidden-normal-bug}
+
+For tangent \((1,1,0)\) and normal \((1,-1,0)\), double only the horizontal scale. Tangent becomes \((2,1,0)\). A naively transformed normal \((2,-1,0)\) gives dot \(3\), not zero. The inverse-transpose normal \((1/2,-1,0)\) gives dot zero. Normalize the latter only after deriving its correct direction.
+
+\subsubsection{A frame can be valid without being continuous}\label{appendix-92ff77d4dfdc-a-frame-can-be-valid-without-being-continuous}
+
+With normal \((0,0,1)\), a least-aligned horizontal helper produces tangent \((0,-1,0)\) and bitangent \((1,0,0)\). All axes are unit and perpendicular, and the frame is positive. Perturb the normal through a helper-selection tie: a different helper can become preferred abruptly. Correct axes do not establish smooth frame evolution. Animated systems must decide whether continuity or a texture reference is required.
+
+\subsubsection{Perspective-correct attribute trace}\label{appendix-92ff77d4dfdc-perspective-correct-attribute-trace}
+
+For two projected endpoints with \(w_0=1,w_1=2\), equal screen weights \(1/2\) produce reciprocal-weight denominator \(1/2+1/4=3/4\). Surface weights become \(2/3\) and \(1/3\). If endpoint attributes are \(0\) and \(1\), affine surface interpolation at that screen location gives \(1/3\), not the naive \(1/2\).
+
+\subsubsection{The first lost quantity can precede every formula}\label{appendix-92ff77d4dfdc-the-first-lost-quantity-can-precede-every-formula}
+
+Store intended horizontal coordinates \(10^8\) and \(10^8+1\) in binary32. Near that scale, one unit is below the local representable spacing, so both can round to the same value. Subtraction then yields zero. Promoting those already-rounded values to binary64 does not recover their difference. Retain a wider global representation or subtract in an appropriately local frame before narrowing.
+
+\subsubsection{Collision difference without an explicit shape}\label{appendix-92ff77d4dfdc-collision-difference-without-an-explicit-shape}
+
+Take intervals \(A=[2,4]\) and \(B=[3,5]\). In positive direction, the difference support is \(4-3=1\). In negative direction, choose \(2-5=-3\). The origin lies between them, consistent with overlap. For \(A=[0,1]\), \(B=[3,4]\), the extrema are \(-4,-2\), both negative; the intervals do not overlap. A full higher-dimensional collision algorithm must manage its simplex and stopping policies separately.
+
+\subsubsection{What the executed lab actually demonstrates}\label{appendix-92ff77d4dfdc-what-the-executed-lab-actually-demonstrates}
+
+The inline scalar program checks the panel weights, area, frame, projection, rejection, reflection, finite-state rejection, huge/tiny scaled normalization, angles, transmission and total internal reflection. It also runs 2,000 deterministic moderate-range cases for decomposition, orthogonality, projection idempotence, reflected length and cross antisymmetry/perpendicularity. None of these tests certify all floating-point inputs, performance, a robust orientation implementation, or human understanding.
+
+\subsection{XR - From geometry to sample loss and evidence}\label{appendix-92ff77d4dfdc-xr---from-geometry-to-sample-loss-and-evidence}
+
+The complete explanations and code remain in \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography}{the independent XR story}.
+
+Use this table to follow the quantities from one step to the next:
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Step
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Numerical witness
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+What it shows
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Convert screen geometry to angles & FOV \(47.658899^\circ\); average 40.286285 PPD; center 37.936213 PPD & Average and local density differ under the planar projection. \\
+Downsample without filtering & Alternating zero/one; take even samples; obtain all zeros & Decimation can turn a pattern into a misleading constant. \\
+Filter before downsampling & Average each pair; obtain 0.5 & This declared alternating sequence gives its intended mean. The filter is not an ideal universal cutoff. \\
+Analyze aligned frequencies & DFT bins 7 and 29 give one-sided amplitudes 0.3 and 0.1 & The stated amplitude normalization separates the two components. \\
+Apply the Gaussian optics model & Gains 0.951850 and 0.291213 at 0.05 and 0.25 cycles per pixel & Higher-frequency contrast is reduced more strongly. \\
+Average light, then encode & Linear 0.5 encodes to 0.735357 in sRGB & Encoded 0.5 instead decodes to 0.214041. The arithmetic domain matters. \\
+Change allocation with the same true-gaze metric & Fixed weighted MSE 0.00610803; gaze-following 0.00378445 & This is one toy-model result, not a human threshold or saved GPU work. \\
+Check threshold algebra & \(F\!\left(\lambda(\ln2)^{1/k}\right)=0.75\) & The formula matches the selected criterion for the illustrative parameters. \\
+\end{longtable}
+}
+
+\subsubsection{Frame history can be clean and wrong}\label{appendix-92ff77d4dfdc-frame-history-can-be-clean-and-wrong}
+
+Follow a moving character:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  The previous frame sees the character at a pixel.
+\item
+  The character moves, exposing the background.
+\item
+  Incorrect reprojection brings the old character color into that background.
+\item
+  Accumulation reduces random noise but retains a ghost.
+\end{enumerate}
+
+A depth or identity mismatch can justify rejecting that history.
+
+A gaze-region change creates a second problem. An old peripheral sample may belong to the correct surface but lack the detail required now.
+
+Lower MSE or lower variance alone does not establish that the reused information is correct.
+
+\subsubsection{An allocation claim and a runtime claim are different}\label{appendix-92ff77d4dfdc-an-allocation-claim-and-a-runtime-claim-are-different}
+
+Normalize the original frame time to one:
+
+\[
+T_{\mathrm{old}}=0.6+0.4=1.
+\]
+
+Only the second component benefits. If its work becomes 70\% cheaper:
+
+\[
+T_{\mathrm{new}}=0.6+0.4(0.3)=0.72.
+\]
+
+The speedup is:
+
+\[
+S=\frac1{0.72}\approx1.3889.
+\]
+
+The calculation assumes additive, non-overlapping costs. A real GPU may have overlap, bandwidth limits, occupancy changes, or synchronization costs.
+
+A post-filtered full reference does not establish that any original shading work was skipped.
+
+\subsection{C++ - Value-transfer and cleanup board traces}\label{appendix-92ff77d4dfdc-c---value-transfer-and-cleanup-board-traces}
+
+Essential code and traces remain inline in \hyperref[01-foundations-i-ch003-trace-one-payload-from-decode-to-cache]{the payload journey} and \hyperref[01-foundations-i-ch004-observe-construction-failure-and-reverse-cleanup]{the event laboratory}.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Scenario
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Recorded events
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Interpretation
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Ordinary constructor body throws & 1,2,3,-2,-1 & Both members completed; complete Whole did not. No destructor-body -3 event. \\
+Whole completes, then leaves scope & 1,2,3,-3,-2,-1 & Destructor body precedes reverse member cleanup. \\
+Delegating target completes, delegating body throws & 4,5,6,-5,-4 & Complete target established object; cleanup invokes its destructor then member destruction. \\
+\end{longtable}
+}
+
+Positive IDs mean construction/body entry, negatives mean destruction. The fixed recorder does not allocate from destructors. Exception traces establish the tested lifetime rules, not a policy for every subsystem's error handling.
+
+\subsubsection{Assignment failure versus successful ownership transfer}\label{appendix-92ff77d4dfdc-assignment-failure-versus-successful-ownership-transfer}
+
+Start A with byte7 and B with byte9 in separate buffers. Prepare B=A with an injected allocation failure: B still holds byte9 at the same live buffer, A still byte7, and allocation count is unchanged. Move-construct C from A: C owns byte7, A is documented empty. Copy-construct from empty A: new owner is empty without traversing a null range. Move-assign C into B: B's byte9 allocation is released, B takes byte7, C becomes empty. Self-move B through its alias preserves its value under this particular owner's contract. Reset B to empty and end scope: live allocation count0.
+
+\subsubsection{The aliased update does not behave like two copies}\label{appendix-92ff77d4dfdc-the-aliased-update-does-not-behave-like-two-copies}
+
+For destination+=source; source*=0.5, starting with distinct source4/destination4 gives destination8/source2. If both parameters designate one float, its state is4→8→4. The second statement sees the first statement's write. Passing scalar values instead creates independent parameter values; no caller mutation is implied.
+
+\subsubsection{Observation is not a mandatory NRVO count}\label{appendix-92ff77d4dfdc-observation-is-not-a-mandatory-nrvo-count}
+
+On the recorded Clang C++23 build, the named Probe return observed zero moves ordinarily and one with optional elision disabled. The immovable same-type prvalue result remained valid in both. This differentiates language-required direct construction from a compiler-selected named-local elision. Do not substitute these observed counts for a timing or allocation benchmark.
+
+\subsection{C++ - Borrow deadlines and dense-pool identity}\label{appendix-92ff77d4dfdc-c---borrow-deadlines-and-dense-pool-identity}
+
+The essential explanation remains inline in \hyperref[01-foundations-i-ch003-when-a-valid-borrow-stops-naming-the-intended-thing]{the borrow story}. This deeper board exercise separates the targets of three paths. Assume a vector with three live Slot objects, enough capacity, and assignments that do not end the destination Slot lifetime.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Event
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+First-slot borrow
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Last-slot borrow
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Entity-11 handle
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Initial owners {[}11,22,33{]} & Live object representing 11 & Live object representing 33 & Must be checked against registry \\
+Move-assign last into first & Same live Slot now represents 33 & Still live until pop; moved-from state & Not a location guarantee \\
+Pop last & Live but wrong original association & Referent lifetime ended & Must be invalidated for removal under registry policy \\
+Reallocate remaining elements & Old storage path invalidated & Already invalid & Can still identify other live entities if registry validates them \\
+Validate entity33 and reacquire & New valid path to current owner33 & Do not reuse old path & Lookup binds identity to current location \\
+\end{longtable}
+}
+
+Do not read a moved-from value without its type's specified contract; this example's integer members and Slot assignment make the first-slot result explicit. Not every pool implementation uses this algorithm. The source-reported Kairo anchors remain To verify.
+
+\subsubsection{Direct alias versus converted snapshot}\label{appendix-92ff77d4dfdc-direct-alias-versus-converted-snapshot}
+
+Start \texttt{count=10}, bind \texttt{const\ int\&\ live=count} and \texttt{const\ double\&\ snapshot=count}. The first referent is count; the second is a new converted double containing10.0. After \texttt{count=50}, live observes50 and snapshot observes10.0. At the end of their enclosing scope the extended double temporary dies; no separate double was owned by count.
+
+\subsubsection{A function call does not renew the deadline}\label{appendix-92ff77d4dfdc-a-function-call-does-not-renew-the-deadline}
+
+Construct temporary string → bind call parameter → return that same path → bind caller's receiving reference → complete full-expression → destroy temporary. The receiver's longer lifetime is irrelevant. Contrast direct local binding, which specifies extension, with returning \texttt{std::string} by value, which establishes an owning result. The complete rule is in \hyperref[appendix-a978b29bbbb0]{Temporary lifetime extension}, not ``references make temporaries live longer.''
+
+\subsubsection{Cache invalidation without exposed storage}\label{appendix-92ff77d4dfdc-cache-invalidation-without-exposed-storage}
+
+Source3/cache-empty → Get holds mutex, computes9, copies9, unlocks → Set holds mutex, replaces source with4, clears cache, unlocks → Get computes16 and copies it under mutex. The earlier returned9 remains a valid independent snapshot. If Get had exposed a reference, clearing the optional could end that referenced integer's lifetime. Locking only while obtaining the reference does not protect its later use.
+
+\subsection{C++ - Build and occupant trace navigation}\label{appendix-92ff77d4dfdc-c---build-and-occupant-trace-navigation}
+
+Essential traces stay inside \hyperref[01-foundations-i-ch003-following-one-call-through-the-build]{the build story} and \hyperref[01-foundations-i-ch003-following-an-escaped-address-through-time]{the escaped-address story}. The complete inline laboratory supplies observable constructions/destructions without executing stale access.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Event
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Storage
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Object or logical occupant
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Valid access
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Aligned byte array exists & Reserved through its enclosing scope & Byte storage; no explicit Tracked occupant yet & Construct at a suitable location \\
+construct\_at(\ldots,7) returns & Same buffer & First Tracked initialized, count1 & Returned pointer can access value7 \\
+destroy\_at(first) completes & Buffer remains & First lifetime ended, destruction count1 & Do not access its members \\
+construct\_at(\ldots,8) returns & Same location & Second occupant, construction count2 & Use returned second pointer \\
+destroy\_at(second) completes & Buffer remains until scope exit & Second lifetime ended, destruction count2 & No further Tracked access \\
+Registry slot0 changes generation7→8 & Registry slot retained & Old handle no longer names live occupant & Compare against live registry generation \\
+\end{longtable}
+}
+
+This deliberate reuse is not the same as dereferencing a pointer to an automatic object after its storage duration ended. Transparent replacement has specific rules; std::launder is not a universal cure for stale pointers.
+
+Longer hand traces live here. Organize by mechanism so later chunks can extend the same trace with deeper representation, math, implementation, or hardware behavior.
+
+A trace should include a concrete input, every state transition that matters, the final output, one invariant check, and one deliberately failing or boundary input when useful.
+
+\subsection{M001 - The 0xAD control byte}\label{appendix-92ff77d4dfdc-m001---the-0xad-control-byte}
+
+\textbf{Introduced by:} \hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 / M001}
+
+\subsubsection{Input and conventions}\label{appendix-92ff77d4dfdc-input-and-conventions}
+
+Schema, from least to most significant position:
+
+\begin{verbatim}
+bits 0-2 mode | bit 3 visible | bits 4-5 quality | bit 6 locked | bit 7 dirty
+\end{verbatim}
+
+Input: \texttt{\{mode=5,\ visible=1,\ quality=2,\ locked=0,\ dirty=1\}}. Field zero occupies the least-significant available bits.
+
+\subsubsection{State-by-state trace}\label{appendix-92ff77d4dfdc-state-by-state-trace}
+
+\begin{verbatim}
+mode       5 << 0 = 00000101
+visible    1 << 3 = 00001000
+quality    2 << 4 = 00100000
+locked     0 << 6 = 00000000
+dirty      1 << 7 = 10000000
+OR result           10101101 = 0xAD
+\end{verbatim}
+
+Base interpretations:
+
+\begin{verbatim}
+binary 10101101 = 128 + 32 + 8 + 4 + 1 = decimal 173
+hex    1010 1101 = A D                    = 0xAD
+octal  010 101 101 = 2 5 5                = 0255
+\end{verbatim}
+
+Quality extraction:
+
+\begin{verbatim}
+10101101 >> 4 = 00001010
+00001010 & 03 = 00000010 = 2
+\end{verbatim}
+
+LSB-first bit-array packing of \texttt{{[}1,0,1,1,0,1,0,1{]}} accumulates \texttt{01}, \texttt{05}, \texttt{0D}, \texttt{2D}, then \texttt{AD}; unpacking index 5 computes \texttt{(0xAD\ \textgreater{}\textgreater{}\ 5)\ \&\ 1\ =\ 1}.
+
+\subsubsection{Result and invariant checks}\label{appendix-92ff77d4dfdc-result-and-invariant-checks}
+
+\begin{itemize}
+\tightlist
+\item
+  Every field round-trips to its input value.
+\item
+  The five fields occupy eight non-overlapping bits exactly.
+\item
+  Changing quality to 3 clears \texttt{0x30}, writes \texttt{0x30}, and yields \texttt{0xBD}; all non-quality bits remain unchanged.
+\end{itemize}
+
+\subsubsection{Boundary or failure trace}\label{appendix-92ff77d4dfdc-boundary-or-failure-trace}
+
+OR-only replacement fails when a new value needs to clear an old 1. For example, replacing quality \texttt{3} with \texttt{1} via \texttt{word\ \textbar{}\ (1\ \textless{}\textless{}\ 4)} leaves the old high field bit set and still decodes as \texttt{3}. Clear-before-OR produces the intended \texttt{1}.
+
+\subsection{M002 - Carry and overflow are different questions}\label{appendix-92ff77d4dfdc-m002---carry-and-overflow-are-different-questions}
+
+\textbf{Introduced by:} \hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 / M002}
+
+\subsubsection{Input and conventions}\label{appendix-92ff77d4dfdc-input-and-conventions-1}
+
+Use eight-bit result storage. \texttt{C} is the ninth unsigned bit, \texttt{V} reports signed two's-complement range failure, \texttt{N} copies result bit 7, and \texttt{Z} tests whether the low result byte is zero.
+
+\subsubsection{State-by-state trace}\label{appendix-92ff77d4dfdc-state-by-state-trace-1}
+
+Case 1 - signed overflow without carry:
+
+\begin{verbatim}
+  01111111  unsigned 127, signed 127
++ 00000001  unsigned   1, signed   1
+----------
+  10000000  unsigned 128, signed -128
+
+C=0: no ninth bit; unsigned 128 fits
+V=1: signed mathematical 128 does not fit [-128,127]
+N=1: result high bit is set
+Z=0: result is nonzero
+\end{verbatim}
+
+Case 2 - carry without signed overflow:
+
+\begin{verbatim}
+  11111111  unsigned 255, signed -1
++ 00000001  unsigned   1, signed  1
+----------
+1 00000000
+
+C=1: unsigned mathematical 256 needs a ninth bit
+V=0: signed mathematical result is valid zero
+N=0: low result high bit is clear
+Z=1: low result byte is zero
+\end{verbatim}
+
+Subtraction example:
+
+\begin{verbatim}
+13 - 5 = 13 + (~5 + 1)
+00001101 + 11111011 = 1 00001000 -> low byte 8
+\end{verbatim}
+
+\subsubsection{Result and invariant checks}\label{appendix-92ff77d4dfdc-result-and-invariant-checks-1}
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{C} and \texttt{V} are independent; neither can replace the other.
+\item
+  \texttt{N} reports the stored sign bit, not whether a signed overflow occurred.
+\item
+  An eight-bit emulator must retain a wider temporary long enough to compute \texttt{C}, then mask the architectural result.
+\end{itemize}
+
+\subsubsection{Boundary or failure trace}\label{appendix-92ff77d4dfdc-boundary-or-failure-trace-1}
+
+\texttt{10000000} represents \texttt{-128}. Complement-plus-one returns \texttt{10000000} because mathematical \texttt{+128} cannot fit. At the fixed-bit residue level the pattern is stable; evaluating same-type signed negation in C++ overflows and is undefined.
+
+\subsection{Reconstructing each state change}\label{appendix-92ff77d4dfdc-reconstructing-each-state-change}
+
+\subsubsection{Decimal to binary and back}\label{appendix-92ff77d4dfdc-decimal-to-binary-and-back}
+
+For 173, successive quotient/remainder pairs are (86,1), (43,0), (21,1), (10,1), (5,0), (2,1), (1,0), (0,1). The remainders are low bits first, so reverse them to get 10101101. Horner accumulators while reading this result are 1,2,5,10,21,43,86,173. This checks both directions without assuming that the displayed order equals array order.
+
+\subsubsection{Replacing a field while preserving neighbors}\label{appendix-92ff77d4dfdc-replacing-a-field-while-preserving-neighbors}
+
+Replace quality 2 with 1 in AD:
+
+\begin{verbatim}
+field width w=2, offset s=4
+low mask L=03; positioned mask M=30
+eight-bit NOT(M)=CF
+clear: AD & CF = 8D
+encode new value: (01 & 03) << 4 = 10
+write: 8D | 10 = 9D
+read back: (9D >> 4) & 03 = 01
+outside field: AD & CF = 9D & CF = 8D
+\end{verbatim}
+
+The last equality proves preservation rather than only checking the new field value.
+
+\subsubsection{Multiplication by selected partial products}\label{appendix-92ff77d4dfdc-multiplication-by-selected-partial-products}
+
+Multiply 13 by 11. Start result=0, partial=13, multiplier=11. A low multiplier bit of 1 includes the partial product; shift the multiplier right and the widened partial left between stages.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lllll@{}}
+\toprule\noalign{}
+Stage & Multiplier & Low bit & Partial & Result after inclusion \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0 & 1011 & 1 & 13 & 13 \\
+1 & 0101 & 1 & 26 & 39 \\
+2 & 0010 & 0 & 52 & 39 \\
+3 & 0001 & 1 & 104 & 143 \\
+\end{longtable}
+}
+
+Check 13×11=143. The widened partial is essential: if it were retained in a narrow original operand, shifts could lose bits before the accumulator sees them.
+
+\subsubsection{Division by shifting the remainder}\label{appendix-92ff77d4dfdc-division-by-shifting-the-remainder}
+
+Divide binary 1101 (13) by 3, reading dividend bits from most to least significant. At each stage append the next bit to the partial remainder, compare with 3, subtract if possible, and append the quotient decision.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Incoming bit
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Remainder before compare
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Subtract 3?
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+New remainder
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Quotient prefix
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1 & 1 & no & 1 & 0 \\
+1 & 3 & yes & 0 & 01 \\
+0 & 0 & no & 0 & 010 \\
+1 & 1 & no & 1 & 0100 \\
+\end{longtable}
+}
+
+Quotient 4 and remainder 1 satisfy 13=4×3+1, with 0≤1\textless3.
+
+\subsubsection{C++ expression types and a safe index}\label{appendix-92ff77d4dfdc-c-expression-types-and-a-safe-index}
+
+For \texttt{uint8\_t\ a=250,b=10} on the host used here:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Stored operands are eight-bit unsigned values.
+\item
+  Integral promotion converts each to int because int represents 0--255.
+\item
+  Addition executes as int arithmetic, producing int 260.
+\item
+  \texttt{auto} keeps int 260; explicit conversion to uint8\_t stores residue 4.
+\end{enumerate}
+
+For int index=−1 and unsigned size=10, an ordinary mixed-sign comparison may convert −1 to a large unsigned value. \texttt{std::cmp\_less(-1,10u)} correctly returns true mathematically, but that alone does not authorize indexing. The valid condition is \texttt{index\textgreater{}=0\ \&\&\ std::cmp\_less(index,size)}.
+
+\subsubsection{Binary subtraction and incoming borrow}\label{appendix-92ff77d4dfdc-binary-subtraction-and-incoming-borrow}
+
+Take A=5, B=3. With carry C=1, compute 5+NOT₈(3)+1=5+252+1=258: result=2, carry-out=1 (no borrow). With C=0, compute 257: result=1, since an incoming borrow subtracts one extra. For A=3,B=5,C=1, exact unsigned difference is −2: low result=254, carry-out=0 (borrow). This is the binary SBC convention, independent of any repository implementation claim.
+
+\subsection{M003 - Bytes to physical memory}\label{appendix-92ff77d4dfdc-m003---bytes-to-physical-memory}
+
+\subsubsection{A matching and mismatching endian decode}\label{appendix-92ff77d4dfdc-a-matching-and-mismatching-endian-decode}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}llll@{}}
+\toprule\noalign{}
+Offset & LE byte & BE byte & LE reader accumulator after byte \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0 & 78 & 12 & 00000078 \\
+1 & 56 & 34 & 00005678 \\
+2 & 34 & 56 & 00345678 \\
+3 & 12 & 78 & 12345678 \\
+\end{longtable}
+}
+
+Bytes are hexadecimal. Reading LE bytes as BE produces 78563412; no intra-octet bit reversal occurs. A schema version=1, count=0x12345678, payloadSize=9, written U8/U32-LE/U64-LE, yields:
+
+\begin{verbatim}
+01 78 56 34 12 09 00 00 00 00 00 00 00
+\end{verbatim}
+
+Field offsets are 0/1/5, length 13. A typical native record places fields at 0/4/8, size 16. Packing may resemble the schema length but does not define its byte order or version contract.
+
+\subsubsection{Struct layout and an aligned array}\label{appendix-92ff77d4dfdc-struct-layout-and-an-aligned-array}
+
+Assume member size/alignment pairs 1/1, 8/8, 2/2, 4/4.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lllll@{}}
+\toprule\noalign{}
+Member & Previous end & Aligned start & Occupied offsets & New end \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+flags & 0 & 0 & 0 & 1 \\
+id & 1 & 8 & 8-15 & 16 \\
+layer & 16 & 16 & 16-17 & 18 \\
+color & 18 & 20 & 20-23 & 24 \\
+\end{longtable}
+}
+
+Holes are seven plus two bytes; payload 15, size 24. Reordering id/color/layer/flags gives 0-7/8-11/12-13/14 plus one tail byte: size 16. Verify on the target ABI.
+
+A 1/4/1 record ends at nine but has size 12. At base 0x1000, next object starts 0x100C and its integer at 0x1010. A fictitious stride nine would put that integer at 0x100D, breaking alignment.
+
+\subsubsection{Page translation with an unchanged offset}\label{appendix-92ff77d4dfdc-page-translation-with-an-unchanged-offset}
+
+Assume 4-KiB pages and an allowed resident mapping.
+
+\begin{verbatim}
+VA                  0x12345ABC
+P                   0x1000 = 4096
+VPN = VA / P        0x12345
+offset = VA % P     0xABC
+mapping             VPN 0x12345 -> PFN 0x987
+frame start         0x987000
+PA = start + offset 0x987ABC
+\end{verbatim}
+
+Process B may map the same VPN to another PFN; adjacent virtual pages may map distant frames. These are address-space mappings, not endian conversions.
+
+Four bytes starting at offset FFE occupy FFE/FFF in page one and 000/001 in page two. A valid first mapping does not prove the second readable. Four bytes at cache-line offset 62 similarly span two 64-byte lines.
+
+\subsubsection{One member load, separated by mechanism}\label{appendix-92ff77d4dfdc-one-member-load-separated-by-mechanism}
+
+Assume active at offset zero, IEEE-754 32-bit float at offset four, object VA 0x12345000, valid alignment, and 4-KiB pages.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Member offset produces VA 0x12345004.
+\item
+  Split into VPN 0x12345 and offset 004.
+\item
+  TLB/page-table lookup supplies allowed PFN 0x5A7.
+\item
+  PA=0x5A7004; cache/memory supplies bytes.
+\item
+  With stated little-endian float representation, 00 00 80 3F corresponds to bits 3F800000 and float 1.0; \hyperref[appendix-343615f49ddf]{IEEE-754 floating point} develops why later.
+\end{enumerate}
+
+A TLB miss can walk valid tables without OS faulting. A nonresident valid page can fault, acquire backing, and resume. A forbidden access may fail. Real processors overlap this conceptual sequence.
+
+\subsubsection{Ownership and lifetime, not geography}\label{appendix-92ff77d4dfdc-ownership-and-lifetime-not-geography}
+
+A local vector object commonly occupies a frame; elements occupy its separate dynamic buffer. A copied span points to elements, not vector metadata. Returning that span after destroying the vector dangles it; reallocation can also invalidate views. Keeping an owner alive is necessary but not always sufficient.
+
+Static locals retain storage across calls; automatic const locals need not use read-only mappings; string literals have static storage and must not be modified. Old numeric addresses or remaining bytes do not extend lifetime.
+
+\subsubsection{Fault recovery and copy-on-write}\label{appendix-92ff77d4dfdc-fault-recovery-and-copy-on-write}
+
+Two mappings share frame F read-only. For a permitted private COW write, OS allocates F2, copies F, changes the writer's mapping to F2 with write permission, and restarts. Not every protection violation is repairable.
+
+\textbf{Diagnosis:} absurd decoded value→byte order; second array element misaligned→stride/tail padding; released vector span→lifetime; first-touch latency→fault/commitment; allocation fails amid holes→fragmentation; published file lost after crash→publication versus durability.
+
+\hyperref[01-foundations-i-ch011-m003---byte-order-layout-and-translation]{Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#M003 - Byte order, layout, and translation} · \href{../05-Engine-I/main.pdf\#nameddest=appendix-d52e4486f527}{Ownership and non-owning views (05-Engine-I, appendix-d52e4486f527)} · \hyperref[appendix-e89a8f290ef5]{Atomic publication and durability}
+
+\subsection{M004 - From fields to values and failure paths}\label{appendix-92ff77d4dfdc-m004---from-fields-to-values-and-failure-paths}
+
+\subsubsection{Encode / decode board trace}\label{appendix-92ff77d4dfdc-encode-decode-board-trace}
+
+For 10.625: integer 10→\texttt{1010}; fractional repeated doubling emits 1,0,1; normalize \texttt{1010.101} to \texttt{1.010101×2³}. Sign 0, stored exponent 130, fraction \texttt{0x2A0000}. OR contributions \texttt{0x00000000}, \texttt{0x41000000}, \texttt{0x002A0000} to obtain \texttt{0x412A0000}. Little-endian bytes are \texttt{00\ 00\ 2A\ 41}.
+
+For \texttt{0xC1540000}: sign contribution \texttt{0x80000000}, exponent contribution \texttt{0x41000000}, fraction \texttt{0x00540000}. Restore \texttt{1.10101₂}, value \(1+1/2+1/8+1/32=1.65625\); scale by 8 and negate → −13.25.
+
+\subsubsection{Boundary corpus and expected words}\label{appendix-92ff77d4dfdc-boundary-corpus-and-expected-words}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Word
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Expected class
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Exact finite value or meaning
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{00000000} & zero & positive zero \\
+\texttt{80000000} & zero & negative zero \\
+\texttt{00000001} & subnormal & \(2^{-149}\) \\
+\texttt{007FFFFF} & subnormal & \(2^{-126}-2^{-149}\) \\
+\texttt{00800000} & normal & \(2^{-126}\) \\
+\texttt{3F7FFFFF} & normal & \(1-2^{-24}\) \\
+\texttt{3F800000} & normal & 1 \\
+\texttt{3F800001} & normal & \(1+2^{-23}\) \\
+\texttt{7F7FFFFF} & normal & \((2-2^{-23})2^{127}\) \\
+\texttt{7F800000} & infinity & positive infinity \\
+\texttt{FF800000} & infinity & negative infinity \\
+\texttt{7FC00001} & quiet NaN & diagnostic raw payload; not a real value \\
+\texttt{7F800001} & signaling NaN & classify raw integer; do not use in arithmetic \\
+\end{longtable}
+}
+
+Largest finite upward nextafter gives infinity; do not label that difference a finite ULP step. Finite exact reconstruction must preserve zero sign, but generating a generic numerical NaN does not preserve the raw payload.
+
+\subsubsection{Rounding trace}\label{appendix-92ff77d4dfdc-rounding-trace}
+
+At toy precision three bits, 1.125 lies between retained integers 4 (\texttt{1.00}) and 5 (\texttt{1.01}): choose 4. At 1.375, choose integer 6 (\texttt{1.10}) over 5. Tail \texttt{1000…} gives G=1,R=0,T=0; retain even low bit, increment odd. Tail \texttt{1010…} gives G=1,R=0,T=1; increment regardless of retained parity.
+
+Actual binary32 tie above 1: exact double value \(1+2^{-24}\) lies midway between \texttt{3F800000} and \texttt{3F800001}. Strict nearest conversion chooses \texttt{3F800000}. Next tie \(1+3\cdot2^{-24}\) chooses \texttt{3F800002}. The lab forces runtime conversion and verifies both.
+
+\subsubsection{Two normalization failures are not the same}\label{appendix-92ff77d4dfdc-two-normalization-failures-are-not-the-same}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Input
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Intermediate trace
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Policy/mechanism
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\((10^{-8},0)\) & finite norm near \(10^{-8}\); norm ≤ float epsilon & absolute cutoff returns zero despite nonzero representability \\
+\((10^{20},10^{20})\) & component squares overflow → infinity; norm infinity; each finite component / infinity → zero & intermediate-range failure \\
+Same huge finite input, hypot & range-aware norm near \(1.4142\times10^{20}\) & finite norm; no unnecessary squared overflow \\
+\end{longtable}
+}
+
+These are source-formula reproductions, not live Kairo API tests.
+
+\subsubsection{Infinity exposes more than an equal-infinity edge case}\label{appendix-92ff77d4dfdc-infinity-exposes-more-than-an-equal-infinity-edge-case}
+
+For the supplied hybrid scalar formula, policy \(10\epsilon_{32}\):
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}llll@{}}
+\toprule\noalign{}
+Pair & Difference & Scale / allowed difference & Final result \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
++inf, +inf & NaN & inf / inf & false: NaN comparison \\
+1, +inf & inf & inf / inf & true: inf ≤ inf \\
++inf, −inf & inf & inf / inf & true: inf ≤ inf \\
+\end{longtable}
+}
+
+An exact-equality branch followed by a non-finite rejection branch makes an alternative policy explicit. For finite inputs, widened arithmetic and independently validated absolute/relative tolerances prevent accidental comparison overflow in the float-specific teaching implementation.
+
+The supplied matrix inversion excerpt asserts determinant magnitude \textgreater{} epsilon before its identity fallback. For \texttt{diag(1e-4f,1e-4f)}, the threshold fails; debug assertions may stop execution, whereas a build without that assertion may reach the fallback. Neither behavior establishes mathematical singularity.
+
+\subsubsection{Serialization policy trace}\label{appendix-92ff77d4dfdc-serialization-policy-trace}
+
+\texttt{1.0f}→raw \texttt{3F800000}→LE \texttt{00\ 00\ 80\ 3F}. Negative zero→\texttt{80000000}→\texttt{00\ 00\ 00\ 80}. A raw quiet-NaN word \texttt{7FC00001}→\texttt{01\ 00\ C0\ 7F}. These golden bytes are checked independently of round trips.
+
+Canonicalization at the raw-word level maps either zero to \texttt{00000000} and any NaN to chosen \texttt{7FC00000}; all other words remain unchanged. This avoids consuming a signaling NaN as a float but deliberately discards its payload/class distinction. No existing asset format was changed.
+
+\hyperref[01-foundations-i-ch011-m004---floating-point-fields-spacing-and-rounding]{Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#M004 - Floating-point fields, spacing, and rounding} · \hyperref[appendix-4e2236f53445-m004---binary-interchange-inspection-and-strict-rounding-laboratory]{Supplementary/Code Snippets\#M004 - Binary interchange inspection and strict rounding laboratory}
+
+\subsection{M005 - Rounding paths and update history}\label{appendix-92ff77d4dfdc-m005---rounding-paths-and-update-history}
+
+\subsubsection{Runtime witness sheet}\label{appendix-92ff77d4dfdc-runtime-witness-sheet}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Experiment under strict nearest arithmetic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Expected observation
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+binary32 0.1 & word 3DCCCCCD; exact rational 13421773/2\^{}27 \\
+binary64 0.1+0.2 versus 0.3 & words 3FD3333333333334 and 3FD3333333333333 \\
+1.5+0.15625 & align exponents by 3; result 1.65625 \\
+2\^{}24+1 & midpoint absorbed to 2\^{}24 \\
+2\^{}24+2 & next float, exactly 16777218 \\
+1753/1024−1751/1024 & exact 2\^{}-9 \\
+stored binary32 1.00000006−1 & exact 2\^{}-23, not desired 6e-8 \\
+sqrt(1e16+1)−sqrt(1e16) in double & zero after absorption/rounded roots \\
+reciprocal conjugate form & useful nonzero value near 5e-9 \\
+max float × 2 & infinity; overflow/inexact flags on tested host \\
+min normal × 0.5 & exact subnormal; no underflow/inexact on tested host \\
+min subnormal × 0.5 & zero tie; underflow/inexact on tested host \\
+FMA witness & separate 0, fused 2\^{}-46 \\
+1e20,−1e20,3.14 regrouped & 3.14f versus zero \\
+distributive witness & 1192.0928955078125 versus 1024 \\
+\end{longtable}
+}
+
+The integer remainder loop for 1/10 emits 00011, then returns to remainder numerator 2, proving periodicity without using an already-approximate decimal float as the conversion reference.
+
+\subsubsection{Kahan trace at binary32 precision}\label{appendix-92ff77d4dfdc-kahan-trace-at-binary32-precision}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}llll@{}}
+\toprule\noalign{}
+Input & Adjusted y & New sum & Compensation \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+2\^{}24 & 2\^{}24 & 2\^{}24 & 0 \\
+1 & 1 & 2\^{}24 & −1 \\
+1 & 2 & 2\^{}24+2 & 0 \\
+\end{longtable}
+}
+
+Naive loses both ones in this order. Kahan preserves this particular aggregate; it is not a universal order-independent sum. Pairwise on {[}2\^{}24,1,1{]} splits one item from two, adds the ones first, and also reaches 2\^{}24+2.
+
+\subsubsection{Precision lost on input cannot be recovered later}\label{appendix-92ff77d4dfdc-precision-lost-on-input-cannot-be-recovered-later}
+
+Intended component 100000001 becomes binary32 100000000. Promoting that stored float gives exact binary64 100000000, not the intended integer. Directly converting the original integer to double preserves it. The cross-product example must distinguish input loss from later multiplication/subtraction error.
+
+\subsubsection{A minimal repeated-storage witness}\label{appendix-92ff77d4dfdc-a-minimal-repeated-storage-witness}
+
+Two values \(0.5\) and \(0.5+2^{-24}\) average to exact midpoint \(0.5+2^{-25}\). Float persistent state rounds that mean to \(0.5\) under nearest-even. Updating with a third value \(0.5+2^{-24}\) then gives a different rounded float than preserving the exact/wider mean through all three samples. Double intermediates in the next update cannot recover the midpoint already discarded. These samples stay inside the laboratory's normalized interval \([-1,1]\).
+
+\subsubsection{Capped weighted mean trace}\label{appendix-92ff77d4dfdc-capped-weighted-mean-trace}
+
+Cap=2, all observation weights=1:
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Step
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Sequence A sample
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+A distance/weight
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Sequence B sample
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+B distance/weight
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1 & 0 & 0 / 1 & 0 & 0 / 1 \\
+2 & 1 & 0.5 / 2 & −1 & −0.5 / 2 \\
+3 & −1 & −0.25 / 2 & 1 & +0.25 / 2 \\
+\end{longtable}
+}
+
+These exact results differ by 0.5 with no arithmetic approximation needed. Source-reported Maveb state narrowing is an additional mechanism; this is a toy formula reproduction, not a live volume reconstruction test.
+
+\subsubsection{Discrete decisions}\label{appendix-92ff77d4dfdc-discrete-decisions}
+
+nextafter(2.5,−infinity) rounds to pixel 2 via llround; nextafter(2.5,+infinity) rounds to 3. The exact midpoint rounds to 3 by the halfway-away-from-zero rule. A small perturbation crossing this boundary changes which observation is sampled.
+
+A scalar field value changing sign near zero can change a surface-extraction case. Scalar RMS error, sign-change count, vertex displacement and topology measure different consequences; none was measured on real reconstruction data in this merge.
+
+\hyperref[appendix-4e2236f53445-m005---strict-arithmetic-and-state-update-laboratory]{Supplementary/Code Snippets\#M005 - Strict arithmetic and state-update laboratory} · \hyperref[01-foundations-i-ch011-m005---representation-error-cancellation-and-rounding-graphs]{Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#M005 - Representation error, cancellation, and rounding graphs}
+
+\subsection{Representation choice - One quantity through several contracts}\label{appendix-92ff77d4dfdc-representation-choice---one-quantity-through-several-contracts}
+
+\subsubsection{Exact choices and irreversible approximations}\label{appendix-92ff77d4dfdc-exact-choices-and-irreversible-approximations}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Quantity/contract
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Stored representation
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Reconstructed result
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+What this demonstrates
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Signed32,F16, value3.25 & raw212992, word00034000 & exactly3.25 & fixed scale is part of interpretation \\
+Signed32,F8, values1.5 and2.25 & raw384 and576; wide product221184 & raw864, value3.375 & product scale must be reduced from256² \\
+INT4 group{[}-7,-3.2,0,2.9,6.8{]},s=1 & levels{[}-7,-3,0,3,7{]} & same levels at scale1 & quantization is lossy before packing \\
+Offset nibble codes & {[}1,5,8,11,15{]} & unpack identical codes & codes are not two's-complement nibbles \\
+Low-first packed bytes & 51 B8 0F & five codes, unused high nibble zero & count is needed to distinguish padding \\
+UNORM8 code128 & 80 hexadecimal & 128/255 & normalized midpoint is not exactly0.5 \\
+Binary16 value1.5 & 3E00 & exactly1.5 & hidden one and exponent bias reused \\
+BF16 tie input3F808000 & 3F80 & 1.0 & finite nearest-even conversion \\
+BF16 next tie3F818000 & 3F82 & 1.015625 & even choice can round upward \\
+\end{longtable}
+}
+
+\subsubsection{Fixed negative rounding trace}\label{appendix-92ff77d4dfdc-fixed-negative-rounding-trace}
+
+At divisor2, numerator−5 has magnitude5=2·2+1. The remainder is exactly half and quotient2 is even; nearest-even gives−2. Numerator−7 gives magnitude7=3·2+1, odd quotient3; increment to4 and restore sign, giving−4. Integer division−7/2 instead gives−3, and arithmetic right shift gives−4. Agreement on one example does not prove identical policies.
+
+\subsubsection{Reconstruct the centroid row}\label{appendix-92ff77d4dfdc-reconstruct-the-centroid-row}
+
+Input{[}-1,-3,2,4{]} gives negative sum−4/count2 and positive sum6/count2. Centroids are−2 and3. The sign labels select{[}-2,-2,3,3{]}. Reference-minus-reconstruction errors{[}1,−1,−1,1{]} square to four ones, so RMSE=1; absolute errors also give MAE=1 and max1.
+
+\subsubsection{The byte image keeps meaning outside the bytes}\label{appendix-92ff77d4dfdc-the-byte-image-keeps-meaning-outside-the-bytes}
+
+The continuous story displays every header/payload offset. The golden total is52 bytes:28 header plus24 data. Decode the image at byte-buffer offset1 using a subspan: the schema's offset zero moves with the subspan; no typed pointer alignment is assumed.
+
+Change byte at file offset1E from80 to00. Payload word3F800000 becomes3F000000; value1 becomes0.5. Shape, magic, version and total size remain valid. The declared CRC over complete original bytes changes; parsing success alone did not protect the numeric data.
+
+Raw image words80000000,7F800000,7FC00001,7F800001 round-trip through the word codec unchanged. This tests raw bytes, not signaling-NaN arithmetic or payload-preserving float transport.
+
+\subsubsection{Three failure paths that must not be confused}\label{appendix-92ff77d4dfdc-three-failure-paths-that-must-not-be-confused}
+
+\begin{itemize}
+\tightlist
+\item
+  A code outside0--15 fails the nibble contract before packing.
+\item
+  A huge claimed shape fails checked size arithmetic/resource policy before allocation.
+\item
+  A same-size changed payload can pass structure checks while failing an independent integrity comparison.
+\end{itemize}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#The\%20complete\%20journey\%20-\%20Encode,\%20compute,\%20store,\%20and\%20investigate}{Teach the complete journey} · \hyperref[appendix-4e2236f53445-representation-codecs-and-bounded-file-laboratory]{Run the regressions}
+
+\subsection{Received completion through Part 1100}\label{appendix-92ff77d4dfdc-received-completion-through-part-1100}
+
+Follow the numerical summation/root/interpolation witnesses in \hyperref[appendix-cb5af353ef77-numerical-reliability-figures-and-their-explanations]{the numerical figure index}, and the frame/depth/stereo/optics traces in \href{../02-Foundations-II/main.pdf\#nameddest=appendix-a2b71a18f5a2-figures-and-their-full-explanations}{the camera figure index (02-Foundations-II, appendix-a2b71a18f5a2-figures-and-their-full-explanations)}. Essential trace explanations remain in the continuous books.

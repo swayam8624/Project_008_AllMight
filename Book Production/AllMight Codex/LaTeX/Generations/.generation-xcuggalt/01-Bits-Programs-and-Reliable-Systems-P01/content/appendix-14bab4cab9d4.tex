@@ -1,0 +1,60 @@
+\hypertarget{appendix-14bab4cab9d4}{}\label{referencestart:appendix-14bab4cab9d4}
+\section{ULP and representable spacing}\label{appendix-14bab4cab9d4-ulp-and-representable-spacing}
+
+\hypertarget{appendix-14bab4cab9d4-ulp-and-representable-spacing}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C004 · \textbf{Latest development:} C004
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-14bab4cab9d4-definition-and-mechanism}
+
+\hypertarget{appendix-14bab4cab9d4-definition-and-mechanism}{}
+
+A unit in the last place describes local spacing. Inside normal binade {[}2\textsuperscript{e,2}(e+1)), p-bit precision gives spacing 2\^{}(e-(p-1)). Immediately above 1 the binary32 gap is twice the gap below it.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-14bab4cab9d4-prerequisites}
+
+\hypertarget{appendix-14bab4cab9d4-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-390ea641da54]{Machine epsilon} --- Spacing near one supplies a reference precision scale, not a universal local gap or tolerance.
+\item
+  \hyperref[appendix-2fae058c82e1]{Exponent bias} --- Stored exponents must be translated to effective powers before reconstructing value or spacing.
+\item
+  \hyperref[appendix-00a6e044c437]{Subnormals and gradual underflow} --- Constant tiny spacing and loss of relative precision define boundary and environment behavior.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-14bab4cab9d4-used-by}
+
+\hypertarget{appendix-14bab4cab9d4-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-614afe1de592]{Rounding to nearest ties to even} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-bc44f7b42f42]{Unit roundoff} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-deca299ae4b8]{ULP distance policies} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-0ec599f8ba27]{Numerical tolerance policies} --- uses this mechanism in its explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-14bab4cab9d4-recall-and-next-depth}
+
+\hypertarget{appendix-14bab4cab9d4-recall-and-next-depth}{}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} State a direction/boundary convention; infinity is not a finite next-neighbor gap.
+
+\subsection{Source and navigation}\label{appendix-14bab4cab9d4-source-and-navigation}
+
+\hypertarget{appendix-14bab4cab9d4-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

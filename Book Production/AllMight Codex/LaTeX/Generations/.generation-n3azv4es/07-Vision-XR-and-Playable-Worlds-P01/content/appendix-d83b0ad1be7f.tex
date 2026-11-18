@@ -1,0 +1,62 @@
+\hypertarget{appendix-d83b0ad1be7f}{}\label{referencestart:appendix-d83b0ad1be7f}
+\section{A posteriori error bounds for contractive iteration}\label{appendix-d83b0ad1be7f-a-posteriori-error-bounds-for-contractive-iteration}
+
+\hypertarget{appendix-d83b0ad1be7f-a-posteriori-error-bounds-for-contractive-iteration}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-d83b0ad1be7f-definition-and-mechanism}
+
+\hypertarget{appendix-d83b0ad1be7f-definition-and-mechanism}{}
+
+For a fixed-point iteration \(x_{n+1}=G(x_n)\), suppose \(G\) is a contraction with Lipschitz constant \(q<1\) on a region containing the iterates and its fixed point. Then the remaining error is bounded by the next step divided by \(1-q\): \(\|x^*-x_n\|\le\|x_{n+1}-x_n\|/(1-q)\). The assumption is essential; a small step alone does not prove convergence because stagnation or a failed update can also make changes tiny. In implementation, report the contraction evidence or a suitable residual bound and keep failure distinct from success. This turns an observed update into a conditional, checkable estimate rather than a guess. If \(q=1/2\) and the latest step is \(10^{-6}\), this bound is \(2\times10^{-6}\), conditional on the contraction proof.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-d83b0ad1be7f-prerequisites}
+
+\hypertarget{appendix-d83b0ad1be7f-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-a7fbaf6d1b1c}{Forward and backward error (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Forward and backward error)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-8f6a01f284a7}{Conditioning and singularity (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Conditioning and singularity)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-d83b0ad1be7f-used-by}
+
+\hypertarget{appendix-d83b0ad1be7f-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-f63eb850796d]{Bracketed and open root solvers}
+\item
+  \hyperref[appendix-31b8c295e05f]{Numerical error budgets}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-d83b0ad1be7f-full-teaching-explanation}
+
+\hypertarget{appendix-d83b0ad1be7f-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#02-foundations-ii-ch028-finding-roots-with-guarantees-and-convergence-checks}{Finding roots with guarantees and convergence checks (Mathematics for Visual Computing, Part 2, Ch. 12)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-d83b0ad1be7f-source-coverage}
+
+\hypertarget{appendix-d83b0ad1be7f-source-coverage}{}
+
+Supplied lesson parts: 988.
+
+\subsection{Future keywords}\label{appendix-d83b0ad1be7f-future-keywords}
+
+\hypertarget{appendix-d83b0ad1be7f-future-keywords}{}
+
+fixed-point iteration, contraction factor, residual certificate

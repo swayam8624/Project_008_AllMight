@@ -1,0 +1,45 @@
+\hypertarget{appendix-d580b422240f}{}
+\section*{Stable probability normalization and log-sum-exp}
+\section{Stable probability normalization and log-sum-exp}\label{stable-probability-normalization-and-log-sum-exp}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+To normalize nonnegative weights, divide each by their sum; direct summation can overflow even when the normalized probabilities are representable. Scale by the largest weight before summing. For log weights \(a_i\), compute \(m+\log\sum_i e^{a_i-m}\), where \(m=\max_i a_i\). Subtracting the maximum prevents exponential overflow, and the result can be used to form softmax probabilities. This assumes at least one finite, valid weight and requires an explicit policy for all-zero, negative, NaN, or infinite inputs. Underflow of very small normalized probabilities is a separate concern from overflow; do not silently equate zero after underflow with mathematically impossible. For log weights \((1000,1001,1000)\), subtracting \(1001\) keeps exponentials bounded while leaving the normalized probabilities unchanged.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)}
+\item
+  \href{}{Unit roundoff (01-Foundations-I, appendix-bc44f7b42f42)}
+\item
+  \href{}{Stable reformulation (01-Foundations-I, appendix-d7f8ba961670)}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Monte Carlo rendering estimators and variance (04-Visual-Computing-II, appendix-031e02bf28af)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Keep\%20probability\%20weights\%20stable\%20before\%20sampling}{Keep probability weights stable before sampling}
+\end{itemize}
+
+\subsection{Source coverage}\label{source-coverage}
+
+Supplied lesson parts: 993--994.
+
+\subsection{Future keywords}\label{future-keywords}
+
+softmax, partition function, log-domain accumulation

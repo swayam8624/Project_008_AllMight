@@ -8,7 +8,7 @@ Real projections carry scale, spacing and incidence constraints beyond an ideali
 
 **Recall question:** Which geometric quantities remain invariant under projection, and which do not?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 76841–77558; source-span SHA256 f5532dbf3c06d22c654e798ec804f292df845606be733657b4f428786dcd6f44. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 77843–78560; source-span SHA256 f5532dbf3c06d22c654e798ec804f292df845606be733657b4f428786dcd6f44. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Real projections add scale, spacing, and incidence geometry

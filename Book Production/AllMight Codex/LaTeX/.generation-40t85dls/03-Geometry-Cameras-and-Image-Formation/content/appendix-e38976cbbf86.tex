@@ -1,0 +1,82 @@
+\hypertarget{appendix-e38976cbbf86}{}\label{referencestart:appendix-e38976cbbf86}
+\section{Mesh topology and homology}\label{appendix-e38976cbbf86-mesh-topology-and-homology}
+
+\hypertarget{appendix-e38976cbbf86-mesh-topology-and-homology}{}
+
+Mesh \textbf{geometry} concerns positions, lengths, angles and curvature. Mesh \textbf{topology} concerns connectivity: which vertices belong to edges, which edges bound faces, which faces meet, where boundaries exist, and how many connected/loop/void structures the complex contains.
+
+Two meshes can have very different coordinates and the same topology. Two triangles can overlap geometrically without being topologically adjacent if they do not share vertex/edge identity.
+
+\subsection{Simplicial-chain view}\label{appendix-e38976cbbf86-simplicial-chain-view}
+
+\hypertarget{appendix-e38976cbbf86-simplicial-chain-view}{}
+
+For a triangle mesh, vertices are 0-simplices, edges are 1-simplices and faces are 2-simplices. A chain is a formal linear combination of simplices.
+
+Boundary operators satisfy
+
+\[
+\partial_k\partial_{k+1}=0,
+\]
+
+the algebraic statement that ``the boundary of a boundary is zero.''
+
+Cycles are chains whose boundary vanishes. Boundaries are cycles created as the boundary of a higher-dimensional chain. Homology quotients cycles by boundaries:
+
+\[
+H_k=Z_k/B_k.
+\]
+
+The Betti number \(\beta_k=\dim H_k\) counts independent homology classes over the chosen coefficient field (for example, \(\mathbb{Z}_2\)); \(Z_k\) is the kernel of the \(k\)-boundary map and \(B_k\) is the image of the \((k+1)\)-boundary map.
+
+For a connected orientable closed surface, \(\beta_0=1\); \(\beta_1\) counts independent one-dimensional homology classes (for genus \(g\), \(\beta_1=2g\)); and \(\beta_2=1\) represents the surface's fundamental two-dimensional class. With a boundary, \(\beta_2\) need not be one.
+
+\subsection{Euler characteristic}\label{appendix-e38976cbbf86-euler-characteristic}
+
+\hypertarget{appendix-e38976cbbf86-euler-characteristic}{}
+
+For a finite triangle complex with vertex, edge and face counts \(V,E,F\),
+
+\[
+\chi=V-E+F.
+\]
+
+For a connected closed orientable surface of genus \(g\),
+
+\[
+\chi=2-2g.
+\]
+
+But equal Euler characteristic alone does not prove arbitrary complexes are topologically equivalent. It is a checksum, not a complete classifier.
+
+\subsection{Mesh diagnostics}\label{appendix-e38976cbbf86-mesh-diagnostics}
+
+\hypertarget{appendix-e38976cbbf86-mesh-diagnostics}{}
+
+Topology checks used by a geometry pipeline should include:
+
+\begin{itemize}
+\tightlist
+\item
+  boundary-edge count;
+\item
+  non-manifold edges with more than two incident faces;
+\item
+  inconsistent face orientation;
+\item
+  disconnected components;
+\item
+  vertex fan manifoldness;
+\item
+  isolated vertices/edges;
+\item
+  duplicate faces;
+\item
+  Euler characteristic and, where appropriate, homology.
+\end{itemize}
+
+tools/labs/mesh\_topology\_lab.cpp now gives an executable layer for unique edges, half-edge twins, boundary/non-manifold classification and Euler characteristic.
+
+Read the connected explanation in \hyperref[03-visual-computing-i-ch002-from-a-scanned-triangle-soup-to-a-mesh-we-can-trust]{Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#From a scanned triangle soup to a mesh we can trust}.
+
+Related: \hyperref[appendix-faac749c9cdd]{Half-edge topology invariants}, \hyperref[appendix-e4d8ed8d6787]{Persistent homology}, \hyperref[appendix-89db9fe1bc8a]{QEM edge collapse and validity}.

@@ -1,0 +1,56 @@
+\hypertarget{appendix-c2a9ad1e2b49}{}\label{referencestart:appendix-c2a9ad1e2b49}
+\section{Process isolation and page permissions}\label{appendix-c2a9ad1e2b49-process-isolation-and-page-permissions}
+
+\hypertarget{appendix-c2a9ad1e2b49-process-isolation-and-page-permissions}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-c2a9ad1e2b49-definition-and-mechanism}
+
+\hypertarget{appendix-c2a9ad1e2b49-definition-and-mechanism}{}
+
+An address-space mapping context determines which physical frame a virtual number names and whether read/write/execute access is permitted. Two processes may use VA 0x400000 for different frames; shared mappings can deliberately use one frame. Permission checks belong to mapping state, not to the apparent numerical validity of a pointer.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-c2a9ad1e2b49-prerequisites}
+
+\hypertarget{appendix-c2a9ad1e2b49-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-18ee4f913c3c]{Addresses and virtual memory} --- Mappings give numeric locations their process-specific storage identity.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-c2a9ad1e2b49-used-by}
+
+\hypertarget{appendix-c2a9ad1e2b49-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-01e5905165c4]{Page tables and MMU} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-b081b7abe193]{Call stack and stack frames} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-5f9e5e2f0a5e]{Read-only data and code} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-78cb248c8355]{ASLR} --- uses this mechanism as stated in its prerequisites.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-c2a9ad1e2b49-recall-and-next-depth}
+
+\hypertarget{appendix-c2a9ad1e2b49-recall-and-next-depth}{}
+
+Give private and deliberately shared mapping examples.
+
+\textbf{Pending:} Kernel/user isolation and architecture-specific protection.
+
+\subsection{Source and navigation}\label{appendix-c2a9ad1e2b49-source-and-navigation}
+
+\hypertarget{appendix-c2a9ad1e2b49-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

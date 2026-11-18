@@ -1,0 +1,44 @@
+\hypertarget{appendix-0976e86e5b9f}{}\label{referencestart:appendix-0976e86e5b9f}
+\section{Off-axis stereo projection and disparity}\label{appendix-0976e86e5b9f-off-axis-stereo-projection-and-disparity}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 11 · \textbf{Latest development:} Phase 11
+
+\subsection{Definition and mechanism}\label{appendix-0976e86e5b9f-definition-and-mechanism}
+
+Stereo cameras use two eye centres separated by a baseline, while each projection frustum is shifted so a chosen zero-parallax plane aligns in the images. Parallel eye orientations with asymmetric frusta avoid the vertical mismatch and discomfort often introduced by toe-in cameras. For rectified pinhole cameras, disparity is approximately \(\Delta x=f_xB/Z\), so inferred depth is \(Z=f_xB/\Delta x\) under the calibration and rectification assumptions. Depth uncertainty grows roughly with \(Z^2\) for fixed pixel disparity error. Distinguish interpupillary distance from lens and display-centre spacing; the rendered baseline is an optical/comfort design decision. Use consistent pixel units for focal length, baseline, and disparity before computing metric depth.
+
+\subsection{Prerequisites}\label{appendix-0976e86e5b9f-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=appendix-c4e98b6e4001}{Stereo correspondence and epipolar geometry (Geometry, Cameras, and Image Formation, Reference notes: Stereo correspondence and epipolar geometry)}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-3ee9861904d5}{Camera calibration and bundle adjustment (Light Transport and Image Synthesis, Reference notes: Camera calibration and bundle adjustment)}
+\item
+  \hyperref[appendix-cac01ebeeb11]{Axial depth and Euclidean range}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-0976e86e5b9f-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  No downstream concept node is added in this stage.
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-0976e86e5b9f-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch035-build-projection-and-stereo-geometry-around-real-camera-baselines}{Build projection and stereo geometry around real camera baselines (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 4)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-0976e86e5b9f-source-coverage}
+
+Supplied lesson parts: 1084--1088.
+
+\subsection{Future keywords}\label{appendix-0976e86e5b9f-future-keywords}
+
+zero-parallax plane, baseline, disparity uncertainty

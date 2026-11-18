@@ -1,0 +1,49 @@
+\hypertarget{appendix-10308c3d753e}{}\label{referencestart:appendix-10308c3d753e}
+\section{Sampling support and missing strata}\label{appendix-10308c3d753e-sampling-support-and-missing-strata}
+
+\hypertarget{appendix-10308c3d753e-sampling-support-and-missing-strata}{}
+
+The \textbf{support} of a sampling distribution is the set of outcomes it can generate with nonzero probability. Importance sampling can change how often regions are visited, but it cannot estimate a nonzero contribution from a region that the estimator never samples unless another technique covers that region.
+
+For an integral
+
+\[
+I=\int_D f(x)\,dx,
+\]
+
+an ordinary importance estimator using density \(p(x)\) is
+
+\[
+\hat I=\frac1N\sum_{i=1}^N\frac{f(X_i)}{p(X_i)},
+\qquad X_i\sim p.
+\]
+
+This requires \(p(x)>0\) wherever \(f(x)\) contributes to the target integral, up to measure-zero exceptions.
+
+If a region has nonzero integral but \(p=0\) there, taking more samples from the existing support cannot repair the missing contribution. The estimator converges to the wrong target.
+
+\subsection{Stratification}\label{appendix-10308c3d753e-stratification}
+
+\hypertarget{appendix-10308c3d753e-stratification}{}
+
+Partition domain \(D\) into strata \(D_k\). A correct stratified estimator accounts for each stratum's measure/probability. If a 3×3 pixel partition has nine equal cells but the algorithm always samples only the first five and treats their mean as the full-pixel mean, it has changed the integration domain.
+
+Randomly selecting strata with the appropriate selection probability can remain unbiased; permanently omitting fixed strata cannot.
+
+\subsection{MIS support}\label{appendix-10308c3d753e-mis-support}
+
+\hypertarget{appendix-10308c3d753e-mis-support}{}
+
+Multiple importance sampling can repair a weak proposal when another technique covers the missing region and the combined estimator uses compatible PDFs. The PDFs must include discrete technique/light selection probabilities as well as continuous densities.
+
+\subsection{Debugging}\label{appendix-10308c3d753e-debugging}
+
+\hypertarget{appendix-10308c3d753e-debugging}{}
+
+Visualize sample positions and build a support occupancy histogram. Many ``mysterious bias'' bugs become obvious when entire regions are empty.
+
+For image-space algorithms, also test edges/corners of the reconstruction filter, not only the pixel center.
+
+Teach and reconstruct: \hyperref[03-visual-computing-i-ch007-a-missing-region-cannot-be-repaired-by-taking-more-samples-there]{Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#A missing region cannot be repaired by taking more samples there}.
+
+Related: \hyperref[appendix-ca8898faf1a6]{Multiple importance sampling}, \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-1c5e85693a06}{Latin-hypercube sampling (Vision, XR, and Playable Worlds, Part 1, Reference notes: Latin-hypercube sampling)}, \href{../07-Vision-XR-and-Playable-Worlds-P02/main.pdf\#nameddest=appendix-4192b2bdd21e}{Antialiasing and sample allocation (Vision, XR, and Playable Worlds, Part 2, Reference notes: Antialiasing and sample allocation)}.

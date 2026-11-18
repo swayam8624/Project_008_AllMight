@@ -8,7 +8,7 @@ Many projected kernels must be assigned to tiles, ordered and composited efficie
 
 **Recall question:** Why does ordering matter when overlapping kernels are composited?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 87885–91348; source-span SHA256 794c6cd748226737828a41050186e0210a55bc768b09acdd8dfc53183d2d8c9a. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 88887–92691; source-span SHA256 090c16dab35a5569d2cd017f4eb5d7b5860f0b4a52c31d2b469dc457111c4241. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Rasterize kernels at scale and connect their identities
@@ -3474,6 +3474,347 @@ $$
 
 ---
 
+
+<!-- Book-completion teaching addition 63df6798f34f57db -->
+
+<!-- Book-completion teaching addition 2555b1c743cf832a -->
+
+## Give captured Gaussians stable world identity
+
+A splat renderer answers an image question: which color and opacity does this primitive contribute at a pixel? Editing a captured scene asks a different question: which persistent world element does this primitive represent, and which physical variables are allowed to move it? These representations overlap, but they are not interchangeable. The original 3D Gaussian Splatting work optimizes anisotropic primitives for view synthesis and rendering; the entity and motion contract below is an explicit engine extension, not a property guaranteed by a trained PLY file. [The 3D Gaussian Splatting paper](https://arxiv.org/abs/2308.04079)
+
+Keep identity separate from storage order. Let each Gaussian carry an immutable identifier $g_i=(n_i,\ell_i)$, where $n_i$ is a namespace or asset identifier and $\ell_i$ is a local identifier. The current vector index is only a temporary address. Sorting, compaction, filtering, or cloning may change that address; none of those operations may silently change the identity of an existing record. A lookup table maps $g_i$ to the current index and is rebuilt after a reorder. A newly cloned primitive receives a new identifier and records its parent ID; it does not reuse the parent's ID.
+
+An editable scene needs a second relation from Gaussian IDs to semantic entities and physical degrees of freedom. Represent it as a versioned association table. For Gaussian $i$ and entity or node $j$, let $w_{ij}$ be the authored influence weight. For a Gaussian fully assigned to one rigid object, one weight is $1$. For a soft boundary, several weights may be nonzero. Within one declared support set, require
+
+$$
+w_{ij}\ge 0,\qquad \sum_j w_{ij}=1.
+$$
+
+Normalization is necessary to reproduce a common translation. Reproducing a complete affine map also requires the rest-center reconstruction below, or an explicitly retained local offset. It does not prove that the association is correct: confidence, source, and an unassigned state must remain explicit. Do not turn a low-confidence semantic guess into a collider or a destructive edit automatically.
+
+First consider weights with **linear precision**: the support positions reproduce the actual learned center, rather than merely averaging some nearby nodes. With associated rest positions $x_j$, this means
+
+$$
+\mu_i=\sum_jw_{ij}x_j.
+$$
+
+If every support point receives the same affine map $x'_j=Ax_j+b$, then
+
+$$
+\mu'_i=\sum_jw_{ij}(Ax_j+b)
+=A\sum_jw_{ij}x_j+b\sum_jw_{ij}
+=A\mu_i+b.
+$$
+
+The last equality uses $\sum_jw_{ij}=1$. This is the affine-reproduction property: the weighted correspondence follows any shared translation, rotation, scale, or shear exactly. If the weights do not sum to one, even a common translation is scaled incorrectly.
+
+A rigid attachment is not the same as replacing every center by the body's center of mass. For body center $x_j$ and rotation $R_j$, retain each splat's own local offset $r_i=R_j^T(\mu_i-x_j)$. Its new center is $x'_j+R'_jr_i$. A one-weight row says which body owns it; that row alone does not encode its distinct location.
+
+For general support weights that do not reconstruct the learned center, retain $d_i=\mu_i-\sum_jw_{ij}x_j$. Given a declared local affine map $A_i$, use $\mu'_i=\sum_jw_{ij}x'_j+A_id_i$. Under a common edit $x'_j=Ax_j+b$ and $A_i=A$, this still yields $A\mu_i+b$. Dropping $d_i$ would cause an immediate jump even before any edit. An empty or unreliable association remains explicitly unassigned; it should not be repaired by inventing uniform weights.
+
+A Gaussian's covariance describes its spatial footprint. Under the same local linear map $A$, transform it by
+
+$$
+\Sigma'_i=A\Sigma_iA^T.
+$$
+
+To derive this, write a centered sample as $\delta=x-\mu$ with covariance $E[\delta\delta^T]=\Sigma$. The transformed centered sample is $\delta'=A\delta$; therefore
+
+$$
+E[\delta'\delta'^T]=E[A\delta\delta^TA^T]=A\Sigma A^T.
+$$
+
+Translation cancels from covariance. A nonsingular $A$ preserves positive definiteness. If $A$ collapses an axis, $\Sigma'$ becomes singular and cannot be inverted to form a conic. A production edit must then reject the update or apply a separately declared minimum-scale policy; silently inverting a singular covariance is not a valid repair. For a pure translation, $A=I$, so the mean moves and the covariance stays unchanged. For a rigid rotation $R$, the covariance rotates as $R\Sigma R^T$. For a uniform scale $s$, it becomes $s^2\Sigma$.
+
+For a deforming support, estimate a local map only when the neighborhood contains enough independent motion. With centered rest offsets $r_j=x_j-\mu$ and changed offsets $r'_j=x'_j-\mu'$, a weighted least-squares map minimizes $\sum_jw_{ij}\|r'_j-Ar_j\|^2$. If the weighted rest covariance $M=\sum_jw_{ij}r_jr_j^T$ is nonsingular, the solution is
+
+$$
+A_i=\left(\sum_jw_{ij}r'_jr_j^T\right)M^{-1}.
+$$
+
+This formula follows by setting the matrix derivative of the squared residual to zero. Solve the resulting linear system with a rank-aware method rather than forming the inverse explicitly in numerical code. It supplies a local affine approximation over this primitive; spatially varying influences or a strongly curved deformation are not represented exactly by one matrix. If $M$ is rank deficient, the neighborhood does not determine a full 3D affine map; use a lower-dimensional model, add a documented regularizer, or reject the deformation. The equation defines a local approximation, not a guarantee that arbitrary cloth folds or topology changes are represented faithfully.
+
+### Worked edit: a supported Gaussian under stretch and translation
+
+Two support nodes have rest positions $x_1=(0,0)^T$ and $x_2=(4,2)^T$. A Gaussian uses $w_1=w_2=0.5$, so its mean is
+
+$$
+\mu=0.5(0,0)+0.5(4,2)=(2,1).
+$$
+
+Apply $A=\begin{bmatrix}2&0\\0&1\end{bmatrix}$ and $b=(1,-1)^T$. The nodes become $x'_1=(1,-1)$ and $x'_2=(9,1)$. The weighted mean is $(5,0)$, which agrees with $A\mu+b=(5,0)$. Now let the original covariance be $\Sigma=\begin{bmatrix}4&1\\1&2\end{bmatrix}$. Then
+
+$$
+\Sigma'=A\Sigma A^T=
+\begin{bmatrix}2&0\\0&1\end{bmatrix}
+\begin{bmatrix}4&1\\1&2\end{bmatrix}
+\begin{bmatrix}2&0\\0&1\end{bmatrix}
+=
+\begin{bmatrix}16&2\\2&2\end{bmatrix}.
+$$
+
+Here $A$ is supplied as the edit operator; two support nodes alone would not determine an unrestricted two-dimensional affine fit. The determinant changes from $7$ to $28$, matching $\det(A)^2\det(\Sigma)=4\cdot7$. Translation changed the center but contributed nothing to the covariance. A student can check the result by multiplying the matrices and confirming $\det(\Sigma')>0$.
+
+## Couple edits in both directions and keep their proof
+
+An appearance edit and a physical edit are separate operations with an explicit bridge between them. In one direction, a semantic selection resolves stable entity IDs to stable Gaussian IDs, then maps those Gaussian IDs through the versioned support table to affected physical DOFs. In the other direction, a committed physical state computes the local motion map for each supported Gaussian, updates its mean and covariance, and rebuilds projected bounds and tile references before rendering. A translation need not change an object-attached appearance function in this model. For spherical-harmonic (SH) appearance attached to a frame $F$, evaluate its coefficients using local viewing direction $F^Td_{world}$, and rotate $F$ with the object. A renderer that instead stores world-direction coefficients must explicitly choose whether to preserve that world-space function or rotate its basis to follow the object. Deformation and relighting do not have an automatic appearance solution. Keep the appearance frame separate from the covariance eigenbasis: repeated eigenvalues and eigenvector sign choices can change that basis without changing the Gaussian shape.
+
+To store a general deformed covariance back as rotation and scales, diagonalize the symmetric $\Sigma'=Q\Lambda Q^T$, require positive eigenvalues, and use scales $\sqrt{\lambda_j}$. Choose eigenvector signs so $\det Q=+1$ before converting to a quaternion. At repeated eigenvalues, orientation is not unique; preserve continuity or retain the full covariance rather than interpreting an arbitrary eigenvector flip as physical rotation. Covariance push-forward changes shape, not a conserved physical mass. If opacity is an appearance peak it may be held fixed by policy; preserving an extinction or density integral needs a separately defined field and Jacobian rule. Do not silently assume either policy from $A\Sigma A^T$.
+
+A useful edit transaction has a before state, a proposed state, and a commit decision. Store the edit ID, parent scene revision, selected stable IDs, association-table revision, operator and parameters, before/after state hashes, affected Gaussian IDs, and validation results. Write the candidate state to a separate revision. Validate finite means, normalized orientation, positive-definite covariance, valid support weights, and stable ID uniqueness before publication. Render the candidate from the same cameras used for the before state. Compare the intended region and the declared unaffected region separately; include color, depth and dominant-ID checks where available. Commit the new revision only if all declared conditions pass. Otherwise retain the prior revision and the failed report. A provenance record makes a result repeatable; it does not make the physical interpretation true by itself.
+
+### Reconstruction exercise with solution
+
+A selected rigid cabinet has three associated Gaussians with stable IDs 51, 64 and 92. The cabinet is translated by $b=(0,2,0)$ with $A=I$. Their support weights each sum to one. For Gaussian 64, the old mean is $(3,1,0)$ and covariance is
+
+$$
+\Sigma=\begin{bmatrix}4&1&0\\1&2&0\\0&0&0.25\end{bmatrix}.
+$$
+
+The renderer's current vector indices for IDs 51, 64 and 92 are $(8,2,11)$, but a depth sort changes them to $(5,10,1)$. State the new mean, covariance, selected identity after sorting, and the minimum checks before committing.
+
+**Solution.** Translation gives $\mu' = \mu+b=(3,3,0)$. Since $A=I$, $\Sigma'=I\Sigma I^T=\Sigma$; translation does not change footprint. The selected identity remains ID 64, whose new transient index is 10. It is incorrect to preserve index 2 as the selection. Before commit, check IDs are unique, every affected support row remains nonnegative and sums to one, means are finite, each covariance is finite and positive definite, and the candidate render preserves declared unaffected regions within the chosen color/depth/ID tolerances. Save the new revision and its report only after those checks pass.
+
+### Limits and exit check
+
+A Gaussian is a learned appearance primitive, not automatically a surface point, rigid body, collider, or mass element. An association table is a model chosen for an application, and ambiguous or incomplete support should remain visible as uncertainty. The affine covariance rule preserves a Gaussian footprint under a locally affine map; it does not solve visibility, self-intersection, cloth topology, contact, or appearance changes caused by newly revealed surfaces. A render that matches the original cameras cannot prove an edit is physically correct from unseen views.
+
+Before calling a captured-world edit complete, a learner should be able to: trace a semantic selection through stable IDs after reordering; show that normalized support weights reproduce a shared affine transform; derive and calculate $A\Sigma A^T$; identify a rank-deficient local fit; rotate or preserve SH according to a stated frame; and produce a provenance record plus before/after tests for affected and unaffected regions. The original 3DGS paper establishes a view-synthesis representation and renderer, not these editor, physics, or publication contracts. Those are additional systems that must be designed and verified explicitly.
+
+## Train the splats only after the forward renderer is understood
+
+A projected, tiled, ordered, composited image is now a complete forward result, and the preceding CPU/GPU comparison gives us checks for color, depth, dominant ID, tile occupancy, and sorting. We can now ask the inverse question: how should the stored splats change so that this renderer matches calibrated photographs? This is where training belongs in the story: the forward map and its failure signals are already visible. The original 3D Gaussian Splatting paper starts from sparse points from camera calibration when available, optimizes their attributes, and interleaves optimization with density control. A rasterizer tutorial without this lifecycle explains only inference, not how the captured representation is fitted. ([Kerbl et al., 2023 paper](https://arxiv.org/abs/2308.04079))
+
+The author implementation used below is pinned to commit [`54c035f7834b564019656c3e3fcc3646292f727d`](https://github.com/graphdeco-inria/gaussian-splatting/commit/54c035f7834b564019656c3e3fcc3646292f727d), committed 30 October 2024. It is a precise historical source specimen, not a claim about every later fork or current 3DGS implementation. Its [`train.py`](https://github.com/graphdeco-inria/gaussian-splatting/blob/54c035f7834b564019656c3e3fcc3646292f727d/train.py#L126-L186) uses a weighted $L_1$ and structural-similarity image loss, optionally adds depth regularization, differentiates the loss, gathers projected-mean gradient statistics, performs scheduled density control and opacity reset, then steps the optimizer. Its [`GaussianModel`](https://github.com/graphdeco-inria/gaussian-splatting/blob/54c035f7834b564019656c3e3fcc3646292f727d/scene/gaussian_model.py#L39-L47) maps stored scale through $\exp$, opacity through $\sigma$, and normalizes rotation quaternions. A robust importer or optimizer must still reject or explicitly repair a zero quaternion: normalization alone does not turn a zero vector into a valid rotation.
+
+For calibrated camera $k$, captured image $I_k$, valid pixel set $\Omega_k$, and renderer $R_k(\Theta)$, a simplified scalar-channel objective is
+
+$$
+L(\Theta)=\sum_{k\in\mathcal B}\frac{1}{|\Omega_k|}\sum_{p\in\Omega_k}\rho\left(R_k(\Theta)_p-I_{k,p}\right),
+$$
+
+where $\mathcal B$ is the sampled batch and $\rho$ is the declared penalty. In the pinned training loop, the image term is a weighted $L_1$ plus DSSIM loss; when reliable depth supervision is enabled, a weighted inverse-depth $L_1$ term is added. The objective's exact weights and preprocessing are part of the experiment. Lower image error does not prove unique or physically useful geometry: several scenes can explain the same measurements, and a view-synthesis representation can exploit appearance to hide geometric error.
+
+The reference stores several parameters in unconstrained form: mean $\mu\in\mathbb R^3$; log-scale $s_{log}$ decoded as $s=\exp(s_{log})>0$; quaternion $q$ normalized before it constructs a rotation; opacity logit $a$ decoded as $o=\sigma(a)\in(0,1)$ for finite real $a$; and appearance coefficients such as spherical harmonics. These choices make ordinary optimizer steps compatible with positive scale and bounded opacity. The opacity derivative can still saturate near zero or one.
+
+## Derive the image gradient through a Gaussian's footprint
+
+At pixel $x$, the Gaussian's spatial weight is $G(x)=\exp(-q(x)/2)$, where $q$ is its squared elliptical distance. Before implementation-specific clamping, its effective sample opacity is
+
+$$
+\alpha(x)=oG(x),\qquad o=\sigma(a).
+$$
+
+For a pixel where this unclamped branch is active and the footprint is held fixed,
+
+$$
+\frac{\partial\alpha}{\partial a}=G\,o(1-o).
+$$
+
+If the renderer clamps $oG$ at a maximum, the derivative is zero on the saturated branch. The factor $\alpha(1-\alpha)$ is only the special case $G=1$; in general it is wrong because the Gaussian's footprint weight is separate from stored opacity.
+
+For two ordered splats in one color channel over background $c_b$, compositing gives
+
+$$
+C=\alpha_1c_1+(1-\alpha_1)\left[\alpha_2c_2+(1-\alpha_2)c_b\right].
+$$
+
+Holding order, centers, and footprint weights fixed, the color and front-opacity derivatives are
+
+$$
+\frac{\partial C}{\partial c_1}=\alpha_1,\qquad
+\frac{\partial C}{\partial c_2}=(1-\alpha_1)\alpha_2,
+\qquad
+\frac{\partial C}{\partial\alpha_1}=c_1-\left[\alpha_2c_2+(1-\alpha_2)c_b\right].
+$$
+
+With squared error $\ell=\tfrac12(C-y)^2$, the chain rule yields $\partial\ell/\partial c_1=(C-y)\alpha_1$ and $\partial\ell/\partial a_1=(C-y)(\partial C/\partial\alpha_1)G_1o_1(1-o_1)$ in the unclamped branch. Position and covariance gradients continue through the projected center and conic because changing them changes $q(x)$ and thus $G(x)$. Discrete tile membership, depth order, threshold crossings, and split/clone decisions are not ordinary smooth parameters; they form separate algorithmic boundaries.
+
+A hand-checkable toy makes the chain rule concrete. Set both footprint weights to one, so the unclamped $\alpha_i=o_i$; this is an explicit unit-footprint assumption, not the general pixel case. Use $\alpha_1=o_1=0.5$, $c_1=0.8$, $\alpha_2=o_2=0.25$, $c_2=0.2$, $c_b=0$, target $y=0.4$. Then $C=0.425$, residual $C-y=0.025$, and
+
+$$
+\frac{\partial\ell}{\partial c_1}=0.0125,\qquad
+\frac{\partial\ell}{\partial\alpha_1}=0.01875,\qquad
+\left.\frac{\partial\ell}{\partial a_1}\right|_{G_1=1}=0.0046875.
+$$
+
+A direct scalar SGD illustration with $\eta=0.1$ gives $c_1'=0.79875$. If alpha were optimized directly, $\alpha_1'=0.498125$. With the stored logit, $a_1'=a_1-0.00046875$; near $a_1=0$, decoded opacity changes by about one quarter of that logit step because $d\sigma/da=0.25$. A production run instead accumulates gradients from many pixels and camera views and uses adaptive optimizer state; this one-pixel trace checks signs and factors only.
+
+## Density control changes model size between gradient steps
+
+Continuous optimization cannot add a primitive when current support is inadequate. The pinned implementation accumulates the norm of the first two components of the projected-mean gradient for visible Gaussians and divides by a visibility count to estimate an average image-space signal ([`add_densification_stats`](https://github.com/graphdeco-inria/gaussian-splatting/blob/54c035f7834b564019656c3e3fcc3646292f727d/scene/gaussian_model.py#L471-L472)). At scheduled intervals it applies two capacity operations:
+
+- **Clone:** when the accumulated mean-gradient magnitude reaches the threshold and the largest world-space scale is no greater than `percent_dense * scene_extent`, copy that small primitive's mean, appearance, opacity, scale, and rotation into a new primitive. The original remains. This adds local representation capacity without moving either copy.
+- **Split:** when the gradient reaches threshold but the largest scale exceeds that cutoff, replace the broad primitive with $N$ children. In this pinned code $N=2$ by default. It samples a zero-mean offset whose standard deviation is the parent's three scales, rotates that offset by the parent's rotation, and adds it to the mean. Child scales are divided by $0.8N$ before mapping back through the inverse scale activation. Then the parent is removed. The samples are random in the parent's anisotropic local coordinates; the reference does not deterministically split along the single largest axis.
+
+The cited source performs clone first and split second. It then prunes primitives whose opacity is below the scheduled minimum; after the configured size gate it also prunes those whose recorded screen radius is too large or whose maximum world scale exceeds $0.1$ times the scene extent. It finally resets scheduled opacities by capping decoded opacity at $0.01$, mapping back to logits, and resetting that parameter group's Adam moments. Those are choices of this revision, not universal constants or a claim that every fork follows them. ([`densify_and_prune`, split and clone](https://github.com/graphdeco-inria/gaussian-splatting/blob/54c035f7834b564019656c3e3fcc3646292f727d/scene/gaussian_model.py#L409-L472); [`reset_opacity`](https://github.com/graphdeco-inria/gaussian-splatting/blob/54c035f7834b564019656c3e3fcc3646292f727d/scene/gaussian_model.py#L258-L261))
+
+The training-loop ordering matters. At the cited revision, `loss.backward()` runs first. Inside the no-gradient control block, the program accumulates visible gradient/radius statistics, performs any scheduled clone/split/prune, performs any scheduled opacity reset (also at the first density-control iteration for a white background), and only then calls the exposure and Gaussian optimizer steps and clears gradients. It does **not** do optimizer-step-then-density-edit as a generic pseudocode might suggest ([`train.py`, lines 142 and 163–186](https://github.com/graphdeco-inria/gaussian-splatting/blob/54c035f7834b564019656c3e3fcc3646292f727d/train.py#L142-L186)).
+
+The model code must keep variable-length tensors and optimizer state aligned. When it appends children, it appends zero rows to Adam's `exp_avg` and `exp_avg_sq`; when pruning, it slices those moments by the same keep-mask; opacity reset replaces the opacity parameter and zeros that parameter's two moment tensors ([`GaussianModel`, lines 316–405](https://github.com/graphdeco-inria/gaussian-splatting/blob/54c035f7834b564019656c3e3fcc3646292f727d/scene/gaussian_model.py#L316-L405)). This revision constructs new `Parameter` objects during append/prune/reset and does not transfer the just-backpropagated `.grad` tensor to those replacements. Consequently, on an edit step those replaced groups have no gradient for the immediately following optimizer call; their stored Adam moments are preserved/sliced or reset as the code specifies, and the next render/backward populates gradients for the new parameters. This behavior follows from the pinned PyTorch code path; it is an implementation fact to verify again when changing frameworks or revisions.
+
+A small branch trace (numbers are teaching values, not source defaults): average projected-mean gradients are $[0.02,0.31,0.24]$, largest world scales are $[0.08,0.70,0.04]$, and the example gradient threshold is $0.20$ with a small/large cutoff of $0.10$. The first splat stays; the second splits; the third clones. If the second has opacity $0.003$ and the example opacity floor is $0.005$, its children may be created by the clone/split operation and then removed by the later prune mask if they inherit that low opacity. A faithful trace must apply the implementation's actual sequence, rather than silently moving the opacity prune ahead of growth. For each append, initialize child moments to zero; for parent removal, slice all parameter and per-splat statistic arrays with the same keep-mask. This example teaches the branch and ordering, not expected quality or useful production thresholds.
+
+Represent the optimizer state and the topology schedule in a checkpoint, not just the visible means and colors. A reproducible experiment records calibrated cameras, image preparation, loss weights, optimizer type and learning-rate schedule, random seed, density thresholds and intervals, opacity-reset schedule, source revision, held-out views, memory use, and render/training time. The pinned loop tests held-out cameras when configured, but the selection and metric must be recorded; a test view used repeatedly to tune the model is no longer an untouched final evaluation.
+
+### Reconstruction exercise: trace one fit and one topology edit
+
+1. Starting from the unit-footprint two-splat example, derive $C$, $\partial\ell/\partial c_1$, $\partial\ell/\partial\alpha_1$, and $\partial\ell/\partial a_1$. Then repeat the opacity-logit derivative with $G_1=0.4$ while keeping $o_1=0.5$ and the other quantities fixed. State why $\alpha_1(1-\alpha_1)$ is not the general chain factor.
+2. Trace the pinned clone/split decision for three splats with the values above. Add a low-opacity flag on the large splat; explain whether the reference grows first or prunes first and what happens to its children.
+3. For each changed tensor, state what happens to its Adam moments and to the just-computed gradient. Name the exact code boundaries you would inspect after changing the pinned revision.
+
+**Worked answer and solution criteria.** The first trace is $C=0.425$, $\partial\ell/\partial c_1=0.0125$, $\partial\ell/\partial\alpha_1=0.01875$, and at $G_1=1,o_1=0.5$, $\partial\ell/\partial a_1=0.0046875$. At $G_1=0.4,o_1=0.5$, the effective opacity is $\alpha_1=0.2$ and the logit chain factor is $G_1o_1(1-o_1)=0.1$, not $\alpha_1(1-\alpha_1)=0.16$. Recomputing the whole pixel with $G_1=0.4$ gives $\alpha_1=0.2$, $C=0.2$, residual $-0.2$, and $\partial\ell/\partial\alpha_1=-0.15$; therefore $\partial\ell/\partial a_1=-0.015$. For topology, use the accumulated-gradient threshold and scale cutoff to classify, perform clone/split in the pinned order, then apply opacity/size pruning. Appended Adam moment rows are zero; pruned rows are removed from moments and per-splat statistics; opacity reset zeroes that parameter's moments. Replaced parameter objects do not receive the previous `.grad` in this code. A complete answer distinguishes those source facts from any alternative policy, and it reports held-out image fit separately from geometry, memory, and runtime.
+
+### A complete scalar training-step laboratory
+
+The following complete Python program checks the two-splat color/logit derivatives against 240 finite differences, rejects the tempting wrong footprint chain rule, verifies a small SGD step, and tests stable identity and optimizer-moment alignment during a declared prune/clone policy. Run it with `python3 tools/labs/gaussian_training_step_lab.py` or with `python3 -O tools/labs/gaussian_training_step_lab.py`. It models one scalar pixel with fixed footprint and ordering; it does not train geometry, reproduce Graphdeco topology ordering, or validate GPU gradients. Implementation explanations are beside the operations in the code.
+
+```python
+#!/usr/bin/env python3
+"""A scalar two-splat gradient and topology-state lab, not a scene trainer."""
+from dataclasses import dataclass, replace
+import math
+import random
+
+
+def require(condition, message):
+    # Checks remain active under python -O; these are executable lesson claims.
+    if not condition:
+        raise AssertionError(message)
+
+
+def sigmoid(x):
+    # Branch to avoid overflowing exp for a large negative or positive logit.
+    if x >= 0:
+        return 1 / (1 + math.exp(-x))
+    e = math.exp(x)
+    return e / (1 + e)
+
+
+def loss_and_gradient(parameters, footprints, target, background=0.0):
+    # The trainable vector is (front color, back color, front logit, back logit).
+    # Geometry, sorting order and the Gaussian footprint values are held fixed.
+    c1, c2, a1, a2 = parameters
+    g1, g2 = footprints
+    if not all(math.isfinite(v) for v in (*parameters, *footprints, target, background)):
+        raise ValueError('All scalar inputs must be finite')
+    if not (0 <= g1 <= 1 and 0 <= g2 <= 1):
+        raise ValueError('This unclamped teaching model requires footprints in [0,1]')
+    o1, o2 = sigmoid(a1), sigmoid(a2)
+    alpha1, alpha2 = o1*g1, o2*g2
+    behind = alpha2*c2 + (1-alpha2)*background
+    color = alpha1*c1 + (1-alpha1)*behind
+    residual = color-target
+    # Chain rule: pixel alpha = opacity * footprint. Its logit derivative is
+    # g*o*(1-o), NOT alpha*(1-alpha), unless the footprint equals one.
+    dcolor = (alpha1, (1-alpha1)*alpha2,
+              (c1-behind)*g1*o1*(1-o1),
+              (1-alpha1)*(c2-background)*g2*o2*(1-o2))
+    return .5*residual*residual, tuple(residual*d for d in dcolor), color
+
+
+def finite_difference(parameters, footprints, target, axis, step=1e-6):
+    # Re-evaluate the forward loss twice. This oracle does not use the analytic
+    # derivative, so a missing transmittance or footprint factor is detectable.
+    if not math.isfinite(step) or step <= 0:
+        raise ValueError('Finite-difference step must be finite and positive')
+    lo, hi = list(parameters), list(parameters)
+    lo[axis] -= step
+    hi[axis] += step
+    return (loss_and_gradient(hi, footprints, target)[0]
+            - loss_and_gradient(lo, footprints, target)[0])/(2*step)
+
+
+@dataclass(frozen=True)
+class ScalarSplat:
+    # Only one scalar parameter and its two Adam moments are represented here.
+    # Real trainers maintain aligned state for every trainable parameter group.
+    identity: int
+    parameter: float
+    first_moment: float
+    second_moment: float
+
+
+def prune_and_clone(records, prune_ids, clone_ids):
+    # This lab chooses prune-before-clone, with pruning winning conflicts.
+    # It is a declared teaching policy, not Graphdeco's exact control order.
+    identities = [r.identity for r in records]
+    if len(identities) != len(set(identities)):
+        raise ValueError('Stable identities must be unique')
+    if not (set(prune_ids) | set(clone_ids)) <= set(identities):
+        raise ValueError('An edit refers to an absent identity')
+    output = [r for r in records if r.identity not in prune_ids]
+    next_id = max(identities, default=-1) + 1
+    for parent in records:
+        if parent.identity in clone_ids and parent.identity not in prune_ids:
+            # The child copies the parameter, but starts with zero moments.
+            # Survivors retain their own moments despite changing array indices.
+            output.append(replace(parent, identity=next_id,
+                                  first_moment=0.0, second_moment=0.0))
+            next_id += 1
+    return output
+
+
+def run():
+    parameters = (.8, .2, 0., math.log(1/3))
+    loss, gradient, color = loss_and_gradient(parameters, (1., 1.), .4)
+    require(math.isclose(color, .425), 'Worked pixel color')
+    require(math.isclose(gradient[0], .0125), 'Front color gradient')
+    require(math.isclose(gradient[2], .0046875), 'Front logit gradient')
+    # A small simultaneous update lowers this particular local loss. It does
+    # not establish global convergence or identify a 3-D scene from one pixel.
+    updated = tuple(p-.1*g for p, g in zip(parameters, gradient))
+    require(loss_and_gradient(updated, (1., 1.), .4)[0] < loss, 'Local SGD descent')
+
+    rng = random.Random(731)
+    for _ in range(60):
+        p = (rng.uniform(-.2, 1.2), rng.uniform(-.2, 1.2),
+             rng.uniform(-3, 3), rng.uniform(-3, 3))
+        footprints = (rng.uniform(.05, 1), rng.uniform(.05, 1))
+        target = rng.uniform(-.1, 1.1)
+        _, analytic, _ = loss_and_gradient(p, footprints, target)
+        for axis in range(4):
+            numerical = finite_difference(p, footprints, target, axis)
+            require(math.isclose(analytic[axis], numerical, rel_tol=2e-5, abs_tol=1e-8),
+                    'Finite-difference gradient disagreement')
+
+    # A deliberate wrong formula must disagree when footprint != 1.
+    _, correct, c = loss_and_gradient(parameters, (.35, .8), .4)
+    alpha = sigmoid(parameters[2])*.35
+    behind = sigmoid(parameters[3])*.8*parameters[1]
+    wrong = (c-.4)*(parameters[0]-behind)*alpha*(1-alpha)
+    require(not math.isclose(correct[2], wrong, rel_tol=1e-3),
+            'The negative chain-rule example must expose the missing footprint')
+    require(sigmoid(-1000.) == 0. and sigmoid(1000.) == 1., 'Finite saturation')
+
+    original = [ScalarSplat(7, .2, .3, .4), ScalarSplat(9, .8, .7, .6)]
+    edited = prune_and_clone(original, {7}, {7, 9})
+    require([r.identity for r in edited] == [9, 10], 'Prune wins; child gets new identity')
+    require(edited[0] == original[1], 'Survivor state follows identity, not old index')
+    require(edited[1].parameter == .8 and edited[1].first_moment == 0
+            and edited[1].second_moment == 0, 'Child state initialization')
+    require(len(original) == 2, 'Topology edit leaves source checkpoint immutable')
+    for bad in ([original[0], original[0]],):
+        try:
+            prune_and_clone(bad, set(), set())
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('Duplicate identity accepted')
+    try:
+        finite_difference(parameters, (1, 1), .4, 0, step=0)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('Zero finite-difference step accepted')
+    print('PASS: worked gradient, SGD, 240 finite differences, wrong-chain rejection, '
+          'saturation, topology/moment identity and negative inputs; scalar CPU model only')
+
+
+if __name__ == '__main__':
+    run()
+```
 
 <!-- CHAPTER-SOURCE-END -->
 

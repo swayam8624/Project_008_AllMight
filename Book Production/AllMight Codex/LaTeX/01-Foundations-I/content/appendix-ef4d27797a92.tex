@@ -1,0 +1,567 @@
+\hypertarget{appendix-ef4d27797a92}{}
+\section*{01 - Bits, Numbers and Memory - Visual Recall}
+\section{Bits, Numbers and Memory - Visual Recall}\label{bits-numbers-and-memory---visual-recall}
+
+\textbf{Scope:} Parts 1--100 only, M001--M006. Companion to \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs}{From Signals to Meaning}. No C++ Volume 02 material is included. This is a retrieval desk, not another textbook.
+
+\subsection{How to use this desk}\label{how-to-use-this-desk}
+
+Cover the visual, sketch it from memory, answer the numbered prompts, then expand the answer key. Score each prompt \textbf{0} (missing/wrong), \textbf{1} (correct label but weak explanation), or \textbf{2} (can reconstruct an example and its limits). Revisit weak prompts in the linked teaching section. Do not turn recognition of a diagram into a mastery claim.
+
+Mermaid shows relationships; byte strips show placement; tables show exact distinctions; state/sequence diagrams show what changes over time. Diagrams are conceptual models, not fixed CPU/OS layouts. Answer keys use collapsible Obsidian callouts.
+
+\subsection{Short-form recall --- the whole route}\label{short-form-recall-the-whole-route}
+
+\textbf{Pattern is not meaning.} A representation contract assigns weights and interpretation. → \textbf{Bits become decisions.} Masks select fields; packing needs widths, ranges, and a policy. → \textbf{Arithmetic is finite.} Choose wrap, saturation, rejection, or widening before calculation. → \textbf{Real values use a ruler.} Floating point trades spacing against range; fixed point chooses a scale. → \textbf{Operations expose error.} Rounding, cancellation, conditioning, and reproducibility matter. → \textbf{Keep the needed information.} Quantization/codebooks spend precision deliberately. → \textbf{Bytes occupy places.} Alignment, lifetime, ownership, and virtual mapping are distinct. → \textbf{Files are agreements.} Define schema, validate lengths, then decode and check integrity.
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/QA/print-reference-dedup/assets/print/c75e72dbf16e92fd18193eedad051a4d1a528cd2cfd231ec07322421177e278c.pdf}}
+
+\textbf{Caption:} Follow one value from physical signal to stored bytes and back. At every transition ask: \emph{Which bits? What meaning? What range/error policy? Where and during which lifetime? What format contract?} For the end-to-end laboratory, see \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#The\%20complete\%20journey\%20-\%20Encode,\%20compute,\%20store,\%20and\%20investigate}{the complete journey}.
+
+\begin{quote}
+{[}!abstract{]} Compact teaching notes \textbf{Represent:} bits are patterns; interpretation supplies meaning. \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#One\%20bit,\%20several\%20bits,\%20and\%20an\%20interpretation}{Bit-pattern example} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Why\%20invert-and-add-one\%20works}{Two\textquotesingle s-complement derivation}
+
+\textbf{Select and compute:} mask = select; shift = reposition; pack = preserve neighbors plus insert validated fields. Arithmetic needs an explicit overflow policy. \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Fields:\%20select,\%20normalize,\%20replace}{Field figure/formulas} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Test\%20the\%20packed\%20meaning}{Packing lab} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Choose\%20the\%20overflow\%20policy\%20before\%20calculating}{Overflow choices}
+
+\textbf{Approximate:} floating point has nonuniform spacing; fixed point has a chosen scale. Rounding is part of each operation; tolerance is a domain rule, not a universal epsilon. \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Encode\%2010.625,\%20then\%20decode\%20−13.25}{Worked encoding} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Cancellation\%20can\%20expose\%20errors\%20made\%20earlier}{Cancellation figure} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20fixed\%20ruler\%20for\%20fractional\%20values}{Fixed-point example}
+
+\textbf{Store and exchange:} address alone does not prove valid access; alignment, lifetime, ownership, and permissions are separate. A file needs an explicit schema and checked lengths. \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Virtual\%20memory\%20translates\%20page\%20identity}{Address translation} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Storage,\%20lifetime,\%20ownership,\%20and\%20placement\%20are\%20different\%20axes}{Memory model} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Validate\%20lengths\%20before\%20performing\%20the\%20arithmetic\%20they\%20request}{Parser safety lab} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Read\%20a\%20dump\%20by\%20reversing\%20the\%20contract}{Hex-dump lab}
+\end{quote}
+
+\subsection{Figure-linked pocket notes}\label{figure-linked-pocket-notes}
+
+Read one row, reconstruct its example, then follow the \textbf{figure} for the diagram and caption or \textbf{explanation} for the full teaching account. These four figures also live inside the continuous chapter, so the teaching text and recall desk share one reference. Each figure is a separate compact horizontal panel; the complete volume covers more than one printable page.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Topic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Smallest useful note
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Return to the teaching chapter
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Interpretation & Same bits, different weights: \texttt{AD} is unsigned 173 or signed −83. State width and encoding first. & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Figure\%20B1\%20-\%20One\%20pattern,\%20two\%20integer\%20readings/}{Figure B1} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#The\%20same\%20bits\%20can\%20mean\%20different\%20integers/}{Explanation} \\
+Field replacement & Validate → clear → position → OR. \texttt{AD→9D} changes quality 2→1; outside-mask bits remain \texttt{8D}. & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Figure\%20B2\%20-\%20Replace\%20a\%20field\%20without\%20damaging\%20its\%20neighbors/}{Figure B2} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Fields:\%20select,\%20normalize,\%20replace/}{Formulas and trace} \\
+Finite arithmetic & Exact \(250+20=270\): eight-bit wrap gives 14, saturation 255, rejection no value. Widen before evaluating. & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Choose\%20the\%20overflow\%20policy\%20before\%20calculating/}{Policy table} \\
+Floating fields & Classify exponent/fraction first; normal binary32 has 24 precision bits, including its implicit leading one. & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#The\%20two\%20formats\%20and\%20their\%20interpretation/}{Field table} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Encode\%2010.625,\%20then\%20decode\%20−13.25/}{Encoding trace} \\
+Rounding graph & FMA rounds once; separate multiply/add rounds twice. For the stated example: \(2^{-46}\) versus zero. & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Figure\%20B3\%20-\%20Rounding\%20points\%20change\%20the\%20answer/}{Figure B3} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#One\%20rounding\%20rather\%20than\%20two/}{Explanation} \\
+Error & Cancellation can expose previous input errors even when subtraction of stored operands is exact. Tolerance needs units and a policy. & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Cancellation\%20can\%20expose\%20errors\%20made\%20earlier/}{Worked trace} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Epsilon\%20is\%20one\%20spacing,\%20not\%20a\%20tolerance/}{Spacing table} \\
+Representation choice & Fixed point chooses a constant step; floats choose a changing step; quantization chooses a finite codebook. Packing valid codes loses no further information. & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Choose\%20the\%20contract\%20before\%20choosing\%20the\%20type/}{Comparison} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#An\%20INT4\%20group,\%20from\%20numbers\%20to\%20nibbles\%20and\%20back/}{Nibble trace} \\
+Translation & Mapping changes page identity and preserves offset: \texttt{12345ABC→987ABC} under the example 4-KiB mapping. & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Figure\%20B4\%20-\%20Translation\%20preserves\%20the\%20offset/}{Figure B4} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Virtual\%20memory\%20translates\%20page\%20identity/}{Explanation} \\
+Valid access & Bounds, alignment, lifetime, permitted access and mapping are separate obligations; old bytes prove none alone. & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Storage,\%20lifetime,\%20ownership,\%20and\%20placement\%20are\%20different\%20axes/}{Lifetime/ownership table} \\
+External bytes & Specify schema → validate arithmetic/limits → decode. Integrity, authenticity and durability require their own contracts. & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Validate\%20lengths\%20before\%20performing\%20the\%20arithmetic\%20they\%20request/}{Bounds rules} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Read\%20a\%20dump\%20by\%20reversing\%20the\%20contract/}{Full dump} \\
+\end{longtable}
+}
+
+\textbf{Recall checkpoint:} draw B1--B4 without looking. Label one assumption and one failure in each. For example: decoding \texttt{AD} as a float is the wrong contract; OR-only insertion cannot clear a field; contraction can erase the intended two-rounding path; a valid address translation does not establish a live C++ object.
+
+\subsection{The entire story on one board --- archived original}\label{the-entire-story-on-one-board-archived-original}
+
+The original vertical overview is retained here for comparison; use the horizontal map above for the one-page route.
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/QA/print-reference-dedup/assets/print/241359477d670e8473f58f1ebb8840415e1fbe221977682ee58ce041f32b7302.pdf}}
+
+\textbf{Opening challenge:} Explain each arrow without using ``it just works.'' At every stage ask: \textbf{Which bits? Which meaning? Where? Valid to access?}
+
+\subsection{1 - A pattern does not announce its meaning}\label{a-pattern-does-not-announce-its-meaning}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#From\%20a\%20signal\%20to\%20an\%20interpretation}{Repair this foundation} · \hyperref[appendix-f414bd4ed05c]{Interpretation contract} · \hyperref[appendix-4fbc03d20829]{Two\textquotesingle s complement}
+
+\begin{verbatim}
+bit index       7    6    5    4    3    2    1    0
+pattern         1    0    1    0    1    1    0    1
+unsigned weight 128  64   32   16    8    4    2    1
+signed weight  -128  64   32   16    8    4    2    1
+
+same pattern:   binary 10101101 = hex AD = octal 255
+unsigned:       128 + 32 + 8 + 4 + 1 = 173
+two's complement: -128 + 32 + 8 + 4 + 1 = -83
+\end{verbatim}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lrll@{}}
+\toprule\noalign{}
+Eight-bit interpretation & Zero patterns & Range & −5 \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Unsigned & 1 & 0\ldots255 & Not in domain \\
+Signed magnitude & 2 & −127\ldots127 & 10000101 \\
+One's complement & 2 & −127\ldots127 & 11111010 \\
+Two's complement & 1 & −128\ldots127 & 11111011 \\
+\end{longtable}
+}
+
+For \(N\) independent bits: \(2^N\) patterns. Unsigned maximum is \(2^N-1\), not \(2^N\). Two's-complement decode subtracts \(2^N\) when the top bit is set.
+
+\textbf{Recall}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Why can imperfect voltage ranges represent a stable bit? Distinguish noise margin, bit, byte, octet, word and character.
+\item
+  Encode 13 by repeated division; decode 1101 using Horner steps. Why do hex and octal group four and three bits?
+\item
+  Derive invert-plus-one rather than reciting it. Why is the signed minimum asymmetric and unsafe to negate in its own signed type?
+\end{enumerate}
+
+\begin{quote}
+{[}!answer{]}- Reveal 1--3 Noise margin tolerates disturbances within a logical range. A bit has two logical states; octet means exactly eight bits; C++ byte has CHAR\_BIT bits and sizeof(char)=1. A word is architecture-specific; a character can need multiple bytes. Historical byte sizes varied.
+
+13→6 remainder1→3 remainder0→1 remainder1→0 remainder1; reverse gives1101. Horner states1→3→6→13. Bases16 and8 are powers2\^{}4 and2\^{}3.
+
+\(2^N-x=(2^N-1-x)+1\): width-limited complement plus one. Zero negates back to zero after the carry is discarded. The positive counterpart of −128 is128, outside the signed eight-bit range. Promotion can change the actual C++ operation type; inspect it first.
+\end{quote}
+
+\subsection{2 - Select, move, replace}\label{select-move-replace}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Bits\%20become\%20decisions\%20and\%20compact\%20fields}{Repair decisions and fields} · \hyperref[appendix-dbe5905163c2]{Bit mask} · \hyperref[appendix-1f9963e1a5d1]{Bit packing}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/QA/print-reference-dedup/assets/print/fa3c652d612213ebd8529a3f241da2e4c8aebac4a299f6a79f31322b7fe25a2a.pdf}}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lll@{}}
+\toprule\noalign{}
+Operation & Eight-bit cue & Reconstruct the purpose \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+AND & AD \& 07 = 05 & Keep selected bits \\
+OR & AD OR 40 = ED & Set selected bits \\
+XOR & AD XOR 08 = A5 & Toggle; repeat restores AD \\
+NOT & NOT₈(0F) = F0 & Invert at a stated width \\
+Extract & (AD \textgreater\textgreater{} 4) \& 03 = 2 & Move then isolate \\
+Replace & quality2→1: AD→9D & Clear then insert; preserve other bits \\
+\end{longtable}
+}
+
+For width \(w\), offset \(s\), carrier \(N\): require \(0<w\), \(s+w\le N\), valid shift counts, and a declared reject/truncate policy. The full-width low-mask case needs care in executable code: shifting 1 by the carrier width is invalid.
+
+\textbf{Recall}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{3}
+\tightlist
+\item
+  Prove both De Morgan identities from four input pairs. Why is built-in logical AND not interchangeable with bitwise AND?
+\item
+  Reconstruct extraction/insertion formulas. Explain any-selected versus all-selected flags and how to test a packer beyond a round trip.
+\item
+  On the C++23 baseline, why can −3/2 and −3\textgreater\textgreater1 differ? What changes when a byte operand is promoted?
+\end{enumerate}
+
+\begin{quote}
+{[}!answer{]}- Reveal 4--6 NOT(A AND B)=NOT A OR NOT B; NOT(A OR B)=NOT A AND NOT B. Logical operators test truth and built-in AND/OR short-circuit; bitwise operators transform every bit.
+
+Low mask \(L=2^w-1\), positioned mask \(M=L2^s\). Extract is right-shift then AND L; insert clears M and ORs the shifted valid field. Any tests nonzero; all compares with the whole mask. Use independent golden bytes, preservation/range checks and boundary/invalid cases: encoder and decoder can share one bug.
+
+Integer division truncates toward zero (−1); arithmetic right shift rounds downward (−2). Promotions determine the operation width, including the width of NOT; a narrow stored type does not force a narrow expression.
+\end{quote}
+
+\subsection{3 - The adder is simple; the policy is not}\label{the-adder-is-simple-the-policy-is-not}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Arithmetic\%20becomes\%20a\%20policy}{Repair finite arithmetic} · \hyperref[appendix-d1a5b1e520c2]{Full adder} · \hyperref[appendix-2ed044358b82]{Arithmetic policies}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/QA/print-reference-dedup/assets/print/3035527ac4ab44832fe74646e90674904812381966e2cf590ab9b0afd5a5bb5c.pdf}}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3000}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.4000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Calculation
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Exact/wide result
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Eight-bit destination policy
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+250+20 & 270 & Wrap14 / saturate255 / reject \\
+127+1 & 128 & Signed eight-bit overflow; no legal wrapping assumption \\
+0−1 unsigned & −1 mathematically & Residue255 \\
+13×11 & 13+26+104 & 143 \\
+13÷3 & \(13=4(3)+1\) & Quotient4, remainder1 \\
+\end{longtable}
+}
+
+\begin{verbatim}
+stored type → promotion → common operation type → calculation → destination conversion
+uint8 + uint8       commonly becomes int arithmetic before narrowing
+signed overflow    must be prevented BEFORE evaluating the expression
+\end{verbatim}
+
+\textbf{Recall}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{6}
+\tightlist
+\item
+  Derive a half adder, add carry-in, and explain ripple delay versus generate/propagate carry networks. Distinguish carry, overflow, negative and zero flags.
+\item
+  Rebuild shift-and-add multiplication and long division. What intermediate width and invalid inputs must be handled?
+\item
+  Choose wrap/saturate/reject/widen for a counter, image sample and size calculation. Why can saturation break associativity?
+\item
+  Explain signed minimum/−1, unsigned reverse-loop failure, plain-char signedness, exact/least/fast widths, and mixed-sign comparisons.
+\end{enumerate}
+
+\begin{quote}
+{[}!answer{]}- Reveal 7--10 Half-adder sum=A XOR B, carry=A AND B. Full-adder carry is true when at least two of its three inputs are true. Ripple chains carry dependencies; prefix designs combine generate/propagate information. Carry answers an unsigned question; overflow a signed-range question; N observes a result sign bit; Z observes all-zero result. Borrow conventions vary: binary6502 SBC uses A−B−(1−C), with C=1 meaning no borrow.
+
+Set multiplier bits select shifted partial products. Division shifts bits into a remainder, conditionally subtracts, and satisfies D=Qd+R with0≤R\textless d.~Prove partial/intermediate ranges. Reject division by0 and same-type signed-min/−1.
+
+Policies follow meaning: bounded samples may clamp, modular counters may wrap, sizes usually need checked arithmetic. Signed overflow remains undefined behavior; widening after the overflowing expression is too late. Saturation and capped updates are order-dependent.
+
+An unsigned i≥0 never terminates a reverse loop. char signedness varies; exact-width aliases are optional, least/fast may be wider. Promotions/common-type conversions can turn a negative operand into a large unsigned value. Track all five stages, not only storage width.
+\end{quote}
+
+\subsection{4 - A stretching ruler with special regions}\label{a-stretching-ruler-with-special-regions}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20stretching\%20ruler\%20for\%20real-valued\%20quantities}{Repair floating representation} · \hyperref[appendix-343615f49ddf]{IEEE-754 floating point}
+
+\begin{verbatim}
+binary32: [ sign:1 ][ stored exponent:8 ][ fraction:23 ]  normal precision24
+binary64: [ sign:1 ][ stored exponent:11][ fraction:52 ]  normal precision53
+\end{verbatim}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/QA/print-reference-dedup/assets/print/d37cdfa04ed1f56791109c79b81ae6ca44a427bf34d60035c4dcd3b189ea1a26.pdf}}
+
+Binary32 normal value, for \(1\le E\le254\):
+
+\[
+x=(-1)^S(1+F/2^{23})2^{E-127}.
+\]
+
+Here S is sign0/1, E stored exponent, F the unsigned23-bit fraction. Subnormal value is \((-1)^SF2^{-149}\).
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Visual checkpoint & Reconstruct \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+10.625 & \(1.010101_2\times2^3\) → word412A0000 \\
+C1540000 & Sign1, exponent130, significand1.65625 → −13.25 \\
+Above1 & binary32 spacing \(2^{-23}\) \\
+Immediately below1 & gap \(2^{-24}\) \\
+Subnormal grid & step \(2^{-149}\), not a hidden-one format \\
+\end{longtable}
+}
+
+\textbf{Recall}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{10}
+\tightlist
+\item
+  Decode the class before the normal formula. Why do +0 and −0 compare equal but differ as representations?
+\item
+  Reconstruct both words above and explain bias127/1023 and hidden precision24/53.
+\item
+  Distinguish epsilon, min-normal, min-subnormal and local ULP. Explain guard/round/sticky and all four rounding directions.
+\end{enumerate}
+
+\begin{quote}
+{[}!answer{]}- Reveal 11--13 Reserved exponent fields alter the interpretation. Zero has E=F=0 and a separate sign; infinities have all-one E,F=0; NaNs have all-one E,F≠0. Signed-zero reciprocals can differ under IEEE behavior; signbit sees the sign even when x\textless0 does not. NaN comparisons are unordered; payload/signaling behavior needs a declared policy.
+
+Normal exponent is E−bias and significand is1+F/2\^{}fractionBits. Subnormals remove the hidden one and keep a fixed tiny grid. A C++ float is not universally required to be binary32.
+
+Epsilon is spacing above1, not a universal comparison tolerance. Binary32 min-normal=\(2^{-126}\); min-subnormal=\(2^{-149}\). Normal binade exponent e gives step \(2^{e-23}\). Guard/round/sticky summarize discarded information. Nearest-even picks the even retained significand at an exact tie; upward/downward/toward-zero are signed directions. Check and restore runtime rounding state.
+\end{quote}
+
+\subsection{5 - Follow the rounding points, not algebra alone}\label{follow-the-rounding-points-not-algebra-alone}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#When\%20arithmetic\%20meets\%20uncertainty}{Repair numerical reasoning} · \hyperref[appendix-a2773a6a2f9d]{Cancellation and loss of significance} · \hyperref[appendix-5f1a2c3f97ff]{Numerical reproducibility}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/QA/print-reference-dedup/assets/print/b88bc7cee25f2693cabec9455a5fd796fa31bba2f538f0fbc3f2186f678e6d2b.pdf}}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Witness
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+What it exposes
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0.1 & Reduced denominator10 is not a power of two: repeating binary fraction \\
+binary32 \(2^{24}+1\) & Nearest-even stores \(2^{24}\): absorption \\
+Nearby stored x−y & Subtraction can be exact while intended inputs remain uncertain \\
+min-normal/2 & Exact subnormal is not automatically an underflow flag \\
+FMA versus multiply then add & One final rounding versus two rounding points \\
+Atomic floating sum & Race-free update does not fix update order \\
+\end{longtable}
+}
+
+\textbf{Recall}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{13}
+\tightlist
+\item
+  When does a rational terminate in binary? Why can cancellation magnify relative input error even when subtraction itself is exact?
+\item
+  Classify overflow, tiny exact results, tiny inexact results, invalid operations and division-by-zero flags.
+\item
+  Distinguish absolute/relative and forward/backward error; stability versus conditioning. Why is approximate closeness not equality?
+\item
+  Draw factored/distributed and FMA/unfused evaluation graphs. What do pairwise/compensated sums, wider accumulation and fixed order solve---and not solve?
+\end{enumerate}
+
+\begin{quote}
+{[}!answer{]}- Reveal 14--17 A reduced rational terminates iff its denominator is a power of two. Sterbenz's nearby-float condition x/2≤y≤2x for nonnegative stored values can give exact subtraction under the stated gradual-underflow conditions. A small difference can still expose earlier input uncertainty; sensitivity scales with (\textbar x\textbar+\textbar y\textbar)/\textbar x−y\textbar.
+
+Tiny and underflow are not synonyms. Flags also include inexact, overflow, divide-by-zero and invalid; classify the actual operation/environment.
+
+Absolute error has units; relative error needs a nonzero reference. Forward error measures output discrepancy; backward error asks how perturbed inputs explain the output. Conditioning belongs to the problem, stability to the algorithm. Validate tolerances and non-finite inputs first; pairwise closeness need not be transitive.
+
+FMA rounds ab+c once; unfused arithmetic rounds the product too. Reassociation/distribution move rounding points. Pairwise and compensated algorithms can reduce error but do not reconstruct lost input bits or guarantee identical cross-platform execution. Wider transient arithmetic does not preserve a repeatedly narrowed state. Determinism needs order, precision, compiler/environment and algorithm contracts; capped TSDF-style weighted updates can remain history-dependent mathematically.
+\end{quote}
+
+\subsection{6 - Choose what information to keep}\label{choose-what-information-to-keep}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Choosing\%20what\%20information\%20to\%20keep}{Repair representation choices} · \hyperref[appendix-1d0dbe8924cc]{Fixed-point representation} · \hyperref[appendix-d5da3eaabaef]{Affine quantization and zero point}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Format
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+What it buys
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+What remains
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Fixed point I/S & Constant absolute step1/S & Bounded range; rescale/overflow policy \\
+FP16 fields1/5/10 & 11-bit normal precision & Maximum65504; narrow range \\
+BF16 fields1/8/7 & Wide exponent range,8-bit precision & Coarse spacing; NaN/rounding policy \\
+Groupwise INT4 & Small local codebook & Clipping, scales, padding, task error \\
+UNORM8 & 256 codes in0\ldots1 & Step1/255; 128 is not exactly0.5 \\
+SNORM8 & Normalized signed range & −128 and−127 both decode−1 \\
+\end{longtable}
+}
+
+\begin{verbatim}
+fixed F=8:    1.5 → raw384     2.25 → raw576
+multiply:    384×576 =221184  (scale256²)
+rescale:     221184/256=864   (scale256)
+decode:      864/256=3.375
+
+offset INT4 codes:  [1,5,8,11,15]
+low nibble first:  [5|1] [11|8] [padding0|15] → 51 B8 0F
+quantization loses information; packing valid codes does not.
+\end{verbatim}
+
+\textbf{Recall}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{17}
+\tightlist
+\item
+  Choose F for a signed32-bit fixed domain ±10\^{}6 with step≤0.001. Derive multiply/divide rescaling and nearest unclipped error.
+\item
+  Encode1.5 in FP16; compare FP16/BF16 near1 and at large magnitude. Why can truncating a NaN payload accidentally produce infinity?
+\item
+  Explain affine q/z/scale, outlier effects, group metadata, learned one-bit centroids, RMSE/MAE and normalized graphics/color-space distinctions.
+\end{enumerate}
+
+\begin{quote}
+{[}!answer{]}- Reveal 18--20 Require \(2^{-F}\le0.001\) and \(10^6 2^F\le2^{31}-1\): F=10 or11. Multiply raw operands at scale S² then round AB/S; quotient rounds AS/B for B≠0. Prove intermediate capacity before calculating, check destination range, and define negative ties. Nearest unclipped error≤1/(2S); relative error can explode nearzero.
+
+FP16 1.5→3E00; bias15, normal min2\^{}-14, subnormal min2\^{}-24. BF16 bias127, normal spacing above1 is2\^{}-7 versus FP16's2\^{}-10. Dropping a nonzero discarded NaN fraction can leave all-one exponent and zero fraction: infinity. Classify first; canonicalization is a policy.
+
+Affine reconstruction is scale×(q−z), with positive valid scale; nearest unclipped ideal error≤scale/2. A max-absolute outlier can erase small values. INT4 payload costs ceil(N/2)+4ceil(N/G) bytes with float32 scales, not four bits/value universally. At N=5,G=32 it costs7 bytes. One-bit labels can select learned means rather than±1. RMSE squares errors; MAE takes magnitudes; neither proves application quality. UNORM is not sRGB; quantized normals may need safe renormalization and still lose direction.
+\end{quote}
+
+\subsection{7 - Placement, translation and lifetime are separate}\label{placement-translation-and-lifetime-are-separate}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Where\%20the\%20bytes\%20live}{Repair memory reasoning} · \hyperref[appendix-bc07c3d25b18]{Endianness} · \hyperref[appendix-a1f7c53b4742]{Alignment and padding} · \hyperref[appendix-01e5905165c4]{Page tables and MMU}
+
+\begin{verbatim}
+value 12345678 hex     increasing byte addresses →
+little endian         78 56 34 12
+big endian            12 34 56 78
+
+ordinary ABI example: char / uint32 / char, alignments1/4/1
+offset 0: [a][pad][pad][pad][b b b b][c][tail][tail][tail]
+member offsets0,4,8; size12; alignment4; array stride12
+\end{verbatim}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/QA/print-reference-dedup/assets/print/f0df9bb11e77f8dff5e389145753f61037a109712e33d8201efff0b8756e3490.pdf}}
+
+Example4-KiB pages: VA12345ABC → VPN12345, offsetABC → PFN987 → PA987ABC. A TLB miss is not automatically a fault; a fault is not automatically disk I/O or a crash.
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/QA/print-reference-dedup/assets/print/05e81e26e2a0094c274eb3648b6882a423c2affc0bd2862a41d873a23556b012.pdf}}
+
+\textbf{Recall}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{20}
+\tightlist
+\item
+  Why does swapping bytes not reverse bits? Derive aligned offsets and tail padding; compare packing, reordering, AoS/SoA and CPU/GPU layouts.
+\item
+  Reconstruct the address translation. Distinguish process isolation, shared mappings, TLB/data-cache misses, faults, COW, virtual/physical contiguity and huge-page tradeoffs.
+\item
+  Separate stack/heap/static regions from storage duration and object lifetime. Explain fragmentation, dangling views, mapped files, const, W\^{}X and ASLR.
+\end{enumerate}
+
+\begin{quote}
+{[}!answer{]}- Reveal 21--23 Endianness orders significance bytes, not bits within an octet. Align each member under stated ABI requirements; round total extent for aligned array stride. Reordering can reduce holes but change ABI. Packing may misalign; smaller is not automatically faster. AoS groups records, SoA fields; hot access patterns and backend layout contracts decide.
+
+For page size P, VPN=floor(VA/P), offset=VA mod P; PA=PFN×P+offset. Context/permissions matter. TLB caches translations; data cache caches contents. COW copies a shared backing page when a permitted write needs a private copy. Consecutive virtual pages may use scattered frames. Larger pages increase simplified TLB reach entries×pageSize but reduce granularity/flexibility.
+
+Automatic objects often use stack frames, but optimization/ABI can differ; heap allocation manages variable-lifetime blocks. Static duration can still need runtime initialization. Internal fragmentation is allocated slack; external fragmentation is separated holes. A span does not own/extend backing life. A mapped file needs bounds, permissions and access/lifetime validity. const does not force a read-only segment; W\^{}X concerns mapping permissions; ASLR varies locations. Old bytes do not prove a live object.
+\end{quote}
+
+\subsection{8 - External bytes need a complete agreement}\label{external-bytes-need-a-complete-agreement}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Bytes\%20become\%20a\%20durable\%20agreement}{Repair external bytes} · \hyperref[appendix-652d81568de9]{Checked binary parsing} · \hyperref[appendix-cbe594d1ab0a]{Integrity and authenticity}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/QA/print-reference-dedup/assets/print/06057618213e7d0bbc4a083ed234057abf4cf6750c6d298ccbf3516d98602595.pdf}}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Same binary32-compatible value1 & Result \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Numeric conversion to uint32 & 1 \\
+Representation bit-cast & Word3F800000 \\
+Little-endian encoding & Bytes00 00 80 3F \\
+Big-endian encoding & Bytes3F 80 00 00 \\
+\end{longtable}
+}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Defense
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Answers
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Does not establish
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Magic/version & Which proposed format/revision? & Valid dimensions or trusted sender \\
+Checked schema & Structurally permitted content? & Unchanged payload \\
+CRC/checksum & Matches stated error-detection reference? & Adversarial authenticity \\
+Cryptographic hash & Matches trusted digest? & Trust if attacker replaces digest too \\
+MAC/signature & Authenticated under trusted key policy? & Semantic correctness \\
+Atomic publication & Replacement visibility contract? & Crash durability \\
+\end{longtable}
+}
+
+\textbf{Recall}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{23}
+\tightlist
+\item
+  State bit-cast preconditions; distinguish native ABI from external schema. Give safe multiplication and range checks before parsing.
+\item
+  Explain checksum blind spots, specified CRC parameters, hash collisions, authenticity and durability. Decode the mini-dump below.
+\end{enumerate}
+
+\begin{quote}
+{[}!answer{]}- Reveal 24--25 Bit-cast needs same size, trivially copyable types and valid initialized representations under the applicable rules. It is not numeric conversion, endian conversion or permission for arbitrary typed access.
+
+Before unsigned a×b check a=0 or b≤MAX/a. Before reading n bytes at o in length L, check o≤L then n≤L−o. Check header≤length, exact payload length, size\_t representability and practical resource limits before allocation.
+
+Additive byte sums miss reorderings. A CRC needs polynomial, initial/final operations, reflection/order and covered range. CRC-32/ISO-HDLC check string123456789 gives CBF43926. Finite digests necessarily have collisions over unrestricted messages. A hostile replacement requires trusted digest/key policy; valid decoding, integrity, authenticity, publication and durability are different claims.
+\end{quote}
+
+\subsubsection{Mini-dump - Reconstruct before revealing}\label{mini-dump---reconstruct-before-revealing}
+
+\begin{verbatim}
+0000  4E 51 54 4E 53 52 30 31   magic
+0008  01 00 00 00               version
+000C  02 00 00 00 00 00 00 00   rows
+0014  03 00 00 00 00 00 00 00   columns
+001C  00 00 80 3F               first payload word
+\end{verbatim}
+
+Assume explicit little-endian uint32 version, uint64 dimensions and IEEE binary32 payload. What are shape, header size, payload size and total size? What changes if payload byte80 becomes00?
+
+\begin{quote}
+{[}!answer{]}- Reveal the dump Shape2×3; header28 bytes; payload24 bytes; total52 bytes. First word3F800000 decodes1. Flipping80→00 gives3F000000, value0.5. Magic, dimensions and file length can remain plausible; structural validation alone misses this substitution. This is a teaching schema, not a freshly verified production format.
+\end{quote}
+
+\subsection{Final blank-board test}\label{final-blank-board-test}
+
+Without looking above, draw: interpretation fork → mask/extract/replace → adder with two flag questions → floating classifier → rounding graph → precision-choice table → byte/alignment strip → virtual translation → live-object state → safe reader.
+
+For every diagram supply \textbf{one numeric example, one invariant, one failure case and one assumption}. Then explain the same stored bytes under two interpretations. A round trip is only one test: demand independent golden bytes and invalid-input checks too.
+
+\subsection{Coverage map - No source parts dropped}\label{coverage-map---no-source-parts-dropped}
+
+This map is navigation, not partwise lesson segmentation. Overlapping examples may revisit a concept; the listed coverage ranges assign each of1--100 exactly once.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Source parts & Recall panel \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1--7; 21--27 & \hyperref[1ux20-ux20Aux20patternux20doesux20notux20announceux20itsux20meaning]{\#1 - A pattern does not announce its meaning} \\
+8--20 & \hyperref[2ux20-ux20Selectux2cux20moveux2cux20replace]{\#2 - Select, move, replace} \\
+28--40 & \hyperref[3ux20-ux20Theux20adderux20isux20simple;ux20theux20policyux20isux20not]{\#3 - The adder is simple; the policy is not} \\
+61--76 & \hyperref[4ux20-ux20Aux20stretchingux20rulerux20withux20specialux20regions]{\#4 - A stretching ruler with special regions} \\
+77--88 & \hyperref[5ux20-ux20Followux20theux20roundingux20pointsux2cux20notux20algebraux20alone]{\#5 - Follow the rounding points, not algebra alone} \\
+89--96 & \hyperref[6ux20-ux20Chooseux20whatux20informationux20toux20keep]{\#6 - Choose what information to keep} \\
+41--60 & \hyperref[7ux20-ux20Placementux2cux20translationux20andux20lifetimeux20areux20separate]{\#7 - Placement, translation and lifetime are separate} \\
+97--100 & \hyperref[8ux20-ux20Externalux20bytesux20needux20aux20completeux20agreement]{\#8 - External bytes need a complete agreement} \\
+\end{longtable}
+}
+
+Repair exact definitions in \hyperref[appendix-fd090d982a15]{Supplementary/Foundations}; longer proofs in \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Reconstruct\%20the\%20representation\%20and\%20lifetime\%20proofs}{Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Reconstruct the representation and lifetime proofs}; extended experiments in \hyperref[appendix-4e2236f53445]{Supplementary/Code Snippets} and \hyperref[appendix-92ff77d4dfdc]{Supplementary/Worked Traces}. The full teaching explanations remain in Volume01. Future recall companions should reuse this one-per-volume structure; none is created for C++ in this request.

@@ -1,0 +1,40 @@
+\hypertarget{appendix-d6607cc4c235}{}\label{referencestart:appendix-d6607cc4c235}
+\section{NaNs and payloads}\label{appendix-d6607cc4c235-nans-and-payloads}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C004 · \textbf{Latest development:} C004
+
+\subsection{Definition and mechanism}\label{appendix-d6607cc4c235-definition-and-mechanism}
+
+All-one exponent with nonzero fraction encodes a non-numerical, unordered NaN. Quiet and signaling classes differ; fraction bits can carry payload information. Ordinary NaN equality is false; use isnan. Raw words can be classified without consuming signaling NaNs as floating values.
+
+\subsection{Prerequisites}\label{appendix-d6607cc4c235-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5057f9ad327f]{Binary32} --- The concrete fields provide the representation used in this mechanism.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-d6607cc4c235-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-f11d1a521253]{Floating-point environment and compiler modes} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-deca299ae4b8]{ULP distance policies} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-0ec599f8ba27]{Numerical tolerance policies} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-e90053a4b201]{Floating-point canonicalization} --- uses this mechanism in its explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-d6607cc4c235-recall-and-next-depth}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Payload/signaling preservation through arithmetic, parameter passing and printing is not guaranteed by a raw-word classifier.
+
+\subsection{Source and navigation}\label{appendix-d6607cc4c235-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

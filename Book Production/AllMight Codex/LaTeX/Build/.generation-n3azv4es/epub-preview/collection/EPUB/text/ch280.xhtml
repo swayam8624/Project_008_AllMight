@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch280.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-275ec8847057-reversed-z-depth-contracts" class="level2">
+<h2>Reversed-Z depth contracts</h2>
+<p>A depth buffer stores an ordering coordinate, not Euclidean distance. Reversed-Z changes the mapping so near geometry receives larger depth values and far geometry approaches zero. The precision advantage comes from combining the reciprocal structure of perspective depth with floating-point numbers whose representable values are denser near zero.</p>
+<p>The entire renderer has to agree on the convention. Reversing only the projection matrix while keeping old clear/comparison assumptions creates a system that is internally contradictory.</p>
+<section id="appendix-275ec8847057-contract-checklist" class="level3">
+<h3>Contract checklist</h3>
+<p>For a conventional zero-to-one API depth range, a common reversed-Z setup uses:</p>
+<ul>
+<li>near plane mapped near 1;</li>
+<li>far distance mapped toward 0;</li>
+<li>depth buffer cleared to 0;</li>
+<li>comparison set to GREATER or GREATER_EQUAL;</li>
+<li>hierarchical depth/occlusion reductions defined consistently with “larger is nearer”;</li>
+<li>screen-space reconstruction derived from the exact projection convention.</li>
+</ul>
+<p>Infinite-far reversed projection can remove an explicit far-plane distance from the perspective matrix, but frustum/culling policy still needs a practical world-space bound when the application cannot process infinite geometry.</p>
+</section>
+<section id="appendix-275ec8847057-why-floating-point-helps" class="level3">
+<h3>Why floating point helps</h3>
+<p>Perspective depth is approximately affine in <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>z</mi>
+</math>. Conventional mapping spends many floating-point representable values near depth one, where far geometry is crowded. Reversed-Z places far geometry near zero, where floating-point exponent scaling gives much more useful relative spacing.</p>
+<p>With integer/fixed-point depth, reversal alone does not create the same dramatic distribution advantage; the floating-point representation is part of the argument.</p>
+</section>
+<section id="appendix-275ec8847057-reconstruction-must-use-the-actual-matrix" class="level3">
+<h3>Reconstruction must use the actual matrix</h3>
+<p>Do not paste a “linearize depth” formula from another API. Different clip-space ranges, handedness, finite/infinite far planes and reversed mappings change the coefficients.</p>
+<p>A robust reconstruction derives camera-space position from the same projection matrix or stores explicit projection parameters and tests known near/far points.</p>
+</section>
+<section id="appendix-275ec8847057-occlusion-and-temporal-systems" class="level3">
+<h3>Occlusion and temporal systems</h3>
+<p>Hierarchical Z, SSAO, SSR, clustered depth slicing, picking and temporal rejection all consume depth meaning. Every reduction or comparison must be audited when the convention changes. A min-reduction hierarchy written for standard depth may need a max-reduction interpretation under reversed-Z.</p>
+</section>
+<section id="appendix-275ec8847057-tests" class="level3">
+<h3>Tests</h3>
+<p>Project known camera-space depths, confirm monotonic ordering, quantize them to the real depth format, reconstruct them, and measure relative world-space error over logarithmically spaced distances. Also test clear-value behavior with an empty frame and a near geometry sample.</p>
+<p>Teach and reconstruct: <a href="ch277.xhtml#id_03-visual-computing-i-ch012-give-depth-an-explicit-meaning" class="wikilink">Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Give depth an explicit meaning</a>.</p>
+<p>Related: <a href="ch458.xhtml#appendix-1bc40b08db4a-hardware-depth-buffer-linearization" class="wikilink">Hardware depth-buffer linearization (Vision, XR, and Playable Worlds, Part 1, Reference notes: Hardware depth-buffer linearization)</a>, <a href="ch314.xhtml#appendix-2e7e9fd28a2c-rendering-history-validity" class="wikilink">Rendering history validity (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Rendering history validity)</a>.</p>
+</section>
+</section>
+</body>
+</html>

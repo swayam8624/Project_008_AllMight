@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch350.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-5fb4af80d1c7-template-matching-and-distance-transforms" class="level2">
+<h2>Template matching and distance transforms</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-5fb4af80d1c7-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Template matching searches an image for a known pattern by comparing a small reference patch at candidate positions. Sum of squared differences penalizes intensity mismatch; normalized correlation compensates for brightness scale and offset. Direct search costs work proportional to image area times template area, while convolution or Fourier methods can accelerate broad searches. Rotation and scale changes require transforming the template or searching additional parameters. For contour-based matching, a distance transform stores each pixel’s distance to the nearest edge. A template edge point then receives a low cost when it lands near an observed contour even if the exact pixels do not align. The chamfer score sums these distances over template points. These methods suit industrial inspection where the target geometry is known, but need explicit thresholds for occlusion, deformation, and false positives.</p>
+</section>
+<section id="appendix-5fb4af80d1c7-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch309.xhtml#appendix-d5b3c692d9f0-convolution-and-filter-footprints" class="wikilink">Convolution and filter footprints (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Convolution and filter footprints)</a></li>
+<li><a href="ch344.xhtml#appendix-36022286b03e-edge-localization-and-subpixel-contours" class="wikilink">Edge localization and subpixel contours</a></li>
+</ul>
+</section>
+<section id="appendix-5fb4af80d1c7-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><span>Worlds, Images and Inference</span></li>
+</ul>
+</section>
+<section id="appendix-5fb4af80d1c7-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<p><a href="ch386.xhtml#id_04-visual-computing-ii-ch030-recognition-templates-and-industrial-matching" class="wikilink">Recognition, templates, and industrial matching (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 11)</a></p>
+</section>
+</section>
+</body>
+</html>

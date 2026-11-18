@@ -1,0 +1,39 @@
+\hypertarget{appendix-292c061cd47c}{}
+\section*{Transform hierarchies TRS and shear}
+\section{Transform hierarchies TRS and shear}\label{appendix-292c061cd47c-transform-hierarchies-trs-and-shear}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase7 · \textbf{Latest development:} Phase7
+
+\subsection{Definition and mechanism}\label{appendix-292c061cd47c-definition-and-mechanism}
+
+A TRS transform stores translation, rotation and diagonal scale, with an explicit application order. General affine matrices are closed under composition; TRS without shear is not. Parent nonuniform scale and rotated children can create shear, so exact world composition may require an affine matrix. Dirty caches must invalidate all dependent results.
+
+\textbf{Reconstruction cue:} Nonorthogonal columns in a composed linear map rule out a pure rotation-times-diagonal-scale representation.
+
+\subsection{Prerequisites}\label{appendix-292c061cd47c-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-1bae9457dbc3}{Coordinate frames and change of basis (02-Foundations-II, appendix-1bae9457dbc3)}
+\item
+  \hyperref[appendix-26d8da71f6c4]{Quaternion matrix and axis-angle conversion}
+\item
+  \hyperref[appendix-d1ea57347893]{Dual quaternions and rigid motion}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-292c061cd47c-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations]{Phase 7 teaching and laboratory}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-292c061cd47c-recall-and-next-depth}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\subsection{Source and navigation}\label{appendix-292c061cd47c-source-and-navigation}
+
+\hyperref[01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations]{Continuous explanation} · \hyperref[appendix-fd090d982a15-phase-7---parts-601-700]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-7---source-analysis-and-verification]{Sources and verification}

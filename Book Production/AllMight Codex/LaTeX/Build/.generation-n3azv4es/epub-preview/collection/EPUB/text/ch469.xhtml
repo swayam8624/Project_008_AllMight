@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch469.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-33237f0f618b-online-moments-and-welford-accumulation" class="level2">
+<h2>Online moments and Welford accumulation</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 10 · <strong>Latest development:</strong> Phase 10</p>
+<section id="appendix-33237f0f618b-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Online statistics update a mean and centered sum of squares as observations arrive, using constant storage. Welford’s recurrence computes a new mean from the old mean and one sample, then adds the product of deviations measured before and after that update. The centered form avoids severe cancellation in E[X²]−E[X]² for data with a large offset and small spread. Divide accumulated scatter by n for descriptive population-normalized variance or by n−1 for unbiased sample variance under IID finite-variance assumptions. The recurrence is numerically better behaved, not immune to overflow, count exhaustion, or all rounding error. Parallel workers can merge count, mean, and scatter summaries with a correction term for different means; merge order can change floating-point results.</p>
+</section>
+<section id="appendix-33237f0f618b-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch388.xhtml#appendix-54c383df9992-expectation-covariance-and-dependence" class="wikilink">Expectation, covariance, and dependence (Spatial Worlds, Engine State, and Simulation, Part 1, Reference notes: Expectation, covariance, and dependence)</a></li>
+<li><a href="ch121.xhtml#appendix-f82e270791c8-accumulated-rounding-error" class="wikilink">Accumulated rounding error (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Accumulated rounding error)</a></li>
+</ul>
+</section>
+<section id="appendix-33237f0f618b-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li>This node is a current endpoint in the supplied Phase 9–10 path.</li>
+</ul>
+</section>
+<section id="appendix-33237f0f618b-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch275.xhtml#id_02-foundations-ii-ch030-finite-samples-need-stable-descriptive-statistics" class="wikilink">Phase 10 teaching section (Mathematics for Visual Computing, Part 2, Ch. 14)</a></li>
+<li><a href="ch094.xhtml#appendix-cb5af353ef77-probability-and-uncertainty-visual-recall" class="wikilink">Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)</a> · visual recall</li>
+</ul>
+</section>
+<section id="appendix-33237f0f618b-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 951 (T06 · M058), 952 (T06 · M058), 953 (T06 · M058), 954 (T06 · M058), 955 (T06 · M058).</p>
+</section>
+</section>
+</body>
+</html>

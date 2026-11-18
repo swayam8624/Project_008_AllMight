@@ -1,0 +1,58 @@
+\hypertarget{appendix-da478be01d02}{}\label{referencestart:appendix-da478be01d02}
+\section{Determinants orientation and volume}\label{appendix-da478be01d02-determinants-orientation-and-volume}
+
+\hypertarget{appendix-da478be01d02-determinants-orientation-and-volume}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase7 · \textbf{Latest development:} University courses
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-da478be01d02-definition-and-mechanism}
+
+\hypertarget{appendix-da478be01d02-definition-and-mechanism}{}
+
+A square matrix determinant measures oriented volume scale. Zero means rank loss; sign records orientation reversal. Its magnitude depends on scale and is not a standalone measure of numerical conditioning.
+
+\end{allmightroledefinition}
+
+\textbf{Reconstruction cue:} Uniform tiny scaling can have tiny determinant and condition number one.
+
+\subsection{Prerequisites}\label{appendix-da478be01d02-prerequisites}
+
+\hypertarget{appendix-da478be01d02-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-2391db8052b1}{Cross products and oriented area (Vision, XR, and Playable Worlds, Reference notes: Cross products and oriented area)}
+\item
+  \hyperref[appendix-bd39c3bf5d64]{Matrices as linear maps and basis images}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-da478be01d02-used-by}
+
+\hypertarget{appendix-da478be01d02-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-48d2e66378ab]{Matrix inversion pivoting and residuals}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-73f5bcf7a462}{Polar decomposition (Vision, XR, and Playable Worlds, Reference notes: Polar decomposition)} --- Extends this foundation into linear-systems and decomposition analysis. \#\# Recall and next depth
+\end{itemize}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\subsection{Source and navigation}\label{appendix-da478be01d02-source-and-navigation}
+
+\hypertarget{appendix-da478be01d02-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations]{Continuous explanation} · \hyperref[appendix-fd090d982a15-phase-7---parts-601-700]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-7---source-analysis-and-verification]{Sources and verification}
+
+\subsection{University course development}\label{appendix-da478be01d02-university-course-development}
+
+\hypertarget{appendix-da478be01d02-university-course-development}{}
+
+Computational geometry often decides whether points are left or right of a directed line, whether three points are collinear, or whether a point lies inside a circle. These decisions reduce to determinant signs. For points \(a,b,c\) in 2D, the signed area determinant classifies orientation. If its exact value is near zero, floating-point rounding can change the sign and make neighboring algorithms disagree, creating flipped triangles or invalid topology. Robust predicates evaluate a fast approximate determinant with an error bound; if the sign is certain they stop, and if uncertain they recompute with higher precision. This adaptive strategy spends extra work only near degeneracy. It does not make constructed intersection coordinates exact, but it protects discrete branching decisions that must be globally consistent in triangulation, mesh repair, and ray-edge intersection.
+
+\href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch032-pose-estimation-transforms-and-robust-fitting}{Pose estimation, transforms, and robust fitting (Vision, XR, and Playable Worlds, Ch. 3)} · \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch028-visibility-queries-and-ray-intersections-1}{Visibility queries and ray intersections (Spatial Worlds, Engine State, and Simulation, Ch. 9)} · \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing}{Meshes, connectivity, and geometry processing (Geometry, Cameras, and Image Formation, Ch. 9)}

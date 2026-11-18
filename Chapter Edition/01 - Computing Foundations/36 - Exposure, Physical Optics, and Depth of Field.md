@@ -8,7 +8,7 @@ Camera exposure converts scene radiance into sensor measurements, while aperture
 
 **Recall question:** Which camera controls change exposure, which change focus blur, and how can their effects be distinguished in an image?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 89920–92789; source-span SHA256 ca3daa5411b64517156270bd4ca15121143ad0ef96df38fc7b31de3fca54753f. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 90167–93036; source-span SHA256 85da0b62a78b033757909481b5fd79089a16a18ac238ea0a3caf1745b6ce438f. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Model exposure, physical optics, and depth of field
@@ -1261,19 +1261,19 @@ The important idea is that camera jitter changes where the scene is sampled, not
 Suppose a pixel has integer coordinates $(i,j)$. Its conventional centre is:
 
 $$
- (i+0.5,j+0.5). 
+ (i+0.5,j+0.5).
 $$
 
 If we want a sample shifted by:
 
 $$
- (\delta_x,\delta_y) 
+ (\delta_x,\delta_y)
 $$
 
 measured in pixels, its sampling position becomes:
 
 $$
- \boxed{ (i+0.5+\delta_x,\ j+0.5+\delta_y) }. 
+ \boxed{ (i+0.5+\delta_x,\ j+0.5+\delta_y) }.
 $$
 
 The shifts are typically subpixel quantities.
@@ -1301,13 +1301,13 @@ A TAA image is not automatically an unbiased Monte Carlo estimate.
 Suppose a camera renders at:
 
 $$
- W=1920,\qquad H=1080. 
+ W=1920,\qquad H=1080.
 $$
 
 On frame 0, use jitter:
 
 $$
- \boldsymbol\delta_0=(+0.25,-0.25) 
+ \boldsymbol\delta_0=(+0.25,-0.25)
 $$
 
 pixels.
@@ -1315,7 +1315,7 @@ pixels.
 On frame 1, use:
 
 $$
- \boldsymbol\delta_1=(-0.25,+0.25). 
+ \boldsymbol\delta_1=(-0.25,+0.25).
 $$
 
 The projected scene shifts relative to the pixel grid differently on the two frames.
@@ -1335,19 +1335,19 @@ Useful jitter sequences include stratified patterns, Halton sequences, and scram
 For example, using Halton bases two and three:
 
 $$
- \mathbf h_k=(\phi_2(k),\phi_3(k)), 
+ \mathbf h_k=(\phi_2(k),\phi_3(k)),
 $$
 
 we can centre the result:
 
 $$
- \boxed{ \boldsymbol\delta_k= \mathbf h_k-(0.5,0.5) }. 
+ \boxed{ \boldsymbol\delta_k= \mathbf h_k-(0.5,0.5) }.
 $$
 
 That produces subpixel offsets in approximately:
 
 $$
- [-0.5,0.5)^2. 
+ [-0.5,0.5)^2.
 $$
 
 The precise sequence length and indexing policy matter.
@@ -1373,7 +1373,7 @@ The pixel-space shift is the same relative to the current raster grid, but the n
 For a surface point with world position $\mathbf p_W$, jittered projection is:
 
 $$
- \mathbf p_{C,j}=P_jV\mathbf p_W. 
+ \mathbf p_{C,j}=P_jV\mathbf p_W.
 $$
 
 If $P_j$ changes, its raster position changes even when $V$ and $\mathbf p_W$ are constant.
@@ -1394,13 +1394,13 @@ We now derive exactly how a subpixel offset modifies a projection matrix.
 Let the original clip coordinates be:
 
 $$
- \mathbf p_c=P\mathbf p_v. 
+ \mathbf p_c=P\mathbf p_v.
 $$
 
 We want the new NDC coordinates to be:
 
 $$
- \boxed{ x_n'=x_n+j_x, \qquad y_n'=y_n+j_y } 
+ \boxed{ x_n'=x_n+j_x, \qquad y_n'=y_n+j_y }
 $$
 
 where $j_x,j_y$ are NDC offsets.
@@ -1408,25 +1408,25 @@ where $j_x,j_y$ are NDC offsets.
 Since:
 
 $$
- x_n=\frac{x_c}{w_c}, 
+ x_n=\frac{x_c}{w_c},
 $$
 
 we require:
 
 $$
- \frac{x_c'}{w_c}= \frac{x_c}{w_c}+j_x. 
+ \frac{x_c'}{w_c}= \frac{x_c}{w_c}+j_x.
 $$
 
 Multiply by $w_c$:
 
 $$
- \boxed{x_c'=x_c+j_xw_c}. 
+ \boxed{x_c'=x_c+j_xw_c}.
 $$
 
 Similarly:
 
 $$
- \boxed{y_c'=y_c+j_yw_c}. 
+ \boxed{y_c'=y_c+j_yw_c}.
 $$
 
 The depth and $w$ coordinates remain unchanged.
@@ -1436,45 +1436,45 @@ The depth and $w$ coordinates remain unchanged.
 Let the projection matrix rows be:
 
 $$
- \mathbf r_0,\mathbf r_1,\mathbf r_2,\mathbf r_3. 
+ \mathbf r_0,\mathbf r_1,\mathbf r_2,\mathbf r_3.
 $$
 
 They produce:
 
 $$
- x_c=\mathbf r_0\mathbf p_v, 
+ x_c=\mathbf r_0\mathbf p_v,
 $$
 
 $$
- y_c=\mathbf r_1\mathbf p_v, 
+ y_c=\mathbf r_1\mathbf p_v,
 $$
 
 $$
- w_c=\mathbf r_3\mathbf p_v. 
+ w_c=\mathbf r_3\mathbf p_v.
 $$
 
 To obtain:
 
 $$
- x_c'=x_c+j_xw_c, 
+ x_c'=x_c+j_xw_c,
 $$
 
 the first row must become:
 
 $$
- \boxed{ \mathbf r_0'=\mathbf r_0+j_x\mathbf r_3 }. 
+ \boxed{ \mathbf r_0'=\mathbf r_0+j_x\mathbf r_3 }.
 $$
 
 Similarly:
 
 $$
- \boxed{ \mathbf r_1'=\mathbf r_1+j_y\mathbf r_3 }. 
+ \boxed{ \mathbf r_1'=\mathbf r_1+j_y\mathbf r_3 }.
 $$
 
 Therefore the most general row-based jitter operation is:
 
 $$
- \boxed{ P_j= \begin{bmatrix} \mathbf r_0+j_x\mathbf r_3\\ \mathbf r_1+j_y\mathbf r_3\\ \mathbf r_2\\ \mathbf r_3 \end{bmatrix} }. 
+ \boxed{ P_j= \begin{bmatrix} \mathbf r_0+j_x\mathbf r_3\\ \mathbf r_1+j_y\mathbf r_3\\ \mathbf r_2\\ \mathbf r_3 \end{bmatrix} }.
 $$
 
 This works for our column-vector convention and also describes the operation for general perspective matrices with nonstandard off-axis terms.
@@ -1484,35 +1484,35 @@ This works for our column-vector convention and also describes the operation for
 For a top-left raster image whose NDC $Y$ increases upward:
 
 $$
- x_p=\frac{W}{2}(x_n+1), 
+ x_p=\frac{W}{2}(x_n+1),
 $$
 
 $$
- y_p=\frac{H}{2}(1-y_n). 
+ y_p=\frac{H}{2}(1-y_n).
 $$
 
 Differentiate:
 
 $$
- \Delta x_p=\frac W2\Delta x_n. 
+ \Delta x_p=\frac W2\Delta x_n.
 $$
 
 Thus:
 
 $$
- \boxed{ j_x=\Delta x_n=\frac{2\delta_x}{W} }. 
+ \boxed{ j_x=\Delta x_n=\frac{2\delta_x}{W} }.
 $$
 
 For Y:
 
 $$
- \Delta y_p=-\frac H2\Delta y_n. 
+ \Delta y_p=-\frac H2\Delta y_n.
 $$
 
 Therefore:
 
 $$
- \boxed{ j_y=-\frac{2\delta_y}{H} }. 
+ \boxed{ j_y=-\frac{2\delta_y}{H} }.
 $$
 
 The negative sign follows from the chosen top-left raster mapping.
@@ -1522,37 +1522,37 @@ The negative sign follows from the chosen top-left raster mapping.
 For:
 
 $$
- W=1920,\qquad H=1080, 
+ W=1920,\qquad H=1080,
 $$
 
 and jitter:
 
 $$
- \delta_x=0.25,\qquad\delta_y=-0.5, 
+ \delta_x=0.25,\qquad\delta_y=-0.5,
 $$
 
 we get:
 
 $$
- j_x=\frac{0.5}{1920} =\boxed{0.000260416667}. 
+ j_x=\frac{0.5}{1920} =\boxed{0.000260416667}.
 $$
 
 And:
 
 $$
- j_y=-\frac{-1}{1080} =\boxed{0.000925925926}. 
+ j_y=-\frac{-1}{1080} =\boxed{0.000925925926}.
 $$
 
 If the original raster position is:
 
 $$
- (x_p,y_p)=(960,540), 
+ (x_p,y_p)=(960,540),
 $$
 
 the new projected position is:
 
 $$
- \boxed{(960.25,539.5)}. 
+ \boxed{(960.25,539.5)}.
 $$
 
 The reference C++23 laboratory verifies this exact shift numerically.
@@ -1562,25 +1562,25 @@ The reference C++23 laboratory verifies this exact shift numerically.
 For our conventional right-handed perspective matrix:
 
 $$
- \mathbf r_3=(0,0,-1,0). 
+ \mathbf r_3=(0,0,-1,0).
 $$
 
 Thus:
 
 $$
- \mathbf r_0'= (s_x,0,-j_x,0) 
+ \mathbf r_0'= (s_x,0,-j_x,0)
 $$
 
 and:
 
 $$
- \mathbf r_1'= (0,s_y,-j_y,0). 
+ \mathbf r_1'= (0,s_y,-j_y,0).
 $$
 
 The jitter appears in the matrix entries:
 
 $$
- \boxed{ P_{0,2}=-j_x, \qquad P_{1,2}=-j_y } 
+ \boxed{ P_{0,2}=-j_x, \qquad P_{1,2}=-j_y }
 $$
 
 under the standard centred projection and our convention.
@@ -1594,13 +1594,13 @@ The general row update is safer and more expressive.
 A production TAA renderer commonly maintains both:
 
 $$
- P_{\mathrm{jittered}} 
+ P_{\mathrm{jittered}}
 $$
 
 and:
 
 $$
- P_{\mathrm{unjittered}}. 
+ P_{\mathrm{unjittered}}.
 $$
 
 The jittered projection is used to generate spatially shifted raster samples.
@@ -1620,7 +1620,7 @@ Temporal reconstruction requires information about where the current visible sur
 Let:
 
 $$
- V_t,\ P_t 
+ V_t,\ P_t
 $$
 
 be the current view and projection matrices.
@@ -1628,7 +1628,7 @@ be the current view and projection matrices.
 Let:
 
 $$
- V_{t-1},\ P_{t-1} 
+ V_{t-1},\ P_{t-1}
 $$
 
 be their previous-frame counterparts.
@@ -1636,31 +1636,31 @@ be their previous-frame counterparts.
 Define:
 
 $$
- \boxed{ C_t=P_tV_t } 
+ \boxed{ C_t=P_tV_t }
 $$
 
 and:
 
 $$
- \boxed{ C_{t-1}=P_{t-1}V_{t-1} }. 
+ \boxed{ C_{t-1}=P_{t-1}V_{t-1} }.
 $$
 
 For a static world-space point:
 
 $$
- \mathbf p_W, 
+ \mathbf p_W,
 $$
 
 its current clip position is:
 
 $$
- \boxed{ \mathbf c_t=C_t\tilde{\mathbf p}_W }. 
+ \boxed{ \mathbf c_t=C_t\tilde{\mathbf p}_W }.
 $$
 
 Its previous clip position is:
 
 $$
- \boxed{ \mathbf c_{t-1}=C_{t-1}\tilde{\mathbf p}_W }. 
+ \boxed{ \mathbf c_{t-1}=C_{t-1}\tilde{\mathbf p}_W }.
 $$
 
 After dividing by their respective $w$ coordinates, we obtain current and previous NDC positions.
@@ -1670,31 +1670,31 @@ After dividing by their respective $w$ coordinates, we obtain current and previo
 Suppose we know the current homogeneous view-space point:
 
 $$
- \tilde{\mathbf p}_{V,t}. 
+ \tilde{\mathbf p}_{V,t}.
 $$
 
 The current view matrix satisfies:
 
 $$
- \tilde{\mathbf p}_{V,t} = V_t\tilde{\mathbf p}_W. 
+ \tilde{\mathbf p}_{V,t} = V_t\tilde{\mathbf p}_W.
 $$
 
 Therefore:
 
 $$
- \tilde{\mathbf p}_W= V_t^{-1}\tilde{\mathbf p}_{V,t}. 
+ \tilde{\mathbf p}_W= V_t^{-1}\tilde{\mathbf p}_{V,t}.
 $$
 
 The previous clip position is:
 
 $$
- \tilde{\mathbf c}_{t-1} = P_{t-1}V_{t-1}\tilde{\mathbf p}_W. 
+ \tilde{\mathbf c}_{t-1} = P_{t-1}V_{t-1}\tilde{\mathbf p}_W.
 $$
 
 Substitute:
 
 $$
- \boxed{ \tilde{\mathbf c}_{t-1} = P_{t-1}V_{t-1}V_t^{-1} \tilde{\mathbf p}_{V,t} }. 
+ \boxed{ \tilde{\mathbf c}_{t-1} = P_{t-1}V_{t-1}V_t^{-1} \tilde{\mathbf p}_{V,t} }.
 $$
 
 This is a camera-only reprojection transformation.
@@ -1708,19 +1708,19 @@ If the point is moving, its previous world position must also be considered.
 If the current clip coordinate is:
 
 $$
- \tilde{\mathbf c}_t, 
+ \tilde{\mathbf c}_t,
 $$
 
 then:
 
 $$
- \tilde{\mathbf p}_W = (P_tV_t)^{-1}\tilde{\mathbf c}_t. 
+ \tilde{\mathbf p}_W = (P_tV_t)^{-1}\tilde{\mathbf c}_t.
 $$
 
 Thus:
 
 $$
- \boxed{ \tilde{\mathbf c}_{t-1} = P_{t-1}V_{t-1} (P_tV_t)^{-1} \tilde{\mathbf c}_t }. 
+ \boxed{ \tilde{\mathbf c}_{t-1} = P_{t-1}V_{t-1} (P_tV_t)^{-1} \tilde{\mathbf c}_t }.
 $$
 
 This expresses how a homogeneous current clip-space point can be mapped to the previous clip frame for static geometry, subject to the relevant inverses and consistent homogeneous scaling.
@@ -1732,25 +1732,25 @@ In screen-space passes, a current NDC position and depth value can be lifted int
 For a moving rigid object:
 
 $$
- \mathbf p_{W,t}=M_t\mathbf p_L. 
+ \mathbf p_{W,t}=M_t\mathbf p_L.
 $$
 
 Its previous world position is:
 
 $$
- \boxed{ \mathbf p_{W,t-1}=M_{t-1}\mathbf p_L }. 
+ \boxed{ \mathbf p_{W,t-1}=M_{t-1}\mathbf p_L }.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf c_t=P_tV_tM_t\tilde{\mathbf p}_L } 
+ \boxed{ \mathbf c_t=P_tV_tM_t\tilde{\mathbf p}_L }
 $$
 
 and:
 
 $$
- \boxed{ \mathbf c_{t-1}= P_{t-1}V_{t-1}M_{t-1}\tilde{\mathbf p}_L }. 
+ \boxed{ \mathbf c_{t-1}= P_{t-1}V_{t-1}M_{t-1}\tilde{\mathbf p}_L }.
 $$
 
 If an engine uses only previous camera matrices but ignores object motion, moving objects may have incorrect motion vectors.
@@ -1762,13 +1762,13 @@ For skinned or deforming geometry, the current and previous local vertex positio
 Then:
 
 $$
- \boxed{ \mathbf c_t=P_tV_tM_t\tilde{\mathbf p}_{L,t} } 
+ \boxed{ \mathbf c_t=P_tV_tM_t\tilde{\mathbf p}_{L,t} }
 $$
 
 and:
 
 $$
- \boxed{ \mathbf c_{t-1}= P_{t-1}V_{t-1}M_{t-1}\tilde{\mathbf p}_{L,t-1} }. 
+ \boxed{ \mathbf c_{t-1}= P_{t-1}V_{t-1}M_{t-1}\tilde{\mathbf p}_{L,t-1} }.
 $$
 
 The previous vertex state may depend on previous skeletal joint transforms, morph weights, cloth states, or other deformation data.
@@ -1796,13 +1796,13 @@ The convention must be declared.
 One common TAA convention defines a backward motion vector:
 
 $$
- \boxed{ \mathbf v= \mathbf p_{\mathrm{previous,raster}} - \mathbf p_{\mathrm{current,raster}} }. 
+ \boxed{ \mathbf v= \mathbf p_{\mathrm{previous,raster}} - \mathbf p_{\mathrm{current,raster}} }.
 $$
 
 Then the previous sampling position is:
 
 $$
- \boxed{ \mathbf p_{\mathrm{previous}} = \mathbf p_{\mathrm{current}}+\mathbf v }. 
+ \boxed{ \mathbf p_{\mathrm{previous}} = \mathbf p_{\mathrm{current}}+\mathbf v }.
 $$
 
 Other pipelines store the opposite sign. Both are valid if consistently implemented.
@@ -1812,7 +1812,7 @@ Other pipelines store the opposite sign. Both are valid if consistently implemen
 Take a stationary world point:
 
 $$
- \mathbf p_W=(0,0,-5) 
+ \mathbf p_W=(0,0,-5)
 $$
 
 and a camera initially at the origin, looking toward $-Z$.
@@ -1820,13 +1820,13 @@ and a camera initially at the origin, looking toward $-Z$.
 Assume:
 
 $$
- \theta_y=90^\circ,\quad a=1. 
+ \theta_y=90^\circ,\quad a=1.
 $$
 
 The horizontal projection is:
 
 $$
- x_n=\frac{x_v}{d} 
+ x_n=\frac{x_v}{d}
 $$
 
 because $s_x=1$.
@@ -1834,49 +1834,49 @@ because $s_x=1$.
 Initially:
 
 $$
- x_v=0,\quad d=5. 
+ x_v=0,\quad d=5.
 $$
 
 Thus:
 
 $$
- x_{n,0}=0. 
+ x_{n,0}=0.
 $$
 
 Now move the camera right by:
 
 $$
- \Delta c_x=0.2. 
+ \Delta c_x=0.2.
 $$
 
 The stationary world's camera-relative X becomes:
 
 $$
- x_{v,1}=0-0.2=-0.2. 
+ x_{v,1}=0-0.2=-0.2.
 $$
 
 Thus:
 
 $$
- x_{n,1}=\frac{-0.2}{5}=-0.04. 
+ x_{n,1}=\frac{-0.2}{5}=-0.04.
 $$
 
 For a 1920-pixel-wide viewport:
 
 $$
- \Delta x_p=\frac{1920}{2}(-0.04) =-38.4. 
+ \Delta x_p=\frac{1920}{2}(-0.04) =-38.4.
 $$
 
 Therefore the point appears to move left by:
 
 $$
- \boxed{38.4\text{ pixels}}. 
+ \boxed{38.4\text{ pixels}}.
 $$
 
 Under the previous-minus-current convention:
 
 $$
- v_x=+38.4. 
+ v_x=+38.4.
 $$
 
 The compiled laboratory reproduces this result.
@@ -1886,25 +1886,25 @@ The compiled laboratory reproduces this result.
 Let current and previous NDC positions be:
 
 $$
- \mathbf n_t,\quad\mathbf n_{t-1}. 
+ \mathbf n_t,\quad\mathbf n_{t-1}.
 $$
 
 An NDC motion vector is:
 
 $$
- \Delta\mathbf n=\mathbf n_{t-1}-\mathbf n_t. 
+ \Delta\mathbf n=\mathbf n_{t-1}-\mathbf n_t.
 $$
 
 For a top-left raster mapping, the pixel-space displacement is:
 
 $$
- \boxed{ v_x=\frac W2\Delta n_x } 
+ \boxed{ v_x=\frac W2\Delta n_x }
 $$
 
 and:
 
 $$
- \boxed{ v_y=-\frac H2\Delta n_y }. 
+ \boxed{ v_y=-\frac H2\Delta n_y }.
 $$
 
 Do not assume that a motion vector stored in NDC can be added directly to a pixel coordinate.
@@ -1916,25 +1916,25 @@ Its units and sign must be defined.
 Let:
 
 $$
- \mathbf n_t^{(j)}= \mathbf n_t^{(0)}+\mathbf j_t 
+ \mathbf n_t^{(j)}= \mathbf n_t^{(0)}+\mathbf j_t
 $$
 
 and:
 
 $$
- \mathbf n_{t-1}^{(j)}= \mathbf n_{t-1}^{(0)}+\mathbf j_{t-1}. 
+ \mathbf n_{t-1}^{(j)}= \mathbf n_{t-1}^{(0)}+\mathbf j_{t-1}.
 $$
 
 Then the jittered NDC displacement is:
 
 $$
- \begin{aligned} \Delta\mathbf n^{(j)} &= \mathbf n_{t-1}^{(j)}-\mathbf n_t^{(j)}\\ &= \mathbf n_{t-1}^{(0)}-\mathbf n_t^{(0)} +\mathbf j_{t-1}-\mathbf j_t. \end{aligned} 
+ \begin{aligned} \Delta\mathbf n^{(j)} &= \mathbf n_{t-1}^{(j)}-\mathbf n_t^{(j)}\\ &= \mathbf n_{t-1}^{(0)}-\mathbf n_t^{(0)} +\mathbf j_{t-1}-\mathbf j_t. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{ \Delta\mathbf n^{(j)} = \Delta\mathbf n^{(0)} + (\mathbf j_{t-1}-\mathbf j_t) }. 
+ \boxed{ \Delta\mathbf n^{(j)} = \Delta\mathbf n^{(0)} + (\mathbf j_{t-1}-\mathbf j_t) }.
 $$
 
 The motion vector includes the difference between temporal sample offsets if jittered positions are used directly.
@@ -1994,25 +1994,25 @@ The motivation is numerical precision.
 Let a world-space point be:
 
 $$
- \mathbf p_W. 
+ \mathbf p_W.
 $$
 
 Let the camera world position be:
 
 $$
- \mathbf c_W. 
+ \mathbf c_W.
 $$
 
 Define the camera-relative vector:
 
 $$
- \boxed{ \mathbf p_R=\mathbf p_W-\mathbf c_W }. 
+ \boxed{ \mathbf p_R=\mathbf p_W-\mathbf c_W }.
 $$
 
 The camera orientation then transforms it into view space:
 
 $$
- \boxed{ \mathbf p_V=R^T\mathbf p_R }. 
+ \boxed{ \mathbf p_V=R^T\mathbf p_R }.
 $$
 
 This is mathematically equivalent to applying the inverse rigid camera transform.
@@ -2057,17 +2057,17 @@ The much smaller relative vector is then converted to binary32.
 Let:
 
 $$
- x_W=100000000.125, 
+ x_W=100000000.125,
 $$
 
 $$
- c_W=100000000. 
+ c_W=100000000.
 $$
 
 Their exact difference is:
 
 $$
- \boxed{x_R=0.125}. 
+ \boxed{x_R=0.125}.
 $$
 
 Binary32 cannot distinguish these two values at that magnitude.
@@ -2075,25 +2075,25 @@ Binary32 cannot distinguish these two values at that magnitude.
 If we first convert both to `float`, they can round to the same representable value:
 
 $$
- \operatorname{float}(x_W) = \operatorname{float}(c_W). 
+ \operatorname{float}(x_W) = \operatorname{float}(c_W).
 $$
 
 Then:
 
 $$
- \boxed{ \operatorname{float}(x_W) - \operatorname{float}(c_W)=0 }. 
+ \boxed{ \operatorname{float}(x_W) - \operatorname{float}(c_W)=0 }.
 $$
 
 But if we subtract in binary64 first:
 
 $$
- x_W-c_W=0.125, 
+ x_W-c_W=0.125,
 $$
 
 then convert:
 
 $$
- \boxed{ \operatorname{float}(x_W-c_W)=0.125 }. 
+ \boxed{ \operatorname{float}(x_W-c_W)=0.125 }.
 $$
 
 The compiled lab verifies exactly this difference.
@@ -2103,13 +2103,13 @@ The compiled lab verifies exactly this difference.
 For a mesh with local vertices $\mathbf p_L$, a world transform may be:
 
 $$
- \mathbf p_W=A\mathbf p_L+\mathbf t_W. 
+ \mathbf p_W=A\mathbf p_L+\mathbf t_W.
 $$
 
 Camera-relative position is:
 
 $$
- \mathbf p_R= A\mathbf p_L+(\mathbf t_W-\mathbf c_W). 
+ \mathbf p_R= A\mathbf p_L+(\mathbf t_W-\mathbf c_W).
 $$
 
 This suggests a practical division of work.
@@ -2117,7 +2117,7 @@ This suggests a practical division of work.
 On the CPU, calculate:
 
 $$
- \boxed{ \mathbf t_R=\mathbf t_W-\mathbf c_W } 
+ \boxed{ \mathbf t_R=\mathbf t_W-\mathbf c_W }
 $$
 
 in high precision.
@@ -2127,7 +2127,7 @@ Upload $\mathbf t_R$ in binary32 where appropriate.
 Then the GPU computes:
 
 $$
- \boxed{ \mathbf p_R=A_f\mathbf p_L+\mathbf t_{R,f} }. 
+ \boxed{ \mathbf p_R=A_f\mathbf p_L+\mathbf t_{R,f} }.
 $$
 
 This avoids constructing huge world coordinates in float and subtracting the camera afterward.
@@ -2157,13 +2157,13 @@ The spacing between representable numbers grows as the exponent increases.
 For a normal binary32 value in the interval:
 
 $$
- [2^e,2^{e+1}), 
+ [2^e,2^{e+1}),
 $$
 
 the spacing is:
 
 $$
- \boxed{ \mathrm{ULP}(x)=2^{e-23} } 
+ \boxed{ \mathrm{ULP}(x)=2^{e-23} }
 $$
 
 because the significand has 24 significant bits, including the implicit leading one.
@@ -2173,37 +2173,37 @@ because the significand has 24 significant bits, including the implicit leading 
 At values around:
 
 $$
- 2^{10}=1024, 
+ 2^{10}=1024,
 $$
 
 the spacing is:
 
 $$
- 2^{10-23}=2^{-13} \approx0.00012207. 
+ 2^{10-23}=2^{-13} \approx0.00012207.
 $$
 
 At values around:
 
 $$
- 2^{20}=1{,}048{,}576, 
+ 2^{20}=1{,}048{,}576,
 $$
 
 the spacing is:
 
 $$
- 2^{20-23}=2^{-3}=0.125. 
+ 2^{20-23}=2^{-3}=0.125.
 $$
 
 At values around:
 
 $$
- 2^{26}=67{,}108{,}864, 
+ 2^{26}=67{,}108{,}864,
 $$
 
 the spacing is:
 
 $$
- 2^{26-23}=8. 
+ 2^{26-23}=8.
 $$
 
 Thus near $10^8$, adjacent binary32 numbers can differ by eight units.
@@ -2225,7 +2225,7 @@ Conversely, fixing the renderer does not automatically fix a float-based physics
 Suppose an object is at world position:
 
 $$
- 10^8\text{ metres}. 
+ 10^8\text{ metres}.
 $$
 
 Its distance from the world origin is huge.
@@ -2233,7 +2233,7 @@ Its distance from the world origin is huge.
 But the camera may be only:
 
 $$
- 2\text{ metres} 
+ 2\text{ metres}
 $$
 
 away.
@@ -2264,43 +2264,43 @@ Origin rebasing periodically changes the simulation's local coordinate origin so
 Suppose world coordinates are represented relative to a current origin:
 
 $$
- \mathbf O. 
+ \mathbf O.
 $$
 
 An object's local runtime coordinate is:
 
 $$
- \boxed{ \mathbf p_R=\mathbf p_W-\mathbf O }. 
+ \boxed{ \mathbf p_R=\mathbf p_W-\mathbf O }.
 $$
 
 If the active region moves far from $\mathbf O$, choose a new origin:
 
 $$
- \mathbf O'=\mathbf O+\Delta. 
+ \mathbf O'=\mathbf O+\Delta.
 $$
 
 To preserve the same geometric world position:
 
 $$
- \mathbf p_R'=\mathbf p_W-\mathbf O'. 
+ \mathbf p_R'=\mathbf p_W-\mathbf O'.
 $$
 
 Substitute:
 
 $$
- \mathbf p_R' = \mathbf p_W-(\mathbf O+\Delta). 
+ \mathbf p_R' = \mathbf p_W-(\mathbf O+\Delta).
 $$
 
 Since:
 
 $$
- \mathbf p_R=\mathbf p_W-\mathbf O, 
+ \mathbf p_R=\mathbf p_W-\mathbf O,
 $$
 
 we get:
 
 $$
- \boxed{ \mathbf p_R'=\mathbf p_R-\Delta }. 
+ \boxed{ \mathbf p_R'=\mathbf p_R-\Delta }.
 $$
 
 Every local position must shift by the negative origin change.
@@ -2310,25 +2310,25 @@ Every local position must shift by the negative origin change.
 Suppose the old runtime origin is:
 
 $$
- \mathbf O=(0,0,0). 
+ \mathbf O=(0,0,0).
 $$
 
 A player is located at:
 
 $$
- \mathbf p_W=(120000,2,50000). 
+ \mathbf p_W=(120000,2,50000).
 $$
 
 Choose a new origin:
 
 $$
- \mathbf O'=(120000,0,50000). 
+ \mathbf O'=(120000,0,50000).
 $$
 
 The player's rebased position is:
 
 $$
- \boxed{ \mathbf p_R'=(0,2,0) }. 
+ \boxed{ \mathbf p_R'=(0,2,0) }.
 $$
 
 The physical player has not moved.
@@ -2360,31 +2360,31 @@ Rebasing scene objects without updating the spatial index can cause incorrect cu
 Suppose the previous frame used origin:
 
 $$
- \mathbf O_{t-1} 
+ \mathbf O_{t-1}
 $$
 
 and the current frame uses:
 
 $$
- \mathbf O_t. 
+ \mathbf O_t.
 $$
 
 The same world point has coordinates:
 
 $$
- \mathbf p_{R,t-1} = \mathbf p_W-\mathbf O_{t-1} 
+ \mathbf p_{R,t-1} = \mathbf p_W-\mathbf O_{t-1}
 $$
 
 and:
 
 $$
- \mathbf p_{R,t} = \mathbf p_W-\mathbf O_t. 
+ \mathbf p_{R,t} = \mathbf p_W-\mathbf O_t.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf p_{R,t-1} = \mathbf p_{R,t} + (\mathbf O_t-\mathbf O_{t-1}) }. 
+ \boxed{ \mathbf p_{R,t-1} = \mathbf p_{R,t} + (\mathbf O_t-\mathbf O_{t-1}) }.
 $$
 
 That origin difference must be accounted for when reconstructing previous-frame positions.
@@ -2414,7 +2414,7 @@ Double precision is often appropriate for global camera positions and scene-to-c
 Let the camera have world position:
 
 $$
- \mathbf c_d 
+ \mathbf c_d
 $$
 
 stored in binary64.
@@ -2422,13 +2422,13 @@ stored in binary64.
 Let its world-space rotation be:
 
 $$
- R_d. 
+ R_d.
 $$
 
 Then the exact mathematical view transform is:
 
 $$
- \boxed{ \mathbf p_V=R_d^T(\mathbf p_W-\mathbf c_d) }. 
+ \boxed{ \mathbf p_V=R_d^T(\mathbf p_W-\mathbf c_d) }.
 $$
 
 A good implementation may perform the subtraction in double precision and convert the resulting relative position to float for GPU stages.
@@ -2469,13 +2469,13 @@ Very small orientation errors can cause noticeable screen-space shifts at large 
 Suppose a point lies at distance $d$ and the camera orientation changes by a small angle:
 
 $$
- \delta\theta. 
+ \delta\theta.
 $$
 
 For small angles, the transverse displacement of the viewing ray at that distance is approximately:
 
 $$
- \boxed{ \delta x\approx d\,\delta\theta } 
+ \boxed{ \delta x\approx d\,\delta\theta }
 $$
 
 with $\delta\theta$ measured in radians.
@@ -2483,19 +2483,19 @@ with $\delta\theta$ measured in radians.
 At:
 
 $$
- d=1000 
+ d=1000
 $$
 
 and:
 
 $$
- \delta\theta=10^{-5}, 
+ \delta\theta=10^{-5},
 $$
 
 the transverse displacement is approximately:
 
 $$
- 0.01 
+ 0.01
 $$
 
 world units.

@@ -8,7 +8,7 @@ Two APIs can represent similar work with different resource and synchronization 
 
 **Recall question:** Which differences are permitted by the contract, and what image or state witness would reveal a conversion error?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 105762–108498; source-span SHA256 806a7c1985cb289efca19c9e0364ba23b697eb0023c90548eb2fb80d3dc191ea. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 107025–109761; source-span SHA256 806a7c1985cb289efca19c9e0364ba23b697eb0023c90548eb2fb80d3dc191ea. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### REAL CROSS-BACKEND CONVERSION & AGREEMENT

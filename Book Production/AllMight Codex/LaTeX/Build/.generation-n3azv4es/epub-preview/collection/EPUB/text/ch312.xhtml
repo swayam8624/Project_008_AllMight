@@ -1,0 +1,5166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch312.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_06-engine-ii-ch030-depth-projection-and-shadow-map-precision" class="level2">
+<h2>Depth, projection, and shadow-map precision</h2>
+<p><a href="ch283.xhtml#id_03-Geometry-Cameras-and-Image-Formation" class="wikilink">Reading map</a> · <a href="ch311.xhtml#id_03-visual-computing-i-ch013-from-view-space-to-clip-space" class="wikilink">Previous chapter</a> · <a href="ch313.xhtml#id_04-visual-computing-ii-ch033-projection-scale-and-incidence-geometry" class="wikilink">Next chapter</a></p>
+<p>Depth buffers encode an ordering decision under finite precision, and projection choices determine where that precision is spent. This chapter connects conventional depth, reverse-Z, and shadow comparisons to geometry and camera range.</p>
+<p><strong>By the end:</strong> Derive how projection maps distance to depth and explain precision, bias, and coverage limits in a shadow pass.</p>
+<p><strong>Recall question:</strong> For the chosen near/far range, where is depth precision concentrated and how can you test whether shadow acne is numerical or geometric?</p>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 73692–77570; source-span SHA256 9b739549c6e26330204a1f584cc78ea197418353d28ed6acdd7663971d7bb602. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_06-engine-ii-ch030-conventional-depth" class="level4">
+<h4>Conventional depth</h4>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mn>1</mn>
+</math>
+<p>with depth comparison <code>LESS</code>.</p>
+<p>At each full-resolution pixel, depth buffer contains the nearest visible surface:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mi>p</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>For a coarse 2×2 block to prove an object is hidden behind <strong>all four pixels</strong>, we need the farthest of those nearest occluders:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>z</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>coarse</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>z</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>z</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>z</mi>
+            <mn>2</mn>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>z</mi>
+            <mn>3</mn>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Why max?</p>
+<p>Suppose depths are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.1</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>0.1</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>0.1</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>0.8</mn>
+  <mo>.</mo>
+</math>
+<p>An object at depth 0.5 is hidden behind the first three pixels, but would be in front of the 0.8 surface.</p>
+<p>Using minimum 0.1 would falsely classify it as occluded.</p>
+<p>Using maximum 0.8 does not.</p>
+<p>For object’s nearest possible depth <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>obj</mtext>
+    </mrow>
+  </msub>
+</math>, conservative occlusion requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>z</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>obj</mtext>
+            </mrow>
+          </msub>
+          <mo>&gt;</mo>
+          <msub>
+            <mi>z</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>coarse</mtext>
+            </mrow>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for the relevant covered region.</p>
+<hr />
+<p><strong>Reverse-Z changes the reduction</strong></p>
+<p>This matters directly for your renderer because you have worked with reverse-Z.</p>
+<p>Reverse-Z typically maps:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mn>0</mn>
+</math>
+<p>with <code>GREATER</code> depth testing.</p>
+<p>Now larger depth means closer.</p>
+<p>At full-resolution pixel, nearest visible surface has the <strong>largest</strong> depth.</p>
+<p>To obtain a conservative coarse value representing the weakest/farthest occluder across a block, use:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>z</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>coarse</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>z</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>z</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>z</mi>
+            <mn>2</mn>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>z</mi>
+            <mn>3</mn>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.9</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>0.9</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>0.9</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>0.2</mn>
+  <mo>.</mo>
+</math>
+<p>Object nearest depth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.5</mn>
+  <mo>.</mo>
+</math>
+<p>It is behind the first three surfaces because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.5</mn>
+  <mo>&lt;</mo>
+  <mn>0.9</mn>
+  <mo>,</mo>
+</math>
+<p>but in front of the fourth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.5</mn>
+  <mo>&gt;</mo>
+  <mn>0.2</mn>
+  <mo>.</mo>
+</math>
+<p>Taking minimum:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>coarse</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>0.2</mn>
+</math>
+<p>prevents us from declaring it occluded.</p>
+<p>The conservative reverse-Z condition becomes approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>z</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>object nearest</mtext>
+            </mrow>
+          </msub>
+          <mo>&lt;</mo>
+          <msub>
+            <mi>z</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>HZB</mtext>
+            </mrow>
+          </msub>
+          <mo stretchy="false">⇒</mo>
+          <mtext>occluded</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for a fully covered region and compatible depth conventions.</p>
+<p>This is the exact opposite reduction direction from conventional Z.</p>
+<p>A reverse-Z engine that builds its HZB pyramid using the wrong min/max operation can produce catastrophic false occlusion.</p>
+<hr />
+<p><strong>Projecting a bounding volume to HZB</strong></p>
+<p>For object AABB:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>,</mo>
+</math>
+<p>we need a conservative screen-space rectangle.</p>
+<p>Project its relevant corners using:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>P</mi>
+  <mi>V</mi>
+  <mi>M</mi>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>After correct clipping and perspective divide:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mi>d</mi>
+      <mi>c</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <mfrac>
+      <msub>
+        <mi>x</mi>
+        <mi>c</mi>
+      </msub>
+      <msub>
+        <mi>w</mi>
+        <mi>c</mi>
+      </msub>
+    </mfrac>
+    <mo>,</mo>
+    <mfrac>
+      <msub>
+        <mi>y</mi>
+        <mi>c</mi>
+      </msub>
+      <msub>
+        <mi>w</mi>
+        <mi>c</mi>
+      </msub>
+    </mfrac>
+    <mo>,</mo>
+    <mfrac>
+      <msub>
+        <mi>z</mi>
+        <mi>c</mi>
+      </msub>
+      <msub>
+        <mi>w</mi>
+        <mi>c</mi>
+      </msub>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Find screen bounds:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>y</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>y</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Also determine the object’s nearest possible depth.</p>
+<p>Then select a pyramid mip level whose texels roughly match the projected rectangle.</p>
+<p>If projected size is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mo>×</mo>
+  <mi>H</mi>
+</math>
+<p>pixels, a common idea is choose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mo>≈</mo>
+  <mo fence="false" stretchy="false">⌊</mo>
+  <msub>
+    <mi>log</mi>
+    <mn>2</mn>
+  </msub>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <mi>W</mi>
+  <mo>,</mo>
+  <mi>H</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+  <mo fence="false" stretchy="false">⌋</mo>
+</math>
+<p>with implementation-specific adjustment so only a small number of HZB texels cover the rectangle.</p>
+<p>The exact choice is a performance policy.</p>
+<p>Correctness comes from conservative depth aggregation and conservative projected bounds.</p>
+<hr />
+<p><strong>Why coarse HZB works</strong></p>
+<p>Suppose object covers:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>128</mn>
+  <mo>×</mo>
+  <mn>128</mn>
+</math>
+<p>pixels.</p>
+<p>Testing full resolution could mean considering:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mo>,</mo>
+  <mn>384</mn>
+</math>
+<p>depth samples.</p>
+<p>At mip level 7:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>128</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msup>
+    <mn>2</mn>
+    <mn>7</mn>
+  </msup>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>One coarse sample summarizes roughly that region.</p>
+<p>So instead of pixel-by-pixel occlusion, we ask:</p>
+<blockquote>
+<p>Is the nearest point of the entire object still behind the conservative farthest occluder covering this entire screen region?</p>
+</blockquote>
+<p>If yes, the whole object can be culled before expensive rendering.</p>
+<p>That is spatial pruning in screen space.</p>
+<hr />
+<p><strong>HZB is not the same thing as ordinary early-Z</strong></p>
+<p>Early-Z occurs while rasterizing fragments.</p>
+<p>The triangle is already submitted and rasterization has begun.</p>
+<p>HZB object culling attempts to reject geometry <strong>before</strong> submitting its expensive draw/mesh work.</p>
+<p>NVIDIA’s occlusion-culling discussions make the same broad distinction: depth testing can cheaply discard individual hidden fragments, while hierarchical/object-level visibility systems aim to avoid processing whole objects or hierarchy nodes when they are known to be hidden. <a href="https://developer.nvidia.com/gpugems/gpugems/part-v-performance-and-practicalities/chapter-29-efficient-occlusion-culling?utm_source=chatgpt.com">NVIDIA Developer</a></p>
+<p>Hardware GPUs also maintain internal hierarchical depth representations for efficient depth rejection; application-built HZBs are conceptually related but are not necessarily the same data structure as the hardware’s private Hi-Z metadata. GPUOpen documents hardware Hi-Z metadata being maintained and resummarized as depth data changes. <a href="https://gpuopen.com/manuals/rgp_manual/overview_windows/?utm_source=chatgpt.com">AMD GPUOpen</a></p>
+<hr />
+<p><strong>HZB must be conservative</strong></p>
+<p>A false negative in visibility means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>visible object classified occluded</mtext>
+  <mo>.</mo>
+</math>
+<p>The result is missing geometry or flicker.</p>
+<p>That is much worse than rendering an unnecessary hidden object.</p>
+<p>Therefore if uncertainty exists:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>assume visible</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Examples of uncertainty:</p>
+<ul>
+<li>projected bound crosses the near plane,</li>
+<li>object fills most of screen,</li>
+<li>depth bounds are poorly conditioned,</li>
+<li>previous-frame depth may no longer match,</li>
+<li>camera teleported,</li>
+<li>object moved rapidly,</li>
+<li>HZB rectangle coverage is uncertain.</li>
+</ul>
+<p>This repeats the entire conservative-geometry philosophy of M078.</p>
+<hr />
+<p><strong>Previous-frame HZB and temporal coherence</strong></p>
+<p>Often the current frame’s complete depth is not available before deciding what to render.</p>
+<p>One solution uses previous-frame depth.</p>
+<p>That introduces one-frame latency.</p>
+<p>If an object was hidden last frame but camera suddenly moves and exposes it, blindly trusting old depth can incorrectly cull it.</p>
+<p>Countermeasures include:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>expand projected bounds</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>camera-motion thresholds</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>keep recently visible objects visible</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>disable occlusion after teleport</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>reproject previous depth</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>conservative velocity expansion</mtext>
+  <mo>.</mo>
+</math>
+<p>This is the rendering analogue of fat AABBs.</p>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>temporal slack</mtext>
+  <mo stretchy="false">↔</mo>
+  <mtext>robustness</mtext>
+  <mo>.</mo>
+</math>
+<p>Historical hierarchical occlusion systems similarly exploit temporal coherence because visibility tends to persist between nearby frames, though overly trusting it results in additional rendering or visibility errors depending on the policy. <a href="https://developer.nvidia.com/gpugems/gpugems2/part-i-geometric-complexity/chapter-6-hardware-occlusion-queries-made-useful?utm_source=chatgpt.com">NVIDIA Developer</a></p>
+<hr />
+<p><strong>The unifying picture of all structures in Pass 08</strong></p>
+<p>Now compare the central abstraction each structure uses.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Structure</th>
+<th>What gets partitioned?</th>
+<th>Best exploitation</th>
+<th>Main weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dynamic AABB tree</td>
+<td>Object hierarchy</td>
+<td>Dynamic bounded objects</td>
+<td>Tree quality/updating</td>
+</tr>
+<tr>
+<td>SAP</td>
+<td>Axis intervals</td>
+<td>Temporal coherence</td>
+<td>Dense overlap</td>
+</tr>
+<tr>
+<td>Spatial hash</td>
+<td>Uniform cells</td>
+<td>Uniform-scale local neighborhoods</td>
+<td>Cell-size sensitivity</td>
+</tr>
+<tr>
+<td>Dense grid</td>
+<td>Uniform cells in bounded domain</td>
+<td>Extreme locality/GPU friendliness</td>
+<td>Memory</td>
+</tr>
+<tr>
+<td>Octree</td>
+<td>3D space recursively</td>
+<td>Sparse multiscale worlds</td>
+<td>Boundary/large-object issues</td>
+</tr>
+<tr>
+<td>Loose octree</td>
+<td>Overlapping 3D cells</td>
+<td>Moving extended objects</td>
+<td>More overlap</td>
+</tr>
+<tr>
+<td>Quadtree</td>
+<td>2D space recursively</td>
+<td>Maps/terrain/2D worlds</td>
+<td>Same regular-partition issues</td>
+</tr>
+<tr>
+<td>KD-tree</td>
+<td>Space via axis planes</td>
+<td>Point nearest-neighbor</td>
+<td>Dynamic/extended geometry</td>
+</tr>
+<tr>
+<td>BSP</td>
+<td>Arbitrary half-spaces</td>
+<td>Static architectural space</td>
+<td>Expensive preprocessing</td>
+</tr>
+<tr>
+<td>Sphere hierarchy</td>
+<td>Object groups by spheres</td>
+<td>Cheap tests/rotation</td>
+<td>Loose fit</td>
+</tr>
+<tr>
+<td>Scene graph</td>
+<td>Semantic/transform relationships</td>
+<td>Ownership/transforms</td>
+<td>Not intrinsically spatial</td>
+</tr>
+<tr>
+<td>Portals/PVS</td>
+<td>Visibility connectivity</td>
+<td>Static indoor visibility</td>
+<td>Static/precompute assumptions</td>
+</tr>
+<tr>
+<td>HZB</td>
+<td>Screen-space depth</td>
+<td>Dynamic occlusion</td>
+<td>Temporal/projection conservatism</td>
+</tr>
+</tbody>
+</table>
+<p>The deeper point is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>A spatial structure is a hypothesis about the workload.</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A hash grid hypothesizes useful locality at one fixed spatial scale.</p>
+<p>SAP hypothesizes strong temporal coherence.</p>
+<p>KD-tree hypothesizes point-like data and useful axis separation.</p>
+<p>Portal/PVS hypothesizes a cell-connected architectural environment.</p>
+<p>HZB hypothesizes enough existing screen-space occlusion to make depth rejection worthwhile.</p>
+<p>If that hypothesis is false, the data structure can become slower than the simpler alternative.</p>
+<hr />
+<p><strong>Choosing between dynamic tree, SAP and spatial hash</strong></p>
+<p>Imagine 50,000 particles uniformly spread through a cubic region, all roughly equal size.</p>
+<p>Spatial hash is attractive.</p>
+<p>Imagine 5,000 rigid bodies moving smoothly with similar frame-to-frame order.</p>
+<p>SAP can be very effective.</p>
+<p>Imagine 10,000 differently sized rigid bodies moving arbitrarily through a world.</p>
+<p>Dynamic AABB tree is more general.</p>
+<p>Imagine millions of static reconstructed triangles.</p>
+<p>Static SAH BVH from Pass 07 is the better fit.</p>
+<p>Imagine millions of static point samples requiring nearest-neighbor search.</p>
+<p>KD-tree is a stronger candidate.</p>
+<p>Imagine an indoor level consisting of rooms and corridors.</p>
+<p>Portals/PVS can remove entire inaccessible regions before generic spatial culling even begins.</p>
+<p>This is why production engines frequently use <strong>several structures simultaneously</strong>.</p>
+<hr />
+<p><strong>A realistic engine composition</strong></p>
+<p>A modern world might use:</p>
+<pre class="text"><code>                    WORLD / ENTITY SYSTEM
+                           |
+               -------------------------
+               |                       |
+       static geometry           dynamic objects
+               |                       |
+             BVH / BLAS          Dynamic AABB tree
+               |                       |
+               -----------+------------
+                          |
+                          v
+                     candidate set
+                          |
+                       frustum
+                          |
+                        PVS
+                          |
+                         HZB
+                          |
+                         GPU</code></pre>
+<p>Meanwhile:</p>
+<pre class="text"><code>AI points / landmarks
+          |
+        KD-tree</code></pre>
+<p>Particle neighborhood queries:</p>
+<pre class="text"><code>particles
+    |
+spatial hash</code></pre>
+<p>Indoor visibility:</p>
+<pre class="text"><code>cell / portal graph</code></pre>
+<p>The same world can legitimately contain all of them.</p>
+<hr />
+<p><strong>Current KairoSpatial implementation audit</strong></p>
+<p>This pass exposes a useful maturity map.</p>
+<p><strong><code>DynamicAABBTree.cppm</code></strong></p>
+<p>Already implemented:</p>
+<pre class="text"><code>binary dynamic tree
+tight/fat leaf bounds
+proxy handles
+incremental insertion
+remove/reinsert updates
+AABB/sphere/ray queries
+layer masks
+pair generation
+height/balance/area diagnostics
+rebuild-through-reinsertion</code></pre>
+<p>Missing or improvable:</p>
+<pre class="text"><code>node free-list reuse
+rotations/balancing
+motion-predictive fattening
+stronger insertion SAH
+moved-proxy pair generation
+true optimized bottom-up rebuild
+near-first ray traversal</code></pre>
+<p><strong><code>SweepAndPrune.cppm</code></strong></p>
+<p>Already implemented:</p>
+<pre class="text"><code>proxy storage
+update/remove
+X-axis sorting
+early X rejection
+full 3D candidate confirmation</code></pre>
+<p>Not yet implemented despite the declared endpoint type:</p>
+<pre class="text"><code>persistent endpoints
+active-set sweep
+incremental endpoint crossing
+temporal-coherence insertion sort
+multi-axis pair masks</code></pre>
+<p><strong><code>SpatialHash.cppm</code></strong></p>
+<p>Already quite coherent:</p>
+<pre class="text"><code>floor-based cell mapping
+negative coordinates
+AABB multi-cell occupancy
+coordinate hashing
+reverse ID-&gt;cells mapping
+remove/reinsert
+AABB query
+radius query
+deduplication</code></pre>
+<p>Main limitations are structural rather than correctness errors:</p>
+<pre class="text"><code>single fixed cell size
+large-object cell explosion
+unordered_map locality/overhead
+full removal/reinsert on every update</code></pre>
+<p><strong><code>Octree.cppm</code></strong></p>
+<p>Implemented as a real loose octree:</p>
+<pre class="text"><code>8-way subdivision
+depth/capacity limits
+loose bounds
+ancestor storage for large items
+AABB/sphere/frustum/ray query
+empty-subtree collapse</code></pre>
+<p>Important improvements:</p>
+<pre class="text"><code>enforce root/world containment
+ID-&gt;node proxy map for fast updates
+population-based merge
+near-first / closest-pruned raycast
+pool/flat allocation
+layer masks</code></pre>
+<p><strong><code>Quadtree.cppm</code></strong></p>
+<p>Currently:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>not yet hierarchically subdivided</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>It is a flat item vector with linear queries.</p>
+<p><strong><code>KDTree.cppm</code></strong></p>
+<p>Implemented well for point queries:</p>
+<pre class="text"><code>median nth_element build
+cyclic axes
+nearest neighbor
+radius search
+K-nearest
+max-heap pruning</code></pre>
+<p>Possible additions:</p>
+<pre class="text"><code>AABB range query
+spread-based axis choice
+deterministic tie-breaks
+bulk point-data locality optimization</code></pre>
+<p><strong>BSP / sphere hierarchy / portal-PVS / HZB</strong></p>
+<p>No dedicated implementations were found in the inspected <code>KairoSpatial</code> repository. Those topics are therefore canonical system knowledge and future engine-integration targets rather than existing code descriptions.</p>
+<hr />
+<p><strong>One especially useful implementation project from this pass</strong></p>
+<p>The best single improvement to make after learning these chunks would be to turn your dynamic AABB tree into a genuinely production-style update structure.</p>
+<p>The sequence would be:</p>
+<pre class="text"><code>1. Implement free-list node reuse
+2. Add displacement-aware fat bounds
+3. Add local rotations
+4. Add proper insertion SAH / inheritance cost
+5. Maintain moved-proxy list
+6. Generate pairs only from moved proxies
+7. Add near-first ray traversal
+8. Benchmark against current implementation</code></pre>
+<p>Do not implement all eight and merely declare victory.</p>
+<p>Measure after each stage:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>update time</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>pair generation time</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>node visits</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>area ratio</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>tree height</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>reinsertion rate</mtext>
+  <mo>.</mo>
+</math>
+<p>That lets you know which features actually pay for your workloads.</p>
+<hr />
+<p><strong>Research bridge: your existing adaptive collision hypothesis becomes much more meaningful now</strong></p>
+<p>Your repository already contains the research hypothesis:</p>
+<pre class="text"><code>Online scene telemetry can choose among:
+dynamic tree
+sweep-and-prune
+spatial hash
+
+such that p95 collision cost is lower
+than one fixed policy.</code></pre>
+<p>Pass 08 gives that hypothesis real algorithmic substance.</p>
+<p>The three methods fail under very different conditions.</p>
+<p>For dynamic tree, useful telemetry includes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mo>=</mo>
+  <mtext>height</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>area ratio</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mo>=</mo>
+  <mtext>visited nodes/query</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <mo>=</mo>
+  <mtext>reinsertion rate</mtext>
+  <mo>.</mo>
+</math>
+<p>For SAP:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>K</mi>
+  <mo>=</mo>
+  <mtext>endpoint inversions/frame</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mtext>average active-set size</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>X candidate pairs</mtext>
+  <mo>.</mo>
+</math>
+<p>For hash:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo>=</mo>
+  <mtext>occupied cells</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mtext>mean bucket occupancy</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mtext>max bucket occupancy</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mtext>mean cells/object</mtext>
+  <mo>.</mo>
+</math>
+<p>Then define estimated total broadphase cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mi>T</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>update</mtext>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>query</mtext>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>candidate narrowphase</mtext>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>A switching policy should minimize <strong>total frame cost</strong>, not merely broadphase query time.</p>
+<p>If hash returns twice as many false-positive candidates, its narrowphase cost belongs in the evaluation.</p>
+<p>Likewise switching structures has a migration cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>switch</mtext>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>A policy that switches every frame may be worse than the fixed structures it attempts to outperform.</p>
+<p>So hysteresis is necessary:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>new</mtext>
+    </mrow>
+  </msub>
+  <mo>&lt;</mo>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>current</mtext>
+    </mrow>
+  </msub>
+  <mo>−</mo>
+  <mi mathvariant="normal">Δ</mi>
+</math>
+<p>for several frames before switching.</p>
+<p>That connects directly to your repository’s existing <code>no_hysteresis</code> ablation idea.</p>
+<p>This is a genuine systems research direction, provided the final contribution goes beyond simply comparing standard broadphase algorithms.</p>
+<hr />
+<p><strong>Pass 08 deep reconstruction map</strong></p>
+<p>You should now mentally see the full phase progression:</p>
+<pre class="text"><code>PASS 07
+STATIC / SEMI-STATIC ACCELERATION
+
+Primitive bounds
+       |
+       v
+      BVH
+       |
+SAH / Morton / LBVH
+       |
+Traversal / pruning
+       |
+Wide / quantized / SIMD
+
+
+PASS 08
+DYNAMIC / SPECIALIZED SPATIAL SYSTEMS
+
+moving AABBs
+   |
+   +---- Dynamic AABB tree
+   |
+   +---- Sweep and prune
+   |
+   +---- Spatial hash / grid
+
+explicit space partition
+   |
+   +---- Octree / loose octree
+   +---- Quadtree
+   +---- KD-tree
+   +---- BSP
+
+alternative bounding hierarchy
+   |
+   +---- sphere hierarchy
+
+scene organization
+   |
+   +---- scene graph
+
+visibility organization
+   |
+   +---- portals
+   +---- PVS
+   +---- hierarchical Z</code></pre>
+<p>These are not random data structures.</p>
+<p>They are different answers to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>What information about space is stable enough that I can exploit it?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Dynamic tree exploits bounded movement.</p>
+<p>SAP exploits ordering stability.</p>
+<p>Hash grids exploit fixed scale.</p>
+<p>Octrees exploit coordinate hierarchy.</p>
+<p>KD-trees exploit point distributions.</p>
+<p>BSP exploits planes.</p>
+<p>Portals exploit architectural connectivity.</p>
+<p>HZB exploits already-rendered depth.</p>
+<hr />
+<p><strong>Parts 1337–1374 coverage check</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Part</th>
+<th>Required subject</th>
+<th>Covered</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1337</td>
+<td>Dynamic AABB tree node representation</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1338</td>
+<td>Fat AABBs</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1339</td>
+<td>Dynamic-tree insertion heuristic</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1340</td>
+<td>Leaf removal</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1341</td>
+<td>Proxy updates</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1342</td>
+<td>Rotations and balancing</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1343</td>
+<td>Dynamic-tree overlap queries</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1344</td>
+<td>SAP endpoints</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1345</td>
+<td>SAP active sets</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1346</td>
+<td>Temporal coherence</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1347</td>
+<td>Insertion sort for endpoints</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1348</td>
+<td>Multi-axis SAP</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1349</td>
+<td>Spatial-hash cell coordinates</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1350</td>
+<td>World → cell mapping</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1351</td>
+<td>Coordinate hashing</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1352</td>
+<td>Hash bucket collision handling</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1353</td>
+<td>Moving-object insertion/update</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1354</td>
+<td>Neighbor/range queries</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1355</td>
+<td>Uniform grids</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1356</td>
+<td>Dense versus hashed grids</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1357</td>
+<td>Octree node representation</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1358</td>
+<td>Octree subdivision</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1359</td>
+<td>Octree insertion</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1360</td>
+<td>Octree range query</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1361</td>
+<td>Loose octrees</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1362</td>
+<td>Quadtree representation</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1363</td>
+<td>Quadtree insertion/subdivision</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1364</td>
+<td>KD splitting planes</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1365</td>
+<td>Median KD construction</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1366</td>
+<td>KD nearest neighbor</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1367</td>
+<td>KD range queries</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1368</td>
+<td>KD versus BVH</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1369</td>
+<td>BSP concept</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1370</td>
+<td>Bounding-sphere hierarchies</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1371</td>
+<td>Scene graph vs spatial index</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1372</td>
+<td>Portals/cells</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1373</td>
+<td>PVS</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1374</td>
+<td>Hierarchical-Z occlusion</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Pass 08 — complete.</strong></p>
+<p>You now have <strong>8 / 18 passes completed</strong>, with <strong>10 remaining</strong>.</p>
+</section>
+<section id="id_06-engine-ii-ch030-next-pass-09-m083-m084-parts-13751400" class="level4">
+<h4>Next — Pass 09: M083 + M084, Parts 1375–1400</h4>
+<p>That finishes this entire spatial phase: <strong>navigation graphs, weighted edges, complete A*, admissible/consistent heuristics, grids and navmeshes, funnel/string-pulling reasoning, dynamic obstacles, hierarchical pathfinding, then spatial serialization, visualization, build-vs-query benchmarking, workload-driven structure selection, and a unified query interface over the complete KairoSpatial family.</strong></p>
+</section>
+<section id="id_06-engine-ii-ch030-navigation-graphs-a-heuristic-theory-grids-navmeshes-funnelstring-pulling-dynamic-obstacles-hierarchical-pathfinding-serialization-visualization-benchmarking-workload-selection-and-unified-spatial-apis" class="level4">
+<h4>Navigation Graphs, A*, Heuristic Theory, Grids, NavMeshes, Funnel/String Pulling, Dynamic Obstacles, Hierarchical Pathfinding, Serialization, Visualization, Benchmarking, Workload Selection, and Unified Spatial APIs</h4>
+<p>This pass completes the entire spatial-acceleration/navigation phase. <strong>M083 owns Parts 1375–1395 and M084 owns Parts 1396–1400</strong>, so we go from graph representation all the way through A* theory and practical navmeshes, then finish by asking how all the spatial structures from Passes 07–09 should actually be serialized, visualized, benchmarked, selected and exposed through an engine API. Graphics_Engine_Mastery_Integra…</p>
+<p>The central transition is this:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Spatial querying asks: &quot;What is where?&quot;</mtext>
+</math>
+<p>while navigation asks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Pathfinding asks: &quot;How can I get from here to there?&quot;</mtext>
+</math>
+<p>Those are related but not identical problems. A BVH tells you that a wall occupies space. A navigation representation tells you that the wall prevents movement and therefore changes connectivity. A pathfinder then searches that connectivity, while a movement/steering system eventually turns the abstract route into actual character motion.</p>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch030-navigation-graphs-a-grids-navmeshes-and-hierarchical-pathfinding" class="level4">
+<h4>NAVIGATION GRAPHS, A*, GRIDS, NAVMESHES AND HIERARCHICAL PATHFINDING</h4>
+<hr />
+<p><strong>Navigation-graph representation</strong></p>
+<p>The most general navigation abstraction is a weighted directed graph:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>V</mi>
+  <mo>,</mo>
+  <mi>E</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>V</mi>
+</math> is a set of states or locations, and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>E</mi>
+</math> is a set of legal transitions.</p>
+<p>For navigation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>∈</mo>
+  <mi>V</mi>
+</math>
+<p>might represent a waypoint, grid cell, navmesh polygon, room, road junction, ladder endpoint, teleport destination, or any other traversable state.</p>
+<p>An edge</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>e</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>means:</p>
+<blockquote>
+<p>an agent may legally travel from node <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>u</mi>
+</math> to node <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math>.</p>
+</blockquote>
+<p>Your Kairo representation is intentionally simple:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> GraphNode <span class="kw">final</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    NavigationNodeID ID<span class="op">;</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    Vec3f Position<span class="op">;</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> GraphEdge <span class="kw">final</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    NavigationNodeID From<span class="op">;</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    NavigationNodeID To<span class="op">;</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Cost<span class="op">;</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>and the graph stores:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span>GraphNode<span class="op">&gt;</span> <span class="va">m_Nodes</span><span class="op">;</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>unordered_map<span class="op">&lt;</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    NavigationNodeID<span class="op">,</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>size_t</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> <span class="va">m_NodeLookup</span><span class="op">;</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>unordered_map<span class="op">&lt;</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    NavigationNodeID<span class="op">,</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>GraphEdge<span class="op">&gt;</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span> <span class="va">m_Adjacency</span><span class="op">;</span></span></code></pre></div>
+<p>This is an <strong>adjacency-list graph</strong>.</p>
+<p>For every node <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>u</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>d</mi>
+  <mi>j</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo fence="false" stretchy="false">{</mo>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo fence="false" stretchy="false">}</mo>
+  <mo>.</mo>
+</math>
+<p>That is the representation A* wants, because from the current node we usually care only about outgoing neighbors.</p>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch030-why-not-an-adjacency-matrix" class="level4">
+<h4>Why not an adjacency matrix?</h4>
+<p>For <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> nodes an adjacency matrix stores:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>N</mi>
+    <mn>2</mn>
+  </msup>
+</math>
+<p>possible connections.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>100</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mn>000</mn>
+  <mo>,</mo>
+</math>
+<p>that means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>10</mn>
+    </mrow>
+  </msup>
+</math>
+<p>matrix entries.</p>
+<p>Navigation graphs are generally sparse. A grid node may have only 4 or 8 neighbors; a navmesh polygon may have perhaps 3–8 neighbors.</p>
+<p>If average degree is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+  <mo>≪</mo>
+  <mi>N</mi>
+</math>, an adjacency list uses approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>+</mo>
+  <mi>N</mi>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>+</mo>
+  <mi>E</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>That is vastly more appropriate.</p>
+<hr />
+<p><strong>Stable IDs versus storage indices</strong></p>
+<p>Your graph separates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mi>a</mi>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>N</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+</math>
+<p>from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>d</mi>
+  <mo>::</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>t</mi>
+  </msub>
+  <mtext> vector index</mtext>
+  <mo>.</mo>
+</math>
+<p>That is good engine architecture.</p>
+<p>Suppose:</p>
+<pre class="text"><code>ID 500 → vector slot 3
+ID 17  → vector slot 4
+ID 92  → vector slot 5</code></pre>
+<p>External systems can keep ID 500 even if internal storage moves.</p>
+<p>The map:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="va">m_NodeLookup</span><span class="op">[</span>id<span class="op">]</span> <span class="op">-&gt;</span> index</span></code></pre></div>
+<p>provides the translation.</p>
+<p>But note the current <code>RemoveNode()</code> behavior. It erases from the middle of <code>m_Nodes</code>:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="va">m_Nodes</span><span class="op">.</span>erase<span class="op">(...)</span></span></code></pre></div>
+<p>then runs:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>RebuildLookup<span class="op">();</span></span></code></pre></div>
+<p>Therefore removal is at least:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>for vector movement and rebuilding, plus the cost of scanning adjacency lists to remove incoming edges.</p>
+<p>For relatively static authored navigation graphs this is fine.</p>
+<p>For graphs with heavy real-time node insertion/removal, sparse-set/generational-handle patterns from the next phase would be superior.</p>
+<p>You are about to see why Phase 15’s ECS/handle material naturally follows this phase.</p>
+<hr />
+<p><strong>Directed versus bidirectional connectivity</strong></p>
+<p>A physical connection is not always symmetric.</p>
+<p>A staircase may be traversable both ways:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">↔</mo>
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>A one-way drop may permit:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">→</mo>
+  <mi>B</mi>
+</math>
+<p>but not:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo stretchy="false">→</mo>
+  <mi>A</mi>
+  <mo>.</mo>
+</math>
+<p>A jump pad, escalator, directional road lane, locked doorway, ledge drop or teleport can all produce asymmetric connectivity.</p>
+<p>Your <code>AddEdge()</code> supports:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> bidirectional <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span></code></pre></div>
+<p>so:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>graph<span class="op">.</span>AddEdge<span class="op">(</span>A<span class="op">,</span> B<span class="op">,</span> cost<span class="op">,</span> <span class="kw">true</span><span class="op">);</span></span></code></pre></div>
+<p>creates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">→</mo>
+  <mi>B</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo stretchy="false">→</mo>
+  <mi>A</mi>
+  <mo>.</mo>
+</math>
+<p>Whereas:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>graph<span class="op">.</span>AddEdge<span class="op">(</span>A<span class="op">,</span> B<span class="op">,</span> cost<span class="op">,</span> <span class="kw">false</span><span class="op">);</span></span></code></pre></div>
+<p>creates only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">→</mo>
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>That distinction becomes essential for admissible pathfinding: A* searches the graph that actually exists, not a geometric guess about connectivity.</p>
+<hr />
+<p><strong>Weighted navigation edges</strong></p>
+<p>The shortest path is not necessarily the path with the fewest edges.</p>
+<p>Suppose:</p>
+<pre class="text"><code>A ----1---- B ----1---- C
+
+ \                       ^
+  \------ 100 -----------/</code></pre>
+<p>A → C is one edge but costs 100.</p>
+<p>A → B → C has two edges but costs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo>=</mo>
+  <mn>2.</mn>
+</math>
+<p>Path cost is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>g</mi>
+          <mo stretchy="false">(</mo>
+          <mi>P</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>e</mi>
+              <mo>∈</mo>
+              <mi>P</mi>
+            </mrow>
+          </munder>
+          <mi>c</mi>
+          <mo stretchy="false">(</mo>
+          <mi>e</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where every edge has weight:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≥</mo>
+  <mn>0.</mn>
+</math>
+<p>Your graph enforces:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(!</span><span class="bu">std::</span>isfinite<span class="op">(</span>cost<span class="op">)</span> <span class="op">||</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    cost <span class="op">&lt;</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">throw</span> <span class="op">...</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>That nonnegative-cost restriction is fundamental for Dijkstra/A* assumptions.</p>
+<hr />
+<p><strong>What can an edge cost represent?</strong></p>
+<p>Do not think:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+</math>
+<p>by definition.</p>
+<p>Cost is whatever objective the navigation system is minimizing.</p>
+<p>A useful model might be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>w</mi>
+    <mi>d</mi>
+  </msub>
+  <mi>D</mi>
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <msub>
+    <mi>w</mi>
+    <mi>t</mi>
+  </msub>
+  <mi>T</mi>
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <msub>
+    <mi>w</mi>
+    <mi>r</mi>
+  </msub>
+  <mi>R</mi>
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <msub>
+    <mi>w</mi>
+    <mi>n</mi>
+  </msub>
+  <mi>N</mi>
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+</math> is distance, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math> estimated traversal time, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+</math> danger/risk, and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> noise/exposure or some game-specific penalty.</p>
+<p>Suppose two routes exist:</p>
+<pre class="text"><code>Route 1:
+short open road
+distance = 20
+danger   = 100
+
+Route 2:
+long covered tunnel
+distance = 35
+danger   = 5</code></pre>
+<p>An ordinary civilian NPC might minimize time.</p>
+<p>A stealth NPC may heavily penalize exposure.</p>
+<p>A wounded NPC may penalize danger.</p>
+<p>The graph remains identical while edge costs change.</p>
+<p>That is one reason graph search is so powerful: geometry and objective can remain separate.</p>
+<hr />
+<p><strong>State expansion when costs depend on more than location</strong></p>
+<p>There is a deeper issue.</p>
+<p>Suppose entering a locked room is possible only after acquiring a key.</p>
+<p>Then node:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>A</mi>
+</math>
+<p>alone no longer describes search state.</p>
+<p>We need:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>K</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>versus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mo>!</mo>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>K</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Similarly, if movement cost depends on remaining fuel, stance, weapon state, time of day, door state or vehicle type, the pathfinding state may need to include those variables.</p>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>graph node</mtext>
+          <mo>≠</mo>
+          <mtext>necessarily physical location</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>It represents the minimum state required for the Markov property:</p>
+<blockquote>
+<p>once current state is known, future transition costs should not depend on forgotten history.</p>
+</blockquote>
+<p>This perspective becomes important in advanced AI planning.</p>
+<hr />
+<p><strong>A* open set</strong></p>
+<p>A* maintains candidate nodes that have been discovered but not yet fully processed.</p>
+<p>This is the <strong>open set</strong>.</p>
+<p>A* repeatedly chooses the node with smallest:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Therefore the natural data structure is a <strong>min-priority queue</strong>.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>open
+
+node   f
+-----------
+A      12
+B       7   &lt;- pop this
+C      19
+D       9</code></pre>
+<p>Your implementation uses:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>priority_queue<span class="op">&lt;</span>OpenNode<span class="op">&gt;</span> open<span class="op">;</span></span></code></pre></div>
+<p>C++’s <code>priority_queue</code> is normally a max-heap.</p>
+<p>So your <code>OpenNode::operator&lt;</code> reverses priority comparison:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> <span class="kw">operator</span><span class="op">&lt;(</span><span class="at">const</span> OpenNode<span class="op">&amp;</span> other<span class="op">)</span> <span class="at">const</span> <span class="kw">noexcept</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Priority <span class="op">&gt;</span> other<span class="op">.</span>Priority<span class="op">;</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>which effectively makes the smallest priority appear at the top.</p>
+<hr />
+<p><strong>Why a binary heap?</strong></p>
+<p>A binary heap gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>push</mtext>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>log</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>pop-min</mtext>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>log</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>A* can perform both operations many times.</p>
+<p>A plain unsorted vector gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>insertion but:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>minimum extraction.</p>
+<p>A sorted vector gives cheap extraction but:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>insertion.</p>
+<p>A heap is a good general compromise.</p>
+<p>Other structures can be better for special cases: bucket queues for bounded integer costs, radix heaps for monotonic integer keys, specialized priority queues for huge navigation workloads.</p>
+<p>But the binary heap remains the standard general-purpose implementation.</p>
+<hr />
+<p><strong>The decrease-key problem</strong></p>
+<p>Suppose node X is already in open with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>X</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>15.</mn>
+</math>
+<p>Later we discover a better route:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>X</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>8.</mn>
+</math>
+<p>Ideally we would decrease its heap priority.</p>
+<p><code>std::priority_queue</code> does not provide efficient arbitrary decrease-key.</p>
+<p>Your implementation uses the standard duplicate-entry technique.</p>
+<p>Instead of modifying the old entry:</p>
+<pre class="text"><code>X cost 15</code></pre>
+<p>push another:</p>
+<pre class="text"><code>X cost 8</code></pre>
+<p>Now both exist.</p>
+<p>When popping:</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>next<span class="op">.</span>Cost <span class="op">!=</span> gScore<span class="op">.</span>at<span class="op">(</span>next<span class="op">.</span>ID<span class="op">))</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">continue</span><span class="op">;</span></span></code></pre></div>
+<p>the stale entry is ignored.</p>
+<p>Thus:</p>
+<pre class="text"><code>heap
+
+X g=8   &lt;- useful
+X g=15  &lt;- stale</code></pre>
+<p>This avoids complex heap-handle management.</p>
+<p>It increases heap entries somewhat but is often an excellent engineering tradeoff.</p>
+<hr />
+<p><strong>Closed sets</strong></p>
+<p>Textbook A* often maintains:</p>
+<pre class="text"><code>OPEN
+CLOSED</code></pre>
+<p>OPEN contains discovered candidates.</p>
+<p>CLOSED contains nodes whose best path has been finalized.</p>
+<p>With a <strong>consistent heuristic</strong>, once node <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> is popped with minimum <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>, its <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math> is final.</p>
+<p>It can safely enter CLOSED.</p>
+<p>Your generic <code>FindPathAStar()</code> interestingly has <strong>no explicit closed set</strong>.</p>
+<p>It stores:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>gScore</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>cameFrom</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>open</span></code></pre></div>
+<p>and permits nodes to be inserted again if a better route appears.</p>
+<p>That means nodes can effectively be reopened.</p>
+<p>This makes the implementation more tolerant of heuristic behavior than a strict no-reopening closed set.</p>
+<hr />
+<p><strong>Your NavMesh A* does have a closed set</strong></p>
+<p>Inside <code>NavMesh::FindPath()</code> the implementation uses:</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">bool</span><span class="op">&gt;</span> closed<span class="op">(</span>count<span class="op">,</span> <span class="kw">false</span><span class="op">);</span></span></code></pre></div>
+<p>and once a polygon is popped:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>closed<span class="op">[</span>current<span class="op">.</span>Index<span class="op">]</span> <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span></code></pre></div>
+<p>Then neighbors that are already closed are skipped:</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>closed<span class="op">[</span>next<span class="op">])</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">continue</span><span class="op">;</span></span></code></pre></div>
+<p>This version depends more strongly on the heuristic being consistent.</p>
+<p>That difference between the two Kairo searches is subtle but important.</p>
+<p>The generic graph A* can reopen improved nodes.</p>
+<p>The navmesh A* does not.</p>
+<p>We will return to this when we derive consistency.</p>
+<hr />
+<p><strong>The g score</strong></p>
+<p>A* defines:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>g</mi>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mtext>best known cost from start to </mtext>
+          <mi>n</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Initially:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>All unknown nodes are conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi mathvariant="normal">∞</mi>
+  <mo>.</mo>
+</math>
+<p>Suppose current node is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>u</mi>
+</math>, and edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mo stretchy="false">→</mo>
+  <mi>v</mi>
+</math>
+<p>has cost <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+</math>.</p>
+<p>Candidate path to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>g</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>tentative</mtext>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>g</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>tentative</mtext>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>&lt;</mo>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>we found a better path.</p>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">←</mo>
+  <msub>
+    <mi>g</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>tentative</mtext>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Your code:</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="dt">float</span> tentative <span class="op">=</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>    gScore<span class="op">[</span>current<span class="op">]</span> <span class="op">+</span> edge<span class="op">.</span>Cost<span class="op">;</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(!</span>gScore<span class="op">.</span>contains<span class="op">(</span>edge<span class="op">.</span>To<span class="op">)</span> <span class="op">||</span></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>    tentative <span class="op">&lt;</span> gScore<span class="op">[</span>edge<span class="op">.</span>To<span class="op">])</span></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>    cameFrom<span class="op">[</span>edge<span class="op">.</span>To<span class="op">]</span> <span class="op">=</span> current<span class="op">;</span></span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>    gScore<span class="op">[</span>edge<span class="op">.</span>To<span class="op">]</span> <span class="op">=</span> tentative<span class="op">;</span></span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This operation is called <strong>relaxation</strong>.</p>
+<p>It is the core operation behind Dijkstra, A*, Bellman-Ford and many shortest-path algorithms.</p>
+<hr />
+<p><strong>Why relaxation works</strong></p>
+<p>Suppose current best route to V costs 20.</p>
+<p>Now we discover:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mo stretchy="false">→</mo>
+  <mi>A</mi>
+  <mo stretchy="false">→</mo>
+  <mi>V</mi>
+</math>
+<p>costing:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>5</mn>
+  <mo>+</mo>
+  <mn>7</mn>
+  <mo>=</mo>
+  <mn>12.</mn>
+</math>
+<p>Then 20 is no longer relevant.</p>
+<p>We replace:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>V</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>20</mn>
+</math>
+<p>with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>V</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>12.</mn>
+</math>
+<p>The predecessor also changes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>F</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mo stretchy="false">[</mo>
+  <mi>V</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mo>.</mo>
+</math>
+<p>A* gradually improves upper bounds on optimal path costs until nodes become finalized.</p>
+<hr />
+<p><strong>Floating-point path costs</strong></p>
+<p>Your implementation rejects nonfinite edge costs and checks accumulated cost:</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(!</span><span class="bu">std::</span>isfinite<span class="op">(</span>tentative<span class="op">))</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">continue</span><span class="op">;</span></span></code></pre></div>
+<p>This is useful.</p>
+<p>Even finite float edges can overflow after accumulation.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≈</mo>
+  <mn>3</mn>
+  <mo>×</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>38</mn>
+    </mrow>
+  </msup>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≈</mo>
+  <mn>3</mn>
+  <mo>×</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>38</mn>
+    </mrow>
+  </msup>
+  <mo>,</mo>
+</math>
+<p>their sum becomes infinity in 32-bit float.</p>
+<p>Putting NaN/∞ values into a heap comparator can destroy ordering assumptions.</p>
+<p>Your code explicitly guards against that.</p>
+<p>For ordinary game-scale navigation this may seem excessive, but these are the edge conditions that make foundational libraries reliable rather than merely functional.</p>
+<hr />
+<p><strong>The heuristic h score</strong></p>
+<p>A*’s second quantity is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>h</mi>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mtext>estimated remaining cost from </mtext>
+          <mi>n</mi>
+          <mtext> to goal</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>the algorithm has no idea where the goal lies.</p>
+<p>It behaves like Dijkstra.</p>
+<p>If <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>h</mi>
+</math> accurately predicts remaining cost without overestimating, A* can ignore enormous regions of the graph.</p>
+<p>Consider:</p>
+<pre class="text"><code>          irrelevant branch
+             /
+S ----------A--------- goal
+             \
+          irrelevant branch</code></pre>
+<p>Dijkstra explores primarily by distance from start.</p>
+<p>A* biases search toward states likely to lead toward the goal.</p>
+<p>The heuristic therefore injects <strong>domain knowledge</strong> into otherwise generic shortest-path search. The original Hart–Nilsson–Raphael formulation formalized exactly this use of heuristic information in minimum-cost graph search. <a href="https://ai.stanford.edu/~nilsson/OnlinePubs-Nils/PublishedPapers/astar.pdf?utm_source=chatgpt.com">Stanford AI Lab</a></p>
+<hr />
+<p><strong>f score</strong></p>
+<p>A* combines known and estimated costs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>f</mi>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mi>g</mi>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo stretchy="false">)</mo>
+          <mo>+</mo>
+          <mi>h</mi>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Interpretation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mtext>what the path has already cost</mtext>
+</math>
+<p>while:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mtext>what we estimate remains</mtext>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mtext>estimated complete path cost through </mtext>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>A* expands the node with the smallest predicted total.</p>
+<p>Suppose:</p>
+<pre class="text"><code>Node A:
+g = 3
+h = 20
+f = 23
+
+Node B:
+g = 10
+h = 4
+f = 14</code></pre>
+<p>Even though B is more expensive to reach, it appears much closer to the goal overall.</p>
+<p>A* chooses B.</p>
+<hr />
+<p><strong>A* is not “greedy best-first + Dijkstra”</strong></p>
+<p>It is tempting to think:</p>
+<pre class="text"><code>Dijkstra uses g
+Greedy best-first uses h
+A* uses g+h</code></pre>
+<p>That is directionally useful, but the deeper interpretation is stronger.</p>
+<p>With admissible <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>h</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>acts as a <strong>lower bound</strong> on the cost of the best solution passing through <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>.</p>
+<p>A* therefore performs a branch-and-bound-like search:</p>
+<blockquote>
+<p>explore nodes whose optimistic total cost is competitive with the best possible solution.</p>
+</blockquote>
+<p>This is conceptually similar to BVH pruning.</p>
+<p>BVH:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>lower geometric bound</mtext>
+  <mo>&gt;</mo>
+  <mtext>best hit</mtext>
+  <mo stretchy="false">⇒</mo>
+  <mtext>prune</mtext>
+  <mo>.</mo>
+</math>
+<p>A*:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>optimistic route estimate</mtext>
+</math>
+<p>orders which partial solutions deserve exploration.</p>
+<p>This connection is why spatial acceleration and graph search fit so naturally in one phase.</p>
+<hr />
+<p><strong>cameFrom / parent map</strong></p>
+<p>Knowing:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>g</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>does not tell us the actual path.</p>
+<p>Whenever relaxation improves node V through U:</p>
+<div class="sourceCode" id="cb47"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>cameFrom<span class="op">[</span>V<span class="op">]</span> <span class="op">=</span> U<span class="op">;</span></span></code></pre></div>
+<p>This records:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mo stretchy="false">←</mo>
+  <mi>U</mi>
+  <mo>.</mo>
+</math>
+<p>Suppose search discovers:</p>
+<pre class="text"><code>cameFrom[D] = C
+cameFrom[C] = B
+cameFrom[B] = A
+cameFrom[A] = S</code></pre>
+<p>Then the predecessor chain is:</p>
+<pre class="text"><code>D ← C ← B ← A ← S</code></pre>
+<p>The actual forward path is:</p>
+<pre class="text"><code>S → A → B → C → D</code></pre>
+<p>The parent map represents a shortest-path tree rooted at the start, or at least the portion discovered so far.</p>
+<hr />
+<p><strong>Path reconstruction</strong></p>
+<p>Start from goal:</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>step <span class="op">=</span> goal<span class="op">;</span></span></code></pre></div>
+<p>Walk backwards:</p>
+<div class="sourceCode" id="cb52"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="op">(</span>step <span class="op">!=</span> start<span class="op">)</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>    path<span class="op">.</span>push_back<span class="op">(</span>step<span class="op">);</span></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>    step <span class="op">=</span> cameFrom<span class="op">[</span>step<span class="op">];</span></span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Finally push start and reverse.</p>
+<p>Your generic implementation does exactly this.</p>
+<p>If path length contains <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+</math> nodes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>reconstruct</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>L</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>There is no reason to store full path prefixes for every open node.</p>
+<p>Doing so would duplicate enormous amounts of memory.</p>
+<p>The predecessor relation is enough.</p>
+<hr />
+<p><strong>Path reconstruction failure modes</strong></p>
+<p>If goal is reached but:</p>
+<pre class="text"><code>cameFrom chain</code></pre>
+<p>fails to reach start, either the search state is corrupted or the implementation incorrectly marked the goal as reachable.</p>
+<p>Your <code>NavMesh</code> code explicitly detects:</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>parent<span class="op">[</span>cursor<span class="op">]</span> <span class="op">==</span> count<span class="op">)</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">throw</span> <span class="bu">std::</span>logic_error<span class="op">(...)</span></span></code></pre></div>
+<p>while reconstructing.</p>
+<p>That is a strong invariant check.</p>
+<p>Another case is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>.</mo>
+</math>
+<p>The generic A* naturally returns a single-node path.</p>
+<p>The navmesh has a related but geometrically richer case: if start and end are within the same polygon, no graph traversal is needed and the route can simply be:</p>
+<pre class="text"><code>start → end</code></pre>
+<p>with a one-polygon corridor.</p>
+<p>Your tests verify exactly that.</p>
+<hr />
+<p><strong>Euclidean heuristic</strong></p>
+<p>For ordinary continuous geometric movement:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>h</mi>
+            <mi>E</mi>
+          </msub>
+          <mo>=</mo>
+          <msqrt>
+            <mo stretchy="false">(</mo>
+            <mi mathvariant="normal">Δ</mi>
+            <mi>x</mi>
+            <msup>
+              <mo stretchy="false">)</mo>
+              <mn>2</mn>
+            </msup>
+            <mo>+</mo>
+            <mo stretchy="false">(</mo>
+            <mi mathvariant="normal">Δ</mi>
+            <mi>y</mi>
+            <msup>
+              <mo stretchy="false">)</mo>
+              <mn>2</mn>
+            </msup>
+            <mo>+</mo>
+            <mo stretchy="false">(</mo>
+            <mi mathvariant="normal">Δ</mi>
+            <mi>z</mi>
+            <msup>
+              <mo stretchy="false">)</mo>
+              <mn>2</mn>
+            </msup>
+          </msqrt>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>x</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>g</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>n</mi>
+  </msub>
+</math>
+<p>and equivalent Y/Z.</p>
+<p>Why is Euclidean distance attractive?</p>
+<p>Because any physically traversed path from <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> to goal must have length at least the straight-line distance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>path</mtext>
+    </mrow>
+  </msub>
+  <mo>≥</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>g</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>−</mo>
+  <mi>n</mi>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo>.</mo>
+</math>
+<p>If movement cost per meter is at least <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>P</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≥</mo>
+  <mi>k</mi>
+  <mi>L</mi>
+  <mo stretchy="false">(</mo>
+  <mi>P</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>k</mi>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>g</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>−</mo>
+  <mi>n</mi>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+</math>
+<p>is a lower bound on remaining cost.</p>
+<p>This is the important part.</p>
+<p>Euclidean <strong>distance</strong> is admissible only if the graph’s cost units support it.</p>
+<hr />
+<p><strong>The common Euclidean-heuristic bug</strong></p>
+<p>Suppose:</p>
+<pre class="text"><code>A ---------------- B
+
+distance = 100
+edge cost = 1</code></pre>
+<p>Raw Euclidean heuristic says:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>100.</mn>
+</math>
+<p>But the actual optimal remaining cost is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>h</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>&gt;</mo>
+  <msup>
+    <mi>h</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>The heuristic overestimates and is inadmissible.</p>
+<p>This can happen with:</p>
+<ul>
+<li>teleporters,</li>
+<li>highways with speed bonuses,</li>
+<li>elevators where cost is time instead of distance,</li>
+<li>abstract edges,</li>
+<li>game-defined cost units.</li>
+</ul>
+<p>Your repository previously encountered exactly this class of failure, as evidenced by the regression test where a detour over a node 100 units away costs only 2.</p>
+<hr />
+<p><strong>Kairo’s scaled Euclidean heuristic</strong></p>
+<p>Your generic A* now calculates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mo stretchy="false">(</mo>
+      <mi>u</mi>
+      <mo>,</mo>
+      <mi>v</mi>
+      <mo stretchy="false">)</mo>
+      <mo>∈</mo>
+      <mi>E</mi>
+      <mo>,</mo>
+      <mtext> </mtext>
+      <mi>d</mi>
+      <mo stretchy="false">(</mo>
+      <mi>u</mi>
+      <mo>,</mo>
+      <mi>v</mi>
+      <mo stretchy="false">)</mo>
+      <mo>&gt;</mo>
+      <mn>0</mn>
+    </mrow>
+  </munder>
+  <mfrac>
+    <mrow>
+      <mi>c</mi>
+      <mo stretchy="false">(</mo>
+      <mi>u</mi>
+      <mo>,</mo>
+      <mi>v</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mi>d</mi>
+      <mo stretchy="false">(</mo>
+      <mi>u</mi>
+      <mo>,</mo>
+      <mi>v</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>h</mi>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mi>α</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <mi>d</mi>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo>,</mo>
+          <mi>g</mi>
+          <mi>o</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is a very interesting general solution.</p>
+<p>For every edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>≤</mo>
+  <mfrac>
+    <mrow>
+      <mi>c</mi>
+      <mo stretchy="false">(</mo>
+      <mi>u</mi>
+      <mo>,</mo>
+      <mi>v</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mi>d</mi>
+      <mo stretchy="false">(</mo>
+      <mi>u</mi>
+      <mo>,</mo>
+      <mi>v</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≤</mo>
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Now take any path:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>.</mo>
+</math>
+<p>By triangle inequality:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>g</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≤</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Multiply by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>α</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>g</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≤</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <mi>α</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>And because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>≤</mo>
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>we get:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>h</mi>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo stretchy="false">)</mo>
+          <mo>≤</mo>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mi>i</mi>
+          </munder>
+          <mi>c</mi>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>v</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>v</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mo>+</mo>
+              <mn>1</mn>
+            </mrow>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for every possible path.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≤</mo>
+  <msup>
+    <mi>h</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>The heuristic is admissible.</p>
+<hr />
+<p><strong>The same construction proves consistency</strong></p>
+<p>Consistency requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>h</mi>
+          <mo stretchy="false">(</mo>
+          <mi>u</mi>
+          <mo stretchy="false">)</mo>
+          <mo>≤</mo>
+          <mi>c</mi>
+          <mo stretchy="false">(</mo>
+          <mi>u</mi>
+          <mo>,</mo>
+          <mi>v</mi>
+          <mo stretchy="false">)</mo>
+          <mo>+</mo>
+          <mi>h</mi>
+          <mo stretchy="false">(</mo>
+          <mi>v</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for every edge <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>u</mi>
+  <mo stretchy="false">→</mo>
+  <mi>v</mi>
+</math>.</p>
+<p>Using triangle inequality:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>g</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≤</mo>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mo>,</mo>
+  <mi>g</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Multiply by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>α</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>g</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≤</mo>
+  <mi>α</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>α</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mo>,</mo>
+  <mi>g</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≤</mo>
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>we obtain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≤</mo>
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Therefore the scaled Euclidean heuristic is consistent as well.</p>
+<p>That is a strong property of your current generic A* implementation.</p>
+<hr />
+<p><strong>Why zero-cost travel collapses to Dijkstra</strong></p>
+<p>Suppose there is a nonzero-distance edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>
+<p>with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mi>c</mi>
+      <mo stretchy="false">(</mo>
+      <mi>u</mi>
+      <mo>,</mo>
+      <mi>v</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mi>d</mi>
+      <mo stretchy="false">(</mo>
+      <mi>u</mi>
+      <mo>,</mo>
+      <mi>v</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>And:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>So the search automatically becomes Dijkstra.</p>
+<p>That is exactly what must happen if zero-cost long-distance transitions exist, because ordinary geometry may no longer provide a useful positive lower bound on cost.</p>
+<p>Your test suite explicitly checks zero-cost travel links.</p>
+<hr />
+<p><strong>Manhattan heuristic</strong></p>
+<p>For a grid where movement is restricted to axis directions:</p>
+<pre class="text"><code>← ↑ → ↓</code></pre>
+<p>in 2D:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>h</mi>
+            <mi>M</mi>
+          </msub>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mi mathvariant="normal">Δ</mi>
+          <mi>x</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mo>+</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mi mathvariant="normal">Δ</mi>
+          <mi>y</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>In 3D:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>h</mi>
+    <mi>M</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>x</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>+</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>y</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>+</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>z</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Suppose target differs by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>x</mi>
+  <mo>=</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>y</mi>
+  <mo>=</mo>
+  <mn>3.</mn>
+</math>
+<p>With four-neighbor movement, every legal route requires at least:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mo>+</mo>
+  <mn>3</mn>
+  <mo>=</mo>
+  <mn>7</mn>
+</math>
+<p>steps.</p>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>h</mi>
+    <mi>M</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>7.</mn>
+</math>
+<p>Euclidean would give:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>5</mn>
+  <mo>,</mo>
+</math>
+<p>which is admissible but less informed.</p>
+<p>A tighter admissible heuristic usually means fewer expansions.</p>
+<hr />
+<p><strong>Why Manhattan fails for diagonal movement</strong></p>
+<p>Suppose diagonal movement is allowed with cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msqrt>
+    <mn>2</mn>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>Start:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>goal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Actual optimal cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msqrt>
+    <mn>2</mn>
+  </msqrt>
+  <mo>≈</mo>
+  <mn>1.414</mn>
+  <mo>.</mo>
+</math>
+<p>Manhattan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">|</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>+</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>=</mo>
+  <mn>2.</mn>
+</math>
+<p>Since:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mo>&gt;</mo>
+  <mn>1.414</mn>
+  <mo>,</mo>
+</math>
+<p>Manhattan overestimates.</p>
+<p>It is no longer admissible.</p>
+<p>A heuristic must match the movement model.</p>
+<hr />
+<p><strong>Octile heuristic</strong></p>
+<p>For an 8-connected 2D grid:</p>
+<pre class="text"><code>N S E W
+NE NW SE SW</code></pre>
+<p>let:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>x</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>x</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>y</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>y</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Assume cardinal move cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+</math>
+<p>and diagonal cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>D</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Use diagonals for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>d</mi>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>steps.</p>
+<p>Then remaining straight steps:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">|</mo>
+  <mi>d</mi>
+  <mi>x</mi>
+  <mo>−</mo>
+  <mi>d</mi>
+  <mi>y</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>h</mi>
+            <mi>O</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>D</mi>
+          <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+          <mo stretchy="false">(</mo>
+          <mi>d</mi>
+          <mi>x</mi>
+          <mo>,</mo>
+          <mi>d</mi>
+          <mi>y</mi>
+          <mo stretchy="false">)</mo>
+          <mo>+</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>D</mi>
+            <mn>2</mn>
+          </msub>
+          <mo>−</mo>
+          <mi>D</mi>
+          <mo stretchy="false">)</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          <mo stretchy="false">(</mo>
+          <mi>d</mi>
+          <mi>x</mi>
+          <mo>,</mo>
+          <mi>d</mi>
+          <mi>y</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>which is algebraically equivalent to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>D</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <mn>2</mn>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>d</mi>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>D</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <msqrt>
+    <mn>2</mn>
+  </msqrt>
+  <mo>,</mo>
+</math>
+<p>we get:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>h</mi>
+            <mi>O</mi>
+          </msub>
+          <mo>=</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+          <mo stretchy="false">(</mo>
+          <mi>d</mi>
+          <mi>x</mi>
+          <mo>,</mo>
+          <mi>d</mi>
+          <mi>y</mi>
+          <mo stretchy="false">)</mo>
+          <mo>+</mo>
+          <mo stretchy="false">(</mo>
+          <msqrt>
+            <mn>2</mn>
+          </msqrt>
+          <mo>−</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+          <mo stretchy="false">(</mo>
+          <mi>d</mi>
+          <mi>x</mi>
+          <mo>,</mo>
+          <mi>d</mi>
+          <mi>y</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is the exact unobstructed grid cost for an 8-connected grid with those move costs.</p>
+<hr />
+<p><strong>Corner cutting matters</strong></p>
+<p>Suppose diagonal movement from:</p>
+<pre class="text"><code>A #
+# B</code></pre>
+<p>is technically geometrically diagonal but both adjacent cardinal cells are blocked.</p>
+<p>Can A move directly to B?</p>
+<p>Different games choose different answers.</p>
+<p>If no corner cutting is allowed, a diagonal neighbor should require sufficient clearance through adjacent cardinal cells.</p>
+<p>That affects reachability but usually not the basic octile lower-bound argument.</p>
+<p>For agents with radius, grid occupancy should also be expanded/eroded accordingly.</p>
+<p>A point-agent path through a one-cell diagonal crack may be impossible for a physical character.</p>
+<hr />
+<p><strong>Dijkstra as A* with zero heuristic</strong></p>
+<p>Set:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>A* now always expands the discovered node with smallest path cost from start.</p>
+<p>That is Dijkstra’s algorithm.</p>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>D</mi>
+          <mi>i</mi>
+          <mi>j</mi>
+          <mi>k</mi>
+          <mi>s</mi>
+          <mi>t</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mo>=</mo>
+          <msup>
+            <mi>A</mi>
+            <mo>∗</mo>
+          </msup>
+          <mtext> with </mtext>
+          <mi>h</mi>
+          <mo>=</mo>
+          <mn>0.</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is not merely a cute fact.</p>
+<p>It gives a debugging baseline.</p>
+<p>If A* returns a path costing more than Dijkstra’s result under nonnegative edges:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>something is wrong</mtext>
+  <mo>.</mo>
+</math>
+<p>Usually the culprit is:</p>
+<ul>
+<li>an inadmissible heuristic,</li>
+<li>incorrect closed-set handling,</li>
+<li>stale priority logic,</li>
+<li>overflow,</li>
+<li>bad graph connectivity.</li>
+</ul>
+<hr />
+<p><strong>Heuristic admissibility</strong></p>
+<p>A heuristic is admissible if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mn>0</mn>
+          <mo>≤</mo>
+          <mi>h</mi>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo stretchy="false">)</mo>
+          <mo>≤</mo>
+          <msup>
+            <mi>h</mi>
+            <mo>∗</mo>
+          </msup>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>h</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math> is the true optimal remaining cost.</p>
+<p>It never overestimates.</p>
+<p>Think of it as an <strong>optimistic lower bound</strong>.</p>
+<p>Suppose true remaining cost is 20.</p>
+<p>These are admissible:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mn>18</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mn>20.</mn>
+</math>
+<p>This is inadmissible:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo>=</mo>
+  <mn>25.</mn>
+</math>
+<p>The closer an admissible heuristic gets to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>h</mi>
+    <mo>∗</mo>
+  </msup>
+</math>, the more informed it is.</p>
+<p>In the ideal impossible case:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msup>
+    <mi>h</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>A* effectively knows the remaining optimal cost already.</p>
+<hr />
+<p><strong>Why overestimation can break optimality</strong></p>
+<p>Suppose:</p>
+<pre class="text"><code>        A ---- 2 ---- Goal
+       /
+Start
+       \
+        B ---- 1 ---- Goal</code></pre>
+<p>Assume total route through A really costs 10, through B costs 5.</p>
+<p>But heuristic says:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>100.</mn>
+</math>
+<p>A* may completely deprioritize B and reach/terminate at the more expensive goal route first, depending on implementation and termination conditions.</p>
+<p>The guarantee is gone.</p>
+<p>An inadmissible heuristic can still be intentionally useful in games if faster, slightly suboptimal routes are acceptable.</p>
+<p>Weighted A* uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>w</mi>
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>w</mi>
+  <mo>&gt;</mo>
+  <mn>1.</mn>
+</math>
+<p>That trades optimality for speed.</p>
+<p>But that must be a deliberate algorithmic policy, not an accidental heuristic bug.</p>
+<hr />
+<p><strong>Heuristic consistency</strong></p>
+<p>Consistency, also called monotonicity, requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>h</mi>
+          <mo stretchy="false">(</mo>
+          <mi>u</mi>
+          <mo stretchy="false">)</mo>
+          <mo>≤</mo>
+          <mi>c</mi>
+          <mo stretchy="false">(</mo>
+          <mi>u</mi>
+          <mo>,</mo>
+          <mi>v</mi>
+          <mo stretchy="false">)</mo>
+          <mo>+</mo>
+          <mi>h</mi>
+          <mo stretchy="false">(</mo>
+          <mi>v</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for every edge.</p>
+<p>Interpretation:</p>
+<blockquote>
+<p>our estimated distance from U to goal should not exceed the cost of stepping to V plus our estimate from V onward.</p>
+</blockquote>
+<p>It is essentially a triangle inequality in cost space.</p>
+<p>Consistency implies admissibility when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>g</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>It also implies that along any path:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+</math>
+<p>does not decrease after relaxation in the problematic way that would require reopening finalized nodes.</p>
+<p>This is why closed-set A* becomes much simpler with a consistent heuristic.</p>
+<hr />
+<p><strong>Admissible but inconsistent heuristics</strong></p>
+<p>A heuristic can be admissible globally but violate consistency locally.</p>
+<p>Then a node that was previously expanded may later receive a better <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+</math>.</p>
+<p>If the implementation permanently closes it and refuses reopening, optimality can fail.</p>
+<p>Therefore:</p>
+<pre class="text"><code>consistent heuristic
+    ↓
+closed node never needs reopening
+
+admissible but inconsistent heuristic
+    ↓
+reopening may be necessary</code></pre>
+<p>Your generic A* has no permanent closed set, so it naturally allows improvements.</p>
+<p>Your navmesh search permanently closes polygons, so its heuristic should be consistent.</p>
+<p>That brings us to an important repository issue.</p>
+<hr />
+<p><strong>A real NavMesh heuristic issue in current Kairo</strong></p>
+<p>Your navmesh edge cost is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>j</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>j</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>⋅</mo>
+  <mfrac>
+    <mrow>
+      <mi>A</mi>
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>a</mi>
+      <mi>C</mi>
+      <mi>o</mi>
+      <mi>s</mi>
+      <msub>
+        <mi>t</mi>
+        <mi>i</mi>
+      </msub>
+      <mo>+</mo>
+      <mi>A</mi>
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>a</mi>
+      <mi>C</mi>
+      <mi>o</mi>
+      <mi>s</mi>
+      <msub>
+        <mi>t</mi>
+        <mi>j</mi>
+      </msub>
+    </mrow>
+    <mn>2</mn>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Your navmesh heuristic is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>g</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If every polygon has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>≥</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo>,</mo>
+  <mi>j</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≥</mo>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>j</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and Euclidean centroid distance is consistent.</p>
+<p>But <code>AddPolygon()</code> currently validates only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>&gt;</mo>
+  <mn>0.</mn>
+</math>
+<p>It allows:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>0.1</mn>
+  <mo>.</mo>
+</math>
+<p>Then an edge of geometric length 10 may cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1.</mn>
+</math>
+<p>Yet the raw Euclidean heuristic may estimate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>10.</mn>
+</math>
+<p>That can overestimate.</p>
+<p>Because navmesh A* also permanently closes nodes, this is not merely theoretical.</p>
+<p>A clean fix is either to enforce:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>≥</mo>
+  <mn>1</mn>
+</math>
+<p>or calculate a valid heuristic scale analogous to the generic graph A*:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mtext>effective cost multiplier</mtext>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>α</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>g</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>That would preserve admissibility/consistency for discounted areas.</p>
+<hr />
+<p><strong>Navigation grids</strong></p>
+<p>A navigation grid maps walkable space into discrete cells.</p>
+<p>Example:</p>
+<pre class="text"><code>. . . # . .
+. S . # . .
+. . . # . .
+. . . . . G</code></pre>
+<p>Each walkable cell becomes a node.</p>
+<p>Edges connect legal neighbors.</p>
+<p>With four-neighbor movement:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>g</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>e</mi>
+  <mo>≤</mo>
+  <mn>4.</mn>
+</math>
+<p>With eight-neighbor movement:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>g</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>e</mi>
+  <mo>≤</mo>
+  <mn>8.</mn>
+</math>
+<p>In 3D voxel navigation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>g</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>e</mi>
+</math>
+<p>can become 6, 18 or 26 depending on movement rules.</p>
+<hr />
+<p><strong>Grid coordinate → node identity</strong></p>
+<p>For a dense 2D grid width <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>W</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>=</mo>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mi>W</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<p>Reverse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+  <mi>W</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌊</mo>
+    <mfrac>
+      <mrow>
+        <mi>i</mi>
+        <mi>n</mi>
+        <mi>d</mi>
+        <mi>e</mi>
+        <mi>x</mi>
+      </mrow>
+      <mi>W</mi>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">⌋</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>This lets navigation avoid storing an explicit adjacency vector for every cell.</p>
+<p>Neighbors can be generated procedurally.</p>
+<p>For example:</p>
+<div class="sourceCode" id="cb63"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constexpr</span> <span class="dt">int</span> offsets<span class="op">[</span><span class="dv">4</span><span class="op">][</span><span class="dv">2</span><span class="op">]</span> <span class="op">=</span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="dv">1</span><span class="op">,</span>  <span class="dv">0</span> <span class="op">},</span></span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">{-</span><span class="dv">1</span><span class="op">,</span>  <span class="dv">0</span> <span class="op">},</span></span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="dv">0</span><span class="op">,</span>  <span class="dv">1</span> <span class="op">},</span></span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span> <span class="dv">0</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span> <span class="op">}</span></span>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>That can make grids extremely compact.</p>
+<hr />
+<p><strong>Grid resolution tradeoff</strong></p>
+<p>Smaller cells give more detailed paths.</p>
+<p>But node count scales rapidly.</p>
+<p>For a 1000 m × 1000 m map:</p>
+<p>At 1 m:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+</math>
+<p>cells.</p>
+<p>At 0.5 m:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mo>×</mo>
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>At 0.1 m:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>100</mn>
+  <mo>×</mo>
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>So halving cell size in 2D quadruples cell count:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>∝</mo>
+  <mfrac>
+    <mn>1</mn>
+    <msup>
+      <mi>h</mi>
+      <mn>2</mn>
+    </msup>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>In 3D:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>∝</mo>
+  <mfrac>
+    <mn>1</mn>
+    <msup>
+      <mi>h</mi>
+      <mn>3</mn>
+    </msup>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Resolution therefore directly controls memory and A* search-space size.</p>
+<p>This is one reason navmeshes are attractive for continuous walkable surfaces.</p>
+<hr />
+<p><strong>Clearance and agent size in grids</strong></p>
+<p>A grid marking only obstacle centers is insufficient.</p>
+<p>Suppose an agent radius is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>We need to ensure its center never comes within <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+</math> of obstacles.</p>
+<p>One viewpoint is to Minkowski-expand obstacles by the agent radius:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mi>b</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>l</mi>
+  <msup>
+    <mi>e</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mi>b</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>⊕</mo>
+  <mi>S</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then pathfind a point-agent center through the remaining free space.</p>
+<p>This same conceptual transformation appears in navmesh generation: walkable space is eroded according to agent radius.</p>
+<p>Navigation should operate on the configuration space of the agent, not merely raw world geometry.</p>
+<hr />
+<p><strong>Navigation meshes</strong></p>
+<p>A navigation mesh represents walkable free space using convex polygons.</p>
+<p>Instead of:</p>
+<pre class="text"><code>hundreds of tiny grid cells</code></pre>
+<p>an open floor may become one large polygon.</p>
+<p>Example:</p>
+<pre class="text"><code>+--------------------+
+|                    |
+|     polygon A      |
+|                    |
++----------+---------+
+           |
++----------+---------+
+|     polygon B      |
++--------------------+</code></pre>
+<p>Each polygon becomes a graph state.</p>
+<p>Shared traversable edges become graph edges.</p>
+<p>This gives two levels:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>geometric representation</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>graph representation</mtext>
+  <mo>.</mo>
+</math>
+<p>That is why navmeshes are so efficient for ordinary character navigation.</p>
+<hr />
+<p><strong>Why convex polygons?</strong></p>
+<p>Inside a convex polygon, any line segment connecting two points stays inside the polygon.</p>
+<p>For any:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>,</mo>
+  <mi>q</mi>
+  <mo>∈</mo>
+  <mi>P</mi>
+  <mo>,</mo>
+</math>
+<p>convexity guarantees:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mi>p</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mi>q</mi>
+  <mo>∈</mo>
+  <mi>P</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi mathvariant="normal">∀</mi>
+  <mi>t</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Therefore once the agent enters a convex nav polygon, local movement within it is straightforward.</p>
+<p>Complex concave walkable regions are decomposed into multiple convex polygons.</p>
+<p>Your <code>NavMesh::ValidatePolygon()</code> explicitly checks convexity in XZ projection.</p>
+<p>It also checks:</p>
+<ul>
+<li>at least 3 vertices,</li>
+<li>at most 64,</li>
+<li>finite coordinates,</li>
+<li>nondegenerate projected area,</li>
+<li>coplanarity,</li>
+<li>a surface normal with meaningful Y component.</li>
+</ul>
+<p>So this navmesh is specifically designed for mostly horizontal walkable surfaces represented in XZ.</p>
+<hr />
+<p><strong>Navigation mesh path pipeline</strong></p>
+<p>A complete navmesh route is not simply:</p>
+<pre class="text"><code>A* → final path</code></pre>
+<p>It is:</p>
+<pre class="text"><code>world-space start/end
+        |
+        v
+locate/snap to polygons
+        |
+        v
+A* over polygon adjacency
+        |
+        v
+polygon corridor
+        |
+        v
+portal sequence
+        |
+        v
+funnel/string pulling
+        |
+        v
+waypoints
+        |
+        v
+steering / locomotion</code></pre>
+<p>Each stage solves a different problem.</p>
+<p>Your current Kairo implementation already contains the first five stages.</p>
+<p>That is significantly more complete than a mere waypoint graph.</p>
+<hr />
+<p><strong>Start/end polygon location</strong></p>
+<p>Your navmesh first attempts:</p>
+<div class="sourceCode" id="cb68"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>FindContainingPolygon<span class="op">(...)</span></span></code></pre></div>
+<p>using point-in-convex-XZ plus vertical tolerance.</p>
+<p>If no polygon contains the point, it can snap to:</p>
+<div class="sourceCode" id="cb69"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>FindNearestPolygon<span class="op">(...)</span></span></code></pre></div>
+<p>within <code>snapDistance</code>.</p>
+<p>This is important because animation/physics can place a character slightly off the mathematical navmesh.</p>
+<p>Without snapping, tiny numerical errors could cause every path query to fail.</p>
+<p>But snapping should be bounded.</p>
+<p>A character 50 m outside the navmesh should not silently teleport logically to the nearest polygon.</p>
+<hr />
+<p><strong>Current polygon-location complexity</strong></p>
+<p><code>FindContainingPolygon()</code> scans every polygon.</p>
+<p><code>FindNearestPolygon()</code> also scans every polygon.</p>
+<p>For <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+</math> navmesh polygons:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>P</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>per location query.</p>
+<p>For small meshes this is fine.</p>
+<p>For a huge open-world navmesh, use a spatial index:</p>
+<pre class="text"><code>navmesh polygon bounds
+        |
+        v
+BVH / grid / tile lookup
+        |
+        v
+small candidate set
+        |
+        v
+exact polygon test</code></pre>
+<p>This is a perfect example of the previous passes supporting navigation.</p>
+<p>The navmesh does not replace spatial indexing; it can itself be spatially indexed.</p>
+<hr />
+<p><strong>Navmesh polygon adjacency</strong></p>
+<p>Two polygons are adjacent if they share a traversable boundary segment.</p>
+<p>That segment becomes a <strong>portal</strong>.</p>
+<p>Your representation is:</p>
+<div class="sourceCode" id="cb71"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> NavMeshPortal <span class="kw">final</span></span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>    NavPolygonID From<span class="op">;</span></span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>    NavPolygonID To<span class="op">;</span></span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>    Vec3f Left<span class="op">;</span></span>
+<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>    Vec3f Right<span class="op">;</span></span>
+<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Note the portal is directed.</p>
+<p>Traveling:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">→</mo>
+  <mi>B</mi>
+</math>
+<p>has a left/right orientation.</p>
+<p>Traveling:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo stretchy="false">→</mo>
+  <mi>A</mi>
+</math>
+<p>reverses the viewpoint, so portal orientation must be recomputed.</p>
+<p>This is necessary for funnel string pulling.</p>
+<hr />
+<p><strong>Building adjacency in Kairo</strong></p>
+<p>Current <code>BuildAdjacency()</code> compares every polygon pair:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then <code>SharedEdge()</code> compares all edges of A against all edges of B looking for endpoints that match within:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ϵ</mi>
+  <mo>.</mo>
+</math>
+<p>For polygons A and B with edge counts <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>E</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>E</mi>
+    <mi>B</mi>
+  </msub>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>E</mi>
+    <mi>A</mi>
+  </msub>
+  <msub>
+    <mi>E</mi>
+    <mi>B</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>for that pair.</p>
+<p>Across <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+</math> polygons, naïvely:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>P</mi>
+    <mn>2</mn>
+  </msup>
+  <msup>
+    <mi>E</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+</math>
+<p>for roughly equal edge count.</p>
+<p>For a few hundred polygons this may be acceptable.</p>
+<p>For hundreds of thousands, it is not.</p>
+<hr />
+<p><strong>Edge-map adjacency construction</strong></p>
+<p>A more scalable build creates a canonical edge key.</p>
+<p>For each polygon edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>quantize/weld endpoints and create unordered key:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo>=</mo>
+  <mo fence="false" stretchy="false">{</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+  <mo fence="false" stretchy="false">}</mo>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<pre class="text"><code>edge key
+  |
+  +-- polygon 17
+  +-- polygon 42</code></pre>
+<p>Two polygons appearing under the same key are adjacent.</p>
+<p>That can reduce adjacency construction toward the total number of edges, assuming effective hashing.</p>
+<p>This is especially natural for navmeshes generated from indexed topology.</p>
+<hr />
+<p><strong>T-junction issue</strong></p>
+<p>Your current <code>SharedEdge()</code> expects the two edge endpoints to match within epsilon.</p>
+<p>Suppose:</p>
+<pre class="text"><code>Polygon A edge:
+A0 --------------------------- A1
+
+Polygon B:
+          B0 -------- B1</code></pre>
+<p>B’s edge is a strict subsegment of A’s edge.</p>
+<p>They geometrically share a portal but their edge endpoints do not match pairwise.</p>
+<p>The current algorithm may fail to connect them.</p>
+<p>A professionally generated navmesh usually removes such topological T-junction ambiguity during construction, or adjacency construction computes overlapping collinear segments rather than exact edge-pair equality.</p>
+<p>So this is another important contract:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Kairo currently assumes authored/welded compatible polygon boundaries</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Area costs on navmesh polygons</strong></p>
+<p>Your polygon stores:</p>
+<div class="sourceCode" id="cb74"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> AreaCost <span class="op">=</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">;</span></span></code></pre></div>
+<p>and edge cost uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>B</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>⋅</mo>
+  <mfrac>
+    <mrow>
+      <mi>C</mi>
+      <mi>o</mi>
+      <mi>s</mi>
+      <msub>
+        <mi>t</mi>
+        <mi>A</mi>
+      </msub>
+      <mo>+</mo>
+      <mi>C</mi>
+      <mi>o</mi>
+      <mi>s</mi>
+      <msub>
+        <mi>t</mi>
+        <mi>B</mi>
+      </msub>
+    </mrow>
+    <mn>2</mn>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>This allows terrain preferences.</p>
+<p>Examples:</p>
+<pre class="text"><code>road       1.0
+grass      1.5
+mud        3.0
+lava      100.0</code></pre>
+<p>assuming costs are multipliers above one.</p>
+<p>A path may therefore choose a geometrically longer corridor if its traversability cost is lower.</p>
+<p>But remember the heuristic issue from above if multipliers below one are allowed.</p>
+<hr />
+<p><strong>Corridor versus actual geometric path</strong></p>
+<p>A* on navmesh polygons returns:</p>
+<pre class="text"><code>Poly 10
+  ↓
+Poly 20
+  ↓
+Poly 30</code></pre>
+<p>That does not mean the character should move through polygon centroids:</p>
+<pre class="text"><code>start
+ → center10
+ → center20
+ → center30
+ → end</code></pre>
+<p>That often produces ugly zig-zags.</p>
+<p>Instead, the polygon route defines a <strong>corridor</strong>.</p>
+<p>The exact geometric shortest route through that corridor is found by string pulling.</p>
+<hr />
+<p><strong>Funnel algorithm</strong></p>
+<p>Imagine the sequence of shared portals:</p>
+<pre class="text"><code>        L1        L2
+         \        /
+          \      /
+start -----\----/-------
+            \  /
+             \/
+             /\
+            /  \
+           /    \
+         R1      R2</code></pre>
+<p>At any point we maintain an apex:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+</math>
+<p>and two rays toward:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>.</mo>
+</math>
+<p>These form the current visibility funnel.</p>
+<p>Each new portal provides:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>R</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>If a new left or right endpoint lies inside the funnel, tighten that side.</p>
+<p>If one side crosses the opposite side, the opposite boundary becomes an unavoidable path corner.</p>
+<p>Then:</p>
+<ol type="1">
+<li>emit that corner,</li>
+<li>move apex there,</li>
+<li>restart funnel construction from that portal.</li>
+</ol>
+<p>This is the string-pulling algorithm.</p>
+<p>The well-known “simple stupid funnel” implementation deliberately restarts from the new apex because the extra portal reprocessing is often worth the simpler, robust control flow. <a href="https://digestingduck.blogspot.com/2010/03/simple-stupid-funnel-algorithm.html?utm_source=chatgpt.com">digestingduck.blogspot.com</a></p>
+<hr />
+<p><strong>Signed area drives funnel orientation</strong></p>
+<p>For XZ navigation, your code uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>a</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo>,</mo>
+  <mi>C</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>A</mi>
+    <mi>x</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>A</mi>
+    <mi>z</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>−</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>A</mi>
+    <mi>z</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>A</mi>
+    <mi>x</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This is the 2D cross product.</p>
+<p>Its sign tells us which side of ray <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo stretchy="false">→</mo>
+  <mi>B</mi>
+</math> point C lies on.</p>
+<p>That allows tests such as:</p>
+<pre class="text"><code>Is new right endpoint tighter?
+Has right crossed left?
+Is new left endpoint tighter?
+Has left crossed right?</code></pre>
+<p>Your code’s <code>TriArea2XZ()</code> implements exactly this.</p>
+<hr />
+<p><strong>Kairo’s funnel setup</strong></p>
+<p>The portal sequence begins with a degenerate portal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and ends with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mo>,</mo>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Between them:</p>
+<div class="sourceCode" id="cb80"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>PortalBetween<span class="op">(</span></span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>    corridor<span class="op">[</span>i<span class="op">],</span></span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>    corridor<span class="op">[</span>i <span class="op">+</span> <span class="dv">1</span><span class="op">]</span></span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a><span class="op">)</span></span></code></pre></div>
+<p>provides left/right boundaries.</p>
+<p>So:</p>
+<pre class="text"><code>(start,start)
+portal 0
+portal 1
+portal 2
+...
+(end,end)</code></pre>
+<p>is passed to the funnel.</p>
+<p>This is a very clean formulation because start and end then participate in the same algorithm as ordinary portals.</p>
+<hr />
+<p><strong>Funnel narrowing</strong></p>
+<p>Suppose current funnel is:</p>
+<pre class="text"><code>        L
+       /
+      /
+     A
+      \
+       \
+        R</code></pre>
+<p>A new portal arrives.</p>
+<p>If new right lies between current right and left, update:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo stretchy="false">←</mo>
+  <msub>
+    <mi>R</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mi>e</mi>
+      <mi>w</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Similarly for left.</p>
+<p>The funnel becomes narrower as the corridor constrains visibility.</p>
+<p>As long as the straight route from apex remains possible, no waypoint is needed.</p>
+<p>This is why a perfectly straight corridor of many polygons can collapse to only:</p>
+<pre class="text"><code>start
+end</code></pre>
+<p>Your test suite verifies exactly this across three polygons.</p>
+<hr />
+<p><strong>Funnel crossing</strong></p>
+<p>Suppose new right crosses current left.</p>
+<p>That means no line from the existing apex can remain inside the corridor while passing through the new portal.</p>
+<p>The current left boundary is now a necessary corner.</p>
+<p>Emit:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>L</mi>
+  <mo>.</mo>
+</math>
+<p>Set:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mi>L</mi>
+  <mo>.</mo>
+</math>
+<p>Reset:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>R</mi>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mo>.</mo>
+</math>
+<p>Then reprocess portals from the new apex.</p>
+<p>Symmetric logic applies when new left crosses right.</p>
+<p>That is the core geometric proof underlying string pulling.</p>
+<hr />
+<p><strong>Path cost versus funnel path length in current Kairo</strong></p>
+<p>There are two different quantities in your <code>NavMeshPath</code>.</p>
+<p>A* cost is based on:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>centroid-to-centroid distance</mtext>
+  <mo>×</mo>
+  <mtext>area costs</mtext>
+  <mo>.</mo>
+</math>
+<p>Funnel outputs a geometric waypoint route through the selected corridor.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+</math>
+<p>is <strong>not necessarily the physical length of <code>Waypoints</code></strong>.</p>
+<p>Nor is it necessarily the exact integrated terrain cost along the funnel path.</p>
+<p>It is the graph-search corridor cost.</p>
+<p>That is fine if documented.</p>
+<p>But systems consuming <code>Cost</code> should understand its meaning.</p>
+<hr />
+<p><strong>Funnel does not solve locomotion</strong></p>
+<p>A funnel provides useful geometric corners.</p>
+<p>It does not solve:</p>
+<ul>
+<li>acceleration,</li>
+<li>turning radius,</li>
+<li>character radius near corners,</li>
+<li>crowd avoidance,</li>
+<li>animation,</li>
+<li>velocity obstacles,</li>
+<li>moving obstacles,</li>
+<li>local steering.</li>
+</ul>
+<p>A useful architecture is:</p>
+<pre class="text"><code>A*
+ ↓
+polygon corridor
+ ↓
+funnel
+ ↓
+corner sequence
+ ↓
+steering
+ ↓
+locomotion / physics</code></pre>
+<p>Trying to make string pulling itself solve all movement behavior usually produces an overly complicated and brittle layer. This separation is also emphasized by the Recast/Detour author’s practical funnel guidance: graph search selects a corridor, string pulling gives directions through it, and steering/locomotion handles final movement. <a href="https://digestingduck.blogspot.com/2010/03/simple-stupid-funnel-algorithm.html?utm_source=chatgpt.com">digestingduck.blogspot.com</a></p>
+<hr />
+<p><strong>Agent radius and portals</strong></p>
+<p>The basic funnel algorithm treats the agent as a point.</p>
+<p>For an agent with radius <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+</math>, portal clearance must account for that radius.</p>
+<p>A common solution is to build/erode the navmesh for a particular agent radius.</p>
+<p>Then an agent center can safely be treated as a point moving over the already-clearance-adjusted mesh.</p>
+<p>If instead using a generic mesh, portals need to be shrunk by radius and corners offset appropriately.</p>
+<p>This becomes complicated around sharp turns.</p>
+<p>That is why navigation meshes are usually generated from explicit agent configuration:</p>
+<pre class="text"><code>radius
+height
+max slope
+step height</code></pre>
+<p>rather than using raw render geometry directly.</p>
+<hr />
+<p><strong>Dynamic obstacles</strong></p>
+<p>A navmesh describes static walkable space well.</p>
+<p>But worlds contain:</p>
+<pre class="text"><code>closed doors
+moving crates
+vehicles
+temporary barriers
+fallen debris
+crowds</code></pre>
+<p>There are several levels of dynamic response.</p>
+<p>The first is <strong>cost modification</strong>.</p>
+<p>Instead of deleting navigation topology, temporarily increase cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">←</mo>
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<p>This is appropriate when passage remains possible but undesirable.</p>
+<hr />
+<p><strong>Blocking edges or polygons</strong></p>
+<p>A stronger policy marks some nodes/edges unavailable:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>k</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Then A* simply ignores them.</p>
+<p>Example:</p>
+<pre class="text"><code>Door open:
+Room A ↔ Room B
+
+Door closed:
+Room A   Room B</code></pre>
+<p>This works well for discrete dynamic state changes.</p>
+<p>Your current generic <code>NavigationGraph</code> does not expose an enabled/disabled edge flag, but such a flag would be straightforward.</p>
+<hr />
+<p><strong>Navmesh carving</strong></p>
+<p>For an obstacle occupying part of a nav polygon, merely disabling the entire polygon may be overly conservative.</p>
+<p>You can carve the obstacle shape out of walkable space and retriangulate/repolygonize the local region.</p>
+<p>This gives accurate navigation but modification is much more expensive.</p>
+<p>Therefore dynamic navmesh systems often divide the world into <strong>tiles</strong>.</p>
+<p>Only affected tiles are rebuilt.</p>
+<p>Recast/Detour’s tile-cache API follows exactly that model: obstacle changes mark affected tiles, and updates rebuild the touched tiles incrementally rather than regenerating the whole navigation mesh. <a href="https://recastnav.com/classdtTileCache.html?utm_source=chatgpt.com">Recast Navigation</a></p>
+<hr />
+<p><strong>Static planning versus local avoidance</strong></p>
+<p>Suppose another character walks across your path.</p>
+<p>Rebuilding navmesh geometry for every other agent every frame would be absurd.</p>
+<p>Instead:</p>
+<pre class="text"><code>Navmesh/A*
+    ↓
+global route around walls
+    ↓
+local avoidance
+    ↓
+avoid nearby moving agents</code></pre>
+<p>This separates two timescales.</p>
+<p>Global pathfinding handles persistent geometry.</p>
+<p>Steering handles rapidly changing local interactions.</p>
+<p>This is analogous to broadphase/narrowphase separation in collision detection.</p>
+<hr />
+<p><strong>Current Kairo dynamic-navigation status</strong></p>
+<p>Your <code>NavMesh</code> supports:</p>
+<ul>
+<li>adding/removing polygons,</li>
+<li>rebuilding adjacency,</li>
+<li>polygon costs,</li>
+<li>containment/nearest queries,</li>
+<li>corridor A*,</li>
+<li>funnel waypoints.</li>
+</ul>
+<p>It does <strong>not</strong> currently expose a dedicated dynamic-obstacle system, tile cache, local carving API or edge-blocking layer.</p>
+<p>So Part 1394 is not yet represented as a full runtime subsystem.</p>
+<p>A practical next step would be a query-time navigation filter:</p>
+<div class="sourceCode" id="cb89"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> NavQueryFilter</span>
+<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> IsPolygonEnabled<span class="op">(</span>NavPolygonID id<span class="op">)</span> <span class="at">const</span><span class="op">;</span></span>
+<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> ExtraCost<span class="op">(</span>NavPolygonID id<span class="op">)</span> <span class="at">const</span><span class="op">;</span></span>
+<span id="cb89-5"><a href="#cb89-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>That alone would support doors, temporary hazards and many game-state changes without rebuilding polygon topology.</p>
+<hr />
+<p><strong>Hierarchical pathfinding</strong></p>
+<p>A* search cost grows with the number of states it may need to expand.</p>
+<p>For a huge grid:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <msup>
+    <mn>10</mn>
+    <mn>7</mn>
+  </msup>
+</math>
+<p>cells.</p>
+<p>Even a good heuristic may touch many nodes.</p>
+<p>Hierarchical pathfinding compresses large regions into higher-level abstractions.</p>
+<p>Suppose grid is divided into clusters:</p>
+<pre class="text"><code>+-------+-------+-------+
+|   A   |   B   |   C   |
+|       |       |       |
++-------+-------+-------+
+|   D   |   E   |   F   |
+|       |       |       |
++-------+-------+-------+</code></pre>
+<p>We identify entrances between clusters.</p>
+<p>Then construct abstract graph:</p>
+<pre class="text"><code>A ↔ B ↔ C
+↕   ↕   ↕
+D ↔ E ↔ F</code></pre>
+<p>High-level A* searches cluster connectivity first.</p>
+<p>Then refine only the relevant clusters.</p>
+<hr />
+<p><strong>HPA* concept</strong></p>
+<p>Hierarchical Path-Finding A* generally performs roughly:</p>
+<pre class="text"><code>Low-level map
+    ↓
+partition into clusters
+    ↓
+find entrances
+    ↓
+precompute local entrance-to-entrance costs
+    ↓
+construct abstract graph
+    ↓
+search abstract graph
+    ↓
+refine each abstract segment locally</code></pre>
+<p>The great advantage is reducing search-space size.</p>
+<p>Instead of exploring thousands of cells across an open region, high-level search crosses that region as one abstract transition.</p>
+<p>The HPA* literature reports large reductions in search effort while accepting small path-quality loss in its approximate variants; the classic paper demonstrated multi-level abstractions and near-optimal paths for game maps. <a href="https://webdocs.cs.ualberta.ca/~mmueller/ps/2004/hpastar.pdf?utm_source=chatgpt.com">webdocs.cs.ualberta.ca</a></p>
+<hr />
+<p><strong>Hierarchical navmeshes</strong></p>
+<p>The same principle applies to navmeshes.</p>
+<p>Individual polygons can be grouped into:</p>
+<pre class="text"><code>region
+sector
+zone
+island</code></pre>
+<p>Then search:</p>
+<pre class="text"><code>world regions
+     ↓
+region portals
+     ↓
+polygon corridor inside chosen regions
+     ↓
+funnel</code></pre>
+<p>For an open-world game:</p>
+<pre class="text"><code>continent
+  ↓
+district
+  ↓
+navmesh tile
+  ↓
+polygon</code></pre>
+<p>may all participate.</p>
+<p>Hierarchy is not tied to grids.</p>
+<p>It is a general search-space abstraction technique.</p>
+<hr />
+<p><strong>Hierarchical pathfinding is an approximation problem</strong></p>
+<p>If high-level abstraction stores only approximate local costs, the route can become suboptimal.</p>
+<p>Suppose an abstract cluster appears cheap from entrance A to B, but the exact local geometry produces a detour.</p>
+<p>If abstraction cost is inaccurate, high-level route selection may choose the wrong cluster sequence.</p>
+<p>There is a spectrum:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>exact precomputed abstraction</mtext>
+</math>
+<p>through:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>near-optimal approximation</mtext>
+</math>
+<p>to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>very cheap coarse guidance</mtext>
+  <mo>.</mo>
+</math>
+<p>Games often willingly sacrifice a tiny amount of path optimality for huge reductions in CPU cost.</p>
+<p>An NPC taking a path 1% longer is usually invisible to the player.</p>
+<p>A frame hitch from pathfinding is not.</p>
+<hr />
+<p><strong>A* repository audit before leaving M083</strong></p>
+<p>Your generic A* implementation has several strong properties.</p>
+<p>It validates finite/nonnegative edge costs, handles start/goal absence cleanly, uses duplicate heap entries instead of requiring decrease-key, skips stale entries, protects against accumulated float overflow, records expansion count, reconstructs through <code>cameFrom</code>, and computes a Euclidean heuristic scale that remains safe when edge costs are cheaper than geometric distance.</p>
+<p>There are also improvements available.</p>
+<p>The generic priority queue has no deterministic secondary tie-breaker, so equal-<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> routes may not have fully deterministic expansion ordering. Computing the global heuristic scale scans every edge on every path query, which can become expensive; because graph topology/costs usually change much less frequently than queries, the scale could be cached and invalidated when edges change. <code>unordered_map</code> storage is flexible but expensive for dense contiguous navigation IDs; vector-backed arrays can be much faster when node indices are compact.</p>
+<p>The navmesh pathfinder has excellent deterministic tie-breaking by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math>, then <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>G</mi>
+</math>, then polygon ID, but as discussed, discounted <code>AreaCost &lt; 1</code> can invalidate its unscaled Euclidean heuristic.</p>
+<p>That is the important systems lesson:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>algorithm correctness lives in data contracts as much as code</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch283.xhtml#id_03-Geometry-Cameras-and-Image-Formation" class="wikilink">Reading map</a> · <a href="ch398.xhtml#id_06-engine-ii-ch029-dynamic-spatial-indices-for-moving-worlds" class="wikilink">Previous chapter (Spatial Worlds, Engine State, and Simulation, Part 2, Ch. 20)</a> · <a href="ch399.xhtml#id_06-engine-ii-ch031-spatial-index-serialization-and-query-evidence" class="wikilink">Next chapter (Spatial Worlds, Engine State, and Simulation, Part 2, Ch. 21)</a></p>
+</section>
+</section>
+</body>
+</html>

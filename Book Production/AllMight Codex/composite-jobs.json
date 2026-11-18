@@ -1,0 +1,263 @@
+{
+  "schema": "allmight-postrender-composite-jobs-v1",
+  "manifest_version": 1,
+  "required_stage": "Run after canonical Mermaid asset rendering and before font metadata, print PDF transcode, native import, and EPUB validation. Every clean render must rerun this post-render composite stage.",
+  "renderer": {
+    "script": "tools/render_assets.cjs",
+    "renderer_version": "mathjax-3.2.2-tex-svg-tex-mml-fontCache-none-pt-dimensions-error-detect-v4+mermaid-11-intrinsic-dimensions-v2",
+    "purpose": "Render component Mermaid panels from the exact code recorded below."
+  },
+  "compositor": {
+    "script": "tools/compose_fcbea_panels.py",
+    "renderer_version": "allmight-fcbea-composite-v2",
+    "purpose": "Prefix inner SVG IDs/references and compose both panels, reader captions and shared-command-buffer explanation into one self-contained SVG."
+  },
+  "jobs": [
+    {
+      "id": "fcbea06ba67e4dcc48784ddf",
+      "kind": "svg-composite",
+      "source_job_id": "fcbea06ba67e4dcc48784ddf",
+      "source_file": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/41 - Evidence, tools, and revisable design.md",
+      "source_code_sha256": "515e45c298f023b71f3493e88ca1563df0f951a4ac4f0f66e63cac7b768aa44a",
+      "canonical_source_asset_output": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/mermaid/fcbea06ba67e4dcc48784ddf.svg",
+      "output_path": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/mermaid/fcbea06ba67e4dcc48784ddf.svg",
+      "output_report_path": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/composite-render-report.json",
+      "components": [
+        {
+          "id": "fcbea-panel-a-TB",
+          "kind": "mermaid",
+          "display": true,
+          "code": "%%{init: {'flowchart': {'nodeSpacing': 8, 'rankSpacing': 14, 'padding': 4, 'wrappingWidth': 160, 'htmlLabels': false}}}%%\nflowchart TB\n  A[\"Asset identity + resource generation\"] --> B[\"Material / shader interface\"]\n  B --> C[\"Per-frame descriptor snapshot\"]\n  C --> D[\"Command buffer\"]\n  F[\"Glyph atlas version\"] --> E[\"Batch vertices + texture-slot map\"]\n  E --> D\n",
+          "code_sha256": "8311675a5c14dbd2536abf3bc4d48e2c09a097bf39059da0fca2dea80ad26ae2",
+          "source_svg_sha256": "64378d3b5f1526f6a71a7d75d2d3284a389560676101d5a244a1b8d7e0e8b664",
+          "expected_node_ids": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F"
+          ],
+          "expected_edges": [
+            [
+              "A",
+              "B"
+            ],
+            [
+              "B",
+              "C"
+            ],
+            [
+              "C",
+              "D"
+            ],
+            [
+              "E",
+              "D"
+            ],
+            [
+              "F",
+              "E"
+            ]
+          ],
+          "output_name": "panel-a.svg",
+          "packaged_source_svg": "Design/Diagram Sources/fcbea-panel-a-TB.svg"
+        },
+        {
+          "id": "fcbea-panel-b-TB",
+          "kind": "mermaid",
+          "display": true,
+          "code": "%%{init: {'flowchart': {'nodeSpacing': 8, 'rankSpacing': 14, 'padding': 4, 'wrappingWidth': 160, 'htmlLabels': false}}}%%\nflowchart TB\n  G[\"Scene epoch + pick ID table\"] --> H[\"Integer picking target\"]\n  I[\"Swapchain extent generation\"] --> J[\"Render targets and views\"]\n  J --> D[\"Command buffer\"]\n  D --> K[\"GPU completion fence/timeline\"]\n  K --> L[\"Retire old resources safely\"]\n",
+          "code_sha256": "d5419981d8b71267d7fd0b6dcce942259033254ffaba4dc63845e7498dc84a2d",
+          "source_svg_sha256": "e20fbc5500809182c61f6d8127505afed18e9d29b922229f5fb621132a6e2dce",
+          "expected_node_ids": [
+            "D",
+            "G",
+            "H",
+            "I",
+            "J",
+            "K",
+            "L"
+          ],
+          "expected_edges": [
+            [
+              "D",
+              "K"
+            ],
+            [
+              "G",
+              "H"
+            ],
+            [
+              "I",
+              "J"
+            ],
+            [
+              "J",
+              "D"
+            ],
+            [
+              "K",
+              "L"
+            ]
+          ],
+          "output_name": "panel-b.svg",
+          "packaged_source_svg": "Design/Diagram Sources/fcbea-panel-b-TB.svg"
+        }
+      ],
+      "source_semantics": {
+        "node_labels": {
+          "A": "Asset identity + resource generation",
+          "B": "Material / shader interface",
+          "C": "Per-frame descriptor snapshot",
+          "D": "Command buffer",
+          "E": "Batch vertices + texture-slot map",
+          "F": "Glyph atlas version",
+          "G": "Scene epoch + pick ID table",
+          "H": "Integer picking target",
+          "I": "Swapchain extent generation",
+          "J": "Render targets and views",
+          "K": "GPU completion fence/timeline",
+          "L": "Retire old resources safely"
+        },
+        "edges": [
+          [
+            "A",
+            "B"
+          ],
+          [
+            "B",
+            "C"
+          ],
+          [
+            "C",
+            "D"
+          ],
+          [
+            "D",
+            "K"
+          ],
+          [
+            "E",
+            "D"
+          ],
+          [
+            "F",
+            "E"
+          ],
+          [
+            "G",
+            "H"
+          ],
+          [
+            "I",
+            "J"
+          ],
+          [
+            "J",
+            "D"
+          ],
+          [
+            "K",
+            "L"
+          ]
+        ],
+        "panel_node_ids": [
+          {
+            "A": "Asset identity + resource generation",
+            "B": "Material / shader interface",
+            "C": "Per-frame descriptor snapshot",
+            "D": "Command buffer",
+            "F": "Glyph atlas version",
+            "E": "Batch vertices + texture-slot map"
+          },
+          {
+            "G": "Scene epoch + pick ID table",
+            "H": "Integer picking target",
+            "I": "Swapchain extent generation",
+            "J": "Render targets and views",
+            "D": "Command buffer",
+            "K": "GPU completion fence/timeline",
+            "L": "Retire old resources safely"
+          }
+        ],
+        "panel_edges": [
+          [
+            [
+              "A",
+              "B"
+            ],
+            [
+              "B",
+              "C"
+            ],
+            [
+              "C",
+              "D"
+            ],
+            [
+              "E",
+              "D"
+            ],
+            [
+              "F",
+              "E"
+            ]
+          ],
+          [
+            [
+              "D",
+              "K"
+            ],
+            [
+              "G",
+              "H"
+            ],
+            [
+              "I",
+              "J"
+            ],
+            [
+              "J",
+              "D"
+            ],
+            [
+              "K",
+              "L"
+            ]
+          ]
+        ],
+        "shared_node_id": "D",
+        "shared_node_explanation": "The command buffer in panel B is the same submission shown in panel A.",
+        "combined_checks": {
+          "all_nodes_cover_source": true,
+          "all_edges_match_source": true,
+          "all_source_label_chars_match": true
+        }
+      },
+      "renderer_script": "tools/render_assets.cjs",
+      "compositor_script": "tools/compose_fcbea_panels.py",
+      "canonical_source_svg_sha256_before_composite": "def0dbb2223081e646d4d0f75be796ddddf3efe1626a02059698f33912d2ebee",
+      "recovery_copy": "Design/Diagram Sources/fcbea-original-source-svg-pre-composite.svg",
+      "recovery_copy_sha256": "def0dbb2223081e646d4d0f75be796ddddf3efe1626a02059698f33912d2ebee"
+    }
+  ],
+  "compositor_version": "allmight-fcbea-composite-v2",
+  "recovery_sources": [
+    {
+      "role": "original-pre-composite",
+      "path": "Design/Diagram Sources/fcbea-original-source-svg-pre-composite.svg",
+      "sha256": "def0dbb2223081e646d4d0f75be796ddddf3efe1626a02059698f33912d2ebee"
+    },
+    {
+      "role": "panel-a",
+      "path": "Design/Diagram Sources/fcbea-panel-a-TB.svg",
+      "sha256": "64378d3b5f1526f6a71a7d75d2d3284a389560676101d5a244a1b8d7e0e8b664"
+    },
+    {
+      "role": "panel-b",
+      "path": "Design/Diagram Sources/fcbea-panel-b-TB.svg",
+      "sha256": "e20fbc5500809182c61f6d8127505afed18e9d29b922229f5fb621132a6e2dce"
+    }
+  ]
+}

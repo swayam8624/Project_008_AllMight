@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch259.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-f4acdb1d5563-metric-gradients-and-differential-measurements" class="level2">
+<h2>Metric gradients and differential measurements</h2>
+<p>The differential of a scalar function is a linear measurement of displacement. The gradient is the vector that represents that measurement after an inner product or metric has been chosen.</p>
+<p>At a point, let coordinate derivative coefficients be collected in <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+</math>. Then</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>f</mi>
+  <mo stretchy="false">[</mo>
+  <mi>h</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <msup>
+    <mi>g</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mi>h</mi>
+  <mo>.</mo>
+</math>
+<p>If the vector-space inner product is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo fence="false" stretchy="false">⟨</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>h</mi>
+  <msub>
+    <mo fence="false" stretchy="false">⟩</mo>
+    <mi>G</mi>
+  </msub>
+  <mo>=</mo>
+  <msup>
+    <mi>u</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mi>G</mi>
+  <mi>h</mi>
+</math>
+<p>for symmetric positive-definite metric matrix <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>G</mi>
+</math>, the metric gradient is defined by</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>f</mi>
+  <mo stretchy="false">[</mo>
+  <mi>h</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mo fence="false" stretchy="false">⟨</mo>
+  <msub>
+    <mi>grad</mi>
+    <mi>G</mi>
+  </msub>
+  <mi>f</mi>
+  <mo>,</mo>
+  <mi>h</mi>
+  <msub>
+    <mo fence="false" stretchy="false">⟩</mo>
+    <mi>G</mi>
+  </msub>
+</math>
+<p>for every displacement <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>h</mi>
+</math>. Therefore</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <msub>
+    <mi>grad</mi>
+    <mi>G</mi>
+  </msub>
+  <mi>f</mi>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>grad</mi>
+    <mi>G</mi>
+  </msub>
+  <mi>f</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>G</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>In ordinary orthonormal Euclidean coordinates <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>G</mi>
+  <mo>=</mo>
+  <mi>I</mi>
+</math>, so derivative coefficients and gradient-vector coordinates happen to match. That familiar coincidence hides the conceptual distinction.</p>
+<p>Example: for <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mi>y</mi>
+</math> and</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>4</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<p>the derivative coefficients are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math> but</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>grad</mi>
+    <mi>G</mi>
+  </msub>
+  <mi>f</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>4</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>The steepest direction depends on the ruler used to constrain step length. This is not merely abstract geometry: weighted optimization, pose parameters mixing translation and rotation, and preconditioned numerical methods all choose an effective metric.</p>
+<p>The maximum first-order change over the metric unit ball is the dual norm of the differential:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <munder>
+    <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    <mrow data-mjx-texclass="ORD">
+      <msup>
+        <mi>h</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="sans-serif">T</mi>
+          </mrow>
+        </mrow>
+      </msup>
+      <mi>G</mi>
+      <mi>h</mi>
+      <mo>≤</mo>
+      <mn>1</mn>
+    </mrow>
+  </munder>
+  <msup>
+    <mi>g</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mi>h</mi>
+  <mo>=</mo>
+  <msqrt>
+    <msup>
+      <mi>g</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="sans-serif">T</mi>
+        </mrow>
+      </mrow>
+    </msup>
+    <msup>
+      <mi>G</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>−</mo>
+        <mn>1</mn>
+      </mrow>
+    </msup>
+    <mi>g</mi>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>So metric gradients and dual-norm error bounds are two views of the same measurement-versus-vector relationship.</p>
+<p>Full derivation and worked trace: <a href="ch245.xhtml#id_01-foundations-i-ch018-a-derivative-measures-change-a-gradient-needs-a-ruler" class="wikilink">Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A derivative measures change; a gradient needs a ruler</a>.</p>
+<p>Related: <a href="ch242.xhtml#appendix-d6d9dbbe3c14-norms-dual-norms-and-error-budgets" class="wikilink">Norms, dual norms and error budgets</a>, <a href="ch518.xhtml#appendix-d8a7ddb675eb-jacobians-pushforwards-and-pullbacks" class="wikilink">Jacobians, pushforwards, and pullbacks (Vision, XR, and Playable Worlds, Part 1, Reference notes: Jacobians, pushforwards, and pullbacks)</a>, <a href="ch488.xhtml#appendix-6ac071f8b50c-hessians-and-local-curvature" class="wikilink">Hessians and local curvature (Vision, XR, and Playable Worlds, Part 1, Reference notes: Hessians and local curvature)</a>.</p>
+</section>
+</body>
+</html>

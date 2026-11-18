@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch224.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-877738f6f4d2-batch-015-technical-source-to-teaching-coverage" class="level2">
+<h2>Batch 015 — technical source-to-teaching coverage</h2>
+<p>This ledger covers the bounded 24-page assignment only. The reading drafts keep conceptual explanations separate from the author’s historical examples and from cautions about apparent code defects.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Source pages (PDF / printed)</th>
+<th>Distinct source ideas and mechanisms</th>
+<th>Teaching destination in <code>pdf-additions-a.md</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>Game Engine Architecture</em> 784–785 / 762–763</td>
+<td>A subsystem-oriented frame loop; cache-friendly contiguous subsystem data; once-per-batch global work; reusable frame resources; pipelined processing; coupled multi-body collision resolution as group work</td>
+<td>“Let dependencies set the update order”</td>
+</tr>
+<tr>
+<td>GEA 785–788 / 763–766</td>
+<td>Parent/held-object ordering; animation-to-ragdoll and ragdoll-to-animation data flow; subsystem phases; pre/post hooks; multiple per-frame object hooks; per-phase membership lists to avoid useless iteration</td>
+<td>“Let dependencies set the update order”</td>
+</tr>
+<tr>
+<td>GEA 788–790 / 766–768</td>
+<td>Dependency forest and tiers; root-first buckets; full phased subsystem passes per bucket; shallow-depth examples; external systems may not accept bucketed calls; the author’s historical <em>Uncharted</em> account</td>
+<td>“Let dependencies set the update order”</td>
+</tr>
+<tr>
+<td>GEA 790–793 / 768–771</td>
+<td>Sequential partial updates; consistent states only before/after a loop; wrong-time reads and one-frame lag; old/new state caching and interpolation; memory cost and residual inconsistency; time stamps and same-bucket query guards</td>
+<td>“Make mixed-time reads visible”</td>
+</tr>
+<tr>
+<td>GEA 793–795 / 771–773</td>
+<td>Object dependency makes parallel updates hard; direct state peeking vs message passing; serial high-level model and parallel low-level systems as the author’s account; blocking vs non-blocking requests; issue as early as possible and consume as late as possible; tolerable stale results; batch ray requests; page 795 introduces events and notification/response duties</td>
+<td>“Make mixed-time reads visible”</td>
+</tr>
+<tr>
+<td><em>Game Physics Engine Development</em> 268–272 / 245–249</td>
+<td>Insertion descends by child <code>getGrowth</code>; leaf split into existing/new child; ancestor-bound refresh; enclosing but nonminimal sphere; reason for runtime approximation; deletion replaces parent with sibling data, detaches adopted children, and recalculates upward; apparent double-delete typo preserved as a warning</td>
+<td>“Update the hierarchy without rebuilding all of it”</td>
+</tr>
+<tr>
+<td>Physics 273–274 / 250–251</td>
+<td>Multiple bounds for awkward sub-objects; level decomposition; box bounds for boxlike spaces; transition from object-dependent hierarchy to world-space partition</td>
+<td>“Grow a spatial hierarchy around the world’s shape”; “Update the hierarchy without rebuilding all of it”</td>
+</tr>
+<tr>
+<td>Physics 274–278 / 251–255</td>
+<td>Spatial structure is fixed to the world while a BVH follows its objects; hybrid combinations; BSP plane representation and signed dot-product side test; normalized direction and sphere crossing; nodes/leaves can contain sets; duplicate cross-plane object policy and candidate pairs; optional BVH per leaf; static-level collision leaves; preprocessing cost</td>
+<td>“Grow a spatial hierarchy around the world’s shape”</td>
+</tr>
+<tr>
+<td>Physics 278–279 / 255–256</td>
+<td>Quad-tree four-way ground/2D split; oct-tree eight-way 3D split; fixed world axes; coordinate-to-child selection with the source’s example; memory reason for choosing quad-tree in ground-focused 3D; apparent uninitialized child index in printed excerpt</td>
+<td>“Grow a spatial hierarchy around the world’s shape”</td>
+</tr>
+</tbody>
+</table>
+<p>The merged <code>pdf-additions.md</code> additionally contains the separately authored scaled sphere-gap visual and recall prompt. It illustrates the already derived parent/child bound example and makes no claim about new book content. Grids are named as a common spatial structure on PDF p. 274 but their mechanics are outside the assigned range; the teaching text labels that limit. Event dispatch is introduced only at the end of GEA p. 795, so the draft records notification and response responsibilities without inventing a queue design.</p>
+<p>Read receipts are in <code>pdf-assignment-a.json</code> and <code>pdf-reviews-a.json</code> for the technical pages, with combined four-book receipts in <code>pdf-assignment.json</code> and <code>pdf-reviews.json</code>. The C pages and scaled visual have separate source drafts. This ledger does not establish whole-book coverage, code correctness, runtime behavior, or comparative performance.</p>
+</section>
+</body>
+</html>

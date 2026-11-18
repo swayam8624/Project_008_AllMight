@@ -1,0 +1,39 @@
+\hypertarget{appendix-292c061cd47c}{}
+\section*{Transform hierarchies TRS and shear}
+\section{Transform hierarchies TRS and shear}\label{transform-hierarchies-trs-and-shear}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase7 · \textbf{Latest development:} Phase7
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A TRS transform stores translation, rotation and diagonal scale, with an explicit application order. General affine matrices are closed under composition; TRS without shear is not. Parent nonuniform scale and rotated children can create shear, so exact world composition may require an affine matrix. Dirty caches must invalidate all dependent results.
+
+\textbf{Reconstruction cue:} Nonorthogonal columns in a composed linear map rule out a pure rotation-times-diagonal-scale representation.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Coordinate frames and change of basis (02-Foundations-II, appendix-1bae9457dbc3)}
+\item
+  \hyperref[appendix-26d8da71f6c4]{Quaternion matrix and axis-angle conversion}
+\item
+  \hyperref[appendix-d1ea57347893]{Dual quaternions and rigid motion}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Keep\%20the\%20promises\%20visible\%20while\%20moving\%20between\%20representations}{Phase 7 teaching and laboratory}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Keep\%20the\%20promises\%20visible\%20while\%20moving\%20between\%20representations}{Continuous explanation} · \hyperref[appendix-fd090d982a15]{Coverage and source gap} · \hyperref[appendix-a103e7846d21]{Sources and verification}

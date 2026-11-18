@@ -8,7 +8,7 @@ GPU resources are not just arrays; formats, usage, alignment, staging, and devic
 
 **Recall question:** Which size, alignment, usage, and memory-type checks must pass before this image can be bound for rendering?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 47458–51847; source-span SHA256 673c57948ffcadffee27142340c44407edd6ec2b89ea6ab803651c34615a0ea7. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 48387–52776; source-span SHA256 673c57948ffcadffee27142340c44407edd6ec2b89ea6ab803651c34615a0ea7. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### BUFFERS, IMAGES, MEMORY & UPLOADS

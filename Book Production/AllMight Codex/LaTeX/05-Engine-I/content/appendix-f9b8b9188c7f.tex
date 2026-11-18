@@ -1,0 +1,37 @@
+\hypertarget{appendix-f9b8b9188c7f}{}
+\section*{Borrow invalidation and logical identity}
+\section{Borrow invalidation and logical identity}\label{borrow-invalidation-and-logical-identity}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A borrow relies on an external lifetime/mutation contract. Vector reallocation invalidates element paths; destruction ends a referent's lifetime. Move-assigning a final dense-pool element into a live earlier slot may preserve that C++ object while changing its logical entity association.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Pointer arithmetic and provenance (01-Foundations-I, appendix-6af5921bc853)} --- Storage relationships, bounds and lifetime distinguish valid access from a non-null value.
+\item
+  \hyperref[appendix-f1581457d322]{Object identity and generation handles} --- Live C++ objects and application entities can diverge when pool slots are repurposed.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Borrow contracts and pool epochs (01-Foundations-I, appendix-aa405b7c3903)}
+\item
+  \href{}{Deferred captures and borrowed views (01-Foundations-I, appendix-aea529eb5175)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Trace owner11 becoming owner33 without first-slot destruction. Pending: per-container invalidation guarantees and stable-storage designs. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#When\%20a\%20valid\%20borrow\%20stops\%20naming\%20the\%20intended\%20thing}{Teaching explanation and examples} · \href{}{Exact coverage (01-Foundations-I, appendix-fd090d982a15 § M008 - Parts 113-126)} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

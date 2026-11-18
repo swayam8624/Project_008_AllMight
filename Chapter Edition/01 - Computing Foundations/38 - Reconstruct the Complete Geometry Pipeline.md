@@ -8,7 +8,7 @@ The earlier concepts now form one end-to-end route from imported panel measureme
 
 **Recall question:** Which assumptions must hold at each stage for the reconstructed value to remain meaningful when it reaches the engine?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 95544–97115; source-span SHA256 3fb7946df56660e1cb430f56aa03a7dd70424ecc723f244234e76bd35e116cb1. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 95791–97432; source-span SHA256 6248bbc6f44946b2e0faa9869bf7ac6e9ebc30a7945ed4cc75ec8c9ecd4db96e. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Teach the complete journey, then break one assumption at a time
@@ -1582,6 +1582,76 @@ The trace prints a sequential sum of zero beside a compensated sum of 10000, a b
 
 <!-- end V10.25 -->
 
+
+<!-- Book-completion teaching addition 3ac34baaafad1663 -->
+
+## A mastery ladder for the whole foundations journey
+
+The chapters have already supplied local laboratories: byte codecs, ownership traces, an asset registry, explicit GPU work, numerical routines and camera reconstruction. This ladder makes their dependency chain visible. Each rung leaves behind a small artifact that the next rung must use. A learner may complete the CPU-only rungs without a graphics device; the last rung must label its evidence honestly.
+
+Use one running object: a saved checkerboard material assigned to a movable panel. Its file contains a version, dimensions, pixel format and texels. The panel has a stable entity handle, a world transform and a camera image. The renderer eventually samples the uploaded texture. The task is to reopen, move, display and revise that panel without confusing bytes, objects, identities, measurements or GPU completion.
+
+### Rung 1 — Decode a bounded asset
+
+**Problem.** The file begins with a fixed 16-byte header: four ASCII magic bytes `TXR1`, a 32-bit little-endian width, a 32-bit little-endian height and a 32-bit little-endian format code. Format code `1` means tightly packed RGBA8: four unsigned eight-bit channels per texel, in red, green, blue, alpha order. Other format codes are unsupported in this exercise. The payload therefore requires $4wh$ bytes. A corrupt file may request dimensions whose product overflows `size_t`, truncate the payload, or contain an unknown format.
+
+**Exercise.** Write a decoder that takes a read-only span of bytes and returns either an owned `Texture` or a named `DecodeError`. In C++23 that result can use `std::expected`; a C++20 solution can use an explicit tagged success/error result. Reject short headers, wrong magic, zero dimensions, unsupported formats, arithmetic overflow and a payload length other than exactly $4wh$. Explain why copying the first bytes into a C++ struct is not a portable decoder.
+
+**Worked solution.** Read each integer byte-by-byte after checking that its range is inside the input. Before computing the pixel count, require $w \le \lfloor\text{SIZE_MAX}/h\rfloor$; before multiplying by four, require $wh \le \lfloor\text{SIZE_MAX}/4\rfloor$. Call the validated payload length $N=4wh$. Require $N\leq\mathrm{SIZE\_MAX}-16$ before forming the total, then require `input.size() == 16 + N`. Separately enforce the application's declared maximum dimensions and allocation budget: arithmetic safety does not make a very large request affordable. Only after these tests construct an owned texture. The solution preserves the invariant that every later texel index is below a validated extent. Struct copying would additionally assume host endianness, padding, alignment and object representation match the file contract.
+
+**Check your work.** Hand-trace width $w=2$ and height $h=3$: payload length must be $24$ bytes. Flip one magic byte, remove the last payload byte, set width to zero, and choose dimensions that overflow multiplication. Each failure must be reported before allocation.
+
+### Rung 2 — Give the panel a stable identity and a safe borrow
+
+**Problem.** The editor stores panels densely in a `vector`. Deleting one panel and adding another can reuse its slot; vector growth can also move every object. A raw pointer or array index retained by an asynchronous upload callback may now refer to a different panel or to dead storage.
+
+**Exercise.** Implement a handle with `{slot, generation}` and a registry whose `get(handle)` returns a checked borrow. Removing an item invalidates its generation; reusing a slot must not make an old handle valid. State exactly how long a returned pointer may be kept.
+
+**Worked solution.** Separate logical identity from dense storage. Each logical slot stores a generation and either a dense-array index or an unoccupied marker; each dense value stores its owning slot. A handle resolves only when its slot is in range, occupied, and has the matching generation. When deleting by swapping the last dense value into a hole, update the moved value's logical slot to its new dense index. Removing an array element without this reverse update leaves a valid-looking handle pointing at the wrong object. Increment the generation on removal, with an explicit policy for generation exhaustion (retire that slot rather than wrap). The simplest safe borrow contract is “valid until the next registry mutation”; callers needing longer use a copied value or a separately owned stable object. The upload callback captures the handle and resolves it on the main thread when publishing, rather than capturing a pointer into a growable vector.
+
+**Hand trace.** A occupies logical slot 0, generation 0, dense index 0; B occupies slot 1, generation 0, dense index 1. Delete A, move B to dense index 0, update slot 1 to index 0, and increment slot 0 to generation 1. Creating C may reuse slot 0 with generation 1 and dense index 1. A's old `{0,0}` handle fails; B's `{1,0}` still resolves to B.
+
+**Failure test.** Create `h0`, remove its object, reuse the slot to create `h1`, then require `get(h0)` to fail and `get(h1)` to succeed. Force vector growth after obtaining a borrow and verify that the old borrow is never dereferenced.
+
+### Rung 3 — Publish asynchronous work without racing ownership
+
+**Problem.** A worker decodes a texture while the main thread edits or deletes its panel. A successful decode does not imply that the result still belongs to a live object, and a GPU upload submission does not imply that the GPU has finished reading the staging bytes.
+
+**Exercise.** Draw a state timeline from request through decode, upload, completion and publication. Identify the owner of each buffer and the event that permits its reuse.
+
+**Worked solution.** The request owns immutable input bytes. The worker owns a decode result and publishes a value message containing the panel handle plus a request/version number. The main thread rejects the message if either the handle is stale or a newer version was requested. It transfers the validated pixels to an upload operation. The staging allocation remains alive until the fence/timeline value for that submission is complete; only then may it be recycled. The destination image remains alive until all submitted work that references it has completed. The main thread publishes the new texture descriptor only at a frame boundary where the renderer's resource-version contract permits the change.
+
+The state progression is therefore `Requested -> Decoded -> Submitted(value) -> Complete(value) -> Published`; failures branch to a recorded error and release only resources whose completion conditions are satisfied. A cancellation flag alone cannot free storage already referenced by submitted GPU work.
+
+### Rung 4 — Reconstruct a measured panel position
+
+**Problem.** A camera reports a pixel location for the panel's known world point. We want to estimate a small two-dimensional translation $q=(t_x,t_y)$ from noisy image measurements while keeping coordinate conventions explicit.
+
+**Exercise.** For a pinhole camera looking along negative camera $z$, use a point $(X,Y,Z)$ with $Z<0$, focal lengths $(f_x,f_y)$ and principal point $(c_x,c_y)$. In this small exercise, both camera $y$ and image coordinate $v$ increase upward; an image buffer whose rows increase downward needs the corresponding sign change. Derive the pixel prediction and its Jacobian with respect to translation parallel to camera $x,y$. For observations $z_i$, set residual $r_i(q)=\pi_i(q)-z_i$ and solve a weighted least-squares step.
+
+**Worked derivation.** With translated camera-space point $(X+t_x,Y+t_y,Z)$,
+
+$$
+u=f_x\frac{X+t_x}{-Z}+c_x,\qquad v=f_y\frac{Y+t_y}{-Z}+c_y.
+$$
+
+Thus the local Jacobian is
+
+$$
+J_i=\begin{bmatrix}-f_x/Z&0\\0&-f_y/Z\end{bmatrix}.
+$$
+
+Stack the residuals and Jacobians, and let $W$ contain the declared inverse pixel-variance weights. A Gauss–Newton step solves $(J^TWJ)\,\delta=-J^TWr$; compute it through the whitened least-squares system $A=W^{1/2}J$, $b=-W^{1/2}r$, solving $A\delta\approx b$ with QR or SVD rather than explicitly inverting $J^TWJ$. If the columns are rank deficient, report which translation is unobservable instead of returning a confident number. Check the derivative by a central finite difference and check the final residual in pixels. This tiny model estimates translation only: it does not estimate depth, rotation, distortion, rolling shutter or a full scene.
+
+For a numerical solution, take $(X,Y,Z)=(0,0,-2)$, $f_x=f_y=100$, zero principal point, identity weights, and observed pixel $(100,-50)$. Starting at $q=(0,0)$ gives residual $(-100,50)$ and $J=50I$, hence $\delta=(2,-1)$. The updated prediction is $(100,-50)$ and the residual is zero in this deliberately linear model. A perturbation of $10^{-4}$ in either translation changes its pixel coordinate by $0.005$, confirming the derivative $50$ pixels per world unit.
+
+### Rung 5 — Integrate and make a bounded claim
+
+**Exercise.** Connect the decoder, registry, worker message, upload lifetime, camera prediction and renderer-facing publication. Write one end-to-end test that deletes the panel while decode is in flight, requests a newer material, forces registry growth, and delays GPU completion. State which parts can be verified on a CPU and which need a real device/API validation layer.
+
+**Solution outline.** Keep the decoded texture as an owned CPU value. Publish only after resolving the generation-aware handle and matching the latest request version. Retain staging data through the submitted completion value. Associate the visible texture with a resource generation so recorded draws cannot accidentally mix the old descriptor with the new image. The camera check uses a finite-difference Jacobian oracle and synthetic observations with known translation. The CPU test can establish decoding, overflow rejection, stale-message rejection, registry invalidation, residual calculation and the program's simulated completion-state logic. A mocked fence cannot prove Vulkan or Metal synchronization correctness; that requires validation on a named API/device configuration. A CPU timing cannot establish GPU performance.
+
+**Exit test.** Without looking at the preceding chapters, explain the invariant protected at each boundary: file-to-value, slot-to-identity, borrow-to-lifetime, submit-to-completion, world-to-camera, and residual-to-estimate. For every invariant, give one counterexample that breaks it, one test that detects the break, and the strongest evidence that test actually provides. If the answer collapses two boundaries into “the pointer is valid” or “the upload succeeded,” revisit that rung.
 
 <!-- CHAPTER-SOURCE-END -->
 

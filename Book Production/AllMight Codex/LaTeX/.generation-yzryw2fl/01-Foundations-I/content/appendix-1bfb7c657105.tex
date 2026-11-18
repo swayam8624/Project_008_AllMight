@@ -1,0 +1,37 @@
+\hypertarget{appendix-1bfb7c657105}{}
+\section*{Matrix SIMD tiling and cache reuse}
+\section{Matrix SIMD tiling and cache reuse}\label{appendix-1bfb7c657105-matrix-simd-tiling-and-cache-reuse}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase7 · \textbf{Latest development:} Phase7
+
+\subsection{Definition and mechanism}\label{appendix-1bfb7c657105-definition-and-mechanism}
+
+Loop ordering and tiling change memory traffic and reuse while preserving the exact scalar algebra. SIMD maps operations to multiple lanes; reduction order and FMA can change rounding. Shape, stride, aliasing and target hardware determine whether an optimization helps.
+
+\textbf{Reconstruction cue:} The i-k-j order reuses A(i,k) across a contiguous output row in row-major arrays.
+
+\subsection{Prerequisites}\label{appendix-1bfb7c657105-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-ffdc1d4e5350]{Matrix storage indexing and strides}
+\item
+  \hyperref[appendix-c2ac4a84c283]{Floating-point reassociation}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-1bfb7c657105-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations]{Phase 7 teaching and laboratory}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-1bfb7c657105-recall-and-next-depth}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\subsection{Source and navigation}\label{appendix-1bfb7c657105-source-and-navigation}
+
+\hyperref[01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations]{Continuous explanation} · \hyperref[appendix-fd090d982a15-phase-7---parts-601-700]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-7---source-analysis-and-verification]{Sources and verification}

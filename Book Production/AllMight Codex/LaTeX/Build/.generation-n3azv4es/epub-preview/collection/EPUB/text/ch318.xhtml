@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch318.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-885c1cb64ae9-microfacet-normal-distributions" class="level2">
+<h2>Microfacet normal distributions</h2>
+<p>A microfacet model treats a macroscopically rough surface as a statistical collection of tiny planar facets. The <strong>normal distribution function</strong> <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+  <mo stretchy="false">(</mo>
+  <mi>m</mi>
+  <mo stretchy="false">)</mo>
+</math> is not simply “the probability of a normal.” It measures the density of microfacet area oriented around direction <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+</math> relative to the macroscopic surface.</p>
+<p>For an isotropic GGX distribution with roughness parameter <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+  <mo>=</mo>
+  <mi>n</mi>
+  <mo>⋅</mo>
+  <mi>m</mi>
+</math>,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>D</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>G</mi>
+      <mi>G</mi>
+      <mi>X</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>m</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <msup>
+      <mi>α</mi>
+      <mn>2</mn>
+    </msup>
+    <mrow>
+      <mi>π</mi>
+      <msup>
+        <mrow data-mjx-texclass="INNER">
+          <mo data-mjx-texclass="OPEN">[</mo>
+          <msup>
+            <mi>c</mi>
+            <mn>2</mn>
+          </msup>
+          <mo stretchy="false">(</mo>
+          <msup>
+            <mi>α</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>−</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+          <mo>+</mo>
+          <mn>1</mn>
+          <mo data-mjx-texclass="CLOSE">]</mo>
+        </mrow>
+        <mn>2</mn>
+      </msup>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>c</mi>
+  <mo>&gt;</mo>
+  <mn>0.</mn>
+</math>
+<p>The important normalization is projected area:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mo data-mjx-texclass="OP">∫</mo>
+    <mrow data-mjx-texclass="ORD">
+      <msup>
+        <mi mathvariant="normal">Ω</mi>
+        <mo>+</mo>
+      </msup>
+    </mrow>
+  </msub>
+  <mi>D</mi>
+  <mo stretchy="false">(</mo>
+  <mi>m</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo>⋅</mo>
+  <mi>m</mi>
+  <mo stretchy="false">)</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <msub>
+    <mi>ω</mi>
+    <mi>m</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>That cosine factor is why <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+  <mo stretchy="false">(</mo>
+  <mi>m</mi>
+  <mo stretchy="false">)</mo>
+</math> itself must not be substituted directly for a solid-angle sampling PDF without the transformation required by the sampling method.</p>
+<section id="appendix-885c1cb64ae9-from-ndf-to-brdf" class="level3">
+<h3>From NDF to BRDF</h3>
+<p>For reflection, the half-vector is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <msub>
+        <mi>ω</mi>
+        <mi>i</mi>
+      </msub>
+      <mo>+</mo>
+      <msub>
+        <mi>ω</mi>
+        <mi>o</mi>
+      </msub>
+    </mrow>
+    <mrow>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+      <msub>
+        <mi>ω</mi>
+        <mi>i</mi>
+      </msub>
+      <mo>+</mo>
+      <msub>
+        <mi>ω</mi>
+        <mi>o</mi>
+      </msub>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>A common Cook–Torrance microfacet BRDF is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>o</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>D</mi>
+      <mo stretchy="false">(</mo>
+      <mi>h</mi>
+      <mo stretchy="false">)</mo>
+      <mi>F</mi>
+      <mo stretchy="false">(</mo>
+      <msub>
+        <mi>ω</mi>
+        <mi>i</mi>
+      </msub>
+      <mo>,</mo>
+      <mi>h</mi>
+      <mo stretchy="false">)</mo>
+      <mi>G</mi>
+      <mo stretchy="false">(</mo>
+      <msub>
+        <mi>ω</mi>
+        <mi>i</mi>
+      </msub>
+      <mo>,</mo>
+      <msub>
+        <mi>ω</mi>
+        <mi>o</mi>
+      </msub>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mn>4</mn>
+      <mo stretchy="false">(</mo>
+      <mi>n</mi>
+      <mo>⋅</mo>
+      <msub>
+        <mi>ω</mi>
+        <mi>i</mi>
+      </msub>
+      <mo stretchy="false">)</mo>
+      <mo stretchy="false">(</mo>
+      <mi>n</mi>
+      <mo>⋅</mo>
+      <msub>
+        <mi>ω</mi>
+        <mi>o</mi>
+      </msub>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Each factor has a different job. <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+</math> describes facet orientation statistics. <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math> describes Fresnel reflection. <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>G</mi>
+</math> accounts for masking and shadowing. The denominator converts the microfacet-area reasoning into a BRDF measured with respect to projected macroscopic area.</p>
+<p>Confusing these roles produces common bugs: multiplying Fresnel twice, using roughness directly where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mo>=</mo>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+</math> was intended, or treating the NDF as the sampled-direction PDF.</p>
+</section>
+<section id="appendix-885c1cb64ae9-numerical-behavior" class="level3">
+<h3>Numerical behavior</h3>
+<p>At very low roughness, the GGX lobe becomes extremely concentrated. A finite-precision implementation needs a policy for minimum roughness, denominator protection, and tangent-frame validity. Simply adding an arbitrary epsilon everywhere changes the model and can break energy behavior.</p>
+<p>At grazing angles, both the geometry term and the denominator become sensitive. The correct response is to derive the limiting behavior and use stable forms, not to clamp intermediate terms independently until the image looks plausible.</p>
+</section>
+<section id="appendix-885c1cb64ae9-executable-reference" class="level3">
+<h3>Executable reference</h3>
+<p>tools/labs/pbr_reference_lab.cpp numerically integrates the projected GGX normalization for several roughness values. It also checks Schlick Fresnel endpoint behavior and reciprocity/finiteness of an isotropic GGX + Smith BRDF.</p>
+<p>Those checks establish mathematical contracts. They do not prove white-furnace energy conservation for the complete material model, anisotropic GGX, transmission, texture-space normal handling, or renderer parity.</p>
+<p>Primary reading in the graphics volume: <a href="ch317.xhtml#id_03-visual-computing-i-ch005-ask-a-surface-where-incoming-energy-can-go" class="wikilink">Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Ask a surface where incoming energy can go</a>.</p>
+<p>Related: <a href="ch322.xhtml#appendix-ca8898faf1a6-multiple-importance-sampling" class="wikilink">Multiple importance sampling</a>, <a href="ch255.xhtml#appendix-a9f83ad40792-color-encoding-and-linear-light-operations" class="wikilink">Color encoding and linear-light operations (Mathematics for Visual Computing, Part 1, Reference notes: Color encoding and linear-light operations)</a>, <a href="ch527.xhtml#appendix-e31893dec985-surface-tangents-normals-and-bitangents" class="wikilink">Surface tangents normals and bitangents (Vision, XR, and Playable Worlds, Part 1, Reference notes: Surface tangents normals and bitangents)</a>.</p>
+</section>
+<section id="appendix-885c1cb64ae9-extended-executable-reference" class="level3">
+<h3>Extended executable reference</h3>
+<p><code>tools/labs/pbr_extended_reference_lab.cpp</code> adds the cases that the first isotropic oracle explicitly left open. It numerically checks projected-area normalization for anisotropic GGX with independent tangent-axis roughness, evaluates exact dielectric Fresnel at normal and grazing limits, reconstructs Snell refraction including total internal reflection, and integrates a Lambertian material in a uniform white furnace.</p>
+<p>The furnace check is intentionally modest: Lambertian reflection has an analytic target equal to albedo, making it an independent conservation oracle. It does <strong>not</strong> claim that a single-scattering rough microfacet reflection model automatically passes a furnace test at every roughness; multiple-scattering compensation and rough transmission need their own model-specific derivations and tests.</p>
+</section>
+</section>
+</body>
+</html>

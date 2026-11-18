@@ -1,0 +1,30 @@
+{
+  "schema": "allmight-production-tooling-runtime-v1",
+  "production_root": ".",
+  "canonical_asset_jobs": "jobs.json",
+  "asset_renderer": {
+    "path": "tools/render_assets.cjs",
+    "sha256": "4ebdbe20b8f6fdedd5024c345e43e67766b8bed5d13bdbd528a21000598edbbd",
+    "renderer_version": "mathjax-3.2.2-tex-svg-tex-mml-fontCache-none-pt-dimensions-error-detect-v4+mermaid-11-intrinsic-dimensions-v2",
+    "module": "Playwright",
+    "resolution": "standard Node module resolution or PLAYWRIGHT_MODULE environment variable",
+    "browser": "Chrome; default /Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "module_resolution": "Playwright package resolved by Node; optional PLAYWRIGHT_MODULE module specifier"
+  },
+  "postrender_composite": {
+    "manifest": "composite-jobs.json",
+    "sha256": "b5e2ec85cf83317c07528bf1c8cb9a713a38e15eae96152e63f648eb5c0cd60f",
+    "runner": "tools/run_composite_jobs.py",
+    "runner_sha256": "824cc4a455650e36d69f8ed59e135f707902fd6a816a9f494ea55e9da556e62c",
+    "compositor": "tools/compose_fcbea_panels.py",
+    "compositor_sha256": "541e47e92176fb9929813f2decc1271a14ec468bf0d25b65d69c2726eb9028e0",
+    "version": "allmight-fcbea-composite-v2"
+  },
+  "durable_asset_maps": {
+    "print_assets": "Tools/Production/merged-print-asset-manifest.json",
+    "font_metadata": "Tools/Production/svg-base-font-metadata.json"
+  },
+  "durable_verifier": "Tools/Production/verify_postrender_assets.py",
+  "python_runtime": "Python 3 standard library",
+  "canonical_asset_jobs_sha256": "3eafffd3d332bd52cf33822c94afda99c038834bdcb1c9e5d6c41a63032e8296"
+}

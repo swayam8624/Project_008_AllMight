@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch043.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-4c8e0238e7ee-deterministic-reduction-tree" class="level2">
+<h2>Deterministic reduction tree</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C005 · <strong>Latest development:</strong> C005</p>
+<section id="appendix-4c8e0238e7ee-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A reduction fixes input order, partition and merge topology so scheduling cannot change the arithmetic grouping. Midpoint recursive splitting is one such tree. Different SIMD widths or partitions can otherwise change it.</p>
+</section>
+<section id="appendix-4c8e0238e7ee-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch109.xhtml#appendix-df318da57389-compensated-and-pairwise-summation" class="wikilink">Compensated and pairwise summation</a> — A fixed pairwise topology specifies the additions a deterministic reduction performs.</li>
+</ul>
+</section>
+<section id="appendix-4c8e0238e7ee-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch055.xhtml#appendix-5f1a2c3f97ff-numerical-reproducibility" class="wikilink">Numerical reproducibility</a> — uses this mechanism to establish its numerical contract.</li>
+</ul>
+</section>
+<section id="appendix-4c8e0238e7ee-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the definition’s example and name the assumptions that make it valid.</p>
+<p><strong>Pending:</strong> Cross-platform identity also requires compatible operation semantics, precision, libraries and environment.</p>
+</section>
+<section id="appendix-4c8e0238e7ee-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-when-arithmetic-meets-uncertainty" class="wikilink">M005 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m005---parts-77-88" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-4c8e0238e7ee-reconstruction-depth" class="level3">
+<h3>Reconstruction depth</h3>
+<p>Floating-point addition is not associative, so a parallel reduction can change low bits when thread count, work partition or scheduling changes. A deterministic reduction tree fixes grouping order independently of which worker finishes first.</p>
+<p>For eight values, a balanced tree can always compute <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>3</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>4</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>5</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>6</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>7</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+</math>. The balanced tree can also reduce error growth compared with some highly unbalanced orders, although it is not equivalent to exact or compensated summation.</p>
+<p>Determinism costs constraints: the implementation may need stable chunk boundaries, temporary partials and an ordered merge. On GPUs, subgroup width and dispatch shape can otherwise change the effective tree.</p>
+<p>Tests should permute scheduling while preserving logical indices and require identical result bits for the deterministic path. A separate accuracy test should compare against a higher-precision or compensated reference; repeatability and numerical accuracy are related but distinct properties.</p>
+</section>
+</section>
+</body>
+</html>

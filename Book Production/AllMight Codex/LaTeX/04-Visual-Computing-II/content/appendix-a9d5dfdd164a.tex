@@ -1,0 +1,61 @@
+\hypertarget{appendix-a9d5dfdd164a}{}
+\section*{Attention and visual transformers}
+\section{Attention and visual transformers}\label{attention-and-visual-transformers}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Self-attention lets each token build a context-dependent mixture of other tokens. A learned linear map produces queries \(Q\), keys \(K\), and values \(V\); scaled dot products compare each query with all keys, softmax converts scores to weights, and those weights combine values. Multiple heads learn different relationships, while positional information tells the model where patches or words came from. Vision transformers split an image into patches, embed them as tokens, and process the sequence with attention and feed-forward blocks. Unlike a small convolution, global attention can relate distant regions in one layer, but its pairwise score matrix grows roughly as the square of token count. Patch size trades spatial detail for compute; positional encodings and training data affect transfer. Attention weights are a mechanism for mixing information, not an explanation of causal importance. A transformer still needs a task objective, data, optimization, and validation, and can fail under distribution shift or poor spatial grounding.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Convolution and filter footprints (03-Visual-Computing-I, appendix-d5b3c692d9f0)}
+\item
+  \href{}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)}
+\item
+  \hyperref[appendix-65788587ef78]{Research validity and ablation}
+\item
+  \href{}{Automatic differentiation and backpropagation (03-Visual-Computing-I, appendix-40df0855b4a7)}
+\item
+  \hyperref[appendix-47c51ea026fb]{Learned image features and CNNs}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Sequence\%20models\%20and\%20attention}{Sequence models and attention}
+\item
+  \hyperref[appendix-772f1fd96148]{Contrastive vision and image-language alignment}
+\item
+  \hyperref[appendix-b0c42da325f1]{Perception feedback and robot learning}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Sequence\%20models\%20and\%20attention}{Sequence models and attention}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  Compute the role of Q, K, and V in one self-attention layer.
+\item
+  What makes global attention expensive as the image patch count grows?
+\end{itemize}
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+Teaching narrative: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Sequence\%20models\%20and\%20attention}{open the main explanation}. Browse the \href{}{University graphics and vision index (02-Foundations-II, appendix-a6d556a4ef50 § University graphics vision and photography - independent series)}. Additional chapter connections: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Image\%20sampling,\%20filtering,\%20and\%20efficient\%20reconstruction}{Image sampling, filtering, and efficient reconstruction}; \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Optical\%20flow\%20and\%20motion\%20from\%20images}{Optical flow and motion from images}; \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#A\%20complete\%20renderer\%20makes\%20the\%20forward\%20model\%20executable}{A complete renderer makes the forward model executable}.
+
+Caption/source records: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#SC-08\%20-\%20Stanford\%20CS231N\%20Spring\%202025\%20Lecture\%208:\%20Attention\%20and\%20Transformers}{SC-08}, \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#SC-16\%20-\%20Stanford\%20CS231N\%20Deep\%20Learning\%20for\%20Computer\%20Vision\%20Spring\%202025\%20Lecture\%2016:\%20Vision\%20and\%20Language}{SC-16}.

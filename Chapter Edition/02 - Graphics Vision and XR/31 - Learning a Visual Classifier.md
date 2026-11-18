@@ -8,7 +8,7 @@ A visual classifier begins with data representation, labels and a decision rule.
 
 **Recall question:** Which parts of a classifier’s behavior come from its representation and training data?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 75311–76246; source-span SHA256 56d79a26d4080a400674898b49e3154b5c9662b90f619a5ed1b44139b34a8055. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 76313–77248; source-span SHA256 56d79a26d4080a400674898b49e3154b5c9662b90f619a5ed1b44139b34a8055. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Learning a visual classifier from examples

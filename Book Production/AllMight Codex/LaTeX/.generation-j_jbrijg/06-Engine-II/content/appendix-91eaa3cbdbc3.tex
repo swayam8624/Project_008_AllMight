@@ -1,0 +1,52 @@
+\hypertarget{appendix-91eaa3cbdbc3}{}
+\section*{Production manifests and transactional publication}
+\chapter{Production manifests and transactional publication}\label{appendix-91eaa3cbdbc3-production-manifests-and-transactional-publication}
+
+A production manifest is a durable description of what should be built and published. It prevents a pipeline from depending on hidden editor state or on ``whatever files happen to be in this directory.''
+
+A useful manifest separates identity from location. A logical asset ID names the thing the project means. Source and output paths say where a particular revision is read and written. A cryptographic digest can identify exact content bytes. A schema version says how to interpret all fields.
+
+\section{Path safety}\label{appendix-91eaa3cbdbc3-path-safety}
+
+Normalize paths before planning any write. A production-safe policy normally rejects parent traversal, unexpected absolute paths, ambiguous separators, and paths that escape the declared project root after symlink resolution.
+
+Lexical normalization alone cannot prove symlink safety. The filesystem must be queried at the point where real paths are resolved, and the resolved target must still lie inside the approved root.
+
+\section{Deterministic plans}\label{appendix-91eaa3cbdbc3-deterministic-plans}
+
+The same manifest and tool versions should produce the same ordered build plan. Determinism makes logs diffable, cache keys stable and failures reproducible.
+
+Planning should be side-effect free. A dry run should reveal every intended output, overwrite, deletion and dependency before publication begins.
+
+\section{Staging and commit}\label{appendix-91eaa3cbdbc3-staging-and-commit}
+
+A safe publication sequence is:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  validate the whole request;
+\item
+  write derived outputs to staging names or directories;
+\item
+  validate staged bytes and metadata;
+\item
+  fsync or equivalent when durability is part of the promise;
+\item
+  publish with the platform's proven atomic replacement mechanism;
+\item
+  update manifest/index state;
+\item
+  retain enough evidence to diagnose rollback or partial failure.
+\end{enumerate}
+
+Atomicity and durability are separate. A rename can make a new name appear atomically yet still not guarantee survival across power loss unless the required data and directory metadata were persisted.
+
+\section{Idempotence}\label{appendix-91eaa3cbdbc3-idempotence}
+
+Repeating the same publication should either be a no-op or produce the same visible state. A pipeline that appends duplicate records, increments versions accidentally or rewrites unrelated timestamps on every run is harder to cache and reason about.
+
+tools/labs/production\_pipeline\_contract\_lab.cpp models deterministic plan generation and idempotent publication in memory. It intentionally labels real filesystem durability as unproved.
+
+Related: \href{../01-Foundations-I/main.pdf\#nameddest=appendix-e89a8f290ef5}{Atomic publication and durability (01-Foundations-I, appendix-e89a8f290ef5)}, \hyperref[appendix-03ade9e1875f]{DCC adapters and engine publication}.

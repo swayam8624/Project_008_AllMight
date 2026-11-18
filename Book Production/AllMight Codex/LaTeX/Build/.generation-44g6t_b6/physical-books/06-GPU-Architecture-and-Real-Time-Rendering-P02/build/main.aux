@@ -1,0 +1,734 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\providecommand \oddpage@label [2]{}
+\@writefile{toc}{\contentsline {chapter}{\numberline {11}GPU performance models and principled redesign}{1}{chapter.11}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{05-engine-i-ch020-gpu-performance-models-and-principled-redesign}{{11}{1}{GPU performance models and principled redesign}{chapter.11}{}}
+\newlabel{stagechapter:05-engine-i-ch020}{{11}{1}{GPU performance models and principled redesign}{section*.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.0.1}PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{1}{subsection.11.0.1}\protected@file@percent }
+\newlabel{05-engine-i-ch020-performance-modeling-principled-gpu-redesign}{{11.0.1}{1}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{subsection.11.0.1}{}}
+\newlabel{p10-cse}{{11.0.1}{10}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.5}{}}
+\newlabel{p10-unroll}{{11.0.1}{10}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.6}{}}
+\newlabel{p10-mixed}{{11.0.1}{14}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.7}{}}
+\newlabel{p10-gemm-old}{{11.0.1}{15}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.8}{}}
+\newlabel{p10-gemm-matrix}{{11.0.1}{15}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.9}{}}
+\newlabel{p10-matmul-interface}{{11.0.1}{16}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.10}{}}
+\newlabel{p10-race-symptoms}{{11.0.1}{16}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.11}{}}
+\newlabel{p10-race}{{11.0.1}{16}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.12}{}}
+\newlabel{p10-correct-reduction}{{11.0.1}{17}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.13}{}}
+\newlabel{p10-barrier-everywhere}{{11.0.1}{17}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.14}{}}
+\newlabel{p10-serial-cull}{{11.0.1}{19}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.15}{}}
+\newlabel{p10-atomic-cull}{{11.0.1}{20}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.16}{}}
+\newlabel{p10-scan-cull}{{11.0.1}{21}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.17}{}}
+\newlabel{p10-bad-prefix}{{11.0.1}{22}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.18}{}}
+\newlabel{p10-fusion-before}{{11.0.1}{24}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.19}{}}
+\newlabel{p10-fusion-after}{{11.0.1}{24}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.20}{}}
+\newlabel{p10-mega}{{11.0.1}{25}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.21}{}}
+\gdef \LT@i {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\newlabel{p10-cpu-push}{{11.0.1}{29}{PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{section*.22}{}}
+\gdef \LT@ii {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\@writefile{toc}{\contentsline {section}{\numberline {11.1}Open the device and describe its storage}{35}{section.11.1}\protected@file@percent }
+\newlabel{05-engine-i-ch020-open-the-device-and-describe-its-storage}{{11.1}{35}{Open the device and describe its storage}{section.11.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1.1}+ M135}{36}{subsection.11.1.1}\protected@file@percent }
+\newlabel{05-engine-i-ch020-m135}{{11.1.1}{36}{+ M135}{subsection.11.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1.2}VULKAN PHILOSOPHY, INSTANCE, DEVICES, QUEUES, SURFACE \& SWAPCHAIN}{36}{subsection.11.1.2}\protected@file@percent }
+\newlabel{05-engine-i-ch020-vulkan-philosophy-instance-devices-queues-surface-swapchain}{{11.1.2}{36}{VULKAN PHILOSOPHY, INSTANCE, DEVICES, QUEUES, SURFACE \& SWAPCHAIN}{subsection.11.1.2}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {12}Buffers, images, memory, and uploads}{56}{chapter.12}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{05-engine-i-ch021-buffers-images-memory-and-uploads}{{12}{56}{Buffers, images, memory, and uploads}{chapter.12}{}}
+\newlabel{stagechapter:05-engine-i-ch021}{{12}{56}{Buffers, images, memory, and uploads}{section*.23}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.1}BUFFERS, IMAGES, MEMORY \& UPLOADS}{56}{subsection.12.0.1}\protected@file@percent }
+\newlabel{05-engine-i-ch021-buffers-images-memory-uploads}{{12.0.1}{56}{BUFFERS, IMAGES, MEMORY \& UPLOADS}{subsection.12.0.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.0.2}DESCRIPTORS, PIPELINE LAYOUTS, SHADERS \& RENDERING STATE}{72}{subsection.12.0.2}\protected@file@percent }
+\newlabel{05-engine-i-ch021-descriptors-pipeline-layouts-shaders-rendering-state}{{12.0.2}{72}{DESCRIPTORS, PIPELINE LAYOUTS, SHADERS \& RENDERING STATE}{subsection.12.0.2}{}}
+\gdef \LT@iii {\LT@entry 
+    {1}{41.918pt}\LT@entry 
+    {3}{139.13751pt}}
+\newlabel{p11-dyn-ubo}{{12.0.2}{75}{DESCRIPTORS, PIPELINE LAYOUTS, SHADERS \& RENDERING STATE}{section*.24}{}}
+\newlabel{p11-kairo-chain}{{12.0.2}{92}{DESCRIPTORS, PIPELINE LAYOUTS, SHADERS \& RENDERING STATE}{section*.25}{}}
+\newlabel{p11-pso-graph}{{12.0.2}{101}{DESCRIPTORS, PIPELINE LAYOUTS, SHADERS \& RENDERING STATE}{section*.26}{}}
+\gdef \LT@iv {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\@writefile{toc}{\contentsline {section}{\numberline {12.1}Record, synchronize and retire explicit work}{106}{section.12.1}\protected@file@percent }
+\newlabel{05-engine-i-ch021-record-synchronize-and-retire-explicit-work}{{12.1}{106}{Record, synchronize and retire explicit work}{section.12.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.1.1}+ M138}{106}{subsection.12.1.1}\protected@file@percent }
+\newlabel{05-engine-i-ch021-m138}{{12.1.1}{106}{+ M138}{subsection.12.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.1.2}COMMAND POOLS, COMMAND BUFFERS, SUBMISSION \& SEMAPHORES}{107}{subsection.12.1.2}\protected@file@percent }
+\newlabel{05-engine-i-ch021-command-pools-command-buffers-submission-semaphores}{{12.1.2}{107}{COMMAND POOLS, COMMAND BUFFERS, SUBMISSION \& SEMAPHORES}{subsection.12.1.2}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {13}Vulkan synchronization and multi-frame lifetimes}{124}{chapter.13}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{05-engine-i-ch022-vulkan-synchronization-and-multi-frame-lifetimes}{{13}{124}{Vulkan synchronization and multi-frame lifetimes}{chapter.13}{}}
+\newlabel{stagechapter:05-engine-i-ch022}{{13}{124}{Vulkan synchronization and multi-frame lifetimes}{section*.27}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {13.0.1}VULKAN MEMORY MODEL, BARRIERS \& MULTI-FRAME LIFETIMES}{124}{subsection.13.0.1}\protected@file@percent }
+\newlabel{05-engine-i-ch022-vulkan-memory-model-barriers-multi-frame-lifetimes}{{13.0.1}{124}{VULKAN MEMORY MODEL, BARRIERS \& MULTI-FRAME LIFETIMES}{subsection.13.0.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {13.0.2}TIMESTAMPS, VALIDATION, DEVICE LOSS, MOLTENVK \& EXPLICIT RAII}{142}{subsection.13.0.2}\protected@file@percent }
+\newlabel{05-engine-i-ch022-timestamps-validation-device-loss-moltenvk-explicit-raii}{{13.0.2}{142}{TIMESTAMPS, VALIDATION, DEVICE LOSS, MOLTENVK \& EXPLICIT RAII}{subsection.13.0.2}{}}
+\gdef \LT@v {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\gdef \LT@vi {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\gdef \LT@vii {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {13.0.3}METAL 4 IS A NEW SUBMISSION MODEL, NOT A RENAME OF OLD METAL}{175}{subsection.13.0.3}\protected@file@percent }
+\newlabel{05-engine-i-ch022-metal-4-is-a-new-submission-model-not-a-rename-of-old-metal}{{13.0.3}{175}{METAL 4 IS A NEW SUBMISSION MODEL, NOT A RENAME OF OLD METAL}{subsection.13.0.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Command allocators make command-memory lifetime explicit}{175}{subsubsection*.28}\protected@file@percent }
+\newlabel{05-engine-i-ch022-command-allocators-make-command-memory-lifetime-explicit}{{13.0.3}{175}{Command allocators make command-memory lifetime explicit}{subsubsection*.28}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Reusable command buffers separate object identity from recorded-work identity}{176}{subsubsection*.29}\protected@file@percent }
+\newlabel{05-engine-i-ch022-reusable-command-buffers-separate-object-identity-from-recorded-work-identity}{{13.0.3}{176}{Reusable command buffers separate object identity from recorded-work identity}{subsubsection*.29}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Queue commit becomes an explicit batching point}{176}{subsubsection*.30}\protected@file@percent }
+\newlabel{05-engine-i-ch022-queue-commit-becomes-an-explicit-batching-point}{{13.0.3}{176}{Queue commit becomes an explicit batching point}{subsubsection*.30}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Argument tables push binding toward shader-visible tables}{176}{subsubsection*.31}\protected@file@percent }
+\newlabel{05-engine-i-ch022-argument-tables-push-binding-toward-shader-visible-tables}{{13.0.3}{176}{Argument tables push binding toward shader-visible tables}{subsubsection*.31}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Residency sets expose the working set}{177}{subsubsection*.32}\protected@file@percent }
+\newlabel{05-engine-i-ch022-residency-sets-expose-the-working-set}{{13.0.3}{177}{Residency sets expose the working set}{subsubsection*.32}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Next-generation barriers should come from graph dependencies}{177}{subsubsection*.33}\protected@file@percent }
+\newlabel{05-engine-i-ch022-next-generation-barriers-should-come-from-graph-dependencies}{{13.0.3}{177}{Next-generation barriers should come from graph dependencies}{subsubsection*.33}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Metal Shading Language 4 expands the GPU programming model}{177}{subsubsection*.34}\protected@file@percent }
+\newlabel{05-engine-i-ch022-metal-shading-language-4-expands-the-gpu-programming-model}{{13.0.3}{177}{Metal Shading Language 4 expands the GPU programming model}{subsubsection*.34}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Uniformity is an execution property}{178}{subsubsection*.35}\protected@file@percent }
+\newlabel{05-engine-i-ch022-uniformity-is-an-execution-property}{{13.0.3}{178}{Uniformity is an execution property}{subsubsection*.35}{}}
+\@writefile{toc}{\contentsline {subsubsection}{MSL atomics resemble C++ vocabulary but have Metal rules}{178}{subsubsection*.36}\protected@file@percent }
+\newlabel{05-engine-i-ch022-msl-atomics-resemble-c-vocabulary-but-have-metal-rules}{{13.0.3}{178}{MSL atomics resemble C++ vocabulary but have Metal rules}{subsubsection*.36}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Capabilities should drive backend paths}{178}{subsubsection*.37}\protected@file@percent }
+\newlabel{05-engine-i-ch022-capabilities-should-drive-backend-paths}{{13.0.3}{178}{Capabilities should drive backend paths}{subsubsection*.37}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {13.0.4}Metal 4 deepening: argument tables, residency, barriers, and multi-threaded encoding are one resource protocol}{179}{subsection.13.0.4}\protected@file@percent }
+\newlabel{05-engine-i-ch022-metal-4-deepening-argument-tables-residency-barriers-and-multi-threaded-encoding-are-one-resource-protocol}{{13.0.4}{179}{Metal 4 deepening: argument tables, residency, barriers, and multi-threaded encoding are one resource protocol}{subsection.13.0.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Argument tables are a root-binding layer, not a replacement for all resource indirection}{179}{subsubsection*.38}\protected@file@percent }
+\newlabel{05-engine-i-ch022-argument-tables-are-a-root-binding-layer-not-a-replacement-for-all-resource-indirection}{{13.0.4}{179}{Argument tables are a root-binding layer, not a replacement for all resource indirection}{subsubsection*.38}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Bindless resource identity still needs generation safety}{180}{subsubsection*.39}\protected@file@percent }
+\newlabel{05-engine-i-ch022-bindless-resource-identity-still-needs-generation-safety}{{13.0.4}{180}{Bindless resource identity still needs generation safety}{subsubsection*.39}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Residency is the physical counterpart to logical binding}{180}{subsubsection*.40}\protected@file@percent }
+\newlabel{05-engine-i-ch022-residency-is-the-physical-counterpart-to-logical-binding}{{13.0.4}{180}{Residency is the physical counterpart to logical binding}{subsubsection*.40}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Residency sets and streaming need a publication point}{181}{subsubsection*.41}\protected@file@percent }
+\newlabel{05-engine-i-ch022-residency-sets-and-streaming-need-a-publication-point}{{13.0.4}{181}{Residency sets and streaming need a publication point}{subsubsection*.41}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Queue barriers should be derived from resource hazards}{182}{subsubsection*.42}\protected@file@percent }
+\newlabel{05-engine-i-ch022-queue-barriers-should-be-derived-from-resource-hazards}{{13.0.4}{182}{Queue barriers should be derived from resource hazards}{subsubsection*.42}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A barrier is not a lifetime guarantee}{182}{subsubsection*.43}\protected@file@percent }
+\newlabel{05-engine-i-ch022-a-barrier-is-not-a-lifetime-guarantee}{{13.0.4}{182}{A barrier is not a lifetime guarantee}{subsubsection*.43}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Command allocators create an allocator epoch}{183}{subsubsection*.44}\protected@file@percent }
+\newlabel{05-engine-i-ch022-command-allocators-create-an-allocator-epoch}{{13.0.4}{183}{Command allocators create an allocator epoch}{subsubsection*.44}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Reusable command-buffer objects do not imply reusable encoded commands}{183}{subsubsection*.45}\protected@file@percent }
+\newlabel{05-engine-i-ch022-reusable-command-buffer-objects-do-not-imply-reusable-encoded-commands}{{13.0.4}{183}{Reusable command-buffer objects do not imply reusable encoded commands}{subsubsection*.45}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Suspended/resumed render passes change how parallel encoding is partitioned}{183}{subsubsection*.46}\protected@file@percent }
+\newlabel{05-engine-i-ch022-suspendedresumed-render-passes-change-how-parallel-encoding-is-partitioned}{{13.0.4}{183}{Suspended/resumed render passes change how parallel encoding is partitioned}{subsubsection*.46}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Attachment maps separate logical shader outputs from physical attachment slots}{184}{subsubsection*.47}\protected@file@percent }
+\newlabel{05-engine-i-ch022-attachment-maps-separate-logical-shader-outputs-from-physical-attachment-slots}{{13.0.4}{184}{Attachment maps separate logical shader outputs from physical attachment slots}{subsubsection*.47}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Texture view pools and placement sparse resources belong to the memory system}{184}{subsubsection*.48}\protected@file@percent }
+\newlabel{05-engine-i-ch022-texture-view-pools-and-placement-sparse-resources-belong-to-the-memory-system}{{13.0.4}{184}{Texture view pools and placement sparse resources belong to the memory system}{subsubsection*.48}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Metal 4 machine-learning encoding strengthens the need for one graph of heterogeneous GPU work}{184}{subsubsection*.49}\protected@file@percent }
+\newlabel{05-engine-i-ch022-metal-4-machine-learning-encoding-strengthens-the-need-for-one-graph-of-heterogeneous-gpu-work}{{13.0.4}{184}{Metal 4 machine-learning encoding strengthens the need for one graph of heterogeneous GPU work}{subsubsection*.49}{}}
+\@writefile{toc}{\contentsline {subsubsection}{The cross-backend lesson from Metal 4 and modern Vulkan is convergence around explicit resource databases}{185}{subsubsection*.50}\protected@file@percent }
+\newlabel{05-engine-i-ch022-the-cross-backend-lesson-from-metal-4-and-modern-vulkan-is-convergence-around-explicit-resource-databases}{{13.0.4}{185}{The cross-backend lesson from Metal 4 and modern Vulkan is convergence around explicit resource databases}{subsubsection*.50}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {14}Execute and measure a Metal frame}{186}{chapter.14}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{05-engine-i-ch023-execute-and-measure-a-metal-frame}{{14}{186}{Execute and measure a Metal frame}{chapter.14}{}}
+\newlabel{stagechapter:05-engine-i-ch023}{{14}{186}{Execute and measure a Metal frame}{section*.51}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {14.1}Execute and measure a Metal frame}{186}{section.14.1}\protected@file@percent }
+\newlabel{05-engine-i-ch023-execute-and-measure-a-metal-frame-1}{{14.1}{186}{Execute and measure a Metal frame}{section.14.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {14.1.1}+ M141}{186}{subsection.14.1.1}\protected@file@percent }
+\newlabel{05-engine-i-ch023-m141}{{14.1.1}{186}{+ M141}{subsection.14.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {14.1.2}CURRENT VULKAN PRACTICE: LEARN THE EXECUTION CONTRACT, NOT AN OLD OBJECT CHECKLIST}{187}{subsection.14.1.2}\protected@file@percent }
+\newlabel{05-engine-i-ch023-current-vulkan-practice-learn-the-execution-contract-not-an-old-object-checklist}{{14.1.2}{187}{CURRENT VULKAN PRACTICE: LEARN THE EXECUTION CONTRACT, NOT AN OLD OBJECT CHECKLIST}{subsection.14.1.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Dynamic rendering removes an object layer, not attachment semantics}{187}{subsubsection*.52}\protected@file@percent }
+\newlabel{05-engine-i-ch023-dynamic-rendering-removes-an-object-layer-not-attachment-semantics}{{14.1.2}{187}{Dynamic rendering removes an object layer, not attachment semantics}{subsubsection*.52}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Synchronization2 is easiest to understand as producer-to-consumer intent}{187}{subsubsection*.53}\protected@file@percent }
+\newlabel{05-engine-i-ch023-synchronization2-is-easiest-to-understand-as-producer-to-consumer-intent}{{14.1.2}{187}{Synchronization2 is easiest to understand as producer-to-consumer intent}{subsubsection*.53}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Timeline semaphores turn completion into epochs}{188}{subsubsection*.54}\protected@file@percent }
+\newlabel{05-engine-i-ch023-timeline-semaphores-turn-completion-into-epochs}{{14.1.2}{188}{Timeline semaphores turn completion into epochs}{subsubsection*.54}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Descriptor indexing is not literal absence of bindings}{188}{subsubsection*.55}\protected@file@percent }
+\newlabel{05-engine-i-ch023-descriptor-indexing-is-not-literal-absence-of-bindings}{{14.1.2}{188}{Descriptor indexing is not literal absence of bindings}{subsubsection*.55}{}}
+\@writefile{toc}{\contentsline {subsubsection}{GPU-driven rendering reorganizes dataflow}{189}{subsubsection*.56}\protected@file@percent }
+\newlabel{05-engine-i-ch023-gpu-driven-rendering-reorganizes-dataflow}{{14.1.2}{189}{GPU-driven rendering reorganizes dataflow}{subsubsection*.56}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Use tutorial sequence, engine evolution and current docs together}{190}{subsubsection*.57}\protected@file@percent }
+\newlabel{05-engine-i-ch023-use-tutorial-sequence-engine-evolution-and-current-docs-together}{{14.1.2}{190}{Use tutorial sequence, engine evolution and current docs together}{subsubsection*.57}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {14.1.3}CURRENT VULKAN DEEPENING: DESCRIPTORS ARE BECOMING MEMORY, PIPELINES ARE BECOMING MORE DYNAMIC, BUT THE CONTRACT IS STILL EXPLICIT}{190}{subsection.14.1.3}\protected@file@percent }
+\newlabel{05-engine-i-ch023-current-vulkan-deepening-descriptors-are-becoming-memory-pipelines-are-becoming-more-dynamic-but-the-contract-is-still-explicit}{{14.1.3}{190}{CURRENT VULKAN DEEPENING: DESCRIPTORS ARE BECOMING MEMORY, PIPELINES ARE BECOMING MORE DYNAMIC, BUT THE CONTRACT IS STILL EXPLICIT}{subsection.14.1.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Descriptor buffers expose the fact that descriptors are encoded data}{190}{subsubsection*.58}\protected@file@percent }
+\newlabel{05-engine-i-ch023-descriptor-buffers-expose-the-fact-that-descriptors-are-encoded-data}{{14.1.3}{190}{Descriptor buffers expose the fact that descriptors are encoded data}{subsubsection*.58}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Descriptor-buffer writes are ordinary memory hazards}{191}{subsubsection*.59}\protected@file@percent }
+\newlabel{05-engine-i-ch023-descriptor-buffer-writes-are-ordinary-memory-hazards}{{14.1.3}{191}{Descriptor-buffer writes are ordinary memory hazards}{subsubsection*.59}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Host descriptor writes and device descriptor writes have different visibility concerns}{192}{subsubsection*.60}\protected@file@percent }
+\newlabel{05-engine-i-ch023-host-descriptor-writes-and-device-descriptor-writes-have-different-visibility-concerns}{{14.1.3}{192}{Host descriptor writes and device descriptor writes have different visibility concerns}{subsubsection*.60}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Descriptor buffers make allocator architecture important again}{192}{subsubsection*.61}\protected@file@percent }
+\newlabel{05-engine-i-ch023-descriptor-buffers-make-allocator-architecture-important-again}{{14.1.3}{192}{Descriptor buffers make allocator architecture important again}{subsubsection*.61}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Shader objects decouple shader-stage selection from monolithic pipeline objects}{192}{subsubsection*.62}\protected@file@percent }
+\newlabel{05-engine-i-ch023-shader-objects-decouple-shader-stage-selection-from-monolithic-pipeline-objects}{{14.1.3}{192}{Shader objects decouple shader-stage selection from monolithic pipeline objects}{subsubsection*.62}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Dynamic rendering plus shader objects pushes the backend toward semantic state tracking}{193}{subsubsection*.63}\protected@file@percent }
+\newlabel{05-engine-i-ch023-dynamic-rendering-plus-shader-objects-pushes-the-backend-toward-semantic-state-tracking}{{14.1.3}{193}{Dynamic rendering plus shader objects pushes the backend toward semantic state tracking}{subsubsection*.63}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Dynamic rendering local read closes part of the old subpass gap}{193}{subsubsection*.64}\protected@file@percent }
+\newlabel{05-engine-i-ch023-dynamic-rendering-local-read-closes-part-of-the-old-subpass-gap}{{14.1.3}{193}{Dynamic rendering local read closes part of the old subpass gap}{subsubsection*.64}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Timeline semaphores are powerful, but swapchain presentation remains a special boundary}{194}{subsubsection*.65}\protected@file@percent }
+\newlabel{05-engine-i-ch023-timeline-semaphores-are-powerful-but-swapchain-presentation-remains-a-special-boundary}{{14.1.3}{194}{Timeline semaphores are powerful, but swapchain presentation remains a special boundary}{subsubsection*.65}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Out-of-order submission can increase latency even when it is legal}{194}{subsubsection*.66}\protected@file@percent }
+\newlabel{05-engine-i-ch023-out-of-order-submission-can-increase-latency-even-when-it-is-legal}{{14.1.3}{194}{Out-of-order submission can increase latency even when it is legal}{subsubsection*.66}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Streaming needs a safe descriptor publication point}{194}{subsubsection*.67}\protected@file@percent }
+\newlabel{05-engine-i-ch023-streaming-needs-a-safe-descriptor-publication-point}{{14.1.3}{194}{Streaming needs a safe descriptor publication point}{subsubsection*.67}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Descriptor update-after-bind is a permission with conditions, not universal mutability}{195}{subsubsection*.68}\protected@file@percent }
+\newlabel{05-engine-i-ch023-descriptor-update-after-bind-is-a-permission-with-conditions-not-universal-mutability}{{14.1.3}{195}{Descriptor update-after-bind is a permission with conditions, not universal mutability}{subsubsection*.68}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Ray queries show why acceleration structures belong to the shared scene database}{195}{subsubsection*.69}\protected@file@percent }
+\newlabel{05-engine-i-ch023-ray-queries-show-why-acceleration-structures-belong-to-the-shared-scene-database}{{14.1.3}{195}{Ray queries show why acceleration structures belong to the shared scene database}{subsubsection*.69}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Ray-query rebuild policy is a workload tradeoff}{196}{subsubsection*.70}\protected@file@percent }
+\newlabel{05-engine-i-ch023-ray-query-rebuild-policy-is-a-workload-tradeoff}{{14.1.3}{196}{Ray-query rebuild policy is a workload tradeoff}{subsubsection*.70}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Mesh shaders change geometry amplification and culling location}{196}{subsubsection*.71}\protected@file@percent }
+\newlabel{05-engine-i-ch023-mesh-shaders-change-geometry-amplification-and-culling-location}{{14.1.3}{196}{Mesh shaders change geometry amplification and culling location}{subsubsection*.71}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Fragment shading rate connects rendering policy to perception and content frequency}{196}{subsubsection*.72}\protected@file@percent }
+\newlabel{05-engine-i-ch023-fragment-shading-rate-connects-rendering-policy-to-perception-and-content-frequency}{{14.1.3}{196}{Fragment shading rate connects rendering policy to perception and content frequency}{subsubsection*.72}{}}
+\gdef \LT@viii {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\@writefile{toc}{\contentsline {subsubsection}{Modern Vulkan study should preserve one invariant across every feature}{197}{subsubsection*.73}\protected@file@percent }
+\newlabel{05-engine-i-ch023-modern-vulkan-study-should-preserve-one-invariant-across-every-feature}{{14.1.3}{197}{Modern Vulkan study should preserve one invariant across every feature}{subsubsection*.73}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {14.1.4}METAL'S CORE EXECUTION MODEL}{197}{subsection.14.1.4}\protected@file@percent }
+\newlabel{05-engine-i-ch023-metals-core-execution-model}{{14.1.4}{197}{METAL'S CORE EXECUTION MODEL}{subsection.14.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {14.1.5}STORAGE MODES, TILE MEMORY, DRAWABLES, FRAMES IN FLIGHT, HEAPS \& SYNCHRONIZATION}{218}{subsection.14.1.5}\protected@file@percent }
+\newlabel{05-engine-i-ch023-storage-modes-tile-memory-drawables-frames-in-flight-heaps-synchronization}{{14.1.5}{218}{STORAGE MODES, TILE MEMORY, DRAWABLES, FRAMES IN FLIGHT, HEAPS \& SYNCHRONIZATION}{subsection.14.1.5}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {15}Profiling and language/platform ownership}{244}{chapter.15}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{05-engine-i-ch024-profiling-and-languageplatform-ownership}{{15}{244}{Profiling and language/platform ownership}{chapter.15}{}}
+\newlabel{stagechapter:05-engine-i-ch024}{{15}{244}{Profiling and language/platform ownership}{section*.74}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.0.1}PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI \& THREAD BOUNDARIES}{244}{subsection.15.0.1}\protected@file@percent }
+\newlabel{05-engine-i-ch024-profiling-objective-c-ownership-swiftui-thread-boundaries}{{15.0.1}{244}{PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI \& THREAD BOUNDARIES}{subsection.15.0.1}{}}
+\gdef \LT@ix {\LT@entry 
+    {1}{148.15787pt}\LT@entry 
+    {1}{153.15787pt}\LT@entry 
+    {1}{148.15787pt}}
+\@writefile{toc}{\contentsline {subsubsection}{First-use completion --- lifetime analysis for a frame-local attachment and a history image}{267}{subsubsection*.75}\protected@file@percent }
+\newlabel{05-engine-i-ch024-first-use-completion-lifetime-analysis-for-a-frame-local-attachment-and-a-history-image}{{15.0.1}{267}{First-use completion --- lifetime analysis for a frame-local attachment and a history image}{subsubsection*.75}{}}
+\gdef \LT@x {\LT@entry 
+    {1}{148.15787pt}\LT@entry 
+    {1}{153.15787pt}\LT@entry 
+    {1}{148.15787pt}}
+\gdef \LT@xi {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.0.2}Distinguish host allocation callbacks from device-memory allocation}{279}{subsection.15.0.2}\protected@file@percent }
+\newlabel{05-engine-i-ch024-distinguish-host-allocation-callbacks-from-device-memory-allocation}{{15.0.2}{279}{Distinguish host allocation callbacks from device-memory allocation}{subsection.15.0.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {15.1}A generated binding is still an API boundary}{280}{section.15.1}\protected@file@percent }
+\newlabel{05-engine-i-ch024-a-generated-binding-is-still-an-api-boundary}{{15.1}{280}{A generated binding is still an API boundary}{section.15.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.1.1}Choose the language boundary before choosing a generator}{281}{subsection.15.1.1}\protected@file@percent }
+\newlabel{05-engine-i-ch024-choose-the-language-boundary-before-choosing-a-generator}{{15.1.1}{281}{Choose the language boundary before choosing a generator}{subsection.15.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.1.2}A visual description does not identify a shader operator}{281}{subsection.15.1.2}\protected@file@percent }
+\newlabel{05-engine-i-ch024-a-visual-description-does-not-identify-a-shader-operator}{{15.1.2}{281}{A visual description does not identify a shader operator}{subsection.15.1.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {15.2}A platform escape hatch must also restore process-wide state}{282}{section.15.2}\protected@file@percent }
+\newlabel{05-engine-i-ch024-a-platform-escape-hatch-must-also-restore-process-wide-state}{{15.2}{282}{A platform escape hatch must also restore process-wide state}{section.15.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.2.1}Restore the state that existed before the adapter changed it}{282}{subsection.15.2.1}\protected@file@percent }
+\newlabel{05-engine-i-ch024-restore-the-state-that-existed-before-the-adapter-changed-it}{{15.2.1}{282}{Restore the state that existed before the adapter changed it}{subsection.15.2.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.2.2}Range count, byte capacity and API guarantees are different quantities}{283}{subsection.15.2.2}\protected@file@percent }
+\newlabel{05-engine-i-ch024-range-count-byte-capacity-and-api-guarantees-are-different-quantities}{{15.2.2}{283}{Range count, byte capacity and API guarantees are different quantities}{subsection.15.2.2}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {16}Renderer evolution through resource ownership}{284}{chapter.16}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{06-engine-ii-ch025-renderer-evolution-through-resource-ownership}{{16}{284}{Renderer evolution through resource ownership}{chapter.16}{}}
+\newlabel{stagechapter:06-engine-ii-ch025}{{16}{284}{Renderer evolution through resource ownership}{section*.76}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {16.1}Let a renderer evolve without losing resource ownership}{284}{section.16.1}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-let-a-renderer-evolve-without-losing-resource-ownership}{{16.1}{284}{Let a renderer evolve without losing resource ownership}{section.16.1}{}}
+\gdef \LT@xii {\LT@entry 
+    {3}{32.10641pt}\LT@entry 
+    {3}{58.79153pt}\LT@entry 
+    {3}{58.79153pt}\LT@entry 
+    {3}{64.21281pt}\LT@entry 
+    {3}{59.21281pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.1}See a frame as a small, inspectable grid}{285}{subsection.16.1.1}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-see-a-frame-as-a-small-inspectable-grid}{{16.1.1}{285}{See a frame as a small, inspectable grid}{subsection.16.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.2}Put a rendering boundary between games and graphics APIs}{286}{subsection.16.1.2}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-put-a-rendering-boundary-between-games-and-graphics-apis}{{16.1.2}{286}{Put a rendering boundary between games and graphics APIs}{subsection.16.1.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{API abstraction has a price}{287}{subsubsection*.77}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-api-abstraction-has-a-price}{{16.1.2}{287}{API abstraction has a price}{subsubsection*.77}{}}
+\@writefile{toc}{\contentsline {subsubsection}{From vertices to useful render operations}{287}{subsubsection*.78}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-from-vertices-to-useful-render-operations}{{16.1.2}{287}{From vertices to useful render operations}{subsubsection*.78}{}}
+\@writefile{toc}{\contentsline {paragraph}{Submit work, then flush it}{287}{paragraph*.79}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-submit-work-then-flush-it}{{16.1.2}{287}{Submit work, then flush it}{paragraph*.79}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Give named cameras an owner and a release path}{288}{subsubsection*.80}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-give-named-cameras-an-owner-and-a-release-path}{{16.1.2}{288}{Give named cameras an owner and a release path}{subsubsection*.80}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Camera and coordinate spaces}{288}{subsubsection*.81}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-camera-and-coordinate-spaces}{{16.1.2}{288}{Camera and coordinate spaces}{subsubsection*.81}{}}
+\@writefile{toc}{\contentsline {paragraph}{Give vectors clear value semantics}{288}{paragraph*.82}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-give-vectors-clear-value-semantics}{{16.1.2}{288}{Give vectors clear value semantics}{paragraph*.82}{}}
+\@writefile{toc}{\contentsline {paragraph}{Transform a point with its rigid body}{289}{paragraph*.83}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-transform-a-point-with-its-rigid-body}{{16.1.2}{289}{Transform a point with its rigid body}{paragraph*.83}{}}
+\@writefile{toc}{\contentsline {paragraph}{Advance orientation and find a moving point's velocity}{291}{paragraph*.84}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-advance-orientation-and-find-a-moving-points-velocity}{{16.1.2}{291}{Advance orientation and find a moving point's velocity}{paragraph*.84}{}}
+\@writefile{toc}{\contentsline {paragraph}{Make transform conventions visible in the data layout}{292}{paragraph*.85}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-make-transform-conventions-visible-in-the-data-layout}{{16.1.2}{292}{Make transform conventions visible in the data layout}{paragraph*.85}{}}
+\@writefile{toc}{\contentsline {paragraph}{A transform matrix can move points and directions, but not in the same way}{294}{paragraph*.86}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-a-transform-matrix-can-move-points-and-directions-but-not-in-the-same-way}{{16.1.2}{294}{A transform matrix can move points and directions, but not in the same way}{paragraph*.86}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Keep renderer contracts small while the backend grows}{295}{subsubsection*.87}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-keep-renderer-contracts-small-while-the-backend-grows}{{16.1.2}{295}{Keep renderer contracts small while the backend grows}{subsubsection*.87}{}}
+\@writefile{toc}{\contentsline {paragraph}{Reading a matrix column without rebuilding it}{295}{paragraph*.88}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-reading-a-matrix-column-without-rebuilding-it}{{16.1.2}{295}{Reading a matrix column without rebuilding it}{paragraph*.88}{}}
+\@writefile{toc}{\contentsline {subsubsection}{What the graphics pipeline stages do}{296}{subsubsection*.89}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-what-the-graphics-pipeline-stages-do}{{16.1.2}{296}{What the graphics pipeline stages do}{subsubsection*.89}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Load a renderer through a small, platform-aware plugin contract}{296}{subsubsection*.90}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-load-a-renderer-through-a-small-platform-aware-plugin-contract}{{16.1.2}{296}{Load a renderer through a small, platform-aware plugin contract}{subsubsection*.90}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Rendering features emerge through visible experiments}{297}{subsubsection*.91}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-rendering-features-emerge-through-visible-experiments}{{16.1.2}{297}{Rendering features emerge through visible experiments}{subsubsection*.91}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Save the selected device facts for later stages}{300}{subsubsection*.92}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-save-the-selected-device-facts-for-later-stages}{{16.1.2}{300}{Save the selected device facts for later stages}{subsubsection*.92}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.3}Choosing and integrating a graphics math library}{300}{subsection.16.1.3}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-choosing-and-integrating-a-graphics-math-library}{{16.1.3}{300}{Choosing and integrating a graphics math library}{subsection.16.1.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Reuse geometry while varying the object transform}{301}{subsubsection*.93}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-reuse-geometry-while-varying-the-object-transform}{{16.1.3}{301}{Reuse geometry while varying the object transform}{subsubsection*.93}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.4}Make each 2D draw describe its own transform}{301}{subsection.16.1.4}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-make-each-2d-draw-describe-its-own-transform}{{16.1.4}{301}{Make each 2D draw describe its own transform}{subsection.16.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.5}Load modern OpenGL entry points at the platform edge}{302}{subsection.16.1.5}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-load-modern-opengl-entry-points-at-the-platform-edge}{{16.1.5}{302}{Load modern OpenGL entry points at the platform edge}{subsection.16.1.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.6}Keep the renderer frontend useful without pretending backends are identical}{302}{subsection.16.1.6}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-keep-the-renderer-frontend-useful-without-pretending-backends-are-identical}{{16.1.6}{302}{Keep the renderer frontend useful without pretending backends are identical}{subsection.16.1.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.7}Give a 2D renderer a clean place to be exercised}{303}{subsection.16.1.7}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-give-a-2d-renderer-a-clean-place-to-be-exercised}{{16.1.7}{303}{Give a 2D renderer a clean place to be exercised}{subsection.16.1.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.8}Start a 2D renderer with one visible, deliberately limited draw path}{304}{subsection.16.1.8}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-start-a-2d-renderer-with-one-visible-deliberately-limited-draw-path}{{16.1.8}{304}{Start a 2D renderer with one visible, deliberately limited draw path}{subsection.16.1.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.9}Put a render API under scene-level submission calls}{305}{subsection.16.1.9}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-put-a-render-api-under-scene-level-submission-calls}{{16.1.9}{305}{Put a render API under scene-level submission calls}{subsection.16.1.9}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A graphics context still has a concrete backend}{306}{subsubsection*.94}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-a-graphics-context-still-has-a-concrete-backend}{{16.1.9}{306}{A graphics context still has a concrete backend}{subsubsection*.94}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Separate a renderer plan from an implemented command queue}{306}{subsubsection*.95}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-separate-a-renderer-plan-from-an-implemented-command-queue}{{16.1.9}{306}{Separate a renderer plan from an implemented command queue}{subsubsection*.95}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.10}Build a renderer interface before investing in one graphics API}{306}{subsection.16.1.10}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-build-a-renderer-interface-before-investing-in-one-graphics-api}{{16.1.10}{306}{Build a renderer interface before investing in one graphics API}{subsection.16.1.10}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Add a second graphics API only after shared assumptions are ready}{307}{subsubsection*.96}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-add-a-second-graphics-api-only-after-shared-assumptions-are-ready}{{16.1.10}{307}{Add a second graphics API only after shared assumptions are ready}{subsubsection*.96}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Constructing a Vulkan graphics pipeline}{307}{subsubsection*.97}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-constructing-a-vulkan-graphics-pipeline}{{16.1.10}{307}{Constructing a Vulkan graphics pipeline}{subsubsection*.97}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Keep Vulkan inputs alive through the call that consumes them}{307}{subsubsection*.98}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-keep-vulkan-inputs-alive-through-the-call-that-consumes-them}{{16.1.10}{307}{Keep Vulkan inputs alive through the call that consumes them}{subsubsection*.98}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Share a renderer contract while keeping backend facts explicit}{308}{subsubsection*.99}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-share-a-renderer-contract-while-keeping-backend-facts-explicit}{{16.1.10}{308}{Share a renderer contract while keeping backend facts explicit}{subsubsection*.99}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.11}Understand Vulkan setup as a chain of explicit dependencies}{308}{subsection.16.1.11}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-understand-vulkan-setup-as-a-chain-of-explicit-dependencies}{{16.1.11}{308}{Understand Vulkan setup as a chain of explicit dependencies}{subsection.16.1.11}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Buffer storage, reuse, and the first backend allocation}{309}{subsubsection*.100}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-buffer-storage-reuse-and-the-first-backend-allocation}{{16.1.11}{309}{Buffer storage, reuse, and the first backend allocation}{subsubsection*.100}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Dynamic allocation inside renderer buffers}{310}{subsubsection*.101}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-dynamic-allocation-inside-renderer-buffers}{{16.1.11}{310}{Dynamic allocation inside renderer buffers}{subsubsection*.101}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Give render buffers an API-neutral owner}{311}{subsubsection*.102}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-give-render-buffers-an-api-neutral-owner}{{16.1.11}{311}{Give render buffers an API-neutral owner}{subsubsection*.102}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Current Vulkan concepts that make the narration easier to follow}{311}{subsubsection*.103}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-current-vulkan-concepts-that-make-the-narration-easier-to-follow}{{16.1.11}{311}{Current Vulkan concepts that make the narration easier to follow}{subsubsection*.103}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.12}Read a triangle's bytes as the GPU will read them}{312}{subsection.16.1.12}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-read-a-triangles-bytes-as-the-gpu-will-read-them}{{16.1.12}{312}{Read a triangle's bytes as the GPU will read them}{subsection.16.1.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.13}Read vertex records as bytes before asking the backend to draw them}{312}{subsection.16.1.13}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-read-vertex-records-as-bytes-before-asking-the-backend-to-draw-them}{{16.1.13}{312}{Read vertex records as bytes before asking the backend to draw them}{subsection.16.1.13}{}}
+\gdef \LT@xiii {\LT@entry 
+    {3}{58.51851pt}\LT@entry 
+    {1}{69.409pt}\LT@entry 
+    {3}{59.65454pt}\LT@entry 
+    {3}{72.72702pt}\LT@entry 
+    {1}{30.158pt}}
+\@writefile{toc}{\contentsline {subsubsection}{Treat vertex data as an agreement between CPU and GPU}{313}{subsubsection*.104}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-treat-vertex-data-as-an-agreement-between-cpu-and-gpu}{{16.1.13}{313}{Treat vertex data as an agreement between CPU and GPU}{subsubsection*.104}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.14}Make geometry, buffers and memory visibility explicit}{313}{subsection.16.1.14}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-make-geometry-buffers-and-memory-visibility-explicit}{{16.1.14}{313}{Make geometry, buffers and memory visibility explicit}{subsection.16.1.14}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A shared position is not always a shared vertex}{314}{subsubsection*.105}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-a-shared-position-is-not-always-a-shared-vertex}{{16.1.14}{314}{A shared position is not always a shared vertex}{subsubsection*.105}{}}
+\@writefile{toc}{\contentsline {paragraph}{Read a vertex as position plus the attributes the surface needs}{315}{paragraph*.106}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-read-a-vertex-as-position-plus-the-attributes-the-surface-needs}{{16.1.14}{315}{Read a vertex as position plus the attributes the surface needs}{paragraph*.106}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Load six sky directions into one cubemap resource}{315}{subsubsection*.107}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-load-six-sky-directions-into-one-cubemap-resource}{{16.1.14}{315}{Load six sky directions into one cubemap resource}{subsubsection*.107}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Let the engine prepare HDR environments for image-based lighting}{316}{subsubsection*.108}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-let-the-engine-prepare-hdr-environments-for-image-based-lighting}{{16.1.14}{316}{Let the engine prepare HDR environments for image-based lighting}{subsubsection*.108}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Shader modules as pipeline inputs}{316}{subsubsection*.109}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-shader-modules-as-pipeline-inputs}{{16.1.14}{316}{Shader modules as pipeline inputs}{subsubsection*.109}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Keep sampling policy with the texture use}{317}{subsubsection*.110}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-keep-sampling-policy-with-the-texture-use}{{16.1.14}{317}{Keep sampling policy with the texture use}{subsubsection*.110}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Connecting per-object material data and texture sampling}{317}{subsubsection*.111}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-connecting-per-object-material-data-and-texture-sampling}{{16.1.14}{317}{Connecting per-object material data and texture sampling}{subsubsection*.111}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.15}Treat a material file as a versioned contract between authoring data and shader inputs}{318}{subsection.16.1.15}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-treat-a-material-file-as-a-versioned-contract-between-authoring-data-and-shader-inputs}{{16.1.15}{318}{Treat a material file as a versioned contract between authoring data and shader inputs}{subsection.16.1.15}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Treat materials as data contracts, and validate the lighting behind them}{318}{subsubsection*.112}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-treat-materials-as-data-contracts-and-validate-the-lighting-behind-them}{{16.1.15}{318}{Treat materials as data contracts, and validate the lighting behind them}{subsubsection*.112}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.16}Follow terrain material identity all the way to its draw}{318}{subsection.16.1.16}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-follow-terrain-material-identity-all-the-way-to-its-draw}{{16.1.16}{318}{Follow terrain material identity all the way to its draw}{subsection.16.1.16}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.17}Move from Phong maps to metallic and roughness with explicit defaults}{319}{subsection.16.1.17}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-move-from-phong-maps-to-metallic-and-roughness-with-explicit-defaults}{{16.1.17}{319}{Move from Phong maps to metallic and roughness with explicit defaults}{subsection.16.1.17}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.18}Keep environment-light precedence and capability requirements visible}{319}{subsection.16.1.18}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-keep-environment-light-precedence-and-capability-requirements-visible}{{16.1.18}{319}{Keep environment-light precedence and capability requirements visible}{subsection.16.1.18}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Materials combine surface values with texture references}{320}{subsubsection*.113}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-materials-combine-surface-values-with-texture-references}{{16.1.18}{320}{Materials combine surface values with texture references}{subsubsection*.113}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A general shader layer and material binding}{320}{subsubsection*.114}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-a-general-shader-layer-and-material-binding}{{16.1.18}{320}{A general shader layer and material binding}{subsubsection*.114}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Why tangent space is needed for normal maps}{321}{subsubsection*.115}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-why-tangent-space-is-needed-for-normal-maps}{{16.1.18}{321}{Why tangent space is needed for normal maps}{subsubsection*.115}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Transparency needs an explicit ordering strategy}{321}{subsubsection*.116}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-transparency-needs-an-explicit-ordering-strategy}{{16.1.18}{321}{Transparency needs an explicit ordering strategy}{subsubsection*.116}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.19}Keep descriptor arrays and image-array layers separate}{322}{subsection.16.1.19}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-keep-descriptor-arrays-and-image-array-layers-separate}{{16.1.19}{322}{Keep descriptor arrays and image-array layers separate}{subsection.16.1.19}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A factory selects an implementation whose behavior still needs testing}{322}{subsubsection*.117}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-a-factory-selects-an-implementation-whose-behavior-still-needs-testing}{{16.1.19}{322}{A factory selects an implementation whose behavior still needs testing}{subsubsection*.117}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.20}Separate shader interface from backend implementation}{323}{subsection.16.1.20}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-separate-shader-interface-from-backend-implementation}{{16.1.20}{323}{Separate shader interface from backend implementation}{subsection.16.1.20}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.21}A material is shared shading code plus surface-specific data}{323}{subsection.16.1.21}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-a-material-is-shared-shading-code-plus-surface-specific-data}{{16.1.21}{323}{A material is shared shading code plus surface-specific data}{subsection.16.1.21}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.22}Compile shader stages, link a program, and inspect both failure points}{324}{subsection.16.1.22}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-compile-shader-stages-link-a-program-and-inspect-both-failure-points}{{16.1.22}{324}{Compile shader stages, link a program, and inspect both failure points}{subsection.16.1.22}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Clip coordinates are not normalized device coordinates}{324}{subsubsection*.118}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-clip-coordinates-are-not-normalized-device-coordinates}{{16.1.22}{324}{Clip coordinates are not normalized device coordinates}{subsubsection*.118}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Return to shader compilation and linking}{326}{subsubsection*.119}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-return-to-shader-compilation-and-linking}{{16.1.22}{326}{Return to shader compilation and linking}{subsubsection*.119}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1.23}Centralize shader lookup without hiding identity and capacity rules}{327}{subsection.16.1.23}\protected@file@percent }
+\newlabel{06-engine-ii-ch025-centralize-shader-lookup-without-hiding-identity-and-capacity-rules}{{16.1.23}{327}{Centralize shader lookup without hiding identity and capacity rules}{subsection.16.1.23}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {17}Descriptor arrays and backend limits}{328}{chapter.17}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{06-engine-ii-ch026-descriptor-arrays-and-backend-limits}{{17}{328}{Descriptor arrays and backend limits}{chapter.17}{}}
+\newlabel{stagechapter:06-engine-ii-ch026}{{17}{328}{Descriptor arrays and backend limits}{section*.120}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.1}Model descriptor arrays as indexed data, and keep backend limits at the backend boundary}{328}{subsection.17.0.1}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-model-descriptor-arrays-as-indexed-data-and-keep-backend-limits-at-the-backend-boundary}{{17.0.1}{328}{Model descriptor arrays as indexed data, and keep backend limits at the backend boundary}{subsection.17.0.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.2}A vertex array records OpenGL binding state; it does not own the buffers}{329}{subsection.17.0.2}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-a-vertex-array-records-opengl-binding-state-it-does-not-own-the-buffers}{{17.0.2}{329}{A vertex array records OpenGL binding state; it does not own the buffers}{subsection.17.0.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.3}Pack scalar material maps only under an explicit channel contract}{329}{subsection.17.0.3}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-pack-scalar-material-maps-only-under-an-explicit-channel-contract}{{17.0.3}{329}{Pack scalar material maps only under an explicit channel contract}{subsection.17.0.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.4}Keep descriptor input arrays alive until the update call consumes them}{330}{subsection.17.0.4}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-keep-descriptor-input-arrays-alive-until-the-update-call-consumes-them}{{17.0.4}{330}{Keep descriptor input arrays alive until the update call consumes them}{subsection.17.0.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A file-backed shader is not yet hot reload}{331}{subsubsection*.121}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-a-file-backed-shader-is-not-yet-hot-reload}{{17.0.4}{331}{A file-backed shader is not yet hot reload}{subsubsection*.121}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.5}One shader source can target two APIs through SPIR-V}{331}{subsection.17.0.5}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-one-shader-source-can-target-two-apis-through-spir-v}{{17.0.5}{331}{One shader source can target two APIs through SPIR-V}{subsection.17.0.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Source-to-volume map}{331}{subsubsection*.122}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-source-to-volume-map}{{17.0.5}{331}{Source-to-volume map}{subsubsection*.122}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.6}Treat shaders and materials as a pipeline, not just files}{332}{subsection.17.0.6}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-treat-shaders-and-materials-as-a-pipeline-not-just-files}{{17.0.6}{332}{Treat shaders and materials as a pipeline, not just files}{subsection.17.0.6}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Find the missing triangle before rebuilding the renderer}{333}{subsubsection*.123}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-find-the-missing-triangle-before-rebuilding-the-renderer}{{17.0.6}{333}{Find the missing triangle before rebuilding the renderer}{subsubsection*.123}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A first input-driven camera}{333}{subsubsection*.124}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-a-first-input-driven-camera}{{17.0.6}{333}{A first input-driven camera}{subsubsection*.124}{}}
+\@writefile{toc}{\contentsline {paragraph}{Treat camera and movement as related modes}{334}{paragraph*.125}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-treat-camera-and-movement-as-related-modes}{{17.0.6}{334}{Treat camera and movement as related modes}{paragraph*.125}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Per-surface response and specular light}{335}{subsubsection*.126}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-per-surface-response-and-specular-light}{{17.0.6}{335}{Per-surface response and specular light}{subsubsection*.126}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Reject a bound only when the plane test proves it is outside}{335}{subsubsection*.127}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-reject-a-bound-only-when-the-plane-test-proves-it-is-outside}{{17.0.6}{335}{Reject a bound only when the plane test proves it is outside}{subsubsection*.127}{}}
+\@writefile{toc}{\contentsline {paragraph}{Filter at geometry granularity}{336}{paragraph*.128}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-filter-at-geometry-granularity}{{17.0.6}{336}{Filter at geometry granularity}{paragraph*.128}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.7}Resize the drawable area, then decide what the camera should show}{336}{subsection.17.0.7}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-resize-the-drawable-area-then-decide-what-the-camera-should-show}{{17.0.7}{336}{Resize the drawable area, then decide what the camera should show}{subsection.17.0.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.8}Keep camera data separate from camera behavior}{337}{subsection.17.0.8}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-keep-camera-data-separate-from-camera-behavior}{{17.0.8}{337}{Keep camera data separate from camera behavior}{subsection.17.0.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.9}Derive a camera from the data the renderer actually consumes}{338}{subsection.17.0.9}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-derive-a-camera-from-the-data-the-renderer-actually-consumes}{{17.0.9}{338}{Derive a camera from the data the renderer actually consumes}{subsection.17.0.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.10}Keep an orthographic camera's view and projection jobs separate}{339}{subsection.17.0.10}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-keep-an-orthographic-cameras-view-and-projection-jobs-separate}{{17.0.10}{339}{Keep an orthographic camera's view and projection jobs separate}{subsection.17.0.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.11}Use math to answer questions the renderer can test}{339}{subsection.17.0.11}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-use-math-to-answer-questions-the-renderer-can-test}{{17.0.11}{339}{Use math to answer questions the renderer can test}{subsection.17.0.11}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Per-object transforms with push constants}{340}{subsubsection*.129}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-per-object-transforms-with-push-constants}{{17.0.11}{340}{Per-object transforms with push constants}{subsubsection*.129}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.12}Render the state the simulation actually produced}{341}{subsection.17.0.12}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-render-the-state-the-simulation-actually-produced}{{17.0.12}{341}{Render the state the simulation actually produced}{subsection.17.0.12}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Inspect cascades and fade shadows before their quality runs out}{341}{subsubsection*.130}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-inspect-cascades-and-fade-shadows-before-their-quality-runs-out}{{17.0.12}{341}{Inspect cascades and fade shadows before their quality runs out}{subsubsection*.130}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Use controlled simplification and hardware counters to find a GPU bottleneck}{341}{subsubsection*.131}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-use-controlled-simplification-and-hardware-counters-to-find-a-gpu-bottleneck}{{17.0.12}{341}{Use controlled simplification and hardware counters to find a GPU bottleneck}{subsubsection*.131}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Choose font storage around glyph coverage and layout needs}{342}{subsubsection*.132}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-choose-font-storage-around-glyph-coverage-and-layout-needs}{{17.0.12}{342}{Choose font storage around glyph coverage and layout needs}{subsubsection*.132}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Choose glyph storage for the scale range you need}{342}{subsubsection*.133}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-choose-glyph-storage-for-the-scale-range-you-need}{{17.0.12}{342}{Choose glyph storage for the scale range you need}{subsubsection*.133}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Debugging lighting and surface direction}{343}{subsubsection*.134}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-debugging-lighting-and-surface-direction}{{17.0.12}{343}{Debugging lighting and surface direction}{subsubsection*.134}{}}
+\@writefile{toc}{\contentsline {paragraph}{Debug the coordinate data that reaches the shader}{343}{paragraph*.135}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-debug-the-coordinate-data-that-reaches-the-shader}{{17.0.12}{343}{Debug the coordinate data that reaches the shader}{paragraph*.135}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.13}Diagnose a frame as a pipeline}{344}{subsection.17.0.13}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-diagnose-a-frame-as-a-pipeline}{{17.0.13}{344}{Diagnose a frame as a pipeline}{subsection.17.0.13}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Reuse geometry while keeping each object's state}{344}{subsubsection*.136}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-reuse-geometry-while-keeping-each-objects-state}{{17.0.13}{344}{Reuse geometry while keeping each object's state}{subsubsection*.136}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A capacity target needs a later measurement}{345}{subsubsection*.137}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-a-capacity-target-needs-a-later-measurement}{{17.0.13}{345}{A capacity target needs a later measurement}{subsubsection*.137}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Measure the actual path, then keep time and network work bounded}{345}{subsubsection*.138}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-measure-the-actual-path-then-keep-time-and-network-work-bounded}{{17.0.13}{345}{Measure the actual path, then keep time and network work bounded}{subsubsection*.138}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.14}Reuse geometry and choose a batch boundary from the data path}{346}{subsection.17.0.14}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-reuse-geometry-and-choose-a-batch-boundary-from-the-data-path}{{17.0.14}{346}{Reuse geometry and choose a batch boundary from the data path}{subsection.17.0.14}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.15}Keep the OpenGL ASR example separate from the Kohi Vulkan renderer}{347}{subsection.17.0.15}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-keep-the-opengl-asr-example-separate-from-the-kohi-vulkan-renderer}{{17.0.15}{347}{Keep the OpenGL ASR example separate from the Kohi Vulkan renderer}{subsection.17.0.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.16}A sprite texture is an authoring reference that reaches a batched draw}{348}{subsection.17.0.16}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-a-sprite-texture-is-an-authoring-reference-that-reaches-a-batched-draw}{{17.0.16}{348}{A sprite texture is an authoring reference that reaches a batched draw}{subsection.17.0.16}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Source-to-volume map}{348}{subsubsection*.139}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-source-to-volume-map-1}{{17.0.16}{348}{Source-to-volume map}{subsubsection*.139}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.17}A tile map needs both a symbol table and a row convention}{349}{subsection.17.0.17}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-a-tile-map-needs-both-a-symbol-table-and-a-row-convention}{{17.0.17}{349}{A tile map needs both a symbol table and a row convention}{subsection.17.0.17}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Source-to-volume map}{349}{subsubsection*.140}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-source-to-volume-map-2}{{17.0.17}{349}{Source-to-volume map}{subsubsection*.140}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.18}A batch limit must trigger a flush before the next quad is written}{349}{subsection.17.0.18}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-a-batch-limit-must-trigger-a-flush-before-the-next-quad-is-written}{{17.0.18}{349}{A batch limit must trigger a flush before the next quad is written}{subsection.17.0.18}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Source-to-volume map}{350}{subsubsection*.141}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-source-to-volume-map-3}{{17.0.18}{350}{Source-to-volume map}{subsubsection*.141}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.19}Rotating one rectangle inside a batch}{350}{subsection.17.0.19}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-rotating-one-rectangle-inside-a-batch}{{17.0.19}{350}{Rotating one rectangle inside a batch}{subsection.17.0.19}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.20}Keep common quad options in the renderer API}{351}{subsection.17.0.20}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-keep-common-quad-options-in-the-renderer-api}{{17.0.20}{351}{Keep common quad options in the renderer API}{subsection.17.0.20}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.21}A sprite sheet is a texture plus a region}{351}{subsection.17.0.21}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-a-sprite-sheet-is-a-texture-plus-a-region}{{17.0.21}{351}{A sprite sheet is a texture plus a region}{subsection.17.0.21}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.22}Batch the data that actually travels together}{352}{subsection.17.0.22}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-batch-the-data-that-actually-travels-together}{{17.0.22}{352}{Batch the data that actually travels together}{subsection.17.0.22}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Choose textures inside a batch}{352}{subsubsection*.142}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-choose-textures-inside-a-batch}{{17.0.22}{352}{Choose textures inside a batch}{subsubsection*.142}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.23}Definitions and a compact applied exercise}{352}{subsection.17.0.23}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-definitions-and-a-compact-applied-exercise}{{17.0.23}{352}{Definitions and a compact applied exercise}{subsection.17.0.23}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.24}Measure the renderer, then choose a batch boundary}{353}{subsection.17.0.24}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-measure-the-renderer-then-choose-a-batch-boundary}{{17.0.24}{353}{Measure the renderer, then choose a batch boundary}{subsection.17.0.24}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A frame can preserve one pass while preparing another}{354}{subsubsection*.143}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-a-frame-can-preserve-one-pass-while-preparing-another}{{17.0.24}{354}{A frame can preserve one pass while preparing another}{subsubsection*.143}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Screen-space geometry as a separate rendering concern}{354}{subsubsection*.144}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-screen-space-geometry-as-a-separate-rendering-concern}{{17.0.24}{354}{Screen-space geometry as a separate rendering concern}{subsubsection*.144}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.25}Turn a visible object into a dependable frame pipeline}{355}{subsection.17.0.25}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-turn-a-visible-object-into-a-dependable-frame-pipeline}{{17.0.25}{355}{Turn a visible object into a dependable frame pipeline}{subsection.17.0.25}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Let render views assemble frame-specific work}{355}{subsubsection*.145}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-let-render-views-assemble-frame-specific-work}{{17.0.25}{355}{Let render views assemble frame-specific work}{subsubsection*.145}{}}
+\gdef \LT@xiv {\LT@entry 
+    {1}{148.15787pt}\LT@entry 
+    {1}{153.15787pt}\LT@entry 
+    {1}{148.15787pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.26}A graph describes dependencies before choosing an order}{356}{subsection.17.0.26}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-a-graph-describes-dependencies-before-choosing-an-order}{{17.0.26}{356}{A graph describes dependencies before choosing an order}{subsection.17.0.26}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.27}Keep pass lifetime separate from frame data and scene ownership}{357}{subsection.17.0.27}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-keep-pass-lifetime-separate-from-frame-data-and-scene-ownership}{{17.0.27}{357}{Keep pass lifetime separate from frame data and scene ownership}{subsection.17.0.27}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.28}Prepare each pass's inputs according to its ordering rules}{357}{subsection.17.0.28}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-prepare-each-passs-inputs-according-to-its-ordering-rules}{{17.0.28}{357}{Prepare each pass's inputs according to its ordering rules}{subsection.17.0.28}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.29}Rebuild image references only after the swap chain has changed}{358}{subsection.17.0.29}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-rebuild-image-references-only-after-the-swap-chain-has-changed}{{17.0.29}{358}{Rebuild image references only after the swap chain has changed}{subsection.17.0.29}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A frame can be drawn only after the presentation image is acquired}{358}{subsubsection*.146}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-a-frame-can-be-drawn-only-after-the-presentation-image-is-acquired}{{17.0.29}{358}{A frame can be drawn only after the presentation image is acquired}{subsubsection*.146}{}}
+\@writefile{toc}{\contentsline {paragraph}{Follow one frame through recording and presentation}{359}{paragraph*.147}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-follow-one-frame-through-recording-and-presentation}{{17.0.29}{359}{Follow one frame through recording and presentation}{paragraph*.147}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.30}A small software renderer makes order dependence visible}{359}{subsection.17.0.30}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-a-small-software-renderer-makes-order-dependence-visible}{{17.0.30}{359}{A small software renderer makes order dependence visible}{subsection.17.0.30}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Describe what every pass reads and writes}{359}{subsubsection*.148}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-describe-what-every-pass-reads-and-writes}{{17.0.30}{359}{Describe what every pass reads and writes}{subsubsection*.148}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Forward and deferred rendering move costs to different places}{360}{subsubsection*.149}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-forward-and-deferred-rendering-move-costs-to-different-places}{{17.0.30}{360}{Forward and deferred rendering move costs to different places}{subsubsection*.149}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A material is data interpreted by an agreed shading model}{360}{subsubsection*.150}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-a-material-is-data-interpreted-by-an-agreed-shading-model}{{17.0.30}{360}{A material is data interpreted by an agreed shading model}{subsubsection*.150}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.31}Choose shadow bias and filtering with the receiver geometry in view}{361}{subsection.17.0.31}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-choose-shadow-bias-and-filtering-with-the-receiver-geometry-in-view}{{17.0.31}{361}{Choose shadow bias and filtering with the receiver geometry in view}{subsection.17.0.31}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.32}Fit light coverage to the camera only after validating every coordinate transform}{361}{subsection.17.0.32}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-fit-light-coverage-to-the-camera-only-after-validating-every-coordinate-transform}{{17.0.32}{361}{Fit light coverage to the camera only after validating every coordinate transform}{subsection.17.0.32}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.33}Why a single map loses detail}{361}{subsection.17.0.33}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-why-a-single-map-loses-detail}{{17.0.33}{361}{Why a single map loses detail}{subsection.17.0.33}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.34}Choose split distances that spend precision near the camera}{362}{subsection.17.0.34}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-choose-split-distances-that-spend-precision-near-the-camera}{{17.0.34}{362}{Choose split distances that spend precision near the camera}{subsection.17.0.34}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.35}Fit a light projection to each slice of the camera view}{363}{subsection.17.0.35}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-fit-a-light-projection-to-each-slice-of-the-camera-view}{{17.0.35}{363}{Fit a light projection to each slice of the camera view}{subsection.17.0.35}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.36}Read the debug view as evidence, not as a finished quality claim}{363}{subsection.17.0.36}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-read-the-debug-view-as-evidence-not-as-a-finished-quality-claim}{{17.0.36}{363}{Read the debug view as evidence, not as a finished quality claim}{subsection.17.0.36}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.37}Keep the prototype's costs and open work visible}{363}{subsection.17.0.37}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-keep-the-prototypes-costs-and-open-work-visible}{{17.0.37}{363}{Keep the prototype's costs and open work visible}{subsection.17.0.37}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.38}Use different views of one image for rendering and sampling}{364}{subsection.17.0.38}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-use-different-views-of-one-image-for-rendering-and-sampling}{{17.0.38}{364}{Use different views of one image for rendering and sampling}{subsection.17.0.38}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.39}Consolidate shadow storage without claiming fewer scene renders}{364}{subsection.17.0.39}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-consolidate-shadow-storage-without-claiming-fewer-scene-renders}{{17.0.39}{364}{Consolidate shadow storage without claiming fewer scene renders}{subsection.17.0.39}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.40}Treat the final array-texture state as unfinished}{365}{subsection.17.0.40}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-treat-the-final-array-texture-state-as-unfinished}{{17.0.40}{365}{Treat the final array-texture state as unfinished}{subsection.17.0.40}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A shadow is a visibility question with a coordinate convention}{365}{subsubsection*.151}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-a-shadow-is-a-visibility-question-with-a-coordinate-convention}{{17.0.40}{365}{A shadow is a visibility question with a coordinate convention}{subsubsection*.151}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Hierarchies make transform ownership visible}{366}{subsubsection*.152}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-hierarchies-make-transform-ownership-visible}{{17.0.40}{366}{Hierarchies make transform ownership visible}{subsubsection*.152}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Name GPU objects and inspect uniform bytes before changing equations}{366}{subsubsection*.153}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-name-gpu-objects-and-inspect-uniform-bytes-before-changing-equations}{{17.0.40}{366}{Name GPU objects and inspect uniform bytes before changing equations}{subsubsection*.153}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Per-frame uniform data and descriptor binding}{367}{subsubsection*.154}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-per-frame-uniform-data-and-descriptor-binding}{{17.0.40}{367}{Per-frame uniform data and descriptor binding}{subsubsection*.154}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.41}Treat submission and completion as separate events}{367}{subsection.17.0.41}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-treat-submission-and-completion-as-separate-events}{{17.0.41}{367}{Treat submission and completion as separate events}{subsection.17.0.41}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.42}Grow concurrency from a dependency you can draw}{368}{subsection.17.0.42}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-grow-concurrency-from-a-dependency-you-can-draw}{{17.0.42}{368}{Grow concurrency from a dependency you can draw}{subsection.17.0.42}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Make light overlap visible before promising a faster frame}{368}{subsubsection*.155}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-make-light-overlap-visible-before-promising-a-faster-frame}{{17.0.42}{368}{Make light overlap visible before promising a faster frame}{subsubsection*.155}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Separate a dead resource from an unfinished workload}{369}{subsubsection*.156}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-separate-a-dead-resource-from-an-unfinished-workload}{{17.0.42}{369}{Separate a dead resource from an unfinished workload}{subsubsection*.156}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Separate a glowing image from illumination of the room}{370}{subsubsection*.157}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-separate-a-glowing-image-from-illumination-of-the-room}{{17.0.42}{370}{Separate a glowing image from illumination of the room}{subsubsection*.157}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.43}From a named texture to a writable image}{370}{subsection.17.0.43}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-from-a-named-texture-to-a-writable-image}{{17.0.43}{370}{From a named texture to a writable image}{subsection.17.0.43}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.0.44}Creating and filling the image}{371}{subsection.17.0.44}\protected@file@percent }
+\newlabel{06-engine-ii-ch026-creating-and-filling-the-image}{{17.0.44}{371}{Creating and filling the image}{subsection.17.0.44}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {18}Preparing and publishing runtime content}{373}{chapter.18}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{06-engine-ii-ch027-preparing-and-publishing-runtime-content}{{18}{373}{Preparing and publishing runtime content}{chapter.18}{}}
+\newlabel{stagechapter:06-engine-ii-ch027}{{18}{373}{Preparing and publishing runtime content}{section*.158}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {18.1}Prepare and publish content before promising it is ready}{373}{section.18.1}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-prepare-and-publish-content-before-promising-it-is-ready}{{18.1}{373}{Prepare and publish content before promising it is ready}{section.18.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.1.1}Allocate every mip level and keep the sampler synchronized with it}{373}{subsection.18.1.1}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-allocate-every-mip-level-and-keep-the-sampler-synchronized-with-it}{{18.1.1}{373}{Allocate every mip level and keep the sampler synchronized with it}{subsection.18.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.1.2}Treat texture layout and transparency as two separate questions}{373}{subsection.18.1.2}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-treat-texture-layout-and-transparency-as-two-separate-questions}{{18.1.2}{373}{Treat texture layout and transparency as two separate questions}{subsection.18.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.1.3}Debug texture coordinates before changing sampling policy}{374}{subsection.18.1.3}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-debug-texture-coordinates-before-changing-sampling-policy}{{18.1.3}{374}{Debug texture coordinates before changing sampling policy}{subsection.18.1.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.1.4}Trace an image from file bytes to a correctly sampled texel}{375}{subsection.18.1.4}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-trace-an-image-from-file-bytes-to-a-correctly-sampled-texel}{{18.1.4}{375}{Trace an image from file bytes to a correctly sampled texel}{subsection.18.1.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{From decoded pixels to a sampleable Vulkan texture}{376}{subsubsection*.159}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-from-decoded-pixels-to-a-sampleable-vulkan-texture}{{18.1.4}{376}{From decoded pixels to a sampleable Vulkan texture}{subsubsection*.159}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A completed load still needs permission to enter the world}{376}{subsubsection*.160}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-a-completed-load-still-needs-permission-to-enter-the-world}{{18.1.4}{376}{A completed load still needs permission to enter the world}{subsubsection*.160}{}}
+\gdef \LT@xv {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\@writefile{toc}{\contentsline {paragraph}{Publish the result of a worker load}{377}{paragraph*.161}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-publish-the-result-of-a-worker-load}{{18.1.4}{377}{Publish the result of a worker load}{paragraph*.161}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Reloading code needs a quiet boundary, not just a new file}{378}{subsubsection*.162}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-reloading-code-needs-a-quiet-boundary-not-just-a-new-file}{{18.1.4}{378}{Reloading code needs a quiet boundary, not just a new file}{subsubsection*.162}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Loading image data means interpreting its layout}{378}{subsubsection*.163}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-loading-image-data-means-interpreting-its-layout}{{18.1.4}{378}{Loading image data means interpreting its layout}{subsubsection*.163}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.1.5}Make loading a state transition rather than a hopeful pointer}{379}{subsection.18.1.5}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-make-loading-a-state-transition-rather-than-a-hopeful-pointer}{{18.1.5}{379}{Make loading a state transition rather than a hopeful pointer}{subsection.18.1.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Resource streaming is a publication protocol, not just a background read}{380}{subsubsection*.164}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-resource-streaming-is-a-publication-protocol-not-just-a-background-read}{{18.1.5}{380}{Resource streaming is a publication protocol, not just a background read}{subsubsection*.164}{}}
+\@writefile{toc}{\contentsline {subsubsection}{From a simulated asset job to real concurrent decoding --- Gregory integration}{381}{subsubsection*.165}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-from-a-simulated-asset-job-to-real-concurrent-decoding-gregory-integration}{{18.1.5}{381}{From a simulated asset job to real concurrent decoding --- Gregory integration}{subsubsection*.165}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Runtime texture replacement and safe publication}{389}{subsubsection*.166}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-runtime-texture-replacement-and-safe-publication}{{18.1.5}{389}{Runtime texture replacement and safe publication}{subsubsection*.166}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A named texture system with reference counting}{389}{subsubsection*.167}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-a-named-texture-system-with-reference-counting}{{18.1.5}{389}{A named texture system with reference counting}{subsubsection*.167}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.1.6}Put file access behind an engine contract}{390}{subsection.18.1.6}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-put-file-access-behind-an-engine-contract}{{18.1.6}{390}{Put file access behind an engine contract}{subsection.18.1.6}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Give game code a stable asset address}{391}{subsubsection*.168}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-give-game-code-a-stable-asset-address}{{18.1.6}{391}{Give game code a stable asset address}{subsubsection*.168}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.1.7}A content browser starts with a root and a navigation rule}{391}{subsection.18.1.7}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-a-content-browser-starts-with-a-root-and-a-navigation-rule}{{18.1.7}{391}{A content browser starts with a root and a navigation rule}{subsection.18.1.7}{}}
+\gdef \LT@xvi {\LT@entry 
+    {1}{148.15787pt}\LT@entry 
+    {1}{153.15787pt}\LT@entry 
+    {1}{148.15787pt}}
+\@writefile{toc}{\contentsline {subsubsection}{Keep filesystem work out of the editor's frame loop}{392}{subsubsection*.169}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-keep-filesystem-work-out-of-the-editors-frame-loop}{{18.1.7}{392}{Keep filesystem work out of the editor's frame loop}{subsubsection*.169}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Source-to-volume map}{393}{subsubsection*.170}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-source-to-volume-map}{{18.1.7}{393}{Source-to-volume map}{subsubsection*.170}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.1.8}Resource and asset systems are about reliable identity and lifetime}{393}{subsection.18.1.8}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-resource-and-asset-systems-are-about-reliable-identity-and-lifetime}{{18.1.8}{393}{Resource and asset systems are about reliable identity and lifetime}{subsection.18.1.8}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Loading different asset types through resource loaders}{394}{subsubsection*.171}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-loading-different-asset-types-through-resource-loaders}{{18.1.8}{394}{Loading different asset types through resource loaders}{subsubsection*.171}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Runtime loading and an engine-oriented mesh cache}{394}{subsubsection*.172}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-runtime-loading-and-an-engine-oriented-mesh-cache}{{18.1.8}{394}{Runtime loading and an engine-oriented mesh cache}{subsubsection*.172}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Invalidate derived assets when vertex layouts change}{395}{subsubsection*.173}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-invalidate-derived-assets-when-vertex-layouts-change}{{18.1.8}{395}{Invalidate derived assets when vertex layouts change}{subsubsection*.173}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Importing a readable mesh format, then caching it}{395}{subsubsection*.174}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-importing-a-readable-mesh-format-then-caching-it}{{18.1.8}{395}{Importing a readable mesh format, then caching it}{subsubsection*.174}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.1.9}Treat assets as references plus a pipeline}{396}{subsection.18.1.9}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-treat-assets-as-references-plus-a-pipeline}{{18.1.9}{396}{Treat assets as references plus a pipeline}{subsection.18.1.9}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Quiesce every callback before unloading a code module}{396}{subsubsection*.175}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-quiesce-every-callback-before-unloading-a-code-module}{{18.1.9}{396}{Quiesce every callback before unloading a code module}{subsubsection*.175}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Failure handling and hot reload}{397}{subsubsection*.176}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-failure-handling-and-hot-reload}{{18.1.9}{397}{Failure handling and hot reload}{subsubsection*.176}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Let a material survive the model that introduced it}{397}{subsubsection*.177}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-let-a-material-survive-the-model-that-introduced-it}{{18.1.9}{397}{Let a material survive the model that introduced it}{subsubsection*.177}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.1.10}Wrapping images and deciding who owns them}{397}{subsection.18.1.10}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-wrapping-images-and-deciding-who-owns-them}{{18.1.10}{397}{Wrapping images and deciding who owns them}{subsection.18.1.10}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {18.2}Find the few objects that can affect the next decision}{398}{section.18.2}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-find-the-few-objects-that-can-affect-the-next-decision}{{18.2}{398}{Find the few objects that can affect the next decision}{section.18.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.2.1}BVH Construction, SAH, Morton/LBVH, Traversal, Refit, Wide/Quantized BVHs and SIMD Packets}{398}{subsection.18.2.1}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-bvh-construction-sah-mortonlbvh-traversal-refit-widequantized-bvhs-and-simd-packets}{{18.2.1}{398}{BVH Construction, SAH, Morton/LBVH, Traversal, Refit, Wide/Quantized BVHs and SIMD Packets}{subsection.18.2.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Reconstruction checkpoint --- compare the hierarchy with an oracle}{398}{subsubsection*.178}\protected@file@percent }
+\newlabel{06-engine-ii-ch027-reconstruction-checkpoint-compare-the-hierarchy-with-an-oracle}{{18.2.1}{398}{Reconstruction checkpoint --- compare the hierarchy with an oracle}{subsubsection*.178}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {19}Compiling renderer intent into backend work}{426}{chapter.19}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{06-engine-ii-ch043-compiling-renderer-intent-into-backend-work}{{19}{426}{Compiling renderer intent into backend work}{chapter.19}{}}
+\newlabel{stagechapter:06-engine-ii-ch043}{{19}{426}{Compiling renderer intent into backend work}{section*.179}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {19.1}Compile renderer intent into backend work}{426}{section.19.1}\protected@file@percent }
+\newlabel{06-engine-ii-ch043-compile-renderer-intent-into-backend-work}{{19.1}{426}{Compile renderer intent into backend work}{section.19.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.1.1}+ M144}{426}{subsection.19.1.1}\protected@file@percent }
+\newlabel{06-engine-ii-ch043-m144}{{19.1.1}{426}{+ M144}{subsection.19.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.1.2}MULTI-BACKEND RENDERER ARCHITECTURE}{426}{subsection.19.1.2}\protected@file@percent }
+\newlabel{06-engine-ii-ch043-multi-backend-renderer-architecture}{{19.1.2}{426}{MULTI-BACKEND RENDERER ARCHITECTURE}{subsection.19.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.1.3}COMPLETE RENDER GRAPH}{442}{subsection.19.1.3}\protected@file@percent }
+\newlabel{06-engine-ii-ch043-complete-render-graph}{{19.1.3}{442}{COMPLETE RENDER GRAPH}{subsection.19.1.3}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {20}Cross-backend conversion and agreement}{475}{chapter.20}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{06-engine-ii-ch044-cross-backend-conversion-and-agreement}{{20}{475}{Cross-backend conversion and agreement}{chapter.20}{}}
+\newlabel{stagechapter:06-engine-ii-ch044}{{20}{475}{Cross-backend conversion and agreement}{section*.180}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {20.0.1}REAL CROSS-BACKEND CONVERSION \& AGREEMENT}{475}{subsection.20.0.1}\protected@file@percent }
+\newlabel{06-engine-ii-ch044-real-cross-backend-conversion-agreement}{{20.0.1}{475}{REAL CROSS-BACKEND CONVERSION \& AGREEMENT}{subsection.20.0.1}{}}
+\gdef \LT@xvii {\LT@entry 
+    {3}{109.097pt}\LT@entry 
+    {3}{145.29048pt}}
+\gdef \LT@xviii {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {21}Rasterizing kernels and connecting world identity}{517}{chapter.21}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{06-engine-ii-ch045-rasterizing-kernels-and-connecting-world-identity}{{21}{517}{Rasterizing kernels and connecting world identity}{chapter.21}{}}
+\newlabel{stagechapter:06-engine-ii-ch045}{{21}{517}{Rasterizing kernels and connecting world identity}{section*.181}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {21.1}Rasterize kernels at scale and connect their identities --- world correspondence}{517}{section.21.1}\protected@file@percent }
+\newlabel{06-engine-ii-ch045-rasterize-kernels-at-scale-and-connect-their-identities-world-correspondence}{{21.1}{517}{Rasterize kernels at scale and connect their identities --- world correspondence}{section.21.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.1.1}CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{517}{subsection.21.1.1}\protected@file@percent }
+\newlabel{06-engine-ii-ch045-captured-worlds-from-appearance-field-to-editable-physical-scene}{{21.1.1}{517}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{subsection.21.1.1}{}}
+\newlabel{f0n5qg}{{21.1.1}{519}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{section*.182}{}}
+\newlabel{7x0yqd}{{21.1.1}{520}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{section*.183}{}}
+\newlabel{ijumvh}{{21.1.1}{521}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{section*.184}{}}
+\newlabel{f90y7n}{{21.1.1}{521}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{section*.185}{}}
+\newlabel{f1gg6w}{{21.1.1}{522}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{section*.186}{}}
+\newlabel{5d4p4w}{{21.1.1}{528}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{section*.187}{}}
+\newlabel{npbq8r}{{21.1.1}{532}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{section*.188}{}}
+\newlabel{z2q1ht}{{21.1.1}{533}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{section*.189}{}}
+\newlabel{t0uvl1}{{21.1.1}{536}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{section*.190}{}}
+\newlabel{0qgv44}{{21.1.1}{541}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{section*.191}{}}
+\newlabel{mm1u1e}{{21.1.1}{543}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{section*.192}{}}
+\newlabel{gr6rum}{{21.1.1}{543}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{section*.193}{}}
+\newlabel{ep4bnk}{{21.1.1}{543}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{section*.194}{}}
+\gdef \LT@xix {\LT@entry 
+    {1}{148.15787pt}\LT@entry 
+    {1}{153.15787pt}\LT@entry 
+    {1}{148.15787pt}}
+\newlabel{fn1jmm}{{21.1.1}{547}{CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{section*.195}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.1.2}THE DEEPEST ARCHITECTURAL CONNECTION OF PHASE 25}{549}{subsection.21.1.2}\protected@file@percent }
+\newlabel{06-engine-ii-ch045-the-deepest-architectural-connection-of-phase-25}{{21.1.2}{549}{THE DEEPEST ARCHITECTURAL CONNECTION OF PHASE 25}{subsection.21.1.2}{}}
+\newlabel{ia3d5k}{{21.1.2}{550}{THE DEEPEST ARCHITECTURAL CONNECTION OF PHASE 25}{section*.196}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.1.3}An image-change certificate must name the edits it covers}{554}{subsection.21.1.3}\protected@file@percent }
+\newlabel{06-engine-ii-ch045-an-image-change-certificate-must-name-the-edits-it-covers}{{21.1.3}{554}{An image-change certificate must name the edits it covers}{subsection.21.1.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Check which transmittance the stopping test actually uses}{556}{subsubsection*.197}\protected@file@percent }
+\newlabel{06-engine-ii-ch045-check-which-transmittance-the-stopping-test-actually-uses}{{21.1.3}{556}{Check which transmittance the stopping test actually uses}{subsubsection*.197}{}}
+\newlabel{8f90ti}{{21.1.3}{560}{Check which transmittance the stopping test actually uses}{section*.198}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.1.4}PHASE 25 VERDICT}{568}{subsection.21.1.4}\protected@file@percent }
+\newlabel{06-engine-ii-ch045-phase-25-verdict}{{21.1.4}{568}{PHASE 25 VERDICT}{subsection.21.1.4}{}}
+\newlabel{stagechaptersend:06-GPU-Architecture-and-Real-Time-Rendering}{{21.1.4}{569}{PHASE 25 VERDICT}{subsection.21.1.4}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {A}Reference Notes}{570}{appendix.A}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{referencestart:appendix-5803241aa1a5}{{A}{570}{Reference Notes}{appendix.A}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.1}A* search and navigation contracts}{570}{section.A.1}\protected@file@percent }
+\newlabel{appendix-5803241aa1a5-a-search-and-navigation-contracts}{{A.1}{570}{A* search and navigation contracts}{section.A.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.1}Relaxation}{570}{subsection.A.1.1}\protected@file@percent }
+\newlabel{appendix-5803241aa1a5-relaxation}{{A.1.1}{570}{Relaxation}{subsection.A.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.2}Navigation is larger than A*}{570}{subsection.A.1.2}\protected@file@percent }
+\newlabel{appendix-5803241aa1a5-navigation-is-larger-than-a}{{A.1.2}{570}{Navigation is larger than A*}{subsection.A.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.3}Executable reference}{570}{subsection.A.1.3}\protected@file@percent }
+\newlabel{appendix-5803241aa1a5-executable-reference}{{A.1.3}{570}{Executable reference}{subsection.A.1.3}{}}
+\newlabel{referencestart:appendix-5653a7aea6bb}{{A.1.3}{570}{Executable reference}{subsection.A.1.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.2}BVH build, traversal, and workload selection}{571}{section.A.2}\protected@file@percent }
+\newlabel{appendix-5653a7aea6bb-bvh-build-traversal-and-workload-selection}{{A.2}{571}{BVH build, traversal, and workload selection}{section.A.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.1}Build choices}{571}{subsection.A.2.1}\protected@file@percent }
+\newlabel{appendix-5653a7aea6bb-build-choices}{{A.2.1}{571}{Build choices}{subsection.A.2.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.2}Traversal representation}{571}{subsection.A.2.2}\protected@file@percent }
+\newlabel{appendix-5653a7aea6bb-traversal-representation}{{A.2.2}{571}{Traversal representation}{subsection.A.2.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.3}Dynamic scenes}{571}{subsection.A.2.3}\protected@file@percent }
+\newlabel{appendix-5653a7aea6bb-dynamic-scenes}{{A.2.3}{571}{Dynamic scenes}{subsection.A.2.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.4}Executable reference}{572}{subsection.A.2.4}\protected@file@percent }
+\newlabel{appendix-5653a7aea6bb-executable-reference}{{A.2.4}{572}{Executable reference}{subsection.A.2.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.5}SAH, Morton and refit witness}{572}{subsection.A.2.5}\protected@file@percent }
+\newlabel{appendix-5653a7aea6bb-sah-morton-and-refit-witness}{{A.2.5}{572}{SAH, Morton and refit witness}{subsection.A.2.5}{}}
+\newlabel{referencestart:appendix-8bc4e8fc547c}{{A.2.5}{572}{SAH, Morton and refit witness}{subsection.A.2.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.3}Dot products and orthogonality}{572}{section.A.3}\protected@file@percent }
+\newlabel{appendix-8bc4e8fc547c-dot-products-and-orthogonality}{{A.3}{572}{Dot products and orthogonality}{section.A.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3.1}Definition and mechanism}{572}{subsection.A.3.1}\protected@file@percent }
+\newlabel{appendix-8bc4e8fc547c-definition-and-mechanism}{{A.3.1}{572}{Definition and mechanism}{subsection.A.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3.2}Prerequisites}{572}{subsection.A.3.2}\protected@file@percent }
+\newlabel{appendix-8bc4e8fc547c-prerequisites}{{A.3.2}{572}{Prerequisites}{subsection.A.3.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3.3}Used by}{573}{subsection.A.3.3}\protected@file@percent }
+\newlabel{appendix-8bc4e8fc547c-used-by}{{A.3.3}{573}{Used by}{subsection.A.3.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3.4}Source and navigation}{573}{subsection.A.3.4}\protected@file@percent }
+\newlabel{appendix-8bc4e8fc547c-source-and-navigation}{{A.3.4}{573}{Source and navigation}{subsection.A.3.4}{}}
+\newlabel{stagereferencesend:06-GPU-Architecture-and-Real-Time-Rendering}{{A.3.4}{573}{Source and navigation}{subsection.A.3.4}{}}
+\gdef \@abspage@last{581}

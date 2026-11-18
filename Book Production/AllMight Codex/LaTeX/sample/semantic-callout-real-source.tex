@@ -1,0 +1,34 @@
+\begin{allmightroleexercise}
+
+\paragraph{Exercise with a complete
+solution}\label{exercise-with-a-complete-solution}
+
+\hypertarget{exercise-with-a-complete-solution}{}
+
+A sensor gate has category \BookInlineCode{GATE=0x10}, mask
+\BookInlineCode{PLAYER\ \textbar{}\ KEY\ =\ 0x21}, and group zero. A
+player has category \BookInlineCode{PLAYER=0x1}, mask
+\BookInlineCode{GATE=0x10}, group zero. A key has category
+\BookInlineCode{KEY=0x20}, mask \BookInlineCode{GATE=0x10}, group zero.
+A decoration has category \BookInlineCode{DECOR=0x40}, mask all bits,
+group zero. A pair of moving platform shapes both use group
+\BookInlineCode{-5}; a player/platform pair uses group indices
+\BookInlineCode{-5} and \BookInlineCode{+5}. Determine eligible pairs,
+then process the following gate observations: step 0 none; step 1 player
+overlaps gate; step 2 same overlap; step 3 player is destroyed; slot 3
+is immediately reused for a decoration with a higher generation before
+queued gameplay events dispatch.
+
+\end{allmightroleexercise}
+
+\textbf{Solution.} Gate/player passes because
+\BookInlineCode{GATE\ \&\ player.mask\ =\ 0x10} and
+\BookInlineCode{PLAYER\ \&\ gate.mask\ =\ 0x1}; gate/key passes because
+\BookInlineCode{GATE\ \&\ key.mask\ =\ 0x10} and
+\BookInlineCode{KEY\ \&\ gate.mask\ =\ 0x20}. Gate/decoration fails
+because \BookInlineCode{DECOR\ \&\ gate.mask\ =\ 0}, even though
+decoration accepts all categories. Two platform shapes with matching
+group \BookInlineCode{-5} are rejected regardless of masks.
+Player/platform groups \BookInlineCode{-5} and \BookInlineCode{+5}
+differ, so group override does not apply; use both reciprocal mask
+tests. If those bits are set, they pass this filter stage.

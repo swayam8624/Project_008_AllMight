@@ -299,6 +299,13 @@ def check_local_markdown(root, output):
     return errors
 
 
+def edition_files(root):
+    # Finder may create .DS_Store when the user opens the edition folder.
+    # Preserve that metadata; unexpected authored files still require review.
+    return {str(p.relative_to(root)) for p in (root / EDITION).rglob('*')
+            if p.is_file() and p.name != '.DS_Store'}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=Path, default=ROOT)
@@ -311,7 +318,7 @@ def main():
     link_errors = check_local_markdown(args.root, output)
     if link_errors:
         raise ValueError('\n'.join(link_errors))
-    existing = {str(p.relative_to(args.root)) for p in (args.root / EDITION).rglob('*') if p.is_file()}
+    existing = edition_files(args.root)
     extra = sorted(existing - output.keys())
     if extra:
         raise ValueError(f'Unexpected chapter-edition files; inspect rather than delete: {extra}')

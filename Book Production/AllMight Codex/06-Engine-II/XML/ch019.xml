@@ -1,0 +1,1071 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Chapter xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/" id="06-engine-ii-ch043" source="Chapter Edition/03 - Game Engine/43 - Compiling renderer intent into backend work.md">
+<Content aid:pstyle="ChapterHeader" id="06-engine-ii-ch043-compiling-renderer-intent-into-backend-work">43 — Compiling renderer intent into backend work&#13;</Content>
+<Content aid:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#06-engine-ii-ch042">Previous chapter</Link> · <Link href="#06-engine-ii-ch044">Next chapter</Link>&#13;</Content>
+<Content aid:pstyle="Content">A renderer should express what a frame needs before translating it into API-specific commands. This chapter makes the compilation boundary explicit so ordering, resource state, and backend execution can be checked separately.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">By the end:</Strong> Map a render request to backend work while preserving resource dependencies, barriers, and lifetime ownership.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Recall question:</Strong> What logical dependency does this command represent, and where is it enforced in the selected backend?&#13;</Content>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 103799–107024; source-span SHA256 4825e8a42f5356f7c060e728c1c9a7e563f7ac3edfd1255c7f569076609bed16. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<Content aid:pstyle="SubchapterHeader" id="06-engine-ii-ch043-compile-renderer-intent-into-backend-work">Compile renderer intent into backend work&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="06-engine-ii-ch043-m144">+ M144&#13;</Content>
+<Content aid:pstyle="Content">This pass closes <Strong aid:cstyle="Bold">Phase 24</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">The curriculum boundary is exact: <Strong aid:cstyle="Bold">M142 owns 2351–2360</Strong>, covering multi-backend motivation, neutral handles/resource descriptions, capability contracts, escape hatches and the failure of lowest-common-denominator abstractions; <Strong aid:cstyle="Bold">M143 owns 2361–2384</Strong>, covering the complete render-graph dependency/lifetime/state model; and <Strong aid:cstyle="Bold">M144 owns 2385–2400</Strong>, covering conversion boundaries, portable scene/material/mesh contracts, shader/layout strategy, Metal↔Vulkan adaptation, reference/backend agreement testing, and native-strength multi-backend design.&#13;</Content>
+<Content aid:pstyle="Content">There are two ideas that dominate everything in this pass:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ab931423159293848cc2e50c.svg" alt="&#10;\boxed{&#10;\text{Share rendering intent, not native API mechanics}&#10;}&#10;" jobId="ab931423159293848cc2e50c" originalTeX="&#10;\boxed{&#10;\text{Share rendering intent, not native API mechanics}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1abff5be5a7455e04d9647c7.svg" alt="&#10;\boxed{&#10;\text{A render graph describes dependencies;&#10;the backend chooses how those dependencies become GPU commands.}&#10;}&#10;" jobId="1abff5be5a7455e04d9647c7" originalTeX="&#10;\boxed{&#10;\text{A render graph describes dependencies;&#10;the backend chooses how those dependencies become GPU commands.}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If you remember those two statements, the entire architecture reconstructs itself.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="06-engine-ii-ch043-multi-backend-renderer-architecture">MULTI-BACKEND RENDERER ARCHITECTURE&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why have multiple rendering backends?</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose your engine supports:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0b20e1228705f77a577572a2.svg" alt="&#10;Metal,\ Vulkan,\ D3D12,\ OpenGL.&#10;" jobId="0b20e1228705f77a577572a2" originalTeX="&#10;Metal,\ Vulkan,\ D3D12,\ OpenGL.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">The naive reaction is:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Write rendering four times.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">That is not what we want.&#13;</Content>
+<Content aid:pstyle="Content">The second naive reaction is:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Build one fake API that looks vaguely like all four.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">That is often even worse.&#13;</Content>
+<Content aid:pstyle="Content">The correct goal is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8193fa8019b6969f001ec879.svg" alt="&#10;\boxed{&#10;\text{one engine rendering model}&#10;}&#10;" jobId="8193fa8019b6969f001ec879" originalTeX="&#10;\boxed{&#10;\text{one engine rendering model}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">with:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/150ebae10f79de5d63182350.svg" alt="&#10;\boxed{&#10;\text{multiple native execution implementations}.&#10;}&#10;" jobId="150ebae10f79de5d63182350" originalTeX="&#10;\boxed{&#10;\text{multiple native execution implementations}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">The engine should agree on things such as:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ddd136d64689963eae83b7cf.svg" alt="&#10;\text{mesh},&#10;" jobId="ddd136d64689963eae83b7cf" originalTeX="&#10;\text{mesh},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/70484d271aa6d459f7b335a6.svg" alt="&#10;\text{material},&#10;" jobId="70484d271aa6d459f7b335a6" originalTeX="&#10;\text{material},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/087aee0d273a518ad8cacfb6.svg" alt="&#10;\text{light},&#10;" jobId="087aee0d273a518ad8cacfb6" originalTeX="&#10;\text{light},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9d7fa74cbbf98a373a07c060.svg" alt="&#10;\text{render pass intent},&#10;" jobId="9d7fa74cbbf98a373a07c060" originalTeX="&#10;\text{render pass intent},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/05ec509bf898f678fb217ee4.svg" alt="&#10;\text{resource usage},&#10;" jobId="05ec509bf898f678fb217ee4" originalTeX="&#10;\text{resource usage},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6a6ed2f0b16ca2b35505ec89.svg" alt="&#10;\text{camera}.&#10;" jobId="6a6ed2f0b16ca2b35505ec89" originalTeX="&#10;\text{camera}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">It should not pretend these are universal:&#13;</Content>
+<Code aid:pstyle="Code" language="text">VkDescriptorSet&#10;MTLArgumentBuffer&#10;ID3D12DescriptorHeap&#10;OpenGL texture unit&#13;</Code>
+<Content aid:pstyle="Content">They are implementation mechanisms.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The three-layer renderer</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A good architecture is:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Engine / Scene&#10;      ↓&#10;Renderer-neutral intent&#10;      ↓&#10;Backend implementation&#10;      ↓&#10;Metal / Vulkan / D3D12 / ...&#13;</Code>
+<Content aid:pstyle="Content">For example:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">MeshDraw draw;&#10;draw.Mesh = meshHandle;&#10;draw.Model = worldTransform;&#10;draw.Material = material;&#13;</Code>
+<Content aid:pstyle="Content">is renderer intent.&#13;</Content>
+<Content aid:pstyle="Content">This:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">vkCmdBindDescriptorSets(...);&#13;</Code>
+<Content aid:pstyle="Content">is Vulkan execution.&#13;</Content>
+<Content aid:pstyle="Content">This:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">encoder-&gt;setFragmentTexture(...);&#13;</Code>
+<Content aid:pstyle="Content">is Metal execution.&#13;</Content>
+<Content aid:pstyle="Content">Do not mix the layers.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kairo is already moving in the right direction</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s public renderer API exposes concepts such as:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Mesh&#10;PBRMaterial&#10;RenderScene&#10;RenderLight&#10;MeshHandle&#10;TextureHandle&#10;ViewportCapture&#13;</Code>
+<Content aid:pstyle="Content">rather than exposing:&#13;</Content>
+<Code aid:pstyle="Code" language="text">VkBuffer&#10;VkImage&#10;MTLBuffer&#10;MTLTexture&#13;</Code>
+<Content aid:pstyle="Content">to ordinary scene code.&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">RendererRuntime</InlineCode> then stores a variant of concrete backend runtimes:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::variant&lt;&#10;    std::unique_ptr&lt;VulkanRendererRuntime&gt;,&#10;    std::unique_ptr&lt;OpenGLRendererRuntime&gt;,&#10;    std::unique_ptr&lt;MetalRendererRuntime&gt;,&#10;    std::unique_ptr&lt;Direct3D12RendererRuntime&gt;&#10;&gt;&#13;</Code>
+<Content aid:pstyle="Content">depending on what is compiled.&#13;</Content>
+<Content aid:pstyle="Content">That is already much closer to the correct architecture than trying to wrap native API calls one-for-one.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Backend selection policy is separate from renderer semantics</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo separates:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/82cd9431150086f895f7cb21.svg" alt="&#10;\text{which backend should I use?}&#10;" jobId="82cd9431150086f895f7cb21" originalTeX="&#10;\text{which backend should I use?}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">from:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5491b1d5e471884b403b7a9c.svg" alt="&#10;\text{how rendering works}.&#10;" jobId="5491b1d5e471884b403b7a9c" originalTeX="&#10;\text{how rendering works}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Current native-first policy is approximately:&#13;</Content>
+<Code aid:pstyle="Code" language="text">macOS   → Metal&#10;Windows → D3D12&#10;Linux   → Vulkan&#13;</Code>
+<Content aid:pstyle="Content">with Vulkan/OpenGL fallbacks based on compiled availability.&#13;</Content>
+<Content aid:pstyle="Content">Good.&#13;</Content>
+<Content aid:pstyle="Content">This means application code can request:&#13;</Content>
+<Code aid:pstyle="Code" language="text">auto&#10;metal&#10;vulkan&#10;d3d12&#10;opengl&#13;</Code>
+<Content aid:pstyle="Content">without changing scene extraction.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">backend-neutral resource handles</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Do not let gameplay code keep:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">VkImage image;&#13;</Code>
+<Content aid:pstyle="Content">because now scene code knows Vulkan.&#13;</Content>
+<Content aid:pstyle="Content">Instead:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">TextureHandle texture;&#10;MeshHandle mesh;&#10;BufferHandle buffer;&#13;</Code>
+<Content aid:pstyle="Content">The renderer owns the native resource behind them.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">using TextureHandle =&#10;    std::uint64_t;&#10;&#10;using MeshHandle =&#10;    std::uint64_t;&#13;</Code>
+<Content aid:pstyle="Content">with:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/244e400184625f9baad39da6.svg" alt="&#10;0=\text{invalid}.&#10;" jobId="244e400184625f9baad39da6" originalTeX="&#10;0=\text{invalid}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Simple and effective.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why handles beat native pointers</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose backend changes from Vulkan to Metal.&#13;</Content>
+<Content aid:pstyle="Content">An asset system storing:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">TextureHandle{17}&#13;</Code>
+<Content aid:pstyle="Content">doesn’t care.&#13;</Content>
+<Content aid:pstyle="Content">Backend registry might map:&#13;</Content>
+<Code aid:pstyle="Code" language="text">17&#10;→ VulkanTexture&#13;</Code>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Code aid:pstyle="Code" language="text">17&#10;→ MetalTexture&#13;</Code>
+<Content aid:pstyle="Content">depending on active runtime.&#13;</Content>
+<Content aid:pstyle="Content">The user of the handle sees identity.&#13;</Content>
+<Content aid:pstyle="Content">The backend sees implementation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Raw integer handles have a stale-handle problem</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose resource index 42 is destroyed.&#13;</Content>
+<Content aid:pstyle="Content">Later a new resource receives 42.&#13;</Content>
+<Content aid:pstyle="Content">Old code accidentally still stores:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/51d9e49df1ed00fe0fd77a7c.svg" alt="&#10;42.&#10;" jobId="51d9e49df1ed00fe0fd77a7c" originalTeX="&#10;42.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Now it refers to the new resource.&#13;</Content>
+<Content aid:pstyle="Content">A stronger handle is generational:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct TextureHandle&#10;{&#10;    uint32_t Index;&#10;    uint32_t Generation;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Registry entry:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct TextureEntry&#10;{&#10;    uint32_t Generation;&#10;    NativeTexture Resource;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Validation:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f28b1e0c49ee445dd6fbb0eb.svg" alt="&#10;handle.Generation&#10;=&#10;entry.Generation.&#10;" jobId="f28b1e0c49ee445dd6fbb0eb" originalTeX="&#10;handle.Generation&#10;=&#10;entry.Generation.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If not:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/349eb75fe8449f1a90c02065.svg" alt="&#10;\boxed{\text{stale handle detected}.}&#10;" jobId="349eb75fe8449f1a90c02065" originalTeX="&#10;\boxed{\text{stale handle detected}.}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Handle composition</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A compact 64-bit handle can encode:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5a6d9bdb5c698f6bb39f43d9.svg" alt="&#10;H=&#10;(G&lt;&lt;32)|I.&#10;" jobId="5a6d9bdb5c698f6bb39f43d9" originalTeX="&#10;H=&#10;(G&lt;&lt;32)|I.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">where:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8140c1e98757c926a2f31582.svg" alt="&#10;I=\text{index},&#10;" jobId="8140c1e98757c926a2f31582" originalTeX="&#10;I=\text{index},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9c9da1f04c718de6a36fd716.svg" alt="&#10;G=\text{generation}.&#10;" jobId="9c9da1f04c718de6a36fd716" originalTeX="&#10;G=\text{generation}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Recover:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f1dbead9a74328c7eb301d70.svg" alt="&#10;I=H\&amp;0xffffffff,&#10;" jobId="f1dbead9a74328c7eb301d70" originalTeX="&#10;I=H\&amp;0xffffffff,&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/607d31219e5731d116f7d378.svg" alt="&#10;G=H&gt;&gt;32.&#10;" jobId="607d31219e5731d116f7d378" originalTeX="&#10;G=H&gt;&gt;32.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Current Kairo’s plain <InlineCode aid:cstyle="InlineCode">uint64_t</InlineCode> can evolve into this without changing the external storage size.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">RenderGraph handles are already typed</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s render graph uses:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct RenderResourceHandle&#10;{&#10;    uint32_t Value;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct RenderPassHandle&#10;{&#10;    uint32_t Value;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">This prevents accidentally passing a pass handle where a resource handle is expected.&#13;</Content>
+<Content aid:pstyle="Content">Maveb’s render graph goes a little further:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct ResourceHandle&#10;{&#10;    uint32_t index;&#10;    uint32_t generation;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">which adds stale-handle protection.&#13;</Content>
+<Content aid:pstyle="Content">The ideal general resource system combines both ideas:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7afc445bd28d38e3e3a2df63.svg" alt="&#10;\boxed{&#10;\text{typed + generational}.&#10;}&#10;" jobId="7afc445bd28d38e3e3a2df63" originalTeX="&#10;\boxed{&#10;\text{typed + generational}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">backend-neutral buffer descriptions</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A generic buffer description should describe <Strong aid:cstyle="Bold">intent</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">Not:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">VkBufferUsageFlags VulkanUsage;&#13;</Code>
+<Content aid:pstyle="Content">Instead:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">enum class BufferUsage : uint32_t&#10;{&#10;    Vertex   = 1 &lt;&lt; 0,&#10;    Index    = 1 &lt;&lt; 1,&#10;    Uniform  = 1 &lt;&lt; 2,&#10;    Storage  = 1 &lt;&lt; 3,&#10;    Indirect = 1 &lt;&lt; 4,&#10;    CopySrc  = 1 &lt;&lt; 5,&#10;    CopyDst  = 1 &lt;&lt; 6&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct BufferDesc&#10;{&#10;    uint64_t Size;&#10;    BufferUsage Usage;&#10;&#10;    MemoryClass Memory;&#10;&#10;    std::string DebugName;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Memory class should also express intent</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Do not expose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">VK_MEMORY_PROPERTY_HOST_VISIBLE&#13;</Code>
+<Content aid:pstyle="Content">to portable engine code.&#13;</Content>
+<Content aid:pstyle="Content">Use something like:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">enum class MemoryClass&#10;{&#10;    GPUOnly,&#10;    CPUToGPU,&#10;    GPUToCPU&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Backend translates:&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">GPUOnly</InlineCode>:&#13;</Content>
+<Content aid:pstyle="Content">Vulkan:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/871d1ca444001fa585726acd.svg" alt="&#10;DEVICE_LOCAL&#10;" jobId="871d1ca444001fa585726acd" originalTeX="&#10;DEVICE_LOCAL&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Metal:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3319867a8f0d556720d82424.svg" alt="&#10;Private.&#10;" jobId="3319867a8f0d556720d82424" originalTeX="&#10;Private.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">CPUToGPU</InlineCode>:&#13;</Content>
+<Content aid:pstyle="Content">Vulkan:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f374cc06d921df94a24d7846.svg" alt="&#10;HOST_VISIBLE&#10;" jobId="f374cc06d921df94a24d7846" originalTeX="&#10;HOST_VISIBLE&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">plus suitable coherency strategy.&#13;</Content>
+<Content aid:pstyle="Content">Metal:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/469bff5ac82a9dde64f4aa73.svg" alt="&#10;Shared.&#10;" jobId="469bff5ac82a9dde64f4aa73" originalTeX="&#10;Shared.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is semantic translation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Avoid overpromising exact equivalence</Strong>&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">GPUOnly</InlineCode> is not:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">exactly <InlineCode aid:cstyle="InlineCode">Private</InlineCode> and exactly <InlineCode aid:cstyle="InlineCode">DEVICE_LOCAL</InlineCode>.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Those APIs expose different memory models.&#13;</Content>
+<Content aid:pstyle="Content">It means:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/523fc9c998851a1b4654f960.svg" alt="&#10;\boxed{&#10;\text{CPU does not require direct access and GPU performance is preferred}.&#10;}&#10;" jobId="523fc9c998851a1b4654f960" originalTeX="&#10;\boxed{&#10;\text{CPU does not require direct access and GPU performance is preferred}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Backend then chooses best representation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">backend-neutral texture descriptions</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A useful texture description:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct TextureDesc&#10;{&#10;    TextureDimension Dimension;&#10;&#10;    uint32_t Width;&#10;    uint32_t Height;&#10;    uint32_t Depth;&#10;&#10;    uint32_t MipLevels;&#10;    uint32_t ArrayLayers;&#10;    uint32_t Samples;&#10;&#10;    PixelFormat Format;&#10;    TextureUsage Usage;&#10;&#10;    MemoryClass Memory;&#10;&#10;    std::string DebugName;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Again, semantic fields.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Texture usage</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Portable usage might include:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Sampled&#10;Storage&#10;ColorAttachment&#10;DepthAttachment&#10;CopySrc&#10;CopyDst&#10;Presentable&#13;</Code>
+<Content aid:pstyle="Content">Backend conversion:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f10f71f04237b91f37101a13.svg" alt="&#10;Sampled&#10;\rightarrow&#10;VK_IMAGE_USAGE_SAMPLED&#10;" jobId="f10f71f04237b91f37101a13" originalTeX="&#10;Sampled&#10;\rightarrow&#10;VK_IMAGE_USAGE_SAMPLED&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b39831892f92987d9cda33d2.svg" alt="&#10;MTLTextureUsageShaderRead.&#10;" jobId="b39831892f92987d9cda33d2" originalTeX="&#10;MTLTextureUsageShaderRead.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Same intent.&#13;</Content>
+<Content aid:pstyle="Content">Different API flags.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Format abstraction needs discipline</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You can define:&#13;</Content>
+<Code aid:pstyle="Code" language="text">RGBA8_UNorm&#10;RGBA8_sRGB&#10;RGBA16_Float&#10;R32_UInt&#10;D32_Float&#13;</Code>
+<Content aid:pstyle="Content">But never invent a portable format unless you know how all target backends support it.&#13;</Content>
+<Content aid:pstyle="Content">Backend capability query should answer:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/77f49bfa786e3f83f4bf669e.svg" alt="&#10;SupportsFormat(&#10;format,&#10;usage).&#10;" jobId="77f49bfa786e3f83f4bf669e" originalTeX="&#10;SupportsFormat(&#10;format,&#10;usage).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For example, a format might support shader sampling but not rendering on one device.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">sampler descriptions</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Portable sampler:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct SamplerDesc&#10;{&#10;    Filter Min;&#10;    Filter Mag;&#10;    Filter Mip;&#10;&#10;    AddressMode U;&#10;    AddressMode V;&#10;    AddressMode W;&#10;&#10;    float MaxAnisotropy;&#10;&#10;    CompareFunction Comparison;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Maps naturally to both Vulkan and Metal.&#13;</Content>
+<Content aid:pstyle="Content">Kairo currently exposes only authored U/V addressing in its public <InlineCode aid:cstyle="InlineCode">TextureSampler</InlineCode>, while filtering remains linear by policy.&#13;</Content>
+<Content aid:pstyle="Content">That is perfectly reasonable for its current asset/material scope.&#13;</Content>
+<Content aid:pstyle="Content">A generic RHI sampler description would be broader.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">backend-neutral pipeline descriptions</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This becomes trickier.&#13;</Content>
+<Content aid:pstyle="Content">A neutral graphics pipeline might describe:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct GraphicsPipelineDesc&#10;{&#10;    ShaderHandle Vertex;&#10;    ShaderHandle Fragment;&#10;&#10;    VertexLayout VertexInput;&#10;&#10;    PrimitiveTopology Topology;&#10;&#10;    RasterState Raster;&#10;    DepthStencilState DepthStencil;&#10;    BlendState Blend;&#10;&#10;    std::vector&lt;PixelFormat&gt;&#10;        ColorFormats;&#10;&#10;    PixelFormat DepthFormat;&#10;&#10;    uint32_t SampleCount;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">This works because these are rendering semantics.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Do not try to normalize everything</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Metal can dynamically change states that Vulkan may traditionally bake into a pipeline.&#13;</Content>
+<Content aid:pstyle="Content">Vulkan may support dynamic rendering.&#13;</Content>
+<Content aid:pstyle="Content">Metal has tile-specific capabilities.&#13;</Content>
+<Content aid:pstyle="Content">D3D12 has root signatures.&#13;</Content>
+<Content aid:pstyle="Content">So pipeline description should describe:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1a3d57aff16f06058f69e152.svg" alt="&#10;\boxed{\text{what the engine wants}}&#10;" jobId="1a3d57aff16f06058f69e152" originalTeX="&#10;\boxed{\text{what the engine wants}}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">without pretending the compiled backend pipeline object has identical structure.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Pipeline cache key</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A pipeline descriptor naturally becomes a cache key:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/40587dc62968fbf5e50e9b37.svg" alt="&#10;K=&#10;hash(&#10;shaders,&#10;formats,&#10;vertexLayout,&#10;raster,&#10;depth,&#10;blend,&#10;samples&#10;).&#10;" jobId="40587dc62968fbf5e50e9b37" originalTeX="&#10;K=&#10;hash(&#10;shaders,&#10;formats,&#10;vertexLayout,&#10;raster,&#10;depth,&#10;blend,&#10;samples&#10;).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Backend:&#13;</Content>
+<Code aid:pstyle="Code" language="text">K → native pipeline object&#13;</Code>
+<Content aid:pstyle="Content">This avoids recompiling equivalent states.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">capability queries, not assumptions</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Never do:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">if (backend == Metal)&#10;    assumeRayTracing = true;&#13;</Code>
+<Content aid:pstyle="Content">Instead:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">RendererCapabilities caps =&#10;    renderer.Capabilities();&#13;</Code>
+<Content aid:pstyle="Content">perhaps:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct RendererCapabilities&#10;{&#10;    bool RayTracing;&#10;    bool MeshShaders;&#10;    bool BindlessTextures;&#10;    bool AsyncCompute;&#10;    bool MemorylessAttachments;&#10;    bool TimelineSynchronization;&#10;&#10;    uint32_t MaxColorAttachments;&#10;    uint32_t MaxTextureDimension2D;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Capability is device-level, not merely API-level</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Vulkan supports ray tracing extensions.&#13;</Content>
+<Content aid:pstyle="Content">That does not imply every Vulkan GPU supports them.&#13;</Content>
+<Content aid:pstyle="Content">Metal exposes ray tracing capabilities.&#13;</Content>
+<Content aid:pstyle="Content">That does not imply every Metal device supports them.&#13;</Content>
+<Content aid:pstyle="Content">Therefore:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9d96b8ad075b92db0baae046.svg" alt="&#10;\boxed{&#10;FeatureAvailable&#10;=&#10;BackendSupports&#10;\land&#10;DeviceSupports.&#10;}&#10;" jobId="9d96b8ad075b92db0baae046" originalTeX="&#10;\boxed{&#10;FeatureAvailable&#10;=&#10;BackendSupports&#10;\land&#10;DeviceSupports.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Maveb already follows this pattern</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Its Metal capability inspection asks the actual device:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5f7beef85219362f325d9dd2.svg" alt="&#10;supportsFamily(...)&#10;" jobId="5f7beef85219362f325d9dd2" originalTeX="&#10;supportsFamily(...)&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4acd840f6ac821bb4b6e027a.svg" alt="&#10;supportsRaytracing()&#10;" jobId="4acd840f6ac821bb4b6e027a" originalTeX="&#10;supportsRaytracing()&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e622abb061f6e91099e1ae68.svg" alt="&#10;supportsDynamicLibraries().&#10;" jobId="e622abb061f6e91099e1ae68" originalTeX="&#10;supportsDynamicLibraries().&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is exactly the correct philosophy.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s current neutral backend query is more focused on:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a08e692e7c140fcbe179a9b8.svg" alt="&#10;\text{compiled backend availability}&#10;" jobId="a08e692e7c140fcbe179a9b8" originalTeX="&#10;\text{compiled backend availability}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">than detailed GPU feature capabilities.&#13;</Content>
+<Content aid:pstyle="Content">A future neutral capability object would complement it.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">feature-level contracts</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A single boolean such as:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">SupportsRenderer = true;&#13;</Code>
+<Content aid:pstyle="Content">is too vague.&#13;</Content>
+<Content aid:pstyle="Content">Define feature contracts.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">CoreRaster&#10;    sampled textures&#10;    depth&#10;    MRT&#10;    indexed draws&#10;&#10;AdvancedRaster&#10;    indirect draws&#10;    storage buffers&#10;&#10;Bindless&#10;    large resource arrays&#10;    nonuniform indexing&#10;&#10;AsyncCompute&#10;    independent compute scheduling&#10;&#10;RayTracing&#10;    acceleration structures&#10;    ray queries/pipelines&#13;</Code>
+<Content aid:pstyle="Content">Then renderer paths can require:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2e3e6a31c9a253895ff2731f.svg" alt="&#10;FeatureLevel\ge X&#10;" jobId="2e3e6a31c9a253895ff2731f" originalTeX="&#10;FeatureLevel\ge X&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">or test individual contracts.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Graceful feature selection</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose clustered forward renderer needs compute + storage buffers.&#13;</Content>
+<Content aid:pstyle="Content">If unavailable:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/af3c9c2fad423ad10570c69d.svg" alt="&#10;\boxed{&#10;\text{fall back to CPU light lists}&#10;}&#10;" jobId="af3c9c2fad423ad10570c69d" originalTeX="&#10;\boxed{&#10;\text{fall back to CPU light lists}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">rather than:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Vulkan failed.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Similarly:&#13;</Content>
+<Content aid:pstyle="Content">Ray-traced reflections unavailable:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/78b3d2e79cecb9522df3d9e7.svg" alt="&#10;SSR\rightarrow probe\ reflection.&#10;" jobId="78b3d2e79cecb9522df3d9e7" originalTeX="&#10;SSR\rightarrow probe\ reflection.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Feature contracts allow real fallback design.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">backend-specific escape hatches</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A portable renderer eventually needs native integration.&#13;</Content>
+<Content aid:pstyle="Content">Examples:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">Dear ImGui Metal backend needs <InlineCode aid:cstyle="InlineCode">MTLDevice</InlineCode>,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">Vulkan tooling needs render pass/device/queue,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">platform capture may need native texture,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">video encoder may consume Metal texture directly.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">The answer is not:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">expose native handles everywhere.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">The answer is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b33edb2963e315c517c05f0e.svg" alt="&#10;\boxed{&#10;\text{explicit, narrow escape hatch}.&#10;}&#10;" jobId="b33edb2963e315c517c05f0e" originalTeX="&#10;\boxed{&#10;\text{explicit, narrow escape hatch}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kairo already does this well</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Ordinary rendering uses neutral API.&#13;</Content>
+<Content aid:pstyle="Content">Tooling-specific accessors expose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">VulkanBackendContext&#10;MetalBackendContext&#10;Direct3D12BackendContext&#13;</Code>
+<Content aid:pstyle="Content">and viewport textures.&#13;</Content>
+<Content aid:pstyle="Content">Metal viewport identity is exposed as erased:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">void* Texture;&#13;</Code>
+<Content aid:pstyle="Content">with documentation that clients must treat it as borrowed and not retain/release it.&#13;</Content>
+<Content aid:pstyle="Content">This is exactly what an escape hatch should look like:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/adc78fb3dc0d48e485bd5f80.svg" alt="&#10;\boxed{&#10;\text{localized + explicit + non-portable by construction}.&#10;}&#10;" jobId="adc78fb3dc0d48e485bd5f80" originalTeX="&#10;\boxed{&#10;\text{localized + explicit + non-portable by construction}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Escape hatch should advertise danger</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For example:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">NativeMetalContext&amp;&#10;GetNativeMetalContext();&#13;</Code>
+<Content aid:pstyle="Content">should exist only in platform/tooling code.&#13;</Content>
+<Content aid:pstyle="Content">Not:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">renderer.GetNativeHandle()&#13;</Code>
+<Content aid:pstyle="Content">called throughout gameplay.&#13;</Content>
+<Content aid:pstyle="Content">One possible policy:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">if (renderer.Backend()&#10;    != GraphicsBackend::Metal)&#10;{&#10;    throw ...&#10;}&#13;</Code>
+<Content aid:pstyle="Content">so misuse fails immediately.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">why lowest-common-denominator abstractions fail</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose your neutral API only supports what OpenGL 3, Vulkan, Metal and D3D12 all expose identically.&#13;</Content>
+<Content aid:pstyle="Content">You may end up with:&#13;</Content>
+<Code aid:pstyle="Code" language="text">draw&#10;texture&#10;vertex buffer&#10;uniform&#13;</Code>
+<Content aid:pstyle="Content">and lose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">argument buffers&#10;descriptor indexing&#10;mesh shaders&#10;ray tracing&#10;memoryless attachments&#10;timeline synchronization&#10;explicit heaps&#10;async compute&#10;subpass/tile features&#13;</Code>
+<Content aid:pstyle="Content">Congratulations—you built a modern engine that behaves like an old API.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Correct abstraction principle</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Do not define:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e2ac28c0edf4367336e52525.svg" alt="&#10;\boxed{&#10;Capabilities=&#10;intersection(&#10;Metal,&#10;Vulkan,&#10;D3D12,&#10;OpenGL).&#10;}&#10;" jobId="e2ac28c0edf4367336e52525" originalTeX="&#10;\boxed{&#10;Capabilities=&#10;intersection(&#10;Metal,&#10;Vulkan,&#10;D3D12,&#10;OpenGL).&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Instead:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/23746ff76e5beb76fe6c627c.svg" alt="&#10;\boxed{&#10;CoreIntent&#10;+&#10;CapabilityQueries&#10;+&#10;OptionalFeatureInterfaces&#10;+&#10;NativeEscapeHatches.&#10;}&#10;" jobId="23746ff76e5beb76fe6c627c" originalTeX="&#10;\boxed{&#10;CoreIntent&#10;+&#10;CapabilityQueries&#10;+&#10;OptionalFeatureInterfaces&#10;+&#10;NativeEscapeHatches.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That lets common code remain common while backends remain strong.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Portable does not mean identical</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A good abstraction says:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Render this HDR scene with depth and shadowing.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">A bad abstraction says:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Every backend must implement a pretend <InlineCode aid:cstyle="InlineCode">PipelineBarrier()</InlineCode> with exactly Vulkan semantics.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Metal does not need to become Vulkan.&#13;</Content>
+<Content aid:pstyle="Content">Vulkan does not need to become Metal.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="06-engine-ii-ch043-complete-render-graph">COMPLETE RENDER GRAPH&#13;</Content>
+<Content aid:pstyle="Content">Now we move to one of the most important engine systems in the entire curriculum.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">render-graph motivation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A traditional renderer manually says:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Create ShadowTexture&#10;&#10;ShadowPass()&#10;Barrier()&#10;&#10;GeometryPass()&#10;Barrier()&#10;&#10;TAA()&#10;Barrier()&#10;&#10;Bloom()&#10;Barrier()&#10;&#10;Present()&#13;</Code>
+<Content aid:pstyle="Content">Problems emerge as passes increase.&#13;</Content>
+<Content aid:pstyle="Content">Which pass owns resource?&#13;</Content>
+<Content aid:pstyle="Content">Who last wrote it?&#13;</Content>
+<Content aid:pstyle="Content">Is it still needed?&#13;</Content>
+<Content aid:pstyle="Content">Can two textures reuse memory?&#13;</Content>
+<Content aid:pstyle="Content">Did we forget a barrier?&#13;</Content>
+<Content aid:pstyle="Content">Can this pass be culled?&#13;</Content>
+<Content aid:pstyle="Content">Can compute overlap graphics?&#13;</Content>
+<Content aid:pstyle="Content">A render graph makes those relationships explicit.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Render graph as a mathematical graph</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Define:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/59fff6047605f69a23fb2cdc.svg" alt="&#10;G=(V,E)&#10;" jobId="59fff6047605f69a23fb2cdc" originalTeX="&#10;G=(V,E)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">where vertices:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c8a306db448de36ae2a6c745.svg" alt="&#10;V=&#10;\text{render passes}.&#10;" jobId="c8a306db448de36ae2a6c745" originalTeX="&#10;V=&#10;\text{render passes}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Directed edge:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e7d1bf097b8745dc3cde58cc.svg" alt="&#10;A\rightarrow B&#10;" jobId="e7d1bf097b8745dc3cde58cc" originalTeX="&#10;A\rightarrow B&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">means:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a3abd9ce41632899d44901e5.svg" alt="&#10;\boxed{&#10;B\text{ depends on }A.&#10;}&#10;" jobId="a3abd9ce41632899d44901e5" originalTeX="&#10;\boxed{&#10;B\text{ depends on }A.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For valid execution:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/75bdc1496170e92ddf3e4322.svg" alt="&#10;G&#10;" jobId="75bdc1496170e92ddf3e4322" originalTeX="&#10;G&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">should be a DAG:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fc56e72461556d9819d0815b.svg" alt="&#10;\boxed{&#10;\text{Directed Acyclic Graph}.&#10;}&#10;" jobId="fc56e72461556d9819d0815b" originalTeX="&#10;\boxed{&#10;\text{Directed Acyclic Graph}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then topological sorting yields legal execution order.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Resource graph interpretation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You can also think bipartitely:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Pass A&#10;   ↓ writes&#10;Resource X&#10;   ↓ read by&#10;Pass B&#13;</Code>
+<Content aid:pstyle="Content">The engine usually compiles resource accesses into pass-to-pass dependency edges.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">pass nodes</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A pass should declare intent.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">graph.AddPass(&#10;    "Lighting",&#10;    {&#10;        Read(gbufferNormal,&#10;             ShaderRead),&#10;&#10;        Read(gbufferDepth,&#10;             ShaderRead),&#10;&#10;        Write(hdrColor,&#10;              ColorAttachment)&#10;    },&#10;    [] {&#10;        EncodeLighting();&#10;    });&#13;</Code>
+<Content aid:pstyle="Content">Pass declaration should separate:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a6bfa7d9c5f01db69cc45fbf.svg" alt="&#10;\boxed{&#10;\text{dependency description}&#10;}&#10;" jobId="a6bfa7d9c5f01db69cc45fbf" originalTeX="&#10;\boxed{&#10;\text{dependency description}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">from:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/98e4daf0dbbf0b9d6f1ba413.svg" alt="&#10;\boxed{&#10;\text{execution callback}.&#10;}&#10;" jobId="98e4daf0dbbf0b9d6f1ba413" originalTeX="&#10;\boxed{&#10;\text{execution callback}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is exactly what current Kairo graph does.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo pass object</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Each pass stores:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Name&#10;Accesses&#10;Dependencies&#10;Execute&#13;</Code>
+<Content aid:pstyle="Content">and every access stores:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Resource&#10;Mode&#10;State&#13;</Code>
+<Content aid:pstyle="Content">with mode:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fe3165a1425dfde13301dd58.svg" alt="&#10;Read,&#10;Write,&#10;ReadWrite.&#10;" jobId="fe3165a1425dfde13301dd58" originalTeX="&#10;Read,&#10;Write,&#10;ReadWrite.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is already a solid minimal model.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">resource nodes</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Resource node represents logical resource, not necessarily immediately allocated native memory.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">RenderResourceDesc&#10;{&#10;    .Name =&#10;        "Scene HDR",&#10;&#10;    .Kind =&#10;        Texture,&#10;&#10;    .EstimatedBytes =&#10;        1920*1080*8,&#10;&#10;    .Transient =&#10;        true,&#10;&#10;    .InitialState =&#10;        Undefined&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Logical identity exists before physical allocation decision.&#13;</Content>
+<Content aid:pstyle="Content">That is critical.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Logical versus physical resource</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Logical:&#13;</Content>
+<Code aid:pstyle="Code" language="text">BloomHalf&#13;</Code>
+<Content aid:pstyle="Content">means:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">pass graph’s half-resolution bloom intermediate.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Physical resource may be:&#13;</Content>
+<Code aid:pstyle="Code" language="text">VkImage #41&#13;</Code>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Code aid:pstyle="Code" language="text">MTLTexture from transient heap slot 3.&#13;</Code>
+<Content aid:pstyle="Content">Logical resource survives backend abstraction.&#13;</Content>
+<Content aid:pstyle="Content">Physical object does not.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">declaring reads</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose pass reads texture:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/841d637d5f268e4d14a96483.svg" alt="&#10;R.&#10;" jobId="841d637d5f268e4d14a96483" originalTeX="&#10;R.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Declaration:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">{&#10;    R,&#10;    RenderAccessMode::Read,&#10;    RenderResourceState::ShaderRead&#10;}&#13;</Code>
+<Content aid:pstyle="Content">This communicates:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c45684a46e91f00d92241263.svg" alt="&#10;\boxed{&#10;\text{pass requires value produced earlier}.&#10;}&#10;" jobId="c45684a46e91f00d92241263" originalTeX="&#10;\boxed{&#10;\text{pass requires value produced earlier}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Compiler can now establish RAW dependency.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Read-before-write validation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For transient resource whose initial state is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e937a34dd44a94bcb3af32b1.svg" alt="&#10;Undefined,&#10;" jobId="e937a34dd44a94bcb3af32b1" originalTeX="&#10;Undefined,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">reading before first write is invalid.&#13;</Content>
+<Content aid:pstyle="Content">Kairo explicitly detects this and throws.&#13;</Content>
+<Content aid:pstyle="Content">This is powerful because a runtime black-screen bug becomes a graph compile error:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Resource 'History' is read before its first write.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">writes</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Write declaration:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">{&#10;    hdr,&#10;    Write,&#10;    ColorAttachment&#10;}&#13;</Code>
+<Content aid:pstyle="Content">means pass produces a new value.&#13;</Content>
+<Content aid:pstyle="Content">Writes matter because all prior accesses may have to finish.&#13;</Content>
+<Content aid:pstyle="Content">If previous writer exists:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/166b3b08235a6509a287969a.svg" alt="&#10;WAW.&#10;" jobId="166b3b08235a6509a287969a" originalTeX="&#10;WAW.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If readers exist:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/92c023b4b5d93c5f0c1af8f0.svg" alt="&#10;WAR.&#10;" jobId="92c023b4b5d93c5f0c1af8f0" originalTeX="&#10;WAR.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Both create ordering requirements.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Hazard dependency construction</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For every resource track:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ba0b75adeab48a828d3dc869.svg" alt="&#10;lastWriter&#10;" jobId="ba0b75adeab48a828d3dc869" originalTeX="&#10;lastWriter&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/97ef4862a4fcb2d7cc0025f3.svg" alt="&#10;activeReaders.&#10;" jobId="97ef4862a4fcb2d7cc0025f3" originalTeX="&#10;activeReaders.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">On read:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f990805a31765e9573112a69.svg" alt="&#10;lastWriter&#10;\rightarrow&#10;currentRead.&#10;" jobId="f990805a31765e9573112a69" originalTeX="&#10;lastWriter&#10;\rightarrow&#10;currentRead.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">On write:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/49e4b4e22cf51ba531221eec.svg" alt="&#10;lastWriter&#10;\rightarrow&#10;currentWrite&#10;" jobId="49e4b4e22cf51ba531221eec" originalTeX="&#10;lastWriter&#10;\rightarrow&#10;currentWrite&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/18c77bca2edc3167753f0bd1.svg" alt="&#10;reader_i&#10;\rightarrow&#10;currentWrite&#10;\quad\forall i.&#10;" jobId="18c77bca2edc3167753f0bd1" originalTeX="&#10;reader_i&#10;\rightarrow&#10;currentWrite&#10;\quad\forall i.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/23954c8ac78b033c66542a92.svg" alt="&#10;activeReaders=\emptyset,&#10;" jobId="23954c8ac78b033c66542a92" originalTeX="&#10;activeReaders=\emptyset,&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cb91219ed0fe70b7744724ce.svg" alt="&#10;lastWriter=currentWrite.&#10;" jobId="cb91219ed0fe70b7744724ce" originalTeX="&#10;lastWriter=currentWrite.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Current Kairo does exactly this.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why two readers need no edge</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Pass A reads X&#10;Pass B reads X&#13;</Code>
+<Content aid:pstyle="Content">neither mutates X.&#13;</Content>
+<Content aid:pstyle="Content">Therefore:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3b04122b7328bdf5ea92c478.svg" alt="&#10;A&#10;\not\rightarrow&#10;B&#10;" jobId="3b04122b7328bdf5ea92c478" originalTeX="&#10;A&#10;\not\rightarrow&#10;B&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3d1c6e0bc3d76aa20730c8eb.svg" alt="&#10;B&#10;\not\rightarrow&#10;A.&#10;" jobId="3d1c6e0bc3d76aa20730c8eb" originalTeX="&#10;B&#10;\not\rightarrow&#10;A.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">They may be reordered or potentially overlap.&#13;</Content>
+<Content aid:pstyle="Content">This is how graphs expose parallelism.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">dependency building</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Consider:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Shadow writes ShadowMap&#10;&#10;Geometry reads ShadowMap&#10;         writes HDR&#10;&#10;Bloom reads HDR&#10;      writes Bloom&#10;&#10;Present reads HDR and Bloom&#13;</Code>
+<Content aid:pstyle="Content">Edges:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/73e7b1bb57421a278f6db5ef.svg" alt="&#10;Shadow\rightarrow Geometry&#10;" jobId="73e7b1bb57421a278f6db5ef" originalTeX="&#10;Shadow\rightarrow Geometry&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6363ff80d7d1eb63be8a4c6f.svg" alt="&#10;Geometry\rightarrow Bloom&#10;" jobId="6363ff80d7d1eb63be8a4c6f" originalTeX="&#10;Geometry\rightarrow Bloom&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/58b746ed6da02ddc7c7d2db0.svg" alt="&#10;Geometry\rightarrow Present&#10;" jobId="58b746ed6da02ddc7c7d2db0" originalTeX="&#10;Geometry\rightarrow Present&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/95721d62191459142bc1d97a.svg" alt="&#10;Bloom\rightarrow Present.&#10;" jobId="95721d62191459142bc1d97a" originalTeX="&#10;Bloom\rightarrow Present.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">The graph does not need hardcoded pass order.&#13;</Content>
+<Content aid:pstyle="Content">Dependencies derive order.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Explicit dependencies still matter</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Some dependencies do not arise from resource hazards.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">GPU timestamp reset&#10;must happen before&#10;profiling pass&#13;</Code>
+<Content aid:pstyle="Content">or API lifecycle:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Acquire&#10;→&#10;Record&#10;→&#10;Submit&#10;→&#10;Present.&#13;</Code>
+<Content aid:pstyle="Content">Kairo provides:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">DependsOn(pass,&#10;          dependency);&#13;</Code>
+<Content aid:pstyle="Content">for these.&#13;</Content>
+<Content aid:pstyle="Content">Its Vulkan frame graph currently uses explicit dependencies for lifecycle ordering.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">cycle detection</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Invalid:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e7d1bf097b8745dc3cde58cc.svg" alt="&#10;A\rightarrow B&#10;" jobId="e7d1bf097b8745dc3cde58cc" originalTeX="&#10;A\rightarrow B&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f4c688b2cef28d2aceaa4d06.svg" alt="&#10;B\rightarrow A.&#10;" jobId="f4c688b2cef28d2aceaa4d06" originalTeX="&#10;B\rightarrow A.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">No valid execution order exists.&#13;</Content>
+<Content aid:pstyle="Content">Kairo uses Kahn-style topological sorting.&#13;</Content>
+<Content aid:pstyle="Content">If sorted pass count:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c644cccfb8a5e42ef36cc9ec.svg" alt="&#10;|O|&#10;" jobId="c644cccfb8a5e42ef36cc9ec" originalTeX="&#10;|O|&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">is not:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b9fab6b7109e3ff2521d88f5.svg" alt="&#10;|V|,&#10;" jobId="b9fab6b7109e3ff2521d88f5" originalTeX="&#10;|V|,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">there is a cycle.&#13;</Content>
+<Content aid:pstyle="Content">Formally:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0c53a1590f9077113f3207a7.svg" alt="&#10;\boxed{&#10;|TopologicalOrder|&lt;|V|&#10;\Rightarrow&#10;cycle.&#10;}&#10;" jobId="0c53a1590f9077113f3207a7" originalTeX="&#10;\boxed{&#10;|TopologicalOrder|&lt;|V|&#10;\Rightarrow&#10;cycle.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kahn algorithm</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Compute indegree:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/adc277756f79b6773b0d8147.svg" alt="&#10;deg^{-}(v).&#10;" jobId="adc277756f79b6773b0d8147" originalTeX="&#10;deg^{-}(v).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Put every zero-indegree node in ready set.&#13;</Content>
+<Content aid:pstyle="Content">Repeatedly:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0fe0e547bd17f2ab4fb2f8e2.svg" alt="&#10;v=popReady()&#10;" jobId="0fe0e547bd17f2ab4fb2f8e2" originalTeX="&#10;v=popReady()&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">append to order.&#13;</Content>
+<Content aid:pstyle="Content">For every outgoing edge:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e93c1be1afd8499cfb0dc050.svg" alt="&#10;v\rightarrow u&#10;" jobId="e93c1be1afd8499cfb0dc050" originalTeX="&#10;v\rightarrow u&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">decrement:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2835b6624fd8d6e05da83f2d.svg" alt="&#10;deg^{-}(u).&#10;" jobId="2835b6624fd8d6e05da83f2d" originalTeX="&#10;deg^{-}(u).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If it becomes zero:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f907968d69a32fa81261b260.svg" alt="&#10;push(u).&#10;" jobId="f907968d69a32fa81261b260" originalTeX="&#10;push(u).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">At end compare size.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kairo makes topological order deterministic</Strong>&#13;</Content>
+<Content aid:pstyle="Content">It uses a priority queue ordered by pass index.&#13;</Content>
+<Content aid:pstyle="Content">Therefore if multiple passes are valid simultaneously, lower declared index wins.&#13;</Content>
+<Content aid:pstyle="Content">That is useful for:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">reproducible testing,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">deterministic captures,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">stable debugging.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Random legal schedules are technically correct but terrible for reproducibility.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">topological sorting</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Graph:&#13;</Content>
+<Code aid:pstyle="Code" language="text">      A&#10;     / \&#10;    B   C&#10;     \ /&#10;      D&#13;</Code>
+<Content aid:pstyle="Content">Valid orders:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A B C D&#10;A C B D&#13;</Code>
+<Content aid:pstyle="Content">Both correct.&#13;</Content>
+<Content aid:pstyle="Content">Topological order represents one linearization of a partial order.&#13;</Content>
+<Content aid:pstyle="Content">This distinction becomes important for async queues later.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">execution ordering</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Compiled graph should be immutable during execution.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo compiles:&#13;</Content>
+<Code aid:pstyle="Code" language="text">resource descriptions&#10;ordered passes&#10;transitions&#10;lifetimes&#10;alias slots&#13;</Code>
+<Content aid:pstyle="Content">then <InlineCode aid:cstyle="InlineCode">Execute()</InlineCode> walks passes in order.&#13;</Content>
+<Content aid:pstyle="Content">Before each callback:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">ApplyTransitions(...)&#13;</Code>
+<Content aid:pstyle="Content">may translate graph state transitions into native backend barriers.&#13;</Content>
+<Content aid:pstyle="Content">This is an excellent separation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Compilation versus execution</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Compile phase performs expensive reasoning:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b862c5560e50a4aba9ffc15e.svg" alt="&#10;dependencies,&#10;cycles,&#10;lifetimes,&#10;aliasing,&#10;transitions.&#10;" jobId="b862c5560e50a4aba9ffc15e" originalTeX="&#10;dependencies,&#10;cycles,&#10;lifetimes,&#10;aliasing,&#10;transitions.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Execution phase should be simple:&#13;</Content>
+<Code aid:pstyle="Code" language="text">for pass in compiledOrder:&#10;    apply inferred native state changes&#10;    execute pass callback&#13;</Code>
+<Content aid:pstyle="Content">This minimizes per-frame logic.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Static versus dynamic graph</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Some engines rebuild graph every frame.&#13;</Content>
+<Content aid:pstyle="Content">Others compile stable topology and only update runtime values.&#13;</Content>
+<Content aid:pstyle="Content">If topology is stable:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e6f6d1fad1150799ac753d42.svg" alt="&#10;\boxed{&#10;\text{cache compiled graph}.&#10;}&#10;" jobId="e6f6d1fad1150799ac753d42" originalTeX="&#10;\boxed{&#10;\text{cache compiled graph}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If feature toggles alter pass set, rebuild when configuration changes.&#13;</Content>
+<Content aid:pstyle="Content">The right balance depends on renderer architecture.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">resource lifetime intervals</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If resource first appears at pass:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c9bb6c8e0a3c6b6b7f36ab38.svg" alt="&#10;f&#10;" jobId="c9bb6c8e0a3c6b6b7f36ab38" originalTeX="&#10;f&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and last appears at:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/128a88e016f2b3493c67a438.svg" alt="&#10;l,&#10;" jobId="128a88e016f2b3493c67a438" originalTeX="&#10;l,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">its logical lifetime is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/55825ef3ed0b0f8759a3ad0a.svg" alt="&#10;\boxed{&#10;[f,l].&#10;}&#10;" jobId="55825ef3ed0b0f8759a3ad0a" originalTeX="&#10;\boxed{&#10;[f,l].&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Pass 0: write A&#10;Pass 1: read A&#10;Pass 2: read A&#13;</Code>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/16bf8670b703a93a6f1e2389.svg" alt="&#10;A=[0,2].&#10;" jobId="16bf8670b703a93a6f1e2389" originalTeX="&#10;A=[0,2].&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">first and last use</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo scans compiled execution order.&#13;</Content>
+<Content aid:pstyle="Content">For first encounter:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fa30bd0a80b63465876f8e61.svg" alt="&#10;FirstPass=position.&#10;" jobId="fa30bd0a80b63465876f8e61" originalTeX="&#10;FirstPass=position.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Every encounter updates:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/64c928c91088401f9703d39a.svg" alt="&#10;LastPass=position.&#10;" jobId="64c928c91088401f9703d39a" originalTeX="&#10;LastPass=position.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That gives interval.&#13;</Content>
+<Content aid:pstyle="Content">This is exactly the information required for transient aliasing.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why declaration order is not lifetime order</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Imagine pass declarations:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A&#10;B&#10;C&#13;</Code>
+<Content aid:pstyle="Content">but dependency sort gives:&#13;</Content>
+<Code aid:pstyle="Code" language="text">B&#10;A&#10;C.&#13;</Code>
+<Content aid:pstyle="Content">Lifetime must use <Strong aid:cstyle="Bold">compiled order</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">Kairo correctly computes lifetimes after topological sorting.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">transient-resource allocation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Transient resource exists only for frame/pass graph.&#13;</Content>
+<Content aid:pstyle="Content">Examples:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Bloom temporary&#10;G-buffer intermediate&#10;SSR ray buffer&#10;post-process scratch&#10;temporary compute histogram&#13;</Code>
+<Content aid:pstyle="Content">You do not necessarily need one physical allocation for every logical transient.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Naive memory</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fd998ac07a1156601514e85b.svg" alt="&#10;R_1=16MB,&#10;R_2=16MB,&#10;R_3=16MB.&#10;" jobId="fd998ac07a1156601514e85b" originalTeX="&#10;R_1=16MB,&#10;R_2=16MB,&#10;R_3=16MB.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Naive:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b0b16754d33373b75ab78e28.svg" alt="&#10;M=48MB.&#10;" jobId="b0b16754d33373b75ab78e28" originalTeX="&#10;M=48MB.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">But if their lifetimes do not overlap:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9d6a900d75587f91aea4b6a8.svg" alt="&#10;R_1:[0,1]&#10;" jobId="9d6a900d75587f91aea4b6a8" originalTeX="&#10;R_1:[0,1]&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9580b3ff0e53b8e795993341.svg" alt="&#10;R_2:[2,3]&#10;" jobId="9580b3ff0e53b8e795993341" originalTeX="&#10;R_2:[2,3]&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5841482eb57022559504a897.svg" alt="&#10;R_3:[4,5]&#10;" jobId="5841482eb57022559504a897" originalTeX="&#10;R_3:[4,5]&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">then physical memory can potentially be:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/34c763579113f2d685c8b049.svg" alt="&#10;\boxed{16MB}&#10;" jobId="34c763579113f2d685c8b049" originalTeX="&#10;\boxed{16MB}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">instead.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">aliasing</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Two logical resources may share backing storage if lifetimes don’t overlap.&#13;</Content>
+<Content aid:pstyle="Content">For intervals:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/90792b515c68cfc15ef11385.svg" alt="&#10;A=[a_0,a_1],&#10;" jobId="90792b515c68cfc15ef11385" originalTeX="&#10;A=[a_0,a_1],&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a60e1983f07796e5f008b6bd.svg" alt="&#10;B=[b_0,b_1],&#10;" jobId="a60e1983f07796e5f008b6bd" originalTeX="&#10;B=[b_0,b_1],&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">non-overlap iff:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3331e73c16cde926785e920d.svg" alt="&#10;\boxed{&#10;a_1&lt;b_0&#10;\lor&#10;b_1&lt;a_0.&#10;}&#10;" jobId="3331e73c16cde926785e920d" originalTeX="&#10;\boxed{&#10;a_1&lt;b_0&#10;\lor&#10;b_1&lt;a_0.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Notice strict inequality.&#13;</Content>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f1890a9fd7e63d58ec6d8bc1.svg" alt="&#10;a_1=b_0,&#10;" jobId="f1890a9fd7e63d58ec6d8bc1" originalTeX="&#10;a_1=b_0,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">both are used during same pass index.&#13;</Content>
+<Content aid:pstyle="Content">They cannot blindly alias.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kairo’s alias algorithm</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For each transient sorted by first use, find existing slot where:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/018b3c2102031285deba63b2.svg" alt="&#10;slot.Kind=resource.Kind,&#10;" jobId="018b3c2102031285deba63b2" originalTeX="&#10;slot.Kind=resource.Kind,&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6fa61b0957024075c4668b82.svg" alt="&#10;slot.Capacity\ge resource.Bytes,&#10;" jobId="6fa61b0957024075c4668b82" originalTeX="&#10;slot.Capacity\ge resource.Bytes,&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/610cc4931e53b805059c0bca.svg" alt="&#10;slot.LastPass&lt;resource.FirstPass.&#10;" jobId="610cc4931e53b805059c0bca" originalTeX="&#10;slot.LastPass&lt;resource.FirstPass.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If found, reuse.&#13;</Content>
+<Content aid:pstyle="Content">Otherwise create new slot.&#13;</Content>
+<Content aid:pstyle="Content">This is a greedy interval-coloring-like allocator.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo scale test is good</Strong>&#13;</Content>
+<Content aid:pstyle="Content">It constructs:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/365e7e52c5051b5bce927d10.svg" alt="&#10;256&#10;" jobId="365e7e52c5051b5bce927d10" originalTeX="&#10;256&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">transient textures in a chain.&#13;</Content>
+<Content aid:pstyle="Content">Each overlaps only immediate neighbor.&#13;</Content>
+<Content aid:pstyle="Content">Expected physical slots:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/529a2362acecb1601ec12376.svg" alt="&#10;\le2.&#10;" jobId="529a2362acecb1601ec12376" originalTeX="&#10;\le2.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">The test asserts transient allocation:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/59d31e7cee96c5b1e8c0a552.svg" alt="&#10;\le&#10;2\times4096&#10;" jobId="59d31e7cee96c5b1e8c0a552" originalTeX="&#10;\le&#10;2\times4096&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">rather than:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/32de2440121074f218900053.svg" alt="&#10;256\times4096.&#10;" jobId="32de2440121074f218900053" originalTeX="&#10;256\times4096.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Excellent test of lifetime-based reuse.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">But current alias compatibility is intentionally incomplete</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Today Kairo checks only:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6ad85356d9083f90406c103a.svg" alt="&#10;Kind&#10;" jobId="6ad85356d9083f90406c103a" originalTeX="&#10;Kind&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e2b387696dbba59754c89eae.svg" alt="&#10;EstimatedBytes.&#10;" jobId="e2b387696dbba59754c89eae" originalTeX="&#10;EstimatedBytes.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is not sufficient for production native aliasing.&#13;</Content>
+<Content aid:pstyle="Content">Two textures might differ in:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">format,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">dimensions,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">sample count,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">usage,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">alignment,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">memory class,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">tiling requirements.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Vulkan memory requirements may differ.&#13;</Content>
+<Content aid:pstyle="Content">Metal heap resource-size/alignment requirements may differ.&#13;</Content>
+<Content aid:pstyle="Content">Therefore real alias compatibility must include:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d8380e941443a61f520a676c.svg" alt="&#10;\boxed{&#10;\text{native-compatible memory class and alignment requirements}.&#10;}&#10;" jobId="d8380e941443a61f520a676c" originalTeX="&#10;\boxed{&#10;\text{native-compatible memory class and alignment requirements}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Better alias descriptor</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct AliasClass&#10;{&#10;    ResourceKind Kind;&#10;&#10;    MemoryClass Memory;&#10;&#10;    uint64_t Size;&#10;    uint64_t Alignment;&#10;&#10;    uint32_t SampleCount;&#10;&#10;    FormatCompatibilityClass FormatClass;&#10;&#10;    ResourceUsage Usage;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Then backend confirms compatibility.&#13;</Content>
+<Content aid:pstyle="Content">Never alias merely because byte counts match.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Aliasing is graph coloring intuition</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Each resource interval is a vertex.&#13;</Content>
+<Content aid:pstyle="Content">If two intervals overlap, connect them.&#13;</Content>
+<Content aid:pstyle="Content">Resources connected by conflict edge cannot share physical slot.&#13;</Content>
+<Content aid:pstyle="Content">Then physical allocation resembles graph coloring.&#13;</Content>
+<Content aid:pstyle="Content">For interval graphs this can be solved efficiently.&#13;</Content>
+<Content aid:pstyle="Content">Greedy sorted-by-start works well.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">barrier inference</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Once graph knows previous state and next state:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/842554c915ac16a1687eea44.svg" alt="&#10;S_{before}&#10;\rightarrow&#10;S_{after},&#10;" jobId="842554c915ac16a1687eea44" originalTeX="&#10;S_{before}&#10;\rightarrow&#10;S_{after},&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">it can ask backend for required synchronization.&#13;</Content>
+<Content aid:pstyle="Content">Kairo stores:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">RenderResourceTransition&#10;{&#10;    Resource;&#10;    Before;&#10;    After;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">and creates one whenever requested state changes.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Example transition</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Resource begins:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/61b5c0df2cd0c6ff7b7d94b2.svg" alt="&#10;Undefined.&#10;" jobId="61b5c0df2cd0c6ff7b7d94b2" originalTeX="&#10;Undefined.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Geometry:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e8c425255e76eb8a5d51e291.svg" alt="&#10;ColorAttachment.&#10;" jobId="e8c425255e76eb8a5d51e291" originalTeX="&#10;ColorAttachment.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Post:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/254ec3f43c1610378dc75225.svg" alt="&#10;ShaderRead.&#10;" jobId="254ec3f43c1610378dc75225" originalTeX="&#10;ShaderRead.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">So compiler produces:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3749a61a1a2f7884744dba5b.svg" alt="&#10;Undefined&#10;\rightarrow&#10;ColorAttachment&#10;" jobId="3749a61a1a2f7884744dba5b" originalTeX="&#10;Undefined&#10;\rightarrow&#10;ColorAttachment&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e14f7343926f44149659abc8.svg" alt="&#10;ColorAttachment&#10;\rightarrow&#10;ShaderRead.&#10;" jobId="e14f7343926f44149659abc8" originalTeX="&#10;ColorAttachment&#10;\rightarrow&#10;ShaderRead.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Vulkan backend can map these to image barriers.&#13;</Content>
+<Content aid:pstyle="Content">Metal tracked resources may need little/no explicit action.&#13;</Content>
+<Content aid:pstyle="Content">Same graph.&#13;</Content>
+<Content aid:pstyle="Content">Different implementation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">State transition alone is not always enough</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo state enum:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Undefined&#10;ColorAttachment&#10;DepthAttachment&#10;ShaderRead&#10;CopySource&#10;CopyDestination&#10;Present&#13;</Code>
+<Content aid:pstyle="Content">is a good minimal set.&#13;</Content>
+<Content aid:pstyle="Content">But future GPU-driven renderer needs distinctions such as:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ShaderStorageRead&#10;ShaderStorageWrite&#10;IndirectArgument&#10;VertexBuffer&#10;IndexBuffer&#10;UniformRead&#10;AccelerationStructureRead&#10;RayTracingWrite&#13;</Code>
+<Content aid:pstyle="Content">because Vulkan synchronization needs exact consumer/producer access scopes.&#13;</Content>
+<Content aid:pstyle="Content">So as backend sophistication grows:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fc07b9df4be2b62777b6dd79.svg" alt="&#10;\boxed{&#10;\text{logical state model must grow with actual hazard semantics}.&#10;}&#10;" jobId="fc07b9df4be2b62777b6dd79" originalTeX="&#10;\boxed{&#10;\text{logical state model must grow with actual hazard semantics}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Barrier derivation example</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Graph says:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/57cb450d87e537faebd5aed3.svg" alt="&#10;CopyDestination&#10;\rightarrow&#10;ShaderRead.&#10;" jobId="57cb450d87e537faebd5aed3" originalTeX="&#10;CopyDestination&#10;\rightarrow&#10;ShaderRead.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Vulkan mapping:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6e373b583a3b95eb57ecfd8d.svg" alt="&#10;TRANSFER&#10;+&#10;TRANSFER_WRITE&#10;" jobId="6e373b583a3b95eb57ecfd8d" originalTeX="&#10;TRANSFER&#10;+&#10;TRANSFER_WRITE&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">to:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9fd58e1da1a908b3ed5fa99a.svg" alt="&#10;FRAGMENT/COMPUTE&#10;+&#10;SHADER_READ.&#10;" jobId="9fd58e1da1a908b3ed5fa99a" originalTeX="&#10;FRAGMENT/COMPUTE&#10;+&#10;SHADER_READ.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Metal:&#13;</Content>
+<Content aid:pstyle="Content">tracked resource:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/214861b540c539032b141aa5.svg" alt="&#10;\text{encoder ordering may suffice}.&#10;" jobId="214861b540c539032b141aa5" originalTeX="&#10;\text{encoder ordering may suffice}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Untracked resource:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a2f4b1cee12e4b24b29550e6.svg" alt="&#10;\text{appropriate barrier/fence}.&#10;" jobId="a2f4b1cee12e4b24b29550e6" originalTeX="&#10;\text{appropriate barrier/fence}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">layout/state transition inference</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Vulkan images have layouts.&#13;</Content>
+<Content aid:pstyle="Content">Metal does not expose equivalent image layout transitions to engine in same fashion.&#13;</Content>
+<Content aid:pstyle="Content">Therefore neutral graph should express:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/04089c669c448fe36678b171.svg" alt="&#10;\text{semantic state},&#10;" jobId="04089c669c448fe36678b171" originalTeX="&#10;\text{semantic state},&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">not:&#13;</Content>
+<Code aid:pstyle="Code" language="text">VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL.&#13;</Code>
+<Content aid:pstyle="Content">Vulkan converts:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/752a7cd606d985bc533eb129.svg" alt="&#10;ShaderRead&#10;\rightarrow&#10;VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL.&#10;" jobId="752a7cd606d985bc533eb129" originalTeX="&#10;ShaderRead&#10;\rightarrow&#10;VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Metal interprets:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f50db9b047029917871ffdc9.svg" alt="&#10;ShaderRead&#10;" jobId="f50db9b047029917871ffdc9" originalTeX="&#10;ShaderRead&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">as binding/hazard intent without fake layouts.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">State is broader than Vulkan layout</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A resource state often means:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f9cc3b96bc98c8ef329791bf.svg" alt="&#10;\boxed{&#10;\text{how resource is being used}&#10;}&#10;" jobId="f9cc3b96bc98c8ef329791bf" originalTeX="&#10;\boxed{&#10;\text{how resource is being used}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">which may imply:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">pipeline stage,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">memory access,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">layout,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">ownership.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">So graph state should be semantic.&#13;</Content>
+<Content aid:pstyle="Content">Backend derives native requirements.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">cross-queue dependencies</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose graphics produces depth.&#13;</Content>
+<Content aid:pstyle="Content">Compute queue performs SSAO.&#13;</Content>
+<Content aid:pstyle="Content">Graphics queue then consumes AO.&#13;</Content>
+<Content aid:pstyle="Content">Logical:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6d9b8ad1bab3fb813d8ae256.svg" alt="&#10;GraphicsDepth&#10;\rightarrow&#10;ComputeSSAO&#10;\rightarrow&#10;GraphicsLighting.&#10;" jobId="6d9b8ad1bab3fb813d8ae256" originalTeX="&#10;GraphicsDepth&#10;\rightarrow&#10;ComputeSSAO&#10;\rightarrow&#10;GraphicsLighting.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">A topological order alone does not synchronize two independent hardware queues.&#13;</Content>
+<Content aid:pstyle="Content">You need cross-queue signaling.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Vulkan cross-queue mapping</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Could be:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Graphics submission&#10;    signals timeline = 15&#10;&#10;Compute submission&#10;    waits timeline &gt;= 15&#10;    executes SSAO&#10;    signals timeline = 16&#10;&#10;Graphics lighting&#10;    waits timeline &gt;= 16&#13;</Code>
+<Content aid:pstyle="Content">If exclusive queue families differ, resource ownership transfer may also be necessary.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Metal cross-queue mapping</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Could use:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d71215f52f4cd765e3359a9f.svg" alt="&#10;MTLSharedEvent.&#10;" jobId="d71215f52f4cd765e3359a9f" originalTeX="&#10;MTLSharedEvent.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Graphics signals:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/53efac09985de178deeab458.svg" alt="&#10;15.&#10;" jobId="53efac09985de178deeab458" originalTeX="&#10;15.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Compute waits:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/53efac09985de178deeab458.svg" alt="&#10;15.&#10;" jobId="53efac09985de178deeab458" originalTeX="&#10;15.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Compute signals:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5e9a3fd2a9c1116564f86bf5.svg" alt="&#10;16.&#10;" jobId="5e9a3fd2a9c1116564f86bf5" originalTeX="&#10;16.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Graphics waits:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5e9a3fd2a9c1116564f86bf5.svg" alt="&#10;16.&#10;" jobId="5e9a3fd2a9c1116564f86bf5" originalTeX="&#10;16.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Same graph dependency.&#13;</Content>
+<Content aid:pstyle="Content">Native synchronization differs.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Queue assignment must become part of pass metadata</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For example:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">enum class QueueClass&#10;{&#10;    Graphics,&#10;    Compute,&#10;    Transfer&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Pass:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">PassDesc&#10;{&#10;    QueueClass::Compute,&#10;    ...&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Compiler can then identify:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9312be26f8563f78be85307c.svg" alt="&#10;\boxed{&#10;dependency crosses queue boundary.&#10;}&#10;" jobId="9312be26f8563f78be85307c" originalTeX="&#10;\boxed{&#10;dependency crosses queue boundary.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Async queue scheduling changes lifetime analysis</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This is subtle and important.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo computes lifetime using a single linear pass order.&#13;</Content>
+<Content aid:pstyle="Content">That works when execution is serial.&#13;</Content>
+<Content aid:pstyle="Content">But with async compute:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Graphics A ────────┐&#10;                  │&#10;Compute B ─────────────&#13;</Code>
+<Content aid:pstyle="Content">two passes can overlap in real time despite having some topological ordering.&#13;</Content>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/830e8360df0f95d0912c1e09.svg" alt="&#10;LastPass&lt;FirstPass&#10;" jobId="830e8360df0f95d0912c1e09" originalTeX="&#10;LastPass&lt;FirstPass&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">in one linear ordering does <Strong aid:cstyle="Bold">not necessarily prove</Strong> physical non-overlap.&#13;</Content>
+<Content aid:pstyle="Content">For cross-queue aliasing you need a happens-before analysis.&#13;</Content>
+<Content aid:pstyle="Content">This is a major step beyond simple render graphs.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Safe async aliasing rule</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Two resources may alias only if graph proves:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e70c1de14e0e2d8646288d97.svg" alt="&#10;end(A)&#10;\prec&#10;begin(B)&#10;" jobId="e70c1de14e0e2d8646288d97" originalTeX="&#10;end(A)&#10;\prec&#10;begin(B)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">in the dependency partial order.&#13;</Content>
+<Content aid:pstyle="Content">Not merely:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f3b2cc435c796dbfb387ad04.svg" alt="&#10;index(A)&lt;index(B).&#10;" jobId="f3b2cc435c796dbfb387ad04" originalTeX="&#10;index(A)&lt;index(B).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If neither is ordered relative to the other:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3745332fbf1e314d36c79dac.svg" alt="&#10;A\parallel B&#10;" jobId="3745332fbf1e314d36c79dac" originalTeX="&#10;A\parallel B&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and they may overlap.&#13;</Content>
+<Content aid:pstyle="Content">Therefore they cannot safely share memory.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">pass culling</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose graph contains:&#13;</Content>
+<Code aid:pstyle="Code" language="text">DebugNormals&#13;</Code>
+<Content aid:pstyle="Content">but debug output is not shown.&#13;</Content>
+<Content aid:pstyle="Content">If no later live pass consumes its output and it has no side effect:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/641f276a5e135f16fcacabbe.svg" alt="&#10;\boxed{&#10;\text{remove pass entirely}.&#10;}&#10;" jobId="641f276a5e135f16fcacabbe" originalTeX="&#10;\boxed{&#10;\text{remove pass entirely}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This reduces GPU work.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reverse liveness analysis</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Start from roots:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b6072b7453dd0258e1e3d02f.svg" alt="&#10;\text{presented outputs}&#10;" jobId="b6072b7453dd0258e1e3d02f" originalTeX="&#10;\text{presented outputs}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/471161724f0907eb2ff6253d.svg" alt="&#10;\text{explicit exports}&#10;" jobId="471161724f0907eb2ff6253d" originalTeX="&#10;\text{explicit exports}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/737265ca95d67f8d68c92647.svg" alt="&#10;\text{side-effect passes}.&#10;" jobId="737265ca95d67f8d68c92647" originalTeX="&#10;\text{side-effect passes}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Mark them live.&#13;</Content>
+<Content aid:pstyle="Content">Then recursively mark their dependencies live.&#13;</Content>
+<Content aid:pstyle="Content">Everything else:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/068d4e576419f0687f50f56a.svg" alt="&#10;\boxed{\text{dead pass}.}&#10;" jobId="068d4e576419f0687f50f56a" originalTeX="&#10;\boxed{\text{dead pass}.}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Maveb render graph already performs pass culling</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Its graph marks passes required if:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/46ac4eb115614244dcf12689.svg" alt="&#10;sideEffect=true&#10;" jobId="46ac4eb115614244dcf12689" originalTeX="&#10;sideEffect=true&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">or they write a resource marked:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/76ed6e3995c4847f824ab75f.svg" alt="&#10;output=true.&#10;" jobId="76ed6e3995c4847f824ab75f" originalTeX="&#10;output=true.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then walks dependencies backward.&#13;</Content>
+<Content aid:pstyle="Content">Only live passes participate in topological scheduling.&#13;</Content>
+<Content aid:pstyle="Content">That is a real pass-culling implementation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kairo currently does not cull</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo compiles all declared passes.&#13;</Content>
+<Content aid:pstyle="Content">So compared with Maveb:&#13;</Content>
+<Content aid:pstyle="Content">Kairo has stronger:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/02ec4975bdaf31317329258d.svg" alt="&#10;state\ transitions,&#10;alias\ slots,&#10;transition\ hooks.&#10;" jobId="02ec4975bdaf31317329258d" originalTeX="&#10;state\ transitions,&#10;alias\ slots,&#10;transition\ hooks.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Maveb has:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a7bc4b257d033f7493cdab8e.svg" alt="&#10;pass\ culling,&#10;DOT\ graph\ export,&#10;generational\ handles.&#10;" jobId="a7bc4b257d033f7493cdab8e" originalTeX="&#10;pass\ culling,&#10;DOT\ graph\ export,&#10;generational\ handles.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">A future unified implementation can combine the strengths.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">imported external resources</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Some resources were created outside graph.&#13;</Content>
+<Content aid:pstyle="Content">Examples:&#13;</Content>
+<Code aid:pstyle="Code" language="text">swapchain image&#10;CAMetalDrawable texture&#10;persistent shadow atlas&#10;engine-owned history&#10;video texture&#10;editor viewport&#13;</Code>
+<Content aid:pstyle="Content">Graph should import rather than own.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Imported resource needs initial state</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The graph must know how external resource enters graph.&#13;</Content>
+<Content aid:pstyle="Content">For example:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d0a77999d7a65cdab62e35aa.svg" alt="&#10;SwapchainInitial=Present.&#10;" jobId="d0a77999d7a65cdab62e35aa" originalTeX="&#10;SwapchainInitial=Present.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b30be3b1368b168dee656c62.svg" alt="&#10;HistoryInitial=ShaderRead.&#10;" jobId="b30be3b1368b168dee656c62" originalTeX="&#10;HistoryInitial=ShaderRead.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Otherwise first transition cannot be inferred.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo models external resource via:&#13;</Content>
+<Code aid:pstyle="Code" language="text">RenderResourceKind::External&#13;</Code>
+<Content aid:pstyle="Content">and requires external resources to be non-transient.&#13;</Content>
+<Content aid:pstyle="Content">Good.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Vulkan graph example</Strong>&#13;</Content>
+<Content aid:pstyle="Content">It creates:&#13;</Content>
+<Code aid:pstyle="Code" language="text">VulkanNativeFrame&#13;</Code>
+<Content aid:pstyle="Content">as:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b50513e32ae3a3b3462fa5ca.svg" alt="&#10;External&#10;" jobId="b50513e32ae3a3b3462fa5ca" originalTeX="&#10;External&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">with:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3cf6c6462657608c33a30304.svg" alt="&#10;InitialState=Present.&#10;" jobId="3cf6c6462657608c33a30304" originalTeX="&#10;InitialState=Present.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then logical stages:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Retire&#10;Acquire&#10;Record&#10;Submit&#10;Present&#13;</Code>
+<Content aid:pstyle="Content">use this token/resource.&#13;</Content>
+<Content aid:pstyle="Content">This current graph is more of a <Strong aid:cstyle="Bold">frame-lifecycle dependency object</Strong> than a complete per-image render graph, but the abstraction principle is sound.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">persistent history resources</Strong>&#13;</Content>
+<Content aid:pstyle="Content">TAA history:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9fd5ae24438f63af71309010.svg" alt="&#10;H_{t-1}&#10;" jobId="9fd5ae24438f63af71309010" originalTeX="&#10;H_{t-1}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">must survive to next frame.&#13;</Content>
+<Content aid:pstyle="Content">Therefore it cannot be transiently aliased as soon as current frame ends.&#13;</Content>
+<Content aid:pstyle="Content">Graph resource should be:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4bb924a654a02fd764c3a572.svg" alt="&#10;Transient=false.&#10;" jobId="4bb924a654a02fd764c3a572" originalTeX="&#10;Transient=false.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Initial state:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f50db9b047029917871ffdc9.svg" alt="&#10;ShaderRead&#10;" jobId="f50db9b047029917871ffdc9" originalTeX="&#10;ShaderRead&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">if valid.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo tests exactly this notion: a persistent resource initialized as <InlineCode aid:cstyle="InlineCode">ShaderRead</InlineCode> may be read immediately, while persistent <InlineCode aid:cstyle="InlineCode">Undefined</InlineCode> read is rejected.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">History invalidation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Persistent doesn’t mean always valid.&#13;</Content>
+<Content aid:pstyle="Content">Invalidate history on:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">camera cut,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">resolution change,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">projection change,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">scene discontinuity,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">major geometry repair,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">renderer mode switch.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Then either:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/38ebd31de94403b6ef337ae8.svg" alt="&#10;HistoryValid=false&#10;" jobId="38ebd31de94403b6ef337ae8" originalTeX="&#10;HistoryValid=false&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">or graph inserts clear/initialize pass.&#13;</Content>
+<Content aid:pstyle="Content">Maveb’s TAA system already carries explicit history validity state.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Ping-pong history</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Typical:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ace81410e58645cced9c20fe.svg" alt="&#10;H_0,H_1.&#10;" jobId="ace81410e58645cced9c20fe" originalTeX="&#10;H_0,H_1.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Frame <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c0e9c136f0f850d8b55a01b3.svg" alt="t" jobId="c0e9c136f0f850d8b55a01b3" originalTeX="t"/>:&#13;</Content>
+<Content aid:pstyle="Content">read:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2ed474e8e51d0d5ab76a868d.svg" alt="&#10;H_{t\bmod2}&#10;" jobId="2ed474e8e51d0d5ab76a868d" originalTeX="&#10;H_{t\bmod2}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">write:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/edc6e51726ebfcb334e50d6f.svg" alt="&#10;H_{(t+1)\bmod2}.&#10;" jobId="edc6e51726ebfcb334e50d6f" originalTeX="&#10;H_{(t+1)\bmod2}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Next frame swap roles.&#13;</Content>
+<Content aid:pstyle="Content">You must ensure frames in flight do not cause simultaneous reuse hazards.&#13;</Content>
+<Content aid:pstyle="Content">With multiple frames in flight, history scheduling becomes more complex than simple CPU frame parity unless GPU execution order guarantees it.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">swapchain/drawable resources in graph</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Presentation resource is special.&#13;</Content>
+<Content aid:pstyle="Content">Vulkan:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/50fc9a3f4b7d63e461352de8.svg" alt="&#10;SwapchainImage.&#10;" jobId="50fc9a3f4b7d63e461352de8" originalTeX="&#10;SwapchainImage.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Metal:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c74fb9a2e33fe06c9c192a54.svg" alt="&#10;CAMetalDrawable.texture.&#10;" jobId="c74fb9a2e33fe06c9c192a54" originalTeX="&#10;CAMetalDrawable.texture.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">These are acquired externally.&#13;</Content>
+<Content aid:pstyle="Content">They should appear near graph boundary.&#13;</Content>
+<Content aid:pstyle="Content">Conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Import Presentable&#10;&#10;ToneMap:&#10;    read HDR&#10;    write Presentable&#10;&#10;Present:&#10;    consume Presentable&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Acquire as graph boundary</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For Vulkan:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8aad649bb21b8604512eea30.svg" alt="&#10;Acquire&#10;" jobId="8aad649bb21b8604512eea30" originalTeX="&#10;Acquire&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">produces access to presentation image.&#13;</Content>
+<Content aid:pstyle="Content">For Metal:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b3e594782f94d4825e6474de.svg" alt="&#10;nextDrawable/currentDrawable&#10;" jobId="b3e594782f94d4825e6474de" originalTeX="&#10;nextDrawable/currentDrawable&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">provides drawable texture.&#13;</Content>
+<Content aid:pstyle="Content">Graph may represent acquisition as external lifecycle operation rather than ordinary resource pass.&#13;</Content>
+<Content aid:pstyle="Content">Either way:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fc4f8cb1ee510ae338a5f62f.svg" alt="&#10;\boxed{&#10;\text{presentation image lifetime begins late and ends at presentation}.&#10;}&#10;" jobId="fc4f8cb1ee510ae338a5f62f" originalTeX="&#10;\boxed{&#10;\text{presentation image lifetime begins late and ends at presentation}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Do not build whole renderer around swapchain</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Internal HDR/depth/temporal resources should be independent.&#13;</Content>
+<Content aid:pstyle="Content">Swapchain/drawable is only final destination.&#13;</Content>
+<Content aid:pstyle="Content">Then resize/presentation format changes don’t infect every pass.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">debugging dependency mistakes</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Common graph failures:&#13;</Content>
+<Content aid:pstyle="Content">Read before write.&#13;</Content>
+<Content aid:pstyle="Content">Missing write declaration.&#13;</Content>
+<Content aid:pstyle="Content">Incorrect state.&#13;</Content>
+<Content aid:pstyle="Content">Missing side-effect root causing pass culling.&#13;</Content>
+<Content aid:pstyle="Content">Cycle.&#13;</Content>
+<Content aid:pstyle="Content">Aliasing resources whose lifetimes actually overlap.&#13;</Content>
+<Content aid:pstyle="Content">Cross-frame history improperly marked transient.&#13;</Content>
+<Content aid:pstyle="Content">Queue dependency omitted.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Debugging rule</Strong>&#13;</Content>
+<Content aid:pstyle="Content">When image is wrong, do not immediately inspect shader.&#13;</Content>
+<Content aid:pstyle="Content">First ask:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b17ebdc5dc0c52fb1dcb0e38.svg" alt="&#10;\boxed{&#10;\text{Was correct producer executed?}&#10;}&#10;" jobId="b17ebdc5dc0c52fb1dcb0e38" originalTeX="&#10;\boxed{&#10;\text{Was correct producer executed?}&#10;}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4e085afd9f5c442ffca64fc7.svg" alt="&#10;\boxed{&#10;\text{Was resource initialized?}&#10;}&#10;" jobId="4e085afd9f5c442ffca64fc7" originalTeX="&#10;\boxed{&#10;\text{Was resource initialized?}&#10;}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/af9028f24c9ec3012fb26878.svg" alt="&#10;\boxed{&#10;\text{Was consumer ordered after producer?}&#10;}&#10;" jobId="af9028f24c9ec3012fb26878" originalTeX="&#10;\boxed{&#10;\text{Was consumer ordered after producer?}&#10;}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6a98ee54c6cf9adf77c9a664.svg" alt="&#10;\boxed{&#10;\text{Was native synchronization emitted?}&#10;}&#10;" jobId="6a98ee54c6cf9adf77c9a664" originalTeX="&#10;\boxed{&#10;\text{Was native synchronization emitted?}&#10;}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/651691a4c5f7787b24fd5f53.svg" alt="&#10;\boxed{&#10;\text{Was physical allocation reused too early?}&#10;}&#10;" jobId="651691a4c5f7787b24fd5f53" originalTeX="&#10;\boxed{&#10;\text{Was physical allocation reused too early?}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Render graphs shift many “graphics bugs” into dependency bugs.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">visualizing graph</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Maveb emits DOT:&#13;</Content>
+<Code aid:pstyle="Code" language="text">digraph AetherRenderGraph {&#10;  p0 [label="Shadow"];&#10;  p1 [label="Geometry"];&#10;  p2 [label="TAA"];&#10;  p3 [label="Present"];&#10;&#10;  p0 -&gt; p1;&#10;  p1 -&gt; p2;&#10;  p2 -&gt; p3;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">Then Graphviz can visualize it.&#13;</Content>
+<Content aid:pstyle="Content">This is extremely valuable.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Better graph visualization</Strong>&#13;</Content>
+<Content aid:pstyle="Content">An engine UI should show:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Pass name&#10;Queue&#10;Execution order&#10;CPU/GPU timing&#10;&#10;Reads&#10;Writes&#10;&#10;Resource state before/after&#10;&#10;First use&#10;Last use&#10;&#10;Alias slot&#10;&#10;Culled/live&#13;</Code>
+<Content aid:pstyle="Content">Then resource:&#13;</Content>
+<Code aid:pstyle="Code" language="text">SceneHDR&#10;  16.6 MB&#10;  first: Geometry&#10;  last: ToneMap&#10;  alias slot: 3&#13;</Code>
+<Content aid:pstyle="Content">You can debug memory and ordering visually.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">resource naming</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Never accept:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Texture_27&#13;</Code>
+<Content aid:pstyle="Content">if semantic name is known.&#13;</Content>
+<Content aid:pstyle="Content">Use:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Scene HDR&#10;Scene Depth&#10;TAA History A&#10;Bloom Half&#10;Gaussian IDs&#10;Directional Shadow Cascades&#13;</Code>
+<Content aid:pstyle="Content">Kairo requires unique graph resource names.&#13;</Content>
+<Content aid:pstyle="Content">Maveb labels native resources extensively.&#13;</Content>
+<Content aid:pstyle="Content">These should be connected.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Name propagation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Ideal:&#13;</Content>
+<Code aid:pstyle="Code" language="text">RenderGraph resource:&#10;    Scene HDR&#10;&#10;↓ Vulkan backend&#10;VkImage debug name:&#10;    Scene HDR&#10;&#10;↓ Metal backend&#10;MTLTexture label:&#10;    Scene HDR&#10;&#10;↓ capture/profiler&#10;same label&#13;</Code>
+<Content aid:pstyle="Content">Now the engine, graph and GPU debugger all speak one vocabulary.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">GPU capture correlation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose graph says:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Pass 17: Temporal Resolve&#13;</Code>
+<Content aid:pstyle="Content">GPU capture should show encoder/debug region:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Temporal Resolve&#13;</Code>
+<Content aid:pstyle="Content">If graph timing says pass 17 is slow, you can immediately find it in Xcode/RenderDoc.&#13;</Content>
+<Content aid:pstyle="Content">This is why names are infrastructure, not decoration.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo profile warning</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s graph profile currently measures CPU callback/recording duration.&#13;</Content>
+<Content aid:pstyle="Content">Not GPU duration.&#13;</Content>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Geometry: 0.35 ms&#13;</Code>
+<Content aid:pstyle="Content">means CPU graph callback time.&#13;</Content>
+<Content aid:pstyle="Content">A future GPU profiler should correlate:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8a556c6bd4845dd27451d9e8.svg" alt="&#10;GraphPassID&#10;" jobId="8a556c6bd4845dd27451d9e8" originalTeX="&#10;GraphPassID&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">with:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3ea53dd41fb794239fe9736a.svg" alt="&#10;GPU timestamp range.&#10;" jobId="3ea53dd41fb794239fe9736a" originalTeX="&#10;GPU timestamp range.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then you can compare:&#13;</Content>
+<Code aid:pstyle="Code" language="text">CPU encode: 0.18 ms&#10;GPU execute: 2.7 ms&#13;</Code>
+<Content aid:pstyle="Content">for the same pass.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">A production render-graph data model</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A stronger version could look like:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct PassDesc&#10;{&#10;    std::string Name;&#10;&#10;    QueueClass Queue;&#10;&#10;    std::vector&lt;ResourceAccess&gt;&#10;        Accesses;&#10;&#10;    bool HasSideEffects = false;&#10;&#10;    ExecuteCallback Execute;&#10;};&#10;&#10;struct ResourceAccess&#10;{&#10;    ResourceHandle Resource;&#10;&#10;    AccessMode Access;&#10;&#10;    ResourceUsage Usage;&#10;&#10;    ShaderStageMask Stages;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Notice separate:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f2a46069e79a0cc704787e5e.svg" alt="&#10;Access&#10;" jobId="f2a46069e79a0cc704787e5e" originalTeX="&#10;Access&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f99494f2098f0bfcb918e4c3.svg" alt="&#10;Usage/Stages.&#10;" jobId="f99494f2098f0bfcb918e4c3" originalTeX="&#10;Usage/Stages.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That gives enough information for Vulkan synchronization.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Better state representation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Instead of only:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ShaderRead&#13;</Code>
+<Content aid:pstyle="Content">you might represent:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct ResourceState&#10;{&#10;    PipelineDomain Domain;&#10;    AccessFlags Access;&#10;    UsageClass Usage;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ComputeShader&#10;StorageWrite&#10;StorageBuffer&#13;</Code>
+<Content aid:pstyle="Content">versus:&#13;</Content>
+<Code aid:pstyle="Code" language="text">FragmentShader&#10;SampledRead&#10;SampledTexture&#13;</Code>
+<Content aid:pstyle="Content">These are both “shader use” but require different native synchronization.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Compiler stages</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A production render graph can conceptually compile through:&#13;</Content>
+<Code aid:pstyle="Code" language="text">validate declarations&#10;↓&#10;construct hazards/dependencies&#10;↓&#10;mark live passes&#10;↓&#10;detect cycles&#10;↓&#10;assign queues&#10;↓&#10;schedule passes&#10;↓&#10;compute lifetimes&#10;↓&#10;plan transient allocations&#10;↓&#10;infer state transitions&#10;↓&#10;infer inter-queue synchronization&#10;↓&#10;generate backend execution plan&#13;</Code>
+<Content aid:pstyle="Content">That is essentially a compiler.&#13;</Content>
+<Content aid:pstyle="Content">Because it is one.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Render graph as compiler IR</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This is the deepest useful perspective.&#13;</Content>
+<Content aid:pstyle="Content">Scene rendering code produces high-level IR:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Shadow writes S&#10;Geometry reads S writes H&#10;Bloom reads H writes B&#10;Present reads H,B&#13;</Code>
+<Content aid:pstyle="Content">Compiler transforms into:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ordered passes&#10;physical resources&#10;barriers&#10;queue waits/signals&#10;load/store decisions&#13;</Code>
+<Content aid:pstyle="Content">Vulkan/Metal backends are code generators.&#13;</Content>
+<Content aid:pstyle="Content">That is why compiler theory ideas such as:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">dependency graphs,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">liveness,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">alias analysis,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">scheduling&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">appear here.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<!-- CHAPTER-SOURCE-END -->
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#06-engine-ii-ch042">Previous chapter</Link> · <Link href="#06-engine-ii-ch044">Next chapter</Link>&#13;</Content>
+</Chapter>

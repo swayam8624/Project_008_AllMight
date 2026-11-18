@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch328.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-1c07d64f5e70-camera-view-and-clip-space-pipeline" class="level2">
+<h2>Camera view and clip-space pipeline</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase7 · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-1c07d64f5e70-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A camera pose maps camera coordinates to world coordinates; its inverse is the view map. Projection produces homogeneous clip coordinates, clipping applies the API-specific inequalities, and valid perspective division produces NDC. Storage order supplies none of these coordinate contracts.</p>
+<p><strong>Reconstruction cue:</strong> A standard minus-Z perspective example needs a point in front of the camera and a meaningful clip w before division.</p>
+</section>
+<section id="appendix-1c07d64f5e70-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch457.xhtml#appendix-1bae9457dbc3-coordinate-frames-and-change-of-basis" class="wikilink">Coordinate frames and change of basis (Vision, XR, and Playable Worlds, Part 1, Reference notes: Coordinate frames and change of basis)</a></li>
+</ul>
+</section>
+<section id="appendix-1c07d64f5e70-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch245.xhtml#id_01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations" class="wikilink">Phase 7 teaching and laboratory (Mathematics for Visual Computing, Part 1, Ch. 2)</a></p></li>
+<li><p><a href="ch331.xhtml#appendix-97578ed97952-depth-buffering-and-visibility-order" class="wikilink">Depth buffering and visibility order</a></p></li>
+<li><p><a href="ch306.xhtml#appendix-21f8456e2629-lens-optics-and-depth-of-field" class="wikilink">Lens optics and depth of field (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Lens optics and depth of field)</a></p></li>
+<li><p><a href="ch352.xhtml#appendix-749ba51a6c25-gpu-vertex-specification" class="wikilink">GPU vertex specification</a></p></li>
+<li><p><a href="ch307.xhtml#appendix-40426e4b2103-homogeneous-clipping-and-perspective-interpolation" class="wikilink">Homogeneous clipping and perspective interpolation (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Homogeneous clipping and perspective interpolation)</a></p></li>
+<li><p><a href="ch514.xhtml#appendix-cac01ebeeb11-axial-depth-and-euclidean-range" class="wikilink">Axial depth and Euclidean range (Vision, XR, and Playable Worlds, Part 1, Reference notes: Axial depth and Euclidean range)</a></p></li>
+<li><p><a href="ch458.xhtml#appendix-1bc40b08db4a-hardware-depth-buffer-linearization" class="wikilink">Hardware depth-buffer linearization (Vision, XR, and Playable Worlds, Part 1, Reference notes: Hardware depth-buffer linearization)</a></p></li>
+<li><p><a href="ch531.xhtml#appendix-f1a6d43e80d1-screen-space-ray-generation-and-mouse-picking" class="wikilink">Screen-space ray generation and mouse picking (Vision, XR, and Playable Worlds, Part 1, Reference notes: Screen-space ray generation and mouse picking)</a></p></li>
+<li><p><a href="ch496.xhtml#appendix-8c40fad29462-ray-differentials-and-camera-sampling-measures" class="wikilink">Ray differentials and camera sampling measures (Vision, XR, and Playable Worlds, Part 1, Reference notes: Ray differentials and camera sampling measures)</a></p></li>
+</ul>
+</section>
+<section id="appendix-1c07d64f5e70-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.</p>
+</section>
+<section id="appendix-1c07d64f5e70-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch245.xhtml#id_01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations" class="wikilink">Continuous explanation (Mathematics for Visual Computing, Part 1, Ch. 2)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-phase-7---parts-601-700" class="wikilink">Coverage and source gap</a> · <a href="ch155.xhtml#appendix-a103e7846d21-phase-7---source-analysis-and-verification" class="wikilink">Sources and verification</a></p>
+</section>
+<section id="appendix-1c07d64f5e70-university-course-development" class="level3">
+<h3>University course development</h3>
+<p>Extend the existing transform pipeline with the clipping and depth-precision decisions that make projection robust. A view frustum is the set of points a camera can see, bounded by near and far planes as well as image sides. Transforming the frustum into a canonical clip cube makes outside tests cheap; partially intersecting triangles must be clipped and triangulated so the rasterizer still receives triangles. The near plane also avoids geometry crossing the eye plane, while the far plane limits depth range. Floating-point depth values are unevenly distributed after perspective division, so an excessively tiny near distance paired with a huge far distance can make two nearby surfaces quantize to the same depth and produce z-fighting. Choose the narrowest useful depth interval and keep the view, clip, normalized, and screen coordinates distinct.</p>
+<p><a href="ch294.xhtml#id_03-visual-computing-i-ch001-a-scene-description-becomes-an-image" class="wikilink">A scene description becomes an image (Geometry, Cameras, and Image Formation, Part 1, Ch. 8)</a> · <a href="ch305.xhtml#id_03-visual-computing-i-ch003-cameras-projection-and-calibration" class="wikilink">Cameras, projection, and calibration (Geometry, Cameras, and Image Formation, Part 1, Ch. 10)</a> · <a href="ch277.xhtml#id_03-visual-computing-i-ch012-rasterization-coverage-and-depth" class="wikilink">Rasterization, coverage, and depth (Mathematics for Visual Computing, Part 2, Ch. 16)</a></p>
+</section>
+<section id="appendix-1c07d64f5e70-phase-11-camera-development" class="level3">
+<h3>Phase 11 camera development</h3>
+<p>A raster-to-ray camera maps a pixel to a geometric sample; In a pinhole model, invert projection and view transforms to recover a camera-space direction, then transform it to world space without applying translation as if it were a point. Pixel-center convention, viewport origin, handedness, clip-depth range, and normalization all affect the result. Offset a pixel to generate differential rays and estimate the surface footprint; that footprint grows with depth and changes with surface orientation. Keep ray generation distinct from raster projection while ensuring their conventions agree. Link: <a href="ch290.xhtml#id_02-foundations-ii-ch037-a-camera-model-must-close-the-loop" class="wikilink">A camera model must close the loop (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)</a>; research: <a href="ch289.xhtml#id_02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review" class="wikilink">Four deeper links from the TUM lecture review (Geometry, Cameras, and Image Formation, Part 1, Ch. 5)</a>.</p>
+</section>
+</section>
+</body>
+</html>

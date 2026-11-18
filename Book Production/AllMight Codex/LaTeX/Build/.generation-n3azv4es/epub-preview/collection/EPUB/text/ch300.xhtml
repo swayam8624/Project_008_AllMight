@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch300.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-921f3f2efb53-dual-quaternion-skinning" class="level2">
+<h2>Dual quaternion skinning</h2>
+<p>Linear blend skinning blends transformed vertex positions or bone matrices. It is simple and GPU-friendly, but blending rotation matrices componentwise is not itself a rigid transformation and can collapse volume around twisting joints.</p>
+<p>Dual quaternions provide a representation of rigid motion that blends rotation and translation together before transforming the point.</p>
+<p>A dual quaternion is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>q</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <msub>
+    <mi>q</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>ε</mi>
+  <msub>
+    <mi>q</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msup>
+    <mi>ε</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>q</mi>
+    <mi>r</mi>
+  </msub>
+</math> is a unit rotation quaternion. For translation vector <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math> represented as pure quaternion <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>t</mi>
+    <mi>q</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+</math> under one common convention,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>q</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>2</mn>
+  </mfrac>
+  <msub>
+    <mi>t</mi>
+    <mi>q</mi>
+  </msub>
+  <msub>
+    <mi>q</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>The translation can be recovered by</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mi>q</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>2</mn>
+  <msub>
+    <mi>q</mi>
+    <mi>d</mi>
+  </msub>
+  <msubsup>
+    <mi>q</mi>
+    <mi>r</mi>
+    <mo>∗</mo>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<section id="appendix-921f3f2efb53-antipodal-problem" class="level3">
+<h3>Antipodal problem</h3>
+<p>Rotation quaternions <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mi>q</mi>
+</math> encode the same physical rotation. Their corresponding dual quaternions likewise differ by a global sign. If two equivalent bones/poses are blended without hemisphere alignment, their real parts can cancel.</p>
+<p>Before weighted blending, choose a reference real quaternion and flip any dual quaternion whose real part has negative dot product with that reference.</p>
+<p>After blending,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>q</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>q</mi>
+        <mo stretchy="false">^</mo>
+      </mover>
+    </mrow>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>normalize the real quaternion magnitude and apply the same scale to the dual part. This is normalized dual-quaternion blending. It represents rigid blending; ordinary dual-quaternion skinning does not directly encode arbitrary nonuniform scale or shear.</p>
+</section>
+<section id="appendix-921f3f2efb53-bind-transforms" class="level3">
+<h3>Bind transforms</h3>
+<p>Skinning still needs the same coordinate contract as matrix skinning:</p>
+<p>current bone world transform × inverse bind transform</p>
+<p>must produce the deformation from bind-space vertex to current posed space. Dual quaternions change the representation/blending mechanism, not the ownership of coordinate spaces.</p>
+</section>
+<section id="appendix-921f3f2efb53-executable-witness" class="level3">
+<h3>Executable witness</h3>
+<p>tools/labs/dual_quaternion_skinning_lab.cpp constructs rigid transforms from quaternion + translation, transforms points, checks distance preservation, blends pure translations, and deliberately blends a dual quaternion with its globally negated equivalent to prove antipodal alignment prevents cancellation.</p>
+<p>It does not yet prove arbitrary multi-joint skinning, scale/shear, GPU implementation, inverse-bind import or production animation parity.</p>
+<p>Related: <a href="ch252.xhtml#appendix-8e61ab68f6b2-quaternion-rotation-and-double-cover" class="wikilink">Quaternion rotation and double cover (Mathematics for Visual Computing, Part 1, Reference notes: Quaternion rotation and double cover)</a>, <a href="ch254.xhtml#appendix-9b4b8254f26b-quaternion-interpolation-and-shortest-paths" class="wikilink">Quaternion interpolation and shortest paths (Mathematics for Visual Computing, Part 1, Reference notes: Quaternion interpolation and shortest paths)</a>, <a href="ch249.xhtml#appendix-292c061cd47c-transform-hierarchies-trs-and-shear" class="wikilink">Transform hierarchies TRS and shear (Mathematics for Visual Computing, Part 1, Reference notes: Transform hierarchies TRS and shear)</a>.</p>
+</section>
+</section>
+</body>
+</html>

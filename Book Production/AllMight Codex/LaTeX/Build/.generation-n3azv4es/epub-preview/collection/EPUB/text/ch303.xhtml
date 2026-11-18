@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch303.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-f28eeec97a3d-spline-bases-and-curve-evaluation" class="level2">
+<h2>Spline bases and curve evaluation</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-f28eeec97a3d-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A spline is a piecewise polynomial curve whose neighboring pieces join under explicit continuity constraints. A cubic Bézier segment uses four control points and Bernstein weights; the weights sum to one, so the curve lies in their convex hull. A B-spline uses local basis functions so moving one control point changes only nearby spans rather than the whole curve. Knots mark where polynomial pieces meet; repeated knots reduce continuity. Catmull–Rom curves interpolate their control points and can be convenient for motion paths, while Bézier curves expose endpoint tangents through their handles. To evaluate a curve, compute basis weights at parameter <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math> and take their weighted sum of control points. Position, first derivative, and parameterization speed matter separately: even a smooth path may speed up or slow down unless its parameter is adjusted.</p>
+</section>
+<section id="appendix-f28eeec97a3d-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch515.xhtml#appendix-ce0341f7ea0d-basis-coordinates-and-dimension" class="wikilink">Basis coordinates and dimension (Vision, XR, and Playable Worlds, Part 1, Reference notes: Basis coordinates and dimension)</a></li>
+</ul>
+</section>
+<section id="appendix-f28eeec97a3d-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><span>Worlds, Images and Inference</span></p></li>
+<li><p><a href="ch522.xhtml#appendix-ddbec701898c-bézier-curves-and-de-casteljau-evaluation" class="wikilink">Bézier curves and De Casteljau evaluation (Vision, XR, and Playable Worlds, Part 1, Reference notes: Bézier curves and De Casteljau evaluation)</a></p></li>
+<li><p><a href="ch521.xhtml#appendix-db3aef8f2fd6-cubic-hermite-interpolation" class="wikilink">Cubic Hermite interpolation (Vision, XR, and Playable Worlds, Part 1, Reference notes: Cubic Hermite interpolation)</a> ## Full teaching explanation</p></li>
+</ul>
+<p><a href="ch294.xhtml#id_03-visual-computing-i-ch001-curves-as-controllable-functions" class="wikilink">Curves as controllable functions</a> · <a href="ch385.xhtml#id_04-visual-computing-ii-ch029-animation-curves-and-motion-paths" class="wikilink">Animation curves and motion paths (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 10)</a></p>
+</section>
+</section>
+</body>
+</html>

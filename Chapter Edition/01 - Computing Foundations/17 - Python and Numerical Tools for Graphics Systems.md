@@ -8,7 +8,7 @@ Python can coordinate experiments and asset workflows, but its abstractions stil
 
 **Recall question:** When does passing a buffer between Python and native code remain zero-copy, and what evidence would verify that claim?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 40137–41803; source-span SHA256 77139658a2f6c7221ff754731baf7d941689b3669560bacd75a26afa609c5ccd. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 40318–41984; source-span SHA256 2c72e04233b21af3e37718f397b485f33ee4fbc9b88c442d300a270c6e201c67. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 # Python, scientific computing and data analysis as graphics-systems infrastructure
@@ -21,11 +21,11 @@ Fluent Python's data-model perspective matters because sequences, mappings, iter
 
 A Python list stores references to Python objects. A NumPy array is a dense typed memory view described by data, shape, strides and dtype. For graphics-style numeric work that distinction dominates locality and bandwidth.
 
-For a C-contiguous array of shape \((H,W,C)\) and element size \(s\),
+For a C-contiguous array of shape $(H,W,C)$ and element size $s$,
 
-\[
+$$
 offset=s(iWC+jC+k).
-\]
+$$
 
 A slice may share storage with different strides. A downstream API that requires contiguous storage can silently introduce a copy. Log shape, dtype and strides when debugging data movement.
 
@@ -39,11 +39,11 @@ Always ask who owns the bytes, whether they are writable, their dtype/stride, va
 
 High Performance Python's durable workflow is measure total time, locate hot functions, measure hot lines/kernels, inspect memory, change one hypothesis, rerun correctness tests and compare distributions.
 
-Amdahl's law gives the upper bound when only fraction \(p\) is accelerated by factor \(s\):
+Amdahl's law gives the upper bound when only fraction $p$ is accelerated by factor $s$:
 
-\[
+$$
 S=\frac{1}{(1-p)+p/s}.
-\]
+$$
 
 Speeding up a tiny fraction cannot transform the whole application.
 
@@ -53,21 +53,21 @@ NumPy executes regular typed loops in compiled code. This reduces interpreter ov
 
 For
 
-\[
+$$
 C=A+B\cdot D,
-\]
+$$
 
 an implementation may allocate an intermediate product. In-place or fused operations can reduce traffic when aliasing allows it. Image buffers, dense grids and point clouds are often bandwidth-limited.
 
 ## Broadcasting is shape algebra
 
-For point cloud \(P\in\mathbb R^{N\times3}\) and translation \(t\in\mathbb R^3\),
+For point cloud $P\in\mathbb R^{N\times3}$ and translation $t\in\mathbb R^3$,
 
-\[
+$$
 P'=P+t.
-\]
+$$
 
-The translation is logically expanded across rows. Broadcasting avoids storing repeated \(t\), but later operations can still create large temporaries. Treat ndim, shape, dtype and finite-value checks as runtime contracts.
+The translation is logically expanded across rows. Broadcasting avoids storing repeated $t$, but later operations can still create large temporaries. Treat ndim, shape, dtype and finite-value checks as runtime contracts.
 
 ## The GIL separates concurrency from CPU parallelism
 
@@ -83,9 +83,9 @@ Numba JIT-compiles supported numeric code. Cython adds static/native compilation
 
 The total cost is
 
-\[
+$$
 T_{total}=T_{marshal}+T_{copy}+T_{kernel}+T_{sync}.
-\]
+$$
 
 A fast kernel called once on a large array is often better than millions of tiny cross-language calls.
 
@@ -95,21 +95,21 @@ Michael Heath's framework is essential for graphics. Error can come from uncerta
 
 Forward error measures error in the answer. Backward error asks what nearby input would make the computed answer exact. Stable algorithms often solve a nearby problem accurately.
 
-For scalar \(y=f(x)\), a local relative condition number is approximately
+For scalar $y=f(x)$, a local relative condition number is approximately
 
-\[
+$$
 \kappa_f(x)=\left|\frac{x f'(x)}{f(x)}\right|.
-\]
+$$
 
-Large \(\kappa\) means small relative input errors can become large output errors even with a stable implementation.
+Large $\kappa$ means small relative input errors can become large output errors even with a stable implementation.
 
 ## Floating point changes algebra
 
 Floating-point addition is not associative:
 
-\[
+$$
 (a+b)+c\neq a+(b+c)
-\]
+$$
 
 in general.
 
@@ -119,7 +119,7 @@ Prefer stable formulations: avoid catastrophic subtraction, scale problems, use 
 
 ## Linear algebra has structure-specific algorithms
 
-Do not compute \(A^{-1}\) merely to solve \(Ax=b\).
+Do not compute $A^{-1}$ merely to solve $Ax=b$.
 
 LU is general; Cholesky exploits SPD structure; QR is robust for least squares; SVD exposes rank and singular directions; iterative methods matter for sparse systems.
 
@@ -129,15 +129,15 @@ Graphics uses these in calibration, fitting, PCA, bundle adjustment, FEM and inv
 
 For
 
-\[
+$$
 \min_\theta L(\theta),
-\]
+$$
 
 gradient descent is
 
-\[
+$$
 \theta_{k+1}=\theta_k-\eta_k\nabla L(\theta_k).
-\]
+$$
 
 The hard questions are parameterization, scale, local minima, derivative quality and identifiability. Automatic differentiation differentiates the implementation; it does not prove the implementation is the intended physical model.
 
@@ -147,15 +147,15 @@ Neural rendering is especially vulnerable because camera pose, geometry, appeara
 
 For
 
-\[
+$$
 \dot y=f(t,y),\qquad y(t_0)=y_0,
-\]
+$$
 
 explicit Euler gives
 
-\[
+$$
 y_{n+1}=y_n+h f(t_n,y_n).
-\]
+$$
 
 It is simple but can be unstable for stiff systems. Higher-order explicit methods improve local accuracy; implicit methods can improve stability at solve cost.
 
@@ -163,7 +163,7 @@ PDE discretization turns continuous models into algebraic systems. Grid spacing 
 
 ## FFT is an algorithmic change
 
-A direct DFT costs \(O(N^2)\); FFT algorithms reduce common cases to \(O(N\log N)\). This matters in convolution, spectral simulation, filtering and signal analysis. FFT convolution still needs explicit padding and boundary semantics because circular and linear convolution differ.
+A direct DFT costs $O(N^2)$; FFT algorithms reduce common cases to $O(N\log N)$. This matters in convolution, spectral simulation, filtering and signal analysis. FFT convolution still needs explicit padding and boundary semantics because circular and linear convolution differ.
 
 ## pandas is a relational layer for experiments
 
@@ -593,31 +593,31 @@ This development uses the reciprocal-vector treatment in *Mathematical Methods f
 
 Our sheared panel has already shown that a vector is not its coordinate list. To implement that statement in an engine, we need two distinct operations. **Construction** takes local coordinates and produces a world-space position. **Recovery** starts with a measured world point and determines its local coordinates. If these are confused, imported mesh vertices, UV frames, hit locations and moving-object attachments drift or point to the wrong feature even when every multiplication has the right dimensions.
 
-Fix a two-dimensional affine frame consisting of an origin \(o\) and two ordered world-space displacement axes \(a,b\), each measured in metres. Local coefficients \(u,v\) count how many steps to take along each axis; they are dimensionless if each axis represents a world displacement per unit local coordinate. The geometric definition is
+Fix a two-dimensional affine frame consisting of an origin $o$ and two ordered world-space displacement axes $a,b$, each measured in metres. Local coefficients $u,v$ count how many steps to take along each axis; they are dimensionless if each axis represents a world displacement per unit local coordinate. The geometric definition is
 
-\[
+$$
 p=o+ua+vb,\qquad d=p-o,\qquad
 B=\begin{bmatrix}a_x&b_x\\a_y&b_y\end{bmatrix},\qquad
 B\begin{bmatrix}u\\v\end{bmatrix}=d.
-\]
+$$
 
-The expression \(p-o\) is legitimate point subtraction and produces a displacement. Adding \(a\) and \(b\) to the origin produces another point. Changing the origin alone is translation; changing the axes changes both the basis and the metric seen by coordinate lists. This distinction is why transforming a *direction* must not add translation, while transforming a *point* does.
+The expression $p-o$ is legitimate point subtraction and produces a displacement. Adding $a$ and $b$ to the origin produces another point. Changing the origin alone is translation; changing the axes changes both the basis and the metric seen by coordinate lists. This distinction is why transforming a *direction* must not add translation, while transforming a *point* does.
 
-Recovery is a linear solve. Cross the equation \(d=ua+vb\) with \(b\): because \(b\times b=0\), we obtain \(d\times b=u(a\times b)\). Similarly \(a\times d=v(a\times b)\). Thus
+Recovery is a linear solve. Cross the equation $d=ua+vb$ with $b$: because $b\times b=0$, we obtain $d\times b=u(a\times b)$. Similarly $a\times d=v(a\times b)$. Thus
 
-\[
+$$
 u=\frac{d_xb_y-d_yb_x}{a_xb_y-a_yb_x},
 \qquad
 v=\frac{a_xd_y-a_yd_x}{a_xb_y-a_yb_x}.
-\]
+$$
 
-Here the 2D cross product returns a signed **area**, not a 3D direction. The common denominator is \(\det B\). If it vanishes, the axes are linearly dependent and infinitely many or no coordinate pairs may explain the observation. A small *relative* determinant is more subtle: the frame is technically invertible but tiny measurement errors can cause large coefficient errors. The signed quantity \(\det B/(\|a\|\|b\|)=\sin\theta\) measures the angle between the axes independently of their lengths. A numerical implementation should reject an axis of zero length, reject nonfinite data, and define a documented conditioning policy. The threshold below is **an application policy**, not the mathematical definition of singularity.
+Here the 2D cross product returns a signed **area**, not a 3D direction. The common denominator is $\det B$. If it vanishes, the axes are linearly dependent and infinitely many or no coordinate pairs may explain the observation. A small *relative* determinant is more subtle: the frame is technically invertible but tiny measurement errors can cause large coefficient errors. The signed quantity $\det B/(\|a\|\|b\|)=\sin\theta$ measures the angle between the axes independently of their lengths. A numerical implementation should reject an axis of zero length, reject nonfinite data, and define a documented conditioning policy. The threshold below is **an application policy**, not the mathematical definition of singularity.
 
-Our panel frame uses \(o=(5,-1)\,\mathrm m\), \(a=(2,0)\,\mathrm m\), and \(b=(1,3)\,\mathrm m\). A local point \(q=(2,-1)\) becomes \(p=(5,-1)+2(2,0)-(1,3)=(8,-4)\,\mathrm m\). Starting instead with \(p\), the displacement \(d=(3,-3)\) gives \(\det B=6\), \(u=12/6=2\), and \(v=-6/6=-1\). Both directions agree, and the intermediate values let us distinguish a basis-order bug from a rounding bug.
+Our panel frame uses $o=(5,-1)\,\mathrm m$, $a=(2,0)\,\mathrm m$, and $b=(1,3)\,\mathrm m$. A local point $q=(2,-1)$ becomes $p=(5,-1)+2(2,0)-(1,3)=(8,-4)\,\mathrm m$. Starting instead with $p$, the displacement $d=(3,-3)$ gives $\det B=6$, $u=12/6=2$, and $v=-6/6=-1$. Both directions agree, and the intermediate values let us distinguish a basis-order bug from a rounding bug.
 
-A coordinate list is **not** automatically a Euclidean ruler. For our axes, \(G=B^\mathsf{T}B=\left[\begin{smallmatrix}4&2\\2&10\end{smallmatrix}\right]\). The world squared distance of a local difference \(q\) is \(q^\mathsf{T}Gq\), giving \(16-8+10=18\,\mathrm m^2\) for \(q=(2,-1)\). Its ordinary coordinate sum of squares is only \(5\), which has no claim to be the physical squared distance. This same metric issue reappears in collision margins, gradient descent with nonorthogonal coordinates, texel footprints and surface parameterization.
+A coordinate list is **not** automatically a Euclidean ruler. For our axes, $G=B^\mathsf{T}B=\left[\begin{smallmatrix}4&2\\2&10\end{smallmatrix}\right]$. The world squared distance of a local difference $q$ is $q^\mathsf{T}Gq$, giving $16-8+10=18\,\mathrm m^2$ for $q=(2,-1)$. Its ordinary coordinate sum of squares is only $5$, which has no claim to be the physical squared distance. This same metric issue reappears in collision margins, gradient descent with nonorthogonal coordinates, texel footprints and surface parameterization.
 
-The following **complete C++20 laboratory** implements both operations and makes the failure contract visible. It uses \(\mathrm{hypot}\) to compute axis lengths, divides each axis by its own norm before forming the determinant, and checks nonfinite input and output. These scaling steps reduce some intermediate overflow hazards; they do not guarantee accuracy for all floating-point exponents or for extremely ill-conditioned frames. Production code should expose error diagnostics, coordinate-space types and domain-specific tolerances. A \(\texttt{Vec2}\) of two doubles is a host-side mathematical record, **not** a portable shader ABI contract.
+The following **complete C++20 laboratory** implements both operations and makes the failure contract visible. It uses $\mathrm{hypot}$ to compute axis lengths, divides each axis by its own norm before forming the determinant, and checks nonfinite input and output. These scaling steps reduce some intermediate overflow hazards; they do not guarantee accuracy for all floating-point exponents or for extremely ill-conditioned frames. Production code should expose error diagnostics, coordinate-space types and domain-specific tolerances. A $\texttt{Vec2}$ of two doubles is a host-side mathematical record, **not** a portable shader ABI contract.
 
 ```cpp
 #include <algorithm>
@@ -715,7 +715,7 @@ int main() {
 }
 ```
 
-**Execution and failure reconstruction.** Compile with `clang++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined tools/labs/basis_measurement_lab.cpp -o /tmp/basis_lab && /tmp/basis_lab`. The exact program was compiled and run with Clang 17 under AddressSanitizer and UndefinedBehaviorSanitizer in the local verification environment. Tests establish the round trip for one nonorthogonal frame, the Gram-metric calculation, rejection of one nearly parallel frame and rejection of nonfinite input. They do **not** prove general overflow immunity, perfect conditioning, GPU agreement, or the correctness of a 3D inverse. To reconstruct rather than memorize, derive the signed-area ratios, prove the metric identity by expanding \((Bq)\cdot(Bq)\), then change the basis to left-handed and verify the signs still recover the correct local point.
+**Execution and failure reconstruction.** Compile with `clang++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined tools/labs/basis_measurement_lab.cpp -o /tmp/basis_lab && /tmp/basis_lab`. The exact program was compiled and run with Clang 17 under AddressSanitizer and UndefinedBehaviorSanitizer in the local verification environment. Tests establish the round trip for one nonorthogonal frame, the Gram-metric calculation, rejection of one nearly parallel frame and rejection of nonfinite input. They do **not** prove general overflow immunity, perfect conditioning, GPU agreement, or the correctness of a 3D inverse. To reconstruct rather than memorize, derive the signed-area ratios, prove the metric identity by expanding $(Bq)\cdot(Bq)$, then change the basis to left-handed and verify the signs still recover the correct local point.
 
 This example is an original implementation bridge informed by the reciprocal-basis, inner-product and matrix treatments in the supplied *Mathematical Methods for Physics and Engineering*. Its implementation and test claims refer to this stand-alone program, not to an uninspected production Kairo source file.
 

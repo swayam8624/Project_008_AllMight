@@ -1,0 +1,34 @@
+\hypertarget{appendix-1988d465c119}{}
+\section*{PDE fields and discrete Laplacians}
+\section{PDE fields and discrete Laplacians}\label{pde-fields-and-discrete-laplacians}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A partial differential equation constrains a field through spatial and temporal derivatives. Laplace's equation \(\Delta u=0\) seeks a harmonic field whose value matches its neighborhood average; Poisson's equation adds a source term. On a regular grid, finite differences produce the five-point stencil with four neighbor weights and a negative center weight. On a triangle mesh, cotangent weights encode angles and a mass matrix normalizes by vertex area. Boundary conditions supply essential data: Dirichlet fixes values, Neumann fixes normal flux, and Robin combines them. Neumann Laplace systems require zero net flux and a pinned value or mean because constants lie in the nullspace. Explicit heat updates have a stability-limited time step; implicit updates solve a sparse system. PDE algorithms separate field representation, spatial operator, boundary conditions, and time integration.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-6a7869dd79a6]{Sampling aliasing and reconstruction}
+\item
+  \href{}{Convolution and filter footprints (03-Visual-Computing-I, appendix-d5b3c692d9f0)}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography}{Worlds, Images and Inference}
+\item
+  \hyperref[appendix-a9ba01fa72a6]{Collision barriers and continuous detection} \#\# Full teaching explanation
+\end{itemize}
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#PDEs,\%20fields,\%20and\%20discrete\%20solvers}{PDEs, fields, and discrete solvers} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Dynamics,\%20forces,\%20and\%20numerical\%20integration}{Dynamics, forces, and numerical integration} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Meshes,\%20connectivity,\%20and\%20geometry\%20processing}{Meshes, connectivity, and geometry processing}
+
+Expanded direct teaching: \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20triangle\%20turns\%20a\%20differential\%20into\%20a\%20concrete\%20field\%20calculation}{Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#A triangle turns a differential into a concrete field calculation}.
+
+A valid finite-element cotangent stiffness can have negative edge weights while retaining nonnegative quadratic energy. Energy contraction, conservation and positivity of the evolving samples are separate requirements. \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Nonnegative\%20energy\%20and\%20nonnegative\%20weights\%20are\%20different\%20promises}{The single-triangle derivation} shows the distinction; \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#A\%20stable\%20heat\%20step\%20can\%20still\%20create\%20a\%20negative\%20sample}{the heat-step trace} gives a negative sample while energy decreases.

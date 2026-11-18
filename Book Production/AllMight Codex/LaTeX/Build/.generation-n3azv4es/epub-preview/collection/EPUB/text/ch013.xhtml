@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch013.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-17fc1bc8b305-octal" class="level2">
+<h2>Octal</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C001 · <strong>Latest development:</strong> C001</p>
+<section id="appendix-17fc1bc8b305-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Base 8 maps one digit to three bits; it survives in permissions and legacy literal syntax.</p>
+<p>Octal digits run from 0 through 7. Group binary from the right in threes: <code>010 101 101₂ = 255₈</code>. In C++, <code>0255</code> is octal 173; decimal <code>255</code> is a different value. Permission triples such as rwx map naturally onto three bits.</p>
+</section>
+<section id="appendix-17fc1bc8b305-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch066.xhtml#appendix-83c3f28f7bda-positional-notation" class="wikilink">Positional notation</a> — A base is the number of available digits.</li>
+</ul>
+</section>
+<section id="appendix-17fc1bc8b305-used-by" class="level3">
+<h3>Used by</h3>
+<p>Connect later chunks here when they use this concept.</p>
+</section>
+<section id="appendix-17fc1bc8b305-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain octal without the label, work the example above, then state the assumption whose removal would change the result.</p>
+<p><strong>Pending:</strong> Unix permission semantics.</p>
+</section>
+<section id="appendix-17fc1bc8b305-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-from-a-signal-to-an-interpretation" class="wikilink">C001 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-foundations" class="wikilink">Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-17fc1bc8b305-why-octal-still-matters" class="level3">
+<h3>Why octal still matters</h3>
+<p>Octal groups binary digits in threes. Each octal digit therefore represents exactly three bits, so a binary field such as <code>111 101 010</code> maps directly to <code>752₈</code> without repeated division. Hexadecimal dominates modern memory dumps because bytes align naturally to two hex digits, but octal survives in domains whose historical or semantic fields are three-bit groups.</p>
+<p>POSIX permission notation is the canonical example: read/write/execute are bit values <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+</math>, so permission <code>0754</code> means owner <code>111</code>, group <code>101</code>, other <code>100</code>. The leading zero in C/C++ source historically denotes an octal integer literal, which creates a real parsing hazard: <code>010</code> is eight, not ten. Modern code should prefer explicit intent and avoid visually ambiguous numeric literals.</p>
+<p>A reconstruction test should convert binary↔︎octal by bit grouping, explain why each digit is 0–7, decode a permission triple, and identify the literal-syntax hazard. Octal is not a different storage representation in memory; it is a textual interpretation of the same integer bits.</p>
+</section>
+</section>
+</body>
+</html>

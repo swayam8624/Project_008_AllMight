@@ -1,0 +1,3782 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch417.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_01-foundations-i-ch015-execute-and-measure-a-metal-frame" class="level2">
+<h2>Execute and Measure a Metal Frame</h2>
+<p><a href="ch410.xhtml#id_06-GPU-Architecture-and-Real-Time-Rendering" class="wikilink">Reading map</a> · <a href="ch416.xhtml#id_01-foundations-i-ch014-submit-synchronize-and-retire-gpu-work" class="wikilink">Previous chapter</a> · <a href="ch418.xhtml#id_01-foundations-i-ch016-profile-gpus-and-respect-apple-ownership-boundaries" class="wikilink">Next chapter</a></p>
+<p>Metal uses its own command, storage, presentation, and synchronization contracts, with Apple GPU tile behavior affecting practical choices. This chapter treats a Metal frame as an execution pipeline whose correctness and performance need separate evidence.</p>
+<p><strong>By the end:</strong> Map Metal device, command, storage, drawable, and synchronization concepts onto a measured frame without importing Vulkan assumptions blindly.</p>
+<p><strong>Recall question:</strong> Which measurements distinguish CPU command encoding cost from GPU execution and presentation delay?</p>
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 34828–37869; source-span SHA256 71e4bac8a630df75ca628f0e92faaadf94348d3efbc86b1f781ed0c597ace587. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_01-foundations-i-ch015-execute-and-measure-a-metal-frame-1" class="level3">
+<h3>Execute and measure a Metal frame</h3>
+<section id="id_01-foundations-i-ch015-m141" class="level4">
+<h4>+ M141</h4>
+<p>Pass 13 begins <strong>Phase 24 — Metal, Render Graphs, Resource Lifetimes, Apple GPU Concerns, and Multi-Backend Rendering</strong>. The exact boundary is important: M139 owns <strong>2301–2316</strong>, Metal’s core execution/resource/shader model; M140 owns <strong>2317–2340</strong>, storage modes, tile-memory implications, drawable/presentation, frames in flight, heaps and synchronization; and M141 owns <strong>2341–2350</strong>, profiling/debugging plus Objective-C++/Swift ownership and threading boundaries. Render-graph construction itself begins later at Part 2361, so that belongs to Pass 14.</p>
+<p>This phase is especially useful for you because we now have three concrete implementation levels to compare:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Kairo Metal</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>small explicit Metal backend</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Maveb Metal</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>multi-pass, triple-buffered production-style renderer</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>AetherStudio bridge</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>C++ Metal core</mtext>
+          <mo stretchy="false">↔</mo>
+          <mtext>Objective-C++</mtext>
+          <mo stretchy="false">↔</mo>
+          <mtext>SwiftUI</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The important conceptual shift from Vulkan is not that Metal is “less explicit.” It is that Metal chooses <strong>different explicit boundaries</strong>.</p>
+<p>Vulkan makes state transitions, access scopes and synchronization extraordinarily visible.</p>
+<p>Metal exposes a somewhat higher-level execution model around:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>device</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>queue</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>command buffer</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>encoder</mtext>
+</math>
+<p>while still giving you direct control over memory placement, render-pass semantics, heaps, hazards and GPU scheduling.</p>
+<hr />
+</section>
+<section id="id_01-foundations-i-ch015-metals-core-execution-model" class="level4">
+<h4>METAL’S CORE EXECUTION MODEL</h4>
+<p><strong>Metal design philosophy</strong></p>
+<p>Metal is Apple’s low-overhead GPU API.</p>
+<p>Its design goal is approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics>
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtable displaystyle="true" columnspacing="1em" rowspacing="3pt">
+            <mtr>
+              <mtd>
+                <mtext>minimal driver ambiguity</mtext>
+                <mo>+</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd>
+                <mtext>low CPU submission overhead</mtext>
+                <mo>+</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd>
+                <mtext>explicit resource ownership</mtext>
+                <mo>+</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd>
+                <mtext>tight mapping to Apple GPU architecture</mtext>
+              </mtd>
+            </mtr>
+          </mtable>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+<annotation encoding="application/x-tex">
+\boxed{
+\text{minimal driver ambiguity}
++
+\text{low CPU submission overhead}
++
+\text{explicit resource ownership}
++
+\text{tight mapping to Apple GPU architecture}
+}
+</annotation></semantics></math>
+<p>but it intentionally exposes fewer low-level synchronization permutations than Vulkan.</p>
+<p>A useful comparison is:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Vulkan</th>
+<th>Metal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>VkDevice</code></td>
+<td><code>MTLDevice</code></td>
+</tr>
+<tr>
+<td><code>VkQueue</code></td>
+<td><code>MTLCommandQueue</code></td>
+</tr>
+<tr>
+<td><code>VkCommandBuffer</code></td>
+<td><code>MTLCommandBuffer</code></td>
+</tr>
+<tr>
+<td>command recording directly into buffer</td>
+<td>commands grouped through encoders</td>
+</tr>
+<tr>
+<td>graphics pipeline</td>
+<td><code>MTLRenderPipelineState</code></td>
+</tr>
+<tr>
+<td>compute pipeline</td>
+<td><code>MTLComputePipelineState</code></td>
+</tr>
+<tr>
+<td>descriptor sets</td>
+<td>direct resource binding / argument buffers</td>
+</tr>
+<tr>
+<td>image layouts</td>
+<td>no direct equivalent exposed in same form</td>
+</tr>
+<tr>
+<td>explicit pipeline barriers</td>
+<td>hazard tracking + barriers/fences/events</td>
+</tr>
+<tr>
+<td>swapchain</td>
+<td><code>CAMetalLayer</code> / <code>CAMetalDrawable</code></td>
+</tr>
+<tr>
+<td>SPIR-V</td>
+<td>Metal library / MSL functions</td>
+</tr>
+</tbody>
+</table>
+<p>The biggest conceptual difference is the <strong>encoder model</strong>.</p>
+<p>In Vulkan, one command buffer can directly contain:</p>
+<pre class="text"><code>vkCmdDraw
+vkCmdDispatch
+vkCmdCopyBuffer
+...</code></pre>
+<p>Metal groups commands by operation family:</p>
+<pre class="text"><code>MTLRenderCommandEncoder
+MTLComputeCommandEncoder
+MTLBlitCommandEncoder</code></pre>
+<p>That is not merely cosmetic.</p>
+<p>It gives Metal a strong phase structure.</p>
+<hr />
+<p><strong><code>MTLDevice</code></strong></p>
+<p><code>MTLDevice</code> represents a GPU and its Metal capabilities.</p>
+<p>Objective-C:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>id<span class="op">&lt;</span>MTLDevice<span class="op">&gt;</span> device <span class="op">=</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    MTLCreateSystemDefaultDevice<span class="op">();</span></span></code></pre></div>
+<p>metal-cpp equivalent:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>MTL<span class="op">::</span>Device<span class="op">*</span> device <span class="op">=</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    MTL<span class="op">::</span>CreateSystemDefaultDevice<span class="op">();</span></span></code></pre></div>
+<p>depending on wrapper/API style.</p>
+<p>The device creates most GPU resources:</p>
+<pre class="text"><code>buffers
+textures
+samplers
+pipeline states
+heaps
+command queues
+libraries</code></pre>
+<p>It also exposes hardware capabilities.</p>
+<p>Maveb explicitly queries Apple GPU family support and capabilities such as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>ray tracing</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>dynamic libraries</mtext>
+  <mo>.</mo>
+</math>
+<p>Its current capability inspection iterates Apple GPU family support and records the highest family exposed.</p>
+<p>That is preferable to saying:</p>
+<blockquote>
+<p>I am on an M-series Mac, therefore feature X exists.</p>
+</blockquote>
+<p>Query actual capabilities.</p>
+<hr />
+<p><strong>Kairo’s device ownership</strong></p>
+<p>Kairo’s Metal backend creates:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>Device <span class="op">=</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    MTLCreateSystemDefaultDevice<span class="op">();</span></span></code></pre></div>
+<p>and throws if no device exists.</p>
+<p>Then:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>Queue <span class="op">=</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">[</span>Device newCommandQueue<span class="op">];</span></span></code></pre></div>
+<p>That gives the backend a single default device and one primary command queue.</p>
+<p>Maveb instead receives/retains a device from its MetalKit bridge and creates its queue internally.</p>
+<p>Both designs are legitimate.</p>
+<p>The latter is especially useful when UI layer already owns an <code>MTKView</code> with a selected device.</p>
+<hr />
+<p><strong>Device identity versus rendering context</strong></p>
+<p>Unlike legacy OpenGL, there is no giant implicit global rendering context.</p>
+<p>A Metal resource carries device association.</p>
+<p>The application can have references to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>B</mi>
+  </msub>
+</math>
+<p>although Apple systems commonly expose one integrated/default GPU in modern Apple-silicon environments.</p>
+<p>The important architectural idea is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>GPU ownership is object-based, not implicit-context-based</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong><code>MTLCommandQueue</code></strong></p>
+<p>A command queue receives command buffers.</p>
+<p>Creation:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>id<span class="op">&lt;</span>MTLCommandQueue<span class="op">&gt;</span> queue <span class="op">=</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">[</span>device newCommandQueue<span class="op">];</span></span></code></pre></div>
+<p>Conceptually:</p>
+<pre class="text"><code>CPU
+ ↓
+command buffer 0
+command buffer 1
+command buffer 2
+ ↓
+MTLCommandQueue
+ ↓
+GPU scheduling</code></pre>
+<p>Command buffers submitted to one queue have ordered queue semantics.</p>
+<p>That does not mean every GPU instruction from one command buffer must completely finish before any useful work from the next can exist internally.</p>
+<p>The implementation may pipeline work where legal.</p>
+<p>But command dependencies/order must remain semantically correct.</p>
+<hr />
+<p><strong>Maveb’s queue</strong></p>
+<p>Maveb:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="va">commandQueue_</span> <span class="op">=</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    adopt<span class="op">(</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        device<span class="op">-&gt;</span>newCommandQueue<span class="op">());</span></span></code></pre></div>
+<p>and labels it:</p>
+<pre class="text"><code>AETHER Primary Queue</code></pre>
+<p>This is good instrumentation.</p>
+<p>The label becomes visible in GPU tools.</p>
+<hr />
+<p><strong>One queue is often enough on Apple GPUs</strong></p>
+<p>Do not import desktop Vulkan thinking too literally.</p>
+<p>You might imagine:</p>
+<pre class="text"><code>graphics queue
+compute queue
+copy queue</code></pre>
+<p>as mandatory architecture.</p>
+<p>Metal supports multiple command queues, but Apple GPU execution and unified memory architecture mean more queues do not inherently mean more physical parallelism.</p>
+<p>A single well-scheduled command queue can already provide excellent throughput.</p>
+<p>Use additional queues where dependency structure and measurement justify them.</p>
+<hr />
+<p><strong><code>MTLCommandBuffer</code></strong></p>
+<p>A command buffer is a package of GPU work destined for a command queue.</p>
+<p>Creation:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>id<span class="op">&lt;</span>MTLCommandBuffer<span class="op">&gt;</span> command <span class="op">=</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">[</span>queue commandBuffer<span class="op">];</span></span></code></pre></div>
+<p>or metal-cpp:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>MTL<span class="op">::</span>CommandBuffer<span class="op">*</span> commandBuffer <span class="op">=</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">commandQueue_</span><span class="op">-&gt;</span>commandBuffer<span class="op">();</span></span></code></pre></div>
+<p>You create encoders from it.</p>
+<p>Then:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>encoder<span class="op">-&gt;</span>endEncoding<span class="op">();</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>commandBuffer<span class="op">-&gt;</span>commit<span class="op">();</span></span></code></pre></div>
+<p>After commit, the GPU can execute it.</p>
+<hr />
+<p><strong>Command-buffer lifecycle</strong></p>
+<p>Conceptually:</p>
+<pre class="text"><code>Created
+    ↓
+Encoding
+    ↓
+Committed
+    ↓
+Scheduled
+    ↓
+Completed</code></pre>
+<p>or:</p>
+<pre class="text"><code>Completed with error</code></pre>
+<p>You cannot keep appending commands after committing.</p>
+<p>This is analogous to Vulkan’s command recording/submission model but without the same reusable command-buffer reset model exposed to the application.</p>
+<p>Metal command buffers are normally short-lived command objects.</p>
+<hr />
+<p><strong>Kairo’s one-command-per-frame model</strong></p>
+<p>Kairo does:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>id<span class="op">&lt;</span>MTLCommandBuffer<span class="op">&gt;</span> command <span class="op">=</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">[</span>Queue commandBuffer<span class="op">];</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>EncodeScene<span class="op">(</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    command<span class="op">,</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    frame<span class="op">);</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>Present<span class="op">(</span>command<span class="op">);</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="op">[</span>command commit<span class="op">];</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>LastCommand <span class="op">=</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    command<span class="op">;</span></span></code></pre></div>
+<p>So each frame produces a fresh command buffer.</p>
+<p>That is idiomatic Metal.</p>
+<hr />
+<p><strong>Maveb does the same at a larger scale</strong></p>
+<p>At frame start:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>MTL<span class="op">::</span>CommandBuffer<span class="op">*</span> commandBuffer <span class="op">=</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">commandQueue_</span><span class="op">-&gt;</span>commandBuffer<span class="op">();</span></span></code></pre></div>
+<p>Then that one frame command buffer accumulates numerous passes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Gaussian work</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>shadows</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>mesh scene</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>TAA</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>bloom</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>presentation</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>optional readback</mtext>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>commandBuffer<span class="op">-&gt;</span>presentDrawable<span class="op">(</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    drawable<span class="op">);</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>commandBuffer<span class="op">-&gt;</span>commit<span class="op">();</span></span></code></pre></div>
+<p>That is a much richer example of the same execution model.</p>
+<hr />
+<p><strong>One active encoder at a time</strong></p>
+<p>Metal command buffers are generally structured as sequential encoding regions.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>command buffer
+
+    RenderEncoder A
+        ...
+    endEncoding
+
+    ComputeEncoder B
+        ...
+    endEncoding
+
+    BlitEncoder C
+        ...
+    endEncoding</code></pre>
+<p>You do not arbitrarily interleave commands from multiple normal encoders into the same command stream.</p>
+<p>Each encoder defines a GPU operation domain.</p>
+<p>This structure makes resource/hazard reasoning easier.</p>
+<hr />
+<p><strong><code>MTLRenderCommandEncoder</code></strong></p>
+<p>A render encoder records rasterization work.</p>
+<p>Creation:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>id<span class="op">&lt;</span>MTLRenderCommandEncoder<span class="op">&gt;</span> encoder <span class="op">=</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">[</span>command</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>        renderCommandEncoderWithDescriptor<span class="op">:</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>            renderPass<span class="op">];</span></span></code></pre></div>
+<p>The descriptor specifies attachments and their load/store semantics.</p>
+<p>Inside encoder you bind:</p>
+<pre class="text"><code>render pipeline
+depth/stencil state
+vertex buffers
+fragment buffers
+textures
+samplers
+viewport
+scissor
+culling state</code></pre>
+<p>then issue:</p>
+<pre class="text"><code>drawPrimitives
+drawIndexedPrimitives</code></pre>
+<hr />
+<p><strong>Kairo render encoder</strong></p>
+<p>Kairo’s scene pass creates:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>id<span class="op">&lt;</span>MTLRenderCommandEncoder<span class="op">&gt;</span> encoder <span class="op">=</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">[</span>command</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>        renderCommandEncoderWithDescriptor<span class="op">:</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>            pass<span class="op">];</span></span></code></pre></div>
+<p>and binds:</p>
+<pre class="text"><code>DepthState
+CullMode
+FrontFacingWinding
+frame uniforms
+shadow map
+material textures
+mesh buffers</code></pre>
+<p>Then draws its opaque and transparent objects.</p>
+<p>This maps closely to its Vulkan backend semantically.</p>
+<p>The API details differ.</p>
+<hr />
+<p><strong>Metal separates pipeline state from many dynamic states</strong></p>
+<p><code>MTLRenderPipelineState</code> contains compiled shader/pipeline configuration, but states such as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>F</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>W</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>w</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+</math>
+<p>are bound independently on encoder.</p>
+<p>Compare Vulkan’s more aggressively baked pipeline-state object.</p>
+<p>Metal’s split makes certain state changes less pipeline-permutation-heavy.</p>
+<hr />
+<p><strong><code>MTLComputeCommandEncoder</code></strong></p>
+<p>Compute encoder records general compute kernels.</p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span><span class="op">*</span> encoder <span class="op">=</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    commandBuffer<span class="op">-&gt;</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>        computeCommandEncoder<span class="op">();</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>encoder<span class="op">-&gt;</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    setComputePipelineState<span class="op">(</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>        pipeline<span class="op">);</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>encoder<span class="op">-&gt;</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>    setBuffer<span class="op">(</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>        buffer<span class="op">,</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>        offset<span class="op">,</span></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>        slot<span class="op">);</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>encoder<span class="op">-&gt;</span></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>    dispatchThreads<span class="op">(</span></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>        grid<span class="op">,</span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>        group<span class="op">);</span></span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>encoder<span class="op">-&gt;</span></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>    endEncoding<span class="op">();</span></span></code></pre></div>
+<p>This is where Maveb’s Gaussian scan/radix pipeline from Pass 9 lives.</p>
+<hr />
+<p><strong>Compute dispatch mapping</strong></p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+</math>
+<p>threads are needed and group size:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mo>,</mo>
+</math>
+<p>you can issue:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>dispatchThreads<span class="op">(</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    MTL<span class="op">::</span>Size<span class="op">(</span>N<span class="op">,</span><span class="dv">1</span><span class="op">,</span><span class="dv">1</span><span class="op">),</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    MTL<span class="op">::</span>Size<span class="op">(</span>G<span class="op">,</span><span class="dv">1</span><span class="op">,</span><span class="dv">1</span><span class="op">));</span></span></code></pre></div>
+<p>Metal generates enough threadgroups to cover the logical grid.</p>
+<p>Or explicitly dispatch threadgroups.</p>
+<p>The MSL kernel receives IDs such as:</p>
+<pre class="metal"><code>uint id
+    [[thread_position_in_grid]]</code></pre>
+<p>exactly as we discussed in GPU architecture.</p>
+<hr />
+<p><strong>Compute pipeline properties</strong></p>
+<p>A <code>MTLComputePipelineState</code> can expose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>E</mi>
+  <mi>x</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>W</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>x</mi>
+  <mi>T</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>T</mi>
+  <mi>h</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>s</mi>
+  <mi>P</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>T</mi>
+  <mi>h</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>g</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>These matter for choosing good workgroup sizes.</p>
+<p>Recall Pass 9:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>workgroup size should respect subgroup/execution width</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Metal gives you implementation data for this rather than requiring you to assume a 32-lane warp.</p>
+<hr />
+<p><strong><code>MTLBlitCommandEncoder</code></strong></p>
+<p>Blit encoder handles data movement and utility transfer operations.</p>
+<p>Examples include:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+</math>
+<p>mipmap generation and synchronization/copy operations depending on resource/storage mode.</p>
+<p>Maveb uses a blit encoder to generate mipmaps:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>blit<span class="op">-&gt;</span>generateMipmaps<span class="op">(</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    texture<span class="op">);</span></span></code></pre></div>
+<p>and to copy a presented drawable into a CPU-readable buffer for frame capture.</p>
+<hr />
+<p><strong>Why use a blit encoder rather than a compute shader for copies?</strong></p>
+<p>A compute shader can copy bytes.</p>
+<p>But dedicated copy/blit hardware and driver paths may be more efficient.</p>
+<p>Blit commands also clearly communicate intent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>this operation moves data</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>rather than:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>this is arbitrary shader computation</mtext>
+  <mo>.</mo>
+</math>
+<p>That can improve scheduling and optimization.</p>
+<hr />
+<p><strong>Maveb frame capture</strong></p>
+<p>Maveb creates a shared buffer and records:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>captureEncoder<span class="op">-&gt;</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    copyFromTexture<span class="op">(</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>        drawableTexture<span class="op">,</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">...</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>        captureBuffer<span class="op">,</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">...);</span></span></code></pre></div>
+<p>Then completion handler reads <code>captureBuffer-&gt;contents()</code> only after command buffer has completed.</p>
+<p>That is the correct asynchronous readback pattern.</p>
+<hr />
+<p><strong><code>MTLBuffer</code></strong></p>
+<p>A Metal buffer is a linear byte allocation.</p>
+<p>Creation can be:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>id<span class="op">&lt;</span>MTLBuffer<span class="op">&gt;</span> b <span class="op">=</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">[</span>device</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>        newBufferWithLength<span class="op">:</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>            size</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>        options<span class="op">:</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>            MTLResourceStorageModeShared<span class="op">];</span></span></code></pre></div>
+<p>or from initial bytes:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>newBufferWithBytes<span class="op">:</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    data</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>length<span class="op">:</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    bytes</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>options<span class="op">:</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span></code></pre></div>
+<p>Like Vulkan buffer, interpretation comes from binding context.</p>
+<hr />
+<p><strong>Buffer offset binding</strong></p>
+<p>You can bind one buffer at different offsets:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>encoder<span class="op">-&gt;</span>setVertexBuffer<span class="op">(</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    frameBuffer<span class="op">,</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    frameOffset<span class="op">,</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">);</span></span></code></pre></div>
+<p>Thus one giant upload arena can hold:</p>
+<pre class="text"><code>camera
+draw constants
+skin palette
+lights
+cluster data
+...</code></pre>
+<p>without creating a new Metal buffer for each allocation.</p>
+<p>Maveb’s <code>FrameContext</code> is explicitly designed around this.</p>
+<hr />
+<p><strong><code>MTLTexture</code></strong></p>
+<p>Texture stores structured image data.</p>
+<p>Descriptor specifies:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>w</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mo>,</mo>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mo>,</mo>
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>L</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Maveb’s scene HDR texture:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>G</mi>
+  <mi>B</mi>
+  <mi>A</mi>
+  <mn>16</mn>
+  <mi>F</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+</math>
+<p>with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+</math>
+<p>and usage:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>T</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>That is exactly the right shape for a GPU-only HDR render target later sampled by post-processing.</p>
+<hr />
+<p><strong>Texture usage flags matter</strong></p>
+<p>Examples:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>W</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>T</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>i</mi>
+  <mi>x</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>F</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>V</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>w</mi>
+  <mo>.</mo>
+</math>
+<p>Declaring correct usage lets Metal optimize resource placement/layout internally.</p>
+<p>This is conceptually similar to Vulkan image usage flags, although Metal hides explicit image layouts from you.</p>
+<hr />
+<p><strong><code>MTLSamplerState</code></strong></p>
+<p>Sampler state controls:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>,</mo>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>d</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>,</mo>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>L</mi>
+  <mi>O</mi>
+  <mi>D</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Creation:</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>MTLSamplerDescriptor<span class="op">*</span> d <span class="op">=</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">[</span>MTLSamplerDescriptor new<span class="op">];</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>d<span class="op">.</span>minFilter <span class="op">=</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>    MTLSamplerMinMagFilterLinear<span class="op">;</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>d<span class="op">.</span>magFilter <span class="op">=</span></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>    MTLSamplerMinMagFilterLinear<span class="op">;</span></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>id<span class="op">&lt;</span>MTLSamplerState<span class="op">&gt;</span> sampler <span class="op">=</span></span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">[</span>device</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>        newSamplerStateWithDescriptor<span class="op">:</span>d<span class="op">];</span></span></code></pre></div>
+<p>Kairo binds texture and sampler separately, unlike Vulkan’s commonly used combined-image-sampler descriptor.</p>
+<hr />
+<p><strong>Comparison samplers</strong></p>
+<p>Maveb’s shadow sampler uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>F</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>L</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>E</mi>
+  <mi>q</mi>
+  <mi>u</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>.</mo>
+</math>
+<p>Shader sampling can perform depth comparison directly.</p>
+<p>This is useful for:</p>
+<ul>
+<li>PCF shadows,</li>
+<li>hardware comparison filtering.</li>
+</ul>
+<p>Sampler state therefore has semantic impact beyond visual filtering.</p>
+<hr />
+<p><strong><code>MTLRenderPipelineState</code></strong></p>
+<p>This is a compiled render pipeline.</p>
+<p>Descriptor includes:</p>
+<ul>
+<li>vertex function,</li>
+<li>fragment function,</li>
+<li>color formats,</li>
+<li>blend state,</li>
+<li>depth/stencil attachment formats,</li>
+<li>sample count,</li>
+<li>vertex descriptor where required.</li>
+</ul>
+<p>Then:</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>id<span class="op">&lt;</span>MTLRenderPipelineState<span class="op">&gt;</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>pipeline <span class="op">=</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">[</span>device</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>        newRenderPipelineStateWithDescriptor<span class="op">:</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>            descriptor</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>        error<span class="op">:</span></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>            <span class="op">&amp;</span>error<span class="op">];</span></span></code></pre></div>
+<hr />
+<p><strong>Kairo pipeline construction</strong></p>
+<p>Kairo builds runtime Metal source into a library.</p>
+<p>Then obtains:</p>
+<pre class="text"><code>mesh_vertex
+mesh_fragment
+skinned_mesh_vertex
+shadow_vertex
+debug_vertex
+...</code></pre>
+<p>and creates pipeline variants.</p>
+<p>It configures:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>w</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>F</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>R</mi>
+  <mi>G</mi>
+  <mi>B</mi>
+  <mi>A</mi>
+  <mn>16</mn>
+  <mi>F</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>w</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+  <mi>F</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>R</mi>
+  <mn>32</mn>
+  <mi>U</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>The same semantic attachments exist in its Vulkan backend.</p>
+<p>This is good backend agreement.</p>
+<hr />
+<p><strong>Blend state belongs to pipeline descriptor</strong></p>
+<p>For transparent pipeline Kairo sets:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>R</mi>
+  <mi>G</mi>
+  <mi>B</mi>
+  <mo>=</mo>
+  <mi>S</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>A</mi>
+  <mi>l</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>R</mi>
+  <mi>G</mi>
+  <mi>B</mi>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>M</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mi>S</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>A</mi>
+  <mi>l</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mo>.</mo>
+</math>
+<p>Exactly the same blend equation as Vulkan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mi>o</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>s</mi>
+  </msub>
+  <msub>
+    <mi>C</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>s</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>This demonstrates an important multi-backend principle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>rendering semantics can match even when API object models differ</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong><code>MTLComputePipelineState</code></strong></p>
+<p>Compute state is built from an MSL <code>kernel</code> function.</p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> function <span class="op">=</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    library<span class="op">-&gt;</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>        newFunction<span class="op">(</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;scan&quot;</span><span class="op">);</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> pipeline <span class="op">=</span></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>    device<span class="op">-&gt;</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>        newComputePipelineState<span class="op">(</span></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>            function<span class="op">,</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>            <span class="op">&amp;</span>error<span class="op">);</span></span></code></pre></div>
+<p>Then bind:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>encoder<span class="op">-&gt;</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>    setComputePipelineState<span class="op">(</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>        pipeline<span class="op">);</span></span></code></pre></div>
+<p>Maveb’s Gaussian system contains multiple pipelines for:</p>
+<ul>
+<li>projection,</li>
+<li>counting,</li>
+<li>scan,</li>
+<li>key generation,</li>
+<li>radix histogram,</li>
+<li>radix scatter,</li>
+<li>compositing.</li>
+</ul>
+<p>Each represents a specialized compute stage.</p>
+<hr />
+<p><strong>Why compute pipeline state is separate</strong></p>
+<p>Compute has no:</p>
+<ul>
+<li>rasterizer,</li>
+<li>blend state,</li>
+<li>color attachments,</li>
+<li>vertex assembly.</li>
+</ul>
+<p>So its pipeline object is simpler.</p>
+<p>It still contains compiled executable metadata and execution-width/resource usage relevant to dispatch.</p>
+<hr />
+<p><strong>shader libraries</strong></p>
+<p>Metal shader functions live inside a:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>L</mi>
+  <mi>i</mi>
+  <mi>b</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<p>There are two major workflows.</p>
+<p>Runtime source compilation:</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>newLibraryWithSource</span></code></pre></div>
+<p>and offline compiled:</p>
+<pre class="text"><code>.metal
+↓
+Metal compiler
+↓
+.metallib</code></pre>
+<p>loaded with:</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>device<span class="op">-&gt;</span>newLibrary<span class="op">(</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    path<span class="op">,</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span>error<span class="op">);</span></span></code></pre></div>
+<hr />
+<p><strong>Kairo versus Maveb shader strategy</strong></p>
+<p>Kairo currently stores MSL source in its backend and performs:</p>
+<div class="sourceCode" id="cb44"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>newLibraryWithSource</span></code></pre></div>
+<p>during initialization.</p>
+<p>Excellent for:</p>
+<ul>
+<li>simplicity,</li>
+<li>rapid testing,</li>
+<li>self-contained backend.</li>
+</ul>
+<p>Maveb loads:</p>
+<pre class="text"><code>AetherShaders.metallib</code></pre>
+<p>from its app bundle.</p>
+<p>That is the more production-oriented approach because shader compilation moves out of the normal runtime path.</p>
+<hr />
+<p><strong>Offline shader compilation advantages</strong></p>
+<p>It reduces runtime pipeline startup cost.</p>
+<p>It allows build-time validation.</p>
+<p>It makes application binaries less dependent on runtime source compilation.</p>
+<p>It enables better build-system integration.</p>
+<p>For an engine like Kairo, you can eventually keep source in repository but compile to metallib during asset/build pipeline.</p>
+<hr />
+<p><strong>MSL vertex functions</strong></p>
+<p>A Metal vertex function looks conceptually like:</p>
+<pre class="metal"><code>struct VertexOut
+{
+    float4 position
+        [[position]];
+
+    float2 uv;
+};
+
+vertex VertexOut vertexMain(
+    uint vertexID
+        [[vertex_id]],
+
+    const device Vertex* vertices
+        [[buffer(0)]])
+{
+    VertexOut out;
+
+    const Vertex v =
+        vertices[vertexID];
+
+    out.position =
+        ...;
+
+    out.uv =
+        v.uv;
+
+    return out;
+}</code></pre>
+<p><code>vertex</code> is the stage qualifier.</p>
+<hr />
+<p><strong>MSL address spaces</strong></p>
+<p>MSL makes memory domains explicit.</p>
+<p>Common qualifiers:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>g</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p><code>device</code> refers to GPU-accessible device memory.</p>
+<p><code>constant</code> is read-only uniform-ish memory.</p>
+<p><code>threadgroup</code> is workgroup-shared on-chip memory.</p>
+<p><code>thread</code> is private per invocation.</p>
+<p>These map directly to the GPU memory hierarchy from Pass 9.</p>
+<hr />
+<p><strong>Vertex input can use buffer pointers or stage-in attributes</strong></p>
+<p>Metal supports different vertex-input styles.</p>
+<p>You can use a vertex descriptor and:</p>
+<pre class="metal"><code>[[stage_in]]</code></pre>
+<p>or manually index a device buffer using:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Both are valid.</p>
+<p>Explicit buffer access can be useful when building custom geometry pipelines.</p>
+<hr />
+<p><strong>MSL fragment functions</strong></p>
+<p>Fragment:</p>
+<pre class="metal"><code>fragment float4 fragmentMain(
+    VertexOut in
+        [[stage_in]],
+
+    texture2d&lt;float&gt; albedo
+        [[texture(0)]],
+
+    sampler s
+        [[sampler(0)]])
+{
+    return albedo.sample(
+        s,
+        in.uv);
+}</code></pre>
+<p>Fragment function runs for generated fragment/sample work.</p>
+<p>It can access:</p>
+<ul>
+<li>interpolated stage data,</li>
+<li>buffers,</li>
+<li>textures,</li>
+<li>samplers.</li>
+</ul>
+<hr />
+<p><strong>Metal texture/sampler separation</strong></p>
+<p>MSL:</p>
+<pre class="metal"><code>texture2d&lt;float&gt;
+    texture [[texture(0)]]
+
+sampler
+    sampler0 [[sampler(0)]]</code></pre>
+<p>lets same texture be used with different samplers.</p>
+<p>This differs from Vulkan’s commonly used:</p>
+<pre class="text"><code>combined image sampler</code></pre>
+<p>although Vulkan can also bind images and samplers separately.</p>
+<p>API abstraction should therefore not assume that:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>H</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>+</mo>
+  <mi>S</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+</math>
+<p>is always the best universal representation.</p>
+<hr />
+<p><strong>MSL compute kernels</strong></p>
+<p>Compute functions use:</p>
+<pre class="metal"><code>kernel</code></pre>
+<p>rather than <code>vertex</code> or <code>fragment</code>.</p>
+<p>Example:</p>
+<pre class="metal"><code>kernel void multiply(
+    const device float* lhs
+        [[buffer(0)]],
+
+    const device float* rhs
+        [[buffer(1)]],
+
+    device float* output
+        [[buffer(2)]],
+
+    uint id
+        [[thread_position_in_grid]])
+{
+    output[id] =
+        lhs[id] *
+        rhs[id];
+}</code></pre>
+<p>This is essentially the exact execution model we derived in Pass 9.</p>
+<hr />
+<p><strong>Threadgroup memory in MSL</strong></p>
+<p>Example reduction:</p>
+<pre class="metal"><code>kernel void reduce(
+    const device float* input
+        [[buffer(0)]],
+
+    device float* output
+        [[buffer(1)]],
+
+    uint local
+        [[thread_index_in_threadgroup]],
+
+    uint group
+        [[threadgroup_position_in_grid]])
+{
+    threadgroup float
+        scratch[256];
+
+    scratch[local] =
+        input[
+            group * 256 +
+            local];
+
+    threadgroup_barrier(
+        mem_flags::mem_threadgroup);
+
+    ...
+}</code></pre>
+<p>The keyword <code>threadgroup</code> is the concrete Metal spelling of shared-memory concepts from Phase 22.</p>
+<hr />
+</section>
+<section id="id_01-foundations-i-ch015-storage-modes-tile-memory-drawables-frames-in-flight-heaps-synchronization" class="level4">
+<h4>STORAGE MODES, TILE MEMORY, DRAWABLES, FRAMES IN FLIGHT, HEAPS &amp; SYNCHRONIZATION</h4>
+<p><strong>Metal storage modes</strong></p>
+<p>Metal’s storage modes describe where/how a resource’s backing storage is accessible.</p>
+<p>The major conceptual modes are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>These are not merely performance hints.</p>
+<p>They define CPU/GPU access rules.</p>
+<hr />
+<p><strong><code>Shared</code></strong></p>
+<p>Shared storage is directly CPU and GPU accessible.</p>
+<p>For buffer:</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span><span class="op">*</span> b <span class="op">=</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>    device<span class="op">-&gt;</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>        newBuffer<span class="op">(</span></span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>            bytes<span class="op">,</span></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>            MTL<span class="op">::</span>ResourceStorageModeShared<span class="op">);</span></span></code></pre></div>
+<p>CPU pointer:</p>
+<div class="sourceCode" id="cb55"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> p <span class="op">=</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>    b<span class="op">-&gt;</span>contents<span class="op">();</span></span></code></pre></div>
+<p>Then CPU can write directly.</p>
+<p>On Apple unified-memory architectures this maps very naturally to physical unified memory.</p>
+<hr />
+<p><strong>Best uses of shared memory</strong></p>
+<p>Typical:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>per-frame constants</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>dynamic geometry</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>upload staging</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>readback</mtext>
+  <mo>.</mo>
+</math>
+<p>But shared does not mean:</p>
+<blockquote>
+<p>use it for every large GPU resource.</p>
+</blockquote>
+<p>GPU-only textures and large static compute buffers may be better as private resources because Metal can optimize them for GPU use.</p>
+<hr />
+<p><strong>Maveb frame uploads</strong></p>
+<p>Each <code>FrameContext</code> creates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mtext> MiB</mtext>
+</math>
+<p>shared upload buffer.</p>
+<p>It also creates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+  <mtext> KiB</mtext>
+</math>
+<p>shared readback buffer.</p>
+<p>Allocation is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>n</mi>
+  <mi>U</mi>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>n</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Current default alignment:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256.</mn>
+</math>
+<p>Then:</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>cpuAddress <span class="op">=</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>    buffer<span class="op">-&gt;</span>contents<span class="op">()</span></span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">+</span> offset<span class="op">;</span></span></code></pre></div>
+<p>This is a clean per-frame arena.</p>
+<hr />
+<p><strong>Why shared memory still needs lifetime synchronization</strong></p>
+<p>Unified physical memory does not remove races.</p>
+<p>Suppose CPU writes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>F</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mn>1</mn>
+</math>
+<p>into the same bytes while GPU is still reading:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>F</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mn>0.</mn>
+</math>
+<p>Physical memory is shared.</p>
+<p>That makes the race more direct, not less real.</p>
+<p>You still need frame-slot ownership.</p>
+<hr />
+<p><strong><code>Private</code></strong></p>
+<p>Private resources are GPU-access-only from ordinary CPU perspective.</p>
+<p>CPU does not obtain meaningful direct pointer to resource data.</p>
+<p>Use for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>render targets</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>static geometry</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>large compute buffers</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>GPU-only intermediate textures</mtext>
+  <mo>.</mo>
+</math>
+<p>Upload normally goes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mtext> </mtext>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo stretchy="false">→</mo>
+  <mi>B</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mo stretchy="false">→</mo>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Maveb uses private render targets</strong></p>
+<p>Its:</p>
+<pre class="text"><code>Scene HDR Color
+Scene Reverse-Z Depth
+Scene Entity IDs
+Scene Motion Vectors
+Bloom textures
+TAA histories
+Gaussian Color/Depth/IDs
+Shadow arrays</code></pre>
+<p>are allocated with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mo>::</mo>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>That is exactly the right architecture for GPU-resident working data.</p>
+<hr />
+<p><strong>Kairo currently makes a different simplification</strong></p>
+<p>Kairo’s smaller Metal backend creates viewport textures with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>That allows simple synchronous:</p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>getBytes<span class="op">:</span></span></code></pre></div>
+<p>readback for picking/capture.</p>
+<p>This favors code simplicity.</p>
+<p>Maveb’s private targets plus explicit blit readback are the more scalable production architecture.</p>
+<p>This is a good example of why architecture evolves with engine maturity.</p>
+<hr />
+<p><strong><code>Managed</code> storage concept</strong></p>
+<p>Managed storage is primarily a macOS-oriented concept for systems where CPU and GPU may maintain distinct copies.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>CPU-visible copy
+↕ synchronization
+GPU-visible copy</code></pre>
+<p>CPU writes may require notifying Metal that a range changed.</p>
+<p>GPU-produced data may need synchronization back toward the CPU copy before CPU reads.</p>
+<p>The exact availability/behavior is platform-dependent, so query/use it only where appropriate.</p>
+<p>On Apple-silicon unified-memory engines, <code>Shared</code> and <code>Private</code> are usually the more central choices.</p>
+<hr />
+<p><strong>Why Managed exists historically</strong></p>
+<p>Discrete GPU memory architecture:</p>
+<pre class="text"><code>CPU RAM
+     ↕
+interconnect
+     ↕
+GPU VRAM</code></pre>
+<p>A resource that both CPU and GPU use may have two copies.</p>
+<p>Managed mode helps Metal track/coherently synchronize those representations.</p>
+<p>This is fundamentally different from physically shared Apple-silicon DRAM.</p>
+<hr />
+<p><strong>Memoryless resources</strong></p>
+<p>A memoryless render target need not have persistent backing storage outside on-chip tile memory.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>tile begins
+    ↓
+temporary depth/color data lives on-chip
+    ↓
+tile processing ends
+    ↓
+data discarded</code></pre>
+<p>No need to write the entire attachment to system memory if nobody needs it afterward.</p>
+<p>This is powerful on tile-based GPUs.</p>
+<hr />
+<p><strong>When memoryless is valid</strong></p>
+<p>Suppose depth exists only for depth testing during one render pass.</p>
+<p>No later pass samples depth.</p>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>depth data is temporally local to the pass</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A memoryless depth attachment may be ideal where supported.</p>
+<p>But if later TAA/SSAO/Hi-Z needs depth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>depth must survive</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then memoryless would be wrong.</p>
+<hr />
+<p><strong>Apple tile-based deferred rendering intuition</strong></p>
+<p>This is one of the most important Apple GPU concepts.</p>
+<p>A conventional immediate mental model says:</p>
+<pre class="text"><code>triangle
+↓
+rasterize
+↓
+write every fragment result to framebuffer memory</code></pre>
+<p>A tile-based renderer instead divides the framebuffer into screen tiles.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>geometry processing
+      ↓
+bin primitives into tiles
+      ↓
+
+Tile 0:
+    load/clear tile attachments
+    rasterize relevant primitives
+    blend/depth test in on-chip tile memory
+    store needed results
+
+Tile 1:
+    same
+...</code></pre>
+<p>The crucial resource is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>fast on-chip tile memory</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Why tile rendering saves bandwidth</strong></p>
+<p>Suppose the same pixel is written by 20 overlapping fragments.</p>
+<p>Immediate external-memory mental model might imply repeated:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mtext> </mtext>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mo>,</mo>
+  <mi>w</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mo>,</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mtext> </mtext>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>w</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>Tile memory lets many of those operations remain on-chip.</p>
+<p>Only the final attachment result may need to be written to system memory.</p>
+<p>This is why attachment <code>loadAction</code> and <code>storeAction</code> matter so much on Apple GPUs.</p>
+<hr />
+<p><strong>Bandwidth is expensive</strong></p>
+<p>Apple GPUs operate under power and memory-bandwidth constraints.</p>
+<p>On-chip tile operations are much cheaper than repeatedly hitting DRAM.</p>
+<p>Therefore one of the most important Metal performance principles is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>avoid unnecessary attachment loads and stores</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Metal load/store actions</strong></p>
+<p>At start of render pass, an attachment has a load action.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>,</mo>
+  <mi>C</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>D</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>At end:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>D</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+</math>
+<p>plus resolve variants for multisampling.</p>
+<p>Same semantic idea as Vulkan Pass 11.</p>
+<p>But on tile-based GPUs the bandwidth consequences become especially tangible.</p>
+<hr />
+<p><strong>LoadActionClear</strong></p>
+<p>If pass overwrites entire target and old contents are irrelevant:</p>
+<div class="sourceCode" id="cb64"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>attachment<span class="op">-&gt;</span></span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>    setLoadAction<span class="op">(</span></span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>        MTL<span class="op">::</span>LoadActionClear<span class="op">);</span></span></code></pre></div>
+<p>GPU can initialize tile memory directly.</p>
+<p>It need not load old attachment data from system memory.</p>
+<p>This is often significantly better than:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+</math>
+<p>followed by shader overwrite.</p>
+<hr />
+<p><strong>LoadActionDontCare</strong></p>
+<p>If every relevant pixel will definitely be overwritten and you do not even require a defined initial clear:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>The GPU may skip initialization entirely.</p>
+<p>Only use it when shader/render coverage guarantees old values are never semantically observed.</p>
+<hr />
+<p><strong>StoreActionDontCare</strong></p>
+<p>If attachment is only temporary:</p>
+<div class="sourceCode" id="cb65"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>depthAttachment<span class="op">-&gt;</span></span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>    setStoreAction<span class="op">(</span></span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>        MTL<span class="op">::</span>StoreActionDontCare<span class="op">);</span></span></code></pre></div>
+<p>Metal does not need to preserve tile result after render pass.</p>
+<p>For a transient depth buffer, this can avoid large memory writeback.</p>
+<hr />
+<p><strong>Kairo’s depth target</strong></p>
+<p>Kairo’s viewport scene pass sets:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mo>.</mo>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mo>.</mo>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>=</mo>
+  <mi>D</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>That is ideal if depth is used only for that pass.</p>
+<p>It says:</p>
+<blockquote>
+<p>I need a fresh depth buffer during rasterization, but I do not care about its value afterward.</p>
+</blockquote>
+<p>This is exactly how you should reason on a tile GPU.</p>
+<hr />
+<p><strong>Maveb differs because it uses depth later</strong></p>
+<p>Maveb’s scene depth participates in later temporal/postprocessing logic.</p>
+<p>Therefore it cannot universally throw it away at the end of the geometry pass.</p>
+<p>Resource lifetime determines store action.</p>
+<p>This is precisely the kind of decision a future render graph can infer.</p>
+<hr />
+<p><strong>Color attachments</strong></p>
+<p>A Metal render pass color attachment specifies:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>For MSAA there may also be resolve texture.</p>
+<p>Maveb temporal pass:</p>
+<pre class="text"><code>destination = TAA history output
+load = DontCare
+store = Store</code></pre>
+<p>Correct because every result is newly written, but later presentation/bloom needs it.</p>
+<hr />
+<p><strong>Multiple render targets</strong></p>
+<p>Kairo/Maveb can attach multiple color targets:</p>
+<pre class="text"><code>HDR color
+Object ID
+Motion vector
+Normal/confidence</code></pre>
+<p>One fragment shader may output different values to different attachments.</p>
+<p>This is Metal’s equivalent of MRT.</p>
+<p>Formats are baked into render pipeline state.</p>
+<p>Therefore pipeline must match attachment formats.</p>
+<hr />
+<p><strong>Depth attachments</strong></p>
+<p>Depth attachment descriptor contains:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mo>.</mo>
+</math>
+<p>Depth compare/write behavior itself lives in:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>These are separate.</p>
+<p>Render pass says:</p>
+<blockquote>
+<p>Which depth texture exists and how its lifetime begins/ends.</p>
+</blockquote>
+<p>Depth state says:</p>
+<blockquote>
+<p>How fragments compare/write depth.</p>
+</blockquote>
+<hr />
+<p><strong>Maveb reverse-Z</strong></p>
+<p>Maveb explicitly labels scene depth:</p>
+<pre class="text"><code>Scene Reverse-Z Depth</code></pre>
+<p>and uses reverse-Z states.</p>
+<p>With reverse-Z:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mn>0.</mn>
+</math>
+<p>So clear depth commonly becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.</mn>
+</math>
+<p>Depth comparison becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+</math>
+<p>or equivalent.</p>
+<p>This contrasts with Kairo’s conventional depth path.</p>
+<hr />
+<p><strong>Drawable acquisition</strong></p>
+<p>To present to a screen, Metal gives you a drawable.</p>
+<p>With <code>MTKView</code>:</p>
+<div class="sourceCode" id="cb69"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span><span class="op">*</span> drawable <span class="op">=</span></span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>    view<span class="op">-&gt;</span></span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a>        currentDrawable<span class="op">();</span></span></code></pre></div>
+<p>or Objective-C:</p>
+<div class="sourceCode" id="cb70"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>id<span class="op">&lt;</span>CAMetalDrawable<span class="op">&gt;</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>drawable <span class="op">=</span></span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>    layer<span class="op">.</span>nextDrawable<span class="op">;</span></span></code></pre></div>
+<p>This drawable owns/presents a texture.</p>
+<p>You render into that texture.</p>
+<hr />
+<p><strong>Acquire drawable as late as practical</strong></p>
+<p>Drawable pools are finite.</p>
+<p>Once you call:</p>
+<pre class="text"><code>nextDrawable</code></pre>
+<p>you hold one presentation resource.</p>
+<p>Acquiring far earlier than needed can reduce presentation pipeline flexibility and potentially block if drawable pool is exhausted.</p>
+<p>A good rule:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>acquire presentation resource near the point it becomes necessary</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Maveb MetalKit acquisition</strong></p>
+<p>Maveb obtains:</p>
+<div class="sourceCode" id="cb72"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>renderPass <span class="op">=</span></span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>    view<span class="op">-&gt;</span></span>
+<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>        currentRenderPassDescriptor<span class="op">();</span></span>
+<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a>drawable <span class="op">=</span></span>
+<span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a>    view<span class="op">-&gt;</span></span>
+<span id="cb72-7"><a href="#cb72-7" aria-hidden="true" tabindex="-1"></a>        currentDrawable<span class="op">();</span></span></code></pre></div>
+<p>and immediately validates them.</p>
+<p>If window is unavailable/minimized and drawable is nil:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>skip frame cleanly</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Correct.</p>
+<hr />
+<p><strong><code>CAMetalLayer</code></strong></p>
+<p><code>CAMetalLayer</code> is the lower-level Core Animation layer that supplies Metal drawables.</p>
+<p>Kairo constructs one directly:</p>
+<div class="sourceCode" id="cb73"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>Layer <span class="op">=</span></span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">[</span>CAMetalLayer layer<span class="op">];</span></span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>Layer<span class="op">.</span>device <span class="op">=</span></span>
+<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>    Device<span class="op">;</span></span>
+<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>Layer<span class="op">.</span>pixelFormat <span class="op">=</span></span>
+<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>    MTLPixelFormatBGRA8Unorm_sRGB<span class="op">;</span></span>
+<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a>Layer<span class="op">.</span>framebufferOnly <span class="op">=</span></span>
+<span id="cb73-11"><a href="#cb73-11" aria-hidden="true" tabindex="-1"></a>    YES<span class="op">;</span></span>
+<span id="cb73-12"><a href="#cb73-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-13"><a href="#cb73-13" aria-hidden="true" tabindex="-1"></a>Layer<span class="op">.</span>displaySyncEnabled <span class="op">=</span></span>
+<span id="cb73-14"><a href="#cb73-14" aria-hidden="true" tabindex="-1"></a>    YES<span class="op">;</span></span></code></pre></div>
+<p>then attaches it to the Cocoa window’s content view.</p>
+<hr />
+<p><strong><code>framebufferOnly</code></strong></p>
+<p>If true, drawable texture is optimized for render-target presentation and restricted from broader shader/readback use.</p>
+<p>This can improve performance.</p>
+<p>Maveb temporarily sets its MetalKit view’s framebuffer-only behavior differently when frame capture is required because it needs to copy/read the drawable.</p>
+<p>That demonstrates the real tradeoff:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>narrow usage permits stronger optimization</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Drawable size</strong></p>
+<p>Kairo updates:</p>
+<div class="sourceCode" id="cb74"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>Layer<span class="op">.</span>drawableSize <span class="op">=</span></span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>    CGSizeMake<span class="op">(</span></span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>        width<span class="op">,</span></span>
+<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a>        height<span class="op">);</span></span></code></pre></div>
+<p>with physical framebuffer dimensions.</p>
+<p>As with Vulkan, retina logical points are not necessarily framebuffer pixels.</p>
+<p>Renderer must work in drawable pixel dimensions.</p>
+<hr />
+<p><strong>presenting drawables</strong></p>
+<p>You do not immediately display the drawable when you finish encoding.</p>
+<p>You schedule presentation on a command buffer:</p>
+<div class="sourceCode" id="cb75"><pre class="sourceCode objectivec"><code class="sourceCode objectivec"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="op">[</span>command</span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>    presentDrawable<span class="op">:</span></span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>        drawable<span class="op">];</span></span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a><span class="op">[</span>command commit<span class="op">];</span></span></code></pre></div>
+<p>Presentation occurs after command buffer reaches appropriate point.</p>
+<p>Maveb metal-cpp:</p>
+<div class="sourceCode" id="cb76"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>commandBuffer<span class="op">-&gt;</span></span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>    presentDrawable<span class="op">(</span></span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>        drawable<span class="op">);</span></span>
+<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>commandBuffer<span class="op">-&gt;</span></span>
+<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a>    commit<span class="op">();</span></span></code></pre></div>
+<hr />
+<p><strong>Why presentation belongs to command buffer</strong></p>
+<p>The GPU must finish rendering the drawable before display consumes it.</p>
+<p>By encoding presentation into the command stream, Metal naturally associates presentation with rendering completion.</p>
+<p>This is conceptually similar to Vulkan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo stretchy="false">→</mo>
+  <mi>v</mi>
+  <mi>k</mi>
+  <mi>Q</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>K</mi>
+  <mi>H</mi>
+  <mi>R</mi>
+  <mo>,</mo>
+</math>
+<p>but Metal makes the common dependency more integrated.</p>
+<hr />
+<p><strong>command-buffer completion handlers</strong></p>
+<p>Metal allows:</p>
+<div class="sourceCode" id="cb77"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>commandBuffer<span class="op">-&gt;</span></span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>    addCompletedHandler<span class="op">(</span></span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>        <span class="op">[](</span>MTL<span class="op">::</span>CommandBuffer<span class="op">*</span> cb<span class="op">)</span></span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a>            <span class="op">...</span></span>
+<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">});</span></span></code></pre></div>
+<p>Handler executes after GPU finishes command buffer.</p>
+<p>This is useful for:</p>
+<ul>
+<li>releasing frame slot,</li>
+<li>processing readback,</li>
+<li>statistics,</li>
+<li>deferred cleanup,</li>
+<li>error inspection.</li>
+</ul>
+<hr />
+<p><strong>Completion handlers are asynchronous</strong></p>
+<p>Do not assume completion handler runs on:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>main UI thread</mtext>
+  <mo>.</mo>
+</math>
+<p>Treat it as arbitrary asynchronous callback context.</p>
+<p>Therefore it should not directly mutate AppKit/SwiftUI UI state unless explicitly marshalled to main thread.</p>
+<hr />
+<p><strong>Maveb completion handler</strong></p>
+<p>Maveb:</p>
+<div class="sourceCode" id="cb78"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>commandBuffer<span class="op">-&gt;</span></span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>    addCompletedHandler<span class="op">(</span></span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>        <span class="op">[</span><span class="kw">this</span><span class="op">,</span>semaphore<span class="op">](...)</span></span>
+<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a>            <span class="op">...</span></span>
+<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>            dispatch_semaphore_signal<span class="op">(</span></span>
+<span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a>                semaphore<span class="op">);</span></span>
+<span id="cb78-8"><a href="#cb78-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">});</span></span></code></pre></div>
+<p>It computes coarse GPU duration:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>T</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mo>−</mo>
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>T</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+</math>
+<p>stores it atomically, increments completed-frame count and releases one frame-in-flight slot.</p>
+<p>That is excellent use of completion handler.</p>
+<hr />
+<p><strong>Frame capture completion</strong></p>
+<p>Another handler copies data out of shared readback buffer only after GPU is finished.</p>
+<p>It protects completed capture with:</p>
+<div class="sourceCode" id="cb79"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>lock_guard</span></code></pre></div>
+<p>because completion occurs asynchronously from app/UI thread.</p>
+<p>Again, correct cross-thread ownership.</p>
+<hr />
+<p><strong>frames-in-flight semaphore limiting</strong></p>
+<p>Maveb creates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>c</mi>
+  <msub>
+    <mi>h</mi>
+    <mi>s</mi>
+  </msub>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>c</mi>
+  </msub>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>At frame start:</p>
+<div class="sourceCode" id="cb80"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>dispatch_semaphore_wait<span class="op">(</span></span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">frameSemaphore_</span><span class="op">,</span></span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>    FOREVER<span class="op">);</span></span></code></pre></div>
+<p>At command completion:</p>
+<div class="sourceCode" id="cb81"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>dispatch_semaphore_signal<span class="op">(</span></span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">frameSemaphore_</span><span class="op">);</span></span></code></pre></div>
+<p>So maximum submitted-not-completed frames is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mn>3</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Why this prevents overwrite</strong></p>
+<p>Frame slot:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>N</mi>
+  <mi>u</mi>
+  <mi>m</mi>
+  <mi>b</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+  <mn>3.</mn>
+</math>
+<p>Because semaphore guarantees no more than three incomplete frames, by the time CPU cycles back to same slot, earlier GPU work using that slot must have completed.</p>
+<p>Then:</p>
+<div class="sourceCode" id="cb82"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a>frame<span class="op">.</span>beginFrame<span class="op">();</span></span></code></pre></div>
+<p>can reset upload/readback cursors safely.</p>
+<p>This is the Metal analogue of multi-frame fence slots in Vulkan.</p>
+<hr />
+<p><strong>Triple buffering latency tradeoff</strong></p>
+<p>More frames in flight improve CPU/GPU overlap.</p>
+<p>But worst-case input-to-display latency can increase.</p>
+<p>If CPU gets three frames ahead:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>p</mi>
+  <mi>u</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>N</mi>
+  </msub>
+</math>
+<p>may not be visible until several queued frames execute.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>throughput</mtext>
+          <mo>≠</mo>
+          <mtext>latency</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Competitive interactive applications may deliberately cap frames in flight lower.</p>
+<hr />
+<p><strong>per-frame upload buffers</strong></p>
+<p>Maveb has one:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mtext> MiB</mtext>
+</math>
+<p>shared upload arena per frame context.</p>
+<p>At frame start:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Each upload:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>n</mi>
+  <mi>U</mi>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>a</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>+</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>This avoids hundreds/thousands of tiny allocations.</p>
+<hr />
+<p><strong>Example frame allocation</strong></p>
+<p>Suppose frame needs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>320</mn>
+  <mtext> byte camera</mtext>
+</math>
+<p>with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+  <mtext> byte alignment</mtext>
+  <mo>.</mo>
+</math>
+<p>Allocate at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.</mn>
+</math>
+<p>Next 80-byte material data:</p>
+<p>current cursor:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>320.</mn>
+</math>
+<p>Aligned:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>512.</mn>
+</math>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>512.</mn>
+</math>
+<p>Next cursor:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>592.</mn>
+</math>
+<p>That wasted padding is the cost of alignment.</p>
+<hr />
+<p><strong>Metal buffer offsets and alignment</strong></p>
+<p>Binding:</p>
+<div class="sourceCode" id="cb83"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>encoder<span class="op">-&gt;</span></span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>    setVertexBuffer<span class="op">(</span></span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a>        buffer<span class="op">,</span></span>
+<span id="cb83-4"><a href="#cb83-4" aria-hidden="true" tabindex="-1"></a>        offset<span class="op">,</span></span>
+<span id="cb83-5"><a href="#cb83-5" aria-hidden="true" tabindex="-1"></a>        index<span class="op">);</span></span></code></pre></div>
+<p>requires offset satisfying relevant alignment requirements.</p>
+<p>Different resource usages have different constraints.</p>
+<p>The safe architecture is to centralize allocation alignment rules rather than scatter magic padding throughout shaders/render code.</p>
+<p>Maveb defaults its frame arena allocations to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+</math>
+<p>byte alignment, which is conservative and convenient for uniform-like data.</p>
+<hr />
+<p><strong>Alignment formula</strong></p>
+<p>For power-of-two alignment:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>a</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>g</mi>
+          <mi>n</mi>
+          <mi>U</mi>
+          <mi>p</mi>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo>,</mo>
+          <mi>a</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo>+</mo>
+          <mi>a</mi>
+          <mo>−</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+          <mi mathvariant="normal">&amp;</mi>
+          <mo>∼</mo>
+          <mo stretchy="false">(</mo>
+          <mi>a</mi>
+          <mo>−</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Maveb uses exactly:</p>
+<div class="sourceCode" id="cb84"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="op">(</span>value <span class="op">+</span> alignment <span class="op">-</span> <span class="dv">1</span><span class="op">)</span></span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a><span class="op">&amp;</span></span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a><span class="op">~(</span>alignment <span class="op">-</span> <span class="dv">1</span><span class="op">)</span></span></code></pre></div>
+<p>and validates alignment is power of two.</p>
+<p>Good allocator hygiene.</p>
+<hr />
+<p><strong>argument buffers</strong></p>
+<p>Direct binding:</p>
+<pre class="text"><code>setBuffer slot 0
+setBuffer slot 1
+setTexture slot 0
+setTexture slot 1
+setSampler slot 0
+...</code></pre>
+<p>can become expensive for large material/resource sets.</p>
+<p>Argument buffers package references to multiple resources into a buffer-backed structure.</p>
+<p>MSL concept:</p>
+<pre class="metal"><code>struct MaterialArguments
+{
+    texture2d&lt;float&gt;
+        baseColor
+        [[id(0)]];
+
+    texture2d&lt;float&gt;
+        normal
+        [[id(1)]];
+
+    sampler
+        samplerState
+        [[id(2)]];
+};</code></pre>
+<p>Shader receives argument-buffer structure at one buffer slot.</p>
+<hr />
+<p><strong>Argument buffers are Metal’s route toward bindless-style resource indexing</strong></p>
+<p>Instead of rebinding every texture per draw, you can build arrays/tables of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Material stores indices.</p>
+<p>GPU selects appropriate resources.</p>
+<p>This aligns extremely well with:</p>
+<ul>
+<li>GPU-driven rendering,</li>
+<li>large material databases,</li>
+<li>indirect draws.</li>
+</ul>
+<p>Conceptually it corresponds to Vulkan descriptor indexing/bindless architectures.</p>
+<hr />
+<p><strong>Argument buffers do not erase residency/hazard concerns</strong></p>
+<p>A buffer containing references to resources does not mean Metal automatically knows all intended indirect resource usage in every configuration.</p>
+<p>Depending on argument-buffer tier/resource model, you may need to explicitly declare resource/heap usage to an encoder.</p>
+<p>This is analogous to the principle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>indirect reference</mtext>
+          <mo>≠</mo>
+          <mtext>resource lifetime magically solved</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Current repository state</strong></p>
+<p>The inspected Kairo/Maveb source paths use direct:</p>
+<pre class="text"><code>setVertexBuffer
+setFragmentBuffer
+setFragmentTexture
+setFragmentSamplerState</code></pre>
+<p>binding extensively.</p>
+<p>I did not find an established argument-buffer architecture in the inspected paths.</p>
+<p>So argument buffers are a future scalability tool, not something I will pretend is already implemented.</p>
+<hr />
+<p><strong>Metal heaps</strong></p>
+<p><code>MTLHeap</code> is a large resource-memory pool from which buffers/textures can be created.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>MTLHeap
+    ↓
+Texture A
+Texture B
+Buffer C
+...</code></pre>
+<p>Benefits include:</p>
+<ul>
+<li>reduced allocation overhead,</li>
+<li>memory control,</li>
+<li>resource aliasing potential,</li>
+<li>predictable transient allocation.</li>
+</ul>
+<hr />
+<p><strong>Maveb frame heap</strong></p>
+<p>Each frame context creates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64</mn>
+  <mtext> MiB</mtext>
+</math>
+<p>private heap.</p>
+<p>Descriptor:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>a</mi>
+  <mi>z</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>d</mi>
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>It is labelled:</p>
+<pre class="text"><code>Frame N Transient Heap</code></pre>
+<p>That is exactly the infrastructure you want for short-lived GPU resources.</p>
+<hr />
+<p><strong>heap suballocation</strong></p>
+<p>When resources are allocated from a heap, Metal manages placement within heap according to resource size/alignment requirements.</p>
+<p>The engine still needs to reason about:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>heap capacity</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>resource lifetime</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>reuse</mtext>
+  <mo>.</mo>
+</math>
+<p>For advanced aliasing, logically non-overlapping resources can reuse backing heap space where API/resource rules allow.</p>
+<hr />
+<p><strong>Heap aliasing intuition</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>A</mi>
+  </msub>
+</math>
+<p>exists during passes 1–3.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>B</mi>
+  </msub>
+</math>
+<p>exists during passes 5–7.</p>
+<p>Their lifetimes do not overlap.</p>
+<p>Instead of reserving:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>they can conceptually reuse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+</math>
+<p>of physical storage.</p>
+<p>This will become explicit render-graph lifetime analysis in Pass 14.</p>
+<hr />
+<p><strong>Heaps do not automatically give optimal aliasing</strong></p>
+<p>Creating a heap does not mean:</p>
+<blockquote>
+<p>all resources magically share memory efficiently.</p>
+</blockquote>
+<p>Engine still needs lifetime knowledge and appropriate resource creation/reuse strategy.</p>
+<p>Maveb has the per-frame heap infrastructure, but I would not claim its current renderer already performs a full graph-driven interval alias plan.</p>
+<p>That belongs to the next architecture stage.</p>
+<hr />
+<p><strong>hazard tracking</strong></p>
+<p>A hazard occurs when memory accesses overlap in an unsafe way.</p>
+<p>Same familiar classes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>A</mi>
+  <mi>W</mi>
+  <mo>,</mo>
+  <mi>W</mi>
+  <mi>A</mi>
+  <mi>R</mi>
+  <mo>,</mo>
+  <mi>W</mi>
+  <mi>A</mi>
+  <mi>W</mi>
+  <mo>.</mo>
+</math>
+<p>Metal can automatically track many hazards for tracked resources.</p>
+<p>This is an important difference from Vulkan’s normal explicit synchronization philosophy.</p>
+<hr />
+<p><strong>Tracked resources</strong></p>
+<p>With:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>H</mi>
+  <mi>a</mi>
+  <mi>z</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>d</mi>
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>,</mo>
+</math>
+<p>Metal tracks usage dependencies and inserts required synchronization where needed across relevant encoders/command buffers according to its model.</p>
+<p>This greatly simplifies application code.</p>
+<p>Maveb’s transient heap explicitly uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>H</mi>
+          <mi>a</mi>
+          <mi>z</mi>
+          <mi>a</mi>
+          <mi>r</mi>
+          <mi>d</mi>
+          <mi>T</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>k</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>g</mi>
+          <mi>M</mi>
+          <mi>o</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>T</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>k</mi>
+          <mi>e</mi>
+          <mi>d</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+  <mo>.</mo>
+</math>
+<p>That is a deliberate correctness-first choice.</p>
+<hr />
+<p><strong>explicit versus implicit hazard tracking</strong></p>
+<p>Tracked mode:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>driver/runtime tracks dependencies</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Untracked mode:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>application promises to synchronize correctly</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Why ever use untracked?</p>
+<p>Because automatic tracking has overhead.</p>
+<p>A sophisticated render graph that already knows every producer/consumer may be able to emit precise synchronization itself.</p>
+<p>But if the graph is wrong:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>untracked resource can race silently</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>This is analogous to Vulkan philosophy</strong></p>
+<p>Vulkan effectively expects you to own synchronization semantics.</p>
+<p>Metal lets you choose a more automatic path for many resources.</p>
+<p>A mature multi-backend renderer can have high-level resource graph semantics, then map:</p>
+<pre class="text"><code>Vulkan:
+    explicit barrier
+
+Metal tracked resource:
+    maybe no manual action
+
+Metal untracked:
+    fence/barrier/event as required</code></pre>
+<p>Same engine-level dependency.</p>
+<p>Different backend mechanism.</p>
+<hr />
+<p><strong>resource barriers in Metal</strong></p>
+<p>Within compute/render encoders, Metal exposes memory barrier mechanisms for ordering shader/resource memory accesses where needed.</p>
+<p>Exact APIs depend on encoder/resource scope and Metal version.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mi>B</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>This is especially relevant when one dispatch/stage writes data that a later dispatch/stage inside the same encoder reads.</p>
+<hr />
+<p><strong>Barrier versus encoder boundary</strong></p>
+<p>Ending one encoder and beginning another can establish certain ordering/hazard behavior, especially for tracked resources.</p>
+<p>But do not use encoder splitting as random “synchronization superstition.”</p>
+<p>You need to know:</p>
+<ul>
+<li>which resource is written,</li>
+<li>where read occurs,</li>
+<li>whether automatic tracking covers it,</li>
+<li>whether same/different command buffer/queue is involved.</li>
+</ul>
+<p>Same conceptual discipline as Vulkan remains.</p>
+<hr />
+<p><strong>fences and events</strong></p>
+<p>Metal exposes multiple synchronization primitives.</p>
+<p><code>MTLFence</code> is a GPU synchronization primitive suited to expressing dependencies between command encoders on a device/queue timeline.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>encoder A
+    updateFence(F)
+
+encoder B
+    waitForFence(F)</code></pre>
+<p>This is useful especially with untracked resources/heaps.</p>
+<hr />
+<p><strong>Metal fence versus Vulkan fence</strong></p>
+<p>They are <strong>not semantically equivalent despite the name</strong>.</p>
+<p>Vulkan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>F</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+</math>
+<p>is mainly CPU-visible submission completion.</p>
+<p>Metal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>F</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+</math>
+<p>is GPU-side synchronization between encoded work.</p>
+<p>Always translate semantics, not names.</p>
+<p>This will matter massively in multi-backend abstraction.</p>
+<hr />
+<p><strong>Events</strong></p>
+<p><code>MTLEvent</code> and especially:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>E</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+</math>
+<p>support synchronization across command buffers/queues.</p>
+<p>Events are more timeline-like than fences.</p>
+<p>They can express signal/wait operations between asynchronous work streams.</p>
+<hr />
+<p><strong>shared events as timeline synchronization</strong></p>
+<p>Shared event has a:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64</mn>
+  <mtext>-bit value</mtext>
+</math>
+<p>conceptually similar to Vulkan timeline semaphore values.</p>
+<p>GPU can encode:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and later:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>CPU can also observe/signal shared event state under its API semantics.</p>
+<p>Thus you can build:</p>
+<pre class="text"><code>Upload queue:
+    signal 52
+
+Render queue:
+    wait 52
+    consume uploaded resource
+
+Render:
+    signal 53
+
+CPU retirement:
+    when completed &gt;= 53
+        free resource</code></pre>
+<p>This is much closer to Vulkan timeline semaphore thinking than <code>MTLFence</code>.</p>
+<hr />
+<p><strong>Why monotonically increasing values are powerful</strong></p>
+<p>With binary synchronization:</p>
+<pre class="text"><code>Semaphore A
+Semaphore B
+Semaphore C
+...</code></pre>
+<p>With a timeline:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mo>…</mo>
+</math>
+<p>one object can describe a long execution history.</p>
+<p>Resource retirement becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>U</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>V</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mo>≤</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>V</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Exactly the model from Pass 12.</p>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch410.xhtml#id_06-GPU-Architecture-and-Real-Time-Rendering" class="wikilink">Reading map</a> · <a href="ch416.xhtml#id_01-foundations-i-ch014-submit-synchronize-and-retire-gpu-work" class="wikilink">Previous chapter</a> · <a href="ch418.xhtml#id_01-foundations-i-ch016-profile-gpus-and-respect-apple-ownership-boundaries" class="wikilink">Next chapter</a></p>
+</section>
+</section>
+</section>
+</body>
+</html>

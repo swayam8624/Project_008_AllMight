@@ -1,0 +1,65 @@
+\hypertarget{appendix-0727340a4428}{}\label{referencestart:appendix-0727340a4428}
+\section{Temporal reprojection and history validation}\label{appendix-0727340a4428-temporal-reprojection-and-history-validation}
+
+\hypertarget{appendix-0727340a4428-temporal-reprojection-and-history-validation}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} XR01 · \textbf{Latest development:} XR01
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-0727340a4428-definition-and-mechanism}
+
+\hypertarget{appendix-0727340a4428-definition-and-mechanism}{}
+
+Reprojection aligns history with a current target; disocclusion exposes content with no matching old observation. Validated blending trades noise against response/ghosting. Gaze-driven quality changes also change history reliability; TAA is not exposure integration.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-0727340a4428-prerequisites}
+
+\hypertarget{appendix-0727340a4428-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-70895739febb]{Spatiotemporal sampling and retinal motion} --- Temporal reuse must respect changing scene and retinal observations.
+\item
+  \hyperref[appendix-4192b2bdd21e]{Antialiasing and sample allocation} --- History depends on the actual current/prior sampling strategy.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-0727340a4428-used-by}
+
+\hypertarget{appendix-0727340a4428-used-by}{}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-5878b813b732]{Foveated rendering and uncertainty}
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#nameddest=appendix-68be451b78b1}{Reservoir resampling and ReSTIR (Mathematics for Visual Computing, Part 2, Reference notes: Reservoir resampling and ReSTIR)} \#\# Recall and next depth
+\end{itemize}
+
+Derive ideal history variance and identify every violated assumption. Pending: motion/depth/jitter conventions and robust implementation. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.
+
+\subsection{Source and navigation}\label{appendix-0727340a4428-source-and-navigation}
+
+\hypertarget{appendix-0727340a4428-source-and-navigation}{}
+
+\hyperref[04-visual-computing-ii-ch042-temporal-reconstruction-is-an-inference-about-correspondence]{Expanded teaching explanation} · \hyperref[appendix-fd090d982a15-xr01---independent-seeing-and-representation-source]{Independent coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}
+
+\subsection{Phase 11 camera development}\label{appendix-0727340a4428-phase-11-camera-development}
+
+\hypertarget{appendix-0727340a4428-phase-11-camera-development}{}
+
+Reprojection predicts where a prior sample lands under camera and object motion. Depth agreement tests whether the same visible surface likely occupies that location, but cannot prove stored color remains valid after lighting, exposure, material, or sampling changes. Combine projected position, depth tolerance, and disocclusion checks; reduce history weight when confidence is low. Monocular reconstruction has arbitrary global scale, so metric depth thresholds require an external scale or consistent units. Reprojection success is geometric evidence, not a photometric guarantee. Link: \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#nameddest=02-foundations-ii-ch037-a-camera-model-must-close-the-loop}{A camera model must close the loop (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)}; research: \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#nameddest=02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review}{Four deeper links from the TUM lecture review (Geometry, Cameras, and Image Formation, Part 1, Ch. 5)}.
+
+\subsection{Neighborhood clipping and deterministic jitter witness}\label{appendix-0727340a4428-neighborhood-clipping-and-deterministic-jitter-witness}
+
+\hypertarget{appendix-0727340a4428-neighborhood-clipping-and-deterministic-jitter-witness}{}
+
+\texttt{tools/labs/realtime\_effects\_reference\_lab.cpp} now extends history validity into two mechanisms that directly affect temporal stability.
+
+The first is deterministic subpixel jitter generated from Halton bases 2 and 3. The sample lies inside one pixel but changes frame to frame, allowing temporal accumulation to observe different subpixel locations. A jitter sequence must be owned by the camera/projection history contract: if the current and previous transforms disagree about whether jitter is included, the motion vector and reprojection become inconsistent.
+
+The second is neighborhood clipping. A reprojected history value can be geometrically valid yet photometrically stale after disocclusion or fast shading change. The smallest CPU oracle clamps the history sample into the current 3×3 neighborhood min/max interval before blending. Production TAA often uses variance-guided bounds, color-space transforms, reactive masks and velocity-dependent weighting, but the invariant remains: history should not inject values unsupported by the current local evidence.
+
+The laboratory checks known first Halton points, uniqueness over an initial sequence, bright/dark history rejection and preservation of an in-range history value. It remains a semantic oracle rather than a complete production TAA implementation.

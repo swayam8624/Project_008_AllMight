@@ -1,0 +1,70 @@
+\hypertarget{appendix-2587680a4fe3}{}\label{referencestart:appendix-2587680a4fe3}
+\section{One scene update across the machine --- Phase 4 retrieval}\label{appendix-2587680a4fe3-one-scene-update-across-the-machine-phase-4-retrieval}
+
+\hypertarget{appendix-2587680a4fe3-one-scene-update-across-the-machine-phase-4-retrieval}{}
+
+This is a reconstruction companion, not a replacement for the \hyperref[01-foundations-i-ch007-from-a-correct-c-asset-service-to-the-instructions-a-cpu-can-execute-phase-4-m019m021-parts-301346]{first} and \hyperref[01-foundations-i-ch007-from-temporary-memory-to-finished-parallel-frames-phase-4-m022m024-parts-347400]{second} continuous chapters. All 100 canonical titles and their actual proof limits appear in \hyperref[appendix-fd090d982a15-phase-4-cpu-architecture-and-measured-execution-parts-301400]{the source contract}. Each task below asks for a causal proof or independent implementation; reading the attached answer is not an assessment.
+
+\subsection{Reconstruction A --- from source to instruction schedule}\label{appendix-2587680a4fe3-reconstruction-a-from-source-to-instruction-schedule}
+
+\hypertarget{appendix-2587680a4fe3-reconstruction-a-from-source-to-instruction-schedule}{}
+
+A particle loop loads x and mass, multiplies them and accumulates into one scalar. Construct a dependency graph showing which loads can overlap and why the accumulator creates a true dependency. Explain why superscalar width is not achieved throughput. Consider what happens if the loop is unrolled into four independent partial accumulators: register pressure rises; dependence depth may shrink; floating-point sum order changes. Distinguish a branch predictor's speculation from the C++ semantics that decide which results are architecturally visible. Sketch a hypothetical five-stage pipeline, then identify what the model omits about modern out-of-order execution.
+
+\textbf{Required evidence:} an optimized assembly excerpt, compiler version/flags and a separate handwritten baseline. If you cannot show them, do not claim a measured instruction cost.
+
+\subsection{Reconstruction B --- where the 64-byte record goes}\label{appendix-2587680a4fe3-reconstruction-b-where-the-64-byte-record-goes}
+
+\hypertarget{appendix-2587680a4fe3-reconstruction-b-where-the-64-byte-record-goes}{}
+
+A large AoS record has sixteen float components, but the hot loop reads only two of them. Derive the useful-byte fraction under a 64-byte-line illustrative cache. Compare the address sequence with separate x/mass arrays. Compute the 64 sets of a hypothetical 32-KiB, 8-way, 64-byte-line cache, and design a repeating stride that can produce conflicts under its simple index mapping. Explain why L1/L2/L3 latency, DRAM bandwidth, TLB misses and NUMA placement are different possible bottlenecks. Give a test that could disprove the hypothesis ``SoA is always faster.''
+
+\textbf{Required evidence:} identical numerical results plus repeated timing and counters on a specified CPU. The \hyperref[source-file-0060a91bd24dd25d6c14e679]{current lab} proves only selected equality and an optional timing experiment.
+
+\subsection{Reconstruction C --- why false sharing is not a data race}\label{appendix-2587680a4fe3-reconstruction-c-why-false-sharing-is-not-a-data-race}
+
+\hypertarget{appendix-2587680a4fe3-reconstruction-c-why-false-sharing-is-not-a-data-race}{}
+
+Two workers update two distinct atomic counters. Explain how a coherence unit covering both counters may migrate, even if both threads use race-free atomic increments. Compare this with two workers writing the \emph{same ordinary integer} without synchronization (undefined behavior). Derive why alignas(64) can help on a machine with appropriate interference granularity but does not guarantee an arbitrary platform's cache-line size. Explain how a store-release plus observing load-acquire publishes a non-atomic payload, and give a counterexample where the acquire load does not observe the publishing value.
+
+\textbf{Required evidence:} coherent happens-before argument, with actual source atomic orders and object lifetime. A passing run alone cannot establish the absence of all possible data races.
+
+\subsection{Reconstruction D --- storage acquisition is not object construction}\label{appendix-2587680a4fe3-reconstruction-d-storage-acquisition-is-not-object-construction}
+
+\hypertarget{appendix-2587680a4fe3-reconstruction-d-storage-acquisition-is-not-object-construction}{}
+
+Design a 4-KiB bounded arena for 64-byte aligned scratch records. Compute padding, capacity and overflow checks before producing a pointer. Explain when placement construction starts object lifetime, which destructors must run, and why monotonic allocation cannot be treated as a per-object free list. Compare slab, buddy, size-class, LIFO stack, free-list and frame arenas for a mixed workload of transient commands and persistent mesh records. Distinguish internal and external fragmentation.
+
+Then trace a mesh whose CPU handle is erased while a GPU draw might still use its underlying buffer. Explain how a monotonic completion timeline permits physical destruction only after the actual submitted use finishes. Analyze what must change for multiple GPU queues or device loss. The \hyperref[source-file-0060a91bd24dd25d6c14e679]{CPU ticket model} is not a Vulkan or Metal implementation.
+
+\subsection{Reconstruction E --- make three threads progress without a lost wake-up}\label{appendix-2587680a4fe3-reconstruction-e-make-three-threads-progress-without-a-lost-wake-up}
+
+\hypertarget{appendix-2587680a4fe3-reconstruction-e-make-three-threads-progress-without-a-lost-wake-up}{}
+
+Implement one task queue with mutex and condition variable. Write the exact shared predicate checked in a loop; explain why checking a condition once or relying solely on notify\_one is insufficient under spurious wakes or races. Prove that workers release the lock before executing user tasks. Consider a dependency chain A→B→C and show how workers waiting synchronously for tasks from the same saturated pool may deadlock. Distinguish deadlock, livelock and starvation; construct an explicit circular lock-order counterexample.
+
+Implement one producer publishing a payload through store-release and one consumer reading it after observing load-acquire. Distinguish relaxed counter increments from this publication protocol. Explain how compare-and-exchange can encounter ABA and why generation tags are not a general memory reclamation scheme.
+
+\subsection{Reconstruction F --- work/span, deterministic sums and profiler evidence}\label{appendix-2587680a4fe3-reconstruction-f-workspan-deterministic-sums-and-profiler-evidence}
+
+\hypertarget{appendix-2587680a4fe3-reconstruction-f-workspan-deterministic-sums-and-profiler-evidence}{}
+
+Given W units of work and S on the critical path, derive the ideal bounds T\_P ≥ max(W/P,S). For a task cost c and scheduling overhead h, explain why increasing the number of tasks improves balancing until overhead and contention dominate. Compare a shared queue with a per-worker work-stealing deque, including the single-item steal race that needs a real algorithmic protocol. With ten thousand exact integer-valued doubles, demonstrate fixed partitioning and ordered reduction; then exhibit three floating-point numbers whose reassociation changes the result.
+
+Starting from a hypothetical 16-ms frame breakdown, form one falsifiable hypothesis. Choose a sampling profiler, instrumentation trace or hardware counters appropriate to the hypothesis. State warm-up, sample count, cache conditions, confidence/variance, end-to-end measurement and rollback condition. Derive Amdahl speedup for serial fraction 0.2 and four ideal workers: 2.5, not 4. Then explain which model assumptions would fail for real heterogeneous CPU/GPU execution.
+
+\subsection{End-to-end mastery gate}\label{appendix-2587680a4fe3-end-to-end-mastery-gate}
+
+\hypertarget{appendix-2587680a4fe3-end-to-end-mastery-gate}{}
+
+Reconstruct the entire asset-to-frame chain without looking at the book: a typed catalog retains an owned resource; a hot loop chooses AoS or SoA from actual accesses; the compiler emits an instruction schedule; threads share memory only through defined synchronization; a persistent pool executes independent jobs while dependencies constrain progress; scratch memory remains alive through its users; GPU resources cannot retire before completion; a profiler establishes whether the optimization truly improves the frame. Name every assumption, uncertainty and failure path. If the real Kairo/Maveb code is uninspected, say so rather than claiming correspondence.
+
+\textbf{Research and source bridge:} \href{https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/video_galleries/lecture-videos/}{MIT 6.172}, \href{https://www.agner.org/optimize/}{Agner Fog's manuals}, \href{https://en.cppreference.com/w/cpp/atomic/memory_order}{cppreference atomics}, and \href{https://doi.org/10.1145/1465482.1465560}{Amdahl's 1967 paper}. These references establish concepts and comparison methods; they do not establish the current engine's measured results.
+
+\subsection{One lane, three arithmetic contracts}\label{appendix-2587680a4fe3-one-lane-three-arithmetic-contracts}
+
+\hypertarget{appendix-2587680a4fe3-one-lane-three-arithmetic-contracts}{}
+
+For unsigned eight-bit lanes, \(250+10=260\): \textbf{wrap → 4; saturate → 255; widen → 260}. A lane's discarded carry never increments the next lane. A portable scalar loop can verify these values without proving SIMD instruction selection or speed.
+
+\textbf{Recall:} why can ordinary signed C++ overflow not be justified by a hardware wrapping instruction? The language expression's promoted type and range still govern it. Work the second four-lane exercise, then check \hyperref[01-foundations-i-ch007-three-lane-arithmetic-contracts-wrap-saturate-and-widen]{the complete trace, solution and commented scalar oracle}.

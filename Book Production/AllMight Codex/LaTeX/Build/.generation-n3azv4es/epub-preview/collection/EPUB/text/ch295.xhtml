@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch295.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-c4e98b6e4001-stereo-correspondence-and-epipolar-geometry" class="level2">
+<h2>Stereo correspondence and epipolar geometry</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-c4e98b6e4001-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Stereo reconstruction uses two or more views to infer depth from corresponding image features. A 3D point and the two camera centers define an epipolar plane; its intersection with each image plane is an epipolar line. Thus a feature in one image should match along a one-dimensional line in the other, reducing a 2D search to a constrained search. With calibrated cameras, triangulation intersects the two viewing rays; noise means they are skew, so estimate the 3D point minimizing reprojection or ray distance. Depth uncertainty grows rapidly when the viewing rays are nearly parallel, which happens for distant points or small baselines. Rectification rotates images so epipolar lines become horizontal scanlines. Occlusion, repetitive texture, and calibration error can still produce mismatches, so confidence and consistency checks are essential.</p>
+</section>
+<section id="appendix-c4e98b6e4001-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch345.xhtml#appendix-3ee9861904d5-camera-calibration-and-bundle-adjustment" class="wikilink">Camera calibration and bundle adjustment (Light Transport and Image Synthesis, Part 1, Reference notes: Camera calibration and bundle adjustment)</a></li>
+<li><a href="ch336.xhtml#appendix-02b9d9a81dca-barycentric-coordinates-and-interpolation" class="wikilink">Barycentric coordinates and interpolation (Light Transport and Image Synthesis, Part 1, Reference notes: Barycentric coordinates and interpolation)</a></li>
+</ul>
+</section>
+<section id="appendix-c4e98b6e4001-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><span>Worlds, Images and Inference</span></p></li>
+<li><p><a href="ch446.xhtml#appendix-0976e86e5b9f-off-axis-stereo-projection-and-disparity" class="wikilink">Off-axis stereo projection and disparity (Vision, XR, and Playable Worlds, Part 1, Reference notes: Off-axis stereo projection and disparity)</a> ## Full teaching explanation</p></li>
+</ul>
+<p><a href="ch540.xhtml#id_04-visual-computing-ii-ch032-stereo-relative-orientation-and-reconstruction" class="wikilink">Stereo, relative orientation, and reconstruction (Vision, XR, and Playable Worlds, Part 1, Ch. 3)</a></p>
+</section>
+</section>
+</body>
+</html>

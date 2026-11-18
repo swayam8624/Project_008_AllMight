@@ -1,0 +1,41 @@
+\documentclass[11pt,twoside,openany]{book}
+\usepackage[print]{allmight-book}
+\begin{document}
+\chapter*{Display Math Reflow Proof}
+\noindent Formula 1: the complete rendering submission chain, with every stage and directed edge preserved.
+\[
+\begin{aligned}\text{scene} &\rightarrow \text{resource upload} \rightarrow \text{command recording}\\\text{command recording} &\rightarrow \text{submission} \rightarrow \text{vertex stage}\\\text{vertex stage} &\rightarrow \text{clipping} \rightarrow \text{rasterization}\\\text{rasterization} &\rightarrow \text{fragment stage} \rightarrow \text{depth/stencil}\\\text{depth/stencil} &\rightarrow \text{attachment} \rightarrow \text{presentation}.\end{aligned}
+\]
+\clearpage
+\noindent Formula 2: the ordered representation family, with the shared hybrid boundary repeated.
+\[
+\begin{aligned}\text{dense explicit field} &\leftrightarrow \text{factorized explicit field} \leftrightarrow \text{hybrid encoded field}\\\text{hybrid encoded field} &\leftrightarrow \text{implicit neural field} \leftrightarrow \text{explicit learned primitives},\end{aligned}
+\]
+\clearpage
+\noindent Formula 3: the original boxed normalization, with only its explanatory words reflowed.
+\[
+\boxed{4N_LN_V=\begin{gathered}\text{geometry/Jacobian normalization required to express}\\\text{microscopic mirror area as a macroscopic BRDF}.\end{gathered}}
+\]
+\clearpage
+\noindent Formula 4: the GPU culling hypothesis, with all words preserved across two lines.
+\[
+\begin{aligned}H: &\text{GPU-driven culling overtakes CPU submission only after a particular}\\&\text{object-count/visibility threshold.}\end{aligned}
+\]
+\bigskip
+\noindent Unicode superscript fallback: text x⁴ and math $x⁴$.
+\clearpage
+\noindent Formula 5: boxed material sentence, preserving every word and the final period.
+\[
+\boxed{\begin{gathered}\text{one material may contain multiple}\\\text{physically meaningful reflection lobes}\\\text{with different roughness distributions}.\end{gathered}}
+\]
+\clearpage
+\noindent Formula 6: boxed rendering-equation sentence, preserving every word and punctuation.
+\[
+\boxed{\begin{gathered}\text{a carefully constructed sequence of random variables}\\\text{whose expectation equals the rendering equation.}\end{gathered}}
+\]
+\clearpage
+\noindent Formula 7: boxed Russian-roulette principle, preserving every word and punctuation.
+\[
+\boxed{\begin{gathered}\text{roulette probability should estimate future contribution,}\\\text{not blindly react to representation artifacts.}\end{gathered}}
+\]
+\end{document}

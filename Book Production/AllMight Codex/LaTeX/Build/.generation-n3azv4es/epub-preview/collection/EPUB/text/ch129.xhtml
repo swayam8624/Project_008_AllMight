@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch129.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-11ba36693aa2-byte-swapping-and-network-order" class="level2">
+<h2>Byte swapping and network order</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-11ba36693aa2-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Byte swapping reverses octet positions; host-to-network conversion instead adapts native order to a specified wire order. On an already-matching host conversion need not swap. Many classic Internet integer fields use big endian, but never infer every protocol’s order from that convention. std::endian queries native order; C++23 std::byteswap reverses suitable integer bytes.</p>
+</section>
+<section id="appendix-11ba36693aa2-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch161.xhtml#appendix-bc07c3d25b18-endianness" class="wikilink">Endianness</a> — Byte order tells how digit significance maps to sequence positions.</li>
+<li><a href="ch095.xhtml#appendix-cc04044b5782-fixed-width-integer-types" class="wikilink">Fixed-width integer types (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Fixed-width integer types)</a> — The representation width fixes byte count and valid shift range.</li>
+</ul>
+</section>
+<section id="appendix-11ba36693aa2-used-by" class="level3">
+<h3>Used by</h3>
+<p>Update downstream uses when later chunks build on this concept.</p>
+</section>
+<section id="appendix-11ba36693aa2-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain why swapping twice restores x and why conversion may be a no-op.</p>
+<p><strong>Pending:</strong> Mixed/native scalar orders and protocol APIs.</p>
+</section>
+<section id="appendix-11ba36693aa2-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

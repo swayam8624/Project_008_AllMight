@@ -1,0 +1,4055 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch575.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_05-engine-i-ch011-streaming-resources-through-explicit-states" class="level2">
+<h2>Streaming resources through explicit states</h2>
+<p><a href="ch442.xhtml#id_07-Vision-XR-and-Playable-Worlds" class="wikilink">Reading map</a> · <a href="ch574.xhtml#id_05-engine-i-ch010-engine-changes-across-subsystem-contracts" class="wikilink">Previous chapter</a> · <a href="ch576.xhtml#id_05-engine-i-ch012-transactions-recovery-and-safe-project-boundaries" class="wikilink">Next chapter</a></p>
+<p>Large worlds cannot load every resource before play begins, so readiness becomes a state transition with owners and versions. This chapter develops asynchronous work, publication, residency, and safe replacement as one resource lifecycle.</p>
+<p><strong>By the end:</strong> Model streaming as request, decode, validation, upload, publication, use, and retirement, including stale completion and memory-budget cases.</p>
+<p><strong>Recall question:</strong> When an older load finishes after a newer request, what prevents the stale result from becoming visible or freeing a resource still in use?</p>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 16279–20419; source-span SHA256 81533611d264a650abc63f2d382154b8cf1a1e248c708174371955334754e42b. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<p><strong>A streaming state machine</strong></p>
+<p>A useful state model:</p>
+<pre class="text"><code>Unloaded
+   |
+   v
+Requested
+   |
+   v
+LoadingCPU
+   |
+   v
+CPUReady
+   |
+   v
+UploadQueued
+   |
+   v
+Resident
+   |
+   v
+EvictPending
+   |
+   v
+Unloaded</code></pre>
+<p>With separate:</p>
+<pre class="text"><code>Failed</code></pre>
+<p>state.</p>
+<p>Do not represent all of this as:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> loaded<span class="op">;</span></span></code></pre></div>
+<p>There are many intermediate states with different ownership.</p>
+<hr />
+<p><strong>Asset identity during streaming</strong></p>
+<p>Asset handle remains:</p>
+<pre class="text"><code>valid</code></pre>
+<p>while asset is Unloaded.</p>
+<p>Queries may return:</p>
+<pre class="text"><code>placeholder
+fallback
+pending future
+not resident status.</code></pre>
+<p>Thus again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>E</mi>
+  <mi>x</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>≠</mo>
+  <mi>C</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>y</mi>
+  <mo>≠</mo>
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Async request object</strong></p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> AssetRequest</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    AssetID Asset<span class="op">;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    ResidencyPriority Priority<span class="op">;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Asset runtime deduplicates multiple requests for same asset.</p>
+<p>If ten entities request the same texture:</p>
+<pre class="text"><code>one load
+ten consumers.</code></pre>
+<p>Do not launch ten disk reads.</p>
+<hr />
+<p><strong>Streaming priorities</strong></p>
+<p>Useful priority inputs include:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>camera distance</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>screen-space size</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>gameplay criticality</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>predicted future visibility</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>explicit preload priority</mtext>
+  <mo>.</mo>
+</math>
+<p>A hero character texture should beat a distant optional prop when budgets are constrained.</p>
+<hr />
+<p><strong>Partial residency</strong></p>
+<p>Residency need not be all-or-nothing.</p>
+<p>Textures:</p>
+<pre class="text"><code>coarse mip resident
+high mips streaming.</code></pre>
+<p>Meshes:</p>
+<pre class="text"><code>low LOD resident
+high LOD requested.</code></pre>
+<p>Worlds:</p>
+<pre class="text"><code>near cells resident
+far cells absent.</code></pre>
+<p>This makes residency a level rather than a bool.</p>
+<hr />
+<p><strong>Residency state</strong></p>
+<p>A richer resource entry:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> <span class="kw">class</span> ResidencyState</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    Unloaded<span class="op">,</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    Loading<span class="op">,</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    CPUResident<span class="op">,</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    Uploading<span class="op">,</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    GPUResident<span class="op">,</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    EvictPending<span class="op">,</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    Failed</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> AssetRuntimeEntry</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    AssetID Asset<span class="op">;</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    ResidencyState State<span class="op">;</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>size_t CPUBytes<span class="op">;</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>size_t GPUBytes<span class="op">;</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint64_t LastUsedFrame<span class="op">;</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t PinCount<span class="op">;</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Now resource manager can make budget decisions.</p>
+<hr />
+<p><strong>CPU and GPU residency are independent</strong></p>
+<p>A texture may be:</p>
+<pre class="text"><code>CPU artifact present
+GPU resource absent</code></pre>
+<p>during upload or after GPU eviction.</p>
+<p>It may also be:</p>
+<pre class="text"><code>GPU resident
+CPU source artifact discarded</code></pre>
+<p>if the runtime no longer needs CPU pixels.</p>
+<p>Therefore track separately where useful:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>C</mi>
+      <mi>P</mi>
+      <mi>U</mi>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>R</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>G</mi>
+      <mi>P</mi>
+      <mi>U</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Memory budgeting</strong></p>
+<p>Suppose GPU texture budget:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mn>4</mn>
+  <mtext> GiB</mtext>
+  <mo>.</mo>
+</math>
+<p>Current resident textures consume:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3.9</mn>
+  <mtext> GiB</mtext>
+  <mo>.</mo>
+</math>
+<p>New request requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>500</mn>
+  <mtext> MiB</mtext>
+  <mo>.</mo>
+</math>
+<p>Resource manager must evict approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>400</mn>
+  <mtext> MiB</mtext>
+</math>
+<p>plus safety margin.</p>
+<p>Candidates might be ranked by:</p>
+<pre class="text"><code>unpinned
+oldest use
+lowest priority
+largest reclaim value.</code></pre>
+<hr />
+<p><strong>Residency is policy</strong></p>
+<p>Low-level GPU API should not decide:</p>
+<blockquote>
+<p>unload distant mountain.</p>
+</blockquote>
+<p>It only knows allocation.</p>
+<p>High-level streaming system has scene/game knowledge.</p>
+<p>Thus:</p>
+<pre class="text"><code>Streaming policy
+      ↓
+Residency manager
+      ↓
+Renderer/GPU allocator</code></pre>
+<p>preserves proper dependency direction.</p>
+<hr />
+<p><strong>Reference counting versus explicit residency</strong></p>
+<p>Reference counting says:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>s</mi>
+  <mtext> </mtext>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <mo stretchy="false">⟺</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>&gt;</mo>
+  <mn>0.</mn>
+</math>
+<p>This works well for ordinary CPU object ownership.</p>
+<p>It is often insufficient for streaming.</p>
+<hr />
+<p><strong>Why references do not equal residency need</strong></p>
+<p>Suppose a Scene contains references to 50,000 textures.</p>
+<p>If each reference increments a strong runtime refcount:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mtext> </mtext>
+  <mn>50</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>may remain resident forever.</p>
+<p>But many are currently:</p>
+<pre class="text"><code>off-screen
+far away
+inactive level
+low-priority.</code></pre>
+<p>The fact that an asset is <strong>logically referenced</strong> does not mean its heavy runtime payload must remain resident.</p>
+<hr />
+<p><strong>Three concepts should be separated</strong></p>
+<p>A good model distinguishes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>R</mi>
+          <mi>e</mi>
+          <mi>f</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>meaning:</p>
+<blockquote>
+<p>some durable object names this asset.</p>
+</blockquote>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>R</mi>
+          <mi>e</mi>
+          <mi>q</mi>
+          <mi>u</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mi>t</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>meaning:</p>
+<blockquote>
+<p>some runtime consumer currently wants it available.</p>
+</blockquote>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>meaning:</p>
+<blockquote>
+<p>do not evict it yet.</p>
+</blockquote>
+<p>These are different.</p>
+<hr />
+<p><strong>Explicit residency leases</strong></p>
+<p>Example:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ResidencyLease</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">~</span>ResidencyLease<span class="op">()</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>        manager<span class="op">.</span>Release<span class="op">(</span>asset<span class="op">);</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>A system can acquire:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> lease <span class="op">=</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    assets<span class="op">.</span>Acquire<span class="op">(</span>texture<span class="op">);</span></span></code></pre></div>
+<p>while it requires residency.</p>
+<p>But simple counts still need budget/priority semantics.</p>
+<p>So:</p>
+<pre class="text"><code>pin count
+priority
+last use
+budget</code></pre>
+<p>often work together.</p>
+<hr />
+<p><strong>Weak persistent handles</strong></p>
+<p>An authored:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>TextureAssetHandle</span></code></pre></div>
+<p>is effectively a weak persistent reference to identity.</p>
+<p>It should not force runtime GPU residency merely because a material exists somewhere in a project file.</p>
+<p>This is another benefit of Kairo’s AssetHandle containing only <code>AssetID</code>, not a shared_ptr to runtime texture.</p>
+<hr />
+<p><strong>Resource lifetime across frames in flight</strong></p>
+<p>This closes M092.</p>
+<p>A resource may have several overlapping lifetimes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>AssetID</mtext>
+    </mrow>
+  </msub>
+</math>
+<p>persistent project lifetime,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>DerivedArtifact</mtext>
+    </mrow>
+  </msub>
+</math>
+<p>cache/runtime CPU lifetime,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>RuntimeHandle</mtext>
+    </mrow>
+  </msub>
+</math>
+<p>process resource lifetime,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>GPUUse</mtext>
+    </mrow>
+  </msub>
+</math>
+<p>asynchronous submission lifetime.</p>
+<p>These are not equal.</p>
+<hr />
+<p><strong>The key inequality</strong></p>
+<p>For resource R submitted to GPU at work item <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>L</mi>
+            <mi>R</mi>
+          </msub>
+          <mo>&gt;</mo>
+          <mi>C</mi>
+          <mi>o</mi>
+          <mi>m</mi>
+          <mi>p</mi>
+          <mi>l</mi>
+          <mi>e</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mo stretchy="false">(</mo>
+          <mi>S</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>CPU saying:</p>
+<pre class="text"><code>&quot;I don&#39;t need it anymore&quot;</code></pre>
+<p>is not enough if GPU still does.</p>
+<p>This is conceptually identical to deferred reclamation in concurrent data structures.</p>
+<p>A resource is retired logically first, physically freed later.</p>
+<hr />
+<p><strong>Example three-frame timeline</strong></p>
+<p>Imagine CPU:</p>
+<pre class="text"><code>CPU frame 10 submitted using Texture A
+CPU frame 11 reloads and publishes Texture B
+CPU frame 12 uses B</code></pre>
+<p>GPU:</p>
+<pre class="text"><code>currently executing frame 9.</code></pre>
+<p>Texture A must remain alive for frame 10 even though no future CPU frame will reference it.</p>
+<p>So:</p>
+<pre class="text"><code>Asset mapping:
+A -&gt; B immediately for future work
+
+GPU memory:
+old A remains until frame 10 fence signals.</code></pre>
+<p>Logical replacement and physical destruction are separate operations.</p>
+<hr />
+<p><strong>Hot-reload publication model</strong></p>
+<p>A robust runtime entry can be:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> TextureEntry</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    AssetID Asset<span class="op">;</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint64_t Revision<span class="op">;</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    TextureRuntimeHandle Current<span class="op">;</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> PublishReplacement<span class="op">(</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    TextureEntry<span class="op">&amp;</span> entry<span class="op">,</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    TextureRuntimeHandle replacement<span class="op">)</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>    TextureRuntimeHandle old <span class="op">=</span></span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>        entry<span class="op">.</span>Current<span class="op">;</span></span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>    entry<span class="op">.</span>Current <span class="op">=</span> replacement<span class="op">;</span></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>    <span class="op">++</span>entry<span class="op">.</span>Revision<span class="op">;</span></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>    RetireAfterGPUCompletion<span class="op">(</span>old<span class="op">);</span></span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>That is the core operation.</p>
+<hr />
+<p><strong>Material/mesh transitive hot reload</strong></p>
+<p>Suppose:</p>
+<pre class="text"><code>Material
+  ↓
+Texture</code></pre>
+<p>Texture reload may not require rebuilding Material if material only stores stable AssetID/descriptor binding.</p>
+<p>It may only require rebinding the new runtime texture.</p>
+<p>But if a shader changes resource layout:</p>
+<pre class="text"><code>descriptor layout changed</code></pre>
+<p>dependent pipelines/material bindings may need rebuilding.</p>
+<p>The dependency graph must distinguish such relationships.</p>
+<p>Hot reload is not always “replace one object.”</p>
+<hr />
+<p><strong>Failure during hot reload</strong></p>
+<p>If replacement shader fails to compile:</p>
+<pre class="text"><code>keep old pipeline
+report error</code></pre>
+<p>Do not replace working runtime state with null merely because source file is temporarily invalid while the user types.</p>
+<p>Editor hot reload especially needs <strong>last-known-good semantics</strong>.</p>
+<p>This drastically improves authoring UX.</p>
+<hr />
+<p><strong>Current Kairo M092 architecture map</strong></p>
+<p>Your code currently has a particularly strong split:</p>
+<pre class="text"><code>AssetID
+    persistent UUID
+
+AssetMetadata
+    path/type/origin/importer/revision/deps
+
+AssetRegistry
+    ID/path topology authority
+
+ImportDatabase
+    source fingerprint +
+    importer/version/settings provenance
+
+AssetImporter
+    source -&gt; derived artifact
+
+ImporterRegistry
+    exact importer ID/version registry
+
+DerivedDataCache
+    immutable recipe-addressed artifacts
+
+SourceWatcher
+    portable source-change observation
+
+KairoRenderer
+    artifact -&gt; runtime GPU representation</code></pre>
+<p>That is a coherent pipeline.</p>
+<p>It is not one monolithic asset manager.</p>
+<hr />
+<p><strong>The current asset pipeline end-to-end</strong></p>
+<p>For a texture:</p>
+<pre class="text"><code>Textures/Wall.png
+        |
+        | AssetID identifies it persistently
+        v
+AssetRegistry metadata
+        |
+        v
+ImportRecord
+        |
+        | source fingerprint
+        | importer = kairo.texture.stb
+        | importer version
+        | canonical settings
+        v
+DerivedDataKey
+        |
+      cache?
+      /    \
+    yes     no
+     |       |
+     |   StbTextureImporter
+     |       |
+     |    mip chain
+     |       |
+     +--- TextureArtifact
+              |
+              v
+       Renderer adapter
+              |
+              v
+       VulkanTexture2D
+              |
+              v
+          VkImage</code></pre>
+<p>This is the mental model to keep.</p>
+<hr />
+<p><strong>Three kinds of hashes in an asset system</strong></p>
+<p>Do not conflate:</p>
+<p><strong>Persistent asset identity</strong></p>
+<p>Kairo:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <mi>U</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+  <mo>.</mo>
+</math>
+<p><strong>Source content fingerprint</strong></p>
+<p>Answers:</p>
+<blockquote>
+<p>are source bytes the same?</p>
+</blockquote>
+<p><strong>Derived cache key</strong></p>
+<p>Answers:</p>
+<blockquote>
+<p>is the entire derivation recipe identical?</p>
+</blockquote>
+<p>These serve different roles.</p>
+<p>A robust asset system may use all three simultaneously.</p>
+<p>Kairo does.</p>
+<hr />
+<p><strong>Three kinds of versions</strong></p>
+<p>Similarly distinguish:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+</math>
+<p>for registry metadata changes,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>V</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+</math>
+<p>for derivation implementation,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+</math>
+<p>for currently published runtime resource generation/hot reload.</p>
+<p>One vague <code>version</code> field cannot express all three cleanly.</p>
+<hr />
+<p><strong>Asset deletion</strong></p>
+<p>Current AssetRegistry refuses to remove an asset while another registered asset depends on it.</p>
+<p>That is a very good invariant.</p>
+<p>Without this:</p>
+<pre class="text"><code>Material -&gt; Texture</code></pre>
+<p>could become silently dangling.</p>
+<p>A higher-level editor may support:</p>
+<pre class="text"><code>Delete anyway and clear references</code></pre>
+<p>or:</p>
+<pre class="text"><code>Delete with dependency replacement.</code></pre>
+<p>But those should be explicit transactions.</p>
+<p>Registry-level safety should remain strict.</p>
+<hr />
+<p><strong>Asset move</strong></p>
+<p>Moving asset path should not affect AssetID.</p>
+<p>Kairo’s registry updates:</p>
+<pre class="text"><code>ID -&gt; new path
+path index
+metadata revision</code></pre>
+<p>atomically enough to avoid leaving an asset with no path mapping if allocation fails.</p>
+<p>This demonstrates an important principle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>metadata operations deserve strong exception guarantees too</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Asset databases are persistent state, not disposable scratch memory.</p>
+<hr />
+<p><strong>Dependency graph complexity</strong></p>
+<p>Let:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mo>=</mo>
+  <mtext>asset count</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo>=</mo>
+  <mtext>dependency count</mtext>
+  <mo>.</mo>
+</math>
+<p>Cycle detection through full reachability per mutation may cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>V</mi>
+  <mo>+</mo>
+  <mi>E</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>in worst case.</p>
+<p>For editor-scale graphs this is usually acceptable.</p>
+<p>If asset graphs become enormous and mutations frequent, maintain additional topological information or use more sophisticated incremental DAG algorithms.</p>
+<p>Correctness first.</p>
+<hr />
+<p><strong>DDC size management</strong></p>
+<p>Content-addressed invalidation produces old unreachable entries.</p>
+<p>Therefore DDC eventually needs garbage collection.</p>
+<p>Possible policy:</p>
+<pre class="text"><code>size budget
+LRU
+age threshold
+workspace manifest reachability</code></pre>
+<p>Importantly, deleting DDC is safe.</p>
+<p>All entries should be reproducible from source + tools.</p>
+<p>That is the criterion for calling it a cache.</p>
+<hr />
+<p><strong>DDC versus packaged build artifacts</strong></p>
+<p>A local DDC may contain many historical/unused entries.</p>
+<p>A shipping package should contain only the dependency closure of the chosen build/startup content.</p>
+<p>Pipeline:</p>
+<pre class="text"><code>project
+    ↓
+resolve package roots
+    ↓
+dependency closure
+    ↓
+resolve current derived artifacts
+    ↓
+copy/cook package manifest + payloads.</code></pre>
+<p>Do not simply ship the entire developer cache.</p>
+<hr />
+<p><strong>Reproducibility</strong></p>
+<p>For a derivation to be reproducible:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>F</mi>
+  <mo stretchy="false">(</mo>
+  <mi>S</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>S</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>I</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>V</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>T</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>There must be no hidden dependency on:</p>
+<pre class="text"><code>current directory
+wall-clock time
+random seed
+machine locale
+unordered-map iteration
+untracked tool version.</code></pre>
+<p>Any hidden input undermines the cache.</p>
+<p>This is why canonical settings, exact importer version and deterministic manifests matter.</p>
+<hr />
+<p><strong>Locale</strong></p>
+<p>Parsing:</p>
+<pre class="text"><code>1.25</code></pre>
+<p>must mean the same thing on systems whose locale expects commas.</p>
+<p>Asset formats should use locale-independent numeric parsing/serialization.</p>
+<p>Kairo consistently uses explicit classic/character-based parsing in several persistence systems, which is the right philosophy.</p>
+<hr />
+<p><strong>Deterministic dependency ordering</strong></p>
+<p>Even if dependency vector semantics are unordered, writing them in arbitrary hash-table iteration order can produce different artifact bytes.</p>
+<p>Canonicalize:</p>
+<pre class="text"><code>sort by stable ID</code></pre>
+<p>before serialization/hashing unless order itself is meaningful.</p>
+<p>Deterministic representation helps:</p>
+<pre class="text"><code>cache hits
+diffs
+reproducible builds
+tests.</code></pre>
+<hr />
+<p><strong>Asset importer error boundaries</strong></p>
+<p>Importer errors should say:</p>
+<pre class="text"><code>asset
+source
+importer
+location if known
+reason.</code></pre>
+<p>But importer failure should not partially mutate registry or runtime.</p>
+<p>Your current functional boundary:</p>
+<pre class="text"><code>Importer returns artifact or throws</code></pre>
+<p>is excellent for this.</p>
+<p>Transaction owner can decide whether to:</p>
+<pre class="text"><code>keep old artifact
+mark source dirty
+show error
+retry.</code></pre>
+<hr />
+<p><strong>Build versus runtime import</strong></p>
+<p>Editor:</p>
+<pre class="text"><code>source watcher detects change
+    ↓
+import
+    ↓
+DDC
+    ↓
+hot reload.</code></pre>
+<p>Shipping runtime:</p>
+<pre class="text"><code>manifest
+    ↓
+prebuilt artifact
+    ↓
+runtime resource.</code></pre>
+<p>Ideally shipped game does not need source file import paths.</p>
+<p>This is Part 1518 and M092 working together.</p>
+<hr />
+<p><strong>Cross-platform artifacts</strong></p>
+<p>Some artifacts can be backend-neutral:</p>
+<pre class="text"><code>canonical mesh vertices/indices
+animation tracks
+scene hierarchy.</code></pre>
+<p>Others should be target-specific:</p>
+<pre class="text"><code>BC7/ASTC textures
+shader binaries
+pipeline libraries.</code></pre>
+<p>So the asset pipeline may have two derivation stages:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>A</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mo stretchy="false">→</mo>
+  <mi>P</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>A</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>This avoids re-parsing expensive source while still producing platform-specific output.</p>
+<hr />
+<p><strong>The complete future Kairo asset runtime</strong></p>
+<p>A strong next-generation runtime could be:</p>
+<pre class="text"><code>AssetRegistry
+    persistent metadata
+
+Import pipeline / DDC
+    authoring/build side
+
+RuntimeAssetManager
+    AssetID -&gt; RuntimeEntry
+                |
+                +-- artifact state
+                +-- residency
+                +-- revision
+                +-- current resource handle
+                +-- load future
+                +-- last GPU use
+
+RendererResourceManager
+    generational runtime handles
+    deferred destruction
+    memory budgeting</code></pre>
+<p>This preserves every lifetime boundary.</p>
+<hr />
+<p><strong>Runtime asset entry design</strong></p>
+<p>For example:</p>
+<div class="sourceCode" id="cb49"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> <span class="kw">class</span> AssetLoadState</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>    Unloaded<span class="op">,</span></span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>    LoadingCPU<span class="op">,</span></span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>    CPUReady<span class="op">,</span></span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>    UploadQueued<span class="op">,</span></span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>    Resident<span class="op">,</span></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>    Failed</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> RuntimeTextureEntry</span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>    AssetID PersistentID<span class="op">;</span></span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint64_t PublishedRevision <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a>    AssetLoadState State <span class="op">=</span></span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>        AssetLoadState<span class="op">::</span>Unloaded<span class="op">;</span></span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>    TextureRuntimeHandle Current<span class="op">{};</span></span>
+<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>size_t ResidentGPUBytes <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-24"><a href="#cb49-24" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint64_t LastUsedSubmission <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb49-25"><a href="#cb49-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-26"><a href="#cb49-26" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t PinCount <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb49-27"><a href="#cb49-27" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Notice what is <strong>not</strong> here:</p>
+<pre class="text"><code>source path as identity
+raw VkImage exposed to scene
+shared_ptr forcing residency.</code></pre>
+<hr />
+<p><strong>Safe reload algorithm</strong></p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> ReloadTexture<span class="op">(</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>    AssetID asset<span class="op">)</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 1. Re-import or fetch new derived artifact.</span></span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>    TextureArtifact artifact <span class="op">=</span></span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>        BuildCurrentArtifact<span class="op">(</span>asset<span class="op">);</span></span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 2. Build replacement completely.</span></span>
+<span id="cb51-9"><a href="#cb51-9" aria-hidden="true" tabindex="-1"></a>    TextureRuntimeHandle replacement <span class="op">=</span></span>
+<span id="cb51-10"><a href="#cb51-10" aria-hidden="true" tabindex="-1"></a>        renderer<span class="op">.</span>CreateTexture<span class="op">(</span>artifact<span class="op">);</span></span>
+<span id="cb51-11"><a href="#cb51-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-12"><a href="#cb51-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 3. Publish only after success.</span></span>
+<span id="cb51-13"><a href="#cb51-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">auto</span><span class="op">&amp;</span> entry <span class="op">=</span></span>
+<span id="cb51-14"><a href="#cb51-14" aria-hidden="true" tabindex="-1"></a>        runtimeAssets<span class="op">.</span>Texture<span class="op">(</span>asset<span class="op">);</span></span>
+<span id="cb51-15"><a href="#cb51-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-16"><a href="#cb51-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="kw">auto</span> old <span class="op">=</span></span>
+<span id="cb51-17"><a href="#cb51-17" aria-hidden="true" tabindex="-1"></a>        entry<span class="op">.</span>Current<span class="op">;</span></span>
+<span id="cb51-18"><a href="#cb51-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-19"><a href="#cb51-19" aria-hidden="true" tabindex="-1"></a>    entry<span class="op">.</span>Current <span class="op">=</span> replacement<span class="op">;</span></span>
+<span id="cb51-20"><a href="#cb51-20" aria-hidden="true" tabindex="-1"></a>    <span class="op">++</span>entry<span class="op">.</span>PublishedRevision<span class="op">;</span></span>
+<span id="cb51-21"><a href="#cb51-21" aria-hidden="true" tabindex="-1"></a>    entry<span class="op">.</span>State <span class="op">=</span></span>
+<span id="cb51-22"><a href="#cb51-22" aria-hidden="true" tabindex="-1"></a>        AssetLoadState<span class="op">::</span>Resident<span class="op">;</span></span>
+<span id="cb51-23"><a href="#cb51-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-24"><a href="#cb51-24" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 4. Old resource is logically dead,</span></span>
+<span id="cb51-25"><a href="#cb51-25" aria-hidden="true" tabindex="-1"></a>    <span class="co">//    but may remain physically alive.</span></span>
+<span id="cb51-26"><a href="#cb51-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>old<span class="op">.</span>IsValid<span class="op">())</span></span>
+<span id="cb51-27"><a href="#cb51-27" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb51-28"><a href="#cb51-28" aria-hidden="true" tabindex="-1"></a>        renderer<span class="op">.</span>RetireTexture<span class="op">(</span></span>
+<span id="cb51-29"><a href="#cb51-29" aria-hidden="true" tabindex="-1"></a>            old<span class="op">,</span></span>
+<span id="cb51-30"><a href="#cb51-30" aria-hidden="true" tabindex="-1"></a>            renderer<span class="op">.</span>LastSubmittedTimeline<span class="op">());</span></span>
+<span id="cb51-31"><a href="#cb51-31" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb51-32"><a href="#cb51-32" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This combines Parts 1540, 1541 and 1545 into one coherent runtime operation.</p>
+<hr />
+<p><strong>Current Kairo gap priorities</strong></p>
+<p>If I were extending the codebase specifically from this pass, the most valuable next work would be:</p>
+<ol type="1">
+<li><p><strong>External-source closure hashing</strong> for glTF and shader include-style dependencies, because a DDC key must include every input that can change output.</p></li>
+<li><p>A dedicated <strong>shader import/compiler pipeline</strong>, because <code>AssetType::Shader</code> exists but no built-in shader compiler was found.</p></li>
+<li><p>A <strong>runtime asset/resource manager</strong> separating AssetID from loaded CPU/GPU resource state.</p></li>
+<li><p><strong>Generational renderer resource handles</strong> if slot reuse is introduced.</p></li>
+<li><p><strong>GPU deferred destruction/timeline retirement</strong>, required for safe hot reload and streaming.</p></li>
+<li><p>Explicit <strong>residency/budget management</strong> rather than letting persistent references imply residency.</p></li>
+</ol>
+<p>That order moves from correctness first to runtime sophistication.</p>
+<hr />
+<p><strong>Architecture issue to watch in current umbrella linking</strong></p>
+<p>Your top-level:</p>
+<div class="sourceCode" id="cb52"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">KairoGameEngine INTERFACE</span></span></code></pre></div>
+<p>links a broad collection of engine targets.</p>
+<p>That is fine as an application-facing convenience target.</p>
+<p>But lower-level runtime libraries should still link the narrowest targets they truly need whenever practical.</p>
+<p>Otherwise everything importing the umbrella can gradually acquire transitive access to:</p>
+<pre class="text"><code>renderer
+physics
+assets
+ECS
+reflection</code></pre>
+<p>even when it should conceptually depend on only one or two.</p>
+<p>An umbrella is useful at the composition boundary.</p>
+<p>It should not become the default dependency of foundational modules.</p>
+<hr />
+<p><strong>EngineCore’s current direction is good</strong></p>
+<p>Several of your current Core modules demonstrate the right principle.</p>
+<p><code>ProjectDescriptor</code> stores renderer policy without importing renderer.</p>
+<p><code>Application</code> owns generic layers rather than concrete rendering/physics.</p>
+<p>Scene data stores persistent asset handles, not GPU handles.</p>
+<p>Runtime VM IDs are not serialized.</p>
+<p>Physics IDs are runtime-only.</p>
+<p>Scene→ECS conversion lives in a bridge.</p>
+<p>Those are not isolated coding details.</p>
+<p>They are repeated applications of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>persistent data knows stable contracts;
+runtime adapters know concrete implementations</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Dependency reconstruction challenge</strong></p>
+<p>Suppose you need to render physics debug shapes.</p>
+<p>Bad:</p>
+<pre class="text"><code>KairoPhysicsEngine
+       ↓
+KairoRenderer</code></pre>
+<p>if Physics is intended to remain renderer-neutral.</p>
+<p>Design instead:</p>
+<pre class="text"><code>KairoPhysicsEngine
+   exposes DebugShape[]
+          |
+          v
+PhysicsRenderBridge
+          |
+          v
+KairoRenderer.</code></pre>
+<p>Now answer:</p>
+<blockquote>
+<p>Which module owns the bridge?</p>
+</blockquote>
+<p>The highest-level integration module that is allowed to depend on both.</p>
+<p>If you can derive this without memorization, you understand dependency inversion.</p>
+<hr />
+<p><strong>Cycle reconstruction challenge</strong></p>
+<p>Given:</p>
+<pre class="text"><code>Scene → Renderer
+Renderer → Scene</code></pre>
+<p>extract:</p>
+<pre class="text"><code>RenderScene
+MeshDraw
+CameraPose
+LightDraw</code></pre>
+<p>as a rendering contract.</p>
+<p>Then:</p>
+<pre class="text"><code>Scene
+   |
+   v
+SceneRenderExtraction
+   |
+   v
+RenderScene
+   |
+   v
+Renderer.</code></pre>
+<p>Remove Renderer dependency from Scene.</p>
+<p>That is architectural cycle removal through directional data extraction.</p>
+<hr />
+<p><strong>Service reconstruction challenge</strong></p>
+<p>Compare:</p>
+<div class="sourceCode" id="cb59"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> AI<span class="op">::</span>Update<span class="op">()</span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">auto</span><span class="op">&amp;</span> physics <span class="op">=</span></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>        Services<span class="op">::</span>Get<span class="op">&lt;</span>PhysicsWorld<span class="op">&gt;();</span></span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>against:</p>
+<div class="sourceCode" id="cb60"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>AI<span class="op">::</span>AI<span class="op">(</span></span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>    PhysicsQuery<span class="op">&amp;</span> physics<span class="op">)</span></span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">:</span> <span class="va">m_Physics</span><span class="op">(</span>physics<span class="op">)</span></span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a><span class="op">{}</span></span></code></pre></div>
+<p>Explain why the second provides:</p>
+<pre class="text"><code>visible dependencies
+testability
+instance isolation
+explicit lifetime.</code></pre>
+<p>Then explain why a narrow:</p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>AISystemContext</span></code></pre></div>
+<p>may be useful when several related services are needed.</p>
+<p>But reject a god <code>EngineContext</code>.</p>
+<hr />
+<p><strong>Lifecycle reconstruction challenge</strong></p>
+<p>Given:</p>
+<pre class="text"><code>Platform
+Device
+Renderer
+RenderBridge
+World</code></pre>
+<p>if:</p>
+<pre class="text"><code>Renderer uses Device
+RenderBridge uses Renderer + World</code></pre>
+<p>initialize:</p>
+<pre class="text"><code>Platform
+Device
+Renderer
+World
+RenderBridge.</code></pre>
+<p>Shutdown dependency-safe:</p>
+<pre class="text"><code>RenderBridge
+World/runtime users
+Renderer resources
+Renderer
+Device
+Platform.</code></pre>
+<p>If jobs or GPU submissions exist, quiesce them before destroying dependencies.</p>
+<hr />
+<p><strong>Asset-identity reconstruction challenge</strong></p>
+<p>Given a texture that moves path and later changes pixels, identify the correct changing/stable values.</p>
+<p>Rename:</p>
+<pre class="text"><code>Textures/A.png
+→ Environment/A.png</code></pre>
+<p>Persistent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+  <mo>:</mo>
+  <mtext>unchanged</mtext>
+  <mo>.</mo>
+</math>
+<p>Path:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>changed</mtext>
+  <mo>.</mo>
+</math>
+<p>Metadata revision:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>changed</mtext>
+  <mo>.</mo>
+</math>
+<p>Source bytes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>same</mtext>
+  <mo>.</mo>
+</math>
+<p>Source fingerprint:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>same</mtext>
+  <mo>.</mo>
+</math>
+<p>Derived key:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>same</mtext>
+</math>
+<p>if path is intentionally not a semantic importer input.</p>
+<p>Now edit pixels.</p>
+<p>AssetID:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>unchanged</mtext>
+  <mo>.</mo>
+</math>
+<p>Source fingerprint:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>changed</mtext>
+  <mo>.</mo>
+</math>
+<p>Derived key:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>changed</mtext>
+  <mo>.</mo>
+</math>
+<p>That is the identity model.</p>
+<hr />
+<p><strong>DDC reconstruction challenge</strong></p>
+<p>You should be able to derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow>
+  <mi>K</mi>
+  <mo>=</mo>
+  <mi>H</mi>
+  <mo stretchy="false">(</mo>
+  <mtable displaystyle="true" columnspacing="1em" rowspacing="3pt">
+    <mtr>
+      <mtd>
+        <mi>S</mi>
+        <mi>o</mi>
+        <mi>u</mi>
+        <mi>r</mi>
+        <mi>c</mi>
+        <mi>e</mi>
+        <mi>F</mi>
+        <mi>i</mi>
+        <mi>n</mi>
+        <mi>g</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mi>p</mi>
+        <mi>r</mi>
+        <mi>i</mi>
+        <mi>n</mi>
+        <mi>t</mi>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>A</mi>
+        <mi>s</mi>
+        <mi>s</mi>
+        <mi>e</mi>
+        <mi>t</mi>
+        <mi>T</mi>
+        <mi>y</mi>
+        <mi>p</mi>
+        <mi>e</mi>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>I</mi>
+        <mi>m</mi>
+        <mi>p</mi>
+        <mi>o</mi>
+        <mi>r</mi>
+        <mi>t</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mi>I</mi>
+        <mi>D</mi>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>I</mi>
+        <mi>m</mi>
+        <mi>p</mi>
+        <mi>o</mi>
+        <mi>r</mi>
+        <mi>t</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mi>V</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mi>s</mi>
+        <mi>i</mi>
+        <mi>o</mi>
+        <mi>n</mi>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>C</mi>
+        <mi>a</mi>
+        <mi>n</mi>
+        <mi>o</mi>
+        <mi>n</mi>
+        <mi>i</mi>
+        <mi>c</mi>
+        <mi>a</mi>
+        <mi>l</mi>
+        <mi>S</mi>
+        <mi>e</mi>
+        <mi>t</mi>
+        <mi>t</mi>
+        <mi>i</mi>
+        <mi>n</mi>
+        <mi>g</mi>
+        <mi>s</mi>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>D</mi>
+        <mi>e</mi>
+        <mi>p</mi>
+        <mi>e</mi>
+        <mi>n</mi>
+        <mi>d</mi>
+        <mi>e</mi>
+        <mi>n</mi>
+        <mi>c</mi>
+        <mi>y</mi>
+        <mi>F</mi>
+        <mi>i</mi>
+        <mi>n</mi>
+        <mi>g</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mi>p</mi>
+        <mi>r</mi>
+        <mi>i</mi>
+        <mi>n</mi>
+        <mi>t</mi>
+        <mi>s</mi>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>T</mi>
+        <mi>a</mi>
+        <mi>r</mi>
+        <mi>g</mi>
+        <mi>e</mi>
+        <mi>t</mi>
+      </mtd>
+    </mtr>
+  </mtable>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</mrow><annotation encoding="application/x-tex">
+K=
+H(
+SourceFingerprint,
+AssetType,
+ImporterID,
+ImporterVersion,
+CanonicalSettings,
+DependencyFingerprints,
+Target
+).
+</annotation></semantics></math>
+<p>Some of those fields may be omitted only if they provably do not influence the artifact.</p>
+<p>Then state the cache invariant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>K</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>K</mi>
+            <mn>2</mn>
+          </msub>
+          <mo stretchy="false">⇒</mo>
+          <mi>A</mi>
+          <mi>r</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>f</mi>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>t</mi>
+          <mi>B</mi>
+          <mi>y</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <msub>
+            <mi>s</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>=</mo>
+          <mi>A</mi>
+          <mi>r</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>f</mi>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>t</mi>
+          <mi>B</mi>
+          <mi>y</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <msub>
+            <mi>s</mi>
+            <mn>2</mn>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If this is false, the cache key is incomplete or the importer is nondeterministic.</p>
+<hr />
+<p><strong>Hot-reload reconstruction challenge</strong></p>
+<p>Given Texture A currently in use:</p>
+<pre class="text"><code>detect source change</code></pre>
+<p>Do <strong>not</strong> destroy A.</p>
+<p>Perform:</p>
+<pre class="text"><code>build artifact B
+create GPU resource B
+validate B
+publish B for future frames
+retire A at its last GPU-use timeline
+destroy A only after completion.</code></pre>
+<p>If any step before publication fails:</p>
+<pre class="text"><code>A stays current.</code></pre>
+<p>That is safe hot reload.</p>
+<hr />
+<p><strong>Streaming reconstruction challenge</strong></p>
+<p>Explain why this is wrong:</p>
+<div class="sourceCode" id="cb71"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>material<span class="op">.</span>TextureHandle<span class="op">.</span>IsValid<span class="op">())</span></span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// therefore texture exists on GPU</span></span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>A valid persistent handle only means the asset is referenced.</p>
+<p>Correct flow:</p>
+<pre class="text"><code>AssetHandle
+    ↓
+RuntimeAssetManager
+    ↓
+ResidencyState
+    ↓
+Resident?
+   /     \
+ yes      no
+ |        |
+use      request/fallback.</code></pre>
+<p>That distinction is central to any scalable asset system.</p>
+<hr />
+<p><strong>Frames-in-flight reconstruction challenge</strong></p>
+<p>CPU replaced resource at frame 20.</p>
+<p>GPU still executing frame 18 and frame 19/20 are queued.</p>
+<p>Question:</p>
+<blockquote>
+<p>Can old resource be destroyed immediately?</p>
+</blockquote>
+<p>No.</p>
+<p>Destroy only after the last submission that references it completes.</p>
+<p>The relevant condition is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>T</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mo>≥</mo>
+  <mi>L</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>U</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>T</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>d</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Not:</p>
+<pre class="text"><code>CPU has moved on.</code></pre>
+<p>That is Part 1545.</p>
+<hr />
+<p><strong>Exact coverage — M091 + M092</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Part</th>
+<th>Topic</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1501</td>
+<td>Game-engine architecture as dependency management</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1502</td>
+<td>Foundation versus runtime responsibilities</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1503</td>
+<td>Dependency inversion in engine modules</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1504</td>
+<td>Avoiding cyclic module dependencies</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1505</td>
+<td>Static versus shared libraries</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1506</td>
+<td>Header-only versus compiled libraries</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1507</td>
+<td>Stable runtime interfaces</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1508</td>
+<td>Backend-specific implementation boundaries</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1509</td>
+<td>Platform abstraction layers</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1510</td>
+<td>Service locators and trade-offs</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1511</td>
+<td>Dependency injection</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1512</td>
+<td>Global state and hidden coupling</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1513</td>
+<td>Engine contexts/service bundles</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1514</td>
+<td>Application lifecycle</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1515</td>
+<td>Initialization order</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1516</td>
+<td>Shutdown order</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1517</td>
+<td>Runtime versus editor process concerns</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1518</td>
+<td>Authoring versus shipped runtime</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1519</td>
+<td>Standalone player architecture</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1520</td>
+<td>Headless validation paths</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1521</td>
+<td>Asset identity</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1522</td>
+<td>Path-based asset identity</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1523</td>
+<td>UUID-based asset identity</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1524</td>
+<td>Content-addressed asset identity</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1525</td>
+<td>Asset handles</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1526</td>
+<td>Generational asset handles</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1527</td>
+<td>Asset registry</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1528</td>
+<td>Asset metadata</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1529</td>
+<td>Source versus derived runtime assets</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1530</td>
+<td>Importer interfaces</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1531</td>
+<td>OBJ import pipeline boundaries</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1532</td>
+<td>glTF import pipeline boundaries</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1533</td>
+<td>Texture import pipeline boundaries</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1534</td>
+<td>Shader import/compilation pipeline</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1535</td>
+<td>Asset dependency graphs</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1536</td>
+<td>Asset-cache keys</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1537</td>
+<td>Derived-data caches</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1538</td>
+<td>Cache invalidation</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1539</td>
+<td>Incremental asset builds</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1540</td>
+<td>Asset hot reloading</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1541</td>
+<td>Safe GPU-resource replacement during hot reload</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1542</td>
+<td>Asset streaming</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1543</td>
+<td>Residency state</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1544</td>
+<td>Reference counting versus explicit residency</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1545</td>
+<td>Resource lifetime across frames in flight</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<p>The main architecture you should retain is this:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtable columnalign="center center center center center center" columnspacing="1em" rowspacing="0.8em 0.8em 0.4em">
+            <mtr>
+              <mtd>
+                <mtext>Source Asset</mtext>
+              </mtd>
+              <mtd>
+                <mo stretchy="false">→</mo>
+              </mtd>
+              <mtd>
+                <mtext>Persistent AssetID</mtext>
+              </mtd>
+              <mtd>
+                <mo stretchy="false">→</mo>
+              </mtd>
+              <mtd>
+                <mtext>Import Recipe</mtext>
+              </mtd>
+              <mtd>
+                <mo stretchy="false">→</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd>
+                <mtext>Derived Artifact</mtext>
+              </mtd>
+              <mtd>
+                <mo stretchy="false">→</mo>
+              </mtd>
+              <mtd>
+                <mtext>Runtime Resource</mtext>
+              </mtd>
+              <mtd>
+                <mo stretchy="false">→</mo>
+              </mtd>
+              <mtd>
+                <mtext>GPU Submission</mtext>
+              </mtd>
+              <mtd>
+                <mo stretchy="false">→</mo>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd></mtd>
+              <mtd>
+                <mtext>Deferred Retirement</mtext>
+              </mtd>
+              <mtd></mtd>
+              <mtd></mtd>
+              <mtd></mtd>
+            </mtr>
+          </mtable>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>while the software architecture around it is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Foundation</mtext>
+          <mo stretchy="false">←</mo>
+          <mtext>Subsystems</mtext>
+          <mo stretchy="false">←</mo>
+          <mtext>Integration Bridges</mtext>
+          <mo stretchy="false">←</mo>
+          <mtext>Player / Editor / Game</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>with callbacks/interfaces allowing control flow to travel in the opposite direction <strong>without reversing source dependencies</strong>.</p>
+<p>For your current Kairo codebase, the largest concrete findings from this pass are that the high-level layering and persistent/runtime identity separation are already strong, the DDC itself is unusually careful, but the next significant correctness/performance frontier is the runtime resource layer: <strong>complete dependency-closure hashing for compound sources, dedicated shader derivation, generational loaded-resource handles, safe asynchronous GPU retirement, streaming/residency budgets, and last-known-good hot reload.</strong></p>
+<p><strong>Pass 14 is M093 + M094, Parts 1546–1582.</strong> That takes the next step into <strong>serialization goals and formats, text versus binary, forward/backward compatibility, endianness, checksums, object/ECS/scene references, reflection metadata/type/property IDs, safe type erasure, inspector architecture, then undo/redo transactions, autosave/recovery, project manifests, path sandboxing, symlink/traversal defense, packaging, atomic publication, and build-config versus runtime-config separation.</strong></p>
+<section id="id_05-engine-i-ch011-serialization-schema-evolution-compatibility-endianness-integrity-object-references-reflection-type-erasure-undoredo-transactions-recovery-autosave-sandboxed-paths-packaging-relocatable-bundles-atomic-publication-and-configuration-boundaries" class="level4">
+<h4>Serialization, Schema Evolution, Compatibility, Endianness, Integrity, Object References, Reflection, Type Erasure, Undo/Redo, Transactions, Recovery, Autosave, Sandboxed Paths, Packaging, Relocatable Bundles, Atomic Publication, and Configuration Boundaries</h4>
+<p>Pass 13 ended with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Source Asset</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>Derived Artifact</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>Runtime Resource</mtext>
+  <mo>.</mo>
+</math>
+<p>Pass 14 asks how the <em>meaning</em> of all that data survives time.</p>
+<p>A renderer object may live for milliseconds. A scene file may need to survive ten years, four engine versions, a CPU-architecture change, property renames, editor crashes, an interrupted save, a moved project directory, and a plugin no longer installed.</p>
+<p>So the central question becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>How do we make engine state durable without making today&#39;s C++ layout tomorrow&#39;s file format?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then M094 adds the editor-side problem:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>How do we make destructive authoring operations reversible and crash-safe?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is one of the most practically important passes because many engine projects get rendering right before they get persistence right—and bad persistence eventually destroys user work.</p>
+<hr />
+</section>
+<section id="id_05-engine-i-ch011-serialization-compatibility-reflection-inspectors-and-type-erasure" class="level4">
+<h4>SERIALIZATION, COMPATIBILITY, REFLECTION, INSPECTORS AND TYPE ERASURE</h4>
+<hr />
+<p><strong>Serialization goals</strong></p>
+<p>Serialization is not merely:</p>
+<blockquote>
+<p>Turn object into bytes.</p>
+</blockquote>
+<p>That definition is too weak.</p>
+<p>For an engine, serialization commonly needs to satisfy several independent properties:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>s</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The data survives process termination.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>t</mi>
+          <mi>a</mi>
+          <mi>b</mi>
+          <mi>i</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The data can move between machines/platforms.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>D</mi>
+          <mi>e</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>m</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>i</mi>
+          <mi>s</mi>
+          <mi>m</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Equivalent logical states preferably produce equivalent serialized representations.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>E</mi>
+          <mi>v</mi>
+          <mi>o</mi>
+          <mi>l</mi>
+          <mi>v</mi>
+          <mi>a</mi>
+          <mi>b</mi>
+          <mi>i</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Future engine versions can interpret older data or migrate it.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>I</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>g</mi>
+          <mi>r</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Corruption can be detected.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>S</mi>
+          <mi>e</mi>
+          <mi>c</mi>
+          <mi>u</mi>
+          <mi>r</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Malformed input cannot request unbounded allocations, escape project roots or exploit parser assumptions.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>f</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>m</mi>
+          <mi>a</mi>
+          <mi>n</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Parsing and storage costs are appropriate for the use case.</p>
+<p>Those goals conflict.</p>
+<p>A human-editable scene file optimizes differently from a GPU texture artifact.</p>
+<hr />
+<p><strong>Serialization domains</strong></p>
+<p>You should not have one universal serializer for every purpose.</p>
+<p>A game engine normally has several serialization domains.</p>
+<pre class="text"><code>Editor scene
+    human-readable
+    diff-friendly
+    versioned
+    semantic
+
+Derived asset
+    compact
+    validated
+    deterministic
+    fast to load
+
+Network packet
+    bandwidth-sensitive
+    transient
+    compatibility constrained
+
+Save game
+    durable
+    version-aware
+    player-facing
+
+Recovery snapshot
+    crash-resistant
+    redundant
+    checksummed</code></pre>
+<p>All serialize information.</p>
+<p>They do not need the same format.</p>
+<p>That is a recurring lesson:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>serialization is a policy boundary, not a utility function.</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Serialization should capture semantics, not object representation</strong></p>
+<p>Suppose:</p>
+<div class="sourceCode" id="cb75"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Camera</span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>    ProjectionMode Mode<span class="op">;</span></span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> VerticalFov<span class="op">;</span></span>
+<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> NearPlane<span class="op">;</span></span>
+<span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> FarPlane<span class="op">;</span></span>
+<span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Bad persistent format:</p>
+<div class="sourceCode" id="cb76"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>write<span class="op">(</span></span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">reinterpret_cast</span><span class="op">&lt;</span><span class="dt">char</span><span class="op">*&gt;(&amp;</span>camera<span class="op">),</span></span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">sizeof</span><span class="op">(</span>camera<span class="op">));</span></span></code></pre></div>
+<p>That stores whatever today’s compiler happened to choose for:</p>
+<pre class="text"><code>padding
+enum representation
+alignment
+float layout assumptions
+member order
+ABI</code></pre>
+<p>The file silently becomes coupled to one compiled object layout.</p>
+<p>Instead store meaning:</p>
+<pre class="text"><code>camera
+projection perspective
+vertical-fov 60
+near-plane 0.1
+far-plane 1000</code></pre>
+<p>or a binary equivalent with explicit field identifiers and numeric widths.</p>
+<p>The serializer should describe:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>C</mi>
+          <mi>a</mi>
+          <mi>m</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mtext> </mtext>
+          <mi>s</mi>
+          <mi>e</mi>
+          <mi>m</mi>
+          <mi>a</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>c</mi>
+          <mi>s</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>rather than:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>C</mi>
+          <mi>a</mi>
+          <mi>m</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mtext> </mtext>
+          <mi>m</mi>
+          <mi>e</mi>
+          <mi>m</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>y</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Text versus binary serialization</strong></p>
+<p>Text serialization represents logical values through characters.</p>
+<p>Examples:</p>
+<pre class="text"><code>near-plane 0.1
+visible true
+mesh &quot;a912...&quot;</code></pre>
+<p>Binary serialization stores encoded fields directly as bytes.</p>
+<p>Neither is inherently superior.</p>
+<p>They optimize different dimensions.</p>
+<hr />
+<p><strong>Why text formats are powerful for authoring</strong></p>
+<p>Text provides:</p>
+<ul>
+<li>easy inspection,</li>
+<li>source-control diffs,</li>
+<li>mergeability,</li>
+<li>manual repair,</li>
+<li>debugging,</li>
+<li>tooling with ordinary editors.</li>
+</ul>
+<p>Suppose a light changes:</p>
+<div class="sourceCode" id="cb80"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="st">- intensity 1000</span></span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a><span class="va">+ intensity 1500</span></span></code></pre></div>
+<p>That is excellent for source control.</p>
+<p>Compare an opaque binary diff:</p>
+<pre class="text"><code>8 bytes changed.</code></pre>
+<p>Far less useful to artists and programmers.</p>
+<p>This is why your current Kairo project, scene and asset-manifest formats being deterministic textual formats is a strong authoring choice.</p>
+<hr />
+<p><strong>Costs of text</strong></p>
+<p>Text is usually:</p>
+<ul>
+<li>larger,</li>
+<li>slower to parse,</li>
+<li>requires numeric conversion,</li>
+<li>requires escaping,</li>
+<li>susceptible to representation ambiguity if not canonicalized.</li>
+</ul>
+<p>For example floating value:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+</math>
+<p>could be written:</p>
+<pre class="text"><code>1
+1.0
+1.000000
+1e0</code></pre>
+<p>All are semantically equivalent.</p>
+<p>If serialized byte identity matters, choose one canonical representation.</p>
+<hr />
+<p><strong>Binary serialization advantages</strong></p>
+<p>Binary can provide:</p>
+<ul>
+<li>compact storage,</li>
+<li>faster decoding,</li>
+<li>direct fixed-width numeric representation,</li>
+<li>easier chunked random access,</li>
+<li>reduced parsing overhead.</li>
+</ul>
+<p>A derived mesh artifact might have:</p>
+<pre class="text"><code>header
+vertex count
+index count
+vertex bytes
+index bytes</code></pre>
+<p>There is no strong reason an end user needs to edit that manually.</p>
+<p>Binary is natural.</p>
+<hr />
+<p><strong>Binary does not automatically mean fast</strong></p>
+<p>A bad binary format can be slower than a good textual one.</p>
+<p>For example:</p>
+<pre class="text"><code>millions of tiny length-prefixed heap allocations</code></pre>
+<p>will perform poorly regardless of binary encoding.</p>
+<p>The real factors include:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>allocation count</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>branching</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>copy count</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>data locality</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>compression</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>schema complexity</mtext>
+  <mo>.</mo>
+</math>
+<p>Binary is an encoding choice, not a performance guarantee.</p>
+<hr />
+<p><strong>Versioned file formats</strong></p>
+<p>Every persistent format that may evolve should identify its schema version.</p>
+<p>Kairo does this consistently.</p>
+<p>Examples conceptually:</p>
+<pre class="text"><code>kairo-project 2
+kairo-assets 1
+kairo-scene 5
+kairo-recovery 1
+kairo-package 1</code></pre>
+<p>This immediately answers:</p>
+<blockquote>
+<p>Which grammar and semantics should parse this file?</p>
+</blockquote>
+<p>Without a version, a parser encounters an unknown structure and has no principled way to distinguish:</p>
+<pre class="text"><code>corruption
+new format
+old format
+wrong file type.</code></pre>
+<hr />
+<p><strong>Magic + version</strong></p>
+<p>A robust header often carries at least:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>Binary example:</p>
+<div class="sourceCode" id="cb87"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> FileHeader</span>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t Magic<span class="op">;</span></span>
+<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t Version<span class="op">;</span></span>
+<span id="cb87-5"><a href="#cb87-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Where:</p>
+<div class="sourceCode" id="cb88"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constexpr</span> <span class="dt">uint32_t</span> Magic <span class="op">=</span></span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">0x4B414952</span><span class="op">;</span> <span class="co">// illustrative &quot;KAIR&quot;</span></span></code></pre></div>
+<p>Then parser first verifies:</p>
+<pre class="text"><code>Is this even my file format?</code></pre>
+<p>before interpreting payload.</p>
+<p>Text formats achieve the same through a canonical first line.</p>
+<hr />
+<p><strong>Version numbers must correspond to semantic interpretation</strong></p>
+<p>Do not increment versions for arbitrary reasons.</p>
+<p>A file version means:</p>
+<blockquote>
+<p>The reader must potentially use different logic to interpret this representation.</p>
+</blockquote>
+<p>If internal C++ code is refactored but serialized semantics remain identical, the file version need not change.</p>
+<p>If field meaning changes:</p>
+<pre class="text"><code>intensity used to mean arbitrary units</code></pre>
+<p>and now means:</p>
+<pre class="text"><code>candela</code></pre>
+<p>that is a schema-semantic change.</p>
+<p>Version/migration is required.</p>
+<hr />
+<p><strong>Schema evolution</strong></p>
+<p>Schema evolution is the process of changing persistent representation while preserving meaningful old data.</p>
+<p>Suppose v1:</p>
+<pre class="text"><code>light
+color 1 1 1
+intensity 5</code></pre>
+<p>v2 introduces unit:</p>
+<pre class="text"><code>light
+color 1 1 1
+intensity 5
+unit candela</code></pre>
+<p>Old files lack the field.</p>
+<p>Reader can assign:</p>
+<pre class="text"><code>unit = legacy</code></pre>
+<p>or convert according to a known v1 rule.</p>
+<p>That is migration.</p>
+<hr />
+<p><strong>Types of schema evolution</strong></p>
+<p>The easiest change is adding an optional field with a default:</p>
+<pre class="text"><code>v1:
+roughness
+
+v2:
+roughness
+double-sided = false</code></pre>
+<p>More complex:</p>
+<pre class="text"><code>v1:
+fov-horizontal
+
+v2:
+fov-vertical</code></pre>
+<p>requires viewport/aspect assumptions.</p>
+<p>Harder:</p>
+<pre class="text"><code>v1:
+Euler rotation
+
+v2:
+Quaternion rotation.</code></pre>
+<p>Requires mathematical conversion.</p>
+<p>Even harder:</p>
+<pre class="text"><code>v1:
+one Mesh component
+
+v2:
+MeshRenderer + MaterialSlot entities.</code></pre>
+<p>Now migration changes object topology.</p>
+<hr />
+<p><strong>Migration should be semantic</strong></p>
+<p>A good migration function is conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>M</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>v</mi>
+      <mn>1</mn>
+      <mo stretchy="false">→</mo>
+      <mi>v</mi>
+      <mn>2</mn>
+    </mrow>
+  </msub>
+  <mo>:</mo>
+  <mi>S</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <msub>
+    <mi>a</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>v</mi>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mi>S</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <msub>
+    <mi>a</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>v</mi>
+      <mn>2</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>It should not be:</p>
+<div class="sourceCode" id="cb99"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a><span class="kw">reinterpret_cast</span><span class="op">&lt;</span>NewStruct<span class="op">*&gt;(</span>oldBytes<span class="op">);</span></span></code></pre></div>
+<p>You are converting meaning.</p>
+<p>Example:</p>
+<div class="sourceCode" id="cb100"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a>CameraV2 Migrate<span class="op">(</span></span>
+<span id="cb100-2"><a href="#cb100-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> CameraV1<span class="op">&amp;</span> old<span class="op">)</span></span>
+<span id="cb100-3"><a href="#cb100-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb100-4"><a href="#cb100-4" aria-hidden="true" tabindex="-1"></a>    CameraV2 result<span class="op">;</span></span>
+<span id="cb100-5"><a href="#cb100-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb100-6"><a href="#cb100-6" aria-hidden="true" tabindex="-1"></a>    result<span class="op">.</span>VerticalFov <span class="op">=</span></span>
+<span id="cb100-7"><a href="#cb100-7" aria-hidden="true" tabindex="-1"></a>        ConvertHorizontalToVertical<span class="op">(</span></span>
+<span id="cb100-8"><a href="#cb100-8" aria-hidden="true" tabindex="-1"></a>            old<span class="op">.</span>HorizontalFov<span class="op">,</span></span>
+<span id="cb100-9"><a href="#cb100-9" aria-hidden="true" tabindex="-1"></a>            old<span class="op">.</span>AssumedAspectRatio<span class="op">);</span></span>
+<span id="cb100-10"><a href="#cb100-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb100-11"><a href="#cb100-11" aria-hidden="true" tabindex="-1"></a>    result<span class="op">.</span>NearPlane <span class="op">=</span></span>
+<span id="cb100-12"><a href="#cb100-12" aria-hidden="true" tabindex="-1"></a>        old<span class="op">.</span>NearPlane<span class="op">;</span></span>
+<span id="cb100-13"><a href="#cb100-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb100-14"><a href="#cb100-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result<span class="op">;</span></span>
+<span id="cb100-15"><a href="#cb100-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<p><strong>Forward compatibility</strong></p>
+<p>Forward compatibility asks:</p>
+<blockquote>
+<p>Can an older reader tolerate data produced by a newer writer?</p>
+</blockquote>
+<p>Suppose reader understands:</p>
+<pre class="text"><code>position
+rotation</code></pre>
+<p>but newer writer adds:</p>
+<pre class="text"><code>scale.</code></pre>
+<p>If old reader can safely ignore unknown <code>scale</code>, forward compatibility exists for that change.</p>
+<hr />
+<p><strong>Forward compatibility is difficult when semantics are required</strong></p>
+<p>Suppose newer format adds:</p>
+<pre class="text"><code>compression zstd</code></pre>
+<p>and old reader understands only:</p>
+<pre class="text"><code>compression none.</code></pre>
+<p>It cannot simply ignore the field because it cannot decode the payload.</p>
+<p>Forward compatibility is therefore not binary yes/no for a whole format.</p>
+<p>It is feature-dependent.</p>
+<hr />
+<p><strong>Backward compatibility</strong></p>
+<p>Backward compatibility asks:</p>
+<blockquote>
+<p>Can a newer reader interpret files written by an older writer?</p>
+</blockquote>
+<p>This is usually much more important for editor/project formats.</p>
+<p>If Kairo 0.5 loads a Kairo 0.4 project and migrates it successfully, that is backward compatibility.</p>
+<p>A mature engine often promises:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mi>O</mi>
+  <mi>l</mi>
+  <mi>d</mi>
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>It may not promise:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mi>l</mi>
+  <mi>d</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mi>C</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Compatibility matrix</strong></p>
+<p>Imagine versions:</p>
+<pre class="text"><code>Reader v1
+Reader v2
+Reader v3
+
+Writer v1
+Writer v2
+Writer v3</code></pre>
+<p>Compatibility is a matrix, not a vague adjective.</p>
+<p>For example:</p>
+<table>
+<thead>
+<tr>
+<th>Reader</th>
+<th style="text-align: right;">File v1</th>
+<th style="text-align: right;">File v2</th>
+<th style="text-align: right;">File v3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v1</td>
+<td style="text-align: right;">yes</td>
+<td style="text-align: right;">maybe</td>
+<td style="text-align: right;">no</td>
+</tr>
+<tr>
+<td>v2</td>
+<td style="text-align: right;">yes</td>
+<td style="text-align: right;">yes</td>
+<td style="text-align: right;">maybe</td>
+</tr>
+<tr>
+<td>v3</td>
+<td style="text-align: right;">yes</td>
+<td style="text-align: right;">yes</td>
+<td style="text-align: right;">yes</td>
+</tr>
+</tbody>
+</table>
+<p>Document this.</p>
+<p>Testing compatibility fixtures is far more meaningful than saying:</p>
+<blockquote>
+<p>We support old files.</p>
+</blockquote>
+<hr />
+<p><strong>Unknown-field handling</strong></p>
+<p>Suppose new Camera file:</p>
+<pre class="text"><code>camera
+fov 60
+near 0.1
+chromatic-aberration 0.2</code></pre>
+<p>Older reader understands only first two fields.</p>
+<p>It has choices.</p>
+<p><strong>Strict rejection</strong></p>
+<pre class="text"><code>unknown field -&gt; error</code></pre>
+<p>Advantages:</p>
+<ul>
+<li>typo detection,</li>
+<li>no silent information loss,</li>
+<li>simple semantics.</li>
+</ul>
+<p>Disadvantages:</p>
+<ul>
+<li>poor forward compatibility.</li>
+</ul>
+<p><strong>Ignore unknown field</strong></p>
+<p>Advantages:</p>
+<ul>
+<li>forward extensibility.</li>
+</ul>
+<p>Disadvantages:</p>
+<ul>
+<li>read/save may destroy fields it did not understand.</li>
+</ul>
+<p><strong>Preserve unknown field</strong></p>
+<p>Old reader keeps opaque unknown data and writes it back unchanged.</p>
+<p>This provides much stronger round-trip compatibility.</p>
+<hr />
+<p><strong>Strictness is useful for authoring correctness</strong></p>
+<p>Your current Kairo parsers are deliberately strict in several inspected formats.</p>
+<p>For example <code>AssetManifest</code> rejects:</p>
+<pre class="text"><code>unknown statement
+unsupported version
+duplicate/nested malformed records.</code></pre>
+<p><code>ProjectDescriptor</code> similarly rejects unknown statements.</p>
+<p>Recovery manifests also reject unknown statements.</p>
+<p>This is a valid policy because it catches:</p>
+<pre class="text"><code>typos
+partial corruption
+unsupported newer formats
+ambiguous interpretation.</code></pre>
+<p>But it means these formats do not obtain generic forward compatibility through unknown-field preservation.</p>
+<p>That is an explicit trade.</p>
+<hr />
+<p><strong>Extensible binary formats commonly use field IDs</strong></p>
+<p>Instead of positional layout:</p>
+<pre class="text"><code>field 0 = x
+field 1 = y
+field 2 = z</code></pre>
+<p>encode:</p>
+<pre class="text"><code>propertyID
+wireType
+length
+payload</code></pre>
+<p>Unknown property ID can then be skipped using length.</p>
+<p>This is why self-describing/tagged binary formats evolve more gracefully than naive fixed struct dumps.</p>
+<hr />
+<p><strong>Stable endianness</strong></p>
+<p>Consider integer:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mi>x</mi>
+  <mn>12345678.</mn>
+</math>
+<p>Little-endian memory:</p>
+<pre class="text"><code>78 56 34 12</code></pre>
+<p>Big-endian:</p>
+<pre class="text"><code>12 34 56 78.</code></pre>
+<p>If you write native integer bytes and read on opposite endian architecture, value changes.</p>
+<p>Persistent binary formats must define byte order.</p>
+<p>Usually:</p>
+<pre class="text"><code>little-endian</code></pre>
+<p>or:</p>
+<pre class="text"><code>network/big-endian.</code></pre>
+<p>Then convert explicitly.</p>
+<hr />
+<p><strong>Endian-safe write</strong></p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb116"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb116-1"><a href="#cb116-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> WriteU32LE<span class="op">(</span></span>
+<span id="cb116-2"><a href="#cb116-2" aria-hidden="true" tabindex="-1"></a>    Writer<span class="op">&amp;</span> out<span class="op">,</span></span>
+<span id="cb116-3"><a href="#cb116-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t value<span class="op">)</span></span>
+<span id="cb116-4"><a href="#cb116-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb116-5"><a href="#cb116-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>byte bytes<span class="op">[</span><span class="dv">4</span><span class="op">]</span></span>
+<span id="cb116-6"><a href="#cb116-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb116-7"><a href="#cb116-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>byte<span class="op">(</span>value <span class="op">&amp;</span> <span class="bn">0xff</span><span class="op">),</span></span>
+<span id="cb116-8"><a href="#cb116-8" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>byte<span class="op">((</span>value <span class="op">&gt;&gt;</span> <span class="dv">8</span><span class="op">)</span> <span class="op">&amp;</span> <span class="bn">0xff</span><span class="op">),</span></span>
+<span id="cb116-9"><a href="#cb116-9" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>byte<span class="op">((</span>value <span class="op">&gt;&gt;</span> <span class="dv">16</span><span class="op">)</span> <span class="op">&amp;</span> <span class="bn">0xff</span><span class="op">),</span></span>
+<span id="cb116-10"><a href="#cb116-10" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>byte<span class="op">((</span>value <span class="op">&gt;&gt;</span> <span class="dv">24</span><span class="op">)</span> <span class="op">&amp;</span> <span class="bn">0xff</span><span class="op">)</span></span>
+<span id="cb116-11"><a href="#cb116-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb116-12"><a href="#cb116-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb116-13"><a href="#cb116-13" aria-hidden="true" tabindex="-1"></a>    out<span class="op">.</span>Write<span class="op">(</span>bytes<span class="op">);</span></span>
+<span id="cb116-14"><a href="#cb116-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This representation is independent of host endianness.</p>
+<hr />
+<p><strong>Stable numeric widths</strong></p>
+<p>Avoid persistent:</p>
+<div class="sourceCode" id="cb117"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a><span class="dt">size_t</span></span>
+<span id="cb117-2"><a href="#cb117-2" aria-hidden="true" tabindex="-1"></a><span class="dt">long</span></span>
+<span id="cb117-3"><a href="#cb117-3" aria-hidden="true" tabindex="-1"></a><span class="dt">unsigned</span> <span class="dt">long</span></span></code></pre></div>
+<p>because their widths can vary by platform/compiler model.</p>
+<p>Prefer:</p>
+<div class="sourceCode" id="cb118"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb118-1"><a href="#cb118-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>uint8_t</span>
+<span id="cb118-2"><a href="#cb118-2" aria-hidden="true" tabindex="-1"></a>std::uint16_t</span>
+<span id="cb118-3"><a href="#cb118-3" aria-hidden="true" tabindex="-1"></a>std::uint32_t</span>
+<span id="cb118-4"><a href="#cb118-4" aria-hidden="true" tabindex="-1"></a>std::uint64_t</span>
+<span id="cb118-5"><a href="#cb118-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb118-6"><a href="#cb118-6" aria-hidden="true" tabindex="-1"></a>std::int32_t</span>
+<span id="cb118-7"><a href="#cb118-7" aria-hidden="true" tabindex="-1"></a>std::int64_t</span></code></pre></div>
+<p>when binary representation requires a fixed width.</p>
+<hr />
+<p><strong>Boolean representation</strong></p>
+<p>Do not serialize <code>sizeof(bool)</code> bytes blindly.</p>
+<p>Define:</p>
+<pre class="text"><code>0 = false
+1 = true.</code></pre>
+<p>Reject other values unless schema intentionally allows them.</p>
+<p>Same for enums.</p>
+<p>Do not serialize underlying enum bytes unless the persistent schema explicitly defines the numeric values.</p>
+<p>Kairo frequently persists semantic enum names rather than compiler-dependent ordinals, which is stronger for textual durability.</p>
+<hr />
+<p><strong>Floating point</strong></p>
+<p>If storing IEEE-754 <code>float32</code>, say so explicitly.</p>
+<p>If format must support architectures where float representation differs, conversion is required.</p>
+<p>On modern target machines IEEE-754 is overwhelmingly common, but a durable format should still define:</p>
+<pre class="text"><code>binary32
+binary64
+little-endian byte order.</code></pre>
+<p>Text float parsing must also reject:</p>
+<pre class="text"><code>NaN
+Infinity</code></pre>
+<p>where they violate engine invariants.</p>
+<p>Your Kairo reflection layer explicitly rejects non-finite floating values in <code>PropertyValue</code>, which is good defensive behavior.</p>
+<hr />
+<p><strong>Checksums and content hashes</strong></p>
+<p>A checksum answers:</p>
+<blockquote>
+<p>Are these bytes likely corrupted?</p>
+</blockquote>
+<p>A cryptographic/content hash can answer:</p>
+<blockquote>
+<p>Is this exactly the same content identity?</p>
+</blockquote>
+<p>They are related but not identical roles.</p>
+<hr />
+<p><strong>Simple checksum</strong></p>
+<p>Example CRC/FNV-style checksum:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>m</mi>
+  <mo stretchy="false">(</mo>
+  <mi>b</mi>
+  <mi>y</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Recovery snapshot stores:</p>
+<pre class="text"><code>payload size
+payload checksum.</code></pre>
+<p>On load:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <msub>
+    <mi>e</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>a</mi>
+      <mi>c</mi>
+      <mi>t</mi>
+      <mi>u</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <msub>
+    <mi>e</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>e</mi>
+      <mi>x</mi>
+      <mi>p</mi>
+      <mi>e</mi>
+      <mi>c</mi>
+      <mi>t</mi>
+      <mi>e</mi>
+      <mi>d</mi>
+    </mrow>
+  </msub>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>m</mi>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>m</mi>
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If not:</p>
+<pre class="text"><code>reject recovery point.</code></pre>
+<p>Your current recovery system does this.</p>
+<hr />
+<p><strong>FNV is not a security primitive</strong></p>
+<p>Kairo’s recovery code explicitly uses FNV-1a as a <strong>corruption detector</strong>, not cryptographic authentication.</p>
+<p>Correct.</p>
+<p>If an attacker deliberately modifies both payload and checksum, FNV offers no meaningful tamper resistance.</p>
+<p>For untrusted distribution/integrity, use something stronger:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>H</mi>
+  <mi>A</mi>
+  <mtext>-</mtext>
+  <mn>256</mn>
+</math>
+<p>or authenticated signatures/MACs depending on threat model.</p>
+<hr />
+<p><strong>Content hash versus checksum</strong></p>
+<p>DDC:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>H</mi>
+  <mi>A</mi>
+  <mn>256</mn>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>is serving identity.</p>
+<p>Recovery:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mi>N</mi>
+  <mi>V</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>is serving accidental-corruption detection.</p>
+<p>Do not conflate these.</p>
+<p>Same mathematical tool family, different security/semantic requirements.</p>
+<hr />
+<p><strong>Chunk checksums</strong></p>
+<p>Large binary artifact could contain:</p>
+<pre class="text"><code>Header
+Chunk table
+Mesh chunk
+Animation chunk
+Texture chunk</code></pre>
+<p>You may checksum each chunk individually.</p>
+<p>Then corruption can be localized.</p>
+<p>You may also hash whole file.</p>
+<p>Trade-off:</p>
+<pre class="text"><code>one global hash = simpler
+per-chunk hashes = better localization/streaming validation.</code></pre>
+<hr />
+<p><strong>Serialization of object references</strong></p>
+<p>Object pointers cannot be persisted.</p>
+<p>Suppose:</p>
+<div class="sourceCode" id="cb126"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb126-1"><a href="#cb126-1" aria-hidden="true" tabindex="-1"></a>Material<span class="op">*</span> material<span class="op">;</span></span></code></pre></div>
+<p>At runtime address:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mi>x</mi>
+  <mn>7</mn>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mn>123.</mn>
+  <mo>.</mo>
+  <mo>.</mo>
+</math>
+<p>has no meaning on next launch.</p>
+<p>Serialize stable identity instead:</p>
+<pre class="text"><code>MaterialAssetID</code></pre>
+<p>or:</p>
+<pre class="text"><code>SceneEntityID.</code></pre>
+<p>On load:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>D</mi>
+  <mo stretchy="false">→</mo>
+  <mi>o</mi>
+  <mi>b</mi>
+  <mi>j</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Two-pass reference resolution</strong></p>
+<p>The universal pattern is:</p>
+<p>Create every object and build:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+  <mo stretchy="false">→</mo>
+  <mi>R</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>O</mi>
+  <mi>b</mi>
+  <mi>j</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Resolve references.</p>
+<p>Example:</p>
+<pre class="text"><code>Entity 10 parent 4
+Entity 4 parent none</code></pre>
+<p>Even if Entity 10 appears first in file, loading works.</p>
+<p>This same pattern appeared in Pass 12 for cloning and ECS extraction.</p>
+<hr />
+<p><strong>Reference classes</strong></p>
+<p>Not every reference has same ownership semantics.</p>
+<p>You may distinguish:</p>
+<pre class="text"><code>Strong reference
+Weak reference
+Optional reference
+External asset reference
+Scene-local reference
+Cross-scene reference.</code></pre>
+<p>For example:</p>
+<pre class="text"><code>MeshRenderer -&gt; MeshAsset</code></pre>
+<p>can remain valid when entity changes.</p>
+<p>A parent relation typically requires target in same loaded scene.</p>
+<p>A gameplay target may be optional and disappear.</p>
+<p>Serializer must understand the semantics.</p>
+<hr />
+<p><strong>ECS entity serialization</strong></p>
+<p>Never serialize:</p>
+<div class="sourceCode" id="cb132"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a>Entity<span class="op">{</span>Index<span class="op">=</span><span class="dv">42</span><span class="op">,</span> Generation<span class="op">=</span><span class="dv">7</span><span class="op">}</span></span></code></pre></div>
+<p>as persistent entity identity unless that runtime handle is explicitly defined as persistent—which it generally should not be.</p>
+<p>Runtime slot allocation is transient.</p>
+<p>Serialize:</p>
+<pre class="text"><code>PersistentEntityID</code></pre>
+<p>and create runtime entities anew on load.</p>
+<hr />
+<p><strong>Entity reference conversion</strong></p>
+<p>Save:</p>
+<pre class="text"><code>Runtime Entity {12,4}
+      ↓
+Scene Entity 105</code></pre>
+<p>Serialized reference:</p>
+<pre class="text"><code>105.</code></pre>
+<p>Load:</p>
+<pre class="text"><code>Scene Entity 105
+      ↓
+Runtime Entity {3,1}.</code></pre>
+<p>The runtime representation can be completely different.</p>
+<p>That is desirable.</p>
+<hr />
+<p><strong>ECS component schema</strong></p>
+<p>A persistent ECS-like scene might encode:</p>
+<pre class="text"><code>entity 105
+component Transform
+  position ...
+component Camera
+  fov ...
+end</code></pre>
+<p>But remember Pass 12’s architecture:</p>
+<p>Kairo’s durable <code>EngineCore::Scene</code> and process-local <code>KairoECS</code> are deliberately separate.</p>
+<p>That means Kairo does not need to serialize its sparse-set internal indices.</p>
+<p>It serializes authored scene semantics and extracts runtime ECS later.</p>
+<p>This is the cleaner design.</p>
+<hr />
+<p><strong>Scene-graph serialization</strong></p>
+<p>A scene graph needs:</p>
+<pre class="text"><code>entities
+components
+hierarchy
+stable IDs
+asset references.</code></pre>
+<p>There are two common hierarchy representations.</p>
+<p>Nested:</p>
+<pre class="text"><code>Root
+{
+    Child
+    {
+        Grandchild
+    }
+}</code></pre>
+<p>or flat IDs:</p>
+<pre class="text"><code>entity 1 parent none
+entity 2 parent 1
+entity 3 parent 2.</code></pre>
+<p>Flat ID representation is often easier for:</p>
+<pre class="text"><code>random ordering
+references
+incremental editing
+streaming.</code></pre>
+<hr />
+<p><strong>Validate hierarchy after loading</strong></p>
+<p>A parser must not assume file hierarchy is valid.</p>
+<p>Check:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>E</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≠</mo>
+  <mi>E</mi>
+  <mo>.</mo>
+</math>
+<p>Check parent exists.</p>
+<p>Check no cycles.</p>
+<p>Check perhaps one root policy if required.</p>
+<p>Check depth bounds if recursion is used.</p>
+<p>Malicious/corrupt file:</p>
+<pre class="text"><code>1 parent 2
+2 parent 3
+3 parent 1</code></pre>
+<p>must not lead to infinite traversal.</p>
+<hr />
+<p><strong>Transactional scene loading</strong></p>
+<p>Do not mutate live scene as parse proceeds.</p>
+<p>Use:</p>
+<div class="sourceCode" id="cb143"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb143-1"><a href="#cb143-1" aria-hidden="true" tabindex="-1"></a>Scene candidate<span class="op">;</span></span>
+<span id="cb143-2"><a href="#cb143-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb143-3"><a href="#cb143-3" aria-hidden="true" tabindex="-1"></a>ParseInto<span class="op">(</span>candidate<span class="op">);</span></span>
+<span id="cb143-4"><a href="#cb143-4" aria-hidden="true" tabindex="-1"></a>Validate<span class="op">(</span>candidate<span class="op">);</span></span>
+<span id="cb143-5"><a href="#cb143-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb143-6"><a href="#cb143-6" aria-hidden="true" tabindex="-1"></a>liveScene <span class="op">=</span></span>
+<span id="cb143-7"><a href="#cb143-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>move<span class="op">(</span>candidate<span class="op">);</span></span></code></pre></div>
+<p>If parse fails at entity 997:</p>
+<pre class="text"><code>live scene remains unchanged.</code></pre>
+<p>Your Kairo scene/project loading architecture repeatedly follows this strong-exception pattern.</p>
+<hr />
+<p><strong>Reflection metadata</strong></p>
+<p>Reflection metadata describes a type in a machine-readable engine-owned way.</p>
+<p>Example:</p>
+<pre class="text"><code>Type:
+Kairo.Engine.Camera
+
+Display:
+Camera
+
+Properties:
+VerticalFov
+NearPlane
+FarPlane
+Exposure
+Primary</code></pre>
+<p>Each property can carry:</p>
+<pre class="text"><code>stable key
+display name
+value kind
+category
+tooltip
+numeric range
+read-only flag
+enum options
+reference target type.</code></pre>
+<p>KairoReflection already implements essentially this model.</p>
+<hr />
+<p><strong>Metadata is not the object’s value</strong></p>
+<p>Descriptor:</p>
+<pre class="text"><code>&quot;near plane is a floating point value&quot;</code></pre>
+<p>is metadata.</p>
+<p>Instance:</p>
+<pre class="text"><code>NearPlane = 0.1</code></pre>
+<p>is data.</p>
+<p>Separate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+</math>
+<p>from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>That enables one descriptor to inspect thousands of objects.</p>
+<hr />
+<p><strong>Stable reflection keys</strong></p>
+<p>Your reflection system uses dotted ASCII identifiers such as:</p>
+<pre class="text"><code>Kairo.Engine.Transform</code></pre>
+<p>instead of compiler RTTI names.</p>
+<p>This is a very good choice.</p>
+<p>RTTI names can be:</p>
+<pre class="text"><code>compiler-dependent
+mangled
+unstable across builds.</code></pre>
+<p>A persistent reflection key should be designed as data schema identity.</p>
+<hr />
+<p><strong>Type IDs</strong></p>
+<p>A type ID is stable identity for a reflected type.</p>
+<p>You have several implementation choices.</p>
+<p><strong>String key</strong></p>
+<pre class="text"><code>Kairo.Engine.Transform</code></pre>
+<p>Advantages:</p>
+<ul>
+<li>readable,</li>
+<li>collision-free if uniqueness enforced,</li>
+<li>persistent-friendly.</li>
+</ul>
+<p>Cost:</p>
+<ul>
+<li>larger comparisons/storage.</li>
+</ul>
+<p><strong>Integer ID assigned at runtime</strong></p>
+<p>Fast, but registration order can make it unstable.</p>
+<p><strong>Hashed stable string</strong></p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+  <mo>=</mo>
+  <mi>H</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo data-mjx-pseudoscript="true">&quot;</mo>
+  </mrow>
+  <mi>K</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mo>.</mo>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo data-mjx-pseudoscript="true">&quot;</mo>
+  </mrow>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Compact and deterministic, but collisions must be handled.</p>
+<hr />
+<p><strong>Persistent versus runtime type IDs</strong></p>
+<p>A useful design is:</p>
+<pre class="text"><code>persistent:
+stable string/hash
+
+runtime:
+dense TypeIndex</code></pre>
+<p>At startup:</p>
+<pre class="text"><code>&quot;Kairo.Engine.Transform&quot;
+    ↓
+runtime index 7.</code></pre>
+<p>Then hot loops can use:</p>
+<div class="sourceCode" id="cb154"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb154-1"><a href="#cb154-1" aria-hidden="true" tabindex="-1"></a><span class="dt">uint16_t</span> TypeIndex<span class="op">;</span></span></code></pre></div>
+<p>while persistence remains compiler/order independent.</p>
+<p>This is the same persistent/runtime identity separation we have seen everywhere.</p>
+<hr />
+<p><strong>Hash collisions</strong></p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+  <mo>=</mo>
+  <mi>H</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>you cannot simply assume collisions never occur.</p>
+<p>At registration:</p>
+<div class="sourceCode" id="cb155"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb155-1"><a href="#cb155-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span></span>
+<span id="cb155-2"><a href="#cb155-2" aria-hidden="true" tabindex="-1"></a>    sameHash <span class="op">&amp;&amp;</span></span>
+<span id="cb155-3"><a href="#cb155-3" aria-hidden="true" tabindex="-1"></a>    differentKey<span class="op">)</span></span>
+<span id="cb155-4"><a href="#cb155-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb155-5"><a href="#cb155-5" aria-hidden="true" tabindex="-1"></a>    fail loudly<span class="op">;</span></span>
+<span id="cb155-6"><a href="#cb155-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>or use sufficiently wide IDs and store canonical key for validation.</p>
+<p>A 64-bit hash makes accidental collision unlikely but not logically impossible.</p>
+<hr />
+<p><strong>Property IDs</strong></p>
+<p>Within one type, every property needs stable identity.</p>
+<p>Bad identity:</p>
+<pre class="text"><code>property index 3.</code></pre>
+<p>Reordering fields changes meaning.</p>
+<p>Better:</p>
+<pre class="text"><code>Kairo.Engine.Camera.NearPlane</code></pre>
+<p>or type-local:</p>
+<pre class="text"><code>near-plane.</code></pre>
+<p>Stable property ID allows:</p>
+<pre class="text"><code>undo
+serialization
+animation binding
+editor presets
+network replication
+property diffing.</code></pre>
+<hr />
+<p><strong>Property display names are not IDs</strong></p>
+<p>Display text:</p>
+<pre class="text"><code>Near Plane</code></pre>
+<p>may later become:</p>
+<pre class="text"><code>Near Clip</code></pre>
+<p>for UI wording.</p>
+<p>That should not invalidate persistence.</p>
+<p>Your ImGui inspector uses stable reflection keys for commit callbacks rather than display labels.</p>
+<p>This is precisely correct:</p>
+<pre class="text"><code>DisplayName = presentation
+Key = identity.</code></pre>
+<hr />
+<p><strong>Reflection without language runtime reflection</strong></p>
+<p>C++ historically does not provide Java/C#-style full runtime field enumeration.</p>
+<p>So engines build their own reflection.</p>
+<p>Kairo does not ask:</p>
+<div class="sourceCode" id="cb163"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb163-1"><a href="#cb163-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span><span class="kw">auto</span> member <span class="op">:</span> <span class="ex">typeof</span><span class="op">(</span>Camera<span class="op">).</span>members<span class="op">())</span></span></code></pre></div>
+<p>because ordinary C++ cannot generally do that in portable production code.</p>
+<p>Instead descriptors are explicitly constructed and registered.</p>
+<p>That is entirely valid.</p>
+<hr />
+<p><strong>Explicit reflection registration</strong></p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb164"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb164-1"><a href="#cb164-1" aria-hidden="true" tabindex="-1"></a>TypeDescriptor CameraDescriptor<span class="op">()</span></span>
+<span id="cb164-2"><a href="#cb164-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb164-3"><a href="#cb164-3" aria-hidden="true" tabindex="-1"></a>    TypeDescriptor type<span class="op">;</span></span>
+<span id="cb164-4"><a href="#cb164-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb164-5"><a href="#cb164-5" aria-hidden="true" tabindex="-1"></a>    type<span class="op">.</span>Key <span class="op">=</span></span>
+<span id="cb164-6"><a href="#cb164-6" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;Kairo.Engine.Camera&quot;</span><span class="op">;</span></span>
+<span id="cb164-7"><a href="#cb164-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb164-8"><a href="#cb164-8" aria-hidden="true" tabindex="-1"></a>    type<span class="op">.</span>DisplayName <span class="op">=</span></span>
+<span id="cb164-9"><a href="#cb164-9" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;Camera&quot;</span><span class="op">;</span></span>
+<span id="cb164-10"><a href="#cb164-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb164-11"><a href="#cb164-11" aria-hidden="true" tabindex="-1"></a>    type<span class="op">.</span>Properties<span class="op">.</span>push_back<span class="op">(</span></span>
+<span id="cb164-12"><a href="#cb164-12" aria-hidden="true" tabindex="-1"></a>        MakeMemberProperty<span class="op">&lt;</span>Camera<span class="op">&gt;(</span></span>
+<span id="cb164-13"><a href="#cb164-13" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb164-14"><a href="#cb164-14" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span>Key <span class="op">=</span></span>
+<span id="cb164-15"><a href="#cb164-15" aria-hidden="true" tabindex="-1"></a>                    <span class="st">&quot;near-plane&quot;</span><span class="op">,</span></span>
+<span id="cb164-16"><a href="#cb164-16" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span>DisplayName <span class="op">=</span></span>
+<span id="cb164-17"><a href="#cb164-17" aria-hidden="true" tabindex="-1"></a>                    <span class="st">&quot;Near Plane&quot;</span></span>
+<span id="cb164-18"><a href="#cb164-18" aria-hidden="true" tabindex="-1"></a>            <span class="op">},</span></span>
+<span id="cb164-19"><a href="#cb164-19" aria-hidden="true" tabindex="-1"></a>            <span class="op">&amp;</span>Camera<span class="op">::</span>NearPlane<span class="op">));</span></span>
+<span id="cb164-20"><a href="#cb164-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb164-21"><a href="#cb164-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> type<span class="op">;</span></span>
+<span id="cb164-22"><a href="#cb164-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The compiler validates the member pointer type.</p>
+<p>The engine owns metadata semantics.</p>
+<hr />
+<p><strong>Benefits of explicit registration</strong></p>
+<p>You choose deliberately what is reflected.</p>
+<p>Private implementation details can remain invisible.</p>
+<p>You can expose a semantic property that is not literally a field.</p>
+<p>Example:</p>
+<pre class="text"><code>Euler Rotation</code></pre>
+<p>could read/write underlying Quaternion.</p>
+<p>Reflection is an abstraction layer.</p>
+<p>It does not have to mirror memory layout.</p>
+<hr />
+<p><strong>Compile-time reflection patterns</strong></p>
+<p>Even without full language reflection, templates can generate descriptors.</p>
+<p>Kairo’s:</p>
+<div class="sourceCode" id="cb166"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb166-1"><a href="#cb166-1" aria-hidden="true" tabindex="-1"></a>MakeMemberProperty<span class="op">&lt;</span>Object<span class="op">,</span> Member<span class="op">&gt;(</span></span>
+<span id="cb166-2"><a href="#cb166-2" aria-hidden="true" tabindex="-1"></a>    metadata<span class="op">,</span></span>
+<span id="cb166-3"><a href="#cb166-3" aria-hidden="true" tabindex="-1"></a>    memberPointer<span class="op">)</span></span></code></pre></div>
+<p>is an example.</p>
+<p>Compile time knows:</p>
+<pre class="text"><code>Object type
+Member type
+pointer-to-member.</code></pre>
+<p>Runtime descriptor stores a type-erased accessor.</p>
+<hr />
+<p><strong>Template-generated accessor</strong></p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb168"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb168-1"><a href="#cb168-1" aria-hidden="true" tabindex="-1"></a>descriptor<span class="op">.</span>Read <span class="op">=</span></span>
+<span id="cb168-2"><a href="#cb168-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">[</span>member<span class="op">](</span><span class="at">const</span> <span class="dt">void</span><span class="op">*</span> object<span class="op">)</span></span>
+<span id="cb168-3"><a href="#cb168-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb168-4"><a href="#cb168-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> Object<span class="op">*</span> typed <span class="op">=</span></span>
+<span id="cb168-5"><a href="#cb168-5" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span></span>
+<span id="cb168-6"><a href="#cb168-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">const</span> Object<span class="op">*&gt;(</span></span>
+<span id="cb168-7"><a href="#cb168-7" aria-hidden="true" tabindex="-1"></a>                    object<span class="op">);</span></span>
+<span id="cb168-8"><a href="#cb168-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb168-9"><a href="#cb168-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Encode<span class="op">(</span></span>
+<span id="cb168-10"><a href="#cb168-10" aria-hidden="true" tabindex="-1"></a>            typed<span class="op">-&gt;*</span>member<span class="op">);</span></span>
+<span id="cb168-11"><a href="#cb168-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span></code></pre></div>
+<p>Write:</p>
+<div class="sourceCode" id="cb169"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb169-1"><a href="#cb169-1" aria-hidden="true" tabindex="-1"></a>descriptor<span class="op">.</span>Write <span class="op">=</span></span>
+<span id="cb169-2"><a href="#cb169-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">[</span>member<span class="op">](</span></span>
+<span id="cb169-3"><a href="#cb169-3" aria-hidden="true" tabindex="-1"></a>        <span class="dt">void</span><span class="op">*</span> object<span class="op">,</span></span>
+<span id="cb169-4"><a href="#cb169-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> PropertyValue<span class="op">&amp;</span> value<span class="op">)</span></span>
+<span id="cb169-5"><a href="#cb169-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb169-6"><a href="#cb169-6" aria-hidden="true" tabindex="-1"></a>        Object<span class="op">*</span> typed <span class="op">=</span></span>
+<span id="cb169-7"><a href="#cb169-7" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span>Object<span class="op">*&gt;(</span></span>
+<span id="cb169-8"><a href="#cb169-8" aria-hidden="true" tabindex="-1"></a>                object<span class="op">);</span></span>
+<span id="cb169-9"><a href="#cb169-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb169-10"><a href="#cb169-10" aria-hidden="true" tabindex="-1"></a>        typed<span class="op">-&gt;*</span>member <span class="op">=</span></span>
+<span id="cb169-11"><a href="#cb169-11" aria-hidden="true" tabindex="-1"></a>            Decode<span class="op">&lt;</span>Member<span class="op">&gt;(</span>value<span class="op">);</span></span>
+<span id="cb169-12"><a href="#cb169-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span></code></pre></div>
+<p>This bridges compile-time type safety into runtime reflection.</p>
+<hr />
+<p><strong>Reflection macro pattern</strong></p>
+<p>Another common design:</p>
+<div class="sourceCode" id="cb170"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb170-1"><a href="#cb170-1" aria-hidden="true" tabindex="-1"></a>REFLECT_TYPE<span class="op">(</span>Camera<span class="op">,</span></span>
+<span id="cb170-2"><a href="#cb170-2" aria-hidden="true" tabindex="-1"></a>    PROPERTY<span class="op">(</span>NearPlane<span class="op">),</span></span>
+<span id="cb170-3"><a href="#cb170-3" aria-hidden="true" tabindex="-1"></a>    PROPERTY<span class="op">(</span>FarPlane<span class="op">),</span></span>
+<span id="cb170-4"><a href="#cb170-4" aria-hidden="true" tabindex="-1"></a>    PROPERTY<span class="op">(</span>Exposure<span class="op">));</span></span></code></pre></div>
+<p>Macros reduce boilerplate but have drawbacks:</p>
+<pre class="text"><code>debuggability
+macro syntax
+tooling complexity.</code></pre>
+<p>Modern template/constexpr code can often replace many macros.</p>
+<p>Use macros only when they improve ergonomics materially.</p>
+<hr />
+<p><strong>Static descriptor pattern</strong></p>
+<p>You can make:</p>
+<div class="sourceCode" id="cb172"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb172-1"><a href="#cb172-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;&gt;</span></span>
+<span id="cb172-2"><a href="#cb172-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Reflection<span class="op">&lt;</span>Camera<span class="op">&gt;</span></span>
+<span id="cb172-3"><a href="#cb172-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb172-4"><a href="#cb172-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">static</span> <span class="kw">constexpr</span> <span class="kw">auto</span> Key <span class="op">=</span></span>
+<span id="cb172-5"><a href="#cb172-5" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;Kairo.Engine.Camera&quot;</span><span class="op">;</span></span>
+<span id="cb172-6"><a href="#cb172-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb172-7"><a href="#cb172-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">static</span> TypeDescriptor Build<span class="op">();</span></span>
+<span id="cb172-8"><a href="#cb172-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then generic registry bootstrap:</p>
+<div class="sourceCode" id="cb173"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb173-1"><a href="#cb173-1" aria-hidden="true" tabindex="-1"></a>registry<span class="op">.</span>Register<span class="op">(</span></span>
+<span id="cb173-2"><a href="#cb173-2" aria-hidden="true" tabindex="-1"></a>    Reflection<span class="op">&lt;</span>Camera<span class="op">&gt;::</span>Build<span class="op">());</span></span></code></pre></div>
+<p>This creates a strong association between C++ type and stable schema descriptor without relying on language RTTI names.</p>
+<hr />
+<p><strong>Runtime reflection registry</strong></p>
+<p>A registry maps stable key to descriptor:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>K</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo stretchy="false">→</mo>
+  <mi>T</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>Kairo’s registry uses deterministic ordered storage:</p>
+<div class="sourceCode" id="cb174"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb174-1"><a href="#cb174-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>map<span class="op">&lt;</span><span class="bu">std::</span>string<span class="op">,</span> TypeDescriptor<span class="op">&gt;</span></span></code></pre></div>
+<p>and sorts properties by stable key during registration.</p>
+<p>That is a deliberate determinism choice.</p>
+<hr />
+<p><strong>Immutable descriptors after registration</strong></p>
+<p>Your reflection registry does not silently mutate already registered descriptors.</p>
+<p>This matters.</p>
+<p>Suppose inspector is currently showing:</p>
+<pre class="text"><code>property key &quot;near-plane&quot;</code></pre>
+<p>and a plugin reload changes its meaning underneath it.</p>
+<p>That would be dangerous.</p>
+<p>Immutable registration means descriptor semantics remain stable for that registry lifetime.</p>
+<p>Plugin reload can construct a new registry/epoch rather than mutate existing contracts unpredictably.</p>
+<hr />
+<p><strong>Registry validation</strong></p>
+<p>Kairo validates:</p>
+<pre class="text"><code>stable type keys
+stable property keys
+display names
+categories
+read accessor presence
+write accessor for writable properties
+numeric ranges
+enum option uniqueness
+reference metadata
+array metadata limits.</code></pre>
+<p>This is exactly what reflection registration should do.</p>
+<p>Fail when schema is registered, not three hours later when editor opens one rare component.</p>
+<hr />
+<p><strong>Property getters and setters</strong></p>
+<p>Reflection should not necessarily expose raw member addresses.</p>
+<p>Getter/setter abstraction gives control.</p>
+<p>Getter:</p>
+<div class="sourceCode" id="cb177"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb177-1"><a href="#cb177-1" aria-hidden="true" tabindex="-1"></a>PropertyValue Read<span class="op">(</span></span>
+<span id="cb177-2"><a href="#cb177-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">void</span><span class="op">*);</span></span></code></pre></div>
+<p>Setter:</p>
+<div class="sourceCode" id="cb178"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb178-1"><a href="#cb178-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> Write<span class="op">(</span></span>
+<span id="cb178-2"><a href="#cb178-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span><span class="op">*,</span></span>
+<span id="cb178-3"><a href="#cb178-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> PropertyValue<span class="op">&amp;);</span></span></code></pre></div>
+<p>This enables validation and conversion.</p>
+<hr />
+<p><strong>Why raw offset reflection is risky</strong></p>
+<p>Some reflection systems store:</p>
+<div class="sourceCode" id="cb179"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb179-1"><a href="#cb179-1" aria-hidden="true" tabindex="-1"></a>offsetof<span class="op">(</span>Camera<span class="op">,</span> NearPlane<span class="op">).</span></span></code></pre></div>
+<p>Then compute:</p>
+<div class="sourceCode" id="cb180"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb180-1"><a href="#cb180-1" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span><span class="op">*</span> base <span class="op">+</span></span>
+<span id="cb180-2"><a href="#cb180-2" aria-hidden="true" tabindex="-1"></a>offset<span class="op">.</span></span></code></pre></div>
+<p>Fast, but tightly coupled to standard-layout assumptions and exact memory layout.</p>
+<p>It also bypasses semantic validation.</p>
+<p>Getter/setter reflection is more flexible.</p>
+<p>Kairo chooses getters/setters through <code>std::function</code>.</p>
+<p>That is appropriate for editor/reflection workloads where correctness and flexibility matter more than nanosecond access.</p>
+<hr />
+<p><strong>Semantic setters</strong></p>
+<p>Suppose:</p>
+<div class="sourceCode" id="cb181"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb181-1"><a href="#cb181-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> Camera<span class="op">::</span>SetNear<span class="op">(</span><span class="dt">float</span> n<span class="op">)</span></span>
+<span id="cb181-2"><a href="#cb181-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb181-3"><a href="#cb181-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>n <span class="op">&lt;=</span> <span class="dv">0</span><span class="op">)</span></span>
+<span id="cb181-4"><a href="#cb181-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">throw</span> <span class="op">...;</span></span>
+<span id="cb181-5"><a href="#cb181-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb181-6"><a href="#cb181-6" aria-hidden="true" tabindex="-1"></a>    NearPlane <span class="op">=</span> n<span class="op">;</span></span>
+<span id="cb181-7"><a href="#cb181-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Reflection should ideally use this semantic path.</p>
+<p>Likewise quaternion write may normalize.</p>
+<p>Asset handle write may validate target type.</p>
+<p>A property setter is an invariant boundary.</p>
+<hr />
+<p><strong>Strong exception behavior</strong></p>
+<p>Setter should preferably behave:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>valid new value</mtext>
+  <mo stretchy="false">⇒</mo>
+  <mtext>commit</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>invalid new value</mtext>
+  <mo stretchy="false">⇒</mo>
+  <mtext>old value unchanged</mtext>
+  <mo>.</mo>
+</math>
+<p>This is crucial because editor commands depend on reliable rollback/undo semantics later in M094.</p>
+<hr />
+<p><strong>Inspector adapters</strong></p>
+<p>Reflection metadata should remain UI-framework neutral.</p>
+<p>It says:</p>
+<pre class="text"><code>Property kind = FloatingPoint
+Range = [0.01, 1000]
+DisplayName = Near Plane</code></pre>
+<p>It should not say:</p>
+<pre class="text"><code>ImGui::DragFloat</code></pre>
+<p>or:</p>
+<pre class="text"><code>QtSlider.</code></pre>
+<p>UI adapter interprets metadata.</p>
+<hr />
+<p><strong>Kairo’s inspector boundary</strong></p>
+<p><code>ImGuiReflectionInspector</code> receives:</p>
+<pre class="text"><code>ReflectionRegistry
+Scene entity
+commit callback.</code></pre>
+<p>It enumerates reflected components and picks an ImGui widget from <code>PropertyValueKind</code>.</p>
+<p>That means:</p>
+<pre class="text"><code>reflection metadata</code></pre>
+<p>does not import ImGui.</p>
+<p>Instead:</p>
+<pre class="text"><code>ImGui adapter
+    ↓
+reflection.</code></pre>
+<p>Correct dependency direction.</p>
+<hr />
+<p><strong>Widget mapping</strong></p>
+<p>Current logic naturally supports:</p>
+<pre class="text"><code>Boolean          -&gt; checkbox
+Signed integer   -&gt; numeric drag
+Unsigned integer -&gt; numeric drag
+Floating point   -&gt; ranged drag
+String           -&gt; text input
+Vector2/3/4      -&gt; component drag
+Quaternion       -&gt; 4-component editor
+Enumeration      -&gt; combo
+Reference        -&gt; reference string editor
+Array            -&gt; current summary/display</code></pre>
+<p>This is the generic-inspector payoff.</p>
+<p>One UI implementation can inspect many component types.</p>
+<hr />
+<p><strong>Inspector must not own mutation semantics</strong></p>
+<p>Notice Kairo’s inspector does not directly perform arbitrary scene writes.</p>
+<p>When edited value changes, it invokes:</p>
+<div class="sourceCode" id="cb189"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb189-1"><a href="#cb189-1" aria-hidden="true" tabindex="-1"></a>commit<span class="op">(</span></span>
+<span id="cb189-2"><a href="#cb189-2" aria-hidden="true" tabindex="-1"></a>    typeKey<span class="op">,</span></span>
+<span id="cb189-3"><a href="#cb189-3" aria-hidden="true" tabindex="-1"></a>    propertyKey<span class="op">,</span></span>
+<span id="cb189-4"><a href="#cb189-4" aria-hidden="true" tabindex="-1"></a>    edited<span class="op">);</span></span></code></pre></div>
+<p>That callback can generate an undoable command.</p>
+<p>This is a very strong architectural separation:</p>
+<pre class="text"><code>UI detects intent
+      ↓
+command layer performs mutation.</code></pre>
+<p>Without this, every widget becomes a secret mutation path bypassing undo.</p>
+<hr />
+<p><strong>Serialization driven by reflection</strong></p>
+<p>If reflection knows:</p>
+<pre class="text"><code>type
+properties
+kinds
+getters</code></pre>
+<p>generic serializer can do:</p>
+<div class="sourceCode" id="cb192"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb192-1"><a href="#cb192-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="at">const</span> <span class="kw">auto</span><span class="op">&amp;</span> property</span>
+<span id="cb192-2"><a href="#cb192-2" aria-hidden="true" tabindex="-1"></a>     <span class="op">:</span> descriptor<span class="op">.</span>Properties<span class="op">)</span></span>
+<span id="cb192-3"><a href="#cb192-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb192-4"><a href="#cb192-4" aria-hidden="true" tabindex="-1"></a>    PropertyValue value <span class="op">=</span></span>
+<span id="cb192-5"><a href="#cb192-5" aria-hidden="true" tabindex="-1"></a>        registry<span class="op">.</span>Read<span class="op">(</span></span>
+<span id="cb192-6"><a href="#cb192-6" aria-hidden="true" tabindex="-1"></a>            typeKey<span class="op">,</span></span>
+<span id="cb192-7"><a href="#cb192-7" aria-hidden="true" tabindex="-1"></a>            property<span class="op">.</span>Key<span class="op">,</span></span>
+<span id="cb192-8"><a href="#cb192-8" aria-hidden="true" tabindex="-1"></a>            object<span class="op">);</span></span>
+<span id="cb192-9"><a href="#cb192-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb192-10"><a href="#cb192-10" aria-hidden="true" tabindex="-1"></a>    writer<span class="op">.</span>Write<span class="op">(</span></span>
+<span id="cb192-11"><a href="#cb192-11" aria-hidden="true" tabindex="-1"></a>        property<span class="op">.</span>Key<span class="op">,</span></span>
+<span id="cb192-12"><a href="#cb192-12" aria-hidden="true" tabindex="-1"></a>        value<span class="op">);</span></span>
+<span id="cb192-13"><a href="#cb192-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This removes duplicate hand-written field enumeration.</p>
+<hr />
+<p><strong>Deserialization driven by reflection</strong></p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb193"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb193-1"><a href="#cb193-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span>SerializedField field <span class="op">:</span> input<span class="op">)</span></span>
+<span id="cb193-2"><a href="#cb193-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb193-3"><a href="#cb193-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> PropertyDescriptor<span class="op">*</span> p <span class="op">=</span></span>
+<span id="cb193-4"><a href="#cb193-4" aria-hidden="true" tabindex="-1"></a>        descriptor<span class="op">.</span>Find<span class="op">(</span>field<span class="op">.</span>ID<span class="op">);</span></span>
+<span id="cb193-5"><a href="#cb193-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb193-6"><a href="#cb193-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>p<span class="op">)</span></span>
+<span id="cb193-7"><a href="#cb193-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb193-8"><a href="#cb193-8" aria-hidden="true" tabindex="-1"></a>        HandleUnknown<span class="op">(</span>field<span class="op">);</span></span>
+<span id="cb193-9"><a href="#cb193-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb193-10"><a href="#cb193-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb193-11"><a href="#cb193-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb193-12"><a href="#cb193-12" aria-hidden="true" tabindex="-1"></a>    PropertyValue value <span class="op">=</span></span>
+<span id="cb193-13"><a href="#cb193-13" aria-hidden="true" tabindex="-1"></a>        Decode<span class="op">(</span></span>
+<span id="cb193-14"><a href="#cb193-14" aria-hidden="true" tabindex="-1"></a>            field<span class="op">,</span></span>
+<span id="cb193-15"><a href="#cb193-15" aria-hidden="true" tabindex="-1"></a>            p<span class="op">-&gt;</span>ValueKind<span class="op">);</span></span>
+<span id="cb193-16"><a href="#cb193-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb193-17"><a href="#cb193-17" aria-hidden="true" tabindex="-1"></a>    registry<span class="op">.</span>Write<span class="op">(</span></span>
+<span id="cb193-18"><a href="#cb193-18" aria-hidden="true" tabindex="-1"></a>        descriptor<span class="op">.</span>Key<span class="op">,</span></span>
+<span id="cb193-19"><a href="#cb193-19" aria-hidden="true" tabindex="-1"></a>        p<span class="op">-&gt;</span>Key<span class="op">,</span></span>
+<span id="cb193-20"><a href="#cb193-20" aria-hidden="true" tabindex="-1"></a>        object<span class="op">,</span></span>
+<span id="cb193-21"><a href="#cb193-21" aria-hidden="true" tabindex="-1"></a>        value<span class="op">);</span></span>
+<span id="cb193-22"><a href="#cb193-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Now reflection schema and persistence schema can share metadata.</p>
+<hr />
+<p><strong>Reflection-driven serialization trade-off</strong></p>
+<p>Be careful with the temptation:</p>
+<blockquote>
+<p>Reflect everything, therefore serialize everything.</p>
+</blockquote>
+<p>Not every reflected property should be persisted.</p>
+<p>Examples:</p>
+<pre class="text"><code>runtime statistics
+computed bounds
+debug state
+cached matrix
+GPU handle.</code></pre>
+<p>So reflection metadata may need flags:</p>
+<div class="sourceCode" id="cb195"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb195-1"><a href="#cb195-1" aria-hidden="true" tabindex="-1"></a>Serializable</span>
+<span id="cb195-2"><a href="#cb195-2" aria-hidden="true" tabindex="-1"></a>Transient</span>
+<span id="cb195-3"><a href="#cb195-3" aria-hidden="true" tabindex="-1"></a>EditorVisible</span>
+<span id="cb195-4"><a href="#cb195-4" aria-hidden="true" tabindex="-1"></a>ReadOnly</span>
+<span id="cb195-5"><a href="#cb195-5" aria-hidden="true" tabindex="-1"></a>NetworkReplicated</span>
+<span id="cb195-6"><a href="#cb195-6" aria-hidden="true" tabindex="-1"></a>SaveGame</span></code></pre></div>
+<p>depending on engine scale.</p>
+<p>Reflection is a metadata platform.</p>
+<p>Serialization is one consumer.</p>
+<hr />
+<p><strong>Current Kairo design</strong></p>
+<p>Kairo currently uses reflection primarily for editor inspection and semantic values while scene serialization remains an explicit dedicated format.</p>
+<p>That is a defensible design.</p>
+<p>Explicit scene serializers give precise control over:</p>
+<pre class="text"><code>versioning
+ordering
+validation
+migration.</code></pre>
+<p>Reflection can gradually reduce boilerplate later without forcing persistence to become purely automatic.</p>
+<hr />
+<p><strong>Editor UI driven by reflection</strong></p>
+<p>The generic inspector architecture is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mi>b</mi>
+  <mi>j</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mo stretchy="false">→</mo>
+  <mi>T</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mo stretchy="false">→</mo>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mi>V</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>U</mi>
+  <mi>I</mi>
+  <mi>W</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>This means adding a new reflected property can automatically make it appear in the inspector.</p>
+<p>That is a massive tooling scalability improvement.</p>
+<hr />
+<p><strong>Metadata can improve UX</strong></p>
+<p>Reflection property metadata can include:</p>
+<pre class="text"><code>Tooltip
+Category
+Advanced flag
+ReadOnly
+NumericRange
+Step
+Enum options
+Reference target.</code></pre>
+<p>Then an editor gains consistent behavior across hundreds of components.</p>
+<p>Without metadata every component requires a bespoke panel.</p>
+<hr />
+<p><strong>Generic inspector versus custom inspector</strong></p>
+<p>Generic reflection UI handles the common 80–90%.</p>
+<p>Some types still deserve a specialized inspector.</p>
+<p>Example:</p>
+<pre class="text"><code>Material
+Animation graph
+Particle system
+Terrain
+Navigation mesh.</code></pre>
+<p>Use generic reflection as the baseline.</p>
+<p>Allow type-specific adapters when domain UX requires them.</p>
+<p>Do not force everything through primitive widgets.</p>
+<hr />
+<p><strong>Safe type erasure</strong></p>
+<p>Type erasure allows runtime code to manipulate values whose concrete C++ type is not known at compile time.</p>
+<p>Kairo reflection uses:</p>
+<div class="sourceCode" id="cb199"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb199-1"><a href="#cb199-1" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="dt">void</span><span class="op">*</span></span>
+<span id="cb199-2"><a href="#cb199-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span></span></code></pre></div>
+<p>plus descriptor-specific functions.</p>
+<p>This is a classic type-erasure boundary.</p>
+<hr />
+<p><strong><code>void*</code> itself is not safe</strong></p>
+<p>This is dangerous:</p>
+<div class="sourceCode" id="cb200"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb200-1"><a href="#cb200-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> object <span class="op">=</span></span>
+<span id="cb200-2"><a href="#cb200-2" aria-hidden="true" tabindex="-1"></a>    GetAnything<span class="op">();</span></span>
+<span id="cb200-3"><a href="#cb200-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb200-4"><a href="#cb200-4" aria-hidden="true" tabindex="-1"></a>descriptorForCamera<span class="op">.</span>Read<span class="op">(</span>object<span class="op">);</span></span></code></pre></div>
+<p>if object is actually a Light.</p>
+<p>The cast inside accessor becomes invalid.</p>
+<p>So safety comes from <strong>pairing pointer with the correct descriptor</strong>.</p>
+<p>The invariant is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">(</mo>
+          <mi>o</mi>
+          <mi>b</mi>
+          <mi>j</mi>
+          <mi>e</mi>
+          <mi>c</mi>
+          <mi>t</mi>
+          <mi>A</mi>
+          <mi>d</mi>
+          <mi>d</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mi>s</mi>
+          <mo>,</mo>
+          <mi>T</mi>
+          <mi>y</mi>
+          <mi>p</mi>
+          <mi>e</mi>
+          <mi>D</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mi>c</mi>
+          <mi>r</mi>
+          <mi>i</mi>
+          <mi>p</mi>
+          <mi>t</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>must correspond to the same concrete type.</p>
+<hr />
+<p><strong>Safer erased object view</strong></p>
+<p>You can encode this:</p>
+<div class="sourceCode" id="cb201"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb201-1"><a href="#cb201-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ReflectedObjectView</span>
+<span id="cb201-2"><a href="#cb201-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb201-3"><a href="#cb201-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span><span class="op">*</span> Object <span class="op">=</span> <span class="kw">nullptr</span><span class="op">;</span></span>
+<span id="cb201-4"><a href="#cb201-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> TypeDescriptor<span class="op">*</span> Type <span class="op">=</span> <span class="kw">nullptr</span><span class="op">;</span></span>
+<span id="cb201-5"><a href="#cb201-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Read:</p>
+<div class="sourceCode" id="cb202"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb202-1"><a href="#cb202-1" aria-hidden="true" tabindex="-1"></a>PropertyValue Read<span class="op">(</span></span>
+<span id="cb202-2"><a href="#cb202-2" aria-hidden="true" tabindex="-1"></a>    ReflectedObjectView object<span class="op">,</span></span>
+<span id="cb202-3"><a href="#cb202-3" aria-hidden="true" tabindex="-1"></a>    PropertyID property<span class="op">);</span></span></code></pre></div>
+<p>Now the pointer and schema travel together.</p>
+<p>Still not mathematically impossible to construct incorrectly, but far harder to mix accidentally.</p>
+<hr />
+<p><strong>Runtime type token</strong></p>
+<p>Stronger:</p>
+<div class="sourceCode" id="cb203"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb203-1"><a href="#cb203-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ErasedObject</span>
+<span id="cb203-2"><a href="#cb203-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb203-3"><a href="#cb203-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span><span class="op">*</span> Data<span class="op">;</span></span>
+<span id="cb203-4"><a href="#cb203-4" aria-hidden="true" tabindex="-1"></a>    TypeID Type<span class="op">;</span></span>
+<span id="cb203-5"><a href="#cb203-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Registry checks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>b</mi>
+  <mi>j</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+  <mi>T</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+  <mi>T</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+</math>
+<p>before accessor invocation.</p>
+<p>This converts silent undefined behavior into a deterministic runtime error.</p>
+<hr />
+<p><strong>Owned type-erased values</strong></p>
+<p>Kairo’s <code>PropertyValue</code> is another safer kind of type erasure.</p>
+<p>It uses:</p>
+<div class="sourceCode" id="cb204"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb204-1"><a href="#cb204-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>variant<span class="op">&lt;</span></span>
+<span id="cb204-2"><a href="#cb204-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span><span class="op">,</span></span>
+<span id="cb204-3"><a href="#cb204-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int64_t</span><span class="op">,</span></span>
+<span id="cb204-4"><a href="#cb204-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span><span class="op">,</span></span>
+<span id="cb204-5"><a href="#cb204-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span><span class="op">,</span></span>
+<span id="cb204-6"><a href="#cb204-6" aria-hidden="true" tabindex="-1"></a>    string<span class="op">,</span></span>
+<span id="cb204-7"><a href="#cb204-7" aria-hidden="true" tabindex="-1"></a>    Vector<span class="op">...</span></span>
+<span id="cb204-8"><a href="#cb204-8" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span></span></code></pre></div>
+<p>This is significantly safer than:</p>
+<div class="sourceCode" id="cb205"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb205-1"><a href="#cb205-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> value<span class="op">;</span></span></code></pre></div>
+<p>because the variant remembers its active alternative.</p>
+<p><code>PropertyValueKind</code> can be checked against expected descriptor kind before writing.</p>
+<hr />
+<p><strong>Why <code>std::any</code> is less ideal here</strong></p>
+<p>You could use:</p>
+<div class="sourceCode" id="cb206"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb206-1"><a href="#cb206-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>any<span class="op">.</span></span></code></pre></div>
+<p>But then the reflection transport becomes dependent on concrete C++ type identities.</p>
+<p>Kairo deliberately defines a canonical, engine-neutral value model:</p>
+<pre class="text"><code>double
+Vector3Value
+ReferenceValue
+EnumerationValue
+ArrayValue.</code></pre>
+<p>That is much better for:</p>
+<pre class="text"><code>editor
+serialization
+plugin boundaries
+potential scripting.</code></pre>
+<hr />
+<p><strong>Reflection must own values, not dangling references</strong></p>
+<p>Kairo’s reflected <code>PropertyValue</code> owns strings, arrays and composite values.</p>
+<p>This is important.</p>
+<p>Returning:</p>
+<div class="sourceCode" id="cb209"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb209-1"><a href="#cb209-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>string_view</span></code></pre></div>
+<p>into a component would create lifetime hazards.</p>
+<p>An inspector may keep the value after component storage changes.</p>
+<p>Owned values decouple reflection transport lifetime from object storage lifetime.</p>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch442.xhtml#id_07-Vision-XR-and-Playable-Worlds" class="wikilink">Reading map</a> · <a href="ch574.xhtml#id_05-engine-i-ch010-engine-changes-across-subsystem-contracts" class="wikilink">Previous chapter</a> · <a href="ch576.xhtml#id_05-engine-i-ch012-transactions-recovery-and-safe-project-boundaries" class="wikilink">Next chapter</a></p>
+</section>
+</section>
+</body>
+</html>

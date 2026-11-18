@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch579.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-91eaa3cbdbc3-production-manifests-and-transactional-publication" class="level2">
+<h2>Production manifests and transactional publication</h2>
+<p>A production manifest is a durable description of what should be built and published. It prevents a pipeline from depending on hidden editor state or on “whatever files happen to be in this directory.”</p>
+<p>A useful manifest separates identity from location. A logical asset ID names the thing the project means. Source and output paths say where a particular revision is read and written. A cryptographic digest can identify exact content bytes. A schema version says how to interpret all fields.</p>
+<section id="appendix-91eaa3cbdbc3-path-safety" class="level3">
+<h3>Path safety</h3>
+<p>Normalize paths before planning any write. A production-safe policy normally rejects parent traversal, unexpected absolute paths, ambiguous separators, and paths that escape the declared project root after symlink resolution.</p>
+<p>Lexical normalization alone cannot prove symlink safety. The filesystem must be queried at the point where real paths are resolved, and the resolved target must still lie inside the approved root.</p>
+</section>
+<section id="appendix-91eaa3cbdbc3-deterministic-plans" class="level3">
+<h3>Deterministic plans</h3>
+<p>The same manifest and tool versions should produce the same ordered build plan. Determinism makes logs diffable, cache keys stable and failures reproducible.</p>
+<p>Planning should be side-effect free. A dry run should reveal every intended output, overwrite, deletion and dependency before publication begins.</p>
+</section>
+<section id="appendix-91eaa3cbdbc3-staging-and-commit" class="level3">
+<h3>Staging and commit</h3>
+<p>A safe publication sequence is:</p>
+<ol type="1">
+<li>validate the whole request;</li>
+<li>write derived outputs to staging names or directories;</li>
+<li>validate staged bytes and metadata;</li>
+<li>fsync or equivalent when durability is part of the promise;</li>
+<li>publish with the platform’s proven atomic replacement mechanism;</li>
+<li>update manifest/index state;</li>
+<li>retain enough evidence to diagnose rollback or partial failure.</li>
+</ol>
+<p>Atomicity and durability are separate. A rename can make a new name appear atomically yet still not guarantee survival across power loss unless the required data and directory metadata were persisted.</p>
+</section>
+<section id="appendix-91eaa3cbdbc3-idempotence" class="level3">
+<h3>Idempotence</h3>
+<p>Repeating the same publication should either be a no-op or produce the same visible state. A pipeline that appends duplicate records, increments versions accidentally or rewrites unrelated timestamps on every run is harder to cache and reason about.</p>
+<p>tools/labs/production_pipeline_contract_lab.cpp models deterministic plan generation and idempotent publication in memory. It intentionally labels real filesystem durability as unproved.</p>
+<p>Related: <a href="ch168.xhtml#appendix-e89a8f290ef5-atomic-publication-and-durability" class="wikilink">Atomic publication and durability (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Atomic publication and durability)</a>, <a href="ch578.xhtml#appendix-03ade9e1875f-dcc-adapters-and-engine-publication" class="wikilink">DCC adapters and engine publication</a>.</p>
+</section>
+</section>
+</body>
+</html>

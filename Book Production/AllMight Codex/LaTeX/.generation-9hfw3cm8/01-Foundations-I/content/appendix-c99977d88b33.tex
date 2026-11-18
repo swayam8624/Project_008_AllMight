@@ -1,0 +1,43 @@
+\hypertarget{appendix-c99977d88b33}{}
+\section{Unsigned modular arithmetic}\label{appendix-c99977d88b33-unsigned-modular-arithmetic}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C002
+
+\subsection{Definition and mechanism}\label{appendix-c99977d88b33-definition-and-mechanism}
+
+Conversion and arithmetic in an unsigned \(N\)-bit domain produce residues modulo \(2^N\); intentional wrap is valid, but wrapped bounds expressions can become security bugs.
+
+Modulo m retains the remainder class after division by m. An unsigned N-bit domain uses m=2ᴺ: 250+10 becomes 4 when stored in eight bits, and 0−1 becomes 255. Narrow operands may promote first, so identify the operation type separately from the destination type.
+
+\subsection{Prerequisites}\label{appendix-c99977d88b33-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-83c3f28f7bda]{Positional notation} --- A base is the number of available digits.
+\item
+  \hyperref[appendix-d67a19507dc5]{Machine word} --- A processor's natural integer processing width is often called its word width, but the term is architecture dependent.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-c99977d88b33-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-53a8cfb25f8d]{Offset-binary coding} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-652d81568de9]{Checked binary parsing} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-4fbc03d20829]{Two\textquotesingle s complement} --- uses unsigned modular arithmetic as part of its representation or reasoning.
+\item
+  \hyperref[appendix-2ed044358b82]{Arithmetic policies} --- uses unsigned modular arithmetic as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-c99977d88b33-recall-and-next-depth}
+
+Explain unsigned modular arithmetic without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} modular algorithms, counters, hashes, and sequence-number comparisons.
+
+\subsection{Source and navigation}\label{appendix-c99977d88b33-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 development} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

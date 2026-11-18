@@ -1,0 +1,43 @@
+\hypertarget{appendix-ed3f9bc298fe}{}\label{referencestart:appendix-ed3f9bc298fe}
+\section{Triangle rasterization and coverage tests}\label{appendix-ed3f9bc298fe-triangle-rasterization-and-coverage-tests}
+
+\hypertarget{appendix-ed3f9bc298fe-triangle-rasterization-and-coverage-tests}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-ed3f9bc298fe-definition-and-mechanism}
+
+\hypertarget{appendix-ed3f9bc298fe-definition-and-mechanism}{}
+
+Rasterization converts triangle geometry into a finite set of image samples. A pixel's ideal coverage is the area fraction inside the triangle; a center test approximates this integral with one binary answer and therefore creates jagged edges. A directed edge defines an inside half-plane, so three signed edge tests classify a point against a triangle. A consistent tie rule assigns samples exactly on shared edges to one triangle, preventing cracks and double coverage. Supersampling tests several locations per pixel and averages their coverage, trading cost for a better area estimate. Hardware often checks candidate samples in parallel within a bounding box, then rejects or accepts coarse blocks that are wholly outside or inside. Triangle coverage is also the basis for interpolating depth, color, normals, and texture coordinates.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-ed3f9bc298fe-prerequisites}
+
+\hypertarget{appendix-ed3f9bc298fe-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-02b9d9a81dca]{Barycentric coordinates and interpolation}
+\item
+  \hyperref[appendix-6a7869dd79a6]{Sampling aliasing and reconstruction}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-ed3f9bc298fe-used-by}
+
+\hypertarget{appendix-ed3f9bc298fe-used-by}{}
+
+\begin{itemize}
+\item
+  {Worlds, Images and Inference}
+\item
+  \hyperref[appendix-97578ed97952]{Depth buffering and visibility order}
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=appendix-40426e4b2103}{Homogeneous clipping and perspective interpolation (Geometry, Cameras, and Image Formation, Reference notes: Homogeneous clipping and perspective interpolation)} \#\# Full teaching explanation
+\end{itemize}
+
+\href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch001-a-scene-description-becomes-an-image}{A scene description becomes an image (Geometry, Cameras, and Image Formation, Ch. 8)} · \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=03-visual-computing-i-ch012-rasterization-coverage-and-depth}{Rasterization, coverage, and depth (Mathematics for Visual Computing, Ch. 16)}

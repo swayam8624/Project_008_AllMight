@@ -8,7 +8,7 @@ A working formula can still fail because its units, shape assumptions, or contac
 
 **Recall question:** Which limiting shape or numeric witness would falsify this formula, and what independent computation would confirm the correction?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 85120–88628; source-span SHA256 c919cfa2491225331b695fc68fec261840abaae8c638c5bfbfc9458580125701. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 86301–89809; source-span SHA256 c919cfa2491225331b695fc68fec261840abaae8c638c5bfbfc9458580125701. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### KAIRO AUDIT 4 — CAPSULE FORMULA

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch112.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-e90053a4b201-floating-point-canonicalization" class="level2">
+<h2>Floating-point canonicalization</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C004 · <strong>Latest development:</strong> C006</p>
+<section id="appendix-e90053a4b201-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Canonicalization deliberately merges encodings: both zeros to positive zero, all NaNs to one quiet pattern. Raw preservation instead keeps sign/payload distinctions. Neither is universally correct; this is a file/hash contract choice.</p>
+<p>M006’s BF16 converter explicitly canonicalizes NaNs while its raw tensor codec preserves uint32 payload words. These are distinct contracts: numerical closeness, canonical identity and raw byte identity must not be conflated.</p>
+</section>
+<section id="appendix-e90053a4b201-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch038.xhtml#appendix-3a048f032c1f-signed-zero" class="wikilink">Signed zero</a> — Numerical equality merges two encodings and must be reflected in the chosen ordering or byte policy.</li>
+<li><a href="ch102.xhtml#appendix-d6607cc4c235-nans-and-payloads" class="wikilink">NaNs and payloads</a> — Unordered comparisons and payload distinctions require explicit metric, comparison and serialization policy.</li>
+<li><a href="ch152.xhtml#appendix-91d09ebed979-serialization" class="wikilink">Serialization (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Serialization)</a> — Changing canonical representation changes the external byte contract.</li>
+<li><a href="ch136.xhtml#appendix-34ee45f161c1-bit-casting-and-representation" class="wikilink">Bit casting and representation (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Bit casting and representation)</a> — A representation word must be distinguished from a numeric conversion before canonicalization.</li>
+</ul>
+</section>
+<section id="appendix-e90053a4b201-used-by" class="level3">
+<h3>Used by</h3>
+<p>Connect later dependent concepts here as their lessons arrive.</p>
+</section>
+<section id="appendix-e90053a4b201-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the concrete example in the definition and identify its validity assumptions.</p>
+<p><strong>Pending:</strong> Do not silently change an existing asset format; cross-platform payload transport needs its own tests.</p>
+</section>
+<section id="appendix-e90053a4b201-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-choosing-what-information-to-keep" class="wikilink">Narrative development</a></p>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">M004 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m004---parts-61-76" class="wikilink">Per-part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,62 @@
+\hypertarget{appendix-b0c42da325f1}{}\label{referencestart:appendix-b0c42da325f1}
+\section{Perception feedback and robot learning}\label{appendix-b0c42da325f1-perception-feedback-and-robot-learning}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-b0c42da325f1-definition-and-mechanism}
+
+A robot learning system closes a loop: sensors produce observations, a policy chooses an action, the world changes, and new observations arrive. A policy maps states or observations to actions; a value function estimates expected future return and can help compare actions. Reinforcement learning updates behavior from outcomes, while imitation learning fits demonstrations. In visual robotics, the observation pipeline may include cameras, learned features, pose estimates, and spatial grounding; errors then affect movement rather than only a label. The training and deployment distributions can differ because the robot's own actions change what it sees. Small perception errors can compound into different states and larger future errors, a form of covariate or distribution shift. Stable deployment therefore needs calibrated sensing, feedback timing, safety constraints, and evaluation on physical conditions. Demonstrations in simulation do not establish robust real-world manipulation; embodiment, contact, latency, and unmodeled dynamics matter. A successful policy is evidence for a task and setting, not general intelligence.
+
+\subsection{Prerequisites}\label{appendix-b0c42da325f1-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-29f4bea4c2bb]{Constrained optimization and inverse kinematics}
+\item
+  \hyperref[appendix-e2e73f8cd93e]{Optical flow and time to contact}
+\item
+  \hyperref[appendix-4815cd87ab8b]{Probability density and change of measure}
+\item
+  \hyperref[appendix-65788587ef78]{Research validity and ablation}
+\item
+  \hyperref[appendix-40df0855b4a7]{Automatic differentiation and backpropagation}
+\item
+  \hyperref[appendix-47c51ea026fb]{Learned image features and CNNs}
+\item
+  \hyperref[appendix-a9d5dfdd164a]{Attention and visual transformers}
+\item
+  \hyperref[appendix-772f1fd96148]{Contrastive vision and image-language alignment}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-b0c42da325f1-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch034-robot-learning-closes-the-perception-action-loop}{Robot learning closes the perception-action loop (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 4)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-b0c42da325f1-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch034-robot-learning-closes-the-perception-action-loop}{Robot learning closes the perception-action loop (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 4)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-b0c42da325f1-recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  Trace an observation through policy, action, changed world state, and next observation.
+\item
+  How can a small perception error compound under deployment distribution shift?
+\end{itemize}
+
+\subsection{Source and navigation}\label{appendix-b0c42da325f1-source-and-navigation}
+
+Teaching narrative: \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch034-robot-learning-closes-the-perception-action-loop}{open the main explanation (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 4)}. Browse the \hyperref[appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series]{University graphics and vision index}. Additional chapter connections: \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch030-optical-flow-and-motion-from-images}{Optical flow and motion from images (Spatial Worlds, Engine State, and Simulation, Spatial Worlds, Engine State, and Simulation, Chapter 11)}; \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch029-dynamics-forces-and-numerical-integration}{Dynamics, forces, and numerical integration (Spatial Worlds, Engine State, and Simulation, Spatial Worlds, Engine State, and Simulation, Chapter 10)}; \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics}{Optimization, constraints, and inverse kinematics (Spatial Worlds, Engine State, and Simulation, Spatial Worlds, Engine State, and Simulation, Chapter 10)}; \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch018-the-robot-needs-a-rule-for-moving-every-direction}{The robot needs a rule for moving every direction (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 2)}.
+
+Caption/source records: \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch036-sc-17---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-17-robot-learning}{SC-17 (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 5)}, \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch036-sc-18---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-18-human-centered-ai}{SC-18 (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 5)}.

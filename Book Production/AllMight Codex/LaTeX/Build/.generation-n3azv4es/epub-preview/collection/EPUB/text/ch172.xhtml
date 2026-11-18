@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch172.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-f897c1ddac8f-virtual-and-physical-contiguity" class="level2">
+<h2>Virtual and physical contiguity</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-f897c1ddac8f-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Consecutive virtual addresses can map nonadjacent physical frames. Vector’s contiguous elements guarantee adjacent object storage in the process model, not one contiguous physical allocation. File offsets and storage-device placement are separate adjacency notions. Contiguity must always name the space being discussed.</p>
+</section>
+<section id="appendix-f897c1ddac8f-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch128.xhtml#appendix-0c67cd5bf30a-pages-and-page-offsets" class="wikilink">Pages and page offsets</a> — Page identity is translated while within-page position is preserved.</li>
+</ul>
+</section>
+<section id="appendix-f897c1ddac8f-used-by" class="level3">
+<h3>Used by</h3>
+<p>Update downstream uses when later chunks build on this concept.</p>
+</section>
+<section id="appendix-f897c1ddac8f-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Map three adjacent virtual pages to frames 912/17/404.</p>
+<p><strong>Pending:</strong> DMA, physical allocation, IOMMU and scatter/gather.</p>
+</section>
+<section id="appendix-f897c1ddac8f-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-f897c1ddac8f-reconstruction-depth" class="level3">
+<h3>Reconstruction depth</h3>
+<p>A virtually contiguous array occupies one uninterrupted range of virtual addresses. The page table may map those virtual pages to physical frames scattered through RAM. Most user-space code only requires virtual contiguity because ordinary loads and stores are translated by the MMU before reaching memory.</p>
+<p>Physical contiguity matters at different boundaries: some DMA devices, huge-page mappings, kernels or fixed hardware buffers may impose stronger requirements. Modern IOMMUs can themselves provide device-visible address translation, reducing the need for physically contiguous host memory in some designs.</p>
+<p>This explains why a large dynamic allocation can succeed even when free physical RAM is fragmented into many regions: the operating system can assemble the virtual range from separate frames and may not commit all of them until faults occur.</p>
+<p>For performance, virtual contiguity still does not guarantee identical locality. Page placement can span NUMA nodes, and TLB reach depends on page size and access footprint. Therefore contiguous storage is a statement about address iteration and element layout, not a complete claim about physical placement.</p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch066.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-83c3f28f7bda-positional-notation" class="level2">
+<h2>Positional notation</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C001 · <strong>Latest development:</strong> C001</p>
+<section id="appendix-83c3f28f7bda-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Digits receive powers-of-base weights; binary uses base two and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>V</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP">∑</mo>
+  <msub>
+    <mi>b</mi>
+    <mi>i</mi>
+  </msub>
+  <msup>
+    <mn>2</mn>
+    <mi>i</mi>
+  </msup>
+</math>.</p>
+<p>A base is the number of available digits. Position i contributes digit × baseⁱ; the rightmost position is i=0. For <code>1011₂</code>, the weights 8,4,2,1 give 8+2+1=11. The number of states is 2ᴺ, while the maximum unsigned value is 2ᴺ−1.</p>
+</section>
+<section id="appendix-83c3f28f7bda-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch107.xhtml#appendix-ddbb69998a2e-bit" class="wikilink">Bit</a> — A bit has two possible logical states.</li>
+</ul>
+</section>
+<section id="appendix-83c3f28f7bda-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch026.xhtml#appendix-2a2f1b74bdd3-terminating-fractions-and-dyadic-rationals" class="wikilink">Terminating fractions and dyadic rationals</a> — Finite fractional digits correspond to an integer over a power of the base.</p></li>
+<li><p><a href="ch077.xhtml#appendix-a24fd710cf67-significand-and-hidden-bit" class="wikilink">Significand and hidden bit</a> — uses positional notation to establish this mechanism’s representation or policy.</p></li>
+<li><p><a href="ch106.xhtml#appendix-dc552784a2c0-binary-conversion" class="wikilink">Binary conversion</a> — uses positional notation as part of its representation or reasoning.</p></li>
+<li><p><a href="ch062.xhtml#appendix-6b8075763724-hexadecimal" class="wikilink">Hexadecimal</a> — uses positional notation as part of its representation or reasoning.</p></li>
+<li><p><a href="ch013.xhtml#appendix-17fc1bc8b305-octal" class="wikilink">Octal</a> — uses positional notation as part of its representation or reasoning.</p></li>
+<li><p><a href="ch024.xhtml#appendix-280445746493-bit-significance" class="wikilink">Bit significance</a> — uses positional notation as part of its representation or reasoning.</p></li>
+<li><p><a href="ch092.xhtml#appendix-c99977d88b33-unsigned-modular-arithmetic" class="wikilink">Unsigned modular arithmetic</a> — uses positional notation as part of its representation or reasoning.</p></li>
+<li><p><a href="ch096.xhtml#appendix-ce20506c8532-signed-magnitude" class="wikilink">Signed magnitude</a> — uses positional notation as part of its representation or reasoning.</p></li>
+<li><p><a href="ch100.xhtml#appendix-d52d5f78ffd1-carry-and-borrow" class="wikilink">Carry and borrow</a> — uses positional notation as part of its representation or reasoning.</p></li>
+<li><p><a href="ch153.xhtml#appendix-92e040df969a-big-endian" class="wikilink">Big endian (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Big endian)</a> — depends on this concept; see its prerequisite explanation.</p></li>
+</ul>
+</section>
+<section id="appendix-83c3f28f7bda-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain positional notation without the label, work the example above, then state the assumption whose removal would change the result.</p>
+<p><strong>Pending:</strong> signed and fractional encodings.</p>
+</section>
+<section id="appendix-83c3f28f7bda-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-from-a-signal-to-an-interpretation" class="wikilink">C001 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-foundations" class="wikilink">Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

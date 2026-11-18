@@ -8,7 +8,7 @@ Counters and timing tools reveal different parts of a frame, while Objective-C++
 
 **Recall question:** What does a GPU counter establish, and what does it leave unknown about the full user-visible frame?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 37689–40136; source-span SHA256 13faebd39dbf30ebc015d30042cfe4cf02c2b2a84bd06204f0b7a175e0329a0a. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 37870–40317; source-span SHA256 13faebd39dbf30ebc015d30042cfe4cf02c2b2a84bd06204f0b7a175e0329a0a. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI & THREAD BOUNDARIES

@@ -1,0 +1,41 @@
+\hypertarget{appendix-f0437ea55a47}{}
+\section*{Conditional Gaussians and Schur complements}
+\chapter{Conditional Gaussians and Schur complements}\label{appendix-f0437ea55a47-conditional-gaussians-and-schur-complements}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\section{Definition and mechanism}\label{appendix-f0437ea55a47-definition-and-mechanism}
+
+Conditioning one block of a jointly Gaussian vector on another produces a Gaussian conditional law under the usual nonsingular assumptions. Its mean shifts by the cross-covariance times the inverse observed-block covariance, while its covariance is the Schur complement Σbb−ΣbaΣaa⁻¹Σab. That conditional covariance is positive semidefinite: insert the vector (−Σaa⁻¹Σabv,v) into the joint covariance quadratic form. If the joint covariance is positive definite, the Schur complement is positive definite. The conditional covariance does not depend on the observed value, although the conditional mean does. This formula links Bayesian updating, Gaussian elimination, and block linear systems. Singular observed blocks require a compatible degenerate-Gaussian treatment or a rank-revealing method; blindly applying an inverse is invalid.
+
+\section{Prerequisites}\label{appendix-f0437ea55a47-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-12bbe185dbe5]{Multivariate Gaussian distributions and whitening}
+\item
+  \hyperref[appendix-f6e77f4a200f]{Gaussian elimination and pivoting}
+\end{itemize}
+
+\section{Used by}\label{appendix-f0437ea55a47-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  This node is a current endpoint in the supplied Phase 9--10 path.
+\end{itemize}
+
+\section{Full teaching explanation}\label{appendix-f0437ea55a47-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#5.\%20Waiting\%20times,\%20event\%20counts,\%20and\%20covariance\%20geometry}{Phase 10 teaching section}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (01-Foundations-I, appendix-cb5af353ef77)} · visual recall
+\end{itemize}
+
+\section{Source coverage}\label{appendix-f0437ea55a47-source-coverage}
+
+Supplied lesson parts: 920 (T01 · M055), 928 (T01 · M056), 929 (T01 · M056), 930 (T01 · M056).

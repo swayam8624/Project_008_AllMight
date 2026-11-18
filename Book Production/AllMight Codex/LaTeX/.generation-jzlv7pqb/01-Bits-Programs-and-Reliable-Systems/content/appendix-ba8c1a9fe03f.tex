@@ -1,0 +1,32 @@
+\hypertarget{appendix-ba8c1a9fe03f}{}\label{referencestart:appendix-ba8c1a9fe03f}
+\section{Default and value initialization}\label{appendix-ba8c1a9fe03f-default-and-value-initialization}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C009 · \textbf{Latest development:} C009
+
+\subsection{Definition and mechanism}\label{appendix-ba8c1a9fe03f-definition-and-mechanism}
+
+No scalar initializer can leave automatic integers indeterminate. Aggregate empty braces initialize omitted members, whereas a user-provided empty default constructor may leave its scalar member uninitialized even with braces. First-declaration defaulting differs from out-of-class defaulting.
+
+\subsection{Prerequisites}\label{appendix-ba8c1a9fe03f-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-7f8ec83d0886]{Constructors and invariant establishment} --- Initialization form and structural order determine how the constructor establishes members.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-ba8c1a9fe03f-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-42e02a12c694]{Special member generation and traits}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-ba8c1a9fe03f-recall-and-next-depth}
+
+Classify int n, int n\{\}, defaulted A\{\}, and empty-body B\{\} without reading the bad cases. Pending: initializer-list overload selection and language-version uninitialized-value rules. Written coverage does not demonstrate personal mastery.
+
+\subsection{Source and navigation}\label{appendix-ba8c1a9fe03f-source-and-navigation}
+
+\hyperref[01-foundations-i-ch003-empty-syntax-does-not-promise-initialized-members]{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15-m009---parts-127-147]{Exact coverage} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

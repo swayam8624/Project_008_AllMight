@@ -1,0 +1,272 @@
+\hypertarget{appendix-64ea716dcadc}{}
+\section*{Game Engine - Visual Recall}
+\chapter{Game Engine - Retrieval Card}\label{appendix-64ea716dcadc-game-engine---retrieval-card}
+
+Use this as a short teaching route, then follow the heading links for explanations, traces and code. The diagram shows responsibilities; it does not imply that every stage runs on a separate thread.
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/QA/print-reference-dedup/assets/print/a10b481e554b18c31dc42eb512dcd20c0c7b652441441f55a1aab0a835786be6.pdf}}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Recall
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Minimum mechanism to reconstruct
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Reopen the explanation
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Ownership & Initialization order follows dependencies; shutdown releases dependents first. A manager does not remove those edges. & {[}{[}Game Engine - From First Frame to Living Worlds\#Keep engine lifecycle separate from game-specific frame work \\
+Time & Elapsed wall time and simulated time are separate. State catch-up, interpolation and pause policies before diagnosing movement. & {[}{[}Game Engine - From First Frame to Living Worlds\#Make timestep and integration choices explicit \\
+Identity & A storage index can move or be reused. Stable identity plus a generation/revision prevents stale references naming a replacement. & {[}{[}Game Engine - From First Frame to Living Worlds\#A live object needs an identity that survives storage changes \\
+Assets & Decode, validate and build a replacement before publication. CPU ownership and final GPU use are different lifetime facts. & {[}{[}Game Engine - From First Frame to Living Worlds\#6. Asset publication connects files, runtime, and graph resources \\
+Render graph & Reads name versions; dependencies order users; compatible non-overlapping lifetimes may alias. Async schedules need actual completion edges. & {[}{[}Game Engine - From First Frame to Living Worlds\#2. Compile a render graph before executing it \\
+Contact coupling & \(G\) maps velocity to gap velocity; \(W=GM^{-1}G^T\) maps reactions to contact acceleration. Shared bodies create off-diagonal coupling. & {[}{[}Game Engine - From First Frame to Living Worlds\#Contact forces form a coupled system \\
+Captured worlds & A splat index is not durable entity identity. Physical support supplies deformation; appearance alone supplies neither mass nor colliders. & {[}{[}Game Engine - From First Frame to Living Worlds\#Rendering identity becomes world identity only through an explicit bridge \\
+Edit bounds & Name color range, contributor order, evaluated pixel opacities, appearance changes and actual stop policy. An alpha-only estimate misses color/order edits. & {[}{[}Game Engine - From First Frame to Living Worlds\#An image-change certificate must name the edits it covers \\
+Save & New scene clears its path. Cancel is a no-op; failed writing keeps the dirty document. Save must choose authored versus runtime state explicitly. & {[}{[}Game Engine - From First Frame to Living Worlds\#A scene's save path is part of its editor state \\
+Camera & The controller chooses input, zoom, speed and resize policy. A viewport change alone does not recompute projection. & {[}{[}Game Engine - From First Frame to Living Worlds\#A camera controller is a policy object, not a projection matrix \\
+Replay & Inputs need compatible state/simulation; snapshots need interpolation; captured video limits camera freedom. Edited retellings are separate from authoritative records. & {[}{[}Game Engine - From First Frame to Living Worlds\#Let play become a replayable story \\
+Game rules & Trace immediate reward and delayed consequences together. Shooting a segment can remove danger while creating mushrooms and split threats. & {[}{[}Game Engine - From First Frame to Living Worlds\#From one core action to a coupled play system: Centipede \\
+Narrative & Authored context and emergent play histories cooperate. Make state changes legible before assuming players understand their consequences. & {[}{[}Game Engine - From First Frame to Living Worlds\#Narrative can be authored, played, and retold \\
+Design document & Record the rule, exception, intended experience and evidence status. A large specification is not proof that play works. & {[}{[}Game Engine - From First Frame to Living Worlds\#A design document is a working reference, not a frozen game \\
+\end{longtable}
+}
+
+\section{Two figures worth reconstructing}\label{appendix-64ea716dcadc-two-figures-worth-reconstructing}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Visual Recall/Game Engine/sphere-bound-gap.svg}]{/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/print/f5195251b2fd29d6cbe6c8a7c98d7d8d52d1942a401acaef9dbdff76e240430f.pdf}}
+\caption{Visual Recall/Game Engine/sphere-bound-gap.svg}
+\end{figure}
+
+An enclosing parent bound can overlap a candidate that misses both children: broad-phase inclusion is a possibility, not a collision. Reopen \href{Game\%20Engine\%20-\%20From\%20First\%20Frame\%20to\%20Living\%20Worlds\#See\%20the\%20empty\%20space\%20inside\%20a\%20parent\%20bound}{the scaled witness and its distances}.
+
+For the separate contracts of pixel footprint, compositing order and storage reuse, use \href{University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Figure\%20ER1\%20-\%20Footprint,\%20compositing\%20order\%20and\%20storage\%20lifetime}{Figure ER1 and its caption}.
+
+Before teaching a topic, reconstruct one failure trace: which invariant was violated, what visible symptom followed, and which measurement isolates the first wrong state? A successful build, a correct CPU formula and a correct native frame are different kinds of evidence.
+
+\textbf{Trace a confusing action:} context → visible option → accepted action → changed state → visible result. Reopen \href{Game\%20Engine\%20-\%20From\%20First\%20Frame\%20to\%20Living\%20Worlds\#Figure\%20E-choice\%20-\%20From\%20opportunity\%20to\%20consequence}{the five-stage choice figure and door trace}.
+
+\textbf{Stable IDs:} random identifiers need a bit-width/count model and a collision policy. \href{Game\%20Engine\%20-\%20From\%20First\%20Frame\%20to\%20Living\%20Worlds\#Figure\%20E-ID\%20-\%20Birthday\%20collision\%20risk}{Figure E-ID} compares the assumptions; a display name or temporary entity slot is a different kind of identifier.
+
+\section{Contact candidates, active constraints, and surviving identities}\label{appendix-64ea716dcadc-contact-candidates-active-constraints-and-surviving-identities}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/QA/print-reference-dedup/assets/print/9e4236f110aa458bb255f697e4f138826ff48c87182114e864355ed01f6c6076.pdf}}
+
+\textbf{Read the figure:} retaining a key preserves a candidate, not a force. Refresh its geometry before deciding whether it belongs in this step's active constraints; validate any old impulse separately.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Reopen the worked teaching
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Sphere passes each box slab test; collision proved? & No: diagonal corner distance can exceed the radius. A 0.30-radius sphere at (1.25,1.25,0) misses a unit-half-extent box. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#From a conservative box check to a sphere--box contact \\
+Closest-point delta is zero? & The sphere center may be inside. Declare a containment policy before choosing a normal. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#From a conservative box check to a sphere--box contact \\
+A contact remains cached across a small gap? & It can remain geometrically retained while inactive; no automatic support, friction, restitution or old impulse. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Keep contact features coherent across frames \\
+Reconnecting seat is still owned? & Preserve participant/avatar identity; rebind authenticated transport, change its generation and reject stale or duplicate commands. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#A reconnect window needs an ownership policy \\
+Five seconds equals 300 ticks? & Only at 60 ticks per elapsed second. Declare whether pause/stall consumes the grace window. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#A reconnect window needs an ownership policy \\
+\end{longtable}
+}
+
+\textbf{Reconstruct:} calculate the corner miss, then explain the inside-box normal failure. Trace a cached depth through 0.018, 0.004, -0.006 and -0.014 metres with separate retention and activation thresholds. Finally decide the outcomes of reconnect at ticks 1499 and 1500, an old-generation packet, and a duplicated new-generation command.
+
+\section{Clip first, divide second, query only completed pass inputs}\label{appendix-64ea716dcadc-clip-first-divide-second-query-only-completed-pass-inputs}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Expand immediately
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Is clip x restricted to minus one through one? & No.~Its bounds depend on w; x=2,w=2 lies on the right plane. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Clip coordinates are not normalized device coordinates \\
+Why is NDC-only testing unsafe? & Dividing (0,0,0,-1) hides its invalid clip inequalities. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Clip coordinates are not normalized device coordinates \\
+Which edge parameter creates the clip intersection? & For (0,0,0,1) to (6,0,0,2), homogeneous t=1/5; divided-coordinate interpolation gives 1/3. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Clip coordinates are not normalized device coordinates \\
+Can the first cascade iteration consume the last cascade's bound? & Only after that bound is complete. Produce pass inputs before gathering geometry. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Compute pass inputs before gathering objects \\
+\end{longtable}
+}
+
+\section{The editor has its own visibility and freshness rules}\label{appendix-64ea716dcadc-the-editor-has-its-own-visibility-and-freshness-rules}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Worked teaching
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Slow directory result arrives after navigation? & Check project, path and request generation; the old folder's result does not own the new active panel. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Keep filesystem work out of the editor's frame loop \\
+Gizmo drawn above a wall but cannot be clicked? & Its input precedence disagrees with its displayed depth policy. Keep rendering and picking consistent. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#An editor manipulator can stay in world space while drawing above the scene \\
+Overlay means skip clipping? & No.~Valid projection and viewport inputs still apply even when scene depth cannot hide the handle. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#An editor manipulator can stay in world space while drawing above the scene \\
+\end{longtable}
+}
+
+\section{Signed forces and changing contacts}\label{appendix-64ea716dcadc-signed-forces-and-changing-contacts}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Return to the narrative / figure
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Compressed ordinary spring versus slack bungee? & Ordinary spring pushes apart; bungee has zero compression force. With k=8 N/m and rest length1m, half-length spring gives +4N outward. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#A spring law is signed, not just a magnitude \\
+Can a current force fix a position-first Euler endpoint? & No.~That position update already uses old velocity; derive the target force for the actual integrator. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#The analytic ``fake stiff spring'' has two separate caveats \\
+What happens to neighboring contact depths? & Translation and small rotation shift shared points; project their relative shift onto the frozen normal and search severity again. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Refresh neighboring penetrations after position correction \\
+Is the shared-point calculation executable? & The full planar witness checks body-order signs, 2/10/13mm depths, unchanged unrelated contact and tangential motion. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#A planar penetration refresh witness \\
+Which kind of game correctness did a test establish? & Separate formal rules, participant perception/coordination and community expectations; use the matching evidence. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Read a game feature at three nested scales \\
+\end{longtable}
+}
+
+\section{Model choices before tuning}\label{appendix-64ea716dcadc-model-choices-before-tuning}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Full explanation
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Is static friction always at its limit? & No: a 45 N push needs 45 N, below a 60 N limit. The coefficient describes the material pair. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#A friction coefficient describes a pair, not a timestep \\
+Does an energy-preserving slow projectile preserve impact momentum? & No: the 2 kg proxy keeps 625 J but multiplies momentum by twenty. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Slow a projectile only after choosing what to preserve \\
+What preserves drop at fixed horizontal range when speed falls twentyfold? & Under the stated drag-free horizontal-launch model, gravity must fall four hundredfold. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Slow a projectile only after choosing what to preserve \\
+\end{longtable}
+}
+
+\section{Context and lifecycle}\label{appendix-64ea716dcadc-context-and-lifecycle}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Full teaching
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Does a successful thread-status query mean the job succeeded? & No.~Query success, final worker status, and handle lifetime are separate states. Closing a handle does not stop its worker. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Query success, worker completion and handle lifetime are separate states \\
+Does identifying a reward prove its effect on every player? & No.~Observe the rule, state the cultural interpretation, then test actual behavior. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Ask what the game makes valuable \\
+\end{longtable}
+}
+
+\section{Reconstruct the integrated runtime witnesses}\label{appendix-64ea716dcadc-reconstruct-the-integrated-runtime-witnesses}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Full explanation and commented code
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+When does a decoded scene become live? & After strict parsing, migration, complete reference/cycle validation and the final no-throw swap. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Serialize scene meaning through stable identities \\
+Why is a resource DAG insufficient for a backend? & Each mip/layer also has initialized contents, layout, access history and queue ownership. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Plan subresource state before translating it to an API \\
+What repairs a wrong predicted tick? & Restore retained state and replay the corrected input sequence; reject corrections older than the declared history policy. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Prediction hides latency; rollback repairs a wrong prediction \\
+What does an audio voice own? & One playback cursor and policy state; it borrows clip data under an explicit lifetime. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Turn the audio front end into a real-time voice and mixing system \\
+What question comes before navigation? & Which action or goal to pursue; behavior trees, utility and planning express different decisions. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Navigation answers how to move; the decision layer answers what to do \\
+\end{longtable}
+}
+
+\section{Recall the contract before trusting the result}\label{appendix-64ea716dcadc-recall-the-contract-before-trusting-the-result}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Recall prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Complete teaching and witness
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Which motions should a joint remove? & Only its constrained relative degrees of freedom. Derive velocity rows before solving effective mass. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#A joint removes selected relative motion, not every motion \\
+Is a sensor event a body pointer to retain? & Queue stable IDs and generation checks; consume after the step with an explicit destruction policy. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Decide which pairs may interact, then publish overlap transitions safely \\
+Does an alias copy a CMake target? & No.~It is another name; modify the real target. Imported target metadata describes an external artifact. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Imported targets describe external artifacts; aliases provide a stable name \\
+May an older shader job replace a newer edit? & Cache its result if valid; activate only the expected current revision. A real concurrent publisher needs a transaction or lock. & {[}{[}Continuous Notes/Game Engine - From First Frame to Living Worlds\#Turn shader import into a checked derivation transaction \\
+\end{longtable}
+}

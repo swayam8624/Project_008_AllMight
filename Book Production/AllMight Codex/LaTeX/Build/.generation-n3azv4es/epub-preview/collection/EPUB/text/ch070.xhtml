@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch070.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-8e5214819615-class-access-and-invariants" class="level2">
+<h2>Class access and invariants</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C007 · <strong>Latest development:</strong> C009</p>
+<section id="appendix-8e5214819615-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Constructors establish externally usable state before publication; failed ordinary construction destroys completed subobjects. Generated memberwise moves do not automatically preserve relations such as extent-to-buffer consistency.</p>
+<p>struct and class differ in default member and base-class access: public versus private. Either supports methods, inheritance, constructors and hidden data. The record-versus-invariant distinction is design convention; an invariant is a condition each public operation must preserve.</p>
+</section>
+<section id="appendix-8e5214819615-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch028.xhtml#appendix-2e4d494c2d94-declarations-and-definitions" class="wikilink">Declarations and definitions</a> — Class declarations establish members and bases whose access must be public or controlled.</li>
+</ul>
+</section>
+<section id="appendix-8e5214819615-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch201.xhtml#appendix-f5593256bcaf-logical-constness-and-mutable-caches" class="wikilink">Logical constness and mutable caches (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Logical constness and mutable caches)</a></li>
+<li><a href="ch184.xhtml#appendix-7f8ec83d0886-constructors-and-invariant-establishment" class="wikilink">Constructors and invariant establishment (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Constructors and invariant establishment)</a></li>
+</ul>
+</section>
+<section id="appendix-8e5214819615-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.</p>
+<p><strong>Pending:</strong> polymorphic invariants and subsystem-level failure policies.</p>
+</section>
+<section id="appendix-8e5214819615-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch207.xhtml#appendix-fd090d982a15-m009---parts-127-147" class="wikilink">C009 development</a></p>
+<p><a href="ch173.xhtml#id_01-foundations-i-ch003-public-records-and-protected-invariants" class="wikilink">C007 teaching chapter (Bits, Programs, and Reliable Systems, Part 2, Ch. 3)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m007---parts-101-112" class="wikilink">Source coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

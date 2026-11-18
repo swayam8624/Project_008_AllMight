@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch199.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-d5908f75721f-parameter-passing-and-sink-contracts" class="level2">
+<h2>Parameter passing and sink contracts</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C009 · <strong>Latest development:</strong> C009</p>
+<section id="appendix-d5908f75721f-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A by-value parameter is an object initialized from the argument expression: lvalues ordinarily copy, xvalues can move, and appropriate prvalues construct directly. References borrow; a pointer parameter copies its pointer value. A sink intentionally retains or consumes a value, not merely observes it.</p>
+</section>
+<section id="appendix-d5908f75721f-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch200.xhtml#appendix-d6d562ca9fbb-references-and-aliases" class="wikilink">References and aliases</a> — Parameter access differs according to whether a new object is created or an existing referent is borrowed.</li>
+<li><a href="ch196.xhtml#appendix-c25d60fed375-const-qualification-and-shallow-constness" class="wikilink">Const qualification and shallow constness</a> — A read-only parameter path does not establish global immutability or ownership.</li>
+</ul>
+</section>
+<section id="appendix-d5908f75721f-used-by" class="level3">
+<h3>Used by</h3>
+<p>Later sources will extend this node when their guarantees are developed.</p>
+</section>
+<section id="appendix-d5908f75721f-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Compare lvalue and prvalue calls with spare capacity, then add growth work. Pending: generic forwarding interfaces, ABI measurements and allocator-specific costs. Written coverage does not demonstrate personal mastery.</p>
+</section>
+<section id="appendix-d5908f75721f-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch173.xhtml#id_01-foundations-i-ch003-a-value-crosses-the-function-boundary" class="wikilink">Teaching mechanism and examples</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m009---parts-127-147" class="wikilink">Exact coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

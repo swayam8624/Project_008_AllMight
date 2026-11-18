@@ -1,0 +1,58 @@
+\hypertarget{appendix-8f38927cfc54}{}\label{referencestart:appendix-8f38927cfc54}
+\section{Bitwise NOT}\label{appendix-8f38927cfc54-bitwise-not}
+
+\hypertarget{appendix-8f38927cfc54-bitwise-not}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C002
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-8f38927cfc54-definition-and-mechanism}
+
+\hypertarget{appendix-8f38927cfc54-definition-and-mechanism}{}
+
+Complements every lane within an explicit representation width.
+
+\end{allmightroledefinition}
+
+Complement must specify width: eight-bit complement of \texttt{0x0F} is \texttt{0xF0}, while sixteen-bit complement is \texttt{0xFFF0}. C++ first promotes narrow operands, so \texttt{\textasciitilde{}uint8\_t\{0\}} usually has type int and value −1. Cast or mask intentionally when retaining eight bits.
+
+\subsection{Prerequisites}\label{appendix-8f38927cfc54-prerequisites}
+
+\hypertarget{appendix-8f38927cfc54-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-24475e1596a8]{Boolean algebra} --- The logical domain is false/true.
+\item
+  \hyperref[appendix-d67a19507dc5]{Machine word} --- A processor's natural integer processing width is often called its word width, but the term is architecture dependent.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-8f38927cfc54-used-by}
+
+\hypertarget{appendix-8f38927cfc54-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-9079d3659da4]{De Morgan\textquotesingle s laws} --- uses bitwise not as part of its representation or reasoning.
+\item
+  \hyperref[appendix-4fbc03d20829]{Two\textquotesingle s complement} --- uses bitwise not as part of its representation or reasoning.
+\item
+  \hyperref[appendix-03c678cd40b3]{One\textquotesingle s complement} --- uses bitwise not as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-8f38927cfc54-recall-and-next-depth}
+
+\hypertarget{appendix-8f38927cfc54-recall-and-next-depth}{}
+
+Explain bitwise not without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} promotions, signed representations, and masked complements.
+
+\subsection{Source and navigation}\label{appendix-8f38927cfc54-source-and-navigation}
+
+\hypertarget{appendix-8f38927cfc54-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 development} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

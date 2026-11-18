@@ -1,0 +1,727 @@
+\contentsline {chapter}{\numberline {9}Continuous Models and Numerical Error}{1}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Continuous models meet numerical computation}{1}{section.9.1}%
+\contentsline {subsection}{\numberline {9.1.1}Heat on a rod: why boundaries, modes, and mesh operators belong together}{1}{subsection.9.1.1}%
+\contentsline {subsubsection}{Boundary conditions choose the modes}{2}{subsubsection*.5}%
+\contentsline {subsubsection}{Derivatives act on modes by multiplying their frequency}{3}{subsubsection*.6}%
+\contentsline {subsubsection}{From a mesh Laplacian to a heat operator}{4}{subsubsection*.7}%
+\contentsline {subsubsection}{Explicit steps have a mesh-dependent stability limit}{5}{subsubsection*.8}%
+\contentsline {subsubsection}{A Green function is an impulse response}{6}{subsubsection*.9}%
+\contentsline {subsubsection}{Sampling, truncation, and ringing}{7}{subsubsection*.10}%
+\contentsline {subsubsection}{Manufactured fields make the solver testable}{7}{subsubsection*.11}%
+\contentsline {subsubsection}{What the boundary means to the discrete solver}{8}{subsubsection*.12}%
+\contentsline {subsubsection}{Spatial and temporal error have different signatures}{9}{subsubsection*.13}%
+\contentsline {subsection}{\numberline {9.1.2}Linear fields become easier when we choose coordinates that match the operator}{10}{subsection.9.1.2}%
+\contentsline {subsubsection}{Fourier, Laplace, and Green methods answer different versions of ``invert this linear system''}{11}{subsubsection*.14}%
+\contentsline {subsubsection}{PDE names are incomplete until the data and domain are specified}{13}{subsubsection*.15}%
+\contentsline {subsubsection}{Complex analysis explains why conformal maps, residues, and asymptotic integrals share one language}{14}{subsubsection*.16}%
+\contentsline {subsubsection}{A contour calculation with its missing limit made explicit}{14}{subsubsection*.17}%
+\contentsline {subsection}{\numberline {9.1.3}ODEs and numerical simulation}{16}{subsection.9.1.3}%
+\contentsline {subsubsection}{Explicit Euler: deriving a simulator from a differential equation}{16}{subsubsection*.18}%
+\contentsline {subparagraph}{The algorithmic state transition}{16}{subparagraph*.19}%
+\contentsline {subparagraph}{Worked example: exponential decay}{17}{subparagraph*.20}%
+\contentsline {subparagraph}{Local truncation error versus global error}{18}{subparagraph*.21}%
+\contentsline {paragraph}{Explicit Euler in a spring simulation}{18}{paragraph*.22}%
+\contentsline {subparagraph}{The energy problem}{19}{subparagraph*.23}%
+\contentsline {subsubsection}{Variational mechanics explains where the equations of motion come from}{19}{subsubsection*.24}%
+\contentsline {paragraph}{Deriving the Euler--Lagrange equations rather than quoting them}{20}{paragraph*.25}%
+\contentsline {paragraph}{Generalized momentum is defined by the Lagrangian}{21}{paragraph*.26}%
+\contentsline {paragraph}{Cyclic coordinates reveal conservation laws immediately}{21}{paragraph*.27}%
+\contentsline {subsubsection}{Noether's principle connects continuous symmetry to conserved quantities}{22}{subsubsection*.28}%
+\contentsline {subsubsection}{Configuration space, velocity space, and phase space are different state spaces}{22}{subsubsection*.29}%
+\contentsline {subsubsection}{The Legendre transform moves from velocity to momentum}{23}{subsubsection*.30}%
+\contentsline {subsubsection}{Hamilton's equations turn mechanics into first-order flow on phase space}{24}{subsubsection*.31}%
+\contentsline {subsubsection}{The canonical symplectic form encodes the position-momentum pairing}{25}{subsubsection*.32}%
+\contentsline {subsubsection}{Poisson brackets turn observables into a dynamical algebra}{25}{subsubsection*.33}%
+\contentsline {subsubsection}{Liouville's theorem says Hamiltonian flow does not compress phase-space volume}{26}{subsubsection*.34}%
+\contentsline {subsubsection}{Canonical transformations preserve the mechanics, not merely coordinates}{27}{subsubsection*.35}%
+\contentsline {subsubsection}{What this means for an engine integrator}{27}{subsubsection*.36}%
+\contentsline {subsubsection}{Semi-implicit Euler: why update order changes the dynamics}{27}{subsubsection*.37}%
+\contentsline {subparagraph}{Deriving the update for the same spring}{28}{subparagraph*.38}%
+\contentsline {subparagraph}{What does symplectic actually mean?}{29}{subparagraph*.39}%
+\contentsline {subparagraph}{Why this matters in real engines}{29}{subparagraph*.40}%
+\contentsline {subsubsection}{Midpoint integration: sampling a slope where it matters}{29}{subsubsection*.41}%
+\contentsline {subparagraph}{Why it is second-order}{30}{subparagraph*.42}%
+\contentsline {subparagraph}{Worked example: midpoint integration update}{31}{subparagraph*.43}%
+\contentsline {subsubsection}{Runge--Kutta second order: a family, not one formula}{31}{subsubsection*.44}%
+\contentsline {subparagraph}{Butcher tableaux: representing Runge--Kutta methods as data}{32}{subparagraph*.45}%
+\contentsline {subsubsection}{Classical fourth-order Runge--Kutta}{33}{subsubsection*.46}%
+\contentsline {subparagraph}{A complete numerical trace}{34}{subparagraph*.47}%
+\contentsline {subparagraph}{Where the \(1,2,2,1\) structure comes from}{35}{subparagraph*.48}%
+\contentsline {subparagraph}{Computational cost}{35}{subparagraph*.49}%
+\contentsline {subsubsection}{Numerical integrator stability}{36}{subsubsection*.50}%
+\contentsline {paragraph}{Euler's amplification factor}{36}{paragraph*.51}%
+\contentsline {subparagraph}{Deriving Euler's stability condition for decay}{37}{subparagraph*.52}%
+\contentsline {subparagraph}{Why explicit Euler destabilizes an ideal spring}{38}{subparagraph*.53}%
+\contentsline {subparagraph}{Semi-implicit Euler stability for the harmonic oscillator}{38}{subparagraph*.54}%
+\contentsline {paragraph}{RK2, RK4, and their stability polynomials}{39}{paragraph*.55}%
+\contentsline {paragraph}{Consistency, stability, and convergence}{40}{paragraph*.56}%
+\contentsline {subsubsection}{Stiff differential equations}{41}{subsubsection*.57}%
+\contentsline {subparagraph}{Multiple timescales}{41}{subparagraph*.58}%
+\contentsline {subparagraph}{Backward Euler: an implicit alternative}{41}{subparagraph*.59}%
+\contentsline {subparagraph}{Why implicit integration is expensive}{43}{subparagraph*.60}%
+\contentsline {subparagraph}{Stiff systems in graphics and simulation}{43}{subparagraph*.61}%
+\contentsline {subparagraph}{More advanced integration techniques worth connecting}{44}{subparagraph*.62}%
+\contentsline {subsubsection}{Production C++23: numerical quadrature and ODE integrators}{44}{subsubsection*.63}%
+\contentsline {paragraph}{Explicit, semi-implicit, midpoint, Heun, and RK4 implementations}{45}{paragraph*.64}%
+\contentsline {subparagraph}{Semi-implicit Euler as a distinct mechanical update}{47}{subparagraph*.65}%
+\contentsline {subsubsection}{Actual repository: KairoPhysicsMath's integration methods --- source claims pending independent repository verification}{48}{subsubsection*.66}%
+\contentsline {paragraph}{Finite differences: approximating derivatives from samples}{50}{paragraph*.67}%
+\contentsline {paragraph}{Forward finite differences}{51}{paragraph*.68}%
+\contentsline {subparagraph}{Deriving the error}{51}{subparagraph*.69}%
+\contentsline {subparagraph}{Numerical example: forward-difference error}{51}{subparagraph*.70}%
+\contentsline {paragraph}{Backward finite differences}{52}{paragraph*.71}%
+\contentsline {subparagraph}{Example using sine}{53}{subparagraph*.72}%
+\contentsline {paragraph}{Central finite differences}{53}{paragraph*.73}%
+\contentsline {subparagraph}{Deriving the second-order accuracy}{53}{subparagraph*.74}%
+\contentsline {subparagraph}{Numerical example: central-difference error}{54}{subparagraph*.75}%
+\contentsline {paragraph}{Why an extremely tiny step size can make finite differences worse}{54}{paragraph*.76}%
+\contentsline {subparagraph}{Deriving the approximate optimal forward-difference step}{55}{subparagraph*.77}%
+\contentsline {subparagraph}{Finite-difference step representability}{56}{subparagraph*.78}%
+\contentsline {subparagraph}{Additional methods: Richardson extrapolation and complex-step differentiation}{57}{subparagraph*.79}%
+\contentsline {chapter}{\numberline {10}Matrix Functions and Nonlinear Least Squares}{58}{chapter.10}%
+\contentsline {section}{\numberline {10.1}Matrix functions turn repeated linear actions into one operator}{58}{section.10.1}%
+\contentsline {subsection}{\numberline {10.1.1}Figure L9 - A matrix function follows the same action after a change of basis}{59}{subsection.10.1.1}%
+\contentsline {section}{\numberline {10.2}The exponential solves a linear differential equation}{59}{section.10.2}%
+\contentsline {section}{\numberline {10.3}Logarithms and square roots need domains and branches}{60}{section.10.3}%
+\contentsline {section}{\numberline {10.4}Matrix powers range from repeated action to fractional functions}{60}{section.10.4}%
+\contentsline {section}{\numberline {10.5}Series define functions but do not guarantee a good algorithm}{61}{section.10.5}%
+\contentsline {section}{\numberline {10.6}Optimization joins derivatives and constraints}{61}{section.10.6}%
+\contentsline {section}{\numberline {10.7}Optimization and inverse problems}{62}{section.10.7}%
+\contentsline {subsection}{\numberline {10.7.1}Differentiating executable computations}{62}{subsection.10.7.1}%
+\contentsline {subsubsection}{Objective functions: translating a problem into mathematics}{62}{subsubsection*.81}%
+\contentsline {paragraph}{A complete optimization problem has several ingredients}{63}{paragraph*.82}%
+\contentsline {paragraph}{Objective functions versus evaluation metrics}{63}{paragraph*.83}%
+\contentsline {paragraph}{Parameters and hyperparameters}{64}{paragraph*.84}%
+\contentsline {subsubsection}{Local minima, global minima, maxima, and saddles}{64}{subsubsection*.85}%
+\contentsline {paragraph}{First-order necessary condition}{65}{paragraph*.86}%
+\contentsline {paragraph}{Second-order conditions}{65}{paragraph*.87}%
+\contentsline {paragraph}{Boundary optima are different}{65}{paragraph*.88}%
+\contentsline {subsubsection}{Convex functions and convex optimization}{66}{subsubsection*.89}%
+\contentsline {paragraph}{Convexity from first-order geometry}{66}{paragraph*.90}%
+\contentsline {paragraph}{Strong convexity}{67}{paragraph*.91}%
+\contentsline {paragraph}{Convexity does not automatically mean easy computation}{67}{paragraph*.92}%
+\contentsline {subsubsection}{Constraints in optimization}{68}{subsubsection*.93}%
+\contentsline {subsubsection}{Gradient descent}{68}{subsubsection*.94}%
+\contentsline {paragraph}{Why does this update decrease the function locally?}{69}{paragraph*.95}%
+\contentsline {paragraph}{Exact worked example}{69}{paragraph*.96}%
+\contentsline {subsubsection}{Learning rates and step sizes}{70}{subsubsection*.97}%
+\contentsline {paragraph}{Exact stability calculation for a quadratic}{70}{paragraph*.98}%
+\contentsline {paragraph}{Why ill-conditioned objectives produce zigzagging}{72}{paragraph*.99}%
+\contentsline {paragraph}{Exact best constant step for a strongly convex quadratic}{72}{paragraph*.100}%
+\contentsline {subsubsection}{Gradient-descent convergence}{73}{subsubsection*.101}%
+\contentsline {paragraph}{Different meanings of convergence}{74}{paragraph*.102}%
+\contentsline {paragraph}{The Polyak--Łojasiewicz connection}{74}{paragraph*.103}%
+\contentsline {subsubsection}{Momentum optimization}{74}{subsubsection*.104}%
+\contentsline {paragraph}{Why momentum can help}{75}{paragraph*.105}%
+\contentsline {paragraph}{Numerical trace}{75}{paragraph*.106}%
+\contentsline {paragraph}{The relationship to damped second-order motion}{76}{paragraph*.107}%
+\contentsline {subsubsection}{Nesterov-style acceleration}{76}{subsubsection*.108}%
+\contentsline {paragraph}{Why look-ahead changes the update}{76}{paragraph*.109}%
+\contentsline {paragraph}{Repository connection}{77}{paragraph*.110}%
+\contentsline {subsubsection}{Newton's method in one dimension}{77}{subsubsection*.111}%
+\contentsline {paragraph}{Quadratic example}{77}{paragraph*.112}%
+\contentsline {paragraph}{Newton is not inherently a minimization method}{78}{paragraph*.113}%
+\contentsline {subsubsection}{Multidimensional Newton's method}{78}{subsubsection*.114}%
+\contentsline {paragraph}{Why solving is better than explicitly inverting}{79}{paragraph*.115}%
+\contentsline {paragraph}{The Newton direction is not always a descent direction}{79}{paragraph*.116}%
+\contentsline {paragraph}{Worked 2D example}{80}{paragraph*.117}%
+\contentsline {subsubsection}{Damping Newton's direction and recognizing its local phase}{81}{subsubsection*.118}%
+\contentsline {subsubsection}{Quasi-Newton methods}{81}{subsubsection*.119}%
+\contentsline {subsubsection}{BFGS and the inverse-Hessian update}{82}{subsubsection*.120}%
+\contentsline {paragraph}{Why the curvature condition matters}{83}{paragraph*.121}%
+\contentsline {paragraph}{BFGS versus L-BFGS}{83}{paragraph*.122}%
+\contentsline {subsubsection}{Line search: optimizing the distance along a direction}{83}{subsubsection*.123}%
+\contentsline {paragraph}{Armijo sufficient decrease}{84}{paragraph*.124}%
+\contentsline {paragraph}{Wolfe conditions}{84}{paragraph*.125}%
+\contentsline {subsubsection}{Backtracking line search}{85}{subsubsection*.126}%
+\contentsline {paragraph}{Complete worked example}{85}{paragraph*.127}%
+\contentsline {paragraph}{Production C++23 algorithm}{86}{paragraph*.128}%
+\contentsline {paragraph}{When backtracking can fail}{88}{paragraph*.129}%
+\contentsline {subsubsection}{Trust-region optimization}{88}{subsubsection*.130}%
+\contentsline {paragraph}{Why a trust region is useful}{88}{paragraph*.131}%
+\contentsline {paragraph}{Predicted versus actual improvement}{88}{paragraph*.132}%
+\contentsline {paragraph}{Numerical example: trust-region acceptance ratio}{89}{paragraph*.133}%
+\contentsline {paragraph}{The geometric distinction}{90}{paragraph*.134}%
+\contentsline {subsection}{\numberline {10.7.2}Lagrange multipliers and constrained stationary points}{90}{subsection.10.7.2}%
+\contentsline {paragraph}{Worked example: constrained optimum on the unit circle}{91}{paragraph*.135}%
+\contentsline {paragraph}{Multiple constraints and the KKT linear system}{92}{paragraph*.136}%
+\contentsline {subsubsection}{Karush--Kuhn--Tucker conditions}{93}{subsubsection*.137}%
+\contentsline {paragraph}{Complementary slackness intuition}{93}{paragraph*.138}%
+\contentsline {paragraph}{A complete one-dimensional example}{94}{paragraph*.139}%
+\contentsline {paragraph}{When are KKT conditions sufficient?}{95}{paragraph*.140}%
+\contentsline {subsection}{\numberline {10.7.3}The dual problem is a lower-bound certificate, a geometry, and a sensitivity model}{95}{subsection.10.7.3}%
+\contentsline {subsection}{\numberline {10.7.4}Interior-point methods turn inequality constraints into a controlled path of Newton systems}{96}{subsection.10.7.4}%
+\contentsline {subsection}{\numberline {10.7.5}Least-squares objectives}{98}{subsection.10.7.5}%
+\contentsline {paragraph}{The linear case}{98}{paragraph*.141}%
+\contentsline {paragraph}{Why normal equations can be numerically dangerous}{99}{paragraph*.142}%
+\contentsline {subsubsection}{Nonlinear least squares}{99}{subsubsection*.143}%
+\contentsline {paragraph}{Deriving the exact Hessian}{100}{paragraph*.144}%
+\contentsline {chapter}{\numberline {11}Gauss--Newton for Geometry and Pose}{101}{chapter.11}%
+\contentsline {subsection}{\numberline {11.0.1}Gauss--Newton}{101}{subsection.11.0.1}%
+\contentsline {paragraph}{Deriving Gauss--Newton from residual linearization}{101}{paragraph*.146}%
+\contentsline {paragraph}{Worked nonlinear example}{102}{paragraph*.147}%
+\contentsline {paragraph}{Rank deficiency and observability}{103}{paragraph*.148}%
+\contentsline {subsubsection}{Levenberg--Marquardt}{103}{subsubsection*.149}%
+\contentsline {paragraph}{Deriving LM as regularized local least squares}{104}{paragraph*.150}%
+\contentsline {paragraph}{Small damping versus large damping}{104}{paragraph*.151}%
+\contentsline {paragraph}{Worked scalar example}{105}{paragraph*.152}%
+\contentsline {paragraph}{Damping updates}{105}{paragraph*.153}%
+\contentsline {paragraph}{Why LM is widely used in geometric reconstruction}{106}{paragraph*.154}%
+\contentsline {subsubsection}{Regularization: modifying the objective to encode preferences}{106}{subsubsection*.155}%
+\contentsline {paragraph}{Why regularization can stabilize an inverse problem}{107}{paragraph*.156}%
+\contentsline {paragraph}{Regularization does not create evidence}{108}{paragraph*.157}%
+\contentsline {subsubsection}{L1 regularization and sparsity}{108}{subsubsection*.158}%
+\contentsline {paragraph}{Derive the soft-thresholding operation}{109}{paragraph*.159}%
+\contentsline {paragraph}{Why ordinary gradient descent is not ideal for L1}{110}{paragraph*.160}%
+\contentsline {paragraph}{Graphics applications}{110}{paragraph*.161}%
+\contentsline {subsubsection}{L2 regularization and ridge-type stabilization}{110}{subsubsection*.162}%
+\contentsline {paragraph}{Generalized Tikhonov regularization}{111}{paragraph*.163}%
+\contentsline {paragraph}{Regularization versus LM damping}{112}{paragraph*.164}%
+\contentsline {subsubsection}{Numerical gradient verification}{112}{subsubsection*.165}%
+\contentsline {paragraph}{What gradient checking can and cannot prove}{112}{paragraph*.166}%
+\contentsline {subsubsection}{Conditioning of optimization problems}{113}{subsubsection*.167}%
+\contentsline {paragraph}{Singular-value interpretation}{113}{paragraph*.168}%
+\contentsline {paragraph}{The condition number}{114}{paragraph*.169}%
+\contentsline {paragraph}{Normal equations square conditioning}{114}{paragraph*.170}%
+\contentsline {paragraph}{Ill-conditioning versus a broken algorithm}{114}{paragraph*.171}%
+\contentsline {subsubsection}{Scale sensitivity in optimization parameters}{115}{subsubsection*.172}%
+\contentsline {paragraph}{Parameter scaling and physical interpretation}{115}{paragraph*.173}%
+\contentsline {subsubsection}{Normalization of optimization variables}{116}{subsubsection*.174}%
+\contentsline {paragraph}{How to choose scales}{116}{paragraph*.175}%
+\contentsline {paragraph}{Normalization is not the same as changing the problem}{116}{paragraph*.176}%
+\contentsline {subsubsection}{Finite precision in iterative optimization}{117}{subsubsection*.177}%
+\contentsline {paragraph}{Catastrophic cancellation}{117}{paragraph*.178}%
+\contentsline {paragraph}{Unrepresentable parameter updates}{117}{paragraph*.179}%
+\contentsline {paragraph}{Nonfinite arithmetic}{118}{paragraph*.180}%
+\contentsline {paragraph}{Summation order}{118}{paragraph*.181}%
+\contentsline {subsubsection}{Stopping criteria}{118}{subsubsection*.182}%
+\contentsline {paragraph}{Gradient-based stopping}{118}{paragraph*.183}%
+\contentsline {paragraph}{Step-based stopping}{119}{paragraph*.184}%
+\contentsline {paragraph}{Objective-change stopping}{119}{paragraph*.185}%
+\contentsline {paragraph}{Multiple criteria and solver statuses}{119}{paragraph*.186}%
+\contentsline {subsubsection}{Absolute versus relative tolerances}{119}{subsubsection*.187}%
+\contentsline {paragraph}{Why relative tolerance alone fails near zero}{120}{paragraph*.188}%
+\contentsline {subsubsection}{Detecting stagnation}{120}{subsubsection*.189}%
+\contentsline {paragraph}{A useful diagnostic procedure}{120}{paragraph*.190}%
+\contentsline {paragraph}{Detecting repeated failure}{120}{paragraph*.191}%
+\contentsline {subsubsection}{Optimization under bounds}{121}{subsubsection*.192}%
+\contentsline {paragraph}{The projection operator}{121}{paragraph*.193}%
+\contentsline {paragraph}{Why raw gradients cannot determine convergence under bounds}{121}{paragraph*.194}%
+\contentsline {subsubsection}{Projected gradient descent}{122}{subsubsection*.195}%
+\contentsline {paragraph}{Deriving the projected-gradient mapping}{122}{paragraph*.196}%
+\contentsline {paragraph}{Numerical example: projection onto a feasible box}{122}{paragraph*.197}%
+\contentsline {paragraph}{Projected line search}{123}{paragraph*.198}%
+\contentsline {subsubsection}{Coordinate descent}{123}{subsubsection*.199}%
+\contentsline {paragraph}{Worked quadratic example}{124}{paragraph*.200}%
+\contentsline {paragraph}{When coordinate descent helps}{125}{paragraph*.201}%
+\contentsline {subsection}{\numberline {11.0.2}Differentiating vector-valued functions}{125}{subsection.11.0.2}%
+\contentsline {paragraph}{Derivative of a cross product}{126}{paragraph*.202}%
+\contentsline {paragraph}{Derivative of a vector norm}{127}{paragraph*.203}%
+\contentsline {subsection}{\numberline {11.0.3}Differentiating matrix-valued functions}{127}{subsection.11.0.3}%
+\contentsline {paragraph}{Differentiating a matrix inverse}{128}{paragraph*.204}%
+\contentsline {paragraph}{Differentiating a linear solve}{128}{paragraph*.205}%
+\contentsline {paragraph}{Matrix derivatives as higher-order objects}{129}{paragraph*.206}%
+\contentsline {subsection}{\numberline {11.0.4}Differentiating quadratic forms}{129}{subsection.11.0.4}%
+\contentsline {paragraph}{General quadratic objective}{130}{paragraph*.207}%
+\contentsline {paragraph}{Differentiation with respect to the matrix}{131}{paragraph*.208}%
+\contentsline {subsection}{\numberline {11.0.5}Differentiating normalized vectors}{131}{subsection.11.0.5}%
+\contentsline {paragraph}{Geometric interpretation}{132}{paragraph*.209}%
+\contentsline {paragraph}{Numerical example: Jacobian of vector normalization}{133}{paragraph*.210}%
+\contentsline {paragraph}{What breaks at zero?}{134}{paragraph*.211}%
+\contentsline {subsection}{\numberline {11.0.6}Differentiating rotations and parameterizations}{134}{subsection.11.0.6}%
+\contentsline {subsubsection}{Derivative of a 2D rotation}{134}{subsubsection*.212}%
+\contentsline {subsubsection}{The tangent space of \(SO(3)\)}{135}{subsubsection*.213}%
+\contentsline {paragraph}{Left and right rotation perturbations}{136}{paragraph*.214}%
+\contentsline {paragraph}{Differentiating a rigid transform}{137}{paragraph*.215}%
+\contentsline {paragraph}{Euler angles and gimbal lock}{138}{paragraph*.216}%
+\contentsline {paragraph}{Quaternion constraints and differentiation}{138}{paragraph*.217}%
+\contentsline {paragraph}{Repository connection: KairoMath Transform}{139}{paragraph*.218}%
+\contentsline {subsubsection}{From a six-number pose update to an actual rigid transform}{139}{subsubsection*.219}%
+\contentsline {chapter}{\numberline {12}Reliable Optimization and Root Finding}{147}{chapter.12}%
+\contentsline {section}{\numberline {12.1}Reliable optimization in practice}{147}{section.12.1}%
+\contentsline {subsection}{\numberline {12.1.1}Building a numerically tested gradient-based optimizer}{147}{subsection.12.1.1}%
+\contentsline {subsubsection}{How the validated gradient-descent implementation works}{148}{subsubsection*.221}%
+\contentsline {subsubsection}{The nonlinear camera calibration experiment}{149}{subsubsection*.222}%
+\contentsline {paragraph}{Deriving the camera Jacobian}{150}{paragraph*.223}%
+\contentsline {subsubsection}{The exact parameter recovery}{151}{subsubsection*.224}%
+\contentsline {subsection}{\numberline {12.1.2}A compact standalone numerical workbench}{151}{subsection.12.1.2}%
+\contentsline {subsection}{\numberline {12.1.3}Repository audit: what KairoMath currently implements --- source claims pending independent repository verification}{155}{subsection.12.1.3}%
+\contentsline {paragraph}{Gradient descent and line search}{156}{paragraph*.225}%
+\contentsline {paragraph}{Newton's method}{156}{paragraph*.226}%
+\contentsline {paragraph}{Gauss--Newton · V09.08.11}{156}{paragraph*.227}%
+\contentsline {paragraph}{Levenberg--Marquardt · V09.08.12}{157}{paragraph*.228}%
+\contentsline {paragraph}{Why this audit matters}{157}{paragraph*.229}%
+\contentsline {subsection}{\numberline {12.1.4}Further essential optimization concepts}{157}{subsection.12.1.4}%
+\contentsline {subsubsection}{Robust losses}{157}{subsubsection*.230}%
+\contentsline {subsubsection}{Iteratively reweighted least squares}{158}{subsubsection*.231}%
+\contentsline {subsubsection}{Preconditioning}{158}{subsubsection*.232}%
+\contentsline {subsubsection}{Matrix-free optimization}{159}{subsubsection*.233}%
+\contentsline {subsubsection}{Schur complements in bundle adjustment}{159}{subsubsection*.234}%
+\contentsline {subsubsection}{Gauge freedom and identifiability}{160}{subsubsection*.235}%
+\contentsline {subsection}{\numberline {12.1.5}Phase 9 research synthesis}{160}{subsection.12.1.5}%
+\contentsline {subsection}{\numberline {12.1.6}Phase 9 reconstruction and mastery gate}{161}{subsection.12.1.6}%
+\contentsline {section}{\numberline {12.2}Floating-point answers: error, conditioning, stability, and stable arithmetic}{162}{section.12.2}%
+\contentsline {subsection}{\numberline {12.2.1}1.1 The standard floating-point model}{163}{subsection.12.2.1}%
+\contentsline {subsection}{\numberline {12.2.2}1.2 How local errors propagate}{163}{subsection.12.2.2}%
+\contentsline {subsection}{\numberline {12.2.3}1.3 Absolute versus relative error propagation}{164}{subsection.12.2.3}%
+\contentsline {subsection}{\numberline {12.2.4}1.4 A geometric example}{165}{subsection.12.2.4}%
+\contentsline {subsection}{\numberline {12.2.5}2.1 Forward error}{166}{subsection.12.2.5}%
+\contentsline {subsection}{\numberline {12.2.6}2.2 Backward error}{166}{subsection.12.2.6}%
+\contentsline {subsection}{\numberline {12.2.7}2.3 A small backward error can coexist with large forward error}{166}{subsection.12.2.7}%
+\contentsline {subsection}{\numberline {12.2.8}2.4 The residual is not the solution error}{168}{subsection.12.2.8}%
+\contentsline {subsection}{\numberline {12.2.9}3.1 Worked conditioning example}{169}{subsection.12.2.9}%
+\contentsline {subsection}{\numberline {12.2.10}3.2 Matrix conditioning}{169}{subsection.12.2.10}%
+\contentsline {subsection}{\numberline {12.2.11}3.3 Conditioning of a root}{170}{subsection.12.2.11}%
+\contentsline {subsection}{\numberline {12.2.12}4.1 Stable algorithm versus stable problem}{171}{subsection.12.2.12}%
+\contentsline {subsection}{\numberline {12.2.13}4.2 Stability of linear-system solving}{171}{subsection.12.2.13}%
+\contentsline {subsection}{\numberline {12.2.14}4.3 Stability is conditional on assumptions}{171}{subsection.12.2.14}%
+\contentsline {subsection}{\numberline {12.2.15}5.1 Why the sum of magnitudes appears}{172}{subsection.12.2.15}%
+\contentsline {subsection}{\numberline {12.2.16}5.2 Numerical example}{172}{subsection.12.2.16}%
+\contentsline {subsection}{\numberline {12.2.17}5.3 Why GPUs expose this problem}{173}{subsection.12.2.17}%
+\contentsline {subsection}{\numberline {12.2.18}6.1 Worked example}{174}{subsection.12.2.18}%
+\contentsline {subsection}{\numberline {12.2.19}6.2 Neumaier compensated summation}{174}{subsection.12.2.19}%
+\contentsline {subsection}{\numberline {12.2.20}6.3 Application to Monte Carlo rendering}{175}{subsection.12.2.20}%
+\contentsline {subsection}{\numberline {12.2.21}7.1 Why balancing helps}{175}{subsection.12.2.21}%
+\contentsline {subsection}{\numberline {12.2.22}7.2 Parallel implementation}{176}{subsection.12.2.22}%
+\contentsline {subsection}{\numberline {12.2.23}7.3 Pairwise versus compensated summation}{177}{subsection.12.2.23}%
+\contentsline {subsection}{\numberline {12.2.24}8.1 Overflow example}{177}{subsection.12.2.24}%
+\contentsline {subsection}{\numberline {12.2.25}8.2 Scaled norm derivation}{177}{subsection.12.2.25}%
+\contentsline {subsection}{\numberline {12.2.26}8.3 Standard-library support}{178}{subsection.12.2.26}%
+\contentsline {subsection}{\numberline {12.2.27}8.4 Stable normalization}{178}{subsection.12.2.27}%
+\contentsline {subsection}{\numberline {12.2.28}9.1 Where cancellation occurs}{179}{subsection.12.2.28}%
+\contentsline {subsection}{\numberline {12.2.29}9.2 A worked example}{179}{subsection.12.2.29}%
+\contentsline {subsection}{\numberline {12.2.30}9.3 Derive a stable alternative}{180}{subsection.12.2.30}%
+\contentsline {subsection}{\numberline {12.2.31}9.4 Why Vieta helps}{181}{subsection.12.2.31}%
+\contentsline {subsection}{\numberline {12.2.32}9.5 Robust C++ implementation issues}{181}{subsection.12.2.32}%
+\contentsline {subsection}{\numberline {12.2.33}10.1 Algebraic reformulation}{181}{subsection.12.2.33}%
+\contentsline {subsection}{\numberline {12.2.34}10.2 \BookInlineCode {log1p} for small changes}{182}{subsection.12.2.34}%
+\contentsline {subsection}{\numberline {12.2.35}10.3 \BookInlineCode {expm1} for small exponentials}{183}{subsection.12.2.35}%
+\contentsline {subsection}{\numberline {12.2.36}10.4 Fused multiply-add}{183}{subsection.12.2.36}%
+\contentsline {subsection}{\numberline {12.2.37}10.5 Higher precision and local coordinate frames}{184}{subsection.12.2.37}%
+\contentsline {subsection}{\numberline {12.2.38}10.6 The central numerical principle}{184}{subsection.12.2.38}%
+\contentsline {subsection}{\numberline {12.2.39}Figure N10-7 --- Summation is an algorithm, not just a plus sign}{184}{subsection.12.2.39}%
+\contentsline {subsection}{\numberline {12.2.40}Figure N10-12 --- Algebraically equal formulas can have unequal numerical error}{184}{subsection.12.2.40}%
+\contentsline {section}{\numberline {12.3}Reconstructing values and curves between samples}{185}{section.12.3}%
+\contentsline {subsection}{\numberline {12.3.1}11.1 Why the distinction matters}{185}{subsection.12.3.1}%
+\contentsline {subsection}{\numberline {12.3.2}11.2 Interpolation inside versus extrapolation outside}{186}{subsection.12.3.2}%
+\contentsline {subsection}{\numberline {12.3.3}11.3 High-degree interpolation and Runge's phenomenon}{186}{subsection.12.3.3}%
+\contentsline {subsection}{\numberline {12.3.4}12.1 Deriving lerp from a straight-line equation}{187}{subsection.12.3.4}%
+\contentsline {subsection}{\numberline {12.3.5}12.2 Worked example}{187}{subsection.12.3.5}%
+\contentsline {subsection}{\numberline {12.3.6}12.3 Important properties}{188}{subsection.12.3.6}%
+\contentsline {subsection}{\numberline {12.3.7}12.4 Interpolation error}{188}{subsection.12.3.7}%
+\contentsline {subsection}{\numberline {12.3.8}12.5 Numerically robust lerp}{189}{subsection.12.3.8}%
+\contentsline {subsection}{\numberline {12.3.9}13.1 Worked example}{190}{subsection.12.3.9}%
+\contentsline {subsection}{\numberline {12.3.10}13.2 Why the name is bilinear}{191}{subsection.12.3.10}%
+\contentsline {subsection}{\numberline {12.3.11}13.3 Derivatives}{191}{subsection.12.3.11}%
+\contentsline {subsection}{\numberline {12.3.12}13.4 Separable filters}{191}{subsection.12.3.12}%
+\contentsline {subsection}{\numberline {12.3.13}14.1 Geometric interpretation}{192}{subsection.12.3.13}%
+\contentsline {subsection}{\numberline {12.3.14}14.2 Worked voxel example}{192}{subsection.12.3.14}%
+\contentsline {subsection}{\numberline {12.3.15}14.3 Application to TSDF sampling}{193}{subsection.12.3.15}%
+\contentsline {subsection}{\numberline {12.3.16}15.1 Why cubics are so useful}{193}{subsection.12.3.16}%
+\contentsline {subsection}{\numberline {12.3.17}15.2 Continuity classes}{194}{subsection.12.3.17}%
+\contentsline {subsection}{\numberline {12.3.18}16.1 Solve the four constraints}{194}{subsection.12.3.18}%
+\contentsline {subsection}{\numberline {12.3.19}16.2 Hermite basis functions}{196}{subsection.12.3.19}%
+\contentsline {subsection}{\numberline {12.3.20}16.3 Worked example}{196}{subsection.12.3.20}%
+\contentsline {subsection}{\numberline {12.3.21}16.4 Physical time scaling}{197}{subsection.12.3.21}%
+\contentsline {subsection}{\numberline {12.3.22}17.1 Why the neighbouring points appear}{198}{subsection.12.3.22}%
+\contentsline {subsection}{\numberline {12.3.23}17.2 Numerical example}{198}{subsection.12.3.23}%
+\contentsline {subsection}{\numberline {12.3.24}17.3 Uniform, chordal, and centripetal parameterizations}{198}{subsection.12.3.24}%
+\contentsline {subsection}{\numberline {12.3.25}17.4 Application to camera paths}{199}{subsection.12.3.25}%
+\contentsline {subsection}{\numberline {12.3.26}18.1 General Bernstein basis}{200}{subsection.12.3.26}%
+\contentsline {subsection}{\numberline {12.3.27}18.2 Partition of unity}{200}{subsection.12.3.27}%
+\contentsline {subsection}{\numberline {12.3.28}18.3 Endpoints}{201}{subsection.12.3.28}%
+\contentsline {subsection}{\numberline {12.3.29}18.4 Endpoint derivatives}{201}{subsection.12.3.29}%
+\contentsline {subsection}{\numberline {12.3.30}18.5 De Casteljau's algorithm}{201}{subsection.12.3.30}%
+\contentsline {subsection}{\numberline {12.3.31}18.6 C++ implementation}{202}{subsection.12.3.31}%
+\contentsline {subsection}{\numberline {12.3.32}18.7 Geometry application}{203}{subsection.12.3.32}%
+\contentsline {subsection}{\numberline {12.3.33}Figure N10-8 --- More polynomial degree does not guarantee a better picture}{203}{subsection.12.3.33}%
+\contentsline {subsection}{\numberline {12.3.34}Figure N10-9 --- Bézier and Hermite can tell the same curve story}{203}{subsection.12.3.34}%
+\contentsline {section}{\numberline {12.4}Finding roots with guarantees and convergence checks}{204}{section.12.4}%
+\contentsline {subsection}{\numberline {12.4.1}19.1 The bisection update}{204}{subsection.12.4.1}%
+\contentsline {subsection}{\numberline {12.4.2}19.2 Worked example: square root of two}{204}{subsection.12.4.2}%
+\contentsline {subsection}{\numberline {12.4.3}19.3 Error bound}{206}{subsection.12.4.3}%
+\contentsline {subsection}{\numberline {12.4.4}19.4 How many iterations?}{206}{subsection.12.4.4}%
+\contentsline {subsection}{\numberline {12.4.5}19.5 Practical limitations}{207}{subsection.12.4.5}%
+\contentsline {subsection}{\numberline {12.4.6}19.6 Numerically stable midpoint}{207}{subsection.12.4.6}%
+\contentsline {subsection}{\numberline {12.4.7}20.1 Numerical example}{208}{subsection.12.4.7}%
+\contentsline {subsection}{\numberline {12.4.8}20.2 Convergence order}{209}{subsection.12.4.8}%
+\contentsline {subsection}{\numberline {12.4.9}20.3 Failure modes}{209}{subsection.12.4.9}%
+\contentsline {subsection}{\numberline {12.4.10}21.1 Derivation from a tangent line}{210}{subsection.12.4.10}%
+\contentsline {subsection}{\numberline {12.4.11}21.2 Numerical example}{210}{subsection.12.4.11}%
+\contentsline {subsection}{\numberline {12.4.12}21.3 Deriving quadratic convergence}{211}{subsection.12.4.12}%
+\contentsline {subsection}{\numberline {12.4.13}21.4 Multiple roots change convergence}{212}{subsection.12.4.13}%
+\contentsline {subsection}{\numberline {12.4.14}21.5 Newton can diverge}{212}{subsection.12.4.14}%
+\contentsline {subsection}{\numberline {12.4.15}22.1 Why hybrid solvers are effective}{213}{subsection.12.4.15}%
+\contentsline {subsection}{\numberline {12.4.16}22.2 A safe design policy}{214}{subsection.12.4.16}%
+\contentsline {subsection}{\numberline {12.4.17}22.3 Error bounds for the root}{214}{subsection.12.4.17}%
+\contentsline {subsection}{\numberline {12.4.18}23.1 Contraction mappings}{215}{subsection.12.4.18}%
+\contentsline {subsection}{\numberline {12.4.19}23.2 A posteriori error bound}{216}{subsection.12.4.19}%
+\contentsline {subsection}{\numberline {12.4.20}23.3 Why a tiny update is not automatically convergence}{217}{subsection.12.4.20}%
+\contentsline {subsection}{\numberline {12.4.21}23.4 Residual-based bounds}{217}{subsection.12.4.21}%
+\contentsline {subsection}{\numberline {12.4.22}23.5 Root-finding certification}{218}{subsection.12.4.22}%
+\contentsline {subsection}{\numberline {12.4.23}Figure N10-10 --- A root solver needs both progress and a safety argument}{218}{subsection.12.4.23}%
+\contentsline {chapter}{\numberline {13}Discretization, Convergence, and Experimental Design}{219}{chapter.13}%
+\contentsline {section}{\numberline {13.1}Separate discretization, truncation, and roundoff; measure convergence}{219}{section.13.1}%
+\contentsline {subsection}{\numberline {13.1.1}24.1 Spatial discretization example}{219}{subsection.13.1.1}%
+\contentsline {subsection}{\numberline {13.1.2}24.2 Grid resolution in a TSDF}{220}{subsection.13.1.2}%
+\contentsline {subsection}{\numberline {13.1.3}24.3 Discretization can change topology}{220}{subsection.13.1.3}%
+\contentsline {subsection}{\numberline {13.1.4}24.4 Consistency, stability, and convergence}{221}{subsection.13.1.4}%
+\contentsline {subsection}{\numberline {13.1.5}25.1 Euler integration}{221}{subsection.13.1.5}%
+\contentsline {subsection}{\numberline {13.1.6}25.2 Difference between truncation and discretization}{222}{subsection.13.1.6}%
+\contentsline {subsection}{\numberline {13.1.7}25.3 Truncating a light-transport series}{222}{subsection.13.1.7}%
+\contentsline {subsection}{\numberline {13.1.8}26.1 Finite differences reveal the trade-off}{223}{subsection.13.1.8}%
+\contentsline {subsection}{\numberline {13.1.9}26.2 Derive an optimal step scale}{223}{subsection.13.1.9}%
+\contentsline {subsection}{\numberline {13.1.10}26.3 Central differences}{224}{subsection.13.1.10}%
+\contentsline {subsection}{\numberline {13.1.11}26.4 More precision is not a substitute for a better algorithm}{225}{subsection.13.1.11}%
+\contentsline {subsection}{\numberline {13.1.12}27.1 Step-size refinement}{225}{subsection.13.1.12}%
+\contentsline {subsection}{\numberline {13.1.13}27.2 Numerical example}{226}{subsection.13.1.13}%
+\contentsline {subsection}{\numberline {13.1.14}27.3 Estimating order without knowing the exact solution}{226}{subsection.13.1.14}%
+\contentsline {subsection}{\numberline {13.1.15}27.4 Richardson extrapolation}{227}{subsection.13.1.15}%
+\contentsline {subsection}{\numberline {13.1.16}27.5 Root-finding convergence order versus discretization order}{227}{subsection.13.1.16}%
+\contentsline {section}{\numberline {13.2}Samples become estimates with defensible uncertainty}{227}{section.13.2}%
+\contentsline {subsection}{\numberline {13.2.1}6. A computer produces deterministic pseudorandom sequences}{228}{subsection.13.2.1}%
+\contentsline {subsubsection}{Sampling a uniform random variable}{228}{subsubsection*.237}%
+\contentsline {paragraph}{1 Deriving a uniform floating-point sample from random bits}{228}{paragraph*.238}%
+\contentsline {paragraph}{2 Why half-open intervals matter}{229}{paragraph*.239}%
+\contentsline {paragraph}{3 Why modulo reduction can produce bias}{230}{paragraph*.240}%
+\contentsline {paragraph}{4 Rejection removes modulo bias}{230}{paragraph*.241}%
+\contentsline {subsubsection}{Pseudorandom-number generators}{231}{subsubsection*.242}%
+\contentsline {paragraph}{1 What makes a generator good?}{231}{paragraph*.243}%
+\contentsline {paragraph}{2 Period}{231}{paragraph*.244}%
+\contentsline {paragraph}{3 State size versus output size}{232}{paragraph*.245}%
+\contentsline {subsubsection}{PRNG state and determinism}{232}{subsubsection*.246}%
+\contentsline {paragraph}{1 Why a fixed seed may not fix the complete application}{232}{paragraph*.247}%
+\contentsline {paragraph}{2 State snapshots}{232}{paragraph*.248}%
+\contentsline {paragraph}{3 Reproducibility levels}{233}{paragraph*.249}%
+\contentsline {paragraph}{4 A deterministic per-pixel random stream}{233}{paragraph*.250}%
+\contentsline {subsubsection}{Linear congruential generators}{233}{subsubsection*.251}%
+\contentsline {paragraph}{1 Numerical trace}{233}{paragraph*.252}%
+\contentsline {paragraph}{2 Conditions for a full period}{234}{paragraph*.253}%
+\contentsline {paragraph}{3 Why a full-period LCG can still be poor}{235}{paragraph*.254}%
+\contentsline {paragraph}{4 LCG code}{235}{paragraph*.255}%
+\contentsline {subsubsection}{Mersenne Twister}{235}{subsubsection*.256}%
+\contentsline {paragraph}{1 How it differs from an LCG}{236}{paragraph*.257}%
+\contentsline {paragraph}{2 The state footprint}{236}{paragraph*.258}%
+\contentsline {paragraph}{3 Mersenne Twister is not cryptographically secure}{236}{paragraph*.259}%
+\contentsline {paragraph}{4 Standard-library sequence versus distribution sequence}{236}{paragraph*.260}%
+\contentsline {subsubsection}{PCG-style generators}{237}{subsubsection*.261}%
+\contentsline {paragraph}{1 PCG32 structure}{237}{paragraph*.262}%
+\contentsline {paragraph}{2 Streams}{237}{paragraph*.263}%
+\contentsline {paragraph}{3 Why PCG is useful for engine development}{237}{paragraph*.264}%
+\contentsline {subsubsection}{Seed selection}{238}{subsubsection*.265}%
+\contentsline {paragraph}{1 Three distinct seed requirements}{238}{paragraph*.266}%
+\contentsline {paragraph}{2 A master-seed architecture}{238}{paragraph*.267}%
+\contentsline {paragraph}{3 Time-based seeding is not automatically desirable}{238}{paragraph*.268}%
+\contentsline {paragraph}{4 Seed collisions}{238}{paragraph*.269}%
+\contentsline {subsubsection}{Hash-based stateless random generation}{239}{subsubsection*.270}%
+\contentsline {paragraph}{1 Why sample dimension matters}{239}{paragraph*.271}%
+\contentsline {paragraph}{2 A simple stateless hash-mixing pattern}{239}{paragraph*.272}%
+\contentsline {paragraph}{3 Stateless sampling and debugging}{240}{paragraph*.273}%
+\contentsline {subsubsection}{Random-number quality for rendering}{240}{subsubsection*.274}%
+\contentsline {paragraph}{1 One-dimensional uniformity is insufficient}{240}{paragraph*.275}%
+\contentsline {paragraph}{2 White noise, stratification, and low discrepancy}{241}{paragraph*.276}%
+\contentsline {paragraph}{3 Test the estimator, not only the generator}{241}{paragraph*.277}%
+\contentsline {subsection}{\numberline {13.2.2}7. Transformations turn simple inputs into useful samples}{242}{subsection.13.2.2}%
+\contentsline {subsubsection}{Transforming uniform random variables}{242}{subsubsection*.278}%
+\contentsline {paragraph}{1 Simple affine transformations}{243}{paragraph*.279}%
+\contentsline {paragraph}{2 Why sampling and PDF calculation must agree}{243}{paragraph*.280}%
+\contentsline {subsubsection}{Inverse-transform sampling}{244}{subsubsection*.281}%
+\contentsline {paragraph}{1 Sampling a triangular PDF}{245}{paragraph*.282}%
+\contentsline {paragraph}{2 Verifying the output distribution}{246}{paragraph*.283}%
+\contentsline {paragraph}{3 The discrete floating-point subtlety}{246}{paragraph*.284}%
+\contentsline {paragraph}{4 Sampling an exponential waiting time}{246}{paragraph*.285}%
+\contentsline {subsubsection}{Rejection sampling}{247}{subsubsection*.286}%
+\contentsline {paragraph}{1 Proving the accepted distribution}{247}{paragraph*.287}%
+\contentsline {paragraph}{2 Numerical example: sampling \(p(x)=2x\)}{248}{paragraph*.288}%
+\contentsline {paragraph}{3 Acceptance efficiency}{249}{paragraph*.289}%
+\contentsline {paragraph}{4 When rejection sampling is invalid or inefficient}{249}{paragraph*.290}%
+\contentsline {subsubsection}{Importance sampling}{249}{subsubsection*.291}%
+\contentsline {paragraph}{1 Derive unbiasedness}{250}{paragraph*.292}%
+\contentsline {paragraph}{2 Importance-sampling variance}{250}{paragraph*.293}%
+\contentsline {paragraph}{3 Worked example: estimating \(\int _0^1x^2\,dx\)}{251}{paragraph*.294}%
+\contentsline {paragraph}{4 Deriving the ideal importance distribution}{252}{paragraph*.295}%
+\contentsline {paragraph}{5 Why we do not always use the ideal PDF}{253}{paragraph*.296}%
+\contentsline {subsubsection}{Probability density under variable transformation}{254}{subsubsection*.297}%
+\contentsline {paragraph}{1 Why the determinant appears}{254}{paragraph*.298}%
+\contentsline {paragraph}{2 Area PDF versus solid-angle PDF}{255}{paragraph*.299}%
+\contentsline {paragraph}{3 Physical meaning}{256}{paragraph*.300}%
+\contentsline {paragraph}{4 Singular and many-to-one cases}{256}{paragraph*.301}%
+\contentsline {subsubsection}{Monte Carlo estimates an expectation by sampling}{256}{subsubsection*.302}%
+\contentsline {subsubsection}{Confidence and credible intervals answer different questions}{257}{subsubsection*.303}%
+\contentsline {subsubsection}{Sampling selection changes the uncertainty story}{258}{subsubsection*.304}%
+\contentsline {subsubsection}{Importance weighting corrects selection only with support}{259}{subsubsection*.305}%
+\contentsline {subsubsection}{Confidence bounds drive exploration under explicit assumptions}{259}{subsubsection*.306}%
+\contentsline {subsubsection}{Cumulative regret and best-arm identification are different goals}{261}{subsubsection*.307}%
+\contentsline {subsubsection}{Adversarial bandits replace a reward distribution with a sequence and force randomization}{261}{subsubsection*.308}%
+\contentsline {subsubsection}{Context and linear structure let one observation teach us about more than one action}{263}{subsubsection*.309}%
+\contentsline {subsubsection}{Thompson sampling explores by sampling a plausible world, not by adding an optimism bonus}{264}{subsubsection*.310}%
+\contentsline {subsubsection}{A bandit becomes a sequential-control problem when actions change what is observed next}{264}{subsubsection*.311}%
+\contentsline {subsubsection}{Stationarity and reproducibility are part of the experiment}{265}{subsubsection*.312}%
+\contentsline {subsubsection}{A compute budget needs a reward that matches the real goal}{266}{subsubsection*.313}%
+\contentsline {subsubsection}{An experiment design checklist in the language of science}{267}{subsubsection*.314}%
+\contentsline {subsubsection}{References for deeper source checks}{267}{subsubsection*.315}%
+\contentsline {subsubsection}{A worked image-budget example: allocate samples without changing the target}{267}{subsubsection*.316}%
+\contentsline {chapter}{\numberline {14}Monte Carlo Estimates and Uncertainty Metrics}{270}{chapter.14}%
+\contentsline {section}{\numberline {14.1}8. Monte Carlo estimates trade computation for uncertainty}{270}{section.14.1}%
+\contentsline {subsection}{\numberline {14.1.1}Monte Carlo estimation}{270}{subsection.14.1.1}%
+\contentsline {subsubsection}{1 Why the convergence rate is \(1/\sqrt N\)}{271}{subsubsection*.318}%
+\contentsline {subsubsection}{2 A numerical example}{271}{subsubsection*.319}%
+\contentsline {subsubsection}{3 Why dimensionality matters differently in Monte Carlo}{272}{subsubsection*.320}%
+\contentsline {subsection}{\numberline {14.1.2}Unbiased estimators}{272}{subsection.14.1.2}%
+\contentsline {subsubsection}{1 The sample mean is unbiased}{272}{subsubsection*.321}%
+\contentsline {subsubsection}{2 Unbiasedness of Monte Carlo integration}{273}{subsubsection*.322}%
+\contentsline {subsubsection}{3 An unbiased estimator can have enormous variance}{273}{subsubsection*.323}%
+\contentsline {subsection}{\numberline {14.1.3}Biased estimators}{274}{subsection.14.1.3}%
+\contentsline {subsubsection}{1 A simple biased estimator}{274}{subsubsection*.324}%
+\contentsline {subsubsection}{2 Bias from clamping fireflies}{274}{subsubsection*.325}%
+\contentsline {subsubsection}{3 Self-normalized importance sampling}{275}{subsubsection*.326}%
+\contentsline {subsection}{\numberline {14.1.4}Estimator variance}{275}{subsection.14.1.4}%
+\contentsline {subsubsection}{1 The bias--variance decomposition}{276}{subsubsection*.327}%
+\contentsline {subsubsection}{2 Why a biased estimator can have smaller MSE}{276}{subsubsection*.328}%
+\contentsline {subsubsection}{3 Correlated samples change variance}{277}{subsubsection*.329}%
+\contentsline {subsection}{\numberline {14.1.5}Law of large numbers}{277}{subsection.14.1.5}%
+\contentsline {subsubsection}{1 A derivation of the weak-law intuition using Chebyshev}{278}{subsubsection*.330}%
+\contentsline {subsubsection}{2 LLN does not give an immediate finite-sample guarantee}{278}{subsubsection*.331}%
+\contentsline {subsubsection}{3 When the mean does not exist}{278}{subsubsection*.332}%
+\contentsline {subsection}{\numberline {14.1.6}Central limit theorem}{279}{subsection.14.1.6}%
+\contentsline {subsubsection}{1 Deriving the normalization scale}{279}{subsubsection*.333}%
+\contentsline {subsubsection}{2 Why the result is surprising}{280}{subsubsection*.334}%
+\contentsline {subsubsection}{3 But CLT does not guarantee that every sample average is Gaussian}{280}{subsubsection*.335}%
+\contentsline {subsubsection}{4 The effective sample size of correlated observations}{280}{subsubsection*.336}%
+\contentsline {subsubsection}{5 What LLN and CLT imply for rendering}{281}{subsubsection*.337}%
+\contentsline {subsection}{\numberline {14.1.7}The empirical distribution is a model built directly from the sample}{282}{subsection.14.1.7}%
+\contentsline {subsubsection}{The plug-in principle}{283}{subsubsection*.338}%
+\contentsline {subsubsection}{Convergence of a distribution estimate is stronger than convergence of one statistic}{284}{subsubsection*.339}%
+\contentsline {subsection}{\numberline {14.1.8}The delta method propagates asymptotic uncertainty through a nonlinear function}{284}{subsection.14.1.8}%
+\contentsline {subsubsection}{Vector form: the same Jacobian logic used elsewhere in this book}{285}{subsubsection*.340}%
+\contentsline {subsubsection}{Worked example: uncertainty of an estimated standard deviation}{286}{subsubsection*.341}%
+\contentsline {subsubsection}{Where the first-order delta method can fail}{287}{subsubsection*.342}%
+\contentsline {section}{\numberline {14.2}9. Finite samples need stable descriptive statistics}{287}{section.14.2}%
+\contentsline {subsection}{\numberline {14.2.1}Sample mean}{287}{subsection.14.2.1}%
+\contentsline {subsubsection}{1 Exact example}{288}{subsubsection*.343}%
+\contentsline {subsubsection}{2 Why the arithmetic mean is sensitive to outliers}{288}{subsubsection*.344}%
+\contentsline {subsubsection}{3 The mean as a least-squares minimizer}{288}{subsubsection*.345}%
+\contentsline {subsection}{\numberline {14.2.2}Sample variance}{289}{subsection.14.2.2}%
+\contentsline {subsubsection}{1 Worked example}{289}{subsubsection*.346}%
+\contentsline {subsubsection}{2 Sample standard deviation}{290}{subsubsection*.347}%
+\contentsline {subsection}{\numberline {14.2.3}Bessel correction}{290}{subsection.14.2.3}%
+\contentsline {subsubsection}{1 Decompose deviations around the true mean}{291}{subsubsection*.348}%
+\contentsline {subsubsection}{2 Take expectations}{291}{subsubsection*.349}%
+\contentsline {subsubsection}{3 Degrees of freedom intuition}{292}{subsubsection*.350}%
+\contentsline {subsection}{\numberline {14.2.4}Online mean computation}{292}{subsection.14.2.4}%
+\contentsline {subsubsection}{1 Worked trace}{293}{subsubsection*.351}%
+\contentsline {subsubsection}{2 C++23 implementation}{294}{subsubsection*.352}%
+\contentsline {subsection}{\numberline {14.2.5}Welford's numerically stable variance algorithm}{294}{subsection.14.2.5}%
+\contentsline {subsubsection}{1 Derive the update}{295}{subsubsection*.353}%
+\contentsline {subsubsection}{2 Expand the new scatter}{295}{subsubsection*.354}%
+\contentsline {subsubsection}{3 The implementation}{296}{subsubsection*.355}%
+\contentsline {subsubsection}{4 Why naive variance is numerically dangerous}{297}{subsubsection*.356}%
+\contentsline {subsubsection}{5 Merging statistics from parallel workers}{298}{subsubsection*.357}%
+\contentsline {subsection}{\numberline {14.2.6}Histograms}{299}{subsection.14.2.6}%
+\contentsline {subsubsection}{1 Counts, frequencies, and density}{299}{subsubsection*.358}%
+\contentsline {subsubsection}{2 Bin width affects interpretation}{300}{subsubsection*.359}%
+\contentsline {subsubsection}{3 Histograms in renderer debugging}{300}{subsubsection*.360}%
+\contentsline {subsection}{\numberline {14.2.7}Quantiles}{300}{subsection.14.2.7}%
+\contentsline {subsubsection}{1 Empirical quantiles}{301}{subsubsection*.361}%
+\contentsline {subsubsection}{2 Numerical example: exponential quantile}{301}{subsubsection*.362}%
+\contentsline {subsubsection}{3 Quantiles as performance metrics}{302}{subsubsection*.363}%
+\contentsline {subsection}{\numberline {14.2.8}Median}{302}{subsection.14.2.8}%
+\contentsline {subsubsection}{1 Median as an absolute-error minimizer}{302}{subsubsection*.364}%
+\contentsline {subsection}{\numberline {14.2.9}Robust statistics}{303}{subsection.14.2.9}%
+\contentsline {subsubsection}{1 Median absolute deviation}{303}{subsubsection*.365}%
+\contentsline {subsubsection}{2 Gaussian-consistent MAD scale}{304}{subsubsection*.366}%
+\contentsline {subsubsection}{3 Trimmed means and winsorization}{304}{subsubsection*.367}%
+\contentsline {subsubsection}{4 Robustness has costs}{305}{subsubsection*.368}%
+\contentsline {subsection}{\numberline {14.2.10}Choose the next measurement using the geometry of what is still unknown}{305}{subsection.14.2.10}%
+\contentsline {section}{\numberline {14.3}10. Inference and error metrics need explicit assumptions}{306}{section.14.3}%
+\contentsline {subsection}{\numberline {14.3.1}Confidence intervals}{306}{subsection.14.3.1}%
+\contentsline {subsubsection}{1 Known population standard deviation}{307}{subsubsection*.369}%
+\contentsline {subsubsection}{2 Unknown population standard deviation}{307}{subsubsection*.370}%
+\contentsline {subsubsection}{3 Numerical example}{308}{subsubsection*.371}%
+\contentsline {subsubsection}{4 Confidence intervals for Monte Carlo rendering}{309}{subsubsection*.372}%
+\contentsline {subsubsection}{5 Adaptive stopping and repeated peeking}{309}{subsubsection*.373}%
+\contentsline {subsection}{\numberline {14.3.2}Hypothesis testing}{309}{subsection.14.3.2}%
+\contentsline {subsubsection}{1 Type I and Type II errors}{310}{subsubsection*.374}%
+\contentsline {subsubsection}{2 What a p-value means}{310}{subsubsection*.375}%
+\contentsline {subsubsection}{3 Paired experiments}{310}{subsubsection*.376}%
+\contentsline {subsubsection}{4 A paired t-test}{311}{subsubsection*.377}%
+\contentsline {subsubsection}{5 Multiple comparisons}{311}{subsubsection*.378}%
+\contentsline {subsubsection}{6 Statistical significance versus practical significance}{312}{subsubsection*.379}%
+\contentsline {subsubsection}{A research claim needs more than a p-value}{312}{subsubsection*.380}%
+\contentsline {subsection}{\numberline {14.3.3}Likelihood turns a forward probability model into an inverse estimation rule}{318}{subsection.14.3.3}%
+\contentsline {subsection}{\numberline {14.3.4}Bootstrap asks what would happen if we could repeat the data-collection process}{320}{subsection.14.3.4}%
+\contentsline {subsection}{\numberline {14.3.5}Decision theory separates an estimator from the consequences of being wrong}{321}{subsection.14.3.5}%
+\contentsline {subsection}{\numberline {14.3.6}Generalization is a prediction problem, not a training-fit problem}{322}{subsection.14.3.6}%
+\contentsline {subsection}{\numberline {14.3.7}A graphical model can encode conditional independence without proving causation}{323}{subsection.14.3.7}%
+\contentsline {subsection}{\numberline {14.3.8}Mean squared error}{324}{subsection.14.3.8}%
+\contentsline {subsubsection}{1 Numerical example: mean squared error}{324}{subsubsection*.381}%
+\contentsline {subsubsection}{2 MSE sensitivity to outliers}{324}{subsubsection*.382}%
+\contentsline {subsection}{\numberline {14.3.9}Root mean squared error}{325}{subsection.14.3.9}%
+\contentsline {subsubsection}{1 Example}{325}{subsubsection*.383}%
+\contentsline {subsubsection}{2 RMSE and Euclidean vector norms}{325}{subsubsection*.384}%
+\contentsline {subsubsection}{3 Aggregation matters}{326}{subsubsection*.385}%
+\contentsline {subsection}{\numberline {14.3.10}Mean absolute error}{326}{subsection.14.3.10}%
+\contentsline {subsubsection}{1 MAE and the L1 norm}{327}{subsubsection*.386}%
+\contentsline {subsubsection}{2 Mean versus median under loss functions}{327}{subsubsection*.387}%
+\contentsline {subsection}{\numberline {14.3.11}Relative error metrics}{327}{subsection.14.3.11}%
+\contentsline {subsubsection}{1 Numerical example: relative error metrics}{328}{subsubsection*.388}%
+\contentsline {subsubsection}{2 Why relative error fails near zero}{328}{subsubsection*.389}%
+\contentsline {subsubsection}{3 Mean absolute percentage error}{329}{subsubsection*.390}%
+\contentsline {subsubsection}{4 Symmetric MAPE}{329}{subsubsection*.391}%
+\contentsline {subsubsection}{5 Normalized RMSE}{329}{subsubsection*.392}%
+\contentsline {subsubsection}{6 Geometric error metrics}{329}{subsubsection*.393}%
+\contentsline {chapter}{\numberline {15}Implement Probability with Numerical Contracts}{331}{chapter.15}%
+\contentsline {section}{\numberline {15.1}11. Implement probability without losing its numerical contracts}{331}{section.15.1}%
+\contentsline {subsection}{\numberline {15.1.1}C++23 implementation: probability and covariance from first principles}{331}{subsection.15.1.1}%
+\contentsline {subsubsection}{1 Representation: mathematical objects should have distinct contracts}{331}{subsubsection*.395}%
+\contentsline {subsubsection}{2 Numerical tail accuracy}{333}{subsubsection*.396}%
+\contentsline {subsection}{\numberline {15.1.2}Computing discrete probabilities without overflowing factorials}{333}{subsection.15.1.2}%
+\contentsline {subsubsection}{1 Poisson PMF}{334}{subsubsection*.397}%
+\contentsline {subsection}{\numberline {15.1.3}Implementing a multivariate Gaussian without explicitly inverting covariance}{335}{subsection.15.1.3}%
+\contentsline {subsubsection}{1 The 2D implementation}{337}{subsubsection*.398}%
+\contentsline {subsubsection}{2 Operation cost and storage}{338}{subsubsection*.399}%
+\contentsline {subsection}{\numberline {15.1.4}Online covariance accumulation}{339}{subsection.15.1.4}%
+\contentsline {subsubsection}{1 A complete 2D numerical example}{339}{subsubsection*.400}%
+\contentsline {subsubsection}{2 C++23 streaming implementation}{341}{subsubsection*.401}%
+\contentsline {section}{\numberline {15.2}12. Use probability to evaluate graphics and research claims}{342}{section.15.2}%
+\contentsline {subsection}{\numberline {15.2.1}Additional connection: Bayesian estimation as optimization}{342}{subsection.15.2.1}%
+\contentsline {subsubsection}{1 Deriving the posterior mean}{343}{subsubsection*.402}%
+\contentsline {subsubsection}{2 Numerical example: Bayesian quadratic objective}{344}{subsubsection*.403}%
+\contentsline {subsection}{\numberline {15.2.2}Probability research bridge: from statistical models to reliable graphics}{344}{subsection.15.2.2}%
+\contentsline {subsubsection}{1 A useful controlled experiment}{345}{subsubsection*.404}%
+\contentsline {subsection}{\numberline {15.2.3}Phase 10, Prompt 4 mastery reconstruction}{345}{subsection.15.2.3}%
+\contentsline {subsubsection}{Further reading: sampling and rendering}{346}{subsubsection*.405}%
+\contentsline {subsection}{\numberline {15.2.4}An exact rendering example: cosine-weighted hemisphere sampling}{346}{subsection.15.2.4}%
+\contentsline {subsubsection}{1 Uniform hemisphere sampling}{347}{subsubsection*.406}%
+\contentsline {subsubsection}{2 Cosine-weighted hemisphere sampling}{347}{subsubsection*.407}%
+\contentsline {subsubsection}{3 Constructing the cosine-weighted direction}{348}{subsubsection*.408}%
+\contentsline {subsubsection}{4 Lambertian reflection}{348}{subsubsection*.409}%
+\contentsline {subsection}{\numberline {15.2.5}Related techniques: multiple importance sampling, Russian roulette, and control variates}{349}{subsection.15.2.5}%
+\contentsline {subsubsection}{1 Multiple importance sampling}{349}{subsubsection*.410}%
+\contentsline {subsubsection}{2 Russian roulette}{350}{subsubsection*.411}%
+\contentsline {subsubsection}{3 Control variates}{351}{subsubsection*.412}%
+\contentsline {subsection}{\numberline {15.2.6}Designing a statistically credible renderer benchmark}{351}{subsection.15.2.6}%
+\contentsline {subsection}{\numberline {15.2.7}Final synthesis: what the 35 parts establish}{352}{subsection.15.2.7}%
+\contentsline {subsubsection}{Further reading: probability and inference}{353}{subsubsection*.413}%
+\contentsline {section}{\numberline {15.3}Keep probability weights stable before sampling}{353}{section.15.3}%
+\contentsline {subsection}{\numberline {15.3.1}28.1 Overflow example}{353}{subsection.15.3.1}%
+\contentsline {subsection}{\numberline {15.3.2}28.2 Scale by the largest weight}{354}{subsection.15.3.2}%
+\contentsline {subsection}{\numberline {15.3.3}28.3 Underflow is a separate concern}{354}{subsection.15.3.3}%
+\contentsline {subsection}{\numberline {15.3.4}28.4 Reject invalid probability inputs}{355}{subsection.15.3.4}%
+\contentsline {subsection}{\numberline {15.3.5}29.1 A numerical example}{355}{subsection.15.3.5}%
+\contentsline {subsection}{\numberline {15.3.6}29.2 General derivation}{356}{subsection.15.3.6}%
+\contentsline {subsection}{\numberline {15.3.7}29.3 Softmax probabilities}{356}{subsection.15.3.7}%
+\contentsline {subsection}{\numberline {15.3.8}29.4 Numerical implementation}{357}{subsection.15.3.8}%
+\contentsline {subsection}{\numberline {15.3.9}29.5 Log-sum-exp bounds}{358}{subsection.15.3.9}%
+\contentsline {subsection}{\numberline {15.3.10}29.6 Derivative of log-sum-exp}{358}{subsection.15.3.10}%
+\contentsline {subsection}{\numberline {15.3.11}29.7 Research grounding}{359}{subsection.15.3.11}%
+\contentsline {section}{\numberline {15.4}Design samples: without replacement, stratified, and low-discrepancy}{359}{section.15.4}%
+\contentsline {subsection}{\numberline {15.4.1}30.1 A simple example}{359}{subsection.15.4.1}%
+\contentsline {subsection}{\numberline {15.4.2}30.2 Fisher--Yates shuffle}{360}{subsection.15.4.2}%
+\contentsline {subsection}{\numberline {15.4.3}30.3 Proving uniformity}{360}{subsection.15.4.3}%
+\contentsline {subsection}{\numberline {15.4.4}30.4 Why unbiased integer selection matters}{361}{subsection.15.4.4}%
+\contentsline {subsection}{\numberline {15.4.5}30.5 Reservoir sampling}{361}{subsection.15.4.5}%
+\contentsline {subsection}{\numberline {15.4.6}30.6 Why reservoir sampling is uniform}{362}{subsection.15.4.6}%
+\contentsline {subsection}{\numberline {15.4.7}31.1 Equal-volume stratification}{363}{subsection.15.4.7}%
+\contentsline {subsection}{\numberline {15.4.8}31.2 Proving unbiasedness}{363}{subsection.15.4.8}%
+\contentsline {subsection}{\numberline {15.4.9}31.3 Variance reduction for a linear function}{364}{subsection.15.4.9}%
+\contentsline {subsection}{\numberline {15.4.10}31.4 General variance decomposition}{365}{subsection.15.4.10}%
+\contentsline {subsection}{\numberline {15.4.11}31.5 The non-square pixel sampling problem}{366}{subsection.15.4.11}%
+\contentsline {subsection}{\numberline {15.4.12}32.1 Two-dimensional construction}{366}{subsection.15.4.12}%
+\contentsline {subsection}{\numberline {15.4.13}32.2 Why the permutation matters}{367}{subsection.15.4.13}%
+\contentsline {subsection}{\numberline {15.4.14}32.3 Arbitrary sample counts}{367}{subsection.15.4.14}%
+\contentsline {subsection}{\numberline {15.4.15}32.4 Higher-dimensional construction}{367}{subsection.15.4.15}%
+\contentsline {subsection}{\numberline {15.4.16}32.5 Why LHS can help}{367}{subsection.15.4.16}%
+\contentsline {subsection}{\numberline {15.4.17}33.1 Discrepancy intuition}{368}{subsection.15.4.17}%
+\contentsline {subsection}{\numberline {15.4.18}33.2 Why discrepancy matters for integration}{368}{subsection.15.4.18}%
+\contentsline {subsection}{\numberline {15.4.19}33.3 Halton sequence}{369}{subsection.15.4.19}%
+\contentsline {subsection}{\numberline {15.4.20}33.4 Binary radical-inverse example}{369}{subsection.15.4.20}%
+\contentsline {subsection}{\numberline {15.4.21}33.5 Two-dimensional Halton}{370}{subsection.15.4.21}%
+\contentsline {subsection}{\numberline {15.4.22}33.6 Sobol sequences}{370}{subsection.15.4.22}%
+\contentsline {subsection}{\numberline {15.4.23}33.7 Randomized quasi-Monte Carlo}{370}{subsection.15.4.23}%
+\contentsline {subsection}{\numberline {15.4.24}33.8 Why rendering benefits}{371}{subsection.15.4.24}%
+\contentsline {subsection}{\numberline {15.4.25}Figure N10-11 --- Arbitrary sample counts need full-domain support}{371}{subsection.15.4.25}%
+\contentsline {subsection}{\numberline {15.4.26}From a geometric gap to a numerically trustworthy collision event}{371}{subsection.15.4.26}%
+\contentsline {subsubsection}{Executable first-contact quadratic}{372}{subsubsection*.414}%
+\contentsline {section}{\numberline {15.5}Test numerical methods and benchmark reproducibly}{376}{section.15.5}%
+\contentsline {subsubsection}{Separate sample-level and run-level observations}{376}{subsubsection*.415}%
+\contentsline {subsection}{\numberline {15.5.1}34.2 A paired benchmark}{377}{subsection.15.5.1}%
+\contentsline {subsection}{\numberline {15.5.2}34.3 What to record}{377}{subsection.15.5.2}%
+\contentsline {subsection}{\numberline {15.5.3}34.4 Performance versus sample count}{377}{subsection.15.5.3}%
+\contentsline {subsubsection}{Exact analytical test cases}{378}{subsubsection*.416}%
+\contentsline {subsubsection}{Property-based tests}{379}{subsubsection*.417}%
+\contentsline {subsubsection}{Metamorphic testing}{379}{subsubsection*.418}%
+\contentsline {subsubsection}{Convergence-order tests}{380}{subsubsection*.419}%
+\contentsline {subsubsection}{Cross-precision tests}{380}{subsubsection*.420}%
+\contentsline {subsubsection}{Statistical tests}{380}{subsubsection*.421}%
+\contentsline {subsubsection}{Deterministic tests of randomized code}{381}{subsubsection*.422}%
+\contentsline {subsection}{\numberline {15.5.4}Reference code excerpts and source-reported validation}{381}{subsection.15.5.4}%
+\contentsline {subsection}{\numberline {15.5.5}Results reported by the supplied source}{382}{subsection.15.5.5}%
+\contentsline {chapter}{\numberline {16}Probability, Statistics and Uncertainty}{384}{chapter.16}%
+\contentsline {section}{\numberline {16.1}From Random Samples to Deliberate Computation}{384}{section.16.1}%
+\contentsline {subsection}{\numberline {16.1.1}A probability model is a space of possible observations}{385}{subsection.16.1.1}%
+\contentsline {subsection}{\numberline {16.1.2}Counts, means, and spread have distinct jobs}{386}{subsection.16.1.2}%
+\contentsline {subsection}{\numberline {16.1.3}Monte Carlo estimates an expectation by sampling}{387}{subsection.16.1.3}%
+\contentsline {subsection}{\numberline {16.1.4}Confidence and credible intervals answer different questions}{388}{subsection.16.1.4}%
+\contentsline {subsection}{\numberline {16.1.5}Sampling selection changes the uncertainty story}{389}{subsection.16.1.5}%
+\contentsline {subsection}{\numberline {16.1.6}Importance weighting corrects selection only with support}{389}{subsection.16.1.6}%
+\contentsline {subsection}{\numberline {16.1.7}Confidence bounds drive exploration under explicit assumptions}{390}{subsection.16.1.7}%
+\contentsline {subsection}{\numberline {16.1.8}Cumulative regret and best-arm identification are different goals}{391}{subsection.16.1.8}%
+\contentsline {subsection}{\numberline {16.1.9}Stationarity and reproducibility are part of the experiment}{392}{subsection.16.1.9}%
+\contentsline {subsection}{\numberline {16.1.10}A compute budget needs a reward that matches the real goal}{393}{subsection.16.1.10}%
+\contentsline {subsection}{\numberline {16.1.11}An experiment design checklist in the language of science}{393}{subsection.16.1.11}%
+\contentsline {subsection}{\numberline {16.1.12}References for deeper source checks}{394}{subsection.16.1.12}%
+\contentsline {subsection}{\numberline {16.1.13}A worked image-budget example: allocate samples without changing the target}{394}{subsection.16.1.13}%
+\contentsline {section}{\numberline {16.2}Numerical integration and Monte Carlo estimation}{395}{section.16.2}%
+\contentsline {subsection}{\numberline {16.2.1}Variance reduction for rendering}{395}{subsection.16.2.1}%
+\contentsline {subsection}{\numberline {16.2.2}Error of quadrature}{399}{subsection.16.2.2}%
+\contentsline {subsection}{\numberline {16.2.3}Importance sampling and support}{399}{subsection.16.2.3}%
+\contentsline {subsection}{\numberline {16.2.4}Variance is visible as image noise}{400}{subsection.16.2.4}%
+\contentsline {subsection}{\numberline {16.2.5}Sampling a nonuniform probability distribution}{400}{subsection.16.2.5}%
+\contentsline {subsection}{\numberline {16.2.6}Bias and consistency in image estimators}{400}{subsection.16.2.6}%
+\contentsline {subsection}{\numberline {16.2.7}A sample-count budget comparison}{401}{subsection.16.2.7}%
+\contentsline {subsection}{\numberline {16.2.8}Reservoir resampling for direct-light estimates}{401}{subsection.16.2.8}%
+\contentsline {subsection}{\numberline {16.2.9}Reuse paths across geometry LoD changes}{403}{subsection.16.2.9}%
+\contentsline {subsubsection}{What the companion presentations add}{405}{subsubsection*.424}%
+\contentsline {subsection}{\numberline {16.2.10}Figure U14 - A reservoir selects a candidate by its weight}{405}{subsection.16.2.10}%
+\contentsline {section}{\numberline {16.3}Rasterization, coverage, and depth}{405}{section.16.3}%
+\contentsline {subsection}{\numberline {16.3.1}Reconstruction checkpoint --- make the coverage rule executable}{406}{subsection.16.3.1}%
+\contentsline {section}{\numberline {16.4}Decide which samples a triangle owns}{406}{section.16.4}%
+\contentsline {subsection}{\numberline {16.4.1}Give depth an explicit meaning}{407}{subsection.16.4.1}%
+\contentsline {subsection}{\numberline {16.4.2}Object → world}{415}{subsection.16.4.2}%
+\contentsline {subsection}{\numberline {16.4.3}World → view}{416}{subsection.16.4.3}%
+\contentsline {chapter}{\numberline {A}Reference Notes}{417}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Bandit exploration and regret}{417}{section.A.1}%
+\contentsline {subsection}{\numberline {A.1.1}UCB intuition}{417}{subsection.A.1.1}%
+\contentsline {subsection}{\numberline {A.1.2}Nonstationary workloads}{417}{subsection.A.1.2}%
+\contentsline {subsection}{\numberline {A.1.3}Adaptive sampling can change an estimator}{417}{subsection.A.1.3}%
+\contentsline {subsection}{\numberline {A.1.4}Graphics/research use}{418}{subsection.A.1.4}%
+\contentsline {section}{\numberline {A.2}Monte Carlo rendering estimators and variance}{418}{section.A.2}%
+\contentsline {subsection}{\numberline {A.2.1}Definition and mechanism}{418}{subsection.A.2.1}%
+\contentsline {subsubsection}{Phase 9--10 development}{418}{subsubsection*.425}%
+\contentsline {subsection}{\numberline {A.2.2}Prerequisites}{419}{subsection.A.2.2}%
+\contentsline {subsection}{\numberline {A.2.3}Full teaching explanation}{419}{subsection.A.2.3}%
+\contentsline {section}{\numberline {A.3}Perspective-correct interpolation}{419}{section.A.3}%
+\contentsline {subsection}{\numberline {A.3.1}Why affine screen interpolation fails}{420}{subsection.A.3.1}%
+\contentsline {subsection}{\numberline {A.3.2}Depth is a separate contract}{420}{subsection.A.3.2}%
+\contentsline {subsection}{\numberline {A.3.3}Derivatives}{420}{subsection.A.3.3}%
+\contentsline {subsection}{\numberline {A.3.4}Executable reference}{420}{subsection.A.3.4}%
+\contentsline {section}{\numberline {A.4}Probability density and change of measure}{420}{section.A.4}%
+\contentsline {subsection}{\numberline {A.4.1}Definition and mechanism}{420}{subsection.A.4.1}%
+\contentsline {subsubsection}{Phase 9--10 development}{421}{subsubsection*.426}%
+\contentsline {subsection}{\numberline {A.4.2}Prerequisites}{421}{subsection.A.4.2}%
+\contentsline {subsection}{\numberline {A.4.3}Used by}{421}{subsection.A.4.3}%
+\contentsline {section}{\numberline {A.5}Reservoir resampling and ReSTIR}{422}{section.A.5}%
+\contentsline {subsection}{\numberline {A.5.1}Definition and mechanism}{422}{subsection.A.5.1}%
+\contentsline {subsection}{\numberline {A.5.2}Prerequisites}{422}{subsection.A.5.2}%
+\contentsline {subsection}{\numberline {A.5.3}Used by}{423}{subsection.A.5.3}%
+\contentsline {subsection}{\numberline {A.5.4}Full teaching explanation}{423}{subsection.A.5.4}%
+\contentsline {subsection}{\numberline {A.5.5}Recall and next depth}{423}{subsection.A.5.5}%
+\contentsline {subsection}{\numberline {A.5.6}Source and navigation}{423}{subsection.A.5.6}%
+\contentsline {section}{\numberline {A.6}Reversed-Z depth contracts}{423}{section.A.6}%
+\contentsline {subsection}{\numberline {A.6.1}Contract checklist}{423}{subsection.A.6.1}%
+\contentsline {subsection}{\numberline {A.6.2}Why floating point helps}{424}{subsection.A.6.2}%
+\contentsline {subsection}{\numberline {A.6.3}Reconstruction must use the actual matrix}{424}{subsection.A.6.3}%
+\contentsline {subsection}{\numberline {A.6.4}Occlusion and temporal systems}{424}{subsection.A.6.4}%
+\contentsline {subsection}{\numberline {A.6.5}Tests}{424}{subsection.A.6.5}%
+\contentsline {chapter}{\numberline {B}Source Attachments}{425}{appendix.B}%

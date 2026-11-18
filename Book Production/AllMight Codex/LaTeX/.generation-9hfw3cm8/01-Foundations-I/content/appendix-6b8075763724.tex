@@ -1,0 +1,40 @@
+\hypertarget{appendix-6b8075763724}{}
+\section{Hexadecimal}\label{appendix-6b8075763724-hexadecimal}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C001 · \textbf{Latest development:} C001
+
+\subsection{Definition and mechanism}\label{appendix-6b8075763724-definition-and-mechanism}
+
+Base 16 maps one digit to four bits, preserving visible bit structure compactly.
+
+Hex digits 0--9 and A--F represent values 0--15. A nibble is four bits, so \texttt{1010\ 1101₂} is \texttt{AD₁₆}. Group from the right and pad only the left when needed. Human digit order does not determine array packing order.
+
+\subsection{Prerequisites}\label{appendix-6b8075763724-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-83c3f28f7bda]{Positional notation} --- A base is the number of available digits.
+\item
+  \hyperref[appendix-280445746493]{Bit significance} --- LSB means least significant bit, normally position 0 with weight 1.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-6b8075763724-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-6854d0e2218e]{Floating-point encoding and decoding} --- uses hexadecimal to establish this mechanism's representation or policy.
+\end{itemize}
+
+Connect later chunks here when they use this concept.
+
+\subsection{Recall and next depth}\label{appendix-6b8075763724-recall-and-next-depth}
+
+Explain hexadecimal without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} hexadecimal floating literals, dumps, addresses, and color/format conventions.
+
+\subsection{Source and navigation}\label{appendix-6b8075763724-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

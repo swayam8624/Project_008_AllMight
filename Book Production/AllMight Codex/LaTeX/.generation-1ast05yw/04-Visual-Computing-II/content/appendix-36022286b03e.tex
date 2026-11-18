@@ -1,0 +1,35 @@
+\hypertarget{appendix-36022286b03e}{}
+\section*{Edge localization and subpixel contours}
+\section{Edge localization and subpixel contours}\label{appendix-36022286b03e-edge-localization-and-subpixel-contours}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-36022286b03e-definition-and-mechanism}
+
+An edge is a rapid image-intensity change, often associated with a material or depth boundary. Differentiating a noisy image amplifies high-frequency noise, so edge detectors first smooth with a Gaussian-like filter and then compute a gradient. Gradient magnitude estimates edge strength; gradient direction estimates the local normal. Nonmaximum suppression keeps a candidate only if it is a local maximum along that normal, thinning a broad response to a contour. Thresholding and hysteresis connect strong responses through weaker neighboring pixels. Subpixel localization fits a local peak to gradient samples, estimating a contour position between pixel centers. Accuracy depends on sampling, blur, contrast, and the assumed edge profile. This makes edge detection a measurement problem whose output uncertainty should propagate into later line, pose, or shape fitting.
+
+\subsection{Prerequisites}\label{appendix-36022286b03e-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-d5b3c692d9f0}{Convolution and filter footprints (03-Visual-Computing-I, appendix-d5b3c692d9f0)}
+\item
+  \hyperref[appendix-6a7869dd79a6]{Sampling aliasing and reconstruction}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-36022286b03e-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography}{Worlds, Images and Inference}
+\item
+  \hyperref[appendix-a5b0383b3b3e]{Hough transform and geometric voting}
+\item
+  \hyperref[appendix-5fb4af80d1c7]{Template matching and distance transforms}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-36022286b03e-full-teaching-explanation}
+
+\hyperref[04-visual-computing-ii-ch030-edges-contours-and-subpixel-localization]{Edges, contours, and subpixel localization} · \hyperref[04-visual-computing-ii-ch030-recognition-templates-and-industrial-matching]{Recognition, templates, and industrial matching}

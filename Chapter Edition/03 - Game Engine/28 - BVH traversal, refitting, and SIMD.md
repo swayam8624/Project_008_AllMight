@@ -8,7 +8,7 @@ A hierarchy reduces query work only when its bounds remain valid after scene cha
 
 **Recall question:** Which bound should be tested next during traversal, and what update must occur when one primitive moves?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 65866–68706; source-span SHA256 1580276dba98f17fb98555784211497c698d4620ac47d3b3333db5b734885863. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 66795–69635; source-span SHA256 1580276dba98f17fb98555784211497c698d4620ac47d3b3333db5b734885863. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### TRAVERSAL, REFITTING, WIDE BVHs AND SIMD

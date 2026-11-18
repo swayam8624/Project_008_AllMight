@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch038.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-3a048f032c1f-signed-zero" class="level2">
+<h2>Signed zero</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C004 · <strong>Latest development:</strong> C004</p>
+<section id="appendix-3a048f032c1f-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Exponent and fraction zero permit either sign. 00000000 and 80000000 compare numerically equal, but signbit and reciprocal distinguish them. Ordinary x&lt;0 does not detect negative zero.</p>
+</section>
+<section id="appendix-3a048f032c1f-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch047.xhtml#appendix-5057f9ad327f-binary32" class="wikilink">Binary32</a> — The concrete fields provide the representation used in this mechanism.</li>
+</ul>
+</section>
+<section id="appendix-3a048f032c1f-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch108.xhtml#appendix-deca299ae4b8-ulp-distance-policies" class="wikilink">ULP distance policies</a> — uses this mechanism in its explanation.</li>
+<li><a href="ch112.xhtml#appendix-e90053a4b201-floating-point-canonicalization" class="wikilink">Floating-point canonicalization</a> — uses this mechanism in its explanation.</li>
+</ul>
+</section>
+<section id="appendix-3a048f032c1f-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the concrete example in the definition and identify its validity assumptions.</p>
+<p><strong>Pending:</strong> Specify zero equality separately from raw-byte equality and ULP ordering.</p>
+</section>
+<section id="appendix-3a048f032c1f-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">M004 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m004---parts-61-76" class="wikilink">Per-part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-3a048f032c1f-reconstruction-depth" class="level3">
+<h3>Reconstruction depth</h3>
+<p>IEEE-754 has both <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>+</mo>
+  <mn>0</mn>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mn>0</mn>
+</math>. They compare equal numerically in ordinary equality, but the sign remains observable through operations such as reciprocal, sign-bit inspection and some branch-cut-sensitive functions:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <mo>+</mo>
+      <mn>0</mn>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mo>+</mo>
+  <mi mathvariant="normal">∞</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <mo>−</mo>
+      <mn>0</mn>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mi mathvariant="normal">∞</mi>
+  <mo>.</mo>
+</math>
+<p>Signed zero preserves directional information after underflow or exact cancellation. That can matter in complex functions, interval boundaries and geometric code that interprets the sign of a quantity near a separating surface.</p>
+<p>It can also surprise serialization, hashing and deterministic comparison. If the application’s semantic model says both zeros are identical, canonicalization may deliberately map negative zero to positive zero before hashing or bytewise equality. If directional zero is meaningful, that canonicalization destroys information.</p>
+<p>Tests should distinguish numeric equality from bit representation and include operations that expose the sign. This is one reason floating-point equality policy must start from domain semantics rather than from a universal epsilon.</p>
+</section>
+</section>
+</body>
+</html>

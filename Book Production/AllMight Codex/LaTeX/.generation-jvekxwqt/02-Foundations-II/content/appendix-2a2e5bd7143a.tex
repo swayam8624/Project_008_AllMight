@@ -1,0 +1,77 @@
+\hypertarget{appendix-2a2e5bd7143a}{}
+\section*{Mastery evidence levels}
+\section{Mastery evidence levels}\label{appendix-2a2e5bd7143a-mastery-evidence-levels}
+
+PROJECTALLMIGHT should not use one word such as ``developed'' for fundamentally different evidence states. A concept can be well explained but not executable, executable in a CPU reference but not on the native GPU, or validated in a teaching lab but not in the current production repository.
+
+Use the following evidence ladder.
+
+\subsection{0 --- Indexed}\label{appendix-2a2e5bd7143a-indexed}
+
+The topic has a real node, canonical name, prerequisites and destination. This proves discoverability only.
+
+\subsection{1 --- Explained}\label{appendix-2a2e5bd7143a-explained}
+
+The forcing problem, definitions, conventions and causal mental model are stated without relying on unexplained jargon.
+
+\subsection{2 --- Derived and traced}\label{appendix-2a2e5bd7143a-derived-and-traced}
+
+The central mathematics or algorithm is derived with symbol meanings, assumptions and at least one nontrivial worked trace containing intermediate state.
+
+\subsection{3 --- Reference implemented}\label{appendix-2a2e5bd7143a-reference-implemented}
+
+A complete, rebuildable implementation exists in the teaching surface or a linked standalone laboratory. Positive and negative cases execute.
+
+\subsection{4 --- Independently verified}\label{appendix-2a2e5bd7143a-independently-verified}
+
+The mechanism is checked against an oracle, invariant, property test, differential implementation, numerical bound or external normative reference strong enough to expose plausible bugs.
+
+\subsection{5 --- Native-system verified}\label{appendix-2a2e5bd7143a-native-system-verified}
+
+Claims involving a real API/device/tool are exercised on that system: Vulkan validation/device output, Metal GPU capture, Blender/Maya/Houdini/Nuke host execution, real filesystem semantics, real network stack, and so on.
+
+\subsection{6 --- Production-repository grounded}\label{appendix-2a2e5bd7143a-production-repository-grounded}
+
+The current Kairo/Maveb/Vulkax/Nanoquant or other target repository revision is inspected and the exact implementation, ownership, lifetime, synchronization, performance and failure paths are tied back to the lesson.
+
+\subsection{7 --- Reconstructed mastery}\label{appendix-2a2e5bd7143a-reconstructed-mastery}
+
+The learner can derive, implement, trace, profile, debug and compare alternatives without copying the source, and can solve a transfer problem in a different context.
+
+A concept can hold several evidence dimensions separately. For example, Vulkan synchronization may be Derived=Yes, CPU reference=Yes, Native Vulkan=No, Kairo parity=Unverified. Do not collapse that into one optimistic ``complete'' flag.
+
+\subsection{Required proof fields}\label{appendix-2a2e5bd7143a-required-proof-fields}
+
+For each M001--M180 chunk, the evidence ledger should record:
+
+\begin{itemize}
+\tightlist
+\item
+  canonical section;
+\item
+  original part range;
+\item
+  definitions and conventions;
+\item
+  derivation;
+\item
+  worked trace;
+\item
+  executable/reference artifact;
+\item
+  positive/negative/property tests;
+\item
+  alternatives/failure modes;
+\item
+  external source review;
+\item
+  native platform evidence if applicable;
+\item
+  production repository evidence;
+\item
+  research bridge;
+\item
+  retrieval/oral reconstruction status.
+\end{itemize}
+
+The purpose is not bureaucracy. It prevents a three-megabyte note from masking one missing proof obligation.

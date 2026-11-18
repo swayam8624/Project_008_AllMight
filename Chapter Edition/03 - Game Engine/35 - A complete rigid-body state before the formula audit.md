@@ -8,7 +8,7 @@ A simulator becomes inspectable when position, orientation, linear and angular v
 
 **Recall question:** Which values are authoritative state, which are derived, and how does a body-local force point become a world-space torque each step?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 82586–85119; source-span SHA256 1a512801cc0b42eaec79556488ed5caa8a7c5d3e1d0676698885d0e965949cf4. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 83767–86300; source-span SHA256 1a512801cc0b42eaec79556488ed5caa8a7c5d3e1d0676698885d0e965949cf4. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### THE COMPLETE KAIRO STATE SO FAR

@@ -1,0 +1,385 @@
+\hypertarget{appendix-a8f634b076b5}{}
+\section{Worlds, Images and Inference --- Fast Recall}\label{appendix-a8f634b076b5-worlds-images-and-inference-fast-recall}
+
+\subsection{Fast route}\label{appendix-a8f634b076b5-fast-route}
+
+Start with a world description and follow it through the physical and computational steps that form an image. Then ask what the measurements let us recover about the world. Each step changes representation and may discard information.
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{../current/Assets/Print/347f36d4f3c6765842a978790566ef003c3750a0de6087fb3b03a6d7951b6f95.pdf}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Represent} points, curves, surfaces, and meshes with the data each operation needs.
+\item
+  \textbf{Place and move} geometry with coordinate frames, hierarchies, animation, and simulation.
+\item
+  \textbf{Measure} the scene through optics, exposure, sensors, and camera projection.
+\item
+  \textbf{Render} visible surfaces, material response, and light transport; rasterization and ray queries organize the work differently.
+\item
+  \textbf{Sample} the continuous image with filters and finite pixels, then encode color for a device.
+\item
+  \textbf{Infer} hidden motion, orientation, shape, or object pose from measurements, stating ambiguities and assumptions.
+\end{enumerate}
+
+For the core visual anchors, open \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch001-figure-u1---linear-maps-separate-directions-stretches-and-output-placement}{Figure U1 (03-Visual-Computing-I, 03-visual-computing-i-ch001-figure-u1-\/-\/-linear-maps-separate-directions-stretches-and-output-placement)}; \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch002-figure-u2---a-half-edge-separates-face-traversal-from-edge-traversal}{Figure U2 (03-Visual-Computing-I, 03-visual-computing-i-ch002-figure-u2-\/-\/-a-half-edge-separates-face-traversal-from-edge-traversal)}; \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch003-figure-u3---two-signals-can-share-the-same-samples}{Figure U3 (03-Visual-Computing-I, 03-visual-computing-i-ch003-figure-u3-\/-\/-two-signals-can-share-the-same-samples)}; \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch032-figure-u4---lighting-rank-determines-which-normal-components-can-be-measured}{Figure U4 (04-Visual-Computing-II, 04-visual-computing-ii-ch032-figure-u4-\/-\/-lighting-rank-determines-which-normal-components-can-be-measured)}; and \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch035-figure-u5---a-direct-light-renderer-makes-the-pipeline-executable}{Figure U5 (04-Visual-Computing-II, 04-visual-computing-ii-ch035-figure-u5-\/-\/-a-direct-light-renderer-makes-the-pipeline-executable)}.
+
+\subsection{Thirty-five retrieval briefs}\label{appendix-a8f634b076b5-thirty-five-retrieval-briefs}
+
+Each brief gives a mechanism to recall, the condition that matters, and a concrete question to use when reopening that section. The links target the matching chapter in the main note.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch001-a-scene-description-becomes-an-image}{A scene description becomes an image (03-Visual-Computing-I, 03-visual-computing-i-ch001-a-scene-description-becomes-an-image)}} --- Graphics maps a scene description to image measurements; vision works backward from measurements to constraints on the scene. Both depend on camera, geometry, light, and sampling assumptions. \textbf{Ask:} In a ray renderer and a rasterizer, which direction does the visibility query travel?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch001-mathematical-language-points-vectors-and-derivatives}{Mathematical language: points, vectors, and derivatives (03-Visual-Computing-I, 03-visual-computing-i-ch001-mathematical-language-points-vectors-and-derivatives)}} --- A point locates; a vector displaces. In a skew basis, geometric squared length is \(c^T Gc\), with \(G=B^TB\). A Jacobian predicts local change; the Hessian records curvature. \textbf{Ask:} Why does summing squared coordinates fail when basis vectors are not orthogonal?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch001-coordinate-frames-transformations-and-pose}{Coordinate frames, transformations, and pose (03-Visual-Computing-I, 03-visual-computing-i-ch001-coordinate-frames-transformations-and-pose)}} --- Homogeneous coordinates let one matrix translate points while leaving direction vectors unchanged. For column vectors, \(TS\) means scale first, then translate; order matters. Normals use inverse-transpose under nonuniform scale. \textbf{Ask:} What result does \(ST\) produce for a point when translation is accidentally scaled too?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch001-curves-as-controllable-functions}{Curves as controllable functions (03-Visual-Computing-I, 03-visual-computing-i-ch001-curves-as-controllable-functions)}} --- A cubic has four degrees of freedom: endpoint positions and endpoint tangents fit Hermite data. Bézier controls expose tangents; de Casteljau evaluates and subdivides exactly. \(C^1\) matches parameter speed as well as direction; \(G^1\) only matches tangent direction. \textbf{Ask:} Why can a visually tangent join still have a speed jump?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch002-surfaces-patches-topology-and-parameterization}{Surfaces, patches, topology, and parameterization (03-Visual-Computing-I, 03-visual-computing-i-ch002-surfaces-patches-topology-and-parameterization)}} --- A chart maps a parameter domain onto a surface; its partial derivatives span the tangent plane. A chart can distort or become singular even if the surface itself is regular. \textbf{Ask:} What condition on the two tangent vectors makes a parameterization lose a local direction?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing}{Meshes, connectivity, and geometry processing (03-Visual-Computing-I, 03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing)}} --- A mesh stores geometry plus adjacency. Half-edges encode directed edge pairs and make face and vertex neighborhoods traversable. Edits must preserve required topology and orientation. See \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch002-figure-u2---a-half-edge-separates-face-traversal-from-edge-traversal}{Figure U2 (03-Visual-Computing-I, 03-visual-computing-i-ch002-figure-u2-\/-\/-a-half-edge-separates-face-traversal-from-edge-traversal)}. \textbf{Ask:} After an edge flip, which adjacent face can become inverted if the new diagonal is geometrically invalid?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch003-lens-optics-focus-and-image-formation}{Lens optics, focus, and image formation (03-Visual-Computing-I, 03-visual-computing-i-ch003-lens-optics-focus-and-image-formation)}} --- A thin lens maps object distance to image distance; defocus spreads a point into a blur circle. Acceptable focus depends on the blur tolerance and output scale, not a universal depth-of-field boundary. The added derivation estimates a focus interval of about 2.34--4.19 m for its stated setup. \textbf{Ask:} Which chosen circle-of-confusion threshold changes that interval?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch003-exposure-sensors-and-dynamic-range}{Exposure, sensors, and dynamic range (03-Visual-Computing-I, 03-visual-computing-i-ch003-exposure-sensors-and-dynamic-range)}} --- Exposure controls collected photons through aperture, shutter time, and sensitivity; equivalent brightness does not imply equivalent motion blur, depth of field, noise, or highlight headroom. Sensor readout and saturation add limits. \textbf{Ask:} If shutter time is halved and aperture widened one stop, what changes besides image brightness?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch003-cameras-projection-and-calibration}{Cameras, projection, and calibration (03-Visual-Computing-I, 03-visual-computing-i-ch003-cameras-projection-and-calibration)}} --- Pinhole projection \(x=fX/Z\) couples image scale to depth. Vanishing points constrain parallel directions; calibration estimates internal parameters and pose from known geometry. Orthographic projection is useful when depth variation is negligible or should not affect measured scale. \textbf{Ask:} Why can three orthogonal vanishing directions still leave a mirror-related calibration solution?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch003-sampling-continuous-signals-and-image-formation}{Sampling continuous signals and image formation (03-Visual-Computing-I, 03-visual-computing-i-ch003-sampling-continuous-signals-and-image-formation)}} --- Sampling records finite values of a continuous signal. Frequencies above half the sample rate can alias to a lower pattern; prefilter before reducing resolution. Pixel-area averaging is already a weak low-pass filter. See \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch003-figure-u3---two-signals-can-share-the-same-samples}{Figure U3 (03-Visual-Computing-I, 03-visual-computing-i-ch003-figure-u3-\/-\/-two-signals-can-share-the-same-samples)}. \textbf{Ask:} How can two different sinusoids produce identical samples on one grid?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch004-image-sampling-filtering-and-efficient-reconstruction}{Image sampling, filtering, and efficient reconstruction (03-Visual-Computing-I, 03-visual-computing-i-ch004-image-sampling-filtering-and-efficient-reconstruction)}} --- Reconstruction filters trade alias suppression, blur, and ringing. A texture Jacobian maps a pixel footprint into texture space; mipmaps suit near-isotropic footprints, anisotropic filters suit elongated ones. Integral images turn any axis-aligned box sum into four table reads after one cumulative pass. \textbf{Ask:} Why does an integral image not make an arbitrary convolution constant-time?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch004-color-perception-encoding-and-display}{Color perception, encoding, and display (03-Visual-Computing-I, 03-visual-computing-i-ch004-color-perception-encoding-and-display)}} --- Cone responses compress a spectrum into three values, so distinct spectra can be metamers. Display codes are often nonlinear: decode to linear light before averaging or compositing, then encode for display. Gamut bounds which responses a device can reproduce. \textbf{Ask:} Why does encoded midpoint 0.5 represent roughly 0.22 linear intensity under gamma 2.2?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch004-light-measurement-and-radiometry}{Light measurement and radiometry (03-Visual-Computing-I, 03-visual-computing-i-ch004-light-measurement-and-radiometry)}} --- Flux, irradiance, intensity, and radiance use different measures. For an area-light element, conversion from area density to solid-angle density uses \(|n_y\cdot(-\omega)|/r^2\). Use the same measure as the integral. \textbf{Ask:} Why does sampling an area light require both the inverse-square factor and the light-normal cosine?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch004-reflectance-brdfs-and-shading}{Reflectance, BRDFs, and shading (03-Visual-Computing-I, 03-visual-computing-i-ch004-reflectance-brdfs-and-shading)}} --- A BRDF describes how incoming direction becomes outgoing radiance. Lambertian reflectance is constant at \(\rho/\pi\); mirrors are delta-like and glossy materials form lobes. \textbf{Ask:} Why can a smooth directional sampler fail to hit an ideal mirror reflection?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch007-the-rendering-equation-and-light-transport}{The rendering equation and light transport (03-Visual-Computing-I, 03-visual-computing-i-ch007-the-rendering-equation-and-light-transport)}} --- Outgoing radiance is emitted light plus visible reflected incoming radiance integrated over a hemisphere. Since incoming radiance comes from other surfaces, transport is coupled. A renderer makes this executable with visibility, BRDF, light, and accumulation. See \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch035-figure-u5---a-direct-light-renderer-makes-the-pipeline-executable}{Figure U5 (04-Visual-Computing-II, 04-visual-computing-ii-ch035-figure-u5-\/-\/-a-direct-light-renderer-makes-the-pipeline-executable)}. \textbf{Ask:} Which term becomes zero when geometry blocks a sampled direction?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation}{Numerical integration and Monte Carlo estimation (03-Visual-Computing-I, 03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation)}} --- For samples \(X\sim p\), estimate \(\int f(x)dx\) with the mean of \(f(X)/p(X)\). Importance sampling reduces estimator variance only when the density covers every contributing region. \textbf{Ask:} Why does quadrupling independent samples usually halve standard error rather than quarter it?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch012-rasterization-coverage-and-depth}{Rasterization, coverage, and depth (03-Visual-Computing-I, 03-visual-computing-i-ch012-rasterization-coverage-and-depth)}} --- Rasterization tests projected primitives at pixel sample locations, interpolates attributes, then depth-tests. Exact edge coverage is an area integral; multisampling estimates it with subpixel tests. Perspective-correct interpolation compensates for the projection divide. \textbf{Ask:} What artifact appears if a checkerboard floor is linearly interpolated in screen space?
+\item
+  \textbf{\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch019-textures-and-surface-detail}{Textures and surface detail (03-Visual-Computing-I, 03-visual-computing-i-ch019-textures-and-surface-detail)}} --- Texture is a signal over surface coordinates. Charts introduce seams and distortion; filtering must follow how that domain projects into each pixel. \textbf{Ask:} Why can one square mip level overblur a floor receding toward the horizon?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch028-visibility-queries-and-ray-intersections-1}{Visibility queries and ray intersections (04-Visual-Computing-II, 04-visual-computing-ii-ch028-visibility-queries-and-ray-intersections-1)}} --- A ray query asks which geometry intersects a path from an origin; hit parameters, barycentric coordinates, and surface orientation answer different parts of the intersection contract. \textbf{Ask:} What additional bound distinguishes a ray from a finite line segment?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch029-acceleration-structures-and-robust-queries-1}{Acceleration structures and robust queries (04-Visual-Computing-II, 04-visual-computing-ii-ch029-acceleration-structures-and-robust-queries-1)}} --- A BVH groups geometry in nested bounds. Traversal skips a node only when its bound cannot intersect the query, so bounds must conservatively contain descendants. Robust predicates matter near tangencies and degenerate geometry. \textbf{Ask:} What correctness failure follows from rounding a bound inward?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch029-scene-graphs-and-articulated-geometry}{Scene graphs and articulated geometry (04-Visual-Computing-II, 04-visual-computing-ii-ch029-scene-graphs-and-articulated-geometry)}} --- A node's world transform composes parent and local transforms; skinning blends posed bone candidates using per-vertex weights. Linear blends can collapse volume when averaging opposing rotations. \textbf{Ask:} Why does applying the inverse bind transform preserve a vertex when current pose equals rest pose?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch029-animation-curves-and-motion-paths}{Animation curves and motion paths (04-Visual-Computing-II, 04-visual-computing-ii-ch029-animation-curves-and-motion-paths)}} --- A moving camera needs position and orientation, plus a valid up direction. Smooth position does not guarantee smooth orientation; rotation interpolation and time parameterization are separate choices. \textbf{Ask:} What makes the camera frame singular when view and up vectors align?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch029-dynamics-forces-and-numerical-integration}{Dynamics, forces, and numerical integration (04-Visual-Computing-II, 04-visual-computing-ii-ch029-dynamics-forces-and-numerical-integration)}} --- Dynamics evolves state from forces or interaction rules; an integrator approximates continuous time with steps. Large steps can inject energy or destabilize springs and cloth. \textbf{Ask:} Why can explicit Euler make a spring oscillation grow even when the physical model conserves energy?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics}{Optimization, constraints, and inverse kinematics (04-Visual-Computing-II, 04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics)}} --- Define variables, objective, constraints, and derivatives before solving. IK linearizes forward kinematics with a Jacobian; feasibility and conditioning govern whether a target is reachable and stable. \textbf{Ask:} What changes when the end-effector Jacobian loses rank?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch030-pdes-fields-and-discrete-solvers}{PDEs, fields, and discrete solvers (04-Visual-Computing-II, 04-visual-computing-ii-ch030-pdes-fields-and-discrete-solvers)}} --- A PDE, spatial discretization, and boundary conditions together define a numerical problem. Choosing a mesh or basis changes the system matrix; boundary data is part of the model. \textbf{Ask:} Why can two solvers using the same interior equation produce different solutions at the boundary?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch030-optical-flow-and-motion-from-images}{Optical flow and motion from images (04-Visual-Computing-II, 04-visual-computing-ii-ch030-optical-flow-and-motion-from-images)}} --- Brightness constancy yields one equation, \(I_xu+I_yv+I_t=0\), for two flow components. A local aperture therefore leaves motion along an edge ambiguous. \textbf{Ask:} What does a single straight edge constrain well, and which motion component remains unobserved?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch030-edges-contours-and-subpixel-localization}{Edges, contours, and subpixel localization (04-Visual-Computing-II, 04-visual-computing-ii-ch030-edges-contours-and-subpixel-localization)}} --- Blur spreads an ideal edge; fitting a response profile can estimate its center between pixels. Hough voting accumulates weak local evidence into a global line or shape hypothesis. \textbf{Ask:} Why can an edge's subpixel estimate shift when the blur model is wrong?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch030-recognition-templates-and-industrial-matching}{Recognition, templates, and industrial matching (04-Visual-Computing-II, 04-visual-computing-ii-ch030-recognition-templates-and-industrial-matching)}} --- Template matching searches over pose and transformation with a score chosen for expected noise and deformation. Coarse-to-fine search reduces cost; thresholds set tolerance, not truth. \textbf{Ask:} Why should an edge alignment score treat normal displacement differently from tangent displacement?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch032-pose-estimation-transforms-and-robust-fitting}{Pose estimation, transforms, and robust fitting (04-Visual-Computing-II, 04-visual-computing-ii-ch032-pose-estimation-transforms-and-robust-fitting)}} --- Estimate rigid pose from correspondences, enforce a proper rotation, and use robust fitting when outliers contaminate matches. RANSAC trial count depends on inlier rate and sample size. \textbf{Ask:} Why does lowering the assumed inlier fraction sharply increase the number of RANSAC trials?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch032-stereo-relative-orientation-and-reconstruction}{Stereo, relative orientation, and reconstruction (04-Visual-Computing-II, 04-visual-computing-ii-ch032-stereo-relative-orientation-and-reconstruction)}} --- Two views constrain rays and relative pose; triangulation recovers structure up to gauge freedoms such as global scale. Critical surfaces make the geometry ill-conditioned. \textbf{Ask:} Why can perfect image correspondences still leave metric scale unknown?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch032-surface-orientation-from-illumination}{Surface orientation from illumination (04-Visual-Computing-II, 04-visual-computing-ii-ch032-surface-orientation-from-illumination)}} --- Photometric stereo uses several known light directions to solve for scaled normal from brightness measurements. The lighting matrix must span the components being estimated. See \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch032-figure-u4---lighting-rank-determines-which-normal-components-can-be-measured}{Figure U4 (04-Visual-Computing-II, 04-visual-computing-ii-ch032-figure-u4-\/-\/-lighting-rank-determines-which-normal-components-can-be-measured)}. \textbf{Ask:} Which normal component becomes unobservable if every light direction lies in one plane?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch032-shape-from-shading-and-reflectance}{Shape from shading and reflectance (04-Visual-Computing-II, 04-visual-computing-ii-ch032-shape-from-shading-and-reflectance)}} --- A single shading image gives a nonlinear relation among surface normal, reflectance, and illumination; integration into height requires boundary conditions and extra assumptions. \textbf{Ask:} Why does a locally valid normal field fail to guarantee one globally consistent surface?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch032-surface-descriptions-and-gaussian-images}{Surface descriptions and Gaussian images (04-Visual-Computing-II, 04-visual-computing-ii-ch032-surface-descriptions-and-gaussian-images)}} --- A Gaussian image maps surface area to normal directions. Its directional mass distribution summarizes orientation and curvature patterns but can be shared by geometrically different surfaces. \textbf{Ask:} Why does the zero-centroid condition hold for a closed surface, and what does it rule out?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch034-photographic-composition-history-and-communication}{Photographic composition, history, and communication (04-Visual-Computing-II, 04-visual-computing-ii-ch034-photographic-composition-history-and-communication)}} --- Viewpoint, crop, sequence, and caption shape how a photograph functions as evidence or argument. A recorded scene is selected and framed, not a neutral inventory. \textbf{Ask:} What does a wide frame reveal that a close crop hides in the same documentary image?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch034-photographic-workflow-and-integrated-decisions}{Photographic workflow and integrated decisions (04-Visual-Computing-II, 04-visual-computing-ii-ch034-photographic-workflow-and-integrated-decisions)}} --- Trace a capture from scene spectrum through optics, exposure, sampling, processing, and display. Each stage can discard information or add artifacts; choose settings around the intended output. \textbf{Ask:} Which stage caused a moiré pattern, and what evidence distinguishes it from JPEG blocking?
+\end{enumerate}
+
+\subsection{Evidence and scope}\label{appendix-a8f634b076b5-evidence-and-scope}
+
+The source ledger covers \textbf{88 entries: 70 requested lectures and 18 added sources}. Its evidence includes \textbf{86 published English automatic-caption tracks, one locally generated Whisper transcript for a technical lecture, one sampled showcase video, and 70 lecture PDFs matched to their course years}. Captions, notes, and sampled visuals support different claims; the legend records which evidence supports each entry.
+
+These briefs are deliberately compact retrieval notes for a 35-chapter continuous treatment. They are not a transcript, a substitute for the worked derivations, or a claim that the entire companion fits on one physical page.
+
+\subsection{Four more figures to redraw from memory}\label{appendix-a8f634b076b5-four-more-figures-to-redraw-from-memory}
+
+\begin{itemize}
+\tightlist
+\item
+\item
+\item
+\item
+\end{itemize}
+
+\subsection{New mechanisms to retrieve}\label{appendix-a8f634b076b5-new-mechanisms-to-retrieve}
+
+A vertex buffer is a byte array interpreted by a draw command. The stride says how many bytes separate successive vertices; the attribute offset says where one field begins inside a vertex. \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch012-rasterization-coverage-and-depth}{Rasterization and vertex layout (03-Visual-Computing-I, 03-visual-computing-i-ch012-rasterization-coverage-and-depth)} · \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch018-figure-u10---vertex-fetch-uses-a-stride-and-byte-offset}{U10 (03-Visual-Computing-I, 03-visual-computing-i-ch018-figure-u10-\/-\/-vertex-fetch-uses-a-stride-and-byte-offset)}. \textbf{Ask:} For 24-byte float32 vertices with RGB after XYZ, what are the position stride and color offset?
+
+A mathematical projection of a finite point set is a map to a line. Small image size means many collisions. Scale, spacing, and additive structure determine whether many directions can compress the same set. This is separate from a camera's projection matrix. \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch032-finite-field-projections-turn-image-size-into-collision-counts}{Finite-field collisions (04-Visual-Computing-II, 04-visual-computing-ii-ch032-finite-field-projections-turn-image-size-into-collision-counts)} · \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch033-real-projections-add-scale-spacing-and-incidence-geometry}{Real projection scales (04-Visual-Computing-II, 04-visual-computing-ii-ch033-real-projections-add-scale-spacing-and-incidence-geometry)} · \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch032-figure-u11---finite-grid-projections-expose-collision-counts}{U11 (04-Visual-Computing-II, 04-visual-computing-ii-ch032-figure-u11-\/-\/-finite-grid-projections-expose-collision-counts)}. \textbf{Ask:} Is the obstruction arithmetic, spatial clustering, or an incidence pattern?
+
+A classifier maps an image representation to scores; a loss compares those scores with the target. The gradient sends a local change backward through each operation by the chain rule. Convolution shares a local filter over the image; attention instead builds content-dependent weights between tokens. \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch031-learning-a-visual-classifier-from-examples}{Learning basics (04-Visual-Computing-II, 04-visual-computing-ii-ch031-learning-a-visual-classifier-from-examples)} · \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch031-convolutional-models-preserve-image-neighborhoods}{CNNs (04-Visual-Computing-II, 04-visual-computing-ii-ch031-convolutional-models-preserve-image-neighborhoods)} · \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch031-sequence-models-and-attention}{Attention (04-Visual-Computing-II, 04-visual-computing-ii-ch031-sequence-models-and-attention)}. \textbf{Ask:} Which shape changes at each layer, and where does the chain rule multiply upstream and local derivatives?
+
+Dense prediction assigns an output to every pixel; detection also predicts object locations and categories. Video adds temporal alignment, motion, and compute cost. \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch031-predict-pixels-and-localize-objects}{Dense prediction and detection (04-Visual-Computing-II, 04-visual-computing-ii-ch031-predict-pixels-and-localize-objects)} · \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch031-video-adds-motion-and-temporal-cost}{Video (04-Visual-Computing-II, 04-visual-computing-ii-ch031-video-adds-motion-and-temporal-cost)}. \textbf{Ask:} Does the evaluation measure pixel accuracy, object matching, or temporal consistency?
+
+Self-supervision creates training targets from the data; generative objectives instead define how a model represents or samples possible outputs. Evaluation must match the claim: reconstruction quality, likelihood, sample quality, and downstream usefulness are different measurements. \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch031-self-supervision-and-evaluation}{Self-supervision (04-Visual-Computing-II, 04-visual-computing-ii-ch031-self-supervision-and-evaluation)} · \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch031-generative-models-learn-distributions-and-samplers}{Generative models (04-Visual-Computing-II, 04-visual-computing-ii-ch031-generative-models-learn-distributions-and-samplers)}. \textbf{Ask:} What observable target trains the model, and what test would falsify the capability claim?
+
+NeRF represents a scene with a learned field queried along rays; Gaussian splatting stores explicit 3D elements and composites their projected contributions. A planar Gaussian gives a direct local surface normal, while 3D Gaussian splats need geometric regularization to recover reliable surfaces. \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch034-learned-representations-of-3d-shape-and-scenes}{Learned 3D representations (04-Visual-Computing-II, 04-visual-computing-ii-ch034-learned-representations-of-3d-shape-and-scenes)} · \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch034-from-scene-representations-to-research-methods}{research methods (04-Visual-Computing-II, 04-visual-computing-ii-ch034-from-scene-representations-to-research-methods)} · \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch034-figure-u12---volume-compositing-accumulates-visible-contributions}{U12 (04-Visual-Computing-II, 04-visual-computing-ii-ch034-figure-u12-\/-\/-volume-compositing-accumulates-visible-contributions)} · \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch034-figure-u13---a-local-gaussian-covariance-projects-to-an-ellipse}{U13 (04-Visual-Computing-II, 04-visual-computing-ii-ch034-figure-u13-\/-\/-a-local-gaussian-covariance-projects-to-an-ellipse)}. \textbf{Ask:} Which representation is queried per ray and which is explicitly rasterized?
+
+An environment map supplies incoming illumination by direction. ReSTIR uses weighted reservoirs to reuse light candidates, but the final estimator still needs correct proposal support and normalization. LoD changes also change geometry, so reused paths need a surface correspondence and its area Jacobian. \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch004-light-measurement-and-radiometry}{Image-based lighting (03-Visual-Computing-I, 03-visual-computing-i-ch004-light-measurement-and-radiometry)} · \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation}{Monte Carlo reuse (03-Visual-Computing-I, 03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation)} · \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch012-figure-u14---a-reservoir-selects-a-candidate-by-its-weight}{U14 (03-Visual-Computing-I, 03-visual-computing-i-ch012-figure-u14-\/-\/-a-reservoir-selects-a-candidate-by-its-weight)}. \textbf{Ask:} What distribution was each candidate drawn from, and what normalization makes reuse valid?
+
+Mitsuba 2 shows how a renderer can change execution mode and differentiate through image formation. It is a 2019 Enoki-based system; its API details are historical and should not be treated as Mitsuba 3 guidance. \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch007-the-rendering-equation-and-light-transport}{Differentiable rendering (03-Visual-Computing-I, 03-visual-computing-i-ch007-the-rendering-equation-and-light-transport)}. \textbf{Ask:} Which quantities are differentiated and which sampling decisions are held fixed?
+
+ARAP editing alternates local rigid rotations with a global sparse position solve. Field-aligned remeshing uses orientation and position fields to guide edge direction and placement. \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing}{Mesh processing (03-Visual-Computing-I, 03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing)}. \textbf{Ask:} Which part is local per vertex and which system is solved globally?
+
+IPC combines a contact barrier with continuous collision detection and a feasibility-preserving line search. A positive barrier alone is not a proof that a finite time step cannot cross a contact. \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch029-dynamics-forces-and-numerical-integration}{Contact dynamics (04-Visual-Computing-II, 04-visual-computing-ii-ch029-dynamics-forces-and-numerical-integration)} · \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch029-figure-u15---the-contact-barrier-grows-near-zero-separation}{U15 (04-Visual-Computing-II, 04-visual-computing-ii-ch029-figure-u15-\/-\/-the-contact-barrier-grows-near-zero-separation)}. \textbf{Ask:} What checks the entire path between the current and proposed configurations?
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{../current/Assets/Print/4488f8d008c1cb5c52ae374050272fc1a4253a601a9753804a154185f807c19b.pdf}}
+
+Read the loop as a diagnostic map: representation, forward model, objective, and evaluation can each limit the result. It is not a single training algorithm; Monte Carlo rendering and supervised learning use different estimators and losses.
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{../current/Assets/Print/3b58f16232bfab9560f7a4da12999cab9903c3094bfeb1a81085dd3693f42be0.pdf}}
+
+This rendering/inference loop joins the original image-formation chapters to learned 3D methods. The reverse arrow indicates an inference problem; it does not imply a unique reconstruction.
+
+\subsection{Rendering, materials, transport --- retrieve the reasons}\label{appendix-a8f634b076b5-rendering-materials-transport-retrieve-the-reasons}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Visual Recall/Integrated Geometry and Engine/rendering-representation-witnesses.png}]{../current/Assets/Print/b90c6e8c01d1188baf778ddd55edd941ab8a86566e1644c646c189cbf0dcb7cf.png}}
+\caption{Visual Recall/Integrated Geometry and Engine/rendering-representation-witnesses.png}
+\end{figure}
+
+The left panel explains projective interpolation; the middle separates encoded storage from linear light; the right proves that a missing sampling region can create bias. These are numerical witnesses, not rendered screenshots from a working engine.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Recall prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Full teaching / figure explanation
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Why clip before dividing? & A primitive can cross the camera plane; division near zero creates unbounded coordinates. Clip the homogeneous primitive first. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Decide which samples a triangle owns \\
+Which barycentrics recover a texture coordinate? & Screen weights need reciprocal-\(w\) correction. Already-divided depth instead interpolates affinely on screen. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Decide which samples a triangle owns \\
+Why does reversed depth help? & Reciprocal distance pairs well with floating-point spacing near zero; every depth consumer must agree on ordering. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Give depth an explicit meaning \\
+Why is encoded midpoint \(0.5\) too dark? & It decodes to about \(0.214\) linear light. Average linear values first. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Make every color number carry a meaning \\
+What do \(D,F,G\) mean? & Facet distribution, interface reflection, and geometric visibility. The NDF normalizes with projected area. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Ask a surface where incoming energy can go \\
+Why can a PDF exceed one? & It is density per unit measure. Its integral is one; its pointwise value need not be bounded by one. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Follow one path without losing its probability \\
+What must area-light sampling include? & Light-choice probability, area density, and the area-to-solid-angle Jacobian. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Follow one path without losing its probability \\
+What makes MIS complete? & Correctly weighted contributions from the participating sampling techniques, in the same measure, with delta events handled separately. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Follow one path without losing its probability \\
+Does more sampling remove every error? & It reduces stochastic error under the estimator's assumptions. Missing-domain and transport-model bias can remain. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#A missing region cannot be repaired by taking more samples there \\
+\end{longtable}
+}
+
+Reconstruct without looking: show why the screen midpoint gives \(u=0.2\) for \(w=(1,4)\); derive the cosine hemisphere integral \(\pi\); convert a selected area-light density into solid angle; explain why roulette survivors divide by survival probability. Then point to where each assumption appears in the implementation.
+
+\subsection{Explicit rendering, captured kernels and animated surfaces - retrieval briefs}\label{appendix-a8f634b076b5-explicit-rendering-captured-kernels-and-animated-surfaces---retrieval-briefs}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Visual Recall/Explicit Rendering/footprint-order-lifetime.png}]{../current/Assets/Print/500d92db78e9529d36f7543addb95edb549981fa50549f94b656320d1ac0e403.png}}
+\caption{Visual Recall/Explicit Rendering/footprint-order-lifetime.png}
+\end{figure}
+
+\begin{itemize}
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch037-local-projection-turns-an-ellipsoid-into-a-screen-ellipse}{Covariance to pixels (04-Visual-Computing-II, 04-visual-computing-ii-ch037-local-projection-turns-an-ellipsoid-into-a-screen-ellipse)}} --- A Jacobian is a local linear prediction. Transform covariance as \(J\Sigma J^T\), then invert the 2D covariance for the conic. Near-plane rejection and a finite footprint policy are prerequisites. Why is this only a local perspective approximation?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch037-from-ellipses-to-bounded-tile-work}{Allocate tile work (04-Visual-Computing-II, 04-visual-computing-ii-ch037-from-ellipses-to-bounded-tile-work)}} --- Count references, exclusive-scan counts, scatter to disjoint slices, sort by tile/depth, then composite. Counts \([4,2,5,1]\) give offsets \([0,4,6,11]\). Why must an unstable final tile sort not destroy depth order?
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch037-figure-er1---footprint-compositing-order-and-storage-lifetime}{Composite in order (04-Visual-Computing-II, 04-visual-computing-ii-ch037-figure-er1-\/-\/-footprint-compositing-order-and-storage-lifetime)}} --- Contribution is \(T\alpha c\) and new transmittance is \(T(1-\alpha)\). Two half-opaque layers leave \(T=0.25\). A transmittance threshold is an approximation budget, not a universal reference constant.
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch037-validation-should-isolate-representations-before-images}{Validate separate outputs (04-Visual-Computing-II, 04-visual-computing-ii-ch037-validation-should-isolate-representations-before-images)}} --- Compare color in a declared space, depth with units, and IDs as discrete values. Average error, peak error and changed-pixel fraction answer different questions. CPU/GPU agreement does not establish antialiasing quality.
+\item
+  \textbf{\hyperref[01-foundations-i-ch011-follow-a-frame-slot-and-a-presentation-image-separately]{Reuse the right object}} --- A slot fence proves slot work completed. It does not prove a presentation wait consumed its semaphore. Frame-slot and acquired-image indices are separate domains. What resolves an acquisition followed by recording failure?
+\item
+  \textbf{\hyperref[01-foundations-i-ch011-retire-a-resource-after-every-user-not-after-one-convenient-clock]{Retire across queues}} --- Every required queue counter must be reached. \((10,4,100)\) does not cover required \((9,5,3)\). Ownership preserves the payload; completion permits destruction.
+\item
+  \textbf{\href{../06-Engine-II/main.pdf\#nameddest=06-engine-ii-ch042-compile-a-render-graph-before-executing-it}{Compile the graph (06-Engine-II, 06-engine-ii-ch042-compile-a-render-graph-before-executing-it)}} --- Versions identify values, dependencies order producers/consumers, and lifetimes constrain storage aliasing. A list position does not prove that independent queues have stopped using memory.
+\item
+  \textbf{\href{../06-Engine-II/main.pdf\#nameddest=06-engine-ii-ch042-rendering-identity-becomes-world-identity-only-through-an-explicit-bridge}{Turn capture into editable world (06-Engine-II, 06-engine-ii-ch042-rendering-identity-becomes-world-identity-only-through-an-explicit-bridge)}} --- Persistent identity survives sorting; physical support supplies deformation. For affine motion, \(\mu'=F\mu+t\) and \(\Sigma'=F\Sigma F^T\). Appearance kernels alone supply neither mass nor colliders.
+\item
+  \textbf{\href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch037-build-a-pose-first-then-deform-the-surface}{Animate in a declared space (04-Visual-Computing-II, 04-visual-computing-ii-ch037-build-a-pose-first-then-deform-the-surface)}} --- Sample pose, resolve the hierarchy, morph before skinning, and build matching current/previous transforms. A global-joint palette already outputs world space. Why does adding the mesh world transform again break it?
+\item
+  \textbf{\href{../06-Engine-II/main.pdf\#nameddest=06-engine-ii-ch045-an-image-change-certificate-must-name-the-edits-it-covers}{Image-change bounds need assumptions (06-Engine-II, 06-engine-ii-ch045-an-image-change-certificate-must-name-the-edits-it-covers)}} --- An opacity-only bound misses a red-to-blue edit at fixed opacity and a depth-order swap. State color range, evaluated per-pixel alpha changes, contributor order, color/background changes, and termination policy before calling an estimate a certificate.
+\end{itemize}
+
+\subsection{A moving pixel still needs a storage contract}\label{appendix-a8f634b076b5-a-moving-pixel-still-needs-a-storage-contract}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Expand
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Flat index is valid; coordinates valid? & Not necessarily. At width 800, x=800,y=0 spills into the next row. Check each coordinate before indexing. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Animate a pixel by respecting the buffer's coordinates and lifetime \\
+Cast a negative subpixel location? & Truncation can map -0.2 to 0; decide continuous clipping before conversion and reject nonfinite/out-of-range values. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Animate a pixel by respecting the buffer's coordinates and lifetime \\
+Clear each frame or retain pixels? & Replacement frame versus intentional history. Clear once at the chosen frame boundary; define trail decay separately. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Animate a pixel by respecting the buffer's coordinates and lifetime \\
+\end{longtable}
+}
+
+\subsection{Conservative culling: keep the region and the bound distinct}\label{appendix-a8f634b076b5-conservative-culling-keep-the-region-and-the-bound-distinct}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Teaching / figure
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+What does point-to-line distance measure? & Perpendicular distance to an infinite line; no endpoint, frustum or occlusion test. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#A line corridor can be a cheap prefilter for shadow-caster work \\
+When is rejecting a caster safe? & The corridor must enclose its possible contribution region; the object sphere must enclose transformed geometry. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#A line corridor can be a cheap prefilter for shadow-caster work \\
+Sphere radius 0.5, corridor radius 0.4? & Center distance above 0.9 rejects. A smaller distance only retains a candidate. & {[}{[}Visual Recall/Game Engine/corridor-and-shear.png \\
+Largest matrix column bounds every stretch? & No under shear: a 1.414 guess misses a 1.618 stretch. Frobenius radius multiplier 2 is safe here. & {[}{[}Visual Recall/Game Engine/corridor-and-shear.svg \\
+\end{longtable}
+}
+
+\textbf{Reconstruct:} prove the distance formula by parallelogram area; explain why an enclosing receiver corridor matters for directional shadows; show what breaks if scale or animation escapes the cached object bound.
+
+\subsection{Mesh energy and value range}\label{appendix-a8f634b076b5-mesh-energy-and-value-range}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Recall prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Return to the teaching
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Can a negative cotangent edge weight coexist with nonnegative energy? & Yes. Valid element energies are squared gradients; individual signed edge terms are coupled by geometry. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Nonnegative energy and nonnegative weights are different promises \\
+Does a stable heat step preserve nonnegative values? & Not necessarily: the worked step produces −0.015 while energy falls from 0.125 to 0.104525. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#A stable heat step can still create a negative sample \\
+What makes an explicit diffusion update a convex average? & Nonnegative edge weights, positive lumped masses, and a step small enough to keep every diagonal update coefficient nonnegative. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Complete single-triangle energy witness \\
+\end{longtable}
+}
+
+\subsection{From measurements to state and pixels}\label{appendix-a8f634b076b5-from-measurements-to-state-and-pixels}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Full commented reconstruction
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+What makes the planar camera bearing model valid? & Known landmarks, planar motion and the explicitly identity body-to-camera extrinsic. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Make the visual correction small enough to inspect: an eight-state planar EKF \\
+What is IMU preintegration compressing? & High-rate samples between keyframes into declared relative motion summaries; it is not a complete visual estimator. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#From raw 3-D IMU samples to the pose constraint used by VIO \\
+What connects extinction to a pixel? & Segment opacity and remaining transmittance weight emitted sample colors. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#A NeRF pixel is an integral before it is a neural-network output \\
+\end{longtable}
+}
+
+\subsection{Build a query structure without silently losing candidates}\label{appendix-a8f634b076b5-build-a-query-structure-without-silently-losing-candidates}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{../current/Assets/Print/6e4d06782433f51927a924bf681e23e791cc7932f965ecbe88c57e62f4cbf062.pdf}}
+
+Each arrow that transfers device-produced data needs the API's required dependency. Finishing a dispatch alone does not replace memory visibility.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Recall prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Full lesson
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Is an append ticket a stored record? & Only when it fits. Track attempted count, stored count and overflow; reject an incomplete candidate structure. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Build GPU bins and fixed hash tables only after capacity and ownership are explicit \\
+How do bins avoid overlap? & Count entries, scan counts into disjoint starts, then scatter within each owned bin interval. Atomic arrival order can vary. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Worked 2D spatial-bin build \\
+What does CAS publish in the small hash model? & It claims a key slot for one payload writer. Queries wait for the whole build and memory handoff. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Fixed-capacity open addressing with a bounded build pass \\
+How does a full table terminate? & Probe at most its capacity; report failure and rebuild or reject. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Collision trace and full-table failure \\
+\end{longtable}
+}
+
+\subsection{Buffering, budget and precision in five answers}\label{appendix-a8f634b076b5-buffering-budget-and-precision-in-five-answers}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prompt
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Short answer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Return to the full derivation
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+What retires a frame's storage? & Its final consumer's completed token; cycling a slot index proves nothing. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Double and triple buffering change ownership, not execution speed \\
+Can async compute always overlap a draw? & Only if dependencies and resource contention permit. Two queues do not imply independent execution hardware. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Async compute starts with a dependency graph \\
+Does persistent mapping permit overwrite? & No.~Mapping, cache visibility and consumer completion are different conditions. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Uploads need bandwidth, visibility and retirement \\
+Which roofline ceiling matters? & The smaller of arithmetic peak and bandwidth × arithmetic intensity, with matching units and memory boundary. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Derive a roofline bound with matching units \\
+Why can FP16 lose a unit increment at 2048? & Neighbor spacing is 2; 2049 rounds to 2048 under ties-to-even. Widening later cannot restore lost input. & {[}{[}Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Half precision is a range and accumulation decision \\
+\end{longtable}
+}
+
+Reproduce the numerical examples in \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch016-check-the-scheduling-and-precision-examples-with-a-scalar-witness}{the six-check scalar witness (03-Visual-Computing-I, 03-visual-computing-i-ch016-check-the-scheduling-and-precision-examples-with-a-scalar-witness)}. The witness does not execute a GPU.

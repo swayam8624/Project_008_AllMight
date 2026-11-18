@@ -1,0 +1,50 @@
+\hypertarget{appendix-5d4252a42886}{}\label{referencestart:appendix-5d4252a42886}
+\section{Auto decltype and reference collapsing}\label{appendix-5d4252a42886-auto-decltype-and-reference-collapsing}
+
+\hypertarget{appendix-5d4252a42886-auto-decltype-and-reference-collapsing}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-5d4252a42886-definition-and-mechanism}
+
+\hypertarget{appendix-5d4252a42886-definition-and-mechanism}{}
+
+Ordinary by-value auto drops top-level const/reference information; auto\& preserves referent qualification. decltype(name) reports the declared type, while decltype((expression)) follows category. Collapsing yields an lvalue reference if either participating reference is \&, otherwise \&\&.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-5d4252a42886-prerequisites}
+
+\hypertarget{appendix-5d4252a42886-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1121b30eaeb0]{Value categories and materialization} --- Expression category determines viable binding and whether temporary identity is needed.
+\item
+  \hyperref[appendix-d6d562ca9fbb]{References and aliases} --- The initial alias and its referent determine later binding and deduction behavior.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-5d4252a42886-used-by}
+
+\hypertarget{appendix-5d4252a42886-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0104b704fb11]{Move casts and forwarding references}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-5d4252a42886-recall-and-next-depth}
+
+\hypertarget{appendix-5d4252a42886-recall-and-next-depth}{}
+
+Explain why decltype(rr) is T\&\& but decltype((rr)) is T\&. Pending: constrained deduction, structured bindings and return-type deduction. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{appendix-5d4252a42886-source-and-navigation}
+
+\hypertarget{appendix-5d4252a42886-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch003-an-expression-has-a-type-and-a-category]{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

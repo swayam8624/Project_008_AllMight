@@ -8,7 +8,7 @@ Before solving a system, inspect symmetry, definiteness, shape, sparsity, and re
 
 **Recall question:** What property allows Cholesky factorization, and what should the solver do when that property is absent?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 44575–46369; source-span SHA256 1cb4f1fe122092d026d946e499755021c659df8b061e538166acf8e2234fa251. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 44756–46550; source-span SHA256 5f2010abd4a4b6e6b9a9324796bc86253b012b8e4cd23fd256ec7c6755129fe9. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Structure makes a decomposition a better tool than generic elimination
@@ -625,7 +625,7 @@ A point begins in object space, moves into world space, enters camera space, and
 We might describe this as:
 
 $$
-\mathbf p_o \xrightarrow{M} \mathbf p_w \xrightarrow{V} \mathbf p_c \xrightarrow{\pi} \mathbf p\_{\text{image}}.
+\mathbf p_o \xrightarrow{M} \mathbf p_w \xrightarrow{V} \mathbf p_c \xrightarrow{\pi} \mathbf p_{\text{image}}.
 $$
 
 Here $M$ is a model transform, $V$ is a view transform, and $\pi$ is perspective projection.
@@ -679,7 +679,7 @@ A limit describes what a function approaches as its input approaches some value.
 The notation is:
 
 $$
-\lim\_{x\to a}f(x)=L.
+\lim_{x\to a}f(x)=L.
 $$
 
 It says that when $x$ is sufficiently close to $a$, $f(x)$ can be made arbitrarily close to $L$.
@@ -701,7 +701,7 @@ $$
 Therefore:
 
 $$
-\boxed{\lim\_{x\to2}f(x)=4}.
+\boxed{\lim_{x\to2}f(x)=4}.
 $$
 
 The limit exists although the original expression is undefined at that point.
@@ -710,7 +710,7 @@ The limit exists although the original expression is undefined at that point.
 
 To understand limits beyond visual intuition, we need precise control of input and output error.
 
-We say $\lim\_{x\to a}f(x)=L$ if, for every desired output tolerance $\varepsilon>0$, there exists an input tolerance $\delta>0$ such that:
+We say $\lim_{x\to a}f(x)=L$ if, for every desired output tolerance $\varepsilon>0$, there exists an input tolerance $\delta>0$ such that:
 
 $$
 0<|x-a|<\delta \quad\Longrightarrow\quad |f(x)-L|<\varepsilon.
@@ -761,7 +761,7 @@ $$
 has a removable singularity at zero because:
 
 $$
-\lim\_{\theta\to0}\frac{\sin\theta}{\theta}=1
+\lim_{\theta\to0}\frac{\sin\theta}{\theta}=1
 $$
 
 when angles are measured in radians.
@@ -773,7 +773,7 @@ Expressions of this kind occur in stable small-angle rotation formulas, exponent
 A function $f$ is continuous at $a$ when:
 
 $$
-\lim\_{x\to a}f(x)=f(a).
+\lim_{x\to a}f(x)=f(a).
 $$
 
 This requires three things: $f(a)$ must exist, the limit must exist, and they must be equal.
@@ -821,7 +821,7 @@ penalizes the magnitude of a residual $r$, but has a corner at $r=0$. Optimizati
 A particularly relevant edge case is the length of a vector:
 
 $$
-f(\mathbf v)=\|\mathbf v\|\_2.
+f(\mathbf v)=\|\mathbf v\|_2.
 $$
 
 It is continuous everywhere, but its ordinary gradient is undefined at the zero vector. Normalizing a zero-length direction therefore has a mathematical singularity, not merely a software inconvenience.
@@ -859,7 +859,7 @@ At $t=2$, its position is $4$ metres. At $t=3$, its position is $9$ metres.
 The average velocity over this one-second interval is:
 
 $$
-v\_{\text{average}}=\frac{9-4}{3-2}=5\ \text{m/s}.
+v_{\text{average}}=\frac{9-4}{3-2}=5\ \text{m/s}.
 $$
 
 But what was its velocity at exactly $t=2$?
@@ -881,7 +881,7 @@ $$
 As $h\to0$:
 
 $$
-\boxed{x'(t)=\lim\_{h\to0}\frac{x(t+h)-x(t)}h=2t}.
+\boxed{x'(t)=\lim_{h\to0}\frac{x(t+h)-x(t)}h=2t}.
 $$
 
 At $t=2$, instantaneous velocity is $4\ \text{m/s}$.
@@ -952,9 +952,9 @@ $$
 f'(x)\approx\frac{f(x+h)-f(x-h)}{2h}
 $$
 
-has truncation error of order $O(h^2)$. Under a standard floating-point error model, roundoff-related error often scales roughly as $O(\epsilon\_{\mathrm{mach}}/h)$ times an appropriate function scale.
+has truncation error of order $O(h^2)$. Under a standard floating-point error model, roundoff-related error often scales roughly as $O(\epsilon_{\mathrm{mach}}/h)$ times an appropriate function scale.
 
-Thus, for forward differences, balancing the leading error terms frequently suggests $h$ of order $\sqrt{\epsilon\_{\mathrm{mach}}}$ times a problem-dependent scale; central differences often suggest a cube-root scaling. These are heuristics, not universal fixed step sizes.
+Thus, for forward differences, balancing the leading error terms frequently suggests $h$ of order $\sqrt{\epsilon_{\mathrm{mach}}}$ times a problem-dependent scale; central differences often suggest a cube-root scaling. These are heuristics, not universal fixed step sizes.
 
 We will implement and compare these methods rigorously in M052.
 
@@ -967,7 +967,7 @@ The derivative is not merely the slope of a graph. It tells us which linear func
 Suppose $f$ is differentiable at $a$. By definition:
 
 $$
-\lim\_{h\to0} \frac{f(a+h)-f(a)}h=f'(a).
+\lim_{h\to0} \frac{f(a+h)-f(a)}h=f'(a).
 $$
 
 Rearranging the mathematical statement gives:
@@ -979,7 +979,7 @@ $$
 where:
 
 $$
-\lim\_{h\to0}\frac{r(h)}h=0.
+\lim_{h\to0}\frac{r(h)}h=0.
 $$
 
 Equivalently:
@@ -1101,7 +1101,7 @@ $$
 For a positive integer $n$:
 
 $$
-\frac d{dx}x^n = \lim\_{h\to0}\frac{(x+h)^n-x^n}{h}.
+\frac d{dx}x^n = \lim_{h\to0}\frac{(x+h)^n-x^n}{h}.
 $$
 
 Using the binomial theorem:
@@ -1155,13 +1155,13 @@ $$
 Start with:
 
 $$
-h'(x)= \lim\_{\Delta x\to0} \frac{f(x+\Delta x)g(x+\Delta x)-f(x)g(x)}{\Delta x}.
+h'(x)= \lim_{\Delta x\to0} \frac{f(x+\Delta x)g(x+\Delta x)-f(x)g(x)}{\Delta x}.
 $$
 
 Insert and subtract the intermediate term $f(x)g(x+\Delta x)$:
 
 $$
-\begin{aligned} h'(x)=\lim\_{\Delta x\to0} \bigg[ &\frac{f(x+\Delta x)-f(x)}{\Delta x}g(x+\Delta x)\\ +{}&f(x)\frac{g(x+\Delta x)-g(x)}{\Delta x} \bigg]. \end{aligned}
+\begin{aligned} h'(x)=\lim_{\Delta x\to0} \bigg[ &\frac{f(x+\Delta x)-f(x)}{\Delta x}g(x+\Delta x)\\ +{}&f(x)\frac{g(x+\Delta x)-g(x)}{\Delta x} \bigg]. \end{aligned}
 $$
 
 Because differentiability implies continuity:
@@ -1369,7 +1369,7 @@ When $a=e$, $\ln e=1$, so the derivative equals the original function.
 We can also understand this from the limit definition:
 
 $$
-\frac d{dx}e^x =e^x\lim\_{h\to0}\frac{e^h-1}{h} =e^x.
+\frac d{dx}e^x =e^x\lim_{h\to0}\frac{e^h-1}{h} =e^x.
 $$
 
 The final limit equals $1$, a defining characteristic of the natural exponential.
@@ -1487,7 +1487,7 @@ This is useful when differentiating products, powers with variable exponents, de
 Consider the product of many small positive probabilities:
 
 $$
-P=\prod\_{i=1}^{N}p_i.
+P=\prod_{i=1}^{N}p_i.
 $$
 
 With thousands of factors, $P$ may underflow to zero in floating-point arithmetic.
@@ -1495,7 +1495,7 @@ With thousands of factors, $P$ may underflow to zero in floating-point arithmeti
 Taking logarithms transforms multiplication into addition:
 
 $$
-\ln P=\sum\_{i=1}^{N}\ln p_i.
+\ln P=\sum_{i=1}^{N}\ln p_i.
 $$
 
 Instead of storing an extremely tiny probability, we can accumulate its log-probability.
@@ -1543,7 +1543,7 @@ Because the length ratio is dimensionless, radians are a natural angular measure
 The standard limits are:
 
 $$
-\lim\_{h\to0}\frac{\sin h}{h}=1, \qquad \lim\_{h\to0}\frac{\cos h-1}{h}=0.
+\lim_{h\to0}\frac{\sin h}{h}=1, \qquad \lim_{h\to0}\frac{\cos h-1}{h}=0.
 $$
 
 These are true in their stated form for radians, not degrees.
@@ -1707,7 +1707,7 @@ Input clamping can prevent accidental out-of-domain values caused by rounding, b
 A more robust angle computation often uses `atan2` with both sine-like and cosine-like information:
 
 $$
-\theta=\operatorname{atan2} \left(\|\mathbf a\times\mathbf b\|,\\, \mathbf a\cdot\mathbf b\right)
+\theta=\operatorname{atan2} \left(\|\mathbf a\times\mathbf b\|,\, \mathbf a\cdot\mathbf b\right)
 $$
 
 for nonzero vectors, with the appropriate interpretation of the returned angle.
@@ -1761,7 +1761,7 @@ One way to derive this is through the differential of the direction angle. Along
 The corresponding local differential is:
 
 $$
-d\theta=\frac{-y\\,dx+x\\,dy}{x^2+y^2}.
+d\theta=\frac{-y\,dx+x\,dy}{x^2+y^2}.
 $$
 
 At the origin, the direction is undefined. The denominator makes this explicit.

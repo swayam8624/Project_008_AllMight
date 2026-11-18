@@ -1,0 +1,51 @@
+\hypertarget{appendix-bc44f7b42f42}{}
+\section*{Unit roundoff}
+\section{Unit roundoff}\label{unit-roundoff}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C004 · \textbf{Latest development:} C005
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Under nearest binary rounding the conventional relative bound for normal-range results is u=2\^{}-p, half upward epsilon. For binary32 this is 2\^{}-24. The bound has range/rounding assumptions.
+
+Repeated-rounding bounds use \(\gamma_n=nu/(1-nu)\) when \(nu<1\), under the stated rounding and range assumptions. Summation error also depends on operand magnitudes; this is not a universal relative-error guarantee.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-14bab4cab9d4]{ULP and representable spacing} --- Adjacent representable points define rounding candidates, errors and step distances.
+\item
+  \hyperref[appendix-614afe1de592]{Rounding to nearest ties to even} --- Midpoint parity determines discarded-tail decisions and the normal relative-error bound.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-3ae74e89b4e6]{Absolute and relative error} --- The local normal-rounding bound supplies the error-analysis scale.
+\item
+  \hyperref[appendix-f82e270791c8]{Accumulated rounding error} --- The local normal-rounding bound supplies the error-analysis scale.
+\end{itemize}
+
+Connect later dependent concepts here as their lessons arrive.
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Stable probability normalization and log-sum-exp (02-Foundations-II, appendix-d580b422240f)}
+\item
+  \href{}{Stable quadratic root evaluation (02-Foundations-II, appendix-b9afba7f63e5)} \#\# Recall and next depth
+\end{itemize}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Subnormal absolute-error models and target-specific arithmetic require separate treatment; do not extend the normal relative bound to arbitrarily tiny results.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#When\%20arithmetic\%20meets\%20uncertainty}{M005 development}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20stretching\%20ruler\%20for\%20real-valued\%20quantities}{M004 teaching chapter} · \hyperref[appendix-fd090d982a15]{Per-part definitions} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

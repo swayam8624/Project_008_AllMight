@@ -1,0 +1,46 @@
+\hypertarget{appendix-7277c62d4599}{}
+\section{Russian roulette path termination}\label{appendix-7277c62d4599-russian-roulette-path-termination}
+
+Russian roulette reduces expected path length without deterministically deleting every long path. At a continuation point, choose a survival probability \(p\in(0,1]\). If the path terminates, its future contribution is zero. If it survives, divide the surviving throughput by \(p\).
+
+For a continuation contribution \(X\),
+
+\[
+Y=
+\begin{cases}
+X/p,&\text{with probability }p,\\
+0,&\text{with probability }1-p.
+\end{cases}
+\]
+
+Then
+
+\[
+\mathbb E[Y]
+=
+p\frac{X}{p}+(1-p)0
+=
+X.
+\]
+
+The compensation preserves the continuation expectation. It does not guarantee lower variance, and it does not undo bias from a separate hard bounce cap.
+
+\subsection{Choosing the survival probability}\label{appendix-7277c62d4599-choosing-the-survival-probability}
+
+A common design bases \(p\) on remaining throughput magnitude, usually after a minimum depth. But the exact scalar used---maximum channel, luminance-like measure, spectral bound---changes variance and path behavior. Clamp policies must be documented.
+
+A very small \(p\) creates rare, very large weights \(1/p\), which can increase variance dramatically. A \(p\) too close to one saves little work. The point is an efficiency trade-off, not a ritual after N bounces.
+
+\subsection{Conditional probability matters}\label{appendix-7277c62d4599-conditional-probability-matters}
+
+The compensation uses the probability of surviving \textbf{at that decision}, conditioned on the path state that reached it. If the probability changes per bounce, multiply the path throughput by the reciprocal of each actual survival probability encountered. Do not divide later by a generic average probability.
+
+\subsection{Executable reference}\label{appendix-7277c62d4599-executable-reference}
+
+tools/labs/monte\_carlo\_transport\_lab.cpp runs one million deterministic-seed roulette trials and verifies that the sample mean remains close to the un-terminated contribution after survival compensation.
+
+That does not prove a complete renderer. It isolates the stochastic invariant so a path tracer can test roulette independently of geometry, BSDF and light-sampling bugs.
+
+Read the connected derivation at \hyperref[03-visual-computing-i-ch007-follow-one-path-without-losing-its-probability]{Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Follow one path without losing its probability}.
+
+Related: \hyperref[appendix-ca8898faf1a6]{Multiple importance sampling}, \href{../02-Foundations-II/main.pdf\#nameddest=appendix-b9db93e28371}{Reproducible numerical benchmarking (02-Foundations-II, appendix-b9db93e28371)}.

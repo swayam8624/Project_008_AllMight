@@ -8,7 +8,7 @@ Finite grids and samples change a continuous problem; truncation and floating-po
 
 **Recall question:** How would you tell whether an observed error comes from grid resolution, numerical arithmetic, or an insufficient sample budget?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 69720–72217; source-span SHA256 5904cbf0b13e2b15146df64601fd0d11f88a7e53b874180b6121aebb2d5fc5ff. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 69967–72464; source-span SHA256 f58f1a1fd3bf562886326a1beb3f9470630298110de5d4f47ef5ac0af6e9f368. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Separate discretization, truncation, and roundoff; measure convergence
@@ -471,13 +471,13 @@ The light-contribution example returns throughout the volume as a concrete use o
 The starting point of many randomized algorithms is a random variable:
 
 $$
- U\sim\mathcal U(0,1). 
+ U\sim\mathcal U(0,1).
 $$
 
 Its probability density is:
 
 $$
- p_U(u)= \begin{cases} 1,&0\le u\le1,\\ 0,&\text{otherwise}, \end{cases} 
+ p_U(u)= \begin{cases} 1,&0\le u\le1,\\ 0,&\text{otherwise}, \end{cases}
 $$
 
 where endpoint conventions do not affect this ideal continuous distribution.
@@ -485,7 +485,7 @@ where endpoint conventions do not affect this ideal continuous distribution.
 Its CDF is:
 
 $$
- F_U(u)=u,\qquad 0\le u\le1. 
+ F_U(u)=u,\qquad 0\le u\le1.
 $$
 
 This distribution is important not because all physical quantities are uniform, but because a source of uniform random numbers can be transformed into many other distributions.
@@ -499,31 +499,31 @@ A practical uniform generator produces a discrete approximation to an ideal cont
 Suppose we obtain an unsigned 32-bit integer $R$ uniformly distributed over:
 
 $$
- \{0,1,\ldots,2^{32}-1\}. 
+ \{0,1,\ldots,2^{32}-1\}.
 $$
 
 Define:
 
 $$
- \boxed{U=\frac{R}{2^{32}}}. 
+ \boxed{U=\frac{R}{2^{32}}}.
 $$
 
 Then:
 
 $$
- 0\le U<1. 
+ 0\le U<1.
 $$
 
 Every attainable lattice value:
 
 $$
- \frac{k}{2^{32}} 
+ \frac{k}{2^{32}}
 $$
 
 has probability:
 
 $$
- \frac1{2^{32}}. 
+ \frac1{2^{32}}.
 $$
 
 The generated variable is not mathematically continuous. It is uniform over a finite dyadic grid.
@@ -533,10 +533,10 @@ For a `double`, this conversion can preserve those 32 random bits exactly becaus
 A higher-resolution approach can use 53 random bits:
 
 $$
- \boxed{ U=\frac{R\_{53}}{2^{53}} } 
+ \boxed{ U=\frac{R_{53}}{2^{53}} }
 $$
 
-where $R\_{53}$ is a uniformly distributed integer from zero through $2^{53}-1$.
+where $R_{53}$ is a uniformly distributed integer from zero through $2^{53}-1$.
 
 This provides samples in the half-open interval $[0,1)$ on a grid compatible with binary64 precision.
 
@@ -545,7 +545,7 @@ This provides samples in the half-open interval $[0,1)$ on a grid compatible wit
 The interval:
 
 $$
- [0,1) 
+ [0,1)
 $$
 
 contains zero but not one.
@@ -555,7 +555,7 @@ That convention is particularly convenient for indexing and inverse-transform sa
 For example, if we choose an integer bucket using:
 
 $$
- i=\lfloor NU\rfloor, 
+ i=\lfloor NU\rfloor,
 $$
 
 then $i$ lies between zero and $N-1$ whenever $U\in[0,1)$.
@@ -565,7 +565,7 @@ If $U=1$ were permitted, the expression could produce $i=N$, an invalid array in
 But some transformations require excluding zero as well. The expression:
 
 $$
- -\log U 
+ -\log U
 $$
 
 is undefined at $U=0$.
@@ -579,19 +579,19 @@ A sampler interface should document its exact floating-point endpoint behavior.
 Suppose a generator produces uniformly distributed integers:
 
 $$
- R\in\{0,1,\ldots,7\}. 
+ R\in\{0,1,\ldots,7\}.
 $$
 
 We want one of three outcomes:
 
 $$
- 0,1,2. 
+ 0,1,2.
 $$
 
 A naive approach is:
 
 $$
- K=R\bmod3. 
+ K=R\bmod3.
 $$
 
 List the results:
@@ -603,15 +603,15 @@ List the results:
 The resulting probabilities are:
 
 $$
- P(K=0)=\frac38, 
+ P(K=0)=\frac38,
 $$
 
 $$
- P(K=1)=\frac38, 
+ P(K=1)=\frac38,
 $$
 
 $$
- P(K=2)=\frac28. 
+ P(K=2)=\frac28.
 $$
 
 The distribution is not uniform.
@@ -627,7 +627,7 @@ Among these six retained integers, each residue modulo three occurs exactly twic
 Therefore:
 
 $$
- P(K=0)=P(K=1)=P(K=2)=\frac13. 
+ P(K=0)=P(K=1)=P(K=2)=\frac13.
 $$
 
 The cost is that some generated values are discarded, so the number of generator draws is variable.
@@ -643,13 +643,13 @@ A pseudorandom-number generator, or PRNG, is a deterministic algorithm designed 
 At its simplest, it has an internal state $s_n$ and a state transition:
 
 $$
- \boxed{s\_{n+1}=T(s_n)}. 
+ \boxed{s_{n+1}=T(s_n)}.
 $$
 
 An output function maps the state to a generated value:
 
 $$
- \boxed{r_n=O(s_n)}. 
+ \boxed{r_n=O(s_n)}.
 $$
 
 Given the initial state and the transition/output algorithms, the sequence is determined.
@@ -739,7 +739,7 @@ For deterministic replay, a stateful generator can expose a serializable state.
 We can store:
 
 $$
- s_n 
+ s_n
 $$
 
 at a checkpoint and restore it later.
@@ -769,7 +769,7 @@ One strategy assigns each pixel a stream derived from its coordinates and a glob
 For example:
 
 $$
- s\_{\mathrm{pixel}}= H(\text{seed},x,y), 
+ s_{\mathrm{pixel}}= H(\text{seed},x,y),
 $$
 
 where $H$ is a mixing function.
@@ -787,7 +787,7 @@ That leads to stateless generation.
 A linear congruential generator, or LCG, uses:
 
 $$
- \boxed{ x\_{n+1}=(ax_n+c)\bmod m }. 
+ \boxed{ x_{n+1}=(ax_n+c)\bmod m }.
 $$
 
 Here $a$ is the multiplier, $c$ is the increment, and $m$ is the modulus.
@@ -801,45 +801,45 @@ This is among the simplest possible PRNG designs.
 Consider the toy generator:
 
 $$
- x\_{n+1}=(5x_n+1)\bmod16. 
+ x_{n+1}=(5x_n+1)\bmod16.
 $$
 
 Let:
 
 $$
- x_0=3. 
+ x_0=3.
 $$
 
 Then:
 
 $$
- x_1=(5\cdot3+1)\bmod16=16\bmod16=0. 
+ x_1=(5\cdot3+1)\bmod16=16\bmod16=0.
 $$
 
 Next:
 
 $$
- x_2=(5\cdot0+1)\bmod16=1. 
+ x_2=(5\cdot0+1)\bmod16=1.
 $$
 
 Then:
 
 $$
- x_3=(5\cdot1+1)\bmod16=6, 
+ x_3=(5\cdot1+1)\bmod16=6,
 $$
 
 $$
- x_4=(5\cdot6+1)\bmod16=31\bmod16=15, 
+ x_4=(5\cdot6+1)\bmod16=31\bmod16=15,
 $$
 
 $$
- x_5=(5\cdot15+1)\bmod16=76\bmod16=12. 
+ x_5=(5\cdot15+1)\bmod16=76\bmod16=12.
 $$
 
 The sequence begins:
 
 $$
- 3,\ 0,\ 1,\ 6,\ 15,\ 12,\ldots 
+ 3,\ 0,\ 1,\ 6,\ 15,\ 12,\ldots
 $$
 
 Every value is completely determined by the previous state.
@@ -855,19 +855,19 @@ For a mixed LCG with positive modulus $m$, the Hull–Dobell theorem gives condi
 For our toy example:
 
 $$
- m=16,\quad a=5,\quad c=1. 
+ m=16,\quad a=5,\quad c=1.
 $$
 
 We have:
 
 $$
- \gcd(1,16)=1. 
+ \gcd(1,16)=1.
 $$
 
 The only prime factor of 16 is 2, and:
 
 $$
- a-1=4 
+ a-1=4
 $$
 
 is divisible by 2 and 4.
@@ -881,7 +881,7 @@ Look at the least significant bit.
 When $a$ and $c$ are odd:
 
 $$
- x\_{n+1}\equiv x_n+1\pmod2. 
+ x_{n+1}\equiv x_n+1\pmod2.
 $$
 
 Therefore the lowest bit alternates between zero and one.
@@ -923,7 +923,7 @@ The Mersenne Twister family was designed to produce long-period pseudorandom seq
 The commonly used MT19937 has period:
 
 $$
- \boxed{2^{19937}-1}. 
+ \boxed{2^{19937}-1}.
 $$
 
 The exponent is a Mersenne-prime exponent.
@@ -957,7 +957,7 @@ Its large state is an advantage for some statistical uses but a disadvantage for
 MT19937's underlying 624-word state requires roughly:
 
 $$
- 624\cdot4=2496\text{ bytes} 
+ 624\cdot4=2496\text{ bytes}
 $$
 
 just for the principal 32-bit state array, not counting implementation metadata.
@@ -965,7 +965,7 @@ just for the principal 32-bit state array, not counting implementation metadata.
 If a renderer naively stores one such generator per million simultaneous ray states:
 
 $$
- 2496\times10^6\text{ bytes} 
+ 2496\times10^6\text{ bytes}
 $$
 
 is approximately 2.5 GB of state data alone.
@@ -1005,13 +1005,13 @@ The central design idea is to combine a simple state transition, often based on 
 Conceptually:
 
 $$
- \boxed{ s\_{n+1}=as_n+c\pmod{2^w} } 
+ \boxed{ s_{n+1}=as_n+c\pmod{2^w} }
 $$
 
 followed by:
 
 $$
- \boxed{ r_n=P(s_n) } 
+ \boxed{ r_n=P(s_n) }
 $$
 
 where $P$ is a suitable output permutation.
@@ -1031,7 +1031,7 @@ A representative PCG32-style generator uses 64-bit internal state and emits 32-b
 Its state transition may use:
 
 $$
- s\_{n+1} = 6364136223846793005\\,s_n+c \pmod{2^{64}}, 
+ s_{n+1} = 6364136223846793005\,s_n+c \pmod{2^{64}},
 $$
 
 with an odd increment $c$.
@@ -1087,7 +1087,7 @@ A good experiment should record the master seed, generator algorithm and version
 A practical system can derive stream identifiers from a master seed:
 
 $$
- s_i=H(s\_{\mathrm{master}},i). 
+ s_i=H(s_{\mathrm{master}},i).
 $$
 
 Here $i$ identifies a worker or logical stream, and $H$ is a suitable mixing function.
@@ -1095,7 +1095,7 @@ Here $i$ identifies a worker or logical stream, and $H$ is a suitable mixing fun
 If the application also uses sample indices and dimensions:
 
 $$
- r=F(s\_{\mathrm{master}},\text{pixel},\text{sample},\text{dimension}), 
+ r=F(s_{\mathrm{master}},\text{pixel},\text{sample},\text{dimension}),
 $$
 
 the generated value can be independent of execution scheduling.
@@ -1129,7 +1129,7 @@ A stateless generator instead calculates a random-looking output from explicit i
 For example:
 
 $$
- \boxed{ r=H(\text{seed},x,y,s,d) } 
+ \boxed{ r=H(\text{seed},x,y,s,d) }
 $$
 
 where:
@@ -1229,7 +1229,7 @@ Suppose a sequence has an approximately uniform histogram on $[0,1)$.
 Now pair consecutive values:
 
 $$
- (u_0,u_1),\quad(u_2,u_3),\quad\ldots. 
+ (u_0,u_1),\quad(u_2,u_3),\quad\ldots.
 $$
 
 If the paired points align along a small number of lines, the two-dimensional sampling pattern is poor even though the one-dimensional histogram looks good.
@@ -1239,7 +1239,7 @@ Rendering frequently uses two-dimensional or higher-dimensional samples.
 A camera ray may use:
 
 $$
- (u_1,u_2) 
+ (u_1,u_2)
 $$
 
 for pixel position, another pair for lens coordinates, and additional dimensions for bounce sampling.
@@ -1296,7 +1296,7 @@ We now have a source of approximately uniform random values. But a ray tracer ne
 How do we transform:
 
 $$
- U\sim\mathcal U(0,1) 
+ U\sim\mathcal U(0,1)
 $$
 
 into a target distribution?
@@ -1304,7 +1304,7 @@ into a target distribution?
 The general idea is to define a mapping:
 
 $$
- \boxed{X=g(U)} 
+ \boxed{X=g(U)}
 $$
 
 and choose $g$ so that the resulting variable $X$ has the desired probability law.
@@ -1323,19 +1323,19 @@ The second is essential for unbiased Monte Carlo weighting.
 Suppose:
 
 $$
- U\sim\mathcal U(0,1). 
+ U\sim\mathcal U(0,1).
 $$
 
 We want:
 
 $$
- X\sim\mathcal U(a,b). 
+ X\sim\mathcal U(a,b).
 $$
 
 Define:
 
 $$
- \boxed{X=a+(b-a)U}. 
+ \boxed{X=a+(b-a)U}.
 $$
 
 Because $U\in[0,1]$, $X$ lies in $[a,b]$.
@@ -1343,25 +1343,25 @@ Because $U\in[0,1]$, $X$ lies in $[a,b]$.
 The inverse mapping is:
 
 $$
- U=\frac{X-a}{b-a}. 
+ U=\frac{X-a}{b-a}.
 $$
 
 Its derivative is:
 
 $$
- \frac{dU}{dX}=\frac1{b-a}. 
+ \frac{dU}{dX}=\frac1{b-a}.
 $$
 
 The density transformation formula gives:
 
 $$
- p_X(x)= p_U\left(\frac{x-a}{b-a}\right) \left|\frac1{b-a}\right|. 
+ p_X(x)= p_U\left(\frac{x-a}{b-a}\right) \left|\frac1{b-a}\right|.
 $$
 
 Inside the interval, $p_U=1$, so:
 
 $$
- \boxed{p_X(x)=\frac1{b-a}}. 
+ \boxed{p_X(x)=\frac1{b-a}}.
 $$
 
 The same affine transformation that changes the numerical range also changes the density according to the Jacobian.
@@ -1401,13 +1401,13 @@ Suppose $X$ has cumulative distribution function $F_X(x)$.
 For a continuous strictly increasing CDF, we can sample $X$ by:
 
 $$
- \boxed{X=F_X^{-1}(U)} 
+ \boxed{X=F_X^{-1}(U)}
 $$
 
 where:
 
 $$
- U\sim\mathcal U(0,1). 
+ U\sim\mathcal U(0,1).
 $$
 
 Why does this work?
@@ -1415,25 +1415,25 @@ Why does this work?
 Let:
 
 $$
- X=F^{-1}(U). 
+ X=F^{-1}(U).
 $$
 
 For a monotone increasing inverse:
 
 $$
- P(X\le x) = P(F^{-1}(U)\le x). 
+ P(X\le x) = P(F^{-1}(U)\le x).
 $$
 
 Apply the increasing function $F$:
 
 $$
- P(X\le x)=P(U\le F(x)). 
+ P(X\le x)=P(U\le F(x)).
 $$
 
 Because $U$ is uniform on $[0,1]$:
 
 $$
- P(U\le v)=v 
+ P(U\le v)=v
 $$
 
 for $v\in[0,1]$.
@@ -1441,7 +1441,7 @@ for $v\in[0,1]$.
 Therefore:
 
 $$
- \boxed{P(X\le x)=F(x)}. 
+ \boxed{P(X\le x)=F(x)}.
 $$
 
 The constructed random variable has the desired CDF.
@@ -1453,37 +1453,37 @@ For general distributions with jumps, the generalized inverse, or quantile funct
 Consider the target density:
 
 $$
- p(x)=2x,\qquad0\le x\le1. 
+ p(x)=2x,\qquad0\le x\le1.
 $$
 
 Check normalization:
 
 $$
- \int_0^12x\\,dx = [x^2]\_0^1=1. 
+ \int_0^12x\,dx = [x^2]_0^1=1.
 $$
 
 Its CDF is:
 
 $$
- F(x)=\int_0^x2t\\,dt=x^2. 
+ F(x)=\int_0^x2t\,dt=x^2.
 $$
 
 Set:
 
 $$
- u=F(x)=x^2. 
+ u=F(x)=x^2.
 $$
 
 Solve for $x$:
 
 $$
- \boxed{x=\sqrt u}. 
+ \boxed{x=\sqrt u}.
 $$
 
 Thus:
 
 $$
- \boxed{X=\sqrt U}. 
+ \boxed{X=\sqrt U}.
 $$
 
 The transformation requires only one uniform random number and a square root.
@@ -1519,13 +1519,13 @@ The staged teaching version adds an explicit finiteness check before the interva
 For $0\le x\le1$:
 
 $$
- P(X\le x) = P(\sqrt U\le x) = P(U\le x^2) =x^2. 
+ P(X\le x) = P(\sqrt U\le x) = P(U\le x^2) =x^2.
 $$
 
 Differentiate the CDF:
 
 $$
- p_X(x)=2x. 
+ p_X(x)=2x.
 $$
 
 The transformed sample follows the intended distribution.
@@ -1549,25 +1549,25 @@ A sampling implementation should not silently produce an infinite estimator weig
 For the exponential distribution:
 
 $$
- F(x)=1-e^{-\lambda x}. 
+ F(x)=1-e^{-\lambda x}.
 $$
 
 Set:
 
 $$
- u=1-e^{-\lambda x}. 
+ u=1-e^{-\lambda x}.
 $$
 
 Rearrange:
 
 $$
- e^{-\lambda x}=1-u. 
+ e^{-\lambda x}=1-u.
 $$
 
 Taking logarithms:
 
 $$
- \boxed{ x=-\frac{\log(1-u)}{\lambda} }. 
+ \boxed{ x=-\frac{\log(1-u)}{\lambda} }.
 $$
 
 A numerically careful implementation uses:
@@ -1601,7 +1601,7 @@ Suppose the target PDF is $p(x)$ and we can easily sample a proposal PDF $q(x)$.
 Choose a constant $M$ satisfying:
 
 $$
- \boxed{ p(x)\le Mq(x) } 
+ \boxed{ p(x)\le Mq(x) }
 $$
 
 for every point in the relevant support.
@@ -1613,7 +1613,7 @@ The algorithm is:
 3. Accept $X$ if:
 
 $$
- \boxed{ U\le\frac{p(X)}{Mq(X)} }. 
+ \boxed{ U\le\frac{p(X)}{Mq(X)} }.
 $$
 
 Otherwise, reject and repeat.
@@ -1625,31 +1625,31 @@ The acceptance probability at a particular proposed $x$ is proportional to $p(x)
 The joint probability density of proposing $x$ and accepting it is proportional to:
 
 $$
- q(x)\frac{p(x)}{Mq(x)} = \frac{p(x)}M. 
+ q(x)\frac{p(x)}{Mq(x)} = \frac{p(x)}M.
 $$
 
 The overall probability of accepting any proposal is:
 
 $$
- P(\text{accept}) = \int q(x)\frac{p(x)}{Mq(x)}\\,dx. 
+ P(\text{accept}) = \int q(x)\frac{p(x)}{Mq(x)}\,dx.
 $$
 
 Cancel $q(x)$:
 
 $$
- P(\text{accept}) = \frac1M\int p(x)\\,dx. 
+ P(\text{accept}) = \frac1M\int p(x)\,dx.
 $$
 
 Since $p$ is normalized:
 
 $$
- \boxed{ P(\text{accept})=\frac1M }. 
+ \boxed{ P(\text{accept})=\frac1M }.
 $$
 
 Conditioning on acceptance gives:
 
 $$
- p(x\mid\text{accept}) = \frac{p(x)/M}{1/M} =p(x). 
+ p(x\mid\text{accept}) = \frac{p(x)/M}{1/M} =p(x).
 $$
 
 Therefore the accepted samples have the desired density.
@@ -1661,31 +1661,31 @@ This proof assumes a valid finite envelope $M$, an appropriate proposal support,
 Use:
 
 $$
- p(x)=2x,\qquad0\le x\le1. 
+ p(x)=2x,\qquad0\le x\le1.
 $$
 
 Choose a uniform proposal:
 
 $$
- q(x)=1. 
+ q(x)=1.
 $$
 
 Because:
 
 $$
- 2x\le2, 
+ 2x\le2,
 $$
 
 we can use:
 
 $$
- M=2. 
+ M=2.
 $$
 
 The acceptance probability becomes:
 
 $$
- \frac{p(x)}{Mq(x)} = \frac{2x}{2} =x. 
+ \frac{p(x)}{Mq(x)} = \frac{2x}{2} =x.
 $$
 
 Therefore the algorithm is remarkably simple.
@@ -1695,13 +1695,13 @@ Generate two independent uniform random values $u_1,u_2$.
 Set:
 
 $$
- x=u_1. 
+ x=u_1.
 $$
 
 Accept if:
 
 $$
- \boxed{u_2\<x}. 
+ \boxed{u_2\<x}.
 $$
 
 Otherwise try again.
@@ -1711,13 +1711,13 @@ Otherwise try again.
 The theoretical acceptance probability is:
 
 $$
- \frac1M=\frac12. 
+ \frac1M=\frac12.
 $$
 
 Therefore the expected number of proposals per accepted sample is:
 
 $$
- \boxed{M=2}. 
+ \boxed{M=2}.
 $$
 
 On average, we need two proposal attempts to obtain one accepted sample.
@@ -1757,7 +1757,7 @@ Importance sampling is among the most consequential concepts in Monte Carlo rend
 Suppose our goal is to evaluate:
 
 $$
- \boxed{ I=\int_Df(x)\\,dx }. 
+ \boxed{ I=\int_Df(x)\,dx }.
 $$
 
 We choose a normalized PDF $p(x)$ that is strictly positive wherever $f(x)$ makes a relevant contribution, apart from harmless measure-zero exceptions.
@@ -1765,19 +1765,19 @@ We choose a normalized PDF $p(x)$ that is strictly positive wherever $f(x)$ make
 Multiply and divide by the PDF:
 
 $$
- I= \int_D \frac{f(x)}{p(x)}p(x)\\,dx. 
+ I= \int_D \frac{f(x)}{p(x)}p(x)\,dx.
 $$
 
 Recognize the expectation:
 
 $$
- \boxed{ I= \mathbb E\_{X\sim p} \left[ \frac{f(X)}{p(X)} \right] }. 
+ \boxed{ I= \mathbb E_{X\sim p} \left[ \frac{f(X)}{p(X)} \right] }.
 $$
 
 Given $N$ independent samples $X_1,\ldots,X_N\sim p$, the Monte Carlo estimator is:
 
 $$
- \boxed{ \widehat I_N= \frac1N\sum\_{i=1}^{N} \frac{f(X_i)}{p(X_i)} }. 
+ \boxed{ \widehat I_N= \frac1N\sum_{i=1}^{N} \frac{f(X_i)}{p(X_i)} }.
 $$
 
 The division by the actual sampling PDF is essential.
@@ -1789,25 +1789,25 @@ Sampling more frequently in important regions without compensating for the PDF g
 For one sample, define:
 
 $$
- Y=\frac{f(X)}{p(X)}. 
+ Y=\frac{f(X)}{p(X)}.
 $$
 
 Then:
 
 $$
- \mathbb E[Y] = \int_D \frac{f(x)}{p(x)}p(x)\\,dx = \int_Df(x)\\,dx =I. 
+ \mathbb E[Y] = \int_D \frac{f(x)}{p(x)}p(x)\,dx = \int_Df(x)\,dx =I.
 $$
 
 Therefore:
 
 $$
- \mathbb E[\widehat I_N] = \frac1N\sum_i\mathbb E[Y_i] =I. 
+ \mathbb E[\widehat I_N] = \frac1N\sum_i\mathbb E[Y_i] =I.
 $$
 
 Thus:
 
 $$
- \boxed{ \mathbb E[\widehat I_N]=I }. 
+ \boxed{ \mathbb E[\widehat I_N]=I }.
 $$
 
 The estimator is unbiased under the stated sampling and integrability assumptions.
@@ -1817,83 +1817,83 @@ The estimator is unbiased under the stated sampling and integrability assumption
 The variance of one contribution is:
 
 $$
- \operatorname{Var}(Y) = \mathbb E[Y^2]-I^2. 
+ \operatorname{Var}(Y) = \mathbb E[Y^2]-I^2.
 $$
 
 Now:
 
 $$
- \mathbb E[Y^2] = \int_D \left(\frac{f(x)}{p(x)}\right)^2p(x)\\,dx = \int_D\frac{f(x)^2}{p(x)}\\,dx. 
+ \mathbb E[Y^2] = \int_D \left(\frac{f(x)}{p(x)}\right)^2p(x)\,dx = \int_D\frac{f(x)^2}{p(x)}\,dx.
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{Var}(Y) = \int_D\frac{f(x)^2}{p(x)}\\,dx-I^2 }. 
+ \boxed{ \operatorname{Var}(Y) = \int_D\frac{f(x)^2}{p(x)}\,dx-I^2 }.
 $$
 
 For independent samples with finite variance:
 
 $$
- \boxed{ \operatorname{Var}(\widehat I_N) = \frac{\operatorname{Var}(Y)}{N} }. 
+ \boxed{ \operatorname{Var}(\widehat I_N) = \frac{\operatorname{Var}(Y)}{N} }.
 $$
 
 Importance sampling is valuable when a good choice of $p$ substantially reduces this variance.
 
-#### 3 Worked example: estimating $\int_0^1x^2\\,dx$
+#### 3 Worked example: estimating $\int_0^1x^2\,dx$
 
 Consider:
 
 $$
- I=\int_0^1x^2\\,dx=\boxed{\frac13}. 
+ I=\int_0^1x^2\,dx=\boxed{\frac13}.
 $$
 
 First use uniform sampling:
 
 $$
- p_U(x)=1. 
+ p_U(x)=1.
 $$
 
 Then the sample contribution is:
 
 $$
- Y_U=x^2. 
+ Y_U=x^2.
 $$
 
 Its expected value is:
 
 $$
- \mathbb E[Y_U]=\frac13. 
+ \mathbb E[Y_U]=\frac13.
 $$
 
 Its second moment is:
 
 $$
- \mathbb E[Y_U^2] = \int_0^1x^4\\,dx =\frac15. 
+ \mathbb E[Y_U^2] = \int_0^1x^4\,dx =\frac15.
 $$
 
 Thus:
 
 $$
- \operatorname{Var}(Y_U) = \frac15-\frac19 = \boxed{\frac4{45}} \approx0.0888889. 
+ \operatorname{Var}(Y_U) = \frac15-\frac19 = \boxed{\frac4{45}} \approx0.0888889.
 $$
 
 Now choose the nonuniform importance PDF:
 
 $$
- p_I(x)=2x. 
+ p_I(x)=2x.
 $$
 
 We already know how to sample it:
 
 $$
- X=\sqrt U. 
+ X=\sqrt U.
 $$
 
 The weighted estimator contribution becomes:
 
 $$
- Y_I= \frac{x^2}{2x} =\frac x2 
+ Y_I= \frac{x^2}{2x} =\frac x2
 $$
 
 for $x>0$.
@@ -1901,25 +1901,25 @@ for $x>0$.
 Its mean remains:
 
 $$
- \mathbb E[Y_I] = \int_0^1\frac x2(2x)\\,dx = \int_0^1x^2\\,dx =\frac13. 
+ \mathbb E[Y_I] = \int_0^1\frac x2(2x)\,dx = \int_0^1x^2\,dx =\frac13.
 $$
 
 Its second moment is:
 
 $$
- \begin{aligned} \mathbb E[Y_I^2] &= \int_0^1\left(\frac x2\right)^2(2x)\\,dx\\ &= \frac12\int_0^1x^3\\,dx\\ &=\frac12\cdot\frac14\\ &=\frac18. \end{aligned} 
+ \begin{aligned} \mathbb E[Y_I^2] &= \int_0^1\left(\frac x2\right)^2(2x)\,dx\\ &= \frac12\int_0^1x^3\,dx\\ &=\frac12\cdot\frac14\\ &=\frac18. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \operatorname{Var}(Y_I) = \frac18-\frac19 = \boxed{\frac1{72}} \approx0.0138889. 
+ \operatorname{Var}(Y_I) = \frac18-\frac19 = \boxed{\frac1{72}} \approx0.0138889.
 $$
 
 Compare variances:
 
 $$
- \boxed{ \frac{\operatorname{Var}(Y_U)} {\operatorname{Var}(Y_I)} = \frac{4/45}{1/72} =6.4 }. 
+ \boxed{ \frac{\operatorname{Var}(Y_U)} {\operatorname{Var}(Y_I)} = \frac{4/45}{1/72} =6.4 }.
 $$
 
 The importance-sampling estimator has 6.4 times smaller per-sample variance than the uniform estimator.
@@ -1929,7 +1929,7 @@ At a fixed number of independent samples, the ratio of estimator variances is al
 The corresponding standard-deviation improvement is:
 
 $$
- \sqrt{6.4}\approx2.53. 
+ \sqrt{6.4}\approx2.53.
 $$
 
 For equal target standard error and equal sample cost, uniform sampling would require approximately 6.4 times as many samples.
@@ -1947,19 +1947,19 @@ Exact analytical variances for estimating ∫₀¹ x² dx. Lower is better.
 For a nonnegative integrand $f(x)\ge0$, suppose the integral is:
 
 $$
- I=\int_Df(x)\\,dx>0. 
+ I=\int_Df(x)\,dx>0.
 $$
 
 Choose:
 
 $$
- \boxed{ p^\star(x)=\frac{f(x)}I }. 
+ \boxed{ p^\star(x)=\frac{f(x)}I }.
 $$
 
 Then:
 
 $$
- \frac{f(x)}{p^\star(x)} = \frac{f(x)}{f(x)/I} =I 
+ \frac{f(x)}{p^\star(x)} = \frac{f(x)}{f(x)/I} =I
 $$
 
 where $f(x)>0$.
@@ -1969,7 +1969,7 @@ Every sample contribution is identical.
 Therefore:
 
 $$
- \boxed{ \operatorname{Var}(Y)=0 }. 
+ \boxed{ \operatorname{Var}(Y)=0 }.
 $$
 
 This is the zero-variance importance distribution.
@@ -1977,31 +1977,31 @@ This is the zero-variance importance distribution.
 For our example:
 
 $$
- f(x)=x^2, \qquad I=\frac13. 
+ f(x)=x^2, \qquad I=\frac13.
 $$
 
 Thus:
 
 $$
- \boxed{ p^\star(x)=3x^2 }. 
+ \boxed{ p^\star(x)=3x^2 }.
 $$
 
 Its CDF is:
 
 $$
- F(x)=x^3. 
+ F(x)=x^3.
 $$
 
 We can sample it using:
 
 $$
- \boxed{ X=U^{1/3} }. 
+ \boxed{ X=U^{1/3} }.
 $$
 
 Every valid weighted contribution is:
 
 $$
- \frac{x^2}{3x^2}=\frac13. 
+ \frac{x^2}{3x^2}=\frac13.
 $$
 
 The variance is zero in the ideal mathematical model.
@@ -2011,7 +2011,7 @@ The variance is zero in the ideal mathematical model.
 The formula:
 
 $$
- p^\star(x)=\frac{f(x)}I 
+ p^\star(x)=\frac{f(x)}I
 $$
 
 contains the unknown integral $I$.
@@ -2035,19 +2035,19 @@ Importance sampling is valid only when the estimator uses the PDF corresponding 
 Suppose a random variable $X$ has PDF $p_X(x)$, and we transform it:
 
 $$
- Y=g(X). 
+ Y=g(X).
 $$
 
 If $g$ is differentiable, invertible, and has a nonzero Jacobian determinant, the transformed PDF is:
 
 $$
- \boxed{ p_Y(y) = p_X(g^{-1}(y)) \left|\det J\_{g^{-1}}(y)\right| }. 
+ \boxed{ p_Y(y) = p_X(g^{-1}(y)) \left|\det J_{g^{-1}}(y)\right| }.
 $$
 
 Equivalently, at corresponding points $y=g(x)$:
 
 $$
- \boxed{ p_Y(g(x)) = \frac{p_X(x)}{|\det J_g(x)|} }. 
+ \boxed{ p_Y(g(x)) = \frac{p_X(x)}{|\det J_g(x)|} }.
 $$
 
 The determinant measures how a small volume element expands or contracts under the mapping.
@@ -2057,31 +2057,31 @@ The determinant measures how a small volume element expands or contracts under t
 For a small region near $x$, probability is approximately:
 
 $$
- p_X(x)\\,dV_x. 
+ p_X(x)\,dV_x.
 $$
 
 The transformation maps it into a region with volume:
 
 $$
- dV_y= |\det J_g(x)|\\,dV_x. 
+ dV_y= |\det J_g(x)|\,dV_x.
 $$
 
 Probability is preserved:
 
 $$
- p_Y(y)\\,dV_y=p_X(x)\\,dV_x. 
+ p_Y(y)\,dV_y=p_X(x)\,dV_x.
 $$
 
 Substitute the volume relation:
 
 $$
- p_Y(y) |\det J_g(x)|dV_x = p_X(x)dV_x. 
+ p_Y(y) |\det J_g(x)|dV_x = p_X(x)dV_x.
 $$
 
 Cancel $dV_x$:
 
 $$
- p_Y(y)= \frac{p_X(x)}{|\det J_g(x)|}. 
+ p_Y(y)= \frac{p_X(x)}{|\det J_g(x)|}.
 $$
 
 This is the multivariable form of the one-dimensional inverse-derivative rule.
@@ -2091,13 +2091,13 @@ This is the multivariable form of the one-dimensional inverse-derivative rule.
 In direct lighting, we may sample a point on a light source using a PDF defined with respect to surface area:
 
 $$
- p_A(x). 
+ p_A(x).
 $$
 
 But the rendering equation integrates incoming directions with respect to solid angle:
 
 $$
- d\omega. 
+ d\omega.
 $$
 
 We need to convert the density.
@@ -2109,37 +2109,37 @@ Let $\theta_L$ be the angle between the light patch's normal and the direction t
 The patch subtends solid angle:
 
 $$
- \boxed{ d\omega= \frac{|\cos\theta_L|}{r^2}\\,dA }. 
+ \boxed{ d\omega= \frac{|\cos\theta_L|}{r^2}\,dA }.
 $$
 
 Therefore:
 
 $$
- dA= \frac{r^2}{|\cos\theta_L|}\\,d\omega. 
+ dA= \frac{r^2}{|\cos\theta_L|}\,d\omega.
 $$
 
 Probability conservation gives:
 
 $$
- p_A\\,dA=p\_\omega\\,d\omega. 
+ p_A\,dA=p_\omega\,d\omega.
 $$
 
 Substitute:
 
 $$
- p_A\frac{r^2}{|\cos\theta_L|}\\,d\omega = p\_\omega\\,d\omega. 
+ p_A\frac{r^2}{|\cos\theta_L|}\,d\omega = p_\omega\,d\omega.
 $$
 
 Thus:
 
 $$
- \boxed{ p\_\omega= p_A\frac{r^2}{|\cos\theta_L|} }. 
+ \boxed{ p_\omega= p_A\frac{r^2}{|\cos\theta_L|} }.
 $$
 
 The inverse relation is:
 
 $$
- \boxed{ p_A= p\_\omega\frac{|\cos\theta_L|}{r^2} }. 
+ \boxed{ p_A= p_\omega\frac{|\cos\theta_L|}{r^2} }.
 $$
 
 These are essential conversions for sampling area lights in path tracing.
@@ -2161,7 +2161,7 @@ They are not arbitrary rendering corrections.
 When:
 
 $$
- |\cos\theta_L|=0, 
+ |\cos\theta_L|=0,
 $$
 
 the differential mapping becomes singular at the grazing configuration.
@@ -2294,13 +2294,13 @@ Choosing among rendering strategies can be a pure-exploration task if the final 
 
 The UCB discussion above assumes each arm has a stable reward law. *Bandit Algorithms* develops a different model in which the environment is represented by a sequence of reward vectors
 
-\[
+$$
 x_1,\ldots,x_n,\qquad x_t\in[0,1]^k,
-\]
+$$
 
-without assuming that arm \(i\) is repeatedly sampled from one fixed distribution. At round \(t\), the learner chooses a distribution \(P_t\), samples an action \(A_t\sim P_t\), and sees only \(x_{t,A_t}\). Performance is compared with the best **fixed** action in hindsight:
+without assuming that arm $i$ is repeatedly sampled from one fixed distribution. At round $t$, the learner chooses a distribution $P_t$, samples an action $A_t\sim P_t$, and sees only $x_{t,A_t}$. Performance is compared with the best **fixed** action in hindsight:
 
-\[
+$$
 R_n
 =
 \max_{i\in[k]}
@@ -2309,39 +2309,39 @@ R_n
 \mathbb E\!\left[
 \sum_{t=1}^{n}x_{t,A_t}
 \right].
-\]
+$$
 
 The comparator matters. Low adversarial regret does not mean the learner tracks an arbitrarily changing best arm; that stronger target needs a switching/nonstationary comparator.
 
-Because unplayed rewards are hidden, the learner constructs an importance-weighted estimate. For an observed reward \(X_t=x_{t,A_t}\), a basic estimator for arm \(i\) is
+Because unplayed rewards are hidden, the learner constructs an importance-weighted estimate. For an observed reward $X_t=x_{t,A_t}$, a basic estimator for arm $i$ is
 
-\[
+$$
 \hat x_{t,i}
 =
 \frac{\mathbf 1\{A_t=i\}X_t}{P_{t,i}}.
-\]
+$$
 
 Conditioned on the past and the current reward vector,
 
-\[
+$$
 \mathbb E[\hat x_{t,i}]
 =
 x_{t,i},
-\]
+$$
 
-provided \(P_{t,i}>0\). The price is variance: when \(P_{t,i}\) is tiny, \(1/P_{t,i}\) can be huge. **Exploration is therefore also a variance-control mechanism.** A policy that drives an arm’s probability essentially to zero loses reliable information about that arm.
+provided $P_{t,i}>0$. The price is variance: when $P_{t,i}$ is tiny, $1/P_{t,i}$ can be huge. **Exploration is therefore also a variance-control mechanism.** A policy that drives an arm’s probability essentially to zero loses reliable information about that arm.
 
-Exp3 combines this estimator with exponential weighting. Cumulative estimated reward \( \hat S_{t-1,i} \) is mapped to a probability roughly proportional to
+Exp3 combines this estimator with exponential weighting. Cumulative estimated reward $ \hat S_{t-1,i} $ is mapped to a probability roughly proportional to
 
-\[
+$$
 \exp(\eta\hat S_{t-1,i}),
-\]
+$$
 
-with learning rate \(\eta\). Large \(\eta\) commits aggressively to the apparent leader; small \(\eta\) stays closer to uniform. In the bounded adversarial model, an appropriate choice gives the characteristic regret scale
+with learning rate $\eta$. Large $\eta$ commits aggressively to the apparent leader; small $\eta$ stays closer to uniform. In the bounded adversarial model, an appropriate choice gives the characteristic regret scale
 
-\[
+$$
 R_n=O(\sqrt{nk\log k}).
-\]
+$$
 
 The theorem is not “Exp3 works on arbitrary reality.” It assumes a particular feedback protocol, reward range, comparator, and adversary model. If the environment reacts after seeing the learner’s current random action in a prohibited way, or if rewards are unbounded/heavy-tailed without adaptation, the proof no longer applies as stated.
 
@@ -2351,21 +2351,21 @@ Source basis: Lattimore and Szepesvári, *Bandit Algorithms*, Chapters 11–12 o
 
 ### Context and linear structure let one observation teach us about more than one action
 
-A contextual bandit observes a context \(c_t\) **before** choosing the action. The benchmark is no longer necessarily the best one global arm; it can be a policy mapping contexts to actions. If every possible context is treated as an unrelated problem, data fragment badly. The useful question is what structure lets experience transfer across contexts.
+A contextual bandit observes a context $c_t$ **before** choosing the action. The benchmark is no longer necessarily the best one global arm; it can be a policy mapping contexts to actions. If every possible context is treated as an unrelated problem, data fragment badly. The useful question is what structure lets experience transfer across contexts.
 
-The expert-advice formulation represents candidate policies as experts. At each round, expert \(m\) provides a distribution over actions. Exp4 maintains weights over experts and mixes their recommendations, using bandit feedback and importance weighting to update the experts indirectly. This makes the comparator “best expert in hindsight” rather than “best arm.” The framework is powerful precisely because the internal form of an expert can be opaque to the bandit algorithm.
+The expert-advice formulation represents candidate policies as experts. At each round, expert $m$ provides a distribution over actions. Exp4 maintains weights over experts and mixes their recommendations, using bandit feedback and importance weighting to update the experts indirectly. This makes the comparator “best expert in hindsight” rather than “best arm.” The framework is powerful precisely because the internal form of an expert can be opaque to the bandit algorithm.
 
-A **linear bandit** assumes more explicit structure. Each action is represented by a feature vector \(a\in\mathbb R^d\), and expected reward is
+A **linear bandit** assumes more explicit structure. Each action is represented by a feature vector $a\in\mathbb R^d$, and expected reward is
 
-\[
+$$
 \mathbb E[X_t\mid A_t=a]
 =
 \langle \theta_*,a\rangle
-\]
+$$
 
-for an unknown parameter \(\theta_*\). One observation informs every action whose features overlap the measured direction. A regularized least-squares estimate is
+for an unknown parameter $\theta_*$. One observation informs every action whose features overlap the measured direction. A regularized least-squares estimate is
 
-\[
+$$
 \hat\theta_t
 =
 V_t^{-1}
@@ -2374,22 +2374,22 @@ V_t^{-1}
 V_t
 =
 \lambda I+\sum_{s=1}^{t}A_sA_s^T.
-\]
+$$
 
-The matrix \(V_t\) is not just bookkeeping. It records **which directions of parameter space have been excited by the chosen actions**. Directions with little action energy remain uncertain.
+The matrix $V_t$ is not just bookkeeping. It records **which directions of parameter space have been excited by the chosen actions**. Directions with little action energy remain uncertain.
 
-Optimism now operates over a confidence **set** rather than an interval. If \(C_t\) is a high-probability set containing \(\theta_*\), define
+Optimism now operates over a confidence **set** rather than an interval. If $C_t$ is a high-probability set containing $\theta_*$, define
 
-\[
+$$
 \operatorname{UCB}_t(a)
 =
 \max_{\theta\in C_t}
 \langle\theta,a\rangle,
-\]
+$$
 
-and choose the action with largest optimistic value. For ellipsoidal confidence sets this becomes a mean prediction plus a geometry-dependent uncertainty bonus involving \(V_t^{-1}\). An action can be attractive because its predicted reward is high or because it probes a weakly measured direction.
+and choose the action with largest optimistic value. For ellipsoidal confidence sets this becomes a mean prediction plus a geometry-dependent uncertainty bonus involving $V_t^{-1}$. An action can be attractive because its predicted reward is high or because it probes a weakly measured direction.
 
-The adaptive design makes confidence analysis subtle. \(A_t\) depends on earlier rewards, so ordinary fixed-design least-squares intervals cannot simply be copied into the bandit loop. The book develops martingale/self-normalized tools precisely because the design matrix is data-dependent. This is a recurring lesson in active vision and adaptive rendering: once the algorithm chooses where to measure based on previous measurements, uncertainty calculations must cover that adaptivity.
+The adaptive design makes confidence analysis subtle. $A_t$ depends on earlier rewards, so ordinary fixed-design least-squares intervals cannot simply be copied into the bandit loop. The book develops martingale/self-normalized tools precisely because the design matrix is data-dependent. This is a recurring lesson in active vision and adaptive rendering: once the algorithm chooses where to measure based on previous measurements, uncertainty calculations must cover that adaptivity.
 
 A graphics example is choosing among candidate ray bundles whose feature vector describes depth variance, normal variation, material roughness, and prior sample count. A global arm mean throws away that structure. A linear model can share information across similar bundles, while its confidence geometry reveals which feature combinations have not been explored. If reward is nonlinear in those features, however, the linear-bandit guarantee is misspecified rather than merely conservative.
 
@@ -2401,22 +2401,22 @@ In a Bayesian bandit model, uncertainty is represented by a posterior distributi
 
 For a Bernoulli arm with a Beta prior,
 
-\[
+$$
 \mu_i\sim\operatorname{Beta}(\alpha_i,\beta_i),
-\]
+$$
 
 success/failure observations update the posterior analytically. A Thompson step samples
 
-\[
+$$
 \tilde\mu_i\sim
 \operatorname{Beta}(\alpha_i+s_i,\beta_i+f_i)
-\]
+$$
 
-for each arm and selects \(\arg\max_i\tilde\mu_i\). Arms with uncertain posteriors sometimes produce optimistic samples and are explored automatically; concentrated clearly inferior posteriors are sampled less often.
+for each arm and selects $\arg\max_i\tilde\mu_i$. Arms with uncertain posteriors sometimes produce optimistic samples and are explored automatically; concentrated clearly inferior posteriors are sampled less often.
 
 This should not be confused with “Bayesian means prior choice does not matter after enough data.” In a sequential bandit, an overly pessimistic prior can suppress an arm, which prevents collecting the data that would correct that pessimism. The feedback loop couples inference and data acquisition. Lattimore and Szepesvári explicitly warn that Thompson sampling is not a universal silver bullet; optimality depends on the model class and prior/algorithm assumptions.
 
-For linear contextual problems, posterior sampling can be performed over the parameter vector. Under a Gaussian model, one samples a plausible \(\tilde\theta_t\) from a covariance shaped by accumulated design information and chooses the action maximizing \(\langle \tilde\theta_t,a\rangle\). This makes the connection to covariance geometry concrete: exploration happens in directions where the posterior remains wide.
+For linear contextual problems, posterior sampling can be performed over the parameter vector. Under a Gaussian model, one samples a plausible $\tilde\theta_t$ from a covariance shaped by accumulated design information and chooses the action maximizing $\langle \tilde\theta_t,a\rangle$. This makes the connection to covariance geometry concrete: exploration happens in directions where the posterior remains wide.
 
 The practical distinction among UCB, Exp3, and Thompson sampling is therefore not cosmetic. UCB constructs an explicit confidence-based optimistic bound under a stochastic model. Exp3 uses randomized exponential weighting and unbiased partial-feedback estimates to compete with a fixed action in an adversarial sequence. Thompson sampling samples a plausible environment from a Bayesian posterior. They can choose similar actions on one trace while carrying different correctness claims.
 
@@ -2424,21 +2424,21 @@ Source basis: *Bandit Algorithms*, Chapters 34–36 on Bayesian learning, Bayesi
 
 ### A bandit becomes a sequential-control problem when actions change what is observed next
 
-A standard bandit reward for arm \(i\) does not require an evolving state whose transition depends on the chosen action. Many engine and robotics decisions do. Moving the camera changes the next viewpoint; a navigation action changes the next location; an allocation decision changes cache state; a control impulse changes future dynamics. The appropriate abstraction is a **Markov decision process** rather than a stateless arm table.
+A standard bandit reward for arm $i$ does not require an evolving state whose transition depends on the chosen action. Many engine and robotics decisions do. Moving the camera changes the next viewpoint; a navigation action changes the next location; an allocation decision changes cache state; a control impulse changes future dynamics. The appropriate abstraction is a **Markov decision process** rather than a stateless arm table.
 
-An MDP defines states \(S_t\), actions \(A_t\), transition probabilities
+An MDP defines states $S_t$, actions $A_t$, transition probabilities
 
-\[
+$$
 P_a(s,s')
 =
 P(S_{t+1}=s'\mid S_t=s,A_t=a),
-\]
+$$
 
-and expected rewards \(r_a(s)\). A policy selects actions from state. The Markov property says the modeled current state contains the information needed for the next-state law; it does not say the real world has no memory. If crucial history is omitted from \(S_t\), the model is not Markov with respect to that state representation.
+and expected rewards $r_a(s)$. A policy selects actions from state. The Markov property says the modeled current state contains the information needed for the next-state law; it does not say the real world has no memory. If crucial history is omitted from $S_t$, the model is not Markov with respect to that state representation.
 
 For a discounted finite MDP, a familiar Bellman optimality equation is
 
-\[
+$$
 V^*(s)
 =
 \max_a
@@ -2449,11 +2449,11 @@ r(s,a)
 \sum_{s'}
 P(s'|s,a)V^*(s')
 \right].
-\]
+$$
 
 Lattimore and Szepesvári’s final chapter develops the average-reward strongly connected setting, where an optimal gain and a relative value/bias function replace the simple discounted form. The exact Bellman equation therefore depends on the objective. The structural idea is the same: optimal value satisfies a fixed-point relation combining immediate reward with the value of successor states.
 
-When \(P\) and \(r\) are unknown, reinforcement learning must explore **state–action dynamics**, not just reward means. Optimism can extend by constructing plausible MDPs or confidence regions for transitions/rewards and acting according to an optimistic model. The difficulty is now that poor exploration can prevent visiting entire state regions. A one-state MDP with action-dependent rewards collapses toward the bandit case; adding state introduces temporal credit and reachability.
+When $P$ and $r$ are unknown, reinforcement learning must explore **state–action dynamics**, not just reward means. Optimism can extend by constructing plausible MDPs or confidence regions for transitions/rewards and acting according to an optimistic model. The difficulty is now that poor exploration can prevent visiting entire state regions. A one-state MDP with action-dependent rewards collapses toward the bandit case; adding state introduces temporal credit and reachability.
 
 This boundary is important for adaptive engine systems. If choosing a denoiser only affects the current frame score, a bandit may suffice. If it changes a temporal history buffer that affects future frames, the reward process has state. If choosing a collision broad-phase rebuild policy changes the structure and cost of future queries, current action and future workload are coupled. Modeling that coupling explicitly is better than forcing history-dependent rewards into a stationary-arm assumption.
 

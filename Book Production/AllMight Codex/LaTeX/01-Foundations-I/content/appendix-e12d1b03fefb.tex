@@ -1,0 +1,45 @@
+\hypertarget{appendix-e12d1b03fefb}{}
+\section*{Atomic operations and write contention}
+\section{Atomic operations and write contention}\label{atomic-operations-and-write-contention}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C005
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Independently meaningful fields sharing a word can require coordinated read-modify-write and can cause unrelated writers to contend.
+
+An atomic update is indivisible to other participating accesses under its specified memory ordering. Packed independent flags may share one read-modify-write location: writers can overwrite each other without coordination. Contention means accesses compete for ownership or serialization.
+
+Atomic additions can prevent lost writes without fixing addition order. Different valid schedules can produce different rounded sums; deterministic reduction requires a defined tree as well as safe synchronization.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1f9963e1a5d1]{Bit packing} --- Packing places several constrained values into a carrier.
+\item
+  \hyperref[appendix-d67a19507dc5]{Machine word} --- A processor's natural integer processing width is often called its word width, but the term is architecture dependent.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5f1a2c3f97ff]{Numerical reproducibility} --- Indivisible updates do not impose a unique schedule-independent ordering.
+\end{itemize}
+
+Connect later chunks here when they use this concept.
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Explain atomic operations and write contention without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} Extend this mechanism to later algorithms and target-specific behavior. See the M005 chapter for its current examples and validity assumptions.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#When\%20arithmetic\%20meets\%20uncertainty}{M005 development}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#From\%20a\%20signal\%20to\%20an\%20interpretation}{C001 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

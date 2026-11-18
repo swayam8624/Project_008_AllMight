@@ -1,0 +1,55 @@
+\hypertarget{appendix-31b8c295e05f}{}
+\section*{Numerical error budgets}
+\section{Numerical error budgets}\label{numerical-error-budgets}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A computed result can differ from a target because of model assumptions, discretization, solver termination, arithmetic, sampling, or uncertain reference data. These contributions may interact, so an additive budget is a diagnostic model rather than a universal identity. First identify which errors are deterministic bounds, which are observed estimates, and which are stochastic uncertainty. For example, a ray-traced pixel can combine approximation of geometry, finite sample variance, floating-point accumulation, and an imperfect reference image. Allocate effort where the dominant contribution lies: extra precision cannot fix model bias, and more samples cannot repair an incorrect PDF. Report units and assumptions with every tolerance.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a7fbaf6d1b1c]{Forward and backward error}
+\item
+  \hyperref[appendix-8f6a01f284a7]{Conditioning and singularity}
+\item
+  \href{}{Algorithmic stability (02-Foundations-II, appendix-aa2bf0d79639)}
+\item
+  \href{}{Discretization, truncation, and roundoff (02-Foundations-II, appendix-6b0648b2b8e8)}
+\item
+  \href{}{Bracketed and open root solvers (02-Foundations-II, appendix-f63eb850796d)}
+\item
+  \href{}{A posteriori error bounds for contractive iteration (02-Foundations-II, appendix-d83b0ad1be7f)}
+\item
+  \href{}{Convergence order and Richardson extrapolation (02-Foundations-II, appendix-aca80b6bf17a)}
+\item
+  \href{}{Position reconstruction from depth (02-Foundations-II, appendix-2cbf2968e866)}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Reproducible numerical benchmarking (02-Foundations-II, appendix-b9db93e28371)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Separate\%20discretization,\%20truncation,\%20and\%20roundoff;\%20measure\%20convergence}{Separate discretization, truncation, and roundoff; measure convergence}
+\end{itemize}
+
+\subsection{Source coverage}\label{source-coverage}
+
+Supplied lesson parts: 966--1000.
+
+\subsection{Future keywords}\label{future-keywords}
+
+model bias, solver tolerance, sampling uncertainty

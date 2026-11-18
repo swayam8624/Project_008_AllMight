@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch205.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-b9548675eb2b-weak-observation-and-ownership-cycles" class="level2">
+<h2>Weak observation and ownership cycles</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C010 · <strong>Latest development:</strong> C010</p>
+<section id="appendix-b9548675eb2b-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p><code>std::weak_ptr&lt;T&gt;</code> observes a <code>shared_ptr</code> ownership group without increasing its strong count. <code>lock()</code> atomically attempts to create a temporary strong owner; the result is empty if the managed object is no longer alive. Replacing one edge of an otherwise all-strong ownership cycle with a weak observation can allow the strong count to reach zero. A check with <code>expired()</code> followed later by access is not equivalent to a successful <code>lock()</code>.</p>
+<p><code>enable_shared_from_this</code> joins the already-established shared ownership group; it must not create a second <code>shared_ptr</code> control block from <code>this</code>.</p>
+</section>
+<section id="appendix-b9548675eb2b-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch204.xhtml#appendix-51602cabe815-exclusive-and-shared-smart-pointer-ownership" class="wikilink">Exclusive and shared smart-pointer ownership</a> — Weak observation belongs to a real shared ownership group.</li>
+</ul>
+</section>
+<section id="appendix-b9548675eb2b-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch190.xhtml#appendix-aea529eb5175-deferred-captures-and-borrowed-views" class="wikilink">Deferred captures and borrowed views (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Deferred captures and borrowed views)</a></li>
+<li><a href="ch061.xhtml#appendix-69739d3ab49b-raii-and-resource-handles" class="wikilink">RAII and resource handles (Bits, Programs, and Reliable Systems, Part 1, Reference notes: RAII and resource handles)</a></li>
+</ul>
+</section>
+<section id="appendix-b9548675eb2b-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Draw a parent/child graph with one weak edge and prove that destruction can proceed. Pending: callback registries, shutdown races, and ownership-group identity.</p>
+</section>
+<section id="appendix-b9548675eb2b-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch203.xhtml#id_01-foundations-i-ch004-weak-observation-breaks-cycles-without-pretending-an-object-is-alive" class="wikilink">M010 teaching narrative</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m010---parts-148-160" class="wikilink">Source coverage</a></p>
+</section>
+</section>
+</body>
+</html>

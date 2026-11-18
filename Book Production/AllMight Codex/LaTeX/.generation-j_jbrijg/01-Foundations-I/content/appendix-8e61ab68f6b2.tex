@@ -1,0 +1,43 @@
+\hypertarget{appendix-8e61ab68f6b2}{}
+\section*{Quaternion rotation and double cover}
+\chapter{Quaternion rotation and double cover}\label{appendix-8e61ab68f6b2-quaternion-rotation-and-double-cover}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase7 · \textbf{Latest development:} University courses
+
+\section{Definition and mechanism}\label{appendix-8e61ab68f6b2-definition-and-mechanism}
+
+For a unit quaternion q, the sandwich q(0,v)conjugate(q) rotates v. q and minus q give the same physical rotation. Every nonzero quaternion also rotates without scale if its true inverse is used; substituting conjugate for inverse off the unit sphere scales by the squared norm.
+
+\textbf{Reconstruction cue:} The scalar-first quaternion (sqrt(1/2),0,0,sqrt(1/2)) rotates the X axis to Y.
+
+\section{Prerequisites}\label{appendix-8e61ab68f6b2-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-965d9260eeab]{Quaternion algebra and Hamilton product}
+\end{itemize}
+
+\section{Used by}\label{appendix-8e61ab68f6b2-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-26d8da71f6c4]{Quaternion matrix and axis-angle conversion}
+\item
+  \hyperref[appendix-9b4b8254f26b]{Quaternion interpolation and shortest paths}
+\end{itemize}
+
+\section{Recall and next depth}\label{appendix-8e61ab68f6b2-recall-and-next-depth}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\section{Source and navigation}\label{appendix-8e61ab68f6b2-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Keep\%20the\%20promises\%20visible\%20while\%20moving\%20between\%20representations}{Continuous explanation} · \hyperref[appendix-fd090d982a15-phase-7---parts-601-700]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-7---source-analysis-and-verification]{Sources and verification}
+
+\section{University course development}\label{appendix-8e61ab68f6b2-university-course-development}
+
+Extend the existing quaternion note with interpolation and sign handling in animation. A unit quaternion represents a 3D rotation, but \(q\) and \(-q\) encode the same physical orientation. If two endpoint quaternions have a negative dot product, negate one endpoint before interpolation so the path follows the shorter arc on the unit four-dimensional sphere. Linear interpolation followed by normalization is inexpensive and often adequate for close orientations; spherical linear interpolation travels at constant angular speed for widely separated rotations. Quaternion interpolation acts on orientation, while translation and scale need their own rules. This matters in camera paths and articulated characters: interpolating four components without handling the double cover can create an unnecessary long spin, while interpolating Euler angles can encounter a gimbal singularity. Validate unit length after operations subject to floating-point drift.
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Coordinate\%20frames,\%20transformations,\%20and\%20pose}{Coordinate frames, transformations, and pose} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Scene\%20graphs\%20and\%20articulated\%20geometry}{Scene graphs and articulated geometry} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Animation\%20curves\%20and\%20motion\%20paths}{Animation curves and motion paths}

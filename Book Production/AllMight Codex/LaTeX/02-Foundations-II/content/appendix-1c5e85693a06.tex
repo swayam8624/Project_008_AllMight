@@ -1,0 +1,45 @@
+\hypertarget{appendix-1c5e85693a06}{}
+\section*{Latin-hypercube sampling}
+\section{Latin-hypercube sampling}\label{latin-hypercube-sampling}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Latin-hypercube sampling divides each coordinate axis into \(N\) equal strata and uses a permutation so every sample occupies one stratum per dimension. With randomized within-stratum positions and randomized permutations, each sample has uniform marginal coordinates; samples are dependent by design. This can improve coverage for some integrands at arbitrary sample counts, including counts that do not form a square grid. It does not guarantee lower variance for every function, and IID variance formulas cannot be applied without accounting for dependence. Test exact stratum coverage deterministically, then compare estimator error over repeated randomized trials for the intended integrand. For \(N=5\), each axis still receives five strata, avoiding the missing-cell bias of taking five cells from a \(3\times3\) grid.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-184fcc411663]{Uniform shuffling without replacement}
+\item
+  \hyperref[appendix-9f693ffd82bc]{Sampling quality: stratification, quasi-Monte Carlo, and blue noise}
+\item
+  \href{}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-b9db93e28371]{Reproducible numerical benchmarking}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Design\%20samples:\%20without\%20replacement,\%20stratified,\%20and\%20low-discrepancy}{Design samples: without replacement, stratified, and low-discrepancy}
+\end{itemize}
+
+\subsection{Source coverage}\label{source-coverage}
+
+Supplied lesson parts: 997.
+
+\subsection{Future keywords}\label{future-keywords}
+
+marginal stratification, randomized Latin hypercube, dependence

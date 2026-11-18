@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch364.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-e2e73f8cd93e-optical-flow-and-time-to-contact" class="level2">
+<h2>Optical flow and time to contact</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-e2e73f8cd93e-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Optical flow is the apparent 2D motion of image features between frames. Under brightness constancy, a tracked point keeps approximately the same intensity as it moves, yielding the constraint <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>I</mi>
+    <mi>x</mi>
+  </msub>
+  <mi>u</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>I</mi>
+    <mi>y</mi>
+  </msub>
+  <mi>v</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>I</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>, where spatial derivatives <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>I</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>I</mi>
+    <mi>y</mi>
+  </msub>
+</math> and temporal derivative <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>I</mi>
+    <mi>t</mi>
+  </msub>
+</math> are measured from the image and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+</math> is image velocity. One equation cannot determine two unknown components at a single pixel, so algorithms add neighborhood smoothness, feature tracking, or multiple scales. Flow can reveal camera motion, object motion, and looming. For an object approaching at speed <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>V</mi>
+</math>, its image size grows at a rate related to depth; the ratio of size to its time derivative estimates time to contact without separately knowing absolute scale under simplifying assumptions. Texture, occlusion, and illumination changes violate brightness constancy.</p>
+</section>
+<section id="appendix-e2e73f8cd93e-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch558.xhtml#appendix-70895739febb-spatiotemporal-sampling-and-retinal-motion" class="wikilink">Spatiotemporal sampling and retinal motion (Vision, XR, and Playable Worlds, Part 2, Reference notes: Spatiotemporal sampling and retinal motion)</a></li>
+<li><a href="ch309.xhtml#appendix-d5b3c692d9f0-convolution-and-filter-footprints" class="wikilink">Convolution and filter footprints (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Convolution and filter footprints)</a></li>
+</ul>
+</section>
+<section id="appendix-e2e73f8cd93e-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><span>Worlds, Images and Inference</span></p></li>
+<li><p><a href="ch360.xhtml#appendix-b0c42da325f1-perception-feedback-and-robot-learning" class="wikilink">Perception feedback and robot learning</a> ## Full teaching explanation</p></li>
+</ul>
+<p><a href="ch386.xhtml#id_04-visual-computing-ii-ch030-optical-flow-and-motion-from-images" class="wikilink">Optical flow and motion from images (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 11)</a> · <a href="ch541.xhtml#id_04-visual-computing-ii-ch034-photographic-composition-history-and-communication" class="wikilink">Photographic composition, history, and communication (Vision, XR, and Playable Worlds, Part 1, Ch. 4)</a></p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,69 @@
+\hypertarget{appendix-83c3f28f7bda}{}\label{referencestart:appendix-83c3f28f7bda}
+\section{Positional notation}\label{appendix-83c3f28f7bda-positional-notation}
+
+\hypertarget{appendix-83c3f28f7bda-positional-notation}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C001 · \textbf{Latest development:} C001
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-83c3f28f7bda-definition-and-mechanism}
+
+\hypertarget{appendix-83c3f28f7bda-definition-and-mechanism}{}
+
+Digits receive powers-of-base weights; binary uses base two and \(V=\sum b_i2^i\).
+
+\end{allmightroledefinition}
+
+A base is the number of available digits. Position i contributes digit × baseⁱ; the rightmost position is i=0. For \BookInlineCode{{1}{0}{1}{1}{₂}}{1011₂}, the weights 8,4,2,1 give 8+2+1=11. The number of states is 2ᴺ, while the maximum unsigned value is 2ᴺ−1.
+
+\subsection{Prerequisites}\label{appendix-83c3f28f7bda-prerequisites}
+
+\hypertarget{appendix-83c3f28f7bda-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-ddbb69998a2e]{Bit} --- A bit has two possible logical states.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-83c3f28f7bda-used-by}
+
+\hypertarget{appendix-83c3f28f7bda-used-by}{}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-2a2f1b74bdd3]{Terminating fractions and dyadic rationals} --- Finite fractional digits correspond to an integer over a power of the base.
+\item
+  \hyperref[appendix-a24fd710cf67]{Significand and hidden bit} --- uses positional notation to establish this mechanism's representation or policy.
+\item
+  \hyperref[appendix-dc552784a2c0]{Binary conversion} --- uses positional notation as part of its representation or reasoning.
+\item
+  \hyperref[appendix-6b8075763724]{Hexadecimal} --- uses positional notation as part of its representation or reasoning.
+\item
+  \hyperref[appendix-17fc1bc8b305]{Octal} --- uses positional notation as part of its representation or reasoning.
+\item
+  \hyperref[appendix-280445746493]{Bit significance} --- uses positional notation as part of its representation or reasoning.
+\item
+  \hyperref[appendix-c99977d88b33]{Unsigned modular arithmetic} --- uses positional notation as part of its representation or reasoning.
+\item
+  \hyperref[appendix-ce20506c8532]{Signed magnitude} --- uses positional notation as part of its representation or reasoning.
+\item
+  \hyperref[appendix-d52d5f78ffd1]{Carry and borrow} --- uses positional notation as part of its representation or reasoning.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-92e040df969a}{Big endian (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Big endian)} --- depends on this concept; see its prerequisite explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-83c3f28f7bda-recall-and-next-depth}
+
+\hypertarget{appendix-83c3f28f7bda-recall-and-next-depth}{}
+
+Explain positional notation without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} signed and fractional encodings.
+
+\subsection{Source and navigation}\label{appendix-83c3f28f7bda-source-and-navigation}
+
+\hypertarget{appendix-83c3f28f7bda-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

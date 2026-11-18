@@ -8,7 +8,7 @@ A material authored in an interchange format must be decoded, represented and bo
 
 **Recall question:** Where can a material pipeline change meaning or cost as assets scale?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 9521–13371; source-span SHA256 7ac0016132c970bd4398a5fa530cea178cc43d6ec9fdb5509802da480e069a88. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 9552–13402; source-span SHA256 7ac0016132c970bd4398a5fa530cea178cc43d6ec9fdb5509802da480e069a88. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Blank-page mastery test

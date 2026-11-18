@@ -8,7 +8,7 @@ A deterministic machine gives each byte meaning through address decoding, state 
 
 **Recall question:** Which hidden state, input order, or clock must be recorded so that another run reproduces the same machine state?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 101303–102535; source-span SHA256 0d5668a9156c7f1e8e04d3708764ee1937b220109a963d67bb32bfa35f43cf8f. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 102484–103798; source-span SHA256 8b4f94eb28e833ee4ad8042dc9866bdb42e781c1bc1a5d55d0631048d5e5cf17. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 # Systems: From Cartridge Bytes to a Reproducible Machine
@@ -195,10 +195,10 @@ A runtime may request two views, four views or asymmetric view configurations. V
 
 Represent each view as data:
 
-\[
+$$
 V_i=\{\text{pose},\text{projection},\text{viewport},
 \text{color},\text{depth},\text{quality policy}\}.
-\]
+$$
 
 The render graph can share view-independent work and instance view-dependent work when the backend supports multiview.
 
@@ -258,9 +258,9 @@ A clean boundary is native runtime plus Python tooling plus stable file/CLI/FFI 
 
 A trace can contain
 
-\[
+$$
 (timestamp,\ head\ pose,\ gaze,\ input,\ view\ config,\ scene\ event).
-\]
+$$
 
 Replay under a controlled clock should measure predicted-versus-truth pose error, gaze error in degrees, fovea miss rate, CPU/GPU stage durations, frame misses/reprojection mode, image metrics and memory/bandwidth counters when available.
 
@@ -276,7 +276,7 @@ Cloud rendering moves some or all graphics work to a remote GPU, encodes the res
 
 The end-to-end motion-to-photon path becomes roughly
 
-\[
+$$
 T =
 T_{sensor}
 +T_{uplink}
@@ -286,7 +286,7 @@ T_{sensor}
 +T_{decode}
 +T_{client-compose}
 +T_{scanout}.
-\]
+$$
 
 These terms overlap in real pipelines, so the equation is an accounting model rather than a claim that every stage runs strictly serially. It is still valuable because moving rendering to a server adds latency and jitter sources that a local engine does not have.
 
@@ -310,6 +310,88 @@ OpenXR standardizes native application-to-runtime interaction across many XR sys
 These layers should not be collapsed into one abstraction. The engine's portable spatial concepts can be shared, but session creation, graphics binding, permission model, input exposure and compositor ownership differ.
 
 
+
+<!-- Book-completion teaching addition c84e70430fe57374 -->
+
+## Game Engine project ladder: first executable loop to evidence-backed capstone
+
+This ladder is an assessment bridge over the canonical teaching route. It points readers to the existing lessons and executable witnesses; it does not replace their derivations or claim that reference labs are the current Kairo implementation. Each stage adds one owner and one failure boundary to the same small world: two moving crates, a floor, one controllable actor, and a saved scene.
+
+## Stage 1 — A visible, repeatable frame
+
+**Enter through:** [[Chapter Edition/03 - Game Engine/02 - How bytes become programs, objects, and resource references#Where the bytes live|A game promise becomes bytes and running state]] and [[Chapter Edition/03 - Game Engine/14 - Application clocks and stable input identity#Keep application key names independent of a windowing library|Application clocks and stable input identity]].
+
+**Build:** a window loop that drains events, converts button transitions into tick-stamped commands, advances a fixed-step simulation, and presents an interpolated snapshot. The demo object moves under one command; rendering reads a snapshot and never mutates simulation state.
+
+**Worked check:** with fixed step $h=1/60\,\mathrm s$, a held-right command of $a=6\,\mathrm{m/s^2}$ for three ticks from rest gives $v_3=0.3\,\mathrm{m/s}$ under semi-implicit Euler and $x_3=h(0.1+0.2+0.3)=0.01\,\mathrm m$. A render at interpolation fraction $\alpha=1/2$ between $x_2=0.005\,\mathrm m$ and $x_3=0.01\,\mathrm m$ displays $0.0075\,\mathrm m$, while authoritative simulation remains at $0.01\,\mathrm m$.
+
+**Solution outline:** keep `previous` and `current` simulation snapshots; update `previous = current` once per fixed tick; advance only from tick commands; derive render pose as `(1-alpha)*previous + alpha*current`. Cap catch-up work and retain/report the discarded-time policy. The window thread owns event polling and presentation.
+
+**Exit test:** replay the same command sequence twice and compare the per-tick state hash. Inject two key-down events before a tick and prove the event queue is fully drained and ordered. State the accumulator-overload policy and show that rendering cannot change the simulation hash.
+
+## Stage 2 — Stable identity and transform ownership
+
+**Enter through:** [[Chapter Edition/03 - Game Engine/15 - Sparse-set components and generational entity handles#COMPONENT POOLS AND SPARSE SETS|Sparse-set components and generational entity handles]], [[Chapter Edition/03 - Game Engine/16 - Archetypes, chunks, relationships, and transforms#ARCHETYPES, CHUNKS, LAYOUTS, RELATIONSHIPS AND TRANSFORMS|Archetypes, chunks, relationships, and transforms]], and [[Chapter Edition/03 - Game Engine/18 - ECS contracts, diagnostics, and GPU handoff#DIAGNOSTICS, MEMORY, COMPLEXITY, API CONTRACTS AND COMPLETE ECS DEFENSE|ECS contracts, diagnostics, and GPU handoff]].
+
+**Build:** a generational entity store with local transforms and parent links. Destroy a parent, reject stale handles, and evaluate world transforms parent-first. Keep structural changes in an explicit command phase.
+
+**Worked check:** parent translation `(10,0)` and child local translation `(2,3)` produce child world translation `(12,3)`. Destroying entity `(slot=4,generation=7)` and reusing slot 4 as generation 8 makes the old handle invalid even though its slot matches.
+
+**Solution outline:** validate both slot bounds and generation on every public handle lookup. Build a parent-first order or perform a color-marked DFS; reject cycles before publishing transforms. A deferred destroy command invalidates the generation and removes component membership at the structural boundary.
+
+**Exit test:** destroy/reuse a slot and prove the old handle cannot read or mutate the new entity. Create a three-node hierarchy and verify parent-first output; add a cycle and verify the update fails without publishing partially updated world transforms.
+
+## Stage 3 — Compile render intent into a legal logical order
+
+**Enter through:** [[Chapter Edition/03 - Game Engine/42 - From cartridge bytes to a reproducible machine#From a list of render passes to a proved execution order|From a list of render passes to a proved execution order]] and [[Chapter Edition/03 - Game Engine/43 - Compiling renderer intent into backend work#Compile renderer intent into backend work|Compile renderer intent into backend work]].
+
+**Build:** a pass graph with explicit resource versions and read/write declarations. Start with shadow, geometry, lighting, tone-map and present. Compile dependencies, reject uninitialized reads and cycles, then emit a deterministic order. Keep logical dependency proof separate from backend barrier proof.
+
+**Worked check:** if `Geometry` writes `GBuffer`, `Lighting` reads `GBuffer` and writes `HDR`, and `ToneMap` reads `HDR`, the required edges are `Geometry -> Lighting -> ToneMap`. Let `UI` read the tone-mapped image and write the final swapchain image, then let `Present` read that final image. The `UI -> Present` edge is a read-after-write dependency: presentation must consume the completed output, regardless of whether an earlier pass touched the same storage. If different logical versions reuse physical memory, the compiler must also account for readers and writers of that backing storage before overwriting it.
+
+**Solution outline:** identify each logical version's producer and consumers. A read depends on its producer. When a new version overwrites existing backing storage, it must also respect the previous writer and the readers that still use that storage; this is where write-after-write and write-after-read constraints enter. Topologically sort with a stable tie-breaker. Do not infer API layout, access masks, queue ownership, or device correctness from this CPU DAG.
+
+**Exit test:** a transient read with no writer, duplicate version declaration, and explicit cycle each fail with a useful diagnostic. Two valid graphs with independent passes produce deterministic output. Explain which separate Vulkan synchronization2 or Metal validation evidence would still be required.
+
+## Stage 4 — Move one rigid body from force to coupled contact
+
+**Enter through:** [[Chapter Edition/03 - Game Engine/35 - A complete rigid-body state before the formula audit#THE COMPLETE KAIRO STATE SO FAR|A complete rigid-body state before the formula audit]], [[Chapter Edition/03 - Game Engine/40 - Coupled contacts and iterative response#From one collision impulse to a coupled contact problem — reconstructed Phase 18 bridge|From one collision impulse to a coupled contact problem — reconstructed Phase 18 bridge]], and [[Chapter Edition/03 - Game Engine/46 - Game design from mechanics to narrative interfaces#Contact forces form a coupled system|Contact forces form a coupled system]].
+
+**Build:** a 2-D rigid body with COM-relative contact Jacobians, nonnegative normal impulses, bounded friction impulses, a small sequential solver, and a deterministic contact island. Instrument residual speed, penetration, iterations, and wake/sleep transitions.
+
+**Worked check:** for an isolated one-kilogram body approaching a static wall at `2 m/s`, zero restitution requires a `2 N s` normal impulse, leaving zero normal speed. If `mu=0.5`, the normal impulse bounds tangent impulse magnitude to `1 N s`. A tangential request of `1.4 N s` therefore clamps to `1 N s`; apply only the difference from the previous accumulated tangent impulse.
+
+**Solution outline:** compute contact-point relative velocity including angular velocity; compute effective inverse mass; project the accumulated normal impulse to `>= 0`; project tangent impulse into `[-mu*lambda_n, +mu*lambda_n]`; apply only each accumulated-impulse delta. Use stable feature keys for cache reuse and invalidate the cache when a feature disappears, body identity changes, normal turns beyond policy, or timestep semantics change.
+
+**Exit test:** run the saved two-contact block and friction-island witnesses. Show equal-and-opposite impulses preserve total linear momentum for an isolated pair before external forces; show friction does not exceed its Coulomb bound; reject a NaN normal and a stale feature key. Compare one-pass and multi-pass residuals and state the CPU-model/device boundary.
+
+## Stage 5 — Save and replace a scene transactionally
+
+**Enter through:** [[Chapter Edition/03 - Game Engine/33 - Versioned scenes and transactional loading#Save scenes as a versioned authoring contract|Save scenes as a versioned authoring contract]] and [[Chapter Edition/03 - Game Engine/33 - Versioned scenes and transactional loading#Save scenes as a versioned authoring contract|Versioned scenes and transactional loading]].
+
+**Build:** a bounded versioned scene document with stable IDs, explicit migration, two-pass reference resolution, parent-cycle detection and all-or-nothing replacement. Unknown future versions must be rejected without mutating the live world.
+
+**Worked check:** document objects `A(parent=B)` and `B(parent=A)` parse as valid records and unique IDs but fail the graph validation stage as a cycle. The live world's hash before and after failure must be identical. A v1 document can migrate into v2 by supplying a documented default; a v99 document is rejected as unsupported.
+
+**Solution outline:** parse into a detached candidate, validate record bounds and IDs, resolve references in a second pass, validate acyclic relationships and component constraints, then swap the candidate into the active world at one commit point. Keep diagnostics attached to source object IDs. Any failure discards the candidate.
+
+**Exit test:** valid v1, valid current version, unknown version, duplicate ID, dangling reference, cycle, truncated input and allocation-limit cases. Hash the active world before each invalid load and verify exact equality afterward. Run the saved versioned-scene codec witness; report that it is a reference codec unless the current project parser is separately inspected and built.
+
+## Stage 6 — Capstone: deterministic replay across save, simulation and rendering
+
+**Enter through:** [[Chapter Edition/03 - Game Engine/42 - From cartridge bytes to a reproducible machine#Deterministic replay requires an explicit state contract|Deterministic replay requires an explicit state contract]], [[Chapter Edition/03 - Game Engine/41 - Evidence, tools, and revisable design#Correlate one player action through every subsystem hand-off|Correlate one player action through every subsystem hand-off]], and [[Chapter Edition/03 - Game Engine/42 - From cartridge bytes to a reproducible machine#The deterministic system capstone and its evidence boundary|The deterministic system capstone and its evidence boundary]].
+
+**Build:** a small game slice where an input command moves a character, a contact changes a crate, a scene can be saved/reloaded, and every frame carries a correlation ID from event through simulation, render submission and diagnostics. Replay the same tick-stamped commands from the same initial scene.
+
+**Worked check:** compare per-tick hashes for two replays. The first differing tick is the failure location; compare entity generations, command sequence, body state, contact cache and random seed at that boundary. A matching final screenshot is not enough because distinct hidden states may render identically.
+
+**Solution outline:** define what belongs in deterministic state (including any persistent warm-start/contact state used on restore), define canonical field order and numeric encoding for hashes, and exclude nondeterministic wall-clock timing from simulation decisions. Give asynchronous asset completion a stable publication tick or gate replay until the same resource version is ready. Render from immutable tick snapshots.
+
+**Exit test:** save at tick `N`, continue to `N+120`, restore, replay the same commands and compare every tick hash. Perturb one command sequence number and demonstrate the first divergence is reported. Force a scene-load error and verify rollback preserves both the prior world and replay continuation. Attach build, test, and device evidence separately; a passing CPU slice does not prove production engine parity.
+
+## Route completion rule
+
+Advance only when the learner can explain the invariant, trace the numeric witness by hand, reproduce the positive and negative tests, identify the code owner and failure boundary, and state what the evidence does not establish. Re-reading the chapter, recognizing its code, or reaching a visually plausible frame is not an exit test.
 
 ## The deterministic system capstone and its evidence boundary
 
@@ -809,7 +891,7 @@ A *logical resource* is an identified array, texture or buffer with an agreed co
 
 Suppose pass A writes the HDR image and pass B reads it. B needs A's output, a **read-after-write** (RAW) ordering dependency. If B reads a prior image version and C later replaces it, C must wait until B has finished reading: this is **write-after-read** (WAR). If A clears a target and C then draws into that same target, the writes must follow the specified ordering: this is **write-after-write** (WAW). RAW protects the validity of a newly produced value; WAR protects access to an old value; WAW protects the chosen order of replacements. A diagram containing only “written here, read there” omits two of these important obligations.
 
-Represent a dependency as a directed edge between pass indices: \(A\to B\) means A must precede B. The graph defines a *partial order*: independent passes may run in either order, but lighting must follow the passes that produce G-buffer attributes and shadow data. The compilation rule in the laboratory uses the submitted pass sequence as the required order for accesses to the **same** resource. It does not claim to infer an artist's intended ordering from arbitrary names. If the author wants to reorder two writes safely, they must specify the intended versions and dependencies.
+Represent a dependency as a directed edge between pass indices: $A\to B$ means A must precede B. The graph defines a *partial order*: independent passes may run in either order, but lighting must follow the passes that produce G-buffer attributes and shadow data. The compilation rule in the laboratory uses the submitted pass sequence as the required order for accesses to the **same** resource. It does not claim to infer an artist's intended ordering from arbitrary names. If the author wants to reorder two writes safely, they must specify the intended versions and dependencies.
 
 Maintain, per resource, the last writer, the readers of its current version, and the imported-initialization flag. For each read, add a RAW dependency from the last writer or reject a transient read without a writer. For each write, add WAW from the previous writer and WAR from every outstanding reader, then clear that reader set and record the new writer. Deduplicate pass-to-pass adjacencies before computing indegrees: two separate RAW reasons between the same passes create one predecessor relationship, not two required predecessor executions. Finally, topologically sort by repeatedly scheduling a zero-indegree pass and deleting its outgoing constraints. If passes remain, a cycle makes the declared ordering impossible.
 
@@ -1233,7 +1315,7 @@ Build and run with `g++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror
 
 Trace the actual resource values. Pass 0 (G-buffer) writes `albedo` and `depth`. Pass 1 writes `shadow`. Pass 2 (lighting) reads all three and writes `hdr`. Pass 3 reads `hdr` and imported `history`, writing `history_next`. Pass 4 tone-maps the new history into `ldr`; pass 5 reads `ldr` for presentation. The compiler records 0→2 twice with distinct reasons (albedo RAW and depth RAW), 1→2 (shadow RAW), 2→3 (HDR RAW), 3→4 (history-next RAW), and 4→5 (display RAW). Passes 0 and 1 are independent, although the stable ready queue chooses 0 first. When `history` is marked non-imported, pass 3 becomes an illegal first read. A separate scenario reads an imported history before overwriting it, proving WAR; another scenario clears then writes a target, proving WAW. The remaining cases must reject a dependency cycle, same-pass feedback, duplicates and uninitialized resources.
 
-With \(P\) passes and \(E\) unique pass-to-pass edges, a min-priority-queue topological sort costs \(O((P+E)\log P)\) as a conservative upper bound. The complete program also has ordered-map/set lookup costs, and generating WAR edges may be quadratic in the number of readers of one resource. Before optimizing, measure a representative workload and distinguish unique pass edges from multiple hazard reasons.
+With $P$ passes and $E$ unique pass-to-pass edges, a min-priority-queue topological sort costs $O((P+E)\log P)$ as a conservative upper bound. The complete program also has ordered-map/set lookup costs, and generating WAR edges may be quadratic in the number of readers of one resource. Before optimizing, measure a representative workload and distinguish unique pass edges from multiple hazard reasons.
 
 ### The essential missing GPU contract, and how to implement it next
 

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch451.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-113f0267e5f4-camera-gauge-freedoms-and-observability" class="level2">
+<h2>Camera gauge freedoms and observability</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 11</p>
+<section id="appendix-113f0267e5f4-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A gauge freedom is a coordinated change to unknown scene and camera parameters that leaves every measured image unchanged. In calibrated monocular structure from motion, translating and rotating the entire reconstruction changes only the chosen world frame, while a common scale change of points and camera translations preserves projections; absolute metric scale therefore needs an external reference. Observability asks which local parameter changes produce distinguishable measurements. Linearizing reprojection residuals gives a Jacobian; its weighted information tensor or matrix <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>J</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mi>W</mi>
+  <mi>J</mi>
+</math> reveals weak parameter combinations through small eigenvalues after gauge directions are fixed. Example: adding more points to one planar, nearly fronto-parallel view may reduce pixel noise while focal length and distance remain strongly coupled. These conclusions assume a stated camera/scene model, correctly associated observations, and local linearization; the information matrix diagnoses local constraints, not global uniqueness. Report uncertainty only after fixing the gauge and specifying the observation noise model.</p>
+<p><strong>Example:</strong> A monocular map can be uniformly enlarged with all camera translations enlarged by the same factor and render the same images; a known baseline or measured object length fixes that scale gauge.</p>
+<p><strong>Assumptions:</strong> The gauge statement assumes calibrated monocular perspective cameras and no metric prior.; The information-matrix interpretation is local and depends on residual weighting and parameterization.</p>
+</section>
+<section id="appendix-113f0267e5f4-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch345.xhtml#appendix-3ee9861904d5-camera-calibration-and-bundle-adjustment" class="wikilink">Camera calibration and bundle adjustment (Light Transport and Image Synthesis, Part 1, Reference notes: Camera calibration and bundle adjustment)</a></li>
+<li><a href="ch457.xhtml#appendix-1bae9457dbc3-coordinate-frames-and-change-of-basis" class="wikilink">Coordinate frames and change of basis</a></li>
+<li><a href="ch363.xhtml#appendix-cb3b26862282-homogeneous-coordinates-and-perspective-division" class="wikilink">Homogeneous coordinates and perspective division (Light Transport and Image Synthesis, Part 1, Reference notes: Homogeneous coordinates and perspective division)</a></li>
+</ul>
+</section>
+<section id="appendix-113f0267e5f4-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch290.xhtml#id_02-foundations-ii-ch037-a-camera-model-must-close-the-loop" class="wikilink">A camera model must close the loop (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)</a></li>
+<li><a href="ch289.xhtml#id_02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review" class="wikilink">Four deeper links from the TUM lecture review (Geometry, Cameras, and Image Formation, Part 1, Ch. 5)</a></li>
+</ul>
+</section>
+<section id="appendix-113f0267e5f4-future-depth" class="level3">
+<h3>Future depth</h3>
+<p>m; o; n; o; c; u; l; a; r; ; s; c; a; l; e; ; g; a; u; g; e; ,; ; J; a; c; o; b; i; a; n; ; n; u; l; l; s; p; a; c; e; ,; ; H; e; s; s; i; a; n; ; s; p; e; c; t; r; u; m; ,; ; F; i; s; h; e; r; ; i; n; f; o; r; m; a; t; i; o; n; ,; ; c; a; l; i; b; r; a; t; i; o; n; ; o; b; s; e; r; v; a; b; i; l; i; t; y</p>
+</section>
+</section>
+</body>
+</html>

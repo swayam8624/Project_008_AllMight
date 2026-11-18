@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch174.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-0104b704fb11-move-casts-and-forwarding-references" class="level2">
+<h2>Move casts and forwarding references</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C008 · <strong>Latest development:</strong> C009</p>
+<section id="appendix-0104b704fb11-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Consumer constructors/assignments now distinguish the cast from actual resource transfer. Const can force copying, return std::move(local) can prevent NRVO, and move_if_noexcept selects a path based on usable construction properties.</p>
+<p>std::move is an xvalue cast preserving constness, not a resource transfer. A deduced cv-unqualified T&amp;&amp; parameter can be a forwarding reference: lvalue arguments deduce T&amp; and collapse to an lvalue reference. std::forward&lt;T&gt; restores the category encoded by deduction.</p>
+</section>
+<section id="appendix-0104b704fb11-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch181.xhtml#appendix-5d4252a42886-auto-decltype-and-reference-collapsing" class="wikilink">Auto decltype and reference collapsing</a> — Deduction and collapsing encode the caller category forwarding restores.</li>
+<li><a href="ch175.xhtml#appendix-1121b30eaeb0-value-categories-and-materialization" class="wikilink">Value categories and materialization</a> — Expression category determines viable binding and whether temporary identity is needed.</li>
+</ul>
+</section>
+<section id="appendix-0104b704fb11-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch180.xhtml#appendix-5636651017c2-move-operations-and-moved-from-states" class="wikilink">Move operations and moved-from states</a></li>
+</ul>
+</section>
+<section id="appendix-0104b704fb11-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Deduce both calls to relay and contrast unconditional move. Pending: deeper forwarding failures and constrained generic interfaces. Written coverage does not establish learner mastery.</p>
+</section>
+<section id="appendix-0104b704fb11-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch207.xhtml#appendix-fd090d982a15-m009---parts-127-147" class="wikilink">C009 development</a></p>
+<p><a href="ch173.xhtml#id_01-foundations-i-ch003-move-permission-is-not-resource-transfer" class="wikilink">Teaching explanation and examples</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m008---parts-113-126" class="wikilink">Exact coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

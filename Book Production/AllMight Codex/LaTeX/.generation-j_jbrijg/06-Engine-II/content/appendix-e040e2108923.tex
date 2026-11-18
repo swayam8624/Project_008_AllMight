@@ -1,0 +1,35 @@
+\hypertarget{appendix-e040e2108923}{}
+\section*{Spring forces and numerical integration}
+\chapter{Spring forces and numerical integration}\label{appendix-e040e2108923-spring-forces-and-numerical-integration}
+
+For displacement from an endpoint to a particle, the ideal spring force preserves the sign of extension: stretching pulls toward the endpoint; compression pushes away. A bungee has zero force while slack and pulls only when stretched. Coincident endpoints need an explicit direction policy. Force magnitude alone cannot detect a direction error.
+
+The force law and the time integrator are separate contracts. An undamped oscillator grows under forward Euler at every positive step size; semi-implicit Euler has a different bounded interval. An analytic target position does not become a reachable current-step position merely by converting it to force. Physical stiffness, mass-normalized coefficients and numerical damping settings need distinct units and definitions.
+
+\section{Prerequisites}\label{appendix-e040e2108923-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-49933872bb51}{Concepts/Norms lengths and induced distances (02-Foundations-II, appendix-49933872bb51)}
+\item
+  \hyperref[appendix-677b59746ae0]{Concepts/Partial derivatives and gradients}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-18eacf61a04b}{Concepts/ODE integration and stability (04-Visual-Computing-II, appendix-18eacf61a04b)}
+\end{itemize}
+
+\section{Full teaching and executable evidence}\label{appendix-e040e2108923-full-teaching-and-executable-evidence}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Game\%20Engine\%20-\%20From\%20First\%20Frame\%20to\%20Living\%20Worlds\#A\%20spring\%20law\%20is\%20signed,\%20not\%20just\%20a\%20magnitude}{Signed force law, potential-energy derivation and figure}
+\item
+  \href{Continuous\%20Notes/Game\%20Engine\%20-\%20From\%20First\%20Frame\%20to\%20Living\%20Worlds\#Solve\%20each\%20linear\%20damping\%20regime\%20with\%20its\%20own\%20form}{Underdamped, critical and overdamped solutions}
+\item
+  \href{Continuous\%20Notes/Game\%20Engine\%20-\%20From\%20First\%20Frame\%20to\%20Living\%20Worlds\#Standalone\%20spring-direction\%20and\%20integration-order\%20laboratory}{Complete C++20 witness and its limits}
+\end{itemize}
+
+\section{Used by}\label{appendix-e040e2108923-used-by}
+
+Force generators, elastic tethers and penalty-force approximations. A shared force equation does not establish that a contact or joint solver has the same stability properties.

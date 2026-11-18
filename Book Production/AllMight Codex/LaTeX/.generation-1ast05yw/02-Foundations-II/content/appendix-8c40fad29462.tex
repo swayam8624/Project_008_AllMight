@@ -1,0 +1,39 @@
+\hypertarget{appendix-8c40fad29462}{}
+\section*{Ray differentials and camera sampling measures}
+\section{Ray differentials and camera sampling measures}\label{appendix-8c40fad29462-ray-differentials-and-camera-sampling-measures}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 11
+
+\subsection{Definition and mechanism}\label{appendix-8c40fad29462-definition-and-mechanism}
+
+A camera sample selects a film location and usually a shutter time, then maps that sample to a weighted ray or path contribution. Ray differentials approximate how neighboring pixel samples change the generated ray; after intersection they estimate the surface footprint covered by a pixel and help choose a texture filter level. A sampling measure states which quantity is sampled and therefore which probability density belongs in a Monte Carlo estimator; area, solid angle, image-plane area, and discrete pixel measures are not interchangeable without a Jacobian. Example: two adjacent pixels generate rays whose intersection points span a large patch on a distant oblique surface, so filtering should average that footprint rather than use a single high-frequency texel. Differential rays are local first-order approximations and can fail at discontinuities or complex lens mappings; the weight and PDF must match the camera model and chosen measure.
+
+\textbf{Example:} For a pinhole camera, offset the raster sample by one pixel in x and y, generate neighboring rays, and intersect them with a textured plane; the resulting parallelogram estimates the pixel footprint for texture filtering.
+
+\textbf{Assumptions:} Differentials approximate nearby rays locally and are not exact at visibility or lens discontinuities.; Importance weights/PDFs are valid only when defined in the same measure as the estimator.
+
+\subsection{Prerequisites}\label{appendix-8c40fad29462-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-1c07d64f5e70}{Camera view and clip-space pipeline (04-Visual-Computing-II, appendix-1c07d64f5e70)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-7d356c396d1a}{Visual angle and calibrated rays (04-Visual-Computing-II, appendix-7d356c396d1a)}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-21f8456e2629}{Lens optics and depth of field (03-Visual-Computing-I, appendix-21f8456e2629)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-8c40fad29462-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[02-foundations-ii-ch037-a-camera-model-must-close-the-loop]{A camera model must close the loop}
+\item
+  \hyperref[02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review]{Four deeper links from the TUM lecture review}
+\end{itemize}
+
+\subsection{Future depth}\label{appendix-8c40fad29462-future-depth}
+
+r; a; y; ; d; i; f; f; e; r; e; n; t; i; a; l; s; ,; ; p; i; x; e; l; ; f; o; o; t; p; r; i; n; t; ,; ; c; a; m; e; r; a; ; i; m; p; o; r; t; a; n; c; e; ,; ; s; o; l; i; d; -; a; n; g; l; e; ; P; D; F; ,; ; m; e; a; s; u; r; e; ; c; o; n; v; e; r; s; i; o; n

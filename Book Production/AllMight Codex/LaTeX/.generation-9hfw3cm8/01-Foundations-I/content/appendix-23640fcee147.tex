@@ -1,0 +1,30 @@
+\hypertarget{appendix-23640fcee147}{}
+\section{Scoped enums and validated domains}\label{appendix-23640fcee147-scoped-enums-and-validated-domains}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C007 · \textbf{Latest development:} C007
+
+\subsection{Definition and mechanism}\label{appendix-23640fcee147-definition-and-mechanism}
+
+enum class scopes enumerators and disallows implicit conversion to integers. A fixed underlying type establishes representation, not membership in the named application domain. Validate external codes before constructing semantic states; explicitly define bitmask operations when combination is intended.
+
+\subsection{Prerequisites}\label{appendix-23640fcee147-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-cc04044b5782]{Fixed-width integer types} --- An enum's underlying integer type establishes representation but not the application's valid code set.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-23640fcee147-used-by}
+
+Later chunks extend this same node; dependent concepts are listed here as they are integrated.
+
+\subsection{Recall and next depth}\label{appendix-23640fcee147-recall-and-next-depth}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} Deeper ownership, pointer/reference, generic programming and module rules from later sources. This is written coverage, not demonstrated personal mastery.
+
+\subsection{Source and navigation}\label{appendix-23640fcee147-source-and-navigation}
+
+\hyperref[01-foundations-i-ch002-give-a-domain-its-own-vocabulary]{C007 teaching chapter} · \hyperref[appendix-fd090d982a15-m007---parts-101-112]{Source coverage} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

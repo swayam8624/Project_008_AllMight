@@ -1,0 +1,1208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Chapter xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/" id="01-foundations-i-ch012" source="Chapter Edition/01 - Computing Foundations/12 - Commands, Async Work, and Resource Lifetimes.md">
+<Content aid:pstyle="ChapterHeader" id="01-foundations-i-ch012-commands-async-work-and-resource-lifetimes">12 — Commands, Async Work, and Resource Lifetimes&#13;</Content>
+<Content aid:pstyle="Content"><Link href="Chapter Edition/01 - Computing Foundations/00 - Reading Map">Reading map</Link> · <Link href="#01-foundations-i-ch011">Previous chapter</Link> · <Link href="#01-foundations-i-ch013">Next chapter</Link>&#13;</Content>
+<Content aid:pstyle="Content">GPU command processors execute submitted work asynchronously, so recording a command is not the same as completing it. This chapter connects queue submission, synchronization, memory lifetime, and scheduling to frame-level performance choices.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">By the end:</Strong> Model when commands are recorded, submitted, executed, and retired, and use synchronization only at real dependency boundaries.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Recall question:</Strong> How does a completion signal change what the CPU may safely read, overwrite, or destroy?&#13;</Content>
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 22733–25911; source-span SHA256 42409f3d01bae1cf39b63ee62f06a72093a3be2f426b615a4f5d8274c3fe89c2. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<Content aid:pstyle="SubChapterSubHeading" id="01-foundations-i-ch012-command-execution-async-work-memory-lifetimes">COMMAND EXECUTION, ASYNC WORK &amp; MEMORY LIFETIMES&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">GPU command processor</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your CPU does not directly call an ALU and say:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Run this shader now.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">It records command data describing:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">pipeline state,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">resources,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">dispatch/draw dimensions,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">copies,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">barriers.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">The GPU command processor/front-end consumes those commands and schedules work onto execution engines.&#13;</Content>
+<Content aid:pstyle="Content">Therefore there are at least two parallel timelines:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9ceb6e86479ef75d17f268f8.svg" alt="&#10;\boxed{&#10;\text{CPU command generation}&#10;}&#10;" jobId="9ceb6e86479ef75d17f268f8" originalTeX="&#10;\boxed{&#10;\text{CPU command generation}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f24069f14c30ca86504acbb2.svg" alt="&#10;\boxed{&#10;\text{GPU command execution}.&#10;}&#10;" jobId="f24069f14c30ca86504acbb2" originalTeX="&#10;\boxed{&#10;\text{GPU command execution}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">A well-designed renderer prevents unnecessary synchronization between them.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Submission overhead</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Imagine issuing 100,000 tiny dispatches each doing 20 arithmetic instructions.&#13;</Content>
+<Content aid:pstyle="Content">Even if GPU arithmetic is fast, command encoding, validation, queue processing and state transitions become significant.&#13;</Content>
+<Content aid:pstyle="Content">Hence GPU work should usually have enough granularity.&#13;</Content>
+<Content aid:pstyle="Content">“Use more dispatches” is not free.&#13;</Content>
+<Content aid:pstyle="Content">This is one reason kernels sometimes fuse adjacent stages.&#13;</Content>
+<Content aid:pstyle="Content">But excessive fusion increases register pressure and divergence.&#13;</Content>
+<Content aid:pstyle="Content">Once again:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d63ef565fe9fab14dda955a9.svg" alt="&#10;\boxed{\text{tradeoff}.}&#10;" jobId="d63ef565fe9fab14dda955a9" originalTeX="&#10;\boxed{\text{tradeoff}.}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">KairoGPU’s current compute wrapper is intentionally synchronous</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo Metal vector operation performs:&#13;</Content>
+<Code aid:pstyle="Code" language="objc" id="p10-kairo-sync">command = queue.commandBuffer();&#10;encode();&#10;command.commit();&#10;command.waitUntilCompleted();&#13;</Code>
+<Content aid:pstyle="Content">for every vector add/multiply call.&#13;</Content>
+<Content aid:pstyle="Content">That is excellent for a simple deterministic wrapper and unit-testable API.&#13;</Content>
+<Content aid:pstyle="Content">But it destroys CPU–GPU overlap.&#13;</Content>
+<Content aid:pstyle="Content">The caller cannot enqueue:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f62b685e82413f132543ef6b.svg" alt="&#10;64&#10;" jobId="f62b685e82413f132543ef6b" originalTeX="&#10;64&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">operations and let the GPU work asynchronously.&#13;</Content>
+<Content aid:pstyle="Content">The CPU waits after each one.&#13;</Content>
+<Content aid:pstyle="Content">That distinction is essential when interpreting its benchmark.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Asynchronous compute</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Async compute means compute work can be scheduled independently of graphics work, potentially overlapping.&#13;</Content>
+<Content aid:pstyle="Content">Conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-async">Graphics: [shadow][gbuffer]------[lighting]&#10;Compute :        [particles][SSAO]&#13;</Code>
+<Content aid:pstyle="Content">If resource dependencies permit and hardware has available execution capacity, some work can overlap.&#13;</Content>
+<Content aid:pstyle="Content">But:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a73fb45c0ed5e9c7a9960363.svg" alt="&#10;\boxed{&#10;\text{asynchronous submission does not guarantee physical parallel execution}.&#10;}&#10;" jobId="a73fb45c0ed5e9c7a9960363" originalTeX="&#10;\boxed{&#10;\text{asynchronous submission does not guarantee physical parallel execution}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why graphics + compute can fail to speed up</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose graphics already saturates:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">shader ALUs,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">memory bandwidth,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">register capacity.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Launching compute concurrently may merely make both workloads compete.&#13;</Content>
+<Content aid:pstyle="Content">Frame may become slower.&#13;</Content>
+<Content aid:pstyle="Content">Async compute is valuable when workloads complement each other.&#13;</Content>
+<Content aid:pstyle="Content">For example one phase may be raster/backend heavy while compute uses spare arithmetic capacity.&#13;</Content>
+<Content aid:pstyle="Content">Or one workload may stall on memory while another has independent arithmetic.&#13;</Content>
+<Content aid:pstyle="Content">You profile.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Resource dependencies constrain overlap</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose compute writes buffer:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f2360f5ef25b959d65d2c747.svg" alt="&#10;B.&#10;" jobId="f2360f5ef25b959d65d2c747" originalTeX="&#10;B.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Graphics immediately reads:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f2360f5ef25b959d65d2c747.svg" alt="&#10;B.&#10;" jobId="f2360f5ef25b959d65d2c747" originalTeX="&#10;B.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/937b01a2f6dbc51786bcc7e4.svg" alt="&#10;Compute(B)&#10;\rightarrow&#10;Graphics(B)&#10;" jobId="937b01a2f6dbc51786bcc7e4" originalTeX="&#10;Compute(B)&#10;\rightarrow&#10;Graphics(B)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">is a real dependency.&#13;</Content>
+<Content aid:pstyle="Content">No amount of async queue magic removes it.&#13;</Content>
+<Content aid:pstyle="Content">To overlap, find independent work:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f7576eccaaf64be6e9166116.svg" alt="&#10;Compute(A)&#10;" jobId="f7576eccaaf64be6e9166116" originalTeX="&#10;Compute(A)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">while:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f42763cf2357924de6018082.svg" alt="&#10;Graphics(B)&#10;" jobId="f42763cf2357924de6018082" originalTeX="&#10;Graphics(B)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">runs.&#13;</Content>
+<Content aid:pstyle="Content">Dependency graphs, not queue count, determine possible overlap.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Transfer engines / copy queues</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Many GPUs provide dedicated mechanisms for:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">buffer copies,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">texture copies,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">uploads,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">readbacks.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">On discrete GPUs these may correspond to separate DMA/copy engines.&#13;</Content>
+<Content aid:pstyle="Content">Using them can allow copying while graphics/compute continue.&#13;</Content>
+<Content aid:pstyle="Content">On Apple unified-memory systems, the physical memory model differs, but blit/copy encoders and resource synchronization still matter.&#13;</Content>
+<Content aid:pstyle="Content">Do not blindly transfer discrete-GPU assumptions to unified memory.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">CPU→GPU upload bandwidth</Strong>&#13;</Content>
+<Content aid:pstyle="Content">On a discrete GPU, uploads typically cross a PCIe-like interconnect.&#13;</Content>
+<Content aid:pstyle="Content">If every frame uploads:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4b72b228689f2caaab406c2a.svg" alt="&#10;1\text{ GB}&#10;" jobId="4b72b228689f2caaab406c2a" originalTeX="&#10;1\text{ GB}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">at 60 FPS:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/99559cfa27ccb0f43b8e1015.svg" alt="&#10;60\text{ GB/s}&#10;" jobId="99559cfa27ccb0f43b8e1015" originalTeX="&#10;60\text{ GB/s}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">of host→device traffic would be required before considering anything else.&#13;</Content>
+<Content aid:pstyle="Content">That can exceed the interconnect budget.&#13;</Content>
+<Content aid:pstyle="Content">Hence:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c866d7c4dcd17af79c011b97.svg" alt="&#10;\boxed{&#10;\text{keep persistent data resident on the GPU}.&#10;}&#10;" jobId="c866d7c4dcd17af79c011b97" originalTeX="&#10;\boxed{&#10;\text{keep persistent data resident on the GPU}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Upload only changes.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Apple unified memory changes the topology, not the optimization problem</Strong>&#13;</Content>
+<Content aid:pstyle="Content">CPU and GPU can share physical memory.&#13;</Content>
+<Content aid:pstyle="Content">That can avoid an explicit host→VRAM copy.&#13;</Content>
+<Content aid:pstyle="Content">But memory traffic is still finite.&#13;</Content>
+<Content aid:pstyle="Content">Caches still matter.&#13;</Content>
+<Content aid:pstyle="Content">Synchronization still matters.&#13;</Content>
+<Content aid:pstyle="Content">Writing massive CPU buffers that the GPU immediately streams still consumes DRAM bandwidth.&#13;</Content>
+<Content aid:pstyle="Content">Unified memory removes one kind of transfer bottleneck; it does not create infinite bandwidth.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">GPU→CPU readback stalls</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This is among the easiest ways to destroy a renderer.&#13;</Content>
+<Content aid:pstyle="Content">Bad pattern:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp" id="p10-bad-read">DispatchGPU();&#10;&#10;WaitForGPU();&#10;&#10;count =&#10;    ReadBuffer();&#10;&#10;SubmitNextWork(count);&#13;</Code>
+<Content aid:pstyle="Content">CPU stalls until GPU finishes.&#13;</Content>
+<Content aid:pstyle="Content">GPU may then stall waiting for CPU to submit subsequent work.&#13;</Content>
+<Content aid:pstyle="Content">The pipeline collapses.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Indirect buffers are one answer to readback</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Instead:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-gpu-chain">GPU creates count&#10;GPU creates indirect args&#10;GPU consumes indirect args&#13;</Code>
+<Content aid:pstyle="Content">Read the result back only when the CPU actually needs it, possibly several frames later.&#13;</Content>
+<Content aid:pstyle="Content">Maveb’s radix dispatch does exactly this.&#13;</Content>
+<Content aid:pstyle="Content">This is why indirect execution and pipelining are deeply connected topics.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Asynchronous readback</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If CPU genuinely needs GPU data, copy into a CPU-visible readback buffer and process after completion.&#13;</Content>
+<Content aid:pstyle="Content">Current Maveb frame capture does this correctly.&#13;</Content>
+<Content aid:pstyle="Content">It encodes texture→buffer copy.&#13;</Content>
+<Content aid:pstyle="Content">Then registers a command-buffer completion handler.&#13;</Content>
+<Content aid:pstyle="Content">Only when GPU work has completed does the handler access buffer contents and construct the CPU capture.&#13;</Content>
+<Content aid:pstyle="Content">The main frame function does not call:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp" id="p10-no-wait">waitUntilCompleted()&#13;</Code>
+<Content aid:pstyle="Content">for every screenshot copy.&#13;</Content>
+<Content aid:pstyle="Content">That preserves normal frame pipelining.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Persistent mapped upload buffers</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The inefficient model:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-map-everything">create/map buffer&#10;write 64 bytes&#10;unmap&#10;submit&#10;&#10;create/map another buffer&#10;...&#13;</Code>
+<Content aid:pstyle="Content">causes allocation/mapping overhead.&#13;</Content>
+<Content aid:pstyle="Content">Instead allocate a large CPU-visible upload buffer once and keep its CPU pointer available.&#13;</Content>
+<Content aid:pstyle="Content">Every frame allocate slices:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f2e20889c6ee56fc76b53464.svg" alt="&#10;[offset,offset+size).&#10;" jobId="f2e20889c6ee56fc76b53464" originalTeX="&#10;[offset,offset+size).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Write directly.&#13;</Content>
+<Content aid:pstyle="Content">Bind GPU buffer + offset.&#13;</Content>
+<Content aid:pstyle="Content">This is persistent mapped arena allocation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Maveb FrameContext does exactly this</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Each frame context owns an 8 MiB <InlineCode aid:cstyle="InlineCode">StorageModeShared</InlineCode> upload buffer.&#13;</Content>
+<Content aid:pstyle="Content">Allocation:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5da00a940824c490fd71ec3f.svg" alt="&#10;offset=&#10;alignUp(cursor,alignment).&#10;" jobId="5da00a940824c490fd71ec3f" originalTeX="&#10;offset=&#10;alignUp(cursor,alignment).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dcda28e9d438fe42fde5437a.svg" alt="&#10;cursor\leftarrow offset+size.&#10;" jobId="dcda28e9d438fe42fde5437a" originalTeX="&#10;cursor\leftarrow offset+size.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Returned slice contains:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp" id="p10-slice">buffer&#10;offset&#10;size&#10;cpuAddress&#13;</Code>
+<Content aid:pstyle="Content">Default alignment:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/98fc5dc18cbaa8d977592061.svg" alt="&#10;256\text{ bytes}.&#10;" jobId="98fc5dc18cbaa8d977592061" originalTeX="&#10;256\text{ bytes}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">CPU writes directly through the shared buffer’s <InlineCode aid:cstyle="InlineCode">contents()</InlineCode> pointer.&#13;</Content>
+<Content aid:pstyle="Content">No per-object Metal buffer creation.&#13;</Content>
+<Content aid:pstyle="Content">Very good.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">It is technically a per-frame bump arena</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The source labels it an <InlineCode aid:cstyle="InlineCode">"Upload Ring"</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">Inside one <InlineCode aid:cstyle="InlineCode">FrameContext</InlineCode>, allocation is currently:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0b82579cc6eeaebb712fbd44.svg" alt="&#10;\boxed{&#10;\text{monotonic cursor reset at beginFrame()}&#10;}&#10;" jobId="0b82579cc6eeaebb712fbd44" originalTeX="&#10;\boxed{&#10;\text{monotonic cursor reset at beginFrame()}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">rather than a circular buffer with independent head and tail.&#13;</Content>
+<Content aid:pstyle="Content">The <Strong aid:cstyle="Bold">three FrameContexts together form the frame ring</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">Slot 0’s cursor is reset only when its frame context becomes reusable after GPU completion.&#13;</Content>
+<Content aid:pstyle="Content">This architecture is simpler than managing one giant circular arena with arbitrary in-flight ranges.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Ring buffer principle</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For a true single-buffer ring, maintain:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/aa0cf18f026a56f3e927403a.svg" alt="&#10;head&#10;" jobId="aa0cf18f026a56f3e927403a" originalTeX="&#10;head&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">for new allocations and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9c4e247f0aa1fa12cd80b6aa.svg" alt="&#10;tail&#10;" jobId="9c4e247f0aa1fa12cd80b6aa" originalTeX="&#10;tail&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">for oldest GPU-in-use data.&#13;</Content>
+<Content aid:pstyle="Content">Never let head overtake live tail.&#13;</Content>
+<Content aid:pstyle="Content">If allocation reaches buffer end:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0c3c00e37654110acdc43b5b.svg" alt="&#10;head\rightarrow0&#10;" jobId="0c3c00e37654110acdc43b5b" originalTeX="&#10;head\rightarrow0&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">only if the wrapped range is no longer in flight.&#13;</Content>
+<Content aid:pstyle="Content">This requires fences/timeline tracking.&#13;</Content>
+<Content aid:pstyle="Content">Per-frame arenas avoid much of that complexity.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Readback arena</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Maveb also allocates a:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9deb95aeb1c6d8480aa33966.svg" alt="&#10;256\text{ KiB}&#10;" jobId="9deb95aeb1c6d8480aa33966" originalTeX="&#10;256\text{ KiB}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">shared readback buffer per frame context.&#13;</Content>
+<Content aid:pstyle="Content">Same aligned bump mechanism.&#13;</Content>
+<Content aid:pstyle="Content">That provides bounded CPU-visible storage for GPU results without creating one tiny readback resource per query.&#13;</Content>
+<Content aid:pstyle="Content">This is exactly the same allocation principle in the opposite data direction.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">GPU memory suballocation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose you need:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bf1a913881225610eb678010.svg" alt="&#10;10,000&#10;" jobId="bf1a913881225610eb678010" originalTeX="&#10;10,000&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">small 4 KiB GPU buffers.&#13;</Content>
+<Content aid:pstyle="Content">Requesting 10,000 dedicated GPU memory allocations can be expensive and fragmented.&#13;</Content>
+<Content aid:pstyle="Content">Instead reserve a large block:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/72aea87a8d954a1f6aa6f8d5.svg" alt="&#10;256\text{ MiB}&#10;" jobId="72aea87a8d954a1f6aa6f8d5" originalTeX="&#10;256\text{ MiB}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and allocate slices from it.&#13;</Content>
+<Content aid:pstyle="Content">Resource:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4fec130b06b6eb48be481244.svg" alt="&#10;(block,\ offset,\ size).&#10;" jobId="4fec130b06b6eb48be481244" originalTeX="&#10;(block,\ offset,\ size).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is suballocation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Dedicated allocations versus suballocation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Dedicated allocation is attractive for:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">enormous textures/buffers,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">special alignment/tiling requirements,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">resources whose lifetime spans most of the application,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">allocations where backend recommends/requires dedication.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Suballocation is excellent for:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">many small resources,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">dynamic/transient resources,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">predictable lifetime pools.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">A serious allocator usually supports both.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Internal and external fragmentation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Internal fragmentation:&#13;</Content>
+<Content aid:pstyle="Content">You allocate 300 bytes from a 512-byte block.&#13;</Content>
+<Content aid:pstyle="Content">Unused:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5b0f65a59cc5ac478c0526b7.svg" alt="&#10;212\text{ bytes}.&#10;" jobId="5b0f65a59cc5ac478c0526b7" originalTeX="&#10;212\text{ bytes}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">External fragmentation:&#13;</Content>
+<Content aid:pstyle="Content">There is enough total free memory, but it exists in disconnected chunks.&#13;</Content>
+<Content aid:pstyle="Content">For example:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-frag">free 10 MB&#10;used 5 MB&#10;free 10 MB&#10;used 5 MB&#10;free 10 MB&#13;</Code>
+<Content aid:pstyle="Content">Total free:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/72ca8843844aba8181213b34.svg" alt="&#10;30\text{ MB}.&#10;" jobId="72ca8843844aba8181213b34" originalTeX="&#10;30\text{ MB}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">A contiguous 25 MB allocation cannot fit.&#13;</Content>
+<Content aid:pstyle="Content">Allocator design matters in long-running engines.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Common suballocators</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A linear/bump allocator is ideal for:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/879e488996e8b069f164b137.svg" alt="&#10;\text{reset-whole-pool-at-once}&#10;" jobId="879e488996e8b069f164b137" originalTeX="&#10;\text{reset-whole-pool-at-once}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">transient data.&#13;</Content>
+<Content aid:pstyle="Content">A free-list allocator handles arbitrary lifetimes.&#13;</Content>
+<Content aid:pstyle="Content">Buddy allocation makes split/merge efficient while restricting block sizes to powers of two.&#13;</Content>
+<Content aid:pstyle="Content">Slab/pool allocators are excellent when many objects have equal size.&#13;</Content>
+<Content aid:pstyle="Content">There is no single GPU allocator for every lifetime class.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Resource aliasing</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose texture A is only used during shadow generation.&#13;</Content>
+<Content aid:pstyle="Content">Texture B is only used much later during bloom.&#13;</Content>
+<Content aid:pstyle="Content">Their lifetimes do not overlap.&#13;</Content>
+<Content aid:pstyle="Content">Instead of allocating:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/adc8f5cde248b202e53e9ebc.svg" alt="&#10;Memory(A)+Memory(B),&#10;" jobId="adc8f5cde248b202e53e9ebc" originalTeX="&#10;Memory(A)+Memory(B),&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">the renderer may place both resources in the same physical region at different times.&#13;</Content>
+<Content aid:pstyle="Content">That is resource aliasing.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Lifetime interval view</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Represent resource lifetime as:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f7a29de7c4a0d53fb42514d7.svg" alt="&#10;[l_i,r_i].&#10;" jobId="f7a29de7c4a0d53fb42514d7" originalTeX="&#10;[l_i,r_i].&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Two resources may alias if:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d6832341c4a189dbeca3c193.svg" alt="&#10;[l_A,r_A]&#10;\cap&#10;[l_B,r_B]&#10;=&#10;\varnothing.&#10;" jobId="d6832341c4a189dbeca3c193" originalTeX="&#10;[l_A,r_A]&#10;\cap&#10;[l_B,r_B]&#10;=&#10;\varnothing.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This turns transient resource allocation into an interval-allocation problem.&#13;</Content>
+<Content aid:pstyle="Content">A frame graph can compute lifetimes automatically.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Aliasing requires synchronization discipline</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Memory reuse is legal only after prior resource use has truly ended.&#13;</Content>
+<Content aid:pstyle="Content">Otherwise:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-alias-bug">pass A still reading memory&#10;pass B overwrites same bytes&#13;</Code>
+<Content aid:pstyle="Content">gives corruption.&#13;</Content>
+<Content aid:pstyle="Content">Alias transitions may require explicit API barriers or hazard tracking depending on backend.&#13;</Content>
+<Content aid:pstyle="Content">Aliasing is memory optimization built on correct lifetime analysis.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Transient memory</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A resource is transient if its contents need exist only during part of a frame.&#13;</Content>
+<Content aid:pstyle="Content">Examples:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">blur intermediates,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">temporary visibility lists,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">scan workspace,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">G-buffer attachments not needed after lighting.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Because lifetimes are short and predictable, transient resources are ideal candidates for pooled/aliased memory.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Maveb already reserves per-frame transient memory infrastructure</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Each <InlineCode aid:cstyle="InlineCode">FrameContext</InlineCode> creates a private:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0dd5319363b6f269ece7a596.svg" alt="&#10;64\text{ MiB}&#10;" jobId="0dd5319363b6f269ece7a596" originalTeX="&#10;64\text{ MiB}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Metal heap labelled:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-transient">Frame N Transient Heap&#13;</Code>
+<Content aid:pstyle="Content">with tracked hazards.&#13;</Content>
+<Content aid:pstyle="Content">That is exactly the kind of backing storage from which transient resources can be allocated.&#13;</Content>
+<Content aid:pstyle="Content">From the inspected code, I would not yet claim that a general lifetime-aware frame-graph alias allocator is fully using this heap everywhere—the infrastructure is present, while full transient lifetime aliasing is a separate system.&#13;</Content>
+<Content aid:pstyle="Content">That distinction matters.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">GPU timestamp queries</Strong>&#13;</Content>
+<Content aid:pstyle="Content">CPU timing:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp" id="p10-wrong-gpu-time">auto t0 = CPUClock::now();&#10;submit();&#10;auto t1 = CPUClock::now();&#13;</Code>
+<Content aid:pstyle="Content">mostly measures:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ba77cdb682f61ffffda8c304.svg" alt="&#10;\text{command submission cost}.&#10;" jobId="ba77cdb682f61ffffda8c304" originalTeX="&#10;\text{command submission cost}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">It does <Strong aid:cstyle="Bold">not</Strong> measure shader execution.&#13;</Content>
+<Content aid:pstyle="Content">To measure GPU duration, the GPU itself records timestamps around work.&#13;</Content>
+<Content aid:pstyle="Content">Conceptually:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a01e719855f6356246fe1e9f.svg" alt="&#10;t_0=\text{GPU timestamp before pass},&#10;" jobId="a01e719855f6356246fe1e9f" originalTeX="&#10;t_0=\text{GPU timestamp before pass},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9464f47e4c419bc16505a5e4.svg" alt="&#10;t_1=\text{GPU timestamp after pass}.&#10;" jobId="9464f47e4c419bc16505a5e4" originalTeX="&#10;t_1=\text{GPU timestamp after pass}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Duration:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/aa0b75c1c81cbe77b980872d.svg" alt="&#10;\boxed{&#10;T=&#10;(t_1-t_0)\times&#10;\text{timestamp period}.&#10;}&#10;" jobId="aa0b75c1c81cbe77b980872d" originalTeX="&#10;\boxed{&#10;T=&#10;(t_1-t_0)\times&#10;\text{timestamp period}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Coarse GPU timing already exists in Maveb</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The frame command buffer completion handler reads:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp" id="p10-gpu-time">GPUEndTime() -&#10;GPUStartTime()&#13;</Code>
+<Content aid:pstyle="Content">and stores milliseconds.&#13;</Content>
+<Content aid:pstyle="Content">That gives coarse command-buffer/frame GPU duration.&#13;</Content>
+<Content aid:pstyle="Content">Useful.&#13;</Content>
+<Content aid:pstyle="Content">But it does not tell you:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-pass-timing-needed">Gaussian projection: 0.3 ms&#10;Radix sort: 1.1 ms&#10;Scene pass: 2.8 ms&#10;TAA: 0.4 ms&#13;</Code>
+<Content aid:pstyle="Content">For that you need pass-level GPU timestamp/counter instrumentation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Pipeline statistics queries</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Timing tells you:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a1cae9cf889795584a44440c.svg" alt="&#10;\text{how long}.&#10;" jobId="a1cae9cf889795584a44440c" originalTeX="&#10;\text{how long}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Pipeline statistics can tell you:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0837b8e861ab05e73c7b0384.svg" alt="&#10;\text{how much work}.&#10;" jobId="0837b8e861ab05e73c7b0384" originalTeX="&#10;\text{how much work}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Depending on API/hardware, possible counters include:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">vertices processed,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">primitives generated,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">fragments,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">compute invocations,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">clipping statistics.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">If frame suddenly doubles from:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cec7d3d45f039608b336c2a1.svg" alt="&#10;8\text{ ms}\rightarrow16\text{ ms},&#10;" jobId="cec7d3d45f039608b336c2a1" originalTeX="&#10;8\text{ ms}\rightarrow16\text{ ms},&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">statistics help distinguish:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Shader got slower&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">from:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">We accidentally submitted twice as much geometry.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Not all metrics are available on every backend.&#13;</Content>
+<Content aid:pstyle="Content">Capability querying matters.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">GPU profiling zones</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A profiling system should expose named zones:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-zones">Frame&#10; ├── Shadow&#10; ├── Gaussian Project&#10; ├── Gaussian Scan&#10; ├── Gaussian Radix&#10; ├── Gaussian Composite&#10; ├── Scene&#10; ├── TAA&#10; └── Presentation&#13;</Code>
+<Content aid:pstyle="Content">Each zone can associate:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">CPU encoding time,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">GPU start/end timestamp,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">counters,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">command-buffer identity.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Then profiler visualizes dependency/overlap.&#13;</Content>
+<Content aid:pstyle="Content">Without zones, optimization becomes guesswork.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Maveb profiler status</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The inspected <InlineCode aid:cstyle="InlineCode">Profiler.cpp</InlineCode> is a CPU-side <InlineCode aid:cstyle="InlineCode">ProfileScope</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">It records:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/814a152593a9cc87529eca1b.svg" alt="&#10;\text{name},&#10;\quad&#10;\text{milliseconds}&#10;" jobId="814a152593a9cc87529eca1b" originalTeX="&#10;\text{name},&#10;\quad&#10;\text{milliseconds}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">under a mutex.&#13;</Content>
+<Content aid:pstyle="Content">The renderer separately records whole-command-buffer GPU time.&#13;</Content>
+<Content aid:pstyle="Content">So current infrastructure distinguishes some CPU/GPU timing, but a full per-pass GPU timestamp-zone system is still a useful future step.&#13;</Content>
+<Content aid:pstyle="Content">That would be particularly valuable for your Gaussian scan/radix pipeline.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="01-foundations-i-ch012-performance-modeling-principled-gpu-redesign">PERFORMANCE MODELING &amp; PRINCIPLED GPU REDESIGN&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Occupancy versus instruction throughput</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Pass 9 established:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/90e7c7c9197006a05030533a.svg" alt="&#10;\text{occupancy}&#10;=&#10;\frac{&#10;\text{resident warps/waves}&#10;}{&#10;\text{maximum}&#10;}.&#10;" jobId="90e7c7c9197006a05030533a" originalTeX="&#10;\text{occupancy}&#10;=&#10;\frac{&#10;\text{resident warps/waves}&#10;}{&#10;\text{maximum}&#10;}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Now comes the warning:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/044147bc7ea06c67ccc2b6d7.svg" alt="&#10;\boxed{&#10;\text{high occupancy is useful only if it helps keep execution units productive}.&#10;}&#10;" jobId="044147bc7ea06c67ccc2b6d7" originalTeX="&#10;\boxed{&#10;\text{high occupancy is useful only if it helps keep execution units productive}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Imagine kernel A:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c86878c1e404bf1b6232ed79.svg" alt="&#10;50\%\text{ occupancy}&#10;" jobId="c86878c1e404bf1b6232ed79" originalTeX="&#10;50\%\text{ occupancy}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">but every active warp continuously issues FMAs.&#13;</Content>
+<Content aid:pstyle="Content">Kernel B:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bcc673b0842a192f69d6deb9.svg" alt="&#10;100\%\text{ occupancy}&#10;" jobId="bcc673b0842a192f69d6deb9" originalTeX="&#10;100\%\text{ occupancy}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">but half its instructions are spill loads/stores.&#13;</Content>
+<Content aid:pstyle="Content">Kernel A may be much faster.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Register reduction can make performance worse</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose original kernel uses:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5f2f0899eac99f4bc6119760.svg" alt="&#10;80&#10;" jobId="5f2f0899eac99f4bc6119760" originalTeX="&#10;80&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">registers/thread.&#13;</Content>
+<Content aid:pstyle="Content">Compiler keeps all important state in registers.&#13;</Content>
+<Content aid:pstyle="Content">You manually rewrite it to use:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ddfe7ec0558ef957601cdf67.svg" alt="&#10;48&#10;" jobId="ddfe7ec0558ef957601cdf67" originalTeX="&#10;48&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">registers and occupancy rises.&#13;</Content>
+<Content aid:pstyle="Content">But now expensive values are recomputed repeatedly or memory accesses increase.&#13;</Content>
+<Content aid:pstyle="Content">Total work rises.&#13;</Content>
+<Content aid:pstyle="Content">Occupancy is not the objective.&#13;</Content>
+<Content aid:pstyle="Content">The objective is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/af43250fd5f2b422a9fefe02.svg" alt="&#10;\boxed{&#10;\text{useful completed work per unit time}.&#10;}&#10;" jobId="af43250fd5f2b422a9fefe02" originalTeX="&#10;\boxed{&#10;\text{useful completed work per unit time}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Arithmetic intensity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Arithmetic intensity is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/46d1470085cbea29ad0cb731.svg" alt="&#10;\boxed{&#10;I=&#10;\frac{&#10;\text{arithmetic operations}&#10;}{&#10;\text{bytes transferred from limiting memory level}&#10;}.&#10;}&#10;" jobId="46d1470085cbea29ad0cb731" originalTeX="&#10;\boxed{&#10;I=&#10;\frac{&#10;\text{arithmetic operations}&#10;}{&#10;\text{bytes transferred from limiting memory level}&#10;}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Typically measured:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b7ea1e3c6c44defbe02311f6.svg" alt="&#10;\text{FLOP/byte}.&#10;" jobId="b7ea1e3c6c44defbe02311f6" originalTeX="&#10;\text{FLOP/byte}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">A low-intensity kernel spends most of its effort moving data.&#13;</Content>
+<Content aid:pstyle="Content">A high-intensity kernel reuses data heavily and performs substantial computation per byte.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">KairoGPU vector multiply arithmetic intensity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Per element:&#13;</Content>
+<Content aid:pstyle="Content">Load:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/00bdad716544ff8c79375f0b.svg" alt="&#10;lhs[i]&#10;" jobId="00bdad716544ff8c79375f0b" originalTeX="&#10;lhs[i]&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">= 4 bytes.&#13;</Content>
+<Content aid:pstyle="Content">Load:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9591077de18f4a071d0aede4.svg" alt="&#10;rhs[i]&#10;" jobId="9591077de18f4a071d0aede4" originalTeX="&#10;rhs[i]&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">= 4 bytes.&#13;</Content>
+<Content aid:pstyle="Content">Store:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b7a92921f9e58cb34db28ed9.svg" alt="&#10;out[i]&#10;" jobId="b7a92921f9e58cb34db28ed9" originalTeX="&#10;out[i]&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">= 4 bytes.&#13;</Content>
+<Content aid:pstyle="Content">Total:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7bacbf2a17c45674a81a76d5.svg" alt="&#10;12\text{ bytes}.&#10;" jobId="7bacbf2a17c45674a81a76d5" originalTeX="&#10;12\text{ bytes}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Arithmetic:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6898ee629ed320a616c498c5.svg" alt="&#10;1\text{ floating multiply}.&#10;" jobId="6898ee629ed320a616c498c5" originalTeX="&#10;1\text{ floating multiply}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Therefore:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/84f07c13c0133f688f4a9a23.svg" alt="&#10;\boxed{&#10;I=&#10;\frac1{12}&#10;\approx0.0833&#10;\text{ FLOP/byte}.&#10;}&#10;" jobId="84f07c13c0133f688f4a9a23" originalTeX="&#10;\boxed{&#10;I=&#10;\frac1{12}&#10;\approx0.0833&#10;\text{ FLOP/byte}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Extremely low arithmetic intensity.&#13;</Content>
+<Content aid:pstyle="Content">This is almost certainly a memory-bandwidth-oriented workload on any modern GPU.&#13;</Content>
+<Content aid:pstyle="Content">Making the multiply itself twice as fast will barely help.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Effective bandwidth metric</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If vector multiply processes <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea63a9f9a03c273b93026960.svg" alt="N" jobId="ea63a9f9a03c273b93026960" originalTeX="N"/> elements in <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bb6344d95a1adb78d71fefa4.svg" alt="T" jobId="bb6344d95a1adb78d71fefa4" originalTeX="T"/> seconds:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/266f045b4d95b4853fa9cb83.svg" alt="&#10;\boxed{&#10;B_{\text{effective}}&#10;=&#10;\frac{&#10;12N&#10;}{&#10;T&#10;}.&#10;}&#10;" jobId="266f045b4d95b4853fa9cb83" originalTeX="&#10;\boxed{&#10;B_{\text{effective}}&#10;=&#10;\frac{&#10;12N&#10;}{&#10;T&#10;}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For repeated operations, multiply by iteration count.&#13;</Content>
+<Content aid:pstyle="Content">This metric is more informative than FLOP/s for such a kernel.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current KairoGPU benchmark</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Benchmark uses:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ac77ee981d5d7ce7cd103547.svg" alt="&#10;N=2^{20}&#10;=&#10;1,048,576&#10;" jobId="ac77ee981d5d7ce7cd103547" originalTeX="&#10;N=2^{20}&#10;=&#10;1,048,576&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">elements.&#13;</Content>
+<Content aid:pstyle="Content">Per dispatch logical traffic:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4656a7a358a22116b217c0fc.svg" alt="&#10;12N&#10;=&#10;12,582,912\text{ bytes}&#10;" jobId="4656a7a358a22116b217c0fc" originalTeX="&#10;12N&#10;=&#10;12,582,912\text{ bytes}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">approximately:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7ca76b34eb70e652ca2999fc.svg" alt="&#10;12\text{ MiB}.&#10;" jobId="7ca76b34eb70e652ca2999fc" originalTeX="&#10;12\text{ MiB}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f62b685e82413f132543ef6b.svg" alt="&#10;64&#10;" jobId="f62b685e82413f132543ef6b" originalTeX="&#10;64&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">iterations:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1cc403882190c1ccd5c079f2.svg" alt="&#10;768\text{ MiB}&#10;" jobId="1cc403882190c1ccd5c079f2" originalTeX="&#10;768\text{ MiB}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">of logical buffer traffic.&#13;</Content>
+<Content aid:pstyle="Content">But every <InlineCode aid:cstyle="InlineCode">VectorMultiplyFloat()</InlineCode> currently commits and waits for GPU completion.&#13;</Content>
+<Content aid:pstyle="Content">Therefore benchmark includes repeated command submission/synchronization overhead.&#13;</Content>
+<Content aid:pstyle="Content">It is useful as an end-to-end dispatch benchmark, but it is <Strong aid:cstyle="Bold">not yet a pure kernel-bandwidth benchmark</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Better benchmark separation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Measure separately:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5aebbf5e9d9512378bad6eec.svg" alt="&#10;T_{\text{submit}},&#10;" jobId="5aebbf5e9d9512378bad6eec" originalTeX="&#10;T_{\text{submit}},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5fbe2e9248590da12e177deb.svg" alt="&#10;T_{\text{GPU}},&#10;" jobId="5fbe2e9248590da12e177deb" originalTeX="&#10;T_{\text{GPU}},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/02cfa1ce8e6b6e506ea9eff7.svg" alt="&#10;B_{\text{effective}},&#10;" jobId="02cfa1ce8e6b6e506ea9eff7" originalTeX="&#10;B_{\text{effective}},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7a11a802eae7afd9bbe18605.svg" alt="&#10;\text{dispatch count}.&#10;" jobId="7a11a802eae7afd9bbe18605" originalTeX="&#10;\text{dispatch count}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Warm the pipeline first.&#13;</Content>
+<Content aid:pstyle="Content">Batch many dispatches in one command buffer if testing kernel throughput.&#13;</Content>
+<Content aid:pstyle="Content">Use GPU timestamps rather than CPU wall time for kernel execution.&#13;</Content>
+<Content aid:pstyle="Content">Then also maintain an end-to-end test because application overhead still matters.&#13;</Content>
+<Content aid:pstyle="Content">Both measurements answer different questions.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Matrix multiplication arithmetic intensity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Now examine Kairo’s tiled matrix multiply.&#13;</Content>
+<Content aid:pstyle="Content">Tile width:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7a83aa6c2ea3bee79f49ff90.svg" alt="&#10;T=16.&#10;" jobId="7a83aa6c2ea3bee79f49ff90" originalTeX="&#10;T=16.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For one <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4bc6341a50f0ef89a830a45a.svg" alt="K" jobId="4bc6341a50f0ef89a830a45a" originalTeX="K"/>-tile step, workgroup loads:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f42e25e23be22981022407f0.svg" alt="&#10;T^2&#10;" jobId="f42e25e23be22981022407f0" originalTeX="&#10;T^2&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">elements from A and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f42e25e23be22981022407f0.svg" alt="&#10;T^2&#10;" jobId="f42e25e23be22981022407f0" originalTeX="&#10;T^2&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">from B.&#13;</Content>
+<Content aid:pstyle="Content">Float bytes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3201f41b44233eacc794ebc3.svg" alt="&#10;4(2T^2)&#10;=&#10;8T^2.&#10;" jobId="3201f41b44233eacc794ebc3" originalTeX="&#10;4(2T^2)&#10;=&#10;8T^2.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">It computes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/086cc3d705d09ebe54e7b7fd.svg" alt="&#10;T^3&#10;" jobId="086cc3d705d09ebe54e7b7fd" originalTeX="&#10;T^3&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">multiply-adds.&#13;</Content>
+<Content aid:pstyle="Content">Counting one FMA as two FLOPs:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e9a513ccecb00637bf4cd59e.svg" alt="&#10;2T^3.&#10;" jobId="e9a513ccecb00637bf4cd59e" originalTeX="&#10;2T^3.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Arithmetic intensity approximately:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/770f55368ab006af6688f965.svg" alt="&#10;\boxed{&#10;I=&#10;\frac{&#10;2T^3&#10;}{&#10;8T^2&#10;}&#10;=&#10;\frac T4.&#10;}&#10;" jobId="770f55368ab006af6688f965" originalTeX="&#10;\boxed{&#10;I=&#10;\frac{&#10;2T^3&#10;}{&#10;8T^2&#10;}&#10;=&#10;\frac T4.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">At:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/355aab229f07243e7388bbf1.svg" alt="&#10;T=16:&#10;" jobId="355aab229f07243e7388bbf1" originalTeX="&#10;T=16:&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/14f4e4b79701520a28fc4d75.svg" alt="&#10;\boxed{&#10;I\approx4\text{ FLOP/byte}.&#10;}&#10;" jobId="14f4e4b79701520a28fc4d75" originalTeX="&#10;\boxed{&#10;I\approx4\text{ FLOP/byte}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is roughly:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f6b6600afcaf51953772ba06.svg" alt="&#10;48\times&#10;" jobId="f6b6600afcaf51953772ba06" originalTeX="&#10;48\times&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">the arithmetic intensity of simple vector multiply.&#13;</Content>
+<Content aid:pstyle="Content">Threadgroup-memory reuse is why.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why larger tiles can raise intensity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Formula:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/050932d620402331c65167f9.svg" alt="&#10;I\approx T/4.&#10;" jobId="050932d620402331c65167f9" originalTeX="&#10;I\approx T/4.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">At:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/851abb6e1a6ed486af134c50.svg" alt="&#10;T=32,&#10;" jobId="851abb6e1a6ed486af134c50" originalTeX="&#10;T=32,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">theoretical tile intensity becomes around:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/398ab139867fb9f9698c1a48.svg" alt="&#10;8\text{ FLOP/byte}.&#10;" jobId="398ab139867fb9f9698c1a48" originalTeX="&#10;8\text{ FLOP/byte}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">But a <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/008269e5473af37ed8a7e67d.svg" alt="32\times32" jobId="008269e5473af37ed8a7e67d" originalTeX="32\times32"/> group would contain:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/098af7090c1116bfaf9ddf36.svg" alt="&#10;1024&#10;" jobId="098af7090c1116bfaf9ddf36" originalTeX="&#10;1024&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">threads and require much more shared memory/register state.&#13;</Content>
+<Content aid:pstyle="Content">Occupancy or hardware group-size limits may collapse.&#13;</Content>
+<Content aid:pstyle="Content">Hence:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d5cd693ffb0140d4d436d398.svg" alt="&#10;\boxed{&#10;\text{greater data reuse can conflict with occupancy/resources}.&#10;}&#10;" jobId="d5cd693ffb0140d4d436d398" originalTeX="&#10;\boxed{&#10;\text{greater data reuse can conflict with occupancy/resources}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is the kind of multi-variable optimization M132 expects.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Bandwidth-bound kernel</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A kernel is bandwidth-bound when arithmetic units could process more work, but memory cannot feed them fast enough.&#13;</Content>
+<Content aid:pstyle="Content">Symptoms include:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">measured memory bandwidth near hardware limit,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">low ALU utilization,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">increasing arithmetic throughput doesn’t improve runtime,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">reducing bytes improves runtime strongly.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Typical examples:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">vector copy,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">vector addition,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">simple particle state update,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">sparse gather.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Compute-bound kernel</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A kernel is compute-bound when arithmetic pipelines are the limiting resource.&#13;</Content>
+<Content aid:pstyle="Content">Symptoms:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">high math-unit utilization,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">memory bandwidth below peak,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">reducing arithmetic improves runtime,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">more data reuse no longer matters much.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Examples can include:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">large matrix multiplication,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">expensive procedural shading,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">heavy transcendental math,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">dense numerical kernels.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Roofline model</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Let:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/83b0118f07872aced237275d.svg" alt="&#10;P_{\max}&#10;=&#10;\text{peak compute throughput}&#10;" jobId="83b0118f07872aced237275d" originalTeX="&#10;P_{\max}&#10;=&#10;\text{peak compute throughput}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">in FLOP/s.&#13;</Content>
+<Content aid:pstyle="Content">Let:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2ae7eec58480fb05aa22277b.svg" alt="&#10;B_{\max}&#10;=&#10;\text{peak memory bandwidth}&#10;" jobId="2ae7eec58480fb05aa22277b" originalTeX="&#10;B_{\max}&#10;=&#10;\text{peak memory bandwidth}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">in bytes/s.&#13;</Content>
+<Content aid:pstyle="Content">For arithmetic intensity:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4dc24e56f8fd0f2c292d896a.svg" alt="&#10;I&#10;" jobId="4dc24e56f8fd0f2c292d896a" originalTeX="&#10;I&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">FLOP/byte, memory can supply at most:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1e64925beffca11ae452fbd3.svg" alt="&#10;B_{\max}I&#10;" jobId="1e64925beffca11ae452fbd3" originalTeX="&#10;B_{\max}I&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">FLOP/s worth of work.&#13;</Content>
+<Content aid:pstyle="Content">Therefore attainable performance is bounded by:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e8dcafbc0cc3d4bb89b86ec6.svg" alt="&#10;\boxed{&#10;P&#10;\le&#10;\min(&#10;P_{\max},&#10;B_{\max}I&#10;).&#10;}&#10;" jobId="e8dcafbc0cc3d4bb89b86ec6" originalTeX="&#10;\boxed{&#10;P&#10;\le&#10;\min(&#10;P_{\max},&#10;B_{\max}I&#10;).&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is the roofline model.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Ridge point</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The two roofs intersect when:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/484ddde17455ff0dd26e115c.svg" alt="&#10;P_{\max}&#10;=&#10;B_{\max}I^*.&#10;" jobId="484ddde17455ff0dd26e115c" originalTeX="&#10;P_{\max}&#10;=&#10;B_{\max}I^*.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Thus:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/14172d55559915650fb8bcc4.svg" alt="&#10;\boxed{&#10;I^*&#10;=&#10;\frac{&#10;P_{\max}&#10;}{&#10;B_{\max}&#10;}.&#10;}&#10;" jobId="14172d55559915650fb8bcc4" originalTeX="&#10;\boxed{&#10;I^*&#10;=&#10;\frac{&#10;P_{\max}&#10;}{&#10;B_{\max}&#10;}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3503518ae003f956aea88b27.svg" alt="&#10;I&lt;I^*,&#10;" jobId="3503518ae003f956aea88b27" originalTeX="&#10;I&lt;I^*,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">kernel is potentially bandwidth bound.&#13;</Content>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b80811abe571b1ab2a8ad718.svg" alt="&#10;I&gt;I^*,&#10;" jobId="b80811abe571b1ab2a8ad718" originalTeX="&#10;I&gt;I^*,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">kernel can potentially become compute bound.&#13;</Content>
+<Content aid:pstyle="Content">This gives you a numerical way to decide whether to optimize data movement or arithmetic.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Example roofline reasoning</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Imagine hypothetical GPU:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c26ba04b18849e53fd794290.svg" alt="&#10;P_{\max}=10\text{ TFLOP/s}&#10;" jobId="c26ba04b18849e53fd794290" originalTeX="&#10;P_{\max}=10\text{ TFLOP/s}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7f01d04382d92e53e34c8903.svg" alt="&#10;B_{\max}=500\text{ GB/s}.&#10;" jobId="7f01d04382d92e53e34c8903" originalTeX="&#10;B_{\max}=500\text{ GB/s}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Ridge intensity:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/30862b8156b16f63ae8f09bb.svg" alt="&#10;I^*&#10;=&#10;\frac{&#10;10\times10^{12}&#10;}{&#10;500\times10^9&#10;}&#10;=&#10;20\text{ FLOP/byte}.&#10;" jobId="30862b8156b16f63ae8f09bb" originalTeX="&#10;I^*&#10;=&#10;\frac{&#10;10\times10^{12}&#10;}{&#10;500\times10^9&#10;}&#10;=&#10;20\text{ FLOP/byte}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Vector multiply:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1eef50aec30a3addb715ef2d.svg" alt="&#10;I=0.083.&#10;" jobId="1eef50aec30a3addb715ef2d" originalTeX="&#10;I=0.083.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Memory roof:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/562425dd68b5a70a68050e37.svg" alt="&#10;500\times0.083&#10;\approx41.7\text{ GFLOP/s}.&#10;" jobId="562425dd68b5a70a68050e37" originalTeX="&#10;500\times0.083&#10;\approx41.7\text{ GFLOP/s}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Far below:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/172fb0d02233b829fb1604a3.svg" alt="&#10;10\text{ TFLOP/s}.&#10;" jobId="172fb0d02233b829fb1604a3" originalTeX="&#10;10\text{ TFLOP/s}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Optimizing multiply instruction is pointless.&#13;</Content>
+<Content aid:pstyle="Content">Your challenge is bandwidth and overhead.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Same hypothetical GPU, tiled matmul</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ada2a4aa4d58e50a8e17db5b.svg" alt="16\times16" jobId="ada2a4aa4d58e50a8e17db5b" originalTeX="16\times16"/> tiled kernel:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/92863ac27972c8dbcbf925bb.svg" alt="&#10;I\approx4.&#10;" jobId="92863ac27972c8dbcbf925bb" originalTeX="&#10;I\approx4.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Memory roof:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ee58feb76c0d0cb3646368f9.svg" alt="&#10;500\text{ GB/s}&#10;\times&#10;4&#10;=&#10;2\text{ TFLOP/s}.&#10;" jobId="ee58feb76c0d0cb3646368f9" originalTeX="&#10;500\text{ GB/s}&#10;\times&#10;4&#10;=&#10;2\text{ TFLOP/s}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Still below:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/172fb0d02233b829fb1604a3.svg" alt="&#10;10\text{ TFLOP/s}.&#10;" jobId="172fb0d02233b829fb1604a3" originalTeX="&#10;10\text{ TFLOP/s}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">So even that hypothetical implementation may remain bandwidth-limited unless cache reuse or larger tiles raise effective intensity.&#13;</Content>
+<Content aid:pstyle="Content">This is why high-end GEMM kernels use sophisticated blocking across multiple memory levels.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Arithmetic intensity is measured at a memory level</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Important subtlety.&#13;</Content>
+<Content aid:pstyle="Content">A value loaded once from DRAM may then be reused ten times from shared memory.&#13;</Content>
+<Content aid:pstyle="Content">DRAM arithmetic intensity is high.&#13;</Content>
+<Content aid:pstyle="Content">Shared-memory arithmetic intensity is different.&#13;</Content>
+<Content aid:pstyle="Content">Cache behavior changes effective traffic.&#13;</Content>
+<Content aid:pstyle="Content">Roofline analysis requires specifying the memory level whose bandwidth roof you are modeling.&#13;</Content>
+<Content aid:pstyle="Content">Advanced performance analysis can use hierarchical rooflines:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/23e566c577b17bbb33a9ab04.svg" alt="&#10;L1,&#10;L2,&#10;DRAM.&#10;" jobId="23e566c577b17bbb33a9ab04" originalTeX="&#10;L1,&#10;L2,&#10;DRAM.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Shader compiler optimization</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Shader source is not hardware machine code.&#13;</Content>
+<Content aid:pstyle="Content">Compiler performs things such as:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">constant folding,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">dead-code elimination,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">common-subexpression elimination,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">loop transformations,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">FMA formation,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">instruction scheduling,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">register allocation,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">strength reduction.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Therefore source code that “looks shorter” can generate worse machine code.&#13;</Content>
+<Content aid:pstyle="Content">And source that appears more complicated can compile better.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Common-subexpression versus register lifetime</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp" id="p10-cse">float expensive =&#10;    f(x);&#10;&#10;a =&#10;    expensive * y;&#10;&#10;... many instructions ...&#10;&#10;b =&#10;    expensive * z;&#13;</Code>
+<Content aid:pstyle="Content">Keeping <InlineCode aid:cstyle="InlineCode">expensive</InlineCode> avoids recomputation.&#13;</Content>
+<Content aid:pstyle="Content">But it remains live for a long time and occupies a register.&#13;</Content>
+<Content aid:pstyle="Content">Recomputing <InlineCode aid:cstyle="InlineCode">f(x)</InlineCode> later may paradoxically improve occupancy if <InlineCode aid:cstyle="InlineCode">f</InlineCode> is cheap.&#13;</Content>
+<Content aid:pstyle="Content">This is an advanced but fundamental compiler/performance tradeoff:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2c4fe5bd3e7bf60a7c1afddb.svg" alt="&#10;\boxed{&#10;\text{compute versus storage even exists at the register level}.&#10;}&#10;" jobId="2c4fe5bd3e7bf60a7c1afddb" originalTeX="&#10;\boxed{&#10;\text{compute versus storage even exists at the register level}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Loop unrolling</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Unrolling:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-unroll">for i=0..7&#13;</Code>
+<Content aid:pstyle="Content">into eight explicit operations can remove loop-control overhead and expose instruction-level parallelism.&#13;</Content>
+<Content aid:pstyle="Content">But it increases:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">code size,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">live temporaries,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">register pressure.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">A small fixed loop may benefit.&#13;</Content>
+<Content aid:pstyle="Content">A giant unrolled loop can spill catastrophically.&#13;</Content>
+<Content aid:pstyle="Content">Never assume <InlineCode aid:cstyle="InlineCode">unroll = faster</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Fast math</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Strict IEEE-like arithmetic preserves semantics around:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">NaN,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">infinity,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">signed zero,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">rounding,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">operation ordering.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Fast-math modes may permit:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">reassociation,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">reciprocal approximations,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">reciprocal-square-root approximations,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">approximate transcendental functions,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">FMA contraction,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">assumptions about finite values.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">This can increase speed substantially.&#13;</Content>
+<Content aid:pstyle="Content">But mathematical identity under real numbers does not imply bitwise identity under floating point.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reassociation example</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Strict:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e91759ad201f2d8230772a5a.svg" alt="&#10;(a+b)+c&#10;" jobId="e91759ad201f2d8230772a5a" originalTeX="&#10;(a+b)+c&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">is not necessarily equal to:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8b6f958710d72b11b1e38fb0.svg" alt="&#10;a+(b+c)&#10;" jobId="8b6f958710d72b11b1e38fb0" originalTeX="&#10;a+(b+c)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">in floating point.&#13;</Content>
+<Content aid:pstyle="Content">Take:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e5008d050f428e1d9ad4c642.svg" alt="&#10;a=10^{20},&#10;\quad&#10;b=-10^{20},&#10;\quad&#10;c=3.14.&#10;" jobId="e5008d050f428e1d9ad4c642" originalTeX="&#10;a=10^{20},&#10;\quad&#10;b=-10^{20},&#10;\quad&#10;c=3.14.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">First:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/919b234df6de08a6481b5a1d.svg" alt="&#10;(a+b)+c&#10;\approx&#10;0+3.14&#10;=&#10;3.14.&#10;" jobId="919b234df6de08a6481b5a1d" originalTeX="&#10;(a+b)+c&#10;\approx&#10;0+3.14&#10;=&#10;3.14.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Second:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b885c282a94ee38674900760.svg" alt="&#10;a+(b+c)&#10;\approx&#10;a-b&#10;\approx0&#10;" jobId="b885c282a94ee38674900760" originalTeX="&#10;a+(b+c)&#10;\approx&#10;a-b&#10;\approx0&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">depending on rounding.&#13;</Content>
+<Content aid:pstyle="Content">Fast math can permit such reassociation.&#13;</Content>
+<Content aid:pstyle="Content">For shading this may be harmless.&#13;</Content>
+<Content aid:pstyle="Content">For deterministic reductions or fragile geometric predicates it may not be.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reciprocal approximation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Instead of:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b0e712787339cd353507c962.svg" alt="&#10;y=\frac{x}{z},&#10;" jobId="b0e712787339cd353507c962" originalTeX="&#10;y=\frac{x}{z},&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">compiler might use approximate reciprocal:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/90feec0e6347a7ed5cab9841.svg" alt="&#10;r\approx\frac1z&#10;" jobId="90feec0e6347a7ed5cab9841" originalTeX="&#10;r\approx\frac1z&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/eae418e7858bd7dff340d51f.svg" alt="&#10;y=xr.&#10;" jobId="eae418e7858bd7dff340d51f" originalTeX="&#10;y=xr.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Likewise normalization may use approximate:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/977d31aba3c8ed73b8664cb0.svg" alt="&#10;\frac1{\sqrt{x}}&#10;" jobId="977d31aba3c8ed73b8664cb0" originalTeX="&#10;\frac1{\sqrt{x}}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">hardware instructions.&#13;</Content>
+<Content aid:pstyle="Content">These can be excellent for normals, lighting or iterative algorithms tolerant to small error.&#13;</Content>
+<Content aid:pstyle="Content">They require careful validation in robust intersection/codecs/synchronization counters.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Half precision</Strong>&#13;</Content>
+<Content aid:pstyle="Content">IEEE FP16 has:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/831acf540b9e59d13ee554f9.svg" alt="&#10;1\text{ sign bit},&#10;" jobId="831acf540b9e59d13ee554f9" originalTeX="&#10;1\text{ sign bit},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7ffa1f05889998396dd0fa5d.svg" alt="&#10;5\text{ exponent bits},&#10;" jobId="7ffa1f05889998396dd0fa5d" originalTeX="&#10;5\text{ exponent bits},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/79fa87ef28bcca7167a1c61f.svg" alt="&#10;10\text{ explicit fraction bits}.&#10;" jobId="79fa87ef28bcca7167a1c61f" originalTeX="&#10;10\text{ explicit fraction bits}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Largest finite magnitude:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7d9a6a259be53fec69172985.svg" alt="&#10;65504.&#10;" jobId="7d9a6a259be53fec69172985" originalTeX="&#10;65504.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Precision is roughly:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f11de3eae078c24a8add066c.svg" alt="&#10;3\text{ decimal digits}&#10;" jobId="f11de3eae078c24a8add066c" originalTeX="&#10;3\text{ decimal digits}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">depending on magnitude.&#13;</Content>
+<Content aid:pstyle="Content">It is not “a slightly less precise float.”&#13;</Content>
+<Content aid:pstyle="Content">Its numerical envelope is dramatically smaller than FP32.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why FP16 can be fast</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Half precision can reduce memory traffic by half:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/79ceb879cc660ad7dbb04c22.svg" alt="&#10;4\text{ bytes}&#10;\rightarrow&#10;2\text{ bytes}.&#10;" jobId="79ceb879cc660ad7dbb04c22" originalTeX="&#10;4\text{ bytes}&#10;\rightarrow&#10;2\text{ bytes}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That doubles the number of values fitting in:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">cache,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">shared memory,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">memory transactions.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Many GPUs also have higher native FP16 arithmetic throughput.&#13;</Content>
+<Content aid:pstyle="Content">So FP16 can help both:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/721c518ab4acacf417c54d5f.svg" alt="&#10;\text{bandwidth}&#10;" jobId="721c518ab4acacf417c54d5f" originalTeX="&#10;\text{bandwidth}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d2ffcaa32c7950ec545ef29d.svg" alt="&#10;\text{compute}.&#10;" jobId="d2ffcaa32c7950ec545ef29d" originalTeX="&#10;\text{compute}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Good FP16 candidates</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Quantities with naturally bounded ranges can work well:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3efb47692f7a6875d6cc6f41.svg" alt="&#10;color\in[0,1]\text{ or moderate HDR},&#10;" jobId="3efb47692f7a6875d6cc6f41" originalTeX="&#10;color\in[0,1]\text{ or moderate HDR},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/efabc3887db096110658608b.svg" alt="&#10;normal\in[-1,1],&#10;" jobId="efabc3887db096110658608b" originalTeX="&#10;normal\in[-1,1],&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/877034a56160a98f7cb26a48.svg" alt="&#10;roughness\in[0,1],&#10;" jobId="877034a56160a98f7cb26a48" originalTeX="&#10;roughness\in[0,1],&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cdb7e059429f3db286270f61.svg" alt="&#10;texture-like intermediate values.&#10;" jobId="cdb7e059429f3db286270f61" originalTeX="&#10;texture-like intermediate values.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Poor candidates include huge world coordinates or accumulated sums spanning many orders of magnitude.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Mixed precision</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The mature solution is rarely:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Make the entire renderer FP16.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Instead:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-mixed">storage: half&#10;load&#10;convert/compute critical terms: float&#10;accumulate: float&#10;store: half&#13;</Code>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/00b3f2502a029b8f2efe5e04.svg" alt="&#10;FP16\times FP16&#10;\rightarrow&#10;FP32\text{ accumulator}.&#10;" jobId="00b3f2502a029b8f2efe5e04" originalTeX="&#10;FP16\times FP16&#10;\rightarrow&#10;FP32\text{ accumulator}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is especially common in matrix hardware.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">FP16 Gaussian implications</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Gaussian rendering contains values such as:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">positions,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">log scales,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">rotations,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">spherical harmonic coefficients,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">opacities.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Some may tolerate half precision.&#13;</Content>
+<Content aid:pstyle="Content">World position may not, especially in large scenes.&#13;</Content>
+<Content aid:pstyle="Content">Depth sorting keys certainly should not casually become FP16 because ordering precision matters.&#13;</Content>
+<Content aid:pstyle="Content">Mixed-precision analysis should be per field.&#13;</Content>
+<Content aid:pstyle="Content">That would be an excellent research/performance experiment for Maveb.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">SIMD-group matrix operations</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Modern GPUs often expose specialized cooperative matrix hardware.&#13;</Content>
+<Content aid:pstyle="Content">Instead of each lane calculating a scalar dot product independently, a subgroup cooperatively multiplies matrix tiles:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a6975caca948abae7f4f5ab2.svg" alt="&#10;D=&#10;AB+C.&#10;" jobId="a6975caca948abae7f4f5ab2" originalTeX="&#10;D=&#10;AB+C.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Think:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/02f58fafc0532c3c695ecd91.svg" alt="&#10;\boxed{&#10;\text{subgroup owns a matrix fragment rather than one scalar output}.&#10;}&#10;" jobId="02f58fafc0532c3c695ecd91" originalTeX="&#10;\boxed{&#10;\text{subgroup owns a matrix fragment rather than one scalar output}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Exact APIs differ by platform:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">tensor/matrix cores,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">cooperative matrices,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">subgroup matrix operations.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">The key architectural idea is common.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why matrix units change algorithm design</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Traditional tiled GEMM:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-gemm-old">load tile&#10;each thread performs scalar FMAs&#13;</Code>
+<Content aid:pstyle="Content">Matrix units:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-gemm-matrix">load compatible fragments&#10;subgroup matrix multiply-accumulate&#10;store result&#13;</Code>
+<Content aid:pstyle="Content">Throughput can be enormously higher for supported:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">dimensions,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">layouts,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">data types.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">But data must be shaped appropriately.&#13;</Content>
+<Content aid:pstyle="Content">You do not get matrix-unit performance from arbitrary irregular code.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">KairoGPU matmul’s future path</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current KairoGPU <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ada2a4aa4d58e50a8e17db5b.svg" alt="16\times16" jobId="ada2a4aa4d58e50a8e17db5b" originalTeX="16\times16"/> threadgroup matrix multiply is a clean educational tiled GEMM.&#13;</Content>
+<Content aid:pstyle="Content">A later optimized backend could dispatch a capability-dependent matrix implementation when subgroup matrix operations are available.&#13;</Content>
+<Content aid:pstyle="Content">That should remain behind the same semantic interface:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp" id="p10-matmul-interface">Device::MatrixMultiply(...)&#13;</Code>
+<Content aid:pstyle="Content">so correctness remains independent of the execution path.&#13;</Content>
+<Content aid:pstyle="Content">This is exactly where Vulkax-style capability querying becomes useful.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Debugging GPU races</Strong>&#13;</Content>
+<Content aid:pstyle="Content">GPU races are especially nasty because output may depend on scheduling.&#13;</Content>
+<Content aid:pstyle="Content">Typical symptoms:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-race-symptoms">works in debug&#10;fails in release&#10;&#10;works on one GPU&#10;fails on another&#10;&#10;adding printf/logging fixes it&#10;&#10;random flickering values&#10;&#10;failure rate changes with workload&#13;</Code>
+<Content aid:pstyle="Content">These are classic indicators of missing synchronization or overlapping ownership.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Race example</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Wrong:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp" id="p10-race">threadgroup uint sum;&#10;&#10;if (local == 0)&#10;    sum = 0;&#10;&#10;sum += value;&#13;</Code>
+<Content aid:pstyle="Content">Problems:&#13;</Content>
+<Content aid:pstyle="Content">Other threads may execute before lane 0 initializes.&#13;</Content>
+<Content aid:pstyle="Content">Multiple threads perform non-atomic RMW.&#13;</Content>
+<Content aid:pstyle="Content">Correctness requires synchronization and aggregation design.&#13;</Content>
+<Content aid:pstyle="Content">A barrier alone after initialization does <Strong aid:cstyle="Bold">not</Strong> make <InlineCode aid:cstyle="InlineCode">sum += value</InlineCode> atomic.&#13;</Content>
+<Content aid:pstyle="Content">This distinction is essential:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4e4690c97f8503810d2e798f.svg" alt="&#10;\boxed{&#10;\text{ordering}&#10;\neq&#10;\text{mutual exclusion/atomicity}.&#10;}&#10;" jobId="4e4690c97f8503810d2e798f" originalTeX="&#10;\boxed{&#10;\text{ordering}&#10;\neq&#10;\text{mutual exclusion/atomicity}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Correct reduction instead of atomic race</Strong>&#13;</Content>
+<Code aid:pstyle="Code" language="metal" id="p10-correct-reduction">threadgroup uint scratch[256];&#10;&#10;scratch[local] =&#10;    value;&#10;&#10;threadgroup_barrier(&#10;    mem_flags::mem_threadgroup);&#10;&#10;for (uint stride = 128;&#10;     stride &gt; 0;&#10;     stride &gt;&gt;= 1)&#10;{&#10;    if (local &lt; stride)&#10;    {&#10;        scratch[local] +=&#10;            scratch[&#10;                local + stride];&#10;    }&#10;&#10;    threadgroup_barrier(&#10;        mem_flags::mem_threadgroup);&#10;}&#10;&#10;if (local == 0)&#10;    output[group] =&#10;        scratch[0];&#13;</Code>
+<Content aid:pstyle="Content">Ownership at each stage is explicit.&#13;</Content>
+<Content aid:pstyle="Content">Far easier to prove correct.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Never “debug” a race by adding random barriers</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A common reaction:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-barrier-everywhere">maybe barrier here?&#10;maybe another here?&#13;</Code>
+<Content aid:pstyle="Content">This can:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">accidentally hide the race,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">destroy performance,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">still be wrong,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">deadlock if control flow diverges.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Instead establish:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c8de805e08f0528a8322cd9b.svg" alt="&#10;\boxed{&#10;\text{who writes each location?}&#10;}&#10;" jobId="c8de805e08f0528a8322cd9b" originalTeX="&#10;\boxed{&#10;\text{who writes each location?}&#10;}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b87f2c0814334fd4c7c60b9d.svg" alt="&#10;\boxed{&#10;\text{who reads it?}&#10;}&#10;" jobId="b87f2c0814334fd4c7c60b9d" originalTeX="&#10;\boxed{&#10;\text{who reads it?}&#10;}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2285fa44d9c3d771df46c238.svg" alt="&#10;\boxed{&#10;\text{what dependency must order those events?}&#10;}&#10;" jobId="2285fa44d9c3d771df46c238" originalTeX="&#10;\boxed{&#10;\text{what dependency must order those events?}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then choose the minimum correct primitive.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Race-debugging technique: deterministic oracle</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Exactly like your BVH oracle and Vulkax Gaussian scheduler oracle:&#13;</Content>
+<Content aid:pstyle="Content">Implement a small CPU reference.&#13;</Content>
+<Content aid:pstyle="Content">For randomized input:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bcbea6db8d678c6c295ff446.svg" alt="&#10;GPU(x)&#10;\stackrel{?}{=}&#10;CPU(x).&#10;" jobId="bcbea6db8d678c6c295ff446" originalTeX="&#10;GPU(x)&#10;\stackrel{?}{=}&#10;CPU(x).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Test thousands of seeds/sizes.&#13;</Content>
+<Content aid:pstyle="Content">Especially test:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e34192aa5101915be0a140bd.svg" alt="&#10;0,&#10;1,&#10;W-1,&#10;W,&#10;W+1,&#10;" jobId="e34192aa5101915be0a140bd" originalTeX="&#10;0,&#10;1,&#10;W-1,&#10;W,&#10;W+1,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">where:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2e6f78c359f10ceeabf7f3f8.svg" alt="&#10;W=\text{workgroup size}.&#10;" jobId="2e6f78c359f10ceeabf7f3f8" originalTeX="&#10;W=\text{workgroup size}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Parallel bugs love boundary sizes.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Poison and sentinel values</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Initialize output to impossible values:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9e0c12e1f5377f3fadc65e5a.svg" alt="&#10;0xDEADBEEF&#10;" jobId="9e0c12e1f5377f3fadc65e5a" originalTeX="&#10;0xDEADBEEF&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">or NaNs.&#13;</Content>
+<Content aid:pstyle="Content">After execution, check whether every required element changed exactly once.&#13;</Content>
+<Content aid:pstyle="Content">For compaction, validate:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">every output index in range,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">no duplicate IDs unless allowed,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">output count exact,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">stable ordering if promised.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Structural validation often catches race bugs before pixel inspection does.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Designing a GPU algorithm systematically</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Before writing shader code, write down the data model.&#13;</Content>
+<Content aid:pstyle="Content">What are inputs?&#13;</Content>
+<Content aid:pstyle="Content">What are outputs?&#13;</Content>
+<Content aid:pstyle="Content">What is one unit of independent work?&#13;</Content>
+<Content aid:pstyle="Content">Which outputs have unique writers?&#13;</Content>
+<Content aid:pstyle="Content">Where do threads need communication?&#13;</Content>
+<Content aid:pstyle="Content">Where does global synchronization occur?&#13;</Content>
+<Content aid:pstyle="Content">What bytes are read/written per element?&#13;</Content>
+<Content aid:pstyle="Content">What branch divergence exists?&#13;</Content>
+<Content aid:pstyle="Content">What limits occupancy?&#13;</Content>
+<Content aid:pstyle="Content">Then design kernels.&#13;</Content>
+<Content aid:pstyle="Content">This prevents “CPU code translated into 100,000 threads.”&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">A serial CPU visibility algorithm</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose CPU code is:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp" id="p10-serial-cull">std::vector&lt;DrawCommand&gt;&#10;BuildDraws(&#10;    std::span&lt;const Object&gt; objects,&#10;    const Camera&amp; camera)&#10;{&#10;    std::vector&lt;DrawCommand&gt; out;&#10;&#10;    for (const Object&amp; object :&#10;         objects)&#10;    {&#10;        if (!InsideFrustum(&#10;                object.bounds,&#10;                camera.frustum))&#10;        {&#10;            continue;&#10;        }&#10;&#10;        if (Occluded(&#10;                object.bounds))&#10;        {&#10;            continue;&#10;        }&#10;&#10;        const uint32_t lod =&#10;            ChooseLOD(&#10;                object,&#10;                camera);&#10;&#10;        out.push_back(&#10;            MakeDrawCommand(&#10;                object,&#10;                lod));&#10;    }&#10;&#10;    return out;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">Naively moving loop body to GPU is not the full solution because <InlineCode aid:cstyle="InlineCode">push_back()</InlineCode> is a serial dynamic operation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">First GPU translation: atomic append</Strong>&#13;</Content>
+<Code aid:pstyle="Code" language="cpp" id="p10-atomic-cull">uint i =&#10;    globalID;&#10;&#10;if (i &gt;= objectCount)&#10;    return;&#10;&#10;if (!Visible(objects[i]))&#10;    return;&#10;&#10;uint dst =&#10;    atomic_fetch_add(&#10;        visibleCount,&#10;        1);&#10;&#10;draws[dst] =&#10;    MakeDraw(objects[i]);&#13;</Code>
+<Content aid:pstyle="Content">This may be excellent.&#13;</Content>
+<Content aid:pstyle="Content">Simple.&#13;</Content>
+<Content aid:pstyle="Content">One pass.&#13;</Content>
+<Content aid:pstyle="Content">If visibility is sparse and contention moderate, stop here.&#13;</Content>
+<Content aid:pstyle="Content">Do not overengineer.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Scalable deterministic translation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If atomic append becomes bottleneck or deterministic order is required:&#13;</Content>
+<Content aid:pstyle="Content">Pass A:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fe5e5bb8e13f8d446dfbf8c9.svg" alt="&#10;visible_i\in\{0,1\}.&#10;" jobId="fe5e5bb8e13f8d446dfbf8c9" originalTeX="&#10;visible_i\in\{0,1\}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Scan:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/47584e93a62d0e26513adfdb.svg" alt="&#10;offset_i=&#10;exclusiveScan(visible).&#10;" jobId="47584e93a62d0e26513adfdb" originalTeX="&#10;offset_i=&#10;exclusiveScan(visible).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Pass B:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp" id="p10-scan-cull">if (visible[i])&#10;{&#10;    draws[offset[i]] =&#10;        MakeDraw(objects[i]);&#10;}&#13;</Code>
+<Content aid:pstyle="Content">Count:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c91ecbd5c98190c621507c43.svg" alt="&#10;drawCount=&#10;offset_{N-1}&#10;+&#10;visible_{N-1}.&#10;" jobId="c91ecbd5c98190c621507c43" originalTeX="&#10;drawCount=&#10;offset_{N-1}&#10;+&#10;visible_{N-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Generate indirect args on GPU.&#13;</Content>
+<Content aid:pstyle="Content">Now every visible object has mathematically unique output ownership.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">“More threads” can be slower</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose CPU algorithm processes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/862d9e85b9e137cd8f947295.svg" alt="&#10;N=128&#10;" jobId="862d9e85b9e137cd8f947295" originalTeX="&#10;N=128&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">items.&#13;</Content>
+<Content aid:pstyle="Content">GPU implementation requires:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">upload,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">dispatch,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">barriers,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">scan,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">second dispatch,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">readback.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">CPU may finish before GPU submission overhead alone.&#13;</Content>
+<Content aid:pstyle="Content">Parallel hardware is useful when:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9d34dc9ec58101d751e45dab.svg" alt="&#10;\boxed{&#10;\text{available parallel work}&#10;\times&#10;\text{work per item}&#10;}&#10;" jobId="9d34dc9ec58101d751e45dab" originalTeX="&#10;\boxed{&#10;\text{available parallel work}&#10;\times&#10;\text{work per item}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">is large enough to amortize overhead.&#13;</Content>
+<Content aid:pstyle="Content">GPU is not a magical function accelerator.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Serial dependency cannot be solved by launching N threads</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Consider:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e8b9d9a4332d9bfc8a77a575.svg" alt="&#10;x_i=&#10;x_{i-1}+a_i.&#10;" jobId="e8b9d9a4332d9bfc8a77a575" originalTeX="&#10;x_i=&#10;x_{i-1}+a_i.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Naively:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp" id="p10-bad-prefix">thread i:&#10;    x[i] =&#10;        x[i-1] +&#10;        a[i];&#13;</Code>
+<Content aid:pstyle="Content">All threads have a dependency chain.&#13;</Content>
+<Content aid:pstyle="Content">Launching them simultaneously creates a race, not a scan.&#13;</Content>
+<Content aid:pstyle="Content">You must <Strong aid:cstyle="Bold">change the algorithm</Strong>—for example to Blelloch’s tree structure.&#13;</Content>
+<Content aid:pstyle="Content">This is the core lesson of Part 2200:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e4889e29f62ed074f5c1a11a.svg" alt="&#10;\boxed{&#10;\text{GPU optimization often requires algorithmic reformulation, not parallel syntax}.&#10;}&#10;" jobId="e4889e29f62ed074f5c1a11a" originalTeX="&#10;\boxed{&#10;\text{GPU optimization often requires algorithmic reformulation, not parallel syntax}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Amdahl’s law</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose fraction:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b02f2f6cf62a0d13e5167811.svg" alt="&#10;p&#10;" jobId="b02f2f6cf62a0d13e5167811" originalTeX="&#10;p&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">is perfectly parallelizable and fraction:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b734d06efa1afddf39e91a81.svg" alt="&#10;1-p&#10;" jobId="b734d06efa1afddf39e91a81" originalTeX="&#10;1-p&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">remains serial.&#13;</Content>
+<Content aid:pstyle="Content">With theoretically infinite processors:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ca2d2076501955caae30a06e.svg" alt="&#10;\boxed{&#10;S_{\max}&#10;=&#10;\frac1{1-p}.&#10;}&#10;" jobId="ca2d2076501955caae30a06e" originalTeX="&#10;\boxed{&#10;S_{\max}&#10;=&#10;\frac1{1-p}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c2820b857f34a1bd311db7f7.svg" alt="&#10;p=0.95,&#10;" jobId="c2820b857f34a1bd311db7f7" originalTeX="&#10;p=0.95,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3b9d967e278a665ba990da15.svg" alt="&#10;S_{\max}=20.&#10;" jobId="3b9d967e278a665ba990da15" originalTeX="&#10;S_{\max}=20.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Even infinite GPU cores cannot exceed 20× if 5% remains serial.&#13;</Content>
+<Content aid:pstyle="Content">This directly applies to Maveb’s currently serial block-sum/radix-offset stages at sufficiently large workloads.&#13;</Content>
+<Content aid:pstyle="Content">They may be insignificant today.&#13;</Content>
+<Content aid:pstyle="Content">But if they become dominant, adding more parallelism to histogram/scatter will not help.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Gustafson-style perspective</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A GPU also lets us scale the problem.&#13;</Content>
+<Content aid:pstyle="Content">Instead of rendering the same 10,000 Gaussians faster, perhaps process:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3fa6b382378af862ca8defa7.svg" alt="&#10;10,000,000.&#10;" jobId="3fa6b382378af862ca8defa7" originalTeX="&#10;10,000,000.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Parallel computing often makes larger feasible workloads possible.&#13;</Content>
+<Content aid:pstyle="Content">Thus speedup is not the only objective.&#13;</Content>
+<Content aid:pstyle="Content">Throughput and problem scale matter.&#13;</Content>
+<Content aid:pstyle="Content">That is particularly relevant for reconstruction/rendering research like Maveb.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Optimization order</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Before modifying code, classify bottleneck.&#13;</Content>
+<Content aid:pstyle="Content">If bandwidth-bound:&#13;</Content>
+<Content aid:pstyle="Content">reduce memory traffic or improve locality.&#13;</Content>
+<Content aid:pstyle="Content">If compute-bound:&#13;</Content>
+<Content aid:pstyle="Content">reduce arithmetic, use faster operations or specialized units.&#13;</Content>
+<Content aid:pstyle="Content">If latency-bound due to low occupancy:&#13;</Content>
+<Content aid:pstyle="Content">reduce registers/shared memory or expose more parallelism.&#13;</Content>
+<Content aid:pstyle="Content">If synchronization-bound:&#13;</Content>
+<Content aid:pstyle="Content">redesign ownership/aggregation.&#13;</Content>
+<Content aid:pstyle="Content">If command-bound:&#13;</Content>
+<Content aid:pstyle="Content">batch work/reduce dispatch count.&#13;</Content>
+<Content aid:pstyle="Content">If CPU-GPU synchronization-bound:&#13;</Content>
+<Content aid:pstyle="Content">remove waits/readbacks.&#13;</Content>
+<Content aid:pstyle="Content">If divergent:&#13;</Content>
+<Content aid:pstyle="Content">reorganize work or data.&#13;</Content>
+<Content aid:pstyle="Content">Without classification, optimization is gambling.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">A practical roofline analysis of KairoGPU vector multiply</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Known logical work per element:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d6c5cde4f91088318f1f0d18.svg" alt="&#10;F=1\text{ FLOP}.&#10;" jobId="d6c5cde4f91088318f1f0d18" originalTeX="&#10;F=1\text{ FLOP}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Logical traffic:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f40afc5b50c07a85c9d91b27.svg" alt="&#10;Q=12\text{ bytes}.&#10;" jobId="f40afc5b50c07a85c9d91b27" originalTeX="&#10;Q=12\text{ bytes}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Intensity:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/64bb1816ade2b37e7d410fa0.svg" alt="&#10;I=0.0833.&#10;" jobId="64bb1816ade2b37e7d410fa0" originalTeX="&#10;I=0.0833.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Measure GPU duration:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2d2a9bb4461a7bca1a720b59.svg" alt="&#10;T.&#10;" jobId="2d2a9bb4461a7bca1a720b59" originalTeX="&#10;T.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/caf5ae41b7aa39a1e1ebdec4.svg" alt="&#10;P_{\text{measured}}&#10;=&#10;\frac{&#10;N&#10;}{&#10;T&#10;}&#10;\text{ FLOP/s}&#10;" jobId="caf5ae41b7aa39a1e1ebdec4" originalTeX="&#10;P_{\text{measured}}&#10;=&#10;\frac{&#10;N&#10;}{&#10;T&#10;}&#10;\text{ FLOP/s}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/59707494f6dd32e043acc4b2.svg" alt="&#10;B_{\text{measured}}&#10;=&#10;\frac{&#10;12N&#10;}{&#10;T&#10;}&#10;.&#10;" jobId="59707494f6dd32e043acc4b2" originalTeX="&#10;B_{\text{measured}}&#10;=&#10;\frac{&#10;12N&#10;}{&#10;T&#10;}&#10;.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/92dd62945999e6970fad6300.svg" alt="&#10;B_{\text{measured}}&#10;" jobId="92dd62945999e6970fad6300" originalTeX="&#10;B_{\text{measured}}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">is near achievable memory bandwidth, stop optimizing arithmetic.&#13;</Content>
+<Content aid:pstyle="Content">Possible improvements become:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">fuse neighboring kernels to eliminate intermediate writes,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">operate in-place where legal,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">compress data,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">use half precision if error permits.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kernel fusion increases arithmetic intensity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose pipeline:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-fusion-before">A → kernel1 → temporary B&#10;B → kernel2 → C&#13;</Code>
+<Content aid:pstyle="Content">Kernel 1 writes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f2360f5ef25b959d65d2c747.svg" alt="&#10;B.&#10;" jobId="f2360f5ef25b959d65d2c747" originalTeX="&#10;B.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Kernel 2 reads:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f2360f5ef25b959d65d2c747.svg" alt="&#10;B.&#10;" jobId="f2360f5ef25b959d65d2c747" originalTeX="&#10;B.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If fused:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-fusion-after">A → fused kernel → C&#13;</Code>
+<Content aid:pstyle="Content">temporary B may stay in registers.&#13;</Content>
+<Content aid:pstyle="Content">You remove global:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ed5e26ace1bb3467fb112175.svg" alt="&#10;\text{write B}+\text{read B}.&#10;" jobId="ed5e26ace1bb3467fb112175" originalTeX="&#10;\text{write B}+\text{read B}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Arithmetic work stays roughly the same.&#13;</Content>
+<Content aid:pstyle="Content">Bytes fall.&#13;</Content>
+<Content aid:pstyle="Content">Thus:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c359cb3bb521f4974e61375d.svg" alt="&#10;\boxed{&#10;I=\frac{FLOPs}{bytes}&#10;}&#10;" jobId="c359cb3bb521f4974e61375d" originalTeX="&#10;\boxed{&#10;I=\frac{FLOPs}{bytes}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">increases.&#13;</Content>
+<Content aid:pstyle="Content">But fused kernel may increase registers and reduce occupancy.&#13;</Content>
+<Content aid:pstyle="Content">Again, every optimization has a shadow.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kernel fission can also help</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose one giant shader handles:&#13;</Content>
+<Code aid:pstyle="Code" language="text" id="p10-mega">diffuse&#10;glass&#10;metal&#10;skin&#10;hair&#10;clearcoat&#10;volume&#10;debug&#13;</Code>
+<Content aid:pstyle="Content">Register pressure and divergence become enormous.&#13;</Content>
+<Content aid:pstyle="Content">Splitting into specialized kernels can improve coherence and occupancy even though it increases dispatch overhead and intermediate traffic.&#13;</Content>
+<Content aid:pstyle="Content">Wavefront path tracing from Pass 8 is exactly this tradeoff.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Performance is a constrained optimization problem</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Think of throughput as constrained by several ceilings:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9669d365edf1b1fcf328583b.svg" alt="&#10;\boxed{&#10;P&#10;\le&#10;\min(&#10;P_{\text{compute}},&#10;P_{\text{bandwidth}},&#10;P_{\text{occupancy}},&#10;P_{\text{sync}},&#10;P_{\text{front-end}}&#10;).&#10;}&#10;" jobId="9669d365edf1b1fcf328583b" originalTeX="&#10;\boxed{&#10;P&#10;\le&#10;\min(&#10;P_{\text{compute}},&#10;P_{\text{bandwidth}},&#10;P_{\text{occupancy}},&#10;P_{\text{sync}},&#10;P_{\text{front-end}}&#10;).&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Improving a ceiling that is not currently minimum does nothing.&#13;</Content>
+<Content aid:pstyle="Content">If memory bandwidth is bottleneck:&#13;</Content>
+<Content aid:pstyle="Content">doubling ALUs gives:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bdd47fde1b8eda30b1458930.svg" alt="&#10;0\%&#10;" jobId="bdd47fde1b8eda30b1458930" originalTeX="&#10;0\%&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">speedup.&#13;</Content>
+<Content aid:pstyle="Content">If command submission is bottleneck:&#13;</Content>
+<Content aid:pstyle="Content">better shared-memory tiling may barely matter.&#13;</Content>
+<Content aid:pstyle="Content">This mindset is more important than memorizing any one optimization.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Maveb performance reading from this phase</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your Gaussian pipeline currently performs:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/27e5c1700c25ec19063231a7.svg" alt="&#10;\text{projection}&#10;\rightarrow&#10;\text{tile counts}&#10;\rightarrow&#10;\text{scan}&#10;\rightarrow&#10;\text{key generation}&#10;\rightarrow&#10;\text{radix histogram}&#10;\rightarrow&#10;\text{prefix}&#10;\rightarrow&#10;\text{scatter}&#10;\rightarrow&#10;\text{tile ranges}&#10;\rightarrow&#10;\text{composite}.&#10;" jobId="27e5c1700c25ec19063231a7" originalTeX="&#10;\text{projection}&#10;\rightarrow&#10;\text{tile counts}&#10;\rightarrow&#10;\text{scan}&#10;\rightarrow&#10;\text{key generation}&#10;\rightarrow&#10;\text{radix histogram}&#10;\rightarrow&#10;\text{prefix}&#10;\rightarrow&#10;\text{scatter}&#10;\rightarrow&#10;\text{tile ranges}&#10;\rightarrow&#10;\text{composite}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Potential bottleneck classes are very different.&#13;</Content>
+<Content aid:pstyle="Content">Projection can be arithmetic-heavy.&#13;</Content>
+<Content aid:pstyle="Content">Key generation can be output-bandwidth-heavy.&#13;</Content>
+<Content aid:pstyle="Content">Radix sort can be memory-bandwidth/synchronization heavy.&#13;</Content>
+<Content aid:pstyle="Content">Serial radix-offset stage can become latency/serial-fraction limited.&#13;</Content>
+<Content aid:pstyle="Content">Composite can become overdraw/bandwidth or arithmetic heavy depending Gaussian occupancy and SH degree.&#13;</Content>
+<Content aid:pstyle="Content">Do not optimize “the Gaussian renderer” as one monolithic thing.&#13;</Content>
+<Content aid:pstyle="Content">Profile each phase.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Gaussian occupancy diagnostic is already useful</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The shader has a debug mode visualizing approximately:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/67e8065265cacb2639a36e0c.svg" alt="&#10;\frac{&#10;\text{Gaussians in tile}&#10;}{&#10;64&#10;}.&#10;" jobId="67e8065265cacb2639a36e0c" originalTeX="&#10;\frac{&#10;\text{Gaussians in tile}&#10;}{&#10;64&#10;}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This tells you spatial load distribution.&#13;</Content>
+<Content aid:pstyle="Content">A screen region with huge per-tile occupancy implies composite work is highly imbalanced.&#13;</Content>
+<Content aid:pstyle="Content">That suggests different optimization strategies than a uniform screen.&#13;</Content>
+<Content aid:pstyle="Content">For example:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">finer tiles,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">early opacity termination,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">workload splitting.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">The correct response follows from data distribution.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Early opacity termination as algorithmic work reduction</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Gaussian composite accumulates opacity and stops when:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8c5c3878235990244d72f50c.svg" alt="&#10;opacity&gt;0.999.&#10;" jobId="8c5c3878235990244d72f50c" originalTeX="&#10;opacity&gt;0.999.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is not merely an arithmetic micro-optimization.&#13;</Content>
+<Content aid:pstyle="Content">If sorted front-to-back for the chosen compositing formulation, opaque-enough pixels can skip many later splats.&#13;</Content>
+<Content aid:pstyle="Content">The best optimization is often:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2b8fc34569e7a42e91ffe914.svg" alt="&#10;\boxed{&#10;\text{do less work}&#10;}&#10;" jobId="2b8fc34569e7a42e91ffe914" originalTeX="&#10;\boxed{&#10;\text{do less work}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">rather than:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/221ba9195bfd35ec177c3d75.svg" alt="&#10;\text{do identical work 5% faster}.&#10;" jobId="221ba9195bfd35ec177c3d75" originalTeX="&#10;\text{do identical work 5% faster}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo/Maveb/Vulkax audit for M130–M132</Strong>&#13;</Content>
+<Table aid:table="table" aid:trows="32" aid:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="header"><Content aid:pstyle="Caption">Topic&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="header"><Content aid:pstyle="Caption">Current state from inspected code&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">GPU spatial binning&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">Yes: Gaussian tiles&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">CPU oracle for GPU scheduling&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">Yes in Vulkax&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">CSR-like counts/offsets/references&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">Yes by scheduler design&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">Scan-based variable output&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">Yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">Atomic counters&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">Yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">GPU indirect dispatch&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">Yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">GPU-generated dynamic dispatch count&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">Yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">Frustum/Hi-Z GPU culling&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">Not established by inspected snippets&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">GPU LOD selection&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">Not established here&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">Particle system/free list&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">Not established here&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">Ping-pong buffers&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">Yes: Gaussian radix keys/values&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">Double/triple frame buffering&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">Yes: Maveb triple frame contexts&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">CPU-GPU frame pipeline&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">Yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">Synchronous demo compute API&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">KairoGPU currently waits per operation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">Persistent CPU-visible upload arena&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">Yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">Upload arena capacity&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">8 MiB/frame context&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">Readback arena&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">256 KiB/frame context&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">Private transient heap&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">64 MiB/frame context&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">Full lifetime-based alias allocator&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">Not demonstrated in inspected snippets&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">Asynchronous frame capture readback&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">Yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">Whole-command-buffer GPU time&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">Yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">Per-pass GPU timestamp zones&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">Not established&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">CPU profiling scopes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">Yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">Vector multiply AI&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">~0.083 FLOP/byte&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">Tiled matmul AI&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">~4 FLOP/byte per tile stage at T=16&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">FP16/matrix-specialized backend path&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">Not established&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">Parallel radix&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">Yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">Parallel local scan&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">Yes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">Serial block-sum scan&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">Yes; possible scale bottleneck&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">Serial global radix-offset stage&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">Yes; possible scale bottleneck&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">Race/correctness validation oracle&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">Strong in Vulkax scheduler design&#13;</Content></Cell></Table>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The deepest M130–M132 connection</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Notice the progression:&#13;</Content>
+<Content aid:pstyle="Content">Pass 9 taught:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/55b0420ee3ad8c86de817fe3.svg" alt="&#10;scan.&#10;" jobId="55b0420ee3ad8c86de817fe3" originalTeX="&#10;scan.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">M130 turns scan into:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ee38590427d30dc97f794198.svg" alt="&#10;\text{bin construction},&#10;" jobId="ee38590427d30dc97f794198" originalTeX="&#10;\text{bin construction},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/54b4a902ed11f31f2bd2cdc7.svg" alt="&#10;\text{visible lists},&#10;" jobId="54b4a902ed11f31f2bd2cdc7" originalTeX="&#10;\text{visible lists},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3c4f4ffe82a7c22077b1fd1a.svg" alt="&#10;\text{indirect commands}.&#10;" jobId="3c4f4ffe82a7c22077b1fd1a" originalTeX="&#10;\text{indirect commands}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">M131 asks:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">How do I keep all of those results GPU-resident and avoid waiting on the CPU?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">M132 asks:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">After removing the obvious waits, what physical resource is actually limiting throughput?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">This is one continuous chain.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Serial CPU thinking versus GPU systems thinking</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A CPU algorithm often owns one mutable container:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp" id="p10-cpu-push">for (...)&#10;{&#10;    if (...)&#10;        vector.push_back(...);&#10;}&#13;</Code>
+<Content aid:pstyle="Content">GPU thinking asks:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8d7380c075cef5ae76f1686e.svg" alt="&#10;\text{How many outputs does each producer create?}&#10;" jobId="8d7380c075cef5ae76f1686e" originalTeX="&#10;\text{How many outputs does each producer create?}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b871c92630b169ea758e5b2c.svg" alt="&#10;\text{Can I derive disjoint output ownership?}&#10;" jobId="b871c92630b169ea758e5b2c" originalTeX="&#10;\text{Can I derive disjoint output ownership?}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e0852c90f20d51f594c6f0a9.svg" alt="&#10;\text{Can I avoid CPU visibility?}&#10;" jobId="e0852c90f20d51f594c6f0a9" originalTeX="&#10;\text{Can I avoid CPU visibility?}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/509714da3b4f319e75d40d75.svg" alt="&#10;\text{Can the GPU construct the next dispatch itself?}&#10;" jobId="509714da3b4f319e75d40d75" originalTeX="&#10;\text{Can the GPU construct the next dispatch itself?}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a9dc06819b689d24aa99f03d.svg" alt="&#10;\text{Can data remain resident?}&#10;" jobId="a9dc06819b689d24aa99f03d" originalTeX="&#10;\text{Can data remain resident?}&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fb08bb3498d8e63009e6c238.svg" alt="&#10;\text{Can CPU prepare frame }N+1&#10;\text{ while GPU executes }N?&#10;" jobId="fb08bb3498d8e63009e6c238" originalTeX="&#10;\text{Can CPU prepare frame }N+1&#10;\text{ while GPU executes }N?&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0805e1a0cf72e3c92b0da20f.svg" alt="&#10;\text{What roof am I hitting afterward?}&#10;" jobId="0805e1a0cf72e3c92b0da20f" originalTeX="&#10;\text{What roof am I hitting afterward?}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is the architectural mindset Phase 22 is trying to establish.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction: build a GPU-driven renderer from first principles</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Start with objects:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/57171e76045a326f0f446cd7.svg" alt="&#10;O_0,\dots,O_{N-1}.&#10;" jobId="57171e76045a326f0f446cd7" originalTeX="&#10;O_0,\dots,O_{N-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Each has:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3d37705d3a3b6ed77ab07857.svg" alt="&#10;bounds,&#10;mesh,&#10;material,&#10;LOD data.&#10;" jobId="3d37705d3a3b6ed77ab07857" originalTeX="&#10;bounds,&#10;mesh,&#10;material,&#10;LOD data.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Compute kernel maps:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/41aa5d6687dcb85131f0069b.svg" alt="&#10;\text{thread }i&#10;\leftrightarrow&#10;O_i.&#10;" jobId="41aa5d6687dcb85131f0069b" originalTeX="&#10;\text{thread }i&#10;\leftrightarrow&#10;O_i.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Frustum:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8124b6c21e48e692c3b742fb.svg" alt="&#10;p_i^{F}.&#10;" jobId="8124b6c21e48e692c3b742fb" originalTeX="&#10;p_i^{F}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Hi-Z:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/191f26274d91771ac5e828b8.svg" alt="&#10;p_i^{O}.&#10;" jobId="191f26274d91771ac5e828b8" originalTeX="&#10;p_i^{O}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Combined:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/71884867c49068dae8c26a94.svg" alt="&#10;p_i=&#10;p_i^F p_i^O.&#10;" jobId="71884867c49068dae8c26a94" originalTeX="&#10;p_i=&#10;p_i^F p_i^O.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Select LOD:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e2c4f61bdd97b476f98eb8c5.svg" alt="&#10;l_i=f(projectedSize_i).&#10;" jobId="e2c4f61bdd97b476f98eb8c5" originalTeX="&#10;l_i=f(projectedSize_i).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Compact:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a9c7fb9acc8555488199cc9d.svg" alt="&#10;offset_i=&#10;exclusiveScan(p).&#10;" jobId="a9c7fb9acc8555488199cc9d" originalTeX="&#10;offset_i=&#10;exclusiveScan(p).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If visible:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ceb7f20fe9e6435d27944db7.svg" alt="&#10;visible[offset_i]&#10;=&#10;(i,l_i).&#10;" jobId="ceb7f20fe9e6435d27944db7" originalTeX="&#10;visible[offset_i]&#10;=&#10;(i,l_i).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then grouping/sorting can arrange by mesh/material/LOD.&#13;</Content>
+<Content aid:pstyle="Content">Generate indirect commands.&#13;</Content>
+<Content aid:pstyle="Content">GPU consumes those commands.&#13;</Content>
+<Content aid:pstyle="Content">CPU never needs the individual visible set.&#13;</Content>
+<Content aid:pstyle="Content">That is a GPU-driven pipeline.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction: spatial bin construction</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Given object <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c9a9aab9bd49b5120a91abe6.svg" alt="i" jobId="c9a9aab9bd49b5120a91abe6" originalTeX="i"/> overlaps bins:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/281f913b5960caed679652cd.svg" alt="&#10;B_i.&#10;" jobId="281f913b5960caed679652cd" originalTeX="&#10;B_i.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Count:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bb2522486057fa7ae70ac1e3.svg" alt="&#10;c_i=|B_i|.&#10;" jobId="bb2522486057fa7ae70ac1e3" originalTeX="&#10;c_i=|B_i|.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Scan:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/39d803381c1a43b2833b3190.svg" alt="&#10;o_i=&#10;\sum_{j&lt;i}c_j.&#10;" jobId="39d803381c1a43b2833b3190" originalTeX="&#10;o_i=&#10;\sum_{j&lt;i}c_j.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Thread <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c9a9aab9bd49b5120a91abe6.svg" alt="i" jobId="c9a9aab9bd49b5120a91abe6" originalTeX="i"/> writes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/45abfc9ec968f0ba05699c34.svg" alt="&#10;references[&#10;o_i+k&#10;]&#10;=&#10;(&#10;bin_{ik},&#10;i&#10;).&#10;" jobId="45abfc9ec968f0ba05699c34" originalTeX="&#10;references[&#10;o_i+k&#10;]&#10;=&#10;(&#10;bin_{ik},&#10;i&#10;).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then either sort by <InlineCode aid:cstyle="InlineCode">bin</InlineCode> or directly construct per-bin counts/offsets depending algorithm.&#13;</Content>
+<Content aid:pstyle="Content">This is exactly the intellectual pattern behind Gaussian scheduling.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction: frame pipeline</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Frame contexts:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/50b54b55b4012b81256a52e1.svg" alt="&#10;F_0,F_1,F_2.&#10;" jobId="50b54b55b4012b81256a52e1" originalTeX="&#10;F_0,F_1,F_2.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">CPU frame:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a8534dbfc9d91947e2eaecfa.svg" alt="&#10;n&#10;" jobId="a8534dbfc9d91947e2eaecfa" originalTeX="&#10;n&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">uses:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3334ed9e1c63c79690f5bd66.svg" alt="&#10;F_{n\bmod3}.&#10;" jobId="3334ed9e1c63c79690f5bd66" originalTeX="&#10;F_{n\bmod3}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Before reuse:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8a43545679794ab21f619eb6.svg" alt="&#10;wait(&#10;F_{n\bmod3}&#10;\text{ retired}&#10;).&#10;" jobId="8a43545679794ab21f619eb6" originalTeX="&#10;wait(&#10;F_{n\bmod3}&#10;\text{ retired}&#10;).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then reset:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/733c658711276e71de94348a.svg" alt="&#10;uploadCursor=0,&#10;" jobId="733c658711276e71de94348a" originalTeX="&#10;uploadCursor=0,&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d5fbe1272adadd5d4bd00a91.svg" alt="&#10;readbackCursor=0.&#10;" jobId="d5fbe1272adadd5d4bd00a91" originalTeX="&#10;readbackCursor=0.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Encode.&#13;</Content>
+<Content aid:pstyle="Content">Submit.&#13;</Content>
+<Content aid:pstyle="Content">Completion marks slot reusable.&#13;</Content>
+<Content aid:pstyle="Content">CPU proceeds.&#13;</Content>
+<Content aid:pstyle="Content">That is how Maveb’s current triple-buffered frame structure should be understood.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction: choose the optimization from the roof</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose measured kernel has:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5bf1e93b21f559e6d4288e94.svg" alt="&#10;I=0.1\text{ FLOP/B}&#10;" jobId="5bf1e93b21f559e6d4288e94" originalTeX="&#10;I=0.1\text{ FLOP/B}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and already consumes most memory bandwidth.&#13;</Content>
+<Content aid:pstyle="Content">Do not:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">unroll arithmetic,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">use matrix units,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">chase higher ALU occupancy.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Instead reduce bytes.&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7c1f0bc6b3b46a2e4c0f61b8.svg" alt="&#10;I=100\text{ FLOP/B}&#10;" jobId="7c1f0bc6b3b46a2e4c0f61b8" originalTeX="&#10;I=100\text{ FLOP/B}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and bandwidth utilization is low while compute pipelines are saturated.&#13;</Content>
+<Content aid:pstyle="Content">Then reduce arithmetic or use faster precision/special units.&#13;</Content>
+<Content aid:pstyle="Content">Suppose both are low.&#13;</Content>
+<Content aid:pstyle="Content">Look for:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">synchronization,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">poor occupancy,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">divergence,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">front-end/dispatch overhead,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">dependency stalls.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Roofline starts the diagnosis; it does not end it.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Phase 22 recall sheet</Strong>&#13;</Content>
+<Table aid:table="table" aid:trows="43" aid:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="header"><Content aid:pstyle="Caption">Concept&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="header"><Content aid:pstyle="Caption">Core idea&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">GPU hash table&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">flat concurrent key→value structure, often open addressed&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">Load factor&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">occupied/capacity; high values increase probe divergence&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">Spatial hashing&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">quantized cell coordinate → hash&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">Spatial binning&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">objects grouped into spatial cells/tiles&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">Atomic append&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">simple dynamic output, but contention/order issues&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">Scan construction&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">count → scan → unique offsets → scatter&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">Indirect args&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">GPU writes commands later consumed by GPU&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">GPU-driven renderer&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">GPU decides visibility/LOD/work counts&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">Frustum culling&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">reject bound outside any frustum plane&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">Hi-Z&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">hierarchical conservative depth summary&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">Conventional Hi-Z&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">commonly max depth for conservative region test&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">Reversed-Z Hi-Z&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">corresponding min-depth hierarchy&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">GPU LOD&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">choose detail from projected screen size&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">Particle free list&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">atomic pool of reusable IDs&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">Particle compaction&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">alive predicate → scan → dense output&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">Ping-pong&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">algorithm reads old buffer, writes new one&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">Double/triple buffering&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">duplicate frame resources for overlap&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">CPU-GPU pipeline&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">CPU prepares future frame while GPU executes prior&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">Command processor&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">GPU consumes encoded draw/dispatch/copy commands&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">Async compute&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">potentially overlap compute and graphics&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">Copy engine&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">independent transfer mechanism where available&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">Upload buffer&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">CPU-visible staging/persistent memory&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">Readback&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">GPU→CPU path; immediate wait is dangerous&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">Ring arena&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">aligned slices reclaimed after GPU retirement&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">Suballocation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">many resources from large memory block&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">Dedicated allocation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">one allocation for one large/special resource&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">Aliasing&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">nonoverlapping resource lifetimes reuse physical memory&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">Transient resource&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">short frame-local lifetime&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">GPU timestamp&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">timing measured on GPU timeline&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">Pipeline statistics&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">counters describing amount of processed work&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">Profiling zone&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">named GPU interval/counter region&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">Occupancy&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">resident execution groups, not a performance score&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">Arithmetic intensity&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">FLOPs / transferred bytes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">Bandwidth bound&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">memory roof limits throughput&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="34"><Content aid:pstyle="TableCell">Compute bound&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="34"><Content aid:pstyle="TableCell">arithmetic roof limits throughput&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="35"><Content aid:pstyle="TableCell">Roofline&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="35"><Content aid:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d38bfc7b1d20223355dd1a1c.svg" alt="P\le\min(P_{\max},B_{\max}I)" jobId="d38bfc7b1d20223355dd1a1c" originalTeX="P\le\min(P_{\max},B_{\max}I)"/>&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="36"><Content aid:pstyle="TableCell">Ridge point&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="36"><Content aid:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fccc24e4da3dddd56d2d34a8.svg" alt="I^*=P_{\max}/B_{\max}" jobId="fccc24e4da3dddd56d2d34a8" originalTeX="I^*=P_{\max}/B_{\max}"/>&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="37"><Content aid:pstyle="TableCell">Fast math&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="37"><Content aid:pstyle="TableCell">relaxed floating semantics for throughput&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="38"><Content aid:pstyle="TableCell">FP16&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="38"><Content aid:pstyle="TableCell">lower bandwidth/storage and often higher throughput, much less precision&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="39"><Content aid:pstyle="TableCell">Matrix units&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="39"><Content aid:pstyle="TableCell">subgroup-cooperative tiled matrix MAC hardware&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="40"><Content aid:pstyle="TableCell">GPU race&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="40"><Content aid:pstyle="TableCell">scheduling-dependent conflicting memory access&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="41"><Content aid:pstyle="TableCell">GPU redesign&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="41"><Content aid:pstyle="TableCell">change dependency structure, not merely thread the CPU loop&#13;</Content></Cell></Table>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Blank-page mastery gate</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You should now be able to take a CPU loop that appends visible objects into a vector and produce two correct GPU versions: first an atomic-append implementation and then a deterministic predicate–scan–scatter version, while explaining exactly when each is preferable.&#13;</Content>
+<Content aid:pstyle="Content">From there, you should be able to explain why reading the visible count back to the CPU before drawing destroys GPU-driven execution, and replace that round trip with an indirect argument buffer.&#13;</Content>
+<Content aid:pstyle="Content">Then derive a compute frustum test from:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c02e29884fde0e72c9569331.svg" alt="&#10;n\cdot C+d&lt;-r,&#10;" jobId="c02e29884fde0e72c9569331" originalTeX="&#10;n\cdot C+d&lt;-r,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">explain why conventional and reversed-Z Hi-Z pyramids use opposite conservative reductions, and derive a projected-size LOD metric proportional to:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/132385fef556416e36b3d77f.svg" alt="&#10;\frac{fr}{z}.&#10;" jobId="132385fef556416e36b3d77f" originalTeX="&#10;\frac{fr}{z}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">You should be able to distinguish algorithmic ping-ponging from double/triple frame buffering, reconstruct Maveb’s three-frame semaphore/context system, and explain why resetting a frame’s upload cursor is only safe after that frame slot has retired on the GPU.&#13;</Content>
+<Content aid:pstyle="Content">Then take KairoGPU’s vector multiply and derive:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fefacdc04fe2a499144e0b77.svg" alt="&#10;I=&#10;\frac1{12}&#10;\approx0.083&#10;\text{ FLOP/B}.&#10;" jobId="fefacdc04fe2a499144e0b77" originalTeX="&#10;I=&#10;\frac1{12}&#10;\approx0.083&#10;\text{ FLOP/B}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Take its tiled matrix multiply and derive:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a30714d52e8bdbc512a10153.svg" alt="&#10;I\approx\frac T4,&#10;" jobId="a30714d52e8bdbc512a10153" originalTeX="&#10;I\approx\frac T4,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">therefore:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/46c8db3daa1283a209a38724.svg" alt="&#10;I_{T=16}\approx4.&#10;" jobId="46c8db3daa1283a209a38724" originalTeX="&#10;I_{T=16}\approx4.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then derive the roofline:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/326dc616b51521d44f607fb5.svg" alt="&#10;\boxed{&#10;P&#10;\le&#10;\min(&#10;P_{\max},&#10;B_{\max}I&#10;)&#10;}&#10;" jobId="326dc616b51521d44f607fb5" originalTeX="&#10;\boxed{&#10;P&#10;\le&#10;\min(&#10;P_{\max},&#10;B_{\max}I&#10;)&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and the ridge point:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/df02cffdebb86a34aebda702.svg" alt="&#10;\boxed{&#10;I^*=&#10;P_{\max}/B_{\max}.&#10;}&#10;" jobId="df02cffdebb86a34aebda702" originalTeX="&#10;\boxed{&#10;I^*=&#10;P_{\max}/B_{\max}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">You should be able to explain why reducing register count can make a shader slower, why FP16 can improve both storage and arithmetic throughput but destroy world-space precision, why a subgroup matrix operation requires restructuring data into matrix fragments, and why adding a barrier does not repair an atomicity bug.&#13;</Content>
+<Content aid:pstyle="Content">Finally, reconstruct the complete Maveb Gaussian compute chain from the hardware perspective:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fc09802546df4bc3558024cb.svg" alt="&#10;\text{project}&#10;\rightarrow&#10;\text{count tile references}&#10;\rightarrow&#10;\text{parallel scan}&#10;\rightarrow&#10;\text{GPU-generated indirect count}&#10;\rightarrow&#10;\text{generate key/value records}&#10;\rightarrow&#10;\text{subgroup histogram}&#10;\rightarrow&#10;\text{prefix}&#10;\rightarrow&#10;\text{stable radix scatter}&#10;\rightarrow&#10;\text{tile ranges}&#10;\rightarrow&#10;\text{composite}.&#10;" jobId="fc09802546df4bc3558024cb" originalTeX="&#10;\text{project}&#10;\rightarrow&#10;\text{count tile references}&#10;\rightarrow&#10;\text{parallel scan}&#10;\rightarrow&#10;\text{GPU-generated indirect count}&#10;\rightarrow&#10;\text{generate key/value records}&#10;\rightarrow&#10;\text{subgroup histogram}&#10;\rightarrow&#10;\text{prefix}&#10;\rightarrow&#10;\text{stable radix scatter}&#10;\rightarrow&#10;\text{tile ranges}&#10;\rightarrow&#10;\text{composite}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then identify its likely scaling frontiers:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/563188c61053a4f034e8116c.svg" alt="&#10;\text{serial block-sum scan},&#10;" jobId="563188c61053a4f034e8116c" originalTeX="&#10;\text{serial block-sum scan},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e62b70486a1215dbbd77117d.svg" alt="&#10;\text{serial radix group-offset computation},&#10;" jobId="e62b70486a1215dbbd77117d" originalTeX="&#10;\text{serial radix group-offset computation},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a9c1a1581ace9c5e519add45.svg" alt="&#10;\text{memory traffic from repeated radix passes},&#10;" jobId="a9c1a1581ace9c5e519add45" originalTeX="&#10;\text{memory traffic from repeated radix passes},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/70a6a45b90b3910d8f957bec.svg" alt="&#10;\text{per-tile compositing imbalance}.&#10;" jobId="70a6a45b90b3910d8f957bec" originalTeX="&#10;\text{per-tile compositing imbalance}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is the final Phase-22 skill: not merely knowing GPU algorithms, but being able to look at a real GPU pipeline and say <Strong aid:cstyle="Bold">which resource, dependency or data movement pattern is likely to become the next limit—and redesign the algorithm accordingly</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">We now enter <Strong aid:cstyle="Bold">Phase 23: Vulkan — Objects, Resources, Descriptors, Commands, Synchronization, Presentation, and Profiling</Strong>. Pass 11 will go from Vulkan’s explicit-control philosophy through <InlineCode aid:cstyle="InlineCode">VkInstance</InlineCode>, physical/logical devices, queues and queue families, swapchains/surface capabilities, buffers/images/memory heaps and memory types, staging and mapping, image layouts and views, samplers, descriptor sets/layouts/pools, push constants and pipeline layouts, shader modules/SPIR-V, graphics/compute pipeline construction and pipeline caches, command pools/buffers, primary/secondary command buffers, and command recording—all tied directly against your current Kairo Vulkan implementation rather than taught as disconnected API calls.&#13;</Content>
+<!-- CHAPTER-SOURCE-END -->
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Link href="Chapter Edition/01 - Computing Foundations/00 - Reading Map">Reading map</Link> · <Link href="#01-foundations-i-ch011">Previous chapter</Link> · <Link href="#01-foundations-i-ch013">Next chapter</Link>&#13;</Content>
+</Chapter>

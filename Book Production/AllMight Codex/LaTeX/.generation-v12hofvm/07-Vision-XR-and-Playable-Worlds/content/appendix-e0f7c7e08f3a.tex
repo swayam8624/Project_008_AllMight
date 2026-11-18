@@ -1,0 +1,35 @@
+\hypertarget{appendix-e0f7c7e08f3a}{}\label{referencestart:appendix-e0f7c7e08f3a}
+\section{Stateful pseudorandom generators and stream state}\label{appendix-e0f7c7e08f3a-stateful-pseudorandom-generators-and-stream-state}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{appendix-e0f7c7e08f3a-definition-and-mechanism}
+
+A pseudorandom-number generator is a deterministic state transition plus an output rule. With a fixed engine, seed, and call order, its integer sequence is reproducible; it is not a source of mathematical independence by itself. Linear congruential generators are compact but have lattice and low-bit structure that can make multidimensional samples poor. Larger-state engines trade memory for period and other statistical properties. Parallel programs need an explicit stream strategy: shared state couples samples to thread scheduling, while copied seeds can duplicate streams. Reproducibility requires recording algorithm version, state, seed derivation, distribution mapping, and sampling order. Standard-library distributions may not yield identical transformed sequences across implementations. Simulation generators are not cryptographically secure unless specifically designed for that purpose.
+
+\subsection{Prerequisites}\label{appendix-e0f7c7e08f3a-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a2360b435383]{Common probability distributions and their assumptions}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-e0f7c7e08f3a-used-by}
+
+\begin{itemize}
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=appendix-8d863ed954d0}{Inverse, rejection, and importance sampling (Mathematics for Visual Computing, Reference notes: Inverse, rejection, and importance sampling)}
+\item
+  \hyperref[appendix-daaf25bfd3a0]{Stateless keyed sampling and reproducibility}
+\item
+  \hyperref[appendix-184fcc411663]{Uniform shuffling without replacement} \#\# Full teaching explanation
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch029-a-computer-produces-deterministic-pseudorandom-sequences}{Phase 10 teaching section (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 13)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)} · visual recall
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-e0f7c7e08f3a-source-coverage}
+
+Supplied lesson parts: 932 (T06 · M057), 933 (T06 · M057), 934 (T06 · M057), 935 (T06 · M057), 936 (T06 · M057), 937 (T06 · M057).

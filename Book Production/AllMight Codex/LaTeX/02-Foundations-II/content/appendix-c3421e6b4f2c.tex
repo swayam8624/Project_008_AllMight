@@ -1,0 +1,19 @@
+\hypertarget{appendix-c3421e6b4f2c}{}
+\section*{QR factorization and least squares}
+\section{QR factorization and least squares}\label{qr-factorization-and-least-squares}
+
+QR writes \(A=QR\) with orthonormal columns in \(Q\) and triangular \(R\). Orthogonal coordinates preserve Euclidean lengths, so least squares reduces to a triangular solve and a perpendicular residual. Householder QR is a stable dense method; Gram--Schmidt explains the geometry but can lose orthogonality.
+
+\textbf{Use it when:} fitting overdetermined data with known full column rank.
+
+\textbf{Developed in Phase 8:} Orthogonal transformations change coordinates without changing Euclidean lengths. QR therefore separates the fitted component, solved through triangular \(R\), from the constant perpendicular residual; the Householder construction is the stable dense route, with Gram--Schmidt retained to make the geometry visible. \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Reflections\%20and\%20plane\%20rotations\%20build\%20QR\%20without\%20losing\%20lengths}{Householder and Givens construction} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#QR\%20turns\%20least\%20squares\%20into\%20a\%20triangular\%20solve\%20plus\%20an\%20irreducible\%20residual}{least squares and its residual}
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\hyperref[appendix-8572a4a060c1]{Linear systems and fundamental subspaces}, \hyperref[appendix-8bc4e8fc547c]{Dot products and orthogonality}, \href{}{Conditioning and singularity (01-Foundations-I, appendix-8f6a01f284a7)}.
+
+\subsection{Used by}\label{used-by}
+
+\hyperref[appendix-221a483bec2d]{Matrix factorization choices}, \hyperref[appendix-1fad5e7f36fa]{Singular value decomposition}, \hyperref[appendix-ad175ef3c5bf]{PCA and covariance eigensystems}.
+
+\textbf{Teaching path:} \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Structure\%20makes\%20a\%20decomposition\%20a\%20better\%20tool\%20than\%20generic\%20elimination}{QR and fitting}.

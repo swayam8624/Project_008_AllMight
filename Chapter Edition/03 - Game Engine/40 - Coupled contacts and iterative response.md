@@ -8,7 +8,7 @@ One isolated collision impulse does not determine a whole stack because contacts
 
 **Recall question:** Why can resolving one contact change another contact’s penetration or friction condition, and how does another solver sweep respond?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 99261–100532; source-span SHA256 be8001578d5efcb293d236b3644df0a2f0dfcd434c936daa4a4cd1e32c127af3. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 100442–101713; source-span SHA256 be8001578d5efcb293d236b3644df0a2f0dfcd434c936daa4a4cd1e32c127af3. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## From one collision impulse to a coupled contact problem — reconstructed Phase 18 bridge

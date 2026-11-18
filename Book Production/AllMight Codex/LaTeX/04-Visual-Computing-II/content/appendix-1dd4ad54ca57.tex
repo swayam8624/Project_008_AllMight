@@ -1,0 +1,31 @@
+\hypertarget{appendix-1dd4ad54ca57}{}
+\section*{Quadric error mesh simplification}
+\section{Quadric error mesh simplification}\label{quadric-error-mesh-simplification}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Quadric error simplification greedily collapses the edge with the least predicted geometric error. For each triangle plane with unit normal \(n\) and offset \(d\), form \(v=(n_x,n_y,n_z,d)^T\) and \(K=vv^T\). A homogeneous point \(U=(x,y,z,1)^T\) has squared point-to-plane error \(U^TKU\). Sum the matrices of incident planes at each vertex; an edge candidate combines endpoint matrices. Partitioning the combined quadratic gives \(Q(x)=x^TAx+2b^Tx+c\), whose stationary point solves \(Ax=-b\). If the system is singular or indefinite, test endpoints and midpoint and keep the least-cost candidate. After selecting a location, reject collapses that flip incident face normals. The metric is a local approximation, so topology preconditions and orientation checks remain necessary.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Half-edge mesh connectivity (03-Visual-Computing-I, appendix-1aea26b2307f)}
+\item
+  \hyperref[appendix-fab348609369]{Manifold polygon meshes and boundary structure}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography}{Worlds, Images and Inference}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{full-teaching-explanation}
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Meshes,\%20connectivity,\%20and\%20geometry\%20processing}{Meshes, connectivity, and geometry processing}

@@ -1,0 +1,51 @@
+\hypertarget{appendix-f82e270791c8}{}\label{referencestart:appendix-f82e270791c8}
+\section{Accumulated rounding error}\label{appendix-f82e270791c8-accumulated-rounding-error}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C005 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-f82e270791c8-definition-and-mechanism}
+
+Under suitable nearest normal-range assumptions, products of rounding factors are bounded using gamma\_n=nu/(1−nu), nu\textless1. A sequential n-term sum has absolute error bounded by gamma\_(n−1) times sum of input magnitudes. Cancellation can make its relative error much larger.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-f82e270791c8-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-bc44f7b42f42]{Unit roundoff} --- The local normal-rounding bound supplies the error-analysis scale.
+\item
+  \hyperref[appendix-3ae74e89b4e6]{Absolute and relative error} --- Discrepancy, magnitude and reference units define sensitivity and threshold significance.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-f82e270791c8-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-df318da57389]{Compensated and pairwise summation} --- uses this mechanism to establish its numerical contract.
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-33237f0f618b}{Online moments and Welford accumulation (Vision, XR, and Playable Worlds, Reference notes: Online moments and Welford accumulation)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-6b0648b2b8e8}{Discretization, truncation, and roundoff (Vision, XR, and Playable Worlds, Reference notes: Discretization, truncation, and roundoff)} \#\# Recall and next depth
+\end{itemize}
+
+Reconstruct the definition's example and name the assumptions that make it valid.
+
+\textbf{Pending:} Apply bounds to actual dependency paths, not a global count of source operators; subnormals/range failures require other analysis.
+
+\subsection{Source and navigation}\label{appendix-f82e270791c8-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-when-arithmetic-meets-uncertainty]{M005 teaching chapter} · \hyperref[appendix-fd090d982a15-m005---parts-77-88]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}
+
+\subsection{Full teaching explanation}\label{appendix-f82e270791c8-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch030-finite-samples-need-stable-descriptive-statistics}{Phase 10 teaching section (Mathematics for Visual Computing, Ch. 14)}
+\item
+  \hyperref[appendix-cb5af353ef77]{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md} · Phase 10 visual recall
+\end{itemize}

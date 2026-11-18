@@ -1,0 +1,46 @@
+\hypertarget{appendix-2e4d494c2d94}{}\label{referencestart:appendix-2e4d494c2d94}
+\section{Declarations and definitions}\label{appendix-2e4d494c2d94-declarations-and-definitions}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C007 · \textbf{Latest development:} C007
+
+\subsection{Definition and mechanism}\label{appendix-2e4d494c2d94-definition-and-mechanism}
+
+A declaration introduces or redeclares an entity; a definition provides the entity's defining information. extern int x is only a declaration; int x=0 defines an object; a function body defines a function. A forward-declared class is incomplete, but a fixed-underlying opaque enum is complete.
+
+\subsection{Prerequisites}\label{appendix-2e4d494c2d94-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-806686359e1b]{Translation units and linking} --- A caller needs declaration/type information before the defining implementation is available.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-2e4d494c2d94-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-8e5214819615]{Class access and invariants} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \hyperref[appendix-b7174c179542]{Aggregate initialization} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \hyperref[appendix-b12b31759da1]{Scopes and name lookup} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \hyperref[appendix-74a0ec818c18]{Linkage and entity ownership} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \hyperref[appendix-49d27bc9d9a5]{One Definition Rule} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \hyperref[appendix-d6d562ca9fbb]{References and aliases}
+\item
+  \hyperref[appendix-1121b30eaeb0]{Value categories and materialization}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-2e4d494c2d94-recall-and-next-depth}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} Deeper ownership, pointer/reference, generic programming and module rules from later sources. This is written coverage, not demonstrated personal mastery.
+
+\subsection{Source and navigation}\label{appendix-2e4d494c2d94-source-and-navigation}
+
+\hyperref[01-foundations-i-ch002-promises-become-definitions]{C007 teaching chapter} · \hyperref[appendix-fd090d982a15-m007---parts-101-112]{Source coverage} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

@@ -1,0 +1,54 @@
+\hypertarget{appendix-3b863809f82a}{}\label{referencestart:appendix-3b863809f82a}
+\section{Gram matrices and coordinate metrics}\label{appendix-3b863809f82a-gram-matrices-and-coordinate-metrics}
+
+\hypertarget{appendix-3b863809f82a-gram-matrices-and-coordinate-metrics}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-3b863809f82a-definition-and-mechanism}
+
+\hypertarget{appendix-3b863809f82a-definition-and-mechanism}{}
+
+A Gram matrix stores pairwise basis inner products. Coordinate vectors measure physical dot products through \(c^\mathsf TGd\). It is positive semidefinite, and positive definite for independent generators. It records metric geometry but not orientation.
+
+\end{allmightroledefinition}
+
+The basis \((1,0),(1,1)\) has \(G=\begin{pmatrix}1&1\\1&2\end{pmatrix}\). Coordinates \((1,2)\) give squared length \(13\), not \(5\).
+
+\subsection{Prerequisites}\label{appendix-3b863809f82a-prerequisites}
+
+\hypertarget{appendix-3b863809f82a-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-ce0341f7ea0d]{Basis coordinates and dimension} --- An ordered basis fixes coordinate meaning and the space whose geometry is measured.
+\item
+  \href{../06-GPU-Architecture-and-Real-Time-Rendering-P02/main.pdf\#nameddest=appendix-8bc4e8fc547c}{Dot products and orthogonality (GPU Architecture and Real-Time Rendering, Part 2, Reference notes: Dot products and orthogonality)} --- Inner-product measurements supply the perpendicularity and alignment constraints.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-3b863809f82a-used-by}
+
+\hypertarget{appendix-3b863809f82a-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c39f1ed34271]{Orthonormal frames and Gram-Schmidt} --- Builds on this mechanism in the connected geometry story.
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#nameddest=appendix-02b9d9a81dca}{Barycentric coordinates and interpolation (Light Transport and Image Synthesis, Part 1, Reference notes: Barycentric coordinates and interpolation)} --- Builds on this mechanism in the connected geometry story.
+\item
+  \hyperref[appendix-50d2ea3c9b26]{Symmetric positive-definite matrices and Cholesky} --- Extends this foundation into linear-systems and decomposition analysis. \#\# Recall and next depth
+\end{itemize}
+
+Explain the residual equations for span projection and why normal equations can worsen conditioning. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-3b863809f82a-source-and-navigation}
+
+\hypertarget{appendix-3b863809f82a-source-and-navigation}{}
+
+\href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#nameddest=01-foundations-i-ch018-a-gram-matrix-remembers-the-geometry-of-a-slanted-basis}{Teaching narrative (Mathematics for Visual Computing, Part 1, Ch. 2)} · \hyperref[appendix-fd090d982a15-phase-6---parts-501-600]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-6---source-analysis-and-verification]{Evidence and limits} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}
+
+Expanded direct teaching: \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#nameddest=01-foundations-i-ch017-choose-what-a-length-is-meant-to-measure}{Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Choose what a length is meant to measure (Mathematics for Visual Computing, Part 1, Ch. 1)}.

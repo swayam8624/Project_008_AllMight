@@ -1,0 +1,3020 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch325.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_03-visual-computing-i-ch010-a-production-path-tracer-media-randomness-and-validation" class="level2">
+<h2>A Production Path Tracer: Media, Randomness and Validation</h2>
+<p><a href="ch316.xhtml#id_04-Light-Transport-and-Image-Synthesis" class="wikilink">Reading map</a> · <a href="ch324.xhtml#id_03-visual-computing-i-ch009-point-lights-mis-and-environment-lighting" class="wikilink">Previous chapter</a> · <a href="ch326.xhtml#id_03-visual-computing-i-ch014-transparency-blending-and-visibility" class="wikilink">Next chapter</a></p>
+<p>A production path tracer must handle nested media, random streams, execution and regression evidence as well as the core estimator. This span joins those engineering contracts to implementation and profiling.</p>
+<p><strong>By the end:</strong> Identify the implementation and validation contracts needed for a robust path tracer.</p>
+<p><strong>Recall question:</strong> Which failures require a mathematical oracle, and which require scene-level tests?</p>
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 22237–24652; source-span SHA256 d7a62450f0ab02c651c24d466b95ea6888bcc00f7612bee01a42b7f623edbeb5. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_03-visual-computing-i-ch010-next-pass-8-m125-m126-parts-20702100" class="level4">
+<h4>Next — Pass 8: M125 + M126, Parts 2070–2100</h4>
+<p>That is the <strong>production path-tracer completion pass</strong>: nested dielectric media and IOR stacks, TIR in the path integrator, colored-throughput Russian roulette, deterministic/stratified/low-discrepancy/blue-noise streams, multithreaded tile scheduling, per-thread RNGs, false-sharing-safe film accumulation, HDR output, debug passes, convergence/reference tests, rays/sec and BVH profiling, packet/wavefront/GPU ray architectures, then a complete end-to-end path tracer with fault isolation across geometry, PDF, BRDF, visibility and accumulation.</p>
+<p>Pass 8 completes <strong>Phase 21 — Ray Tracing, Monte Carlo Light Transport, Sampling, BVH Rendering, and Path Tracing</strong>.</p>
+<p>The curriculum explicitly positions M125 as the “make transport survive real materials, real randomness and real CPU execution” module and M126 as the “prove it, profile it, restructure it for parallel hardware, and know exactly where it is broken” module.</p>
+<p>Pass 7 gave us:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>β</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>β</mi>
+    <mi>k</mi>
+  </msub>
+  <mfrac>
+    <mrow>
+      <msub>
+        <mi>f</mi>
+        <mi>k</mi>
+      </msub>
+      <mrow data-mjx-texclass="ORD">
+        <mo stretchy="false">|</mo>
+      </mrow>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <msub>
+        <mi>θ</mi>
+        <mi>k</mi>
+      </msub>
+      <mo stretchy="false">|</mo>
+    </mrow>
+    <msub>
+      <mi>p</mi>
+      <mi>k</mi>
+    </msub>
+  </mfrac>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mo stretchy="false">←</mo>
+  <mi>L</mi>
+  <mo>+</mo>
+  <mi>β</mi>
+  <msub>
+    <mi>L</mi>
+    <mi>e</mi>
+  </msub>
+</math>
+<p>plus NEE and MIS.</p>
+<p>Now we make that system survive scenes like:</p>
+<pre class="text"><code>camera
+  ↓
+air
+  ↓
+water
+  ↓
+glass shell
+  ↓
+air bubble
+  ↓
+glass
+  ↓
+water</code></pre>
+<p>while hundreds of millions of rays are generated by many CPU/GPU workers without races, repeated random patterns, broken accumulation, incorrect PDFs, or untraceable rendering errors.</p>
+<hr />
+</section>
+<section id="id_03-visual-computing-i-ch010-parts-20702089" class="level4">
+<h4>PARTS 2070–2089</h4>
+<p><strong>Why simple glass breaks the moment media are nested</strong></p>
+<p>The Whitted renderer we inspected earlier essentially assumes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>outside medium</mtext>
+  <mo>=</mo>
+  <mtext>air</mtext>
+  <mo>,</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>inside medium</mtext>
+  <mo>=</mo>
+  <mtext>material.IOR</mtext>
+  <mo>.</mo>
+</math>
+<p>So when entering glass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>η</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>η</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1.5</mn>
+  <mo>.</mo>
+</math>
+<p>When leaving:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>η</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1.5</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>η</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>That works for:</p>
+<pre class="text"><code>air → isolated glass object → air.</code></pre>
+<p>But now place the glass object under water.</p>
+<p>Correct transition is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>water</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>glass</mtext>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>η</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>≈</mo>
+  <mn>1.333</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>η</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>≈</mo>
+  <mn>1.5</mn>
+  <mo>.</mo>
+</math>
+<p>If the renderer still uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo stretchy="false">→</mo>
+  <mn>1.5</mn>
+  <mo>,</mo>
+</math>
+<p>Snell’s law is wrong.</p>
+<p>So are:</p>
+<ul>
+<li>refraction direction,</li>
+<li>Fresnel reflectance,</li>
+<li>total-internal-reflection conditions.</li>
+</ul>
+<p>The visible result can be substantially wrong even though the glass shader “looks plausible.”</p>
+<hr />
+<p><strong>Refraction depends on a pair of media</strong></p>
+<p>Snell’s law:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>η</mi>
+            <mi>i</mi>
+          </msub>
+          <mi>sin</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <msub>
+            <mi>θ</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>η</mi>
+            <mi>t</mi>
+          </msub>
+          <mi>sin</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <msub>
+            <mi>θ</mi>
+            <mi>t</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The quantity needed in the vector refraction equation is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>η</mi>
+          <mo>=</mo>
+          <mfrac>
+            <msub>
+              <mi>η</mi>
+              <mi>i</mi>
+            </msub>
+            <msub>
+              <mi>η</mi>
+              <mi>t</mi>
+            </msub>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The important conceptual shift is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>IOR is not solely a property of the surface interaction.</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>It describes a <strong>medium</strong>.</p>
+<p>The interface tells us which medium exists on each side.</p>
+<p>A physically useful surface boundary therefore conceptually contains something like:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> MediumInterface</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    MediumID Outside<span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    MediumID Inside<span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>rather than merely:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> MaterialIOR<span class="op">;</span></span></code></pre></div>
+<hr />
+<p><strong>Properly nested dielectric media</strong></p>
+<p>Consider:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>air</mtext>
+  <mo>=</mo>
+  <mn>1.0003</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>water</mtext>
+  <mo>=</mo>
+  <mn>1.333</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>glass</mtext>
+  <mo>=</mo>
+  <mn>1.5</mn>
+  <mo>.</mo>
+</math>
+<p>A camera ray starts in air.</p>
+<p>Medium state:</p>
+<pre class="text"><code>[air]</code></pre>
+<p>It enters water:</p>
+<pre class="text"><code>[air, water]</code></pre>
+<p>Transition:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1.0</mn>
+  <mo stretchy="false">→</mo>
+  <mn>1.333</mn>
+  <mo>.</mo>
+</math>
+<p>It enters a glass object submerged in the water:</p>
+<pre class="text"><code>[air, water, glass]</code></pre>
+<p>Transition:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1.333</mn>
+  <mo stretchy="false">→</mo>
+  <mn>1.5</mn>
+  <mo>.</mo>
+</math>
+<p>It exits glass back into water:</p>
+<pre class="text"><code>[air, water]</code></pre>
+<p>Transition:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1.5</mn>
+  <mo stretchy="false">→</mo>
+  <mn>1.333</mn>
+  <mo>.</mo>
+</math>
+<p>Then leaves water:</p>
+<pre class="text"><code>[air]</code></pre>
+<p>Transition:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1.333</mn>
+  <mo stretchy="false">→</mo>
+  <mn>1.0</mn>
+  <mo>.</mo>
+</math>
+<p>That is the intuition behind an <strong>IOR stack</strong>.</p>
+<hr />
+<p><strong>Why a stack works only for properly nested closed volumes</strong></p>
+<p>A simple stack assumes interfaces obey properly nested topology.</p>
+<p>For example:</p>
+<pre class="text"><code>air
+ └─ water
+     └─ glass
+         └─ air bubble</code></pre>
+<p>Every entry has a corresponding exit in reverse order.</p>
+<p>Then push/pop is well defined.</p>
+<p>But arbitrary overlapping meshes can look like:</p>
+<pre class="text"><code>object A enters
+object B enters
+object A exits
+object B exits</code></pre>
+<p>which is not a proper stack nesting.</p>
+<p>Production renderers therefore often distinguish:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>geometric object identity</mtext>
+</math>
+<p>from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>medium interface identity</mtext>
+</math>
+<p>and may require explicit medium priorities or robust boundary semantics.</p>
+<p>For our Kairo progression, a stack is still the correct next architecture because it handles the common closed-nested case cleanly.</p>
+<hr />
+<p><strong>A path needs medium state</strong></p>
+<p>A production path state can contain:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> MediumStack</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>array<span class="op">&lt;</span>MediumID<span class="op">,</span> <span class="dv">8</span><span class="op">&gt;</span> IDs<span class="op">{};</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Count <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    MediumID Current<span class="op">()</span> <span class="at">const</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> IDs<span class="op">[</span>Count <span class="op">-</span> <span class="dv">1</span><span class="op">];</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Start with:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>IDs<span class="op">[</span><span class="dv">0</span><span class="op">]</span> <span class="op">=</span> Air<span class="op">;</span></span></code></pre></div>
+<p>When a transmission event enters a dielectric volume:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>push<span class="op">(</span>interiorMedium<span class="op">);</span></span></code></pre></div>
+<p>When it exits:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>pop<span class="op">();</span></span></code></pre></div>
+<p>Reflection does <strong>not</strong> change the medium.</p>
+<p>This distinction is essential.</p>
+<hr />
+<p><strong>Front-face information becomes mandatory</strong></p>
+<p>We previously noted that Kairo’s current <code>SurfaceHit</code> stores:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>Position</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>Normal</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>UV</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>PrimitiveIndex</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>MaterialIndex</span></code></pre></div>
+<p>but does not preserve separate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>g</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>FrontFace</mtext>
+  <mo>.</mo>
+</math>
+<p>That becomes a real architectural limitation now.</p>
+<p>To update a medium stack correctly, the path tracer must know whether the ray crossed:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>outside</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>inside</mtext>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>inside</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>outside</mtext>
+  <mo>.</mo>
+</math>
+<p>Use the geometric normal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>frontFace</mtext>
+          <mo>=</mo>
+          <mi>D</mi>
+          <mo>⋅</mo>
+          <msub>
+            <mi>N</mi>
+            <mi>g</mi>
+          </msub>
+          <mo>&lt;</mo>
+          <mn>0.</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Not the normal-mapped shading normal.</p>
+<p>A normal map must never cause the renderer to suddenly believe the ray entered a different dielectric volume.</p>
+<hr />
+<p><strong>Upgraded hit record</strong></p>
+<p>A production-oriented Kairo hit would benefit from:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> SurfaceHit</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> T <span class="op">=</span> Infinity<span class="op">;</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    Vec3 Position<span class="op">;</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// True primitive orientation.</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    Vec3 GeometricNormal<span class="op">;</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Smooth/normal-mapped normal used for BSDF evaluation.</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    Vec3 ShadingNormal<span class="op">;</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>    Vec2 UV<span class="op">;</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>    Vec3 Barycentric<span class="op">;</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> PrimitiveIndex<span class="op">;</span></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> MaterialIndex<span class="op">;</span></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> FrontFace<span class="op">;</span></span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Maintain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>⋅</mo>
+  <msub>
+    <mi>N</mi>
+    <mi>g</mi>
+  </msub>
+  <mo>≥</mo>
+  <mn>0.</mn>
+</math>
+<p>Use:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>g</mi>
+  </msub>
+</math>
+<p>for:</p>
+<ul>
+<li>entering/exiting classification,</li>
+<li>origin offset,</li>
+<li>medium crossing.</li>
+</ul>
+<p>Use:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>s</mi>
+  </msub>
+</math>
+<p>for most BRDF calculations.</p>
+<p>That separation prevents an entire class of path-tracing bugs.</p>
+<hr />
+<p><strong>Computing <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>η</mi>
+    <mi>i</mi>
+  </msub>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>η</mi>
+    <mi>t</mi>
+  </msub>
+</math></strong></p>
+<p>Suppose current medium stack is:</p>
+<pre class="text"><code>[air, water]</code></pre>
+<p>and hit is front-facing glass boundary.</p>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>η</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>η</mi>
+  <mo stretchy="false">(</mo>
+  <mtext>water</mtext>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>1.333</mn>
+  <mo>.</mo>
+</math>
+<p>Target interior medium:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>η</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1.5</mn>
+  <mo>.</mo>
+</math>
+<p>If the ray instead reaches the back face of that glass shell, current medium is glass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>η</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1.5</mn>
+</math>
+<p>and after leaving it the stack underneath says:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>η</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1.333</mn>
+  <mo>.</mo>
+</math>
+<p>The previous medium, not automatically air, is the target.</p>
+<hr />
+<p><strong>Refraction with tracked media</strong></p>
+<p>Let incoming travel direction be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>.</mo>
+</math>
+<p>Choose geometric interface normal <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> to oppose the incoming ray.</p>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>I</mi>
+  <mo>.</mo>
+</math>
+<p>Ratio:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>η</mi>
+  <mo>=</mo>
+  <mfrac>
+    <msub>
+      <mi>η</mi>
+      <mi>i</mi>
+    </msub>
+    <msub>
+      <mi>η</mi>
+      <mi>t</mi>
+    </msub>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Compute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>sin</mi>
+    <mn>2</mn>
+  </msup>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <msup>
+    <mi>η</mi>
+    <mn>2</mn>
+  </msup>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <mn>1</mn>
+    <mo>−</mo>
+    <msup>
+      <mi>cos</mi>
+      <mn>2</mn>
+    </msup>
+    <mo data-mjx-texclass="NONE">⁡</mo>
+    <msub>
+      <mi>θ</mi>
+      <mi>i</mi>
+    </msub>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>sin</mi>
+    <mn>2</mn>
+  </msup>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>≤</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <msqrt>
+    <mn>1</mn>
+    <mo>−</mo>
+    <msup>
+      <mi>sin</mi>
+      <mn>2</mn>
+    </msup>
+    <mo data-mjx-texclass="NONE">⁡</mo>
+    <msub>
+      <mi>θ</mi>
+      <mi>t</mi>
+    </msub>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>Transmission direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>T</mi>
+          <mo>=</mo>
+          <mi>η</mi>
+          <mi>I</mi>
+          <mo>+</mo>
+          <mo stretchy="false">(</mo>
+          <mi>η</mi>
+          <mi>cos</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <msub>
+            <mi>θ</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>−</mo>
+          <mi>cos</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <msub>
+            <mi>θ</mi>
+            <mi>t</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mi>N</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Total internal reflection</strong></p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>η</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>&gt;</mo>
+  <msub>
+    <mi>η</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>a sufficiently grazing incident ray cannot refract.</p>
+<p>Condition:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>sin</mi>
+            <mn>2</mn>
+          </msup>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <msub>
+            <mi>θ</mi>
+            <mi>t</mi>
+          </msub>
+          <mo>&gt;</mo>
+          <mn>1.</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then no real <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>t</mi>
+  </msub>
+</math> exists.</p>
+<p>The correct path event becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>reflection probability</mtext>
+          <mo>=</mo>
+          <mn>1.</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>No transmission event occurs.</p>
+<p>And crucially:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>the medium stack must not change.</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The ray did not cross the interface.</p>
+<hr />
+<p><strong>Critical angle</strong></p>
+<p>From Snell:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>η</mi>
+    <mi>i</mi>
+  </msub>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>η</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>θ</mi>
+            <mi>c</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>arcsin</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">(</mo>
+            <mfrac>
+              <msub>
+                <mi>η</mi>
+                <mi>t</mi>
+              </msub>
+              <msub>
+                <mi>η</mi>
+                <mi>i</mi>
+              </msub>
+            </mfrac>
+            <mo data-mjx-texclass="CLOSE">)</mo>
+          </mrow>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>η</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>&gt;</mo>
+  <msub>
+    <mi>η</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>For glass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>η</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1.5</mn>
+  <mo>,</mo>
+</math>
+<p>to air:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>η</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>we get:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>θ</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>arcsin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+  <mo>≈</mo>
+  <msup>
+    <mn>41.81</mn>
+    <mo>∘</mo>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>For glass to water:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>θ</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>arcsin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <mfrac>
+      <mn>1.333</mn>
+      <mn>1.5</mn>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mo>≈</mo>
+  <msup>
+    <mn>62.7</mn>
+    <mo>∘</mo>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Notice the enormous difference.</p>
+<p>A renderer that assumes every glass exit goes to air will produce TIR where real submerged glass should transmit.</p>
+<p>That is not a subtle error.</p>
+<hr />
+<p><strong>Fresnel must use the correct medium pair too</strong></p>
+<p>At normal incidence, dielectric Fresnel:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>F</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>=</mo>
+          <msup>
+            <mrow data-mjx-texclass="INNER">
+              <mo data-mjx-texclass="OPEN">(</mo>
+              <mfrac>
+                <mrow>
+                  <msub>
+                    <mi>η</mi>
+                    <mi>i</mi>
+                  </msub>
+                  <mo>−</mo>
+                  <msub>
+                    <mi>η</mi>
+                    <mi>t</mi>
+                  </msub>
+                </mrow>
+                <mrow>
+                  <msub>
+                    <mi>η</mi>
+                    <mi>i</mi>
+                  </msub>
+                  <mo>+</mo>
+                  <msub>
+                    <mi>η</mi>
+                    <mi>t</mi>
+                  </msub>
+                </mrow>
+              </mfrac>
+              <mo data-mjx-texclass="CLOSE">)</mo>
+            </mrow>
+            <mn>2</mn>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Air to glass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>F</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <msup>
+    <mrow data-mjx-texclass="INNER">
+      <mo data-mjx-texclass="OPEN">(</mo>
+      <mfrac>
+        <mrow>
+          <mn>1</mn>
+          <mo>−</mo>
+          <mn>1.5</mn>
+        </mrow>
+        <mrow>
+          <mn>1</mn>
+          <mo>+</mo>
+          <mn>1.5</mn>
+        </mrow>
+      </mfrac>
+      <mo data-mjx-texclass="CLOSE">)</mo>
+    </mrow>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <mn>0.04</mn>
+  <mo>.</mo>
+</math>
+<p>Water to glass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>F</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <msup>
+    <mrow data-mjx-texclass="INNER">
+      <mo data-mjx-texclass="OPEN">(</mo>
+      <mfrac>
+        <mrow>
+          <mn>1.333</mn>
+          <mo>−</mo>
+          <mn>1.5</mn>
+        </mrow>
+        <mrow>
+          <mn>1.333</mn>
+          <mo>+</mo>
+          <mn>1.5</mn>
+        </mrow>
+      </mfrac>
+      <mo data-mjx-texclass="CLOSE">)</mo>
+    </mrow>
+    <mn>2</mn>
+  </msup>
+  <mo>≈</mo>
+  <mn>0.00347</mn>
+  <mo>.</mo>
+</math>
+<p>Only about:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.35</mn>
+  <mi mathvariant="normal">%</mi>
+  <mo>.</mo>
+</math>
+<p>That is radically different from 4%.</p>
+<p>This explains why submerged interfaces can almost disappear visually.</p>
+<p>Using fixed:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>F</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>0.04</mn>
+</math>
+<p>for every dielectric interface is only valid for approximately air-to-<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1.5</mn>
+</math>-IOR surfaces.</p>
+<hr />
+<p><strong>Glass event selection with medium state</strong></p>
+<p>A path tracer should calculate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>η</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>η</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo stretchy="false">(</mo>
+  <mtext>reflection</mtext>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>F</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo stretchy="false">(</mo>
+  <mtext>transmission</mtext>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>F</mi>
+  <mo>.</mo>
+</math>
+<p>If TIR:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>If reflection chosen:</p>
+<p>medium stack unchanged.</p>
+<p>If transmission chosen:</p>
+<p>medium state crosses the boundary.</p>
+<p>That order matters.</p>
+<p>You should not push/pop the medium before knowing whether the path actually transmitted.</p>
+<hr />
+<p><strong>A useful medium-aware dielectric sample</strong></p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> DielectricSample</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    Vec3 Wi<span class="op">;</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> Reflection <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> Transmission <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> Delta <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> EventProbability <span class="op">=</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">;</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">// The medium the ray will occupy after transmission.</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    MediumID NextMedium<span class="op">;</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>DielectricSample SampleDielectric<span class="op">(</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> SurfaceHit<span class="op">&amp;</span> hit<span class="op">,</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Ray<span class="op">&amp;</span> ray<span class="op">,</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>    MediumStack<span class="op">&amp;</span> media<span class="op">,</span></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Material<span class="op">&amp;</span> material<span class="op">,</span></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>    RNG<span class="op">&amp;</span> rng<span class="op">)</span></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3 Ng <span class="op">=</span></span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>        hit<span class="op">.</span>GeometricNormal<span class="op">;</span></span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">bool</span> entering <span class="op">=</span></span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>        hit<span class="op">.</span>FrontFace<span class="op">;</span></span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Orient the interface normal against incident travel.</span></span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3 N <span class="op">=</span></span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>        entering <span class="op">?</span> Ng <span class="op">:</span> <span class="op">-</span>Ng<span class="op">;</span></span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> MediumID currentMedium <span class="op">=</span></span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a>        media<span class="op">.</span>Current<span class="op">();</span></span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> MediumID targetMedium <span class="op">=</span></span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a>        entering</span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a>            <span class="op">?</span> material<span class="op">.</span>InteriorMedium</span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>            <span class="op">:</span> media<span class="op">.</span>BelowTop<span class="op">();</span></span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> etaI <span class="op">=</span></span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>        GetMedium<span class="op">(</span>currentMedium<span class="op">).</span>IOR<span class="op">;</span></span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> etaT <span class="op">=</span></span>
+<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a>        GetMedium<span class="op">(</span>targetMedium<span class="op">).</span>IOR<span class="op">;</span></span>
+<span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> eta <span class="op">=</span></span>
+<span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a>        etaI <span class="op">/</span> etaT<span class="op">;</span></span>
+<span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-49"><a href="#cb19-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> cosThetaI <span class="op">=</span></span>
+<span id="cb19-50"><a href="#cb19-50" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>clamp<span class="op">(</span></span>
+<span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a>            Dot<span class="op">(-</span>ray<span class="op">.</span>Direction<span class="op">,</span> N<span class="op">),</span></span>
+<span id="cb19-52"><a href="#cb19-52" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.0</span><span class="bu">f</span><span class="op">,</span></span>
+<span id="cb19-53"><a href="#cb19-53" aria-hidden="true" tabindex="-1"></a>            <span class="fl">1.0</span><span class="bu">f</span><span class="op">);</span></span>
+<span id="cb19-54"><a href="#cb19-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-55"><a href="#cb19-55" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> sin2ThetaT <span class="op">=</span></span>
+<span id="cb19-56"><a href="#cb19-56" aria-hidden="true" tabindex="-1"></a>        eta <span class="op">*</span> eta <span class="op">*</span></span>
+<span id="cb19-57"><a href="#cb19-57" aria-hidden="true" tabindex="-1"></a>        <span class="op">(</span><span class="fl">1.0</span><span class="bu">f</span> <span class="op">-</span></span>
+<span id="cb19-58"><a href="#cb19-58" aria-hidden="true" tabindex="-1"></a>         cosThetaI <span class="op">*</span> cosThetaI<span class="op">);</span></span>
+<span id="cb19-59"><a href="#cb19-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-60"><a href="#cb19-60" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Total internal reflection.</span></span>
+<span id="cb19-61"><a href="#cb19-61" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>sin2ThetaT <span class="op">&gt;</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb19-62"><a href="#cb19-62" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb19-63"><a href="#cb19-63" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
+<span id="cb19-64"><a href="#cb19-64" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb19-65"><a href="#cb19-65" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>Wi <span class="op">=</span></span>
+<span id="cb19-66"><a href="#cb19-66" aria-hidden="true" tabindex="-1"></a>                Reflect<span class="op">(</span></span>
+<span id="cb19-67"><a href="#cb19-67" aria-hidden="true" tabindex="-1"></a>                    ray<span class="op">.</span>Direction<span class="op">,</span></span>
+<span id="cb19-68"><a href="#cb19-68" aria-hidden="true" tabindex="-1"></a>                    N<span class="op">),</span></span>
+<span id="cb19-69"><a href="#cb19-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-70"><a href="#cb19-70" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>Reflection <span class="op">=</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb19-71"><a href="#cb19-71" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>EventProbability <span class="op">=</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">,</span></span>
+<span id="cb19-72"><a href="#cb19-72" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>NextMedium <span class="op">=</span> currentMedium</span>
+<span id="cb19-73"><a href="#cb19-73" aria-hidden="true" tabindex="-1"></a>        <span class="op">};</span></span>
+<span id="cb19-74"><a href="#cb19-74" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb19-75"><a href="#cb19-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-76"><a href="#cb19-76" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> F <span class="op">=</span></span>
+<span id="cb19-77"><a href="#cb19-77" aria-hidden="true" tabindex="-1"></a>        FresnelDielectric<span class="op">(</span></span>
+<span id="cb19-78"><a href="#cb19-78" aria-hidden="true" tabindex="-1"></a>            cosThetaI<span class="op">,</span></span>
+<span id="cb19-79"><a href="#cb19-79" aria-hidden="true" tabindex="-1"></a>            etaI<span class="op">,</span></span>
+<span id="cb19-80"><a href="#cb19-80" aria-hidden="true" tabindex="-1"></a>            etaT<span class="op">);</span></span>
+<span id="cb19-81"><a href="#cb19-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-82"><a href="#cb19-82" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>rng<span class="op">.</span>NextFloat<span class="op">()</span> <span class="op">&lt;</span> F<span class="op">)</span></span>
+<span id="cb19-83"><a href="#cb19-83" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb19-84"><a href="#cb19-84" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span></span>
+<span id="cb19-85"><a href="#cb19-85" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb19-86"><a href="#cb19-86" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>Wi <span class="op">=</span></span>
+<span id="cb19-87"><a href="#cb19-87" aria-hidden="true" tabindex="-1"></a>                Reflect<span class="op">(</span></span>
+<span id="cb19-88"><a href="#cb19-88" aria-hidden="true" tabindex="-1"></a>                    ray<span class="op">.</span>Direction<span class="op">,</span></span>
+<span id="cb19-89"><a href="#cb19-89" aria-hidden="true" tabindex="-1"></a>                    N<span class="op">),</span></span>
+<span id="cb19-90"><a href="#cb19-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-91"><a href="#cb19-91" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>Reflection <span class="op">=</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb19-92"><a href="#cb19-92" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>EventProbability <span class="op">=</span> F<span class="op">,</span></span>
+<span id="cb19-93"><a href="#cb19-93" aria-hidden="true" tabindex="-1"></a>            <span class="op">.</span>NextMedium <span class="op">=</span> currentMedium</span>
+<span id="cb19-94"><a href="#cb19-94" aria-hidden="true" tabindex="-1"></a>        <span class="op">};</span></span>
+<span id="cb19-95"><a href="#cb19-95" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb19-96"><a href="#cb19-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-97"><a href="#cb19-97" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3 transmitted <span class="op">=</span></span>
+<span id="cb19-98"><a href="#cb19-98" aria-hidden="true" tabindex="-1"></a>        Refract<span class="op">(</span></span>
+<span id="cb19-99"><a href="#cb19-99" aria-hidden="true" tabindex="-1"></a>            ray<span class="op">.</span>Direction<span class="op">,</span></span>
+<span id="cb19-100"><a href="#cb19-100" aria-hidden="true" tabindex="-1"></a>            N<span class="op">,</span></span>
+<span id="cb19-101"><a href="#cb19-101" aria-hidden="true" tabindex="-1"></a>            eta<span class="op">);</span></span>
+<span id="cb19-102"><a href="#cb19-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-103"><a href="#cb19-103" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span></span>
+<span id="cb19-104"><a href="#cb19-104" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb19-105"><a href="#cb19-105" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>Wi <span class="op">=</span> transmitted<span class="op">,</span></span>
+<span id="cb19-106"><a href="#cb19-106" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>Transmission <span class="op">=</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb19-107"><a href="#cb19-107" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>EventProbability <span class="op">=</span> <span class="fl">1.0</span><span class="bu">f</span> <span class="op">-</span> F<span class="op">,</span></span>
+<span id="cb19-108"><a href="#cb19-108" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>NextMedium <span class="op">=</span> targetMedium</span>
+<span id="cb19-109"><a href="#cb19-109" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb19-110"><a href="#cb19-110" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Then update the stack only after <code>Transmission == true</code>.</p>
+<hr />
+<p><strong>Refractive throughput has an extra subtlety</strong></p>
+<p>For reflection in the same medium, radiance transport is comparatively simple.</p>
+<p>Across a refractive interface, solid angle changes according to Snell’s law.</p>
+<p>Radiance across media obeys an optical invariant involving:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>η</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Consequently a rigorous BSDF implementation must include an appropriate squared-IOR factor for transmission depending on whether it is transporting <strong>radiance</strong> or its adjoint/importance.</p>
+<p>A common camera-to-light radiance-transport convention introduces a factor proportional to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mrow data-mjx-texclass="INNER">
+              <mo data-mjx-texclass="OPEN">(</mo>
+              <mfrac>
+                <msub>
+                  <mi>η</mi>
+                  <mi>i</mi>
+                </msub>
+                <msub>
+                  <mi>η</mi>
+                  <mi>t</mi>
+                </msub>
+              </mfrac>
+              <mo data-mjx-texclass="CLOSE">)</mo>
+            </mrow>
+            <mn>2</mn>
+          </msup>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>inside the specular-transmission throughput.</p>
+<p>The exact placement depends on your BSDF direction and transport-mode conventions.</p>
+<p>The engineering rule is more important than memorizing one isolated expression:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>pick one transport convention and apply its </mtext>
+          <msup>
+            <mi>η</mi>
+            <mn>2</mn>
+          </msup>
+          <mtext> factor consistently everywhere</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Do not copy a refraction vector from one renderer and a BTDF weight from another renderer whose <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>ω</mi>
+    <mi>o</mi>
+  </msub>
+</math> conventions differ.</p>
+<hr />
+<p><strong>Russian roulette with colored throughput</strong></p>
+<p>Pass 7’s generic throughput:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>β</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>β</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>β</mi>
+    <mi>g</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>β</mi>
+    <mi>b</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>β</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.9</mn>
+  <mo>,</mo>
+  <mn>0.03</mn>
+  <mo>,</mo>
+  <mn>0.01</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Using luminance alone may say this path is relatively dim.</p>
+<p>But the red channel remains very important.</p>
+<p>A common roulette survival estimate is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mi>s</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>clamp</mi>
+          <mo stretchy="false">(</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>β</mi>
+            <mi>r</mi>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>β</mi>
+            <mi>g</mi>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>β</mi>
+            <mi>b</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>,</mo>
+          <msub>
+            <mi>p</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+            </mrow>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>p</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            </mrow>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For the example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>≈</mo>
+  <mn>0.9</mn>
+  <mo>.</mo>
+</math>
+<p>On survival:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>β</mi>
+          <mo stretchy="false">←</mo>
+          <mfrac>
+            <mi>β</mi>
+            <msub>
+              <mi>p</mi>
+              <mi>s</mi>
+            </msub>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That keeps every color channel unbiased.</p>
+<hr />
+<p><strong>Why roulette cannot divide each channel by a different probability</strong></p>
+<p>For the ordinary shared RGB path described here, use one survival decision and divide every channel by the same survival probability. Independent channel roulette is a different estimator and requires its own compensation and bookkeeping; it is not mathematically impossible.</p>
+<p>A path is one geometric transport event.</p>
+<p>If red survived while green died, you would conceptually have separate spectral paths with different directions/visibility histories.</p>
+<p>RGB path tracing normally keeps one common path event and one common survival probability.</p>
+<p>The color remains in:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>β</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Refraction and roulette</strong></p>
+<p>An advanced subtlety appears with refractive <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>η</mi>
+    <mn>2</mn>
+  </msup>
+</math> scaling.</p>
+<p>Throughput magnitude can jump because of a change in transport measure rather than because the path has become physically more or less important.</p>
+<p>A production renderer may maintain an auxiliary refractive scale when deciding roulette probability so an <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>η</mi>
+    <mn>2</mn>
+  </msup>
+</math> convention does not cause pathological termination behavior.</p>
+<p>The key principle is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>roulette probability should estimate future contribution, not blindly react to representation artifacts</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Deterministic random-number streams per pixel</strong></p>
+<p>Suppose renderer uses one global RNG protected by a mutex.</p>
+<p>Thread A processes pixel 10 first this run.</p>
+<p>Thread B processes it first next run.</p>
+<p>Random-number consumption order changes.</p>
+<p>The image changes.</p>
+<p>That makes debugging miserable.</p>
+<p>Instead derive random streams from stable identity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">(</mo>
+          <mtext>pixel</mtext>
+          <mo>,</mo>
+          <mtext>sample</mtext>
+          <mo>,</mo>
+          <mtext>dimension</mtext>
+          <mo>,</mo>
+          <mtext>global seed</mtext>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then the same pixel/sample receives the same random sequence regardless of:</p>
+<ul>
+<li>thread count,</li>
+<li>tile order,</li>
+<li>scheduling.</li>
+</ul>
+<p>Current Kairo already moves strongly in this direction.</p>
+<p>Path RNG seed is built from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>S</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>S</mi>
+  <mi>e</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>So a path’s random sequence is tied to the pixel/sample rather than to the worker thread.</p>
+<p>That is excellent for reproducibility.</p>
+<hr />
+<p><strong>Current Kairo RNG</strong></p>
+<p>Current seed:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    x      <span class="op">*</span> <span class="dv">73856093</span><span class="bu">u</span> <span class="op">^</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    y      <span class="op">*</span> <span class="dv">19349663</span><span class="bu">u</span> <span class="op">^</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    sample <span class="op">*</span> <span class="dv">83492791</span><span class="bu">u</span> <span class="op">^</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    SampleSeed <span class="op">*</span> <span class="dv">2654435761</span><span class="bu">u</span> <span class="op">^</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    <span class="bn">0x9e3779b9</span><span class="bu">u</span><span class="op">;</span></span></code></pre></div>
+<p>Then <code>TracePath()</code> advances a local xorshift state.</p>
+<p>This gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>thread-schedule-independent local randomness</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That property is arguably better for deterministic rendering than a pure per-thread stateful RNG.</p>
+<hr />
+<p><strong>The weakness of sequential per-path RNG consumption</strong></p>
+<p>Suppose bounce code currently consumes random dimensions as:</p>
+<pre class="text"><code>dimension 0 → BSDF x
+dimension 1 → BSDF y
+dimension 2 → Russian roulette</code></pre>
+<p>Later you add light sampling before BSDF:</p>
+<pre class="text"><code>dimension 0 → light x
+dimension 1 → light y
+dimension 2 → BSDF x
+dimension 3 → BSDF y
+dimension 4 → roulette</code></pre>
+<p>Every later random number changes.</p>
+<p>This makes before/after debugging difficult.</p>
+<p>A more sophisticated sampler gives named/stable dimensions:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>Sample1D<span class="op">(</span>pixel<span class="op">,</span> sample<span class="op">,</span> Dimension<span class="op">::</span>LightSelection<span class="op">);</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>Sample2D<span class="op">(</span>pixel<span class="op">,</span> sample<span class="op">,</span> Dimension<span class="op">::</span>LightUV<span class="op">);</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>Sample2D<span class="op">(</span>pixel<span class="op">,</span> sample<span class="op">,</span> Dimension<span class="op">::</span>BSDF<span class="op">);</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>Sample1D<span class="op">(</span>pixel<span class="op">,</span> sample<span class="op">,</span> Dimension<span class="op">::</span>Roulette<span class="op">);</span></span></code></pre></div>
+<p>Counter-based RNGs and Sobol samplers are especially useful here because a sample can be addressed by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mtext>sample index</mtext>
+  <mo>,</mo>
+  <mtext>dimension</mtext>
+  <mo stretchy="false">)</mo>
+</math>
+<p>without depending on consumption order.</p>
+<hr />
+<p><strong>Correlated random samples</strong></p>
+<p>Two random numbers can each look uniform individually and still be badly correlated together.</p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ξ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>ξ</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Every 2D sample lies on:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo>=</mo>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>Marginals are uniform.</p>
+<p>2D distribution is terrible.</p>
+<p>For a disk sampler this can produce directional streaks.</p>
+<p>For area lights it can produce banding.</p>
+<p>For lens samples it can create structured bokeh artifacts.</p>
+<p>Rendering needs good <strong>multidimensional</strong> sample structure, not merely a histogram that looks flat in each dimension.</p>
+<hr />
+<p><strong>Correlation between pixels</strong></p>
+<p>Suppose every pixel uses exactly the same subpixel jitter pattern.</p>
+<p>Edges can develop coherent structured artifacts.</p>
+<p>Independent randomness converts the structure into noise, but pure white noise is itself not always ideal perceptually.</p>
+<p>This is why rendering sampling eventually moves toward:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>stratification</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>low discrepancy</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>blue noise</mtext>
+  <mo>.</mo>
+</math>
+<p>These control where error energy appears.</p>
+<hr />
+<p><strong>Stratified pixel sampling</strong></p>
+<p>Divide pixel into:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>n</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>×</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>y</mi>
+  </msub>
+</math>
+<p>cells.</p>
+<p>For a <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>2</mn>
+  <mo>×</mo>
+  <mn>2</mn>
+</math> example:</p>
+<pre class="text"><code>+-----+-----+
+|  •  | •   |
++-----+-----+
+|   • |  •  |
++-----+-----+</code></pre>
+<p>Draw one jittered sample per cell.</p>
+<p>Compared with four independent random samples, stratification guarantees broad pixel coverage.</p>
+<p>For one dimension split into <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> strata:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>i</mi>
+      <mo>+</mo>
+      <msub>
+        <mi>ξ</mi>
+        <mi>i</mi>
+      </msub>
+    </mrow>
+    <mi>N</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>This reduces clustering.</p>
+<p>Current Kairo’s <code>StratifiedPixelSample()</code> implements this principle with deterministic hashed jitter.</p>
+<hr />
+<p><strong>Non-square Kairo sample counts</strong></p>
+<p>Current implementation chooses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌈</mo>
+    <msqrt>
+      <mi>N</mi>
+    </msqrt>
+    <mo data-mjx-texclass="CLOSE">⌉</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Then uses sample index to select one cell in an <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+  <mo>×</mo>
+  <mi>s</mi>
+</math> grid.</p>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>16</mn>
+  <mo>,</mo>
+</math>
+<p>excellent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mo>×</mo>
+  <mn>4.</mn>
+</math>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>5</mn>
+  <mo>,</mo>
+</math>
+<p>it constructs a conceptual:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <mo>×</mo>
+  <mn>3</mn>
+</math>
+<p>grid but only fills five cells.</p>
+<p>The sample set therefore does not cover all strata symmetrically.</p>
+<p>This can be an incorrect Monte Carlo estimator for the full pixel: equal averaging over a fixed subset of strata leaves part of the pixel with zero sampling probability. It is unbiased only under additional assumptions, or with a sampling design and weights that cover the complete pixel. Randomize the subset uniformly with correct weights, use a complete stratification, or use another full-support sampler.</p>
+<p>Square SPP values work especially naturally with this implementation.</p>
+<hr />
+<p><strong>Low-discrepancy sampling</strong></p>
+<p>Random samples can cluster.</p>
+<p>A low-discrepancy sequence deliberately fills space evenly.</p>
+<p>For a sample set <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>x</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>N</mi>
+  </msub>
+</math>, discrepancy measures deviation between:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>fraction of samples in a region</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>region&#39;s volume</mtext>
+  <mo>.</mo>
+</math>
+<p>Roughly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>low discrepancy</mtext>
+          <mo>=</mo>
+          <mtext>few large holes and few clusters</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Common families include:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Van der Corput</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Halton</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Hammersley</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Sobol</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Van der Corput sequence</strong></p>
+<p>Take integer <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>, write it in base 2, reverse its digits after the radix point.</p>
+<p>For example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>:</mo>
+  <msub>
+    <mn>1</mn>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mn>0.1</mn>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>0.5</mn>
+  <mo>.</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mo>:</mo>
+  <msub>
+    <mn>10</mn>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mn>0.01</mn>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>0.25</mn>
+  <mo>.</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>=</mo>
+  <mn>3</mn>
+  <mo>:</mo>
+  <msub>
+    <mn>11</mn>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mn>0.11</mn>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>0.75</mn>
+  <mo>.</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>=</mo>
+  <mn>4</mn>
+  <mo>:</mo>
+  <msub>
+    <mn>100</mn>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mn>0.001</mn>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>0.125</mn>
+  <mo>.</mo>
+</math>
+<p>So sequence begins approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>0.25</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>0.75</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>0.125</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>0.625</mn>
+  <mo>,</mo>
+  <mo>…</mo>
+</math>
+<p>Notice how it progressively fills gaps.</p>
+<p>That is very different from independent random clustering.</p>
+<hr />
+<p><strong>Halton</strong></p>
+<p>Halton uses radical inverse with different prime bases for each dimension.</p>
+<p>Dimension 0:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>base </mtext>
+  <mn>2.</mn>
+</math>
+<p>Dimension 1:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>base </mtext>
+  <mn>3.</mn>
+</math>
+<p>Dimension 2:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>base </mtext>
+  <mn>5.</mn>
+</math>
+<p>and so on.</p>
+<p>It is simple and effective at low dimensions, but higher-dimensional correlations can become problematic.</p>
+<p>Rendering can require dozens or hundreds of dimensions because each bounce consumes multiple random values.</p>
+<p>That is why Sobol and scrambling are common modern choices.</p>
+<hr />
+<p><strong>Sobol sampling</strong></p>
+<p>Sobol is a digital low-discrepancy sequence designed for high-dimensional integration.</p>
+<p>One major advantage is that samples can be addressed by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mtext>sample index</mtext>
+  <mo>,</mo>
+  <mtext>dimension</mtext>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This fits rendering perfectly.</p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> u <span class="op">=</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    Sobol<span class="op">(</span>sampleIndex<span class="op">,</span> dimension<span class="op">);</span></span></code></pre></div>
+<p>Then dimension assignment remains stable even if work scheduling changes.</p>
+<p>Scrambling, such as Owen-style scrambling, helps decorrelate sequences between pixels while preserving useful low-discrepancy structure.</p>
+<hr />
+<p><strong>Low discrepancy is not simply “better randomness”</strong></p>
+<p>For Monte Carlo, pure independent randomness gives classic:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>N</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mn>2</mn>
+    </mrow>
+  </msup>
+  <mo stretchy="false">)</mo>
+</math>
+<p>root-mean-square convergence.</p>
+<p>Quasi-Monte-Carlo low-discrepancy sampling can achieve much better behavior for sufficiently smooth, lower-effective-dimensional integrands.</p>
+<p>But rendering integrands contain discontinuities from:</p>
+<ul>
+<li>visibility,</li>
+<li>texture edges,</li>
+<li>delta events.</li>
+</ul>
+<p>So real performance depends strongly on scene/integrator structure.</p>
+<p>You benchmark.</p>
+<p>You do not assume Sobol beats everything in every rendering regime.</p>
+<hr />
+<p><strong>Blue-noise sampling</strong></p>
+<p>White noise has energy spread across frequencies.</p>
+<p>Humans are especially sensitive to low-frequency noise such as:</p>
+<ul>
+<li>blotches,</li>
+<li>bands,</li>
+<li>large clusters.</li>
+</ul>
+<p>Blue-noise distributions suppress low-frequency error and push energy toward higher spatial frequencies.</p>
+<p>Visually:</p>
+<pre class="text"><code>white noise:
+clusters + holes
+
+blue noise:
+even local spacing, no obvious grid</code></pre>
+<p>The rendered estimator may have similar average numerical error, yet blue-noise error often looks much less objectionable.</p>
+<p>That is crucial for low-sample real-time rendering.</p>
+<hr />
+<p><strong>Low discrepancy versus blue noise</strong></p>
+<p>Low-discrepancy sequences optimize integration uniformity over sample count/dimensions.</p>
+<p>Blue noise optimizes spatial/frequency distribution of error.</p>
+<p>They solve overlapping but distinct problems.</p>
+<p>A renderer may want:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>low discrepancy across path dimensions</mtext>
+</math>
+<p>while simultaneously using:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>blue-noise scrambling across image pixels</mtext>
+  <mo>.</mo>
+</math>
+<p>These ideas are complementary.</p>
+<hr />
+<p><strong>Threaded tile rendering</strong></p>
+<p>Path tracing is embarrassingly parallel at a high level:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>each pixel/sample can usually be evaluated independently</mtext>
+  <mo>.</mo>
+</math>
+<p>Instead of launching a thread per pixel, divide the image into tiles.</p>
+<p>For example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mo>×</mo>
+  <mn>16.</mn>
+</math>
+<p>Each worker repeatedly obtains a tile and renders all pixels inside it.</p>
+<p>Advantages include:</p>
+<ul>
+<li>good cache locality,</li>
+<li>manageable work units,</li>
+<li>low scheduling overhead,</li>
+<li>no pixel-level synchronization.</li>
+</ul>
+<p>Kairo already uses this architecture.</p>
+<hr />
+<p><strong>Current Kairo tile scheduler</strong></p>
+<p>The renderer computes tile count and creates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext mathvariant="monospace">nextTile</mtext>
+</math>
+<p>as:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>atomic<span class="op">&lt;</span><span class="dt">uint32_t</span><span class="op">&gt;</span></span></code></pre></div>
+<p>Each worker executes:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>tileIndex <span class="op">=</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    nextTile<span class="op">.</span>fetch_add<span class="op">(</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>        <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>        memory_order_relaxed<span class="op">);</span></span></code></pre></div>
+<p>until all tiles are consumed.</p>
+<p>This is a <strong>dynamic work queue implemented with an atomic counter</strong>.</p>
+<p>It is simple and effective.</p>
+<hr />
+<p><strong>Why dynamic work allocation matters for path tracing</strong></p>
+<p>Two image tiles can have wildly different cost.</p>
+<p>Tile A may see:</p>
+<pre class="text"><code>empty sky.</code></pre>
+<p>Each path:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mtext> intersection + miss</mtext>
+  <mo>.</mo>
+</math>
+<p>Tile B may see:</p>
+<pre class="text"><code>glass + mirrors + complex BVH region + many shadow rays.</code></pre>
+<p>Each pixel may require many bounces and intersection queries.</p>
+<p>Static assignment:</p>
+<pre class="text"><code>thread 0 gets fixed image quarter
+thread 1 gets another quarter</code></pre>
+<p>can leave one worker busy long after others finish.</p>
+<p>Dynamic tiles allow idle workers to take more work.</p>
+<p>That reduces tail latency.</p>
+<hr />
+<p><strong>Tile-size tradeoff</strong></p>
+<p>If tile is enormous:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>512</mn>
+  <mo>×</mo>
+  <mn>512</mn>
+  <mo>,</mo>
+</math>
+<p>there may be too few tasks.</p>
+<p>Load imbalance increases.</p>
+<p>If tile is tiny:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>×</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>the atomic work-distribution overhead becomes comparable to rendering work.</p>
+<p>Good tile size balances:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>locality</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>load granularity</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>scheduling overhead</mtext>
+  <mo>.</mo>
+</math>
+<p>For CPU path tracing, values around:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mo>×</mo>
+  <mn>8</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>16</mn>
+  <mo>×</mo>
+  <mn>16</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>32</mn>
+  <mo>×</mo>
+  <mn>32</mn>
+</math>
+<p>are common experiment points.</p>
+<p>The correct Kairo size should be benchmarked.</p>
+<hr />
+<p><strong>Per-thread RNGs</strong></p>
+<p>A traditional multithreaded renderer assigns each worker its own RNG state.</p>
+<p>This eliminates locks.</p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>ThreadState</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    RNG rng<span class="op">;</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    Stats stats<span class="op">;</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>But this has a reproducibility problem.</p>
+<p>If thread scheduling changes, pixel A may be evaluated by a different worker and receive a different random stream.</p>
+<p>Kairo’s per-pixel/sample seed design avoids this.</p>
+<p>So for Kairo, I would distinguish:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>worker-local storage for speed</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>pixel/sample-addressed randomness for determinism</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The RNG object can be local to a worker/path, but the seed should come from stable path identity.</p>
+<hr />
+<p><strong>Thread-local statistics</strong></p>
+<p>Kairo does another smart thing:</p>
+<p>Each worker gets:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>RenderStats<span class="op">&amp;</span> localStats <span class="op">=</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    workerStats<span class="op">[</span>workerIndex<span class="op">];</span></span></code></pre></div>
+<p>and updates it without atomics.</p>
+<p>After all workers join, statistics are reduced.</p>
+<p>That avoids atomic increments for every ray.</p>
+<p>Given potentially billions of ray events, atomically incrementing a global counter per intersection would be disastrous.</p>
+<hr />
+<p><strong>But current workerStats can false-share</strong></p>
+<p><code>workerStats</code> is:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span>RenderStats<span class="op">&gt;</span></span></code></pre></div>
+<p>with structs adjacent in memory.</p>
+<p>Thread 0 repeatedly writes:</p>
+<pre class="text"><code>workerStats[0]</code></pre>
+<p>Thread 1 repeatedly writes:</p>
+<pre class="text"><code>workerStats[1].</code></pre>
+<p>Even though they are logically different objects, fields may reside on the same:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64</mn>
+  <mtext>-byte cache line</mtext>
+  <mo>.</mo>
+</math>
+<p>If so, each core’s write invalidates the other’s cached line.</p>
+<p>This is <strong>false sharing</strong>.</p>
+<p>No actual data is shared logically, but cache coherence behaves as though it is.</p>
+<hr />
+<p><strong>Cache-coherence intuition</strong></p>
+<p>Imagine cache line contains:</p>
+<pre class="text"><code>[ thread0 counter | thread1 counter ]</code></pre>
+<p>Core 0 modifies its half.</p>
+<p>The coherence protocol must gain exclusive ownership of the entire line.</p>
+<p>Core 1’s copy becomes invalid.</p>
+<p>Core 1 modifies its half.</p>
+<p>Ownership moves back.</p>
+<p>The line “ping-pongs” between cores.</p>
+<p>Performance can collapse.</p>
+<p>The fix is separate cache lines.</p>
+<hr />
+<p><strong>Padded thread state</strong></p>
+<p>A simple design:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> <span class="kw">alignas</span><span class="op">(</span><span class="dv">64</span><span class="op">)</span> WorkerStats</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    RenderStats Value<span class="op">;</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Padding may be added automatically because</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// of alignment / size rounding.</span></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Or use:</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">alignas</span><span class="op">(</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>hardware_destructive_interference_size<span class="op">)</span></span></code></pre></div>
+<p>when appropriate and supported.</p>
+<p>You should benchmark before optimizing, but highly updated per-thread counters are classic false-sharing candidates.</p>
+<hr />
+<p><strong>False sharing in the film</strong></p>
+<p>Kairo writes pixels directly into one row-major:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span>Color3f<span class="op">&gt;</span></span></code></pre></div>
+<p>but tile ownership means no two workers intentionally write the same pixel.</p>
+<p>That avoids data races.</p>
+<p>However, two simultaneously rendered neighboring tiles can touch different pixels located on the same cache line near their boundary.</p>
+<p>This is possible false sharing.</p>
+<p>Usually it is much less severe than sharing one hot counter line because each pixel is written relatively infrequently.</p>
+<p>A tile-local accumulation buffer followed by a contiguous commit can eliminate even that if profiling says it matters.</p>
+<hr />
+<p><strong>Kairo’s current film write pattern is good</strong></p>
+<p>Inside one <code>renderPixel()</code>:</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>Color3f accumulated <span class="op">=</span> Black<span class="op">();</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> samples<span class="op">:</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>    accumulated <span class="op">+=</span> Trace<span class="op">(...);</span></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>film<span class="op">.</span>SetPixel<span class="op">(</span></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>    x<span class="op">,</span></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>    y<span class="op">,</span></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>    accumulated <span class="op">/</span> spp<span class="op">);</span></span></code></pre></div>
+<p>So the shared film is written:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>once per pixel</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>rather than once per sample.</p>
+<p>That minimizes contention and memory traffic.</p>
+<p>Very good CPU architecture.</p>
+<hr />
+<p><strong>Film sample accumulation</strong></p>
+<p>For sample colors:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>X</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>X</mi>
+    <mi>N</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>the target pixel is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>X</mi>
+        <mo stretchy="false">¯</mo>
+      </mover>
+    </mrow>
+    <mi>N</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>N</mi>
+  </mfrac>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>X</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Three common architectures are:</p>
+<pre class="text"><code>sum + sample count
+online running mean
+mean + M2 variance statistics</code></pre>
+<p>For adaptive path tracing, the third is best because it supports convergence estimates.</p>
+<hr />
+<p><strong>Accumulation must happen in linear HDR space</strong></p>
+<p>Do <strong>not</strong> tone map each sample and average:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mn>1</mn>
+    <mi>N</mi>
+  </mfrac>
+  <mo data-mjx-texclass="OP">∑</mo>
+  <mi>T</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>X</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Tone mapping is nonlinear, so:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>T</mi>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">(</mo>
+            <mfrac>
+              <mn>1</mn>
+              <mi>N</mi>
+            </mfrac>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <msub>
+              <mi>X</mi>
+              <mi>i</mi>
+            </msub>
+            <mo data-mjx-texclass="CLOSE">)</mo>
+          </mrow>
+          <mo>≠</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mi>N</mi>
+          </mfrac>
+          <mo data-mjx-texclass="OP">∑</mo>
+          <mi>T</mi>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>X</mi>
+            <mi>i</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Correct pipeline:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>sample radiance</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>linear accumulation</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>mean</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>exposure</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>tone map</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>display encoding</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Floating-point accumulation precision</strong></p>
+<p><code>Color3f</code> is three 32-bit floats.</p>
+<p>Float has approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>24</mn>
+</math>
+<p>bits of significand precision.</p>
+<p>Relative machine epsilon around unity is roughly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>7</mn>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Now imagine accumulated sum becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Trying to add:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>3</mn>
+    </mrow>
+  </msup>
+</math>
+<p>may no longer affect the float because the representable spacing near <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+</math> is too coarse.</p>
+<p>That means many tiny samples can disappear numerically after very large contributions.</p>
+<hr />
+<p><strong>Catastrophic accumulation scenario</strong></p>
+<p>Suppose samples are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>10</mn>
+    <mn>8</mn>
+  </msup>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo>…</mo>
+</math>
+<p>A large firefly pushes sum to around:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>10</mn>
+    <mn>8</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Float spacing near that magnitude is multiple units.</p>
+<p>Subsequent contributions of order:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+</math>
+<p>can lose precision.</p>
+<p>This is another reason fireflies hurt numerics in addition to visual variance.</p>
+<hr />
+<p><strong>Double accumulation</strong></p>
+<p>A simple offline CPU renderer can maintain:</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> AccumColor</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> r<span class="op">;</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> g<span class="op">;</span></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> b<span class="op">;</span></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>even if BRDF/intersection math remains float.</p>
+<p>At final output convert to float.</p>
+<p>This dramatically improves long-running progressive accumulation for modest CPU memory cost.</p>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mi>K</mi>
+  <mo>=</mo>
+  <mn>8.29</mn>
+  <mtext> million pixels</mtext>
+  <mo>,</mo>
+</math>
+<p>RGB float accumulation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8.29</mn>
+  <mi>M</mi>
+  <mo>×</mo>
+  <mn>12</mn>
+  <mo>≈</mo>
+  <mn>99.5</mn>
+  <mtext> MB</mtext>
+  <mo>.</mo>
+</math>
+<p>RGB double:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8.29</mn>
+  <mi>M</mi>
+  <mo>×</mo>
+  <mn>24</mn>
+  <mo>≈</mo>
+  <mn>199</mn>
+  <mtext> MB</mtext>
+  <mo>.</mo>
+</math>
+<p>That is not free, but very plausible for offline CPU rendering.</p>
+<hr />
+<p><strong>Kahan compensated summation</strong></p>
+<p>If doubles are too expensive, compensated summation tracks lost low-order terms.</p>
+<p>For scalar:</p>
+<div class="sourceCode" id="cb44"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> KahanAdd<span class="op">(</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> x<span class="op">,</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span><span class="op">&amp;</span> sum<span class="op">,</span></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span><span class="op">&amp;</span> compensation<span class="op">)</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> y <span class="op">=</span></span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>        x <span class="op">-</span> compensation<span class="op">;</span></span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> t <span class="op">=</span></span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>        sum <span class="op">+</span> y<span class="op">;</span></span>
+<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>    compensation <span class="op">=</span></span>
+<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a>        <span class="op">(</span>t <span class="op">-</span> sum<span class="op">)</span> <span class="op">-</span> y<span class="op">;</span></span>
+<span id="cb44-14"><a href="#cb44-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-15"><a href="#cb44-15" aria-hidden="true" tabindex="-1"></a>    sum <span class="op">=</span> t<span class="op">;</span></span>
+<span id="cb44-16"><a href="#cb44-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This significantly reduces error in long sums.</p>
+<p>It costs extra arithmetic/state.</p>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>benchmark and choose based on render duration/dynamic range</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Current Kairo internal HDR representation</strong></p>
+<p><code>Color3f</code> explicitly documents:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>linear RGB values may exceed </mtext>
+          <mn>1.</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is exactly right.</p>
+<p>The film therefore stores scene-referred HDR values before display conversion.</p>
+<p>Current <code>SaveHDR()</code> writes this linear film directly to Radiance RGBE.</p>
+<p>So unlike the earlier real-time Kairo shader we inspected, the ray tracer does preserve pre-tone-map HDR internally.</p>
+<p>That is an important positive distinction.</p>
+<hr />
+<p><strong>Radiance RGBE format</strong></p>
+<p>RGBE stores:</p>
+<pre class="text"><code>R mantissa
+G mantissa
+B mantissa
+shared exponent</code></pre>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <mo>,</mo>
+  <mi>G</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo>×</mo>
+  <msup>
+    <mn>2</mn>
+    <mi>E</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>The shared exponent gives huge dynamic range with compact 32 bits/pixel.</p>
+<p>Current Kairo’s <code>EncodeRGBE()</code> finds:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <mo>,</mo>
+  <mi>G</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>uses <code>frexp</code> to split magnitude into mantissa/exponent, and encodes RGB relative to that exponent.</p>
+<p>This preserves values far above:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1.</mn>
+</math>
+<hr />
+<p><strong>RGBE precision limitation</strong></p>
+<p>RGBE has only 8-bit mantissa channels and one shared exponent.</p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>=</mo>
+  <mn>10000</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mo>=</mo>
+  <mn>0.01</mn>
+  <mo>.</mo>
+</math>
+<p>The exponent needed for red also determines green’s precision.</p>
+<p>Small channels relative to the maximum can lose accuracy.</p>
+<p>For serious production compositing, OpenEXR with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mtext>-bit half</mtext>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>32</mn>
+  <mtext>-bit float</mtext>
+</math>
+<p>channels is typically more flexible.</p>
+<p>Kairo’s RGBE support is still a major improvement over 8-bit PNG/PPM because it preserves scene dynamic range.</p>
+<hr />
+<p><strong>HDR output versus display output</strong></p>
+<p>HDR output should preserve:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>linear</mtext>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>No Reinhard.</p>
+<p>No gamma 2.2.</p>
+<p>No clamping to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Display output needs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>exposure</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>tone mapping</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>transfer encoding</mtext>
+  <mo>.</mo>
+</math>
+<p>Kairo respects this distinction:</p>
+<p><code>SaveHDR()</code> writes the linear film.</p>
+<p><code>SavePPM()</code> performs Reinhard and then approximate gamma encoding.</p>
+<p>Good separation.</p>
+<hr />
+<p><strong>Tone mapping</strong></p>
+<p>A path tracer may produce:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>12</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>0.8</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>A display cannot directly represent this in ordinary SDR.</p>
+<p>Exposure first:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>C</mi>
+            <mi>e</mi>
+          </msub>
+          <mo>=</mo>
+          <msup>
+            <mn>2</mn>
+            <mrow data-mjx-texclass="ORD">
+              <mi>E</mi>
+              <mi>V</mi>
+            </mrow>
+          </msup>
+          <mi>C</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then tone map.</p>
+<p>Simple Reinhard:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>T</mi>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mfrac>
+            <mi>x</mi>
+            <mrow>
+              <mn>1</mn>
+              <mo>+</mo>
+              <mi>x</mi>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mn>12</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo stretchy="false">(</mo>
+  <mn>12</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>12</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>13</mn>
+  <mo>≈</mo>
+  <mn>0.923</mn>
+  <mo>.</mo>
+</math>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mn>0.8</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo stretchy="false">(</mo>
+  <mn>0.8</mn>
+  <mo stretchy="false">)</mo>
+  <mo>≈</mo>
+  <mn>0.444</mn>
+  <mo>.</mo>
+</math>
+<p>Then encode to display space.</p>
+<hr />
+<p><strong>Why exposure belongs before tone mapping</strong></p>
+<p>Exposure is linear scaling:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mi>e</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>k</mi>
+  <mi>C</mi>
+  <mo>.</mo>
+</math>
+<p>Changing exposure represents camera/display adaptation.</p>
+<p>If you apply exposure after tone mapping, the nonlinear curve has already compressed highlight relationships.</p>
+<p>Correct conceptual sequence:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>C</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>scene</mtext>
+            </mrow>
+          </msub>
+          <mo stretchy="false">→</mo>
+          <msup>
+            <mn>2</mn>
+            <mrow data-mjx-texclass="ORD">
+              <mi>E</mi>
+              <mi>V</mi>
+            </mrow>
+          </msup>
+          <mo stretchy="false">→</mo>
+          <mi>T</mi>
+          <mo stretchy="false">(</mo>
+          <mi>C</mi>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">→</mo>
+          <mtext>sRGB/display encoding</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Debug mode: normals</strong></p>
+<p>Current <code>TraceNormal()</code> outputs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>C</mi>
+          <mo>=</mo>
+          <mn>0.5</mn>
+          <mi>N</mi>
+          <mo>+</mo>
+          <mn>0.5</mn>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">→</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">→</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This bypasses materials and lighting.</p>
+<p>It diagnoses:</p>
+<ul>
+<li>wrong winding,</li>
+<li>flipped normals,</li>
+<li>interpolation errors,</li>
+<li>transform errors.</li>
+</ul>
+<p>A beauty image can hide those behind shadows and textures.</p>
+<p>Normal output cannot.</p>
+<hr />
+<p><strong>Debug mode: albedo</strong></p>
+<p>Kairo’s debug path directly returns:</p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>EvaluateAlbedo<span class="op">(</span>scene<span class="op">,</span> hit<span class="op">)</span></span></code></pre></div>
+<p>This isolates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>material texture/factor interpretation</mtext>
+</math>
+<p>from lighting.</p>
+<p>If the beauty image is wrong but albedo is correct, look downstream at:</p>
+<ul>
+<li>BRDF,</li>
+<li>light,</li>
+<li>visibility,</li>
+<li>exposure.</li>
+</ul>
+<p>If albedo itself is wrong, do not touch GGX.</p>
+<p>Debugging should proceed in causal order.</p>
+<hr />
+<p><strong>Debug mode: depth</strong></p>
+<p>Kairo computes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>d</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mfrac>
+    <mrow>
+      <mi>t</mi>
+      <mo>−</mo>
+      <msub>
+        <mi>d</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mtext>near</mtext>
+        </mrow>
+      </msub>
+    </mrow>
+    <mrow>
+      <msub>
+        <mi>d</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mtext>far</mtext>
+        </mrow>
+      </msub>
+      <mo>−</mo>
+      <msub>
+        <mi>d</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mtext>near</mtext>
+        </mrow>
+      </msub>
+    </mrow>
+  </mfrac>
+</math>
+<p>clamped to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Near:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>white</mtext>
+  <mo>.</mo>
+</math>
+<p>Far:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>black</mtext>
+  <mo>.</mo>
+</math>
+<p>This verifies:</p>
+<ul>
+<li>camera rays,</li>
+<li>closest-hit selection,</li>
+<li>BVH traversal,</li>
+<li>intersection distances.</li>
+</ul>
+<p>Because Kairo normalizes ray directions, hit <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math> is actual world-space distance, which makes the depth visualization meaningful.</p>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch316.xhtml#id_04-Light-Transport-and-Image-Synthesis" class="wikilink">Reading map</a> · <a href="ch324.xhtml#id_03-visual-computing-i-ch009-point-lights-mis-and-environment-lighting" class="wikilink">Previous chapter</a> · <a href="ch421.xhtml#id_03-visual-computing-i-ch011-bvh-traversal-and-deterministic-evidence" class="wikilink">Next chapter (GPU Architecture and Real-Time Rendering, Part 1, Ch. 8)</a></p>
+</section>
+</section>
+</body>
+</html>

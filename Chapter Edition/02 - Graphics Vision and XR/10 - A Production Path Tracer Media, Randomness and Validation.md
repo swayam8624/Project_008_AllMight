@@ -8,7 +8,7 @@ A production path tracer must handle nested media, random streams, execution and
 
 **Recall question:** Which failures require a mathematical oracle, and which require scene-level tests?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 22206–24621; source-span SHA256 d7a62450f0ab02c651c24d466b95ea6888bcc00f7612bee01a42b7f623edbeb5. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 22237–24652; source-span SHA256 d7a62450f0ab02c651c24d466b95ea6888bcc00f7612bee01a42b7f623edbeb5. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Next — Pass 8: M125 + M126, Parts 2070–2100

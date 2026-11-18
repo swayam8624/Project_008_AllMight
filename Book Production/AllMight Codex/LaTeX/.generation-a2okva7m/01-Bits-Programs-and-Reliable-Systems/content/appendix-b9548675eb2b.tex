@@ -1,0 +1,40 @@
+\hypertarget{appendix-b9548675eb2b}{}\label{referencestart:appendix-b9548675eb2b}
+\section{Weak observation and ownership cycles}\label{appendix-b9548675eb2b-weak-observation-and-ownership-cycles}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C010 · \textbf{Latest development:} C010
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-b9548675eb2b-definition-and-mechanism}
+
+\texttt{std::weak\_ptr\textless{}T\textgreater{}} observes a \texttt{shared\_ptr} ownership group without increasing its strong count. \texttt{lock()} atomically attempts to create a temporary strong owner; the result is empty if the managed object is no longer alive. Replacing one edge of an otherwise all-strong ownership cycle with a weak observation can allow the strong count to reach zero. A check with \texttt{expired()} followed later by access is not equivalent to a successful \texttt{lock()}.
+
+\end{allmightroledefinition}
+
+\texttt{enable\_shared\_from\_this} joins the already-established shared ownership group; it must not create a second \texttt{shared\_ptr} control block from \texttt{this}.
+
+\subsection{Prerequisites}\label{appendix-b9548675eb2b-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-51602cabe815]{Exclusive and shared smart-pointer ownership} --- Weak observation belongs to a real shared ownership group.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-b9548675eb2b-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-aea529eb5175]{Deferred captures and borrowed views}
+\item
+  \hyperref[appendix-69739d3ab49b]{RAII and resource handles}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-b9548675eb2b-recall-and-next-depth}
+
+Draw a parent/child graph with one weak edge and prove that destruction can proceed. Pending: callback registries, shutdown races, and ownership-group identity.
+
+\subsection{Source and navigation}\label{appendix-b9548675eb2b-source-and-navigation}
+
+\hyperref[01-foundations-i-ch004-weak-observation-breaks-cycles-without-pretending-an-object-is-alive]{M010 teaching narrative} · \hyperref[appendix-fd090d982a15-m010---parts-148-160]{Source coverage}

@@ -1,0 +1,45 @@
+\hypertarget{appendix-ac697f5c66e8}{}\label{referencestart:appendix-ac697f5c66e8}
+\section{Bit field}\label{appendix-ac697f5c66e8-bit-field}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C001 · \textbf{Latest development:} C001
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-ac697f5c66e8-definition-and-mechanism}
+
+A schema-owned range of positions described by width and offset.
+
+\end{allmightroledefinition}
+
+A field is a declared range with offset s and width w, not automatically a C++ language bit-field member. Width two at offset four owns positions 4--5 and values 0--3. The schema must fit the carrier and either forbid overlaps or explain their meaning.
+
+\subsection{Prerequisites}\label{appendix-ac697f5c66e8-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-dbe5905163c2]{Bit mask} --- A mask is a selection pattern, not an operation.
+\item
+  \hyperref[appendix-73425b25118e]{Shift operations} --- Logical right shift fills high positions with zero; arithmetic right shift replicates the sign bit.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-ac697f5c66e8-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-5057f9ad327f]{Binary32} --- uses bit field to establish this mechanism's representation or policy.
+\item
+  \hyperref[appendix-1f9963e1a5d1]{Bit packing} --- uses bit field as part of its representation or reasoning.
+\item
+  \hyperref[appendix-343615f49ddf]{IEEE-754 floating point} --- uses bit field as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-ac697f5c66e8-recall-and-next-depth}
+
+Explain bit field without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} C++ language bit-fields, instruction formats, GPU formats, and versioned schemas.
+
+\subsection{Source and navigation}\label{appendix-ac697f5c66e8-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

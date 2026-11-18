@@ -8,7 +8,7 @@ The canonical implementation gives a concrete collision pipeline, and the reposi
 
 **Recall question:** What evidence would show that two implementations agree beyond matching one example?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 50455–53175; source-span SHA256 4d17188383f66aa2ba12ab023e382a345b02ac8dd00c1b00f946111c929d3acc. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 51457–54177; source-span SHA256 4d17188383f66aa2ba12ab023e382a345b02ac8dd00c1b00f946111c929d3acc. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Canonical C++23 implementation and repository comparison

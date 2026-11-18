@@ -1,0 +1,41 @@
+\hypertarget{appendix-17fc1bc8b305}{}
+\section*{Octal}
+\chapter{Octal}\label{appendix-17fc1bc8b305-octal}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C001 · \textbf{Latest development:} C001
+
+\section{Definition and mechanism}\label{appendix-17fc1bc8b305-definition-and-mechanism}
+
+Base 8 maps one digit to three bits; it survives in permissions and legacy literal syntax.
+
+Octal digits run from 0 through 7. Group binary from the right in threes: \texttt{010\ 101\ 101₂\ =\ 255₈}. In C++, \texttt{0255} is octal 173; decimal \texttt{255} is a different value. Permission triples such as rwx map naturally onto three bits.
+
+\section{Prerequisites}\label{appendix-17fc1bc8b305-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-83c3f28f7bda]{Positional notation} --- A base is the number of available digits.
+\end{itemize}
+
+\section{Used by}\label{appendix-17fc1bc8b305-used-by}
+
+Connect later chunks here when they use this concept.
+
+\section{Recall and next depth}\label{appendix-17fc1bc8b305-recall-and-next-depth}
+
+Explain octal without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} Unix permission semantics.
+
+\section{Source and navigation}\label{appendix-17fc1bc8b305-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#From\%20a\%20signal\%20to\%20an\%20interpretation}{C001 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\section{Why octal still matters}\label{appendix-17fc1bc8b305-why-octal-still-matters}
+
+Octal groups binary digits in threes. Each octal digit therefore represents exactly three bits, so a binary field such as \texttt{111\ 101\ 010} maps directly to \texttt{752₈} without repeated division. Hexadecimal dominates modern memory dumps because bytes align naturally to two hex digits, but octal survives in domains whose historical or semantic fields are three-bit groups.
+
+POSIX permission notation is the canonical example: read/write/execute are bit values \(4,2,1\), so permission \texttt{0754} means owner \texttt{111}, group \texttt{101}, other \texttt{100}. The leading zero in C/C++ source historically denotes an octal integer literal, which creates a real parsing hazard: \texttt{010} is eight, not ten. Modern code should prefer explicit intent and avoid visually ambiguous numeric literals.
+
+A reconstruction test should convert binary↔octal by bit grouping, explain why each digit is 0--7, decode a permission triple, and identify the literal-syntax hazard. Octal is not a different storage representation in memory; it is a textual interpretation of the same integer bits.

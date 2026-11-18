@@ -1,0 +1,51 @@
+\hypertarget{appendix-b9db93e28371}{}
+\section*{Reproducible numerical benchmarking}
+\chapter{Reproducible numerical benchmarking}\label{appendix-b9db93e28371-reproducible-numerical-benchmarking}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\section{Definition and mechanism}\label{appendix-b9db93e28371-definition-and-mechanism}
+
+A useful numerical benchmark separates sample-level variability from run-level variability and pairs competing methods on the same inputs or seeds. Record the algorithm, precision, compiler/runtime settings, sample count, seed or keyed input, warm-up policy, timing method, and error metric. Compare distributions or paired differences rather than a single favorable run. A speed improvement is meaningful only if accuracy and failure rates remain acceptable for the target workload. For Monte Carlo methods, repeat independent runs and report uncertainty; for deterministic solvers, use analytical or manufactured solutions and measure convergence. Reproducibility is an experimental contract, not merely a fixed random seed. If the workload is stochastic, compare paired seeds and report both runtime and error distributions.
+
+\section{Prerequisites}\label{appendix-b9db93e28371-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-5f1a2c3f97ff}{Numerical reproducibility (01-Foundations-I, appendix-5f1a2c3f97ff)}
+\item
+  \hyperref[appendix-c83016554b1e]{Confidence intervals and sequential evidence}
+\item
+  \hyperref[appendix-bcc44e9d3d02]{Robust summaries and error metrics}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-31b8c295e05f}{Numerical error budgets (01-Foundations-I, appendix-31b8c295e05f)}
+\item
+  \hyperref[appendix-aca80b6bf17a]{Convergence order and Richardson extrapolation}
+\item
+  \hyperref[appendix-1c5e85693a06]{Latin-hypercube sampling}
+\end{itemize}
+
+\section{Used by}\label{appendix-b9db93e28371-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-65788587ef78}{Research validity and ablation (04-Visual-Computing-II, appendix-65788587ef78)}
+\end{itemize}
+
+\section{Full teaching explanation}\label{appendix-b9db93e28371-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Test\%20numerical\%20methods\%20and\%20benchmark\%20reproducibly}{Test numerical methods and benchmark reproducibly}
+\end{itemize}
+
+\section{Source coverage}\label{appendix-b9db93e28371-source-coverage}
+
+Supplied lesson parts: 999--1000.
+
+\section{Future keywords}\label{appendix-b9db93e28371-future-keywords}
+
+paired trials, random seeds, uncertainty reporting

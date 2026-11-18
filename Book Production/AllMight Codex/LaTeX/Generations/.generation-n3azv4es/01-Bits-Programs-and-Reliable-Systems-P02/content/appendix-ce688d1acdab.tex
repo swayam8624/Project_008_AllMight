@@ -1,0 +1,60 @@
+\hypertarget{appendix-ce688d1acdab}{}\label{referencestart:appendix-ce688d1acdab}
+\section{Huge pages and TLB reach}\label{appendix-ce688d1acdab-huge-pages-and-tlb-reach}
+
+\hypertarget{appendix-ce688d1acdab-huge-pages-and-tlb-reach}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-ce688d1acdab-definition-and-mechanism}
+
+\hypertarget{appendix-ce688d1acdab-definition-and-mechanism}{}
+
+A larger page covers more bytes per translation. With T same-size cached entries, illustrative reach is T×P bytes. One GiB requires 262144 pages at 4 KiB versus 512 at 2 MiB. Larger pages trade flexibility, availability, fragmentation and fault granularity; the counts alone do not prove performance improvement.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-ce688d1acdab-prerequisites}
+
+\hypertarget{appendix-ce688d1acdab-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-7a2d9c5ce511]{TLB} --- Larger pages change the amount of memory covered by cached translations.
+\item
+  \hyperref[appendix-a7c50686d81f]{Allocator fragmentation} --- Coarser allocation granularity introduces space/availability trade-offs.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-ce688d1acdab-used-by}
+
+\hypertarget{appendix-ce688d1acdab-used-by}{}
+
+Update downstream uses when later chunks build on this concept.
+
+\subsection{Recall and next depth}\label{appendix-ce688d1acdab-recall-and-next-depth}
+
+\hypertarget{appendix-ce688d1acdab-recall-and-next-depth}{}
+
+Calculate page counts without asserting a universal speedup.
+
+\textbf{Pending:} Mixed page sizes, workloads, benchmarks and OS policy.
+
+\subsection{Source and navigation}\label{appendix-ce688d1acdab-source-and-navigation}
+
+\hypertarget{appendix-ce688d1acdab-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}
+
+\subsection{Reach, fragmentation, and measurement}\label{appendix-ce688d1acdab-reach-fragmentation-and-measurement}
+
+\hypertarget{appendix-ce688d1acdab-reach-fragmentation-and-measurement}{}
+
+TLB reach is approximately the number of cached translations multiplied by the page size. If a TLB can hold \(N\) translations, switching from 4 KiB pages to 2 MiB huge pages can increase the bytes covered by those translations by a factor of 512.
+
+That does not make huge pages universally faster. They can increase internal fragmentation, make allocation/compaction harder, change NUMA placement behavior and waste memory when only small portions of each huge page are touched. Transparent Huge Pages may also promote or split mappings asynchronously, so an application should not infer actual page size from its allocation API alone.
+
+The right benchmark holds the useful computation fixed while varying working-set size and access stride, then observes TLB/page-walk counters where available. A speedup from huge pages should correlate with translation pressure rather than simply with a different allocator or cache footprint.
+
+For engines, huge pages are most plausible for stable, large, densely accessed arenas---not as a default for every allocation.

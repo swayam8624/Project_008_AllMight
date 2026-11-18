@@ -8,7 +8,7 @@ GPU command processors execute submitted work asynchronously, so recording a com
 
 **Recall question:** How does a completion signal change what the CPU may safely read, overwrite, or destroy?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 22552–25730; source-span SHA256 42409f3d01bae1cf39b63ee62f06a72093a3be2f426b615a4f5d8274c3fe89c2. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 22733–25911; source-span SHA256 42409f3d01bae1cf39b63ee62f06a72093a3be2f426b615a4f5d8274c3fe89c2. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### COMMAND EXECUTION, ASYNC WORK & MEMORY LIFETIMES

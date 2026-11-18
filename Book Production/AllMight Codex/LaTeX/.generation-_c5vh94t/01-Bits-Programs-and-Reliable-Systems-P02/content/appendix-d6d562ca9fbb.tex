@@ -1,0 +1,56 @@
+\hypertarget{appendix-d6d562ca9fbb}{}\label{referencestart:appendix-d6d562ca9fbb}
+\section{References and aliases}\label{appendix-d6d562ca9fbb-references-and-aliases}
+
+\hypertarget{appendix-d6d562ca9fbb-references-and-aliases}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-d6d562ca9fbb-definition-and-mechanism}
+
+\hypertarget{appendix-d6d562ca9fbb-definition-and-mechanism}{}
+
+A reference is an alias established by binding, not a reseatable pointer object. Assignment through it assigns the referent. In \texttt{int\&\ r=a;\ r=b;}, r still names a. A reference definition needs a binding; an extern reference declaration can defer the definition. References can dangle and are non-owning.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-d6d562ca9fbb-prerequisites}
+
+\hypertarget{appendix-d6d562ca9fbb-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0b104bcba06b]{Storage duration and object lifetime} --- The referent and its backing storage must survive each alias use.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#nameddest=appendix-2e4d494c2d94}{Declarations and definitions (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Declarations and definitions)} --- Declarations establish the entities and types whose uses are being classified.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-d6d562ca9fbb-used-by}
+
+\hypertarget{appendix-d6d562ca9fbb-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-37856d997bb0]{Reference binding and converted temporaries}
+\item
+  \hyperref[appendix-5d4252a42886]{Auto decltype and reference collapsing}
+\item
+  \hyperref[appendix-c25d60fed375]{Const qualification and shallow constness}
+\item
+  \hyperref[appendix-d5908f75721f]{Parameter passing and sink contracts}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-d6d562ca9fbb-recall-and-next-depth}
+
+\hypertarget{appendix-d6d562ca9fbb-recall-and-next-depth}{}
+
+Trace reference assignment versus reseating a reference-to-pointer. Pending: reference members and generated copy/assignment behavior. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{appendix-d6d562ca9fbb-source-and-navigation}
+
+\hypertarget{appendix-d6d562ca9fbb-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch003-giving-another-name-to-a-live-object]{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

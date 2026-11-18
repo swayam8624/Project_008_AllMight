@@ -1,0 +1,4036 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch440.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_06-engine-ii-ch044-cross-backend-conversion-and-agreement" class="level2">
+<h2>Cross-backend conversion and agreement</h2>
+<p><a href="ch410.xhtml#id_06-GPU-Architecture-and-Real-Time-Rendering" class="wikilink">Reading map</a> · <a href="ch439.xhtml#id_06-engine-ii-ch043-compiling-renderer-intent-into-backend-work" class="wikilink">Previous chapter</a> · <a href="ch441.xhtml#id_06-engine-ii-ch045-rasterizing-kernels-and-connecting-world-identity" class="wikilink">Next chapter</a></p>
+<p>Two APIs can represent similar work with different resource and synchronization rules. This chapter tests conversion at those seams and states what agreement means for images and execution.</p>
+<p><strong>By the end:</strong> Define parity criteria for a cross-backend path, including formats, coordinate conventions, synchronization, and output comparison.</p>
+<p><strong>Recall question:</strong> Which differences are permitted by the contract, and what image or state witness would reveal a conversion error?</p>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 107025–109761; source-span SHA256 806a7c1985cb289efca19c9e0364ba23b697eb0023c90548eb2fb80d3dc191ea. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_06-engine-ii-ch044-real-cross-backend-conversion-agreement" class="level4">
+<h4>REAL CROSS-BACKEND CONVERSION &amp; AGREEMENT</h4>
+<p><strong>backend conversion boundaries</strong></p>
+<p>There should be one explicit point where neutral data becomes native data.</p>
+<p>For example:</p>
+<pre class="text"><code>MeshDraw
+      ↓
+MetalDraw</code></pre>
+<p>or:</p>
+<pre class="text"><code>MeshDraw
+      ↓
+Vulkan draw uniforms/descriptors.</code></pre>
+<p>Conversion must not happen randomly across gameplay/editor code.</p>
+<hr />
+<p><strong>Kairo’s Metal boundary is explicit</strong></p>
+<p><code>MetalRendererRuntime::Convert(const MeshDraw&amp;)</code> converts:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mo>,</mo>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mo>,</mo>
+  <mi>N</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>M</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>P</mi>
+  <mi>B</mi>
+  <mi>R</mi>
+  <mi>M</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>,</mo>
+  <mi>O</mi>
+  <mi>b</mi>
+  <mi>j</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+  <mo>,</mo>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>o</mi>
+  <mi>w</mi>
+  <mi>f</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>s</mi>
+</math>
+<p>into its Metal detail structure.</p>
+<p>That is a good boundary.</p>
+<p>The neutral object does not contain Metal types.</p>
+<hr />
+<p><strong>Conversion boundary can correct backend representation</strong></p>
+<p>CPU matrix may be row-major.</p>
+<p>MSL expects data in representation suitable for shader code.</p>
+<p>Vulkan GLSL/SPIR-V may use a different upload convention.</p>
+<p>Conversion layer is allowed to transpose/copy.</p>
+<p>Shared scene semantics remain unchanged.</p>
+<hr />
+<p><strong>portable mesh representation</strong></p>
+<p>Kairo’s <code>MeshVertex</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> MeshVertex</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    Vec3f Position<span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    Vec3f Color<span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    Vec3f Normal<span class="op">;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    Vec2f TexCoord<span class="op">;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>plus:</p>
+<pre class="text"><code>uint32 indices
+optional parallel skin stream.</code></pre>
+<p>This is backend-neutral.</p>
+<p>Vulkan turns fields into vertex attribute formats.</p>
+<p>Metal binds the bytes into its vertex/shader convention.</p>
+<hr />
+<p><strong>Why CPU mesh format should not equal native vertex descriptor object</strong></p>
+<p>Asset representation should survive backend changes.</p>
+<p>Bad:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Mesh</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    VkVertexInputAttributeDescription</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        attributes<span class="op">[</span><span class="dv">4</span><span class="op">];</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Good:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>MeshLayout</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    Position Float3</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    Normal Float3</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    UV Float2</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>then backend translates.</p>
+<hr />
+<p><strong>Portable mesh should still be expressive</strong></p>
+<p>Future mesh layout might include:</p>
+<pre class="text"><code>position
+normal
+tangent
+UV0
+UV1
+color
+joint indices
+joint weights
+morph streams</code></pre>
+<p>Renderer can reject unsupported layouts through capability/feature contract.</p>
+<p>Do not hardcode backend API objects into assets.</p>
+<hr />
+<p><strong>portable material representation</strong></p>
+<p>Kairo’s <code>PBRMaterial</code> is a good example.</p>
+<p>It stores:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mo>,</mo>
+  <mi>R</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>A</mi>
+  <mi>O</mi>
+  <mo>,</mo>
+  <mi>E</mi>
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>N</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>S</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>A</mi>
+  <mi>l</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>C</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mo>,</mo>
+  <mi>A</mi>
+  <mi>l</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>D</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>S</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+</math>
+<p>plus neutral texture handles.</p>
+<p>This is semantic PBR data.</p>
+<p>No descriptor set.</p>
+<p>No sampler object.</p>
+<p>No <code>MTLTexture*</code>.</p>
+<p>Excellent.</p>
+<hr />
+<p><strong>Material semantics must be canonical</strong></p>
+<p>Example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0.04</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<p>must mean same thing on every backend.</p>
+<p>Texture channel conventions must match.</p>
+<p>Color-space semantics must match.</p>
+<p>Normal-map convention must match.</p>
+<p>Then shaders can be compared meaningfully.</p>
+<p>Multi-backend parity begins at the material contract.</p>
+<hr />
+<p><strong>portable scene extraction</strong></p>
+<p>Scene system might contain:</p>
+<pre class="text"><code>ECS entities
+physics objects
+animation components
+editor-only objects
+asset IDs</code></pre>
+<p>Renderer should not directly inspect all that.</p>
+<p>Extract:</p>
+<pre class="text"><code>RenderScene</code></pre>
+<p>containing:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>D</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>w</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>L</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Kairo already does this.</p>
+<hr />
+<p><strong>Why extraction is valuable</strong></p>
+<p>Gameplay scene can change architecture.</p>
+<p>Renderer doesn’t care.</p>
+<p>Renderer accepts one canonical frame snapshot.</p>
+<p>It also enables:</p>
+<ul>
+<li>deterministic tests,</li>
+<li>headless captures,</li>
+<li>recording/replay,</li>
+<li>backend comparison.</li>
+</ul>
+<p>You can serialize a <code>RenderScene</code> and replay it through Metal and Vulkan.</p>
+<p>That is extremely powerful.</p>
+<hr />
+<p><strong>runtime render bridge</strong></p>
+<p><code>RendererRuntime</code> is Kairo’s current bridge.</p>
+<p>Application says:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>renderer<span class="op">.</span>CreateMesh<span class="op">(...)</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>renderer<span class="op">.</span>CreateTexture<span class="op">(...)</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>renderer<span class="op">.</span>SubmitRenderScene<span class="op">(...)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>renderer<span class="op">.</span>SetCameraPose<span class="op">(...)</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>renderer<span class="op">.</span>DrawFrame<span class="op">(...)</span></span></code></pre></div>
+<p>Runtime dispatches to current backend via <code>std::variant</code>.</p>
+<p>This is a clean façade.</p>
+<hr />
+<p><strong>Static polymorphism alternative</strong></p>
+<p>Instead of virtual interface:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>IRenderBackend</span></code></pre></div>
+<p>or variant, one could template backend.</p>
+<p>But runtime selection often requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>d</mi>
+  <mo>::</mo>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+</math>
+<p>or dynamic polymorphism.</p>
+<p>Kairo’s variant approach has useful properties:</p>
+<ul>
+<li>concrete backend types remain known,</li>
+<li>no manual vtable interface proliferation,</li>
+<li>backend-specific accessors can still exist.</li>
+</ul>
+<hr />
+<p><strong>GPU handles must stay private</strong></p>
+<p>Do not allow:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>MeshDraw</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    VkBuffer VertexBuffer<span class="op">;</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>because now Metal cannot consume <code>MeshDraw</code>.</p>
+<p>Neutral handle:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>MeshHandle Mesh<span class="op">;</span></span></code></pre></div>
+<p>Backend owns:</p>
+<p>Vulkan:</p>
+<pre class="text"><code>VkBuffer
+VkDeviceMemory</code></pre>
+<p>Metal:</p>
+<pre class="text"><code>MTLBuffer</code></pre>
+<p>D3D12:</p>
+<pre class="text"><code>ID3D12Resource</code></pre>
+<p>and resolves handle internally.</p>
+<hr />
+<p><strong>Tooling exception</strong></p>
+<p>Sometimes editor needs native texture.</p>
+<p>Kairo exposes:</p>
+<pre class="text"><code>MetalViewportTexture
+VulkanViewportTexture
+Direct3D12ViewportTexture</code></pre>
+<p>as explicit tooling APIs.</p>
+<p>That is acceptable because non-portability is isolated.</p>
+<p>Ordinary scene extraction remains native-handle-free.</p>
+<hr />
+<p><strong>Generation is important for borrowed native views</strong></p>
+<p>Kairo native viewport info includes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>Resize may replace texture.</p>
+<p>Editor sees generation change and knows previously cached native handle is stale.</p>
+<p>That is exactly how borrowed cross-layer handles should be managed.</p>
+<hr />
+<p><strong>backend-specific shader compilation</strong></p>
+<p>There is no requirement that every backend use same shader binary.</p>
+<p>Current Kairo already demonstrates separate strategies.</p>
+<p>Vulkan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>L</mi>
+  <mi>S</mi>
+  <mi>L</mi>
+  <mo stretchy="false">→</mo>
+  <mi>S</mi>
+  <mi>P</mi>
+  <mi>I</mi>
+  <mi>R</mi>
+  <mtext>-</mtext>
+  <mi>V</mi>
+  <mo>.</mo>
+</math>
+<p>Metal backend currently:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>S</mi>
+  <mi>L</mi>
+  <mtext> </mtext>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>r</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>L</mi>
+  <mi>i</mi>
+  <mi>b</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<p>Maveb:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>S</mi>
+  <mi>L</mi>
+  <mo stretchy="false">→</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>b</mi>
+  <mo>.</mo>
+</math>
+<p>All can implement same material model.</p>
+<hr />
+<p><strong>Backend-specific compilation is not duplication of renderer semantics</strong></p>
+<p>Shader source may differ.</p>
+<p>But formulas should agree:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>G</mi>
+  <mi>X</mi>
+  <mo>,</mo>
+  <mi>F</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mo>,</mo>
+  <mi>n</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mtext> </mtext>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>p</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>,</mo>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>p</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>You can share:</p>
+<ul>
+<li>generated constants,</li>
+<li>material ABI definitions,</li>
+<li>tests,</li>
+<li>CPU reference equations.</li>
+</ul>
+<p>Source language does not have to be identical.</p>
+<hr />
+<p><strong>cross-API shader language strategies</strong></p>
+<p>There are several valid strategies.</p>
+<p>One is separate native shaders:</p>
+<pre class="text"><code>GLSL for Vulkan
+MSL for Metal
+HLSL for D3D12</code></pre>
+<p>Highest native control.</p>
+<p>More maintenance.</p>
+<p>Another is one source language plus translation:</p>
+<pre class="text"><code>HLSL
+→ DXIL
+→ SPIR-V
+→ MSL</code></pre>
+<p>using compiler/toolchains.</p>
+<p>Another is custom shader IR/code generation.</p>
+<p>The best approach depends on engine scale.</p>
+<hr />
+<p><strong>Why source translation is attractive</strong></p>
+<p>One material shader source.</p>
+<p>Backend compiler generates target.</p>
+<p>Avoid formula drift.</p>
+<p>But translated shader may not expose native-specific features elegantly.</p>
+<p>Special extensions still require backend-specific branches.</p>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>shared where semantic, specialized where native strength matters</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Shader ABI is more important than source language</strong></p>
+<p>CPU side needs to know:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>p</mi>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Whether source was GLSL or MSL is secondary.</p>
+<p>A stable reflected metadata contract is key.</p>
+<hr />
+<p><strong>shader reflection</strong></p>
+<p>Reflection extracts information from compiled shader:</p>
+<pre class="text"><code>inputs
+outputs
+buffer bindings
+texture bindings
+samplers
+constant layouts
+resource array sizes
+threadgroup size</code></pre>
+<p>For example:</p>
+<pre class="text"><code>Camera:
+    set 0 binding 0
+    size 256
+
+Material:
+    set 1 binding 2
+    size 64
+
+BaseColor:
+    texture slot 0</code></pre>
+<p>Then pipeline system can validate CPU bindings.</p>
+<hr />
+<p><strong>Reflection prevents ABI drift</strong></p>
+<p>Without reflection:</p>
+<p>shader changes:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="dt">binding</span><span class="op">=</span><span class="dv">3</span></span></code></pre></div>
+<p>CPU still binds:</p>
+<pre class="text"><code>binding=2.</code></pre>
+<p>Runtime visual corruption.</p>
+<p>With reflection/build-time validation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>binding mismatch becomes build/initialization error</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Much better.</p>
+<hr />
+<p><strong>Reflection sources differ by backend</strong></p>
+<p>SPIR-V has structured decorations that can be reflected.</p>
+<p>Metal can expose pipeline/function reflection information under appropriate creation options/tools.</p>
+<p>D3D has reflection APIs.</p>
+<p>A cross-backend build pipeline can normalize these into one engine metadata format.</p>
+<hr />
+<p><strong>pipeline-layout generation from metadata</strong></p>
+<p>Suppose reflection says:</p>
+<pre class="text"><code>set 0:
+    Camera UBO
+    Shadow texture
+
+set 1:
+    Material UBO
+    5 textures</code></pre>
+<p>Vulkan backend can generate:</p>
+<pre class="text"><code>VkDescriptorSetLayout
+VkPipelineLayout.</code></pre>
+<p>Metal backend can map metadata to expected buffer/texture slots or argument-buffer layout.</p>
+<p>D3D12 can generate root signature/table mapping.</p>
+<p>Same shader contract.</p>
+<p>Different native layout object.</p>
+<hr />
+<p><strong>Generated layout is safer than duplicated hand declarations</strong></p>
+<p>Bad architecture:</p>
+<pre class="text"><code>shader says binding 5
+
+C++ manually says binding 5
+
+Metal manually says slot 5
+
+D3D manually says register 5</code></pre>
+<p>Four places can drift.</p>
+<p>Better:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mtext> </mtext>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mo stretchy="false">→</mo>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mtext> </mtext>
+  <mi>b</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mtext> </mtext>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Metal versus Vulkan coordinate conventions</strong></p>
+<p>This deserves careful separation.</p>
+<p>Engine should define one canonical world-space convention.</p>
+<p>Kairo currently documents:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>right-handed world</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>+</mo>
+  <mi>Y</mi>
+</math>
+<p>as up.</p>
+<p>Then camera builds one projection convention.</p>
+<hr />
+<p><strong>Depth convention</strong></p>
+<p>Vulkan clip/NDC depth convention uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>z</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Metal similarly uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>z</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>This makes Metal↔︎Vulkan projection sharing easier than OpenGL, where conventional NDC depth historically uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Still, framebuffer Y mapping must be handled deliberately.</p>
+<hr />
+<p><strong>Kairo’s current camera convention</strong></p>
+<p>Its <code>Projection()</code> deliberately flips:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>11</mn>
+    </mrow>
+  </msub>
+  <mo stretchy="false">←</mo>
+  <mo>−</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>11</mn>
+    </mrow>
+  </msub>
+</math>
+<p>with comment:</p>
+<blockquote>
+<p>renderer uses Vulkan’s positive-height viewport; flip clip-space Y once.</p>
+</blockquote>
+<p>Tests explicitly require:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>j</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>&lt;</mo>
+  <mn>0.</mn>
+</math>
+<p>So Kairo has effectively chosen a Vulkan-oriented clip projection as its renderer-level convention.</p>
+<p>Metal backend consumes that same scene/camera state, and its presentation/capture path is expected to produce top-left-oriented output like all other backends.</p>
+<hr />
+<p><strong>Better architectural formulation</strong></p>
+<p>Instead of saying:</p>
+<blockquote>
+<p>engine camera is Vulkan camera,</p>
+</blockquote>
+<p>define:</p>
+<pre class="text"><code>CanonicalClipConvention:
+    right-handed view
+    depth 0..1
+    framebuffer-facing Y convention chosen once</code></pre>
+<p>Then each backend adapter decides whether it needs:</p>
+<ul>
+<li>projection Y flip,</li>
+<li>viewport inversion,</li>
+<li>texture-coordinate flip,</li>
+<li>winding correction.</li>
+</ul>
+<p>The key rule:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>adapt once, not in random shaders</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Winding can change when Y is flipped</strong></p>
+<p>A screen-space Y inversion changes orientation.</p>
+<p>Triangle signed area:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>y</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>y</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>−</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>y</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>y</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Replace:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo stretchy="false">→</mo>
+  <mo>−</mo>
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>A</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mstyle scriptlevel="0">
+    <mspace width="-0.167em"></mspace>
+  </mstyle>
+  <mo>=</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="-0.167em"></mspace>
+  </mstyle>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo>.</mo>
+</math>
+<p>So front/back winding reverses.</p>
+<p>Backend must compensate through:</p>
+<ul>
+<li>front-face convention,</li>
+<li>viewport/projection strategy,</li>
+<li>cull state.</li>
+</ul>
+<p>This is why coordinate adaptation cannot be treated as only “image upside down.”</p>
+<hr />
+<p><strong>Texture-origin conventions</strong></p>
+<p>Asset UVs should remain canonical.</p>
+<p>Do not globally mutate UVs for each backend unless necessary.</p>
+<p>Presentation/readback APIs may use different row orientation.</p>
+<p>Kairo’s neutral <code>ViewportCapture</code> contract explicitly requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>top-left-origin row-major RGBA8</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for every backend.</p>
+<p>Excellent.</p>
+<p>Backend converts native readback to that canonical format.</p>
+<hr />
+<p><strong>synchronization adaptation</strong></p>
+<p>This is where bad abstraction often appears.</p>
+<p>Do not define:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>renderer<span class="op">.</span>PipelineBarrier<span class="op">(</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    srcStage<span class="op">,</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    dstStage<span class="op">,</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">...);</span></span></code></pre></div>
+<p>as neutral API.</p>
+<p>That is Vulkan-shaped.</p>
+<p>Instead graph says:</p>
+<pre class="text"><code>Resource X:
+    previous = CopyDestination
+    next = ShaderRead.</code></pre>
+<p>Backend translates.</p>
+<hr />
+<p><strong>Vulkan translation</strong></p>
+<p>Logical:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>y</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo stretchy="false">→</mo>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Could become:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mi>R</mi>
+  <mi>A</mi>
+  <mi>N</mi>
+  <mi>S</mi>
+  <mi>F</mi>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mi>R</mi>
+  <mi>A</mi>
+  <mi>N</mi>
+  <mi>S</mi>
+  <mi>F</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>R</mi>
+    <mi>W</mi>
+  </msub>
+  <mi>R</mi>
+  <mi>I</mi>
+  <mi>T</mi>
+  <mi>E</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>F</mi>
+  <mi>R</mi>
+  <mi>A</mi>
+  <mi>G</mi>
+  <mi>M</mi>
+  <mi>E</mi>
+  <mi>N</mi>
+  <mi>T</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>C</mi>
+  <mi>O</mi>
+  <mi>M</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mi>T</mi>
+  <mi>E</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mi>S</mi>
+  <mi>H</mi>
+  <mi>A</mi>
+  <mi>D</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>R</mi>
+    <mi>R</mi>
+  </msub>
+  <mi>E</mi>
+  <mi>A</mi>
+  <mi>D</mi>
+  <mo>,</mo>
+</math>
+<p>plus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>R</mi>
+  <mi>A</mi>
+  <mi>N</mi>
+  <mi>S</mi>
+  <mi>F</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>R</mi>
+    <mi>D</mi>
+  </msub>
+  <mi>S</mi>
+  <mi>T</mi>
+  <mo stretchy="false">→</mo>
+  <mi>S</mi>
+  <mi>H</mi>
+  <mi>A</mi>
+  <mi>D</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>R</mi>
+    <mi>R</mi>
+  </msub>
+  <mi>E</mi>
+  <mi>A</mi>
+  <msub>
+    <mi>D</mi>
+    <mi>O</mi>
+  </msub>
+  <mi>N</mi>
+  <mi>L</mi>
+  <mi>Y</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Metal translation</strong></p>
+<p>Same logical transition with tracked resource might require:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>no explicit image-layout barrier</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>because Metal handles relevant hazard state.</p>
+<p>If untracked and crossing encoder scopes, backend may emit:</p>
+<ul>
+<li>memory barrier,</li>
+<li>fence,</li>
+<li>event,</li>
+<li>encoder boundary as appropriate.</li>
+</ul>
+<p>Same intent.</p>
+<p>Native strength preserved.</p>
+<hr />
+<p><strong>Synchronization abstraction should express dependency, not primitive</strong></p>
+<p>Engine:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>u</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>U</mi>
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>U</mi>
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Backend:</p>
+<p>Vulkan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Metal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>z</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>d</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>D3D12:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>b</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>That is correct portability.</p>
+<hr />
+<p><strong>CPU reference testing against Metal</strong></p>
+<p>GPU algorithms should have small CPU oracles where feasible.</p>
+<p>Suppose Metal compute kernel transforms points:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>p</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>M</mi>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>CPU reference computes same.</p>
+<p>Test random deterministic inputs.</p>
+<p>Compare:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ϵ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>G</mi>
+  <mi>P</mi>
+  <msub>
+    <mi>U</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>−</mo>
+  <mi>C</mi>
+  <mi>P</mi>
+  <msub>
+    <mi>U</mi>
+    <mi>i</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Accept:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ϵ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>≤</mo>
+  <msub>
+    <mi>ϵ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>a</mi>
+      <mi>b</mi>
+      <mi>s</mi>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>ϵ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>C</mi>
+  <mi>P</mi>
+  <msub>
+    <mi>U</mi>
+    <mi>i</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>This handles both small and large magnitudes.</p>
+<hr />
+<p><strong>CPU oracle candidates in your projects</strong></p>
+<p>Excellent candidates include:</p>
+<pre class="text"><code>skin matrix transform
+normal transform
+projection
+prefix scan
+radix histogram
+BVH visibility
+Gaussian covariance projection
+tile bounds
+PBR BRDF evaluation
+TSDF integration
+voxel agreement</code></pre>
+<p>This is exactly how Maveb should protect GPU kernels.</p>
+<hr />
+<p><strong>Avoid bitwise float equality</strong></p>
+<p>CPU and GPU may differ due to:</p>
+<ul>
+<li>fused multiply-add,</li>
+<li>operation ordering,</li>
+<li>precision contraction,</li>
+<li>transcendental implementation.</li>
+</ul>
+<p>Use tolerance derived from numerical conditioning.</p>
+<p>For deterministic integer scan/radix logic, exact equality may be appropriate.</p>
+<p>For floating geometry:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo>+</mo>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Property testing beats only example testing</strong></p>
+<p>Instead of one point:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>generate thousands of seeded cases.</p>
+<p>Check invariants:</p>
+<p>Projection finite.</p>
+<p>Covariance remains PSD-ish within tolerance.</p>
+<p>Sorted keys nondecreasing.</p>
+<p>Prefix scan monotonic for nonnegative counts.</p>
+<p>Tile IDs within bounds.</p>
+<p>This finds entire bug classes.</p>
+<hr />
+<p><strong>visual agreement across backends</strong></p>
+<p>Exact image equality is usually too strict.</p>
+<p>Rasterization may differ slightly because of:</p>
+<ul>
+<li>precision,</li>
+<li>derivative implementation,</li>
+<li>filtering,</li>
+<li>edge rules,</li>
+<li>shader compiler decisions.</li>
+</ul>
+<p>We need meaningful image metrics.</p>
+<hr />
+<p><strong>Per-pixel error</strong></p>
+<p>For linear HDR pixels <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>A</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>i</mi>
+  </msub>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>e</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>A</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Mean squared error:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>S</mi>
+  <mi>E</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>N</mi>
+  </mfrac>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <msub>
+    <mi>e</mi>
+    <mi>i</mi>
+  </msub>
+  <msup>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>RMSE:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>R</mi>
+          <mi>M</mi>
+          <mi>S</mi>
+          <mi>E</mi>
+          <mo>=</mo>
+          <msqrt>
+            <mi>M</mi>
+            <mi>S</mi>
+            <mi>E</mi>
+          </msqrt>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Useful first metric.</p>
+<hr />
+<p><strong>Relative error</strong></p>
+<p>Dark/bright values behave differently.</p>
+<p>Relative form:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>e</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mo stretchy="false">|</mo>
+      <mi>A</mi>
+      <mo>−</mo>
+      <mi>B</mi>
+      <mo stretchy="false">|</mo>
+    </mrow>
+    <mrow>
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+      <mo stretchy="false">(</mo>
+      <mrow data-mjx-texclass="ORD">
+        <mo stretchy="false">|</mo>
+      </mrow>
+      <mi>A</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo stretchy="false">|</mo>
+      </mrow>
+      <mo>,</mo>
+      <mrow data-mjx-texclass="ORD">
+        <mo stretchy="false">|</mo>
+      </mrow>
+      <mi>B</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo stretchy="false">|</mo>
+      </mrow>
+      <mo>,</mo>
+      <mi>ϵ</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Useful for HDR.</p>
+<p>Do comparison in linear space before tone mapping when possible.</p>
+<p>Then separately compare final presentation.</p>
+<hr />
+<p><strong>PSNR</strong></p>
+<p>For normalized LDR values:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>S</mi>
+  <mi>N</mi>
+  <mi>R</mi>
+  <mo>=</mo>
+  <mn>10</mn>
+  <msub>
+    <mi>log</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>10</mn>
+    </mrow>
+  </msub>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <mfrac>
+      <mrow>
+        <mi>M</mi>
+        <mi>A</mi>
+        <msup>
+          <mi>X</mi>
+          <mn>2</mn>
+        </msup>
+      </mrow>
+      <mrow>
+        <mi>M</mi>
+        <mi>S</mi>
+        <mi>E</mi>
+      </mrow>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Higher is better.</p>
+<p>Useful for regression but not sufficient alone.</p>
+<p>A spatially shifted edge can give high error while scene is visually correct.</p>
+<hr />
+<p><strong>Masked comparison</strong></p>
+<p>Some pixels are inherently unstable:</p>
+<ul>
+<li>silhouette edges,</li>
+<li>shadow boundaries,</li>
+<li>transparency,</li>
+<li>stochastic effects.</li>
+</ul>
+<p>A robust backend agreement suite can compare:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>stable interior mask</mtext>
+</math>
+<p>strictly.</p>
+<p>Then evaluate edge pixels with larger tolerance.</p>
+<hr />
+<p><strong>Compare semantic debug views</strong></p>
+<p>Rather than only final beauty image, compare:</p>
+<pre class="text"><code>Normals
+Linear depth
+Object IDs
+Albedo
+Roughness
+Shadow visibility
+Lighting-only
+Motion vectors</code></pre>
+<p>If final images differ, these isolate where divergence begins.</p>
+<p>This is far more useful than a single screenshot diff.</p>
+<hr />
+<p><strong>Current Kairo capture contract helps</strong></p>
+<p>Every backend must return:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>G</mi>
+  <mi>B</mi>
+  <mi>A</mi>
+  <mn>8</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>p</mi>
+  <mo>−</mo>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>w</mi>
+  <mo>−</mo>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>j</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>That normalization removes irrelevant presentation convention differences from tests.</p>
+<p>A future backend agreement test can render same <code>RenderScene</code> through Vulkan and Metal, capture both, and compare.</p>
+<hr />
+<p><strong>Object IDs should match exactly</strong></p>
+<p>Final colors may tolerate differences.</p>
+<p>Object IDs should not.</p>
+<p>For identical scene and camera:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <msub>
+    <mi>D</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>M</mi>
+      <mi>e</mi>
+      <mi>t</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>I</mi>
+  <msub>
+    <mi>D</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>V</mi>
+      <mi>u</mi>
+      <mi>l</mi>
+      <mi>k</mi>
+      <mi>a</mi>
+      <mi>n</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>away from rasterization boundary ambiguity.</p>
+<p>This is an excellent structural test.</p>
+<p>Depth can be compared numerically.</p>
+<p>Normals can be angle-compared:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>θ</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>cos</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>⋅</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>one render-graph pass on Vulkan and Metal</strong></p>
+<p>Take a shadow pass.</p>
+<p>Shared graph declaration:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>graph<span class="op">.</span>AddPass<span class="op">(</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;DirectionalShadow&quot;</span><span class="op">,</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>        Write<span class="op">(</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>            shadowDepth<span class="op">,</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>            DepthAttachment<span class="op">)</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">[&amp;]</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>        backend<span class="op">.</span>EncodeShadow<span class="op">(...);</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">});</span></span></code></pre></div>
+<p>Shared intent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>write depth-only shadow map</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Now implementation diverges.</p>
+<hr />
+<p><strong>Vulkan shadow mapping</strong></p>
+<p>Backend may:</p>
+<ul>
+<li>transition image to depth attachment layout,</li>
+<li>begin render pass/dynamic rendering,</li>
+<li>bind depth-only pipeline,</li>
+<li>bind descriptors,</li>
+<li>draw shadow casters,</li>
+<li>transition to shader-read layout.</li>
+</ul>
+<p>Potential barrier:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>E</mi>
+  <mi>P</mi>
+  <mi>T</mi>
+  <msub>
+    <mi>H</mi>
+    <mi>W</mi>
+  </msub>
+  <mi>R</mi>
+  <mi>I</mi>
+  <mi>T</mi>
+  <mi>E</mi>
+  <mo stretchy="false">→</mo>
+  <mi>S</mi>
+  <mi>H</mi>
+  <mi>A</mi>
+  <mi>D</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>R</mi>
+    <mi>R</mi>
+  </msub>
+  <mi>E</mi>
+  <mi>A</mi>
+  <mi>D</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Metal shadow mapping</strong></p>
+<p>Backend may:</p>
+<ul>
+<li>use private depth texture,</li>
+<li>begin render encoder,</li>
+<li>choose clear/load action,</li>
+<li>bind shadow pipeline,</li>
+<li>draw,</li>
+<li>end encoder,</li>
+<li>let tracked hazards handle later sampling.</li>
+</ul>
+<p>If shadow were transient and never sampled, Metal might exploit memoryless storage.</p>
+<p>But because shadow is sampled later:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+</math>
+<p>is required.</p>
+<p>Same intent.</p>
+<p>Native choices differ.</p>
+<hr />
+<p><strong>Do not force Vulkan to imitate Metal tile semantics</strong></p>
+<p>Vulkan backend may optimize via:</p>
+<ul>
+<li>dynamic rendering,</li>
+<li>explicit render pass,</li>
+<li>transient attachments,</li>
+<li>subpass behavior,</li>
+<li>memory aliasing.</li>
+</ul>
+<p>Metal backend may use:</p>
+<ul>
+<li>memoryless attachments,</li>
+<li>tracked hazards,</li>
+<li>heaps,</li>
+<li>argument buffers.</li>
+</ul>
+<p>Both implement:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>same graph resource dependency</mtext>
+  <mo>.</mo>
+</math>
+<p>That is a strong abstraction.</p>
+<hr />
+<p><strong>shared engine intent, native backend strength</strong></p>
+<p>This is the culmination of Phase 24.</p>
+<p>A good renderer architecture does <strong>not</strong> say:</p>
+<blockquote>
+<p>Metal and Vulkan are the same.</p>
+</blockquote>
+<p>It says:</p>
+<blockquote>
+<p>The scene means the same thing on Metal and Vulkan.</p>
+</blockquote>
+<p>That difference is everything.</p>
+<hr />
+<p><strong>Shared intent layer</strong></p>
+<p>Shared:</p>
+<pre class="text"><code>Mesh
+Material
+Camera
+Light
+RenderScene
+
+Graph Pass
+Graph Resource
+Read/Write dependency
+Texture format intent
+Buffer usage intent
+
+PBR equations
+Depth convention
+Capture convention
+Object IDs</code></pre>
+<p>Native:</p>
+<pre class="text"><code>VkImage / MTLTexture
+VkDescriptorSet / argument buffer/direct slots
+VkPipeline / MTLRenderPipelineState
+VkBarrier / Metal hazard tracking
+VkSemaphore / MTLSharedEvent
+swapchain / CAMetalDrawable</code></pre>
+<hr />
+<p><strong>The abstraction inversion trap</strong></p>
+<p>Bad:</p>
+<pre class="text"><code>Engine
+ ↓
+Fake Vulkan API
+ ↓
+Metal backend translates Vulkan concepts</code></pre>
+<p>Now Metal is second-class.</p>
+<p>Better:</p>
+<pre class="text"><code>Engine Rendering Intent
+      ↓
+Render Graph / RHI Semantic Layer
+      ↓            ↓
+   Vulkan        Metal</code></pre>
+<p>No backend is the master language.</p>
+<hr />
+<p><strong>Native-strength extensions</strong></p>
+<p>Suppose Metal supports tile shader optimization beneficial to one effect.</p>
+<p>Expose optional renderer feature:</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    caps<span class="op">.</span>SupportsTileDeferredPath<span class="op">)</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    backend<span class="op">.</span>EncodeNativeTilePath<span class="op">(...);</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>    EncodePortablePath<span class="op">(...);</span></span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Do not prohibit Metal optimization because Vulkan path differs.</p>
+<p>Likewise Vulkan descriptor indexing should not be forbidden because legacy OpenGL cannot match it.</p>
+<hr />
+<p><strong>One feature, different algorithms</strong></p>
+<p>Even more importantly, two backends do not have to run exactly the same algorithm if final semantics match.</p>
+<p>Example:</p>
+<p>Metal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>−</mo>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mtext> </mtext>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mtext> </mtext>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>Vulkan desktop:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mtext> </mtext>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>Both produce:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>D</mi>
+  <mi>R</mi>
+  <mi>L</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>Graph contract can remain:</p>
+<pre class="text"><code>reads GBuffer
+reads Lights
+writes HDR.</code></pre>
+<p>This is backend-native strength.</p>
+<hr />
+<p><strong>But visual agreement still matters</strong></p>
+<p>Backend-specific algorithms must satisfy reference bounds.</p>
+<p>You cannot say:</p>
+<blockquote>
+<p>Metal looks different because optimization.</p>
+</blockquote>
+<p>You need:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>defined acceptable output agreement</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That may be:</p>
+<ul>
+<li>exact IDs,</li>
+<li>close depth,</li>
+<li>close BRDF,</li>
+<li>bounded final HDR error.</li>
+</ul>
+<p>Architecture plus validation.</p>
+<hr />
+<p><strong>Current Kairo architecture assessment</strong></p>
+<p>Kairo is already doing several things correctly.</p>
+<p>Its scene representation is neutral.</p>
+<p>Its handles are neutral.</p>
+<p>Its renderer façade dispatches to concrete runtimes.</p>
+<p>Its editor/tooling-native access is isolated.</p>
+<p>Its captures normalize output orientation.</p>
+<p>Its render graph can infer dependencies/states/lifetimes/alias slots.</p>
+<p>Its backend selection is explicit and testable.</p>
+<p>But several systems remain intentionally intermediate.</p>
+<p>The neutral resource API is domain-specific rather than a full buffer/texture/pipeline RHI.</p>
+<p>GPU capabilities are not yet represented by a rich neutral capability object.</p>
+<p>Render-graph resource states are too coarse for advanced storage/indirect/ray-tracing synchronization.</p>
+<p>Kairo’s graph does not yet pass-cull.</p>
+<p>It has no queue assignment/cross-queue scheduler.</p>
+<p>Its alias compatibility is not yet native-resource-safe enough for real backing-memory reuse.</p>
+<p>Its transition hooks exist, but full native barrier generation is not yet broadly integrated.</p>
+<p>That is a strong foundation, not a finished render-graph compiler.</p>
+<hr />
+<p><strong>Current Maveb render-graph assessment</strong></p>
+<p>Maveb’s graph has strengths Kairo currently lacks.</p>
+<p>It uses generational resource handles.</p>
+<p>It performs backward pass liveness.</p>
+<p>It supports:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>E</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+</math>
+<p>passes.</p>
+<p>It supports explicit exported outputs.</p>
+<p>It culls unused passes.</p>
+<p>It generates DOT visualization.</p>
+<p>It computes lifetimes.</p>
+<p>But its current graph is less detailed than Kairo regarding:</p>
+<ul>
+<li>semantic resource states,</li>
+<li>native transition planning,</li>
+<li>alias slot planning.</li>
+</ul>
+<p>The obvious research/engineering direction is to combine both designs.</p>
+<hr />
+<p><strong>A stronger combined graph</strong></p>
+<p>Imagine:</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>ResourceHandle hdr <span class="op">=</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    graph<span class="op">.</span>CreateTexture<span class="op">(</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;Scene HDR&quot;</span><span class="op">,</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>        TextureDesc<span class="op">{...});</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>PassHandle geometry <span class="op">=</span></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>    graph<span class="op">.</span>AddPass<span class="op">({</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>Name <span class="op">=</span> <span class="st">&quot;Geometry&quot;</span><span class="op">,</span></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>Queue <span class="op">=</span> Graphics<span class="op">,</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>Writes <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>                hdr<span class="op">,</span></span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a>                ColorAttachmentWrite</span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">});</span></span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a>PassHandle bloom <span class="op">=</span></span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a>    graph<span class="op">.</span>AddPass<span class="op">({</span></span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>Name <span class="op">=</span> <span class="st">&quot;Bloom&quot;</span><span class="op">,</span></span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>Queue <span class="op">=</span> Compute<span class="op">,</span></span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>Reads <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a>                hdr<span class="op">,</span></span>
+<span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a>                SampledRead</span>
+<span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb39-29"><a href="#cb39-29" aria-hidden="true" tabindex="-1"></a>        <span class="op">},</span></span>
+<span id="cb39-30"><a href="#cb39-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-31"><a href="#cb39-31" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>Writes <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb39-32"><a href="#cb39-32" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb39-33"><a href="#cb39-33" aria-hidden="true" tabindex="-1"></a>                bloomHalf<span class="op">,</span></span>
+<span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a>                StorageWrite</span>
+<span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb39-36"><a href="#cb39-36" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb39-37"><a href="#cb39-37" aria-hidden="true" tabindex="-1"></a>    <span class="op">});</span></span></code></pre></div>
+<p>Compiler determines everything else.</p>
+<hr />
+<p><strong>The compiler output</strong></p>
+<p>A compiled pass might contain:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> CompiledPass</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>    PassID Pass<span class="op">;</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>    QueueClass Queue<span class="op">;</span></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>Barrier<span class="op">&gt;</span></span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>        PreBarriers<span class="op">;</span></span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>QueueWait<span class="op">&gt;</span></span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>        Waits<span class="op">;</span></span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>QueueSignal<span class="op">&gt;</span></span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>        Signals<span class="op">;</span></span>
+<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-16"><a href="#cb40-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>PhysicalResourceBinding<span class="op">&gt;</span></span>
+<span id="cb40-17"><a href="#cb40-17" aria-hidden="true" tabindex="-1"></a>        Resources<span class="op">;</span></span>
+<span id="cb40-18"><a href="#cb40-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-19"><a href="#cb40-19" aria-hidden="true" tabindex="-1"></a>    ExecuteCallback Execute<span class="op">;</span></span>
+<span id="cb40-20"><a href="#cb40-20" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then backend translator converts generic synchronization into native API.</p>
+<hr />
+<p><strong>Physical allocation plan</strong></p>
+<p>For every transient resource:</p>
+<pre class="text"><code>logical handle
+first use
+last use
+native compatibility class
+size
+alignment
+alias slot</code></pre>
+<p>For Metal:</p>
+<pre class="text"><code>alias slot
+→ MTLHeap offset/resource allocation strategy</code></pre>
+<p>For Vulkan:</p>
+<pre class="text"><code>alias slot
+→ VkDeviceMemory region
+→ VkImage/VkBuffer binding</code></pre>
+<p>Potentially different physical plan per backend.</p>
+<p>Same lifetime graph.</p>
+<hr />
+<p><strong>Backend-specific resource compatibility</strong></p>
+<p>Metal may say two textures can share one heap allocation pattern.</p>
+<p>Vulkan may have different memory type/alignment requirements.</p>
+<p>Therefore graph should produce:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>logical non-overlap proof</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>while backend allocator decides:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>whether physical aliasing is legal</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Important separation.</p>
+<hr />
+<p><strong>Render graph should not own every persistent resource</strong></p>
+<p>Assets:</p>
+<pre class="text"><code>textures
+mesh buffers
+materials
+history
+shadow atlas</code></pre>
+<p>often live in renderer resource manager.</p>
+<p>Graph imports them.</p>
+<p>Transient graph resources are graph-allocated.</p>
+<p>Thus:</p>
+<pre class="text"><code>Renderer Resource Registry
+    persistent/native resources
+
+Render Graph
+    frame dependency/lifetime plan</code></pre>
+<p>These are complementary systems.</p>
+<hr />
+<p><strong>Frame graph versus persistent graph</strong></p>
+<p>Frame graph describes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>one frame&#39;s dependency structure</mtext>
+  <mo>.</mo>
+</math>
+<p>Persistent systems track:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>cross-frame resources and state</mtext>
+  <mo>.</mo>
+</math>
+<p>Examples:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>A</mi>
+  <mi>A</mi>
+  <mi>H</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>o</mi>
+  <mi>w</mi>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>b</mi>
+  <mi>e</mi>
+  <mi>A</mi>
+  <mi>t</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Do not force render graph to recreate persistent resource identity every frame.</p>
+<p>Import/reference it.</p>
+<hr />
+<p><strong>GPU-driven rendering integration</strong></p>
+<p>Future:</p>
+<pre class="text"><code>CullCompute
+    writes VisibleInstances
+    writes IndirectArgs
+
+DrawOpaque
+    reads VisibleInstances
+    reads IndirectArgs</code></pre>
+<p>Graph automatically infers:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>O</mi>
+  <mi>M</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mi>T</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>W</mi>
+  </msub>
+  <mi>R</mi>
+  <mi>I</mi>
+  <mi>T</mi>
+  <mi>E</mi>
+  <mo stretchy="false">→</mo>
+  <mi>I</mi>
+  <mi>N</mi>
+  <mi>D</mi>
+  <mi>I</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+  <mi>C</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>R</mi>
+  </msub>
+  <mi>E</mi>
+  <mi>A</mi>
+  <mi>D</mi>
+  <mo>.</mo>
+</math>
+<p>Vulkan barrier maps correctly.</p>
+<p>Metal tracked/untracked dependency maps correctly.</p>
+<p>This is where render graph becomes critical.</p>
+<hr />
+<p><strong>Ray tracing integration</strong></p>
+<p>Likewise:</p>
+<pre class="text"><code>BuildBLAS
+BuildTLAS
+RayTraceReflections
+Denoise
+Composite</code></pre>
+<p>Graph tracks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>u</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>W</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>R</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>The neutral abstraction must grow, but core idea stays identical.</p>
+<hr />
+<p><strong>A compact dependency derivation</strong></p>
+<p>Let resource <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+</math>.</p>
+<p>Maintain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>W</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>last writer</mtext>
+  <mo>.</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>set of active readers</mtext>
+  <mo>.</mo>
+</math>
+<p>For read by pass <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>W</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>≠</mo>
+  <mi data-mjx-alternate="1">∅</mi>
+  <mo stretchy="false">⇒</mo>
+  <msub>
+    <mi>W</mi>
+    <mi>r</mi>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mi>r</mi>
+  </msub>
+  <mo stretchy="false">←</mo>
+  <msub>
+    <mi>R</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>∪</mo>
+  <mo fence="false" stretchy="false">{</mo>
+  <mi>p</mi>
+  <mo fence="false" stretchy="false">}</mo>
+  <mo>.</mo>
+</math>
+<p>For write:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>W</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>≠</mo>
+  <mi data-mjx-alternate="1">∅</mi>
+  <mo stretchy="false">⇒</mo>
+  <msub>
+    <mi>W</mi>
+    <mi>r</mi>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>For every:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>∈</mo>
+  <msub>
+    <mi>R</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>:</mo>
+  <mi>q</mi>
+  <mo stretchy="false">→</mo>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>=</mo>
+  <mi data-mjx-alternate="1">∅</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>W</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>That is the heart of Kairo’s current graph compiler.</p>
+<hr />
+<p><strong>Why declaration order still influences hazard inference</strong></p>
+<p>Current Kairo processes accesses in original pass declaration order before topological sorting.</p>
+<p>This works as a version-ordering model:</p>
+<p>each write creates a new logical version of resource in declared program order.</p>
+<p>But an even more sophisticated render graph often models explicit resource versions:</p>
+<pre class="text"><code>HDR v0
+HDR v1
+HDR v2</code></pre>
+<p>so dataflow becomes unambiguous.</p>
+<p>This is called resource versioning in many frame-graph systems.</p>
+<hr />
+<p><strong>Resource versioning</strong></p>
+<p>Instead of:</p>
+<pre class="text"><code>Pass A writes X
+Pass B writes X</code></pre>
+<p>represent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>X</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mi>A</mi>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>X</mi>
+    <mn>1</mn>
+  </msub>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>X</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mi>B</mi>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>X</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Readers explicitly consume:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>X</mi>
+    <mn>1</mn>
+  </msub>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>X</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>This prevents accidental ordering ambiguity and improves culling.</p>
+<hr />
+<p><strong>SSA analogy</strong></p>
+<p>This resembles static single assignment.</p>
+<p>Each write produces a new resource version.</p>
+<p>Example:</p>
+<pre class="text"><code>HDR0 = Geometry()
+HDR1 = TAA(HDR0)
+HDR2 = BloomComposite(HDR1)</code></pre>
+<p>Now dependencies are obvious.</p>
+<p>Frame graphs often benefit from SSA-like thinking.</p>
+<hr />
+<p><strong>Render graph and compiler optimization analogy</strong></p>
+<p>Render graph optimization maps beautifully to compiler concepts:</p>
+<table>
+<thead>
+<tr>
+<th>Compiler</th>
+<th>Render graph</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>instruction</td>
+<td>pass</td>
+</tr>
+<tr>
+<td>value</td>
+<td>resource version</td>
+</tr>
+<tr>
+<td>def-use chain</td>
+<td>write/read edge</td>
+</tr>
+<tr>
+<td>dead-code elimination</td>
+<td>pass culling</td>
+</tr>
+<tr>
+<td>liveness analysis</td>
+<td>resource lifetime</td>
+</tr>
+<tr>
+<td>register allocation</td>
+<td>transient aliasing</td>
+</tr>
+<tr>
+<td>instruction scheduling</td>
+<td>pass/queue scheduling</td>
+</tr>
+<tr>
+<td>memory barrier</td>
+<td>GPU synchronization</td>
+</tr>
+<tr>
+<td>IR lowering</td>
+<td>backend command generation</td>
+</tr>
+</tbody>
+</table>
+<p>This is not metaphorical fluff.</p>
+<p>It is structurally almost the same problem.</p>
+<hr />
+<p><strong>Research bridge: Apple locality</strong></p>
+<p>Now combine render graphs with Apple GPU architecture.</p>
+<p>If graph knows:</p>
+<pre class="text"><code>Depth
+first = GBuffer
+last = GBuffer</code></pre>
+<p>and no later pass reads it:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Metal backend could choose memoryless depth</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If graph knows color is written and consumed in same tile-compatible sequence, backend may optimize pass grouping.</p>
+<p>Thus render graph becomes a machine for discovering tile-locality opportunities.</p>
+<hr />
+<p><strong>Vulkan analogue</strong></p>
+<p>Same high-level graph may let Vulkan choose:</p>
+<ul>
+<li>transient attachments,</li>
+<li>dynamic rendering,</li>
+<li>subpass merging,</li>
+<li>attachment load/store decisions,</li>
+<li>memory aliasing.</li>
+</ul>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>same lifetime information</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>different backend optimization</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is exactly native-strength multi-backend rendering.</p>
+<hr />
+<p><strong>Load/store inference</strong></p>
+<p>If resource first use is write and old contents irrelevant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>O</mi>
+  <mi>p</mi>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mtext> or </mtext>
+  <mi>D</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>If last use ends at pass and resource is not exported/persistent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>O</mi>
+  <mi>p</mi>
+  <mo>=</mo>
+  <mi>D</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>If consumed later:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Graph lifetime analysis can derive these decisions automatically.</p>
+<p>This is a huge practical benefit.</p>
+<hr />
+<p><strong>Example</strong></p>
+<p>Resource:</p>
+<pre class="text"><code>Depth
+first use = Geometry write
+last use = Geometry
+transient = true</code></pre>
+<p>Metal:</p>
+<pre class="text"><code>storage = Memoryless
+load = Clear
+store = DontCare.</code></pre>
+<p>Vulkan:</p>
+<pre class="text"><code>transient depth image
+loadOp = Clear
+storeOp = DontCare.</code></pre>
+<p>Same graph intent.</p>
+<p>Excellent native mapping.</p>
+<hr />
+<p><strong>Another example: SceneHDR</strong></p>
+<pre class="text"><code>first = Geometry
+last = ToneMap</code></pre>
+<p>Cannot discard after geometry.</p>
+<p>Need:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+</math>
+<p>after producer if native pass boundary requires system-memory persistence.</p>
+<p>Graph explains why.</p>
+<hr />
+<p><strong>Debugging alias corruption</strong></p>
+<p>Suppose bloom texture unexpectedly shows shadow data.</p>
+<p>Potential cause:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>S</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>S</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>o</mi>
+  <mi>w</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>but lifetimes actually overlap.</p>
+<p>Graph debugger should display:</p>
+<pre class="text"><code>Shadow [1,4]
+Bloom  [4,7]</code></pre>
+<p>These overlap at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4.</mn>
+</math>
+<p>Therefore strict rule:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>&lt;</mo>
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+</math>
+<p>would reject aliasing.</p>
+<p>If allocator used:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>≤</mo>
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<p>that would be a bug.</p>
+<hr />
+<p><strong>Async aliasing bug</strong></p>
+<p>Even worse:</p>
+<p>Topological order:</p>
+<pre class="text"><code>A index 2
+B index 3</code></pre>
+<p>but queues run concurrently.</p>
+<p>Intervals based solely on index may appear non-overlapping despite simultaneous execution.</p>
+<p>Therefore async graph must use synchronization DAG, not only index ranges.</p>
+<p>This is exactly why full queue scheduling is a major render-graph evolution.</p>
+<hr />
+<p><strong>Backend agreement should be automated</strong></p>
+<p>For every regression scene:</p>
+<p>Render Vulkan.</p>
+<p>Render Metal.</p>
+<p>Capture:</p>
+<pre class="text"><code>beauty
+depth
+normals
+IDs</code></pre>
+<p>Compare.</p>
+<p>Store metrics.</p>
+<p>CI fails if error exceeds threshold.</p>
+<p>This is much stronger than visually inspecting occasional screenshots.</p>
+<hr />
+<p><strong>Agreement test hierarchy</strong></p>
+<p>The most useful order is:</p>
+<p>First CPU mathematical oracle.</p>
+<p>Then backend semantic debug outputs.</p>
+<p>Then final image.</p>
+<p>Why?</p>
+<p>If final image differs, you need localization.</p>
+<p>CPU reference tells whether one backend is fundamentally wrong.</p>
+<p>Debug buffers tell where divergence appears.</p>
+<p>Beauty comparison confirms end-to-end parity.</p>
+<hr />
+<p><strong>Example PBR agreement</strong></p>
+<p>Choose one surface:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mo>,</mo>
+  <mi>L</mi>
+  <mo>,</mo>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>CPU computes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>D</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>G</mi>
+      <mi>G</mi>
+      <mi>X</mi>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <mi>F</mi>
+  <mo>,</mo>
+  <mi>G</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Metal shader output debug mode writes BRDF value.</p>
+<p>Vulkan shader writes same.</p>
+<p>Compare both against CPU.</p>
+<p>That tests formula consistency independent from full scene.</p>
+<hr />
+<p><strong>Example projection agreement</strong></p>
+<p>CPU computes expected clip:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>P</mi>
+  <mi>V</mi>
+  <mi>M</mi>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>Metal vertex debug captures transformed point.</p>
+<p>Vulkan does same.</p>
+<p>Compare.</p>
+<p>This instantly finds matrix transpose/Y convention mistakes.</p>
+<hr />
+<p><strong>Example skinning agreement</strong></p>
+<p>CPU:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>p</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>M</mi>
+    <mi>i</mi>
+  </msub>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>GPU Metal.</p>
+<p>GPU Vulkan.</p>
+<p>Check:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <msubsup>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>G</mi>
+      <mi>P</mi>
+      <mi>U</mi>
+    </mrow>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>−</mo>
+  <msubsup>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>C</mi>
+      <mi>P</mi>
+      <mi>U</mi>
+    </mrow>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo>&lt;</mo>
+  <mi>ϵ</mi>
+  <mo>.</mo>
+</math>
+<p>This is exactly the sort of test your Kairo skinning smoke infrastructure can evolve toward.</p>
+<hr />
+<p><strong>Final architecture proposal</strong></p>
+<p>A clean eventual structure:</p>
+<pre class="text"><code>KairoAssets / EngineCore
+        ↓
+RenderScene Extraction
+        ↓
+RendererRuntime
+        ↓
+RenderGraph Builder
+        ↓
+Compiled Render Plan
+        ↓
+Backend Translator
+ ┌────────┼─────────┐
+Vulkan   Metal    D3D12</code></pre>
+<p>Renderer resource manager sits alongside:</p>
+<pre class="text"><code>MeshHandle
+TextureHandle
+PipelineHandle</code></pre>
+<p>and backends resolve them to native objects.</p>
+<hr />
+<p><strong>What belongs above the backend</strong></p>
+<p>Above:</p>
+<pre class="text"><code>world/view transforms
+material semantics
+lights
+camera
+resource intent
+pass dependencies
+logical formats
+resource lifetime
+feature requirements
+rendering equations</code></pre>
+<hr />
+<p><strong>What belongs below</strong></p>
+<p>Below:</p>
+<pre class="text"><code>native memory allocation
+native image/buffer handles
+descriptor/argument binding
+pipeline objects
+barriers
+events/semaphores
+render encoders
+swapchain/drawable
+native shader binaries</code></pre>
+<p>That division is the essence of M144.</p>
+<hr />
+<p><strong>What must sometimes straddle boundary</strong></p>
+<p>Things like:</p>
+<pre class="text"><code>texture format support
+ray tracing availability
+max samples
+native tooling integration
+GPU profiler integration</code></pre>
+<p>need capability queries or escape hatches.</p>
+<p>Do not force them fully above or below.</p>
+<p>Provide explicit interface.</p>
+<hr />
+<p><strong>Phase-24 reconstruction table</strong></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Core meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Neutral handle</td>
+<td>Stable renderer-owned identity without native API type</td>
+</tr>
+<tr>
+<td>Generational handle</td>
+<td>Index + generation prevents stale reuse</td>
+</tr>
+<tr>
+<td>Neutral buffer description</td>
+<td>Size/usage/memory intent</td>
+</tr>
+<tr>
+<td>Neutral texture description</td>
+<td>Dimensions/format/usage/memory intent</td>
+</tr>
+<tr>
+<td>Neutral sampler</td>
+<td>Filtering/addressing intent</td>
+</tr>
+<tr>
+<td>Neutral pipeline</td>
+<td>Rendering semantics, not native pipeline object</td>
+</tr>
+<tr>
+<td>Capability query</td>
+<td>Ask actual device rather than assume from API</td>
+</tr>
+<tr>
+<td>Feature contract</td>
+<td>Named renderer functionality requirement</td>
+</tr>
+<tr>
+<td>Escape hatch</td>
+<td>Explicit localized access to native backend</td>
+</tr>
+<tr>
+<td>Lowest-common denominator</td>
+<td>Anti-pattern that discards native strengths</td>
+</tr>
+<tr>
+<td>Render graph</td>
+<td>DAG of rendering dependencies</td>
+</tr>
+<tr>
+<td>Pass node</td>
+<td>Unit of GPU work</td>
+</tr>
+<tr>
+<td>Resource node</td>
+<td>Logical data object</td>
+</tr>
+<tr>
+<td>Read declaration</td>
+<td>Consumer dependency</td>
+</tr>
+<tr>
+<td>Write declaration</td>
+<td>Producer/versioning event</td>
+</tr>
+<tr>
+<td>RAW</td>
+<td>writer must precede reader</td>
+</tr>
+<tr>
+<td>WAR</td>
+<td>reader must precede later writer</td>
+</tr>
+<tr>
+<td>WAW</td>
+<td>writer must precede later writer</td>
+</tr>
+<tr>
+<td>Cycle</td>
+<td>Impossible dependency schedule</td>
+</tr>
+<tr>
+<td>Topological order</td>
+<td>Legal linearization of DAG</td>
+</tr>
+<tr>
+<td>Lifetime</td>
+<td>First-use to last-use interval</td>
+</tr>
+<tr>
+<td>Transient resource</td>
+<td>Frame-local logical resource</td>
+</tr>
+<tr>
+<td>Aliasing</td>
+<td>Physical reuse across non-overlapping lifetimes</td>
+</tr>
+<tr>
+<td>Barrier inference</td>
+<td>Convert usage transition into native sync</td>
+</tr>
+<tr>
+<td>State inference</td>
+<td>Track semantic resource use</td>
+</tr>
+<tr>
+<td>Cross-queue dependency</td>
+<td>Dependency requiring semaphore/event-like sync</td>
+</tr>
+<tr>
+<td>Pass culling</td>
+<td>Dead-code elimination for unused GPU work</td>
+</tr>
+<tr>
+<td>Imported resource</td>
+<td>Native/persistent resource entering graph</td>
+</tr>
+<tr>
+<td>History resource</td>
+<td>Cross-frame persistent data</td>
+</tr>
+<tr>
+<td>Present resource</td>
+<td>Swapchain/drawable external resource</td>
+</tr>
+<tr>
+<td>Graph visualization</td>
+<td>Human-readable dependency structure</td>
+</tr>
+<tr>
+<td>Resource naming</td>
+<td>Shared engine/debugger identity</td>
+</tr>
+<tr>
+<td>Capture correlation</td>
+<td>Match graph pass to native GPU event</td>
+</tr>
+<tr>
+<td>Conversion boundary</td>
+<td>Neutral → backend-native representation</td>
+</tr>
+<tr>
+<td>Portable mesh</td>
+<td>API-independent geometry</td>
+</tr>
+<tr>
+<td>Portable material</td>
+<td>Semantic shading data</td>
+</tr>
+<tr>
+<td>Scene extraction</td>
+<td>Canonical renderer snapshot</td>
+</tr>
+<tr>
+<td>Runtime bridge</td>
+<td>Selects concrete backend</td>
+</tr>
+<tr>
+<td>Private GPU handles</td>
+<td>Native handles remain backend-local</td>
+</tr>
+<tr>
+<td>Shader strategy</td>
+<td>Native, translated or generated</td>
+</tr>
+<tr>
+<td>Reflection</td>
+<td>Extract shader ABI metadata</td>
+</tr>
+<tr>
+<td>Layout generation</td>
+<td>Build native bindings from shader metadata</td>
+</tr>
+<tr>
+<td>Coordinate adaptation</td>
+<td>Backend-specific clip/framebuffer transform</td>
+</tr>
+<tr>
+<td>Sync adaptation</td>
+<td>Same dependency, native synchronization</td>
+</tr>
+<tr>
+<td>CPU reference</td>
+<td>Mathematical correctness oracle</td>
+</tr>
+<tr>
+<td>Backend agreement</td>
+<td>Cross-API output parity</td>
+</tr>
+<tr>
+<td>Native-strength abstraction</td>
+<td>Common intent, specialized implementation</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Blank-page mastery gate</strong></p>
+<p>From scratch, design a renderer supporting Metal and Vulkan.</p>
+<p>You are not allowed to put either:</p>
+<pre class="text"><code>Vk*</code></pre>
+<p>or:</p>
+<pre class="text"><code>MTL*</code></pre>
+<p>in scene code.</p>
+<p>Define:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>H</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>T</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>H</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>H</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Explain why a generational handle is stronger than a plain integer.</p>
+<p>Then design a neutral:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mo>,</mo>
+  <mi>T</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mo>,</mo>
+  <mi>S</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mo>,</mo>
+  <mi>G</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>s</mi>
+  <mi>P</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mo>.</mo>
+</math>
+<p>For every field explain whether it expresses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>rendering intent</mtext>
+</math>
+<p>or accidentally leaks one API.</p>
+<p>Then explain why:</p>
+<div class="sourceCode" id="cb66"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>backend <span class="op">==</span> Vulkan<span class="op">)</span></span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>    enableFeature<span class="op">();</span></span></code></pre></div>
+<p>is inferior to:</p>
+<div class="sourceCode" id="cb67"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span></span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>    capabilities<span class="op">.</span>Supports<span class="op">(</span></span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>        Feature<span class="op">::</span>Bindless<span class="op">))</span></span></code></pre></div>
+<p>because device support matters.</p>
+<p>Then design one escape hatch for an ImGui Metal adapter and explain why ordinary gameplay code must never see it.</p>
+<p>Then explain why:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>∩</mo>
+  <mi>V</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>k</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+</math>
+<p>is a bad renderer architecture.</p>
+<p>Now build a graph:</p>
+<pre class="text"><code>Shadow
+Geometry
+TAA
+Bloom
+Present</code></pre>
+<p>with resources:</p>
+<pre class="text"><code>ShadowDepth
+SceneHDR
+HistoryIn
+HistoryOut
+BloomHalf
+Drawable</code></pre>
+<p>Write all read/write edges.</p>
+<p>From those derive RAW/WAR/WAW dependencies.</p>
+<p>Run Kahn’s algorithm conceptually.</p>
+<p>Compute first/last-use intervals.</p>
+<p>Find which transient resources may alias.</p>
+<p>Prove aliasing using:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>&lt;</mo>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then explain why that proof becomes insufficient when A and B execute asynchronously on different queues.</p>
+<p>Then infer transitions:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo stretchy="false">→</mo>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>A</mi>
+  <mi>t</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>A</mi>
+  <mi>t</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">→</mo>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo stretchy="false">→</mo>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>A</mi>
+  <mi>t</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">→</mo>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Explain why the graph should not emit <code>VkImageMemoryBarrier</code> itself.</p>
+<p>Vulkan backend should do that.</p>
+<p>Metal backend may rely on tracked hazards or emit Metal-native synchronization.</p>
+<p>Then mark:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+</math>
+<p>persistent/imported.</p>
+<p>Mark:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>w</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+</math>
+<p>external.</p>
+<p>Explain why neither should be transiently aliased like a bloom scratch texture.</p>
+<p>Then perform pass liveness.</p>
+<p>Assume Bloom output is disabled.</p>
+<p>Show why the Bloom pass disappears if no side effect or live output depends on it.</p>
+<p>Then design DOT output.</p>
+<p>Then propagate pass/resource names into:</p>
+<ul>
+<li>Vulkan debug labels,</li>
+<li>Metal labels,</li>
+<li>GPU captures.</li>
+</ul>
+<p>Then implement one shadow pass twice.</p>
+<p>Shared graph intent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>write shadow depth</mtext>
+  <mo>.</mo>
+</math>
+<p>Vulkan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>p</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mo>+</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>+</mo>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>−</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>Metal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>+</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>+</mo>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>z</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Explain why forcing Metal to expose Vulkan layouts would be an abstraction failure.</p>
+<p>Then explain the coordinate boundary.</p>
+<p>Canonical engine world:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mtext>-</mtext>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>,</mo>
+  <mo>+</mo>
+  <mi>Y</mi>
+  <mtext> </mtext>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>Define a canonical clip convention.</p>
+<p>Backend alone handles:</p>
+<ul>
+<li>clip Y,</li>
+<li>viewport orientation,</li>
+<li>depth convention,</li>
+<li>winding.</li>
+</ul>
+<p>Never scatter fixes through shaders.</p>
+<p>Then build CPU reference tests for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>k</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mi>R</mi>
+  <mi>D</mi>
+  <mi>F</mi>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>Then build Metal↔︎Vulkan image agreement using:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>M</mi>
+  <mi>S</mi>
+  <mi>E</mi>
+</math>
+<p>and semantic debug buffers.</p>
+<p>Final requirement:</p>
+<p>Explain this sentence precisely:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>A good multi-backend renderer shares meaning, not implementation.</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If you can reconstruct all of that, you have crossed from:</p>
+<blockquote>
+<p>person who can call Metal and Vulkan</p>
+</blockquote>
+<p>into:</p>
+<blockquote>
+<p>person who can design an actual renderer architecture.</p>
+</blockquote>
+<p><strong>Phase 24 is complete: M139–M144, Parts 2301–2400.</strong></p>
+<p>That begins <strong>Phase 25 — 3D Gaussian Splatting</strong>, and this one maps directly into Maveb’s research core: point-based versus triangle rendering, 1D/multivariate Gaussians, means/covariance and covariance ellipsoids, converting Gaussian scale+rotation into a 3D covariance, projecting 3D covariance through the camera Jacobian into screen-space covariance, conic inversion, eigenvalues/eigenvectors and ellipse bounds, spherical harmonics and view-dependent color, opacity/compositing, tile assignment and prefix sums, depth-key construction, GPU radix sorting, front-to-back splat compositing, numerical stability, gradients/differentiability, and then tracing the complete Maveb Gaussian pipeline against the underlying 3DGS math.</p>
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch410.xhtml#id_06-GPU-Architecture-and-Real-Time-Rendering" class="wikilink">Reading map</a> · <a href="ch439.xhtml#id_06-engine-ii-ch043-compiling-renderer-intent-into-backend-work" class="wikilink">Previous chapter</a> · <a href="ch441.xhtml#id_06-engine-ii-ch045-rasterizing-kernels-and-connecting-world-identity" class="wikilink">Next chapter</a></p>
+</section>
+</section>
+</body>
+</html>

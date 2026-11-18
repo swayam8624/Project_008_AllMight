@@ -1,0 +1,49 @@
+\hypertarget{appendix-0ec599f8ba27}{}\label{referencestart:appendix-0ec599f8ba27}
+\section{Numerical tolerance policies}\label{appendix-0ec599f8ba27-numerical-tolerance-policies}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C004 · \textbf{Latest development:} C005
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-0ec599f8ba27-definition-and-mechanism}
+
+Tolerance is a task-chosen allowed discrepancy: absolute in original units, relative to scale, or representable-step based. Machine epsilon is not automatically a norm cutoff. Handle non-finite values and validate tolerances before formulas.
+
+\end{allmightroledefinition}
+
+M005 distinguishes absolute tolerance in the quantity's units from dimensionless relative tolerance. Validate policy parameters and classify non-finite values before arithmetic; approximate closeness is not transitive.
+
+\subsection{Prerequisites}\label{appendix-0ec599f8ba27-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-390ea641da54]{Machine epsilon} --- Spacing near one supplies a reference precision scale, not a universal local gap or tolerance.
+\item
+  \hyperref[appendix-14bab4cab9d4]{ULP and representable spacing} --- Adjacent representable points define rounding candidates, errors and step distances.
+\item
+  \hyperref[appendix-eb336149c00a]{Floating-point infinities} --- Non-finite operands and overflowing intermediates need branches before ordinary finite formulas.
+\item
+  \hyperref[appendix-d6607cc4c235]{NaNs and payloads} --- Unordered comparisons and payload distinctions require explicit metric, comparison and serialization policy.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-0ec599f8ba27-used-by}
+
+\begin{itemize}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-b5b83329215b}{Vector tolerances and finite-state diagnostics (Vision, XR, and Playable Worlds, Reference notes: Vector tolerances and finite-state diagnostics)} --- Phase 6 uses this established foundation in its geometry narrative.
+\item
+  \hyperref[appendix-8f6a01f284a7]{Conditioning and singularity} --- uses this mechanism in its explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-0ec599f8ba27-recall-and-next-depth}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Extend this mechanism to later algorithms and target-specific behavior. See the M005 chapter for its current examples and validity assumptions.
+
+\subsection{Source and navigation}\label{appendix-0ec599f8ba27-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-when-arithmetic-meets-uncertainty]{M005 development}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

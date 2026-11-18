@@ -1,0 +1,759 @@
+\hypertarget{appendix-4ad47bdd269a}{}
+\section*{Dependency Map}
+\section{Dependency Map}\label{dependency-map}
+
+\subsection{Phase 8 - From constraints to spectra}\label{phase-8---from-constraints-to-spectra}
+
+Read prerequisite → dependent. Phase 8 reuses the vector, matrix, metric, storage, and conditioning foundations from Phases 6--7; those connections are kept explicit here.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prerequisites
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dependent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Why the dependency exists
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\href{}{Matrices as linear maps and basis images (01-Foundations-I, appendix-bd39c3bf5d64)}, \href{}{Basis coordinates and dimension (01-Foundations-I, appendix-ce0341f7ea0d)} & \hyperref[appendix-8572a4a060c1]{Linear systems and fundamental subspaces} & Rows measure inputs; columns span reachable outputs, while rank-nullity counts invisible input changes. \\
+\hyperref[appendix-8572a4a060c1]{Linear systems and fundamental subspaces}, \href{}{Conditioning and singularity (01-Foundations-I, appendix-8f6a01f284a7)} & \hyperref[appendix-f6e77f4a200f]{Gaussian elimination and pivoting} & Elimination exposes equivalent constraints; pivot choices control division risk but cannot cure sensitivity. \\
+\hyperref[appendix-f6e77f4a200f]{Gaussian elimination and pivoting}, \href{}{Matrix storage indexing and strides (01-Foundations-I, appendix-ffdc1d4e5350)} & \hyperref[appendix-55e4b5b0a1e6]{LU factorization and reusable solves} & Elimination multipliers and triangular entries become reusable factors in an explicit storage layout. \\
+\hyperref[appendix-175ca5ff874d]{Matrix transpose symmetry and trace}, \hyperref[appendix-3b863809f82a]{Gram matrices and coordinate metrics} & \hyperref[appendix-50d2ea3c9b26]{Symmetric positive-definite matrices and Cholesky} & Symmetry and positive quadratic energy justify the triangular square-root factorization. \\
+\hyperref[appendix-8572a4a060c1]{Linear systems and fundamental subspaces}, \hyperref[appendix-8bc4e8fc547c]{Dot products and orthogonality}, \href{}{Conditioning and singularity (01-Foundations-I, appendix-8f6a01f284a7)} & \hyperref[appendix-c3421e6b4f2c]{QR factorization and least squares} & Orthogonal coordinates preserve residual length and separate fitted from perpendicular components. \\
+\href{}{Matrices as linear maps and basis images (01-Foundations-I, appendix-bd39c3bf5d64)}, \hyperref[appendix-8572a4a060c1]{Linear systems and fundamental subspaces} & \hyperref[appendix-0b3be18411f9]{Eigenvalues and eigenspaces} & An invariant direction is the null-space solution of \(A-\lambda I\). \\
+\hyperref[appendix-ab31ef447dbf]{Matrix multiplication and composition order}, \hyperref[appendix-0b3be18411f9]{Eigenvalues and eigenspaces}, \hyperref[appendix-8bc4e8fc547c]{Dot products and orthogonality} & \hyperref[appendix-1fad5e7f36fa]{Singular value decomposition} & SVD pairs distinct input and output orthonormal directions for any rectangular map. \\
+\hyperref[appendix-1fad5e7f36fa]{Singular value decomposition}, \hyperref[appendix-8572a4a060c1]{Linear systems and fundamental subspaces}, \hyperref[appendix-f8657bac66e5]{Matrix norms and numerical error} & \hyperref[appendix-541306fdbc1b]{Moore-Penrose pseudoinverse} & Reciprocating selected singular values gives least-squares and minimum-norm solutions while exposing sensitivity. \\
+\hyperref[appendix-0b3be18411f9]{Eigenvalues and eigenspaces}, \hyperref[appendix-1fad5e7f36fa]{Singular value decomposition} & \hyperref[appendix-ad175ef3c5bf]{PCA and covariance eigensystems} & Centered data covariance eigenvectors and data-matrix singular vectors encode the same principal directions. \\
+\hyperref[appendix-1fad5e7f36fa]{Singular value decomposition}, \hyperref[appendix-0b3be18411f9]{Eigenvalues and eigenspaces}, \href{}{Determinants orientation and volume (01-Foundations-I, appendix-da478be01d02)} & \hyperref[appendix-73f5bcf7a462]{Polar decomposition} & SVD assembles an orthogonal factor and a positive-semidefinite stretch; determinant exposes reflection. \\
+\hyperref[appendix-49933872bb51]{Norms lengths and induced distances}, \hyperref[appendix-1fad5e7f36fa]{Singular value decomposition}, \href{}{Forward and backward error (01-Foundations-I, appendix-a7fbaf6d1b1c)} & \hyperref[appendix-f8657bac66e5]{Matrix norms and numerical error} & Norm choice defines residual scale, maximum stretch, and error amplification. \\
+\hyperref[appendix-0b3be18411f9]{Eigenvalues and eigenspaces}, \hyperref[appendix-ab31ef447dbf]{Matrix multiplication and composition order}, \hyperref[appendix-f8657bac66e5]{Matrix norms and numerical error} & \hyperref[appendix-0f4bc2bf2b1f]{Matrix functions} & Spectral decompositions explain scalar functions of a matrix; norms and branches constrain computation. \\
+\hyperref[appendix-8572a4a060c1]{Linear systems and fundamental subspaces}, \hyperref[appendix-50d2ea3c9b26]{Symmetric positive-definite matrices and Cholesky}, \hyperref[appendix-f8657bac66e5]{Matrix norms and numerical error} & \hyperref[appendix-67c87a3d9e94]{Sparse and iterative solvers} & Large sparse structure motivates matrix-vector iteration, with convergence and residual contracts. \\
+\hyperref[appendix-f6e77f4a200f]{Gaussian elimination and pivoting}, \hyperref[appendix-55e4b5b0a1e6]{LU factorization and reusable solves}, \hyperref[appendix-50d2ea3c9b26]{Symmetric positive-definite matrices and Cholesky}, \hyperref[appendix-c3421e6b4f2c]{QR factorization and least squares}, \hyperref[appendix-1fad5e7f36fa]{Singular value decomposition} & \hyperref[appendix-221a483bec2d]{Matrix factorization choices} & The task and verified matrix structure determine a method; no one factorization fits every case. \\
+\href{}{Matrix storage indexing and strides (01-Foundations-I, appendix-ffdc1d4e5350)}, \hyperref[appendix-67c87a3d9e94]{Sparse and iterative solvers} & \hyperref[appendix-221a483bec2d]{Matrix factorization choices} & Sparse algorithms and their storage/convergence costs inform workload selection. \\
+\end{longtable}
+}
+
+The Phase 8 concepts point back to their teaching sections and include reciprocal ``Used by'' navigation. The full 100-part source ledger is in \href{}{Foundations (01-Foundations-I, appendix-fd090d982a15 § Phase 8 - Parts 701-800)}.
+
+\subsection{Phase 7 - From basis images to moving worlds}\label{phase-7---from-basis-images-to-moving-worlds}
+
+Read prerequisite → dependent. Storage layout does not determine algebraic action, and quaternion component order does not determine multiplication convention.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prerequisites
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dependent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Why
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\href{}{Basis coordinates and dimension (01-Foundations-I, appendix-ce0341f7ea0d)} & \href{}{Matrices as linear maps and basis images (01-Foundations-I, appendix-bd39c3bf5d64)} & A matrix is a rectangular scalar array. \\
+\href{}{Matrices as linear maps and basis images (01-Foundations-I, appendix-bd39c3bf5d64)} & \hyperref[appendix-ab31ef447dbf]{Matrix multiplication and composition order} & The product AB applies B first for column-vector actions. \\
+\hyperref[appendix-ab31ef447dbf]{Matrix multiplication and composition order} & \hyperref[appendix-175ca5ff874d]{Matrix transpose symmetry and trace} & Transpose exchanges row and column indices and reverses product order. \\
+\hyperref[appendix-2391db8052b1]{Cross products and oriented area}, \href{}{Matrices as linear maps and basis images (01-Foundations-I, appendix-bd39c3bf5d64)} & \href{}{Determinants orientation and volume (01-Foundations-I, appendix-da478be01d02)} & A square matrix determinant measures oriented volume scale. \\
+\href{}{Determinants orientation and volume (01-Foundations-I, appendix-da478be01d02)}, \href{}{Conditioning and singularity (01-Foundations-I, appendix-8f6a01f284a7)} & \href{}{Matrix inversion pivoting and residuals (01-Foundations-I, appendix-48d2e66378ab)} & Inversion reconstructs input coordinates from output for an invertible square map. \\
+\href{}{Matrices as linear maps and basis images (01-Foundations-I, appendix-bd39c3bf5d64)}, \hyperref[appendix-cb3b26862282]{Homogeneous coordinates and perspective division} & \href{}{Linear affine and projective transformations (01-Foundations-I, appendix-0bf0ca73f735)} & Linear maps preserve linear combinations and fix zero. \\
+\href{}{Linear affine and projective transformations (01-Foundations-I, appendix-0bf0ca73f735)}, \href{}{Matrix inversion pivoting and residuals (01-Foundations-I, appendix-48d2e66378ab)} & \hyperref[appendix-1bae9457dbc3]{Coordinate frames and change of basis} & A frame gives an origin and independent axes relative to another frame. \\
+\hyperref[appendix-1bae9457dbc3]{Coordinate frames and change of basis} & \href{}{Camera view and clip-space pipeline (04-Visual-Computing-II, appendix-1c07d64f5e70)} & A camera pose maps camera coordinates to world coordinates; its inverse is the view map. \\
+\href{}{ABI and object layout (01-Foundations-I, appendix-c4ac6bb0fff8)}, \href{}{Pointer arithmetic and provenance (01-Foundations-I, appendix-6af5921bc853)}, \href{}{Matrices as linear maps and basis images (01-Foundations-I, appendix-bd39c3bf5d64)} & \href{}{Matrix storage indexing and strides (01-Foundations-I, appendix-ffdc1d4e5350)} & Matrix row/column semantics are independent of physical row-major or column-major storage. \\
+\href{}{Matrix storage indexing and strides (01-Foundations-I, appendix-ffdc1d4e5350)}, \href{}{Floating-point reassociation (01-Foundations-I, appendix-c2ac4a84c283)} & \href{}{Matrix SIMD tiling and cache reuse (01-Foundations-I, appendix-1bfb7c657105)} & Loop ordering and tiling change memory traffic and reuse while preserving the exact scalar algebra. \\
+\hyperref[appendix-8bc4e8fc547c]{Dot products and orthogonality}, \hyperref[appendix-2391db8052b1]{Cross products and oriented area} & \href{}{Quaternion algebra and Hamilton product (01-Foundations-I, appendix-965d9260eeab)} & A quaternion has scalar w and vector u. \\
+\href{}{Quaternion algebra and Hamilton product (01-Foundations-I, appendix-965d9260eeab)} & \href{}{Quaternion rotation and double cover (01-Foundations-I, appendix-8e61ab68f6b2)} & For a unit quaternion q, the sandwich q(0,v)conjugate(q) rotates v. \\
+\href{}{Quaternion rotation and double cover (01-Foundations-I, appendix-8e61ab68f6b2)}, \href{}{Matrices as linear maps and basis images (01-Foundations-I, appendix-bd39c3bf5d64)} & \href{}{Quaternion matrix and axis-angle conversion (01-Foundations-I, appendix-26d8da71f6c4)} & A unit axis and angle give q=(cos(theta/2),axis sin(theta/2)). \\
+\href{}{Quaternion rotation and double cover (01-Foundations-I, appendix-8e61ab68f6b2)} & \href{}{Quaternion interpolation and shortest paths (01-Foundations-I, appendix-9b4b8254f26b)} & Quaternion interpolation must account for the double cover. \\
+\href{}{Quaternion matrix and axis-angle conversion (01-Foundations-I, appendix-26d8da71f6c4)}, \hyperref[appendix-ab31ef447dbf]{Matrix multiplication and composition order} & \href{}{Euler angles and gimbal singularity (01-Foundations-I, appendix-5f723fbd0593)} & Euler/Tait-Bryan angles are coordinates for rotation with a specified axis/order convention. \\
+\href{}{Quaternion algebra and Hamilton product (01-Foundations-I, appendix-965d9260eeab)}, \href{}{Linear affine and projective transformations (01-Foundations-I, appendix-0bf0ca73f735)} & \href{}{Dual quaternions and rigid motion (01-Foundations-I, appendix-d1ea57347893)} & A rigid dual quaternion consists of a unit real quaternion and a dual quaternion part satisfying real dot dual equals zero. \\
+\hyperref[appendix-1bae9457dbc3]{Coordinate frames and change of basis}, \href{}{Quaternion matrix and axis-angle conversion (01-Foundations-I, appendix-26d8da71f6c4)}, \href{}{Dual quaternions and rigid motion (01-Foundations-I, appendix-d1ea57347893)} & \href{}{Transform hierarchies TRS and shear (01-Foundations-I, appendix-292c061cd47c)} & A TRS transform stores translation, rotation and diagonal scale, with an explicit application order. \\
+\end{longtable}
+}
+
+\subsection{Phase 6 - From movement to reliable geometry}\label{phase-6---from-movement-to-reliable-geometry}
+
+This spine integrates Parts 501--600 without assuming the unreceived Parts 148--500 are complete. Shared numeric and C++ nodes supply explicit prerequisites; independent XR material remains a separate series. Concept notes contain reciprocal downstream links. Read this table from prerequisite to dependent.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prerequisites
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dependent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Why the dependency exists
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\hyperref[appendix-52051ad550fe]{Scalars fields and real-number models} & \hyperref[appendix-0659864c0aa3]{Vectors coordinates and affine points} & Field operations define which scalar multipliers the vector laws may use. \\
+\hyperref[appendix-0659864c0aa3]{Vectors coordinates and affine points} & \hyperref[appendix-173b52c063ae]{Vector spaces subspaces and span} & Point, displacement and coordinate roles determine which geometric operations are meaningful. \\
+\hyperref[appendix-173b52c063ae]{Vector spaces subspaces and span} & \href{}{Basis coordinates and dimension (01-Foundations-I, appendix-ce0341f7ea0d)} & Reachability and closure establish the spanning and independence questions. \\
+\href{}{Basis coordinates and dimension (01-Foundations-I, appendix-ce0341f7ea0d)} & \hyperref[appendix-49933872bb51]{Norms lengths and induced distances} & An ordered basis fixes coordinate meaning and the space whose geometry is measured. \\
+\hyperref[appendix-49933872bb51]{Norms lengths and induced distances}, \href{}{Robust norm and intermediate range (01-Foundations-I, appendix-7f1e17dcafb1)} & \hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization} & Lengths and their domains are needed before unit directions or angular measurements. Range-safe scaling avoids losing a valid direction to unnecessary squared intermediates. \\
+\hyperref[appendix-49933872bb51]{Norms lengths and induced distances} & \hyperref[appendix-8bc4e8fc547c]{Dot products and orthogonality} & Lengths and their domains are needed before unit directions or angular measurements. \\
+\hyperref[appendix-8bc4e8fc547c]{Dot products and orthogonality} & \hyperref[appendix-505a502c372a]{Projection rejection and scalar components} & Inner-product measurements supply the perpendicularity and alignment constraints. \\
+\href{}{Basis coordinates and dimension (01-Foundations-I, appendix-ce0341f7ea0d)}, \hyperref[appendix-8bc4e8fc547c]{Dot products and orthogonality} & \hyperref[appendix-3b863809f82a]{Gram matrices and coordinate metrics} & An ordered basis fixes coordinate meaning and the space whose geometry is measured. Inner-product measurements supply the perpendicularity and alignment constraints. \\
+\hyperref[appendix-52051ad550fe]{Scalars fields and real-number models} & \hyperref[appendix-f77eadcc4a93]{Complex numbers and planar rotations} & Field operations define which scalar multipliers the vector laws may use. \\
+\hyperref[appendix-8bc4e8fc547c]{Dot products and orthogonality} & \hyperref[appendix-2391db8052b1]{Cross products and oriented area} & Inner-product measurements supply the perpendicularity and alignment constraints. \\
+\hyperref[appendix-2391db8052b1]{Cross products and oriented area} & \hyperref[appendix-87d7626c8d37]{Coordinate handedness and orientation} & Oriented area supplies face normals, frame signs and geometric determinants. \\
+\hyperref[appendix-2391db8052b1]{Cross products and oriented area}, \hyperref[appendix-8bc4e8fc547c]{Dot products and orthogonality} & \hyperref[appendix-5caa058bd9c7]{Triple products and signed volume} & Oriented area supplies face normals, frame signs and geometric determinants. Inner-product measurements supply the perpendicularity and alignment constraints. \\
+\hyperref[appendix-2391db8052b1]{Cross products and oriented area}, \hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization} & \hyperref[appendix-e569e60e18e6]{Robust vector angles} & Oriented area supplies face normals, frame signs and geometric determinants. Validated finite unit directions establish the preconditions for simplified geometry formulas. \\
+\hyperref[appendix-2391db8052b1]{Cross products and oriented area}, \hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization}, \hyperref[appendix-505a502c372a]{Projection rejection and scalar components} & \hyperref[appendix-e31893dec985]{Surface tangents normals and bitangents} & Oriented area supplies face normals, frame signs and geometric determinants. Validated finite unit directions establish the preconditions for simplified geometry formulas. Removing an unwanted component creates residuals, tangent axes and mirror decompositions. \\
+\hyperref[appendix-e31893dec985]{Surface tangents normals and bitangents}, \hyperref[appendix-3b863809f82a]{Gram matrices and coordinate metrics} & \hyperref[appendix-c39f1ed34271]{Orthonormal frames and Gram-Schmidt} & The surface tangent plane gives the axes that orthogonalization must preserve. Pairwise basis measurements define the systems and metric used in reconstruction. \\
+\hyperref[appendix-505a502c372a]{Projection rejection and scalar components}, \hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization} & \hyperref[appendix-44e00863b4d5]{Reflection refraction and shading directions} & Removing an unwanted component creates residuals, tangent axes and mirror decompositions. Validated finite unit directions establish the preconditions for simplified geometry formulas. \\
+\hyperref[appendix-3b863809f82a]{Gram matrices and coordinate metrics}, \hyperref[appendix-0659864c0aa3]{Vectors coordinates and affine points} & \hyperref[appendix-02b9d9a81dca]{Barycentric coordinates and interpolation} & Pairwise basis measurements define the systems and metric used in reconstruction. Point, displacement and coordinate roles determine which geometric operations are meaningful. \\
+\hyperref[appendix-2391db8052b1]{Cross products and oriented area}, \href{}{Dot and cross-product rounding (01-Foundations-I, appendix-5aef4f13483a)} & \hyperref[appendix-341296fb3f64]{Robust geometric predicates} & Oriented area supplies face normals, frame signs and geometric determinants. Cancellation and rounded inputs explain when a determinant sign or finite measurement is uncertain. \\
+\hyperref[appendix-02b9d9a81dca]{Barycentric coordinates and interpolation} & \hyperref[appendix-0026ec42c9d5]{Convex combinations and convex hulls} & Affine weights establish origin-independent combinations and inside-hull restrictions. \\
+\hyperref[appendix-0026ec42c9d5]{Convex combinations and convex hulls}, \hyperref[appendix-8bc4e8fc547c]{Dot products and orthogonality} & \hyperref[appendix-215ac7099a82]{Minkowski sums and support mappings} & Convex set geometry is the domain for hull support and collision constructions. Inner-product measurements supply the perpendicularity and alignment constraints. \\
+\hyperref[appendix-0659864c0aa3]{Vectors coordinates and affine points} & \hyperref[appendix-cb3b26862282]{Homogeneous coordinates and perspective division} & Point, displacement and coordinate roles determine which geometric operations are meaningful. \\
+\href{}{Basis coordinates and dimension (01-Foundations-I, appendix-ce0341f7ea0d)}, \hyperref[appendix-8bc4e8fc547c]{Dot products and orthogonality} & \href{}{Covectors linear functionals and normal transforms (01-Foundations-I, appendix-46da295c6787)} & An ordered basis fixes coordinate meaning and the space whose geometry is measured. Inner-product measurements supply the perpendicularity and alignment constraints. \\
+\hyperref[appendix-2391db8052b1]{Cross products and oriented area}, \hyperref[appendix-5caa058bd9c7]{Triple products and signed volume} & \hyperref[appendix-e1960925d1b8]{Exterior products and geometric algebra} & Oriented area supplies face normals, frame signs and geometric determinants. Oriented volume connects exterior grades and determinant-based geometry. \\
+\hyperref[appendix-0659864c0aa3]{Vectors coordinates and affine points}, \href{}{Named members versus array elements (01-Foundations-I, appendix-3f7e15effba6)} & \hyperref[appendix-37a39984ba66]{Vector value types and component access} & Point, displacement and coordinate roles determine which geometric operations are meaningful. Array-relative pointer rules constrain safe named-component access. \\
+\hyperref[appendix-37a39984ba66]{Vector value types and component access}, \href{}{Alignment and padding (01-Foundations-I, appendix-a1f7c53b4742)}, \hyperref[appendix-3c7b1a56de01]{SIMD and GPU data layouts} & \hyperref[appendix-26bf6bf2fb8b]{Vector storage SIMD and boundary layouts} & Primitive representation and access rules support layout choices and semantic wrappers. Object alignment and array stride constrain storage and boundary conversions. Lane access and external interface layouts require separate storage contracts. \\
+\href{}{Numerical tolerance policies (01-Foundations-I, appendix-0ec599f8ba27)}, \href{}{Dot and cross-product rounding (01-Foundations-I, appendix-5aef4f13483a)} & \hyperref[appendix-b5b83329215b]{Vector tolerances and finite-state diagnostics} & A declared scale and domain make closeness and rejection thresholds meaningful. Cancellation and rounded inputs explain when a determinant sign or finite measurement is uncertain. \\
+\hyperref[appendix-0659864c0aa3]{Vectors coordinates and affine points}, \hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization}, \hyperref[appendix-37a39984ba66]{Vector value types and component access} & \hyperref[appendix-380a220e2529]{Coordinate-space types and validated invariants} & Point, displacement and coordinate roles determine which geometric operations are meaningful. Validated finite unit directions establish the preconditions for simplified geometry formulas. Primitive representation and access rules support layout choices and semantic wrappers. \\
+\end{longtable}
+}
+
+\subsection{Independent XR learning spine}\label{independent-xr-learning-spine}
+
+XR01 is outside the3,000-part progression. Physical interpretation, angular geometry, signals, reconstruction and experimental evidence connect within this separate series and to shared foundations.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prerequisites
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dependent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Why the dependency exists
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\href{}{Light spectra and radiometry (04-Visual-Computing-II, appendix-215c2570199b)} & \href{}{Reflectance and rendering equation (04-Visual-Computing-II, appendix-96da0b153b77)} & The light quantity and units must be established before its interaction or visual effect is modeled. \\
+\href{}{Light spectra and radiometry (04-Visual-Computing-II, appendix-215c2570199b)} & \href{}{Retinal encoding and receptive fields (04-Visual-Computing-II, appendix-7281c15ac44a)} & The light quantity and units must be established before its interaction or visual effect is modeled. \\
+\href{}{Light spectra and radiometry (04-Visual-Computing-II, appendix-215c2570199b)} & \href{}{Optical focus and binocular conflict (04-Visual-Computing-II, appendix-f90cee1be7a4)} & The light quantity and units must be established before its interaction or visual effect is modeled. \\
+\href{}{Optical focus and binocular conflict (04-Visual-Computing-II, appendix-f90cee1be7a4)} & \href{}{Visual angle and calibrated rays (04-Visual-Computing-II, appendix-7d356c396d1a)} & Optical image formation determines the direction/focus assumptions used by geometry and binocular analysis. \\
+\href{}{Visual angle and calibrated rays (04-Visual-Computing-II, appendix-7d356c396d1a)}, \href{}{Retinal encoding and receptive fields (04-Visual-Computing-II, appendix-7281c15ac44a)} & \href{}{Visual acuity and eccentricity (04-Visual-Computing-II, appendix-b491fc48c54b)} & Angular coordinates make sampling density and gaze-relative location physically meaningful. \\
+\href{}{Retinal encoding and receptive fields (04-Visual-Computing-II, appendix-7281c15ac44a)} & \href{}{Contrast sensitivity adaptation and masking (04-Visual-Computing-II, appendix-b3aa9e8e01ad)} & Spatial/contrast-sensitive neural responses motivate task-dependent visual models. \\
+\href{}{Visual angle and calibrated rays (04-Visual-Computing-II, appendix-7d356c396d1a)} & \href{}{Eye movements and display-time gaze (04-Visual-Computing-II, appendix-a6f2c4fe1996)} & Angular coordinates make sampling density and gaze-relative location physically meaningful. \\
+\href{}{Interpretation contract (01-Foundations-I, appendix-f414bd4ed05c)} & \href{}{Continuous signals and discrete samples (04-Visual-Computing-II, appendix-1077ea8fc737)} & A numeric sample requires a domain, units and encoding convention. \\
+\href{}{Continuous signals and discrete samples (04-Visual-Computing-II, appendix-1077ea8fc737)} & \href{}{Fourier analysis and spectral phase (04-Visual-Computing-II, appendix-b60686ba06a1)} & Filtering/frequency analysis operates on a declared domain and its samples. \\
+\href{}{Fourier analysis and spectral phase (04-Visual-Computing-II, appendix-b60686ba06a1)} & \href{}{Sampling aliasing and reconstruction (04-Visual-Computing-II, appendix-6a7869dd79a6)} & Frequency and phase reveal transfer, sampling ambiguity and structural loss. \\
+\href{}{Continuous signals and discrete samples (04-Visual-Computing-II, appendix-1077ea8fc737)}, \href{}{Fourier analysis and spectral phase (04-Visual-Computing-II, appendix-b60686ba06a1)} & \href{}{Convolution and filter footprints (03-Visual-Computing-I, appendix-d5b3c692d9f0)} & Filtering/frequency analysis operates on a declared domain and its samples. \\
+\href{}{Optical focus and binocular conflict (04-Visual-Computing-II, appendix-f90cee1be7a4)}, \href{}{Fourier analysis and spectral phase (04-Visual-Computing-II, appendix-b60686ba06a1)}, \href{}{Convolution and filter footprints (03-Visual-Computing-I, appendix-d5b3c692d9f0)} & \href{}{PSF OTF and MTF (04-Visual-Computing-II, appendix-8b76b0efd27f)} & Optical image formation determines the direction/focus assumptions used by geometry and binocular analysis. \\
+\href{}{Convolution and filter footprints (03-Visual-Computing-I, appendix-d5b3c692d9f0)}, \href{}{Sampling aliasing and reconstruction (04-Visual-Computing-II, appendix-6a7869dd79a6)} & \href{}{Multiscale texture filtering (04-Visual-Computing-II, appendix-b677a85ba76f)} & A weighting footprint establishes the filtered response, boundary effects and frequency transfer. \\
+\href{}{Sampling aliasing and reconstruction (04-Visual-Computing-II, appendix-6a7869dd79a6)}, \href{}{Eye movements and display-time gaze (04-Visual-Computing-II, appendix-a6f2c4fe1996)} & \href{}{Spatiotemporal sampling and retinal motion (04-Visual-Computing-II, appendix-70895739febb)} & Allocation/filtering must respect what reduced samples can distinguish. \\
+\href{}{Sampling aliasing and reconstruction (04-Visual-Computing-II, appendix-6a7869dd79a6)}, \href{}{Multiscale texture filtering (04-Visual-Computing-II, appendix-b677a85ba76f)} & \href{}{Antialiasing and sample allocation (04-Visual-Computing-II, appendix-4192b2bdd21e)} & Allocation/filtering must respect what reduced samples can distinguish. \\
+\href{}{Spatiotemporal sampling and retinal motion (04-Visual-Computing-II, appendix-70895739febb)}, \href{}{Antialiasing and sample allocation (04-Visual-Computing-II, appendix-4192b2bdd21e)} & \href{}{Temporal reprojection and history validation (04-Visual-Computing-II, appendix-0727340a4428)} & Temporal reuse must respect changing scene and retinal observations. \\
+\href{}{Light spectra and radiometry (04-Visual-Computing-II, appendix-215c2570199b)}, \href{}{Interpretation contract (01-Foundations-I, appendix-f414bd4ed05c)} & \href{}{Color encoding and linear-light operations (04-Visual-Computing-II, appendix-a9f83ad40792)} & The light quantity and units must be established before its interaction or visual effect is modeled. \\
+\href{}{Contrast sensitivity adaptation and masking (04-Visual-Computing-II, appendix-b3aa9e8e01ad)}, \href{}{Fourier analysis and spectral phase (04-Visual-Computing-II, appendix-b60686ba06a1)}, \href{}{Color encoding and linear-light operations (04-Visual-Computing-II, appendix-a9f83ad40792)} & \href{}{Perceptual metrics and display calibration (04-Visual-Computing-II, appendix-b2c1846508bf)} & Visibility judgments require sensitivity and stimulus-context definitions. \\
+\href{}{Contrast sensitivity adaptation and masking (04-Visual-Computing-II, appendix-b3aa9e8e01ad)} & \href{}{Psychophysics and threshold inference (04-Visual-Computing-II, appendix-1759f03e8ce7)} & Visibility judgments require sensitivity and stimulus-context definitions. \\
+\href{}{Visual acuity and eccentricity (04-Visual-Computing-II, appendix-b491fc48c54b)}, \href{}{Temporal reprojection and history validation (04-Visual-Computing-II, appendix-0727340a4428)}, \href{}{Eye movements and display-time gaze (04-Visual-Computing-II, appendix-a6f2c4fe1996)} & \href{}{Foveated rendering and uncertainty (04-Visual-Computing-II, appendix-5878b813b732)} & Peripheral allocation uses a specified task-dependent angular sensitivity model. \\
+\href{}{Optical focus and binocular conflict (04-Visual-Computing-II, appendix-f90cee1be7a4)}, \href{}{Psychophysics and threshold inference (04-Visual-Computing-II, appendix-1759f03e8ce7)}, \href{}{Visual acuity and eccentricity (04-Visual-Computing-II, appendix-b491fc48c54b)} & \href{}{Stereoacuity and binocular foveation (04-Visual-Computing-II, appendix-8dc848f14052)} & Optical image formation determines the direction/focus assumptions used by geometry and binocular analysis. \\
+\href{}{Psychophysics and threshold inference (04-Visual-Computing-II, appendix-1759f03e8ce7)}, \href{}{Perceptual metrics and display calibration (04-Visual-Computing-II, appendix-b2c1846508bf)} & \href{}{Research validity and ablation (04-Visual-Computing-II, appendix-65788587ef78)} & A perceptual conclusion requires a defined task and inference procedure. \\
+\end{longtable}
+}
+
+\subsection{Construction and value transfer}\label{construction-and-value-transfer}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prerequisites
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dependent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Why the dependency exists
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\href{}{References and aliases (01-Foundations-I, appendix-d6d562ca9fbb)}, \href{}{Const qualification and shallow constness (01-Foundations-I, appendix-c25d60fed375)} & \href{}{Parameter passing and sink contracts (01-Foundations-I, appendix-d5908f75721f)} & Parameter access differs according to whether a new object is created or an existing referent is borrowed. \\
+\href{}{Value categories and materialization (01-Foundations-I, appendix-1121b30eaeb0)}, \href{}{Object construction and storage reuse (01-Foundations-I, appendix-a82f9c438857)} & \href{}{Return values and copy elision (01-Foundations-I, appendix-b08d3788c5c6)} & The return expression category distinguishes result construction from a bound path or move candidate. \\
+\href{}{Class access and invariants (01-Foundations-I, appendix-8e5214819615)}, \href{}{Object construction and storage reuse (01-Foundations-I, appendix-a82f9c438857)} & \href{}{Constructors and invariant establishment (01-Foundations-I, appendix-7f8ec83d0886)} & Construction must establish the conditions public operations are allowed to assume. \\
+\href{}{Constructors and invariant establishment (01-Foundations-I, appendix-7f8ec83d0886)} & \href{}{Default and value initialization (01-Foundations-I, appendix-ba8c1a9fe03f)} & Initialization form and structural order determine how the constructor establishes members. \\
+\href{}{Constructors and invariant establishment (01-Foundations-I, appendix-7f8ec83d0886)} & \href{}{Member order and delegating constructors (01-Foundations-I, appendix-3cb49709605a)} & Initialization form and structural order determine how the constructor establishes members. \\
+\href{}{Member order and delegating constructors (01-Foundations-I, appendix-3cb49709605a)}, \href{}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)} & \href{}{Destruction and partial construction (01-Foundations-I, appendix-9bfe377cef7a)} & Reverse cleanup depends on the order and completeness of subobject construction. \\
+\href{}{Object identity and generation handles (05-Engine-I, appendix-f1581457d322)}, \href{}{Ownership and non-owning views (05-Engine-I, appendix-d52e4486f527)} & \href{}{Copy semantics and resource identity (01-Foundations-I, appendix-1340cd1ce582)} & Copying an identifier differs from cloning the resource or application entity. \\
+\href{}{Copy semantics and resource identity (01-Foundations-I, appendix-1340cd1ce582)}, \href{}{Constructors and invariant establishment (01-Foundations-I, appendix-7f8ec83d0886)}, \href{}{Destruction and partial construction (01-Foundations-I, appendix-9bfe377cef7a)} & \href{}{Assignment and exception guarantees (01-Foundations-I, appendix-bea6beb5350f)} & Assignment and moving must implement a defined semantic value rather than a raw pointer copy. \\
+\href{}{Move casts and forwarding references (01-Foundations-I, appendix-0104b704fb11)}, \href{}{Copy semantics and resource identity (01-Foundations-I, appendix-1340cd1ce582)}, \href{}{Destruction and partial construction (01-Foundations-I, appendix-9bfe377cef7a)} & \href{}{Move operations and moved-from states (01-Foundations-I, appendix-5636651017c2)} & An xvalue cast permits selection of a consuming operation without performing it. \\
+\href{}{Copy semantics and resource identity (01-Foundations-I, appendix-1340cd1ce582)}, \href{}{Move operations and moved-from states (01-Foundations-I, appendix-5636651017c2)}, \href{}{Default and value initialization (01-Foundations-I, appendix-ba8c1a9fe03f)} & \href{}{Special member generation and traits (01-Foundations-I, appendix-42e02a12c694)} & Assignment and moving must implement a defined semantic value rather than a raw pointer copy. \\
+\href{}{Move operations and moved-from states (01-Foundations-I, appendix-5636651017c2)}, \href{}{Assignment and exception guarantees (01-Foundations-I, appendix-bea6beb5350f)}, \href{}{Special member generation and traits (01-Foundations-I, appendix-42e02a12c694)} & \href{}{Noexcept and transfer selection (01-Foundations-I, appendix-c746afaa47d1)} & Traits, failure policy and relocation must distinguish source survival from source destruction. \\
+\href{}{Special member generation and traits (01-Foundations-I, appendix-42e02a12c694)}, \href{}{Assignment and exception guarantees (01-Foundations-I, appendix-bea6beb5350f)}, \href{}{Ownership and non-owning views (05-Engine-I, appendix-d52e4486f527)} & \href{}{Rules of Three Five and Zero (01-Foundations-I, appendix-7679107d057e)} & The actual usable construction expression determines trait-controlled transfer selection. \\
+\href{}{Move operations and moved-from states (01-Foundations-I, appendix-5636651017c2)}, \href{}{Object construction and storage reuse (01-Foundations-I, appendix-a82f9c438857)} & \href{}{Relocation versus move (01-Foundations-I, appendix-adfd6397af8d)} & Traits, failure policy and relocation must distinguish source survival from source destruction. \\
+\href{}{Destruction and partial construction (01-Foundations-I, appendix-9bfe377cef7a)}, \href{}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)} & \href{}{RAII and resource handles (01-Foundations-I, appendix-69739d3ab49b)} & Cleanup responsibility follows completed object lifetimes; reused storage and external resources need separate protocols. \\
+\href{}{Ownership and non-owning views (05-Engine-I, appendix-d52e4486f527)}, \href{}{RAII and resource handles (01-Foundations-I, appendix-69739d3ab49b)} & \href{}{Exclusive and shared smart-pointer ownership (01-Foundations-I, appendix-51602cabe815)} & Borrows must be distinguished from sole ownership and a deliberately shared lifetime. \\
+\href{}{Exclusive and shared smart-pointer ownership (01-Foundations-I, appendix-51602cabe815)} & \href{}{Weak observation and ownership cycles (01-Foundations-I, appendix-b9548675eb2b)} & A non-owning observer can break an ownership cycle and must acquire a strong owner before access. \\
+\href{}{Object construction and storage reuse (01-Foundations-I, appendix-a82f9c438857)}, \href{}{RAII and resource handles (01-Foundations-I, appendix-69739d3ab49b)} & \href{}{Placement construction and explicit lifetime management (01-Foundations-I, appendix-f56c3e43fd4e)} & Storage, object construction/destruction and storage release are distinct operations. \\
+\end{longtable}
+}
+
+\subsection{Borrowing, categories and const access}\label{borrowing-categories-and-const-access}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prerequisites
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dependent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Why the dependency exists
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\href{}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)}, \href{}{Declarations and definitions (01-Foundations-I, appendix-2e4d494c2d94)} & \href{}{References and aliases (01-Foundations-I, appendix-d6d562ca9fbb)} & A reference is an alias established by binding, not a reseatable pointer object. \\
+\href{}{Declarations and definitions (01-Foundations-I, appendix-2e4d494c2d94)} & \href{}{Value categories and materialization (01-Foundations-I, appendix-1121b30eaeb0)} & lvalues and xvalues identify objects/functions; prvalues produce values/results. \\
+\href{}{References and aliases (01-Foundations-I, appendix-d6d562ca9fbb)}, \href{}{Value categories and materialization (01-Foundations-I, appendix-1121b30eaeb0)} & \href{}{Reference binding and converted temporaries (01-Foundations-I, appendix-37856d997bb0)} & Binding chooses an initial referent under type/category rules. \\
+\href{}{Reference binding and converted temporaries (01-Foundations-I, appendix-37856d997bb0)}, \href{}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)} & \href{}{Temporary lifetime extension (01-Foundations-I, appendix-a978b29bbbb0)} & Ordinary temporary destruction occurs at the full-expression's end unless specified extension applies. \\
+\href{}{Value categories and materialization (01-Foundations-I, appendix-1121b30eaeb0)}, \href{}{References and aliases (01-Foundations-I, appendix-d6d562ca9fbb)} & \href{}{Auto decltype and reference collapsing (01-Foundations-I, appendix-5d4252a42886)} & Ordinary by-value auto drops top-level const/reference information; auto\& preserves referent qualification. \\
+\href{}{Auto decltype and reference collapsing (01-Foundations-I, appendix-5d4252a42886)}, \href{}{Value categories and materialization (01-Foundations-I, appendix-1121b30eaeb0)} & \href{}{Move casts and forwarding references (01-Foundations-I, appendix-0104b704fb11)} & std::move is an xvalue cast preserving constness, not a resource transfer. \\
+\href{}{Pointer arithmetic and provenance (01-Foundations-I, appendix-6af5921bc853)} & \href{}{Null pointers and optional access (01-Foundations-I, appendix-afae48c31800)} & A null pointer designates no object/function; nullptr\_t converts to appropriate null pointer values without choosing an integer overload. \\
+\href{}{Pointer arithmetic and provenance (01-Foundations-I, appendix-6af5921bc853)}, \href{}{Object identity and generation handles (05-Engine-I, appendix-f1581457d322)} & \href{}{Borrow invalidation and logical identity (05-Engine-I, appendix-f9b8b9188c7f)} & A borrow relies on an external lifetime/mutation contract. \\
+\href{}{Borrow invalidation and logical identity (05-Engine-I, appendix-f9b8b9188c7f)} & \href{}{Borrow contracts and pool epochs (01-Foundations-I, appendix-aa405b7c3903)} & An epoch versions a borrow-validity interval. \\
+\href{}{Ownership and non-owning views (05-Engine-I, appendix-d52e4486f527)}, \href{}{Temporary lifetime extension (01-Foundations-I, appendix-a978b29bbbb0)}, \href{}{Borrow invalidation and logical identity (05-Engine-I, appendix-f9b8b9188c7f)} & \href{}{Deferred captures and borrowed views (01-Foundations-I, appendix-aea529eb5175)} & A span or string\_view describes data without owning it. \\
+\href{}{References and aliases (01-Foundations-I, appendix-d6d562ca9fbb)} & \href{}{Const qualification and shallow constness (01-Foundations-I, appendix-c25d60fed375)} & Const restricts modification through an access path; another mutable alias can change a mutable referent. \\
+\href{}{Const qualification and shallow constness (01-Foundations-I, appendix-c25d60fed375)} & \href{}{Multilevel pointer qualification (01-Foundations-I, appendix-5e1a7561cd98)} & int** cannot implicitly become const int**: that would permit injection of an actually const object's address into an original int*. \\
+\href{}{Const qualification and shallow constness (01-Foundations-I, appendix-c25d60fed375)}, \href{}{Value categories and materialization (01-Foundations-I, appendix-1121b30eaeb0)}, \href{}{Temporary lifetime extension (01-Foundations-I, appendix-a978b29bbbb0)} & \href{}{Ref-qualified accessors (01-Foundations-I, appendix-d42039b1d6f7)} & Member \&/\&\& qualifiers constrain the caller's object category. \\
+\href{}{Const qualification and shallow constness (01-Foundations-I, appendix-c25d60fed375)}, \href{}{Class access and invariants (01-Foundations-I, appendix-8e5214819615)} & \href{}{Logical constness and mutable caches (01-Foundations-I, appendix-f5593256bcaf)} & Logical constness preserves public meaning while eligible mutable data members may change private state. \\
+\end{longtable}
+}
+
+\subsection{C++ - From buildable text to live objects}\label{c---from-buildable-text-to-live-objects}
+
+The C++ volume accepts Parts 101--160. Construction/value transfer and M010 resource ownership develop the object-and-borrow foundation without conflating lifetime, identity, category, storage, external use or disposal. Code examples and runtime/build traces live directly in \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs}{Volume 02}.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prerequisite
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dependent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Reason
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\href{}{Compiler IR and machine instructions (01-Foundations-I, appendix-942ad41afb30)} & \href{}{Translation units and linking (01-Foundations-I, appendix-806686359e1b)} & Compilation and emitted code explain why separately translated units need a link step. \\
+\href{}{Translation units and linking (01-Foundations-I, appendix-806686359e1b)} & \href{}{Declarations and definitions (01-Foundations-I, appendix-2e4d494c2d94)} & A caller needs declaration/type information before the defining implementation is available. \\
+\href{}{Declarations and definitions (01-Foundations-I, appendix-2e4d494c2d94)} & \href{}{One Definition Rule (01-Foundations-I, appendix-49d27bc9d9a5)} & Agreement about which declarations define entities is necessary to state the one-definition constraint. \\
+\href{}{Declarations and definitions (01-Foundations-I, appendix-2e4d494c2d94)} & \href{}{Linkage and entity ownership (01-Foundations-I, appendix-74a0ec818c18)} & Declarations must be related to determine whether they denote one entity or distinct private entities. \\
+\href{}{Declarations and definitions (01-Foundations-I, appendix-2e4d494c2d94)} & \href{}{Scopes and name lookup (01-Foundations-I, appendix-b12b31759da1)} & A declaration binds a name before scope and lookup can determine which binding is found. \\
+\href{}{Scopes and name lookup (01-Foundations-I, appendix-b12b31759da1)} & \href{}{Argument-dependent lookup (01-Foundations-I, appendix-7863714aa97f)} & Ordinary lookup provides candidates and suppression rules before arguments can add associated candidates. \\
+\href{}{Translation units and linking (01-Foundations-I, appendix-806686359e1b)} & \href{}{C++ modules and reachability (01-Foundations-I, appendix-410a611a5b8d)} & Interface information serves compilation, while object code serves linking; modules change their distribution. \\
+\href{}{Translation units and linking (01-Foundations-I, appendix-806686359e1b)} & \href{}{Preprocessing and macro boundaries (01-Foundations-I, appendix-33c0a92ce855)} & The compilation boundary explains where token replacement stops and typed semantic analysis begins. \\
+\href{}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)} & \href{}{Object construction and storage reuse (01-Foundations-I, appendix-a82f9c438857)} & Backing-storage duration must be distinguished from the occupant's start, destruction and replacement. \\
+\href{}{Object construction and storage reuse (01-Foundations-I, appendix-a82f9c438857)} & \href{}{Object identity and generation handles (05-Engine-I, appendix-f1581457d322)} & Storage reuse creates successive occupants, motivating handles that record the intended generation. \\
+\href{}{Fixed-width integer types (01-Foundations-I, appendix-cc04044b5782)} & \href{}{Scoped enums and validated domains (01-Foundations-I, appendix-23640fcee147)} & An enum's underlying integer type establishes representation but not the application's valid code set. \\
+\href{}{Declarations and definitions (01-Foundations-I, appendix-2e4d494c2d94)} & \href{}{Aggregate initialization (01-Foundations-I, appendix-b7174c179542)} & The defined class's members and constructors determine whether aggregate element initialization applies. \\
+\href{}{Declarations and definitions (01-Foundations-I, appendix-2e4d494c2d94)} & \href{}{Class access and invariants (01-Foundations-I, appendix-8e5214819615)} & Class declarations establish members and bases whose access must be public or controlled. \\
+\href{}{ABI and object layout (01-Foundations-I, appendix-c4ac6bb0fff8)} & \href{}{Standard-layout and trivial copyability (01-Foundations-I, appendix-958870a64c53)} & ABI offsets and padding must be separated from standard-layout and byte-copy language eligibility. \\
+\href{}{Pointer arithmetic and provenance (01-Foundations-I, appendix-6af5921bc853)} & \href{}{Named members versus array elements (01-Foundations-I, appendix-3f7e15effba6)} & Array-relative pointer bounds explain why adjacency of separate members cannot authorize indexing. \\
+\href{}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)} & \href{}{Thread-local storage (01-Foundations-I, appendix-3b88c6cd7195)} & Thread duration is a distinct backing-storage category, not a synonym for a local name's scope. \\
+\end{longtable}
+}
+
+An edge from prerequisite to dependent means the dependent explanation uses the prerequisite's definition or mechanism. Obsidian's graph shows actual note links; the labeled prerequisite lists in concept notes give those edges their meaning.
+
+\subsection{Phase 6-10 mathematical learning route}\label{phase-6-10-mathematical-learning-route}
+
+Phase 6 establishes vectors, coordinates, and geometry; Phase 7 treats matrices as maps and changes of basis; Phase 8 develops solves, decompositions, and matrix functions; Phase 9 models change with derivatives, integrals, ODEs, and optimization; Phase 10 uses probability and statistics to reason about uncertain samples.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Phase
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Teaching volume
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+6 & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#The\%20panel\%20gives\%20us\%20a\%20reason\%20to\%20learn/}{06 - From Movement to Meaning - Vectors, Geometry and Reliable Code} \\
+7 & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Keep\%20the\%20promises\%20visible\%20while\%20moving\%20between\%20representations/}{07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions} \\
+8 & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#The\%20graphics\%20problem\%20hiding\%20inside\%20a\%20matrix\%20equation/}{08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions} \\
+9 & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Functions,\%20limits,\%20continuity,\%20and\%20scalar\%20change/}{09 - From Local Change to Reliable Motion - Calculus and Optimization} \\
+10 & \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Learning\%20route/}{10 - From Uncertainty to Trustworthy Samples - Probability and Monte Carlo} \\
+\end{longtable}
+}
+
+\subsection{Phase 9-10 prerequisite edges}\label{phase-9-10-prerequisite-edges}
+
+Every prerequisite below is also a prerequisite link on the dependent note and a reciprocal Used by link on its prerequisite note.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prerequisite
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dependent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Why the dependency exists
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\hyperref[appendix-a59658325cd6]{Function contracts: domains, codomains, and images} & \hyperref[appendix-d9f70bdfbc92]{Differentiation rules and chain rule} & The Differentiation rules and chain rule explanation builds on the definition or mechanism in Function contracts: domains, codomains, and images. \\
+\hyperref[appendix-fecc1847f5a3]{Limits and continuity} & \hyperref[appendix-d9f70bdfbc92]{Differentiation rules and chain rule} & The Differentiation rules and chain rule explanation builds on the definition or mechanism in Limits and continuity. \\
+\hyperref[appendix-a59658325cd6]{Function contracts: domains, codomains, and images} & \href{}{Partial derivatives and gradients (06-Engine-II, appendix-677b59746ae0)} & The Partial derivatives and gradients explanation builds on the definition or mechanism in Function contracts: domains, codomains, and images. \\
+\hyperref[appendix-7bc181935c42]{Derivative as a local linear map} & \href{}{Partial derivatives and gradients (06-Engine-II, appendix-677b59746ae0)} & The Partial derivatives and gradients explanation builds on the definition or mechanism in Derivative as a local linear map. \\
+\href{}{Partial derivatives and gradients (06-Engine-II, appendix-677b59746ae0)} & \hyperref[appendix-e2d476574aab]{Directional and total derivatives} & The Directional and total derivatives explanation builds on the definition or mechanism in Partial derivatives and gradients. \\
+\hyperref[appendix-7bc181935c42]{Derivative as a local linear map} & \hyperref[appendix-e2d476574aab]{Directional and total derivatives} & The Directional and total derivatives explanation builds on the definition or mechanism in Derivative as a local linear map. \\
+\hyperref[appendix-7bc181935c42]{Derivative as a local linear map} & \href{}{Jacobians, pushforwards, and pullbacks (01-Foundations-I, appendix-d8a7ddb675eb)} & The Jacobians, pushforwards, and pullbacks explanation builds on the definition or mechanism in Derivative as a local linear map. \\
+\hyperref[appendix-ab31ef447dbf]{Matrix multiplication and composition order} & \href{}{Jacobians, pushforwards, and pullbacks (01-Foundations-I, appendix-d8a7ddb675eb)} & The Jacobians, pushforwards, and pullbacks explanation builds on the definition or mechanism in Matrix multiplication and composition order. \\
+\href{}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)} & \href{}{Jacobians, pushforwards, and pullbacks (01-Foundations-I, appendix-d8a7ddb675eb)} & The Jacobians, pushforwards, and pullbacks explanation builds on the definition or mechanism in Probability density and change of measure. \\
+\href{}{Jacobians, pushforwards, and pullbacks (01-Foundations-I, appendix-d8a7ddb675eb)} & \href{}{Hessians and local curvature (01-Foundations-I, appendix-6ac071f8b50c)} & The Hessians and local curvature explanation builds on the definition or mechanism in Jacobians, pushforwards, and pullbacks. \\
+\hyperref[appendix-50d2ea3c9b26]{Symmetric positive-definite matrices and Cholesky} & \href{}{Hessians and local curvature (01-Foundations-I, appendix-6ac071f8b50c)} & The Hessians and local curvature explanation builds on the definition or mechanism in Symmetric positive-definite matrices and Cholesky. \\
+\hyperref[appendix-7bc181935c42]{Derivative as a local linear map} & \hyperref[appendix-32f39e9a3738]{Taylor models and approximation error} & The Taylor models and approximation error explanation builds on the definition or mechanism in Derivative as a local linear map. \\
+\href{}{Hessians and local curvature (01-Foundations-I, appendix-6ac071f8b50c)} & \hyperref[appendix-32f39e9a3738]{Taylor models and approximation error} & The Taylor models and approximation error explanation builds on the definition or mechanism in Hessians and local curvature. \\
+\hyperref[appendix-7bc181935c42]{Derivative as a local linear map} & \hyperref[appendix-e2d7b4f2161d]{Finite differences and step-size balance} & The Finite differences and step-size balance explanation builds on the definition or mechanism in Derivative as a local linear map. \\
+\href{}{Absolute and relative error (01-Foundations-I, appendix-3ae74e89b4e6)} & \hyperref[appendix-e2d7b4f2161d]{Finite differences and step-size balance} & The Finite differences and step-size balance explanation builds on the definition or mechanism in Absolute and relative error. \\
+\hyperref[appendix-7bc181935c42]{Derivative as a local linear map} & \hyperref[appendix-1a50e72435c2]{Definite integrals and the fundamental theorem} & The Definite integrals and the fundamental theorem explanation builds on the definition or mechanism in Derivative as a local linear map. \\
+\hyperref[appendix-1a50e72435c2]{Definite integrals and the fundamental theorem} & \hyperref[appendix-80521eae6b71]{Numerical quadrature and error} & The Numerical quadrature and error explanation builds on the definition or mechanism in Definite integrals and the fundamental theorem. \\
+\href{}{Absolute and relative error (01-Foundations-I, appendix-3ae74e89b4e6)} & \hyperref[appendix-80521eae6b71]{Numerical quadrature and error} & The Numerical quadrature and error explanation builds on the definition or mechanism in Absolute and relative error. \\
+\hyperref[appendix-1a50e72435c2]{Definite integrals and the fundamental theorem} & \hyperref[appendix-e8ab9836882e]{ODE initial-value problems and stiffness} & The ODE initial-value problems and stiffness explanation builds on the definition or mechanism in Definite integrals and the fundamental theorem. \\
+\hyperref[appendix-0b3be18411f9]{Eigenvalues and eigenspaces} & \hyperref[appendix-e8ab9836882e]{ODE initial-value problems and stiffness} & The ODE initial-value problems and stiffness explanation builds on the definition or mechanism in Eigenvalues and eigenspaces. \\
+\href{}{Absolute and relative error (01-Foundations-I, appendix-3ae74e89b4e6)} & \hyperref[appendix-e8ab9836882e]{ODE initial-value problems and stiffness} & The ODE initial-value problems and stiffness explanation builds on the definition or mechanism in Absolute and relative error. \\
+\hyperref[appendix-e8ab9836882e]{ODE initial-value problems and stiffness} & \hyperref[appendix-8f96f9c4d5bc]{Time integrators and symplectic updates} & The Time integrators and symplectic updates explanation builds on the definition or mechanism in ODE initial-value problems and stiffness. \\
+\href{}{Hessians and local curvature (01-Foundations-I, appendix-6ac071f8b50c)} & \hyperref[appendix-54c8f5828387]{Newton and quasi-Newton optimization} & The Newton and quasi-Newton optimization explanation builds on the definition or mechanism in Hessians and local curvature. \\
+\href{}{Constrained optimization and inverse kinematics (04-Visual-Computing-II, appendix-29f4bea4c2bb)} & \hyperref[appendix-54c8f5828387]{Newton and quasi-Newton optimization} & The Newton and quasi-Newton optimization explanation builds on the definition or mechanism in Constrained optimization and inverse kinematics. \\
+\href{}{Jacobians, pushforwards, and pullbacks (01-Foundations-I, appendix-d8a7ddb675eb)} & \hyperref[appendix-2c2df8345991]{Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt} & The Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt explanation builds on the definition or mechanism in Jacobians, pushforwards, and pullbacks. \\
+\href{}{Hessians and local curvature (01-Foundations-I, appendix-6ac071f8b50c)} & \hyperref[appendix-2c2df8345991]{Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt} & The Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt explanation builds on the definition or mechanism in Hessians and local curvature. \\
+\hyperref[appendix-50d2ea3c9b26]{Symmetric positive-definite matrices and Cholesky} & \hyperref[appendix-2c2df8345991]{Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt} & The Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt explanation builds on the definition or mechanism in Symmetric positive-definite matrices and Cholesky. \\
+\href{}{Constrained optimization and inverse kinematics (04-Visual-Computing-II, appendix-29f4bea4c2bb)} & \hyperref[appendix-2c2df8345991]{Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt} & The Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt explanation builds on the definition or mechanism in Constrained optimization and inverse kinematics. \\
+\href{}{Automatic differentiation and backpropagation (03-Visual-Computing-I, appendix-40df0855b4a7)} & \hyperref[appendix-8836553d56fc]{Implicit differentiation and parameter sensitivities} & The Implicit differentiation and parameter sensitivities explanation builds on the definition or mechanism in Automatic differentiation and backpropagation. \\
+\href{}{Constrained optimization and inverse kinematics (04-Visual-Computing-II, appendix-29f4bea4c2bb)} & \hyperref[appendix-8836553d56fc]{Implicit differentiation and parameter sensitivities} & The Implicit differentiation and parameter sensitivities explanation builds on the definition or mechanism in Constrained optimization and inverse kinematics. \\
+\href{}{ODE integration and stability (04-Visual-Computing-II, appendix-18eacf61a04b)} & \hyperref[appendix-8836553d56fc]{Implicit differentiation and parameter sensitivities} & The Implicit differentiation and parameter sensitivities explanation builds on the definition or mechanism in ODE integration and stability. \\
+\hyperref[appendix-f1ef323f6ed7]{Probability spaces, events, and conditioning} & \hyperref[appendix-4d0203f7944f]{Random variables and probability laws} & The Random variables and probability laws explanation builds on the definition or mechanism in Probability spaces, events, and conditioning. \\
+\hyperref[appendix-4d0203f7944f]{Random variables and probability laws} & \hyperref[appendix-a2360b435383]{Common probability distributions and their assumptions} & The Common probability distributions and their assumptions explanation builds on the definition or mechanism in Random variables and probability laws. \\
+\hyperref[appendix-54c383df9992]{Expectation, covariance, and dependence} & \hyperref[appendix-a2360b435383]{Common probability distributions and their assumptions} & The Common probability distributions and their assumptions explanation builds on the definition or mechanism in Expectation, covariance, and dependence. \\
+\hyperref[appendix-f1ef323f6ed7]{Probability spaces, events, and conditioning} & \hyperref[appendix-54c383df9992]{Expectation, covariance, and dependence} & The Expectation, covariance, and dependence explanation builds on the definition or mechanism in Probability spaces, events, and conditioning. \\
+\hyperref[appendix-4d0203f7944f]{Random variables and probability laws} & \hyperref[appendix-54c383df9992]{Expectation, covariance, and dependence} & The Expectation, covariance, and dependence explanation builds on the definition or mechanism in Random variables and probability laws. \\
+\hyperref[appendix-54c383df9992]{Expectation, covariance, and dependence} & \hyperref[appendix-12bbe185dbe5]{Multivariate Gaussian distributions and whitening} & The Multivariate Gaussian distributions and whitening explanation builds on the definition or mechanism in Expectation, covariance, and dependence. \\
+\hyperref[appendix-50d2ea3c9b26]{Symmetric positive-definite matrices and Cholesky} & \hyperref[appendix-12bbe185dbe5]{Multivariate Gaussian distributions and whitening} & The Multivariate Gaussian distributions and whitening explanation builds on the definition or mechanism in Symmetric positive-definite matrices and Cholesky. \\
+\href{}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)} & \hyperref[appendix-12bbe185dbe5]{Multivariate Gaussian distributions and whitening} & The Multivariate Gaussian distributions and whitening explanation builds on the definition or mechanism in Probability density and change of measure. \\
+\hyperref[appendix-12bbe185dbe5]{Multivariate Gaussian distributions and whitening} & \hyperref[appendix-f0437ea55a47]{Conditional Gaussians and Schur complements} & The Conditional Gaussians and Schur complements explanation builds on the definition or mechanism in Multivariate Gaussian distributions and whitening. \\
+\hyperref[appendix-f6e77f4a200f]{Gaussian elimination and pivoting} & \hyperref[appendix-f0437ea55a47]{Conditional Gaussians and Schur complements} & The Conditional Gaussians and Schur complements explanation builds on the definition or mechanism in Gaussian elimination and pivoting. \\
+\hyperref[appendix-a2360b435383]{Common probability distributions and their assumptions} & \hyperref[appendix-e0f7c7e08f3a]{Stateful pseudorandom generators and stream state} & The Stateful pseudorandom generators and stream state explanation builds on the definition or mechanism in Common probability distributions and their assumptions. \\
+\hyperref[appendix-e0f7c7e08f3a]{Stateful pseudorandom generators and stream state} & \hyperref[appendix-daaf25bfd3a0]{Stateless keyed sampling and reproducibility} & The Stateless keyed sampling and reproducibility explanation builds on the definition or mechanism in Stateful pseudorandom generators and stream state. \\
+\hyperref[appendix-daaf25bfd3a0]{Stateless keyed sampling and reproducibility} & \hyperref[appendix-9f693ffd82bc]{Sampling quality: stratification, quasi-Monte Carlo, and blue noise} & The Sampling quality: stratification, quasi-Monte Carlo, and blue noise explanation builds on the definition or mechanism in Stateless keyed sampling and reproducibility. \\
+\href{}{Sampling aliasing and reconstruction (04-Visual-Computing-II, appendix-6a7869dd79a6)} & \hyperref[appendix-9f693ffd82bc]{Sampling quality: stratification, quasi-Monte Carlo, and blue noise} & The Sampling quality: stratification, quasi-Monte Carlo, and blue noise explanation builds on the definition or mechanism in Sampling aliasing and reconstruction. \\
+\hyperref[appendix-4d0203f7944f]{Random variables and probability laws} & \hyperref[appendix-8d863ed954d0]{Inverse, rejection, and importance sampling} & The Inverse, rejection, and importance sampling explanation builds on the definition or mechanism in Random variables and probability laws. \\
+\href{}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)} & \hyperref[appendix-8d863ed954d0]{Inverse, rejection, and importance sampling} & The Inverse, rejection, and importance sampling explanation builds on the definition or mechanism in Probability density and change of measure. \\
+\hyperref[appendix-e0f7c7e08f3a]{Stateful pseudorandom generators and stream state} & \hyperref[appendix-8d863ed954d0]{Inverse, rejection, and importance sampling} & The Inverse, rejection, and importance sampling explanation builds on the definition or mechanism in Stateful pseudorandom generators and stream state. \\
+\hyperref[appendix-54c383df9992]{Expectation, covariance, and dependence} & \hyperref[appendix-33237f0f618b]{Online moments and Welford accumulation} & The Online moments and Welford accumulation explanation builds on the definition or mechanism in Expectation, covariance, and dependence. \\
+\href{}{Accumulated rounding error (01-Foundations-I, appendix-f82e270791c8)} & \hyperref[appendix-33237f0f618b]{Online moments and Welford accumulation} & The Online moments and Welford accumulation explanation builds on the definition or mechanism in Accumulated rounding error. \\
+\hyperref[appendix-a2360b435383]{Common probability distributions and their assumptions} & \hyperref[appendix-c83016554b1e]{Confidence intervals and sequential evidence} & The Confidence intervals and sequential evidence explanation builds on the definition or mechanism in Common probability distributions and their assumptions. \\
+\hyperref[appendix-54c383df9992]{Expectation, covariance, and dependence} & \hyperref[appendix-c83016554b1e]{Confidence intervals and sequential evidence} & The Confidence intervals and sequential evidence explanation builds on the definition or mechanism in Expectation, covariance, and dependence. \\
+\href{}{Monte Carlo rendering estimators and variance (04-Visual-Computing-II, appendix-031e02bf28af)} & \hyperref[appendix-c83016554b1e]{Confidence intervals and sequential evidence} & The Confidence intervals and sequential evidence explanation builds on the definition or mechanism in Monte Carlo rendering estimators and variance. \\
+\hyperref[appendix-54c383df9992]{Expectation, covariance, and dependence} & \hyperref[appendix-bcc44e9d3d02]{Robust summaries and error metrics} & The Robust summaries and error metrics explanation builds on the definition or mechanism in Expectation, covariance, and dependence. \\
+\href{}{Absolute and relative error (01-Foundations-I, appendix-3ae74e89b4e6)} & \hyperref[appendix-bcc44e9d3d02]{Robust summaries and error metrics} & The Robust summaries and error metrics explanation builds on the definition or mechanism in Absolute and relative error. \\
+\hyperref[appendix-4d0203f7944f]{Random variables and probability laws} & \href{}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)} & The Probability density and change of measure explanation builds on the definition or mechanism in Random variables and probability laws. \\
+\hyperref[appendix-8d863ed954d0]{Inverse, rejection, and importance sampling} & \href{}{Monte Carlo rendering estimators and variance (04-Visual-Computing-II, appendix-031e02bf28af)} & The Monte Carlo rendering estimators and variance explanation builds on the definition or mechanism in Inverse, rejection, and importance sampling. \\
+\hyperref[appendix-54c383df9992]{Expectation, covariance, and dependence} & \href{}{Monte Carlo rendering estimators and variance (04-Visual-Computing-II, appendix-031e02bf28af)} & The Monte Carlo rendering estimators and variance explanation builds on the definition or mechanism in Expectation, covariance, and dependence. \\
+\hyperref[appendix-7bc181935c42]{Derivative as a local linear map} & \href{}{Automatic differentiation and backpropagation (03-Visual-Computing-I, appendix-40df0855b4a7)} & The Automatic differentiation and backpropagation explanation builds on the definition or mechanism in Derivative as a local linear map. \\
+\href{}{Jacobians, pushforwards, and pullbacks (01-Foundations-I, appendix-d8a7ddb675eb)} & \href{}{Automatic differentiation and backpropagation (03-Visual-Computing-I, appendix-40df0855b4a7)} & The Automatic differentiation and backpropagation explanation builds on the definition or mechanism in Jacobians, pushforwards, and pullbacks. \\
+\hyperref[appendix-e8ab9836882e]{ODE initial-value problems and stiffness} & \href{}{ODE integration and stability (04-Visual-Computing-II, appendix-18eacf61a04b)} & The ODE integration and stability explanation builds on the definition or mechanism in ODE initial-value problems and stiffness. \\
+\hyperref[appendix-8f96f9c4d5bc]{Time integrators and symplectic updates} & \href{}{ODE integration and stability (04-Visual-Computing-II, appendix-18eacf61a04b)} & The ODE integration and stability explanation builds on the definition or mechanism in Time integrators and symplectic updates. \\
+\hyperref[appendix-54c383df9992]{Expectation, covariance, and dependence} & \hyperref[appendix-ad175ef3c5bf]{PCA and covariance eigensystems} & The PCA and covariance eigensystems explanation builds on the definition or mechanism in Expectation, covariance, and dependence. \\
+\hyperref[appendix-12bbe185dbe5]{Multivariate Gaussian distributions and whitening} & \hyperref[appendix-ad175ef3c5bf]{PCA and covariance eigensystems} & The PCA and covariance eigensystems explanation builds on the definition or mechanism in Multivariate Gaussian distributions and whitening. \\
+\href{}{Monte Carlo rendering estimators and variance (04-Visual-Computing-II, appendix-031e02bf28af)} & \href{}{Antialiasing and sample allocation (04-Visual-Computing-II, appendix-4192b2bdd21e)} & The Antialiasing and sample allocation explanation builds on the definition or mechanism in Monte Carlo rendering estimators and variance. \\
+\hyperref[appendix-9f693ffd82bc]{Sampling quality: stratification, quasi-Monte Carlo, and blue noise} & \href{}{Antialiasing and sample allocation (04-Visual-Computing-II, appendix-4192b2bdd21e)} & The Antialiasing and sample allocation explanation builds on the definition or mechanism in Sampling quality: stratification, quasi-Monte Carlo, and blue noise. \\
+\end{longtable}
+}
+
+\subsection{Learning spines}\label{learning-spines}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prerequisite
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dependent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Why the dependency exists
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\href{}{Physical and logical binary states (01-Foundations-I, appendix-ea798b1ceb35)} & \href{}{Bit (01-Foundations-I, appendix-ddbb69998a2e)} & A stable two-state abstraction is the unit being encoded. \\
+\href{}{Bit (01-Foundations-I, appendix-ddbb69998a2e)} & \href{}{Positional notation (01-Foundations-I, appendix-83c3f28f7bda)} & Positions assign numeric weights to those states. \\
+\href{}{Positional notation (01-Foundations-I, appendix-83c3f28f7bda)} & \href{}{Binary conversion (01-Foundations-I, appendix-dc552784a2c0)} & Division and weighted sums reconstruct the same digit expansion. \\
+\href{}{Bit significance (01-Foundations-I, appendix-280445746493)} & \href{}{Bit mask (01-Foundations-I, appendix-dbe5905163c2)} & A selection must identify which positions belong to it. \\
+\href{}{Boolean algebra (01-Foundations-I, appendix-24475e1596a8)} & \href{}{Bitwise AND (01-Foundations-I, appendix-68b52453737c)}, \href{}{Bitwise OR (01-Foundations-I, appendix-a427ce8ce8a6)}, \href{}{Bitwise XOR (01-Foundations-I, appendix-d49161831368)}, \href{}{Bitwise NOT (01-Foundations-I, appendix-8f38927cfc54)} & Each word operation applies a one-bit truth table to every lane. \\
+\href{}{Bit mask (01-Foundations-I, appendix-dbe5905163c2)}, \href{}{Shift operations (01-Foundations-I, appendix-73425b25118e)} & \href{}{Bit field (01-Foundations-I, appendix-ac697f5c66e8)} & Selection plus normalization extracts a range of bits. \\
+\href{}{Bit field (01-Foundations-I, appendix-ac697f5c66e8)}, \href{}{Interpretation contract (01-Foundations-I, appendix-f414bd4ed05c)} & \href{}{Bit packing (01-Foundations-I, appendix-1f9963e1a5d1)} & Packing must preserve declared ownership, widths, and ordering. \\
+\href{}{Machine word (01-Foundations-I, appendix-d67a19507dc5)}, \href{}{Positional notation (01-Foundations-I, appendix-83c3f28f7bda)} & \href{}{Unsigned modular arithmetic (01-Foundations-I, appendix-c99977d88b33)} & Finite width imposes the modulus \(2^N\). \\
+\href{}{Unsigned modular arithmetic (01-Foundations-I, appendix-c99977d88b33)}, \href{}{Bitwise NOT (01-Foundations-I, appendix-8f38927cfc54)} & \href{}{Two\textquotesingle s complement (01-Foundations-I, appendix-4fbc03d20829)} & A negative residue is complement-plus-one at the same width. \\
+\href{}{Half adder (01-Foundations-I, appendix-1652d27a8e90)}, \href{}{Carry and borrow (01-Foundations-I, appendix-d52d5f78ffd1)} & \href{}{Full adder (01-Foundations-I, appendix-d1a5b1e520c2)} & Multi-position addition needs an incoming carry. \\
+\href{}{Full adder (01-Foundations-I, appendix-d1a5b1e520c2)} & \href{}{Ripple-carry addition (01-Foundations-I, appendix-17917d9fdbe3)} & Chained carry outputs form the circuit's critical path. \\
+\href{}{Two\textquotesingle s complement (01-Foundations-I, appendix-4fbc03d20829)}, \href{}{Full adder (01-Foundations-I, appendix-d1a5b1e520c2)} & \href{}{Carry, overflow, negative, and zero flags (01-Foundations-I, appendix-8d687c9c08ab)} & The same result bits answer distinct signed and unsigned questions. \\
+\href{}{Two\textquotesingle s complement (01-Foundations-I, appendix-4fbc03d20829)} & \href{}{Subtraction through addition (01-Foundations-I, appendix-1c7df340573e)} & Negation lets subtraction reuse the adder. \\
+\href{}{Shift operations (01-Foundations-I, appendix-73425b25118e)}, \href{}{Full adder (01-Foundations-I, appendix-d1a5b1e520c2)} & \href{}{Shift-and-add multiplication (01-Foundations-I, appendix-a65290d66ed9)} & Set multiplier bits select weighted partial sums. \\
+\href{}{Shift operations (01-Foundations-I, appendix-73425b25118e)}, \href{}{Subtraction through addition (01-Foundations-I, appendix-1c7df340573e)} & \href{}{Binary long division (01-Foundations-I, appendix-89985e6a2685)} & Shifted remainders are compared and reduced by subtraction. \\
+\href{}{Fixed-width integer types (01-Foundations-I, appendix-cc04044b5782)} & \href{}{Integral promotion (01-Foundations-I, appendix-45303d03796a)} & Stored width alone does not establish expression width. \\
+\href{}{Integral promotion (01-Foundations-I, appendix-45303d03796a)} & \href{}{Usual arithmetic conversions (01-Foundations-I, appendix-5e2d663adf7f)} & Promotion occurs before selection of the common operation type. \\
+\href{}{Usual arithmetic conversions (01-Foundations-I, appendix-5e2d663adf7f)} & \href{}{Mixed signedness (01-Foundations-I, appendix-736a2345de4a)} & Conversion can change a negative operand into an unsigned residue. \\
+\href{}{Byte and octet (01-Foundations-I, appendix-5bee2df85484)}, \href{}{Bit significance (01-Foundations-I, appendix-280445746493)} & \href{}{Endianness (01-Foundations-I, appendix-bc07c3d25b18)} & Byte ordering must be distinguished from bit weights. \\
+\href{}{Endianness (01-Foundations-I, appendix-bc07c3d25b18)}, \href{}{Fixed-width integer types (01-Foundations-I, appendix-cc04044b5782)} & \href{}{Serialization (01-Foundations-I, appendix-91d09ebed979)} & A file format must define the exact emitted byte sequence. \\
+\end{longtable}
+}
+
+\subsection{Narrative order and source coverage}\label{narrative-order-and-source-coverage}
+
+The first six sources cover Parts 1--100. Volume 01 follows physical state → interpretation → decisions/fields → finite arithmetic → floating representation/error → deliberate precision choices → placement/lifetime → serialization/integrity/dump. Source order remains in Foundations. M007--M010 now cover C++ Parts 101--160; exact source ranges remain in Foundations.
+
+Future connections already have definitions: \href{}{IEEE-754 floating point (01-Foundations-I, appendix-343615f49ddf)}, \href{}{Cache lines and memory bandwidth (01-Foundations-I, appendix-e4ccdbab8320)}, \href{}{Atomic operations and write contention (01-Foundations-I, appendix-e12d1b03fefb)}, \hyperref[appendix-3c7b1a56de01]{SIMD and GPU data layouts}, \href{}{Quantization and compressed weights (04-Visual-Computing-II, appendix-fdc7879e8bf2)}, \href{}{Compiler IR and machine instructions (01-Foundations-I, appendix-942ad41afb30)}, and \href{}{Guest and host integer domains (01-Foundations-I, appendix-33e7a011b684)}. Update these same notes when their curriculum parts arrive.
+
+\subsection{Navigation}\label{navigation}
+
+\hyperref[appendix-a6d556a4ef50]{Keyword Index} · \href{Graphics\%20Engine\%20Mastery\%20-\%20Continuous\%20Notes}{Graphics Engine Mastery - Continuous Notes} · \href{}{Supplementary/Foundations (01-Foundations-I, appendix-fd090d982a15)} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Reconstruct\%20the\%20representation\%20and\%20lifetime\%20proofs}{Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Reconstruct the representation and lifetime proofs} · \href{}{Supplementary/Code Snippets (01-Foundations-I, appendix-4e2236f53445)} · \href{}{Supplementary/Worked Traces (01-Foundations-I, appendix-92ff77d4dfdc)}
+
+\subsection{Updating the graph}\label{updating-the-graph}
+
+For each chunk, define new terms before linking them, add prerequisite reasons, link downstream uses, and back-link the relevant teaching chapter. A shared source link is navigation; a prerequisite link explains learning order. The graph can contain navigation cycles even when the prerequisite relation is acyclic.
+
+\subsection{M003 - Placement and memory learning spine}\label{m003---placement-and-memory-learning-spine}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prerequisites
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dependent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Reason
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\href{}{Endianness (01-Foundations-I, appendix-bc07c3d25b18)}, \href{}{Shift operations (01-Foundations-I, appendix-73425b25118e)} & \href{}{Little endian (01-Foundations-I, appendix-367b6abf460e)} & Byte order tells how digit significance maps to sequence positions. Shifts relocate a selected byte or address field to its significance position. \\
+\href{}{Endianness (01-Foundations-I, appendix-bc07c3d25b18)}, \href{}{Positional notation (01-Foundations-I, appendix-83c3f28f7bda)} & \href{}{Big endian (01-Foundations-I, appendix-92e040df969a)} & Byte order tells how digit significance maps to sequence positions. Base-256 weighted digits give the codec's numeric meaning. \\
+\href{}{Endianness (01-Foundations-I, appendix-bc07c3d25b18)}, \href{}{Fixed-width integer types (01-Foundations-I, appendix-cc04044b5782)} & \href{}{Byte swapping and network order (01-Foundations-I, appendix-11ba36693aa2)} & Byte order tells how digit significance maps to sequence positions. The representation width fixes byte count and valid shift range. \\
+\href{}{Alignment and padding (01-Foundations-I, appendix-a1f7c53b4742)}, \href{}{Fixed-width integer types (01-Foundations-I, appendix-cc04044b5782)} & \href{}{ABI and object layout (01-Foundations-I, appendix-c4ac6bb0fff8)} & Address divisibility determines legal placement and layout holes. The representation width fixes byte count and valid shift range. \\
+\href{}{Alignment and padding (01-Foundations-I, appendix-a1f7c53b4742)} & \href{}{Internal and tail padding (01-Foundations-I, appendix-f52f8c5a3afd)} & Address divisibility determines legal placement and layout holes. \\
+\href{}{Internal and tail padding (01-Foundations-I, appendix-f52f8c5a3afd)}, \href{}{Cache lines and memory bandwidth (01-Foundations-I, appendix-e4ccdbab8320)} & \href{}{Field reordering and AoS versus SoA (05-Engine-I, appendix-5522ad176ca0)} & The position and amount of unused layout space determine reordering/packing effects. Field adjacency and stride affect useful bytes fetched per access. \\
+\href{}{Alignment and padding (01-Foundations-I, appendix-a1f7c53b4742)}, \href{}{Internal and tail padding (01-Foundations-I, appendix-f52f8c5a3afd)}, \href{}{Undefined behavior (01-Foundations-I, appendix-f558f5b4d8f2)} & \href{}{Packed structures and misaligned access (01-Foundations-I, appendix-0682dbfc5f0e)} & Address divisibility determines legal placement and layout holes. The position and amount of unused layout space determine reordering/packing effects. Hardware completion does not prove a language-level operation legal. \\
+\href{}{Addresses and virtual memory (01-Foundations-I, appendix-18ee4f913c3c)}, \href{}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)} & \href{}{Pointer arithmetic and provenance (01-Foundations-I, appendix-6af5921bc853)} & Mappings give numeric locations their process-specific storage identity. Access requires an object and backing storage that are still valid. \\
+\href{}{Addresses and virtual memory (01-Foundations-I, appendix-18ee4f913c3c)}, \href{}{Bit mask (01-Foundations-I, appendix-dbe5905163c2)}, \href{}{Shift operations (01-Foundations-I, appendix-73425b25118e)} & \href{}{Pages and page offsets (01-Foundations-I, appendix-0c67cd5bf30a)} & Mappings give numeric locations their process-specific storage identity. A low-bit mask isolates the within-page offset. Shifts relocate a selected byte or address field to its significance position. \\
+\href{}{Pages and page offsets (01-Foundations-I, appendix-0c67cd5bf30a)}, \href{}{Process isolation and page permissions (01-Foundations-I, appendix-c2a9ad1e2b49)} & \href{}{Page tables and MMU (01-Foundations-I, appendix-01e5905165c4)} & Page identity is translated while within-page position is preserved. The mapping context and permissions constrain which accesses proceed. \\
+\href{}{Page tables and MMU (01-Foundations-I, appendix-01e5905165c4)} & \href{}{TLB (01-Foundations-I, appendix-7a2d9c5ce511)} & Cached or faulting translation starts from the mapping/protection mechanism. \\
+\href{}{Addresses and virtual memory (01-Foundations-I, appendix-18ee4f913c3c)} & \href{}{Process isolation and page permissions (01-Foundations-I, appendix-c2a9ad1e2b49)} & Mappings give numeric locations their process-specific storage identity. \\
+\href{}{Page tables and MMU (01-Foundations-I, appendix-01e5905165c4)} & \href{}{Page faults and demand paging (01-Foundations-I, appendix-cc0909a7ef14)} & Cached or faulting translation starts from the mapping/protection mechanism. \\
+\href{}{Page faults and demand paging (01-Foundations-I, appendix-cc0909a7ef14)} & \href{}{Copy-on-write (01-Foundations-I, appendix-7a06e5baac04)} & Deferred private copying is implemented through a recoverable write fault. \\
+\href{}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)}, \href{}{Process isolation and page permissions (01-Foundations-I, appendix-c2a9ad1e2b49)} & \href{}{Call stack and stack frames (01-Foundations-I, appendix-b081b7abe193)} & Access requires an object and backing storage that are still valid. The mapping context and permissions constrain which accesses proceed. \\
+\href{}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)}, \href{}{Alignment and padding (01-Foundations-I, appendix-a1f7c53b4742)} & \href{}{Dynamic allocation and heap (01-Foundations-I, appendix-c3480f7d9ff3)} & Access requires an object and backing storage that are still valid. Address divisibility determines legal placement and layout holes. \\
+\href{}{Dynamic allocation and heap (01-Foundations-I, appendix-c3480f7d9ff3)} & \href{}{Allocator fragmentation (01-Foundations-I, appendix-a7c50686d81f)} & Allocated buffers/blocks supply the storage whose ownership and fragmentation matter. \\
+\href{}{Interpretation contract (01-Foundations-I, appendix-f414bd4ed05c)} & \href{}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)} & Representation, type, and lifetime must identify what object exists. \\
+\href{}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)} & \href{}{Static storage and initialization (01-Foundations-I, appendix-17c93c4c2f19)} & Access requires an object and backing storage that are still valid. \\
+\href{}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)}, \href{}{Process isolation and page permissions (01-Foundations-I, appendix-c2a9ad1e2b49)} & \href{}{Read-only data and code (01-Foundations-I, appendix-5f9e5e2f0a5e)} & Access requires an object and backing storage that are still valid. The mapping context and permissions constrain which accesses proceed. \\
+\href{}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)}, \href{}{Dynamic allocation and heap (01-Foundations-I, appendix-c3480f7d9ff3)} & \href{}{Ownership and non-owning views (05-Engine-I, appendix-d52e4486f527)} & Access requires an object and backing storage that are still valid. Allocated buffers/blocks supply the storage whose ownership and fragmentation matter. \\
+\href{}{Pages and page offsets (01-Foundations-I, appendix-0c67cd5bf30a)} & \href{}{Virtual and physical contiguity (01-Foundations-I, appendix-f897c1ddac8f)} & Page identity is translated while within-page position is preserved. \\
+\href{}{Page faults and demand paging (01-Foundations-I, appendix-cc0909a7ef14)}, \href{}{Ownership and non-owning views (05-Engine-I, appendix-d52e4486f527)} & \href{}{Memory-mapped files (01-Foundations-I, appendix-313ee7a0ba7b)} & Deferred private copying is implemented through a recoverable write fault. A mapping or publication pipeline must keep referenced bytes valid. \\
+\href{}{Serialization (01-Foundations-I, appendix-91d09ebed979)}, \href{}{Ownership and non-owning views (05-Engine-I, appendix-d52e4486f527)} & \href{}{Atomic publication and durability (01-Foundations-I, appendix-e89a8f290ef5)} & Publication persists already-specified bytes, rather than defining their format. A mapping or publication pipeline must keep referenced bytes valid. \\
+\href{}{Process isolation and page permissions (01-Foundations-I, appendix-c2a9ad1e2b49)} & \href{}{ASLR (01-Foundations-I, appendix-78cb248c8355)} & The mapping context and permissions constrain which accesses proceed. \\
+\href{}{TLB (01-Foundations-I, appendix-7a2d9c5ce511)}, \href{}{Allocator fragmentation (01-Foundations-I, appendix-a7c50686d81f)} & \href{}{Huge pages and TLB reach (01-Foundations-I, appendix-ce688d1acdab)} & Larger pages change the amount of memory covered by cached translations. Coarser allocation granularity introduces space/availability trade-offs. \\
+\href{}{Byte and octet (01-Foundations-I, appendix-5bee2df85484)}, \href{}{Bit significance (01-Foundations-I, appendix-280445746493)} & \href{}{Endianness (01-Foundations-I, appendix-bc07c3d25b18)} & Byte units define both storage offsets and significance digits. Distinguish byte significance from where it is stored. \\
+\href{}{Interpretation contract (01-Foundations-I, appendix-f414bd4ed05c)}, \href{}{Fixed-width integer types (01-Foundations-I, appendix-cc04044b5782)}, \href{}{Endianness (01-Foundations-I, appendix-bc07c3d25b18)} & \href{}{Serialization (01-Foundations-I, appendix-91d09ebed979)} & Representation, type, and lifetime must identify what object exists. The representation width fixes byte count and valid shift range. Byte order tells how digit significance maps to sequence positions. \\
+\href{}{Byte and octet (01-Foundations-I, appendix-5bee2df85484)}, \href{}{Addresses and virtual memory (01-Foundations-I, appendix-18ee4f913c3c)} & \href{}{Alignment and padding (01-Foundations-I, appendix-a1f7c53b4742)} & Byte units define both storage offsets and significance digits. Mappings give numeric locations their process-specific storage identity. \\
+\href{}{Byte and octet (01-Foundations-I, appendix-5bee2df85484)} & \href{}{Addresses and virtual memory (01-Foundations-I, appendix-18ee4f913c3c)} & Byte units define both storage offsets and significance digits. \\
+\end{longtable}
+}
+
+\subsection{M004 - Representation and rounding learning spine}\label{m004---representation-and-rounding-learning-spine}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prerequisites
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dependent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Why these steps are needed
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\href{}{IEEE-754 floating point (01-Foundations-I, appendix-343615f49ddf)}, \href{}{Bit field (01-Foundations-I, appendix-ac697f5c66e8)} & \href{}{Binary32 (01-Foundations-I, appendix-5057f9ad327f)} & A 32-bit binary interchange format with one sign bit, eight exponent bits and 23 fraction bits. Normal precision is 24 bits; exponent bias is 127. Word 3F800000 has E=127,F=0 and means 1. \\
+\href{}{Binary32 (01-Foundations-I, appendix-5057f9ad327f)} & \href{}{Binary64 (01-Foundations-I, appendix-5078dfab64e6)} & A 64-bit binary interchange format with 1/11/52 fields, 53 significant normal bits and bias 1023. Normal exponent range is −1022 through 1023. Word 3FF0000000000000 means 1. \\
+\href{}{Binary32 (01-Foundations-I, appendix-5057f9ad327f)} & \href{}{Exponent bias (01-Foundations-I, appendix-2fae058c82e1)} & Normal exponents are encoded as unsigned E=e+B. Binary32 B=127, so exponent 3 stores 130. Field zero and all-ones are reserved; classify before subtracting bias. \\
+\href{}{Binary32 (01-Foundations-I, appendix-5057f9ad327f)}, \href{}{Positional notation (01-Foundations-I, appendix-83c3f28f7bda)} & \href{}{Significand and hidden bit (01-Foundations-I, appendix-a24fd710cf67)} & The significand supplies significant digits; the exponent supplies scale. A normal binary value begins 1.f, so its leading one is implied, not stored. Binary32 fraction F contributes F/2\^{}23; subnormals instead begin 0.f. \\
+\href{}{Exponent bias (01-Foundations-I, appendix-2fae058c82e1)}, \href{}{Significand and hidden bit (01-Foundations-I, appendix-a24fd710cf67)}, \href{}{Hexadecimal (01-Foundations-I, appendix-6b8075763724)} & \href{}{Floating-point encoding and decoding (01-Foundations-I, appendix-6854d0e2218e)} & Encoding chooses fields for a value; decoding classifies fields and reconstructs their meaning. 10.625 normalizes to 1.010101₂×2³, giving 412A0000. C1540000 decodes to −13.25. \\
+\href{}{Binary32 (01-Foundations-I, appendix-5057f9ad327f)} & \href{}{Signed zero (01-Foundations-I, appendix-3a048f032c1f)} & Exponent and fraction zero permit either sign. 00000000 and 80000000 compare numerically equal, but signbit and reciprocal distinguish them. Ordinary x\textless0 does not detect negative zero. \\
+\href{}{Binary32 (01-Foundations-I, appendix-5057f9ad327f)} & \href{}{Floating-point infinities (01-Foundations-I, appendix-eb336149c00a)} & All-one exponent and zero fraction encode signed infinity. This is not maximum finite. Infinity minus itself is NaN; overflow's result also depends on rounding direction. \\
+\href{}{Binary32 (01-Foundations-I, appendix-5057f9ad327f)} & \href{}{NaNs and payloads (01-Foundations-I, appendix-d6607cc4c235)} & All-one exponent with nonzero fraction encodes a non-numerical, unordered NaN. Quiet and signaling classes differ; fraction bits can carry payload information. Ordinary NaN equality is false; use isnan. Raw words can be classified without consuming signaling NaNs as floating values. \\
+\href{}{Exponent bias (01-Foundations-I, appendix-2fae058c82e1)}, \href{}{Significand and hidden bit (01-Foundations-I, appendix-a24fd710cf67)} & \href{}{Subnormals and gradual underflow (01-Foundations-I, appendix-00a6e044c437)} & Exponent zero and nonzero fraction remove the hidden one and hold the effective exponent at the normal minimum. Binary32 values are F×2\^{}-149, connecting smoothly to 2\^{}-126. Absolute spacing stays fixed while relative precision degrades. \\
+\href{}{Significand and hidden bit (01-Foundations-I, appendix-a24fd710cf67)} & \href{}{Machine epsilon (01-Foundations-I, appendix-390ea641da54)} & For these binary types epsilon is upward spacing at 1: 2\^{}-23 for binary32 and 2\^{}-52 for binary64. It is neither minimum positive value nor a physical threshold. \\
+\href{}{Machine epsilon (01-Foundations-I, appendix-390ea641da54)}, \href{}{Exponent bias (01-Foundations-I, appendix-2fae058c82e1)}, \href{}{Subnormals and gradual underflow (01-Foundations-I, appendix-00a6e044c437)} & \href{}{ULP and representable spacing (01-Foundations-I, appendix-14bab4cab9d4)} & A unit in the last place describes local spacing. Inside normal binade {[}2\textsuperscript{e,2}(e+1)), p-bit precision gives spacing 2\^{}(e-(p-1)). Immediately above 1 the binary32 gap is twice the gap below it. \\
+\href{}{ULP and representable spacing (01-Foundations-I, appendix-14bab4cab9d4)} & \href{}{Rounding to nearest ties to even (01-Foundations-I, appendix-614afe1de592)} & Choose the nearest representable value; exactly halfway choose the even retained significand integer. At toy precision three bits, 1.125→1 and 1.375→1.5. std::round uses halfway-away-from-zero instead. \\
+\href{}{ULP and representable spacing (01-Foundations-I, appendix-14bab4cab9d4)}, \href{}{Rounding to nearest ties to even (01-Foundations-I, appendix-614afe1de592)} & \href{}{Unit roundoff (01-Foundations-I, appendix-bc44f7b42f42)} & Under nearest binary rounding the conventional relative bound for normal-range results is u=2\^{}-p, half upward epsilon. For binary32 this is 2\^{}-24. The bound has range/rounding assumptions. \\
+\href{}{Boolean algebra (01-Foundations-I, appendix-24475e1596a8)}, \href{}{Rounding to nearest ties to even (01-Foundations-I, appendix-614afe1de592)} & \href{}{Guard round and sticky bits (01-Foundations-I, appendix-b572b631069b)} & Guard is first discarded bit, round the next, sticky ORs all remaining bits. With retained low bit L, nearest-even increments when G AND (R OR sticky OR L). Sticky summarizes any nonzero tail. \\
+\href{}{Rounding to nearest ties to even (01-Foundations-I, appendix-614afe1de592)} & \href{}{Directed rounding modes (01-Foundations-I, appendix-637d164ae5ca)} & Upward means toward positive infinity, downward toward negative infinity, and toward-zero truncates magnitude. Upward rounding of −2.1 to an integer gives −2, not −3. \\
+\href{}{Directed rounding modes (01-Foundations-I, appendix-637d164ae5ca)}, \href{}{NaNs and payloads (01-Foundations-I, appendix-d6607cc4c235)} & \href{}{Floating-point environment and compiler modes (01-Foundations-I, appendix-f11d1a521253)} & The environment includes rounding direction and exception status. Runtime mode changes can fail and must restore prior state. Strict compiler settings are needed; fast-math may discard required special-value or environment assumptions. \\
+\href{}{IEEE-754 floating point (01-Foundations-I, appendix-343615f49ddf)}, \href{}{Subnormals and gradual underflow (01-Foundations-I, appendix-00a6e044c437)} & \href{}{Floating-point exception flags (01-Foundations-I, appendix-ed8531b46754)} & Invalid, divide-by-zero, overflow, underflow and inexact are status conditions, not C++ throw exceptions. Exact subnormal results need not signal underflow. Flag/trap behavior depends on the environment. \\
+\href{}{Subnormals and gradual underflow (01-Foundations-I, appendix-00a6e044c437)}, \href{}{Floating-point environment and compiler modes (01-Foundations-I, appendix-f11d1a521253)} & \href{}{Flush-to-zero and denormals-are-zero (01-Foundations-I, appendix-e979eb012782)} & FTZ flushes certain tiny results to zero; DAZ treats subnormal inputs as zero in supporting environments. They change gradual-underflow behavior. Cost and support are target/mode-specific. \\
+\href{}{Fixed-width integer types (01-Foundations-I, appendix-cc04044b5782)}, \href{}{Interpretation contract (01-Foundations-I, appendix-f414bd4ed05c)}, \href{}{IEEE-754 floating point (01-Foundations-I, appendix-343615f49ddf)} & \href{}{Bit casting and representation (01-Foundations-I, appendix-34ee45f161c1)} & A same-size eligible bit\_cast transfers representation, not numeric value. On the checked binary32 host, bit\_cast\textless uint32\_t\textgreater{}(1.0f)=3F800000, whereas a numeric cast gives 1. Pointer punning is not an equivalent legal operation. \\
+\href{}{ULP and representable spacing (01-Foundations-I, appendix-14bab4cab9d4)}, \href{}{Signed zero (01-Foundations-I, appendix-3a048f032c1f)}, \href{}{NaNs and payloads (01-Foundations-I, appendix-d6607cc4c235)} & \href{}{ULP distance policies (01-Foundations-I, appendix-deca299ae4b8)} & Distance counts representable steps under a declared ordering/equality policy. The finite-only laboratory collapses both zeros to one key and rejects NaNs/infinities. Across negative minimum subnormal to positive minimum subnormal distance is two. \\
+\href{}{Machine epsilon (01-Foundations-I, appendix-390ea641da54)}, \href{}{ULP and representable spacing (01-Foundations-I, appendix-14bab4cab9d4)}, \href{}{Floating-point infinities (01-Foundations-I, appendix-eb336149c00a)}, \href{}{NaNs and payloads (01-Foundations-I, appendix-d6607cc4c235)} & \href{}{Numerical tolerance policies (01-Foundations-I, appendix-0ec599f8ba27)} & Tolerance is a task-chosen allowed discrepancy: absolute in original units, relative to scale, or representable-step based. Machine epsilon is not automatically a norm cutoff. Handle non-finite values and validate tolerances before formulas. \\
+\href{}{IEEE-754 floating point (01-Foundations-I, appendix-343615f49ddf)}, \href{}{Floating-point infinities (01-Foundations-I, appendix-eb336149c00a)} & \href{}{Robust norm and intermediate range (01-Foundations-I, appendix-7f1e17dcafb1)} & A final representable answer can be lost to overflowing intermediates. Squaring 1e20f overflows before a finite norm could be formed. Scale by maximum component or use hypot to avoid unnecessary squared overflow. \\
+\href{}{Numerical tolerance policies (01-Foundations-I, appendix-0ec599f8ba27)} & \href{}{Conditioning and singularity (01-Foundations-I, appendix-8f6a01f284a7)} & Conditioning measures sensitivity to input perturbation. A=1e-4 I has determinant 1e-8 but condition number one in the 2-norm. Uniform scaling changes determinant magnitude without changing this conditioning measure. \\
+\href{}{Signed zero (01-Foundations-I, appendix-3a048f032c1f)}, \href{}{NaNs and payloads (01-Foundations-I, appendix-d6607cc4c235)}, \href{}{Serialization (01-Foundations-I, appendix-91d09ebed979)}, \href{}{Bit casting and representation (01-Foundations-I, appendix-34ee45f161c1)} & \href{}{Floating-point canonicalization (01-Foundations-I, appendix-e90053a4b201)} & Canonicalization deliberately merges encodings: both zeros to positive zero, all NaNs to one quiet pattern. Raw preservation instead keeps sign/payload distinctions. Neither is universally correct; this is a file/hash contract choice. \\
+\href{}{Directed rounding modes (01-Foundations-I, appendix-637d164ae5ca)}, \href{}{Floating-point environment and compiler modes (01-Foundations-I, appendix-f11d1a521253)} & \href{}{Interval arithmetic (01-Foundations-I, appendix-1823a14330cb)} & An interval encloses a possible exact value between lower and upper bounds. Correct outward rounding can preserve containment when the whole algorithm honors necessary assumptions. \\
+\end{longtable}
+}
+
+The first volume covers all Parts 1--100. Prerequisites explain the story's dependencies; they do not require leaving the continuous volume to learn an essential definition.
+
+\subsection{M005 - Arithmetic, error and reproducibility learning spine}\label{m005---arithmetic-error-and-reproducibility-learning-spine}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prerequisites
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dependent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Why these steps are needed
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\href{}{Positional notation (01-Foundations-I, appendix-83c3f28f7bda)}, \href{}{Binary32 (01-Foundations-I, appendix-5057f9ad327f)} & \href{}{Terminating fractions and dyadic rationals (01-Foundations-I, appendix-2a2f1b74bdd3)} & A reduced denominator must contain only factors of two to terminate in binary. \\
+\href{}{Significand and hidden bit (01-Foundations-I, appendix-a24fd710cf67)}, \href{}{Exponent bias (01-Foundations-I, appendix-2fae058c82e1)}, \href{}{Guard round and sticky bits (01-Foundations-I, appendix-b572b631069b)} & \href{}{Floating-point addition and absorption (01-Foundations-I, appendix-a1b1b4580dfd)} & Align scales before addition; discarded digits influence rounding or disappear. \\
+\href{}{Unit roundoff (01-Foundations-I, appendix-bc44f7b42f42)} & \href{}{Absolute and relative error (01-Foundations-I, appendix-3ae74e89b4e6)} & Separate error magnitude from error relative to a nonzero reference. \\
+\href{}{Absolute and relative error (01-Foundations-I, appendix-3ae74e89b4e6)}, \href{}{Conditioning and singularity (01-Foundations-I, appendix-8f6a01f284a7)} & \href{}{Forward and backward error (01-Foundations-I, appendix-a7fbaf6d1b1c)} & Distinguish output discrepancy from the input perturbation that explains it. \\
+\href{}{Unit roundoff (01-Foundations-I, appendix-bc44f7b42f42)}, \href{}{Absolute and relative error (01-Foundations-I, appendix-3ae74e89b4e6)} & \href{}{Accumulated rounding error (01-Foundations-I, appendix-f82e270791c8)} & Bounds depend on rounding count, range assumptions and operand magnitudes. \\
+\href{}{Absolute and relative error (01-Foundations-I, appendix-3ae74e89b4e6)}, \href{}{Significand and hidden bit (01-Foundations-I, appendix-a24fd710cf67)}, \href{}{Conditioning and singularity (01-Foundations-I, appendix-8f6a01f284a7)} & \href{}{Cancellation and loss of significance (01-Foundations-I, appendix-a2773a6a2f9d)} & A small difference exposes input uncertainty relative to its size. \\
+\href{}{Cancellation and loss of significance (01-Foundations-I, appendix-a2773a6a2f9d)}, \href{}{Subnormals and gradual underflow (01-Foundations-I, appendix-00a6e044c437)} & \href{}{Sterbenz lemma (01-Foundations-I, appendix-399b7ad53f39)} & Nearby stored operands can subtract exactly even though their original inputs were rounded. \\
+\href{}{Cancellation and loss of significance (01-Foundations-I, appendix-a2773a6a2f9d)} & \href{}{Stable reformulation (01-Foundations-I, appendix-d7f8ba961670)} & Change intermediates to avoid unnecessary loss while preserving the mathematical target. \\
+\href{}{IEEE-754 floating point (01-Foundations-I, appendix-343615f49ddf)}, \href{}{Rounding to nearest ties to even (01-Foundations-I, appendix-614afe1de592)} & \href{}{Fused multiply-add (01-Foundations-I, appendix-41e8ef22a21e)} & One final rounding differs from separate product and sum roundings. \\
+\href{}{Floating-point addition and absorption (01-Foundations-I, appendix-a1b1b4580dfd)}, \href{}{Fused multiply-add (01-Foundations-I, appendix-41e8ef22a21e)} & \href{}{Floating-point reassociation (01-Foundations-I, appendix-c2ac4a84c283)} & Expression grouping changes rounded intermediates. \\
+\href{}{Floating-point reassociation (01-Foundations-I, appendix-c2ac4a84c283)}, \href{}{Accumulated rounding error (01-Foundations-I, appendix-f82e270791c8)} & \href{}{Compensated and pairwise summation (01-Foundations-I, appendix-df318da57389)} & Correction terms and balanced trees address different accumulation mechanisms. \\
+\href{}{Compensated and pairwise summation (01-Foundations-I, appendix-df318da57389)} & \href{}{Deterministic reduction tree (01-Foundations-I, appendix-4c8e0238e7ee)} & Fix leaves and grouping to make reduction order repeatable. \\
+\href{}{Deterministic reduction tree (01-Foundations-I, appendix-4c8e0238e7ee)}, \href{}{Floating-point environment and compiler modes (01-Foundations-I, appendix-f11d1a521253)}, \href{}{Atomic operations and write contention (01-Foundations-I, appendix-e12d1b03fefb)} & \href{}{Numerical reproducibility (01-Foundations-I, appendix-5f1a2c3f97ff)} & Order, arithmetic environment and synchronization are separate contracts. \\
+\href{}{Binary32 (01-Foundations-I, appendix-5057f9ad327f)}, \href{}{Binary64 (01-Foundations-I, appendix-5078dfab64e6)}, \href{}{Rounding to nearest ties to even (01-Foundations-I, appendix-614afe1de592)} & \href{}{Mixed-precision state updates (01-Foundations-I, appendix-260182e617b7)} & Wider computation cannot restore information discarded by persistent narrowing. \\
+\href{}{Mixed-precision state updates (01-Foundations-I, appendix-260182e617b7)}, \href{}{Arithmetic policies (01-Foundations-I, appendix-2ed044358b82)} & \href{}{Capped weighted updates (01-Foundations-I, appendix-1e45d0613db3)} & Capping changes the recurrence and creates exact history dependence before roundoff. \\
+\href{}{Absolute and relative error (01-Foundations-I, appendix-3ae74e89b4e6)}, \href{}{Directed rounding modes (01-Foundations-I, appendix-637d164ae5ca)} & \href{}{Numerical decision boundaries (01-Foundations-I, appendix-c80db39080be)} & Small numeric changes can cross pixel, sign or threshold decisions. \\
+\href{}{Cancellation and loss of significance (01-Foundations-I, appendix-a2773a6a2f9d)}, \href{}{Fused multiply-add (01-Foundations-I, appendix-41e8ef22a21e)}, \href{}{Compensated and pairwise summation (01-Foundations-I, appendix-df318da57389)} & \href{}{Dot and cross-product rounding (01-Foundations-I, appendix-5aef4f13483a)} & Input representation, product rounding and summation are separate sources of error. \\
+\end{longtable}
+}
+
+\subsection{Representation choices and external contracts}\label{representation-choices-and-external-contracts}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prerequisites
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dependent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Why these steps are needed
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\href{}{Two\textquotesingle s complement (01-Foundations-I, appendix-4fbc03d20829)}, \href{}{Interpretation contract (01-Foundations-I, appendix-f414bd4ed05c)} & \href{}{Fixed-point representation (01-Foundations-I, appendix-1d0dbe8924cc)} & A raw integer I represents I/S for an agreed positive scale S and units. With S=2\^{}16, raw 212992 means 3.25. The integer has no built-in fractional point. \\
+\href{}{Fixed-point representation (01-Foundations-I, appendix-1d0dbe8924cc)} & \href{}{Fixed-point range and resolution (01-Foundations-I, appendix-ceb4c4a9b5a1)} & For signed N-bit raw storage and F fraction bits, step is 2\^{}-F and the positive endpoint is (2\textsuperscript{(N-1)-1)/2}F. Required step 0.001 and magnitude 1e6 in 32 bits allow F=10 or 11. \\
+\href{}{Fixed-point representation (01-Foundations-I, appendix-1d0dbe8924cc)}, \href{}{Minimum signed value (01-Foundations-I, appendix-05f39b10364d)}, \href{}{Arithmetic policies (01-Foundations-I, appendix-2ed044358b82)} & \href{}{Fixed-point rescaling (01-Foundations-I, appendix-3333db47830f)} & Raw multiplication changes scale S to S²; divide the wide product by S with a declared rounding rule. Raw division uses A*S/B. Check the destination after widening, and handle divisor zero and signed minima. \\
+\href{}{Fixed-point representation (01-Foundations-I, appendix-1d0dbe8924cc)}, \href{}{Absolute and relative error (01-Foundations-I, appendix-3ae74e89b4e6)} & \href{}{Affine quantization and zero point (01-Foundations-I, appendix-d5da3eaabaef)} & A positive step s, integer zero point z and bounded code q reconstruct x̂=s(q-z). Nearest encode uses clamp(round(x/s)+z). Half-step error assumes no clipping and ideal parameters. \\
+\href{}{Affine quantization and zero point (01-Foundations-I, appendix-d5da3eaabaef)}, \href{}{Bit packing (01-Foundations-I, appendix-1f9963e1a5d1)} & \href{}{Groupwise quantization and metadata (01-Foundations-I, appendix-638204c40e8b)} & Local groups share a scale, improving adaptation at a metadata cost. Symmetric INT4 calibration maxAbs/7 reconstructs codes around {[}-7,7{]}; float scales add about 32/G bits per value for full groups. \\
+\href{}{Quantization and compressed weights (04-Visual-Computing-II, appendix-fdc7879e8bf2)} & \href{}{One-bit centroid quantization (01-Foundations-I, appendix-4ccd7a775813)} & One sign label selects one of two row means. Row {[}-1,-3,2,4{]} reconstructs {[}-2,-2,3,3{]}, with RMSE one. Two float32 centroids cost 64 additional bits per row. \\
+\href{}{Affine quantization and zero point (01-Foundations-I, appendix-d5da3eaabaef)} & \href{}{UNORM and SNORM (01-Foundations-I, appendix-b2402c453dac)} & UNORM decodes q/(2\^{}n-1); UNORM8 code128 gives128/255. SNORM commonly clamps q/(2\^{}(n-1)-1) at -1, so -128 and -127 both map to -1 for eight bits. \\
+\href{}{IEEE-754 floating point (01-Foundations-I, appendix-343615f49ddf)}, \href{}{Rounding to nearest ties to even (01-Foundations-I, appendix-614afe1de592)} & \href{}{Binary16 (01-Foundations-I, appendix-34443cec7170)} & IEEE binary16 has 1/5/10 fields, bias15 and11 normal precision bits. Word3E00 is1.5; maximum finite65504; normal minimum2\^{}-14 and subnormal minimum2\^{}-24. \\
+\href{}{IEEE-754 floating point (01-Foundations-I, appendix-343615f49ddf)}, \href{}{Rounding to nearest ties to even (01-Foundations-I, appendix-614afe1de592)} & \href{}{Bfloat16 (01-Foundations-I, appendix-18b8dd966b5d)} & BF16 has1/8/7 fields, bias127 and8 normal precision bits. It keeps broad exponent range at coarse spacing2\^{}-7 above1. A nearest-even conversion must handle NaNs separately from finite rounding. \\
+\href{}{Unsigned modular arithmetic (01-Foundations-I, appendix-c99977d88b33)}, \href{}{Interpretation contract (01-Foundations-I, appendix-f414bd4ed05c)} & \href{}{Offset-binary coding (01-Foundations-I, appendix-53a8cfb25f8d)} & A bias turns signed levels into unsigned codes. For the source-shaped INT4 convention c=q+8, -3 becomes nibble0101, not the two's-complement nibble1101. \\
+\href{}{Absolute and relative error (01-Foundations-I, appendix-3ae74e89b4e6)}, \href{}{Quantization and compressed weights (04-Visual-Computing-II, appendix-fdc7879e8bf2)} & \href{}{Quantization error metrics (01-Foundations-I, appendix-537171d69d27)} & For N\textgreater0, RMSE is sqrt(sum squared discrepancies/N), MAE is mean absolute discrepancy, and max error is the largest observed magnitude. Promote float operands before subtraction when measuring in double. \\
+\href{}{Serialization (01-Foundations-I, appendix-91d09ebed979)}, \href{}{Bit casting and representation (01-Foundations-I, appendix-34ee45f161c1)} & \href{}{Binary format contracts (01-Foundations-I, appendix-590bbb2424c1)} & A schema declares field widths/order, byte order, numeric representation, valid values, lengths, version, padding and identity policy. Magic identifies a candidate format; version chooses a schema, neither authenticates content. \\
+\href{}{Binary format contracts (01-Foundations-I, appendix-590bbb2424c1)}, \href{}{Unsigned modular arithmetic (01-Foundations-I, appendix-c99977d88b33)}, \href{}{Short-circuit evaluation (01-Foundations-I, appendix-2e245a6fa8d3)} & \href{}{Checked binary parsing (01-Foundations-I, appendix-652d81568de9)} & Validate products before size calculation, ranges with offset≤size and length≤size-offset, and practical resource limits before allocation. Mapping/alignment does not itself establish valid typed object access. \\
+\href{}{Bitwise XOR (01-Foundations-I, appendix-d49161831368)}, \href{}{Serialization (01-Foundations-I, appendix-91d09ebed979)} & \href{}{Checksums CRCs and hashes (01-Foundations-I, appendix-ed338677de0a)} & Checksums/digests summarize specified bytes. Additive checksums miss reorderings; CRCs use GF(2) polynomial remainders and declared parameters. Cryptographic hashes need a trusted reference to support integrity claims against substitution. \\
+\href{}{Checksums CRCs and hashes (01-Foundations-I, appendix-ed338677de0a)}, \href{}{Interpretation contract (01-Foundations-I, appendix-f414bd4ed05c)} & \href{}{Integrity and authenticity (01-Foundations-I, appendix-cbe594d1ab0a)} & Integrity compares content with a declared reference; authenticity requires a trust mechanism such as a MAC or signature. Replacing both file and untrusted digest defeats a simple hash comparison. \\
+\href{}{Endianness (01-Foundations-I, appendix-bc07c3d25b18)}, \href{}{Bit casting and representation (01-Foundations-I, appendix-34ee45f161c1)}, \href{}{Binary format contracts (01-Foundations-I, appendix-590bbb2424c1)} & \href{}{Memory dump interpretation (01-Foundations-I, appendix-230b59c0676b)} & Raw octets gain meaning from offsets, width, encoding and byte order. Bytes00 00 80 3F mean integer1065353216 or binary32 one under different little-endian contracts. A dump does not prove a typed object is live. \\
+\end{longtable}
+}
+
+\subsection{Phase 10--11 --- Parts 966--1100 prerequisite edges}\label{phase-1011-parts-9661100-prerequisite-edges}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Prerequisites
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dependent
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Why these steps are needed
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\hyperref[appendix-d83b0ad1be7f]{A posteriori error bounds for contractive iteration} & \hyperref[appendix-f63eb850796d]{Bracketed and open root solvers} & Bracketed and open root solvers uses the definitions or assumptions established by A posteriori error bounds for contractive iteration. \\
+\hyperref[appendix-d83b0ad1be7f]{A posteriori error bounds for contractive iteration} & \href{}{Numerical error budgets (01-Foundations-I, appendix-31b8c295e05f)} & Numerical error budgets uses the definitions or assumptions established by A posteriori error bounds for contractive iteration. \\
+\href{}{Accumulated rounding error (01-Foundations-I, appendix-f82e270791c8)} & \hyperref[appendix-6b0648b2b8e8]{Discretization, truncation, and roundoff} & Discretization, truncation, and roundoff uses the definitions or assumptions established by Accumulated rounding error. \\
+\hyperref[appendix-aa2bf0d79639]{Algorithmic stability} & \hyperref[appendix-f63eb850796d]{Bracketed and open root solvers} & Bracketed and open root solvers uses the definitions or assumptions established by Algorithmic stability. \\
+\hyperref[appendix-aa2bf0d79639]{Algorithmic stability} & \href{}{Numerical error budgets (01-Foundations-I, appendix-31b8c295e05f)} & Numerical error budgets uses the definitions or assumptions established by Algorithmic stability. \\
+\hyperref[appendix-aa2bf0d79639]{Algorithmic stability} & \hyperref[appendix-b9afba7f63e5]{Stable quadratic root evaluation} & Stable quadratic root evaluation uses the definitions or assumptions established by Algorithmic stability. \\
+\hyperref[appendix-cac01ebeeb11]{Axial depth and Euclidean range} & \hyperref[appendix-1bc40b08db4a]{Hardware depth-buffer linearization} & Hardware depth-buffer linearization uses the definitions or assumptions established by Axial depth and Euclidean range. \\
+\hyperref[appendix-cac01ebeeb11]{Axial depth and Euclidean range} & \hyperref[appendix-0976e86e5b9f]{Off-axis stereo projection and disparity} & Off-axis stereo projection and disparity uses the definitions or assumptions established by Axial depth and Euclidean range. \\
+\hyperref[appendix-cac01ebeeb11]{Axial depth and Euclidean range} & \hyperref[appendix-2cbf2968e866]{Position reconstruction from depth} & Position reconstruction from depth uses the definitions or assumptions established by Axial depth and Euclidean range. \\
+\hyperref[appendix-02b9d9a81dca]{Barycentric coordinates and interpolation} & \hyperref[appendix-0c2a5f69851e]{Interpolation versus approximation} & Interpolation versus approximation uses the definitions or assumptions established by Barycentric coordinates and interpolation. \\
+\hyperref[appendix-f63eb850796d]{Bracketed and open root solvers} & \href{}{Numerical error budgets (01-Foundations-I, appendix-31b8c295e05f)} & Numerical error budgets uses the definitions or assumptions established by Bracketed and open root solvers. \\
+\href{}{Camera calibration and bundle adjustment (04-Visual-Computing-II, appendix-3ee9861904d5)} & \hyperref[appendix-0976e86e5b9f]{Off-axis stereo projection and disparity} & Off-axis stereo projection and disparity uses the definitions or assumptions established by Camera calibration and bundle adjustment. \\
+\href{}{Camera calibration and bundle adjustment (04-Visual-Computing-II, appendix-3ee9861904d5)} & \hyperref[appendix-fc99ad39f351]{Omnidirectional camera projections} & Omnidirectional camera projections uses the definitions or assumptions established by Camera calibration and bundle adjustment. \\
+\href{}{Camera calibration and bundle adjustment (04-Visual-Computing-II, appendix-3ee9861904d5)} & \hyperref[appendix-2cbf2968e866]{Position reconstruction from depth} & Position reconstruction from depth uses the definitions or assumptions established by Camera calibration and bundle adjustment. \\
+\href{}{Camera view and clip-space pipeline (04-Visual-Computing-II, appendix-1c07d64f5e70)} & \hyperref[appendix-cac01ebeeb11]{Axial depth and Euclidean range} & Axial depth and Euclidean range uses the definitions or assumptions established by Camera view and clip-space pipeline. \\
+\href{}{Camera view and clip-space pipeline (04-Visual-Computing-II, appendix-1c07d64f5e70)} & \hyperref[appendix-1bc40b08db4a]{Hardware depth-buffer linearization} & Hardware depth-buffer linearization uses the definitions or assumptions established by Camera view and clip-space pipeline. \\
+\href{}{Camera view and clip-space pipeline (04-Visual-Computing-II, appendix-1c07d64f5e70)} & \hyperref[appendix-f1a6d43e80d1]{Screen-space ray generation and mouse picking} & Screen-space ray generation and mouse picking uses the definitions or assumptions established by Camera view and clip-space pipeline. \\
+\href{}{Conditioning and singularity (01-Foundations-I, appendix-8f6a01f284a7)} & \hyperref[appendix-d83b0ad1be7f]{A posteriori error bounds for contractive iteration} & A posteriori error bounds for contractive iteration uses the definitions or assumptions established by Conditioning and singularity. \\
+\href{}{Conditioning and singularity (01-Foundations-I, appendix-8f6a01f284a7)} & \hyperref[appendix-aa2bf0d79639]{Algorithmic stability} & Algorithmic stability uses the definitions or assumptions established by Conditioning and singularity. \\
+\href{}{Conditioning and singularity (01-Foundations-I, appendix-8f6a01f284a7)} & \hyperref[appendix-f63eb850796d]{Bracketed and open root solvers} & Bracketed and open root solvers uses the definitions or assumptions established by Conditioning and singularity. \\
+\href{}{Conditioning and singularity (01-Foundations-I, appendix-8f6a01f284a7)} & \href{}{Numerical error budgets (01-Foundations-I, appendix-31b8c295e05f)} & Numerical error budgets uses the definitions or assumptions established by Conditioning and singularity. \\
+\href{}{Conditioning and singularity (01-Foundations-I, appendix-8f6a01f284a7)} & \hyperref[appendix-b9afba7f63e5]{Stable quadratic root evaluation} & Stable quadratic root evaluation uses the definitions or assumptions established by Conditioning and singularity. \\
+\hyperref[appendix-c83016554b1e]{Confidence intervals and sequential evidence} & \hyperref[appendix-b9db93e28371]{Reproducible numerical benchmarking} & Reproducible numerical benchmarking uses the definitions or assumptions established by Confidence intervals and sequential evidence. \\
+\hyperref[appendix-aca80b6bf17a]{Convergence order and Richardson extrapolation} & \href{}{Numerical error budgets (01-Foundations-I, appendix-31b8c295e05f)} & Numerical error budgets uses the definitions or assumptions established by Convergence order and Richardson extrapolation. \\
+\hyperref[appendix-aca80b6bf17a]{Convergence order and Richardson extrapolation} & \hyperref[appendix-b9db93e28371]{Reproducible numerical benchmarking} & Reproducible numerical benchmarking uses the definitions or assumptions established by Convergence order and Richardson extrapolation. \\
+\href{}{Depth buffering and visibility order (03-Visual-Computing-I, appendix-97578ed97952)} & \hyperref[appendix-1bc40b08db4a]{Hardware depth-buffer linearization} & Hardware depth-buffer linearization uses the definitions or assumptions established by Depth buffering and visibility order. \\
+\hyperref[appendix-6b0648b2b8e8]{Discretization, truncation, and roundoff} & \hyperref[appendix-aca80b6bf17a]{Convergence order and Richardson extrapolation} & Convergence order and Richardson extrapolation uses the definitions or assumptions established by Discretization, truncation, and roundoff. \\
+\hyperref[appendix-6b0648b2b8e8]{Discretization, truncation, and roundoff} & \href{}{Numerical error budgets (01-Foundations-I, appendix-31b8c295e05f)} & Numerical error budgets uses the definitions or assumptions established by Discretization, truncation, and roundoff. \\
+\hyperref[appendix-e2d7b4f2161d]{Finite differences and step-size balance} & \hyperref[appendix-aca80b6bf17a]{Convergence order and Richardson extrapolation} & Convergence order and Richardson extrapolation uses the definitions or assumptions established by Finite differences and step-size balance. \\
+\href{}{Forward and backward error (01-Foundations-I, appendix-a7fbaf6d1b1c)} & \hyperref[appendix-d83b0ad1be7f]{A posteriori error bounds for contractive iteration} & A posteriori error bounds for contractive iteration uses the definitions or assumptions established by Forward and backward error. \\
+\href{}{Forward and backward error (01-Foundations-I, appendix-a7fbaf6d1b1c)} & \hyperref[appendix-aa2bf0d79639]{Algorithmic stability} & Algorithmic stability uses the definitions or assumptions established by Forward and backward error. \\
+\href{}{Forward and backward error (01-Foundations-I, appendix-a7fbaf6d1b1c)} & \href{}{Numerical error budgets (01-Foundations-I, appendix-31b8c295e05f)} & Numerical error budgets uses the definitions or assumptions established by Forward and backward error. \\
+\hyperref[appendix-1bc40b08db4a]{Hardware depth-buffer linearization} & \hyperref[appendix-2cbf2968e866]{Position reconstruction from depth} & Position reconstruction from depth uses the definitions or assumptions established by Hardware depth-buffer linearization. \\
+\hyperref[appendix-cb3b26862282]{Homogeneous coordinates and perspective division} & \hyperref[appendix-2cbf2968e866]{Position reconstruction from depth} & Position reconstruction from depth uses the definitions or assumptions established by Homogeneous coordinates and perspective division. \\
+\hyperref[appendix-0c2a5f69851e]{Interpolation versus approximation} & \hyperref[appendix-ddbec701898c]{Bézier curves and De Casteljau evaluation} & Bézier curves and De Casteljau evaluation uses the definitions or assumptions established by Interpolation versus approximation. \\
+\hyperref[appendix-0c2a5f69851e]{Interpolation versus approximation} & \hyperref[appendix-db3aef8f2fd6]{Cubic Hermite interpolation} & Cubic Hermite interpolation uses the definitions or assumptions established by Interpolation versus approximation. \\
+\hyperref[appendix-0c2a5f69851e]{Interpolation versus approximation} & \hyperref[appendix-0a09b6dfdc86]{Tensor-product interpolation} & Tensor-product interpolation uses the definitions or assumptions established by Interpolation versus approximation. \\
+\hyperref[appendix-1c5e85693a06]{Latin-hypercube sampling} & \hyperref[appendix-b9db93e28371]{Reproducible numerical benchmarking} & Reproducible numerical benchmarking uses the definitions or assumptions established by Latin-hypercube sampling. \\
+\href{}{Numerical error budgets (01-Foundations-I, appendix-31b8c295e05f)} & \hyperref[appendix-b9db93e28371]{Reproducible numerical benchmarking} & Reproducible numerical benchmarking uses the definitions or assumptions established by Numerical error budgets. \\
+\hyperref[appendix-80521eae6b71]{Numerical quadrature and error} & \hyperref[appendix-aca80b6bf17a]{Convergence order and Richardson extrapolation} & Convergence order and Richardson extrapolation uses the definitions or assumptions established by Numerical quadrature and error. \\
+\hyperref[appendix-80521eae6b71]{Numerical quadrature and error} & \hyperref[appendix-6b0648b2b8e8]{Discretization, truncation, and roundoff} & Discretization, truncation, and roundoff uses the definitions or assumptions established by Numerical quadrature and error. \\
+\href{}{Numerical reproducibility (01-Foundations-I, appendix-5f1a2c3f97ff)} & \hyperref[appendix-b9db93e28371]{Reproducible numerical benchmarking} & Reproducible numerical benchmarking uses the definitions or assumptions established by Numerical reproducibility. \\
+\hyperref[appendix-2cbf2968e866]{Position reconstruction from depth} & \href{}{Numerical error budgets (01-Foundations-I, appendix-31b8c295e05f)} & Numerical error budgets uses the definitions or assumptions established by Position reconstruction from depth. \\
+\href{}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)} & \hyperref[appendix-1c5e85693a06]{Latin-hypercube sampling} & Latin-hypercube sampling uses the definitions or assumptions established by Probability density and change of measure. \\
+\href{}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)} & \hyperref[appendix-d580b422240f]{Stable probability normalization and log-sum-exp} & Stable probability normalization and log-sum-exp uses the definitions or assumptions established by Probability density and change of measure. \\
+\hyperref[appendix-f1ef323f6ed7]{Probability spaces, events, and conditioning} & \hyperref[appendix-184fcc411663]{Uniform shuffling without replacement} & Uniform shuffling without replacement uses the definitions or assumptions established by Probability spaces, events, and conditioning. \\
+\hyperref[appendix-b9db93e28371]{Reproducible numerical benchmarking} & \href{}{Research validity and ablation (04-Visual-Computing-II, appendix-65788587ef78)} & Prerequisite provides concepts used by the dependent. \\
+\hyperref[appendix-bcc44e9d3d02]{Robust summaries and error metrics} & \hyperref[appendix-b9db93e28371]{Reproducible numerical benchmarking} & Reproducible numerical benchmarking uses the definitions or assumptions established by Robust summaries and error metrics. \\
+\href{}{Sampling aliasing and reconstruction (04-Visual-Computing-II, appendix-6a7869dd79a6)} & \hyperref[appendix-0a09b6dfdc86]{Tensor-product interpolation} & Tensor-product interpolation uses the definitions or assumptions established by Sampling aliasing and reconstruction. \\
+\hyperref[appendix-9f693ffd82bc]{Sampling quality: stratification, quasi-Monte Carlo, and blue noise} & \hyperref[appendix-1c5e85693a06]{Latin-hypercube sampling} & Latin-hypercube sampling uses the definitions or assumptions established by Sampling quality: stratification, quasi-Monte Carlo, and blue noise. \\
+\href{}{Spline bases and curve evaluation (03-Visual-Computing-I, appendix-f28eeec97a3d)} & \hyperref[appendix-ddbec701898c]{Bézier curves and De Casteljau evaluation} & Bézier curves and De Casteljau evaluation uses the definitions or assumptions established by Spline bases and curve evaluation. \\
+\href{}{Spline bases and curve evaluation (03-Visual-Computing-I, appendix-f28eeec97a3d)} & \hyperref[appendix-db3aef8f2fd6]{Cubic Hermite interpolation} & Cubic Hermite interpolation uses the definitions or assumptions established by Spline bases and curve evaluation. \\
+\hyperref[appendix-d580b422240f]{Stable probability normalization and log-sum-exp} & \href{}{Monte Carlo rendering estimators and variance (04-Visual-Computing-II, appendix-031e02bf28af)} & Prerequisite provides concepts used by the dependent. \\
+\hyperref[appendix-b9afba7f63e5]{Stable quadratic root evaluation} & \hyperref[appendix-f63eb850796d]{Bracketed and open root solvers} & Bracketed and open root solvers uses the definitions or assumptions established by Stable quadratic root evaluation. \\
+\href{}{Stable reformulation (01-Foundations-I, appendix-d7f8ba961670)} & \hyperref[appendix-d580b422240f]{Stable probability normalization and log-sum-exp} & Stable probability normalization and log-sum-exp uses the definitions or assumptions established by Stable reformulation. \\
+\href{}{Stable reformulation (01-Foundations-I, appendix-d7f8ba961670)} & \hyperref[appendix-b9afba7f63e5]{Stable quadratic root evaluation} & Stable quadratic root evaluation uses the definitions or assumptions established by Stable reformulation. \\
+\hyperref[appendix-e0f7c7e08f3a]{Stateful pseudorandom generators and stream state} & \hyperref[appendix-184fcc411663]{Uniform shuffling without replacement} & Uniform shuffling without replacement uses the definitions or assumptions established by Stateful pseudorandom generators and stream state. \\
+\hyperref[appendix-daaf25bfd3a0]{Stateless keyed sampling and reproducibility} & \hyperref[appendix-184fcc411663]{Uniform shuffling without replacement} & Uniform shuffling without replacement uses the definitions or assumptions established by Stateless keyed sampling and reproducibility. \\
+\href{}{Stereo correspondence and epipolar geometry (03-Visual-Computing-I, appendix-c4e98b6e4001)} & \hyperref[appendix-0976e86e5b9f]{Off-axis stereo projection and disparity} & Off-axis stereo projection and disparity uses the definitions or assumptions established by Stereo correspondence and epipolar geometry. \\
+\hyperref[appendix-32f39e9a3738]{Taylor models and approximation error} & \hyperref[appendix-6b0648b2b8e8]{Discretization, truncation, and roundoff} & Discretization, truncation, and roundoff uses the definitions or assumptions established by Taylor models and approximation error. \\
+\hyperref[appendix-32f39e9a3738]{Taylor models and approximation error} & \hyperref[appendix-0c2a5f69851e]{Interpolation versus approximation} & Interpolation versus approximation uses the definitions or assumptions established by Taylor models and approximation error. \\
+\hyperref[appendix-184fcc411663]{Uniform shuffling without replacement} & \hyperref[appendix-1c5e85693a06]{Latin-hypercube sampling} & Latin-hypercube sampling uses the definitions or assumptions established by Uniform shuffling without replacement. \\
+\hyperref[appendix-184fcc411663]{Uniform shuffling without replacement} & \hyperref[appendix-9f693ffd82bc]{Sampling quality: stratification, quasi-Monte Carlo, and blue noise} & Prerequisite provides concepts used by the dependent. \\
+\hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization} & \hyperref[appendix-cac01ebeeb11]{Axial depth and Euclidean range} & Axial depth and Euclidean range uses the definitions or assumptions established by Unit directions and safe normalization. \\
+\hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization} & \hyperref[appendix-fc99ad39f351]{Omnidirectional camera projections} & Omnidirectional camera projections uses the definitions or assumptions established by Unit directions and safe normalization. \\
+\hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization} & \hyperref[appendix-f1a6d43e80d1]{Screen-space ray generation and mouse picking} & Screen-space ray generation and mouse picking uses the definitions or assumptions established by Unit directions and safe normalization. \\
+\href{}{Unit roundoff (01-Foundations-I, appendix-bc44f7b42f42)} & \hyperref[appendix-d580b422240f]{Stable probability normalization and log-sum-exp} & Stable probability normalization and log-sum-exp uses the definitions or assumptions established by Unit roundoff. \\
+\href{}{Unit roundoff (01-Foundations-I, appendix-bc44f7b42f42)} & \hyperref[appendix-b9afba7f63e5]{Stable quadratic root evaluation} & Stable quadratic root evaluation uses the definitions or assumptions established by Unit roundoff. \\
+\href{}{Visual angle and calibrated rays (04-Visual-Computing-II, appendix-7d356c396d1a)} & \hyperref[appendix-fc99ad39f351]{Omnidirectional camera projections} & Omnidirectional camera projections uses the definitions or assumptions established by Visual angle and calibrated rays. \\
+\href{}{Visual angle and calibrated rays (04-Visual-Computing-II, appendix-7d356c396d1a)} & \hyperref[appendix-f1a6d43e80d1]{Screen-space ray generation and mouse picking} & Screen-space ray generation and mouse picking uses the definitions or assumptions established by Visual angle and calibrated rays. \\
+\end{longtable}
+}
+
+\subsection{Phase 11 - Camera observability and differential sampling}\label{phase-11---camera-observability-and-differential-sampling}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Camera calibration and bundle adjustment (04-Visual-Computing-II, appendix-3ee9861904d5)} → \hyperref[appendix-113f0267e5f4]{Camera gauge freedoms and observability} --- prerequisite definitions and assumptions.
+\item
+  \hyperref[appendix-1bae9457dbc3]{Coordinate frames and change of basis} → \hyperref[appendix-113f0267e5f4]{Camera gauge freedoms and observability} --- prerequisite definitions and assumptions.
+\item
+  \hyperref[appendix-cb3b26862282]{Homogeneous coordinates and perspective division} → \hyperref[appendix-113f0267e5f4]{Camera gauge freedoms and observability} --- prerequisite definitions and assumptions.
+\item
+  \href{}{Camera view and clip-space pipeline (04-Visual-Computing-II, appendix-1c07d64f5e70)} → \hyperref[appendix-8c40fad29462]{Ray differentials and camera sampling measures} --- prerequisite definitions and assumptions.
+\item
+  \href{}{Visual angle and calibrated rays (04-Visual-Computing-II, appendix-7d356c396d1a)} → \hyperref[appendix-8c40fad29462]{Ray differentials and camera sampling measures} --- prerequisite definitions and assumptions.
+\item
+  \href{}{Lens optics and depth of field (03-Visual-Computing-I, appendix-21f8456e2629)} → \hyperref[appendix-8c40fad29462]{Ray differentials and camera sampling measures} --- prerequisite definitions and assumptions.
+\end{itemize}

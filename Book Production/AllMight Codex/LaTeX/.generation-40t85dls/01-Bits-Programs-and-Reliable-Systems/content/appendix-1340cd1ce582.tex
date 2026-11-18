@@ -1,0 +1,54 @@
+\hypertarget{appendix-1340cd1ce582}{}\label{referencestart:appendix-1340cd1ce582}
+\section{Copy semantics and resource identity}\label{appendix-1340cd1ce582-copy-semantics-and-resource-identity}
+
+\hypertarget{appendix-1340cd1ce582-copy-semantics-and-resource-identity}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C009 · \textbf{Latest development:} C009
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-1340cd1ce582-definition-and-mechanism}
+
+\hypertarget{appendix-1340cd1ce582-definition-and-mechanism}{}
+
+Copy construction creates a new object using member/type semantics. Pointers and reference bindings preserve associations; vector-backed pixel values duplicate owned contents; copying handles does not clone resources. Deep copying a graph needs a defined sharing and identity-remapping policy.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-1340cd1ce582-prerequisites}
+
+\hypertarget{appendix-1340cd1ce582-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-f1581457d322]{Object identity and generation handles} --- Copying an identifier differs from cloning the resource or application entity.
+\item
+  \hyperref[appendix-d52e4486f527]{Ownership and non-owning views} --- The owner/view distinction determines whether copying duplicates resources or descriptors.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-1340cd1ce582-used-by}
+
+\hypertarget{appendix-1340cd1ce582-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-bea6beb5350f]{Assignment and exception guarantees}
+\item
+  \hyperref[appendix-5636651017c2]{Move operations and moved-from states}
+\item
+  \hyperref[appendix-42e02a12c694]{Special member generation and traits}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-1340cd1ce582-recall-and-next-depth}
+
+\hypertarget{appendix-1340cd1ce582-recall-and-next-depth}{}
+
+Choose duplicate, share, remap or reject for four engine types. Pending: graph-clone algorithms and immutable shared ownership. Written coverage does not demonstrate personal mastery.
+
+\subsection{Source and navigation}\label{appendix-1340cd1ce582-source-and-navigation}
+
+\hypertarget{appendix-1340cd1ce582-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch003-copy-a-meaning-rather-than-just-its-bytes]{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15-m009---parts-127-147]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

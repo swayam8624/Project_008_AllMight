@@ -1,0 +1,48 @@
+\hypertarget{appendix-b081b7abe193}{}\label{referencestart:appendix-b081b7abe193}
+\section{Call stack and stack frames}\label{appendix-b081b7abe193-call-stack-and-stack-frames}
+
+\hypertarget{appendix-b081b7abe193-call-stack-and-stack-frames}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-b081b7abe193-definition-and-mechanism}
+
+\hypertarget{appendix-b081b7abe193-definition-and-mechanism}{}
+
+A call stack conventionally holds LIFO activation records: return state, saved registers, spills, some arguments/locals, and alignment. Optimized locals may use registers or disappear; automatic storage does not mandate a stack slot. Downward growth is platform convention. Capacity/guard mappings can limit recursion despite free RAM elsewhere.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-b081b7abe193-prerequisites}
+
+\hypertarget{appendix-b081b7abe193-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0b104bcba06b]{Storage duration and object lifetime} --- Access requires an object and backing storage that are still valid.
+\item
+  \hyperref[appendix-c2a9ad1e2b49]{Process isolation and page permissions} --- The mapping context and permissions constrain which accesses proceed.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-b081b7abe193-used-by}
+
+\hypertarget{appendix-b081b7abe193-used-by}{}
+
+Update downstream uses when later chunks build on this concept.
+
+\subsection{Recall and next depth}\label{appendix-b081b7abe193-recall-and-next-depth}
+
+\hypertarget{appendix-b081b7abe193-recall-and-next-depth}{}
+
+Trace A→B→C→returns and identify the dead local.
+
+\textbf{Pending:} Calling conventions, unwinding, coroutines, guard regions.
+
+\subsection{Source and navigation}\label{appendix-b081b7abe193-source-and-navigation}
+
+\hypertarget{appendix-b081b7abe193-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

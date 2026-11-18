@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch025.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-28e6f216fdc7-three-volume-corpus-development-audit-12-november-2026" class="level2">
+<h2>Three-volume corpus development audit — 12 November 2026</h2>
+<section id="appendix-28e6f216fdc7-scope-and-verified-repository-state" class="level3">
+<h3>Scope and verified repository state</h3>
+<p>Baseline for the first consolidation: <code>89c386f25b361685051bb035799014c8875487cd</code>. The consolidation was merged as <code>635dec49e67fc31f377b8f9f638a458a0b5a9abb</code>. The subsequently inspected main head was <code>e25a8095815944a19e3ea3a3f69c40b7c90dd6fb</code>. This audit uses the contents of that <strong>later main head</strong> rather than assuming the merge remained the latest state. The new render-graph source-to-volume exercise in this continuation is additive to that baseline; distinguish its branch tests from merged main checks.</p>
+<p>The three canonical continuous books are Mathematics, Graphics, and Game Engine. The repository still retains four <em>archival source copies</em> under <code>Continuous Notes/</code> (Computing Foundations, XR, Rigid Bodies, Systems), making <strong>seven physical Markdown files</strong> in that folder. They are retained as reversible provenance, not designated further required books; this is an organizational compromise to be resolved only after a backlink and preserved-source audit. The source-preservation checker verifies exact migrated body inclusion <strong>or original-line-preserving additive expansions</strong>, alongside canonical original line-order preservation; it is intentionally <strong>not</strong> proof that all original content is coherently taught at first use.</p>
+</section>
+<section id="appendix-28e6f216fdc7-change-by-change-assessment" class="level3">
+<h3>Change-by-change assessment</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Change</th>
+<th>Current evidence</th>
+<th>Remaining decision / failure mode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mathematics canonical volume</td>
+<td>Affine-frame inverse / reciprocal-basis C++20 witness inline and independently in <code>tools/labs/basis_measurement_lab.cpp</code>. Exact-code inclusion and release-safe checks passed GitHub regression.</td>
+<td>Numeric example is a 2D host representation, not a general 3D inverse, GPU shader ABI, ill-conditioning proof or all-input overflow-safe solver. Add property-based tests and explain transformations when first used.</td>
+</tr>
+<tr>
+<td>Graphics canonical volume</td>
+<td>Full former XR source and shader-buffer/GPU execution teaching migrated. Existing geometry, CCD and raster code retained.</td>
+<td>A long XR insertion appears before much of the main coordinate-frame teaching; unedited source chapter headers and old backlinks can disrupt continuity. GPU performance and shading rules need driver captures/reference comparisons.</td>
+</tr>
+<tr>
+<td>Game Engine canonical volume</td>
+<td>Full formerly separate bits/C++/CPU/algorithms, explicit backend, rigid-body and emulator/system bodies migrated. Spring, contact refresh and game-system framing added after merge with source-synced C++ witnesses.</td>
+<td>The huge foundation insertion comes before the normal engine startup narrative. Source presence is not the same as teaching at the implementation’s first meaningful use. Important GPU backend and production Kairo claims remain unverified.</td>
+</tr>
+<tr>
+<td>Tests and source agreement</td>
+<td>Three-volume exact-substring/ordered-line audit and continuous embedded-code agreement succeeded. New <code>render_graph_contract_lab.cpp</code> expands a conceptual graph into runnable RAW/WAR/WAW/topological and negative tests.</td>
+<td>Full volume semantic review, all snippets building on every supported compiler, GPU barriers, all source units and production-engine integration have not been proven.</td>
+</tr>
+<tr>
+<td>Review/source ledger</td>
+<td>Latest inspected checkpoint records <strong>26,821 reviewed claim-text points and 2,894 pending</strong>, out of 29,715 registered point claims over 590 retained records.</td>
+<td>“Reviewed” is a saved claim-text reading receipt, <strong>not</strong> complete raw-video truth verification, complete textbook reading, or source integration. Never revert to the older 14,240/15,475 snapshot when reporting current state.</td>
+</tr>
+</tbody>
+</table>
+<p>The repository’s latest main CI at inspection passed the C++20 regression, continuous-source agreement and three-volume preservation workflows. The previous release-only <code>assert</code> defect was repaired by using explicit runtime checks, so <code>-DNDEBUG</code> no longer disables the basis laboratory’s validation.</p>
+</section>
+<section id="appendix-28e6f216fdc7-navigation-and-first-use-risks-found-by-the-live-link-inventory" class="level3">
+<h3>Navigation and first-use risks found by the live link inventory</h3>
+<p>The three books contained approximately <strong>23 links into the old archival volumes</strong> at the inspected head: 1 from Mathematics, 11 from Graphics and 11 from Game Engine. The source targets still exist, so these are mostly <em>legacy detours</em>, not missing files. Nevertheless they violate the spirit of one reader-facing continuous destination per subject. Their replacement requires determining which in-book heading now owns each prerequisite; a blanket text substitution would break provenance and risk moving a reader to the wrong derivation. Until reconciled, the old link is supporting provenance rather than an instruction to start a fourth book.</p>
+<p>A first-pass wiki-link regex reported spurious missing targets such as <code>nodiscard</code>, <code>no_unique_address</code>, GPU attributes and media paths. Those are often C++/shader syntax, escaped expressions, or images, not Obsidian page links. An audit tool must ignore fenced/inline source and distinguish image attachments from Markdown notes before treating these as missing content. Heading existence itself also proves only the presence of a title, not a coherent implementation.</p>
+<p>The Engine source insertion is particularly large and now occupies roughly forty thousand lines before the original mid-engine renderer material. Graphics also contains an early full XR source block. These are <strong>high-priority reading-flow issues</strong> even though the mechanical content-preservation checks are green. Preserve original words, but use linking, carefully justified section placement and substantive bridge explanations to make the story follow a recurring engine problem rather than a pasted source queue.</p>
+</section>
+<section id="appendix-28e6f216fdc7-implementation-depth-contract-for-every-developed-concept" class="level3">
+<h3>Implementation-depth contract for every developed concept</h3>
+<p>A reader should be able to close the book and build the mechanism. Therefore a concept is not “done” until its first meaningful use provides: the forcing engineering problem; definitions of every symbol, convention and unit; the derivation and its assumptions; the concrete memory/state representation and ownership; the full algorithm and decision branches; a complete documented implementation or a clearly labeled API-specific implementation; a numerical trace with inspectable intermediate state; failure/degeneracy and alternatives; proof of invariants and bounded behavior; and reproducible positive, negative and metamorphic tests. The note itself must contain these, not just a heading, a pointer to a video, or a code file that the reader must discover elsewhere.</p>
+<p><strong>Witness categories must remain distinct.</strong> A CPU-only pedagogical model can prove logic, arithmetic and expected rejection cases. It cannot prove production GPU memory visibility or Apple/NVIDIA driver behavior. A reference engine test cannot establish the current Kairo integration unless the exact Kairo commit and reproducible build are inspected. A mathematically derived assumption is not an observed result; a video transcript’s claim is not verified code; the 3,000-part route map is an ownership assignment rather than 3,000 completed reconstructions.</p>
+</section>
+<section id="appendix-28e6f216fdc7-current-development-increment-logical-render-graph-compiler" class="level3">
+<h3>Current development increment: logical render-graph compiler</h3>
+<p>The Game Engine volume now carries a full C++20 pass-graph compiler inline at the point where renderer intent becomes backend work. The independent laboratory is <code>tools/labs/render_graph_contract_lab.cpp</code>, source-synchronized through <code>tools/check_continuous_code_sync.py</code>. It builds a DAG from per-resource last-writer and reader-cohort state, records RAW/WAR/WAW hazards, handles imported history, topologically sorts with deterministic tie-breaking, and rejects duplicate resources, uninitialized transient reads, feedback and explicit cycles. The six-pass G-buffer/shadow/lighting/temporal/tone-map/present trace and negative cases make those semantics inspectable. GCC and Clang compiled/reran the reference locally with <code>-O1</code> and <code>-O2 -DNDEBUG</code>, warnings-as-errors.</p>
+<p><strong>Boundary:</strong> This is a <em>single-queue logical whole-resource compiler</em>, not an implemented Vulkan or Metal render graph. It does not emit stage/access masks, image layout transitions, queue-family ownership, timeline waits, transient aliasing or device-loss recovery. Those remain first-class milestones, not implicit features of this passing laboratory. See the <a href="https://docs.vulkan.org/spec/latest/chapters/synchronization.html">Vulkan synchronization specification</a> for the separate memory-model obligations.</p>
+</section>
+<section id="appendix-28e6f216fdc7-next-priority-queue-with-acceptance-criteria" class="level3">
+<h3>Next priority queue with acceptance criteria</h3>
+<ol type="1">
+<li><strong>Remove legacy reading detours without losing evidence.</strong> Resolve each old note backlink to the exact newly embedded canonical heading and explain domain-specific prerequisites locally; keep exact raw source copies under version control. Audit inline C++ attributes and image paths separately, avoiding false link positives.</li>
+<li><strong>Review the remaining 2,894 source claim-text points against their actual units</strong>, update review receipts, and directly enrich Mathematics/Graphics/Game Engine where an inspected claim reveals an underdeveloped first-use explanation. Do not infer transcript/audio validity from the claim text. The saved local backlog identified by the source ledger may be unavailable from remote GitHub; do not fabricate receipts.</li>
+<li><strong>Develop GPU transitions from the logical render DAG</strong> with explicit Vulkan synchronization2 and Metal-specific resource rules, CPU reference graphs, recorded device-validation output and cross-backend parity. Expand to per-mip/layer/aspect and history versioning before claiming transient reuse.</li>
+<li><strong>Prove implementation readiness instead of matching headings.</strong> For every mapped original part, record the exact in-book implementation destination, executable/source identity, derivation, worked trace, failures and production evidence if claimed. Preserve missing or unreceived parts and distinguish reconstructed teaching from source-provided lessons.</li>
+<li><strong>Complete outstanding books/captions and repository-grounded case studies</strong> in bounded audited batches. Never convert older source book/course titles into a claim that every page, second of video, or current project branch has been inspected.</li>
+</ol>
+<p>This report is an audit checkpoint and development instruction embedded in the repository, not a certificate that the entire curriculum is complete.</p>
+</section>
+</section>
+</body>
+</html>

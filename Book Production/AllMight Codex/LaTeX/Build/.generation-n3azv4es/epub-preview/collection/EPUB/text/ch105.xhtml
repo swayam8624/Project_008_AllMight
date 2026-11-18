@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch105.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-dbe5905163c2-bit-mask" class="level2">
+<h2>Bit mask</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C001 · <strong>Latest development:</strong> C001</p>
+<section id="appendix-dbe5905163c2-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A pattern naming selected bit positions; its effect depends on the operation used with it.</p>
+<p>A mask is a selection pattern, not an operation. <code>0x30 = 00110000₂</code> names positions 4 and 5. AND reads selected positions, OR sets them, XOR toggles them, and AND with the width-limited complement clears them. Full-width masks need a special implementation case.</p>
+</section>
+<section id="appendix-dbe5905163c2-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch024.xhtml#appendix-280445746493-bit-significance" class="wikilink">Bit significance</a> — LSB means least significant bit, normally position 0 with weight 1.</li>
+<li><a href="ch053.xhtml#appendix-5bee2df85484-byte-and-octet" class="wikilink">Byte and octet</a> — An octet is exactly eight bits.</li>
+</ul>
+</section>
+<section id="appendix-dbe5905163c2-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch083.xhtml#appendix-ac697f5c66e8-bit-field" class="wikilink">Bit field</a> — uses bit mask as part of its representation or reasoning.</p></li>
+<li><p><a href="ch128.xhtml#appendix-0c67cd5bf30a-pages-and-page-offsets" class="wikilink">Pages and page offsets (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Pages and page offsets)</a> — depends on this concept; see its prerequisite explanation.</p></li>
+</ul>
+</section>
+<section id="appendix-dbe5905163c2-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain bit mask without the label, work the example above, then state the assumption whose removal would change the result.</p>
+<p><strong>Pending:</strong> Apply and reconstruct this concept independently.</p>
+</section>
+<section id="appendix-dbe5905163c2-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-from-a-signal-to-an-interpretation" class="wikilink">C001 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-foundations" class="wikilink">Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

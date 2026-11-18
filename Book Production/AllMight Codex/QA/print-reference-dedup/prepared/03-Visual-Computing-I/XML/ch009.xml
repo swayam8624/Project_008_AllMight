@@ -1,0 +1,1195 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Chapter xmlns:ns0="http://ns.adobe.com/AdobeInDesign/4.0/" id="03-visual-computing-i-ch009" source="Chapter Edition/02 - Graphics Vision and XR/09 - Point Lights, MIS and Environment Lighting.md">
+<Content ns0:pstyle="ChapterHeader" id="03-visual-computing-i-ch009-point-lights-mis-and-environment-lighting">09 — Point Lights, MIS and Environment Lighting</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/02 - Graphics Vision and XR/00 - Reading Map">Reading map</Link> · <Link href="#03-visual-computing-i-ch008">Previous chapter</Link> · <Link href="#03-visual-computing-i-ch010">Next chapter</Link></Content>
+<Content ns0:pstyle="Content">Point lights are discrete directional events while environment illumination occupies a continuous distribution. Multiple importance sampling connects competing estimators while keeping each light’s probability model explicit.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">By the end:</Strong> Compare point-light and environment estimators and explain MIS weighting.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Recall question:</Strong> What makes a point light a delta distribution, and how does MIS use competing PDFs?</Content>
+
+
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Point-light sampling</Strong></Content>
+<Content ns0:pstyle="Content">A point light has zero area.</Content>
+<Content ns0:pstyle="Content">From point <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0cfb135b111632e99e113052.svg" alt="x" jobId="0cfb135b111632e99e113052" originalTeX="x" />, there is exactly one direction:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6320567dca9e85dfd9cfdb0a.svg" alt="&#10;\omega_L&#10;=&#10;\frac{&#10;P_L-x&#10;}{&#10;\|P_L-x\|&#10;}.&#10;" jobId="6320567dca9e85dfd9cfdb0a" originalTeX="&#10;\omega_L&#10;=&#10;\frac{&#10;P_L-x&#10;}{&#10;\|P_L-x\|&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is a delta-direction light sampling event.</Content>
+<Content ns0:pstyle="Content">There is no finite ordinary solid-angle PDF like:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/62e129e4809c3732e62323f2.svg" alt="&#10;1/(4\pi)&#10;" jobId="62e129e4809c3732e62323f2" originalTeX="&#10;1/(4\pi)&#10;" /></Formula>
+<Content ns0:pstyle="Content">for sampling the point light itself.</Content>
+<Content ns0:pstyle="Content">It is a discrete/delta event.</Content>
+<Content ns0:pstyle="Content">Its contribution for radiant intensity <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9e3efbb15574573a4d3dc298.svg" alt="I" jobId="9e3efbb15574573a4d3dc298" originalTeX="I" /> is approximately:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0092b856456983a09dd26b37.svg" alt="&#10;L_i&#10;\propto&#10;\frac{&#10;I&#10;}{&#10;r^2&#10;}.&#10;" jobId="0092b856456983a09dd26b37" originalTeX="&#10;L_i&#10;\propto&#10;\frac{&#10;I&#10;}{&#10;r^2&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0c7bfd1fdc7ae78399bb738b.svg" alt="&#10;L_d&#10;=&#10;f_r&#10;L_i&#10;\cos\theta&#10;V.&#10;" jobId="0c7bfd1fdc7ae78399bb738b" originalTeX="&#10;L_d&#10;=&#10;f_r&#10;L_i&#10;\cos\theta&#10;V.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Kairo’s <InlineCode ns0:cstyle="InlineCode">PointLight::Intensity</InlineCode> is explicitly documented in candela, so inverse-square attenuation is appropriate for its basic photometric interpretation.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Delta lights and MIS</Strong></Content>
+<Content ns0:pstyle="Content">A delta point light cannot be hit by randomly selecting an arbitrary continuous BSDF direction with nonzero probability.</Content>
+<Content ns0:pstyle="Content">Probability of selecting exactly one direction from a continuum is zero.</Content>
+<Content ns0:pstyle="Content">Therefore ordinary finite-PDF MIS comparison with a continuous BSDF sampler must treat delta distributions specially.</Content>
+<Content ns0:pstyle="Content">This is why rendering code usually labels sampling events:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/595567f7e8231aa82ca357ae.svg" alt="&#10;\text{delta}&#10;" jobId="595567f7e8231aa82ca357ae" originalTeX="&#10;\text{delta}&#10;" /></Formula>
+<Content ns0:pstyle="Content">versus:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b148a7e699b3941e8a1d9c71.svg" alt="&#10;\text{non-delta}.&#10;" jobId="b148a7e699b3941e8a1d9c71" originalTeX="&#10;\text{non-delta}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">You should never attempt to “evaluate the point-light PDF as a huge number.”</Content>
+<Content ns0:pstyle="Content">It belongs to a different measure/distribution class.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Environment lighting</Strong></Content>
+<Content ns0:pstyle="Content">An environment map defines radiance for every direction:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ce029701a6ea1c67c3231745.svg" alt="&#10;L_{\text{env}}(\omega).&#10;" jobId="ce029701a6ea1c67c3231745" originalTeX="&#10;L_{\text{env}}(\omega).&#10;" /></Formula>
+<Content ns0:pstyle="Content">There is no finite light position.</Content>
+<Content ns0:pstyle="Content">A ray that escapes geometry returns:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dc249a57a7860cf7f76442ff.svg" alt="&#10;\boxed{&#10;L_i=&#10;L_{\text{env}}(\omega).&#10;}&#10;" jobId="dc249a57a7860cf7f76442ff" originalTeX="&#10;\boxed{&#10;L_i=&#10;L_{\text{env}}(\omega).&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Current Kairo does exactly this in <InlineCode ns0:cstyle="InlineCode">Scene::SampleEnvironment()</InlineCode>.</Content>
+<Content ns0:pstyle="Content">If environment texture exists, direction is converted into equirectangular coordinates:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9258c1b9087b57035fdf7dba.svg" alt="&#10;u=&#10;\frac12+&#10;\frac{&#10;\operatorname{atan2}(z,x)&#10;}{&#10;2\pi&#10;},&#10;" jobId="9258c1b9087b57035fdf7dba" originalTeX="&#10;u=&#10;\frac12+&#10;\frac{&#10;\operatorname{atan2}(z,x)&#10;}{&#10;2\pi&#10;},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4e906f1e6273233f4bb8902d.svg" alt="&#10;v=&#10;\frac12-&#10;\frac{&#10;\arcsin(y)&#10;}{&#10;\pi&#10;}.&#10;" jobId="4e906f1e6273233f4bb8902d" originalTeX="&#10;v=&#10;\frac12-&#10;\frac{&#10;\arcsin(y)&#10;}{&#10;\pi&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is equivalent to latitude-longitude mapping.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Uniform environment sampling</Strong></Content>
+<Content ns0:pstyle="Content">One straightforward NEE strategy samples a uniform sphere direction:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d6dab0249c9478b7dcc66b62.svg" alt="&#10;p_\omega&#10;=&#10;\frac1{4\pi}.&#10;" jobId="d6dab0249c9478b7dcc66b62" originalTeX="&#10;p_\omega&#10;=&#10;\frac1{4\pi}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then test whether the direction is above the shading normal:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/691ac79ade364bba94e269c4.svg" alt="&#10;n\cdot\omega&gt;0.&#10;" jobId="691ac79ade364bba94e269c4" originalTeX="&#10;n\cdot\omega&gt;0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Evaluate:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bb7df65ac6346d4280dd9aa5.svg" alt="&#10;\frac{&#10;L_{\text{env}}(\omega)&#10;f_r&#10;(n\cdot\omega)&#10;}{&#10;1/(4\pi)&#10;}.&#10;" jobId="bb7df65ac6346d4280dd9aa5" originalTeX="&#10;\frac{&#10;L_{\text{env}}(\omega)&#10;f_r&#10;(n\cdot\omega)&#10;}{&#10;1/(4\pi)&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is unbiased.</Content>
+<Content ns0:pstyle="Content">But HDR environment maps often contain tiny, extremely bright features such as the sun.</Content>
+<Content ns0:pstyle="Content">Uniform sampling wastes almost all samples in dark sky regions.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Uniform UV sampling is not uniform sphere sampling</Strong></Content>
+<Content ns0:pstyle="Content">An equirectangular map uses:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9a9e734d0cb957566cf36695.svg" alt="&#10;u=\frac{\phi}{2\pi},&#10;\qquad&#10;v=\frac{\theta}{\pi}.&#10;" jobId="9a9e734d0cb957566cf36695" originalTeX="&#10;u=\frac{\phi}{2\pi},&#10;\qquad&#10;v=\frac{\theta}{\pi}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">A texel spans:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/75f33a792bb457d8e8b943e1.svg" alt="&#10;d\phi\,d\theta.&#10;" jobId="75f33a792bb457d8e8b943e1" originalTeX="&#10;d\phi\,d\theta.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Its spherical solid angle is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6c0883d4a2bc7a420dee241e.svg" alt="&#10;\boxed{&#10;d\omega&#10;=&#10;\sin\theta&#10;\,d\theta\,d\phi.&#10;}&#10;" jobId="6c0883d4a2bc7a420dee241e" originalTeX="&#10;\boxed{&#10;d\omega&#10;=&#10;\sin\theta&#10;\,d\theta\,d\phi.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore texels near the equator represent much larger solid angle than texels near the poles.</Content>
+<Content ns0:pstyle="Content">If you uniformly choose map texels, you do <Strong ns0:cstyle="Bold">not</Strong> uniformly sample directions.</Content>
+<Content ns0:pstyle="Content">This is a classic environment-map bug.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">PDF of uniform UV sampling</Strong></Content>
+<Content ns0:pstyle="Content">Since:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c6a05a51dde77a85c5e3a6b0.svg" alt="&#10;d\phi=2\pi\,du,&#10;" jobId="c6a05a51dde77a85c5e3a6b0" originalTeX="&#10;d\phi=2\pi\,du,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bdd8bac1295bb9ff48b34e27.svg" alt="&#10;d\theta=\pi\,dv,&#10;" jobId="bdd8bac1295bb9ff48b34e27" originalTeX="&#10;d\theta=\pi\,dv,&#10;" /></Formula>
+<Content ns0:pstyle="Content">we get:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4348149afe2eb4c445b2f5ee.svg" alt="&#10;d\omega&#10;=&#10;2\pi^2&#10;\sin\theta&#10;\,du\,dv.&#10;" jobId="4348149afe2eb4c445b2f5ee" originalTeX="&#10;d\omega&#10;=&#10;2\pi^2&#10;\sin\theta&#10;\,du\,dv.&#10;" /></Formula>
+<Content ns0:pstyle="Content">If:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b5077ce11e90ca0b53bc58bc.svg" alt="&#10;p_{uv}=1&#10;" jobId="b5077ce11e90ca0b53bc58bc" originalTeX="&#10;p_{uv}=1&#10;" /></Formula>
+<Content ns0:pstyle="Content">on the unit square, then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3e3844924b0bba6f32714f60.svg" alt="&#10;p_\omega&#10;=&#10;p_{uv}&#10;\left|&#10;\frac{&#10;du\,dv&#10;}{&#10;d\omega&#10;}&#10;\right|.&#10;" jobId="3e3844924b0bba6f32714f60" originalTeX="&#10;p_\omega&#10;=&#10;p_{uv}&#10;\left|&#10;\frac{&#10;du\,dv&#10;}{&#10;d\omega&#10;}&#10;\right|.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Thus:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9bc3ea3f60b92399bc47da1a.svg" alt="&#10;\boxed{&#10;p_\omega&#10;=&#10;\frac{&#10;1&#10;}{&#10;2\pi^2\sin\theta&#10;}.&#10;}&#10;" jobId="9bc3ea3f60b92399bc47da1a" originalTeX="&#10;\boxed{&#10;p_\omega&#10;=&#10;\frac{&#10;1&#10;}{&#10;2\pi^2\sin\theta&#10;}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">The apparent singularity near poles reflects how many UV samples get packed into tiny solid angle there.</Content>
+<Content ns0:pstyle="Content">This is why one must always know the PDF’s measure.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Environment importance sampling</Strong></Content>
+<Content ns0:pstyle="Content">A better environment sampler chooses directions roughly proportional to radiance contribution.</Content>
+<Content ns0:pstyle="Content">For a latitude-longitude texel at row corresponding to <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e117613505f4284aaf8ae9d2.svg" alt="\theta" jobId="e117613505f4284aaf8ae9d2" originalTeX="\theta" />, use weight:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e002bd752acef5f9fb505894.svg" alt="&#10;\boxed{&#10;w_{ij}&#10;=&#10;Y_{ij}&#10;\sin\theta_j&#10;}&#10;" jobId="e002bd752acef5f9fb505894" originalTeX="&#10;\boxed{&#10;w_{ij}&#10;=&#10;Y_{ij}&#10;\sin\theta_j&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">where:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1eab6526f7561291a50249d3.svg" alt="&#10;Y_{ij}&#10;" jobId="1eab6526f7561291a50249d3" originalTeX="&#10;Y_{ij}&#10;" /></Formula>
+<Content ns0:pstyle="Content">is luminance.</Content>
+<Content ns0:pstyle="Content">Why multiply by:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d1d7793113660c68977c758e.svg" alt="&#10;\sin\theta?&#10;" jobId="d1d7793113660c68977c758e" originalTeX="&#10;\sin\theta?&#10;" /></Formula>
+<Content ns0:pstyle="Content">Because each texel’s solid angle is proportional to it.</Content>
+<Content ns0:pstyle="Content">Sampling only by pixel luminance would over-represent polar texels relative to their actual angular area.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Environment luminance</Strong></Content>
+<Content ns0:pstyle="Content">A simple linear-RGB luminance approximation may be:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/31f7bef102cfa5811a32253c.svg" alt="&#10;Y&#10;=&#10;0.2126R+&#10;0.7152G+&#10;0.0722B.&#10;" jobId="31f7bef102cfa5811a32253c" originalTeX="&#10;Y&#10;=&#10;0.2126R+&#10;0.7152G+&#10;0.0722B.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The exact coefficients depend on RGB primaries/working space.</Content>
+<Content ns0:pstyle="Content">For importance sampling, what matters most is a scalar proportional to expected energy.</Content>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dee7e82dacb3600eb24005b1.svg" alt="&#10;w_{ij}&#10;=&#10;Y_{ij}\sin\theta_j.&#10;" jobId="dee7e82dacb3600eb24005b1" originalTeX="&#10;w_{ij}&#10;=&#10;Y_{ij}\sin\theta_j.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Normalize all weights:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/256da6def7cecc74c5c9a51e.svg" alt="&#10;P_{ij}&#10;=&#10;\frac{&#10;w_{ij}&#10;}{&#10;\sum_{kl}w_{kl}&#10;}.&#10;" jobId="256da6def7cecc74c5c9a51e" originalTeX="&#10;P_{ij}&#10;=&#10;\frac{&#10;w_{ij}&#10;}{&#10;\sum_{kl}w_{kl}&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Now texels containing bright sun pixels receive much higher probability.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Cumulative distribution function sampling</Strong></Content>
+<Content ns0:pstyle="Content">For a 1D discrete distribution:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/024f415d9ce4b68344cf83c6.svg" alt="&#10;p_0,p_1,\dots,p_{n-1},&#10;" jobId="024f415d9ce4b68344cf83c6" originalTeX="&#10;p_0,p_1,\dots,p_{n-1},&#10;" /></Formula>
+<Content ns0:pstyle="Content">build cumulative:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ae36d9afc59e889e47096519.svg" alt="&#10;C_0=p_0,&#10;" jobId="ae36d9afc59e889e47096519" originalTeX="&#10;C_0=p_0,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/642b4f71f217b20d4eb006bd.svg" alt="&#10;C_1=p_0+p_1,&#10;" jobId="642b4f71f217b20d4eb006bd" originalTeX="&#10;C_1=p_0+p_1,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a072123da674b1ba7d231db5.svg" alt="&#10;\dots&#10;" jobId="a072123da674b1ba7d231db5" originalTeX="&#10;\dots&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ccddbf8ce2edf865be23354e.svg" alt="&#10;C_{n-1}=1.&#10;" jobId="ccddbf8ce2edf865be23354e" originalTeX="&#10;C_{n-1}=1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Draw:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/53bbbec10cf6b8ce72dbc0a2.svg" alt="&#10;\xi\in[0,1).&#10;" jobId="53bbbec10cf6b8ce72dbc0a2" originalTeX="&#10;\xi\in[0,1).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Find smallest index <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c9a9aab9bd49b5120a91abe6.svg" alt="i" jobId="c9a9aab9bd49b5120a91abe6" originalTeX="i" /> where:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cf088d1c2860bcbcc3c0e5ac.svg" alt="&#10;C_i&gt;\xi.&#10;" jobId="cf088d1c2860bcbcc3c0e5ac" originalTeX="&#10;C_i&gt;\xi.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This can be located with binary search:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/81abeda478a9f36eb73c6bd4.svg" alt="&#10;O(\log n).&#10;" jobId="81abeda478a9f36eb73c6bd4" originalTeX="&#10;O(\log n).&#10;" /></Formula>
+<Content ns0:pstyle="Content">For a 2D environment map, typically build:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/66638985922ebbe5695a4198.svg" alt="&#10;\boxed{&#10;\text{marginal CDF over rows}&#10;}&#10;" jobId="66638985922ebbe5695a4198" originalTeX="&#10;\boxed{&#10;\text{marginal CDF over rows}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">plus:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/30b35184c9a6c900235f1db2.svg" alt="&#10;\boxed{&#10;\text{conditional CDF over columns within each row}.&#10;}&#10;" jobId="30b35184c9a6c900235f1db2" originalTeX="&#10;\boxed{&#10;\text{conditional CDF over columns within each row}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">2D environment CDF construction</Strong></Content>
+<Content ns0:pstyle="Content">For each row <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ce2f1083717013be91c13bbf.svg" alt="j" jobId="ce2f1083717013be91c13bbf" originalTeX="j" />, compute:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dee7e82dacb3600eb24005b1.svg" alt="&#10;w_{ij}&#10;=&#10;Y_{ij}\sin\theta_j.&#10;" jobId="dee7e82dacb3600eb24005b1" originalTeX="&#10;w_{ij}&#10;=&#10;Y_{ij}\sin\theta_j.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Row sum:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/065bc63c0835f0f040e16cab.svg" alt="&#10;W_j=&#10;\sum_iw_{ij}.&#10;" jobId="065bc63c0835f0f040e16cab" originalTeX="&#10;W_j=&#10;\sum_iw_{ij}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Build conditional distribution:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cd68d0e3219a9ced7779aac9.svg" alt="&#10;P(i|j)&#10;=&#10;\frac{w_{ij}}{W_j}.&#10;" jobId="cd68d0e3219a9ced7779aac9" originalTeX="&#10;P(i|j)&#10;=&#10;\frac{w_{ij}}{W_j}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then marginal row distribution:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/31b93b38e9209caf94f709c9.svg" alt="&#10;P(j)&#10;=&#10;\frac{W_j}{\sum_kW_k}.&#10;" jobId="31b93b38e9209caf94f709c9" originalTeX="&#10;P(j)&#10;=&#10;\frac{W_j}{\sum_kW_k}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Sampling:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3b837b9f875bf1d4b531b0ef.svg" alt="&#10;j\sim P(j),&#10;" jobId="3b837b9f875bf1d4b531b0ef" originalTeX="&#10;j\sim P(j),&#10;" /></Formula>
+<Content ns0:pstyle="Content">then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/056ff69772562a9a47209ab4.svg" alt="&#10;i\sim P(i|j).&#10;" jobId="056ff69772562a9a47209ab4" originalTeX="&#10;i\sim P(i|j).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Joint probability:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e2b50814a2a1d2a2b8cf5a66.svg" alt="&#10;\boxed{&#10;P(i,j)=P(j)P(i|j).&#10;}&#10;" jobId="e2b50814a2a1d2a2b8cf5a66" originalTeX="&#10;\boxed{&#10;P(i,j)=P(j)P(i|j).&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then jitter within the chosen texel and convert the discrete texel probability to a continuous directional PDF.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why texel probability is not yet a solid-angle PDF</Strong></Content>
+<Content ns0:pstyle="Content">Suppose selected texel probability is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8a87ef146c24123444820b10.svg" alt="&#10;P_{ij}.&#10;" jobId="8a87ef146c24123444820b10" originalTeX="&#10;P_{ij}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">If we sample uniformly inside that texel, UV density is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e27d907eacedfd6d44f3d3db.svg" alt="&#10;p_{uv}&#10;=&#10;P_{ij}&#10;WH&#10;" jobId="e27d907eacedfd6d44f3d3db" originalTeX="&#10;p_{uv}&#10;=&#10;P_{ij}&#10;WH&#10;" /></Formula>
+<Content ns0:pstyle="Content">because texel UV area is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f15587e7101da7936818885b.svg" alt="&#10;\frac1{WH}.&#10;" jobId="f15587e7101da7936818885b" originalTeX="&#10;\frac1{WH}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0982efdd39a20de85d40a4f2.svg" alt="&#10;p_\omega&#10;=&#10;\frac{&#10;p_{uv}&#10;}{&#10;2\pi^2\sin\theta&#10;}.&#10;" jobId="0982efdd39a20de85d40a4f2" originalTeX="&#10;p_\omega&#10;=&#10;\frac{&#10;p_{uv}&#10;}{&#10;2\pi^2\sin\theta&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/afe3921a8a4c0d28e9cd9b2a.svg" alt="&#10;\boxed{&#10;p_\omega&#10;=&#10;\frac{&#10;P_{ij}WH&#10;}{&#10;2\pi^2\sin\theta&#10;}.&#10;}&#10;" jobId="afe3921a8a4c0d28e9cd9b2a" originalTeX="&#10;\boxed{&#10;p_\omega&#10;=&#10;\frac{&#10;P_{ij}WH&#10;}{&#10;2\pi^2\sin\theta&#10;}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">The <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/11357fb85e0fb054abc81457.svg" alt="\sin\theta" jobId="11357fb85e0fb054abc81457" originalTeX="\sin\theta" /> in the importance weights and the conversion are not redundant; one handles texel solid angle during discrete selection, the other converts from UV density into directional density.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Alias-table sampling</Strong></Content>
+<Content ns0:pstyle="Content">CDF lookup costs:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a620529628172bfa23376062.svg" alt="&#10;O(\log N)&#10;" jobId="a620529628172bfa23376062" originalTeX="&#10;O(\log N)&#10;" /></Formula>
+<Content ns0:pstyle="Content">with binary search.</Content>
+<Content ns0:pstyle="Content">Alias method preprocesses a discrete distribution into two arrays, conceptually:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d8f70b24d0f6491ba11b3dd5.svg" alt="&#10;\text{probability}[i],&#10;" jobId="d8f70b24d0f6491ba11b3dd5" originalTeX="&#10;\text{probability}[i],&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0a388f57e07ecd241fb5be02.svg" alt="&#10;\text{alias}[i].&#10;" jobId="0a388f57e07ecd241fb5be02" originalTeX="&#10;\text{alias}[i].&#10;" /></Formula>
+<Content ns0:pstyle="Content">Sampling then requires:</Content>
+<List type="ordered" start="1" numberStyle="Decimal" delimiter="Period">
+<ListItem><Content ns0:pstyle="Content">choose one column uniformly;</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">draw one random threshold;</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">choose either column or alias.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Runtime:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0129949257d42cbb87b39a16.svg" alt="&#10;\boxed{O(1).}&#10;" jobId="0129949257d42cbb87b39a16" originalTeX="&#10;\boxed{O(1).}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Preprocessing is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1443cd4b69efe1caefeab00b.svg" alt="&#10;O(N).&#10;" jobId="1443cd4b69efe1caefeab00b" originalTeX="&#10;O(N).&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is valuable for:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">thousands of lights,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">large environment distributions,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">repeated sampling over many rays.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Alias-table intuition</Strong></Content>
+<Content ns0:pstyle="Content">Imagine every bin should contain exactly average probability mass:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1eac4390704e799d1b40185f.svg" alt="&#10;1/N.&#10;" jobId="1eac4390704e799d1b40185f" originalTeX="&#10;1/N.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Some original outcomes are underfull.</Content>
+<Content ns0:pstyle="Content">Some are overfull.</Content>
+<Content ns0:pstyle="Content">During preprocessing, use excess probability from overfull bins to top up underfull bins.</Content>
+<Content ns0:pstyle="Content">Each final column stores:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/98cfc9658d0bf0e29ffdf808.svg" alt="&#10;\text{primary outcome}&#10;" jobId="98cfc9658d0bf0e29ffdf808" originalTeX="&#10;\text{primary outcome}&#10;" /></Formula>
+<Content ns0:pstyle="Content">plus possibly:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/317b089f4e5af3cf77881baa.svg" alt="&#10;\text{alias outcome}.&#10;" jobId="317b089f4e5af3cf77881baa" originalTeX="&#10;\text{alias outcome}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">At sampling time, one uniform column and one coin flip reproduce the original nonuniform distribution.</Content>
+<Content ns0:pstyle="Content">The method trades preprocessing and memory for constant-time sampling.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Current Kairo environment status</Strong></Content>
+<Content ns0:pstyle="Content">Current Kairo:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4b57225a64854d13c7921dc8.svg" alt="&#10;\text{can sample an environment when a ray misses}.&#10;" jobId="4b57225a64854d13c7921dc8" originalTeX="&#10;\text{can sample an environment when a ray misses}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">It supports:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f3bc8ae8d382fb80a54a1ca4.svg" alt="&#10;\text{constant environment color}&#10;" jobId="f3bc8ae8d382fb80a54a1ca4" originalTeX="&#10;\text{constant environment color}&#10;" /></Formula>
+<Content ns0:pstyle="Content">or:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/91d93234710a170e42ceff75.svg" alt="&#10;\text{lat-long texture}.&#10;" jobId="91d93234710a170e42ceff75" originalTeX="&#10;\text{lat-long texture}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">What it does <Strong ns0:cstyle="Bold">not yet implement</Strong> is environment next-event estimation.</Content>
+<Content ns0:pstyle="Content">There is currently no:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/91d8eea561ca0c3aadaa143c.svg" alt="&#10;\text{uniform directional environment sampler},&#10;" jobId="91d8eea561ca0c3aadaa143c" originalTeX="&#10;\text{uniform directional environment sampler},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5af626efcf5f9b5965aa7d5a.svg" alt="&#10;\text{luminance}\times\sin\theta\text{ importance distribution},&#10;" jobId="5af626efcf5f9b5965aa7d5a" originalTeX="&#10;\text{luminance}\times\sin\theta\text{ importance distribution},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/777716e9345bc79470a89867.svg" alt="&#10;\text{CDF},&#10;" jobId="777716e9345bc79470a89867" originalTeX="&#10;\text{CDF},&#10;" /></Formula>
+<Content ns0:pstyle="Content">or:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/114a37fba10101aad3ac6802.svg" alt="&#10;\text{alias table}&#10;" jobId="114a37fba10101aad3ac6802" originalTeX="&#10;\text{alias table}&#10;" /></Formula>
+<Content ns0:pstyle="Content">in <InlineCode ns0:cstyle="InlineCode">Environment.cppm</InlineCode>.</Content>
+<Content ns0:pstyle="Content">Therefore bright HDR environment illumination can only be discovered by ordinary bounce directions.</Content>
+<Content ns0:pstyle="Content">That is a major variance opportunity.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Multiple samples per pixel</Strong></Content>
+<Content ns0:pstyle="Content">A pixel estimate after <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea63a9f9a03c273b93026960.svg" alt="N" jobId="ea63a9f9a03c273b93026960" originalTeX="N" /> samples is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a38cfdb56bbdde38bb03cdcd.svg" alt="&#10;\boxed{&#10;\bar X_N&#10;=&#10;\frac1N&#10;\sum_{i=1}^NX_i.&#10;}&#10;" jobId="a38cfdb56bbdde38bb03cdcd" originalTeX="&#10;\boxed{&#10;\bar X_N&#10;=&#10;\frac1N&#10;\sum_{i=1}^NX_i.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Each <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8c24d3b2dedd93622e149418.svg" alt="X_i" jobId="8c24d3b2dedd93622e149418" originalTeX="X_i" /> may include randomness from:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">subpixel location,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">BSDF direction,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">light sample,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">Russian roulette,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">environment sample,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">lens sample in future,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">time sample in future.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">More samples reduce estimator variance:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a367104702abc9a1d5a70b4a.svg" alt="&#10;\operatorname{Var}(\bar X_N)&#10;=&#10;\frac{\sigma^2}{N}&#10;" jobId="a367104702abc9a1d5a70b4a" originalTeX="&#10;\operatorname{Var}(\bar X_N)&#10;=&#10;\frac{\sigma^2}{N}&#10;" /></Formula>
+<Content ns0:pstyle="Content">for independent samples.</Content>
+<Content ns0:pstyle="Content">Standard deviation:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d3a4902031775226a9eb0ed2.svg" alt="&#10;\boxed{&#10;\sigma_{\bar X}&#10;=&#10;\frac{\sigma}{\sqrt N}.&#10;}&#10;" jobId="d3a4902031775226a9eb0ed2" originalTeX="&#10;\boxed{&#10;\sigma_{\bar X}&#10;=&#10;\frac{\sigma}{\sqrt N}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Current Kairo pixel sampling</Strong></Content>
+<Content ns0:pstyle="Content">Kairo’s renderer uses <InlineCode ns0:cstyle="InlineCode">StratifiedPixelSample()</InlineCode>.</Content>
+<Content ns0:pstyle="Content">For:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1d54ae7b62a8d840de9b4cb9.svg" alt="&#10;N&gt;1,&#10;" jobId="1d54ae7b62a8d840de9b4cb9" originalTeX="&#10;N&gt;1,&#10;" /></Formula>
+<Content ns0:pstyle="Content">it computes grid side:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/90304deda6e862a63fe8a4c9.svg" alt="&#10;s=&#10;\left\lceil&#10;\sqrt N&#10;\right\rceil.&#10;" jobId="90304deda6e862a63fe8a4c9" originalTeX="&#10;s=&#10;\left\lceil&#10;\sqrt N&#10;\right\rceil.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Sample index determines stratum:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c83cb51f8316e3fa7003c1df.svg" alt="&#10;s_x=i\bmod s,&#10;" jobId="c83cb51f8316e3fa7003c1df" originalTeX="&#10;s_x=i\bmod s,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7e17a34ccba3f46b0e1b9813.svg" alt="&#10;s_y=\lfloor i/s\rfloor.&#10;" jobId="7e17a34ccba3f46b0e1b9813" originalTeX="&#10;s_y=\lfloor i/s\rfloor.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then adds deterministic hashed jitter inside each stratum.</Content>
+<Content ns0:pstyle="Content">This is better distributed than purely independent random points.</Content>
+<Content ns0:pstyle="Content">It also remains deterministic from:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea9ede950800bb8ff7cb6a1c.svg" alt="&#10;(x,y,\text{sample},\text{seed}).&#10;" jobId="ea9ede950800bb8ff7cb6a1c" originalTeX="&#10;(x,y,\text{sample},\text{seed}).&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is excellent for testing.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Subtle stratification issue for non-square sample counts</Strong></Content>
+<Content ns0:pstyle="Content">Suppose:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e0fa1ec02d2cdf37caba9c77.svg" alt="&#10;N=5.&#10;" jobId="e0fa1ec02d2cdf37caba9c77" originalTeX="&#10;N=5.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1a218627c56ee5a4e6bab6b1.svg" alt="&#10;s=\lceil\sqrt5\rceil=3.&#10;" jobId="1a218627c56ee5a4e6bab6b1" originalTeX="&#10;s=\lceil\sqrt5\rceil=3.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Grid has:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/466e659b28d2a80de07d46dd.svg" alt="&#10;9&#10;" jobId="466e659b28d2a80de07d46dd" originalTeX="&#10;9&#10;" /></Formula>
+<Content ns0:pstyle="Content">possible cells.</Content>
+<Content ns0:pstyle="Content">But only first 5 are populated.</Content>
+<Content ns0:pstyle="Content">Taking the first five cells gives zero probability to four cells. For a generic pixel integrand, equal averaging then estimates the mean over the selected region rather than the full pixel. This can introduce bias, rather than only a less symmetric noise pattern.</Content>
+<Content ns0:pstyle="Content">So current sampling is a practical compact stratification method, not a mathematically perfect <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea63a9f9a03c273b93026960.svg" alt="N" jobId="ea63a9f9a03c273b93026960" originalTeX="N" />-sample stratification for every arbitrary <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea63a9f9a03c273b93026960.svg" alt="N" jobId="ea63a9f9a03c273b93026960" originalTeX="N" />.</Content>
+<Content ns0:pstyle="Content">Common production choices use square sample counts, Latin-hypercube methods, Sobol, PMJ, blue noise or other low-discrepancy sequences.</Content>
+<Content ns0:pstyle="Content">Those come later in the curriculum.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Progressive accumulation</Strong></Content>
+<Content ns0:pstyle="Content">Instead of rendering:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/098af7090c1116bfaf9ddf36.svg" alt="&#10;1024&#10;" jobId="098af7090c1116bfaf9ddf36" originalTeX="&#10;1024&#10;" /></Formula>
+<Content ns0:pstyle="Content">samples in one blocking call, render:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ccbe732adce23dab29151742.svg" alt="&#10;1&#10;" jobId="ccbe732adce23dab29151742" originalTeX="&#10;1&#10;" /></Formula>
+<Content ns0:pstyle="Content">sample per pixel repeatedly.</Content>
+<Content ns0:pstyle="Content">After pass 1:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/430b4db69d4ed55aa42829ea.svg" alt="&#10;\bar X_1=X_1.&#10;" jobId="430b4db69d4ed55aa42829ea" originalTeX="&#10;\bar X_1=X_1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">After pass 2:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a3804351ef77a3b17a2875fc.svg" alt="&#10;\bar X_2=\frac{X_1+X_2}{2}.&#10;" jobId="a3804351ef77a3b17a2875fc" originalTeX="&#10;\bar X_2=\frac{X_1+X_2}{2}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">After <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7e0169371fd671a4ffc5c604.svg" alt="n" jobId="7e0169371fd671a4ffc5c604" originalTeX="n" />:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d5b71973eeb184b34871868b.svg" alt="&#10;\boxed{&#10;\bar X_n&#10;=&#10;\frac1n&#10;\sum_{k=1}^nX_k.&#10;}&#10;" jobId="d5b71973eeb184b34871868b" originalTeX="&#10;\boxed{&#10;\bar X_n&#10;=&#10;\frac1n&#10;\sum_{k=1}^nX_k.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">This enables:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">progressively improving preview,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">stopping whenever quality is sufficient,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">adaptive sampling,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">interactive renderer feedback.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Online mean update</Strong></Content>
+<Content ns0:pstyle="Content">You do not need to store all samples.</Content>
+<Content ns0:pstyle="Content">Given previous mean:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c44ae2e9df6f53362e2d8ed9.svg" alt="&#10;\mu_{n-1},&#10;" jobId="c44ae2e9df6f53362e2d8ed9" originalTeX="&#10;\mu_{n-1},&#10;" /></Formula>
+<Content ns0:pstyle="Content">new sample:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c14f642f2e39858f311af045.svg" alt="&#10;x_n,&#10;" jobId="c14f642f2e39858f311af045" originalTeX="&#10;x_n,&#10;" /></Formula>
+<Content ns0:pstyle="Content">update:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0722c0ceb53fb9b38c255af3.svg" alt="&#10;\boxed{&#10;\mu_n&#10;=&#10;\mu_{n-1}&#10;+&#10;\frac{&#10;x_n-\mu_{n-1}&#10;}{&#10;n&#10;}.&#10;}&#10;" jobId="0722c0ceb53fb9b38c255af3" originalTeX="&#10;\boxed{&#10;\mu_n&#10;=&#10;\mu_{n-1}&#10;+&#10;\frac{&#10;x_n-\mu_{n-1}&#10;}{&#10;n&#10;}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Derivation:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/56a1cc4f221970758a0dc337.svg" alt="&#10;\mu_n&#10;=&#10;\frac{&#10;(n-1)\mu_{n-1}+x_n&#10;}{&#10;n&#10;}&#10;" jobId="56a1cc4f221970758a0dc337" originalTeX="&#10;\mu_n&#10;=&#10;\frac{&#10;(n-1)\mu_{n-1}+x_n&#10;}{&#10;n&#10;}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0a9bbd25dafbf7f974af4979.svg" alt="&#10;=&#10;\mu_{n-1}&#10;+&#10;\frac{x_n-\mu_{n-1}}{n}.&#10;" jobId="0a9bbd25dafbf7f974af4979" originalTeX="&#10;=&#10;\mu_{n-1}&#10;+&#10;\frac{x_n-\mu_{n-1}}{n}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is numerically and operationally useful for progressive rendering.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Current Kairo progressive renderer</Strong></Content>
+<Content ns0:pstyle="Content">Kairo’s <InlineCode ns0:cstyle="InlineCode">RenderProgressive(scene, passes)</InlineCode> currently runs one-sample-per-pixel render passes with incremented seeds.</Content>
+<Content ns0:pstyle="Content">It sums each completed pass image:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b22da134c2c5ec74ce74e95b.svg" alt="&#10;S=&#10;\sum_{k=1}^{P}I_k&#10;" jobId="b22da134c2c5ec74ce74e95b" originalTeX="&#10;S=&#10;\sum_{k=1}^{P}I_k&#10;" /></Formula>
+<Content ns0:pstyle="Content">and finally divides by:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2f36fa708c042768bc07cd86.svg" alt="&#10;P.&#10;" jobId="2f36fa708c042768bc07cd86" originalTeX="&#10;P.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is mathematically equivalent to the arithmetic mean.</Content>
+<Content ns0:pstyle="Content">The limitation is architectural: it only computes the final average after the requested pass batch and does not maintain per-pixel online sample count/variance as first-class state.</Content>
+<Content ns0:pstyle="Content">The comments themselves describe future inspectable intermediate images.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Per-pixel variance</Strong></Content>
+<Content ns0:pstyle="Content">A pixel with samples:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2d7eb0a7369dbd63c3e77ad6.svg" alt="&#10;x_1,\dots,x_n&#10;" jobId="2d7eb0a7369dbd63c3e77ad6" originalTeX="&#10;x_1,\dots,x_n&#10;" /></Formula>
+<Content ns0:pstyle="Content">has sample variance:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/75d39432295b3b6351543159.svg" alt="&#10;\boxed{&#10;s^2&#10;=&#10;\frac{&#10;1&#10;}{&#10;n-1&#10;}&#10;\sum_i&#10;(x_i-\bar x)^2.&#10;}&#10;" jobId="75d39432295b3b6351543159" originalTeX="&#10;\boxed{&#10;s^2&#10;=&#10;\frac{&#10;1&#10;}{&#10;n-1&#10;}&#10;\sum_i&#10;(x_i-\bar x)^2.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">For RGB we can track variance separately per channel, or often track luminance variance to drive adaptive sampling.</Content>
+<Content ns0:pstyle="Content">High variance means:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/14edbaa808347cf94c3130e1.svg" alt="&#10;\text{pixel estimate remains statistically unstable}.&#10;" jobId="14edbaa808347cf94c3130e1" originalTeX="&#10;\text{pixel estimate remains statistically unstable}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Low variance means:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9d44779cf2e6191f6918c344.svg" alt="&#10;\text{additional samples are producing similar results}.&#10;" jobId="9d44779cf2e6191f6918c344" originalTeX="&#10;\text{additional samples are producing similar results}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why naive variance computation can be numerically poor</Strong></Content>
+<Content ns0:pstyle="Content">Computing:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1bb88a60bead4a5665e7e7b1.svg" alt="&#10;E[x^2]-E[x]^2&#10;" jobId="1bb88a60bead4a5665e7e7b1" originalTeX="&#10;E[x^2]-E[x]^2&#10;" /></Formula>
+<Content ns0:pstyle="Content">can suffer catastrophic cancellation when values are large but variance is small.</Content>
+<Content ns0:pstyle="Content">Welford’s online algorithm is robust.</Content>
+<Content ns0:pstyle="Content">Maintain:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1605ab0a4d8afbd55aa898fe.svg" alt="&#10;n,\mu,M_2.&#10;" jobId="1605ab0a4d8afbd55aa898fe" originalTeX="&#10;n,\mu,M_2.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For new sample <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0cfb135b111632e99e113052.svg" alt="x" jobId="0cfb135b111632e99e113052" originalTeX="x" />:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1b3e40eff54c25901879f223.svg" alt="&#10;n\leftarrow n+1,&#10;" jobId="1b3e40eff54c25901879f223" originalTeX="&#10;n\leftarrow n+1,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e0ed611dffe16be4ccb50d0c.svg" alt="&#10;\delta=x-\mu,&#10;" jobId="e0ed611dffe16be4ccb50d0c" originalTeX="&#10;\delta=x-\mu,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/23707f8f239c5890efe474e7.svg" alt="&#10;\mu\leftarrow\mu+\delta/n,&#10;" jobId="23707f8f239c5890efe474e7" originalTeX="&#10;\mu\leftarrow\mu+\delta/n,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1c4e1cb3bfc4aaad77f4d14f.svg" alt="&#10;\delta_2=x-\mu,&#10;" jobId="1c4e1cb3bfc4aaad77f4d14f" originalTeX="&#10;\delta_2=x-\mu,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5dfbd02568e619c91321e1db.svg" alt="&#10;M_2\leftarrow M_2+\delta\delta_2.&#10;" jobId="5dfbd02568e619c91321e1db" originalTeX="&#10;M_2\leftarrow M_2+\delta\delta_2.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/06b431aa9c818c9313825cab.svg" alt="&#10;\boxed{&#10;s^2=&#10;\frac{M_2}{n-1}.&#10;}&#10;" jobId="06b431aa9c818c9313825cab" originalTeX="&#10;\boxed{&#10;s^2=&#10;\frac{M_2}{n-1}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">A useful film accumulator</Strong></Content>
+<Code ns0:pstyle="Code" language="cpp">struct PixelStatistics
+{
+    uint64_t count = 0;
+
+    Color mean = Color::Black();
+    Color m2   = Color::Black();
+
+    void AddSample(const Color&amp; x)
+    {
+        ++count;
+
+        const Color delta =
+            x - mean;
+
+        mean +=
+            delta /
+            static_cast&lt;float&gt;(count);
+
+        const Color delta2 =
+            x - mean;
+
+        m2 +=
+            delta * delta2;
+    }
+
+    Color Variance() const
+    {
+        if (count &lt; 2)
+            return Color::Black();
+
+        return
+            m2 /
+            static_cast&lt;float&gt;(count - 1);
+    }
+
+    Color StandardError() const
+    {
+        if (count &lt; 2)
+            return Color::Black();
+
+        return Sqrt(
+            Variance() /
+            static_cast&lt;float&gt;(count));
+    }
+};</Code>
+<Content ns0:pstyle="Content">This would be a natural evolution of Kairo’s current <InlineCode ns0:cstyle="InlineCode">Film</InlineCode>, which presently stores only the final <InlineCode ns0:cstyle="InlineCode">Color3f</InlineCode> per pixel.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Variance enables adaptive sampling</Strong></Content>
+<Content ns0:pstyle="Content">Suppose pixel A has estimated standard error:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7bc153e43a06aff6154d0cf8.svg" alt="&#10;0.001.&#10;" jobId="7bc153e43a06aff6154d0cf8" originalTeX="&#10;0.001.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Pixel B:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b3918846f58d675d4c848575.svg" alt="&#10;0.25.&#10;" jobId="b3918846f58d675d4c848575" originalTeX="&#10;0.25.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Spending another 1000 samples equally on both is wasteful.</Content>
+<Content ns0:pstyle="Content">Adaptive sampling allocates more work to high-variance pixels.</Content>
+<Content ns0:pstyle="Content">A termination criterion might compare:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/07ec73d5808addfbcd64c95f.svg" alt="&#10;\frac{&#10;\text{standard error}&#10;}{&#10;|\text{mean}|+\epsilon&#10;}&#10;" jobId="07ec73d5808addfbcd64c95f" originalTeX="&#10;\frac{&#10;\text{standard error}&#10;}{&#10;|\text{mean}|+\epsilon&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">against a threshold.</Content>
+<Content ns0:pstyle="Content">This is more advanced than current M124 requirements, but it follows directly from per-pixel variance.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Noise versus bias</Strong></Content>
+<Content ns0:pstyle="Content">An estimator can have:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c7582607eb8821055ba84593.svg" alt="&#10;\text{variance}&#10;" jobId="c7582607eb8821055ba84593" originalTeX="&#10;\text{variance}&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/15399cd1939e66d05560c64e.svg" alt="&#10;\text{bias}.&#10;" jobId="15399cd1939e66d05560c64e" originalTeX="&#10;\text{bias}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Bias:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/94dcb181a620732e320a39b6.svg" alt="&#10;\boxed{&#10;\operatorname{Bias}&#10;=&#10;E[\hat I]-I.&#10;}&#10;" jobId="94dcb181a620732e320a39b6" originalTeX="&#10;\boxed{&#10;\operatorname{Bias}&#10;=&#10;E[\hat I]-I.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Variance:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/56d892073d49638e33c6e139.svg" alt="&#10;\boxed{&#10;E[&#10;(\hat I-E[\hat I])^2&#10;].&#10;}&#10;" jobId="56d892073d49638e33c6e139" originalTeX="&#10;\boxed{&#10;E[&#10;(\hat I-E[\hat I])^2&#10;].&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Unbiased noisy path tracer:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bc595cf6fad8b603e2f08b52.svg" alt="&#10;E[\hat I]=I&#10;" jobId="bc595cf6fad8b603e2f08b52" originalTeX="&#10;E[\hat I]=I&#10;" /></Formula>
+<Content ns0:pstyle="Content">but finite images fluctuate.</Content>
+<Content ns0:pstyle="Content">A biased renderer may look smooth but converge to the wrong answer.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Mean-squared error decomposition</Strong></Content>
+<Content ns0:pstyle="Content">A useful identity is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b15acb0d6356d4c2526429a5.svg" alt="&#10;\boxed{&#10;MSE&#10;=&#10;\operatorname{Var}&#10;+&#10;\operatorname{Bias}^2.&#10;}&#10;" jobId="b15acb0d6356d4c2526429a5" originalTeX="&#10;\boxed{&#10;MSE&#10;=&#10;\operatorname{Var}&#10;+&#10;\operatorname{Bias}^2.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">This explains why small controlled bias may sometimes be acceptable in production.</Content>
+<Content ns0:pstyle="Content">A slightly biased estimator with dramatically lower variance may produce lower visible error at finite rendering time.</Content>
+<Content ns0:pstyle="Content">But that must be a conscious engineering decision.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Sources of bias</Strong></Content>
+<Content ns0:pstyle="Content">A hard maximum bounce depth introduces bias.</Content>
+<Content ns0:pstyle="Content">Contribution clamping introduces bias.</Content>
+<Content ns0:pstyle="Content">An incorrect MIS scheme introduces bias.</Content>
+<Content ns0:pstyle="Content">Denoising can introduce reconstruction bias.</Content>
+<Content ns0:pstyle="Content">Approximate BRDFs are model bias relative to real physics.</Content>
+<Content ns0:pstyle="Content">Finite precision can introduce numerical errors.</Content>
+<Content ns0:pstyle="Content">Russian roulette, however, <Strong ns0:cstyle="Bold">does not inherently introduce bias</Strong> when survival compensation is correct.</Content>
+<Content ns0:pstyle="Content">That distinction matters.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Fireflies</Strong></Content>
+<Content ns0:pstyle="Content">Fireflies are isolated extremely bright samples.</Content>
+<Content ns0:pstyle="Content">They usually arise when:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1d67b27e805d16c64f12e739.svg" alt="&#10;\boxed{&#10;\frac{f(x)}{p(x)}&#10;}&#10;" jobId="1d67b27e805d16c64f12e739" originalTeX="&#10;\boxed{&#10;\frac{f(x)}{p(x)}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">becomes very large for a rare event.</Content>
+<Content ns0:pstyle="Content">Suppose:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3f46c0f18d6ff501fbb38032.svg" alt="&#10;f(x)=1000&#10;" jobId="3f46c0f18d6ff501fbb38032" originalTeX="&#10;f(x)=1000&#10;" /></Formula>
+<Content ns0:pstyle="Content">but:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0d12f00c9fee950eb42a98bb.svg" alt="&#10;p(x)=10^{-6}.&#10;" jobId="0d12f00c9fee950eb42a98bb" originalTeX="&#10;p(x)=10^{-6}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then weight:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8f50bcb298e9eaa3bacb6314.svg" alt="&#10;10^9.&#10;" jobId="8f50bcb298e9eaa3bacb6314" originalTeX="&#10;10^9.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Even if event happens once in millions of samples, one occurrence can dominate a pixel average.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Common firefly sources</Strong></Content>
+<Content ns0:pstyle="Content">A glossy BRDF randomly landing on a tiny intense light is a classic case.</Content>
+<Content ns0:pstyle="Content">A bright HDR sun pixel sampled with a nearly uniform environment PDF is another.</Content>
+<Content ns0:pstyle="Content">Near-specular caustic paths can create extremely concentrated transport.</Content>
+<Content ns0:pstyle="Content">Shading-normal mismatches can cause artificial BRDF amplification.</Content>
+<Content ns0:pstyle="Content">Near-zero PDFs, malformed roughness, invalid normals or bad Jacobians can create numerical fireflies rather than legitimate statistical ones.</Content>
+<Content ns0:pstyle="Content">The correct first response is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cddc75f52e5673e0000229bc.svg" alt="&#10;\boxed{&#10;\text{find why }f/p\text{ is huge}.&#10;}&#10;" jobId="cddc75f52e5673e0000229bc" originalTeX="&#10;\boxed{&#10;\text{find why }f/p\text{ is huge}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Not immediately clamp the pixel.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Clamping</Strong></Content>
+<Content ns0:pstyle="Content">One firefly suppression technique:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/686abaee0624abe99db40ba9.svg" alt="&#10;C'=&#10;\min(C,C_{\max})&#10;" jobId="686abaee0624abe99db40ba9" originalTeX="&#10;C'=&#10;\min(C,C_{\max})&#10;" /></Formula>
+<Content ns0:pstyle="Content">componentwise or by luminance.</Content>
+<Content ns0:pstyle="Content">This reduces variance.</Content>
+<Content ns0:pstyle="Content">But:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6cef959c3ce3bafea21cc584.svg" alt="&#10;E[C']\neq E[C]&#10;" jobId="6cef959c3ce3bafea21cc584" originalTeX="&#10;E[C']\neq E[C]&#10;" /></Formula>
+<Content ns0:pstyle="Content">whenever contributions above threshold genuinely occur.</Content>
+<Content ns0:pstyle="Content">Therefore clamping is biased.</Content>
+<Content ns0:pstyle="Content">The image usually becomes too dark in transport regions depending on rare high-energy paths.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why clamping can still be useful</Strong></Content>
+<Content ns0:pstyle="Content">In interactive rendering or game-oriented offline preview, a tiny amount of bias may be preferable to obvious fireflies.</Content>
+<Content ns0:pstyle="Content">A better hierarchy of fixes is conceptually:</Content>
+<Content ns0:pstyle="Content">First fix incorrect PDFs/Jacobians/BRDFs.</Content>
+<Content ns0:pstyle="Content">Then improve importance sampling.</Content>
+<Content ns0:pstyle="Content">Then use NEE and MIS.</Content>
+<Content ns0:pstyle="Content">Then improve environment/light distributions.</Content>
+<Content ns0:pstyle="Content">Then, only if necessary, use carefully controlled clamping.</Content>
+<Content ns0:pstyle="Content">Clamping should be treated as a variance-management compromise, not as the mathematical solution.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Path-space intuition</Strong></Content>
+<Content ns0:pstyle="Content">Instead of thinking one bounce at a time, think of a whole path:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c2254158b4b8cc54b4005f68.svg" alt="&#10;\boxed{&#10;\bar x&#10;=&#10;(x_0,x_1,\dots,x_k).&#10;}&#10;" jobId="c2254158b4b8cc54b4005f68" originalTeX="&#10;\boxed{&#10;\bar x&#10;=&#10;(x_0,x_1,\dots,x_k).&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Where:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9c3ff4fdbea827b5a74f4aa2.svg" alt="&#10;x_0=\text{camera},&#10;" jobId="9c3ff4fdbea827b5a74f4aa2" originalTeX="&#10;x_0=\text{camera},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/86733e0688b21d780f359d5f.svg" alt="&#10;x_k=\text{emitter/environment}.&#10;" jobId="86733e0688b21d780f359d5f" originalTeX="&#10;x_k=\text{emitter/environment}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">A path contribution roughly contains products of:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0b22b2a750657cbb65411317.svg" alt="&#10;\text{emission},&#10;" jobId="0b22b2a750657cbb65411317" originalTeX="&#10;\text{emission},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b62ef55e7ff64b08e445e91d.svg" alt="&#10;\text{BRDF/BSDF values},&#10;" jobId="b62ef55e7ff64b08e445e91d" originalTeX="&#10;\text{BRDF/BSDF values},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4e92de878d3837de92fccb37.svg" alt="&#10;\text{geometry terms},&#10;" jobId="4e92de878d3837de92fccb37" originalTeX="&#10;\text{geometry terms},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/564ea3b97f2ddb3fc53a3b18.svg" alt="&#10;\text{visibility},&#10;" jobId="564ea3b97f2ddb3fc53a3b18" originalTeX="&#10;\text{visibility},&#10;" /></Formula>
+<Content ns0:pstyle="Content">divided by path-sampling density.</Content>
+<Content ns0:pstyle="Content">Thus rendering can be viewed as integration over a gigantic <Strong ns0:cstyle="Bold">path space</Strong> rather than merely directions at one surface.</Content>
+<Content ns0:pstyle="Content">This is the conceptual foundation for:</Content>
+<List type="bullet">
+<ListItem><Content ns0:pstyle="Content">bidirectional path tracing,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">vertex connection and merging,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">Metropolis light transport.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">We are not implementing those now, but the mental model starts here.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Path notation and event classes</Strong></Content>
+<Content ns0:pstyle="Content">A common shorthand uses:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/616a44de8e3de57c1ca6a3e8.svg" alt="&#10;E=\text{emitter},&#10;" jobId="616a44de8e3de57c1ca6a3e8" originalTeX="&#10;E=\text{emitter},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2f484a18f324af01445fbbfc.svg" alt="&#10;D=\text{diffuse},&#10;" jobId="2f484a18f324af01445fbbfc" originalTeX="&#10;D=\text{diffuse},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/56df172f260fb996e8769b2d.svg" alt="&#10;G=\text{glossy},&#10;" jobId="56df172f260fb996e8769b2d" originalTeX="&#10;G=\text{glossy},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bc07df5d49f9bd44716d303b.svg" alt="&#10;S=\text{specular/delta},&#10;" jobId="bc07df5d49f9bd44716d303b" originalTeX="&#10;S=\text{specular/delta},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1554414f058f5c4091df0d74.svg" alt="&#10;C=\text{camera}.&#10;" jobId="1554414f058f5c4091df0d74" originalTeX="&#10;C=\text{camera}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">A simple direct diffuse path:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b6ca83fbb3033f0e44153766.svg" alt="&#10;CDE.&#10;" jobId="b6ca83fbb3033f0e44153766" originalTeX="&#10;CDE.&#10;" /></Formula>
+<Content ns0:pstyle="Content">A mirror reflection:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/026b88c85dcca82ecdfdfd49.svg" alt="&#10;CSE.&#10;" jobId="026b88c85dcca82ecdfdfd49" originalTeX="&#10;CSE.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Diffuse interreflection:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e002f75e2ec2b3f173aeebbb.svg" alt="&#10;CDDE.&#10;" jobId="e002f75e2ec2b3f173aeebbb" originalTeX="&#10;CDDE.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Caustic-like path:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/73a2c5ff68a30d8ad9d0a91e.svg" alt="&#10;CDSSE&#10;" jobId="73a2c5ff68a30d8ad9d0a91e" originalTeX="&#10;CDSSE&#10;" /></Formula>
+<Content ns0:pstyle="Content">depending on direction convention/path ordering.</Content>
+<Content ns0:pstyle="Content">Path-space classification helps explain why some algorithms handle certain transport well and others poorly.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Specular delta distributions</Strong></Content>
+<Content ns0:pstyle="Content">A perfect mirror reflects into exactly one outgoing direction.</Content>
+<Content ns0:pstyle="Content">Its BRDF cannot be represented as an ordinary smooth finite function.</Content>
+<Content ns0:pstyle="Content">It contains a Dirac delta distribution.</Content>
+<Content ns0:pstyle="Content">Informally:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8c0c928ba7a7ed15b75dc4ea.svg" alt="&#10;f_s&#10;\propto&#10;\delta(&#10;\omega_i-\omega_r&#10;).&#10;" jobId="8c0c928ba7a7ed15b75dc4ea" originalTeX="&#10;f_s&#10;\propto&#10;\delta(&#10;\omega_i-\omega_r&#10;).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Why does this matter?</Content>
+<Content ns0:pstyle="Content">Because probability of selecting exactly the mirror direction using a continuous hemisphere sampler is zero.</Content>
+<Content ns0:pstyle="Content">Therefore perfect-specular events require specialized deterministic/delta sampling.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Delta event versus very glossy event</Strong></Content>
+<Content ns0:pstyle="Content">Rough GGX with:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/df81e3aceb42bb07fd7459c8.svg" alt="&#10;r=0.01&#10;" jobId="df81e3aceb42bb07fd7459c8" originalTeX="&#10;r=0.01&#10;" /></Formula>
+<Content ns0:pstyle="Content">is still technically a finite-width continuous distribution.</Content>
+<Content ns0:pstyle="Content">Perfect mirror:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/61a3d4e1923d60047f3c5662.svg" alt="&#10;r=0&#10;" jobId="61a3d4e1923d60047f3c5662" originalTeX="&#10;r=0&#10;" /></Formula>
+<Content ns0:pstyle="Content">in ideal mathematical form becomes a delta.</Content>
+<Content ns0:pstyle="Content">These behave differently in MIS.</Content>
+<Content ns0:pstyle="Content">For a delta event, there is usually only one valid transport direction.</Content>
+<Content ns0:pstyle="Content">The sampled BSDF event is treated with discrete probability rather than ordinary finite solid-angle density in the same way.</Content>
+<Content ns0:pstyle="Content">You must not evaluate the perfect mirror using a naïve:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2f0edbcaef34097e83538760.svg" alt="&#10;p_\omega=\text{finite number}&#10;" jobId="2f0edbcaef34097e83538760" originalTeX="&#10;p_\omega=\text{finite number}&#10;" /></Formula>
+<Content ns0:pstyle="Content">as though it were diffuse.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Diffuse event</Strong></Content>
+<Content ns0:pstyle="Content">A diffuse event scatters over an entire hemisphere.</Content>
+<Content ns0:pstyle="Content">For Lambert:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a924888382c41db8b3d0eb51.svg" alt="&#10;f=\rho/\pi.&#10;" jobId="a924888382c41db8b3d0eb51" originalTeX="&#10;f=\rho/\pi.&#10;" /></Formula>
+<Content ns0:pstyle="Content">A continuum of directions has nonzero contribution.</Content>
+<Content ns0:pstyle="Content">Cosine-weighted sampling works well.</Content>
+<Content ns0:pstyle="Content">This is a <Strong ns0:cstyle="Bold">non-delta continuous event</Strong>.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Glossy event</Strong></Content>
+<Content ns0:pstyle="Content">A glossy BRDF such as GGX rough reflection also has continuous support over a range of directions, but concentrated around specular configurations.</Content>
+<Content ns0:pstyle="Content">It is non-delta as long as roughness is nonzero.</Content>
+<Content ns0:pstyle="Content">A GGX VNDF sampler is appropriate.</Content>
+<Content ns0:pstyle="Content">Thus:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/54f1bdc52548940d1307abc4.svg" alt="&#10;\text{diffuse}&#10;" jobId="54f1bdc52548940d1307abc4" originalTeX="&#10;\text{diffuse}&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ba00f02ad9eaed9d082d0b24.svg" alt="&#10;\text{glossy}&#10;" jobId="ba00f02ad9eaed9d082d0b24" originalTeX="&#10;\text{glossy}&#10;" /></Formula>
+<Content ns0:pstyle="Content">are both continuous, but their ideal PDFs differ drastically.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why event classification matters for NEE</Strong></Content>
+<Content ns0:pstyle="Content">At a diffuse surface:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fee2b30a4a840950773bc3d2.svg" alt="&#10;\text{sample lights explicitly}.&#10;" jobId="fee2b30a4a840950773bc3d2" originalTeX="&#10;\text{sample lights explicitly}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">At a rough glossy surface:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6d19abce9bf8c0ffb5bffc48.svg" alt="&#10;\text{sample lights + BSDF with MIS}.&#10;" jobId="6d19abce9bf8c0ffb5bffc48" originalTeX="&#10;\text{sample lights + BSDF with MIS}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">At a perfect mirror surface:</Content>
+<Content ns0:pstyle="Content">there is usually no need to perform ordinary direct-light NEE toward arbitrary lights because only one outgoing direction is supported by the BSDF delta.</Content>
+<Content ns0:pstyle="Content">This is why path tracers often carry flags such as:</Content>
+<Code ns0:pstyle="Code" language="cpp">BSDF_Diffuse
+BSDF_Glossy
+BSDF_Specular
+BSDF_Reflection
+BSDF_Transmission</Code>
+<Content ns0:pstyle="Content">They control both sampling and MIS logic.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Glass as probabilistic event selection</Strong></Content>
+<Content ns0:pstyle="Content">At an ideal dielectric interface, Fresnel gives reflection probability:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d1f65b907de80f83b50c4984.svg" alt="&#10;F.&#10;" jobId="d1f65b907de80f83b50c4984" originalTeX="&#10;F.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Transmission energy fraction:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5d3d009ffc441b1e01d32703.svg" alt="&#10;1-F.&#10;" jobId="5d3d009ffc441b1e01d32703" originalTeX="&#10;1-F.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Whitted tracing spawned both reflection and refraction rays.</Content>
+<Content ns0:pstyle="Content">Path tracing can instead select <Strong ns0:cstyle="Bold">one</Strong> branch.</Content>
+<Content ns0:pstyle="Content">Draw:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5f37196ffce91cd1567e50af.svg" alt="&#10;\xi\sim U[0,1).&#10;" jobId="5f37196ffce91cd1567e50af" originalTeX="&#10;\xi\sim U[0,1).&#10;" /></Formula>
+<Content ns0:pstyle="Content">If:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1823114dd873c1c139e39f5b.svg" alt="&#10;\xi&lt;F,&#10;" jobId="1823114dd873c1c139e39f5b" originalTeX="&#10;\xi&lt;F,&#10;" /></Formula>
+<Content ns0:pstyle="Content">choose reflection.</Content>
+<Content ns0:pstyle="Content">Otherwise choose transmission.</Content>
+<Content ns0:pstyle="Content">This avoids exponential ray branching.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why choosing probability equal to Fresnel is elegant</Strong></Content>
+<Content ns0:pstyle="Content">Suppose reflected contribution factor contains:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d1f65b907de80f83b50c4984.svg" alt="&#10;F.&#10;" jobId="d1f65b907de80f83b50c4984" originalTeX="&#10;F.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Sampling reflection with probability:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/005c690d6ebf1eedcf4858af.svg" alt="&#10;p_r=F.&#10;" jobId="005c690d6ebf1eedcf4858af" originalTeX="&#10;p_r=F.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Monte Carlo weight includes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0828fda1e85cb93eb35e1da0.svg" alt="&#10;\frac{F}{p_r}&#10;=&#10;\frac{F}{F}&#10;=&#10;1.&#10;" jobId="0828fda1e85cb93eb35e1da0" originalTeX="&#10;\frac{F}{p_r}&#10;=&#10;\frac{F}{F}&#10;=&#10;1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Similarly transmission:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ef2df6a9ea8083aa0a0085e6.svg" alt="&#10;p_t=1-F,&#10;" jobId="ef2df6a9ea8083aa0a0085e6" originalTeX="&#10;p_t=1-F,&#10;" /></Formula>
+<Content ns0:pstyle="Content">and in the simplest lossless conceptual case:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/696583faf175a7d21ea216b1.svg" alt="&#10;\frac{1-F}{p_t}=1.&#10;" jobId="696583faf175a7d21ea216b1" originalTeX="&#10;\frac{1-F}{p_t}=1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So Fresnel factor cancels selection probability.</Content>
+<Content ns0:pstyle="Content">This dramatically stabilizes ideal dielectric event sampling.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Glass pseudocode</Strong></Content>
+<Code ns0:pstyle="Code" language="cpp">BSDFSample SampleIdealGlass(
+    Vec3 wo,
+    Vec3 n,
+    float etaI,
+    float etaT,
+    RNG&amp; rng)
+{
+    const float cosTheta =
+        std::clamp(
+            Dot(wo, n),
+            0.0f,
+            1.0f);
+
+    const float F =
+        FresnelDielectric(
+            cosTheta,
+            etaI,
+            etaT);
+
+    const float eta =
+        etaI / etaT;
+
+    const auto wt =
+        Refract(
+            -wo,
+            n,
+            eta);
+
+    // Total internal reflection.
+    if (!wt)
+    {
+        return
+        {
+            .Wi = Reflect(-wo, n),
+            .Probability = 1.0f,
+            .IsDelta = true,
+            .IsTransmission = false
+        };
+    }
+
+    if (Random01(rng) &lt; F)
+    {
+        return
+        {
+            .Wi = Reflect(-wo, n),
+            .Probability = F,
+            .IsDelta = true,
+            .IsTransmission = false
+        };
+    }
+
+    return
+    {
+        .Wi = *wt,
+        .Probability = 1.0f - F,
+        .IsDelta = true,
+        .IsTransmission = true
+    };
+}</Code>
+<Content ns0:pstyle="Content">The full radiance-domain transmission throughput requires careful refractive-index factors.</Content>
+<Content ns0:pstyle="Content">That belongs to the next pass together with nested media and explicit IOR tracking.</Content>
+<Content ns0:pstyle="Content">Do not simplify full dielectric transport to “just <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/953c55494350520463de1d25.svg" alt="1-F" jobId="953c55494350520463de1d25" originalTeX="1-F" />” once we derive the BTDF rigorously.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Total internal reflection in event selection</Strong></Content>
+<Content ns0:pstyle="Content">If refraction has no real solution:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9cd886199e8ed77cc421c9a4.svg" alt="&#10;\sin^2\theta_t&gt;1,&#10;" jobId="9cd886199e8ed77cc421c9a4" originalTeX="&#10;\sin^2\theta_t&gt;1,&#10;" /></Formula>
+<Content ns0:pstyle="Content">then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a69aa4fc40754882484da6cd.svg" alt="&#10;F=1.&#10;" jobId="a69aa4fc40754882484da6cd" originalTeX="&#10;F=1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Reflection probability becomes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6c2c622b13d936f745d14f5b.svg" alt="&#10;p_r=1.&#10;" jobId="6c2c622b13d936f745d14f5b" originalTeX="&#10;p_r=1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Transmission probability:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2dcf0bd9d362165b93f47381.svg" alt="&#10;p_t=0.&#10;" jobId="2dcf0bd9d362165b93f47381" originalTeX="&#10;p_t=0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So event selection naturally becomes deterministic mirror reflection.</Content>
+<Content ns0:pstyle="Content">No special arbitrary fallback is needed beyond recognizing TIR.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Current Kairo Path mode versus theory</Strong></Content>
+<Content ns0:pstyle="Content">This is the most important repository audit in this pass.</Content>
+<Content ns0:pstyle="Content">Current <InlineCode ns0:cstyle="InlineCode">TracePath()</InlineCode> only has a special material branch for:</Content>
+<Code ns0:pstyle="Code" language="cpp">MaterialType::Emissive</Code>
+<Content ns0:pstyle="Content">There is no branch for:</Content>
+<Code ns0:pstyle="Code" language="cpp">Mirror
+Glass
+PBR</Code>
+<Content ns0:pstyle="Content">inside the current path integrator.</Content>
+<Content ns0:pstyle="Content">After direct lighting, every non-emissive surface receives:</Content>
+<Code ns0:pstyle="Code" language="cpp">CosineHemisphereDirection(hit.Normal)</Code>
+<Content ns0:pstyle="Content">and the next bounce is weighted approximately by:</Content>
+<Code ns0:pstyle="Code" language="cpp">albedo / survivalProbability</Code>
+<Content ns0:pstyle="Content">Therefore current Kairo <Strong ns0:cstyle="Bold">Path mode effectively treats every non-emissive surface as diffuse Lambertian for indirect transport</Strong>, even when the material record says Mirror, Glass or PBR.</Content>
+<Content ns0:pstyle="Content">The Whitted integrator handles mirror/glass properly.</Content>
+<Content ns0:pstyle="Content">The direct PBR integrator handles GGX direct illumination.</Content>
+<Content ns0:pstyle="Content">But the path integrator has not yet unified those into a general BSDF transport system.</Content>
+<Content ns0:pstyle="Content">That is the largest architectural gap exposed by M123/M124.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">What a general Kairo BSDF layer should look like</Strong></Content>
+<Content ns0:pstyle="Content">Instead of the path integrator knowing material types directly, introduce an abstraction conceptually like:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct BSDFSample
+{
+    Vec3 Wi;
+
+    Color F;
+
+    float Pdf;
+
+    bool IsDelta;
+    bool IsReflection;
+    bool IsTransmission;
+};
+
+Color EvaluateBSDF(
+    const Material&amp; material,
+    const SurfaceHit&amp; hit,
+    Vec3 wo,
+    Vec3 wi);
+
+float PdfBSDF(
+    const Material&amp; material,
+    const SurfaceHit&amp; hit,
+    Vec3 wo,
+    Vec3 wi);
+
+BSDFSample SampleBSDF(
+    const Material&amp; material,
+    const SurfaceHit&amp; hit,
+    Vec3 wo,
+    RNG&amp; rng);</Code>
+<Content ns0:pstyle="Content">Then the integrator operates generically:</Content>
+<Code ns0:pstyle="Code" language="cpp">sample = SampleBSDF(...);
+
+beta *=
+    sample.F *
+    abs(dot(N, sample.Wi)) /
+    sample.Pdf;</Code>
+<Content ns0:pstyle="Content">Mirror returns delta reflection.</Content>
+<Content ns0:pstyle="Content">Glass returns Fresnel-selected delta reflection/transmission.</Content>
+<Content ns0:pstyle="Content">Lambert returns cosine-sampled diffuse.</Content>
+<Content ns0:pstyle="Content">PBR returns GGX/VNDF reflection plus diffuse mixture.</Content>
+<Content ns0:pstyle="Content">That architecture is where the renderer should move.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Sampling a mixture BSDF</Strong></Content>
+<Content ns0:pstyle="Content">Suppose metallic-roughness dielectric material contains:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5d08e9af5820c03dde1f7537.svg" alt="&#10;f=&#10;f_d+f_s.&#10;" jobId="5d08e9af5820c03dde1f7537" originalTeX="&#10;f=&#10;f_d+f_s.&#10;" /></Formula>
+<Content ns0:pstyle="Content">One simple sampling strategy chooses diffuse with probability:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2fb79a947623fae65b93a28c.svg" alt="&#10;p_d&#10;" jobId="2fb79a947623fae65b93a28c" originalTeX="&#10;p_d&#10;" /></Formula>
+<Content ns0:pstyle="Content">and specular with:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/85c423c004b4eb3117ebb4c1.svg" alt="&#10;p_s=1-p_d.&#10;" jobId="85c423c004b4eb3117ebb4c1" originalTeX="&#10;p_s=1-p_d.&#10;" /></Formula>
+<Content ns0:pstyle="Content">If diffuse selected:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/50708c83f78c9711a3ccb8b4.svg" alt="&#10;\omega_i\sim p_d^{\text{dir}}.&#10;" jobId="50708c83f78c9711a3ccb8b4" originalTeX="&#10;\omega_i\sim p_d^{\text{dir}}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">If specular:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1add7501606740dd41f6f160.svg" alt="&#10;\omega_i\sim p_s^{\text{dir}}.&#10;" jobId="1add7501606740dd41f6f160" originalTeX="&#10;\omega_i\sim p_s^{\text{dir}}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The complete mixture PDF for an obtained direction is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/07adb2ff6b6a7c844c8c9342.svg" alt="&#10;\boxed{&#10;p(\omega)&#10;=&#10;p_d\,p_d^{\text{dir}}(\omega)&#10;+&#10;p_s\,p_s^{\text{dir}}(\omega).&#10;}&#10;" jobId="07adb2ff6b6a7c844c8c9342" originalTeX="&#10;\boxed{&#10;p(\omega)&#10;=&#10;p_d\,p_d^{\text{dir}}(\omega)&#10;+&#10;p_s\,p_s^{\text{dir}}(\omega).&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">You must evaluate the <Strong ns0:cstyle="Bold">full BSDF</Strong>:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/45ecbd87174f26f3f5b2f89d.svg" alt="&#10;f_d+f_s&#10;" jobId="45ecbd87174f26f3f5b2f89d" originalTeX="&#10;f_d+f_s&#10;" /></Formula>
+<Content ns0:pstyle="Content">and divide by the <Strong ns0:cstyle="Bold">mixture PDF</Strong>, not merely the PDF of the branch you happened to choose if both lobes have support there.</Content>
+<Content ns0:pstyle="Content">This is a common implementation error.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Mixture probability should approximate lobe energy</Strong></Content>
+<Content ns0:pstyle="Content">Choosing:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c1233183899d2b54fb2b0c3c.svg" alt="&#10;p_d=0.5,&#10;\quad&#10;p_s=0.5&#10;" jobId="c1233183899d2b54fb2b0c3c" originalTeX="&#10;p_d=0.5,&#10;\quad&#10;p_s=0.5&#10;" /></Formula>
+<Content ns0:pstyle="Content">is simple.</Content>
+<Content ns0:pstyle="Content">But if a metal has:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a62d9afa1165ec4e8006b391.svg" alt="&#10;f_d\approx0,&#10;" jobId="a62d9afa1165ec4e8006b391" originalTeX="&#10;f_d\approx0,&#10;" /></Formula>
+<Content ns0:pstyle="Content">half the samples are wasted.</Content>
+<Content ns0:pstyle="Content">Better choose lobe probabilities based on expected diffuse/specular energy.</Content>
+<Content ns0:pstyle="Content">For metallic:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a75bc56373dec8836b6c8032.svg" alt="&#10;p_s\rightarrow1.&#10;" jobId="a75bc56373dec8836b6c8032" originalTeX="&#10;p_s\rightarrow1.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For diffuse dielectric:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2fb79a947623fae65b93a28c.svg" alt="&#10;p_d&#10;" jobId="2fb79a947623fae65b93a28c" originalTeX="&#10;p_d&#10;" /></Formula>
+<Content ns0:pstyle="Content">can be larger while still preserving nonzero specular selection.</Content>
+<Content ns0:pstyle="Content">This is another form of importance sampling.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Full next-event estimation architecture</Strong></Content>
+<Content ns0:pstyle="Content">At each non-delta path vertex <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0cfb135b111632e99e113052.svg" alt="x" jobId="0cfb135b111632e99e113052" originalTeX="x" />:</Content>
+<Content ns0:pstyle="Content">Choose a light index:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f4f6ac63ecf0ed020347f29f.svg" alt="&#10;j\sim P_{\text{light}}(j).&#10;" jobId="f4f6ac63ecf0ed020347f29f" originalTeX="&#10;j\sim P_{\text{light}}(j).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Sample that light:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a013bd9e4f53968772ccb2a1.svg" alt="&#10;s_L.&#10;" jobId="a013bd9e4f53968772ccb2a1" originalTeX="&#10;s_L.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Its complete light PDF is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4e0c2866514b546e880e5226.svg" alt="&#10;\boxed{&#10;p_L&#10;=&#10;P_{\text{light}}(j)&#10;p(\omega|j).&#10;}&#10;" jobId="4e0c2866514b546e880e5226" originalTeX="&#10;\boxed{&#10;p_L&#10;=&#10;P_{\text{light}}(j)&#10;p(\omega|j).&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Evaluate:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/671b9fdf5dd6cc707109b9e9.svg" alt="&#10;f_r,&#10;\quad&#10;L_i,&#10;\quad&#10;\cos\theta,&#10;\quad&#10;V.&#10;" jobId="671b9fdf5dd6cc707109b9e9" originalTeX="&#10;f_r,&#10;\quad&#10;L_i,&#10;\quad&#10;\cos\theta,&#10;\quad&#10;V.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Evaluate BSDF PDF for the same direction:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/318cfccb15eb1748b1396f5f.svg" alt="&#10;p_B.&#10;" jobId="318cfccb15eb1748b1396f5f" originalTeX="&#10;p_B.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Apply:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b670f94b9555c700d122b8a8.svg" alt="&#10;w_L=&#10;\frac{p_L^2}{p_L^2+p_B^2}.&#10;" jobId="b670f94b9555c700d122b8a8" originalTeX="&#10;w_L=&#10;\frac{p_L^2}{p_L^2+p_B^2}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then add:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7c2ac6a53e0593b71504d21f.svg" alt="&#10;\boxed{&#10;L&#10;\mathrel{+}=&#10;\beta&#10;w_L&#10;\frac{&#10;f_rL_i\cos\theta V&#10;}{&#10;p_L&#10;}.&#10;}&#10;" jobId="7c2ac6a53e0593b71504d21f" originalTeX="&#10;\boxed{&#10;L&#10;\mathrel{+}=&#10;\beta&#10;w_L&#10;\frac{&#10;f_rL_i\cos\theta V&#10;}{&#10;p_L&#10;}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is the light-sampling side of MIS NEE.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Matching BSDF-emitter MIS</Strong></Content>
+<Content ns0:pstyle="Content">When the BSDF-sampled path later reaches a light/environment, evaluate the light technique’s PDF for that same direction.</Content>
+<Content ns0:pstyle="Content">Suppose previous BSDF PDF was:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/318cfccb15eb1748b1396f5f.svg" alt="&#10;p_B.&#10;" jobId="318cfccb15eb1748b1396f5f" originalTeX="&#10;p_B.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Equivalent light PDF:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b36b3415f245e608fb61e2d4.svg" alt="&#10;p_L.&#10;" jobId="b36b3415f245e608fb61e2d4" originalTeX="&#10;p_L.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/397449c09f9fa5cab05b80c5.svg" alt="&#10;w_B&#10;=&#10;\frac{&#10;p_B^2&#10;}{&#10;p_B^2+p_L^2&#10;}.&#10;" jobId="397449c09f9fa5cab05b80c5" originalTeX="&#10;w_B&#10;=&#10;\frac{&#10;p_B^2&#10;}{&#10;p_B^2+p_L^2&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Emission contribution:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c11c81614dd1aa3be8d79056.svg" alt="&#10;\boxed{&#10;L&#10;\mathrel{+}=&#10;\beta&#10;w_B&#10;L_e.&#10;}&#10;" jobId="c11c81614dd1aa3be8d79056" originalTeX="&#10;\boxed{&#10;L&#10;\mathrel{+}=&#10;\beta&#10;w_B&#10;L_e.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">If previous event was delta:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a022bf37d733f18884e7d5e2.svg" alt="&#10;w_B=1&#10;" jobId="a022bf37d733f18884e7d5e2" originalTeX="&#10;w_B=1&#10;" /></Formula>
+<Content ns0:pstyle="Content">because ordinary light sampling could not generate that delta path in the same way.</Content>
+<Content ns0:pstyle="Content">This is the symmetry missing from many half-implemented MIS renderers.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Environment NEE with MIS</Strong></Content>
+<Content ns0:pstyle="Content">At a diffuse/glossy surface, sample environment direction:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/83b8f1fdfe8759dadb3e4d4e.svg" alt="&#10;\omega_L&#10;\sim&#10;p_{\text{env}}.&#10;" jobId="83b8f1fdfe8759dadb3e4d4e" originalTeX="&#10;\omega_L&#10;\sim&#10;p_{\text{env}}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Trace shadow ray to infinity.</Content>
+<Content ns0:pstyle="Content">If unoccluded:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5510564aad2a4c8341b354c5.svg" alt="&#10;L_i=&#10;L_{\text{env}}(\omega_L).&#10;" jobId="5510564aad2a4c8341b354c5" originalTeX="&#10;L_i=&#10;L_{\text{env}}(\omega_L).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Evaluate:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1e3517fb5c522aa212cda8ff.svg" alt="&#10;p_B=&#10;\operatorname{PdfBSDF}(\omega_L).&#10;" jobId="1e3517fb5c522aa212cda8ff" originalTeX="&#10;p_B=&#10;\operatorname{PdfBSDF}(\omega_L).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bf08b9189a50d84093e27546.svg" alt="&#10;w_L&#10;=&#10;\frac{&#10;p_{\text{env}}^2&#10;}{&#10;p_{\text{env}}^2+p_B^2&#10;}.&#10;" jobId="bf08b9189a50d84093e27546" originalTeX="&#10;w_L&#10;=&#10;\frac{&#10;p_{\text{env}}^2&#10;}{&#10;p_{\text{env}}^2+p_B^2&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Contribution:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5d9b47aa1384624351224e61.svg" alt="&#10;\boxed{&#10;L_d&#10;=&#10;\beta&#10;w_L&#10;\frac{&#10;L_{\text{env}}&#10;f_r&#10;\cos\theta&#10;}{&#10;p_{\text{env}}&#10;}.&#10;}&#10;" jobId="5d9b47aa1384624351224e61" originalTeX="&#10;\boxed{&#10;L_d&#10;=&#10;\beta&#10;w_L&#10;\frac{&#10;L_{\text{env}}&#10;f_r&#10;\cos\theta&#10;}{&#10;p_{\text{env}}&#10;}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">If the subsequent BSDF ray misses the scene and sees the environment, perform the symmetric BSDF-side weighting.</Content>
+<Content ns0:pstyle="Content">That is how HDR skies can become both efficient and unbiased.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Per-pixel firefly diagnostics</Strong></Content>
+<Content ns0:pstyle="Content">A mature renderer should not just show a final noisy image.</Content>
+<Content ns0:pstyle="Content">Track at least conceptually:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/056456e8d334635024223b5e.svg" alt="&#10;\max |L_{\text{sample}}|,&#10;" jobId="056456e8d334635024223b5e" originalTeX="&#10;\max |L_{\text{sample}}|,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b905c4ee685375e6b147bf53.svg" alt="&#10;\max |\beta|,&#10;" jobId="b905c4ee685375e6b147bf53" originalTeX="&#10;\max |\beta|,&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3a9c0e23e2aad5097f09c9c7.svg" alt="&#10;\min p_{\text{BSDF}},&#10;" jobId="3a9c0e23e2aad5097f09c9c7" originalTeX="&#10;\min p_{\text{BSDF}},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9b184afcccde92c6116a010b.svg" alt="&#10;\min p_{\text{light}},&#10;" jobId="9b184afcccde92c6116a010b" originalTeX="&#10;\min p_{\text{light}},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dba5269dd8b1ef7ba814cb15.svg" alt="&#10;\text{bounce where max occurred},&#10;" jobId="dba5269dd8b1ef7ba814cb15" originalTeX="&#10;\text{bounce where max occurred},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/558b1257c72f625673e020d1.svg" alt="&#10;\text{event class}.&#10;" jobId="558b1257c72f625673e020d1" originalTeX="&#10;\text{event class}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">If one pixel has:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7a05e4a31fafc6e2e08de7a1.svg" alt="&#10;10^6&#10;" jobId="7a05e4a31fafc6e2e08de7a1" originalTeX="&#10;10^6&#10;" /></Formula>
+<Content ns0:pstyle="Content">sample radiance while neighbors are around:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b86e83038195ca245cdcd284.svg" alt="&#10;2,&#10;" jobId="b86e83038195ca245cdcd284" originalTeX="&#10;2,&#10;" /></Formula>
+<Content ns0:pstyle="Content">you want to know whether it was caused by:</Content>
+<Code ns0:pstyle="Code" language="text">GGX sample at bounce 4,
+environment sun,
+pdf = 1.2e-8</Code>
+<Content ns0:pstyle="Content">rather than merely seeing a white dot.</Content>
+<Content ns0:pstyle="Content">Path debugging needs transport metadata.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Progressive convergence experiment</Strong></Content>
+<Content ns0:pstyle="Content">For one fixed scene, render:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b8afbe3bd7b2ef5abaf57d8c.svg" alt="&#10;1,\ 4,\ 16,\ 64,\ 256,\ 1024&#10;" jobId="b8afbe3bd7b2ef5abaf57d8c" originalTeX="&#10;1,\ 4,\ 16,\ 64,\ 256,\ 1024&#10;" /></Formula>
+<Content ns0:pstyle="Content">samples per pixel.</Content>
+<Content ns0:pstyle="Content">Use a very high-sample reference:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/841d637d5f268e4d14a96483.svg" alt="&#10;R.&#10;" jobId="841d637d5f268e4d14a96483" originalTeX="&#10;R.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Compute RMSE:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9834a31547950b59f5eb6c15.svg" alt="&#10;RMSE_N&#10;=&#10;\sqrt{&#10;\frac1M&#10;\sum_p&#10;\|I_N(p)-R(p)\|^2&#10;}.&#10;" jobId="9834a31547950b59f5eb6c15" originalTeX="&#10;RMSE_N&#10;=&#10;\sqrt{&#10;\frac1M&#10;\sum_p&#10;\|I_N(p)-R(p)\|^2&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For independent Monte Carlo, error should roughly trend:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b9c876d0324dad0db6469b32.svg" alt="&#10;\boxed{&#10;RMSE\propto N^{-1/2}&#10;}&#10;" jobId="b9c876d0324dad0db6469b32" originalTeX="&#10;\boxed{&#10;RMSE\propto N^{-1/2}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">until other errors dominate.</Content>
+<Content ns0:pstyle="Content">If error plateaus at a nonzero level, suspect <Strong ns0:cstyle="Bold">bias</Strong>, not ordinary Monte Carlo noise.</Content>
+<Content ns0:pstyle="Content">That is an extremely important debugging distinction.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Noise pattern can diagnose sampling</Strong></Content>
+<Content ns0:pstyle="Content">Uniform random sampling creates white-noise-like high-frequency variation.</Content>
+<Content ns0:pstyle="Content">Stratification suppresses low-frequency clustering in finite sample sets.</Content>
+<Content ns0:pstyle="Content">Low-discrepancy sequences create more even coverage.</Content>
+<Content ns0:pstyle="Content">Blue-noise sequences push error toward frequencies that are less visually objectionable.</Content>
+<Content ns0:pstyle="Content">The estimator can remain mathematically correct while the <Emphasis ns0:cstyle="Emphasis">spatial structure</Emphasis> of finite-sample error changes dramatically.</Content>
+<Content ns0:pstyle="Content">That will matter later for real-time rendering.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Current Kairo progressive testing</Strong></Content>
+<Content ns0:pstyle="Content">The current tests verify that progressive path rendering:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/08156f213128adeeab9aee37.svg" alt="&#10;\text{produces finite pixels}&#10;" jobId="08156f213128adeeab9aee37" originalTeX="&#10;\text{produces finite pixels}&#10;" /></Formula>
+<Content ns0:pstyle="Content">and:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d584dcc342ee292990adb1a4.svg" alt="&#10;\text{is deterministic for the same seeds}.&#10;" jobId="d584dcc342ee292990adb1a4" originalTeX="&#10;\text{is deterministic for the same seeds}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is good infrastructure.</Content>
+<Content ns0:pstyle="Content">What is still absent is a real convergence test checking:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/df6db9852ff10aa47ac4fd12.svg" alt="&#10;\text{error decreases with sample count}&#10;" jobId="df6db9852ff10aa47ac4fd12" originalTeX="&#10;\text{error decreases with sample count}&#10;" /></Formula>
+<Content ns0:pstyle="Content">and a per-pixel variance estimator.</Content>
+<Content ns0:pstyle="Content">Those are natural M124 additions.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Research-quality variance comparison</Strong></Content>
+<Content ns0:pstyle="Content">To compare sampling strategies, hold everything fixed except the sampler.</Content>
+<Content ns0:pstyle="Content">For example render the same scene using:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/559a5ce24c1f0c5b62e780ea.svg" alt="&#10;\text{uniform hemisphere},&#10;" jobId="559a5ce24c1f0c5b62e780ea" originalTeX="&#10;\text{uniform hemisphere},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2cf9687cf50b81e7bb78b84a.svg" alt="&#10;\text{cosine hemisphere},&#10;" jobId="2cf9687cf50b81e7bb78b84a" originalTeX="&#10;\text{cosine hemisphere},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ab4dc2c9f75f9168a2eabbbd.svg" alt="&#10;\text{GGX NDF},&#10;" jobId="ab4dc2c9f75f9168a2eabbbd" originalTeX="&#10;\text{GGX NDF},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9c6e9d562f8b3d5733d3bd85.svg" alt="&#10;\text{GGX VNDF},&#10;" jobId="9c6e9d562f8b3d5733d3bd85" originalTeX="&#10;\text{GGX VNDF},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a97f5b0723ca557fc8d4c0a9.svg" alt="&#10;\text{light sampling},&#10;" jobId="a97f5b0723ca557fc8d4c0a9" originalTeX="&#10;\text{light sampling},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7d407cf1d2953245bbac016e.svg" alt="&#10;\text{MIS}.&#10;" jobId="7d407cf1d2953245bbac016e" originalTeX="&#10;\text{MIS}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Measure at fixed:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/693488ee275c06deacdfb343.svg" alt="&#10;\text{ray count}&#10;" jobId="693488ee275c06deacdfb343" originalTeX="&#10;\text{ray count}&#10;" /></Formula>
+<Content ns0:pstyle="Content">rather than merely fixed SPP.</Content>
+<Content ns0:pstyle="Content">Why?</Content>
+<Content ns0:pstyle="Content">A technique that launches three shadow rays per bounce costs more than one that launches none.</Content>
+<Content ns0:pstyle="Content">Quality per sample and quality per unit time are different metrics.</Content>
+<Content ns0:pstyle="Content">The meaningful research quantity is often:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1e79ac22265b59a279eb66ab.svg" alt="&#10;\boxed{&#10;\text{error versus compute budget}.&#10;}&#10;" jobId="1e79ac22265b59a279eb66ab" originalTeX="&#10;\boxed{&#10;\text{error versus compute budget}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Variance and BVH cost interact</Strong></Content>
+<Content ns0:pstyle="Content">Suppose method A requires:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1f665366351fb3fb13f88f69.svg" alt="&#10;100&#10;" jobId="1f665366351fb3fb13f88f69" originalTeX="&#10;100&#10;" /></Formula>
+<Content ns0:pstyle="Content">samples for target variance but each sample costs:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/17260351843161cec6b3c32b.svg" alt="&#10;5&#10;" jobId="17260351843161cec6b3c32b" originalTeX="&#10;5&#10;" /></Formula>
+<Content ns0:pstyle="Content">rays.</Content>
+<Content ns0:pstyle="Content">Method B needs:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3a0bc193b1b9da939b7cd9d2.svg" alt="&#10;200&#10;" jobId="3a0bc193b1b9da939b7cd9d2" originalTeX="&#10;200&#10;" /></Formula>
+<Content ns0:pstyle="Content">samples but costs:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ccbe732adce23dab29151742.svg" alt="&#10;1&#10;" jobId="ccbe732adce23dab29151742" originalTeX="&#10;1&#10;" /></Formula>
+<Content ns0:pstyle="Content">ray each.</Content>
+<Content ns0:pstyle="Content">Then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/635fddbb35858036e14bd2b1.svg" alt="&#10;A=500\text{ rays},&#10;" jobId="635fddbb35858036e14bd2b1" originalTeX="&#10;A=500\text{ rays},&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/177bf6aa3a266d64acfeb7f2.svg" alt="&#10;B=200\text{ rays}.&#10;" jobId="177bf6aa3a266d64acfeb7f2" originalTeX="&#10;B=200\text{ rays}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So “lower variance per sample” does not automatically mean faster rendering.</Content>
+<Content ns0:pstyle="Content">Integrator design must optimize:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/917b63820a01981be329492f.svg" alt="&#10;\boxed{&#10;\text{variance}\times\text{cost}&#10;}&#10;" jobId="917b63820a01981be329492f" originalTeX="&#10;\boxed{&#10;\text{variance}\times\text{cost}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">or an equivalent time-normalized metric.</Content>
+<Content ns0:pstyle="Content">This becomes very important with complex MIS and next-event estimation.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Path tracing is probability bookkeeping</Strong></Content>
+<Content ns0:pstyle="Content">At this stage the core renderer is no longer difficult because ray intersection is mysterious.</Content>
+<Content ns0:pstyle="Content">The hard part is maintaining a consistent probability story.</Content>
+<Content ns0:pstyle="Content">For every random choice you must be able to answer:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ddf8af6d1789c0884683a935.svg" alt="&#10;\text{What was sampled?}&#10;" jobId="ddf8af6d1789c0884683a935" originalTeX="&#10;\text{What was sampled?}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3462421e90faf512b618c405.svg" alt="&#10;\text{Under what measure?}&#10;" jobId="3462421e90faf512b618c405" originalTeX="&#10;\text{Under what measure?}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cd4b7c67bee7db05b14456e3.svg" alt="&#10;\text{What was its PDF?}&#10;" jobId="cd4b7c67bee7db05b14456e3" originalTeX="&#10;\text{What was its PDF?}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a79666d9def9f8ed9031c629.svg" alt="&#10;\text{Did another technique also sample this event?}&#10;" jobId="a79666d9def9f8ed9031c629" originalTeX="&#10;\text{Did another technique also sample this event?}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/487840b11fc9a14b5804de68.svg" alt="&#10;\text{If yes, what is the MIS weight?}&#10;" jobId="487840b11fc9a14b5804de68" originalTeX="&#10;\text{If yes, what is the MIS weight?}&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/aa362284b730337d92215ae0.svg" alt="&#10;\text{How does this choice update throughput?}&#10;" jobId="aa362284b730337d92215ae0" originalTeX="&#10;\text{How does this choice update throughput?}&#10;" /></Formula>
+<Content ns0:pstyle="Content">If you cannot answer those questions for every bounce, the integrator is not yet trustworthy.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">A more complete Kairo-style path-loop target</Strong></Content>
+<Code ns0:pstyle="Code" language="cpp">Color TracePath(
+    const Scene&amp; scene,
+    Ray ray,
+    RNG&amp; rng)
+{
+    Color L =
+        Color::Black();
+
+    Color beta =
+        Color::White();
+
+    float previousBsdfPdf = 0.0f;
+    bool previousDelta = true;
+
+    for (uint32_t bounce = 0;
+         bounce &lt; MaxDepth;
+         ++bounce)
+    {
+        const auto hit =
+            scene.Intersect(ray);
+
+        if (!hit)
+        {
+            const Color Le =
+                scene.SampleEnvironment(
+                    ray.Direction);
+
+            if (bounce == 0 ||
+                previousDelta)
+            {
+                L += beta * Le;
+            }
+            else
+            {
+                const float lightPdf =
+                    scene.EnvironmentPdf(
+                        ray.Direction);
+
+                const float w =
+                    PowerHeuristic(
+                        previousBsdfPdf,
+                        lightPdf);
+
+                L +=
+                    beta *
+                    Le *
+                    w;
+            }
+
+            break;
+        }
+
+        const Material&amp; material =
+            scene.Materials[
+                hit-&gt;MaterialIndex];
+
+        // -----------------------------------------------------
+        // Emissive surface hit.
+        // -----------------------------------------------------
+        if (IsEmitter(material))
+        {
+            const Color Le =
+                material.Emission;
+
+            if (bounce == 0 ||
+                previousDelta)
+            {
+                L += beta * Le;
+            }
+            else
+            {
+                const float lightPdf =
+                    scene.PdfEmitterHit(
+                        ray,
+                        *hit);
+
+                const float w =
+                    PowerHeuristic(
+                        previousBsdfPdf,
+                        lightPdf);
+
+                L +=
+                    beta *
+                    Le *
+                    w;
+            }
+        }
+
+        const Vec3 wo =
+            -ray.Direction;
+
+        // -----------------------------------------------------
+        // Next-event estimation for non-delta BSDFs.
+        // -----------------------------------------------------
+        if (!IsPureDelta(material))
+        {
+            LightSample light =
+                scene.SampleLight(
+                    *hit,
+                    rng);
+
+            if (light.Valid &amp;&amp;
+                light.Pdf &gt; 0.0f)
+            {
+                const float cosTheta =
+                    std::max(
+                        Dot(
+                            hit-&gt;ShadingNormal,
+                            light.Wi),
+                        0.0f);
+
+                if (cosTheta &gt; 0.0f &amp;&amp;
+                    !scene.Occluded(
+                        SpawnShadowRay(
+                            *hit,
+                            light.Wi,
+                            light.Distance)))
+                {
+                    const Color f =
+                        EvaluateBSDF(
+                            material,
+                            *hit,
+                            wo,
+                            light.Wi);
+
+                    const float bsdfPdf =
+                        PdfBSDF(
+                            material,
+                            *hit,
+                            wo,
+                            light.Wi);
+
+                    const float w =
+                        light.IsDelta
+                        ? 1.0f
+                        : PowerHeuristic(
+                            light.Pdf,
+                            bsdfPdf);
+
+                    L +=
+                        beta *
+                        f *
+                        light.Radiance *
+                        (cosTheta *
+                         w /
+                         light.Pdf);
+                }
+            }
+        }
+
+        // -----------------------------------------------------
+        // Continue path by BSDF sampling.
+        // -----------------------------------------------------
+        BSDFSample bsdf =
+            SampleBSDF(
+                material,
+                *hit,
+                wo,
+                rng);
+
+        if (!bsdf.Valid ||
+            bsdf.Pdf &lt;= 0.0f)
+        {
+            break;
+        }
+
+        const float cosine =
+            bsdf.IsDelta
+            ? 1.0f
+            : std::abs(
+                Dot(
+                    hit-&gt;ShadingNormal,
+                    bsdf.Wi));
+
+        beta *=
+            bsdf.F *
+            (cosine /
+             bsdf.Pdf);
+
+        if (!IsFinite(beta) ||
+            MaxComponent(beta) &lt;= 0.0f)
+        {
+            break;
+        }
+
+        previousBsdfPdf =
+            bsdf.Pdf;
+
+        previousDelta =
+            bsdf.IsDelta;
+
+        ray =
+            SpawnRay(
+                *hit,
+                bsdf.Wi,
+                bsdf.IsTransmission);
+
+        // -----------------------------------------------------
+        // Russian roulette.
+        // -----------------------------------------------------
+        if (bounce &gt;= 3)
+        {
+            const float survival =
+                std::clamp(
+                    MaxComponent(beta),
+                    0.05f,
+                    0.95f);
+
+            if (Random01(rng) &gt;
+                survival)
+            {
+                break;
+            }
+
+            beta /= survival;
+        }
+    }
+
+    return L;
+}</Code>
+<Content ns0:pstyle="Content">There are still subtleties around delta BSDF conventions, transmission Jacobians, shading normals, nested media and light-selection PDFs, but this architecture is qualitatively closer to a complete modern path tracer than current <InlineCode ns0:cstyle="InlineCode">TracePath()</InlineCode>.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">The deepest connection: every “rendering trick” is a sampling strategy</Strong></Content>
+<Content ns0:pstyle="Content">A hard shadow ray is a very specialized light sample.</Content>
+<Content ns0:pstyle="Content">An area-light shadow ray is a sample from emitter area.</Content>
+<Content ns0:pstyle="Content">A cosine bounce is a BRDF-oriented sample.</Content>
+<Content ns0:pstyle="Content">GGX sampling is specular-lobe importance sampling.</Content>
+<Content ns0:pstyle="Content">Environment CDF sampling is incoming-radiance importance sampling.</Content>
+<Content ns0:pstyle="Content">MIS combines multiple distributions because no one proposal distribution tracks the entire integrand perfectly.</Content>
+<Content ns0:pstyle="Content">Russian roulette samples path length.</Content>
+<Content ns0:pstyle="Content">Subpixel jitter samples the pixel footprint.</Content>
+<Content ns0:pstyle="Content">Even glass Fresnel selection samples between discrete transport events.</Content>
+<Content ns0:pstyle="Content">Thus the path tracer can be understood as:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4169e35a7f8ec4bc9a7dce0f.svg" alt="&#10;\boxed{&#10;\text{a carefully constructed sequence of random variables whose expectation equals the rendering equation.}&#10;}&#10;" jobId="4169e35a7f8ec4bc9a7dce0f" originalTeX="&#10;\boxed{&#10;\text{a carefully constructed sequence of random variables whose expectation equals the rendering equation.}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is the real conceptual leap of M123/M124.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Current Kairo M123/M124 audit</Strong></Content>
+<Table ns0:table="table" ns0:trows="35" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Concept</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Current Kairo</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">Subpixel stratification</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">Yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Uniform sphere sampler</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Not exposed in current path code</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Uniform hemisphere sampler</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Not current path strategy</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">Cosine hemisphere sampler</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">Yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">Surface-basis transform</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">Yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">Lambert importance sampling</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">Yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">GGX NDF sampling</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">No in <InlineCode ns0:cstyle="InlineCode">PathIntegrator</InlineCode></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">GGX VNDF sampling</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">No</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">Power heuristic function</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">Yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">Complete two-sided MIS</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">No</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content ns0:pstyle="TableCell">Diffuse path throughput</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content ns0:pstyle="TableCell">Implicit via Lambert/cosine cancellation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content ns0:pstyle="TableCell">Generic <InlineCode ns0:cstyle="InlineCode">f*cos/pdf</InlineCode> path loop</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content ns0:pstyle="TableCell">No</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content ns0:pstyle="TableCell">Maximum depth</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content ns0:pstyle="TableCell">Yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="13"><Content ns0:pstyle="TableCell">Russian roulette</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="13"><Content ns0:pstyle="TableCell">Yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="14"><Content ns0:pstyle="TableCell">Survival from accumulated throughput</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="14"><Content ns0:pstyle="TableCell">No; current surface albedo used</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="15"><Content ns0:pstyle="TableCell">Point-light NEE</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="15"><Content ns0:pstyle="TableCell">Yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="16"><Content ns0:pstyle="TableCell">Directional/spot NEE</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="16"><Content ns0:pstyle="TableCell">Yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="17"><Content ns0:pstyle="TableCell">Area-light sampling</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="17"><Content ns0:pstyle="TableCell">Fixed sample grid</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="18"><Content ns0:pstyle="TableCell">Correct area→solid-angle PDF formula</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="18"><Content ns0:pstyle="TableCell">Computed</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="19"><Content ns0:pstyle="TableCell">Physically complete area-light estimator</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="19"><Content ns0:pstyle="TableCell">Not yet</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="20"><Content ns0:pstyle="TableCell">Environment miss radiance</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="20"><Content ns0:pstyle="TableCell">Yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="21"><Content ns0:pstyle="TableCell">Environment NEE</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="21"><Content ns0:pstyle="TableCell">No</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="22"><Content ns0:pstyle="TableCell">Environment importance map</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="22"><Content ns0:pstyle="TableCell">No</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="23"><Content ns0:pstyle="TableCell">CDF/alias sampler</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="23"><Content ns0:pstyle="TableCell">No</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="24"><Content ns0:pstyle="TableCell">Multiple samples/pixel</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="24"><Content ns0:pstyle="TableCell">Yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="25"><Content ns0:pstyle="TableCell">Progressive passes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="25"><Content ns0:pstyle="TableCell">Yes</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="26"><Content ns0:pstyle="TableCell">Online per-pixel mean</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="26"><Content ns0:pstyle="TableCell">Not yet</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="27"><Content ns0:pstyle="TableCell">Per-pixel variance</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="27"><Content ns0:pstyle="TableCell">Not yet</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="28"><Content ns0:pstyle="TableCell">Firefly instrumentation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="28"><Content ns0:pstyle="TableCell">Not yet</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="29"><Content ns0:pstyle="TableCell">Explicit delta/glossy/diffuse event types</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="29"><Content ns0:pstyle="TableCell">Not in path integrator</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="30"><Content ns0:pstyle="TableCell">Fresnel path-event selection</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="30"><Content ns0:pstyle="TableCell">Whitted only, not current Path mode</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="31"><Content ns0:pstyle="TableCell">Mirror transport in Path mode</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="31"><Content ns0:pstyle="TableCell">Not yet</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="32"><Content ns0:pstyle="TableCell">Glass transport in Path mode</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="32"><Content ns0:pstyle="TableCell">Not yet</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="33"><Content ns0:pstyle="TableCell">PBR/GGX indirect transport</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="33"><Content ns0:pstyle="TableCell">Not yet</Content></Cell></Table>
+<Content ns0:pstyle="Content">This is an excellent place to draw the line between “features whose source code exists somewhere in the renderer” and “features integrated into a mathematically unified path tracer.”</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">PASS 7 RECONSTRUCTION SHEET</Strong></Content>
+<Table ns0:table="table" ns0:trows="37" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Concept</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Core equation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">Uniform sphere</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/716c1a196f1aa6a721731a15.svg" alt="p=1/(4\pi)" jobId="716c1a196f1aa6a721731a15" originalTeX="p=1/(4\pi)" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Uniform hemisphere</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/331d0504e39e543fee026c73.svg" alt="p=1/(2\pi)" jobId="331d0504e39e543fee026c73" originalTeX="p=1/(2\pi)" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Uniform sphere sample</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/83e740914053eddcacba1c88.svg" alt="z=1-2\xi,\;\phi=2\pi\xi" jobId="83e740914053eddcacba1c88" originalTeX="z=1-2\xi,\;\phi=2\pi\xi" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">Cosine hemisphere</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3c83e1e11d5b8857af111275.svg" alt="p=\cos\theta/\pi" jobId="3c83e1e11d5b8857af111275" originalTeX="p=\cos\theta/\pi" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">Cosine sample</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7d5e61552210abbe28b02848.svg" alt="r=\sqrt{\xi},\;\phi=2\pi\xi" jobId="7d5e61552210abbe28b02848" originalTeX="r=\sqrt{\xi},\;\phi=2\pi\xi" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">Local→world</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/36ba31cfb50b44c62c53d14e.svg" alt="\omega=xT+yN+zB" jobId="36ba31cfb50b44c62c53d14e" originalTeX="\omega=xT+yN+zB" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">Lambert</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/78786b451184357266496395.svg" alt="f=\rho/\pi" jobId="78786b451184357266496395" originalTeX="f=\rho/\pi" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">Lambert+cosine cancellation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7bcfe11f60de8bc3b02d40b1.svg" alt="f\cos/p=\rho" jobId="7bcfe11f60de8bc3b02d40b1" originalTeX="f\cos/p=\rho" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">MC variance term</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/152e5f3aa7a717b8cc797e17.svg" alt="\int f^2/p-I^2" jobId="152e5f3aa7a717b8cc797e17" originalTeX="\int f^2/p-I^2" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">Ideal importance PDF</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b16822c8ae9aa5e2749f5e76.svg" alt="p^*\propto|f|" jobId="b16822c8ae9aa5e2749f5e76" originalTeX="p^*\propto|f|" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content ns0:pstyle="TableCell">GGX half-vector PDF</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/faef1c3a0890c3eb0c36eeb3.svg" alt="p_H=D(H)(N\cdot H)" jobId="faef1c3a0890c3eb0c36eeb3" originalTeX="p_H=D(H)(N\cdot H)" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content ns0:pstyle="TableCell">Reflection Jacobian</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/99650eee12e95da18bf46f96.svg" alt="p_L=p_H/(4|V\cdot H|)" jobId="99650eee12e95da18bf46f96" originalTeX="p_L=p_H/(4|V\cdot H|)" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content ns0:pstyle="TableCell">VNDF</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content ns0:pstyle="TableCell">condition GGX normals on visibility from <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4c2a9a20a981d7e78b6c8889.svg" alt="V" jobId="4c2a9a20a981d7e78b6c8889" originalTeX="V" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="13"><Content ns0:pstyle="TableCell">Balance MIS</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="13"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2eb48c6e8da0434cd3aa5962.svg" alt="w_i=n_ip_i/\sum n_jp_j" jobId="2eb48c6e8da0434cd3aa5962" originalTeX="w_i=n_ip_i/\sum n_jp_j" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="14"><Content ns0:pstyle="TableCell">Power MIS</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="14"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/13082ac1efc513ea81ddca23.svg" alt="w_i=(n_ip_i)^2/\sum(n_jp_j)^2" jobId="13082ac1efc513ea81ddca23" originalTeX="w_i=(n_ip_i)^2/\sum(n_jp_j)^2" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="15"><Content ns0:pstyle="TableCell">Throughput</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="15"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d263c7f89e3f13d98b16154c.svg" alt="\beta\leftarrow\beta f|\cos\theta|/p" jobId="d263c7f89e3f13d98b16154c" originalTeX="\beta\leftarrow\beta f|\cos\theta|/p" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="16"><Content ns0:pstyle="TableCell">Emission contribution</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="16"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9efa04ee9935c873abd7ebd5.svg" alt="L\leftarrow L+\beta L_e" jobId="9efa04ee9935c873abd7ebd5" originalTeX="L\leftarrow L+\beta L_e" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="17"><Content ns0:pstyle="TableCell">Russian roulette</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="17"><Content ns0:pstyle="TableCell">survive with <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dafbedbc78645c7a501722fe.svg" alt="p_s" jobId="dafbedbc78645c7a501722fe" originalTeX="p_s" />, then <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9d0e08112c7fa87528174add.svg" alt="\beta\leftarrow\beta/p_s" jobId="9d0e08112c7fa87528174add" originalTeX="\beta\leftarrow\beta/p_s" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="18"><Content ns0:pstyle="TableCell">NEE</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="18"><Content ns0:pstyle="TableCell">explicitly sample a light at current vertex</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="19"><Content ns0:pstyle="TableCell">Uniform area PDF</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="19"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b09eb357932e64cf12b9e0d1.svg" alt="p_A=1/A" jobId="b09eb357932e64cf12b9e0d1" originalTeX="p_A=1/A" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="20"><Content ns0:pstyle="TableCell">Area→solid-angle</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="20"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9021b01a43bb0fabede2d578.svg" alt="p_\omega=p_A r^2/|\cos\theta_L|" jobId="9021b01a43bb0fabede2d578" originalTeX="p_\omega=p_A r^2/|\cos\theta_L|" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="21"><Content ns0:pstyle="TableCell">Point light</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="21"><Content ns0:pstyle="TableCell">delta direction, inverse-square intensity</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="22"><Content ns0:pstyle="TableCell">Uniform environment</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="22"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d016780d34e379134bae9be2.svg" alt="p_\omega=1/(4\pi)" jobId="d016780d34e379134bae9be2" originalTeX="p_\omega=1/(4\pi)" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="23"><Content ns0:pstyle="TableCell">Lat-long solid angle</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="23"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ef8c4d0d9144c8d0f9a4812e.svg" alt="d\omega=2\pi^2\sin\theta\,du\,dv" jobId="ef8c4d0d9144c8d0f9a4812e" originalTeX="d\omega=2\pi^2\sin\theta\,du\,dv" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="24"><Content ns0:pstyle="TableCell">Env importance weight</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="24"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b2fba2105de343dc4f719264.svg" alt="w_{ij}=Y_{ij}\sin\theta_j" jobId="b2fba2105de343dc4f719264" originalTeX="w_{ij}=Y_{ij}\sin\theta_j" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="25"><Content ns0:pstyle="TableCell">CDF sampling</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="25"><Content ns0:pstyle="TableCell">invert cumulative probability</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="26"><Content ns0:pstyle="TableCell">Alias sampling</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="26"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ad271e79f123403db6392aca.svg" alt="O(1)" jobId="ad271e79f123403db6392aca" originalTeX="O(1)" /> discrete sampling after preprocessing</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="27"><Content ns0:pstyle="TableCell">Pixel mean</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="27"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9e0c120467563e162a150887.svg" alt="\bar X_N=N^{-1}\sum X_i" jobId="9e0c120467563e162a150887" originalTeX="\bar X_N=N^{-1}\sum X_i" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="28"><Content ns0:pstyle="TableCell">Online mean</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="28"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/27ff241b61ff64de05dd9ded.svg" alt="\mu_n=\mu_{n-1}+(x_n-\mu_{n-1})/n" jobId="27ff241b61ff64de05dd9ded" originalTeX="\mu_n=\mu_{n-1}+(x_n-\mu_{n-1})/n" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="29"><Content ns0:pstyle="TableCell">Sample variance</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="29"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f3f525ec3ebc16c426aecf51.svg" alt="s^2=M_2/(n-1)" jobId="f3f525ec3ebc16c426aecf51" originalTeX="s^2=M_2/(n-1)" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="30"><Content ns0:pstyle="TableCell">Monte Carlo noise</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="30"><Content ns0:pstyle="TableCell"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6535366aaf992797fe9585d8.svg" alt="\sigma\propto1/\sqrt N" jobId="6535366aaf992797fe9585d8" originalTeX="\sigma\propto1/\sqrt N" /></Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="31"><Content ns0:pstyle="TableCell">MSE</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="31"><Content ns0:pstyle="TableCell">variance + bias²</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="32"><Content ns0:pstyle="TableCell">Firefly</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="32"><Content ns0:pstyle="TableCell">rare huge <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ecabb62e0b263325fdba5c65.svg" alt="f/p" jobId="ecabb62e0b263325fdba5c65" originalTeX="f/p" /> contribution</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="33"><Content ns0:pstyle="TableCell">Clamping</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="33"><Content ns0:pstyle="TableCell">lowers variance but introduces bias</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="34"><Content ns0:pstyle="TableCell">Delta specular</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="34"><Content ns0:pstyle="TableCell">probability mass concentrated on exact direction</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="35"><Content ns0:pstyle="TableCell">Glass selection</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="35"><Content ns0:pstyle="TableCell">reflection with <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6c545e75c8708e0c86ff2194.svg" alt="F" jobId="6c545e75c8708e0c86ff2194" originalTeX="F" />, transmission with <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/953c55494350520463de1d25.svg" alt="1-F" jobId="953c55494350520463de1d25" originalTeX="1-F" /></Content></Cell></Table>
+<Content ns0:pstyle="Content">The curriculum explicitly places M123 and M124 as the sampling, MIS, throughput, NEE, variance and path-event foundation before the later production path-tracer work.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Blank-page mastery gate</Strong></Content>
+<Content ns0:pstyle="Content">From no notes, derive uniform-sphere sampling by starting from:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/16972622120c6cea3d9660a0.svg" alt="&#10;d\omega=\sin\theta\,d\theta\,d\phi&#10;" jobId="16972622120c6cea3d9660a0" originalTeX="&#10;d\omega=\sin\theta\,d\theta\,d\phi&#10;" /></Formula>
+<Content ns0:pstyle="Content">and showing why:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/97d58323c018e1d3101ddad0.svg" alt="&#10;z=\cos\theta&#10;" jobId="97d58323c018e1d3101ddad0" originalTeX="&#10;z=\cos\theta&#10;" /></Formula>
+<Content ns0:pstyle="Content">must be uniform.</Content>
+<Content ns0:pstyle="Content">Then derive cosine hemisphere sampling from:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9c14726ec51c3a386959d263.svg" alt="&#10;p_\theta=2\cos\theta\sin\theta&#10;" jobId="9c14726ec51c3a386959d263" originalTeX="&#10;p_\theta=2\cos\theta\sin\theta&#10;" /></Formula>
+<Content ns0:pstyle="Content">until you get:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cdb4bd0d6a932eec41ac1bd0.svg" alt="&#10;\sin\theta=\sqrt{\xi}.&#10;" jobId="cdb4bd0d6a932eec41ac1bd0" originalTeX="&#10;\sin\theta=\sqrt{\xi}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then show why Lambert plus cosine sampling yields:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/886879d12397a41a14ee1b3d.svg" alt="&#10;\frac{&#10;(\rho/\pi)\cos\theta&#10;}{&#10;\cos\theta/\pi&#10;}&#10;=&#10;\rho.&#10;" jobId="886879d12397a41a14ee1b3d" originalTeX="&#10;\frac{&#10;(\rho/\pi)\cos\theta&#10;}{&#10;\cos\theta/\pi&#10;}&#10;=&#10;\rho.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then derive:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3261dced8c31ac9026789cb2.svg" alt="&#10;\operatorname{Var}&#10;\left[&#10;\frac{f(X)}{p(X)}&#10;\right]&#10;=&#10;\int\frac{f^2}{p}-I^2&#10;" jobId="3261dced8c31ac9026789cb2" originalTeX="&#10;\operatorname{Var}&#10;\left[&#10;\frac{f(X)}{p(X)}&#10;\right]&#10;=&#10;\int\frac{f^2}{p}-I^2&#10;" /></Formula>
+<Content ns0:pstyle="Content">and use it to explain importance sampling.</Content>
+<Content ns0:pstyle="Content">Then reconstruct GGX half-vector sampling and explain why converting:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/62af70da3401ef50be355ce7.svg" alt="&#10;H\rightarrow L&#10;" jobId="62af70da3401ef50be355ce7" originalTeX="&#10;H\rightarrow L&#10;" /></Formula>
+<Content ns0:pstyle="Content">requires:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a5a895b8df38d085ca80ce47.svg" alt="&#10;\frac1{4|V\cdot H|}.&#10;" jobId="a5a895b8df38d085ca80ce47" originalTeX="&#10;\frac1{4|V\cdot H|}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then derive the balance and power MIS heuristics and explain why weighting only the light-sampled half of a two-technique MIS scheme is incomplete.</Content>
+<Content ns0:pstyle="Content">Then reconstruct:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/132ff132be696182ecfe2c8c.svg" alt="&#10;\beta_{k+1}&#10;=&#10;\beta_k&#10;\frac{&#10;f_k|\cos\theta_k|&#10;}{&#10;p_k&#10;}.&#10;" jobId="132ff132be696182ecfe2c8c" originalTeX="&#10;\beta_{k+1}&#10;=&#10;\beta_k&#10;\frac{&#10;f_k|\cos\theta_k|&#10;}{&#10;p_k&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then prove Russian roulette is unbiased:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ac19d0f1d1a99b2213871f90.svg" alt="&#10;E[X]=&#10;p_s(C/p_s)=C.&#10;" jobId="ac19d0f1d1a99b2213871f90" originalTeX="&#10;E[X]=&#10;p_s(C/p_s)=C.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then derive:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5afadbc70e2be10e4814ea6c.svg" alt="&#10;d\omega&#10;=&#10;\frac{&#10;\cos\theta_L&#10;}{&#10;r^2&#10;}&#10;dA&#10;" jobId="5afadbc70e2be10e4814ea6c" originalTeX="&#10;d\omega&#10;=&#10;\frac{&#10;\cos\theta_L&#10;}{&#10;r^2&#10;}&#10;dA&#10;" /></Formula>
+<Content ns0:pstyle="Content">and therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/00131b5c45e561ac59e6ddde.svg" alt="&#10;p_\omega&#10;=&#10;p_A&#10;\frac{&#10;r^2&#10;}{&#10;\cos\theta_L&#10;}.&#10;" jobId="00131b5c45e561ac59e6ddde" originalTeX="&#10;p_\omega&#10;=&#10;p_A&#10;\frac{&#10;r^2&#10;}{&#10;\cos\theta_L&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then explain why environment-map importance weights require:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a566e2284cd549739f9b1b7c.svg" alt="&#10;Y\sin\theta.&#10;" jobId="a566e2284cd549739f9b1b7c" originalTeX="&#10;Y\sin\theta.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Finally explain the difference between:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9c35fffef0d1e838695c03f5.svg" alt="&#10;\text{diffuse},&#10;\quad&#10;\text{glossy},&#10;\quad&#10;\text{delta specular},&#10;" jobId="9c35fffef0d1e838695c03f5" originalTeX="&#10;\text{diffuse},&#10;\quad&#10;\text{glossy},&#10;\quad&#10;\text{delta specular},&#10;" /></Formula>
+<Content ns0:pstyle="Content">and why ideal glass can choose reflection with probability <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6c545e75c8708e0c86ff2194.svg" alt="F" jobId="6c545e75c8708e0c86ff2194" originalTeX="F" /> and transmission with probability <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/953c55494350520463de1d25.svg" alt="1-F" jobId="953c55494350520463de1d25" originalTeX="1-F" /> without tracing both branches.</Content>
+<Content ns0:pstyle="Content">If you can reconstruct all of those pieces, then Monte Carlo path tracing is no longer “random rays.” It is a controlled probability estimator whose every random choice has a measure, a PDF, a transport factor and a reason.</Content>
+
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/02 - Graphics Vision and XR/00 - Reading Map">Reading map</Link> · <Link href="#03-visual-computing-i-ch008">Previous chapter</Link> · <Link href="#03-visual-computing-i-ch010">Next chapter</Link></Content>
+</Chapter>

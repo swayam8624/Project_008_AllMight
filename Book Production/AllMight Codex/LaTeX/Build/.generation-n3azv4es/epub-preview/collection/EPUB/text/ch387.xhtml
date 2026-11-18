@@ -1,0 +1,6780 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch387.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_04-visual-computing-ii-ch041-per-vertex-and-per-corner-mesh-attributes" class="level2">
+<h2>Per-Vertex and Per-Corner Mesh Attributes</h2>
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch386.xhtml#id_04-visual-computing-ii-ch030-mesh-operators-boundaries-and-diffusion" class="wikilink">Previous chapter</a> · <a href="ch389.xhtml#id_05-engine-i-ch013-portable-startup-windows-events-and-input" class="wikilink">Next chapter</a></p>
+<p>A mesh vertex can carry a single shared value, while a corner can carry values that differ across incident faces. This distinction explains seams, normals, UVs and the relationship between topology and shading.</p>
+<p><strong>By the end:</strong> Choose per-vertex or per-corner attributes based on mesh continuity.</p>
+<p><strong>Recall question:</strong> When should two triangles share a vertex position but keep separate corner attributes?</p>
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 95949–99206; source-span SHA256 c8d8b33f6c039e15153ca041dae1dd9fdbdecdebf8e8bea1c5148b831d7a5ad9. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_04-visual-computing-ii-ch041-per-vertex-vs-per-corner" class="level4">
+<h4>Per-vertex vs per-corner</h4>
+<p>Consider cube corner shared by three faces.</p>
+<p>Geometric vertex position:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+</math>
+<p>is one point.</p>
+<p>But face normals:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>n</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>z</mi>
+  </msub>
+</math>
+<p>are three different values.</p>
+<p>A GPU vertex typically has one normal.</p>
+<p>Therefore same topological vertex must be duplicated:</p>
+<pre class="text"><code>position identical
+normal different</code></pre>
+<p>Likewise UV seam.</p>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>GPU vertex</mtext>
+          <mo>≠</mo>
+          <mtext>topological vertex</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A GPU vertex is usually a unique tuple of all active corner attributes.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-index-sharing" class="level4">
+<h4>Index sharing</h4>
+<p>You may share two corners only if every indexed attribute agrees:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>n</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>,</mo>
+  <mi>u</mi>
+  <mi>v</mi>
+  <mo>,</mo>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If position same but UV differs:</p>
+<p>duplicate.</p>
+<p>If position+UV same but normal differs:</p>
+<p>duplicate.</p>
+<p>This becomes crucial in OBJ importer later.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-topology-vs-geometry" class="level4">
+<h4>Topology vs geometry</h4>
+<p>Two meshes can have identical positions but different topology.</p>
+<p>Example:</p>
+<p>Two triangles sharing coordinates.</p>
+<p>Mesh A:</p>
+<p>indices share edge vertices.</p>
+<p>Mesh B:</p>
+<p>duplicates vertices along edge.</p>
+<p>Visually identical in flat render.</p>
+<p>Topologically:</p>
+<p>A connected.</p>
+<p>B disconnected.</p>
+<p>Algorithms like smoothing, subdivision, simulation and adjacency behave differently.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-boundary-edges" class="level4">
+<h4>Boundary edges</h4>
+<p>For triangle mesh edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>e</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>j</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Count incident faces.</p>
+<p>Boundary if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">|</mo>
+          <mi>F</mi>
+          <mo stretchy="false">(</mo>
+          <mi>e</mi>
+          <mo stretchy="false">)</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mo>=</mo>
+          <mn>1.</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Interior manifold edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">|</mo>
+  <mi>F</mi>
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>=</mo>
+  <mn>2.</mn>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-manifold-and-non-manifold" class="level4">
+<h4>Manifold and non-manifold</h4>
+<p>A 2-manifold interior edge has exactly two incident faces.</p>
+<p>Non-manifold if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">|</mo>
+  <mi>F</mi>
+  <mo stretchy="false">(</mo>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>&gt;</mo>
+  <mn>2.</mn>
+</math>
+<p>Example three triangles sharing one edge.</p>
+<p>Vertex can also be non-manifold if incident faces form disconnected fans.</p>
+<p>Why care?</p>
+<p>Many algorithms assume local disk topology.</p>
+<p>Half-edge traversal, subdivision, normals and simplification can fail on non-manifold data.</p>
+<p>Current Kairo <code>EditableMesh::Validate()</code> explicitly counts canonical edges and rejects any edge used by more than two faces.</p>
+<p>That is a strong invariant.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-connected-components" class="level4">
+<h4>Connected components</h4>
+<p>Construct graph where faces are nodes.</p>
+<p>Two faces adjacent if sharing edge.</p>
+<p>Run DFS/BFS.</p>
+<p>Each traversal produces one connected component.</p>
+<p>Complexity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>V</mi>
+  <mo>+</mo>
+  <mi>E</mi>
+  <mo>+</mo>
+  <mi>F</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Useful for:</p>
+<p>isolating objects, cleanup, import diagnostics, topology repair.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-face-adjacency" class="level4">
+<h4>Face adjacency</h4>
+<p>Map canonical edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo fence="false" stretchy="false">{</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>j</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>j</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo fence="false" stretchy="false">}</mo>
+</math>
+<p>to incident face list.</p>
+<p>Then:</p>
+<pre class="text"><code>edge -&gt; [faceA,faceB]</code></pre>
+<p>gives face adjacency.</p>
+<p>For manifold interior edge:</p>
+<p>two faces.</p>
+<p>Boundary:</p>
+<p>one.</p>
+<p>Non-manifold:</p>
+<p>more than two.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-vertex-adjacency" class="level4">
+<h4>Vertex adjacency</h4>
+<p>For every edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>j</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>add:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>∈</mo>
+  <mi>N</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>∈</mo>
+  <mi>N</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>j</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>One-ring:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>N</mi>
+          <mo stretchy="false">(</mo>
+          <mi>v</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mtext>vertices directly connected to </mtext>
+          <mi>v</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This neighborhood drives smoothing, curvature, subdivision, local editing.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-half-edge" class="level4">
+<h4>Half-edge</h4>
+<p>Each undirected edge becomes two directed half-edges.</p>
+<p>A canonical half-edge record:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> HalfEdge</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    VertexID origin<span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    FaceID face<span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    HalfEdgeID twin<span class="op">;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    HalfEdgeID next<span class="op">;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo stretchy="false">→</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>w</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mo stretchy="false">(</mo>
+  <mi>h</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>b</mi>
+  <mo stretchy="false">→</mo>
+  <mi>a</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Within a face:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>h</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>moves around boundary.</p>
+<p>For triangle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>h</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>h</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>h</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>h</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-one-ring-traversal" class="level4">
+<h4>One-ring traversal</h4>
+<p>Suppose outgoing half-edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>h</mi>
+    <mn>0</mn>
+  </msub>
+</math>
+<p>from vertex <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math>.</p>
+<p>A common manifold traversal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>h</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>n</mi>
+              <mi>e</mi>
+              <mi>x</mi>
+              <mi>t</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mi>t</mi>
+          <mi>w</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mi>e</mi>
+          <mi>x</mi>
+          <mi>t</mi>
+          <mo stretchy="false">(</mo>
+          <mi>h</mi>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>or variant depending whether half-edge stores origin/destination convention.</p>
+<p>Repeated application walks neighboring faces around vertex.</p>
+<p>This gives ordered ring, not merely unordered adjacency set.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-current-kairo-representation" class="level4">
+<h4>Current Kairo representation</h4>
+<p>Kairo <code>EditableHalfEdge</code> currently stores:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>From</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>To</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>Face</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>Corner</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>optional<span class="op">&lt;</span>Twin<span class="op">&gt;</span></span></code></pre></div>
+<p>It does not store an explicit <code>Next</code> index.</p>
+<p><code>next</code> is implicit from the face’s corner sequence:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mspace width="1em"></mspace>
+  <mo stretchy="false">(</mo>
+  <mi>mod</mi>
+  <mspace width="0.333em"></mspace>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>V</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>That is perfectly workable.</p>
+<p>Its topology representation also uses persistent 64-bit editable vertex and face IDs rather than raw vector indices—good for editor operations.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-normals-tangents-bounds-and-obj" class="level4">
+<h4>NORMALS, TANGENTS, BOUNDS AND OBJ</h4>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-flat-face-normal" class="level4">
+<h4>Flat face normal</h4>
+<p>Triangle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Edges:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>e</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>e</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Unnormalized normal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>n</mi>
+      <mo stretchy="false">~</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <msub>
+    <mi>e</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>×</mo>
+  <msub>
+    <mi>e</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Normalized:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>n</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>e</mi>
+                <mn>1</mn>
+              </msub>
+              <mo>×</mo>
+              <msub>
+                <mi>e</mi>
+                <mn>2</mn>
+              </msub>
+            </mrow>
+            <mrow>
+              <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+              <msub>
+                <mi>e</mi>
+                <mn>1</mn>
+              </msub>
+              <mo>×</mo>
+              <msub>
+                <mi>e</mi>
+                <mn>2</mn>
+              </msub>
+              <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Magnitude:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <msub>
+    <mi>e</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>×</mo>
+  <msub>
+    <mi>e</mi>
+    <mn>2</mn>
+  </msub>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo>=</mo>
+  <mn>2</mn>
+  <msub>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mi>r</mi>
+      <mi>i</mi>
+      <mi>a</mi>
+      <mi>n</mi>
+      <mi>g</mi>
+      <mi>l</mi>
+      <mi>e</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>So cross product naturally contains area weight.</p>
+<p>Current Kairo’s <code>FaceNormal()</code> computes exactly this.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-smooth-normals" class="level4">
+<h4>Smooth normals</h4>
+<p>Simplest:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>n</mi>
+    <mi>v</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>n</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <munder>
+      <mo data-mjx-texclass="OP">∑</mo>
+      <mrow data-mjx-texclass="ORD">
+        <mi>f</mi>
+        <mo>∋</mo>
+        <mi>v</mi>
+      </mrow>
+    </munder>
+    <msub>
+      <mi>n</mi>
+      <mi>f</mi>
+    </msub>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>This gives equal face weight.</p>
+<p>Current Kairo <code>RecalculateSmoothNormals</code> uses this simple equal-normal accumulation.</p>
+<p>But a large triangle and tiny triangle count equally.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-area-weighted-normals" class="level4">
+<h4>Area-weighted normals</h4>
+<p>Use unnormalized face cross products:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>n</mi>
+            <mi>v</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>n</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>m</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>z</mi>
+          <mi>e</mi>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">(</mo>
+            <munder>
+              <mo data-mjx-texclass="OP">∑</mo>
+              <mrow data-mjx-texclass="ORD">
+                <mi>f</mi>
+                <mo>∋</mo>
+                <mi>v</mi>
+              </mrow>
+            </munder>
+            <mo stretchy="false">(</mo>
+            <msub>
+              <mi>e</mi>
+              <mn>1</mn>
+            </msub>
+            <mo>×</mo>
+            <msub>
+              <mi>e</mi>
+              <mn>2</mn>
+            </msub>
+            <mo stretchy="false">)</mo>
+            <mo data-mjx-texclass="CLOSE">)</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Since magnitude:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <msub>
+    <mi>A</mi>
+    <mi>f</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>large faces contribute more.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-angle-weighted-normals" class="level4">
+<h4>Angle-weighted normals</h4>
+<p>At vertex <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math>, face corner angle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>θ</mi>
+    <mi>f</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>n</mi>
+            <mi>v</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>n</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>m</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>z</mi>
+          <mi>e</mi>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">(</mo>
+            <munder>
+              <mo data-mjx-texclass="OP">∑</mo>
+              <mi>f</mi>
+            </munder>
+            <msub>
+              <mi>θ</mi>
+              <mi>f</mi>
+            </msub>
+            <msub>
+              <mi>n</mi>
+              <mi>f</mi>
+            </msub>
+            <mo data-mjx-texclass="CLOSE">)</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This often better approximates smooth surface normals under irregular triangulation because contribution depends on wedge angle rather than triangle area.</p>
+<p>Hard edges require separate normals/corner vertices rather than averaging everything.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-tangent-generation" class="level4">
+<h4>Tangent generation</h4>
+<p>Triangle position edges:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>e</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>e</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>UV deltas:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>u</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>u</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>u</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>u</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>u</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>We assume:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>e</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>+</mo>
+  <mi>B</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>e</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>+</mo>
+  <mi>B</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Solve:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo>=</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>1</mn>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>T</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>e</mi>
+                <mn>1</mn>
+              </msub>
+              <mi mathvariant="normal">Δ</mi>
+              <msub>
+                <mi>v</mi>
+                <mn>2</mn>
+              </msub>
+              <mo>−</mo>
+              <msub>
+                <mi>e</mi>
+                <mn>2</mn>
+              </msub>
+              <mi mathvariant="normal">Δ</mi>
+              <msub>
+                <mi>v</mi>
+                <mn>1</mn>
+              </msub>
+            </mrow>
+            <mi>D</mi>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>B</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>e</mi>
+                <mn>2</mn>
+              </msub>
+              <mi mathvariant="normal">Δ</mi>
+              <msub>
+                <mi>u</mi>
+                <mn>1</mn>
+              </msub>
+              <mo>−</mo>
+              <msub>
+                <mi>e</mi>
+                <mn>1</mn>
+              </msub>
+              <mi mathvariant="normal">Δ</mi>
+              <msub>
+                <mi>u</mi>
+                <mn>2</mn>
+              </msub>
+            </mrow>
+            <mi>D</mi>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Maveb’s glTF loader generates tangents using exactly this formula when authored tangents are absent.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-orthogonalize-tangent" class="level4">
+<h4>Orthogonalize tangent</h4>
+<p>After accumulating tangents:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>T</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mo>−</mo>
+  <mi>N</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>T</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Normalize:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>T</mi>
+              <mo stretchy="false">^</mo>
+            </mover>
+          </mrow>
+          <mo>=</mo>
+          <mi>n</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>m</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>z</mi>
+          <mi>e</mi>
+          <mo stretchy="false">(</mo>
+          <msup>
+            <mi>T</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msup>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is Gram-Schmidt.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-handedness" class="level4">
+<h4>Handedness</h4>
+<p>Reconstructed bitangent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>B</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>s</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>×</mo>
+  <mi>T</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mo>∈</mo>
+  <mo fence="false" stretchy="false">{</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo fence="false" stretchy="false">}</mo>
+  <mo>.</mo>
+</math>
+<p>Compute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>s</mi>
+          <mo>=</mo>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>g</mi>
+          <mi>n</mi>
+          <mo stretchy="false">(</mo>
+          <mo stretchy="false">(</mo>
+          <mi>N</mi>
+          <mo>×</mo>
+          <mi>T</mi>
+          <mo stretchy="false">)</mo>
+          <mo>⋅</mo>
+          <mi>B</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Store tangent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Maveb does exactly this.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-degenerate-uvs" class="level4">
+<h4>Degenerate UVs</h4>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo>=</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>1</mn>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>≈</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>UV mapping has zero/near-zero area.</p>
+<p>Cannot invert.</p>
+<p>Do not divide.</p>
+<p>Fallback tangent can be generated from normal and arbitrary nonparallel axis.</p>
+<p>Maveb skips degenerate UV triangle accumulation and later constructs fallback tangent.</p>
+<p>Correct.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-bounds" class="level4">
+<h4>Bounds</h4>
+<p>AABB:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mi>z</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>x</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mi>z</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Cheap and tight in fixed coordinate frame.</p>
+<p>Bounding sphere simple center:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>m</mi>
+      <mi>i</mi>
+      <mi>n</mi>
+      <mo>+</mo>
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+    <mn>2</mn>
+  </mfrac>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    <mi>i</mi>
+  </munder>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>−</mo>
+  <mi>c</mi>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo>.</mo>
+</math>
+<p>Ritter algorithm often produces tighter sphere cheaply.</p>
+<p>Exact minimum enclosing sphere is more expensive.</p>
+<p>Bounds drive:</p>
+<p>culling, BVH, picking, LOD, shadow fitting, animated bounds.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-obj" class="level4">
+<h4>OBJ</h4>
+<p>OBJ positions:</p>
+<pre class="text"><code>v x y z</code></pre>
+<p>UV:</p>
+<pre class="text"><code>vt u v</code></pre>
+<p>normal:</p>
+<pre class="text"><code>vn x y z</code></pre>
+<p>face:</p>
+<pre class="text"><code>f v/vt/vn v/vt/vn v/vt/vn</code></pre>
+<p>Important: OBJ uses separate index streams.</p>
+<p>A face corner can reference:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>u</mi>
+  <mi>v</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>n</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>GPU usually wants one unified vertex index.</p>
+<p>Therefore importer must deduplicate <strong>tuples</strong>, not positions alone.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-obj-negative-indices" class="level4">
+<h4>OBJ negative indices</h4>
+<p>Positive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+</math>
+<p>means first element.</p>
+<p>OBJ is one-based.</p>
+<p>Negative:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>−</mo>
+  <mn>1</mn>
+</math>
+<p>means most recently defined element.</p>
+<p>For count <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math>, negative <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <msub>
+            <mi>x</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mn>0</mn>
+              <mi>b</mi>
+              <mi>a</mi>
+              <mi>s</mi>
+              <mi>e</mi>
+              <mi>d</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mi>N</mi>
+          <mo>+</mo>
+          <mi>i</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Example <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>10</mn>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">→</mo>
+  <mn>9</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>−</mo>
+  <mn>2</mn>
+  <mo stretchy="false">→</mo>
+  <mn>8.</mn>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-polygon-triangulation" class="level4">
+<h4>Polygon triangulation</h4>
+<p>OBJ faces can have <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+  <mo>&gt;</mo>
+  <mn>3</mn>
+</math> vertices.</p>
+<p>Simple fan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>3</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>…</p>
+<p>works for convex polygons.</p>
+<p>It can fail for concave polygons.</p>
+<p>Robust importer can use ear clipping after projecting polygon to plane.</p>
+<p>Do not silently claim fan triangulation supports arbitrary polygons.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-tuple-deduplication" class="level4">
+<h4>Tuple deduplication</h4>
+<p>Hash key:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ObjVertexKey</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> Position<span class="op">;</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> UV<span class="op">;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> Normal<span class="op">;</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Map:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo stretchy="false">→</mo>
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mi>V</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>When corner tuple first seen, create GPU vertex.</p>
+<p>When repeated, reuse index.</p>
+<p>This preserves seams and hard normals.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-gltf-from-bytes-to-portable-scene" class="level4">
+<h4>glTF FROM BYTES TO PORTABLE SCENE</h4>
+<p>glTF is fundamentally a structured graph of metadata pointing into binary data.</p>
+<p>The hierarchy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>b</mi>
+          <mi>u</mi>
+          <mi>f</mi>
+          <mi>f</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mo stretchy="false">→</mo>
+          <mi>b</mi>
+          <mi>u</mi>
+          <mi>f</mi>
+          <mi>f</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>V</mi>
+          <mi>i</mi>
+          <mi>e</mi>
+          <mi>w</mi>
+          <mo stretchy="false">→</mo>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mi>s</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mo stretchy="false">→</mo>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>t</mi>
+          <mi>r</mi>
+          <mi>i</mi>
+          <mi>b</mi>
+          <mi>u</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>must be deeply understood.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-buffers" class="level4">
+<h4>Buffers</h4>
+<p>Buffer is raw bytes.</p>
+<p>Could be:</p>
+<p>external <code>.bin</code>, embedded GLB chunk, data URI.</p>
+<p>No semantic type yet.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-bufferview" class="level4">
+<h4>bufferView</h4>
+<p>A bufferView selects a byte range:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mi>y</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>O</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mi>y</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>L</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mi>y</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Think:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>raw byte slice</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>It may represent interleaved vertex data or index stream.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-accessor" class="level4">
+<h4>Accessor</h4>
+<p>Accessor adds typed interpretation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>T</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>n</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Example:</p>
+<pre class="text"><code>componentType = FLOAT
+type = VEC3
+count = 1000</code></pre>
+<p>means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1000</mn>
+</math>
+<p>three-component float vectors.</p>
+<p>Effective address:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>b</mi>
+          <mi>u</mi>
+          <mi>f</mi>
+          <mi>f</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>B</mi>
+          <mi>a</mi>
+          <mi>s</mi>
+          <mi>e</mi>
+          <mo>+</mo>
+          <mi>b</mi>
+          <mi>u</mi>
+          <mi>f</mi>
+          <mi>f</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>V</mi>
+          <mi>i</mi>
+          <mi>e</mi>
+          <mi>w</mi>
+          <mo>.</mo>
+          <mi>b</mi>
+          <mi>y</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>O</mi>
+          <mi>f</mi>
+          <mi>f</mi>
+          <mi>s</mi>
+          <mi>e</mi>
+          <mi>t</mi>
+          <mo>+</mo>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mi>s</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mo>.</mo>
+          <mi>b</mi>
+          <mi>y</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>O</mi>
+          <mi>f</mi>
+          <mi>f</mi>
+          <mi>s</mi>
+          <mi>e</mi>
+          <mi>t</mi>
+          <mo>+</mo>
+          <mi>i</mi>
+          <mo>×</mo>
+          <mi>s</mi>
+          <mi>t</mi>
+          <mi>r</mi>
+          <mi>i</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Never forget both offsets.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-primitive-attributes" class="level4">
+<h4>Primitive attributes</h4>
+<p>glTF primitive may map:</p>
+<pre class="text"><code>POSITION -&gt; accessor 4
+NORMAL   -&gt; accessor 7
+TEXCOORD_0 -&gt; accessor 9
+JOINTS_0 -&gt; accessor 11
+WEIGHTS_0 -&gt; accessor 12</code></pre>
+<p>Semantic names drive interpretation.</p>
+<p>Position required for rendering primitive.</p>
+<p>Normals/tangents optional.</p>
+<p>Joint/weights appear for skinning.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-indices" class="level4">
+<h4>Indices</h4>
+<p>Index accessor uses scalar unsigned integer component type.</p>
+<p>Could be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mn>8</mn>
+  <mo>,</mo>
+  <mi>u</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mn>16</mn>
+  <mo>,</mo>
+  <mi>u</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mn>32.</mn>
+</math>
+<p>Convert into engine index type, often <code>uint32_t</code>.</p>
+<p>Validate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>&lt;</mo>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Maveb and Kairo both perform strict count/bounds validation rather than trusting source.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-nodes" class="level4">
+<h4>Nodes</h4>
+<p>A glTF node can contain:</p>
+<p>mesh, camera, skin, children and transform.</p>
+<p>Transform either:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>x</mi>
+</math>
+<p>or decomposed:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>,</mo>
+  <mi>R</mi>
+  <mo>,</mo>
+  <mi>S</mi>
+  <mo>.</mo>
+</math>
+<p>Local:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>M</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>l</mi>
+      <mi>o</mi>
+      <mi>c</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mi>R</mi>
+  <mi>S</mi>
+</math>
+<p>under glTF convention.</p>
+<p>World:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>M</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>w</mi>
+              <mi>o</mi>
+              <mi>r</mi>
+              <mi>l</mi>
+              <mi>d</mi>
+              <mo>,</mo>
+              <mi>n</mi>
+              <mi>o</mi>
+              <mi>d</mi>
+              <mi>e</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>M</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>w</mi>
+              <mi>o</mi>
+              <mi>r</mi>
+              <mi>l</mi>
+              <mi>d</mi>
+              <mo>,</mo>
+              <mi>p</mi>
+              <mi>a</mi>
+              <mi>r</mi>
+              <mi>e</mi>
+              <mi>n</mi>
+              <mi>t</mi>
+            </mrow>
+          </msub>
+          <msub>
+            <mi>M</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>l</mi>
+              <mi>o</mi>
+              <mi>c</mi>
+              <mi>a</mi>
+              <mi>l</mi>
+              <mo>,</mo>
+              <mi>n</mi>
+              <mi>o</mi>
+              <mi>d</mi>
+              <mi>e</mi>
+            </mrow>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Scene contains root node indices.</p>
+<p>Not every node in file must belong to active scene.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-kairos-matrix-conversion" class="level4">
+<h4>Kairo’s matrix conversion</h4>
+<p>glTF matrices stored column-major.</p>
+<p>Kairo math stores row-major but uses column-vector multiplication.</p>
+<p>Current runtime copies:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>w</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>m</mi>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo stretchy="false">[</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>m</mi>
+  <mi>n</mi>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mo>+</mo>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>w</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>This is storage conversion preserving same mathematical transform, not an arbitrary geometric transpose.</p>
+<p>This distinction is extremely important.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-materials" class="level4">
+<h4>Materials</h4>
+<p>Primitive references material index.</p>
+<p>Material contains glTF PBR metallic-roughness data:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>F</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>F</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>F</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>n</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>,</mo>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>d</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>S</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>We already covered its shading semantics in M119.</p>
+<p>Importer must preserve semantic defaults and texture color spaces.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-imagestexturessamplers" class="level4">
+<h4>Images/textures/samplers</h4>
+<p>Image:</p>
+<p>actual image payload/source.</p>
+<p>Texture:</p>
+<p>links image plus sampler.</p>
+<p>Sampler:</p>
+<p>mag/min filters and wrap modes.</p>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>I</mi>
+          <mi>m</mi>
+          <mi>a</mi>
+          <mi>g</mi>
+          <mi>e</mi>
+          <mo>≠</mo>
+          <mi>T</mi>
+          <mi>e</mi>
+          <mi>x</mi>
+          <mi>t</mi>
+          <mi>u</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mo>≠</mo>
+          <mi>S</mi>
+          <mi>a</mi>
+          <mi>m</mi>
+          <mi>p</mi>
+          <mi>l</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Current Maveb loader resolves wrap modes and all glTF minification/mipmap filter combinations into portable enums.</p>
+<p>It currently requires texture coordinate set:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>E</mi>
+  <mi>X</mi>
+  <mi>C</mi>
+  <mi>O</mi>
+  <mi>O</mi>
+  <mi>R</mi>
+  <msub>
+    <mi>D</mi>
+    <mn>0</mn>
+  </msub>
+</math>
+<p>for its supported material bindings; other coordinate sets are rejected as unsupported rather than misinterpreted.</p>
+<p>Good.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-animation-structures" class="level4">
+<h4>Animation structures</h4>
+<p>A glTF animation has:</p>
+<p>samplers and channels.</p>
+<p>Animation sampler defines:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>p</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>p</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>Channel maps sampler to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>N</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+</math>
+<p>and path:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>w</mi>
+  <mi>e</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Kairo’s imported animation representation follows this model.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-skins" class="level4">
+<h4>Skins</h4>
+<p>Skin stores ordered joint node list:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>J</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>J</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+</math>
+<p>and inverse-bind matrices.</p>
+<p><code>JOINTS_0</code> vertex values index into <strong>this ordered skin joint array</strong>, not global node indices directly.</p>
+<p>That distinction is critical.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-morph-targets" class="level4">
+<h4>Morph targets</h4>
+<p>Primitive target may contain delta accessors:</p>
+<pre class="text"><code>POSITION
+NORMAL
+TANGENT</code></pre>
+<p>These are deltas, not complete replacement geometry.</p>
+<p>For target <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>p</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Final morph position:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>p</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mo>+</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>k</mi>
+  </munder>
+  <msub>
+    <mi>w</mi>
+    <mi>k</mi>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>p</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>More later.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-simplification-subdivision-smoothing-and-parameterization" class="level4">
+<h4>SIMPLIFICATION, SUBDIVISION, SMOOTHING AND PARAMETERIZATION</h4>
+<p>Current repository boundary first: the inspected KairoAssets code has real editable topology, split/inset/extrude/dissolve/loop-cut and subdivision-modifier infrastructure, but I did <strong>not</strong> find an implemented QEM simplifier, cotangent Laplacian or UV parameterization system in the current repo. So the theory below is curriculum-level, not a claim about current implementation.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-edge-collapse" class="level4">
+<h4>Edge collapse</h4>
+<p>Simplification reduces triangle count while minimizing visual/geometric error.</p>
+<p>Edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>a</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>b</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>collapsed to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>v</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>All faces referencing either endpoint now reference <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>v</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+</math>.</p>
+<p>Degenerate faces removed.</p>
+<p>But collapse can change topology, normals and UVs.</p>
+<p>Choosing which edge and new position is the problem.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-quadric-error-metrics" class="level4">
+<h4>Quadric Error Metrics</h4>
+<p>For plane:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mi>y</mi>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mi>z</mi>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>normalized plane vector:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mi>a</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mo>,</mo>
+  <mi>d</mi>
+  <msup>
+    <mo stretchy="false">]</mo>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>For homogeneous vertex:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>v</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+  <mo>,</mo>
+  <mn>1</mn>
+  <msup>
+    <mo stretchy="false">]</mo>
+    <mi>T</mi>
+  </msup>
+  <mo>,</mo>
+</math>
+<p>signed plane equation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>p</mi>
+    <mi>T</mi>
+  </msup>
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>v</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Squared distance-like error:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>p</mi>
+    <mi>T</mi>
+  </msup>
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>v</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Rewrite:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">(</mo>
+          <msup>
+            <mi>p</mi>
+            <mi>T</mi>
+          </msup>
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>v</mi>
+              <mo stretchy="false">^</mo>
+            </mover>
+          </mrow>
+          <msup>
+            <mo stretchy="false">)</mo>
+            <mn>2</mn>
+          </msup>
+          <mo>=</mo>
+          <msup>
+            <mrow data-mjx-texclass="ORD">
+              <mover>
+                <mi>v</mi>
+                <mo stretchy="false">^</mo>
+              </mover>
+            </mrow>
+            <mi>T</mi>
+          </msup>
+          <mo stretchy="false">(</mo>
+          <mi>p</mi>
+          <msup>
+            <mi>p</mi>
+            <mi>T</mi>
+          </msup>
+          <mo stretchy="false">)</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mover>
+              <mi>v</mi>
+              <mo stretchy="false">^</mo>
+            </mover>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Define plane quadric:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>Q</mi>
+    <mi>p</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>p</mi>
+  <msup>
+    <mi>p</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>For vertex adjacent to planes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>Q</mi>
+            <mi>v</mi>
+          </msub>
+          <mo>=</mo>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>p</mi>
+              <mo>∋</mo>
+              <mi>v</mi>
+            </mrow>
+          </munder>
+          <msub>
+            <mi>Q</mi>
+            <mi>p</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For collapsing edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Q</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>Q</mi>
+    <mi>a</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>Q</mi>
+    <mi>b</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Candidate cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>E</mi>
+          <mo stretchy="false">(</mo>
+          <msup>
+            <mi>v</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msup>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <msup>
+            <mrow data-mjx-texclass="ORD">
+              <mover>
+                <mi>v</mi>
+                <mo stretchy="false">^</mo>
+              </mover>
+            </mrow>
+            <mrow>
+              <mo data-mjx-alternate="1" data-mjx-pseudoscript="true">′</mo>
+              <mi>T</mi>
+            </mrow>
+          </msup>
+          <mi>Q</mi>
+          <msup>
+            <mrow data-mjx-texclass="ORD">
+              <mover>
+                <mi>v</mi>
+                <mo stretchy="false">^</mo>
+              </mover>
+            </mrow>
+            <mo data-mjx-alternate="1">′</mo>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Choose position minimizing this.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-solve-optimal-collapse-position" class="level4">
+<h4>Solve optimal collapse position</h4>
+<p>Partition:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Q</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mi>A</mi>
+        </mtd>
+        <mtd>
+          <mi>b</mi>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <msup>
+            <mi>b</mi>
+            <mi>T</mi>
+          </msup>
+        </mtd>
+        <mtd>
+          <mi>c</mi>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+</math>
+<p>with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> 3×3.</p>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msup>
+    <mi>x</mi>
+    <mi>T</mi>
+  </msup>
+  <mi>A</mi>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mn>2</mn>
+  <msup>
+    <mi>b</mi>
+    <mi>T</mi>
+  </msup>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mo>.</mo>
+</math>
+<p>Gradient:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">∇</mi>
+  <mi>E</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>A</mi>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mn>2</mn>
+  <mi>b</mi>
+  <mo>.</mo>
+</math>
+<p>Set zero:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>A</mi>
+          <mi>x</mi>
+          <mo>=</mo>
+          <mo>−</mo>
+          <mi>b</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> invertible:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <msup>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi>b</mi>
+  <mo>.</mo>
+</math>
+<p>If singular, test endpoints and midpoint.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-topology-constraints" class="level4">
+<h4>Topology constraints</h4>
+<p>Do not collapse if it:</p>
+<p>inverts triangle orientation, creates duplicate faces, creates non-manifold edge, collapses boundary incorrectly, crosses material/UV seam, destroys protected feature edge.</p>
+<p>A common manifold test is link condition.</p>
+<p>For edge <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+</math>, one-ring intersection should match edge link.</p>
+<p>Topology preservation matters as much as geometric QEM cost.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-subdivision" class="level4">
+<h4>Subdivision</h4>
+<p>Subdivision increases mesh resolution and smooths surface.</p>
+<p>Loop subdivision for triangles.</p>
+<p>Interior edge new vertex with endpoints:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+</math>
+<p>and opposite vertices:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>3</mn>
+  </msub>
+  <mo>:</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>v</mi>
+            <mi>e</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mn>3</mn>
+            <mn>8</mn>
+          </mfrac>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>v</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>v</mi>
+            <mn>1</mn>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>+</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mn>8</mn>
+          </mfrac>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>v</mi>
+            <mn>2</mn>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>v</mi>
+            <mn>3</mn>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Boundary edge typically:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mi>e</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>2</mn>
+  </mfrac>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-existing-loop-vertex" class="level4">
+<h4>Existing Loop vertex</h4>
+<p>For interior valence <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>, one exact Loop weight formulation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>β</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>n</mi>
+  </mfrac>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mfrac>
+      <mn>5</mn>
+      <mn>8</mn>
+    </mfrac>
+    <mo>−</mo>
+    <msup>
+      <mrow data-mjx-texclass="INNER">
+        <mo data-mjx-texclass="OPEN">(</mo>
+        <mfrac>
+          <mn>3</mn>
+          <mn>8</mn>
+        </mfrac>
+        <mo>+</mo>
+        <mfrac>
+          <mn>1</mn>
+          <mn>4</mn>
+        </mfrac>
+        <mi>cos</mi>
+        <mo data-mjx-texclass="NONE">⁡</mo>
+        <mfrac>
+          <mrow>
+            <mn>2</mn>
+            <mi>π</mi>
+          </mrow>
+          <mi>n</mi>
+        </mfrac>
+        <mo data-mjx-texclass="CLOSE">)</mo>
+      </mrow>
+      <mn>2</mn>
+    </msup>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>v</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msup>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mn>1</mn>
+          <mo>−</mo>
+          <mi>n</mi>
+          <mi>β</mi>
+          <mo stretchy="false">)</mo>
+          <mi>v</mi>
+          <mo>+</mo>
+          <mi>β</mi>
+          <munderover>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>j</mi>
+              <mo>=</mo>
+              <mn>1</mn>
+            </mrow>
+            <mrow data-mjx-texclass="ORD">
+              <mi>n</mi>
+            </mrow>
+          </munderover>
+          <msub>
+            <mi>v</mi>
+            <mi>j</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Common simplified rules exist, but the above captures canonical valence dependence.</p>
+<p>Each old triangle becomes four.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-laplacian-smoothing" class="level4">
+<h4>Laplacian smoothing</h4>
+<p>Uniform Laplacian:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>v</mi>
+        <mo stretchy="false">¯</mo>
+      </mover>
+    </mrow>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <mo stretchy="false">|</mo>
+      <mi>N</mi>
+      <mo stretchy="false">(</mo>
+      <mi>i</mi>
+      <mo stretchy="false">)</mo>
+      <mo stretchy="false">|</mo>
+    </mrow>
+  </mfrac>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>∈</mo>
+      <mi>N</mi>
+      <mo stretchy="false">(</mo>
+      <mi>i</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </munder>
+  <msub>
+    <mi>v</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Laplacian:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>v</mi>
+        <mo stretchy="false">¯</mo>
+      </mover>
+    </mrow>
+    <mi>i</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Update:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msubsup>
+            <mi>v</mi>
+            <mi>i</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msubsup>
+          <mo>=</mo>
+          <msub>
+            <mi>v</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>+</mo>
+          <mi>λ</mi>
+          <mi mathvariant="normal">Δ</mi>
+          <msub>
+            <mi>v</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Problem:</p>
+<p>mesh shrinkage.</p>
+<p>Repeated averaging moves vertices toward center.</p>
+<p>Taubin smoothing uses positive/negative passes to reduce shrinkage.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-cotangent-laplacian" class="level4">
+<h4>Cotangent Laplacian</h4>
+<p>For edge <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+  <mi>j</mi>
+</math>, opposite angles:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>α</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>β</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Weight:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>w</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mi>j</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mn>2</mn>
+          </mfrac>
+          <mo stretchy="false">(</mo>
+          <mi>cot</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <msub>
+            <mi>α</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mi>j</mi>
+            </mrow>
+          </msub>
+          <mo>+</mo>
+          <mi>cot</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <msub>
+            <mi>β</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mi>j</mi>
+            </mrow>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Discrete Laplacian:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <msub>
+      <mi>A</mi>
+      <mi>i</mi>
+    </msub>
+  </mfrac>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+    </mrow>
+  </munder>
+  <msub>
+    <mi>w</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>with appropriate area normalization.</p>
+<p>This reflects local surface geometry better than uniform neighbor average.</p>
+<p>Used in:</p>
+<p>smoothing, curvature, parameterization, deformation.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-parameterization" class="level4">
+<h4>Parameterization</h4>
+<p>Map surface mesh:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>to UV:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Want low angular/stretch distortion and no overlap.</p>
+<p>For disk-like mesh, fix boundary to 2D curve, solve interior harmonic equations:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mi>j</mi>
+          </munder>
+          <msub>
+            <mi>w</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mi>j</mi>
+            </mrow>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>u</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>u</mi>
+            <mi>j</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mn>0</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and same for v.</p>
+<p>Cotangent weights yield conformal-ish harmonic maps but can fold depending boundary/topology.</p>
+<p>LSCM minimizes conformal distortion.</p>
+<p>ABF optimizes angles.</p>
+<p>Complex topology requires cuts.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-uv-seams" class="level4">
+<h4>UV seams</h4>
+<p>Closed surface cannot generally flatten to plane without seams/distortion.</p>
+<p>A seam duplicates a topological vertex in UV domain.</p>
+<p>Same position:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>Different UVs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <msub>
+    <mi>v</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>≠</mo>
+  <mi>u</mi>
+  <msub>
+    <mi>v</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Therefore GPU mesh duplication is required.</p>
+<p>This loops directly back to Part 2608:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>corner attributes create vertex splits</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-skeletons-skinning-and-animation" class="level4">
+<h4>SKELETONS, SKINNING AND ANIMATION</h4>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-skeleton-hierarchy" class="level4">
+<h4>Skeleton hierarchy</h4>
+<p>Skeleton is tree/forest of joints.</p>
+<p>Each joint:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>j</mi>
+</math>
+<p>has parent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>j</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Local transform relative parent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>World/global:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>G</mi>
+            <mi>j</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>G</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>p</mi>
+              <mi>a</mi>
+              <mi>r</mi>
+              <mi>e</mi>
+              <mi>n</mi>
+              <mi>t</mi>
+              <mo stretchy="false">(</mo>
+              <mi>j</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </msub>
+          <msub>
+            <mi>L</mi>
+            <mi>j</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Root:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>G</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>r</mi>
+      <mi>o</mi>
+      <mi>o</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>r</mi>
+      <mi>o</mi>
+      <mi>o</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Current Kairo animation runtime resolves this recursively and detects hierarchy cycles defensively.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-local-transforms" class="level4">
+<h4>Local transforms</h4>
+<p>Usually TRS:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mi>R</mi>
+  <mo stretchy="false">(</mo>
+  <mi>q</mi>
+  <mo stretchy="false">)</mo>
+  <mi>S</mi>
+  <mo stretchy="false">(</mo>
+  <mi>s</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Animation channels update components.</p>
+<p>Matrix-authored static glTF nodes may remain exact matrices rather than forcing lossy decomposition.</p>
+<p>Kairo explicitly preserves this distinction.</p>
+<p>That is good engineering.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-bind-pose" class="level4">
+<h4>Bind pose</h4>
+<p>Bind pose is skeleton configuration in which mesh was authored/attached.</p>
+<p>Let joint bind global:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>We want vertex transformed from bind coordinate into current joint coordinate.</p>
+<p>First undo bind:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>B</mi>
+    <mi>j</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>Then apply current:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>G</mi>
+    <mi>j</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Skin transform:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>S</mi>
+            <mi>j</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>t</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <msub>
+            <mi>G</mi>
+            <mi>j</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>t</mi>
+          <mo stretchy="false">)</mo>
+          <msubsup>
+            <mi>B</mi>
+            <mi>j</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msubsup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>At bind pose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>G</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>so:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>I</mi>
+  <mo>.</mo>
+</math>
+<p>This is the key sanity check.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-gltf-inverse-bind-matrices" class="level4">
+<h4>glTF inverse-bind matrices</h4>
+<p>glTF stores:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>B</mi>
+  <msub>
+    <mi>M</mi>
+    <mi>j</mi>
+  </msub>
+</math>
+<p>directly.</p>
+<p>Current Kairo EngineCore builds palette:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>J</mi>
+          <mi>o</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>M</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>r</mi>
+          <mi>i</mi>
+          <msub>
+            <mi>x</mi>
+            <mi>j</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>W</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>l</mi>
+          <mi>d</mi>
+          <mi>J</mi>
+          <mi>o</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <msub>
+            <mi>t</mi>
+            <mi>j</mi>
+          </msub>
+          <mo>⋅</mo>
+          <mi>I</mi>
+          <mi>n</mi>
+          <mi>v</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>s</mi>
+          <mi>e</mi>
+          <mi>B</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <msub>
+            <mi>d</mi>
+            <mi>j</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>It intentionally keeps this in asset space and applies outer scene/entity transform later in renderer.</p>
+<p>That avoids requiring inverse of mesh-node transform, which may contain zero scale.</p>
+<p>This is a thoughtful design choice.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-linear-blend-skinning" class="level4">
+<h4>Linear Blend Skinning</h4>
+<p>Vertex has joint indices:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>j</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>j</mi>
+    <mn>3</mn>
+  </msub>
+</math>
+<p>and weights:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>w</mi>
+    <mn>3</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Weights:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>≥</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>and ideally:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mi>i</mi>
+          </munder>
+          <msub>
+            <mi>w</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>=</mo>
+          <mn>1.</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Skinned position:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>p</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msup>
+          <mo>=</mo>
+          <munderover>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mo>=</mo>
+              <mn>0</mn>
+            </mrow>
+            <mrow data-mjx-texclass="ORD">
+              <mn>3</mn>
+            </mrow>
+          </munderover>
+          <msub>
+            <mi>w</mi>
+            <mi>i</mi>
+          </msub>
+          <msub>
+            <mi>S</mi>
+            <mrow data-mjx-texclass="ORD">
+              <msub>
+                <mi>j</mi>
+                <mi>i</mi>
+              </msub>
+            </mrow>
+          </msub>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">[</mo>
+            <mtable columnspacing="1em" rowspacing="4pt">
+              <mtr>
+                <mtd>
+                  <mi>p</mi>
+                </mtd>
+              </mtr>
+              <mtr>
+                <mtd>
+                  <mn>1</mn>
+                </mtd>
+              </mtr>
+            </mtable>
+            <mo data-mjx-texclass="CLOSE">]</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Equivalently blended skin matrix:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>S</mi>
+    <mrow data-mjx-texclass="ORD">
+      <msub>
+        <mi>j</mi>
+        <mi>i</mi>
+      </msub>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>p</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>S</mi>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-weight-normalization" class="level4">
+<h4>Weight normalization</h4>
+<p>Input may not sum exactly one due quantization.</p>
+<p>Compute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>
+<p>normalize:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>w</mi>
+    <mi>i</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>=</mo>
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>If all zero, importer must define fallback or reject.</p>
+<p>Current Kairo renderer validates that four weights sum to one within:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>3</mn>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>It also caps portable palette at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>255</mn>
+</math>
+<p>joints because 255 mat4 values fit its 16 KiB baseline uniform-buffer portability target.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-skinning-normalstangents" class="level4">
+<h4>Skinning normals/tangents</h4>
+<p>Position uses <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>.</p>
+<p>Direction uses <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>.</p>
+<p>For purely rigid joint matrices, blend upper 3×3 and normalize.</p>
+<p>With nonuniform scale, correct normal transformation is inverse transpose.</p>
+<p>But:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <munder>
+      <mo data-mjx-texclass="OP">∑</mo>
+      <mi>i</mi>
+    </munder>
+    <msub>
+      <mi>w</mi>
+      <mi>i</mi>
+    </msub>
+    <msub>
+      <mi>S</mi>
+      <mi>i</mi>
+    </msub>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+</math>
+<p>is not generally equal to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>S</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>There is no perfect simple LBS normal rule under arbitrary nonrigid blended transforms.</p>
+<p>Many engines assume joint transforms are rigid/uniform-scale and use weighted 3×3 then normalize.</p>
+<p>Tangents similarly.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-candy-wrapper-artifact" class="level4">
+<h4>Candy-wrapper artifact</h4>
+<p>Consider cylinder arm twisting 180° between two bones.</p>
+<p>LBS linearly blends matrices.</p>
+<p>Linear interpolation of rotations is not a rotation.</p>
+<p>At midpoint, opposite rotations can partially cancel, shrinking cross-section.</p>
+<p>Result:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>volume collapse / candy-wrapper twist</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-dual-quaternion-skinning" class="level4">
+<h4>Dual-quaternion skinning</h4>
+<p>Rigid transform represented by dual quaternion:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>q</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <msub>
+    <mi>q</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>ϵ</mi>
+  <msub>
+    <mi>q</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Blend dual quaternions then normalize.</p>
+<p>This better interpolates rotations/translations and preserves volume under twisting.</p>
+<p>It does not naturally handle arbitrary nonuniform scale; hybrid methods are needed.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-animation-clipschannelssamplers" class="level4">
+<h4>Animation clips/channels/samplers</h4>
+<p>Clip:</p>
+<p>collection of animation channels over duration.</p>
+<p>Channel:</p>
+<p>target node/property.</p>
+<p>Sampler:</p>
+<p>key times + values + interpolation.</p>
+<p>Key times:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>&lt;</mo>
+  <msub>
+    <mi>t</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>&lt;</mo>
+  <mo>⋯</mo>
+  <mo>&lt;</mo>
+  <msub>
+    <mi>t</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Current Maveb loader explicitly rejects non-finite, unsorted or duplicate animation times.</p>
+<p>Excellent malformed-data defense.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-translation-interpolation" class="level4">
+<h4>Translation interpolation</h4>
+<p>For segment:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>t</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>t</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Normalized:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>t</mi>
+      <mo>−</mo>
+      <msub>
+        <mi>t</mi>
+        <mn>0</mn>
+      </msub>
+    </mrow>
+    <mrow>
+      <msub>
+        <mi>t</mi>
+        <mn>1</mn>
+      </msub>
+      <mo>−</mo>
+      <msub>
+        <mi>t</mi>
+        <mn>0</mn>
+      </msub>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Translation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>T</mi>
+          <mo stretchy="false">(</mo>
+          <mi>u</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mn>1</mn>
+          <mo>−</mo>
+          <mi>u</mi>
+          <mo stretchy="false">)</mo>
+          <msub>
+            <mi>T</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>+</mo>
+          <mi>u</mi>
+          <msub>
+            <mi>T</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-scale-interpolation" class="level4">
+<h4>Scale interpolation</h4>
+<p>Similarly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>S</mi>
+          <mo stretchy="false">(</mo>
+          <mi>u</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mn>1</mn>
+          <mo>−</mo>
+          <mi>u</mi>
+          <mo stretchy="false">)</mo>
+          <msub>
+            <mi>S</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>+</mo>
+          <mi>u</mi>
+          <msub>
+            <mi>S</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Usually component-wise.</p>
+<p>Negative scales complicate interpolation but glTF permits scale values that can be negative.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-quaternion-interpolation" class="level4">
+<h4>Quaternion interpolation</h4>
+<p>Given normalized quaternions:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>q</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>q</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Cosine:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>q</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>⋅</mo>
+  <msub>
+    <mi>q</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo>&lt;</mo>
+  <mn>0</mn>
+</math>
+<p>negate one quaternion because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>−</mo>
+  <mi>q</mi>
+</math>
+<p>represent same rotation, but we want shortest path.</p>
+<p>Slerp:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>q</mi>
+          <mo stretchy="false">(</mo>
+          <mi>u</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mi>sin</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <mo stretchy="false">(</mo>
+              <mo stretchy="false">(</mo>
+              <mn>1</mn>
+              <mo>−</mo>
+              <mi>u</mi>
+              <mo stretchy="false">)</mo>
+              <mi>θ</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+            <mrow>
+              <mi>sin</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <mi>θ</mi>
+            </mrow>
+          </mfrac>
+          <msub>
+            <mi>q</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>+</mo>
+          <mfrac>
+            <mrow>
+              <mi>sin</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <mo stretchy="false">(</mo>
+              <mi>u</mi>
+              <mi>θ</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+            <mrow>
+              <mi>sin</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <mi>θ</mi>
+            </mrow>
+          </mfrac>
+          <msub>
+            <mi>q</mi>
+            <mn>1</mn>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>For small angle, normalized lerp is numerically better.</p>
+<p>Current Kairo uses <code>SLerp</code>.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-step-interpolation" class="level4">
+<h4>Step interpolation</h4>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>i</mi>
+  </msub>
+</math>
+<p>until next key.</p>
+<p>No interpolation.</p>
+<p>Useful for discrete state or intentionally stepped animation.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-cubic-spline" class="level4">
+<h4>Cubic spline</h4>
+<p>glTF cubic spline stores:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>T</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>T</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+</math>
+<p>per key.</p>
+<p>For interval <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+</math>, Hermite:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>h</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>00</mn>
+    </mrow>
+  </msub>
+  <msub>
+    <mi>P</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>h</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>10</mn>
+    </mrow>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <msub>
+    <mi>M</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>h</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>01</mn>
+    </mrow>
+  </msub>
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>h</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>11</mn>
+    </mrow>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <msub>
+    <mi>M</mi>
+    <mn>1</mn>
+  </msub>
+</math>
+<p>with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>h</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>00</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>2</mn>
+  <msup>
+    <mi>u</mi>
+    <mn>3</mn>
+  </msup>
+  <mo>−</mo>
+  <mn>3</mn>
+  <msup>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>h</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>10</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msup>
+    <mi>u</mi>
+    <mn>3</mn>
+  </msup>
+  <mo>−</mo>
+  <mn>2</mn>
+  <msup>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>h</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>01</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mn>2</mn>
+  <msup>
+    <mi>u</mi>
+    <mn>3</mn>
+  </msup>
+  <mo>+</mo>
+  <mn>3</mn>
+  <msup>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>h</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>11</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msup>
+    <mi>u</mi>
+    <mn>3</mn>
+  </msup>
+  <mo>−</mo>
+  <msup>
+    <mi>u</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Note tangent multiplication by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Current Kairo animation runtime implements Hermite sampling and renormalizes quaternion result for rotation channels.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-pose-evaluation" class="level4">
+<h4>Pose evaluation</h4>
+<p>Algorithm:</p>
+<p>Start rest pose.</p>
+<p>Sample each active channel at time <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math>.</p>
+<p>Override corresponding local TRS component.</p>
+<p>Rebuild local matrices.</p>
+<p>Resolve hierarchy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>G</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>G</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>p</mi>
+      <mi>a</mi>
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <msub>
+    <mi>L</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Build skin palette:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>G</mi>
+    <mi>j</mi>
+  </msub>
+  <msubsup>
+    <mi>B</mi>
+    <mi>j</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>Then render.</p>
+<p>That is the complete pose path.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-animation-blending" class="level4">
+<h4>Animation blending</h4>
+<p>Two local poses A/B.</p>
+<p>Translation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>α</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Scale:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mo>=</mo>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>S</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>S</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>α</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Rotation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>=</mo>
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>R</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>R</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>α</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then reconstruct local transform.</p>
+<p>Current Kairo <code>BlendGltfAnimationPoses()</code> does exactly this.</p>
+<p>Do not linearly blend arbitrary 4×4 matrices if you want meaningful rotations/scales.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-crossfade" class="level4">
+<h4>Crossfade</h4>
+<p>Fade from clip A to B over duration <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo>−</mo>
+  <msub>
+    <mi>t</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>D</mi>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Evaluate both clips at their own times.</p>
+<p>Blend resulting poses.</p>
+<p>Once:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>drop A.</p>
+<p>For locomotion, phase synchronization may improve transition.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-additive-animation" class="level4">
+<h4>Additive animation</h4>
+<p>Additive pose stores delta relative reference pose.</p>
+<p>Translation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>T</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>a</mi>
+      <mi>n</mi>
+      <mi>i</mi>
+      <mi>m</mi>
+    </mrow>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>f</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Scale can be ratio or delta.</p>
+<p>Rotation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>R</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>R</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>a</mi>
+      <mi>n</mi>
+      <mi>i</mi>
+      <mi>m</mi>
+    </mrow>
+  </msub>
+  <msubsup>
+    <mi>R</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>f</mi>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>Apply weighted:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>o</mi>
+      <mi>u</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mi>I</mi>
+  <mo>,</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>R</mi>
+  <mo>,</mo>
+  <mi>w</mi>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>R</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>b</mi>
+      <mi>a</mi>
+      <mi>s</mi>
+      <mi>e</mi>
+    </mrow>
+  </msub>
+</math>
+<p>with convention-dependent multiplication order.</p>
+<p>Useful for:</p>
+<p>breathing, recoil, aim offsets, facial layers.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-root-motion" class="level4">
+<h4>Root motion</h4>
+<p>Animation root may translate character forward.</p>
+<p>If renderer applies root animation while game object also moves, double motion can happen.</p>
+<p>Root-motion system extracts root delta:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>T</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>r</mi>
+      <mi>o</mi>
+      <mi>o</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>t</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>−</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>r</mi>
+      <mi>o</mi>
+      <mi>o</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>t</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and rotation delta.</p>
+<p>Apply to entity/world locomotion.</p>
+<p>Then remove that motion from local skeleton root as appropriate.</p>
+<p>This synchronizes gameplay position with authored movement.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-morphs-animated-bounds-compression-and-complete-trace" class="level4">
+<h4>MORPHS, ANIMATED BOUNDS, COMPRESSION AND COMPLETE TRACE</h4>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-morph-position-deltas" class="level4">
+<h4>Morph position deltas</h4>
+<p>Base position:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>Target k delta:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>p</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Weight:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Result:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mi>m</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>p</mi>
+          <mo>+</mo>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mi>k</mi>
+          </munder>
+          <msub>
+            <mi>w</mi>
+            <mi>k</mi>
+          </msub>
+          <mi mathvariant="normal">Δ</mi>
+          <msub>
+            <mi>p</mi>
+            <mi>k</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Targets can represent:</p>
+<p>facial expression, corrective shape, muscle bulge, damage deformation.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-morph-normal-deltas" class="level4">
+<h4>Morph normal deltas</h4>
+<p>Similarly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>n</mi>
+    <mi>m</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>n</mi>
+  <mo>+</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>k</mi>
+  </munder>
+  <msub>
+    <mi>w</mi>
+    <mi>k</mi>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>n</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then normalize:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>n</mi>
+            <mi>m</mi>
+          </msub>
+          <mo stretchy="false">←</mo>
+          <mi>n</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>m</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>z</mi>
+          <mi>e</mi>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>n</mi>
+            <mi>m</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Morph normals are not unit after linear addition.</p>
+<p>Tangents may also have deltas.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-morph-weights" class="level4">
+<h4>Morph weights</h4>
+<p>Multiple targets combine linearly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>p</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>w</mi>
+    <mn>0</mn>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>w</mi>
+    <mn>1</mn>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>p</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>+</mo>
+  <mo>⋯</mo>
+  <mo>.</mo>
+</math>
+<p>Weights need not necessarily sum to one.</p>
+<p>This is not barycentric blending between full shapes.</p>
+<p>It is additive delta composition.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-morph-before-or-after-skinning" class="level4">
+<h4>Morph before or after skinning</h4>
+<p>For glTF semantics, morph target displacements are applied to base mesh in object/local space <strong>before skinning</strong>.</p>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mi>m</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>p</mi>
+          <mo>+</mo>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mi>k</mi>
+          </munder>
+          <msub>
+            <mi>w</mi>
+            <mi>k</mi>
+          </msub>
+          <mi mathvariant="normal">Δ</mi>
+          <msub>
+            <mi>p</mi>
+            <mi>k</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>s</mi>
+              <mi>k</mi>
+              <mi>i</mi>
+              <mi>n</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mi>j</mi>
+          </munder>
+          <msubsup>
+            <mi>w</mi>
+            <mi>j</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>s</mi>
+              <mi>k</mi>
+              <mi>i</mi>
+              <mi>n</mi>
+            </mrow>
+          </msubsup>
+          <msub>
+            <mi>S</mi>
+            <mi>j</mi>
+          </msub>
+          <msub>
+            <mi>p</mi>
+            <mi>m</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If you skin first and then add object-space morph delta, result is wrong because delta does not follow bones.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-animated-bounds" class="level4">
+<h4>Animated bounds</h4>
+<p>Static mesh bounds no longer valid under:</p>
+<p>skinning, morphing, procedural animation.</p>
+<p>Options:</p>
+<p>Conservative offline bound over all animation samples.</p>
+<p>Per-bone bounds transformed each frame.</p>
+<p>CPU-evaluate bounds.</p>
+<p>GPU reduction.</p>
+<p>Inflated rest bound.</p>
+<p>Exact per-frame vertex reduction is expensive.</p>
+<p>Bone bounds are common compromise.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-cpu-vs-gpu-skinning" class="level4">
+<h4>CPU vs GPU skinning</h4>
+<p>CPU skinning:</p>
+<p>Compute transformed vertices on CPU.</p>
+<p>Upload dynamic vertex buffer.</p>
+<p>Pros: easy CPU collision/picking, simple shaders.</p>
+<p>Cons: CPU work + upload bandwidth.</p>
+<p>GPU skinning:</p>
+<p>Upload base vertices once.</p>
+<p>Upload joint palette every frame.</p>
+<p>Vertex shader computes skin.</p>
+<p>Pros: scalable, low upload bandwidth.</p>
+<p>Cons: deformed vertices unavailable to CPU unless replicated/read back.</p>
+<p>Current Kairo is architected for GPU skinning: EngineCore computes palette, renderer receives four-weight influence stream + palette.</p>
+<p>This separation is good.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-animation-compression" class="level4">
+<h4>Animation compression</h4>
+<p>Raw animation can be large.</p>
+<p>Compression dimensions:</p>
+<p>quantize times, quantize translation/scale, quaternion smallest-three encoding, remove redundant constant tracks, reduce keys by error threshold.</p>
+<p>Quaternion unit constraint means four floats are redundant.</p>
+<p>Store largest component index and sign, encode remaining three.</p>
+<p>Reconstruct fourth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>q</mi>
+    <mi>m</mi>
+  </msub>
+  <mo>=</mo>
+  <msqrt>
+    <mn>1</mn>
+    <mo>−</mo>
+    <msubsup>
+      <mi>q</mi>
+      <mi>a</mi>
+      <mn>2</mn>
+    </msubsup>
+    <mo>−</mo>
+    <msubsup>
+      <mi>q</mi>
+      <mi>b</mi>
+      <mn>2</mn>
+    </msubsup>
+    <mo>−</mo>
+    <msubsup>
+      <mi>q</mi>
+      <mi>c</mi>
+      <mn>2</mn>
+    </msubsup>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>Key reduction removes key <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> if interpolation between neighbors stays under error tolerance.</p>
+<p>Error should be measured after hierarchical effect when possible, not only local component difference.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-coordinate-convention-conversion" class="level4">
+<h4>Coordinate-convention conversion</h4>
+<p>Importers must reconcile:</p>
+<p>handedness, up axis, forward axis, matrix storage, texture UV conventions, winding.</p>
+<p>Never sprinkle conversions randomly.</p>
+<p>Define canonical engine convention.</p>
+<p>Construct conversion transform:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>.</mo>
+</math>
+<p>Positions:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>e</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>C</mi>
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Transforms:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>M</mi>
+            <mi>e</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>C</mi>
+          <msub>
+            <mi>M</mi>
+            <mi>s</mi>
+          </msub>
+          <msup>
+            <mi>C</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Normals use corresponding linear inverse-transpose where needed.</p>
+<p>If conversion changes handedness:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>C</mi>
+  <mo stretchy="false">)</mo>
+  <mo>&lt;</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>triangle winding flips.</p>
+<p>Tangent handedness may need sign adjustment.</p>
+<p>Animation transforms and inverse-bind matrices must be converted consistently with mesh.</p>
+<p>Converting only vertices but not skeleton is catastrophic.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-asset-validation" class="level4">
+<h4>Asset validation</h4>
+<p>Treat glTF/OBJ as hostile input.</p>
+<p>Validate:</p>
+<p>counts within budgets, finite floats, accessor byte ranges, stride, component type, indices in range, node hierarchy acyclic, skin joints valid, inverse-bind count matches joint count, weights finite/nonnegative, animation times increasing, quaternion nonzero, morph target counts match base, texture/material indices valid.</p>
+<p>Current Kairo and Maveb both do substantial validation.</p>
+<p>Maveb explicitly checks file-size budgets, primitive counts, vertex/index growth, finite animation data, increasing key times and nonzero rotation quaternions.</p>
+<p>Kairo’s scene validator also rejects malformed hierarchy and inconsistent skin data before runtime palette building.</p>
+<hr />
+<p>A strong pipeline is:</p>
+<pre class="text"><code>glTF bytes
+↓
+JSON/GLB parser
+↓
+buffers / bufferViews / accessors
+↓
+validated typed attribute streams
+↓
+portable MeshArtifact
+    positions
+    normals
+    tangents
+    UVs
+    indices
+    morph targets
+    joints/weights
+↓
+portable Materials / Textures
+↓
+portable node hierarchy
+↓
+skins + inverse binds
+↓
+animation clips/channels
+↓
+EngineCore runtime pose
+↓
+skin palette
+↓
+Renderer GPU buffers</code></pre>
+<p>The important architectural boundary:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>renderer should not know glTF parsing details</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Assets owns file semantics.</p>
+<p>EngineCore owns animation semantics.</p>
+<p>Renderer owns GPU execution.</p>
+<p>Current Kairo architecture follows this separation remarkably well.</p>
+<hr />
+<p>This is the final mastery trace.</p>
+<p>Assume glTF contains one mesh vertex.</p>
+<p>POSITION accessor eventually decodes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.2</mn>
+  <mo>,</mo>
+  <mn>1.0</mn>
+  <mo>,</mo>
+  <mn>0.0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Morph target 0:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.0</mn>
+  <mo>,</mo>
+  <mn>0.1</mn>
+  <mo>,</mo>
+  <mn>0.0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Morph weight:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>m</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>0.5</mn>
+  <mo>.</mo>
+</math>
+<p>First morph:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>m</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mo>+</mo>
+  <mn>0.5</mn>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+</math>
+</section>
+<section id="id_04-visual-computing-ii-ch041-section" class="level3">
+<h3><math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.2</mn>
+  <mo>,</mo>
+  <mn>1.05</mn>
+  <mo>,</mo>
+  <mn>0.0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math></h3>
+<section id="id_04-visual-computing-ii-ch041-skin-influence" class="level4">
+<h4>Skin influence</h4>
+<p>Vertex:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>j</mi>
+  <mi>o</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>7</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mi>e</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.7</mn>
+  <mo>,</mo>
+  <mn>0.3</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Skin joint index 3 maps to node:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>J</mi>
+    <mn>3</mn>
+  </msub>
+</math>
+<p>in skin’s ordered joint array.</p>
+<p>Palette:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mn>3</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>G</mi>
+    <mrow data-mjx-texclass="ORD">
+      <msub>
+        <mi>J</mi>
+        <mn>3</mn>
+      </msub>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <msubsup>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <msub>
+        <mi>J</mi>
+        <mn>3</mn>
+      </msub>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mn>7</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>G</mi>
+    <mrow data-mjx-texclass="ORD">
+      <msub>
+        <mi>J</mi>
+        <mn>7</mn>
+      </msub>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <msubsup>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <msub>
+        <mi>J</mi>
+        <mn>7</mn>
+      </msub>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>Skin:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mi>s</mi>
+          </msub>
+          <mo>=</mo>
+          <mn>0.7</mn>
+          <msub>
+            <mi>S</mi>
+            <mn>3</mn>
+          </msub>
+          <msub>
+            <mi>p</mi>
+            <mi>m</mi>
+          </msub>
+          <mo>+</mo>
+          <mn>0.3</mn>
+          <msub>
+            <mi>S</mi>
+            <mn>7</mn>
+          </msub>
+          <msub>
+            <mi>p</mi>
+            <mi>m</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-entityworld-transform" class="level4">
+<h4>Entity/world transform</h4>
+<p>If asset-space result belongs to entity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>M</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>t</mi>
+      <mi>i</mi>
+      <mi>t</mi>
+      <mi>y</mi>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>world:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mi>w</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>M</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>e</mi>
+              <mi>n</mi>
+              <mi>t</mi>
+              <mi>i</mi>
+              <mi>t</mi>
+              <mi>y</mi>
+            </mrow>
+          </msub>
+          <msub>
+            <mi>p</mi>
+            <mi>s</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then camera:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>v</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>V</mi>
+  <msub>
+    <mi>p</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Clip:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mi>c</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>P</mi>
+          <msub>
+            <mi>p</mi>
+            <mi>v</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>NDC:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mi>d</mi>
+      <mi>c</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>.</mo>
+  <mi>x</mi>
+  <mi>y</mi>
+  <mi>z</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>p</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>.</mo>
+  <mi>w</mi>
+  <mo>.</mo>
+</math>
+<p>Viewport maps to pixel.</p>
+<p>That is the final rendered position.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-previous-frame-version-for-taa" class="level4">
+<h4>Previous-frame version for TAA</h4>
+<p>Now connect Pass 18 back to Pass 17.</p>
+<p>Previous morph:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>m</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>0</mn>
+      <mo>,</mo>
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Previous joint globals:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>G</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>J</mi>
+      <mo>,</mo>
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Previous entity matrix:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>M</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>t</mi>
+      <mi>i</mi>
+      <mi>t</mi>
+      <mi>y</mi>
+      <mo>,</mo>
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Previous camera:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <msub>
+    <mi>V</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Compute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>c</mi>
+      <mo>,</mo>
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Current:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>c</mi>
+      <mo>,</mo>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then motion vector:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mo>=</mo>
+  <mi>N</mi>
+  <mi>D</mi>
+  <msub>
+    <mi>C</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>−</mo>
+  <mi>N</mi>
+  <mi>D</mi>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>So correct TAA motion for animated character requires every layer of the animation stack.</p>
+<p>This is why rendering systems cannot treat animation as an unrelated subsystem.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-a-coherent-end-to-end-c-model" class="level4">
+<h4>A COHERENT END-TO-END C++ MODEL</h4>
+<div class="sourceCode" id="cb14"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co">// -----------------------------------------------------------------------------</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co">// One portable animated-vertex evaluation.</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co">// This is intentionally explicit to show the ordering of morphing, skinning,</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">// entity/world transforms, and camera projection.</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co">// -----------------------------------------------------------------------------</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> SkinInfluence</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>array<span class="op">&lt;</span><span class="dt">uint32_t</span><span class="op">,</span> <span class="dv">4</span><span class="op">&gt;</span> Joint<span class="op">;</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>array<span class="op">&lt;</span><span class="dt">float</span><span class="op">,</span> <span class="dv">4</span><span class="op">&gt;</span> Weight<span class="op">;</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>Vec4 EvaluateAnimatedVertex<span class="op">(</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3<span class="op">&amp;</span> basePosition<span class="op">,</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>span<span class="op">&lt;</span><span class="at">const</span> Vec3<span class="op">&gt;</span> morphPositionDeltas<span class="op">,</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>span<span class="op">&lt;</span><span class="at">const</span> <span class="dt">float</span><span class="op">&gt;</span> morphWeights<span class="op">,</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> SkinInfluence<span class="op">&amp;</span> influence<span class="op">,</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>span<span class="op">&lt;</span><span class="at">const</span> Mat4<span class="op">&gt;</span> jointPalette<span class="op">,</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Mat4<span class="op">&amp;</span> entityWorld<span class="op">,</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Mat4<span class="op">&amp;</span> view<span class="op">,</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Mat4<span class="op">&amp;</span> projection<span class="op">)</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Start in mesh/object space.</span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    Vec3 morphed <span class="op">=</span> basePosition<span class="op">;</span></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>    <span class="co">// glTF morph targets are additive deltas and are applied before skinning.</span></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="bu">std::</span>size_t targetCount <span class="op">=</span></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>min<span class="op">(</span></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>            morphPositionDeltas<span class="op">.</span>size<span class="op">(),</span></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>            morphWeights<span class="op">.</span>size<span class="op">());</span></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="bu">std::</span>size_t target <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>         target <span class="op">&lt;</span> targetCount<span class="op">;</span></span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>         <span class="op">++</span>target<span class="op">)</span></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>        morphed <span class="op">+=</span></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>            morphPositionDeltas<span class="op">[</span>target<span class="op">]</span></span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>            <span class="op">*</span> morphWeights<span class="op">[</span>target<span class="op">];</span></span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Four-weight linear blend skinning.</span></span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>    Vec4 skinned<span class="op">{</span><span class="fl">0.0</span><span class="bu">f</span><span class="op">};</span></span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="bu">std::</span>size_t slot <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>         slot <span class="op">&lt;</span> <span class="dv">4</span><span class="op">;</span></span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a>         <span class="op">++</span>slot<span class="op">)</span></span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="dt">float</span> weight <span class="op">=</span></span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a>            influence<span class="op">.</span>Weight<span class="op">[</span>slot<span class="op">];</span></span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>weight <span class="op">==</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="dt">uint32_t</span> joint <span class="op">=</span></span>
+<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a>            influence<span class="op">.</span>Joint<span class="op">[</span>slot<span class="op">];</span></span>
+<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>joint <span class="op">&gt;=</span></span>
+<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a>            jointPalette<span class="op">.</span>size<span class="op">())</span></span>
+<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a>            <span class="cf">throw</span> <span class="bu">std::</span>out_of_range<span class="op">(</span></span>
+<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;Vertex references &quot;</span></span>
+<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;missing skin joint.&quot;</span><span class="op">);</span></span>
+<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a>        skinned <span class="op">+=</span></span>
+<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a>            weight <span class="op">*</span></span>
+<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a>            <span class="op">(</span></span>
+<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a>                jointPalette<span class="op">[</span>joint<span class="op">]</span></span>
+<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a>                <span class="op">*</span></span>
+<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a>                Vec4<span class="op">{</span></span>
+<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a>                    morphed<span class="op">,</span></span>
+<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a>                    <span class="fl">1.0</span><span class="bu">f</span></span>
+<span id="cb14-73"><a href="#cb14-73" aria-hidden="true" tabindex="-1"></a>                <span class="op">}</span></span>
+<span id="cb14-74"><a href="#cb14-74" aria-hidden="true" tabindex="-1"></a>            <span class="op">);</span></span>
+<span id="cb14-75"><a href="#cb14-75" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb14-76"><a href="#cb14-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-77"><a href="#cb14-77" aria-hidden="true" tabindex="-1"></a>    <span class="co">// The skin palette is asset-space in Kairo&#39;s current architecture.</span></span>
+<span id="cb14-78"><a href="#cb14-78" aria-hidden="true" tabindex="-1"></a>    <span class="co">// The owning entity/world transform is applied outside it.</span></span>
+<span id="cb14-79"><a href="#cb14-79" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec4 world <span class="op">=</span></span>
+<span id="cb14-80"><a href="#cb14-80" aria-hidden="true" tabindex="-1"></a>        entityWorld <span class="op">*</span></span>
+<span id="cb14-81"><a href="#cb14-81" aria-hidden="true" tabindex="-1"></a>        skinned<span class="op">;</span></span>
+<span id="cb14-82"><a href="#cb14-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-83"><a href="#cb14-83" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec4 viewPosition <span class="op">=</span></span>
+<span id="cb14-84"><a href="#cb14-84" aria-hidden="true" tabindex="-1"></a>        view <span class="op">*</span></span>
+<span id="cb14-85"><a href="#cb14-85" aria-hidden="true" tabindex="-1"></a>        world<span class="op">;</span></span>
+<span id="cb14-86"><a href="#cb14-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-87"><a href="#cb14-87" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec4 clip <span class="op">=</span></span>
+<span id="cb14-88"><a href="#cb14-88" aria-hidden="true" tabindex="-1"></a>        projection <span class="op">*</span></span>
+<span id="cb14-89"><a href="#cb14-89" aria-hidden="true" tabindex="-1"></a>        viewPosition<span class="op">;</span></span>
+<span id="cb14-90"><a href="#cb14-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-91"><a href="#cb14-91" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> clip<span class="op">;</span></span>
+<span id="cb14-92"><a href="#cb14-92" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The joint palette generation feeding this function is:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> each joint j<span class="op">:</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Global animated joint transform obtained by walking the node hierarchy.</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    Mat4 currentJointWorld <span class="op">=</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>        ResolveWorldTransform<span class="op">(</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>            jointNode<span class="op">[</span>j<span class="op">],</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>            sampledPose<span class="op">);</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Imported inverse-bind takes bind-space vertices into joint-local bind space.</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    Mat4 skinMatrix <span class="op">=</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>        currentJointWorld</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">*</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>        inverseBind<span class="op">[</span>j<span class="op">];</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    palette<span class="op">[</span>j<span class="op">]</span> <span class="op">=</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>        skinMatrix<span class="op">;</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>That is essentially Kairo EngineCore’s current contract.</p>
+<hr />
+<p>KairoAssets’ editable mesh currently has stable vertex/face IDs, face polygons, edge validation, transactional editing, twin half-edge construction and non-manifold-edge rejection. Its half-edge <code>next</code> relationship is implicit through face corner order rather than stored explicitly.</p>
+<p>Its current modeling stack includes real split/extrude/inset/dissolve/quad-strip operations and basic subdivision infrastructure. The current repo does <strong>not</strong> yet contain a QEM simplifier, cotangent Laplacian or production UV parameterization implementation, so those remain future implementation opportunities.</p>
+<p>Kairo’s glTF importer already separates file representation from portable runtime artifacts and handles materials, textures, images, nodes, skins, animation and morph structures. EngineCore evaluates animation and computes asset-space skin palettes; Renderer only needs portable influence streams and matrices. That separation is exactly what a scalable engine should do.</p>
+<p>Maveb’s glTF path similarly performs strict validation and has a useful tangent generator with explicit UV degeneracy handling and tangent handedness reconstruction. Its animation importer validates time monotonicity and quaternion norms rather than accepting malformed animation silently.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-the-connection-between-pass-17-and-pass-18" class="level4">
+<h4>THE CONNECTION BETWEEN PASS 17 AND PASS 18</h4>
+<p>These phases are not separate islands.</p>
+<p>Animation generates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mtext> </mtext>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mtext> </mtext>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<p>Those generate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mtext> </mtext>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Motion vectors feed:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>A</mi>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mtext> </mtext>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mtext> </mtext>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>Animated bounds feed:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>m</mi>
+  <mtext> </mtext>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>H</mi>
+  <mi>i</mi>
+  <mo>−</mo>
+  <mi>Z</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>o</mi>
+  <mi>w</mi>
+  <mtext> </mtext>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mtext> </mtext>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Morph/skinning changes shadow caster geometry.</p>
+<p>Material/mesh import determines tangent frames used by PBR.</p>
+<p>Entity transforms determine light-space positions.</p>
+<p>So the real frame dependency is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>A</mi>
+          <mi>s</mi>
+          <mi>s</mi>
+          <mi>e</mi>
+          <mi>t</mi>
+          <mi>s</mi>
+          <mo stretchy="false">→</mo>
+          <mi>A</mi>
+          <mi>n</mi>
+          <mi>i</mi>
+          <mi>m</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mo stretchy="false">→</mo>
+          <mi>D</mi>
+          <mi>e</mi>
+          <mi>f</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>m</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mo stretchy="false">→</mo>
+          <mi>B</mi>
+          <mi>o</mi>
+          <mi>u</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>s</mi>
+          <mo stretchy="false">→</mo>
+          <mi>V</mi>
+          <mi>i</mi>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>b</mi>
+          <mi>i</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+          <mo stretchy="false">→</mo>
+          <mi>L</mi>
+          <mi>i</mi>
+          <mi>g</mi>
+          <mi>h</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>g</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <mi>S</mi>
+          <mi>h</mi>
+          <mi>a</mi>
+          <mi>d</mi>
+          <mi>o</mi>
+          <mi>w</mi>
+          <mi>s</mi>
+          <mo stretchy="false">→</mo>
+          <mi>P</mi>
+          <mi>o</mi>
+          <mi>s</mi>
+          <mi>t</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <mi>T</mi>
+          <mi>e</mi>
+          <mi>m</mi>
+          <mi>p</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>not separate unrelated systems.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-reconstruction-gate-pass-17" class="level4">
+<h4>RECONSTRUCTION GATE — PASS 17</h4>
+<p>From blank paper, derive a clustered renderer.</p>
+<p>Starting with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mo>,</mo>
+  <mi>H</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>N</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>f</mi>
+</math>
+<p>derive tile count, linear and logarithmic z slicing.</p>
+<p>Show:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>z</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>N</mi>
+    <mi>z</mi>
+  </msub>
+  <mfrac>
+    <mrow>
+      <mi>ln</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mo stretchy="false">(</mo>
+      <mi>z</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mi>n</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mi>ln</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mo stretchy="false">(</mo>
+      <mi>f</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mi>n</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Construct cluster volume.</p>
+<p>Derive point-sphere vs AABB test.</p>
+<p>Explain conservative spot-light bounding.</p>
+<p>Compare dense:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>×</mo>
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+</math>
+<p>memory against CSR:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>×</mo>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo>+</mo>
+  <mi>R</mi>
+  <mo>×</mo>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>Derive count/scan/scatter.</p>
+<p>Explain overflow.</p>
+<p>Then design adaptive controller using:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Explain hysteresis:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>t</mi>
+      <mi>e</mi>
+      <mi>r</mi>
+    </mrow>
+  </msub>
+  <mo>&gt;</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>e</mi>
+      <mi>x</mi>
+      <mi>i</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then derive Hi-Z semantics for conventional and reversed-Z.</p>
+<p>Then derive shadow map comparison, constant/slope bias, Peter-panning and PCF.</p>
+<p>Derive CSM practical split:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>s</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>λ</mi>
+  <mi>n</mi>
+  <mo stretchy="false">(</mo>
+  <mi>f</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>n</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mi>N</mi>
+    </mrow>
+  </msup>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>λ</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">[</mo>
+  <mi>n</mi>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mi>f</mi>
+  <mo>−</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mi>i</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>N</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Explain stabilization by texel snapping.</p>
+<p>Explain VSM moments.</p>
+<p>Then distinguish AO from GI.</p>
+<p>Explain probe leakage and visibility.</p>
+<p>Explain SSR missing-data problem.</p>
+<p>Explain radiance-cascade spatial/angular tradeoff.</p>
+<p>Then derive motion vector:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mi>D</mi>
+  <msub>
+    <mi>C</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>−</mo>
+  <mi>N</mi>
+  <mi>D</mi>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Show why previous joint palette is mandatory for skinned TAA.</p>
+<p>Derive reprojection.</p>
+<p>Explain depth/normal/ID rejection and neighborhood clamp.</p>
+<p>Then explain bloom in HDR before tone map.</p>
+<p>Finally derive a particle alive/dead compaction and a soft-particle depth fade.</p>
+<p>If you can reconstruct that, Phase 26 is mastered.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-reconstruction-gate-pass-18" class="level4">
+<h4>RECONSTRUCTION GATE — PASS 18</h4>
+<p>From blank paper, define the distinction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>topological vertex</mtext>
+  <mo>≠</mo>
+  <mtext>GPU vertex</mtext>
+  <mo>.</mo>
+</math>
+<p>Explain UV seam/hard-normal duplication.</p>
+<p>Classify:</p>
+<p>boundary, manifold, non-manifold edge.</p>
+<p>Construct half-edge twin and next.</p>
+<p>Traverse one-ring.</p>
+<p>Derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>n</mi>
+    <mi>f</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>n</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>×</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>p</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Compare equal, area and angle-weighted smooth normals.</p>
+<p>Derive tangent from UV Jacobian and tangent handedness.</p>
+<p>Parse OBJ negative indices and deduplicate tuple:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then reconstruct glTF:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>V</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>w</mi>
+  <mo stretchy="false">→</mo>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Explain scene node hierarchy.</p>
+<p>Explain skin joint indexing.</p>
+<p>Derive QEM:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Q</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP">∑</mo>
+  <mi>p</mi>
+  <msup>
+    <mi>p</mi>
+    <mi>T</mi>
+  </msup>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msup>
+    <mi>v</mi>
+    <mi>T</mi>
+  </msup>
+  <mi>Q</mi>
+  <mi>v</mi>
+  <mo>.</mo>
+</math>
+<p>Derive optimal collapse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>x</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mi>b</mi>
+  <mo>.</mo>
+</math>
+<p>Explain Loop weights, Laplacian and cotangent Laplacian.</p>
+<p>Then derive skeleton globals:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>G</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>G</mi>
+    <mi>p</mi>
+  </msub>
+  <msub>
+    <mi>L</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>G</mi>
+    <mi>j</mi>
+  </msub>
+  <msubsup>
+    <mi>B</mi>
+    <mi>j</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>Derive four-weight LBS.</p>
+<p>Explain candy-wrapper failure and DQS.</p>
+<p>Derive lerp, slerp and cubic Hermite animation.</p>
+<p>Explain crossfade, additive animation and root motion.</p>
+<p>Then derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>m</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mo>+</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>k</mi>
+  </munder>
+  <msub>
+    <mi>m</mi>
+    <mi>k</mi>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>p</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Explain why morphing precedes skinning.</p>
+<p>Finally trace:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>g</mi>
+          <mi>l</mi>
+          <mi>T</mi>
+          <mi>F</mi>
+          <mtext> </mtext>
+          <mi>b</mi>
+          <mi>y</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mo stretchy="false">→</mo>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mi>s</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mo stretchy="false">→</mo>
+          <mi>b</mi>
+          <mi>a</mi>
+          <mi>s</mi>
+          <mi>e</mi>
+          <mtext> </mtext>
+          <mi>v</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>x</mi>
+          <mo stretchy="false">→</mo>
+          <mi>m</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>p</mi>
+          <mi>h</mi>
+          <mo stretchy="false">→</mo>
+          <mi>s</mi>
+          <mi>k</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mo stretchy="false">→</mo>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+          <mtext> </mtext>
+          <mi>w</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>l</mi>
+          <mi>d</mi>
+          <mo stretchy="false">→</mo>
+          <mi>c</mi>
+          <mi>a</mi>
+          <mi>m</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mo stretchy="false">→</mo>
+          <mi>c</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>p</mi>
+          <mo stretchy="false">→</mo>
+          <mi>p</mi>
+          <mi>i</mi>
+          <mi>x</mi>
+          <mi>e</mi>
+          <mi>l</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and repeat it for previous frame to obtain the TAA motion vector.</p>
+<p>If you can do that without a reference, you understand the entire asset-to-rendered-motion path.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch041-status" class="level4">
+<h4>STATUS</h4>
+<p><strong>Pass 17 complete — M151–M156, Parts 2501–2600.</strong></p>
+<p><strong>Pass 18 complete — M157–M162, Parts 2601–2700.</strong></p>
+<p>That means the complete <strong>1801–2700 sequence we planned across the 18 passes is now finished</strong>, including Phase 21 ray/path tracing, Phase 22 GPU architecture, Phase 23/24 modern API and multi-backend/render-graph design, Phase 25 Gaussian captured worlds, Phase 26 advanced real-time rendering, and Phase 27 mesh/asset/animation systems.</p>
+<p>Graph connections: <a href="ch362.xhtml#appendix-c5b332e400e7-radiance-fields-and-gaussian-splatting" class="wikilink">Radiance fields and Gaussian splatting (Light Transport and Image Synthesis, Part 1, Reference notes: Radiance fields and Gaussian splatting)</a>, <a href="ch388.xhtml#appendix-54c383df9992-expectation-covariance-and-dependence" class="wikilink">Expectation, covariance, and dependence</a>, and <a href="ch332.xhtml#appendix-f2ee4d086415-prefix-scan-and-stream-compaction" class="wikilink">Prefix scan and stream compaction (Light Transport and Image Synthesis, Part 1, Reference notes: Prefix scan and stream compaction)</a>. These link nodes supplement the inline derivations; the equations and examples remain in this book.</p>
+<section id="id_04-visual-computing-ii-ch041-check-which-transmittance-the-stopping-test-actually-uses" class="level5">
+<h5>Check which transmittance the stopping test actually uses</h5>
+<p>The residual bound above assumes that the <strong>actual unprocessed remainder</strong> has transmittance below the stated cutoff. A test on the next candidate value is different. In the inspected <a href="https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu">Graphdeco forward CUDA kernel</a>, the code computes a candidate transmittance, checks it against the cutoff, and can stop before accumulating that candidate layer or assigning the candidate transmittance. The stored transmittance can therefore remain above the cutoff. Reading the numeric constant alone does not establish the omitted-energy bound.</p>
+<p>For example, let current transmittance be <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>0.009</mn>
+</math> and the next opacity be <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.99</mn>
+</math>. The candidate is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.00009</mn>
+</math>, below <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>4</mn>
+    </mrow>
+  </msup>
+</math>. If this layer is skipped when that test succeeds, a red layer over black loses a contribution of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.00891</mn>
+</math>, which is much larger than <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>4</mn>
+    </mrow>
+  </msup>
+</math>. This is an arithmetic counterexample to applying the after-accumulation remainder bound to a before-accumulation stopping policy; it is not a measured artifact in a trained scene.</p>
+<p>If candidate-based stopping uses <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>α</mi>
+  <mo stretchy="false">)</mo>
+  <mo>&lt;</mo>
+  <mi>τ</mi>
+</math> and a proven opacity cap <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>α</mi>
+  <mo>≤</mo>
+  <msub>
+    <mi>a</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>&lt;</mo>
+  <mn>1</mn>
+</math>, then the discarded current remainder instead satisfies</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>&lt;</mo>
+  <mfrac>
+    <mi>τ</mi>
+    <mrow>
+      <mn>1</mn>
+      <mo>−</mo>
+      <msub>
+        <mi>a</mi>
+        <mrow data-mjx-texclass="ORD">
+          <mi>m</mi>
+          <mi>a</mi>
+          <mi>x</mi>
+        </mrow>
+      </msub>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>With <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>0.99</mn>
+</math>, that worst-case bound is one hundred times the cutoff. It is loose but follows from the actual branch condition. A tighter implementation-specific bound must inspect the actual discarded layer and remainder. Footprint truncation and small-alpha rejection are additional approximation policies; they are not automatically covered by an early-termination allowance. Define whether the comparison target is an ideal untruncated compositor or the same renderer with a particular stop rule disabled.</p>
+<p>For color edits, changing order and a complete fixed-order derivation, see <a href="ch441.xhtml#id_06-engine-ii-ch045-an-image-change-certificate-must-name-the-edits-it-covers" class="wikilink">the image-change certificate contract (GPU Architecture and Real-Time Rendering, Part 2, Ch. 21)</a>.</p>
+<hr />
+</section>
+</section>
+</section>
+<section id="id_04-visual-computing-ii-ch041-from-a-rendered-frame-to-a-viewers-experience" class="level3">
+<h3>From a rendered frame to a viewer’s experience</h3>
+<p>The renderer now gives us a concrete image-formation and execution model. We can ask the next question: which parts of that image survive display sampling, optics, motion and perception? The following foundation develops those mechanisms using the mathematical and rendering tools already introduced. It is the preserved perceptual/XR section, relocated here so its prerequisites come first.</p>
+</section>
+<section id="id_04-visual-computing-ii-ch041-a-correct-image-must-survive-the-viewer-perceptual-rendering-and-xr" class="level3">
+<h3>A correct image must survive the viewer — perceptual rendering and XR</h3>
+<p>The workshop image is only the beginning of the measurement. Light passes through a camera or display, reaches an eye and is interpreted under changing gaze, contrast and motion. This full XR foundation is integrated here before later camera and rendering algorithms. Source claims remain explicitly distinguished from measured or implemented results.</p>
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch367.xhtml#id_04-visual-computing-ii-ch040-lighting-reconstruction-and-surface-motion" class="wikilink">Previous chapter (Light Transport and Image Synthesis, Part 1, Ch. 10)</a> · <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-xr-radiometry-optics-and-perception" class="wikilink">Next chapter (Vision, XR, and Playable Worlds, Part 2, Ch. 9)</a></p>
+</section>
+</section>
+</body>
+</html>

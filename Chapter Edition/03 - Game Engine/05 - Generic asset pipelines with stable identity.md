@@ -8,7 +8,7 @@ Several resource kinds repeat the same loading shape, but their sizes, validatio
 
 **Recall question:** How can one pipeline share mechanics across asset types without erasing their distinct validation and lifetime contracts?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 7081–8059; source-span SHA256 524d1ed59af9e706542d8675a9338678b7e4e6c308354a5cc6c6e0026c5cb191. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 7081–8059; source-span SHA256 31b060051468e71568977ffba1d6536354fc872b93964572580b7dca652a1a80. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## One asset pipeline, many asset types — generic code without accidental promises
@@ -296,11 +296,11 @@ This sequence has a deliberate order. The capacity check happens before construc
 
 Let `c` be the number of published entries before the call and `C` the static capacity. We maintain the invariant:
 
-\[
+$$
 0\le c\le C,\qquad
 \text{slots }[0,c)\text{ are engaged},\qquad
 \text{slots }[c,C)\text{ are disengaged}.
-\]
+$$
 
 If `c=C`, the function rejects the insertion and changes nothing. If `c<C` and the proposed construction throws, the next optional remains disengaged and the published count stays `c`. If construction succeeds, the new slot is engaged, and incrementing the count makes the published interval `[0,c+1)`. This is a short, inspectable correctness proof that depends on the container's real semantics, not merely the word "generic".
 
@@ -347,7 +347,7 @@ The solution is not “move everything into templates.” We must split the **st
 
 ### The pixel format is not an integer whose meaning we must rediscover
 
-Suppose the tile is an 8-by-2 image with four 8-bit channels per pixel. It has \(8\times 2=16\) pixels. Each pixel contributes four source bytes, so its uncompressed, tightly packed payload has \(16\times4=64\) bytes. For an RGB image with four rows and four columns, the source payload has \(4\times4\times3=48\) bytes. These equations arise from the representation we have chosen: width and height count pixels, while `channels` counts 8-bit source components per pixel. They do **not** automatically give the amount of device memory after alignment, row-pitch requirements, mipmaps, block compression, or backend-specific allocation overhead.
+Suppose the tile is an 8-by-2 image with four 8-bit channels per pixel. It has $8\times 2=16$ pixels. Each pixel contributes four source bytes, so its uncompressed, tightly packed payload has $16\times4=64$ bytes. For an RGB image with four rows and four columns, the source payload has $4\times4\times3=48$ bytes. These equations arise from the representation we have chosen: width and height count pixels, while `channels` counts 8-bit source components per pixel. They do **not** automatically give the amount of device memory after alignment, row-pitch requirements, mipmaps, block compression, or backend-specific allocation overhead.
 
 Our asset type already knows its format. We therefore define a finite domain:
 
@@ -412,7 +412,7 @@ static_assert(checked_product(8, 4) == 32);
 
 The word `constexpr` means this function is **eligible** for evaluation in a constant-expression context when the necessary conditions hold. It does not say every invocation executes during compilation. In the static assertion, `checked_product(8,4)` is evaluated as a constant expression. When we later call `checked_product(runtime_width,runtime_height)`, the same source function may execute at runtime. A compiler may also optimize a runtime call using ordinary constant propagation where it has sufficient information; that optimization is distinct from the language-level requirement to produce a constant expression.
 
-Why is the overflow check written as a division? Multiplying first would already lose the information we needed to detect overflow. For nonnegative unsigned numbers \(x,y\), a product fits in a maximum representable value \(M\) exactly when \(x\le M/y\) for \(y\ne0\). We therefore test the inequality before multiplication. The `y == 0` case needs separate handling to avoid division by zero; multiplying by zero is safe and yields zero. In the tile pipeline, we apply this function once to `width * height` and again to `pixels * channels`. This establishes a correct *count arithmetic* invariant, although it does not establish enough available memory or any GPU-specific alignment guarantee.
+Why is the overflow check written as a division? Multiplying first would already lose the information we needed to detect overflow. For nonnegative unsigned numbers $x,y$, a product fits in a maximum representable value $M$ exactly when $x\le M/y$ for $y\ne0$. We therefore test the inequality before multiplication. The `y == 0` case needs separate handling to avoid division by zero; multiplying by zero is safe and yields zero. In the tile pipeline, we apply this function once to `width * height` and again to `pixels * channels`. This establishes a correct *count arithmetic* invariant, although it does not establish enough available memory or any GPU-specific alignment guarantee.
 
 At runtime, the laboratory asks for a tile with width `SIZE_MAX` and height two. The first multiplication check throws before computing an overflowing product. The policy and recorder are not invoked after that failure, so the rejected request does not appear as a planned tile. In a compile-time constant-evaluation context, a call that attempts to evaluate the throwing path cannot produce the required constant expression; the program must reject its use as a compile-time constant. This is not an excuse to rely on exceptions in a real-time hot loop: the public engine may instead return a typed error, as Phase 2 developed. The function illustrates the distinction between the *arithmetic rule* and the *chosen error-delivery policy*.
 
@@ -446,23 +446,23 @@ Three terms are now distinguishable. `constexpr` enables constant evaluation of 
 
 The same engine that loads textures may divide images into small tiles and assign compact keys to neighboring positions. One common ordering scheme is **Morton order**, also called Z-order, which interleaves the binary digits of two coordinates. It is useful because coordinates that are near one another often receive nearby keys, but it does not guarantee perfect spatial locality or replace a complete spatial index.
 
-Take a four-bit coordinate \(x\). Write its bits as \(x_3x_2x_1x_0\). To make room for a second coordinate, place each bit at an even position:
+Take a four-bit coordinate $x$. Write its bits as $x_3x_2x_1x_0$. To make room for a second coordinate, place each bit at an even position:
 
-\[
+$$
 \operatorname{spread}(x)
 =\sum_{i=0}^{3} \left(\left\lfloor\frac{x}{2^i}\right\rfloor\bmod 2\right)2^{2i}.
-\]
+$$
 
-The division and remainder here simply ask for bit \(i\); in C++ we use a right shift and bitwise AND. For \(x=3\), binary `0011`, the low two bits are set, so spreading produces `00000101`, decimal five. For \(y=5\), binary `0101`, spreading produces `00010001`, decimal seventeen. Shift the spread \(y\) bits left by one and combine:
+The division and remainder here simply ask for bit $i$; in C++ we use a right shift and bitwise AND. For $x=3$, binary `0011`, the low two bits are set, so spreading produces `00000101`, decimal five. For $y=5$, binary `0101`, spreading produces `00010001`, decimal seventeen. Shift the spread $y$ bits left by one and combine:
 
-\[
+$$
 \operatorname{morton}(3,5)
 =\operatorname{spread}(3)\;|\;
 \big(\operatorname{spread}(5)\ll 1\big)
 =5\;|\;(17\ll1)
 =5\;|\;34
 =39.
-\]
+$$
 
 The bitwise OR is correct here because one spread result occupies even bit positions and the other, after shifting, occupies odd bit positions; there is no overlapping set bit to carry. If the coordinates are outside the range zero through fifteen, the four-bit function cannot represent them and must reject them or use a wider scheme. This small example is **one four-bit-per-axis tile key**, not a complete texture layout for arbitrary image dimensions.
 
@@ -547,7 +547,7 @@ public:
 
 The policy instance's *type* is fixed by the specialization, but its stored state, such as a 64-byte budget, can still be supplied at runtime. That distinction is important: choosing `ByteBudgetPolicy` at compile time does not mean the number 64 must be a template argument. We can change budgets between planner objects without compiling a different type for every numeric value.
 
-For the RGBA example, width eight and height two require \(8\times2\times4=64\) bytes. With a 64-byte budget, the plan is accepted and recorded. An 8-by-3 tile would require 96 bytes, so the same planner throws before recording it. A different 4-by-4 tile also requires 64 bytes, but when the verified-payload mode is used with an empty buffer, it fails the length check. Both failure paths leave the recorder's count at one. The error source and the publish boundary remain observable; policy selection does not hide them.
+For the RGBA example, width eight and height two require $8\times2\times4=64$ bytes. With a 64-byte budget, the plan is accepted and recorded. An 8-by-3 tile would require 96 bytes, so the same planner throws before recording it. A different 4-by-4 tile also requires 64 bytes, but when the verified-payload mode is used with an empty buffer, it fails the length check. Both failure paths leave the recorder's count at one. The error source and the publish boundary remain observable; policy selection does not hide them.
 
 ### The recorder is known statically; explain the CRTP rather than mystifying it
 
@@ -668,7 +668,7 @@ There is also a transaction boundary worth examining. The `TilePlanner::prepare`
 
 ### A mastery test that connects every mechanism without breaking the narrative
 
-You should now be able to reconstruct the following reasoning without opening the source. Start with a mesh/texture asset pipeline and explain which values are known by the compiler and which appear only at runtime. Derive the source-byte size \(W\times H\times C\) and explain why multiplication must be checked before forming the result. Design a trait whose compile-time channel count is an `integral_constant` value, then show when `if constexpr` eliminates a format-specific branch and when `constexpr` merely permits a calculation to execute during compilation.
+You should now be able to reconstruct the following reasoning without opening the source. Start with a mesh/texture asset pipeline and explain which values are known by the compiler and which appear only at runtime. Derive the source-byte size $W\times H\times C$ and explain why multiplication must be checked before forming the result. Design a trait whose compile-time channel count is an `integral_constant` value, then show when `if constexpr` eliminates a format-specific branch and when `constexpr` merely permits a calculation to execute during compilation.
 
 Build a legal compile-time tile configuration with `consteval`; explain why a runtime argument cannot replace a required constant expression. Derive a four-bit Morton table from interleaving coordinate bits and verify why (3,5) yields 39. Explain why the resulting `inline constexpr` table and the `constinit` mutable counter make different guarantees. Choose two budget policies and show why the checked arithmetic contract remains valid under both. Build a `RecorderBase<Derived>` and explain precisely why the derived cast is sound only for a genuinely appropriate object; contrast that static call with runtime type erasure. Use empty tag types to distinguish a verified payload from a metadata-only plan and explain why the latter cannot be used as proof of upload readiness. Finally draw the three policy holder layouts and state what EBO and `[[no_unique_address]]` *permit*—and what they do not promise across compilers.
 
@@ -727,18 +727,18 @@ One important nonstandard-looking exception to "vector is a normal contiguous ar
 
 Allocating a new block for *every* append would be expensive. If a sequence grows from zero to `n` elements, and on each append we move every existing element into a precisely sized replacement block, the total number of moved elements is:
 
-\[
+$$
 0+1+2+\cdots+(n-1)=\frac{n(n-1)}{2}.
-\]
+$$
 
 This is quadratic in `n`. It is not a reasonable growth strategy for a large asset array.
 
 A common implementation instead chooses a new capacity that is a factor `g>1` larger when the vector fills. If the capacities are approximately `1,g,g^2,\ldots,g^k`, the total number of previously stored elements copied or moved across those reallocation events is a geometric series:
 
-\[
+$$
 1+g+g^2+\cdots+g^{k-1}
 =\frac{g^k-1}{g-1}.
-\]
+$$
 
 Since the last capacity is on the order of the final element count, the total relocation work over all appends is proportional to `n` for fixed `g>1`. Divide total work by `n` appends and the *amortized* relocation cost per append is constant, even though one particular append may relocate a large existing sequence. For a factor around two, the geometric series of prior capacities is bounded by a small multiple of the final size; for a smaller growth factor the storage overhead may be lower but the number of reallocations higher. These are tradeoffs, not standardized growth factors.
 
@@ -864,15 +864,15 @@ Under typical hash distribution assumptions, insertion, lookup and deletion have
 
 A hash table's **load factor** is:
 
-\[
+$$
 \alpha = \frac{n}{b},
-\]
+$$
 
 where `n` is the number of elements and `b` is the number of buckets. The `max_load_factor` setting establishes the desired upper bound after applicable operations and controls when growth is needed. If we want to support at least `N` elements while targeting maximum load `m`, the bucket count needs to be at least approximately:
 
-\[
+$$
 b \ge \left\lceil \frac{N}{m} \right\rceil.
-\]
+$$
 
 In the lab we set `max_load_factor(0.5f)` and later call `reserve(96)`, requesting enough bucket capacity for that many elements under the configured maximum. This request is not the same as reserving space for 96 contiguous objects. `unordered_map::reserve` is connected to bucket reorganization, not vector's element storage. Some implementations may grow or choose a bucket count using their own policies; the exact bucket number is not a portable constant.
 

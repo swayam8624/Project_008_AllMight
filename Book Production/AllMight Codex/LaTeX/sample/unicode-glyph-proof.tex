@@ -1,0 +1,25 @@
+\documentclass[11pt,twoside,openany]{book}
+\usepackage[print]{allmight-book}
+\title{Unicode glyph and wrapped-code proof}
+\author{AllMight Codex}
+\date{}
+\begin{document}
+\maketitle
+Regular text: n₀, Aᵢ₊₁, 2ᴺ⁻¹, 2⁸, x⁶, and pₙ.
+Bold text: \textbf{n₀, 2ᴺ⁻¹, Aᵢ₊₁, and pₙ}.
+Inline Menlo: \texttt{pₚ}, \texttt{xᵢ}, and \texttt{2ᴺ⁻¹}.
+Fallback coverage: ᴺ ⁻ ᵢ ₀ ₂ ₈ ₙ ᵀ ⁸ ₊ ₁ ⁱ ⁶ ₚ 👋.
+Bold fallback coverage: \textbf{ᴺ ⁻ ᵢ ₀ ₂ ₈ ₙ ᵀ ⁸ ₊ ₁ ⁱ ⁶ ₚ 👋}.
+Menlo fallback coverage: \texttt{ᴺ ⁻ ᵢ ₀ ₂ ₈ ₙ ᵀ ⁸ ₊ ₁ ⁱ ⁶ ₚ 👋}.
+The integral bounds remain attached in math: $\int₀¹ x²\,dx$.
+The supplementary symbol remains visible: 👋.
+The exact inline-code math case remains visible:
+\[
+\texttt{Occluded(ray,d-\epsilon)}.
+\]
+\begin{Verbatim}[fontsize=\small]
+std::vector<VisibleId> keepVisible(const std::span<const Bounds> objects, const Camera& camera, const VisibilityOptions& options) { return compact(objects, camera, options); }
+for each member: offset = round_up(offset, alignof(member)); ensure the result remains inside the declared object extent before writing another field.
+https://example.org/a/long/path/with/many/components?parameter=alpha&other=beta
+\end{Verbatim}
+\end{document}

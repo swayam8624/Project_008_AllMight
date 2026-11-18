@@ -8,7 +8,7 @@ A renderer spans profiling tools, Objective-C++, Swift, and platform state, each
 
 **Recall question:** What does this profile actually measure, and what state must be restored when the platform-specific operation ends?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 59392–61667; source-span SHA256 36fd001ce5303fe2ca7d7f5feebd3891737fba9b7d9c0aff076a76eda6647514. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 60321–62596; source-span SHA256 36fd001ce5303fe2ca7d7f5feebd3891737fba9b7d9c0aff076a76eda6647514. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI & THREAD BOUNDARIES

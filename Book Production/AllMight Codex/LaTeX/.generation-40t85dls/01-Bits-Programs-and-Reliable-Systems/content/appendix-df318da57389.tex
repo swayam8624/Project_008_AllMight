@@ -1,0 +1,54 @@
+\hypertarget{appendix-df318da57389}{}\label{referencestart:appendix-df318da57389}
+\section{Compensated and pairwise summation}\label{appendix-df318da57389-compensated-and-pairwise-summation}
+
+\hypertarget{appendix-df318da57389-compensated-and-pairwise-summation}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C005 · \textbf{Latest development:} C005
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-df318da57389-definition-and-mechanism}
+
+\hypertarget{appendix-df318da57389-definition-and-mechanism}{}
+
+Kahan tracks an estimate of lost low-order information; fixed pairwise sums combine balanced halves. For float inputs {[}2\^{}24,1,1{]}, naive gives 2\^{}24 while both illustrated improved methods reach 2\^{}24+2. Neither is universally exact or order-independent.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-df318da57389-prerequisites}
+
+\hypertarget{appendix-df318da57389-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c2ac4a84c283]{Floating-point reassociation} --- Different sum groupings define the numerical behavior of reduction methods.
+\item
+  \hyperref[appendix-f82e270791c8]{Accumulated rounding error} --- Path-length and magnitude bounds motivate shorter trees and compensation.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-df318da57389-used-by}
+
+\hypertarget{appendix-df318da57389-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-4c8e0238e7ee]{Deterministic reduction tree} --- uses this mechanism to establish its numerical contract.
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=appendix-5aef4f13483a}{Dot and cross-product rounding (Mathematics for Visual Computing, Reference notes: Dot and cross-product rounding)} --- uses this mechanism to establish its numerical contract.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-df318da57389-recall-and-next-depth}
+
+\hypertarget{appendix-df318da57389-recall-and-next-depth}{}
+
+Reconstruct the definition's example and name the assumptions that make it valid.
+
+\textbf{Pending:} Adversarial data, non-finite contracts, allocation/parallel costs and stronger accumulators.
+
+\subsection{Source and navigation}\label{appendix-df318da57389-source-and-navigation}
+
+\hypertarget{appendix-df318da57389-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-when-arithmetic-meets-uncertainty]{M005 teaching chapter} · \hyperref[appendix-fd090d982a15-m005---parts-77-88]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

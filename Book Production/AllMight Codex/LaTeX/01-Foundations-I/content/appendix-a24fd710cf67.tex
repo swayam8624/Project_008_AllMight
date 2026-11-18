@@ -1,0 +1,44 @@
+\hypertarget{appendix-a24fd710cf67}{}
+\section*{Significand and hidden bit}
+\section{Significand and hidden bit}\label{significand-and-hidden-bit}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C004 · \textbf{Latest development:} C004
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+The significand supplies significant digits; the exponent supplies scale. A normal binary value begins 1.f, so its leading one is implied, not stored. Binary32 fraction F contributes F/2\^{}23; subnormals instead begin 0.f.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5057f9ad327f]{Binary32} --- The concrete fields provide the representation used in this mechanism.
+\item
+  \hyperref[appendix-83c3f28f7bda]{Positional notation} --- Negative powers of two give fractional digits their exact weights.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-a1b1b4580dfd]{Floating-point addition and absorption} --- Significant digit positions determine alignment and what leading digits cancel.
+\item
+  \hyperref[appendix-a2773a6a2f9d]{Cancellation and loss of significance} --- Significant digit positions determine alignment and what leading digits cancel.
+\item
+  \hyperref[appendix-6854d0e2218e]{Floating-point encoding and decoding} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-00a6e044c437]{Subnormals and gradual underflow} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-390ea641da54]{Machine epsilon} --- uses this mechanism in its explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Explain why 23 fraction bits give 24 normal bits but not 24-bit relative precision arbitrarily close to zero.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20stretching\%20ruler\%20for\%20real-valued\%20quantities}{M004 teaching chapter} · \hyperref[appendix-fd090d982a15]{Per-part definitions} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

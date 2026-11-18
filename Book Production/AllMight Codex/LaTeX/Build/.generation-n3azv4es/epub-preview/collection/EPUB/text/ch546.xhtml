@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch546.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-5f4b2e24c3f6-gaussian-alpha-compositing-and-order" class="level2">
+<h2>Gaussian alpha compositing and order</h2>
+<p>A splat rasterizer typically evaluates an opacity contribution for each projected Gaussian and composites visible contributors in depth order. Front-to-back compositing keeps a running transmittance</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>and for layer <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> with opacity <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>α</mi>
+    <mi>i</mi>
+  </msub>
+</math>,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>α</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>C</mi>
+  <mo stretchy="false">←</mo>
+  <mi>C</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>c</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>After all layers, accumulated opacity is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∏</mo>
+    <mi>i</mi>
+  </munder>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Opacity accumulation is commutative under this formula, but color is generally <strong>not</strong> because earlier colors receive larger transmittance weights. Therefore sorting or another order-correct method is part of the image definition, not just an optimization.</p>
+<section id="appendix-5f4b2e24c3f6-early-termination" class="level3">
+<h3>Early termination</h3>
+<p>When <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math> becomes small, later layers can contribute at most a small amount if color values are bounded. An early-out threshold is therefore an approximation with a measurable error bound. The threshold should not be mixed into the layer before deciding whether that layer contributes; candidate-transmittance and post-accumulation stopping can differ by one visible contributor.</p>
+</section>
+<section id="appendix-5f4b2e24c3f6-numerical-stability" class="level3">
+<h3>Numerical stability</h3>
+<p>Large numbers of tiny alpha values can accumulate rounding error. Clamping alpha should follow a stated kernel/model rule rather than hide negative or greater-than-one values produced by an earlier bug.</p>
+<p>Sorting precision also matters. If depth keys quantize several splats to the same value, the tie policy should be deterministic if reproducible images are required.</p>
+</section>
+<section id="appendix-5f4b2e24c3f6-executable-witness" class="level3">
+<h3>Executable witness</h3>
+<p>tools/labs/gaussian_projection_reference_lab.cpp composites two colored layers in both orders. It proves equal final opacity but different color, making the ordering dependency observable.</p>
+<p>Related: <a href="ch543.xhtml#appendix-24269cb6977c-gaussian-covariance-projection-and-footprint" class="wikilink">Gaussian covariance projection and footprint</a>, <a href="ch320.xhtml#appendix-10308c3d753e-sampling-support-and-missing-strata" class="wikilink">Sampling support and missing strata (Light Transport and Image Synthesis, Part 1, Reference notes: Sampling support and missing strata)</a>.</p>
+</section>
+</section>
+</body>
+</html>

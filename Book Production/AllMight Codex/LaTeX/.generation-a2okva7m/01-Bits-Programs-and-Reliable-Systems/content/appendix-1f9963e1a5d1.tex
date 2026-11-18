@@ -1,0 +1,47 @@
+\hypertarget{appendix-1f9963e1a5d1}{}\label{referencestart:appendix-1f9963e1a5d1}
+\section{Bit packing}\label{appendix-1f9963e1a5d1-bit-packing}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C001 · \textbf{Latest development:} C001
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-1f9963e1a5d1-definition-and-mechanism}
+
+Multiple constrained values share a carrier word; extraction and mutation must preserve the declared schema.
+
+\end{allmightroledefinition}
+
+Packing places several constrained values into a carrier. Input \texttt{{[}1,0,1,1,0,1,0,1{]}} packed LSB-first produces \texttt{0xAD}. Unpacking needs the logical count because the final byte may contain unused bits. Define whether padding must be zero, ignored, or rejected.
+
+\subsection{Prerequisites}\label{appendix-1f9963e1a5d1-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-ac697f5c66e8]{Bit field} --- A field is a declared range with offset s and width w, not automatically a C++ language bit-field member.
+\item
+  \hyperref[appendix-a427ce8ce8a6]{Bitwise OR} --- Per lane: only 0\textbar0 is 0; the other three cases are 1.
+\item
+  \hyperref[appendix-f414bd4ed05c]{Interpretation contract} --- For \texttt{0xAD}, unsigned interpretation gives 173; eight-bit two's complement gives −83.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-1f9963e1a5d1-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-638204c40e8b]{Groupwise quantization and metadata} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-e12d1b03fefb]{Atomic operations and write contention} --- uses bit packing as part of its representation or reasoning.
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-fdc7879e8bf2}{Quantization and compressed weights (Vision, XR, and Playable Worlds, Reference notes: Quantization and compressed weights)} --- uses bit packing as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-1f9963e1a5d1-recall-and-next-depth}
+
+Explain bit packing without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} bulk kernels, padding policy, random access, atomic mutation, and format evolution.
+
+\subsection{Source and navigation}\label{appendix-1f9963e1a5d1-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

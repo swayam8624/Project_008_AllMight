@@ -1,0 +1,43 @@
+\hypertarget{appendix-f662b5b1773b}{}
+\section*{GPU workgroups and synchronization}
+\section{GPU workgroups and synchronization}\label{appendix-f662b5b1773b-gpu-workgroups-and-synchronization}
+
+GPU execution has several scopes that must not be collapsed into the word ``thread.'' An invocation executes one logical shader instance. Invocations are grouped into workgroups for explicitly shared local memory and workgroup barriers. Hardware may execute smaller subgroup or SIMD groups inside a workgroup. Many workgroups make up a dispatch.
+
+A workgroup barrier can coordinate invocations that participate in that workgroup. It cannot create a global barrier across arbitrary workgroups in the same dispatch. If an algorithm requires all blocks to finish phase A before any block begins phase B, use a mechanism that establishes that dependency: usually separate dispatches/commands with API synchronization, or a carefully designed device-wide primitive supported by the target model.
+
+\subsection{Execution barrier versus memory visibility}\label{appendix-f662b5b1773b-execution-barrier-versus-memory-visibility}
+
+``Everyone reached the same point'' and ``everyone can now observe the required writes'' are related but distinct contracts. APIs and shading languages expose memory scopes and semantics because a control barrier alone is not a universal cache flush.
+
+The producer/consumer question is always:
+
+\begin{itemize}
+\tightlist
+\item
+  what operation produced the bytes?
+\item
+  what later operation consumes them?
+\item
+  which execution scopes must be ordered?
+\item
+  which memory accesses must become visible?
+\item
+  which resource/subresource is covered?
+\end{itemize}
+
+\subsection{Subgroups}\label{appendix-f662b5b1773b-subgroups}
+
+Subgroup collectives can exchange values and perform ballots, reductions and scans without workgroup shared memory. They are fast but require care around subgroup width, inactive lanes and portability. An algorithm that silently assumes 32 lanes can break on hardware using a different subgroup size.
+
+\subsection{Shared memory and bank conflicts}\label{appendix-f662b5b1773b-shared-memory-and-bank-conflicts}
+
+Workgroup memory is physically optimized for cooperation but has finite capacity and bank structure. Tiling can reduce global bandwidth, yet an unfortunate address pattern can serialize accesses through bank conflicts. Register pressure and shared-memory allocation also constrain occupancy, so increasing tile size is not free.
+
+\subsection{Evidence boundary}\label{appendix-f662b5b1773b-evidence-boundary}
+
+The canonical notes now distinguish CPU semantic models from native hardware evidence. A CPU prefix-scan or render-graph test can prove dependency logic but cannot prove Vulkan visibility, Metal hazard behavior, subgroup width or driver performance. Hardware claims require validation layers, GPU capture/counters, and device-specific results.
+
+Teach and reconstruct: \hyperref[01-foundations-i-ch008-let-many-invocations-cooperate-without-inventing-a-global-clock]{Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Let many invocations cooperate without inventing a global clock}.
+
+Related: \hyperref[appendix-f2ee4d086415]{Prefix scan and stream compaction}, \hyperref[appendix-749048795dbb]{Shader buffer ABI}.

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch168.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-e89a8f290ef5-atomic-publication-and-durability" class="level2">
+<h2>Atomic publication and durability</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-e89a8f290ef5-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Publishing a prepared temporary file by replacement concerns observers of the filesystem namespace. Crash durability concerns whether contents and namespace updates survive failures; it needs a specified platform/filesystem protocol. Neither follows from building a vector of bytes. The supplied AtomicFile excerpt is an unverified repository claim, not a tested durability guarantee.</p>
+</section>
+<section id="appendix-e89a8f290ef5-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch152.xhtml#appendix-91d09ebed979-serialization" class="wikilink">Serialization</a> — Publication persists already-specified bytes, rather than defining their format.</li>
+<li><a href="ch167.xhtml#appendix-d52e4486f527-ownership-and-non-owning-views" class="wikilink">Ownership and non-owning views</a> — A mapping or publication pipeline must keep referenced bytes valid.</li>
+</ul>
+</section>
+<section id="appendix-e89a8f290ef5-used-by" class="level3">
+<h3>Used by</h3>
+<p>Update downstream uses when later chunks build on this concept.</p>
+</section>
+<section id="appendix-e89a8f290ef5-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Name the observers and failure model for an atomic guarantee.</p>
+<p><strong>Pending:</strong> Platform replacement semantics, flush ordering, recovery and cross-volume limits.</p>
+</section>
+<section id="appendix-e89a8f290ef5-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-e89a8f290ef5-executed-posix-durability-sequence" class="level3">
+<h3>Executed POSIX durability sequence</h3>
+<p>The durability contract now has an actual syscall-level witness in <code>tools/labs/atomic_publication_durability_lab.cpp</code>.</p>
+<p>The reference creates a staging file with exclusive creation, writes the complete payload, calls <code>fsync</code> on the file, closes it, renames it within the same directory, opens the containing directory, and calls <code>fsync</code> on that directory before treating publication as complete. It then verifies the final bytes and absence of the staging name. Separate tests reject a pre-existing staging file and a traversal-style final name.</p>
+<p>This is stronger than “write temp then rename,” because rename atomicity and durable persistence are different properties. The file sync requests persistence of file contents/metadata; the directory sync requests persistence of the directory-entry change. Successful calls on CI are evidence that the operating-system/filesystem accepted that ordering. They are <strong>not</strong> a laboratory power-cut test and cannot promise identical persistence guarantees on every filesystem, storage controller, Windows API, network filesystem or production asset pipeline.</p>
+</section>
+</section>
+</body>
+</html>

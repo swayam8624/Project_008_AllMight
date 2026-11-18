@@ -1,0 +1,3845 @@
+I checked the canonical numbering before starting. There is one important correction: **Parts 534–537 are the full dot-product foundation through orthogonality; actual vector projection is Part 538.** The canonical sequence is:
+
+**534. Dot product algebraic definition**  
+**535. Dot product geometric interpretation**  
+**536. Deriving the cosine-angle relation for the dot product**  
+**537. Orthogonal vectors**  
+**538. Vector projection onto another vector** Project_Sheldon_Master_Curricul…
+
+So I am **not going to silently steal Part 538 and pretend it was 537**. I will, however, build 534–537 deeply enough that projection in 538 becomes almost inevitable rather than another formula to memorize. That also follows the curriculum rule against compressing later atomic Parts into the current one merely because they are related. Pasted markdown
+
+This is a major block. The path from here is eventually:
+
+\[
+\boxed{
+\text{dot product}
+\rightarrow
+\text{angle}
+\rightarrow
+\text{orthogonality}
+\rightarrow
+\text{projection}
+\rightarrow
+\text{closest points}
+\rightarrow
+\text{collision geometry}
+\rightarrow
+\text{constraint solvers}
+}
+\]
+
+---
+
+# PART 534 — DOT PRODUCT ALGEBRAIC DEFINITION
+
+# 534.1 What problem are we solving?
+
+Until now, most vector operations have produced vectors.
+
+Addition:
+
+\[
+\vec a+\vec b
+\rightarrow
+\text{vector}.
+\]
+
+Subtraction:
+
+\[
+\vec a-\vec b
+\rightarrow
+\text{vector}.
+\]
+
+Scalar multiplication:
+
+\[
+s\vec a
+\rightarrow
+\text{vector}.
+\]
+
+Magnitude is different:
+
+\[
+\|\vec a\|
+\rightarrow
+\text{scalar}.
+\]
+
+Now we want another operation that takes **two vectors** and produces a **scalar**.
+
+Why?
+
+Because there are important questions about two vectors that are scalar questions:
+
+> How strongly do they point in the same direction?
+
+> Are they perpendicular?
+
+> How much of one lies along some direction?
+
+> What angle separates them?
+
+> How much work does a force perform along a displacement?
+
+> How strongly does a light direction align with a surface orientation?
+
+All of these eventually reduce to one operation.
+
+The dot product.
+
+---
+
+# 534.2 Formal algebraic definition
+
+For two real coordinate vectors:
+
+\[
+\vec a=(a_1,a_2,\ldots,a_n)
+\]
+
+and
+
+\[
+\vec b=(b_1,b_2,\ldots,b_n),
+\]
+
+their dot product is:
+
+\[
+\boxed{
+\vec a\cdot\vec b
+=
+\sum_{i=1}^{n}a_i b_i
+}
+\]
+
+which means:
+
+\[
+\boxed{
+\vec a\cdot\vec b
+=
+a_1b_1+a_2b_2+\cdots+a_nb_n.
+}
+\]
+
+In 2D:
+
+\[
+\boxed{
+(a_x,a_y)\cdot(b_x,b_y)
+=
+a_xb_x+a_yb_y.
+}
+\]
+
+In 3D:
+
+\[
+\boxed{
+(a_x,a_y,a_z)\cdot(b_x,b_y,b_z)
+=
+a_xb_x+a_yb_y+a_zb_z.
+}
+\]
+
+The result is a scalar.
+
+Not another vector.
+
+---
+
+# 534.3 Walk the operation physically in memory
+
+Take:
+
+\[
+\vec a=(2,3,4)
+\]
+
+and:
+
+\[
+\vec b=(5,-1,2).
+\]
+
+Memory conceptually:
+
+```text
+a
+┌────────┬────────┬────────┐
+│ 2      │ 3      │ 4      │
+│ a.x    │ a.y    │ a.z    │
+└────────┴────────┴────────┘
+
+b
+┌────────┬────────┬────────┐
+│ 5      │ -1     │ 2      │
+│ b.x    │ b.y    │ b.z    │
+└────────┴────────┴────────┘
+```
+
+Dot product pairs corresponding components:
+
+```text
+a.x * b.x   = 2 * 5
+a.y * b.y   = 3 * -1
+a.z * b.z   = 4 * 2
+```
+
+Then reduces them to one scalar:
+
+\[
+10-3+8=15.
+\]
+
+Therefore:
+
+\[
+\boxed{
+(2,3,4)\cdot(5,-1,2)=15.
+}
+\]
+
+Data flow:
+
+```text
+a.x ──×── b.x ──► product0 ─┐
+                             │
+a.y ──×── b.y ──► product1 ─┼─► ADD/REDUCE ─► scalar
+                             │
+a.z ──×── b.z ──► product2 ─┘
+```
+
+This is a **multiply-and-reduce** operation.
+
+That structure later appears everywhere from linear algebra to neural-network inference.
+
+---
+
+# 534.4 Why corresponding components?
+
+Consider coordinates relative to an orthonormal basis:
+
+\[
+\vec e_1,\vec e_2,\ldots,\vec e_n.
+\]
+
+Then:
+
+\[
+\vec a
+=
+a_1\vec e_1+\cdots+a_n\vec e_n
+\]
+
+and:
+
+\[
+\vec b
+=
+b_1\vec e_1+\cdots+b_n\vec e_n.
+\]
+
+The dot product compares how much each vector contributes along the **same basis direction**.
+
+Thus:
+
+\[
+a_1b_1
+\]
+
+compares their first-direction contributions,
+
+\[
+a_2b_2
+\]
+
+their second-direction contributions,
+
+and so forth.
+
+Then we accumulate the contributions.
+
+This already hints at why it measures alignment.
+
+But the rigorous geometry comes in Parts 535–536.
+
+---
+
+# 534.5 Critical basis caveat
+
+The familiar formula:
+
+\[
+\vec a\cdot\vec b
+=
+\sum_i a_i b_i
+\]
+
+is the coordinate formula for the ordinary Euclidean dot product when the coordinates are expressed in an **orthonormal basis**.
+
+That condition matters.
+
+Recall from Part 526 that the same problem appeared for:
+
+\[
+\|\vec v\|
+=
+\sqrt{\sum_i v_i^2}.
+\]
+
+If the basis vectors themselves are not perpendicular/unit length, raw coordinate components cannot simply be multiplied and summed.
+
+Later Part 541 introduces the **Gram matrix**, which handles the general situation.
+
+For now our graphics coordinates are assumed to be expressed in a Euclidean orthonormal frame unless stated otherwise.
+
+That assumption must stay visible.
+
+---
+
+# 534.6 Dotting a vector with itself
+
+This immediately reveals something familiar.
+
+Take:
+
+\[
+\vec v=(v_1,\ldots,v_n).
+\]
+
+Then:
+
+\[
+\vec v\cdot\vec v
+=
+v_1^2+\cdots+v_n^2.
+\]
+
+But from Parts 526–531:
+
+\[
+\|\vec v\|_2^2
+=
+v_1^2+\cdots+v_n^2.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\vec v\cdot\vec v
+=
+\|\vec v\|^2.
+}
+\]
+
+And consequently:
+
+\[
+\boxed{
+\|\vec v\|
+=
+\sqrt{\vec v\cdot\vec v}.
+}
+\]
+
+This is extremely important.
+
+Euclidean magnitude is not some separate unrelated operation.
+
+It arises directly from the dot product of a vector with itself.
+
+---
+
+# 534.7 Self-dot is nonnegative
+
+Since:
+
+\[
+\vec v\cdot\vec v
+=
+\sum_i v_i^2,
+\]
+
+and every:
+
+\[
+v_i^2\ge0,
+\]
+
+we get:
+
+\[
+\boxed{
+\vec v\cdot\vec v\ge0.
+}
+\]
+
+And:
+
+\[
+\vec v\cdot\vec v=0
+\]
+
+only when:
+
+\[
+v_i=0
+\]
+
+for every component.
+
+So:
+
+\[
+\boxed{
+\vec v\cdot\vec v=0
+\iff
+\vec v=\vec0.
+}
+\]
+
+This is called **positive definiteness** for the Euclidean inner product.
+
+We do not need the broader inner-product-space theory yet; what matters is that self-dot behaves like squared length.
+
+---
+
+# 534.8 Symmetry
+
+Take:
+
+\[
+\vec a\cdot\vec b.
+\]
+
+Definition:
+
+\[
+\sum_i a_i b_i.
+\]
+
+Real multiplication is commutative:
+
+\[
+a_i b_i=b_i a_i.
+\]
+
+Therefore:
+
+\[
+\sum_i a_i b_i
+=
+\sum_i b_i a_i.
+\]
+
+Hence:
+
+\[
+\boxed{
+\vec a\cdot\vec b
+=
+\vec b\cdot\vec a.
+}
+\]
+
+The Euclidean dot product is symmetric.
+
+---
+
+# 534.9 Distributivity over vector addition
+
+Consider:
+
+\[
+\vec a\cdot(\vec b+\vec c).
+\]
+
+Component \(i\) of \(\vec b+\vec c\) is:
+
+\[
+b_i+c_i.
+\]
+
+Thus:
+
+\[
+\vec a\cdot(\vec b+\vec c)
+=
+\sum_i a_i(b_i+c_i).
+\]
+
+Scalar distributivity gives:
+
+\[
+=
+\sum_i(a_ib_i+a_ic_i).
+\]
+
+Split the sums:
+
+\[
+=
+\sum_i a_ib_i
++
+\sum_i a_ic_i.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\vec a\cdot(\vec b+\vec c)
+=
+\vec a\cdot\vec b
++
+\vec a\cdot\vec c.
+}
+\]
+
+---
+
+# 534.10 Scalar compatibility
+
+For scalar \(s\):
+
+\[
+(s\vec a)\cdot\vec b.
+\]
+
+Components of \(s\vec a\) are:
+
+\[
+sa_i.
+\]
+
+Therefore:
+
+\[
+(s\vec a)\cdot\vec b
+=
+\sum_i(sa_i)b_i.
+\]
+
+Factor \(s\):
+
+\[
+=
+s\sum_i a_ib_i.
+\]
+
+Hence:
+
+\[
+\boxed{
+(s\vec a)\cdot\vec b
+=
+s(\vec a\cdot\vec b).
+}
+\]
+
+Because the product is symmetric:
+
+\[
+\boxed{
+\vec a\cdot(s\vec b)
+=
+s(\vec a\cdot\vec b).
+}
+\]
+
+---
+
+# 534.11 Bilinearity
+
+The previous properties together mean the dot product is **linear in each argument separately**.
+
+For example:
+
+\[
+(\alpha\vec a+\beta\vec b)\cdot\vec c
+=
+\alpha(\vec a\cdot\vec c)
++
+\beta(\vec b\cdot\vec c).
+\]
+
+And similarly in the second argument.
+
+This property is called **bilinearity**:
+
+```text
+bi     → two
+linear → linear in each input
+```
+
+It becomes enormously important later in matrix algebra and quadratic forms.
+
+---
+
+# 534.12 Dot product versus component-wise multiplication
+
+Do not confuse:
+
+\[
+\vec a\cdot\vec b
+\]
+
+with:
+
+\[
+(a_xb_x,\ a_yb_y,\ a_zb_z).
+\]
+
+The latter produces a vector and is usually called **component-wise multiplication** or the Hadamard product.
+
+Example:
+
+\[
+(2,3,4)\odot(5,-1,2)
+=
+(10,-3,8).
+\]
+
+Dot product goes one step further:
+
+\[
+10+(-3)+8=15.
+\]
+
+So:
+
+```text
+component-wise multiply:
+Vec3 × Vec3 → Vec3
+
+dot product:
+Vec3 × Vec3 → scalar
+```
+
+This type distinction is fundamental.
+
+---
+
+# 534.13 Units
+
+Suppose:
+
+\[
+\vec a
+\]
+
+has units metres and:
+
+\[
+\vec b
+\]
+
+also metres.
+
+Then:
+
+\[
+\vec a\cdot\vec b
+\]
+
+has units:
+
+\[
+m^2.
+\]
+
+This matches:
+
+\[
+\vec v\cdot\vec v
+=
+\|\vec v\|^2.
+\]
+
+Squared length has squared units.
+
+But dot operands do not necessarily need identical physical units.
+
+For example, force:
+
+\[
+N
+\]
+
+dotted with displacement:
+
+\[
+m
+\]
+
+produces:
+
+\[
+N\cdot m
+=
+J,
+\]
+
+energy/work.
+
+So always track units.
+
+---
+
+# 534.14 Canonical C++ implementation
+
+```cpp
+struct Vec3 {
+    float x{};
+    float y{};
+    float z{};
+};
+
+[[nodiscard]]
+constexpr float dot(Vec3 a, Vec3 b) noexcept
+{
+    return
+        a.x * b.x +
+        a.y * b.y +
+        a.z * b.z;
+}
+```
+
+Line by line:
+
+```cpp
+a.x * b.x
+```
+
+measures interaction of their first-coordinate contributions.
+
+```cpp
+a.y * b.y
+```
+
+does the same in the second axis.
+
+```cpp
+a.z * b.z
+```
+
+does the same in the third.
+
+The `+` operations reduce these coordinate-wise interactions to one scalar.
+
+No allocation.
+
+No ownership.
+
+No lifetime complexity.
+
+No dynamic memory.
+
+---
+
+# 534.15 Fixed computational cost
+
+For a 3D dot product:
+
+\[
+3
+\]
+
+multiplications and:
+
+\[
+2
+\]
+
+additions conceptually.
+
+Thus:
+
+\[
+O(1)
+\]
+
+for fixed `Vec3`.
+
+For \(n\)-dimensional vectors:
+
+\[
+n
+\]
+
+multiplications and approximately:
+
+\[
+n-1
+\]
+
+additions:
+
+\[
+\boxed{O(n)}.
+\]
+
+---
+
+# 534.16 Fused multiply-add
+
+Modern floating-point hardware can often compute operations resembling:
+
+\[
+a_ib_i+s
+\]
+
+using **fused multiply-add**:
+
+\[
+\operatorname{fma}(a_i,b_i,s).
+\]
+
+Recall Part 85:
+
+FMA computes the multiplication and addition with a single final rounding rather than rounding the multiplication first and then the addition.
+
+So a dot product can conceptually accumulate as:
+
+\[
+s_0=0
+\]
+
+\[
+s_1=\operatorname{fma}(a_x,b_x,s_0)
+\]
+
+\[
+s_2=\operatorname{fma}(a_y,b_y,s_1)
+\]
+
+\[
+s_3=\operatorname{fma}(a_z,b_z,s_2).
+\]
+
+This can improve both throughput and numerical accuracy depending on target hardware/compiler.
+
+---
+
+# 534.17 Accumulation error
+
+Mathematically:
+
+\[
+a_xb_x+a_yb_y+a_zb_z
+\]
+
+can be regrouped freely.
+
+Floating-point addition is not associative.
+
+Therefore:
+
+```cpp
+(a.x*b.x + a.y*b.y) + a.z*b.z
+```
+
+may differ slightly from:
+
+```cpp
+a.x*b.x + (a.y*b.y + a.z*b.z)
+```
+
+For three components the issue is usually small.
+
+For massive dot products with thousands or millions of elements, accumulation accuracy becomes a serious numerical concern.
+
+This is highly relevant later in numerical linear algebra and ML kernels.
+
+---
+
+# 534.18 Cancellation
+
+Consider:
+
+\[
+\vec a=(10^8,10^8,1)
+\]
+
+\[
+\vec b=(10^8,-10^8,1).
+\]
+
+Mathematically:
+
+\[
+\vec a\cdot\vec b
+=
+10^{16}
+-
+10^{16}
++
+1
+=
+1.
+\]
+
+But finite precision may lose that final `1` depending on representation/evaluation.
+
+The true result is tiny compared with the intermediate products.
+
+That is catastrophic cancellation in dot-product accumulation.
+
+Therefore a dot product near zero can be especially sensitive when its component terms are huge and cancelling.
+
+This matters greatly when using the dot product to decide:
+
+> Are these vectors perpendicular?
+
+---
+
+# 534.19 SIMD/hardware view
+
+A wide CPU SIMD implementation can conceptually perform multiple component products simultaneously:
+
+```text
+a = [ ax ay az ... ]
+b = [ bx by bz ... ]
+
+vector multiply
+       ↓
+
+[ax*bx ay*by az*bz ...]
+
+horizontal reduction
+       ↓
+
+scalar dot
+```
+
+The multiplication is embarrassingly parallel.
+
+The final reduction is the special part.
+
+GPUs are also excellent at such arithmetic.
+
+Dot products are so common in graphics that shader languages expose them as fundamental vector operations.
+
+But the mathematical operation remains exactly the multiply-and-sum derived above.
+
+---
+
+# PART 535 — DOT PRODUCT GEOMETRIC INTERPRETATION
+
+The algebra told us **how to compute**:
+
+\[
+\vec a\cdot\vec b.
+\]
+
+Now we need to understand **what the number means geometrically**.
+
+This is where the dot product becomes genuinely useful rather than just another arithmetic recipe.
+
+---
+
+# 535.1 Start with the simplest possible direction
+
+Take the standard X unit vector:
+
+\[
+\vec e_x=(1,0).
+\]
+
+Let:
+
+\[
+\vec v=(v_x,v_y).
+\]
+
+Compute:
+
+\[
+\vec v\cdot\vec e_x.
+\]
+
+Using the algebraic definition:
+
+\[
+(v_x,v_y)\cdot(1,0)
+=
+v_x(1)+v_y(0).
+\]
+
+Therefore:
+
+\[
+\boxed{
+\vec v\cdot\vec e_x=v_x.
+}
+\]
+
+That is striking.
+
+Dotting a vector with the unit X direction extracts how much of the vector exists along X.
+
+Similarly:
+
+\[
+\boxed{
+\vec v\cdot\vec e_y=v_y.
+}
+\]
+
+And in 3D:
+
+\[
+\vec v\cdot\vec e_z=v_z.
+\]
+
+So the dot product already behaves like a **directional measurement**.
+
+---
+
+# 535.2 Concrete example
+
+Take:
+
+\[
+\vec v=(4,3).
+\]
+
+Dot with X direction:
+
+\[
+(4,3)\cdot(1,0)
+=
+4.
+\]
+
+Dot with Y:
+
+\[
+(4,3)\cdot(0,1)
+=
+3.
+\]
+
+That means the ordinary components themselves can be recovered through dot products with orthonormal basis vectors.
+
+This is a deep connection:
+
+\[
+\boxed{
+\text{coordinate component}
+=
+\text{dot with corresponding unit basis direction}.
+}
+\]
+
+This works because the standard basis is orthonormal.
+
+---
+
+# 535.3 Why zero contribution disappears
+
+Suppose:
+
+\[
+\vec v=(4,3)
+\]
+
+and we ask only about X alignment.
+
+The Y component should contribute nothing.
+
+And indeed:
+
+\[
+3\cdot0=0.
+\]
+
+The basis vector:
+
+\[
+(1,0)
+\]
+
+acts like a directional selector.
+
+That is one intuitive way to understand dot products.
+
+---
+
+# 535.4 Same direction
+
+Take:
+
+\[
+\vec a=(1,0)
+\]
+
+and:
+
+\[
+\vec b=(3,0).
+\]
+
+Dot:
+
+\[
+1\cdot3+0\cdot0=3.
+\]
+
+Positive.
+
+Both point along positive X.
+
+Now:
+
+\[
+\vec a=(2,0),
+\quad
+\vec b=(5,0).
+\]
+
+Dot:
+
+\[
+10.
+\]
+
+Still positive, and larger because the vectors themselves are larger.
+
+Therefore the dot product encodes both:
+
+1. directional alignment;
+2. magnitudes.
+
+This is why raw dot values cannot be interpreted as pure angle unless vector magnitudes are controlled.
+
+---
+
+# 535.5 Opposite direction
+
+Take:
+
+\[
+\vec a=(1,0)
+\]
+
+and:
+
+\[
+\vec b=(-3,0).
+\]
+
+Dot:
+
+\[
+1(-3)+0(0)=-3.
+\]
+
+Negative.
+
+The vectors point oppositely.
+
+So:
+
+\[
+\boxed{
+\text{negative dot}
+\Rightarrow
+\text{more opposite than perpendicular}
+}
+\]
+
+for nonzero Euclidean vectors.
+
+The exact angle interpretation comes next.
+
+---
+
+# 535.6 Perpendicular directions
+
+Take:
+
+\[
+\vec a=(1,0)
+\]
+
+and:
+
+\[
+\vec b=(0,1).
+\]
+
+Dot:
+
+\[
+1(0)+0(1)=0.
+\]
+
+Neither vector has any component along the other.
+
+This gives:
+
+\[
+\boxed{
+\text{perpendicular nonzero vectors have zero dot product}.
+}
+\]
+
+Part 537 will formalize that as **orthogonality**.
+
+---
+
+# 535.7 A less trivial perpendicular pair
+
+Take:
+
+\[
+\vec a=(2,1).
+\]
+
+Consider:
+
+\[
+\vec b=(-1,2).
+\]
+
+Dot:
+
+\[
+2(-1)+1(2)
+=
+-2+2
+=
+0.
+\]
+
+These are perpendicular even though neither is axis-aligned.
+
+Why?
+
+The contributions cancel exactly:
+
+```text
+X interaction = -2
+Y interaction = +2
+
+total = 0
+```
+
+Geometrically the vectors meet at \(90^\circ\).
+
+---
+
+# 535.8 Alignment is weighted by magnitude
+
+Consider:
+
+\[
+\vec u=(1,0).
+\]
+
+Compare:
+
+\[
+\vec v=(1,0)
+\]
+
+and:
+
+\[
+\vec w=(1000,0).
+\]
+
+Then:
+
+\[
+\vec u\cdot\vec v=1
+\]
+
+while:
+
+\[
+\vec u\cdot\vec w=1000.
+\]
+
+Their **direction** is identical.
+
+The dot values differ because \(\vec w\) is much longer.
+
+Thus:
+
+\[
+\boxed{
+\text{raw dot product is not a pure orientation measure}.
+}
+\]
+
+To isolate orientation, we will either divide out magnitudes or use unit vectors.
+
+That arrives naturally in Part 536.
+
+---
+
+# 535.9 Unit-vector interpretation
+
+If:
+
+\[
+\hat d
+\]
+
+is unit length, then dotting another vector against \(\hat d\) measures that vector's signed amount along the chosen direction.
+
+For the standard X axis:
+
+\[
+\hat d=(1,0),
+\]
+
+we already saw the result is simply \(v_x\).
+
+For arbitrary unit directions, the same geometric concept holds.
+
+The full mathematical proof comes from the cosine relation next.
+
+This is the bridge toward projection.
+
+---
+
+# 535.10 Sign as a half-space test
+
+Suppose \(\hat f\) represents an object's forward direction.
+
+Let:
+
+\[
+\vec d
+=
+target-position.
+\]
+
+Then:
+
+\[
+\hat f\cdot\vec d
+\]
+
+has meaningful sign.
+
+If positive, target has a component in front of the plane perpendicular to forward.
+
+If negative, it lies behind.
+
+If zero, it lies on that perpendicular plane.
+
+Conceptually:
+
+```text
+                 front region
+                      ↑
+                      |
+                     target
+                      *
+                      |
+----------------------+---------------- plane perpendicular to f
+                      |
+          object *----→ f
+                      |
+                 back region
+```
+
+This becomes an extremely common engine test.
+
+---
+
+# 535.11 Coordinate space is non-negotiable
+
+Suppose:
+
+```cpp
+Vec3 forwardWorld;
+Vec3 targetDirectionLocal;
+```
+
+Then:
+
+```cpp
+dot(forwardWorld, targetDirectionLocal)
+```
+
+is not a meaningful geometric alignment.
+
+Even though both are `Vec3`.
+
+Both vectors must be represented in a compatible coordinate basis before the Euclidean component formula represents their true geometric relation.
+
+This is one of the most common real-world mistakes with dot products.
+
+Always ask:
+
+\[
+\boxed{
+\text{dot product in which coordinate space?}
+}
+\]
+
+---
+
+# 535.12 Translation does not matter
+
+The dot product takes vectors, not points.
+
+If vectors represent free directions/displacements, translating the entire scene does nothing to them.
+
+Therefore their alignment does not change.
+
+When working from points, first construct displacement:
+
+\[
+\vec d=Q-P.
+\]
+
+Then dot that vector.
+
+Do not conceptually "dot two positions" unless you deliberately mean their position vectors relative to an origin.
+
+---
+
+# 535.13 Lighting intuition
+
+Suppose:
+
+\[
+\hat n
+\]
+
+is a unit surface normal and:
+
+\[
+\hat l
+\]
+
+is a unit direction toward a light.
+
+Then:
+
+\[
+\hat n\cdot\hat l
+\]
+
+measures their angular alignment.
+
+When light comes straight along the normal, the value reaches its maximum.
+
+When tangent to the surface, it becomes zero.
+
+When behind the surface, it becomes negative.
+
+This eventually becomes the familiar cosine factor in diffuse shading.
+
+The shading model itself belongs much later; the geometric machinery is what matters here.
+
+---
+
+# 535.14 Mechanical work intuition
+
+A force acting perpendicular to motion does no mechanical work along that displacement.
+
+A force aligned with motion performs positive work.
+
+Opposite force performs negative work.
+
+The mathematical expression is:
+
+\[
+W=\vec F\cdot\vec d.
+\]
+
+Units:
+
+\[
+N\cdot m=J.
+\]
+
+This is a physical example of the dot product's directional interaction meaning.
+
+---
+
+# PART 536 — DERIVING THE COSINE-ANGLE RELATION FOR THE DOT PRODUCT
+
+This Part is the central theorem.
+
+We want to prove:
+
+\[
+\boxed{
+\vec a\cdot\vec b
+=
+\|\vec a\|
+\|\vec b\|
+\cos\theta
+}
+\]
+
+where:
+
+- \(\vec a,\vec b\neq0\),
+- \(\theta\) is the angle between them,
+- conventionally \(0\le\theta\le\pi\).
+
+We are not going to memorize it.
+
+We will derive it from geometry and the algebra already established.
+
+---
+
+# 536.1 Construct a triangle from two vectors
+
+Place:
+
+\[
+\vec a
+\]
+
+and:
+
+\[
+\vec b
+\]
+
+at the same origin.
+
+The vector joining the tip of \(\vec b\) to the tip of \(\vec a\) is:
+
+\[
+\vec a-\vec b.
+\]
+
+So we have a triangle whose side lengths are:
+
+\[
+\|\vec a\|,
+\]
+
+\[
+\|\vec b\|,
+\]
+
+\[
+\|\vec a-\vec b\|.
+\]
+
+And the angle between \(\vec a\) and \(\vec b\) is:
+
+\[
+\theta.
+\]
+
+---
+
+# 536.2 Algebraic expression for the third side
+
+Start:
+
+\[
+\|\vec a-\vec b\|^2.
+\]
+
+From Part 534:
+
+\[
+\|\vec x\|^2
+=
+\vec x\cdot\vec x.
+\]
+
+Therefore:
+
+\[
+\|\vec a-\vec b\|^2
+=
+(\vec a-\vec b)\cdot(\vec a-\vec b).
+\]
+
+Use distributivity:
+
+\[
+=
+\vec a\cdot\vec a
+-
+\vec a\cdot\vec b
+-
+\vec b\cdot\vec a
++
+\vec b\cdot\vec b.
+\]
+
+Symmetry says:
+
+\[
+\vec a\cdot\vec b
+=
+\vec b\cdot\vec a.
+\]
+
+Therefore:
+
+\[
+=
+\vec a\cdot\vec a
+-
+2(\vec a\cdot\vec b)
++
+\vec b\cdot\vec b.
+\]
+
+Replace self-dots with squared magnitudes:
+
+\[
+\boxed{
+\|\vec a-\vec b\|^2
+=
+\|\vec a\|^2
++
+\|\vec b\|^2
+-
+2\vec a\cdot\vec b.
+}
+\]
+
+That came purely from dot-product algebra.
+
+---
+
+# 536.3 Geometric expression from the law of cosines
+
+For a triangle with sides \(A,B,C\) and included angle \(\theta\), the law of cosines says:
+
+\[
+C^2=A^2+B^2-2AB\cos\theta.
+\]
+
+Here:
+
+\[
+A=\|\vec a\|
+\]
+
+\[
+B=\|\vec b\|
+\]
+
+\[
+C=\|\vec a-\vec b\|.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\|\vec a-\vec b\|^2
+=
+\|\vec a\|^2
++
+\|\vec b\|^2
+-
+2\|\vec a\|\|\vec b\|\cos\theta.
+}
+\]
+
+---
+
+# 536.4 Compare the two expressions
+
+Algebra gave:
+
+\[
+\|\vec a-\vec b\|^2
+=
+\|\vec a\|^2+\|\vec b\|^2
+-
+2\vec a\cdot\vec b.
+\]
+
+Geometry gave:
+
+\[
+\|\vec a-\vec b\|^2
+=
+\|\vec a\|^2+\|\vec b\|^2
+-
+2\|\vec a\|\|\vec b\|\cos\theta.
+\]
+
+The first two terms are identical.
+
+Therefore the final terms must match:
+
+\[
+-2\vec a\cdot\vec b
+=
+-2\|\vec a\|\|\vec b\|\cos\theta.
+\]
+
+Divide by \(-2\):
+
+\[
+\boxed{
+\vec a\cdot\vec b
+=
+\|\vec a\|
+\|\vec b\|
+\cos\theta.
+}
+\]
+
+Derived.
+
+---
+
+# 536.5 What the formula actually says
+
+It decomposes the dot product into:
+
+\[
+\boxed{
+\text{magnitude of a}
+\times
+\text{magnitude of b}
+\times
+\text{angular alignment}.
+}
+\]
+
+The angular factor is:
+
+\[
+\cos\theta.
+\]
+
+That explains everything we observed in Part 535.
+
+---
+
+# 536.6 Same direction
+
+If:
+
+\[
+\theta=0,
+\]
+
+then:
+
+\[
+\cos0=1.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\vec a\cdot\vec b
+=
+\|\vec a\|\|\vec b\|.
+}
+\]
+
+This is the largest possible positive value for fixed magnitudes.
+
+---
+
+# 536.7 Perpendicular
+
+If:
+
+\[
+\theta=90^\circ=\frac\pi2,
+\]
+
+then:
+
+\[
+\cos\frac\pi2=0.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\vec a\cdot\vec b=0.
+}
+\]
+
+Hence perpendicularity becomes an algebraic zero test.
+
+That is the core of Part 537.
+
+---
+
+# 536.8 Opposite direction
+
+If:
+
+\[
+\theta=180^\circ=\pi,
+\]
+
+then:
+
+\[
+\cos\pi=-1.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\vec a\cdot\vec b
+=
+-\|\vec a\|\|\vec b\|.
+}
+\]
+
+Maximum negative alignment.
+
+---
+
+# 536.9 Acute versus obtuse
+
+For:
+
+\[
+0<\theta<90^\circ,
+\]
+
+cosine is positive.
+
+Therefore:
+
+\[
+\vec a\cdot\vec b>0.
+\]
+
+For:
+
+\[
+\theta=90^\circ,
+\]
+
+dot is zero.
+
+For:
+
+\[
+90^\circ<\theta\le180^\circ,
+\]
+
+cosine is negative.
+
+Thus:
+
+\[
+\boxed{
+\begin{aligned}
+\vec a\cdot\vec b>0
+&\Rightarrow \text{acute angle}\\
+\vec a\cdot\vec b=0
+&\Rightarrow \text{right angle, for nonzero vectors}\\
+\vec a\cdot\vec b<0
+&\Rightarrow \text{obtuse angle}
+\end{aligned}}
+\]
+
+This sign test often avoids actually computing an angle.
+
+---
+
+# 536.10 Solve for the angle
+
+For nonzero vectors:
+
+\[
+\vec a\cdot\vec b
+=
+\|\vec a\|\|\vec b\|\cos\theta.
+\]
+
+Divide:
+
+\[
+\cos\theta
+=
+\frac{
+\vec a\cdot\vec b
+}{
+\|\vec a\|\|\vec b\|
+}.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\theta
+=
+\arccos
+\left(
+\frac{
+\vec a\cdot\vec b
+}{
+\|\vec a\|\|\vec b\|
+}
+\right).
+}
+\]
+
+But only when:
+
+\[
+\vec a\neq0
+\]
+
+and:
+
+\[
+\vec b\neq0.
+\]
+
+The zero vector has no direction, so an angle involving zero is undefined.
+
+---
+
+# 536.11 Why the ratio must lie in \([-1,1]\)
+
+Cosine requires:
+
+\[
+-1\le\cos\theta\le1.
+\]
+
+Therefore mathematically:
+
+\[
+-1
+\le
+\frac{
+\vec a\cdot\vec b
+}{
+\|\vec a\|\|\vec b\|
+}
+\le
+1.
+\]
+
+Equivalently:
+
+\[
+\boxed{
+|\vec a\cdot\vec b|
+\le
+\|\vec a\|\|\vec b\|.
+}
+\]
+
+You already encountered this inequality in Part 531 while proving the L2 triangle inequality.
+
+That was the Cauchy–Schwarz inequality.
+
+Now its geometry is visible:
+
+> the directional overlap can never exceed the product of the two magnitudes.
+
+---
+
+# 536.12 Unit vectors simplify everything
+
+If:
+
+\[
+\|\hat a\|=1
+\]
+
+and:
+
+\[
+\|\hat b\|=1,
+\]
+
+then:
+
+\[
+\hat a\cdot\hat b
+=
+1\cdot1\cdot\cos\theta.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\hat a\cdot\hat b=\cos\theta.
+}
+\]
+
+This is extraordinarily useful.
+
+For normalized directions, dot product directly produces cosine similarity.
+
+---
+
+# 536.13 Worked example: \(60^\circ\)
+
+Let:
+
+\[
+\vec a=(1,0).
+\]
+
+Take unit vector at \(60^\circ\):
+
+\[
+\vec b=
+\left(
+\frac12,
+\frac{\sqrt3}{2}
+\right).
+\]
+
+Dot:
+
+\[
+\vec a\cdot\vec b
+=
+1\left(\frac12\right)
++
+0\left(\frac{\sqrt3}{2}\right).
+\]
+
+Thus:
+
+\[
+\boxed{
+\vec a\cdot\vec b=\frac12.
+}
+\]
+
+Both vectors are unit.
+
+Therefore:
+
+\[
+\cos\theta=\frac12.
+\]
+
+So:
+
+\[
+\boxed{\theta=60^\circ.}
+\]
+
+---
+
+# 536.14 Worked arbitrary example
+
+Let:
+
+\[
+\vec a=(3,4)
+\]
+
+and:
+
+\[
+\vec b=(4,-3).
+\]
+
+Dot:
+
+\[
+3(4)+4(-3)
+=
+12-12
+=
+0.
+\]
+
+Magnitudes:
+
+\[
+\|\vec a\|=5,
+\qquad
+\|\vec b\|=5.
+\]
+
+Then:
+
+\[
+\cos\theta
+=
+\frac0{25}
+=
+0.
+\]
+
+Therefore:
+
+\[
+\boxed{\theta=90^\circ.}
+\]
+
+No visual inspection required.
+
+---
+
+# 536.15 Another arbitrary example
+
+Let:
+
+\[
+\vec a=(2,1)
+\]
+
+and:
+
+\[
+\vec b=(3,4).
+\]
+
+Dot:
+
+\[
+2(3)+1(4)=10.
+\]
+
+Magnitudes:
+
+\[
+\|\vec a\|=\sqrt5
+\]
+
+and:
+
+\[
+\|\vec b\|=5.
+\]
+
+Therefore:
+
+\[
+\cos\theta
+=
+\frac{10}{5\sqrt5}
+=
+\frac2{\sqrt5}
+\approx0.8944.
+\]
+
+So angle is approximately:
+
+\[
+26.565^\circ.
+\]
+
+The positive dot predicted it would be acute before we ever evaluated `acos`.
+
+---
+
+# 536.16 Why you often don't need the angle
+
+Suppose gameplay asks:
+
+> Is target within a 60° forward cone?
+
+If forward and target directions are unit length and the maximum allowed angle is \(\alpha\), then instead of computing:
+
+\[
+\theta=\arccos(\hat f\cdot\hat d)
+\]
+
+and comparing:
+
+\[
+\theta\le\alpha,
+\]
+
+we can exploit that cosine decreases from \(0\) to \(\pi\):
+
+\[
+\theta\le\alpha
+\iff
+\cos\theta\ge\cos\alpha.
+\]
+
+Since:
+
+\[
+\cos\theta=\hat f\cdot\hat d,
+\]
+
+test:
+
+```cpp
+if (dot(forward, directionToTarget) >= cosMaxAngle) {
+    // Inside cone.
+}
+```
+
+This avoids inverse trigonometric evaluation.
+
+---
+
+# 536.17 Numerical `acos` problem
+
+Mathematically, normalized dot values lie in:
+
+\[
+[-1,1].
+\]
+
+Floating-point error can produce:
+
+\[
+1.0000001
+\]
+
+or:
+
+\[
+-1.0000001.
+\]
+
+Passing this to:
+
+```cpp
+std::acos(...)
+```
+
+can produce NaN because the mathematical domain is only:
+
+\[
+[-1,1].
+\]
+
+Therefore production code typically clamps:
+
+```cpp
+float cosine =
+    dot(a, b) /
+    (length(a) * length(b));
+
+cosine = std::clamp(cosine, -1.0f, 1.0f);
+
+float angle = std::acos(cosine);
+```
+
+Again: only after ensuring both vectors are nonzero.
+
+---
+
+# 536.18 A safer API with unit vectors
+
+If the type system guarantees unit length:
+
+```cpp
+float angleBetween(UnitVec3 a, UnitVec3 b)
+{
+    float c = dot(a.value(), b.value());
+
+    c = std::clamp(c, -1.0f, 1.0f);
+
+    return std::acos(c);
+}
+```
+
+This avoids repeatedly recomputing magnitudes and makes the precondition visible.
+
+But there are more numerically robust angle methods near parallel/antiparallel cases.
+
+Those are deliberately Part 552:
+
+**Robust angle computation with atan2.**
+
+We do not steal that lesson here.
+
+---
+
+# 536.19 Dot product does not care about handedness
+
+Right-handed versus left-handed coordinate systems affect orientation-sensitive operations such as cross products.
+
+But the Euclidean dot product measures angle/magnitude relationships.
+
+Changing handedness while preserving Euclidean geometry does not change:
+
+\[
+\vec a\cdot\vec b.
+\]
+
+So dot products are insensitive to orientation handedness in that sense.
+
+This is useful later when dealing with graphics API conventions.
+
+---
+
+# PART 537 — ORTHOGONAL VECTORS
+
+Now we formalize the special dot-product condition:
+
+\[
+\vec a\cdot\vec b=0.
+\]
+
+---
+
+# 537.1 Definition
+
+Vectors \(\vec a\) and \(\vec b\) are **orthogonal** if:
+
+\[
+\boxed{
+\vec a\cdot\vec b=0.
+}
+\]
+
+For two nonzero Euclidean vectors, this is equivalent to:
+
+\[
+\boxed{
+\theta=90^\circ.
+}
+\]
+
+"Orthogonal" is the broader mathematical term.
+
+"Perpendicular" is the familiar geometric wording.
+
+---
+
+# 537.2 Why the equivalence follows immediately
+
+From Part 536:
+
+\[
+\vec a\cdot\vec b
+=
+\|\vec a\|\|\vec b\|\cos\theta.
+\]
+
+If both vectors are nonzero:
+
+\[
+\|\vec a\|\|\vec b\|>0.
+\]
+
+Therefore:
+
+\[
+\vec a\cdot\vec b=0
+\]
+
+implies:
+
+\[
+\cos\theta=0.
+\]
+
+For angle in:
+
+\[
+[0,\pi],
+\]
+
+that means:
+
+\[
+\theta=\frac\pi2.
+\]
+
+Thus:
+
+\[
+90^\circ.
+\]
+
+---
+
+# 537.3 The zero-vector caveat
+
+This is subtle.
+
+For every vector \(\vec v\):
+
+\[
+\vec0\cdot\vec v=0.
+\]
+
+Therefore algebraically:
+
+\[
+\boxed{
+\vec0
+\text{ is orthogonal to every vector}.
+}
+\]
+
+But the zero vector has no direction.
+
+So we cannot say it makes a geometric \(90^\circ\) angle with every vector.
+
+The angle involving zero is undefined.
+
+Hence distinguish:
+
+```text
+algebraic orthogonality:
+dot == 0
+
+geometric perpendicularity:
+nonzero directions making 90°
+```
+
+This matters whenever somebody uses "orthogonal" casually.
+
+---
+
+# 537.4 Examples
+
+Standard basis:
+
+\[
+\vec e_x=(1,0,0)
+\]
+
+\[
+\vec e_y=(0,1,0)
+\]
+
+\[
+\vec e_z=(0,0,1).
+\]
+
+Then:
+
+\[
+\vec e_x\cdot\vec e_y=0
+\]
+
+\[
+\vec e_x\cdot\vec e_z=0
+\]
+
+\[
+\vec e_y\cdot\vec e_z=0.
+\]
+
+So the standard basis directions are mutually orthogonal.
+
+Because they also have unit length, they are actually **orthonormal**.
+
+That concept receives its full treatment later in Part 559.
+
+---
+
+# 537.5 Pythagorean theorem from orthogonality
+
+Suppose:
+
+\[
+\vec u\cdot\vec v=0.
+\]
+
+Consider:
+
+\[
+\|\vec u+\vec v\|^2.
+\]
+
+Rewrite through self-dot:
+
+\[
+(\vec u+\vec v)\cdot(\vec u+\vec v).
+\]
+
+Expand:
+
+\[
+=
+\vec u\cdot\vec u
++
+2\vec u\cdot\vec v
++
+\vec v\cdot\vec v.
+\]
+
+Orthogonality gives:
+
+\[
+\vec u\cdot\vec v=0.
+\]
+
+Thus:
+
+\[
+=
+\|\vec u\|^2+\|\vec v\|^2.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\|\vec u+\vec v\|^2
+=
+\|\vec u\|^2+\|\vec v\|^2
+}
+\]
+
+when:
+
+\[
+\vec u\perp\vec v.
+\]
+
+This is the vector form of the Pythagorean theorem.
+
+So Pythagoras itself is fundamentally tied to dot-product orthogonality.
+
+---
+
+# 537.6 Orthogonal nonzero vectors are linearly independent
+
+This is a beautiful theorem.
+
+Suppose:
+
+\[
+\vec v_1,\ldots,\vec v_k
+\]
+
+are mutually orthogonal nonzero vectors.
+
+That means:
+
+\[
+\vec v_i\cdot\vec v_j=0
+\]
+
+whenever:
+
+\[
+i\neq j.
+\]
+
+We want to prove they are linearly independent.
+
+Suppose:
+
+\[
+a_1\vec v_1+\cdots+a_k\vec v_k=\vec0.
+\]
+
+Dot both sides with some particular:
+
+\[
+\vec v_j.
+\]
+
+Then:
+
+\[
+\left(
+a_1\vec v_1+\cdots+a_k\vec v_k
+\right)
+\cdot
+\vec v_j
+=
+\vec0\cdot\vec v_j.
+\]
+
+Using bilinearity:
+
+\[
+a_1(\vec v_1\cdot\vec v_j)
++\cdots+
+a_j(\vec v_j\cdot\vec v_j)
++\cdots+
+a_k(\vec v_k\cdot\vec v_j)
+=
+0.
+\]
+
+Every cross term disappears because the vectors are orthogonal.
+
+Only:
+
+\[
+a_j(\vec v_j\cdot\vec v_j)=0
+\]
+
+remains.
+
+But:
+
+\[
+\vec v_j\cdot\vec v_j
+=
+\|\vec v_j\|^2>0
+\]
+
+because \(\vec v_j\neq0\).
+
+Therefore:
+
+\[
+a_j=0.
+\]
+
+This works for every \(j\).
+
+Thus:
+
+\[
+a_1=\cdots=a_k=0.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\text{every set of mutually orthogonal nonzero vectors is linearly independent}.
+}
+\]
+
+This is why orthogonal bases are so valuable.
+
+They automatically avoid linear redundancy.
+
+---
+
+# 537.7 Orthogonality decouples components
+
+Suppose we have orthonormal basis:
+
+\[
+\vec e_1,\vec e_2,\vec e_3.
+\]
+
+And:
+
+\[
+\vec v=
+v_1\vec e_1+
+v_2\vec e_2+
+v_3\vec e_3.
+\]
+
+Dot with:
+
+\[
+\vec e_1.
+\]
+
+Then:
+
+\[
+\vec v\cdot\vec e_1
+=
+v_1(\vec e_1\cdot\vec e_1)
++
+v_2(\vec e_2\cdot\vec e_1)
++
+v_3(\vec e_3\cdot\vec e_1).
+\]
+
+Since basis is orthonormal:
+
+\[
+\vec e_1\cdot\vec e_1=1
+\]
+
+and all cross terms are zero.
+
+Therefore:
+
+\[
+\boxed{
+\vec v\cdot\vec e_1=v_1.
+}
+\]
+
+This explains rigorously why dotting with an orthonormal basis vector extracts a coordinate.
+
+Orthogonality causes the unwanted coordinate contributions to disappear.
+
+---
+
+# 537.8 Why orthogonality is computationally powerful
+
+Suppose two effects live along orthogonal directions.
+
+Then their squared magnitudes add independently:
+
+\[
+\|\vec u+\vec v\|^2
+=
+\|\vec u\|^2+\|\vec v\|^2.
+\]
+
+There is no cross interaction term.
+
+Compare the general case:
+
+\[
+\|\vec u+\vec v\|^2
+=
+\|\vec u\|^2
++
+2\vec u\cdot\vec v
++
+\|\vec v\|^2.
+\]
+
+The term:
+
+\[
+2\vec u\cdot\vec v
+\]
+
+is the coupling.
+
+Orthogonality kills it.
+
+This "cross terms disappear" phenomenon is why orthogonal representations are prized throughout mathematics, signal processing, statistics, numerical methods, rendering and physics.
+
+---
+
+# 537.9 Orthogonality is not parallelism
+
+Do not confuse:
+
+```text
+parallel:
+vectors lie along same/opposite line
+```
+
+with:
+
+```text
+orthogonal:
+dot product = 0
+```
+
+For unit vectors:
+
+Parallel same direction:
+
+\[
+\hat a\cdot\hat b=1.
+\]
+
+Opposite:
+
+\[
+=-1.
+\]
+
+Orthogonal:
+
+\[
+=0.
+\]
+
+These are three qualitatively different relationships.
+
+---
+
+# 537.10 Numerical orthogonality is not `dot == 0`
+
+Mathematically:
+
+\[
+\vec a\cdot\vec b=0.
+\]
+
+In floating point, even vectors theoretically perpendicular may produce:
+
+\[
+2.98\times10^{-8}
+\]
+
+instead of exact zero.
+
+So this can be fragile:
+
+```cpp
+if (dot(a, b) == 0.0f)
+```
+
+But replacing it blindly with:
+
+```cpp
+if (std::abs(dot(a, b)) < 1e-6f)
+```
+
+also has a problem.
+
+Dot-product magnitude scales with vector magnitudes.
+
+Take:
+
+\[
+\vec a\rightarrow10^9\vec a,
+\]
+
+\[
+\vec b\rightarrow10^9\vec b.
+\]
+
+The dot value scales by:
+
+\[
+10^{18}.
+\]
+
+A fixed absolute epsilon no longer has the same meaning.
+
+---
+
+# 537.11 Scale-aware orthogonality test
+
+From Cauchy–Schwarz:
+
+\[
+|\vec a\cdot\vec b|
+\le
+\|\vec a\|\|\vec b\|.
+\]
+
+A scale-relative perpendicularity measure is:
+
+\[
+\frac{
+|\vec a\cdot\vec b|
+}{
+\|\vec a\|\|\vec b\|
+}.
+\]
+
+For nonzero vectors this is:
+
+\[
+|\cos\theta|.
+\]
+
+So an approximate test could be:
+
+\[
+\boxed{
+|\vec a\cdot\vec b|
+\le
+\varepsilon
+\|\vec a\|\|\vec b\|
+}
+\]
+
+for an angular tolerance \(\varepsilon\).
+
+If both vectors are already unit:
+
+\[
+\boxed{
+|\vec a\cdot\vec b|
+\le\varepsilon.
+}
+\]
+
+That is much more meaningful than one arbitrary absolute dot threshold.
+
+---
+
+# 537.12 Code
+
+For normalized vectors:
+
+```cpp
+[[nodiscard]]
+bool approximatelyOrthogonal(
+    Vec3 unitA,
+    Vec3 unitB,
+    float cosineTolerance) noexcept
+{
+    return std::abs(dot(unitA, unitB))
+        <= cosineTolerance;
+}
+```
+
+The API should ideally encode that `unitA` and `unitB` are genuinely unit vectors rather than hoping their names are truthful.
+
+For general vectors:
+
+```cpp
+[[nodiscard]]
+bool approximatelyOrthogonal(
+    Vec3 a,
+    Vec3 b,
+    float cosineTolerance) noexcept
+{
+    const float aa = dot(a, a);
+    const float bb = dot(b, b);
+
+    if (aa == 0.0f || bb == 0.0f) {
+        // Policy decision:
+        // algebraically zero is orthogonal,
+        // but no geometric angle exists.
+        return false;
+    }
+
+    const float lhs =
+        std::abs(dot(a, b));
+
+    const float rhs =
+        cosineTolerance *
+        std::sqrt(aa * bb);
+
+    return lhs <= rhs;
+}
+```
+
+In production, extreme magnitudes and overflow/underflow may require more robust length handling, as discussed in Parts 526–529.
+
+---
+
+# 537.13 Orthogonality and camera frames
+
+A good camera basis typically wants:
+
+\[
+\vec r\cdot\vec u=0
+\]
+
+\[
+\vec r\cdot\vec f=0
+\]
+
+\[
+\vec u\cdot\vec f=0.
+\]
+
+And usually:
+
+\[
+\|\vec r\|
+=
+\|\vec u\|
+=
+\|\vec f\|
+=
+1.
+\]
+
+Thus the camera axes form an **orthonormal frame**.
+
+If numerical drift causes:
+
+\[
+\vec r\cdot\vec u\neq0,
+\]
+
+the coordinate frame may develop shear-like distortion or other inconsistencies.
+
+Later Parts 559–562 develop this fully.
+
+---
+
+# THE BRIDGE TO PROJECTION — WITHOUT STEALING PART 538
+
+Now we can finally see exactly why projection is next.
+
+Suppose we have vector:
+
+\[
+\vec a
+\]
+
+and some nonzero direction:
+
+\[
+\vec b.
+\]
+
+We want to split \(\vec a\) into:
+
+```text
+part along b
++
+part perpendicular to b
+```
+
+Call the along-part:
+
+\[
+\vec p.
+\]
+
+Then the leftover is:
+
+\[
+\vec r=\vec a-\vec p.
+\]
+
+For \(\vec p\) to genuinely capture **all of the part along \(\vec b\)**, the leftover should contain none of that direction.
+
+Therefore:
+
+\[
+\boxed{
+\vec r\cdot\vec b=0.
+}
+\]
+
+Or:
+
+\[
+\boxed{
+(\vec a-\vec p)\cdot\vec b=0.
+}
+\]
+
+And because \(\vec p\) must lie along \(\vec b\), it has the form:
+
+\[
+\boxed{
+\vec p=t\vec b
+}
+\]
+
+for some scalar \(t\).
+
+So projection becomes:
+
+> Find the scalar \(t\) such that
+
+\[
+(\vec a-t\vec b)\cdot\vec b=0.
+\]
+
+That single equation is exactly where **Part 538 — Vector projection onto another vector** starts.
+
+I am stopping there deliberately rather than giving the answer before its canonical Part.
+
+---
+
+# ONE MASTER EXAMPLE ACROSS 534–537
+
+Take:
+
+\[
+\vec a=(3,4)
+\]
+
+and:
+
+\[
+\vec b=(4,-3).
+\]
+
+## Algebraic dot
+
+\[
+\vec a\cdot\vec b
+=
+3(4)+4(-3).
+\]
+
+\[
+=
+12-12.
+\]
+
+\[
+\boxed{=0.}
+\]
+
+## Magnitudes
+
+\[
+\|\vec a\|
+=
+\sqrt{9+16}
+=
+5.
+\]
+
+\[
+\|\vec b\|
+=
+\sqrt{16+9}
+=
+5.
+\]
+
+## Angle relation
+
+\[
+0
+=
+5(5)\cos\theta.
+\]
+
+Therefore:
+
+\[
+\cos\theta=0.
+\]
+
+Thus:
+
+\[
+\boxed{\theta=90^\circ.}
+\]
+
+## Orthogonality
+
+Therefore:
+
+\[
+\boxed{
+\vec a\perp\vec b.
+}
+\]
+
+## Sum length
+
+\[
+\vec a+\vec b=(7,1).
+\]
+
+Squared magnitude:
+
+\[
+49+1=50.
+\]
+
+Pythagorean prediction:
+
+\[
+\|\vec a\|^2+\|\vec b\|^2
+=
+25+25
+=
+50.
+\]
+
+Matches perfectly.
+
+This one example links all four Parts.
+
+---
+
+# DEEPER STRUCTURAL VIEW
+
+You should now see that the dot product is simultaneously several things.
+
+Algebraically:
+
+\[
+\boxed{
+\vec a\cdot\vec b
+=
+\sum_i a_i b_i.
+}
+\]
+
+Self-dot:
+
+\[
+\boxed{
+\vec v\cdot\vec v
+=
+\|\vec v\|^2.
+}
+\]
+
+Geometrically:
+
+\[
+\boxed{
+\vec a\cdot\vec b
+=
+\|\vec a\|
+\|\vec b\|
+\cos\theta.
+}
+\]
+
+For unit vectors:
+
+\[
+\boxed{
+\hat a\cdot\hat b
+=
+\cos\theta.
+}
+\]
+
+Orthogonality:
+
+\[
+\boxed{
+\vec a\perp\vec b
+\iff
+\vec a\cdot\vec b=0.
+}
+\]
+
+Coordinate extraction in orthonormal basis:
+
+\[
+\boxed{
+v_i=\vec v\cdot\vec e_i.
+}
+\]
+
+These are not six unrelated tricks.
+
+They are six views of the same mathematical structure.
+
+---
+
+# COMMON ENGINE ERRORS
+
+## Mistake 1: assuming raw dot is always in \([-1,1]\)
+
+False.
+
+Take:
+
+\[
+(100,0)\cdot(100,0)=10000.
+\]
+
+Only the dot product of **unit vectors** is guaranteed to lie in:
+
+\[
+[-1,1].
+\]
+
+---
+
+## Mistake 2: testing angle with non-normalized vectors as if dot = cosine
+
+Wrong:
+
+```cpp
+float c = dot(a, b);
+```
+
+does not equal \(\cos\theta\) unless both are unit.
+
+Correct conceptual expression:
+
+\[
+\cos\theta
+=
+\frac{a\cdot b}{\|a\|\|b\|}.
+\]
+
+---
+
+## Mistake 3: mixing coordinate spaces
+
+```cpp
+dot(worldNormal, tangentLightDirection);
+```
+
+is meaningless without conversion.
+
+---
+
+## Mistake 4: `acos(dot(a,b))` without clamping
+
+Floating error can push the value outside:
+
+\[
+[-1,1].
+\]
+
+---
+
+## Mistake 5: angle involving zero vector
+
+There is no direction, therefore no meaningful angle.
+
+---
+
+## Mistake 6: exact perpendicularity test
+
+```cpp
+dot(a,b) == 0
+```
+
+is unreliable after floating-point computation.
+
+---
+
+## Mistake 7: arbitrary global epsilon
+
+Dot units and magnitude depend on the operand scales.
+
+Scale-aware tolerance is usually more meaningful.
+
+---
+
+# CPU EXECUTION TRACE
+
+Suppose:
+
+```cpp
+Vec3 a{2.0f, 3.0f, 4.0f};
+Vec3 b{5.0f, -1.0f, 2.0f};
+
+float d = dot(a, b);
+```
+
+Conceptually:
+
+```text
+register ax ← 2
+register ay ← 3
+register az ← 4
+
+register bx ← 5
+register by ← -1
+register bz ← 2
+
+p0 ← ax × bx   = 10
+p1 ← ay × by   = -3
+p2 ← az × bz   = 8
+
+s0 ← p0 + p1   = 7
+s1 ← s0 + p2   = 15
+
+d ← 15
+```
+
+No heap allocation.
+
+No pointer ownership.
+
+No synchronization.
+
+Typically all operands/results can remain in registers when optimized.
+
+That is why dot products are extremely cheap individually.
+
+---
+
+# BATCHED PERFORMANCE
+
+For millions of vectors:
+
+\[
+d_i=\vec a_i\cdot\vec b_i.
+\]
+
+Then the problem becomes a streaming numeric workload:
+
+```text
+load a_i
+load b_i
+multiply
+reduce
+store scalar
+```
+
+Potential bottlenecks include:
+
+- memory bandwidth;
+- cache behavior;
+- AoS versus SoA representation;
+- SIMD packing;
+- reduction instruction structure;
+- compiler vectorization.
+
+For small fixed vectors, arithmetic itself is cheap enough that data movement can dominate.
+
+---
+
+# NUMERICAL ADVERSARIAL TEST
+
+Consider:
+
+\[
+\vec a=(10^8,10^8,1)
+\]
+
+and:
+
+\[
+\vec b=(10^8,-10^8,1).
+\]
+
+The mathematical dot is:
+
+\[
+1.
+\]
+
+The vectors are almost orthogonal relative to their enormous magnitudes.
+
+Indeed:
+
+\[
+\|\vec a\|\|\vec b\|
+\approx
+2\times10^{16}.
+\]
+
+Thus:
+
+\[
+\cos\theta
+\approx
+\frac1{2\times10^{16}}.
+\]
+
+So the angle is incredibly close to \(90^\circ\).
+
+But a floating-point computation may lose the residual `1`.
+
+If it returns exactly:
+
+\[
+0,
+\]
+
+the code thinks they are perfectly orthogonal.
+
+This demonstrates why:
+
+\[
+\boxed{
+\text{geometric predicates based on cancellation can be numerically sensitive}.
+}
+\]
+
+Later computational geometry spends a great deal of effort on robust predicates for exactly this reason.
+
+---
+
+# TEST SUITE YOU SHOULD EXPECT
+
+Basic identities:
+
+```cpp
+assert(dot(Vec3{1,0,0}, Vec3{0,1,0}) == 0.0f);
+assert(dot(Vec3{1,0,0}, Vec3{1,0,0}) == 1.0f);
+assert(dot(Vec3{1,0,0}, Vec3{-1,0,0}) == -1.0f);
+```
+
+Symmetry:
+
+```cpp
+approx(dot(a, b), dot(b, a));
+```
+
+Self-dot:
+
+```cpp
+approx(dot(v, v), lengthSquared(v));
+```
+
+Distributivity:
+
+```cpp
+approx(
+    dot(a, b + c),
+    dot(a, b) + dot(a, c)
+);
+```
+
+Scalar compatibility:
+
+```cpp
+approx(
+    dot(s * a, b),
+    s * dot(a, b)
+);
+```
+
+Orthogonal known pair:
+
+```cpp
+Vec2 a{3,4};
+Vec2 b{4,-3};
+
+approx(dot(a, b), 0.0f);
+```
+
+And tests should include:
+
+- zero vectors;
+- tiny values;
+- huge values;
+- NaN;
+- infinity;
+- nearly parallel vectors;
+- nearly opposite vectors;
+- nearly perpendicular vectors.
+
+---
+
+# DEBUGGING TREE FOR A WRONG DOT PRODUCT
+
+Suppose a lighting/camera/collision result looks wrong.
+
+Do not first question the `x*y + y*y + z*z` arithmetic.
+
+Ask:
+
+```text
+What do these two vectors represent?
+        ↓
+Are both actually vectors rather than points?
+        ↓
+Which coordinate space is each one in?
+        ↓
+Are their units compatible with the intended calculation?
+        ↓
+Does the algorithm require normalized vectors?
+        ↓
+Can either vector be zero?
+        ↓
+Are either components NaN or infinity?
+        ↓
+Is the dot result suffering catastrophic cancellation?
+        ↓
+Is code incorrectly interpreting raw dot as cosine?
+        ↓
+Is an acos call receiving a value outside [-1,1]?
+```
+
+That is a real graphics-debugging strategy.
+
+---
+
+# INTERVIEW ATTACK TREE
+
+## Level 1
+
+Define dot product.
+
+\[
+a\cdot b=\sum_i a_i b_i.
+\]
+
+---
+
+## Level 2
+
+What does it return?
+
+A scalar.
+
+---
+
+## Level 3
+
+Prove:
+
+\[
+v\cdot v=\|v\|^2.
+\]
+
+Expand component-wise.
+
+---
+
+## Level 4
+
+Why is dot product symmetric?
+
+Because real scalar multiplication is commutative.
+
+---
+
+## Level 5
+
+Derive:
+
+\[
+a\cdot b
+=
+\|a\|\|b\|\cos\theta.
+\]
+
+Use the squared length of:
+
+\[
+a-b
+\]
+
+and compare algebraic expansion with the law of cosines.
+
+---
+
+## Level 6
+
+Why does dot sign identify acute/obtuse relationships?
+
+Because magnitudes are nonnegative and cosine changes sign at \(90^\circ\).
+
+---
+
+## Level 7
+
+Why does normalized dot equal cosine?
+
+Because both magnitudes equal one.
+
+---
+
+## Level 8
+
+Why are mutually orthogonal nonzero vectors independent?
+
+Dot a supposed zero linear combination with each vector; every cross term vanishes, leaving only one coefficient times positive squared length.
+
+---
+
+## Level 9
+
+Why is `abs(dot(a,b)) < epsilon` not scale independent?
+
+Because:
+
+\[
+(sa)\cdot(tb)=st(a\cdot b).
+\]
+
+The raw dot magnitude changes with operand scaling.
+
+---
+
+## Level 10
+
+Why does:
+
+\[
+\sum_i a_i b_i
+\]
+
+need qualification when the basis isn't orthonormal?
+
+Because raw coordinates no longer directly encode Euclidean metric relationships; basis-vector pairwise dot products contribute. Part 541's Gram matrix captures those interactions.
+
+---
+
+# BLANK-SCREEN RECONSTRUCTION GATE — PART 534
+
+Without looking, derive and explain:
+
+\[
+a\cdot b
+=
+\sum_i a_i b_i.
+\]
+
+Then prove:
+
+\[
+a\cdot b=b\cdot a.
+\]
+
+Then:
+
+\[
+a\cdot(b+c)=a\cdot b+a\cdot c.
+\]
+
+Then:
+
+\[
+(sa)\cdot b=s(a\cdot b).
+\]
+
+Then:
+
+\[
+v\cdot v=\|v\|^2.
+\]
+
+And explain why the result is a scalar rather than a vector.
+
+---
+
+# MASTERY GATE — PART 535
+
+Given arbitrary vector:
+
+\[
+v=(x,y,z),
+\]
+
+explain why:
+
+\[
+v\cdot e_x=x.
+\]
+
+Then explain geometrically what positive, zero and negative dot values suggest.
+
+Also explain why:
+
+\[
+(1,0)\cdot(100,0)=100
+\]
+
+does not imply some "100-times stronger angle."
+
+Magnitude is still present.
+
+---
+
+# MASTERY GATE — PART 536
+
+From scratch, derive:
+
+\[
+\|a-b\|^2
+=
+\|a\|^2+\|b\|^2-2a\cdot b.
+\]
+
+Then compare with law of cosines and recover:
+
+\[
+\boxed{
+a\cdot b=\|a\|\|b\|\cos\theta.
+}
+\]
+
+Then derive:
+
+\[
+\theta
+=
+\arccos
+\frac{a\cdot b}{\|a\|\|b\|}.
+\]
+
+State exactly why zero vectors invalidate it.
+
+Explain why unit vectors simplify it.
+
+Explain why production code clamps before `acos`.
+
+---
+
+# MASTERY GATE — PART 537
+
+You should prove:
+
+\[
+a\perp b
+\iff
+a\cdot b=0
+\]
+
+for nonzero Euclidean vectors.
+
+Then derive the orthogonal Pythagorean relation:
+
+\[
+\|a+b\|^2
+=
+\|a\|^2+\|b\|^2.
+\]
+
+Then prove mutually orthogonal nonzero vectors are independent.
+
+Finally explain why:
+
+\[
+0\cdot v=0
+\]
+
+makes zero algebraically orthogonal to everything while still having no meaningful \(90^\circ\) directional angle.
+
+---
+
+# THE MODEL YOU NEED BEFORE PROJECTION
+
+You should now be able to move freely between all of these:
+
+\[
+\boxed{
+a\cdot b
+=
+\sum_i a_i b_i
+}
+\]
+
+**coordinate computation**
+
+\[
+\boxed{
+v\cdot v=\|v\|^2
+}
+\]
+
+**length**
+
+\[
+\boxed{
+a\cdot b
+=
+\|a\|\|b\|\cos\theta
+}
+\]
+
+**geometry**
+
+\[
+\boxed{
+\hat a\cdot\hat b=\cos\theta
+}
+\]
+
+**orientation**
+
+\[
+\boxed{
+a\cdot b=0
+}
+\]
+
+**orthogonality**
+
+and finally the unresolved problem:
+
+\[
+\boxed{
+a-p
+\perp
+b
+}
+\]
+
+where \(p\) must lie along \(b\).
+
+That last condition is exactly the doorway into projection.
+
+**Completed Part 534 — Dot product algebraic definition**  
+**Completed Part 535 — Dot product geometric interpretation**  
+**Completed Part 536 — Deriving the cosine-angle relation for the dot product**  
+**Completed Part 537 — Orthogonal vectors**
+
+**Next Core Part 538 — Vector projection onto another vector.**

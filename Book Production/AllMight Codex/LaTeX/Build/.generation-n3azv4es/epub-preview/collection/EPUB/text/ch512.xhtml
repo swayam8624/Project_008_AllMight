@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch512.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-c39f1ed34271-orthonormal-frames-and-gram-schmidt" class="level2">
+<h2>Orthonormal frames and Gram-Schmidt</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> Phase6 · <strong>Latest development:</strong> Phase6</p>
+<section id="appendix-c39f1ed34271-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>An orthonormal frame has unit perpendicular axes, so its Gram matrix is identity. Gram–Schmidt constructs axes by repeated rejection. Modified order uses the updated residual and changes rounding behavior. Frame existence, numerical reliability and output continuity are distinct questions.</p>
+<p>For <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>, rejection produces <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. A least-aligned helper axis avoids a near-parallel cross but can switch discontinuously.</p>
+</section>
+<section id="appendix-c39f1ed34271-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch527.xhtml#appendix-e31893dec985-surface-tangents-normals-and-bitangents" class="wikilink">Surface tangents normals and bitangents</a> — The surface tangent plane gives the axes that orthogonalization must preserve.</li>
+<li><a href="ch474.xhtml#appendix-3b863809f82a-gram-matrices-and-coordinate-metrics" class="wikilink">Gram matrices and coordinate metrics</a> — Pairwise basis measurements define the systems and metric used in reconstruction.</li>
+</ul>
+</section>
+<section id="appendix-c39f1ed34271-used-by" class="level3">
+<h3>Used by</h3>
+<p>Later curriculum sources can deepen this same node; no future coverage is marked complete.</p>
+</section>
+<section id="appendix-c39f1ed34271-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Check reconstruction and orthogonality separately; know when a QR-based method is the next step. Full production proofs, target-specific integration and learner mastery require further evidence.</p>
+</section>
+<section id="appendix-c39f1ed34271-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch236.xhtml#id_01-foundations-i-ch017-orthonormal-frames-make-reconstruction-simple" class="wikilink">Teaching narrative (Mathematics for Visual Computing, Part 1, Ch. 1)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-phase-6---parts-501-600" class="wikilink">Coverage and source gap</a> · <a href="ch155.xhtml#appendix-a103e7846d21-phase-6---source-analysis-and-verification" class="wikilink">Evidence and limits</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map</a></p>
+</section>
+</section>
+</body>
+</html>

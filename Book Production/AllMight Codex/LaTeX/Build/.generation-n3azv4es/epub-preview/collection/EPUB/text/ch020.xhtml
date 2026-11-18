@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch020.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-1f9963e1a5d1-bit-packing" class="level2">
+<h2>Bit packing</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C001 · <strong>Latest development:</strong> C001</p>
+<section id="appendix-1f9963e1a5d1-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Multiple constrained values share a carrier word; extraction and mutation must preserve the declared schema.</p>
+<p>Packing places several constrained values into a carrier. Input <code>[1,0,1,1,0,1,0,1]</code> packed LSB-first produces <code>0xAD</code>. Unpacking needs the logical count because the final byte may contain unused bits. Define whether padding must be zero, ignored, or rejected.</p>
+</section>
+<section id="appendix-1f9963e1a5d1-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch083.xhtml#appendix-ac697f5c66e8-bit-field" class="wikilink">Bit field</a> — A field is a declared range with offset s and width w, not automatically a C++ language bit-field member.</li>
+<li><a href="ch079.xhtml#appendix-a427ce8ce8a6-bitwise-or" class="wikilink">Bitwise OR</a> — Per lane: only 0|0 is 0; the other three cases are 1.</li>
+<li><a href="ch119.xhtml#appendix-f414bd4ed05c-interpretation-contract" class="wikilink">Interpretation contract</a> — For <code>0xAD</code>, unsigned interpretation gives 173; eight-bit two’s complement gives −83.</li>
+</ul>
+</section>
+<section id="appendix-1f9963e1a5d1-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch058.xhtml#appendix-638204c40e8b-groupwise-quantization-and-metadata" class="wikilink">Groupwise quantization and metadata</a> — uses this mechanism to define its representation, error or validation contract.</p></li>
+<li><p><a href="ch110.xhtml#appendix-e12d1b03fefb-atomic-operations-and-write-contention" class="wikilink">Atomic operations and write contention</a> — uses bit packing as part of its representation or reasoning.</p></li>
+<li><p><a href="ch570.xhtml#appendix-fdc7879e8bf2-quantization-and-compressed-weights" class="wikilink">Quantization and compressed weights (Vision, XR, and Playable Worlds, Part 2, Reference notes: Quantization and compressed weights)</a> — uses bit packing as part of its representation or reasoning.</p></li>
+</ul>
+</section>
+<section id="appendix-1f9963e1a5d1-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain bit packing without the label, work the example above, then state the assumption whose removal would change the result.</p>
+<p><strong>Pending:</strong> bulk kernels, padding policy, random access, atomic mutation, and format evolution.</p>
+</section>
+<section id="appendix-1f9963e1a5d1-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-from-a-signal-to-an-interpretation" class="wikilink">C001 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-foundations" class="wikilink">Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

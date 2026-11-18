@@ -1,0 +1,30 @@
+\hypertarget{appendix-c4e98b6e4001}{}
+\section*{Stereo correspondence and epipolar geometry}
+\chapter{Stereo correspondence and epipolar geometry}\label{appendix-c4e98b6e4001-stereo-correspondence-and-epipolar-geometry}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\section{Definition and mechanism}\label{appendix-c4e98b6e4001-definition-and-mechanism}
+
+Stereo reconstruction uses two or more views to infer depth from corresponding image features. A 3D point and the two camera centers define an epipolar plane; its intersection with each image plane is an epipolar line. Thus a feature in one image should match along a one-dimensional line in the other, reducing a 2D search to a constrained search. With calibrated cameras, triangulation intersects the two viewing rays; noise means they are skew, so estimate the 3D point minimizing reprojection or ray distance. Depth uncertainty grows rapidly when the viewing rays are nearly parallel, which happens for distant points or small baselines. Rectification rotates images so epipolar lines become horizontal scanlines. Occlusion, repetitive texture, and calibration error can still produce mismatches, so confidence and consistency checks are essential.
+
+\section{Prerequisites}\label{appendix-c4e98b6e4001-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-3ee9861904d5}{Camera calibration and bundle adjustment (04-Visual-Computing-II, appendix-3ee9861904d5)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-02b9d9a81dca}{Barycentric coordinates and interpolation (02-Foundations-II, appendix-02b9d9a81dca)}
+\end{itemize}
+
+\section{Used by}\label{appendix-c4e98b6e4001-used-by}
+
+\begin{itemize}
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography}{Worlds, Images and Inference}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-0976e86e5b9f}{Off-axis stereo projection and disparity (02-Foundations-II, appendix-0976e86e5b9f)} \#\# Full teaching explanation
+\end{itemize}
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Stereo,\%20relative\%20orientation,\%20and\%20reconstruction}{Stereo, relative orientation, and reconstruction}

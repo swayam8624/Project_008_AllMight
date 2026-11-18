@@ -8,7 +8,7 @@ Many geometry decisions need a reliable sign rather than a highly accurate coord
 
 **Recall question:** Why can a tiny coordinate error change a discrete geometric decision even when the coordinate itself looks accurate?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 84092–86864; source-span SHA256 7c5c6bbc8b2668606338540d3dd424fa10757eb9904d3c79e619641ec12f0e04. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 84339–87111; source-span SHA256 f824915709a11c867778d38638510a33752e0269c1d2d5233cf5caca04f05d7c. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## A sign can matter more than a coordinate: robust predicates
@@ -92,49 +92,49 @@ Assume the camera looks along negative view-space $Z$.
 Let positive forward depth be:
 
 $$
- d=-z_v>0. 
+ d=-z_v>0.
 $$
 
 Let the vertical field of view be $\theta_y$, and aspect ratio be:
 
 $$
- a=\frac WH. 
+ a=\frac WH.
 $$
 
 Define:
 
 $$
- t_y=\tan\left(\frac{\theta_y}{2}\right). 
+ t_y=\tan\left(\frac{\theta_y}{2}\right).
 $$
 
 At depth $d$, the visible half-height is:
 
 $$
- \boxed{h(d)=dt_y}. 
+ \boxed{h(d)=dt_y}.
 $$
 
 The visible half-width is:
 
 $$
- \boxed{w(d)=ad t_y}. 
+ \boxed{w(d)=ad t_y}.
 $$
 
 Therefore, a view-space point $(x,y,-d)$ is inside the lateral frustum boundaries exactly when:
 
 $$
- \boxed{-ad t_y\le x\le ad t_y} 
+ \boxed{-ad t_y\le x\le ad t_y}
 $$
 
 and:
 
 $$
- \boxed{-dt_y\le y\le dt_y}. 
+ \boxed{-dt_y\le y\le dt_y}.
 $$
 
 With finite near and far distances:
 
 $$
- \boxed{n\le d\le f}. 
+ \boxed{n\le d\le f}.
 $$
 
 These six inequalities describe the entire symmetric perspective viewing frustum.
@@ -144,45 +144,45 @@ These six inequalities describe the entire symmetric perspective viewing frustum
 Suppose:
 
 $$
- \theta_y=60^\circ,\qquad a=\frac{16}{9}, 
+ \theta_y=60^\circ,\qquad a=\frac{16}{9},
 $$
 
 $$
- n=0.1,\qquad f=100. 
+ n=0.1,\qquad f=100.
 $$
 
 Since:
 
 $$
- \tan30^\circ=\frac1{\sqrt3}\approx0.577350269, 
+ \tan30^\circ=\frac1{\sqrt3}\approx0.577350269,
 $$
 
 the half-height at depth $d=10$ is:
 
 $$
- h(10)=10(0.577350269)\approx5.773503. 
+ h(10)=10(0.577350269)\approx5.773503.
 $$
 
 The half-width is:
 
 $$
- w(10)=\frac{16}{9}(5.773503)\approx10.264005. 
+ w(10)=\frac{16}{9}(5.773503)\approx10.264005.
 $$
 
 Thus the visible rectangle at depth ten is approximately:
 
 $$
- x\in[-10.264,10.264], 
+ x\in[-10.264,10.264],
 $$
 
 $$
- y\in[-5.774,5.774]. 
+ y\in[-5.774,5.774].
 $$
 
 The point:
 
 $$
- (8,3,-10) 
+ (8,3,-10)
 $$
 
 is inside.
@@ -190,7 +190,7 @@ is inside.
 The point:
 
 $$
- (12,3,-10) 
+ (12,3,-10)
 $$
 
 is outside the right frustum boundary.
@@ -198,7 +198,7 @@ is outside the right frustum boundary.
 The point:
 
 $$
- (0,0,-0.05) 
+ (0,0,-0.05)
 $$
 
 is outside the near boundary because its positive depth is smaller than $0.1$.
@@ -242,31 +242,31 @@ For a symmetric camera, we can construct them analytically.
 Define:
 
 $$
- t_y=\tan(\theta_y/2). 
+ t_y=\tan(\theta_y/2).
 $$
 
 Near half-height and half-width:
 
 $$
- \boxed{ h_n=nt_y,\qquad w_n=ant_y }. 
+ \boxed{ h_n=nt_y,\qquad w_n=ant_y }.
 $$
 
 Far half-height and half-width:
 
 $$
- \boxed{ h_f=ft_y,\qquad w_f=aft_y }. 
+ \boxed{ h_f=ft_y,\qquad w_f=aft_y }.
 $$
 
 In our camera coordinate system, the near corners are:
 
 $$
- \boxed{ (\pm w_n,\pm h_n,-n) }. 
+ \boxed{ (\pm w_n,\pm h_n,-n) }.
 $$
 
 The far corners are:
 
 $$
- \boxed{ (\pm w_f,\pm h_f,-f) }. 
+ \boxed{ (\pm w_f,\pm h_f,-f) }.
 $$
 
 Every independent choice of the two signs gives one corner.
@@ -276,47 +276,47 @@ Every independent choice of the two signs gives one corner.
 Let:
 
 $$
- \theta_y=90^\circ,\qquad a=1, 
+ \theta_y=90^\circ,\qquad a=1,
 $$
 
 $$
- n=1,\qquad f=3. 
+ n=1,\qquad f=3.
 $$
 
 Because:
 
 $$
- \tan45^\circ=1, 
+ \tan45^\circ=1,
 $$
 
 we obtain:
 
 $$
- h_n=w_n=1, 
+ h_n=w_n=1,
 $$
 
 $$
- h_f=w_f=3. 
+ h_f=w_f=3.
 $$
 
 The near corners are:
 
 $$
- (-1,-1,-1),\ (1,-1,-1), 
+ (-1,-1,-1),\ (1,-1,-1),
 $$
 
 $$
- (1,1,-1),\ (-1,1,-1). 
+ (1,1,-1),\ (-1,1,-1).
 $$
 
 The far corners are:
 
 $$
- (-3,-3,-3),\ (3,-3,-3), 
+ (-3,-3,-3),\ (3,-3,-3),
 $$
 
 $$
- (3,3,-3),\ (-3,3,-3). 
+ (3,3,-3),\ (-3,3,-3).
 $$
 
 Notice that far-plane dimensions are three times near-plane dimensions because the far depth is three times the near depth.
@@ -328,7 +328,7 @@ Suppose the camera has world position $\mathbf c$ and camera-to-world rotation $
 Then:
 
 $$
- \boxed{ \mathbf p_W=\mathbf c+R\mathbf p_C }. 
+ \boxed{ \mathbf p_W=\mathbf c+R\mathbf p_C }.
 $$
 
 For any of the eight view-space corners, use this transformation to obtain the corresponding world-space point.
@@ -336,7 +336,7 @@ For any of the eight view-space corners, use this transformation to obtain the c
 Equivalently, if $C$ is the camera-to-world homogeneous matrix:
 
 $$
- \boxed{ \tilde{\mathbf p}_W=C\tilde{\mathbf p}_C }. 
+ \boxed{ \tilde{\mathbf p}_W=C\tilde{\mathbf p}_C }.
 $$
 
 ### Frustum corners from inverse view-projection
@@ -346,37 +346,37 @@ For a general projection, including an asymmetric or off-axis camera, the analyt
 Instead, construct the inverse view-projection:
 
 $$
- \boxed{ Q=(PV)^{-1} }. 
+ \boxed{ Q=(PV)^{-1} }.
 $$
 
 For a conventional zero-to-one clip-depth camera, the eight NDC corner positions are:
 
 $$
- (x_n,y_n,z_n) 
+ (x_n,y_n,z_n)
 $$
 
 with:
 
 $$
- x_n\in\\{-1,1\\},\quad y_n\in\\{-1,1\\},\quad z_n\in\\{0,1\\}. 
+ x_n\in\\{-1,1\\},\quad y_n\in\\{-1,1\\},\quad z_n\in\\{0,1\\}.
 $$
 
 Lift an NDC corner to homogeneous coordinates:
 
 $$
- \tilde{\mathbf q}= \begin{bmatrix}x_n\\y_n\\z_n\\1\end{bmatrix}. 
+ \tilde{\mathbf q}= \begin{bmatrix}x_n\\y_n\\z_n\\1\end{bmatrix}.
 $$
 
 Compute:
 
 $$
- \tilde{\mathbf p}=Q\tilde{\mathbf q}. 
+ \tilde{\mathbf p}=Q\tilde{\mathbf q}.
 $$
 
 Then divide by its homogeneous coordinate:
 
 $$
- \boxed{ \mathbf p_W= \frac{\tilde{\mathbf p}_{xyz}}{\tilde p_w} }. 
+ \boxed{ \mathbf p_W= \frac{\tilde{\mathbf p}_{xyz}}{\tilde p_w} }.
 $$
 
 This reconstructs the world-space frustum corner, assuming the inverse exists and the resulting point is finite.
@@ -386,13 +386,13 @@ This reconstructs the world-space frustum corner, assuming the inverse exists an
 For conventional zero-to-one depth:
 
 $$
- z_n=0 \text{ is near},\qquad z_n=1 \text{ is far}. 
+ z_n=0 \text{ is near},\qquad z_n=1 \text{ is far}.
 $$
 
 For reversed-Z:
 
 $$
- z_n=1 \text{ is near},\qquad z_n=0 \text{ is far}. 
+ z_n=1 \text{ is near},\qquad z_n=0 \text{ is far}.
 $$
 
 An inverse-projection implementation must use the appropriate depth endpoints.
@@ -406,7 +406,7 @@ An infinite-far projection has no finite far rectangle.
 When unprojecting the far depth endpoint, a homogeneous result may have:
 
 $$
- w=0. 
+ w=0.
 $$
 
 This represents a direction or point at infinity rather than a finite Cartesian point.
@@ -420,13 +420,13 @@ For infinite frusta, construct near corners and far rays, or represent the frust
 A plane in three-dimensional Euclidean space can be represented by:
 
 $$
- \boxed{ \mathbf n\cdot\mathbf p+d=0 }. 
+ \boxed{ \mathbf n\cdot\mathbf p+d=0 }.
 $$
 
 Here:
 
 $$
- \mathbf n= \begin{bmatrix}a\\b\\c\end{bmatrix} 
+ \mathbf n= \begin{bmatrix}a\\b\\c\end{bmatrix}
 $$
 
 is the plane normal, and $d$ is the plane offset.
@@ -434,13 +434,13 @@ is the plane normal, and $d$ is the plane offset.
 In expanded form:
 
 $$
- \boxed{ ax+by+cz+d=0 }. 
+ \boxed{ ax+by+cz+d=0 }.
 $$
 
 The four plane coefficients can be stored as:
 
 $$
- \boxed{ \boldsymbol\pi=(a,b,c,d)^T }. 
+ \boxed{ \boldsymbol\pi=(a,b,c,d)^T }.
 $$
 
 ### Signed distance
@@ -448,13 +448,13 @@ $$
 If the normal is unit length:
 
 $$
- \\|\mathbf n\\|=1, 
+ \|\mathbf n\|=1,
 $$
 
 then:
 
 $$
- \boxed{ s(\mathbf p)=\mathbf n\cdot\mathbf p+d } 
+ \boxed{ s(\mathbf p)=\mathbf n\cdot\mathbf p+d }
 $$
 
 is the signed Euclidean distance from the point to the plane.
@@ -462,7 +462,7 @@ is the signed Euclidean distance from the point to the plane.
 If the normal is not normalized, the signed Euclidean distance is:
 
 $$
- \boxed{ s(\mathbf p)= \frac{\mathbf n\cdot\mathbf p+d}{\\|\mathbf n\\|} }. 
+ \boxed{ s(\mathbf p)= \frac{\mathbf n\cdot\mathbf p+d}{\|\mathbf n\|} }.
 $$
 
 This distinction is crucial for sphere culling.
@@ -476,7 +476,7 @@ For frustum culling, a convenient convention is to orient every plane normal tow
 Then:
 
 $$
- \boxed{ \mathbf n_i\cdot\mathbf p+d_i\ge0 } 
+ \boxed{ \mathbf n_i\cdot\mathbf p+d_i\ge0 }
 $$
 
 means the point is on or inside plane $i$'s permitted half-space.
@@ -488,55 +488,55 @@ A point is inside the entire frustum if it satisfies all six inequalities.
 For our view space, positive forward depth is:
 
 $$
- d_{\mathrm{view}}=-z. 
+ d_{\mathrm{view}}=-z.
 $$
 
 The near condition:
 
 $$
- d_{\mathrm{view}}\ge n 
+ d_{\mathrm{view}}\ge n
 $$
 
 becomes:
 
 $$
- -z\ge n. 
+ -z\ge n.
 $$
 
 Thus:
 
 $$
- \boxed{ -z-n\ge0 }. 
+ \boxed{ -z-n\ge0 }.
 $$
 
 The inward-facing near plane is:
 
 $$
- \boxed{ \boldsymbol\pi_{\mathrm{near}}=(0,0,-1,-n) }. 
+ \boxed{ \boldsymbol\pi_{\mathrm{near}}=(0,0,-1,-n) }.
 $$
 
 The far condition:
 
 $$
- d_{\mathrm{view}}\le f 
+ d_{\mathrm{view}}\le f
 $$
 
 becomes:
 
 $$
- -z\le f. 
+ -z\le f.
 $$
 
 Therefore:
 
 $$
- \boxed{ z+f\ge0 }. 
+ \boxed{ z+f\ge0 }.
 $$
 
 The inward-facing far plane is:
 
 $$
- \boxed{ \boldsymbol\pi_{\mathrm{far}}=(0,0,1,f) }. 
+ \boxed{ \boldsymbol\pi_{\mathrm{far}}=(0,0,1,f) }.
 $$
 
 The unit normals point toward the interior.
@@ -546,65 +546,65 @@ The unit normals point toward the interior.
 Let:
 
 $$
- t_x=a\tan(\theta_y/2), 
+ t_x=a\tan(\theta_y/2),
 $$
 
 $$
- t_y=\tan(\theta_y/2). 
+ t_y=\tan(\theta_y/2).
 $$
 
 The left condition is:
 
 $$
- x\ge-d_{\mathrm{view}}t_x. 
+ x\ge-d_{\mathrm{view}}t_x.
 $$
 
 Since $d_{\mathrm{view}}=-z$:
 
 $$
- x\ge zt_x. 
+ x\ge zt_x.
 $$
 
 Thus:
 
 $$
- \boxed{x-t_xz\ge0}. 
+ \boxed{x-t_xz\ge0}.
 $$
 
 The unnormalized left plane is:
 
 $$
- \boxed{ \boldsymbol\pi_L=(1,0,-t_x,0) }. 
+ \boxed{ \boldsymbol\pi_L=(1,0,-t_x,0) }.
 $$
 
 The right condition is:
 
 $$
- x\le-d_{\mathrm{view}}t_x=-zt_x. 
+ x\le-d_{\mathrm{view}}t_x=-zt_x.
 $$
 
 Therefore:
 
 $$
- \boxed{-x-t_xz\ge0}, 
+ \boxed{-x-t_xz\ge0},
 $$
 
 giving:
 
 $$
- \boxed{ \boldsymbol\pi_R=(-1,0,-t_x,0) }. 
+ \boxed{ \boldsymbol\pi_R=(-1,0,-t_x,0) }.
 $$
 
 Similarly:
 
 $$
- \boxed{ \boldsymbol\pi_B=(0,1,-t_y,0) } 
+ \boxed{ \boldsymbol\pi_B=(0,1,-t_y,0) }
 $$
 
 and:
 
 $$
- \boxed{ \boldsymbol\pi_T=(0,-1,-t_y,0) }. 
+ \boxed{ \boldsymbol\pi_T=(0,-1,-t_y,0) }.
 $$
 
 For a symmetric perspective frustum, these four side planes pass through the camera origin.
@@ -616,19 +616,19 @@ Their plane offsets are zero.
 The left normal is:
 
 $$
- \mathbf n_L=(1,0,-t_x). 
+ \mathbf n_L=(1,0,-t_x).
 $$
 
 Its length is:
 
 $$
- \sqrt{1+t_x^2}. 
+ \sqrt{1+t_x^2}.
 $$
 
 Therefore the normalized plane is:
 
 $$
- \boxed{ \hat{\boldsymbol\pi}_L= \frac{(1,0,-t_x,0)} {\sqrt{1+t_x^2}} }. 
+ \boxed{ \hat{\boldsymbol\pi}_L= \frac{(1,0,-t_x,0)} {\sqrt{1+t_x^2}} }.
 $$
 
 The same normalization applies to the remaining side planes.
@@ -636,7 +636,7 @@ The same normalization applies to the remaining side planes.
 For a plane $(a,b,c,d)$, always divide all four coefficients by:
 
 $$
- \sqrt{a^2+b^2+c^2}. 
+ \sqrt{a^2+b^2+c^2}.
 $$
 
 Normalizing only the first three coefficients but leaving the offset untouched changes the plane.
@@ -650,7 +650,7 @@ Instead of explicitly constructing frustum corners and taking cross products, we
 Let:
 
 $$
- \boxed{ C=PV } 
+ \boxed{ C=PV }
 $$
 
 map world-space homogeneous points into clip space.
@@ -658,25 +658,25 @@ map world-space homogeneous points into clip space.
 Write its rows as:
 
 $$
- C= \begin{bmatrix} \mathbf r_0^T\\ \mathbf r_1^T\\ \mathbf r_2^T\\ \mathbf r_3^T \end{bmatrix}. 
+ C= \begin{bmatrix} \mathbf r_0^T\\ \mathbf r_1^T\\ \mathbf r_2^T\\ \mathbf r_3^T \end{bmatrix}.
 $$
 
 For a world-space homogeneous point $\tilde{\mathbf p}$:
 
 $$
- x_c=\mathbf r_0^T\tilde{\mathbf p}, 
+ x_c=\mathbf r_0^T\tilde{\mathbf p},
 $$
 
 $$
- y_c=\mathbf r_1^T\tilde{\mathbf p}, 
+ y_c=\mathbf r_1^T\tilde{\mathbf p},
 $$
 
 $$
- z_c=\mathbf r_2^T\tilde{\mathbf p}, 
+ z_c=\mathbf r_2^T\tilde{\mathbf p},
 $$
 
 $$
- w_c=\mathbf r_3^T\tilde{\mathbf p}. 
+ w_c=\mathbf r_3^T\tilde{\mathbf p}.
 $$
 
 The clip-space inequalities can therefore be pulled back into world-space plane inequalities.
@@ -686,25 +686,25 @@ The clip-space inequalities can therefore be pulled back into world-space plane 
 The clip-space left boundary is:
 
 $$
- -w_c\le x_c. 
+ -w_c\le x_c.
 $$
 
 Rearrange:
 
 $$
- x_c+w_c\ge0. 
+ x_c+w_c\ge0.
 $$
 
 Substitute the row expressions:
 
 $$
- (\mathbf r_0+\mathbf r_3)^T\tilde{\mathbf p}\ge0. 
+ (\mathbf r_0+\mathbf r_3)^T\tilde{\mathbf p}\ge0.
 $$
 
 Thus:
 
 $$
- \boxed{ \boldsymbol\pi_L=\mathbf r_3+\mathbf r_0 }. 
+ \boxed{ \boldsymbol\pi_L=\mathbf r_3+\mathbf r_0 }.
 $$
 
 ### Right plane
@@ -712,19 +712,19 @@ $$
 The right boundary is:
 
 $$
- x_c\le w_c. 
+ x_c\le w_c.
 $$
 
 Thus:
 
 $$
- w_c-x_c\ge0. 
+ w_c-x_c\ge0.
 $$
 
 Therefore:
 
 $$
- \boxed{ \boldsymbol\pi_R=\mathbf r_3-\mathbf r_0 }. 
+ \boxed{ \boldsymbol\pi_R=\mathbf r_3-\mathbf r_0 }.
 $$
 
 ### Bottom and top planes
@@ -732,25 +732,25 @@ $$
 The bottom clip inequality is:
 
 $$
- y_c+w_c\ge0. 
+ y_c+w_c\ge0.
 $$
 
 Thus:
 
 $$
- \boxed{ \boldsymbol\pi_B=\mathbf r_3+\mathbf r_1 }. 
+ \boxed{ \boldsymbol\pi_B=\mathbf r_3+\mathbf r_1 }.
 $$
 
 The top inequality is:
 
 $$
- w_c-y_c\ge0. 
+ w_c-y_c\ge0.
 $$
 
 Thus:
 
 $$
- \boxed{ \boldsymbol\pi_T=\mathbf r_3-\mathbf r_1 }. 
+ \boxed{ \boldsymbol\pi_T=\mathbf r_3-\mathbf r_1 }.
 $$
 
 ### Near and far for zero-to-one clip depth
@@ -758,31 +758,31 @@ $$
 For Vulkan/Metal-style zero-to-one clipping:
 
 $$
- 0\le z_c\le w_c. 
+ 0\le z_c\le w_c.
 $$
 
 The lower-depth boundary is:
 
 $$
- z_c\ge0. 
+ z_c\ge0.
 $$
 
 Therefore:
 
 $$
- \boxed{ \boldsymbol\pi_{z=0}=\mathbf r_2 }. 
+ \boxed{ \boldsymbol\pi_{z=0}=\mathbf r_2 }.
 $$
 
 The upper-depth boundary is:
 
 $$
- w_c-z_c\ge0. 
+ w_c-z_c\ge0.
 $$
 
 Therefore:
 
 $$
- \boxed{ \boldsymbol\pi_{z=w}=\mathbf r_3-\mathbf r_2 }. 
+ \boxed{ \boldsymbol\pi_{z=w}=\mathbf r_3-\mathbf r_2 }.
 $$
 
 These are the two depth-boundary planes.
@@ -798,19 +798,19 @@ The extraction identities do not change under reversed-Z, but the semantic label
 Under traditional OpenGL clip depth:
 
 $$
- -w_c\le z_c\le w_c. 
+ -w_c\le z_c\le w_c.
 $$
 
 The lower-depth plane is:
 
 $$
- \boxed{ \boldsymbol\pi_{z=-w}=\mathbf r_3+\mathbf r_2 }. 
+ \boxed{ \boldsymbol\pi_{z=-w}=\mathbf r_3+\mathbf r_2 }.
 $$
 
 The upper-depth plane remains:
 
 $$
- \boxed{ \boldsymbol\pi_{z=w}=\mathbf r_3-\mathbf r_2 }. 
+ \boxed{ \boldsymbol\pi_{z=w}=\mathbf r_3-\mathbf r_2 }.
 $$
 
 Therefore a plane extractor must know the active clip-depth convention.
@@ -830,7 +830,7 @@ Therefore a plane extractor must know the active clip-depth convention.
 These formulas assume column vectors, with world points multiplied on the right of the matrix:
 
 $$
- \mathbf p_c=C\mathbf p_w. 
+ \mathbf p_c=C\mathbf p_w.
 $$
 
 For row-vector mathematics, corresponding formulas use columns rather than rows.
@@ -842,25 +842,25 @@ Row-major versus column-major storage does not determine whether to extract rows
 For each extracted plane:
 
 $$
- \boldsymbol\pi=(a,b,c,d), 
+ \boldsymbol\pi=(a,b,c,d),
 $$
 
 calculate:
 
 $$
- \ell=\sqrt{a^2+b^2+c^2}. 
+ \ell=\sqrt{a^2+b^2+c^2}.
 $$
 
 If:
 
 $$
- \ell>0, 
+ \ell>0,
 $$
 
 normalize:
 
 $$
- \boxed{ \hat{\boldsymbol\pi}=\boldsymbol\pi/\ell }. 
+ \boxed{ \hat{\boldsymbol\pi}=\boldsymbol\pi/\ell }.
 $$
 
 If $\ell$ is zero or numerically degenerate, the boundary may represent a redundant constraint rather than a finite plane.
@@ -879,7 +879,7 @@ scottfielder.com
 You can extract planes from:
 
 $$
- C=PVM 
+ C=PVM
 $$
 
 to obtain clipping inequalities expressed in the object's local coordinates.
@@ -897,25 +897,25 @@ But choose one consistent coordinate space for the plane and the bound. Testing 
 A sphere is defined by centre:
 
 $$
- \mathbf c 
+ \mathbf c
 $$
 
 and radius:
 
 $$
- r\ge0. 
+ r\ge0.
 $$
 
 Suppose we have a normalized inward-facing plane:
 
 $$
- \mathbf n\cdot\mathbf p+d=0, \qquad \\|\mathbf n\\|=1. 
+ \mathbf n\cdot\mathbf p+d=0, \qquad \|\mathbf n\|=1.
 $$
 
 The signed distance from the sphere centre to the plane is:
 
 $$
- \boxed{ s=\mathbf n\cdot\mathbf c+d }. 
+ \boxed{ s=\mathbf n\cdot\mathbf c+d }.
 $$
 
 The sphere extends $r$ units from its centre in every direction.
@@ -923,13 +923,13 @@ The sphere extends $r$ units from its centre in every direction.
 Therefore, its smallest signed distance to the plane is:
 
 $$
- s-r. 
+ s-r.
 $$
 
 Its largest signed distance is:
 
 $$
- s+r. 
+ s+r.
 $$
 
 ### Derive the three cases
@@ -937,7 +937,7 @@ $$
 If:
 
 $$
- \boxed{s<-r}, 
+ \boxed{s<-r},
 $$
 
 even the nearest part of the sphere toward the plane's interior remains outside.
@@ -949,7 +949,7 @@ It can be culled.
 If:
 
 $$
- \boxed{s>r}, 
+ \boxed{s>r},
 $$
 
 the sphere lies entirely inside that half-space.
@@ -957,7 +957,7 @@ the sphere lies entirely inside that half-space.
 If:
 
 $$
- \boxed{-r\le s\le r}, 
+ \boxed{-r\le s\le r},
 $$
 
 the sphere intersects the plane.
@@ -994,13 +994,13 @@ This code assumes every plane normal has unit length and both the sphere and pla
 Take the near plane:
 
 $$
- \boldsymbol\pi_N=(0,0,-1,-1). 
+ \boldsymbol\pi_N=(0,0,-1,-1).
 $$
 
 The permitted region is:
 
 $$
- -z-1\ge0, 
+ -z-1\ge0,
 $$
 
 meaning positive view depth is at least one.
@@ -1008,25 +1008,25 @@ meaning positive view depth is at least one.
 Suppose the sphere has:
 
 $$
- \mathbf c=(0,0,-0.5) 
+ \mathbf c=(0,0,-0.5)
 $$
 
 and radius:
 
 $$
- r=0.2. 
+ r=0.2.
 $$
 
 Its signed distance is:
 
 $$
- s=0.5-1=-0.5. 
+ s=0.5-1=-0.5.
 $$
 
 Because:
 
 $$
- -0.5<-0.2, 
+ -0.5<-0.2,
 $$
 
 the sphere is entirely outside the near plane.
@@ -1036,19 +1036,19 @@ Cull it.
 Now increase the radius:
 
 $$
- r=0.6. 
+ r=0.6.
 $$
 
 Then:
 
 $$
- -r=-0.6. 
+ -r=-0.6.
 $$
 
 Since:
 
 $$
- s=-0.5\ge-0.6, 
+ s=-0.5\ge-0.6,
 $$
 
 the sphere intersects the near plane.
@@ -1074,7 +1074,7 @@ Suppose a local sphere has radius $r_L$, and the object's linear transform is $A
 Under pure uniform scale $s$:
 
 $$
- r_W=|s|r_L. 
+ r_W=|s|r_L.
 $$
 
 For nonuniform scale, the transformed sphere becomes an ellipsoid.
@@ -1082,15 +1082,15 @@ For nonuniform scale, the transformed sphere becomes an ellipsoid.
 To obtain a conservative world-space enclosing sphere, use:
 
 $$
- \boxed{ r_W=\\|A\\|_2r_L } 
+ \boxed{ r_W=\|A\|_2r_L }
 $$
 
-where $\\|A\\|_2$ is the largest singular value of $A$.
+where $\|A\|_2$ is the largest singular value of $A$.
 
 A simpler conservative upper bound is the Frobenius norm:
 
 $$
- r_W\le\\|A\\|_Fr_L, 
+ r_W\le\|A\|_Fr_L,
 $$
 
 although it may be looser.
@@ -1102,13 +1102,13 @@ Using only the largest diagonal scale component is not always conservative if sh
 An axis-aligned bounding box, or AABB, is defined by minimum and maximum coordinate vectors:
 
 $$
- \mathbf b_{\min}, \qquad \mathbf b_{\max}. 
+ \mathbf b_{\min}, \qquad \mathbf b_{\max}.
 $$
 
 Every contained point satisfies:
 
 $$
- b_{\min,i}\le p_i\le b_{\max,i}. 
+ b_{\min,i}\le p_i\le b_{\max,i}.
 $$
 
 For efficient plane testing, it is useful to express the box using its centre and half-extents.
@@ -1116,25 +1116,25 @@ For efficient plane testing, it is useful to express the box using its centre an
 Define:
 
 $$
- \boxed{ \mathbf c= \frac{\mathbf b_{\min}+\mathbf b_{\max}}2 } 
+ \boxed{ \mathbf c= \frac{\mathbf b_{\min}+\mathbf b_{\max}}2 }
 $$
 
 and:
 
 $$
- \boxed{ \mathbf e= \frac{\mathbf b_{\max}-\mathbf b_{\min}}2 }. 
+ \boxed{ \mathbf e= \frac{\mathbf b_{\max}-\mathbf b_{\min}}2 }.
 $$
 
 Any point inside the box can be written:
 
 $$
- \mathbf p=\mathbf c+\boldsymbol\delta 
+ \mathbf p=\mathbf c+\boldsymbol\delta
 $$
 
 with:
 
 $$
- |\delta_x|\le e_x, \qquad |\delta_y|\le e_y, \qquad |\delta_z|\le e_z. 
+ |\delta_x|\le e_x, \qquad |\delta_y|\le e_y, \qquad |\delta_z|\le e_z.
 $$
 
 ### Derive the projected radius
@@ -1142,37 +1142,37 @@ $$
 For a normalized plane normal $\mathbf n$, the plane expression is:
 
 $$
- s(\mathbf p)=\mathbf n\cdot\mathbf p+d. 
+ s(\mathbf p)=\mathbf n\cdot\mathbf p+d.
 $$
 
 Substitute:
 
 $$
- \mathbf p=\mathbf c+\boldsymbol\delta. 
+ \mathbf p=\mathbf c+\boldsymbol\delta.
 $$
 
 Then:
 
 $$
- s(\mathbf p)= \mathbf n\cdot\mathbf c+d+ \mathbf n\cdot\boldsymbol\delta. 
+ s(\mathbf p)= \mathbf n\cdot\mathbf c+d+ \mathbf n\cdot\boldsymbol\delta.
 $$
 
 Define centre distance:
 
 $$
- \boxed{ s_c=\mathbf n\cdot\mathbf c+d }. 
+ \boxed{ s_c=\mathbf n\cdot\mathbf c+d }.
 $$
 
 Now find the maximum possible magnitude of the offset term:
 
 $$
- \mathbf n\cdot\boldsymbol\delta = n_x\delta_x+n_y\delta_y+n_z\delta_z. 
+ \mathbf n\cdot\boldsymbol\delta = n_x\delta_x+n_y\delta_y+n_z\delta_z.
 $$
 
 Because each $\delta_i$ is bounded, the maximum absolute projection is:
 
 $$
- \boxed{ r_{\mathrm{box}}= |n_x|e_x+|n_y|e_y+|n_z|e_z }. 
+ \boxed{ r_{\mathrm{box}}= |n_x|e_x+|n_y|e_y+|n_z|e_z }.
 $$
 
 This is the box's support radius along the plane normal.
@@ -1182,19 +1182,19 @@ This is the box's support radius along the plane normal.
 The minimum signed distance of the box to the plane is:
 
 $$
- s_{\min}=s_c-r_{\mathrm{box}}. 
+ s_{\min}=s_c-r_{\mathrm{box}}.
 $$
 
 The box lies entirely outside the inward half-space if its maximum signed distance is negative:
 
 $$
- s_{\max}=s_c+r_{\mathrm{box}}<0. 
+ s_{\max}=s_c+r_{\mathrm{box}}<0.
 $$
 
 Therefore the correct rejection condition is:
 
 $$
- \boxed{ s_c<-r_{\mathrm{box}} }. 
+ \boxed{ s_c<-r_{\mathrm{box}} }.
 $$
 
 The corresponding conservative code is:
@@ -1237,13 +1237,13 @@ Plane normalization is not strictly required for this AABB support-radius compar
 Consider the inward plane:
 
 $$
- x\ge0. 
+ x\ge0.
 $$
 
 Its normal is:
 
 $$
- \mathbf n=(1,0,0), 
+ \mathbf n=(1,0,0),
 $$
 
 with $d=0$.
@@ -1251,31 +1251,31 @@ with $d=0$.
 Let an AABB have centre:
 
 $$
- \mathbf c=(-3,0,0) 
+ \mathbf c=(-3,0,0)
 $$
 
 and half-extents:
 
 $$
- \mathbf e=(1,2,1). 
+ \mathbf e=(1,2,1).
 $$
 
 The centre signed distance is:
 
 $$
- s_c=-3. 
+ s_c=-3.
 $$
 
 The projected radius is:
 
 $$
- r_{\mathrm{box}}= |1|(1)+0+0=1. 
+ r_{\mathrm{box}}= |1|(1)+0+0=1.
 $$
 
 Since:
 
 $$
- -3<-1, 
+ -3<-1,
 $$
 
 the box is outside.
@@ -1283,19 +1283,19 @@ the box is outside.
 Now move its centre to:
 
 $$
- (-0.5,0,0). 
+ (-0.5,0,0).
 $$
 
 Then:
 
 $$
- s_c=-0.5. 
+ s_c=-0.5.
 $$
 
 Because:
 
 $$
- -0.5\not<-1, 
+ -0.5\not<-1,
 $$
 
 the box intersects the permitted half-space.
@@ -1317,7 +1317,7 @@ A local-space AABB transformed by a rotation is an oriented bounding box, not au
 A conservative world AABB can be computed using the transformed centre and absolute linear matrix:
 
 $$
- \boxed{ \mathbf e_W=|A|\mathbf e_L } 
+ \boxed{ \mathbf e_W=|A|\mathbf e_L }
 $$
 
 where $|A|$ denotes the matrix formed by taking the absolute value of each element.
@@ -1325,7 +1325,7 @@ where $|A|$ denotes the matrix formed by taking the absolute value of each eleme
 This follows from applying componentwise bounds to:
 
 $$
- A\boldsymbol\delta. 
+ A\boldsymbol\delta.
 $$
 
 The resulting world AABB is conservative under affine transformations.
@@ -1347,13 +1347,13 @@ An oblique clipping plane is a clipping boundary that is not aligned with the co
 Ordinary perspective projection clips against planes such as:
 
 $$
- z_{\mathrm{view}}=-n. 
+ z_{\mathrm{view}}=-n.
 $$
 
 An oblique plane might instead have the equation:
 
 $$
- \boxed{ ax+by+cz+d=0 } 
+ \boxed{ ax+by+cz+d=0 }
 $$
 
 with a normal not parallel to the camera's forward axis.
@@ -1379,43 +1379,43 @@ An oblique near plane makes the projection's clipping boundary match the desired
 Suppose a plane in world space is:
 
 $$
- \boldsymbol\pi_W= \begin{bmatrix} a\\b\\c\\d \end{bmatrix}. 
+ \boldsymbol\pi_W= \begin{bmatrix} a\\b\\c\\d \end{bmatrix}.
 $$
 
 A point transforms from world to view using:
 
 $$
- \mathbf p_V=V\mathbf p_W. 
+ \mathbf p_V=V\mathbf p_W.
 $$
 
 Thus:
 
 $$
- \mathbf p_W=V^{-1}\mathbf p_V. 
+ \mathbf p_W=V^{-1}\mathbf p_V.
 $$
 
 The world plane equation is:
 
 $$
- \boldsymbol\pi_W^T\mathbf p_W=0. 
+ \boldsymbol\pi_W^T\mathbf p_W=0.
 $$
 
 Substitute:
 
 $$
- \boldsymbol\pi_W^TV^{-1}\mathbf p_V=0. 
+ \boldsymbol\pi_W^TV^{-1}\mathbf p_V=0.
 $$
 
 We want:
 
 $$
- \boldsymbol\pi_V^T\mathbf p_V=0. 
+ \boldsymbol\pi_V^T\mathbf p_V=0.
 $$
 
 Therefore:
 
 $$
- \boxed{ \boldsymbol\pi_V=V^{-T}\boldsymbol\pi_W }. 
+ \boxed{ \boldsymbol\pi_V=V^{-T}\boldsymbol\pi_W }.
 $$
 
 This is the inverse-transpose rule for transforming planes.
@@ -1427,7 +1427,7 @@ The same dual-space principle appears in normal transformations.
 An inward-facing oblique clip plane can be written:
 
 $$
- \boxed{ \boldsymbol\pi^T\tilde{\mathbf p}\ge0 }. 
+ \boxed{ \boldsymbol\pi^T\tilde{\mathbf p}\ge0 }.
 $$
 
 The clipping algorithm retains the permitted half-space.
@@ -1437,7 +1437,7 @@ A projection matrix can be modified so that a canonical clip boundary correspond
 For zero-to-one clip depth, the canonical lower-depth boundary is:
 
 $$
- z_c\ge0. 
+ z_c\ge0.
 $$
 
 If the third row of a projection matrix is constructed to be proportional to the desired plane coefficients in view space, that lower clip boundary can represent the oblique plane.
@@ -1490,7 +1490,7 @@ After perspective projection, rasterization computes barycentric coordinates rel
 A tempting implementation is:
 
 $$
- \boxed{ a_{\mathrm{naive}}= \lambda_0a_0+\lambda_1a_1+\lambda_2a_2 }. 
+ \boxed{ a_{\mathrm{naive}}= \lambda_0a_0+\lambda_1a_1+\lambda_2a_2 }.
 $$
 
 Here $\lambda_i$ are screen-space barycentric weights.
@@ -1508,23 +1508,23 @@ Consider two 3D endpoints along a projected line.
 Endpoint 0 lies at positive camera depth:
 
 $$
- d_0=1. 
+ d_0=1.
 $$
 
 Endpoint 1 lies at:
 
 $$
- d_1=4. 
+ d_1=4.
 $$
 
 Let an attribute such as texture coordinate be:
 
 $$
- a_0=0, 
+ a_0=0,
 $$
 
 $$
- a_1=1. 
+ a_1=1.
 $$
 
 Suppose a screen-space point is halfway between the projected endpoints.
@@ -1532,7 +1532,7 @@ Suppose a screen-space point is halfway between the projected endpoints.
 A naive screen-space interpolation gives:
 
 $$
- \boxed{ a_{\mathrm{naive}}=0.5 }. 
+ \boxed{ a_{\mathrm{naive}}=0.5 }.
 $$
 
 But the 3D segment is not sampled halfway in its original affine parameter.
@@ -1544,43 +1544,43 @@ The nearer endpoint influences projected position more strongly because perspect
 For a screen-space halfway point, use weights:
 
 $$
- \lambda_0=\lambda_1=0.5. 
+ \lambda_0=\lambda_1=0.5.
 $$
 
 The perspective-correct attribute formula is:
 
 $$
- a= \frac{ \lambda_0a_0/d_0+\lambda_1a_1/d_1 }{ \lambda_0/d_0+\lambda_1/d_1 }. 
+ a= \frac{ \lambda_0a_0/d_0+\lambda_1a_1/d_1 }{ \lambda_0/d_0+\lambda_1/d_1 }.
 $$
 
 Substitute:
 
 $$
- a= \frac{ 0.5(0)/1+0.5(1)/4 }{ 0.5/1+0.5/4 }. 
+ a= \frac{ 0.5(0)/1+0.5(1)/4 }{ 0.5/1+0.5/4 }.
 $$
 
 The numerator is:
 
 $$
- 0.125. 
+ 0.125.
 $$
 
 The denominator is:
 
 $$
- 0.5+0.125=0.625. 
+ 0.5+0.125=0.625.
 $$
 
 Therefore:
 
 $$
- \boxed{ a=\frac{0.125}{0.625}=0.2 }. 
+ \boxed{ a=\frac{0.125}{0.625}=0.2 }.
 $$
 
 The true projectively corrected attribute is:
 
 $$
- \boxed{0.2}, 
+ \boxed{0.2},
 $$
 
 not $0.5$.
@@ -1623,37 +1623,37 @@ We now derive the full formula for a triangle rather than memorizing the result.
 Let the original 3D triangle vertices be:
 
 $$
- P_0,P_1,P_2. 
+ P_0,P_1,P_2.
 $$
 
 Let a point on the original triangle have 3D affine barycentric coordinates:
 
 $$
- \alpha_0,\alpha_1,\alpha_2. 
+ \alpha_0,\alpha_1,\alpha_2.
 $$
 
 Then:
 
 $$
- \boxed{ \alpha_0+\alpha_1+\alpha_2=1 } 
+ \boxed{ \alpha_0+\alpha_1+\alpha_2=1 }
 $$
 
 and:
 
 $$
- \boxed{ P=\alpha_0P_0+\alpha_1P_1+\alpha_2P_2 }. 
+ \boxed{ P=\alpha_0P_0+\alpha_1P_1+\alpha_2P_2 }.
 $$
 
 Suppose an attribute is affinely interpolated on the original triangle:
 
 $$
- \boxed{ a=\alpha_0a_0+\alpha_1a_1+\alpha_2a_2 }. 
+ \boxed{ a=\alpha_0a_0+\alpha_1a_1+\alpha_2a_2 }.
 $$
 
 The problem is that the rasterizer knows screen-space barycentric weights:
 
 $$
- \lambda_0,\lambda_1,\lambda_2, 
+ \lambda_0,\lambda_1,\lambda_2,
 $$
 
 not the original $\alpha_i$.
@@ -1665,49 +1665,49 @@ We need a relationship between them.
 Let the projected homogeneous vertices be:
 
 $$
- C_i= \begin{bmatrix} x_i\\y_i\\z_i\\w_i \end{bmatrix}. 
+ C_i= \begin{bmatrix} x_i\\y_i\\z_i\\w_i \end{bmatrix}.
 $$
 
 Their NDC XY positions are:
 
 $$
- q_i= \begin{bmatrix} x_i/w_i\\ y_i/w_i \end{bmatrix}. 
+ q_i= \begin{bmatrix} x_i/w_i\\ y_i/w_i \end{bmatrix}.
 $$
 
 Because projective transformations are linear in homogeneous coordinates, the homogeneous image of the affine 3D combination is proportional to:
 
 $$
- \boxed{ C=\sum_i\alpha_iC_i }. 
+ \boxed{ C=\sum_i\alpha_iC_i }.
 $$
 
 Its homogeneous denominator is:
 
 $$
- \boxed{ W=\sum_i\alpha_iw_i }. 
+ \boxed{ W=\sum_i\alpha_iw_i }.
 $$
 
 Its projected XY position is:
 
 $$
- q= \frac{ \sum_i\alpha_iw_iq_i }{ \sum_i\alpha_iw_i }. 
+ q= \frac{ \sum_i\alpha_iw_iq_i }{ \sum_i\alpha_iw_i }.
 $$
 
 Define:
 
 $$
- \boxed{ \lambda_i=\frac{\alpha_iw_i}{W} }. 
+ \boxed{ \lambda_i=\frac{\alpha_iw_i}{W} }.
 $$
 
 Then:
 
 $$
- \sum_i\lambda_i=1. 
+ \sum_i\lambda_i=1.
 $$
 
 And:
 
 $$
- q=\sum_i\lambda_iq_i. 
+ q=\sum_i\lambda_iq_i.
 $$
 
 Thus $\lambda_i$ are precisely the affine barycentric weights in the projected screen-space triangle.
@@ -1717,13 +1717,13 @@ Thus $\lambda_i$ are precisely the affine barycentric weights in the projected s
 From:
 
 $$
- \lambda_i=\frac{\alpha_iw_i}{W}, 
+ \lambda_i=\frac{\alpha_iw_i}{W},
 $$
 
 we get:
 
 $$
- \alpha_i=\lambda_i\frac W{w_i}. 
+ \alpha_i=\lambda_i\frac W{w_i}.
 $$
 
 We still need $W$.
@@ -1731,31 +1731,31 @@ We still need $W$.
 Use:
 
 $$
- \sum_i\alpha_i=1. 
+ \sum_i\alpha_i=1.
 $$
 
 Therefore:
 
 $$
- \sum_i\lambda_i\frac W{w_i}=1. 
+ \sum_i\lambda_i\frac W{w_i}=1.
 $$
 
 Factor $W$:
 
 $$
- W\sum_i\frac{\lambda_i}{w_i}=1. 
+ W\sum_i\frac{\lambda_i}{w_i}=1.
 $$
 
 Hence:
 
 $$
- \boxed{ W= \frac1{\sum_i\lambda_i/w_i} }. 
+ \boxed{ W= \frac1{\sum_i\lambda_i/w_i} }.
 $$
 
 Substitute:
 
 $$
- \boxed{ \alpha_i= \frac{\lambda_i/w_i} {\sum_j\lambda_j/w_j} }. 
+ \boxed{ \alpha_i= \frac{\lambda_i/w_i} {\sum_j\lambda_j/w_j} }.
 $$
 
 This is the central relationship between screen-space and original-triangle barycentric coordinates.
@@ -1765,19 +1765,19 @@ This is the central relationship between screen-space and original-triangle bary
 We know:
 
 $$
- a=\sum_i\alpha_i a_i. 
+ a=\sum_i\alpha_i a_i.
 $$
 
 Substitute the recovered $\alpha_i$:
 
 $$
- a= \sum_i a_i \frac{\lambda_i/w_i} {\sum_j\lambda_j/w_j}. 
+ a= \sum_i a_i \frac{\lambda_i/w_i} {\sum_j\lambda_j/w_j}.
 $$
 
 Factor the common denominator:
 
 $$
- \boxed{ a= \frac{ \sum_i\lambda_i a_i/w_i }{ \sum_i\lambda_i/w_i } }. 
+ \boxed{ a= \frac{ \sum_i\lambda_i a_i/w_i }{ \sum_i\lambda_i/w_i } }.
 $$
 
 That is perspective-correct interpolation.
@@ -1789,49 +1789,49 @@ It works componentwise for vector attributes.
 Suppose a rasterized triangle has screen-space barycentric weights:
 
 $$
- \lambda=(0.5,0.25,0.25). 
+ \lambda=(0.5,0.25,0.25).
 $$
 
 Its clip $w$ values are:
 
 $$
- w=(1,4,4). 
+ w=(1,4,4).
 $$
 
 The scalar vertex attribute is:
 
 $$
- a=(0,1,0). 
+ a=(0,1,0).
 $$
 
 Naive interpolation gives:
 
 $$
- a_{\mathrm{naive}} = 0.5(0)+0.25(1)+0.25(0) =\boxed{0.25}. 
+ a_{\mathrm{naive}} = 0.5(0)+0.25(1)+0.25(0) =\boxed{0.25}.
 $$
 
 Perspective-correct numerator:
 
 $$
- N= 0.5\frac01+ 0.25\frac14+ 0.25\frac04 =0.0625. 
+ N= 0.5\frac01+ 0.25\frac14+ 0.25\frac04 =0.0625.
 $$
 
 Denominator:
 
 $$
- D= 0.5\frac11+ 0.25\frac14+ 0.25\frac14. 
+ D= 0.5\frac11+ 0.25\frac14+ 0.25\frac14.
 $$
 
 Thus:
 
 $$
- D=0.5+0.0625+0.0625=0.625. 
+ D=0.5+0.0625+0.0625=0.625.
 $$
 
 Therefore:
 
 $$
- \boxed{ a=\frac{0.0625}{0.625}=0.1 }. 
+ \boxed{ a=\frac{0.0625}{0.625}=0.1 }.
 $$
 
 This example is tested in the compiled C++23 laboratory.
@@ -1841,13 +1841,13 @@ This example is tested in the compiled C++23 laboratory.
 From the earlier relationship:
 
 $$
- W=\frac1{\sum_i\lambda_i/w_i}, 
+ W=\frac1{\sum_i\lambda_i/w_i},
 $$
 
 we obtain:
 
 $$
- \boxed{ \frac1W= \sum_i\frac{\lambda_i}{w_i} }. 
+ \boxed{ \frac1W= \sum_i\frac{\lambda_i}{w_i} }.
 $$
 
 Thus reciprocal homogeneous $w$ is affine in screen-space barycentric coordinates.
@@ -1855,13 +1855,13 @@ Thus reciprocal homogeneous $w$ is affine in screen-space barycentric coordinate
 For the conventional perspective matrix with:
 
 $$
- w=d, 
+ w=d,
 $$
 
 this becomes:
 
 $$
- \boxed{ \frac1d= \sum_i\lambda_i\frac1{d_i} }. 
+ \boxed{ \frac1d= \sum_i\lambda_i\frac1{d_i} }.
 $$
 
 This explains why reciprocal depth plays such a central role in rasterization.
@@ -1873,7 +1873,7 @@ The corrected attribute is a ratio of two affine expressions in screen-space bar
 For a segment, it has the form:
 
 $$
- a(t)= \frac{A+Bt}{C+Dt}. 
+ a(t)= \frac{A+Bt}{C+Dt}.
 $$
 
 This is a rational-linear or linear-fractional function.
@@ -1901,33 +1901,33 @@ Barycentric coordinates describe a point as an affine combination of triangle ve
 Let a 2D triangle have raster-space or NDC vertices:
 
 $$
- A=(x_0,y_0), 
+ A=(x_0,y_0),
 $$
 
 $$
- B=(x_1,y_1), 
+ B=(x_1,y_1),
 $$
 
 $$
- C=(x_2,y_2). 
+ C=(x_2,y_2).
 $$
 
 We want weights:
 
 $$
- \lambda_0,\lambda_1,\lambda_2 
+ \lambda_0,\lambda_1,\lambda_2
 $$
 
 satisfying:
 
 $$
- \boxed{ P=\lambda_0A+\lambda_1B+\lambda_2C } 
+ \boxed{ P=\lambda_0A+\lambda_1B+\lambda_2C }
 $$
 
 and:
 
 $$
- \boxed{ \lambda_0+\lambda_1+\lambda_2=1 }. 
+ \boxed{ \lambda_0+\lambda_1+\lambda_2=1 }.
 $$
 
 ### Derive using two edge vectors
@@ -1935,33 +1935,33 @@ $$
 Subtract $A$:
 
 $$
- P-A= \lambda_1(B-A)+\lambda_2(C-A) 
+ P-A= \lambda_1(B-A)+\lambda_2(C-A)
 $$
 
 because:
 
 $$
- \lambda_0=1-\lambda_1-\lambda_2. 
+ \lambda_0=1-\lambda_1-\lambda_2.
 $$
 
 Define:
 
 $$
- \mathbf e_1=B-A, 
+ \mathbf e_1=B-A,
 $$
 
 $$
- \mathbf e_2=C-A, 
+ \mathbf e_2=C-A,
 $$
 
 $$
- \mathbf q=P-A. 
+ \mathbf q=P-A.
 $$
 
 We need to solve:
 
 $$
- \mathbf q= \lambda_1\mathbf e_1+ \lambda_2\mathbf e_2. 
+ \mathbf q= \lambda_1\mathbf e_1+ \lambda_2\mathbf e_2.
 $$
 
 This is a $2\times2$ linear system.
@@ -1971,37 +1971,37 @@ This is a $2\times2$ linear system.
 Define the scalar 2D cross product:
 
 $$
- \boxed{ \operatorname{cross}_2(a,b)=a_xb_y-a_yb_x }. 
+ \boxed{ \operatorname{cross}_2(a,b)=a_xb_y-a_yb_x }.
 $$
 
 Cross both sides with $\mathbf e_2$:
 
 $$
- \operatorname{cross}_2(\mathbf q,\mathbf e_2) = \lambda_1 \operatorname{cross}_2(\mathbf e_1,\mathbf e_2) 
+ \operatorname{cross}_2(\mathbf q,\mathbf e_2) = \lambda_1 \operatorname{cross}_2(\mathbf e_1,\mathbf e_2)
 $$
 
 because:
 
 $$
- \operatorname{cross}_2(\mathbf e_2,\mathbf e_2)=0. 
+ \operatorname{cross}_2(\mathbf e_2,\mathbf e_2)=0.
 $$
 
 Therefore:
 
 $$
- \boxed{ \lambda_1= \frac{ \operatorname{cross}_2(P-A,C-A) }{ \operatorname{cross}_2(B-A,C-A) } }. 
+ \boxed{ \lambda_1= \frac{ \operatorname{cross}_2(P-A,C-A) }{ \operatorname{cross}_2(B-A,C-A) } }.
 $$
 
 Similarly, cross $\mathbf e_1$ with both sides:
 
 $$
- \boxed{ \lambda_2= \frac{ \operatorname{cross}_2(B-A,P-A) }{ \operatorname{cross}_2(B-A,C-A) } }. 
+ \boxed{ \lambda_2= \frac{ \operatorname{cross}_2(B-A,P-A) }{ \operatorname{cross}_2(B-A,C-A) } }.
 $$
 
 Then:
 
 $$
- \boxed{ \lambda_0=1-\lambda_1-\lambda_2 }. 
+ \boxed{ \lambda_0=1-\lambda_1-\lambda_2 }.
 $$
 
 These are the screen-space barycentric coordinates.
@@ -2011,69 +2011,69 @@ These are the screen-space barycentric coordinates.
 Let:
 
 $$
- A=(0,0),\quad B=(1,0),\quad C=(0,1). 
+ A=(0,0),\quad B=(1,0),\quad C=(0,1).
 $$
 
 Choose:
 
 $$
- P=(0.25,0.25). 
+ P=(0.25,0.25).
 $$
 
 Then:
 
 $$
- B-A=(1,0), 
+ B-A=(1,0),
 $$
 
 $$
- C-A=(0,1), 
+ C-A=(0,1),
 $$
 
 $$
- P-A=(0.25,0.25). 
+ P-A=(0.25,0.25).
 $$
 
 The denominator is:
 
 $$
- \operatorname{cross}_2((1,0),(0,1))=1. 
+ \operatorname{cross}_2((1,0),(0,1))=1.
 $$
 
 For $\lambda_1$:
 
 $$
- \operatorname{cross}_2((0.25,0.25),(0,1))=0.25. 
+ \operatorname{cross}_2((0.25,0.25),(0,1))=0.25.
 $$
 
 Thus:
 
 $$
- \lambda_1=0.25. 
+ \lambda_1=0.25.
 $$
 
 For $\lambda_2$:
 
 $$
- \operatorname{cross}_2((1,0),(0.25,0.25))=0.25. 
+ \operatorname{cross}_2((1,0),(0.25,0.25))=0.25.
 $$
 
 Thus:
 
 $$
- \lambda_2=0.25. 
+ \lambda_2=0.25.
 $$
 
 And:
 
 $$
- \lambda_0=0.5. 
+ \lambda_0=0.5.
 $$
 
 Therefore:
 
 $$
- \boxed{ \lambda=(0.5,0.25,0.25) }. 
+ \boxed{ \lambda=(0.5,0.25,0.25) }.
 $$
 
 ### Point-in-triangle testing
@@ -2081,7 +2081,7 @@ $$
 For a nondegenerate triangle, the point is inside or on its boundary when:
 
 $$
- \boxed{ \lambda_i\ge0 } 
+ \boxed{ \lambda_i\ge0 }
 $$
 
 for all three weights, subject to the chosen boundary convention and numerical tolerance.
@@ -2093,7 +2093,7 @@ If any weight is negative, the point lies outside the triangle.
 The denominator is twice the oriented area of the triangle:
 
 $$
- \operatorname{cross}_2(B-A,C-A). 
+ \operatorname{cross}_2(B-A,C-A).
 $$
 
 If it is zero, the triangle vertices are collinear and the ordinary barycentric coordinate solution is not unique.
@@ -2109,7 +2109,7 @@ Floating-point tolerance rules must be chosen with attention to triangle scale a
 Define an oriented edge function:
 
 $$
- \boxed{ E_{AB}(P)= \operatorname{cross}_2(B-A,P-A) }. 
+ \boxed{ E_{AB}(P)= \operatorname{cross}_2(B-A,P-A) }.
 $$
 
 It is affine in the coordinates of $P$.
@@ -2167,19 +2167,19 @@ We will make this conversion explicit later.
 For a point in camera coordinates:
 
 $$
- \mathbf X_C= \begin{bmatrix} X_C\\Y_C\\Z_C \end{bmatrix}, 
+ \mathbf X_C= \begin{bmatrix} X_C\\Y_C\\Z_C \end{bmatrix},
 $$
 
 with:
 
 $$
- Z_C>0, 
+ Z_C>0,
 $$
 
 the normalized pinhole coordinates are:
 
 $$
- \boxed{ x=\frac{X_C}{Z_C}, \qquad y=\frac{Y_C}{Z_C} }. 
+ \boxed{ x=\frac{X_C}{Z_C}, \qquad y=\frac{Y_C}{Z_C} }.
 $$
 
 These coordinates describe the direction of the incoming ray relative to the optical axis.
@@ -2189,13 +2189,13 @@ These coordinates describe the direction of the incoming ray relative to the opt
 A simple calibrated camera maps normalized coordinates to pixels using:
 
 $$
- \boxed{ u=f_xx+c_x } 
+ \boxed{ u=f_xx+c_x }
 $$
 
 and:
 
 $$
- \boxed{ v=f_yy+c_y }. 
+ \boxed{ v=f_yy+c_y }.
 $$
 
 Here $u,v$ are image pixel coordinates.
@@ -2203,19 +2203,19 @@ Here $u,v$ are image pixel coordinates.
 The parameters have the following meanings.
 
 $$
- f_x 
+ f_x
 $$
 
 is the horizontal focal scale in pixels.
 
 $$
- f_y 
+ f_y
 $$
 
 is the vertical focal scale in pixels.
 
 $$
- (c_x,c_y) 
+ (c_x,c_y)
 $$
 
 is the principal point, expressed in the same pixel-coordinate convention as the image observations.
@@ -2223,7 +2223,7 @@ is the principal point, expressed in the same pixel-coordinate convention as the
 The camera intrinsic model can include skew:
 
 $$
- \boxed{ u=f_xx+s\,y+c_x }. 
+ \boxed{ u=f_xx+s\,y+c_x }.
 $$
 
 Usually skew is zero or small in modern ordinary digital cameras, but it should not be silently assumed zero when working with an arbitrary calibration file.
@@ -2252,7 +2252,7 @@ For an ideal pinhole projection, it controls the scale between ray angle and ima
 Suppose the ideal image plane is at distance:
 
 $$
- f 
+ f
 $$
 
 from the pinhole.
@@ -2260,19 +2260,19 @@ from the pinhole.
 By similar triangles:
 
 $$
- \frac{x_{\mathrm{image}}}{f} = \frac{X_C}{Z_C}. 
+ \frac{x_{\mathrm{image}}}{f} = \frac{X_C}{Z_C}.
 $$
 
 Therefore:
 
 $$
- \boxed{ x_{\mathrm{image}}= f\frac{X_C}{Z_C} }. 
+ \boxed{ x_{\mathrm{image}}= f\frac{X_C}{Z_C} }.
 $$
 
 Similarly:
 
 $$
- \boxed{ y_{\mathrm{image}}= f\frac{Y_C}{Z_C} }. 
+ \boxed{ y_{\mathrm{image}}= f\frac{Y_C}{Z_C} }.
 $$
 
 The image-plane dimensions and $f$ must use the same physical length units.
@@ -2282,13 +2282,13 @@ The image-plane dimensions and $f$ must use the same physical length units.
 Suppose the physical sensor height is:
 
 $$
- H_s. 
+ H_s.
 $$
 
 The vertical FOV is:
 
 $$
- \boxed{ \theta_y= 2\arctan\left(\frac{H_s}{2f}\right) } 
+ \boxed{ \theta_y= 2\arctan\left(\frac{H_s}{2f}\right) }
 $$
 
 for the ideal rectilinear model.
@@ -2296,13 +2296,13 @@ for the ideal rectilinear model.
 Rearrange:
 
 $$
- \tan(\theta_y/2)=\frac{H_s}{2f}. 
+ \tan(\theta_y/2)=\frac{H_s}{2f}.
 $$
 
 Thus:
 
 $$
- \boxed{ f=\frac{H_s}{2\tan(\theta_y/2)} }. 
+ \boxed{ f=\frac{H_s}{2\tan(\theta_y/2)} }.
 $$
 
 A larger focal length produces a narrower FOV when sensor size is fixed.
@@ -2314,23 +2314,23 @@ A smaller focal length produces a wider FOV.
 Suppose:
 
 $$
- H_s=24\text{ mm}, 
+ H_s=24\text{ mm},
 $$
 
 $$
- f=35\text{ mm}. 
+ f=35\text{ mm}.
 $$
 
 Then:
 
 $$
- \theta_y= 2\arctan\left(\frac{24}{70}\right). 
+ \theta_y= 2\arctan\left(\frac{24}{70}\right).
 $$
 
 Numerically:
 
 $$
- \boxed{ \theta_y\approx37.85^\circ }. 
+ \boxed{ \theta_y\approx37.85^\circ }.
 $$
 
 The exact value depends on the adopted idealized sensor geometry.
@@ -2356,7 +2356,7 @@ The principal point is the image location where the optical axis intersects the 
 Its coordinates are:
 
 $$
- \boxed{(c_x,c_y)}. 
+ \boxed{(c_x,c_y)}.
 $$
 
 It need not coincide exactly with the geometric centre of the image.
@@ -2368,11 +2368,11 @@ Several factors can shift the effective principal point: sensor alignment, optic
 For a simple centred camera, one might use:
 
 $$
- c_x\approx W/2, 
+ c_x\approx W/2,
 $$
 
 $$
- c_y\approx H/2 
+ c_y\approx H/2
 $$
 
 when coordinates are defined continuously from the image's outer edges.
@@ -2382,7 +2382,7 @@ But this must be interpreted according to the image-coordinate convention.
 If integer pixel indices denote pixel centres at coordinates $0,1,\ldots,W-1$, a geometric centre is often represented as:
 
 $$
- \frac{W-1}{2}. 
+ \frac{W-1}{2}.
 $$
 
 These are two coordinate conventions for the same geometric idea, differing by half a pixel.
@@ -2394,7 +2394,7 @@ A calibration should explicitly define whether integer coordinates refer to pixe
 The normalized camera ray corresponding to pixel $(u,v)$, assuming zero skew and no distortion, has direction proportional to:
 
 $$
- \boxed{ \mathbf d_C= \begin{bmatrix} (u-c_x)/f_x\\ (v-c_y)/f_y\\ 1 \end{bmatrix} }. 
+ \boxed{ \mathbf d_C= \begin{bmatrix} (u-c_x)/f_x\\ (v-c_y)/f_y\\ 1 \end{bmatrix} }.
 $$
 
 If $c_x$ changes while $u$ remains fixed, the inferred horizontal ray angle changes.
@@ -2406,19 +2406,19 @@ Thus a principal-point error causes systematic reprojection errors, especially w
 Suppose:
 
 $$
- W=1920,\quad H=1080. 
+ W=1920,\quad H=1080.
 $$
 
 The nominal centred optical location under a continuous image-edge coordinate convention is:
 
 $$
- (960,540). 
+ (960,540).
 $$
 
 But calibration gives:
 
 $$
- (c_x,c_y)=(968,535). 
+ (c_x,c_y)=(968,535).
 $$
 
 The principal point is shifted eight pixels right and five pixels upward relative to that nominal centre.
@@ -2426,7 +2426,7 @@ The principal point is shifted eight pixels right and five pixels upward relativ
 A point along the optical axis maps to:
 
 $$
- \boxed{(u,v)=(968,535)}. 
+ \boxed{(u,v)=(968,535)}.
 $$
 
 If an algorithm assumes $(960,540)$, it assigns the optical-axis point an incorrect normalized direction.
@@ -2440,7 +2440,7 @@ The intrinsic focal parameters $f_x,f_y$ are measured in pixels.
 Suppose the horizontal pixel pitch is:
 
 $$
- p_x 
+ p_x
 $$
 
 millimetres per pixel.
@@ -2448,13 +2448,13 @@ millimetres per pixel.
 Then:
 
 $$
- \boxed{ f_x=\frac f{p_x} }. 
+ \boxed{ f_x=\frac f{p_x} }.
 $$
 
 Similarly, if vertical pixel pitch is $p_y$:
 
 $$
- \boxed{ f_y=\frac f{p_y} }. 
+ \boxed{ f_y=\frac f{p_y} }.
 $$
 
 If the pixel pitches differ, $f_x$ and $f_y$ can differ even when physical focal length is the same.
@@ -2464,19 +2464,19 @@ If the pixel pitches differ, $f_x$ and $f_y$ can differ even when physical focal
 If the physical sensor width is $S_x$ and the image width is $W$ pixels:
 
 $$
- p_x=\frac{S_x}{W}. 
+ p_x=\frac{S_x}{W}.
 $$
 
 Therefore:
 
 $$
- \boxed{ f_x=\frac{fW}{S_x} }. 
+ \boxed{ f_x=\frac{fW}{S_x} }.
 $$
 
 Likewise:
 
 $$
- \boxed{ f_y=\frac{fH}{S_y} }. 
+ \boxed{ f_y=\frac{fH}{S_y} }.
 $$
 
 These formulas assume the stated sensor region maps to the stated image dimensions without additional crop, resampling, or calibration changes.
@@ -2486,39 +2486,39 @@ These formulas assume the stated sensor region maps to the stated image dimensio
 Suppose:
 
 $$
- f=35\text{ mm}, 
+ f=35\text{ mm},
 $$
 
 $$
- S_x=36\text{ mm}, 
+ S_x=36\text{ mm},
 $$
 
 $$
- W=6000\text{ pixels}. 
+ W=6000\text{ pixels}.
 $$
 
 Then:
 
 $$
- f_x=\frac{35(6000)}{36}. 
+ f_x=\frac{35(6000)}{36}.
 $$
 
 Thus:
 
 $$
- \boxed{ f_x\approx5833.33\text{ pixels} }. 
+ \boxed{ f_x\approx5833.33\text{ pixels} }.
 $$
 
 If the sensor height is 24 mm and the image height is 4000 pixels:
 
 $$
- f_y=\frac{35(4000)}{24}. 
+ f_y=\frac{35(4000)}{24}.
 $$
 
 Therefore:
 
 $$
- \boxed{ f_y\approx5833.33\text{ pixels} }. 
+ \boxed{ f_y\approx5833.33\text{ pixels} }.
 $$
 
 The two values agree because the image and sensor aspect ratios agree and the assumed pixels are square.
@@ -2530,25 +2530,25 @@ Suppose the original image is $W\times H$.
 Resize it by horizontal scale:
 
 $$
- s_x 
+ s_x
 $$
 
 and vertical scale:
 
 $$
- s_y. 
+ s_y.
 $$
 
 Under a compatible continuous pixel-coordinate convention:
 
 $$
- \boxed{ f_x'=s_xf_x, \qquad f_y'=s_yf_y }. 
+ \boxed{ f_x'=s_xf_x, \qquad f_y'=s_yf_y }.
 $$
 
 The principal point also transforms:
 
 $$
- \boxed{ c_x'=s_xc_x, \qquad c_y'=s_yc_y }. 
+ \boxed{ c_x'=s_xc_x, \qquad c_y'=s_yc_y }.
 $$
 
 However, if the resize operation uses a pixel-centre alignment convention, half-pixel offsets may appear in the exact coordinate transformation.
@@ -2556,13 +2556,13 @@ However, if the resize operation uses a pixel-centre alignment convention, half-
 For example, a common centre-preserving transformation between integer-centred pixel coordinate systems is:
 
 $$
- u'=(u+0.5)s_x-0.5. 
+ u'=(u+0.5)s_x-0.5.
 $$
 
 Then:
 
 $$
- \boxed{ c_x'=(c_x+0.5)s_x-0.5 }. 
+ \boxed{ c_x'=(c_x+0.5)s_x-0.5 }.
 $$
 
 The correct formula depends on the image resampler's coordinate convention.
@@ -2572,7 +2572,7 @@ The correct formula depends on the image resampler's coordinate convention.
 If an image is cropped by removing $x_0$ pixels from the left and $y_0$ pixels from the top, under a consistent pixel coordinate system:
 
 $$
- \boxed{ c_x'=c_x-x_0, \qquad c_y'=c_y-y_0 }. 
+ \boxed{ c_x'=c_x-x_0, \qquad c_y'=c_y-y_0 }.
 $$
 
 Focal scales remain unchanged when cropping alone does not rescale the image.
@@ -2584,7 +2584,7 @@ Failing to update the principal point after cropping creates systematic calibrat
 The intrinsic parameters can be assembled into one matrix:
 
 $$
- \boxed{ K= \begin{bmatrix} f_x&s&c_x\\ 0&f_y&c_y\\ 0&0&1 \end{bmatrix} }. 
+ \boxed{ K= \begin{bmatrix} f_x&s&c_x\\ 0&f_y&c_y\\ 0&0&1 \end{bmatrix} }.
 $$
 
 Here $s$ is the skew coefficient, expressed consistently with the camera's pixel-coordinate model.
@@ -2592,7 +2592,7 @@ Here $s$ is the skew coefficient, expressed consistently with the camera's pixel
 For the common zero-skew case:
 
 $$
- \boxed{ K= \begin{bmatrix} f_x&0&c_x\\ 0&f_y&c_y\\ 0&0&1 \end{bmatrix} }. 
+ \boxed{ K= \begin{bmatrix} f_x&0&c_x\\ 0&f_y&c_y\\ 0&0&1 \end{bmatrix} }.
 $$
 
 ### From camera coordinates to homogeneous pixels
@@ -2600,13 +2600,13 @@ $$
 Take:
 
 $$
- \mathbf X_C= \begin{bmatrix} X_C\\Y_C\\Z_C \end{bmatrix}. 
+ \mathbf X_C= \begin{bmatrix} X_C\\Y_C\\Z_C \end{bmatrix}.
 $$
 
 Multiply:
 
 $$
- K\mathbf X_C= \begin{bmatrix} f_xX_C+sY_C+c_xZ_C\\ f_yY_C+c_yZ_C\\ Z_C \end{bmatrix}. 
+ K\mathbf X_C= \begin{bmatrix} f_xX_C+sY_C+c_xZ_C\\ f_yY_C+c_yZ_C\\ Z_C \end{bmatrix}.
 $$
 
 This is a homogeneous pixel coordinate.
@@ -2614,19 +2614,19 @@ This is a homogeneous pixel coordinate.
 Divide by the third component $Z_C$:
 
 $$
- \boxed{ u=f_x\frac{X_C}{Z_C} +s\frac{Y_C}{Z_C} +c_x } 
+ \boxed{ u=f_x\frac{X_C}{Z_C} +s\frac{Y_C}{Z_C} +c_x }
 $$
 
 and:
 
 $$
- \boxed{ v=f_y\frac{Y_C}{Z_C} +c_y }. 
+ \boxed{ v=f_y\frac{Y_C}{Z_C} +c_y }.
 $$
 
 Therefore:
 
 $$
- \boxed{ \lambda \begin{bmatrix}u\\v\\1\end{bmatrix} = K\mathbf X_C } 
+ \boxed{ \lambda \begin{bmatrix}u\\v\\1\end{bmatrix} = K\mathbf X_C }
 $$
 
 for an appropriate nonzero homogeneous scale $\lambda$, often $Z_C$.
@@ -2636,53 +2636,53 @@ for an appropriate nonzero homogeneous scale $\lambda$, often $Z_C$.
 Let:
 
 $$
- K= \begin{bmatrix} 800&0&960\\ 0&820&535\\ 0&0&1 \end{bmatrix}. 
+ K= \begin{bmatrix} 800&0&960\\ 0&820&535\\ 0&0&1 \end{bmatrix}.
 $$
 
 Consider camera-space point:
 
 $$
- \mathbf X_C= \begin{bmatrix}1\\0.5\\2\end{bmatrix}. 
+ \mathbf X_C= \begin{bmatrix}1\\0.5\\2\end{bmatrix}.
 $$
 
 Its normalized coordinates are:
 
 $$
- x=\frac12=0.5, 
+ x=\frac12=0.5,
 $$
 
 $$
- y=\frac{0.5}{2}=0.25. 
+ y=\frac{0.5}{2}=0.25.
 $$
 
 Pixel X:
 
 $$
- u=800(0.5)+960. 
+ u=800(0.5)+960.
 $$
 
 Thus:
 
 $$
- \boxed{u=1360}. 
+ \boxed{u=1360}.
 $$
 
 Pixel Y:
 
 $$
- v=820(0.25)+535. 
+ v=820(0.25)+535.
 $$
 
 Therefore:
 
 $$
- \boxed{v=740}. 
+ \boxed{v=740}.
 $$
 
 The resulting pixel location is:
 
 $$
- \boxed{(1360,740)}. 
+ \boxed{(1360,740)}.
 $$
 
 This exact numerical case is tested in the reference implementation.
@@ -2692,7 +2692,7 @@ This exact numerical case is tested in the reference implementation.
 Suppose we observe an ideal undistorted pixel coordinate:
 
 $$
- (u,v). 
+ (u,v).
 $$
 
 We want the normalized camera ray.
@@ -2700,37 +2700,37 @@ We want the normalized camera ray.
 For zero skew:
 
 $$
- \boxed{ x=\frac{u-c_x}{f_x} } 
+ \boxed{ x=\frac{u-c_x}{f_x} }
 $$
 
 and:
 
 $$
- \boxed{ y=\frac{v-c_y}{f_y} }. 
+ \boxed{ y=\frac{v-c_y}{f_y} }.
 $$
 
 The unnormalized camera ray is:
 
 $$
- \boxed{ \mathbf d_C= \begin{bmatrix} x\\y\\1 \end{bmatrix} }. 
+ \boxed{ \mathbf d_C= \begin{bmatrix} x\\y\\1 \end{bmatrix} }.
 $$
 
 With skew, solve the Y coordinate first:
 
 $$
- y=\frac{v-c_y}{f_y}. 
+ y=\frac{v-c_y}{f_y}.
 $$
 
 Then:
 
 $$
- \boxed{ x=\frac{u-c_x-sy}{f_x} }. 
+ \boxed{ x=\frac{u-c_x-sy}{f_x} }.
 $$
 
 This is equivalent to applying:
 
 $$
- K^{-1} 
+ K^{-1}
 $$
 
 to the homogeneous pixel vector.

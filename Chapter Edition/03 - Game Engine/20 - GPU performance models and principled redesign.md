@@ -8,7 +8,7 @@ Once the frame is correct, its limiting resource can be measured rather than gue
 
 **Recall question:** What observation would distinguish a bandwidth limit from an occupancy limit in the same GPU workload?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 43849–47457; source-span SHA256 38cc3311bdaf957926baa5ad6ec73a8539bfb76d302c2fc0c3171bcd72575040. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 44778–48386; source-span SHA256 38cc3311bdaf957926baa5ad6ec73a8539bfb76d302c2fc0c3171bcd72575040. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### PERFORMANCE MODELING & PRINCIPLED GPU REDESIGN

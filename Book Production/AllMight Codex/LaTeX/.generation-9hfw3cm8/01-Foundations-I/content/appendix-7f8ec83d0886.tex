@@ -1,0 +1,38 @@
+\hypertarget{appendix-7f8ec83d0886}{}
+\section{Constructors and invariant establishment}\label{appendix-7f8ec83d0886-constructors-and-invariant-establishment}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C009 · \textbf{Latest development:} C009
+
+\subsection{Definition and mechanism}\label{appendix-7f8ec83d0886-definition-and-mechanism}
+
+Construction initializes bases/members before the body and establishes the promised usable state. Initializing a member after the colon differs from assigning it in the body. explicit controls accidental conversions; factories can provide error-bearing creation interfaces.
+
+\subsection{Prerequisites}\label{appendix-7f8ec83d0886-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-8e5214819615]{Class access and invariants} --- Construction must establish the conditions public operations are allowed to assume.
+\item
+  \hyperref[appendix-a82f9c438857]{Object construction and storage reuse} --- A new destination requires a valid lifetime, independently of available bytes.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-7f8ec83d0886-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-ba8c1a9fe03f]{Default and value initialization}
+\item
+  \hyperref[appendix-3cb49709605a]{Member order and delegating constructors}
+\item
+  \hyperref[appendix-bea6beb5350f]{Assignment and exception guarantees}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-7f8ec83d0886-recall-and-next-depth}
+
+State a texture invariant and distinguish toy nonzero extent validation from a complete format contract. Pending: expected factories and conversion overloads. Written coverage does not demonstrate personal mastery.
+
+\subsection{Source and navigation}\label{appendix-7f8ec83d0886-source-and-navigation}
+
+\hyperref[01-foundations-i-ch003-construction-establishes-a-usable-state]{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15-m009---parts-127-147]{Exact coverage} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch322.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-ca8898faf1a6-multiple-importance-sampling" class="level2">
+<h2>Multiple importance sampling</h2>
+<p>Multiple importance sampling combines estimators from several sampling techniques without pretending that one proposal distribution is good everywhere.</p>
+<p>Suppose two techniques generate the same contribution <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math> using PDFs <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>a</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>b</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math>. With one sample from each technique, an MIS estimator can use weights <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>w</mi>
+    <mi>a</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>w</mi>
+    <mi>b</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math> satisfying appropriate partition and support conditions. The balance heuristic uses</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>a</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <msub>
+        <mi>n</mi>
+        <mi>a</mi>
+      </msub>
+      <msub>
+        <mi>p</mi>
+        <mi>a</mi>
+      </msub>
+      <mo stretchy="false">(</mo>
+      <mi>x</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <msub>
+        <mi>n</mi>
+        <mi>a</mi>
+      </msub>
+      <msub>
+        <mi>p</mi>
+        <mi>a</mi>
+      </msub>
+      <mo stretchy="false">(</mo>
+      <mi>x</mi>
+      <mo stretchy="false">)</mo>
+      <mo>+</mo>
+      <msub>
+        <mi>n</mi>
+        <mi>b</mi>
+      </msub>
+      <msub>
+        <mi>p</mi>
+        <mi>b</mi>
+      </msub>
+      <mo stretchy="false">(</mo>
+      <mi>x</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+</math>
+<p>with the symmetric definition for <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>w</mi>
+    <mi>b</mi>
+  </msub>
+</math>. For one sample from each, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>n</mi>
+    <mi>a</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>b</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>.</p>
+<p>The key idea is not “average two answers.” The estimator must evaluate the PDFs in the <strong>same measure</strong> for the same sampled event. Mixing a solid-angle PDF with an area PDF without the Jacobian conversion makes the weights meaningless.</p>
+<section id="appendix-ca8898faf1a6-support-matters" class="level3">
+<h3>Support matters</h3>
+<p>If technique A can sample a contribution that B cannot, then <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>b</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0</mn>
+</math> at that event and A should receive full weight. But if the implementation accidentally reports zero because it evaluated the wrong lobe, wrong hemisphere, or wrong light-selection probability, MIS can hide a bug behind a numerically finite result.</p>
+<p>For direct lighting, the full light-sampling PDF may include both discrete light selection and continuous point/direction sampling:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>l</mi>
+      <mi>i</mi>
+      <mi>g</mi>
+      <mi>h</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mtext>choose light</mtext>
+  <mo stretchy="false">)</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mtext>sample point or direction</mtext>
+  <mo>∣</mo>
+  <mtext>light</mtext>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>The BSDF PDF must be converted to the same directional measure before comparison.</p>
+</section>
+<section id="appendix-ca8898faf1a6-power-heuristic" class="level3">
+<h3>Power heuristic</h3>
+<p>A common alternative is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>a</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mo stretchy="false">(</mo>
+      <msub>
+        <mi>n</mi>
+        <mi>a</mi>
+      </msub>
+      <msub>
+        <mi>p</mi>
+        <mi>a</mi>
+      </msub>
+      <msup>
+        <mo stretchy="false">)</mo>
+        <mi>β</mi>
+      </msup>
+    </mrow>
+    <mrow>
+      <mo stretchy="false">(</mo>
+      <msub>
+        <mi>n</mi>
+        <mi>a</mi>
+      </msub>
+      <msub>
+        <mi>p</mi>
+        <mi>a</mi>
+      </msub>
+      <msup>
+        <mo stretchy="false">)</mo>
+        <mi>β</mi>
+      </msup>
+      <mo>+</mo>
+      <mo stretchy="false">(</mo>
+      <msub>
+        <mi>n</mi>
+        <mi>b</mi>
+      </msub>
+      <msub>
+        <mi>p</mi>
+        <mi>b</mi>
+      </msub>
+      <msup>
+        <mo stretchy="false">)</mo>
+        <mi>β</mi>
+      </msup>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+</math>
+<p>often with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>β</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+</math>. This suppresses a technique more aggressively when its PDF is much smaller than the competing proposal.</p>
+<p>The heuristic changes variance, not the target integral, when the estimator is constructed correctly.</p>
+</section>
+<section id="appendix-ca8898faf1a6-executable-reference" class="level3">
+<h3>Executable reference</h3>
+<p>tools/labs/monte_carlo_transport_lab.cpp checks the simple balance-weight partition property and separately verifies cosine-hemisphere transport and Russian-roulette expectation compensation. It is a mathematical estimator witness, not yet a complete path tracer with next-event estimation and scene lights.</p>
+<p>Read the connected derivation at <a href="ch319.xhtml#id_03-visual-computing-i-ch007-follow-one-path-without-losing-its-probability" class="wikilink">Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Follow one path without losing its probability</a>.</p>
+<p>Related: <a href="ch321.xhtml#appendix-7277c62d4599-russian-roulette-path-termination" class="wikilink">Russian roulette path termination</a>, <a href="ch265.xhtml#appendix-8d863ed954d0-inverse-rejection-and-importance-sampling" class="wikilink">Inverse, rejection, and importance sampling (Mathematics for Visual Computing, Part 1, Reference notes: Inverse, rejection, and importance sampling)</a>, <a href="ch320.xhtml#appendix-10308c3d753e-sampling-support-and-missing-strata" class="wikilink">Sampling support and missing strata</a>.</p>
+</section>
+<section id="appendix-ca8898faf1a6-scene-level-mis-witness" class="level3">
+<h3>Scene-level MIS witness</h3>
+<p><code>tools/labs/path_transport_scene_lab.cpp</code> lifts the estimator checks into an actual camera/geometry/shading path. A camera ray intersects a sphere, establishes the shading normal, and evaluates Lambertian outgoing radiance under a constant environment using two proposals for the same hemisphere integral: uniform-hemisphere light sampling and cosine-weighted BSDF sampling. Each sample evaluates both PDFs in the same solid-angle measure and uses the balance heuristic.</p>
+<p>Because constant environment radiance over a Lambertian surface has the analytic solution</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>o</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>ρ</mi>
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>v</mi>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>the pixel estimate has an independent target rather than merely comparing two noisy implementations. The witness therefore checks geometry, throughput, proposal PDFs, MIS weighting and convergence together. Emissive-geometry NEE, multiple bounces, media and full rendered-image parity remain later evidence layers.</p>
+</section>
+</section>
+</body>
+</html>

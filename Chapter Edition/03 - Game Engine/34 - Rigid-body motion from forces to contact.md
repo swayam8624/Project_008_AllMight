@@ -8,7 +8,7 @@ The crate that moved through the engine now needs a physical state whose transla
 
 **Recall question:** Where is the center of mass, what torque follows from this force point, and which state variables must be integrated?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 80373–82585; source-span SHA256 a5e41f45f514265d9107e9acef609a06b90f749807cf827035d6c5abf99a916a. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 81532–83766; source-span SHA256 1b49185b19cbb4cef57bdfe065968b7e91aa0bbc928c8f7a3850e6dc31720958. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## From the push on a panel to a repeatable rigid-body simulator
@@ -348,19 +348,41 @@ The pressure-plate crate from our workshop game is now the engineering test case
 
 ### Follow one crate through the complete physical argument
 
-Suppose our crate is a homogeneous rectangular box with mass $m=2\\,\\mathrm{kg}$, width $a=2\\,\\mathrm m$, height $b=1\\,\\mathrm m$, and depth $c=1\\,\\mathrm m$. We choose the world frame to have $y$ upward and represent local body axes by the columns of a rotation $R$. The body's centre of mass $x$ has units metres; linear velocity $v$ has units m/s; angular velocity $\\omega$ has units rad/s. Those declarations let us distinguish positions from displacements, degrees from radians, and a world vector from body-local coordinates *before* an implementation mixes them.
+Suppose our crate is a homogeneous rectangular box with mass $m=2\,\mathrm{kg}$, width $a=2\,\mathrm m$, height $b=1\,\mathrm m$, and depth $c=1\,\mathrm m$. We choose the world frame to have $y$ upward and represent local body axes by the columns of a rotation $R$. The body's centre of mass $x$ has units metres; linear velocity $v$ has units m/s; angular velocity $\omega$ has units rad/s. Those declarations let us distinguish positions from displacements, degrees from radians, and a world vector from body-local coordinates *before* an implementation mixes them.
 
 For a homogeneous axis-aligned box the centre-of-mass inertia tensor in its local principal frame is diagonal:
 
-$
-I_{\\mathrm{body}}=\\frac{m}{12}\\operatorname{diag}(b^2+c^2,\\;a^2+c^2,\\;a^2+b^2)=\\operatorname{diag}(1/3,5/6,5/6)\\;\\mathrm{kg\\,m^2}.
-$
+$$
+I_{\mathrm{body}}=\frac{m}{12}\operatorname{diag}(b^2+c^2,\;a^2+c^2,\;a^2+b^2)=\operatorname{diag}(1/3,5/6,5/6)\;\mathrm{kg\,m^2}.
+$$
 
-Why is this mass-dependent matrix necessary? Consider a world-space horizontal force $F=(10,0,0)\\,\\mathrm N$ acting $0.5\\,\\mathrm m$ above the centre, at lever arm $r=(0,0.5,0)\\,\\mathrm m$. Its linear acceleration contribution is $F/m=(5,0,0)\\,\\mathrm{m/s^2}$, regardless of the contact point. But the same force exerts torque $\\tau=r\\times F=(0,0,-5)\\,\\mathrm{N\\,m}$. With the body axes initially aligned to world axes, the instantaneous angular acceleration about the principal $z$ axis is $\\alpha_z=\\tau_z/I_{zz}=-6\\,\\mathrm{rad/s^2}$ because $I_{zz}=5/6\\,\\mathrm{kg\\,m^2}$. This last scalar division is valid *here*, at the specified aligned orientation and initial zero angular velocity: in general the rotational equation also includes the gyroscopic term $\\omega\\times(I\\omega)$, and the world inertia is $I_{world}=R I_{body}R^T$.
+Why is this mass-dependent matrix necessary? Consider a world-space horizontal force $F=(10,0,0)\,\mathrm N$ acting $0.5\,\mathrm m$ above the centre, at lever arm $r=(0,0.5,0)\,\mathrm m$. Its linear acceleration contribution is $F/m=(5,0,0)\,\mathrm{m/s^2}$, regardless of the contact point. But the same force exerts torque $\tau=r\times F=(0,0,-5)\,\mathrm{N\,m}$. With the body axes initially aligned to world axes, the instantaneous angular acceleration about the principal $z$ axis is $\alpha_z=\tau_z/I_{zz}=-6\,\mathrm{rad/s^2}$ because $I_{zz}=5/6\,\mathrm{kg\,m^2}$. This last scalar division is valid *here*, at the specified aligned orientation and initial zero angular velocity: in general the rotational equation also includes the gyroscopic term $\omega\times(I\omega)$, and the world inertia is $I_{world}=R I_{body}R^T$.
 
-At a fixed timestep $h=0.01\\,\\mathrm s$, an isolated semi-implicit first step from zero velocity would change the linear velocity by $(0.05,0,0)\\,\\mathrm{m/s}$ and, under the stated initial-axis assumptions, the angular velocity about $z$ by $-0.06\\,\\mathrm{rad/s}$. These are *one-step numerical approximations*, not exact long-duration predictions: as the orientation and velocities evolve, inertia, collision and solver forces change. Integrating orientation therefore requires a declared quaternion or rotation-matrix convention and an update consistent with the world/local angular-velocity frame.
+At a fixed timestep $h=0.01\,\mathrm s$, an isolated semi-implicit first step from zero velocity would change the linear velocity by $(0.05,0,0)\,\mathrm{m/s}$ and, under the stated initial-axis assumptions, the angular velocity about $z$ by $-0.06\,\mathrm{rad/s}$. These are *one-step numerical approximations*, not exact long-duration predictions: as the orientation and velocities evolve, inertia, collision and solver forces change. Integrating orientation therefore requires a declared quaternion or rotation-matrix convention and an update consistent with the world/local angular-velocity frame.
 
-When the crate touches the plate or floor, the contact impulse must change both $v$ and $\\omega$ through the lever arm. This motivates the effective inverse mass of the contact and ultimately the accumulated, clamped normal impulse of the persistent solver. A complete, continuous derivation from point velocity to contact constraints and warm starting is available in [[Chapter Edition/01 - Computing Foundations/39 - Research Navigation and Source Boundaries#Physical Foundations — Rigid Bodies, Extended Motion, and Contact Constraints|Rigid Bodies - From Extended Motion to Contact Constraints]]; the steps immediately below retain the supplied full derivations and engine code evidence. The standalone [C++20 contact laboratory](../../tools/labs/rigid_body_contact_lab.cpp) checks the simpler, central-contact limit; it does not establish correctness of the 3D angular solver.
+When the crate touches the plate or floor, the contact impulse must change both $v$ and $\omega$ through the lever arm. This motivates the effective inverse mass of the contact and ultimately the accumulated, clamped normal impulse of the persistent solver. A complete, continuous derivation from point velocity to contact constraints and warm starting is available in [[Chapter Edition/01 - Computing Foundations/39 - Research Navigation and Source Boundaries#Physical Foundations — Rigid Bodies, Extended Motion, and Contact Constraints|Rigid Bodies - From Extended Motion to Contact Constraints]]; the steps immediately below retain the supplied full derivations and engine code evidence. The standalone [C++20 contact laboratory](../../tools/labs/rigid_body_contact_lab.cpp) checks the simpler, central-contact limit; it does not establish correctness of the 3D angular solver.
+
+<!-- Book-completion teaching addition f825d990f828525a -->
+
+#### Derive the contact response before solving a stack
+
+At a world contact point $p$, a rigid body's point velocity is $v_p=v+\omega\times r$, where $r=p-x_{COM}$. For bodies $A$ and $B$, choose unit normal $n$ from $A$ to $B$ and define closing speed with sign intact: $u=n^T(v_{Bp}-v_{Ap})$. Then $u<0$ means the surfaces are approaching. In a planar solver, the scalar cross product $r\times n$ is the signed moment arm.
+
+A normal impulse $\lambda n$ on $B$ is paired with $-\lambda n$ on $A$. It changes the center velocities by $\Delta v_A=-m_A^{-1}\lambda n$ and $\Delta v_B=m_B^{-1}\lambda n$, and angular velocities by $\Delta\omega_A=-I_A^{-1}(r_A\times n)\lambda$ and $\Delta\omega_B=I_B^{-1}(r_B\times n)\lambda$. Projecting the resulting point-velocity changes back onto $n$ gives $\Delta u=K\lambda$, where
+
+$$
+K=m_A^{-1}+m_B^{-1}+I_A^{-1}(r_A\times n)^2+I_B^{-1}(r_B\times n)^2.
+$$
+
+$K$ is the effective inverse mass at this contact, measured in $\mathrm{kg}^{-1}$. For one frictionless, zero-restitution contact with $u<0$ and $K>0$, the impulse that stops closing is $\lambda=-u/K$; unilateral contact clamps that result to $\lambda\ge0$, because the surface can push but cannot pull. Restitution changes the target speed only for a newly impacting contact; penetration correction is a separate position or bias policy and must not be mistaken for this velocity derivation.
+
+**Hand trace.** Let $A$ have $m_A=1\,\mathrm{kg}$, $I_A^{-1}=3\,\mathrm{kg}^{-1}\mathrm m^{-2}$, $r_A=(0,0.5)\,\mathrm m$, and let $B$ be fixed. Set $n=(1,0)$ and $u=-2\,\mathrm{m/s}$. Then $(r_A\times n)=-0.5\,\mathrm m$ and $K=1+3(0.5)^2=1.75\,\mathrm{kg}^{-1}$. The stopping impulse is $\lambda=2/1.75=8/7\,\mathrm{N\,s}$. Body $A$ receives $-8/7\,\mathrm{N\,s}$ along $x$, so $\Delta v_{Ax}=-8/7\,\mathrm{m/s}$; its angular change is $-3(-0.5)(8/7)=12/7\,\mathrm{rad/s}$. The contact-point normal-speed increase is $K\lambda=2\,\mathrm{m/s}$, taking $u$ to zero. The equal-and-opposite impulse is applied to $B$ in a two-dynamic-body case; this trace holds $B$ fixed to isolate the algebra.
+
+**Solved check.** Move the same impulse line through $A$'s centre, so $r_A\times n=0$. Now $K=1\,\mathrm{kg}^{-1}$, $\lambda=2\,\mathrm{N\,s}$, and $\Delta\omega_A=0$. The larger impulse is required because the off-centre contact in the first case could use rotation as well as translation to remove closing speed. If the initial speed instead is $u=+0.3\,\mathrm{m/s}$, the unilateral solution is $\lambda=0$; a repulsive contact must not attract separating bodies.
+
+This scalar derivation is the base case. With two contacts, an impulse at one point changes speed at the other, so the scalar $K$ becomes a matrix and row order matters at finite iteration counts. The later active-set witness solves the two-point block; the sequential solver and cached impulses then provide an iterative policy. The original supplied Parts 1701–1800 lesson body was not received, so that later material remains labeled reconstruction rather than source-preserved lecture content.
+
+
 
 The sequence below keeps the source's Part 1601–1700 labels for provenance, but those numbers do not divide the reasoning into separate lessons. Keep asking what the crate needs *next* to remain a physically and numerically coherent part of the game.
 

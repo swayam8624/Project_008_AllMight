@@ -1,0 +1,44 @@
+\hypertarget{appendix-bc07c3d25b18}{}
+\section*{Endianness}
+\chapter{Endianness}\label{appendix-bc07c3d25b18-endianness}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C003
+
+\section{Definition and mechanism}\label{appendix-bc07c3d25b18-definition-and-mechanism}
+
+Byte order maps numeric significance to ascending addresses without changing the value. Little endian emits the low octet first; big endian emits the high octet first. The 32-bit value 0x12345678 becomes 78/56/34/12 or 12/34/56/78 respectively. It does not specify intra-byte bit order. Explicit unsigned shifts/masks define an external representation independent of native host order.
+
+\section{Prerequisites}\label{appendix-bc07c3d25b18-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5bee2df85484]{Byte and octet} --- Byte units define both storage offsets and significance digits.
+\item
+  \hyperref[appendix-280445746493]{Bit significance} --- Distinguish byte significance from where it is stored.
+\end{itemize}
+
+\section{Used by}\label{appendix-bc07c3d25b18-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-230b59c0676b]{Memory dump interpretation} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-367b6abf460e]{Little endian} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-92e040df969a]{Big endian} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-11ba36693aa2]{Byte swapping and network order} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-91d09ebed979]{Serialization} --- uses this mechanism as stated in its prerequisites.
+\end{itemize}
+
+\section{Recall and next depth}\label{appendix-bc07c3d25b18-recall-and-next-depth}
+
+Derive four bytes, invert each matching codec, and explain the mismatched decode.
+
+\textbf{Pending:} Mixed endian representations and protocol-specific rules.
+
+\section{Source and navigation}\label{appendix-bc07c3d25b18-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Where\%20the\%20bytes\%20live}{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

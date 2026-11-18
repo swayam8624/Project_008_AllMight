@@ -1,0 +1,48 @@
+\hypertarget{appendix-11ba36693aa2}{}\label{referencestart:appendix-11ba36693aa2}
+\section{Byte swapping and network order}\label{appendix-11ba36693aa2-byte-swapping-and-network-order}
+
+\hypertarget{appendix-11ba36693aa2-byte-swapping-and-network-order}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-11ba36693aa2-definition-and-mechanism}
+
+\hypertarget{appendix-11ba36693aa2-definition-and-mechanism}{}
+
+Byte swapping reverses octet positions; host-to-network conversion instead adapts native order to a specified wire order. On an already-matching host conversion need not swap. Many classic Internet integer fields use big endian, but never infer every protocol's order from that convention. std::endian queries native order; C++23 std::byteswap reverses suitable integer bytes.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-11ba36693aa2-prerequisites}
+
+\hypertarget{appendix-11ba36693aa2-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-bc07c3d25b18]{Endianness} --- Byte order tells how digit significance maps to sequence positions.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#nameddest=appendix-cc04044b5782}{Fixed-width integer types (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Fixed-width integer types)} --- The representation width fixes byte count and valid shift range.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-11ba36693aa2-used-by}
+
+\hypertarget{appendix-11ba36693aa2-used-by}{}
+
+Update downstream uses when later chunks build on this concept.
+
+\subsection{Recall and next depth}\label{appendix-11ba36693aa2-recall-and-next-depth}
+
+\hypertarget{appendix-11ba36693aa2-recall-and-next-depth}{}
+
+Explain why swapping twice restores x and why conversion may be a no-op.
+
+\textbf{Pending:} Mixed/native scalar orders and protocol APIs.
+
+\subsection{Source and navigation}\label{appendix-11ba36693aa2-source-and-navigation}
+
+\hypertarget{appendix-11ba36693aa2-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

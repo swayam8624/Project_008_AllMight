@@ -1,0 +1,38 @@
+\hypertarget{appendix-637d164ae5ca}{}
+\section*{Directed rounding modes}
+\section{Directed rounding modes}\label{appendix-637d164ae5ca-directed-rounding-modes}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C004 · \textbf{Latest development:} C004
+
+\subsection{Definition and mechanism}\label{appendix-637d164ae5ca-definition-and-mechanism}
+
+Upward means toward positive infinity, downward toward negative infinity, and toward-zero truncates magnitude. Upward rounding of −2.1 to an integer gives −2, not −3.
+
+\subsection{Prerequisites}\label{appendix-637d164ae5ca-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-614afe1de592]{Rounding to nearest ties to even} --- Midpoint parity determines discarded-tail decisions and the normal relative-error bound.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-637d164ae5ca-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-c80db39080be]{Numerical decision boundaries} --- Integer/pixel rounding policy controls discrete boundary choices.
+\item
+  \hyperref[appendix-f11d1a521253]{Floating-point environment and compiler modes} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-1823a14330cb]{Interval arithmetic} --- uses this mechanism in its explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-637d164ae5ca-recall-and-next-depth}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Use these signed directions on adjacent floating neighbors, not only integers.
+
+\subsection{Source and navigation}\label{appendix-637d164ae5ca-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

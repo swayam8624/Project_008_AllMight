@@ -1,0 +1,4576 @@
+The canonical sequence is exactly:
+
+**538. Vector projection onto another vector**  
+**539. Vector rejection from another vector**  
+**540. Scalar projection**  
+**541. Gram matrix concept** Project_Sheldon_Master_Curricul…
+
+These four are one tightly connected mathematical system:
+
+\[
+\boxed{
+\text{dot product}
+\rightarrow
+\text{projection}
+\rightarrow
+\text{orthogonal remainder}
+\rightarrow
+\text{scalar component}
+\rightarrow
+\text{pairwise dot-product structure}
+}
+\]
+
+The main thing I do **not** want you to leave this lesson believing is:
+
+> projection is just that formula with two dots and a division.
+
+The formula is the *consequence*. The actual concept is **decomposing a vector into a component parallel to another direction and a component perpendicular to it**. Once that is owned, projection, closest points, orthogonal coordinates, Gram matrices, least squares, collision response, friction decomposition, normal/tangent decomposition, and much of linear algebra stop looking like unrelated tricks.
+
+---
+
+# PART 538 — VECTOR PROJECTION ONTO ANOTHER VECTOR
+
+# 538.1 The actual problem
+
+Suppose we have two vectors:
+
+\[
+\vec a
+\]
+
+and nonzero:
+
+\[
+\vec b.
+\]
+
+Imagine:
+
+\[
+\vec b
+\]
+
+defines some direction.
+
+We want to answer:
+
+> How much of \(\vec a\) lies **along the direction of \(\vec b\)**?
+
+Not merely a number.
+
+We want the actual **vector component** of \(\vec a\) that points along \(\vec b\).
+
+Call it:
+
+\[
+\operatorname{proj}_{\vec b}\vec a.
+\]
+
+Read that notation as:
+
+> projection of \(a\) onto \(b\).
+
+Be very careful about operand roles:
+
+\[
+\boxed{
+\operatorname{proj}_{\vec b}\vec a
+}
+\]
+
+means:
+
+- \(\vec a\) = vector being projected;
+- \(\vec b\) = vector defining the target line/direction.
+
+---
+
+# 538.2 The geometric picture
+
+Imagine \(\vec a\) somewhere above the line through \(\vec b\).
+
+```text
+                    tip of a
+                       ●
+                      /|
+                     / |
+                    /  | perpendicular remainder
+                   /   |
+                  /    |
+                 /     |
+                /      ↓
+origin ●────────●──────────────────→ direction b
+        projection of a onto b
+```
+
+We want to decompose:
+
+\[
+\boxed{
+\vec a
+=
+\text{parallel component}
++
+\text{perpendicular component}
+}
+\]
+
+Write:
+
+\[
+\vec a
+=
+\vec p+\vec r
+\]
+
+where:
+
+\[
+\vec p
+\parallel
+\vec b
+\]
+
+and:
+
+\[
+\vec r
+\perp
+\vec b.
+\]
+
+Here:
+
+\[
+\vec p=
+\operatorname{proj}_{\vec b}\vec a.
+\]
+
+The entire projection derivation comes from these two requirements.
+
+---
+
+# 538.3 Requirement 1: projected vector must lie along \(\vec b\)
+
+If \(\vec p\) lies along \(\vec b\), then it must be a scalar multiple of \(\vec b\):
+
+\[
+\boxed{
+\vec p=t\vec b
+}
+\]
+
+for some scalar \(t\).
+
+At this point we do **not** know \(t\).
+
+That scalar is what we need to solve.
+
+---
+
+# 538.4 Requirement 2: leftover must be perpendicular
+
+The leftover after removing the projection is:
+
+\[
+\vec r
+=
+\vec a-\vec p.
+\]
+
+Because \(\vec p\) contains all of the component along \(\vec b\), the remainder must contain **none** of \(\vec b\)'s direction.
+
+Therefore:
+
+\[
+\boxed{
+\vec r\cdot\vec b=0.
+}
+\]
+
+Substitute:
+
+\[
+\vec r=\vec a-t\vec b.
+\]
+
+Then:
+
+\[
+(\vec a-t\vec b)\cdot\vec b=0.
+\]
+
+This one equation determines the projection.
+
+---
+
+# 538.5 Derive the projection coefficient
+
+Expand using dot-product distributivity:
+
+\[
+\vec a\cdot\vec b
+-
+(t\vec b)\cdot\vec b
+=
+0.
+\]
+
+Pull scalar \(t\) outside:
+
+\[
+\vec a\cdot\vec b
+-
+t(\vec b\cdot\vec b)
+=
+0.
+\]
+
+Therefore:
+
+\[
+t(\vec b\cdot\vec b)
+=
+\vec a\cdot\vec b.
+\]
+
+If:
+
+\[
+\vec b\neq\vec0,
+\]
+
+then:
+
+\[
+\vec b\cdot\vec b
+=
+\|\vec b\|^2
+>0.
+\]
+
+So divide:
+
+\[
+\boxed{
+t
+=
+\frac{\vec a\cdot\vec b}
+{\vec b\cdot\vec b}
+}
+\]
+
+or equivalently:
+
+\[
+\boxed{
+t
+=
+\frac{\vec a\cdot\vec b}
+{\|\vec b\|^2}.
+}
+\]
+
+Since:
+
+\[
+\vec p=t\vec b,
+\]
+
+we obtain the canonical formula:
+
+\[
+\boxed{
+\operatorname{proj}_{\vec b}\vec a
+=
+\frac{\vec a\cdot\vec b}
+{\vec b\cdot\vec b}
+\vec b
+}
+\]
+
+or:
+
+\[
+\boxed{
+\operatorname{proj}_{\vec b}\vec a
+=
+\frac{\vec a\cdot\vec b}
+{\|\vec b\|^2}
+\vec b.
+}
+\]
+
+That formula is now **derived**, not memorized.
+
+---
+
+# 538.6 Understand every term
+
+Look carefully:
+
+\[
+\frac{\vec a\cdot\vec b}
+{\vec b\cdot\vec b}
+\vec b.
+\]
+
+The numerator:
+
+\[
+\vec a\cdot\vec b
+\]
+
+measures directional alignment weighted by both magnitudes.
+
+The denominator:
+
+\[
+\vec b\cdot\vec b
+=
+\|\vec b\|^2
+\]
+
+corrects for the scale of the target vector.
+
+The ratio:
+
+\[
+t=
+\frac{\vec a\cdot\vec b}
+{\vec b\cdot\vec b}
+\]
+
+answers:
+
+> How many copies of \(\vec b\) are needed to reach the projection?
+
+Then:
+
+\[
+t\vec b
+\]
+
+constructs the projected vector.
+
+---
+
+# 538.7 Why the denominator is necessary
+
+This is one of the most common mistakes.
+
+People sometimes write:
+
+\[
+(\vec a\cdot\vec b)\vec b.
+\]
+
+That works only if:
+
+\[
+\|\vec b\|=1.
+\]
+
+Otherwise the scale of \(\vec b\) gets counted twice.
+
+Example:
+
+\[
+\vec a=(3,4)
+\]
+
+and:
+
+\[
+\vec b=(2,0).
+\]
+
+Geometrically, the projection of \(\vec a\) onto the X direction should be:
+
+\[
+(3,0).
+\]
+
+Dot:
+
+\[
+\vec a\cdot\vec b
+=
+3(2)+4(0)
+=
+6.
+\]
+
+If we incorrectly compute:
+
+\[
+6\vec b
+=
+6(2,0)
+=
+(12,0),
+\]
+
+obviously wrong.
+
+Correct denominator:
+
+\[
+\vec b\cdot\vec b
+=
+4.
+\]
+
+So:
+
+\[
+t=\frac64=\frac32.
+\]
+
+Then:
+
+\[
+t\vec b
+=
+\frac32(2,0)
+=
+\boxed{(3,0)}.
+\]
+
+Correct.
+
+---
+
+# 538.8 Unit-vector simplification
+
+If target direction is unit length:
+
+\[
+\|\hat b\|=1,
+\]
+
+then:
+
+\[
+\hat b\cdot\hat b=1.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\operatorname{proj}_{\hat b}\vec a
+=
+(\vec a\cdot\hat b)\hat b.
+}
+\]
+
+This is why unit directions are so convenient.
+
+The denominator disappears.
+
+---
+
+# 538.9 Geometric derivation using cosine
+
+We can derive the same result another way.
+
+From Part 536:
+
+\[
+\vec a\cdot\vec b
+=
+\|\vec a\|
+\|\vec b\|
+\cos\theta.
+\]
+
+The signed amount of \(\vec a\) lying along the **unit direction**:
+
+\[
+\hat b
+=
+\frac{\vec b}{\|\vec b\|}
+\]
+
+is:
+
+\[
+\|\vec a\|\cos\theta.
+\]
+
+So projected vector is:
+
+\[
+(\|\vec a\|\cos\theta)\hat b.
+\]
+
+Replace:
+
+\[
+\hat b=
+\frac{\vec b}{\|\vec b\|}.
+\]
+
+Then:
+
+\[
+\operatorname{proj}_{\vec b}\vec a
+=
+\|\vec a\|\cos\theta
+\frac{\vec b}{\|\vec b\|}.
+\]
+
+But:
+
+\[
+\|\vec a\|\cos\theta
+=
+\frac{\vec a\cdot\vec b}
+{\|\vec b\|}.
+\]
+
+Therefore:
+
+\[
+=
+\frac{\vec a\cdot\vec b}
+{\|\vec b\|}
+\frac{\vec b}{\|\vec b\|}.
+\]
+
+Thus:
+
+\[
+\boxed{
+=
+\frac{\vec a\cdot\vec b}
+{\|\vec b\|^2}\vec b.
+}
+\]
+
+Same formula.
+
+One derivation came from orthogonality.
+
+One came from cosine geometry.
+
+That agreement is important.
+
+---
+
+# 538.10 Worked example
+
+Take:
+
+\[
+\vec a=(4,3)
+\]
+
+and:
+
+\[
+\vec b=(2,1).
+\]
+
+Dot:
+
+\[
+\vec a\cdot\vec b
+=
+4(2)+3(1)
+=
+11.
+\]
+
+Self-dot of \(b\):
+
+\[
+\vec b\cdot\vec b
+=
+4+1
+=
+5.
+\]
+
+Therefore:
+
+\[
+t=\frac{11}{5}.
+\]
+
+Projection:
+
+\[
+\operatorname{proj}_{b}a
+=
+\frac{11}{5}(2,1).
+\]
+
+So:
+
+\[
+\boxed{
+\operatorname{proj}_{b}a
+=
+\left(
+\frac{22}{5},
+\frac{11}{5}
+\right)
+=
+(4.4,2.2).
+}
+\]
+
+Notice the X component is larger than \(a_x=4\).
+
+That is not a bug.
+
+Projection is onto a **slanted line**, not independently clamping coordinates.
+
+---
+
+# 538.11 Verify the remainder is perpendicular
+
+Remainder:
+
+\[
+\vec r
+=
+\vec a-\vec p.
+\]
+
+So:
+
+\[
+(4,3)-(4.4,2.2)
+=
+(-0.4,0.8).
+\]
+
+Dot with target:
+
+\[
+(-0.4,0.8)\cdot(2,1)
+\]
+
+\[
+=-0.8+0.8
+\]
+
+\[
+=0.
+\]
+
+Perfect.
+
+Thus:
+
+\[
+\boxed{
+\vec a-\operatorname{proj}_{\vec b}\vec a
+\perp
+\vec b.
+}
+\]
+
+That is the most important correctness test of a projection implementation.
+
+---
+
+# 538.12 Projection does not depend on the magnitude of the target vector
+
+This deserves a proof.
+
+Suppose we replace:
+
+\[
+\vec b
+\]
+
+with:
+
+\[
+c\vec b
+\]
+
+where \(c\neq0\).
+
+Then:
+
+\[
+\operatorname{proj}_{c\vec b}\vec a
+=
+\frac{
+\vec a\cdot(c\vec b)
+}{
+(c\vec b)\cdot(c\vec b)
+}
+(c\vec b).
+\]
+
+Numerator:
+
+\[
+c(\vec a\cdot\vec b).
+\]
+
+Denominator:
+
+\[
+c^2(\vec b\cdot\vec b).
+\]
+
+Then multiply by:
+
+\[
+c\vec b.
+\]
+
+So:
+
+\[
+\frac{
+c(a\cdot b)
+}{
+c^2(b\cdot b)
+}
+c b
+=
+\frac{a\cdot b}{b\cdot b}b.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\operatorname{proj}_{c\vec b}\vec a
+=
+\operatorname{proj}_{\vec b}\vec a
+}
+\]
+
+for every nonzero scalar \(c\).
+
+This is exactly what we want.
+
+Projection is onto the **line spanned by \(\vec b\)**, not onto the specific magnitude of \(\vec b\).
+
+Even reversing:
+
+\[
+\vec b\rightarrow-\vec b
+\]
+
+gives the same projection vector.
+
+---
+
+# 538.13 Projection onto yourself
+
+Take:
+
+\[
+\operatorname{proj}_{\vec b}\vec b.
+\]
+
+Then:
+
+\[
+\frac{
+\vec b\cdot\vec b
+}{
+\vec b\cdot\vec b
+}
+\vec b
+=
+\vec b.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\operatorname{proj}_{\vec b}\vec b=\vec b.
+}
+\]
+
+A vector already completely inside the target subspace survives projection unchanged.
+
+---
+
+# 538.14 Projection of an orthogonal vector
+
+If:
+
+\[
+\vec a\cdot\vec b=0,
+\]
+
+then:
+
+\[
+\operatorname{proj}_{\vec b}\vec a
+=
+0\vec b
+=
+\vec0.
+\]
+
+Thus:
+
+\[
+\boxed{
+\vec a\perp\vec b
+\Rightarrow
+\operatorname{proj}_{\vec b}\vec a=\vec0.
+}
+\]
+
+Makes perfect geometric sense.
+
+No component exists along \(\vec b\).
+
+---
+
+# 538.15 Projection of the zero vector
+
+If:
+
+\[
+\vec a=\vec0
+\]
+
+and:
+
+\[
+\vec b\neq0,
+\]
+
+then:
+
+\[
+\vec0\cdot\vec b=0.
+\]
+
+Therefore:
+
+\[
+\operatorname{proj}_{\vec b}\vec0
+=
+\vec0.
+\]
+
+That is perfectly valid.
+
+But projecting **onto zero** is not valid.
+
+---
+
+# 538.16 Why projection onto zero is undefined
+
+Formula contains:
+
+\[
+\vec b\cdot\vec b.
+\]
+
+If:
+
+\[
+\vec b=\vec0,
+\]
+
+denominator is:
+
+\[
+0.
+\]
+
+More importantly, zero vector defines no line/direction.
+
+So:
+
+\[
+\boxed{
+\operatorname{proj}_{\vec0}\vec a
+\text{ is undefined}.
+}
+\]
+
+This is not merely "division by zero in code."
+
+The geometric target does not exist.
+
+---
+
+# 538.17 Projection is the closest vector on the target line
+
+This is one of the deepest interpretations.
+
+Consider all vectors along \(b\):
+
+\[
+t\vec b
+\]
+
+for arbitrary scalar \(t\).
+
+We want the member closest to \(\vec a\).
+
+Define squared error:
+
+\[
+f(t)
+=
+\|\vec a-t\vec b\|^2.
+\]
+
+Using self-dot:
+
+\[
+f(t)
+=
+(\vec a-t\vec b)\cdot(\vec a-t\vec b).
+\]
+
+Expand:
+
+\[
+=
+\vec a\cdot\vec a
+-
+2t(\vec a\cdot\vec b)
++
+t^2(\vec b\cdot\vec b).
+\]
+
+So:
+
+\[
+f(t)
+=
+\|\vec a\|^2
+-
+2t(a\cdot b)
++
+t^2\|b\|^2.
+\]
+
+This is a quadratic in \(t\).
+
+Differentiate:
+
+\[
+f'(t)
+=
+-2(a\cdot b)
++
+2t(b\cdot b).
+\]
+
+Set derivative to zero:
+
+\[
+-2(a\cdot b)
++
+2t(b\cdot b)=0.
+\]
+
+Thus:
+
+\[
+t
+=
+\frac{a\cdot b}
+{b\cdot b}.
+\]
+
+Exactly our projection coefficient.
+
+Second derivative:
+
+\[
+f''(t)=2(b\cdot b)>0.
+\]
+
+So it is a minimum.
+
+Therefore:
+
+\[
+\boxed{
+\operatorname{proj}_{b}a
+\text{ is the closest point/vector to }a
+\text{ on the line }\operatorname{span}\{b\}.
+}
+\]
+
+This is the seed of **least squares**.
+
+---
+
+# 538.18 Projection is linear in the input being projected
+
+Fix nonzero \(b\).
+
+Define:
+
+\[
+P_b(a)
+=
+\operatorname{proj}_b a.
+\]
+
+Then:
+
+\[
+P_b(\alpha a+\beta c)
+=
+\frac{
+(\alpha a+\beta c)\cdot b
+}{
+b\cdot b
+}b.
+\]
+
+By dot linearity:
+
+\[
+=
+\frac{
+\alpha(a\cdot b)+
+\beta(c\cdot b)
+}{
+b\cdot b
+}b.
+\]
+
+Split:
+
+\[
+=
+\alpha P_b(a)+
+\beta P_b(c).
+\]
+
+Therefore projection onto a fixed line is a **linear transformation**:
+
+\[
+\boxed{
+P_b(\alpha a+\beta c)
+=
+\alpha P_b(a)+\beta P_b(c).
+}
+\]
+
+Later matrices will represent this transformation.
+
+---
+
+# 538.19 Projection is idempotent
+
+"Idempotent" means applying an operation twice changes nothing after the first application.
+
+Take:
+
+\[
+P_b(P_b(a)).
+\]
+
+After the first projection, the result already lies along \(b\).
+
+Projection of a vector already along \(b\) returns itself.
+
+Therefore:
+
+\[
+\boxed{
+P_b(P_b(a))=P_b(a).
+}
+\]
+
+This will later become matrix identity:
+
+\[
+P^2=P.
+\]
+
+You do not need matrix machinery yet to understand the geometry.
+
+---
+
+# 538.20 C++ implementation
+
+```cpp
+[[nodiscard]]
+Vec3 projectOnto(
+    Vec3 a,
+    Vec3 b)
+{
+    const float denominator = dot(b, b);
+
+    // b must define a valid direction.
+    assert(denominator > 0.0f);
+
+    const float coefficient =
+        dot(a, b) / denominator;
+
+    return b * coefficient;
+}
+```
+
+Execution:
+
+```text
+dot(a,b)
+    ↓
+alignment scalar
+
+dot(b,b)
+    ↓
+target squared length
+
+divide
+    ↓
+coefficient t
+
+b × t
+    ↓
+projected vector
+```
+
+For fixed `Vec3`, two dots + division + vector scaling are all constant-time.
+
+---
+
+# 538.21 Unit-direction optimized API
+
+If type guarantees:
+
+\[
+\|\hat b\|=1,
+\]
+
+then:
+
+```cpp
+[[nodiscard]]
+Vec3 projectOntoUnit(
+    Vec3 a,
+    UnitVec3 b) noexcept
+{
+    const Vec3 direction = b.value();
+
+    return direction * dot(a, direction);
+}
+```
+
+No denominator.
+
+No division.
+
+And no ambiguity about whether the formula assumes normalization.
+
+That is good API design.
+
+---
+
+# PART 539 — VECTOR REJECTION FROM ANOTHER VECTOR
+
+Projection extracts the portion **along** a chosen direction.
+
+What remains?
+
+The part **perpendicular** to it.
+
+That is the **vector rejection**.
+
+---
+
+# 539.1 Definition
+
+Given:
+
+\[
+\vec a
+\]
+
+and nonzero:
+
+\[
+\vec b,
+\]
+
+define:
+
+\[
+\boxed{
+\operatorname{rej}_{\vec b}\vec a
+=
+\vec a-
+\operatorname{proj}_{\vec b}\vec a.
+}
+\]
+
+So if:
+
+\[
+\vec p=\operatorname{proj}_{\vec b}\vec a,
+\]
+
+then:
+
+\[
+\vec r=
+\operatorname{rej}_{\vec b}\vec a
+\]
+
+and:
+
+\[
+\boxed{
+\vec a=\vec p+\vec r.
+}
+\]
+
+This is an **orthogonal decomposition** of \(a\) relative to the line spanned by \(b\).
+
+---
+
+# 539.2 Derive the explicit formula
+
+Projection:
+
+\[
+\vec p
+=
+\frac{a\cdot b}{b\cdot b}b.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\operatorname{rej}_{b}a
+=
+a-
+\frac{a\cdot b}{b\cdot b}b.
+}
+\]
+
+If \(\hat b\) is unit:
+
+\[
+\boxed{
+\operatorname{rej}_{\hat b}a
+=
+a-(a\cdot\hat b)\hat b.
+}
+\]
+
+---
+
+# 539.3 Why rejection is perpendicular
+
+Let's actually prove it.
+
+Let:
+
+\[
+r
+=
+a-
+\frac{a\cdot b}{b\cdot b}b.
+\]
+
+Dot with \(b\):
+
+\[
+r\cdot b
+=
+a\cdot b
+-
+\left(
+\frac{a\cdot b}{b\cdot b}b
+\right)\cdot b.
+\]
+
+Pull out scalar:
+
+\[
+=
+a\cdot b
+-
+\frac{a\cdot b}{b\cdot b}
+(b\cdot b).
+\]
+
+Cancel denominator:
+
+\[
+=
+a\cdot b-a\cdot b.
+\]
+
+Therefore:
+
+\[
+\boxed{
+r\cdot b=0.
+}
+\]
+
+Hence:
+
+\[
+\boxed{
+\operatorname{rej}_b a
+\perp b.
+}
+\]
+
+This is the defining property.
+
+---
+
+# 539.4 Worked example from Part 538
+
+Recall:
+
+\[
+a=(4,3),
+\]
+
+\[
+b=(2,1).
+\]
+
+Projection:
+
+\[
+p=(4.4,2.2).
+\]
+
+Rejection:
+
+\[
+r=a-p.
+\]
+
+Thus:
+
+\[
+r=
+(4,3)-(4.4,2.2)
+\]
+
+\[
+=
+\boxed{(-0.4,0.8)}.
+\]
+
+Dot:
+
+\[
+(-0.4,0.8)\cdot(2,1)
+=
+-0.8+0.8
+=
+0.
+\]
+
+So it is perpendicular.
+
+---
+
+# 539.5 Orthogonal decomposition
+
+We now have:
+
+\[
+\boxed{
+a
+=
+\operatorname{proj}_b a
++
+\operatorname{rej}_b a
+}
+\]
+
+with:
+
+\[
+\boxed{
+\operatorname{proj}_b a
+\perp
+\operatorname{rej}_b a.
+}
+\]
+
+Why are they perpendicular?
+
+Projection is parallel to \(b\).
+
+Rejection is perpendicular to \(b\).
+
+Therefore projection and rejection are perpendicular to each other.
+
+This gives Pythagoras:
+
+\[
+\boxed{
+\|a\|^2
+=
+\|\operatorname{proj}_b a\|^2
++
+\|\operatorname{rej}_b a\|^2.
+}
+\]
+
+---
+
+# 539.6 Verify with our example
+
+Original:
+
+\[
+a=(4,3)
+\]
+
+so:
+
+\[
+\|a\|^2=16+9=25.
+\]
+
+Projection:
+
+\[
+p=(4.4,2.2).
+\]
+
+Squared length:
+
+\[
+4.4^2+2.2^2
+=
+19.36+4.84
+=
+24.2.
+\]
+
+Rejection:
+
+\[
+r=(-0.4,0.8).
+\]
+
+Squared length:
+
+\[
+0.16+0.64
+=
+0.8.
+\]
+
+Sum:
+
+\[
+24.2+0.8=25.
+\]
+
+Exactly:
+
+\[
+\boxed{
+25=24.2+0.8.
+}
+\]
+
+---
+
+# 539.7 Rejection of something already parallel
+
+If:
+
+\[
+a=c b,
+\]
+
+then:
+
+\[
+\operatorname{proj}_b a=a.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\operatorname{rej}_b a=0.
+}
+\]
+
+There is no perpendicular component.
+
+---
+
+# 539.8 Rejection of an orthogonal vector
+
+If:
+
+\[
+a\cdot b=0,
+\]
+
+then projection is zero.
+
+Therefore:
+
+\[
+\boxed{
+\operatorname{rej}_b a=a.
+}
+\]
+
+The entire vector is already perpendicular.
+
+---
+
+# 539.9 Rejection is also invariant to scaling \(b\)
+
+Because projection does not depend on the magnitude or sign of target vector:
+
+\[
+\operatorname{proj}_{cb}a
+=
+\operatorname{proj}_b a
+\]
+
+for:
+
+\[
+c\neq0.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\operatorname{rej}_{cb}a
+=
+\operatorname{rej}_b a.
+}
+\]
+
+The operation depends only on the line spanned by \(b\).
+
+---
+
+# 539.10 Rejection as "remove an axis"
+
+Suppose:
+
+\[
+\hat n
+\]
+
+is a unit normal direction.
+
+Then:
+
+\[
+a-
+(a\cdot\hat n)\hat n
+\]
+
+removes the component of \(a\) along the normal.
+
+What remains lies in the plane perpendicular to \(n\).
+
+This appears everywhere.
+
+Examples:
+
+- sliding velocity along a wall;
+- tangent component of motion;
+- decomposing force into normal/tangential parts;
+- removing vertical motion;
+- constructing tangent vectors;
+- projecting velocity onto a contact surface.
+
+---
+
+# 539.11 Example: sliding along ground
+
+Suppose unit ground normal:
+
+\[
+\hat n=(0,1,0).
+\]
+
+Velocity:
+
+\[
+v=(3,-5,2).
+\]
+
+Projection of velocity onto normal:
+
+\[
+(v\cdot n)n.
+\]
+
+Dot:
+
+\[
+3(0)+(-5)(1)+2(0)
+=
+-5.
+\]
+
+Normal component:
+
+\[
+-5(0,1,0)
+=
+(0,-5,0).
+\]
+
+Reject it:
+
+\[
+v-(0,-5,0)
+=
+\boxed{(3,0,2)}.
+\]
+
+That is the tangent velocity along the horizontal plane.
+
+We removed the vertical component.
+
+This is the mathematical skeleton behind many "slide along surface" calculations.
+
+---
+
+# 539.12 Why this generalizes beyond axis-aligned surfaces
+
+Suppose surface normal is not:
+
+\[
+(0,1,0).
+\]
+
+Maybe:
+
+\[
+\hat n=
+\left(
+\frac1{\sqrt2},
+\frac1{\sqrt2},
+0
+\right).
+\]
+
+You cannot simply "set Y to zero."
+
+Instead:
+
+\[
+v_{\text{tangent}}
+=
+v-
+(v\cdot n)n.
+\]
+
+The dot product lets us remove a component relative to **any direction**, not just standard axes.
+
+That is why projection/rejection is much more powerful than component hacking.
+
+---
+
+# 539.13 Rejection is a linear transformation
+
+For fixed \(b\):
+
+\[
+R_b(a)
+=
+a-P_b(a).
+\]
+
+Identity mapping \(a\mapsto a\) is linear.
+
+Projection is linear.
+
+Therefore rejection is linear.
+
+So:
+
+\[
+\boxed{
+R_b(\alpha a+\beta c)
+=
+\alpha R_b(a)+
+\beta R_b(c).
+}
+\]
+
+---
+
+# 539.14 Rejection is idempotent
+
+Once a vector has been rejected from \(b\), it is already perpendicular to \(b\).
+
+Applying rejection again removes zero additional component.
+
+Thus:
+
+\[
+\boxed{
+R_b(R_b(a))=R_b(a).
+}
+\]
+
+Projection and rejection are complementary idempotent operations.
+
+---
+
+# 539.15 Complementary operators
+
+Conceptually:
+
+\[
+P_b(a)
+=
+\text{parallel part}
+\]
+
+and:
+
+\[
+R_b(a)
+=
+\text{perpendicular part}.
+\]
+
+Together:
+
+\[
+\boxed{
+P_b+R_b=I
+}
+\]
+
+where \(I\) means "leave the vector unchanged."
+
+This notation anticipates linear operators/matrices but the meaning is simple:
+
+\[
+P_b(a)+R_b(a)=a.
+\]
+
+---
+
+# 539.16 C++ implementation
+
+```cpp
+[[nodiscard]]
+Vec3 rejectFrom(
+    Vec3 a,
+    Vec3 b)
+{
+    return a - projectOnto(a, b);
+}
+```
+
+Or for unit target:
+
+```cpp
+[[nodiscard]]
+Vec3 rejectFromUnit(
+    Vec3 a,
+    UnitVec3 b)
+{
+    const Vec3 n = b.value();
+
+    return a - n * dot(a, n);
+}
+```
+
+This should be the implementation you mentally reconstruct—not memorize.
+
+---
+
+# 539.17 Numerical issue: subtractive cancellation
+
+Rejection can be numerically sensitive when \(a\) is almost parallel to \(b\).
+
+Suppose projection is nearly equal to \(a\).
+
+Then:
+
+\[
+r=a-p
+\]
+
+subtracts two very similar numbers.
+
+The true rejection may be tiny.
+
+Floating-point relative error in that tiny result can be large.
+
+Example conceptually:
+
+\[
+a=(1,\epsilon)
+\]
+
+and:
+
+\[
+b=(1,0)
+\]
+
+with tiny \(\epsilon\).
+
+Projection:
+
+\[
+(1,0).
+\]
+
+Rejection:
+
+\[
+(0,\epsilon).
+\]
+
+If \(\epsilon\) is near machine precision compared with the scale of `a`, that residual can be sensitive.
+
+This becomes important in basis construction and Gram–Schmidt later.
+
+---
+
+# PART 540 — SCALAR PROJECTION
+
+This is often confused with the projection coefficient.
+
+They are related.
+
+They are **not the same thing unless the target direction is unit length**.
+
+We need to be precise.
+
+---
+
+# 540.1 What question does scalar projection answer?
+
+Vector projection answers:
+
+> What vector lies along \(b\) representing \(a\)'s parallel component?
+
+Scalar projection asks:
+
+> What is the **signed length** of \(a\)'s component along the direction of \(b\)?
+
+The result is a scalar.
+
+It is often called:
+
+- scalar projection;
+- scalar component;
+- signed component.
+
+Notation sometimes appears as:
+
+\[
+\operatorname{comp}_{b}a.
+\]
+
+---
+
+# 540.2 Derive it geometrically
+
+Let:
+
+\[
+\theta
+\]
+
+be angle between nonzero \(a\) and \(b\).
+
+The signed length of \(a\) along \(b\)'s direction is:
+
+\[
+\boxed{
+\|a\|\cos\theta.
+}
+\]
+
+From dot-product relation:
+
+\[
+a\cdot b
+=
+\|a\|
+\|b\|
+\cos\theta.
+\]
+
+Divide by:
+
+\[
+\|b\|.
+\]
+
+Then:
+
+\[
+\boxed{
+\operatorname{comp}_b a
+=
+\frac{a\cdot b}
+{\|b\|}.
+}
+\]
+
+This is scalar projection.
+
+---
+
+# 540.3 Why it is signed
+
+Suppose \(a\) points mostly in same direction as \(b\).
+
+Then:
+
+\[
+a\cdot b>0.
+\]
+
+Scalar projection is positive.
+
+If perpendicular:
+
+\[
+a\cdot b=0.
+\]
+
+Scalar projection is zero.
+
+If \(a\) points mostly opposite:
+
+\[
+a\cdot b<0.
+\]
+
+Scalar projection is negative.
+
+Thus scalar projection tells not only amount but orientation relative to \(b\).
+
+---
+
+# 540.4 Unit-target simplification
+
+If:
+
+\[
+\|\hat b\|=1,
+\]
+
+then:
+
+\[
+\boxed{
+\operatorname{comp}_{\hat b}a
+=
+a\cdot\hat b.
+}
+\]
+
+This is why we said earlier that dotting with a unit direction returns the signed component along that direction.
+
+Now the statement is fully justified.
+
+---
+
+# 540.5 Example
+
+Take:
+
+\[
+a=(4,3),
+\]
+
+\[
+b=(2,1).
+\]
+
+We know:
+
+\[
+a\cdot b=11.
+\]
+
+Magnitude:
+
+\[
+\|b\|=\sqrt5.
+\]
+
+Scalar projection:
+
+\[
+\operatorname{comp}_b a
+=
+\frac{11}{\sqrt5}.
+\]
+
+Numerically:
+
+\[
+\boxed{
+\approx4.91935.
+}
+\]
+
+This means the parallel component of \(a\) has signed Euclidean length approximately \(4.919\) in the positive direction of \(b\).
+
+---
+
+# 540.6 Check against vector projection magnitude
+
+Earlier:
+
+\[
+p=
+\left(
+\frac{22}{5},
+\frac{11}{5}
+\right).
+\]
+
+Its magnitude:
+
+\[
+\|p\|
+=
+\sqrt{
+\frac{484}{25}
++
+\frac{121}{25}
+}.
+\]
+
+\[
+=
+\sqrt{
+\frac{605}{25}
+}
+\]
+
+\[
+=
+\frac{\sqrt{605}}5.
+\]
+
+Since:
+
+\[
+605=121\cdot5,
+\]
+
+\[
+=
+\frac{11\sqrt5}{5}
+=
+\frac{11}{\sqrt5}.
+\]
+
+Exactly the scalar projection magnitude because it is positive.
+
+If projection points opposite target orientation, vector projection magnitude remains nonnegative while scalar projection becomes negative.
+
+That distinction matters.
+
+---
+
+# 540.7 Scalar projection versus projection coefficient
+
+This is critical.
+
+Projection coefficient:
+
+\[
+\boxed{
+t=
+\frac{a\cdot b}
+{b\cdot b}
+=
+\frac{a\cdot b}
+{\|b\|^2}
+}
+\]
+
+means:
+
+> how many copies of the specific vector \(b\) produce the vector projection?
+
+Scalar projection:
+
+\[
+\boxed{
+s=
+\frac{a\cdot b}
+{\|b\|}
+}
+\]
+
+means:
+
+> signed Euclidean length along the direction of \(b\).
+
+These are related by:
+
+\[
+\boxed{
+s=t\|b\|.
+}
+\]
+
+Or:
+
+\[
+\boxed{
+t=\frac{s}{\|b\|}.
+}
+\]
+
+Only when:
+
+\[
+\|b\|=1
+\]
+
+do we get:
+
+\[
+\boxed{
+t=s=a\cdot b.
+}
+\]
+
+---
+
+# 540.8 Concrete demonstration of the difference
+
+Take:
+
+\[
+a=(3,4)
+\]
+
+and:
+
+\[
+b=(2,0).
+\]
+
+Dot:
+
+\[
+a\cdot b=6.
+\]
+
+Target magnitude:
+
+\[
+\|b\|=2.
+\]
+
+Scalar projection:
+
+\[
+s=\frac62=3.
+\]
+
+Correct: \(a\) contains 3 units along positive X.
+
+Projection coefficient:
+
+\[
+t=\frac6{4}=1.5.
+\]
+
+Why 1.5?
+
+Because:
+
+\[
+1.5(2,0)=(3,0).
+\]
+
+So:
+
+```text
+scalar projection = 3 units of physical signed length
+
+projection coefficient = 1.5 copies of vector (2,0)
+```
+
+Very different interpretations.
+
+---
+
+# 540.9 Units expose the distinction
+
+Suppose both \(a\) and \(b\) are displacement vectors measured in metres.
+
+Then:
+
+\[
+a\cdot b
+\]
+
+has units:
+
+\[
+m^2.
+\]
+
+Scalar projection:
+
+\[
+\frac{m^2}{m}
+=
+m.
+\]
+
+So it has units of **length**.
+
+Projection coefficient:
+
+\[
+\frac{m^2}{m^2}=1.
+\]
+
+It is dimensionless.
+
+That is a powerful sanity check.
+
+---
+
+# 540.10 Reconstruct vector projection from scalar projection
+
+Let:
+
+\[
+\hat b=
+\frac{b}{\|b\|}.
+\]
+
+Then scalar projection is:
+
+\[
+s=
+\frac{a\cdot b}{\|b\|}.
+\]
+
+Vector projection is:
+
+\[
+\boxed{
+\operatorname{proj}_b a
+=
+s\hat b.
+}
+\]
+
+Meaning:
+
+```text
+signed amount
+×
+unit direction
+=
+parallel vector
+```
+
+This is arguably the cleanest conceptual definition.
+
+---
+
+# 540.11 Positive, zero, negative cases
+
+For nonzero \(a,b\):
+
+If angle acute:
+
+\[
+s>0.
+\]
+
+If:
+
+\[
+\theta=90^\circ,
+\]
+
+then:
+
+\[
+s=0.
+\]
+
+If angle obtuse:
+
+\[
+s<0.
+\]
+
+If same direction:
+
+\[
+s=\|a\|.
+\]
+
+If exactly opposite:
+
+\[
+s=-\|a\|.
+\]
+
+These follow immediately from:
+
+\[
+s=\|a\|\cos\theta.
+\]
+
+---
+
+# 540.12 Scalar projection onto a basis direction
+
+Suppose:
+
+\[
+e_x=(1,0,0).
+\]
+
+Then:
+
+\[
+\operatorname{comp}_{e_x}v
+=
+v\cdot e_x
+=
+v_x.
+\]
+
+Thus ordinary Cartesian coordinates can be understood as scalar projections onto the orthonormal basis vectors:
+
+\[
+\boxed{
+v_x=v\cdot e_x
+}
+\]
+
+\[
+\boxed{
+v_y=v\cdot e_y
+}
+\]
+
+\[
+\boxed{
+v_z=v\cdot e_z.
+}
+\]
+
+This is a profound reinterpretation of coordinates.
+
+In an orthonormal basis, coordinates are simply signed projection lengths.
+
+---
+
+# 540.13 Why this fails in a nonorthogonal basis
+
+Suppose basis vectors are:
+
+\[
+b_1=(1,0)
+\]
+
+and:
+
+\[
+b_2=(1,1).
+\]
+
+Vector:
+
+\[
+v=b_1+b_2=(2,1).
+\]
+
+Its coordinates relative to this basis are:
+
+\[
+[v]_B=(1,1).
+\]
+
+But:
+
+\[
+v\cdot b_1=2.
+\]
+
+So dotting with \(b_1\) does **not** return coordinate coefficient \(1\).
+
+Why?
+
+Because \(b_2\) also has a component along \(b_1\).
+
+The basis directions are not orthogonal, so their contributions contaminate one another.
+
+This is exactly the problem Part 541's Gram matrix captures.
+
+---
+
+# 540.14 C++ implementation
+
+For arbitrary nonzero \(b\):
+
+```cpp
+[[nodiscard]]
+float scalarProjection(
+    Vec3 a,
+    Vec3 b)
+{
+    const float bLength =
+        std::sqrt(dot(b, b));
+
+    assert(bLength > 0.0f);
+
+    return dot(a, b) / bLength;
+}
+```
+
+For guaranteed unit target:
+
+```cpp
+[[nodiscard]]
+float scalarProjection(
+    Vec3 a,
+    UnitVec3 b) noexcept
+{
+    return dot(a, b.value());
+}
+```
+
+Again, semantic types can make expensive or unsafe assumptions explicit.
+
+---
+
+# PART 541 — GRAM MATRIX CONCEPT
+
+This Part looks like a sudden jump.
+
+It is not.
+
+Everything we just learned assumed we could ask about:
+
+\[
+b_i\cdot b_j.
+\]
+
+Now suppose we have many vectors:
+
+\[
+b_1,b_2,\ldots,b_k.
+\]
+
+Rather than repeatedly asking for their pairwise dot products one by one, we collect **all pairwise geometric relationships into one table**.
+
+That table is the **Gram matrix**.
+
+---
+
+# 541.1 Why do we need it?
+
+Recall the comfortable orthonormal basis case.
+
+If:
+
+\[
+e_i\cdot e_j
+=
+0
+\quad
+(i\neq j)
+\]
+
+and:
+
+\[
+e_i\cdot e_i=1,
+\]
+
+then coordinates are extremely easy to interpret.
+
+But in a general basis:
+
+\[
+b_1,\ldots,b_k,
+\]
+
+the vectors may:
+
+- not be unit length;
+- not be perpendicular;
+- have various pairwise angles.
+
+To understand metric geometry in that basis, we need to know all:
+
+\[
+b_i\cdot b_j.
+\]
+
+The Gram matrix stores exactly that information.
+
+---
+
+# 541.2 Formal definition
+
+Given vectors:
+
+\[
+b_1,\ldots,b_k,
+\]
+
+their Gram matrix is:
+
+\[
+\boxed{
+G_{ij}
+=
+b_i\cdot b_j.
+}
+\]
+
+That means row \(i\), column \(j\) contains the dot product between vectors \(b_i\) and \(b_j\).
+
+For three vectors:
+
+\[
+\boxed{
+G=
+\begin{bmatrix}
+b_1\cdot b_1 & b_1\cdot b_2 & b_1\cdot b_3\\
+b_2\cdot b_1 & b_2\cdot b_2 & b_2\cdot b_3\\
+b_3\cdot b_1 & b_3\cdot b_2 & b_3\cdot b_3
+\end{bmatrix}.
+}
+\]
+
+You do not need full matrix algebra yet.
+
+For now a matrix is simply an organized rectangular array of scalars.
+
+---
+
+# 541.3 The diagonal stores squared lengths
+
+Entry:
+
+\[
+G_{ii}
+=
+b_i\cdot b_i.
+\]
+
+But:
+
+\[
+b_i\cdot b_i
+=
+\|b_i\|^2.
+\]
+
+Therefore:
+
+\[
+\boxed{
+G_{ii}
+=
+\|b_i\|^2.
+}
+\]
+
+So the diagonal tells us every vector's squared magnitude.
+
+---
+
+# 541.4 Off-diagonal entries store pairwise alignment
+
+For:
+
+\[
+i\neq j,
+\]
+
+\[
+G_{ij}
+=
+b_i\cdot b_j.
+\]
+
+Using cosine relation:
+
+\[
+\boxed{
+G_{ij}
+=
+\|b_i\|
+\|b_j\|
+\cos\theta_{ij}.
+}
+\]
+
+Therefore each off-diagonal entry tells us how aligned two basis/generator vectors are.
+
+Positive:
+
+```text
+acute relation
+```
+
+Zero:
+
+```text
+orthogonal
+```
+
+Negative:
+
+```text
+obtuse relation
+```
+
+with magnitude affected by vector lengths.
+
+---
+
+# 541.5 Example with standard basis
+
+Take:
+
+\[
+e_x=(1,0,0),
+\]
+
+\[
+e_y=(0,1,0),
+\]
+
+\[
+e_z=(0,0,1).
+\]
+
+Pairwise dots:
+
+\[
+e_x\cdot e_x=1
+\]
+
+\[
+e_y\cdot e_y=1
+\]
+
+\[
+e_z\cdot e_z=1.
+\]
+
+Cross dots:
+
+\[
+e_x\cdot e_y=0
+\]
+
+etc.
+
+Therefore:
+
+\[
+\boxed{
+G=
+\begin{bmatrix}
+1&0&0\\
+0&1&0\\
+0&0&1
+\end{bmatrix}.
+}
+\]
+
+This special matrix is the **identity matrix**.
+
+It tells us:
+
+- every basis vector has unit length;
+- every different pair is orthogonal.
+
+Thus:
+
+\[
+\boxed{
+G=I
+}
+\]
+
+for an orthonormal basis.
+
+---
+
+# 541.6 Example with non-unit orthogonal basis
+
+Take:
+
+\[
+b_1=(2,0)
+\]
+
+and:
+
+\[
+b_2=(0,3).
+\]
+
+Dots:
+
+\[
+b_1\cdot b_1=4.
+\]
+
+\[
+b_2\cdot b_2=9.
+\]
+
+\[
+b_1\cdot b_2=0.
+\]
+
+Therefore:
+
+\[
+\boxed{
+G=
+\begin{bmatrix}
+4&0\\
+0&9
+\end{bmatrix}.
+}
+\]
+
+The zero off-diagonal tells us the basis vectors are orthogonal.
+
+The non-one diagonal tells us they are not normalized.
+
+---
+
+# 541.7 Example with nonorthogonal basis
+
+Take:
+
+\[
+b_1=(1,0)
+\]
+
+and:
+
+\[
+b_2=(1,1).
+\]
+
+Compute:
+
+\[
+b_1\cdot b_1=1.
+\]
+
+\[
+b_1\cdot b_2=1.
+\]
+
+\[
+b_2\cdot b_1=1.
+\]
+
+\[
+b_2\cdot b_2=2.
+\]
+
+So:
+
+\[
+\boxed{
+G=
+\begin{bmatrix}
+1&1\\
+1&2
+\end{bmatrix}.
+}
+\]
+
+The nonzero off-diagonal value tells us the coordinate directions are not perpendicular.
+
+This matrix captures the geometry that raw coordinate tuples alone were hiding.
+
+---
+
+# 541.8 Why the Gram matrix is symmetric
+
+Because:
+
+\[
+b_i\cdot b_j
+=
+b_j\cdot b_i.
+\]
+
+Therefore:
+
+\[
+G_{ij}=G_{ji}.
+\]
+
+Hence:
+
+\[
+\boxed{
+G^T=G.
+}
+\]
+
+That means the matrix mirrors across its diagonal.
+
+For example:
+
+\[
+\begin{bmatrix}
+1&4&7\\
+4&2&5\\
+7&5&9
+\end{bmatrix}.
+\]
+
+Knowing the upper triangle automatically determines the lower triangle.
+
+---
+
+# 541.9 Gram matrix lets us compute vector length from nonorthogonal coordinates
+
+This is one of the most important uses.
+
+Suppose basis:
+
+\[
+B=(b_1,b_2)
+\]
+
+and vector has coordinates:
+
+\[
+[x]_B=
+\begin{bmatrix}
+c_1\\
+c_2
+\end{bmatrix}.
+\]
+
+That means:
+
+\[
+x=c_1b_1+c_2b_2.
+\]
+
+What is:
+
+\[
+\|x\|^2?
+\]
+
+Compute self-dot:
+
+\[
+x\cdot x.
+\]
+
+Substitute:
+
+\[
+(c_1b_1+c_2b_2)
+\cdot
+(c_1b_1+c_2b_2).
+\]
+
+Expand:
+
+\[
+c_1^2(b_1\cdot b_1)
++
+2c_1c_2(b_1\cdot b_2)
++
+c_2^2(b_2\cdot b_2).
+\]
+
+This is **not** generally:
+
+\[
+c_1^2+c_2^2.
+\]
+
+The basis geometry appears through the dot products.
+
+Those dot products are exactly entries of \(G\).
+
+In compact notation:
+
+\[
+\boxed{
+\|x\|^2
+=
+c^T G c.
+}
+\]
+
+---
+
+# 541.10 What does \(c^TGc\) mean?
+
+Do not let compact matrix notation hide the actual arithmetic.
+
+For:
+
+\[
+c=
+\begin{bmatrix}
+c_1\\
+c_2
+\end{bmatrix}
+\]
+
+and:
+
+\[
+G=
+\begin{bmatrix}
+g_{11}&g_{12}\\
+g_{21}&g_{22}
+\end{bmatrix},
+\]
+
+the expression:
+
+\[
+c^TGc
+\]
+
+means:
+
+\[
+\boxed{
+c_1^2g_{11}
++
+c_1c_2g_{12}
++
+c_2c_1g_{21}
++
+c_2^2g_{22}.
+}
+\]
+
+Because Gram matrix is symmetric:
+
+\[
+g_{12}=g_{21},
+\]
+
+so:
+
+\[
+=
+c_1^2g_{11}
++
+2c_1c_2g_{12}
++
+c_2^2g_{22}.
+\]
+
+Exactly the expansion above.
+
+Nothing magical happened.
+
+Matrix notation simply packages the repeated sums.
+
+---
+
+# 541.11 Verify using our slanted basis
+
+Recall:
+
+\[
+b_1=(1,0)
+\]
+
+\[
+b_2=(1,1)
+\]
+
+and:
+
+\[
+G=
+\begin{bmatrix}
+1&1\\
+1&2
+\end{bmatrix}.
+\]
+
+Take coordinates:
+
+\[
+c=
+\begin{bmatrix}
+1\\
+1
+\end{bmatrix}.
+\]
+
+Geometric vector:
+
+\[
+x=b_1+b_2=(2,1).
+\]
+
+Its true squared Euclidean length:
+
+\[
+\|x\|^2
+=
+2^2+1^2
+=
+5.
+\]
+
+Now use Gram matrix:
+
+\[
+c^TGc.
+\]
+
+First:
+
+\[
+Gc=
+\begin{bmatrix}
+1&1\\
+1&2
+\end{bmatrix}
+\begin{bmatrix}
+1\\
+1
+\end{bmatrix}
+=
+\begin{bmatrix}
+2\\
+3
+\end{bmatrix}.
+\]
+
+Then:
+
+\[
+c^T(Gc)
+=
+[1\quad1]
+\begin{bmatrix}
+2\\
+3
+\end{bmatrix}
+=
+5.
+\]
+
+Correct:
+
+\[
+\boxed{
+\|x\|^2=5.
+}
+\]
+
+Naive:
+
+\[
+1^2+1^2=2
+\]
+
+would have been wrong.
+
+---
+
+# 541.12 Gram matrix also computes dot products between coordinate vectors
+
+Suppose:
+
+\[
+x=\sum_i c_i b_i
+\]
+
+and:
+
+\[
+y=\sum_j d_j b_j.
+\]
+
+Then:
+
+\[
+x\cdot y
+=
+\left(
+\sum_i c_i b_i
+\right)
+\cdot
+\left(
+\sum_j d_j b_j
+\right).
+\]
+
+By bilinearity:
+
+\[
+=
+\sum_i\sum_j
+c_i d_j
+(b_i\cdot b_j).
+\]
+
+But:
+
+\[
+b_i\cdot b_j=G_{ij}.
+\]
+
+Therefore:
+
+\[
+\boxed{
+x\cdot y
+=
+c^T G d.
+}
+\]
+
+This is the general coordinate formula.
+
+The familiar:
+
+\[
+x\cdot y
+=
+c^Td
+=
+\sum_i c_i d_i
+\]
+
+is only the special case:
+
+\[
+G=I.
+\]
+
+In other words:
+
+\[
+\boxed{
+\text{ordinary component dot product assumes the metric matrix is identity.}
+}
+\]
+
+That is a deep point.
+
+---
+
+# 541.13 This explains the caveat from Parts 526 and 534
+
+Earlier we kept saying:
+
+> \(\sqrt{x^2+y^2+z^2}\) and \(\sum x_iy_i\) assume an orthonormal basis.
+
+Now we can finally state the general rule.
+
+In arbitrary basis coordinates:
+
+\[
+\boxed{
+\|v\|^2
+=
+[v]_B^T
+G
+[v]_B
+}
+\]
+
+and:
+
+\[
+\boxed{
+u\cdot v
+=
+[u]_B^T
+G
+[v]_B.
+}
+\]
+
+If basis is orthonormal:
+
+\[
+G=I,
+\]
+
+so:
+
+\[
+u^TIv=u^Tv.
+\]
+
+That collapses to the familiar sum-of-products.
+
+---
+
+# 541.14 Gram matrix and linear dependence
+
+Here is another powerful property.
+
+Suppose vectors:
+
+\[
+b_1,\ldots,b_k
+\]
+
+are linearly dependent.
+
+Then there exists nonzero coefficient vector \(c\) such that:
+
+\[
+\sum_i c_i b_i=0.
+\]
+
+Call that geometric vector \(x\).
+
+Then:
+
+\[
+\|x\|^2=0.
+\]
+
+But:
+
+\[
+\|x\|^2=c^T G c.
+\]
+
+So there is some nonzero \(c\) for which:
+
+\[
+c^T G c=0.
+\]
+
+That means Gram matrix has a degeneracy.
+
+For independent real vectors, no nonzero coefficient combination can produce zero.
+
+Therefore:
+
+\[
+c^T G c>0
+\]
+
+for every nonzero \(c\).
+
+This property is called **positive definiteness**.
+
+So:
+
+\[
+\boxed{
+\text{independent vectors}
+\Rightarrow
+G\text{ positive definite}.
+}
+\]
+
+If the generators are dependent, the Gram matrix is singular.
+
+Full determinant/eigenvalue machinery comes later, but the conceptual relationship belongs here.
+
+---
+
+# 541.15 Positive semidefiniteness proof
+
+Even without assuming independence:
+
+\[
+c^T G c
+=
+\left\|
+\sum_i c_i b_i
+\right\|^2.
+\]
+
+Squared magnitude is always nonnegative.
+
+Therefore:
+
+\[
+\boxed{
+c^T G c\ge0
+}
+\]
+
+for every coefficient vector \(c\).
+
+This property is called **positive semidefinite**.
+
+So every real Gram matrix is:
+
+\[
+\boxed{
+\text{symmetric and positive semidefinite}.
+}
+\]
+
+If the underlying vectors are independent, it becomes positive definite.
+
+---
+
+# 541.16 Gram determinant intuition
+
+Without developing determinant theory early, one fact is worth previewing.
+
+For two vectors:
+
+\[
+u,v,
+\]
+
+Gram matrix:
+
+\[
+G=
+\begin{bmatrix}
+u\cdot u & u\cdot v\\
+v\cdot u & v\cdot v
+\end{bmatrix}.
+\]
+
+Its determinant is:
+
+\[
+(u\cdot u)(v\cdot v)
+-
+(u\cdot v)^2.
+\]
+
+Using cosine relation:
+
+\[
+=
+\|u\|^2\|v\|^2
+-
+\|u\|^2\|v\|^2\cos^2\theta.
+\]
+
+Factor:
+
+\[
+=
+\|u\|^2\|v\|^2
+(1-\cos^2\theta).
+\]
+
+Since:
+
+\[
+1-\cos^2\theta=\sin^2\theta,
+\]
+
+we get:
+
+\[
+\boxed{
+\det G
+=
+\|u\|^2
+\|v\|^2
+\sin^2\theta.
+}
+\]
+
+That is the **squared area of the parallelogram** spanned by \(u\) and \(v\).
+
+Cross-product area receives its canonical treatment in Parts 542–545, so we stop there.
+
+But you should see that the Gram matrix already contains area information.
+
+---
+
+# 541.17 What happens when vectors become parallel?
+
+If:
+
+\[
+v=c u,
+\]
+
+then angle is:
+
+\[
+0
+\quad\text{or}\quad
+\pi.
+\]
+
+So:
+
+\[
+\sin\theta=0.
+\]
+
+Therefore:
+
+\[
+\det G=0.
+\]
+
+Geometrically, the "parallelogram" collapses into a line.
+
+Algebraically, the vectors are dependent.
+
+Gram matrix detects the degeneracy.
+
+---
+
+# 541.18 Nearly dependent vectors
+
+Suppose:
+
+\[
+b_1=(1,0)
+\]
+
+and:
+
+\[
+b_2=(1,\varepsilon)
+\]
+
+for tiny \(\varepsilon\).
+
+Then:
+
+\[
+G=
+\begin{bmatrix}
+1 & 1\\
+1 & 1+\varepsilon^2
+\end{bmatrix}.
+\]
+
+As:
+
+\[
+\varepsilon\rightarrow0,
+\]
+
+the matrix approaches:
+
+\[
+\begin{bmatrix}
+1&1\\
+1&1
+\end{bmatrix},
+\]
+
+which corresponds to two identical directions.
+
+This is the algebraic signature of the numerical near-dependence we discussed earlier.
+
+So Gram matrices also connect directly to conditioning.
+
+---
+
+# 541.19 Gram matrix as a geometry cache
+
+Suppose you have a collection of basis/generator vectors:
+
+\[
+b_1,\ldots,b_k.
+\]
+
+Their Gram matrix caches:
+
+- all squared lengths;
+- all pairwise dot products;
+- therefore all pairwise cosine relationships if lengths are known;
+- information about orthogonality;
+- information about dependence;
+- metric geometry in their coordinate system.
+
+It is essentially a compact table of their mutual Euclidean relationships.
+
+---
+
+# 541.20 Gram matrix for an orthonormal basis
+
+If basis is orthonormal:
+
+\[
+b_i\cdot b_j
+=
+\begin{cases}
+1&i=j\\
+0&i\neq j
+\end{cases}
+\]
+
+which is often abbreviated with the Kronecker delta:
+
+\[
+\delta_{ij}.
+\]
+
+Thus:
+
+\[
+\boxed{
+G=I.
+}
+\]
+
+This is why orthonormal bases are so convenient.
+
+All cross-interactions disappear.
+
+Metric computations become ordinary component arithmetic.
+
+---
+
+# 541.21 Why a nonorthogonal basis complicates projection
+
+Suppose we want coordinates of vector \(v\) in basis:
+
+\[
+b_1,b_2.
+\]
+
+If basis were orthonormal:
+
+\[
+c_1=v\cdot b_1
+\]
+
+\[
+c_2=v\cdot b_2.
+\]
+
+But when they are not orthogonal, those dots mix contributions.
+
+Instead, if:
+
+\[
+v=c_1b_1+c_2b_2,
+\]
+
+dot both sides with \(b_1\):
+
+\[
+v\cdot b_1
+=
+c_1(b_1\cdot b_1)
++
+c_2(b_2\cdot b_1).
+\]
+
+Dot with \(b_2\):
+
+\[
+v\cdot b_2
+=
+c_1(b_1\cdot b_2)
++
+c_2(b_2\cdot b_2).
+\]
+
+Write together:
+
+\[
+\boxed{
+\begin{bmatrix}
+b_1\cdot b_1 & b_2\cdot b_1\\
+b_1\cdot b_2 & b_2\cdot b_2
+\end{bmatrix}
+\begin{bmatrix}
+c_1\\
+c_2
+\end{bmatrix}
+=
+\begin{bmatrix}
+v\cdot b_1\\
+v\cdot b_2
+\end{bmatrix}.
+}
+\]
+
+The matrix on the left is the Gram matrix.
+
+So the Gram matrix tells us how to **untangle overlapping nonorthogonal coordinate directions**.
+
+This will later connect to normal equations, least squares, basis transformations, and covectors.
+
+---
+
+# 541.22 C++ construction
+
+For three vectors:
+
+```cpp
+struct Mat3 {
+    float m[3][3]{};
+};
+
+[[nodiscard]]
+Mat3 gramMatrix(
+    Vec3 b0,
+    Vec3 b1,
+    Vec3 b2) noexcept
+{
+    return {{
+        {
+            dot(b0, b0),
+            dot(b0, b1),
+            dot(b0, b2)
+        },
+        {
+            dot(b1, b0),
+            dot(b1, b1),
+            dot(b1, b2)
+        },
+        {
+            dot(b2, b0),
+            dot(b2, b1),
+            dot(b2, b2)
+        }
+    }};
+}
+```
+
+But because symmetry gives:
+
+\[
+G_{ij}=G_{ji},
+\]
+
+an optimized implementation technically only needs to compute six unique values for a \(3\times3\) Gram matrix:
+
+```text
+g00
+g01 g11
+g02 g12 g22
+```
+
+rather than nine independent dots.
+
+Whether you store only half depends on how the matrix will be used.
+
+---
+
+# 541.23 Complexity
+
+For \(k\) vectors of dimension \(n\), naive Gram construction requires pairwise dots.
+
+Number of unique pairs including diagonal:
+
+\[
+\frac{k(k+1)}2.
+\]
+
+Each dot costs:
+
+\[
+O(n).
+\]
+
+So:
+
+\[
+\boxed{
+O(k^2n)
+}
+\]
+
+time.
+
+Storage for full Gram matrix:
+
+\[
+\boxed{
+O(k^2).
+}
+\]
+
+For tiny graphics bases such as 2D/3D frames, this is trivial.
+
+For thousands of vectors in ML/numerical workloads, Gram construction can become substantial.
+
+---
+
+# ONE COMPLETE EXAMPLE CONNECTING 538–541
+
+Take:
+
+\[
+b=(2,1)
+\]
+
+and:
+
+\[
+a=(4,3).
+\]
+
+## Step 1: projection coefficient
+
+\[
+t=
+\frac{a\cdot b}{b\cdot b}.
+\]
+
+We have:
+
+\[
+a\cdot b=11
+\]
+
+and:
+
+\[
+b\cdot b=5.
+\]
+
+Therefore:
+
+\[
+t=\frac{11}{5}=2.2.
+\]
+
+---
+
+## Step 2: vector projection
+
+\[
+p=tb.
+\]
+
+Therefore:
+
+\[
+p=2.2(2,1).
+\]
+
+\[
+\boxed{
+p=(4.4,2.2).
+}
+\]
+
+---
+
+## Step 3: rejection
+
+\[
+r=a-p.
+\]
+
+\[
+r=(4,3)-(4.4,2.2).
+\]
+
+\[
+\boxed{
+r=(-0.4,0.8).
+}
+\]
+
+Verify:
+
+\[
+r\cdot b=0.
+\]
+
+---
+
+## Step 4: scalar projection
+
+\[
+s=
+\frac{a\cdot b}{\|b\|}.
+\]
+
+\[
+=
+\frac{11}{\sqrt5}.
+\]
+
+\[
+\boxed{
+s\approx4.919.
+}
+\]
+
+Notice:
+
+\[
+t=2.2
+\]
+
+but:
+
+\[
+s\approx4.919.
+\]
+
+They are different quantities.
+
+---
+
+## Step 5: verify relation
+
+\[
+s=t\|b\|.
+\]
+
+Right side:
+
+\[
+2.2\sqrt5
+\approx4.919.
+\]
+
+Correct.
+
+---
+
+## Step 6: Gram matrix of \(b\) and \(r\)
+
+Take:
+
+\[
+q_1=b=(2,1)
+\]
+
+and:
+
+\[
+q_2=r=(-0.4,0.8).
+\]
+
+Gram matrix:
+
+\[
+G=
+\begin{bmatrix}
+q_1\cdot q_1 & q_1\cdot q_2\\
+q_2\cdot q_1 & q_2\cdot q_2
+\end{bmatrix}.
+\]
+
+Compute:
+
+\[
+q_1\cdot q_1=5.
+\]
+
+\[
+q_1\cdot q_2=0.
+\]
+
+\[
+q_2\cdot q_2=0.8.
+\]
+
+Therefore:
+
+\[
+\boxed{
+G=
+\begin{bmatrix}
+5&0\\
+0&0.8
+\end{bmatrix}.
+}
+\]
+
+The zero off-diagonal entries expose their orthogonality.
+
+If we normalized both, Gram matrix would become:
+
+\[
+I.
+\]
+
+---
+
+# PROJECTION AND REJECTION AS A GEOMETRIC DECOMPOSER
+
+This is the mental mechanism you should now see automatically:
+
+```text
+                      a
+                     ↗
+                    /|
+                   / |
+                  /  | rejection
+                 /   | perpendicular
+                /    |
+origin ●───────●─────┘────────→ b
+           projection
+             parallel
+```
+
+And algebraically:
+
+\[
+\boxed{
+a
+=
+\underbrace{
+\frac{a\cdot b}{b\cdot b}b
+}_{\text{projection}}
++
+\underbrace{
+\left(
+a-
+\frac{a\cdot b}{b\cdot b}b
+\right)
+}_{\text{rejection}}
+}
+\]
+
+with:
+
+\[
+\boxed{
+\operatorname{proj}_b a
+\cdot
+\operatorname{rej}_b a
+=
+0.
+}
+\]
+
+That single decomposition is one of the most reused patterns in graphics and physics.
+
+---
+
+# WHERE THIS APPEARS IN ENGINE WORK
+
+Projection:
+
+- velocity along an axis;
+- force along a joint axis;
+- distance along a ray;
+- movement along a road/tangent;
+- coordinate extraction;
+- closest point on a line;
+- contact normal velocity;
+- camera-space directional components.
+
+Rejection:
+
+- sliding velocity along a wall;
+- tangent velocity;
+- removing normal motion;
+- removing vertical motion from locomotion;
+- tangent construction;
+- normal/tangent force decomposition.
+
+Scalar projection:
+
+- signed distance along an axis;
+- forward speed;
+- penetration/motion amount along a normal;
+- coordinate along a unit basis direction;
+- whether something lies ahead or behind.
+
+Gram matrices:
+
+- nonorthogonal basis geometry;
+- coordinate coupling;
+- independence/conditioning analysis;
+- least-squares structures;
+- basis metric information;
+- generalized projections.
+
+---
+
+# COMMON BUG 1 — ASSUMING TARGET IS UNIT
+
+Wrong if `b` is arbitrary:
+
+```cpp
+Vec3 p = b * dot(a, b);
+```
+
+Correct arbitrary form:
+
+```cpp
+Vec3 p =
+    b * (dot(a, b) / dot(b, b));
+```
+
+Or require `UnitVec3` and use the simplified form safely.
+
+---
+
+# COMMON BUG 2 — NORMALIZE NEEDLESSLY
+
+This works:
+
+```cpp
+Vec3 unitB = normalize(b);
+
+Vec3 p =
+    unitB * dot(a, unitB);
+```
+
+But if you only need projection and already have safe nonzero \(b\), you can directly use:
+
+\[
+\frac{a\cdot b}{b\cdot b}b.
+\]
+
+That avoids explicitly computing a square root.
+
+However, numerical behavior and existing cached unit directions may change the practical choice.
+
+---
+
+# COMMON BUG 3 — ZERO TARGET
+
+This:
+
+```cpp
+projectOnto(a, Vec3{0,0,0});
+```
+
+has no mathematical meaning.
+
+A robust API must:
+
+- assert;
+- return optional/error;
+- use a documented fallback;
+
+rather than silently divide by zero.
+
+---
+
+# COMMON BUG 4 — MIXING SCALAR PROJECTION AND COEFFICIENT
+
+These:
+
+\[
+\frac{a\cdot b}{\|b\|}
+\]
+
+and:
+
+\[
+\frac{a\cdot b}{\|b\|^2}
+\]
+
+are **not interchangeable**.
+
+First = signed physical component length.
+
+Second = coefficient multiplying the particular vector \(b\).
+
+---
+
+# COMMON BUG 5 — WRONG COORDINATE SPACE
+
+```cpp
+projectOnto(worldVelocity, localAxis);
+```
+
+is nonsense unless one operand is transformed into the other's space.
+
+Projection has the same coordinate-space requirement as dot product.
+
+---
+
+# COMMON BUG 6 — USING REJECTION WHEN YOU NEED REFLECTION
+
+Rejection:
+
+\[
+a-\operatorname{proj}_n a
+\]
+
+removes the normal component.
+
+Reflection later uses twice the normal component:
+
+\[
+a-2\operatorname{proj}_n a.
+\]
+
+That is Part 553.
+
+Do not confuse the two.
+
+---
+
+# COMMON BUG 7 — BELIEVING A GRAM MATRIX "IS THE BASIS"
+
+It isn't.
+
+The basis consists of vectors:
+
+\[
+b_1,\ldots,b_k.
+\]
+
+The Gram matrix stores only their pairwise inner products:
+
+\[
+G_{ij}=b_i\cdot b_j.
+\]
+
+It captures their **metric relationships**, not necessarily their absolute orientation in the ambient coordinate system.
+
+For example, rotating every vector together preserves all pairwise dot products, so the Gram matrix stays the same.
+
+Thus Gram matrix describes intrinsic relationships among the vectors, not their absolute placement/orientation.
+
+---
+
+# A VERY DEEP GRAM-MATRIX FACT
+
+Suppose two collections of vectors have the same Gram matrix.
+
+Then they have the same:
+
+- individual lengths;
+- pairwise angles;
+- pairwise metric relationships.
+
+They may simply be rotated/reflected versions of one another in Euclidean space, subject to dimensional conditions.
+
+So the Gram matrix is almost a fingerprint of the **internal geometry** of the vector collection.
+
+It forgets absolute global orientation.
+
+That is why it is so useful.
+
+---
+
+# NUMERICAL CONDITIONING
+
+Projection coefficient:
+
+\[
+t=
+\frac{a\cdot b}{b\cdot b}.
+\]
+
+If \(b\) is extremely tiny, denominator is extremely tiny.
+
+Mathematically scaling \(b\) should not affect the projection result.
+
+Floating point, however, can suffer:
+
+- underflow in \(b\cdot b\);
+- overflow for huge \(b\);
+- unstable division;
+- NaN if bad inputs exist.
+
+A robust implementation can scale \(b\) before calculation or use normalized semantic directions when the application permits.
+
+Likewise Gram matrices of nearly dependent vectors become numerically ill-conditioned.
+
+That is not an accidental implementation problem—it reflects the underlying geometry.
+
+---
+
+# HARDWARE VIEW
+
+For arbitrary 3D projection:
+
+```text
+dot(a,b)       3 mul + 2 add
+dot(b,b)       3 mul + 2 add
+division       1
+scale b        3 mul
+```
+
+plus loads/stores.
+
+If target is unit:
+
+```text
+dot(a,b)       3 mul + 2 add
+scale b        3 mul
+```
+
+So maintaining unit axes can reduce repeated projection cost.
+
+But unit vectors also require:
+
+- construction cost;
+- validation;
+- possible renormalization.
+
+The right choice depends on usage frequency and invariants.
+
+---
+
+# PROJECTION RECONSTRUCTION EXERCISE
+
+Without looking at the formula, start only with:
+
+\[
+p=t b
+\]
+
+and requirement:
+
+\[
+a-p\perp b.
+\]
+
+Turn perpendicularity into:
+
+\[
+(a-tb)\cdot b=0.
+\]
+
+Expand and solve.
+
+If you cannot recover:
+
+\[
+\boxed{
+t=\frac{a\cdot b}{b\cdot b}
+}
+\]
+
+and therefore:
+
+\[
+\boxed{
+p=\frac{a\cdot b}{b\cdot b}b,
+}
+\]
+
+you do not yet own projection.
+
+---
+
+# MASTERY GATE — PART 538
+
+You must be able to explain:
+
+1. why projection lies in \(\operatorname{span}\{b\}\);
+2. why the residual must be orthogonal;
+3. why denominator is \(b\cdot b\);
+4. why unit \(b\) simplifies the formula;
+5. why scaling \(b\) changes neither projection nor target line;
+6. why projection onto zero is undefined;
+7. why projection gives the closest point on the target line;
+8. why applying projection twice changes nothing.
+
+And derive all of them.
+
+---
+
+# MASTERY GATE — PART 539
+
+From memory:
+
+\[
+\boxed{
+\operatorname{rej}_b a
+=
+a-\operatorname{proj}_b a.
+}
+\]
+
+Then prove:
+
+\[
+\operatorname{rej}_b a\cdot b=0.
+\]
+
+Derive:
+
+\[
+a=
+\operatorname{proj}_b a+
+\operatorname{rej}_b a.
+\]
+
+Then use orthogonality to prove:
+
+\[
+\|a\|^2
+=
+\|\operatorname{proj}_b a\|^2+
+\|\operatorname{rej}_b a\|^2.
+\]
+
+You should also be able to derive tangent velocity from a surface normal without memorizing special physics code.
+
+---
+
+# MASTERY GATE — PART 540
+
+You must distinguish these three without hesitation:
+
+### Vector projection
+
+\[
+\boxed{
+p=
+\frac{a\cdot b}{\|b\|^2}b
+}
+\]
+
+returns a vector.
+
+### Scalar projection
+
+\[
+\boxed{
+s=
+\frac{a\cdot b}{\|b\|}
+}
+\]
+
+returns signed length.
+
+### Projection coefficient
+
+\[
+\boxed{
+t=
+\frac{a\cdot b}{\|b\|^2}
+}
+\]
+
+returns number of copies of \(b\).
+
+And know:
+
+\[
+\boxed{
+p=s\hat b=tb
+}
+\]
+
+and:
+
+\[
+\boxed{
+s=t\|b\|.
+}
+\]
+
+---
+
+# MASTERY GATE — PART 541
+
+From vectors:
+
+\[
+b_1,\ldots,b_k,
+\]
+
+reconstruct:
+
+\[
+\boxed{
+G_{ij}=b_i\cdot b_j.
+}
+\]
+
+Then explain:
+
+\[
+G_{ii}
+=
+\|b_i\|^2.
+\]
+
+Off-diagonal:
+
+\[
+G_{ij}
+=
+\|b_i\|
+\|b_j\|
+\cos\theta_{ij}.
+\]
+
+Prove symmetry:
+
+\[
+G_{ij}=G_{ji}.
+\]
+
+Explain why:
+
+\[
+G=I
+\]
+
+for an orthonormal basis.
+
+Then derive from first principles:
+
+\[
+\boxed{
+x\cdot y
+=
+c^TGd
+}
+\]
+
+for coordinate vectors \(c,d\) in a nonorthogonal basis.
+
+And especially explain why:
+
+\[
+\boxed{
+\|x\|^2=c^TGc
+}
+\]
+
+replaces naïve:
+
+\[
+c_1^2+\cdots+c_n^2
+\]
+
+when the basis is not orthonormal.
+
+Finally, explain why:
+
+\[
+c^TGc\ge0
+\]
+
+and why dependent generators make some nonzero \(c\) produce zero.
+
+---
+
+# THE FINAL MODEL
+
+At this point you should see a hierarchy:
+
+\[
+\boxed{
+a\cdot b
+}
+\]
+
+measures pairwise metric interaction.
+
+From that:
+
+\[
+\boxed{
+\frac{a\cdot b}{b\cdot b}b
+}
+\]
+
+extracts the component of \(a\) parallel to \(b\).
+
+Subtract it:
+
+\[
+\boxed{
+a-
+\frac{a\cdot b}{b\cdot b}b
+}
+\]
+
+and you get the perpendicular component.
+
+Remove vector direction but retain signed amount:
+
+\[
+\boxed{
+\frac{a\cdot b}{\|b\|}
+}
+\]
+
+and you get scalar projection.
+
+Now do dot products among an entire collection of vectors:
+
+\[
+\boxed{
+G_{ij}=b_i\cdot b_j
+}
+\]
+
+and you obtain a compact encoding of their metric geometry.
+
+That is not four unrelated Parts.
+
+It is one escalation:
+
+```text
+ONE DOT PRODUCT
+      ↓
+directional overlap
+
+ONE-DIRECTION DECOMPOSITION
+      ↓
+projection + rejection
+
+SIGNED COMPONENT
+      ↓
+scalar projection
+
+MANY VECTORS
+      ↓
+all pairwise directional relationships
+
+GRAM MATRIX
+```
+
+That completes the dot/projection block and prepares you for the next major operation: the **cross product**.
+
+**Completed Part 538 — Vector projection onto another vector**  
+**Completed Part 539 — Vector rejection from another vector**  
+**Completed Part 540 — Scalar projection**  
+**Completed Part 541 — Gram matrix concept**
+
+**Next Core Part 542 — Cross product definition in \(\mathbb R^3\).**

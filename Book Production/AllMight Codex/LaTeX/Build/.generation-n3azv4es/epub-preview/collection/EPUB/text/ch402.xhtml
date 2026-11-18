@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch402.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-66742099f8a0-center-of-mass-and-inertia" class="level2">
+<h2>Center of mass and inertia</h2>
+<p>The center of mass is the point at which translational motion can be separated cleanly from rotational motion for a rigid body.</p>
+<p>For point masses <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>m</mi>
+    <mi>i</mi>
+  </msub>
+</math> at positions <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+</math>,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>r</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>c</mi>
+      <mi>m</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>M</mi>
+  </mfrac>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>m</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>M</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>m</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>For a continuous density <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>ρ</mi>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+</math>,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>r</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>c</mi>
+      <mi>m</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>M</mi>
+  </mfrac>
+  <mo data-mjx-texclass="OP">∫</mo>
+  <mi>r</mi>
+  <mi>ρ</mi>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>V</mi>
+  <mo>.</mo>
+</math>
+<p>A visual pivot, modeling origin or collider-local origin does not have to equal the center of mass.</p>
+<section id="appendix-66742099f8a0-inertia-tensor" class="level3">
+<h3>Inertia tensor</h3>
+<p>Relative to center of mass, the inertia tensor is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP">∫</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mi>r</mi>
+    <msup>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+      <mn>2</mn>
+    </msup>
+    <mrow data-mjx-texclass="ORD">
+      <mn mathvariant="bold">1</mn>
+    </mrow>
+    <mo>−</mo>
+    <mi>r</mi>
+    <msup>
+      <mi>r</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="sans-serif">T</mi>
+        </mrow>
+      </mrow>
+    </msup>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mi>d</mi>
+  <mi>m</mi>
+  <mo>.</mo>
+</math>
+<p>It maps angular velocity to angular momentum in body coordinates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mo>=</mo>
+  <mi>I</mi>
+  <mi>ω</mi>
+</math>
+<p>when the tensor and vector are expressed in compatible frames.</p>
+<p>In world space, if body orientation is rotation <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+</math>,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>w</mi>
+      <mi>o</mi>
+      <mi>r</mi>
+      <mi>l</mi>
+      <mi>d</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>R</mi>
+  <msub>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>b</mi>
+      <mi>o</mi>
+      <mi>d</mi>
+      <mi>y</mi>
+    </mrow>
+  </msub>
+  <msup>
+    <mi>R</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mo>,</mo>
+</math>
+<p>and similarly for the inverse inertia when invertible.</p>
+</section>
+<section id="appendix-66742099f8a0-parallel-axis-theorem" class="level3">
+<h3>Parallel-axis theorem</h3>
+<p>Moving the reference point away from the center of mass changes inertia:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mi>P</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>c</mi>
+      <mi>m</mi>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <mi>M</mi>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mi>d</mi>
+    <msup>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+      <mn>2</mn>
+    </msup>
+    <mrow data-mjx-texclass="ORD">
+      <mn mathvariant="bold">1</mn>
+    </mrow>
+    <mo>−</mo>
+    <mi>d</mi>
+    <msup>
+      <mi>d</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="sans-serif">T</mi>
+        </mrow>
+      </mrow>
+    </msup>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math> is the displacement between reference points.</p>
+<p>This is why using a collider-origin inertia as though it were a center-of-mass inertia couples translation and rotation incorrectly.</p>
+</section>
+<section id="appendix-66742099f8a0-scaling" class="level3">
+<h3>Scaling</h3>
+<p>Changing units does not change the physical body. Numerically converting metres to centimetres changes coordinate values and unit labels consistently.</p>
+<p>Physically resizing a uniform-density object does change mass and inertia. Under uniform length scale <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+</math> in 3D at fixed density, mass scales as <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>s</mi>
+    <mn>3</mn>
+  </msup>
+</math> and inertia as <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>s</mi>
+    <mn>5</mn>
+  </msup>
+</math>.</p>
+</section>
+<section id="appendix-66742099f8a0-impulse-coupling" class="level3">
+<h3>Impulse coupling</h3>
+<p>An impulse <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>J</mi>
+</math> at lever arm <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+</math> changes angular velocity by</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <msubsup>
+    <mi>I</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>w</mi>
+      <mi>o</mi>
+      <mi>r</mi>
+      <mi>l</mi>
+      <mi>d</mi>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mo>×</mo>
+  <mi>J</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This feeds directly into contact effective mass and constraint solving.</p>
+<p>Read the connected explanation in <a href="ch401.xhtml#id_06-engine-ii-ch034-from-the-push-on-a-panel-to-a-repeatable-rigid-body-simulator" class="wikilink">Continuous Notes/Game Engine - From First Frame to Living Worlds#From the push on a panel to a repeatable rigid-body simulator</a>.</p>
+<p>Related: <a href="ch403.xhtml#appendix-c39931e6e4c2-impulse-and-force-timing" class="wikilink">Impulse and force timing</a>, <a href="ch404.xhtml#id_06-engine-ii-ch035-part-1637-composite-body-mass-properties" class="wikilink">Mass properties and inertia tensor</a>.</p>
+</section>
+</section>
+</body>
+</html>

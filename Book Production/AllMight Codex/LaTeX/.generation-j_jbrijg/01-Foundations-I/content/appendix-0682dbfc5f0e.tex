@@ -1,0 +1,35 @@
+\hypertarget{appendix-0682dbfc5f0e}{}
+\section*{Packed structures and misaligned access}
+\chapter{Packed structures and misaligned access}\label{appendix-0682dbfc5f0e-packed-structures-and-misaligned-access}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\section{Definition and mechanism}\label{appendix-0682dbfc5f0e-definition-and-mechanism}
+
+Compiler packing extensions can weaken aggregate/member alignment and remove holes. A uint32 member at offset one may be misaligned. Direct extension-aware member access may receive special code generation; extracting an ordinary typed pointer can lose that treatment. Hardware tolerance does not establish legal C++ access. Explicit codecs avoid alignment, lifetime, and host-layout assumptions.
+
+\section{Prerequisites}\label{appendix-0682dbfc5f0e-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a1f7c53b4742]{Alignment and padding} --- Address divisibility determines legal placement and layout holes.
+\item
+  \hyperref[appendix-f52f8c5a3afd]{Internal and tail padding} --- The position and amount of unused layout space determine reordering/packing effects.
+\item
+  \hyperref[appendix-f558f5b4d8f2]{Undefined behavior} --- Hardware completion does not prove a language-level operation legal.
+\end{itemize}
+
+\section{Used by}\label{appendix-0682dbfc5f0e-used-by}
+
+Update downstream uses when later chunks build on this concept.
+
+\section{Recall and next depth}\label{appendix-0682dbfc5f0e-recall-and-next-depth}
+
+Distinguish packing, endian normalization, and legal typed access.
+
+\textbf{Pending:} Instruction-specific costs and mapped-file parsing.
+
+\section{Source and navigation}\label{appendix-0682dbfc5f0e-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Where\%20the\%20bytes\%20live}{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

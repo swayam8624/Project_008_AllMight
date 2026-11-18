@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch339.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-1aea26b2307f-half-edge-mesh-connectivity" class="level2">
+<h2>Half-edge mesh connectivity</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-1aea26b2307f-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A half-edge data structure stores each undirected edge as two opposite directed records. Each record points to its twin, the next directed edge around its face, its origin vertex, its edge, and its face; vertices, edges, and faces keep one representative half-edge. Repeatedly following next visits a face boundary. Following twin then next walks around a vertex fan. This makes local neighborhoods and edits proportional to local degree rather than requiring a scan of every face. Correctness depends on invariants: twin of twin returns to the original, a half-edge is not its own twin, and next pointers form closed face cycles. The representation naturally assumes manifold connectivity; it can encode flips, splits, and collapses by changing a bounded set of pointers, but careless updates can break the cycles and corrupt subsequent traversal.</p>
+</section>
+<section id="appendix-1aea26b2307f-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch366.xhtml#appendix-fab348609369-manifold-polygon-meshes-and-boundary-structure" class="wikilink">Manifold polygon meshes and boundary structure</a></li>
+</ul>
+</section>
+<section id="appendix-1aea26b2307f-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><span>Worlds, Images and Inference</span></p></li>
+<li><p><a href="ch335.xhtml#appendix-0234ab7f86b1-subdivision-surface-masks" class="wikilink">Subdivision surface masks</a></p></li>
+<li><p><a href="ch340.xhtml#appendix-1dd4ad54ca57-quadric-error-mesh-simplification" class="wikilink">Quadric error mesh simplification</a></p></li>
+<li><p><a href="ch298.xhtml#appendix-7107009c505b-local-rigidity-and-mesh-orientation-fields" class="wikilink">Local rigidity and mesh orientation fields (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Local rigidity and mesh orientation fields)</a> ## Full teaching explanation</p></li>
+</ul>
+<p><a href="ch296.xhtml#id_03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing" class="wikilink">Meshes, connectivity, and geometry processing (Geometry, Cameras, and Image Formation, Part 1, Ch. 9)</a></p>
+</section>
+</section>
+</body>
+</html>

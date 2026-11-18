@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch090.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-c4ac6bb0fff8-abi-and-object-layout" class="level2">
+<h2>ABI and object layout</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C007</p>
+<section id="appendix-c4ac6bb0fff8-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>C++23 preserves declaration order for nonzero-size non-variant data members even across different access labels; earlier standards had weaker ordering guarantees. alignas can request supported stronger alignment, increasing stride. Standard-layout and trivial copyability are distinct; offsetof is guaranteed for standard-layout types, while use on others is conditionally supported. Verify CPU/upload/shader offsets separately.</p>
+<p>An application binary interface (ABI) specifies implementation-level calling and data-layout conventions. Member offsets, complete size/alignment, and calling conventions affect binary compatibility. sizeof/alignof/offsetof inspect a standard-layout record; they do not define a portable file schema. Assume stated target rules before deriving 0/4/8 offsets.</p>
+</section>
+<section id="appendix-c4ac6bb0fff8-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch156.xhtml#appendix-a1f7c53b4742-alignment-and-padding" class="wikilink">Alignment and padding (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Alignment and padding)</a> — Address divisibility determines legal placement and layout holes.</li>
+<li><a href="ch095.xhtml#appendix-cc04044b5782-fixed-width-integer-types" class="wikilink">Fixed-width integer types</a> — The representation width fixes byte count and valid shift range.</li>
+</ul>
+</section>
+<section id="appendix-c4ac6bb0fff8-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch260.xhtml#appendix-ffdc1d4e5350-matrix-storage-indexing-and-strides" class="wikilink">Matrix storage indexing and strides (Mathematics for Visual Computing, Part 1, Reference notes: Matrix storage indexing and strides)</a></p></li>
+<li><p><a href="ch185.xhtml#appendix-958870a64c53-standard-layout-and-trivial-copyability" class="wikilink">Standard-layout and trivial copyability (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Standard-layout and trivial copyability)</a> — uses this prerequisite to establish its entity, lifetime, representation or lookup contract.</p></li>
+</ul>
+<p>Update downstream uses when later chunks build on this concept.</p>
+</section>
+<section id="appendix-c4ac6bb0fff8-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Separate measured compiler layout from a proposed wire schema.</p>
+<p><strong>Pending:</strong> Full lifetime replacement, ownership/concurrency policies and cross-target ABI experiments; the opening examples do not establish those later guarantees.</p>
+</section>
+<section id="appendix-c4ac6bb0fff8-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a> · <a href="ch173.xhtml#id_01-foundations-i-ch003-bringing-the-object-model-back-to-bytes" class="wikilink">C007 development (Bits, Programs, and Reliable Systems, Part 2, Ch. 3)</a></p>
+</section>
+</section>
+</body>
+</html>

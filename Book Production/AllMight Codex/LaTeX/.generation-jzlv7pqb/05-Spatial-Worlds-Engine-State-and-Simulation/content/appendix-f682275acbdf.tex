@@ -1,0 +1,30 @@
+\hypertarget{appendix-f682275acbdf}{}\label{referencestart:appendix-f682275acbdf}
+\section{Incremental contact penetration refresh}\label{appendix-f682275acbdf-incremental-contact-penetration-refresh}
+
+Position correction moves every contact point attached to the corrected bodies. For a small rotation, its first-order point displacement is translation plus rotation vector crossed with the pre-correction world-space lever arm. Project the difference of the two point movements onto the frozen contact normal, using the declared normal and penetration signs.
+
+Refresh each known contact once for the correction just applied, then reconsider the worst penetration. Reusing an old correction counts movement twice. This local estimate cannot discover new contacts or replace geometry refresh after substantial rotation or a feature change.
+
+\subsection{Prerequisites}\label{appendix-f682275acbdf-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-2391db8052b1}{Concepts/Cross products and oriented area (Bits, Programs, and Reliable Systems, Reference notes: Cross products and oriented area)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-f744e41b95b4}{Concepts/Unit directions and safe normalization (Bits, Programs, and Reliable Systems, Reference notes: Unit directions and safe normalization)}
+\end{itemize}
+
+\subsection{Full teaching and executable evidence}\label{appendix-f682275acbdf-full-teaching-and-executable-evidence}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=06-engine-ii-ch046-refresh-neighboring-penetrations-after-position-correction}{Derivation, three-contact ranking trace and complexity limits (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 17)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=06-engine-ii-ch046-a-planar-penetration-refresh-witness}{Complete planar C++20 reference (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 17)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-f682275acbdf-used-by}
+
+Iterative position correction and contact-priority updates. The reference is a frozen-feature updater, not a full collision detector or rigid-body solver.

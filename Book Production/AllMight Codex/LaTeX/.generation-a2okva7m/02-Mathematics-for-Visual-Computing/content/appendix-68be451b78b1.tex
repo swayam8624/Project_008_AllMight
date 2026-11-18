@@ -1,0 +1,58 @@
+\hypertarget{appendix-68be451b78b1}{}\label{referencestart:appendix-68be451b78b1}
+\section{Reservoir resampling and ReSTIR}\label{appendix-68be451b78b1-reservoir-resampling-and-restir}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-68be451b78b1-definition-and-mechanism}
+
+Reservoir sampling keeps a compact candidate for a weighted distribution without storing every sample. When candidate \(y_i\) has target weight \(w_i\), maintain a running weight sum and replace the stored candidate with probability proportional to \(w_i\); the reservoir records enough normalization information to estimate the desired integral without bias under stated assumptions. ReSTIR reuses candidates across pixels and frames, which is valuable when direct lighting has many possible lights or paths but only a few can be evaluated per pixel. Reuse requires correcting for the source and target distributions, accounting for visibility changes, and managing temporal history. If weights or normalization are wrong, the image may be biased; stale reuse causes trails or light leaks when geometry or illumination moves. The method reduces expensive samples rather than making sampling free. It depends on a valid estimator, careful normalization, and an understanding of whether correlated reused samples preserve the intended expectation.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-68be451b78b1-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-031e02bf28af]{Monte Carlo rendering estimators and variance}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-6a7869dd79a6}{Sampling aliasing and reconstruction (Light Transport and Image Synthesis, Reference notes: Sampling aliasing and reconstruction)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-0727340a4428}{Temporal reprojection and history validation (Vision, XR, and Playable Worlds, Reference notes: Temporal reprojection and history validation)}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-96da0b153b77}{Reflectance and rendering equation (Light Transport and Image Synthesis, Reference notes: Reflectance and rendering equation)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-68be451b78b1-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation]{Numerical integration and Monte Carlo estimation}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-68be451b78b1-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation]{Numerical integration and Monte Carlo estimation}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-68be451b78b1-recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  Trace the running weight sum and replacement probability for one reservoir update.
+\item
+  Which correction is needed when a sample is reused under a different target distribution?
+\end{itemize}
+
+\subsection{Source and navigation}\label{appendix-68be451b78b1-source-and-navigation}
+
+Teaching narrative: \hyperref[03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation]{open the main explanation}. Browse the \hyperref[appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series]{University graphics and vision index}. Additional chapter connections: \hyperref[03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation]{Numerical integration and Monte Carlo estimation}; \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=03-visual-computing-i-ch007-the-rendering-equation-and-light-transport}{The rendering equation and light transport (Light Transport and Image Synthesis, Ch. 2)}; \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch029-acceleration-structures-and-robust-queries-1}{Acceleration structures and robust queries (Spatial Worlds, Engine State, and Simulation, Ch. 10)}.
+
+Caption/source records: \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch036-p3-15---ray-tracing}{P3-15 (Vision, XR, and Playable Worlds, Ch. 5)}, \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch036-p3-19---shadows-part-2}{P3-19 (Vision, XR, and Playable Worlds, Ch. 5)}.

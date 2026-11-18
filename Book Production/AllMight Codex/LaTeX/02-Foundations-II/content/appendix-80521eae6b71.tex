@@ -1,0 +1,38 @@
+\hypertarget{appendix-80521eae6b71}{}
+\section*{Numerical quadrature and error}
+\section{Numerical quadrature and error}\label{numerical-quadrature-and-error}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 9 · \textbf{Latest development:} Phase 9
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Quadrature approximates a definite integral from finitely many function evaluations. Left, right, and midpoint rectangle rules use constant local models; the trapezoid rule uses linear interpolation; Simpson's rule integrates a local quadratic fit over paired intervals. Their errors depend on smoothness, interval size, and rule-specific derivative bounds. Refining the mesh usually improves accuracy for smooth functions, but increases computation and may expose floating-point accumulation error. Adaptive quadrature places more samples where the integrand changes rapidly, provided its error estimator is trustworthy. Quadrature differs from Monte Carlo: deterministic rules have dimension-dependent behavior, while random sampling is attractive in high dimensions but has statistical uncertainty. Report the interval, nodes, weights, stopping tolerance, and error-control method so numerical results can be reproduced.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1a50e72435c2]{Definite integrals and the fundamental theorem}
+\item
+  \href{}{Absolute and relative error (01-Foundations-I, appendix-3ae74e89b4e6)}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\item
+  This node is a current endpoint in the supplied Phase 9--10 path.
+\item
+  \hyperref[appendix-aca80b6bf17a]{Convergence order and Richardson extrapolation}
+\item
+  \hyperref[appendix-6b0648b2b8e8]{Discretization, truncation, and roundoff} \#\# Full teaching explanation
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Integration\%20and\%20quadrature}{Phase 9 teaching section}
+\item
+  \href{}{Visual Recall/09 - Calculus and Optimization - Visual Recall.md (01-Foundations-I, appendix-adf48f5dc5c1)} · visual recall
+\end{itemize}
+
+\subsection{Source coverage}\label{source-coverage}
+
+Supplied lesson parts: 835 (T03 · M051), 836 (T03 · M051), 837 (T03 · M051).

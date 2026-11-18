@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch093.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-c9d92e145503-rigid-contacts-from-point-velocity-to-a-persistent-contact-manifold" class="level2">
+<h2>Rigid contacts: from point velocity to a persistent contact manifold</h2>
+<blockquote>
+<p>Scope: original, independently reconstructed teaching for the existing engine collision-response narrative. The executable witnesses are <a href="ch614.xhtml#source-source-file-103f7ae75398744dea475e34">rigid_contact_lab.cpp</a> and <a href="ch609.xhtml#source-source-file-44c320ffad9698c7abd453e2">persistent_contact_lab.cpp</a>. These are <strong>2D velocity-level CPU witnesses</strong>; they do not claim to be Kairo’s engine implementation, 3D production manifold generation, or continuous collision detection. Symbols and sign conventions below follow those two witnesses.</p>
+</blockquote>
+<section id="appendix-c9d92e145503-why-a-contact-is-a-constraint-rather-than-a-force-chosen-by-eye" class="level3">
+<h3>Why a contact is a constraint rather than a force chosen by eye</h3>
+<p>Imagine a box descending onto a static floor. The collision detector reports that the geometry is touching or overlapping, but it does not say which velocities are physically admissible. With body A as the floor and body B as the box, define the contact normal <strong>n</strong> to point from A toward B. At contact position <strong>p</strong>, the lever arms measured from each body’s centre of mass are <strong>r_A = p − x_A</strong> and <strong>r_B = p − x_B</strong>. For a planar rigid body, its point velocity is <strong>v(p) = v_com + ω × r</strong>, where planar scalar angular speed ω produces <strong>ω × (r_x,r_y) = (−ω r_y, ω r_x)</strong>. This matters because an object rotating toward the floor can be closing at a corner even when the centre of mass is moving away.</p>
+<p>The relative velocity of the two material points is <strong>u = (v_B + ω_B × r_B) − (v_A + ω_A × r_A)</strong>. The normal component <strong>u_n = u · n</strong> tells us whether those two points are closing (<strong>u_n &lt; 0</strong>) or separating (<strong>u_n &gt; 0</strong>). For a non-penetrating unilateral contact without restitution, the desired post-solve condition is <strong>u_n ≥ 0</strong>, with a nonnegative accumulated contact impulse <strong>λ_n ≥ 0</strong>. Their complementarity condition is <strong>λ_n u_n = 0</strong> at an exact solution: either the contact carries a positive separating-prevention impulse and reaches zero normal speed, or the bodies separate freely and the contact carries no impulse. Finite-iteration solvers only approximate this coupled condition.</p>
+</section>
+<section id="appendix-c9d92e145503-deriving-effective-inverse-mass-rather-than-memorizing-its-denominator" class="level3">
+<h3>Deriving effective inverse mass, rather than memorizing its denominator</h3>
+<p>The impulse on B is <strong>+λ n</strong> and the reaction on A is <strong>−λ n</strong>. Newton’s linear momentum law gives <strong>Δv_B = +λ m_B⁻¹ n</strong> and <strong>Δv_A = −λ m_A⁻¹ n</strong>. Angular impulse about the centre of mass gives <strong>Δω_B = +λ I_B⁻¹ (r_B × n)</strong> and <strong>Δω_A = −λ I_A⁻¹ (r_A × n)</strong>, where the planar cross product of vectors is the scalar <strong>r_x n_y − r_y n_x</strong>. A rotation changes point velocity through <strong>Δω × r</strong>, and its projection onto n adds an angular term proportional to the squared lever arm.</p>
+<p>Consequently the normal relative velocity changes by <strong>Δu_n = k_n λ</strong>, where</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>k</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>=</mo>
+  <msubsup>
+    <mi>m</mi>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>+</mo>
+  <msubsup>
+    <mi>m</mi>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>+</mo>
+  <msubsup>
+    <mi>I</mi>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>×</mo>
+  <mi>n</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <msubsup>
+    <mi>I</mi>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>×</mo>
+  <mi>n</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Here <strong>k_n</strong> is <em>inverse effective mass</em> in the contact direction, not mass itself. The same physical impulse changes normal speed less when the effective mass is large. The equation follows from the full point-velocity update; it is not valid to omit rotational terms whenever the contact is off-centre. A static body uses zero inverse mass and inertia, but two completely unresponsive bodies yield <strong>k_n = 0</strong> and must not be divided by. The corresponding tangential value <strong>k_t</strong> is obtained by substituting the perpendicular unit tangent <strong>t = (−n_y, n_x)</strong> for n.</p>
+<p>For a desired post-impact normal speed <strong>b</strong>, one unconstrained correction is <strong>Δλ = (b − u_n)/k_n</strong>. A real contact cannot pull the bodies together, so the accumulated normal multiplier is projected:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>λ</mi>
+    <mi>n</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mi>e</mi>
+      <mi>w</mi>
+    </mrow>
+  </msubsup>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <mn>0</mn>
+    <mo>,</mo>
+    <msubsup>
+      <mi>λ</mi>
+      <mi>n</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi>o</mi>
+        <mi>l</mi>
+        <mi>d</mi>
+      </mrow>
+    </msubsup>
+    <mo>+</mo>
+    <mfrac>
+      <mrow>
+        <mi>b</mi>
+        <mo>−</mo>
+        <msub>
+          <mi>u</mi>
+          <mi>n</mi>
+        </msub>
+      </mrow>
+      <msub>
+        <mi>k</mi>
+        <mi>n</mi>
+      </msub>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p><strong>Apply only the difference</strong>, <strong>Δλ_n = λ_n^{new} − λ_n^{old}</strong>, to body velocities. Applying the whole accumulated value every iteration would add the same historical impulse repeatedly, making motion energy grow artificially. Conversely, resetting the accumulator on every sweep defeats the projected Gauss–Seidel interpretation and prevents reliable friction bounds.</p>
+</section>
+<section id="appendix-c9d92e145503-restitution-is-a-contact-creation-decision-not-a-new-bounce-each-iteration" class="level3">
+<h3>Restitution is a contact-creation decision, not a new bounce each iteration</h3>
+<p>For an impact with pre-solve normal speed <strong>u_n^before &lt; −v_threshold</strong>, the outgoing speed target in this simplified solver is <strong>b = −e u_n^before</strong>, with restitution coefficient <strong>e ∈ [0,1]</strong>. This target must be sampled <strong>before</strong> contact impulses change the velocity and then held fixed during the iteration. If a solver recomputes <strong>b</strong> from the current velocity at every visit, a persistent resting point can acquire artificial new bounce energy. The witness distinguishes a new impact from a persistent contact through an explicit <code>newImpact</code> argument; a production engine requires an actual contact-state machine and impact detection so the decision is not left to a careless caller.</p>
+<p>For the central collision test, both bodies have mass 1 kg, A starts at 2 m/s, B at 0 m/s, and the normal is +x. Their relative closing speed is −2 m/s; with <strong>e=1</strong> and <strong>k_n=2 kg⁻¹</strong>, we need <strong>Δλ_n = (2 − (−2))/2 = 2 kg·m/s</strong>. The resulting velocities are 0 m/s and 2 m/s. Linear momentum remains 2 kg·m/s, and the kinetic energy remains 2 joules. This equality is specific to the elastic, frictionless, central, idealized two-body case—not a conservation promise for frictional or inelastic impacts.</p>
+</section>
+<section id="appendix-c9d92e145503-why-friction-depends-on-the-normal-impulse" class="level3">
+<h3>Why friction depends on the normal impulse</h3>
+<p>For the upward normal <strong>n=(0,1)</strong> the laboratory chooses the tangent <strong>t=(−1,0)</strong>. The sliding box initially moves at +3 m/s in x, so its <em>tangent-coordinate</em> velocity is <strong>u_t = −3 m/s</strong>. The unconstrained tangent impulse is <strong>−u_t/k_t</strong>; here <strong>k_t=1 kg⁻¹</strong>, giving +3 kg·m/s. The normal collision supplies <strong>λ_n=2 kg·m/s</strong>. With coefficient <strong>μ=0.5</strong>, the Coulomb limit is <strong>μλ_n=1 kg·m/s</strong>, so the stored tangent impulse is <strong>+1</strong>, not −1. Multiplying <strong>+1 × (−1,0)</strong> produces an x-directed impulse of <strong>(−1,0)</strong>, reducing the box’s x velocity from +3 to +2 m/s. <strong>The sign of the stored scalar is relative to the chosen tangent direction; it cannot be interpreted without that basis.</strong></p>
+<p>The projected update is <strong>λ_t^{new} = clamp(λ_t^{old} − u_t/k_t, −μλ_n, +μλ_n)</strong>. This is a scalar tangent model for 2D; real 3D contact has a two-dimensional tangent plane and requires a disk-cone constraint or a chosen approximation. The witness applies a single coefficient and does not model static-versus-dynamic friction transition, anisotropy, rolling friction, torsional friction or compliant materials.</p>
+</section>
+<section id="appendix-c9d92e145503-why-a-manifold-needs-persistent-identity-and-sequential-sweeps" class="level3">
+<h3>Why a manifold needs persistent identity and sequential sweeps</h3>
+<p>A wide box can contact a floor at two corners. Both rows modify the <strong>same</strong> centre-of-mass velocity and angular velocity. Solving one row therefore changes the velocity seen by the next row. A one-pass independent pair of impulses is not equivalent to solving their coupled system. The reference witness stores two world-space contact points, evaluates each row in sequence, and repeats sweeps. The residual normal speeds and angular velocity are checked after twenty sweeps. Its iteration result is deterministic for its fixed row order but should not be advertised as an order-independent exact solution.</p>
+<p>On the next frame, a geometry matcher must identify whether each <em>physical contact feature</em> persisted. If the same feature, body pair, contact orientation, and compatible basis survive, previously accumulated impulses are useful initial guesses. <strong>Warm-start once</strong> by applying the cached impulses to the newly constructed pre-solve velocities before iteration. Never warm-start twice, and never reuse a tangential scalar after rotating the tangent basis without transforming it. A changed feature ID, reversed A/B order, altered normal, teleport, or discontinuous mass/inertia change may invalidate the cache. The witness includes a feature ID as data but <strong>does not implement feature matching</strong>; that is a separate production requirement.</p>
+<p>Caches may also require <code>dt</code>-aware scaling when timestep changes, and a true contact solver must decide how speculative contacts and missed or sleeping frames are handled. Warm-starting can improve convergence, but it is not a substitute for manifold quality.</p>
+</section>
+<section id="appendix-c9d92e145503-contact-identity-why-matching-by-memory-address-or-contact-index-is-insufficient" class="level3">
+<h3>Contact identity: why matching by memory address or contact index is insufficient</h3>
+<p>The physical reaction at a point can be reused between frames only if the cache still refers to the same interacting surface features. When two faces touch, clipping may produce two manifold points whose array order changes as the bodies rotate. If we cache impulse #0 against array position #0, a later reordering can accidentally apply the left-corner impulse at the right corner, creating a torque that was never physically demanded. A robust narrow phase should assign each contact a stable feature pair, for example an incident vertex/edge identifier and reference face identifier, with deterministic canonicalization of body ordering. These identifiers are geometric facts maintained by collision generation, not sequential indices assigned by a container.</p>
+<p>The executable <a href="ch599.xhtml#source-source-file-830b13449e1c6505af693753">contact-cache witness</a> concentrates on the subsequent <strong>policy</strong> rather than inventing a complete polygon clipper. The <code>Key</code> holds canonical body IDs plus two feature identifiers. The map stores the previously accepted normal and tangent impulse, its local normal direction, the previous friction coefficient, timestep, and last-seen frame. The cache is valid only if the same key was seen on the immediately preceding frame, the normal has changed by no more than 15 degrees, and the new timestep is between half and twice the cached timestep. These are <strong>documented laboratory thresholds</strong>, not universally optimal thresholds or engine-wide facts. The code rejects reversed body order because reversing A and B changes the sign of the normal and impulse convention.</p>
+<p>A tangent impulse is a vector in world space, although this 2D solver stores it as one scalar relative to a perpendicular tangent. When the normal rotates from <strong>n_old</strong> to <strong>n_new</strong>, the tangent axes <strong>t_old=(-n_old.y,n_old.x)</strong> and <strong>t_new=(-n_new.y,n_new.x)</strong> also rotate. The old physical friction impulse is <strong>P_t_old=λ_t_old t_old</strong>. The scalar along the new tangent is its dot projection:</p>
+<p><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><semantics><mrow><mi>λ</mi><msup><mrow><mi>t</mi><mo>,</mo><mi>n</mi><mi>e</mi><mi>w</mi></mrow><mrow><mi>s</mi><mi>e</mi><mi>e</mi><mi>d</mi></mrow></msup><mo>=</mo><mfrac><mrow><mi mathvariant="normal">Δ</mi><msub><mi>t</mi><mrow><mi>n</mi><mi>e</mi><mi>w</mi></mrow></msub></mrow><mrow><mi mathvariant="normal">Δ</mi><msub><mi>t</mi><mrow><mi>o</mi><mi>l</mi><mi>d</mi></mrow></msub></mrow></mfrac><mrow><mo stretchy="true" form="prefix">(</mo><mi>λ</mi><mrow><mi>t</mi><mo>,</mo><mi>o</mi><mi>l</mi><mi>d</mi></mrow><mo>,</mo><msub><mi mathvariant="bold-italic">𝒕</mi><mrow><mi>o</mi><mi>l</mi><mi>d</mi></mrow></msub><mo>⋅</mo><msub><mi mathvariant="bold-italic">𝒕</mi><mrow><mi>n</mi><mi>e</mi><mi>w</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">\lambda{t,new}^{seed} = \frac{\Delta t_{new}}{\Delta t_{old}} \left(\lambda{t,old},\mathbf t_{old}\cdot\mathbf t_{new}\right).</annotation></semantics></math></p>
+<p>The normal cache receives the same heuristic timestep ratio, and the tangent is clamped to <strong>± μ_new λ_n_new</strong>. With an old upward normal <strong>(0,1)</strong>, the old tangent is <strong>(-1,0)</strong>. If the normal turns 10 degrees, the tangent projection of a previous scalar impulse 0.5 is <strong>0.5 cos(10°) ≈ 0.492404</strong>, while the world impulse direction has changed consistently. Reusing 0.5 unchanged would preserve the scalar but <strong>not</strong> the intended projection onto the new contact tangent. This linear projection is a warm-start heuristic, not an exact solution of the new contact constraint; the subsequent iterative solver must still correct its residual.</p>
+<p>An edit to the friction coefficient clears only the tangential cached impulse in this experiment, retaining the normal impulse if all other validity rules pass. A material change in restitution, velocity discontinuity, teleport, substantial mass/inertia change, sleeping transition, or topology discontinuity may also require cache rejection in a production system and is not automatically detected by this small input type. Impulse scaling by timestep ratio is similarly a common starting heuristic, not an unconditional physical identity; the test exercises ratios 0.5, 1, and 4 and rejects the last. A caller must invoke <code>begin_frame</code>, use <code>lookup</code> to seed each new manifold row, warm-start those rows <strong>once</strong>, run velocity iterations, <code>store</code> each final impulse exactly once, and <code>prune</code> stale entries. Pruning at the wrong moment can erase still-needed contacts; storing duplicate feature keys silently makes iteration results depend on array ordering, so the witness rejects duplicates.</p>
+<p>The implementation has a testable boundary: it assumes a reliable feature matcher has already produced identifiers, that contact validity has been established by the geometry system, and that stable body IDs are never prematurely recycled. A generation-counted body handle would be safer than an integer object index alone. The cache does not detect 3D tangent-frame rotation, it does not calculate a physically accurate contact point, and its ordered map is a reference implementation rather than a measured real-time allocation strategy. A production engine should benchmark a preallocated flat hash map or per-pair cache with explicit frame ownership and deterministic iteration requirements.</p>
+</section>
+<section id="appendix-c9d92e145503-velocity-correction-is-not-penetration-correction" class="level3">
+<h3>Velocity correction is not penetration correction</h3>
+<p>The equations above change velocities. They do not, by themselves, repair existing overlaps in positions. A production pipeline generally needs a distinct and carefully scoped policy: geometry generation and signed separation, speculative contact margins, split impulses or position-level stabilization, and consistent timestep handling. Naively adding a large position-error velocity bias can inject energy, make stacks jitter, or break restitution. This CPU witness intentionally has no position integrator, no Baumgarte term, no split impulse and no continuous collision detection. Therefore its passing tests cannot establish the correctness of CCD tunneling prevention or deep-overlap recovery.</p>
+</section>
+<section id="appendix-c9d92e145503-from-end-of-frame-overlap-to-continuous-time-of-impact" class="level3">
+<h3>From end-of-frame overlap to continuous time of impact</h3>
+<p>The contact solver described above only acts on contacts it has been given. A fast-moving disk can start to the left of a thin obstacle and finish to the right of it without overlapping at the <em>end</em> of a fixed simulation step. If collision detection samples positions only at the step boundary, it sees no collision, so even a mathematically perfect impulse solver cannot prevent tunneling. This is the reason continuous collision detection (CCD) is a separate geometric question: <strong>what is the first time, within the proposed integration interval, when the moving shapes touch?</strong></p>
+<p>For two disks with initial centres <strong>x_A</strong> and <strong>x_B</strong>, constant velocities <strong>v_A</strong> and <strong>v_B</strong>, and radii <strong>r_A</strong>, <strong>r_B</strong>, define the relative centre separation <strong>p = x_B - x_A</strong>, relative velocity <strong>v = v_B - v_A</strong>, and sum of radii <strong>R = r_A + r_B</strong>. Their separation at time <strong>t</strong> is <strong>p(t) = p + tv</strong>. They first touch when the squared centre distance equals the squared radius sum:</p>
+<p><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><semantics><mrow><mrow><mo stretchy="true" form="prefix">‖</mo><mi mathvariant="bold-italic">𝒑</mi><mo>+</mo><mi>t</mi><mi mathvariant="bold-italic">𝒗</mi><mo stretchy="true" form="postfix">‖</mo></mrow><mn>2</mn><mo>=</mo><mi>R</mi><mn>2</mn><mi>.</mi></mrow><annotation encoding="application/x-tex">\lVert \mathbf p+t\mathbf v\rVert2=R2.</annotation></semantics></math></p>
+<p>Expanding the dot product gives the quadratic</p>
+<p><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><semantics><mrow><mi>a</mi><msup><mi>t</mi><mn>2</mn></msup><mo>+</mo><mi>b</mi><mi>t</mi><mo>+</mo><mi>c</mi><mo>=</mo><mn>0</mn><mo>,</mo><mspace width="2.0em"></mspace><mi>a</mi><mo>=</mo><mi mathvariant="bold-italic">𝒗</mi><mo>⋅</mo><mi mathvariant="bold-italic">𝒗</mi><mo>,</mo><mspace width="1.0em"></mspace><mi>b</mi><mo>=</mo><mn>2</mn><mi mathvariant="bold-italic">𝒑</mi><mo>⋅</mo><mi mathvariant="bold-italic">𝒗</mi><mo>,</mo><mspace width="1.0em"></mspace><mi>c</mi><mo>=</mo><mi mathvariant="bold-italic">𝒑</mi><mo>⋅</mo><mi mathvariant="bold-italic">𝒑</mi><mo>−</mo><msup><mi>R</mi><mn>2</mn></msup><mi>.</mi></mrow><annotation encoding="application/x-tex">at^2+bt+c=0,\qquad a=\mathbf v\cdot\mathbf v,\quad b=2\mathbf p\cdot\mathbf v,\quad c=\mathbf p\cdot\mathbf p-R^2.</annotation></semantics></math></p>
+<p>The meaning of the coefficients is crucial. <strong>c</strong> is the initial squared-distance gap: c&lt;0 means the disks are already overlapping and this witness returns t=0, assigning overlap correction to a separate solver; c=0 means initial touching. If <strong>a=0</strong>, the relative geometry never moves during the interval. For initially separated disks, <strong>b≥0</strong> means squared distance is not initially decreasing, so a collision cannot occur under these constant velocities. A discriminant <strong>D=b²−4ac&lt;0</strong> means the motion line misses the expanded-radius disk. <strong>D=0</strong> gives a tangent or grazing touch, which counts as a contact in this laboratory.</p>
+<p>The familiar quadratic expression <strong>(-b−sqrt(D))/(2a)</strong> can lose precision when nearly equal quantities are subtracted. The <a href="ch600.xhtml#source-source-file-887bbb1db2a031cbbf1eee43">swept-disk CPU witness</a> instead computes a stable intermediate <strong>q = -0.5(b − sqrt(D))</strong> in its restricted <strong>b&lt;0</strong> branch, then evaluates the roots as <strong>t_near = c/q</strong> and <strong>t_far = q/a</strong>. Their product remains <strong>c/a</strong>, and the smaller root is tested against <strong>0≤t≤Δt</strong>. The code uses <code>std::fma</code> in the discriminant to avoid one rounding step, but this is still finite-precision arithmetic; reliable collision detection across extreme dynamic ranges needs scale-aware error analysis or a more robust predicate policy.</p>
+<p>Consider a disk of radius 1 m stationary at the origin and another radius-1 disk initially at x=10 m moving left at 100 m/s. Its centre must move 8 m before touching, so the time of impact is <strong>0.08 s</strong>. At Δt=0.1 s, the moving disk would end at the origin and overlap if sampled; for an even faster moving disk it could end <em>past</em> the obstacle and be missed entirely. An analytical time-of-impact query reports the 0.08 s encounter regardless of the end position. During a simulation step, a practical engine can advance up to this impact, generate a contact normal, solve or schedule the event, and then advance the remaining time, with a bounded substep count and an explicit policy for simultaneous events and resting contacts.</p>
+<p>The event’s collision normal is the normalized relative separation <strong>n(t) = (p+tv)/|p+tv|</strong>, pointing A to B. When initial centres coincide, there is no unique geometric normal; the witness uses a deterministic velocity-based fallback or +x if relative velocity is zero. This fallback is a test policy rather than a geometrically determined surface normal. The tests explicitly examine grazing touch, no-hit trajectories, hits outside the requested frame, existing overlap, coincident centres, invalid parameters, a high-dynamic-range trajectory, and Galilean invariance under equal velocity added to both bodies. The latter should not change relative motion or time of impact.</p>
+<p><strong>What this does not solve:</strong> disk CCD assumes translational linear motion throughout the interval and fixed radii. It does not include forces or acceleration changing the trajectory, rotation of polygons, concave meshes, vertex-edge events, general convex support functions, conservative advancement, broadphase swept bounds, contact island rescheduling, stable substep integration, or CCD after multiple impulses. It also does not prove the absence of false misses at all floating-point scales. These exclusions must be explicit when moving from a CPU analytic oracle to the engine’s full collision pipeline.</p>
+</section>
+<section id="appendix-c9d92e145503-a-complete-impact-event-geometry-first-time-impulse-and-remaining-interval" class="level3">
+<h3>A complete impact event: geometry, first time, impulse and remaining interval</h3>
+<p>The earlier swept-disk query identifies an impact but does not evolve a scene. The independent <a href="ch602.xhtml#source-source-file-ad26f703e8f150d27a72bf93">disk event pipeline laboratory</a> connects geometry, state integration, simultaneous constraints and the remainder of the frame. It does <strong>not</strong> claim to be Kairo’s actual world step. The model assumes fixed-radius, non-spinning disks, piecewise constant velocities, instantaneous frictionless impulses, and linear motion between impacts. There are no forces, torque, resting-contact stabilization, soft contacts or arbitrary polygons.</p>
+<p>The entire algorithm follows from keeping one variable: <strong>remaining time</strong>. At each iteration, query all unordered disk pairs for their first collision in that remaining interval. If no pair collides, advance every position by its current velocity times the entire remaining interval. If collisions exist, find the earliest time, move <em>all</em> disks to that instant, collect other impacts at approximately the same time, freeze each event’s incoming normal velocity and restitution target, solve their normal impulses, then repeat the time-of-impact scan because the impulses have changed the future motion.</p>
+<p>The numerical trace is visible in the first laboratory test. A radius-1 stationary disk is at x=0. Another radius-1 disk starts at x=10 with velocity −100 m/s, and the requested frame duration is 0.10 s. The moving disk must travel 8 m before the two surfaces meet, giving <strong>TOI=0.08 s</strong>. The world advances both disks through 0.08 s, then an elastic impulse against the infinite-mass disk reverses its incoming velocity to +100 m/s. The remaining time is 0.02 s, so its centre ends at <strong>x=4 m</strong>. An end-of-frame overlap test cannot reconstruct this physically meaningful trajectory by merely reversing the velocity at t=0.10 s.</p>
+<p>For non-spinning disk collisions along the line of centres, the inverse effective mass is the sum of inverse masses, <strong>k = m_A⁻¹ + m_B⁻¹</strong>. With unit collision normal <strong>n</strong> pointing from A to B, relative normal speed <strong>u_n=(v_B−v_A)·n</strong>, and fixed impact target <strong>b=−e u_n_before</strong>, the solver’s unilateral accumulated impulse is</p>
+<p><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><semantics><mrow><mi>λ</mi><mrow><mi>n</mi><mi>e</mi><mi>x</mi><mi>t</mi></mrow><mo>=</mo><mrow><mi mathvariant="normal">max</mi><mo>⁡</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mi>λ</mi><mrow><mi>p</mi><mi>r</mi><mi>e</mi><mi>v</mi><mi>i</mi><mi>o</mi><mi>u</mi><mi>s</mi></mrow><mo>+</mo><mfrac><mrow><mi>b</mi><mo>−</mo><mo stretchy="false" form="prefix">(</mo><msub><mi mathvariant="bold-italic">𝒗</mi><mi>B</mi></msub><mo>−</mo><msub><mi mathvariant="bold-italic">𝒗</mi><mi>A</mi></msub><mo stretchy="false" form="postfix">)</mo><mo>⋅</mo><mi mathvariant="bold-italic">𝒏</mi></mrow><mrow><msub><mi>m</mi><mi>A</mi></msub><mrow><mi>−</mi><mn>1</mn></mrow><mo>+</mo><msub><mi>m</mi><mi>B</mi></msub><mrow><mi>−</mi><mn>1</mn></mrow></mrow></mfrac><mo stretchy="true" form="postfix">)</mo></mrow><mi>.</mi></mrow><annotation encoding="application/x-tex">\lambda{next}=\max\left(0,\lambda{previous} +\frac{b-(\mathbf v_B-\mathbf v_A)\cdot\mathbf n} {m_A{-1}+m_B{-1}}\right).</annotation></semantics></math></p>
+<p>Only the difference <strong>Δλ = λ_next − λ_previous</strong> changes velocities. In a simultaneous batch, multiple contact rows may share a disk, so each row modifies the velocities seen by subsequent rows. The laboratory runs 32 sequential sweeps, freezing the original bounce target rather than repeatedly inventing a new restitution event. A symmetric three-disk scene tests two simultaneous impacts; another three-disk scene tests two impacts at <em>different</em> times in one frame.</p>
+<p>The discovery procedure is <strong>O(n²)</strong> for each rescan because it checks every unordered pair, with no spatial acceleration. The same-time grouping threshold and near-touch geometry threshold are explicit finite-precision policies, not robust computational-geometry predicates. Grazing trajectories with zero closing normal speed are skipped. Deep initial overlaps are rejected rather than repaired. An event budget throws when exhausted, preventing an infinite event loop from masquerading as successful advancement. Importantly, a thrown exception can leave the input scene partly advanced: a production caller needs a rollback snapshot or transactional step if partial state mutation is unacceptable.</p>
+<p>The nine deterministic tests exercise fast impacts, isolated elastic momentum and energy conservation, simultaneous row coupling, separating pairs, initial overlap rejection, event-budget exhaustion, chained events, ideal inelastic energy loss, and zero-duration/duplicate-ID validation. These tests establish a small analytic oracle, <strong>not</strong> a general proof of energy or convergence for arbitrary many-body simultaneous collisions, a guarantee against floating-point tunneling, support for rotating convex objects, or a persistent resting-contact engine. For an impact against an externally fixed body, momentum conservation of the two displayed disks alone is not the correct closed-system invariant; the stationary environment receives the reaction.</p>
+</section>
+<section id="appendix-c9d92e145503-reducing-collision-search-without-losing-collisions-conservative-swept-bounds" class="level3">
+<h3>Reducing collision search without losing collisions: conservative swept bounds</h3>
+<p>The event-step laboratory above asks every pair of disks whether they will collide during the remaining time interval. With <strong>n</strong> bodies, this examines <strong>n(n−1)/2</strong> unordered pairs after each event. For 1,000 disks, that is 499,500 expensive exact pair-time queries per scan—even if almost every disk is far away from the others. A <strong>broad phase</strong> exists to reject pairs that cannot possibly interact using a cheaper geometric test; it is not allowed to reject a true collision merely to be fast. This is why the central proof obligation is <em>conservative coverage</em>, not an attractive benchmark on one scene.</p>
+<p>For a disk of radius <strong>r</strong>, initial centre <strong>p=(p_x,p_y)</strong>, velocity <strong>v=(v_x,v_y)</strong> and remaining interval <strong>Δt</strong>, its centre under constant velocity travels along the segment from <strong>p</strong> to <strong>p+vΔt</strong>. Every possible disk position lies inside its swept axis-aligned rectangle. Its x bounds are <strong>min(p_x,p_x+v_xΔt)−r</strong> and <strong>max(p_x,p_x+v_xΔt)+r</strong>; y is analogous. The <a href="ch616.xhtml#source-source-file-6597829be009fc0bb1b17d87">swept-broadphase reference lab</a> conservatively rounds each boundary one representable floating-point value outward with <code>std::nextafter</code>. The exact continuous disk shape is a capsule around the segment, while its swept AABB is a larger rectangle: the rectangle admits extra pairs but must not discard any collision, provided the endpoints and bounds are correctly represented.</p>
+<p>The algorithm sorts these rectangles by their minimum x coordinate, breaking ties by stable disk ID. As it visits each new rectangle, it removes from an active set any earlier rectangle whose maximum x lies strictly before the current minimum x. Every remaining active rectangle overlaps along x; the algorithm then compares their y intervals. Pairs that pass both checks are returned in deterministic lexicographically sorted index order, with a duplicate assertion. A true disk impact at time <strong>t∈[0,Δt]</strong> means the two disk regions intersect at that time; their swept AABBs must both contain the intersection point. Therefore their AABBs overlap in x and y and the pair must survive the broad-phase filtering. The reverse implication is false: AABBs may overlap even when the disks pass at different times or miss geometrically. The exact TOI narrow phase must therefore test every <em>candidate</em> before scheduling an event.</p>
+<p>The laboratory compares its candidate set with an <strong>independent analytic disk TOI predicate</strong>, rather than comparing the broad phase against itself. Each true TOI pair must appear in the returned set. It tests a high-speed crossing, 100 stationary well-spaced disks with zero candidates, 200 seeded randomized scenes containing 35 disks each, and malformed identity/time inputs. The random scenes therefore examine up to 119,000 unordered pairs for conservative coverage, because each 35-disk scene contains 595 pairs. These are useful regression witnesses, not a proof against all finite-precision failures.</p>
+<p>Sorting has <strong>O(n log n)</strong> comparison cost. Maintaining the simple active vector has potentially <strong>O(n²)</strong> scanning and removal cost when many broad AABBs overlap; the output itself can contain <strong>O(n²)</strong> candidate pairs in a dense scene. A scalable production version may use a better interval structure, broadphase BVH, grid, or incremental pair cache, and should benchmark temporally coherent motion rather than assuming this sample has production throughput. The original broadphase witness remains independently testable; <strong>the event stepper now has an optional swept-candidate mode</strong> alongside its exhaustive reference mode. Both generate candidate pairs for the current remaining interval, and the event stepper rebuilds candidates after each velocity-changing impact. A differential test source is committed to compare complete outcomes, but its successful GitHub-hosted execution remains unverified. This code-level integration is not yet native Kairo runtime integration or evidence of speedup.</p>
+</section>
+<section id="appendix-c9d92e145503-how-to-reconstruct-and-verify-the-witness" class="level3">
+<h3>How to reconstruct and verify the witness</h3>
+<p>Read the <code>Row</code> fields as a prepared contact Jacobian in compressed form: <strong>ra/rb</strong> are the lever arms, <strong>n/t</strong> are the constraint axes, <strong>kn/kt</strong> are scalar rows of the matrix <strong>J M⁻¹ Jᵀ</strong>. The method <code>relative_velocity</code> computes <strong>Jv</strong>, <code>inverse_effective_mass</code> computes a row’s inverse effective mass, <code>solve_one</code> projects impulse increments, and <code>warm_start</code> applies an already-owned cache once. <code>make_row</code> validates data and freezes the impact target. The six tests cover central momentum/energy, friction orientation, angular impulse, separating and static degeneracies, coupled two-contact iteration/next-frame cache, and nonfinite-input rejection.</p>
+<p>Run strict compilation and execution, then run a sanitizer build. Expected output is <code>persistent-contact witness: 6 suites PASS</code>. This verifies only the tested cases on the compiling environment; the repository GitHub Actions workflow repeats strict and undefined-behavior checks, with remote status to be verified separately.</p>
+<p>A reconstruction exercise is to add two bodies with unequal masses and an off-centre contact, compute <strong>kn</strong> by hand and compare every intermediate <strong>u_n</strong>, <strong>Δλ_n</strong>, <strong>Δv</strong> and <strong>Δω</strong>. A stronger follow-up exercise is to implement real feature matching, deliberately reverse normals between frames, and demonstrate that incorrectly reused cached tangential impulses generate artificial energy. Neither extension is presently claimed as implemented.</p>
+</section>
+<section id="appendix-c9d92e145503-verified-boundary-and-research-questions" class="level3">
+<h3>Verified boundary and research questions</h3>
+<p>The lab does <strong>not</strong> verify Kairo’s current renderer or physics engine, broadphase pair generation, narrowphase contact topology, 3D Jacobians, static/dynamic island management, precise multi-contact complementarity, numerical convergence across arbitrary scenes, determinism across compilers, robust CCD, or real-time performance. Before a research claim about stability or speed, define independent scene families, error metrics (maximum penetration, residual closing speed, drift, energy increase), iteration budgets, timestep families and order-randomization trials. Compare warm versus cold starts without changing geometry, feature matching or tolerances at the same time.</p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,39 @@
+\hypertarget{appendix-45303d03796a}{}
+\section*{Integral promotion}
+\section{Integral promotion}\label{appendix-45303d03796a-integral-promotion}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C002
+
+\subsection{Definition and mechanism}\label{appendix-45303d03796a-definition-and-mechanism}
+
+Narrow integral operands promote to \texttt{int} when it represents their entire range, otherwise to \texttt{unsigned\ int}; the operator acts at that promoted width.
+
+Narrow integer types become int if int represents every original value; otherwise they become unsigned int. Promotion happens before the operation, not only on assignment. On the usual host, uint8\_t\{250\}+uint8\_t\{10\} is int 260; converting afterward to uint8\_t yields 4.
+
+\subsection{Prerequisites}\label{appendix-45303d03796a-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-cc04044b5782]{Fixed-width integer types} --- When supplied, std::uint32\_t has exactly 32 bits; uint\_least32\_t has at least 32; uint\_fast32\_t is chosen for speed with at least 32.
+\item
+  \hyperref[appendix-f414bd4ed05c]{Interpretation contract} --- For \texttt{0xAD}, unsigned interpretation gives 173; eight-bit two's complement gives −83.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-45303d03796a-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5e2d663adf7f]{Usual arithmetic conversions} --- uses integral promotion as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-45303d03796a-recall-and-next-depth}
+
+Explain integral promotion without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} enumeration promotions, overload resolution, and implementation-specific ranks.
+
+\subsection{Source and navigation}\label{appendix-45303d03796a-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 development} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

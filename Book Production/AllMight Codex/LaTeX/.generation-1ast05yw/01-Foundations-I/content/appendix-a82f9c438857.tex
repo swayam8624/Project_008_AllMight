@@ -1,0 +1,49 @@
+\hypertarget{appendix-a82f9c438857}{}
+\section*{Object construction and storage reuse}
+\section{Object construction and storage reuse}\label{appendix-a82f9c438857-object-construction-and-storage-reuse}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C007 · \textbf{Latest development:} C010
+
+\subsection{Definition and mechanism}\label{appendix-a82f9c438857-definition-and-mechanism}
+
+Initialization creates an occupant whereas assignment replaces an existing occupant's state. Ordinary constructor failure and post-target delegation failure have different complete-object cleanup behavior.
+
+Storage needs sufficient size/alignment before object initialization can complete and start an ordinary lifetime. construct\_at and destroy\_at separate object life from backing storage. A cast alone does not construct arbitrary types. Some specified operations implicitly create implicit-lifetime objects; replacement and launder have additional preconditions.
+
+M010 adds the resource-management view: placement construction or \texttt{construct\_at} uses already-provided storage; it does not allocate that storage. \texttt{destroy\_at} ends the occupant's lifetime, while an arena separately decides when to reuse or release its bytes. Explicit destruction is safe only inside a protocol that prevents accidental second destruction. See \hyperref[appendix-f56c3e43fd4e]{Placement construction and explicit lifetime management}.
+
+\subsection{Prerequisites}\label{appendix-a82f9c438857-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../05-Engine-I/main.pdf\#nameddest=appendix-0b104bcba06b}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)} --- Backing-storage duration must be distinguished from the occupant's start, destruction and replacement.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-a82f9c438857-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../05-Engine-I/main.pdf\#nameddest=appendix-f1581457d322}{Object identity and generation handles (05-Engine-I, appendix-f1581457d322)} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \hyperref[appendix-b08d3788c5c6]{Return values and copy elision}
+\item
+  \hyperref[appendix-7f8ec83d0886]{Constructors and invariant establishment}
+\item
+  \hyperref[appendix-adfd6397af8d]{Relocation versus move}
+\item
+  \hyperref[appendix-f56c3e43fd4e]{Placement construction and explicit lifetime management}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-a82f9c438857-recall-and-next-depth}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} explicit lifetime restart, smart ownership and allocator protocols.
+
+\subsection{Source and navigation}\label{appendix-a82f9c438857-source-and-navigation}
+
+\hyperref[appendix-fd090d982a15-m009---parts-127-147]{C009 development}
+
+\hyperref[01-foundations-i-ch002-storage-is-a-place-an-object-is-its-occupant]{C007 teaching chapter} · \hyperref[appendix-fd090d982a15-m007---parts-101-112]{Source coverage} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

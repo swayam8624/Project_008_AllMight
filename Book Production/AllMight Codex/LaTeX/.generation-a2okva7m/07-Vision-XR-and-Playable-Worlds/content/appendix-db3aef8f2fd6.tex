@@ -1,0 +1,46 @@
+\hypertarget{appendix-db3aef8f2fd6}{}\label{referencestart:appendix-db3aef8f2fd6}
+\section{Cubic Hermite interpolation}\label{appendix-db3aef8f2fd6-cubic-hermite-interpolation}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-db3aef8f2fd6-definition-and-mechanism}
+
+A cubic Hermite segment is determined by endpoint values and endpoint tangent data. With normalized \(t\in[0,1]\), its four basis polynomials blend the two endpoint positions and two tangents. Tangents are derivatives with respect to the parameter, so physical-time derivatives must be scaled by segment duration: a velocity in units per second is not interchangeable with a tangent per normalized parameter. Hermite curves are useful when a camera path or animation must pass through known positions while exposing direct control over its entry and exit directions. The endpoint constraints determine one cubic polynomial; continuity between adjacent segments still requires compatible endpoint tangents.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-db3aef8f2fd6-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0c2a5f69851e]{Interpolation versus approximation}
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=appendix-f28eeec97a3d}{Spline bases and curve evaluation (Geometry, Cameras, and Image Formation, Reference notes: Spline bases and curve evaluation)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-db3aef8f2fd6-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  No downstream concept node is added in this stage.
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-db3aef8f2fd6-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch028-reconstructing-values-and-curves-between-samples}{Reconstructing values and curves between samples (Mathematics for Visual Computing, Ch. 12)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-db3aef8f2fd6-source-coverage}
+
+Supplied lesson parts: 981.
+
+\subsection{Future keywords}\label{appendix-db3aef8f2fd6-future-keywords}
+
+endpoint tangents, C1 continuity, parameter scaling

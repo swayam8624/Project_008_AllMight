@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch221.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-877738f6f4d2-batch-009-group-b-coverage-map" class="level2">
+<h2>Batch 009 group B coverage map</h2>
+<p>This draft maps the fully read caption findings to the current live book, <span>Continuous Notes/Game Engine - From First Frame to Living Worlds</span>. “Existing” means the book already teaches the underlying concept; it does not assert that every statement in the source episode has been independently verified. The additions draft is deliberately selective and keeps source-specific unresolved results and layout arithmetic that are not already taught as clearly.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Source</th>
+<th>Substantive findings</th>
+<th>Existing exact destination heading(s)</th>
+<th>Treatment in additions-b.md</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=5b95WTHZ9HE">2000 HOUR 2D Game Engine! // Code Review</a></td>
+<td>README-only review: manual script update coupling; pointers into vector storage; index and generated-ID caveats; scene lifetime. No code inspected.</td>
+<td><code>#### Keep example behavior in the example application</code>; <code>## Keep identity, storage, and ownership in agreement</code>; <code>### A content browser starts with a root and a navigation rule</code>; <code>### Model a scene as data, then make it executable</code></td>
+<td>Covered conceptually in ownership section; retain evidence limit that review was documentation-only.</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=9HCboZHTyrw">2D Game Engine by 13-YEAR-OLD! // Code Review</a></td>
+<td>Batch-file setup, globals, application loop, const/reference suggestions, vector pointer invalidation, texture atlas/lazy glyph ideas, reusable quad transform.</td>
+<td><code>### Generate platform projects from one configuration, then verify each target</code>; <code>#### Put ownership and lifetime into the first application loop</code>; <code>### Keep identity, storage, and ownership in agreement</code>; <code>### A sprite sheet is a texture plus a region</code>; <code>### Give a 2D renderer a clean place to be exercised</code></td>
+<td>Ownership section explains why pointer/index suggestions need explicit mutation rules; no repeated foundation exposition.</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=9PmjQvowfAI">GAME ENGINE DEVELOPER Reacts to UNREAL ENGINE 5 Demo</a></td>
+<td>Reaction to Epic demo: Lumen/Nanite, triangle counts, resolution, reverb, Niagara/Chaos, animation, storage/compression. Estimates and console/platform comparisons are unverified.</td>
+<td><code>#### Treat screenshots and trailers as observations, not implementation proofs</code>; <code>### A visual review should describe the frame before naming its technique</code>; <code>### Focus the prototype on the risky question</code></td>
+<td>Roadmap/source-boundary section uses the reaction as example of attributed historical claims; no technical claims promoted.</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=B6pM9KcIFE4">TERMINAL GAME ENGINE! // Code Review</a></td>
+<td>Review questions around scene ownership, valid states/assertions, delta time/input, nested vector representation and pool/flat-buffer alternative.</td>
+<td><code>#### Put ownership and lifetime into the first application loop</code>; <code>### Scale movement by elapsed time, and state what the clock means</code>; <code>### Keep identity, storage, and ownership in agreement</code>; <code>##### ECS performance claims need a memory-layout argument</code></td>
+<td>Ownership section preserves that representation alternatives are proposals until workload and deletion rules are specified.</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=Glq1oDBy1cQ">SOMEONE Code Reviewed Hazel, My Game Engine</a></td>
+<td>Historical Hazel review: lifecycle order, queued event callback ownership, raw layer pointers, renderer thread lifetime, intrusive refs, Buffer view/ownership ambiguity, unresolved raw-byte object-lifetime discussion, settings conversion, potential animation move leak, string/C API contract, shared refs, Windows UTF conversion, thread-affinity mask.</td>
+<td><code>#### Centralize subsystem lifecycle without hiding order</code>; <code>### Synchronous dispatch versus a queued bus</code>; <code>#### Removing a layer pointer does not define who destroys it</code>; <code>### Keep submitted render resources alive until their users finish</code>; <code>### State ownership and memory lifetime</code>; <code>### Make loading a state transition rather than a hopeful pointer</code>; <code>### Keep the event API explicit about payload, timing, and propagation</code></td>
+<td>New ownership section adds a concrete decision framework while preserving uncertainty and historical source scope. No reviewer speculation treated as reproduced defect.</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=_kEO7kreWnU">Hazel is going to be FREE! How do we get there?</a></td>
+<td>Dated Hazel release model/roadmap; proposed source access, multiplayer boundary, prefab updates, GPU-particle integration, named work ownership and QA.</td>
+<td><code>### Documentation is part of the build and release path</code>; <code>## Prepare and publish content before promising it is ready</code>; <code>#### Keep source assets, engine choices, and runtime packages distinct</code>; <code>### Choose the game you want to make before choosing how much engine to build</code></td>
+<td>New roadmap section clarifies roadmap ≠ capability and keeps plans dated. Multiplayer and prefab foundations are already covered; no duplication.</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=aWGVjFTbXc8">Code Reviewing My Own Game Engine Series (Hazel 2D)</a></td>
+<td>Narrated 2D Hazel clone/build/UI review: project setup, static state teardown, separate sandbox script build, editor limitations, entity picking ID, coarse renderer API boundary, SPIR-V/OpenGL path, batching and circle shader, Mono/Coral historical claim.</td>
+<td><code>### Build boundaries: library choice, runtime assumptions, and warning scope</code>; <code>#### Put ownership and lifetime into the first application loop</code>; <code>#### Selection and picking</code>; <code>#### API abstraction has a price</code>; <code>### One shader source can target two APIs through SPIR-V</code>; <code>### A content browser starts with a root and a navigation rule</code>; <code>### Keep the OpenGL ASR example separate from the Kohi Vulkan renderer</code></td>
+<td>No duplicate walkthrough; historical/API currency limits are retained in audit scope.</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=iY6QbL_3L2I">Diagnosing Performance Issues in Hazel</a></td>
+<td>First-use hitch traced with frame capture and added markers; candidate logging/random-number initialization; final root cause not reached in available captions.</td>
+<td><code>### Diagnose a frame as a pipeline</code>; <code>#### A capacity target needs a later measurement</code>; <code>### Measure the renderer, then choose a batch boundary</code>; <code>#### Logging and diagnostics belong early</code></td>
+<td>New first-slow-action section preserves the investigation procedure and explicitly unresolved endpoint. This is the clearest incremental teaching contribution from the group.</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=uQljBVVb-lU">ImGui Thumbnail Layout - Content Browser Panel</a></td>
+<td>Fixed grid, dynamic column count from available width and cell allowance, minimum one column, separate style spacing, directory navigation, editor resources vs project assets, file-type icons.</td>
+<td><code>### A content browser starts with a root and a navigation rule</code>; <code>### Resource and asset systems are about reliable identity and lifetime</code>; <code>#### Loading different asset types through resource loaders</code>; <code>### Repeated editor controls need one shared layout rule</code></td>
+<td>New thumbnail-grid section gives the compact <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo fence="false" stretchy="false">⌊</mo>
+  <mi>W</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>T</mi>
+  <mo>+</mo>
+  <mi>P</mi>
+  <mo stretchy="false">)</mo>
+  <mo fence="false" stretchy="false">⌋</mo>
+  <mo stretchy="false">)</mo>
+</math> derivation and distinguishes custom layout spacing from UI style spacing.</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=v1SRHrCa4XQ">GAME ENGINE DEVELOPER Reacts to ROAD TO PS5 (Part 2)</a></td>
+<td>Secondary reaction to historical PS5 storage/I/O/GPU talk; measurements/architecture claims attributed to the presentation; incomplete before power section.</td>
+<td><code>### Diagnose a frame as a pipeline</code>; <code>### Put a rendering boundary between games and graphics APIs</code>; <code>#### API abstraction has a price</code>; <code>### Focus the prototype on the risky question</code>; <code>#### Treat screenshots and trailers as observations, not implementation proofs</code></td>
+<td>Roadmap/source boundary notes attribution, incompleteness, and non-portability. Does not assert the claims as current general facts.</td>
+</tr>
+<tr>
+<td><a href="https://www.youtube.com/watch?v=v_BmwKl9Inc">Game Engine WITHOUT LIBRARIES! // Code Review</a></td>
+<td>Review of Windows-only engine: dependency tradeoffs, separate game executable, level/component ownership, vector locality, static physics/camera state, custom math tests, repeated per-sprite geometry/texture setup.</td>
+<td><code>### Build boundaries: library choice, runtime assumptions, and warning scope</code>; <code>### Put operating-system differences behind a narrow platform boundary</code>; <code>## Keep identity, storage, and ownership in agreement</code>; <code>##### ECS performance claims need a memory-layout argument</code>; <code>### Choosing and integrating a graphics math library</code>; <code>### Give a 2D renderer a clean place to be exercised</code></td>
+<td>Ownership section treats pooling and handles as design questions, not guaranteed speedups; source inspection claims remain attributed and unverified.</td>
+</tr>
+</tbody>
+</table>
+<section id="appendix-877738f6f4d2-limits" class="level3">
+<h3>Limits</h3>
+<p>All eleven group B caption texts were fully read, with canonical word counts and cleaned-file hashes saved in <code>reviews-b.json</code>. This is not frame-by-frame review, source checkout, build reproduction, benchmark verification, or current API research. Some videos are reactions, code reviews, or historic roadmap reports; opinions, narrated observations, and confirmed mechanisms are distinguished in their receipts. The coverage map routes all salient findings, but it is not a literal claim that every utterance has a unique paragraph in the book. Several foundations are already covered under the exact headings above; additions-b.md therefore prioritizes the incremental cold-start investigation, grid-sizing derivation, ownership decision questions, and evidence boundary.</p>
+</section>
+</section>
+</body>
+</html>

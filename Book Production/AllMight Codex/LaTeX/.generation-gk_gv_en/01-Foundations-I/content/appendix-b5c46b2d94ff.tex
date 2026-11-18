@@ -1,0 +1,37 @@
+\hypertarget{appendix-b5c46b2d94ff}{}
+\section*{Carry-lookahead and parallel-prefix adders}
+\chapter{Carry-lookahead and parallel-prefix adders}\label{appendix-b5c46b2d94ff-carry-lookahead-and-parallel-prefix-adders}
+
+\textbf{Curriculum depth:} Forward · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\section{Definition and mechanism}\label{appendix-b5c46b2d94ff-definition-and-mechanism}
+
+Generate/propagate terms expose carries for parallel evaluation instead of serial ripple.
+
+Generate Gᵢ=Aᵢ AND Bᵢ creates carry locally; propagate Pᵢ=Aᵢ XOR Bᵢ passes carry through. Expanding Cᵢ₊₁=Gᵢ OR (Pᵢ AND Cᵢ) permits parallel carry computation. Detailed prefix networks and wiring trade-offs remain future work.
+
+\section{Prerequisites}\label{appendix-b5c46b2d94ff-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-17917d9fdbe3]{Ripple-carry addition} --- Connect carry-out at bit i to carry-in at i+1.
+\item
+  \hyperref[appendix-68b52453737c]{Bitwise AND} --- Per lane: 0\&0=0, 0\&1=0, 1\&0=0, 1\&1=1.
+\item
+  \hyperref[appendix-a427ce8ce8a6]{Bitwise OR} --- Per lane: only 0\textbar0 is 0; the other three cases are 1.
+\end{itemize}
+
+\section{Used by}\label{appendix-b5c46b2d94ff-used-by}
+
+Connect later chunks here when they use this concept.
+
+\section{Recall and next depth}\label{appendix-b5c46b2d94ff-recall-and-next-depth}
+
+Explain carry-lookahead and parallel-prefix adders without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} carry-lookahead, Kogge-Stone, Brent-Kung, carry-select, area, power, and wiring trade-offs.
+
+\section{Source and navigation}\label{appendix-b5c46b2d94ff-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Arithmetic\%20becomes\%20a\%20policy}{C002 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

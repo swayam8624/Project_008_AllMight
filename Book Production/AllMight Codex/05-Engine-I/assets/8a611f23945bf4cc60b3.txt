@@ -1,0 +1,3165 @@
+We are now at the point where the earlier ideas become a coherent representation system. The canonical sequence is **511. Linear independence**, **512. Basis vectors**, **513. Dimension of a vector space**, **514. Coordinate representation relative to a basis**, and **515. Changing basis conceptually**. Project_Sheldon_Master_Curricul…
+
+These five should be learned as one dependency chain, but I will not collapse their depth:
+
+\[
+\boxed{
+\text{span}
+\rightarrow
+\text{redundancy}
+\rightarrow
+\text{linear independence}
+\rightarrow
+\text{basis}
+\rightarrow
+\text{dimension}
+\rightarrow
+\text{coordinates relative to basis}
+\rightarrow
+\text{change of basis}
+}
+\]
+
+I’ll keep the distinction between mathematical object, coordinate representation, and machine storage explicit throughout, exactly as required by the mastery contract. Pasted markdown
+
+---
+
+# PART 511 — LINEAR INDEPENDENCE
+
+## 511.1 The problem left by span
+
+From Part 510, suppose we have
+
+\[
+S=\{\vec v_1,\vec v_2,\ldots,\vec v_k\}.
+\]
+
+Its span is
+
+\[
+\operatorname{span}(S)
+=
+\left\{
+a_1\vec v_1+\cdots+a_k\vec v_k
+\right\}.
+\]
+
+But there is a problem.
+
+Some of the vectors in \(S\) may contribute **nothing new**.
+
+For example,
+
+\[
+\vec v_1=(1,0)
+\]
+
+and
+
+\[
+\vec v_2=(2,0).
+\]
+
+We already know
+
+\[
+\vec v_2=2\vec v_1.
+\]
+
+Therefore
+
+\[
+\operatorname{span}\{\vec v_1,\vec v_2\}
+=
+\operatorname{span}\{\vec v_1\}.
+\]
+
+The second vector is redundant.
+
+The natural question is:
+
+> How can we determine rigorously whether some vectors contain redundant directional information?
+
+That is what **linear independence** answers.
+
+---
+
+# 511.2 Why the zero vector is the key test
+
+Suppose
+
+\[
+a_1\vec v_1+\cdots+a_k\vec v_k=\vec0.
+\]
+
+There is always one obvious solution:
+
+\[
+a_1=a_2=\cdots=a_k=0.
+\]
+
+That is called the **trivial solution**.
+
+The important question is whether there is another solution where at least one coefficient is nonzero.
+
+If there is, then some vector can be reconstructed from the others.
+
+That means redundancy exists.
+
+This observation gives the formal definition.
+
+---
+
+# 511.3 Formal definition
+
+Vectors
+
+\[
+\vec v_1,\ldots,\vec v_k
+\]
+
+are **linearly independent** if the equation
+
+\[
+\boxed{
+a_1\vec v_1+\cdots+a_k\vec v_k=\vec0
+}
+\]
+
+has only the solution
+
+\[
+\boxed{
+a_1=a_2=\cdots=a_k=0.
+}
+\]
+
+If there exists any solution with at least one
+
+\[
+a_i\neq0,
+\]
+
+then the vectors are **linearly dependent**.
+
+So independence means:
+
+\[
+\boxed{
+\text{none of the vectors can be recreated from the others}
+}
+\]
+
+in the linear-combination sense.
+
+---
+
+# 511.4 Why a nontrivial zero combination implies redundancy
+
+Suppose
+
+\[
+a_1\vec v_1+\cdots+a_k\vec v_k=\vec0
+\]
+
+and assume
+
+\[
+a_j\neq0.
+\]
+
+Move the \(j\)-th term to the other side:
+
+\[
+a_j\vec v_j
+=
+-\sum_{i\neq j}a_i\vec v_i.
+\]
+
+Because \(a_j\neq0\), its scalar inverse exists.
+
+Divide by \(a_j\):
+
+\[
+\vec v_j
+=
+-\sum_{i\neq j}
+\frac{a_i}{a_j}\vec v_i.
+\]
+
+Therefore
+
+\[
+\boxed{
+\vec v_j
+\in
+\operatorname{span}
+\{\vec v_i:i\neq j\}.
+}
+\]
+
+So one vector is reconstructible from the rest.
+
+That is exactly what redundancy means.
+
+This is not merely intuition; it is the algebraic proof.
+
+---
+
+# 511.5 First dependent example
+
+Take
+
+\[
+\vec v_1=(1,2)
+\]
+
+and
+
+\[
+\vec v_2=(2,4).
+\]
+
+Test
+
+\[
+a\vec v_1+b\vec v_2=\vec0.
+\]
+
+Substitute:
+
+\[
+a(1,2)+b(2,4)=(0,0).
+\]
+
+Component-wise:
+
+\[
+a+2b=0
+\]
+
+and
+
+\[
+2a+4b=0.
+\]
+
+But the second equation is just twice the first.
+
+Choose
+
+\[
+b=1.
+\]
+
+Then
+
+\[
+a=-2.
+\]
+
+So:
+
+\[
+-2\vec v_1+\vec v_2=\vec0.
+\]
+
+The coefficients are not both zero.
+
+Therefore:
+
+\[
+\boxed{
+\vec v_1,\vec v_2
+\text{ are linearly dependent}.
+}
+\]
+
+And indeed:
+
+\[
+\vec v_2=2\vec v_1.
+\]
+
+---
+
+# 511.6 Independent example in \(\mathbb R^2\)
+
+Take
+
+\[
+\vec u=(1,0)
+\]
+
+and
+
+\[
+\vec v=(0,1).
+\]
+
+Solve
+
+\[
+a\vec u+b\vec v=\vec0.
+\]
+
+Then:
+
+\[
+a(1,0)+b(0,1)=(0,0)
+\]
+
+so:
+
+\[
+(a,b)=(0,0).
+\]
+
+Thus
+
+\[
+a=0,\qquad b=0.
+\]
+
+There is no nontrivial solution.
+
+Therefore:
+
+\[
+\boxed{
+(1,0),(0,1)
+\text{ are linearly independent}.
+}
+\]
+
+---
+
+# 511.7 Independent non-axis example
+
+Take
+
+\[
+\vec u=(1,1)
+\]
+
+and
+
+\[
+\vec v=(1,-1).
+\]
+
+Suppose
+
+\[
+a\vec u+b\vec v=\vec0.
+\]
+
+Then:
+
+\[
+a(1,1)+b(1,-1)=(0,0).
+\]
+
+Component equations:
+
+\[
+a+b=0
+\]
+
+and
+
+\[
+a-b=0.
+\]
+
+Add them:
+
+\[
+2a=0
+\]
+
+so
+
+\[
+a=0.
+\]
+
+Then:
+
+\[
+b=0.
+\]
+
+Therefore the vectors are independent.
+
+Notice they do not need to be perpendicular to be independent.
+
+That distinction matters.
+
+\[
+\boxed{
+\text{independence}\neq\text{orthogonality}
+}
+\]
+
+Orthogonality is stronger and appears later.
+
+---
+
+# 511.8 Any set containing the zero vector is dependent
+
+Suppose the set contains
+
+\[
+\vec0.
+\]
+
+Then choose coefficient \(1\) for that vector and \(0\) for every other vector.
+
+You immediately get
+
+\[
+1\vec0+0\vec v_2+\cdots+0\vec v_k=\vec0.
+\]
+
+This is a nontrivial coefficient solution because one coefficient equals \(1\).
+
+Therefore:
+
+\[
+\boxed{
+\text{any set containing }\vec0
+\text{ is linearly dependent}.
+}
+\]
+
+This is worth being able to answer instantly.
+
+---
+
+# 511.9 A single nonzero vector is independent
+
+Suppose the set contains only
+
+\[
+\{\vec v\}
+\]
+
+with
+
+\[
+\vec v\neq\vec0.
+\]
+
+Test:
+
+\[
+a\vec v=\vec0.
+\]
+
+From Part 507:
+
+\[
+a\vec v=\vec0
+\Rightarrow
+a=0
+\text{ or }
+\vec v=\vec0.
+\]
+
+But \(\vec v\neq0\).
+
+Therefore:
+
+\[
+a=0.
+\]
+
+So any single nonzero vector forms an independent set.
+
+---
+
+# 511.10 Why three vectors in a plane can be dependent
+
+Consider:
+
+\[
+\vec v_1=(1,0),
+\]
+
+\[
+\vec v_2=(0,1),
+\]
+
+\[
+\vec v_3=(1,1).
+\]
+
+Observe:
+
+\[
+\vec v_3=\vec v_1+\vec v_2.
+\]
+
+Therefore:
+
+\[
+\vec v_1+\vec v_2-\vec v_3=\vec0.
+\]
+
+The coefficients
+
+\[
+1,\quad1,\quad-1
+\]
+
+are not all zero.
+
+Therefore the set is dependent.
+
+Adding \((1,1)\) did not enlarge the span:
+
+\[
+\operatorname{span}
+\{
+\vec v_1,\vec v_2,\vec v_3
+\}
+=
+\operatorname{span}
+\{
+\vec v_1,\vec v_2
+\}.
+\]
+
+This is exactly the connection between independence and span redundancy.
+
+---
+
+# 511.11 Independence means uniqueness of coefficients
+
+This is one of the deepest results here.
+
+Suppose \(\vec v_1,\ldots,\vec v_k\) are independent.
+
+Assume one vector \(\vec x\) has two representations:
+
+\[
+\vec x
+=
+a_1\vec v_1+\cdots+a_k\vec v_k
+\]
+
+and
+
+\[
+\vec x
+=
+b_1\vec v_1+\cdots+b_k\vec v_k.
+\]
+
+Subtract:
+
+\[
+\vec0
+=
+(a_1-b_1)\vec v_1
++\cdots+
+(a_k-b_k)\vec v_k.
+\]
+
+Because the generators are independent, the only zero combination is the trivial one.
+
+Therefore:
+
+\[
+a_i-b_i=0
+\]
+
+for every \(i\).
+
+Thus:
+
+\[
+a_i=b_i.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\text{independent generators give unique coefficients}
+}
+\]
+
+for every vector they span.
+
+This result is the mathematical reason coordinates become well-defined once we have a basis.
+
+---
+
+# 511.12 Independence versus numerical independence
+
+Consider:
+
+\[
+\vec u=(1,0)
+\]
+
+and:
+
+\[
+\vec v=(1,10^{-8}).
+\]
+
+Mathematically they are independent.
+
+There is no scalar \(c\) such that:
+
+\[
+\vec v=c\vec u.
+\]
+
+But numerically they are almost parallel.
+
+If you try to reconstruct certain target vectors, the required coefficients can become huge and cancellation can become severe.
+
+So distinguish:
+
+\[
+\boxed{
+\text{exact linear independence}
+}
+\]
+
+from
+
+\[
+\boxed{
+\text{numerically well-conditioned independence}.
+}
+\]
+
+Later singular values and conditioning quantify this precisely.
+
+---
+
+# 511.13 Why an epsilon test for independence is dangerous
+
+A naive implementation might say:
+
+```cpp
+if (std::abs(det) < 1e-6f)
+    dependent = true;
+```
+
+But whether `1e-6` makes sense depends on the scale of the problem.
+
+For vectors around magnitude
+
+\[
+10^{-9},
+\]
+
+that threshold is enormous.
+
+For vectors around
+
+\[
+10^{10},
+\]
+
+it may be tiny.
+
+So numerical independence tests often need relative scaling, normalization, rank-revealing decompositions, or singular-value thresholds.
+
+This is another case where the mathematical definition is exact while implementation requires numerical policy.
+
+---
+
+# PART 512 — BASIS VECTORS
+
+Now we have two important concepts:
+
+A set can **span** a vector space.
+
+A set can be **linearly independent**.
+
+A basis is where both properties hold simultaneously.
+
+---
+
+# 512.1 Why basis exists
+
+Suppose we want to describe every vector in a space using some reference vectors.
+
+If our reference vectors do not span the whole space, some vectors cannot be represented.
+
+If they are dependent, representations may not be unique.
+
+So we need:
+
+\[
+\boxed{
+\text{enough vectors to reach everything}
+}
+\]
+
+but also:
+
+\[
+\boxed{
+\text{no redundant vectors}
+}
+\]
+
+That gives the basis definition.
+
+---
+
+# 512.2 Formal definition
+
+A set
+
+\[
+B=
+\{
+\vec b_1,\ldots,\vec b_n
+\}
+\]
+
+is a **basis** of vector space \(V\) if:
+
+\[
+\operatorname{span}(B)=V
+\]
+
+and the vectors in \(B\) are linearly independent.
+
+So:
+
+\[
+\boxed{
+\text{basis}
+=
+\text{independent spanning set}
+}
+\]
+
+This is one of the fundamental definitions of linear algebra.
+
+---
+
+# 512.3 Why both conditions are necessary
+
+Consider:
+
+\[
+\{(1,0)\}.
+\]
+
+This set is independent.
+
+But it does not span \(\mathbb R^2\).
+
+Therefore it is not a basis of \(\mathbb R^2\).
+
+Now consider:
+
+\[
+\{(1,0),(0,1),(1,1)\}.
+\]
+
+It spans \(\mathbb R^2\).
+
+But it is dependent because:
+
+\[
+(1,1)=(1,0)+(0,1).
+\]
+
+Therefore it is also not a basis.
+
+Only something that is simultaneously spanning and independent qualifies.
+
+---
+
+# 512.4 Standard basis of \(\mathbb R^2\)
+
+The familiar basis is:
+
+\[
+\vec e_1=(1,0)
+\]
+
+and
+
+\[
+\vec e_2=(0,1).
+\]
+
+They are independent and span every vector:
+
+\[
+(x,y)
+=
+x\vec e_1+y\vec e_2.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\{(1,0),(0,1)\}
+}
+\]
+
+is a basis of \(\mathbb R^2\).
+
+This particular one is called the **standard basis**.
+
+Part 516 later gives it its dedicated treatment.
+
+---
+
+# 512.5 Standard basis of \(\mathbb R^3\)
+
+Similarly:
+
+\[
+\vec e_1=(1,0,0)
+\]
+
+\[
+\vec e_2=(0,1,0)
+\]
+
+\[
+\vec e_3=(0,0,1).
+\]
+
+Every:
+
+\[
+(x,y,z)
+\]
+
+can be written:
+
+\[
+x\vec e_1+y\vec e_2+z\vec e_3.
+\]
+
+They are independent.
+
+Therefore they form a basis.
+
+Again, detailed treatment belongs to Part 517.
+
+---
+
+# 512.6 Basis vectors do not have to be unit length
+
+Consider:
+
+\[
+\vec b_1=(2,0)
+\]
+
+and:
+
+\[
+\vec b_2=(0,3).
+\]
+
+These vectors are independent.
+
+Can they span \(\mathbb R^2\)?
+
+For arbitrary target:
+
+\[
+(x,y),
+\]
+
+we need:
+
+\[
+a(2,0)+b(0,3)=(x,y).
+\]
+
+That means:
+
+\[
+2a=x
+\]
+
+and:
+
+\[
+3b=y.
+\]
+
+So:
+
+\[
+a=\frac{x}{2}
+\]
+
+and:
+
+\[
+b=\frac{y}{3}.
+\]
+
+Every target has a solution.
+
+Therefore they form a basis.
+
+So:
+
+\[
+\boxed{
+\text{basis vectors need not be normalized}
+}
+\]
+
+---
+
+# 512.7 Basis vectors do not have to be perpendicular
+
+Take:
+
+\[
+\vec b_1=(1,0)
+\]
+
+and:
+
+\[
+\vec b_2=(1,1).
+\]
+
+They are independent.
+
+Any target:
+
+\[
+(x,y)
+\]
+
+must satisfy:
+
+\[
+a(1,0)+b(1,1)
+=
+(x,y).
+\]
+
+Expanding:
+
+\[
+(a+b,b)=(x,y).
+\]
+
+Thus:
+
+\[
+b=y
+\]
+
+and:
+
+\[
+a=x-y.
+\]
+
+Always solvable.
+
+Therefore these two vectors form a basis of \(\mathbb R^2\).
+
+Geometrically:
+
+```text
+     b2
+    /
+   /
+  /
+ •────────→ b1
+```
+
+The coordinate grid is now slanted.
+
+That is perfectly legal.
+
+So:
+
+\[
+\boxed{
+\text{basis}\neq\text{orthonormal basis}
+}
+\]
+
+Orthonormal bases come later in Part 559.
+
+---
+
+# 512.8 Basis as a coordinate measuring system
+
+A basis tells us which directions count as our coordinate directions.
+
+If:
+
+\[
+B=
+\{\vec b_1,\vec b_2\},
+\]
+
+then instead of describing vectors using the standard X/Y directions, we describe them using amounts along:
+
+\[
+\vec b_1
+\]
+
+and:
+
+\[
+\vec b_2.
+\]
+
+So basis vectors are not merely "important vectors."
+
+They define a **coordinate language**.
+
+This is the bridge into Part 514.
+
+---
+
+# 512.9 Basis and uniqueness
+
+Because basis vectors are independent, the representation
+
+\[
+\vec v
+=
+a_1\vec b_1+\cdots+a_n\vec b_n
+\]
+
+has unique coefficients.
+
+Because they span \(V\), such coefficients exist for every \(\vec v\in V\).
+
+Thus a basis gives both:
+
+\[
+\boxed{\text{existence}}
+\]
+
+and
+
+\[
+\boxed{\text{uniqueness}}
+\]
+
+of coordinates.
+
+That is the real reason basis is so important.
+
+---
+
+# 512.10 Removing redundant generators until a basis remains
+
+Suppose:
+
+\[
+S=
+\{
+(1,0),
+(0,1),
+(1,1)
+\}.
+\]
+
+This spans \(\mathbb R^2\), but it is dependent.
+
+Because:
+
+\[
+(1,1)
+=
+(1,0)+(0,1),
+\]
+
+we can remove the third vector without changing the span.
+
+We are left with:
+
+\[
+\{
+(1,0),(0,1)
+\}.
+\]
+
+That is independent and still spans.
+
+Thus it is a basis.
+
+Conceptually:
+
+```text
+spanning set
+    ↓ remove redundant generators
+independent spanning set
+    ↓
+basis
+```
+
+Later algorithms such as Gaussian elimination, QR and SVD provide systematic ways of discovering this structure.
+
+---
+
+# PART 513 — DIMENSION OF A VECTOR SPACE
+
+Now a striking fact appears.
+
+Different bases of the same finite-dimensional vector space always contain the same number of vectors.
+
+That number is called the **dimension**.
+
+---
+
+# 513.1 The motivating question
+
+Suppose one basis of \(\mathbb R^2\) is:
+
+\[
+\{(1,0),(0,1)\}.
+\]
+
+Another is:
+
+\[
+\{(1,1),(1,-1)\}.
+\]
+
+Another is:
+
+\[
+\{(2,0),(1,7)\}.
+\]
+
+The actual basis vectors differ.
+
+Yet all bases contain exactly two vectors.
+
+Why?
+
+Because the space has two independent directions of freedom.
+
+That count is the dimension.
+
+---
+
+# 513.2 Formal definition
+
+If \(V\) has a finite basis containing \(n\) vectors, then:
+
+\[
+\boxed{
+\dim V=n.
+}
+\]
+
+For example:
+
+\[
+\dim\mathbb R^2=2
+\]
+
+and:
+
+\[
+\dim\mathbb R^3=3.
+\]
+
+The number is not tied to one particular basis.
+
+It is an invariant of the vector space itself.
+
+---
+
+# 513.3 Why "number of components" is not the deepest definition
+
+For \(\mathbb R^3\), vectors happen to be represented using three real coordinates.
+
+So it is tempting to define dimension as:
+
+> number of components.
+
+That is not the fundamental definition.
+
+The deeper statement is:
+
+\[
+\boxed{
+\dim V
+=
+\text{number of vectors in any basis of }V.
+}
+\]
+
+Component count follows after a basis is chosen.
+
+This matters because vector spaces can consist of objects that are not initially coordinate tuples.
+
+---
+
+# 513.4 Example: a plane inside \(\mathbb R^3\)
+
+Consider:
+
+\[
+W=
+\{
+(x,y,0)
+\}.
+\]
+
+This is a subspace of \(\mathbb R^3\).
+
+A basis is:
+
+\[
+(1,0,0),\qquad(0,1,0).
+\]
+
+Therefore:
+
+\[
+\boxed{
+\dim W=2.
+}
+\]
+
+Notice that every vector is physically stored using three coordinates:
+
+\[
+(x,y,0),
+\]
+
+but the subspace has dimension only \(2\).
+
+So:
+
+\[
+\boxed{
+\text{storage component count}
+\neq
+\text{intrinsic dimension}
+}
+\]
+
+in general.
+
+That distinction becomes extremely important in graphics and geometry.
+
+---
+
+# 513.5 Example: a line in \(\mathbb R^3\)
+
+Let:
+
+\[
+W=
+\{
+t(1,2,3)\mid t\in\mathbb R
+\}.
+\]
+
+A basis is simply:
+
+\[
+\{(1,2,3)\}.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\dim W=1.
+}
+\]
+
+Yet every vector still uses three ambient coordinates.
+
+Again:
+
+```text
+ambient storage:
+3 numbers
+
+intrinsic freedom:
+1 coefficient
+```
+
+---
+
+# 513.6 Zero subspace dimension
+
+The zero subspace is:
+
+\[
+\{\vec0\}.
+\]
+
+It has no nonzero independent vectors.
+
+Its basis is the empty set:
+
+\[
+\varnothing.
+\]
+
+Therefore:
+
+\[
+\boxed{
+\dim\{\vec0\}=0.
+}
+\]
+
+This is mathematically consistent with:
+
+\[
+\operatorname{span}(\varnothing)=\{\vec0\}.
+\]
+
+---
+
+# 513.7 Degrees of freedom intuition
+
+Dimension is often interpreted as the number of independent scalar choices required to identify a vector once a basis is fixed.
+
+In a line:
+
+\[
+t\vec b_1
+\]
+
+we choose one scalar \(t\).
+
+Dimension:
+
+\[
+1.
+\]
+
+In a plane:
+
+\[
+a\vec b_1+b\vec b_2
+\]
+
+we choose two scalars.
+
+Dimension:
+
+\[
+2.
+\]
+
+In \(\mathbb R^3\):
+
+\[
+a\vec b_1+b\vec b_2+c\vec b_3.
+\]
+
+Three independent scalar choices.
+
+Dimension:
+
+\[
+3.
+\]
+
+This "degrees of freedom" interpretation is extremely useful.
+
+---
+
+# 513.8 Why three vectors cannot be independent in a 2D space
+
+Suppose:
+
+\[
+\dim V=2.
+\]
+
+A basis already contains two independent vectors and spans everything.
+
+Any third vector \(\vec w\) is already inside the span of those two.
+
+Therefore:
+
+\[
+\vec w=a\vec b_1+b\vec b_2.
+\]
+
+So:
+
+\[
+a\vec b_1+b\vec b_2-\vec w=\vec0.
+\]
+
+That is a nontrivial zero combination.
+
+Thus the three vectors are dependent.
+
+Therefore:
+
+\[
+\boxed{
+\text{no independent set in an }n\text{-dimensional space can contain more than }n\text{ vectors}.
+}
+\]
+
+---
+
+# 513.9 Why fewer than \(n\) vectors cannot span an \(n\)-dimensional space
+
+If fewer than \(n\) vectors spanned an \(n\)-dimensional space, we could remove all remaining basis directions while still reaching everything.
+
+That would contradict the fact that a basis requires \(n\) independent directions.
+
+More formally, the key theorem is:
+
+\[
+\boxed{
+\text{any spanning set has at least }n\text{ vectors}
+}
+\]
+
+and:
+
+\[
+\boxed{
+\text{any independent set has at most }n\text{ vectors}.
+}
+\]
+
+When both equality conditions are satisfied, the set is a basis.
+
+---
+
+# 513.10 Dimension is not physical spatial dimension only
+
+Graphics programmers often hear dimension and immediately think:
+
+```text
+2D
+3D
+4D homogeneous coordinates
+```
+
+But vector-space dimension is much broader.
+
+For example, real polynomials of degree at most two:
+
+\[
+p(x)=a+bx+cx^2
+\]
+
+can be generated by:
+
+\[
+1,\quad x,\quad x^2.
+\]
+
+Those three are independent.
+
+So the polynomial space has dimension:
+
+\[
+3.
+\]
+
+Yet nobody is claiming the polynomial physically exists in 3D space.
+
+Dimension means:
+
+\[
+\boxed{
+\text{number of independent basis directions in the abstract vector space}.
+}
+\]
+
+---
+
+# 513.11 Dimension and memory
+
+Suppose a plane is embedded in \(\mathbb R^3\).
+
+You might store a point in the plane as:
+
+```cpp
+struct Vec3 {
+    float x, y, z;
+};
+```
+
+which uses three scalar slots.
+
+But if you know the plane basis:
+
+\[
+\vec b_1,\vec b_2,
+\]
+
+you could represent the same plane vector using only two coefficients:
+
+```cpp
+struct PlaneCoordinates {
+    float u;
+    float v;
+};
+```
+
+and reconstruct:
+
+\[
+\vec x=u\vec b_1+v\vec b_2.
+\]
+
+Thus intrinsic dimension can enable more compact representations.
+
+Whether that is worthwhile depends on runtime costs, storage, transformations and API complexity.
+
+---
+
+# PART 514 — COORDINATE REPRESENTATION RELATIVE TO A BASIS
+
+This is where Part 506 becomes fully formal.
+
+We previously said:
+
+\[
+\vec v
+\neq
+(v_x,v_y,v_z)
+\]
+
+as concepts.
+
+Now we can say precisely what the tuple is.
+
+It is the list of coefficients needed to reconstruct \(\vec v\) from a chosen basis.
+
+---
+
+# 514.1 Formal coordinate definition
+
+Let:
+
+\[
+B=
+(\vec b_1,\ldots,\vec b_n)
+\]
+
+be an ordered basis of \(V\).
+
+Because \(B\) spans \(V\), every vector \(\vec v\in V\) can be written:
+
+\[
+\vec v
+=
+c_1\vec b_1+\cdots+c_n\vec b_n.
+\]
+
+Because \(B\) is independent, those coefficients are unique.
+
+We define:
+
+\[
+\boxed{
+[\vec v]_B
+=
+(c_1,\ldots,c_n).
+}
+\]
+
+Read:
+
+> coordinates of \(\vec v\) relative to basis \(B\).
+
+This is the precise mathematical meaning of coordinates.
+
+---
+
+# 514.2 Why the basis must be ordered
+
+Consider basis:
+
+\[
+B=(\vec b_1,\vec b_2).
+\]
+
+Coordinates:
+
+\[
+(3,5)
+\]
+
+mean:
+
+\[
+3\vec b_1+5\vec b_2.
+\]
+
+If we reverse basis order:
+
+\[
+B'=(\vec b_2,\vec b_1),
+\]
+
+then the same vector has coordinates:
+
+\[
+(5,3).
+\]
+
+So although a basis is often informally described as a set, coordinate representation requires an **ordered basis**.
+
+The component positions correspond to particular basis vectors.
+
+---
+
+# 514.3 Standard coordinates
+
+Take standard basis:
+
+\[
+E=
+\left(
+(1,0),
+(0,1)
+\right).
+\]
+
+For vector:
+
+\[
+\vec v=(3,2)
+\]
+
+geometrically, we have:
+
+\[
+\vec v
+=
+3(1,0)+2(0,1).
+\]
+
+Therefore:
+
+\[
+[\vec v]_E=(3,2).
+\]
+
+This is why ordinary Cartesian coordinates feel like the vector itself.
+
+We use the standard basis so constantly that the basis is often omitted.
+
+But strictly:
+
+\[
+(3,2)
+\]
+
+means:
+
+\[
+[\vec v]_E=(3,2)
+\]
+
+relative to that chosen basis.
+
+---
+
+# 514.4 Nonstandard basis example
+
+Let:
+
+\[
+B=
+(\vec b_1,\vec b_2)
+\]
+
+where:
+
+\[
+\vec b_1=(1,1)
+\]
+
+and:
+
+\[
+\vec b_2=(1,-1).
+\]
+
+Take geometric vector whose standard coordinates are:
+
+\[
+(4,2).
+\]
+
+We seek:
+
+\[
+c_1,c_2
+\]
+
+such that:
+
+\[
+c_1(1,1)+c_2(1,-1)=(4,2).
+\]
+
+Component equations:
+
+\[
+c_1+c_2=4
+\]
+
+\[
+c_1-c_2=2.
+\]
+
+Add:
+
+\[
+2c_1=6.
+\]
+
+Therefore:
+
+\[
+c_1=3.
+\]
+
+Then:
+
+\[
+c_2=1.
+\]
+
+So:
+
+\[
+\boxed{
+[\vec v]_B=(3,1).
+}
+\]
+
+But in the standard basis:
+
+\[
+\boxed{
+[\vec v]_E=(4,2).
+}
+\]
+
+Same vector.
+
+Different coordinates.
+
+This is Part 506 made mathematically precise.
+
+---
+
+# 514.5 Coordinates are not physical measurements in universal axes
+
+The tuple
+
+\[
+(3,1)_B
+\]
+
+means:
+
+\[
+3\vec b_1+1\vec b_2.
+\]
+
+It does not necessarily mean:
+
+```text
+3 metres world X
+1 metre world Y
+```
+
+unless the basis vectors actually correspond to those directions and units.
+
+This is exactly why graphics APIs must track coordinate spaces.
+
+---
+
+# 514.6 Reconstructing the vector from coordinates
+
+Given:
+
+\[
+[\vec v]_B=(c_1,\ldots,c_n),
+\]
+
+reconstruction is:
+
+\[
+\boxed{
+\vec v
+=
+c_1\vec b_1+\cdots+c_n\vec b_n.
+}
+\]
+
+This process takes coefficients and turns them back into the underlying vector.
+
+In code for a 2D basis:
+
+```cpp
+struct Vec2 {
+    float x;
+    float y;
+};
+
+struct Basis2 {
+    Vec2 b1;
+    Vec2 b2;
+};
+
+Vec2 reconstruct(
+    const Basis2& basis,
+    float c1,
+    float c2) noexcept
+{
+    return {
+        c1 * basis.b1.x + c2 * basis.b2.x,
+        c1 * basis.b1.y + c2 * basis.b2.y
+    };
+}
+```
+
+Mathematically:
+
+```cpp
+c1 * basis.b1
+```
+
+is:
+
+\[
+c_1\vec b_1.
+\]
+
+Then adding the second term performs the linear combination.
+
+---
+
+# 514.7 Why coordinates are unique
+
+Suppose:
+
+\[
+\vec v
+=
+a_1\vec b_1+\cdots+a_n\vec b_n
+\]
+
+and also:
+
+\[
+\vec v
+=
+c_1\vec b_1+\cdots+c_n\vec b_n.
+\]
+
+Subtract:
+
+\[
+\vec0
+=
+(a_1-c_1)\vec b_1+\cdots+(a_n-c_n)\vec b_n.
+\]
+
+Since basis vectors are independent:
+
+\[
+a_i-c_i=0
+\]
+
+for every \(i\).
+
+Thus:
+
+\[
+a_i=c_i.
+\]
+
+So each vector has exactly one coordinate tuple relative to a chosen basis.
+
+Without independence, coordinates would not be unique.
+
+Without spanning, some vectors would have no coordinates at all.
+
+This is why basis requires both.
+
+---
+
+# 514.8 Coordinate arithmetic
+
+Suppose:
+
+\[
+[\vec u]_B=(u_1,\ldots,u_n)
+\]
+
+and:
+
+\[
+[\vec v]_B=(v_1,\ldots,v_n).
+\]
+
+Then:
+
+\[
+\vec u+\vec v
+=
+\sum_i u_i\vec b_i+\sum_i v_i\vec b_i.
+\]
+
+Regroup:
+
+\[
+=
+\sum_i(u_i+v_i)\vec b_i.
+\]
+
+Therefore:
+
+\[
+\boxed{
+[\vec u+\vec v]_B
+=
+[\vec u]_B+[\vec v]_B
+}
+\]
+
+component-wise.
+
+Likewise:
+
+\[
+\boxed{
+[a\vec v]_B
+=
+a[\vec v]_B.
+}
+\]
+
+This is why coordinate tuples faithfully reproduce vector-space operations.
+
+The coordinate map preserves linear structure.
+
+---
+
+# 514.9 Mathematical vector versus machine coordinate structure
+
+You now have four layers:
+
+```text
+abstract vector
+      ↓ choose ordered basis
+coordinate tuple
+      ↓ choose scalar representation
+floating-point components
+      ↓ choose physical layout
+bytes in memory
+```
+
+For example:
+
+\[
+\vec v
+\]
+
+might become:
+
+\[
+[\vec v]_B=(3,1)
+\]
+
+then:
+
+```cpp
+Vec2 coords{3.0f, 1.0f};
+```
+
+then bytes representing two IEEE-754 floats.
+
+Each layer answers a different question.
+
+---
+
+# PART 515 — CHANGING BASIS CONCEPTUALLY
+
+Now suppose we have two different coordinate languages.
+
+The vector does not change.
+
+The numbers used to describe it do.
+
+A **change of basis** converts one coordinate representation of the same vector into another.
+
+---
+
+# 515.1 The central picture
+
+Suppose:
+
+\[
+B=(\vec b_1,\vec b_2)
+\]
+
+and:
+
+\[
+C=(\vec c_1,\vec c_2)
+\]
+
+are two bases of the same vector space.
+
+A vector \(\vec v\) may have:
+
+\[
+[\vec v]_B=(a,b)
+\]
+
+and:
+
+\[
+[\vec v]_C=(p,q).
+\]
+
+But there is still only one geometric/abstract vector:
+
+\[
+\boxed{
+\vec v
+}
+\]
+
+So:
+
+\[
+a\vec b_1+b\vec b_2
+=
+p\vec c_1+q\vec c_2.
+\]
+
+Change of basis means solving for the new coefficients.
+
+---
+
+# 515.2 The conceptual algorithm
+
+To change from basis \(B\) coordinates to basis \(C\) coordinates:
+
+```text
+coordinates in B
+      ↓
+reconstruct the underlying vector
+      ↓
+express that same vector using C
+      ↓
+coordinates in C
+```
+
+That is the deepest concept.
+
+Later matrices will make this efficient.
+
+But you should understand the operation before learning the matrix shortcut.
+
+---
+
+# 515.3 Concrete example
+
+Let standard basis be:
+
+\[
+E=
+((1,0),(0,1)).
+\]
+
+Let alternative basis:
+
+\[
+B=
+((1,1),(1,-1)).
+\]
+
+Suppose:
+
+\[
+[\vec v]_B=(3,1).
+\]
+
+First reconstruct the vector.
+
+\[
+\vec v
+=
+3(1,1)+1(1,-1).
+\]
+
+Compute:
+
+\[
+3(1,1)=(3,3).
+\]
+
+Then:
+
+\[
+(3,3)+(1,-1)
+=
+(4,2).
+\]
+
+Therefore:
+
+\[
+[\vec v]_E=(4,2).
+\]
+
+So:
+
+\[
+\boxed{
+(3,1)_B
+\longrightarrow
+(4,2)_E.
+}
+\]
+
+Nothing physically moved.
+
+Only our coordinate description changed.
+
+---
+
+# 515.4 Reverse conversion
+
+Now start with:
+
+\[
+[\vec v]_E=(4,2).
+\]
+
+We want coordinates in \(B\).
+
+Solve:
+
+\[
+a(1,1)+b(1,-1)=(4,2).
+\]
+
+As before:
+
+\[
+a+b=4
+\]
+
+\[
+a-b=2.
+\]
+
+Therefore:
+
+\[
+a=3,\qquad b=1.
+\]
+
+Thus:
+
+\[
+\boxed{
+(4,2)_E
+\longrightarrow
+(3,1)_B.
+}
+\]
+
+The two conversions are inverses.
+
+---
+
+# 515.5 Why basis changes can alter component magnitudes dramatically
+
+Consider basis:
+
+\[
+B=
+((100,0),(0,100)).
+\]
+
+A vector with standard coordinates:
+
+\[
+(50,200)
+\]
+
+has basis-\(B\) coordinates:
+
+\[
+\left(
+\frac{50}{100},
+\frac{200}{100}
+\right)
+=
+(0.5,2).
+\]
+
+So the same vector may have coordinates:
+
+\[
+(50,200)
+\]
+
+or:
+
+\[
+(0.5,2).
+\]
+
+Coordinate magnitudes alone do not tell you physical vector size unless you know the basis.
+
+This is another reason coordinate metadata matters.
+
+---
+
+# 515.6 Rotation of basis versus rotation of vector
+
+This distinction is critical.
+
+Suppose a physical vector remains fixed.
+
+You rotate the coordinate axes.
+
+Its coordinates change.
+
+That is a **passive** viewpoint.
+
+Alternatively, keep axes fixed and rotate the physical vector.
+
+That changes the actual vector.
+
+That is an **active** viewpoint.
+
+These can lead to formulas that look like inverses of each other.
+
+Full active/passive transformation treatment is Part 654, but you should already know:
+
+\[
+\boxed{
+\text{rotate vector}
+\neq
+\text{rotate coordinate system}.
+}
+\]
+
+---
+
+# 515.7 Graphics interpretation: object space and world space
+
+Imagine an object's local basis is rotated relative to world basis.
+
+A local vector may be:
+
+\[
+(1,0,0)_{\text{local}}.
+\]
+
+That means:
+
+> one unit along the object's local first basis direction.
+
+In world coordinates, that same geometric direction might be:
+
+\[
+(0.707,0,0.707)_{\text{world}}.
+\]
+
+The vector is the same geometric direction.
+
+The coordinate tuple changed because the basis changed.
+
+This is exactly what local-to-world transformations formalize later.
+
+---
+
+# 515.8 Camera-space interpretation
+
+Suppose a world-space direction is:
+
+\[
+(0,0,-1)_{\text{world}}.
+\]
+
+If the camera rotates, the same world direction may have very different camera-space coordinates.
+
+Nothing about the world direction itself changed.
+
+Only its representation in the camera basis changed.
+
+This is why graphics debugging must always ask:
+
+\[
+\boxed{
+\text{coordinates relative to which basis?}
+}
+\]
+
+---
+
+# 515.9 Why change-of-basis requires an invertible relationship
+
+If \(B\) and \(C\) are both bases of the same finite-dimensional space, then every vector has:
+
+- exactly one coordinate representation in \(B\),
+- exactly one coordinate representation in \(C\).
+
+So converting:
+
+\[
+[\vec v]_B
+\rightarrow
+[\vec v]_C
+\]
+
+must be reversible.
+
+If you could not recover the original coordinates, one of the representations would have lost information.
+
+This is why the eventual change-of-basis transformation is invertible.
+
+Later matrix language will express this much more compactly.
+
+---
+
+# 515.10 What if the "basis" vectors are dependent?
+
+Suppose someone attempts to use:
+
+\[
+(1,0)
+\]
+
+and:
+
+\[
+(2,0)
+\]
+
+as a coordinate basis for \(\mathbb R^2\).
+
+They are dependent.
+
+They cannot represent vectors such as:
+
+\[
+(0,1).
+\]
+
+Even for vectors they can represent, coefficients are not unique.
+
+For:
+
+\[
+(4,0),
+\]
+
+you could use:
+
+\[
+4(1,0)+0(2,0)
+\]
+
+or:
+
+\[
+0(1,0)+2(2,0).
+\]
+
+So no unique coordinate conversion exists.
+
+This is exactly why basis requires independence.
+
+---
+
+# 515.11 What if the "basis" does not span?
+
+Take only:
+
+\[
+\{(1,0)\}
+\]
+
+for \(\mathbb R^2\).
+
+It is independent but cannot represent:
+
+\[
+(0,1).
+\]
+
+So some vectors have no coordinate representation.
+
+Again, not a valid basis for the whole space.
+
+---
+
+# 515.12 Basis change as solving equations
+
+In 2D, suppose:
+
+\[
+\vec c_1=(c_{11},c_{21})
+\]
+
+and:
+
+\[
+\vec c_2=(c_{12},c_{22}).
+\]
+
+Given target vector:
+
+\[
+\vec v=(x,y),
+\]
+
+coordinates \((p,q)\) in basis \(C\) satisfy:
+
+\[
+p\vec c_1+q\vec c_2=\vec v.
+\]
+
+Component-wise:
+
+\[
+pc_{11}+qc_{12}=x
+\]
+
+\[
+pc_{21}+qc_{22}=y.
+\]
+
+So basis conversion is fundamentally a small **system of linear equations**.
+
+Phase 8 eventually teaches how to solve such systems robustly.
+
+Matrices later package the basis vectors and these equations elegantly.
+
+But conceptually:
+
+\[
+\boxed{
+\text{change of basis}
+=
+\text{solve for new coefficients of the same vector}.
+}
+\]
+
+---
+
+# 515.13 Canonical C++ representation
+
+Without yet introducing a full matrix library:
+
+```cpp
+struct Vec2 {
+    double x;
+    double y;
+};
+
+struct Basis2 {
+    Vec2 b1;
+    Vec2 b2;
+};
+```
+
+Reconstruction:
+
+```cpp
+Vec2 fromBasisCoordinates(
+    const Basis2& basis,
+    Vec2 coordinates) noexcept
+{
+    const double a = coordinates.x;
+    const double b = coordinates.y;
+
+    return {
+        a * basis.b1.x + b * basis.b2.x,
+        a * basis.b1.y + b * basis.b2.y
+    };
+}
+```
+
+To resolve a vector into a general 2D basis, solve:
+
+\[
+a b_{1x}+b b_{2x}=v_x
+\]
+
+\[
+a b_{1y}+b b_{2y}=v_y.
+\]
+
+For the 2D case, eliminating variables gives the denominator:
+
+\[
+D
+=
+b_{1x}b_{2y}
+-
+b_{2x}b_{1y}.
+\]
+
+Then:
+
+\[
+a
+=
+\frac
+{v_xb_{2y}-b_{2x}v_y}
+{D}
+\]
+
+and:
+
+\[
+b
+=
+\frac
+{b_{1x}v_y-v_xb_{1y}}
+{D}.
+\]
+
+So:
+
+```cpp
+Vec2 toBasisCoordinates(
+    const Basis2& basis,
+    Vec2 v)
+{
+    const double D =
+        basis.b1.x * basis.b2.y
+      - basis.b2.x * basis.b1.y;
+
+    if (std::abs(D) < 1e-12) {
+        throw std::runtime_error("Basis is singular or nearly singular");
+    }
+
+    const double a =
+        (v.x * basis.b2.y - basis.b2.x * v.y) / D;
+
+    const double b =
+        (basis.b1.x * v.y - v.x * basis.b1.y) / D;
+
+    return {a, b};
+}
+```
+
+Do **not** memorize that formula as the essence of basis conversion.
+
+The essence is:
+
+\[
+a\vec b_1+b\vec b_2=\vec v.
+\]
+
+The formula is merely one algebraic solution of that equation.
+
+Later matrices and Gaussian elimination provide the general machinery.
+
+---
+
+# 515.14 Why the denominator matters
+
+The denominator
+
+\[
+D
+=
+b_{1x}b_{2y}
+-
+b_{2x}b_{1y}
+\]
+
+becomes zero exactly when the two 2D vectors are linearly dependent.
+
+Example:
+
+\[
+\vec b_1=(1,2)
+\]
+
+and:
+
+\[
+\vec b_2=(2,4).
+\]
+
+Then:
+
+\[
+D
+=
+1\cdot4-2\cdot2
+=
+4-4
+=
+0.
+\]
+
+So the coordinate-solving equations do not have a unique solution.
+
+That connects three ideas:
+
+\[
+\boxed{
+\text{basis}
+\Longleftrightarrow
+\text{independence}
+\Longleftrightarrow
+\text{unique coordinate solve}
+}
+\]
+
+In Part 626 you will recognize \(D\) as the 2D determinant.
+
+---
+
+# 515.15 Near-dependent bases and numerical instability
+
+Suppose:
+
+\[
+\vec b_1=(1,0)
+\]
+
+and:
+
+\[
+\vec b_2=(1,10^{-10}).
+\]
+
+Mathematically they are independent.
+
+Therefore they form a basis of \(\mathbb R^2\).
+
+But:
+
+\[
+D=10^{-10}.
+\]
+
+The denominator is tiny.
+
+That means small errors in the input coordinates can produce huge changes in solved coefficients.
+
+This basis is mathematically valid but numerically poor.
+
+Geometrically, its axes are almost parallel.
+
+A good coordinate system should usually avoid such near-degeneracy.
+
+This previews the idea of conditioning.
+
+---
+
+# 511–515: THE ENTIRE CHAIN
+
+Start with generators:
+
+\[
+\vec v_1,\ldots,\vec v_k.
+\]
+
+Their span tells us everything they can produce.
+
+But perhaps some vectors are redundant.
+
+Test:
+
+\[
+a_1\vec v_1+\cdots+a_k\vec v_k=\vec0.
+\]
+
+If only the trivial coefficient solution exists, they are:
+
+\[
+\boxed{\text{linearly independent}}.
+\]
+
+If they are also able to span the entire space, they form a:
+
+\[
+\boxed{\text{basis}}.
+\]
+
+Every basis of a finite-dimensional space contains the same number of vectors.
+
+That number is:
+
+\[
+\boxed{\dim V}.
+\]
+
+Given ordered basis:
+
+\[
+B=(\vec b_1,\ldots,\vec b_n),
+\]
+
+every vector has unique coordinates:
+
+\[
+[\vec v]_B
+=
+(c_1,\ldots,c_n)
+\]
+
+meaning:
+
+\[
+\vec v
+=
+c_1\vec b_1+\cdots+c_n\vec b_n.
+\]
+
+Pick another basis \(C\), and the same vector receives another tuple:
+
+\[
+[\vec v]_C.
+\]
+
+Converting between them is:
+
+\[
+\boxed{\text{change of basis}}.
+\]
+
+So:
+
+```text
+generators
+   ↓
+span
+   ↓
+ask whether generators are redundant
+   ↓
+linear independence
+   ↓
+independent + spanning
+   ↓
+basis
+   ↓
+number of basis vectors
+   ↓
+dimension
+   ↓
+coefficients relative to basis
+   ↓
+coordinates
+   ↓
+replace basis, preserve vector
+   ↓
+change of basis
+```
+
+---
+
+# A COMPLETE WORKED EXAMPLE
+
+Consider the plane:
+
+\[
+W=
+\{
+(x,y,z)\in\mathbb R^3
+\mid
+x+y-z=0
+\}.
+\]
+
+From Part 510:
+
+\[
+z=x+y.
+\]
+
+Therefore:
+
+\[
+(x,y,z)
+=
+(x,y,x+y)
+\]
+
+which can be written:
+
+\[
+x(1,0,1)+y(0,1,1).
+\]
+
+Define:
+
+\[
+\vec b_1=(1,0,1),
+\qquad
+\vec b_2=(0,1,1).
+\]
+
+They span \(W\).
+
+Now test independence:
+
+\[
+a\vec b_1+b\vec b_2=\vec0.
+\]
+
+Expand:
+
+\[
+a(1,0,1)+b(0,1,1)
+=
+(a,b,a+b).
+\]
+
+Set equal to:
+
+\[
+(0,0,0).
+\]
+
+Therefore:
+
+\[
+a=0
+\]
+
+and:
+
+\[
+b=0.
+\]
+
+So they are independent.
+
+Therefore:
+
+\[
+\boxed{
+B=(\vec b_1,\vec b_2)
+}
+\]
+
+is a basis of \(W\).
+
+Hence:
+
+\[
+\boxed{
+\dim W=2.
+}
+\]
+
+Now consider:
+
+\[
+\vec v=(3,4,7).
+\]
+
+Check the plane constraint:
+
+\[
+3+4-7=0.
+\]
+
+So \(\vec v\in W\).
+
+Relative to basis \(B\):
+
+\[
+\vec v
+=
+3\vec b_1+4\vec b_2.
+\]
+
+Therefore:
+
+\[
+\boxed{
+[\vec v]_B=(3,4).
+}
+\]
+
+Notice the transformation in representation:
+
+```text
+ambient ℝ³ coordinates:
+(3,4,7)
+
+intrinsic coordinates in W:
+(3,4)
+```
+
+Same vector inside the subspace.
+
+Different coordinate representation.
+
+The plane is 2-dimensional even though it is embedded in three-dimensional ambient space.
+
+That one example unifies Parts 508–515.
+
+---
+
+# ENGINE / GRAPHICS INTERPRETATION
+
+Suppose an object's local frame is described by three independent directions:
+
+\[
+\vec r,\quad\vec u,\quad\vec f
+\]
+
+for right, up and forward.
+
+If they span 3D space and are independent, they form a basis.
+
+A local direction:
+
+\[
+(2,1,-4)_{\text{local}}
+\]
+
+means:
+
+\[
+2\vec r+1\vec u-4\vec f.
+\]
+
+That resulting geometric vector can then be expressed in world coordinates.
+
+Changing local coordinates to world coordinates is fundamentally a basis-conversion problem.
+
+Later matrices make this:
+
+\[
+\text{coordinate vector}
+\rightarrow
+\text{matrix multiply}
+\rightarrow
+\text{new coordinate vector}.
+\]
+
+But the matrix is not the underlying idea.
+
+The underlying idea is:
+
+\[
+\boxed{
+\text{same vector, different basis coefficients}.
+}
+\]
+
+---
+
+# NUMERICAL REALITY
+
+Mathematically, basis vectors are either independent or dependent.
+
+Computationally, you often encounter a third practical category:
+
+\[
+\text{nearly dependent}.
+\]
+
+Suppose:
+
+\[
+\vec b_1=(1,0,0)
+\]
+
+\[
+\vec b_2=(0,1,0)
+\]
+
+\[
+\vec b_3=(1,1,10^{-9}).
+\]
+
+Mathematically, the third vector has a tiny but nonzero out-of-plane component, so all three are independent.
+
+But resolving arbitrary vectors into that basis may require large cancelling coefficients.
+
+Floating-point noise can be amplified drastically.
+
+So production numerical code does not merely ask:
+
+> Is the determinant exactly zero?
+
+It asks questions about:
+
+- scale,
+- relative tolerance,
+- condition number,
+- singular values,
+- numerical rank.
+
+Those advanced concepts come later, but this is why they exist.
+
+---
+
+# INTERVIEW ATTACK TREE
+
+**Level 1 — What is linear independence?**
+
+A set is linearly independent if:
+
+\[
+a_1\vec v_1+\cdots+a_k\vec v_k=\vec0
+\]
+
+implies:
+
+\[
+a_1=\cdots=a_k=0.
+\]
+
+**Level 2 — Why does a nontrivial zero combination imply redundancy?**
+
+Because if \(a_j\neq0\), we can solve:
+
+\[
+\vec v_j
+=
+-\sum_{i\neq j}\frac{a_i}{a_j}\vec v_i,
+\]
+
+so \(\vec v_j\) lies in the span of the others.
+
+**Level 3 — What is a basis?**
+
+An independent spanning set.
+
+**Level 4 — Why does a basis give unique coordinates?**
+
+Spanning guarantees existence of coefficients; independence guarantees uniqueness.
+
+**Level 5 — What is dimension?**
+
+The number of vectors in any basis of a finite-dimensional vector space.
+
+**Level 6 — Can a 2D subspace live in \(\mathbb R^3\)?**
+
+Yes. Example:
+
+\[
+\{(x,y,0)\}.
+\]
+
+Its ambient representation uses three coordinates, but a basis has two vectors, so its intrinsic dimension is two.
+
+**Level 7 — What exactly are coordinates?**
+
+Coefficients of a vector's unique linear combination with respect to an ordered basis.
+
+**Level 8 — What is change of basis?**
+
+Replacing one coordinate representation with another while keeping the underlying vector fixed.
+
+**Level 9 — Why must a basis change be invertible?**
+
+Because each basis gives a one-to-one coordinate representation of the same space.
+
+**Level 10 — Why can a mathematically valid basis still be bad numerically?**
+
+If the basis vectors are nearly dependent, small input errors can require large changes in coefficients. The representation is ill-conditioned.
+
+---
+
+# BLANK-SCREEN MASTERY GATE
+
+You should be able to derive, not merely recite, why:
+
+\[
+a_1\vec v_1+\cdots+a_k\vec v_k=\vec0
+\]
+
+with a nonzero coefficient means one vector is reconstructible from the others.
+
+You should be able to prove that independent generators give unique coefficients.
+
+You should be able to distinguish immediately between:
+
+\[
+\text{independent set},
+\quad
+\text{spanning set},
+\quad
+\text{basis}.
+\]
+
+You should explain dimension without saying only "number of coordinates."
+
+You should take a basis such as:
+
+\[
+B=
+((1,1),(1,-1))
+\]
+
+and manually find:
+
+\[
+[(4,2)]_B=(3,1).
+\]
+
+Then reverse the process.
+
+Most importantly, you should be able to state the full conceptual separation:
+
+\[
+\boxed{
+\text{vector}
+\neq
+\text{basis}
+\neq
+\text{coordinates}
+}
+\]
+
+The vector is the mathematical/geometric object.
+
+The basis is the reference system used to describe it.
+
+The coordinates are the coefficients relative to that basis.
+
+Changing the basis changes the coordinates, **not necessarily the vector**.
+
+**Completed Part 511 — Linear independence**  
+**Completed Part 512 — Basis vectors**  
+**Completed Part 513 — Dimension of a vector space**  
+**Completed Part 514 — Coordinate representation relative to a basis**  
+**Completed Part 515 — Changing basis conceptually**
+
+**Next Core Part 516 — Standard basis in \(\mathbb R^2\).**

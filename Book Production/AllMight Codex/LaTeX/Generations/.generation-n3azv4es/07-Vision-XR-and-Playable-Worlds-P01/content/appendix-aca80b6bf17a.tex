@@ -1,0 +1,64 @@
+\hypertarget{appendix-aca80b6bf17a}{}\label{referencestart:appendix-aca80b6bf17a}
+\section{Convergence order and Richardson extrapolation}\label{appendix-aca80b6bf17a-convergence-order-and-richardson-extrapolation}
+
+\hypertarget{appendix-aca80b6bf17a-convergence-order-and-richardson-extrapolation}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-aca80b6bf17a-definition-and-mechanism}
+
+\hypertarget{appendix-aca80b6bf17a-definition-and-mechanism}{}
+
+If an approximation has leading error \(Q_h=Q^*+Ch^p+O(h^{p+1})\), halving the step reduces that term by about \(2^p\). Comparing results at \(h\), \(h/2\), and \(h/4\) estimates the observed order; Richardson extrapolation combines two resolutions to cancel the leading term when the assumed order is valid. The method is diagnostic, not magic: measurements must be in the asymptotic regime, the same mathematical quantity must be computed at each resolution, and roundoff or stochastic noise must not dominate. For Euler integration, first-order refinement predicts the leading error to halve. Record the sequence and residuals rather than reporting an order from one pair alone. Ratios near an expected power provide evidence, but one noisy ratio is not a convergence study.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-aca80b6bf17a-prerequisites}
+
+\hypertarget{appendix-aca80b6bf17a-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-6b0648b2b8e8]{Discretization, truncation, and roundoff}
+\item
+  \hyperref[appendix-e2d7b4f2161d]{Finite differences and step-size balance}
+\item
+  \hyperref[appendix-80521eae6b71]{Numerical quadrature and error}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-aca80b6bf17a-used-by}
+
+\hypertarget{appendix-aca80b6bf17a-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-31b8c295e05f]{Numerical error budgets}
+\item
+  \hyperref[appendix-b9db93e28371]{Reproducible numerical benchmarking}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-aca80b6bf17a-full-teaching-explanation}
+
+\hypertarget{appendix-aca80b6bf17a-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#02-foundations-ii-ch029-separate-discretization-truncation-and-roundoff-measure-convergence}{Separate discretization, truncation, and roundoff; measure convergence (Mathematics for Visual Computing, Part 2, Ch. 13)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-aca80b6bf17a-source-coverage}
+
+\hypertarget{appendix-aca80b6bf17a-source-coverage}{}
+
+Supplied lesson parts: 992.
+
+\subsection{Future keywords}\label{appendix-aca80b6bf17a-future-keywords}
+
+\hypertarget{appendix-aca80b6bf17a-future-keywords}{}
+
+mesh refinement, observed order, extrapolation

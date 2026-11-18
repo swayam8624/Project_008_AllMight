@@ -1,0 +1,39 @@
+\hypertarget{appendix-c25d60fed375}{}
+\section*{Const qualification and shallow constness}
+\section{Const qualification and shallow constness}\label{appendix-c25d60fed375-const-qualification-and-shallow-constness}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\subsection{Definition and mechanism}\label{appendix-c25d60fed375-definition-and-mechanism}
+
+Const restricts modification through an access path; another mutable alias can change a mutable referent. An actually const object cannot be made writable by const\_cast. Pointer-member constness is shallow: const span\textless int\textgreater{} permits integer writes whereas span does not.
+
+\subsection{Prerequisites}\label{appendix-c25d60fed375-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-d6d562ca9fbb]{References and aliases} --- The initial alias and its referent determine later binding and deduction behavior.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-c25d60fed375-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5e1a7561cd98]{Multilevel pointer qualification}
+\item
+  \hyperref[appendix-d42039b1d6f7]{Ref-qualified accessors}
+\item
+  \hyperref[appendix-f5593256bcaf]{Logical constness and mutable caches}
+\item
+  \hyperref[appendix-d5908f75721f]{Parameter passing and sink contracts}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-c25d60fed375-recall-and-next-depth}
+
+Read all four pointer-qualification combinations aloud. Pending: atomics, volatile hardware access and immutable shared-state design. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{appendix-c25d60fed375-source-and-navigation}
+
+\hyperref[01-foundations-i-ch003-read-only-is-a-path-not-an-ownership-or-synchronization-promise]{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

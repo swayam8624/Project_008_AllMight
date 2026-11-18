@@ -1,0 +1,43 @@
+\hypertarget{appendix-7d356c396d1a}{}\label{referencestart:appendix-7d356c396d1a}
+\section{Visual angle and calibrated rays}\label{appendix-7d356c396d1a-visual-angle-and-calibrated-rays}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} XR01 · \textbf{Latest development:} XR01
+
+\subsection{Definition and mechanism}\label{appendix-7d356c396d1a-definition-and-mechanism}
+
+Visual angle depends on geometry, not an image's pixel count alone. Eccentricity is the angle between calibrated unit gaze/pixel directions. Average PPD differs from local density under a rectilinear mapping; UV distance is dimensionless.
+
+\subsection{Prerequisites}\label{appendix-7d356c396d1a-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-f90cee1be7a4]{Optical focus and binocular conflict} --- Optical image formation determines the direction/focus assumptions used by geometry and binocular analysis.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-7d356c396d1a-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-b491fc48c54b]{Visual acuity and eccentricity}
+\item
+  \hyperref[appendix-a6f2c4fe1996]{Eye movements and display-time gaze}
+\item
+  \hyperref[appendix-fc99ad39f351]{Omnidirectional camera projections}
+\item
+  \hyperref[appendix-f1a6d43e80d1]{Screen-space ray generation and mouse picking}
+\item
+  \hyperref[appendix-8c40fad29462]{Ray differentials and camera sampling measures}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-7d356c396d1a-recall-and-next-depth}
+
+Derive center PPD from pixel pitch separately from average PPD. Pending: distortion mappings and measured headset rays. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.
+
+\subsection{Source and navigation}\label{appendix-7d356c396d1a-source-and-navigation}
+
+\href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch042-angles-connect-display-samples-to-a-viewer}{Expanded teaching explanation (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 9)} · \hyperref[appendix-fd090d982a15-xr01---independent-seeing-and-representation-source]{Independent coverage} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}
+
+\subsection{Phase 11 camera development}\label{appendix-7d356c396d1a-phase-11-camera-development}
+
+A calibrated pixel maps to a viewing direction through inverse intrinsics and a declared distortion model. Nearby pixels define nearby directions; their derivatives estimate how a finite pixel footprint expands on a surface. Visual angle measures directional separation, while ray differentials describe local change in generated rays and may include lens sampling. For fisheye or omnidirectional cameras, angular footprint varies across the image. Transform sampling densities with the correct Jacobian when changing from pixel area to solid angle. Link: \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch037-a-camera-model-must-close-the-loop}{A camera model must close the loop (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 6)}; research: \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review}{Four deeper links from the TUM lecture review (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 5)}.

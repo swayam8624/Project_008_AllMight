@@ -1,0 +1,38 @@
+\hypertarget{appendix-380a220e2529}{}\label{referencestart:appendix-380a220e2529}
+\section{Coordinate-space types and validated invariants}\label{appendix-380a220e2529-coordinate-space-types-and-validated-invariants}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-380a220e2529-definition-and-mechanism}
+
+Compile-time space tags and affine-role types reject some meaningless operations without stored tag bytes. Validated wrappers carry finite/unit promises only through invariant-preserving operations. Broad local-space tags do not identify every dynamic object's frame.
+
+\end{allmightroledefinition}
+
+Point difference returns a same-space vector. Scaling a unit direction by two returns an ordinary vector, not another unit direction.
+
+\subsection{Prerequisites}\label{appendix-380a220e2529-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0659864c0aa3]{Vectors coordinates and affine points} --- Point, displacement and coordinate roles determine which geometric operations are meaningful.
+\item
+  \hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization} --- Validated finite unit directions establish the preconditions for simplified geometry formulas.
+\item
+  \hyperref[appendix-37a39984ba66]{Vector value types and component access} --- Primitive representation and access rules support layout choices and semantic wrappers.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-380a220e2529-used-by}
+
+Later curriculum sources can deepen this same node; no future coverage is marked complete.
+
+\subsection{Recall and next depth}\label{appendix-380a220e2529-recall-and-next-depth}
+
+Name the promise each constructor establishes; encode transform source/destination and separate normal transformation. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-380a220e2529-source-and-navigation}
+
+\href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch037-types-can-remember-the-promises-that-three-components-forget}{Teaching narrative (Geometry, Cameras, and Image Formation, Ch. 6)} · \hyperref[appendix-fd090d982a15-phase-6---parts-501-600]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-6---source-analysis-and-verification]{Evidence and limits} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

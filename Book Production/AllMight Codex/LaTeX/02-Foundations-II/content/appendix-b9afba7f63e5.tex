@@ -1,0 +1,47 @@
+\hypertarget{appendix-b9afba7f63e5}{}
+\section*{Stable quadratic root evaluation}
+\section{Stable quadratic root evaluation}\label{stable-quadratic-root-evaluation}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+The direct quadratic formula can lose nearly all significant digits in one root when it subtracts nearly equal values. For real coefficients with nonzero leading coefficient and a valid nonnegative discriminant, compute a signed large-magnitude numerator first: \(q=-\frac12(b+\operatorname{copysign}(\sqrt{b^2-4ac},b))\), then obtain roots as \(q/a\) and \(c/q\). The second root follows from the product relation \(x_1x_2=c/a\). This avoids cancellation in the small root, but it does not prevent overflow in the discriminant or cover degenerate coefficients, nonfinite inputs, or \(q=0\); a robust solver also scales inputs and handles those cases explicitly. For example, the small root of \(x^2+10^8x+1=0\) is near \(-10^{-8}\), exactly the root most endangered by direct subtraction.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Stable reformulation (01-Foundations-I, appendix-d7f8ba961670)}
+\item
+  \href{}{Unit roundoff (01-Foundations-I, appendix-bc44f7b42f42)}
+\item
+  \href{}{Conditioning and singularity (01-Foundations-I, appendix-8f6a01f284a7)}
+\item
+  \hyperref[appendix-aa2bf0d79639]{Algorithmic stability}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-f63eb850796d]{Bracketed and open root solvers}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Floating-point\%20answers:\%20error,\%20conditioning,\%20stability,\%20and\%20stable\%20arithmetic}{Floating-point answers: error, conditioning, stability, and stable arithmetic}
+\end{itemize}
+
+\subsection{Source coverage}\label{source-coverage}
+
+Supplied lesson parts: 974.
+
+\subsection{Future keywords}\label{future-keywords}
+
+Vieta relation, discriminant scaling, cancellation

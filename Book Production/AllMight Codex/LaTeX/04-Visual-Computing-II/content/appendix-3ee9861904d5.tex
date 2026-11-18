@@ -1,0 +1,46 @@
+\hypertarget{appendix-3ee9861904d5}{}
+\section*{Camera calibration and bundle adjustment}
+\section{Camera calibration and bundle adjustment}\label{camera-calibration-and-bundle-adjustment}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Camera calibration estimates parameters that map 3D points to image coordinates. Intrinsics describe focal scale, principal point, and lens distortion; extrinsics describe camera pose relative to the scene. Known calibration targets provide 3D-to-2D correspondences, and a nonlinear least-squares objective minimizes reprojection error. Bundle adjustment jointly refines many camera poses and 3D feature points by minimizing all observed image residuals. The problem is sparse because each image sees only a subset of points. It also has gauge freedoms: translating or scaling the entire reconstruction may leave projections unchanged, so fix a reference pose or scale. Robust loss functions reduce the effect of mismatched features. Good initialization, parameter scaling, and Jacobian structure determine whether optimization converges.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Homogeneous coordinates and perspective division (02-Foundations-II, appendix-cb3b26862282)}
+\item
+  \href{}{Singular value decomposition (02-Foundations-II, appendix-1fad5e7f36fa)}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography}{Worlds, Images and Inference}
+\item
+  \href{}{Stereo correspondence and epipolar geometry (03-Visual-Computing-I, appendix-c4e98b6e4001)}
+\item
+  \hyperref[appendix-c5b332e400e7]{Radiance fields and Gaussian splatting}
+\item
+  \href{}{Off-axis stereo projection and disparity (02-Foundations-II, appendix-0976e86e5b9f)}
+\item
+  \href{}{Omnidirectional camera projections (02-Foundations-II, appendix-fc99ad39f351)}
+\item
+  \href{}{Position reconstruction from depth (02-Foundations-II, appendix-2cbf2968e866)}
+\item
+  \href{}{Camera gauge freedoms and observability (02-Foundations-II, appendix-113f0267e5f4)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{full-teaching-explanation}
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Cameras,\%20projection,\%20and\%20calibration}{Cameras, projection, and calibration} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Pose\%20estimation,\%20transforms,\%20and\%20robust\%20fitting}{Pose estimation, transforms, and robust fitting} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Stereo,\%20relative\%20orientation,\%20and\%20reconstruction}{Stereo, relative orientation, and reconstruction}
+
+\subsection{Phase 11 camera development}\label{phase-11-camera-development}
+
+Linearize reprojection residuals as r(θ+δ)≈r(θ)+Jδ; the weighted information matrix \(J^{\mathsf T}WJ\) reveals parameter combinations that change observations. Null directions are local ambiguities, while small eigenvalues indicate weak constraints. In calibrated monocular structure from motion, global frame choice and common scene scale are gauge freedoms. Fix a pose and scale convention, or add a metric measurement, before interpreting covariance. Repeated nearly identical views may leave focal length, depth, and pose coupled even with many pixels. Link: \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20camera\%20model\%20must\%20close\%20the\%20loop}{A camera model must close the loop}; research: \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Four\%20deeper\%20links\%20from\%20the\%20TUM\%20lecture\%20review}{Four deeper links from the TUM lecture review}.

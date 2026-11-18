@@ -1,0 +1,48 @@
+\hypertarget{appendix-aea529eb5175}{}\label{referencestart:appendix-aea529eb5175}
+\section{Deferred captures and borrowed views}\label{appendix-aea529eb5175-deferred-captures-and-borrowed-views}
+
+\hypertarget{appendix-aea529eb5175-deferred-captures-and-borrowed-views}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-aea529eb5175-definition-and-mechanism}
+
+\hypertarget{appendix-aea529eb5175-definition-and-mechanism}{}
+
+A span or string\_view describes data without owning it. Copying a view copies its descriptor, not its backing storage. Reference captures and captured this pointers can outlive their referents; copying an owning string into the closure creates a separate owned snapshot.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-aea529eb5175-prerequisites}
+
+\hypertarget{appendix-aea529eb5175-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-d52e4486f527]{Ownership and non-owning views} --- Copying a descriptor does not copy or own its data.
+\item
+  \hyperref[appendix-a978b29bbbb0]{Temporary lifetime extension} --- Temporary deadlines constrain returned paths and deferred access.
+\item
+  \hyperref[appendix-f9b8b9188c7f]{Borrow invalidation and logical identity} --- Invalidating mutations define the deadlines a saved epoch or deferred borrow must respect.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-aea529eb5175-used-by}
+
+\hypertarget{appendix-aea529eb5175-used-by}{}
+
+Later sources will deepen this same node; no empty dependent nodes are created.
+
+\subsection{Recall and next depth}\label{appendix-aea529eb5175-recall-and-next-depth}
+
+\hypertarget{appendix-aea529eb5175-recall-and-next-depth}{}
+
+Contrast capturing string versus string\_view by value. Pending: scheduling, cancellation and ownership-pinning policies. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{appendix-aea529eb5175-source-and-navigation}
+
+\hypertarget{appendix-aea529eb5175-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch003-borrowed-views-and-deferred-work-need-an-owner-story]{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

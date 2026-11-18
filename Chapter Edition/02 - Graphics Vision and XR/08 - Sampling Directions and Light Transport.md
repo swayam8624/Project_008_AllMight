@@ -8,7 +8,7 @@ Uniformly sampling angles is not the same as uniformly sampling directions on a 
 
 **Recall question:** Why does uniform theta sampling overrepresent some regions of a sphere?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 16535–19360; source-span SHA256 7c6f2a0a8cefb6d7221ab8bcc33a0e7a400344c81b2b38c4deb75ebf02570803. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 16566–19391; source-span SHA256 7c6f2a0a8cefb6d7221ab8bcc33a0e7a400344c81b2b38c4deb75ebf02570803. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Next — Pass 7: M123 + M124, Parts 2031–2069

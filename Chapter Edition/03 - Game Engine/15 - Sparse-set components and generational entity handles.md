@@ -8,7 +8,7 @@ As the world grows, storing every entity as a separate object becomes costly and
 
 **Recall question:** After an entity is removed and its slot reused, what check proves that an old handle cannot refer to the new entity?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 26787–30485; source-span SHA256 18e61883b4093cd8d2128f7c7fd86eb43d1edc8198491d3160d14f2075582ec1. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 27305–31132; source-span SHA256 29c2eba597ac4ff7b873302152871c5ba90a2b55c3171b335c90cc4c37d2e924. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### COMPONENT POOLS AND SPARSE SETS
@@ -761,6 +761,135 @@ m_Sparse[entity.Index] = Missing;
 The critical step is not the move itself.
 
 It is repairing sparse metadata.
+
+<!-- Book-completion teaching addition 327ca0a6bfe314a8 -->
+
+### The move must not throw after entity metadata changes
+
+The order above has one important type requirement. It writes the last `Entity` into the removed dense slot **before** assigning the moved `T` component. `Entity` is two integers, so that assignment is non-throwing. A user-defined component move assignment is not necessarily non-throwing. If `m_Components[dense] = std::move(m_Components[last])` throws, the entity row has already changed while `m_Sparse` still describes the old rows. The pool can then contain duplicate entity records and a lookup/removal can no longer repair the original invariant.
+
+The later blank-file `SparseSet<T>` example spells the exception specification as `noexcept(std::is_nothrow_move_assignable_v<T>)`. That controls whether an exception may escape or instead terminates; it does **not** make the two-array update transactional. For the shown O(1) swap-removal algorithm, make the component requirement explicit and reject unsupported types at compile time. `std::is_nothrow_move_assignable_v` requires a direct `<type_traits>` include in a standalone translation unit.
+
+```cpp
+// Inside SparseSet<T>; this policy makes the two writes below a no-throw commit.
+bool Remove(Entity entity) noexcept
+    requires std::is_nothrow_move_assignable_v<T> &&
+             std::is_nothrow_destructible_v<T>;
+```
+
+This is a deliberate storage contract: components used in a removable packed pool must be nothrow move-assignable and nothrow destructible. If an engine must accept throwing move assignment, perform the potentially throwing component operation before changing entity/sparse metadata and define the resulting basic guarantee carefully; the component value may still have changed. A strong guarantee needs a non-throwing commit step, such as constructing a copy before mutation and swapping it in with a nothrow swap, or using indirection. Do not imply that changing the order alone preserves the original component value.
+
+To rerun the exact `Entity` and `SparseSet<T>` excerpt and exercise both cases, use the [C++20 extraction check](../../tools/labs/ecs_sparse_set_exception_check.py):
+
+```sh
+python3 tools/labs/ecs_sparse_set_exception_check.py \
+  "Continuous Notes/Game Engine - From First Frame to Living Worlds.md"
+```
+
+It injects the missing direct `<type_traits>` header for this standalone translation unit, compiles the extracted book blocks with warnings as errors, checks ordinary insert/lookup/swap-remove behavior, and then injects a throwing move assignment. The second case must observe the current excerpt's duplicate dense-entity row; it is a bounded counterexample to the exception-safety claim, not a test of production Kairo or of the constrained signature above.
+
+The reproducible check below reads the current full book rather than maintaining a second sparse-set implementation. Its expected failing invariant is a counterexample; the command succeeds only when ordinary behavior passes and that unsupported-type failure is reproduced.
+
+```python
+#!/usr/bin/env python3
+"""Compile exact book excerpts; prove ordinary behavior AND its throwing-move gap."""
+import argparse
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+
+# Parse the actual Markdown blocks, rather than copying a different ECS model.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from note_integrity import code_blocks
+
+ROOT = Path(__file__).resolve().parents[2]
+BOOK = ROOT / 'Continuous Notes/Game Engine - From First Frame to Living Worlds.md'
+
+DRIVER = r"""
+#include <iostream>
+struct ThrowingComponent {
+    int value;
+    inline static bool fail = false;
+    explicit ThrowingComponent(int v) : value(v) {}
+    ThrowingComponent(const ThrowingComponent&) = default;
+    ThrowingComponent(ThrowingComponent&&) noexcept = default;
+    ThrowingComponent& operator=(ThrowingComponent&& other) {
+        // Throw before touching the value, so any broken entity metadata is
+        // attributable to Remove's ordering, not a partially assigned T.
+        if (fail) throw std::runtime_error("deliberate component move failure");
+        value = other.value;
+        return *this;
+    }
+};
+
+int main() {
+    SparseSet<int> pool;
+    const Entity old{0, 1}, second{1, 1}, replacement{0, 2};
+    pool.Emplace(old, 7);
+    pool.Emplace(second, 9);
+    if (pool.Get(old) != 7 || pool.Get(second) != 9) return 1;
+    if (!pool.Remove(old)) return 2;
+    // Swap-removal must repair the surviving entity's reverse map.
+    if (pool.Contains(old) || pool.Get(second) != 9 || pool.Size() != 1) return 3;
+    pool.Emplace(replacement, 11);
+    if (pool.Contains(old) || pool.Get(replacement) != 11) return 4;
+
+    SparseSet<ThrowingComponent> unsafe;
+    unsafe.Emplace(old, 10);
+    unsafe.Emplace(second, 20);
+    ThrowingComponent::fail = true;
+    bool caught = false;
+    try { unsafe.Remove(old); }
+    catch (const std::runtime_error&) { caught = true; }
+    ThrowingComponent::fail = false;
+    // This EXPECTED counterexample is evidence of an unsupported T contract.
+    // Passing this check does not make the current generic Remove safe.
+    if (!caught || unsafe.Entities().size() != 2 ||
+        unsafe.Entities()[0] != second || unsafe.Entities()[1] != second) return 5;
+    if (unsafe.Contains(old)) return 6;
+    std::cout << "PASS: normal swap-remove and generation reuse; "
+                 "EXPECTED throwing-move invariant failure reproduced\n";
+}
+"""
+
+
+def assemble(book):
+    blocks = [b.body for b in code_blocks(book.read_text()) if b.language == 'cpp']
+    # Matching exact declarations keeps introductory sketches out of this check.
+    entities = [b for b in blocks if 'struct Entity final' in b and '#include <cstdint>' in b]
+    pools = [b for b in blocks if 'class SparseSet' in b and
+             'std::is_nothrow_move_assignable_v<T>' in b and 'EnsureSparse' in b]
+    if len(entities) != 1 or len(pools) != 1:
+        raise ValueError('Expected one exact Entity and full SparseSet excerpt')
+    # The book fragment omits a direct header; add it explicitly for this TU.
+    return '#include <type_traits>\n' + entities[0] + '\n' + pools[0] + '\n' + DRIVER
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('book', nargs='?', type=Path, default=BOOK)
+    parser.add_argument('--compiler', default='c++')
+    args = parser.parse_args()
+    compiler = shutil.which(args.compiler)
+    if not compiler:
+        parser.error('A C++20 compiler is required')
+    with tempfile.TemporaryDirectory(prefix='allmight-ecs-excerpt-') as folder:
+        source = Path(folder) / 'ecs.cpp'
+        binary = Path(folder) / 'ecs'
+        source.write_text(assemble(args.book))
+        command = [compiler, '-std=c++20', '-O2', '-DNDEBUG', '-Wall',
+                   '-Wextra', '-Wpedantic', '-Werror', str(source), '-o', str(binary)]
+        subprocess.run(command, check=True)
+        subprocess.run([str(binary)], check=True)
+
+
+if __name__ == '__main__':
+    main()
+```
+
+
 
 ---
 

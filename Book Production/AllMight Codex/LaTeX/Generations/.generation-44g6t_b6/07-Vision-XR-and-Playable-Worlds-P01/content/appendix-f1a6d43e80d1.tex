@@ -1,0 +1,62 @@
+\hypertarget{appendix-f1a6d43e80d1}{}\label{referencestart:appendix-f1a6d43e80d1}
+\section{Screen-space ray generation and mouse picking}\label{appendix-f1a6d43e80d1-screen-space-ray-generation-and-mouse-picking}
+
+\hypertarget{appendix-f1a6d43e80d1-screen-space-ray-generation-and-mouse-picking}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 11 · \textbf{Latest development:} Phase 11
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-f1a6d43e80d1-definition-and-mechanism}
+
+\hypertarget{appendix-f1a6d43e80d1-definition-and-mechanism}{}
+
+A screen ray begins with a pixel location mapped through the viewport to NDC, then through inverse projection and camera pose into a world-space origin and direction. For perspective cameras, rays usually share the eye origin; orthographic rays have parallel directions but different origins across the image. Mouse picking must use the same high-DPI scaling, viewport offset, origin, and Y convention as rendering. Near and far unprojection can define a ray segment, but a point at infinity or an infinite far plane needs an explicit direction construction. Picking then intersects that ray with scene geometry or uses an object-ID buffer.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-f1a6d43e80d1-prerequisites}
+
+\hypertarget{appendix-f1a6d43e80d1-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#nameddest=appendix-1c07d64f5e70}{Camera view and clip-space pipeline (Light Transport and Image Synthesis, Part 1, Reference notes: Camera view and clip-space pipeline)}
+\item
+  \hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P02/main.pdf\#nameddest=appendix-7d356c396d1a}{Visual angle and calibrated rays (Vision, XR, and Playable Worlds, Part 2, Reference notes: Visual angle and calibrated rays)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-f1a6d43e80d1-used-by}
+
+\hypertarget{appendix-f1a6d43e80d1-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  No downstream concept node is added in this stage.
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-f1a6d43e80d1-full-teaching-explanation}
+
+\hypertarget{appendix-f1a6d43e80d1-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#nameddest=02-foundations-ii-ch035-recover-geometry-from-depth-and-construct-screen-space-rays}{Recover geometry from depth and construct screen-space rays (Geometry, Cameras, and Image Formation, Part 1, Ch. 4)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-f1a6d43e80d1-source-coverage}
+
+\hypertarget{appendix-f1a6d43e80d1-source-coverage}{}
+
+Supplied lesson parts: 1082--1083.
+
+\subsection{Future keywords}\label{appendix-f1a6d43e80d1-future-keywords}
+
+\hypertarget{appendix-f1a6d43e80d1-future-keywords}{}
+
+inverse projection, viewport mapping, picking ray

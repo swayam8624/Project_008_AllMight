@@ -1,0 +1,55 @@
+\hypertarget{appendix-ffdc1d4e5350}{}\label{referencestart:appendix-ffdc1d4e5350}
+\section{Matrix storage indexing and strides}\label{appendix-ffdc1d4e5350-matrix-storage-indexing-and-strides}
+
+\hypertarget{appendix-ffdc1d4e5350-matrix-storage-indexing-and-strides}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase7 · \textbf{Latest development:} Phase7
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-ffdc1d4e5350-definition-and-mechanism}
+
+\hypertarget{appendix-ffdc1d4e5350-definition-and-mechanism}{}
+
+Matrix row/column semantics are independent of physical row-major or column-major storage. A strided view uses explicit row and column strides, shape, backing extent, and borrow lifetime. Separate named scalar members are not an array eligible for pointer indexing.
+
+\end{allmightroledefinition}
+
+\textbf{Reconstruction cue:} For row-major strides row=8 and column=1, element (2,3) has scalar offset 19.
+
+\subsection{Prerequisites}\label{appendix-ffdc1d4e5350-prerequisites}
+
+\hypertarget{appendix-ffdc1d4e5350-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#nameddest=appendix-c4ac6bb0fff8}{ABI and object layout (Bits, Programs, and Reliable Systems, Part 1, Reference notes: ABI and object layout)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-6af5921bc853}{Pointer arithmetic and provenance (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Pointer arithmetic and provenance)}
+\item
+  \hyperref[appendix-bd39c3bf5d64]{Matrices as linear maps and basis images}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-ffdc1d4e5350-used-by}
+
+\hypertarget{appendix-ffdc1d4e5350-used-by}{}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-1bfb7c657105]{Matrix SIMD tiling and cache reuse}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-55e4b5b0a1e6}{LU factorization and reusable solves (Vision, XR, and Playable Worlds, Part 1, Reference notes: LU factorization and reusable solves)} --- Extends this foundation into linear-systems and decomposition analysis.
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-67c87a3d9e94}{Sparse and iterative solvers (Vision, XR, and Playable Worlds, Part 1, Reference notes: Sparse and iterative solvers)} --- Extends this foundation into linear-systems and decomposition analysis.
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#nameddest=appendix-749ba51a6c25}{GPU vertex specification (Light Transport and Image Synthesis, Part 1, Reference notes: GPU vertex specification)} \#\# Recall and next depth
+\end{itemize}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\subsection{Source and navigation}\label{appendix-ffdc1d4e5350-source-and-navigation}
+
+\hypertarget{appendix-ffdc1d4e5350-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations]{Continuous explanation} · \hyperref[appendix-fd090d982a15-phase-7---parts-601-700]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-7---source-analysis-and-verification]{Sources and verification}

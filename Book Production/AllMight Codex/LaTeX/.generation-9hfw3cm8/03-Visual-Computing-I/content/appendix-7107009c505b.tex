@@ -1,0 +1,56 @@
+\hypertarget{appendix-7107009c505b}{}
+\section{Local rigidity and mesh orientation fields}\label{appendix-7107009c505b-local-rigidity-and-mesh-orientation-fields}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-7107009c505b-definition-and-mechanism}
+
+As-Rigid-As-Possible (ARAP) deformation seeks vertex positions that change as little as possible from a preferred local rigid transform. For each vertex neighborhood, fit a rotation to the deformed edge vectors, then minimize residuals between transformed rest edges and current edges. Alternating between local rotations and a global position solve makes a nonlinear shape-editing problem tractable, but the result depends on constraints, initialization, mesh quality, and rotation fitting. Instant Meshes uses direction or orientation fields over a surface to guide a quad-dominant remeshing; field singularities encode where a globally consistent direction cannot exist. A mesh's half-edge connectivity, boundary structure, and orientation determine valid neighborhoods and field transport. Poor triangles, seams, boundary conditions, or inconsistent orientation can create artifacts. ARAP is a local preservation objective, not exact rigidity of the whole shape; a direction field guides topology but does not uniquely determine a good mesh without sizing and feature constraints.
+
+\subsection{Prerequisites}\label{appendix-7107009c505b-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1aea26b2307f]{Half-edge mesh connectivity}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-fab348609369}{Manifold polygon meshes and boundary structure (04-Visual-Computing-II, appendix-fab348609369)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-0234ab7f86b1}{Subdivision surface masks (04-Visual-Computing-II, appendix-0234ab7f86b1)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-29f4bea4c2bb}{Constrained optimization and inverse kinematics (04-Visual-Computing-II, appendix-29f4bea4c2bb)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-2391db8052b1}{Cross products and oriented area (02-Foundations-II, appendix-2391db8052b1)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-7107009c505b-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing]{Meshes, connectivity, and geometry processing}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-7107009c505b-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing]{Meshes, connectivity, and geometry processing}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-7107009c505b-recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  Describe one local rotation/global solve step of ARAP and the role of a field singularity in remeshing.
+\item
+  Why can low local deformation energy fail to ensure a globally rigid shape?
+\end{itemize}
+
+\subsection{Source and navigation}\label{appendix-7107009c505b-source-and-navigation}
+
+Teaching narrative: \hyperref[03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing]{open the main explanation}. Browse the \href{../02-Foundations-II/main.pdf\#nameddest=appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series}{University graphics and vision index (02-Foundations-II, appendix-a6d556a4ef50-university-graphics-vision-and-photography-\/-\/-independent-series)}. Additional chapter connections: \hyperref[03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing]{Meshes, connectivity, and geometry processing}; \hyperref[03-visual-computing-i-ch002-surfaces-patches-topology-and-parameterization]{Surfaces, patches, topology, and parameterization}; \href{../01-Foundations-I/main.pdf\#nameddest=01-foundations-i-ch020-put-the-algorithms-in-a-graphics-context}{Put the algorithms in a graphics context (01-Foundations-I, 01-foundations-i-ch020-put-the-algorithms-in-a-graphics-context)}.
+
+Caption/source records: \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch036-p3-16---subdivision-surfaces-part-1}{P3-16 (04-Visual-Computing-II, 04-visual-computing-ii-ch036-p3-16-\/-\/-subdivision-surfaces-part-1)}, \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch036-p3-17---subdivision-surfaces-part-2}{P3-17 (04-Visual-Computing-II, 04-visual-computing-ii-ch036-p3-17-\/-\/-subdivision-surfaces-part-2)}, \href{../04-Visual-Computing-II/main.pdf\#nameddest=04-visual-computing-ii-ch036-sc-15---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-15-3d-vision}{SC-15 (04-Visual-Computing-II, 04-visual-computing-ii-ch036-sc-15-\/-\/-stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-15-3d-vision)}.

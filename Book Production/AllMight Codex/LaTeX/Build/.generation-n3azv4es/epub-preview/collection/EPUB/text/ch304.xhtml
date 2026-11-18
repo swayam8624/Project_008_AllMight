@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch304.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-faac749c9cdd-half-edge-topology-invariants" class="level2">
+<h2>Half-edge topology invariants</h2>
+<p>A triangle index buffer tells the renderer which three vertices form each face, but many geometry-processing algorithms need explicit adjacency: which face lies across an edge, which edges surround a vertex, and where the mesh boundary is.</p>
+<p>A half-edge representation splits every undirected edge into directed records attached to faces. For triangle face <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>, create directed half-edges</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>v</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>For a consistently oriented two-manifold interior edge, exactly two half-edges share the same undirected endpoints and they run in opposite directions. They become twins.</p>
+<section id="appendix-faac749c9cdd-invariants" class="level3">
+<h3>Invariants</h3>
+<p>A useful topology builder should establish:</p>
+<ul>
+<li>every face vertex index is valid;</li>
+<li>a face does not repeat one of its own vertices;</li>
+<li>each directed edge appears at most once for an oriented manifold triangle mesh;</li>
+<li>an undirected edge with one incident face is a boundary edge;</li>
+<li>an undirected edge with two incident faces is manifold only when directions oppose;</li>
+<li>an undirected edge with more than two incident faces is non-manifold;</li>
+<li>twin links are symmetric;</li>
+<li>face-cycle next links return to the original half-edge.</li>
+</ul>
+<p>Vertex-manifoldness needs an additional fan test. Merely checking that every edge has at most two incident faces does not reject a “bow-tie” vertex whose incident triangles form separate fans touching only at that vertex.</p>
+</section>
+<section id="appendix-faac749c9cdd-euler-characteristic-as-a-diagnostic" class="level3">
+<h3>Euler characteristic as a diagnostic</h3>
+<p>For a finite mesh complex,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>χ</mi>
+  <mo>=</mo>
+  <mi>V</mi>
+  <mo>−</mo>
+  <mi>E</mi>
+  <mo>+</mo>
+  <mi>F</mi>
+  <mo>.</mo>
+</math>
+<p>A topological disk has <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>χ</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>. A closed sphere-like tetrahedron has <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>χ</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+</math>. Euler characteristic does not fully classify arbitrary meshes, but it is a powerful cross-check against adjacency construction.</p>
+</section>
+<section id="appendix-faac749c9cdd-why-topology-must-be-separated-from-geometry" class="level3">
+<h3>Why topology must be separated from geometry</h3>
+<p>Two faces can be topologically adjacent even if their coordinates are nearly coincident or wildly deformed. Conversely, two spatially overlapping triangles need not share topology. Build connectivity from explicit vertex/edge identity unless the task is specifically to weld geometric duplicates under a tolerance.</p>
+</section>
+<section id="appendix-faac749c9cdd-executable-witness" class="level3">
+<h3>Executable witness</h3>
+<p>tools/labs/mesh_topology_lab.cpp builds directed/undirected edge maps, pairs twins, counts boundaries and non-manifold edges, checks orientation, and validates Euler characteristic on a two-triangle disk and a closed tetrahedron. A third case deliberately creates a three-face non-manifold edge.</p>
+<p>The witness does not yet prove vertex-fan manifoldness, polygonal faces, robust welding, edge collapse, remeshing or production importer parity.</p>
+<p>Related: <a href="ch339.xhtml#appendix-1aea26b2307f-half-edge-mesh-connectivity" class="wikilink">Half-edge mesh connectivity (Light Transport and Image Synthesis, Part 1, Reference notes: Half-edge mesh connectivity)</a>, <a href="ch301.xhtml#appendix-e38976cbbf86-mesh-topology-and-homology" class="wikilink">Mesh topology and homology</a>, <a href="ch299.xhtml#appendix-89db9fe1bc8a-qem-edge-collapse-and-validity" class="wikilink">QEM edge collapse and validity</a>.</p>
+</section>
+</section>
+</body>
+</html>

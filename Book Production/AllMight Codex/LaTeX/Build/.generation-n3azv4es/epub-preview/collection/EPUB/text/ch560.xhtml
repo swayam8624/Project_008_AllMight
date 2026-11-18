@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch560.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-73c6b8ed5a87-light-vision-and-perception-visual-recall" class="level2">
+<h2>Light, Vision and Perception — Visual Recall</h2>
+<p><strong>Scope:</strong> Companion to <span>Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography</span>. This is a recall board: sketch the path, then explain what each stage measures and what it cannot establish.</p>
+<blockquote>
+<p>[!abstract] One-page quick notes <strong>Light → eye → task → display:</strong> rendering is a loop; code values are not the light itself. <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-light-must-become-a-quantity-before-it-becomes-a-color" class="wikilink">Radiometry → colorimetry</a> <strong>See only what survives the pipeline:</strong> optics, contrast, adaptation, eccentricity, sampling and reconstruction all constrain visibility. <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-the-eye-is-an-optical-instrument-with-neural-processing-inside-it" class="wikilink">Eye and neural processing</a> · <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-visibility-is-about-contrast-conditions-and-tasks" class="wikilink">Visibility and task</a> <strong>Time matters twice:</strong> eye motion changes the retinal sample; history reuse predicts correspondence and must validate it. <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-a-gaze-sample-needs-a-time-as-well-as-a-direction" class="wikilink">Gaze and time</a> · <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-temporal-reconstruction-is-an-inference-about-correspondence" class="wikilink">Temporal reuse</a> <strong>Measure, don’t assume:</strong> quality metrics and thresholds answer only the question their procedure tested. <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-quality-numbers-need-a-question-they-can-actually-answer" class="wikilink">Quality metrics</a> · <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-a-threshold-is-evidence-from-a-procedure-not-a-universal-border" class="wikilink">Threshold evidence</a> <strong>Spend detail where useful, safely:</strong> foveation is a resource allocation with prediction uncertainty and latency margins. <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-foveation-is-allocation-under-uncertain-perception-and-timing" class="wikilink">Foveation</a></p>
+</blockquote>
+<section id="appendix-73c6b8ed5a87-figure-linked-short-notes" class="level3">
+<h3>Figure-linked short notes</h3>
+<p>Use one row at a time: explain the claim, open its figure, then follow the nearby chapter explanation. The figure labels are shared with the continuous chapter.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Figure in the chapter</th>
+<th>Shortest useful brief</th>
+<th>Boundary to remember</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-figure-x0-a-qualitative-picture-of-the-xr-loop" class="wikilink">X0 · Perception collage</a></td>
+<td>Scene → display light → optics → retina → task; gaze feeds rendering decisions.</td>
+<td>Qualitative AI illustration; not calibrated rays or anatomical dimensions.</td>
+</tr>
+<tr>
+<td><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-figure-x1-two-simultaneous-depth-demands" class="wikilink">X1 · Focus and pointing</a></td>
+<td>Vergence points the eyes; accommodation changes focus. A near stereo target can coexist with a distant optical image.</td>
+<td>Demanded distances can disagree; sharpness alone cannot fix that.</td>
+</tr>
+<tr>
+<td><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-figure-x2-the-samples-cannot-name-their-original" class="wikilink">X2 · Aliasing witness</a></td>
+<td>At 10 Hz, 13 Hz and 3 Hz cosines give identical samples: their phase difference is whole cycles.</td>
+<td>Filter before reducing sample rate; more bits cannot recover lost distinctions.</td>
+</tr>
+<tr>
+<td><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-figure-x3-same-endpoints-different-averaging-domain" class="wikilink">X3 · Linear-light mean</a></td>
+<td>Black/white mean is 0.5 linear → about 0.73536 sRGB. Encoded mean 0.5 → about 0.21404 linear.</td>
+<td>Values are normalized channels, not nits. Specify the encoding and arithmetic domain.</td>
+</tr>
+<tr>
+<td><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-figure-x4-aim-detail-at-visible-time" class="wikilink">X4 · Gaze timing</a></td>
+<td>Predict gaze for visible time; expand the sharp region for measured uncertainty.</td>
+<td>A 90 Hz stream gives 11.11 ms intervals, not a latency measurement.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Connect the rest:</strong> <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-fourier-coordinates-reveal-what-a-filter-removes" class="wikilink">Fourier coefficients describe frequency and phase</a> · <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-what-happens-to-a-point-of-light" class="wikilink">PSF → OTF → MTF</a> · <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-temporal-reconstruction-is-an-inference-about-correspondence" class="wikilink">TAA requires valid correspondence</a> · <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-a-threshold-is-evidence-from-a-procedure-not-a-universal-border" class="wikilink">Thresholds depend on procedure</a> · <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-less-shading-does-not-mean-the-whole-frame-becomes-equally-faster" class="wikilink">Whole-frame savings need profiling</a>.</p>
+</section>
+<section id="appendix-73c6b8ed5a87-visual-atlas-what-each-view-is-for" class="level3">
+<h3>Visual atlas — what each view is for</h3>
+<figure>
+<img src="../media/file192.png" alt="Qualitative AI illustration of the XR perception loop, foveal and peripheral vision, and binocular focus cues." />
+<figcaption aria-hidden="true">Qualitative AI illustration of the XR perception loop, foveal and peripheral vision, and binocular focus cues.</figcaption>
+</figure>
+<p><em>Illustration caption:</em> The rendered image is not the perceptual result. Light, optics, neural processing, task and display timing intervene. This is a qualitative AI teaching collage, not a calibrated optical ray diagram or anatomical measurement; <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-figure-x0-a-qualitative-picture-of-the-xr-loop" class="wikilink">open the same figure in context</a>.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Recall figure</th>
+<th>One-line takeaway</th>
+<th>Open the full explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="ch560.xhtml#appendix-73c6b8ed5a87-from-emitted-light-to-a-perceptual-claim" class="wikilink">Perception loop</a></td>
+<td>The display closes the loop by changing the next light reaching the observer.</td>
+<td><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-prologue---a-perfect-scene-can-still-make-a-poor-experience" class="wikilink">Prologue</a></td>
+</tr>
+<tr>
+<td><a href="ch560.xhtml#appendix-73c6b8ed5a87-four-measurement-families-that-must-not-be-collapsed" class="wikilink">Measurement ladder</a></td>
+<td>Physical light, color matches, perception, metrics and experiments are different claims.</td>
+<td><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-light-must-become-a-quantity-before-it-becomes-a-color" class="wikilink">Radiometry and colorimetry</a></td>
+</tr>
+<tr>
+<td><a href="ch560.xhtml#appendix-73c6b8ed5a87-sampling-and-filtering-preserve-what-can-be-distinguished" class="wikilink">Sampling loop</a></td>
+<td>Filter before sampling; reconstruction cannot recover distinctions already aliased.</td>
+<td><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-sampling-is-a-question-of-what-remains-distinguishable" class="wikilink">Sampling and aliasing</a> · <a href="ch551.xhtml#id_04-visual-computing-ii-ch042-a-footprint-is-more-meaningful-than-an-isolated-pixel-center" class="wikilink">Pixel footprint</a></td>
+</tr>
+<tr>
+<td><a href="ch560.xhtml#appendix-73c6b8ed5a87-temporal-reuse-is-a-correspondence-hypothesis" class="wikilink">History validation</a></td>
+<td>Reuse prior samples only when correspondence evidence supports them.</td>
+<td><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-temporal-reconstruction-is-an-inference-about-correspondence" class="wikilink">Temporal reconstruction</a></td>
+</tr>
+<tr>
+<td><a href="ch560.xhtml#appendix-73c6b8ed5a87-foveation-is-a-budget-under-uncertainty" class="wikilink">Foveation margin</a></td>
+<td>Gaze prediction error and latency determine the safe high-detail region.</td>
+<td><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-foveation-is-allocation-under-uncertain-perception-and-timing" class="wikilink">Foveation design</a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-73c6b8ed5a87-from-emitted-light-to-a-perceptual-claim" class="level3">
+<h3>From emitted light to a perceptual claim</h3>
+<p><img src="../media/file198.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Caption:</strong> The rendering loop is closed: the display changes the light reaching the observer, and observer/task conditions shape what counts as visible. RGB code values are not spectra and are not automatically linear-light energy.</p>
+</section>
+<section id="appendix-73c6b8ed5a87-four-measurement-families-that-must-not-be-collapsed" class="level3">
+<h3>Four measurement families that must not be collapsed</h3>
+<p><img src="../media/file199.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Caption:</strong> A metric score is not a direct reading of human experience. Each transformation adds assumptions and conditions.</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Question</th>
+<th>Distinction to retrieve</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>How much physical light?</td>
+<td>Radiant power/energy and radiance/irradiance are different quantities.</td>
+</tr>
+<tr>
+<td>What color signal?</td>
+<td>Spectrum and colorimetric coordinates are not interchangeable.</td>
+</tr>
+<tr>
+<td>What does the eye resolve?</td>
+<td>Acuity varies with eccentricity, contrast, adaptation and task.</td>
+</tr>
+<tr>
+<td>Is the displayed result equivalent?</td>
+<td>Focus/accommodation and binocular vergence can conflict in stereoscopic displays.</td>
+</tr>
+<tr>
+<td>Does a score prove improvement?</td>
+<td>Only for the metric, conditions, observers and task actually tested.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-73c6b8ed5a87-sampling-and-filtering-preserve-what-can-be-distinguished" class="level3">
+<h3>Sampling and filtering: preserve what can be distinguished</h3>
+<p><img src="../media/file200.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Caption:</strong> Sampling without suitable filtering can make distinct signals produce identical samples. A pixel footprint, motion, and time interval all matter; one isolated pixel center is not a complete image measurement.</p>
+</section>
+<section id="appendix-73c6b8ed5a87-temporal-reuse-is-a-correspondence-hypothesis" class="level3">
+<h3>Temporal reuse is a correspondence hypothesis</h3>
+<p><img src="../media/file201.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Caption:</strong> Reprojection is not “old pixels are correct.” It is a prediction plus validation. Jitter, temporal antialiasing and motion blur address related but distinct problems.</p>
+</section>
+<section id="appendix-73c6b8ed5a87-foveation-is-a-budget-under-uncertainty" class="level3">
+<h3>Foveation is a budget under uncertainty</h3>
+<pre class="text"><code>gaze estimate ──&gt; predicted gaze at display time ──&gt; high-quality region
+      │                        │                              │
+      └── latency/error ───────┴── safety margin ────────────┘
+                               ↓
+                   lower peripheral work only where justified</code></pre>
+<p><strong>Caption:</strong> Less shading work does not imply the whole frame becomes equally faster. Prediction error, transition smoothness, display timing and workload determine the usable benefit.</p>
+</section>
+<section id="appendix-73c6b8ed5a87-retrieval-prompts" class="level3">
+<h3>Retrieval prompts</h3>
+<ol type="1">
+<li>Why can two different continuous signals produce the same samples?</li>
+<li>How do sampling rate, filter footprint and reconstruction relate?</li>
+<li>What changes between linear-light averaging and averaging encoded RGB values?</li>
+<li>Why can a sharp stereo image still feel uncomfortable?</li>
+<li>What evidence is needed before a threshold can be treated as a boundary?</li>
+<li>Why does valid foveation require a margin for gaze prediction error?</li>
+</ol>
+<blockquote>
+<p>[!answer]- Compact key Frequencies beyond the sampling system’s distinguishable range can alias. Filtering limits content before discrete sampling; reconstruction defines what is inferred between samples. Nonlinear transfer encoding changes averages. Accommodation and vergence can demand different focal distances. A threshold depends on procedure and conditions, not just a fitted curve. Gaze latency/error can move the true fovea outside a region sized only around the estimate.</p>
+</blockquote>
+<p><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-sampling-is-a-question-of-what-remains-distinguishable" class="wikilink">Teach the complete XR chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-xr01---independent-seeing-and-representation-source" class="wikilink">Source ledger</a></p>
+</section>
+</section>
+</body>
+</html>

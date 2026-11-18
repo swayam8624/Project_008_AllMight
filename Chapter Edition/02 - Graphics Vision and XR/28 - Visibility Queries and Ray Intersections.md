@@ -8,7 +8,7 @@ Visibility queries carry intervals and surface rules that determine what counts 
 
 **Recall question:** How do the query interval and hit policy change the meaning of a visibility result?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 70959–73706; source-span SHA256 ebec4d3282c57f7e7f93acf64351677cc903b54cabbc3a7ffb0850a46259e4ed. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 71961–74708; source-span SHA256 ebec4d3282c57f7e7f93acf64351677cc903b54cabbc3a7ffb0850a46259e4ed. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Visibility queries and ray intersections

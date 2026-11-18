@@ -8,7 +8,7 @@ C++ qualifiers and borrow intervals determine which accesses are legal, while gr
 
 **Recall question:** What completion event must be observed before a buffer can be safely reused or released?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 20193–22551; source-span SHA256 eac5e1899267f2d0892cdeb7c185ae1cc8020578dec46e56aec17b4d18a322da. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 20374–22732; source-span SHA256 eac5e1899267f2d0892cdeb7c185ae1cc8020578dec46e56aec17b4d18a322da. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## C++ - Qualification safety and borrow intervals

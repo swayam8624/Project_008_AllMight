@@ -4,7 +4,7 @@ import sys
 import tempfile
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from build_chapter_edition import anchors, prepare, render, BODY_START, BODY_END
+from build_chapter_edition import anchors, prepare, render, BODY_START, BODY_END, edition_files
 from check_vault_links import audit
 
 
@@ -70,6 +70,16 @@ class ChapterEditionTests(unittest.TestCase):
             self.assertIn('(../../Visual%20Recall/picture.svg)', page)
             self.assertIn('(../../tools/lab.cpp)', page)
             self.assertIn('**`operator[](i)`**', page)
+
+    def test_finder_metadata_is_preserved_but_authored_extras_are_reported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root / 'Chapter Edition'
+            folder.mkdir()
+            (folder / '.DS_Store').write_bytes(b'Finder metadata')
+            (folder / 'My extra lesson.md').write_text('Keep this lesson.')
+            self.assertEqual(edition_files(root), {'Chapter Edition/My extra lesson.md'})
+            self.assertTrue((folder / '.DS_Store').is_file())
 
     def test_missing_boundary_fails(self):
         with tempfile.TemporaryDirectory() as tmp:

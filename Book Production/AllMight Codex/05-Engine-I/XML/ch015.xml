@@ -1,0 +1,1196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Chapter xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/" id="05-engine-i-ch015" source="Chapter Edition/03 - Game Engine/15 - Sparse-set components and generational entity handles.md">
+<Content aid:pstyle="ChapterHeader" id="05-engine-i-ch015-sparse-set-components-and-generational-entity-handles">15 — Sparse-set components and generational entity handles&#13;</Content>
+<Content aid:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#05-engine-i-ch014">Previous chapter</Link> · <Link href="#05-engine-i-ch016">Next chapter</Link>&#13;</Content>
+<Content aid:pstyle="Content">As the world grows, storing every entity as a separate object becomes costly and references can outlive their occupants. This chapter derives dense component pools, sparse lookup, and generation checks from those constraints.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">By the end:</Strong> Implement component membership and entity identity while accounting for swap removal, slot reuse, and stale handles.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Recall question:</Strong> After an entity is removed and its slot reused, what check proves that an old handle cannot refer to the new entity?&#13;</Content>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 27305–31132; source-span SHA256 29c2eba597ac4ff7b873302152871c5ba90a2b55c3171b335c90cc4c37d2e924. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<Content aid:pstyle="SubChapterSubHeading" id="05-engine-i-ch015-component-pools-and-sparse-sets">COMPONENT POOLS AND SPARSE SETS&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Component pools</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A sparse-set ECS usually stores one pool per component type:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform Pool&#10;----------------&#10;entities&#10;components&#10;&#10;Velocity Pool&#10;----------------&#10;entities&#10;components&#10;&#10;Health Pool&#10;----------------&#10;entities&#10;components&#13;</Code>
+<Content aid:pstyle="Content">An entity with Transform and Health exists in both corresponding pools.&#13;</Content>
+<Content aid:pstyle="Content">There is no requirement that pools have equal sizes.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">100,000 entities total&#10;100,000 transforms&#10; 20,000 velocities&#10;    300 bosses&#10;     12 directional lights&#13;</Code>
+<Content aid:pstyle="Content">That density difference is what later makes smallest-pool queries powerful.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Type erasure in Kairo pools</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your registry needs to do this during entity destruction:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">for (every component pool)&#10;    remove(entity);&#13;</Code>
+<Content aid:pstyle="Content">But the registry does not statically know every component type.&#13;</Content>
+<Content aid:pstyle="Content">So Kairo uses:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct StorageBase&#10;{&#10;    virtual ~StorageBase() = default;&#10;&#10;    virtual bool Remove(&#10;        Entity entity) noexcept = 0;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">template&lt;typename Component&gt;&#10;struct Pool final : StorageBase&#10;{&#10;    SparseSet&lt;Component&gt; Set;&#10;&#10;    bool Remove(&#10;        Entity entity) noexcept override&#10;    {&#10;        return Set.Remove(entity);&#10;    }&#10;};&#13;</Code>
+<Content aid:pstyle="Content">This is type erasure.&#13;</Content>
+<Content aid:pstyle="Content">At typed access time:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Pool&lt;Transform&gt;&#13;</Code>
+<Content aid:pstyle="Content">is known.&#13;</Content>
+<Content aid:pstyle="Content">At generic destruction time:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">StorageBase*&#13;</Code>
+<Content aid:pstyle="Content">is enough.&#13;</Content>
+<Content aid:pstyle="Content">That is a clean division.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why Kairo keeps both <InlineCode aid:cstyle="InlineCode">m_Pools</InlineCode> and <InlineCode aid:cstyle="InlineCode">m_Storages</InlineCode></Strong>&#13;</Content>
+<Content aid:pstyle="Content">You have:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">unordered_map&lt;type_index, unique_ptr&lt;StorageBase&gt;&gt;&#10;    m_Pools;&#13;</Code>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">vector&lt;StorageBase*&gt;&#10;    m_Storages;&#13;</Code>
+<Content aid:pstyle="Content">The map answers:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">give me the pool for type T.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">The vector answers:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">iterate every existing pool quickly.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">The unique ownership remains in <InlineCode aid:cstyle="InlineCode">m_Pools</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">m_Storages</InlineCode> contains non-owning pointers.&#13;</Content>
+<Content aid:pstyle="Content">This avoids traversing an unordered map when bulk iterating all storages.&#13;</Content>
+<Content aid:pstyle="Content">However, entity destruction still has complexity:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d3f04dc1444bfb26f1e4d9eb.svg" alt="&#10;O(T)&#10;" jobId="d3f04dc1444bfb26f1e4d9eb" originalTeX="&#10;O(T)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">where <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bb6344d95a1adb78d71fefa4.svg" alt="T" jobId="bb6344d95a1adb78d71fefa4" originalTeX="T"/> is the total number of registered component types, because it asks every pool whether the entity is present.&#13;</Content>
+<Content aid:pstyle="Content">Later signatures or per-entity component lists can reduce that.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Sparse-set concept</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose entities owning Position are:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Entity indices:&#10;2, 7, 100&#13;</Code>
+<Content aid:pstyle="Content">We want:&#13;</Content>
+<List type="ordered" start="1" numberStyle="Decimal" delimiter="Period">
+<ListItem><Content aid:pstyle="Content"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ad271e79f123403db6392aca.svg" alt="O(1)" jobId="ad271e79f123403db6392aca" originalTeX="O(1)"/> membership lookup by entity,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">dense contiguous component iteration.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">A sparse set combines two representations.&#13;</Content>
+<Code aid:pstyle="Code" language="text">SPARSE ARRAY&#10;indexed by entity index&#10;&#10;entity index:&#10;0 1 2 3 4 5 6 7 8 ... 100&#10;    . 0 . . . . 1 . ...  2&#10;&#10;&#10;DENSE ENTITY ARRAY&#10;&#10;dense index:&#10;0   1    2&#10;&#10;entity:&#10;2   7   100&#10;&#10;&#10;DENSE COMPONENT ARRAY&#10;&#10;dense index:&#10;0       1       2&#10;&#10;Position:&#10;P2      P7      P100&#13;</Code>
+<Content aid:pstyle="Content">The sparse array maps:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fddaf94b1448c8bf82a57de2.svg" alt="&#10;entityIndex\rightarrow denseIndex.&#10;" jobId="fddaf94b1448c8bf82a57de2" originalTeX="&#10;entityIndex\rightarrow denseIndex.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">The dense arrays map:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/36483fa804da809b5016de02.svg" alt="&#10;denseIndex\rightarrow entity/component.&#10;" jobId="36483fa804da809b5016de02" originalTeX="&#10;denseIndex\rightarrow entity/component.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This exact sparse-to-packed architecture is also the core model documented by EnTT: its component pools are specialized sparse sets with packed entity/component storage; modern EnTT additionally pages sparse and component storage to control memory and pointer stability. <Link href="https://skypjack.github.io/entt/md_docs_2md_2entity.html?utm_source=chatgpt.com">skypjack.github.io</Link>&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The fundamental sparse-set invariant</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For every dense slot <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d4359f2456d8fbcc30e392f0.svg" alt="d" jobId="d4359f2456d8fbcc30e392f0" originalTeX="d"/>:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/28c5b45fa20c88a33990996f.svg" alt="&#10;\boxed{&#10;Sparse[DenseEntity[d].Index]=d.&#10;}&#10;" jobId="28c5b45fa20c88a33990996f" originalTeX="&#10;\boxed{&#10;Sparse[DenseEntity[d].Index]=d.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">And for entity E claiming membership:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/abaebb64c19d8c9280251424.svg" alt="&#10;d=Sparse[E.Index].&#10;" jobId="abaebb64c19d8c9280251424" originalTeX="&#10;d=Sparse[E.Index].&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then membership is valid only if:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/349777ad0e1e3ae1a97a9e7f.svg" alt="&#10;d&lt;Dense.size&#10;" jobId="349777ad0e1e3ae1a97a9e7f" originalTeX="&#10;d&lt;Dense.size&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/61cf5307fbaad7f9161689ae.svg" alt="&#10;DenseEntity[d]=E.&#10;" jobId="61cf5307fbaad7f9161689ae" originalTeX="&#10;DenseEntity[d]=E.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That last equality is where generations enter.&#13;</Content>
+<Content aid:pstyle="Content">This invariant is the heart of the entire data structure.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Sparse index array</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo stores:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::vector&lt;std::uint32_t&gt; m_Sparse;&#13;</Code>
+<Content aid:pstyle="Content">Missing slots contain:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Missing =&#10;    std::numeric_limits&lt;uint32_t&gt;::max();&#13;</Code>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Code aid:pstyle="Code" language="text">entity index 0 -&gt; Missing&#10;entity index 1 -&gt; Missing&#10;entity index 2 -&gt; 0&#10;entity index 3 -&gt; Missing&#10;entity index 7 -&gt; 1&#13;</Code>
+<Content aid:pstyle="Content">Lookup does not search.&#13;</Content>
+<Content aid:pstyle="Content">It indexes directly:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e732c0723500a1418bb56936.svg" alt="&#10;dense=Sparse[E.Index].&#10;" jobId="e732c0723500a1418bb56936" originalTeX="&#10;dense=Sparse[E.Index].&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That’s why membership is <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ad271e79f123403db6392aca.svg" alt="O(1)" jobId="ad271e79f123403db6392aca" originalTeX="O(1)"/>.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Sparse-array memory cost</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose highest entity index is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3fa6b382378af862ca8defa7.svg" alt="&#10;10,000,000.&#10;" jobId="3fa6b382378af862ca8defa7" originalTeX="&#10;10,000,000.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Even if this component exists on only 3 entities, a flat <InlineCode aid:cstyle="InlineCode">uint32_t</InlineCode> sparse array may require about:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4c7d174e1cb82e4d1a382717.svg" alt="&#10;10,000,001\times4&#10;\approx40\text{ MB}.&#10;" jobId="4c7d174e1cb82e4d1a382717" originalTeX="&#10;10,000,001\times4&#10;\approx40\text{ MB}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For <Strong aid:cstyle="Bold">one component type</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">If dozens of sparse components independently allocate huge sparse arrays, memory explodes.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s current flat sparse vector therefore works especially well when:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ff142096f132741e6f35b507.svg" alt="&#10;\text{entity indices are reasonably dense}.&#10;" jobId="ff142096f132741e6f35b507" originalTeX="&#10;\text{entity indices are reasonably dense}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Production ECS libraries often page sparse arrays precisely to avoid allocating the entire index range for every pool. EnTT’s current storage documentation explicitly notes paged sparse arrays for this reason. <Link href="https://skypjack.github.io/entt/md_docs_2md_2entity.html?utm_source=chatgpt.com">skypjack.github.io</Link>&#13;</Content>
+<Content aid:pstyle="Content">A paged sparse set might allocate only pages touched by entities.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Dense entity array</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo stores:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::vector&lt;Entity&gt; m_Entities;&#13;</Code>
+<Content aid:pstyle="Content">This array tells us:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Which entity owns component at dense index <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d4359f2456d8fbcc30e392f0.svg" alt="d" jobId="d4359f2456d8fbcc30e392f0" originalTeX="d"/>?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">dense 0 -&gt; Entity {42,3}&#10;dense 1 -&gt; Entity {7,1}&#10;dense 2 -&gt; Entity {921,8}&#13;</Code>
+<Content aid:pstyle="Content">Dense order has no requirement to match entity index order.&#13;</Content>
+<Content aid:pstyle="Content">That is important.&#13;</Content>
+<Content aid:pstyle="Content">We trade ordering for compactness.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Dense component array</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo stores:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::vector&lt;Component&gt; m_Components;&#13;</Code>
+<Content aid:pstyle="Content">with exact positional correspondence:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/71b82d6bf5cd48c907f7f884.svg" alt="&#10;m_Entities[d]&#10;\leftrightarrow&#10;m_Components[d].&#10;" jobId="71b82d6bf5cd48c907f7f884" originalTeX="&#10;m_Entities[d]&#10;\leftrightarrow&#10;m_Components[d].&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Code aid:pstyle="Code" language="text">DenseEntities[5] = Entity 73&#10;DenseComponents[5] = Transform of Entity 73&#13;</Code>
+<Content aid:pstyle="Content">The invariant:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ec3e17d2da62b5da58d06b18.svg" alt="&#10;|Entities|=|Components|.&#10;" jobId="ec3e17d2da62b5da58d06b18" originalTeX="&#10;|Entities|=|Components|.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is why iteration can simply walk:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">for (size_t i = 0;&#10;     i &lt; components.size();&#10;     ++i)&#10;{&#10;    Entity e = entities[i];&#10;    Component&amp; c = components[i];&#10;}&#13;</Code>
+<Content aid:pstyle="Content">No pointer chasing.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Sparse-set membership lookup</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">bool Contains(Entity entity) const noexcept&#10;{&#10;    if (!entity.IsValid() ||&#10;        entity.Index &gt;= m_Sparse.size())&#10;    {&#10;        return false;&#10;    }&#10;&#10;    const std::uint32_t dense =&#10;        m_Sparse[entity.Index];&#10;&#10;    return&#10;        dense != Missing &amp;&amp;&#10;        dense &lt; m_Entities.size() &amp;&amp;&#10;        m_Entities[dense] == entity;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">Let’s derive every check.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Valid index sentinel</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Reject null-like handles.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Sparse bounds</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Avoid out-of-bounds indexing.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Missing sentinel</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Entity index has no dense mapping.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Dense bounds</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Defensive corruption check.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Full entity equality</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Protect against stale generations.&#13;</Content>
+<Content aid:pstyle="Content">Every line has a purpose.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why sparse index alone is insufficient</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">old entity = {42,1}&#10;new entity = {42,2}&#13;</Code>
+<Content aid:pstyle="Content">Sparse array says:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Sparse[42] = 7&#13;</Code>
+<Content aid:pstyle="Content">If membership checked only:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Sparse[42] != Missing&#13;</Code>
+<Content aid:pstyle="Content">then both generations would appear to own the component.&#13;</Content>
+<Content aid:pstyle="Content">Generation comparison prevents that:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">DenseEntities[7] == Entity{42,2}&#13;</Code>
+<Content aid:pstyle="Content">means old handle <InlineCode aid:cstyle="InlineCode">{42,1}</InlineCode> fails.&#13;</Content>
+<Content aid:pstyle="Content">This makes the sparse set generation-aware.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Sparse-set component lookup</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Once membership is known:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e732c0723500a1418bb56936.svg" alt="&#10;dense=Sparse[E.Index].&#10;" jobId="e732c0723500a1418bb56936" originalTeX="&#10;dense=Sparse[E.Index].&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/98b9ef79081b1b33c8a4b7ae.svg" alt="&#10;component=DenseComponents[dense].&#10;" jobId="98b9ef79081b1b33c8a4b7ae" originalTeX="&#10;component=DenseComponents[dense].&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Kairo:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Component* TryGet(Entity entity) noexcept&#10;{&#10;    return Contains(entity)&#10;        ? &amp;m_Components[&#10;              m_Sparse[entity.Index]]&#10;        : nullptr;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">So successful lookup involves roughly:&#13;</Content>
+<Code aid:pstyle="Code" language="text">entity index&#10;  ↓&#10;sparse array load&#10;  ↓&#10;dense entity validation&#10;  ↓&#10;dense component access&#13;</Code>
+<Content aid:pstyle="Content">No hash table is needed per entity/component lookup.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why this can outperform entity→component hash maps</Strong>&#13;</Content>
+<Content aid:pstyle="Content">An alternative would be:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">unordered_map&lt;Entity, Transform&gt;&#13;</Code>
+<Content aid:pstyle="Content">for every component.&#13;</Content>
+<Content aid:pstyle="Content">That introduces:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">hash calculation,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">bucket lookup,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">pointer chasing,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">bucket metadata,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">poor iteration locality.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Sparse set uses direct indexing and contiguous packed data.&#13;</Content>
+<Content aid:pstyle="Content">The tradeoff is sparse-array memory.&#13;</Content>
+<Content aid:pstyle="Content">This is a classic space/time/layout trade.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Sparse-set component insertion</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Insertion needs to preserve the invariant:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9e850a89e065490483e33933.svg" alt="&#10;Sparse[Entity.Index]=DensePosition.&#10;" jobId="9e850a89e065490483e33933" originalTeX="&#10;Sparse[Entity.Index]=DensePosition.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Kairo first ensures sparse capacity:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">EnsureSparseIndex(entity.Index);&#13;</Code>
+<Content aid:pstyle="Content">Then verifies that entity does not already exist.&#13;</Content>
+<Content aid:pstyle="Content">It also checks something subtle:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">if (m_Sparse[entity.Index] != Missing)&#10;{&#10;    throw ...&#10;}&#13;</Code>
+<Content aid:pstyle="Content">even after <InlineCode aid:cstyle="InlineCode">Contains(entity)</InlineCode> returned false.&#13;</Content>
+<Content aid:pstyle="Content">Why?&#13;</Content>
+<Content aid:pstyle="Content">Because the slot could belong to a <Strong aid:cstyle="Bold">different generation</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The different-generation insertion hazard</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">dense entities:&#10;[ Entity{42,1} ]&#10;&#10;Sparse[42] = 0&#13;</Code>
+<Content aid:pstyle="Content">Now caller attempts:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Emplace(Entity{42,2}, ...)&#13;</Code>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">Contains({42,2})</InlineCode> returns false because generation differs.&#13;</Content>
+<Content aid:pstyle="Content">If insertion blindly proceeded:&#13;</Content>
+<Code aid:pstyle="Code" language="text">dense:&#10;0 -&gt; {42,1}&#10;1 -&gt; {42,2}&#10;&#10;Sparse[42] = 1&#13;</Code>
+<Content aid:pstyle="Content">Now old dense entry 0 exists but no sparse mapping can reach it.&#13;</Content>
+<Content aid:pstyle="Content">It became an <Strong aid:cstyle="Bold">orphan component</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">Your implementation detects this and rejects insertion until old generation is removed.&#13;</Content>
+<Content aid:pstyle="Content">That is a genuinely important invariant defense.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Dense insertion algorithm</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Let:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4055d67a18ed77da61b13c42.svg" alt="&#10;d=|Dense|.&#10;" jobId="4055d67a18ed77da61b13c42" originalTeX="&#10;d=|Dense|.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Code aid:pstyle="Code" language="text">DenseEntities.push(E)&#10;DenseComponents.emplace(component)&#10;Sparse[E.Index] = d&#13;</Code>
+<Content aid:pstyle="Content">Kairo does:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">const std::uint32_t dense =&#10;    CheckedDenseIndex();&#10;&#10;m_Entities.push_back(entity);&#10;&#10;try&#10;{&#10;    m_Components.emplace_back(&#10;        std::forward&lt;Arguments&gt;(arguments)...);&#10;}&#10;catch (...)&#10;{&#10;    m_Entities.pop_back();&#10;    throw;&#10;}&#10;&#10;m_Sparse[entity.Index] = dense;&#13;</Code>
+<Content aid:pstyle="Content">Note that sparse mapping is assigned last.&#13;</Content>
+<Content aid:pstyle="Content">That is crucial for exception safety.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why sparse mapping must be updated last</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose component construction throws.&#13;</Content>
+<Content aid:pstyle="Content">If code had already done:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Sparse[e.Index] = newDense;&#13;</Code>
+<Content aid:pstyle="Content">then sparse would point to a component that never successfully existed.&#13;</Content>
+<Content aid:pstyle="Content">Instead Kairo leaves sparse untouched until both dense arrays are successfully extended.&#13;</Content>
+<Content aid:pstyle="Content">If component construction throws:&#13;</Content>
+<Code aid:pstyle="Code" language="text">entity push -&gt; rolled back&#10;component -&gt; never exists&#10;sparse -&gt; still Missing&#13;</Code>
+<Content aid:pstyle="Content">Internal state remains valid.&#13;</Content>
+<Content aid:pstyle="Content">Good container engineering again.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Swap-and-pop removal</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Removing an element from the middle of <InlineCode aid:cstyle="InlineCode">std::vector</InlineCode> normally shifts everything after it:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1443cd4b69efe1caefeab00b.svg" alt="&#10;O(N).&#10;" jobId="1443cd4b69efe1caefeab00b" originalTeX="&#10;O(N).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">ECS pools generally do not require stable order.&#13;</Content>
+<Content aid:pstyle="Content">So swap with the last dense element, then pop.&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">dense index:&#10;&#10;0   1   2   3   4&#10;&#10;A   B   C   D   E&#13;</Code>
+<Content aid:pstyle="Content">Remove B at index 1.&#13;</Content>
+<Content aid:pstyle="Content">Move E into slot 1:&#13;</Content>
+<Code aid:pstyle="Code" language="text">0   1   2   3&#10;&#10;A   E   C   D&#13;</Code>
+<Content aid:pstyle="Content">Then pop old last slot.&#13;</Content>
+<Content aid:pstyle="Content">Complexity:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/708d5469d148397520838b0b.svg" alt="&#10;O(1).&#10;" jobId="708d5469d148397520838b0b" originalTeX="&#10;O(1).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kairo removal code</Strong>&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">const uint32_t dense =&#10;    m_Sparse[entity.Index];&#10;&#10;const uint32_t last =&#10;    static_cast&lt;uint32_t&gt;(&#10;        m_Entities.size() - 1u);&#10;&#10;if (dense != last)&#10;{&#10;    m_Entities[dense] =&#10;        std::move(m_Entities[last]);&#10;&#10;    m_Components[dense] =&#10;        std::move(m_Components[last]);&#10;&#10;    m_Sparse[&#10;        m_Entities[dense].Index&#10;    ] = dense;&#10;}&#10;&#10;m_Entities.pop_back();&#10;m_Components.pop_back();&#10;&#10;m_Sparse[entity.Index] = Missing;&#13;</Code>
+<Content aid:pstyle="Content">The critical step is not the move itself.&#13;</Content>
+<Content aid:pstyle="Content">It is repairing sparse metadata.&#13;</Content>
+<!-- Book-completion teaching addition 327ca0a6bfe314a8 -->
+<Content aid:pstyle="SubChapterSubHeading" id="05-engine-i-ch015-the-move-must-not-throw-after-entity-metadata-changes">The move must not throw after entity metadata changes&#13;</Content>
+<Content aid:pstyle="Content">The order above has one important type requirement. It writes the last <InlineCode aid:cstyle="InlineCode">Entity</InlineCode> into the removed dense slot <Strong aid:cstyle="Bold">before</Strong> assigning the moved <InlineCode aid:cstyle="InlineCode">T</InlineCode> component. <InlineCode aid:cstyle="InlineCode">Entity</InlineCode> is two integers, so that assignment is non-throwing. A user-defined component move assignment is not necessarily non-throwing. If <InlineCode aid:cstyle="InlineCode">m_Components[dense] = std::move(m_Components[last])</InlineCode> throws, the entity row has already changed while <InlineCode aid:cstyle="InlineCode">m_Sparse</InlineCode> still describes the old rows. The pool can then contain duplicate entity records and a lookup/removal can no longer repair the original invariant.&#13;</Content>
+<Content aid:pstyle="Content">The later blank-file <InlineCode aid:cstyle="InlineCode">SparseSet&lt;T&gt;</InlineCode> example spells the exception specification as <InlineCode aid:cstyle="InlineCode">noexcept(std::is_nothrow_move_assignable_v&lt;T&gt;)</InlineCode>. That controls whether an exception may escape or instead terminates; it does <Strong aid:cstyle="Bold">not</Strong> make the two-array update transactional. For the shown O(1) swap-removal algorithm, make the component requirement explicit and reject unsupported types at compile time. <InlineCode aid:cstyle="InlineCode">std::is_nothrow_move_assignable_v</InlineCode> requires a direct <InlineCode aid:cstyle="InlineCode">&lt;type_traits&gt;</InlineCode> include in a standalone translation unit.&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">// Inside SparseSet&lt;T&gt;; this policy makes the two writes below a no-throw commit.&#10;bool Remove(Entity entity) noexcept&#10;    requires std::is_nothrow_move_assignable_v&lt;T&gt; &amp;&amp;&#10;             std::is_nothrow_destructible_v&lt;T&gt;;&#13;</Code>
+<Content aid:pstyle="Content">This is a deliberate storage contract: components used in a removable packed pool must be nothrow move-assignable and nothrow destructible. If an engine must accept throwing move assignment, perform the potentially throwing component operation before changing entity/sparse metadata and define the resulting basic guarantee carefully; the component value may still have changed. A strong guarantee needs a non-throwing commit step, such as constructing a copy before mutation and swapping it in with a nothrow swap, or using indirection. Do not imply that changing the order alone preserves the original component value.&#13;</Content>
+<Content aid:pstyle="Content">To rerun the exact <InlineCode aid:cstyle="InlineCode">Entity</InlineCode> and <InlineCode aid:cstyle="InlineCode">SparseSet&lt;T&gt;</InlineCode> excerpt and exercise both cases, use the <Link href="assets/a82fe256cca93e1d7bd6.py">C++20 extraction check</Link>:&#13;</Content>
+<Code aid:pstyle="Code" language="sh">python3 tools/labs/ecs_sparse_set_exception_check.py \&#10;  "Continuous Notes/Game Engine - From First Frame to Living Worlds.md"&#13;</Code>
+<Content aid:pstyle="Content">It injects the missing direct <InlineCode aid:cstyle="InlineCode">&lt;type_traits&gt;</InlineCode> header for this standalone translation unit, compiles the extracted book blocks with warnings as errors, checks ordinary insert/lookup/swap-remove behavior, and then injects a throwing move assignment. The second case must observe the current excerpt’s duplicate dense-entity row; it is a bounded counterexample to the exception-safety claim, not a test of production Kairo or of the constrained signature above.&#13;</Content>
+<Content aid:pstyle="Content">The reproducible check below reads the current full book rather than maintaining a second sparse-set implementation. Its expected failing invariant is a counterexample; the command succeeds only when ordinary behavior passes and that unsupported-type failure is reproduced.&#13;</Content>
+<Code aid:pstyle="Code" language="python">#!/usr/bin/env python3&#10;"""Compile exact book excerpts; prove ordinary behavior AND its throwing-move gap."""&#10;import argparse&#10;from pathlib import Path&#10;import shutil&#10;import subprocess&#10;import sys&#10;import tempfile&#10;&#10;# Parse the actual Markdown blocks, rather than copying a different ECS model.&#10;sys.path.insert(0, str(Path(__file__).resolve().parents[1]))&#10;from note_integrity import code_blocks&#10;&#10;ROOT = Path(__file__).resolve().parents[2]&#10;BOOK = ROOT / 'Continuous Notes/Game Engine - From First Frame to Living Worlds.md'&#10;&#10;DRIVER = r"""&#10;#include &lt;iostream&gt;&#10;struct ThrowingComponent {&#10;    int value;&#10;    inline static bool fail = false;&#10;    explicit ThrowingComponent(int v) : value(v) {}&#10;    ThrowingComponent(const ThrowingComponent&amp;) = default;&#10;    ThrowingComponent(ThrowingComponent&amp;&amp;) noexcept = default;&#10;    ThrowingComponent&amp; operator=(ThrowingComponent&amp;&amp; other) {&#10;        // Throw before touching the value, so any broken entity metadata is&#10;        // attributable to Remove's ordering, not a partially assigned T.&#10;        if (fail) throw std::runtime_error("deliberate component move failure");&#10;        value = other.value;&#10;        return *this;&#10;    }&#10;};&#10;&#10;int main() {&#10;    SparseSet&lt;int&gt; pool;&#10;    const Entity old{0, 1}, second{1, 1}, replacement{0, 2};&#10;    pool.Emplace(old, 7);&#10;    pool.Emplace(second, 9);&#10;    if (pool.Get(old) != 7 || pool.Get(second) != 9) return 1;&#10;    if (!pool.Remove(old)) return 2;&#10;    // Swap-removal must repair the surviving entity's reverse map.&#10;    if (pool.Contains(old) || pool.Get(second) != 9 || pool.Size() != 1) return 3;&#10;    pool.Emplace(replacement, 11);&#10;    if (pool.Contains(old) || pool.Get(replacement) != 11) return 4;&#10;&#10;    SparseSet&lt;ThrowingComponent&gt; unsafe;&#10;    unsafe.Emplace(old, 10);&#10;    unsafe.Emplace(second, 20);&#10;    ThrowingComponent::fail = true;&#10;    bool caught = false;&#10;    try { unsafe.Remove(old); }&#10;    catch (const std::runtime_error&amp;) { caught = true; }&#10;    ThrowingComponent::fail = false;&#10;    // This EXPECTED counterexample is evidence of an unsupported T contract.&#10;    // Passing this check does not make the current generic Remove safe.&#10;    if (!caught || unsafe.Entities().size() != 2 ||&#10;        unsafe.Entities()[0] != second || unsafe.Entities()[1] != second) return 5;&#10;    if (unsafe.Contains(old)) return 6;&#10;    std::cout &lt;&lt; "PASS: normal swap-remove and generation reuse; "&#10;                 "EXPECTED throwing-move invariant failure reproduced\n";&#10;}&#10;"""&#10;&#10;&#10;def assemble(book):&#10;    blocks = [b.body for b in code_blocks(book.read_text()) if b.language == 'cpp']&#10;    # Matching exact declarations keeps introductory sketches out of this check.&#10;    entities = [b for b in blocks if 'struct Entity final' in b and '#include &lt;cstdint&gt;' in b]&#10;    pools = [b for b in blocks if 'class SparseSet' in b and&#10;             'std::is_nothrow_move_assignable_v&lt;T&gt;' in b and 'EnsureSparse' in b]&#10;    if len(entities) != 1 or len(pools) != 1:&#10;        raise ValueError('Expected one exact Entity and full SparseSet excerpt')&#10;    # The book fragment omits a direct header; add it explicitly for this TU.&#10;    return '#include &lt;type_traits&gt;\n' + entities[0] + '\n' + pools[0] + '\n' + DRIVER&#10;&#10;&#10;def main():&#10;    parser = argparse.ArgumentParser(description=__doc__)&#10;    parser.add_argument('book', nargs='?', type=Path, default=BOOK)&#10;    parser.add_argument('--compiler', default='c++')&#10;    args = parser.parse_args()&#10;    compiler = shutil.which(args.compiler)&#10;    if not compiler:&#10;        parser.error('A C++20 compiler is required')&#10;    with tempfile.TemporaryDirectory(prefix='allmight-ecs-excerpt-') as folder:&#10;        source = Path(folder) / 'ecs.cpp'&#10;        binary = Path(folder) / 'ecs'&#10;        source.write_text(assemble(args.book))&#10;        command = [compiler, '-std=c++20', '-O2', '-DNDEBUG', '-Wall',&#10;                   '-Wextra', '-Wpedantic', '-Werror', str(source), '-o', str(binary)]&#10;        subprocess.run(command, check=True)&#10;        subprocess.run([str(binary)], check=True)&#10;&#10;&#10;if __name__ == '__main__':&#10;    main()&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Repairing sparse indices</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Before removal:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Sparse[A] = 0&#10;Sparse[B] = 1&#10;Sparse[C] = 2&#10;Sparse[D] = 3&#10;Sparse[E] = 4&#10;&#10;Dense:&#10;0 A&#10;1 B&#10;2 C&#10;3 D&#10;4 E&#13;</Code>
+<Content aid:pstyle="Content">Move E:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Dense:&#10;0 A&#10;1 E&#10;2 C&#10;3 D&#13;</Code>
+<Content aid:pstyle="Content">If we forget to change:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/74cd6f0aa4cde9ae1f02bb4a.svg" alt="&#10;Sparse[E],&#10;" jobId="74cd6f0aa4cde9ae1f02bb4a" originalTeX="&#10;Sparse[E],&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">it remains:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e2993debdbe47c40a068a796.svg" alt="&#10;4.&#10;" jobId="e2993debdbe47c40a068a796" originalTeX="&#10;4.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">But dense slot 4 no longer exists.&#13;</Content>
+<Content aid:pstyle="Content">So after moving:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cd2e399d7f7cfa89c234a852.svg" alt="&#10;\boxed{&#10;Sparse[E.Index]\leftarrow1.&#10;}&#10;" jobId="cd2e399d7f7cfa89c234a852" originalTeX="&#10;\boxed{&#10;Sparse[E.Index]\leftarrow1.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Finally:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f318c55eef1602abd235a6ac.svg" alt="&#10;Sparse[B.Index]\leftarrow Missing.&#10;" jobId="f318c55eef1602abd235a6ac" originalTeX="&#10;Sparse[B.Index]\leftarrow Missing.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This restores the sparse-set invariant.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The removal invariant proof</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Let removed entity be <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ca739f3d985a5f9f93859b2c.svg" alt="R" jobId="ca739f3d985a5f9f93859b2c" originalTeX="R"/>, dense index <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d4359f2456d8fbcc30e392f0.svg" alt="d" jobId="d4359f2456d8fbcc30e392f0" originalTeX="d"/>, and final entity be <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/078a07a47520596c454ae260.svg" alt="M" jobId="078a07a47520596c454ae260" originalTeX="M"/>, previous last index <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/788fc84b923de3dbe70001a6.svg" alt="l" jobId="788fc84b923de3dbe70001a6" originalTeX="l"/>.&#13;</Content>
+<Content aid:pstyle="Content">Before:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0f5a80e7e6996397aad0a245.svg" alt="&#10;Sparse[M.Index]=l.&#10;" jobId="0f5a80e7e6996397aad0a245" originalTeX="&#10;Sparse[M.Index]=l.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">After move:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9ee3f0cf9a045907d32ca020.svg" alt="&#10;DenseEntity[d]=M.&#10;" jobId="9ee3f0cf9a045907d32ca020" originalTeX="&#10;DenseEntity[d]=M.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Therefore invariant requires:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5a26640a202992675a1b5461.svg" alt="&#10;Sparse[M.Index]=d.&#10;" jobId="5a26640a202992675a1b5461" originalTeX="&#10;Sparse[M.Index]=d.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then R no longer exists:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/710584a2b3bdfc416fbec406.svg" alt="&#10;Sparse[R.Index]=Missing.&#10;" jobId="710584a2b3bdfc416fbec406" originalTeX="&#10;Sparse[R.Index]=Missing.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">All other entries remain unchanged.&#13;</Content>
+<Content aid:pstyle="Content">Hence invariant holds globally.&#13;</Content>
+<Content aid:pstyle="Content">That is the entire correctness proof of swap-remove.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Component address invalidation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This is where many ECS APIs become dangerous.&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Transform* t =&#10;    registry.TryGet&lt;Transform&gt;(entity);&#13;</Code>
+<Content aid:pstyle="Content">You keep <InlineCode aid:cstyle="InlineCode">t</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">Then another Transform is inserted.&#13;</Content>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">m_Components.push_back(...)&#13;</Code>
+<Content aid:pstyle="Content">causes <InlineCode aid:cstyle="InlineCode">std::vector</InlineCode> reallocation, <Strong aid:cstyle="Bold">every component pointer/reference in that vector becomes invalid</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">So even insertion can invalidate references.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Removal has an even nastier hazard</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">dense:&#10;0 A&#10;1 B&#10;2 C&#10;3 D&#13;</Code>
+<Content aid:pstyle="Content">You hold:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Transform* ptrD =&#10;    &amp;components[3];&#10;&#10;Transform* ptrB =&#10;    &amp;components[1];&#13;</Code>
+<Content aid:pstyle="Content">Remove B.&#13;</Content>
+<Content aid:pstyle="Content">D moves:&#13;</Content>
+<Code aid:pstyle="Code" language="text">0 A&#10;1 D&#10;2 C&#13;</Code>
+<Content aid:pstyle="Content">Now:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">ptrB</InlineCode> points to memory now representing D,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">ptrD</InlineCode> points into the popped tail slot and is invalid.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">The first case is especially dangerous.&#13;</Content>
+<Content aid:pstyle="Content">The pointer may still point to valid memory.&#13;</Content>
+<Content aid:pstyle="Content">It simply refers to a <Strong aid:cstyle="Bold">different logical entity</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">That can create silent corruption rather than an immediate crash.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">ECS references require explicit lifetime contracts</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A safe rule is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2b881786dbcc7a29f2a1f0f4.svg" alt="&#10;\boxed{&#10;\text{component references are temporary views, not stable handles}.&#10;}&#10;" jobId="2b881786dbcc7a29f2a1f0f4" originalTeX="&#10;\boxed{&#10;\text{component references are temporary views, not stable handles}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Use them during one known-safe operation:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">auto&amp; transform =&#10;    registry.Get&lt;Transform&gt;(e);&#10;&#10;transform.position += delta;&#13;</Code>
+<Content aid:pstyle="Content">Do not casually cache them across structural changes.&#13;</Content>
+<Content aid:pstyle="Content">If long-lived access is needed, keep:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Entity&#13;</Code>
+<Content aid:pstyle="Content">and call:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">TryGet&lt;T&gt;(entity)&#13;</Code>
+<Content aid:pstyle="Content">again when needed.&#13;</Content>
+<Content aid:pstyle="Content">Identity is stable.&#13;</Content>
+<Content aid:pstyle="Content">Component addresses are not necessarily stable.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold"><InlineCode aid:cstyle="InlineCode">Reserve()</InlineCode> helps but does not solve removal invalidation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo supports:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">registry.Reserve&lt;Transform&gt;(100000);&#13;</Code>
+<Content aid:pstyle="Content">which reserves dense vector capacity.&#13;</Content>
+<Content aid:pstyle="Content">That can prevent reallocation during expected insertions.&#13;</Content>
+<Content aid:pstyle="Content">Therefore component addresses may remain stable <Strong aid:cstyle="Bold">under insertion until capacity is exceeded</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">But swap-removal can still move components.&#13;</Content>
+<Content aid:pstyle="Content">So reserve reduces one invalidation mechanism.&#13;</Content>
+<Content aid:pstyle="Content">It does not create a stable-address guarantee.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stable-component storage alternatives</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If components must keep stable addresses, several strategies exist.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Paged storage</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Allocate components in fixed pages:&#13;</Content>
+<Code aid:pstyle="Code" language="text">page 0&#10;[ ][ ][ ][ ]&#10;&#10;page 1&#10;[ ][ ][ ][ ]&#10;&#10;page 2&#10;[ ][ ][ ][ ]&#13;</Code>
+<Content aid:pstyle="Content">Adding a page does not relocate old pages.&#13;</Content>
+<Content aid:pstyle="Content">Lookup becomes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c6349c3f28d8e7c7edd086d0.svg" alt="&#10;page=i/P&#10;" jobId="c6349c3f28d8e7c7edd086d0" originalTeX="&#10;page=i/P&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e7bad7b771a971adc07f30ad.svg" alt="&#10;offset=i\bmod P.&#10;" jobId="e7bad7b771a971adc07f30ad" originalTeX="&#10;offset=i\bmod P.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This preserves pointer stability across growth.&#13;</Content>
+<Content aid:pstyle="Content">Modern EnTT explicitly uses paged component storage to provide pointer stability on additions, while retaining packed entity arrangements and optional in-place deletion policies. <Link href="https://skypjack.github.io/entt/md_docs_2md_2entity.html?utm_source=chatgpt.com">skypjack.github.io</Link>&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Tombstones / in-place deletion</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Instead of swapping the last component into the removed slot:&#13;</Content>
+<Code aid:pstyle="Code" language="text">before:&#10;A B C D&#10;&#10;remove B:&#10;&#10;A [hole] C D&#13;</Code>
+<Content aid:pstyle="Content">Address of C and D remains stable.&#13;</Content>
+<Content aid:pstyle="Content">But now iteration encounters holes.&#13;</Content>
+<Content aid:pstyle="Content">You need:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">tombstone checks,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">free-slot reuse,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">periodic compaction,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">more complex indexing.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Stable addresses and perfectly dense iteration are opposing goals.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Indirection storage</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Another option:&#13;</Content>
+<Code aid:pstyle="Code" language="text">dense entity list&#10;      |&#10;      v&#10;component handles/pointers&#10;      |&#10;      v&#10;stable component allocation&#13;</Code>
+<Content aid:pstyle="Content">Then ECS can reorder handles without moving components.&#13;</Content>
+<Content aid:pstyle="Content">But every component access introduces another pointer chase.&#13;</Content>
+<Content aid:pstyle="Content">You sacrifice locality.&#13;</Content>
+<Content aid:pstyle="Content">Again:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c7cfa962d9cea6b0493fd1d9.svg" alt="&#10;\boxed{&#10;\text{there is no free stability}.&#10;}&#10;" jobId="c7cfa962d9cea6b0493fd1d9" originalTeX="&#10;\boxed{&#10;\text{there is no free stability}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Dense component iteration</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The payoff for sparse sets is here.&#13;</Content>
+<Content aid:pstyle="Content">Suppose system updates every Position:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">for (Position&amp; p :&#10;     positionPool.Components())&#10;{&#10;    p.x += ...;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">Components are contiguous.&#13;</Content>
+<Content aid:pstyle="Content">CPU sees approximately:&#13;</Content>
+<Code aid:pstyle="Code" language="text">P0 P1 P2 P3 P4 P5 P6 P7 ...&#13;</Code>
+<Content aid:pstyle="Content">rather than:&#13;</Content>
+<Code aid:pstyle="Code" language="text">pointer -&gt; object&#10;pointer -&gt; object&#10;pointer -&gt; object&#13;</Code>
+<Content aid:pstyle="Content">Hardware prefetchers can predict sequential access.&#13;</Content>
+<Content aid:pstyle="Content">Cache lines deliver several components at once.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why contiguous iteration is so powerful</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Assume a hypothetical 64-byte cache line and a 12-byte Position:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct Position&#10;{&#10;    float x, y, z;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">One line contains roughly five Positions worth of useful data, ignoring boundary effects.&#13;</Content>
+<Content aid:pstyle="Content">A pointer-heavy object hierarchy might load an entire 128-byte or 256-byte object even when the system only needs 12 bytes of position.&#13;</Content>
+<Content aid:pstyle="Content">Data-oriented design asks:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f968b7d63d2c9929764d4003.svg" alt="&#10;\boxed{&#10;\text{what data does this loop actually consume?}&#10;}&#10;" jobId="f968b7d63d2c9929764d4003" originalTeX="&#10;\boxed{&#10;\text{what data does this loop actually consume?}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and stores that data accordingly.&#13;</Content>
+<Content aid:pstyle="Content">This is the philosophical center of ECS performance.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current <InlineCode aid:cstyle="InlineCode">Registry::Each&lt;T&gt;</InlineCode></Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo does:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">const auto&amp; entities =&#10;    pool-&gt;Set.Entities();&#10;&#10;auto&amp; components =&#10;    pool-&gt;Set.Components();&#10;&#10;for (std::size_t index = 0;&#10;     index &lt; count;&#10;     ++index)&#10;{&#10;    const Entity entity =&#10;        entities[index];&#10;&#10;    if (IsAlive(entity))&#10;    {&#10;        std::invoke(&#10;            callable,&#10;            entity,&#10;            components[index]);&#10;    }&#10;}&#13;</Code>
+<Content aid:pstyle="Content">This is a dense linear traversal.&#13;</Content>
+<Content aid:pstyle="Content">The <InlineCode aid:cstyle="InlineCode">IsAlive()</InlineCode> check should normally always succeed if registry invariants hold, because destroying entities removes their components.&#13;</Content>
+<Content aid:pstyle="Content">It is an extra safety check.&#13;</Content>
+<Content aid:pstyle="Content">Potential optimization in highly tuned code would be to rely on invariants and omit redundant liveness checks from hot loops, but only after proving registry mutation rules prevent stale dense entries.&#13;</Content>
+<Content aid:pstyle="Content">Correctness first.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Multi-component query</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose system needs:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Position&#10;Velocity&#10;Health&#13;</Code>
+<Content aid:pstyle="Content">with pool sizes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9a41815e3c7216383d712291.svg" alt="&#10;|P|=1,000,000&#10;" jobId="9a41815e3c7216383d712291" originalTeX="&#10;|P|=1,000,000&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/55a1940ecdfb7744919045c3.svg" alt="&#10;|V|=400,000&#10;" jobId="55a1940ecdfb7744919045c3" originalTeX="&#10;|V|=400,000&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f28d794ab3f15635e57b7ea1.svg" alt="&#10;|H|=10,000.&#10;" jobId="f28d794ab3f15635e57b7ea1" originalTeX="&#10;|H|=10,000.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">You could scan every Position and ask:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Has Velocity?&#10;Has Health?&#13;</Code>
+<Content aid:pstyle="Content">That performs around one million primary iterations.&#13;</Content>
+<Content aid:pstyle="Content">Or scan Health:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bf1a913881225610eb678010.svg" alt="&#10;10,000&#10;" jobId="bf1a913881225610eb678010" originalTeX="&#10;10,000&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and test:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Has Position?&#10;Has Velocity?&#13;</Code>
+<Content aid:pstyle="Content">Much cheaper.&#13;</Content>
+<Content aid:pstyle="Content">Therefore:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/981889b0f9522b4c1f39a296.svg" alt="&#10;\boxed{&#10;\text{iterate the smallest required pool}.&#10;}&#10;" jobId="981889b0f9522b4c1f39a296" originalTeX="&#10;\boxed{&#10;\text{iterate the smallest required pool}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Complexity of smallest-pool joins</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Query requires <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d2884c0481e0eb7ae5d428e3.svg" alt="k" jobId="d2884c0481e0eb7ae5d428e3" originalTeX="k"/> component types.&#13;</Content>
+<Content aid:pstyle="Content">Let smallest pool size be:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/45203b2a8f7ae784a00db794.svg" alt="&#10;m.&#10;" jobId="45203b2a8f7ae784a00db794" originalTeX="&#10;m.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Each candidate performs approximately:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a632a3edf70318e426aebb86.svg" alt="&#10;k-1&#10;" jobId="a632a3edf70318e426aebb86" originalTeX="&#10;k-1&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">constant-time sparse membership tests.&#13;</Content>
+<Content aid:pstyle="Content">Complexity:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/93cf0ffda66a3f04940cbbc3.svg" alt="&#10;\boxed{&#10;O(m(k-1)).&#10;}&#10;" jobId="93cf0ffda66a3f04940cbbc3" originalTeX="&#10;\boxed{&#10;O(m(k-1)).&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For fixed small <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d2884c0481e0eb7ae5d428e3.svg" alt="k" jobId="d2884c0481e0eb7ae5d428e3" originalTeX="k"/>:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea4d59fa618aad7bb6bdda00.svg" alt="&#10;O(m).&#10;" jobId="ea4d59fa618aad7bb6bdda00" originalTeX="&#10;O(m).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is one of the strongest features of sparse-set ECS.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo two-component join</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your registry explicitly chooses the smaller pool.&#13;</Content>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">first-&gt;Set.Size()&#10;&lt;=&#10;second-&gt;Set.Size()&#13;</Code>
+<Content aid:pstyle="Content">scan first and sparse-lookup second.&#13;</Content>
+<Content aid:pstyle="Content">Otherwise scan second.&#13;</Content>
+<Content aid:pstyle="Content">Yet callback order remains:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Entity, First&amp;, Second&amp;&#13;</Code>
+<Content aid:pstyle="Content">regardless of which pool drives iteration.&#13;</Content>
+<Content aid:pstyle="Content">That is excellent API behavior.&#13;</Content>
+<Content aid:pstyle="Content">Storage optimization does not leak into callback semantics.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current three-component join</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The same strategy is manually expanded for three pools.&#13;</Content>
+<Content aid:pstyle="Content">It identifies minimum of:&#13;</Content>
+<Code aid:pstyle="Code" language="text">First&#10;Second&#10;Third&#13;</Code>
+<Content aid:pstyle="Content">and scans it.&#13;</Content>
+<Content aid:pstyle="Content">Then performs <InlineCode aid:cstyle="InlineCode">TryGet</InlineCode> on the other two.&#13;</Content>
+<Content aid:pstyle="Content">Your tests explicitly construct:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Position = 128&#10;Velocity = 64&#10;Health   = 8&#13;</Code>
+<Content aid:pstyle="Content">and verify the join visits only the eight entities satisfying all components.&#13;</Content>
+<Content aid:pstyle="Content">That is exactly the workload where smallest-pool iteration shines.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Multi-pool membership tests</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For entity E and query:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/97b72dcb0e3a1f6142690102.svg" alt="&#10;Q=\{A,B,C\},&#10;" jobId="97b72dcb0e3a1f6142690102" originalTeX="&#10;Q=\{A,B,C\},&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">if A drives iteration:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">if (poolB.Contains(E) &amp;&amp;&#10;    poolC.Contains(E))&#10;{&#10;    execute(E);&#10;}&#13;</Code>
+<Content aid:pstyle="Content">Each membership lookup is:&#13;</Content>
+<Code aid:pstyle="Code" language="text">entity index&#10;    ↓&#10;sparse index&#10;    ↓&#10;dense owner validation&#13;</Code>
+<Content aid:pstyle="Content">roughly constant-time.&#13;</Content>
+<Content aid:pstyle="Content">This is an intersection operation:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/496e46e171d22de1e05a29de.svg" alt="&#10;A\cap B\cap C.&#10;" jobId="496e46e171d22de1e05a29de" originalTeX="&#10;A\cap B\cap C.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">The sparse set turns set intersection into direct indexed membership tests rather than sorting/merging IDs every frame.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Required versus excluded components</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Production queries often include exclusions.&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Position&#10;Velocity&#10;WITHOUT Frozen&#10;WITHOUT Dead&#13;</Code>
+<Content aid:pstyle="Content">The condition is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5b99d1a9f1ec413dbd159c2e.svg" alt="&#10;E\in Position&#10;\land&#10;E\in Velocity&#10;\land&#10;E\notin Frozen&#10;\land&#10;E\notin Dead.&#10;" jobId="5b99d1a9f1ec413dbd159c2e" originalTeX="&#10;E\in Position&#10;\land&#10;E\in Velocity&#10;\land&#10;E\notin Frozen&#10;\land&#10;E\notin Dead.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Smallest required pool can still drive the query.&#13;</Content>
+<Content aid:pstyle="Content">Then membership tests evaluate positive and negative constraints.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Component signatures / bit masks</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose there are at most 64 component types.&#13;</Content>
+<Content aid:pstyle="Content">Assign each a bit:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform = bit 0&#10;Velocity  = bit 1&#10;Health    = bit 2&#10;Light     = bit 3&#13;</Code>
+<Content aid:pstyle="Content">Entity signature:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform + Health&#10;&#10;000...0101&#13;</Code>
+<Content aid:pstyle="Content">Query requiring Transform + Health:&#13;</Content>
+<Code aid:pstyle="Code" language="text">required = 0101&#13;</Code>
+<Content aid:pstyle="Content">Entity matches if:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/de4496d80a277a9245477ca0.svg" alt="&#10;\boxed{&#10;(signature\ \&amp;\ required)=required.&#10;}&#10;" jobId="de4496d80a277a9245477ca0" originalTeX="&#10;\boxed{&#10;(signature\ \&amp;\ required)=required.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Excluded mask:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cfda4bede0429034b43f12ba.svg" alt="&#10;(signature\ \&amp;\ excluded)=0.&#10;" jobId="cfda4bede0429034b43f12ba" originalTeX="&#10;(signature\ \&amp;\ excluded)=0.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Example signature code</Strong>&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">using Signature = std::uint64_t;&#10;&#10;constexpr Signature Bit(&#10;    std::uint32_t componentID)&#10;{&#10;    return&#10;        Signature{1}&#10;        &lt;&lt; componentID;&#10;}&#10;&#10;bool Matches(&#10;    Signature entity,&#10;    Signature required,&#10;    Signature excluded)&#10;{&#10;    return&#10;        (entity &amp; required) == required&#10;        &amp;&amp;&#10;        (entity &amp; excluded) == 0;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">This makes set-membership predicates extremely cheap.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Signatures do not replace component pools</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A signature can answer:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Does entity 42 conceptually own Transform?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">It does not tell you where Transform is stored.&#13;</Content>
+<Content aid:pstyle="Content">You still need:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/eda89fe5ab6c58ea98cd1583.svg" alt="&#10;SparseSet&lt;Transform&gt;&#10;" jobId="eda89fe5ab6c58ea98cd1583" originalTeX="&#10;SparseSet&lt;Transform&gt;&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">or another storage backend.&#13;</Content>
+<Content aid:pstyle="Content">Signatures are metadata.&#13;</Content>
+<Content aid:pstyle="Content">Sparse sets are storage/index structures.&#13;</Content>
+<Content aid:pstyle="Content">They complement each other.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Signatures can accelerate entity destruction</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo destruction does:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">for (every registered component pool)&#10;    pool.Remove(entity);&#13;</Code>
+<Content aid:pstyle="Content">If there are 200 component types but entity owns 4, this checks 196 irrelevant pools.&#13;</Content>
+<Content aid:pstyle="Content">With entity signature:&#13;</Content>
+<Code aid:pstyle="Code" language="text">bits set:&#10;3, 19, 77, 91&#13;</Code>
+<Content aid:pstyle="Content">you can iterate only those four component storages.&#13;</Content>
+<Content aid:pstyle="Content">That changes destruction work from roughly:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d3f04dc1444bfb26f1e4d9eb.svg" alt="&#10;O(T)&#10;" jobId="d3f04dc1444bfb26f1e4d9eb" originalTeX="&#10;O(T)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">to:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7343ab5febdaa2e5be96b614.svg" alt="&#10;O(C_e),&#10;" jobId="7343ab5febdaa2e5be96b614" originalTeX="&#10;O(C_e),&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">where <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/12d29047f223df62c22da60c.svg" alt="C_e" jobId="12d29047f223df62c22da60c" originalTeX="C_e"/> is number of components actually owned.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The problem with a fixed 64-bit signature</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Once component count exceeds 64:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">uint64_t&#13;</Code>
+<Content aid:pstyle="Content">is insufficient.&#13;</Content>
+<Content aid:pstyle="Content">Could use:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::bitset&lt;256&gt;&#13;</Code>
+<Content aid:pstyle="Content">if maximum is known at compile time.&#13;</Content>
+<Content aid:pstyle="Content">But a plugin architecture may not know component count in advance.&#13;</Content>
+<Content aid:pstyle="Content">Then we need dynamic bitsets.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Dynamic bitsets</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Represent bitset as:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::vector&lt;std::uint64_t&gt; words;&#13;</Code>
+<Content aid:pstyle="Content">For component ID <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8f4478925a81604cf26ebbc1.svg" alt="c" jobId="8f4478925a81604cf26ebbc1" originalTeX="c"/>:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b70363a53daef8866adb9654.svg" alt="&#10;word=c/64&#10;" jobId="b70363a53daef8866adb9654" originalTeX="&#10;word=c/64&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ebedb0389c58e593341114c4.svg" alt="&#10;bit=c\bmod64.&#10;" jobId="ebedb0389c58e593341114c4" originalTeX="&#10;bit=c\bmod64.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Set:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">words[word] |=&#10;    uint64_t{1} &lt;&lt; bit;&#13;</Code>
+<Content aid:pstyle="Content">Test:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">(words[word] &amp;&#10; (uint64_t{1} &lt;&lt; bit))&#10;!= 0;&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Dynamic signature matching</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Required query signature contains multiple words.&#13;</Content>
+<Content aid:pstyle="Content">Entity matches if for every word <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c9a9aab9bd49b5120a91abe6.svg" alt="i" jobId="c9a9aab9bd49b5120a91abe6" originalTeX="i"/>:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6c8b715b4774bcdd8b59dfb7.svg" alt="&#10;(E_i\ \&amp;\ R_i)=R_i.&#10;" jobId="6c8b715b4774bcdd8b59dfb7" originalTeX="&#10;(E_i\ \&amp;\ R_i)=R_i.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">C++:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">bool ContainsAll(&#10;    std::span&lt;const uint64_t&gt; entity,&#10;    std::span&lt;const uint64_t&gt; required)&#10;{&#10;    for (std::size_t i = 0;&#10;         i &lt; required.size();&#10;         ++i)&#10;    {&#10;        const uint64_t e =&#10;            i &lt; entity.size()&#10;                ? entity[i]&#10;                : 0;&#10;&#10;        if ((e &amp; required[i])&#10;            != required[i])&#10;        {&#10;            return false;&#10;        }&#10;    }&#10;&#10;    return true;&#10;}&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Dynamic bitsets can become expensive</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/365e7e52c5051b5bce927d10.svg" alt="&#10;256&#10;" jobId="365e7e52c5051b5bce927d10" originalTeX="&#10;256&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">possible component types.&#13;</Content>
+<Content aid:pstyle="Content">That requires:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a1ced0b685f3ecf53bef09f0.svg" alt="&#10;256/8=32\text{ bytes}&#10;" jobId="a1ced0b685f3ecf53bef09f0" originalTeX="&#10;256/8=32\text{ bytes}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">of signature per entity.&#13;</Content>
+<Content aid:pstyle="Content">For one million entities:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5658f85d5ffd493536612d20.svg" alt="&#10;32\text{ MB}&#10;" jobId="5658f85d5ffd493536612d20" originalTeX="&#10;32\text{ MB}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">just for signatures.&#13;</Content>
+<Content aid:pstyle="Content">And most entities may use only a handful of those component types.&#13;</Content>
+<Content aid:pstyle="Content">This is one motivation for archetype systems, where a signature belongs to a <Strong aid:cstyle="Bold">group/archetype</Strong> rather than being duplicated per entity.&#13;</Content>
+<Content aid:pstyle="Content">That is Pass 11 territory, but you should already see why it emerges.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kairo currently has no component signature layer</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current membership is inferred through sparse-set ownership.&#13;</Content>
+<Content aid:pstyle="Content">There is no:&#13;</Content>
+<Code aid:pstyle="Code" language="text">entity component mask&#10;dynamic bitset&#10;component signature&#13;</Code>
+<Content aid:pstyle="Content">in the current <InlineCode aid:cstyle="InlineCode">Registry</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">That is perfectly valid for a sparse-set ECS.&#13;</Content>
+<Content aid:pstyle="Content">EnTT itself deliberately describes its registry model as sparse-set based and bitset-free, demonstrating that signatures are an optional architecture choice rather than an ECS requirement. <Link href="https://skypjack.github.io/entt/md_docs_2md_2entity.html?utm_source=chatgpt.com">skypjack.github.io</Link>&#13;</Content>
+<Content aid:pstyle="Content">The curriculum requires understanding signatures because they become especially important in archetype matching, query caching and generic tooling.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Query caching</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose every frame you run:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Position + Velocity + Health&#13;</Code>
+<Content aid:pstyle="Content">The naive query setup repeatedly does:&#13;</Content>
+<Code aid:pstyle="Code" language="text">find Position pool&#10;find Velocity pool&#10;find Health pool&#10;determine smallest pool&#13;</Code>
+<Content aid:pstyle="Content">before iteration.&#13;</Content>
+<Content aid:pstyle="Content">That work is avoidable.&#13;</Content>
+<Content aid:pstyle="Content">A query object can cache:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct CachedQuery&#10;{&#10;    Pool&lt;Position&gt;* PositionPool;&#10;    Pool&lt;Velocity&gt;* VelocityPool;&#10;    Pool&lt;Health&gt;* HealthPool;&#10;&#10;    DriverKind Driver;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Then the query can run directly.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Level 1 query cache: cache storage lookup</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This is safest.&#13;</Content>
+<Content aid:pstyle="Content">Cache:&#13;</Content>
+<Code aid:pstyle="Code" language="text">type -&gt; pool pointers&#10;driver pool&#13;</Code>
+<Content aid:pstyle="Content">but still determine membership live.&#13;</Content>
+<Content aid:pstyle="Content">Structural changes do not invalidate the pool objects themselves as long as pool addresses remain stable.&#13;</Content>
+<Content aid:pstyle="Content">In Kairo, pools are heap-allocated under <InlineCode aid:cstyle="InlineCode">unique_ptr</InlineCode>, so <InlineCode aid:cstyle="InlineCode">unordered_map</InlineCode> rehashing moves <InlineCode aid:cstyle="InlineCode">unique_ptr</InlineCode> objects but does not move the allocated Pool object.&#13;</Content>
+<Content aid:pstyle="Content">Thus cached raw <InlineCode aid:cstyle="InlineCode">Pool&lt;T&gt;*</InlineCode> can remain valid until a pool is explicitly destroyed—which current Registry never does.&#13;</Content>
+<Content aid:pstyle="Content">That makes this caching strategy attractive.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Level 2 query cache: cache matching entities</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You could cache:&#13;</Content>
+<Code aid:pstyle="Code" language="text">entities currently matching&#10;Position + Velocity + Health&#13;</Code>
+<Content aid:pstyle="Content">Then iteration becomes extremely cheap.&#13;</Content>
+<Content aid:pstyle="Content">But adding/removing a component changes membership.&#13;</Content>
+<Content aid:pstyle="Content">Now cache requires invalidation.&#13;</Content>
+<Content aid:pstyle="Content">Use a structural version:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">uint64_t m_StructureVersion;&#13;</Code>
+<Content aid:pstyle="Content">Increment on:&#13;</Content>
+<Code aid:pstyle="Code" language="text">entity create&#10;entity destroy&#10;component add&#10;component remove&#13;</Code>
+<Content aid:pstyle="Content">Query stores:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">uint64_t CachedVersion;&#13;</Code>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d4017dcc7b4a916ab8431824.svg" alt="&#10;CachedVersion\neq RegistryVersion,&#10;" jobId="d4017dcc7b4a916ab8431824" originalTeX="&#10;CachedVersion\neq RegistryVersion,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">rebuild matching set.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Global structural versions can over-invalidate</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose query requires:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Position + Velocity&#13;</Code>
+<Content aid:pstyle="Content">and someone adds:&#13;</Content>
+<Code aid:pstyle="Code" language="text">AudioEmitter&#13;</Code>
+<Content aid:pstyle="Content">to unrelated entity.&#13;</Content>
+<Content aid:pstyle="Content">A global version invalidates the Position+Velocity cache unnecessarily.&#13;</Content>
+<Content aid:pstyle="Content">More granular solution:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Position pool version&#10;Velocity pool version&#10;Health pool version&#10;...&#13;</Code>
+<Content aid:pstyle="Content">Cache records versions only for pools it depends on.&#13;</Content>
+<Content aid:pstyle="Content">Or maintain event-driven incremental query membership.&#13;</Content>
+<Content aid:pstyle="Content">That is more complex but can scale better.&#13;</Content>
+<Content aid:pstyle="Content">Current ECS libraries often have explicit cached query mechanisms and change/version tracking for exactly this reason; Flecs, for example, distinguishes cached queries and tracks structural/component changes to determine whether matched data changed. <Link href="https://www.flecs.dev/flecs/Queries.html?utm_source=chatgpt.com">Flecs</Link>&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Cached entity lists versus sparse-set joins</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Do not assume caching all result entities is automatically faster.&#13;</Content>
+<Content aid:pstyle="Content">Suppose structure changes frequently:&#13;</Content>
+<Code aid:pstyle="Code" language="text">thousands of add/remove operations every frame&#13;</Code>
+<Content aid:pstyle="Content">Then maintaining query membership may cost more than simply scanning the smallest pool.&#13;</Content>
+<Content aid:pstyle="Content">The decision is workload-dependent:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0fa5b451c88720fcced7acb6.svg" alt="&#10;C_{\text{cache}}&#10;=&#10;C_{\text{maintenance}}&#10;+&#10;C_{\text{iteration}}.&#10;" jobId="0fa5b451c88720fcced7acb6" originalTeX="&#10;C_{\text{cache}}&#10;=&#10;C_{\text{maintenance}}&#10;+&#10;C_{\text{iteration}}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Compare with:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/37ddc942a0d774b65dafd3f6.svg" alt="&#10;C_{\text{uncached}}&#10;=&#10;C_{\text{pool lookup}}&#10;+&#10;m(k-1)\cdot C_{\text{sparse lookup}}.&#10;" jobId="37ddc942a0d774b65dafd3f6" originalTeX="&#10;C_{\text{uncached}}&#10;=&#10;C_{\text{pool lookup}}&#10;+&#10;m(k-1)\cdot C_{\text{sparse lookup}}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Benchmark.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Structural changes</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A structural change modifies <Strong aid:cstyle="Bold">which components/entities exist or where they are stored</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">Examples:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Create entity&#10;Destroy entity&#10;Add component&#10;Remove component&#13;</Code>
+<Content aid:pstyle="Content">Changing:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">position.x += 1;&#13;</Code>
+<Content aid:pstyle="Content">is not structural.&#13;</Content>
+<Content aid:pstyle="Content">The component stays in the same pool.&#13;</Content>
+<Content aid:pstyle="Content">Adding:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">registry.Emplace&lt;Velocity&gt;(entity);&#13;</Code>
+<Content aid:pstyle="Content">is structural because the Velocity pool changes.&#13;</Content>
+<Content aid:pstyle="Content">Removing Transform is structural because dense storage can reorder.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why structural mutation during iteration is dangerous</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">registry.Each&lt;Health&gt;(&#10;    [&amp;](Entity e, Health&amp; health)&#10;    {&#10;        if (health.Value &lt;= 0)&#10;            registry.Destroy(e);&#10;    });&#13;</Code>
+<Content aid:pstyle="Content">Assume dense Health pool:&#13;</Content>
+<Code aid:pstyle="Code" language="text">index&#10;0 A&#10;1 B&#10;2 C&#10;3 D&#13;</Code>
+<Content aid:pstyle="Content">Loop currently at:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3e0e39c63a5897bc1395c457.svg" alt="&#10;i=1&#10;" jobId="3e0e39c63a5897bc1395c457" originalTeX="&#10;i=1&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">on B.&#13;</Content>
+<Content aid:pstyle="Content">Destroy B.&#13;</Content>
+<Content aid:pstyle="Content">Swap-remove moves D into index 1:&#13;</Content>
+<Code aid:pstyle="Code" language="text">0 A&#10;1 D&#10;2 C&#13;</Code>
+<Content aid:pstyle="Content">Loop increments:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2767d42cede6dfded6f904e2.svg" alt="&#10;i=2.&#10;" jobId="2767d42cede6dfded6f904e2" originalTeX="&#10;i=2.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">D is never visited.&#13;</Content>
+<Content aid:pstyle="Content">The structural mutation changed iteration order under the iterator.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">It can be worse than skipping an element</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If insertion reallocates:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">m_Components.emplace_back(...)&#13;</Code>
+<Content aid:pstyle="Content">then references currently held by the loop may become dangling.&#13;</Content>
+<Content aid:pstyle="Content">If entity destruction removes components from the primary pool, loop size changes.&#13;</Content>
+<Content aid:pstyle="Content">If another callback stores <InlineCode aid:cstyle="InlineCode">Component&amp;</InlineCode> and later structural change swap-moves that slot, the reference may now denote a different entity.&#13;</Content>
+<Content aid:pstyle="Content">Thus don’t mutate while iterating is not stylistic.&#13;</Content>
+<Content aid:pstyle="Content">It is an ownership/invalidation rule.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo explicitly documents the restriction</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your <InlineCode aid:cstyle="InlineCode">Registry::Each</InlineCode> says, in effect:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">do not add/remove the primary component or destroy entities during this call because dense storage may reorder.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">That is correct.&#13;</Content>
+<Content aid:pstyle="Content">But the next question is inevitable:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">What if gameplay logically needs to destroy an entity inside a system?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Answer:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/feccfd7688a436fff2657ae3.svg" alt="&#10;\boxed{&#10;\text{defer the structural change}.&#10;}&#10;" jobId="feccfd7688a436fff2657ae3" originalTeX="&#10;\boxed{&#10;\text{defer the structural change}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Deferred entity creation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose during projectile update:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">if (exploded)&#10;{&#10;    CreateExplosionEntity();&#10;}&#13;</Code>
+<Content aid:pstyle="Content">Creating immediately may mutate multiple component pools.&#13;</Content>
+<Content aid:pstyle="Content">Instead record:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Create entity command&#13;</Code>
+<Content aid:pstyle="Content">and execute it after iteration.&#13;</Content>
+<Content aid:pstyle="Content">Problem:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">How do later commands refer to an entity that does not exist yet?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Use a temporary token.&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct DeferredEntity&#10;{&#10;    uint32_t Token;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">DeferredEntity explosion =&#10;    commands.Create();&#10;&#10;commands.Emplace&lt;Transform&gt;(&#10;    explosion,&#10;    transform);&#10;&#10;commands.Emplace&lt;Explosion&gt;(&#10;    explosion,&#10;    explosionData);&#13;</Code>
+<Content aid:pstyle="Content">At flush time:&#13;</Content>
+<Code aid:pstyle="Code" language="text">token 7 -&gt; real Entity{241,6}&#13;</Code>
+<Content aid:pstyle="Content">Subsequent commands resolve token 7 to that entity.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Alternative: reserve identity immediately</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Another architecture is:&#13;</Content>
+<Code aid:pstyle="Code" language="text">allocate entity ID now&#10;defer only storage mutation&#13;</Code>
+<Content aid:pstyle="Content">Then systems immediately obtain a normal <InlineCode aid:cstyle="InlineCode">Entity</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">This simplifies references between queued commands.&#13;</Content>
+<Content aid:pstyle="Content">But now creation is deferred only partially; registry entity metadata changed immediately.&#13;</Content>
+<Content aid:pstyle="Content">Whether that is safe depends on threading and iteration model.&#13;</Content>
+<Content aid:pstyle="Content">In a fully readonly multithreaded stage, you may want <Strong aid:cstyle="Bold">no world mutation at all</Strong> until merge.&#13;</Content>
+<Content aid:pstyle="Content">Hence temporary deferred tokens are the stronger general model.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Deferred entity destruction</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Instead of:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">registry.Destroy(entity);&#13;</Code>
+<Content aid:pstyle="Content">inside a system:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">commands.Destroy(entity);&#13;</Code>
+<Content aid:pstyle="Content">Physical destruction occurs later.&#13;</Content>
+<Content aid:pstyle="Content">But now you need to define semantics.&#13;</Content>
+<Content aid:pstyle="Content">During the remainder of this system pass, is the entity considered alive?&#13;</Content>
+<Content aid:pstyle="Content">Two common models:&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Fully deferred semantics</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Until flush:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">registry.IsAlive(entity) == true;&#13;</Code>
+<Content aid:pstyle="Content">Other systems in the same stage can still observe it.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Logical tombstone semantics</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Mark entity:&#13;</Content>
+<Code aid:pstyle="Code" language="text">PendingDestroy&#13;</Code>
+<Content aid:pstyle="Content">immediately for query/filter purposes, but delay actual pool mutation.&#13;</Content>
+<Content aid:pstyle="Content">This provides more intuitive dead now behavior but adds complexity.&#13;</Content>
+<Content aid:pstyle="Content">A command buffer must define this explicitly.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Deferred component add/remove</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Same principle:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">commands.Emplace&lt;Velocity&gt;(&#10;    entity,&#10;    velocity);&#10;&#10;commands.Remove&lt;Health&gt;(&#10;    entity);&#13;</Code>
+<Content aid:pstyle="Content">Nothing touches dense arrays until flush.&#13;</Content>
+<Content aid:pstyle="Content">During the iteration:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Position pool&#10;Velocity pool&#10;Health pool&#13;</Code>
+<Content aid:pstyle="Content">remain structurally stable.&#13;</Content>
+<Content aid:pstyle="Content">That is what makes current pointers/iterators safe.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Command buffers</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A command buffer is not merely:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">vector&lt;enum Command&gt;&#13;</Code>
+<Content aid:pstyle="Content">It is a <Strong aid:cstyle="Bold">transaction log of deferred structural intent</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">Conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="text">CommandBuffer&#10;&#10;0 Create token #0&#10;1 Add Transform to token #0&#10;2 Add Explosion to token #0&#10;3 Remove Health from Entity A&#10;4 Destroy Entity B&#10;5 Add Velocity to Entity C&#13;</Code>
+<Content aid:pstyle="Content">At a synchronization point:&#13;</Content>
+<Code aid:pstyle="Code" language="text">finish iteration&#10;      ↓&#10;flush commands in defined order&#10;      ↓&#10;registry becomes mutable&#10;      ↓&#10;apply structural mutations&#13;</Code>
+<Content aid:pstyle="Content">Then next systems observe the new structure.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">A practical C++23 command-buffer skeleton</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Since Kairo is C++23, a useful implementation can use <InlineCode aid:cstyle="InlineCode">std::move_only_function</InlineCode>.&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">#include &lt;cstdint&gt;&#10;#include &lt;functional&gt;&#10;#include &lt;tuple&gt;&#10;#include &lt;utility&gt;&#10;#include &lt;variant&gt;&#10;#include &lt;vector&gt;&#10;&#10;struct DeferredEntity&#10;{&#10;    std::uint32_t Token = 0;&#10;};&#10;&#10;using EntityReference =&#10;    std::variant&lt;Entity, DeferredEntity&gt;;&#10;&#10;class ECSCommandBuffer&#10;{&#10;public:&#10;    DeferredEntity Create()&#10;    {&#10;        DeferredEntity token{&#10;            static_cast&lt;std::uint32_t&gt;(&#10;                m_DeferredEntities.size())&#10;        };&#10;&#10;        m_DeferredEntities.push_back(Entity{});&#10;&#10;        // Creation itself is executed in stream order.&#10;        m_Commands.emplace_back(&#10;            [token](&#10;                Registry&amp; registry,&#10;                std::vector&lt;Entity&gt;&amp; resolved)&#10;            {&#10;                resolved[token.Token] =&#10;                    registry.Create();&#10;            });&#10;&#10;        return token;&#10;    }&#10;&#10;    void Destroy(EntityReference reference)&#10;    {&#10;        m_Commands.emplace_back(&#10;            [reference](&#10;                Registry&amp; registry,&#10;                std::vector&lt;Entity&gt;&amp; resolved)&#10;            {&#10;                registry.Destroy(&#10;                    Resolve(reference, resolved));&#10;            });&#10;    }&#10;&#10;    template&lt;&#10;        typename Component,&#10;        typename... Arguments&gt;&#10;    void Emplace(&#10;        EntityReference reference,&#10;        Arguments&amp;&amp;... arguments)&#10;    {&#10;        // Store arguments inside the command.&#10;        // decay_t makes the command own its payload.&#10;        auto values =&#10;            std::tuple&lt;&#10;                std::decay_t&lt;Arguments&gt;...&#10;            &gt;(&#10;                std::forward&lt;Arguments&gt;(&#10;                    arguments)...);&#10;&#10;        m_Commands.emplace_back(&#10;            [&#10;                reference,&#10;                values = std::move(values)&#10;            ](&#10;                Registry&amp; registry,&#10;                std::vector&lt;Entity&gt;&amp; resolved&#10;            ) mutable&#10;            {&#10;                Entity entity =&#10;                    Resolve(reference, resolved);&#10;&#10;                std::apply(&#10;                    [&amp;](auto&amp;&amp;... unpacked)&#10;                    {&#10;                        registry.Emplace&lt;Component&gt;(&#10;                            entity,&#10;                            std::forward&lt;&#10;                                decltype(unpacked)&#10;                            &gt;(unpacked)...);&#10;                    },&#10;                    std::move(values));&#10;            });&#10;    }&#10;&#10;    template&lt;typename Component&gt;&#10;    void Remove(EntityReference reference)&#10;    {&#10;        m_Commands.emplace_back(&#10;            [reference](&#10;                Registry&amp; registry,&#10;                std::vector&lt;Entity&gt;&amp; resolved)&#10;            {&#10;                registry.Remove&lt;Component&gt;(&#10;                    Resolve(reference, resolved));&#10;            });&#10;    }&#10;&#10;    void Flush(Registry&amp; registry)&#10;    {&#10;        for (auto&amp; command : m_Commands)&#10;        {&#10;            command(&#10;                registry,&#10;                m_DeferredEntities);&#10;        }&#10;&#10;        Clear();&#10;    }&#10;&#10;    void Clear()&#10;    {&#10;        m_Commands.clear();&#10;        m_DeferredEntities.clear();&#10;    }&#10;&#10;private:&#10;    using Command =&#10;        std::move_only_function&lt;&#10;            void(&#10;                Registry&amp;,&#10;                std::vector&lt;Entity&gt;&amp;)&gt;;&#10;&#10;    std::vector&lt;Command&gt; m_Commands;&#10;    std::vector&lt;Entity&gt; m_DeferredEntities;&#10;&#10;    static Entity Resolve(&#10;        const EntityReference&amp; reference,&#10;        const std::vector&lt;Entity&gt;&amp; resolved)&#10;    {&#10;        if (const Entity* entity =&#10;                std::get_if&lt;Entity&gt;(&#10;                    &amp;reference))&#10;        {&#10;            return *entity;&#10;        }&#10;&#10;        const DeferredEntity token =&#10;            std::get&lt;DeferredEntity&gt;(&#10;                reference);&#10;&#10;        return resolved.at(token.Token);&#10;    }&#10;};&#13;</Code>
+<Content aid:pstyle="Content">This is not the only design, but notice what it solves:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">mutations happen later,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">command payload is owned,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">move-only payloads can be supported,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">newly created entities can be referenced by later commands,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">command order is explicit.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Safe gameplay usage</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Now:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">ECSCommandBuffer commands;&#10;&#10;registry.Each&lt;Health&gt;(&#10;    [&amp;](Entity entity, Health&amp; health)&#10;    {&#10;        if (health.Value &lt;= 0)&#10;        {&#10;            commands.Destroy(entity);&#10;        }&#10;    });&#10;&#10;// Iteration is over.&#10;// Dense pools can now change.&#10;commands.Flush(registry);&#13;</Code>
+<Content aid:pstyle="Content">The primary component array remains stable during <InlineCode aid:cstyle="InlineCode">Each</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">This is the correct structural-mutation model.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Command order is observable</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose command stream says:&#13;</Content>
+<Code aid:pstyle="Code" language="text">1 Remove Health from A&#10;2 Destroy A&#13;</Code>
+<Content aid:pstyle="Content">versus:&#13;</Content>
+<Code aid:pstyle="Code" language="text">1 Destroy A&#10;2 Remove Health from A&#13;</Code>
+<Content aid:pstyle="Content">Those are not necessarily equivalent from the API’s perspective.&#13;</Content>
+<Content aid:pstyle="Content">First ordering:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Remove succeeds&#10;Destroy succeeds&#13;</Code>
+<Content aid:pstyle="Content">Second:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Destroy succeeds&#10;Remove sees dead entity and returns false&#13;</Code>
+<Content aid:pstyle="Content">Therefore command buffer must define whether it:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">preserves issue order,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">canonicalizes commands,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">coalesces them,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">sorts by entity/type,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">exposes unspecified order.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">For a first implementation, <Strong aid:cstyle="Bold">preserve issue order</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">It is easiest to reason about.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Command coalescing is possible later</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose same system produces:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Add Velocity E&#10;Remove Velocity E&#10;Add Velocity E&#13;</Code>
+<Content aid:pstyle="Content">The final state may be simplified.&#13;</Content>
+<Content aid:pstyle="Content">But coalescing is complicated by:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">constructors/destructors,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">events,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">observers,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">side effects,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">component values,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">replication logs.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Do not optimize command sequences until semantics are completely specified.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Multithreaded command buffers</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This becomes even more powerful with jobs.&#13;</Content>
+<Content aid:pstyle="Content">Give each worker thread:&#13;</Content>
+<Code aid:pstyle="Code" language="text">its own command buffer&#13;</Code>
+<Content aid:pstyle="Content">while registry storage is readonly for structural operations.&#13;</Content>
+<Content aid:pstyle="Content">Workers can safely iterate:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Thread 0 -&gt; commands0&#10;Thread 1 -&gt; commands1&#10;Thread 2 -&gt; commands2&#10;Thread 3 -&gt; commands3&#13;</Code>
+<Content aid:pstyle="Content">At synchronization:&#13;</Content>
+<Code aid:pstyle="Code" language="text">merge command buffers&#10;     ↓&#10;apply structure changes&#13;</Code>
+<Content aid:pstyle="Content">No worker needs to mutate component pool layout concurrently.&#13;</Content>
+<Content aid:pstyle="Content">Flecs uses essentially this staging model: while systems iterate readonly world storage, add/remove/set/delete operations can be queued into command buffers, and thread-specific stages are merged at synchronization points. The reason is exactly that direct structural changes can reallocate component arrays and invalidate ongoing iteration. <Link href="https://www.flecs.dev/flecs/Systems.html?utm_source=chatgpt.com">Flecs</Link>&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Deterministic multithreaded merging</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If deterministic simulation matters, do not merge thread buffers in whichever thread finishes first.&#13;</Content>
+<Content aid:pstyle="Content">That gives scheduling-dependent command order.&#13;</Content>
+<Content aid:pstyle="Content">Instead define something such as:&#13;</Content>
+<Code aid:pstyle="Code" language="text">system execution order&#10;then worker index&#10;then local command sequence&#13;</Code>
+<Content aid:pstyle="Content">So global sequence is deterministic:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bd9c412912f12e8911625194.svg" alt="&#10;(systemID,\ workerID,\ localSequence).&#10;" jobId="bd9c412912f12e8911625194" originalTeX="&#10;(systemID,\ workerID,\ localSequence).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This becomes important for:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">lockstep games,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">deterministic replay,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">simulation tests,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">reproducible bugs.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Command-buffer exception semantics</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose flush executes:&#13;</Content>
+<Code aid:pstyle="Code" language="text">command 0 succeeds&#10;command 1 succeeds&#10;command 2 component constructor throws&#13;</Code>
+<Content aid:pstyle="Content">What happens to commands 3–10?&#13;</Content>
+<Content aid:pstyle="Content">You must decide.&#13;</Content>
+<Content aid:pstyle="Content">Options include:&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Fail-fast partial commit</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Commands 0–1 remain applied.&#13;</Content>
+<Content aid:pstyle="Content">Flush throws.&#13;</Content>
+<Content aid:pstyle="Content">Simple, but not transactional.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Validate-then-apply</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Perform as much validation as possible before mutation.&#13;</Content>
+<Content aid:pstyle="Content">Cannot protect against arbitrary user component constructor failures completely.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Full transactional rollback</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Extremely complicated and expensive for arbitrary component types.&#13;</Content>
+<Content aid:pstyle="Content">Most game ECS systems choose well-defined partial/fail-fast semantics and design component construction to avoid exceptions.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The current Kairo structural journal is </Strong>not** a command buffer**&#13;</Content>
+<Content aid:pstyle="Content">Kairo currently records:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">enum class StructuralChangeKind&#10;{&#10;    Created,&#10;    Destroyed,&#10;    ComponentAdded,&#10;    ComponentRemoved&#10;};&#13;</Code>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct StructuralChange&#10;{&#10;    uint64_t Sequence;&#10;    StructuralChangeKind Kind;&#10;    Entity Subject;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">That is a <Strong aid:cstyle="Bold">journal of changes that already happened</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">Flow:&#13;</Content>
+<Code aid:pstyle="Code" language="text">mutation occurs&#10;     ↓&#10;AppendChange(...)&#13;</Code>
+<Content aid:pstyle="Content">A command buffer does:&#13;</Content>
+<Code aid:pstyle="Code" language="text">request mutation&#10;     ↓&#10;store command&#10;     ↓&#10;apply mutation later&#13;</Code>
+<Content aid:pstyle="Content">They solve different problems.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why both systems are useful</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Command buffer answers:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">How do I safely schedule structural changes?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Structural journal answers:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">What structural changes happened?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Journal can support:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">editor tooling,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">replication,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">incremental scene bridges,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">debugging,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">event processing,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">recording/replay.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Command buffer supports:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">safe iteration,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">staging,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">parallelism,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">deterministic structural commits.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">A mature ECS can contain both.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo journal performance issue</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The journal has fixed logical capacity.&#13;</Content>
+<Content aid:pstyle="Content">When full:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">if (m_Changes.size()&#10;    == m_JournalCapacity)&#10;{&#10;    m_Changes.erase(&#10;        m_Changes.begin());&#10;}&#13;</Code>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">vector::erase(begin)</InlineCode> shifts every remaining event left.&#13;</Content>
+<Content aid:pstyle="Content">For capacity <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/416c0d97f9d6faecea2b280b.svg" alt="C" jobId="416c0d97f9d6faecea2b280b" originalTeX="C"/>:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5f84035f340599da8b111b59.svg" alt="&#10;O(C)&#10;" jobId="5f84035f340599da8b111b59" originalTeX="&#10;O(C)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">per new structural event once full.&#13;</Content>
+<Content aid:pstyle="Content">At:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/92c438f4905879e1e4c787f9.svg" alt="&#10;C=4096,&#10;" jobId="92c438f4905879e1e4c787f9" originalTeX="&#10;C=4096,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">each additional event can move roughly 4095 records.&#13;</Content>
+<Content aid:pstyle="Content">Under heavy entity churn, that becomes unnecessary work.&#13;</Content>
+<Content aid:pstyle="Content">A ring buffer is a much better representation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Ring-buffer journal</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Keep:&#13;</Content>
+<Code aid:pstyle="Code" language="text">buffer[C]&#10;head&#10;count&#13;</Code>
+<Content aid:pstyle="Content">When full:&#13;</Content>
+<Code aid:pstyle="Code" language="text">overwrite oldest&#10;advance head&#13;</Code>
+<Content aid:pstyle="Content">Appending remains:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/708d5469d148397520838b0b.svg" alt="&#10;O(1).&#10;" jobId="708d5469d148397520838b0b" originalTeX="&#10;O(1).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Logical sequence numbers already exist:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">m_NextChangeSequence&#13;</Code>
+<Content aid:pstyle="Content">so chronological meaning does not require physical vector ordering.&#13;</Content>
+<Content aid:pstyle="Content">This is a concrete improvement for current KairoECS.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Another current Kairo storage contract: move assignment</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Your sparse-set removal does:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">m_Components[dense] =&#10;    std::move(m_Components[last]);&#13;</Code>
+<Content aid:pstyle="Content">Therefore <InlineCode aid:cstyle="InlineCode">Component</InlineCode> must be move-assignable.&#13;</Content>
+<Content aid:pstyle="Content">README already states this.&#13;</Content>
+<Content aid:pstyle="Content">There is an additional subtlety:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">SparseSet::Remove(...)&#13;</Code>
+<Content aid:pstyle="Content">is declared:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">noexcept&#13;</Code>
+<Content aid:pstyle="Content">but component move assignment is called inside it.&#13;</Content>
+<Content aid:pstyle="Content">If a component’s move assignment throws, the program invokes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/73c048aef1218474bfea21a9.svg" alt="&#10;std::terminate.&#10;" jobId="73c048aef1218474bfea21a9" originalTeX="&#10;std::terminate.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Therefore the effective current Kairo contract is stronger than merely:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/294838b0fb97fc54f6518ff4.svg" alt="&#10;MoveAssignable.&#10;" jobId="294838b0fb97fc54f6518ff4" originalTeX="&#10;MoveAssignable.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For safe removal it should effectively be:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/df4078079de3ee102a6aefc2.svg" alt="&#10;\boxed{&#10;\text{nothrow move-assignable}&#10;}&#10;" jobId="df4078079de3ee102a6aefc2" originalTeX="&#10;\boxed{&#10;\text{nothrow move-assignable}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">or the implementation must stop declaring removal <InlineCode aid:cstyle="InlineCode">noexcept</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">We will go much deeper into non-trivial component lifetime in M089, but this is already an important current-code constraint.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo M085/M086 implementation map</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Here is where your actual code stands after the audit:&#13;</Content>
+<Table aid:table="table" aid:trows="37" aid:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="header"><Content aid:pstyle="Caption">Curriculum concept&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="header"><Content aid:pstyle="Caption">Current Kairo status&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">Entity identity as data&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">Entity index&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">Generations&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">Packed entity integer&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell"><Strong aid:cstyle="Bold">Not packed; stored as two <InlineCode aid:cstyle="InlineCode">uint32_t</InlineCode>s</Strong>&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">Free list&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">Implemented with <InlineCode aid:cstyle="InlineCode">vector&lt;uint32_t&gt;</InlineCode>&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">Recycled creation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">Generation increment on destruction&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">Generation wrap defense&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell"><Strong aid:cstyle="Bold">Strong: retires max-generation slots</Strong>&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">Handle validation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">Component type identity&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">RTTI / <InlineCode aid:cstyle="InlineCode">std::type_index</InlineCode>&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">Static numeric component IDs&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">Not implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">Rich runtime component registry&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">Not implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">Component pools&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">Sparse-set storage&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">Sparse array&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">Dense entity array&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">Dense component array&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">Membership lookup&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">Implemented with generation validation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">Component lookup&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">Component insertion&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">Implemented with rollback&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">Swap-and-pop removal&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">Sparse-index repair&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">Address invalidation contract&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">Documented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">Stable-address alternative&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">Not implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">Dense iteration&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">Smallest-pool multi-query&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">Implemented for 2 and 3 component types&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">Multi-pool sparse tests&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">Component signatures&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">Not implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">Dynamic masks&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">Not implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">Query caching&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">Not implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">Structural-change restrictions&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">Documented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">Deferred creation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">Not implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">Deferred destruction&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">Not implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">Deferred component changes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">Not implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="34"><Content aid:pstyle="TableCell">Structural command buffer&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="34"><Content aid:pstyle="TableCell">Not implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="35"><Content aid:pstyle="TableCell">Structural journal&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="35"><Content aid:pstyle="TableCell">Implemented, but it is a different mechanism&#13;</Content></Cell></Table>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The complete memory model</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Now combine everything.&#13;</Content>
+<Content aid:pstyle="Content">Entity metadata:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Generations:&#10;[1][5][8][2][...]&#10;&#10;Alive:&#10;[1][0][1][1][...]&#10;&#10;Free indices:&#10;[1][...]&#13;</Code>
+<Content aid:pstyle="Content">Transform sparse set:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Sparse:&#10;entity index -&gt; dense index&#10;&#10;[ . ][ . ][ 1 ][ . ][ 0 ][ ... ]&#13;</Code>
+<Content aid:pstyle="Content">Transform dense entities:&#13;</Content>
+<Code aid:pstyle="Code" language="text">dense index&#10;0 -&gt; Entity{4,2}&#10;1 -&gt; Entity{2,8}&#13;</Code>
+<Content aid:pstyle="Content">Transform dense components:&#13;</Content>
+<Code aid:pstyle="Code" language="text">dense index&#10;0 -&gt; Transform for {4,2}&#10;1 -&gt; Transform for {2,8}&#13;</Code>
+<Content aid:pstyle="Content">Velocity sparse set may contain completely different entities.&#13;</Content>
+<Content aid:pstyle="Content">The registry is not one giant object array.&#13;</Content>
+<Content aid:pstyle="Content">It is a federation of independently packed data columns keyed by safe generational identities.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Lookup pipeline from an entity to a component</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">registry.Get&lt;Transform&gt;(&#10;    Entity{42,7});&#13;</Code>
+<Content aid:pstyle="Content">Conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="text">1. Is Index != InvalidIndex?&#10;2. Is 42 inside registry metadata?&#10;3. Is slot 42 alive?&#10;4. Is current generation == 7?&#10;5. Find Pool&lt;Transform&gt;&#10;6. Is sparse index 42 inside Transform sparse array?&#10;7. dense = Sparse[42]&#10;8. Is dense valid?&#10;9. Does DenseEntities[dense] == {42,7}?&#10;10. Return DenseComponents[dense]&#13;</Code>
+<Content aid:pstyle="Content">Each layer protects a different invariant.&#13;</Content>
+<Content aid:pstyle="Content">This is why a properly built ECS is far more than <InlineCode aid:cstyle="InlineCode">unordered_map&lt;Entity, Component&gt;</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Destruction pipeline</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">registry.Destroy(&#10;    Entity{42,7});&#13;</Code>
+<Content aid:pstyle="Content">conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Validate entity&#10;     ↓&#10;Remove Transform{42,7}&#10;     ↓&#10;Remove Velocity{42,7}&#10;     ↓&#10;Remove any other owned components&#10;     ↓&#10;Alive[42] = false&#10;     ↓&#10;Generation[42] = 8&#10;     ↓&#10;FreeIndices.push(42)&#13;</Code>
+<Content aid:pstyle="Content">Now:&#13;</Content>
+<Code aid:pstyle="Code" language="text">{42,7} invalid forever&#13;</Code>
+<Content aid:pstyle="Content">and future:&#13;</Content>
+<Code aid:pstyle="Code" language="text">{42,8}&#13;</Code>
+<Content aid:pstyle="Content">may reuse the slot safely.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Query pipeline</Strong>&#13;</Content>
+<Content aid:pstyle="Content">System:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform + Velocity + Health&#13;</Code>
+<Content aid:pstyle="Content">Pool counts:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform 100000&#10;Velocity   40000&#10;Health      2000&#13;</Code>
+<Content aid:pstyle="Content">Choose Health as driver.&#13;</Content>
+<Content aid:pstyle="Content">For each:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Health dense entry&#10;     ↓&#10;entity&#10;     ↓&#10;Transform sparse membership&#10;     ↓&#10;Velocity sparse membership&#10;     ↓&#10;if both exist:&#10;    obtain dense component references&#10;     ↓&#10;execute system&#13;</Code>
+<Content aid:pstyle="Content">Thus runtime is proportional primarily to the rarest component.&#13;</Content>
+<Content aid:pstyle="Content">That is the algorithmic strength of sparse-set joins.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why Kairo’s current registry is genuinely data-oriented</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Data-oriented does not simply mean:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">we use vectors.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">It means organization follows the operations that dominate runtime.&#13;</Content>
+<Content aid:pstyle="Content">Your registry does several things correctly:&#13;</Content>
+<List type="bullet">
+<ListItem><Content aid:pstyle="Content">component values of one type are contiguous,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">entity IDs are tiny,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">membership uses direct indexing,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">iteration is dense,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">queries choose the rarest pool,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">entity reuse does not compromise safety,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">component storage is independent of scene hierarchy.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">Those are actual data-oriented decisions.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">What it still lacks before becoming a stronger production ECS</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The highest-value next additions from this pass are:&#13;</Content>
+<Code aid:pstyle="Code" language="text">1. Dense numeric runtime component IDs&#10;2. Persistent schema IDs kept separate from runtime IDs&#10;3. Paged sparse storage if entity index extent becomes large&#10;4. Explicit storage invalidation policy&#10;5. Component/query structural version counters&#10;6. Generic variadic sparse-set queries&#10;7. Deferred structural command buffer&#10;8. Thread-local command staging&#10;9. Ring-buffer structural journal&#10;10. Stronger component move/noexcept constraints&#13;</Code>
+<Content aid:pstyle="Content">I would prioritize <Strong aid:cstyle="Bold">command buffering</Strong> before signatures.&#13;</Content>
+<Content aid:pstyle="Content">Why?&#13;</Content>
+<Content aid:pstyle="Content">Because signatures mostly optimize metadata/query organization.&#13;</Content>
+<Content aid:pstyle="Content">Command buffering fixes a correctness and scalability boundary:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6cc41d8a0a839ab4193e8ad2.svg" alt="&#10;\boxed{&#10;\text{systems currently cannot safely perform arbitrary structural changes during iteration}.&#10;}&#10;" jobId="6cc41d8a0a839ab4193e8ad2" originalTeX="&#10;\boxed{&#10;\text{systems currently cannot safely perform arbitrary structural changes during iteration}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That limitation will matter more and more when parallel scheduling arrives.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">A generic variadic query direction</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo manually implements:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Each&lt;A&gt;&#10;Each&lt;A,B&gt;&#10;Each&lt;A,B,C&gt;&#13;</Code>
+<Content aid:pstyle="Content">This becomes unmanageable for:&#13;</Content>
+<Code aid:pstyle="Code" language="text">4 components&#10;5 components&#10;6 components&#10;...&#13;</Code>
+<Content aid:pstyle="Content">A future query abstraction should accept:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">registry.Each&lt;&#10;    Transform,&#10;    Velocity,&#10;    Health,&#10;    PhysicsBody&#10;&gt;(callback);&#13;</Code>
+<Content aid:pstyle="Content">Internally:&#13;</Content>
+<List type="ordered" start="1" numberStyle="Decimal" delimiter="Period">
+<ListItem><Content aid:pstyle="Content">collect pool pointers,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">determine smallest pool,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">iterate that pool,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">test all other pools,&#13;</Content></ListItem>
+<ListItem><Content aid:pstyle="Content">invoke callback in template argument order.&#13;</Content></ListItem>
+</List>
+<Content aid:pstyle="Content">The challenge is preserving typed references while the driver pool type varies.&#13;</Content>
+<Content aid:pstyle="Content">This is where tuples, compile-time indices and fold expressions become useful.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Generic membership fold</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Conceptually:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">bool matches =&#10;    (pool&lt;ComponentTypes&gt;()&#10;         .Contains(entity)&#10;     &amp;&amp; ...);&#13;</Code>
+<Content aid:pstyle="Content">In a real implementation you avoid rechecking the driver’s membership.&#13;</Content>
+<Content aid:pstyle="Content">But the fold-expression concept is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b28115d3e70ee16fcfb141d4.svg" alt="&#10;\bigwedge_{T\in Q}&#10;Contains_T(E).&#10;" jobId="b28115d3e70ee16fcfb141d4" originalTeX="&#10;\bigwedge_{T\in Q}&#10;Contains_T(E).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then fetch:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">callback(&#10;    entity,&#10;    *pool&lt;ComponentTypes&gt;()&#10;         .TryGet(entity)...&#10;);&#13;</Code>
+<Content aid:pstyle="Content">The compile-time type list provides callback ordering.&#13;</Content>
+<Content aid:pstyle="Content">The runtime pool-size comparison chooses the driver.&#13;</Content>
+<Content aid:pstyle="Content">This gives both genericity and sparse-set efficiency.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why query caching will eventually become more important</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Today:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Each&lt;Transform,Velocity&gt;&#13;</Code>
+<Content aid:pstyle="Content">does two <InlineCode aid:cstyle="InlineCode">type_index</InlineCode> hash lookups to retrieve pools each call.&#13;</Content>
+<Content aid:pstyle="Content">If hundreds of systems invoke similar queries every frame, those pool lookups become unnecessary overhead.&#13;</Content>
+<Content aid:pstyle="Content">A persistent query:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">auto moving =&#10;    registry.Query&lt;&#10;        Transform,&#10;        Velocity&gt;();&#13;</Code>
+<Content aid:pstyle="Content">could cache storage pointers once.&#13;</Content>
+<Content aid:pstyle="Content">Then per frame:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">moving.Each(...);&#13;</Code>
+<Content aid:pstyle="Content">does only join work.&#13;</Content>
+<Content aid:pstyle="Content">This is the natural next step without yet requiring archetypes.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The ownership rule you should memorize</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The ECS owns components.&#13;</Content>
+<Content aid:pstyle="Content">Systems borrow them.&#13;</Content>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b1136ec06a6bad5410cd10fa.svg" alt="&#10;\boxed{&#10;Registry&#10;\rightarrow&#10;\text{owns entity metadata and component storage}&#10;}&#10;" jobId="b1136ec06a6bad5410cd10fa" originalTeX="&#10;\boxed{&#10;Registry&#10;\rightarrow&#10;\text{owns entity metadata and component storage}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">while:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fe7309b5f8f0d890ee8db9eb.svg" alt="&#10;\boxed{&#10;System&#10;\rightarrow&#10;\text{temporarily borrows component references}&#10;}&#10;" jobId="fe7309b5f8f0d890ee8db9eb" originalTeX="&#10;\boxed{&#10;System&#10;\rightarrow&#10;\text{temporarily borrows component references}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d97f566d25bc3a46e9705b80.svg" alt="&#10;\boxed{&#10;Entity handle&#10;\rightarrow&#10;\text{stable logical reference}&#10;}&#10;" jobId="d97f566d25bc3a46e9705b80" originalTeX="&#10;\boxed{&#10;Entity handle&#10;\rightarrow&#10;\text{stable logical reference}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">but:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f6134b466118f68189985dc7.svg" alt="&#10;\boxed{&#10;Component*&#10;\rightarrow&#10;\text{potentially unstable physical reference}.&#10;}&#10;" jobId="f6134b466118f68189985dc7" originalTeX="&#10;\boxed{&#10;Component*&#10;\rightarrow&#10;\text{potentially unstable physical reference}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This one mental model prevents a huge class of engine bugs.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Identity versus location</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This also connects to everything we learned earlier.&#13;</Content>
+<Content aid:pstyle="Content">A BVH node index can change if hierarchy rebuilt.&#13;</Content>
+<Content aid:pstyle="Content">A component’s dense index can change if another component is removed.&#13;</Content>
+<Content aid:pstyle="Content">A vector address can change if reallocated.&#13;</Content>
+<Content aid:pstyle="Content">Therefore:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/566628e53c933c6b435ac2b9.svg" alt="&#10;\text{physical storage location}&#10;" jobId="566628e53c933c6b435ac2b9" originalTeX="&#10;\text{physical storage location}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">should usually not be identity.&#13;</Content>
+<Content aid:pstyle="Content">Instead:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6b738d98badbef060b6c5464.svg" alt="&#10;\text{stable logical handle}&#10;\rightarrow&#10;\text{current storage location}.&#10;" jobId="6b738d98badbef060b6c5464" originalTeX="&#10;\text{stable logical handle}&#10;\rightarrow&#10;\text{current storage location}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For ECS:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/100e155d001339127e406409.svg" alt="&#10;Entity(Index,Generation)&#10;\rightarrow&#10;Sparse[Index]&#10;\rightarrow&#10;DenseIndex&#10;\rightarrow&#10;Component.&#10;" jobId="100e155d001339127e406409" originalTeX="&#10;Entity(Index,Generation)&#10;\rightarrow&#10;Sparse[Index]&#10;\rightarrow&#10;DenseIndex&#10;\rightarrow&#10;Component.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That extra indirection buys storage freedom.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why this architecture scales better than pointers between objects</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Imagine one million entities.&#13;</Content>
+<Content aid:pstyle="Content">If gameplay systems store raw pointers between components, then any compaction/migration invalidates relationships.&#13;</Content>
+<Content aid:pstyle="Content">With entity handles:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct Target&#10;{&#10;    Entity TargetEntity;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">the target remains logical.&#13;</Content>
+<Content aid:pstyle="Content">On use:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">if (registry.IsAlive(target.TargetEntity))&#10;{&#10;    ...&#10;}&#13;</Code>
+<Content aid:pstyle="Content">The target entity’s components may have moved ten times.&#13;</Content>
+<Content aid:pstyle="Content">Relationship remains valid because it does not encode a component address.&#13;</Content>
+<Content aid:pstyle="Content">This becomes essential in archetype migration next pass.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Entity handles are not globally persistent IDs</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Another critical distinction.&#13;</Content>
+<Content aid:pstyle="Content">Your Kairo Entity is documented as:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">process-local.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">That is right.&#13;</Content>
+<Content aid:pstyle="Content">Do not serialize:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Index = 27&#10;Generation = 4&#13;</Code>
+<Content aid:pstyle="Content">and assume it identifies the same game object after loading tomorrow.&#13;</Content>
+<Content aid:pstyle="Content">Index allocation depends on runtime lifecycle.&#13;</Content>
+<Content aid:pstyle="Content">For persistent scene identity, use another ID:&#13;</Content>
+<Code aid:pstyle="Code" language="text">UUID&#10;SceneEntityID&#10;AssetObjectID&#10;NetworkID&#13;</Code>
+<Content aid:pstyle="Content">Then loading constructs fresh ECS entities and maps persistent IDs to runtime handles.&#13;</Content>
+<Content aid:pstyle="Content">This separation will matter heavily in scene serialization later.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Sparse-set memory complexity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For one pool:&#13;</Content>
+<Content aid:pstyle="Content">Let:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a843c246bd4b8b900d5e1d0a.svg" alt="&#10;E_{\max}&#10;=&#10;\text{largest entity index extent},&#10;" jobId="a843c246bd4b8b900d5e1d0a" originalTeX="&#10;E_{\max}&#10;=&#10;\text{largest entity index extent},&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fb6814a66d12857f67fb8f84.svg" alt="&#10;N_C&#10;=&#10;\text{number of entities owning component C}.&#10;" jobId="fb6814a66d12857f67fb8f84" originalTeX="&#10;N_C&#10;=&#10;\text{number of entities owning component C}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">With Kairo’s flat sparse array:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1e2259bafbff88fba4dc17d8.svg" alt="&#10;M_C&#10;\approx&#10;4E_{\max}&#10;+&#10;sizeof(Entity)N_C&#10;+&#10;sizeof(Component)N_C.&#10;" jobId="1e2259bafbff88fba4dc17d8" originalTeX="&#10;M_C&#10;\approx&#10;4E_{\max}&#10;+&#10;sizeof(Entity)N_C&#10;+&#10;sizeof(Component)N_C.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">The sparse portion depends on <Strong aid:cstyle="Bold">entity extent</Strong>, not component population.&#13;</Content>
+<Content aid:pstyle="Content">This is why rare components can still consume large sparse metadata if entity IDs grow very high.&#13;</Content>
+<Content aid:pstyle="Content">Paged sparse arrays change this toward allocated-page occupancy.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Time complexity summary</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For current Kairo sparse-set registry, ignoring allocation effects:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/71b4514d9dbf9429987c217d.svg" alt="&#10;IsAlive(E)=O(1)&#10;" jobId="71b4514d9dbf9429987c217d" originalTeX="&#10;IsAlive(E)=O(1)&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dbb605e6543dda84c32dad09.svg" alt="&#10;Has&lt;T&gt;(E)=O(1)&#10;" jobId="dbb605e6543dda84c32dad09" originalTeX="&#10;Has&lt;T&gt;(E)=O(1)&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/806a707515ab4eb3a18e9898.svg" alt="&#10;Get&lt;T&gt;(E)=O(1)&#10;" jobId="806a707515ab4eb3a18e9898" originalTeX="&#10;Get&lt;T&gt;(E)=O(1)&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/079cdfa0d568e14496926882.svg" alt="&#10;Emplace&lt;T&gt;(E)=O(1)&#10;" jobId="079cdfa0d568e14496926882" originalTeX="&#10;Emplace&lt;T&gt;(E)=O(1)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">amortized,&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bad83f9392f8ece8fa461457.svg" alt="&#10;Remove&lt;T&gt;(E)=O(1)&#10;" jobId="bad83f9392f8ece8fa461457" originalTeX="&#10;Remove&lt;T&gt;(E)=O(1)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">assuming movable component,&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9cde640f2d24b53ee218154f.svg" alt="&#10;Each&lt;T&gt;=O(|T|)&#10;" jobId="9cde640f2d24b53ee218154f" originalTeX="&#10;Each&lt;T&gt;=O(|T|)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and for query <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e749219cca0cbee6d47def4c.svg" alt="T_1,\dots,T_k" jobId="e749219cca0cbee6d47def4c" originalTeX="T_1,\dots,T_k"/>:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7ef0e125f0d469e1c288703d.svg" alt="&#10;Each&lt;T_1,\dots,T_k&gt;&#10;=&#10;O(&#10;\min_i|T_i|&#10;\cdot(k-1)&#10;).&#10;" jobId="7ef0e125f0d469e1c288703d" originalTeX="&#10;Each&lt;T_1,\dots,T_k&gt;&#10;=&#10;O(&#10;\min_i|T_i|&#10;\cdot(k-1)&#10;).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Entity destruction is currently:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d3f04dc1444bfb26f1e4d9eb.svg" alt="&#10;O(T)&#10;" jobId="d3f04dc1444bfb26f1e4d9eb" originalTeX="&#10;O(T)&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">over number of registered component types because every pool is checked.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — build a generational registry from blank memory</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You should be able to derive the minimum entity allocator yourself.&#13;</Content>
+<Content aid:pstyle="Content">State:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">vector&lt;uint32_t&gt; generations;&#10;vector&lt;bool&gt; alive;&#10;vector&lt;uint32_t&gt; free;&#13;</Code>
+<Content aid:pstyle="Content">Create:&#13;</Content>
+<Code aid:pstyle="Code" language="text">if free nonempty:&#10;    pop index&#10;else:&#10;    append metadata&#10;&#10;alive[index] = true&#10;&#10;return {index, generation[index]}&#13;</Code>
+<Content aid:pstyle="Content">Destroy:&#13;</Content>
+<Code aid:pstyle="Code" language="text">validate&#10;remove components&#10;alive[index] = false&#10;&#10;if generation not max:&#10;    generation++&#10;    free.push(index)&#10;else:&#10;    retire slot&#13;</Code>
+<Content aid:pstyle="Content">Validate:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cece35ece22a244af417b8e8.svg" alt="&#10;IndexValid&#10;\land&#10;Bounds&#10;\land&#10;Alive&#10;\land&#10;GenerationMatch.&#10;" jobId="cece35ece22a244af417b8e8" originalTeX="&#10;IndexValid&#10;\land&#10;Bounds&#10;\land&#10;Alive&#10;\land&#10;GenerationMatch.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If you cannot derive this without remembering code, revisit M085.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — sparse set</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You should be able to draw this from memory:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Sparse&#10;entity index → dense index&#10;&#10;DenseEntities&#10;dense index → entity&#10;&#10;DenseComponents&#10;dense index → component&#13;</Code>
+<Content aid:pstyle="Content">Then state invariant:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/97f8ce1a3f51b1462e10d738.svg" alt="&#10;Sparse[DenseEntities[d].Index]=d.&#10;" jobId="97f8ce1a3f51b1462e10d738" originalTeX="&#10;Sparse[DenseEntities[d].Index]=d.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Membership:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/39bc83f3b8da143c2151f8f2.svg" alt="&#10;d=Sparse[E.Index]&#10;" jobId="39bc83f3b8da143c2151f8f2" originalTeX="&#10;d=Sparse[E.Index]&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/341bab25468fd9bd661e629a.svg" alt="&#10;d\neq Missing&#10;\land&#10;d&lt;DenseSize&#10;\land&#10;DenseEntities[d]=E.&#10;" jobId="341bab25468fd9bd661e629a" originalTeX="&#10;d\neq Missing&#10;\land&#10;d&lt;DenseSize&#10;\land&#10;DenseEntities[d]=E.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Removal:&#13;</Content>
+<Code aid:pstyle="Code" language="text">move last into hole&#10;repair sparse[lastEntity.Index]&#10;pop dense arrays&#10;Sparse[removed.Index] = Missing&#13;</Code>
+<Content aid:pstyle="Content">That is the entire sparse-set mechanism.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — invalidation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You should know immediately:&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Component insertion may invalidate</Strong>&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/484f5b2905284624ad4a815b.svg" alt="&#10;\text{all component references}&#10;" jobId="484f5b2905284624ad4a815b" originalTeX="&#10;\text{all component references}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">if vector reallocates.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Swap-remove invalidates</Strong>&#13;</Content>
+<Content aid:pstyle="Content">the removed component,&#13;</Content>
+<Content aid:pstyle="Content">the old address of the moved last component,&#13;</Content>
+<Content aid:pstyle="Content">and changes the logical entity represented at the removed slot address.&#13;</Content>
+<Content aid:pstyle="Content">Therefore:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/580f63e1315ee32b9d561d47.svg" alt="&#10;\boxed{&#10;\text{never promise pointer stability unless storage policy explicitly provides it}.&#10;}&#10;" jobId="580f63e1315ee32b9d561d47" originalTeX="&#10;\boxed{&#10;\text{never promise pointer stability unless storage policy explicitly provides it}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — command buffering</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If a system wants:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">for every Health:&#10;    if health &lt;= 0:&#10;        destroy entity&#13;</Code>
+<Content aid:pstyle="Content">do not mutate the primary pool.&#13;</Content>
+<Content aid:pstyle="Content">Instead:&#13;</Content>
+<Code aid:pstyle="Code" language="text">iteration&#10;     ↓&#10;record Destroy commands&#10;     ↓&#10;finish iteration&#10;     ↓&#10;flush command buffer&#13;</Code>
+<Content aid:pstyle="Content">For deferred creation:&#13;</Content>
+<Code aid:pstyle="Code" language="text">temporary token&#10;     ↓&#10;Create command&#10;     ↓&#10;later AddComponent commands reference token&#10;     ↓&#10;flush resolves token → real Entity&#13;</Code>
+<Content aid:pstyle="Content">That is Part 1431–1434 in one coherent mechanism.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Exact coverage — M085 + M086</Strong>&#13;</Content>
+<Table aid:table="table" aid:trows="35" aid:tcols="3" sourceHeadRows="1" sourceBodyHeadRows=""><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="header"><Content aid:pstyle="Caption">Part&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="header"><Content aid:pstyle="Caption">Required topic&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="header"><Content aid:pstyle="Caption">Covered&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">1401&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">Entity identity as data rather than object hierarchy&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">1402&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">Entity index representation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">1403&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">Generation counters&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">1404&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">Packing index/generation into one integer&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">1405&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">Entity free lists&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">1406&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">Creation from free-list slot&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">1407&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">Destruction and generation increments&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">1408&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">Validating entity handle&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">1409&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">Component type identity&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">1410&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">Static component type IDs&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">1411&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">Runtime component type registries&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">1412&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">Component pools&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">1413&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">Sparse-set concept&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">1414&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">Sparse index array&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">1415&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">Dense entity array&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">1416&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">Dense component array&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">1417&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">Sparse-set membership lookup&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">1418&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">Sparse-set component lookup&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">1419&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">Sparse-set component insertion&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">1420&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">Swap-and-pop removal&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">1421&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">Sparse-index repair after removal&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">1422&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">Component-address invalidation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">1423&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">Stable-storage alternatives&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">1424&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">Dense component iteration&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">1425&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">Smallest-pool iteration&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">1426&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">Multi-pool membership tests&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">1427&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">Component signatures / masks&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">1428&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">Dynamic bitsets&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">1429&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">Query caching&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">1430&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">Structural changes / iterator invalidation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">1431&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">Deferred entity creation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">1432&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">Deferred entity destruction&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">1433&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">Deferred component add/remove&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">1434&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">ECS command buffers&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell></Table>
+<Content aid:pstyle="Content">The important result is that you should no longer think of ECS as “entities + components + systems.”&#13;</Content>
+<Content aid:pstyle="Content">You should now see this chain:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2306afb1eb4dc2227b33e0f8.svg" alt="&#10;\boxed{&#10;\text{generational identity}&#10;\rightarrow&#10;\text{slot reuse}&#10;\rightarrow&#10;\text{typed pools}&#10;\rightarrow&#10;\text{sparse indirection}&#10;\rightarrow&#10;\text{dense storage}&#10;\rightarrow&#10;\text{constant-time membership}&#10;\rightarrow&#10;\text{smallest-pool joins}&#10;\rightarrow&#10;\text{invalidation rules}&#10;\rightarrow&#10;\text{deferred structural mutation}.&#10;}&#10;" jobId="2306afb1eb4dc2227b33e0f8" originalTeX="&#10;\boxed{&#10;\text{generational identity}&#10;\rightarrow&#10;\text{slot reuse}&#10;\rightarrow&#10;\text{typed pools}&#10;\rightarrow&#10;\text{sparse indirection}&#10;\rightarrow&#10;\text{dense storage}&#10;\rightarrow&#10;\text{constant-time membership}&#10;\rightarrow&#10;\text{smallest-pool joins}&#10;\rightarrow&#10;\text{invalidation rules}&#10;\rightarrow&#10;\text{deferred structural mutation}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">And this sets up <Strong aid:cstyle="Bold">Pass 11 — M087 + M088, Parts 1435–1474</Strong>, where the architecture becomes substantially more advanced: <Strong aid:cstyle="Bold">archetype signatures, chunks, entity migration between archetypes, chunk capacity/alignment, columnar SoA storage, sparse-set vs archetype ECS, hot/cold splitting, tags, resources, relationships, scene hierarchies, transform dirty propagation, concrete render/physics/light/camera/script/input components, entity↔subsystem ID bridges, events, tick models, dependency graphs, parallel system execution, synchronization hazards, false sharing and prefetch behavior.</Strong>&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="05-engine-i-ch015-archetype-ecs-chunks-migration-aossoa-hotcold-layouts-tags-resources-relationships-transform-hierarchies-engine-components-subsystem-id-bridges-events-tick-models-system-dags-parallel-ecs-scheduling-hazards-false-sharing-and-prefetch">Archetype ECS, Chunks, Migration, AoS/SoA, Hot–Cold Layouts, Tags, Resources, Relationships, Transform Hierarchies, Engine Components, Subsystem ID Bridges, Events, Tick Models, System DAGs, Parallel ECS Scheduling, Hazards, False Sharing and Prefetch&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Coverage:</Strong> M087 owns <Strong aid:cstyle="Bold">Parts 1435–1451</Strong> and M088 owns <Strong aid:cstyle="Bold">Parts 1452–1474</Strong>, with every atom in both ranges required. Graphics_Engine_Mastery_Integra…&#13;</Content>
+<Content aid:pstyle="Content">Pass 10 established a sparse-set ECS:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/068855689ac04bb2522814d5.svg" alt="&#10;Entity(Index,Generation)&#10;\rightarrow&#10;Sparse&#10;\rightarrow&#10;DenseIndex&#10;\rightarrow&#10;Component.&#10;" jobId="068855689ac04bb2522814d5" originalTeX="&#10;Entity(Index,Generation)&#10;\rightarrow&#10;Sparse&#10;\rightarrow&#10;DenseIndex&#10;\rightarrow&#10;Component.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is already a powerful runtime model. Pass 11 asks a different question:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3911fee9918f2b578ec078b4.svg" alt="&#10;\boxed{&#10;\text{What if the dominant workload is not random component lookup, but processing huge groups of identically shaped entities?}&#10;}&#10;" jobId="3911fee9918f2b578ec078b4" originalTeX="&#10;\boxed{&#10;\text{What if the dominant workload is not random component lookup, but processing huge groups of identically shaped entities?}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is where <Strong aid:cstyle="Bold">archetypes and chunks</Strong> appear.&#13;</Content>
+<Content aid:pstyle="Content">Then the second half asks the larger engine question:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7bb0708a56ddafd67e09464d.svg" alt="&#10;\boxed{&#10;\text{How do rendering, physics, input, scripts, events and jobs actually attach to this ECS without destroying its data-oriented properties?}&#10;}&#10;" jobId="7bb0708a56ddafd67e09464d" originalTeX="&#10;\boxed{&#10;\text{How do rendering, physics, input, scripts, events and jobs actually attach to this ECS without destroying its data-oriented properties?}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is one of the most architecturally important passes in the entire curriculum.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<!-- CHAPTER-SOURCE-END -->
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#05-engine-i-ch014">Previous chapter</Link> · <Link href="#05-engine-i-ch016">Next chapter</Link>&#13;</Content>
+</Chapter>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch352.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-749ba51a6c25-gpu-vertex-specification" class="level2">
+<h2>GPU vertex specification</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-749ba51a6c25-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A GPU vertex-input specification explains how bytes in one or more buffers become per-vertex shader inputs. A buffer object owns bytes; a vertex array object records their interpretation: enabled attributes, component count and type, normalization, stride, byte offset, and the buffer binding used for fetch. Stride is the number of bytes between successive vertices; offset is the first component’s byte position. For vertex i, the address is base + offset + i × stride. For interleaved records containing position (3 floats), normal (3), and UV (2), the stride is 8 × 4 = 32 bytes and the UV offset is 24 bytes. Modern binding APIs separate attribute format from the buffer binding; older pointer-style calls can capture the buffer bound at setup time. A wrong stride may still address valid memory, so the symptom is often plausible but scrambled geometry. The contract must agree with CPU packing, shader input types, and the API’s state-capture rules.</p>
+</section>
+<section id="appendix-749ba51a6c25-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch464.xhtml#appendix-26bf6bf2fb8b-vector-storage-simd-and-boundary-layouts" class="wikilink">Vector storage SIMD and boundary layouts (Vision, XR, and Playable Worlds, Part 1, Reference notes: Vector storage SIMD and boundary layouts)</a></li>
+<li><a href="ch260.xhtml#appendix-ffdc1d4e5350-matrix-storage-indexing-and-strides" class="wikilink">Matrix storage indexing and strides (Mathematics for Visual Computing, Part 1, Reference notes: Matrix storage indexing and strides)</a></li>
+<li><a href="ch328.xhtml#appendix-1c07d64f5e70-camera-view-and-clip-space-pipeline" class="wikilink">Camera view and clip-space pipeline</a></li>
+<li><a href="ch145.xhtml#appendix-6af5921bc853-pointer-arithmetic-and-provenance" class="wikilink">Pointer arithmetic and provenance (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Pointer arithmetic and provenance)</a></li>
+</ul>
+</section>
+<section id="appendix-749ba51a6c25-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch277.xhtml#id_03-visual-computing-i-ch012-rasterization-coverage-and-depth" class="wikilink">Rasterization, coverage, and depth (Mathematics for Visual Computing, Part 2, Ch. 16)</a></li>
+<li><a href="ch307.xhtml#appendix-40426e4b2103-homogeneous-clipping-and-perspective-interpolation" class="wikilink">Homogeneous clipping and perspective interpolation (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Homogeneous clipping and perspective interpolation)</a></li>
+</ul>
+</section>
+<section id="appendix-749ba51a6c25-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch277.xhtml#id_03-visual-computing-i-ch012-rasterization-coverage-and-depth" class="wikilink">Rasterization, coverage, and depth (Mathematics for Visual Computing, Part 2, Ch. 16)</a></li>
+</ul>
+</section>
+<section id="appendix-749ba51a6c25-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<ul>
+<li>Trace the fetched address for vertex 3 when stride is 32 bytes and offset is 24 bytes.</li>
+<li>Why can an incorrect stride produce plausible but scrambled geometry without a memory fault?</li>
+</ul>
+</section>
+<section id="appendix-749ba51a6c25-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p>Teaching narrative: <a href="ch277.xhtml#id_03-visual-computing-i-ch012-rasterization-coverage-and-depth" class="wikilink">open the main explanation (Mathematics for Visual Computing, Part 2, Ch. 16)</a>. Browse the <a href="ch547.xhtml#appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series" class="wikilink">University graphics and vision index</a>. Additional chapter connections: <a href="ch294.xhtml#id_03-visual-computing-i-ch001-a-scene-description-becomes-an-image" class="wikilink">A scene description becomes an image (Geometry, Cameras, and Image Formation, Part 1, Ch. 8)</a>; <a href="ch277.xhtml#id_03-visual-computing-i-ch012-rasterization-coverage-and-depth" class="wikilink">Rasterization, coverage, and depth (Mathematics for Visual Computing, Part 2, Ch. 16)</a>; <a href="ch292.xhtml#id_02-foundations-ii-ch038-the-mathematical-table-needs-an-explicit-storage-agreement" class="wikilink">The mathematical table needs an explicit storage agreement (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)</a>; <a href="ch173.xhtml#id_01-foundations-i-ch003-a-pointer-carries-an-access-contract" class="wikilink">A pointer carries an access contract (Bits, Programs, and Reliable Systems, Part 2, Ch. 3)</a>.</p>
+<p>Caption/source records: <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-p1-01---module-1.1-course-intro-administrivia-part-1-graphics-visual-computing-2026" class="wikilink">P1-01 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>, <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-p3-03---moving-objects-in-space" class="wikilink">P3-03 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>, <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-p3-04---rotations-about-an-arbitrary-axis" class="wikilink">P3-04 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>.</p>
+</section>
+</section>
+</body>
+</html>

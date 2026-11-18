@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch545.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-5f40b4fea463-captured-world-similarity-alignment" class="level2">
+<h2>Captured-world similarity alignment</h2>
+<p>Two reconstructions of the same scene can disagree by a similarity transform even when both are internally consistent. A similarity transform Sim(3) contains rotation <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+</math>, translation <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math> and a uniform scale <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>s</mi>
+  <mi>R</mi>
+  <msub>
+    <mi>p</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Rigid SE(3) alignment is the special case <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>.</p>
+<p>This distinction matters when combining monocular/COLMAP-style reconstruction, device tracking, LiDAR geometry, Gaussian scenes or engine coordinates. A translation/rotation-only fit can look approximately correct near the alignment origin while scale error grows with distance.</p>
+<section id="appendix-5f40b4fea463-covariance-transformation" class="level3">
+<h3>Covariance transformation</h3>
+<p>A covariance represents second-order spread around the transformed mean. Translation does not affect covariance. Under the linear part <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+  <mi>R</mi>
+</math>,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>s</mi>
+  <mi>R</mi>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>A</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>s</mi>
+  <mi>R</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mo>=</mo>
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+  <mi>R</mi>
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>A</mi>
+  </msub>
+  <msup>
+    <mi>R</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>That <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+</math> factor is required because variance has squared units.</p>
+</section>
+<section id="appendix-5f40b4fea463-estimation" class="level3">
+<h3>Estimation</h3>
+<p>With corresponding point sets, similarity alignment can be estimated by centering the data, solving for rotation from cross-covariance, recovering scale from the centered energies, then translation from the transformed centroids. Robust systems must additionally handle outliers, degenerate configurations and coordinate-convention mistakes.</p>
+<p>A good alignment report should include more than one mean error. Inspect residual distributions, spatial pattern, held-out correspondences and downstream image/depth consequences. A low training-set residual does not prove the transform generalizes.</p>
+</section>
+<section id="appendix-5f40b4fea463-engine-boundary" class="level3">
+<h3>Engine boundary</h3>
+<p>The alignment should be represented as one explicit typed transform with declared source and destination frames. Applying scale separately to positions while forgetting camera translations, covariance, velocity or distance thresholds creates a mixed-coordinate system.</p>
+<p>Related: <a href="ch543.xhtml#appendix-24269cb6977c-gaussian-covariance-projection-and-footprint" class="wikilink">Gaussian covariance projection and footprint</a>, <a href="ch457.xhtml#appendix-1bae9457dbc3-coordinate-frames-and-change-of-basis" class="wikilink">Coordinate frames and change of basis</a>, <a href="ch072.xhtml#appendix-8f6a01f284a7-conditioning-and-singularity" class="wikilink">Conditioning and singularity (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Conditioning and singularity)</a>.</p>
+</section>
+</section>
+</body>
+</html>

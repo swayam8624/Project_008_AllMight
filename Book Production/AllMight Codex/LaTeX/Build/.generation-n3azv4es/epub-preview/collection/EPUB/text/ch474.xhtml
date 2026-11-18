@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch474.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-3b863809f82a-gram-matrices-and-coordinate-metrics" class="level2">
+<h2>Gram matrices and coordinate metrics</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> Phase6 · <strong>Latest development:</strong> Phase6</p>
+<section id="appendix-3b863809f82a-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A Gram matrix stores pairwise basis inner products. Coordinate vectors measure physical dot products through <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>c</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="sans-serif">T</mi>
+    </mrow>
+  </msup>
+  <mi>G</mi>
+  <mi>d</mi>
+</math>. It is positive semidefinite, and positive definite for independent generators. It records metric geometry but not orientation.</p>
+<p>The basis <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math> has <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>G</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+        <mtd>
+          <mn>2</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+</math>. Coordinates <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+</math> give squared length <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>13</mn>
+</math>, not <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>5</mn>
+</math>.</p>
+</section>
+<section id="appendix-3b863809f82a-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch515.xhtml#appendix-ce0341f7ea0d-basis-coordinates-and-dimension" class="wikilink">Basis coordinates and dimension</a> — An ordered basis fixes coordinate meaning and the space whose geometry is measured.</li>
+<li><a href="ch435.xhtml#appendix-8bc4e8fc547c-dot-products-and-orthogonality" class="wikilink">Dot products and orthogonality (GPU Architecture and Real-Time Rendering, Part 2, Reference notes: Dot products and orthogonality)</a> — Inner-product measurements supply the perpendicularity and alignment constraints.</li>
+</ul>
+</section>
+<section id="appendix-3b863809f82a-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch512.xhtml#appendix-c39f1ed34271-orthonormal-frames-and-gram-schmidt" class="wikilink">Orthonormal frames and Gram-Schmidt</a> — Builds on this mechanism in the connected geometry story.</li>
+<li><a href="ch336.xhtml#appendix-02b9d9a81dca-barycentric-coordinates-and-interpolation" class="wikilink">Barycentric coordinates and interpolation (Light Transport and Image Synthesis, Part 1, Reference notes: Barycentric coordinates and interpolation)</a> — Builds on this mechanism in the connected geometry story.</li>
+<li><a href="ch480.xhtml#appendix-50d2ea3c9b26-symmetric-positive-definite-matrices-and-cholesky" class="wikilink">Symmetric positive-definite matrices and Cholesky</a> — Extends this foundation into linear-systems and decomposition analysis. ## Recall and next depth</li>
+</ul>
+<p>Explain the residual equations for span projection and why normal equations can worsen conditioning. Full production proofs, target-specific integration and learner mastery require further evidence.</p>
+</section>
+<section id="appendix-3b863809f82a-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch245.xhtml#id_01-foundations-i-ch018-a-gram-matrix-remembers-the-geometry-of-a-slanted-basis" class="wikilink">Teaching narrative (Mathematics for Visual Computing, Part 1, Ch. 2)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-phase-6---parts-501-600" class="wikilink">Coverage and source gap</a> · <a href="ch155.xhtml#appendix-a103e7846d21-phase-6---source-analysis-and-verification" class="wikilink">Evidence and limits</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map</a></p>
+<p>Expanded direct teaching: <a href="ch236.xhtml#id_01-foundations-i-ch017-choose-what-a-length-is-meant-to-measure" class="wikilink">Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Choose what a length is meant to measure (Mathematics for Visual Computing, Part 1, Ch. 1)</a>.</p>
+</section>
+</section>
+</body>
+</html>

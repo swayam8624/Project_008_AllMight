@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch204.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-51602cabe815-exclusive-and-shared-smart-pointer-ownership" class="level2">
+<h2>Exclusive and shared smart-pointer ownership</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C010 · <strong>Latest development:</strong> C010</p>
+<section id="appendix-51602cabe815-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p><code>std::unique_ptr&lt;T, D&gt;</code> is a move-only exclusive owner whose deleter <code>D</code> defines disposal. <code>get()</code> exposes a borrow; <code>release()</code> transfers the responsibility without deleting. <code>std::shared_ptr&lt;T&gt;</code> joins a shared ownership group represented by a control block; the managed object is destroyed when the last strong owner is released. The control block can outlive the object while weak observers remain. The stored pointer and the object whose destruction the control block arranges can differ (for example, aliasing ownership).</p>
+<p>Shared ownership is not pointee synchronization. Concurrent operations on distinct smart-pointer handles do not automatically make concurrent access to <code>T</code> safe. Use sharing only when several independent parties truly retain the same lifetime.</p>
+</section>
+<section id="appendix-51602cabe815-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch167.xhtml#appendix-d52e4486f527-ownership-and-non-owning-views" class="wikilink">Ownership and non-owning views (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Ownership and non-owning views)</a> — Access-only views and ownership responsibilities are different contracts.</li>
+<li><a href="ch061.xhtml#appendix-69739d3ab49b-raii-and-resource-handles" class="wikilink">RAII and resource handles (Bits, Programs, and Reliable Systems, Part 1, Reference notes: RAII and resource handles)</a> — Smart pointers are standard resource owners built around lifetime-bound cleanup.</li>
+</ul>
+</section>
+<section id="appendix-51602cabe815-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch205.xhtml#appendix-b9548675eb2b-weak-observation-and-ownership-cycles" class="wikilink">Weak observation and ownership cycles</a></li>
+<li><a href="ch206.xhtml#appendix-f56c3e43fd4e-placement-construction-and-explicit-lifetime-management" class="wikilink">Placement construction and explicit lifetime management</a></li>
+</ul>
+</section>
+<section id="appendix-51602cabe815-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain why <code>unique_ptr&lt;Derived&gt;</code> converted to <code>unique_ptr&lt;Base&gt;</code> needs a valid base destruction policy. Pending: allocator/deleter state and atomic shared ownership interfaces.</p>
+</section>
+<section id="appendix-51602cabe815-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch203.xhtml#id_01-foundations-i-ch004-exclusive-ownership-unique_ptr-makes-transfer-visible" class="wikilink">M010 teaching narrative</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m010---parts-148-160" class="wikilink">Source coverage</a></p>
+</section>
+</section>
+</body>
+</html>

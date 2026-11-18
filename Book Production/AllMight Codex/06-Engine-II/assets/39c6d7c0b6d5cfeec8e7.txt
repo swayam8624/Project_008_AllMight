@@ -1,0 +1,3592 @@
+The canonical sequence is:
+
+**559. Orthonormal bases**  
+**560. Constructing an orthonormal basis from one direction**  
+**561. Gram-Schmidt orthogonalization**  
+**562. Modified Gram-Schmidt and numerical stability**  
+**563. Handedness of coordinate bases**. Project_Sheldon_Master_Curricul…
+
+This is one of the most consequential basis blocks in the entire phase. We have spent Parts 501–558 building vectors, bases, coordinates, dot/cross products, projection, normals, tangents and bitangents. Now we answer the engineering question:
+
+\[
+\boxed{
+\text{What properties should a coordinate frame have so geometry becomes easy, stable, and cheap?}
+}
+\]
+
+The answer is usually an **orthonormal basis**. Then we learn how to manufacture one, how Gram-Schmidt generalizes that process, why the textbook algorithm becomes numerically weaker in floating point, and finally why an ordered basis has a handed orientation at all.
+
+The mastery standard remains reconstruction rather than memorization. Pasted markdown
+
+---
+
+# PART 559 — ORTHONORMAL BASES
+
+## 559.1 We already know what a basis is
+
+From Part 512, a basis of an \(n\)-dimensional vector space is a collection of \(n\) vectors that is both:
+
+\[
+\text{linearly independent}
+\]
+
+and:
+
+\[
+\text{spanning}.
+\]
+
+For \(\mathbb R^3\), any three independent vectors form a basis.
+
+For example:
+
+\[
+b_1=(1,0,0),
+\]
+
+\[
+b_2=(1,1,0),
+\]
+
+\[
+b_3=(1,1,1)
+\]
+
+form a perfectly valid basis.
+
+But "valid basis" does not imply "convenient basis."
+
+These vectors are neither mutually perpendicular nor all unit length.
+
+That complicates almost every metric operation.
+
+---
+
+# 559.2 Orthogonal basis
+
+A basis:
+
+\[
+B=(b_1,\ldots,b_n)
+\]
+
+is **orthogonal** when distinct basis vectors satisfy:
+
+\[
+\boxed{
+b_i\cdot b_j=0
+\qquad
+i\neq j.
+}
+\]
+
+They meet at right angles.
+
+Notice this says nothing yet about their lengths.
+
+For example:
+
+\[
+(2,0),
+\qquad
+(0,7)
+\]
+
+form an orthogonal basis of \(\mathbb R^2\), because:
+
+\[
+(2,0)\cdot(0,7)=0.
+\]
+
+But the vectors have lengths:
+
+\[
+2,\qquad7.
+\]
+
+So orthogonal does **not** mean normalized.
+
+---
+
+# 559.3 Orthonormal basis
+
+An **orthonormal basis** adds unit length:
+
+\[
+\boxed{
+b_i\cdot b_j
+=
+\begin{cases}
+1,&i=j,\\
+0,&i\neq j.
+\end{cases}
+}
+\]
+
+This combines:
+
+\[
+b_i\perp b_j
+\quad(i\neq j)
+\]
+
+with:
+
+\[
+\|b_i\|=1.
+\]
+
+The word itself tells you:
+
+```text
+ortho  → orthogonal
+normal → normalized
+```
+
+The standard basis:
+
+\[
+e_x=(1,0,0),
+\]
+
+\[
+e_y=(0,1,0),
+\]
+
+\[
+e_z=(0,0,1)
+\]
+
+is orthonormal.
+
+But an orthonormal basis does not need to align with world XYZ.
+
+A rotated frame can be equally orthonormal.
+
+---
+
+# 559.4 Why orthogonality automatically gives independence
+
+Suppose:
+
+\[
+b_1,\ldots,b_k
+\]
+
+are nonzero and mutually orthogonal.
+
+Assume:
+
+\[
+c_1b_1+\cdots+c_kb_k=0.
+\]
+
+Dot both sides with \(b_j\):
+
+\[
+(c_1b_1+\cdots+c_kb_k)\cdot b_j=0.
+\]
+
+By linearity:
+
+\[
+c_1(b_1\cdot b_j)+\cdots+c_j(b_j\cdot b_j)+\cdots=0.
+\]
+
+Every cross term vanishes:
+
+\[
+b_i\cdot b_j=0
+\quad i\neq j.
+\]
+
+So only:
+
+\[
+c_j\|b_j\|^2=0
+\]
+
+remains.
+
+Since \(b_j\neq0\):
+
+\[
+\|b_j\|^2>0.
+\]
+
+Therefore:
+
+\[
+c_j=0.
+\]
+
+This holds for every \(j\).
+
+Hence:
+
+\[
+\boxed{
+\text{nonzero mutually orthogonal vectors are automatically linearly independent}.
+}
+\]
+
+So in \(\mathbb R^3\), three nonzero mutually orthogonal vectors automatically form a basis.
+
+---
+
+# 559.5 Why coordinates become extremely easy
+
+Suppose:
+
+\[
+B=(e_1,e_2,e_3)
+\]
+
+is orthonormal.
+
+Any vector:
+
+\[
+v
+\]
+
+can be written uniquely as:
+
+\[
+v=c_1e_1+c_2e_2+c_3e_3.
+\]
+
+Dot both sides with \(e_1\):
+
+\[
+v\cdot e_1
+=
+c_1(e_1\cdot e_1)
++
+c_2(e_2\cdot e_1)
++
+c_3(e_3\cdot e_1).
+\]
+
+Because the basis is orthonormal:
+
+\[
+e_1\cdot e_1=1
+\]
+
+and:
+
+\[
+e_2\cdot e_1=e_3\cdot e_1=0.
+\]
+
+Therefore:
+
+\[
+\boxed{
+c_1=v\cdot e_1.
+}
+\]
+
+Likewise:
+
+\[
+\boxed{
+c_2=v\cdot e_2,
+\qquad
+c_3=v\cdot e_3.
+}
+\]
+
+Therefore:
+
+\[
+\boxed{
+v
+=
+(v\cdot e_1)e_1+
+(v\cdot e_2)e_2+
+(v\cdot e_3)e_3.
+}
+\]
+
+This is an extremely powerful formula.
+
+An orthonormal basis lets us recover coordinates using only dot products.
+
+---
+
+# 559.6 Compare with a nonorthogonal basis
+
+Recall:
+
+\[
+b_1=(1,0)
+\]
+
+and:
+
+\[
+b_2=(1,1).
+\]
+
+Suppose:
+
+\[
+v=(2,1)
+=
+1b_1+1b_2.
+\]
+
+Its basis coordinates are:
+
+\[
+(1,1)_B.
+\]
+
+But:
+
+\[
+v\cdot b_1=2,
+\]
+
+not 1.
+
+The other basis vector contaminated the measurement because:
+
+\[
+b_1\cdot b_2\neq0.
+\]
+
+With orthonormal basis vectors there is no contamination.
+
+Each dot isolates exactly one coordinate.
+
+That is why orthonormal frames are computational gold.
+
+---
+
+# 559.7 The Gram matrix becomes identity
+
+Part 541 gave:
+
+\[
+G_{ij}=b_i\cdot b_j.
+\]
+
+For an orthonormal basis:
+
+\[
+G_{ij}
+=
+\delta_{ij}.
+\]
+
+Therefore:
+
+\[
+\boxed{
+G=I.
+}
+\]
+
+This means all the complicated general-basis metric machinery disappears.
+
+Recall:
+
+\[
+x\cdot y=c^TGd.
+\]
+
+When:
+
+\[
+G=I,
+\]
+
+this becomes:
+
+\[
+x\cdot y=c^Td.
+\]
+
+In coordinates:
+
+\[
+\boxed{
+x\cdot y
+=
+\sum_i c_i d_i.
+}
+\]
+
+Likewise:
+
+\[
+\|x\|^2=c^TGc
+\]
+
+reduces to:
+
+\[
+\boxed{
+\|x\|^2
+=
+\sum_i c_i^2.
+}
+\]
+
+The familiar Cartesian formulas are easy precisely because the standard basis is orthonormal.
+
+---
+
+# 559.8 Pythagoras extends to the whole basis
+
+If:
+
+\[
+v=\sum_i c_i e_i
+\]
+
+in an orthonormal basis, then:
+
+\[
+\|v\|^2
+=
+v\cdot v.
+\]
+
+Expand:
+
+\[
+\left(\sum_i c_ie_i\right)
+\cdot
+\left(\sum_j c_je_j\right).
+\]
+
+Every \(i\neq j\) cross term vanishes.
+
+Only:
+
+\[
+c_i^2(e_i\cdot e_i)
+\]
+
+remains.
+
+Since each self-dot equals one:
+
+\[
+\boxed{
+\|v\|^2
+=
+\sum_i c_i^2.
+}
+\]
+
+This is the generalized Pythagorean theorem.
+
+It is also a finite-dimensional version of **Parseval's identity**.
+
+You do not need the functional-analysis version. The key idea is:
+
+> orthogonal coordinates separate energy/length cleanly.
+
+---
+
+# 559.9 Dot products are preserved by orthonormal coordinates
+
+Let:
+
+\[
+u=\sum_i a_i e_i
+\]
+
+and:
+
+\[
+v=\sum_i b_i e_i.
+\]
+
+Then:
+
+\[
+u\cdot v
+=
+\sum_i a_ib_i.
+\]
+
+So moving from one orthonormal frame to another changes coordinate numbers but preserves:
+
+\[
+\boxed{
+\text{lengths}
+}
+\]
+
+and:
+
+\[
+\boxed{
+\text{angles}.
+}
+\]
+
+Why?
+
+Because both are determined by dot products.
+
+This is why rigid orientation frames in graphics, cameras and physics are expected to remain orthonormal.
+
+---
+
+# 559.10 What does an orthonormal frame mean geometrically?
+
+In 3D suppose:
+
+\[
+R,U,F
+\]
+
+represent right, up and forward.
+
+For an ideal camera orientation:
+
+\[
+R\cdot U=0,
+\]
+
+\[
+R\cdot F=0,
+\]
+
+\[
+U\cdot F=0,
+\]
+
+while:
+
+\[
+\|R\|=\|U\|=\|F\|=1.
+\]
+
+Then a vector can be converted into camera-relative components through:
+
+\[
+v_R=v\cdot R,
+\]
+
+\[
+v_U=v\cdot U,
+\]
+
+\[
+v_F=v\cdot F.
+\]
+
+That is the geometric meaning behind many later view-matrix constructions.
+
+---
+
+# 559.11 TBN frame connection
+
+From Parts 556–558:
+
+\[
+T
+\]
+
+is tangent,
+
+\[
+B
+\]
+
+bitangent,
+
+\[
+N
+\]
+
+normal.
+
+A clean tangent frame wants:
+
+\[
+T\cdot B=0,
+\]
+
+\[
+T\cdot N=0,
+\]
+
+\[
+B\cdot N=0,
+\]
+
+and:
+
+\[
+\|T\|=\|B\|=\|N\|=1.
+\]
+
+Then tangent-space normal:
+
+\[
+n_t=(x,y,z)
+\]
+
+corresponds to:
+
+\[
+\boxed{
+n_w=xT+yB+zN.
+}
+\]
+
+And inverse coordinate extraction is just:
+
+\[
+\boxed{
+x=n_w\cdot T,
+\quad
+y=n_w\cdot B,
+\quad
+z=n_w\cdot N.
+}
+\]
+
+Orthonormality makes both directions simple.
+
+---
+
+# 559.12 Numerical reality
+
+A mathematically orthonormal frame can drift in floating point.
+
+Suppose:
+
+\[
+R\cdot U
+\]
+
+should be:
+
+\[
+0.
+\]
+
+After thousands of incremental rotations you might get:
+
+\[
+2\times10^{-5}.
+\]
+
+And:
+
+\[
+\|R\|
+\]
+
+might become:
+
+\[
+1.00003.
+\]
+
+Now the frame contains slight scale/skew contamination.
+
+Repeatedly treating it as perfectly orthonormal can gradually produce errors.
+
+That motivates the next three Parts: construction and re-orthogonalization.
+
+---
+
+# PART 560 — CONSTRUCTING AN ORTHONORMAL BASIS FROM ONE DIRECTION
+
+This sounds impossible at first.
+
+One vector contains only one direction.
+
+A 3D basis needs three directions.
+
+So what exactly are we solving?
+
+---
+
+# 560.1 The input does not uniquely determine the answer
+
+Suppose we are given unit vector:
+
+\[
+N=(0,0,1).
+\]
+
+Any pair of unit XY vectors rotated by any angle around Z can complete the basis.
+
+For example:
+
+\[
+T=(1,0,0),\quad B=(0,1,0)
+\]
+
+works.
+
+But so does:
+
+\[
+T=
+\left(
+\frac1{\sqrt2},
+\frac1{\sqrt2},
+0
+\right),
+\]
+
+\[
+B=
+\left(
+-\frac1{\sqrt2},
+\frac1{\sqrt2},
+0
+\right).
+\]
+
+Infinitely many completions exist.
+
+Therefore:
+
+\[
+\boxed{
+\text{one direction fixes two rotational degrees of freedom but leaves free rotation around itself}.
+}
+\]
+
+That remaining freedom is often called **roll**.
+
+The construction algorithm therefore needs an arbitrary but deterministic convention.
+
+---
+
+# 560.2 Desired output
+
+Given nonzero:
+
+\[
+v,
+\]
+
+we want:
+
+\[
+e_1,e_2,e_3
+\]
+
+such that:
+
+\[
+e_1=\frac v{\|v\|}
+\]
+
+and:
+
+\[
+e_i\cdot e_j=0
+\quad i\neq j,
+\]
+
+with:
+
+\[
+\|e_i\|=1.
+\]
+
+We also want a chosen handed orientation.
+
+---
+
+# 560.3 Naive approach
+
+Normalize input:
+
+\[
+e_1=\hat v.
+\]
+
+Choose some helper axis:
+
+\[
+h.
+\]
+
+Cross:
+
+\[
+t=h\times e_1.
+\]
+
+Then normalize:
+
+\[
+e_2=\frac t{\|t\|}.
+\]
+
+Finally:
+
+\[
+e_3=e_1\times e_2.
+\]
+
+Why does this work?
+
+Because:
+
+\[
+h\times e_1
+\]
+
+is perpendicular to \(e_1\).
+
+After normalization:
+
+\[
+e_2\perp e_1
+\]
+
+and:
+
+\[
+\|e_2\|=1.
+\]
+
+Then:
+
+\[
+e_1\times e_2
+\]
+
+is perpendicular to both.
+
+Because \(e_1,e_2\) are unit and perpendicular:
+
+\[
+\|e_1\times e_2\|
+=
+1\cdot1\cdot\sin90^\circ
+=
+1.
+\]
+
+So:
+
+\[
+e_3
+\]
+
+is already unit.
+
+Hence the basis is orthonormal.
+
+---
+
+# 560.4 Why `helper = X` is not robust
+
+Suppose:
+
+\[
+e_1=(1,0,0)
+\]
+
+and:
+
+\[
+h=(1,0,0).
+\]
+
+Then:
+
+\[
+h\times e_1=0.
+\]
+
+Cannot normalize.
+
+Even if:
+
+\[
+e_1
+\]
+
+is merely *almost* parallel to \(h\), the cross product becomes tiny:
+
+\[
+\|h\times e_1\|
+=
+\sin\theta.
+\]
+
+A tiny cross product amplifies floating-point noise when normalized.
+
+Therefore helper selection must deliberately avoid alignment.
+
+---
+
+# 560.5 A robust axis-selection principle
+
+Suppose normalized:
+
+\[
+n=(n_x,n_y,n_z).
+\]
+
+Choose the standard axis associated with the **smallest absolute component** of \(n\).
+
+Why?
+
+If:
+
+\[
+|n_x|
+\]
+
+is smallest, then \(n\) cannot be strongly aligned with:
+
+\[
+e_x=(1,0,0).
+\]
+
+Alignment with \(e_x\) is:
+
+\[
+|n\cdot e_x|
+=
+|n_x|.
+\]
+
+So picking the smallest component picks the coordinate axis least aligned with \(n\).
+
+This maximizes safety against near-parallel helper vectors.
+
+---
+
+# 560.6 Example
+
+Let:
+
+\[
+n=(0.99,0.1,0.05)
+\]
+
+after normalization approximately.
+
+Absolute components:
+
+\[
+0.99,\quad0.1,\quad0.05.
+\]
+
+Smallest is Z.
+
+Choose:
+
+\[
+h=e_z=(0,0,1).
+\]
+
+This is much safer than using \(e_x\), which would be almost parallel to \(n\).
+
+---
+
+# 560.7 Complete construction
+
+Given nonzero input \(v\):
+
+\[
+n=\operatorname{normalize}(v).
+\]
+
+Choose helper \(h\) least aligned with \(n\).
+
+Then:
+
+\[
+\boxed{
+t=
+\operatorname{normalize}(h\times n).
+}
+\]
+
+Then:
+
+\[
+\boxed{
+b=n\times t.
+}
+\]
+
+We now have:
+
+\[
+t\perp n,
+\]
+
+\[
+b\perp n,
+\]
+
+\[
+b\perp t,
+\]
+
+with all three unit.
+
+Thus:
+
+\[
+\boxed{
+(t,b,n)
+}
+\]
+
+is an orthonormal basis.
+
+---
+
+# 560.8 Verify algebraically
+
+Since:
+
+\[
+t=\frac{h\times n}{\|h\times n\|},
+\]
+
+cross-product perpendicularity gives:
+
+\[
+t\cdot n=0.
+\]
+
+Then:
+
+\[
+b=n\times t.
+\]
+
+So:
+
+\[
+b\cdot n=0,
+\]
+
+\[
+b\cdot t=0.
+\]
+
+Magnitude:
+
+\[
+\|b\|
+=
+\|n\|\|t\|\sin90^\circ
+=
+1.
+\]
+
+Therefore all orthonormal conditions hold.
+
+---
+
+# 560.9 C++ implementation
+
+```cpp
+struct OrthonormalBasis3 {
+    Vec3 x;
+    Vec3 y;
+    Vec3 z;
+};
+
+[[nodiscard]]
+std::optional<OrthonormalBasis3>
+basisFromDirection(Vec3 direction) noexcept
+{
+    auto nOpt = tryNormalize(direction);
+
+    if (!nOpt) {
+        return std::nullopt;
+    }
+
+    const Vec3 n = *nOpt;
+
+    Vec3 helper;
+
+    const float ax = std::abs(n.x);
+    const float ay = std::abs(n.y);
+    const float az = std::abs(n.z);
+
+    if (ax <= ay && ax <= az) {
+        helper = {1.0f, 0.0f, 0.0f};
+    }
+    else if (ay <= az) {
+        helper = {0.0f, 1.0f, 0.0f};
+    }
+    else {
+        helper = {0.0f, 0.0f, 1.0f};
+    }
+
+    auto tOpt = tryNormalize(
+        cross(helper, n));
+
+    if (!tOpt) {
+        return std::nullopt;
+    }
+
+    const Vec3 t = *tOpt;
+    const Vec3 b = cross(n, t);
+
+    return OrthonormalBasis3{
+        t,
+        b,
+        n
+    };
+}
+```
+
+For valid finite input, the helper strategy should prevent the second normalization from degenerating.
+
+---
+
+# 560.10 What arbitrary choice did we make?
+
+The input direction fixed:
+
+\[
+n.
+\]
+
+But the helper axis determined the orientation of \(t\) around \(n\).
+
+So if the input direction moves smoothly and the selected helper suddenly switches from X to Y, the generated tangent can rotate discontinuously.
+
+That can matter for:
+
+- procedural shading;
+- particle orientation;
+- animation frames;
+- camera rigs.
+
+Therefore "robust against division by zero" and "temporally smooth" are **different requirements**.
+
+A helper-axis method solves the first but does not necessarily solve the second.
+
+More specialized basis-construction algorithms can improve continuity.
+
+The canonical concept here is the construction principle; later systems may choose more sophisticated methods.
+
+---
+
+# PART 561 — GRAM-SCHMIDT ORTHOGONALIZATION
+
+Part 560 solved one special 3D problem.
+
+Now suppose we already have several linearly independent vectors:
+
+\[
+v_1,v_2,\ldots,v_k.
+\]
+
+They span some subspace but are not orthogonal.
+
+We want to transform them into an orthonormal set:
+
+\[
+e_1,e_2,\ldots,e_k
+\]
+
+that spans the **same subspace**.
+
+This is the Gram-Schmidt process.
+
+---
+
+# 561.1 The core idea
+
+Take the first vector.
+
+Nothing comes before it, so just normalize:
+
+\[
+u_1=v_1.
+\]
+
+\[
+\boxed{
+e_1=
+\frac{u_1}{\|u_1\|}.
+}
+\]
+
+Now look at \(v_2\).
+
+It may contain some component along \(e_1\).
+
+Remove that component:
+
+\[
+u_2
+=
+v_2-
+\operatorname{proj}_{e_1}v_2.
+\]
+
+Because \(e_1\) is unit:
+
+\[
+\operatorname{proj}_{e_1}v_2
+=
+(v_2\cdot e_1)e_1.
+\]
+
+So:
+
+\[
+\boxed{
+u_2
+=
+v_2-(v_2\cdot e_1)e_1.
+}
+\]
+
+Then normalize:
+
+\[
+\boxed{
+e_2=\frac{u_2}{\|u_2\|}.
+}
+\]
+
+Now \(e_2\) is perpendicular to \(e_1\).
+
+---
+
+# 561.2 Third vector
+
+For:
+
+\[
+v_3,
+\]
+
+remove its component along **both** existing orthonormal directions:
+
+\[
+u_3
+=
+v_3
+-
+(v_3\cdot e_1)e_1
+-
+(v_3\cdot e_2)e_2.
+\]
+
+Then:
+
+\[
+\boxed{
+e_3=
+\frac{u_3}{\|u_3\|}.
+}
+\]
+
+General pattern:
+
+\[
+\boxed{
+u_i
+=
+v_i
+-
+\sum_{j=1}^{i-1}
+(v_i\cdot e_j)e_j
+}
+\]
+
+followed by:
+
+\[
+\boxed{
+e_i=\frac{u_i}{\|u_i\|}.
+}
+\]
+
+That is classical Gram-Schmidt.
+
+---
+
+# 561.3 Why does subtracting all projections work?
+
+Take:
+
+\[
+u_i
+=
+v_i
+-
+\sum_{j<i}
+(v_i\cdot e_j)e_j.
+\]
+
+Choose some previous basis vector \(e_k\), where:
+
+\[
+k<i.
+\]
+
+Dot:
+
+\[
+u_i\cdot e_k.
+\]
+
+Substitute:
+
+\[
+v_i\cdot e_k
+-
+\sum_{j<i}
+(v_i\cdot e_j)
+(e_j\cdot e_k).
+\]
+
+Because previous \(e_j\) are orthonormal:
+
+\[
+e_j\cdot e_k
+=
+\begin{cases}
+1,&j=k\\
+0,&j\neq k.
+\end{cases}
+\]
+
+Therefore the entire sum collapses to:
+
+\[
+v_i\cdot e_k.
+\]
+
+So:
+
+\[
+u_i\cdot e_k
+=
+v_i\cdot e_k-v_i\cdot e_k
+=
+0.
+\]
+
+Hence:
+
+\[
+\boxed{
+u_i\perp e_k
+\quad
+\text{for every }k<i.
+}
+\]
+
+Normalization does not change orthogonality.
+
+Therefore \(e_i\) is orthogonal to every previous vector.
+
+This gives an induction proof that the entire output is orthonormal.
+
+---
+
+# 561.4 Why span is preserved
+
+This is just as important as orthogonality.
+
+We do not want to invent an unrelated basis.
+
+We want the same subspace.
+
+For \(u_i\):
+
+\[
+u_i
+=
+v_i
+-
+\sum_{j<i}(v_i\cdot e_j)e_j.
+\]
+
+Every earlier \(e_j\) lies in:
+
+\[
+\operatorname{span}\{v_1,\ldots,v_j\}.
+\]
+
+Therefore:
+
+\[
+u_i
+\]
+
+is a linear combination of:
+
+\[
+v_1,\ldots,v_i.
+\]
+
+So:
+
+\[
+\operatorname{span}\{e_1,\ldots,e_i\}
+\subseteq
+\operatorname{span}\{v_1,\ldots,v_i\}.
+\]
+
+Conversely, rearrange:
+
+\[
+v_i
+=
+u_i+
+\sum_{j<i}(v_i\cdot e_j)e_j.
+\]
+
+Thus each original \(v_i\) lies in the span of the new vectors.
+
+Therefore:
+
+\[
+\boxed{
+\operatorname{span}\{e_1,\ldots,e_k\}
+=
+\operatorname{span}\{v_1,\ldots,v_k\}.
+}
+\]
+
+Gram-Schmidt changes the **basis**, not the represented subspace.
+
+---
+
+# 561.5 Full worked example
+
+Take:
+
+\[
+v_1=(1,1,0),
+\]
+
+\[
+v_2=(1,0,0),
+\]
+
+\[
+v_3=(1,1,1).
+\]
+
+These are independent but not orthogonal.
+
+Start:
+
+\[
+u_1=v_1=(1,1,0).
+\]
+
+Magnitude:
+
+\[
+\|u_1\|=\sqrt2.
+\]
+
+Thus:
+
+\[
+\boxed{
+e_1=
+\left(
+\frac1{\sqrt2},
+\frac1{\sqrt2},
+0
+\right).
+}
+\]
+
+Now \(v_2\).
+
+Projection coefficient:
+
+\[
+v_2\cdot e_1
+=
+(1,0,0)\cdot
+\left(
+\frac1{\sqrt2},
+\frac1{\sqrt2},
+0
+\right)
+=
+\frac1{\sqrt2}.
+\]
+
+Projection:
+
+\[
+\frac1{\sqrt2}e_1
+=
+\left(
+\frac12,
+\frac12,
+0
+\right).
+\]
+
+Subtract:
+
+\[
+u_2
+=
+(1,0,0)
+-
+\left(
+\frac12,\frac12,0
+\right).
+\]
+
+So:
+
+\[
+u_2=
+\left(
+\frac12,-\frac12,0
+\right).
+\]
+
+Its magnitude:
+
+\[
+\|u_2\|
+=
+\sqrt{
+\frac14+\frac14
+}
+=
+\frac1{\sqrt2}.
+\]
+
+Therefore:
+
+\[
+\boxed{
+e_2=
+\left(
+\frac1{\sqrt2},
+-\frac1{\sqrt2},
+0
+\right).
+}
+\]
+
+Check:
+
+\[
+e_1\cdot e_2
+=
+\frac12-\frac12
+=
+0.
+\]
+
+Now:
+
+\[
+v_3=(1,1,1).
+\]
+
+First projection:
+
+\[
+v_3\cdot e_1
+=
+\frac1{\sqrt2}+
+\frac1{\sqrt2}
+=
+\sqrt2.
+\]
+
+Thus:
+
+\[
+(v_3\cdot e_1)e_1
+=
+\sqrt2
+\left(
+\frac1{\sqrt2},
+\frac1{\sqrt2},
+0
+\right)
+=
+(1,1,0).
+\]
+
+Second projection:
+
+\[
+v_3\cdot e_2
+=
+\frac1{\sqrt2}
+-
+\frac1{\sqrt2}
+=
+0.
+\]
+
+Therefore:
+
+\[
+u_3
+=
+(1,1,1)
+-
+(1,1,0)
+-
+0.
+\]
+
+So:
+
+\[
+u_3=(0,0,1).
+\]
+
+Already unit.
+
+Thus:
+
+\[
+\boxed{
+e_3=(0,0,1).
+}
+\]
+
+Final orthonormal basis:
+
+\[
+\boxed{
+e_1=
+\left(
+\frac1{\sqrt2},
+\frac1{\sqrt2},
+0
+\right)
+}
+\]
+
+\[
+\boxed{
+e_2=
+\left(
+\frac1{\sqrt2},
+-\frac1{\sqrt2},
+0
+\right)
+}
+\]
+
+\[
+\boxed{
+e_3=(0,0,1).
+}
+\]
+
+---
+
+# 561.6 What if input vectors are dependent?
+
+Suppose:
+
+\[
+v_2=2v_1.
+\]
+
+After producing:
+
+\[
+e_1,
+\]
+
+Gram-Schmidt computes:
+
+\[
+u_2
+=
+v_2-(v_2\cdot e_1)e_1.
+\]
+
+But the entirety of \(v_2\) lies along \(e_1\).
+
+So:
+
+\[
+u_2=0.
+\]
+
+Then normalization fails.
+
+That is exactly correct.
+
+The original vectors did not contain another independent direction.
+
+Gram-Schmidt cannot manufacture dimension that was not present.
+
+---
+
+# 561.7 Near dependence is the dangerous case
+
+Exact dependence gives a clean zero.
+
+Near dependence gives a tiny residual.
+
+Suppose:
+
+\[
+v_2=v_1+\epsilon.
+\]
+
+After removing the large component along \(v_1\), only a tiny difference remains.
+
+Then normalization multiplies that residual approximately by:
+
+\[
+\frac1{\|\epsilon\|}.
+\]
+
+Any rounding error inside the residual gets amplified.
+
+This is why Gram-Schmidt becomes numerically interesting rather than merely algebraically interesting.
+
+That is Part 562.
+
+---
+
+# 561.8 Input order matters
+
+Suppose you feed:
+
+\[
+v_1,v_2,v_3.
+\]
+
+Gram-Schmidt gives one orthonormal basis.
+
+Change the order:
+
+\[
+v_3,v_1,v_2.
+\]
+
+You may get another.
+
+Both span the same full subspace if inputs are independent.
+
+Why?
+
+The first vector is preserved up to normalization, so whatever vector appears first heavily determines the resulting orientation.
+
+Therefore Gram-Schmidt is not a unique canonical map from a set to a basis.
+
+The input is an **ordered sequence**.
+
+---
+
+# 561.9 Complexity
+
+For \(k\) vectors each with \(n\) components, vector \(i\) is projected against approximately \(i-1\) previous vectors.
+
+Total projection count is:
+
+\[
+0+1+\cdots+(k-1)
+=
+\frac{k(k-1)}2.
+\]
+
+Each dot/update costs:
+
+\[
+O(n).
+\]
+
+Therefore:
+
+\[
+\boxed{
+O(nk^2)
+}
+\]
+
+time.
+
+Storage is roughly:
+
+\[
+O(nk)
+\]
+
+for the vectors themselves.
+
+For a tiny 3D frame this is irrelevant.
+
+For large numerical matrices it matters.
+
+---
+
+# 561.10 Classical C++ skeleton
+
+```cpp
+bool gramSchmidt3(
+    Vec3 const input[3],
+    Vec3 output[3],
+    float minResidualSquared)
+{
+    for (int i = 0; i < 3; ++i) {
+        Vec3 u = input[i];
+
+        for (int j = 0; j < i; ++j) {
+            // Classical mathematical expression:
+            // subtract projection onto each prior unit vector.
+            u -= output[j]
+               * dot(input[i], output[j]);
+        }
+
+        const float u2 = dot(u, u);
+
+        if (u2 <= minResidualSquared) {
+            return false;
+        }
+
+        output[i] =
+            u * (1.0f / std::sqrt(u2));
+    }
+
+    return true;
+}
+```
+
+Notice something subtle:
+
+inside the projections we used:
+
+```cpp
+dot(input[i], output[j])
+```
+
+rather than:
+
+```cpp
+dot(u, output[j])
+```
+
+That distinction leads directly to Part 562.
+
+---
+
+# PART 562 — MODIFIED GRAM-SCHMIDT AND NUMERICAL STABILITY
+
+In exact real arithmetic, classical Gram-Schmidt works perfectly.
+
+Computers do not use exact real arithmetic.
+
+Repeated projection subtraction introduces rounding.
+
+The original textbook formula and its algebraically equivalent rearrangement can behave very differently in floating point.
+
+---
+
+# 562.1 Classical Gram-Schmidt
+
+For input \(v_i\):
+
+\[
+u_i
+=
+v_i
+-
+\sum_{j<i}
+(v_i\cdot e_j)e_j.
+\]
+
+Notice every coefficient is computed against the **original** \(v_i\):
+
+\[
+v_i\cdot e_1,
+\]
+
+\[
+v_i\cdot e_2,
+\]
+
+etc.
+
+Conceptually:
+
+```text
+start with original v_i
+
+measure all its components
+against existing basis axes
+
+subtract all those components
+```
+
+In exact arithmetic this is correct.
+
+---
+
+# 562.2 What floating point changes
+
+Suppose:
+
+\[
+v_i
+\]
+
+is almost contained in the span of previous basis vectors.
+
+The desired residual:
+
+\[
+u_i
+\]
+
+is tiny.
+
+But the formula forms it by subtracting large nearly cancelling vectors:
+
+\[
+v_i
+-
+\text{large projection}
+-
+\text{large projection}.
+\]
+
+Each subtraction incurs rounding.
+
+So the final tiny residual may contain substantial contamination along directions we thought we removed.
+
+Then normalization amplifies the contamination.
+
+Output vectors lose orthogonality.
+
+---
+
+# 562.3 Modified Gram-Schmidt
+
+Instead of calculating all coefficients against the original vector, maintain a working residual:
+
+\[
+w=v_i.
+\]
+
+Then process one previous basis direction at a time.
+
+First:
+
+\[
+r_{1i}=e_1\cdot w.
+\]
+
+Update:
+
+\[
+w\leftarrow w-r_{1i}e_1.
+\]
+
+Now \(w\) should have less component along \(e_1\).
+
+Then:
+
+\[
+r_{2i}=e_2\cdot w.
+\]
+
+Update:
+
+\[
+w\leftarrow w-r_{2i}e_2.
+\]
+
+Continue.
+
+Finally normalize the remaining \(w\).
+
+So:
+
+\[
+\boxed{
+w_0=v_i
+}
+\]
+
+\[
+\boxed{
+w_j
+=
+w_{j-1}
+-
+(e_j\cdot w_{j-1})e_j.
+}
+\]
+
+This is **Modified Gram-Schmidt**, MGS.
+
+---
+
+# 562.4 Why are CGS and MGS identical in exact arithmetic?
+
+Suppose previous basis vectors are perfectly orthonormal.
+
+After subtracting \(e_1\)'s component:
+
+\[
+w_1
+=
+v-(v\cdot e_1)e_1.
+\]
+
+Now compute:
+
+\[
+w_1\cdot e_2.
+\]
+
+Substitute:
+
+\[
+=
+v\cdot e_2
+-
+(v\cdot e_1)(e_1\cdot e_2).
+\]
+
+But:
+
+\[
+e_1\cdot e_2=0.
+\]
+
+Therefore:
+
+\[
+w_1\cdot e_2
+=
+v\cdot e_2.
+\]
+
+So in exact arithmetic it makes no difference whether the second coefficient is measured from \(v\) or the updated residual.
+
+This is why both algorithms produce the same mathematical answer.
+
+---
+
+# 562.5 Why floating point breaks that equivalence
+
+On a computer, we may have:
+
+\[
+\operatorname{fl}(e_1\cdot e_2)
+\neq0
+\]
+
+even if mathematically they should be orthogonal.
+
+Or subtraction may leave:
+
+\[
+w_1
+\]
+
+with a small residual component along \(e_1\).
+
+Modified Gram-Schmidt measures later components from the **actual residual the machine currently has**, not from the ideal mathematical original.
+
+This tends to remove errors as the computation progresses.
+
+It is not magically exact.
+
+But it is usually more numerically stable.
+
+---
+
+# 562.6 Code difference is tiny
+
+Classical-style inner computation:
+
+```cpp
+Vec3 u = input[i];
+
+for (int j = 0; j < i; ++j) {
+    const float coeff =
+        dot(input[i], output[j]);
+
+    u -= output[j] * coeff;
+}
+```
+
+Modified:
+
+```cpp
+Vec3 u = input[i];
+
+for (int j = 0; j < i; ++j) {
+    const float coeff =
+        dot(u, output[j]);
+
+    u -= output[j] * coeff;
+}
+```
+
+One tiny source-code difference:
+
+```text
+dot(input[i], ...)
+```
+
+versus:
+
+```text
+dot(u, ...)
+```
+
+can create a major numerical difference for difficult inputs.
+
+This is exactly why implementation-level understanding matters.
+
+---
+
+# 562.7 Illustrative float32 example
+
+Consider three almost dependent vectors:
+
+\[
+v_1=(1,\epsilon,0),
+\]
+
+\[
+v_2=(1,0,\epsilon),
+\]
+
+\[
+v_3=(1,-\epsilon,0)
+\]
+
+with:
+
+\[
+\epsilon=10^{-4}.
+\]
+
+Mathematically they are still independent.
+
+But they are extremely close to sharing the same first direction.
+
+A representative binary32 calculation can produce classical Gram-Schmidt output whose worst off-diagonal dot product is on the order of:
+
+\[
+\boxed{4.5\times10^{-1}}
+\]
+
+in this adversarial example—a severe loss of orthogonality.
+
+Running the sequential Modified Gram-Schmidt form on the same values can keep the corresponding orthogonality error around:
+
+\[
+\boxed{7\times10^{-5}}
+\]
+
+for the same style of float32 evaluation.
+
+The exact numbers depend on compiler, instruction ordering, FMA usage and implementation, so do not memorize the values.
+
+The important point is the magnitude of the difference:
+
+\[
+\boxed{
+\text{algebraically equivalent does not mean numerically equivalent}.
+}
+\]
+
+---
+
+# 562.8 Why near-dependent systems are inherently difficult
+
+Do not conclude:
+
+> CGS is bad, MGS fixes everything.
+
+Suppose:
+
+\[
+v_2
+\]
+
+differs from \(v_1\) by only a few representable bits.
+
+The information describing the second independent direction is genuinely tiny.
+
+No rearrangement can recover information that floating-point representation never stored.
+
+MGS improves stability.
+
+It cannot abolish conditioning.
+
+That distinction is crucial:
+
+\[
+\boxed{
+\text{algorithmic stability}
+\neq
+\text{problem conditioning}.
+}
+\]
+
+---
+
+# 562.9 Reorthogonalization
+
+For demanding numerical work, even MGS may lose too much orthogonality.
+
+One strategy is to perform another orthogonalization pass.
+
+After obtaining residual \(w\), project it again against existing basis vectors and subtract remaining components.
+
+Conceptually:
+
+\[
+\text{MGS pass}
+\rightarrow
+\text{residual}
+\rightarrow
+\text{MGS again}.
+\]
+
+This costs more arithmetic but can recover substantially better orthogonality.
+
+In high-quality numerical linear algebra, other methods such as Householder transformations are often preferred for QR factorization because of stronger stability properties.
+
+Those belong to later advanced-linear-algebra Parts.
+
+Here the lesson is:
+
+\[
+\boxed{
+\text{Gram-Schmidt is not only an algebraic process; its computational arrangement matters}.
+}
+\]
+
+---
+
+# 562.10 What should an engine do?
+
+For a 3D frame, full numerical-linear-algebra machinery may be excessive.
+
+Suppose you have a somewhat dirty normal \(N\) and tangent \(T\).
+
+Often you can normalize \(N\), reject \(T\) from \(N\):
+
+\[
+T'
+=
+T-(T\cdot N)N,
+\]
+
+normalize \(T'\), then construct:
+
+\[
+B=N\times T'.
+\]
+
+That is effectively a small specialized Gram-Schmidt step.
+
+For arbitrary high-dimensional bases or decompositions, general MGS/Householder-type methods become more appropriate.
+
+The engineering solution should match the problem scale.
+
+---
+
+# 562.11 Numerical validation
+
+After constructing a 3D orthonormal frame \(e_1,e_2,e_3\), useful diagnostic quantities include:
+
+\[
+|e_i\cdot e_i-1|
+\]
+
+for unit-length error, and:
+
+\[
+|e_i\cdot e_j|
+\]
+
+for orthogonality error.
+
+Rather than only asking:
+
+```cpp
+isFrameValid(frame)
+```
+
+during debugging, log the actual residuals.
+
+Example:
+
+```text
+|x·x - 1| = 2.3e-6
+|y·y - 1| = 9.0e-7
+|z·z - 1| = 1.7e-6
+
+|x·y| = 3.1e-5
+|x·z| = 7.2e-6
+|y·z| = 1.4e-5
+```
+
+That tells you whether the problem is scale drift, nonorthogonality, or both.
+
+---
+
+# PART 563 — HANDEDNESS OF COORDINATE BASES
+
+Now we reach a concept that causes an enormous number of graphics bugs because people learn it as:
+
+> some engines are left-handed and OpenGL/DirectX do different things.
+
+That is too shallow.
+
+Handedness is fundamentally a property of an **ordered basis orientation**.
+
+---
+
+# 563.1 Basis order matters
+
+Suppose we have the standard basis vectors:
+
+\[
+e_x,
+e_y,
+e_z.
+\]
+
+The ordered basis:
+
+\[
+(e_x,e_y,e_z)
+\]
+
+is not conceptually identical to:
+
+\[
+(e_y,e_x,e_z).
+\]
+
+They contain the same set of directions.
+
+But the **order** is different.
+
+Handedness captures this orientation distinction.
+
+---
+
+# 563.2 Use the cross product
+
+In a positively oriented conventional 3D basis:
+
+\[
+e_x\times e_y=e_z.
+\]
+
+This gives one orientation class.
+
+Suppose instead the third basis direction were:
+
+\[
+-e_z.
+\]
+
+Then:
+
+\[
+e_x\times e_y
+=
+-e_3.
+\]
+
+That basis has opposite handedness.
+
+So for orthonormal basis:
+
+\[
+(b_1,b_2,b_3),
+\]
+
+look at:
+
+\[
+b_1\times b_2.
+\]
+
+If it points along \(b_3\), the frame has one handed orientation.
+
+If it points opposite \(b_3\), it has the other.
+
+---
+
+# 563.3 Scalar triple product gives the clean test
+
+Take:
+
+\[
+\boxed{
+h=
+(b_1\times b_2)\cdot b_3.
+}
+\]
+
+For an orthonormal basis:
+
+\[
+b_1\times b_2
+\]
+
+is unit and perpendicular to the first two vectors.
+
+Therefore it must equal either:
+
+\[
++b_3
+\]
+
+or:
+
+\[
+-b_3.
+\]
+
+Thus:
+
+\[
+h=
++1
+\]
+
+or:
+
+\[
+h=-1.
+\]
+
+So:
+
+\[
+\boxed{
+h>0
+\Rightarrow
+\text{one handed orientation}
+}
+\]
+
+and:
+
+\[
+\boxed{
+h<0
+\Rightarrow
+\text{the opposite orientation}.
+}
+\]
+
+With the standard right-hand cross-product convention, positive corresponds to a **right-handed basis**.
+
+So:
+
+\[
+\boxed{
+(b_1\times b_2)\cdot b_3>0
+\quad\Rightarrow\quad
+\text{right-handed}.
+}
+\]
+
+Negative:
+
+\[
+\boxed{
+\text{left-handed}.
+}
+\]
+
+Parts 564 and 565 will treat each system separately. Here we care about the underlying basis property.
+
+---
+
+# 563.4 General independent bases
+
+The basis does not need to be orthonormal.
+
+Take independent:
+
+\[
+b_1,b_2,b_3.
+\]
+
+The scalar triple product:
+
+\[
+\boxed{
+(b_1\times b_2)\cdot b_3
+}
+\]
+
+still has a sign.
+
+Its magnitude is the parallelepiped volume.
+
+Its sign gives orientation.
+
+Thus:
+
+\[
+\boxed{
+\operatorname{sign}
+[(b_1\times b_2)\cdot b_3]
+}
+\]
+
+detects handedness for any independent 3D basis.
+
+If the result is zero:
+
+\[
+\boxed{
+\text{the vectors do not form a basis at all}.
+}
+\]
+
+They are linearly dependent.
+
+---
+
+# 563.5 Why swapping two basis vectors flips handedness
+
+Start:
+
+\[
+H=(b_1\times b_2)\cdot b_3.
+\]
+
+Swap \(b_1,b_2\):
+
+\[
+H'
+=
+(b_2\times b_1)\cdot b_3.
+\]
+
+Cross anti-commutativity:
+
+\[
+b_2\times b_1
+=
+-(b_1\times b_2).
+\]
+
+Therefore:
+
+\[
+H'=-H.
+\]
+
+So:
+
+\[
+\boxed{
+\text{swapping any two basis axes reverses handedness}.
+}
+\]
+
+This is why axis reordering is not innocent when orientation matters.
+
+---
+
+# 563.6 Positive scaling preserves handedness
+
+Scale:
+
+\[
+b_1\rightarrow sb_1
+\]
+
+with:
+
+\[
+s>0.
+\]
+
+Then:
+
+\[
+(sb_1\times b_2)\cdot b_3
+=
+s[(b_1\times b_2)\cdot b_3].
+\]
+
+Sign remains unchanged.
+
+So changing axis length positively does not change orientation.
+
+---
+
+# 563.7 Negative scaling flips handedness
+
+Now:
+
+\[
+s<0.
+\]
+
+Then the triple-product sign reverses.
+
+Geometrically, negative scaling one axis reflects the frame across a plane.
+
+Therefore:
+
+\[
+\boxed{
+\text{one-axis reflection flips handedness}.
+}
+\]
+
+This becomes extremely important later with negative object scales.
+
+---
+
+# 563.8 Rotation preserves handedness
+
+A proper rotation changes all basis directions but preserves their orientation relationships.
+
+If you rotate a right-handed basis rigidly, it remains right-handed.
+
+You did not mirror space.
+
+You only turned the frame.
+
+So:
+
+\[
+\boxed{
+\text{rotation preserves handedness}.
+}
+\]
+
+A reflection reverses it.
+
+This distinction eventually becomes determinant sign:
+
+\[
+\det R=+1
+\]
+
+for proper rotations, while orientation-reversing transforms have negative determinant.
+
+Full determinant theory is intentionally Part 629.
+
+---
+
+# 563.9 Concrete example
+
+Start:
+
+\[
+e_x=(1,0,0),
+\]
+
+\[
+e_y=(0,1,0),
+\]
+
+\[
+e_z=(0,0,1).
+\]
+
+Then:
+
+\[
+e_x\times e_y=e_z.
+\]
+
+So:
+
+\[
+(e_x\times e_y)\cdot e_z
+=
+e_z\cdot e_z
+=
+1.
+\]
+
+Right-handed.
+
+Now flip Z:
+
+\[
+e_z'=(0,0,-1).
+\]
+
+Then:
+
+\[
+(e_x\times e_y)\cdot e_z'
+=
+e_z\cdot(-e_z)
+=
+-1.
+\]
+
+Opposite handedness.
+
+Nothing changed about X/Y perpendicularity or unit length.
+
+Only orientation changed.
+
+This demonstrates that:
+
+\[
+\boxed{
+\text{orthonormality does not determine handedness}.
+}
+\]
+
+There are right-handed and left-handed orthonormal bases.
+
+---
+
+# 563.10 TBN handedness revisited
+
+Part 558 gave tangent frame:
+
+\[
+(T,B,N).
+\]
+
+Suppose:
+
+\[
+B=N\times T.
+\]
+
+What handedness does the ordered frame \((T,B,N)\) have?
+
+Check:
+
+\[
+T\times B
+=
+T\times(N\times T).
+\]
+
+Use vector triple product:
+
+\[
+T\times(N\times T)
+=
+N(T\cdot T)
+-
+T(T\cdot N).
+\]
+
+For unit perpendicular \(T,N\):
+
+\[
+T\cdot T=1,
+\]
+
+\[
+T\cdot N=0.
+\]
+
+Therefore:
+
+\[
+T\times B=N.
+\]
+
+So:
+
+\[
+\boxed{
+(T,B,N)
+}
+\]
+
+is positively/right-handed under this convention.
+
+If instead:
+
+\[
+B=-N\times T,
+\]
+
+the frame becomes left-handed.
+
+This is exactly why mirrored UVs require a handedness sign.
+
+---
+
+# 563.11 Handedness is NOT "which axis is up"
+
+A coordinate system might use:
+
+\[
+Y\text{ up}
+\]
+
+or:
+
+\[
+Z\text{ up}.
+\]
+
+Either can be right-handed or left-handed depending on the directions and ordering of the remaining axes.
+
+So:
+
+\[
+\boxed{
+\text{Y-up vs Z-up is an axis convention, not handedness itself}.
+}
+\]
+
+---
+
+# 563.12 Handedness is NOT "camera looks down +Z or -Z"
+
+Likewise, a camera convention using:
+
+\[
+-Z\text{ forward}
+\]
+
+does not by itself tell you the handedness of every coordinate basis involved.
+
+You need to inspect the ordered basis orientations.
+
+Statements such as:
+
+> "-Z forward means right-handed"
+
+without specifying the rest of the basis are incomplete.
+
+---
+
+# 563.13 Handedness is NOT memory layout
+
+These are completely separate issues:
+
+```text
+row-major vs column-major
+```
+
+describes matrix storage/index interpretation.
+
+```text
+row vectors vs column vectors
+```
+
+describes algebraic convention.
+
+```text
+right-handed vs left-handed
+```
+
+describes basis orientation.
+
+They can be combined independently.
+
+Confusing these categories causes endless graphics folklore.
+
+---
+
+# 563.14 Why cross products become tricky across handedness changes
+
+Suppose a transform mirrors X.
+
+Ordinary direction vectors transform accordingly.
+
+But recall from Part 546: a cross product is an orientation-sensitive pseudovector.
+
+If:
+
+\[
+n=a\times b,
+\]
+
+and you reflect \(a,b\), then blindly comparing the transformed \(n\) against the cross of transformed vectors can produce an extra sign under an orientation reversal.
+
+That is not cross product malfunction.
+
+The cross product encodes orientation.
+
+So converting meshes between opposite handed conventions often requires attention to:
+
+- triangle winding;
+- normals;
+- tangent-frame handedness;
+- cross-product order.
+
+Part 564–565 will make the coordinate-system versions concrete.
+
+---
+
+# 563.15 Detecting a frame's handedness in code
+
+For a general independent basis:
+
+```cpp
+enum class Handedness {
+    Right,
+    Left
+};
+
+[[nodiscard]]
+std::optional<Handedness>
+basisHandedness(
+    Vec3 x,
+    Vec3 y,
+    Vec3 z,
+    float degeneracyThreshold)
+{
+    const double orientedVolume =
+        dot(cross(x, y), z);
+
+    if (std::abs(orientedVolume)
+        <= degeneracyThreshold)
+    {
+        return std::nullopt;
+    }
+
+    return orientedVolume > 0.0
+        ? Handedness::Right
+        : Handedness::Left;
+}
+```
+
+But again:
+
+\[
+\boxed{
+\text{a raw absolute threshold is scale-dependent}.
+}
+\]
+
+The triple product has cubic units if all three vectors share a length unit.
+
+For an already approximately orthonormal frame, the ideal value is:
+
+\[
+\pm1,
+\]
+
+so classification is straightforward.
+
+For arbitrary badly scaled bases, use a scale-aware degeneracy policy.
+
+---
+
+# 563.16 A normalized orientation score
+
+For nonzero basis vectors:
+
+\[
+s
+=
+\frac{
+(b_1\times b_2)\cdot b_3
+}{
+\|b_1\|\|b_2\|\|b_3\|
+}.
+\]
+
+Its sign still indicates orientation.
+
+Its magnitude lies in:
+
+\[
+[0,1]
+\]
+
+for the relevant geometric relationship.
+
+For a perfectly orthogonal frame:
+
+\[
+|s|=1.
+\]
+
+Near:
+
+\[
+s=0,
+\]
+
+the three vectors are close to coplanar/degenerate.
+
+So this normalized quantity separates scale from orientation quality.
+
+---
+
+# HOW 559–563 FIT TOGETHER
+
+We started with an arbitrary basis.
+
+An orthonormal basis gives the ideal metric structure:
+
+\[
+\boxed{
+e_i\cdot e_j=\delta_{ij}.
+}
+\]
+
+That makes coordinate extraction, lengths, angles, projections, TBN frames and camera frames simple.
+
+Given only one direction, Part 560 showed how to choose additional perpendicular directions and manufacture such a frame.
+
+Given several arbitrary independent vectors, Part 561 generalized the same idea:
+
+\[
+\boxed{
+\text{subtract earlier projections}
+\rightarrow
+\text{orthogonal residual}
+\rightarrow
+\text{normalize}.
+}
+\]
+
+Part 562 then exposed the machine-level issue:
+
+\[
+\boxed{
+\text{mathematically equivalent formulas can have very different floating-point stability}.
+}
+\]
+
+And Part 563 added the final missing property:
+
+Even if a frame is perfectly orthonormal, there are still **two orientation classes**.
+
+\[
+\boxed{
+\text{orthonormality tells you metric quality;}
+}
+\]
+
+\[
+\boxed{
+\text{handedness tells you orientation}.
+}
+\]
+
+Those are independent properties.
+
+---
+
+# ENGINE-LEVEL EXAMPLE: REPAIRING A CAMERA FRAME
+
+Suppose a camera has approximate:
+
+\[
+F
+\]
+
+forward and:
+
+\[
+U
+\]
+
+up vectors after numerical drift.
+
+Assume forward must be authoritative.
+
+Normalize it:
+
+\[
+F'=\operatorname{normalize}(F).
+\]
+
+Remove from \(U\) whatever lies along \(F'\):
+
+\[
+U'
+=
+U-(U\cdot F')F'.
+\]
+
+Normalize:
+
+\[
+U''=\operatorname{normalize}(U').
+\]
+
+Then construct:
+
+\[
+R=U''\times F'
+\]
+
+or another cross order depending on the engine's desired handedness convention.
+
+You have just performed a small Gram-Schmidt-like orthonormalization.
+
+The final cross order determines orientation.
+
+So three Parts appear in one practical repair:
+
+```text
+Gram-Schmidt idea
+→ restore perpendicularity
+
+normalization
+→ restore axis lengths
+
+cross-product order
+→ choose handedness
+```
+
+This is the mathematics underneath many camera-frame fixes.
+
+---
+
+# NUMERICAL FAILURE SCENARIO
+
+Suppose:
+
+\[
+F=(0,1,0)
+\]
+
+and user's nominal up vector is also:
+
+\[
+U=(0,1,0).
+\]
+
+Then:
+
+\[
+U-(U\cdot F)F
+\]
+
+becomes:
+
+\[
+0.
+\]
+
+The desired frame cannot be constructed from those two directions because they carry only one independent direction.
+
+This is not a normalization problem.
+
+It is a **rank/independence problem**.
+
+A robust camera system needs a fallback auxiliary axis.
+
+The same underlying issue appears in:
+
+- tangent-frame creation;
+- look-at matrices;
+- procedural particle orientation;
+- joint frames;
+- constraint axes.
+
+---
+
+# IMPLEMENTATION INVARIANTS FOR A 3D ORTHONORMAL BASIS
+
+For:
+
+```cpp
+struct Frame3 {
+    Vec3 x;
+    Vec3 y;
+    Vec3 z;
+};
+```
+
+you want the following approximate invariants:
+
+\[
+x\cdot x\approx1,
+\]
+
+\[
+y\cdot y\approx1,
+\]
+
+\[
+z\cdot z\approx1,
+\]
+
+\[
+x\cdot y\approx0,
+\]
+
+\[
+x\cdot z\approx0,
+\]
+
+\[
+y\cdot z\approx0.
+\]
+
+And if orientation matters:
+
+\[
+\boxed{
+(x\times y)\cdot z\approx+1
+}
+\]
+
+for a right-handed orthonormal frame, or approximately:
+
+\[
+-1
+\]
+
+for left-handed.
+
+Notice how the last invariant cannot be inferred from the first six.
+
+Both handednesses satisfy identical orthonormality tests.
+
+---
+
+# PERFORMANCE REALITY
+
+For a 3D frame, none of these operations is computationally expensive in isolation.
+
+Construction requires a few dots/crosses, one or two normalizations, comparisons and scalar operations.
+
+The engineering concerns are more often:
+
+- whether the frame must be rebuilt every frame;
+- whether thousands or millions of entities need it;
+- whether orientations can instead be represented by quaternions/matrices;
+- whether repeated reconstruction creates temporal discontinuities;
+- whether SIMD batching is useful;
+- whether an already orthogonal representation can preserve the invariant more cheaply.
+
+For general \(n\times k\) Gram-Schmidt, however:
+
+\[
+O(nk^2)
+\]
+
+becomes meaningful.
+
+That distinction between fixed graphics `Vec3` math and general numerical linear algebra is important.
+
+---
+
+# DEBUGGING ATTACK TREE
+
+Suppose an allegedly orthonormal camera/TBN frame behaves incorrectly.
+
+First inspect:
+
+\[
+\|x\|,\|y\|,\|z\|.
+\]
+
+If they differ materially from 1, you have normalization/scale drift.
+
+Then inspect:
+
+\[
+x\cdot y,\quad x\cdot z,\quad y\cdot z.
+\]
+
+If those are nonzero, you have orthogonality drift.
+
+Then inspect:
+
+\[
+(x\times y)\cdot z.
+\]
+
+If its sign is opposite the expected convention, you have a handedness problem rather than merely an orthogonality problem.
+
+If its magnitude is close to zero, the frame is degenerating.
+
+If all mathematical invariants pass but rendering still appears wrong, investigate coordinate-space mismatch, matrix convention, or transform semantics rather than repeatedly renormalizing healthy vectors.
+
+That diagnostic separation is important.
+
+---
+
+# MASTERY GATE — PART 559
+
+From a blank page, define an orthonormal basis using:
+
+\[
+e_i\cdot e_j.
+\]
+
+Prove mutually orthogonal nonzero vectors are independent.
+
+Then derive:
+
+\[
+\boxed{
+c_i=v\cdot e_i
+}
+\]
+
+for coordinates in an orthonormal basis.
+
+From that derive:
+
+\[
+\boxed{
+\|v\|^2=\sum_i c_i^2
+}
+\]
+
+and:
+
+\[
+\boxed{
+u\cdot v=\sum_i a_ib_i.
+}
+\]
+
+Finally explain why:
+
+\[
+G=I
+\]
+
+for an orthonormal basis.
+
+---
+
+# MASTERY GATE — PART 560
+
+Given one arbitrary nonzero direction, explain why an entire 3D orientation is not uniquely determined.
+
+Identify the remaining roll degree of freedom.
+
+Then derive a construction:
+
+\[
+n=\operatorname{normalize}(v),
+\]
+
+choose helper \(h\not\parallel n\),
+
+\[
+t=\operatorname{normalize}(h\times n),
+\]
+
+\[
+b=n\times t.
+\]
+
+Prove all three axes are unit and mutually perpendicular.
+
+Then explain why choosing the least-aligned coordinate axis is more robust than always choosing X.
+
+---
+
+# MASTERY GATE — PART 561
+
+Without looking up Gram-Schmidt, derive it from projection rejection.
+
+You should obtain:
+
+\[
+\boxed{
+u_i
+=
+v_i
+-
+\sum_{j<i}
+(v_i\cdot e_j)e_j
+}
+\]
+
+and:
+
+\[
+\boxed{
+e_i=\frac{u_i}{\|u_i\|}.
+}
+\]
+
+Prove \(u_i\) is perpendicular to every previous \(e_j\).
+
+Prove the output span equals the input span.
+
+Explain why exact dependence produces a zero residual and why input ordering changes the resulting orthonormal basis.
+
+---
+
+# MASTERY GATE — PART 562
+
+Explain the exact difference between:
+
+\[
+(v_i\cdot e_j)
+\]
+
+using the original vector at every step and:
+
+\[
+(w\cdot e_j)
+\]
+
+using the currently updated residual.
+
+Prove why the two are equivalent in exact arithmetic.
+
+Then explain why rounding destroys the equivalence and why Modified Gram-Schmidt generally preserves orthogonality better.
+
+Most importantly, distinguish:
+
+\[
+\boxed{
+\text{numerical stability}
+}
+\]
+
+from:
+
+\[
+\boxed{
+\text{conditioning of the input problem}.
+}
+\]
+
+MGS can improve the former. It cannot repair information that was never numerically resolvable.
+
+---
+
+# MASTERY GATE — PART 563
+
+Given ordered independent basis:
+
+\[
+(b_1,b_2,b_3),
+\]
+
+derive:
+
+\[
+\boxed{
+H=(b_1\times b_2)\cdot b_3.
+}
+\]
+
+Explain why:
+
+\[
+H>0
+\]
+
+and:
+
+\[
+H<0
+\]
+
+represent opposite handed orientations under the standard cross-product convention.
+
+Then prove swapping two axes negates \(H\).
+
+Explain why positive scaling preserves the sign while negative scaling one axis flips it.
+
+Finally be able to say, without hesitation:
+
+\[
+\boxed{
+\text{orthonormality and handedness are separate properties}.
+}
+\]
+
+A basis can be perfectly orthonormal and still be either right-handed or left-handed.
+
+---
+
+The deepest mental model from this block is:
+
+\[
+\boxed{
+\text{basis}
+=
+\text{coordinate language}
+}
+\]
+
+\[
+\boxed{
+\text{orthogonality}
+=
+\text{axes do not contaminate each other's measurements}
+}
+\]
+
+\[
+\boxed{
+\text{normalization}
+=
+\text{coordinate coefficient equals physical signed component}
+}
+\]
+
+\[
+\boxed{
+\text{Gram-Schmidt}
+=
+\text{systematically remove overlap between basis candidates}
+}
+\]
+
+\[
+\boxed{
+\text{Modified Gram-Schmidt}
+=
+\text{perform that removal in a more floating-point-aware order}
+}
+\]
+
+and:
+
+\[
+\boxed{
+\text{handedness}
+=
+\text{orientation class of the ordered basis}.
+}
+\]
+
+That completes the mathematical machinery needed before separating right-handed and left-handed coordinate systems themselves.
+
+**Completed Part 559 — Orthonormal bases**  
+**Completed Part 560 — Constructing an orthonormal basis from one direction**  
+**Completed Part 561 — Gram-Schmidt orthogonalization**  
+**Completed Part 562 — Modified Gram-Schmidt and numerical stability**  
+**Completed Part 563 — Handedness of coordinate bases**
+
+**Next Core Part 564 — Right-handed coordinate systems.**

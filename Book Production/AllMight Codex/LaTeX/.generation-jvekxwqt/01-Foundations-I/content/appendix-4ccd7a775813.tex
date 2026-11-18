@@ -1,0 +1,54 @@
+\hypertarget{appendix-4ccd7a775813}{}
+\section*{One-bit centroid quantization}
+\section{One-bit centroid quantization}\label{appendix-4ccd7a775813-one-bit-centroid-quantization}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C006 · \textbf{Latest development:} C006
+
+\subsection{Definition and mechanism}\label{appendix-4ccd7a775813-definition-and-mechanism}
+
+One sign label selects one of two row means. Row {[}-1,-3,2,4{]} reconstructs {[}-2,-2,3,3{]}, with RMSE one. Two float32 centroids cost 64 additional bits per row.
+
+\subsection{Prerequisites}\label{appendix-4ccd7a775813-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-fdc7879e8bf2}{Quantization and compressed weights (04-Visual-Computing-II, appendix-fdc7879e8bf2)} --- supplies the representation or validity rule used above.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-4ccd7a775813-used-by}
+
+Connect later dependent concepts here when their explanations use this mechanism.
+
+\subsection{Recall and next depth}\label{appendix-4ccd7a775813-recall-and-next-depth}
+
+Reconstruct the example and identify the condition that would invalidate it.
+
+\textbf{Pending:} Empty-side, zero and non-finite policies must be explicit in a production codec.
+
+\subsection{Source and navigation}\label{appendix-4ccd7a775813-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-choosing-what-information-to-keep]{Continuous teaching story} · {Source coverage ledger {[}referenced section unavailable{]}} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\subsection{Reconstruction depth}\label{appendix-4ccd7a775813-reconstruction-depth}
+
+One-bit centroid quantization does not merely store a sign. A group of source values is partitioned into two reconstruction levels, often centroids \(c_0\) and \(c_1\), and each element stores one membership bit. Decoding is therefore
+
+\[
+\hat x_i = c_{b_i},
+\qquad b_i\in\{0,1\}.
+\]
+
+If the centroids are fixed to symmetric values such as \(\{-a,+a\}\), metadata becomes cheaper but the representation loses the ability to follow asymmetric distributions. If they are fitted per group, metadata cost increases but reconstruction error can fall.
+
+The useful engineering quantity is total cost, not bits-per-weight in isolation:
+
+\[
+\text{effective bits/value}
+=
+1 + \frac{\text{centroid metadata bits}}{\text{group size}}.
+\]
+
+Small groups adapt better but pay more metadata and may reduce SIMD efficiency. Large groups amortize metadata but force unrelated values to share two reconstruction levels.
+
+A correct implementation tests deterministic centroid selection, empty-cluster handling, tie policy, bit packing order, group tails, finite decoded values, and error against a declared metric. For inference, the important next question is whether the binary code can participate directly in a dot-product kernel or must be expanded first; that determines whether compression actually saves bandwidth.

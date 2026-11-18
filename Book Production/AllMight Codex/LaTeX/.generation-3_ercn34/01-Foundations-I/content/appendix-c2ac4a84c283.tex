@@ -1,0 +1,38 @@
+\hypertarget{appendix-c2ac4a84c283}{}
+\section*{Floating-point reassociation}
+\section{Floating-point reassociation}\label{appendix-c2ac4a84c283-floating-point-reassociation}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C005 · \textbf{Latest development:} C005
+
+\subsection{Definition and mechanism}\label{appendix-c2ac4a84c283-definition-and-mechanism}
+
+Changing grouping moves rounding points. With binary32 1e20,−1e20,3.14, groupings give 3.14f versus zero. Distributive factored/expanded paths can also differ: the supplied strict witness gives 1192.0928955078125 versus 1024.
+
+\subsection{Prerequisites}\label{appendix-c2ac4a84c283-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a1b1b4580dfd]{Floating-point addition and absorption} --- Lost small addends explain why a regrouped graph can return a different result.
+\item
+  \hyperref[appendix-41e8ef22a21e]{Fused multiply-add} --- Contraction changes intermediate rounding in a multiplication/addition graph.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-c2ac4a84c283-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-1bfb7c657105]{Matrix SIMD tiling and cache reuse}
+\item
+  \hyperref[appendix-df318da57389]{Compensated and pairwise summation} --- uses this mechanism to establish its numerical contract.
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-40df0855b4a7}{Automatic differentiation and backpropagation (03-Visual-Computing-I, appendix-40df0855b4a7)} \#\# Recall and next depth
+\end{itemize}
+
+Reconstruct the definition's example and name the assumptions that make it valid.
+
+\textbf{Pending:} Source syntax, compiler permissions, contraction and generated reductions must be distinguished.
+
+\subsection{Source and navigation}\label{appendix-c2ac4a84c283-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-when-arithmetic-meets-uncertainty]{M005 teaching chapter} · \hyperref[appendix-fd090d982a15-m005---parts-77-88]{Part definitions} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

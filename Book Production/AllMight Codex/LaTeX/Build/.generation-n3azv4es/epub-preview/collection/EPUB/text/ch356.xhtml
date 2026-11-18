@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch356.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-a5b0383b3b3e-hough-transform-and-geometric-voting" class="level2">
+<h2>Hough transform and geometric voting</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-a5b0383b3b3e-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>The Hough transform detects a parametric shape by letting each image feature vote for compatible shape parameters. A line can be represented by normal angle <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>θ</mi>
+</math> and signed distance <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>ρ</mi>
+</math>, avoiding the vertical-line singularity of slope-intercept form. Each edge point votes along a curve in <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>ρ</mi>
+  <mo>,</mo>
+  <mi>θ</mi>
+  <mo stretchy="false">)</mo>
+</math> space; a bin with many votes indicates a line supported by many image points. Circle detection adds center and radius parameters, increasing accumulator dimension and cost. Quantization controls a tradeoff: coarse bins merge nearby hypotheses but reduce precision; fine bins need more votes and memory. Gradient direction can restrict votes and reduce clutter. The transform tolerates missing edge segments because evidence accumulates globally, but unrelated edges can also create peaks, so candidates need geometric validation and robust fitting.</p>
+</section>
+<section id="appendix-a5b0383b3b3e-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch344.xhtml#appendix-36022286b03e-edge-localization-and-subpixel-contours" class="wikilink">Edge localization and subpixel contours</a></li>
+</ul>
+</section>
+<section id="appendix-a5b0383b3b3e-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><span>Worlds, Images and Inference</span></li>
+</ul>
+</section>
+<section id="appendix-a5b0383b3b3e-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<p><a href="ch386.xhtml#id_04-visual-computing-ii-ch030-edges-contours-and-subpixel-localization" class="wikilink">Edges, contours, and subpixel localization (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 11)</a> · <a href="ch386.xhtml#id_04-visual-computing-ii-ch030-recognition-templates-and-industrial-matching" class="wikilink">Recognition, templates, and industrial matching (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 11)</a></p>
+</section>
+</section>
+</body>
+</html>

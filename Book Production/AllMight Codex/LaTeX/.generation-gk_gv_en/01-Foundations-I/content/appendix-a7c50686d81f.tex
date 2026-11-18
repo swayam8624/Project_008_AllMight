@@ -1,0 +1,45 @@
+\hypertarget{appendix-a7c50686d81f}{}
+\section*{Allocator fragmentation}
+\chapter{Allocator fragmentation}\label{appendix-a7c50686d81f-allocator-fragmentation}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C003 · \textbf{Latest development:} C003
+
+\section{Definition and mechanism}\label{appendix-a7c50686d81f-definition-and-mechanism}
+
+Internal fragmentation is unused space inside an allocated block, e.g.~37 bytes requested in a 48-byte class leaves 11. External fragmentation is free space split into holes incapable of satisfying one contiguous request, e.g.~three separated 20-byte holes cannot supply one 60-byte block. Metadata overhead is an additional cost.
+
+\section{Prerequisites}\label{appendix-a7c50686d81f-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c3480f7d9ff3]{Dynamic allocation and heap} --- Allocated buffers/blocks supply the storage whose ownership and fragmentation matter.
+\end{itemize}
+
+\section{Used by}\label{appendix-a7c50686d81f-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-ce688d1acdab]{Huge pages and TLB reach} --- uses this mechanism as stated in its prerequisites.
+\end{itemize}
+
+\section{Recall and next depth}\label{appendix-a7c50686d81f-recall-and-next-depth}
+
+Distinguish slack, metadata, and separated holes.
+
+\textbf{Pending:} Coalescing, size classes, virtual commitment and measured overhead.
+
+\section{Source and navigation}\label{appendix-a7c50686d81f-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Where\%20the\%20bytes\%20live}{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\section{Reconstruction depth}\label{appendix-a7c50686d81f-reconstruction-depth}
+
+Fragmentation is wasted allocation capacity caused by request shapes and allocator policy. Internal fragmentation is unused space inside an allocated block because of alignment, size classes or rounding. External fragmentation is free memory split into pieces that cannot satisfy a larger request even when total free bytes are sufficient.
+
+A game or graphics workload amplifies the issue because lifetimes are structured: per-frame temporaries, long-lived assets, streaming resources and transient staging data behave differently. Using one general heap for all of them can mix lifetimes and make reuse less predictable.
+
+A useful experiment records requested bytes, committed bytes, peak live bytes, largest free span, allocation count and reuse over time. Frame arenas eliminate external fragmentation inside a frame by resetting wholesale; pools trade generality for fixed-size reuse; free lists require split and coalesce policy.
+
+Fragmentation is not measured by ``the process uses a lot of memory'' alone. Residency, allocator metadata, page commitment and application-owned slack must be separated before choosing a remedy.

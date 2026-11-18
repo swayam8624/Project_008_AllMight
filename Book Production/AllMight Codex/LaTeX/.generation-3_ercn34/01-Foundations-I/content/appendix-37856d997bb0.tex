@@ -1,0 +1,35 @@
+\hypertarget{appendix-37856d997bb0}{}
+\section*{Reference binding and converted temporaries}
+\section{Reference binding and converted temporaries}\label{appendix-37856d997bb0-reference-binding-and-converted-temporaries}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\subsection{Definition and mechanism}\label{appendix-37856d997bb0-definition-and-mechanism}
+
+Binding chooses an initial referent under type/category rules. A const int\& bound to an int lvalue tracks that integer; a const double\& initialized from the same int binds a converted temporary snapshot. Base-subobject binding need not copy; bit-fields cannot provide ordinary mutable integer references.
+
+\subsection{Prerequisites}\label{appendix-37856d997bb0-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-d6d562ca9fbb]{References and aliases} --- The initial alias and its referent determine later binding and deduction behavior.
+\item
+  \hyperref[appendix-1121b30eaeb0]{Value categories and materialization} --- Expression category determines viable binding and whether temporary identity is needed.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-37856d997bb0-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a978b29bbbb0]{Temporary lifetime extension}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-37856d997bb0-recall-and-next-depth}
+
+Mutate the original after both bindings and predict their values. Pending: user-defined conversion overloads and volatile binding. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{appendix-37856d997bb0-source-and-navigation}
+
+\hyperref[01-foundations-i-ch003-binding-chooses-a-referent-not-always-the-one-you-imagined]{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

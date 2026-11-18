@@ -1,0 +1,53 @@
+\hypertarget{appendix-05f39b10364d}{}\label{referencestart:appendix-05f39b10364d}
+\section{Minimum signed value}\label{appendix-05f39b10364d-minimum-signed-value}
+
+\hypertarget{appendix-05f39b10364d-minimum-signed-value}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-05f39b10364d-definition-and-mechanism}
+
+\hypertarget{appendix-05f39b10364d-definition-and-mechanism}{}
+
+Two's-complement range has one extra negative value, so \BookInlineCode{{I}{N}{T}{\_}{M}{I}{N}}{INT\_MIN} cannot be negated or represented by same-type absolute value.
+
+\end{allmightroledefinition}
+
+N-bit two's complement spans −2ᴺ⁻¹ through 2ᴺ⁻¹−1. Eight-bit minimum is −128, whose positive counterpart 128 does not fit. Negating int minimum or dividing it by −1 overflows the operation type. Narrow int8\_t operands may promote first, so the original storage width alone does not establish UB.
+
+\subsection{Prerequisites}\label{appendix-05f39b10364d-prerequisites}
+
+\hypertarget{appendix-05f39b10364d-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-4fbc03d20829]{Two\textquotesingle s complement} --- For raw unsigned value u in N bits, signed decoding is u when u\textless2ᴺ⁻¹, otherwise u−2ᴺ.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-05f39b10364d-used-by}
+
+\hypertarget{appendix-05f39b10364d-used-by}{}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-3333db47830f]{Fixed-point rescaling} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-1a599c924a4e]{Signed integer overflow} --- uses minimum signed value as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-05f39b10364d-recall-and-next-depth}
+
+\hypertarget{appendix-05f39b10364d-recall-and-next-depth}{}
+
+Explain minimum signed value without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} Apply and reconstruct this concept independently.
+
+\subsection{Source and navigation}\label{appendix-05f39b10364d-source-and-navigation}
+
+\hypertarget{appendix-05f39b10364d-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch061.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-69739d3ab49b-raii-and-resource-handles" class="level2">
+<h2>RAII and resource handles</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C010 · <strong>Latest development:</strong> C010</p>
+<section id="appendix-69739d3ab49b-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Resource Acquisition Is Initialization (RAII) ties a cleanup responsibility to a well-defined object’s lifetime. A resource handle acquires or adopts responsibility, preserves the release protocol through moves/composition, and performs matching cleanup on scope exit—including ordinary exception unwinding. The resource can be a memory allocation, lock, file, socket, native GPU object, or other paired protocol. RAII does not itself prove that an external asynchronous user has finished; it must trigger the correct deferred-release protocol.</p>
+<p>Construction failure cleans completed subobjects, so each acquired responsibility should enter an owner immediately. A raw native handle is not an owner unless its release contract is implemented and documented.</p>
+</section>
+<section id="appendix-69739d3ab49b-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch127.xhtml#appendix-0b104bcba06b-storage-duration-and-object-lifetime" class="wikilink">Storage duration and object lifetime (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Storage duration and object lifetime)</a> — Object scope and resource lifetime must be distinguished.</li>
+<li><a href="ch186.xhtml#appendix-9bfe377cef7a-destruction-and-partial-construction" class="wikilink">Destruction and partial construction (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Destruction and partial construction)</a> — Completed owner subobjects clean up during failure.</li>
+</ul>
+</section>
+<section id="appendix-69739d3ab49b-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch204.xhtml#appendix-51602cabe815-exclusive-and-shared-smart-pointer-ownership" class="wikilink">Exclusive and shared smart-pointer ownership (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Exclusive and shared smart-pointer ownership)</a></li>
+<li><a href="ch206.xhtml#appendix-f56c3e43fd4e-placement-construction-and-explicit-lifetime-management" class="wikilink">Placement construction and explicit lifetime management (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Placement construction and explicit lifetime management)</a></li>
+</ul>
+</section>
+<section id="appendix-69739d3ab49b-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>For a GPU buffer, identify the C++ owner, every borrower, the completion condition, and the native release call. Pending: allocator-aware and async-deferred reclamation protocols.</p>
+</section>
+<section id="appendix-69739d3ab49b-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch203.xhtml#id_01-foundations-i-ch004-from-a-live-object-to-responsible-resource-ownership" class="wikilink">M010 teaching narrative (Bits, Programs, and Reliable Systems, Part 3, Ch. 4)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m010---parts-148-160" class="wikilink">Source coverage</a></p>
+</section>
+</section>
+</body>
+</html>

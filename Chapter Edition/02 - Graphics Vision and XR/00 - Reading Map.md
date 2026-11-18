@@ -7,9 +7,9 @@ Follow the image from geometry and light through rendering, inference, captured 
 | Chapter | Estimated pages | What you will learn |
 |---|---:|---|
 
-| [[Chapter Edition/02 - Graphics Vision and XR/01 - From Worlds to Images and Inference|01 — From Worlds to Images and Inference]] | 54.8 | Trace the graphics forward problem and distinguish it from vision’s inverse problem. |
+| [[Chapter Edition/02 - Graphics Vision and XR/01 - From Worlds to Images and Inference|01 — From Worlds to Images and Inference]] | 68.1 | Trace the graphics forward problem and distinguish it from vision’s inverse problem. |
 
-| [[Chapter Edition/02 - Graphics Vision and XR/02 - Surfaces, Topology and Parameterization|02 — Surfaces, Topology and Parameterization]] | 47.6 | Choose between parametric, implicit and mesh representations based on the operation required. |
+| [[Chapter Edition/02 - Graphics Vision and XR/02 - Surfaces, Topology and Parameterization|02 — Surfaces, Topology and Parameterization]] | 49.6 | Choose between parametric, implicit and mesh representations based on the operation required. |
 
 | [[Chapter Edition/02 - Graphics Vision and XR/03 - Lens Optics and Image Formation|03 — Lens Optics and Image Formation]] | 41.1 | Relate focal length, object distance, focus tolerance and image sampling. |
 
@@ -37,7 +37,7 @@ Follow the image from geometry and light through rendering, inference, captured 
 
 | [[Chapter Edition/02 - Graphics Vision and XR/15 - Rasterization Foundations and Renderer Evidence|15 — Rasterization Foundations and Renderer Evidence]] | 42.7 | Separate implementation-specific renderer evidence from general rasterization concepts. |
 
-| [[Chapter Edition/02 - Graphics Vision and XR/16 - GPU Memory, Divergence and Execution Order|16 — GPU Memory, Divergence and Execution Order]] | 52.9 | Reason about memory access, divergence and synchronization in GPU programs. |
+| [[Chapter Edition/02 - Graphics Vision and XR/16 - GPU Memory, Divergence and Execution Order|16 — GPU Memory, Divergence and Execution Order]] | 81.2 | Reason about memory access, divergence and synchronization in GPU programs. |
 
 | [[Chapter Edition/02 - Graphics Vision and XR/17 - Build, Test and Reproduce the Program|17 — Build, Test and Reproduce the Program]] | 55.2 | Identify the build and test evidence required to reproduce a program. |
 
@@ -75,7 +75,7 @@ Follow the image from geometry and light through rendering, inference, captured 
 
 | [[Chapter Edition/02 - Graphics Vision and XR/34 - Learned 3D Shapes and Scene Representations|34 — Learned 3D Shapes and Scene Representations]] | 48.8 | Compare 3D representations in relation to the tasks they support. |
 
-| [[Chapter Edition/02 - Graphics Vision and XR/35 - A Complete Renderer as an Executable Forward Model|35 — A Complete Renderer as an Executable Forward Model]] | 52.1 | Trace a renderer from scene inputs to image output and identify its evidence limits. |
+| [[Chapter Edition/02 - Graphics Vision and XR/35 - A Complete Renderer as an Executable Forward Model|35 — A Complete Renderer as an Executable Forward Model]] | 54.0 | Trace a renderer from scene inputs to image output and identify its evidence limits. |
 
 | [[Chapter Edition/02 - Graphics Vision and XR/36 - Source Atlas and Reconstruction Checkpoints|36 — Source Atlas and Reconstruction Checkpoints]] | 63.6 | Use source provenance and reconstruction checkpoints to understand coverage and evidence boundaries. |
 
@@ -83,7 +83,7 @@ Follow the image from geometry and light through rendering, inference, captured 
 
 | [[Chapter Edition/02 - Graphics Vision and XR/38 - Projecting Ellipsoids into Screen-Space Conics|38 — Projecting Ellipsoids into Screen-Space Conics]] | 55.7 | Derive the screen-space conic induced by a projected ellipsoid. |
 
-| [[Chapter Edition/02 - Graphics Vision and XR/39 - Tiling, Ordering and Compositing at Scale|39 — Tiling, Ordering and Compositing at Scale]] | 51.8 | Describe the tiling, sorting and compositing stages for large kernel sets. |
+| [[Chapter Edition/02 - Graphics Vision and XR/39 - Tiling, Ordering and Compositing at Scale|39 — Tiling, Ordering and Compositing at Scale]] | 65.1 | Describe the tiling, sorting and compositing stages for large kernel sets. |
 
 | [[Chapter Edition/02 - Graphics Vision and XR/40 - Lighting, Reconstruction and Surface Motion|40 — Lighting, Reconstruction and Surface Motion]] | 50.1 | Connect lighting and reconstruction choices to animated surface representations. |
 

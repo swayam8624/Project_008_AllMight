@@ -1,0 +1,20 @@
+\documentclass[11pt,oneside,openany]{book}
+\usepackage[ebook]{allmight-book}
+\begin{document}
+\chapter{Reflowable edition proof profile}
+This 6 × 9 inch PDF is a fixed-page typography check only. The separately generated EPUB uses semantic markup, selectable mathematics, and reader-controlled reflow.
+\[
+\nabla f(\mathbf{x}) =
+\begin{bmatrix}
+\partial f/\partial x_1 & \cdots & \partial f/\partial x_n
+\end{bmatrix}^{\mathsf{T}}.
+\]
+\begin{longtable}{@{}ll@{}}
+\toprule Asset & Semantic EPUB form \\
+\midrule
+Equation & MathML \\
+Diagram & SVG \\
+Code & Selectable text \\
+\bottomrule
+\end{longtable}
+\end{document}

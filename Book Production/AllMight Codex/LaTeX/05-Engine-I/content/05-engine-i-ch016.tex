@@ -1,0 +1,4247 @@
+\hypertarget{05-engine-i-ch016}{}
+\section{16 --- Archetypes, chunks, relationships, and transforms}\label{archetypes-chunks-relationships-and-transforms}
+
+\href{Chapter\%20Edition/03\%20-\%20Game\%20Engine/00\%20-\%20Reading\%20Map}{Reading map} · \hyperref[05-engine-i-ch015]{Previous chapter} · \hyperref[05-engine-i-ch017]{Next chapter}
+
+Sparse sets make independent component stores easy to understand; archetypes group entities by shared component layout. This chapter compares the tradeoffs and then follows hierarchy, relationships, and transforms through chunked storage.
+
+\textbf{By the end:} Compare sparse-set and archetype operations, then specify how entity migration and transform dependencies preserve identity and update order.
+
+\textbf{Recall question:} What changes physically when an entity gains a component, and how do parent changes invalidate dependent world transforms?
+
+\subsubsection{ARCHETYPES, CHUNKS, LAYOUTS, RELATIONSHIPS AND TRANSFORMS}\label{archetypes-chunks-layouts-relationships-and-transforms}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Archetype ECS concept}
+
+In the sparse-set model, storage is organized by \textbf{component type}.
+
+\begin{verbatim}
+Transform pool
+--------------------
+E1 T1
+E2 T2
+E4 T4
+E9 T9
+
+Velocity pool
+--------------------
+E1 V1
+E4 V4
+E7 V7
+
+Health pool
+--------------------
+E1 H1
+E2 H2
+\end{verbatim}
+
+Entity 1 has:
+
+\[
+\{Transform,Velocity,Health\}.
+\]
+
+Entity 2 has:
+
+\[
+\{Transform,Health\}.
+\]
+
+Entity 4 has:
+
+\[
+\{Transform,Velocity\}.
+\]
+
+An archetype ECS instead organizes entities by the \textbf{entire set of component types they possess}.
+
+So:
+
+\begin{verbatim}
+Archetype A
+{Transform, Velocity, Health}
+
+E1
+
+
+Archetype B
+{Transform, Health}
+
+E2
+
+
+Archetype C
+{Transform, Velocity}
+
+E4
+\end{verbatim}
+
+An archetype is therefore:
+
+\[
+\boxed{
+A(E)=
+\{\text{all component types owned by E}\}
+}
+\]
+
+and every entity with exactly the same component set belongs to the same archetype.
+
+Unity Entities uses this exact organizational idea: entities with the same component set are grouped into an archetype, and entities of an archetype are stored in chunks containing parallel arrays for those components. \href{https://docs.unity.cn/Packages/com.unity.entities\%401.0/manual/concepts-archetypes.html?utm_source=chatgpt.com}{Unity User Manual}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Archetypes are equivalence classes}
+
+Define relation:
+
+\[
+E_i\sim E_j
+\]
+
+iff:
+
+\[
+Components(E_i)=Components(E_j).
+\]
+
+This relation is reflexive, symmetric and transitive, so entities partition into equivalence classes.
+
+Each equivalence class is an archetype.
+
+If:
+
+\[
+E_1=\{A,B,C\}
+\]
+
+and:
+
+\[
+E_2=\{A,B,C\},
+\]
+
+then:
+
+\[
+E_1\sim E_2.
+\]
+
+But:
+
+\[
+E_3=\{A,B,C,D\}
+\]
+
+belongs to another archetype even if D is only a zero-byte tag.
+
+That last point matters.
+
+The \textbf{presence of a component type} defines archetype identity, not its memory size.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why this radically changes query execution}
+
+Suppose a system wants:
+
+\begin{verbatim}
+Transform
+Velocity
+Health
+\end{verbatim}
+
+Sparse-set ECS asks:
+
+\begin{verbatim}
+Which pool is smallest?
+For every entity there:
+    Does it also have the other components?
+\end{verbatim}
+
+Archetype ECS asks:
+
+\begin{quote}
+Which archetypes contain at least Transform, Velocity and Health?
+\end{quote}
+
+Suppose the world contains:
+
+\begin{verbatim}
+A1 = {Transform, Velocity, Health}
+A2 = {Transform, Velocity, Health, AI}
+A3 = {Transform, Health}
+A4 = {Transform, Velocity}
+A5 = {Transform, Velocity, Health, Renderable}
+\end{verbatim}
+
+The query matches:
+
+\[
+A_1,\quad A_2,\quad A_5.
+\]
+
+Once archetype matching is cached, the system iterates entire contiguous storage regions where \textbf{every entity is already known to match}.
+
+No per-entity \texttt{Has\textless{}Velocity\textgreater{}()} check is needed.
+
+That is the great archetype advantage.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Query work moves from entities to archetypes}
+
+Imagine:
+
+\[
+N=1,000,000
+\]
+
+entities but only:
+
+\[
+A=120
+\]
+
+archetypes.
+
+Query matching can be performed against 120 archetype signatures rather than one million entities.
+
+If archetypes stabilize early, matched archetype lists can be cached and reused. Unity's documentation explicitly notes that archetype sets often stabilize early, allowing queries to cache matching archetypes. \href{https://docs.unity.cn/Packages/com.unity.entities\%401.0/manual/concepts-archetypes.html?utm_source=chatgpt.com}{Unity User Manual}
+
+So query setup can approach:
+
+\[
+O(A)
+\]
+
+once when cache is rebuilt,
+
+then iteration is simply:
+
+\[
+O(N_{\text{matching entities}}).
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo's current position}
+
+Your current \texttt{KairoECS} is \textbf{not an archetype ECS}.
+
+It currently owns independent:
+
+\begin{verbatim}
+SparseSet<Component>
+\end{verbatim}
+
+pools selected through:
+
+\begin{verbatim}
+Pool<Component>.
+\end{verbatim}
+
+That is completely legitimate.
+
+M087 is therefore partly canonical theory and partly a design alternative you must be able to evaluate against your existing sparse-set implementation.
+
+Do \textbf{not} rewrite KairoECS into archetypes merely because this chunk exists.
+
+First understand when one wins.
+
+We will compare them properly in Part 1441.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Archetype signatures}
+
+We need a canonical identity for:
+
+\[
+\{Transform,Velocity,Health\}.
+\]
+
+One option is a bitset:
+
+\begin{verbatim}
+bit 0 Transform
+bit 1 Velocity
+bit 2 Health
+bit 3 Renderable
+bit 4 Light
+...
+\end{verbatim}
+
+Then:
+
+\begin{verbatim}
+Transform + Velocity + Health
+
+00000111
+\end{verbatim}
+
+is the archetype signature.
+
+But with a dynamic component registry, a more general representation is a \textbf{sorted list of component type IDs}.
+
+\begin{verbatim}
+using ComponentTypeID = std::uint32_t;
+
+struct ArchetypeKey
+{
+    std::vector<ComponentTypeID> Types;
+};
+\end{verbatim}
+
+Canonical requirement:
+
+\[
+Types_0<Types_1<\dots<Types_n.
+\]
+
+So:
+
+\begin{verbatim}
+{Velocity, Health, Transform}
+\end{verbatim}
+
+and:
+
+\begin{verbatim}
+{Health, Transform, Velocity}
+\end{verbatim}
+
+canonicalize to the same key.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why sorted signatures are powerful}
+
+Given sorted component IDs:
+
+\begin{verbatim}
+[2, 5, 8, 17]
+\end{verbatim}
+
+adding component 11 produces:
+
+\begin{verbatim}
+[2, 5, 8, 11, 17].
+\end{verbatim}
+
+Removing 5 produces:
+
+\begin{verbatim}
+[2, 8, 17].
+\end{verbatim}
+
+Signature hashing becomes deterministic.
+
+Matching required components can use sorted-set containment.
+
+And unlike a fixed 64-bit mask, there is no hard 64-component ceiling.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Archetype lookup}
+
+World needs:
+
+\begin{verbatim}
+signature → Archetype*
+\end{verbatim}
+
+Conceptually:
+
+\begin{verbatim}
+std::unordered_map<
+    ArchetypeKey,
+    std::unique_ptr<Archetype>,
+    ArchetypeKeyHash
+> archetypes;
+\end{verbatim}
+
+When adding/removing a component:
+
+\begin{verbatim}
+source signature
+      ↓
+derive destination signature
+      ↓
+lookup/create destination archetype
+      ↓
+migrate entity
+\end{verbatim}
+
+This lookup should not be repeated unnecessarily.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Archetype transition edges}
+
+Suppose archetype:
+
+\[
+A=\{Transform,Velocity\}.
+\]
+
+Adding Health always produces:
+
+\[
+B=\{Transform,Velocity,Health\}.
+\]
+
+Once discovered, cache:
+
+\begin{verbatim}
+A
+  add Health
+      ↓
+      B
+\end{verbatim}
+
+Similarly:
+
+\begin{verbatim}
+B
+  remove Health
+      ↓
+      A
+\end{verbatim}
+
+So archetypes themselves form a \textbf{transition graph}.
+
+A production representation might contain:
+
+\begin{verbatim}
+struct ArchetypeTransition
+{
+    Archetype* OnAdd;
+    Archetype* OnRemove;
+};
+\end{verbatim}
+
+indexed by component type.
+
+Then component add/remove avoids repeatedly rebuilding and hashing signatures.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Archetype chunks}
+
+An archetype may contain millions of entities.
+
+We usually do not allocate one gigantic ever-growing block.
+
+Instead divide storage into fixed-ish blocks called \textbf{chunks}.
+
+\begin{verbatim}
+Archetype:
+{Transform, Velocity, Health}
+
+Chunk 0
+E0..E511
+
+Chunk 1
+E512..E1023
+
+Chunk 2
+...
+\end{verbatim}
+
+Each chunk stores the same set of component columns.
+
+Unity Entities is one production example using fixed \textbf{16 KiB chunks}; chunk capacity depends on the component sizes in the archetype. \href{https://docs.unity.cn/Packages/com.unity.entities\%401.0/manual/concepts-archetypes.html?utm_source=chatgpt.com}{Unity User Manual}
+
+The specific 16 KiB number is not universal.
+
+The architectural idea is.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why chunks rather than one large array}
+
+Chunks provide:
+
+\begin{itemize}
+\tightlist
+\item
+  bounded relocation,
+\item
+  easy job partitioning,
+\item
+  predictable memory blocks,
+\item
+  chunk-level change versions,
+\item
+  chunk-level metadata,
+\item
+  easier allocation/reclamation,
+\item
+  reduced giant-vector reallocation,
+\item
+  locality-preserving work units.
+\end{itemize}
+
+A chunk becomes simultaneously:
+
+\[
+\boxed{
+\text{storage unit}
++
+\text{iteration unit}
++
+\text{job unit}
++
+\text{change-tracking unit}.
+}
+\]
+
+That is enormously useful.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{A conceptual archetype chunk}
+
+For:
+
+\[
+A=\{Transform,Velocity,Health\},
+\]
+
+chunk memory conceptually looks like:
+
+\begin{verbatim}
++------------------------------------------------------+
+| chunk header                                         |
++------------------------------------------------------+
+| Entity[capacity]                                     |
++------------------------------------------------------+
+| Transform[capacity]                                  |
++------------------------------------------------------+
+| Velocity[capacity]                                   |
++------------------------------------------------------+
+| Health[capacity]                                     |
++------------------------------------------------------+
+\end{verbatim}
+
+Not:
+
+\begin{verbatim}
+Entity
+Transform
+Velocity
+Health
+Entity
+Transform
+Velocity
+Health
+...
+\end{verbatim}
+
+That distinction is Part 1440's columnar storage.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Entity locations in archetype ECS}
+
+Sparse-set ECS locates component through:
+
+\[
+Entity\rightarrow Sparse\rightarrow Dense.
+\]
+
+Archetype ECS needs an entity-location table:
+
+\begin{verbatim}
+struct EntityLocation
+{
+    Archetype* Archetype;
+    Chunk* Chunk;
+    std::uint32_t Row;
+};
+\end{verbatim}
+
+Then:
+
+\[
+Entity
+\rightarrow
+(Archetype,Chunk,Row)
+\]
+
+and component T is:
+
+\[
+Chunk.Column<T>()[Row].
+\]
+
+The entity record itself therefore points to its current \textbf{storage row}, not to individual component addresses.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Entity movement between archetypes}
+
+This is the defining structural operation.
+
+Suppose entity has:
+
+\[
+A=\{Transform,Velocity\}.
+\]
+
+We execute:
+
+\begin{verbatim}
+Emplace<Health>(entity);
+\end{verbatim}
+
+The entity's component set becomes:
+
+\[
+B=\{Transform,Velocity,Health\}.
+\]
+
+It cannot remain in A because every row in A must have exactly the A signature.
+
+So the entity physically migrates.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Archetype migration sequence}
+
+Suppose source:
+
+\begin{verbatim}
+A = {Transform, Velocity}
+\end{verbatim}
+
+destination:
+
+\begin{verbatim}
+B = {Transform, Velocity, Health}
+\end{verbatim}
+
+Migration is:
+
+\begin{verbatim}
+1. Find/create B.
+2. Find destination chunk with free row.
+3. Allocate destination row.
+4. Move/copy Entity ID.
+5. Move Transform.
+6. Move Velocity.
+7. Construct Health.
+8. Update entity-location record.
+9. Remove source row.
+10. Repair location of entity swapped into source hole.
+\end{verbatim}
+
+That is a structural change.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Migration is much more expensive than changing component values}
+
+Compare:
+
+\begin{verbatim}
+velocity.x += 1.0f;
+\end{verbatim}
+
+with:
+
+\begin{verbatim}
+registry.Emplace<Health>(entity);
+\end{verbatim}
+
+The first mutates perhaps 4 bytes.
+
+The second may:
+
+\begin{itemize}
+\tightlist
+\item
+  locate two archetypes,
+\item
+  allocate chunk space,
+\item
+  move several components,
+\item
+  construct a component,
+\item
+  destruct source components,
+\item
+  swap-remove source row,
+\item
+  update entity metadata,
+\item
+  update chunk counts,
+\item
+  potentially update query caches.
+\end{itemize}
+
+Therefore archetype ECS strongly rewards worlds where:
+
+\[
+\boxed{
+\text{component sets are relatively stable}.
+}
+\]
+
+If entities constantly add/remove components every frame, archetype migration cost can dominate.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Swap-removal inside source chunk}
+
+Suppose source chunk rows:
+
+\begin{verbatim}
+row 0 E10
+row 1 E20
+row 2 E30
+row 3 E40
+\end{verbatim}
+
+Move E20 to another archetype.
+
+To keep source packed:
+
+\begin{verbatim}
+row 1 ← E40
+\end{verbatim}
+
+Then source becomes:
+
+\begin{verbatim}
+row 0 E10
+row 1 E40
+row 2 E30
+\end{verbatim}
+
+Now update:
+
+\begin{verbatim}
+Location[E40].Row = 1.
+\end{verbatim}
+
+Exactly the same invariant repair we learned for sparse sets appears again.
+
+Dense storage repeatedly leads to swap-remove.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Migration and exception safety}
+
+With trivial components, migration is straightforward.
+
+With:
+
+\begin{verbatim}
+std::string
+unique_ptr<Resource>
+custom destructors
+throwing constructors
+\end{verbatim}
+
+it becomes substantially harder.
+
+If moving three components succeeds and the fourth throws, what is the entity's state?
+
+That is why M089 later spends an entire chunk on nontrivial component lifetime.
+
+For now, recognize that archetype migration implicitly requires a type-erased operation table:
+
+\begin{verbatim}
+construct
+move construct
+destroy
+possibly copy
+\end{verbatim}
+
+for every component type.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Chunk capacity}
+
+Suppose chunk size is:
+
+\[
+B.
+\]
+
+Header uses:
+
+\[
+H.
+\]
+
+Archetype contains columns with element sizes:
+
+\[
+s_0,s_1,\dots,s_k.
+\]
+
+Capacity \(N\) is the largest integer satisfying:
+
+\[
+\boxed{
+H+
+\sum_{i=0}^{k}
+AlignUp(Ns_i,a_i)
+\le B
+}
+\]
+
+where \(a_i\) is required alignment for each column.
+
+Entity IDs themselves are another column.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Approximate capacity example}
+
+Suppose:
+
+\begin{verbatim}
+Entity      8 bytes
+Transform  48 bytes
+Velocity   12 bytes
+Health      4 bytes
+\end{verbatim}
+
+Ignoring alignment/header:
+
+\[
+bytes/entity
+=
+8+48+12+4
+=
+72.
+\]
+
+For a 16 KiB chunk:
+
+\[
+16384/72
+\approx227.
+\]
+
+Actual capacity is slightly lower after header and alignment.
+
+Add a 256-byte AI state component:
+
+\[
+72+256=328.
+\]
+
+Now:
+
+\[
+16384/328
+\approx49.
+\]
+
+A single large component can drastically reduce chunk density.
+
+This motivates hot/cold splitting.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Alignment}
+
+Suppose component requires:
+
+\[
+alignof(T)=16.
+\]
+
+Its column start must be aligned accordingly.
+
+A simplistic layout:
+
+\begin{verbatim}
+header
+Entity column
+Transform column
+Velocity column
+...
+\end{verbatim}
+
+must call:
+
+\[
+AlignUp(offset,alignment)
+\]
+
+before each column.
+
+Canonical helper:
+
+\begin{verbatim}
+constexpr std::size_t AlignUp(
+    std::size_t value,
+    std::size_t alignment)
+{
+    return
+        (value + alignment - 1)
+        & ~(alignment - 1);
+}
+\end{verbatim}
+
+for power-of-two alignment.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Chunk size is a systems choice}
+
+Larger chunks:
+
+\begin{itemize}
+\tightlist
+\item
+  fewer allocations,
+\item
+  more entities per job,
+\item
+  lower metadata overhead,
+\item
+  potentially more cache pollution,
+\item
+  larger migration working set.
+\end{itemize}
+
+Smaller chunks:
+
+\begin{itemize}
+\tightlist
+\item
+  finer job granularity,
+\item
+  smaller working sets,
+\item
+  more chunk metadata,
+\item
+  more allocations,
+\item
+  potentially more fragmentation.
+\end{itemize}
+
+There is no sacred universal chunk size.
+
+The correct number depends on:
+
+\[
+\text{cache hierarchy}
++
+\text{component widths}
++
+\text{job system}
++
+\text{allocator}
++
+\text{workload}.
+\]
+
+Unity's 16 KiB chunks are a useful production design reference, not a universal law. \href{https://docs.unity.cn/Packages/com.unity.entities\%401.0/manual/concepts-archetypes.html?utm_source=chatgpt.com}{Unity User Manual}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Columnar storage inside chunks}
+
+Suppose archetype:
+
+\begin{verbatim}
+Transform
+Velocity
+Health
+\end{verbatim}
+
+AoS-like chunk storage would be:
+
+\begin{verbatim}
+T0 V0 H0
+T1 V1 H1
+T2 V2 H2
+...
+\end{verbatim}
+
+Columnar storage is:
+
+\begin{verbatim}
+T0 T1 T2 T3 ...
+V0 V1 V2 V3 ...
+H0 H1 H2 H3 ...
+\end{verbatim}
+
+Each system accesses only the columns it needs.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why columnar chunks are powerful}
+
+A movement system needs:
+
+\begin{verbatim}
+Transform
+Velocity
+\end{verbatim}
+
+but not:
+
+\begin{verbatim}
+Health
+AI
+Renderable
+Audio
+Name
+\end{verbatim}
+
+Columnar layout means the CPU streams only:
+
+\begin{verbatim}
+Transform[]
+Velocity[]
+\end{verbatim}
+
+The irrelevant columns need not enter cache.
+
+That is the real data-oriented advantage.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Archetype query execution}
+
+Suppose query matches chunks C1, C2, C3.
+
+For each:
+
+\begin{verbatim}
+auto* transforms =
+    chunk.Column<Transform>();
+
+auto* velocities =
+    chunk.Column<Velocity>();
+
+for (uint32_t i = 0;
+     i < chunk.Count();
+     ++i)
+{
+    transforms[i].Position +=
+        velocities[i].Linear * dt;
+}
+\end{verbatim}
+
+No \texttt{Has\textless{}T\textgreater{}}.
+
+No sparse lookup.
+
+No entity-level component discovery.
+
+Just contiguous arrays known to match.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Sparse-set versus archetype ECS}
+
+Now the real comparison.
+
+Sparse-set ECS optimizes:
+
+\[
+\boxed{
+\text{independent component pools + flexible structural mutation}.
+}
+\]
+
+Archetype ECS optimizes:
+
+\[
+\boxed{
+\text{whole-component-set grouping + extremely efficient multi-component iteration}.
+}
+\]
+
+Neither universally wins.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Sparse-set strengths}
+
+Sparse sets are excellent when:
+
+\begin{itemize}
+\tightlist
+\item
+  component sets change frequently,
+\item
+  random component lookup is common,
+\item
+  components are very sparse,
+\item
+  you want independent component pools,
+\item
+  engine complexity must remain moderate,
+\item
+  query component counts are small,
+\item
+  entity population is not extreme.
+\end{itemize}
+
+Adding Health only inserts into:
+
+\begin{verbatim}
+Health pool
+\end{verbatim}
+
+instead of migrating every existing component.
+
+That can be much cheaper structurally.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Archetype strengths}
+
+Archetypes excel when:
+
+\begin{itemize}
+\tightlist
+\item
+  huge populations share a few signatures,
+\item
+  systems process many components together,
+\item
+  component sets are comparatively stable,
+\item
+  chunk-level parallelism matters,
+\item
+  query cache overhead must be tiny,
+\item
+  change tracking can operate at chunk granularity.
+\end{itemize}
+
+For simulation-heavy workloads:
+
+\begin{verbatim}
+Transform + Velocity + Acceleration + Mass
+\end{verbatim}
+
+across hundreds of thousands of entities, archetype chunks can be extremely effective.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Sparse-set weakness versus archetypes}
+
+For:
+
+\begin{verbatim}
+A+B+C+D+E
+\end{verbatim}
+
+sparse-set query might scan the smallest pool and execute four sparse lookups per candidate.
+
+Those lookups jump through several sparse/dense arrays.
+
+Archetype query already knows that matching chunks contain all five components.
+
+It performs zero membership tests per entity.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Archetype weakness versus sparse sets}
+
+Add one component to entity owning ten components.
+
+Sparse set:
+
+\begin{verbatim}
+insert one component
+\end{verbatim}
+
+Archetype:
+
+\begin{verbatim}
+move entity
++ move ten common components
++ construct new component
++ remove source row
+\end{verbatim}
+
+So archetype structural mutation can be significantly more expensive.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hybrid ECS designs}
+
+Real engines need not choose one ideology absolutely.
+
+You could use:
+
+\begin{itemize}
+\tightlist
+\item
+  archetype chunks for hot simulation components,
+\item
+  separate sparse pools for large/rare components,
+\item
+  external stable storage for pointer-stable objects,
+\item
+  resources outside entity storage,
+\item
+  relationship indices separate from archetypes.
+\end{itemize}
+
+The design goal is not:
+
+\begin{quote}
+be a pure archetype ECS.
+\end{quote}
+
+The goal is:
+
+\[
+\boxed{
+\text{put each data category where its access pattern belongs}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{AoS component data}
+
+Array of Structures:
+
+\begin{verbatim}
+struct Particle
+{
+    Vec3 Position;
+    Vec3 Velocity;
+    float Mass;
+    float Lifetime;
+};
+
+std::vector<Particle> particles;
+\end{verbatim}
+
+Memory:
+
+\begin{verbatim}
+P0 V0 M0 L0
+P1 V1 M1 L1
+P2 V2 M2 L2
+...
+\end{verbatim}
+
+This is AoS.
+
+It is convenient because all properties of one object are adjacent.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{When AoS is good}
+
+Suppose code does:
+
+\begin{verbatim}
+for (Particle& p : particles)
+{
+    RenderDebugParticle(
+        p.Position,
+        p.Velocity,
+        p.Mass,
+        p.Lifetime);
+}
+\end{verbatim}
+
+Every field is used.
+
+AoS is reasonable.
+
+Similarly, a complex component itself may be naturally treated as one logical record.
+
+AoS is not inherently bad.
+
+The question is always:
+
+\[
+\boxed{
+\text{Does the access pattern consume the whole record?}
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{AoS waste}
+
+Suppose physics integration only uses:
+
+\begin{verbatim}
+Position
+Velocity
+\end{verbatim}
+
+but each Particle also stores:
+
+\begin{verbatim}
+Name
+Material
+DebugColor
+Lifetime
+CollisionHistory
+AssetReference
+\end{verbatim}
+
+The cache line fetches irrelevant bytes.
+
+Useful-byte ratio can become terrible.
+
+That is where SoA helps.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{SoA component data}
+
+Structure of Arrays:
+
+\begin{verbatim}
+struct Particles
+{
+    std::vector<Vec3> Positions;
+    std::vector<Vec3> Velocities;
+    std::vector<float> Masses;
+    std::vector<float> Lifetimes;
+};
+\end{verbatim}
+
+Memory:
+
+\begin{verbatim}
+P0 P1 P2 P3 ...
+V0 V1 V2 V3 ...
+M0 M1 M2 M3 ...
+L0 L1 L2 L3 ...
+\end{verbatim}
+
+Now integration reads only the Position and Velocity streams.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{ECS is already partly SoA}
+
+A sparse-set ECS with separate component pools:
+
+\begin{verbatim}
+Transform[]
+Velocity[]
+Health[]
+\end{verbatim}
+
+is SoA \textbf{at the component level}.
+
+But inside Transform:
+
+\begin{verbatim}
+struct Transform
+{
+    Vec3 Position;
+    Quaternion Rotation;
+    Vec3 Scale;
+};
+\end{verbatim}
+
+it is still AoS relative to its fields.
+
+So there are multiple layout levels:
+
+\begin{verbatim}
+world
+  → component type separation
+      → component internal field layout
+\end{verbatim}
+
+You can have:
+
+\begin{verbatim}
+SoA components
+with AoS fields inside each component.
+\end{verbatim}
+
+That is often perfectly fine.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Transform SoA example}
+
+If a system only changes positions for one million objects, an extreme SoA might be:
+
+\begin{verbatim}
+struct TransformColumns
+{
+    float* PosX;
+    float* PosY;
+    float* PosZ;
+
+    float* RotX;
+    float* RotY;
+    float* RotZ;
+    float* RotW;
+
+    float* ScaleX;
+    float* ScaleY;
+    float* ScaleZ;
+};
+\end{verbatim}
+
+This can be wonderful for SIMD.
+
+But it substantially complicates APIs.
+
+Do not split data until profiling shows a reason.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{AoSoA}
+
+There is an intermediate pattern:
+
+\textbf{Array of Structures of Arrays}.
+
+For SIMD width 4:
+
+\begin{verbatim}
+Block 0:
+x[4]
+y[4]
+z[4]
+
+Block 1:
+x[4]
+y[4]
+z[4]
+\end{verbatim}
+
+This can align naturally with vector registers while preserving manageable grouping.
+
+High-performance particle, animation and physics kernels often benefit from such arrangements.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hot-and-cold splitting}
+
+Suppose one component contains:
+
+\begin{verbatim}
+struct Character
+{
+    // hot every frame
+    Vec3 Position;
+    Vec3 Velocity;
+    float Health;
+
+    // cold
+    std::string DisplayName;
+    AssetHandle Portrait;
+    std::string Biography;
+    DebugMetadata Debug;
+};
+\end{verbatim}
+
+Every update pulls cold bytes near hot data.
+
+Instead split:
+
+\begin{verbatim}
+struct CharacterRuntime
+{
+    Vec3 Position;
+    Vec3 Velocity;
+    float Health;
+};
+
+struct CharacterMetadata
+{
+    std::string DisplayName;
+    AssetHandle Portrait;
+    std::string Biography;
+    DebugMetadata Debug;
+};
+\end{verbatim}
+
+Now hot loops ignore cold data entirely.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hot/cold splitting and chunks}
+
+Large cold components reduce archetype chunk capacity even when systems never touch them.
+
+Suppose hot data per entity is:
+
+\[
+64\text{ bytes}.
+\]
+
+Cold metadata adds:
+
+\[
+512\text{ bytes}.
+\]
+
+If stored together:
+
+\[
+576\text{ bytes/entity}.
+\]
+
+16 KiB chunk fits only roughly:
+
+\[
+28
+\]
+
+entities.
+
+If cold data is external:
+
+\[
+16384/64
+\approx256.
+\]
+
+That is almost an order of magnitude difference in chunk density.
+
+This is why hot/cold splitting is not cosmetic.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo-specific hot/cold example}
+
+Your authored \texttt{MeshRendererComponent} contains persistent asset handles, material slot arrays, shadow flags and render-layer data.
+
+A runtime renderer may not want all of that in the hottest per-draw path.
+
+The renderer-facing \texttt{MeshDraw} already represents a more runtime-specific extraction:
+
+\begin{verbatim}
+MeshHandle Mesh;
+Mat4f Model;
+PBRMaterial Material;
+uint32_t ObjectID;
+bool CastShadows;
+bool ReceiveShadows;
+\end{verbatim}
+
+That is a good conceptual bridge:
+
+\begin{verbatim}
+authored component
+      ↓
+runtime extraction
+      ↓
+hot renderer data
+\end{verbatim}
+
+Do not force authoring representation to be the most efficient GPU submission representation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Tag components}
+
+A tag component has identity but no per-entity payload.
+
+Examples:
+
+\begin{verbatim}
+struct Player {};
+struct Dead {};
+struct Frozen {};
+struct Static {};
+struct NeedsTransformUpdate {};
+\end{verbatim}
+
+The entity either has the tag or does not.
+
+In archetype ECS, tag presence affects signature but requires no component column.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Tags are data despite having zero bytes}
+
+\texttt{Dead} expresses state:
+
+\[
+Dead(E)\in\{false,true\}.
+\]
+
+A system can query:
+
+\begin{verbatim}
+Health
+WITHOUT Dead
+\end{verbatim}
+
+The tag encodes one bit of semantic information through membership.
+
+So a zero-byte component is still meaningful data.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Tags and archetype fragmentation}
+
+Be careful.
+
+Every distinct component combination creates a distinct archetype.
+
+If you introduce many independent tags:
+
+\begin{verbatim}
+Selected
+Highlighted
+Sleeping
+Visible
+NetworkDirty
+EditorLocked
+QuestTarget
+...
+\end{verbatim}
+
+all combinations may theoretically generate:
+
+\[
+2^N
+\]
+
+signatures.
+
+Most will never exist, but excessive dynamic tags can still create archetype proliferation.
+
+For rapidly toggled flags, sometimes one packed bitfield component is better than structural tag migration.
+
+Again:
+
+\[
+\boxed{
+\text{structural state}
+\neq
+\text{ordinary mutable state}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo's current tags are not ECS tag components}
+
+Current \texttt{EngineCore::EntitySettingsComponent} contains:
+
+\begin{verbatim}
+std::vector<std::string> Tags;
+\end{verbatim}
+
+These are flexible authored string tags.
+
+Examples might be:
+
+\begin{verbatim}
+"player"
+"enemy"
+"spawn-point"
+\end{verbatim}
+
+That is different from:
+
+\begin{verbatim}
+struct Dead {};
+\end{verbatim}
+
+as an ECS structural tag.
+
+String tags are good for authoring/search.
+
+Compile-time or numeric ECS tags are better for hot simulation queries.
+
+Do not conflate them.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Singleton/resource components}
+
+Some data belongs to the \textbf{world}, not to each entity.
+
+Examples:
+
+\begin{verbatim}
+DeltaTime
+PhysicsWorld
+InputState
+NavigationWorld
+RenderSettings
+Weather
+RandomGenerator
+ActiveCamera
+\end{verbatim}
+
+Duplicating these across entities is nonsense.
+
+Use a resource/singleton model.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Singleton entity versus resource storage}
+
+One pattern:
+
+\begin{verbatim}
+Entity WorldSettings
+    Time
+    Gravity
+    Environment
+\end{verbatim}
+
+Another:
+
+\begin{verbatim}
+registry.Resource<Time>();
+registry.Resource<InputState>();
+\end{verbatim}
+
+with separate world resource storage.
+
+Resource storage often communicates intent more clearly:
+
+\[
+\boxed{
+\text{there is exactly one value per ECS world}.
+}
+\]
+
+A singleton entity is useful if you want ordinary entity queries/reflection/serialization.
+
+Both are valid.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Input is usually a resource first}
+
+Your current \texttt{Kairo.EngineCore.Input} behaves like a resource/service.
+
+It stores:
+
+\begin{itemize}
+\tightlist
+\item
+  current and previous keys,
+\item
+  mouse buttons,
+\item
+  gamepad buttons,
+\item
+  gamepad axes,
+\item
+  mouse position,
+\item
+  mouse delta,
+\item
+  scroll delta.
+\end{itemize}
+
+That is appropriate for raw device state.
+
+It should not be copied onto every player entity.
+
+Later a system can transform raw input into per-entity intent:
+
+\begin{verbatim}
+struct CharacterInput
+{
+    Vec2 Move;
+    Vec2 Look;
+    bool JumpPressed;
+};
+\end{verbatim}
+
+So:
+
+\begin{verbatim}
+Input resource
+     ↓
+input-mapping system
+     ↓
+CharacterInput component
+\end{verbatim}
+
+This distinction becomes important in Part 1458.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Relationship components}
+
+Not all ECS data is unary.
+
+Ordinary component says:
+
+\[
+Has(E,T).
+\]
+
+A relationship says:
+
+\[
+R(E_a,E_b).
+\]
+
+Examples:
+
+\begin{verbatim}
+ChildOf(child,parent)
+Targets(attacker,target)
+OwnedBy(item,player)
+AttachedTo(weapon,bone)
+Follows(camera,character)
+\end{verbatim}
+
+This is graph data inside an ECS.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Relationship-as-component design}
+
+Simplest:
+
+\begin{verbatim}
+struct Parent
+{
+    Entity Value;
+};
+
+struct Target
+{
+    Entity Value;
+};
+\end{verbatim}
+
+Then each entity has at most one Parent and one Target.
+
+This works extremely well for many relationships.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Relationship pairs}
+
+Another model treats:
+
+\[
+(RelationshipType,\TargetEntity)
+\]
+
+as a component-like ID.
+
+For example:
+
+\begin{verbatim}
+(ChildOf, Entity42)
+(Eats, Apple)
+(Likes, Entity17)
+\end{verbatim}
+
+Flecs provides this pair model directly, allowing relationships to participate in ECS queries. \href{https://www.flecs.dev/flecs/Relationships.html?utm_source=chatgpt.com}{Flecs}
+
+It is powerful, but it has storage implications.
+
+If target entity participates in archetype identity, many different relationship targets can fragment storage into many tables/archetypes.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Parent-as-data versus parent-as-signature}
+
+Consider 100,000 children with 10,000 possible parents.
+
+If parent identity becomes part of archetype signature:
+
+\begin{verbatim}
+ChildOf Parent17
+ChildOf Parent18
+ChildOf Parent19
+...
+\end{verbatim}
+
+you may get large numbers of storage groups.
+
+If instead:
+
+\begin{verbatim}
+struct Parent
+{
+    Entity Value;
+};
+\end{verbatim}
+
+all children with a Parent component can share the same archetype.
+
+Flecs itself distinguishes hierarchy storage strategies for exactly this reason: its regular \texttt{ChildOf} relationship can partition storage by parent, while a parent-component-style hierarchy can avoid fragmenting ordinary component layout. \href{https://www.flecs.dev/flecs/HierarchiesManual.html?utm_source=chatgpt.com}{Flecs}
+
+This is a deep storage consequence of relationship modeling.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Parent-child relationships}
+
+A scene hierarchy requires:
+
+\[
+Parent(child)=parent.
+\]
+
+We often also want efficient:
+
+\[
+Children(parent).
+\]
+
+You can store only Parent and derive children by scanning.
+
+But that is:
+
+\[
+O(N)
+\]
+
+per parent query.
+
+Better maintain reverse adjacency.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Bidirectional hierarchy invariants}
+
+If child C says:
+
+\[
+Parent(C)=P,
+\]
+
+then P's child index should contain C.
+
+So:
+
+\[
+\boxed{
+Parent(C)=P
+\iff
+C\in Children(P)
+}
+\]
+
+for live hierarchy relations.
+
+This is exactly the invariant your current \texttt{EngineCore::Scene} maintains.
+
+It stores:
+
+\begin{verbatim}
+std::optional<Entity> Parent;
+std::vector<Entity> Children;
+\end{verbatim}
+
+and \texttt{SetParent()} updates both sides.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Cycle prevention}
+
+A hierarchy should be a forest/DAG, not:
+
+\begin{verbatim}
+A parent B
+B parent C
+C parent A
+\end{verbatim}
+
+Your current \texttt{Scene::SetParent()} walks ancestors of the prospective parent and rejects if it encounters the child.
+
+That enforces:
+
+\[
+child\notin Ancestors(parent).
+\]
+
+This is essential because world-transform propagation assumes acyclicity.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Destruction policy}
+
+What happens when a parent dies?
+
+Common choices:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  destroy entire subtree,
+\item
+  reparent children to root,
+\item
+  reparent to parent's parent,
+\item
+  reject destruction until children removed.
+\end{enumerate}
+
+Your current \texttt{Scene} chooses \textbf{subtree destruction}.
+
+It performs an iterative walk rather than recursive destruction, avoiding stack overflow on very deep hierarchies.
+
+That is a clear and coherent policy.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Scene hierarchy transforms}
+
+Each entity has local transform:
+
+\[
+L_e.
+\]
+
+Root world transform:
+
+\[
+W_r=L_r.
+\]
+
+For child C of P:
+
+\[
+\boxed{
+W_C=W_P L_C
+}
+\]
+
+assuming the engine's transform composition convention uses parent * local.
+
+For a chain:
+
+\begin{verbatim}
+Root → Arm → Hand → Sword
+\end{verbatim}
+
+Sword world transform is:
+
+\[
+W_S=
+L_RL_AL_HL_S.
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo hierarchy calculation}
+
+Your current \texttt{Scene::WorldTransform()}:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  walks from entity to root collecting ancestors,
+\item
+  reverses the ancestry,
+\item
+  multiplies local transforms root-to-leaf.
+\end{enumerate}
+
+Conceptually:
+
+\begin{verbatim}
+Transform world = Identity();
+
+for (Entity e : rootToLeaf)
+{
+    world *= Local(e);
+}
+\end{verbatim}
+
+This is correct and authoritative.
+
+But its complexity is:
+
+\[
+O(depth)
+\]
+
+per call.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why repeated on-demand hierarchy walks become expensive}
+
+Suppose 100,000 entities form moderate hierarchies and renderer asks for world transform of each.
+
+A parent's transform may be recomputed separately for every descendant.
+
+If tree depth averages \(d\):
+
+\[
+O(Nd).
+\]
+
+A dedicated transform system can instead traverse hierarchy once:
+
+\[
+O(N).
+\]
+
+Each parent's world transform is computed once and reused for its children.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hierarchy traversal order}
+
+You must process parent before child.
+
+One way is breadth-first:
+
+\begin{verbatim}
+depth 0 roots
+depth 1 children
+depth 2 grandchildren
+...
+\end{verbatim}
+
+Another is depth-first pre-order.
+
+What matters is:
+
+\[
+\boxed{
+ParentWorld
+\text{ must exist before }
+ChildWorld.
+}
+\]
+
+This introduces a dependency that ordinary flat ECS iteration does not automatically capture.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Local and world transform components}
+
+A runtime ECS may separate:
+
+\begin{verbatim}
+struct LocalTransform
+{
+    Vec3 Position;
+    Quaternion Rotation;
+    Vec3 Scale;
+};
+
+struct WorldTransform
+{
+    Mat4 Matrix;
+};
+\end{verbatim}
+
+Then hierarchy system reads:
+
+\begin{verbatim}
+LocalTransform
+Parent
+Parent.WorldTransform
+\end{verbatim}
+
+and writes:
+
+\begin{verbatim}
+WorldTransform
+\end{verbatim}
+
+This makes dependencies explicit.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dirty transform propagation}
+
+Recomputing every world transform every frame is unnecessary if most entities do not move.
+
+Mark changed transforms dirty.
+
+Simple approach:
+
+\begin{verbatim}
+struct TransformDirty {};
+\end{verbatim}
+
+When local transform changes:
+
+\begin{verbatim}
+mark entity dirty
+mark all descendants dirty
+\end{verbatim}
+
+Then update only dirty subtrees.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Immediate dirty propagation}
+
+If entity A changes:
+
+\begin{verbatim}
+A
+├── B
+│   ├── D
+│   └── E
+└── C
+\end{verbatim}
+
+mark:
+
+\begin{verbatim}
+A B C D E dirty.
+\end{verbatim}
+
+Correct but modifying A may require:
+
+\[
+O(size(subtree)).
+\]
+
+If the hierarchy is huge and parents change frequently, dirty marking itself becomes expensive.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Version-based lazy propagation}
+
+A more elegant design stores:
+
+\begin{verbatim}
+struct TransformState
+{
+    uint64_t LocalVersion;
+    uint64_t WorldVersion;
+
+    uint64_t CachedParentWorldVersion;
+};
+\end{verbatim}
+
+Recompute entity E if:
+
+\[
+LocalVersion_E
+\text{ changed}
+\]
+
+or:
+
+\[
+WorldVersion_{Parent(E)}
+\neq
+CachedParentWorldVersion_E.
+\]
+
+After recomputation:
+
+\begin{verbatim}
+CachedParentWorldVersion =
+    Parent.WorldVersion
+\end{verbatim}
+
+and increment E's world version.
+
+Now changing a parent does not require immediately writing dirty flags through the entire subtree.
+
+Descendants discover the change during ordered traversal.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dirty propagation and archetype tags}
+
+You \emph{could} use:
+
+\begin{verbatim}
+struct DirtyTransform {};
+\end{verbatim}
+
+as a tag.
+
+But if this tag is frequently added and removed every frame in an archetype ECS, entities constantly migrate between:
+
+\begin{verbatim}
+{Transform, Parent}
+\end{verbatim}
+
+and:
+
+\begin{verbatim}
+{Transform, Parent, DirtyTransform}.
+\end{verbatim}
+
+That is expensive.
+
+For very transient state, a bit/flag/version inside existing transform metadata can be better.
+
+This is exactly the kind of decision Part 1445 was warning about.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Previous and current transform snapshots}
+
+Physics often runs at fixed frequency:
+
+\[
+dt_f=\frac1{60}.
+\]
+
+Rendering may run:
+
+\[
+90,\ 120,\ 144,\ 240\text{ Hz}.
+\]
+
+If renderer uses only latest physics state, objects visibly step at 60 Hz.
+
+Store:
+
+\[
+T_{prev}
+\]
+
+and:
+
+\[
+T_{curr}.
+\]
+
+Then render between them.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Fixed-step interpolation}
+
+Frame accumulator:
+
+\[
+accumulator.
+\]
+
+After fixed simulation steps:
+
+\[
+\alpha=
+\frac{accumulator}{dt_f}.
+\]
+
+Where:
+
+\[
+0\le\alpha<1.
+\]
+
+Render position:
+
+\[
+p_r=
+(1-\alpha)p_{prev}
++
+\alpha p_{curr}.
+\]
+
+Scale similarly.
+
+Rotation should use:
+
+\[
+q_r=
+Slerp(q_{prev},q_{curr},\alpha).
+\]
+
+Do \textbf{not} generally linearly interpolate complete transformation matrices.
+
+That can introduce shear/non-orthonormal rotations.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Snapshot update order}
+
+Every physics tick:
+
+\begin{verbatim}
+Previous = Current;
+
+SimulateFixedStep();
+
+Current = NewSimulationTransform;
+\end{verbatim}
+
+Then rendering independently uses:
+
+\begin{verbatim}
+Interpolate(
+    Previous,
+    Current,
+    alpha);
+\end{verbatim}
+
+This decouples simulation and rendering clocks.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Teleports}
+
+Suppose character teleports 100 meters.
+
+If:
+
+\begin{verbatim}
+Previous = old location
+Current  = new location
+\end{verbatim}
+
+interpolation makes it fly rapidly across the map for one rendered interval.
+
+For teleport:
+
+\begin{verbatim}
+Previous = teleportedTransform;
+Current  = teleportedTransform;
+\end{verbatim}
+
+to suppress interpolation.
+
+This is a small but essential runtime rule.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo status for M087}
+
+Current Kairo contains:
+
+\begin{itemize}
+\tightlist
+\item
+  a sparse-set ECS rather than archetype chunks,
+\item
+  authored \texttt{Scene} parent/children hierarchy,
+\item
+  cycle-safe parenting,
+\item
+  on-demand world transform calculation,
+\item
+  flexible string tags.
+\end{itemize}
+
+It does \textbf{not currently implement} in inspected KairoECS:
+
+\begin{itemize}
+\tightlist
+\item
+  archetypes,
+\item
+  archetype chunks,
+\item
+  archetype migration,
+\item
+  chunk column layouts,
+\item
+  archetype transition caches,
+\item
+  dirty-transform propagation,
+\item
+  previous/current ECS transform snapshots.
+\end{itemize}
+
+So M087 is largely a \textbf{next-level runtime architecture}, not a claim about what your sparse-set registry already does.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsubsection{ENGINE COMPONENTS, BRIDGES, EVENTS, TICKS AND PARALLEL SYSTEM SCHEDULING}\label{engine-components-bridges-events-ticks-and-parallel-system-scheduling}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Renderable component representation}
+
+A scene/ECS renderable should not own Vulkan/Metal command buffers.
+
+It should describe \textbf{render intent}.
+
+A useful authored component:
+
+\begin{verbatim}
+struct Renderable
+{
+    MeshAssetHandle Mesh;
+    MaterialAssetHandle Material;
+
+    uint64_t RenderLayers;
+
+    bool Visible;
+    bool CastShadows;
+    bool ReceiveShadows;
+};
+\end{verbatim}
+
+Your current \texttt{MeshRendererComponent} already follows this philosophy.
+
+It contains persistent typed asset handles and renderer-neutral policy.
+
+That is excellent separation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Authored renderable versus runtime renderer object}
+
+Asset identity:
+
+\begin{verbatim}
+MeshAssetHandle
+MaterialAssetHandle
+\end{verbatim}
+
+is not necessarily the renderer's runtime GPU handle.
+
+The rendering bridge resolves:
+
+\begin{verbatim}
+ECS Entity
+MeshAssetHandle
+MaterialAssetHandle
+WorldTransform
+        ↓
+Renderer
+        ↓
+MeshHandle
+GPU buffers
+descriptor tables
+pipeline/material state
+\end{verbatim}
+
+Keep those domains separate.
+
+Otherwise scene files accidentally serialize GPU-process-local IDs.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Render extraction}
+
+A good ECS/render pipeline often builds a frame-local render scene:
+
+\begin{verbatim}
+ECS components
+     ↓
+visibility/culling
+     ↓
+render extraction
+     ↓
+MeshDraw[]
+Light[]
+Camera
+     ↓
+renderer
+\end{verbatim}
+
+Your \texttt{KairoRenderer::RenderScene} already works this way.
+
+A \texttt{MeshDraw} is a runtime submission record rather than the authored component itself.
+
+This is precisely the architecture you want.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Physics body component}
+
+A rigid-body ECS component describes persistent physical intent:
+
+\begin{verbatim}
+struct RigidBody
+{
+    MotionType Motion;
+
+    float Density;
+    float GravityScale;
+    float LinearDamping;
+    float AngularDamping;
+};
+\end{verbatim}
+
+Your current \texttt{RigidBodyComponent} stores exactly this kind of authoring data.
+
+Critically, its documentation says runtime body IDs belong to the physics-world adapter and are \textbf{not serialized in the scene}.
+
+That separation is correct.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why runtime physics IDs should not live in persistent authored data}
+
+Suppose scene file stores:
+
+\begin{verbatim}
+BodyID = 83.
+\end{verbatim}
+
+Next run physics world allocates bodies in a different order.
+
+Body 83 may now be unrelated.
+
+Therefore persistent data contains:
+
+\begin{verbatim}
+how this entity should behave physically
+\end{verbatim}
+
+while runtime bridge stores:
+
+\begin{verbatim}
+which PhysicsWorld body currently implements it.
+\end{verbatim}
+
+Two distinct identities.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Collider component}
+
+Collider contains geometric and filtering data:
+
+\begin{verbatim}
+struct Collider
+{
+    Shape ShapeType;
+
+    Vec3 HalfExtents;
+    float Radius;
+    float HalfHeight;
+
+    float Friction;
+    float Restitution;
+
+    uint32_t BelongsTo;
+    uint32_t CollidesWith;
+
+    bool IsTrigger;
+};
+\end{verbatim}
+
+Your current component contains these concepts.
+
+That is a good persistent representation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Multiple colliders per entity}
+
+A simple optional:
+
+\begin{verbatim}
+ColliderComponent
+\end{verbatim}
+
+implies at most one authored collider per entity.
+
+Complex characters may need:
+
+\begin{verbatim}
+torso capsule
+head sphere
+weapon hitbox
+foot sensors
+\end{verbatim}
+
+There are several ECS designs:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  dynamic buffer of collider descriptors,
+\item
+  child entities each owning Collider,
+\item
+  multiple specialized collider components,
+\item
+  one external physics body with several colliders represented by a handle list.
+\end{enumerate}
+
+Child-entity colliders fit naturally with entity relationships but increase entity count.
+
+A buffer is compact but makes individual collider identity trickier.
+
+Again, model according to access/lifetime needs.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Light component}
+
+Light data should describe physical/scene intent.
+
+Your \texttt{LightComponent} includes:
+
+\begin{itemize}
+\tightlist
+\item
+  Directional/Point/Spot/RectangleArea,
+\item
+  linear RGB color,
+\item
+  physically meaningful intensity,
+\item
+  Lux/Candela/Nit,
+\item
+  range,
+\item
+  spot cone angles,
+\item
+  area dimensions,
+\item
+  shadow policy,
+\item
+  shadow bias,
+\item
+  render layers.
+\end{itemize}
+
+This is considerably better than:
+
+\begin{verbatim}
+float intensity = 5;
+\end{verbatim}
+
+with no unit.
+
+Explicit units make the renderer adapter deterministic.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Light transforms}
+
+Light component does not need to duplicate world position/direction.
+
+Position and orientation should come from:
+
+\begin{verbatim}
+Transform
+\end{verbatim}
+
+while light stores photometric properties.
+
+That is component composition:
+
+\begin{verbatim}
+Transform + Light
+\end{verbatim}
+
+rather than bloating Light with unrelated transform state.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Camera component}
+
+Your current Camera contains:
+
+\begin{itemize}
+\tightlist
+\item
+  perspective/orthographic mode,
+\item
+  vertical FOV,
+\item
+  near/far planes,
+\item
+  orthographic size,
+\item
+  exposure,
+\item
+  clear mode/color,
+\item
+  render-layer mask,
+\item
+  Primary flag.
+\end{itemize}
+
+Again, camera transform comes from Transform.
+
+Thus camera entity is:
+
+\begin{verbatim}
+Transform
+Camera
+\end{verbatim}
+
+not one monolithic camera object.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Primary camera is global state hiding in entity data}
+
+\texttt{CameraComponent::Primary} allows at most one primary camera in your current \texttt{Scene}.
+
+Another architecture would store:
+
+\begin{verbatim}
+struct ActiveCameraResource
+{
+    Entity Camera;
+};
+\end{verbatim}
+
+Why?
+
+Because ``which camera is active?'' is really world-level state.
+
+Then cameras themselves do not need mutually exclusive \texttt{Primary} flags.
+
+Both designs work.
+
+The resource design avoids scanning or invariant enforcement across all camera components.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Script or behavior component}
+
+A script component should generally store:
+
+\begin{verbatim}
+script asset/class identity
+enabled state
+serialized parameters
+\end{verbatim}
+
+not a raw VM pointer.
+
+Your current:
+
+\begin{verbatim}
+struct LogicComponent
+{
+    DocumentAssetHandle Document;
+    bool Enabled;
+};
+\end{verbatim}
+
+does exactly the persistent-identity part.
+
+Runtime VM instances are deliberately process-local.
+
+That is the right separation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Script runtime state}
+
+The bridge might maintain:
+
+\begin{verbatim}
+Entity
+   ↓
+ScriptInstanceID
+   ↓
+VM state
+\end{verbatim}
+
+or a runtime component:
+
+\begin{verbatim}
+struct ScriptRuntime
+{
+    ScriptInstanceID Instance;
+};
+\end{verbatim}
+
+but that process-local data should not be confused with the authored Logic component.
+
+On scene load:
+
+\begin{verbatim}
+LogicComponent
+    ↓
+compile/load bytecode
+    ↓
+create VM instance
+    ↓
+runtime bridge mapping
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Input component/state representation}
+
+There are two different ``input states.''
+
+Raw device state:
+
+\begin{verbatim}
+W key down
+mouse dx
+gamepad axis 0 = 0.72
+\end{verbatim}
+
+Gameplay intent:
+
+\begin{verbatim}
+Move = (0.8,0.1)
+Look = (-2.1,0.4)
+JumpPressed = true
+Fire = true
+\end{verbatim}
+
+Raw state belongs naturally to a resource/service.
+
+Gameplay intent can belong to an entity.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why this separation matters}
+
+Keyboard W does not inherently mean:
+
+\[
+MoveForward.
+\]
+
+Bindings may change.
+
+A gamepad may produce the same Move action.
+
+AI may generate Move without any physical device.
+
+Networking may inject remote inputs.
+
+So:
+
+\begin{verbatim}
+raw hardware
+     ↓
+input mapping
+     ↓
+gameplay command component
+\end{verbatim}
+
+allows human, AI, replay and network inputs to converge onto the same simulation interface.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Entity-to-physics ID mapping}
+
+Your PhysicsWorld has runtime IDs:
+
+\begin{verbatim}
+BodyID
+ColliderID
+\end{verbatim}
+
+Your ECS has:
+
+\begin{verbatim}
+Entity(Index,Generation)
+\end{verbatim}
+
+These are separate identity spaces.
+
+You need a bridge.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Bidirectional physics bridge}
+
+A useful structure:
+
+\begin{verbatim}
+struct PhysicsEntityBridge
+{
+    std::unordered_map<Entity, BodyID>
+        EntityToBody;
+
+    std::vector<Entity>
+        BodyToEntity;
+};
+\end{verbatim}
+
+Then:
+
+\[
+Entity\rightarrow BodyID
+\]
+
+for writing forces/transforms,
+
+and:
+
+\[
+BodyID\rightarrow Entity
+\]
+
+for collision events/raycast hits.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why reverse mapping matters}
+
+Physics reports:
+
+\begin{verbatim}
+Body 17 collided with Body 43.
+\end{verbatim}
+
+Gameplay cares about:
+
+\begin{verbatim}
+Player collided with Door.
+\end{verbatim}
+
+So:
+
+\begin{verbatim}
+Body17
+   ↓
+Entity A
+
+Body43
+   ↓
+Entity B
+\end{verbatim}
+
+must be cheap.
+
+A one-way Entity→Body map is insufficient.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo PhysicsWorld ID behavior}
+
+Current PhysicsWorld creates body IDs as vector indices and, on destruction, deactivates records rather than compacting/reusing them immediately.
+
+That means an old BodyID does not silently alias a newly compacted body.
+
+This is a useful deletion-safety property.
+
+If you later introduce body-ID reuse, consider a generational physics handle for the same reason ECS entities use generations.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Entity-to-render-object mapping}
+
+Renderer may have:
+
+\begin{verbatim}
+MeshHandle
+MaterialHandle
+RenderProxyID
+ObjectID
+\end{verbatim}
+
+ECS Entity should remain independent.
+
+Bridge:
+
+\begin{verbatim}
+Entity
+  ↓
+render extraction
+  ↓
+frame render object
+\end{verbatim}
+
+Many engines do not need a permanent render object for every entity.
+
+Frame extraction can simply generate transient draws.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo \texttt{MeshDraw}}
+
+Your renderer has:
+
+\begin{verbatim}
+struct MeshDraw
+{
+    MeshHandle Mesh;
+    Mat4f Model;
+    PBRMaterial Material;
+    uint32_t ObjectID;
+    ...
+};
+\end{verbatim}
+
+This is already a clear separation:
+
+\begin{verbatim}
+renderer resource MeshHandle
+\end{verbatim}
+
+versus:
+
+\begin{verbatim}
+ObjectID used to identify the scene object.
+\end{verbatim}
+
+Good architecture.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stable object IDs for picking}
+
+GPU picking often renders an integer ID into an offscreen attachment:
+
+\begin{verbatim}
+pixel → object ID
+\end{verbatim}
+
+Then readback gives:
+
+\[
+ID=1234.
+\]
+
+Map 1234 to scene/entity.
+
+But there is a subtle lifetime problem.
+
+GPU readback is asynchronous.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why writing ECS index directly into the pick buffer can be unsafe}
+
+Frame N:
+
+\begin{verbatim}
+Entity {Index=42, Generation=7}
+→ pick value 42
+\end{verbatim}
+
+Entity dies.
+
+Before readback completes, index 42 gets reused:
+
+\begin{verbatim}
+Entity {42,8}.
+\end{verbatim}
+
+GPU reports:
+
+\begin{verbatim}
+42.
+\end{verbatim}
+
+If CPU interprets only the index, it selects the wrong object.
+
+This is the same ABA problem again.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Safer GPU picking}
+
+Option A: write persistent scene ID if it is guaranteed not to recycle during relevant lifetime.
+
+Your current authored \texttt{Scene::Entity} uses stable scene-local \texttt{uint32\_t} IDs, and \texttt{MeshDraw::ObjectID} can naturally carry that.
+
+Option B: use a frame-local pick table:
+
+\begin{verbatim}
+PickID 1 -> Entity{42,7}
+PickID 2 -> Entity{97,3}
+...
+\end{verbatim}
+
+Render only PickID.
+
+Keep the table until GPU readback for that frame finishes.
+
+Then:
+
+\begin{verbatim}
+pixel PickID
+   ↓
+that frame's immutable lookup table
+   ↓
+generational Entity
+   ↓
+IsAlive()
+\end{verbatim}
+
+This is especially robust for runtime ECS handles.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{ECS event queues}
+
+Not every interaction should call another system immediately.
+
+Suppose physics detects 50 collisions.
+
+Instead of recursively invoking gameplay inside solver code, produce events:
+
+\begin{verbatim}
+struct CollisionEvent
+{
+    Entity A;
+    Entity B;
+    CollisionPhase Phase;
+};
+\end{verbatim}
+
+Push them into an event queue.
+
+Later gameplay systems consume them.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why event queues help}
+
+They decouple:
+
+\[
+\text{producer timing}
+\]
+
+from:
+
+\[
+\text{consumer execution}.
+\]
+
+Physics can finish in a clean state.
+
+Gameplay can process events afterward.
+
+Structural changes can be command-buffered.
+
+Replay can record events.
+
+Multiple listeners can consume them.
+
+This is much easier to reason about than arbitrary nested callbacks.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Double-buffered event queues}
+
+A strong design is:
+
+\begin{verbatim}
+WriteEvents
+ReadEvents
+\end{verbatim}
+
+During phase:
+
+\begin{verbatim}
+producers append WriteEvents
+consumers read ReadEvents
+\end{verbatim}
+
+At synchronization:
+
+\begin{verbatim}
+swap(ReadEvents, WriteEvents);
+WriteEvents.clear();
+\end{verbatim}
+
+This prevents an event handler generating another event from recursively entering the same iteration unexpectedly.
+
+It establishes clear frame/tick boundaries.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo event systems}
+
+\texttt{EngineCore::Event} currently represents platform/window events such as:
+
+\begin{verbatim}
+WindowClose
+WindowResize
+KeyPressed
+MouseMoved
+...
+\end{verbatim}
+
+and supports immediate handled propagation.
+
+Separately, \texttt{PhysicsWorld} has:
+
+\begin{verbatim}
+PhysicsContactEvent
+\end{verbatim}
+
+with:
+
+\begin{verbatim}
+Begin
+Stay
+End
+\end{verbatim}
+
+and supports both polling and a synchronous callback.
+
+So current Kairo already has \textbf{event-producing subsystems}, but not yet one generalized typed ECS event-queue layer.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Collision event delivery}
+
+Physics emits:
+
+\begin{verbatim}
+BodyID A
+BodyID B
+ColliderID A
+ColliderID B
+Begin/Stay/End
+Trigger flag
+\end{verbatim}
+
+ECS bridge resolves:
+
+\begin{verbatim}
+BodyID → Entity
+\end{verbatim}
+
+then produces gameplay event:
+
+\begin{verbatim}
+struct EntityCollisionEvent
+{
+    Entity A;
+    Entity B;
+
+    ColliderID ColliderA;
+    ColliderID ColliderB;
+
+    CollisionPhase Phase;
+    bool IsTrigger;
+};
+\end{verbatim}
+
+Now gameplay never needs to know body-table internals.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Event timing relative to physics}
+
+Current Kairo PhysicsWorld carefully dispatches contact callbacks only after solver arrays and profiling have finished.
+
+Its source explicitly avoids callback mutation while iterating live body/contact/joint storage.
+
+That is exactly the right principle.
+
+For ECS integration I would go one step further:
+
+\begin{verbatim}
+Physics Step
+    ↓
+capture contact events
+    ↓
+map IDs to entities
+    ↓
+enqueue ECS events
+    ↓
+finish physics phase
+    ↓
+gameplay event systems
+    ↓
+deferred structural flush
+\end{verbatim}
+
+This maximizes isolation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Begin-play lifecycle events}
+
+Many components need one-time initialization.
+
+Examples:
+
+\begin{verbatim}
+script OnStart
+AI initialize
+audio autoplay
+particle emitter activation
+runtime resource creation
+\end{verbatim}
+
+You need to distinguish:
+
+\begin{verbatim}
+entity exists
+\end{verbatim}
+
+from:
+
+\begin{verbatim}
+entity has entered gameplay.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Lifecycle state}
+
+A simple component:
+
+\begin{verbatim}
+enum class LifecycleState : uint8_t
+{
+    PendingBeginPlay,
+    Running,
+    PendingEndPlay
+};
+
+struct Lifecycle
+{
+    LifecycleState State;
+};
+\end{verbatim}
+
+Begin-play system queries:
+
+\begin{verbatim}
+Lifecycle == PendingBeginPlay
+\end{verbatim}
+
+executes initialization, then sets:
+
+\begin{verbatim}
+Running.
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{A tag-based lifecycle alternative}
+
+Use:
+
+\begin{verbatim}
+struct NeedsBeginPlay {};
+\end{verbatim}
+
+System runs:
+
+\begin{verbatim}
+Logic + NeedsBeginPlay
+\end{verbatim}
+
+then removes tag.
+
+But in archetype ECS, removing the tag migrates the entity.
+
+For a one-time operation that occurs only once in entity lifetime, that may be entirely acceptable.
+
+For state that toggles every frame, less so.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Components added after gameplay starts}
+
+Important semantic question.
+
+Suppose world is already running and entity receives a new:
+
+\begin{verbatim}
+LogicComponent.
+\end{verbatim}
+
+Should that script receive BeginPlay?
+
+Usually yes---but define it explicitly.
+
+Lifecycle belongs not only to entity creation, but sometimes to \textbf{component activation}.
+
+You may need:
+
+\begin{verbatim}
+OnComponentAdded
+OnBeginPlay
+OnEnable
+OnDisable
+OnDestroy
+\end{verbatim}
+
+as separate concepts.
+
+Do not collapse them into one vague ``Start.''
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Fixed tick versus render tick}
+
+Physics needs stable timestep.
+
+Rendering needs actual display cadence.
+
+So maintain at least two clocks.
+
+Physics:
+
+\[
+dt_f=\frac{1}{60}.
+\]
+
+Render:
+
+\[
+dt_r=
+\text{actual frame duration}.
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Fixed-step accumulator}
+
+Canonical:
+
+\begin{verbatim}
+accumulator += frameDelta;
+
+std::uint32_t substeps = 0;
+
+while (accumulator >= fixedDelta &&
+       substeps < maxSubsteps)
+{
+    FixedUpdate(fixedDelta);
+
+    accumulator -= fixedDelta;
+    ++substeps;
+}
+
+const float alpha =
+    accumulator / fixedDelta;
+
+Render(alpha);
+\end{verbatim}
+
+This decouples simulation stability from rendering cadence.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Spiral of death}
+
+Suppose simulation takes longer than real time.
+
+Frame takes 100 ms.
+
+At 60 Hz you owe:
+
+\[
+100/16.67\approx6
+\]
+
+physics steps.
+
+Those steps themselves may take another 100 ms.
+
+Now you owe more.
+
+System falls progressively behind.
+
+This is the spiral of death.
+
+Use:
+
+\begin{verbatim}
+maximum substeps
+frame-time clamp
+adaptive degradation
+\end{verbatim}
+
+depending on engine requirements.
+
+Never allow an unbounded fixed-step catch-up loop.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Tick groups}
+
+A useful high-level order:
+
+\begin{verbatim}
+Input sample
+     ↓
+Variable gameplay preparation
+     ↓
+Fixed gameplay
+     ↓
+Physics
+     ↓
+Collision event extraction
+     ↓
+Post-physics gameplay
+     ↓
+Animation / transform finalization
+     ↓
+Render extraction
+     ↓
+Rendering
+\end{verbatim}
+
+Actual engines vary, but the principle is explicit phase boundaries.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{System ordering dependencies}
+
+Some systems depend semantically on others.
+
+Example:
+
+\begin{verbatim}
+InputMapping
+    ↓
+CharacterControl
+    ↓
+PhysicsForceApplication
+    ↓
+PhysicsStep
+    ↓
+PhysicsToTransform
+    ↓
+RenderExtraction
+\end{verbatim}
+
+Executing RenderExtraction before PhysicsToTransform yields one-frame-old transforms.
+
+That is not a thread race.
+
+It is a \textbf{semantic ordering bug}.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Explicit before/after dependencies}
+
+A system descriptor may declare:
+
+\begin{verbatim}
+struct SystemDescriptor
+{
+    SystemID ID;
+
+    std::vector<SystemID> After;
+    std::vector<SystemID> Before;
+};
+\end{verbatim}
+
+For example:
+
+\begin{verbatim}
+PhysicsStep.After(CharacterController)
+RenderExtraction.After(PhysicsToTransform)
+\end{verbatim}
+
+Scheduler converts these into edges.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{System dependency graph}
+
+Represent systems as a DAG:
+
+\[
+G=(V,E)
+\]
+
+where:
+
+\[
+A\rightarrow B
+\]
+
+means:
+
+\begin{quote}
+B may not execute until A finishes.
+\end{quote}
+
+Example:
+
+\begin{verbatim}
+        Animation
+           |
+           v
+Input -> Gameplay -> Physics
+           |           |
+           |           v
+           +------> Transform
+                        |
+                        v
+                  RenderExtract
+\end{verbatim}
+
+Independent branches can execute simultaneously.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Data hazards also produce dependencies}
+
+Suppose:
+
+\begin{verbatim}
+System A writes Velocity
+System B reads Velocity
+\end{verbatim}
+
+They cannot overlap unless additional partition guarantees exist.
+
+Similarly:
+
+\begin{verbatim}
+A writes Position
+B writes Position
+\end{verbatim}
+
+conflicts.
+
+But:
+
+\begin{verbatim}
+A reads Position
+B reads Position
+\end{verbatim}
+
+is safe.
+
+So access declarations can generate dependency edges.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Topological scheduling}
+
+A DAG can be executed in topological order.
+
+Kahn's algorithm:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  compute indegree of every system,
+\item
+  push zero-indegree systems into ready set,
+\item
+  execute/remove ready node,
+\item
+  decrement outgoing neighbor indegrees,
+\item
+  newly zero-indegree nodes become ready.
+\end{enumerate}
+
+If processed count:
+
+\[
+<|V|,
+\]
+
+a cycle exists.
+
+That is a configuration error.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Parallel topological scheduler}
+
+Instead of taking one zero-indegree node at a time, take \textbf{all currently ready nodes}.
+
+\begin{verbatim}
+Wave 0:
+A B C
+
+Wave 1:
+D E
+
+Wave 2:
+F
+\end{verbatim}
+
+A/B/C can run concurrently.
+
+After they complete, D/E become available.
+
+This exposes parallelism while preserving dependencies.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo JobSystem}
+
+Your \texttt{KairoEngineCore::JobSystem} currently provides:
+
+\begin{itemize}
+\tightlist
+\item
+  fixed worker pool,
+\item
+  thread-safe job queue,
+\item
+  futures,
+\item
+  exception propagation,
+\item
+  \texttt{WaitIdle()}.
+\end{itemize}
+
+It is a \textbf{generic executor}.
+
+It does not currently know:
+
+\begin{itemize}
+\tightlist
+\item
+  ECS component reads,
+\item
+  ECS component writes,
+\item
+  system dependencies,
+\item
+  topological scheduling,
+\item
+  archetype/chunk iteration.
+\end{itemize}
+
+That is a good layering boundary.
+
+An ECS scheduler can sit \textbf{above} the JobSystem.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Parallel-safe ECS iteration}
+
+Suppose one chunk contains:
+
+\[
+1000
+\]
+
+Transform + Velocity entities.
+
+You can partition:
+
+\begin{verbatim}
+Thread 0 rows   0–249
+Thread 1 rows 250–499
+Thread 2 rows 500–749
+Thread 3 rows 750–999
+\end{verbatim}
+
+If every worker writes only its own rows:
+
+\[
+\text{no component element is written by two threads}.
+\]
+
+Safe.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Chunk-level parallelism}
+
+Archetypes make this particularly natural:
+
+\begin{verbatim}
+Chunk 0 -> worker A
+Chunk 1 -> worker B
+Chunk 2 -> worker C
+Chunk 3 -> worker D
+\end{verbatim}
+
+Each chunk is an independent dense memory region.
+
+This is one of the strongest practical arguments for chunk storage.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Structural changes during parallel iteration}
+
+Still forbidden.
+
+Thread A cannot migrate an entity out of a chunk while Thread B is iterating the same archetype storage.
+
+Use thread-local command buffers:
+
+\begin{verbatim}
+worker 0 → commands 0
+worker 1 → commands 1
+worker 2 → commands 2
+\end{verbatim}
+
+merge/apply after jobs finish.
+
+Exactly the command-buffer principle from Pass 10 becomes mandatory in parallel ECS.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Read-only versus writable declarations}
+
+A scheduler needs to know what every system intends to access.
+
+Example:
+
+\begin{verbatim}
+struct MovementSystemAccess
+{
+    Reads<Velocity> ReadsVelocity;
+    Writes<Transform> WritesTransform;
+};
+\end{verbatim}
+
+Conceptually maintain:
+
+\[
+R(S)
+\]
+
+read set,
+
+\[
+W(S)
+\]
+
+write set.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why \texttt{const} at callback level is not enough}
+
+C++ can enforce:
+
+\begin{verbatim}
+const Velocity&
+\end{verbatim}
+
+inside one callback.
+
+But scheduler must know access \textbf{before the job runs}.
+
+It needs metadata to decide concurrency.
+
+So access intent is part of system registration.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Resource accesses too}
+
+Systems can also conflict through globals.
+
+Example:
+
+\begin{verbatim}
+System A writes PhysicsWorld resource
+System B reads PhysicsWorld resource
+\end{verbatim}
+
+even if their ECS component sets do not overlap.
+
+Therefore descriptor needs:
+
+\begin{verbatim}
+component reads/writes
+resource reads/writes
+structural access
+\end{verbatim}
+
+All contribute to scheduling hazards.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Detecting system data hazards}
+
+For systems A and B:
+
+No hazard if:
+
+\[
+W(A)\cap
+(R(B)\cup W(B))
+=
+\varnothing
+\]
+
+and:
+
+\[
+W(B)\cap
+(R(A)\cup W(A))
+=
+\varnothing.
+\]
+
+Equivalently, conflict exists if one writes something the other reads or writes.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hazard table}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lll@{}}
+\toprule\noalign{}
+A access & B access & Safe concurrently? \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Read & Read & Yes \\
+Read & Write & No \\
+Write & Read & No \\
+Write & Write & No \\
+\end{longtable}
+}
+
+This is the fundamental scheduler rule.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hazards don't tell you direction}
+
+Suppose:
+
+\begin{verbatim}
+A writes Velocity
+B reads Velocity
+\end{verbatim}
+
+They conflict.
+
+But should:
+
+\[
+A\rightarrow B
+\]
+
+or:
+
+\[
+B\rightarrow A?
+\]
+
+The access sets alone cannot tell you.
+
+You still need:
+
+\begin{itemize}
+\tightlist
+\item
+  explicit before/after semantics,
+\item
+  phase ordering,
+\item
+  registration order as fallback,
+\item
+  dataflow semantics.
+\end{itemize}
+
+Hazard detection determines \textbf{cannot overlap}.
+
+It does not automatically determine \textbf{which result is desired}.
+
+Important distinction.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Structural access as a world-wide hazard}
+
+A system that can:
+
+\begin{verbatim}
+create entity
+destroy entity
+add component
+remove component
+\end{verbatim}
+
+can potentially invalidate queries/storage.
+
+One conservative scheduler model marks structural access as:
+
+\[
+\text{exclusive world write}.
+\]
+
+Then no ordinary ECS iteration overlaps it.
+
+Better model:
+
+\begin{verbatim}
+systems queue structural commands
+\end{verbatim}
+
+and actual structural flush happens at a dedicated barrier.
+
+That preserves far more parallelism.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{ECS job partitioning}
+
+One system may itself need many jobs.
+
+Suppose:
+
+\[
+N=1,000,000
+\]
+
+entities.
+
+Don't submit one job per entity.
+
+Job scheduling overhead would dominate.
+
+Partition into ranges.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Grain size model}
+
+Let:
+
+\[
+H=
+\text{job scheduling overhead}
+\]
+
+and:
+
+\[
+C=
+\text{cost per entity}.
+\]
+
+For grain size \(G\), useful work per job:
+
+\[
+GC.
+\]
+
+We want:
+
+\[
+\boxed{
+GC\gg H.
+}
+\]
+
+If job costs 5 µs to schedule and 100 entities take 1 µs total, terrible.
+
+If 10,000 entities take 100 µs, scheduling overhead is small.
+
+Measure.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Static versus dynamic partitioning}
+
+Static:
+
+\begin{verbatim}
+thread 0 gets fixed chunk range
+thread 1 gets fixed chunk range
+...
+\end{verbatim}
+
+cheap but can become unbalanced if chunks differ in cost.
+
+Dynamic job queue:
+
+\begin{verbatim}
+many medium jobs
+workers pull next available
+\end{verbatim}
+
+provides load balancing.
+
+Work stealing can improve this further.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Archetype chunk = natural job unit}
+
+One simple model:
+
+\begin{verbatim}
+one job per chunk.
+\end{verbatim}
+
+But if chunks are tiny or system work cheap, overhead may be excessive.
+
+Batch several chunks per job.
+
+Conversely, one huge chunk with expensive per-entity work may be split by row range.
+
+Again, chunks are storage units, not necessarily sacred scheduling units.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{False sharing}
+
+This is one of the most misunderstood multithreading problems.
+
+Suppose cache line contains:
+
+\begin{verbatim}
+x0 x1 x2 x3 x4 x5 x6 x7
+\end{verbatim}
+
+Thread A writes x0.
+
+Thread B writes x1.
+
+They are completely different variables.
+
+There is no logical data race.
+
+But both variables occupy the same cache line.
+
+Cache coherence operates at cache-line granularity.
+
+The line repeatedly migrates between cores.
+
+That is false sharing. Intel's optimization guidance explicitly warns that independently modified data on the same cache line can cause costly coherence traffic between cores. \href{https://cdrdv2-public.intel.com/814198/248966-Optimization-Reference-Manual-V1-049.pdf?utm_source=chatgpt.com}{Intel CDRD}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Terrible ECS partitioning}
+
+Do not do:
+
+\begin{verbatim}
+thread 0 → entities 0,2,4,6,8...
+thread 1 → entities 1,3,5,7,9...
+\end{verbatim}
+
+if both write a dense component array.
+
+Adjacent elements share cache lines.
+
+Threads ping-pong those lines constantly.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Better partitioning}
+
+Use contiguous ranges:
+
+\begin{verbatim}
+thread 0:
+0 ... 2499
+
+thread 1:
+2500 ... 4999
+
+thread 2:
+5000 ... 7499
+
+thread 3:
+7500 ... 9999
+\end{verbatim}
+
+Now only the boundary lines risk sharing.
+
+Most cache lines belong exclusively to one thread during the job.
+
+Chunk-level assignment naturally encourages this.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\href{Chapter\%20Edition/03\%20-\%20Game\%20Engine/00\%20-\%20Reading\%20Map}{Reading map} · \hyperref[05-engine-i-ch015]{Previous chapter} · \hyperref[05-engine-i-ch017]{Next chapter}

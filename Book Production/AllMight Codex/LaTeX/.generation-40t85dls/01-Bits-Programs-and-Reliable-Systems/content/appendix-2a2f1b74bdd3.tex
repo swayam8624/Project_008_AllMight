@@ -1,0 +1,60 @@
+\hypertarget{appendix-2a2f1b74bdd3}{}\label{referencestart:appendix-2a2f1b74bdd3}
+\section{Terminating fractions and dyadic rationals}\label{appendix-2a2f1b74bdd3-terminating-fractions-and-dyadic-rationals}
+
+\hypertarget{appendix-2a2f1b74bdd3-terminating-fractions-and-dyadic-rationals}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C005 · \textbf{Latest development:} C005
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-2a2f1b74bdd3-definition-and-mechanism}
+
+\hypertarget{appendix-2a2f1b74bdd3-definition-and-mechanism}{}
+
+A reduced rational p/q terminates in base B iff q divides a power of B. In binary q must be a power of two. Binary32 0.1 is exactly 13421773/2\^{}27, chosen as an approximation of non-dyadic 1/10.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-2a2f1b74bdd3-prerequisites}
+
+\hypertarget{appendix-2a2f1b74bdd3-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-83c3f28f7bda]{Positional notation} --- Finite fractional digits correspond to an integer over a power of the base.
+\item
+  \hyperref[appendix-5057f9ad327f]{Binary32} --- Its finite significand/exponent makes each stored finite value a dyadic rational.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-2a2f1b74bdd3-used-by}
+
+\hypertarget{appendix-2a2f1b74bdd3-used-by}{}
+
+Connect later dependent concepts here when their lessons arrive.
+
+\subsection{Recall and next depth}\label{appendix-2a2f1b74bdd3-recall-and-next-depth}
+
+\hypertarget{appendix-2a2f1b74bdd3-recall-and-next-depth}{}
+
+Reconstruct the definition's example and name the assumptions that make it valid.
+
+\textbf{Pending:} Other bases, decimal conversion algorithms and exact rational arithmetic.
+
+\subsection{Source and navigation}\label{appendix-2a2f1b74bdd3-source-and-navigation}
+
+\hypertarget{appendix-2a2f1b74bdd3-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-when-arithmetic-meets-uncertainty]{M005 teaching chapter} · \hyperref[appendix-fd090d982a15-m005---parts-77-88]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}
+
+\subsection{Why decimal-friendly numbers can be binary-hostile}\label{appendix-2a2f1b74bdd3-why-decimal-friendly-numbers-can-be-binary-hostile}
+
+\hypertarget{appendix-2a2f1b74bdd3-why-decimal-friendly-numbers-can-be-binary-hostile}{}
+
+A reduced rational number \(p/q\) has a terminating representation in base \(b\) exactly when every prime factor of \(q\) also divides \(b\). Base 10 has prime factors 2 and 5, so fractions such as \(1/10\) terminate. Base 2 has only prime factor 2, so only \textbf{dyadic rationals} with denominator \(2^k\) terminate.
+
+That is why \(0.5\), \(0.25\), and \(0.125\) are exact in ordinary binary floating point while \(0.1\) repeats forever and must be rounded. The issue is not that floating point is ``bad at decimals''; it is a consequence of positional representation.
+
+This perspective helps debugging: multiplying a binary approximation to 0.1 by ten need not recreate the exact path one imagines from decimal arithmetic. For currency or protocol fields whose semantics are decimal-exact, scaled integers or decimal floating formats may be better contracts.
+
+A reconstruction exercise should reduce several fractions, classify their denominator prime factors, and predict whether they terminate in bases 2, 10, and 16 before checking actual floating encodings.

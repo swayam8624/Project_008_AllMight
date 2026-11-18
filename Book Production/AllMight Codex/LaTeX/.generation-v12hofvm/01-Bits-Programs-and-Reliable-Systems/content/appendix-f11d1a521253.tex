@@ -1,0 +1,43 @@
+\hypertarget{appendix-f11d1a521253}{}\label{referencestart:appendix-f11d1a521253}
+\section{Floating-point environment and compiler modes}\label{appendix-f11d1a521253-floating-point-environment-and-compiler-modes}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C004 · \textbf{Latest development:} C005
+
+\subsection{Definition and mechanism}\label{appendix-f11d1a521253-definition-and-mechanism}
+
+The environment includes rounding direction and exception status. Runtime mode changes can fail and must restore prior state. Strict compiler settings are needed; fast-math may discard required special-value or environment assumptions.
+
+M005 uses strict arithmetic and disables implicit FMA contraction to distinguish fused from separate graphs. The full floating environment is restored after the lab; cross-platform bitwise reproducibility is not established.
+
+\subsection{Prerequisites}\label{appendix-f11d1a521253-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-637d164ae5ca]{Directed rounding modes} --- The signed rounding direction is state that a demonstration or enclosure algorithm must control.
+\item
+  \hyperref[appendix-d6607cc4c235]{NaNs and payloads} --- Unordered comparisons and payload distinctions require explicit metric, comparison and serialization policy.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-f11d1a521253-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-5f1a2c3f97ff]{Numerical reproducibility} --- Rounding, contraction, subnormal and optimization assumptions must match.
+\item
+  \hyperref[appendix-e979eb012782]{Flush-to-zero and denormals-are-zero} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-1823a14330cb]{Interval arithmetic} --- uses this mechanism in its explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-f11d1a521253-recall-and-next-depth}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Extend this mechanism to later algorithms and target-specific behavior. See the M005 chapter for its current examples and validity assumptions.
+
+\subsection{Source and navigation}\label{appendix-f11d1a521253-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-when-arithmetic-meets-uncertainty]{M005 development}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

@@ -1,0 +1,972 @@
+\contentsline {chapter}{\numberline {1}Geometry Queries from Scene to Contact}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}From a Scene to a Collision Answer: Geometry as a Chain of Contracts}{1}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}The scene is not yet geometry}{2}{subsection.1.1.1}%
+\contentsline {subsection}{\numberline {1.1.2}Predicates are the decision points}{3}{subsection.1.1.2}%
+\contentsline {subsection}{\numberline {1.1.3}Bounds preserve possibilities}{4}{subsection.1.1.3}%
+\contentsline {subsection}{\numberline {1.1.4}Queries turn geometry into answers}{4}{subsection.1.1.4}%
+\contentsline {subsection}{\numberline {1.1.5}Minkowski difference turns two shapes into one}{5}{subsection.1.1.5}%
+\contentsline {subsubsection}{Numeric witness: a complete 2D GJK separation trace}{6}{subsubsection*.3}%
+\contentsline {subsection}{\numberline {1.1.6}EPA converts overlap into a displacement estimate}{7}{subsection.1.1.6}%
+\contentsline {subsection}{\numberline {1.1.7}Motion changes the question}{7}{subsection.1.1.7}%
+\contentsline {subsection}{\numberline {1.1.8}The final contract is observable}{8}{subsection.1.1.8}%
+\contentsline {subsection}{\numberline {1.1.9}A short laboratory for the contracts}{9}{subsection.1.1.9}%
+\contentsline {subsection}{\numberline {1.1.10}Geometric Predicates, Rays, Lines, Segments, and Planes}{10}{subsection.1.1.10}%
+\contentsline {subsection}{\numberline {1.1.11}Spheres and Triangles}{23}{subsection.1.1.11}%
+\contentsline {chapter}{\numberline {2}Collision Implementations and Repository Comparison}{44}{chapter.2}%
+\contentsline {subsection}{\numberline {2.0.1}Canonical C++23 implementation and repository comparison}{44}{subsection.2.0.1}%
+\contentsline {subsection}{\numberline {2.0.2}Research bridge and validation}{48}{subsection.2.0.2}%
+\contentsline {subsection}{\numberline {2.0.3}Axis-Aligned Bounding Boxes}{50}{subsection.2.0.3}%
+\contentsline {subsection}{\numberline {2.0.4}Oriented Bounding Boxes}{62}{subsection.2.0.4}%
+\contentsline {subsection}{\numberline {2.0.5}Capsules}{67}{subsection.2.0.5}%
+\contentsline {subsection}{\numberline {2.0.6}Frusta, Planes, and Visibility Classification}{71}{subsection.2.0.6}%
+\contentsline {subsection}{\numberline {2.0.7}Convex Polygons, Winding, Area, and Centroids}{81}{subsection.2.0.7}%
+\contentsline {chapter}{\numberline {3}Convex Support Mapping and Distance}{89}{chapter.3}%
+\contentsline {subsection}{\numberline {3.0.1}Support Mapping}{89}{subsection.3.0.1}%
+\contentsline {subsection}{\numberline {3.0.2}Convex Hulls}{93}{subsection.3.0.2}%
+\contentsline {subsection}{\numberline {3.0.3}C++23 Reference Lab and Verification}{104}{subsection.3.0.3}%
+\contentsline {subsection}{\numberline {3.0.4}Production Reliability and Research}{105}{subsection.3.0.4}%
+\contentsline {subsection}{\numberline {3.0.5}Reconstruction and Mastery Gate}{106}{subsection.3.0.5}%
+\contentsline {subsection}{\numberline {3.0.6}PART I --- M071: Voronoi Regions and Simplex Geometry}{108}{subsection.3.0.6}%
+\contentsline {subsection}{\numberline {3.0.7}PART II --- Closest Approaches Between Lines and Segments}{118}{subsection.3.0.7}%
+\contentsline {subsection}{\numberline {3.0.8}PART III --- Intersections of Planes}{129}{subsection.3.0.8}%
+\contentsline {chapter}{\numberline {4}Mesh Topology and Connectivity}{136}{chapter.4}%
+\contentsline {subsection}{\numberline {4.0.1}PART IV --- M071: Mesh Topology and Connectivity}{136}{subsection.4.0.1}%
+\contentsline {subsection}{\numberline {4.0.2}PART V --- M072: Boundary Geometry and Adjacency}{146}{subsection.4.0.2}%
+\contentsline {subsection}{\numberline {4.0.3}PART VI --- Numerical Robustness and the Geometry Contract}{151}{subsection.4.0.3}%
+\contentsline {subsection}{\numberline {4.0.4}PART VII --- Building a Production Geometry Library}{158}{subsection.4.0.4}%
+\contentsline {subsection}{\numberline {4.0.5}PART VIII --- Reference Implementation and Repository Verification}{161}{subsection.4.0.5}%
+\contentsline {subsection}{\numberline {4.0.6}PART IX --- Research Bridge}{163}{subsection.4.0.6}%
+\contentsline {subsection}{\numberline {4.0.7}PART X --- Reconstruction Challenge}{163}{subsection.4.0.7}%
+\contentsline {subsection}{\numberline {4.0.8}Phase 12 completion status}{165}{subsection.4.0.8}%
+\contentsline {subsection}{\numberline {4.0.9}PART I --- M073: Intersection and Collision Query Fundamentals}{165}{subsection.4.0.9}%
+\contentsline {subsection}{\numberline {4.0.10}PART II --- Ray Intersections with Planes and Spheres}{169}{subsection.4.0.10}%
+\contentsline {chapter}{\numberline {5}Ray--Triangle Intersection}{180}{chapter.5}%
+\contentsline {subsection}{\numberline {5.0.1}PART III --- Ray-Triangle Intersection}{180}{subsection.5.0.1}%
+\contentsline {subsection}{\numberline {5.0.2}PART IV --- Ray-Box and Ray-Capsule Intersections}{187}{subsection.5.0.2}%
+\contentsline {subsection}{\numberline {5.0.3}PART V --- M074: Primitive Overlap and Contact Geometry}{200}{subsection.5.0.3}%
+\contentsline {subsection}{\numberline {5.0.4}PART VI --- The Separating Axis Theorem}{213}{subsection.5.0.4}%
+\contentsline {chapter}{\numberline {6}SAT for Triangle and Convex Polygon Tests}{228}{chapter.6}%
+\contentsline {subsection}{\numberline {6.0.1}PART VII --- Triangle-AABB SAT and Convex Polygon SAT}{228}{subsection.6.0.1}%
+\contentsline {subsection}{\numberline {6.0.2}PART VIII --- Complete C++23 Reference Lab}{234}{subsection.6.0.2}%
+\contentsline {subsection}{\numberline {6.0.3}PART IX --- Actual KairoGeometry and KairoPhysicsEngine Review}{235}{subsection.6.0.3}%
+\contentsline {subsection}{\numberline {6.0.4}PART X --- Numerical Robustness, Performance, and Research}{236}{subsection.6.0.4}%
+\contentsline {subsection}{\numberline {6.0.5}PART XI --- Reconstruction Exercises}{237}{subsection.6.0.5}%
+\contentsline {subsection}{\numberline {6.0.6}From Minkowski Geometry to GJK}{240}{subsection.6.0.6}%
+\contentsline {subsection}{\numberline {6.0.7}EPA and Penetration Recovery}{259}{subsection.6.0.7}%
+\contentsline {chapter}{\numberline {7}Contact Features and Manifolds}{271}{chapter.7}%
+\contentsline {subsection}{\numberline {7.0.1}Contact Features and Manifolds}{271}{subsection.7.0.1}%
+\contentsline {subsubsection}{Construct contact geometry that a solver can actually consume}{289}{subsubsection*.4}%
+\contentsline {subsubsection}{Why continuous collision detection requires motion geometry}{290}{subsubsection*.5}%
+\contentsline {subsubsection}{From swept regions to a broad phase with no missing candidates}{290}{subsubsection*.6}%
+\contentsline {subsubsection}{Proving candidate generation, connecting the collision stages, and debugging misses}{291}{subsubsection*.7}%
+\contentsline {subsubsection}{A numerical debugging trace: find the stage that lost the collision}{292}{subsubsection*.8}%
+\contentsline {subsubsection}{Finite precision and the cost of a seemingly harmless comparison}{292}{subsubsection*.9}%
+\contentsline {subsubsection}{How to reconstruct this for an engine or GPU backend}{293}{subsubsection*.10}%
+\contentsline {subsubsection}{Executable segment clipping and feature geometry}{293}{subsubsection*.11}%
+\contentsline {subsubsection}{Full implementation: disk TOI and conservative swept candidate generation}{294}{subsubsection*.12}%
+\contentsline {subsubsection}{Implementation laboratory and debugging contract}{300}{subsubsection*.13}%
+\contentsline {subsection}{\numberline {7.0.2}Continuous Collision Detection}{300}{subsection.7.0.2}%
+\contentsline {subsection}{\numberline {7.0.3}KairoPhysicsEngine: Verified Current State}{321}{subsection.7.0.3}%
+\contentsline {subsection}{\numberline {7.0.4}The C++23 Reference Lab}{322}{subsection.7.0.4}%
+\contentsline {subsection}{\numberline {7.0.5}What Full Production Readiness Requires}{323}{subsection.7.0.5}%
+\contentsline {subsection}{\numberline {7.0.6}Research Connection to KairoPhysics, Vulkax, and Deformable Geometry}{325}{subsection.7.0.6}%
+\contentsline {subsection}{\numberline {7.0.7}Reconstruction and Mastery Gate}{325}{subsection.7.0.7}%
+\contentsline {chapter}{\numberline {8}Mesh Queries, Classification and Clipping}{330}{chapter.8}%
+\contentsline {subsection}{\numberline {8.0.1}Mesh Ray, Overlap, Containment, Classification and Clipping}{330}{subsection.8.0.1}%
+\contentsline {subsection}{\numberline {8.0.2}Numerical Robustness, Collision API Design, SIMD, Fuzzing and Library Engineering}{362}{subsection.8.0.2}%
+\contentsline {chapter}{\numberline {9}Visibility Queries and Ray Intersections}{391}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Visibility queries and ray intersections}{391}{section.9.1}%
+\contentsline {subsection}{\numberline {9.1.1}Let a visibility query carry an interval and a surface contract}{391}{subsection.9.1.1}%
+\contentsline {subsection}{\numberline {9.1.2}PARTS 2001--2013}{392}{subsection.9.1.2}%
+\contentsline {subsection}{\numberline {9.1.3}Rays as geometric visibility queries}{392}{subsection.9.1.3}%
+\contentsline {subsection}{\numberline {9.1.4}PARTS 2014--2030}{426}{subsection.9.1.4}%
+\contentsline {subsection}{\numberline {9.1.5}Whitted transport → rendering equation → Monte Carlo}{426}{subsection.9.1.5}%
+\contentsline {subsection}{\numberline {9.1.6}Query contracts}{427}{subsection.9.1.6}%
+\contentsline {subsection}{\numberline {9.1.7}A ray answers the visibility question}{427}{subsection.9.1.7}%
+\contentsline {subsection}{\numberline {9.1.8}From the camera to a surface: the ray is a query, not a line segment}{428}{subsection.9.1.8}%
+\contentsline {subsection}{\numberline {9.1.9}A triangle hit has coordinates inside the triangle}{430}{subsection.9.1.9}%
+\contentsline {subsection}{\numberline {9.1.10}Boolean solids can be intersected without building their boundary mesh}{431}{subsection.9.1.10}%
+\contentsline {subsection}{\numberline {9.1.11}Shadows are visibility from a second viewpoint}{432}{subsection.9.1.11}%
+\contentsline {subsection}{\numberline {9.1.12}A line corridor can be a cheap prefilter for shadow-caster work}{432}{subsection.9.1.12}%
+\contentsline {subsubsection}{Compute pass inputs before gathering objects}{434}{subsubsection*.14}%
+\contentsline {subsection}{\numberline {9.1.13}Shadow maps reuse visibility from the light's viewpoint}{435}{subsection.9.1.13}%
+\contentsline {chapter}{\numberline {10}Acceleration Structures and Robust Queries}{438}{chapter.10}%
+\contentsline {section}{\numberline {10.1}Acceleration structures and robust queries}{438}{section.10.1}%
+\contentsline {subsection}{\numberline {10.1.1}Geometric queries and acceleration structures}{438}{subsection.10.1.1}%
+\contentsline {subsection}{\numberline {10.1.2}Bounding-volume hierarchy invariants}{439}{subsection.10.1.2}%
+\contentsline {subsection}{\numberline {10.1.3}Data structures shape the algorithm}{439}{subsection.10.1.3}%
+\contentsline {subsection}{\numberline {10.1.4}Robustness and conditioning are related but different}{440}{subsection.10.1.4}%
+\contentsline {subsection}{\numberline {10.1.5}Acceleration: spend scene work once so each ray can skip most geometry}{440}{subsection.10.1.5}%
+\contentsline {subsection}{\numberline {10.1.6}Additional geometry notes for rasterization}{442}{subsection.10.1.6}%
+\contentsline {subsubsection}{Visibility: compare depth locally or trace paths}{442}{subsubsection*.15}%
+\contentsline {subsubsection}{Choose visibility algorithms by their ordering and data needs}{443}{subsubsection*.16}%
+\contentsline {subsubsection}{Ray intersection, recursive paths, and acceleration}{444}{subsubsection*.17}%
+\contentsline {section}{\numberline {10.2}Scene graphs and articulated geometry}{445}{section.10.2}%
+\contentsline {subsection}{\numberline {10.2.1}Forward kinematics makes inverse kinematics differentiable}{445}{subsection.10.2.1}%
+\contentsline {subsection}{\numberline {10.2.2}Why linear blends can twist a character limb}{446}{subsection.10.2.2}%
+\contentsline {subsection}{\numberline {10.2.3}Scene graphs: reuse local structure, compute global pose}{446}{subsection.10.2.3}%
+\contentsline {subsection}{\numberline {10.2.4}Skinning: attach a surface to a moving skeleton}{448}{subsection.10.2.4}%
+\contentsline {subsection}{\numberline {10.2.5}Additional geometry notes for acceleration structures}{450}{subsection.10.2.5}%
+\contentsline {subsubsection}{Hierarchical modeling: reuse geometry through transforms}{450}{subsubsection*.18}%
+\contentsline {section}{\numberline {10.3}Animation curves and motion paths}{451}{section.10.3}%
+\contentsline {subsection}{\numberline {10.3.1}A camera path is animation plus a frame choice}{451}{subsection.10.3.1}%
+\contentsline {subsection}{\numberline {10.3.2}Camera orientation continuity along a spline path}{451}{subsection.10.3.2}%
+\contentsline {subsection}{\numberline {10.3.3}Additional geometry notes for scene graphs}{451}{subsection.10.3.3}%
+\contentsline {subsubsection}{Smooth interpolating paths and camera motion}{451}{subsubsection*.19}%
+\contentsline {section}{\numberline {10.4}Dynamics, forces, and numerical integration}{452}{section.10.4}%
+\contentsline {subsection}{\numberline {10.4.1}Animation, dynamics, optimization, and PDEs}{452}{subsection.10.4.1}%
+\contentsline {subsection}{\numberline {10.4.2}ODE integration and stability}{454}{subsection.10.4.2}%
+\contentsline {subsection}{\numberline {10.4.3}Motion models from a tossed rock to crowds}{455}{subsection.10.4.3}%
+\contentsline {subsection}{\numberline {10.4.4}Keep physical and numerical error separate}{455}{subsection.10.4.4}%
+\contentsline {subsection}{\numberline {10.4.5}Crowd bottlenecks and particle models}{456}{subsection.10.4.5}%
+\contentsline {subsection}{\numberline {10.4.6}First-order state formulation}{456}{subsection.10.4.6}%
+\contentsline {subsection}{\numberline {10.4.7}Lagrangian mechanics and generalized coordinates}{456}{subsection.10.4.7}%
+\contentsline {subsection}{\numberline {10.4.8}Reduce constraints with a coordinate that fits the motion}{457}{subsection.10.4.8}%
+\contentsline {subsection}{\numberline {10.4.9}A model can be simple locally and rich globally}{457}{subsection.10.4.9}%
+\contentsline {subsection}{\numberline {10.4.10}Time steps change the behavior of a simulated system}{458}{subsection.10.4.10}%
+\contentsline {subsection}{\numberline {10.4.11}A short coupled-simulation example}{459}{subsection.10.4.11}%
+\contentsline {subsection}{\numberline {10.4.12}Simulation: from forces to trajectories}{459}{subsection.10.4.12}%
+\contentsline {subsection}{\numberline {10.4.13}Particle rules, state vectors, and a stability calculation}{460}{subsection.10.4.13}%
+\contentsline {subsection}{\numberline {10.4.14}A spring is a force derived from an energy}{463}{subsection.10.4.14}%
+\contentsline {subsection}{\numberline {10.4.15}A cloth mesh needs more than the visible triangle edges}{464}{subsection.10.4.15}%
+\contentsline {subsection}{\numberline {10.4.16}Contact dynamics with a nonintersection guarantee}{465}{subsection.10.4.16}%
+\contentsline {subsubsection}{Friction inside the same solve}{466}{subsubsection*.20}%
+\contentsline {subsubsection}{What the paper tests}{466}{subsubsection*.21}%
+\contentsline {subsection}{\numberline {10.4.17}Friction and empirical tests for contact dynamics}{467}{subsection.10.4.17}%
+\contentsline {subsubsection}{Friction inside the same solve}{467}{subsubsection*.22}%
+\contentsline {subsubsection}{What the paper tests}{467}{subsubsection*.23}%
+\contentsline {subsection}{\numberline {10.4.18}Figure U15 - The contact barrier grows near zero separation}{468}{subsection.10.4.18}%
+\contentsline {section}{\numberline {10.5}Optimization, constraints, and inverse kinematics}{468}{section.10.5}%
+\contentsline {subsection}{\numberline {10.5.1}Inverse kinematics as constrained optimization}{468}{subsection.10.5.1}%
+\contentsline {subsection}{\numberline {10.5.2}Feasibility, constraints, and optimality}{469}{subsection.10.5.2}%
+\contentsline {subsection}{\numberline {10.5.3}Quadratic objectives and linear systems}{469}{subsection.10.5.3}%
+\contentsline {subsection}{\numberline {10.5.4}Differentiating through a graphics pipeline}{469}{subsection.10.5.4}%
+\contentsline {subsection}{\numberline {10.5.5}Feasible sets, existence, and the difference between local and global}{470}{subsection.10.5.5}%
+\contentsline {subsection}{\numberline {10.5.6}Convexity and why quadratic energy often reduces to linear algebra}{470}{subsection.10.5.6}%
+\contentsline {subsection}{\numberline {10.5.7}Gradient descent, step control, and curvature}{471}{subsection.10.5.7}%
+\contentsline {subsection}{\numberline {10.5.8}Function spaces and image error}{471}{subsection.10.5.8}%
+\contentsline {subsection}{\numberline {10.5.9}Automatic differentiation}{472}{subsection.10.5.9}%
+\contentsline {subsection}{\numberline {10.5.10}Computing derivatives: four different contracts}{472}{subsection.10.5.10}%
+\contentsline {chapter}{\numberline {11}Mesh Operators, Boundaries and Diffusion}{474}{chapter.11}%
+\contentsline {section}{\numberline {11.1}Heat on a rod: why boundaries, modes, and mesh operators belong together}{474}{section.11.1}%
+\contentsline {subsection}{\numberline {11.1.1}Boundary conditions choose the modes}{475}{subsection.11.1.1}%
+\contentsline {subsection}{\numberline {11.1.2}Derivatives act on modes by multiplying their frequency}{476}{subsection.11.1.2}%
+\contentsline {subsection}{\numberline {11.1.3}From a mesh Laplacian to a heat operator}{477}{subsection.11.1.3}%
+\contentsline {subsection}{\numberline {11.1.4}Explicit steps have a mesh-dependent stability limit}{478}{subsection.11.1.4}%
+\contentsline {subsection}{\numberline {11.1.5}A Green function is an impulse response}{479}{subsection.11.1.5}%
+\contentsline {subsection}{\numberline {11.1.6}Sampling, truncation, and ringing}{480}{subsection.11.1.6}%
+\contentsline {subsection}{\numberline {11.1.7}Manufactured fields make the solver testable}{481}{subsection.11.1.7}%
+\contentsline {subsection}{\numberline {11.1.8}What the boundary means to the discrete solver}{482}{subsection.11.1.8}%
+\contentsline {subsection}{\numberline {11.1.9}Spatial and temporal error have different signatures}{483}{subsection.11.1.9}%
+\contentsline {section}{\numberline {11.2}PDEs, fields, and discrete solvers}{484}{section.11.2}%
+\contentsline {subsection}{\numberline {11.2.1}PDE discretization and variational structure}{484}{subsection.11.2.1}%
+\contentsline {subsection}{\numberline {11.2.2}The same field equation can describe very different behavior}{484}{subsection.11.2.2}%
+\contentsline {subsection}{\numberline {11.2.3}Discretize the space with a representation that fits}{485}{subsection.11.2.3}%
+\contentsline {subsection}{\numberline {11.2.4}Boundary data is part of the equation}{486}{subsection.11.2.4}%
+\contentsline {subsection}{\numberline {11.2.5}Turn the discretized equations into a solver}{486}{subsection.11.2.5}%
+\contentsline {subsection}{\numberline {11.2.6}Discrete field equations and their stability conditions}{487}{subsection.11.2.6}%
+\contentsline {subsubsection}{From a PDE to a sparse system and a stable update}{487}{subsubsection*.24}%
+\contentsline {subsubsection}{Derive the five-point grid stencil}{487}{subsubsection*.25}%
+\contentsline {subsubsection}{Poisson and Laplace equations become sparse linear systems}{488}{subsubsection*.26}%
+\contentsline {subsubsection}{Explicit heat flow and its stability limit}{489}{subsubsection*.27}%
+\contentsline {subsubsection}{The cotangent mesh Laplacian and what ``positive'' means}{490}{subsubsection*.28}%
+\contentsline {subsubsection}{One spatial operator, different simulations}{491}{subsubsection*.29}%
+\contentsline {subsubsection}{A wave needs two initial conditions and a different time update}{491}{subsubsection*.30}%
+\contentsline {section}{\numberline {11.3}Optical flow and motion from images}{492}{section.11.3}%
+\contentsline {subsection}{\numberline {11.3.1}Brightness constancy is a measurement equation, not a universal law}{492}{subsection.11.3.1}%
+\contentsline {subsection}{\numberline {11.3.2}Noise gain and the shape of a good measurement}{493}{subsection.11.3.2}%
+\contentsline {subsection}{\numberline {11.3.3}The brightness equation has one constraint per pixel}{493}{subsection.11.3.3}%
+\contentsline {subsection}{\numberline {11.3.4}Eigenvectors expose directional noise gain}{495}{subsection.11.3.4}%
+\contentsline {subsection}{\numberline {11.3.5}B. Is the optical-flow estimate constrained?}{495}{subsection.11.3.5}%
+\contentsline {subsection}{\numberline {11.3.6}Flow: why one bright edge cannot reveal full motion}{496}{subsection.11.3.6}%
+\contentsline {subsection}{\numberline {11.3.7}A compact focus-of-expansion calculation}{496}{subsection.11.3.7}%
+\contentsline {subsection}{\numberline {11.3.8}Lecture 3's practical TTC estimator and its failure near impact}{496}{subsection.11.3.8}%
+\contentsline {subsection}{\numberline {11.3.9}Figure U7 - Independent gradients resolve the aperture ambiguity}{499}{subsection.11.3.9}%
+\contentsline {section}{\numberline {11.4}Edges, contours, and subpixel localization}{499}{section.11.4}%
+\contentsline {subsection}{\numberline {11.4.1}Edges and blobs: image geometry without a full 3-D model}{499}{subsection.11.4.1}%
+\contentsline {subsection}{\numberline {11.4.2}Worked blob example from a rectangular contour}{501}{subsection.11.4.2}%
+\contentsline {subsection}{\numberline {11.4.3}Subpixel edge localization as a complete industrial pipeline}{501}{subsection.11.4.3}%
+\contentsline {subsection}{\numberline {11.4.4}What defocus does to an edge, and where interpolation bias comes from}{503}{subsection.11.4.4}%
+\contentsline {subsection}{\numberline {11.4.5}Hough voting turns weak local evidence into a global hypothesis}{504}{subsection.11.4.5}%
+\contentsline {subsection}{\numberline {11.4.6}Orthogonal line fitting is the right geometry for edge fragments}{505}{subsection.11.4.6}%
+\contentsline {section}{\numberline {11.5}Recognition, templates, and industrial matching}{505}{section.11.5}%
+\contentsline {subsection}{\numberline {11.5.1}Industrial recognition: templates, transforms, and tolerances}{505}{subsection.11.5.1}%
+\contentsline {subsection}{\numberline {11.5.2}From correlation to sparse, multidimensional pattern matching}{508}{subsection.11.5.2}%
+\contentsline {subsection}{\numberline {11.5.3}The score is a design choice, and affine transforms act on normals}{510}{subsection.11.5.3}%
+\contentsline {subsection}{\numberline {11.5.4}PatMax: continuous pose refinement after coarse localization}{511}{subsection.11.5.4}%
+\contentsline {subsection}{\numberline {11.5.5}C. How should an edge alignment score behave?}{512}{subsection.11.5.5}%
+\contentsline {chapter}{\numberline {12}Per-Vertex and Per-Corner Mesh Attributes}{513}{chapter.12}%
+\contentsline {subsection}{\numberline {12.0.1}Per-vertex vs per-corner}{513}{subsection.12.0.1}%
+\contentsline {subsection}{\numberline {12.0.2}Index sharing}{514}{subsection.12.0.2}%
+\contentsline {subsection}{\numberline {12.0.3}Topology vs geometry}{514}{subsection.12.0.3}%
+\contentsline {subsection}{\numberline {12.0.4}Boundary edges}{514}{subsection.12.0.4}%
+\contentsline {subsection}{\numberline {12.0.5}Manifold and non-manifold}{515}{subsection.12.0.5}%
+\contentsline {subsection}{\numberline {12.0.6}Connected components}{515}{subsection.12.0.6}%
+\contentsline {subsection}{\numberline {12.0.7}Face adjacency}{515}{subsection.12.0.7}%
+\contentsline {subsection}{\numberline {12.0.8}Vertex adjacency}{516}{subsection.12.0.8}%
+\contentsline {subsection}{\numberline {12.0.9}Half-edge}{516}{subsection.12.0.9}%
+\contentsline {subsection}{\numberline {12.0.10}One-ring traversal}{517}{subsection.12.0.10}%
+\contentsline {subsection}{\numberline {12.0.11}Current Kairo representation}{517}{subsection.12.0.11}%
+\contentsline {subsection}{\numberline {12.0.12}NORMALS, TANGENTS, BOUNDS AND OBJ}{518}{subsection.12.0.12}%
+\contentsline {subsection}{\numberline {12.0.13}Flat face normal}{518}{subsection.12.0.13}%
+\contentsline {subsection}{\numberline {12.0.14}Smooth normals}{518}{subsection.12.0.14}%
+\contentsline {subsection}{\numberline {12.0.15}Area-weighted normals}{519}{subsection.12.0.15}%
+\contentsline {subsection}{\numberline {12.0.16}Angle-weighted normals}{519}{subsection.12.0.16}%
+\contentsline {subsection}{\numberline {12.0.17}Tangent generation}{519}{subsection.12.0.17}%
+\contentsline {subsection}{\numberline {12.0.18}Orthogonalize tangent}{520}{subsection.12.0.18}%
+\contentsline {subsection}{\numberline {12.0.19}Handedness}{520}{subsection.12.0.19}%
+\contentsline {subsection}{\numberline {12.0.20}Degenerate UVs}{521}{subsection.12.0.20}%
+\contentsline {subsection}{\numberline {12.0.21}Bounds}{521}{subsection.12.0.21}%
+\contentsline {subsection}{\numberline {12.0.22}OBJ}{522}{subsection.12.0.22}%
+\contentsline {subsection}{\numberline {12.0.23}OBJ negative indices}{522}{subsection.12.0.23}%
+\contentsline {subsection}{\numberline {12.0.24}Polygon triangulation}{523}{subsection.12.0.24}%
+\contentsline {subsection}{\numberline {12.0.25}Tuple deduplication}{523}{subsection.12.0.25}%
+\contentsline {subsection}{\numberline {12.0.26}glTF FROM BYTES TO PORTABLE SCENE}{523}{subsection.12.0.26}%
+\contentsline {subsection}{\numberline {12.0.27}Buffers}{524}{subsection.12.0.27}%
+\contentsline {subsection}{\numberline {12.0.28}bufferView}{524}{subsection.12.0.28}%
+\contentsline {subsection}{\numberline {12.0.29}Accessor}{524}{subsection.12.0.29}%
+\contentsline {subsection}{\numberline {12.0.30}Primitive attributes}{525}{subsection.12.0.30}%
+\contentsline {subsection}{\numberline {12.0.31}Indices}{525}{subsection.12.0.31}%
+\contentsline {subsection}{\numberline {12.0.32}Nodes}{525}{subsection.12.0.32}%
+\contentsline {subsection}{\numberline {12.0.33}Kairo's matrix conversion}{526}{subsection.12.0.33}%
+\contentsline {subsection}{\numberline {12.0.34}Materials}{526}{subsection.12.0.34}%
+\contentsline {subsection}{\numberline {12.0.35}Images/textures/samplers}{526}{subsection.12.0.35}%
+\contentsline {subsection}{\numberline {12.0.36}Animation structures}{527}{subsection.12.0.36}%
+\contentsline {subsection}{\numberline {12.0.37}Skins}{527}{subsection.12.0.37}%
+\contentsline {subsection}{\numberline {12.0.38}Morph targets}{528}{subsection.12.0.38}%
+\contentsline {subsection}{\numberline {12.0.39}SIMPLIFICATION, SUBDIVISION, SMOOTHING AND PARAMETERIZATION}{528}{subsection.12.0.39}%
+\contentsline {subsection}{\numberline {12.0.40}Edge collapse}{528}{subsection.12.0.40}%
+\contentsline {subsection}{\numberline {12.0.41}Quadric Error Metrics}{529}{subsection.12.0.41}%
+\contentsline {subsection}{\numberline {12.0.42}Solve optimal collapse position}{530}{subsection.12.0.42}%
+\contentsline {subsection}{\numberline {12.0.43}Topology constraints}{530}{subsection.12.0.43}%
+\contentsline {subsection}{\numberline {12.0.44}Subdivision}{530}{subsection.12.0.44}%
+\contentsline {subsection}{\numberline {12.0.45}Existing Loop vertex}{531}{subsection.12.0.45}%
+\contentsline {subsection}{\numberline {12.0.46}Laplacian smoothing}{531}{subsection.12.0.46}%
+\contentsline {subsection}{\numberline {12.0.47}Cotangent Laplacian}{532}{subsection.12.0.47}%
+\contentsline {subsection}{\numberline {12.0.48}Parameterization}{532}{subsection.12.0.48}%
+\contentsline {subsection}{\numberline {12.0.49}UV seams}{533}{subsection.12.0.49}%
+\contentsline {subsection}{\numberline {12.0.50}SKELETONS, SKINNING AND ANIMATION}{533}{subsection.12.0.50}%
+\contentsline {subsection}{\numberline {12.0.51}Skeleton hierarchy}{533}{subsection.12.0.51}%
+\contentsline {subsection}{\numberline {12.0.52}Local transforms}{534}{subsection.12.0.52}%
+\contentsline {subsection}{\numberline {12.0.53}Bind pose}{534}{subsection.12.0.53}%
+\contentsline {subsection}{\numberline {12.0.54}glTF inverse-bind matrices}{535}{subsection.12.0.54}%
+\contentsline {subsection}{\numberline {12.0.55}Linear Blend Skinning}{535}{subsection.12.0.55}%
+\contentsline {subsection}{\numberline {12.0.56}Weight normalization}{536}{subsection.12.0.56}%
+\contentsline {subsection}{\numberline {12.0.57}Skinning normals/tangents}{536}{subsection.12.0.57}%
+\contentsline {subsection}{\numberline {12.0.58}Candy-wrapper artifact}{537}{subsection.12.0.58}%
+\contentsline {subsection}{\numberline {12.0.59}Dual-quaternion skinning}{537}{subsection.12.0.59}%
+\contentsline {subsection}{\numberline {12.0.60}Animation clips/channels/samplers}{537}{subsection.12.0.60}%
+\contentsline {subsection}{\numberline {12.0.61}Translation interpolation}{537}{subsection.12.0.61}%
+\contentsline {subsection}{\numberline {12.0.62}Scale interpolation}{538}{subsection.12.0.62}%
+\contentsline {subsection}{\numberline {12.0.63}Quaternion interpolation}{538}{subsection.12.0.63}%
+\contentsline {subsection}{\numberline {12.0.64}Step interpolation}{539}{subsection.12.0.64}%
+\contentsline {subsection}{\numberline {12.0.65}Cubic spline}{539}{subsection.12.0.65}%
+\contentsline {subsection}{\numberline {12.0.66}Pose evaluation}{540}{subsection.12.0.66}%
+\contentsline {subsection}{\numberline {12.0.67}Animation blending}{540}{subsection.12.0.67}%
+\contentsline {subsection}{\numberline {12.0.68}Crossfade}{540}{subsection.12.0.68}%
+\contentsline {subsection}{\numberline {12.0.69}Additive animation}{541}{subsection.12.0.69}%
+\contentsline {subsection}{\numberline {12.0.70}Root motion}{541}{subsection.12.0.70}%
+\contentsline {subsection}{\numberline {12.0.71}MORPHS, ANIMATED BOUNDS, COMPRESSION AND COMPLETE TRACE}{542}{subsection.12.0.71}%
+\contentsline {subsection}{\numberline {12.0.72}Morph position deltas}{542}{subsection.12.0.72}%
+\contentsline {subsection}{\numberline {12.0.73}Morph normal deltas}{542}{subsection.12.0.73}%
+\contentsline {subsection}{\numberline {12.0.74}Morph weights}{543}{subsection.12.0.74}%
+\contentsline {subsection}{\numberline {12.0.75}Morph before or after skinning}{543}{subsection.12.0.75}%
+\contentsline {subsection}{\numberline {12.0.76}Animated bounds}{543}{subsection.12.0.76}%
+\contentsline {subsection}{\numberline {12.0.77}CPU vs GPU skinning}{544}{subsection.12.0.77}%
+\contentsline {subsection}{\numberline {12.0.78}Animation compression}{544}{subsection.12.0.78}%
+\contentsline {subsection}{\numberline {12.0.79}Coordinate-convention conversion}{544}{subsection.12.0.79}%
+\contentsline {subsection}{\numberline {12.0.80}Asset validation}{545}{subsection.12.0.80}%
+\contentsline {section}{\numberline {12.1}\[ = (0.2,1.05,0.0,1). \]}{547}{section.12.1}%
+\contentsline {subsection}{\numberline {12.1.1}Skin influence}{547}{subsection.12.1.1}%
+\contentsline {subsection}{\numberline {12.1.2}Entity/world transform}{548}{subsection.12.1.2}%
+\contentsline {subsection}{\numberline {12.1.3}Previous-frame version for TAA}{548}{subsection.12.1.3}%
+\contentsline {subsection}{\numberline {12.1.4}A COHERENT END-TO-END C++ MODEL}{549}{subsection.12.1.4}%
+\contentsline {subsection}{\numberline {12.1.5}THE CONNECTION BETWEEN PASS 17 AND PASS 18}{552}{subsection.12.1.5}%
+\contentsline {subsection}{\numberline {12.1.6}RECONSTRUCTION GATE --- PASS 17}{553}{subsection.12.1.6}%
+\contentsline {subsection}{\numberline {12.1.7}RECONSTRUCTION GATE --- PASS 18}{554}{subsection.12.1.7}%
+\contentsline {subsection}{\numberline {12.1.8}STATUS}{555}{subsection.12.1.8}%
+\contentsline {subsubsection}{Check which transmittance the stopping test actually uses}{556}{subsubsection*.31}%
+\contentsline {section}{\numberline {12.2}From a rendered frame to a viewer's experience}{556}{section.12.2}%
+\contentsline {section}{\numberline {12.3}A correct image must survive the viewer --- perceptual rendering and XR}{557}{section.12.3}%
+\contentsline {chapter}{\numberline {13}Portable startup, windows, events, and input}{558}{chapter.13}%
+\contentsline {section}{\numberline {13.1}Turn the application into a portable working foundation}{558}{section.13.1}%
+\contentsline {subsubsection}{Make subsystem memory needs visible before startup}{558}{subsubsection*.32}%
+\contentsline {subsubsection}{Keep engine lifecycle separate from game-specific frame work}{559}{subsubsection*.33}%
+\contentsline {paragraph}{Freeze features, then move game behavior out of the core}{559}{paragraph*.34}%
+\contentsline {paragraph}{Keep frame phases visible so game work and engine work stay separate}{559}{paragraph*.35}%
+\contentsline {subsection}{\numberline {13.1.1}Keep example behavior in the example application}{560}{subsection.13.1.1}%
+\contentsline {subsubsection}{Add a feature by following its data across the engine}{560}{subsubsection*.36}%
+\contentsline {subsection}{\numberline {13.1.2}Choose a module boundary that matches how the game is developed}{561}{subsection.13.1.2}%
+\contentsline {subsection}{\numberline {13.1.3}Design the next engine layer backward from a small finished game}{562}{subsection.13.1.3}%
+\contentsline {subsubsection}{Source-to-volume map}{562}{subsubsection*.37}%
+\contentsline {subsection}{\numberline {13.1.4}Prototype the game loop, then list what the engine lacks}{562}{subsection.13.1.4}%
+\contentsline {subsubsection}{Let a short game expose the engine's next concrete need}{563}{subsubsection*.38}%
+\contentsline {subsection}{\numberline {13.1.5}Build a minimal application before building game systems}{563}{subsection.13.1.5}%
+\contentsline {subsection}{\numberline {13.1.6}Generate platform projects from one configuration, then verify each target}{564}{subsection.13.1.6}%
+\contentsline {subsubsection}{Make platform and lifecycle assumptions visible}{565}{subsubsection*.39}%
+\contentsline {subsection}{\numberline {13.1.7}Packaging changes the host, not the engine's obligations}{565}{subsection.13.1.7}%
+\contentsline {subsubsection}{Project generation is part of the foundation}{566}{subsubsection*.40}%
+\contentsline {subsubsection}{Logging and diagnostics belong early}{566}{subsubsection*.41}%
+\contentsline {subsubsection}{Separate a diagnostic message from the operation it describes}{566}{subsubsection*.42}%
+\contentsline {subsubsection}{Put ownership and lifetime into the first application loop}{567}{subsubsection*.43}%
+\contentsline {subsection}{\numberline {13.1.8}A service is not ready merely because its constructor returned --- Gregory integration}{567}{subsection.13.1.8}%
+\contentsline {subsection}{\numberline {13.1.9}Precompiled headers as a measured project choice}{568}{subsection.13.1.9}%
+\contentsline {subsection}{\numberline {13.1.10}Build boundaries: library choice, runtime assumptions, and warning scope}{569}{subsection.13.1.10}%
+\contentsline {subsection}{\numberline {13.1.11}Make build and source organization part of maintenance}{570}{subsection.13.1.11}%
+\contentsline {subsubsection}{Keep declarations, ownership, and implementation visible}{571}{subsubsection*.44}%
+\contentsline {subsubsection}{Keep project organization useful and proportionate}{571}{subsubsection*.45}%
+\contentsline {subsection}{\numberline {13.1.12}Start a tool project from the build recipe}{572}{subsection.13.1.12}%
+\contentsline {subsubsection}{Keep build work incremental and validate dependency tracking}{573}{subsubsection*.46}%
+\contentsline {subsubsection}{Give asset tools a precise command-line contract}{573}{subsubsection*.47}%
+\contentsline {paragraph}{Understand the argument strings before parsing a mode}{574}{paragraph*.48}%
+\contentsline {paragraph}{Make file naming a checked rule}{575}{paragraph*.49}%
+\contentsline {paragraph}{Treat the compiler as another process}{576}{paragraph*.50}%
+\contentsline {paragraph}{Keep platform scripts and shared policy in agreement}{577}{paragraph*.51}%
+\contentsline {subsection}{\numberline {13.1.13}Begin with a runnable program and a visible failure}{577}{subsection.13.1.13}%
+\contentsline {subsubsection}{Keep a window milestone small enough to verify}{579}{subsubsection*.52}%
+\contentsline {paragraph}{A resize becomes pending work}{579}{paragraph*.53}%
+\contentsline {subsection}{\numberline {13.1.14}Put operating-system differences behind a narrow platform boundary}{579}{subsection.13.1.14}%
+\contentsline {subsection}{\numberline {13.1.15}Start with one visible event}{580}{subsection.13.1.15}%
+\contentsline {section}{\numberline {13.2}Let one input produce one intended change}{580}{section.13.2}%
+\contentsline {subsection}{\numberline {13.2.1}Let input enter without handing it the whole world}{580}{subsection.13.2.1}%
+\contentsline {subsection}{\numberline {13.2.2}Separate elapsed time from the time the world advances}{581}{subsection.13.2.2}%
+\contentsline {subsubsection}{A game is soft real-time, and one frame can contain several timelines}{582}{subsubsection*.54}%
+\contentsline {subsection}{\numberline {13.2.3}Give the application a clock and a loop}{583}{subsection.13.2.3}%
+\contentsline {subsubsection}{Put a mutex around shared allocation bookkeeping}{583}{subsubsection*.55}%
+\contentsline {subsubsection}{A wait result can change ownership even when recovery is needed}{584}{subsubsection*.56}%
+\contentsline {paragraph}{Query success, worker completion and handle lifetime are separate states}{584}{paragraph*.57}%
+\contentsline {subsubsection}{Main-thread work and threads}{585}{subsubsection*.58}%
+\contentsline {subsubsection}{Minimized, resized, and closing states}{585}{subsubsection*.59}%
+\contentsline {subsubsection}{Make event delivery behavior explicit}{586}{subsubsection*.60}%
+\contentsline {subsubsection}{Make event identity and input values explicit}{586}{subsubsection*.61}%
+\contentsline {subsection}{\numberline {13.2.4}Keep the event API explicit about payload, timing, and propagation}{586}{subsection.13.2.4}%
+\contentsline {subsubsection}{Separate application events from game messages}{587}{subsubsection*.62}%
+\contentsline {subsection}{\numberline {13.2.5}Treat events as messages with an explicit route}{587}{subsection.13.2.5}%
+\contentsline {subsubsection}{Synchronous dispatch versus a queued bus}{588}{subsubsection*.63}%
+\contentsline {subsubsection}{Removing a layer pointer does not define who destroys it}{588}{subsubsection*.64}%
+\contentsline {subsubsection}{Propagation and ``handled'' semantics}{588}{subsubsection*.65}%
+\contentsline {subsection}{\numberline {13.2.6}Layers give features a place to live}{588}{subsection.13.2.6}%
+\contentsline {subsubsection}{Overlays and the editor}{589}{subsubsection*.66}%
+\contentsline {subsection}{\numberline {13.2.7}Transform a pointer into the control's local space before testing a hit}{589}{subsection.13.2.7}%
+\contentsline {subsection}{\numberline {13.2.8}Treat input capture as a route, not a hit-test result}{590}{subsection.13.2.8}%
+\contentsline {subsection}{\numberline {13.2.9}Keep the standard UI optional and stateful, but name its current limits}{591}{subsection.13.2.9}%
+\contentsline {subsection}{\numberline {13.2.10}Track text length, allocation capacity, cursor, and selection separately}{591}{subsection.13.2.10}%
+\contentsline {subsection}{\numberline {13.2.11}Use stencil when a rotated UI shape cannot be represented by a scissor rectangle}{592}{subsection.13.2.11}%
+\contentsline {subsection}{\numberline {13.2.12}Display scale and persistent identity need explicit platform policies}{592}{subsection.13.2.12}%
+\contentsline {subsubsection}{Let the UI observe input before the game acts on it}{592}{subsubsection*.67}%
+\contentsline {subsubsection}{A physical key is not a typed character}{593}{subsubsection*.68}%
+\contentsline {subsection}{\numberline {13.2.13}Turning platform callbacks into engine events}{593}{subsection.13.2.13}%
+\contentsline {subsection}{\numberline {13.2.14}Poll current input while routing input events}{593}{subsection.13.2.14}%
+\contentsline {subsubsection}{Input callbacks and state queries serve different questions}{594}{subsubsection*.69}%
+\contentsline {chapter}{\numberline {14}Application clocks and stable input identity}{596}{chapter.14}%
+\contentsline {subsection}{\numberline {14.0.1}Keep application key names independent of a windowing library}{596}{subsection.14.0.1}%
+\contentsline {subsection}{\numberline {14.0.2}A held button and a completed tap carry different information}{596}{subsection.14.0.2}%
+\contentsline {subsection}{\numberline {14.0.3}Normalize input before gameplay consumes it}{598}{subsection.14.0.3}%
+\contentsline {subsubsection}{Preserve input edges as well as the final held state}{598}{subsubsection*.70}%
+\contentsline {subsubsection}{Input travels through two clocks, a focus owner, and a durable tick command}{599}{subsubsection*.71}%
+\contentsline {subsubsection}{Derive frame time from a monotonic clock, then treat pacing as a separate choice}{600}{subsubsection*.72}%
+\contentsline {subsubsection}{Pace the quiet period after a resize}{600}{subsubsection*.73}%
+\contentsline {subsection}{\numberline {14.0.4}Scale movement by elapsed time, and state what the clock means}{601}{subsection.14.0.4}%
+\contentsline {subsection}{\numberline {14.0.5}Make timestep and integration choices explicit}{602}{subsection.14.0.5}%
+\contentsline {subsection}{\numberline {14.0.6}Time is part of the design}{603}{subsection.14.0.6}%
+\contentsline {subsection}{\numberline {14.0.7}Teach a control when the player needs it}{603}{subsection.14.0.7}%
+\contentsline {subsection}{\numberline {14.0.8}Update gameplay state, then let subsystems batch their work}{604}{subsection.14.0.8}%
+\contentsline {subsection}{\numberline {14.0.9}Let dependencies set the update order}{604}{subsection.14.0.9}%
+\contentsline {subsection}{\numberline {14.0.10}Make mixed-time reads visible}{605}{subsection.14.0.10}%
+\contentsline {section}{\numberline {14.1}Keep identity, storage, and ownership in agreement}{605}{section.14.1}%
+\contentsline {subsection}{\numberline {14.1.1}A live object needs an identity that survives storage changes}{605}{subsection.14.1.1}%
+\contentsline {subsection}{\numberline {14.1.2}Keep submitted render resources alive until their users finish}{607}{subsection.14.1.2}%
+\contentsline {subsubsection}{Fence and semaphore jobs}{608}{subsubsection*.74}%
+\contentsline {subsection}{\numberline {14.1.3}State ownership and memory lifetime}{609}{subsection.14.1.3}%
+\contentsline {subsubsection}{Read memory statistics as a ledger with a stated boundary}{610}{subsubsection*.75}%
+\contentsline {subsubsection}{Align the address the caller receives}{611}{subsubsection*.76}%
+\contentsline {paragraph}{Recover the original allocation range}{611}{paragraph*.77}%
+\contentsline {subsubsection}{Bridge Vulkan allocation callbacks to an engine allocator}{611}{subsubsection*.78}%
+\contentsline {subsection}{\numberline {14.1.4}Give memory a lifetime that matches the work}{612}{subsection.14.1.4}%
+\contentsline {subsubsection}{Two scratch buffers still need a completion rule}{613}{subsubsection*.79}%
+\contentsline {subsection}{\numberline {14.1.5}Give memory a purpose, then choose an allocator to fit it}{614}{subsection.14.1.5}%
+\contentsline {subsubsection}{Total free space is not necessarily one usable range}{615}{subsubsection*.80}%
+\contentsline {subsubsection}{Dynamic arrays in C: track capacity separately from length}{615}{subsubsection*.81}%
+\contentsline {subsection}{\numberline {14.1.6}Separate state ownership from state use}{616}{subsection.14.1.6}%
+\contentsline {subsection}{\numberline {14.1.7}Preserve ownership, freshness, and intent in engine APIs}{616}{subsection.14.1.7}%
+\contentsline {subsubsection}{Treat ownership proposals as questions about lifetime and identity}{617}{subsubsection*.82}%
+\contentsline {subsection}{\numberline {14.1.8}Give references a way to survive object deletion and relocation}{617}{subsection.14.1.8}%
+\contentsline {section}{\numberline {14.2}Let identity survive changes in storage}{618}{section.14.2}%
+\contentsline {subsection}{\numberline {14.2.1}Reconstruction checkpoint --- prove identity survives relocation}{618}{subsection.14.2.1}%
+\contentsline {subsection}{\numberline {14.2.2}Entity Identity, Generational Handles, Type Identity, Sparse-Set ECS, Dense Storage, Queries, Invalidation and Deferred Structural Changes}{618}{subsection.14.2.2}%
+\contentsline {subsection}{\numberline {14.2.3}ENTITY IDENTITY, GENERATIONS, FREE LISTS AND COMPONENT TYPE IDENTITY}{619}{subsection.14.2.3}%
+\contentsline {chapter}{\numberline {15}Sparse-set components and generational entity handles}{642}{chapter.15}%
+\contentsline {subsection}{\numberline {15.0.1}COMPONENT POOLS AND SPARSE SETS}{642}{subsection.15.0.1}%
+\contentsline {subsection}{\numberline {15.0.2}The move must not throw after entity metadata changes}{655}{subsection.15.0.2}%
+\contentsline {subsection}{\numberline {15.0.3}Archetype ECS, Chunks, Migration, AoS/SoA, Hot--Cold Layouts, Tags, Resources, Relationships, Transform Hierarchies, Engine Components, Subsystem ID Bridges, Events, Tick Models, System DAGs, Parallel ECS Scheduling, Hazards, False Sharing and Prefetch}{706}{subsection.15.0.3}%
+\contentsline {chapter}{\numberline {16}Archetypes, chunks, relationships, and transforms}{707}{chapter.16}%
+\contentsline {subsection}{\numberline {16.0.1}ARCHETYPES, CHUNKS, LAYOUTS, RELATIONSHIPS AND TRANSFORMS}{707}{subsection.16.0.1}%
+\contentsline {subsection}{\numberline {16.0.2}ENGINE COMPONENTS, BRIDGES, EVENTS, TICKS AND PARALLEL SYSTEM SCHEDULING}{745}{subsection.16.0.2}%
+\contentsline {chapter}{\numberline {17}ECS performance through cache and scheduling}{774}{chapter.17}%
+\contentsline {subsection}{\numberline {17.0.1}Decide which pairs may interact, then publish overlap transitions safely}{782}{subsection.17.0.1}%
+\contentsline {subsubsection}{A category and mask rule is reciprocal}{782}{subsubsection*.83}%
+\contentsline {subsubsection}{Same nonzero groups can override the masks}{782}{subsubsection*.84}%
+\contentsline {subsubsection}{A sensor detects overlap and skips physical response}{783}{subsubsection*.85}%
+\contentsline {subsubsection}{Derive begin, stay, and end from stable pair sets}{784}{subsubsection*.86}%
+\contentsline {subsubsection}{Queue copied events, then resolve at a safe boundary}{785}{subsubsection*.87}%
+\contentsline {subsubsection}{Exercise with a complete solution}{786}{subsubsection*.88}%
+\contentsline {subsubsection}{Bounded executable witness}{786}{subsubsection*.89}%
+\contentsline {subsection}{\numberline {17.0.2}Component Lifetime, Move-Only Data, Serialization, Entity Reference Remapping, Schema Evolution, Reflection, Inspector Editing, Undo/Redo, Prefabs, Scene↔ECS Conversion, Cloning, Network Identity, Determinism, ECS Diagnostics, Memory Budgets, Complexity, Invalidation Contracts, Reuse Testing, Benchmarking, and Building the Whole Sparse-Set ECS From Scratch}{809}{subsection.17.0.2}%
+\contentsline {subsection}{\numberline {17.0.3}PRODUCTION COMPONENT LIFETIME, SERIALIZATION, REFLECTION, SCENES AND IDENTITY}{809}{subsection.17.0.3}%
+\contentsline {chapter}{\numberline {18}ECS contracts, diagnostics, and GPU handoff}{849}{chapter.18}%
+\contentsline {subsection}{\numberline {18.0.1}DIAGNOSTICS, MEMORY, COMPLEXITY, API CONTRACTS AND COMPLETE ECS DEFENSE}{849}{subsection.18.0.1}%
+\contentsline {section}{\numberline {18.1}Give the renderer a clear job, then meet the graphics API}{898}{section.18.1}%
+\contentsline {section}{\numberline {18.2}Explicit backend execution closes the renderer's lifetime contract}{898}{section.18.2}%
+\contentsline {section}{\numberline {18.3}From generated GPU work to safe explicit execution}{898}{section.18.3}%
+\contentsline {chapter}{\numberline {19}BVH traversal, refitting, and SIMD}{899}{chapter.19}%
+\contentsline {subsection}{\numberline {19.0.1}TRAVERSAL, REFITTING, WIDE BVHs AND SIMD}{899}{subsection.19.0.1}%
+\contentsline {subsection}{\numberline {19.0.2}Dynamic Spatial Indices, Sweep-and-Prune, Hash Grids, Octrees, Quadtrees, KD-Trees, BSP, Sphere Hierarchies, Portals/PVS and Hierarchical-Z}{944}{subsection.19.0.2}%
+\contentsline {chapter}{\numberline {20}Dynamic spatial indices for moving worlds}{946}{chapter.20}%
+\contentsline {subsection}{\numberline {20.0.1}Dynamic AABB Trees, Sweep-and-Prune, Spatial Hashes and Uniform Grids}{946}{subsection.20.0.1}%
+\contentsline {subsection}{\numberline {20.0.2}Octrees, Quadtrees, KD-Trees, BSP, Sphere Hierarchies, Scene Graphs, Portals/PVS and Hi-Z}{979}{subsection.20.0.2}%
+\contentsline {subsection}{\numberline {20.0.3}KD-tree}{998}{subsection.20.0.3}%
+\contentsline {subsection}{\numberline {20.0.4}BVH}{998}{subsection.20.0.4}%
+\contentsline {chapter}{\numberline {21}Spatial-index serialization and query evidence}{1010}{chapter.21}%
+\contentsline {subsection}{\numberline {21.0.1}SERIALIZATION, VISUALIZATION, BENCHMARKING, STRUCTURE SELECTION, UNIFIED QUERY DESIGN}{1010}{subsection.21.0.1}%
+\contentsline {subsection}{\numberline {21.0.2}Strategy A --- serialize primitives and rebuild}{1011}{subsection.21.0.2}%
+\contentsline {subsection}{\numberline {21.0.3}Strategy B --- serialize built structure}{1011}{subsection.21.0.3}%
+\contentsline {section}{\numberline {21.1}Make a world that can be authored, saved, and run}{1035}{section.21.1}%
+\contentsline {subsubsection}{From geometry pieces to objects and transforms}{1035}{subsubsection*.90}%
+\contentsline {subsection}{\numberline {21.1.1}Model a scene as data, then make it executable}{1036}{subsection.21.1.1}%
+\contentsline {subsubsection}{Stable identity matters for saving}{1036}{subsubsection*.91}%
+\contentsline {paragraph}{Save the state the player needs to resume}{1037}{paragraph*.92}%
+\contentsline {subsubsection}{Keep authored data visible to both code and the editor}{1037}{subsubsection*.93}%
+\contentsline {subsection}{\numberline {21.1.2}White is the identity texture for a color-only quad}{1037}{subsection.21.1.2}%
+\contentsline {subsubsection}{Source-to-volume map}{1038}{subsubsection*.94}%
+\contentsline {subsection}{\numberline {21.1.3}An entity wrapper can hide registry vocabulary without owning component storage}{1038}{subsection.21.1.3}%
+\contentsline {subsubsection}{Source-to-volume map}{1039}{subsubsection*.95}%
+\contentsline {subsection}{\numberline {21.1.4}Clear the entity-ID attachment to a deliberate sentinel}{1039}{subsection.21.1.4}%
+\contentsline {subsection}{\numberline {21.1.5}Inspect and edit the selected entity}{1039}{subsection.21.1.5}%
+\contentsline {subsection}{\numberline {21.1.6}Carry entity identity through a batched draw}{1040}{subsection.21.1.6}%
+\contentsline {subsection}{\numberline {21.1.7}Treat entities as IDs and components as data}{1040}{subsection.21.1.7}%
+\contentsline {subsection}{\numberline {21.1.8}Build a scene through entity and component menus}{1041}{subsection.21.1.8}%
+\contentsline {subsection}{\numberline {21.1.9}Bind native C++ behavior to an entity}{1041}{subsection.21.1.9}%
+\contentsline {subsection}{\numberline {21.1.10}Use component pools for the work a system needs}{1042}{subsection.21.1.10}%
+\contentsline {subsection}{\numberline {21.1.11}Write color and entity identity in one render pass}{1042}{subsection.21.1.11}%
+\contentsline {subsection}{\numberline {21.1.12}Drag and manipulate without confusing identity}{1043}{subsection.21.1.12}%
+\contentsline {subsubsection}{Components and invariants}{1043}{subsubsection*.96}%
+\contentsline {paragraph}{ECS performance claims need a memory-layout argument}{1044}{paragraph*.97}%
+\contentsline {subsubsection}{Let the world own a changing population}{1044}{subsubsection*.98}%
+\contentsline {subsubsection}{Geometry as a managed renderable resource}{1044}{subsubsection*.99}%
+\contentsline {subsubsection}{Trace terrain from authored samples to submitted geometry}{1045}{subsubsection*.100}%
+\contentsline {subsection}{\numberline {21.1.13}The gameplay foundation is the negotiated boundary between engine and game}{1046}{subsection.21.1.13}%
+\contentsline {subsection}{\numberline {21.1.14}A game world is a changing state inside a larger designed space}{1047}{subsection.21.1.14}%
+\contentsline {subsubsection}{A streamed world must preserve authored identity when its objects are absent}{1047}{subsubsection*.101}%
+\contentsline {subsection}{\numberline {21.1.15}Make common searches cheap by choosing them deliberately}{1049}{subsection.21.1.15}%
+\contentsline {subsection}{\numberline {21.1.16}A useful object needs rules for being noticed, reached, and used}{1049}{subsection.21.1.16}%
+\contentsline {chapter}{\numberline {22}Versioned scenes and transactional loading}{1051}{chapter.22}%
+\contentsline {subsection}{\numberline {22.0.1}Save scenes as a versioned authoring contract}{1051}{subsection.22.0.1}%
+\contentsline {subsection}{\numberline {22.0.2}Serialization is an interface between tools and execution}{1051}{subsection.22.0.2}%
+\contentsline {subsection}{\numberline {22.0.3}Play mode needs an explicit state boundary}{1052}{subsection.22.0.3}%
+\contentsline {subsubsection}{Run a copy so Play cannot damage the edited scene}{1052}{subsubsection*.102}%
+\contentsline {subsection}{\numberline {22.0.4}Physics tools should reveal what the solver sees}{1053}{subsection.22.0.4}%
+\contentsline {subsubsection}{Draw physics colliders as editor overlays}{1053}{subsubsection*.103}%
+\contentsline {subsection}{\numberline {22.0.5}Scripts need a host, a lifecycle, and inspectable state}{1054}{subsection.22.0.5}%
+\contentsline {subsubsection}{Keep behavior independent from the asset it acts on}{1054}{subsubsection*.104}%
+\contentsline {subsection}{\numberline {22.0.6}Prefabs and iteration shift design cost to identity management}{1054}{subsection.22.0.6}%
+\contentsline {subsection}{\numberline {22.0.7}Practice: trace one object end to end}{1055}{subsection.22.0.7}%
+\contentsline {subsection}{\numberline {22.0.8}Build contacts that can support stable physical response}{1055}{subsection.22.0.8}%
+\contentsline {subsection}{\numberline {22.0.9}From a conservative box check to a sphere--box contact}{1056}{subsection.22.0.9}%
+\contentsline {subsection}{\numberline {22.0.10}Keep contact features coherent across frames}{1058}{subsection.22.0.10}%
+\contentsline {subsubsection}{A four-sample support trace}{1059}{subsubsection*.105}%
+\contentsline {subsection}{\numberline {22.0.11}Sleeping physics bodies without losing a collision chain}{1061}{subsection.22.0.11}%
+\contentsline {section}{\numberline {22.1}The rotating crate forces mechanics to meet engine state}{1062}{section.22.1}%
+\contentsline {section}{\numberline {22.2}Rigid bodies --- from extended motion to contact constraints}{1062}{section.22.2}%
+\contentsline {subsection}{\numberline {22.2.1}The crate exposes the weakness of point-mass motion}{1062}{subsection.22.2.1}%
+\contentsline {subsection}{\numberline {22.2.2}Why the centre of mass, inertia and torque appear}{1063}{subsection.22.2.2}%
+\contentsline {subsection}{\numberline {22.2.3}Generalized coordinates describe the configuration the mechanism can actually have}{1063}{subsection.22.2.3}%
+\contentsline {subsection}{\numberline {22.2.4}D'Alembert's principle says ideal constraint reactions do no virtual work}{1065}{subsection.22.2.4}%
+\contentsline {subsection}{\numberline {22.2.5}Small oscillations turn nonlinear mechanics into a generalized eigenproblem near equilibrium}{1066}{subsection.22.2.5}%
+\contentsline {subsection}{\numberline {22.2.6}The Legendre transform turns configuration-space dynamics into phase-space dynamics}{1067}{subsection.22.2.6}%
+\contentsline {subsection}{\numberline {22.2.7}Symplectic structure explains why long-time phase behavior is a stronger target than one-step position error}{1069}{subsection.22.2.7}%
+\contentsline {subsection}{\numberline {22.2.8}Turning continuous motion into an engine timestep}{1070}{subsection.22.2.8}%
+\contentsline {subsection}{\numberline {22.2.9}Why contact changes \emph {both} linear and angular velocity}{1070}{subsection.22.2.9}%
+\contentsline {subsection}{\numberline {22.2.10}How a resting contact avoids the endless-bounce problem}{1071}{subsection.22.2.10}%
+\contentsline {subsection}{\numberline {22.2.11}The live engine contract}{1072}{subsection.22.2.11}%
+\contentsline {subsection}{\numberline {22.2.12}Reconstruction and failure tests}{1072}{subsection.22.2.12}%
+\contentsline {subsection}{\numberline {22.2.13}How the next engineering problem follows}{1073}{subsection.22.2.13}%
+\contentsline {subsection}{\numberline {22.2.14}Let motion and contact answer the same world rules}{1073}{subsection.22.2.14}%
+\contentsline {subsubsection}{The physics step: predict, detect, resolve, commit}{1073}{subsubsection*.106}%
+\contentsline {paragraph}{4.1 Integration is a numerical approximation}{1073}{paragraph*.107}%
+\contentsline {paragraph}{4.2 Find candidate pairs before detailed contact}{1074}{paragraph*.108}%
+\contentsline {paragraph}{4.3 Resolve velocity and overlap}{1074}{paragraph*.109}%
+\contentsline {paragraph}{Particle cables and rods are distance constraints represented as contacts}{1075}{paragraph*.110}%
+\contentsline {paragraph}{What changes when the solver works directly on predicted positions}{1076}{paragraph*.111}%
+\contentsline {subsubsection}{A joint removes selected relative motion, not every motion}{1077}{subsubsection*.112}%
+\contentsline {paragraph}{Count the rows before extending the solver to three dimensions}{1078}{paragraph*.113}%
+\contentsline {paragraph}{Verify the planar rows independently}{1079}{paragraph*.114}%
+\contentsline {paragraph}{4.4 Discrete time can miss collisions}{1084}{paragraph*.115}%
+\contentsline {subsubsection}{A discrete update is a choice}{1084}{subsubsection*.116}%
+\contentsline {subsubsection}{Mass and inverse mass}{1085}{subsubsection*.117}%
+\contentsline {subsubsection}{One-dimensional collision impulse, with signs made explicit}{1085}{subsubsection*.118}%
+\contentsline {subsubsection}{Broad phase, narrow phase, and contact data}{1086}{subsubsection*.119}%
+\contentsline {paragraph}{Separate likely collision pairs from exact contact data}{1087}{paragraph*.120}%
+\contentsline {subsubsection}{Friction lives in the contact plane}{1087}{subsubsection*.121}%
+\contentsline {subsubsection}{Resting contacts, iteration, and stability}{1088}{subsubsection*.122}%
+\contentsline {subsubsection}{A practical validation ladder}{1089}{subsubsection*.123}%
+\contentsline {subsubsection}{Integrate physics without surrendering the scene model}{1089}{subsubsection*.124}%
+\contentsline {paragraph}{Connect simulation bodies to logical objects and rendered meshes}{1090}{paragraph*.125}%
+\contentsline {paragraph}{Turning a push into a spin}{1090}{paragraph*.126}%
+\contentsline {paragraph}{Advance rotation with torque, then check the exact integration listing}{1092}{paragraph*.127}%
+\contentsline {subsubsection}{Physics exists to serve the game's rules}{1092}{subsubsection*.128}%
+\contentsline {paragraph}{A physics system supplies motion; gameplay decides what that motion should mean}{1093}{paragraph*.129}%
+\contentsline {subsubsection}{Make simulation behavior inspectable with focused tests}{1094}{subsubsection*.130}%
+\contentsline {subsubsection}{Physics scope and safe approximation}{1094}{subsubsection*.131}%
+\contentsline {paragraph}{Approximate aerodynamic forces with a body-space tensor}{1095}{paragraph*.132}%
+\contentsline {subparagraph}{Turn aerodynamic controls and buoyancy into forces at useful points}{1095}{subparagraph*.133}%
+\contentsline {subsubsection}{Treat orientation as state, then refresh its convenient transform}{1097}{subsubsection*.134}%
+\contentsline {subsubsection}{Use a hierarchy to avoid testing every collision pair}{1098}{subsubsection*.135}%
+\contentsline {subsubsection}{Grow a spatial hierarchy around the world's shape}{1099}{subsubsection*.136}%
+\contentsline {subsubsection}{Update the hierarchy without rebuilding all of it}{1100}{subsubsection*.137}%
+\contentsline {subsubsection}{See the empty space inside a parent bound}{1100}{subsubsection*.138}%
+\contentsline {chapter}{\numberline {23}Rigid-body motion from forces to contact}{1102}{chapter.23}%
+\contentsline {section}{\numberline {23.1}From the push on a panel to a repeatable rigid-body simulator}{1102}{section.23.1}%
+\contentsline {subsection}{\numberline {23.1.1}Why the center of mass is the useful origin}{1103}{subsection.23.1.1}%
+\contentsline {subsection}{\numberline {23.1.2}Inertia says how the same mass resists different turns}{1104}{subsection.23.1.2}%
+\contentsline {subsubsection}{Body coordinates and world coordinates}{1105}{subsubsection*.139}%
+\contentsline {subsection}{\numberline {23.1.3}The edge push: force, torque, and angular momentum}{1105}{subsection.23.1.3}%
+\contentsline {subsubsection}{Force generators are policies over bodies, not permanent force state}{1106}{subsubsection*.140}%
+\contentsline {subsubsection}{A particle aggregate is a useful model for connected, flexible geometry}{1106}{subsubsection*.141}%
+\contentsline {subsection}{\numberline {23.1.4}A staged explosion is a timed game force field, not a blast simulation}{1107}{subsection.23.1.4}%
+\contentsline {subsection}{\numberline {23.1.5}Force acts over an interval; impulse acts at an event}{1109}{subsection.23.1.5}%
+\contentsline {subsection}{\numberline {23.1.6}A step is an ordered computation, not a bag of formulas}{1109}{subsection.23.1.6}%
+\contentsline {subsection}{\numberline {23.1.7}Fixed time, substeps, snapshots, and repeatability}{1111}{subsection.23.1.7}%
+\contentsline {subsection}{\numberline {23.1.8}Conservation checks distinguish physics from policy}{1112}{subsection.23.1.8}%
+\contentsline {subsection}{\numberline {23.1.9}A compact implementation contract}{1113}{subsection.23.1.9}%
+\contentsline {subsection}{\numberline {23.1.10}How the model fails when one contract is vague}{1114}{subsection.23.1.10}%
+\contentsline {subsubsection}{Time-step invariance has a limited meaning}{1114}{subsubsection*.142}%
+\contentsline {subsubsection}{Coordinate conventions are part of the API}{1115}{subsubsection*.143}%
+\contentsline {subsubsection}{World scale and robust operating ranges}{1115}{subsubsection*.144}%
+\contentsline {subsubsection}{Reset and replay semantics}{1116}{subsubsection*.145}%
+\contentsline {subsection}{\numberline {23.1.11}Rigid-Body State, Center of Mass, Mass and Inverse Mass, Newtonian Force Accumulation, Gravity, Drag, Springs, Damping, Torque, Angular Momentum, Inertia Tensors, Principal Axes, Shape Inertia, Parallel-Axis Theorem, Composite Bodies, and World-Space Inverse Inertia}{1117}{subsection.23.1.11}%
+\contentsline {subsection}{\numberline {23.1.12}Follow one crate through the complete physical argument}{1117}{subsection.23.1.12}%
+\contentsline {subsubsection}{Derive the contact response before solving a stack}{1118}{subsubsection*.146}%
+\contentsline {subsection}{\numberline {23.1.13}FROM PARTICLES TO A RIGID BODY}{1119}{subsection.23.1.13}%
+\contentsline {subsection}{\numberline {23.1.14}Part 1601 --- Particles versus rigid bodies}{1119}{subsection.23.1.14}%
+\contentsline {subsection}{\numberline {23.1.15}Part 1602 --- The fixed internal-distance assumption}{1121}{subsection.23.1.15}%
+\contentsline {subsection}{\numberline {23.1.16}Part 1603 --- Translational state}{1123}{subsection.23.1.16}%
+\contentsline {subsection}{\numberline {23.1.17}Part 1604 --- Rotational state}{1123}{subsection.23.1.17}%
+\contentsline {subsection}{\numberline {23.1.18}Part 1605 --- Center of mass}{1124}{subsection.23.1.18}%
+\contentsline {subsection}{\numberline {23.1.19}Part 1606 --- COM from point masses}{1125}{subsection.23.1.19}%
+\contentsline {subsection}{\numberline {23.1.20}Part 1607 --- COM of continuous uniform shapes}{1126}{subsection.23.1.20}%
+\contentsline {subsection}{\numberline {23.1.21}Part 1608 --- Mass versus inverse mass}{1127}{subsection.23.1.21}%
+\contentsline {subsection}{\numberline {23.1.22}Part 1609 --- Infinite-mass bodies through inverse mass zero}{1128}{subsection.23.1.22}%
+\contentsline {subsection}{\numberline {23.1.23}Part 1610 --- Density and mass from volume}{1129}{subsection.23.1.23}%
+\contentsline {subsection}{\numberline {23.1.24}Part 1611 --- Linear momentum}{1132}{subsection.23.1.24}%
+\contentsline {subsection}{\numberline {23.1.25}Part 1612 --- Newton's first law}{1133}{subsection.23.1.25}%
+\contentsline {subsection}{\numberline {23.1.26}Part 1613 --- Newton's second law in force form}{1133}{subsection.23.1.26}%
+\contentsline {subsection}{\numberline {23.1.27}Part 1614 --- Newton's second law in momentum form}{1134}{subsection.23.1.27}%
+\contentsline {subsection}{\numberline {23.1.28}Part 1615 --- Newton's third law}{1134}{subsection.23.1.28}%
+\contentsline {subsection}{\numberline {23.1.29}Part 1616 --- Force accumulation}{1135}{subsection.23.1.29}%
+\contentsline {subsection}{\numberline {23.1.30}Part 1617 --- Gravity as force or acceleration}{1137}{subsection.23.1.30}%
+\contentsline {subsection}{\numberline {23.1.31}Part 1618 --- Drag-force concepts}{1138}{subsection.23.1.31}%
+\contentsline {subsection}{\numberline {23.1.32}Part 1619 --- Springs and Hooke's law}{1140}{subsection.23.1.32}%
+\contentsline {subsection}{\numberline {23.1.33}Part 1620 --- Damping forces}{1141}{subsection.23.1.33}%
+\contentsline {chapter}{\numberline {24}A complete rigid-body state before the formula audit}{1145}{chapter.24}%
+\contentsline {subsection}{\numberline {24.0.1}THE COMPLETE KAIRO STATE SO FAR}{1145}{subsection.24.0.1}%
+\contentsline {subsection}{\numberline {24.0.2}TORQUE AND INERTIA FROM FIRST PRINCIPLES}{1146}{subsection.24.0.2}%
+\contentsline {subsection}{\numberline {24.0.3}Part 1621 --- Torque from an off-center force}{1146}{subsection.24.0.3}%
+\contentsline {subsection}{\numberline {24.0.4}Part 1622 --- Lever arm vectors}{1148}{subsection.24.0.4}%
+\contentsline {subsection}{\numberline {24.0.5}Part 1623 --- Angular velocity}{1149}{subsection.24.0.5}%
+\contentsline {subsection}{\numberline {24.0.6}Part 1624 --- Angular acceleration}{1150}{subsection.24.0.6}%
+\contentsline {subsection}{\numberline {24.0.7}Part 1625 --- Angular momentum}{1150}{subsection.24.0.7}%
+\contentsline {subsection}{\numberline {24.0.8}Part 1626 --- Moment of inertia as rotational mass}{1151}{subsection.24.0.8}%
+\contentsline {subsection}{\numberline {24.0.9}Part 1627 --- Why an inertia tensor exists}{1153}{subsection.24.0.9}%
+\contentsline {subsection}{\numberline {24.0.10}Part 1628 --- Inertia tensor representation}{1153}{subsection.24.0.10}%
+\contentsline {subsection}{\numberline {24.0.11}Part 1629 --- Principal moments}{1154}{subsection.24.0.11}%
+\contentsline {subsection}{\numberline {24.0.12}Part 1630 --- Principal axes}{1154}{subsection.24.0.12}%
+\contentsline {subsection}{\numberline {24.0.13}Part 1631 --- Point-mass inertia tensor}{1155}{subsection.24.0.13}%
+\contentsline {subsection}{\numberline {24.0.14}Part 1632 --- Solid sphere inertia}{1156}{subsection.24.0.14}%
+\contentsline {subsection}{\numberline {24.0.15}Part 1633 --- Solid box inertia}{1156}{subsection.24.0.15}%
+\contentsline {subsection}{\numberline {24.0.16}Part 1634 --- Cylinder inertia}{1157}{subsection.24.0.16}%
+\contentsline {subsection}{\numberline {24.0.17}Part 1635 --- Capsule inertia concept}{1158}{subsection.24.0.17}%
+\contentsline {subsection}{\numberline {24.0.18}Part 1636 --- Parallel-axis theorem}{1158}{subsection.24.0.18}%
+\contentsline {subsection}{\numberline {24.0.19}Part 1637 --- Composite-body mass properties}{1160}{subsection.24.0.19}%
+\contentsline {subsection}{\numberline {24.0.20}Part 1638 --- Local-space inertia tensor}{1162}{subsection.24.0.20}%
+\contentsline {subsection}{\numberline {24.0.21}Part 1639 --- Inverse inertia tensor}{1162}{subsection.24.0.21}%
+\contentsline {subsection}{\numberline {24.0.22}Part 1640 --- Rotating inertia into world space}{1164}{subsection.24.0.22}%
+\contentsline {subsection}{\numberline {24.0.23}Part 1641 --- World-space inverse inertia}{1165}{subsection.24.0.23}%
+\contentsline {subsection}{\numberline {24.0.24}Part 1642 --- Why inertia tensors are symmetric}{1167}{subsection.24.0.24}%
+\contentsline {subsection}{\numberline {24.0.25}KAIRO AUDIT 1 --- \texttt {MakeMassProperties()} AND NON-DIAGONAL INERTIA}{1171}{subsection.24.0.25}%
+\contentsline {subsection}{\numberline {24.0.26}KAIRO AUDIT 2 --- CENTER-OF-MASS CONVENTION}{1175}{subsection.24.0.26}%
+\contentsline {subsection}{\numberline {24.0.27}KAIRO AUDIT 3 --- COMPOUND CHILD ROTATION}{1177}{subsection.24.0.27}%
+\contentsline {chapter}{\numberline {25}Auditing capsule mass properties and collision formulas}{1179}{chapter.25}%
+\contentsline {subsection}{\numberline {25.0.1}KAIRO AUDIT 4 --- CAPSULE FORMULA}{1179}{subsection.25.0.1}%
+\contentsline {subsection}{\numberline {25.0.2}Impulses, Off-Center Response, Rigid-Body Runtime State, Sleeping, Static/Kinematic/Dynamic Semantics, Euler Integration, Quaternion Dynamics, Exponential Maps, Fixed Timestep, Substeps, Spiral-of-Death Control, Physics Snapshots, Render Interpolation, and Scene Synchronization}{1219}{subsection.25.0.2}%
+\contentsline {subsection}{\numberline {25.0.3}IMPULSE RESPONSE AND THE ACTUAL RIGID-BODY OBJECT}{1219}{subsection.25.0.3}%
+\contentsline {subsection}{\numberline {25.0.4}Part 1643 --- Linear impulse}{1219}{subsection.25.0.4}%
+\contentsline {subsection}{\numberline {25.0.5}Part 1644 --- Linear velocity change from impulse}{1220}{subsection.25.0.5}%
+\contentsline {subsection}{\numberline {25.0.6}Static-body consequence}{1221}{subsection.25.0.6}%
+\contentsline {subsection}{\numberline {25.0.7}Part 1645 --- Angular impulse}{1221}{subsection.25.0.7}%
+\contentsline {subsection}{\numberline {25.0.8}Part 1646 --- Angular velocity change from an off-center impulse}{1223}{subsection.25.0.8}%
+\contentsline {subsection}{\numberline {25.0.9}Example}{1223}{subsection.25.0.9}%
+\contentsline {subsection}{\numberline {25.0.10}Part 1647 --- Applying an impulse at a world-space point}{1224}{subsection.25.0.10}%
+\contentsline {subsection}{\numberline {25.0.11}Part 1648 --- Applying an impulse at center of mass}{1225}{subsection.25.0.11}%
+\contentsline {subsection}{\numberline {25.0.12}Part 1649 --- Force versus impulse}{1226}{subsection.25.0.12}%
+\contentsline {subsection}{\numberline {25.0.13}Why collisions use impulses}{1227}{subsection.25.0.13}%
+\contentsline {subsection}{\numberline {25.0.14}Force is frame-duration sensitive; impulse is not}{1228}{subsection.25.0.14}%
+\contentsline {subsection}{\numberline {25.0.15}Part 1650 --- Torque impulse versus continuous torque}{1228}{subsection.25.0.15}%
+\contentsline {chapter}{\numberline {26}Physical examples and state validation}{1230}{chapter.26}%
+\contentsline {subsection}{\numberline {26.0.1}Physical examples}{1230}{subsection.26.0.1}%
+\contentsline {subsection}{\numberline {26.0.2}Part 1651 --- Rigid-body state structure in memory}{1230}{subsection.26.0.2}%
+\contentsline {subsection}{\numberline {26.0.3}State that changes every simulation step}{1232}{subsection.26.0.3}%
+\contentsline {subsection}{\numberline {26.0.4}Why storing everything in one \texttt {RigidBody} is acceptable initially}{1232}{subsection.26.0.4}%
+\contentsline {subsection}{\numberline {26.0.5}Part 1652 --- Position representation}{1232}{subsection.26.0.5}%
+\contentsline {subsection}{\numberline {26.0.6}Physics position should mean COM}{1233}{subsection.26.0.6}%
+\contentsline {subsection}{\numberline {26.0.7}Part 1653 --- Orientation quaternion representation}{1233}{subsection.26.0.7}%
+\contentsline {subsection}{\numberline {26.0.8}Rotation matrix relation}{1234}{subsection.26.0.8}%
+\contentsline {subsection}{\numberline {26.0.9}Part 1654 --- Linear velocity representation}{1235}{subsection.26.0.9}%
+\contentsline {subsection}{\numberline {26.0.10}Part 1655 --- Angular velocity representation}{1235}{subsection.26.0.10}%
+\contentsline {subsection}{\numberline {26.0.11}World angular velocity versus body angular velocity}{1236}{subsection.26.0.11}%
+\contentsline {subsection}{\numberline {26.0.12}Part 1656 --- Force and torque accumulators}{1236}{subsection.26.0.12}%
+\contentsline {subsection}{\numberline {26.0.13}Impulses bypass accumulators}{1237}{subsection.26.0.13}%
+\contentsline {subsection}{\numberline {26.0.14}Part 1657 --- Sleeping flags and activity state}{1237}{subsection.26.0.14}%
+\contentsline {subsection}{\numberline {26.0.15}Sleeping state machine}{1238}{subsection.26.0.15}%
+\contentsline {subsection}{\numberline {26.0.16}Why sleeping needs a timer}{1239}{subsection.26.0.16}%
+\contentsline {subsection}{\numberline {26.0.17}Sleeping body velocity}{1239}{subsection.26.0.17}%
+\contentsline {subsection}{\numberline {26.0.18}Wake conditions}{1239}{subsection.26.0.18}%
+\contentsline {subsection}{\numberline {26.0.19}One Kairo nuance}{1240}{subsection.26.0.19}%
+\contentsline {subsection}{\numberline {26.0.20}Part 1658 --- Body types: static, kinematic, dynamic}{1240}{subsection.26.0.20}%
+\contentsline {subsection}{\numberline {26.0.21}Part 1659 --- Kinematic semantics}{1240}{subsection.26.0.21}%
+\contentsline {subsection}{\numberline {26.0.22}Why kinematic velocity matters}{1241}{subsection.26.0.22}%
+\contentsline {subsection}{\numberline {26.0.23}Current Kairo semantics}{1241}{subsection.26.0.23}%
+\contentsline {subsection}{\numberline {26.0.24}Part 1660 --- Dynamic-body semantics}{1242}{subsection.26.0.24}%
+\contentsline {subsection}{\numberline {26.0.25}User movement of a dynamic body}{1242}{subsection.26.0.25}%
+\contentsline {subsection}{\numberline {26.0.26}Part 1661 --- Static-body semantics}{1243}{subsection.26.0.26}%
+\contentsline {subsection}{\numberline {26.0.27}one critical distinction}{1243}{subsection.26.0.27}%
+\contentsline {subsection}{\numberline {26.0.28}DISCRETIZING NEWTON'S EQUATIONS}{1244}{subsection.26.0.28}%
+\contentsline {subsection}{\numberline {26.0.29}Part 1662 --- Explicit Euler}{1244}{subsection.26.0.29}%
+\contentsline {subsection}{\numberline {26.0.30}Explicit Euler error}{1245}{subsection.26.0.30}%
+\contentsline {subsection}{\numberline {26.0.31}Gravity example}{1246}{subsection.26.0.31}%
+\contentsline {subsection}{\numberline {26.0.32}Part 1663 --- Semi-implicit Euler}{1246}{subsection.26.0.32}%
+\contentsline {subsection}{\numberline {26.0.33}Part 1664 --- Why games prefer semi-implicit Euler}{1247}{subsection.26.0.33}%
+\contentsline {subsection}{\numberline {26.0.34}Semi-implicit oscillator}{1248}{subsection.26.0.34}%
+\contentsline {subsection}{\numberline {26.0.35}``More stable'' does not mean unconditionally stable}{1248}{subsection.26.0.35}%
+\contentsline {subsection}{\numberline {26.0.36}Current Kairo integration architecture}{1249}{subsection.26.0.36}%
+\contentsline {subsection}{\numberline {26.0.37}Part 1665 --- Position integration}{1250}{subsection.26.0.37}%
+\contentsline {subsection}{\numberline {26.0.38}Position correction versus velocity integration}{1250}{subsection.26.0.38}%
+\contentsline {subsection}{\numberline {26.0.39}Part 1666 --- Linear velocity integration}{1250}{subsection.26.0.39}%
+\contentsline {subsection}{\numberline {26.0.40}Part 1667 --- Quaternion derivative from angular velocity}{1251}{subsection.26.0.40}%
+\contentsline {subsection}{\numberline {26.0.41}Deriving the half factor}{1252}{subsection.26.0.41}%
+\contentsline {subsection}{\numberline {26.0.42}Why multiplication order matters}{1252}{subsection.26.0.42}%
+\contentsline {subsection}{\numberline {26.0.43}Part 1668 --- Quaternion orientation integration}{1253}{subsection.26.0.43}%
+\contentsline {subsection}{\numberline {26.0.44}Angular velocity choice in semi-implicit integration}{1253}{subsection.26.0.44}%
+\contentsline {subsection}{\numberline {26.0.45}Part 1669 --- Quaternion renormalization}{1254}{subsection.26.0.45}%
+\contentsline {subsection}{\numberline {26.0.46}What happens without normalization}{1254}{subsection.26.0.46}%
+\contentsline {subsection}{\numberline {26.0.47}Normalization is not a fix for poor integration}{1255}{subsection.26.0.47}%
+\contentsline {subsection}{\numberline {26.0.48}Part 1670 --- Exponential-map orientation integration}{1255}{subsection.26.0.48}%
+\contentsline {subsection}{\numberline {26.0.49}Exponential-map implementation}{1256}{subsection.26.0.49}%
+\contentsline {subsection}{\numberline {26.0.50}Why exponential map is natural}{1257}{subsection.26.0.50}%
+\contentsline {subsection}{\numberline {26.0.51}Is Kairo currently using exponential-map integration?}{1257}{subsection.26.0.51}%
+\contentsline {subsection}{\numberline {26.0.52}Part 1671 --- Fixed timestep}{1258}{subsection.26.0.52}%
+\contentsline {subsection}{\numberline {26.0.53}Why fixed timestep helps determinism}{1258}{subsection.26.0.53}%
+\contentsline {subsection}{\numberline {26.0.54}Part 1672 --- Variable timestep instability}{1259}{subsection.26.0.54}%
+\contentsline {subsection}{\numberline {26.0.55}Nonlinear systems are especially sensitive}{1259}{subsection.26.0.55}%
+\contentsline {subsection}{\numberline {26.0.56}Part 1673 --- Accumulator-based fixed stepping}{1260}{subsection.26.0.56}%
+\contentsline {subsection}{\numberline {26.0.57}Example}{1260}{subsection.26.0.57}%
+\contentsline {subsection}{\numberline {26.0.58}Current Kairo has two fixed-step layers}{1261}{subsection.26.0.58}%
+\contentsline {subsection}{\numberline {26.0.59}Part 1674 --- Multiple physics substeps}{1262}{subsection.26.0.59}%
+\contentsline {subsection}{\numberline {26.0.60}Why substeps improve collision and constraints}{1262}{subsection.26.0.60}%
+\contentsline {subsection}{\numberline {26.0.61}Part 1675 --- Maximum-substep budgets}{1263}{subsection.26.0.61}%
+\contentsline {subsection}{\numberline {26.0.62}Maximum frame delta}{1263}{subsection.26.0.62}%
+\contentsline {subsection}{\numberline {26.0.63}Part 1676 --- Spiral of death}{1264}{subsection.26.0.63}%
+\contentsline {subsection}{\numberline {26.0.64}The mathematical condition}{1264}{subsection.26.0.64}%
+\contentsline {subsection}{\numberline {26.0.65}Part 1677 --- Dropping excessive accumulated time}{1265}{subsection.26.0.65}%
+\contentsline {subsection}{\numberline {26.0.66}What dropping time means physically}{1265}{subsection.26.0.66}%
+\contentsline {subsection}{\numberline {26.0.67}Other overload policies}{1266}{subsection.26.0.67}%
+\contentsline {subsection}{\numberline {26.0.68}Part 1678 --- Previous/current physics snapshots}{1266}{subsection.26.0.68}%
+\contentsline {subsection}{\numberline {26.0.69}``Snapshot'' has two meanings}{1267}{subsection.26.0.69}%
+\contentsline {subsection}{\numberline {26.0.70}Full physics snapshot}{1267}{subsection.26.0.70}%
+\contentsline {subsection}{\numberline {26.0.71}Snapshot must include hidden dynamic memory}{1268}{subsection.26.0.71}%
+\contentsline {subsection}{\numberline {26.0.72}Part 1679 --- Render interpolation between physics snapshots}{1268}{subsection.26.0.72}%
+\contentsline {subsection}{\numberline {26.0.73}Why rendering current physics pose directly jitters}{1269}{subsection.26.0.73}%
+\contentsline {subsection}{\numberline {26.0.74}Rotation interpolation}{1269}{subsection.26.0.74}%
+\contentsline {subsection}{\numberline {26.0.75}Interpolation introduces presentation latency}{1270}{subsection.26.0.75}%
+\contentsline {subsection}{\numberline {26.0.76}Teleports and interpolation}{1271}{subsection.26.0.76}%
+\contentsline {subsection}{\numberline {26.0.77}Part 1680 --- Physics→scene transform synchronization}{1271}{subsection.26.0.77}%
+\contentsline {subsection}{\numberline {26.0.78}Scene hierarchy problem}{1272}{subsection.26.0.78}%
+\contentsline {subsection}{\numberline {26.0.79}Why parent-first publication is required}{1272}{subsection.26.0.79}%
+\contentsline {subsection}{\numberline {26.0.80}Physics should not directly depend on Scene}{1273}{subsection.26.0.80}%
+\contentsline {subsection}{\numberline {26.0.81}Dynamic ownership direction}{1273}{subsection.26.0.81}%
+\contentsline {subsection}{\numberline {26.0.82}Part 1681 --- Scene→kinematic synchronization}{1274}{subsection.26.0.82}%
+\contentsline {subsection}{\numberline {26.0.83}Kinematic pose update should occur before physics step}{1274}{subsection.26.0.83}%
+\contentsline {subsection}{\numberline {26.0.84}Deriving kinematic linear velocity}{1274}{subsection.26.0.84}%
+\contentsline {subsection}{\numberline {26.0.85}Deriving kinematic angular velocity from quaternions}{1275}{subsection.26.0.85}%
+\contentsline {subsection}{\numberline {26.0.86}A proper kinematic target API}{1276}{subsection.26.0.86}%
+\contentsline {subsection}{\numberline {26.0.87}Current Kairo Part 1681 status}{1277}{subsection.26.0.87}%
+\contentsline {subsection}{\numberline {26.0.88}KAIRO DEEP AUDIT --- IMPULSE APPLICATION ORDER}{1278}{subsection.26.0.88}%
+\contentsline {subsection}{\numberline {26.0.89}Force versus impulse timing inside the current world}{1279}{subsection.26.0.89}%
+\contentsline {subsection}{\numberline {26.0.90}Why immediate gameplay impulses can be applied before the step}{1280}{subsection.26.0.90}%
+\contentsline {subsection}{\numberline {26.0.91}But contact-solver impulses are internal to the step}{1280}{subsection.26.0.91}%
+\contentsline {subsection}{\numberline {26.0.92}Contact effective mass preview}{1281}{subsection.26.0.92}%
+\contentsline {subsection}{\numberline {26.0.93}Rigid-body state memory and ownership}{1281}{subsection.26.0.93}%
+\contentsline {subsection}{\numberline {26.0.94}Sleeping and determinism}{1282}{subsection.26.0.94}%
+\contentsline {subsection}{\numberline {26.0.95}Fixed timestep and determinism are not synonymous}{1282}{subsection.26.0.95}%
+\contentsline {subsection}{\numberline {26.0.96}Cross-platform deterministic replay}{1282}{subsection.26.0.96}%
+\contentsline {subsection}{\numberline {26.0.97}Fixed-step listener architecture}{1283}{subsection.26.0.97}%
+\contentsline {subsection}{\numberline {26.0.98}Render-frame input versus physics-step input}{1284}{subsection.26.0.98}%
+\contentsline {subsection}{\numberline {26.0.99}Continuous force with substeps}{1284}{subsection.26.0.99}%
+\contentsline {subsection}{\numberline {26.0.100}Impulse under multiple substeps}{1285}{subsection.26.0.100}%
+\contentsline {chapter}{\numberline {27}Integrator choices and energy drift}{1286}{chapter.27}%
+\contentsline {subsection}{\numberline {27.0.1}Explicit versus semi-implicit energy example}{1286}{subsection.27.0.1}%
+\contentsline {subsection}{\numberline {27.0.2}Damping and fixed timestep}{1287}{subsection.27.0.2}%
+\contentsline {subsection}{\numberline {27.0.3}Quaternion Euler versus exponential map numerical comparison}{1288}{subsection.27.0.3}%
+\contentsline {subsection}{\numberline {27.0.4}Angular velocity clamping}{1289}{subsection.27.0.4}%
+\contentsline {subsection}{\numberline {27.0.5}Maximum linear speed and CCD}{1289}{subsection.27.0.5}%
+\contentsline {subsection}{\numberline {27.0.6}Fixed timestep as a frequency choice}{1290}{subsection.27.0.6}%
+\contentsline {subsection}{\numberline {27.0.7}Simulation frequency must match problem scale}{1290}{subsection.27.0.7}%
+\contentsline {subsection}{\numberline {27.0.8}Substeps versus solver iterations}{1291}{subsection.27.0.8}%
+\contentsline {subsection}{\numberline {27.0.9}Physics snapshots and replay architecture in current Kairo}{1291}{subsection.27.0.9}%
+\contentsline {subsection}{\numberline {27.0.10}Why replay stores commands rather than frame deltas}{1292}{subsection.27.0.10}%
+\contentsline {subsection}{\numberline {27.0.11}Physics restore and interpolation history}{1292}{subsection.27.0.11}%
+\contentsline {subsection}{\numberline {27.0.12}Render interpolation should not feed back into physics}{1293}{subsection.27.0.12}%
+\contentsline {subsection}{\numberline {27.0.13}Dynamic hierarchy caveat}{1293}{subsection.27.0.13}%
+\contentsline {subsection}{\numberline {27.0.14}Static children under moving parents}{1293}{subsection.27.0.14}%
+\contentsline {subsection}{\numberline {27.0.15}Kinematic synchronization and hierarchy}{1294}{subsection.27.0.15}%
+\contentsline {subsection}{\numberline {27.0.16}Kinematic teleport versus kinematic sweep}{1294}{subsection.27.0.16}%
+\contentsline {subsection}{\numberline {27.0.17}Sleeping and kinematics}{1294}{subsection.27.0.17}%
+\contentsline {subsection}{\numberline {27.0.18}Static-to-kinematic transition}{1295}{subsection.27.0.18}%
+\contentsline {subsection}{\numberline {27.0.19}Dynamic-to-static transition}{1295}{subsection.27.0.19}%
+\contentsline {subsection}{\numberline {27.0.20}Kairo's public mutable body vector}{1295}{subsection.27.0.20}%
+\contentsline {subsection}{\numberline {27.0.21}Snapshot topology and runtime identity}{1296}{subsection.27.0.21}%
+\contentsline {subsection}{\numberline {27.0.22}A more complete interpolation architecture}{1297}{subsection.27.0.22}%
+\contentsline {subsection}{\numberline {27.0.23}Important alternative interpretation of interpolation alpha}{1298}{subsection.27.0.23}%
+\contentsline {subsection}{\numberline {27.0.24}Why physics should not run at render rate}{1298}{subsection.27.0.24}%
+\contentsline {subsection}{\numberline {27.0.25}Why rendering should not wait for the next physics step}{1299}{subsection.27.0.25}%
+\contentsline {subsection}{\numberline {27.0.26}Input sampling problem}{1299}{subsection.27.0.26}%
+\contentsline {subsection}{\numberline {27.0.27}Impulse event buffering}{1300}{subsection.27.0.27}%
+\contentsline {subsection}{\numberline {27.0.28}Force timing with variable render rate}{1300}{subsection.27.0.28}%
+\contentsline {subsection}{\numberline {27.0.29}Rigid-body memory and cache behavior}{1301}{subsection.27.0.29}%
+\contentsline {subsection}{\numberline {27.0.30}Impulse invariants worth testing}{1302}{subsection.27.0.30}%
+\contentsline {subsection}{\numberline {27.0.31}Angular impulse conservation}{1303}{subsection.27.0.31}%
+\contentsline {subsection}{\numberline {27.0.32}Why contact impulses depend on rotational inertia}{1304}{subsection.27.0.32}%
+\contentsline {subsection}{\numberline {27.0.33}Time-step dependence of restitution}{1304}{subsection.27.0.33}%
+\contentsline {subsubsection}{First-use completion --- restitution, penetration correction, and the timestep are different mechanisms}{1304}{subsubsection*.147}%
+\contentsline {subsection}{\numberline {27.0.34}Kairo's fixed-step overload behavior deserves one subtle note}{1306}{subsection.27.0.34}%
+\contentsline {subsection}{\numberline {27.0.35}Fixed-step accumulator precision}{1307}{subsection.27.0.35}%
+\contentsline {subsection}{\numberline {27.0.36}Floating accumulator comparison}{1307}{subsection.27.0.36}%
+\contentsline {subsection}{\numberline {27.0.37}Previous/current snapshots with zero physics steps}{1308}{subsection.27.0.37}%
+\contentsline {subsection}{\numberline {27.0.38}Multiple substeps and pose history}{1308}{subsection.27.0.38}%
+\contentsline {subsection}{\numberline {27.0.39}Scene transform publication and scale}{1309}{subsection.27.0.39}%
+\contentsline {subsection}{\numberline {27.0.40}Kairo collider scaling semantics}{1309}{subsection.27.0.40}%
+\contentsline {subsection}{\numberline {27.0.41}Kinematic scene sync should account for scale changes separately}{1309}{subsection.27.0.41}%
+\contentsline {subsection}{\numberline {27.0.42}Explicit Euler still has educational value}{1310}{subsection.27.0.42}%
+\contentsline {subsection}{\numberline {27.0.43}Why not simply use RK4 for everything?}{1310}{subsection.27.0.43}%
+\contentsline {subsection}{\numberline {27.0.44}Verlet and position-based systems}{1310}{subsection.27.0.44}%
+\contentsline {subsection}{\numberline {27.0.45}Orientation exactness with constant angular velocity}{1311}{subsection.27.0.45}%
+\contentsline {subsection}{\numberline {27.0.46}Exponential map with changing angular velocity}{1311}{subsection.27.0.46}%
+\contentsline {subsection}{\numberline {27.0.47}Quaternion sign canonicalization}{1312}{subsection.27.0.47}%
+\contentsline {subsection}{\numberline {27.0.48}Sleeping state and snapshot restore}{1312}{subsection.27.0.48}%
+\contentsline {subsection}{\numberline {27.0.49}Accumulated force in snapshots}{1312}{subsection.27.0.49}%
+\contentsline {subsection}{\numberline {27.0.50}Warm-start state and deterministic restore}{1313}{subsection.27.0.50}%
+\contentsline {subsection}{\numberline {27.0.51}Interpolation alpha after dropping time}{1313}{subsection.27.0.51}%
+\contentsline {subsection}{\numberline {27.0.52}Scene synchronization needs clear authority tags}{1313}{subsection.27.0.52}%
+\contentsline {subsection}{\numberline {27.0.53}Suggested Kairo scene-sync architecture}{1314}{subsection.27.0.53}%
+\contentsline {subsection}{\numberline {27.0.54}Current Kairo architecture already nearly matches this}{1315}{subsection.27.0.54}%
+\contentsline {subsection}{\numberline {27.0.55}KAIRO PASS 17 AUDIT SUMMARY}{1315}{subsection.27.0.55}%
+\contentsline {subsection}{\numberline {27.0.56}Reconstruction challenge --- impulse}{1317}{subsection.27.0.56}%
+\contentsline {subsection}{\numberline {27.0.57}Reconstruction challenge --- force versus impulse}{1317}{subsection.27.0.57}%
+\contentsline {subsection}{\numberline {27.0.58}Reconstruction challenge --- body ownership}{1318}{subsection.27.0.58}%
+\contentsline {subsection}{\numberline {27.0.59}Reconstruction challenge --- semi-implicit Euler}{1318}{subsection.27.0.59}%
+\contentsline {subsection}{\numberline {27.0.60}Reconstruction challenge --- quaternion derivative}{1319}{subsection.27.0.60}%
+\contentsline {subsection}{\numberline {27.0.61}Reconstruction challenge --- accumulator}{1320}{subsection.27.0.61}%
+\contentsline {subsection}{\numberline {27.0.62}Reconstruction challenge --- spiral of death}{1321}{subsection.27.0.62}%
+\contentsline {subsection}{\numberline {27.0.63}Reconstruction challenge --- interpolation versus simulation}{1321}{subsection.27.0.63}%
+\contentsline {subsection}{\numberline {27.0.64}Reconstruction challenge --- kinematic velocity}{1322}{subsection.27.0.64}%
+\contentsline {subsection}{\numberline {27.0.65}Force/Impulse Timing, Velocity Limits, Gravity and Damping Policy, Energy and Momentum Diagnostics, Integration Drift, Determinism, Units and Scale, COM/Inertia Debugging, Physics Tests, and a Fully Derived Standalone RigidBody Integrator}{1325}{subsection.27.0.65}%
+\contentsline {subsection}{\numberline {27.0.66}Part 1682 --- Force clearing after a step}{1326}{subsection.27.0.66}%
+\contentsline {subsection}{\numberline {27.0.67}Why force clearing belongs after the complete step}{1327}{subsection.27.0.67}%
+\contentsline {subsection}{\numberline {27.0.68}Forces are ephemeral inputs, not durable state}{1327}{subsection.27.0.68}%
+\contentsline {subsection}{\numberline {27.0.69}Part 1683 --- Impulse application timing}{1328}{subsection.27.0.69}%
+\contentsline {subsection}{\numberline {27.0.70}Timing within a fixed step}{1329}{subsection.27.0.70}%
+\contentsline {subsection}{\numberline {27.0.71}Contact impulses are applied during solving}{1329}{subsection.27.0.71}%
+\contentsline {subsection}{\numberline {27.0.72}Applying an impulse after \texttt {Step()}}{1329}{subsection.27.0.72}%
+\contentsline {subsection}{\numberline {27.0.73}Part 1684 --- Velocity clamping and why it can be dangerous}{1330}{subsection.27.0.73}%
+\contentsline {subsection}{\numberline {27.0.74}Clamping destroys momentum}{1330}{subsection.27.0.74}%
+\contentsline {subsection}{\numberline {27.0.75}Clamping destroys kinetic energy even more strongly}{1331}{subsection.27.0.75}%
+\contentsline {subsection}{\numberline {27.0.76}Why clamps still exist}{1331}{subsection.27.0.76}%
+\contentsline {subsection}{\numberline {27.0.77}Clamps can hide bugs}{1332}{subsection.27.0.77}%
+\contentsline {subsection}{\numberline {27.0.78}Current Kairo clamp placement}{1333}{subsection.27.0.78}%
+\contentsline {subsection}{\numberline {27.0.79}Part 1685 --- Maximum angular speed and numerical concerns}{1333}{subsection.27.0.79}%
+\contentsline {subsection}{\numberline {27.0.80}Rotational feature speed}{1334}{subsection.27.0.80}%
+\contentsline {subsection}{\numberline {27.0.81}Better criterion than an arbitrary \(\mitomega _{max}\)}{1335}{subsection.27.0.81}%
+\contentsline {subsection}{\numberline {27.0.82}Part 1686 --- Gravity scaling per body}{1335}{subsection.27.0.82}%
+\contentsline {subsection}{\numberline {27.0.83}Why body gravity scale is not mass}{1336}{subsection.27.0.83}%
+\contentsline {subsection}{\numberline {27.0.84}Negative gravity scale}{1337}{subsection.27.0.84}%
+\contentsline {subsection}{\numberline {27.0.85}Gravity as acceleration preserves equivalence principle}{1337}{subsection.27.0.85}%
+\contentsline {subsection}{\numberline {27.0.86}Part 1687 --- Linear damping implementation}{1337}{subsection.27.0.86}%
+\contentsline {subsection}{\numberline {27.0.87}Half-life interpretation}{1338}{subsection.27.0.87}%
+\contentsline {chapter}{\numberline {28}Composable timesteps and stable simulation policy}{1340}{chapter.28}%
+\contentsline {subsection}{\numberline {28.0.1}Timestep composability}{1340}{subsection.28.0.1}%
+\contentsline {subsection}{\numberline {28.0.2}Damping removes momentum and energy intentionally}{1340}{subsection.28.0.2}%
+\contentsline {subsection}{\numberline {28.0.3}Part 1688 --- Angular damping implementation}{1341}{subsection.28.0.3}%
+\contentsline {subsection}{\numberline {28.0.4}Equivalent damping torque in simple case}{1341}{subsection.28.0.4}%
+\contentsline {subsection}{\numberline {28.0.5}Part 1689 --- Energy in rigid-body motion}{1342}{subsection.28.0.5}%
+\contentsline {subsection}{\numberline {28.0.6}Energy is scalar, not vector}{1342}{subsection.28.0.6}%
+\contentsline {subsection}{\numberline {28.0.7}Part 1690 --- Translational kinetic energy}{1343}{subsection.28.0.7}%
+\contentsline {subsection}{\numberline {28.0.8}Why speed squared matters}{1344}{subsection.28.0.8}%
+\contentsline {subsection}{\numberline {28.0.9}Part 1691 --- Rotational kinetic energy}{1344}{subsection.28.0.9}%
+\contentsline {subsection}{\numberline {28.0.10}Static body energy}{1345}{subsection.28.0.10}%
+\contentsline {subsection}{\numberline {28.0.11}Part 1692 --- Momentum conservation checks}{1345}{subsection.28.0.11}%
+\contentsline {subsection}{\numberline {28.0.12}Collision momentum test}{1345}{subsection.28.0.12}%
+\contentsline {subsection}{\numberline {28.0.13}Why equal and opposite impulse guarantees linear momentum conservation}{1346}{subsection.28.0.13}%
+\contentsline {subsection}{\numberline {28.0.14}When momentum is not supposed to be conserved}{1346}{subsection.28.0.14}%
+\contentsline {subsection}{\numberline {28.0.15}Part 1693 --- Energy drift in numerical integration}{1347}{subsection.28.0.15}%
+\contentsline {subsection}{\numberline {28.0.16}Explicit Euler energy growth}{1347}{subsection.28.0.16}%
+\contentsline {subsection}{\numberline {28.0.17}Semi-implicit Euler does not conserve the exact Hamiltonian}{1348}{subsection.28.0.17}%
+\contentsline {subsection}{\numberline {28.0.18}Damping versus drift}{1348}{subsection.28.0.18}%
+\contentsline {subsection}{\numberline {28.0.19}Collision restitution}{1348}{subsection.28.0.19}%
+\contentsline {subsection}{\numberline {28.0.20}Energy-error experiment you should build}{1349}{subsection.28.0.20}%
+\contentsline {subsection}{\numberline {28.0.21}Part 1694 --- Determinism concerns in rigid-body simulation}{1349}{subsection.28.0.21}%
+\contentsline {subsection}{\numberline {28.0.22}Floating-point non-associativity}{1349}{subsection.28.0.22}%
+\contentsline {subsection}{\numberline {28.0.23}Sequential impulse ordering}{1350}{subsection.28.0.23}%
+\contentsline {subsection}{\numberline {28.0.24}Parallelism}{1350}{subsection.28.0.24}%
+\contentsline {subsection}{\numberline {28.0.25}FMA and compiler differences}{1351}{subsection.28.0.25}%
+\contentsline {subsection}{\numberline {28.0.26}Denormals, FTZ and DAZ}{1351}{subsection.28.0.26}%
+\contentsline {subsection}{\numberline {28.0.27}Unordered containers}{1351}{subsection.28.0.27}%
+\contentsline {subsection}{\numberline {28.0.28}Kairo's replay architecture is exactly the correct diagnostic}{1352}{subsection.28.0.28}%
+\contentsline {subsection}{\numberline {28.0.29}State hash is not proof of cross-platform mathematical equivalence}{1352}{subsection.28.0.29}%
+\contentsline {subsection}{\numberline {28.0.30}Part 1695 --- Floating-point scale and unit choice}{1353}{subsection.28.0.30}%
+\contentsline {subsection}{\numberline {28.0.31}Extremely tiny objects are also problematic}{1353}{subsection.28.0.31}%
+\contentsline {subsection}{\numberline {28.0.32}Dimensionless numerical ratios matter}{1353}{subsection.28.0.32}%
+\contentsline {subsection}{\numberline {28.0.33}Mass ratios}{1354}{subsection.28.0.33}%
+\contentsline {subsection}{\numberline {28.0.34}Part 1696 --- SI units in a physics engine}{1354}{subsection.28.0.34}%
+\contentsline {subsection}{\numberline {28.0.35}Full dimensional table}{1355}{subsection.28.0.35}%
+\contentsline {subsection}{\numberline {28.0.36}Why SI helps tooling and research}{1356}{subsection.28.0.36}%
+\contentsline {subsection}{\numberline {28.0.37}You can render in another scale without changing physics units}{1356}{subsection.28.0.37}%
+\contentsline {subsection}{\numberline {28.0.38}Part 1697 --- Debug visualization of center of mass and inertia}{1357}{subsection.28.0.38}%
+\contentsline {subsection}{\numberline {28.0.39}Center-of-mass marker}{1357}{subsection.28.0.39}%
+\contentsline {subsection}{\numberline {28.0.40}Principal axes visualization}{1358}{subsection.28.0.40}%
+\contentsline {subsection}{\numberline {28.0.41}How long should inertia axes be?}{1358}{subsection.28.0.41}%
+\contentsline {subsection}{\numberline {28.0.42}Inertia ellipsoid}{1359}{subsection.28.0.42}%
+\contentsline {subsection}{\numberline {28.0.43}Force and torque arrows}{1359}{subsection.28.0.43}%
+\contentsline {subsection}{\numberline {28.0.44}Suggested Kairo debug contract}{1359}{subsection.28.0.44}%
+\contentsline {subsection}{\numberline {28.0.45}Part 1698 --- Unit tests for mass properties}{1360}{subsection.28.0.45}%
+\contentsline {subsection}{\numberline {28.0.46}Sphere tests}{1361}{subsection.28.0.46}%
+\contentsline {subsection}{\numberline {28.0.47}Box test}{1361}{subsection.28.0.47}%
+\contentsline {subsection}{\numberline {28.0.48}Symmetry property test}{1362}{subsection.28.0.48}%
+\contentsline {subsection}{\numberline {28.0.49}Positive inertia test}{1362}{subsection.28.0.49}%
+\contentsline {subsection}{\numberline {28.0.50}Inverse consistency}{1362}{subsection.28.0.50}%
+\contentsline {subsection}{\numberline {28.0.51}Parallel-axis theorem test}{1363}{subsection.28.0.51}%
+\contentsline {subsection}{\numberline {28.0.52}COM tests}{1363}{subsection.28.0.52}%
+\contentsline {subsection}{\numberline {28.0.53}Principal-moment triangle inequalities}{1364}{subsection.28.0.53}%
+\contentsline {subsection}{\numberline {28.0.54}Part 1699 --- Unit tests for impulse response}{1364}{subsection.28.0.54}%
+\contentsline {subsection}{\numberline {28.0.55}Center-of-mass impulse test}{1364}{subsection.28.0.55}%
+\contentsline {subsection}{\numberline {28.0.56}Off-center impulse test}{1365}{subsection.28.0.56}%
+\contentsline {subsection}{\numberline {28.0.57}Parallel impulse test}{1365}{subsection.28.0.57}%
+\contentsline {subsection}{\numberline {28.0.58}Static impulse test}{1366}{subsection.28.0.58}%
+\contentsline {subsection}{\numberline {28.0.59}Equal-and-opposite pair test}{1366}{subsection.28.0.59}%
+\contentsline {subsection}{\numberline {28.0.60}Angular momentum conservation pair test}{1367}{subsection.28.0.60}%
+\contentsline {subsection}{\numberline {28.0.61}Energy test for elastic 1D collision}{1367}{subsection.28.0.61}%
+\contentsline {subsection}{\numberline {28.0.62}Inelastic collision test}{1368}{subsection.28.0.62}%
+\contentsline {subsection}{\numberline {28.0.63}Part 1700 --- Implementing a standalone RigidBody integrator and proving every update mathematically}{1368}{subsection.28.0.63}%
+\contentsline {subsection}{\numberline {28.0.64}The standalone data model}{1368}{subsection.28.0.64}%
+\contentsline {subsection}{\numberline {28.0.65}World-space inertia}{1370}{subsection.28.0.65}%
+\contentsline {subsection}{\numberline {28.0.66}Force accumulation}{1372}{subsection.28.0.66}%
+\contentsline {subsection}{\numberline {28.0.67}Immediate impulse response}{1373}{subsection.28.0.67}%
+\contentsline {subsection}{\numberline {28.0.68}Velocity clamp}{1374}{subsection.28.0.68}%
+\contentsline {subsection}{\numberline {28.0.69}Exponential-map orientation update}{1374}{subsection.28.0.69}%
+\contentsline {subsection}{\numberline {28.0.70}Full Newton-Euler force integration}{1376}{subsection.28.0.70}%
+\contentsline {subsection}{\numberline {28.0.71}Pose integration}{1379}{subsection.28.0.71}%
+\contentsline {subsection}{\numberline {28.0.72}Force clearing}{1380}{subsection.28.0.72}%
+\contentsline {subsection}{\numberline {28.0.73}Complete standalone step}{1380}{subsection.28.0.73}%
+\contentsline {subsection}{\numberline {28.0.74}Proof of every state update}{1381}{subsection.28.0.74}%
+\contentsline {subsection}{\numberline {28.0.75}A complete energy diagnostic for that body}{1383}{subsection.28.0.75}%
+\contentsline {subsection}{\numberline {28.0.76}Standalone validation experiment 1 --- free translation}{1384}{subsection.28.0.76}%
+\contentsline {subsection}{\numberline {28.0.77}Experiment 2 --- constant force}{1385}{subsection.28.0.77}%
+\contentsline {subsection}{\numberline {28.0.78}Experiment 3 --- COM impulse}{1385}{subsection.28.0.78}%
+\contentsline {subsection}{\numberline {28.0.79}Experiment 4 --- torque-free sphere}{1386}{subsection.28.0.79}%
+\contentsline {subsection}{\numberline {28.0.80}Experiment 5 --- torque-free asymmetric body}{1386}{subsection.28.0.80}%
+\contentsline {subsection}{\numberline {28.0.81}Experiment 6 --- damping half-life}{1387}{subsection.28.0.81}%
+\contentsline {subsection}{\numberline {28.0.82}Experiment 7 --- energy drift sweep}{1387}{subsection.28.0.82}%
+\contentsline {subsection}{\numberline {28.0.83}Final Kairo audit for M101/M102}{1387}{subsection.28.0.83}%
+\contentsline {subsection}{\numberline {28.0.84}Exact M101 + M102 coverage}{1389}{subsection.28.0.84}%
+\contentsline {chapter}{\numberline {29}Coupled contacts and iterative response}{1392}{chapter.29}%
+\contentsline {section}{\numberline {29.1}From one collision impulse to a coupled contact problem --- reconstructed Phase 18 bridge}{1392}{section.29.1}%
+\contentsline {subsection}{\numberline {29.1.1}Executable active-set witness with numeric and failure traces}{1393}{subsection.29.1.1}%
+\contentsline {subsection}{\numberline {29.1.2}An animation library is one part of an authoring workflow}{1398}{subsection.29.1.2}%
+\contentsline {subsubsection}{Separate animation sampling, action state, and behavioral control}{1399}{subsubsection*.148}%
+\contentsline {subsubsection}{Animation proposes motion; a single system commits it}{1400}{subsubsection*.149}%
+\contentsline {subsubsection}{Reconstruct the animation controller, not just the pose formula}{1401}{subsubsection*.150}%
+\contentsline {subsection}{\numberline {29.1.3}One executable world-contract reconstruction --- where these hand-offs meet}{1409}{subsection.29.1.3}%
+\contentsline {subsection}{\numberline {29.1.4}Extracting a method should expose its inputs}{1418}{subsection.29.1.4}%
+\contentsline {section}{\numberline {29.2}Grow behaviour and presentation without losing ownership}{1418}{section.29.2}%
+\contentsline {subsection}{\numberline {29.2.1}A screen-space circle is still geometry}{1418}{subsection.29.2.1}%
+\contentsline {subsection}{\numberline {29.2.2}Give each native script its own lifecycle}{1419}{subsection.29.2.2}%
+\contentsline {subsection}{\numberline {29.2.3}Make scripts cooperate with the same lifetime rules}{1420}{subsection.29.2.3}%
+\contentsline {subsubsection}{Design a scripting boundary around what game behavior needs}{1420}{subsubsection*.151}%
+\contentsline {subsection}{\numberline {29.2.4}Add scripting at a deliberate boundary}{1421}{subsection.29.2.4}%
+\contentsline {subsubsection}{Native versus managed scripting}{1421}{subsubsection*.152}%
+\contentsline {paragraph}{Check an in-memory layout before treating it as a bridge}{1422}{paragraph*.153}%
+\contentsline {subparagraph}{Run the native lab}{1422}{subparagraph*.154}%
+\contentsline {subsubsection}{Embed a managed runtime behind an engine boundary}{1424}{subsubsection*.155}%
+\contentsline {subsection}{\numberline {29.2.5}Managed scripts extend the host, not the engine's storage model}{1424}{subsection.29.2.5}%
+\contentsline {subsubsection}{Keep managed scripts as clients of native engine state}{1425}{subsubsection*.156}%
+\contentsline {subsection}{\numberline {29.2.6}A moving picture needs a pose, not only a position}{1425}{subsection.29.2.6}%
+\contentsline {subsection}{\numberline {29.2.7}Sound has another clock and another deadline}{1426}{subsection.29.2.7}%
+\contentsline {subsubsection}{Author the sound's cause, location, and environment}{1427}{subsubsection*.157}%
+\contentsline {subsection}{\numberline {29.2.8}An enemy needs an answerable question at each layer}{1427}{subsection.29.2.8}%
+\contentsline {subsubsection}{Start multiplayer design from the game's authority needs}{1428}{subsubsection*.158}%
+\contentsline {subsection}{\numberline {29.2.9}A remote world is an estimate with an authority rule}{1428}{subsection.29.2.9}%
+\contentsline {subsubsection}{Prove a connection with rectangles before adding a 3D renderer}{1429}{subsubsection*.159}%
+\contentsline {subsubsection}{Treat a real deployment as part of the prototype}{1429}{subsubsection*.160}%
+\contentsline {paragraph}{Separate server responsibilities and prove the deployment target}{1430}{paragraph*.161}%
+\contentsline {subsubsection}{Bound the work queued between network peers}{1430}{subsubsection*.162}%
+\contentsline {subsection}{\numberline {29.2.10}Shipping is another consumer of the same data}{1430}{subsection.29.2.10}%
+\contentsline {subsection}{\numberline {29.2.11}Use pull requests to make collaboration inspectable}{1431}{subsection.29.2.11}%
+\contentsline {subsubsection}{Review contributions against the current direction}{1431}{subsubsection*.163}%
+\contentsline {subsection}{\numberline {29.2.12}Make a performance claim identify its workload, measurement, and unfinished work}{1432}{subsection.29.2.12}%
+\contentsline {subsubsection}{Measure the workload, then state what the evidence proves}{1433}{subsubsection*.164}%
+\contentsline {subsection}{\numberline {29.2.13}Separate an issue report from a proposed fix}{1433}{subsection.29.2.13}%
+\contentsline {subsection}{\numberline {29.2.14}Connect implementation changes to play tests}{1434}{subsection.29.2.14}%
+\contentsline {subsubsection}{Treat iteration evidence as part of the feature}{1434}{subsubsection*.165}%
+\contentsline {chapter}{\numberline {A}Reference Notes}{1436}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Archetype ECS}{1436}{section.A.1}%
+\contentsline {subsection}{\numberline {A.1.1}Signature and chunk model}{1436}{subsection.A.1.1}%
+\contentsline {subsection}{\numberline {A.1.2}Migration}{1436}{subsection.A.1.2}%
+\contentsline {subsection}{\numberline {A.1.3}Address invalidation}{1437}{subsection.A.1.3}%
+\contentsline {subsection}{\numberline {A.1.4}Scheduling consequence}{1437}{subsection.A.1.4}%
+\contentsline {subsection}{\numberline {A.1.5}Executable reconstruction}{1437}{subsection.A.1.5}%
+\contentsline {subsection}{\numberline {A.1.6}Scheduler and hierarchy witness}{1438}{subsection.A.1.6}%
+\contentsline {section}{\numberline {A.2}Center of mass and inertia}{1438}{section.A.2}%
+\contentsline {subsection}{\numberline {A.2.1}Inertia tensor}{1438}{subsection.A.2.1}%
+\contentsline {subsection}{\numberline {A.2.2}Parallel-axis theorem}{1439}{subsection.A.2.2}%
+\contentsline {subsection}{\numberline {A.2.3}Scaling}{1439}{subsection.A.2.3}%
+\contentsline {subsection}{\numberline {A.2.4}Impulse coupling}{1439}{subsection.A.2.4}%
+\contentsline {section}{\numberline {A.3}Continuous collision detection}{1439}{section.A.3}%
+\contentsline {subsection}{\numberline {A.3.1}Time of impact}{1439}{subsection.A.3.1}%
+\contentsline {subsection}{\numberline {A.3.2}Conservative versus exact}{1440}{subsection.A.3.2}%
+\contentsline {subsection}{\numberline {A.3.3}Robustness}{1440}{subsection.A.3.3}%
+\contentsline {subsection}{\numberline {A.3.4}Verification}{1440}{subsection.A.3.4}%
+\contentsline {section}{\numberline {A.4}Expectation, covariance, and dependence}{1440}{section.A.4}%
+\contentsline {subsection}{\numberline {A.4.1}Definition and mechanism}{1440}{subsection.A.4.1}%
+\contentsline {subsection}{\numberline {A.4.2}Prerequisites}{1441}{subsection.A.4.2}%
+\contentsline {subsection}{\numberline {A.4.3}Used by}{1441}{subsection.A.4.3}%
+\contentsline {subsection}{\numberline {A.4.4}Full teaching explanation}{1441}{subsection.A.4.4}%
+\contentsline {subsection}{\numberline {A.4.5}Source coverage}{1441}{subsection.A.4.5}%
+\contentsline {section}{\numberline {A.5}GJK and EPA}{1441}{section.A.5}%
+\contentsline {subsection}{\numberline {A.5.1}Simplex evolution}{1442}{subsection.A.5.1}%
+\contentsline {subsection}{\numberline {A.5.2}Termination and finite precision}{1442}{subsection.A.5.2}%
+\contentsline {subsection}{\numberline {A.5.3}EPA after intersection}{1442}{subsection.A.5.3}%
+\contentsline {subsection}{\numberline {A.5.4}Contact generation is later}{1443}{subsection.A.5.4}%
+\contentsline {section}{\numberline {A.6}Impulse and force timing}{1443}{section.A.6}%
+\contentsline {subsection}{\numberline {A.6.1}Off-centre impulse}{1443}{subsection.A.6.1}%
+\contentsline {subsection}{\numberline {A.6.2}Frame event versus physical force}{1444}{subsection.A.6.2}%
+\contentsline {subsection}{\numberline {A.6.3}Fixed step}{1444}{subsection.A.6.3}%
+\contentsline {subsection}{\numberline {A.6.4}Verification}{1444}{subsection.A.6.4}%
+\contentsline {subsection}{\numberline {A.6.5}Constraint-level continuation}{1444}{subsection.A.6.5}%
+\contentsline {section}{\numberline {A.7}Matrix norms and numerical error}{1444}{section.A.7}%
+\contentsline {subsection}{\numberline {A.7.1}Prerequisites}{1445}{subsection.A.7.1}%
+\contentsline {subsection}{\numberline {A.7.2}Used by}{1445}{subsection.A.7.2}%
+\contentsline {subsection}{\numberline {A.7.3}A matrix norm can protect a geometry bound}{1445}{subsection.A.7.3}%
+\contentsline {section}{\numberline {A.8}Sparse-set storage}{1445}{section.A.8}%
+\contentsline {subsection}{\numberline {A.8.1}Swap-and-pop removal}{1446}{subsection.A.8.1}%
+\contentsline {subsection}{\numberline {A.8.2}Address stability}{1446}{subsection.A.8.2}%
+\contentsline {subsection}{\numberline {A.8.3}Complexity is not the whole workload}{1446}{subsection.A.8.3}%
+\contentsline {subsection}{\numberline {A.8.4}Executable reconstruction}{1446}{subsection.A.8.4}%
+\contentsline {chapter}{\numberline {B}Source Attachments}{1447}{appendix.B}%

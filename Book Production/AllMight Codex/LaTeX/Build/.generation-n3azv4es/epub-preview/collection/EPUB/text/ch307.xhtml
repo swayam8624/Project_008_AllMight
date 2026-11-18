@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch307.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-40426e4b2103-homogeneous-clipping-and-perspective-interpolation" class="level2">
+<h2>Homogeneous clipping and perspective interpolation</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-40426e4b2103-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>After a vertex is transformed, its clip-space coordinate is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>y</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>z</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>w</mi>
+    <mi>c</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>. Clip primitives against the view volume before perspective division; under the conventional OpenGL clip convention the inequalities are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <msub>
+    <mi>w</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>≤</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>y</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>z</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>≤</mo>
+  <msub>
+    <mi>w</mi>
+    <mi>c</mi>
+  </msub>
+</math>. A crossing edge is split by interpolating its homogeneous endpoints, which preserves the projective line and avoids dividing by a small or negative <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+</math> too early. Only surviving points are divided by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>w</mi>
+    <mi>c</mi>
+  </msub>
+</math> to enter normalized device coordinates. Attributes then need perspective-correct interpolation: screen-space barycentric weights interpolate <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>w</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>w</mi>
+</math>, and the fragment value is their ratio. For a triangle with weights <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>a</mi>
+    <mi>i</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>. Direct linear interpolation in screen space is correct only for affine quantities or equal depth; otherwise textures warp. Clip-space depth conventions and the near/far interval vary by API and projection setup, so the inequalities must match the active pipeline.</p>
+</section>
+<section id="appendix-40426e4b2103-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch363.xhtml#appendix-cb3b26862282-homogeneous-coordinates-and-perspective-division" class="wikilink">Homogeneous coordinates and perspective division (Light Transport and Image Synthesis, Part 1, Reference notes: Homogeneous coordinates and perspective division)</a></li>
+<li><a href="ch328.xhtml#appendix-1c07d64f5e70-camera-view-and-clip-space-pipeline" class="wikilink">Camera view and clip-space pipeline (Light Transport and Image Synthesis, Part 1, Reference notes: Camera view and clip-space pipeline)</a></li>
+<li><a href="ch336.xhtml#appendix-02b9d9a81dca-barycentric-coordinates-and-interpolation" class="wikilink">Barycentric coordinates and interpolation (Light Transport and Image Synthesis, Part 1, Reference notes: Barycentric coordinates and interpolation)</a></li>
+<li><a href="ch365.xhtml#appendix-ed3f9bc298fe-triangle-rasterization-and-coverage-tests" class="wikilink">Triangle rasterization and coverage tests (Light Transport and Image Synthesis, Part 1, Reference notes: Triangle rasterization and coverage tests)</a></li>
+<li><a href="ch331.xhtml#appendix-97578ed97952-depth-buffering-and-visibility-order" class="wikilink">Depth buffering and visibility order (Light Transport and Image Synthesis, Part 1, Reference notes: Depth buffering and visibility order)</a></li>
+<li><a href="ch352.xhtml#appendix-749ba51a6c25-gpu-vertex-specification" class="wikilink">GPU vertex specification (Light Transport and Image Synthesis, Part 1, Reference notes: GPU vertex specification)</a></li>
+</ul>
+</section>
+<section id="appendix-40426e4b2103-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch277.xhtml#id_03-visual-computing-i-ch012-rasterization-coverage-and-depth" class="wikilink">Rasterization, coverage, and depth (Mathematics for Visual Computing, Part 2, Ch. 16)</a></li>
+<li><a href="ch305.xhtml#id_03-visual-computing-i-ch003-cameras-projection-and-calibration" class="wikilink">Cameras, projection, and calibration</a></li>
+</ul>
+</section>
+<section id="appendix-40426e4b2103-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch277.xhtml#id_03-visual-computing-i-ch012-rasterization-coverage-and-depth" class="wikilink">Rasterization, coverage, and depth (Mathematics for Visual Computing, Part 2, Ch. 16)</a></li>
+<li><a href="ch305.xhtml#id_03-visual-computing-i-ch003-cameras-projection-and-calibration" class="wikilink">Cameras, projection, and calibration</a></li>
+</ul>
+</section>
+<section id="appendix-40426e4b2103-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<ul>
+<li>Derive the clip-space edge intersection and perspective-correct attribute ratio.</li>
+<li>Why must clipping happen before divide by w, and why is linear screen interpolation wrong for texture coordinates?</li>
+</ul>
+</section>
+<section id="appendix-40426e4b2103-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p>Teaching narrative: <a href="ch277.xhtml#id_03-visual-computing-i-ch012-rasterization-coverage-and-depth" class="wikilink">open the main explanation (Mathematics for Visual Computing, Part 2, Ch. 16)</a>. Browse the <a href="ch547.xhtml#appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series" class="wikilink">University graphics and vision index</a>. Additional chapter connections: <a href="ch305.xhtml#id_03-visual-computing-i-ch003-cameras-projection-and-calibration" class="wikilink">Cameras, projection, and calibration</a>; <a href="ch277.xhtml#id_03-visual-computing-i-ch012-rasterization-coverage-and-depth" class="wikilink">Rasterization, coverage, and depth (Mathematics for Visual Computing, Part 2, Ch. 16)</a>; <a href="ch245.xhtml#id_01-foundations-i-ch018-homogeneous-coordinates-preserve-the-role-of-a-location" class="wikilink">Homogeneous coordinates preserve the role of a location (Mathematics for Visual Computing, Part 1, Ch. 2)</a>; <a href="ch261.xhtml#id_01-foundations-i-ch019-a-camera-is-another-frame-so-viewing-uses-its-inverse" class="wikilink">A camera is another frame, so viewing uses its inverse (Mathematics for Visual Computing, Part 1, Ch. 3)</a>.</p>
+<p>Caption/source records: <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-p1-02---module-1.2-course-intro-administrivia-part-2-graphics-visual-computing-2026" class="wikilink">P1-02 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>, <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-p3-05---the-camera-transform" class="wikilink">P3-05 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>, <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-p3-06---clipping" class="wikilink">P3-06 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>, <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-p3-12---scan-conversion" class="wikilink">P3-12 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>.</p>
+</section>
+<section id="appendix-40426e4b2103-phase-11-camera-development" class="level3">
+<h3>Phase 11 camera development</h3>
+<p>Clipping and perspective-correct interpolation preserve projective geometry, while texture filtering asks how much surface area maps to a pixel. Neighboring camera rays approximate the image-to-surface footprint. At grazing angles one pixel can cover a long, thin region; a center-only texel lookup may alias detail even when attributes interpolate correctly. Use footprint estimates to select mip levels or anisotropic filters, while respecting visibility edges where derivatives jump. Ray differentials aid sampling but do not replace clipping or multisample coverage. Source basis: PBRT differential-ray texture filtering. Link: <a href="ch290.xhtml#id_02-foundations-ii-ch037-a-camera-model-must-close-the-loop" class="wikilink">A camera model must close the loop</a>; research: <a href="ch289.xhtml#id_02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review" class="wikilink">Four deeper links from the TUM lecture review</a>.</p>
+</section>
+<section id="appendix-40426e4b2103-worked-clip-plane-trace-beside-the-shader-explanation" class="level3">
+<h3>Worked clip-plane trace beside the shader explanation</h3>
+<p>For clip endpoints <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>6</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+</math>, the right-plane intersection uses homogeneous edge parameter <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>5</mn>
+</math>; interpolating the already divided endpoints would use <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>3</mn>
+</math>. <a href="ch433.xhtml#id_06-engine-ii-ch025-clip-coordinates-are-not-normalized-device-coordinates" class="wikilink">The worked trace and pipeline figure (GPU Architecture and Real-Time Rendering, Part 2, Ch. 16)</a> also explain negative fourth components, the zero-divisor limit and declared depth conventions. This is used by the shader-stage teaching before program compilation and linking are discussed.</p>
+</section>
+<section id="appendix-40426e4b2103-executable-raster-state-continuation" class="level3">
+<h3>Executable raster-state continuation</h3>
+<p>The project now carries two complementary CPU witnesses. <code>tools/labs/raster_reference_lab.cpp</code> owns edge coverage, barycentrics, perspective-correct interpolation and depth ordering. <code>tools/labs/raster_pipeline_state_lab.cpp</code> continues the same pipeline through a homogeneous clip-plane intersection, an explicit four-sample coverage mask, stencil compare/pass update and premultiplied source-over blending.</p>
+<p>That separation is deliberate: clipping happens in homogeneous coordinates before divide-by-<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+</math>; sample ownership happens after screen mapping; stencil/depth are stateful per-fragment/sample decisions; blending combines a surviving source with an existing destination. Treating all of them as “rasterization” without preserving these boundaries makes debugging nearly impossible.</p>
+</section>
+</section>
+</body>
+</html>

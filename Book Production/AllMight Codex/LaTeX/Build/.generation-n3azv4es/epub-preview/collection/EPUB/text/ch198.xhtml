@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch198.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-d42039b1d6f7-ref-qualified-accessors" class="level2">
+<h2>Ref-qualified accessors</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C008 · <strong>Latest development:</strong> C009</p>
+<section id="appendix-d42039b1d6f7-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Value-returning temporary accessors provide an owning result through direct construction or member movement. Both const and mutable rvalue policies remain required; the shorter M009 source example does not replace the four-way safe design.</p>
+<p>Member &amp;/&amp;&amp; qualifiers constrain the caller’s object category. Borrowed getters suit persistent owners; temporary getters can return owning values or be deleted. Handle const rvalues too: a missing const&amp;&amp; policy can expose a borrowed result through const&amp;. Inside &amp;&amp; members, *this remains an lvalue.</p>
+</section>
+<section id="appendix-d42039b1d6f7-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch196.xhtml#appendix-c25d60fed375-const-qualification-and-shallow-constness" class="wikilink">Const qualification and shallow constness</a> — Access-path qualification constrains nested conversions and member writes.</li>
+<li><a href="ch175.xhtml#appendix-1121b30eaeb0-value-categories-and-materialization" class="wikilink">Value categories and materialization</a> — Expression category determines viable binding and whether temporary identity is needed.</li>
+<li><a href="ch187.xhtml#appendix-a978b29bbbb0-temporary-lifetime-extension" class="wikilink">Temporary lifetime extension</a> — Temporary deadlines constrain returned paths and deferred access.</li>
+</ul>
+</section>
+<section id="appendix-d42039b1d6f7-used-by" class="level3">
+<h3>Used by</h3>
+<p>Later sources will deepen this same node; no empty dependent nodes are created.</p>
+</section>
+<section id="appendix-d42039b1d6f7-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Write all four Name overloads and justify each return type. Pending: explicit object parameters and generic interface deduction. Written coverage does not establish learner mastery.</p>
+</section>
+<section id="appendix-d42039b1d6f7-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch207.xhtml#appendix-fd090d982a15-m009---parts-127-147" class="wikilink">C009 development</a></p>
+<p><a href="ch173.xhtml#id_01-foundations-i-ch003-an-accessor-must-respect-the-callers-lifetime" class="wikilink">Teaching explanation and examples</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m008---parts-113-126" class="wikilink">Exact coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

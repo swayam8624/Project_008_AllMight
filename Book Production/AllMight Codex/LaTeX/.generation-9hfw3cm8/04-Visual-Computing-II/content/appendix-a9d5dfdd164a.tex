@@ -1,0 +1,60 @@
+\hypertarget{appendix-a9d5dfdd164a}{}
+\section{Attention and visual transformers}\label{appendix-a9d5dfdd164a-attention-and-visual-transformers}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-a9d5dfdd164a-definition-and-mechanism}
+
+Self-attention lets each token build a context-dependent mixture of other tokens. A learned linear map produces queries \(Q\), keys \(K\), and values \(V\); scaled dot products compare each query with all keys, softmax converts scores to weights, and those weights combine values. Multiple heads learn different relationships, while positional information tells the model where patches or words came from. Vision transformers split an image into patches, embed them as tokens, and process the sequence with attention and feed-forward blocks. Unlike a small convolution, global attention can relate distant regions in one layer, but its pairwise score matrix grows roughly as the square of token count. Patch size trades spatial detail for compute; positional encodings and training data affect transfer. Attention weights are a mechanism for mixing information, not an explanation of causal importance. A transformer still needs a task objective, data, optimization, and validation, and can fail under distribution shift or poor spatial grounding.
+
+\subsection{Prerequisites}\label{appendix-a9d5dfdd164a-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-d5b3c692d9f0}{Convolution and filter footprints (03-Visual-Computing-I, appendix-d5b3c692d9f0)}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-4815cd87ab8b}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)}
+\item
+  \hyperref[appendix-65788587ef78]{Research validity and ablation}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-40df0855b4a7}{Automatic differentiation and backpropagation (03-Visual-Computing-I, appendix-40df0855b4a7)}
+\item
+  \hyperref[appendix-47c51ea026fb]{Learned image features and CNNs}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-a9d5dfdd164a-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[04-visual-computing-ii-ch031-sequence-models-and-attention]{Sequence models and attention}
+\item
+  \hyperref[appendix-772f1fd96148]{Contrastive vision and image-language alignment}
+\item
+  \hyperref[appendix-b0c42da325f1]{Perception feedback and robot learning}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-a9d5dfdd164a-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[04-visual-computing-ii-ch031-sequence-models-and-attention]{Sequence models and attention}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-a9d5dfdd164a-recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  Compute the role of Q, K, and V in one self-attention layer.
+\item
+  What makes global attention expensive as the image patch count grows?
+\end{itemize}
+
+\subsection{Source and navigation}\label{appendix-a9d5dfdd164a-source-and-navigation}
+
+Teaching narrative: \hyperref[04-visual-computing-ii-ch031-sequence-models-and-attention]{open the main explanation}. Browse the \href{../02-Foundations-II/main.pdf\#nameddest=appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series}{University graphics and vision index (02-Foundations-II, appendix-a6d556a4ef50-university-graphics-vision-and-photography-\/-\/-independent-series)}. Additional chapter connections: \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch004-image-sampling-filtering-and-efficient-reconstruction}{Image sampling, filtering, and efficient reconstruction (03-Visual-Computing-I, 03-visual-computing-i-ch004-image-sampling-filtering-and-efficient-reconstruction)}; \hyperref[04-visual-computing-ii-ch030-optical-flow-and-motion-from-images]{Optical flow and motion from images}; \hyperref[04-visual-computing-ii-ch035-a-complete-renderer-makes-the-forward-model-executable]{A complete renderer makes the forward model executable}.
+
+Caption/source records: \hyperref[04-visual-computing-ii-ch036-sc-08---stanford-cs231n-spring-2025-lecture-8-attention-and-transformers]{SC-08}, \hyperref[04-visual-computing-ii-ch036-sc-16---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-16-vision-and-language]{SC-16}.

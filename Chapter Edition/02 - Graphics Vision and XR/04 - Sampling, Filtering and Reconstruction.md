@@ -8,7 +8,7 @@ Once an image is sampled, reconstruction must manage aliasing, filtering, memory
 
 **Recall question:** Why can two different continuous signals produce the same samples?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 3634–5492; source-span SHA256 a5e8c6ab058880d462b98ce41d402c3c9d234b2758b0fab61efaabf5a5e4874b. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 3665–5523; source-span SHA256 a5e8c6ab058880d462b98ce41d402c3c9d234b2758b0fab61efaabf5a5e4874b. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Image sampling, filtering, and efficient reconstruction

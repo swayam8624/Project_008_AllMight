@@ -1,0 +1,39 @@
+\hypertarget{appendix-1a599c924a4e}{}
+\section*{Signed integer overflow}
+\section{Signed integer overflow}\label{signed-integer-overflow}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A signed arithmetic result outside its type's range is undefined in C++; hardware low bits do not create a language-level wrap guarantee.
+
+Overflow concerns the operation's signed type after promotions. int maximum + 1 is undefined. For checked addition, reject b\textgreater0 and a\textgreater max−b, or b\textless0 and a\textless min−b, before evaluating a+b. Hardware status flags do not change the C++ contract.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-05f39b10364d]{Minimum signed value} --- N-bit two's complement spans −2ᴺ⁻¹ through 2ᴺ⁻¹−1.
+\item
+  \hyperref[appendix-f558f5b4d8f2]{Undefined behavior} --- The C++ language imposes no requirements on an execution that invokes undefined behavior.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-3999c6209649]{Saturating arithmetic} --- uses signed integer overflow as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Explain signed integer overflow without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} checked arithmetic facilities, optimizer transformations, and sanitizers.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Arithmetic\%20becomes\%20a\%20policy}{C002 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

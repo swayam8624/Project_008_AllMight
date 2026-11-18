@@ -1,0 +1,30 @@
+\hypertarget{appendix-89b2d5b7c9e1}{}\label{referencestart:appendix-89b2d5b7c9e1}
+\section{Surface orientation from image brightness}\label{appendix-89b2d5b7c9e1-surface-orientation-from-image-brightness}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-89b2d5b7c9e1-definition-and-mechanism}
+
+Shape-from-illumination methods infer surface orientation or depth from how light changes across an image. Photometric stereo observes a fixed camera view under multiple known light directions; for a Lambertian surface, measured intensity is proportional to albedo times the dot product between light direction and surface normal. Solving several such equations estimates the scaled normal, then integration recovers height up to boundary and scale ambiguities. A reflectance map plots brightness as a function of surface normal under fixed illumination and can reveal which orientations are visible. The extended Gaussian image maps each surface area to its normal on the unit sphere; its distribution summarizes orientation and convex shape properties. Shape-from-shading uses one image and must jointly reason about unknown lighting, albedo, and depth, so it is more ambiguous. Each method needs assumptions stated explicitly.
+
+\subsection{Prerequisites}\label{appendix-89b2d5b7c9e1-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-96da0b153b77]{Reflectance and rendering equation}
+\item
+  \hyperref[appendix-215c2570199b]{Light spectra and radiometry}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-89b2d5b7c9e1-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  {Worlds, Images and Inference}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-89b2d5b7c9e1-full-teaching-explanation}
+
+\href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch032-surface-orientation-from-illumination}{Surface orientation from illumination (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 3)} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch032-shape-from-shading-and-reflectance}{Shape from shading and reflectance (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 3)} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch032-surface-descriptions-and-gaussian-images}{Surface descriptions and Gaussian images (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 3)}

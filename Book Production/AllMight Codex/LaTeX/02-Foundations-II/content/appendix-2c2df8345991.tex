@@ -1,0 +1,45 @@
+\hypertarget{appendix-2c2df8345991}{}
+\section*{Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt}
+\section{Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt}\label{nonlinear-least-squares-gauss-newton-and-levenberg-marquardt}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 9 · \textbf{Latest development:} Phase 9
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Nonlinear least squares minimizes one half the squared norm of a residual vector. Its gradient and Hessian involve the residual Jacobian; the exact Hessian also contains second derivatives of each residual. Gauss--Newton drops those latter terms, producing a positive-semidefinite normal matrix and an efficient local step when residuals are small or the model is close to linear. Levenberg--Marquardt adds damping to control ill-conditioned or overly aggressive steps, blending Gauss--Newton with gradient descent. These algorithms are useful for camera calibration, bundle adjustment, and geometric fitting. Residual scaling, parameter units, rank deficiency, and gauge freedoms influence the solution. Normal equations can square the condition number, so QR or other structured solves may be safer. A small residual does not prove parameters are identifiable or physically correct.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Jacobians, pushforwards, and pullbacks (01-Foundations-I, appendix-d8a7ddb675eb)}
+\item
+  \href{}{Hessians and local curvature (01-Foundations-I, appendix-6ac071f8b50c)}
+\item
+  \hyperref[appendix-50d2ea3c9b26]{Symmetric positive-definite matrices and Cholesky}
+\item
+  \href{}{Constrained optimization and inverse kinematics (04-Visual-Computing-II, appendix-29f4bea4c2bb)}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  This node is a current endpoint in the supplied Phase 9--10 path.
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Optimization\%20and\%20inverse\%20problems}{Phase 9 teaching section}
+\item
+  \href{}{Visual Recall/09 - Calculus and Optimization - Visual Recall.md (01-Foundations-I, appendix-adf48f5dc5c1)} · visual recall
+\end{itemize}
+
+\subsection{Source coverage}\label{source-coverage}
+
+Supplied lesson parts: 877 (T02 · M053), 878 (T02 · M053), 879 (T02 · M053), 880 (T02 · M053).

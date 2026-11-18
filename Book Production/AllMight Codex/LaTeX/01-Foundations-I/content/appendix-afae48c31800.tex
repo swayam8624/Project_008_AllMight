@@ -1,0 +1,39 @@
+\hypertarget{appendix-afae48c31800}{}
+\section*{Null pointers and optional access}
+\section{Null pointers and optional access}\label{null-pointers-and-optional-access}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A null pointer designates no object/function; nullptr\_t converts to appropriate null pointer values without choosing an integer overload. A non-null pointer is not a lifetime or bounds proof. Deleting a typed null object pointer is valid, but bare delete nullptr is ill-formed.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-6af5921bc853]{Pointer arithmetic and provenance} --- Storage relationships, bounds and lifetime distinguish valid access from a non-null value.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+Later sources will deepen this same node; no empty dependent nodes are created.
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Explain absence, stale access and one-past access separately. Pending: optional/reference wrapper APIs and owning-pointer policies. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20pointer\%20carries\%20an\%20access\%20contract}{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15]{Exact coverage} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\subsection{Absence must be part of the type or contract}\label{absence-must-be-part-of-the-type-or-contract}
+
+A null pointer represents ``no object at this address-bearing interface''; dereferencing it is invalid. That makes raw pointer nullability an API question. If a parameter must always designate an object, a reference or explicitly non-null wrapper communicates more than a nullable pointer plus a comment.
+
+Optional ownership and optional observation are different. A \texttt{std::unique\_ptr\textless{}T\textgreater{}} may be empty while also owning when nonempty; \texttt{T*} may be nullable but usually says nothing about ownership; \texttt{std::optional\textless{}T\textgreater{}} stores an optional value without indirection. Choosing among them should follow lifetime and absence semantics rather than syntax convenience.
+
+Null checks also do not prove lifetime. A non-null dangling pointer is still invalid, and a pointer can become logically stale even if its numeric address is later reused for a different object.
+
+Tests for optional APIs should cover absent state, present state, transitions between them, moved-from ownership and invalid external identifiers. Avoid sentinel pointer values other than the language-defined null representation unless a low-level ABI explicitly owns that convention.

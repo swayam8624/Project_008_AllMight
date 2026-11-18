@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch375.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-aef6177f7b3f-gjk-and-epa" class="level2">
+<h2>GJK and EPA</h2>
+<p>GJK answers geometric questions about two convex shapes by working with their Minkowski difference</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo fence="false" stretchy="false">{</mo>
+  <mi>a</mi>
+  <mo>−</mo>
+  <mi>b</mi>
+  <mo>∣</mo>
+  <mi>a</mi>
+  <mo>∈</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo>∈</mo>
+  <mi>B</mi>
+  <mo fence="false" stretchy="false">}</mo>
+  <mo>.</mo>
+</math>
+<p>The shapes intersect exactly when the origin lies inside <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>−</mo>
+  <mi>B</mi>
+</math>. The algorithm does not construct that difference explicitly. It asks each shape for an extreme support point. For search direction <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math>,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>A</mi>
+      <mo>−</mo>
+      <mi>B</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>A</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mo>−</mo>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>B</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Each support query adds one point, and GJK maintains a simplex containing at most four support points in 3D.</p>
+<section id="appendix-aef6177f7b3f-simplex-evolution" class="level3">
+<h3>Simplex evolution</h3>
+<p>A simplex may be a point, segment, triangle or tetrahedron. The update step determines which Voronoi region of the simplex can still contain the closest point to the origin, discards vertices that cannot matter, and produces a new search direction.</p>
+<p>This geometric classification is the heart of GJK. Memorizing a chain of cross products without the region argument makes degeneracy bugs almost impossible to diagnose.</p>
+<p>A production implementation must define behavior for repeated support points, nearly collinear segments, nearly coplanar triangles, tiny search directions and finite iteration limits.</p>
+<p>Intersection-GJK and distance-GJK use related simplexes but do not have identical termination rules. A condition sufficient to say “origin cannot be passed in this direction” is not automatically a high-quality distance convergence test.</p>
+</section>
+<section id="appendix-aef6177f7b3f-termination-and-finite-precision" class="level3">
+<h3>Termination and finite precision</h3>
+<p>Exact zero comparisons are brittle. Useful termination signals include lack of support progress, lack of distance improvement, repeated support points, simplex containment within tolerance, and an explicit maximum iteration count.</p>
+<p>Every exit should identify the reason. An iteration cap is “uncertain/no convergence” unless the algorithm has another conservative proof of separation or intersection.</p>
+</section>
+<section id="appendix-aef6177f7b3f-epa-after-intersection" class="level3">
+<h3>EPA after intersection</h3>
+<p>When GJK produces an appropriate simplex/polytope enclosing the origin, EPA estimates penetration by refining the boundary of that Minkowski polytope.</p>
+<p>The core loop is:</p>
+<ol type="1">
+<li>find the face closest to the origin;</li>
+<li>query a support point in the outward face normal;</li>
+<li>compare the new support distance with the current face distance;</li>
+<li>if their gap is within tolerance, return the face normal/depth approximation;</li>
+<li>otherwise remove faces visible from the new support point;</li>
+<li>extract the horizon boundary;</li>
+<li>connect the new point to the horizon and continue.</li>
+</ol>
+<p>EPA therefore owns topology as well as geometry. Incorrect face orientation or horizon ordering can create an inside-out polytope even when GJK was correct.</p>
+<p>Finite support-gap tolerance gives an approximation. EPA should not be described as exact penetration recovery for arbitrary floating-point convex shapes.</p>
+</section>
+<section id="appendix-aef6177f7b3f-contact-generation-is-later" class="level3">
+<h3>Contact generation is later</h3>
+<p>A penetration normal and depth are not a persistent contact manifold. The physics engine still needs witness/contact points, feature identity, clipping or support-feature reconstruction, warm-start keys, friction basis and lifetime policy.</p>
+<p>Read the connected explanation in <a href="ch373.xhtml#id_03-visual-computing-i-ch020-from-a-scene-to-a-collision-answer-geometry-as-a-chain-of-contracts" class="wikilink">Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#From a Scene to a Collision Answer: Geometry as a Chain of Contracts</a>.</p>
+<p>Related: <a href="ch374.xhtml#appendix-66956ed6c753-continuous-collision-detection" class="wikilink">Continuous collision detection</a>, <a href="ch460.xhtml#appendix-215ac7099a82-minkowski-sums-and-support-mappings" class="wikilink">Minkowski sums and support mappings (Vision, XR, and Playable Worlds, Part 1, Reference notes: Minkowski sums and support mappings)</a>, <a href="ch580.xhtml#id_06-engine-ii-ch046-complete-persistent-contact-implementation-and-cache-policy" class="wikilink">Persistent contact manifolds (Vision, XR, and Playable Worlds, Part 2, Ch. 17)</a>.</p>
+</section>
+</section>
+</body>
+</html>

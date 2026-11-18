@@ -1,0 +1,32 @@
+\hypertarget{appendix-1aea26b2307f}{}
+\section*{Half-edge mesh connectivity}
+\section{Half-edge mesh connectivity}\label{appendix-1aea26b2307f-half-edge-mesh-connectivity}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-1aea26b2307f-definition-and-mechanism}
+
+A half-edge data structure stores each undirected edge as two opposite directed records. Each record points to its twin, the next directed edge around its face, its origin vertex, its edge, and its face; vertices, edges, and faces keep one representative half-edge. Repeatedly following next visits a face boundary. Following twin then next walks around a vertex fan. This makes local neighborhoods and edits proportional to local degree rather than requiring a scan of every face. Correctness depends on invariants: twin of twin returns to the original, a half-edge is not its own twin, and next pointers form closed face cycles. The representation naturally assumes manifold connectivity; it can encode flips, splits, and collapses by changing a bounded set of pointers, but careless updates can break the cycles and corrupt subsequent traversal.
+
+\subsection{Prerequisites}\label{appendix-1aea26b2307f-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-fab348609369}{Manifold polygon meshes and boundary structure (04-Visual-Computing-II, appendix-fab348609369)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-1aea26b2307f-used-by}
+
+\begin{itemize}
+\item
+  {Worlds, Images and Inference {[}referenced source unavailable{]}}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-0234ab7f86b1}{Subdivision surface masks (04-Visual-Computing-II, appendix-0234ab7f86b1)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-1dd4ad54ca57}{Quadric error mesh simplification (04-Visual-Computing-II, appendix-1dd4ad54ca57)}
+\item
+  \hyperref[appendix-7107009c505b]{Local rigidity and mesh orientation fields} \#\# Full teaching explanation
+\end{itemize}
+
+\hyperref[03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing]{Meshes, connectivity, and geometry processing}

@@ -1,0 +1,43 @@
+\hypertarget{appendix-a9f83ad40792}{}
+\section*{Color encoding and linear-light operations}
+\section{Color encoding and linear-light operations}\label{color-encoding-and-linear-light-operations}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} XR01 · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Color primaries/white point and nonlinear transfer encoding are different. Physical intensity filtering uses the appropriate linear quantity; black/white averaging then sRGB encoding gives about 0.735, not encoded 0.5. Tone/gamut mapping and absolute display luminance need separate contracts.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-215c2570199b]{Light spectra and radiometry} --- The light quantity and units must be established before its interaction or visual effect is modeled.
+\item
+  \href{}{Interpretation contract (01-Foundations-I, appendix-f414bd4ed05c)} --- A numeric sample requires a domain, units and encoding convention.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-b2c1846508bf]{Perceptual metrics and display calibration}
+\item
+  \href{}{Exposure and sensor response (03-Visual-Computing-I, appendix-92d45cdf2afc)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+State the metric's encoding and peak before comparing images. Pending: standardized HDR and measured display calibration. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Encoded\%20RGB\%20must\%20not\%20masquerade\%20as\%20linear\%20light}{Expanded teaching explanation} · \href{}{Independent coverage (01-Foundations-I, appendix-fd090d982a15 § XR01 - Independent seeing and representation source)} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\subsection{University course development}\label{university-course-development}
+
+Extend the existing color note with why image-processing arithmetic must distinguish encoded values from light. A display encoding such as sRGB uses a nonlinear transfer curve so code values allocate precision in a way that suits perception and storage. Averaging or adding those encoded numbers does not generally average or add emitted light. Decode to linear-light RGB before blending, filtering, estimating radiance, or compositing, then encode for display. If two equal-area samples contain linear intensities \(0\) and \(1\), their physical average is \(0.5\); averaging their encoded sRGB values and treating that result as light yields a different, brighter answer. Color primaries and a white point also define the coordinate system of RGB, so a numeric triplet is incomplete without its color space. Keep scene-referred radiance, display-referred color, and perceptual appearance separate.
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Color\%20perception,\%20encoding,\%20and\%20display}{Color perception, encoding, and display} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Light\%20measurement\%20and\%20radiometry}{Light measurement and radiometry} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Image\%20sampling,\%20filtering,\%20and\%20efficient\%20reconstruction}{Image sampling, filtering, and efficient reconstruction}

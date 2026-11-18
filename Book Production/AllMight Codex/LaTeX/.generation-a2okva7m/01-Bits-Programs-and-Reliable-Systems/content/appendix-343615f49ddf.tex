@@ -1,0 +1,61 @@
+\hypertarget{appendix-343615f49ddf}{}\label{referencestart:appendix-343615f49ddf}
+\section{IEEE-754 floating point}\label{appendix-343615f49ddf-ieee-754-floating-point}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C005
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-343615f49ddf-definition-and-mechanism}
+
+IEEE-754 specifies floating formats and behavior including representation classes, rounding directions and exception conditions. A finite bit pattern is interpreted through sign, exponent and significand rules, not as a two's-complement integer.
+
+\end{allmightroledefinition}
+
+Binary32 has 1/8/23 stored fields and 24-bit normal precision; binary64 has 1/11/52 fields and 53-bit normal precision. Word 412A0000 encodes 10.625 in binary32. Exponent-zero and all-one fields distinguish zero/subnormal and infinity/NaN. Normal spacing expands with exponent; nearest-even and directed modes choose representable results under explicit rules. These format names do not prove every C++ float/double has those representations.
+
+M005 develops alignment, cancellation, FMA and accumulated error. Numeric equality is not representation identity, and moving rounding points can change the computed result.
+
+\subsection{Prerequisites}\label{appendix-343615f49ddf-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-ac697f5c66e8]{Bit field} --- A field is a declared range with offset s and width w, not automatically a C++ language bit-field member.
+\item
+  \hyperref[appendix-f414bd4ed05c]{Interpretation contract} --- For \texttt{0xAD}, unsigned interpretation gives 173; eight-bit two's complement gives −83.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-343615f49ddf-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-34443cec7170]{Binary16} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-18b8dd966b5d]{Bfloat16} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-41e8ef22a21e]{Fused multiply-add} --- Fused operation semantics and destination rounding are part of the arithmetic contract.
+\item
+  \hyperref[appendix-5057f9ad327f]{Binary32} --- uses ieee-754 floating point to establish this mechanism's representation or policy.
+\item
+  \hyperref[appendix-ed8531b46754]{Floating-point exception flags} --- uses ieee-754 floating point to establish this mechanism's representation or policy.
+\item
+  \hyperref[appendix-34ee45f161c1]{Bit casting and representation} --- uses ieee-754 floating point to establish this mechanism's representation or policy.
+\item
+  \hyperref[appendix-7f1e17dcafb1]{Robust norm and intermediate range} --- uses ieee-754 floating point to establish this mechanism's representation or policy.
+\end{itemize}
+
+Connect later dependent concepts here when their lessons arrive.
+
+\subsection{Recall and next depth}\label{appendix-343615f49ddf-recall-and-next-depth}
+
+Reconstruct 10.625's fields, distinguish epsilon from minimum positive values, and resolve an exact midpoint without calling it decimal rounding.
+
+\textbf{Pending:} Extend this mechanism to later algorithms and target-specific behavior. See the M005 chapter for its current examples and validity assumptions.
+
+\subsection{Source and navigation}\label{appendix-343615f49ddf-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-when-arithmetic-meets-uncertainty]{M005 development}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{C004 development}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

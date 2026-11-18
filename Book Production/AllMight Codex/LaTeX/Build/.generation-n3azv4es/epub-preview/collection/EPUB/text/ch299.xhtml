@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch299.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-89db9fe1bc8a-qem-edge-collapse-and-validity" class="level2">
+<h2>QEM edge collapse and validity</h2>
+<p>Mesh simplification is not “remove the shortest edge.” A collapse changes both geometry and topology, so a useful cost must estimate geometric error while a validity gate protects the mesh from illegal connectivity or orientation changes.</p>
+<section id="appendix-89db9fe1bc8a-plane-quadrics" class="level3">
+<h3>Plane quadrics</h3>
+<p>For a face plane</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mi>y</mi>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mi>z</mi>
+  <mo>+</mo>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>with normalized normal <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mo stretchy="false">)</mo>
+</math>, write the homogeneous plane vector</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mo>,</mo>
+  <mi>d</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>The squared distance-like penalty of homogeneous vertex <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>v</mi>
+      <mo stretchy="false">¯</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+  <mo>,</mo>
+  <mn>1</mn>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+</math> to that plane is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>v</mi>
+      <mo stretchy="false">¯</mo>
+    </mover>
+  </mrow>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>v</mi>
+        <mo stretchy="false">¯</mo>
+      </mover>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <msup>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>v</mi>
+      <mo stretchy="false">¯</mo>
+    </mover>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>So the face contributes quadric</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>K</mi>
+    <mi>p</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>p</mi>
+  <msup>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Sum incident face quadrics around a vertex. For candidate edge <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+</math>, combine</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Q</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>Q</mi>
+    <mi>u</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>Q</mi>
+    <mi>v</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Evaluate a proposed replacement position <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>x</mi>
+      <mo stretchy="false">¯</mo>
+    </mover>
+  </mrow>
+</math> using</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>x</mi>
+        <mo stretchy="false">¯</mo>
+      </mover>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="sans-serif">T</mi>
+      </mrow>
+    </mrow>
+  </msup>
+  <mi>Q</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>x</mi>
+      <mo stretchy="false">¯</mo>
+    </mover>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>The optimal unconstrained position comes from the upper-left linear system when it is nonsingular. If that solve is unstable or singular, candidates such as endpoints and midpoint provide robust fallbacks.</p>
+</section>
+<section id="appendix-89db9fe1bc8a-topology-gate-before-cost" class="level3">
+<h3>Topology gate before cost</h3>
+<p>A low QEM cost does not make a collapse legal. Before committing, check conditions such as:</p>
+<ul>
+<li>the link condition or equivalent local-manifold test;</li>
+<li>boundary preservation policy;</li>
+<li>no face becomes degenerate by repeated vertex identity;</li>
+<li>no surviving triangle flips orientation beyond the chosen geometric tolerance;</li>
+<li>attributes/seams that the simplifier promises to preserve;</li>
+<li>no non-manifold edge or vertex is created.</li>
+</ul>
+<p>The exact validity policy depends on whether the pipeline allows topology changes, but it must be explicit.</p>
+</section>
+<section id="appendix-89db9fe1bc8a-priority-queue-invalidation" class="level3">
+<h3>Priority queue invalidation</h3>
+<p>A simplifier often keeps edge candidates in a heap. After one collapse, nearby quadrics/connectivity change, so old candidate costs become stale. Use version stamps/generations or recompute on pop. Otherwise a heap can return a numerically small cost for an edge that no longer exists in the same neighborhood.</p>
+</section>
+<section id="appendix-89db9fe1bc8a-verification" class="level3">
+<h3>Verification</h3>
+<p>Compare simplification against invariants after every collapse: manifold/boundary status, valid indices, nonzero face area, finite coordinates and expected Euler behavior. Geometry error should be measured on the resulting surface rather than inferred only from the sum of local QEM costs.</p>
+<p>The current branch now provides tools/labs/mesh_topology_lab.cpp for the topology layer and the existing cotangent-energy witness for discrete operators. A full executable QEM collapse loop remains the next implementation milestone rather than being silently claimed complete.</p>
+<p>Related: <a href="ch304.xhtml#appendix-faac749c9cdd-half-edge-topology-invariants" class="wikilink">Half-edge topology invariants</a>, <a href="ch301.xhtml#appendix-e38976cbbf86-mesh-topology-and-homology" class="wikilink">Mesh topology and homology</a>.</p>
+</section>
+<section id="appendix-89db9fe1bc8a-executable-collapse-layer" class="level3">
+<h3>Executable collapse layer</h3>
+<p><code>tools/labs/qem_edge_collapse_lab.cpp</code> now implements the first complete QEM collapse witness instead of leaving this section at topology-only prose. It constructs normalized face planes, accumulates <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+  <msup>
+    <mi>p</mi>
+    <mi>T</mi>
+  </msup>
+</math> quadrics into vertices, combines the two endpoint quadrics for an edge, evaluates candidate cost in homogeneous coordinates, and runs a geometric validity gate before accepting the collapse.</p>
+<p>The validity witness deliberately distinguishes a triangle that disappears because it contains both collapsed endpoints from a surviving triangle that becomes degenerate or flips. The former is expected topology change; the latter is rejected. This still leaves the optimal <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>3</mn>
+  <mo>×</mo>
+  <mn>3</mn>
+</math> solve, link-condition proof, boundary-feature weights, attribute quadrics and progressive-mesh bookkeeping as higher layers, but QEM is no longer merely named.</p>
+</section>
+<section id="appendix-89db9fe1bc8a-optimal-solve-and-topology-link-condition-continuation" class="level3">
+<h3>Optimal solve and topology link-condition continuation</h3>
+<p><code>tools/labs/qem_optimal_link_lab.cpp</code> now adds two pieces that the first collapse witness deliberately left open.</p>
+<p>For a summed quadric written in homogeneous form, the candidate minimizing the quadratic error satisfies the <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>3</mn>
+  <mo>×</mo>
+  <mn>3</mn>
+</math> linear system formed by the upper-left block and translation column. The lab solves that system with pivoting, verifies the unique intersection of three orthogonal planes, and detects a rank-deficient single-plane quadric so the caller can fall back to an endpoint/midpoint policy instead of inventing an unstable inverse.</p>
+<p>The same witness constructs vertex one-rings and the set of vertices opposite an edge in its incident triangles. A manifold triangle-mesh edge is accepted only when it has one boundary face or two interior faces <strong>and</strong> the common one-ring neighbors match that opposite set. A three-face edge is explicitly rejected as non-manifold. Attribute quadrics, boundary-feature weighting, priority-queue updates and production progressive simplification still remain above this reference layer.</p>
+</section>
+</section>
+</body>
+</html>

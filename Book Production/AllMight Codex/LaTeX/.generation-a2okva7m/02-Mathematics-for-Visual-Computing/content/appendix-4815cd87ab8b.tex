@@ -1,0 +1,57 @@
+\hypertarget{appendix-4815cd87ab8b}{}\label{referencestart:appendix-4815cd87ab8b}
+\section{Probability density and change of measure}\label{appendix-4815cd87ab8b-probability-density-and-change-of-measure}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-4815cd87ab8b-definition-and-mechanism}
+
+A probability density describes probability per unit of a chosen measure, not probability at a point. A density \(p_A(a)\) over area differs from a density \(p_\omega(\omega)\) over solid angle. When a mapping changes variables, its Jacobian converts density so total probability remains one: \(p_B(b)=p_A(a)|da/db|\) in one dimension, with the determinant of the inverse Jacobian in multiple dimensions. In rendering, choosing a point on a light and using its direction from a shading point requires an area-to-solid-angle conversion involving distance squared and the light's projected cosine. Estimator formulas are only correct when the sampling density and integral use the same measure. This concept prevents missing factors in importance sampling, environment-map sampling, and camera-lens integration.
+
+\end{allmightroledefinition}
+
+\subsubsection{Phase 9--10 development}\label{appendix-4815cd87ab8b-phase-910-development}
+
+A density is meaningful relative to a measure and its support; its value at a point is not itself an event probability. For a continuous scalar variable, an interval probability is the integral of the density over that interval. Under a differentiable one-to-one change of variables, the transformed density includes the absolute determinant of the inverse Jacobian. Values outside the transformed support have zero probability. A mixed law can contain both point masses and a continuous part, so one PDF alone cannot describe every distribution. When a renderer changes a surface-area density into a solid-angle density, the geometric Jacobian must preserve the same probability.
+
+\subsection{Prerequisites}\label{appendix-4815cd87ab8b-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-215c2570199b}{Light spectra and radiometry (Light Transport and Image Synthesis, Reference notes: Light spectra and radiometry)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4d0203f7944f}{Random variables and probability laws (Vision, XR, and Playable Worlds, Reference notes: Random variables and probability laws)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-4815cd87ab8b-used-by}
+
+\begin{itemize}
+\item
+  {Worlds, Images and Inference}
+\item
+  \hyperref[appendix-031e02bf28af]{Monte Carlo rendering estimators and variance}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-a9d5dfdd164a}{Attention and visual transformers (Light Transport and Image Synthesis, Reference notes: Attention and visual transformers)}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-772f1fd96148}{Contrastive vision and image-language alignment (Light Transport and Image Synthesis, Reference notes: Contrastive vision and image-language alignment)}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-2c568f05ee34}{Latent-variable models and generative flows (Light Transport and Image Synthesis, Reference notes: Latent-variable models and generative flows)}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-b0c42da325f1}{Perception feedback and robot learning (Light Transport and Image Synthesis, Reference notes: Perception feedback and robot learning)}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=appendix-c5b332e400e7}{Radiance fields and Gaussian splatting (Light Transport and Image Synthesis, Reference notes: Radiance fields and Gaussian splatting)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-d8a7ddb675eb}{Jacobians, pushforwards, and pullbacks (Vision, XR, and Playable Worlds, Reference notes: Jacobians, pushforwards, and pullbacks)}
+\item
+  \hyperref[appendix-8d863ed954d0]{Inverse, rejection, and importance sampling}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-12bbe185dbe5}{Multivariate Gaussian distributions and whitening (Vision, XR, and Playable Worlds, Reference notes: Multivariate Gaussian distributions and whitening)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-1c5e85693a06}{Latin-hypercube sampling (Vision, XR, and Playable Worlds, Reference notes: Latin-hypercube sampling)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-d580b422240f}{Stable probability normalization and log-sum-exp (Vision, XR, and Playable Worlds, Reference notes: Stable probability normalization and log-sum-exp)} \#\# Full teaching explanation
+\end{itemize}
+
+\href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch004-light-measurement-and-radiometry}{Light measurement and radiometry (Geometry, Cameras, and Image Formation, Ch. 11)} · \hyperref[03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation]{Numerical integration and Monte Carlo estimation} · \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch003-lens-optics-focus-and-image-formation}{Lens optics, focus, and image formation (Geometry, Cameras, and Image Formation, Ch. 10)} - \hyperref[02-foundations-ii-ch023-random-quantities-and-their-probability-laws]{Phase 10 teaching section} - \hyperref[02-foundations-ii-ch029-transformations-turn-simple-inputs-into-useful-samples]{Phase 10 teaching section} - \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)} · Phase 10 visual recall

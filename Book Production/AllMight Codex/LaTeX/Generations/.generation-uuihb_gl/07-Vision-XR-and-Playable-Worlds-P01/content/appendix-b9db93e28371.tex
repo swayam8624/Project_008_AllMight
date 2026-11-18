@@ -1,0 +1,68 @@
+\hypertarget{appendix-b9db93e28371}{}\label{referencestart:appendix-b9db93e28371}
+\section{Reproducible numerical benchmarking}\label{appendix-b9db93e28371-reproducible-numerical-benchmarking}
+
+\hypertarget{appendix-b9db93e28371-reproducible-numerical-benchmarking}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-b9db93e28371-definition-and-mechanism}
+
+\hypertarget{appendix-b9db93e28371-definition-and-mechanism}{}
+
+A useful numerical benchmark separates sample-level variability from run-level variability and pairs competing methods on the same inputs or seeds. Record the algorithm, precision, compiler/runtime settings, sample count, seed or keyed input, warm-up policy, timing method, and error metric. Compare distributions or paired differences rather than a single favorable run. A speed improvement is meaningful only if accuracy and failure rates remain acceptable for the target workload. For Monte Carlo methods, repeat independent runs and report uncertainty; for deterministic solvers, use analytical or manufactured solutions and measure convergence. Reproducibility is an experimental contract, not merely a fixed random seed. If the workload is stochastic, compare paired seeds and report both runtime and error distributions.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-b9db93e28371-prerequisites}
+
+\hypertarget{appendix-b9db93e28371-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#nameddest=appendix-5f1a2c3f97ff}{Numerical reproducibility (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Numerical reproducibility)}
+\item
+  \hyperref[appendix-c83016554b1e]{Confidence intervals and sequential evidence}
+\item
+  \hyperref[appendix-bcc44e9d3d02]{Robust summaries and error metrics}
+\item
+  \hyperref[appendix-31b8c295e05f]{Numerical error budgets}
+\item
+  \hyperref[appendix-aca80b6bf17a]{Convergence order and Richardson extrapolation}
+\item
+  \hyperref[appendix-1c5e85693a06]{Latin-hypercube sampling}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-b9db93e28371-used-by}
+
+\hypertarget{appendix-b9db93e28371-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P02/main.pdf\#nameddest=appendix-65788587ef78}{Research validity and ablation (Vision, XR, and Playable Worlds, Part 2, Reference notes: Research validity and ablation)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-b9db93e28371-full-teaching-explanation}
+
+\hypertarget{appendix-b9db93e28371-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#nameddest=02-foundations-ii-ch031-test-numerical-methods-and-benchmark-reproducibly}{Test numerical methods and benchmark reproducibly (Mathematics for Visual Computing, Part 2, Ch. 15)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-b9db93e28371-source-coverage}
+
+\hypertarget{appendix-b9db93e28371-source-coverage}{}
+
+Supplied lesson parts: 999--1000.
+
+\subsection{Future keywords}\label{appendix-b9db93e28371-future-keywords}
+
+\hypertarget{appendix-b9db93e28371-future-keywords}{}
+
+paired trials, random seeds, uncertainty reporting

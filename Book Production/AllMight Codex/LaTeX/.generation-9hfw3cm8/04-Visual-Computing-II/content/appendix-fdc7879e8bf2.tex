@@ -1,0 +1,46 @@
+\hypertarget{appendix-fdc7879e8bf2}{}
+\section{Quantization and compressed weights}\label{appendix-fdc7879e8bf2-quantization-and-compressed-weights}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C006
+
+\subsection{Definition and mechanism}\label{appendix-fdc7879e8bf2-definition-and-mechanism}
+
+Low-precision values and packed model weights reuse field-width, mask, shift, and bandwidth trade-offs.
+
+Quantization maps a larger numeric domain to a smaller discrete set, usually with information loss. Packing stores those discrete codes compactly; dequantization reconstructs approximations. Bit packing alone is lossless for valid codes, whereas quantization changes represented precision.
+
+M006 develops affine scales and zero points, local group calibration, offset-coded INT4, one-bit row centroids, metadata overhead and error metrics. Packing preserves discrete codes; quantization deliberately loses information. See the worked five-value group in the continuous story.
+
+\subsection{Prerequisites}\label{appendix-fdc7879e8bf2-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-1f9963e1a5d1}{Bit packing (01-Foundations-I, appendix-1f9963e1a5d1)} --- Packing places several constrained values into a carrier.
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-2ed044358b82}{Arithmetic policies (01-Foundations-I, appendix-2ed044358b82)} --- A policy states the intended response to an unrepresentable answer: wrap modulo a base, report checked failure, widen storage, clamp to an endpoint, or grow arbitrary precision.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-fdc7879e8bf2-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-4ccd7a775813}{One-bit centroid quantization (01-Foundations-I, appendix-4ccd7a775813)} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-537171d69d27}{Quantization error metrics (01-Foundations-I, appendix-537171d69d27)} --- uses this mechanism to define its representation, error or validation contract.
+\end{itemize}
+
+Connect later chunks here when they use this concept.
+
+\subsection{Recall and next depth}\label{appendix-fdc7879e8bf2-recall-and-next-depth}
+
+Explain quantization and compressed weights without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} task-level accuracy and throughput experiments, alternative calibration objectives and target kernels; these were not measured in the teaching merge.
+
+\subsection{Source and navigation}\label{appendix-fdc7879e8bf2-source-and-navigation}
+
+\href{../01-Foundations-I/main.pdf\#nameddest=01-foundations-i-ch001-choosing-what-information-to-keep}{Narrative development (01-Foundations-I, 01-foundations-i-ch001-choosing-what-information-to-keep)}
+
+\href{../01-Foundations-I/main.pdf\#nameddest=01-foundations-i-ch001-from-a-signal-to-an-interpretation}{C001 teaching chapter (01-Foundations-I, 01-foundations-i-ch001-from-a-signal-to-an-interpretation)} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (01-Foundations-I, appendix-fd090d982a15)} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

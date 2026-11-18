@@ -1,0 +1,29 @@
+\hypertarget{appendix-0234ab7f86b1}{}
+\section{Subdivision surface masks}\label{appendix-0234ab7f86b1-subdivision-surface-masks}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-0234ab7f86b1-definition-and-mechanism}
+
+Subdivision refines a control mesh and updates old and newly inserted vertices with local masks, producing a sequence that approaches a smooth limit surface. Loop subdivision targets triangle meshes: for an interior edge with endpoints \(a,b\) and opposite vertices \(c,d\), its new point is \(3(a+b)/8+(c+d)/8\). An old vertex of degree \(n\) becomes \((1-n\beta)S+\beta\sum_iP_i\), with the lecture's simple weight \(\beta=3/16\) for \(n=3\) and \(3/(8n)\) otherwise. Catmull--Clark targets polygon meshes: face points are face-vertex averages, interior edge points average endpoints and two adjacent face points, and old vertices use face-average, edge-midpoint-average, and original-position terms. Boundary rules differ from interior masks and must be stated. Extraordinary vertices have nonregular valence and need deliberate treatment.
+
+\subsection{Prerequisites}\label{appendix-0234ab7f86b1-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-1aea26b2307f}{Half-edge mesh connectivity (03-Visual-Computing-I, appendix-1aea26b2307f)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-0026ec42c9d5}{Convex combinations and convex hulls (02-Foundations-II, appendix-0026ec42c9d5)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-0234ab7f86b1-used-by}
+
+\begin{itemize}
+\item
+  {Worlds, Images and Inference {[}referenced source unavailable{]}}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-7107009c505b}{Local rigidity and mesh orientation fields (03-Visual-Computing-I, appendix-7107009c505b)} \#\# Full teaching explanation
+\end{itemize}
+
+\href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing}{Meshes, connectivity, and geometry processing (03-Visual-Computing-I, 03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing)} · \hyperref[04-visual-computing-ii-ch032-surface-descriptions-and-gaussian-images]{Surface descriptions and Gaussian images}

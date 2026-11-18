@@ -1,0 +1,16 @@
+\documentclass[11pt,twoside,openany]{book}
+\usepackage[print]{allmight-book}
+\pagestyle{plain}
+\begin{document}
+\section*{Compact linear flow: one row}
+The canonical nodes and arrow order are preserved. This is the compact LR rendering under the print panel's width and height caps.
+\begin{center}\BookDiagramPanel{../Assets/Diagrams/Print-v1/9d2bde15579064d764bf59cc-lr.pdf}\end{center}
+\newpage
+\section*{Compact linear flow: two-row presentation}
+The same six node IDs, five directed edges, and label text are laid out across two rows. The path enters the second row at the right and continues back toward the left.
+\begin{center}\BookDiagramPanel{../Assets/Diagrams/Print-v1/9d2bde15579064d764bf59cc-lr-wrap2.pdf}\end{center}
+\newpage
+\section*{Seven-node pipeline: four plus three}
+This presentation-only SVG reflow keeps the source node IDs, directed edge IDs, label text, and arrow adjacency. The first row contains four nodes; the second row continues from right to left.
+\begin{center}\BookDiagramPanel{../Assets/Diagrams/Print-v1/d21d21b04281361cfda13e69-lr-wrap2.pdf}\end{center}
+\end{document}

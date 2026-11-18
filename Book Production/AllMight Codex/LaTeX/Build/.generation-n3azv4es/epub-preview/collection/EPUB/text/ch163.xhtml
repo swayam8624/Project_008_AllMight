@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch163.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-c3480f7d9ff3-dynamic-allocation-and-heap" class="level2">
+<h2>Dynamic allocation and heap</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C003 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-c3480f7d9ff3-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>An allocator manages variable-lifetime blocks from larger memory regions; new/free-store usage is commonly called heap allocation. An allocated object’s later latency depends on locality, not the heap label. Vector metadata may be automatic/static while its element buffer is separately dynamic. Over-aligned types need suitable allocation support.</p>
+</section>
+<section id="appendix-c3480f7d9ff3-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch127.xhtml#appendix-0b104bcba06b-storage-duration-and-object-lifetime" class="wikilink">Storage duration and object lifetime</a> — Access requires an object and backing storage that are still valid.</li>
+<li><a href="ch156.xhtml#appendix-a1f7c53b4742-alignment-and-padding" class="wikilink">Alignment and padding</a> — Address divisibility determines legal placement and layout holes.</li>
+</ul>
+</section>
+<section id="appendix-c3480f7d9ff3-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch157.xhtml#appendix-a7c50686d81f-allocator-fragmentation" class="wikilink">Allocator fragmentation</a> — uses this mechanism as stated in its prerequisites.</li>
+<li><a href="ch167.xhtml#appendix-d52e4486f527-ownership-and-non-owning-views" class="wikilink">Ownership and non-owning views</a> — uses this mechanism as stated in its prerequisites.</li>
+</ul>
+</section>
+<section id="appendix-c3480f7d9ff3-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Separate allocation work, element buffer location, and access cost.</p>
+<p><strong>Pending:</strong> Arenas, slabs, size classes, synchronization and resource allocators.</p>
+</section>
+<section id="appendix-c3480f7d9ff3-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,1985 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch399.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_06-engine-ii-ch031-spatial-index-serialization-and-query-evidence" class="level2">
+<h2>Spatial-index serialization and query evidence</h2>
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch398.xhtml#id_06-engine-ii-ch029-dynamic-spatial-indices-for-moving-worlds" class="wikilink">Previous chapter</a> · <a href="ch400.xhtml#id_06-engine-ii-ch033-versioned-scenes-and-transactional-loading" class="wikilink">Next chapter</a></p>
+<p>A spatial index must be saved, inspected, and compared against a reference query before its performance claims are useful. This chapter joins serialization, visualization, benchmarking, and structure choice around one query contract.</p>
+<p><strong>By the end:</strong> Define a reproducible spatial-query workload and compare candidate structures for correctness, update cost, and query quality.</p>
+<p><strong>Recall question:</strong> What reference result validates the index, and what measurements separate serialization, update, and query costs?</p>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 77571–79405; source-span SHA256 d47bec240cb50e8b811461d0159c27b4dcf12c862428c365d2c1d9b3bc2bd99a. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_06-engine-ii-ch031-serialization-visualization-benchmarking-structure-selection-unified-query-design" class="level4">
+<h4>SERIALIZATION, VISUALIZATION, BENCHMARKING, STRUCTURE SELECTION, UNIFIED QUERY DESIGN</h4>
+<p>Parts 1396–1400 are only five atomic topics, but they are arguably the most important engineering topics of the entire spatial phase because they turn algorithms into an engine subsystem.</p>
+<hr />
+<p><strong>Spatial-index serialization</strong></p>
+<p>Suppose building a large SAH BVH takes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>10</mn>
+  <mtext> seconds</mtext>
+  <mo>.</mo>
+</math>
+<p>If geometry is static, rebuilding it every launch is wasteful.</p>
+<p>We can serialize the built acceleration structure.</p>
+<p>But “write the struct bytes to disk” is not a serialization system.</p>
+<p>A valid format must define:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>schema</mtext>
+          <mo>+</mo>
+          <mtext>version</mtext>
+          <mo>+</mo>
+          <mtext>endianness</mtext>
+          <mo>+</mo>
+          <mtext>numeric representation</mtext>
+          <mo>+</mo>
+          <mtext>offset semantics</mtext>
+          <mo>+</mo>
+          <mtext>validation</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Never serialize raw pointers</strong></p>
+<p>Suppose a node contains:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>Node<span class="op">*</span> left<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>Node<span class="op">*</span> right<span class="op">;</span></span></code></pre></div>
+<p>Those addresses are meaningful only inside one process execution.</p>
+<p>After loading tomorrow:</p>
+<pre class="text"><code>0x7ff8a203...</code></pre>
+<p>may belong to something entirely different.</p>
+<p>Therefore serialization should use:</p>
+<pre class="text"><code>indices
+offsets
+IDs</code></pre>
+<p>rather than process addresses.</p>
+<p>Your flat BVH already uses:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>SpatialIndex Left<span class="op">;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>SpatialIndex Right<span class="op">;</span></span></code></pre></div>
+<p>which is serialization-friendly.</p>
+<p>The pointer-based octree is less directly serializable because its <code>unique_ptr&lt;Node&gt;</code> relationships need flattening or reconstruction.</p>
+<hr />
+<p><strong>Serialize source or derived structure?</strong></p>
+<p>There are two valid strategies.</p>
+</section>
+<section id="id_06-engine-ii-ch031-strategy-a-serialize-primitives-and-rebuild" class="level4">
+<h4>Strategy A — serialize primitives and rebuild</h4>
+<p>Store:</p>
+<pre class="text"><code>primitive bounds
+IDs
+settings</code></pre>
+<p>Then rebuild BVH/tree during load.</p>
+<p>Advantages include portability and resilience to node-layout changes.</p>
+<p>Disadvantage is rebuild cost.</p>
+</section>
+<section id="id_06-engine-ii-ch031-strategy-b-serialize-built-structure" class="level4">
+<h4>Strategy B — serialize built structure</h4>
+<p>Store:</p>
+<pre class="text"><code>nodes
+primitive order
+build settings
+metadata</code></pre>
+<p>Then load directly.</p>
+<p>Load becomes extremely fast.</p>
+<p>But format becomes more tightly coupled to implementation.</p>
+<p>A production asset pipeline often does both conceptually:</p>
+<pre class="text"><code>source asset
+   ↓
+offline cooking
+   ↓
+platform-specific cooked acceleration structure</code></pre>
+<p>The runtime only loads cooked data.</p>
+<hr />
+<p><strong>A robust BVH file header</strong></p>
+<p>A useful format might begin:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> SpatialFileHeader</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t magic<span class="op">;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint16_t versionMajor<span class="op">;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint16_t versionMinor<span class="op">;</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t endianTag<span class="op">;</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t nodeCount<span class="op">;</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t primitiveCount<span class="op">;</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t nodeStride<span class="op">;</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t primitiveStride<span class="op">;</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint64_t sourceHash<span class="op">;</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint64_t settingsHash<span class="op">;</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Why store source/settings hash?</p>
+<p>Suppose geometry changed but old BVH cache still exists.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≠</mo>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>H</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mo>,</mo>
+</math>
+<p>the cached tree is stale.</p>
+<p>Likewise changing:</p>
+<pre class="text"><code>MaxLeafSize
+SAH settings
+quantization policy</code></pre>
+<p>should invalidate cooked data.</p>
+<hr />
+<p><strong>Versioning</strong></p>
+<p>Suppose version 1 node is:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>Bounds</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>Left</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>Right</span></code></pre></div>
+<p>and version 2 adds:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>Parent</span></code></pre></div>
+<p>Blindly loading v1 bytes into v2 structs is dangerous.</p>
+<p>Instead:</p>
+<pre class="text"><code>magic
+version
+schema</code></pre>
+<p>controls migration.</p>
+<p>A runtime asset loader might support only current cooked version:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>header<span class="op">.</span>version <span class="op">!=</span> CurrentVersion<span class="op">)</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> RebuildRequired<span class="op">;</span></span></code></pre></div>
+<p>An editor tool can support conversion.</p>
+<p>Separating <strong>runtime simplicity</strong> from <strong>authoring compatibility</strong> is often the right design.</p>
+<hr />
+<p><strong>Endianness and alignment</strong></p>
+<p>Suppose file was cooked on little-endian x86 and loaded on another architecture.</p>
+<p>Integer byte representation may differ.</p>
+<p>Likewise in-memory C++ struct padding is not a stable storage contract.</p>
+<p>Never assume:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">sizeof</span><span class="op">(</span>MyNode<span class="op">)</span></span></code></pre></div>
+<p>defines a universal file format.</p>
+<p>Either serialize each field explicitly or define a strictly packed/versioned binary layout.</p>
+<p>A file format is a data protocol, not a memory dump.</p>
+<hr />
+<p><strong>What should be serialized for each Kairo structure?</strong></p>
+<p>A static BVH is a strong candidate for direct serialization:</p>
+<pre class="text"><code>nodes
+primitives
+primitive order
+settings
+stats optional</code></pre>
+<p>A dynamic AABB tree usually does <strong>not</strong> need to preserve transient topology. Often it is better to serialize object bounds/IDs and rebuild because fat bounds, balance state and free-list fragmentation are runtime concerns.</p>
+<p>A spatial hash can serialize input object bounds but reconstruct hash buckets quickly.</p>
+<p>A KD-tree for static point clouds can be worth serializing directly.</p>
+<p>A navmesh is an excellent serialized asset:</p>
+<pre class="text"><code>polygons
+vertices
+area types/costs
+adjacency
+portals
+tile metadata</code></pre>
+<p>because navmesh generation can be expensive.</p>
+<hr />
+<p><strong>Spatial visualization</strong></p>
+<p>Spatial structures are almost impossible to debug from logs alone.</p>
+<p>Imagine this report:</p>
+<pre class="text"><code>VisitedNodes = 947</code></pre>
+<p>Is 947 good?</p>
+<p>Without seeing the tree and query, you cannot tell.</p>
+<p>Visual debugging lets you inspect structure.</p>
+<p>For BVH:</p>
+<pre class="text"><code>depth
+bounds
+leaf occupancy
+traversal path
+candidate primitives</code></pre>
+<p>For dynamic trees:</p>
+<pre class="text"><code>tight bounds
+fat bounds
+height
+rotations
+area ratio</code></pre>
+<p>For spatial hashes:</p>
+<pre class="text"><code>occupied cells
+bucket occupancy
+object duplication</code></pre>
+<p>For navigation:</p>
+<pre class="text"><code>graph nodes
+edges
+open/closed sets
+g/h/f
+corridor
+portals
+funnel
+waypoints</code></pre>
+<hr />
+<p><strong>Your current visualization stack</strong></p>
+<p><code>SpatialDebug.cppm</code> exposes lightweight debug geometry:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>DebugLine</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>DebugBox</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>DebugSphere</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>SpatialDebugDrawList</span></code></pre></div>
+<p>and extraction helpers for:</p>
+<pre class="text"><code>BVH boxes
+dynamic-tree bounds
+octree cells
+ray lines</code></pre>
+<p>Separately, <code>SpatialVisualizer.cpp</code> produces a much richer generated HTML/SVG debugger.</p>
+<p>The repository README says the visualizer currently displays:</p>
+<pre class="text"><code>BVH hierarchy/AABB queries
+BVH ray traversal
+dynamic-tree broadphase stats
+spatial-hash grid/radius queries
+KDTree nearest neighbors
+NavigationGraph + A* paths</code></pre>
+<p>So Kairo already has a genuinely useful spatial debugging surface.</p>
+<hr />
+<p><strong>A small current debug-data mismatch</strong></p>
+<p><code>ExtractBVHBoxes()</code> currently assigns:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>Depth <span class="op">=</span> <span class="dv">0</span></span></code></pre></div>
+<p>to every BVH node.</p>
+<p>So although the field is named <code>Depth</code>, static BVH extraction does not compute actual tree depth.</p>
+<p>For dynamic tree extraction it writes:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>Depth <span class="op">=</span> node<span class="op">.</span>Height<span class="op">;</span></span></code></pre></div>
+<p>but height means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>distance from node to deepest descendant</mtext>
+</math>
+<p>not:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>distance from root to node</mtext>
+  <mo>.</mo>
+</math>
+<p>So the same field currently means two different things, and one of them is always zero.</p>
+<p>A better debug record would separate:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="dt">uint32_t</span> DepthFromRoot<span class="op">;</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="dt">uint32_t</span> SubtreeHeight<span class="op">;</span></span></code></pre></div>
+<p>These are different diagnostic quantities.</p>
+<hr />
+<p><strong>Visualizing A</strong>*</p>
+<p>One of the best A* debuggers shows search evolution frame by frame.</p>
+<p>For every node:</p>
+<pre class="text"><code>white  = unseen
+blue   = open
+gray   = closed
+green  = final path
+red    = blocked</code></pre>
+<p>Then label:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>h</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>f</mi>
+  <mo>.</mo>
+</math>
+<p>For node N:</p>
+<pre class="text"><code>N
+g=12
+h=7
+f=19</code></pre>
+<p>Watching expansion immediately reveals heuristic behavior.</p>
+<p>If A* expands almost every node:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+</math>
+<p>is weak or zero.</p>
+<p>If it rushes toward goal and returns a wrong route:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+</math>
+<p>may be inadmissible or closed-set logic wrong.</p>
+<p>Visualization converts mathematical properties into visible behavior.</p>
+<hr />
+<p><strong>Visualizing a navmesh path</strong></p>
+<p>A useful navmesh debugger should display four layers simultaneously:</p>
+<pre class="text"><code>all polygons
+    ↓
+selected A* corridor
+    ↓
+left/right portal edges
+    ↓
+funnel waypoints</code></pre>
+<p>Then if the path zig-zags, you can identify whether the bug lies in:</p>
+<pre class="text"><code>A* corridor
+portal orientation
+funnel logic
+steering</code></pre>
+<p>without guessing.</p>
+<p>This separation is especially important because a poor final route is not necessarily an A* bug.</p>
+<hr />
+<p><strong>Benchmarking build time versus query time</strong></p>
+<p>This is one of the most important equations in the spatial phase.</p>
+<p>Suppose structure <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math> costs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mi>S</mi>
+  </msub>
+</math>
+<p>to build/update, and average query cost is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>Q</mi>
+    <mi>S</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Suppose it will receive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>q</mi>
+  </msub>
+</math>
+<p>queries before the next rebuild.</p>
+<p>Total cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>T</mi>
+            <mi>S</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>B</mi>
+            <mi>S</mi>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>N</mi>
+            <mi>q</mi>
+          </msub>
+          <msub>
+            <mi>Q</mi>
+            <mi>S</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This explains why “fastest query” is not the same as “best data structure.”</p>
+<hr />
+<p><strong>The crossover point</strong></p>
+<p>Suppose structure A:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>100</mn>
+  <mi>m</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>Q</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0.01</mn>
+  <mi>m</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Structure B:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>5</mn>
+  <mi>m</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>Q</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0.05</mn>
+  <mi>m</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Set total costs equal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>100</mn>
+  <mo>+</mo>
+  <mn>0.01</mn>
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>5</mn>
+  <mo>+</mo>
+  <mn>0.05</mn>
+  <mi>N</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>95</mn>
+  <mo>=</mo>
+  <mn>0.04</mn>
+  <mi>N</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>N</mi>
+          <mo>=</mo>
+          <mn>2375.</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If fewer than about 2375 queries occur before rebuild, B is faster overall.</p>
+<p>If many more occur, A amortizes its expensive build and wins.</p>
+<p>That is exactly why high-quality SAH BVHs dominate static ray tracing while fast Morton/refit methods are attractive for dynamic geometry.</p>
+<hr />
+<p><strong>End-to-end cost includes candidate quality</strong></p>
+<p>For collision broadphase:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>update</mtext>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>broadphase</mtext>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>N</mi>
+    <mi>c</mi>
+  </msub>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>narrowphase</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>candidate pair count</mtext>
+  <mo>.</mo>
+</math>
+<p>Suppose spatial hash query itself is 2× faster than dynamic tree but returns 10× more false-positive candidates.</p>
+<p>The total physics frame may be slower.</p>
+<p>Therefore benchmark:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>whole pipeline, not just index lookup</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The same applies to rendering.</p>
+<p>A culling structure that costs little but returns nearly every object saves almost nothing downstream.</p>
+<hr />
+<p><strong>What a credible benchmark must control</strong></p>
+<p>Use identical input data and query sets across structures.</p>
+<p>Correctness must first be checked against a brute-force oracle.</p>
+<p>Then record at minimum:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>build/update time</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>query latency</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>candidate count</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>visited nodes/cells</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>memory use</mtext>
+  <mo>.</mo>
+</math>
+<p>Average alone is not enough.</p>
+<p>Record:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mn>50</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>p</mi>
+  <mn>95</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>p</mi>
+  <mn>99</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>Games care about frame spikes.</p>
+<p>A 0.1 ms average with an occasional 20 ms query may be worse than a consistent 0.5 ms algorithm.</p>
+<hr />
+<p><strong>Benchmark distributions, not one toy scene</strong></p>
+<p>Spatial structures are workload-sensitive.</p>
+<p>Benchmark at least several distributions.</p>
+<p>A uniform grid favors different structures from a highly clustered scene.</p>
+<p>A line/corridor stresses axis choice.</p>
+<p>Concentric/overlapping objects stress hierarchy pruning.</p>
+<p>Huge scale variation stresses grids.</p>
+<p>High churn stresses dynamic update policies.</p>
+<p>Mostly-static scenes favor expensive preprocessing.</p>
+<p>A research result claiming:</p>
+<blockquote>
+<p>“spatial hash is fastest”</p>
+</blockquote>
+<p>without specifying spatial distribution, object sizes, motion, query shape and density is almost meaningless.</p>
+<hr />
+<p><strong>Warm caches and cold caches</strong></p>
+<p>Running the same query one million times measures a heavily warmed cache.</p>
+<p>Real workloads may query different regions.</p>
+<p>Therefore separate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>warm-cache throughput</mtext>
+</math>
+<p>from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>cold/random access</mtext>
+  <mo>.</mo>
+</math>
+<p>Likewise distinguish:</p>
+<pre class="text"><code>build once
+query repeatedly</code></pre>
+<p>from:</p>
+<pre class="text"><code>update
+query
+update
+query</code></pre>
+<p>because dynamic structures interact strongly with cache state and allocator behavior.</p>
+<hr />
+<p><strong>Current Kairo benchmark status</strong></p>
+<p><code>BVHBuildStats</code> already records:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>BuildMilliseconds</span></code></pre></div>
+<p>and traversal results record:</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>VisitedNodes</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>TestedPrimitives</span></code></pre></div>
+<p>Dynamic tree exposes:</p>
+<pre class="text"><code>Height
+MaxBalance
+AreaRatio</code></pre>
+<p>These are excellent instrumentation primitives.</p>
+<p>But there is currently no dedicated benchmark suite comparing:</p>
+<pre class="text"><code>BVH median
+BVH SAH
+Morton path
+dynamic tree
+SAP
+spatial hash
+octree
+brute force</code></pre>
+<p>under controlled workloads.</p>
+<p>That is the major missing piece for Part 1398.</p>
+<hr />
+<p><strong>Choosing a spatial data structure by workload</strong></p>
+<p>There is no “best spatial structure.”</p>
+<p>The relevant variables are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+</math>
+<p>object count,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+</math>
+<p>update rate,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Q</mi>
+</math>
+<p>query rate,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+</math>
+<p>spatial density,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+</math>
+<p>object-scale variance,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+</math>
+<p>temporal coherence,</p>
+<p>and query type.</p>
+<p>A useful decision table is:</p>
+<table>
+<thead>
+<tr>
+<th>Workload</th>
+<th>Strong default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Static triangles + many rays</td>
+<td>SAH BVH / wide BVH</td>
+</tr>
+<tr>
+<td>Frequently rebuilt ray geometry</td>
+<td>LBVH/Morton + refit/hybrid</td>
+</tr>
+<tr>
+<td>Arbitrary moving rigid objects</td>
+<td>Dynamic AABB tree</td>
+</tr>
+<tr>
+<td>Coherent moving AABBs</td>
+<td>Sweep-and-prune</td>
+</tr>
+<tr>
+<td>Many similar-size local objects</td>
+<td>Spatial hash/uniform grid</td>
+</tr>
+<tr>
+<td>Sparse multiscale world</td>
+<td>Loose octree</td>
+</tr>
+<tr>
+<td>2D spatial partition</td>
+<td>Quadtree</td>
+</tr>
+<tr>
+<td>Static point nearest-neighbor</td>
+<td>KD-tree</td>
+</tr>
+<tr>
+<td>Character navigation over surfaces</td>
+<td>Navmesh</td>
+</tr>
+<tr>
+<td>Huge regular navigation grid</td>
+<td>Hierarchical grid/HPA*</td>
+</tr>
+<tr>
+<td>Indoor visibility</td>
+<td>Cells/portals/PVS</td>
+</tr>
+<tr>
+<td>Dynamic rendered occlusion</td>
+<td>HZB</td>
+</tr>
+</tbody>
+</table>
+<p>This table is not law. It is the first hypothesis you benchmark.</p>
+<hr />
+<p><strong>Update/query ratio is often the deciding factor</strong></p>
+<p>Suppose geometry changes every frame.</p>
+<p>A high-quality static SAH build may be unacceptable.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>SAH</mtext>
+    </mrow>
+  </msub>
+  <mo>≫</mo>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>fast</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>and only a handful of queries occur before the next update, fast update wins even if each query is slower.</p>
+<p>Conversely static collision mesh:</p>
+<pre class="text"><code>build once
+query millions of times</code></pre>
+<p>strongly favors expensive preprocessing.</p>
+<p>So always ask:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>How many queries will amortize one update?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This question is more useful than asking:</p>
+<blockquote>
+<p>Which tree is faster?</p>
+</blockquote>
+<hr />
+<p><strong>Query shape also matters</strong></p>
+<p>A structure optimized for point-neighbor queries may not be ideal for ray traversal.</p>
+<p>KD-tree:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>excellent nearest-point pruning</mtext>
+  <mo>.</mo>
+</math>
+<p>BVH:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>excellent bounded-primitive ray traversal</mtext>
+  <mo>.</mo>
+</math>
+<p>Hash:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>excellent local radius/neighborhood enumeration under suitable scale</mtext>
+  <mo>.</mo>
+</math>
+<p>Portal/PVS:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>excellent whole-region visibility rejection</mtext>
+  <mo>.</mo>
+</math>
+<p>The word <strong>spatial query</strong> hides many very different computational problems.</p>
+<hr />
+<p><strong>Data distribution matters</strong></p>
+<p>Suppose spatial hash cell size is 1 m.</p>
+<p>If every object is ~0.5 m, excellent.</p>
+<p>If one object is 10 km wide, it may occupy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>12</mn>
+    </mrow>
+  </msup>
+</math>
+<p>1 m³ cells in 3D conceptually.</p>
+<p>Completely unusable.</p>
+<p>A dynamic tree handles scale variation much better.</p>
+<p>Likewise SAP works well if intervals remain locally ordered, but a chaotic teleport-heavy scene destroys temporal coherence.</p>
+<p>Thus structure selection is fundamentally empirical.</p>
+<hr />
+<p><strong>Designing one spatial-query interface</strong></p>
+<p>Now we reach the final atom of the entire spatial phase.</p>
+<p>Kairo currently says it wants one consistent spatial-query language.</p>
+<p>This is the correct goal.</p>
+<p>But a dangerous design is:</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ISpatialIndex</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> QueryAABB<span class="op">(...)=</span><span class="dv">0</span><span class="op">;</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> QuerySphere<span class="op">(...)=</span><span class="dv">0</span><span class="op">;</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> Raycast<span class="op">(...)=</span><span class="dv">0</span><span class="op">;</span></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> Nearest<span class="op">(...)=</span><span class="dv">0</span><span class="op">;</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> FindPath<span class="op">(...)=</span><span class="dv">0</span><span class="op">;</span></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Why dangerous?</p>
+<p>Because not every backend meaningfully supports every operation.</p>
+<p>A navigation graph cannot naturally answer arbitrary ray-triangle intersection.</p>
+<p>A BVH does not inherently know how to find an AI path.</p>
+<p>A hash grid may support ray traversal only poorly.</p>
+<p>Forcing every structure into every method produces fake or inefficient implementations.</p>
+<hr />
+<p><strong>Separate query semantics from backend</strong></p>
+<p>The better idea is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>one query vocabulary</mtext>
+          <mo>+</mo>
+          <mtext>explicit capabilities</mtext>
+          <mo>+</mo>
+          <mtext>multiple backends</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Shared geometric queries might be:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> AABBQuery<span class="op">;</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> SphereQuery<span class="op">;</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> RayQuery<span class="op">;</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> PointQuery<span class="op">;</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> NearestQuery<span class="op">;</span></span></code></pre></div>
+<p>Navigation:</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> PathQuery<span class="op">;</span></span></code></pre></div>
+<p>Then each backend advertises capabilities.</p>
+<p>For example:</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> <span class="kw">class</span> SpatialCapability <span class="op">:</span> <span class="bu">std::</span>uint32_t</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>    AABB    <span class="op">=</span> <span class="dv">1</span><span class="bu">u</span> <span class="op">&lt;&lt;</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>    Sphere  <span class="op">=</span> <span class="dv">1</span><span class="bu">u</span> <span class="op">&lt;&lt;</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>    Ray     <span class="op">=</span> <span class="dv">1</span><span class="bu">u</span> <span class="op">&lt;&lt;</span> <span class="dv">2</span><span class="op">,</span></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>    Point   <span class="op">=</span> <span class="dv">1</span><span class="bu">u</span> <span class="op">&lt;&lt;</span> <span class="dv">3</span><span class="op">,</span></span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>    Nearest <span class="op">=</span> <span class="dv">1</span><span class="bu">u</span> <span class="op">&lt;&lt;</span> <span class="dv">4</span><span class="op">,</span></span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>    Path    <span class="op">=</span> <span class="dv">1</span><span class="bu">u</span> <span class="op">&lt;&lt;</span> <span class="dv">5</span></span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>A BVH might expose:</p>
+<pre class="text"><code>AABB
+Sphere
+Ray
+Point</code></pre>
+<p>KD-tree:</p>
+<pre class="text"><code>Nearest
+Radius</code></pre>
+<p>Navigation:</p>
+<pre class="text"><code>Path</code></pre>
+<p>This is honest architecture.</p>
+<hr />
+<p><strong>Candidate semantics must also be explicit</strong></p>
+<p>Suppose dynamic tree returns collider 42 because its AABB intersects a ray.</p>
+<p>Does that mean:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>ray hit collider 42 exactly</mtext>
+  <mo>?</mo>
+</math>
+<p>No.</p>
+<p>It means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>ray hit collider 42&#39;s broadphase bound</mtext>
+  <mo>.</mo>
+</math>
+<p>A unified interface must distinguish:</p>
+<pre class="text"><code>candidate query
+exact geometry query</code></pre>
+<p>Otherwise consumers will eventually treat broadphase results as exact hits.</p>
+<p>Possible naming:</p>
+<div class="sourceCode" id="cb47"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>QueryCandidates<span class="op">(...)</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>RaycastBounds<span class="op">(...)</span></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>RaycastExact<span class="op">(...)</span></span></code></pre></div>
+<p>or attach result quality:</p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> <span class="kw">class</span> SpatialResultKind</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>    ConservativeCandidate<span class="op">,</span></span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>    Exact</span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Semantics matter more than naming.</p>
+<hr />
+<p><strong>Any-hit, closest-hit and all-hit are separate contracts</strong></p>
+<p>Do not expose one ambiguous <code>Raycast()</code> and assume everyone knows what it does.</p>
+<p>There are at least three distinct operations:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>AnyHit</mtext>
+</math>
+<p>returns as soon as one valid hit exists.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>ClosestHit</mtext>
+</math>
+<p>returns minimum:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>AllHits</mtext>
+</math>
+<p>returns all acceptable intersections, usually sorted.</p>
+<p>Those have different optimal traversal strategies.</p>
+<p>The interface should express the semantic intent so the backend can optimize appropriately.</p>
+<hr />
+<p><strong>A capability-oriented C++ design</strong></p>
+<p>One practical architecture is compile-time concepts for engine-internal code.</p>
+<div class="sourceCode" id="cb49"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">class</span> T<span class="op">&gt;</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="kw">concept</span> AABBQueryable <span class="op">=</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">requires</span><span class="op">(</span></span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> T<span class="op">&amp;</span> index<span class="op">,</span></span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> SpatialAABB<span class="op">&amp;</span> bounds<span class="op">,</span></span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>        SpatialLayerMask mask<span class="op">)</span></span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>        index<span class="op">.</span>QueryAABB<span class="op">(</span>bounds<span class="op">,</span> mask<span class="op">)</span></span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="op">-&gt;</span> <span class="bu">std::</span>same_as<span class="op">&lt;</span>SpatialOverlapResult<span class="op">&gt;;</span></span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">class</span> T<span class="op">&gt;</span></span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a><span class="kw">concept</span> RayQueryable <span class="op">=</span></span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">requires</span><span class="op">(</span></span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> T<span class="op">&amp;</span> index<span class="op">,</span></span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> SpatialRay<span class="op">&amp;</span> ray<span class="op">,</span></span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>        <span class="dt">float</span> maxDistance<span class="op">,</span></span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a>        SpatialLayerMask mask<span class="op">)</span></span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a>        index<span class="op">.</span>QueryRay<span class="op">(</span></span>
+<span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a>            ray<span class="op">,</span></span>
+<span id="cb49-24"><a href="#cb49-24" aria-hidden="true" tabindex="-1"></a>            maxDistance<span class="op">,</span></span>
+<span id="cb49-25"><a href="#cb49-25" aria-hidden="true" tabindex="-1"></a>            mask<span class="op">)</span></span>
+<span id="cb49-26"><a href="#cb49-26" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb49-27"><a href="#cb49-27" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then algorithms can require only what they use.</p>
+<p>No giant universal base class is necessary.</p>
+<hr />
+<p><strong>Runtime backend selection</strong></p>
+<p>If backend must be selected dynamically, type erasure or <code>std::variant</code> works.</p>
+<p>For example:</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> SpatialBackend <span class="op">=</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>variant<span class="op">&lt;</span></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>        StaticBVHIndex<span class="op">,</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>        DynamicTreeIndex<span class="op">,</span></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>        HashGridIndex<span class="op">,</span></span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>        OctreeIndex</span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;;</span></span></code></pre></div>
+<p>Then:</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>SpatialOverlapResult QueryAABB<span class="op">(</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> SpatialBackend<span class="op">&amp;</span> backend<span class="op">,</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> SpatialAABB<span class="op">&amp;</span> query<span class="op">,</span></span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>    SpatialLayerMask mask<span class="op">)</span></span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">std::</span>visit<span class="op">(</span></span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">[&amp;](</span><span class="at">const</span> <span class="kw">auto</span><span class="op">&amp;</span> index<span class="op">)</span></span>
+<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a>            <span class="op">-&gt;</span> SpatialOverlapResult</span>
+<span id="cb51-9"><a href="#cb51-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb51-10"><a href="#cb51-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="kw">constexpr</span> <span class="op">(</span></span>
+<span id="cb51-11"><a href="#cb51-11" aria-hidden="true" tabindex="-1"></a>                <span class="kw">requires</span> <span class="op">{</span></span>
+<span id="cb51-12"><a href="#cb51-12" aria-hidden="true" tabindex="-1"></a>                    index<span class="op">.</span>QueryAABB<span class="op">(</span></span>
+<span id="cb51-13"><a href="#cb51-13" aria-hidden="true" tabindex="-1"></a>                        query<span class="op">,</span></span>
+<span id="cb51-14"><a href="#cb51-14" aria-hidden="true" tabindex="-1"></a>                        mask<span class="op">);</span></span>
+<span id="cb51-15"><a href="#cb51-15" aria-hidden="true" tabindex="-1"></a>                <span class="op">})</span></span>
+<span id="cb51-16"><a href="#cb51-16" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb51-17"><a href="#cb51-17" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> index<span class="op">.</span>QueryAABB<span class="op">(</span></span>
+<span id="cb51-18"><a href="#cb51-18" aria-hidden="true" tabindex="-1"></a>                    query<span class="op">,</span></span>
+<span id="cb51-19"><a href="#cb51-19" aria-hidden="true" tabindex="-1"></a>                    mask<span class="op">);</span></span>
+<span id="cb51-20"><a href="#cb51-20" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb51-21"><a href="#cb51-21" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span></span>
+<span id="cb51-22"><a href="#cb51-22" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb51-23"><a href="#cb51-23" aria-hidden="true" tabindex="-1"></a>                <span class="cf">throw</span> UnsupportedQuery<span class="op">{};</span></span>
+<span id="cb51-24"><a href="#cb51-24" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb51-25"><a href="#cb51-25" aria-hidden="true" tabindex="-1"></a>        <span class="op">},</span></span>
+<span id="cb51-26"><a href="#cb51-26" aria-hidden="true" tabindex="-1"></a>        backend<span class="op">);</span></span>
+<span id="cb51-27"><a href="#cb51-27" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>That gives one runtime object while retaining backend-specific capabilities.</p>
+<hr />
+<p><strong>But navigation should probably remain a separate domain service</strong></p>
+<p>A path query is conceptually different from geometric overlap.</p>
+<p>It contains:</p>
+<pre class="text"><code>start
+goal
+agent properties
+cost filters
+obstacle policy</code></pre>
+<p>rather than:</p>
+<pre class="text"><code>shape
+bounds
+layer mask</code></pre>
+<p>So I would not force:</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>FindPath<span class="op">()</span></span></code></pre></div>
+<p>into the same low-level interface as:</p>
+<div class="sourceCode" id="cb55"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>QueryAABB<span class="op">().</span></span></code></pre></div>
+<p>Instead use a higher-level facade:</p>
+<pre class="text"><code>SpatialService
+├── GeometryQueries
+└── NavigationQueries</code></pre>
+<p>Both can share IDs, vectors, debugging and spatial-index infrastructure without pretending they are identical operations.</p>
+<p>That preserves conceptual clarity.</p>
+<hr />
+<p><strong>A coherent Kairo-style final architecture</strong></p>
+<p>A production-oriented design could look like:</p>
+<pre class="text"><code>KairoSpatial
+│
+├── Geometry contracts
+│   ├── SpatialID
+│   ├── SpatialAABB
+│   ├── SpatialRay
+│   ├── overlap results
+│   └── ray results
+│
+├── Static indices
+│   ├── BVH
+│   └── KDTree
+│
+├── Dynamic indices
+│   ├── DynamicAABBTree
+│   ├── SweepAndPrune
+│   └── SpatialHash
+│
+├── Partitioning
+│   ├── Octree
+│   └── Quadtree
+│
+├── Navigation
+│   ├── NavigationGraph
+│   ├── AStar
+│   └── NavMesh
+│
+├── Query facade
+│   ├── AABB
+│   ├── sphere
+│   ├── ray
+│   ├── nearest
+│   └── path
+│
+├── Serialization
+│
+├── Benchmarking
+│
+└── Debug/visualization</code></pre>
+<p>This is much closer to what the entire Phase 14 curriculum is building toward.</p>
+<hr />
+<p><strong>The final conceptual synthesis of Passes 07–09</strong></p>
+<p>You began Part 1301 with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>&quot;Spatial acceleration is pruning work.&quot;</mtext>
+</math>
+<p>That statement now expands into an entire engine philosophy.</p>
+<p>For geometric queries:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>cheap conservative bound</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>discard impossible work</mtext>
+  <mo>.</mo>
+</math>
+<p>For A*:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>cheap optimistic heuristic</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>prioritize plausible work</mtext>
+  <mo>.</mo>
+</math>
+<p>For navmeshes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>compress continuous walkable space</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>search a much smaller graph</mtext>
+  <mo>.</mo>
+</math>
+<p>For HPA*:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>compress the graph again</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>search an abstraction first</mtext>
+  <mo>.</mo>
+</math>
+<p>For HZB:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>compress depth spatially</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>discard hidden rendering work</mtext>
+  <mo>.</mo>
+</math>
+<p>The unifying idea is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>construct a cheaper representation that preserves enough truth to reject or postpone expensive computation.</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is the intellectual center of spatial acceleration.</p>
+<hr />
+<p><strong>Reconstruction challenge</strong></p>
+<p>You should be able to rebuild A* from first principles without memorizing code.</p>
+<p>Start with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>All other nodes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo>=</mo>
+  <mi mathvariant="normal">∞</mi>
+  <mo>.</mo>
+</math>
+<p>Put start in a min-priority open set with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mo>+</mo>
+  <mi>h</mi>
+  <mo>.</mo>
+</math>
+<p>Repeatedly pop lowest-<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> node.</p>
+<p>For each outgoing edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo>&lt;</mo>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>b</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>update:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>F</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>b</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>b</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>b</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>b</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>b</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>and push/update the open set.</p>
+<p>Terminate when the goal is safely finalized under your heuristic assumptions.</p>
+<p>Then walk <code>cameFrom</code> backward.</p>
+<p>If you cannot derive the algorithm from those equations, do not claim mastery yet.</p>
+<hr />
+<p><strong>Heuristic reconstruction challenge</strong></p>
+<p>You should be able to explain without notes:</p>
+<p>For 4-connected unit grid:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>d</mi>
+  <mi>x</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>+</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>d</mi>
+  <mi>y</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>For 8-connected unit/<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msqrt>
+    <mn>2</mn>
+  </msqrt>
+</math> grid:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>d</mi>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <msqrt>
+    <mn>2</mn>
+  </msqrt>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>d</mi>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>For arbitrary geometric graph with costs unrelated to distance, raw Euclidean may fail.</p>
+<p>Kairo’s generic fix:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    <mi>e</mi>
+  </munder>
+  <mfrac>
+    <mrow>
+      <mi>c</mi>
+      <mo stretchy="false">(</mo>
+      <mi>e</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mi>d</mi>
+      <mo stretchy="false">(</mo>
+      <mi>e</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>α</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>g</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then prove both:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≤</mo>
+  <msup>
+    <mi>h</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≤</mo>
+  <mi>c</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>That derivation is the theoretical mastery checkpoint of M083.</p>
+<hr />
+<p><strong>Navmesh reconstruction challenge</strong></p>
+<p>From a blank file, you should be able to design:</p>
+<pre class="text"><code>NavPolygon
+Portal
+Adjacency
+FindContainingPolygon
+A* corridor
+Funnel</code></pre>
+<p>and explain each stage.</p>
+<p>You should know why polygons are convex, why portals require direction/orientation, why polygon centroids are acceptable graph representatives but produce ugly final paths, why the funnel fixes that, why agent radius cannot simply be ignored, and why moving agents belong in steering rather than navmesh carving.</p>
+<p>You should also be able to identify the current Kairo limitation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>&lt;</mo>
+  <mn>1</mn>
+</math>
+<p>can invalidate the navmesh’s unscaled Euclidean heuristic.</p>
+<hr />
+<p><strong>M084 reconstruction challenge</strong></p>
+<p>Given two candidate spatial structures A and B, derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>N</mi>
+  <msub>
+    <mi>Q</mi>
+    <mi>A</mi>
+  </msub>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>N</mi>
+  <msub>
+    <mi>Q</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Solve their crossover query count.</p>
+<p>Then explain why query time alone is insufficient when candidate counts differ.</p>
+<p>Design a serialized BVH file without raw pointers.</p>
+<p>Design a debug view showing tree quality.</p>
+<p>Finally design a query API that does not pretend BVH, spatial hash, KD-tree and navmesh all support the exact same semantics.</p>
+<p>If you can do those things, you understand the <strong>systems engineering</strong> rather than merely the algorithms.</p>
+<hr />
+<p><strong>Exact coverage</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Part</th>
+<th>Topic</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1375</td>
+<td>Navigation-graph representation</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1376</td>
+<td>Weighted navigation edges</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1377</td>
+<td>A* open-set representation</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1378</td>
+<td>A* closed-set representation</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1379</td>
+<td>A* g score</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1380</td>
+<td>A* heuristic score</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1381</td>
+<td>A* f score</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1382</td>
+<td>Parent/came-from map</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1383</td>
+<td>Path reconstruction</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1384</td>
+<td>Euclidean heuristic</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1385</td>
+<td>Manhattan heuristic</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1386</td>
+<td>Octile heuristic</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1387</td>
+<td>Dijkstra as A* with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>h</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math></td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1388</td>
+<td>Heuristic admissibility</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1389</td>
+<td>Heuristic consistency</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1390</td>
+<td>Navigation grids</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1391</td>
+<td>Navigation meshes</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1392</td>
+<td>Navmesh polygon adjacency</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1393</td>
+<td>Funnel algorithm</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1394</td>
+<td>Dynamic obstacle updates</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1395</td>
+<td>Hierarchical pathfinding</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1396</td>
+<td>Spatial-index serialization</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1397</td>
+<td>Spatial visualization</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1398</td>
+<td>Build-vs-query benchmarking</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1399</td>
+<td>Workload-driven structure choice</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1400</td>
+<td>Unified spatial-query interface</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<p>And with Part <strong>1400</strong>, the entire <strong>Spatial Acceleration, Dynamic Broadphase and Navigation phase is complete</strong>.</p>
+<p>The next pass crosses a major engine boundary.</p>
+<p>We enter <strong>ECS, entity identity, packed generational handles, free lists, stale-handle prevention, component storage, sparse sets, dense iteration, add/remove mechanics and the beginning of data-oriented entity architecture</strong>. That phase is where many of the design ideas you just saw—stable IDs versus vector positions, contiguous data, indirection, free lists, stale references, cache behavior—stop being isolated spatial-system concerns and become the architecture of the whole engine.</p>
+</section>
+<section id="id_06-engine-ii-ch031-make-a-world-that-can-be-authored-saved-and-run" class="level3">
+<h3>Make a world that can be authored, saved, and run</h3>
+<p>Drawing one object makes a graphics demonstration. A useful engine also lets someone create and inspect the data behind many objects, then run that data without confusing authored state with temporary play state.</p>
+<section id="id_06-engine-ii-ch031-from-geometry-pieces-to-objects-and-transforms" class="level5">
+<h5>From geometry pieces to objects and transforms</h5>
+<p>Geometry is a drawable piece; a mesh groups one or more geometries and associates them with a transform so the group can behave as one object. Different pieces can keep different materials, which fits imported assets containing multiple subobjects. The renderer still only needs each geometry and the matrix at which to draw it, so the application can flatten mesh contents into geometry render records. The video’s dynamic allocation on every frame is explicitly temporary. (Kohi #053, 00:01–00:03; 00:10–00:17)</p>
+<p>A transform packages position, quaternion rotation, scale, a cached local matrix, a dirty flag, and an optional parent. The dirty flag is a correctness mechanism: changing a component means the cached matrix is stale, so changes should go through setters that mark it dirty. Absolute setters and relative operations have different meanings: setting position replaces it, while translating adds an offset; rotation and scale have corresponding relative operations. Local matrices can then be recomputed only when needed, and world transforms combine the local transform with the parent’s world transform up the hierarchy. (Kohi #054, 00:01–00:15)</p>
+<p>Parent pointers impose a lifetime requirement. If a mesh is copied from a temporary stack variable into another collection, a pointer to the original transform becomes invalid when that function returns. Keeping meshes in stable application-owned storage makes parent references usable. In the demo, a child inherits its parent’s rotation while retaining its local offset and its own rotation. (Kohi #054, 00:15–00:27)</p>
+<p>Source reading: <a href="https://www.youtube.com/watch?v=73KBx90cD0M">caption source</a> · <a href="https://www.youtube.com/watch?v=r2535XLneiI">caption source</a>. Captions document the narrated development state; on-screen code and reported builds were not independently reproduced.</p>
+</section>
+<section id="id_06-engine-ii-ch031-model-a-scene-as-data-then-make-it-executable" class="level4">
+<h4>Model a scene as data, then make it executable</h4>
+<p>A scene is a set of entities and the data attached to them, plus systems that interpret that data. The entity is a handle or identity; components hold facts such as transform, sprite, camera, collider, or script reference. Systems query entities that have the components they need and update or render them.</p>
+<p>Hazel’s public snapshot uses EnTT’s registry. The <code>Scene</code> creates entities, destroys them, duplicates them, finds them by UUID or name, and provides views over component sets. A <code>TransformComponent</code> can describe position and orientation, while other components describe renderable or behavioral data. The entity wrapper gives editor-facing code a convenient handle while the registry stores component data. This is an entity-component system (ECS): instead of building deep class inheritance such as <code>AnimatedEnemyWithColliderAndSprite</code>, the game can assemble an entity from independent pieces.</p>
+<p>The advantage appears when combinations vary. One entity might have a transform and camera. Another might have transform, sprite, and physics body. A third might have transform and script state. A system can process exactly the component combinations it needs. The cost is indirection and the need to manage identity, component relationships, and system scheduling. ECS is not automatically faster or simpler for every project. It is useful when the project needs flexible composition and data-oriented queries. A small game with a few stable object types may be clearer with direct objects.</p>
+<section id="id_06-engine-ii-ch031-stable-identity-matters-for-saving" class="level5">
+<h5>Stable identity matters for saving</h5>
+<p>An ECS registry often uses compact internal indices that can change when entities are destroyed or storage is reorganized. A saved scene needs stable identities across a reload. Hazel’s <code>Scene</code> keeps UUIDs associated with registry entities, and its API exposes lookup by UUID. This separates a persistent identifier from a transient storage handle.</p>
+<p>A UUID is a large identifier intended to be unique enough that independently created objects can be distinguished. It is not a human-readable name and it does not encode ordering. Names are useful for searching and display; UUIDs are useful for references that should survive rename. A saved camera target, parent relationship, or script reference should not depend only on an editable label like “Player.”</p>
+<p>When cloning or duplicating a scene, choose whether IDs should be preserved or regenerated. Copying a scene for runtime play often needs a separate runtime instance, while the editor copy remains intact. Reusing the same UUID in two simultaneously active scenes can confuse global lookup or asset references. Define the lifetime and uniqueness domain: per scene, per project, or globally.</p>
+<section id="id_06-engine-ii-ch031-save-the-state-the-player-needs-to-resume" class="level6">
+<h6>Save the state the player needs to resume</h6>
+<p>A world chunk describes initial conditions and static world content. A saved game records the changed state needed to resume play. Copying all static geometry into every save is redundant if it can be loaded from the world data; saving a smaller selection of gameplay-relevant changes can make a checkpoint file compact.</p>
+<p>A <strong>checkpoint save</strong> can store a checkpoint ID plus the player state needed at that point, such as health, lives, inventory, weapons, or ammunition. If the game deliberately starts every player at a known state, even some of that data can be omitted. The tradeoff is less choice about where to save and the risk of frustration when checkpoints are far apart.</p>
+<p>A <strong>save-anywhere</strong> system needs a broader snapshot: current locations and other relevant state for the objects whose state affects gameplay, while static world content can still come from the level data. It need not preserve every runtime detail. For example, exact animation time or every simulated body’s precise velocity may be omitted if the difference after loading is imperceptible or irrelevant. This is a player-facing equivalence test: after save and reload, can the player tell a meaningful difference? The answer depends on the game, so save policy is part of gameplay design as well as file format design.</p>
+<p>The chapter says world loading and saved-game loading often have distinct requirements, even if they can share parts of a data format. A level file may favor flexible authoring, while a save may favor compression and compactness. Treat this as the source’s architectural comparison, not as an argument that a current engine must maintain two completely separate systems.</p>
+</section>
+</section>
+<section id="id_06-engine-ii-ch031-keep-authored-data-visible-to-both-code-and-the-editor" class="level5">
+<h5>Keep authored data visible to both code and the editor</h5>
+<p>A designer should be able to move a boundary or tune a speed without finding a magic number in source. An empty scene entity with only a transform can mark an upper or lower bound; a script can read that transform at runtime. The same pattern applies to spawn regions: represent the region as a visible collider or volume, then let the script use its bounds. This makes the level itself carry spatial decisions, while code describes what those decisions mean (Hazel game code review, 00:28:11–00:30:20).</p>
+<p>Gameplay values can follow the same route. A script’s public speed or dash fields can be exposed in the scene editor, while update logic applies elapsed time to cooldowns. If a cooldown starts at half a second, subtract the frame’s elapsed seconds and trigger when it reaches zero; this keeps the duration stable as frame lengths vary. For a small prototype, a few local timers may be clearer than a generalized scheduler. When many behaviors need timed callbacks, a shared system may become worth the design and testing cost (Hazel game code review, 00:14:23–00:21:48).</p>
+<p>Visual appearance and collision are separate representations. In a 3D tile world, the creator renders thousands of repeated tiles through instancing while a separate ground plane provides collision. This avoids treating every visual tile as a physics entity, but it also means a visible shoreline does not automatically block movement. The rule at a land/water boundary must be designed explicitly, because an invisible collider may contradict what the player sees (Remaking My First Game in 3D, 00:17:43–00:23:33).</p>
+</section>
+</section>
+<section id="id_06-engine-ii-ch031-white-is-the-identity-texture-for-a-color-only-quad" class="level4">
+<h4>White is the identity texture for a color-only quad</h4>
+<p>A 2D renderer can draw a solid color and a textured sprite through one shader. Let <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math> be the sampled texture color and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math> the per-quad tint; output <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+  <mo>⊙</mo>
+  <mi>C</mi>
+</math>, where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>⊙</mo>
+</math> means channel-wise multiplication. For an ordinary color quad, bind a one-pixel white texture, so <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math> and the result is exactly <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math>. For a textured quad, bind its image and use white as <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math> when no tint is wanted. The same shader and binding path now handles both cases. <a href="https://www.youtube.com/watch?v=-myXuS3t1W4">Single Shader 2D Renderer</a></p>
+<p>The Hazel episode removes its separate flat-color shader, adds a color uniform to the texture shader, and binds that shader once at <code>BeginScene</code>. It creates the white texture directly in GPU memory rather than depending on an extra image file. This simplifies shader state changes, but the episode does not benchmark the size of any speedup; the demonstrated result is one shared path and fewer shader switches.</p>
+<p>Creating a texture and filling it are different operations. The source adds a size-based constructor and a <code>SetData</code> upload method. For a full uncompressed image with width <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>W</mi>
+</math>, height <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>H</mi>
+</math>, and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math> bytes per pixel, the data buffer must contain <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>W</mi>
+  <mi>H</mi>
+  <mi>B</mi>
+</math> bytes. For example, a <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mo>×</mo>
+  <mn>1</mn>
+</math> RGBA8 white image uses four bytes. That check is valid only when the supported format and upload region are known; a generalized API must account for row pitch, subregions, compressed formats, channel order, and overflow in the size calculation. The episode explicitly leaves texture formats and sampling options for later refinement.</p>
+<section id="id_06-engine-ii-ch031-source-to-volume-map" class="level5">
+<h5>Source-to-volume map</h5>
+<ul>
+<li>Existing foundations: <code>### Treat shaders and materials as a pipeline, not just files</code>, <code>#### Connecting per-object material data and texture sampling</code>, and <code>### Reuse geometry and choose a batch boundary from the data path</code>.</li>
+<li>This source adds the white-texture identity trick and a concrete full-image byte-count contract; it does not repeat material or sampling foundations.</li>
+<li>Limits: English automatic captions; the shader, texture API, and measured performance were not independently verified.</li>
+</ul>
+</section>
+</section>
+<section id="id_06-engine-ii-ch031-an-entity-wrapper-can-hide-registry-vocabulary-without-owning-component-storage" class="level4">
+<h4>An entity wrapper can hide registry vocabulary without owning component storage</h4>
+<p>An ECS registry stores component data; an entity is an identity used to associate that data. An editor-facing API can still make the common operation read naturally: create an entity, then ask it to add or retrieve a component. A thin wrapper can carry the registry identity and the scene context needed to perform that query, while leaving component storage in the registry. Its convenience methods do not mean the entity object owns its components.</p>
+<p>The Hazel episode builds this wrapper around an EnTT handle and a scene pointer. <code>HasComponent&lt;T&gt;</code>, <code>GetComponent&lt;T&gt;</code>, <code>AddComponent&lt;T&gt;(args...)</code>, and <code>RemoveComponent&lt;T&gt;</code> forward to registry operations. Forwarding constructor arguments lets the registry construct a component in place. The scene also adds a transform and a tag when creating a named entity. This is one API design choice, not a requirement of ECS. <a href="https://www.youtube.com/watch?v=GfSzeAcsBb0">The ENTITY Class</a></p>
+<p>The ownership boundary needs care. The presenter considers a weak scene reference but uses a raw pointer in this snapshot, keeping the wrapper small and non-owning. That means its validity depends on the scene outliving every operation performed through the wrapper. A wrapper copied into a panel or retained across scene replacement can dangle. A nonzero handle check is also not a complete liveness test: the registry may have destroyed that ID, and zero may or may not be reserved by the particular entity library. Check both context lifetime and registry validity before dereferencing, or arrange for wrappers to be short-lived and scoped to a known scene operation.</p>
+<p>This source extends the existing scene/ECS explanation with the boundary between a convenient facade and actual ownership. For the broader system overview, see <code>### Model a scene as data, then make it executable</code> and <code>### Treat editor panels as clients of live engine state</code>.</p>
+<section id="id_06-engine-ii-ch031-source-to-volume-map-1" class="level5">
+<h5>Source-to-volume map</h5>
+<ul>
+<li>Existing foundation: <code>### Model a scene as data, then make it executable</code>, which already identifies the entity as a handle and components as registry data.</li>
+<li>The source adds the wrapper’s concrete method surface, in-place argument forwarding, and the raw-scene-pointer lifetime tradeoff.</li>
+<li>Limits: English automatic captions; the wrapper implementation and EnTT behavior were not independently inspected.</li>
+</ul>
+</section>
+</section>
+<section id="id_06-engine-ii-ch031-clear-the-entity-id-attachment-to-a-deliberate-sentinel" class="level4">
+<h4>Clear the entity-ID attachment to a deliberate sentinel</h4>
+<p>An editor can identify an object under the mouse by rendering entity IDs into a separate integer color attachment. The scene color attachment can keep its usual background color, but the ID attachment needs a value that means “no entity.” Otherwise empty pixels inherit whatever clear value happens to be configured and can look like valid IDs. In this episode, the object test pixels contain <code>50</code>, so the chosen background sentinel is <code>-1</code>. <a href="https://www.youtube.com/watch?v=LPhBiIvDOs0">Clearing Framebuffer Texture Attachments</a></p>
+<p>The captioned prototype performs its ordinary scene clear, then explicitly initializes the ID texture with <code>glClearTexImage</code>, using an integer format and an <code>int</code> value. The integer guarantee comes from that type-matched operation: ordinary <code>glClear</code> has undefined results for integer color buffers. For a signed integer attachment, a correctly targeted <code>glClearBufferiv</code> is another typed path; use the intended draw-buffer index and matching framebuffer state. <a href="https://registry.khronos.org/OpenGL/specs/gl/glspec30.pdf">OpenGL specification</a> The public framebuffer operation becomes <code>ClearAttachment(index, value)</code>. This narrowly typed interface makes accidental float input harder for the shown integer attachment. The episode notes that a broader typed API might be useful later, and that clear responsibility could ultimately belong to a render pass or another layer. The demo confirms the intended data result in its displayed picking buffer: object pixels show <code>50</code>, empty pixels show <code>-1</code>.</p>
+<p>The accompanying Git lesson explains why unfinished feature work lives on a branch. Keep a usable main branch as the known baseline, isolate an in-progress mouse-picking feature, then merge it when ready. Branching allows the development snapshot to be incomplete, but does not itself make that snapshot stable. This source stops before actual selection: its next step is to read the ID when the mouse points at or clicks an entity. The narrated buffer values are not independent runtime verification, and exact API spelling comes from automatic captions.</p>
+<p>The signed <code>R32I</code> example reserves <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mn>1</mn>
+</math> for empty pixels; declare the supported ID range rather than assuming every unsigned 32-bit identifier is a positive signed value. An unsigned <code>R32UI</code> design needs matching shader outputs, transfer types, and a reserved unsigned sentinel. Neither format creates an extra out-of-band value: reserve an ID or carry validity separately.</p>
+</section>
+<section id="id_06-engine-ii-ch031-inspect-and-edit-the-selected-entity" class="level4">
+<h4>Inspect and edit the selected entity</h4>
+<p>A properties panel can start with one reliable fact the scene hierarchy already knows: which entity is selected. The Hazel editor uses that selection context to show the entity’s tag and transform. The tag is copied into a bounded character buffer for the ImGui input field, then written back to the tag string if the user edits it. A compiler warning prompts replacement of an unsafe copy with a size-aware version. The episode explicitly leaves Unicode support open. <a href="https://www.youtube.com/watch?v=NBpB0qscF3E">Properties Panel</a></p>
+<p>For translation, the panel exposes the transform matrix’s translation vector through a three-component drag control. The control reports whether a value changed; that matters for fields such as rotation that may require decomposing and rebuilding a matrix, although translation is edited in place in this example. A collapsible component heading uses a type-specific hash as its UI identifier and is open by default. The episode notes that polished labels, stable ID conventions, and a reusable style layer still need attention.</p>
+<p>Selection should also be reversible. Clicking blank space in the hierarchy panel clears the selection, while clicking an entity row still selects it. The handler checks whether the panel is hovered and whether the left mouse button is down; ImGui’s active-item blocking prevents the blank-area handler from swallowing a row click. This episode does not yet select objects by clicking the rendered scene, and its inspector still lacks broad component editing, add/remove controls, and a camera panel. Those limits keep the example a first working inspector step rather than a finished authoring workflow.</p>
+</section>
+<section id="id_06-engine-ii-ch031-carry-entity-identity-through-a-batched-draw" class="level4">
+<h4>Carry entity identity through a batched draw</h4>
+<p>The integer attachment from the previous step can only help if each rendered entity writes its own ID. A uniform is set for a draw call, but Hazel’s 2D renderer batches many quads into one call. The episode therefore adds an integer ID to each quad’s vertex data and forwards it through the editor shader to the integer color attachment. The entity identifier is unsigned in the entity system, while the picking buffer is signed so <code>-1</code> can represent empty space; the narrator notes that zero is a valid entity ID. <a href="https://www.youtube.com/watch?v=GKERbQ7Sqyg">Mouse Picking</a></p>
+<p>Integer vertex attributes need the integer attribute setup path (<code>glVertexAttribIPointer</code>), rather than the floating-point conversion path. The speaker admits the existing vertex-layout code is not fully understood during the walkthrough, which is a cue to verify the exact API and types in code before copying the pattern. The renderer API is also still in flux: generic quads serve UI and debug drawing, while a sprite-specific entry point can take a sprite component, transform, and entity ID.</p>
+<p>With IDs written, the editor can read a pixel and map its value back to a scene entity, then display that entity’s tag while the pointer hovers. This episode does not yet implement click-to-select. It calls out the interaction cases that must be handled: dragging an entity should not accidentally select another, and a click over a front face should not replace the intended manipulation target. The extra buffer is presented as editor tooling; the episode gives no profiler evidence and does not argue that shipped games should pay for this path.</p>
+</section>
+<section id="id_06-engine-ii-ch031-treat-entities-as-ids-and-components-as-data" class="level4">
+<h4>Treat entities as IDs and components as data</h4>
+<p>Hazel adopts EnTT for its entity-component system rather than building a robust registry from scratch. The episode’s reasons are practical: a reliable ECS is a large subsystem, and the author wants to spend more time on graphics. The library is vendored as a single header with its license, and exposed to both engine and client code because templates must be instantiated where client-defined component types are used. <a href="https://www.youtube.com/watch?v=D4hz0wEB978">Intro to EnTT</a></p>
+<p>A scene owns a registry. The registry creates entity identifiers and stores their components; an entity itself is just an ID, not a nested object that owns fields. A component can therefore be a plain data struct, such as a transform wrapper around a matrix. The registry emplaces a component on an entity, retrieves it by reference, checks whether it exists, or removes it. No shared component base class is required.</p>
+<p>Systems need sets of entities with the data they consume. A view iterates entities with one component type; a group can expose entities with several required component types, such as both transform and sprite data for rendering. The episode shows structured bindings for the retrieved references. EnTT also offers runtime views when component types are not known at compile time, and lifecycle signals for construct/destroy/replace events. Those features are described but not benchmarked or fully integrated here. Snapshot serialization is mentioned, then deferred in favor of the author’s existing hand-written approach because the API did not feel clear. Verify exact methods against the EnTT version in use; this transcript is an introductory development recording, not a current API reference.</p>
+</section>
+<section id="id_06-engine-ii-ch031-build-a-scene-through-entity-and-component-menus" class="level4">
+<h4>Build a scene through entity and component menus</h4>
+<p>An editor becomes useful when a blank scene can be assembled without writing setup code. Hazel adds a right-click menu on empty hierarchy space to create an entity, and a separate context menu on an entity row to delete it. Deletion is deferred until the current UI pass finishes, because the row and properties panel may still read the entity during that frame. If the removed entity was selected, the selection context is cleared as well. <a href="https://www.youtube.com/watch?v=PsyGmsIgp9M">Adding/Removing Entities and Components UI</a></p>
+<p>The properties panel adds a component menu for camera and sprite-renderer components. A per-component header control offers removal, while the transform stays mandatory and cannot be removed. Removal is likewise delayed until the current UI drawing is done. The options are hard-coded in this version; a component registry would be needed for extensible or user-defined component menus.</p>
+<p>A lifecycle issue appears when a camera is added after the viewport’s initial resize: it missed the earlier event and has no matching projection. The scene therefore handles component-added notifications and initializes a new camera with the stored viewport size. The example uses explicit template specializations for each built-in component and notes that this may not scale to custom types. Finally, the episode still needs a camera entity to display the scene; a separate editor camera is not part of this implementation yet. These mechanics produce a basic scene-building path, while camera ownership, extensibility, and UI polish remain incomplete.</p>
+</section>
+<section id="id_06-engine-ii-ch031-bind-native-c-behavior-to-an-entity" class="level4">
+<h4>Bind native C++ behavior to an entity</h4>
+<p>A camera entity needs behavior such as moving in response to input, but that behavior belongs to the game scene rather than the editor layer. Hazel introduces a <code>NativeScriptComponent</code> that binds a C++ script type and gives the script access to its entity and scene through a <code>ScriptableEntity</code> base. This native path is presented as a choice alongside the planned C# scripting system; it does not require an external language runtime. <a href="https://www.youtube.com/watch?v=iIUhg88MK5M">Native Scripting</a></p>
+<p>The initial binding stores callbacks for deferred construction, destruction, and the <code>OnCreate</code>, <code>OnDestroy</code>, and <code>OnUpdate</code> lifecycle methods. A scene update walks entities with native-script components, constructs an instance when needed, supplies its entity/scene context, calls <code>OnCreate</code>, then calls <code>OnUpdate</code> with the timestep. The camera-controller example changes a transform using keyboard input, illustrating how the script can use Hazel’s C++ APIs directly.</p>
+<p>This first implementation has important limits. It assumes all lifecycle methods exist, so a small script cannot omit unused hooks; the author proposes compile-time detection for a later episode. The scene has no proper play/stop lifecycle, and destruction is not fully connected. The callback approach is later revised in a separate episode to use virtual lifecycle methods. Performance concerns about callable wrappers are discussed but not measured. The recording is live coding, including a camera-selection false alarm, so treat the transcript as an implementation story rather than independent runtime proof.</p>
+</section>
+<section id="id_06-engine-ii-ch031-use-component-pools-for-the-work-a-system-needs" class="level4">
+<h4>Use component pools for the work a system needs</h4>
+<p>A scene can contain a player, a light, an audio source, a mesh, and behavior in many combinations. Inheritance tends to turn those combinations into a growing family of special subclasses: an audio mesh, a lighted audio mesh, an enemy that is all of those, and so on. Composition represents each capability as a separate data component attached to an entity. The entity’s key role is to associate the components that belong together. <a href="https://www.youtube.com/watch?v=Z-CILn2w9K0">Entity Component System</a></p>
+<p>A simple entity-owned list of component pointers is flexible but can make systems scan every entity, test which components exist, and follow pointers to scattered memory. An ECS instead stores component types in pools so a job can iterate the data it needs together. A renderer can work on mesh and transform data; physics can use rigidbody and transform data; script updates can walk script components. The narrator explains cache locality conceptually, without benchmark measurements.</p>
+<p>“System” describes the work over one or more component pools; it does not require a rigid separate class hierarchy. EnTT is chosen to provide registry storage, relationships, and iteration, while Hazel should keep components mostly as data and expose a convenient API. This episode is a design explanation, not an implementation walkthrough; the integration comes later. Treat its performance discussion as a motivation and mental model, not a quantified result.</p>
+</section>
+<section id="id_06-engine-ii-ch031-write-color-and-entity-identity-in-one-render-pass" class="level4">
+<h4>Write color and entity identity in one render pass</h4>
+<p>Editor picking needs a screen-space record of which entity produced each pixel. Hazel adds a second color attachment to the scene framebuffer: the usual color target remains visible, while a separate integer target stores entity IDs. Because the 2D renderer batches many quads into one draw call, the ID travels with each vertex; a per-object uniform cannot change between quads inside that call. Writing both outputs in one pass avoids drawing the geometry a second time. <a href="https://www.youtube.com/watch?v=f-GbHye1VFQ">Multiple Render Targets and Framebuffer Refactor</a></p>
+<p><strong>Format clarification:</strong> that episode establishes an entity-ID/color output, but the “integer target” wording above does not establish an integer texture format. Its stated RGBA8 support denotes normalized color storage, which differs from an integer-format attachment. Preserve the picking payload/encoding contract separately from the attachment component type and readback format; inspect the implementation before assigning a precise integer representation to this historical example. Writing selectable identity and display color in one pass is the demonstrated design idea. <a href="https://registry.khronos.org/OpenGL/specs/gl/glspec30.pdf">Khronos framebuffer component types</a>.</p>
+<p>The previous framebuffer API always created one RGBA8 target and one depth24-stencil8 target. A specification list lets a caller describe color attachments and an optional depth attachment, so later passes can request different layouts such as a depth-only shadow map or multiple floating-point color targets. On invalidation, the implementation recreates textures from that fixed specification while resize changes dimensions. OpenGL also needs its active draw-buffer list configured for multiple fragment outputs; this episode caps that list at four and uses <code>GL_NONE</code> for a depth-only pass.</p>
+<p>The experiment writes ordinary color at output location 0 and red at location 1, then displays attachment 1 in the viewport. This demonstrates two targets and confirms that the second texture can be read. The specification looks extensible, but the implementation here supports only RGBA8 and depth24-stencil8; filtering/wrap configuration, richer type conversion, other formats, and capability-based draw-buffer limits remain unfinished. Treat the API as a developing abstraction, not a complete framebuffer format system or general OpenGL reference.</p>
+</section>
+<section id="id_06-engine-ii-ch031-drag-and-manipulate-without-confusing-identity" class="level4">
+<h4>Drag and manipulate without confusing identity</h4>
+<p>In a content browser, a drag operation carries a typed payload that identifies what the target should load. The lesson uses the asset path and joins a relative item path with the content root. It finds several practical traps: path strings may be wide, a drop payload may be null, and repeated icons need distinct immediate-mode UI IDs or they all behave like one item. An asset path payload is a locator, not automatically a durable asset identity; validate it at the receiver and define how moved or renamed files resolve (<a href="https://www.youtube.com/watch?v=yjVSs1HtAng">yjVSs1HtAng</a>, 06:14–13:00; 26:11–37:36).</p>
+<p>A transform gizmo is a viewport tool that maps pointer movement into an object transform. The selected entity and camera matrices go into a manipulation library; a viewport rectangle scopes drawing and input. Decompose the transform only while the gizmo actively changes it, and keep selection ownership separate so future mouse picking can replace the hierarchy-only selection source. The tutorial uses local manipulation, applies rotation as deltas, offers Q/W/E/R modes, and adds Control snapping with steps for translation, rotation, and scale. It also exposes a hover/focus boolean bug: accept a shortcut when the viewport is hovered or focused, not only when both are true (<a href="https://www.youtube.com/watch?v=Pegb5CZuibU">Pegb5CZuibU</a>, 12:32–27:12; 34:15–49:30). These are UI behavior details from the tutorial; they do not prove a general decomposition is numerically stable for every matrix or transform hierarchy.</p>
+<section id="id_06-engine-ii-ch031-components-and-invariants" class="level5">
+<h5>Components and invariants</h5>
+<p>Components should describe data with a clear owner and meaning. A transform component should define its units, coordinate convention, and whether its matrix is derived or stored. A camera component should state its projection parameters and how viewport resizing updates aspect ratio. A sprite component should distinguish the source texture from tint and UV selection. A rigid body component should define whether physics or the editor owns the transform while simulation is running.</p>
+<p>The public Hazel <code>Scene</code> listens for component additions through an internal template hook. This allows the scene to respond when a camera component appears, for example by initializing it against the current viewport size. That is an important pattern: component data and scene invariants should remain synchronized. But avoid making every component addition trigger hidden global work. A future maintainer should be able to locate where invariants are enforced.</p>
+<section id="id_06-engine-ii-ch031-ecs-performance-claims-need-a-memory-layout-argument" class="level6">
+<h6>ECS performance claims need a memory-layout argument</h6>
+<p>During the pull-request review stream, The Cherno argues against caching a transform matrix by adding substantial cached fields to every transform component. His explanation is that the extra bytes can reduce how many adjacent components fit in CPU cache, while checks and memory traffic can outweigh recomputing a small matrix. The useful lesson is methodological: identify what data a loop touches, account for the added component size, and profile before declaring a cache faster. The stream’s rough byte arithmetic is illustrative rather than a benchmark, and the specific code proposal is not independently inspected here (The Cherno, “Finishing the Pull Requests!,” 00:38:00–00:51:44).</p>
+</section>
+</section>
+<section id="id_06-engine-ii-ch031-let-the-world-own-a-changing-population" class="level5">
+<h5>Let the world own a changing population</h5>
+<p>One hard-coded player can be updated directly. Once the workshop contains a player, several moving crates, and temporary projectiles, the world needs a collection of live objects and a rule for visiting them. Adding another object should mean registering it with that collection, not adding another special update call to the application loop.</p>
+<p>An inheritance-based design can give objects shared identity, position, and update operations in a base entity type, with concrete types specializing behavior. An entity-component design instead associates identity with selected data and lets systems process the relevant combinations. These are different arrangements of responsibility; an early tutorial using subclasses is not evidence that it has implemented an ECS. In either arrangement, explain who owns the objects, when they are registered, and which pass is allowed to remove them.</p>
+<p>Suppose a projectile hits a crate while the world is iterating its object list. A removal request can mark the projectile inactive or queue its identity for retirement. The collection owner then performs removal at a defined boundary. Decide whether an object marked for removal can receive another update, event, render request, or query result before that boundary. Removing an entry during an index-based traversal can shift the next entry and accidentally skip it; immediate destruction can also invalidate borrowed references. The existing handle-and-deferred-removal lab makes this boundary executable for its small model.</p>
+<p>A resizable collection does not promise stable element addresses. Adding objects may move storage, even though the logical objects still exist. Keep the identity/storage distinction from the earlier memory section when choosing how other systems refer to these objects.</p>
+<p>The fully read early Cherno entities lesson moves from one player to a level-owned collection and describes removal as a state request. The ownership rules and cautions above complete the explanation without treating its live-coded timer, movement formulas, or constructor-access narration as verified implementation. <a href="https://www.youtube.com/watch?v=J3wfaJk_IMw">Caption source: 3D Game Programming — Entities</a>.</p>
+</section>
+<section id="id_06-engine-ii-ch031-geometry-as-a-managed-renderable-resource" class="level5">
+<h5>Geometry as a managed renderable resource</h5>
+<p>A model can contain several parts, often one geometry for each material. The geometry resource groups vertex and optional index data with its material, while a render record supplies that geometry and a model matrix. This separates “what mesh data exists” from “where this instance is placed.” The renderer packet can then carry an array of geometry draws, and the renderer simply loops through it.</p>
+<p>The geometry system owns the higher-level lifetime: callers can acquire an existing geometry by ID, create one from a configuration, and release it. Reference counts and an auto-release option mirror the texture/material systems. Creating geometry asks the renderer to upload vertices and indices, then acquires the named material; if that lookup fails, it uses a default material. Releasing at zero can destroy geometry and release its material. The Vulkan backend stores geometry metadata in a fixed array and records each geometry’s vertex/index count, byte size and offsets into shared buffers.</p>
+<p>The test plane generator provides a practical way to exercise this path. It creates a grid from width, height, segment counts and texture tiling values. Each cell gets four vertices and six indices, with UVs scaled to repeat the texture. Because it duplicates vertices between adjacent cells and allocates arrays dynamically, the presenter explicitly treats it as test code rather than a production mesh builder; callers must free those arrays.</p>
+<p>The draw path binds the shared vertex buffer at the geometry’s recorded offset and chooses indexed drawing when index data exists, otherwise a non-indexed draw uses the vertex count. Material application and model push constants become separate steps, which can help when batching objects that share material state. Important infrastructure remains unfinished: ranges are not actually returned to a free list, offsets grow monotonically, and destruction waits for the whole device to idle. The demo reports a fallback texture when a referenced file is absent, then corrects the named asset and shows changed tiling; these are narrated outcomes.</p>
+<p>Source reading: <a href="https://www.youtube.com/watch?v=tHW0T6a0h5E">caption source</a>. Captions document the narrated development state; on-screen code and reported builds were not independently reproduced.</p>
+</section>
+<section id="id_06-engine-ii-ch031-trace-terrain-from-authored-samples-to-submitted-geometry" class="level5">
+<h5>Trace terrain from authored samples to submitted geometry</h5>
+<p>Terrain passes through several contracts before pixels appear. A height-map image is authored input; one pixel can become one normalized height sample and one grid vertex. The Kohi prototype steps RGBA data by four bytes, averages RGB while ignoring alpha, and divides by 255; a mistaken extra index multiplication skipped most samples. Image dimensions and samples must be copied into terrain-owned data before the temporary image resource is released. Large maps also exceeded fixed vertex/index buffer capacities in a later stream, where increasing those capacities enabled the reported sample render. <a href="https://www.youtube.com/watch?v=hSvbfxOPCZ0">Height-map import</a> · <a href="https://www.youtube.com/watch?v=vLzvpFaX50A">Terrain-owned data and buffer limits</a></p>
+<p>A grid’s tile counts set resolution; extents and origin set placement and scale. Each cell becomes two triangles, with UVs following grid coordinates. One source proposes generating this geometry during initialization with flat placeholder heights; sampled elevation and derived normals/tangents remain later work. A terrain section in a scene file is not a runtime terrain: parse it, validate its record, create runtime config and object, register it with the scene, then include it in render data. One parser-to-runtime stream ends with both terrain and render-path counts still zero. <a href="https://www.youtube.com/watch?v=unypFSvg7gI">Terrain grid design</a> · <a href="https://www.youtube.com/watch?v=o3VS8tbwaRI">Terrain scene parsing</a></p>
+<p>When terrain exists but draws incorrectly, inspect each representation boundary: CPU vertices before upload, GPU attributes after upload, uniforms after binding, and final draw state. One debugging stream first finds 60,000 vertices at the origin, then incorrect matrix block layout; correcting generation and alignment produces a plane, still upside down. Another scene/render-view refactor replaces an opaque geometry-array pointer with typed scene-owned mesh and terrain arrays; a pointer/value mismatch and an uninitialized terrain array each cause separate failures. These streams report partial progress, not a complete terrain feature. <a href="https://www.youtube.com/watch?v=N34cyDfZVtA">Terrain rendering diagnostics</a> · <a href="https://www.youtube.com/watch?v=JgMCoxs0nqo">Scene and view packet separation</a></p>
+<p>A temporary terrain path may remove texture sampling, use fixed colors, or duplicate uniform handling to isolate geometry. Keep such scaffolding marked as provisional; the source ends before a finished terrain render. <a href="https://www.youtube.com/watch?v=X9EYh-EfOz4">Terrain bring-up slice</a></p>
+</section>
+</section>
+<section id="id_06-engine-ii-ch031-the-gameplay-foundation-is-the-negotiated-boundary-between-engine-and-game" class="level4">
+<h4>The gameplay foundation is the negotiated boundary between engine and game</h4>
+<p>The phrase <strong>gameplay foundation</strong> is useful because the border between reusable engine code and one game’s rules is not a clean horizontal line. Gregory places a cluster of systems near that boundary: the runtime object model, world loading and streaming, periodic object updates, messaging/events, scripting, and high-level objectives or game flow. These services can be engineered generically, but their useful shape is usually influenced by genre and project needs. Treat the boundary as a gradient rather than pretending that everything below a directory named Engine is universally reusable.</p>
+<p>A particularly important distinction is between the <strong>authoring object model</strong> and the <strong>runtime representation</strong>. The editor may show a designer one conceptual “Door” with transform, mesh, lock state, trigger, sound, and script fields. Runtime code does not need one C++ object containing exactly those fields. It may represent the door through ECS components, handles into rendering and physics systems, a script instance, and an objective-state reference. What must remain faithful is the authored meaning. The conversion must preserve identity, properties, references, and behavior the tools promised, even if the runtime reorganizes the data for locality, streaming, or backend ownership.</p>
+<p>World streaming makes that separation unavoidable. A designer thinks in persistent locations and object identities; runtime memory contains only the chunks currently resident. An unloaded object may still be the target of a quest, save-game reference, network identity, or future script action. Therefore “object reference” cannot automatically mean “address of a currently allocated object.” Stable authored identifiers, runtime handles, and residency state answer different questions. The existing identity and streaming sections build those mechanisms; the gameplay-foundation view explains why they are needed by design rather than merely by memory management.</p>
+<p>The same applies to updates and messages. A runtime object model needs some way to make changing elements act over time, but “call Update on every object” is only one implementation. Dependencies between animation, physics, AI, scripts, objectives, and rendering determine where state becomes visible. An event can communicate a discrete occurrence—plate pressed, enemy killed, area entered—while durable state answers what remains true. If high-level game flow listens for those events, it should update an explicit objective state rather than infer progression from transient presentation effects.</p>
+<p>High-level <strong>game flow</strong> is the part most easily lost when an engine curriculum focuses only on low-level systems. A game can have perfect rendering, physics, scripting, and persistence yet still need a structure that answers: what objective is active, which prerequisites are satisfied, which areas or interactions are gated, what happens on failure, and what becomes possible after success? That structure may be a sequence, graph, state machine, quest system, mission script, or data-driven rule set. Its form should follow the game. The architectural principle is that it consumes meaningful gameplay state and events, not renderer details or editor widget state.</p>
+<p>Finally, scripting exists here for iteration and authorship, not because native code is inherently unsuitable. A scripting boundary should expose the stable concepts the game needs—entities, components, queries, events, timers, objectives—while keeping allocator internals, graphics API objects, and unsafe lifetime assumptions behind engine-owned interfaces. The editor, runtime object model, and script API should therefore agree semantically even when they use different physical representations.</p>
+<p>Source basis: Gregory, <em>Game Engine Architecture</em>, Chapters 13–14, especially §14.1’s gameplay-foundation components, runtime object models, world chunk loading/streaming, object references/queries, real-time updating, event/message passing, scripting, and high-level game flow.</p>
+</section>
+<section id="id_06-engine-ii-ch031-a-game-world-is-a-changing-state-inside-a-larger-designed-space" class="level4">
+<h4>A game world is a changing state inside a larger designed space</h4>
+<p>A level is not the same thing as an objective. A <strong>world chunk</strong> is a discrete playable region of the authored world; it may correspond to a level, map, stage, or area and can be managed by a small team. An <strong>objective</strong> is a player goal with a success condition and, usually, a consequence for failure. A game may connect one objective to several chunks, and a chunk may host multiple objectives. That separation lets designers revise the order or meaning of goals without rebuilding the world boundaries around them. The chapter diagrams a typical world split into chunks and a separate objective graph that maps goals onto chunks (PDF pp. 715–717 / printed pp. 693–695; Figure 13.2 and 13.3 inspected on PDF pp. 715 and 717).</p>
+<p>The runtime <strong>game state</strong> is the current state of the world elements that change over time. A moving character, a projectile, or a trigger volume can be dynamic; terrain and buildings are often static. The boundary is a design and optimization choice rather than a universal property of an asset: animated waterfalls may still be treated as static if they do not participate in gameplay interactions. Knowing that geometry will not move can permit precomputation or omission of work, while destructible scenery may swap between authored intact, damaged, and destroyed versions. Static and dynamic are therefore ends of a spectrum shaped by interaction and the cost of updating (PDF pp. 712–715 / printed pp. 690–693; Figure 13.1 inspected on PDF p. 713).</p>
+<p>Large worlds are divided for more than memory limits. Chunks can control pacing and progression, make an open world manageable, and let different teams create separate regions. A hub-and-spoke layout gives a central area access to branches; a graph can connect regions in less regular ways. These are structural options, not mandatory level-loading architectures. Likewise, <strong>instancing</strong> means drawing or placing repeated copies of a small set of meshes at different transforms, creating variety without authoring every repeated piece as unique geometry. <strong>Brush geometry</strong> describes shapes as bounded convex volumes and can speed up early blockout; if the layout proves useful, artists can refine or replace it with detailed meshes (PDF pp. 714–716 / printed pp. 692–694).</p>
+<section id="id_06-engine-ii-ch031-a-streamed-world-must-preserve-authored-identity-when-its-objects-are-absent" class="level5">
+<h5>A streamed world must preserve authored identity when its objects are absent</h5>
+<p>A door in world cell 7 may be named by an objective, a save file and a script even while cell 7 is not loaded. Therefore <strong>durable identity</strong> cannot be a raw pointer into a live ECS array. Use an authored key such as <code>(world ID, cell ID, local object ID)</code> or a stable GUID, and resolve it through a registry that knows which cell versions are resident. Resolution may return <code>Unloaded</code>, <code>Loading</code>, <code>Missing</code>, or a live runtime handle; those states must not be confused. A sparse-set entity index with a generation protects against reuse <em>inside a live world</em>, but it does not automatically provide stable identity across scene exports, runtime resets and streamed cell unload/reload. Store the authored-to-runtime mapping explicitly and invalidate it before destroying a cell’s memory.</p>
+<p>Walk a three-step scene. A quest registers a reference to <code>cell=7, object=42</code> while the player is in cell 3; resolution returns <code>Unloaded</code>, but the quest retains the durable ID. When cell 7 becomes resident, the registry maps object 42 to a live, generation-checked ECS handle and queues <code>OnAvailable</code> once. When the player leaves, unloading must wait for consumers that have pinned the cell, for outstanding simulation queries and for any GPU work that borrows its buffers. Once retired, a stale direct runtime handle must be rejected even though the <em>authored</em> reference remains legitimate. If the quest actually requires a target immediately, that is an explicit streaming/pinning policy—not a reason to assume every referenced object is permanently resident.</p>
+<p>Spatial queries also cross residency boundaries. A gameplay radius query can visit the spatial structure of loaded cells while a navigation or quest system requests additional cells. But a query returning “no hit” among loaded cells is <strong>not necessarily evidence that no matching world object exists</strong>. Define whether the query is resident-only, blocks until a region is loaded, returns partial results with a completeness flag, or uses coarse baked proxies for unloaded cells. Deterministic physics must not suddenly begin colliding with an object half-way through an integration step; publish collision worlds at simulation phase boundaries. Visual streaming can obey different deadlines, but cannot silently determine gameplay authority.</p>
+<p>The runtime loop now has a meaningfully ordered schedule. At the beginning of fixed tick <code>k</code>, accept logical input and approved publication commands; issue simulation-safe stream changes; resolve gameplay references; run scripts/AI that consume snapshot state; evaluate animation motion requests; perform physics and collision; finalize authoritative transforms, tick events and ECS structural mutations; and seal a read-only presentation snapshot. The render loop may interpolate between snapshots and draw at a different rate without executing gameplay events twice. Do not assume this is the only valid ordering—some engines need AI before animation, animation after physics, multiple substeps, or deferred event dispatch—but every read/write dependency needs an unambiguous producer, consumer and boundary. An event emitted during tick <code>k</code> and delivered in tick <code>k+1</code> must carry enough identity to be processed once and to be logged and replayed.</p>
+<p>The world-editor representation is different again: editable source instances, prefab overrides, human-friendly paths, and undo history are authoring data. Runtime ECS archetypes, compact transforms, spatial indices and GPU draw packets are optimized derived data. Export a versioned immutable runtime package with an explicit dependency manifest and source identity; never promise that editing a scene document changes an already executing cell until the approved reload and publication protocol has run. A robust failure test edits/reloads a cell, preserves its authored IDs, verifies that obsolete runtime handles fail, and checks that gameplay events do not replay merely because a visual instance was recreated.</p>
+<p>This is the missing bridge between the world-editor/game-object discussions of Gregory’s Chapters 13–14 and the much more detailed ECS, serialization and graphics foundations already present in this volume. The important contribution is not a new object hierarchy; it is a precise contract for identity, visibility, simulation authority and memory lifetime across absent and resident worlds.</p>
+</section>
+</section>
+<section id="id_06-engine-ii-ch031-make-common-searches-cheap-by-choosing-them-deliberately" class="level4">
+<h4>Make common searches cheap by choosing them deliberately</h4>
+<p>Gameplay asks questions such as “which enemies are within ten meters?”, “what did this ray hit?”, or “which destructible objects have low health?” One universal database that answers every possible question with maximum speed is not a realistic design target. Pick the searches the game actually needs and arrange data around them: an id index for identity, maintained groups for common categories, a collision query for paths and visibility, or spatial partitions for nearby objects. These are design options from the chapter, not a claim that one structure fits every world.</p>
+<p>For example, a blast can first query a radius to produce nearby candidates, then apply exact distance and gameplay rules to decide who takes damage. The first step narrows work; it does not itself define the game’s damage semantics. (Constructed example.)</p>
+<p>(<em>Game Engine Architecture</em>, PDF pp. 778–779 / printed pp. 756–757.)</p>
+</section>
+<section id="id_06-engine-ii-ch031-a-useful-object-needs-rules-for-being-noticed-reached-and-used" class="level4">
+<h4>A useful object needs rules for being noticed, reached, and used</h4>
+<p>Imagine reaching a dark room with a low battery. In the <em>Unspeakable</em> proposal, the flashlight dims and loses range as charge falls. It uses charge while on, spare batteries are inserted when it starts to dim, and some creatures are deterred by its beam; a nearly drained light is less effective. The player can also lose a flashlight when an event breaks it. Its HUD bar and spare-battery count appear while it is on. The map solves a different problem: it pauses play, offers two zoom levels and scrolling, lets the player browse found maps, marks current position and facing, and lists carried quest items. Maps may cover the current, future, or already visited areas; some places have none, and the player can collect an overview map of the whole island. The proposal leaves a placement question open: should ammunition quantities, weapons, puzzle parts, or health packs be randomized, with designer overrides? [Game Design Theory and Practice, PDF pp. 633–634 / printed pp. 608–609]</p>
+<p>The Use button checks nearby objects roughly within a 45-degree facing cone, then chooses the closest one. The character may move into a position and play an object-specific animation. A door can open or close, fail because it needs a key or another event, or require damage to break a lock; a used key normally unlocks that door for the rest of the game, and may remain in inventory until the last door in a group is opened. Chests use similar rules but do not let the player walk through them. Switches can be one-use, resettable, or toggled. Quest items are used automatically when the player presses Use at a place that accepts them, and are then removed. A security monitor can switch to a remote camera view; ordinary controls stop working there except Use to exit, and damage to either camera or monitor breaks the connection. A table can have several monitors; a camera may pan, but the player cannot control its motion. A pushable object enters a constrained mode: the character can move forward, backward, or strafe but cannot turn; the object moves one rectilinear grid cell per move, never diagonally, and a blocked object blocks the character. Use exits this mode. These rules make selection, state change, feedback, and exit conditions explicit. They describe a proposal, not original implementation architecture. [PDF pp. 634–636 / printed pp. 609–611]</p>
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch372.xhtml#id_05-Spatial-Worlds-Engine-State-and-Simulation" class="wikilink">Reading map</a> · <a href="ch312.xhtml#id_06-engine-ii-ch030-depth-projection-and-shadow-map-precision" class="wikilink">Previous chapter (Geometry, Cameras, and Image Formation, Part 1, Ch. 13)</a> · <a href="ch371.xhtml#id_06-engine-ii-ch032-terrain-materials-and-image-composition" class="wikilink">Next chapter (Light Transport and Image Synthesis, Part 1, Ch. 11)</a></p>
+</section>
+</section>
+</section>
+</body>
+</html>

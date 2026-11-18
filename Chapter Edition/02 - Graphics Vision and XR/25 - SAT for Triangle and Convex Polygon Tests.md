@@ -8,7 +8,7 @@ Separating axis tests turn overlap into a search for a projection axis with disj
 
 **Recall question:** Why can triangle vertices all lie outside a box even when the triangle intersects it?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 61971–64643; source-span SHA256 9bf0db86e9647d07edd2f6254dad19b3576ab6b7edfbee1088565f1e1ca8fe22. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 62973–65645; source-span SHA256 9bf0db86e9647d07edd2f6254dad19b3576ab6b7edfbee1088565f1e1ca8fe22. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### PART VII — Triangle-AABB SAT and Convex Polygon SAT

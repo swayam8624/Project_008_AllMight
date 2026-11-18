@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch052.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-5888fd6102dc-shamir-secret-sharing" class="level2">
+<h2>Shamir secret sharing</h2>
+<p>Shamir secret sharing splits a secret into shares so that any threshold number can reconstruct it while fewer shares reveal no information in the ideal finite-field construction when coefficients are chosen uniformly at random.</p>
+<p>Choose a prime field <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="double-struck">F</mi>
+    </mrow>
+    <mi>p</mi>
+  </msub>
+</math> containing the secret value and a threshold <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math>. Construct a random polynomial</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>s</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>a</mi>
+    <mn>1</mn>
+  </msub>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mo>⋯</mo>
+  <mo>+</mo>
+  <msub>
+    <mi>a</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <msup>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+</math>
+<p>with secret <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+  <mo>=</mo>
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. Give participant <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> the share <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+</math> for distinct nonzero <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+</math>.</p>
+<p>Any <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math> shares recover <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> through Lagrange interpolation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>y</mi>
+    <mi>i</mi>
+  </msub>
+  <munder>
+    <mo data-mjx-texclass="OP">∏</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>≠</mo>
+      <mi>i</mi>
+    </mrow>
+  </munder>
+  <mfrac>
+    <mrow>
+      <mo>−</mo>
+      <msub>
+        <mi>x</mi>
+        <mi>j</mi>
+      </msub>
+    </mrow>
+    <mrow>
+      <msub>
+        <mi>x</mi>
+        <mi>i</mi>
+      </msub>
+      <mo>−</mo>
+      <msub>
+        <mi>x</mi>
+        <mi>j</mi>
+      </msub>
+    </mrow>
+  </mfrac>
+  <mspace width="1em"></mspace>
+  <mo stretchy="false">(</mo>
+  <mi>mod</mi>
+  <mspace width="0.333em"></mspace>
+  <mi>p</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Every division is multiplication by a finite-field inverse. Ordinary integer division is wrong.</p>
+<section id="appendix-5888fd6102dc-security-condition" class="level3">
+<h3>Security condition</h3>
+<p>The coefficients must be generated with a cryptographically secure random generator. Deterministic or predictable coefficients destroy the information-theoretic secrecy claim even though interpolation still reconstructs correctly.</p>
+<p>Share identifiers also matter: using duplicate x coordinates makes interpolation invalid.</p>
+</section>
+<section id="appendix-5888fd6102dc-evidence-boundary" class="level3">
+<h3>Evidence boundary</h3>
+<p>tools/labs/crypto_primitives_lab.cpp demonstrates a three-share reconstruction over prime field 257 and reconstructs the same secret from two different three-share subsets.</p>
+<p>Its polynomial coefficients are deliberately deterministic so the test is reproducible. Therefore the laboratory proves interpolation arithmetic, <strong>not</strong> production secrecy.</p>
+<p>A production system additionally needs CSPRNG coefficients, authenticated share transport/storage, versioning, participant identity, compromise/recovery policy and secure erasure.</p>
+<p>Related: <a href="ch164.xhtml#appendix-cbe594d1ab0a-integrity-and-authenticity" class="wikilink">Integrity and authenticity (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Integrity and authenticity)</a>, <a href="ch049.xhtml#appendix-50af792c9da7-hmac-and-hkdf" class="wikilink">HMAC and HKDF</a>.</p>
+</section>
+</section>
+</body>
+</html>

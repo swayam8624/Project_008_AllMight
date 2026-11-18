@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch019.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-1e45d0613db3-capped-weighted-updates" class="level2">
+<h2>Capped weighted updates</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C005 · <strong>Latest development:</strong> C005</p>
+<section id="appendix-1e45d0613db3-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A cap can discard old influence mathematically. With cap 2 and unit-weight observations [0,1,−1] versus [0,−1,1], exact distances end at −0.25 versus +0.25. This is not merely floating summation order.</p>
+</section>
+<section id="appendix-1e45d0613db3-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch023.xhtml#appendix-260182e617b7-mixed-precision-state-updates" class="wikilink">Mixed-precision state updates</a> — Persistent rounding must be separated from mathematical history-weight policy.</li>
+<li><a href="ch029.xhtml#appendix-2ed044358b82-arithmetic-policies" class="wikilink">Arithmetic policies</a> — Capping changes which influence is retained rather than only the representation.</li>
+</ul>
+</section>
+<section id="appendix-1e45d0613db3-used-by" class="level3">
+<h3>Used by</h3>
+<p>Connect later dependent concepts here when their lessons arrive.</p>
+</section>
+<section id="appendix-1e45d0613db3-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the definition’s example and name the assumptions that make it valid.</p>
+<p><strong>Pending:</strong> Changing to batch averaging changes the algorithm; separate history policy from rounding.</p>
+</section>
+<section id="appendix-1e45d0613db3-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-when-arithmetic-meets-uncertainty" class="wikilink">M005 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m005---parts-77-88" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-1e45d0613db3-why-clipping-a-contribution-changes-the-estimator" class="level3">
+<h3>Why clipping a contribution changes the estimator</h3>
+<p>A capped weighted update replaces an unbounded contribution <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+  <mi>x</mi>
+</math> with something like</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>w</mi>
+      <mo stretchy="false">~</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <mi>w</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>w</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi mathvariant="normal">Δ</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>w</mi>
+      <mo stretchy="false">~</mo>
+    </mover>
+  </mrow>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>The cap protects an online system from one extreme weight dominating state, overflowing finite precision, or creating intolerable variance. But unless the cap is part of the intended mathematical model, it introduces bias: contributions above the threshold are deliberately underrepresented.</p>
+<p>This trade appears in importance weighting, robust online statistics, adaptive reconstruction and control. The correct question is not “does clipping stabilize it?” but how bias changes as the cap moves and whether the uncapped tail is real signal, model mismatch, or corrupted data.</p>
+<p>A useful experiment sweeps <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>w</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+</math>, records variance, bias against an uncapped/high-precision reference, effective sample size and downstream failure rate. Tests should include weights exactly at the cap, negative/invalid weights when the domain forbids them, and extreme values that would overflow the uncapped path.</p>
+</section>
+</section>
+</body>
+</html>

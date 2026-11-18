@@ -1,0 +1,48 @@
+\hypertarget{appendix-1bae9457dbc3}{}
+\section*{Coordinate frames and change of basis}
+\section{Coordinate frames and change of basis}\label{coordinate-frames-and-change-of-basis}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase7 · \textbf{Latest development:} Phase7
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A frame gives an origin and independent axes relative to another frame. Its matrix maps local coordinates to that parent description. Changing description uses the inverse destination frame followed by the source frame; active motion and passive coordinate change answer different questions.
+
+\textbf{Reconstruction cue:} Coordinates from frame A to frame B use inverse(F\_B) times F\_A.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Linear affine and projective transformations (01-Foundations-I, appendix-0bf0ca73f735)}
+\item
+  \href{}{Matrix inversion pivoting and residuals (01-Foundations-I, appendix-48d2e66378ab)}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\item
+  \href{}{Camera view and clip-space pipeline (04-Visual-Computing-II, appendix-1c07d64f5e70)}
+\item
+  \href{}{Transform hierarchies TRS and shear (01-Foundations-I, appendix-292c061cd47c)}
+\item
+  \href{}{Manifold polygon meshes and boundary structure (04-Visual-Computing-II, appendix-fab348609369)}
+\item
+  \href{}{Constrained optimization and inverse kinematics (04-Visual-Computing-II, appendix-29f4bea4c2bb)}
+\item
+  \hyperref[appendix-113f0267e5f4]{Camera gauge freedoms and observability}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Keep\%20the\%20promises\%20visible\%20while\%20moving\%20between\%20representations}{Continuous explanation} · \href{}{Coverage and source gap (01-Foundations-I, appendix-fd090d982a15 § Phase 7 - Parts 601-700)} · \href{}{Sources and verification (01-Foundations-I, appendix-a103e7846d21 § Phase 7 - Source analysis and verification)}
+
+\subsection{Phase 11 camera development}\label{phase-11-camera-development}
+
+A basis change re-expresses the same physical points and transforms; a reconstruction gauge allows different parameter assignments to produce identical measurements. Fixing one camera pose chooses a world origin and orientation, but adds no image evidence. Monocular scale remains free until a baseline, known length, or metric sensor anchors it. Do not mistake a coordinate convention for an empirical measurement. This distinction matters when defining bundle-adjustment priors and covariance, and assumes a rigid calibrated camera model. Link: \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20camera\%20model\%20must\%20close\%20the\%20loop}{A camera model must close the loop}; research: \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Four\%20deeper\%20links\%20from\%20the\%20TUM\%20lecture\%20review}{Four deeper links from the TUM lecture review}.

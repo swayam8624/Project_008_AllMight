@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch427.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-f15ce0d9c170-vulkan-synchronization2-and-resource-transitions" class="level2">
+<h2>Vulkan synchronization2 and resource transitions</h2>
+<p>Vulkan synchronization is not “put a barrier between two passes.” A dependency has to connect a real producer access to a real consumer access with execution and memory scopes that cover both operations.</p>
+<p>Vulkan 1.3 includes the synchronization2 model promoted from VK_KHR_synchronization2. It places stage and access masks together in the version-2 barrier structures and uses commands such as vkCmdPipelineBarrier2 and vkQueueSubmit2.</p>
+<p>Primary references: - https://docs.vulkan.org/guide/latest/extensions/VK_KHR_synchronization2.html - https://docs.vulkan.org/spec/latest/chapters/synchronization.html</p>
+<section id="appendix-f15ce0d9c170-producer-consumer-reasoning" class="level3">
+<h3>Producer → consumer reasoning</h3>
+<p>For every hazard, write the transition in words first.</p>
+<p>Example:</p>
+<p>A transfer command writes a storage buffer. A later compute shader reads that buffer.</p>
+<p>The producer execution stage is transfer. The producer access is transfer write. The consumer execution stage is compute shader. The consumer access is shader storage read.</p>
+<p>An abstract memory barrier therefore needs to cover:</p>
+<p>source stage = TRANSFER<br />
+source access = TRANSFER_WRITE<br />
+destination stage = COMPUTE_SHADER<br />
+destination access = SHADER_STORAGE_READ.</p>
+<p>Using ALL_COMMANDS and MEMORY_READ/WRITE everywhere may accidentally work but destroys precision and can hide misunderstanding. Using a destination stage that never performs the consumer access is not made correct by a broad access mask.</p>
+</section>
+<section id="appendix-f15ce0d9c170-image-transitions-add-a-layout-contract" class="level3">
+<h3>Image transitions add a layout contract</h3>
+<p>Images have another state dimension: layout. An image memory barrier can both synchronize accesses and transition from oldLayout to newLayout. The old layout must describe the state established by prior use unless the contents are intentionally discarded under the rules that permit that.</p>
+<p>A render graph therefore needs more than “read” and “write.” For each image subresource it eventually needs:</p>
+<ul>
+<li>stage/access usage;</li>
+<li>required layout;</li>
+<li>aspect;</li>
+<li>mip range;</li>
+<li>array-layer range;</li>
+<li>queue ownership when queues/families differ.</li>
+</ul>
+<p>A whole-image state tracker is a valid early implementation but cannot claim correct independent mip/layer scheduling.</p>
+</section>
+<section id="appendix-f15ce0d9c170-queue-submission-and-timeline-semaphores" class="level3">
+<h3>Queue submission and timeline semaphores</h3>
+<p>Synchronization2 also modernizes queue submission through VkSubmitInfo2 and related structures. Timeline semaphores carry monotonically increasing integer values and are useful for expressing ordered completion points across submissions. A timeline value is not a memory barrier by itself; the signal/wait operations participate in dependencies whose scopes must still match the work.</p>
+</section>
+<section id="appendix-f15ce0d9c170-native-witness-now-in-the-repository" class="level3">
+<h3>Native witness now in the repository</h3>
+<p>tools/native/vulkan_sync_smoke.cpp is compiled and executed in the dedicated native graphics workflow on Ubuntu with a Vulkan implementation and validation layer packages. It:</p>
+<ul>
+<li>creates a Vulkan 1.3 instance;</li>
+<li>finds a device exposing synchronization2;</li>
+<li>creates a queue/device with the feature enabled;</li>
+<li>records a VkMemoryBarrier2 through vkCmdPipelineBarrier2;</li>
+<li>submits the command buffer using vkQueueSubmit2;</li>
+<li>waits for fence completion;</li>
+<li>fails on validation-layer errors when the layer is available.</li>
+</ul>
+<p>That materially raises the evidence level from a CPU-only logical graph.</p>
+<p>It still does not prove a resource-specific RAW transition, image layout transition, queue-family transfer, timeline protocol, transient aliasing, physical-GPU performance, or current Kairo/Vulkax integration. Each of those needs its own captured witness.</p>
+<p>Related: <a href="ch419.xhtml#appendix-f662b5b1773b-gpu-workgroups-and-synchronization" class="wikilink">GPU workgroups and synchronization</a>, <a href="ch314.xhtml#appendix-2e7e9fd28a2c-rendering-history-validity" class="wikilink">Rendering history validity (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Rendering history validity)</a>, <a href="ch424.xhtml#appendix-0fc95374cb7e-render-graph-barrier-lowering" class="wikilink">Render graph barrier lowering</a>.</p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,19 @@
+\hypertarget{appendix-541306fdbc1b}{}
+\section*{Moore-Penrose pseudoinverse}
+\chapter{Moore-Penrose pseudoinverse}\label{appendix-541306fdbc1b-moore-penrose-pseudoinverse}
+
+The exact SVD defines \(A^+\) by reciprocating every positive singular value and transposing the orthogonal factors. \(A^+b\) minimizes residual first and Euclidean solution norm among minimizers second. A numerical cutoff instead produces \(A_\tau^+\): if it discards a positive singular value, it solves a retained-rank approximation and can increase the residual of the original system. The cutoff makes the treatment of weak directions explicit.
+
+\textbf{Use it when:} rectangular or rank-deficient least squares needs a minimum-norm answer.
+
+\textbf{Developed in Phase 8:} The exact pseudoinverse reciprocates every positive singular value, yielding the least-squares solution with minimum Euclidean norm. A practical cutoff defines a different, truncated operator: discarding even a positive singular value can increase the residual for the original system, so the tolerance and retained rank are part of the mathematical answer. \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#The\%20Moore–Penrose\%20inverse\%20and\%20its\%20four\%20identities}{the exact pseudoinverse} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Thresholding\%20and\%20regularization\%20are\%20different\%20choices}{truncation and regularization}
+
+\section{Prerequisites}\label{appendix-541306fdbc1b-prerequisites}
+
+\hyperref[appendix-1fad5e7f36fa]{Singular value decomposition}, \hyperref[appendix-8572a4a060c1]{Linear systems and fundamental subspaces}, \hyperref[appendix-f8657bac66e5]{Matrix norms and numerical error}.
+
+\section{Used by}\label{appendix-541306fdbc1b-used-by}
+
+\hyperref[appendix-ad175ef3c5bf]{PCA and covariance eigensystems}, \hyperref[appendix-221a483bec2d]{Matrix factorization choices}.
+
+\textbf{Teaching path:} \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Pseudoinverse\%20makes\%20least\%20squares\%20and\%20minimum\%20norm\%20one\%20operation}{pseudoinverse}.

@@ -1,0 +1,4273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch439.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_06-engine-ii-ch043-compiling-renderer-intent-into-backend-work" class="level2">
+<h2>Compiling renderer intent into backend work</h2>
+<p><a href="ch410.xhtml#id_06-GPU-Architecture-and-Real-Time-Rendering" class="wikilink">Reading map</a> · <a href="ch436.xhtml#id_06-engine-ii-ch027-preparing-and-publishing-runtime-content" class="wikilink">Previous chapter</a> · <a href="ch440.xhtml#id_06-engine-ii-ch044-cross-backend-conversion-and-agreement" class="wikilink">Next chapter</a></p>
+<p>A renderer should express what a frame needs before translating it into API-specific commands. This chapter makes the compilation boundary explicit so ordering, resource state, and backend execution can be checked separately.</p>
+<p><strong>By the end:</strong> Map a render request to backend work while preserving resource dependencies, barriers, and lifetime ownership.</p>
+<p><strong>Recall question:</strong> What logical dependency does this command represent, and where is it enforced in the selected backend?</p>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 103799–107024; source-span SHA256 4825e8a42f5356f7c060e728c1c9a7e563f7ac3edfd1255c7f569076609bed16. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_06-engine-ii-ch043-compile-renderer-intent-into-backend-work" class="level3">
+<h3>Compile renderer intent into backend work</h3>
+<section id="id_06-engine-ii-ch043-m144" class="level4">
+<h4>+ M144</h4>
+<p>This pass closes <strong>Phase 24</strong>.</p>
+<p>The curriculum boundary is exact: <strong>M142 owns 2351–2360</strong>, covering multi-backend motivation, neutral handles/resource descriptions, capability contracts, escape hatches and the failure of lowest-common-denominator abstractions; <strong>M143 owns 2361–2384</strong>, covering the complete render-graph dependency/lifetime/state model; and <strong>M144 owns 2385–2400</strong>, covering conversion boundaries, portable scene/material/mesh contracts, shader/layout strategy, Metal↔︎Vulkan adaptation, reference/backend agreement testing, and native-strength multi-backend design.</p>
+<p>There are two ideas that dominate everything in this pass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Share rendering intent, not native API mechanics</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>A render graph describes dependencies;
+the backend chooses how those dependencies become GPU commands.</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If you remember those two statements, the entire architecture reconstructs itself.</p>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch043-multi-backend-renderer-architecture" class="level4">
+<h4>MULTI-BACKEND RENDERER ARCHITECTURE</h4>
+<p><strong>Why have multiple rendering backends?</strong></p>
+<p>Suppose your engine supports:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>V</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>k</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>D</mi>
+  <mn>3</mn>
+  <mi>D</mi>
+  <mn>12</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>O</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>G</mi>
+  <mi>L</mi>
+  <mo>.</mo>
+</math>
+<p>The naive reaction is:</p>
+<blockquote>
+<p>Write rendering four times.</p>
+</blockquote>
+<p>That is not what we want.</p>
+<p>The second naive reaction is:</p>
+<blockquote>
+<p>Build one fake API that looks vaguely like all four.</p>
+</blockquote>
+<p>That is often even worse.</p>
+<p>The correct goal is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>one engine rendering model</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>multiple native execution implementations</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The engine should agree on things such as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>mesh</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>material</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>light</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>render pass intent</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>resource usage</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>camera</mtext>
+  <mo>.</mo>
+</math>
+<p>It should not pretend these are universal:</p>
+<pre class="text"><code>VkDescriptorSet
+MTLArgumentBuffer
+ID3D12DescriptorHeap
+OpenGL texture unit</code></pre>
+<p>They are implementation mechanisms.</p>
+<hr />
+<p><strong>The three-layer renderer</strong></p>
+<p>A good architecture is:</p>
+<pre class="text"><code>Engine / Scene
+      ↓
+Renderer-neutral intent
+      ↓
+Backend implementation
+      ↓
+Metal / Vulkan / D3D12 / ...</code></pre>
+<p>For example:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>MeshDraw draw<span class="op">;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>draw<span class="op">.</span>Mesh <span class="op">=</span> meshHandle<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>draw<span class="op">.</span>Model <span class="op">=</span> worldTransform<span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>draw<span class="op">.</span>Material <span class="op">=</span> material<span class="op">;</span></span></code></pre></div>
+<p>is renderer intent.</p>
+<p>This:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>vkCmdBindDescriptorSets<span class="op">(...);</span></span></code></pre></div>
+<p>is Vulkan execution.</p>
+<p>This:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>encoder<span class="op">-&gt;</span>setFragmentTexture<span class="op">(...);</span></span></code></pre></div>
+<p>is Metal execution.</p>
+<p>Do not mix the layers.</p>
+<hr />
+<p><strong>Kairo is already moving in the right direction</strong></p>
+<p>Kairo’s public renderer API exposes concepts such as:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>Mesh</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>PBRMaterial</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>RenderScene</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>RenderLight</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>MeshHandle</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>TextureHandle</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>ViewportCapture</span></code></pre></div>
+<p>rather than exposing:</p>
+<pre class="text"><code>VkBuffer
+VkImage
+MTLBuffer
+MTLTexture</code></pre>
+<p>to ordinary scene code.</p>
+<p><code>RendererRuntime</code> then stores a variant of concrete backend runtimes:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>variant<span class="op">&lt;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>VulkanRendererRuntime<span class="op">&gt;,</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>OpenGLRendererRuntime<span class="op">&gt;,</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>MetalRendererRuntime<span class="op">&gt;,</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>unique_ptr<span class="op">&lt;</span>Direct3D12RendererRuntime<span class="op">&gt;</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;</span></span></code></pre></div>
+<p>depending on what is compiled.</p>
+<p>That is already much closer to the correct architecture than trying to wrap native API calls one-for-one.</p>
+<hr />
+<p><strong>Backend selection policy is separate from renderer semantics</strong></p>
+<p>Kairo separates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>which backend should I use?</mtext>
+</math>
+<p>from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>how rendering works</mtext>
+  <mo>.</mo>
+</math>
+<p>Current native-first policy is approximately:</p>
+<pre class="text"><code>macOS   → Metal
+Windows → D3D12
+Linux   → Vulkan</code></pre>
+<p>with Vulkan/OpenGL fallbacks based on compiled availability.</p>
+<p>Good.</p>
+<p>This means application code can request:</p>
+<pre class="text"><code>auto
+metal
+vulkan
+d3d12
+opengl</code></pre>
+<p>without changing scene extraction.</p>
+<hr />
+<p><strong>backend-neutral resource handles</strong></p>
+<p>Do not let gameplay code keep:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>VkImage image<span class="op">;</span></span></code></pre></div>
+<p>because now scene code knows Vulkan.</p>
+<p>Instead:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>TextureHandle texture<span class="op">;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>MeshHandle mesh<span class="op">;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>BufferHandle buffer<span class="op">;</span></span></code></pre></div>
+<p>The renderer owns the native resource behind them.</p>
+<p>Current Kairo:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> TextureHandle <span class="op">=</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint64_t<span class="op">;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> MeshHandle <span class="op">=</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint64_t<span class="op">;</span></span></code></pre></div>
+<p>with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>=</mo>
+  <mtext>invalid</mtext>
+  <mo>.</mo>
+</math>
+<p>Simple and effective.</p>
+<hr />
+<p><strong>Why handles beat native pointers</strong></p>
+<p>Suppose backend changes from Vulkan to Metal.</p>
+<p>An asset system storing:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>TextureHandle<span class="op">{</span><span class="dv">17</span><span class="op">}</span></span></code></pre></div>
+<p>doesn’t care.</p>
+<p>Backend registry might map:</p>
+<pre class="text"><code>17
+→ VulkanTexture</code></pre>
+<p>or:</p>
+<pre class="text"><code>17
+→ MetalTexture</code></pre>
+<p>depending on active runtime.</p>
+<p>The user of the handle sees identity.</p>
+<p>The backend sees implementation.</p>
+<hr />
+<p><strong>Raw integer handles have a stale-handle problem</strong></p>
+<p>Suppose resource index 42 is destroyed.</p>
+<p>Later a new resource receives 42.</p>
+<p>Old code accidentally still stores:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>42.</mn>
+</math>
+<p>Now it refers to the new resource.</p>
+<p>A stronger handle is generational:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> TextureHandle</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Index<span class="op">;</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Generation<span class="op">;</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Registry entry:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> TextureEntry</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Generation<span class="op">;</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    NativeTexture Resource<span class="op">;</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Validation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>=</mo>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>If not:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>stale handle detected</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Handle composition</strong></p>
+<p>A compact 64-bit handle can encode:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>G</mi>
+  <mo>&lt;&lt;</mo>
+  <mn>32</mn>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>I</mi>
+  <mo>.</mo>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <mtext>index</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mo>=</mo>
+  <mtext>generation</mtext>
+  <mo>.</mo>
+</math>
+<p>Recover:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <mi>H</mi>
+  <mi mathvariant="normal">&amp;</mi>
+  <mn>0</mn>
+  <mi>x</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mo>=</mo>
+  <mi>H</mi>
+  <mo>&gt;&gt;</mo>
+  <mn>32.</mn>
+</math>
+<p>Current Kairo’s plain <code>uint64_t</code> can evolve into this without changing the external storage size.</p>
+<hr />
+<p><strong>RenderGraph handles are already typed</strong></p>
+<p>Kairo’s render graph uses:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> RenderResourceHandle</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Value<span class="op">;</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>and:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> RenderPassHandle</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Value<span class="op">;</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>This prevents accidentally passing a pass handle where a resource handle is expected.</p>
+<p>Maveb’s render graph goes a little further:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ResourceHandle</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> index<span class="op">;</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> generation<span class="op">;</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>which adds stale-handle protection.</p>
+<p>The ideal general resource system combines both ideas:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>typed + generational</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>backend-neutral buffer descriptions</strong></p>
+<p>A generic buffer description should describe <strong>intent</strong>.</p>
+<p>Not:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>VkBufferUsageFlags VulkanUsage<span class="op">;</span></span></code></pre></div>
+<p>Instead:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> <span class="kw">class</span> BufferUsage <span class="op">:</span> <span class="dt">uint32_t</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    Vertex   <span class="op">=</span> <span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    Index    <span class="op">=</span> <span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    Uniform  <span class="op">=</span> <span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">2</span><span class="op">,</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    Storage  <span class="op">=</span> <span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">3</span><span class="op">,</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    Indirect <span class="op">=</span> <span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">4</span><span class="op">,</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    CopySrc  <span class="op">=</span> <span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">5</span><span class="op">,</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>    CopyDst  <span class="op">=</span> <span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">6</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> BufferDesc</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> Size<span class="op">;</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    BufferUsage Usage<span class="op">;</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    MemoryClass Memory<span class="op">;</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>string DebugName<span class="op">;</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<hr />
+<p><strong>Memory class should also express intent</strong></p>
+<p>Do not expose:</p>
+<pre class="text"><code>VK_MEMORY_PROPERTY_HOST_VISIBLE</code></pre>
+<p>to portable engine code.</p>
+<p>Use something like:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> <span class="kw">class</span> MemoryClass</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    GPUOnly<span class="op">,</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    CPUToGPU<span class="op">,</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    GPUToCPU</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Backend translates:</p>
+<p><code>GPUOnly</code>:</p>
+<p>Vulkan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>E</mi>
+  <mi>V</mi>
+  <mi>I</mi>
+  <mi>C</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>L</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>C</mi>
+  <mi>A</mi>
+  <mi>L</mi>
+</math>
+<p>Metal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p><code>CPUToGPU</code>:</p>
+<p>Vulkan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>O</mi>
+  <mi>S</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>V</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>S</mi>
+  <mi>I</mi>
+  <mi>B</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+</math>
+<p>plus suitable coherency strategy.</p>
+<p>Metal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>That is semantic translation.</p>
+<hr />
+<p><strong>Avoid overpromising exact equivalence</strong></p>
+<p><code>GPUOnly</code> is not:</p>
+<blockquote>
+<p>exactly <code>Private</code> and exactly <code>DEVICE_LOCAL</code>.</p>
+</blockquote>
+<p>Those APIs expose different memory models.</p>
+<p>It means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>CPU does not require direct access and GPU performance is preferred</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Backend then chooses best representation.</p>
+<hr />
+<p><strong>backend-neutral texture descriptions</strong></p>
+<p>A useful texture description:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> TextureDesc</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    TextureDimension Dimension<span class="op">;</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Width<span class="op">;</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Height<span class="op">;</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Depth<span class="op">;</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> MipLevels<span class="op">;</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> ArrayLayers<span class="op">;</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Samples<span class="op">;</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>    PixelFormat Format<span class="op">;</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>    TextureUsage Usage<span class="op">;</span></span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>    MemoryClass Memory<span class="op">;</span></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>string DebugName<span class="op">;</span></span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Again, semantic fields.</p>
+<hr />
+<p><strong>Texture usage</strong></p>
+<p>Portable usage might include:</p>
+<pre class="text"><code>Sampled
+Storage
+ColorAttachment
+DepthAttachment
+CopySrc
+CopyDst
+Presentable</code></pre>
+<p>Backend conversion:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo stretchy="false">→</mo>
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>I</mi>
+  </msub>
+  <mi>M</mi>
+  <mi>A</mi>
+  <mi>G</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>U</mi>
+  </msub>
+  <mi>S</mi>
+  <mi>A</mi>
+  <mi>G</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>S</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>M</mi>
+  <mi>P</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+  <mi>D</mi>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>T</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>U</mi>
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Same intent.</p>
+<p>Different API flags.</p>
+<hr />
+<p><strong>Format abstraction needs discipline</strong></p>
+<p>You can define:</p>
+<pre class="text"><code>RGBA8_UNorm
+RGBA8_sRGB
+RGBA16_Float
+R32_UInt
+D32_Float</code></pre>
+<p>But never invent a portable format unless you know how all target backends support it.</p>
+<p>Backend capability query should answer:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mi>F</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>For example, a format might support shader sampling but not rendering on one device.</p>
+<hr />
+<p><strong>sampler descriptions</strong></p>
+<p>Portable sampler:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> SamplerDesc</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    Filter Min<span class="op">;</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    Filter Mag<span class="op">;</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    Filter Mip<span class="op">;</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    AddressMode U<span class="op">;</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    AddressMode V<span class="op">;</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>    AddressMode W<span class="op">;</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> MaxAnisotropy<span class="op">;</span></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>    CompareFunction Comparison<span class="op">;</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Maps naturally to both Vulkan and Metal.</p>
+<p>Kairo currently exposes only authored U/V addressing in its public <code>TextureSampler</code>, while filtering remains linear by policy.</p>
+<p>That is perfectly reasonable for its current asset/material scope.</p>
+<p>A generic RHI sampler description would be broader.</p>
+<hr />
+<p><strong>backend-neutral pipeline descriptions</strong></p>
+<p>This becomes trickier.</p>
+<p>A neutral graphics pipeline might describe:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> GraphicsPipelineDesc</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    ShaderHandle Vertex<span class="op">;</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    ShaderHandle Fragment<span class="op">;</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    VertexLayout VertexInput<span class="op">;</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    PrimitiveTopology Topology<span class="op">;</span></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>    RasterState Raster<span class="op">;</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    DepthStencilState DepthStencil<span class="op">;</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>    BlendState Blend<span class="op">;</span></span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>PixelFormat<span class="op">&gt;</span></span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>        ColorFormats<span class="op">;</span></span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>    PixelFormat DepthFormat<span class="op">;</span></span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> SampleCount<span class="op">;</span></span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>This works because these are rendering semantics.</p>
+<hr />
+<p><strong>Do not try to normalize everything</strong></p>
+<p>Metal can dynamically change states that Vulkan may traditionally bake into a pipeline.</p>
+<p>Vulkan may support dynamic rendering.</p>
+<p>Metal has tile-specific capabilities.</p>
+<p>D3D12 has root signatures.</p>
+<p>So pipeline description should describe:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>what the engine wants</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>without pretending the compiled backend pipeline object has identical structure.</p>
+<hr />
+<p><strong>Pipeline cache key</strong></p>
+<p>A pipeline descriptor naturally becomes a cache key:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>K</mi>
+  <mo>=</mo>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>L</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Backend:</p>
+<pre class="text"><code>K → native pipeline object</code></pre>
+<p>This avoids recompiling equivalent states.</p>
+<hr />
+<p><strong>capability queries, not assumptions</strong></p>
+<p>Never do:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>backend <span class="op">==</span> Metal<span class="op">)</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    assumeRayTracing <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span></code></pre></div>
+<p>Instead:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>RendererCapabilities caps <span class="op">=</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    renderer<span class="op">.</span>Capabilities<span class="op">();</span></span></code></pre></div>
+<p>perhaps:</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> RendererCapabilities</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> RayTracing<span class="op">;</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> MeshShaders<span class="op">;</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> BindlessTextures<span class="op">;</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> AsyncCompute<span class="op">;</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> MemorylessAttachments<span class="op">;</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> TimelineSynchronization<span class="op">;</span></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> MaxColorAttachments<span class="op">;</span></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> MaxTextureDimension2D<span class="op">;</span></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<hr />
+<p><strong>Capability is device-level, not merely API-level</strong></p>
+<p>Vulkan supports ray tracing extensions.</p>
+<p>That does not imply every Vulkan GPU supports them.</p>
+<p>Metal exposes ray tracing capabilities.</p>
+<p>That does not imply every Metal device supports them.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>F</mi>
+          <mi>e</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>u</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>A</mi>
+          <mi>v</mi>
+          <mi>a</mi>
+          <mi>i</mi>
+          <mi>l</mi>
+          <mi>a</mi>
+          <mi>b</mi>
+          <mi>l</mi>
+          <mi>e</mi>
+          <mo>=</mo>
+          <mi>B</mi>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>k</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>S</mi>
+          <mi>u</mi>
+          <mi>p</mi>
+          <mi>p</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>t</mi>
+          <mi>s</mi>
+          <mo>∧</mo>
+          <mi>D</mi>
+          <mi>e</mi>
+          <mi>v</mi>
+          <mi>i</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+          <mi>S</mi>
+          <mi>u</mi>
+          <mi>p</mi>
+          <mi>p</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>t</mi>
+          <mi>s</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Maveb already follows this pattern</strong></p>
+<p>Its Metal capability inspection asks the actual device:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mi>F</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>y</mi>
+  <mo stretchy="false">(</mo>
+  <mo>.</mo>
+  <mo>.</mo>
+  <mo>.</mo>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mi>R</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mi>D</mi>
+  <mi>y</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>L</mi>
+  <mi>i</mi>
+  <mi>b</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>That is exactly the correct philosophy.</p>
+<p>Kairo’s current neutral backend query is more focused on:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>compiled backend availability</mtext>
+</math>
+<p>than detailed GPU feature capabilities.</p>
+<p>A future neutral capability object would complement it.</p>
+<hr />
+<p><strong>feature-level contracts</strong></p>
+<p>A single boolean such as:</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>SupportsRenderer <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span></code></pre></div>
+<p>is too vague.</p>
+<p>Define feature contracts.</p>
+<p>Example:</p>
+<pre class="text"><code>CoreRaster
+    sampled textures
+    depth
+    MRT
+    indexed draws
+
+AdvancedRaster
+    indirect draws
+    storage buffers
+
+Bindless
+    large resource arrays
+    nonuniform indexing
+
+AsyncCompute
+    independent compute scheduling
+
+RayTracing
+    acceleration structures
+    ray queries/pipelines</code></pre>
+<p>Then renderer paths can require:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>L</mi>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mo>≥</mo>
+  <mi>X</mi>
+</math>
+<p>or test individual contracts.</p>
+<hr />
+<p><strong>Graceful feature selection</strong></p>
+<p>Suppose clustered forward renderer needs compute + storage buffers.</p>
+<p>If unavailable:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>fall back to CPU light lists</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>rather than:</p>
+<blockquote>
+<p>Vulkan failed.</p>
+</blockquote>
+<p>Similarly:</p>
+<p>Ray-traced reflections unavailable:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>S</mi>
+  <mi>R</mi>
+  <mo stretchy="false">→</mo>
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>b</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>Feature contracts allow real fallback design.</p>
+<hr />
+<p><strong>backend-specific escape hatches</strong></p>
+<p>A portable renderer eventually needs native integration.</p>
+<p>Examples:</p>
+<ul>
+<li>Dear ImGui Metal backend needs <code>MTLDevice</code>,</li>
+<li>Vulkan tooling needs render pass/device/queue,</li>
+<li>platform capture may need native texture,</li>
+<li>video encoder may consume Metal texture directly.</li>
+</ul>
+<p>The answer is not:</p>
+<blockquote>
+<p>expose native handles everywhere.</p>
+</blockquote>
+<p>The answer is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>explicit, narrow escape hatch</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Kairo already does this well</strong></p>
+<p>Ordinary rendering uses neutral API.</p>
+<p>Tooling-specific accessors expose:</p>
+<pre class="text"><code>VulkanBackendContext
+MetalBackendContext
+Direct3D12BackendContext</code></pre>
+<p>and viewport textures.</p>
+<p>Metal viewport identity is exposed as erased:</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> Texture<span class="op">;</span></span></code></pre></div>
+<p>with documentation that clients must treat it as borrowed and not retain/release it.</p>
+<p>This is exactly what an escape hatch should look like:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>localized + explicit + non-portable by construction</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Escape hatch should advertise danger</strong></p>
+<p>For example:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>NativeMetalContext<span class="op">&amp;</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>GetNativeMetalContext<span class="op">();</span></span></code></pre></div>
+<p>should exist only in platform/tooling code.</p>
+<p>Not:</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>renderer<span class="op">.</span>GetNativeHandle<span class="op">()</span></span></code></pre></div>
+<p>called throughout gameplay.</p>
+<p>One possible policy:</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>renderer<span class="op">.</span>Backend<span class="op">()</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">!=</span> GraphicsBackend<span class="op">::</span>Metal<span class="op">)</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">throw</span> <span class="op">...</span></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>so misuse fails immediately.</p>
+<hr />
+<p><strong>why lowest-common-denominator abstractions fail</strong></p>
+<p>Suppose your neutral API only supports what OpenGL 3, Vulkan, Metal and D3D12 all expose identically.</p>
+<p>You may end up with:</p>
+<pre class="text"><code>draw
+texture
+vertex buffer
+uniform</code></pre>
+<p>and lose:</p>
+<pre class="text"><code>argument buffers
+descriptor indexing
+mesh shaders
+ray tracing
+memoryless attachments
+timeline synchronization
+explicit heaps
+async compute
+subpass/tile features</code></pre>
+<p>Congratulations—you built a modern engine that behaves like an old API.</p>
+<hr />
+<p><strong>Correct abstraction principle</strong></p>
+<p>Do not define:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>C</mi>
+          <mi>a</mi>
+          <mi>p</mi>
+          <mi>a</mi>
+          <mi>b</mi>
+          <mi>i</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mo>=</mo>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>s</mi>
+          <mi>e</mi>
+          <mi>c</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mo stretchy="false">(</mo>
+          <mi>M</mi>
+          <mi>e</mi>
+          <mi>t</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mo>,</mo>
+          <mi>V</mi>
+          <mi>u</mi>
+          <mi>l</mi>
+          <mi>k</mi>
+          <mi>a</mi>
+          <mi>n</mi>
+          <mo>,</mo>
+          <mi>D</mi>
+          <mn>3</mn>
+          <mi>D</mi>
+          <mn>12</mn>
+          <mo>,</mo>
+          <mi>O</mi>
+          <mi>p</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>G</mi>
+          <mi>L</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Instead:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>C</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>I</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mo>+</mo>
+          <mi>C</mi>
+          <mi>a</mi>
+          <mi>p</mi>
+          <mi>a</mi>
+          <mi>b</mi>
+          <mi>i</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+          <mi>Q</mi>
+          <mi>u</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>i</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mo>+</mo>
+          <mi>O</mi>
+          <mi>p</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mi>F</mi>
+          <mi>e</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>u</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>I</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>f</mi>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mo>+</mo>
+          <mi>N</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>v</mi>
+          <mi>e</mi>
+          <mi>E</mi>
+          <mi>s</mi>
+          <mi>c</mi>
+          <mi>a</mi>
+          <mi>p</mi>
+          <mi>e</mi>
+          <mi>H</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>c</mi>
+          <mi>h</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That lets common code remain common while backends remain strong.</p>
+<hr />
+<p><strong>Portable does not mean identical</strong></p>
+<p>A good abstraction says:</p>
+<blockquote>
+<p>Render this HDR scene with depth and shadowing.</p>
+</blockquote>
+<p>A bad abstraction says:</p>
+<blockquote>
+<p>Every backend must implement a pretend <code>PipelineBarrier()</code> with exactly Vulkan semantics.</p>
+</blockquote>
+<p>Metal does not need to become Vulkan.</p>
+<p>Vulkan does not need to become Metal.</p>
+<hr />
+</section>
+<section id="id_06-engine-ii-ch043-complete-render-graph" class="level4">
+<h4>COMPLETE RENDER GRAPH</h4>
+<p>Now we move to one of the most important engine systems in the entire curriculum.</p>
+<hr />
+<p><strong>render-graph motivation</strong></p>
+<p>A traditional renderer manually says:</p>
+<pre class="text"><code>Create ShadowTexture
+
+ShadowPass()
+Barrier()
+
+GeometryPass()
+Barrier()
+
+TAA()
+Barrier()
+
+Bloom()
+Barrier()
+
+Present()</code></pre>
+<p>Problems emerge as passes increase.</p>
+<p>Which pass owns resource?</p>
+<p>Who last wrote it?</p>
+<p>Is it still needed?</p>
+<p>Can two textures reuse memory?</p>
+<p>Did we forget a barrier?</p>
+<p>Can this pass be culled?</p>
+<p>Can compute overlap graphics?</p>
+<p>A render graph makes those relationships explicit.</p>
+<hr />
+<p><strong>Render graph as a mathematical graph</strong></p>
+<p>Define:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>V</mi>
+  <mo>,</mo>
+  <mi>E</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>where vertices:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mo>=</mo>
+  <mtext>render passes</mtext>
+  <mo>.</mo>
+</math>
+<p>Directed edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">→</mo>
+  <mi>B</mi>
+</math>
+<p>means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>B</mi>
+          <mtext> depends on </mtext>
+          <mi>A</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For valid execution:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+</math>
+<p>should be a DAG:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Directed Acyclic Graph</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then topological sorting yields legal execution order.</p>
+<hr />
+<p><strong>Resource graph interpretation</strong></p>
+<p>You can also think bipartitely:</p>
+<pre class="text"><code>Pass A
+   ↓ writes
+Resource X
+   ↓ read by
+Pass B</code></pre>
+<p>The engine usually compiles resource accesses into pass-to-pass dependency edges.</p>
+<hr />
+<p><strong>pass nodes</strong></p>
+<p>A pass should declare intent.</p>
+<p>Example:</p>
+<div class="sourceCode" id="cb47"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>graph<span class="op">.</span>AddPass<span class="op">(</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;Lighting&quot;</span><span class="op">,</span></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>        Read<span class="op">(</span>gbufferNormal<span class="op">,</span></span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>             ShaderRead<span class="op">),</span></span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>        Read<span class="op">(</span>gbufferDepth<span class="op">,</span></span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>             ShaderRead<span class="op">),</span></span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>        Write<span class="op">(</span>hdrColor<span class="op">,</span></span>
+<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a>              ColorAttachment<span class="op">)</span></span>
+<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
+<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">[]</span> <span class="op">{</span></span>
+<span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a>        EncodeLighting<span class="op">();</span></span>
+<span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">});</span></span></code></pre></div>
+<p>Pass declaration should separate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>dependency description</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>execution callback</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is exactly what current Kairo graph does.</p>
+<hr />
+<p><strong>Current Kairo pass object</strong></p>
+<p>Each pass stores:</p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>Name</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>Accesses</span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>Dependencies</span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>Execute</span></code></pre></div>
+<p>and every access stores:</p>
+<div class="sourceCode" id="cb49"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>Resource</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>Mode</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>State</span></code></pre></div>
+<p>with mode:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>,</mo>
+  <mi>W</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>W</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>This is already a solid minimal model.</p>
+<hr />
+<p><strong>resource nodes</strong></p>
+<p>Resource node represents logical resource, not necessarily immediately allocated native memory.</p>
+<p>Example:</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>RenderResourceDesc</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span>Name <span class="op">=</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;Scene HDR&quot;</span><span class="op">,</span></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span>Kind <span class="op">=</span></span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>        Texture<span class="op">,</span></span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span>EstimatedBytes <span class="op">=</span></span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>        <span class="dv">1920</span><span class="op">*</span><span class="dv">1080</span><span class="op">*</span><span class="dv">8</span><span class="op">,</span></span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span>Transient <span class="op">=</span></span>
+<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>        <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span>InitialState <span class="op">=</span></span>
+<span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a>        Undefined</span>
+<span id="cb50-17"><a href="#cb50-17" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Logical identity exists before physical allocation decision.</p>
+<p>That is critical.</p>
+<hr />
+<p><strong>Logical versus physical resource</strong></p>
+<p>Logical:</p>
+<pre class="text"><code>BloomHalf</code></pre>
+<p>means:</p>
+<blockquote>
+<p>pass graph’s half-resolution bloom intermediate.</p>
+</blockquote>
+<p>Physical resource may be:</p>
+<pre class="text"><code>VkImage #41</code></pre>
+<p>or:</p>
+<pre class="text"><code>MTLTexture from transient heap slot 3.</code></pre>
+<p>Logical resource survives backend abstraction.</p>
+<p>Physical object does not.</p>
+<hr />
+<p><strong>declaring reads</strong></p>
+<p>Suppose pass reads texture:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>.</mo>
+</math>
+<p>Declaration:</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>    R<span class="op">,</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>    RenderAccessMode<span class="op">::</span>Read<span class="op">,</span></span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>    RenderResourceState<span class="op">::</span>ShaderRead</span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This communicates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>pass requires value produced earlier</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Compiler can now establish RAW dependency.</p>
+<hr />
+<p><strong>Read-before-write validation</strong></p>
+<p>For transient resource whose initial state is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>,</mo>
+</math>
+<p>reading before first write is invalid.</p>
+<p>Kairo explicitly detects this and throws.</p>
+<p>This is powerful because a runtime black-screen bug becomes a graph compile error:</p>
+<pre class="text"><code>Resource &#39;History&#39; is read before its first write.</code></pre>
+<hr />
+<p><strong>writes</strong></p>
+<p>Write declaration:</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>    hdr<span class="op">,</span></span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>    Write<span class="op">,</span></span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>    ColorAttachment</span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>means pass produces a new value.</p>
+<p>Writes matter because all prior accesses may have to finish.</p>
+<p>If previous writer exists:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mi>A</mi>
+  <mi>W</mi>
+  <mo>.</mo>
+</math>
+<p>If readers exist:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mi>A</mi>
+  <mi>R</mi>
+  <mo>.</mo>
+</math>
+<p>Both create ordering requirements.</p>
+<hr />
+<p><strong>Hazard dependency construction</strong></p>
+<p>For every resource track:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>W</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>On read:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>W</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>On write:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>W</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>W</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>W</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi mathvariant="normal">∀</mi>
+  <mi>i</mi>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mi mathvariant="normal">∅</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>W</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>W</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Current Kairo does exactly this.</p>
+<hr />
+<p><strong>Why two readers need no edge</strong></p>
+<p>If:</p>
+<pre class="text"><code>Pass A reads X
+Pass B reads X</code></pre>
+<p>neither mutates X.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>↛</mo>
+  <mi>B</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>↛</mo>
+  <mi>A</mi>
+  <mo>.</mo>
+</math>
+<p>They may be reordered or potentially overlap.</p>
+<p>This is how graphs expose parallelism.</p>
+<hr />
+<p><strong>dependency building</strong></p>
+<p>Consider:</p>
+<pre class="text"><code>Shadow writes ShadowMap
+
+Geometry reads ShadowMap
+         writes HDR
+
+Bloom reads HDR
+      writes Bloom
+
+Present reads HDR and Bloom</code></pre>
+<p>Edges:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>o</mi>
+  <mi>w</mi>
+  <mo stretchy="false">→</mo>
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo stretchy="false">→</mo>
+  <mi>B</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo stretchy="false">→</mo>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mo stretchy="false">→</mo>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>The graph does not need hardcoded pass order.</p>
+<p>Dependencies derive order.</p>
+<hr />
+<p><strong>Explicit dependencies still matter</strong></p>
+<p>Some dependencies do not arise from resource hazards.</p>
+<p>Example:</p>
+<pre class="text"><code>GPU timestamp reset
+must happen before
+profiling pass</code></pre>
+<p>or API lifecycle:</p>
+<pre class="text"><code>Acquire
+→
+Record
+→
+Submit
+→
+Present.</code></pre>
+<p>Kairo provides:</p>
+<div class="sourceCode" id="cb61"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>DependsOn<span class="op">(</span>pass<span class="op">,</span></span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>          dependency<span class="op">);</span></span></code></pre></div>
+<p>for these.</p>
+<p>Its Vulkan frame graph currently uses explicit dependencies for lifecycle ordering.</p>
+<hr />
+<p><strong>cycle detection</strong></p>
+<p>Invalid:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">→</mo>
+  <mi>B</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo stretchy="false">→</mo>
+  <mi>A</mi>
+  <mo>.</mo>
+</math>
+<p>No valid execution order exists.</p>
+<p>Kairo uses Kahn-style topological sorting.</p>
+<p>If sorted pass count:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">|</mo>
+  <mi>O</mi>
+  <mo stretchy="false">|</mo>
+</math>
+<p>is not:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">|</mo>
+  <mi>V</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<p>there is a cycle.</p>
+<p>Formally:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">|</mo>
+          <mi>T</mi>
+          <mi>o</mi>
+          <mi>p</mi>
+          <mi>o</mi>
+          <mi>l</mi>
+          <mi>o</mi>
+          <mi>g</mi>
+          <mi>i</mi>
+          <mi>c</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mi>O</mi>
+          <mi>r</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mo>&lt;</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mi>V</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mo stretchy="false">⇒</mo>
+          <mi>c</mi>
+          <mi>y</mi>
+          <mi>c</mi>
+          <mi>l</mi>
+          <mi>e</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Kahn algorithm</strong></p>
+<p>Compute indegree:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <msup>
+    <mi>g</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+    </mrow>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Put every zero-indegree node in ready set.</p>
+<p>Repeatedly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>y</mi>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">)</mo>
+</math>
+<p>append to order.</p>
+<p>For every outgoing edge:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mo stretchy="false">→</mo>
+  <mi>u</mi>
+</math>
+<p>decrement:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <msup>
+    <mi>g</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+    </mrow>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If it becomes zero:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>At end compare size.</p>
+<hr />
+<p><strong>Kairo makes topological order deterministic</strong></p>
+<p>It uses a priority queue ordered by pass index.</p>
+<p>Therefore if multiple passes are valid simultaneously, lower declared index wins.</p>
+<p>That is useful for:</p>
+<ul>
+<li>reproducible testing,</li>
+<li>deterministic captures,</li>
+<li>stable debugging.</li>
+</ul>
+<p>Random legal schedules are technically correct but terrible for reproducibility.</p>
+<hr />
+<p><strong>topological sorting</strong></p>
+<p>Graph:</p>
+<pre class="text"><code>      A
+     / \
+    B   C
+     \ /
+      D</code></pre>
+<p>Valid orders:</p>
+<pre class="text"><code>A B C D
+A C B D</code></pre>
+<p>Both correct.</p>
+<p>Topological order represents one linearization of a partial order.</p>
+<p>This distinction becomes important for async queues later.</p>
+<hr />
+<p><strong>execution ordering</strong></p>
+<p>Compiled graph should be immutable during execution.</p>
+<p>Current Kairo compiles:</p>
+<pre class="text"><code>resource descriptions
+ordered passes
+transitions
+lifetimes
+alias slots</code></pre>
+<p>then <code>Execute()</code> walks passes in order.</p>
+<p>Before each callback:</p>
+<div class="sourceCode" id="cb65"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>ApplyTransitions<span class="op">(...)</span></span></code></pre></div>
+<p>may translate graph state transitions into native backend barriers.</p>
+<p>This is an excellent separation.</p>
+<hr />
+<p><strong>Compilation versus execution</strong></p>
+<p>Compile phase performs expensive reasoning:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mi>y</mi>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>,</mo>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Execution phase should be simple:</p>
+<pre class="text"><code>for pass in compiledOrder:
+    apply inferred native state changes
+    execute pass callback</code></pre>
+<p>This minimizes per-frame logic.</p>
+<hr />
+<p><strong>Static versus dynamic graph</strong></p>
+<p>Some engines rebuild graph every frame.</p>
+<p>Others compile stable topology and only update runtime values.</p>
+<p>If topology is stable:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>cache compiled graph</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If feature toggles alter pass set, rebuild when configuration changes.</p>
+<p>The right balance depends on renderer architecture.</p>
+<hr />
+<p><strong>resource lifetime intervals</strong></p>
+<p>If resource first appears at pass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+</math>
+<p>and last appears at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mo>,</mo>
+</math>
+<p>its logical lifetime is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">[</mo>
+          <mi>f</mi>
+          <mo>,</mo>
+          <mi>l</mi>
+          <mo stretchy="false">]</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Example:</p>
+<pre class="text"><code>Pass 0: write A
+Pass 1: read A
+Pass 2: read A</code></pre>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>first and last use</strong></p>
+<p>Kairo scans compiled execution order.</p>
+<p>For first encounter:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>P</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>Every encounter updates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>P</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>That gives interval.</p>
+<p>This is exactly the information required for transient aliasing.</p>
+<hr />
+<p><strong>Why declaration order is not lifetime order</strong></p>
+<p>Imagine pass declarations:</p>
+<pre class="text"><code>A
+B
+C</code></pre>
+<p>but dependency sort gives:</p>
+<pre class="text"><code>B
+A
+C.</code></pre>
+<p>Lifetime must use <strong>compiled order</strong>.</p>
+<p>Kairo correctly computes lifetimes after topological sorting.</p>
+<hr />
+<p><strong>transient-resource allocation</strong></p>
+<p>Transient resource exists only for frame/pass graph.</p>
+<p>Examples:</p>
+<pre class="text"><code>Bloom temporary
+G-buffer intermediate
+SSR ray buffer
+post-process scratch
+temporary compute histogram</code></pre>
+<p>You do not necessarily need one physical allocation for every logical transient.</p>
+<hr />
+<p><strong>Naive memory</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>16</mn>
+  <mi>M</mi>
+  <mi>B</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>R</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>16</mn>
+  <mi>M</mi>
+  <mi>B</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>R</mi>
+    <mn>3</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>16</mn>
+  <mi>M</mi>
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>Naive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mo>=</mo>
+  <mn>48</mn>
+  <mi>M</mi>
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>But if their lifetimes do not overlap:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>:</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>:</mo>
+  <mo stretchy="false">[</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mn>3</mn>
+  </msub>
+  <mo>:</mo>
+  <mo stretchy="false">[</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<p>then physical memory can potentially be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mn>16</mn>
+          <mi>M</mi>
+          <mi>B</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>instead.</p>
+<hr />
+<p><strong>aliasing</strong></p>
+<p>Two logical resources may share backing storage if lifetimes don’t overlap.</p>
+<p>For intervals:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>a</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>a</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>b</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>b</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<p>non-overlap iff:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>a</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>&lt;</mo>
+          <msub>
+            <mi>b</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>∨</mo>
+          <msub>
+            <mi>b</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>&lt;</mo>
+          <msub>
+            <mi>a</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Notice strict inequality.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>a</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>b</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>both are used during same pass index.</p>
+<p>They cannot blindly alias.</p>
+<hr />
+<p><strong>Kairo’s alias algorithm</strong></p>
+<p>For each transient sorted by first use, find existing slot where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+  <mi>K</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+  <mi>K</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo>≥</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+  <mi>B</mi>
+  <mi>y</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+  <mi>L</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>P</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>&lt;</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>P</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>If found, reuse.</p>
+<p>Otherwise create new slot.</p>
+<p>This is a greedy interval-coloring-like allocator.</p>
+<hr />
+<p><strong>Current Kairo scale test is good</strong></p>
+<p>It constructs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+</math>
+<p>transient textures in a chain.</p>
+<p>Each overlaps only immediate neighbor.</p>
+<p>Expected physical slots:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>≤</mo>
+  <mn>2.</mn>
+</math>
+<p>The test asserts transient allocation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>≤</mo>
+  <mn>2</mn>
+  <mo>×</mo>
+  <mn>4096</mn>
+</math>
+<p>rather than:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+  <mo>×</mo>
+  <mn>4096.</mn>
+</math>
+<p>Excellent test of lifetime-based reuse.</p>
+<hr />
+<p><strong>But current alias compatibility is intentionally incomplete</strong></p>
+<p>Today Kairo checks only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>K</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>B</mi>
+  <mi>y</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>That is not sufficient for production native aliasing.</p>
+<p>Two textures might differ in:</p>
+<ul>
+<li>format,</li>
+<li>dimensions,</li>
+<li>sample count,</li>
+<li>usage,</li>
+<li>alignment,</li>
+<li>memory class,</li>
+<li>tiling requirements.</li>
+</ul>
+<p>Vulkan memory requirements may differ.</p>
+<p>Metal heap resource-size/alignment requirements may differ.</p>
+<p>Therefore real alias compatibility must include:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>native-compatible memory class and alignment requirements</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Better alias descriptor</strong></p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb71"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> AliasClass</span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>    ResourceKind Kind<span class="op">;</span></span>
+<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a>    MemoryClass Memory<span class="op">;</span></span>
+<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> Size<span class="op">;</span></span>
+<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> Alignment<span class="op">;</span></span>
+<span id="cb71-9"><a href="#cb71-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-10"><a href="#cb71-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> SampleCount<span class="op">;</span></span>
+<span id="cb71-11"><a href="#cb71-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-12"><a href="#cb71-12" aria-hidden="true" tabindex="-1"></a>    FormatCompatibilityClass FormatClass<span class="op">;</span></span>
+<span id="cb71-13"><a href="#cb71-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-14"><a href="#cb71-14" aria-hidden="true" tabindex="-1"></a>    ResourceUsage Usage<span class="op">;</span></span>
+<span id="cb71-15"><a href="#cb71-15" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then backend confirms compatibility.</p>
+<p>Never alias merely because byte counts match.</p>
+<hr />
+<p><strong>Aliasing is graph coloring intuition</strong></p>
+<p>Each resource interval is a vertex.</p>
+<p>If two intervals overlap, connect them.</p>
+<p>Resources connected by conflict edge cannot share physical slot.</p>
+<p>Then physical allocation resembles graph coloring.</p>
+<p>For interval graphs this can be solved efficiently.</p>
+<p>Greedy sorted-by-start works well.</p>
+<hr />
+<p><strong>barrier inference</strong></p>
+<p>Once graph knows previous state and next state:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>b</mi>
+      <mi>e</mi>
+      <mi>f</mi>
+      <mi>o</mi>
+      <mi>r</mi>
+      <mi>e</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>S</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>a</mi>
+      <mi>f</mi>
+      <mi>t</mi>
+      <mi>e</mi>
+      <mi>r</mi>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>it can ask backend for required synchronization.</p>
+<p>Kairo stores:</p>
+<div class="sourceCode" id="cb72"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>RenderResourceTransition</span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>    Resource<span class="op">;</span></span>
+<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a>    Before<span class="op">;</span></span>
+<span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a>    After<span class="op">;</span></span>
+<span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>and creates one whenever requested state changes.</p>
+<hr />
+<p><strong>Example transition</strong></p>
+<p>Resource begins:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Geometry:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>A</mi>
+  <mi>t</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Post:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>So compiler produces:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo stretchy="false">→</mo>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>A</mi>
+  <mi>t</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>A</mi>
+  <mi>t</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">→</mo>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Vulkan backend can map these to image barriers.</p>
+<p>Metal tracked resources may need little/no explicit action.</p>
+<p>Same graph.</p>
+<p>Different implementation.</p>
+<hr />
+<p><strong>State transition alone is not always enough</strong></p>
+<p>Current Kairo state enum:</p>
+<pre class="text"><code>Undefined
+ColorAttachment
+DepthAttachment
+ShaderRead
+CopySource
+CopyDestination
+Present</code></pre>
+<p>is a good minimal set.</p>
+<p>But future GPU-driven renderer needs distinctions such as:</p>
+<pre class="text"><code>ShaderStorageRead
+ShaderStorageWrite
+IndirectArgument
+VertexBuffer
+IndexBuffer
+UniformRead
+AccelerationStructureRead
+RayTracingWrite</code></pre>
+<p>because Vulkan synchronization needs exact consumer/producer access scopes.</p>
+<p>So as backend sophistication grows:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>logical state model must grow with actual hazard semantics</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Barrier derivation example</strong></p>
+<p>Graph says:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>y</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo stretchy="false">→</mo>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Vulkan mapping:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>R</mi>
+  <mi>A</mi>
+  <mi>N</mi>
+  <mi>S</mi>
+  <mi>F</mi>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mo>+</mo>
+  <mi>T</mi>
+  <mi>R</mi>
+  <mi>A</mi>
+  <mi>N</mi>
+  <mi>S</mi>
+  <mi>F</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>R</mi>
+    <mi>W</mi>
+  </msub>
+  <mi>R</mi>
+  <mi>I</mi>
+  <mi>T</mi>
+  <mi>E</mi>
+</math>
+<p>to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mi>R</mi>
+  <mi>A</mi>
+  <mi>G</mi>
+  <mi>M</mi>
+  <mi>E</mi>
+  <mi>N</mi>
+  <mi>T</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>C</mi>
+  <mi>O</mi>
+  <mi>M</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mi>T</mi>
+  <mi>E</mi>
+  <mo>+</mo>
+  <mi>S</mi>
+  <mi>H</mi>
+  <mi>A</mi>
+  <mi>D</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>R</mi>
+    <mi>R</mi>
+  </msub>
+  <mi>E</mi>
+  <mi>A</mi>
+  <mi>D</mi>
+  <mo>.</mo>
+</math>
+<p>Metal:</p>
+<p>tracked resource:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>encoder ordering may suffice</mtext>
+  <mo>.</mo>
+</math>
+<p>Untracked resource:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>appropriate barrier/fence</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>layout/state transition inference</strong></p>
+<p>Vulkan images have layouts.</p>
+<p>Metal does not expose equivalent image layout transitions to engine in same fashion.</p>
+<p>Therefore neutral graph should express:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>semantic state</mtext>
+  <mo>,</mo>
+</math>
+<p>not:</p>
+<pre class="text"><code>VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL.</code></pre>
+<p>Vulkan converts:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo stretchy="false">→</mo>
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>I</mi>
+  </msub>
+  <mi>M</mi>
+  <mi>A</mi>
+  <mi>G</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>L</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>Y</mi>
+  <mi>O</mi>
+  <mi>U</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>S</mi>
+  </msub>
+  <mi>H</mi>
+  <mi>A</mi>
+  <mi>D</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>R</mi>
+    <mi>R</mi>
+  </msub>
+  <mi>E</mi>
+  <mi>A</mi>
+  <msub>
+    <mi>D</mi>
+    <mi>O</mi>
+  </msub>
+  <mi>N</mi>
+  <mi>L</mi>
+  <msub>
+    <mi>Y</mi>
+    <mi>O</mi>
+  </msub>
+  <mi>P</mi>
+  <mi>T</mi>
+  <mi>I</mi>
+  <mi>M</mi>
+  <mi>A</mi>
+  <mi>L</mi>
+  <mo>.</mo>
+</math>
+<p>Metal interprets:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+</math>
+<p>as binding/hazard intent without fake layouts.</p>
+<hr />
+<p><strong>State is broader than Vulkan layout</strong></p>
+<p>A resource state often means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>how resource is being used</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>which may imply:</p>
+<ul>
+<li>pipeline stage,</li>
+<li>memory access,</li>
+<li>layout,</li>
+<li>ownership.</li>
+</ul>
+<p>So graph state should be semantic.</p>
+<p>Backend derives native requirements.</p>
+<hr />
+<p><strong>cross-queue dependencies</strong></p>
+<p>Suppose graphics produces depth.</p>
+<p>Compute queue performs SSAO.</p>
+<p>Graphics queue then consumes AO.</p>
+<p>Logical:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>s</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mo stretchy="false">→</mo>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>S</mi>
+  <mi>S</mi>
+  <mi>A</mi>
+  <mi>O</mi>
+  <mo stretchy="false">→</mo>
+  <mi>G</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>s</mi>
+  <mi>L</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>A topological order alone does not synchronize two independent hardware queues.</p>
+<p>You need cross-queue signaling.</p>
+<hr />
+<p><strong>Vulkan cross-queue mapping</strong></p>
+<p>Could be:</p>
+<pre class="text"><code>Graphics submission
+    signals timeline = 15
+
+Compute submission
+    waits timeline &gt;= 15
+    executes SSAO
+    signals timeline = 16
+
+Graphics lighting
+    waits timeline &gt;= 16</code></pre>
+<p>If exclusive queue families differ, resource ownership transfer may also be necessary.</p>
+<hr />
+<p><strong>Metal cross-queue mapping</strong></p>
+<p>Could use:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>E</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Graphics signals:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>15.</mn>
+</math>
+<p>Compute waits:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>15.</mn>
+</math>
+<p>Compute signals:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16.</mn>
+</math>
+<p>Graphics waits:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16.</mn>
+</math>
+<p>Same graph dependency.</p>
+<p>Native synchronization differs.</p>
+<hr />
+<p><strong>Queue assignment must become part of pass metadata</strong></p>
+<p>For example:</p>
+<div class="sourceCode" id="cb77"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> <span class="kw">class</span> QueueClass</span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>    Graphics<span class="op">,</span></span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>    Compute<span class="op">,</span></span>
+<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a>    Transfer</span>
+<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Pass:</p>
+<div class="sourceCode" id="cb78"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>PassDesc</span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>    QueueClass<span class="op">::</span>Compute<span class="op">,</span></span>
+<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Compiler can then identify:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>p</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>c</mi>
+          <mi>y</mi>
+          <mi>c</mi>
+          <mi>r</mi>
+          <mi>o</mi>
+          <mi>s</mi>
+          <mi>s</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mi>q</mi>
+          <mi>u</mi>
+          <mi>e</mi>
+          <mi>u</mi>
+          <mi>e</mi>
+          <mi>b</mi>
+          <mi>o</mi>
+          <mi>u</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>a</mi>
+          <mi>r</mi>
+          <mi>y</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Async queue scheduling changes lifetime analysis</strong></p>
+<p>This is subtle and important.</p>
+<p>Current Kairo computes lifetime using a single linear pass order.</p>
+<p>That works when execution is serial.</p>
+<p>But with async compute:</p>
+<pre class="text"><code>Graphics A ────────┐
+                  │
+Compute B ─────────────</code></pre>
+<p>two passes can overlap in real time despite having some topological ordering.</p>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>P</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>&lt;</mo>
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>P</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+</math>
+<p>in one linear ordering does <strong>not necessarily prove</strong> physical non-overlap.</p>
+<p>For cross-queue aliasing you need a happens-before analysis.</p>
+<p>This is a major step beyond simple render graphs.</p>
+<hr />
+<p><strong>Safe async aliasing rule</strong></p>
+<p>Two resources may alias only if graph proves:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≺</mo>
+  <mi>b</mi>
+  <mi>e</mi>
+  <mi>g</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>in the dependency partial order.</p>
+<p>Not merely:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>&lt;</mo>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If neither is ordered relative to the other:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>∥</mo>
+  <mi>B</mi>
+</math>
+<p>and they may overlap.</p>
+<p>Therefore they cannot safely share memory.</p>
+<hr />
+<p><strong>pass culling</strong></p>
+<p>Suppose graph contains:</p>
+<pre class="text"><code>DebugNormals</code></pre>
+<p>but debug output is not shown.</p>
+<p>If no later live pass consumes its output and it has no side effect:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>remove pass entirely</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This reduces GPU work.</p>
+<hr />
+<p><strong>Reverse liveness analysis</strong></p>
+<p>Start from roots:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>presented outputs</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>explicit exports</mtext>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>side-effect passes</mtext>
+  <mo>.</mo>
+</math>
+<p>Mark them live.</p>
+<p>Then recursively mark their dependencies live.</p>
+<p>Everything else:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>dead pass</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Maveb render graph already performs pass culling</strong></p>
+<p>Its graph marks passes required if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>E</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+</math>
+<p>or they write a resource marked:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>p</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Then walks dependencies backward.</p>
+<p>Only live passes participate in topological scheduling.</p>
+<p>That is a real pass-culling implementation.</p>
+<hr />
+<p><strong>Kairo currently does not cull</strong></p>
+<p>Current Kairo compiles all declared passes.</p>
+<p>So compared with Maveb:</p>
+<p>Kairo has stronger:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mtext> </mtext>
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mtext> </mtext>
+  <mi>h</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>k</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Maveb has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mtext> </mtext>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>,</mo>
+  <mi>D</mi>
+  <mi>O</mi>
+  <mi>T</mi>
+  <mtext> </mtext>
+  <mi>g</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mtext> </mtext>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mtext> </mtext>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>A future unified implementation can combine the strengths.</p>
+<hr />
+<p><strong>imported external resources</strong></p>
+<p>Some resources were created outside graph.</p>
+<p>Examples:</p>
+<pre class="text"><code>swapchain image
+CAMetalDrawable texture
+persistent shadow atlas
+engine-owned history
+video texture
+editor viewport</code></pre>
+<p>Graph should import rather than own.</p>
+<hr />
+<p><strong>Imported resource needs initial state</strong></p>
+<p>The graph must know how external resource enters graph.</p>
+<p>For example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>w</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>=</mo>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>=</mo>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Otherwise first transition cannot be inferred.</p>
+<p>Current Kairo models external resource via:</p>
+<pre class="text"><code>RenderResourceKind::External</code></pre>
+<p>and requires external resources to be non-transient.</p>
+<p>Good.</p>
+<hr />
+<p><strong>Current Vulkan graph example</strong></p>
+<p>It creates:</p>
+<pre class="text"><code>VulkanNativeFrame</code></pre>
+<p>as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+</math>
+<p>with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Then logical stages:</p>
+<pre class="text"><code>Retire
+Acquire
+Record
+Submit
+Present</code></pre>
+<p>use this token/resource.</p>
+<p>This current graph is more of a <strong>frame-lifecycle dependency object</strong> than a complete per-image render graph, but the abstraction principle is sound.</p>
+<hr />
+<p><strong>persistent history resources</strong></p>
+<p>TAA history:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>H</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+</math>
+<p>must survive to next frame.</p>
+<p>Therefore it cannot be transiently aliased as soon as current frame ends.</p>
+<p>Graph resource should be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Initial state:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+</math>
+<p>if valid.</p>
+<p>Current Kairo tests exactly this notion: a persistent resource initialized as <code>ShaderRead</code> may be read immediately, while persistent <code>Undefined</code> read is rejected.</p>
+<hr />
+<p><strong>History invalidation</strong></p>
+<p>Persistent doesn’t mean always valid.</p>
+<p>Invalidate history on:</p>
+<ul>
+<li>camera cut,</li>
+<li>resolution change,</li>
+<li>projection change,</li>
+<li>scene discontinuity,</li>
+<li>major geometry repair,</li>
+<li>renderer mode switch.</li>
+</ul>
+<p>Then either:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mi>V</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+</math>
+<p>or graph inserts clear/initialize pass.</p>
+<p>Maveb’s TAA system already carries explicit history validity state.</p>
+<hr />
+<p><strong>Ping-pong history</strong></p>
+<p>Typical:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>H</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>H</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Frame <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math>:</p>
+<p>read:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>H</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+      <mn>2</mn>
+    </mrow>
+  </msub>
+</math>
+<p>write:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>H</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo stretchy="false">(</mo>
+      <mi>t</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+      <mo stretchy="false">)</mo>
+      <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+      <mn>2</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Next frame swap roles.</p>
+<p>You must ensure frames in flight do not cause simultaneous reuse hazards.</p>
+<p>With multiple frames in flight, history scheduling becomes more complex than simple CPU frame parity unless GPU execution order guarantees it.</p>
+<hr />
+<p><strong>swapchain/drawable resources in graph</strong></p>
+<p>Presentation resource is special.</p>
+<p>Vulkan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>w</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>I</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Metal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>A</mi>
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>D</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>w</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>These are acquired externally.</p>
+<p>They should appear near graph boundary.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>Import Presentable
+
+ToneMap:
+    read HDR
+    write Presentable
+
+Present:
+    consume Presentable</code></pre>
+<hr />
+<p><strong>Acquire as graph boundary</strong></p>
+<p>For Vulkan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>q</mi>
+  <mi>u</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+</math>
+<p>produces access to presentation image.</p>
+<p>For Metal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>D</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>w</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>D</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>w</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+</math>
+<p>provides drawable texture.</p>
+<p>Graph may represent acquisition as external lifecycle operation rather than ordinary resource pass.</p>
+<p>Either way:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>presentation image lifetime begins late and ends at presentation</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Do not build whole renderer around swapchain</strong></p>
+<p>Internal HDR/depth/temporal resources should be independent.</p>
+<p>Swapchain/drawable is only final destination.</p>
+<p>Then resize/presentation format changes don’t infect every pass.</p>
+<hr />
+<p><strong>debugging dependency mistakes</strong></p>
+<p>Common graph failures:</p>
+<p>Read before write.</p>
+<p>Missing write declaration.</p>
+<p>Incorrect state.</p>
+<p>Missing side-effect root causing pass culling.</p>
+<p>Cycle.</p>
+<p>Aliasing resources whose lifetimes actually overlap.</p>
+<p>Cross-frame history improperly marked transient.</p>
+<p>Queue dependency omitted.</p>
+<hr />
+<p><strong>Debugging rule</strong></p>
+<p>When image is wrong, do not immediately inspect shader.</p>
+<p>First ask:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Was correct producer executed?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Was resource initialized?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Was consumer ordered after producer?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Was native synchronization emitted?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Was physical allocation reused too early?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Render graphs shift many “graphics bugs” into dependency bugs.</p>
+<hr />
+<p><strong>visualizing graph</strong></p>
+<p>Maveb emits DOT:</p>
+<pre class="text"><code>digraph AetherRenderGraph {
+  p0 [label=&quot;Shadow&quot;];
+  p1 [label=&quot;Geometry&quot;];
+  p2 [label=&quot;TAA&quot;];
+  p3 [label=&quot;Present&quot;];
+
+  p0 -&gt; p1;
+  p1 -&gt; p2;
+  p2 -&gt; p3;
+}</code></pre>
+<p>Then Graphviz can visualize it.</p>
+<p>This is extremely valuable.</p>
+<hr />
+<p><strong>Better graph visualization</strong></p>
+<p>An engine UI should show:</p>
+<pre class="text"><code>Pass name
+Queue
+Execution order
+CPU/GPU timing
+
+Reads
+Writes
+
+Resource state before/after
+
+First use
+Last use
+
+Alias slot
+
+Culled/live</code></pre>
+<p>Then resource:</p>
+<pre class="text"><code>SceneHDR
+  16.6 MB
+  first: Geometry
+  last: ToneMap
+  alias slot: 3</code></pre>
+<p>You can debug memory and ordering visually.</p>
+<hr />
+<p><strong>resource naming</strong></p>
+<p>Never accept:</p>
+<pre class="text"><code>Texture_27</code></pre>
+<p>if semantic name is known.</p>
+<p>Use:</p>
+<pre class="text"><code>Scene HDR
+Scene Depth
+TAA History A
+Bloom Half
+Gaussian IDs
+Directional Shadow Cascades</code></pre>
+<p>Kairo requires unique graph resource names.</p>
+<p>Maveb labels native resources extensively.</p>
+<p>These should be connected.</p>
+<hr />
+<p><strong>Name propagation</strong></p>
+<p>Ideal:</p>
+<pre class="text"><code>RenderGraph resource:
+    Scene HDR
+
+↓ Vulkan backend
+VkImage debug name:
+    Scene HDR
+
+↓ Metal backend
+MTLTexture label:
+    Scene HDR
+
+↓ capture/profiler
+same label</code></pre>
+<p>Now the engine, graph and GPU debugger all speak one vocabulary.</p>
+<hr />
+<p><strong>GPU capture correlation</strong></p>
+<p>Suppose graph says:</p>
+<pre class="text"><code>Pass 17: Temporal Resolve</code></pre>
+<p>GPU capture should show encoder/debug region:</p>
+<pre class="text"><code>Temporal Resolve</code></pre>
+<p>If graph timing says pass 17 is slow, you can immediately find it in Xcode/RenderDoc.</p>
+<p>This is why names are infrastructure, not decoration.</p>
+<hr />
+<p><strong>Current Kairo profile warning</strong></p>
+<p>Kairo’s graph profile currently measures CPU callback/recording duration.</p>
+<p>Not GPU duration.</p>
+<p>So:</p>
+<pre class="text"><code>Geometry: 0.35 ms</code></pre>
+<p>means CPU graph callback time.</p>
+<p>A future GPU profiler should correlate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>P</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+</math>
+<p>with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Then you can compare:</p>
+<pre class="text"><code>CPU encode: 0.18 ms
+GPU execute: 2.7 ms</code></pre>
+<p>for the same pass.</p>
+<hr />
+<p><strong>A production render-graph data model</strong></p>
+<p>A stronger version could look like:</p>
+<div class="sourceCode" id="cb96"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> PassDesc</span>
+<span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb96-3"><a href="#cb96-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>string Name<span class="op">;</span></span>
+<span id="cb96-4"><a href="#cb96-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb96-5"><a href="#cb96-5" aria-hidden="true" tabindex="-1"></a>    QueueClass Queue<span class="op">;</span></span>
+<span id="cb96-6"><a href="#cb96-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb96-7"><a href="#cb96-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>ResourceAccess<span class="op">&gt;</span></span>
+<span id="cb96-8"><a href="#cb96-8" aria-hidden="true" tabindex="-1"></a>        Accesses<span class="op">;</span></span>
+<span id="cb96-9"><a href="#cb96-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb96-10"><a href="#cb96-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> HasSideEffects <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb96-11"><a href="#cb96-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb96-12"><a href="#cb96-12" aria-hidden="true" tabindex="-1"></a>    ExecuteCallback Execute<span class="op">;</span></span>
+<span id="cb96-13"><a href="#cb96-13" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb96-14"><a href="#cb96-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb96-15"><a href="#cb96-15" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ResourceAccess</span>
+<span id="cb96-16"><a href="#cb96-16" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb96-17"><a href="#cb96-17" aria-hidden="true" tabindex="-1"></a>    ResourceHandle Resource<span class="op">;</span></span>
+<span id="cb96-18"><a href="#cb96-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb96-19"><a href="#cb96-19" aria-hidden="true" tabindex="-1"></a>    AccessMode Access<span class="op">;</span></span>
+<span id="cb96-20"><a href="#cb96-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb96-21"><a href="#cb96-21" aria-hidden="true" tabindex="-1"></a>    ResourceUsage Usage<span class="op">;</span></span>
+<span id="cb96-22"><a href="#cb96-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb96-23"><a href="#cb96-23" aria-hidden="true" tabindex="-1"></a>    ShaderStageMask Stages<span class="op">;</span></span>
+<span id="cb96-24"><a href="#cb96-24" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Notice separate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>That gives enough information for Vulkan synchronization.</p>
+<hr />
+<p><strong>Better state representation</strong></p>
+<p>Instead of only:</p>
+<pre class="text"><code>ShaderRead</code></pre>
+<p>you might represent:</p>
+<div class="sourceCode" id="cb98"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ResourceState</span>
+<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb98-3"><a href="#cb98-3" aria-hidden="true" tabindex="-1"></a>    PipelineDomain Domain<span class="op">;</span></span>
+<span id="cb98-4"><a href="#cb98-4" aria-hidden="true" tabindex="-1"></a>    AccessFlags Access<span class="op">;</span></span>
+<span id="cb98-5"><a href="#cb98-5" aria-hidden="true" tabindex="-1"></a>    UsageClass Usage<span class="op">;</span></span>
+<span id="cb98-6"><a href="#cb98-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Example:</p>
+<pre class="text"><code>ComputeShader
+StorageWrite
+StorageBuffer</code></pre>
+<p>versus:</p>
+<pre class="text"><code>FragmentShader
+SampledRead
+SampledTexture</code></pre>
+<p>These are both “shader use” but require different native synchronization.</p>
+<hr />
+<p><strong>Compiler stages</strong></p>
+<p>A production render graph can conceptually compile through:</p>
+<pre class="text"><code>validate declarations
+↓
+construct hazards/dependencies
+↓
+mark live passes
+↓
+detect cycles
+↓
+assign queues
+↓
+schedule passes
+↓
+compute lifetimes
+↓
+plan transient allocations
+↓
+infer state transitions
+↓
+infer inter-queue synchronization
+↓
+generate backend execution plan</code></pre>
+<p>That is essentially a compiler.</p>
+<p>Because it is one.</p>
+<hr />
+<p><strong>Render graph as compiler IR</strong></p>
+<p>This is the deepest useful perspective.</p>
+<p>Scene rendering code produces high-level IR:</p>
+<pre class="text"><code>Shadow writes S
+Geometry reads S writes H
+Bloom reads H writes B
+Present reads H,B</code></pre>
+<p>Compiler transforms into:</p>
+<pre class="text"><code>ordered passes
+physical resources
+barriers
+queue waits/signals
+load/store decisions</code></pre>
+<p>Vulkan/Metal backends are code generators.</p>
+<p>That is why compiler theory ideas such as:</p>
+<ul>
+<li>dependency graphs,</li>
+<li>liveness,</li>
+<li>alias analysis,</li>
+<li>scheduling</li>
+</ul>
+<p>appear here.</p>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch410.xhtml#id_06-GPU-Architecture-and-Real-Time-Rendering" class="wikilink">Reading map</a> · <a href="ch234.xhtml#id_06-engine-ii-ch042-from-cartridge-bytes-to-a-reproducible-machine" class="wikilink">Previous chapter (Bits, Programs, and Reliable Systems, Part 4, Ch. 20)</a> · <a href="ch440.xhtml#id_06-engine-ii-ch044-cross-backend-conversion-and-agreement" class="wikilink">Next chapter</a></p>
+</section>
+</section>
+</section>
+</body>
+</html>

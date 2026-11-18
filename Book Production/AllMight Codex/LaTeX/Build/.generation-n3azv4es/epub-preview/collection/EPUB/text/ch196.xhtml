@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch196.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-c25d60fed375-const-qualification-and-shallow-constness" class="level2">
+<h2>Const qualification and shallow constness</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C008 · <strong>Latest development:</strong> C008</p>
+<section id="appendix-c25d60fed375-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Const restricts modification through an access path; another mutable alias can change a mutable referent. An actually const object cannot be made writable by const_cast. Pointer-member constness is shallow: const span&lt;int&gt; permits integer writes whereas span&lt;const int> does not.</p>
+</section>
+<section id="appendix-c25d60fed375-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch200.xhtml#appendix-d6d562ca9fbb-references-and-aliases" class="wikilink">References and aliases</a> — The initial alias and its referent determine later binding and deduction behavior.</li>
+</ul>
+</section>
+<section id="appendix-c25d60fed375-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch182.xhtml#appendix-5e1a7561cd98-multilevel-pointer-qualification" class="wikilink">Multilevel pointer qualification</a></li>
+<li><a href="ch198.xhtml#appendix-d42039b1d6f7-ref-qualified-accessors" class="wikilink">Ref-qualified accessors</a></li>
+<li><a href="ch201.xhtml#appendix-f5593256bcaf-logical-constness-and-mutable-caches" class="wikilink">Logical constness and mutable caches</a></li>
+<li><a href="ch199.xhtml#appendix-d5908f75721f-parameter-passing-and-sink-contracts" class="wikilink">Parameter passing and sink contracts</a></li>
+</ul>
+</section>
+<section id="appendix-c25d60fed375-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Read all four pointer-qualification combinations aloud. Pending: atomics, volatile hardware access and immutable shared-state design. Written coverage does not establish learner mastery.</p>
+</section>
+<section id="appendix-c25d60fed375-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch173.xhtml#id_01-foundations-i-ch003-read-only-is-a-path-not-an-ownership-or-synchronization-promise" class="wikilink">Teaching explanation and examples</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m008---parts-113-126" class="wikilink">Exact coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

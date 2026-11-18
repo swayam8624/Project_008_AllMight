@@ -8,7 +8,7 @@ The exponential distribution describes memoryless waiting times, while covarianc
 
 **Recall question:** What does covariance’s off-diagonal structure say about two measured components, and when can a decomposition be non-unique?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 55712–57904; source-span SHA256 fa6b786b766b094a03643ce67e036b6dd04561ce3319c57fc48d55b5f9978613. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 55893–58085; source-span SHA256 3bd427ddc9614879019d856444b3fb4232e122435a1daa348e2b35f004c67791. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## 5. Waiting times, event counts, and covariance geometry
@@ -20,13 +20,13 @@ The exponential distribution models a nonnegative waiting time in a memoryless e
 Let:
 
 $$
- T\sim\operatorname{Exponential}(\lambda), 
+ T\sim\operatorname{Exponential}(\lambda),
 $$
 
 where:
 
 $$
- \lambda>0 
+ \lambda>0
 $$
 
 is the rate parameter.
@@ -34,7 +34,7 @@ is the rate parameter.
 Its PDF is:
 
 $$
- \boxed{ p_T(t)= \begin{cases} \lambda e^{-\lambda t},&t\ge0,\\ 0,&t<0. \end{cases} } 
+ \boxed{ p_T(t)= \begin{cases} \lambda e^{-\lambda t},&t\ge0,\\ 0,&t<0. \end{cases} }
 $$
 
 The parameter $\lambda$ has units of inverse time if $T$ is measured in time.
@@ -44,19 +44,19 @@ The parameter $\lambda$ has units of inverse time if $T$ is measured in time.
 For $t\ge0$:
 
 $$
- F_T(t)= \int_0^t\lambda e^{-\lambda s}\\,ds. 
+ F_T(t)= \int_0^t\lambda e^{-\lambda s}\,ds.
 $$
 
 Integrate:
 
 $$
- F_T(t)= \left[-e^{-\lambda s}\right]\_0^t. 
+ F_T(t)= \left[-e^{-\lambda s}\right]_0^t.
 $$
 
 Therefore:
 
 $$
- \boxed{ F_T(t)=1-e^{-\lambda t} }. 
+ \boxed{ F_T(t)=1-e^{-\lambda t} }.
 $$
 
 For $t<0$, the CDF is zero.
@@ -64,13 +64,13 @@ For $t<0$, the CDF is zero.
 The survival function is:
 
 $$
- S_T(t)=P(T>t). 
+ S_T(t)=P(T>t).
 $$
 
 For $t\ge0$:
 
 $$
- \boxed{ S_T(t)=e^{-\lambda t} }. 
+ \boxed{ S_T(t)=e^{-\lambda t} }.
 $$
 
 #### 2 Deriving the mean: exponential distribution
@@ -78,13 +78,13 @@ $$
 The mean is:
 
 $$
- \mathbb E[T]= \int_0^\infty t\lambda e^{-\lambda t}\\,dt. 
+ \mathbb E[T]= \int_0^\infty t\lambda e^{-\lambda t}\,dt.
 $$
 
 Integration by parts gives:
 
 $$
- \mathbb E[T] = \frac1\lambda 
+ \mathbb E[T] = \frac1\lambda
 $$
 
 because the boundary term vanishes and the remaining exponential integral evaluates to $1/\lambda$.
@@ -92,25 +92,25 @@ because the boundary term vanishes and the remaining exponential integral evalua
 Thus:
 
 $$
- \boxed{ \mathbb E[T]=\frac1\lambda }. 
+ \boxed{ \mathbb E[T]=\frac1\lambda }.
 $$
 
 The second moment is:
 
 $$
- \mathbb E[T^2]=\frac2{\lambda^2}. 
+ \mathbb E[T^2]=\frac2{\lambda^2}.
 $$
 
 Therefore:
 
 $$
- \operatorname{Var}(T) = \frac2{\lambda^2} -\frac1{\lambda^2} = \boxed{\frac1{\lambda^2}}. 
+ \operatorname{Var}(T) = \frac2{\lambda^2} -\frac1{\lambda^2} = \boxed{\frac1{\lambda^2}}.
 $$
 
 The standard deviation is also:
 
 $$
- \sigma_T=\frac1\lambda. 
+ \sigma_T=\frac1\lambda.
 $$
 
 #### 3 Memorylessness
@@ -118,7 +118,7 @@ $$
 The defining property is:
 
 $$
- \boxed{ P(T>s+t\mid T>s)=P(T>t) } 
+ \boxed{ P(T>s+t\mid T>s)=P(T>t) }
 $$
 
 for $s,t\ge0$.
@@ -128,25 +128,25 @@ Let's derive it.
 Because:
 
 $$
- \{T>s+t\}\subseteq\{T>s\}, 
+ \{T>s+t\}\subseteq\{T>s\},
 $$
 
 conditional probability gives:
 
 $$
- P(T>s+t\mid T>s) = \frac{P(T>s+t)}{P(T>s)}. 
+ P(T>s+t\mid T>s) = \frac{P(T>s+t)}{P(T>s)}.
 $$
 
 Using the exponential survival function:
 
 $$
- = \frac{e^{-\lambda(s+t)}}{e^{-\lambda s}} =e^{-\lambda t}. 
+ = \frac{e^{-\lambda(s+t)}}{e^{-\lambda s}} =e^{-\lambda t}.
 $$
 
 But:
 
 $$
- e^{-\lambda t}=P(T>t). 
+ e^{-\lambda t}=P(T>t).
 $$
 
 Therefore the exponential distribution is memoryless.
@@ -160,25 +160,25 @@ This is a special property and is not true for most waiting-time distributions.
 Suppose events arrive at an average rate of:
 
 $$
- \lambda=2\text{ events per second}. 
+ \lambda=2\text{ events per second}.
 $$
 
 The mean waiting time is:
 
 $$
- \mathbb E[T]=0.5\text{ seconds}. 
+ \mathbb E[T]=0.5\text{ seconds}.
 $$
 
 The probability of observing an event within $0.1$ seconds is:
 
 $$
- \begin{aligned} P(T\le0.1) &=1-e^{-2(0.1)}\\ &=1-e^{-0.2}\\ &\approx\boxed{0.181269}. \end{aligned} 
+ \begin{aligned} P(T\le0.1) &=1-e^{-2(0.1)}\\ &=1-e^{-0.2}\\ &\approx\boxed{0.181269}. \end{aligned}
 $$
 
 The probability of waiting longer than one second is:
 
 $$
- P(T>1)=e^{-2}\approx0.135335. 
+ P(T>1)=e^{-2}\approx0.135335.
 $$
 
 #### 5 Numerical stability of the CDF
@@ -186,7 +186,7 @@ $$
 The formula:
 
 $$
- 1-e^{-\lambda t} 
+ 1-e^{-\lambda t}
 $$
 
 can lose precision when $\lambda t$ is very small, because $e^{-\lambda t}$ is close to one.
@@ -218,31 +218,31 @@ This is an example of mathematically equivalent formulas having different numeri
 Let:
 
 $$
- U\sim U(0,1). 
+ U\sim U(0,1).
 $$
 
 Set:
 
 $$
- U=F_T(t)=1-e^{-\lambda t}. 
+ U=F_T(t)=1-e^{-\lambda t}.
 $$
 
 Then:
 
 $$
- 1-U=e^{-\lambda t}. 
+ 1-U=e^{-\lambda t}.
 $$
 
 Take logarithms:
 
 $$
- \log(1-U)=-\lambda t. 
+ \log(1-U)=-\lambda t.
 $$
 
 Thus:
 
 $$
- \boxed{ T=-\frac{\log(1-U)}{\lambda} }. 
+ \boxed{ T=-\frac{\log(1-U)}{\lambda} }.
 $$
 
 In floating-point code, `-log1p(-u)/lambda` can be preferable when $u$ is small.
@@ -256,13 +256,13 @@ The Poisson distribution models counts of events under an idealized Poisson proc
 A Poisson random variable takes values:
 
 $$
- K\in\{0,1,2,\ldots\}. 
+ K\in\{0,1,2,\ldots\}.
 $$
 
 Write:
 
 $$
- \boxed{K\sim\operatorname{Poisson}(\lambda)} 
+ \boxed{K\sim\operatorname{Poisson}(\lambda)}
 $$
 
 where $\lambda\ge0$ is the expected count over the specified observation interval or region.
@@ -270,7 +270,7 @@ where $\lambda\ge0$ is the expected count over the specified observation interva
 Its PMF is:
 
 $$
- \boxed{ P(K=k)= e^{-\lambda}\frac{\lambda^k}{k!} }. 
+ \boxed{ P(K=k)= e^{-\lambda}\frac{\lambda^k}{k!} }.
 $$
 
 For $\lambda=0$, the distribution is concentrated at $K=0$.
@@ -282,7 +282,7 @@ Suppose an interval is divided into $n$ small subintervals.
 Assume each subinterval contains an event with probability:
 
 $$
- p=\frac\lambda n, 
+ p=\frac\lambda n,
 $$
 
 and trials are independent.
@@ -290,43 +290,43 @@ and trials are independent.
 The total count is:
 
 $$
- K_n\sim\operatorname{Binomial} \left(n,\frac\lambda n\right). 
+ K_n\sim\operatorname{Binomial} \left(n,\frac\lambda n\right).
 $$
 
 Therefore:
 
 $$
- P(K_n=k) = \binom nk \left(\frac\lambda n\right)^k \left(1-\frac\lambda n\right)^{n-k}. 
+ P(K_n=k) = \binom nk \left(\frac\lambda n\right)^k \left(1-\frac\lambda n\right)^{n-k}.
 $$
 
 Rewrite the first two factors:
 
 $$
- \binom nk\left(\frac\lambda n\right)^k = \frac{n(n-1)\cdots(n-k+1)}{k!} \frac{\lambda^k}{n^k}. 
+ \binom nk\left(\frac\lambda n\right)^k = \frac{n(n-1)\cdots(n-k+1)}{k!} \frac{\lambda^k}{n^k}.
 $$
 
 For fixed $k$, as $n\to\infty$:
 
 $$
- \frac{n(n-1)\cdots(n-k+1)}{n^k} \to1. 
+ \frac{n(n-1)\cdots(n-k+1)}{n^k} \to1.
 $$
 
 Therefore:
 
 $$
- \binom nk\left(\frac\lambda n\right)^k \to \frac{\lambda^k}{k!}. 
+ \binom nk\left(\frac\lambda n\right)^k \to \frac{\lambda^k}{k!}.
 $$
 
 The remaining factor satisfies:
 
 $$
- \left(1-\frac\lambda n\right)^{n-k} \to e^{-\lambda}. 
+ \left(1-\frac\lambda n\right)^{n-k} \to e^{-\lambda}.
 $$
 
 Thus:
 
 $$
- \boxed{ P(K=k)=e^{-\lambda}\frac{\lambda^k}{k!} }. 
+ \boxed{ P(K=k)=e^{-\lambda}\frac{\lambda^k}{k!} }.
 $$
 
 This is the Poisson limit of the binomial distribution.
@@ -336,7 +336,7 @@ This is the Poisson limit of the binomial distribution.
 Start with:
 
 $$
- \mathbb E[K] = \sum\_{k=0}^\infty k e^{-\lambda}\frac{\lambda^k}{k!}. 
+ \mathbb E[K] = \sum_{k=0}^\infty k e^{-\lambda}\frac{\lambda^k}{k!}.
 $$
 
 The $k=0$ term vanishes.
@@ -344,19 +344,19 @@ The $k=0$ term vanishes.
 For $k\ge1$:
 
 $$
- \frac{k}{k!}=\frac1{(k-1)!}. 
+ \frac{k}{k!}=\frac1{(k-1)!}.
 $$
 
 Therefore:
 
 $$
- \begin{aligned} \mathbb E[K] &= e^{-\lambda} \sum\_{k=1}^\infty \frac{\lambda^k}{(k-1)!}\\ &= \lambda e^{-\lambda} \sum\_{j=0}^\infty \frac{\lambda^j}{j!}\\ &=\lambda e^{-\lambda}e^\lambda. \end{aligned} 
+ \begin{aligned} \mathbb E[K] &= e^{-\lambda} \sum_{k=1}^\infty \frac{\lambda^k}{(k-1)!}\\ &= \lambda e^{-\lambda} \sum_{j=0}^\infty \frac{\lambda^j}{j!}\\ &=\lambda e^{-\lambda}e^\lambda. \end{aligned}
 $$
 
 Thus:
 
 $$
- \boxed{\mathbb E[K]=\lambda}. 
+ \boxed{\mathbb E[K]=\lambda}.
 $$
 
 #### 3 Deriving the variance: Poisson distribution
@@ -364,49 +364,49 @@ $$
 First calculate the factorial second moment:
 
 $$
- \mathbb E[K(K-1)]. 
+ \mathbb E[K(K-1)].
 $$
 
 Using the PMF:
 
 $$
- \mathbb E[K(K-1)] = \sum\_{k=2}^\infty k(k-1)e^{-\lambda} \frac{\lambda^k}{k!}. 
+ \mathbb E[K(K-1)] = \sum_{k=2}^\infty k(k-1)e^{-\lambda} \frac{\lambda^k}{k!}.
 $$
 
 Because:
 
 $$
- \frac{k(k-1)}{k!}=\frac1{(k-2)!}, 
+ \frac{k(k-1)}{k!}=\frac1{(k-2)!},
 $$
 
 we obtain:
 
 $$
- \mathbb E[K(K-1)] = \lambda^2e^{-\lambda} \sum\_{j=0}^{\infty}\frac{\lambda^j}{j!} =\lambda^2. 
+ \mathbb E[K(K-1)] = \lambda^2e^{-\lambda} \sum_{j=0}^{\infty}\frac{\lambda^j}{j!} =\lambda^2.
 $$
 
 Now use:
 
 $$
- K^2=K(K-1)+K. 
+ K^2=K(K-1)+K.
 $$
 
 Thus:
 
 $$
- \mathbb E[K^2] = \lambda^2+\lambda. 
+ \mathbb E[K^2] = \lambda^2+\lambda.
 $$
 
 Therefore:
 
 $$
- \operatorname{Var}(K) = \lambda^2+\lambda-\lambda^2. 
+ \operatorname{Var}(K) = \lambda^2+\lambda-\lambda^2.
 $$
 
 Hence:
 
 $$
- \boxed{ \operatorname{Var}(K)=\lambda }. 
+ \boxed{ \operatorname{Var}(K)=\lambda }.
 $$
 
 The Poisson distribution has equal mean and variance.
@@ -418,25 +418,25 @@ This equality is an important model diagnostic, although finite-sample estimates
 Suppose:
 
 $$
- K\sim\operatorname{Poisson}(2). 
+ K\sim\operatorname{Poisson}(2).
 $$
 
 What is the probability of exactly three events?
 
 $$
- P(K=3) = e^{-2}\frac{2^3}{3!}. 
+ P(K=3) = e^{-2}\frac{2^3}{3!}.
 $$
 
 Therefore:
 
 $$
- P(K=3)= e^{-2}\frac86 \approx\boxed{0.180447}. 
+ P(K=3)= e^{-2}\frac86 \approx\boxed{0.180447}.
 $$
 
 The probability of zero events is:
 
 $$
- P(K=0)=e^{-2}\approx0.135335. 
+ P(K=0)=e^{-2}\approx0.135335.
 $$
 
 #### 5 Poisson process and exponential waiting times
@@ -446,19 +446,19 @@ Suppose events occur according to a homogeneous Poisson process with rate $r$ ev
 The count in an interval of duration $t$ satisfies:
 
 $$
- \boxed{ N(t)\sim\operatorname{Poisson}(rt) }. 
+ \boxed{ N(t)\sim\operatorname{Poisson}(rt) }.
 $$
 
 Thus:
 
 $$
- \mathbb E[N(t)]=rt. 
+ \mathbb E[N(t)]=rt.
 $$
 
 The probability of no events during the interval is:
 
 $$
- P(N(t)=0)=e^{-rt}. 
+ P(N(t)=0)=e^{-rt}.
 $$
 
 Let $T$ be the waiting time until the first event.
@@ -468,7 +468,7 @@ The event $T>t$ means no event occurred during the first $t$ units of time.
 Therefore:
 
 $$
- P(T>t)=P(N(t)=0)=e^{-rt}. 
+ P(T>t)=P(N(t)=0)=e^{-rt}.
 $$
 
 This is exactly the survival function of an exponential distribution with rate $r$.
@@ -476,7 +476,7 @@ This is exactly the survival function of an exponential distribution with rate $
 Hence:
 
 $$
- \boxed{ T\sim\operatorname{Exponential}(r) }. 
+ \boxed{ T\sim\operatorname{Exponential}(r) }.
 $$
 
 This establishes the connection between Poisson counts and exponential waiting times.
@@ -498,7 +498,7 @@ We now extend the Gaussian distribution from one uncertain scalar to an entire u
 Suppose a reconstructed point has uncertain position:
 
 $$
- \mathbf X= \begin{bmatrix} X\\Y\\Z \end{bmatrix}. 
+ \mathbf X= \begin{bmatrix} X\\Y\\Z \end{bmatrix}.
 $$
 
 We need to describe not only how uncertain each coordinate is, but also how coordinate errors are coupled.
@@ -506,25 +506,25 @@ We need to describe not only how uncertain each coordinate is, but also how coor
 A multivariate Gaussian uses a mean vector:
 
 $$
- \boldsymbol\mu\in\mathbb R^n 
+ \boldsymbol\mu\in\mathbb R^n
 $$
 
 and covariance matrix:
 
 $$
- \Sigma\in\mathbb R^{n\times n}. 
+ \Sigma\in\mathbb R^{n\times n}.
 $$
 
 We write:
 
 $$
- \boxed{ \mathbf X\sim\mathcal N(\boldsymbol\mu,\Sigma) }. 
+ \boxed{ \mathbf X\sim\mathcal N(\boldsymbol\mu,\Sigma) }.
 $$
 
 For a nonsingular covariance matrix, its PDF is:
 
 $$
- \boxed{ p(\mathbf x)= \frac{ \exp\left[ -\frac12(\mathbf x-\boldsymbol\mu)^T \Sigma^{-1} (\mathbf x-\boldsymbol\mu) \right] }{ (2\pi)^{n/2}\sqrt{\det\Sigma} } }. 
+ \boxed{ p(\mathbf x)= \frac{ \exp\left[ -\frac12(\mathbf x-\boldsymbol\mu)^T \Sigma^{-1} (\mathbf x-\boldsymbol\mu) \right] }{ (2\pi)^{n/2}\sqrt{\det\Sigma} } }.
 $$
 
 This formula is dense, so we will derive it from transformations and explain every component.
@@ -534,7 +534,7 @@ This formula is dense, so we will derive it from transformations and explain eve
 Let:
 
 $$
- \mathbf Z= \begin{bmatrix} Z_1\\ \vdots\\ Z_n \end{bmatrix} 
+ \mathbf Z= \begin{bmatrix} Z_1\\ \vdots\\ Z_n \end{bmatrix}
 $$
 
 where each $Z_i\sim\mathcal N(0,1)$, and the components are independent.
@@ -542,31 +542,31 @@ where each $Z_i\sim\mathcal N(0,1)$, and the components are independent.
 Their joint density is the product of the scalar densities:
 
 $$
- p\_{\mathbf Z}(\mathbf z)= \prod\_{i=1}^{n} \frac1{\sqrt{2\pi}}e^{-z_i^2/2}. 
+ p_{\mathbf Z}(\mathbf z)= \prod_{i=1}^{n} \frac1{\sqrt{2\pi}}e^{-z_i^2/2}.
 $$
 
 Multiply the normalizing factors:
 
 $$
- \prod\_{i=1}^{n}\frac1{\sqrt{2\pi}} = \frac1{(2\pi)^{n/2}}. 
+ \prod_{i=1}^{n}\frac1{\sqrt{2\pi}} = \frac1{(2\pi)^{n/2}}.
 $$
 
 Combine the exponents:
 
 $$
- \prod_i e^{-z_i^2/2} = e^{-\frac12\sum_i z_i^2}. 
+ \prod_i e^{-z_i^2/2} = e^{-\frac12\sum_i z_i^2}.
 $$
 
 Since:
 
 $$
- \sum_i z_i^2=\mathbf z^T\mathbf z, 
+ \sum_i z_i^2=\mathbf z^T\mathbf z,
 $$
 
 the joint density becomes:
 
 $$
- \boxed{ p\_{\mathbf Z}(\mathbf z)= \frac1{(2\pi)^{n/2}} e^{-\frac12\mathbf z^T\mathbf z} }. 
+ \boxed{ p_{\mathbf Z}(\mathbf z)= \frac1{(2\pi)^{n/2}} e^{-\frac12\mathbf z^T\mathbf z} }.
 $$
 
 This is the standard multivariate Gaussian with zero mean and identity covariance.
@@ -574,7 +574,7 @@ This is the standard multivariate Gaussian with zero mean and identity covarianc
 Its equal-density surfaces are spheres because the exponent depends only on:
 
 $$
- \\|\mathbf z\\|^2. 
+ \|\mathbf z\|^2.
 $$
 
 #### 2 Transform the standard Gaussian
@@ -582,7 +582,7 @@ $$
 Let:
 
 $$
- \boxed{ \mathbf X=\boldsymbol\mu+A\mathbf Z } 
+ \boxed{ \mathbf X=\boldsymbol\mu+A\mathbf Z }
 $$
 
 where $A$ is an invertible $n\times n$ matrix.
@@ -590,19 +590,19 @@ where $A$ is an invertible $n\times n$ matrix.
 The mean is:
 
 $$
- \mathbb E[\mathbf X] = \boldsymbol\mu+A\mathbb E[\mathbf Z] =\boldsymbol\mu. 
+ \mathbb E[\mathbf X] = \boldsymbol\mu+A\mathbb E[\mathbf Z] =\boldsymbol\mu.
 $$
 
 The covariance is:
 
 $$
- \begin{aligned} \operatorname{Cov}(\mathbf X) &= \mathbb E[ (A\mathbf Z)(A\mathbf Z)^T ]\\ &= A\mathbb E[\mathbf Z\mathbf Z^T]A^T\\ &=AIA^T. \end{aligned} 
+ \begin{aligned} \operatorname{Cov}(\mathbf X) &= \mathbb E[ (A\mathbf Z)(A\mathbf Z)^T ]\\ &= A\mathbb E[\mathbf Z\mathbf Z^T]A^T\\ &=AIA^T. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{\Sigma=AA^T}. 
+ \boxed{\Sigma=AA^T}.
 $$
 
 This says an arbitrary nonsingular linear transformation of an independent standard Gaussian produces a correlated Gaussian.
@@ -614,79 +614,79 @@ We can interpret $A$ as combining rotation, stretching, and shearing of the stan
 We have:
 
 $$
- \mathbf x=\boldsymbol\mu+A\mathbf z. 
+ \mathbf x=\boldsymbol\mu+A\mathbf z.
 $$
 
 Solve for $\mathbf z$:
 
 $$
- \mathbf z=A^{-1}(\mathbf x-\boldsymbol\mu). 
+ \mathbf z=A^{-1}(\mathbf x-\boldsymbol\mu).
 $$
 
 The Jacobian of this inverse transformation is:
 
 $$
- J=A^{-1}. 
+ J=A^{-1}.
 $$
 
 The density transformation formula is:
 
 $$
- p\_{\mathbf X}(\mathbf x) = p\_{\mathbf Z}(A^{-1}(\mathbf x-\boldsymbol\mu)) |\det A^{-1}|. 
+ p_{\mathbf X}(\mathbf x) = p_{\mathbf Z}(A^{-1}(\mathbf x-\boldsymbol\mu)) |\det A^{-1}|.
 $$
 
 Substitute the standard Gaussian density:
 
 $$
- p\_{\mathbf X}(\mathbf x) = \frac{|\det A^{-1}|}{(2\pi)^{n/2}} \exp\left[ -\frac12 \\|A^{-1}(\mathbf x-\boldsymbol\mu)\\|^2 \right]. 
+ p_{\mathbf X}(\mathbf x) = \frac{|\det A^{-1}|}{(2\pi)^{n/2}} \exp\left[ -\frac12 \|A^{-1}(\mathbf x-\boldsymbol\mu)\|^2 \right].
 $$
 
 Now expand the squared norm:
 
 $$
- \begin{aligned} \\|A^{-1}\mathbf d\\|^2 &=(A^{-1}\mathbf d)^T(A^{-1}\mathbf d)\\ &=\mathbf d^TA^{-T}A^{-1}\mathbf d. \end{aligned} 
+ \begin{aligned} \|A^{-1}\mathbf d\|^2 &=(A^{-1}\mathbf d)^T(A^{-1}\mathbf d)\\ &=\mathbf d^TA^{-T}A^{-1}\mathbf d. \end{aligned}
 $$
 
 Because:
 
 $$
- \Sigma=AA^T, 
+ \Sigma=AA^T,
 $$
 
 we have:
 
 $$
- \Sigma^{-1}=A^{-T}A^{-1}. 
+ \Sigma^{-1}=A^{-T}A^{-1}.
 $$
 
 Thus:
 
 $$
- \\|A^{-1}\mathbf d\\|^2 = \mathbf d^T\Sigma^{-1}\mathbf d. 
+ \|A^{-1}\mathbf d\|^2 = \mathbf d^T\Sigma^{-1}\mathbf d.
 $$
 
 For the normalization, use:
 
 $$
- \det\Sigma= \det(AA^T) =(\det A)^2. 
+ \det\Sigma= \det(AA^T) =(\det A)^2.
 $$
 
 Therefore:
 
 $$
- |\det A|=\sqrt{\det\Sigma}. 
+ |\det A|=\sqrt{\det\Sigma}.
 $$
 
 Since:
 
 $$
- |\det A^{-1}|=\frac1{|\det A|}, 
+ |\det A^{-1}|=\frac1{|\det A|},
 $$
 
 we obtain:
 
 $$
- \boxed{ p(\mathbf x)= \frac1{(2\pi)^{n/2}\sqrt{\det\Sigma}} \exp\left[ -\frac12(\mathbf x-\boldsymbol\mu)^T \Sigma^{-1}(\mathbf x-\boldsymbol\mu) \right] }. 
+ \boxed{ p(\mathbf x)= \frac1{(2\pi)^{n/2}\sqrt{\det\Sigma}} \exp\left[ -\frac12(\mathbf x-\boldsymbol\mu)^T \Sigma^{-1}(\mathbf x-\boldsymbol\mu) \right] }.
 $$
 
 That is the full multivariate Gaussian density, derived rather than memorized.
@@ -696,7 +696,7 @@ That is the full multivariate Gaussian density, derived rather than memorized.
 The quantity:
 
 $$
- \boxed{ d_M^2= (\mathbf x-\boldsymbol\mu)^T \Sigma^{-1} (\mathbf x-\boldsymbol\mu) } 
+ \boxed{ d_M^2= (\mathbf x-\boldsymbol\mu)^T \Sigma^{-1} (\mathbf x-\boldsymbol\mu) }
 $$
 
 is the squared [[Chapter Edition/01 - Computing Foundations/24 - Waiting Times, Covariance, and Matrix Decomposition#5. Waiting times, event counts, and covariance geometry|Mahalanobis distance]].
@@ -704,7 +704,7 @@ is the squared [[Chapter Edition/01 - Computing Foundations/24 - Waiting Times, 
 Ordinary Euclidean squared distance is:
 
 $$
- d_E^2= (\mathbf x-\boldsymbol\mu)^T (\mathbf x-\boldsymbol\mu). 
+ d_E^2= (\mathbf x-\boldsymbol\mu)^T (\mathbf x-\boldsymbol\mu).
 $$
 
 Mahalanobis distance accounts for the distribution's scale and correlations.
@@ -718,13 +718,13 @@ If another direction has small variance, a comparable physical displacement can 
 Because a covariance matrix is symmetric, it can be eigendecomposed:
 
 $$
- \Sigma=Q\Lambda Q^T. 
+ \Sigma=Q\Lambda Q^T.
 $$
 
 For positive-definite covariance:
 
 $$
- \Lambda= \operatorname{diag}(\lambda_1,\ldots,\lambda_n) 
+ \Lambda= \operatorname{diag}(\lambda_1,\ldots,\lambda_n)
 $$
 
 with every $\lambda_i>0$.
@@ -732,31 +732,31 @@ with every $\lambda_i>0$.
 Then:
 
 $$
- \Sigma^{-1}=Q\Lambda^{-1}Q^T. 
+ \Sigma^{-1}=Q\Lambda^{-1}Q^T.
 $$
 
 Let:
 
 $$
- \mathbf d=\mathbf x-\boldsymbol\mu. 
+ \mathbf d=\mathbf x-\boldsymbol\mu.
 $$
 
 Express the displacement in the covariance eigenbasis:
 
 $$
- \mathbf z=Q^T\mathbf d. 
+ \mathbf z=Q^T\mathbf d.
 $$
 
 The squared Mahalanobis distance becomes:
 
 $$
- \boxed{ d_M^2= \sum\_{i=1}^{n}\frac{z_i^2}{\lambda_i} }. 
+ \boxed{ d_M^2= \sum_{i=1}^{n}\frac{z_i^2}{\lambda_i} }.
 $$
 
 A constant-density surface satisfies:
 
 $$
- d_M^2=c 
+ d_M^2=c
 $$
 
 for some $c>0$.
@@ -768,7 +768,7 @@ The eigenvectors identify the principal directions. The square roots of eigenval
 For the contour $d_M^2=c$, the semi-axis lengths are:
 
 $$
- \boxed{ a_i=\sqrt{c\lambda_i} }. 
+ \boxed{ a_i=\sqrt{c\lambda_i} }.
 $$
 
 Thus covariance is not merely a table of correlations. It encodes the geometry of an uncertainty ellipsoid.
@@ -778,37 +778,37 @@ Thus covariance is not merely a table of correlations. It encodes the geometry o
 Consider a random vector with mean:
 
 $$
- \boldsymbol\mu= \begin{bmatrix} 0.5\\-1 \end{bmatrix} 
+ \boldsymbol\mu= \begin{bmatrix} 0.5\\-1 \end{bmatrix}
 $$
 
 and covariance:
 
 $$
- \boxed{ \Sigma= \begin{bmatrix} 4&1.2\\ 1.2&9 \end{bmatrix} }. 
+ \boxed{ \Sigma= \begin{bmatrix} 4&1.2\\ 1.2&9 \end{bmatrix} }.
 $$
 
 The first coordinate has variance 4, so its standard deviation is:
 
 $$
- \sigma_X=2. 
+ \sigma_X=2.
 $$
 
 The second has variance 9:
 
 $$
- \sigma_Y=3. 
+ \sigma_Y=3.
 $$
 
 The covariance between them is:
 
 $$
- \operatorname{Cov}(X,Y)=1.2. 
+ \operatorname{Cov}(X,Y)=1.2.
 $$
 
 Their correlation is:
 
 $$
- \rho=\frac{1.2}{(2)(3)} =\boxed{0.2}. 
+ \rho=\frac{1.2}{(2)(3)} =\boxed{0.2}.
 $$
 
 The positive correlation causes the distribution's equal-density contours to be tilted relative to the coordinate axes.
@@ -818,13 +818,13 @@ The positive correlation causes the distribution's equal-density contours to be 
 The determinant is:
 
 $$
- \begin{aligned} \det\Sigma &=(4)(9)-(1.2)^2\\ &=36-1.44\\ &=\boxed{34.56}. \end{aligned} 
+ \begin{aligned} \det\Sigma &=(4)(9)-(1.2)^2\\ &=36-1.44\\ &=\boxed{34.56}. \end{aligned}
 $$
 
 For a two-dimensional Gaussian:
 
 $$
- p(\boldsymbol\mu)= \frac1{2\pi\sqrt{\det\Sigma}}, 
+ p(\boldsymbol\mu)= \frac1{2\pi\sqrt{\det\Sigma}},
 $$
 
 because the Mahalanobis distance at the mean is zero.
@@ -832,7 +832,7 @@ because the Mahalanobis distance at the mean is zero.
 Thus:
 
 $$
- \boxed{ p(\boldsymbol\mu) = \frac1{2\pi\sqrt{34.56}} \approx0.027072806 }. 
+ \boxed{ p(\boldsymbol\mu) = \frac1{2\pi\sqrt{34.56}} \approx0.027072806 }.
 $$
 
 The units are inverse square units of the random coordinates. This is a density value, not the probability that $\mathbf X$ equals the mean exactly.
@@ -842,85 +842,85 @@ The units are inverse square units of the random coordinates. This is a density 
 We can generate a correlated Gaussian from independent standard normals using:
 
 $$
- \mathbf X=\boldsymbol\mu+L\mathbf Z 
+ \mathbf X=\boldsymbol\mu+L\mathbf Z
 $$
 
 where:
 
 $$
- \Sigma=LL^T. 
+ \Sigma=LL^T.
 $$
 
 For our covariance, choose lower-triangular:
 
 $$
- L= \begin{bmatrix} a&0\\ b&c \end{bmatrix}. 
+ L= \begin{bmatrix} a&0\\ b&c \end{bmatrix}.
 $$
 
 Then:
 
 $$
- LL^T= \begin{bmatrix} a^2&ab\\ ab&b^2+c^2 \end{bmatrix}. 
+ LL^T= \begin{bmatrix} a^2&ab\\ ab&b^2+c^2 \end{bmatrix}.
 $$
 
 Match this with:
 
 $$
- \Sigma= \begin{bmatrix} 4&1.2\\ 1.2&9 \end{bmatrix}. 
+ \Sigma= \begin{bmatrix} 4&1.2\\ 1.2&9 \end{bmatrix}.
 $$
 
 First:
 
 $$
- a^2=4 \quad\Longrightarrow\quad a=2. 
+ a^2=4 \quad\Longrightarrow\quad a=2.
 $$
 
 Then:
 
 $$
- ab=1.2 \quad\Longrightarrow\quad b=\frac{1.2}{2}=0.6. 
+ ab=1.2 \quad\Longrightarrow\quad b=\frac{1.2}{2}=0.6.
 $$
 
 Finally:
 
 $$
- b^2+c^2=9. 
+ b^2+c^2=9.
 $$
 
 Thus:
 
 $$
- c^2=9-0.36=8.64, 
+ c^2=9-0.36=8.64,
 $$
 
 so:
 
 $$
- c=\sqrt{8.64}. 
+ c=\sqrt{8.64}.
 $$
 
 Therefore:
 
 $$
- \boxed{ L= \begin{bmatrix} 2&0\\ 0.6&\sqrt{8.64} \end{bmatrix} }. 
+ \boxed{ L= \begin{bmatrix} 2&0\\ 0.6&\sqrt{8.64} \end{bmatrix} }.
 $$
 
 If:
 
 $$
- Z_1,Z_2\overset{\mathrm{iid}}{\sim}\mathcal N(0,1), 
+ Z_1,Z_2\overset{\mathrm{iid}}{\sim}\mathcal N(0,1),
 $$
 
 then:
 
 $$
- \boxed{ X=0.5+2Z_1 } 
+ \boxed{ X=0.5+2Z_1 }
 $$
 
 and:
 
 $$
- \boxed{ Y=-1+0.6Z_1+\sqrt{8.64}\\,Z_2 }. 
+ \boxed{ Y=-1+0.6Z_1+\sqrt{8.64}\,Z_2 }.
 $$
 
 The shared $Z_1$ component creates the desired correlation.
@@ -928,13 +928,13 @@ The shared $Z_1$ component creates the desired correlation.
 Verify the covariance:
 
 $$
- \operatorname{Cov}(X,Y) = \operatorname{Cov}(2Z_1,0.6Z_1+\sqrt{8.64}Z_2). 
+ \operatorname{Cov}(X,Y) = \operatorname{Cov}(2Z_1,0.6Z_1+\sqrt{8.64}Z_2).
 $$
 
 By bilinearity:
 
 $$
- = 1.2\operatorname{Var}(Z_1) + 2\sqrt{8.64}\operatorname{Cov}(Z_1,Z_2). 
+ = 1.2\operatorname{Var}(Z_1) + 2\sqrt{8.64}\operatorname{Cov}(Z_1,Z_2).
 $$
 
 The standard normals are independent, so their covariance is zero. Also $\operatorname{Var}(Z_1)=1$.
@@ -942,13 +942,13 @@ The standard normals are independent, so their covariance is zero. Also $\operat
 Therefore:
 
 $$
- \boxed{\operatorname{Cov}(X,Y)=1.2}. 
+ \boxed{\operatorname{Cov}(X,Y)=1.2}.
 $$
 
 The variance of $Y$ is:
 
 $$
- 0.6^2+8.64=9. 
+ 0.6^2+8.64=9.
 $$
 
 The transformation reproduces the required covariance exactly in the mathematical model.
@@ -960,31 +960,31 @@ An especially important result is that conditioning one part of a jointly Gaussi
 Partition the random vector:
 
 $$
- \mathbf X= \begin{bmatrix} \mathbf X_a\\ \mathbf X_b \end{bmatrix} 
+ \mathbf X= \begin{bmatrix} \mathbf X_a\\ \mathbf X_b \end{bmatrix}
 $$
 
 with mean:
 
 $$
- \boldsymbol\mu= \begin{bmatrix} \boldsymbol\mu_a\\ \boldsymbol\mu_b \end{bmatrix} 
+ \boldsymbol\mu= \begin{bmatrix} \boldsymbol\mu_a\\ \boldsymbol\mu_b \end{bmatrix}
 $$
 
 and covariance:
 
 $$
- \Sigma= \begin{bmatrix} \Sigma\_{aa}&\Sigma\_{ab}\\ \Sigma\_{ba}&\Sigma\_{bb} \end{bmatrix}. 
+ \Sigma= \begin{bmatrix} \Sigma_{aa}&\Sigma_{ab}\\ \Sigma_{ba}&\Sigma_{bb} \end{bmatrix}.
 $$
 
-If $\Sigma\_{aa}$ is positive definite, then:
+If $\Sigma_{aa}$ is positive definite, then:
 
 $$
- \boxed{ \mathbb E[\mathbf X_b\mid\mathbf X_a=\mathbf a] = \boldsymbol\mu_b+ \Sigma\_{ba}\Sigma\_{aa}^{-1} (\mathbf a-\boldsymbol\mu_a) } 
+ \boxed{ \mathbb E[\mathbf X_b\mid\mathbf X_a=\mathbf a] = \boldsymbol\mu_b+ \Sigma_{ba}\Sigma_{aa}^{-1} (\mathbf a-\boldsymbol\mu_a) }
 $$
 
 and:
 
 $$
- \boxed{ \operatorname{Cov}(\mathbf X_b\mid\mathbf X_a) = \Sigma\_{bb} - \Sigma\_{ba}\Sigma\_{aa}^{-1}\Sigma\_{ab} }. 
+ \boxed{ \operatorname{Cov}(\mathbf X_b\mid\mathbf X_a) = \Sigma_{bb} - \Sigma_{ba}\Sigma_{aa}^{-1}\Sigma_{ab} }.
 $$
 
 For any vector $v$, set $u=-\Sigma_{aa}^{-1}\Sigma_{ab}v$. Then
@@ -1005,51 +1005,51 @@ This directly connects probability to the Schur-complement linear algebra used i
 Return to:
 
 $$
- \mu_X=0.5,\qquad \mu_Y=-1, 
+ \mu_X=0.5,\qquad \mu_Y=-1,
 $$
 
 $$
- \operatorname{Var}(X)=4,\qquad \operatorname{Var}(Y)=9, 
+ \operatorname{Var}(X)=4,\qquad \operatorname{Var}(Y)=9,
 $$
 
 $$
- \operatorname{Cov}(X,Y)=1.2. 
+ \operatorname{Cov}(X,Y)=1.2.
 $$
 
 The conditional mean of $Y$ given $X=x$ is:
 
 $$
- \mathbb E[Y\mid X=x] = -1+\frac{1.2}{4}(x-0.5). 
+ \mathbb E[Y\mid X=x] = -1+\frac{1.2}{4}(x-0.5).
 $$
 
 Thus:
 
 $$
- \boxed{ \mathbb E[Y\mid X=x] = -1+0.3(x-0.5) }. 
+ \boxed{ \mathbb E[Y\mid X=x] = -1+0.3(x-0.5) }.
 $$
 
 If we observe:
 
 $$
- X=2.5, 
+ X=2.5,
 $$
 
 the conditional mean becomes:
 
 $$
- -1+0.3(2) =\boxed{-0.4}. 
+ -1+0.3(2) =\boxed{-0.4}.
 $$
 
 The conditional variance is:
 
 $$
- \operatorname{Var}(Y\mid X) = 9-\frac{1.2^2}{4}. 
+ \operatorname{Var}(Y\mid X) = 9-\frac{1.2^2}{4}.
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{Var}(Y\mid X)=8.64 }. 
+ \boxed{ \operatorname{Var}(Y\mid X)=8.64 }.
 $$
 
 Before observing $X$, the variance of $Y$ was 9.
@@ -1067,7 +1067,7 @@ That property is one reason Gaussian models are convenient for estimation and fi
 For a scalar Gaussian:
 
 $$
- P(|Z|\le1)\approx0.6827. 
+ P(|Z|\le1)\approx0.6827.
 $$
 
 It is tempting to assume that the corresponding two-dimensional one-sigma ellipse contains 68.27% probability.
@@ -1077,13 +1077,13 @@ That is incorrect.
 For:
 
 $$
- \mathbf X\sim\mathcal N(\boldsymbol\mu,\Sigma) 
+ \mathbf X\sim\mathcal N(\boldsymbol\mu,\Sigma)
 $$
 
 in two dimensions with positive-definite covariance, the squared Mahalanobis distance:
 
 $$
- D^2= (\mathbf X-\boldsymbol\mu)^T \Sigma^{-1} (\mathbf X-\boldsymbol\mu) 
+ D^2= (\mathbf X-\boldsymbol\mu)^T \Sigma^{-1} (\mathbf X-\boldsymbol\mu)
 $$
 
 follows a chi-squared distribution with two degrees of freedom.
@@ -1091,19 +1091,19 @@ follows a chi-squared distribution with two degrees of freedom.
 Therefore:
 
 $$
- P(D^2\le c)=1-e^{-c/2}. 
+ P(D^2\le c)=1-e^{-c/2}.
 $$
 
 For the ellipse with:
 
 $$
- D^2\le1, 
+ D^2\le1,
 $$
 
 the enclosed probability is:
 
 $$
- \boxed{ P(D^2\le1)=1-e^{-1/2}\approx0.393469 }. 
+ \boxed{ P(D^2\le1)=1-e^{-1/2}\approx0.393469 }.
 $$
 
 So the one-sigma ellipse contains only about 39.3% probability.
@@ -1111,23 +1111,23 @@ So the one-sigma ellipse contains only about 39.3% probability.
 To enclose 95% probability, solve:
 
 $$
- 1-e^{-c/2}=0.95. 
+ 1-e^{-c/2}=0.95.
 $$
 
 Then:
 
 $$
- e^{-c/2}=0.05, 
+ e^{-c/2}=0.05,
 $$
 
 $$
- c=-2\log0.05\approx5.991465. 
+ c=-2\log0.05\approx5.991465.
 $$
 
 The ellipse semi-axis lengths are therefore:
 
 $$
- \sqrt{5.991465\lambda_i} 
+ \sqrt{5.991465\lambda_i}
 $$
 
 along the covariance eigenvectors.
@@ -1141,25 +1141,25 @@ We have already introduced covariance matrices, but now we will study their full
 For a random vector $\mathbf X\in\mathbb R^n$:
 
 $$
- \boxed{ \Sigma= \mathbb E[ (\mathbf X-\boldsymbol\mu) (\mathbf X-\boldsymbol\mu)^T ] }. 
+ \boxed{ \Sigma= \mathbb E[ (\mathbf X-\boldsymbol\mu) (\mathbf X-\boldsymbol\mu)^T ] }.
 $$
 
 Write the centred random vector as:
 
 $$
- \mathbf Z=\mathbf X-\boldsymbol\mu. 
+ \mathbf Z=\mathbf X-\boldsymbol\mu.
 $$
 
 Then:
 
 $$
- \Sigma=\mathbb E[\mathbf Z\mathbf Z^T]. 
+ \Sigma=\mathbb E[\mathbf Z\mathbf Z^T].
 $$
 
 Each matrix entry is:
 
 $$
- \Sigma\_{ij}=\mathbb E[Z_iZ_j]. 
+ \Sigma_{ij}=\mathbb E[Z_iZ_j].
 $$
 
 #### 1 Covariance is symmetric
@@ -1167,19 +1167,19 @@ $$
 Take the transpose:
 
 $$
- \Sigma^T = \mathbb E[(\mathbf Z\mathbf Z^T)^T]. 
+ \Sigma^T = \mathbb E[(\mathbf Z\mathbf Z^T)^T].
 $$
 
 But:
 
 $$
- (\mathbf Z\mathbf Z^T)^T = \mathbf Z\mathbf Z^T. 
+ (\mathbf Z\mathbf Z^T)^T = \mathbf Z\mathbf Z^T.
 $$
 
 Therefore:
 
 $$
- \boxed{\Sigma^T=\Sigma}. 
+ \boxed{\Sigma^T=\Sigma}.
 $$
 
 This is an exact mathematical property of covariance matrices.
@@ -1193,31 +1193,31 @@ Small numerical asymmetries may arise from independent calculations or rounding,
 Choose any deterministic vector:
 
 $$
- \mathbf a\in\mathbb R^n. 
+ \mathbf a\in\mathbb R^n.
 $$
 
 Form the scalar random variable:
 
 $$
- Y=\mathbf a^T\mathbf X. 
+ Y=\mathbf a^T\mathbf X.
 $$
 
 Its mean is:
 
 $$
- \mathbb E[Y]=\mathbf a^T\boldsymbol\mu. 
+ \mathbb E[Y]=\mathbf a^T\boldsymbol\mu.
 $$
 
 Its variance is:
 
 $$
- \begin{aligned} \operatorname{Var}(Y) &= \mathbb E[ (\mathbf a^T(\mathbf X-\boldsymbol\mu))^2 ]\\ &= \mathbb E[ \mathbf a^T\mathbf Z\mathbf Z^T\mathbf a ]\\ &= \mathbf a^T\mathbb E[\mathbf Z\mathbf Z^T]\mathbf a. \end{aligned} 
+ \begin{aligned} \operatorname{Var}(Y) &= \mathbb E[ (\mathbf a^T(\mathbf X-\boldsymbol\mu))^2 ]\\ &= \mathbb E[ \mathbf a^T\mathbf Z\mathbf Z^T\mathbf a ]\\ &= \mathbf a^T\mathbb E[\mathbf Z\mathbf Z^T]\mathbf a. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{Var}(\mathbf a^T\mathbf X) = \mathbf a^T\Sigma\mathbf a }. 
+ \boxed{ \operatorname{Var}(\mathbf a^T\mathbf X) = \mathbf a^T\Sigma\mathbf a }.
 $$
 
 This is one of the most powerful covariance identities.
@@ -1229,7 +1229,7 @@ It says the uncertainty of a linear measurement is obtained by projecting the co
 Let:
 
 $$
- \mathbf Y=A\mathbf X+\mathbf b, 
+ \mathbf Y=A\mathbf X+\mathbf b,
 $$
 
 where $A$ is a deterministic matrix and $\mathbf b$ is a deterministic translation.
@@ -1237,25 +1237,25 @@ where $A$ is a deterministic matrix and $\mathbf b$ is a deterministic translati
 The mean is:
 
 $$
- \boxed{ \boldsymbol\mu_Y=A\boldsymbol\mu_X+\mathbf b }. 
+ \boxed{ \boldsymbol\mu_Y=A\boldsymbol\mu_X+\mathbf b }.
 $$
 
 The centred output is:
 
 $$
- \mathbf Y-\boldsymbol\mu_Y = A(\mathbf X-\boldsymbol\mu_X). 
+ \mathbf Y-\boldsymbol\mu_Y = A(\mathbf X-\boldsymbol\mu_X).
 $$
 
 Its covariance becomes:
 
 $$
- \begin{aligned} \Sigma_Y &= \mathbb E[ A(\mathbf X-\boldsymbol\mu_X) (\mathbf X-\boldsymbol\mu_X)^TA^T ]\\ &= A\Sigma_XA^T. \end{aligned} 
+ \begin{aligned} \Sigma_Y &= \mathbb E[ A(\mathbf X-\boldsymbol\mu_X) (\mathbf X-\boldsymbol\mu_X)^TA^T ]\\ &= A\Sigma_XA^T. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{ \Sigma_Y=A\Sigma_XA^T }. 
+ \boxed{ \Sigma_Y=A\Sigma_XA^T }.
 $$
 
 Translation changes the mean but does not change covariance.
@@ -1265,13 +1265,13 @@ Translation changes the mean but does not change covariance.
 If $R$ is a rotation matrix:
 
 $$
- \mathbf Y=R\mathbf X+\mathbf t, 
+ \mathbf Y=R\mathbf X+\mathbf t,
 $$
 
 then:
 
 $$
- \boxed{ \Sigma_Y=R\Sigma_XR^T }. 
+ \boxed{ \Sigma_Y=R\Sigma_XR^T }.
 $$
 
 This rotates the covariance ellipsoid without changing its eigenvalues.
@@ -1285,7 +1285,7 @@ By contrast, a nonuniform scale or general affine transform changes those varian
 Suppose:
 
 $$
- \mathbf Y=f(\mathbf X) 
+ \mathbf Y=f(\mathbf X)
 $$
 
 with differentiable $f$.
@@ -1293,13 +1293,13 @@ with differentiable $f$.
 For small uncertainty around the mean, linearize:
 
 $$
- f(\mathbf X) \approx f(\boldsymbol\mu_X) + J_f(\boldsymbol\mu_X) (\mathbf X-\boldsymbol\mu_X). 
+ f(\mathbf X) \approx f(\boldsymbol\mu_X) + J_f(\boldsymbol\mu_X) (\mathbf X-\boldsymbol\mu_X).
 $$
 
 The approximate covariance is:
 
 $$
- \boxed{ \Sigma_Y \approx J_f\Sigma_XJ_f^T }. 
+ \boxed{ \Sigma_Y \approx J_f\Sigma_XJ_f^T }.
 $$
 
 This is the first-order covariance propagation formula derived through Jacobians in the geometry and Jacobian discussion.
@@ -1309,10 +1309,10 @@ The approximation becomes less reliable when uncertainty is large relative to lo
 A second-order Taylor expansion can also introduce a correction to the predicted mean:
 
 $$
- \mathbb E[f_i(\mathbf X)] \approx f_i(\boldsymbol\mu) + \frac12\operatorname{tr}(H\_{f_i}\Sigma). 
+ \mathbb E[f_i(\mathbf X)] \approx f_i(\boldsymbol\mu) + \frac12\operatorname{tr}(H_{f_i}\Sigma).
 $$
 
-Here $H\_{f_i}$ is the Hessian of output component $i$.
+Here $H_{f_i}$ is the Hessian of output component $i$.
 
 Thus nonlinear transformations can change both the covariance and the mean in ways that first-order propagation does not fully capture.
 
@@ -1321,31 +1321,31 @@ Thus nonlinear transformations can change both the covariance and the mean in wa
 A 3D Gaussian representation may have a mean position:
 
 $$
- \boldsymbol\mu\_{3D} 
+ \boldsymbol\mu_{3D}
 $$
 
 and covariance:
 
 $$
- \Sigma\_{3D}. 
+ \Sigma_{3D}.
 $$
 
 A camera rotation maps its covariance into camera coordinates:
 
 $$
- \Sigma_c=R\Sigma\_{3D}R^T. 
+ \Sigma_c=R\Sigma_{3D}R^T.
 $$
 
 A local perspective-projection Jacobian then gives an approximate image-space covariance:
 
 $$
- \boxed{ \Sigma\_{2D}\approx J\_\pi\Sigma_cJ\_\pi^T }. 
+ \boxed{ \Sigma_{2D}\approx J_\pi\Sigma_cJ_\pi^T }.
 $$
 
 Combining:
 
 $$
- \boxed{ \Sigma\_{2D}\approx J\_\pi R\Sigma\_{3D}R^TJ\_\pi^T }. 
+ \boxed{ \Sigma_{2D}\approx J_\pi R\Sigma_{3D}R^TJ_\pi^T }.
 $$
 
 This formula is directly relevant to projected Gaussian footprints.
@@ -1355,7 +1355,7 @@ But there is an important distinction between a normalized probability density a
 A probability density contains the normalization factor involving $\det\Sigma$. Many Gaussian rendering formulations use kernels of the form:
 
 $$
- G(\mathbf x)= \exp\left( -\frac12(\mathbf x-\boldsymbol\mu)^T \Sigma^{-1}(\mathbf x-\boldsymbol\mu) \right) 
+ G(\mathbf x)= \exp\left( -\frac12(\mathbf x-\boldsymbol\mu)^T \Sigma^{-1}(\mathbf x-\boldsymbol\mu) \right)
 $$
 
 together with learned opacity or amplitude terms.
@@ -1371,13 +1371,13 @@ The mathematical covariance transformation is closely related, but the full rend
 Let:
 
 $$
- \Sigma_Y=J\Sigma_XJ^T. 
+ \Sigma_Y=J\Sigma_XJ^T.
 $$
 
 The rank satisfies:
 
 $$
- \operatorname{rank}(\Sigma_Y) \le \min(\operatorname{rank}(J),\operatorname{rank}(\Sigma_X)). 
+ \operatorname{rank}(\Sigma_Y) \le \min(\operatorname{rank}(J),\operatorname{rank}(\Sigma_X)).
 $$
 
 If a transformation loses dimensions, the output covariance cannot recover them.
@@ -1385,7 +1385,7 @@ If a transformation loses dimensions, the output covariance cannot recover them.
 For a $2\times3$ perspective-projection Jacobian:
 
 $$
- J\_\pi:\mathbb R^3\rightarrow\mathbb R^2, 
+ J_\pi:\mathbb R^3\rightarrow\mathbb R^2,
 $$
 
 the output covariance has rank at most two.
@@ -1407,13 +1407,13 @@ It must be symmetric and positive semidefinite, abbreviated PSD.
 We write:
 
 $$
- \boxed{\Sigma\succeq0}. 
+ \boxed{\Sigma\succeq0}.
 $$
 
 The mathematical definition is:
 
 $$
- \boxed{ \mathbf a^T\Sigma\mathbf a\ge0 \quad\text{for every }\mathbf a\in\mathbb R^n }. 
+ \boxed{ \mathbf a^T\Sigma\mathbf a\ge0 \quad\text{for every }\mathbf a\in\mathbb R^n }.
 $$
 
 Why must this hold?
@@ -1421,13 +1421,13 @@ Why must this hold?
 From the covariance quadratic-form section:
 
 $$
- \mathbf a^T\Sigma\mathbf a = \operatorname{Var}(\mathbf a^T\mathbf X). 
+ \mathbf a^T\Sigma\mathbf a = \operatorname{Var}(\mathbf a^T\mathbf X).
 $$
 
 A variance is an expectation of a square:
 
 $$
- \operatorname{Var}(Y) = \mathbb E[(Y-\mathbb E[Y])^2]. 
+ \operatorname{Var}(Y) = \mathbb E[(Y-\mathbb E[Y])^2].
 $$
 
 A square is nonnegative.
@@ -1437,7 +1437,7 @@ Therefore variance cannot be negative.
 Hence:
 
 $$
- \boxed{ \mathbf a^T\Sigma\mathbf a = \operatorname{Var}(\mathbf a^T\mathbf X) \ge0 }. 
+ \boxed{ \mathbf a^T\Sigma\mathbf a = \operatorname{Var}(\mathbf a^T\mathbf X) \ge0 }.
 $$
 
 That proves the PSD requirement.
@@ -1449,15 +1449,15 @@ Because $\Sigma$ is real symmetric, it has real eigenvalues and an orthonormal e
 Let:
 
 $$
- \Sigma\mathbf v_i=\lambda_i\mathbf v_i. 
+ \Sigma\mathbf v_i=\lambda_i\mathbf v_i.
 $$
 
-Choose $\mathbf a=\mathbf v_i$, with $\\|\mathbf v_i\\|=1$.
+Choose $\mathbf a=\mathbf v_i$, with $\|\mathbf v_i\|=1$.
 
 Then:
 
 $$
- \mathbf v_i^T\Sigma\mathbf v_i = \lambda_i. 
+ \mathbf v_i^T\Sigma\mathbf v_i = \lambda_i.
 $$
 
 But PSD requires this quadratic form to be nonnegative.
@@ -1465,7 +1465,7 @@ But PSD requires this quadratic form to be nonnegative.
 Therefore:
 
 $$
- \boxed{\lambda_i\ge0}. 
+ \boxed{\lambda_i\ge0}.
 $$
 
 Every eigenvalue of a valid covariance matrix must be nonnegative.
@@ -1479,7 +1479,7 @@ Thus these are equivalent descriptions.
 A matrix is positive definite, or PD, if:
 
 $$
- \mathbf a^T\Sigma\mathbf a>0 
+ \mathbf a^T\Sigma\mathbf a>0
 $$
 
 for every nonzero $\mathbf a$.
@@ -1497,19 +1497,19 @@ That means some linear combination of the random variables is deterministic.
 Consider:
 
 $$
- \boxed{ \Sigma= \begin{bmatrix} 1&2\\ 2&4 \end{bmatrix} }. 
+ \boxed{ \Sigma= \begin{bmatrix} 1&2\\ 2&4 \end{bmatrix} }.
 $$
 
 The determinant is:
 
 $$
- \det\Sigma=4-4=0. 
+ \det\Sigma=4-4=0.
 $$
 
 The eigenvalues are:
 
 $$
- 5,\qquad0. 
+ 5,\qquad0.
 $$
 
 Both are nonnegative, so the matrix is PSD.
@@ -1521,27 +1521,27 @@ What physical uncertainty could produce it?
 Let $X$ be a scalar random variable with variance one, and let:
 
 $$
- Y=2X. 
+ Y=2X.
 $$
 
 Then:
 
 $$
- \operatorname{Var}(X)=1, 
+ \operatorname{Var}(X)=1,
 $$
 
 $$
- \operatorname{Var}(Y)=4, 
+ \operatorname{Var}(Y)=4,
 $$
 
 $$
- \operatorname{Cov}(X,Y)=2. 
+ \operatorname{Cov}(X,Y)=2.
 $$
 
 The covariance matrix is exactly:
 
 $$
- \begin{bmatrix} 1&2\\2&4 \end{bmatrix}. 
+ \begin{bmatrix} 1&2\\2&4 \end{bmatrix}.
 $$
 
 The variables have perfect linear dependence.
@@ -1549,7 +1549,7 @@ The variables have perfect linear dependence.
 The combination:
 
 $$
- Y-2X 
+ Y-2X
 $$
 
 has zero variance.
@@ -1563,13 +1563,13 @@ It does not have an ordinary nonsingular 2D Gaussian density with respect to are
 Consider:
 
 $$
- \boxed{ A= \begin{bmatrix} 1&2\\ 2&1 \end{bmatrix} }. 
+ \boxed{ A= \begin{bmatrix} 1&2\\ 2&1 \end{bmatrix} }.
 $$
 
 Its eigenvalues are:
 
 $$
- 3,\qquad-1. 
+ 3,\qquad-1.
 $$
 
 The negative eigenvalue makes it indefinite.
@@ -1577,19 +1577,19 @@ The negative eigenvalue makes it indefinite.
 Choose:
 
 $$
- \mathbf a= \begin{bmatrix} 1\\-1 \end{bmatrix}. 
+ \mathbf a= \begin{bmatrix} 1\\-1 \end{bmatrix}.
 $$
 
 Then:
 
 $$
- \mathbf a^TA\mathbf a=-2. 
+ \mathbf a^TA\mathbf a=-2.
 $$
 
 If this matrix were a covariance, it would imply:
 
 $$
- \operatorname{Var}(X-Y)=-2, 
+ \operatorname{Var}(X-Y)=-2,
 $$
 
 which is impossible.
@@ -1601,37 +1601,37 @@ Therefore $A$ cannot be a valid covariance matrix.
 Consider a symmetric covariance matrix:
 
 $$
- \Sigma= \begin{bmatrix} \sigma_X^2&c\\ c&\sigma_Y^2 \end{bmatrix}. 
+ \Sigma= \begin{bmatrix} \sigma_X^2&c\\ c&\sigma_Y^2 \end{bmatrix}.
 $$
 
 For it to be PSD, we require:
 
 $$
- \sigma_X^2\ge0, \qquad \sigma_Y^2\ge0, 
+ \sigma_X^2\ge0, \qquad \sigma_Y^2\ge0,
 $$
 
 and:
 
 $$
- \boxed{ \sigma_X^2\sigma_Y^2-c^2\ge0 }. 
+ \boxed{ \sigma_X^2\sigma_Y^2-c^2\ge0 }.
 $$
 
 Equivalently:
 
 $$
- |c|\le\sigma_X\sigma_Y. 
+ |c|\le\sigma_X\sigma_Y.
 $$
 
 If both standard deviations are positive:
 
 $$
- \left|\frac{c}{\sigma_X\sigma_Y}\right|\le1. 
+ \left|\frac{c}{\sigma_X\sigma_Y}\right|\le1.
 $$
 
 Thus:
 
 $$
- \boxed{|\rho|\le1}. 
+ \boxed{|\rho|\le1}.
 $$
 
 The familiar correlation bound is therefore also a matrix positive-semidefiniteness condition.
@@ -1641,7 +1641,7 @@ The familiar correlation bound is therefore also a matrix positive-semidefiniten
 For a symmetric positive-definite matrix:
 
 $$
- \boxed{\Sigma=LL^T} 
+ \boxed{\Sigma=LL^T}
 $$
 
 with $L$ lower triangular and positive diagonal.
@@ -1689,19 +1689,19 @@ In practical code, a covariance estimate can contain a tiny negative eigenvalue 
 One simple repair for a symmetric matrix is to eigendecompose:
 
 $$
- A=Q\Lambda Q^T, 
+ A=Q\Lambda Q^T,
 $$
 
 replace negative eigenvalues by zero:
 
 $$
- \Lambda\_+= \operatorname{diag}(\max(\lambda_i,0)), 
+ \Lambda\_+= \operatorname{diag}(\max(\lambda_i,0)),
 $$
 
 then reconstruct:
 
 $$
- \boxed{ A\_+=Q\Lambda\_+Q^T }. 
+ \boxed{ A\_+=Q\Lambda\_+Q^T }.
 $$
 
 For a real symmetric matrix, this is a nearest PSD projection in the Frobenius norm when no additional constraints are imposed.

@@ -1,0 +1,4049 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch576.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_05-engine-i-ch012-transactions-recovery-and-safe-project-boundaries" class="level2">
+<h2>Transactions, recovery, and safe project boundaries</h2>
+<p><a href="ch442.xhtml#id_07-Vision-XR-and-Playable-Worlds" class="wikilink">Reading map</a> · <a href="ch575.xhtml#id_05-engine-i-ch011-streaming-resources-through-explicit-states" class="wikilink">Previous chapter</a> · <a href="ch577.xhtml#id_06-engine-ii-ch041-evidence-tools-and-revisable-design" class="wikilink">Next chapter</a></p>
+<p>Interactive tools need edits that can be undone and projects that can be reopened after failure. This chapter makes mutation transactional and treats paths, packages, backups, and atomic publication as security and recovery contracts.</p>
+<p><strong>By the end:</strong> Design undo/redo, save recovery, path validation, and package publication so partial failure cannot silently corrupt authored work.</p>
+<p><strong>Recall question:</strong> Which state is authoritative before and after a failed save, and how does the system prove that the published project is complete?</p>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 20420–24709; source-span SHA256 92d825554ec3ec68c9a64a4357481a4f61ed46201d275c8ccef881791b1ca3f8. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_05-engine-i-ch012-undo-transactions-recovery-project-boundaries-path-security-packaging-and-atomic-publication" class="level4">
+<h4>UNDO, TRANSACTIONS, RECOVERY, PROJECT BOUNDARIES, PATH SECURITY, PACKAGING AND ATOMIC PUBLICATION</h4>
+<hr />
+<p><strong>Undo commands</strong></p>
+<p>Undo begins with one idea:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>An edit must contain enough information to reverse itself.</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For property edit:</p>
+<pre class="text"><code>Entity
+Component
+Property
+Before
+After.</code></pre>
+<p>For create entity:</p>
+<pre class="text"><code>CreatedEntityID
+complete creation state.</code></pre>
+<p>For delete entity:</p>
+<pre class="text"><code>serialized deleted subtree.</code></pre>
+<p>The inverse operation must be deterministic.</p>
+<hr />
+<p><strong>Command interface</strong></p>
+<p>Kairo currently defines:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> EditorCommand</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> <span class="bu">std::</span>string_view</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    Name<span class="op">()</span> <span class="at">const</span> <span class="kw">noexcept</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> <span class="dt">void</span> Execute<span class="op">()</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> <span class="dt">void</span> Undo<span class="op">()</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> <span class="dt">bool</span> TryMerge<span class="op">(</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        EditorCommand<span class="op">&amp;)</span> <span class="kw">noexcept</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>This is an excellent minimal command model.</p>
+<p>Each command owns the state necessary for forward and reverse transitions.</p>
+<hr />
+<p><strong>Creation command identity</strong></p>
+<p>A subtle problem:</p>
+<p>Create entity.</p>
+<p>Undo.</p>
+<p>Redo.</p>
+<p>If redo allocates a <strong>different Entity ID</strong>, references or selection state may behave unexpectedly.</p>
+<p>Kairo’s creation commands preserve the allocated scene identity.</p>
+<p>First execution:</p>
+<pre class="text"><code>allocate ID 42.</code></pre>
+<p>Undo:</p>
+<pre class="text"><code>destroy 42.</code></pre>
+<p>Redo:</p>
+<pre class="text"><code>CreateEntityWithID(42).</code></pre>
+<p>This is exactly the right editor semantic.</p>
+<hr />
+<p><strong>Undo commands should store semantic state</strong></p>
+<p>For Light edit:</p>
+<p>Bad:</p>
+<pre class="text"><code>store pointer to Light
+store raw bytes.</code></pre>
+<p>Better:</p>
+<pre class="text"><code>Entity ID
+Before LightComponent
+After LightComponent.</code></pre>
+<p>Kairo’s <code>SetSceneComponentCommand</code> follows this model.</p>
+<p>It captures complete before/after component values.</p>
+<p>Undo therefore does not depend on stale memory addresses.</p>
+<hr />
+<p><strong>Command-pattern undo/redo</strong></p>
+<p>Command history is a sequence:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>C</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Maintain cursor <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>:</p>
+<pre class="text"><code>[ applied commands | redo commands ]
+                  ^
+                cursor</code></pre>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mo>=</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+</math>
+<p>commands 0–2 are applied.</p>
+<p>Commands 3 onward are redoable.</p>
+<hr />
+<p><strong>Undo</strong></p>
+<p>Undo command:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+  <mi>U</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>o</mi>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Only after successful Undo:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mo stretchy="false">←</mo>
+  <mi>k</mi>
+  <mo>−</mo>
+  <mn>1.</mn>
+</math>
+<p>This ordering matters.</p>
+<p>If Undo throws and cursor moved first, history would claim state changed when it did not.</p>
+<p>Current Kairo does the operation first and changes cursor afterward.</p>
+<p>Strong design.</p>
+<hr />
+<p><strong>Redo</strong></p>
+<p>Redo:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>.</mo>
+  <mi>E</mi>
+  <mi>x</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mo stretchy="false">←</mo>
+  <mi>k</mi>
+  <mo>+</mo>
+  <mn>1.</mn>
+</math>
+<p>Again cursor changes only after successful execution.</p>
+<hr />
+<p><strong>New edit after undo</strong></p>
+<p>History:</p>
+<pre class="text"><code>A B C D
+      ^</code></pre>
+<p>Suppose C/D are redo branch.</p>
+<p>Now execute X.</p>
+<p>Expected:</p>
+<pre class="text"><code>A B X</code></pre>
+<p>not:</p>
+<pre class="text"><code>A B X C D.</code></pre>
+<p>Kairo truncates redo entries when a new command executes after undo.</p>
+<p>This is standard linear undo semantics.</p>
+<hr />
+<p><strong>Command history memory</strong></p>
+<p>Unlimited undo can retain huge snapshots.</p>
+<p>Imagine deleting a 2 GiB terrain entity snapshot 500 times.</p>
+<p>History becomes enormous.</p>
+<p>Kairo bounds command history, defaulting to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>512</mn>
+</math>
+<p>entries.</p>
+<p>When full, oldest applied command is evicted.</p>
+<p>That is a reasonable first memory policy.</p>
+<p>More advanced systems use:</p>
+<pre class="text"><code>byte budget
+compressed snapshots
+disk-backed history.</code></pre>
+<hr />
+<p><strong>Command merging</strong></p>
+<p>Slider drag generates many micro-edits:</p>
+<pre class="text"><code>1.00
+1.01
+1.02
+...
+3.50.</code></pre>
+<p>Without merging, Ctrl-Z walks every intermediate frame.</p>
+<p>Kairo’s:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>TryMerge<span class="op">(...)</span></span></code></pre></div>
+<p>allows adjacent compatible commands to coalesce.</p>
+<p>A merged command should preserve:</p>
+<pre class="text"><code>Before = initial value
+After = latest value.</code></pre>
+<p>That makes one intuitive undo step.</p>
+<hr />
+<p><strong>Transactional editor changes</strong></p>
+<p>A transaction is stronger than an undo command.</p>
+<p>It means an operation involving several mutations behaves:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>all succeed or none become visible</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Suppose “Add Physics Preview” adds:</p>
+<pre class="text"><code>RigidBody
+Collider.</code></pre>
+<p>If RigidBody succeeds but Collider validation fails, leaving only one component is undesirable.</p>
+<p>A transactional command should prevalidate or mutate a candidate state first.</p>
+<hr />
+<p><strong>Strong exception guarantee</strong></p>
+<p>For an operation <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo stretchy="false">(</mo>
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">{</mo>
+    <mtable columnalign="left left" columnspacing="1em" rowspacing=".2em">
+      <mtr>
+        <mtd>
+          <mi>S</mi>
+          <mi>t</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <msup>
+            <mi>e</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msup>
+          <mo>,</mo>
+        </mtd>
+        <mtd>
+          <mi>s</mi>
+          <mi>u</mi>
+          <mi>c</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mi>s</mi>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mi>S</mi>
+          <mi>t</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mo>,</mo>
+        </mtd>
+        <mtd>
+          <mi>f</mi>
+          <mi>a</mi>
+          <mi>i</mi>
+          <mi>l</mi>
+          <mi>u</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE" fence="true" stretchy="true" symmetric="true"></mo>
+  </mrow>
+</math>
+<p>not:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <msub>
+    <mi>e</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>h</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+      <mi>f</mi>
+      <mo>−</mo>
+      <mi>m</mi>
+      <mi>u</mi>
+      <mi>t</mi>
+      <mi>a</mi>
+      <mi>t</mi>
+      <mi>e</mi>
+      <mi>d</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Kairo’s command interface explicitly requires a strong exception guarantee from commands.</p>
+<p>This is a very good contract.</p>
+<hr />
+<p><strong>Validate before mutation</strong></p>
+<p>Example:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> SetMaterial<span class="op">(</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    Entity e<span class="op">,</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    MaterialAssetHandle asset<span class="op">)</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// May throw.</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    assets<span class="op">.</span>Resolve<span class="op">(</span>asset<span class="op">);</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Only mutate after validation.</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    scene<span class="op">.</span>SetMaterial<span class="op">(</span>e<span class="op">,</span> asset<span class="op">);</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Kairo’s logic-document command uses precisely this pattern: it resolves the typed asset before replacing the component.</p>
+<p>This keeps failure atomic.</p>
+<hr />
+<p><strong>Candidate-copy transactions</strong></p>
+<p>For complex state:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>Scene candidate <span class="op">=</span> scene<span class="op">;</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>ApplyOperation<span class="op">(</span>candidate<span class="op">);</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>candidate<span class="op">.</span>Validate<span class="op">();</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>scene <span class="op">=</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>move<span class="op">(</span>candidate<span class="op">);</span></span></code></pre></div>
+<p>This can be expensive but gives strong semantics.</p>
+<p>Your RuntimeWorld and several project-loading paths already use candidate state before commit.</p>
+<hr />
+<p><strong>Multi-command transactions</strong></p>
+<p>Sometimes one UI action logically contains many commands.</p>
+<p>Example prefab instantiation:</p>
+<pre class="text"><code>create root
+create 20 children
+add components
+set hierarchy
+resolve references.</code></pre>
+<p>Undo should happen as one action.</p>
+<p>Use composite command:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> CompositeCommand</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    vector<span class="op">&lt;</span>Command<span class="op">&gt;</span> Commands<span class="op">;</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Execute in order.</p>
+<p>Undo in reverse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>C</mi>
+    <mi>n</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>,</mo>
+  <msubsup>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msubsup>
+    <mi>C</mi>
+    <mn>0</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>If an Execute fails midway, undo already-applied children before propagating failure.</p>
+<hr />
+<p><strong>Transaction boundary should match user intent</strong></p>
+<p>Not every low-level mutation deserves an undo record.</p>
+<p>User performs:</p>
+<blockquote>
+<p>Duplicate subtree.</p>
+</blockquote>
+<p>That is one logical operation even though hundreds of component writes occur.</p>
+<p>The undo stack should reflect <strong>semantic authoring actions</strong>, not internal implementation calls.</p>
+<p>This dramatically improves editor usability.</p>
+<hr />
+<p><strong>Recovery journals</strong></p>
+<p>Undo protects against:</p>
+<pre class="text"><code>user mistake during a live session.</code></pre>
+<p>Recovery protects against:</p>
+<pre class="text"><code>process crash
+OS crash
+power loss
+editor bug.</code></pre>
+<p>These are different problems.</p>
+<p>Undo history stored only in RAM disappears during a crash.</p>
+<p>Recovery state must live outside the process.</p>
+<hr />
+<p><strong>Snapshot versus write-ahead journal</strong></p>
+<p>Two broad approaches exist.</p>
+<p><strong>Snapshot</strong></p>
+<p>Periodically save complete recovery state:</p>
+<pre class="text"><code>Project
+Manifest
+Scene
+Documents
+Draft buffers.</code></pre>
+<p><strong>Operation journal</strong></p>
+<p>Append every mutation:</p>
+<pre class="text"><code>SetTransform
+DeleteEntity
+ChangeMaterial
+...</code></pre>
+<p>Then replay after last durable checkpoint.</p>
+<p>Kairo currently uses a recovery <strong>snapshot</strong> model.</p>
+<p>That is simpler and robust.</p>
+<hr />
+<p><strong>Kairo recovery snapshot</strong></p>
+<p>A recovery point contains metadata such as:</p>
+<pre class="text"><code>original project root
+project file
+active scene
+creation time
+list of recovery files.</code></pre>
+<p>Each payload records:</p>
+<pre class="text"><code>role
+target path
+payload path
+byte count
+checksum
+dirty state
+active state.</code></pre>
+<p>The snapshot includes:</p>
+<pre class="text"><code>project descriptor
+asset manifest
+scene
+authoring documents
+text drafts.</code></pre>
+<p>This is impressively complete.</p>
+<hr />
+<p><strong>Drafts versus canonical documents</strong></p>
+<p>One subtle feature matters greatly.</p>
+<p>A text editor buffer may currently contain invalid syntax.</p>
+<p>Example user is halfway typing:</p>
+<pre class="text"><code>function foo(</code></pre>
+<p>An autosave/recovery system must preserve those bytes.</p>
+<p>It must <strong>not</strong> require them to parse as a valid authoritative document.</p>
+<p>Kairo distinguishes:</p>
+<pre class="text"><code>AuthoringDocument
+TextDraft.</code></pre>
+<p>The recovery code explicitly says drafts may be syntactically invalid and should not be promoted to authoritative state merely because they were recovered.</p>
+<p>That is exactly correct.</p>
+<hr />
+<p><strong>Recovery integrity</strong></p>
+<p>On load Kairo verifies:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>B</mi>
+  <mi>y</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>M</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>B</mi>
+  <mi>y</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>m</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>M</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>C</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>m</mi>
+  <mo>.</mo>
+</math>
+<p>If one payload fails:</p>
+<pre class="text"><code>reject recovery snapshot.</code></pre>
+<p>This is much safer than opening a partially written state and hoping.</p>
+<hr />
+<p><strong>Recovery publication</strong></p>
+<p>A recovery snapshot is built in a staging directory.</p>
+<p>Only after payloads and manifest are complete is the snapshot directory published into the recovery root.</p>
+<p>Thus discovery sees either:</p>
+<pre class="text"><code>old complete snapshots</code></pre>
+<p>or:</p>
+<pre class="text"><code>new complete snapshot.</code></pre>
+<p>Not a partially assembled snapshot masquerading as valid.</p>
+<p>This is atomic-publication thinking at directory granularity.</p>
+<hr />
+<p><strong>Retention</strong></p>
+<p>Recovery data grows indefinitely unless bounded.</p>
+<p>Kairo defaults to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>10</mn>
+</math>
+<p>snapshots and permits up to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>64.</mn>
+</math>
+<p>Old recovery points can be removed according to creation ordering.</p>
+<p>This is the correct distinction:</p>
+<pre class="text"><code>recovery data is redundant safety state,
+not permanent project history.</code></pre>
+<hr />
+<p><strong>Autosave architecture</strong></p>
+<p>Autosave is a policy layered over recovery primitives.</p>
+<p>The safe definition is not:</p>
+<blockquote>
+<p>Call Save All every 30 seconds.</p>
+</blockquote>
+<p>That can overwrite the user’s authoritative files with partially edited state.</p>
+<p>Better:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>A</mi>
+          <mi>u</mi>
+          <mi>t</mi>
+          <mi>o</mi>
+          <mi>s</mi>
+          <mi>a</mi>
+          <mi>v</mi>
+          <mi>e</mi>
+          <mo stretchy="false">→</mo>
+          <mi>R</mi>
+          <mi>e</mi>
+          <mi>c</mi>
+          <mi>o</mi>
+          <mi>v</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>y</mi>
+          <mi>S</mi>
+          <mi>n</mi>
+          <mi>a</mi>
+          <mi>p</mi>
+          <mi>s</mi>
+          <mi>h</mi>
+          <mi>o</mi>
+          <mi>t</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The user’s real project remains unchanged.</p>
+<hr />
+<p><strong>Autosave should not clear dirty state</strong></p>
+<p>Suppose scene is unsaved.</p>
+<p>Autosave creates recovery snapshot.</p>
+<p>The editor must still display:</p>
+<pre class="text"><code>*
+unsaved changes.</code></pre>
+<p>Because autosave did not commit the user’s canonical project.</p>
+<p>Kairo’s recovery API explicitly says creating a recovery point does not modify:</p>
+<pre class="text"><code>dirty flags
+command history
+authored files.</code></pre>
+<p>Excellent.</p>
+<hr />
+<p><strong>Autosave scheduling</strong></p>
+<p>A practical policy might trigger when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>S</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>L</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo>&gt;</mo>
+  <mi>T</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>U</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>C</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+</math>
+<p>and editor is not currently in a critical file operation.</p>
+<p>For example:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    session<span class="op">.</span>HasUnsavedChanges<span class="op">()</span> <span class="op">&amp;&amp;</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    now <span class="op">-</span> lastRecovery <span class="op">&gt;</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>chrono::minutes<span class="op">(</span><span class="dv">2</span><span class="op">))</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>    session<span class="op">.</span>CreateRecoveryPoint<span class="op">();</span></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>But do not perform heavy serialization synchronously every frame.</p>
+<hr />
+<p><strong>Snapshot consistency under asynchronous autosave</strong></p>
+<p>If autosave happens on a background thread while UI mutates Scene concurrently, copying live structures without synchronization is dangerous.</p>
+<p>Options:</p>
+<pre class="text"><code>short lock + snapshot copy
+immutable/persistent document structures
+command barrier
+serialize a versioned copy.</code></pre>
+<p>The recovery job should operate on a stable snapshot, not moving live state.</p>
+<hr />
+<p><strong>Current Kairo status for autosave</strong></p>
+<p>The inspected code clearly provides:</p>
+<pre class="text"><code>CreateRecoveryPoint
+LoadRecoverySnapshot
+RestoreRecoveryPoint
+retention
+checksums
+draft preservation.</code></pre>
+<p>A full time-based autosave scheduler was not evident in the inspected recovery/session files.</p>
+<p>So the <strong>recovery mechanism exists</strong>; automatic scheduling is a host/editor policy that can be layered on top.</p>
+<p>That is a reasonable architectural separation.</p>
+<hr />
+<p><strong>Project descriptors</strong></p>
+<p>A project descriptor tells the engine how to bootstrap the project.</p>
+<p>Current Kairo descriptor contains:</p>
+<pre class="text"><code>Name
+AssetManifest
+StartupScene
+EngineVersion
+InputMap
+RenderingProfile
+GraphicsBackend
+optional PlayExecutable
+EnabledPlugins
+BuildProfiles.</code></pre>
+<p>This is exactly the right level of information.</p>
+<p>It does not contain:</p>
+<pre class="text"><code>VkDevice
+runtime ECS entity IDs
+GPU resources.</code></pre>
+<p>It contains persistent bootstrap policy.</p>
+<hr />
+<p><strong>Descriptor versus runtime state</strong></p>
+<p>Descriptor:</p>
+<pre class="text"><code>graphics-backend metal</code></pre>
+<p>is configuration.</p>
+<p>Runtime:</p>
+<pre class="text"><code>selected physical device
+queue family
+swapchain image count</code></pre>
+<p>is runtime state.</p>
+<p>Do not serialize runtime discoveries back into project descriptor unless they are deliberate project settings.</p>
+<hr />
+<p><strong>Descriptor versioning</strong></p>
+<p>Kairo supports:</p>
+<pre class="text"><code>kairo-project 1
+kairo-project 2.</code></pre>
+<p>New v2 fields include broader engine/build settings.</p>
+<p>The parser explicitly applies version-specific requirements.</p>
+<p>That is much better than:</p>
+<pre class="text"><code>try reading fields and guess format.</code></pre>
+<hr />
+<p><strong>Manifest validation</strong></p>
+<p>A manifest should be validated structurally and semantically.</p>
+<p>Structural validation:</p>
+<pre class="text"><code>header valid?
+token count correct?
+values parse?
+counts bounded?
+records closed?</code></pre>
+<p>Semantic validation:</p>
+<pre class="text"><code>IDs valid?
+paths valid?
+asset types valid?
+dependencies exist?
+dependency types match?
+cycles absent?
+duplicates absent?</code></pre>
+<p>Do both.</p>
+<hr />
+<p><strong>Kairo asset manifest validation</strong></p>
+<p>Current parser bounds:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>S</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo>≤</mo>
+  <mn>64</mn>
+  <mtext> MiB</mtext>
+  <mo>.</mo>
+</math>
+<p>It bounds:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>≤</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000.</mn>
+</math>
+<p>It bounds dependency count per asset.</p>
+<p>It limits path/importer lengths.</p>
+<p>It rejects unknown statements.</p>
+<p>Then registry installation performs graph/topology validation.</p>
+<p>This is strong layered validation.</p>
+<hr />
+<p><strong>Why limits are security features</strong></p>
+<p>Input says:</p>
+<pre class="text"><code>array-count = 4,000,000,000.</code></pre>
+<p>Naive parser:</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>vector<span class="op">.</span>resize<span class="op">(</span>count<span class="op">);</span></span></code></pre></div>
+<p>may attempt huge allocation.</p>
+<p>Always validate before allocating:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>≤</mo>
+  <mi>M</mi>
+  <mi>a</mi>
+  <mi>x</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>u</mi>
+  <mi>m</mi>
+  <mi>A</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>w</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Every variable-length structure needs a budget.</p>
+<p>This applies even to “local project files” because corrupted data should not be capable of crashing the tool unpredictably.</p>
+<hr />
+<p><strong>Duplicate validation</strong></p>
+<p>Manifest might list same AssetID twice.</p>
+<p>Or two paths differing only by case:</p>
+<pre class="text"><code>Textures/A.png
+textures/a.png.</code></pre>
+<p>On Windows/macOS configurations these may alias.</p>
+<p>Kairo’s portable path key case-folds logical paths to avoid such ambiguous manifests.</p>
+<p>That is an important cross-platform policy.</p>
+<hr />
+<p><strong>Sandboxed project-relative paths</strong></p>
+<p>A project file should normally reference:</p>
+<pre class="text"><code>Scenes/Main.kscene
+Textures/A.png.</code></pre>
+<p>Not:</p>
+<pre class="text"><code>C:\Users\Alice\Desktop\foo.png</code></pre>
+<p>or:</p>
+<pre class="text"><code>/home/alice/foo.png.</code></pre>
+<p>Project-relative paths enable:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>l</mi>
+          <mi>o</mi>
+          <mi>c</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>a</mi>
+          <mi>b</mi>
+          <mi>i</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+          <mo>+</mo>
+          <mi>p</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>t</mi>
+          <mi>a</mi>
+          <mi>b</mi>
+          <mi>i</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+          <mo>+</mo>
+          <mi>s</mi>
+          <mi>a</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>b</mi>
+          <mi>o</mi>
+          <mi>x</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>g</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Path resolution model</strong></p>
+<p>Given canonical root:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>.</mo>
+</math>
+<p>Given validated relative path:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>Candidate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>p</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then require:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>∈</mo>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>That is stronger than lexical normalization alone because symlinks can alter filesystem resolution.</p>
+<hr />
+<p><strong>Never use string-prefix containment</strong></p>
+<p>Wrong:</p>
+<div class="sourceCode" id="cb55"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>candidateString<span class="op">.</span>starts_with<span class="op">(</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>    rootString<span class="op">);</span></span></code></pre></div>
+<p>If root:</p>
+<pre class="text"><code>/Game</code></pre>
+<p>then:</p>
+<pre class="text"><code>/Game2/evil.txt</code></pre>
+<p>also starts with <code>/Game</code>.</p>
+<p>Kairo’s <code>IsWithinProjectRoot()</code> compares filesystem path components instead.</p>
+<p>Correct.</p>
+<hr />
+<p><strong>Existing files and future outputs differ</strong></p>
+<p>Existing path can use:</p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>filesystem::canonical<span class="op">(...)</span></span></code></pre></div>
+<p>because target exists.</p>
+<p>Future save path may not exist yet.</p>
+<p>Kairo uses:</p>
+<div class="sourceCode" id="cb59"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>weakly_canonical<span class="op">(...)</span></span></code></pre></div>
+<p>for future output paths, resolving existing prefixes while allowing missing final components.</p>
+<p>This distinction is exactly right.</p>
+<hr />
+<p><strong>Path traversal prevention</strong></p>
+<p>Classic traversal:</p>
+<pre class="text"><code>../../../../etc/passwd</code></pre>
+<p>or:</p>
+<pre class="text"><code>..\..\Windows\System32.</code></pre>
+<p>If joined naively:</p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>root <span class="op">/</span> userPath</span></code></pre></div>
+<p>attacker can escape root.</p>
+<p>Kairo’s <code>NormalizeAssetPath()</code> rejects parent components.</p>
+<p>That is the first line of defense.</p>
+<hr />
+<p><strong>Absolute path injection</strong></p>
+<p>Also reject:</p>
+<pre class="text"><code>/etc/passwd
+C:\Windows\System32
+\\server\share</code></pre>
+<p>because path joining semantics may discard the project root.</p>
+<p>A relative-project field should be <strong>provably relative</strong>.</p>
+<p>Kairo checks:</p>
+<pre class="text"><code>is_absolute
+has_root_name
+has_root_directory.</code></pre>
+<p>Good.</p>
+<hr />
+<p><strong>Encodings and separators</strong></p>
+<p>Cross-platform paths are tricky.</p>
+<p>On Windows:</p>
+<pre class="text"><code>\</code></pre>
+<p>is native separator.</p>
+<p>Portable project formats should usually canonicalize to:</p>
+<pre class="text"><code>/</code></pre>
+<p>when serialized.</p>
+<p>Kairo uses generic path spelling and validates portable character sets.</p>
+<p>This means the same manifest behaves consistently across host systems.</p>
+<hr />
+<p><strong><code>.</code> and empty components</strong></p>
+<p>Normalize:</p>
+<pre class="text"><code>Meshes/./Cube.obj</code></pre>
+<p>to:</p>
+<pre class="text"><code>Meshes/Cube.obj.</code></pre>
+<p>Reject paths that normalize to the project root itself when a file is expected.</p>
+<p>Canonical path representation reduces ambiguity and duplicate identities.</p>
+<hr />
+<p><strong>Symlink escape prevention</strong></p>
+<p>Lexical traversal checks are not enough.</p>
+<p>Suppose:</p>
+<pre class="text"><code>Project/
+    Assets/
+        External -&gt; /etc</code></pre>
+<p>Then user path:</p>
+<pre class="text"><code>Assets/External/passwd</code></pre>
+<p>contains no <code>..</code>.</p>
+<p>Lexically it appears inside project.</p>
+<p>Filesystem resolution escapes.</p>
+<p>Therefore canonicalize after filesystem resolution and verify containment.</p>
+<p>Kairo does this for existing project files.</p>
+<hr />
+<p><strong>Future output symlink problem</strong></p>
+<p>Suppose:</p>
+<pre class="text"><code>Project/Saves</code></pre>
+<p>is a symlink to:</p>
+<pre class="text"><code>/tmp/other.</code></pre>
+<p>Saving:</p>
+<pre class="text"><code>Saves/Main.kscene</code></pre>
+<p>would escape project.</p>
+<p><code>ResolveProjectOutput()</code> uses <code>weakly_canonical(root / relative)</code> and then component-wise root containment.</p>
+<p>This catches existing symlink redirects.</p>
+<p>Good.</p>
+<hr />
+<p><strong>Packaging is stricter</strong></p>
+<p>Kairo’s package collector rejects symbolic links entirely.</p>
+<p>This is an excellent packaging policy.</p>
+<p>Why?</p>
+<p>A bundle should contain concrete files, not references whose meaning changes after relocation.</p>
+<p>A symlink could point:</p>
+<pre class="text"><code>outside project
+to machine-specific location
+to missing target after installation.</code></pre>
+<p>Rejecting all symlinks produces a much cleaner portable bundle.</p>
+<hr />
+<p><strong>TOCTOU caveat</strong></p>
+<p>There is one deeper security issue.</p>
+<p>Sequence:</p>
+<pre class="text"><code>canonicalize path
+check path
+open file</code></pre>
+<p>has a time-of-check/time-of-use window.</p>
+<p>An adversarial process could replace a path component with a symlink between check and open.</p>
+<p>For a normal trusted desktop project environment, canonicalization is usually sufficient.</p>
+<p>For hardened untrusted sandboxes, use OS-level directory handles and no-follow APIs such as <code>openat</code>-style relative opening, platform equivalents, and descriptor-relative traversal.</p>
+<p>That is the difference between:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>robust editor sandboxing</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>hostile multi-user filesystem security</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Runtime packaging</strong></p>
+<p>Packaging converts a development project into a runnable deployment bundle.</p>
+<p>It should not simply <code>zip</code> the whole repository.</p>
+<p>Exclude:</p>
+<pre class="text"><code>.git
+temporary caches
+recovery journals
+editor-only metadata
+build outputs recursively copied into themselves.</code></pre>
+<p>Include:</p>
+<pre class="text"><code>runtime project
+required assets
+player executable
+required runtime libraries
+manifest
+launcher/config.</code></pre>
+<hr />
+<p><strong>Current Kairo package pipeline</strong></p>
+<p><code>PackageRuntimeProject()</code> roughly performs:</p>
+<pre class="text"><code>select build profile
+resolve player executable
+validate output
+create staging directory
+collect bounded project payload
+reject symlinks/non-regular entries
+copy project
+relocate descriptor as Project.kproject
+copy player
+write launcher
+write package manifest
+re-open staged RuntimeProject
+publish staging directory.</code></pre>
+<p>That is a serious packaging pipeline rather than an ad-hoc copy script.</p>
+<hr />
+<p><strong>Revalidate staged package</strong></p>
+<p>One particularly good step is:</p>
+<div class="sourceCode" id="cb79"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>RuntimeProject<span class="op">(</span></span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>    packagedProject <span class="op">/</span></span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;Project.kproject&quot;</span><span class="op">);</span></span></code></pre></div>
+<p>before publication.</p>
+<p>This means all descriptor-relative paths are exercised in the <strong>actual relocated layout</strong>.</p>
+<p>So:</p>
+<pre class="text"><code>package builds</code></pre>
+<p>is not considered success until:</p>
+<pre class="text"><code>packaged project can bootstrap.</code></pre>
+<p>Excellent acceptance gate.</p>
+<hr />
+<p><strong>Package closure</strong></p>
+<p>The next level beyond copying an entire project tree is dependency-closure packaging.</p>
+<p>Given startup scene roots:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>.</mo>
+</math>
+<p>Compute transitive asset closure:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Package only needed cooked assets.</p>
+<p>This reduces shipping size and prevents unused source content from leaking into distribution.</p>
+<p>Current packaging appears project-tree based with filtering rather than complete asset-DAG cooking, so dependency-closure packaging remains a future optimization.</p>
+<hr />
+<p><strong>Development versus release packaging</strong></p>
+<p>Development bundle may include:</p>
+<pre class="text"><code>symbols
+debug shaders
+validation layers configuration
+diagnostics
+editable assets.</code></pre>
+<p>Release:</p>
+<pre class="text"><code>optimized cooked assets
+stripped symbols
+shipping config
+no editor recovery state.</code></pre>
+<p>Project <code>BuildProfiles</code> already provide the right policy hook.</p>
+<hr />
+<p><strong>Relocatable bundles</strong></p>
+<p>A relocatable bundle runs regardless of absolute install directory.</p>
+<p>Bad:</p>
+<pre class="text"><code>/home/swayam/KairoBuild/project/Scenes/Main.kscene</code></pre>
+<p>embedded into executable.</p>
+<p>Good:</p>
+<pre class="text"><code>project/Project.kproject</code></pre>
+<p>resolved relative to package root.</p>
+<hr />
+<p><strong>Launcher-relative discovery</strong></p>
+<p>Kairo’s Unix launcher determines:</p>
+<div class="sourceCode" id="cb86"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="va">KAIRO_PACKAGE_ROOT</span><span class="op">=</span></span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a>    <span class="ex">directory</span> of launcher</span></code></pre></div>
+<p>then executes:</p>
+<pre class="text"><code>bin/KairoPlayer
+project/Project.kproject</code></pre>
+<p>relative to that root.</p>
+<p>Thus moving:</p>
+<pre class="text"><code>Build/Release</code></pre>
+<p>to:</p>
+<pre class="text"><code>/Applications/MyGame</code></pre>
+<p>does not break project paths.</p>
+<p>That is relocatability.</p>
+<hr />
+<p><strong>Shared libraries complicate relocatability</strong></p>
+<p>If KairoPlayer dynamically depends on:</p>
+<pre class="text"><code>libFoo.so
+SomeFramework.dylib
+Some.dll</code></pre>
+<p>package must include them and configure loader discovery.</p>
+<p>Linux:</p>
+<pre class="text"><code>RPATH / $ORIGIN</code></pre>
+<p>macOS:</p>
+<pre class="text"><code>@executable_path
+@loader_path
+install names.</code></pre>
+<p>Windows:</p>
+<pre class="text"><code>DLL beside executable
+or controlled search paths.</code></pre>
+<p>Static linking reduces much of this complexity.</p>
+<p>But a truly relocatable shared-library build must manage loader paths explicitly.</p>
+<hr />
+<p><strong>Runtime content must also avoid absolute paths</strong></p>
+<p>Even if executable locates project correctly, a scene containing:</p>
+<pre class="text"><code>C:\Users\Swayam\Textures\a.png</code></pre>
+<p>kills relocatability.</p>
+<p>That is why Part 1576’s project-relative path discipline and Part 1580 are connected.</p>
+<p>Relocatable packaging is not a packaging-only feature.</p>
+<p>It starts at every persistent reference.</p>
+<hr />
+<p><strong>Atomic publication by rename</strong></p>
+<p>Suppose saving:</p>
+<pre class="text"><code>Assets.kassets.</code></pre>
+<p>Bad:</p>
+<pre class="text"><code>open destination truncate
+write half
+power loss.</code></pre>
+<p>Now original file is gone and replacement is incomplete.</p>
+<p>Better:</p>
+<pre class="text"><code>write temporary sibling
+flush/close
+validate
+rename temp -&gt; destination.</code></pre>
+<p>Within the same filesystem, rename/replacement can provide atomic <strong>visibility</strong> semantics.</p>
+<p>Readers see old or new name, not half a file.</p>
+<hr />
+<p><strong>Why same-directory temporary matters</strong></p>
+<p>Rename between different filesystems may become:</p>
+<pre class="text"><code>copy + delete</code></pre>
+<p>or fail.</p>
+<p>Atomicity is typically guaranteed only within the same filesystem.</p>
+<p>So create:</p>
+<pre class="text"><code>Assets.kassets.tmp-UUID</code></pre>
+<p>beside:</p>
+<pre class="text"><code>Assets.kassets.</code></pre>
+<p>Kairo follows this pattern.</p>
+<hr />
+<p><strong>Windows versus POSIX replacement</strong></p>
+<p>Kairo centralizes platform behavior in <code>AtomicFile.cppm</code>.</p>
+<p>On Windows it uses:</p>
+<div class="sourceCode" id="cb101"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a>MoveFileExW<span class="op">(</span></span>
+<span id="cb101-2"><a href="#cb101-2" aria-hidden="true" tabindex="-1"></a>    temporary<span class="op">,</span></span>
+<span id="cb101-3"><a href="#cb101-3" aria-hidden="true" tabindex="-1"></a>    destination<span class="op">,</span></span>
+<span id="cb101-4"><a href="#cb101-4" aria-hidden="true" tabindex="-1"></a>    MOVEFILE_REPLACE_EXISTING <span class="op">|</span></span>
+<span id="cb101-5"><a href="#cb101-5" aria-hidden="true" tabindex="-1"></a>    MOVEFILE_WRITE_THROUGH<span class="op">);</span></span></code></pre></div>
+<p>On non-Windows it uses:</p>
+<div class="sourceCode" id="cb102"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>filesystem::rename<span class="op">(</span></span>
+<span id="cb102-2"><a href="#cb102-2" aria-hidden="true" tabindex="-1"></a>    temporary<span class="op">,</span></span>
+<span id="cb102-3"><a href="#cb102-3" aria-hidden="true" tabindex="-1"></a>    destination<span class="op">);</span></span></code></pre></div>
+<p>This avoids duplicating platform-specific final-publication behavior across manifests/scenes/documents.</p>
+<p>Good architecture.</p>
+<hr />
+<p><strong>Atomic visibility is not full crash durability</strong></p>
+<p>This distinction is extremely important.</p>
+<p>Suppose:</p>
+<pre class="text"><code>write()
+flush C++ stream
+rename()</code></pre>
+<p>completes.</p>
+<p><code>flush()</code> generally pushes data to the OS kernel.</p>
+<p>It does <strong>not necessarily guarantee</strong> the data has reached stable physical storage.</p>
+<p>For stronger POSIX crash durability you may need:</p>
+<pre class="text"><code>fsync(temp file)
+rename()
+fsync(parent directory)</code></pre>
+<p>and equivalent platform-specific primitives.</p>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>A</mi>
+          <mi>t</mi>
+          <mi>o</mi>
+          <mi>m</mi>
+          <mi>i</mi>
+          <mi>c</mi>
+          <mtext> </mtext>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>a</mi>
+          <mi>m</mi>
+          <mi>e</mi>
+          <mo>≠</mo>
+          <mi>G</mi>
+          <mi>u</mi>
+          <mi>a</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>e</mi>
+          <mi>d</mi>
+          <mtext> </mtext>
+          <mi>p</mi>
+          <mi>o</mi>
+          <mi>w</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mo>−</mo>
+          <mi>l</mi>
+          <mi>o</mi>
+          <mi>s</mi>
+          <mi>s</mi>
+          <mtext> </mtext>
+          <mi>d</mi>
+          <mi>u</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mi>b</mi>
+          <mi>i</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Kairo’s current atomic replacement design is strong against partial application-level writes and rename-level replacement failures, but do not overstate POSIX <code>std::filesystem::rename + ostream::flush</code> as full journaled-disk durability.</p>
+<hr />
+<p><strong>Directory publication</strong></p>
+<p>Packaging uses a similar principle.</p>
+<p>Build complete staging directory:</p>
+<pre class="text"><code>.Release.kairo-stage-123/</code></pre>
+<p>then rename:</p>
+<pre class="text"><code>stage
+→
+Release.</code></pre>
+<p>If replacing an existing package, Kairo:</p>
+<pre class="text"><code>existing -&gt; backup
+stage -&gt; output</code></pre>
+<p>and attempts rollback if publication fails.</p>
+<p>That is transactional directory publication.</p>
+<hr />
+<p><strong>Multi-file atomicity</strong></p>
+<p>Atomic rename solves one file.</p>
+<p>Suppose project Save All modifies:</p>
+<pre class="text"><code>Project.kproject
+Assets.kassets
+Main.kscene.</code></pre>
+<p>Saving each atomically does <strong>not</strong> make the set atomically consistent across a crash.</p>
+<p>Crash after manifest replacement but before scene replacement can leave mixed generations.</p>
+<p>Kairo’s own comments correctly avoid claiming cross-file crash atomicity.</p>
+<p>Recovery journaling addresses this higher-level problem.</p>
+<hr />
+<p><strong>Ways to achieve stronger multi-file commits</strong></p>
+<p>You can use:</p>
+<p><strong>Generation directory</strong></p>
+<p>Write:</p>
+<pre class="text"><code>generation-42/</code></pre>
+<p>completely.</p>
+<p>Then atomically switch:</p>
+<pre class="text"><code>current -&gt; generation-42</code></pre>
+<p>through a manifest/pointer.</p>
+<p><strong>Journal</strong></p>
+<p>Record intended transaction.</p>
+<p>Apply files.</p>
+<p>Mark commit complete.</p>
+<p>Recovery either rolls forward or rolls back.</p>
+<p><strong>Single container</strong></p>
+<p>Store project in one database/container that supports transactions.</p>
+<p>Each approach adds complexity.</p>
+<p>For Kairo’s current editor, independent atomic files + recovery snapshots is a very reasonable balance.</p>
+<hr />
+<p><strong>Build configuration versus runtime configuration</strong></p>
+<p>This distinction is frequently abused.</p>
+<p>Build configuration determines <strong>what code/artifacts are produced</strong>.</p>
+<p>Examples:</p>
+<pre class="text"><code>Debug / Release
+sanitizers enabled
+editor target built
+raytracer built
+AI cloud provider compiled
+Vulkan backend compiled.</code></pre>
+<p>Runtime configuration determines <strong>how an existing executable behaves</strong>.</p>
+<p>Examples:</p>
+<pre class="text"><code>renderer = metal
+resolution = 1920×1080
+volume = 0.8
+startup scene
+graphics quality.</code></pre>
+<hr />
+<p><strong>Build-time configuration</strong></p>
+<p>Current Kairo CMake options include things like:</p>
+<pre class="text"><code>BUILD_EDITOR
+BUILD_PLAYER
+BUILD_RAYTRACER
+BUILD_COMPUTE_STACK
+ENABLE_SANITIZERS
+ENABLE_PACKAGING.</code></pre>
+<p>These change the target graph or compilation.</p>
+<p>They belong to build configuration.</p>
+<p>You cannot meaningfully toggle:</p>
+<pre class="text"><code>ENABLE_SANITIZERS=true</code></pre>
+<p>at runtime if sanitizer instrumentation was never compiled in.</p>
+<hr />
+<p><strong>Runtime configuration</strong></p>
+<p><code>ProjectDescriptor</code> contains:</p>
+<pre class="text"><code>graphics-backend
+rendering-profile
+startup-scene
+input-map
+plugins
+build profiles.</code></pre>
+<p>Some of these are persistent project policy consumed at startup.</p>
+<p>For example:</p>
+<pre class="text"><code>graphics-backend = auto</code></pre>
+<p>can be overridden by player command line:</p>
+<pre class="text"><code>--renderer metal.</code></pre>
+<p>That is runtime policy.</p>
+<hr />
+<p><strong>Compile-time feature vs runtime feature</strong></p>
+<p>Suppose Vulkan support is not built.</p>
+<p>Project says:</p>
+<pre class="text"><code>graphics-backend vulkan.</code></pre>
+<p>Runtime cannot magically create Vulkan code.</p>
+<p>So capability is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>R</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>O</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>∩</mo>
+  <mi>P</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Runtime configuration selects <strong>within</strong> compiled capabilities.</p>
+<p>That is the correct relation.</p>
+<hr />
+<p><strong>Environment configuration</strong></p>
+<p>There is also deployment/environment configuration:</p>
+<pre class="text"><code>cache directory
+logging level
+crash upload endpoint
+server port.</code></pre>
+<p>Some may be runtime command-line/environment settings rather than project-persistent settings.</p>
+<p>Do not stuff every setting into <code>ProjectDescriptor</code>.</p>
+<p>Ask:</p>
+<blockquote>
+<p>Is this project content, user preference, machine configuration, build configuration or runtime session state?</p>
+</blockquote>
+<p>Different scopes deserve different storage.</p>
+<hr />
+<p><strong>Configuration precedence</strong></p>
+<p>A common policy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>&lt;</mo>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>j</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mo>&lt;</mo>
+  <mi>U</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mo>&lt;</mo>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>L</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Example:</p>
+<pre class="text"><code>engine default:
+renderer auto
+
+project:
+renderer vulkan
+
+user:
+renderer metal
+
+CLI:
+--renderer opengl</code></pre>
+<p>Final:</p>
+<pre class="text"><code>opengl.</code></pre>
+<p>The exact precedence is a product choice.</p>
+<p>But it should be deterministic and documented.</p>
+<hr />
+<p><strong>Never serialize secrets into project config accidentally</strong></p>
+<p>Runtime configuration can include credentials:</p>
+<pre class="text"><code>API tokens
+server keys.</code></pre>
+<p>These should not enter:</p>
+<pre class="text"><code>source-controlled Project.kproject.</code></pre>
+<p>Secrets belong in environment/secure credential stores.</p>
+<p>This is another reason configuration scopes must remain distinct.</p>
+<hr />
+<p><strong>Reflection + undo integration</strong></p>
+<p>Now combine M093 and M094.</p>
+<p>Inspector reads:</p>
+<pre class="text"><code>TypeKey
+PropertyKey
+CurrentValue.</code></pre>
+<p>User edits.</p>
+<p>Do not call reflection setter directly from UI.</p>
+<p>Instead create:</p>
+<div class="sourceCode" id="cb125"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a>ReflectedPropertyCommand</span>
+<span id="cb125-2"><a href="#cb125-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb125-3"><a href="#cb125-3" aria-hidden="true" tabindex="-1"></a>    Entity<span class="op">;</span></span>
+<span id="cb125-4"><a href="#cb125-4" aria-hidden="true" tabindex="-1"></a>    TypeKey<span class="op">;</span></span>
+<span id="cb125-5"><a href="#cb125-5" aria-hidden="true" tabindex="-1"></a>    PropertyKey<span class="op">;</span></span>
+<span id="cb125-6"><a href="#cb125-6" aria-hidden="true" tabindex="-1"></a>    Before<span class="op">;</span></span>
+<span id="cb125-7"><a href="#cb125-7" aria-hidden="true" tabindex="-1"></a>    After<span class="op">;</span></span>
+<span id="cb125-8"><a href="#cb125-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Execute:</p>
+<pre class="text"><code>registry.Write(...After).</code></pre>
+<p>Undo:</p>
+<pre class="text"><code>registry.Write(...Before).</code></pre>
+<p>Now every reflected property automatically participates in undo.</p>
+<p>That is one of the greatest practical benefits of stable property IDs.</p>
+<hr />
+<p><strong>Example reflected property command</strong></p>
+<div class="sourceCode" id="cb128"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb128-1"><a href="#cb128-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SetReflectedPropertyCommand</span>
+<span id="cb128-2"><a href="#cb128-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">final</span> <span class="op">:</span> <span class="kw">public</span> EditorCommand</span>
+<span id="cb128-3"><a href="#cb128-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb128-4"><a href="#cb128-4" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb128-5"><a href="#cb128-5" aria-hidden="true" tabindex="-1"></a>    SetReflectedPropertyCommand<span class="op">(</span></span>
+<span id="cb128-6"><a href="#cb128-6" aria-hidden="true" tabindex="-1"></a>        ReflectionRegistry<span class="op">&amp;</span> reflection<span class="op">,</span></span>
+<span id="cb128-7"><a href="#cb128-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>string type<span class="op">,</span></span>
+<span id="cb128-8"><a href="#cb128-8" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>string property<span class="op">,</span></span>
+<span id="cb128-9"><a href="#cb128-9" aria-hidden="true" tabindex="-1"></a>        <span class="dt">void</span><span class="op">*</span> object<span class="op">,</span></span>
+<span id="cb128-10"><a href="#cb128-10" aria-hidden="true" tabindex="-1"></a>        PropertyValue before<span class="op">,</span></span>
+<span id="cb128-11"><a href="#cb128-11" aria-hidden="true" tabindex="-1"></a>        PropertyValue after<span class="op">)</span></span>
+<span id="cb128-12"><a href="#cb128-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">:</span> <span class="va">m_Reflection</span><span class="op">(&amp;</span>reflection<span class="op">),</span></span>
+<span id="cb128-13"><a href="#cb128-13" aria-hidden="true" tabindex="-1"></a>          <span class="va">m_Type</span><span class="op">(</span><span class="bu">std::</span>move<span class="op">(</span>type<span class="op">)),</span></span>
+<span id="cb128-14"><a href="#cb128-14" aria-hidden="true" tabindex="-1"></a>          <span class="va">m_Property</span><span class="op">(</span><span class="bu">std::</span>move<span class="op">(</span>property<span class="op">)),</span></span>
+<span id="cb128-15"><a href="#cb128-15" aria-hidden="true" tabindex="-1"></a>          <span class="va">m_Object</span><span class="op">(</span>object<span class="op">),</span></span>
+<span id="cb128-16"><a href="#cb128-16" aria-hidden="true" tabindex="-1"></a>          <span class="va">m_Before</span><span class="op">(</span><span class="bu">std::</span>move<span class="op">(</span>before<span class="op">)),</span></span>
+<span id="cb128-17"><a href="#cb128-17" aria-hidden="true" tabindex="-1"></a>          <span class="va">m_After</span><span class="op">(</span><span class="bu">std::</span>move<span class="op">(</span>after<span class="op">))</span></span>
+<span id="cb128-18"><a href="#cb128-18" aria-hidden="true" tabindex="-1"></a>    <span class="op">{}</span></span>
+<span id="cb128-19"><a href="#cb128-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb128-20"><a href="#cb128-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> Execute<span class="op">()</span> <span class="kw">override</span></span>
+<span id="cb128-21"><a href="#cb128-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb128-22"><a href="#cb128-22" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Reflection</span><span class="op">-&gt;</span>Write<span class="op">(</span></span>
+<span id="cb128-23"><a href="#cb128-23" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Type</span><span class="op">,</span></span>
+<span id="cb128-24"><a href="#cb128-24" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Property</span><span class="op">,</span></span>
+<span id="cb128-25"><a href="#cb128-25" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Object</span><span class="op">,</span></span>
+<span id="cb128-26"><a href="#cb128-26" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_After</span><span class="op">);</span></span>
+<span id="cb128-27"><a href="#cb128-27" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb128-28"><a href="#cb128-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb128-29"><a href="#cb128-29" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> Undo<span class="op">()</span> <span class="kw">override</span></span>
+<span id="cb128-30"><a href="#cb128-30" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb128-31"><a href="#cb128-31" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Reflection</span><span class="op">-&gt;</span>Write<span class="op">(</span></span>
+<span id="cb128-32"><a href="#cb128-32" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Type</span><span class="op">,</span></span>
+<span id="cb128-33"><a href="#cb128-33" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Property</span><span class="op">,</span></span>
+<span id="cb128-34"><a href="#cb128-34" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Object</span><span class="op">,</span></span>
+<span id="cb128-35"><a href="#cb128-35" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Before</span><span class="op">);</span></span>
+<span id="cb128-36"><a href="#cb128-36" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb128-37"><a href="#cb128-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb128-38"><a href="#cb128-38" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span><span class="op">:</span></span>
+<span id="cb128-39"><a href="#cb128-39" aria-hidden="true" tabindex="-1"></a>    ReflectionRegistry<span class="op">*</span> <span class="va">m_Reflection</span><span class="op">;</span></span>
+<span id="cb128-40"><a href="#cb128-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb128-41"><a href="#cb128-41" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>string <span class="va">m_Type</span><span class="op">;</span></span>
+<span id="cb128-42"><a href="#cb128-42" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>string <span class="va">m_Property</span><span class="op">;</span></span>
+<span id="cb128-43"><a href="#cb128-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb128-44"><a href="#cb128-44" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span><span class="op">*</span> <span class="va">m_Object</span><span class="op">;</span></span>
+<span id="cb128-45"><a href="#cb128-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb128-46"><a href="#cb128-46" aria-hidden="true" tabindex="-1"></a>    PropertyValue <span class="va">m_Before</span><span class="op">;</span></span>
+<span id="cb128-47"><a href="#cb128-47" aria-hidden="true" tabindex="-1"></a>    PropertyValue <span class="va">m_After</span><span class="op">;</span></span>
+<span id="cb128-48"><a href="#cb128-48" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>But there is a major problem.</p>
+<hr />
+<p><strong>Do not store long-lived raw <code>void*</code> in editor commands</strong></p>
+<p>That object’s address may change.</p>
+<p>Scene may be reloaded.</p>
+<p>Entity may be destroyed.</p>
+<p>Component may move.</p>
+<p>So actual editor command should store:</p>
+<pre class="text"><code>persistent Scene Entity ID
+TypeKey
+PropertyKey
+Before
+After.</code></pre>
+<p>On Execute/Undo:</p>
+<pre class="text"><code>resolve entity
+resolve component object
+write reflected property.</code></pre>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>I</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+          <mo>≠</mo>
+          <mi>A</mi>
+          <mi>d</mi>
+          <mi>d</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mi>s</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This same principle has now appeared in ECS, assets, GPU resources, object references, undo and reflection.</p>
+<hr />
+<p><strong>Reflection + serialization integration</strong></p>
+<p>If every serializable property has stable ID:</p>
+<pre class="text"><code>Camera.NearPlane
+Camera.FarPlane
+Camera.Exposure.</code></pre>
+<p>then file can store:</p>
+<pre class="text"><code>type Kairo.Engine.Camera
+
+property near-plane 0.1
+property far-plane 1000
+property exposure 1.</code></pre>
+<p>Generic loader resolves:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>K</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo stretchy="false">→</mo>
+  <mi>T</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mi>K</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo stretchy="false">→</mo>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>This is how reflection becomes schema machinery.</p>
+<hr />
+<p><strong>Property rename problem</strong></p>
+<p>Suppose:</p>
+<pre class="text"><code>near-plane</code></pre>
+<p>renamed to:</p>
+<pre class="text"><code>near-clip.</code></pre>
+<p>If property key changes, old serialized files break.</p>
+<p>Therefore distinguish:</p>
+<pre class="text"><code>DisplayName can change freely.
+
+Persistent PropertyKey should remain stable.</code></pre>
+<p>If semantic key must change, provide migration alias:</p>
+<pre class="text"><code>old near-plane
+→ new near-clip.</code></pre>
+<p>Never casually rename persistent IDs for cosmetic reasons.</p>
+<hr />
+<p><strong>Type rename problem</strong></p>
+<p>Similarly:</p>
+<pre class="text"><code>Kairo.Engine.MeshRenderer</code></pre>
+<p>might later be called:</p>
+<pre class="text"><code>Kairo.Rendering.MeshRenderer</code></pre>
+<p>as code organization changes.</p>
+<p>Should persistent type ID change?</p>
+<p>Probably not unless schema identity truly changes.</p>
+<p>Persistence identity should not necessarily mirror source namespace.</p>
+<p>You may keep legacy stable key forever while C++ type moves namespaces.</p>
+<p>This is why persistent IDs must not be auto-derived blindly from <code>typeid</code>.</p>
+<hr />
+<p><strong>Unknown reflected properties</strong></p>
+<p>Suppose plugin missing.</p>
+<p>Scene has:</p>
+<pre class="text"><code>Kairo.Plugin.Water</code></pre>
+<p>but registry does not contain that type.</p>
+<p>Policies include:</p>
+<pre class="text"><code>hard failure
+preserve opaque component
+load placeholder
+disable component.</code></pre>
+<p>If editor aims to preserve projects even when optional plugin is temporarily unavailable, opaque preservation can be extremely valuable.</p>
+<p>If runtime requires plugin for correctness, hard failure may be right.</p>
+<p>This policy belongs to serialization/product design.</p>
+<hr />
+<p><strong>Version reflection descriptors too</strong></p>
+<p>If a reflected type’s schema evolves, you may associate:</p>
+<div class="sourceCode" id="cb141"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb141-1"><a href="#cb141-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> TypeDescriptor</span>
+<span id="cb141-2"><a href="#cb141-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb141-3"><a href="#cb141-3" aria-hidden="true" tabindex="-1"></a>    StableTypeID ID<span class="op">;</span></span>
+<span id="cb141-4"><a href="#cb141-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> SchemaVersion<span class="op">;</span></span>
+<span id="cb141-5"><a href="#cb141-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb141-6"><a href="#cb141-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then serializer can know:</p>
+<pre class="text"><code>Component Camera schema 3.</code></pre>
+<p>This is more scalable than relying only on global scene-format version when plugins/components evolve independently.</p>
+<p>Kairo currently uses stable type/property keys and versioned scene formats; per-type schema versions would be a possible future extension.</p>
+<hr />
+<p><strong>Safe type erasure + plugins</strong></p>
+<p>Suppose plugin registers:</p>
+<pre class="text"><code>TypeDescriptor
+accessor callbacks.</code></pre>
+<p>Then plugin unloads while registry still holds <code>std::function</code> lambdas whose code lives inside unloaded library.</p>
+<p>Calling them becomes catastrophic.</p>
+<p>So dynamic plugin systems require descriptor/code lifetime coupling.</p>
+<p>Policy:</p>
+<pre class="text"><code>plugin may unload only after
+all registered descriptors are removed
+and no reflected objects remain.</code></pre>
+<p>Or descriptors remain valid until process shutdown.</p>
+<p>Type erasure solves type coupling.</p>
+<p>It does not solve code lifetime automatically.</p>
+<hr />
+<p><strong>Inspector transactions</strong></p>
+<p>When user drags Transform X for 200 frames:</p>
+<pre class="text"><code>UI needs immediate live preview.</code></pre>
+<p>But undo should be one command.</p>
+<p>A strong pattern:</p>
+<pre class="text"><code>BeginInteraction:
+capture Before
+
+During drag:
+apply preview state
+
+EndInteraction:
+capture After
+push one command representing Before→After</code></pre>
+<p>Be careful not to execute command twice if preview already applied.</p>
+<p>Kairo’s <code>TryMerge</code> model is another valid solution: each incremental command executes and subsequent commands merge into the previous history entry.</p>
+<hr />
+<p><strong>Recovery versus undo history</strong></p>
+<p>Should recovery snapshots store entire undo stack?</p>
+<p>Not necessarily.</p>
+<p>Two different recovery goals:</p>
+<p><strong>Document recovery</strong></p>
+<p>Restore unsaved content.</p>
+<p><strong>Session recovery</strong></p>
+<p>Restore undo/redo cursor, selection, tabs, camera, etc.</p>
+<p>Kairo currently prioritizes authored/recovery payloads and session context such as active document.</p>
+<p>That is a sound first target.</p>
+<p>Recovering exact undo history requires serializing every command, which is significantly more complex.</p>
+<hr />
+<p><strong>Recovery snapshots and checksum collision</strong></p>
+<p>FNV-1a 64-bit collision is possible.</p>
+<p>For accidental bit corruption, risk is sufficiently low for many editor recovery contexts.</p>
+<p>For adversarially modified recovery directories, not secure.</p>
+<p>If future threat model includes untrusted recovery payloads, replace or augment with SHA-256.</p>
+<p>Security algorithms should match threat model rather than superstition.</p>
+<hr />
+<p><strong>Recovery timestamp ordering</strong></p>
+<p>Kairo goes beyond simply naming snapshots by wall clock.</p>
+<p>Wall clocks can move backward.</p>
+<p>Multiple snapshots can occur in same millisecond.</p>
+<p>It ensures each published recovery timestamp is greater than prior valid snapshots.</p>
+<p>This gives deterministic retention ordering even across clock rollback/collisions.</p>
+<p>That is a thoughtful production detail.</p>
+<hr />
+<p><strong>Project paths and case sensitivity</strong></p>
+<p>Suppose Linux allows both:</p>
+<pre class="text"><code>Textures/A.png
+Textures/a.png.</code></pre>
+<p>Windows may treat them as same path.</p>
+<p>A cross-platform project should reject ambiguous case-only duplicates.</p>
+<p>Kairo’s portable key lowercases paths for lookup while preserving authored spelling.</p>
+<p>This is a pragmatic cross-platform policy.</p>
+<hr />
+<p><strong>Unicode path complexity</strong></p>
+<p>Even case folding does not solve every Unicode issue.</p>
+<p>Characters may have multiple normalization forms:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtext mathvariant="normal">é</mtext><annotation encoding="application/x-tex">\text{é}</annotation></semantics></math>
+<p>can be one code point or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>e</mi>
+  <mo>+</mo>
+  <mtext>combining accent</mtext>
+  <mo>.</mo>
+</math>
+<p>Some filesystems normalize automatically; others do not.</p>
+<p>A fully portable asset pipeline may need defined Unicode normalization rules.</p>
+<p>Kairo’s current path rules concentrate on portable ASCII-sensitive filesystem hazards and Windows reserved names, which is already strong; deeper Unicode canonicalization can become relevant for global content pipelines.</p>
+<hr />
+<p><strong>Manifest canonical ordering</strong></p>
+<p>Current AssetManifest serializer sorts assets by stable AssetID and dependencies by dependency ID.</p>
+<p>This means semantically identical registry state serializes consistently.</p>
+<p>Benefits:</p>
+<pre class="text"><code>clean diffs
+stable hashes
+reproducible builds
+lower merge noise.</code></pre>
+<p>Deterministic ordering is one of the cheapest high-value persistence improvements.</p>
+<hr />
+<p><strong>Reflection registry canonical ordering</strong></p>
+<p>Similarly Kairo:</p>
+<pre class="text"><code>uses std::map for types
+sorts properties by stable key.</code></pre>
+<p>That makes descriptor snapshots deterministic independent of registration call order.</p>
+<p>Again, deterministic metadata matters for:</p>
+<pre class="text"><code>tooling
+testing
+serialization
+plugin diagnostics.</code></pre>
+<hr />
+<p><strong>Build config should not leak into data semantics accidentally</strong></p>
+<p>Suppose Debug build serializes:</p>
+<pre class="text"><code>sizeof(size_t)=8</code></pre>
+<p>while another target differs.</p>
+<p>Persistent file must not depend on compile flags such as:</p>
+<pre class="text"><code>NDEBUG
+packing pragmas
+compiler ABI.</code></pre>
+<p>The serialization layer acts as the firewall between:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mi>u</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>d</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>D</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>S</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mo>.</mo>
+</math>
+<p>This is one reason explicit field serialization matters.</p>
+<hr />
+<p><strong>Runtime config should not invalidate DDC unless semantically relevant</strong></p>
+<p>Suppose runtime setting:</p>
+<pre class="text"><code>masterVolume = 0.5.</code></pre>
+<p>It should not change asset cache keys.</p>
+<p>But build/import setting:</p>
+<pre class="text"><code>texture compression = BC7.</code></pre>
+<p>must.</p>
+<p>So configuration scope influences derivation identity.</p>
+<p>Ask:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Can this setting change artifact bytes?</mtext>
+</math>
+<p>If yes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>include in DDC recipe</mtext>
+  <mo>.</mo>
+</math>
+<p>If no, do not over-invalidate.</p>
+<hr />
+<p><strong>Configuration is another dependency graph</strong></p>
+<p>Artifact:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mi>F</mi>
+  <mo stretchy="false">(</mo>
+  <mi>S</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>S</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>T</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Thus configuration values are hidden edges in build graph.</p>
+<p>If a setting influences output but is not included in cache key:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>cache correctness bug</mtext>
+  <mo>.</mo>
+</math>
+<p>This connects M092’s DDC logic directly to Part 1582.</p>
+<hr />
+<p><strong>Current Kairo audit for M093/M094</strong></p>
+<p>The inspected implementation currently provides:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Area</th>
+<th>Current Kairo status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Versioned project formats</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Versioned scene formats</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Versioned asset manifest</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Strict unknown-statement handling</td>
+<td>Implemented in inspected text formats</td>
+</tr>
+<tr>
+<td>Stable asset/entity references</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Stable reflection type/property keys</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>UI-neutral reflection values</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Runtime reflection registry</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Generic getter/setter descriptors</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Generic ImGui reflection inspector</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Safe owned <code>PropertyValue</code> type erasure</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td><code>void*</code> object erasure</td>
+<td>Implemented, descriptor pairing remains invariant</td>
+</tr>
+<tr>
+<td>Command-pattern undo/redo</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Bounded command history</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Redo-branch truncation</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Command merging hook</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Scene creation commands preserve IDs</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Strong-exception command contract</td>
+<td>Explicit</td>
+</tr>
+<tr>
+<td>Recovery snapshots</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Recovery payload checksums</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Invalid text draft recovery</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Recovery retention</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Periodic autosave scheduler</td>
+<td>Not evident in inspected core recovery code</td>
+</tr>
+<tr>
+<td>Project descriptor v2</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Asset manifest validation</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Project-relative path normalization</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Traversal rejection</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Canonical symlink escape checks</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Packaging symlink rejection</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Runtime package staging</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Staged package bootstrap validation</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Relocatable launcher</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Atomic file replacement</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Atomic directory package publication</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Full fsync-style POSIX crash durability</td>
+<td>Not established by the inspected atomic-file code</td>
+</tr>
+<tr>
+<td>Build/runtime config separation</td>
+<td>Strongly present</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Important Kairo improvement: checked erased object views</strong></p>
+<p>Current reflection accessors accept:</p>
+<div class="sourceCode" id="cb155"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb155-1"><a href="#cb155-1" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="dt">void</span><span class="op">*</span></span>
+<span id="cb155-2"><a href="#cb155-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*.</span></span></code></pre></div>
+<p>The registry validates:</p>
+<pre class="text"><code>type key
+property key
+PropertyValue kind.</code></pre>
+<p>But it cannot intrinsically prove that:</p>
+<pre class="text"><code>void*</code></pre>
+<p>actually points to the C++ type associated with descriptor.</p>
+<p>A useful future abstraction:</p>
+<div class="sourceCode" id="cb158"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb158-1"><a href="#cb158-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ReflectedObject</span>
+<span id="cb158-2"><a href="#cb158-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb158-3"><a href="#cb158-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span><span class="op">*</span> Address <span class="op">=</span> <span class="kw">nullptr</span><span class="op">;</span></span>
+<span id="cb158-4"><a href="#cb158-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>string_view TypeKey<span class="op">;</span></span>
+<span id="cb158-5"><a href="#cb158-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then:</p>
+<div class="sourceCode" id="cb159"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb159-1"><a href="#cb159-1" aria-hidden="true" tabindex="-1"></a>registry<span class="op">.</span>Write<span class="op">(</span></span>
+<span id="cb159-2"><a href="#cb159-2" aria-hidden="true" tabindex="-1"></a>    object<span class="op">,</span></span>
+<span id="cb159-3"><a href="#cb159-3" aria-hidden="true" tabindex="-1"></a>    property<span class="op">,</span></span>
+<span id="cb159-4"><a href="#cb159-4" aria-hidden="true" tabindex="-1"></a>    value<span class="op">);</span></span></code></pre></div>
+<p>compares:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>b</mi>
+  <mi>j</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+  <mi>T</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>K</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+  <mi>K</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<p>This turns one class of UB into deterministic validation.</p>
+<hr />
+<p><strong>Stronger alternative using runtime token</strong></p>
+<div class="sourceCode" id="cb160"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb160-1"><a href="#cb160-1" aria-hidden="true" tabindex="-1"></a><span class="kw">using</span> RuntimeTypeToken <span class="op">=</span></span>
+<span id="cb160-2"><a href="#cb160-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t<span class="op">;</span></span>
+<span id="cb160-3"><a href="#cb160-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb160-4"><a href="#cb160-4" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ReflectedObject</span>
+<span id="cb160-5"><a href="#cb160-5" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb160-6"><a href="#cb160-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span><span class="op">*</span> Address<span class="op">;</span></span>
+<span id="cb160-7"><a href="#cb160-7" aria-hidden="true" tabindex="-1"></a>    RuntimeTypeToken RuntimeType<span class="op">;</span></span>
+<span id="cb160-8"><a href="#cb160-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>TypeDescriptor contains matching token.</p>
+<p>Persistent key remains:</p>
+<pre class="text"><code>Kairo.Engine.Camera.</code></pre>
+<p>Runtime token is dense and fast.</p>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+  <mo>≠</mo>
+  <mi>R</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>Same architecture as assets and ECS.</p>
+<hr />
+<p><strong>Important Kairo improvement: reflection serialization policy flags</strong></p>
+<p>Current metadata already has:</p>
+<pre class="text"><code>ReadOnly
+Multiline
+Advanced.</code></pre>
+<p>Future flags might include:</p>
+<div class="sourceCode" id="cb163"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb163-1"><a href="#cb163-1" aria-hidden="true" tabindex="-1"></a><span class="kw">enum</span> <span class="kw">class</span> PropertyFlags</span>
+<span id="cb163-2"><a href="#cb163-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb163-3"><a href="#cb163-3" aria-hidden="true" tabindex="-1"></a>    None<span class="op">,</span></span>
+<span id="cb163-4"><a href="#cb163-4" aria-hidden="true" tabindex="-1"></a>    ReadOnly<span class="op">,</span></span>
+<span id="cb163-5"><a href="#cb163-5" aria-hidden="true" tabindex="-1"></a>    Multiline<span class="op">,</span></span>
+<span id="cb163-6"><a href="#cb163-6" aria-hidden="true" tabindex="-1"></a>    Advanced<span class="op">,</span></span>
+<span id="cb163-7"><a href="#cb163-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb163-8"><a href="#cb163-8" aria-hidden="true" tabindex="-1"></a>    Serializable<span class="op">,</span></span>
+<span id="cb163-9"><a href="#cb163-9" aria-hidden="true" tabindex="-1"></a>    Transient<span class="op">,</span></span>
+<span id="cb163-10"><a href="#cb163-10" aria-hidden="true" tabindex="-1"></a>    SaveGame<span class="op">,</span></span>
+<span id="cb163-11"><a href="#cb163-11" aria-hidden="true" tabindex="-1"></a>    Replicated<span class="op">,</span></span>
+<span id="cb163-12"><a href="#cb163-12" aria-hidden="true" tabindex="-1"></a>    EditorOnly</span>
+<span id="cb163-13"><a href="#cb163-13" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>This lets reflection drive more systems without assuming every visible property belongs in every persistence domain.</p>
+<hr />
+<p><strong>Important Kairo improvement: field aliases</strong></p>
+<p>For schema evolution:</p>
+<div class="sourceCode" id="cb164"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb164-1"><a href="#cb164-1" aria-hidden="true" tabindex="-1"></a>PropertyMetadata</span>
+<span id="cb164-2"><a href="#cb164-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb164-3"><a href="#cb164-3" aria-hidden="true" tabindex="-1"></a>    Key <span class="op">=</span> <span class="st">&quot;near-clip&quot;</span><span class="op">,</span></span>
+<span id="cb164-4"><a href="#cb164-4" aria-hidden="true" tabindex="-1"></a>    LegacyKeys <span class="op">=</span></span>
+<span id="cb164-5"><a href="#cb164-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb164-6"><a href="#cb164-6" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;near-plane&quot;</span></span>
+<span id="cb164-7"><a href="#cb164-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb164-8"><a href="#cb164-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Deserializer sees old field:</p>
+<pre class="text"><code>near-plane</code></pre>
+<p>and maps it to current property.</p>
+<p>Writer emits only:</p>
+<pre class="text"><code>near-clip.</code></pre>
+<p>This gradually canonicalizes old formats.</p>
+<hr />
+<p><strong>Important Kairo improvement: descriptor schema version</strong></p>
+<div class="sourceCode" id="cb167"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb167-1"><a href="#cb167-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> TypeDescriptor</span>
+<span id="cb167-2"><a href="#cb167-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb167-3"><a href="#cb167-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>string Key<span class="op">;</span></span>
+<span id="cb167-4"><a href="#cb167-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> SchemaVersion<span class="op">;</span></span>
+<span id="cb167-5"><a href="#cb167-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb167-6"><a href="#cb167-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb167-7"><a href="#cb167-7" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then plugin/component persistence can evolve independently from whole-scene version.</p>
+<p>This becomes especially valuable once third-party components exist.</p>
+<hr />
+<p><strong>Important Kairo improvement: recovery scheduling</strong></p>
+<p>Existing primitives are already strong.</p>
+<p>A thin editor policy can add:</p>
+<div class="sourceCode" id="cb168"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb168-1"><a href="#cb168-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> RecoveryScheduler</span>
+<span id="cb168-2"><a href="#cb168-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb168-3"><a href="#cb168-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb168-4"><a href="#cb168-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> Tick<span class="op">(</span></span>
+<span id="cb168-5"><a href="#cb168-5" aria-hidden="true" tabindex="-1"></a>        ProjectSession<span class="op">&amp;</span> session<span class="op">,</span></span>
+<span id="cb168-6"><a href="#cb168-6" aria-hidden="true" tabindex="-1"></a>        TimePoint now<span class="op">)</span></span>
+<span id="cb168-7"><a href="#cb168-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb168-8"><a href="#cb168-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span></span>
+<span id="cb168-9"><a href="#cb168-9" aria-hidden="true" tabindex="-1"></a>            <span class="op">!</span>session<span class="op">.</span>HasUnsavedChanges<span class="op">())</span></span>
+<span id="cb168-10"><a href="#cb168-10" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb168-11"><a href="#cb168-11" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span><span class="op">;</span></span>
+<span id="cb168-12"><a href="#cb168-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb168-13"><a href="#cb168-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb168-14"><a href="#cb168-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span></span>
+<span id="cb168-15"><a href="#cb168-15" aria-hidden="true" tabindex="-1"></a>            now <span class="op">-</span> <span class="va">m_LastSnapshot</span> <span class="op">&lt;</span></span>
+<span id="cb168-16"><a href="#cb168-16" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Interval</span><span class="op">)</span></span>
+<span id="cb168-17"><a href="#cb168-17" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb168-18"><a href="#cb168-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span><span class="op">;</span></span>
+<span id="cb168-19"><a href="#cb168-19" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb168-20"><a href="#cb168-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb168-21"><a href="#cb168-21" aria-hidden="true" tabindex="-1"></a>        session<span class="op">.</span>CreateRecoveryPoint<span class="op">();</span></span>
+<span id="cb168-22"><a href="#cb168-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb168-23"><a href="#cb168-23" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_LastSnapshot</span> <span class="op">=</span> now<span class="op">;</span></span>
+<span id="cb168-24"><a href="#cb168-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb168-25"><a href="#cb168-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb168-26"><a href="#cb168-26" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span><span class="op">:</span></span>
+<span id="cb168-27"><a href="#cb168-27" aria-hidden="true" tabindex="-1"></a>    Duration <span class="va">m_Interval</span> <span class="op">=</span></span>
+<span id="cb168-28"><a href="#cb168-28" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>chrono::minutes<span class="op">(</span><span class="dv">2</span><span class="op">);</span></span>
+<span id="cb168-29"><a href="#cb168-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb168-30"><a href="#cb168-30" aria-hidden="true" tabindex="-1"></a>    TimePoint <span class="va">m_LastSnapshot</span><span class="op">{};</span></span>
+<span id="cb168-31"><a href="#cb168-31" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>In production, snapshot creation may be delegated to an I/O worker after capturing immutable state.</p>
+<hr />
+<p><strong>Important Kairo improvement: full durable save option</strong></p>
+<p>Current atomic rename semantics are excellent for normal editor failure resistance.</p>
+<p>For workloads where power-loss durability matters, introduce a lower-level durable file abstraction:</p>
+<pre class="text"><code>write temp
+flush userspace
+fsync temp
+atomic rename
+fsync containing directory.</code></pre>
+<p>On Windows, use the appropriate write-through/handle flush semantics.</p>
+<p>Then expose:</p>
+<pre class="text"><code>SaveMode::Atomic
+SaveMode::Durable.</code></pre>
+<p>Not every editor keystroke requires durability-grade fsync latency.</p>
+<p>Recovery snapshots perhaps do.</p>
+<hr />
+<p><strong>Important Kairo improvement: package dependency closure</strong></p>
+<p>Current package process copies a validated project payload with exclusions.</p>
+<p>Future release cooker should use:</p>
+<pre class="text"><code>startup scene
++
+runtime config roots
+        ↓
+asset dependency DAG
+        ↓
+transitive required assets
+        ↓
+platform-specific derived artifacts
+        ↓
+runtime package.</code></pre>
+<p>Then exclude:</p>
+<pre class="text"><code>source OBJ
+source PSD
+unused scenes
+unused editor documents
+local DDC.</code></pre>
+<p>This would complete Pass 13’s authoring/runtime separation.</p>
+<hr />
+<p><strong>Reconstruction challenge — serialization</strong></p>
+<p>Given:</p>
+<div class="sourceCode" id="cb173"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb173-1"><a href="#cb173-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Camera</span>
+<span id="cb173-2"><a href="#cb173-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb173-3"><a href="#cb173-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Near<span class="op">;</span></span>
+<span id="cb173-4"><a href="#cb173-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Far<span class="op">;</span></span>
+<span id="cb173-5"><a href="#cb173-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Explain why this is wrong:</p>
+<div class="sourceCode" id="cb174"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb174-1"><a href="#cb174-1" aria-hidden="true" tabindex="-1"></a>file<span class="op">.</span>write<span class="op">(</span></span>
+<span id="cb174-2"><a href="#cb174-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">reinterpret_cast</span><span class="op">&lt;</span><span class="dt">char</span><span class="op">*&gt;(&amp;</span>camera<span class="op">),</span></span>
+<span id="cb174-3"><a href="#cb174-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">sizeof</span><span class="op">(</span>Camera<span class="op">));</span></span></code></pre></div>
+<p>Then derive a robust representation defining:</p>
+<pre class="text"><code>format identity
+version
+field IDs/names
+float representation
+validation
+unknown-field policy.</code></pre>
+<p>If you cannot explain padding, ABI, endian, schema evolution and unknown-field consequences, serialization is not yet mastered.</p>
+<hr />
+<p><strong>Reconstruction challenge — compatibility</strong></p>
+<p>Suppose v1:</p>
+<pre class="text"><code>entity
+position
+rotation</code></pre>
+<p>v2 adds:</p>
+<pre class="text"><code>scale.</code></pre>
+<p>Answer separately:</p>
+<p><strong>New reader loading old file</strong></p>
+<p>Backward compatibility.</p>
+<p>Give:</p>
+<pre class="text"><code>scale = 1.</code></pre>
+<p><strong>Old reader loading new file</strong></p>
+<p>Forward compatibility.</p>
+<p>Possible only if unknown <code>scale</code> can be skipped or preserved.</p>
+<p>Then explain why strict parsers intentionally reject it.</p>
+<hr />
+<p><strong>Reconstruction challenge — object references</strong></p>
+<p>Given:</p>
+<pre class="text"><code>Entity 10 parent Entity 5</code></pre>
+<p>runtime entities are:</p>
+<pre class="text"><code>10 -&gt; {42,7}
+5  -&gt; {91,3}.</code></pre>
+<p>Save:</p>
+<pre class="text"><code>10 parent 5.</code></pre>
+<p>Never:</p>
+<pre class="text"><code>42:7 parent 91:3.</code></pre>
+<p>Load:</p>
+<pre class="text"><code>create all persistent entities
+build ID map
+resolve parent references
+validate no cycles.</code></pre>
+<p>That algorithm should now be automatic.</p>
+<hr />
+<p><strong>Reconstruction challenge — reflection</strong></p>
+<p>Given C++ field:</p>
+<div class="sourceCode" id="cb184"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb184-1"><a href="#cb184-1" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> Camera<span class="op">::</span>Exposure<span class="op">;</span></span></code></pre></div>
+<p>derive:</p>
+<pre class="text"><code>Stable TypeKey
+Stable PropertyKey
+DisplayName
+PropertyValueKind
+Read accessor
+Write accessor
+Range
+Flags.</code></pre>
+<p>Then trace:</p>
+<pre class="text"><code>Camera instance
+    ↓
+registry.Read
+    ↓
+PropertyValue
+    ↓
+ImGui adapter
+    ↓
+user changes
+    ↓
+command
+    ↓
+registry.Write.</code></pre>
+<p>That is the complete reflection/editor path.</p>
+<hr />
+<p><strong>Reconstruction challenge — type erasure</strong></p>
+<p>Explain why:</p>
+<div class="sourceCode" id="cb187"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb187-1"><a href="#cb187-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> object</span></code></pre></div>
+<p>does not provide type safety.</p>
+<p>Safety comes from:</p>
+<pre class="text"><code>object pointer
++
+correct descriptor
++
+validated PropertyValue kind.</code></pre>
+<p>Then propose runtime TypeToken if you need explicit misuse detection.</p>
+<p>That is safe type erasure.</p>
+<hr />
+<p><strong>Reconstruction challenge — undo</strong></p>
+<p>History:</p>
+<pre class="text"><code>A B C D
+cursor after D.</code></pre>
+<p>Undo twice:</p>
+<pre class="text"><code>A B | C D.</code></pre>
+<p>Execute X.</p>
+<p>Result:</p>
+<pre class="text"><code>A B X |</code></pre>
+<p>C/D discarded.</p>
+<p>Then explain why cursor moves only <strong>after</strong> Execute/Undo succeeds.</p>
+<p>That is command-history correctness.</p>
+<hr />
+<p><strong>Reconstruction challenge — recovery</strong></p>
+<p>Explain difference:</p>
+<pre class="text"><code>Save</code></pre>
+<p>writes authoritative state.</p>
+<pre class="text"><code>Undo</code></pre>
+<p>reverses semantic edits in current process.</p>
+<pre class="text"><code>Recovery snapshot</code></pre>
+<p>protects unsaved state against process failure.</p>
+<pre class="text"><code>Autosave</code></pre>
+<p>periodically produces recovery state without necessarily committing authoritative files.</p>
+<p>Those are four separate mechanisms.</p>
+<hr />
+<p><strong>Reconstruction challenge — path sandbox</strong></p>
+<p>Given:</p>
+<pre class="text"><code>ProjectRoot =
+/Users/x/Game
+
+Input =
+Assets/../Outside/file</code></pre>
+<p>reject lexically.</p>
+<p>Given:</p>
+<pre class="text"><code>Assets/External</code></pre>
+<p>is symlink to:</p>
+<pre class="text"><code>/etc.</code></pre>
+<p>canonical path escapes root.</p>
+<p>Reject after filesystem resolution.</p>
+<p>Then explain why string prefix comparison is unsafe and path-component comparison is required.</p>
+<hr />
+<p><strong>Reconstruction challenge — atomic save</strong></p>
+<p>Correct sequence:</p>
+<pre class="text"><code>serialize/validate
+      ↓
+write sibling temp
+      ↓
+flush/close
+      ↓
+atomic replace
+      ↓
+cleanup.</code></pre>
+<p>Explain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>atomic visibility</mtext>
+</math>
+<p>versus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>power-loss durability</mtext>
+  <mo>.</mo>
+</math>
+<p>They are not identical.</p>
+<p>That distinction is important enough to remember permanently.</p>
+<hr />
+<p><strong>Reconstruction challenge — package relocation</strong></p>
+<p>Bundle:</p>
+<pre class="text"><code>MyGame/
+├── run.sh
+├── bin/
+│   └── KairoPlayer
+└── project/
+    ├── Project.kproject
+    ├── Scenes/
+    └── Assets...</code></pre>
+<p>Launcher discovers root from itself.</p>
+<p>All project paths are relative.</p>
+<p>Therefore moving:</p>
+<pre class="text"><code>/home/a/MyGame</code></pre>
+<p>to:</p>
+<pre class="text"><code>/opt/MyGame</code></pre>
+<p>should still work.</p>
+<p>That is relocatability.</p>
+<hr />
+<p><strong>Reconstruction challenge — configuration</strong></p>
+<p>Classify:</p>
+<pre class="text"><code>BUILD_EDITOR=ON</code></pre>
+<p>as build-time.</p>
+<pre class="text"><code>--renderer metal</code></pre>
+<p>as runtime.</p>
+<pre class="text"><code>startup-scene Scenes/Main.kscene</code></pre>
+<p>as persistent project runtime policy.</p>
+<pre class="text"><code>OPENAI_API_KEY</code></pre>
+<p>as environment/secret configuration.</p>
+<pre class="text"><code>texture-compression=BC7</code></pre>
+<p>as asset-build configuration and therefore potentially a DDC-key input.</p>
+<p>If you can classify settings by lifetime/scope, you understand Part 1582 rather than merely memorizing terms.</p>
+<hr />
+<p><strong>The deep unifying principle of M093</strong></p>
+<p>Serialization, reflection and compatibility are all fundamentally about <strong>stable semantic identity</strong>.</p>
+<p>You need stable identity for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>F</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>And you must keep those identities independent from:</p>
+<pre class="text"><code>memory address
+vector index
+compiler RTTI name
+display label
+filesystem location
+GPU handle.</code></pre>
+<p>This is the exact same principle that has appeared repeatedly throughout the curriculum.</p>
+<hr />
+<p><strong>The deep unifying principle of M094</strong></p>
+<p>Undo, recovery and atomic save are all forms of <strong>controlled state transition</strong>.</p>
+<p>Instead of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>M</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+</math>
+<p>think:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>S</mi>
+          <mi>t</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <msub>
+            <mi>e</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>o</mi>
+              <mi>l</mi>
+              <mi>d</mi>
+            </mrow>
+          </msub>
+          <mover>
+            <mstyle scriptlevel="0">
+              <mo data-mjx-texclass="REL">→</mo>
+            </mstyle>
+            <mpadded width="+0.833em" lspace="0.278em" voffset="-.2em" height="-.2em">
+              <mi>v</mi>
+              <mi>a</mi>
+              <mi>l</mi>
+              <mi>i</mi>
+              <mi>d</mi>
+              <mi>a</mi>
+              <mi>t</mi>
+              <mi>e</mi>
+              <mi>d</mi>
+              <mtext> </mtext>
+              <mi>t</mi>
+              <mi>r</mi>
+              <mi>a</mi>
+              <mi>n</mi>
+              <mi>s</mi>
+              <mi>a</mi>
+              <mi>c</mi>
+              <mi>t</mi>
+              <mi>i</mi>
+              <mi>o</mi>
+              <mi>n</mi>
+              <mspace depth=".25em"></mspace>
+            </mpadded>
+          </mover>
+          <mi>S</mi>
+          <mi>t</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <msub>
+            <mi>e</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>n</mi>
+              <mi>e</mi>
+              <mi>w</mi>
+            </mrow>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>And preserve enough information to either:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>b</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>Undo gives semantic rollback.</p>
+<p>Atomic rename gives file-level publication.</p>
+<p>Recovery gives crash-level restoration.</p>
+<p>Staging packaging gives directory-level publication.</p>
+<p>These are the same systems idea applied at different scopes.</p>
+<hr />
+<p><strong>Exact coverage — M093 + M094</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Part</th>
+<th>Topic</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1546</td>
+<td>Serialization goals</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1547</td>
+<td>Binary versus text serialization</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1548</td>
+<td>Versioned file formats</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1549</td>
+<td>Schema evolution</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1550</td>
+<td>Forward compatibility</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1551</td>
+<td>Backward compatibility</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1552</td>
+<td>Unknown-field handling</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1553</td>
+<td>Stable endianness and numeric widths</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1554</td>
+<td>Checksums and content hashes</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1555</td>
+<td>Serialization of object references</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1556</td>
+<td>Serialization of ECS entities</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1557</td>
+<td>Scene-graph serialization</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1558</td>
+<td>Reflection metadata</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1559</td>
+<td>Type IDs</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1560</td>
+<td>Property IDs</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1561</td>
+<td>Reflection without language runtime reflection</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1562</td>
+<td>Compile-time reflection patterns</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1563</td>
+<td>Runtime reflection registries</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1564</td>
+<td>Property getters and setters</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1565</td>
+<td>Inspector adapters</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1566</td>
+<td>Serialization driven by reflection</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1567</td>
+<td>Editor UI driven by reflection</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1568</td>
+<td>Safe type erasure</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1569</td>
+<td>Undo commands</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1570</td>
+<td>Command-pattern undo/redo</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1571</td>
+<td>Transactional editor changes</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1572</td>
+<td>Recovery journals</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1573</td>
+<td>Autosave architecture</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1574</td>
+<td>Project descriptors</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1575</td>
+<td>Manifest validation</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1576</td>
+<td>Sandboxed project-relative paths</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1577</td>
+<td>Path traversal prevention</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1578</td>
+<td>Symlink escape prevention</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1579</td>
+<td>Runtime packaging</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1580</td>
+<td>Relocatable bundles</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1581</td>
+<td>Atomic publication by filesystem rename</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1582</td>
+<td>Build configuration versus runtime configuration</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<p>You now have the complete persistence/tooling chain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtable displaystyle="true" columnalign="right left" columnspacing="0em" rowspacing="3pt">
+            <mtr>
+              <mtd>
+                <mtext>C++ object</mtext>
+              </mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">→</mo>
+                <mtext>stable reflected schema</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">→</mo>
+                <mtext>versioned semantic representation</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">→</mo>
+                <mtext>validated references</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">→</mo>
+                <mtext>atomic persistent file</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">→</mo>
+                <mtext>recovery-protected editor state</mtext>
+              </mtd>
+            </mtr>
+            <mtr>
+              <mtd></mtd>
+              <mtd>
+                <mi></mi>
+                <mo stretchy="false">→</mo>
+                <mtext>relocatable runtime package</mtext>
+                <mo>.</mo>
+              </mtd>
+            </mtr>
+          </mtable>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>And the Kairo-specific architecture is already substantially aligned with that model: <strong>strict versioned text formats, persistent IDs instead of pointers, stable reflection keys instead of RTTI names, generic owned reflection values, UI-neutral descriptors, command-based undo, recovery snapshots with checksums, canonicalized project-relative paths, symlink escape checking, staged package validation, and atomic replacement.</strong></p>
+<p>The biggest remaining upgrades from this pass are not conceptual rewrites. They are production hardening: <strong>runtime-checked reflected object/type pairing, reflection serialization-policy flags and schema aliases, automatic recovery scheduling, stronger fsync-level durability where required, and dependency-closure/platform-cooked runtime packages.</strong></p>
+<p><strong>Pass 15 is M095 + M096, Parts 1583–1600.</strong> It closes Phase 16 with <strong>CMake’s target model; PUBLIC/PRIVATE/INTERFACE dependency propagation; imported/alias targets; presets; Ninja’s build DAG; compiler toolchains; Clang/MSVC portability; C++ modules across targets; Git submodule pinning; reproducible superbuilds; CI matrices; unit/integration/smoke testing; crash reporting; structured logs/profiling hooks; portable subsystem boundaries; and finally drawing the full ownership/data flow from source asset → editor → package → player → runtime subsystem.</strong></p>
+<!-- Book-completion teaching addition 1a6abe03521a3636 -->
+</section>
+<section id="id_05-engine-i-ch012-imported-targets-describe-external-artifacts-aliases-provide-a-stable-name" class="level4">
+<h4>Imported targets describe external artifacts; aliases provide a stable name</h4>
+<p>A CMake target is a named node in the build graph, with properties describing its sources, output and usage requirements. An <strong>imported target</strong> describes an artifact built outside this CMake build. It creates no compile/archive rule for that artifact, but consumers can still inherit its declared include paths, definitions and link requirements. An <strong>alias</strong> gives the same target another name. It does not copy properties or create a wrapper library; later changes to the real target remain visible through the alias.</p>
+<p>This exercise uses CMake 3.18’s documented behavior. A non-GLOBAL imported target is visible in its declaring directory and descendants. CMake 3.18 permits an alias of that imported target, with matching directory visibility. An alias cannot itself be aliased, installed or exported, and cannot be the target whose properties are modified. Modify the real target; there is no requirement that all such modifications precede creation of the alias.</p>
+<section id="id_05-engine-i-ch012-a-complete-project-with-an-externally-produced-archive" class="level5">
+<h5>A complete project with an externally produced archive</h5>
+<p>Create the files below under <code>tools/labs/cmake_imported_alias/</code>, or use the saved copy in the vault. The vendor source is included solely so this exercise can produce its own stand-in archive before CMake runs. The CMake build then treats that archive exactly as an outside artifact: it builds only the consumer. No package download or third-party library is required.</p>
+<p><strong>CMakeLists.txt</strong></p>
+<!-- exact-source: tools/labs/cmake_imported_alias/CMakeLists.txt -->
+<div class="sourceCode" id="cb209"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb209-1"><a href="#cb209-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This minimum selects the documented imported-alias directory-scope behavior.</span></span>
+<span id="cb209-2"><a href="#cb209-2" aria-hidden="true" tabindex="-1"></a><span class="kw">cmake_minimum_required</span>(<span class="ot">VERSION</span> <span class="dt">3.18</span>)</span>
+<span id="cb209-3"><a href="#cb209-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Enable and identify the host C++ toolchain. No dependency is downloaded.</span></span>
+<span id="cb209-4"><a href="#cb209-4" aria-hidden="true" tabindex="-1"></a><span class="kw">project</span>(ImportedAliasExample <span class="ot">LANGUAGES</span> <span class="ot">CXX</span>)</span>
+<span id="cb209-5"><a href="#cb209-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb209-6"><a href="#cb209-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">NOT</span> <span class="ot">DEFINED</span> VENDOR_MATH_LIBRARY <span class="ot">OR</span> <span class="ot">NOT</span> <span class="ot">EXISTS</span> <span class="st">&quot;</span><span class="dv">${VENDOR_MATH_LIBRARY}</span><span class="st">&quot;</span>)</span>
+<span id="cb209-7"><a href="#cb209-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">message</span>(<span class="ot">FATAL_ERROR</span> <span class="st">&quot;Set VENDOR_MATH_LIBRARY to the prebuilt vendor_math archive&quot;</span>)</span>
+<span id="cb209-8"><a href="#cb209-8" aria-hidden="true" tabindex="-1"></a><span class="cf">endif</span>()</span>
+<span id="cb209-9"><a href="#cb209-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb209-10"><a href="#cb209-10" aria-hidden="true" tabindex="-1"></a><span class="co"># The target is a build-graph description of a file produced elsewhere.</span></span>
+<span id="cb209-11"><a href="#cb209-11" aria-hidden="true" tabindex="-1"></a><span class="co"># It contributes no compile or archive rule of its own.</span></span>
+<span id="cb209-12"><a href="#cb209-12" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(deps)</span>
+<span id="cb209-13"><a href="#cb209-13" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(scope_probe)</span></code></pre></div>
+<p><strong>deps/CMakeLists.txt</strong></p>
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/CMakeLists.txt -->
+<div class="sourceCode" id="cb210"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb210-1"><a href="#cb210-1" aria-hidden="true" tabindex="-1"></a><span class="co"># STATIC describes the external archive; IMPORTED means CMake will not build it.</span></span>
+<span id="cb210-2"><a href="#cb210-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">Vendor::Math</span> <span class="ot">STATIC</span> <span class="ot">IMPORTED</span>)</span>
+<span id="cb210-3"><a href="#cb210-3" aria-hidden="true" tabindex="-1"></a><span class="kw">set_target_properties</span>(<span class="bn">Vendor::Math</span> <span class="ot">PROPERTIES</span></span>
+<span id="cb210-4"><a href="#cb210-4" aria-hidden="true" tabindex="-1"></a>  <span class="ot">IMPORTED_LOCATION</span> <span class="st">&quot;</span><span class="dv">${VENDOR_MATH_LIBRARY}</span><span class="st">&quot;</span></span>
+<span id="cb210-5"><a href="#cb210-5" aria-hidden="true" tabindex="-1"></a>  <span class="ot">INTERFACE_INCLUDE_DIRECTORIES</span> <span class="st">&quot;</span><span class="dv">${CMAKE_CURRENT_LIST_DIR}</span><span class="st">/include&quot;</span></span>
+<span id="cb210-6"><a href="#cb210-6" aria-hidden="true" tabindex="-1"></a>  <span class="ot">INTERFACE_COMPILE_DEFINITIONS</span> <span class="st">&quot;VENDOR_MATH_IMPORTED=1&quot;</span></span>
+<span id="cb210-7"><a href="#cb210-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb210-8"><a href="#cb210-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb210-9"><a href="#cb210-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Alias supplies this project with a stable name. It remains the same target.</span></span>
+<span id="cb210-10"><a href="#cb210-10" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">Project::Math</span> <span class="ot">ALIAS</span> <span class="bn">Vendor::Math</span>)</span>
+<span id="cb210-11"><a href="#cb210-11" aria-hidden="true" tabindex="-1"></a><span class="co"># An alias does not copy properties. Later changes to Vendor::Math are</span></span>
+<span id="cb210-12"><a href="#cb210-12" aria-hidden="true" tabindex="-1"></a><span class="co"># observed through Project::Math too; modify the real target, not the alias.</span></span>
+<span id="cb210-13"><a href="#cb210-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb210-14"><a href="#cb210-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Both imported target and its alias are visible in this child directory.</span></span>
+<span id="cb210-15"><a href="#cb210-15" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(consumer)</span></code></pre></div>
+<p><strong>deps/include/vendor_math.hpp</strong></p>
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/include/vendor_math.hpp -->
+<div class="sourceCode" id="cb211"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb211-1"><a href="#cb211-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#pragma once</span></span>
+<span id="cb211-2"><a href="#cb211-2" aria-hidden="true" tabindex="-1"></a><span class="kw">namespace</span> vendor <span class="op">{</span> <span class="dt">int</span> forty_two<span class="op">();</span> <span class="op">}</span></span></code></pre></div>
+<p><strong>deps/vendor_math.cpp</strong></p>
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/vendor_math.cpp -->
+<div class="sourceCode" id="cb212"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb212-1"><a href="#cb212-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&quot;vendor_math.hpp&quot;</span></span>
+<span id="cb212-2"><a href="#cb212-2" aria-hidden="true" tabindex="-1"></a><span class="kw">namespace</span> vendor <span class="op">{</span> <span class="dt">int</span> forty_two<span class="op">()</span> <span class="op">{</span> <span class="cf">return</span> <span class="dv">42</span><span class="op">;</span> <span class="op">}</span> <span class="op">}</span></span></code></pre></div>
+<p><strong>deps/consumer/CMakeLists.txt</strong></p>
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/consumer/CMakeLists.txt -->
+<div class="sourceCode" id="cb213"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb213-1"><a href="#cb213-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">NOT</span> <span class="ot">TARGET</span> <span class="bn">Vendor::Math</span> <span class="ot">OR</span> <span class="ot">NOT</span> <span class="ot">TARGET</span> <span class="bn">Project::Math</span>)</span>
+<span id="cb213-2"><a href="#cb213-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">message</span>(<span class="ot">FATAL_ERROR</span> <span class="st">&quot;Imported target and alias must be visible below deps/&quot;</span>)</span>
+<span id="cb213-3"><a href="#cb213-3" aria-hidden="true" tabindex="-1"></a><span class="cf">endif</span>()</span>
+<span id="cb213-4"><a href="#cb213-4" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">imported_consumer</span> main.cpp)</span>
+<span id="cb213-5"><a href="#cb213-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Linking the alias carries its location and include/definition usage requirements.</span></span>
+<span id="cb213-6"><a href="#cb213-6" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">imported_consumer</span> <span class="ot">PRIVATE</span> <span class="bn">Project::Math</span>)</span></code></pre></div>
+<p><strong>deps/consumer/main.cpp</strong></p>
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/consumer/main.cpp -->
+<div class="sourceCode" id="cb214"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb214-1"><a href="#cb214-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;vendor_math.hpp&gt;</span></span>
+<span id="cb214-2"><a href="#cb214-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb214-3"><a href="#cb214-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">// This compile-time check proves INTERFACE_COMPILE_DEFINITIONS propagated.</span></span>
+<span id="cb214-4"><a href="#cb214-4" aria-hidden="true" tabindex="-1"></a><span class="pp">#ifndef VENDOR_MATH_IMPORTED</span></span>
+<span id="cb214-5"><a href="#cb214-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#error expected imported target usage requirement</span></span>
+<span id="cb214-6"><a href="#cb214-6" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif</span></span>
+<span id="cb214-7"><a href="#cb214-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> vendor<span class="op">::</span>forty_two<span class="op">()</span> <span class="op">==</span> <span class="dv">42</span> <span class="op">?</span> <span class="dv">0</span> <span class="op">:</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb214-8"><a href="#cb214-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><strong>scope_probe/CMakeLists.txt</strong></p>
+<!-- exact-source: tools/labs/cmake_imported_alias/scope_probe/CMakeLists.txt -->
+<div class="sourceCode" id="cb215"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb215-1"><a href="#cb215-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The imported target was not GLOBAL; sibling directories cannot see it.</span></span>
+<span id="cb215-2"><a href="#cb215-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="ot">TARGET</span> <span class="bn">Vendor::Math</span> <span class="ot">OR</span> <span class="ot">TARGET</span> <span class="bn">Project::Math</span>)</span>
+<span id="cb215-3"><a href="#cb215-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">message</span>(<span class="ot">FATAL_ERROR</span> <span class="st">&quot;non-GLOBAL imported target leaked outside deps/&quot;</span>)</span>
+<span id="cb215-4"><a href="#cb215-4" aria-hidden="true" tabindex="-1"></a><span class="cf">endif</span>()</span>
+<span id="cb215-5"><a href="#cb215-5" aria-hidden="true" tabindex="-1"></a><span class="kw">message</span>(<span class="ot">STATUS</span> <span class="st">&quot;PASS: non-GLOBAL imported target and alias are directory-scoped&quot;</span>)</span></code></pre></div>
+<p><strong>negative/CMakeLists.txt</strong></p>
+<!-- exact-source: tools/labs/cmake_imported_alias/negative/CMakeLists.txt -->
+<div class="sourceCode" id="cb216"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb216-1"><a href="#cb216-1" aria-hidden="true" tabindex="-1"></a><span class="kw">cmake_minimum_required</span>(<span class="ot">VERSION</span> <span class="dt">3.18</span>)</span>
+<span id="cb216-2"><a href="#cb216-2" aria-hidden="true" tabindex="-1"></a><span class="kw">project</span>(ExpectedFailure <span class="ot">LANGUAGES</span> <span class="ot">CXX</span>)</span>
+<span id="cb216-3"><a href="#cb216-3" aria-hidden="true" tabindex="-1"></a><span class="kw">add_executable</span>(<span class="bn">missing_target</span> main.cpp)</span>
+<span id="cb216-4"><a href="#cb216-4" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(<span class="bn">missing_target</span> <span class="ot">PRIVATE</span> <span class="bn">Missing::Target</span>)</span></code></pre></div>
+<p><strong>negative/main.cpp</strong></p>
+<!-- exact-source: tools/labs/cmake_imported_alias/negative/main.cpp -->
+<div class="sourceCode" id="cb217"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb217-1"><a href="#cb217-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">()</span> <span class="op">{</span> <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span> <span class="op">}</span></span></code></pre></div>
+</section>
+<section id="id_05-engine-i-ch012-read-the-dependency-graph-then-run-it" class="level5">
+<h5>Read the dependency graph, then run it</h5>
+<p>The imported name and alias are declared in <code>deps/</code>. Its consumer is a descendant, so both names resolve there. The root’s <code>scope_probe/</code> is a sibling, so neither non-GLOBAL name resolves there. Linking <code>Project::Math</code> carries the archive location, header directory and <code>VENDOR_MATH_IMPORTED</code> definition. The consumer never receives a hand-written include flag or macro outside the target interface, and its compile-time check fails if that interface is lost.</p>
+<p>For independent siblings that need the dependency, declare it in their common parent, intentionally use an imported GLOBAL target, or consume a package configuration that defines the target in the required scope. An alias created where the real target is invisible does not repair visibility. The <code>::</code> name is also useful: an unresolved namespaced dependency raises a configure/generate error instead of being treated as an ordinary raw linker name.</p>
+<p>From the example’s directory, produce the archive outside the CMake graph and build the consumer. These shell comments explain which owner performs each step:</p>
+<div class="sourceCode" id="cb218"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb218-1"><a href="#cb218-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The host compiler and archiver act as the external vendor for this small demo.</span></span>
+<span id="cb218-2"><a href="#cb218-2" aria-hidden="true" tabindex="-1"></a><span class="ex">c++</span> <span class="at">-std</span><span class="op">=</span>c++11 <span class="at">-Ideps</span>/include <span class="at">-c</span> deps/vendor_math.cpp <span class="at">-o</span> /tmp/vendor_math.o</span>
+<span id="cb218-3"><a href="#cb218-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ar</span> rcs /tmp/libvendor_math.a /tmp/vendor_math.o</span>
+<span id="cb218-4"><a href="#cb218-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb218-5"><a href="#cb218-5" aria-hidden="true" tabindex="-1"></a><span class="co"># IMPORTED_LOCATION receives an absolute path to that already-existing archive.</span></span>
+<span id="cb218-6"><a href="#cb218-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> /tmp/imported-alias-build <span class="at">-DVENDOR_MATH_LIBRARY</span><span class="op">=</span>/tmp/libvendor_math.a</span>
+<span id="cb218-7"><a href="#cb218-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--build</span> /tmp/imported-alias-build</span>
+<span id="cb218-8"><a href="#cb218-8" aria-hidden="true" tabindex="-1"></a><span class="ex">/tmp/imported-alias-build/deps/consumer/imported_consumer</span></span>
+<span id="cb218-9"><a href="#cb218-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb218-10"><a href="#cb218-10" aria-hidden="true" tabindex="-1"></a><span class="co"># This independent negative project must fail for Missing::Target, not a compiler error.</span></span>
+<span id="cb218-11"><a href="#cb218-11" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> negative <span class="at">-B</span> /tmp/imported-alias-negative</span></code></pre></div>
+<p><strong>Worked solution and expected results.</strong> The positive project reports that the imported target and alias are directory-scoped, compiles the consumer with its inherited header path and definition, links the prebuilt archive, and returns zero. The negative project fails during configuration/generation because <code>Missing::Target</code> is not defined. A nonzero return alone is insufficient evidence: inspect the diagnostic to confirm the intended failure. If the positive consumer cannot find the header, inspect <code>INTERFACE_INCLUDE_DIRECTORIES</code>; if its macro check fails, inspect <code>INTERFACE_COMPILE_DEFINITIONS</code>; if linking fails, verify the archive’s absolute path, architecture and symbol definition.</p>
+<p>The solution to making the target visible to a sibling is a scope change at the shared dependency declaration, not a duplicate archive or an alias of an invisible target. If a dependency’s requirements are wrong, update the real imported target; the alias remains another spelling of it.</p>
+<p>A static archive uses <code>IMPORTED_LOCATION</code>. A Windows shared-library package may need both <code>IMPORTED_IMPLIB</code> for the link-time import library and <code>IMPORTED_LOCATION</code> for the runtime DLL. A header-only imported INTERFACE target has no compiled artifact. Multiple configurations may require configuration-specific locations. Those are distinct package contracts; this static host example does not test every platform layout.</p>
+<p>Source policy: the <a href="https://cmake.org/cmake/help/v3.18/command/add_library.html">CMake 3.18 add_library reference</a>, <a href="https://cmake.org/cmake/help/v3.18/command/target_link_libraries.html">target_link_libraries</a>, and <a href="https://cmake.org/cmake/help/v3.18/prop_tgt/IMPORTED_LOCATION.html">IMPORTED_LOCATION</a> define the behavior used here. The completed lab verifies this one project under the recorded installed toolchain, not every CMake generator or vendor SDK.</p>
+<p><strong>Complete source→editor→runtime data and ownership flow</strong></p>
+<p>This is the culmination of the entire Phase 16.</p>
+<p>We are going to trace <strong>one texture</strong>, <strong>one scene entity</strong>, and <strong>one frame</strong> through the whole engine.</p>
+<p>If you can draw this from memory, you understand the phase.</p>
+<hr />
+<p><strong>Stage 1 — source content</strong></p>
+<p>Artist creates:</p>
+<pre class="text"><code>Project/
+└── Textures/
+    └── Wall.png</code></pre>
+<p>At this stage the authoritative thing is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>B</mi>
+  <mi>y</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Ownership:</p>
+<pre class="text"><code>filesystem/project content.</code></pre>
+<p>It is not yet:</p>
+<pre class="text"><code>renderer texture
+GPU image
+runtime handle.</code></pre>
+<hr />
+<p><strong>Stage 2 — persistent asset registration</strong></p>
+<p>Asset system gives it:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>w</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Metadata:</p>
+<pre class="text"><code>ID
+Type = Texture
+Path = Textures/Wall.png
+Importer = kairo.texture.stb
+Dependencies...</code></pre>
+<p>Ownership:</p>
+<pre class="text"><code>AssetRegistry owns metadata.</code></pre>
+<p>Important separation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>w</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo>≠</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo data-mjx-pseudoscript="true">&quot;</mo>
+  </mrow>
+  <mi>T</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>W</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mo>.</mo>
+  <mi>p</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo data-mjx-pseudoscript="true">&quot;</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Move path; ID survives.</p>
+<hr />
+<p><strong>Stage 3 — import recipe</strong></p>
+<p>Import database records:</p>
+<pre class="text"><code>source fingerprint
+importer ID
+importer version
+canonical settings.</code></pre>
+<p>Derived key:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>K</mi>
+  <mo>=</mo>
+  <mi>H</mi>
+  <mo stretchy="false">(</mo>
+  <mi>S</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>I</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+  <mo>,</mo>
+  <mi>I</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>V</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>S</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>T</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>y</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>p</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Ownership:</p>
+<pre class="text"><code>import pipeline.</code></pre>
+<p>This is reproducibility metadata.</p>
+<hr />
+<p><strong>Stage 4 — derived artifact</strong></p>
+<p>Importer produces:</p>
+<pre class="text"><code>TextureArtifact</code></pre>
+<p>with:</p>
+<pre class="text"><code>dimensions
+format
+mip levels
+pixel payload.</code></pre>
+<p>DDC stores it under immutable key K.</p>
+<p>Ownership:</p>
+<pre class="text"><code>DerivedDataCache.</code></pre>
+<p>Deleting DDC should not destroy project identity.</p>
+<p>The artifact is reproducible.</p>
+<hr />
+<p><strong>Stage 5 — authored scene reference</strong></p>
+<p>A scene entity’s MeshRenderer/Material may store:</p>
+<pre class="text"><code>TextureAssetHandle{
+    AssetID = A_wall
+}.</code></pre>
+<p>Ownership:</p>
+<pre class="text"><code>EngineCore Scene.</code></pre>
+<p>It does not store:</p>
+<pre class="text"><code>VkImage
+TextureHandle
+filesystem pointer.</code></pre>
+<p>Excellent lifetime separation.</p>
+<hr />
+<p><strong>Stage 6 — editor inspection</strong></p>
+<p>Reflection registry describes:</p>
+<pre class="text"><code>MeshRenderer
+Material
+asset-reference property.</code></pre>
+<p>Inspector displays stable semantic reference.</p>
+<p>User edits.</p>
+<p>The ImGui layer emits intent:</p>
+<pre class="text"><code>Set property</code></pre>
+<p>rather than mutating arbitrary bytes.</p>
+<p>Ownership flow:</p>
+<pre class="text"><code>UI
+    ↓
+Editor command
+    ↓
+Scene persistent state.</code></pre>
+<hr />
+<p><strong>Stage 7 — undo transaction</strong></p>
+<p>Command captures:</p>
+<pre class="text"><code>Entity ID
+TypeKey
+PropertyKey
+Before
+After.</code></pre>
+<p>Execute modifies scene.</p>
+<p>History owns command.</p>
+<p>Undo reverses.</p>
+<p>The scene remains the authoritative authored state.</p>
+<p>No renderer object is directly edited by the property widget.</p>
+<hr />
+<p><strong>Stage 8 — persistent save</strong></p>
+<p>Scene serializer writes:</p>
+<pre class="text"><code>stable entity IDs
+component schema
+asset IDs
+hierarchy references.</code></pre>
+<p>It uses a versioned format.</p>
+<p>Save sequence:</p>
+<pre class="text"><code>serialize candidate
+write temporary sibling
+flush/close
+atomic replace.</code></pre>
+<p>Ownership transfers from in-memory scene representation to durable file representation.</p>
+<p>They represent the same semantics, not the same memory.</p>
+<hr />
+<p><strong>Stage 9 — recovery path</strong></p>
+<p>If scene is unsaved:</p>
+<pre class="text"><code>CreateRecoveryPoint</code></pre>
+<p>serializes current in-memory state into separate recovery snapshot.</p>
+<p>Recovery owns redundant safety copies.</p>
+<p>It does <strong>not</strong> become canonical project state unless explicitly restored.</p>
+<hr />
+<p><strong>Stage 10 — packaging</strong></p>
+<p>Build profile determines output.</p>
+<p>Packaging creates staging tree:</p>
+<pre class="text"><code>package/
+├── bin/KairoPlayer
+├── project/Project.kproject
+├── project/Scenes/...
+└── package.kmanifest</code></pre>
+<p>It rejects unsafe symlinks and transient editor state.</p>
+<p>Then staged project is reopened and validated.</p>
+<p>Only after success does package become visible.</p>
+<p>Ownership:</p>
+<pre class="text"><code>packaging pipeline
+→ published bundle.</code></pre>
+<hr />
+<p><strong>Stage 11 — Player bootstrap</strong></p>
+<p>Launcher determines package root.</p>
+<p>Runs:</p>
+<pre class="text"><code>KairoPlayer
+project/Project.kproject.</code></pre>
+<p>Player loads:</p>
+<pre class="text"><code>ProjectDescriptor
+AssetManifest
+StartupScene.</code></pre>
+<p>No editor is required.</p>
+<p>The runtime composition root constructs:</p>
+<pre class="text"><code>runtime project
+ECS bridge
+physics
+audio
+input
+renderer
+gameplay
+render bridge.</code></pre>
+<hr />
+<p><strong>Stage 12 — scene→runtime ECS extraction</strong></p>
+<p>Persistent authored:</p>
+<pre class="text"><code>Scene Entity 1007</code></pre>
+<p>becomes:</p>
+<pre class="text"><code>Runtime Entity {Index,Generation}.</code></pre>
+<p>Bridge records:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+  <mo stretchy="false">↔</mo>
+  <mi>R</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<p>Persistent scene remains distinct from process-local ECS storage.</p>
+<hr />
+<p><strong>Stage 13 — asset runtime resolution</strong></p>
+<p>The runtime entity references:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>w</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Asset runtime resolves:</p>
+<pre class="text"><code>AssetID
+   ↓
+derived artifact
+   ↓
+renderer resource creation.</code></pre>
+<p>Renderer creates:</p>
+<pre class="text"><code>TextureHandle T17</code></pre>
+<p>which may internally correspond to:</p>
+<pre class="text"><code>VkImage
+MTLTexture
+ID3D12Resource
+OpenGL texture.</code></pre>
+<p>Now we have three distinct identities:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>w</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+</math>
+<p>persistent,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mn>17</mn>
+</math>
+<p>runtime renderer identity,</p>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mi>O</mi>
+  <mi>b</mi>
+  <mi>j</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+</math>
+<p>backend-specific object.</p>
+<p>Never merge them conceptually.</p>
+<hr />
+<p><strong>Stage 14 — simulation</strong></p>
+<p>Runtime systems operate on:</p>
+<pre class="text"><code>ECS entities
+physics BodyIDs
+input state
+script state.</code></pre>
+<p>Physics may map:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo stretchy="false">↔</mo>
+  <mi>B</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>y</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+  <mo>.</mo>
+</math>
+<p>Renderer does not become physics owner.</p>
+<p>Subsystem-specific identities remain separate.</p>
+<hr />
+<p><strong>Stage 15 — render extraction</strong></p>
+<p>ECS:</p>
+<pre class="text"><code>Transform
+Renderable
+Light
+Camera</code></pre>
+<p>becomes frame data:</p>
+<pre class="text"><code>RenderScene
+MeshDraw[]
+Lights
+Camera.</code></pre>
+<p>This is a <strong>copy/extraction boundary</strong>.</p>
+<p>Renderer receives exactly what it needs.</p>
+<p>It does not traverse arbitrary editor Scene internals.</p>
+<hr />
+<p><strong>Stage 16 — render graph</strong></p>
+<p>Renderer compiles:</p>
+<pre class="text"><code>passes
+resources
+accesses
+transitions
+lifetimes.</code></pre>
+<p>RenderGraph produces execution plan.</p>
+<p>CPU timing can produce:</p>
+<pre class="text"><code>RenderGraphExecutionProfile.</code></pre>
+<p>Backend records GPU work.</p>
+<hr />
+<p><strong>Stage 17 — GPU submission</strong></p>
+<p>Backend submits resources.</p>
+<p>Now their lifetime extends beyond CPU frame construction.</p>
+<p>For a resource R:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <mo stretchy="false">)</mo>
+  <mo>&gt;</mo>
+  <mi>L</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mi>U</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If hot reloaded:</p>
+<pre class="text"><code>new resource published
+old resource retired
+old object destroyed only after GPU completion.</code></pre>
+<p>This is the frames-in-flight rule from Pass 13.</p>
+<hr />
+<p><strong>Stage 18 — diagnostics</strong></p>
+<p>Along the entire path:</p>
+<pre class="text"><code>Logger
+profiling
+validation
+tests
+crash metadata.</code></pre>
+<p>observe the system.</p>
+<p>Diagnostics should <strong>observe</strong> engine state.</p>
+<p>They should not become the owner of core semantics.</p>
+<hr />
+<p><strong>Stage 19 — CI proves the complete graph</strong></p>
+<p>The build artifact did not emerge from nowhere.</p>
+<p>CI reconstructs:</p>
+<pre class="text"><code>workspace.lock
+        ↓
+exact repositories
+        ↓
+preset
+        ↓
+toolchain
+        ↓
+CMake target graph
+        ↓
+Ninja DAG
+        ↓
+build
+        ↓
+unit tests
+        ↓
+integration tests
+        ↓
+smoke tests
+        ↓
+package.</code></pre>
+<p>That chain is the <strong>build-time equivalent</strong> of your runtime ownership chain.</p>
+<hr />
+<p><strong>The two master DAGs</strong></p>
+<p>At this point you should mentally separate two large graphs.</p>
+</section>
+</section>
+<section id="id_05-engine-i-ch012-build-dag" class="level4">
+<h4>Build DAG</h4>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mo stretchy="false">→</mo>
+  <mi>C</mi>
+  <mi>M</mi>
+  <mi>a</mi>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>T</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo stretchy="false">→</mo>
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>A</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo stretchy="false">→</mo>
+  <mi>E</mi>
+  <mi>x</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+</section>
+<section id="id_05-engine-i-ch012-runtime-dag" class="level4">
+<h4>Runtime DAG</h4>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>j</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>D</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mo stretchy="false">→</mo>
+  <mi>R</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>S</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">→</mo>
+  <mi>S</mi>
+  <mi>u</mi>
+  <mi>b</mi>
+  <mi>s</mi>
+  <mi>y</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">→</mo>
+  <mi>F</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>W</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>k</mi>
+  <mo>.</mo>
+</math>
+<p>Neither should contain hidden cycles.</p>
+<p>And both should have explicit ownership.</p>
+<hr />
+<p><strong>The full Kairo architecture in one view</strong></p>
+<pre class="text"><code>                    DEVELOPMENT / AUTHORING
+
+ Source repositories
+       |
+       | exact SHAs
+       v
+ workspace.lock
+       |
+       v
+ CMake target graph
+       |
+       v
+ Ninja build graph
+       |
+       +--------------------+
+       |                    |
+       v                    v
+    KairoEditor          KairoPlayer
+       |                    ^
+       |                    |
+       v                    |
+ Project + source assets    |
+       |                    |
+       v                    |
+ Asset Registry             |
+       |                    |
+       v                    |
+ Importers / DDC            |
+       |                    |
+       v                    |
+ Derived artifacts          |
+       |                    |
+       v                    |
+ Scene authoring            |
+       |                    |
+       v                    |
+ Reflection inspector       |
+       |                    |
+       v                    |
+ Undo / recovery            |
+       |                    |
+       v                    |
+ Persistent project files   |
+       |                    |
+       +-------&gt; Packaging--+
+                            |
+                            v
+
+                         RUNTIME
+
+                     ProjectDescriptor
+                            |
+                            v
+                       AssetManifest
+                            |
+                            v
+                         Scene
+                            |
+                            v
+                      ECS extraction
+                    /       |        \
+                   v        v         v
+               Physics    Logic     Render
+                   |        |         |
+                   +--------+---------+
+                            |
+                            v
+                        Frame state
+                            |
+                            v
+                       RenderScene
+                            |
+                            v
+                       RenderGraph
+                            |
+                            v
+                      Backend commands
+                            |
+                            v
+                           GPU</code></pre>
+<p>That is Phase 16.</p>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch442.xhtml#id_07-Vision-XR-and-Playable-Worlds" class="wikilink">Reading map</a> · <a href="ch575.xhtml#id_05-engine-i-ch011-streaming-resources-through-explicit-states" class="wikilink">Previous chapter</a> · <a href="ch389.xhtml#id_05-engine-i-ch013-portable-startup-windows-events-and-input" class="wikilink">Next chapter (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 13)</a></p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,38 @@
+\hypertarget{appendix-5f40b4fea463}{}\label{referencestart:appendix-5f40b4fea463}
+\section{Captured-world similarity alignment}\label{appendix-5f40b4fea463-captured-world-similarity-alignment}
+
+Two reconstructions of the same scene can disagree by a similarity transform even when both are internally consistent. A similarity transform Sim(3) contains rotation \(R\), translation \(t\) and a uniform scale \(s\):
+
+\[
+p_B = sRp_A+t.
+\]
+
+Rigid SE(3) alignment is the special case \(s=1\).
+
+This distinction matters when combining monocular/COLMAP-style reconstruction, device tracking, LiDAR geometry, Gaussian scenes or engine coordinates. A translation/rotation-only fit can look approximately correct near the alignment origin while scale error grows with distance.
+
+\subsection{Covariance transformation}\label{appendix-5f40b4fea463-covariance-transformation}
+
+A covariance represents second-order spread around the transformed mean. Translation does not affect covariance. Under the linear part \(sR\),
+
+\[
+\Sigma_B
+=
+(sR)\Sigma_A(sR)^{\mathsf T}
+=
+s^2 R\Sigma_A R^{\mathsf T}.
+\]
+
+That \(s^2\) factor is required because variance has squared units.
+
+\subsection{Estimation}\label{appendix-5f40b4fea463-estimation}
+
+With corresponding point sets, similarity alignment can be estimated by centering the data, solving for rotation from cross-covariance, recovering scale from the centered energies, then translation from the transformed centroids. Robust systems must additionally handle outliers, degenerate configurations and coordinate-convention mistakes.
+
+A good alignment report should include more than one mean error. Inspect residual distributions, spatial pattern, held-out correspondences and downstream image/depth consequences. A low training-set residual does not prove the transform generalizes.
+
+\subsection{Engine boundary}\label{appendix-5f40b4fea463-engine-boundary}
+
+The alignment should be represented as one explicit typed transform with declared source and destination frames. Applying scale separately to positions while forgetting camera translations, covariance, velocity or distance thresholds creates a mixed-coordinate system.
+
+Related: \hyperref[appendix-24269cb6977c]{Gaussian covariance projection and footprint}, \hyperref[appendix-1bae9457dbc3]{Coordinate frames and change of basis}, \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-8f6a01f284a7}{Conditioning and singularity (Bits, Programs, and Reliable Systems, Reference notes: Conditioning and singularity)}.

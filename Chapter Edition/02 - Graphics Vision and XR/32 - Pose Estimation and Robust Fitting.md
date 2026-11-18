@@ -8,7 +8,7 @@ Pose estimation links image measurements to geometric transformations under nois
 
 **Recall question:** Why does robust fitting help when some image correspondences are incorrect?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 76247–76840; source-span SHA256 2b26cc68a32efa9ed410fab065ef8ec5d22188d487162a50501d59794a738d97. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 77249–77842; source-span SHA256 2b26cc68a32efa9ed410fab065ef8ec5d22188d487162a50501d59794a738d97. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Pose estimation, transforms, and robust fitting

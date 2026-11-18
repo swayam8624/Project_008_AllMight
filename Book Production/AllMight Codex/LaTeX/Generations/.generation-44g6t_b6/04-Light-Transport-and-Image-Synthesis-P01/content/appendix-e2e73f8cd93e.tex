@@ -1,0 +1,41 @@
+\hypertarget{appendix-e2e73f8cd93e}{}\label{referencestart:appendix-e2e73f8cd93e}
+\section{Optical flow and time to contact}\label{appendix-e2e73f8cd93e-optical-flow-and-time-to-contact}
+
+\hypertarget{appendix-e2e73f8cd93e-optical-flow-and-time-to-contact}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-e2e73f8cd93e-definition-and-mechanism}
+
+\hypertarget{appendix-e2e73f8cd93e-definition-and-mechanism}{}
+
+Optical flow is the apparent 2D motion of image features between frames. Under brightness constancy, a tracked point keeps approximately the same intensity as it moves, yielding the constraint \(I_xu+I_yv+I_t=0\), where spatial derivatives \(I_x,I_y\) and temporal derivative \(I_t\) are measured from the image and \((u,v)\) is image velocity. One equation cannot determine two unknown components at a single pixel, so algorithms add neighborhood smoothness, feature tracking, or multiple scales. Flow can reveal camera motion, object motion, and looming. For an object approaching at speed \(V\), its image size grows at a rate related to depth; the ratio of size to its time derivative estimates time to contact without separately knowing absolute scale under simplifying assumptions. Texture, occlusion, and illumination changes violate brightness constancy.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-e2e73f8cd93e-prerequisites}
+
+\hypertarget{appendix-e2e73f8cd93e-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P02/main.pdf\#nameddest=appendix-70895739febb}{Spatiotemporal sampling and retinal motion (Vision, XR, and Playable Worlds, Part 2, Reference notes: Spatiotemporal sampling and retinal motion)}
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#nameddest=appendix-d5b3c692d9f0}{Convolution and filter footprints (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Convolution and filter footprints)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-e2e73f8cd93e-used-by}
+
+\hypertarget{appendix-e2e73f8cd93e-used-by}{}
+
+\begin{itemize}
+\item
+  {Worlds, Images and Inference}
+\item
+  \hyperref[appendix-b0c42da325f1]{Perception feedback and robot learning} \#\# Full teaching explanation
+\end{itemize}
+
+\href{../05-Spatial-Worlds-Engine-State-and-Simulation-P01/main.pdf\#nameddest=04-visual-computing-ii-ch030-optical-flow-and-motion-from-images}{Optical flow and motion from images (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 11)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=04-visual-computing-ii-ch034-photographic-composition-history-and-communication}{Photographic composition, history, and communication (Vision, XR, and Playable Worlds, Part 1, Ch. 4)}

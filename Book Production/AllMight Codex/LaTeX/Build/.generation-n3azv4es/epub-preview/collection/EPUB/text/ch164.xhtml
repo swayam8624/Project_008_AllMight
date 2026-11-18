@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch164.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-cbe594d1ab0a-integrity-and-authenticity" class="level2">
+<h2>Integrity and authenticity</h2>
+<p><strong>Curriculum depth:</strong> Derived with executable primitive witnesses · <strong>First seen:</strong> C006 · <strong>Latest development:</strong> Phase 28 repair</p>
+<p><strong>Integrity</strong> means detecting unauthorized or accidental modification relative to a trusted reference. <strong>Authenticity</strong> additionally answers who or what was authorized to create the message.</p>
+<p>Hashing a file and storing the digest beside it protects against accidental corruption only when the digest itself is trusted. An attacker able to replace both can recompute the hash.</p>
+<p>A message authentication code solves a different problem: parties share a secret key <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>K</mi>
+</math> and compute a tag such as</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>HMAC</mi>
+    <mi>K</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>m</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Someone without the key should not be able to forge a valid tag for a modified message under the security assumptions of HMAC and the underlying hash.</p>
+<p>A digital signature separates signing and verification keys and supports different trust models. The choice between MAC and signature is therefore architectural, not a matter of which API call is available.</p>
+<section id="appendix-cbe594d1ab0a-hmac-construction" class="level3">
+<h3>HMAC construction</h3>
+<p>For hash block size <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math>, normalize key <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>K</mi>
+</math> to one block, then compute</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>HMAC</mi>
+    <mi>K</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>m</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>H</mi>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">(</mo>
+  <mi>K</mi>
+  <mo>⊕</mo>
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>H</mi>
+  <mo stretchy="false">(</mo>
+  <mo stretchy="false">(</mo>
+  <mi>K</mi>
+  <mo>⊕</mo>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo stretchy="false">)</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>m</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>The inner and outer domains prevent the construction from being equivalent to a naive hash of key concatenated with message.</p>
+<p>tools/labs/crypto_primitives_lab.cpp checks HMAC-SHA256 against an RFC 4231 known-answer vector.</p>
+</section>
+<section id="appendix-cbe594d1ab0a-key-management-is-part-of-authenticity" class="level3">
+<h3>Key management is part of authenticity</h3>
+<p>A mathematically correct MAC does not help if:</p>
+<ul>
+<li>the key is embedded publicly in the executable;</li>
+<li>keys are reused across incompatible protocols without domain separation;</li>
+<li>a compromised key is never rotated;</li>
+<li>comparison leaks useful timing information in an adversarial environment;</li>
+<li>replayed old authenticated messages are accepted without nonce/counter/version policy.</li>
+</ul>
+<p>Cryptographic primitives are building blocks, not complete protocols.</p>
+</section>
+<section id="appendix-cbe594d1ab0a-production-boundary" class="level3">
+<h3>Production boundary</h3>
+<p>The educational implementations in this repository exist to make the bytes/rounds/contracts reconstructable. Production systems should use vetted cryptographic libraries and platform key-storage facilities rather than treating a teaching SHA/HMAC implementation as hardened security code.</p>
+<p>Related: <a href="ch169.xhtml#appendix-ed338677de0a-checksums-crcs-and-hashes" class="wikilink">Checksums CRCs and hashes</a>, <a href="ch049.xhtml#appendix-50af792c9da7-hmac-and-hkdf" class="wikilink">HMAC and HKDF (Bits, Programs, and Reliable Systems, Part 1, Reference notes: HMAC and HKDF)</a>, <a href="ch007.xhtml#appendix-098192f8d46d-merkle-trees-and-authenticated-structure" class="wikilink">Merkle trees and authenticated structure (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Merkle trees and authenticated structure)</a>, <a href="ch052.xhtml#appendix-5888fd6102dc-shamir-secret-sharing" class="wikilink">Shamir secret sharing (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Shamir secret sharing)</a>.</p>
+</section>
+</section>
+</body>
+</html>

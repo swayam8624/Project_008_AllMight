@@ -1,0 +1,57 @@
+\hypertarget{appendix-a9ba01fa72a6}{}
+\section*{Collision barriers and continuous detection}
+\chapter{Collision barriers and continuous detection}\label{appendix-a9ba01fa72a6-collision-barriers-and-continuous-detection}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\section{Definition and mechanism}\label{appendix-a9ba01fa72a6-definition-and-mechanism}
+
+A collision barrier turns a geometric safety condition into an optimization energy that rises sharply as bodies approach contact. Incremental Potential Contact (IPC) combines barrier terms for vertex-face and edge-edge separations with a time-step formulation that prevents interpenetration while a deformable object moves. Continuous collision detection (CCD) asks whether two moving primitives touch at any time during a step, not only at its endpoints; a pair can cross and separate between discrete samples. Robust CCD therefore needs conservative root bounds and careful handling of near-degenerate geometry. The barrier does not replace a correct collision set: missing pairs, invalid orientations, or a nonconservative CCD test can still allow tunneling. Very stiff barriers also make optimization ill-conditioned and require line search or step restrictions. IPC's guarantees depend on assumptions about the initial configuration, collision constraints, and numerical tolerances. The core distinction is discrete overlap testing versus continuous-in-time contact prevention.
+
+\section{Prerequisites}\label{appendix-a9ba01fa72a6-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-29f4bea4c2bb]{Constrained optimization and inverse kinematics}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-341296fb3f64}{Robust geometric predicates (02-Foundations-II, appendix-341296fb3f64)}
+\item
+  \hyperref[appendix-1988d465c119]{PDE fields and discrete Laplacians}
+\item
+  \hyperref[appendix-fab348609369]{Manifold polygon meshes and boundary structure}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-49933872bb51}{Norms lengths and induced distances (02-Foundations-II, appendix-49933872bb51)}
+\end{itemize}
+
+\section{Used by}\label{appendix-a9ba01fa72a6-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Dynamics,\%20forces,\%20and\%20numerical\%20integration}{Dynamics, forces, and numerical integration}
+\end{itemize}
+
+\section{Full teaching explanation}\label{appendix-a9ba01fa72a6-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Dynamics,\%20forces,\%20and\%20numerical\%20integration}{Dynamics, forces, and numerical integration}
+\end{itemize}
+
+\section{Recall and next depth}\label{appendix-a9ba01fa72a6-recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  Explain how a barrier energy and continuous collision check prevent a crossing between time-step endpoints.
+\item
+  Which numerical or geometric assumption could still allow tunneling?
+\end{itemize}
+
+\section{Source and navigation}\label{appendix-a9ba01fa72a6-source-and-navigation}
+
+Teaching narrative: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Dynamics,\%20forces,\%20and\%20numerical\%20integration}{open the main explanation}. Browse the \href{../02-Foundations-II/main.pdf\#nameddest=appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series}{University graphics and vision index (02-Foundations-II, appendix-a6d556a4ef50-university-graphics-vision-and-photography-\/-\/-independent-series)}. Additional chapter connections: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Dynamics,\%20forces,\%20and\%20numerical\%20integration}{Dynamics, forces, and numerical integration}; \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Optimization,\%20constraints,\%20and\%20inverse\%20kinematics}{Optimization, constraints, and inverse kinematics}; \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Weighted\%20points\%20lead\%20from\%20affine\%20geometry\%20to\%20collision\%20shapes}{Weighted points lead from affine geometry to collision shapes}.
+
+Caption/source records: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#P3-16\%20-\%20Subdivision\%20Surfaces\%20Part\%201}{P3-16}, \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#SC-15\%20-\%20Stanford\%20CS231N\%20Deep\%20Learning\%20for\%20Computer\%20Vision\%20Spring\%202025\%20Lecture\%2015:\%203D\%20Vision}{SC-15}.

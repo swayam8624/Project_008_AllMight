@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch321.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-7277c62d4599-russian-roulette-path-termination" class="level2">
+<h2>Russian roulette path termination</h2>
+<p>Russian roulette reduces expected path length without deterministically deleting every long path. At a continuation point, choose a survival probability <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>. If the path terminates, its future contribution is zero. If it survives, divide the surviving throughput by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math>.</p>
+<p>For a continuation contribution <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>X</mi>
+</math>,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Y</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">{</mo>
+    <mtable columnalign="left left" columnspacing="1em" rowspacing=".2em">
+      <mtr>
+        <mtd>
+          <mi>X</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <mi>p</mi>
+          <mo>,</mo>
+        </mtd>
+        <mtd>
+          <mtext>with probability </mtext>
+          <mi>p</mi>
+          <mo>,</mo>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+          <mo>,</mo>
+        </mtd>
+        <mtd>
+          <mtext>with probability </mtext>
+          <mn>1</mn>
+          <mo>−</mo>
+          <mi>p</mi>
+          <mo>.</mo>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE" fence="true" stretchy="true" symmetric="true"></mo>
+  </mrow>
+</math>
+<p>Then</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="double-struck">E</mi>
+  </mrow>
+  <mo stretchy="false">[</mo>
+  <mi>Y</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mfrac>
+    <mi>X</mi>
+    <mi>p</mi>
+  </mfrac>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>p</mi>
+  <mo stretchy="false">)</mo>
+  <mn>0</mn>
+  <mo>=</mo>
+  <mi>X</mi>
+  <mo>.</mo>
+</math>
+<p>The compensation preserves the continuation expectation. It does not guarantee lower variance, and it does not undo bias from a separate hard bounce cap.</p>
+<section id="appendix-7277c62d4599-choosing-the-survival-probability" class="level3">
+<h3>Choosing the survival probability</h3>
+<p>A common design bases <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math> on remaining throughput magnitude, usually after a minimum depth. But the exact scalar used—maximum channel, luminance-like measure, spectral bound—changes variance and path behavior. Clamp policies must be documented.</p>
+<p>A very small <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math> creates rare, very large weights <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>p</mi>
+</math>, which can increase variance dramatically. A <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math> too close to one saves little work. The point is an efficiency trade-off, not a ritual after N bounces.</p>
+</section>
+<section id="appendix-7277c62d4599-conditional-probability-matters" class="level3">
+<h3>Conditional probability matters</h3>
+<p>The compensation uses the probability of surviving <strong>at that decision</strong>, conditioned on the path state that reached it. If the probability changes per bounce, multiply the path throughput by the reciprocal of each actual survival probability encountered. Do not divide later by a generic average probability.</p>
+</section>
+<section id="appendix-7277c62d4599-executable-reference" class="level3">
+<h3>Executable reference</h3>
+<p>tools/labs/monte_carlo_transport_lab.cpp runs one million deterministic-seed roulette trials and verifies that the sample mean remains close to the un-terminated contribution after survival compensation.</p>
+<p>That does not prove a complete renderer. It isolates the stochastic invariant so a path tracer can test roulette independently of geometry, BSDF and light-sampling bugs.</p>
+<p>Read the connected derivation at <a href="ch319.xhtml#id_03-visual-computing-i-ch007-follow-one-path-without-losing-its-probability" class="wikilink">Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Follow one path without losing its probability</a>.</p>
+<p>Related: <a href="ch322.xhtml#appendix-ca8898faf1a6-multiple-importance-sampling" class="wikilink">Multiple importance sampling</a>, <a href="ch509.xhtml#appendix-b9db93e28371-reproducible-numerical-benchmarking" class="wikilink">Reproducible numerical benchmarking (Vision, XR, and Playable Worlds, Part 1, Reference notes: Reproducible numerical benchmarking)</a>.</p>
+</section>
+</section>
+</body>
+</html>

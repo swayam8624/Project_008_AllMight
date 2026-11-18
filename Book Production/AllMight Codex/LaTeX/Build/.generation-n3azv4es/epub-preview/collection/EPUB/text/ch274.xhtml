@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch274.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-3dc863dbddf3-bandit-exploration-and-regret" class="level2">
+<h2>Bandit exploration and regret</h2>
+<p>A multi-armed bandit models sequential choices when only the reward of the chosen action is observed. It separates exploitation—choosing what currently looks best—from exploration—choosing an uncertain action to learn about it.</p>
+<p>Let arm <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> have unknown mean reward <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>μ</mi>
+    <mi>a</mi>
+  </msub>
+</math>. Over <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math> rounds, one common stationary pseudo-regret benchmark is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>T</mi>
+  <msup>
+    <mi>μ</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo>−</mo>
+  <munderover>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>=</mo>
+      <mn>1</mn>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mi>T</mi>
+    </mrow>
+  </munderover>
+  <msub>
+    <mi>μ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <msub>
+        <mi>A</mi>
+        <mi>t</mi>
+      </msub>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>μ</mi>
+    <mo>∗</mo>
+  </msup>
+</math> is the largest fixed-arm mean and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>A</mi>
+    <mi>t</mi>
+  </msub>
+</math> is the chosen arm at round <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+</math>.</p>
+<p>Regret is meaningful only relative to the benchmark and environment assumptions. In a nonstationary problem, “best fixed arm” may be the wrong target.</p>
+<section id="appendix-3dc863dbddf3-ucb-intuition" class="level3">
+<h3>UCB intuition</h3>
+<p>Upper-confidence-bound methods choose an action using an optimistic estimate such as</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>μ</mi>
+        <mo stretchy="false">^</mo>
+      </mover>
+    </mrow>
+    <mi>a</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>c</mi>
+  <msqrt>
+    <mfrac>
+      <mrow>
+        <mi>log</mi>
+        <mo data-mjx-texclass="NONE">⁡</mo>
+        <mi>t</mi>
+      </mrow>
+      <msub>
+        <mi>N</mi>
+        <mi>a</mi>
+      </msub>
+    </mfrac>
+  </msqrt>
+  <mo>,</mo>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>N</mi>
+    <mi>a</mi>
+  </msub>
+</math> is the number of samples from arm <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>. The uncertainty bonus shrinks with evidence and is larger for rarely tried arms.</p>
+<p>The derivation of a confidence radius depends on reward bounds/noise assumptions. Reusing a textbook radius for arbitrary unbounded timing noise or correlated frame measurements removes the theorem that motivated it.</p>
+</section>
+<section id="appendix-3dc863dbddf3-nonstationary-workloads" class="level3">
+<h3>Nonstationary workloads</h3>
+<p>Render cost, network latency, cache behavior and user demand can change. An all-history mean adapts slowly after a regime shift. Sliding-window estimates, exponential discounting or explicit change detection trade statistical efficiency in stationary periods for responsiveness.</p>
+</section>
+<section id="appendix-3dc863dbddf3-adaptive-sampling-can-change-an-estimator" class="level3">
+<h3>Adaptive sampling can change an estimator</h3>
+<p>Choosing what to measure next based on observed rewards is useful for experimental efficiency, but it can make a naive final average biased toward frequently selected outcomes. Adaptive experiment allocation and unbiased Monte Carlo integration are different problems.</p>
+<p>When selection probabilities are known, importance weighting can correct some adaptive sampling schemes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>μ</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>T</mi>
+  </mfrac>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>t</mi>
+  </munder>
+  <mfrac>
+    <mrow>
+      <mrow data-mjx-texclass="ORD">
+        <mn mathvariant="bold">1</mn>
+      </mrow>
+      <mo stretchy="false">[</mo>
+      <msub>
+        <mi>A</mi>
+        <mi>t</mi>
+      </msub>
+      <mo>=</mo>
+      <mi>a</mi>
+      <mo stretchy="false">]</mo>
+      <msub>
+        <mi>X</mi>
+        <mi>t</mi>
+      </msub>
+    </mrow>
+    <mrow>
+      <msub>
+        <mi>p</mi>
+        <mi>t</mi>
+      </msub>
+      <mo stretchy="false">(</mo>
+      <mi>a</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Very small selection probabilities can make the variance enormous, so mathematical unbiasedness does not guarantee a practical estimator.</p>
+</section>
+<section id="appendix-3dc863dbddf3-graphicsresearch-use" class="level3">
+<h3>Graphics/research use</h3>
+<p>Bandits are plausible for choosing which configuration to benchmark, which reconstruction region deserves another expensive measurement, or which experiment to run next. They should not be inserted into a pixel estimator on the assumption that maximizing a reward signal automatically preserves the target rendering integral.</p>
+<p>The direct mathematics expansion is at <a href="ch275.xhtml#id_02-foundations-ii-ch030-choose-the-next-measurement-using-the-geometry-of-what-is-still-unknown" class="wikilink">Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Choose the next measurement using the geometry of what is still unknown</a>. The graphics narrative connects adaptive computation at <a href="ch277.xhtml#id_03-visual-computing-i-ch012-from-random-samples-to-deliberate-computation" class="wikilink">Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#From Random Samples to Deliberate Computation</a>.</p>
+<p>Related: <a href="ch513.xhtml#appendix-c83016554b1e-confidence-intervals-and-sequential-evidence" class="wikilink">Confidence intervals and sequential evidence (Vision, XR, and Playable Worlds, Part 1, Reference notes: Confidence intervals and sequential evidence)</a>, <a href="ch265.xhtml#appendix-8d863ed954d0-inverse-rejection-and-importance-sampling" class="wikilink">Inverse, rejection, and importance sampling (Mathematics for Visual Computing, Part 1, Reference notes: Inverse, rejection, and importance sampling)</a>, <a href="ch320.xhtml#appendix-10308c3d753e-sampling-support-and-missing-strata" class="wikilink">Sampling support and missing strata (Light Transport and Image Synthesis, Part 1, Reference notes: Sampling support and missing strata)</a>.</p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,36 @@
+\hypertarget{appendix-c80db39080be}{}\label{referencestart:appendix-c80db39080be}
+\section{Numerical decision boundaries}\label{appendix-c80db39080be-numerical-decision-boundaries}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C005 · \textbf{Latest development:} C005
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-c80db39080be-definition-and-mechanism}
+
+A small arithmetic perturbation can cross a discrete threshold. Values just below/above pixel midpoint 2.5 choose indices 2/3 under llround; a near-zero field sign can change mesh connectivity. Scalar error and topology are different outputs.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-c80db39080be-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-3ae74e89b4e6]{Absolute and relative error} --- Discrepancy, magnitude and reference units define sensitivity and threshold significance.
+\item
+  \hyperref[appendix-637d164ae5ca]{Directed rounding modes} --- Integer/pixel rounding policy controls discrete boundary choices.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-c80db39080be-used-by}
+
+Connect later dependent concepts here when their lessons arrive.
+
+\subsection{Recall and next depth}\label{appendix-c80db39080be-recall-and-next-depth}
+
+Reconstruct the definition's example and name the assumptions that make it valid.
+
+\textbf{Pending:} Robust predicates, classification uncertainty, pixel/voxel bounds and surface-extraction guarantees.
+
+\subsection{Source and navigation}\label{appendix-c80db39080be-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-when-arithmetic-meets-uncertainty]{M005 teaching chapter} · \hyperref[appendix-fd090d982a15-m005---parts-77-88]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

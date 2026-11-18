@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch332.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-f2ee4d086415-prefix-scan-and-stream-compaction" class="level2">
+<h2>Prefix scan and stream compaction</h2>
+<p>A prefix scan turns local counts into globally consistent offsets. For an exclusive sum scan of input <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>y</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>y</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <munderover>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>=</mo>
+      <mn>0</mn>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </munderover>
+  <msub>
+    <mi>x</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>If each element says how many output records it will emit, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>y</mi>
+    <mi>i</mi>
+  </msub>
+</math> is the first output slot owned by element <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math>. This converts a race-prone global append into deterministic non-overlapping regions.</p>
+<p>For Boolean compaction, let predicate <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>b</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>∈</mo>
+  <mo fence="false" stretchy="false">{</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo fence="false" stretchy="false">}</mo>
+</math>. Scan <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> to obtain offsets. Every active element with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>b</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math> writes itself to output[scan[i]]. The final output count is scan[n-1] + b[n-1].</p>
+<section id="appendix-f2ee4d086415-parallel-structure" class="level3">
+<h3>Parallel structure</h3>
+<p>The naive parallel scan that repeatedly doubles an offset performs <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mi>log</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math> work. A work-efficient tree scan performs an up-sweep/reduction followed by a down-sweep and uses <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math> work with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>log</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math> depth.</p>
+<p>On a GPU, a practical large-array scan normally has several levels:</p>
+<ol type="1">
+<li>scan each workgroup block into local output;</li>
+<li>record each block total;</li>
+<li>scan the block totals;</li>
+<li>add each scanned block offset back into that block’s local results.</li>
+</ol>
+<p>Every phase has a dependency. Dispatching all phases without establishing visibility/order is not a valid scan merely because each shader is individually correct.</p>
+<p>Shared-memory bank conflicts and subgroup width affect performance, while workgroup barriers only synchronize participating invocations in that workgroup.</p>
+</section>
+<section id="appendix-f2ee4d086415-stream-compaction-as-an-allocation-proof" class="level3">
+<h3>Stream compaction as an allocation proof</h3>
+<p>Compaction is useful beyond filtering visible objects. It appears in GPU-driven draw generation, BVH construction, particle survival, tiled light lists, Gaussian tile duplication and sparse work queues.</p>
+<p>The scan proves that each surviving producer owns a distinct range before any scatter writes occur.</p>
+</section>
+<section id="appendix-f2ee4d086415-evidence-boundary" class="level3">
+<h3>Evidence boundary</h3>
+<p>The current repository has CPU-side scan/compaction reasoning in the canonical volumes but does not yet claim a native Vulkan/Metal scan kernel benchmark. The next hardware proof should compare a scalar CPU oracle, a workgroup implementation, multi-workgroup hierarchy, adversarial non-power-of-two sizes, and captured GPU timing.</p>
+<p>Primary background: NVIDIA GPU Gems 3, Chapter 39, “Parallel Prefix Sum (Scan) with CUDA.”</p>
+<p>Teach and reconstruct: <a href="ch411.xhtml#id_01-foundations-i-ch008-scan-turns-local-counts-into-nonoverlapping-output-regions" class="wikilink">Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Scan turns local counts into nonoverlapping output regions (GPU Architecture and Real-Time Rendering, Part 1, Ch. 1)</a>.</p>
+<p>Related: <a href="ch419.xhtml#appendix-f662b5b1773b-gpu-workgroups-and-synchronization" class="wikilink">GPU workgroups and synchronization (GPU Architecture and Real-Time Rendering, Part 1, Reference notes: GPU workgroups and synchronization)</a>, <a href="ch437.xhtml#appendix-5653a7aea6bb-bvh-build-traversal-and-workload-selection" class="wikilink">BVH build traversal and workload selection (GPU Architecture and Real-Time Rendering, Part 2, Reference notes: BVH build traversal and workload selection)</a>.</p>
+</section>
+</section>
+</body>
+</html>

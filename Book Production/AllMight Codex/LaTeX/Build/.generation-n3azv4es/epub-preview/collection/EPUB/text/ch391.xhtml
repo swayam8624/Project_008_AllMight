@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch391.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-8404d0b1a3e7-sparse-set-storage" class="level2">
+<h2>Sparse-set storage</h2>
+<p>A sparse set answers a common ECS question: how do we keep component values densely packed while entities live in a much larger, sparse identifier space?</p>
+<p>Use two index structures:</p>
+<ul>
+<li>dense: a compact sequence of live entities, often parallel to a compact component-value array;</li>
+<li>sparse: indexed by entity index and storing where that entity should appear in dense.</li>
+</ul>
+<p>If sparse[e.index] says dense slot d, membership is not established until dense[d] is checked against the complete entity identity. This matters when entity indices are reused with newer generations. An old handle and a new handle may share the same numeric index.</p>
+<p>A common representation encodes absence as zero and stores dense_index + 1 in sparse. Then:</p>
+<p>contains(e) = 1. e.index is within sparse bounds; 2. sparse[e.index] is nonzero; 3. d = sparse[e.index] - 1 is within dense bounds; 4. dense_entities[d] equals the full entity handle e.</p>
+<p>Step 4 prevents a stale generation from inheriting the new occupant’s component by index coincidence.</p>
+<section id="appendix-8404d0b1a3e7-swap-and-pop-removal" class="level3">
+<h3>Swap-and-pop removal</h3>
+<p>To erase dense slot d in O(1), move the last dense element into d and pop the last row. But the moved entity’s sparse reverse mapping must be repaired.</p>
+<p>If b is removed from [a,b,c], c moves into b’s old dense slot. The operation is therefore not just:</p>
+<p>dense[d] = dense.back(); dense.pop_back();</p>
+<p>It also requires:</p>
+<p>sparse[c.index] = d.</p>
+<p>Forgetting that repair produces one of the nastiest ECS bugs: a membership query succeeds but returns the wrong component row later.</p>
+</section>
+<section id="appendix-8404d0b1a3e7-address-stability" class="level3">
+<h3>Address stability</h3>
+<p>Swap-and-pop can invalidate a pointer even when the underlying vector does not allocate. The bytes at a saved address may now belong to another entity. Vector reallocation creates an additional invalidation mode. Therefore sparse-set component addresses should be treated as borrows with a clear mutation boundary.</p>
+<p>Stable-address designs exist—paged pools, indirection, tombstones, node storage—but they trade locality, memory, branch cost, or iteration simplicity for stability.</p>
+</section>
+<section id="appendix-8404d0b1a3e7-complexity-is-not-the-whole-workload" class="level3">
+<h3>Complexity is not the whole workload</h3>
+<p>Sparse sets give expected O(1) membership, insertion and removal and dense O(n) iteration. But real performance depends on:</p>
+<ul>
+<li>size of the sparse index array;</li>
+<li>cache behavior of random entity-index probes;</li>
+<li>component payload size;</li>
+<li>frequency of structural mutations;</li>
+<li>query combinations across several component pools;</li>
+<li>whether iteration follows the smallest pool or performs archetype-style grouping.</li>
+</ul>
+<p>So “O(1)” does not settle the architecture decision.</p>
+</section>
+<section id="appendix-8404d0b1a3e7-executable-reconstruction" class="level3">
+<h3>Executable reconstruction</h3>
+<p>tools/labs/ecs_reconstruction_lab.cpp implements a generational entity pool and a sparse-set component pool. Its tests remove a middle dense element and verify that the swap-moved entity still resolves correctly. It also checks stale-generation behavior.</p>
+<p>Read the connected engine narrative at <a href="ch390.xhtml#id_05-engine-i-ch014-let-identity-survive-changes-in-storage" class="wikilink">Continuous Notes/Game Engine - From First Frame to Living Worlds#Let identity survive changes in storage</a>.</p>
+<p>Related: <a href="ch392.xhtml#appendix-fbfeb0430008-archetype-ecs" class="wikilink">Archetype ECS</a>, <a href="ch170.xhtml#appendix-f1581457d322-object-identity-and-generation-handles" class="wikilink">Object identity and generation handles (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Object identity and generation handles)</a>, <a href="ch202.xhtml#appendix-f9b8b9188c7f-borrow-invalidation-and-logical-identity" class="wikilink">Borrow invalidation and logical identity (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Borrow invalidation and logical identity)</a>.</p>
+</section>
+</section>
+</body>
+</html>

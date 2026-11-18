@@ -1,0 +1,36 @@
+\hypertarget{appendix-5e2d663adf7f}{}
+\section{Usual arithmetic conversions}\label{appendix-5e2d663adf7f-usual-arithmetic-conversions}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\subsection{Definition and mechanism}\label{appendix-5e2d663adf7f-definition-and-mechanism}
+
+After promotions, binary operators choose a common type according to rank, signedness, and representability; the operands may change value before comparison or arithmetic.
+
+After promotions, equal-signedness operands use the higher-ranked type. For signed S and unsigned U: if U rank≥S rank, convert S to U; otherwise use S if it represents all U values; otherwise use S's unsigned counterpart. Rank and width are related but distinct.
+
+\subsection{Prerequisites}\label{appendix-5e2d663adf7f-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-45303d03796a]{Integral promotion} --- Narrow integer types become int if int represents every original value; otherwise they become unsigned int.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-5e2d663adf7f-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-736a2345de4a]{Mixed signedness} --- uses usual arithmetic conversions as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-5e2d663adf7f-recall-and-next-depth}
+
+Explain usual arithmetic conversions without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} the full standard decision tree and floating/integer combinations.
+
+\subsection{Source and navigation}\label{appendix-5e2d663adf7f-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

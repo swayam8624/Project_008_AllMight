@@ -1,0 +1,2210 @@
+\chapter{Object representation, lifetime, and enforceable promises}\label{05-engine-i-ch003-object-representation-lifetime-and-enforceable-promises}\phantomsection\hypertarget{05-engine-i-ch003}{}\label{stagechapter:05-engine-i-ch003}
+
+\hypertarget{05-engine-i-ch003-object-representation-lifetime-and-enforceable-promises}{}
+
+\hyperref[volume-reading-map]{Reading map} · \hyperref[05-engine-i-ch002-how-bytes-become-programs-objects-and-resource-references]{Previous chapter} · \hyperref[05-engine-i-ch004-resource-ownership-failure-paths-and-review-practice]{Next chapter}
+
+Once a program has live objects, similar syntax can still create different states and lifetimes. This chapter compares initialization, copying, references, and invariants to show when a representation is safe to expose.
+
+\textbf{By the end:} Distinguish representation from validation and explain how constructors, ownership, and lifetime rules protect invariants.
+
+\textbf{Recall question:} For a record that owns data, which operations create, transfer, borrow, or invalidate that data, and how would you prove each?
+
+\section{Representation is an intention, not input validation}\label{05-engine-i-ch003-representation-is-an-intention-not-input-validation}
+
+\hypertarget{05-engine-i-ch003-representation-is-an-intention-not-input-validation}{}
+
+A useful independent example is:
+
+\begin{verbatim}
+enum class ChangeKind : std::uint8_t {
+    Created, Destroyed, ComponentAdded, ComponentRemoved
+};
+\end{verbatim}
+
+Include \texttt{\textless{}cstdint\textgreater{}} before this fragment. The scoped enum's default underlying type would be \texttt{int}; the explicit underlying type requests an eight-bit representation on targets providing that alias. This helps compact records but says nothing about file version, endian order of other fields, or GPU compatibility. In the fragments below, \texttt{StructuralChangeKind} means an equivalent enum with these same four enumerators; each fragment is illustrative, not a separate complete program.
+
+\subsection{Getting the underlying integer}\label{05-engine-i-ch003-getting-the-underlying-integer}
+
+\hypertarget{05-engine-i-ch003-getting-the-underlying-integer}{}
+
+In C++23:
+
+\begin{verbatim}
+#include <utility>
+
+auto raw = std::to_underlying(
+    StructuralChangeKind::Destroyed
+);
+\end{verbatim}
+
+This is better than repeatedly spelling:
+
+\begin{verbatim}
+static_cast<std::uint8_t>(
+    StructuralChangeKind::Destroyed
+);
+\end{verbatim}
+
+because the return type tracks the enum's actual underlying type. Earlier code commonly used \texttt{std::underlying\_type\_t\textless{}E\textgreater{}}.
+
+\subsection{An enum can represent more than just the named enumerators}\label{05-engine-i-ch003-an-enum-can-represent-more-than-just-the-named-enumerators}
+
+\hypertarget{05-engine-i-ch003-an-enum-can-represent-more-than-just-the-named-enumerators}{}
+
+Never assume deserializing one byte automatically validates:
+
+\begin{verbatim}
+StructuralChangeKind
+\end{verbatim}
+
+You might receive:
+
+\begin{verbatim}
+0xC7
+\end{verbatim}
+
+Your protocol should validate the domain. Conceptually:
+
+\begin{verbatim}
+std::optional<StructuralChangeKind>
+decodeChangeKind(std::uint8_t raw)
+{
+    switch (raw)
+    {
+        case 0:
+            return StructuralChangeKind::Created;
+        case 1:
+            return StructuralChangeKind::Destroyed;
+        case 2:
+            return StructuralChangeKind::ComponentAdded;
+        case 3:
+            return StructuralChangeKind::ComponentRemoved;
+        default:
+            return std::nullopt;
+    }
+}
+\end{verbatim}
+
+The enum gives you type safety \textbf{inside a correct C++ program}. It does not sanitize arbitrary external bytes. That matters in game assets, network messages and binary scene files.
+
+\subsection{Enum flags}\label{05-engine-i-ch003-enum-flags}
+
+\hypertarget{05-engine-i-ch003-enum-flags}{}
+
+Sometimes an enum represents mutually exclusive states:
+
+\begin{verbatim}
+enum class State
+{
+    Idle,
+    Running,
+    Dead
+};
+\end{verbatim}
+
+Sometimes it represents a bitmask:
+
+\begin{verbatim}
+enum class Access : std::uint32_t
+{
+    None  = 0,
+    Read  = 1u << 0,
+    Write = 1u << 1,
+    Exec  = 1u << 2
+};
+\end{verbatim}
+
+For \texttt{enum\ class} (\hyperref[appendix-23640fcee147]{Scoped enums and validated domains}), bitwise operations do not automatically exist:
+
+\begin{verbatim}
+Access::Read | Access::Write
+\end{verbatim}
+
+requires operator definitions or explicit underlying conversion. That is good because the compiler forces the API designer to say:
+
+\begin{quote}
+These enumerators are intentionally combinable.
+\end{quote}
+
+\section{Records acquire their initial state}\label{05-engine-i-ch003-records-acquire-their-initial-state}
+
+\hypertarget{05-engine-i-ch003-records-acquire-their-initial-state}{}
+
+This becomes crucial in engine code because many types are deliberately simple records. Consider:
+
+\begin{verbatim}
+struct Vertex
+{
+    float x;
+    float y;
+    float z;
+    std::uint32_t color;
+};
+\end{verbatim}
+
+No custom constructor is required to initialize it. You can write:
+
+\begin{verbatim}
+Vertex v{
+    1.0f,
+    2.0f,
+    3.0f,
+    0xFFFFFFFFu
+};
+\end{verbatim}
+
+This is \textbf{\hyperref[appendix-b7174c179542]{aggregate initialization}}. The language knows how to initialize the constituent elements directly.
+
+\subsection{What counts as an aggregate?}\label{05-engine-i-ch003-what-counts-as-an-aggregate}
+
+\hypertarget{05-engine-i-ch003-what-counts-as-an-aggregate}{}
+
+For modern C++20/23 class types, the practical rules include no user-declared or inherited constructors, no private/protected direct non-static data members, no virtual functions, and no prohibited virtual/private/protected base-class structure. Instead of memorizing every standard-revision wording change, test actual intent:
+
+\begin{verbatim}
+#include <type_traits>
+
+static_assert(std::is_aggregate_v<Vertex>);
+\end{verbatim}
+
+That is the professional approach. The precise aggregate definition evolved across C++ versions.
+
+\section{Similar braces can invoke different mechanisms}\label{05-engine-i-ch003-similar-braces-can-invoke-different-mechanisms}
+
+\hypertarget{05-engine-i-ch003-similar-braces-can-invoke-different-mechanisms}{}
+
+A record with public members, default member initializers and member functions can still be an \hyperref[appendix-b7174c179542]{aggregate}. For example, the laboratory's \texttt{ResourceHandle} has no user-declared constructor, and its \texttt{\{42,7\}} initialization initializes its two non-static fields. A static constant does not become a per-object aggregate element. Contrast \texttt{struct\ Vec\ \{\ float\ x,y,z;\ Vec(float\ a,float\ b,float\ c):x(a),y(b),z(c)\{\}\ \};}. Its user-declared constructor makes it non-aggregate in C++20/23. \texttt{Vec\{1,2,3\}} selects that constructor. Even a constructor explicitly defaulted on its first declaration is user-declared; do not substitute the older `no user-provided constructor' criterion for the modern rule. Ordinary methods do not by themselves disqualify an aggregate. Arrays are aggregates too, and aggregate bases precede direct members in element order.
+
+Use \texttt{std::is\_aggregate\_v\textless{}T\textgreater{}} when aggregate initialization is an intentional API property. A later added constructor can break designated initialization without changing any field names. Source-reported Entity/Vector contrasts remain examples to verify in the actual project.
+
+\subsection{Initialization order}\label{05-engine-i-ch003-initialization-order}
+
+\hypertarget{05-engine-i-ch003-initialization-order}{}
+
+Aggregate elements are initialized in their declaration/order rules, not in arbitrary conceptual order. For:
+
+\begin{verbatim}
+struct Particle
+{
+    float x;
+    float y;
+    int lifetime;
+};
+\end{verbatim}
+
+this maps naturally:
+
+\begin{verbatim}
+Particle p{
+    10.0f,
+    20.0f,
+    60
+};
+\end{verbatim}
+
+But positional initialization can become difficult to read:
+
+\begin{verbatim}
+PipelineDesc desc{
+    1,
+    0,
+    true,
+    false,
+    4,
+    1
+};
+\end{verbatim}
+
+What is \texttt{4}? What is \texttt{1}? Hence C++20 designated initialization.
+
+\subsection{Designated initializers}\label{05-engine-i-ch003-designated-initializers}
+
+\hypertarget{05-engine-i-ch003-designated-initializers}{}
+
+\begin{verbatim}
+Particle p{
+    .x = 10.0f,
+    .y = 20.0f,
+    .lifetime = 60
+};
+\end{verbatim}
+
+Unlike C, C++ requires the designators to respect declaration order. If declaration is:
+
+\begin{verbatim}
+struct Particle
+{
+    float x;
+    float y;
+    int lifetime;
+};
+\end{verbatim}
+
+then this is not portable-valid C++ designated initialization:
+
+\begin{verbatim}
+Particle p{
+    .lifetime = 60,
+    .x = 10.0f
+};
+\end{verbatim}
+
+The order must follow:
+
+\begin{verbatim}
+x → y → lifetime
+\end{verbatim}
+
+Also, C++ designators name direct data members rather than supporting all of C's more permissive designated-initialization forms.
+
+\subsection{Missing members}\label{05-engine-i-ch003-missing-members}
+
+\hypertarget{05-engine-i-ch003-missing-members}{}
+
+Suppose:
+
+\begin{verbatim}
+struct Material
+{
+    float roughness = 0.5f;
+    float metallic  = 0.0f;
+    bool doubleSided{};
+};
+\end{verbatim}
+
+Then:
+
+\begin{verbatim}
+Material m{
+    .roughness = 0.8f
+};
+\end{verbatim}
+
+leaves the other members to their default member initialization rules. This can make data descriptors very expressive.
+
+\subsection{Aggregate initialization and API evolution}\label{05-engine-i-ch003-aggregate-initialization-and-api-evolution}
+
+\hypertarget{05-engine-i-ch003-aggregate-initialization-and-api-evolution}{}
+
+Here is a real engineering trap. Version 1:
+
+\begin{verbatim}
+struct Dispatch
+{
+    std::uint32_t x;
+    std::uint32_t y;
+    std::uint32_t z;
+};
+\end{verbatim}
+
+Client:
+
+\begin{verbatim}
+Dispatch d{8, 8, 1};
+\end{verbatim}
+
+Then someone changes the structure:
+
+\begin{verbatim}
+struct Dispatch
+{
+    std::uint32_t queue;
+    std::uint32_t x;
+    std::uint32_t y;
+    std::uint32_t z;
+};
+\end{verbatim}
+
+Now positional initialization has a changed meaning or fails. Designators make intent clearer:
+
+\begin{verbatim}
+Dispatch d{
+    .x = 8,
+    .y = 8,
+    .z = 1
+};
+\end{verbatim}
+
+But adding/reordering members can still have ABI/layout consequences. Source-level convenience does not imply binary compatibility.
+
+\subsection{Braces do more than aggregates}\label{05-engine-i-ch003-braces-do-more-than-aggregates}
+
+\hypertarget{05-engine-i-ch003-braces-do-more-than-aggregates}{}
+
+Effective Modern C++ spends substantial attention on this because:
+
+\begin{verbatim}
+T{...}
+\end{verbatim}
+
+does \textbf{not always mean aggregate initialization}. For example:
+
+\begin{verbatim}
+std::vector<int> a(10, 20);
+\end{verbatim}
+
+means approximately:
+
+\begin{verbatim}
+10 elements, each value 20
+\end{verbatim}
+
+while:
+
+\begin{verbatim}
+std::vector<int> b{10, 20};
+\end{verbatim}
+
+means:
+
+\begin{verbatim}
+two elements: 10 and 20
+\end{verbatim}
+
+because \texttt{std::initializer\_list} overloads receive special preference during braced constructor overload resolution. So braces offer:
+
+\begin{verbatim}
+narrowing protection
+clear default construction
+aggregate initialization
+initializer-list construction
+ordinary constructor calls
+\end{verbatim}
+
+depending on the type. Never determine semantics from punctuation alone. Ask:
+
+\begin{quote}
+What initialization mechanism and overload resolution rules apply to this type?
+\end{quote}
+
+\section{Public records and protected invariants}\label{05-engine-i-ch003-public-records-and-protected-invariants}
+
+\hypertarget{05-engine-i-ch003-public-records-and-protected-invariants}{}
+
+This one is simpler syntactically but culturally important. The classic separate-compilation model lets clients compile against an interface while implementations are compiled separately. These:
+
+\begin{verbatim}
+struct A
+{
+    int x;
+};
+\end{verbatim}
+
+and:
+
+\begin{verbatim}
+class A
+{
+public:
+    int x;
+};
+\end{verbatim}
+
+have the same access semantics. A \texttt{struct} can have:
+
+\begin{verbatim}
+constructors
+destructors
+virtual functions
+private members
+inheritance
+templates
+operators
+static members
+friends
+\end{verbatim}
+
+A \texttt{class} can be a simple aggregate. There is no language rule saying:
+
+\begin{verbatim}
+struct = dumb C data
+class = real object-oriented object
+\end{verbatim}
+
+\subsection{The other difference: base-class access}\label{05-engine-i-ch003-the-other-difference-base-class-access}
+
+\hypertarget{05-engine-i-ch003-the-other-difference-base-class-access}{}
+
+With:
+
+\begin{verbatim}
+struct Derived : Base
+{
+};
+\end{verbatim}
+
+inheritance is public by default. With:
+
+\begin{verbatim}
+class Derived : Base
+{
+};
+\end{verbatim}
+
+inheritance is private by default. Equivalent explicit forms:
+
+\begin{verbatim}
+struct Derived : public Base {};
+\end{verbatim}
+
+and:
+
+\begin{verbatim}
+class Derived : private Base {};
+\end{verbatim}
+
+This is the second language-level default difference.
+
+\section{A convention about promises}\label{05-engine-i-ch003-a-convention-about-promises}
+
+\hypertarget{05-engine-i-ch003-a-convention-about-promises}{}
+
+Use a struct for an intentionally transparent record; use a class when a public API maintains an \textbf{invariant}, a condition that must remain true after each allowed operation. A record with unrestricted public fields cannot promise an invariant that callers can freely violate. These are design choices, not language restrictions: structs can hide members and classes can expose them. Neither keyword alone determines copying, lifetime, allocation, virtual dispatch, or thread safety.
+
+\section{Bringing the object model back to bytes}\label{05-engine-i-ch003-bringing-the-object-model-back-to-bytes}
+
+\hypertarget{05-engine-i-ch003-bringing-the-object-model-back-to-bytes}{}
+
+An \textbf{ABI} (application binary interface) is the target agreement about data layout, symbols and calls. A \textbf{stride} is the byte distance between successive records. An \textbf{offset} is a member's displacement from a chosen record origin. Internal padding separates members; tail padding completes the record's stride. In C++23, nonzero-size non-variant data members follow declaration order even across access labels; this does not imply no gaps, and it is stronger than some earlier language versions.
+
+Now we finally connect C++ source declarations to actual bytes. Take:
+
+\begin{verbatim}
+struct Example
+{
+    char a;
+    double b;
+    char c;
+};
+\end{verbatim}
+
+A beginner imagines:
+
+\begin{verbatim}
+a : 1 byte
+b : 8 bytes
+c : 1 byte
+--------------
+total 10
+\end{verbatim}
+
+But processors and ABIs have alignment requirements. Assume:
+
+\begin{verbatim}
+alignof(char)   = 1
+alignof(double) = 8
+\end{verbatim}
+
+A typical ABI may lay it out as:
+
+\begin{verbatim}
+offset
+0       a
+1-7     padding
+8-15    b
+16      c
+17-23   tail padding
+\end{verbatim}
+
+So:
+
+\begin{verbatim}
+sizeof(Example)
+\end{verbatim}
+
+could be:
+
+\begin{verbatim}
+24
+\end{verbatim}
+
+not 10. Why tail padding? Because if you have:
+
+\begin{verbatim}
+Example array[2];
+\end{verbatim}
+
+then:
+
+\begin{verbatim}
+array[1]
+\end{verbatim}
+
+must begin at an address suitably aligned for \texttt{double}. If object size were 17:
+
+\begin{verbatim}
+first object starts 0
+next starts 17
+\end{verbatim}
+
+which would misalign its \texttt{double}. Rounding total size to the class alignment allows:
+
+\begin{verbatim}
+object 0: [0,23]
+object 1: [24,47]
+\end{verbatim}
+
+with proper repeated alignment.
+
+\subsection{Typical alignment calculation}\label{05-engine-i-ch003-typical-alignment-calculation}
+
+\hypertarget{05-engine-i-ch003-typical-alignment-calculation}{}
+
+For a conventional ABI, a useful mental algorithm is:
+
+\begin{verbatim}
+offset = 0
+
+for each member:     offset = round_up(offset, alignof(member))     member.offset = offset     offset += sizeof(member)
+
+class_alignment = ABI-selected alignment, often max(member alignments)
+sizeof(class) = round_up(offset, class_alignment)
+\end{verbatim}
+
+This is not the complete C++ standard's universal class-layout algorithm. Bases, empty subobjects, \texttt{{[}{[}no\_unique\_address{]}{]}}, virtual mechanisms, packing pragmas, bit-fields and ABI choices complicate it. But it correctly explains ordinary POD-like engine structs on mainstream ABIs.
+
+\subsection{Reordering members can reduce padding}\label{05-engine-i-ch003-reordering-members-can-reduce-padding}
+
+\hypertarget{05-engine-i-ch003-reordering-members-can-reduce-padding}{}
+
+Assume:
+
+\begin{verbatim}
+struct Bad
+{
+    char a;
+    double b;
+    char c;
+};
+\end{verbatim}
+
+Typical result:
+
+\begin{verbatim}
+24 bytes
+\end{verbatim}
+
+Reorder:
+
+\begin{verbatim}
+struct Better
+{
+    double b;
+    char a;
+    char c;
+};
+\end{verbatim}
+
+Typical:
+
+\begin{verbatim}
+offset 0-7 : b
+offset 8   : a
+offset 9   : c
+offset10-15: tail padding
+
+size = 16
+\end{verbatim}
+
+For one object:
+
+\begin{verbatim}
+8 bytes saved
+\end{verbatim}
+
+For one million:
+
+\begin{verbatim}
+~8 MB saved
+\end{verbatim}
+
+But don't mindlessly reorder public binary formats. Changing member order can alter:
+
+\begin{verbatim}
+ABI
+serialized layout
+shader layout
+network packet layout
+cache packing
+debug tooling assumptions
+\end{verbatim}
+
+Optimization and compatibility can conflict.
+
+\subsection{\texorpdfstring{\texttt{alignof} and \texttt{alignas}}{alignof and alignas}}\label{05-engine-i-ch003-alignof-and-alignas}
+
+\hypertarget{05-engine-i-ch003-alignof-and-alignas}{}
+
+Query alignment:
+
+\begin{verbatim}
+std::cout << alignof(float);
+std::cout << alignof(Vec3f);
+\end{verbatim}
+
+Request stronger alignment:
+
+\begin{verbatim}
+struct alignas(16) SIMDVec4
+{
+    float x;
+    float y;
+    float z;
+    float w;
+};
+\end{verbatim}
+
+Now:
+
+\begin{verbatim}
+alignof(SIMDVec4) >= 16
+\end{verbatim}
+
+subject to implementation support. Why do this? Possible reasons:
+
+\begin{verbatim}
+SIMD load requirements/preference
+cache-line separation
+GPU-facing ABI structure
+atomic/hardware constraint
+false-sharing control
+\end{verbatim}
+
+But over-alignment can increase memory footprint.
+
+\subsection{\texorpdfstring{\texttt{standard-layout} does NOT mean ``packed C struct''}{standard-layout does NOT mean ``packed C struct''}}\label{05-engine-i-ch003-standard-layout-does-not-mean-packed-c-struct}
+
+\hypertarget{05-engine-i-ch003-standard-layout-does-not-mean-packed-c-struct}{}
+
+This distinction matters enormously. Check:
+
+\begin{verbatim}
+std::is_standard_layout_v<T>
+\end{verbatim}
+
+A \hyperref[appendix-958870a64c53]{standard-layout} type satisfies a set of structural restrictions intended to preserve useful low-level layout properties. It does \textbf{not} mean:
+
+\begin{verbatim}
+no padding
+cross-platform binary stable
+same layout on every compiler
+GPU-compatible
+safe to memcpy into any foreign API
+network-serializable
+endianness-independent
+\end{verbatim}
+
+Those are separate properties. The exact formal standard-layout eligibility rules involving base classes have evolved and are complicated enough that production code should query:
+
+\begin{verbatim}
+std::is_standard_layout_v<T>
+\end{verbatim}
+
+rather than attempting to duplicate the language definition in an illustrative metaprogram.
+
+\subsection{\texorpdfstring{\texttt{trivially\_copyable} is another distinct concept}{trivially\_copyable is another distinct concept}}\label{05-engine-i-ch003-trivially_copyable-is-another-distinct-concept}
+
+\hypertarget{05-engine-i-ch003-trivially_copyable-is-another-distinct-concept}{}
+
+You can test:
+
+\begin{verbatim}
+std::is_trivially_copyable_v<T>
+\end{verbatim}
+
+This has to do with whether byte-wise copying can legitimately reproduce object representations under the language's permitted operations. It is not the same as:
+
+\begin{verbatim}
+standard-layout
+aggregate
+trivial
+\end{verbatim}
+
+Think of four independent questions:
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Property
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Main question
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+aggregate & Can it use aggregate initialization semantics? \\
+standard-layout & Does it satisfy C-like structural layout constraints? \\
+trivially copyable & Can object representations be copied bytewise under defined rules? \\
+trivial & Are relevant construction/copy/destruction operations trivial? \\
+\end{longtable}
+}
+
+Old C++ literature often bundled properties into ``POD.'' Modern C++ reasoning should use the actual traits you need.
+
+\section{Adjacent members are not an array}\label{05-engine-i-ch003-adjacent-members-are-not-an-array}
+
+\hypertarget{05-engine-i-ch003-adjacent-members-are-not-an-array}{}
+
+Consider an independent record \texttt{struct\ NamedVector\ \{\ float\ x,y,z;\ \};}. Even if size is twelve bytes, every member is a separate subobject. A \textbf{subobject} is an object inside another object, such as a member or array element; it has its own type and lifetime constraints.
+
+\texttt{(\&v.x){[}1{]}} is not valid access to \texttt{v.y}. A non-array object is treated as a one-element array for pointer arithmetic: forming \texttt{\&v.x\ +\ 1} can produce its one-past pointer, but dereferencing it as the next float is not permitted. Adding two already leaves that one-element bound. Physical adjacency and standard-layout do not create a float array. This is the source attachment's central project-shaped finding, but here it is a language analysis of an independent representation, not a freshly verified Kairo defect.
+
+A span is a non-owning view over an existing valid range. \texttt{std::span\textless{}float,3\textgreater{}\{\&v.x,3\}} does not manufacture the missing array. A cast likewise does not create it. Byte inspection, valid array traversal and named-member access are different operations.
+
+\subsection{Correct alternatives}\label{05-engine-i-ch003-correct-alternatives}
+
+\hypertarget{05-engine-i-ch003-correct-alternatives}{}
+
+If \texttt{.x}, \texttt{.y}, \texttt{.z} syntax is important, retain separate fields and write indexing explicitly:
+
+\begin{verbatim}
+constexpr T& operator[](std::size_t index) noexcept
+{
+    assert(index < 3);
+
+    switch (index)
+    {
+        case 0: return x;
+        case 1: return y;
+        default: return z;
+    }
+}
+
+constexpr const T& operator[](std::size_t index) const noexcept
+{
+    assert(index < 3);
+
+    switch (index)
+    {
+        case 0: return x;
+        case 1: return y;
+        default: return z;
+    }
+}
+\end{verbatim}
+
+For explicit contiguous export:
+
+\begin{verbatim}
+[[nodiscard]]
+constexpr std::array<T, 3> ToArray() const noexcept
+{
+    return {x, y, z};
+}
+\end{verbatim}
+
+If true array semantics are the fundamental representation, instead store:
+
+\begin{verbatim}
+template<typename T>
+struct Vector3
+{
+    std::array<T, 3> values{};
+
+    constexpr T& x() noexcept { return values[0]; }
+    constexpr T& y() noexcept { return values[1]; }
+    constexpr T& z() noexcept { return values[2]; }
+
+    constexpr T* Data() noexcept
+    {
+        return values.data();
+    }
+};
+\end{verbatim}
+
+Now:
+
+\begin{verbatim}
+Data()[1]
+\end{verbatim}
+
+really traverses an array. Do \textbf{not} ``fix'' the existing representation by creating:
+
+\begin{verbatim}
+std::span<T, 3>{&x, 3}
+\end{verbatim}
+
+because the underlying problem remains: \texttt{\&x} does not designate element zero of a three-element \texttt{T} array. A project audit should first establish the current representation, callers and revision before proposing a production change.
+
+\subsection{Why the bug often appears to work forever}\label{05-engine-i-ch003-why-the-bug-often-appears-to-work-forever}
+
+\hypertarget{05-engine-i-ch003-why-the-bug-often-appears-to-work-forever}{}
+
+The ABI probably lays:
+
+\begin{verbatim}
+x: offset 0
+y: offset 4
+z: offset 8
+\end{verbatim}
+
+for \texttt{float}. Machine code for:
+
+\begin{verbatim}
+(&x)[1]
+\end{verbatim}
+
+will calculate:
+
+\begin{verbatim}
+address(x) + sizeof(float)
+\end{verbatim}
+
+which numerically lands on \texttt{y}. So:
+
+\begin{verbatim}
+debug: works
+release: works
+Clang: works
+GCC: works
+10 million frames: works
+\end{verbatim}
+
+does not prove defined C++ behavior. Undefined behavior means:
+
+\begin{quote}
+The C++ language no longer constrains the implementation to the semantics you intended.
+\end{quote}
+
+That is why language-level validity matters even when the hardware arithmetic ``obviously works.'' This becomes much more serious when optimizers use alias/lifetime rules to transform code.
+
+\subsection{CPU layout is not GPU layout}\label{05-engine-i-ch003-cpu-layout-is-not-gpu-layout}
+
+\hypertarget{05-engine-i-ch003-cpu-layout-is-not-gpu-layout}{}
+
+Your code asserts:
+
+\begin{verbatim}
+sizeof(Vec3f) == 3 * sizeof(float)
+\end{verbatim}
+
+On mainstream hardware:
+
+\begin{verbatim}
+Vec3f = 12 bytes
+\end{verbatim}
+
+Do not conclude:
+
+\begin{verbatim}
+therefore GPU float3 is always 12-byte stride/alignment compatible
+\end{verbatim}
+
+GPU-side layout depends on:
+
+\begin{verbatim}
+API
+shader language
+buffer category
+selected layout rules
+alignment rules
+packing rules
+vertex input declarations
+\end{verbatim}
+
+For example, a graphics API may let you explicitly describe a vertex attribute:
+
+\begin{verbatim}
+position:
+    format = three 32-bit floats
+    offset = 0
+stride = whatever CPU vertex stride is
+\end{verbatim}
+
+while uniform/storage buffer layout may apply different alignment rules. Metal also distinguishes vector packing situations and provides packed representations for cases where you need a tight external layout. So your correct engineering pipeline is:
+
+\begin{verbatim}
+C++ logical type
+      ↓
+CPU representation
+      ↓
+explicit backend upload representation
+      ↓
+API-described offsets/stride/alignment
+      ↓
+shader representation
+\end{verbatim}
+
+not:
+
+\begin{verbatim}
+standard-layout C++ type
+      ⇒ automatically GPU-compatible
+\end{verbatim}
+
+This matters directly in Vulkan, Metal, Gaussian splatting, mesh upload, skinning and shader parameter code.
+
+\subsection{\texorpdfstring{\texttt{offsetof}}{offsetof}}\label{05-engine-i-ch003-offsetof}
+
+\hypertarget{05-engine-i-ch003-offsetof}{}
+
+For standard-layout types:
+
+\begin{verbatim}
+#include <cstddef>
+
+struct Vertex
+{
+    float px;
+    float py;
+    float pz;
+    std::uint32_t color;
+};
+
+static_assert(std::is_standard_layout_v<Vertex>);
+
+static_assert(offsetof(Vertex, px) == 0);
+\end{verbatim}
+
+You can use offset checks to enforce a binary/API contract. If a shader/upload ABI expects:
+
+\begin{verbatim}
+position offset 0
+color    offset 12
+stride   16
+\end{verbatim}
+
+make those expectations executable:
+
+\begin{verbatim}
+static_assert(offsetof(Vertex, color) == 12);
+static_assert(sizeof(Vertex) == 16);
+\end{verbatim}
+
+Then a layout-breaking code change fails at compile time rather than rendering corrupted triangles. That is exactly how language knowledge becomes engine reliability.
+
+\subsection{\texorpdfstring{\texttt{\#pragma\ pack} is not a magic optimization}{\#pragma pack is not a magic optimization}}\label{05-engine-i-ch003-pragma-pack-is-not-a-magic-optimization}
+
+\hypertarget{05-engine-i-ch003-pragma-pack-is-not-a-magic-optimization}{}
+
+You will sometimes see:
+
+\begin{verbatim}
+#pragma pack(push, 1)
+
+struct Header
+{
+    std::uint8_t type;
+    std::uint32_t length;
+};
+
+#pragma pack(pop)
+\end{verbatim}
+
+This can remove normal padding on supporting compilers. But it is non-standard and can produce misaligned members. Then:
+
+\begin{verbatim}
+header.length
+\end{verbatim}
+
+may require slower unaligned access or, on some architectures/instruction choices, require special handling. For external binary formats, a better design is often:
+
+\begin{verbatim}
+read individual fields from bytes
+decode endian explicitly
+validate values
+construct normal aligned C++ object
+\end{verbatim}
+
+rather than forcing runtime objects to impersonate disk packets.
+
+\subsection{Bit-fields}\label{05-engine-i-ch003-bit-fields}
+
+\hypertarget{05-engine-i-ch003-bit-fields}{}
+
+Similarly:
+
+\begin{verbatim}
+struct Flags
+{
+    unsigned visible : 1;
+    unsigned shadow  : 1;
+    unsigned dynamic : 1;
+};
+\end{verbatim}
+
+does not give you a portable three-bit file format. Bit-field allocation order and packing details are implementation-defined. They can be useful internally, but for stable formats use explicit masks:
+
+\begin{verbatim}
+std::uint32_t flags;
+
+constexpr std::uint32_t Visible = 1u << 0;
+constexpr std::uint32_t Shadow  = 1u << 1;
+constexpr std::uint32_t Dynamic = 1u << 2;
+\end{verbatim}
+
+Now serialization representation is under your control.
+
+\section{Following an escaped address through time}\label{05-engine-i-ch003-following-an-escaped-address-through-time}
+
+\hypertarget{05-engine-i-ch003-following-an-escaped-address-through-time}{}
+
+For this independent trace, use \texttt{struct\ Entity\ \{\ std::uint32\_t\ Index;\ std::uint32\_t\ Generation;\ \};} with \texttt{\textless{}cstdint\textgreater{}}. It is a teaching record, not an import of the Kairo module. The stale dereference shown later is an invalid example to analyze, not to execute.
+
+Take:
+
+\begin{verbatim}
+Entity* escaped = nullptr;
+
+void update()
+{
+    Entity local{
+        .Index = 42,
+        .Generation = 7
+    };
+
+    escaped = &local;
+}
+\end{verbatim}
+
+Before calling \texttt{update}:
+
+\begin{verbatim}
+escaped object:
+    static storage duration
+    value = nullptr
+\end{verbatim}
+
+Enter \texttt{update}. Storage for \texttt{local} becomes available:
+
+\begin{verbatim}
+automatic storage
+address hypothetically 0x7FF0
+\end{verbatim}
+
+Initialization completes:
+
+\begin{verbatim}
+Entity object lifetime begins
+identity = Entity object A
+address  = 0x7FF0
+value:
+    Index      42
+    Generation 7
+\end{verbatim}
+
+Then:
+
+\begin{verbatim}
+escaped = &local;
+\end{verbatim}
+
+Now:
+
+\begin{verbatim}
+escaped value = 0x7FF0
+\end{verbatim}
+
+Exit the function. \texttt{local}'s lifetime ends. Its automatic storage is no longer reserved for that object. But \texttt{escaped} still contains:
+
+\begin{verbatim}
+0x7FF0
+\end{verbatim}
+
+That numerical address has not magically become \texttt{nullptr}. So:
+
+\begin{verbatim}
+escaped->Index
+\end{verbatim}
+
+attempts to use an object after its lifetime ended. This is undefined behavior. Later:
+
+\begin{verbatim}
+void somethingElse()
+{
+    Entity another{
+        .Index = 99,
+        .Generation = 5
+    };
+}
+\end{verbatim}
+
+The implementation might reuse address:
+
+\begin{verbatim}
+0x7FF0
+\end{verbatim}
+
+Now the same address may contain a \textbf{different object}. That is why:
+
+\begin{verbatim}
+same address ≠ same lifetime
+same address ≠ same identity
+\end{verbatim}
+
+And it is conceptually the same reason ECS generation counters exist.
+
+\section{Following one call through the build}\label{05-engine-i-ch003-following-one-call-through-the-build}
+
+\hypertarget{05-engine-i-ch003-following-one-call-through-the-build}{}
+
+Assume:
+
+\begin{verbatim}
+// Math.cppm
+export module Math;
+
+export int twice(int);
+\end{verbatim}
+
+and:
+
+\begin{verbatim}
+// MathImpl.cpp
+module Math;
+
+int twice(int x)
+{
+    return x * 2;
+}
+\end{verbatim}
+
+and:
+
+\begin{verbatim}
+// App.cpp
+import Math;
+
+int main()
+{
+    return twice(21) == 42 ? 0 : 1;
+}
+\end{verbatim}
+
+Conceptually the module interface establishes an exported declaration:
+
+\begin{verbatim}
+name: twice
+type: int(int)
+module ownership/reachability: Math
+\end{verbatim}
+
+\texttt{App.cpp} performs lookup and sees the exported declaration. The compiler therefore knows the call is valid and emits code referencing the appropriate function entity. \texttt{MathImpl.cpp} provides the definition. At link time:
+
+\begin{verbatim}
+App object:
+    requires twice(int)
+
+Math implementation object:
+    defines twice(int)
+
+linker:
+    resolve
+\end{verbatim}
+
+If the definition disappears:
+
+\begin{verbatim}
+source syntax valid
+name lookup valid
+type checking valid
+compilation valid
+
+link:
+    unresolved function definition
+\end{verbatim}
+
+If two illegal non-inline definitions appear:
+
+\begin{verbatim}
+meaning itself violates ODR
+\end{verbatim}
+
+and the linker may catch a duplicate symbol---although not all ODR violations are guaranteed to be diagnosed. The distinction between:
+
+\begin{verbatim}
+lookup failure
+compile failure
+link failure
+ODR violation
+\end{verbatim}
+
+is now precise.
+
+\section{Giving another name to a live object}\label{05-engine-i-ch003-giving-another-name-to-a-live-object}
+
+\hypertarget{05-engine-i-ch003-giving-another-name-to-a-live-object}{}
+
+We now have objects with lifetimes and identities. How can another piece of code work with one without creating a second object? A \hyperref[appendix-d6d562ca9fbb]{reference} supplies an \textbf{alias}: another way to designate an existing referent. The \textbf{referent} is the thing designated; the name of a reference is not the referent's owner.
+
+\begin{verbatim}
+int a = 2;
+int b = 9;
+int& alias = a;
+alias = b;
+b = 20;
+// a == 9, b == 20; alias still designates a.
+\end{verbatim}
+
+Read \texttt{int\&\ alias\ =\ a} as binding, not as a box containing a replaceable address. Read \texttt{alias\ =\ b} as assignment to the already-bound \texttt{a}, not rebinding. The three visible states are \texttt{(a,b)=(2,9)}, then \texttt{(9,9)}, then \texttt{(9,20)}. That trace is more useful than memorizing that references ``cannot be reseated.'' A pointer, in contrast, is an object storing a pointer value: \texttt{int*\ p\ =\ \&a;\ p\ =\ \&b;} changes which object \texttt{p} designates without assigning either integer.
+
+A reference definition normally needs an initializer. \texttt{extern\ int\&\ shared;} is a declaration, not an exception permitting an unbound reference object. Reference members obtain bindings through their containing object's initialization. No well-defined ordinary reference represents an optional null state; obtaining one by dereferencing a null pointer does not manufacture a legitimate ``null reference.'' Yet references can dangle after their referents die. Required access is not permanent access.
+
+References are not objects. They do not form arrays of references, and there are no pointers to references. \texttt{sizeof(alias)} describes the referred-to integer; \texttt{\&alias} obtains its address. Functions can also be referents. A reference to a pointer, \texttt{int*\&\ selected\ =\ p}, aliases the pointer object: assigning \texttt{selected\ =\ \&a} reseats \texttt{p}. This is different from \texttt{int*} pointing at an integer and different again from a reference to that integer.
+
+\texttt{std::reference\_wrapper\textless{}T\textgreater{}} from \texttt{\textless{}functional\textgreater{}} is a copyable object wrapping a reference-like association, useful in containers. Copying the wrapper does not copy or own the referent. \texttt{std::addressof(object)} from \texttt{\textless{}memory\textgreater{}} gets an actual object address even when a user-defined \texttt{operator\&} changes the meaning of ordinary \texttt{\&object}. None of these mechanisms prevents the referent from dying.
+
+Teaching checkpoint: draw the integer objects first, then arrows for the access paths. Which statement changes a value, which changes an arrow, and which creates a new object? That question will also untangle \texttt{const} later.
+
+\section{An expression has a type and a category}\label{05-engine-i-ch003-an-expression-has-a-type-and-a-category}
+
+\hypertarget{05-engine-i-ch003-an-expression-has-a-type-and-a-category}{}
+
+A type answers what operations and values an expression supports. A \hyperref[appendix-1121b30eaeb0]{value category} answers how that expression relates to identity and value production. Category belongs to an expression, not permanently to a variable. \textbf{lvalue} means an expression identifying a function or object without the expiring-object designation. \textbf{xvalue} identifies an object whose resources may be reused. \textbf{prvalue} computes a value to initialize an object or supply an operand. The broader family \textbf{glvalue} contains lvalues and xvalues; \textbf{rvalue} contains prvalues and xvalues. These are overlapping families, not five disjoint boxes.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Expression, assuming \texttt{int\ x=4;\ int\&\&\ rr=7;}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Category
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+What to notice
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{x}, \texttt{rr}, \texttt{*p} when valid & lvalue & Naming \texttt{rr} does not automatically consume its referent. \\
+\texttt{std::move(x)} & xvalue & Still designates \texttt{x}; no new integer is created by the cast. \\
+\texttt{4}, \texttt{x+1}, \texttt{x++} & prvalue & Produces a value; postfix increment's old value is not the updated object. \\
+\texttt{++x} & lvalue & The built-in prefix operation designates the updated \texttt{x}. \\
+call returning \texttt{T\&} & lvalue & The returned access path has identity. \\
+call returning \texttt{T\&\&} & xvalue & Expiring designation does not itself prove lifetime safety. \\
+ordinary call returning \texttt{T} & prvalue & Produces the result object/value. \\
+\end{longtable}
+}
+
+``lvalue means left side of assignment'' fails immediately: a const lvalue is not assignable. ``rvalue means temporary'' fails for \texttt{std::move(x)}, which designates an existing object. String literals are lvalue arrays: \texttt{"hello"} has type \texttt{const\ char{[}6{]}}, including its terminating zero, not a temporary \texttt{std::string}.
+
+\textbf{Materialization} is the conversion that supplies a temporary object when a prvalue needs an identity-bearing result, for example to bind a reference. Do not teach that every class prvalue must first live in a separate temporary and then be copied: modern C++ can initialize the final result directly. The result-construction story below develops direct construction and optional NRVO.
+
+\hyperref[appendix-5d4252a42886]{decltype} can expose category without evaluating its operand. For an unparenthesized name it reports the declared type; for a general expression it yields \texttt{T\&} for an lvalue, \texttt{T\&\&} for an xvalue, and \texttt{T} for a prvalue. Thus \texttt{decltype(rr)} is \texttt{int\&\&}, but \texttt{decltype((rr))} is \texttt{int\&}. The parentheses remove the special name rule. That distinction is checked against the \href{https://eel.is/c++draft/dcl.type.decltype}{draft's decltype rules}.
+
+\begin{verbatim}
+const int n = 3;
+auto value = n;          // int: a new object, top-level const dropped
+auto& path = n;          // const int&: preserve the referent's constness
+decltype(auto) copy = n; // const int: name rule
+decltype(auto) borrow = (n); // const int&: expression rule
+\end{verbatim}
+
+\texttt{decltype(auto)} is therefore not ``a more precise auto that is always better.'' Adding parentheses in a returning function can change a returned value into a dangling reference. An \textbf{unevaluated operand} is inspected for language properties rather than executed: \texttt{decltype(++n)} still must be well-formed, but a valid \texttt{decltype(++x)} does not increment \texttt{x}.
+
+Named rvalue-reference variables are lvalues in ordinary use. There is a specific C++23 exception for move-eligible expressions in return contexts; do not extend that special rule to an arbitrary use of \texttt{rr}. Later return/copy-elision material will develop it.
+
+\section{Binding chooses a referent, not always the one you imagined}\label{05-engine-i-ch003-binding-chooses-a-referent-not-always-the-one-you-imagined}
+
+\hypertarget{05-engine-i-ch003-binding-chooses-a-referent-not-always-the-one-you-imagined}{}
+
+\hyperref[appendix-37856d997bb0]{Binding} establishes the initial association. For ordinary same-type integers without volatile complications, this is the useful opening matrix:
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Initializer
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\texttt{int\&}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\texttt{const\ int\&}
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\texttt{int\&\&}
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+non-const integer lvalue & binds original & binds original read-only & rejected \\
+const integer lvalue & rejected & binds original & rejected \\
+integer prvalue or non-const xvalue & rejected & binds temporary/original respectively & binds temporary/original respectively \\
+\end{longtable}
+}
+
+An rvalue reference to const, \texttt{const\ int\&\&}, can bind const rvalues too, but is not a general forwarding reference. These rules describe binding; they do not prove that a bound object will survive later use.
+
+\begin{verbatim}
+int count = 10;
+const int& live = count;
+const double& snapshot = count;
+count = 50;
+// live sees 50; snapshot still sees 10.0.
+\end{verbatim}
+
+The second reference needs a \texttt{double}, so conversion produces a temporary \texttt{double} initialized from the old integer. The temporary, not \texttt{count}, is its referent. Conversely, a \texttt{Base\&} bound to a compatible \texttt{Derived} lvalue can designate the original object's base subobject rather than copy it. A \textbf{subobject} is an object nested within another, such as a member, base, or array element.
+
+Bit-fields need another distinction. They are members occupying a specified number of bits, not independently addressable ordinary integers. \texttt{int\&} cannot bind directly to an integer bit-field; a suitable const reference can bind to a temporary holding its value. Updating the original field does not update that copied value. This is conversion/snapshot behavior, not mysterious aliasing.
+
+References also preserve array extent where pointer conversion would lose it:
+
+\begin{verbatim}
+int samples[3]{10, 20, 30};
+int (&whole)[3] = samples;
+const char (&word)[6] = "hello";
+// whole identifies the entire array; word includes the terminating zero.
+\end{verbatim}
+
+\textbf{Array-to-pointer conversion}, often called decay, produces a pointer to the first element in many expression contexts. A reference to an array binds the array instead. Decay is not the assertion that arrays ``are pointers.'' Their sizes, types, and valid operations differ.
+
+Ask four questions when reading any binding: what type is required, what category is supplied, was a conversion needed, and which actual object became the referent? Then ask how long that object lives.
+
+\section{A temporary needs an explicit lifetime story}\label{05-engine-i-ch003-a-temporary-needs-an-explicit-lifetime-story}
+
+\hypertarget{05-engine-i-ch003-a-temporary-needs-an-explicit-lifetime-story}{}
+
+A \textbf{full-expression} is an expression not nested inside another expression for the relevant language rules. In these simple statements, its end is the semicolon. Ordinary temporaries are destroyed at that end, after the statement's work. \hyperref[appendix-a978b29bbbb0]{Lifetime extension} has specific syntactic rules; it is not an ownership service that follows every alias.
+
+First define this function at namespace scope:
+
+\begin{verbatim}
+const std::string& pass(const std::string& s) { return s; }
+\end{verbatim}
+
+Then compare these local declarations inside a caller:
+
+\begin{verbatim}
+const std::string& direct = std::string{"kept"};
+// The directly bound temporary lives for direct's local lifetime.
+const std::string& escaped = pass(std::string{"gone"});
+// The temporary dies at this semicolon. Never read escaped afterwards.
+\end{verbatim}
+
+The call temporarily binds its parameter for the calling full-expression. Returning that reference does not start a second extension. The calling reference is still a path to the same object, whose deadline was already set. Splitting the timeline makes the danger visible:
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lll@{}}
+\toprule\noalign{}
+Event & Temporary alive? & Access consequence \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+construct \texttt{"gone"} temporary & yes & parameter may read it \\
+return reference from \texttt{pass} & yes & result still designates it \\
+initialize \texttt{escaped} & yes & no transitive extension \\
+finish initializer full-expression & no & \texttt{escaped} dangles \\
+\end{longtable}
+}
+
+Directly binding through permitted built-in member access can extend the containing temporary, as in \texttt{const\ auto\&\ name\ =\ Record\{"Ada"\}.name;} for a suitable public \texttt{name} member. Calling a getter that returns \texttt{const\ std::string\&} is different: the call result is not that permitted member-access expression. This is why a getter on a temporary needs its own contract.
+
+Aggregate initialization supplies a deliberately sharp laboratory case:
+
+\begin{verbatim}
+struct Holder { const int& value; };
+Holder kept{7};  // braces extend the directly bound temporary to kept's lifetime
+Holder lost(7);  // C++20+: temporary dies at this statement's end
+// Do not read lost.value after its declaration.
+auto* heap = new Holder{7}; // temporary dies at this statement's end too
+delete heap;              // do not read heap->value; deletion cannot rescue it
+\end{verbatim}
+
+The \texttt{new} expression can keep the holder object alive while its reference member dangles. Allocating the borrower does not allocate ownership of the borrowed object. The brace/parenthesis exception and parameter/new exceptions are specified in \href{https://eel.is/c++draft/class.temporary}{temporary object lifetime}.
+
+Never return a reference to a local automatic object. A C++23 function returning a reference directly bound to a temporary also leaves a dangling result; current draft/C++26 rules reject that direct return binding. Do not confuse a newly mandated diagnostic with a newly introduced safety problem. Nor should a compiler warning be treated as a universal lifetime proof.
+
+Lifetime extension is narrowly useful for local work. For transfer across a function boundary, a returned owning value is usually the clearer starting contract. The cleanup and composition story below develops RAII; owning smart-pointer policies remain later depth, not implied by the word ``reference.''
+
+\section{Move permission is not resource transfer}\label{05-engine-i-ch003-move-permission-is-not-resource-transfer}
+
+\hypertarget{05-engine-i-ch003-move-permission-is-not-resource-transfer}{}
+
+\hyperref[appendix-0104b704fb11]{std::move} from \texttt{\textless{}utility\textgreater{}} casts an expression to an xvalue while preserving constness. It does not transfer a resource by itself. \texttt{std::move(text);} alone neither clears a string nor creates a destination. A subsequent constructor or assignment chooses an overload and performs whatever operation that type defines.
+
+\begin{verbatim}
+std::string original = "frame";
+std::string&& alias = std::move(original); // binding only; original still "frame"
+std::string destination = std::move(original); // construction may use a move
+// Don't assume original is empty: consult the moved-from contract.
+const std::string fixed = "label";
+std::string copied = std::move(fixed); // const preserved; usual string copy selected
+\end{verbatim}
+
+An ordinary \texttt{std::string} move constructor requires a non-const rvalue reference; it cannot generally detach the storage of a const source. ``Moved-from'' does not mean destroyed, universally empty, or universally reusable for every operation. The value-transfer story below develops consumer operations and their contracts. This distinction and the terminology update from older ``universal reference'' to \textbf{forwarding reference} were cross-checked against selected passages in Meyers; see \hyperref[appendix-a103e7846d21-m008---borrowing-categories-and-const-access]{Reading record}.
+
+A deduced, cv-unqualified template parameter in \texttt{T\&\&} is a forwarding reference:
+
+\begin{verbatim}
+void inspect(int&) { /* lvalue access */ }
+void inspect(int&&) { /* expiring access */ }
+template<class T>
+void relay(T&& item) {
+    inspect(std::forward<T>(item));
+}
+\end{verbatim}
+
+\texttt{relay(x)} with an integer lvalue deduces \texttt{T=int\&}; \texttt{relay(4)} deduces \texttt{T=int}. The parameter name \texttt{item} is an lvalue in the body in either case. \texttt{std::forward\textless{}T\textgreater{}} restores the category represented by the deduction. Replacing it with unconditional \texttt{std::move} would treat even the caller's lvalue as expiring.
+
+\textbf{Reference collapsing} removes reference-to-reference combinations formed through deduction or aliases: \texttt{\&} combined with either \texttt{\&} or \texttt{\&\&} yields \texttt{\&}; only \texttt{\&\&} combined with \texttt{\&\&} yields \texttt{\&\&}. It is not permission to write a direct \texttt{int\&\ \&} declaration. \texttt{const\ T\&\&}, \texttt{std::vector\textless{}T\textgreater{}\&\&}, or \texttt{T\&\&} where the class template already fixed \texttt{T} are not this forwarding pattern. \texttt{auto\&\&} often uses similar deduction, but deduction from a braced initializer list is a notable exception, not a generic forwarding argument.
+
+This is a mechanism lesson, not a rule to forward every expression everywhere. An ordinary function taking \texttt{Widget\&\&} has a fixed parameter type. Whether it may consume that object is an API decision; the declaration alone does not perform the consumption.
+
+\section{A pointer carries an access contract}\label{05-engine-i-ch003-a-pointer-carries-an-access-contract}
+
+\hypertarget{05-engine-i-ch003-a-pointer-carries-an-access-contract}{}
+
+References gave us required aliases; \hyperref[appendix-afae48c31800]{pointers} give us stored, reseatable, potentially absent access paths. A \textbf{null pointer value} designates no object or function. \texttt{nullptr} has type \texttt{std::nullptr\_t} and converts to null pointer values without pretending to be an integer argument. Overloads \texttt{choose(int)} and \texttt{choose(int*)} select the integer overload for \texttt{0}, the pointer overload for \texttt{nullptr}.
+
+\begin{verbatim}
+int* absent = nullptr;
+delete absent; // valid: no pointed-to object is destroyed
+// delete nullptr; // ill-formed: nullptr_t is not a pointer-to-object type
+\end{verbatim}
+
+The supplied source's bare \texttt{delete\ nullptr;} was corrected to the typed-pointer form. The \href{https://eel.is/c++draft/expr.delete}{delete-expression rules} distinguish operand type from a valid null operand value. Null's object representation need not be all zero bits. A successful null check proves only absence was excluded; it says nothing about lifetime, bounds, or current ownership.
+
+Ordinary throwing \texttt{new\ T} reports allocation failure with \texttt{std::bad\_alloc}. A nothrow allocation form can return null for allocation failure, but an exception thrown by \texttt{T}'s constructor is a separate matter and can still propagate. \texttt{std::optional\textless{}T*\textgreater{}} can represent both no stored pointer and a stored null pointer; use two levels of absence only when both have a defined meaning.
+
+\texttt{*p} forms an lvalue designating the pointee when permitted. The expression does not itself mean ``read its bytes into a value''; a subsequent value conversion can do that. Valid access requires an appropriate live object, type accessibility, alignment, permissions, and an in-range position. A \textbf{one-past pointer} marks the end of an array and can participate in allowed traversal/comparison; it is not a dereferenceable element.
+
+For \texttt{int\ values{[}3{]}}, the permitted positions formed relative to \texttt{values} are offsets zero through three inclusive. \texttt{values+3} may be an end marker. \texttt{values+4} is already outside permitted pointer formation; the rule does not wait for dereference. Subtraction requires pointers into the same array (including its end) and a result representable in \texttt{std::ptrdiff\_t}. A non-array object is treated as a one-element array for this arithmetic, not as a license to walk adjacent members.
+
+\begin{verbatim}
+struct Pair { int x, y; };
+Pair pair{1, 2};
+int* first = &pair.x;
+// first + 1 is one-past x, not an authorized pointer to y.
+// first[1] is invalid even if a layout report shows adjacent members.
+int real[2]{1, 2};
+int* end = real + 2; // valid end marker, never dereference it
+\end{verbatim}
+
+\hyperref[appendix-6af5921bc853]{Provenance} names the relationship between a pointer value, storage, and the object/path from which it was obtained. Do not replace that relationship with ``an integer address that seems plausible.'' An available \texttt{std::uintptr\_t} supports the specified pointer-to-integer-and-back round trip; it does not authorize arbitrary arithmetic, revive a destroyed occupant, or confer access to unrelated storage. WG21's \href{https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3407r1.html}{P3407R1} is research discussion, not an adopted C++23 rulebook.
+
+\texttt{void*} can carry certain object pointers but cannot be dereferenced as an object of unknown type in ordinary C++. A cast supplies a type expression, not a construction or validity proof. Character/byte inspection through \texttt{char}, \texttt{unsigned\ char}, or \texttt{std::byte} is different from arbitrary typed access; \texttt{signed\ char} is not listed as the general C++ byte-aliasing exception. Inspecting representation does not make an arbitrary byte buffer a live valid \texttt{Widget}. Function pointers and member pointers have their own rules; do not assume they share object-pointer representations. A GPU device address is meaningful only under the relevant backend/address-space contract, not automatically dereferenceable by CPU C++.
+
+At the teaching desk, write ``non-null,'' ``mapped,'' ``aligned,'' ``in bounds,'' ``live,'' and ``correct entity'' separately. None is a substitute for the others.
+
+\section{When a valid borrow stops naming the intended thing}\label{05-engine-i-ch003-when-a-valid-borrow-stops-naming-the-intended-thing}
+
+\hypertarget{05-engine-i-ch003-when-a-valid-borrow-stops-naming-the-intended-thing}{}
+
+\subsection{Figure CPP-02 - A borrow can fail in two different ways}\label{05-engine-i-ch003-figure-cpp-02---a-borrow-can-fail-in-two-different-ways}
+
+\hypertarget{05-engine-i-ch003-figure-cpp-02---a-borrow-can-fail-in-two-different-ways}{}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{../current/Assets/Print/07397679d830121b9749aa875ce2e141a493754288db8444b2dfbeaef4ac90ae.pdf}}
+
+\textbf{Read the picture:} a reallocation breaks access to the former element, while swap-and-pop assignment can preserve a slot's C++ lifetime but change its application identity. The examples below show both mechanisms. \textbf{Limit:} reacquisition must occur through a currently valid owner/registry under its mutation and synchronization contract; an old pointer cannot validate itself, and a generation check alone does not stabilize a component address. \hyperref[appendix-960160274237-four-figure-briefs]{Recall this figure}.
+
+A \textbf{borrow} is a non-owning access path used under an external lifetime and mutation contract. A \textbf{dangling} pointer/reference outlives the object it once designated. \hyperref[appendix-f9b8b9188c7f]{Invalidation} can arise when a container reallocates, removes elements, or changes the association the application intended.
+
+A vector has a control object, a capacity (allocated element slots), and a size (live elements). Exceeding capacity during growth can replace the element buffer. Reallocation invalidates element references, pointers, and iterators; reserving capacity before taking a borrow can avoid reallocation up to that capacity, not forever. The distinction between size and capacity and the reserve guarantee is checked against \href{https://eel.is/c++draft/vector.capacity}{vector capacity}.
+
+\begin{verbatim}
+std::vector<int> numbers{10};
+int& old = numbers[0];
+numbers.reserve(numbers.capacity() + 1); // forces reallocation if successful
+// old must not be used. Reacquire through numbers[0].
+\end{verbatim}
+
+\texttt{reserve} protects against a particular growth mechanism, not every erase or structural change. Erasing a vector element invalidates references/iterators at or after the erased position. A swap-and-pop pool can exhibit a different failure: move-assigning the last component into an earlier existing slot can leave that slot object alive while changing which entity its state represents.
+
+\begin{verbatim}
+struct Slot { int entity; int value; };
+std::vector<Slot> pool{{11, 100}, {22, 200}, {33, 300}};
+Slot* cached = &pool[0];       // intended entity 11
+pool[0] = std::move(pool.back());
+pool.pop_back();
+// cached still reaches the live first Slot, now representing entity 33.
+\end{verbatim}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Stage
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Slot zero's C++ lifetime
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Logical owner
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+What the old path guarantees
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+borrow first slot & live & 11 & current access to 11 under present contract \\
+assign last slot into first & continues & 33 & access to a live Slot, not the original entity \\
+destroy last element & first still live & 33 & no recovery of entity 11's association \\
+\end{longtable}
+}
+
+This is \textbf{semantic invalidation}, not necessarily a dangling pointer. The last element's old borrow does dangle after its destruction. Reallocation creates yet another failure. Do not label all three ``the address changed.'' AddressSanitizer can miss the semantic case completely, and allocated vector capacity need not be poisoned when a popped object dies.
+
+\hyperref[appendix-f1581457d322]{Generation handles} validate logical entity identity through a registry. Two copied handles are two separate C++ objects with equal handle values, potentially identifying the same application entity. A currently valid handle does not prove that an earlier \texttt{Component\&} survived the pool's subsequent mutations. Entity generation and pool location are separate dimensions.
+
+The source reports KairoECS \texttt{Get}, \texttt{TryGet}, and \texttt{Emplace} borrows into dense vector storage, plus swap-and-pop removal. Those are useful hypotheses for an audit, not independently confirmed repository facts here. The local \texttt{Slot} example establishes the mechanism without depending on that project.
+
+For a conservative \hyperref[appendix-aa405b7c3903]{pool-epoch contract}, increment a mutation counter on every operation declared to invalidate borrows. A checked borrow records that counter and checks it before accessing the cached element. An \textbf{epoch} is a version identifying a permitted observation interval. The pool/epoch object must itself outlive every checked borrow; otherwise even reading the counter is unsafe. Counter wrap, bypassed mutations, concurrent access, and check-then-use races remain policy obligations. An epoch is a debug witness, not an owning pointer or automatic synchronization.
+
+An efficient starting discipline is: acquire the component, perform a narrow operation without structural mutation, discard the borrow, mutate, validate the handle again, and reacquire. Longer-lived component access needs an explicitly stronger storage/ownership contract. ``Stable entity IDs'' is not that contract.
+
+\section{Borrowed views and deferred work need an owner story}\label{05-engine-i-ch003-borrowed-views-and-deferred-work-need-an-owner-story}
+
+\hypertarget{05-engine-i-ch003-borrowed-views-and-deferred-work-need-an-owner-story}{}
+
+\hyperref[appendix-aea529eb5175]{std::span\textless T\textgreater{}} describes a contiguous range with an extent; \texttt{std::string\_view} describes characters without owning them. A \textbf{view} is a descriptor of existing data, not a copy of the data. A span can improve length-aware code, but it does not establish the underlying range's validity or extend lifetime. A view into a local string returned by a function dangles. A reference member in a renderer likewise requires its device to outlive that renderer's use of the device.
+
+\begin{verbatim}
+// Invalid contract: do not call this and use the result.
+std::string_view bad_name() {
+    std::string local = "Ada";
+    return local;
+}
+// Owning result: the caller receives its own string object.
+std::string good_name() { return "Ada"; }
+\end{verbatim}
+
+A lambda's \textbf{closure} is the object storing its captures. \texttt{{[}\&{]}} stores reference-like access to locals; \texttt{{[}this{]}} captures the pointer to the current object, not ownership of that object. If queued work runs later, returning from the creator or destroying the owner can invalidate those paths. Capturing a \texttt{string\_view} by value still copies only its descriptor. Capturing an owning string by value supplies a different contract.
+
+\begin{verbatim}
+std::string label = "frame";
+auto snapshot_job = [saved = label] { return saved.size(); };
+label.clear();
+// snapshot_job still owns its independent saved string.
+\end{verbatim}
+
+Ownership of the closure and scheduling still matter: the callable must itself remain alive when invoked. Capturing a resource handle by value preserves the handle bits, not necessarily resource existence; deferred work may need validation or a lifetime-pinning policy. Smart-pointer ownership and complete scheduling contracts remain future depth.
+
+\section{Read-only is a path, not an ownership or synchronization promise}\label{05-engine-i-ch003-read-only-is-a-path-not-an-ownership-or-synchronization-promise}
+
+\hypertarget{05-engine-i-ch003-read-only-is-a-path-not-an-ownership-or-synchronization-promise}{}
+
+\hyperref[appendix-c25d60fed375]{const} constrains modification through a type/access path. A const object and a const path to a mutable object are not interchangeable. \texttt{const\ int\&\ view\ =\ mutable\_int;} prohibits assignment through \texttt{view}, but the original mutable access can still update the same integer. Conversely, modifying an actually const object through \texttt{const\_cast} is undefined behavior. Removing a qualifier is not permission to write.
+
+\textbf{Top-level const} qualifies the immediate object described by a type; \textbf{low-level const} qualifies an object accessed through a pointer/reference. \textbf{Shallow constness} means a const owner containing a pointer does not automatically make the pointee const. \texttt{const} does not imply compile-time evaluation: runtime input can initialize a const local. \texttt{constexpr} and \texttt{constinit} answer different initialization questions.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lll@{}}
+\toprule\noalign{}
+Declaration & Reseat pointer? & Modify \texttt{T} through pointer? \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{T*\ p} & yes & yes, if actually mutable and valid \\
+\texttt{const\ T*\ p} / \texttt{T\ const*\ p} & yes & no \\
+\texttt{T*\ const\ p} & no & yes, if actually mutable and valid \\
+\texttt{const\ T*\ const\ p} & no & no \\
+\end{longtable}
+}
+
+The same principle applies to ranges. \texttt{const\ std::span\textless{}int\textgreater{}} makes the descriptor const but still permits modifying its integer elements. \texttt{std::span\textless{}const\ int\textgreater{}} gives read-only element access, but mutable aliases elsewhere may still write. Neither owns the integers. A public \texttt{const\ int*} parameter promises a read-only path, not global immutability.
+
+For ordinary by-value parameters, top-level const does not distinguish function signatures: \texttt{void\ f(int)} and \texttt{void\ f(const\ int)} declare the same function. Pointer-to-const and pointer-to-mutable parameters can distinguish overloads because the pointed-to qualification differs. A reference itself cannot be reseated; a const qualification applied to a reference through an alias does not turn it into a new ``const reference object.'' Describe constness of its referent instead.
+
+\hyperref[appendix-5e1a7561cd98]{Qualification conversions} are safety rules, not a general permission to sprinkle const into any nesting level:
+
+\begin{verbatim}
+int* p = nullptr;
+int** pp = &p;
+// const int** unsafe = pp; // rejected
+const int* const* safe = pp; // permitted: the intermediate pointer is read-only
+\end{verbatim}
+
+If the rejected conversion existed, \texttt{*unsafe\ =\ \&actually\_const\_int} could put a pointer to a const integer into the original mutable \texttt{int*\ p}. Then \texttt{*p\ =\ 9} would write to a const object through an apparently mutable type. The intermediate const in the permitted conversion blocks precisely that injection. This is why \texttt{int*} to \texttt{const\ int*} is safe but \texttt{int**} to \texttt{const\ int**} is not. See the \href{https://eel.is/c++draft/conv.qual}{qualification-conversion rule} and \hyperref[01-foundations-i-ch011-c---qualification-safety-and-borrow-intervals]{full counterexample}.
+
+\texttt{volatile} is not a replacement for a mutex or atomic access. It has specialized observable-access uses; it does not provide a general happens-before relationship or prevent data races. Neither pointer constness nor a const member function proves thread safety.
+
+\section{An accessor must respect the caller's lifetime}\label{05-engine-i-ch003-an-accessor-must-respect-the-callers-lifetime}
+
+\hypertarget{05-engine-i-ch003-an-accessor-must-respect-the-callers-lifetime}{}
+
+A const non-static member function restricts access to ordinary non-mutable members through its implicit object path. It does not freeze unrelated global state, static members, mutable members, or objects reached by stored pointers. The \href{https://eel.is/c++draft/class.mfct.non.static}{non-static member-function rules} distinguish the object's access qualification from global immutability.
+
+\hyperref[appendix-d42039b1d6f7]{Ref qualifiers} constrain the caller's object category: \texttt{\&} selects persistent lvalue-object access; \texttt{\&\&} selects rvalue-object access. A getter returning a borrow from a temporary is often an avoidable design error. Give a persistent owner a borrowed member path and an expiring owner an owning result:
+
+\begin{verbatim}
+class Named {
+    std::string name_;
+public:
+    explicit Named(std::string name) : name_(std::move(name)) {}
+    std::string& Name() & { return name_; }
+    const std::string& Name() const & { return name_; }
+    std::string Name() && { return std::move(name_); }
+    std::string Name() const && { return name_; } // copy from const temporary
+};
+\end{verbatim}
+
+The fourth overload is important. A const temporary cannot use the non-const \texttt{\&\&} overload; without a const-rvalue policy, a \texttt{const\ \&} member overload may still give it a dangling borrowed result. Returning a value for both rvalue paths closes that hole. Alternatively delete both rvalue getter overloads and reject such calls. A value-returning getter may still copy a persistent object if that is the desired API; this four-way design is an illustration, not a universal performance rule.
+
+\begin{verbatim}
+Named owner{"persistent"};
+const std::string& borrowed = owner.Name(); // owner must survive the use
+std::string owned = Named{"temporary"}.Name(); // survives temporary destruction
+\end{verbatim}
+
+Inside an \texttt{\&\&} member function, the expression \texttt{*this} is still an lvalue; \texttt{name\_} is not automatically moved just because the caller was an rvalue. Explicit \texttt{std::move(name\_)} makes the consuming intent visible. \texttt{std::as\_const(owner)} creates a const lvalue path; its rvalue overload is deleted rather than accepting a temporary. An \texttt{override} specifier also catches accidental const-signature mismatches in virtual interfaces.
+
+\section{A cache may change bits without changing meaning}\label{05-engine-i-ch003-a-cache-may-change-bits-without-changing-meaning}
+
+\hypertarget{05-engine-i-ch003-a-cache-may-change-bits-without-changing-meaning}{}
+
+\hyperref[appendix-f5593256bcaf]{Logical constness} preserves what the object means to its users, not necessarily every private bit. A lazily computed cache may change internally while the represented mesh or polynomial remains the same. \texttt{mutable} permits a non-static member to be modified through a const object path; it does not erase its synchronization or invalidation obligations.
+
+\textbf{Lazy computation} delays work until a result is requested. \textbf{Cache invalidation} removes or versions a cached result when its source changes. An \textbf{invariant} is a condition required at the boundaries of the public operations. Here the invariant is that a populated cache agrees with the current source. Protecting only the cache while reading a concurrently changing source does not preserve it.
+
+\begin{verbatim}
+class CachedSquare {
+    mutable std::mutex mutex_;
+    int source_ = 3;
+    mutable std::optional<int> square_;
+public:
+    void Set(int value) {
+        std::scoped_lock lock(mutex_);
+        source_ = value;       // caller must keep squaring within int range
+        square_.reset();
+    }
+    int Get() const {
+        std::scoped_lock lock(mutex_);
+        if (!square_) square_ = source_ * source_;
+        return *square_;      // copy result while still protected
+    }
+};
+\end{verbatim}
+
+For this small illustration all reads/writes of source and cache share one mutex. A \textbf{mutex} excludes overlapping critical sections; \textbf{scoped locking} releases it on scope exit, including exceptions. The returned integer is a snapshot, not a reference into a cache that might be reset after unlocking. Expensive computation may require a versioned compute-outside-lock protocol, but that needs validation of the source version before publishing the result. Simply returning \texttt{const\ Result\&} under a lock would not make later unlocked reads safe.
+
+\texttt{mutable} applies to eligible non-static data members, not reference members or a top-level const member. \texttt{mutable\ const\ T*\ pointer} can be valid because the pointer itself is mutable while its pointee path is const. A mutex is not copyable; adding it changes the containing type's default copy/move possibilities. Decide those operations deliberately rather than assuming a cached type remains an ordinary copyable record.
+
+A mutable lambda addresses a different problem: it permits modification of the closure's by-value captures through its call operator. \texttt{auto\ counter\ =\ {[}n=0{]}()\ mutable\ \{\ return\ ++n;\ \};} increments that closure's private counter, not an external original integer. It gives no automatic thread safety when several threads invoke the same closure.
+
+\section{Choose the access contract before the parameter syntax}\label{05-engine-i-ch003-choose-the-access-contract-before-the-parameter-syntax}
+
+\hypertarget{05-engine-i-ch003-choose-the-access-contract-before-the-parameter-syntax}{}
+
+We have enough vocabulary to ask the right next questions. Is this argument a small value to copy, required borrowed access, optional access, a bounded range, or a resource to consume? Does the function return an owning result or a path into someone else's lifetime? These questions precede whether a signature uses \texttt{T}, \texttt{T\&}, \texttt{const\ T\&}, \texttt{T*}, or \texttt{T\&\&}.
+
+Passing an integer by const reference is not automatically faster than passing its value. Indirection, aliasing restrictions, ABI behavior, and inlining affect generated work. \textbf{Aliasing} means several access paths can designate the same object: \texttt{update(x,x)} can make two reference parameters interact in a way independent value parameters do not. The \href{https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines\#f16-for-in-parameters-pass-cheaply-copied-types-by-value-and-others-by-reference-to-const}{Core Guidelines' input-parameter guidance} is design guidance, not a benchmark result. Now we can develop these interface choices into construction, transfer and cleanup policies.
+
+At the board, connect the story: declarations identify entities; storage hosts live objects; expression categories describe uses; binding chooses a referent; lifetime limits the path; mutation may invalidate its physical or logical target; const restricts access; ownership and synchronization remain separate obligations. That is the foundation for reliable interfaces.
+
+\subsection{Worked API choice: borrow, consume, retain, or copy a value}\label{05-engine-i-ch003-worked-api-choice-borrow-consume-retain-or-copy-a-value}
+
+\hypertarget{05-engine-i-ch003-worked-api-choice-borrow-consume-retain-or-copy-a-value}{}
+
+A function signature should say whether it borrows access, consumes one owner, or retains shared lifetime. Copying a value is a separate decision from extending an object's lifetime. This self-contained C++20 example demonstrates those choices and a matching deleter for a C file handle.
+
+\begin{verbatim}
+#include <cstdio>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <utility>
+
+struct FileCloser {
+    void operator()(std::FILE* file) const noexcept {
+        if (file) std::fclose(file);
+    }
+};
+using TempFile = std::unique_ptr<std::FILE, FileCloser>;
+
+void inspect_file(std::FILE& file) {
+    (void)file; // Borrowed access; this function does not close it.
+    std::cout << "inspect: caller still owns file\n";
+}
+
+void consume_file(TempFile file) {
+    (void)file; // Sink: ownership arrived by value and ends at function exit.
+    std::cout << "consume: callee owns file until return\n";
+}
+
+void inspect_shared(const std::shared_ptr<const std::string>& text) {
+    std::cout << "observe: " << *text << '\n';
+    // Borrow the existing handle for this call; do not store a copy.
+}
+
+struct Cache {
+    std::shared_ptr<const std::string> retained;
+
+    void retain_shared(std::shared_ptr<const std::string> text) {
+        retained = std::move(text); // Sink: keep a shared owner after return.
+    }
+};
+
+int main() {
+    // Same value at the start, independent owned strings after copying.
+    std::string title = "North";
+    std::string copy = title;
+    copy[0] = 'M';
+    std::cout << "values: " << title << " / " << copy << '\n';
+
+    auto file = TempFile{std::tmpfile()}; // Custom deleter calls fclose.
+    if (!file) return 1;
+    inspect_file(*file);                   // Borrow FILE&, no ownership transfer.
+    consume_file(std::move(file));          // Transfer unique ownership by value.
+    std::cout << "caller handle after sink: " << (file ? "full" : "empty") << '\n';
+
+    Cache cache;
+    auto shared = std::make_shared<const std::string>("shared lifetime");
+    inspect_shared(shared);                 // Borrow the shared_ptr handle by const ref.
+    cache.retain_shared(shared);             // Copy into sink, then retain in Cache.
+    shared.reset();                          // Cache keeps the object alive.
+    std::cout << "cache after caller reset: " << *cache.retained << '\n';
+}
+\end{verbatim}
+
+\section{The call-site decision}\label{05-engine-i-ch003-the-call-site-decision}
+
+\hypertarget{05-engine-i-ch003-the-call-site-decision}{}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Need at the boundary
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Parameter shape
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+What the signature communicates
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Read or mutate a live object only during this call & \texttt{T\&} / \texttt{const\ T\&} & Borrow. The caller maintains lifetime and obeys invalidation rules. \\
+Consume one exclusive owner & \texttt{std::unique\_ptr\textless{}T\textgreater{}} by value & Sink. The caller passes \texttt{std::move(owner)}; the callee owns the cleanup duty. \\
+Keep shared lifetime & \texttt{std::shared\_ptr\textless{}T\textgreater{}} by value & Join/retain the ownership group. A copy extends lifetime beyond the call if stored. \\
+Temporarily inspect an already shared handle & \texttt{const\ std::shared\_ptr\textless{}T\textgreater{}\&} & Borrow the handle without incrementing the owner count just for parameter passing. Do not store the reference. \\
+Release a non-memory resource & Owner plus matching deleter/RAII wrapper & Cleanup follows that resource's protocol; \texttt{std::FILE} uses \texttt{fclose}, not \texttt{delete}. \\
+\end{longtable}
+}
+
+An API that only observes data generally should take \texttt{T\&} or \texttt{const\ T\&}, even if some caller happens to own it through a \texttt{shared\_ptr}. Use a shared-pointer parameter when the function's contract actually depends on shared ownership or transfers/retains that handle. By-value strings illustrate value semantics: the copy owns a separate string value. Two shared pointers, by contrast, can refer into one shared object; copying the handle is not a deep copy of the pointee.
+
+Standard wording matters for edge cases. Standard-library objects are generally valid but unspecified after a move unless the type specification guarantees more; use only operations whose preconditions hold. A user-defined type must preserve its own documented invariant. \href{https://eel.is/c++draft/lib.types.movedfrom}{C++ draft: moved-from library types}. Operations on distinct shared-pointer objects may share a control block under specified library guarantees, but this does not synchronize the pointed-to object; mutable access still needs synchronization or immutability. \href{https://eel.is/c++draft/util.smartptr.shared}{C++ draft: shared\_ptr general requirements}. These corrections address overbroad statements in selected CppCon talks and Q\&A; the example is original. The selected full-caption sources were Inbal Levi on smart pointers and RAII, Dave Abrahams on value semantics, Ben Saks on move semantics, and Phil Nash on lifetime management: \href{https://www.youtube.com/watch?v=07rJOzFRs6M}{Levi}, \href{https://www.youtube.com/watch?v=QthAU-t3PQ4}{Abrahams}, \href{https://www.youtube.com/watch?v=szU5b972F7E}{Saks}, and \href{https://www.youtube.com/watch?v=aMvIv6blzBs}{Nash}.
+
+\section{A value crosses the function boundary}\label{05-engine-i-ch003-a-value-crosses-the-function-boundary}
+
+\hypertarget{05-engine-i-ch003-a-value-crosses-the-function-boundary}{}
+
+Borrowing solves access without duplication. It does not solve ownership of a result that must survive the caller, or independence when one function transforms data. \hyperref[appendix-d5908f75721f]{By-value parameters} supply a separate object initialized from the argument expression. The \textbf{argument} is what the caller supplies; the \textbf{parameter} is the callee's declared input. Do not replace that distinction with ``all calls mechanically copy bytes.'' The source's category and the destination type choose how initialization works.
+
+Use an engine-shaped teaching model with no engine dependencies:
+
+\begin{verbatim}
+struct Extent2D { std::uint32_t width=0, height=0; };
+struct TexturePayload {
+    std::string debugName;
+    Extent2D extent{};
+    std::uint32_t mipCount=1;
+    std::vector<std::byte> pixels;
+};
+\end{verbatim}
+
+An extent is a pair of dimensions; a mip level is a progressively lower-resolution texture level. This record describes CPU data, not a live GPU allocation. \texttt{std::string} and \texttt{std::vector} own their own storage according to their library contracts. The record itself need not implement manual release. Image format validation is deliberately not implemented by these four fields alone.
+
+For \texttt{void\ receive(TexturePayload\ payload)}, \texttt{receive(existing)} ordinarily copy-constructs the parameter from an lvalue. \texttt{receive(std::move(existing))} can move-construct it from an xvalue. \texttt{receive(TexturePayload\{\})} directly constructs the parameter from a same-type prvalue. Changing \texttt{payload.debugName} does not change the caller's original string after an ordinary copy. However, a by-value record containing a raw pointer can still designate shared external data: separate outer objects do not prove separate reachable resources.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Signature shape
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Callee gets
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Contract to state
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{T\ value} & separate T object & value semantics; may store/transform its own value \\
+\texttt{const\ T\&\ value} & required borrowed path & read-only through this path; no retention beyond validity \\
+\texttt{T\&\ value} & required mutable borrowed path & in-out operation; aliasing may occur \\
+\texttt{const\ T*\ value} & a copied pointer object & document whether null means absence; otherwise validity required \\
+\texttt{T\&\&\ value} & rvalue-bound borrowed path & permission to consume when the API promises that; not an automatic transfer \\
+\texttt{std::span\textless{}const\ T\textgreater{}} & copied range descriptor & valid live sequence; no owning lifetime extension \\
+\end{longtable}
+}
+
+A \textbf{sink} is an operation intended to retain or consume a supplied value. A by-value sink allows the caller to preserve an lvalue by copying or surrender an expiring value by moving:
+
+\begin{verbatim}
+class TextureCache {
+    std::vector<TexturePayload> records_;
+public:
+    void Insert(TexturePayload payload) {
+        records_.push_back(std::move(payload));
+    }
+};
+\end{verbatim}
+
+If capacity is already sufficient, insertion from an lvalue ordinarily means one copy into the parameter and one move into the element. A directly produced value can initialize the parameter without an intermediate transfer, then move into the element. Growth adds transfer work for old elements; do not omit it from a performance claim. Two overloads, \texttt{Insert(const\ T\&)} and \texttt{Insert(T\&\&)}, can avoid the extra parameter-to-destination step but add interface/implementation work. Reusing destination capacity during assignment can favor yet another design. Choose based on semantics and measured workload, not a slogan.
+
+Pointer parameters are themselves passed by value unless the signature says otherwise. \texttt{void\ reset(T*\ p)\{p=nullptr;\}} resets only that local pointer. \texttt{void\ reset(T*\&\ p)\{p=nullptr;\}} can reseat the caller's pointer. Optional access must say what null does. A declaration \texttt{void\ process(float\ values{[}16{]})} adjusts to a pointer parameter; it does not enforce sixteen elements. A span packages pointer and count but still relies on a valid range. At C/driver boundaries, wrap the documented pointer protocol rather than inventing an ownership guarantee. Portable C++23 has no standard \texttt{restrict} keyword; compiler extensions require a real non-aliasing promise.
+
+An alias trace makes the difference concrete. Given \texttt{destination\ +=\ source;\ source\ *=\ 0.5f;}, passing distinct values source4/destination4 yields source2/destination8. Passing the same object to both reference parameters gives 4→8→4. The signature admits this association unless its contract explicitly excludes it; an optimizer cannot assume distinct referents merely because the parameter names differ.
+
+\section{Return a result without handing out a lifetime problem}\label{05-engine-i-ch003-return-a-result-without-handing-out-a-lifetime-problem}
+
+\hypertarget{05-engine-i-ch003-return-a-result-without-handing-out-a-lifetime-problem}{}
+
+\hyperref[appendix-b08d3788c5c6]{Return by value} establishes a result object rather than borrowing a local's expired storage. A \textbf{result object} is the object initialized by the value-producing call in the relevant context. Many ABIs let a caller provide destination storage through a hidden address for a large result; that implementation technique is not a mandated layout or calling convention.
+
+\begin{verbatim}
+TexturePayload fallback() {
+    return TexturePayload{.debugName="fallback", .extent={1,1},
+                          .mipCount=1, .pixels={}};
+}
+TexturePayload built() {
+    TexturePayload result;
+    result.debugName="built";
+    return result;
+}
+\end{verbatim}
+
+The two returns have different guarantees. Since C++17, an appropriate same-type prvalue directly initializes its destination; there need not be an intermediate object that requires copying or moving. \textbf{NRVO}, named return value optimization, is permitted for an eligible non-volatile local object, excluding a function parameter or handler parameter. It can make the named local and result the same object, but is optional in C++23. The optional case still requires a valid fallback. See \href{https://eel.is/c++draft/class.copy.elision}{copy-elision conditions}.
+
+\begin{verbatim}
+struct Token {
+    Token()=default;
+    Token(const Token&)=delete;
+    Token(Token&&)=delete;
+};
+Token direct() { return Token{}; } // valid C++17+: no transfer constructor needed
+// Token named() { Token token; return token; } // rejected: unavailable fallback
+\end{verbatim}
+
+The destructor must still be accessible and usable where required; the result ultimately dies. ``No copy required'' does not mean ``no destruction requirements.'' Direct construction also has context limits, such as potentially overlapping subobjects; do not generalize a complete-object example to every base-subobject initialization.
+
+For an eligible local or by-value parameter returned in C++23, implicit-move rules treat the return expression as an xvalue. In ordinary uses a named rvalue-reference variable is still an lvalue; this return context is the special rule already previewed. \href{https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2266r3.html}{P2266R3} documents that change. Returning a parameter is not NRVO, although it can move. \texttt{return\ std::move(local);} removes the simple named-local NRVO form; prefer \texttt{return\ local;} when applicable. Const on a returned local can prevent destructive moving in the fallback, even if NRVO hides the cost on one compiler.
+
+A reference return answers a different question: where is an existing object? Returning a local automatic object by reference or pointer does not keep it alive. Returning a static object can supply persistent shared access, not a caller-owned independent value; returning a container element inherits container invalidation. Views carry the same underlying-storage obligation. The existing four-way ref-qualified getter handles both mutable and const temporary callers, closing the const-rvalue hole in the attachment's shorter getter example. Likewise, \texttt{decltype(auto)} returning \texttt{(member)} can preserve a borrowed reference, not an owning result.
+
+Instrumenting transfer constructors can help explain selection, but optional elision can omit observable copy/move side effects. Under direct prvalue semantics there is no hidden transfer to count. Therefore never make required business logic depend on a copy constructor running. Tests below distinguish mandatory assertions from compiler-dependent NRVO observations.
+
+\section{Construction establishes a usable state}\label{05-engine-i-ch003-construction-establishes-a-usable-state}
+
+\hypertarget{05-engine-i-ch003-construction-establishes-a-usable-state}{}
+
+A \hyperref[appendix-7f8ec83d0886]{constructor} initializes the object and establishes its invariant; it is not merely an ordinary method run after a complete object already exists. Before its body, base and member initialization has taken place. A \textbf{member-initializer list} is the syntax after the constructor's colon, such as \texttt{:\ name\_(std::move(name))}. It is not a \texttt{std::initializer\_list} container of values.
+
+\begin{verbatim}
+class TextureRecord {
+    std::string name_;
+    Extent2D extent_;
+    std::vector<std::byte> pixels_;
+public:
+    TextureRecord(std::string name, Extent2D extent,
+                  std::vector<std::byte> pixels)
+        : name_(std::move(name)), extent_(extent), pixels_(std::move(pixels)) {
+        if (!extent_.width || !extent_.height)
+            throw std::invalid_argument("zero extent");
+    }
+};
+\end{verbatim}
+
+The check establishes only nonzero dimensions, not a complete image schema. A production invariant might additionally relate byte count, format, extent, mip layout, and resource limits using checked arithmetic. This is where values become usable domain objects rather than arbitrary collections of bits.
+
+Assigning \texttt{name\_} in the body would first initialize the member by some other rule and then assign it. For a class member that can mean default construction followed by replacement; for a reference or const member, body assignment cannot provide the initial binding/value. Prefer direct member initialization for initial state. Allocation supplies storage; construction establishes an occupant, whether in automatic storage, dynamically allocated storage, or an explicitly managed buffer.
+
+A constructor cannot return an error value. It can throw, or creation can be mediated by a factory returning an error-bearing result such as C++23 \texttt{std::expected\textless{}T,E\textgreater{}} where appropriate. That is an interface choice; \texttt{expected} does not make underlying allocations incapable of throwing. Do not register \texttt{this} with callbacks or jobs before the intended invariant exists. Other code could observe unfinished state, and construction failure might leave the registration dangling.
+
+Use \texttt{explicit} for a single-argument constructor when automatic conversion is undesirable: \texttt{explicit\ Index(std::uint32\_t)} supports \texttt{Index\{3\}} but not an accidental integer argument where an Index is required. The complete conversion-overload story remains later depth.
+
+\section{Empty syntax does not promise initialized members}\label{05-engine-i-ch003-empty-syntax-does-not-promise-initialized-members}
+
+\hypertarget{05-engine-i-ch003-empty-syntax-does-not-promise-initialized-members}{}
+
+\hyperref[appendix-ba8c1a9fe03f]{Default initialization} and \textbf{value initialization} name language mechanisms, not interchangeable spellings. A default constructor is callable with no arguments; it may have parameters with defaults. An implicitly declared constructor, a first-declaration \texttt{=default}, and an empty user-written body need not have identical properties.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Type and declaration
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Mechanism/current state
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+automatic \texttt{int\ n;} & default initialization performs no scalar initialization; do not read before setting \\
+\texttt{int\ n\{\};} & initializes integer to zero \\
+aggregate \texttt{struct\ Stats\{int\ uploads;\};\ Stats\ s\{\};} & aggregate initialization gives uploads zero \\
+\texttt{struct\ A\{int\ n;\ A()=default;\};\ A\ a\{\};} & selected constructor is not user-provided; value initialization supplies zero initialization first \\
+\texttt{struct\ B\{int\ n;\ B()\{\}\};\ B\ b\{\};} & user-provided empty constructor does not initialize n; do not read it \\
+\texttt{struct\ C\{int\ n=0;\ C()\{\}\};\ C\ c\{\};} & default member initializer supplies zero even with that body \\
+\end{longtable}
+}
+
+\textbf{Zero initialization} supplies zero/null values according to type; it is not a generic claim that every object's full byte representation is memset-zero. \textbf{User-declared} means a declaration was written by the programmer. \textbf{User-provided} excludes a function explicitly defaulted or deleted on its first declaration. Thus \texttt{A()=default} inside the class is user-declared but not user-provided; declaring \texttt{A();} then defining \texttt{A::A()=default;} outside counts as user-provided. These terms affect initialization and triviality; they are not decorative vocabulary. The \href{https://eel.is/c++draft/dcl.init}{initialization rules} supply the mechanisms behind the table.
+
+In C++23 an ordinary read of an uninitialized automatic int has undefined behavior. Later language-version distinctions must not be used to justify such a read in this laboratory. Write defaults beside members where they describe an intended state. This does not force every type to have a valid empty domain state: a device-backed object may intentionally require arguments.
+
+\texttt{Stats\ stats();} declares a function returning Stats, not an object. The \textbf{most vexing parse} is the family of declaration ambiguities where an intended object declaration is parsed as a function declaration. \texttt{Stats\ stats\{\};} avoids this case. Likewise \texttt{new\ int} leaves the scalar uninitialized, while \texttt{new\ int()} value-initializes it to zero; neither is a recommendation for manual allocation in ordinary application code.
+
+Braces may choose aggregate initialization or a constructor/initializer-list route; parentheses and braces are not universal substitutes. The earlier reference-member temporary example already demonstrated a lifetime difference. Ask which mechanism the exact declaration selects rather than memorizing that braces make everything zero.
+
+\section{Construction order records lifetime dependencies}\label{05-engine-i-ch003-construction-order-records-lifetime-dependencies}
+
+\hypertarget{05-engine-i-ch003-construction-order-records-lifetime-dependencies}{}
+
+\hyperref[appendix-3cb49709605a]{Initialization order} is structural: virtual bases when applicable, direct bases in their specified order, non-static data members in declaration order, then the constructor body. Reordering entries after the colon does not reorder construction. The fixed order lets all constructor overloads share a coherent reverse cleanup order.
+
+\begin{verbatim}
+class MeasuredPixels {
+    std::vector<std::byte> pixels_; // provider must be declared first
+    std::size_t byteCount_;
+public:
+    explicit MeasuredPixels(std::vector<std::byte> pixels)
+        : pixels_(std::move(pixels)), byteCount_(pixels_.size()) {}
+};
+\end{verbatim}
+
+Declaring \texttt{byteCount\_} first and computing it from \texttt{pixels\_.size()} would inspect a member before its construction, regardless of the visually reassuring initializer list. Write both declarations and initializers in dependency order; use compiler reorder warnings. A constructor's explicit member initializer overrides that member's default initializer rather than assigning after it.
+
+The same idea handles a staging buffer needing its device during cleanup: declare \texttt{Device\ device\_;\ Buffer\ buffer\_;} so the buffer is constructed after and destroyed before the device. This is a lifetime dependency, not merely an ABI/layout preference. An externally borrowed device still needs its own outliving guarantee.
+
+A \textbf{delegating constructor} names another constructor of the same class as its sole member initializer. The target performs base/member initialization and its body, then the delegating body executes. This centralizes validation and prevents defaults drifting between overloads:
+
+\begin{verbatim}
+struct NamedCount {
+    std::string name;
+    int count;
+    NamedCount(std::string n, int c):name(std::move(n)),count(c) {
+        if (count<0) throw std::invalid_argument("negative count");
+    }
+    explicit NamedCount(int c):NamedCount("unnamed",c) {}
+};
+\end{verbatim}
+
+A delegating initializer cannot also initialize selected members. Delegation cycles are ill-formed; the chain must terminate at a constructor that actually initializes the subobjects. These are specified construction rules, not an optimization tactic. See \href{https://eel.is/c++draft/class.base.init}{base and member initialization}.
+
+\section{Destruction closes the ownership interval}\label{05-engine-i-ch003-destruction-closes-the-ownership-interval}
+
+\hypertarget{05-engine-i-ch003-destruction-closes-the-ownership-interval}{}
+
+A \hyperref[appendix-9bfe377cef7a]{destructor} performs an object's cleanup. For a fully constructed ordinary automatic class object, leaving its scope triggers destruction, including when an exception unwinds the scope. \textbf{Stack unwinding} is that cleanup of active scopes while an exception propagates. Deterministic means tied to a defined lifetime boundary, not a promise that the OS will execute cleanup after abrupt termination or process kill.
+
+The destructor body runs before the member/base destructors. Members are then destroyed in reverse construction order, followed by bases under their rules. If a non-delegating constructor throws, already-completed bases/members are destroyed in reverse order; the complete object's destructor is not invoked. A member whose constructor did not complete is not treated as a fully constructed member either. By contrast, if a delegating target has completed and the later delegating body throws, cleanup can invoke the object's destructor. State which case is being traced rather than asserting ``a throwing constructor never invokes its destructor'' without qualification. See \href{https://eel.is/c++draft/except.ctor}{constructor exception cleanup}.
+
+RAII---resource acquisition is initialization---uses an owning object's lifetime to control a resource's release. Owning vector/string members already demonstrate the principle. A raw pointer data member alone does not run delete automatically: destruction of the pointer object only ends that pointer's lifetime. Explicitly destroying an ordinary automatic object and then allowing its normal destruction without valid lifetime restoration is not a routine cleanup technique.
+
+Cleanup should normally not throw. If an exception escapes a non-throwing destructor, termination follows; a second escaping destructor exception during active exception unwinding also leads to termination. Error-reporting close/flush operations may therefore be separate explicit functions, with the destructor retaining a safe non-throwing fallback. A trivial destructor may require no runtime cleanup, but the object still has a lifetime end.
+
+The inline construction-failure trace below records member1 construction, member2 construction, entry to body, then destruction of member2 and member1. The absent complete-object destructor is the observable distinction. It also records the successful path where the destructor body runs first.
+
+\section{Copy a meaning rather than just its bytes}\label{05-engine-i-ch003-copy-a-meaning-rather-than-just-its-bytes}
+
+\hypertarget{05-engine-i-ch003-copy-a-meaning-rather-than-just-its-bytes}{}
+
+\hyperref[appendix-1340cd1ce582]{Copy construction} creates a new object from an existing same-type object under the selected copy operation. \texttt{T\ b=a;} is initialization despite its equals sign. Generated copying of an ordinary non-union class is memberwise: strings copy strings, vectors copy their elements into destination-owned storage, scalars copy values, pointers copy pointer values, and reference members bind the same referent. It is not a universal memcpy or recursively deep clone.
+
+\textbf{Shallow copy} preserves associations to existing resources; \textbf{deep copy} duplicates the resources defined by the type's copy contract. Neither is universally correct. Copying an integer texture ID should not clone a GPU texture. Copying an owning CPU pixel value may intentionally produce independent pixel storage. Copying a reference-bearing binding should preserve its alias association. A scene clone may need an old-ID→new-ID mapping so internal relationships and intended sharing survive; blindly recursing through pointers can duplicate shared resources or loop through cycles.
+
+\begin{verbatim}
+TexturePayload original;
+original.pixels.resize(4);
+TexturePayload independent=original;
+independent.pixels[0]=std::byte{7};
+// original.pixels[0] is unchanged by this write.
+struct Borrowed { TexturePayload* payload; };
+Borrowed first{&original};
+Borrowed second=first; // two descriptors, one external payload
+\end{verbatim}
+
+For a raw-memory owner with a destructor calling \texttt{delete{[}{]}\ data\_}, an implicit pointer copy can create two alleged owners of one allocation and double deletion at destruction. The repair is not simply ``write a copy constructor'': decide whether the semantic operation is deep copying, shared ownership with an appropriate owner type, or deleted copying. A type representing unique GPU/OS state may reject copying. Copy-on-write, where sharing persists until a mutation duplicates data, adds hidden allocation, alias invalidation and synchronization costs; it is a deliberate design, not a free deep-copy optimization.
+
+Cross-member invariants need particular care. A generated move of \texttt{\{extent,pixels\}} moves each member appropriately but can leave nonzero source dimensions with a moved-from pixel container. If the class promises a relationship between dimensions and populated bytes for every live state, ``the members are individually valid'' is insufficient. Either allow/document an empty moved-from domain state, implement coordinated semantics in the responsible owner abstraction, or redesign the invariant. Rule Zero removes boilerplate; it does not prove arbitrary domain relationships.
+
+\section{Replacing a value is not creating an object}\label{05-engine-i-ch003-replacing-a-value-is-not-creating-an-object}
+
+\hypertarget{05-engine-i-ch003-replacing-a-value-is-not-creating-an-object}{}
+
+\hyperref[appendix-bea6beb5350f]{Assignment} changes an already-live target through an assignment operator. Copy assignment normally preserves the source's semantic value while replacing the destination's. Generated assignment uses member assignments rather than constructing a second complete target. Existing vector/string capacity can sometimes be reused, so its cost need not equal new-object copy construction.
+
+\begin{verbatim}
+TexturePayload made=original; // construction
+made=independent;             // assignment to an existing object
+\end{verbatim}
+
+The conventional signature \texttt{T\&\ operator=(const\ T\&)} returns \texttt{*this}, allowing \texttt{a=b=c}. Language copy-assignment forms are broader, but that common shape expresses a reference to the assigned target. Reference members and const scalar members can make generated assignment deleted, even when copying into a new object is valid. A custom assignment through a reference referent is possible only as an explicitly chosen different contract; it does not reseat that reference.
+
+Self-assignment is a real alias case: \texttt{x=x}. In a naive raw owner, deleting the destination's old resource before making a replacement loses the original data and rollback state. If the source aliases the destination, later updates to destination metadata also change what \texttt{other} sees; an exact implementation might copy from a saved freed address or from its new uninitialized allocation. Neither should be taught as a safe algorithm, but don't claim every ordering gives the same use-after-free trace.
+
+The safer transaction is \textbf{prepare → commit → cleanup}. Allocate and copy a replacement while the old value remains intact; only after success replace the owning metadata and release the old allocation. \textbf{Copy-and-swap} implements that with a complete temporary copy, a non-throwing swap, and the temporary's destructor releasing the former destination. It handles self-copy and can provide the strong guarantee, but often sacrifices destination-capacity reuse. The byte-owner lab implements this policy and deliberately injects allocation failure before commit.
+
+A \textbf{strong exception guarantee} means failure leaves the operation's promised observable state unchanged. A \textbf{basic guarantee} preserves valid invariants/no resource leaks while allowing values to change. A \textbf{non-throwing guarantee} means the operation cannot report failure by escaping an exception. These are contracts to establish, not decorations added by syntax. Memberwise assignment of several individually safe members does not automatically give an all-or-nothing guarantee for the entire enclosing object.
+
+\section{A move transfers responsibility while the source survives}\label{05-engine-i-ch003-a-move-transfers-responsibility-while-the-source-survives}
+
+\hypertarget{05-engine-i-ch003-a-move-transfers-responsibility-while-the-source-survives}{}
+
+\subsection{Figure CPP-03 - Move the duty, keep both object lifetimes}\label{05-engine-i-ch003-figure-cpp-03---move-the-duty-keep-both-object-lifetimes}
+
+\hypertarget{05-engine-i-ch003-figure-cpp-03---move-the-duty-keep-both-object-lifetimes}{}
+
+\pandocbounded{\includegraphics[keepaspectratio,alt={Diagram}]{../current/Assets/Print/83bce2a437cb073c70833f6bf7bedd2e69c9e555b714acd18c04533c44eec42e.pdf}}
+
+\textbf{Read the picture:} this is the manual byte-block contract below: construction creates the destination; ownership moves; the source remains a live, safely destructible empty object. \textbf{Limit:} \texttt{std::move} alone is a cast, not this transfer. Other types may copy, move inline data, or leave a valid but unspecified source state; move assignment also has an existing destination resource to handle. \hyperref[appendix-960160274237-four-figure-briefs]{Recall this figure}.
+
+\hyperref[appendix-5636651017c2]{Move construction} creates a new destination from an expiring source; \textbf{move assignment} replaces an existing destination, which may already own a resource needing release. For a pointer-owning byte block, a move can transfer the allocation pointer and size, then set the source to a documented empty state. \texttt{std::exchange(source.pointer,nullptr)} returns the old pointer while installing the new source state. That differs from merely copying the pointer and leaving two owners.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Before/operation
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Destination
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Source
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Lifetime consequence
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+move construction & new owner takes allocation A & becomes empty under this block's contract & source object remains alive \\
+move assignment into owner B & releases B, takes A & becomes empty & both outer object lifetimes continue \\
+destruction after move & releases only its current owned resource & empty source safely releases nothing & lifetime ends at normal destruction \\
+\end{longtable}
+}
+
+Inside \texttt{T(T\&\&\ other)}, the named expression \texttt{other} is an lvalue in ordinary member-initializer/body use. Move class-type members with explicit intent where needed; copying a scalar size is already cheap. \texttt{std::move} preserves const: an ordinary \texttt{T(T\&\&)} cannot bind a const source, so an available \texttt{T(const\ T\&)} may be selected instead. A cast without a consumer performs no ownership transfer.
+
+Self-move, \texttt{x=std::move(x)}, also needs a documented policy. Our manual block uses an identity guard and preserves its value. Do not demand that every standard-library type preserve its exact old value under self-move; consult its valid-state contract and operation preconditions. A moved-from object is still alive. Standard-library types generally specify valid-but-unspecified states unless they give a stronger guarantee; a user-defined type must implement its own promised invariant. \textbf{Unspecified} is not uninitialized or undefined: the value is not promised, but permitted operations still have defined requirements. \texttt{empty()} may be a valid query even though you cannot assume its answer; \texttt{front()} still requires a nonempty sequence.
+
+For our block, the stronger contract is size0/null after a distinct-object move, plus safe destruction, copying of that empty state and assignment of a fresh value. It avoids traversing a nonexistent range when size is zero. For the earlier texture payload, consult member contracts without asserting the entire source vector/string must have a particular printed value.
+
+Moving is not necessarily constant-time. An inline \texttt{std::array\textless{}float,N\textgreater{}} still transfers N inline values. Small-string storage may live inside the string object and be copied rather than pointer-stolen. Allocator-aware move assignment may require elementwise work when storage cannot be adopted by the destination allocator. A user-written move can do arbitrary work. Measure bytes, allocations, time and workload---not merely the occurrence of an ampersand.
+
+\section{Failure guarantees shape the transfer algorithm}\label{05-engine-i-ch003-failure-guarantees-shape-the-transfer-algorithm}
+
+\hypertarget{05-engine-i-ch003-failure-guarantees-shape-the-transfer-algorithm}{}
+
+\hyperref[appendix-c746afaa47d1]{noexcept} declares a non-throwing exception contract, not that the function contains no throw-capable instructions. If an exception escapes such a function, termination follows. Mark a move non-throwing only when its actual members/resource policy support that promise.
+
+Container growth must balance transfer cost with rollback. A throwing move might mutate the first source element, then fail on a later one; restoring the original sequence may be impossible. If non-mutating copying is available, an implementation can use it to preserve the required guarantee. \texttt{std::move\_if\_noexcept(x)} selects an access category: it yields a const-reference path when move construction may throw and copying is possible, otherwise an rvalue-reference path. It does not itself transfer anything. See \href{https://eel.is/c++draft/forward}{forward/move helpers}.
+
+The spelling is therefore a policy bridge from type properties to an operation's failure guarantee. If copying is impossible, a throwing move remains the available choice and a particular container operation can have weaker exceptional-effect guarantees. Do not teach ``vector always gives strong rollback'' regardless of type and operation. Neither should a trait-controlled algorithm assume every library implementation must use exactly one named helper internally.
+
+Defaulted moves can derive exception properties from their selected member/base operations when left to the language. Forcing \texttt{noexcept} on a defaulted move without checking its subobjects is not automatically an improvement: a throw can terminate. Member composition often lets the compiler propagate the correct behavior. The inline probe checks the helper's return type directly rather than inferring a portable vector strategy from a constructor log.
+
+\section{Let the compiler compose the operations}\label{05-engine-i-ch003-let-the-compiler-compose-the-operations}
+
+\hypertarget{05-engine-i-ch003-let-the-compiler-compose-the-operations}{}
+
+\hyperref[appendix-42e02a12c694]{Special members} are the default constructor, copy/move constructors, copy/move assignment operators, and destructor. Whether the compiler declares one, whether it is deleted, and whether an expression can use it are three different questions.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Programmer declaration in an ordinary class
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Consequence to check in C++23
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+no constructor declarations & default constructor can be implicitly declared \\
+ordinary/default constructor & does not alone suppress implicit copy/move operations \\
+copy constructor or copy assignment & suppresses implicit move generation \\
+destructor, including first-declaration \texttt{=default} & suppresses implicit move generation \\
+move constructor or move assignment & implicitly declared copy operations are defined as deleted unless usable copy operations are supplied explicitly \\
+defaulted operation & may itself be deleted because a selected member/base operation is unusable \\
+\end{longtable}
+}
+
+This is a practical map, not the complete union/inheritance/constraint rulebook. A reference member can copy-bind, yet generated assignment is deleted. A non-copyable owner member can make the containing object non-copyable. A named constructor being available does not imply all required operations are available. The \href{https://eel.is/c++draft/class.copy.ctor}{copy/move constructor} and \href{https://eel.is/c++draft/class.copy.assign}{assignment} rules govern those details.
+
+\texttt{std::is\_move\_constructible\_v\textless{}T\textgreater{}} asks whether construction from a \texttt{T\&\&} expression is valid. It does not ask whether the selected constructor's parameter is exactly \texttt{T\&\&}. A class with a user-declared destructor can have no generated dedicated move constructor but still accept an rvalue through \texttt{const\ T\&} copying. The trait may be true---and copying may be expensive. Likewise a nothrow trait classifies the valid expression, which could be a non-throwing copy.
+
+An explicitly deleted move constructor can remain the best overload and reject an rvalue even when a copy constructor exists. A defaulted move that becomes deleted has specified ignore rules permitting fallback in relevant cases. ``Unavailable move always falls back to copying'' is therefore too broad. The diagnostic exercise demonstrates the explicitly deleted case.
+
+First-declaration defaulting can retain triviality and inferred properties that a hand-written equivalent body loses. A \textbf{trivial} operation has the specified simple language properties; it is not synonymous with ``fast enough in my benchmark.'' Trivially copyable, standard-layout, aggregate, and nothrow-movable remain distinct traits. Rule-Zero composition containing vectors does not magically become trivially copyable or serialization-ready.
+
+\section{From three repairs to five decisions to zero boilerplate}\label{05-engine-i-ch003-from-three-repairs-to-five-decisions-to-zero-boilerplate}
+
+\hypertarget{05-engine-i-ch003-from-three-repairs-to-five-decisions-to-zero-boilerplate}{}
+
+\hyperref[appendix-7679107d057e]{The Rule of Three} is a design heuristic: if raw-resource semantics require a custom destructor, copy constructor, or copy assignment, consider all three together. It is not a compiler requirement to support copying; explicitly deleting copying can be correct. The Rule of Five adds move construction and move assignment as coordinated decisions after C++11.
+
+The \textbf{Rule of Zero} moves ownership responsibility into members whose own operations already match the intended semantics, so the containing class usually needs no custom copy/move/destruction operations. It does not mean ``never write a constructor'': ordinary validation or default construction can coexist with composed transfer/cleanup. The texture payload's owning string/vector members and a scalar math record illustrate the approach without requiring a hand-maintained five-function protocol.
+
+The raw owner below is educational infrastructure: its five operations expose the ownership invariant, failure transaction and source-reset contract. Prefer a vector-backed byte value for ordinary application code. A low-level unique resource wrapper may still need custom/deleted operations; then application-level records compose that tested owner instead of repeating resource logic.
+
+\hyperref[appendix-adfd6397af8d]{Relocation} distinguishes transfer plus an ended source lifetime from a move that leaves its source alive until normal later destruction. Container growth often uses move-construction followed by destruction; that pair must not be conflated with a universally legal memcpy of arbitrary nontrivial objects. The attachment discusses proposal-era trivial relocation. Here it is a future/toolchain-dependent research bridge, not a portable C++23 facility or an adopted-language-status claim. Self-references, external registrations and lifetime rules can make a bitwise relocation invalid even when a type's source code looks small.
+
+The design progression is responsibility, not fashion: define the meaning of a copy, define who releases a resource, make failure and self-alias cases safe, supply moves where meaningful, then remove redundant custom code when composition already satisfies those contracts.
+
+\section{Trace one payload from decode to cache}\label{05-engine-i-ch003-trace-one-payload-from-decode-to-cache}
+
+\hypertarget{05-engine-i-ch003-trace-one-payload-from-decode-to-cache}{}
+
+Assume the cache has reserved enough capacity for the next insertion; otherwise growth adds old-element transfer and invalidation. Assume TexturePayload retains ordinary composed string/vector semantics.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Stage
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Mechanism
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Which object/resource is owned where?
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\texttt{wall=built()} & optional NRVO or implicit-move fallback & caller receives an owning payload value \\
+\texttt{cache.Insert(wall)} begins & copy construction of value parameter & wall preserved; parameter gets independent vector storage \\
+parameter enters \texttt{push\_back(std::move(payload))} & move construction of new cache element & cache element takes member state; parameter remains alive moved-from \\
+Insert returns & parameter destruction & releases whatever members still own, without invalidating the cache's independent owner \\
+\texttt{cache.Insert(fallback())} & direct result/parameter initialization, then element move & no mandatory intermediate parameter-transfer copy/move \\
+cache grows later & member/type-dependent transfer to new backing & old borrows may be invalidated even if handles persist \\
+cache dies & reverse destruction of contained ownership & CPU allocations released; no implied GPU destruction from a numeric handle \\
+\end{longtable}
+}
+
+This does not implement a decoder or uploader. It establishes the value-transfer backbone those systems would use. A 4096×4096 RGBA8 pixel image alone contains 67,108,864 bytes, or64 MiB, before mip levels/metadata. Copying that vector and copying a64-bit handle are radically different operations despite both using \texttt{=} syntax.
+
+For teaching, ask the listener at every arrow: is a new object created, is an existing value assigned, is an access path merely bound, does source lifetime continue, what allocation is owned, and what happens if the operation fails? Those questions connect the entire build/object/borrow/value story.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hyperref[volume-reading-map]{Reading map} · \hyperref[05-engine-i-ch002-how-bytes-become-programs-objects-and-resource-references]{Previous chapter} · \hyperref[05-engine-i-ch004-resource-ownership-failure-paths-and-review-practice]{Next chapter}

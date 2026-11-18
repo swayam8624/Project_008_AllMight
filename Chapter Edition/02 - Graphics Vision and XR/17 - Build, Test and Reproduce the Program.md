@@ -8,7 +8,7 @@ A reproducible renderer depends on its build graph, toolchain, tests, logging an
 
 **Recall question:** Which build inputs must be pinned to make a result reproducible?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 40669–44664; source-span SHA256 485c5cac17ad0b6413d47006d43737304432f9a7bc6de0c76cf3dfc646b4a211. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 41671–45666; source-span SHA256 485c5cac17ad0b6413d47006d43737304432f9a7bc6de0c76cf3dfc646b4a211. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Build, document, measure, and reproduce the program

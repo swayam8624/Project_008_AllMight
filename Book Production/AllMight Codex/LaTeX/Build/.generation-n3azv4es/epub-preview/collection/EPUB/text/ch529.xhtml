@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch529.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-e8ab9836882e-ode-initial-value-problems-and-stiffness" class="level2">
+<h2>ODE initial-value problems and stiffness</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 9 · <strong>Latest development:</strong> Phase 9</p>
+<section id="appendix-e8ab9836882e-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>An ordinary differential equation specifies a state’s rate of change as a function of state and time. An initial-value problem adds the starting state; together they define the trajectory when existence and uniqueness conditions hold. Numerical integration advances approximate states through finite time steps. Stability concerns whether numerical errors remain controlled under repeated updates, not just whether one step is accurate. A stiff system contains modes with very different time scales; explicit methods may require impractically small steps to remain stable even when the visible solution changes slowly. Implicit methods can enlarge the stable step region but require solving equations. Consistency, stability, and convergence are distinct properties. A simulator should choose its step and integrator based on the dynamics, not merely the display frame interval or apparent smoothness of one trajectory.</p>
+</section>
+<section id="appendix-e8ab9836882e-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch456.xhtml#appendix-1a50e72435c2-definite-integrals-and-the-fundamental-theorem" class="wikilink">Definite integrals and the fundamental theorem</a></li>
+<li><a href="ch448.xhtml#appendix-0b3be18411f9-eigenvalues-and-eigenspaces" class="wikilink">Eigenvalues and eigenspaces</a></li>
+<li><a href="ch039.xhtml#appendix-3ae74e89b4e6-absolute-and-relative-error" class="wikilink">Absolute and relative error (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Absolute and relative error)</a></li>
+</ul>
+</section>
+<section id="appendix-e8ab9836882e-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch338.xhtml#appendix-18eacf61a04b-ode-integration-and-stability" class="wikilink">ODE integration and stability (Light Transport and Image Synthesis, Part 1, Reference notes: ODE integration and stability)</a></li>
+<li><a href="ch497.xhtml#appendix-8f96f9c4d5bc-time-integrators-and-symplectic-updates" class="wikilink">Time integrators and symplectic updates</a></li>
+</ul>
+</section>
+<section id="appendix-e8ab9836882e-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch269.xhtml#id_02-foundations-ii-ch025-odes-and-numerical-simulation" class="wikilink">Phase 9 teaching section (Mathematics for Visual Computing, Part 2, Ch. 9)</a></li>
+<li><a href="ch084.xhtml#appendix-adf48f5dc5c1-calculus-and-optimization-visual-recall" class="wikilink">Visual Recall/09 - Calculus and Optimization - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 09 - Calculus and Optimization - Visual Recall)</a> · visual recall</li>
+</ul>
+</section>
+<section id="appendix-e8ab9836882e-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 838 (T03 · M051), 839 (T03 · M051), 845 (T03 · M051), 846 (T03 · M051).</p>
+</section>
+</section>
+</body>
+</html>

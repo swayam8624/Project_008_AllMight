@@ -1,0 +1,63 @@
+\hypertarget{appendix-b0c42da325f1}{}
+\section*{Perception feedback and robot learning}
+\section{Perception feedback and robot learning}\label{perception-feedback-and-robot-learning}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A robot learning system closes a loop: sensors produce observations, a policy chooses an action, the world changes, and new observations arrive. A policy maps states or observations to actions; a value function estimates expected future return and can help compare actions. Reinforcement learning updates behavior from outcomes, while imitation learning fits demonstrations. In visual robotics, the observation pipeline may include cameras, learned features, pose estimates, and spatial grounding; errors then affect movement rather than only a label. The training and deployment distributions can differ because the robot's own actions change what it sees. Small perception errors can compound into different states and larger future errors, a form of covariate or distribution shift. Stable deployment therefore needs calibrated sensing, feedback timing, safety constraints, and evaluation on physical conditions. Demonstrations in simulation do not establish robust real-world manipulation; embodiment, contact, latency, and unmodeled dynamics matter. A successful policy is evidence for a task and setting, not general intelligence.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-29f4bea4c2bb]{Constrained optimization and inverse kinematics}
+\item
+  \hyperref[appendix-e2e73f8cd93e]{Optical flow and time to contact}
+\item
+  \href{}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)}
+\item
+  \hyperref[appendix-65788587ef78]{Research validity and ablation}
+\item
+  \href{}{Automatic differentiation and backpropagation (03-Visual-Computing-I, appendix-40df0855b4a7)}
+\item
+  \hyperref[appendix-47c51ea026fb]{Learned image features and CNNs}
+\item
+  \hyperref[appendix-a9d5dfdd164a]{Attention and visual transformers}
+\item
+  \hyperref[appendix-772f1fd96148]{Contrastive vision and image-language alignment}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Robot\%20learning\%20closes\%20the\%20perception-action\%20loop}{Robot learning closes the perception-action loop}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Robot\%20learning\%20closes\%20the\%20perception-action\%20loop}{Robot learning closes the perception-action loop}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  Trace an observation through policy, action, changed world state, and next observation.
+\item
+  How can a small perception error compound under deployment distribution shift?
+\end{itemize}
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+Teaching narrative: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Robot\%20learning\%20closes\%20the\%20perception-action\%20loop}{open the main explanation}. Browse the \href{}{University graphics and vision index (02-Foundations-II, appendix-a6d556a4ef50 § University graphics vision and photography - independent series)}. Additional chapter connections: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Optical\%20flow\%20and\%20motion\%20from\%20images}{Optical flow and motion from images}; \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Dynamics,\%20forces,\%20and\%20numerical\%20integration}{Dynamics, forces, and numerical integration}; \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Optimization,\%20constraints,\%20and\%20inverse\%20kinematics}{Optimization, constraints, and inverse kinematics}; \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#The\%20robot\%20needs\%20a\%20rule\%20for\%20moving\%20every\%20direction}{The robot needs a rule for moving every direction}.
+
+Caption/source records: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#SC-17\%20-\%20Stanford\%20CS231N\%20Deep\%20Learning\%20for\%20Computer\%20Vision\%20Spring\%202025\%20Lecture\%2017:\%20Robot\%20Learning}{SC-17}, \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#SC-18\%20-\%20Stanford\%20CS231N\%20Deep\%20Learning\%20for\%20Computer\%20Vision\%20Spring\%202025\%20Lecture\%2018:\%20Human-Centered\%20AI}{SC-18}.

@@ -1,0 +1,55 @@
+\hypertarget{appendix-68be451b78b1}{}
+\section*{Reservoir resampling and ReSTIR}
+\section{Reservoir resampling and ReSTIR}\label{reservoir-resampling-and-restir}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Reservoir sampling keeps a compact candidate for a weighted distribution without storing every sample. When candidate \(y_i\) has target weight \(w_i\), maintain a running weight sum and replace the stored candidate with probability proportional to \(w_i\); the reservoir records enough normalization information to estimate the desired integral without bias under stated assumptions. ReSTIR reuses candidates across pixels and frames, which is valuable when direct lighting has many possible lights or paths but only a few can be evaluated per pixel. Reuse requires correcting for the source and target distributions, accounting for visibility changes, and managing temporal history. If weights or normalization are wrong, the image may be biased; stale reuse causes trails or light leaks when geometry or illumination moves. The method reduces expensive samples rather than making sampling free. It depends on a valid estimator, careful normalization, and an understanding of whether correlated reused samples preserve the intended expectation.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Monte Carlo rendering estimators and variance (04-Visual-Computing-II, appendix-031e02bf28af)}
+\item
+  \href{}{Sampling aliasing and reconstruction (04-Visual-Computing-II, appendix-6a7869dd79a6)}
+\item
+  \href{}{Temporal reprojection and history validation (04-Visual-Computing-II, appendix-0727340a4428)}
+\item
+  \href{}{Reflectance and rendering equation (04-Visual-Computing-II, appendix-96da0b153b77)}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Numerical\%20integration\%20and\%20Monte\%20Carlo\%20estimation}{Numerical integration and Monte Carlo estimation}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Numerical\%20integration\%20and\%20Monte\%20Carlo\%20estimation}{Numerical integration and Monte Carlo estimation}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  Trace the running weight sum and replacement probability for one reservoir update.
+\item
+  Which correction is needed when a sample is reused under a different target distribution?
+\end{itemize}
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+Teaching narrative: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Numerical\%20integration\%20and\%20Monte\%20Carlo\%20estimation}{open the main explanation}. Browse the \href{}{University graphics and vision index (02-Foundations-II, appendix-a6d556a4ef50 § University graphics vision and photography - independent series)}. Additional chapter connections: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Numerical\%20integration\%20and\%20Monte\%20Carlo\%20estimation}{Numerical integration and Monte Carlo estimation}; \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#The\%20rendering\%20equation\%20and\%20light\%20transport}{The rendering equation and light transport}; \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Acceleration\%20structures\%20and\%20robust\%20queries}{Acceleration structures and robust queries}.
+
+Caption/source records: \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#P3-15\%20-\%20Ray\%20Tracing}{P3-15}, \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#P3-19\%20-\%20Shadows\%20Part\%202}{P3-19}.

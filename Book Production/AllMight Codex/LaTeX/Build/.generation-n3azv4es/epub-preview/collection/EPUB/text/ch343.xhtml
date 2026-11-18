@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch343.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-2c568f05ee34-latent-variable-models-and-generative-flows" class="level2">
+<h2>Latent-variable models and generative flows</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-2c568f05ee34-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Generative models describe how data could be produced, often by first sampling a latent variable <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>z</mi>
+</math> and mapping it to an observation <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>. A variational autoencoder (VAE) learns an encoder distribution <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+  <mo stretchy="false">(</mo>
+  <mi>z</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math> and decoder <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>z</mi>
+  <mo stretchy="false">)</mo>
+</math>; its evidence lower bound balances reconstruction likelihood against a KL penalty that keeps the latent distribution tractable. A generative adversarial network (GAN) trains a generator against a discriminator, creating a game that can produce sharp samples but may be unstable or collapse to limited modes. Normalizing flows use invertible transformations so the data density can be computed with a change-of-variables Jacobian determinant. These methods solve different tradeoffs among likelihood, sample quality, latent structure, and optimization stability. Their assumptions matter: a VAE’s posterior family may be too simple, a GAN score is not a calibrated density, and a flow’s invertibility constrains architecture. Generated samples are not evidence that the model has learned the true causal process.</p>
+</section>
+<section id="appendix-2c568f05ee34-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch281.xhtml#appendix-4815cd87ab8b-probability-density-and-change-of-measure" class="wikilink">Probability density and change of measure (Mathematics for Visual Computing, Part 2, Reference notes: Probability density and change of measure)</a></li>
+<li><a href="ch342.xhtml#appendix-29f4bea4c2bb-constrained-optimization-and-inverse-kinematics" class="wikilink">Constrained optimization and inverse kinematics</a></li>
+<li><a href="ch557.xhtml#appendix-65788587ef78-research-validity-and-ablation" class="wikilink">Research validity and ablation (Vision, XR, and Playable Worlds, Part 2, Reference notes: Research validity and ablation)</a></li>
+<li><a href="ch346.xhtml#appendix-40df0855b4a7-automatic-differentiation-and-backpropagation" class="wikilink">Automatic differentiation and backpropagation</a></li>
+</ul>
+</section>
+<section id="appendix-2c568f05ee34-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch539.xhtml#id_04-visual-computing-ii-ch031-generative-models-learn-distributions-and-samplers" class="wikilink">Generative models learn distributions and samplers (Vision, XR, and Playable Worlds, Part 1, Ch. 2)</a></li>
+<li><a href="ch362.xhtml#appendix-c5b332e400e7-radiance-fields-and-gaussian-splatting" class="wikilink">Radiance fields and Gaussian splatting</a></li>
+</ul>
+</section>
+<section id="appendix-2c568f05ee34-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch539.xhtml#id_04-visual-computing-ii-ch031-generative-models-learn-distributions-and-samplers" class="wikilink">Generative models learn distributions and samplers (Vision, XR, and Playable Worlds, Part 1, Ch. 2)</a></li>
+</ul>
+</section>
+<section id="appendix-2c568f05ee34-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<ul>
+<li>State the VAE reconstruction/KL tradeoff, GAN adversarial objective, and flow change-of-variables role.</li>
+<li>Which assumption or training failure distinguishes each family?</li>
+</ul>
+</section>
+<section id="appendix-2c568f05ee34-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p>Teaching narrative: <a href="ch539.xhtml#id_04-visual-computing-ii-ch031-generative-models-learn-distributions-and-samplers" class="wikilink">open the main explanation (Vision, XR, and Playable Worlds, Part 1, Ch. 2)</a>. Browse the <a href="ch547.xhtml#appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series" class="wikilink">University graphics and vision index</a>. Additional chapter connections: <a href="ch277.xhtml#id_03-visual-computing-i-ch012-numerical-integration-and-monte-carlo-estimation" class="wikilink">Numerical integration and Monte Carlo estimation (Mathematics for Visual Computing, Part 2, Ch. 16)</a>; <a href="ch385.xhtml#id_04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics" class="wikilink">Optimization, constraints, and inverse kinematics (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 10)</a>; <a href="ch261.xhtml#id_01-foundations-i-ch019-a-linear-equation-is-a-measurement-and-several-equations-are-geometry" class="wikilink">A linear equation is a measurement, and several equations are geometry (Mathematics for Visual Computing, Part 1, Ch. 3)</a>.</p>
+<p>Caption/source records: <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-sc-13---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-13-generative-models-1" class="wikilink">SC-13 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>, <a href="ch542.xhtml#id_04-visual-computing-ii-ch036-sc-14---stanford-cs231n-deep-learning-for-computer-vision-spring-2025-lecture-14-generative-models-2" class="wikilink">SC-14 (Vision, XR, and Playable Worlds, Part 1, Ch. 5)</a>.</p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,68 @@
+\hypertarget{appendix-d7f8ba961670}{}\label{referencestart:appendix-d7f8ba961670}
+\section{Stable reformulation}\label{appendix-d7f8ba961670-stable-reformulation}
+
+\hypertarget{appendix-d7f8ba961670-stable-reformulation}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C005 · \textbf{Latest development:} C005
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-d7f8ba961670-definition-and-mechanism}
+
+\hypertarget{appendix-d7f8ba961670-definition-and-mechanism}{}
+
+A mathematically equivalent expression can avoid unnecessary numerical loss. sqrt(x+1)−sqrt(x)=1/(sqrt(x+1)+sqrt(x)) for x≥0; at double x=1e16 the direct result is zero while the reciprocal form remains near 5e-9.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-d7f8ba961670-prerequisites}
+
+\hypertarget{appendix-d7f8ba961670-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a2773a6a2f9d]{Cancellation and loss of significance} --- Near-equal operand errors motivate exact-subtraction distinctions and reformulation.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-d7f8ba961670-used-by}
+
+\hypertarget{appendix-d7f8ba961670-used-by}{}
+
+Connect later dependent concepts here when their lessons arrive.
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-d580b422240f}{Stable probability normalization and log-sum-exp (Vision, XR, and Playable Worlds, Part 1, Reference notes: Stable probability normalization and log-sum-exp)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-b9afba7f63e5}{Stable quadratic root evaluation (Vision, XR, and Playable Worlds, Part 1, Reference notes: Stable quadratic root evaluation)} \#\# Recall and next depth
+\end{itemize}
+
+Reconstruct the definition's example and name the assumptions that make it valid.
+
+\textbf{Pending:} Every reformulation still needs domain, range, conditioning and accuracy checks.
+
+\subsection{Source and navigation}\label{appendix-d7f8ba961670-source-and-navigation}
+
+\hypertarget{appendix-d7f8ba961670-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-when-arithmetic-meets-uncertainty]{M005 teaching chapter} · \hyperref[appendix-fd090d982a15-m005---parts-77-88]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}
+
+\subsection{Algebraic equivalence is not numerical equivalence}\label{appendix-d7f8ba961670-algebraic-equivalence-is-not-numerical-equivalence}
+
+\hypertarget{appendix-d7f8ba961670-algebraic-equivalence-is-not-numerical-equivalence}{}
+
+Two formulas can be identical over real arithmetic and behave very differently in finite precision. Stable reformulation changes the computational path while preserving the intended mathematical quantity.
+
+For the quadratic equation, the textbook root expression can subtract nearly equal numbers and lose most significant digits. Computing one root with a sign-aware expression such as
+
+\[
+q=-\tfrac12\left(b+\operatorname{sign}(b)\sqrt{b^2-4ac}\right)
+\]
+
+and obtaining the other as \(c/q\) avoids that cancellation in many cases.
+
+The same idea appears in log-sum-exp, \BookInlineCode{hypot}-style norms, rationalizing expressions, compensated sums, and solving least squares with QR rather than normal equations. A reformulation is not automatically stable: its overflow/underflow regions and exceptional inputs still need analysis.
+
+Tests should compare against a higher-precision reference across adversarial inputs, not only ordinary random values. The goal is to show that the reformulated algorithm reduces forward/backward error where the naive expression is fragile.

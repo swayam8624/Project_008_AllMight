@@ -1,0 +1,38 @@
+\hypertarget{appendix-26bf6bf2fb8b}{}\label{referencestart:appendix-26bf6bf2fb8b}
+\section{Vector storage SIMD and boundary layouts}\label{appendix-26bf6bf2fb8b-vector-storage-simd-and-boundary-layouts}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\subsection{Definition and mechanism}\label{appendix-26bf6bf2fb8b-definition-and-mechanism}
+
+Storage layout, compute lanes and external buffer layout are separate contracts. SIMD may operate within one vector or across objects. AoS, SoA and AoSoA change access patterns. Alignment and padding must be measured; a spare lane is not implicitly valid homogeneous data.
+
+One million twelve-byte vectors occupy four million fewer payload bytes than sixteen-byte vectors. A sixteen-byte load still needs sixteen accessible bytes even if one lane is discarded.
+
+\subsection{Prerequisites}\label{appendix-26bf6bf2fb8b-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-37a39984ba66]{Vector value types and component access} --- Primitive representation and access rules support layout choices and semantic wrappers.
+\item
+  \hyperref[appendix-a1f7c53b4742]{Alignment and padding} --- Object alignment and array stride constrain storage and boundary conversions.
+\item
+  \hyperref[appendix-3c7b1a56de01]{SIMD and GPU data layouts} --- Lane access and external interface layouts require separate storage contracts.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-26bf6bf2fb8b-used-by}
+
+Later curriculum sources can deepen this same node; no future coverage is marked complete.
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-749ba51a6c25]{GPU vertex specification} \#\# Recall and next depth
+\end{itemize}
+
+Measure size/stride and shader offsets separately; benchmark before claiming an optimized representation wins. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-26bf6bf2fb8b-source-and-navigation}
+
+\href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch037-storage-and-computation-can-choose-different-layouts}{Teaching narrative (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 6)} · \hyperref[appendix-fd090d982a15-phase-6---parts-501-600]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-6---source-analysis-and-verification]{Evidence and limits} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

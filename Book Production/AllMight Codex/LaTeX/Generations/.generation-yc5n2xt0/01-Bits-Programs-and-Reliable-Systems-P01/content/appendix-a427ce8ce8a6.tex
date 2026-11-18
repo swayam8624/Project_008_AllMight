@@ -1,0 +1,56 @@
+\hypertarget{appendix-a427ce8ce8a6}{}\label{referencestart:appendix-a427ce8ce8a6}
+\section{Bitwise OR}\label{appendix-a427ce8ce8a6-bitwise-or}
+
+\hypertarget{appendix-a427ce8ce8a6-bitwise-or}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C001 · \textbf{Latest development:} C001
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-a427ce8ce8a6-definition-and-mechanism}
+
+\hypertarget{appendix-a427ce8ce8a6-definition-and-mechanism}{}
+
+Sets selected lanes while preserving lanes paired with 0; it cannot clear an existing 1.
+
+\end{allmightroledefinition}
+
+Per lane: only 0\textbar0 is 0; the other three cases are 1. \BookInlineCode{0xAD\ \textbar{}\ 0x40\ =\ 0xED} sets locked. Repeating the operation leaves the same result: OR is idempotent. It cannot clear an existing 1, so replacing a field requires a clear step.
+
+\subsection{Prerequisites}\label{appendix-a427ce8ce8a6-prerequisites}
+
+\hypertarget{appendix-a427ce8ce8a6-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-24475e1596a8]{Boolean algebra} --- The logical domain is false/true.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-a427ce8ce8a6-used-by}
+
+\hypertarget{appendix-a427ce8ce8a6-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1f9963e1a5d1]{Bit packing} --- uses bitwise or as part of its representation or reasoning.
+\item
+  \hyperref[appendix-fe6b457d68d8]{Logical versus bitwise operators} --- uses bitwise or as part of its representation or reasoning.
+\item
+  \hyperref[appendix-b5c46b2d94ff]{Carry-lookahead and parallel-prefix adders} --- uses bitwise or as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-a427ce8ce8a6-recall-and-next-depth}
+
+\hypertarget{appendix-a427ce8ce8a6-recall-and-next-depth}{}
+
+Explain bitwise or without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} flag sets and concurrent updates.
+
+\subsection{Source and navigation}\label{appendix-a427ce8ce8a6-source-and-navigation}
+
+\hypertarget{appendix-a427ce8ce8a6-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

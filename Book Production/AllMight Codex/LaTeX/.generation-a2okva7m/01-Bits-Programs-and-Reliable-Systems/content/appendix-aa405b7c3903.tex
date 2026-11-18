@@ -1,0 +1,32 @@
+\hypertarget{appendix-aa405b7c3903}{}\label{referencestart:appendix-aa405b7c3903}
+\section{Borrow contracts and pool epochs}\label{appendix-aa405b7c3903-borrow-contracts-and-pool-epochs}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-aa405b7c3903-definition-and-mechanism}
+
+An epoch versions a borrow-validity interval. A checked borrow compares its saved epoch to the live pool counter before using the cached element. The pool counter must outlive the borrow; counters alone do not supply ownership, synchronization, race freedom or wrap immunity.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-aa405b7c3903-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-f9b8b9188c7f]{Borrow invalidation and logical identity} --- Invalidating mutations define the deadlines a saved epoch or deferred borrow must respect.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-aa405b7c3903-used-by}
+
+Later sources will deepen this same node; no empty dependent nodes are created.
+
+\subsection{Recall and next depth}\label{appendix-aa405b7c3903-recall-and-next-depth}
+
+List every mutation that advances the epoch and identify check-then-use races. Pending: production wrappers, wrap policy and concurrent lifetime pinning. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{appendix-aa405b7c3903-source-and-navigation}
+
+\hyperref[01-foundations-i-ch003-when-a-valid-borrow-stops-naming-the-intended-thing]{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

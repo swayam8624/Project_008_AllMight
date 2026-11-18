@@ -1,0 +1,35 @@
+\hypertarget{appendix-fab348609369}{}\label{referencestart:appendix-fab348609369}
+\section{Manifold polygon meshes and boundary structure}\label{appendix-fab348609369-manifold-polygon-meshes-and-boundary-structure}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-fab348609369-definition-and-mechanism}
+
+A polygon mesh is a combinatorial surface made of vertices, edges, and faces plus an embedding that assigns each vertex a position. Manifoldness is a local connectivity condition: an interior edge belongs to two faces, and the faces around each interior vertex form one cycle or fan. At a boundary, an edge belongs to one face and the vertex neighborhood forms one open chain; each boundary component closes into a loop. A bow-tie vertex with two disconnected fans is nonmanifold even if every face is an ordinary triangle. These conditions let algorithms define an unambiguous local tangent neighborhood, traversal, and surface orientation. Connectivity validity does not guarantee good geometry: valid topology can still self-intersect, collapse to a point, or contain poor skinny triangles. Keep topological and geometric quality checks separate.
+
+\subsection{Prerequisites}\label{appendix-fab348609369-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-1bae9457dbc3}{Coordinate frames and change of basis (Vision, XR, and Playable Worlds, Reference notes: Coordinate frames and change of basis)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-fab348609369-used-by}
+
+\begin{itemize}
+\item
+  {Worlds, Images and Inference}
+\item
+  \hyperref[appendix-1aea26b2307f]{Half-edge mesh connectivity}
+\item
+  \hyperref[appendix-1dd4ad54ca57]{Quadric error mesh simplification}
+\item
+  \hyperref[appendix-0b426c47dd78]{Bounding volume hierarchies}
+\item
+  \hyperref[appendix-a9ba01fa72a6]{Collision barriers and continuous detection}
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=appendix-7107009c505b}{Local rigidity and mesh orientation fields (Geometry, Cameras, and Image Formation, Reference notes: Local rigidity and mesh orientation fields)} \#\# Full teaching explanation
+\end{itemize}
+
+\href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch002-surfaces-patches-topology-and-parameterization}{Surfaces, patches, topology, and parameterization (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 9)} · \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing}{Meshes, connectivity, and geometry processing (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 9)} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch032-surface-descriptions-and-gaussian-images}{Surface descriptions and Gaussian images (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 3)}

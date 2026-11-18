@@ -1,0 +1,18 @@
+\hypertarget{appendix-221a483bec2d}{}\label{referencestart:appendix-221a483bec2d}
+\section{Matrix factorization choices}\label{appendix-221a483bec2d-matrix-factorization-choices}
+
+Choose a solver from the matrix promises and task: pivoted LU for general square systems, Cholesky for SPD systems, QR for full-rank least squares, SVD or rank-revealing methods when weak directions matter, and iterative methods for suitable large sparse workloads. Reuse factors for repeated right-hand sides.
+
+\textbf{Use it when:} choosing an algorithm before implementing or calling a numerical routine.
+
+\textbf{Developed in Phase 8:} The factorization should follow the matrix structure and the requested result: LU handles general square systems, Cholesky exploits positive definiteness, QR fits full-rank least squares, and SVD handles uncertain rank and spectral questions. The comparison also weighs sparsity, reuse, memory, and whether an iterative tolerance is acceptable. \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch038-choose-a-factorization-from-structure-and-the-requested-answer}{factorization selection (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 7)} · \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch019-a-runnable-pivoted-lu-reference-preserves-the-elimination-history}{the runnable LU example (Mathematics for Visual Computing, Mathematics for Visual Computing, Chapter 3)}
+
+\subsection{Prerequisites}\label{appendix-221a483bec2d-prerequisites}
+
+\hyperref[appendix-f6e77f4a200f]{Gaussian elimination and pivoting}, \hyperref[appendix-55e4b5b0a1e6]{LU factorization and reusable solves}, \hyperref[appendix-50d2ea3c9b26]{Symmetric positive-definite matrices and Cholesky}, \hyperref[appendix-c3421e6b4f2c]{QR factorization and least squares}, \hyperref[appendix-1fad5e7f36fa]{Singular value decomposition}, \hyperref[appendix-67c87a3d9e94]{Sparse and iterative solvers}.
+
+\subsection{Used by}\label{appendix-221a483bec2d-used-by}
+
+\hyperref[appendix-67c87a3d9e94]{Sparse and iterative solvers}, \hyperref[appendix-0f4bc2bf2b1f]{Matrix functions}.
+
+\textbf{Teaching path:} \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=02-foundations-ii-ch038-close-the-journey-with-an-algorithm-selection-conversation}{selection conversation (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 7)}.

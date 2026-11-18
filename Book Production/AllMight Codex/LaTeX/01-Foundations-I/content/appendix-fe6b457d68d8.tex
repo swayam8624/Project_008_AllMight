@@ -1,0 +1,41 @@
+\hypertarget{appendix-fe6b457d68d8}{}
+\section*{Logical versus bitwise operators}
+\section{Logical versus bitwise operators}\label{logical-versus-bitwise-operators}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C001 · \textbf{Latest development:} C001
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Logical operators reduce operands to conditions; bitwise operators transform corresponding representation lanes.
+
+Built-in \texttt{\&\&}, \texttt{\textbar{}\textbar{}}, and \texttt{!} convert operands to truth conditions. \texttt{\&}, \texttt{\textbar{}}, \texttt{\^{}}, and \texttt{\textasciitilde{}} operate on integer representation bits. For 10 and 12, \texttt{10\ \&\ 12} is 8 whereas \texttt{10\ \&\&\ 12} is true. Overloaded operators may have additional semantics.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-24475e1596a8]{Boolean algebra} --- The logical domain is false/true.
+\item
+  \hyperref[appendix-68b52453737c]{Bitwise AND} --- Per lane: 0\&0=0, 0\&1=0, 1\&0=0, 1\&1=1.
+\item
+  \hyperref[appendix-a427ce8ce8a6]{Bitwise OR} --- Per lane: only 0\textbar0 is 0; the other three cases are 1.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-2e245a6fa8d3]{Short-circuit evaluation} --- uses logical versus bitwise operators as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Explain logical versus bitwise operators without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} overloads, precedence, vector predicates, and branch lowering.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#From\%20a\%20signal\%20to\%20an\%20interpretation}{C001 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

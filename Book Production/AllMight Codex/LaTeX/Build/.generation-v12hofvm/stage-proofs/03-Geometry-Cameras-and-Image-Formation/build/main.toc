@@ -1,0 +1,1015 @@
+\contentsline {chapter}{\numberline {1}Geometry Becomes an Image and an Inverse Problem}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Geometry becomes an image and an inverse problem}{1}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}From Coordinate Frames to Camera Images: Projective Geometry and Cameras}{1}{subsection.1.1.1}%
+\contentsline {subsection}{\numberline {1.1.2}a vector is a measured displacement, a matrix is a frame rule}{2}{subsection.1.1.2}%
+\contentsline {subsection}{\numberline {1.1.3}A coordinate is a claim about a frame}{3}{subsection.1.1.3}%
+\contentsline {subsubsection}{Deriving matrix notation}{4}{subsubsection*.3}%
+\contentsline {subsubsection}{Numerical example}{4}{subsubsection*.4}%
+\contentsline {subsubsection}{General versus orthonormal bases}{5}{subsubsection*.5}%
+\contentsline {subsubsection}{Transformation order changes the result}{6}{subsubsection*.6}%
+\contentsline {subsubsection}{Parent-child transformations}{7}{subsubsection*.7}%
+\contentsline {subsubsection}{World space is a chosen convention}{8}{subsubsection*.8}%
+\contentsline {subsubsection}{World origin and large scenes}{8}{subsubsection*.9}%
+\contentsline {subsection}{\numberline {1.1.4}A camera is an inverse pose}{8}{subsection.1.1.4}%
+\contentsline {subsubsection}{Why use view space?}{9}{subsubsection*.10}%
+\contentsline {subsubsection}{Why clip before perspective division?}{10}{subsubsection*.11}%
+\contentsline {subsubsection}{NDC does not mean raster pixels}{11}{subsubsection*.12}%
+\contentsline {subsubsection}{Continuous raster positions versus discrete pixel indices}{12}{subsubsection*.13}%
+\contentsline {subsubsection}{Texture coordinates are attached to geometry}{12}{subsubsection*.14}%
+\contentsline {subsubsection}{Texture origin conventions}{13}{subsubsection*.15}%
+\contentsline {subsubsection}{Texture filtering}{13}{subsubsection*.16}%
+\contentsline {subsubsection}{Deriving surface tangents from UV coordinates}{13}{subsubsection*.17}%
+\contentsline {subsubsection}{Orthogonalization}{15}{subsubsection*.18}%
+\contentsline {subsubsection}{Nonuniform scaling and normals}{15}{subsubsection*.19}%
+\contentsline {subsubsection}{Numerical example · V11.02.12}{16}{subsubsection*.20}%
+\contentsline {subsubsection}{Homogeneous point representation}{17}{subsubsection*.21}%
+\contentsline {subsubsection}{Why it matters for camera rays}{18}{subsubsection*.22}%
+\contentsline {subsubsection}{Volume scaling}{19}{subsubsection*.23}%
+\contentsline {subsubsection}{Why camera transforms should generally be rigid}{20}{subsubsection*.24}%
+\contentsline {subsubsection}{Camera-to-world transform}{20}{subsubsection*.25}%
+\contentsline {subsubsection}{View transform}{20}{subsubsection*.26}%
+\contentsline {subsubsection}{Orthonormality requirements}{21}{subsubsection*.27}%
+\contentsline {subsubsection}{Why the basis must be recomputed carefully}{22}{subsubsection*.28}%
+\contentsline {subsubsection}{Step 1: Construct forward}{22}{subsubsection*.29}%
+\contentsline {subsubsection}{Step 2: Construct right}{23}{subsubsection*.30}%
+\contentsline {subsubsection}{Step 3: Recompute up}{23}{subsubsection*.31}%
+\contentsline {subsubsection}{Step 4: Construct camera-to-world rotation}{23}{subsubsection*.32}%
+\contentsline {subsubsection}{Step 5: Construct the view matrix}{24}{subsubsection*.33}%
+\contentsline {subsubsection}{Degenerate up vectors}{24}{subsubsection*.34}%
+\contentsline {subsubsection}{Worked look-at example}{24}{subsubsection*.35}%
+\contentsline {subsubsection}{Expanded look-at view matrix}{26}{subsubsection*.36}%
+\contentsline {subsubsection}{Verify camera position maps to origin}{26}{subsubsection*.37}%
+\contentsline {subsubsection}{Verify a target point lies on the forward axis}{26}{subsubsection*.38}%
+\contentsline {subsubsection}{Numerical example · V11.02.31}{27}{subsubsection*.39}%
+\contentsline {subsubsection}{Rotation behaves similarly}{28}{subsubsection*.40}%
+\contentsline {subsubsection}{Passive versus active transformations}{28}{subsubsection*.41}%
+\contentsline {subsubsection}{Connection to robotics and reconstruction}{28}{subsubsection*.42}%
+\contentsline {subsection}{\numberline {1.1.5}Perspective belongs to projective geometry}{29}{subsection.1.1.5}%
+\contentsline {subsubsection}{An ordinary affine transformation}{29}{subsubsection*.43}%
+\contentsline {subsubsection}{Perspective does not preserve parallelism}{30}{subsubsection*.44}%
+\contentsline {subsubsection}{Why a new geometry is useful}{31}{subsubsection*.45}%
+\contentsline {subsubsection}{Directional interpretation}{31}{subsubsection*.46}%
+\contentsline {subsubsection}{Parallel lines meet at an ideal point}{32}{subsubsection*.47}%
+\contentsline {subsubsection}{The line at infinity}{33}{subsubsection*.48}%
+\contentsline {subsubsection}{Three-dimensional projective points at infinity}{33}{subsubsection*.49}%
+\contentsline {subsubsection}{Why zero scaling is excluded}{34}{subsubsection*.50}%
+\contentsline {subsubsection}{Derive invariance under projective transformation}{34}{subsubsection*.51}%
+\contentsline {subsubsection}{Points versus planes under transformation}{35}{subsubsection*.52}%
+\contentsline {subsubsection}{Numerical cautions}{35}{subsubsection*.53}%
+\contentsline {subsubsection}{Construct a line from two points}{36}{subsubsection*.54}%
+\contentsline {subsubsection}{Worked line construction}{36}{subsubsection*.55}%
+\contentsline {subsubsection}{Intersect two lines}{37}{subsubsection*.56}%
+\contentsline {subsubsection}{Worked intersection}{37}{subsubsection*.57}%
+\contentsline {subsubsection}{Line transformation}{38}{subsubsection*.58}%
+\contentsline {subsubsection}{Applications}{38}{subsubsection*.59}%
+\contentsline {subsubsection}{Plane through three points}{39}{subsubsection*.60}%
+\contentsline {subsubsection}{Example}{40}{subsubsection*.61}%
+\contentsline {subsubsection}{Three planes can determine a point}{40}{subsubsection*.62}%
+\contentsline {subsubsection}{Plane transformation revisited}{41}{subsubsection*.63}%
+\contentsline {subsubsection}{Near planes, frustum planes, and projective planes}{41}{subsubsection*.64}%
+\contentsline {chapter}{\numberline {2}Projection, Clipping, and Raster Sampling}{42}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Projection turns rays into clip coordinates}{42}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Why parallel rays matter}{43}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}When orthographic projection is useful}{43}{subsection.2.1.2}%
+\contentsline {subsection}{\numberline {2.1.3}Derive the depth mapping}{44}{subsection.2.1.3}%
+\contentsline {subsection}{\numberline {2.1.4}Assemble the matrix}{45}{subsection.2.1.4}%
+\contentsline {subsection}{\numberline {2.1.5}OpenGL default depth variant}{46}{subsection.2.1.5}%
+\contentsline {subsection}{\numberline {2.1.6}Reversed-Z orthographic variant}{46}{subsection.2.1.6}%
+\contentsline {subsection}{\numberline {2.1.7}Numerical example · V11.03.08}{47}{subsection.2.1.7}%
+\contentsline {subsection}{\numberline {2.1.8}Projected size}{48}{subsection.2.1.8}%
+\contentsline {subsection}{\numberline {2.1.9}Perspective is a rational mapping}{48}{subsection.2.1.9}%
+\contentsline {subsection}{\numberline {2.1.10}Field of view from the viewing triangle}{49}{subsection.2.1.10}%
+\contentsline {subsection}{\numberline {2.1.11}Numerical example · V11.03.12}{49}{subsection.2.1.11}%
+\contentsline {subsection}{\numberline {2.1.12}Worked example · V11.03.13}{51}{subsection.2.1.12}%
+\contentsline {subsection}{\numberline {2.1.13}What happens when \(w_c=0\)?}{51}{subsection.2.1.13}%
+\contentsline {subsection}{\numberline {2.1.14}What happens for negative \(w_c\)?}{51}{subsection.2.1.14}%
+\contentsline {subsection}{\numberline {2.1.15}Why projective equivalence matters}{53}{subsection.2.1.15}%
+\contentsline {subsection}{\numberline {2.1.16}Affine transformations versus projective transformations}{53}{subsection.2.1.16}%
+\contentsline {subsection}{\numberline {2.1.17}Geometric significance of homogeneous \(w=0\)}{53}{subsection.2.1.17}%
+\contentsline {subsection}{\numberline {2.1.18}Why \(w_c=-z_v\) is natural}{54}{subsection.2.1.18}%
+\contentsline {subsection}{\numberline {2.1.19}\(w\) is not always depth}{54}{subsection.2.1.19}%
+\contentsline {subsection}{\numberline {2.1.20}Perspective-correct interpolation preview}{55}{subsection.2.1.20}%
+\contentsline {subsection}{\numberline {2.1.21}Derive the vertical scale}{55}{subsection.2.1.21}%
+\contentsline {subsection}{\numberline {2.1.22}Derive the horizontal scale}{56}{subsection.2.1.22}%
+\contentsline {subsection}{\numberline {2.1.23}Choose homogeneous \(w\)}{57}{subsection.2.1.23}%
+\contentsline {subsection}{\numberline {2.1.24}Derive the depth row}{57}{subsection.2.1.24}%
+\contentsline {subsection}{\numberline {2.1.25}Assemble the matrix · V11.03.26}{58}{subsection.2.1.25}%
+\contentsline {subsection}{\numberline {2.1.26}Verify the near plane}{59}{subsection.2.1.26}%
+\contentsline {subsection}{\numberline {2.1.27}Verify the far plane}{60}{subsection.2.1.27}%
+\contentsline {subsection}{\numberline {2.1.28}Numerical matrix example}{60}{subsection.2.1.28}%
+\contentsline {section}{\numberline {2.2}Depth is a numerical design choice}{61}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Field of view controls perspective scale}{61}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Numerical comparison}{62}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Units: degrees versus radians}{62}{subsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.4}Numerical example · V11.04.05}{63}{subsection.2.2.4}%
+\contentsline {subsection}{\numberline {2.2.5}Why FOV angles are not proportional to aspect ratio}{64}{subsection.2.2.5}%
+\contentsline {subsection}{\numberline {2.2.6}Horizontal versus vertical FOV locking}{64}{subsection.2.2.6}%
+\contentsline {subsection}{\numberline {2.2.7}Example · V11.04.08}{64}{subsection.2.2.7}%
+\contentsline {subsection}{\numberline {2.2.8}Pixel aspect ratio}{65}{subsection.2.2.8}%
+\contentsline {subsection}{\numberline {2.2.9}What does the near plane actually do?}{65}{subsection.2.2.9}%
+\contentsline {subsection}{\numberline {2.2.10}Near clipping is not the same as ray-intersection epsilon}{66}{subsection.2.2.10}%
+\contentsline {subsection}{\numberline {2.2.11}Why a very small near plane can be dangerous}{66}{subsection.2.2.11}%
+\contentsline {subsection}{\numberline {2.2.12}What the far plane controls}{66}{subsection.2.2.12}%
+\contentsline {subsection}{\numberline {2.2.13}Numerical example · V11.04.14}{67}{subsection.2.2.13}%
+\contentsline {subsection}{\numberline {2.2.14}Can the far plane be infinite?}{67}{subsection.2.2.14}%
+\contentsline {subsection}{\numberline {2.2.15}Why depth precision concentrates near the camera}{68}{subsection.2.2.15}%
+\contentsline {subsection}{\numberline {2.2.16}Numerical depth mapping}{68}{subsection.2.2.16}%
+\contentsline {subsection}{\numberline {2.2.17}Approximate physical depth resolution}{69}{subsection.2.2.17}%
+\contentsline {subsection}{\numberline {2.2.18}A 24-bit fixed-point example}{69}{subsection.2.2.18}%
+\contentsline {subsection}{\numberline {2.2.19}How the near plane affects precision}{70}{subsection.2.2.19}%
+\contentsline {subsection}{\numberline {2.2.20}Fixed-point versus floating-point depth}{71}{subsection.2.2.20}%
+\contentsline {subsection}{\numberline {2.2.21}A basic example}{71}{subsection.2.2.21}%
+\contentsline {subsection}{\numberline {2.2.22}Other causes that resemble Z-fighting}{71}{subsection.2.2.22}%
+\contentsline {subsection}{\numberline {2.2.23}Remedies}{72}{subsection.2.2.23}%
+\contentsline {subsection}{\numberline {2.2.24}Deriving reversed-Z}{72}{subsection.2.2.24}%
+\contentsline {subsection}{\numberline {2.2.25}Why floating-point reversed-Z works}{74}{subsection.2.2.25}%
+\contentsline {subsection}{\numberline {2.2.26}Required pipeline changes}{74}{subsection.2.2.26}%
+\contentsline {subsection}{\numberline {2.2.27}Hierarchical Z interpretation}{75}{subsection.2.2.27}%
+\contentsline {subsection}{\numberline {2.2.28}Is reversed-Z equally useful for integer depth?}{75}{subsection.2.2.28}%
+\contentsline {subsection}{\numberline {2.2.29}Conventional zero-to-one infinite perspective}{75}{subsection.2.2.29}%
+\contentsline {subsection}{\numberline {2.2.30}Reversed-Z infinite perspective}{76}{subsection.2.2.30}%
+\contentsline {subsection}{\numberline {2.2.31}Recover positive view depth}{77}{subsection.2.2.31}%
+\contentsline {subsection}{\numberline {2.2.32}Numerical example · V11.04.33}{78}{subsection.2.2.32}%
+\contentsline {subsection}{\numberline {2.2.33}Infinite far does not eliminate every depth issue}{78}{subsection.2.2.33}%
+\contentsline {subsection}{\numberline {2.2.34}Figure C11-1 --- Depth mapping and floating-point spacing work together}{79}{subsection.2.2.34}%
+\contentsline {section}{\numberline {2.3}A projected point still needs a raster convention}{79}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Right-handed projection}{79}{subsection.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2}Conventional left-handed perspective}{80}{subsection.2.3.2}%
+\contentsline {subsection}{\numberline {2.3.3}Handedness does not determine NDC depth range}{81}{subsection.2.3.3}%
+\contentsline {subsection}{\numberline {2.3.4}Handedness and face orientation}{82}{subsection.2.3.4}%
+\contentsline {subsection}{\numberline {2.3.5}Derive the right-handed OpenGL perspective depth row}{82}{subsection.2.3.5}%
+\contentsline {subsection}{\numberline {2.3.6}Depth-buffer mapping}{84}{subsection.2.3.6}%
+\contentsline {subsection}{\numberline {2.3.7}Modern OpenGL clip control}{84}{subsection.2.3.7}%
+\contentsline {subsection}{\numberline {2.3.8}Reversed-Z in OpenGL}{84}{subsection.2.3.8}%
+\contentsline {subsection}{\numberline {2.3.9}What Vulkan does not prescribe}{85}{subsection.2.3.9}%
+\contentsline {subsection}{\numberline {2.3.10}Viewport depth transform}{85}{subsection.2.3.10}%
+\contentsline {subsection}{\numberline {2.3.11}Negative viewport height}{85}{subsection.2.3.11}%
+\contentsline {subsection}{\numberline {2.3.12}Winding and rasterization}{86}{subsection.2.3.12}%
+\contentsline {subsection}{\numberline {2.3.13}Metal projection matrices}{86}{subsection.2.3.13}%
+\contentsline {subsection}{\numberline {2.3.14}Metal matrix memory conventions}{86}{subsection.2.3.14}%
+\contentsline {subsection}{\numberline {2.3.15}Metal depth states}{87}{subsection.2.3.15}%
+\contentsline {subsection}{\numberline {2.3.16}Maveb's existing projection}{87}{subsection.2.3.16}%
+\contentsline {subsection}{\numberline {2.3.17}The mathematical NDC-to-raster choice}{88}{subsection.2.3.17}%
+\contentsline {subsection}{\numberline {2.3.18}Vulkan's positive-height viewport}{89}{subsection.2.3.18}%
+\contentsline {subsection}{\numberline {2.3.19}Alternative: negative Vulkan viewport height}{89}{subsection.2.3.19}%
+\contentsline {subsection}{\numberline {2.3.20}OpenGL window origin}{89}{subsection.2.3.20}%
+\contentsline {subsection}{\numberline {2.3.21}Metal viewport interpretation}{89}{subsection.2.3.21}%
+\contentsline {subsection}{\numberline {2.3.22}Texture coordinates are yet another layer}{90}{subsection.2.3.22}%
+\contentsline {subsection}{\numberline {2.3.23}Deriving X mapping}{90}{subsection.2.3.23}%
+\contentsline {subsection}{\numberline {2.3.24}Deriving Y mapping}{91}{subsection.2.3.24}%
+\contentsline {subsection}{\numberline {2.3.25}Viewport offsets}{92}{subsection.2.3.25}%
+\contentsline {subsection}{\numberline {2.3.26}Viewport depth mapping}{92}{subsection.2.3.26}%
+\contentsline {subsection}{\numberline {2.3.27}Viewport versus scissor}{93}{subsection.2.3.27}%
+\contentsline {subsection}{\numberline {2.3.28}Pixel-centre coordinates in NDC}{93}{subsection.2.3.28}%
+\contentsline {subsection}{\numberline {2.3.29}Example: top-left pixel at 1920×1080}{94}{subsection.2.3.29}%
+\contentsline {subsection}{\numberline {2.3.30}A subtle result for even-resolution images}{95}{subsection.2.3.30}%
+\contentsline {subsection}{\numberline {2.3.31}Picking and ray generation}{95}{subsection.2.3.31}%
+\contentsline {subsection}{\numberline {2.3.32}Direct3D 9 pixel centres}{96}{subsection.2.3.32}%
+\contentsline {subsection}{\numberline {2.3.33}Direct3D 10 and later convention}{96}{subsection.2.3.33}%
+\contentsline {subsection}{\numberline {2.3.34}Why blindly adding half a pixel is wrong}{96}{subsection.2.3.34}%
+\contentsline {subsection}{\numberline {2.3.35}Texture texel centres}{97}{subsection.2.3.35}%
+\contentsline {subsection}{\numberline {2.3.36}Fullscreen triangles and post-processing}{97}{subsection.2.3.36}%
+\contentsline {subsection}{\numberline {2.3.37}Historical compatibility}{97}{subsection.2.3.37}%
+\contentsline {chapter}{\numberline {3}Robust Predicates and Camera Sensitivity}{98}{chapter.3}%
+\contentsline {section}{\numberline {3.1}A sign can matter more than a coordinate: robust predicates}{98}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Filtering before exact work}{98}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Predicates and constructions have different contracts}{99}{subsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.1.3}Worked scale check}{99}{subsection.3.1.3}%
+\contentsline {subsection}{\numberline {3.1.4}Where this belongs in a renderer or vision system}{100}{subsection.3.1.4}%
+\contentsline {section}{\numberline {3.2}The viewing volume is six half-spaces}{100}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Derive the geometry from field of view}{100}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Numerical example · V11.06.03}{101}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Why a frustum is a convex volume}{102}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}What frustum culling can and cannot prove}{102}{subsection.3.2.4}%
+\contentsline {subsection}{\numberline {3.2.5}Worked construction}{103}{subsection.3.2.5}%
+\contentsline {subsection}{\numberline {3.2.6}Transform corners into world space}{104}{subsection.3.2.6}%
+\contentsline {subsection}{\numberline {3.2.7}Frustum corners from inverse view-projection}{104}{subsection.3.2.7}%
+\contentsline {subsection}{\numberline {3.2.8}Reversed-Z changes corner assignments}{105}{subsection.3.2.8}%
+\contentsline {subsection}{\numberline {3.2.9}Infinite-far geometry}{105}{subsection.3.2.9}%
+\contentsline {subsection}{\numberline {3.2.10}Signed distance}{106}{subsection.3.2.10}%
+\contentsline {subsection}{\numberline {3.2.11}Choose inward-facing normals}{106}{subsection.3.2.11}%
+\contentsline {subsection}{\numberline {3.2.12}Derive the near and far planes}{106}{subsection.3.2.12}%
+\contentsline {subsection}{\numberline {3.2.13}Derive the side planes}{107}{subsection.3.2.13}%
+\contentsline {subsection}{\numberline {3.2.14}Normalize the side planes}{108}{subsection.3.2.14}%
+\contentsline {subsection}{\numberline {3.2.15}Derive the left plane}{109}{subsection.3.2.15}%
+\contentsline {subsection}{\numberline {3.2.16}Right plane}{110}{subsection.3.2.16}%
+\contentsline {subsection}{\numberline {3.2.17}Bottom and top planes}{110}{subsection.3.2.17}%
+\contentsline {subsection}{\numberline {3.2.18}Near and far for zero-to-one clip depth}{110}{subsection.3.2.18}%
+\contentsline {subsection}{\numberline {3.2.19}OpenGL-style negative-one-to-one depth}{111}{subsection.3.2.19}%
+\contentsline {subsection}{\numberline {3.2.20}Summary extraction table}{111}{subsection.3.2.20}%
+\contentsline {subsection}{\numberline {3.2.21}Normalize and validate}{112}{subsection.3.2.21}%
+\contentsline {subsection}{\numberline {3.2.22}Model-space frustum planes}{112}{subsection.3.2.22}%
+\contentsline {subsection}{\numberline {3.2.23}Derive the three cases}{113}{subsection.3.2.23}%
+\contentsline {subsection}{\numberline {3.2.24}Culling against all planes}{113}{subsection.3.2.24}%
+\contentsline {subsection}{\numberline {3.2.25}Numerical example · V11.06.26}{114}{subsection.3.2.25}%
+\contentsline {subsection}{\numberline {3.2.26}Why this test is conservative}{115}{subsection.3.2.26}%
+\contentsline {subsection}{\numberline {3.2.27}Transforming a local sphere into world space}{115}{subsection.3.2.27}%
+\contentsline {subsection}{\numberline {3.2.28}Derive the projected radius}{116}{subsection.3.2.28}%
+\contentsline {subsection}{\numberline {3.2.29}Culling condition}{117}{subsection.3.2.29}%
+\contentsline {subsection}{\numberline {3.2.30}Numerical example · V11.06.31}{118}{subsection.3.2.30}%
+\contentsline {subsection}{\numberline {3.2.31}Why AABB tests can outperform sphere tests}{119}{subsection.3.2.31}%
+\contentsline {subsection}{\numberline {3.2.32}A robust culling pipeline}{119}{subsection.3.2.32}%
+\contentsline {subsection}{\numberline {3.2.33}Why ordinary near clipping is insufficient}{120}{subsection.3.2.33}%
+\contentsline {subsection}{\numberline {3.2.34}Plane transformation between spaces}{120}{subsection.3.2.34}%
+\contentsline {subsection}{\numberline {3.2.35}Clipping as a half-space inequality}{121}{subsection.3.2.35}%
+\contentsline {subsection}{\numberline {3.2.36}Oblique matrix construction is convention-dependent}{121}{subsection.3.2.36}%
+\contentsline {subsection}{\numberline {3.2.37}Practical safeguards}{121}{subsection.3.2.37}%
+\contentsline {subsection}{\numberline {3.2.38}Figure C11-2 --- Culling is a conservative half-space test}{121}{subsection.3.2.38}%
+\contentsline {section}{\numberline {3.3}Raster interpolation remembers homogeneous depth}{122}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}A simple segment example}{122}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Derive the corrected midpoint}{123}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}What visual error does naive interpolation cause?}{124}{subsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.3.4}Depth is a special case}{124}{subsection.3.3.4}%
+\contentsline {subsection}{\numberline {3.3.5}Homogeneous projected vertices}{125}{subsection.3.3.5}%
+\contentsline {subsection}{\numberline {3.3.6}Solve for the original weights}{126}{subsection.3.3.6}%
+\contentsline {subsection}{\numberline {3.3.7}Recover the attribute}{127}{subsection.3.3.7}%
+\contentsline {subsection}{\numberline {3.3.8}Numerical triangle example}{127}{subsection.3.3.8}%
+\contentsline {subsection}{\numberline {3.3.9}Derive reciprocal-depth interpolation}{128}{subsection.3.3.9}%
+\contentsline {subsection}{\numberline {3.3.10}Why this is a rational expression}{128}{subsection.3.3.10}%
+\contentsline {subsection}{\numberline {3.3.11}Important implementation choices}{128}{subsection.3.3.11}%
+\contentsline {subsection}{\numberline {3.3.12}Derive using two edge vectors}{129}{subsection.3.3.12}%
+\contentsline {subsection}{\numberline {3.3.13}Derive the determinant form}{130}{subsection.3.3.13}%
+\contentsline {subsection}{\numberline {3.3.14}Numerical example · V11.10.15}{130}{subsection.3.3.14}%
+\contentsline {subsection}{\numberline {3.3.15}Point-in-triangle testing}{131}{subsection.3.3.15}%
+\contentsline {subsection}{\numberline {3.3.16}Triangle degeneracy}{132}{subsection.3.3.16}%
+\contentsline {subsection}{\numberline {3.3.17}Edge functions}{132}{subsection.3.3.17}%
+\contentsline {subsection}{\numberline {3.3.18}Figure C11-3 --- Attributes follow reciprocal clip w}{132}{subsection.3.3.18}%
+\contentsline {section}{\numberline {3.4}Intrinsics map optical rays to pixels}{133}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Start from the physical pinhole model}{133}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}From normalized image coordinates to pixels}{134}{subsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.3}Intrinsics are not just sensor metadata}{134}{subsection.3.4.3}%
+\contentsline {subsection}{\numberline {3.4.4}Focal length versus field of view}{135}{subsection.3.4.4}%
+\contentsline {subsection}{\numberline {3.4.5}Numerical example · V11.11.06}{136}{subsection.3.4.5}%
+\contentsline {subsection}{\numberline {3.4.6}Why focal length controls perspective framing but not perspective existence}{136}{subsection.3.4.6}%
+\contentsline {subsection}{\numberline {3.4.7}Why it may be off-centre}{136}{subsection.3.4.7}%
+\contentsline {subsection}{\numberline {3.4.8}Principal-point offset changes ray directions}{137}{subsection.3.4.8}%
+\contentsline {subsection}{\numberline {3.4.9}Numerical example · V11.11.10}{137}{subsection.3.4.9}%
+\contentsline {subsection}{\numberline {3.4.10}Sensor dimensions}{138}{subsection.3.4.10}%
+\contentsline {subsection}{\numberline {3.4.11}Numerical example · V11.11.12}{139}{subsection.3.4.11}%
+\contentsline {subsection}{\numberline {3.4.12}How intrinsics change when resizing an image}{139}{subsection.3.4.12}%
+\contentsline {subsection}{\numberline {3.4.13}Cropping}{140}{subsection.3.4.13}%
+\contentsline {subsection}{\numberline {3.4.14}From camera coordinates to homogeneous pixels}{140}{subsection.3.4.14}%
+\contentsline {subsection}{\numberline {3.4.15}Numerical example · V11.11.16}{141}{subsection.3.4.15}%
+\contentsline {subsection}{\numberline {3.4.16}Inverse intrinsics}{142}{subsection.3.4.16}%
+\contentsline {subsection}{\numberline {3.4.17}Why \(K\) is not the same as a GPU projection matrix}{143}{subsection.3.4.17}%
+\contentsline {section}{\numberline {3.5}derivative means local image sensitivity}{143}{section.3.5}%
+\contentsline {section}{\numberline {3.6}covariance carries both size and direction of uncertainty}{144}{section.3.6}%
+\contentsline {chapter}{\numberline {4}Camera Extrinsics and Projection Geometry}{145}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Extrinsics place the optical camera in the world}{145}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Camera centre versus extrinsic translation}{145}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Numerical example · V11.12.03}{146}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}Camera-to-world versus world-to-camera}{146}{subsection.4.1.3}%
+\contentsline {subsection}{\numberline {4.1.4}The camera projection matrix in computer vision}{148}{subsection.4.1.4}%
+\contentsline {subsection}{\numberline {4.1.5}Example · V11.12.06}{148}{subsection.4.1.5}%
+\contentsline {subsection}{\numberline {4.1.6}Coordinate convention mismatch: graphics versus CV}{149}{subsection.4.1.6}%
+\contentsline {subsection}{\numberline {4.1.7}Complete projection equation}{150}{subsection.4.1.7}%
+\contentsline {subsection}{\numberline {4.1.8}Why a single image cannot determine unique 3D depth}{151}{subsection.4.1.8}%
+\contentsline {subsection}{\numberline {4.1.9}Projective scale ambiguity}{151}{subsection.4.1.9}%
+\contentsline {subsection}{\numberline {4.1.10}Reprojection error}{152}{subsection.4.1.10}%
+\contentsline {subsection}{\numberline {4.1.11}Projection Jacobian}{152}{subsection.4.1.11}%
+\contentsline {subsection}{\numberline {4.1.12}Figure C11-8 --- Residual count does not guarantee observable motion}{154}{subsection.4.1.12}%
+\contentsline {section}{\numberline {4.2}distortion is a forward map; undistortion solves its inverse}{154}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Real lenses bend the pinhole image}{154}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Two different coordinate pairs}{154}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Why distortion must be modeled separately from \(K\)}{155}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.3.3}Different lens families require different models}{155}{subsection.4.3.3}%
+\contentsline {subsection}{\numberline {4.3.4}Distortion and calibration residuals}{155}{subsection.4.3.4}%
+\contentsline {subsection}{\numberline {4.3.5}Why powers of \(r^2\) appear}{156}{subsection.4.3.5}%
+\contentsline {subsection}{\numberline {4.3.6}Barrel distortion}{157}{subsection.4.3.6}%
+\contentsline {subsection}{\numberline {4.3.7}Pincushion distortion}{157}{subsection.4.3.7}%
+\contentsline {subsection}{\numberline {4.3.8}Numerical example · V11.13.09}{157}{subsection.4.3.8}%
+\contentsline {subsection}{\numberline {4.3.9}Why radial distortion can become non-invertible}{158}{subsection.4.3.9}%
+\contentsline {subsection}{\numberline {4.3.10}Rational radial distortion}{159}{subsection.4.3.10}%
+\contentsline {subsection}{\numberline {4.3.11}Full radial-plus-tangential model}{160}{subsection.4.3.11}%
+\contentsline {subsection}{\numberline {4.3.12}Numerical example with tangential distortion only}{160}{subsection.4.3.12}%
+\contentsline {subsection}{\numberline {4.3.13}Units and interpretation}{161}{subsection.4.3.13}%
+\contentsline {subsection}{\numberline {4.3.14}Complete projection pipeline with distortion}{162}{subsection.4.3.14}%
+\contentsline {subsection}{\numberline {4.3.15}Convert observed pixels to distorted normalized coordinates}{163}{subsection.4.3.15}%
+\contentsline {subsection}{\numberline {4.3.16}Fixed-point inversion}{163}{subsection.4.3.16}%
+\contentsline {subsection}{\numberline {4.3.17}Newton inversion}{164}{subsection.4.3.17}%
+\contentsline {subsection}{\numberline {4.3.18}Derive the distortion Jacobian}{164}{subsection.4.3.18}%
+\contentsline {subsection}{\numberline {4.3.19}Solve the Newton system}{166}{subsection.4.3.19}%
+\contentsline {subsection}{\numberline {4.3.20}What can go wrong?}{167}{subsection.4.3.20}%
+\contentsline {subsection}{\numberline {4.3.21}Undistorting an image is not just undistorting its corner points}{167}{subsection.4.3.21}%
+\contentsline {subsection}{\numberline {4.3.22}Distortion and reprojection uncertainty}{168}{subsection.4.3.22}%
+\contentsline {subsection}{\numberline {4.3.23}Figure C11-6 --- Distortion is a map with a domain, not just a coefficient list}{168}{subsection.4.3.23}%
+\contentsline {section}{\numberline {4.4}Recover geometry from depth and construct screen-space rays}{168}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Derive the geometric relationship}{169}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}Numerical example · V11.14.03}{170}{subsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.4.3}Converting a range image to axial depth}{170}{subsection.4.4.3}%
+\contentsline {subsection}{\numberline {4.4.4}Start from the perspective matrix}{171}{subsection.4.4.4}%
+\contentsline {subsection}{\numberline {4.4.5}Conventional finite zero-to-one depth}{171}{subsection.4.4.5}%
+\contentsline {subsection}{\numberline {4.4.6}Finite reversed-Z}{172}{subsection.4.4.6}%
+\contentsline {subsection}{\numberline {4.4.7}Infinite reversed-Z}{172}{subsection.4.4.7}%
+\contentsline {subsection}{\numberline {4.4.8}Traditional OpenGL NDC depth}{173}{subsection.4.4.8}%
+\contentsline {subsection}{\numberline {4.4.9}A generalized endpoint derivation}{173}{subsection.4.4.9}%
+\contentsline {subsection}{\numberline {4.4.10}Numerical example · V11.14.11}{174}{subsection.4.4.10}%
+\contentsline {subsection}{\numberline {4.4.11}Numerical stability matters when linearizing}{175}{subsection.4.4.11}%
+\contentsline {subsection}{\numberline {4.4.12}Method A: reconstruct from NDC and FOV}{175}{subsection.4.4.12}%
+\contentsline {subsection}{\numberline {4.4.13}Numerical example · V11.14.14}{176}{subsection.4.4.13}%
+\contentsline {subsection}{\numberline {4.4.14}Method B: inverse projection}{177}{subsection.4.4.14}%
+\contentsline {subsection}{\numberline {4.4.15}Why this works}{177}{subsection.4.4.15}%
+\contentsline {subsection}{\numberline {4.4.16}Important implementation details}{178}{subsection.4.4.16}%
+\contentsline {subsection}{\numberline {4.4.17}A concrete worked example}{178}{subsection.4.4.17}%
+\contentsline {subsection}{\numberline {4.4.18}Why large-world systems need special care}{179}{subsection.4.4.18}%
+\contentsline {subsection}{\numberline {4.4.19}Why inverse VP sometimes fails in practice}{179}{subsection.4.4.19}%
+\contentsline {subsection}{\numberline {4.4.20}Perspective camera: derive the ray from NDC}{179}{subsection.4.4.20}%
+\contentsline {subsection}{\numberline {4.4.21}Pixel centre to NDC}{180}{subsection.4.4.21}%
+\contentsline {subsection}{\numberline {4.4.22}Example: 90-degree square camera}{180}{subsection.4.4.22}%
+\contentsline {subsection}{\numberline {4.4.23}Orthographic cameras are different}{181}{subsection.4.4.23}%
+\contentsline {subsection}{\numberline {4.4.24}Ray generation through inverse projection}{181}{subsection.4.4.24}%
+\contentsline {subsection}{\numberline {4.4.25}Worked viewport example}{182}{subsection.4.4.25}%
+\contentsline {subsection}{\numberline {4.4.26}The rest of the picking pipeline}{183}{subsection.4.4.26}%
+\contentsline {subsection}{\numberline {4.4.27}Picking from an object-ID buffer}{183}{subsection.4.4.27}%
+\contentsline {subsection}{\numberline {4.4.28}High-DPI displays}{183}{subsection.4.4.28}%
+\contentsline {section}{\numberline {4.5}stereo turns a calibrated angle into a distance}{184}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Build projection and stereo geometry around real camera baselines}{184}{section.4.6}%
+\contentsline {subsection}{\numberline {4.6.1}Derive the matrix}{184}{subsection.4.6.1}%
+\contentsline {subsection}{\numberline {4.6.2}Worked example · V11.15.03}{186}{subsection.4.6.2}%
+\contentsline {subsection}{\numberline {4.6.3}What off-axis projection is not}{186}{subsection.4.6.3}%
+\contentsline {subsection}{\numberline {4.6.4}Derive the two image coordinates}{187}{subsection.4.6.4}%
+\contentsline {subsection}{\numberline {4.6.5}Recover depth}{188}{subsection.4.6.5}%
+\contentsline {subsection}{\numberline {4.6.6}Numerical example · V11.15.07}{188}{subsection.4.6.6}%
+\contentsline {subsection}{\numberline {4.6.7}Why stereo depth accuracy worsens at distance}{189}{subsection.4.6.7}%
+\contentsline {subsection}{\numberline {4.6.8}Depth-uncertainty example}{189}{subsection.4.6.8}%
+\contentsline {subsection}{\numberline {4.6.9}Rectification and epipolar constraints}{190}{subsection.4.6.9}%
+\contentsline {subsection}{\numberline {4.6.10}Why IPD matters}{190}{subsection.4.6.10}%
+\contentsline {subsection}{\numberline {4.6.11}Eye centres, lens centres, and display centres are different}{191}{subsection.4.6.11}%
+\contentsline {subsection}{\numberline {4.6.12}Practical XR architecture}{191}{subsection.4.6.12}%
+\contentsline {subsection}{\numberline {4.6.13}Why asymmetry appears}{191}{subsection.4.6.13}%
+\contentsline {subsection}{\numberline {4.6.14}Derive shifted near-plane bounds}{191}{subsection.4.6.14}%
+\contentsline {subsection}{\numberline {4.6.15}The zero-parallax plane}{192}{subsection.4.6.15}%
+\contentsline {subsection}{\numberline {4.6.16}Why toe-in stereo is problematic}{192}{subsection.4.6.16}%
+\contentsline {subsection}{\numberline {4.6.17}OpenXR angular frusta}{193}{subsection.4.6.17}%
+\contentsline {subsection}{\numberline {4.6.18}Derive translational parallax}{193}{subsection.4.6.18}%
+\contentsline {subsection}{\numberline {4.6.19}Numerical example · V11.15.20}{194}{subsection.4.6.19}%
+\contentsline {subsection}{\numberline {4.6.20}Relative parallax}{195}{subsection.4.6.20}%
+\contentsline {subsection}{\numberline {4.6.21}Rotation versus translation}{195}{subsection.4.6.21}%
+\contentsline {subsection}{\numberline {4.6.22}Parallax is not identical to perceived depth}{195}{subsection.4.6.22}%
+\contentsline {subsection}{\numberline {4.6.23}Figure C11-4 --- Stereo turns pixel uncertainty into depth uncertainty}{196}{subsection.4.6.23}%
+\contentsline {section}{\numberline {4.7}Represent directions over the full sphere}{196}{section.4.7}%
+\contentsline {subsection}{\numberline {4.7.1}Construct six camera directions}{196}{subsection.4.7.1}%
+\contentsline {subsection}{\numberline {4.7.2}Derive a cubemap direction mapping}{197}{subsection.4.7.2}%
+\contentsline {subsection}{\numberline {4.7.3}Why the mapping is not uniform in solid angle}{197}{subsection.4.7.3}%
+\contentsline {subsection}{\numberline {4.7.4}Cubemaps and real environment reconstruction}{198}{subsection.4.7.4}%
+\contentsline {subsection}{\numberline {4.7.5}Seam debugging}{198}{subsection.4.7.5}%
+\contentsline {subsection}{\numberline {4.7.6}Define spherical coordinates}{198}{subsection.4.7.6}%
+\contentsline {subsection}{\numberline {4.7.7}Convert image UV to angles}{199}{subsection.4.7.7}%
+\contentsline {subsection}{\numberline {4.7.8}Inverse mapping}{199}{subsection.4.7.8}%
+\contentsline {subsection}{\numberline {4.7.9}Equirectangular is not equal-area}{200}{subsection.4.7.9}%
+\contentsline {subsection}{\numberline {4.7.10}Importance sampling an HDR panorama}{200}{subsection.4.7.10}%
+\contentsline {subsection}{\numberline {4.7.11}Why this matters to Maveb}{201}{subsection.4.7.11}%
+\contentsline {subsection}{\numberline {4.7.12}Four common fisheye mappings}{201}{subsection.4.7.12}%
+\contentsline {subsection}{\numberline {4.7.13}Derive the equidistant mapping}{202}{subsection.4.7.13}%
+\contentsline {subsection}{\numberline {4.7.14}Derive the equisolid-angle form}{202}{subsection.4.7.14}%
+\contentsline {subsection}{\numberline {4.7.15}Numerical comparison · V11.16.16}{203}{subsection.4.7.15}%
+\contentsline {subsection}{\numberline {4.7.16}Generate a fisheye ray from a pixel}{203}{subsection.4.7.16}%
+\contentsline {subsection}{\numberline {4.7.17}Why fisheye matters for XR and capture}{204}{subsection.4.7.17}%
+\contentsline {subsection}{\numberline {4.7.18}Figure C11-7 --- Image coordinates need a sampling-measure conversion}{204}{subsection.4.7.18}%
+\contentsline {chapter}{\numberline {5}Exposure, Physical Optics, and Depth of Field}{206}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Model exposure, physical optics, and depth of field}{206}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}Exposure versus scene radiance}{206}{subsection.5.1.1}%
+\contentsline {subsection}{\numberline {5.1.2}Exposure stops}{206}{subsection.5.1.2}%
+\contentsline {subsection}{\numberline {5.1.3}Photographic exposure value}{207}{subsection.5.1.3}%
+\contentsline {subsection}{\numberline {5.1.4}Derive the EV relationship}{207}{subsection.5.1.4}%
+\contentsline {subsection}{\numberline {5.1.5}Numerical example · V11.17.06}{208}{subsection.5.1.5}%
+\contentsline {subsection}{\numberline {5.1.6}Exposure and tone mapping are not the same}{209}{subsection.5.1.6}%
+\contentsline {subsection}{\numberline {5.1.7}Auto-exposure}{209}{subsection.5.1.7}%
+\contentsline {subsection}{\numberline {5.1.8}F-number is inversely related to aperture size}{210}{subsection.5.1.8}%
+\contentsline {subsection}{\numberline {5.1.9}Derive the aperture area}{210}{subsection.5.1.9}%
+\contentsline {subsection}{\numberline {5.1.10}The f-stop sequence}{211}{subsection.5.1.10}%
+\contentsline {subsection}{\numberline {5.1.11}Aperture affects more than brightness}{211}{subsection.5.1.11}%
+\contentsline {subsection}{\numberline {5.1.12}Sampling a disk uniformly}{211}{subsection.5.1.12}%
+\contentsline {subsection}{\numberline {5.1.13}Mathematical image formation over time}{212}{subsection.5.1.13}%
+\contentsline {subsection}{\numberline {5.1.14}Motion blur as a temporal integral}{213}{subsection.5.1.14}%
+\contentsline {subsection}{\numberline {5.1.15}A moving-point example}{213}{subsection.5.1.15}%
+\contentsline {subsection}{\numberline {5.1.16}Global shutter versus rolling shutter}{214}{subsection.5.1.16}%
+\contentsline {subsection}{\numberline {5.1.17}Shutter angle}{214}{subsection.5.1.17}%
+\contentsline {subsection}{\numberline {5.1.18}A critical ray-tracing implementation detail}{215}{subsection.5.1.18}%
+\contentsline {subsection}{\numberline {5.1.19}Simple exposure model}{215}{subsection.5.1.19}%
+\contentsline {subsection}{\numberline {5.1.20}Numerical example · V11.17.21}{215}{subsection.5.1.20}%
+\contentsline {subsection}{\numberline {5.1.21}ISO and noise}{216}{subsection.5.1.21}%
+\contentsline {subsection}{\numberline {5.1.22}Why physically based renderers must distinguish exposure from gain}{216}{subsection.5.1.22}%
+\contentsline {subsection}{\numberline {5.1.23}EV100 example}{216}{subsection.5.1.23}%
+\contentsline {subsection}{\numberline {5.1.24}The thin-lens equation}{217}{subsection.5.1.24}%
+\contentsline {subsection}{\numberline {5.1.25}Derive the CoC diameter}{218}{subsection.5.1.25}%
+\contentsline {subsection}{\numberline {5.1.26}Numerical example · V11.17.27}{218}{subsection.5.1.26}%
+\contentsline {subsection}{\numberline {5.1.27}CoC in pixels}{219}{subsection.5.1.27}%
+\contentsline {subsection}{\numberline {5.1.28}Signed CoC}{220}{subsection.5.1.28}%
+\contentsline {subsection}{\numberline {5.1.29}CoC is not a perfect physical blur disk}{220}{subsection.5.1.29}%
+\contentsline {subsection}{\numberline {5.1.30}Depth of field depends on the output criterion}{220}{subsection.5.1.30}%
+\contentsline {subsection}{\numberline {5.1.31}Derive the hyperfocal distance}{221}{subsection.5.1.31}%
+\contentsline {subsection}{\numberline {5.1.32}Numerical hyperfocal example}{221}{subsection.5.1.32}%
+\contentsline {subsection}{\numberline {5.1.33}Derive near and far DoF limits}{222}{subsection.5.1.33}%
+\contentsline {subsection}{\numberline {5.1.34}What happens beyond the hyperfocal focus distance?}{224}{subsection.5.1.34}%
+\contentsline {subsection}{\numberline {5.1.35}What changes DoF?}{224}{subsection.5.1.35}%
+\contentsline {subsection}{\numberline {5.1.36}Depth of field as a rendering integral}{225}{subsection.5.1.36}%
+\contentsline {subsection}{\numberline {5.1.37}Geometry of the camera}{225}{subsection.5.1.37}%
+\contentsline {subsection}{\numberline {5.1.38}Step 1: Construct the pinhole viewing direction}{226}{subsection.5.1.38}%
+\contentsline {subsection}{\numberline {5.1.39}Step 2: Intersect the pinhole ray with the focus plane}{226}{subsection.5.1.39}%
+\contentsline {subsection}{\numberline {5.1.40}Step 3: Sample the aperture}{227}{subsection.5.1.40}%
+\contentsline {subsection}{\numberline {5.1.41}Step 4: Construct the new ray}{227}{subsection.5.1.41}%
+\contentsline {subsection}{\numberline {5.1.42}Why all aperture rays agree at the focus plane}{228}{subsection.5.1.42}%
+\contentsline {subsection}{\numberline {5.1.43}A simple numerical example}{228}{subsection.5.1.43}%
+\contentsline {subsection}{\numberline {5.1.44}Step 5: Transform lens rays into world space}{229}{subsection.5.1.44}%
+\contentsline {subsection}{\numberline {5.1.45}C++23 implementation}{230}{subsection.5.1.45}%
+\contentsline {subsection}{\numberline {5.1.46}Pinhole limit}{231}{subsection.5.1.46}%
+\contentsline {subsection}{\numberline {5.1.47}Focal length versus focus distance}{232}{subsection.5.1.47}%
+\contentsline {subsection}{\numberline {5.1.48}Lens and shutter sampling together}{232}{subsection.5.1.48}%
+\contentsline {subsection}{\numberline {5.1.49}Figure C11-5 --- Focus distance, focal length and aperture are different controls}{232}{subsection.5.1.49}%
+\contentsline {section}{\numberline {5.2}A camera image changes over time}{232}{section.5.2}%
+\contentsline {subsection}{\numberline {5.2.1}Why different samples reveal different information}{233}{subsection.5.2.1}%
+\contentsline {subsection}{\numberline {5.2.2}A simple two-frame jitter example}{234}{subsection.5.2.2}%
+\contentsline {subsection}{\numberline {5.2.3}Jitter sequences}{234}{subsection.5.2.3}%
+\contentsline {subsection}{\numberline {5.2.4}Jitter amplitude}{234}{subsection.5.2.4}%
+\contentsline {subsection}{\numberline {5.2.5}The geometry of temporal error}{235}{subsection.5.2.5}%
+\contentsline {subsection}{\numberline {5.2.6}Matrix-row derivation}{236}{subsection.5.2.6}%
+\contentsline {subsection}{\numberline {5.2.7}Convert pixel jitter to NDC jitter}{236}{subsection.5.2.7}%
+\contentsline {subsection}{\numberline {5.2.8}Numerical example · V11.07.09}{237}{subsection.5.2.8}%
+\contentsline {subsection}{\numberline {5.2.9}How this changes a conventional perspective matrix}{238}{subsection.5.2.9}%
+\contentsline {subsection}{\numberline {5.2.10}Jittered versus unjittered projection}{238}{subsection.5.2.10}%
+\contentsline {subsection}{\numberline {5.2.11}Deriving reprojection for a static world point}{239}{subsection.5.2.11}%
+\contentsline {subsection}{\numberline {5.2.12}Camera-only reprojection from current clip space}{240}{subsection.5.2.12}%
+\contentsline {subsection}{\numberline {5.2.13}Previous model matrices}{240}{subsection.5.2.13}%
+\contentsline {subsection}{\numberline {5.2.14}Deformation is another case}{241}{subsection.5.2.14}%
+\contentsline {subsection}{\numberline {5.2.15}Camera cuts and history validity}{241}{subsection.5.2.15}%
+\contentsline {subsection}{\numberline {5.2.16}Derive camera-translation screen motion}{241}{subsection.5.2.16}%
+\contentsline {subsection}{\numberline {5.2.17}NDC motion versus pixel motion}{243}{subsection.5.2.17}%
+\contentsline {subsection}{\numberline {5.2.18}Jitter contribution to motion vectors}{243}{subsection.5.2.18}%
+\contentsline {subsection}{\numberline {5.2.19}Translation, rotation, and parallax}{244}{subsection.5.2.19}%
+\contentsline {subsection}{\numberline {5.2.20}Motion vectors are not optical flow}{244}{subsection.5.2.20}%
+\contentsline {section}{\numberline {5.3}Large worlds need local arithmetic}{244}{section.5.3}%
+\contentsline {subsection}{\numberline {5.3.1}Bad order of operations}{245}{subsection.5.3.1}%
+\contentsline {subsection}{\numberline {5.3.2}Better order}{245}{subsection.5.3.2}%
+\contentsline {subsection}{\numberline {5.3.3}Numerical demonstration}{245}{subsection.5.3.3}%
+\contentsline {subsection}{\numberline {5.3.4}Object-relative vertices}{246}{subsection.5.3.4}%
+\contentsline {subsection}{\numberline {5.3.5}Why camera-relative rendering matters for temporal history}{246}{subsection.5.3.5}%
+\contentsline {subsection}{\numberline {5.3.6}Derive float spacing}{247}{subsection.5.3.6}%
+\contentsline {subsection}{\numberline {5.3.7}Consequences in a graphics engine}{248}{subsection.5.3.7}%
+\contentsline {subsection}{\numberline {5.3.8}Difference between absolute and relative accuracy}{248}{subsection.5.3.8}%
+\contentsline {subsection}{\numberline {5.3.9}The limitation of merely switching matrix multiplication to double}{248}{subsection.5.3.9}%
+\contentsline {subsection}{\numberline {5.3.10}Numerical example · V11.08.11}{249}{subsection.5.3.10}%
+\contentsline {subsection}{\numberline {5.3.11}What must be rebased?}{250}{subsection.5.3.11}%
+\contentsline {subsection}{\numberline {5.3.12}Spatial acceleration structures}{250}{subsection.5.3.12}%
+\contentsline {subsection}{\numberline {5.3.13}Temporal history problem}{250}{subsection.5.3.13}%
+\contentsline {subsection}{\numberline {5.3.14}Camera-relative rendering versus origin rebasing}{251}{subsection.5.3.14}%
+\contentsline {subsection}{\numberline {5.3.15}A double-precision rigid view transform}{251}{subsection.5.3.15}%
+\contentsline {subsection}{\numberline {5.3.16}Why rotation also matters}{252}{subsection.5.3.16}%
+\contentsline {subsection}{\numberline {5.3.17}Precision must be end-to-end}{252}{subsection.5.3.17}%
+\contentsline {subsection}{\numberline {5.3.18}Repository connection: Maveb camera paths}{253}{subsection.5.3.18}%
+\contentsline {section}{\numberline {5.4}calibration needs observable parameters and a fixed reference}{253}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Calibration needs informative observations and a fixed gauge}{254}{section.5.5}%
+\contentsline {subsection}{\numberline {5.5.1}Gauge freedom: the whole scene can move without changing its image}{254}{subsection.5.5.1}%
+\contentsline {subsection}{\numberline {5.5.2}Planar calibration and the danger of repetitive views}{254}{subsection.5.5.2}%
+\contentsline {subsection}{\numberline {5.5.3}Small worked observability example}{255}{subsection.5.5.3}%
+\contentsline {subsection}{\numberline {5.5.4}Design calibration as an experiment}{255}{subsection.5.5.4}%
+\contentsline {subsection}{\numberline {5.5.5}The solver does not erase ambiguity}{255}{subsection.5.5.5}%
+\contentsline {section}{\numberline {5.6}Calibrated two-view geometry: direction before distance}{256}{section.5.6}%
+\contentsline {section}{\numberline {5.7}Gauge freedom, singular values, and choosing a physical pose}{257}{section.5.7}%
+\contentsline {section}{\numberline {5.8}Planes change the model}{257}{section.5.8}%
+\contentsline {section}{\numberline {5.9}Why three views contribute information beyond pairs}{258}{section.5.9}%
+\contentsline {section}{\numberline {5.10}A camera ray carries a pixel footprint}{259}{section.5.10}%
+\contentsline {subsection}{\numberline {5.10.1}Why this prevents shimmer}{259}{subsection.5.10.1}%
+\contentsline {subsection}{\numberline {5.10.2}Sample spacing is part of the derivative}{260}{subsection.5.10.2}%
+\contentsline {subsection}{\numberline {5.10.3}The camera's probability measure must match its samples}{260}{subsection.5.10.3}%
+\contentsline {subsection}{\numberline {5.10.4}Worked perspective example}{260}{subsection.5.10.4}%
+\contentsline {subsection}{\numberline {5.10.5}Practical checks and limitations}{261}{subsection.5.10.5}%
+\contentsline {section}{\numberline {5.11}Four deeper links from the TUM lecture review}{261}{section.5.11}%
+\contentsline {subsection}{\numberline {5.11.1}Photometric identifiability: a direct method needs a brightness model}{261}{subsection.5.11.1}%
+\contentsline {subsubsection}{Derivation: which pose changes are visible to a direct residual?}{262}{subsubsection*.65}%
+\contentsline {subsection}{\numberline {5.11.2}A variational optical-flow model, derived from the brightness equation}{263}{subsection.5.11.2}%
+\contentsline {subsubsection}{Worked Euler--Lagrange derivation}{263}{subsubsection*.66}%
+\contentsline {subsection}{\numberline {5.11.3}From a six-parameter pose update to a bundle-adjustment Jacobian}{264}{subsection.5.11.3}%
+\contentsline {subsection}{\numberline {5.11.4}Pairwise epipolar agreement does not guarantee one shared 3D structure}{265}{subsection.5.11.4}%
+\contentsline {subsubsection}{A compact evidence-to-claim map}{266}{subsubsection*.67}%
+\contentsline {chapter}{\numberline {6}Camera Contracts and Transform-Chain Debugging}{267}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Make camera conventions explicit and debug the full transform chain}{267}{section.6.1}%
+\contentsline {subsection}{\numberline {6.1.1}Why a generic \texttt {Camera} class can become unsafe}{267}{subsection.6.1.1}%
+\contentsline {subsection}{\numberline {6.1.2}Use semantic types}{268}{subsection.6.1.2}%
+\contentsline {subsection}{\numberline {6.1.3}Separate the camera pose}{268}{subsection.6.1.3}%
+\contentsline {subsection}{\numberline {6.1.4}Separate projection specifications}{269}{subsection.6.1.4}%
+\contentsline {subsection}{\numberline {6.1.5}Define the viewport independently}{269}{subsection.6.1.5}%
+\contentsline {subsection}{\numberline {6.1.6}Define optics independently}{270}{subsection.6.1.6}%
+\contentsline {subsection}{\numberline {6.1.7}Define temporal camera state}{270}{subsection.6.1.7}%
+\contentsline {subsection}{\numberline {6.1.8}Frame-state update ordering}{271}{subsection.6.1.8}%
+\contentsline {subsection}{\numberline {6.1.9}A camera API should expose operations, not just matrices}{272}{subsection.6.1.9}%
+\contentsline {subsection}{\numberline {6.1.10}Make coordinate-space mistakes difficult to compile}{272}{subsection.6.1.10}%
+\contentsline {subsection}{\numberline {6.1.11}Camera invariants}{273}{subsection.6.1.11}%
+\contentsline {subsection}{\numberline {6.1.12}Cross-API matrix upload}{274}{subsection.6.1.12}%
+\contentsline {subsection}{\numberline {6.1.13}Reversed-Z must be implemented as a complete pipeline contract}{274}{subsection.6.1.13}%
+\contentsline {subsection}{\numberline {6.1.14}Physical cameras and rendering APIs are different layers}{274}{subsection.6.1.14}%
+\contentsline {subsection}{\numberline {6.1.15}The reference scene}{275}{subsection.6.1.15}%
+\contentsline {subsection}{\numberline {6.1.16}Step 1: Local to world}{276}{subsection.6.1.16}%
+\contentsline {subsection}{\numberline {6.1.17}Step 2: World to view}{276}{subsection.6.1.17}%
+\contentsline {subsection}{\numberline {6.1.18}Step 3: View to homogeneous clip}{276}{subsection.6.1.18}%
+\contentsline {subsection}{\numberline {6.1.19}Step 4: Perspective division}{277}{subsection.6.1.19}%
+\contentsline {subsection}{\numberline {6.1.20}Step 5: Viewport mapping}{278}{subsection.6.1.20}%
+\contentsline {subsection}{\numberline {6.1.21}Step 6: Reverse the pipeline}{278}{subsection.6.1.21}%
+\contentsline {subsection}{\numberline {6.1.22}Step 7: Compare CPU and GPU}{279}{subsection.6.1.22}%
+\contentsline {subsection}{\numberline {6.1.23}A systematic camera-debugging matrix}{279}{subsection.6.1.23}%
+\contentsline {subsection}{\numberline {6.1.24}Instrument the camera instead of guessing}{280}{subsection.6.1.24}%
+\contentsline {subsection}{\numberline {6.1.25}Standalone camera-geometry reference laboratory (source-reported)}{281}{subsection.6.1.25}%
+\contentsline {subsection}{\numberline {6.1.26}Numerical results reported by the supplied source}{281}{subsection.6.1.26}%
+\contentsline {subsection}{\numberline {6.1.27}Repository observations reported by the supplied source}{282}{subsection.6.1.27}%
+\contentsline {subsection}{\numberline {6.1.28}KairoRayTracer --- currently a pinhole camera}{282}{subsection.6.1.28}%
+\contentsline {subsection}{\numberline {6.1.29}KairoRenderer --- conventional depth and viewport-specific Y handling}{282}{subsection.6.1.29}%
+\contentsline {subsection}{\numberline {6.1.30}Maveb --- reversed-Z}{282}{subsection.6.1.30}%
+\contentsline {subsection}{\numberline {6.1.31}Cross-project camera consistency}{283}{subsection.6.1.31}%
+\contentsline {subsection}{\numberline {6.1.32}A consistent depth-of-field verification example}{284}{subsection.6.1.32}%
+\contentsline {section}{\numberline {6.2}A camera model must close the loop}{284}{section.6.2}%
+\contentsline {subsection}{\numberline {6.2.1}Trace, implementation, repository audit, and derivation bridge}{285}{subsection.6.2.1}%
+\contentsline {subsection}{\numberline {6.2.2}Complete worked example: from a mesh vertex to a framebuffer pixel}{285}{subsection.6.2.2}%
+\contentsline {subsubsection}{Local to world}{285}{subsubsection*.68}%
+\contentsline {subsubsection}{World to view}{286}{subsubsection*.69}%
+\contentsline {subsubsection}{View to clip}{287}{subsubsection*.70}%
+\contentsline {subsubsection}{Perspective divide}{288}{subsubsection*.71}%
+\contentsline {subsubsection}{NDC to raster}{288}{subsubsection*.72}%
+\contentsline {subsection}{\numberline {6.2.3}Additional derivation: an off-centre perspective projection}{289}{subsection.6.2.3}%
+\contentsline {subsection}{\numberline {6.2.4}C++23 implementation and verification}{291}{subsection.6.2.4}%
+\contentsline {subsection}{\numberline {6.2.5}45.1 The most important implementation: projection conventions as explicit parameters}{291}{subsection.6.2.5}%
+\contentsline {subsection}{\numberline {6.2.6}45.2 Infinite-far generalization}{293}{subsection.6.2.6}%
+\contentsline {subsection}{\numberline {6.2.7}45.3 Verified program output}{293}{subsection.6.2.7}%
+\contentsline {subsection}{\numberline {6.2.8}Source-reported repository observations: KairoMath, KairoRenderer, KairoRayTracer, and Maveb}{294}{subsection.6.2.8}%
+\contentsline {subsubsection}{KairoMath: matrix and projection conventions}{294}{subsubsection*.73}%
+\contentsline {subsection}{\numberline {6.2.9}Improvement: validation}{295}{subsection.6.2.9}%
+\contentsline {subsection}{\numberline {6.2.10}Improvement: explicit depth variants}{295}{subsection.6.2.10}%
+\contentsline {subsubsection}{KairoRenderer: camera and viewport}{295}{subsubsection*.74}%
+\contentsline {subsection}{\numberline {6.2.11}Improvement: look-at degeneracy}{295}{subsection.6.2.11}%
+\contentsline {subsection}{\numberline {6.2.12}Improvement: framebuffer extent}{296}{subsection.6.2.12}%
+\contentsline {subsubsection}{KairoRenderer: Vulkan viewport target}{296}{subsubsection*.75}%
+\contentsline {subsubsection}{KairoRayTracer: camera-ray basis}{296}{subsubsection*.76}%
+\contentsline {subsubsection}{Maveb: reversed-Z Metal camera}{297}{subsubsection*.77}%
+\contentsline {subsection}{\numberline {6.2.13}Mastery verification: what you should now be able to derive}{297}{subsection.6.2.13}%
+\contentsline {subsection}{\numberline {6.2.14}Final formula sheet}{298}{subsection.6.2.14}%
+\contentsline {subsection}{\numberline {6.2.15}Calibrated projection, uncertainty, reference implementation, and repository evidence}{299}{subsection.6.2.15}%
+\contentsline {subsection}{\numberline {6.2.16}End-to-end example: calibrated projection, optical distortion, and image uncertainty}{299}{subsection.6.2.16}%
+\contentsline {subsubsection}{36.1 World to graphics view}{299}{subsubsection*.78}%
+\contentsline {subsubsection}{36.2 Graphics view to CV optical frame}{299}{subsubsection*.79}%
+\contentsline {subsubsection}{36.3 Apply intrinsics}{300}{subsubsection*.80}%
+\contentsline {subsubsection}{36.4 Apply simple radial distortion}{300}{subsubsection*.81}%
+\contentsline {subsubsection}{36.5 Derive the image-space uncertainty}{301}{subsubsection*.82}%
+\contentsline {subsection}{\numberline {6.2.17}Verified C++23 implementation}{303}{subsection.6.2.17}%
+\contentsline {subsubsection}{37.1 The numerical results}{304}{subsubsection*.83}%
+\contentsline {subsection}{\numberline {6.2.18}37.2 C++23: frustum plane extraction}{304}{subsection.6.2.18}%
+\contentsline {subsection}{\numberline {6.2.19}37.3 C++23: stable temporal jitter}{305}{subsection.6.2.19}%
+\contentsline {subsection}{\numberline {6.2.20}37.4 C++23: Newton undistortion}{306}{subsection.6.2.20}%
+\contentsline {subsection}{\numberline {6.2.21}What the actual repositories establish}{306}{subsection.6.2.21}%
+\contentsline {subsubsection}{KairoRenderer --- camera state}{306}{subsubsection*.84}%
+\contentsline {subsubsection}{Maveb --- camera paths}{307}{subsubsection*.85}%
+\contentsline {subsubsection}{Maveb --- calibration loading}{307}{subsubsection*.86}%
+\contentsline {subsubsection}{Vulkax --- observation-space pinhole camera}{308}{subsubsection*.87}%
+\contentsline {subsection}{\numberline {6.2.22}Research bridge: why these two modules matter}{308}{subsection.6.2.22}%
+\contentsline {section}{\numberline {6.3}A runnable camera oracle with declared conventions}{309}{section.6.3}%
+\contentsline {section}{\numberline {6.4}The mathematics becomes a reliable implementation}{311}{section.6.4}%
+\contentsline {subsection}{\numberline {6.4.1}Three stored numbers are not the complete contract}{311}{subsection.6.4.1}%
+\contentsline {subsubsection}{Initialization and access should be unsurprising}{312}{subsubsection*.88}%
+\contentsline {subsubsection}{Operators should preserve the mathematical question}{312}{subsubsection*.89}%
+\contentsline {subsubsection}{Choose the component type separately from the geometric role}{312}{subsubsection*.90}%
+\contentsline {subsection}{\numberline {6.4.2}Storage and computation can choose different layouts}{313}{subsection.6.4.2}%
+\contentsline {subsubsection}{SIMD has two different opportunities}{313}{subsubsection*.91}%
+\contentsline {subsubsection}{A GPU buffer is a separate agreement}{314}{subsubsection*.92}%
+\contentsline {subsection}{\numberline {6.4.3}A reliability checklist for moving from symbols to images}{314}{subsection.6.4.3}%
+\contentsline {subsection}{\numberline {6.4.4}Reliability begins at the boundary of the calculation}{315}{subsection.6.4.4}%
+\contentsline {subsubsection}{Ask what ``close'' means before choosing a tolerance}{315}{subsubsection*.93}%
+\contentsline {subsubsection}{Locate the first invalid operation}{315}{subsubsection*.94}%
+\contentsline {subsubsection}{Large world coordinates can lose a small movement before geometry starts}{316}{subsubsection*.95}%
+\contentsline {subsection}{\numberline {6.4.5}Types can remember the promises that three components forget}{316}{subsection.6.4.5}%
+\contentsline {subsection}{\numberline {6.4.6}A complete scalar laboratory makes the story executable}{317}{subsection.6.4.6}%
+\contentsline {subsubsection}{Reference implementation and regression driver}{317}{subsubsection*.96}%
+\contentsline {subsubsection}{What each layer guarantees, and what it does not}{323}{subsubsection*.97}%
+\contentsline {chapter}{\numberline {7}Reconstruct the Complete Geometry Pipeline}{325}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Teach the complete journey, then break one assumption at a time}{325}{section.7.1}%
+\contentsline {subsection}{\numberline {7.1.1}A reconstruction desk for active teaching}{325}{subsection.7.1.1}%
+\contentsline {section}{\numberline {7.2}The mathematical table needs an explicit storage agreement}{326}{section.7.2}%
+\contentsline {subsection}{\numberline {7.2.1}Own actual arrays rather than inventing array bounds between members}{327}{subsection.7.2.1}%
+\contentsline {subsection}{\numberline {7.2.2}Figure M7 - A submatrix keeps the parent's physical stride}{328}{subsection.7.2.2}%
+\contentsline {section}{\numberline {7.3}Runtime views borrow a layout as well as a lifetime}{329}{section.7.3}%
+\contentsline {section}{\numberline {7.4}SIMD and loop order change the execution schedule, not the matrix question}{329}{section.7.4}%
+\contentsline {section}{\numberline {7.5}A complete scalar laboratory makes the contracts observable}{331}{section.7.5}%
+\contentsline {subsection}{\numberline {7.5.1}Complete runnable matrix and orientation reference}{331}{subsection.7.5.1}%
+\contentsline {subsection}{\numberline {7.5.2}Read the assertions as experiments}{340}{subsection.7.5.2}%
+\contentsline {section}{\numberline {7.6}Teach the journey by changing one promise}{341}{section.7.6}%
+\contentsline {subsection}{\numberline {7.6.1}Where transforms lead next}{341}{subsection.7.6.1}%
+\contentsline {section}{\numberline {7.7}Implementation kernels and shape reasoning}{342}{section.7.7}%
+\contentsline {section}{\numberline {7.8}An implementation review checklist grounded in the map}{343}{section.7.8}%
+\contentsline {section}{\numberline {7.9}Householder reductions turn a dense SVD into a bidiagonal problem}{343}{section.7.9}%
+\contentsline {section}{\numberline {7.10}Jacobi SVD removes column coupling pair by pair}{344}{section.7.10}%
+\contentsline {section}{\numberline {7.11}Scale-aware convergence and output conventions make results interpretable}{345}{section.7.11}%
+\contentsline {section}{\numberline {7.12}Independent reconstruction and orthogonality checks test the SVD invariants}{346}{section.7.12}%
+\contentsline {subsection}{\numberline {7.12.1}Figure L8 - SVD validation needs independent checks}{347}{subsection.7.12.1}%
+\contentsline {section}{\numberline {7.13}A matrix object must describe shape, ownership, and workspace}{347}{section.7.13}%
+\contentsline {section}{\numberline {7.14}Dynamic matrix storage makes factorization dimensions and lifetimes explicit}{348}{section.7.14}%
+\contentsline {section}{\numberline {7.15}Zero singular directions require deliberate orthonormal completion}{351}{section.7.15}%
+\contentsline {section}{\numberline {7.16}Matrix views need checked address arithmetic as well as a stride}{351}{section.7.16}%
+\contentsline {section}{\numberline {7.17}Factorization is also a memory and lifetime decision}{352}{section.7.17}%
+\contentsline {section}{\numberline {7.18}Workspace allocation is part of the solver contract}{352}{section.7.18}%
+\contentsline {section}{\numberline {7.19}Sparse problems change the economics of solving}{354}{section.7.19}%
+\contentsline {subsection}{\numberline {7.19.1}Figure L10 - Direct and iterative methods occupy different workloads}{355}{subsection.7.19.1}%
+\contentsline {section}{\numberline {7.20}Sparse storage changes the cost model}{355}{section.7.20}%
+\contentsline {section}{\numberline {7.21}Direct and iterative solvers suit different workloads}{356}{section.7.21}%
+\contentsline {section}{\numberline {7.22}Choose a factorization from structure and the requested answer}{357}{section.7.22}%
+\contentsline {section}{\numberline {7.23}Board workbench: follow the numbers before trusting the name}{358}{section.7.23}%
+\contentsline {subsection}{\numberline {7.23.1}One elimination step preserves the complete equation}{358}{subsection.7.23.1}%
+\contentsline {subsection}{\numberline {7.23.2}Cholesky exposes an energy structure}{358}{subsection.7.23.2}%
+\contentsline {subsection}{\numberline {7.23.3}QR fits noisy samples without changing the residual measure}{359}{subsection.7.23.3}%
+\contentsline {subsection}{\numberline {7.23.4}Power iteration needs a visible starting component}{359}{subsection.7.23.4}%
+\contentsline {subsection}{\numberline {7.23.5}An SVD separates input directions from output directions}{359}{subsection.7.23.5}%
+\contentsline {subsection}{\numberline {7.23.6}Pseudoinversion states what to do with an impossible target}{359}{subsection.7.23.6}%
+\contentsline {subsection}{\numberline {7.23.7}PCA tells geometry only after centering and choosing units}{359}{subsection.7.23.7}%
+\contentsline {subsection}{\numberline {7.23.8}Orthogonal factors support clearer error statements}{360}{subsection.7.23.8}%
+\contentsline {section}{\numberline {7.24}An SVD API begins with shapes and guarantees}{360}{section.7.24}%
+\contentsline {section}{\numberline {7.25}Numerical policies must share one rank decision}{361}{section.7.25}%
+\contentsline {section}{\numberline {7.26}A call lifecycle makes ownership reviewable}{362}{section.7.26}%
+\contentsline {section}{\numberline {7.27}Validate reconstruction, orthogonality, and triplets separately}{362}{section.7.27}%
+\contentsline {section}{\numberline {7.28}The library boundary is part of numerical correctness}{363}{section.7.28}%
+\contentsline {section}{\numberline {7.29}Close the journey with an algorithm-selection conversation}{363}{section.7.29}%
+\contentsline {section}{\numberline {7.30}Reconstructed C++23 laboratory}{364}{section.7.30}%
+\contentsline {subsection}{\numberline {7.30.1}Standalone C++23 probability and statistics laboratory}{364}{subsection.7.30.1}%
+\contentsline {section}{\numberline {7.31}A runnable laboratory for numerical contracts}{370}{section.7.31}%
+\contentsline {section}{\numberline {7.32}A mastery ladder for the whole foundations journey}{372}{section.7.32}%
+\contentsline {subsection}{\numberline {7.32.1}Rung 1 --- Decode a bounded asset}{373}{subsection.7.32.1}%
+\contentsline {subsection}{\numberline {7.32.2}Rung 2 --- Give the panel a stable identity and a safe borrow}{373}{subsection.7.32.2}%
+\contentsline {subsection}{\numberline {7.32.3}Rung 3 --- Publish asynchronous work without racing ownership}{374}{subsection.7.32.3}%
+\contentsline {subsection}{\numberline {7.32.4}Rung 4 --- Reconstruct a measured panel position}{374}{subsection.7.32.4}%
+\contentsline {subsection}{\numberline {7.32.5}Rung 5 --- Integrate and make a bounded claim}{375}{subsection.7.32.5}%
+\contentsline {chapter}{\numberline {8}From Worlds to Images and Inference}{376}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Worlds, Images and Inference}{376}{section.8.1}%
+\contentsline {subsection}{\numberline {8.1.1}The question that holds the whole story together}{376}{subsection.8.1.1}%
+\contentsline {subsection}{\numberline {8.1.2}How to use this volume without losing the thread}{377}{subsection.8.1.2}%
+\contentsline {subsubsection}{A project ladder that turns the image pipeline into evidence}{378}{subsubsection*.98}%
+\contentsline {paragraph}{Worked checkpoints for the six-stage route}{379}{paragraph*.99}%
+\contentsline {subsection}{\numberline {8.1.3}A scene description becomes an image}{381}{subsection.8.1.3}%
+\contentsline {subsubsection}{From a triangle to a measured image}{381}{subsubsection*.100}%
+\contentsline {subsubsection}{Graphics is a chain of representations}{381}{subsubsection*.101}%
+\contentsline {subsubsection}{Ray tracing becomes difficult at the boundaries: precision, footprints, variance, reuse and hybrid execution}{382}{subsubsection*.102}%
+\contentsline {paragraph}{A secondary ray should not immediately hit the surface that spawned it}{382}{paragraph*.103}%
+\contentsline {paragraph}{A ray query includes an interval}{383}{paragraph*.104}%
+\contentsline {paragraph}{A mathematical ray has zero width; an image sample does not}{383}{paragraph*.105}%
+\contentsline {paragraph}{Importance sampling changes variance only if the weight stays correct}{384}{paragraph*.106}%
+\contentsline {paragraph}{Clamping and regularization trade bias for variance}{384}{paragraph*.107}%
+\contentsline {paragraph}{Denoising is inference from a noisy measurement}{385}{paragraph*.108}%
+\contentsline {paragraph}{Temporal reuse changes the statistics}{385}{paragraph*.109}%
+\contentsline {paragraph}{Hybrid rendering is a deliberate decomposition, not an embarrassing halfway state}{386}{paragraph*.110}%
+\contentsline {paragraph}{Ray tracing performance is scheduling and memory behavior too}{386}{paragraph*.111}%
+\contentsline {paragraph}{How the MIT lectures and Ray Tracing Gems fit together}{387}{paragraph*.112}%
+\contentsline {subsubsection}{MIT graphics gap closure: the renderer is one continuous numerical model from shape to motion to light to pixels}{387}{subsubsection*.113}%
+\contentsline {paragraph}{Parametric curves are functions whose derivatives are geometric information}{387}{paragraph*.114}%
+\contentsline {paragraph}{de Casteljau is both an evaluator and a geometric proof}{389}{paragraph*.115}%
+\contentsline {paragraph}{Continuity between curve segments has levels}{390}{paragraph*.116}%
+\contentsline {paragraph}{Hierarchical modeling is repeated change of basis}{390}{paragraph*.117}%
+\contentsline {paragraph}{A scene graph and a transform-update graph are related but not identical}{391}{paragraph*.118}%
+\contentsline {paragraph}{Skinning is weighted coordinate transformation}{392}{paragraph*.119}%
+\contentsline {paragraph}{Normals cannot always use the same matrix as positions}{393}{paragraph*.120}%
+\contentsline {paragraph}{Color values are not all in the same mathematical space}{393}{paragraph*.121}%
+\contentsline {paragraph}{The rendering equation and BRDF are only meaningful under consistent units and spaces}{394}{paragraph*.122}%
+\contentsline {paragraph}{Animation turns the world into an ODE problem}{394}{paragraph*.123}%
+\contentsline {subparagraph}{Explicit Euler}{394}{subparagraph*.124}%
+\contentsline {subparagraph}{Semi-implicit Euler}{395}{subparagraph*.125}%
+\contentsline {subparagraph}{Backward Euler}{395}{subparagraph*.126}%
+\contentsline {subparagraph}{Verlet-style position integration}{395}{subparagraph*.127}%
+\contentsline {paragraph}{Time step is a numerical parameter, not merely frame duration}{395}{paragraph*.128}%
+\contentsline {paragraph}{A mass-spring system exposes stiffness}{396}{paragraph*.129}%
+\contentsline {paragraph}{Collision detection and collision response are different problems}{396}{paragraph*.130}%
+\contentsline {paragraph}{Restitution is not a generic bounce multiplier}{397}{paragraph*.131}%
+\contentsline {paragraph}{Friction is constrained tangential impulse}{397}{paragraph*.132}%
+\contentsline {paragraph}{Position correction and velocity correction solve different errors}{398}{paragraph*.133}%
+\contentsline {paragraph}{Sampling unifies rasterization and ray tracing}{398}{paragraph*.134}%
+\contentsline {paragraph}{Mipmapping is prefiltered integration over scale}{398}{paragraph*.135}%
+\contentsline {paragraph}{Rasterization is an analytic visibility shortcut plus sampling}{399}{paragraph*.136}%
+\contentsline {paragraph}{Depth is also a convention-sensitive quantity}{399}{paragraph*.137}%
+\contentsline {paragraph}{Shadow mapping is another sampling problem}{399}{paragraph*.138}%
+\contentsline {paragraph}{Image-based lighting turns the environment into an integral}{400}{paragraph*.139}%
+\contentsline {paragraph}{Output devices complete the numerical pipeline}{400}{paragraph*.140}%
+\contentsline {paragraph}{The MIT sequence is a dependency graph, not a list of disconnected lectures}{401}{paragraph*.141}%
+\contentsline {subsubsection}{Algorithmic scope and debugging the image pipeline}{402}{subsubsection*.142}%
+\contentsline {subsubsection}{The first lecture's scope: algorithms behind pictures}{402}{subsubsection*.143}%
+\contentsline {subsubsection}{Learning path and conventions}{403}{subsubsection*.144}%
+\contentsline {subsubsection}{What an image can and cannot tell us}{403}{subsubsection*.145}%
+\contentsline {subsubsection}{Lecture 1's demonstrations: vision is judged by the task it enables}{403}{subsubsection*.146}%
+\contentsline {subsubsection}{A photograph is a model of a view}{404}{subsubsection*.147}%
+\contentsline {subsection}{\numberline {8.1.4}From sampled images to the mathematics that makes them controllable}{405}{subsection.8.1.4}%
+\contentsline {subsection}{\numberline {8.1.5}Mathematical language: points, vectors, and derivatives}{405}{subsection.8.1.5}%
+\contentsline {subsubsection}{Points, vectors, bases, and linear maps}{405}{subsubsection*.148}%
+\contentsline {subsubsection}{Coordinate-free products and the meaning of second derivatives}{406}{subsubsection*.149}%
+\contentsline {subsubsection}{A compact glossary of recurring terms}{407}{subsubsection*.150}%
+\contentsline {subsubsection}{Additional geometric and rendering mechanisms from the graphics course}{408}{subsubsection*.151}%
+\contentsline {paragraph}{Points and vectors obey different operations}{408}{paragraph*.152}%
+\contentsline {subsection}{\numberline {8.1.6}Coordinate frames, transformations, and pose}{409}{subsection.8.1.6}%
+\contentsline {subsubsection}{Coordinate frames and affine transforms}{409}{subsubsection*.153}%
+\contentsline {subsubsection}{What different transforms preserve}{409}{subsubsection*.154}%
+\contentsline {subsubsection}{Rotation representations compared}{410}{subsubsection*.155}%
+\contentsline {subsubsection}{Coordinates make composition possible}{410}{subsubsection*.156}%
+\contentsline {subsubsection}{Figure U1 - Linear maps separate directions stretches and output placement}{411}{subsubsection*.157}%
+\contentsline {subsubsection}{Matrix composition as a worked graphics pipeline}{411}{subsubsection*.158}%
+\contentsline {paragraph}{Matrix transforms build reusable models}{411}{paragraph*.159}%
+\contentsline {paragraph}{Why homogeneous coordinates are useful}{412}{paragraph*.160}%
+\contentsline {paragraph}{Rotation from a circle and angle addition}{413}{paragraph*.161}%
+\contentsline {paragraph}{Shear, reflection, and affine structure}{413}{paragraph*.162}%
+\contentsline {paragraph}{Composing operations: order and a numerical trace}{413}{paragraph*.163}%
+\contentsline {paragraph}{From one point to a hierarchy of objects}{414}{paragraph*.164}%
+\contentsline {subsubsection}{Additional geometry notes for coordinate frames}{414}{subsubsection*.165}%
+\contentsline {paragraph}{A fixed matrix separates parameter, basis, and geometry}{414}{paragraph*.166}%
+\contentsline {paragraph}{Coordinate frames make object motion composable}{415}{paragraph*.167}%
+\contentsline {paragraph}{Homogeneous coordinates turn perspective into a projection}{417}{paragraph*.168}%
+\contentsline {paragraph}{Rotation matrices, gimbal lock, and quaternions}{417}{paragraph*.169}%
+\contentsline {paragraph}{Quaternions: a compact way to compose orientation}{417}{paragraph*.170}%
+\contentsline {subsection}{\numberline {8.1.7}Curves as controllable functions}{419}{subsection.8.1.7}%
+\contentsline {subsubsection}{Interpolating animation curves}{419}{subsubsection*.171}%
+\contentsline {subsubsection}{One cubic polynomial has several design languages}{419}{subsubsection*.172}%
+\contentsline {subsubsection}{Why endpoint data needs a cubic, and how the conversion works}{420}{subsubsection*.173}%
+\contentsline {subsubsection}{The blossom explains both control points and exact subdivision}{421}{subsubsection*.174}%
+\contentsline {subsubsection}{A curve is a controllable function, not a row of dots}{422}{subsubsection*.175}%
+\contentsline {subsubsection}{Choosing where to sample a curve}{425}{subsubsection*.176}%
+\contentsline {subsubsection}{Additional geometry notes for curves}{425}{subsubsection*.177}%
+\contentsline {paragraph}{Bernstein polynomials turn affine combinations into curves}{425}{paragraph*.178}%
+\contentsline {paragraph}{Design curves: smooth without passing through every control point}{426}{paragraph*.179}%
+\contentsline {subparagraph}{Chaikin corner cutting}{426}{subparagraph*.180}%
+\contentsline {subparagraph}{de Casteljau: evaluate the Bezier curve by repeated interpolation}{427}{subparagraph*.181}%
+\contentsline {subparagraph}{Joining curve segments and extending to surfaces}{427}{subparagraph*.182}%
+\contentsline {paragraph}{Smooth curve and patch families}{427}{paragraph*.183}%
+\contentsline {chapter}{\numberline {9}Surfaces, Topology and Parameterization}{430}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Surfaces, patches, topology, and parameterization}{430}{section.9.1}%
+\contentsline {subsection}{\numberline {9.1.1}Curves, surfaces, and local coordinates}{430}{subsection.9.1.1}%
+\contentsline {subsection}{\numberline {9.1.2}Orientability, boundaries, and local neighborhoods}{430}{subsection.9.1.2}%
+\contentsline {subsection}{\numberline {9.1.3}Parameterization distortions}{431}{subsection.9.1.3}%
+\contentsline {subsection}{\numberline {9.1.4}Surfaces: parameter domains, patches, and meshes}{431}{subsection.9.1.4}%
+\contentsline {section}{\numberline {9.2}Meshes, connectivity, and geometry processing}{432}{section.9.2}%
+\contentsline {subsection}{\numberline {9.2.1}Reconstruction checkpoint --- topology before surgery}{433}{subsection.9.2.1}%
+\contentsline {subsection}{\numberline {9.2.2}Mesh topology and data structures}{433}{subsection.9.2.2}%
+\contentsline {subsection}{\numberline {9.2.3}Geometry processing and mesh edits}{433}{subsection.9.2.3}%
+\contentsline {subsection}{\numberline {9.2.4}Local editing and quality measures}{434}{subsection.9.2.4}%
+\contentsline {subsection}{\numberline {9.2.5}A local connectivity structure makes edits explicit}{435}{subsection.9.2.5}%
+\contentsline {subsection}{\numberline {9.2.6}A mesh processing failure as a query problem}{436}{subsection.9.2.6}%
+\contentsline {subsection}{\numberline {9.2.7}Why a mesh can be treated like a signal}{436}{subsection.9.2.7}%
+\contentsline {subsection}{\numberline {9.2.8}Differential coordinates preserve local shape while solving for new global positions}{436}{subsection.9.2.8}%
+\contentsline {subsection}{\numberline {9.2.9}Parameterization distortion is a singular-value statement about the surface map}{438}{subsection.9.2.9}%
+\contentsline {subsection}{\numberline {9.2.10}Signed distance as a geometric signal}{439}{subsection.9.2.10}%
+\contentsline {subsection}{\numberline {9.2.11}Subdivision masks and quadric error become executable rules}{439}{subsection.9.2.11}%
+\contentsline {subsubsection}{Subdivision masks and quadric error are computable rules, not labels}{439}{subsubsection*.184}%
+\contentsline {subsubsection}{Loop subdivision: old vertices and new edge points}{439}{subsubsection*.185}%
+\contentsline {subsubsection}{Catmull--Clark: face, edge, and vertex masks}{440}{subsubsection*.186}%
+\contentsline {subsubsection}{Quadric error metric: turn nearby planes into a collapse cost}{441}{subsubsection*.187}%
+\contentsline {subsection}{\numberline {9.2.12}Figure U2 - A half-edge separates face traversal from edge traversal}{443}{subsection.9.2.12}%
+\contentsline {subsection}{\numberline {9.2.13}Additional geometry notes for surfaces and parameterization}{443}{subsection.9.2.13}%
+\contentsline {subsubsection}{Subdivision meshes and the topology they need}{443}{subsubsection*.188}%
+\contentsline {subsubsection}{Catmull--Clark and Loop subdivision}{444}{subsubsection*.189}%
+\contentsline {subsection}{\numberline {9.2.14}As-rigid-as-possible local shape preservation}{445}{subsection.9.2.14}%
+\contentsline {subsection}{\numberline {9.2.15}Field-aligned remeshing without a global parameterization}{446}{subsection.9.2.15}%
+\contentsline {section}{\numberline {9.3}From a scanned triangle soup to a mesh we can trust}{448}{section.9.3}%
+\contentsline {subsection}{\numberline {9.3.1}A mesh is a neighborhood rule as well as a drawing}{449}{subsection.9.3.1}%
+\contentsline {subsection}{\numberline {9.3.2}The boundary of a boundary cancels}{450}{subsection.9.3.2}%
+\contentsline {subsection}{\numberline {9.3.3}Euler characteristic is a structural checksum, not a shape score}{451}{subsection.9.3.3}%
+\contentsline {subsection}{\numberline {9.3.4}Homology: ask which loops actually have a filling}{453}{subsection.9.3.4}%
+\contentsline {subsection}{\numberline {9.3.5}Alpha complexes turn a union of balls into a finite topological object}{454}{subsection.9.3.5}%
+\contentsline {subsection}{\numberline {9.3.6}Persistence asks which features survive scale changes}{455}{subsection.9.3.6}%
+\contentsline {subsection}{\numberline {9.3.7}Persistence stability says small function perturbations cannot move the diagram arbitrarily far}{456}{subsection.9.3.7}%
+\contentsline {subsection}{\numberline {9.3.8}Morse functions and Reeb graphs compress how level-set components split and merge}{457}{subsection.9.3.8}%
+\contentsline {subsection}{\numberline {9.3.9}The discrete Laplacian turns adjacency into a motion rule}{457}{subsection.9.3.9}%
+\contentsline {subsubsection}{Nonnegative energy and nonnegative weights are different promises}{458}{subsubsection*.190}%
+\contentsline {subsubsection}{A stable heat step can still create a negative sample}{460}{subsubsection*.191}%
+\contentsline {paragraph}{Complete single-triangle energy witness}{461}{paragraph*.192}%
+\contentsline {subsubsection}{Smoothing is a flow with side effects}{463}{subsubsection*.193}%
+\contentsline {subsection}{\numberline {9.3.10}Remeshing improves elements while preserving the intended surface}{464}{subsection.9.3.10}%
+\contentsline {subsection}{\numberline {9.3.11}Simplification trades face count against approximation error}{464}{subsection.9.3.11}%
+\contentsline {subsection}{\numberline {9.3.12}Surface repair and volumetric repair preserve different kinds of evidence}{465}{subsection.9.3.12}%
+\contentsline {subsection}{\numberline {9.3.13}A repeatable mesh-processing checkpoint}{466}{subsection.9.3.13}%
+\contentsline {chapter}{\numberline {10}Lens Optics and Image Formation}{468}{chapter.10}%
+\contentsline {section}{\numberline {10.1}Lens optics, focus, and image formation}{468}{section.10.1}%
+\contentsline {subsection}{\numberline {10.1.1}How a lens forms an image}{468}{subsection.10.1.1}%
+\contentsline {subsection}{\numberline {10.1.2}Focus is determined by a tolerance and an output}{469}{subsection.10.1.2}%
+\contentsline {subsection}{\numberline {10.1.3}Deriving the acceptable focus interval}{470}{subsection.10.1.3}%
+\contentsline {subsection}{\numberline {10.1.4}Figure U6 - Principal rays explain the thin lens}{472}{subsection.10.1.4}%
+\contentsline {subsection}{\numberline {10.1.5}The ideal pinhole and a real lens answer different questions}{472}{subsection.10.1.5}%
+\contentsline {subsection}{\numberline {10.1.6}Aberrations, field falloff, and correction}{473}{subsection.10.1.6}%
+\contentsline {section}{\numberline {10.2}Exposure, sensors, and dynamic range}{473}{section.10.2}%
+\contentsline {subsection}{\numberline {10.2.1}From scene radiance to pixel brightness}{473}{subsection.10.2.1}%
+\contentsline {subsection}{\numberline {10.2.2}Exposure: choosing what the sensor can collect}{474}{subsection.10.2.2}%
+\contentsline {subsection}{\numberline {10.2.3}Sensors turn photons into measurements}{476}{subsection.10.2.3}%
+\contentsline {subsection}{\numberline {10.2.4}Equivalent exposures preserve brightness but not the photograph}{478}{subsection.10.2.4}%
+\contentsline {subsection}{\numberline {10.2.5}Choosing an HDR method by what moves}{479}{subsection.10.2.5}%
+\contentsline {subsection}{\numberline {10.2.6}Stops, EV, and scene ratios}{480}{subsection.10.2.6}%
+\contentsline {subsection}{\numberline {10.2.7}Meter readings are estimates, not scene knowledge}{481}{subsection.10.2.7}%
+\contentsline {subsection}{\numberline {10.2.8}A blur threshold depends on the intended view}{481}{subsection.10.2.8}%
+\contentsline {section}{\numberline {10.3}Cameras, projection, and calibration}{481}{section.10.3}%
+\contentsline {subsection}{\numberline {10.3.1}Rotation and projective cameras}{481}{subsection.10.3.1}%
+\contentsline {subsection}{\numberline {10.3.2}Perspective is linear before the divide}{482}{subsection.10.3.2}%
+\contentsline {subsection}{\numberline {10.3.3}Perspective projection links 3-D velocity to image flow}{483}{subsection.10.3.3}%
+\contentsline {subsection}{\numberline {10.3.4}Camera calibration from straight lines and vanishing points}{484}{subsection.10.3.4}%
+\contentsline {subsection}{\numberline {10.3.5}Orthographic projection as an engineered measurement choice}{486}{subsection.10.3.5}%
+\contentsline {subsection}{\numberline {10.3.6}Interior calibration from known scene points}{486}{subsection.10.3.6}%
+\contentsline {subsection}{\numberline {10.3.7}Exterior orientation: where the camera stands and where it points}{488}{subsection.10.3.7}%
+\contentsline {subsection}{\numberline {10.3.8}Panoramas: geometry before stitching}{489}{subsection.10.3.8}%
+\contentsline {subsection}{\numberline {10.3.9}Field of view, image scale, and formats}{490}{subsection.10.3.9}%
+\contentsline {subsection}{\numberline {10.3.10}From a camera view transform to viewport pixels}{491}{subsection.10.3.10}%
+\contentsline {subsubsection}{A 2D world window mapped to a screen viewport}{491}{subsubsection*.194}%
+\contentsline {subsubsection}{The 3D view transform moves the world around a fixed camera}{492}{subsubsection*.195}%
+\contentsline {subsection}{\numberline {10.3.11}Additional geometry notes for meshes}{493}{subsection.10.3.11}%
+\contentsline {subsubsection}{From a camera frustum to the image-space cube}{493}{subsubsection*.196}%
+\contentsline {subsubsection}{Clipping as signed distance and interpolation}{495}{subsubsection*.197}%
+\contentsline {section}{\numberline {10.4}Sampling continuous signals and image formation}{495}{section.10.4}%
+\contentsline {subsection}{\numberline {10.4.1}Frequency, alias, and reconstruction}{496}{subsection.10.4.1}%
+\contentsline {subsection}{\numberline {10.4.2}Raster sampling of a blurred signal}{496}{subsection.10.4.2}%
+\contentsline {subsection}{\numberline {10.4.3}Sampling and aliasing: pixels measure areas, not mathematical points}{496}{subsection.10.4.3}%
+\contentsline {subsection}{\numberline {10.4.4}Sampling and reconstruction}{497}{subsection.10.4.4}%
+\contentsline {subsection}{\numberline {10.4.5}Figure U3 - Two signals can share the same samples}{498}{subsection.10.4.5}%
+\contentsline {subsection}{\numberline {10.4.6}Pixel count, storage, and bandwidth}{498}{subsection.10.4.6}%
+\contentsline {subsubsection}{A raster is stored samples, not tiny squares}{498}{subsubsection*.198}%
+\contentsline {chapter}{\numberline {11}Sampling, Filtering and Reconstruction}{500}{chapter.11}%
+\contentsline {section}{\numberline {11.1}Image sampling, filtering, and efficient reconstruction}{500}{section.11.1}%
+\contentsline {subsection}{\numberline {11.1.1}Animate a pixel by respecting the buffer's coordinates and lifetime}{500}{subsection.11.1.1}%
+\contentsline {subsection}{\numberline {11.1.2}Treat a render-order fix as evidence about a frame schedule}{502}{subsection.11.1.2}%
+\contentsline {subsection}{\numberline {11.1.3}Sampling, integral images, and the limits of a box average}{503}{subsection.11.1.3}%
+\contentsline {subsection}{\numberline {11.1.4}Texture mapping is filtering over a changing footprint}{503}{subsection.11.1.4}%
+\contentsline {subsection}{\numberline {11.1.5}Pixel footprints and texture derivatives}{504}{subsection.11.1.5}%
+\contentsline {subsection}{\numberline {11.1.6}Antialiasing is controlled filtering before and after sampling}{504}{subsection.11.1.6}%
+\contentsline {subsection}{\numberline {11.1.7}Resolution, blur, and display}{505}{subsection.11.1.7}%
+\contentsline {subsection}{\numberline {11.1.8}Pyramids trade pixel count against aliasing and feature visibility}{506}{subsection.11.1.8}%
+\contentsline {subsection}{\numberline {11.1.9}The processing pipeline reconstructs a usable image}{506}{subsection.11.1.9}%
+\contentsline {subsection}{\numberline {11.1.10}Aligning repeated frames}{508}{subsection.11.1.10}%
+\contentsline {subsection}{\numberline {11.1.11}Image processing: local rules over an image grid}{509}{subsection.11.1.11}%
+\contentsline {subsection}{\numberline {11.1.12}Image processing changes pixels, neighborhoods, and exposure}{509}{subsection.11.1.12}%
+\contentsline {subsection}{\numberline {11.1.13}Fast image operations: sampling, convolution, and integral images}{511}{subsection.11.1.13}%
+\contentsline {subsection}{\numberline {11.1.14}Sparse differences make wide spline filters cheap}{511}{subsection.11.1.14}%
+\contentsline {subsection}{\numberline {11.1.15}Worked example: four-corner rectangle sum}{512}{subsection.11.1.15}%
+\contentsline {subsection}{\numberline {11.1.16}An integral image makes every rectangular sum constant-time}{513}{subsection.11.1.16}%
+\contentsline {subsection}{\numberline {11.1.17}Derivatives and integrals are convolution operators}{513}{subsection.11.1.17}%
+\contentsline {section}{\numberline {11.2}Color perception, encoding, and display}{514}{section.11.2}%
+\contentsline {section}{\numberline {11.3}Make every color number carry a meaning}{514}{section.11.3}%
+\contentsline {subsection}{\numberline {11.3.1}Radiant energy}{516}{subsection.11.3.1}%
+\contentsline {subsection}{\numberline {11.3.2}Radiant flux}{517}{subsection.11.3.2}%
+\contentsline {subsection}{\numberline {11.3.3}Color as spectral measurement}{535}{subsection.11.3.3}%
+\contentsline {subsection}{\numberline {11.3.4}Additive and subtractive mixtures}{536}{subsection.11.3.4}%
+\contentsline {subsection}{\numberline {11.3.5}Chromaticity, gamut, and color conversion}{536}{subsection.11.3.5}%
+\contentsline {subsection}{\numberline {11.3.6}Color: device values are not perceived color}{536}{subsection.11.3.6}%
+\contentsline {subsection}{\numberline {11.3.7}Output devices close the loop}{537}{subsection.11.3.7}%
+\contentsline {subsection}{\numberline {11.3.8}Color is a three-number perceptual response to a spectrum}{537}{subsection.11.3.8}%
+\contentsline {subsection}{\numberline {11.3.9}Output devices turn samples into emitted or reflected light}{538}{subsection.11.3.9}%
+\contentsline {subsection}{\numberline {11.3.10}Color is a measurement and a convention}{540}{subsection.11.3.10}%
+\contentsline {subsection}{\numberline {11.3.11}From scene spectrum to display color}{540}{subsection.11.3.11}%
+\contentsline {subsection}{\numberline {11.3.12}Color matrices and nonlinear encodings}{541}{subsection.11.3.12}%
+\contentsline {subsection}{\numberline {11.3.13}Color photographs are a sequence of measurements and reconstructions}{542}{subsection.11.3.13}%
+\contentsline {subsection}{\numberline {11.3.14}Additive and subtractive mixing are different operations}{542}{subsection.11.3.14}%
+\contentsline {section}{\numberline {11.4}Light measurement and radiometry}{543}{section.11.4}%
+\contentsline {subsection}{\numberline {11.4.1}Radiometry and BRDF}{543}{subsection.11.4.1}%
+\contentsline {subsection}{\numberline {11.4.2}Measure, units, and conservation}{543}{subsection.11.4.2}%
+\contentsline {subsection}{\numberline {11.4.3}Directional, hemispherical, and area lights}{544}{subsection.11.4.3}%
+\contentsline {subsection}{\numberline {11.4.4}Light in a scene: source size, reflection, and shape}{544}{subsection.11.4.4}%
+\contentsline {subsection}{\numberline {11.4.5}Lighting for a photograph}{545}{subsection.11.4.5}%
+\contentsline {subsection}{\numberline {11.4.6}Read the shadows to estimate a light source}{546}{subsection.11.4.6}%
+\contentsline {subsection}{\numberline {11.4.7}Environment illumination and differential compositing}{547}{subsection.11.4.7}%
+\contentsline {section}{\numberline {11.5}Reflectance, BRDFs, and shading}{549}{section.11.5}%
+\contentsline {chapter}{\numberline {12}From View Space to Clip Space}{550}{chapter.12}%
+\contentsline {subsection}{\numberline {12.0.1}View → clip}{550}{subsection.12.0.1}%
+\contentsline {subsection}{\numberline {12.0.2}+ M113 + M114}{590}{subsection.12.0.2}%
+\contentsline {subsection}{\numberline {12.0.3}Stencil, culling, scissor/viewports, attachments, load/store, MSAA}{591}{subsection.12.0.3}%
+\contentsline {chapter}{\numberline {13}Depth, projection, and shadow-map precision}{605}{chapter.13}%
+\contentsline {subsection}{\numberline {13.0.1}Conventional depth}{605}{subsection.13.0.1}%
+\contentsline {subsection}{\numberline {13.0.2}Next --- Pass 09: M083 + M084, Parts 1375--1400}{620}{subsection.13.0.2}%
+\contentsline {subsection}{\numberline {13.0.3}Navigation Graphs, A*, Heuristic Theory, Grids, NavMeshes, Funnel/String Pulling, Dynamic Obstacles, Hierarchical Pathfinding, Serialization, Visualization, Benchmarking, Workload Selection, and Unified Spatial APIs}{620}{subsection.13.0.3}%
+\contentsline {subsection}{\numberline {13.0.4}NAVIGATION GRAPHS, A*, GRIDS, NAVMESHES AND HIERARCHICAL PATHFINDING}{620}{subsection.13.0.4}%
+\contentsline {subsection}{\numberline {13.0.5}Why not an adjacency matrix?}{622}{subsection.13.0.5}%
+\contentsline {chapter}{\numberline {14}Projection Scale and Incidence Geometry}{665}{chapter.14}%
+\contentsline {section}{\numberline {14.1}Real projections add scale, spacing, and incidence geometry}{665}{section.14.1}%
+\contentsline {subsection}{\numberline {14.1.1}The real setting adds scales}{665}{subsection.14.1.1}%
+\contentsline {subsection}{\numberline {14.1.2}Sieve and incidence geometry}{665}{subsection.14.1.2}%
+\contentsline {subsection}{\numberline {14.1.3}The first eight lectures: from exact collisions to geometric scale}{666}{subsection.14.1.3}%
+\contentsline {subsubsection}{What the Szemerédi--Trotter proof does not reveal (Lecture 9)}{667}{subsubsection*.199}%
+\contentsline {subsubsection}{Sumsets, energy, and robust structure (Lectures 10--12)}{668}{subsubsection*.200}%
+\contentsline {subsection}{\numberline {14.1.4}What the Szemerédi--Trotter proof does not reveal}{671}{subsection.14.1.4}%
+\contentsline {subsection}{\numberline {14.1.5}Why the Euclidean projection theorem needs scale regularity}{672}{subsection.14.1.5}%
+\contentsline {subsection}{\numberline {14.1.6}Uniform trees make multiscale size usable}{673}{subsection.14.1.6}%
+\contentsline {subsection}{\numberline {14.1.7}The large sieve: why rational samples separate}{674}{subsection.14.1.7}%
+\contentsline {subsection}{\numberline {14.1.8}Szemerédi--Trotter partitioning and the cross-cell limitation}{675}{subsection.14.1.8}%
+\contentsline {subsection}{\numberline {14.1.9}Bourgain's real theorem: what uniformization actually preserves}{676}{subsection.14.1.9}%
+\contentsline {subsection}{\numberline {14.1.10}Frostman measures, energy, and the projection integral}{676}{subsection.14.1.10}%
+\contentsline {section}{\numberline {14.2}Additive structure explains repeated coincidences}{677}{section.14.2}%
+\contentsline {subsection}{\numberline {14.2.1}Additive structure and robust projection growth}{677}{subsection.14.2.1}%
+\contentsline {subsection}{\numberline {14.2.2}Sumsets, energy, and robust structure}{677}{subsection.14.2.2}%
+\contentsline {subsubsection}{From many additive coincidences to a genuinely structured rectangle}{680}{subsubsection*.201}%
+\contentsline {subsubsection}{Why the Euclidean projection theorem needs scale regularity}{681}{subsubsection*.202}%
+\contentsline {subsubsection}{Uniform trees make multiscale size usable}{682}{subsubsection*.203}%
+\contentsline {subsubsection}{Robust expansion is what makes the real argument iterate}{683}{subsubsection*.204}%
+\contentsline {subsubsection}{Finite groups: when a walk is stuck, look for an approximate subgroup}{685}{subsubsection*.205}%
+\contentsline {subsubsection}{Homogeneous dynamics: shear, diagonal renormalization, and projection geometry}{687}{subsubsection*.206}%
+\contentsline {subsubsection}{Lattice-orbit spreading: expanding a segment is not enough}{689}{subsubsection*.207}%
+\contentsline {subsubsection}{Furstenberg sets: rich tubes, three regimes, and Beck's theorem}{690}{subsubsection*.208}%
+\contentsline {subsubsection}{AD regularity turns the rich-tube count into a submultiplicative quantity}{691}{subsubsection*.209}%
+\contentsline {subsubsection}{The last scale-combination argument}{692}{subsubsection*.210}%
+\contentsline {subsubsection}{Proof and normalization supplement: finite fields through real discretization}{693}{subsubsection*.211}%
+\contentsline {subsection}{\numberline {14.2.3}From many additive coincidences to a genuinely structured rectangle}{693}{subsection.14.2.3}%
+\contentsline {subsection}{\numberline {14.2.4}Robust expansion is what makes the real argument iterate}{694}{subsection.14.2.4}%
+\contentsline {subsection}{\numberline {14.2.5}Ruzsa, Plünnecke, Petridis, and BSG: explicit variables and losses}{696}{subsection.14.2.5}%
+\contentsline {section}{\numberline {14.3}Dynamics connect projection growth to rich tubes}{697}{section.14.3}%
+\contentsline {subsection}{\numberline {14.3.1}Dynamics and the sharp rich-tube theorem}{697}{subsection.14.3.1}%
+\contentsline {subsection}{\numberline {14.3.2}Finite groups: when a walk is stuck, look for an approximate subgroup}{697}{subsection.14.3.2}%
+\contentsline {subsection}{\numberline {14.3.3}Homogeneous dynamics: shear, diagonal renormalization, and projection geometry}{700}{subsection.14.3.3}%
+\contentsline {subsection}{\numberline {14.3.4}Lattice-orbit spreading: expanding a segment is not enough}{701}{subsection.14.3.4}%
+\contentsline {subsection}{\numberline {14.3.5}Furstenberg sets: rich tubes, three regimes, and Beck's theorem}{702}{subsection.14.3.5}%
+\contentsline {subsection}{\numberline {14.3.6}AD regularity turns the rich-tube count into a submultiplicative quantity}{704}{subsection.14.3.6}%
+\contentsline {subsection}{\numberline {14.3.7}The last scale-combination argument}{704}{subsection.14.3.7}%
+\contentsline {subsection}{\numberline {14.3.8}Finite-group mixing: norms, gap, and expansion}{706}{subsection.14.3.8}%
+\contentsline {subsection}{\numberline {14.3.9}Homogeneous dynamics: hypotheses behind the lattice picture}{707}{subsection.14.3.9}%
+\contentsline {chapter}{\numberline {A}Reference Notes}{708}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Convolution and filter footprints}{708}{section.A.1}%
+\contentsline {subsection}{\numberline {A.1.1}Definition and mechanism}{708}{subsection.A.1.1}%
+\contentsline {subsection}{\numberline {A.1.2}Prerequisites}{708}{subsection.A.1.2}%
+\contentsline {subsection}{\numberline {A.1.3}Used by}{708}{subsection.A.1.3}%
+\contentsline {subsection}{\numberline {A.1.4}Source and navigation}{709}{subsection.A.1.4}%
+\contentsline {subsection}{\numberline {A.1.5}University course development}{709}{subsection.A.1.5}%
+\contentsline {section}{\numberline {A.2}Dual quaternion skinning}{709}{section.A.2}%
+\contentsline {subsection}{\numberline {A.2.1}Antipodal problem}{710}{subsection.A.2.1}%
+\contentsline {subsection}{\numberline {A.2.2}Bind transforms}{710}{subsection.A.2.2}%
+\contentsline {subsection}{\numberline {A.2.3}Executable witness}{710}{subsection.A.2.3}%
+\contentsline {section}{\numberline {A.3}Exceptional projections and dimension}{710}{section.A.3}%
+\contentsline {subsection}{\numberline {A.3.1}Definition and mechanism}{710}{subsection.A.3.1}%
+\contentsline {subsection}{\numberline {A.3.2}Prerequisites}{711}{subsection.A.3.2}%
+\contentsline {subsection}{\numberline {A.3.3}Used by}{711}{subsection.A.3.3}%
+\contentsline {subsection}{\numberline {A.3.4}Full teaching explanation}{711}{subsection.A.3.4}%
+\contentsline {subsection}{\numberline {A.3.5}Recall and next depth}{711}{subsection.A.3.5}%
+\contentsline {subsection}{\numberline {A.3.6}Source and navigation}{711}{subsection.A.3.6}%
+\contentsline {section}{\numberline {A.4}Exposure and sensor response}{712}{section.A.4}%
+\contentsline {subsection}{\numberline {A.4.1}Definition and mechanism}{712}{subsection.A.4.1}%
+\contentsline {subsection}{\numberline {A.4.2}Prerequisites}{712}{subsection.A.4.2}%
+\contentsline {subsection}{\numberline {A.4.3}Used by}{712}{subsection.A.4.3}%
+\contentsline {subsection}{\numberline {A.4.4}Full teaching explanation}{712}{subsection.A.4.4}%
+\contentsline {section}{\numberline {A.5}Half-edge topology invariants}{712}{section.A.5}%
+\contentsline {subsection}{\numberline {A.5.1}Invariants}{713}{subsection.A.5.1}%
+\contentsline {subsection}{\numberline {A.5.2}Euler characteristic as a diagnostic}{713}{subsection.A.5.2}%
+\contentsline {subsection}{\numberline {A.5.3}Why topology must be separated from geometry}{713}{subsection.A.5.3}%
+\contentsline {subsection}{\numberline {A.5.4}Executable witness}{713}{subsection.A.5.4}%
+\contentsline {section}{\numberline {A.6}Homogeneous clipping and perspective interpolation}{713}{section.A.6}%
+\contentsline {subsection}{\numberline {A.6.1}Definition and mechanism}{714}{subsection.A.6.1}%
+\contentsline {subsection}{\numberline {A.6.2}Prerequisites}{714}{subsection.A.6.2}%
+\contentsline {subsection}{\numberline {A.6.3}Used by}{714}{subsection.A.6.3}%
+\contentsline {subsection}{\numberline {A.6.4}Full teaching explanation}{714}{subsection.A.6.4}%
+\contentsline {subsection}{\numberline {A.6.5}Recall and next depth}{714}{subsection.A.6.5}%
+\contentsline {subsection}{\numberline {A.6.6}Source and navigation}{715}{subsection.A.6.6}%
+\contentsline {subsection}{\numberline {A.6.7}Phase 11 camera development}{715}{subsection.A.6.7}%
+\contentsline {subsection}{\numberline {A.6.8}Worked clip-plane trace beside the shader explanation}{715}{subsection.A.6.8}%
+\contentsline {subsection}{\numberline {A.6.9}Executable raster-state continuation}{715}{subsection.A.6.9}%
+\contentsline {section}{\numberline {A.7}Lens optics and depth of field}{716}{section.A.7}%
+\contentsline {subsection}{\numberline {A.7.1}Definition and mechanism}{716}{subsection.A.7.1}%
+\contentsline {subsection}{\numberline {A.7.2}Prerequisites}{716}{subsection.A.7.2}%
+\contentsline {subsection}{\numberline {A.7.3}Used by}{716}{subsection.A.7.3}%
+\contentsline {subsection}{\numberline {A.7.4}Full teaching explanation}{716}{subsection.A.7.4}%
+\contentsline {subsection}{\numberline {A.7.5}Phase 11 camera development}{716}{subsection.A.7.5}%
+\contentsline {section}{\numberline {A.8}Local rigidity and mesh orientation fields}{717}{section.A.8}%
+\contentsline {subsection}{\numberline {A.8.1}Definition and mechanism}{717}{subsection.A.8.1}%
+\contentsline {subsection}{\numberline {A.8.2}Prerequisites}{717}{subsection.A.8.2}%
+\contentsline {subsection}{\numberline {A.8.3}Used by}{717}{subsection.A.8.3}%
+\contentsline {subsection}{\numberline {A.8.4}Full teaching explanation}{717}{subsection.A.8.4}%
+\contentsline {subsection}{\numberline {A.8.5}Recall and next depth}{717}{subsection.A.8.5}%
+\contentsline {subsection}{\numberline {A.8.6}Source and navigation}{718}{subsection.A.8.6}%
+\contentsline {section}{\numberline {A.9}Mesh topology and homology}{718}{section.A.9}%
+\contentsline {subsection}{\numberline {A.9.1}Simplicial-chain view}{718}{subsection.A.9.1}%
+\contentsline {subsection}{\numberline {A.9.2}Euler characteristic}{718}{subsection.A.9.2}%
+\contentsline {subsection}{\numberline {A.9.3}Mesh diagnostics}{719}{subsection.A.9.3}%
+\contentsline {section}{\numberline {A.10}PDE fields and discrete Laplacians}{719}{section.A.10}%
+\contentsline {subsection}{\numberline {A.10.1}Definition and mechanism}{719}{subsection.A.10.1}%
+\contentsline {subsection}{\numberline {A.10.2}Prerequisites}{719}{subsection.A.10.2}%
+\contentsline {subsection}{\numberline {A.10.3}Used by}{720}{subsection.A.10.3}%
+\contentsline {section}{\numberline {A.11}Persistent homology}{720}{section.A.11}%
+\contentsline {subsection}{\numberline {A.11.1}What persistence means}{720}{subsection.A.11.1}%
+\contentsline {subsection}{\numberline {A.11.2}Union-find intuition for H0}{721}{subsection.A.11.2}%
+\contentsline {subsection}{\numberline {A.11.3}Mesh/reconstruction relevance}{721}{subsection.A.11.3}%
+\contentsline {subsection}{\numberline {A.11.4}Evidence boundary}{721}{subsection.A.11.4}%
+\contentsline {section}{\numberline {A.12}QEM edge collapse and validity}{721}{section.A.12}%
+\contentsline {subsection}{\numberline {A.12.1}Plane quadrics}{721}{subsection.A.12.1}%
+\contentsline {subsection}{\numberline {A.12.2}Topology gate before cost}{722}{subsection.A.12.2}%
+\contentsline {subsection}{\numberline {A.12.3}Priority queue invalidation}{722}{subsection.A.12.3}%
+\contentsline {subsection}{\numberline {A.12.4}Verification}{722}{subsection.A.12.4}%
+\contentsline {subsection}{\numberline {A.12.5}Executable collapse layer}{723}{subsection.A.12.5}%
+\contentsline {subsection}{\numberline {A.12.6}Optimal solve and topology link-condition continuation}{723}{subsection.A.12.6}%
+\contentsline {section}{\numberline {A.13}Rendering history validity}{723}{section.A.13}%
+\contentsline {subsection}{\numberline {A.13.1}Reprojection is a hypothesis}{724}{subsection.A.13.1}%
+\contentsline {subsection}{\numberline {A.13.2}Versioned history}{724}{subsection.A.13.2}%
+\contentsline {subsection}{\numberline {A.13.3}Failure-oriented tests}{724}{subsection.A.13.3}%
+\contentsline {section}{\numberline {A.14}SIMD and GPU data layouts}{724}{section.A.14}%
+\contentsline {subsection}{\numberline {A.14.1}Definition and mechanism}{724}{subsection.A.14.1}%
+\contentsline {subsection}{\numberline {A.14.2}Prerequisites}{724}{subsection.A.14.2}%
+\contentsline {subsection}{\numberline {A.14.3}Used by}{725}{subsection.A.14.3}%
+\contentsline {subsection}{\numberline {A.14.4}M003 development}{725}{subsection.A.14.4}%
+\contentsline {subsection}{\numberline {A.14.5}Recall and next depth}{725}{subsection.A.14.5}%
+\contentsline {subsection}{\numberline {A.14.6}Source and navigation}{725}{subsection.A.14.6}%
+\contentsline {section}{\numberline {A.15}Spline bases and curve evaluation}{725}{section.A.15}%
+\contentsline {subsection}{\numberline {A.15.1}Definition and mechanism}{725}{subsection.A.15.1}%
+\contentsline {subsection}{\numberline {A.15.2}Prerequisites}{726}{subsection.A.15.2}%
+\contentsline {subsection}{\numberline {A.15.3}Used by}{726}{subsection.A.15.3}%
+\contentsline {section}{\numberline {A.16}Stereo correspondence and epipolar geometry}{726}{section.A.16}%
+\contentsline {subsection}{\numberline {A.16.1}Definition and mechanism}{726}{subsection.A.16.1}%
+\contentsline {subsection}{\numberline {A.16.2}Prerequisites}{726}{subsection.A.16.2}%
+\contentsline {subsection}{\numberline {A.16.3}Used by}{727}{subsection.A.16.3}%
+\contentsline {section}{\numberline {A.17}Matrices, Transforms and Quaternions --- Visual Recall}{727}{section.A.17}%
+\contentsline {subsection}{\numberline {A.17.1}The short route}{727}{subsection.A.17.1}%
+\contentsline {subsection}{\numberline {A.17.2}Four experiments to reconstruct without the chapter}{730}{subsection.A.17.2}%
+\contentsline {subsection}{\numberline {A.17.3}Added retrieval prompt}{730}{subsection.A.17.3}%
+\contentsline {section}{\numberline {A.18}Camera projection: shortest useful recall}{731}{section.A.18}%
+\contentsline {subsection}{\numberline {A.18.1}Frames and transforms}{731}{subsection.A.18.1}%
+\contentsline {subsection}{\numberline {A.18.2}Projection, depth, raster, and culling}{731}{subsection.A.18.2}%
+\contentsline {subsection}{\numberline {A.18.3}Time and calibrated image formation}{732}{subsection.A.18.3}%
+\contentsline {subsection}{\numberline {A.18.4}Reconstruction, stereo, and optics}{732}{subsection.A.18.4}%
+\contentsline {subsection}{\numberline {A.18.5}Essential figures}{732}{subsection.A.18.5}%
+\contentsline {subsection}{\numberline {A.18.6}Figures and their full explanations}{732}{subsection.A.18.6}%
+\contentsline {subsection}{\numberline {A.18.7}Linked camera concepts}{733}{subsection.A.18.7}%
+\contentsline {subsection}{\numberline {A.18.8}Deeper research retrieval}{733}{subsection.A.18.8}%
+\contentsline {subsection}{\numberline {A.18.9}Research concept links}{734}{subsection.A.18.9}%

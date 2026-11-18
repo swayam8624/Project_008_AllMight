@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch497.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-8f96f9c4d5bc-time-integrators-and-symplectic-updates" class="level2">
+<h2>Time integrators and symplectic updates</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 9 · <strong>Latest development:</strong> Phase 9</p>
+<section id="appendix-8f96f9c4d5bc-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A time integrator turns a differential equation into a discrete state update. Explicit Euler uses the current slope; midpoint and Runge–Kutta methods combine several slope evaluations to improve local accuracy; semi-implicit Euler updates velocity before position and can behave better for mechanical systems. Symplectic methods preserve the geometric structure of Hamiltonian dynamics, often keeping long-run energy error bounded rather than allowing systematic drift. No method is universally best: order, stability region, cost, conservation, and stiffness all matter. A higher formal order does not guarantee better behavior at an unsuitable step size or under discontinuous forces. Compare integrators on the same problem, step policy, and error target. Update order is part of the algorithm: changing it can change stability and physical behavior, not merely code style.</p>
+</section>
+<section id="appendix-8f96f9c4d5bc-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch529.xhtml#appendix-e8ab9836882e-ode-initial-value-problems-and-stiffness" class="wikilink">ODE initial-value problems and stiffness</a></li>
+</ul>
+</section>
+<section id="appendix-8f96f9c4d5bc-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch338.xhtml#appendix-18eacf61a04b-ode-integration-and-stability" class="wikilink">ODE integration and stability (Light Transport and Image Synthesis, Part 1, Reference notes: ODE integration and stability)</a></li>
+</ul>
+</section>
+<section id="appendix-8f96f9c4d5bc-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch269.xhtml#id_02-foundations-ii-ch025-odes-and-numerical-simulation" class="wikilink">Phase 9 teaching section (Mathematics for Visual Computing, Part 2, Ch. 9)</a></li>
+<li><a href="ch084.xhtml#appendix-adf48f5dc5c1-calculus-and-optimization-visual-recall" class="wikilink">Visual Recall/09 - Calculus and Optimization - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 09 - Calculus and Optimization - Visual Recall)</a> · visual recall</li>
+</ul>
+</section>
+<section id="appendix-8f96f9c4d5bc-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 840 (T03 · M051), 841 (T03 · M051), 842 (T03 · M051), 843 (T03 · M051), 844 (T03 · M051).</p>
+</section>
+</section>
+</body>
+</html>

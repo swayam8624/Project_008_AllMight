@@ -1,0 +1,51 @@
+\hypertarget{appendix-d5b3c692d9f0}{}\label{referencestart:appendix-d5b3c692d9f0}
+\section{Convolution and filter footprints}\label{appendix-d5b3c692d9f0-convolution-and-filter-footprints}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} XR01 · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-d5b3c692d9f0-definition-and-mechanism}
+
+Convolution combines shifted values with a weighting kernel; its spectrum multiplies transfer functions. Pixel footprints and boundary policies define what is averaged. A separable Gaussian uses two 1D passes; unpadded DFT filtering wraps circularly.
+
+\subsection{Prerequisites}\label{appendix-d5b3c692d9f0-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1077ea8fc737]{Continuous signals and discrete samples} --- Filtering/frequency analysis operates on a declared domain and its samples.
+\item
+  \hyperref[appendix-b60686ba06a1]{Fourier analysis and spectral phase} --- Frequency and phase reveal transfer, sampling ambiguity and structural loss.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-d5b3c692d9f0-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-8b76b0efd27f]{PSF OTF and MTF}
+\item
+  \hyperref[appendix-b677a85ba76f]{Multiscale texture filtering}
+\item
+  \hyperref[appendix-e2e73f8cd93e]{Optical flow and time to contact}
+\item
+  \hyperref[appendix-36022286b03e]{Edge localization and subpixel contours}
+\item
+  \hyperref[appendix-5fb4af80d1c7]{Template matching and distance transforms}
+\item
+  \hyperref[appendix-1988d465c119]{PDE fields and discrete Laplacians}
+\item
+  \hyperref[appendix-a9d5dfdd164a]{Attention and visual transformers}
+\item
+  \hyperref[appendix-47c51ea026fb]{Learned image features and CNNs} \#\# Recall and next depth
+\end{itemize}
+
+Derive the three-tap filter's gain and constant preservation. Pending: implementation cost, padding and spatially varying kernels. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.
+
+\subsection{Source and navigation}\label{appendix-d5b3c692d9f0-source-and-navigation}
+
+\href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch042-a-footprint-is-more-meaningful-than-an-isolated-pixel-center}{Expanded teaching explanation (Vision, XR, and Playable Worlds, Vision, XR, and Playable Worlds, Chapter 9)} · \hyperref[appendix-fd090d982a15-xr01---independent-seeing-and-representation-source]{Independent coverage} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}
+
+\subsection{University course development}\label{appendix-d5b3c692d9f0-university-course-development}
+
+Extend the current convolution note from a sliding kernel to image formation and resampling. A pixel integrates incoming image energy over a finite footprint; point sampling is only an approximation to that area integral. Convolution combines nearby values with weights whose spatial support is the kernel footprint, and its Fourier transform describes which spatial frequencies survive. Before reducing resolution, low-pass filtering suppresses frequencies the coarser grid cannot represent. In texture mapping, the screen-to-texture Jacobian maps a nearly square screen pixel to a texture-space parallelogram. If the two singular directions have very different lengths, an isotropic mip level blurs one direction too much; anisotropic filters take extra samples along the long axis. This same footprint reasoning links pixel reconstruction, antialiasing, texture filtering, and sensor blur without treating them as unrelated tricks.
+
+\href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch003-sampling-continuous-signals-and-image-formation}{Sampling continuous signals and image formation (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 10)} · \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch004-image-sampling-filtering-and-efficient-reconstruction}{Image sampling, filtering, and efficient reconstruction (Geometry, Cameras, and Image Formation, Geometry, Cameras, and Image Formation, Chapter 11)} · \href{../04-Light-Transport-and-Image-Synthesis/main.pdf\#nameddest=03-visual-computing-i-ch019-textures-and-surface-detail}{Textures and surface detail (Light Transport and Image Synthesis, Light Transport and Image Synthesis, Chapter 8)}

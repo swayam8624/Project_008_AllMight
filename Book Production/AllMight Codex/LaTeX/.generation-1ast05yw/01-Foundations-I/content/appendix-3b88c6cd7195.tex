@@ -1,0 +1,31 @@
+\hypertarget{appendix-3b88c6cd7195}{}
+\section*{Thread-local storage}
+\section{Thread-local storage}\label{appendix-3b88c6cd7195-thread-local-storage}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C007 · \textbf{Latest development:} C007
+
+\subsection{Definition and mechanism}\label{appendix-3b88c6cd7195-definition-and-mechanism}
+
+thread\_local gives a separate object/storage instance per thread; block scope does not make it automatic. Initialization, access costs and destruction follow implementation/language rules. Thread-local state does not make shared pointees thread-safe, and escaped addresses need a valid thread/object lifetime.
+
+\subsection{Prerequisites}\label{appendix-3b88c6cd7195-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../05-Engine-I/main.pdf\#nameddest=appendix-0b104bcba06b}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)} --- Thread duration is a distinct backing-storage category, not a synonym for a local name's scope.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-3b88c6cd7195-used-by}
+
+Later chunks extend this same node; dependent concepts are listed here as they are integrated.
+
+\subsection{Recall and next depth}\label{appendix-3b88c6cd7195-recall-and-next-depth}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} Deeper ownership, pointer/reference, generic programming and module rules from later sources. This is written coverage, not demonstrated personal mastery.
+
+\subsection{Source and navigation}\label{appendix-3b88c6cd7195-source-and-navigation}
+
+\hyperref[01-foundations-i-ch002-a-name-does-not-decide-how-long-storage-lasts]{C007 teaching chapter} · \hyperref[appendix-fd090d982a15-m007---parts-101-112]{Source coverage} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

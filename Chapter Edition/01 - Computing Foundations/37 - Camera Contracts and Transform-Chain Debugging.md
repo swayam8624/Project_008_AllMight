@@ -8,7 +8,7 @@ A safe camera API separates pose, projection, depth, and raster conventions rath
 
 **Recall question:** If the final pixel is wrong, what intermediate coordinate should you inspect first, and which contract does it test?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 92790–95543; source-span SHA256 775dc2899b9313850b9315786fc230dfde9c711696c577f50b6691de99817ebe. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 93037–95790; source-span SHA256 ff9fb23aab9ebc413a2ce9ee1acf22cb01bdfc4a2c0af26d14b3f670299495fb. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Make camera conventions explicit and debug the full transform chain
@@ -832,13 +832,13 @@ We have now studied all 42 original parts individually. Let's combine them into 
 Suppose a mesh contains local point:
 
 $$
- \boxed{ \mathbf p_L=(1,0,0) }. 
+ \boxed{ \mathbf p_L=(1,0,0) }.
 $$
 
 Its model matrix translates the object by:
 
 $$
- \mathbf t=(2,1,0) 
+ \mathbf t=(2,1,0)
 $$
 
 with no rotation or scale.
@@ -846,29 +846,29 @@ with no rotation or scale.
 The camera is at:
 
 $$
- \mathbf c=(0,0,5) 
+ \mathbf c=(0,0,5)
 $$
 
 looking at the world origin with world up:
 
 $$
- (0,1,0). 
+ (0,1,0).
 $$
 
 The camera parameters are:
 
 $$
- \theta_y=60^\circ, \qquad a=\frac{16}{9}, 
+ \theta_y=60^\circ, \qquad a=\frac{16}{9},
 $$
 
 $$
- n=0.1,\qquad f=1000. 
+ n=0.1,\qquad f=1000.
 $$
 
 The framebuffer resolution is:
 
 $$
- 1920\times1080. 
+ 1920\times1080.
 $$
 
 We use conventional zero-to-one perspective depth and an explicitly defined top-left raster mapping.
@@ -878,19 +878,19 @@ We use conventional zero-to-one perspective depth and an explicitly defined top-
 The model matrix is:
 
 $$
- M= \begin{bmatrix} 1&0&0&2\\ 0&1&0&1\\ 0&0&1&0\\ 0&0&0&1 \end{bmatrix}. 
+ M= \begin{bmatrix} 1&0&0&2\\ 0&1&0&1\\ 0&0&1&0\\ 0&0&0&1 \end{bmatrix}.
 $$
 
 Transform the homogeneous local point:
 
 $$
- \mathbf p_L= \begin{bmatrix} 1\\0\\0\\1 \end{bmatrix}. 
+ \mathbf p_L= \begin{bmatrix} 1\\0\\0\\1 \end{bmatrix}.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf p_W= M\mathbf p_L= \begin{bmatrix} 3\\1\\0\\1 \end{bmatrix} }. 
+ \boxed{ \mathbf p_W= M\mathbf p_L= \begin{bmatrix} 3\\1\\0\\1 \end{bmatrix} }.
 $$
 
 #### World to view
@@ -900,13 +900,13 @@ The camera is translated five units along $+Z$, looking toward $-Z$.
 Its view matrix is:
 
 $$
- V= \begin{bmatrix} 1&0&0&0\\ 0&1&0&0\\ 0&0&1&-5\\ 0&0&0&1 \end{bmatrix}. 
+ V= \begin{bmatrix} 1&0&0&0\\ 0&1&0&0\\ 0&0&1&-5\\ 0&0&0&1 \end{bmatrix}.
 $$
 
 Thus:
 
 $$
- \boxed{ \mathbf p_V= V\mathbf p_W= \begin{bmatrix} 3\\1\\-5\\1 \end{bmatrix} }. 
+ \boxed{ \mathbf p_V= V\mathbf p_W= \begin{bmatrix} 3\\1\\-5\\1 \end{bmatrix} }.
 $$
 
 The point is three units right, one unit up, and five units forward from the camera.
@@ -914,7 +914,7 @@ The point is three units right, one unit up, and five units forward from the cam
 Its positive camera depth is:
 
 $$
- \boxed{d=5}. 
+ \boxed{d=5}.
 $$
 
 Note that this is axial view depth, not Euclidean distance from the camera centre.
@@ -922,7 +922,7 @@ Note that this is axial view depth, not Euclidean distance from the camera centr
 The Euclidean distance is:
 
 $$
- \sqrt{3^2+1^2+5^2}=\sqrt{35}\approx5.9161. 
+ \sqrt{3^2+1^2+5^2}=\sqrt{35}\approx5.9161.
 $$
 
 Ordinary perspective depth mapping uses $d=-z_v=5$, not the Euclidean range.
@@ -932,53 +932,53 @@ Ordinary perspective depth mapping uses $d=-z_v=5$, not the Euclidean range.
 For the stated FOV and aspect ratio:
 
 $$
- s_x\approx0.9742785793, 
+ s_x\approx0.9742785793,
 $$
 
 $$
- s_y\approx1.7320508076. 
+ s_y\approx1.7320508076.
 $$
 
 Our projection is:
 
 $$
- P= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-1.00010001&-0.100010001\\ 0&0&-1&0 \end{bmatrix}. 
+ P= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-1.00010001&-0.100010001\\ 0&0&-1&0 \end{bmatrix}.
 $$
 
 Apply to:
 
 $$
- \mathbf p_V=(3,1,-5,1)^T. 
+ \mathbf p_V=(3,1,-5,1)^T.
 $$
 
 The clip X coordinate is:
 
 $$
- x_c=s_x(3)\approx2.922835738. 
+ x_c=s_x(3)\approx2.922835738.
 $$
 
 The clip Y coordinate is:
 
 $$
- y_c=s_y(1)\approx1.732050808. 
+ y_c=s_y(1)\approx1.732050808.
 $$
 
 The clip W coordinate is:
 
 $$
- \boxed{w_c=5}. 
+ \boxed{w_c=5}.
 $$
 
 The clip Z coordinate follows from the depth row and is approximately:
 
 $$
- z_c=4.900490049. 
+ z_c=4.900490049.
 $$
 
 Thus:
 
 $$
- \boxed{ \mathbf p_C\approx \begin{bmatrix} 2.922835738\\ 1.732050808\\ 4.900490049\\ 5 \end{bmatrix} }. 
+ \boxed{ \mathbf p_C\approx \begin{bmatrix} 2.922835738\\ 1.732050808\\ 4.900490049\\ 5 \end{bmatrix} }.
 $$
 
 #### Perspective divide
@@ -988,25 +988,25 @@ Divide by $w_c=5$.
 Therefore:
 
 $$
- \boxed{ x_n\approx0.584567148 } 
+ \boxed{ x_n\approx0.584567148 }
 $$
 
 and:
 
 $$
- \boxed{ y_n\approx0.346410162 }. 
+ \boxed{ y_n\approx0.346410162 }.
 $$
 
 The depth is:
 
 $$
- \boxed{ z_n\approx0.980098010 }. 
+ \boxed{ z_n\approx0.980098010 }.
 $$
 
 The NDC point is:
 
 $$
- \boxed{ \mathbf p_N\approx (0.584567148,\ 0.346410162,\ 0.980098010) }. 
+ \boxed{ \mathbf p_N\approx (0.584567148,\ 0.346410162,\ 0.980098010) }.
 $$
 
 It lies inside the conventional zero-to-one visible depth interval and symmetric XY NDC bounds.
@@ -1016,37 +1016,37 @@ It lies inside the conventional zero-to-one visible depth interval and symmetric
 Using a top-left raster origin:
 
 $$
- x_p=\frac{x_n+1}{2}1920. 
+ x_p=\frac{x_n+1}{2}1920.
 $$
 
 Substitute:
 
 $$
- x_p= \frac{1.584567148}{2}(1920). 
+ x_p= \frac{1.584567148}{2}(1920).
 $$
 
 Therefore:
 
 $$
- \boxed{x_p\approx1521.184462}. 
+ \boxed{x_p\approx1521.184462}.
 $$
 
 For Y:
 
 $$
- y_p=\frac{1-y_n}{2}1080. 
+ y_p=\frac{1-y_n}{2}1080.
 $$
 
 Thus:
 
 $$
- \boxed{y_p\approx352.938513}. 
+ \boxed{y_p\approx352.938513}.
 $$
 
 The final continuous raster position is:
 
 $$
- \boxed{ \mathbf p_{\mathrm{raster}} \approx (1521.1845,\ 352.9385) }. 
+ \boxed{ \mathbf p_{\mathrm{raster}} \approx (1521.1845,\ 352.9385) }.
 $$
 
 That is the complete mathematical journey from a mesh vertex to an image position.
@@ -1073,13 +1073,13 @@ The earlier perspective derivation used a centred frustum; the more general form
 Suppose the near plane has horizontal coordinates:
 
 $$
- l,\ r 
+ l,\ r
 $$
 
 and vertical coordinates:
 
 $$
- b,\ t. 
+ b,\ t.
 $$
 
 The near plane is at positive camera depth $n$.
@@ -1089,53 +1089,53 @@ We want near-plane X coordinate $l$ to map to NDC $-1$, and $r$ to map to $+1$.
 Assume the clip X numerator is:
 
 $$
- x_c=\alpha x+\beta z. 
+ x_c=\alpha x+\beta z.
 $$
 
 The perspective denominator is:
 
 $$
- w_c=-z=d. 
+ w_c=-z=d.
 $$
 
 At the near plane:
 
 $$
- z=-n. 
+ z=-n.
 $$
 
 Thus:
 
 $$
- x_n=\frac{\alpha x-\beta n}{n} = \frac{\alpha x}{n}-\beta. 
+ x_n=\frac{\alpha x-\beta n}{n} = \frac{\alpha x}{n}-\beta.
 $$
 
 Enforce the left and right bounds:
 
 $$
- \frac{\alpha l}{n}-\beta=-1, 
+ \frac{\alpha l}{n}-\beta=-1,
 $$
 
 $$
- \frac{\alpha r}{n}-\beta=1. 
+ \frac{\alpha r}{n}-\beta=1.
 $$
 
 Subtract:
 
 $$
- \frac{\alpha(r-l)}n=2. 
+ \frac{\alpha(r-l)}n=2.
 $$
 
 Therefore:
 
 $$
- \boxed{ \alpha=\frac{2n}{r-l} }. 
+ \boxed{ \alpha=\frac{2n}{r-l} }.
 $$
 
 Substitute:
 
 $$
- \boxed{ \beta=\frac{r+l}{r-l} }. 
+ \boxed{ \beta=\frac{r+l}{r-l} }.
 $$
 
 The same reasoning applies vertically.
@@ -1143,23 +1143,23 @@ The same reasoning applies vertically.
 Therefore a general asymmetric right-handed zero-to-one perspective matrix is:
 
 $$
- \boxed{ P= \begin{bmatrix} \dfrac{2n}{r-l}&0&\dfrac{r+l}{r-l}&0\\ 0&\dfrac{2n}{t-b}&\dfrac{t+b}{t-b}&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix} }. 
+ \boxed{ P= \begin{bmatrix} \dfrac{2n}{r-l}&0&\dfrac{r+l}{r-l}&0\\ 0&\dfrac{2n}{t-b}&\dfrac{t+b}{t-b}&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix} }.
 $$
 
 When the frustum is symmetric:
 
 $$
- l=-r,\qquad b=-t, 
+ l=-r,\qquad b=-t,
 $$
 
 the off-axis terms vanish:
 
 $$
- \frac{r+l}{r-l}=0, 
+ \frac{r+l}{r-l}=0,
 $$
 
 $$
- \frac{t+b}{t-b}=0. 
+ \frac{t+b}{t-b}=0.
 $$
 
 The matrix reduces to our ordinary centred perspective projection.
@@ -1221,57 +1221,57 @@ Rather than writing several superficially different projection functions, it der
 For our right-handed perspective convention, let:
 
 $$
- z_n(d)=-A+\frac Bd. 
+ z_n(d)=-A+\frac Bd.
 $$
 
 Define desired endpoint depths:
 
 $$
- d_n=z_n(n), 
+ d_n=z_n(n),
 $$
 
 $$
- d_f=z_n(f). 
+ d_f=z_n(f).
 $$
 
 We have:
 
 $$
- -A+\frac Bn=d_n, 
+ -A+\frac Bn=d_n,
 $$
 
 $$
- -A+\frac Bf=d_f. 
+ -A+\frac Bf=d_f.
 $$
 
 Subtract:
 
 $$
- B\left(\frac1n-\frac1f\right)=d_n-d_f. 
+ B\left(\frac1n-\frac1f\right)=d_n-d_f.
 $$
 
 Thus:
 
 $$
- \boxed{ B=\frac{nf(d_n-d_f)}{f-n} }. 
+ \boxed{ B=\frac{nf(d_n-d_f)}{f-n} }.
 $$
 
 Use the near equation:
 
 $$
- A=\frac Bn-d_n. 
+ A=\frac Bn-d_n.
 $$
 
 Substitute:
 
 $$
- \boxed{ A=\frac{nd_n-fd_f}{f-n} }. 
+ \boxed{ A=\frac{nd_n-fd_f}{f-n} }.
 $$
 
 Therefore a general finite perspective depth row is:
 
 $$
- \boxed{ \left( 0,\ 0,\ \frac{nd_n-fd_f}{f-n},\ \frac{nf(d_n-d_f)}{f-n} \right) }. 
+ \boxed{ \left( 0,\ 0,\ \frac{nd_n-fd_f}{f-n},\ \frac{nf(d_n-d_f)}{f-n} \right) }.
 $$
 
 This formula handles conventional and reversed depth in both supported depth intervals.
@@ -1283,35 +1283,35 @@ It is more robust conceptually than memorizing four matrices separately.
 Take:
 
 $$
- f\to\infty. 
+ f\to\infty.
 $$
 
 Then:
 
 $$
- A\to-d_f, 
+ A\to-d_f,
 $$
 
 $$
- B\to n(d_n-d_f). 
+ B\to n(d_n-d_f).
 $$
 
 Thus:
 
 $$
- \boxed{ A_{\infty}=-d_f, \qquad B_{\infty}=n(d_n-d_f) }. 
+ \boxed{ A_{\infty}=-d_f, \qquad B_{\infty}=n(d_n-d_f) }.
 $$
 
 For infinite reversed-Z with zero-to-one depth:
 
 $$
- d_n=1,\qquad d_f=0. 
+ d_n=1,\qquad d_f=0.
 $$
 
 Therefore:
 
 $$
- A=0,\qquad B=n. 
+ A=0,\qquad B=n.
 $$
 
 We recover the simple infinite reversed-Z matrix.
@@ -1341,7 +1341,7 @@ The tests verify several important properties rather than merely comparing print
 The camera-to-world and world-to-camera matrices compose to identity:
 
 $$
- \boxed{VC=I}. 
+ \boxed{VC=I}.
 $$
 
 The camera's world position transforms to the view origin.
@@ -1383,15 +1383,15 @@ These conventions are internally coherent and match the reference mathematics of
 The existing `Perspective()` function produces:
 
 $$
- P_{22}=\frac f{n-f}, 
+ P_{22}=\frac f{n-f},
 $$
 
 $$
- P_{23}=\frac{fn}{n-f}, 
+ P_{23}=\frac{fn}{n-f},
 $$
 
 $$
- P_{32}=-1. 
+ P_{32}=-1.
 $$
 
 Those are the conventional right-handed zero-to-one coefficients derived earlier.
@@ -1450,13 +1450,13 @@ But those checks do not prove the up vector is nonparallel to the forward direct
 If:
 
 $$
- \mathbf f\parallel\mathbf u_0, 
+ \mathbf f\parallel\mathbf u_0,
 $$
 
 then:
 
 $$
- \mathbf f\times\mathbf u_0=\mathbf0. 
+ \mathbf f\times\mathbf u_0=\mathbf0.
 $$
 
 A look-at implementation must handle this case explicitly.
@@ -1512,7 +1512,7 @@ Thus it would be incorrect to claim this renderer already uses reversed-Z merely
 The pinhole camera constructs a forward/right/up basis and generates rays using:
 
 $$
- \boxed{ \mathbf d= \operatorname{normalize} \left[ \mathbf f+ x_s\mathbf r+ y_s\mathbf u \right] }. 
+ \boxed{ \mathbf d= \operatorname{normalize} \left[ \mathbf f+ x_s\mathbf r+ y_s\mathbf u \right] }.
 $$
 
 The screen offsets use vertical FOV and aspect ratio.
@@ -1520,11 +1520,11 @@ The screen offsets use vertical FOV and aspect ratio.
 Its normalized raster inputs are mapped using:
 
 $$
- x_s=(2u-1)\tan(\theta_y/2)a, 
+ x_s=(2u-1)\tan(\theta_y/2)a,
 $$
 
 $$
- y_s=(1-2v)\tan(\theta_y/2). 
+ y_s=(1-2v)\tan(\theta_y/2).
 $$
 
 This is mathematically consistent with the top-left normalized raster convention and a right-handed camera looking along local $-Z$.
@@ -1560,7 +1560,7 @@ It is being able to reconstruct the complete rendering coordinate pipeline from 
 Start with the definition of a frame:
 
 $$
- \mathbf p=\mathbf o+B\mathbf p_{\mathrm{local}}. 
+ \mathbf p=\mathbf o+B\mathbf p_{\mathrm{local}}.
 $$
 
 Derive its inverse, explain why points and directions transform differently, derive rigid camera inverse matrices, construct a look-at basis with correct cross-product order, and demonstrate why camera movement produces an inverse transformation of world coordinates.
@@ -1570,13 +1570,13 @@ You should also explain how tangent frames and normal matrices differ, why nonun
 Start from similar triangles:
 
 $$
- x_s=\frac{sx}{d}, \qquad y_s=\frac{sy}{d}. 
+ x_s=\frac{sx}{d}, \qquad y_s=\frac{sy}{d}.
 $$
 
 Derive the perspective divide through:
 
 $$
- w_c=-z_v. 
+ w_c=-z_v.
 $$
 
 Derive the projection scale from FOV and aspect ratio.
@@ -1594,53 +1594,53 @@ A complete implementation should test all of these against independently constru
 Object to clip
 
 $$
- \boxed{ \mathbf p_C=PVM\mathbf p_L } 
+ \boxed{ \mathbf p_C=PVM\mathbf p_L }
 $$
 
 World to camera
 
 $$
- \boxed{ \mathbf p_V=R^T(\mathbf p_W-\mathbf c) } 
+ \boxed{ \mathbf p_V=R^T(\mathbf p_W-\mathbf c) }
 $$
 
 Perspective division
 
 $$
- \boxed{ \mathbf p_N= \frac{\mathbf p_C.xyz}{\mathbf p_C.w} } 
+ \boxed{ \mathbf p_N= \frac{\mathbf p_C.xyz}{\mathbf p_C.w} }
 $$
 
 Vertical and horizontal FOV
 
 $$
- \boxed{ \theta_x= 2\arctan \left( a\tan(\theta_y/2) \right) } 
+ \boxed{ \theta_x= 2\arctan \left( a\tan(\theta_y/2) \right) }
 $$
 
 Standard zero-to-one perspective depth
 
 $$
- \boxed{ z_n(d)= \frac f{f-n} - \frac{fn}{(f-n)d} } 
+ \boxed{ z_n(d)= \frac f{f-n} - \frac{fn}{(f-n)d} }
 $$
 
 Finite reversed-Z perspective depth
 
 $$
- \boxed{ z_n(d)= \frac{nf}{(f-n)d} - \frac n{f-n} } 
+ \boxed{ z_n(d)= \frac{nf}{(f-n)d} - \frac n{f-n} }
 $$
 
 Infinite reversed-Z
 
 $$
- \boxed{ z_n(d)=\frac nd } 
+ \boxed{ z_n(d)=\frac nd }
 $$
 
 Top-left pixel centre to NDC
 
 $$
- \boxed{ x_n=\frac{2(i+0.5)}W-1 } 
+ \boxed{ x_n=\frac{2(i+0.5)}W-1 }
 $$
 
 $$
- \boxed{ y_n=1-\frac{2(j+0.5)}H } 
+ \boxed{ y_n=1-\frac{2(j+0.5)}H }
 $$
 
 ### Calibrated projection, uncertainty, reference implementation, and repository evidence
@@ -1652,7 +1652,7 @@ Let's connect the two modules through one camera observation.
 Assume a graphics camera located at world position:
 
 $$
- \mathbf C_W=(0,0,5) 
+ \mathbf C_W=(0,0,5)
 $$
 
 with its canonical orientation looking toward world $-Z$.
@@ -1660,7 +1660,7 @@ with its canonical orientation looking toward world $-Z$.
 A world point is:
 
 $$
- \mathbf X_W=(1,1,0). 
+ \mathbf X_W=(1,1,0).
 $$
 
 We want to determine where it appears in a calibrated camera image, optionally apply lens distortion, and determine how small 3D position uncertainty affects the projected pixel.
@@ -1674,13 +1674,13 @@ The graphics camera is translated five units along $+Z$.
 Its world-to-view transform subtracts:
 
 $$
- (0,0,5). 
+ (0,0,5).
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf X_G=(1,1,-5) }. 
+ \boxed{ \mathbf X_G=(1,1,-5) }.
 $$
 
 The point is one unit right, one unit up, and five units forward.
@@ -1690,23 +1690,23 @@ The point is one unit right, one unit up, and five units forward.
 Apply the convention conversion:
 
 $$
- S= \begin{bmatrix} 1&0&0\\ 0&-1&0\\ 0&0&-1 \end{bmatrix}. 
+ S= \begin{bmatrix} 1&0&0\\ 0&-1&0\\ 0&0&-1 \end{bmatrix}.
 $$
 
 Then:
 
 $$
- \boxed{ \mathbf X_C=S\mathbf X_G=(1,-1,5) }. 
+ \boxed{ \mathbf X_C=S\mathbf X_G=(1,-1,5) }.
 $$
 
 The optical camera sees the point at normalized coordinates:
 
 $$
- x=\frac15=0.2, 
+ x=\frac15=0.2,
 $$
 
 $$
- y=\frac{-1}{5}=-0.2. 
+ y=\frac{-1}{5}=-0.2.
 $$
 
 #### 36.3 Apply intrinsics
@@ -1714,37 +1714,37 @@ $$
 Let:
 
 $$
- K= \begin{bmatrix} 800&0&960\\ 0&820&540\\ 0&0&1 \end{bmatrix}. 
+ K= \begin{bmatrix} 800&0&960\\ 0&820&540\\ 0&0&1 \end{bmatrix}.
 $$
 
 For the undistorted image:
 
 $$
- u=800(0.2)+960. 
+ u=800(0.2)+960.
 $$
 
 Thus:
 
 $$
- \boxed{u=1120}. 
+ \boxed{u=1120}.
 $$
 
 And:
 
 $$
- v=820(-0.2)+540. 
+ v=820(-0.2)+540.
 $$
 
 Thus:
 
 $$
- \boxed{v=376}. 
+ \boxed{v=376}.
 $$
 
 The undistorted pixel is:
 
 $$
- \boxed{(1120,376)}. 
+ \boxed{(1120,376)}.
 $$
 
 It lies to the right and above the principal point, as expected.
@@ -1754,7 +1754,7 @@ It lies to the right and above the principal point, as expected.
 Let:
 
 $$
- k_1=-0.1 
+ k_1=-0.1
 $$
 
 with all other distortion coefficients zero.
@@ -1762,53 +1762,53 @@ with all other distortion coefficients zero.
 The normalized squared radius is:
 
 $$
- r^2=0.2^2+(-0.2)^2=0.08. 
+ r^2=0.2^2+(-0.2)^2=0.08.
 $$
 
 The radial factor is:
 
 $$
- L=1-0.1(0.08)=0.992. 
+ L=1-0.1(0.08)=0.992.
 $$
 
 Therefore:
 
 $$
- x_d=0.2(0.992)=0.1984, 
+ x_d=0.2(0.992)=0.1984,
 $$
 
 $$
- y_d=-0.2(0.992)=-0.1984. 
+ y_d=-0.2(0.992)=-0.1984.
 $$
 
 Map to pixels:
 
 $$
- u_d=800(0.1984)+960. 
+ u_d=800(0.1984)+960.
 $$
 
 Thus:
 
 $$
- \boxed{u_d=1118.72}. 
+ \boxed{u_d=1118.72}.
 $$
 
 And:
 
 $$
- v_d=820(-0.1984)+540. 
+ v_d=820(-0.1984)+540.
 $$
 
 Thus:
 
 $$
- \boxed{v_d=377.312}. 
+ \boxed{v_d=377.312}.
 $$
 
 The distorted pixel is:
 
 $$
- \boxed{(1118.72,377.312)}. 
+ \boxed{(1118.72,377.312)}.
 $$
 
 The observed point moves inward toward the principal point.
@@ -1820,13 +1820,13 @@ That is consistent with the negative radial coefficient in this example.
 Suppose the camera-space 3D point has covariance:
 
 $$
- \Sigma_X= \begin{bmatrix} 0.0001&0&0\\ 0&0.0001&0\\ 0&0&0.0004 \end{bmatrix}. 
+ \Sigma_X= \begin{bmatrix} 0.0001&0&0\\ 0&0.0001&0\\ 0&0&0.0004 \end{bmatrix}.
 $$
 
 These entries correspond to standard deviations of:
 
 $$
- 0.01,\quad0.01,\quad0.02 
+ 0.01,\quad0.01,\quad0.02
 $$
 
 world units along the three camera-space axes.
@@ -1834,71 +1834,71 @@ world units along the three camera-space axes.
 For the undistorted pinhole mapping, the Jacobian is:
 
 $$
- J_\pi= \begin{bmatrix} f_x/Z&0&-f_xX/Z^2\\ 0&f_y/Z&-f_yY/Z^2 \end{bmatrix}. 
+ J_\pi= \begin{bmatrix} f_x/Z&0&-f_xX/Z^2\\ 0&f_y/Z&-f_yY/Z^2 \end{bmatrix}.
 $$
 
 Substitute:
 
 $$
- f_x=800,\quad f_y=820, 
+ f_x=800,\quad f_y=820,
 $$
 
 $$
- X=1,\quad Y=-1,\quad Z=5. 
+ X=1,\quad Y=-1,\quad Z=5.
 $$
 
 Then:
 
 $$
- \boxed{ J_\pi= \begin{bmatrix} 160&0&-32\\ 0&164&32.8 \end{bmatrix} }. 
+ \boxed{ J_\pi= \begin{bmatrix} 160&0&-32\\ 0&164&32.8 \end{bmatrix} }.
 $$
 
 The first-order projected pixel covariance is:
 
 $$
- \Sigma_u\approx J_\pi\Sigma_XJ_\pi^T. 
+ \Sigma_u\approx J_\pi\Sigma_XJ_\pi^T.
 $$
 
 Calculate the horizontal variance:
 
 $$
- \sigma_u^2= 160^2(0.0001)+(-32)^2(0.0004). 
+ \sigma_u^2= 160^2(0.0001)+(-32)^2(0.0004).
 $$
 
 Therefore:
 
 $$
- \sigma_u^2=2.56+0.4096 =\boxed{2.9696}. 
+ \sigma_u^2=2.56+0.4096 =\boxed{2.9696}.
 $$
 
 The vertical variance is:
 
 $$
- \sigma_v^2= 164^2(0.0001)+32.8^2(0.0004). 
+ \sigma_v^2= 164^2(0.0001)+32.8^2(0.0004).
 $$
 
 Thus:
 
 $$
- \sigma_v^2= 2.6896+0.430336 =\boxed{3.119936}. 
+ \sigma_v^2= 2.6896+0.430336 =\boxed{3.119936}.
 $$
 
 The covariance is:
 
 $$
- \operatorname{Cov}(u,v) = (-32)(32.8)(0.0004). 
+ \operatorname{Cov}(u,v) = (-32)(32.8)(0.0004).
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{Cov}(u,v)=-0.41984 }. 
+ \boxed{ \operatorname{Cov}(u,v)=-0.41984 }.
 $$
 
 The full first-order pixel covariance is:
 
 $$
- \boxed{ \Sigma_u\approx \begin{bmatrix} 2.9696&-0.41984\\ -0.41984&3.119936 \end{bmatrix} }. 
+ \boxed{ \Sigma_u\approx \begin{bmatrix} 2.9696&-0.41984\\ -0.41984&3.119936 \end{bmatrix} }.
 $$
 
 Its off-diagonal terms arise because uncertainty in camera-space depth affects both pixel coordinates.
@@ -1908,7 +1908,7 @@ This is a concrete example of a 3D uncertainty ellipsoid projecting to a correla
 With optical distortion, the full local Jacobian becomes:
 
 $$
- \boxed{ J_{\mathrm{pixel}} = K_{2\times2}J_DJ_{\mathrm{normalize}} } 
+ \boxed{ J_{\mathrm{pixel}} = K_{2\times2}J_DJ_{\mathrm{normalize}} }
 $$
 
 where $J_D$ is the distortion Jacobian and $J_{\mathrm{normalize}}$ is the normalized pinhole Jacobian.
@@ -1916,7 +1916,7 @@ where $J_D$ is the distortion Jacobian and $J_{\mathrm{normalize}}$ is the norma
 Then:
 
 $$
- \boxed{ \Sigma_{\mathrm{pixel}} \approx J_{\mathrm{pixel}} \Sigma_X J_{\mathrm{pixel}}^T }. 
+ \boxed{ \Sigma_{\mathrm{pixel}} \approx J_{\mathrm{pixel}} \Sigma_X J_{\mathrm{pixel}}^T }.
 $$
 
 This is a useful bridge from the camera mathematics to uncertainty-aware Gaussian projection and reconstruction.
@@ -2058,7 +2058,7 @@ y -= delta.y;
 This is not just a procedural recipe. Every step follows from the local linearization:
 
 $$
- D(\mathbf q+\Delta) \approx D(\mathbf q)+J_D(\mathbf q)\Delta. 
+ D(\mathbf q+\Delta) \approx D(\mathbf q)+J_D(\mathbf q)\Delta.
 $$
 
 A complete implementation must check the determinant or numerical conditioning, limit iterations, reject nonfinite results, and confirm the final residual.
@@ -2119,7 +2119,7 @@ Also, a temporal renderer must distinguish sampled camera-path motion from TAA j
 The inspected [Maveb CalibrationLoader.cpp](https://github.com/swayam8624/Maveb/blob/main/engine/capture/calibration/CalibrationLoader.cpp?utm_source=chatgpt.com) reads:
 
 $$
- f_x,\ f_y,\ c_x,\ c_y 
+ f_x,\ f_y,\ c_x,\ c_y
 $$
 
 and supports distortion-model labels including `None`, `Radial`, and `Opencv`.
@@ -2141,7 +2141,7 @@ Those require semantic validation.
 The inspected [Vulkax pinhole_camera.hpp](https://github.com/swayam8624/Vulkax/blob/main/include/vulkax/world/pinhole_camera.hpp?utm_source=chatgpt.com) implements a pinhole projection forward model with:
 
 $$
- f_x,\ f_y,\ c_x,\ c_y, 
+ f_x,\ f_y,\ c_x,\ c_y,
 $$
 
 camera position, target, up, and near plane.
@@ -2151,13 +2151,13 @@ It uses world-space basis vectors and computes positive forward depth as the dot
 Its pixel mapping is:
 
 $$
- \boxed{ u=f_x\frac{X}{d}+c_x } 
+ \boxed{ u=f_x\frac{X}{d}+c_x }
 $$
 
 and:
 
 $$
- \boxed{ v=c_y-f_y\frac{Y}{d} } 
+ \boxed{ v=c_y-f_y\frac{Y}{d} }
 $$
 
 where its camera $Y$ axis points upward while pixel Y points downward.
@@ -2181,7 +2181,7 @@ A rendering engine culls geometry using frustum half-spaces. A temporal renderer
 The common mathematical structure is:
 
 $$
- \boxed{ \text{Geometry} \rightarrow \text{Coordinate transformation} \rightarrow \text{Projection} \rightarrow \text{Observation} }. 
+ \boxed{ \text{Geometry} \rightarrow \text{Coordinate transformation} \rightarrow \text{Projection} \rightarrow \text{Observation} }.
 $$
 
 The same structure supports both forward rendering and inverse reconstruction.

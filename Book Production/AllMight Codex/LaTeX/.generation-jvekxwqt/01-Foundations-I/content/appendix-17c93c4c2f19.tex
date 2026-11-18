@@ -1,0 +1,33 @@
+\hypertarget{appendix-17c93c4c2f19}{}
+\section*{Static storage and initialization}
+\section{Static storage and initialization}\label{appendix-17c93c4c2f19-static-storage-and-initialization}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C003 · \textbf{Latest development:} C007
+
+\subsection{Definition and mechanism}\label{appendix-17c93c4c2f19-definition-and-mechanism}
+
+constinit requires static initialization without making an object const. Dynamic initialization across translation units requires ordering care; explicit owners or function-local statics can provide a clear dependency path. Local-static first initialization is synchronized since C++11, but later calls/mutations still require normal concurrency rules. Initialization and shutdown dependencies are distinct.
+
+Namespace-scope/static objects have program-duration storage. Initialized writable objects commonly use data-like regions; zero-initialized objects use BSS-like zero-fill, avoiding literal zeros in the executable. Some objects require runtime dynamic initialization; cross-unit order is a distinct problem from storage allocation.
+
+\subsection{Prerequisites}\label{appendix-17c93c4c2f19-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../05-Engine-I/main.pdf\#nameddest=appendix-0b104bcba06b}{Storage duration and object lifetime (05-Engine-I, appendix-0b104bcba06b)} --- Access requires an object and backing storage that are still valid.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-17c93c4c2f19-used-by}
+
+Update downstream uses when later chunks build on this concept.
+
+\subsection{Recall and next depth}\label{appendix-17c93c4c2f19-recall-and-next-depth}
+
+Explain a large zero-initialized global without equally large file bytes.
+
+\textbf{Pending:} Full lifetime replacement, ownership/concurrency policies and cross-target ABI experiments; the opening examples do not establish those later guarantees.
+
+\subsection{Source and navigation}\label{appendix-17c93c4c2f19-source-and-navigation}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)} · \hyperref[01-foundations-i-ch002-a-name-does-not-decide-how-long-storage-lasts]{C007 development}

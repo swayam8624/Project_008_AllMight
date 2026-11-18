@@ -1,0 +1,4088 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch326.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_03-visual-computing-i-ch014-transparency-blending-and-visibility" class="level2">
+<h2>Transparency, Blending and Visibility</h2>
+<p><a href="ch316.xhtml#id_04-Light-Transport-and-Image-Synthesis" class="wikilink">Reading map</a> · <a href="ch325.xhtml#id_03-visual-computing-i-ch010-a-production-path-tracer-media-randomness-and-validation" class="wikilink">Previous chapter</a> · <a href="ch327.xhtml#id_03-visual-computing-i-ch015-rasterization-foundations-and-renderer-evidence" class="wikilink">Next chapter</a></p>
+<p>Transparency changes the order in which fragments contribute to the framebuffer. Alpha conventions, overdraw, depth tests and hierarchy queries determine both correctness and cost.</p>
+<p><strong>By the end:</strong> Explain source-over blending and the visibility tradeoffs around transparency.</p>
+<p><strong>Recall question:</strong> Why can ordinary depth writes produce incorrect results for translucent surfaces?</p>
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 31801–35330; source-span SHA256 9768468ffe0591ef778fa7677b9d06d203f9efc509fdfe16bf00e469a4a3139e. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_03-visual-computing-i-ch014-blending-transparency-alpha-testing-overdraw-early-z-queries-hi-z" class="level4">
+<h4>Blending, transparency, alpha testing, overdraw, early-Z, queries, Hi-Z</h4>
+<hr />
+<p><strong>Blending is a framebuffer recurrence</strong></p>
+<p>Suppose a new fragment produces source color</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mi>s</mi>
+  </msub>
+</math>
+<p>and the framebuffer currently stores destination color</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>A general blend operation can be written</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>C</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>out</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mi>Op</mi>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">(</mo>
+            <msub>
+              <mi>F</mi>
+              <mi>s</mi>
+            </msub>
+            <msub>
+              <mi>C</mi>
+              <mi>s</mi>
+            </msub>
+            <mo>,</mo>
+            <msub>
+              <mi>F</mi>
+              <mi>d</mi>
+            </msub>
+            <msub>
+              <mi>C</mi>
+              <mi>d</mi>
+            </msub>
+            <mo data-mjx-texclass="CLOSE">)</mo>
+          </mrow>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>F</mi>
+    <mi>s</mi>
+  </msub>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>F</mi>
+    <mi>d</mi>
+  </msub>
+</math> are configurable factors.</p>
+<p>For ADD:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>out</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>F</mi>
+    <mi>s</mi>
+  </msub>
+  <msub>
+    <mi>C</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>F</mi>
+    <mi>d</mi>
+  </msub>
+  <msub>
+    <mi>C</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Vulkan exposes exactly this model: source/destination RGB and alpha factors plus separate blend operations per color attachment. <a href="https://docs.vulkan.org/spec/latest/chapters/framebuffer.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<p>This means blending is not fundamentally a “transparency feature.”</p>
+<p>It is a programmable recurrence on framebuffer state.</p>
+<p>Transparency is one important use.</p>
+<hr />
+<p><strong>Standard straight-alpha source-over</strong></p>
+<p>Let</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>α</mi>
+    <mi>s</mi>
+  </msub>
+</math>
+<p>be source opacity.</p>
+<p>For straight/unassociated RGB, the standard color equation is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>C</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>out</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>α</mi>
+            <mi>s</mi>
+          </msub>
+          <msub>
+            <mi>C</mi>
+            <mi>s</mi>
+          </msub>
+          <mo>+</mo>
+          <mo stretchy="false">(</mo>
+          <mn>1</mn>
+          <mo>−</mo>
+          <msub>
+            <mi>α</mi>
+            <mi>s</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <msub>
+            <mi>C</mi>
+            <mi>d</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The corresponding output alpha is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>α</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>out</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>α</mi>
+            <mi>s</mi>
+          </msub>
+          <mo>+</mo>
+          <mo stretchy="false">(</mo>
+          <mn>1</mn>
+          <mo>−</mo>
+          <msub>
+            <mi>α</mi>
+            <mi>s</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <msub>
+            <mi>α</mi>
+            <mi>d</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>which expands to</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>α</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>s</mi>
+  </msub>
+  <msub>
+    <mi>α</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>This is the Porter-Duff source-over operator.</p>
+<p>The Vulkan configuration is:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>srcColor <span class="op">=</span> SRC_ALPHA<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>dstColor <span class="op">=</span> ONE_MINUS_SRC_ALPHA<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>colorOp  <span class="op">=</span> ADD<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>srcAlpha <span class="op">=</span> ONE<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>dstAlpha <span class="op">=</span> ONE_MINUS_SRC_ALPHA<span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>alphaOp  <span class="op">=</span> ADD<span class="op">;</span></span></code></pre></div>
+<p>And that is precisely what the current Kairo transparent pipeline uses.</p>
+<p>So your current renderer is a concrete straight-alpha source-over implementation.</p>
+<hr />
+<p><strong>A numerical blend trace</strong></p>
+<p>Suppose the framebuffer currently stores blue:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and a 25% opaque red fragment arrives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>α</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0.25</mn>
+  <mo>.</mo>
+</math>
+<p>Then</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>out</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>0.25</mn>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mn>0.75</mn>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>so</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>C</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>out</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mn>0.25</mn>
+          <mo>,</mo>
+          <mn>0</mn>
+          <mo>,</mo>
+          <mn>0.75</mn>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The important conceptual point:</p>
+<p>The source RGB <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> does <strong>not</strong> mean the final contribution is full red.</p>
+<p>Alpha scales its contribution during blending.</p>
+<hr />
+<p><strong>Premultiplied alpha</strong></p>
+<p>Instead of storing</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>C</mi>
+  <mo>,</mo>
+  <mi>α</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>store</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>α</mi>
+  <mi>C</mi>
+  <mo>,</mo>
+  <mi>α</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Define</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>C</mi>
+    <mi>s</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>=</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>s</mi>
+  </msub>
+  <msub>
+    <mi>C</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then source-over becomes</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msubsup>
+            <mi>C</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>out</mtext>
+            </mrow>
+            <mo data-mjx-alternate="1">′</mo>
+          </msubsup>
+          <mo>=</mo>
+          <msubsup>
+            <mi>C</mi>
+            <mi>s</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msubsup>
+          <mo>+</mo>
+          <mo stretchy="false">(</mo>
+          <mn>1</mn>
+          <mo>−</mo>
+          <msub>
+            <mi>α</mi>
+            <mi>s</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <msubsup>
+            <mi>C</mi>
+            <mi>d</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msubsup>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>which uses</p>
+<pre class="text"><code>source factor      = ONE
+destination factor = ONE_MINUS_SRC_ALPHA</code></pre>
+<p>rather than multiplying source RGB by alpha during the blend.</p>
+<hr />
+<p><strong>Why premultiplied alpha is more than an optimization</strong></p>
+<p>Consider a transparent texel.</p>
+<p>Straight-alpha representation could contain</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>α</mi>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>That texel is “fully transparent red.”</p>
+<p>Another could contain</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>α</mi>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>They are visually identical in isolation.</p>
+<p>But interpolate those RGB values during texture filtering and hidden color can leak into partially transparent edge texels.</p>
+<p>In premultiplied representation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo stretchy="false">⇒</mo>
+  <mi>α</mi>
+  <mi>C</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Transparent texels have a canonical zero contribution.</p>
+<p>That makes interpolation and filtering behave much more naturally.</p>
+<p>This is one of the deepest reasons production compositing systems often prefer premultiplied alpha.</p>
+<p>However, every layer must agree.</p>
+<p>If the texture/shader already outputs premultiplied RGB but the blend state still uses <code>SRC_ALPHA</code>, you multiply by alpha twice:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>contribution</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>α</mi>
+  <mo stretchy="false">(</mo>
+  <mi>α</mi>
+  <mi>C</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msup>
+    <mi>α</mi>
+    <mn>2</mn>
+  </msup>
+  <mi>C</mi>
+  <mo>.</mo>
+</math>
+<p>The result becomes too dark.</p>
+<p>Your current Kairo pipeline is <strong>straight alpha</strong>, so do not start premultiplying shader output unless you change the blending state too.</p>
+<hr />
+<p><strong>Additive blending</strong></p>
+<p>Set</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>F</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>F</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>Then</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>C</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>out</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>C</mi>
+            <mi>s</mi>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>C</mi>
+            <mi>d</mi>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is useful for phenomena where contributions accumulate:</p>
+<pre class="text"><code>glows
+energy effects
+light-like particles
+some bloom accumulation</code></pre>
+<p>On HDR floating-point targets this can exceed 1:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>2.1</mn>
+  <mo>,</mo>
+  <mn>0.7</mn>
+  <mo>,</mo>
+  <mn>4.4</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>which is perfectly reasonable before tone mapping.</p>
+<p>Additive blending is mathematically commutative:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>+</mo>
+  <mi>B</mi>
+  <mo>=</mo>
+  <mi>B</mi>
+  <mo>+</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+</math>
+<p>so pure additive transparent particles are much less sensitive to ordering than source-over transparency.</p>
+<hr />
+<p><strong>Multiplicative blending</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>out</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>s</mi>
+  </msub>
+  <msub>
+    <mi>C</mi>
+    <mi>d</mi>
+  </msub>
+</math>
+<p>component-wise.</p>
+<p>Then a source value of 1 leaves the destination unchanged:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>⋅</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>while zero blacks it out.</p>
+<p>This has historically been useful for modulation, darkening and certain decal/effect models.</p>
+<p>One blend-state representation can be:</p>
+<pre class="text"><code>source factor      = DST_COLOR
+destination factor = ZERO</code></pre>
+<p>giving</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mi>s</mi>
+  </msub>
+  <msub>
+    <mi>C</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Again, “blending” is much broader than transparency.</p>
+<hr />
+<p><strong>Why ordinary transparency is order dependent</strong></p>
+<p>Take black background and two 50%-opaque layers:</p>
+<p>Red:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>α</mi>
+  <mo>=</mo>
+  <mn>0.5</mn>
+  <mo>.</mo>
+</math>
+<p>Blue:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>α</mi>
+  <mo>=</mo>
+  <mn>0.5</mn>
+  <mo>.</mo>
+</math>
+<p>Red over background:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then blue over that:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>0.5</mn>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mn>0.5</mn>
+  <mo stretchy="false">(</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.25</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0.5</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Reverse the order.</p>
+<p>Blue first:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>C</mi>
+    <mn>1</mn>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0.5</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then red:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>C</mi>
+    <mn>2</mn>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>=</mo>
+  <mn>0.5</mn>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mn>0.5</mn>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0.5</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0.25</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Therefore</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>R</mi>
+          <mi>over</mi>
+          <mi>B</mi>
+          <mo>≠</mo>
+          <mi>B</mi>
+          <mi>over</mi>
+          <mi>R</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and ordinary alpha transparency requires approximate back-to-front ordering.</p>
+<hr />
+<p><strong>Why transparent geometry usually does not write depth</strong></p>
+<p>Imagine:</p>
+<pre class="text"><code>front transparent pane
+rear transparent pane</code></pre>
+<p>If the front pane writes depth, the rear pane can fail the depth test entirely.</p>
+<p>But physically we need both contributions.</p>
+<p>So a common configuration is:</p>
+<pre class="text"><code>depth test  = ON
+depth write = OFF</code></pre>
+<p>This allows transparent geometry to respect opaque occluders while not preventing later transparent layers from contributing.</p>
+<p>Your Kairo transparent pipeline does exactly this:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="va">m_TransparentPipeline</span> <span class="op">=</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    CreatePipeline<span class="op">(...,</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                   depthWrite <span class="op">=</span> VK_FALSE<span class="op">,</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                   alphaBlend <span class="op">=</span> <span class="kw">true</span><span class="op">);</span></span></code></pre></div>
+<p>The opaque path uses depth writes.</p>
+<hr />
+<p><strong>Kairo’s current transparency sorting</strong></p>
+<p>Current Kairo collects blended draws and stable-sorts them using approximate camera distance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>d</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>model</mtext>
+    </mrow>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>camera</mtext>
+    </mrow>
+  </msub>
+  <msup>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Larger distance is drawn first.</p>
+<p>That is a reasonable object-level approximation.</p>
+<p>But imagine two long transparent objects that intersect.</p>
+<p>Object A’s origin may be farther from the camera even though half of A is in front of B and half is behind it.</p>
+<p>There exists no single object ordering that solves the geometry.</p>
+<p>That is why order-independent transparency is a research/advanced-rendering topic, rather than something sorting can completely solve.</p>
+<hr />
+<p><strong>Alpha testing / cutouts</strong></p>
+<p>Some materials are not really translucent.</p>
+<p>A leaf texture might represent:</p>
+<pre class="text"><code>leaf     → fully opaque
+outside  → fully empty</code></pre>
+<p>Instead of blending partial opacity, use a threshold:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>if </mtext>
+  <mi>α</mi>
+  <mo>&lt;</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>c</mi>
+  </msub>
+  <mo stretchy="false">⇒</mo>
+  <mtext>discard</mtext>
+  <mo>.</mo>
+</math>
+<p>For example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>α</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0.5</mn>
+  <mo>.</mo>
+</math>
+<p>Then pixels become binary:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>opaque or absent</mtext>
+  <mo>.</mo>
+</math>
+<p>Advantages include:</p>
+<pre class="text"><code>depth writes remain useful
+sorting becomes much easier
+hidden geometry can be rejected</code></pre>
+<p>The cost is aliasing around thin edges.</p>
+<p>Your current <code>triangle.frag</code> implements exactly this for its mask mode:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">if</span> <span class="op">(</span>maskMode <span class="op">&amp;&amp;</span> baseColorAlpha<span class="op">.</span><span class="fu">a</span> <span class="op">&lt;</span> cutoff<span class="op">)</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">discard</span><span class="op">;</span></span></code></pre></div>
+<p>So Kairo already has all three broad alpha semantics:</p>
+<pre class="text"><code>opaque
+masked/cutout
+blended</code></pre>
+<hr />
+<p><strong>Alpha-to-coverage</strong></p>
+<p>Suppose 4× MSAA gives four coverage bits.</p>
+<p>Instead of converting alpha into framebuffer blending, alpha-to-coverage converts alpha approximately into a sample mask.</p>
+<p>For example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>≈</mo>
+  <mn>0.5</mn>
+</math>
+<p>might produce coverage of roughly two of four samples.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>alpha 0.0 → 0000
+alpha 0.25 → perhaps 1000
+alpha 0.5 → perhaps 1010
+alpha 0.75 → perhaps 1110
+alpha 1.0 → 1111</code></pre>
+<p>Actual patterns are implementation-dependent and may use dithering.</p>
+<p>The key benefit for foliage is that covered samples can still participate normally in depth.</p>
+<p>So alpha-to-coverage can provide antialiased cutout edges without conventional translucent depth-write problems.</p>
+<p>But it needs multisampling.</p>
+<p>Your present 1× Kairo viewport cannot benefit meaningfully from alpha-to-coverage.</p>
+<hr />
+<p><strong>Overdraw</strong></p>
+<p>Suppose one final pixel is shaded by six opaque triangles before the nearest visible result survives.</p>
+<p>The display shows one color.</p>
+<p>The GPU may have performed six fragment shader executions.</p>
+<p>Define an intuitive overdraw factor:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mtext>fragment/sample work generated</mtext>
+    <mtext>visible output work</mtext>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Large <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+</math> means enormous wasted work.</p>
+<p>Common causes include:</p>
+<pre class="text"><code>dense foliage
+particles
+large overlapping UI
+poor draw ordering
+very high geometric density
+full-screen effects</code></pre>
+<p>Overdraw is particularly painful when fragment shaders are expensive.</p>
+<hr />
+<p><strong>Fill rate and bandwidth are not the same thing</strong></p>
+<p>“Fill rate” informally describes the ability to process/write large numbers of fragments or samples.</p>
+<p>But the bottleneck might actually be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>shader ALU</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>texture bandwidth</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>attachment bandwidth</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>ROP/blending throughput</mtext>
+  <mo>,</mo>
+</math>
+<p>or some combination.</p>
+<p>Consider Kairo’s viewport.</p>
+<p>Approximate attachment sizes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>G</mi>
+  <mi>B</mi>
+  <mi>A</mi>
+  <mn>16</mn>
+  <mi>F</mi>
+  <mo>=</mo>
+  <mn>8</mn>
+  <mtext> bytes</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mn>32</mn>
+  <mi>U</mi>
+  <mi>I</mi>
+  <mo>=</mo>
+  <mn>4</mn>
+  <mtext> bytes</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mn>32</mn>
+  <mi>F</mi>
+  <mo>=</mo>
+  <mn>4</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>That is roughly</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mtext> bytes/sample</mtext>
+</math>
+<p>of attachment state before considering reads, compression, caches or tiling.</p>
+<p>At 3840×2160:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mn>294</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mn>400</mn>
+  <mtext> pixels</mtext>
+  <mo>.</mo>
+</math>
+<p>At 60 fps:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8.2944</mn>
+  <mo>×</mo>
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+  <mo>×</mo>
+  <mn>16</mn>
+  <mo>×</mo>
+  <mn>60</mn>
+  <mo>≈</mo>
+  <mn>7.96</mn>
+  <mo>×</mo>
+  <msup>
+    <mn>10</mn>
+    <mn>9</mn>
+  </msup>
+</math>
+<p>or almost</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mn>8</mn>
+          <mtext> GB/s</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>of raw per-frame attachment traffic for a single write of each value.</p>
+<p>With 4× samples, naive raw traffic would approach:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>≈</mo>
+  <mn>32</mn>
+  <mtext> GB/s</mtext>
+  <mo>.</mo>
+</math>
+<p>Real architectures use compression and tiles to avoid much of this, but the estimate explains why unnecessary overdraw and multisampling can be expensive.</p>
+<hr />
+<p><strong>Early-Z and front-to-back opaque ordering</strong></p>
+<p>Suppose a nearby wall covers almost the entire screen.</p>
+<p>If you draw 100 objects behind the wall first, their fragments may shade and later become hidden.</p>
+<p>If you draw the wall first, subsequent fragments can often fail depth early.</p>
+<p>Thus for opaque geometry:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>front-to-back sorting</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>better opportunity for early depth rejection</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This competes with state sorting.</p>
+<p>If switching material pipelines is expensive, you may choose:</p>
+<pre class="text"><code>perfect depth sorting but many pipeline switches</code></pre>
+<p>or</p>
+<pre class="text"><code>material batching but more overdraw.</code></pre>
+<p>Production renderers solve a multi-objective optimization rather than using one universal sort.</p>
+<hr />
+<p><strong>Early-Z is not an absolute promise</strong></p>
+<p>We discussed early versus late depth in Pass 1.</p>
+<p>The fragment pipeline may contain operations that constrain early testing, such as explicit depth writes or certain fragment-side effects.</p>
+<p>Vulkan’s fragment pipeline defines depth/stencil testing as part of per-fragment operations and exposes explicit early/late fragment-test execution stages. <a href="https://docs.vulkan.org/spec/latest/chapters/fragops.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<p>Modern implementations also use hierarchical rejection before individual sample tests.</p>
+<p>So “early-Z” should be understood as a family of implementations that avoid fragment work when visibility can be proven, not one mandatory little hardware block.</p>
+<hr />
+<p><strong>Occlusion queries</strong></p>
+<p>An occlusion query asks approximately:</p>
+<blockquote>
+<p>How many samples survived visibility testing for this draw?</p>
+</blockquote>
+<p>A common use is:</p>
+<pre class="text"><code>draw cheap bounding proxy
+→ query visible sample count
+→ skip expensive object next frame if zero</code></pre>
+<p>The danger is synchronization.</p>
+<p>If the CPU does:</p>
+<pre class="text"><code>issue query
+wait immediately
+decide what to draw</code></pre>
+<p>you can force CPU/GPU serialization.</p>
+<p>The GPU may have to finish enormous amounts of queued work before the CPU receives the result.</p>
+<p>Production use therefore often accepts latency:</p>
+<pre class="text"><code>frame N query
+frame N+1 or N+2 result</code></pre>
+<p>and uses conservative logic so temporary stale visibility does not cause popping.</p>
+<hr />
+<p><strong>Hierarchical Z</strong></p>
+<p>Testing every incoming sample against full-resolution depth is already useful, but many pixels can often be rejected in blocks.</p>
+<p>Imagine an 8×8 block.</p>
+<p>If every stored depth within that block is closer than an incoming primitive, the entire block can be discarded.</p>
+<p>A Hi-Z structure stores coarse conservative summaries.</p>
+<p>For conventional Z:</p>
+<pre class="text"><code>near = 0
+far  = 1
+depth test = LESS</code></pre>
+<p>one useful conservative level stores the maximum depth of a region:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>z</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>z</mi>
+    <mi>n</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Suppose an incoming object’s nearest possible depth over the block is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>near,obj</mtext>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>If</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>near,obj</mtext>
+    </mrow>
+  </msub>
+  <mo>≥</mo>
+  <mi>H</mi>
+  <mo>,</mo>
+</math>
+<p>then since every existing sample satisfies</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>≤</mo>
+  <mi>H</mi>
+  <mo>≤</mo>
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>near,obj</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>the object is behind every stored depth value.</p>
+<p>Reject the whole block.</p>
+<hr />
+<p><strong>Reversed-Z reverses the Hi-Z reduction direction</strong></p>
+<p>Under reversed-Z:</p>
+<pre class="text"><code>near = 1
+far  = 0
+depth test = GREATER</code></pre>
+<p>the conservative bound flips.</p>
+<p>A useful hierarchy stores</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>H</mi>
+    <mi>R</mi>
+  </msub>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>z</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>z</mi>
+    <mi>n</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If the candidate object’s nearest/highest depth satisfies</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>near,obj</mtext>
+    </mrow>
+  </msub>
+  <mo>≤</mo>
+  <msub>
+    <mi>H</mi>
+    <mi>R</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>then every existing sample is at least as near as the candidate, so it cannot pass <code>GREATER</code>.</p>
+<p>This illustrates an important lesson from Pass 1:</p>
+<blockquote>
+<p>Reversed-Z is not merely a projection matrix change.</p>
+</blockquote>
+<p>Any subsystem interpreting depth ordering must be audited.</p>
+<p>Hi-Z is one of them.</p>
+<hr />
+</section>
+<section id="id_03-visual-computing-i-ch014-instancing-batching-indirect-drawing-gpu-culling-mesh-shaders-execution-cost-data-binding-psos-and-permutations" class="level4">
+<h4>Instancing, batching, indirect drawing, GPU culling, mesh shaders, execution cost, data binding, PSOs and permutations</h4>
+<hr />
+<p><strong>Why draw-call overhead exists</strong></p>
+<p>Suppose you have 50,000 identical rocks.</p>
+<p>A naive renderer performs:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> <span class="op">(</span><span class="at">const</span> Rock<span class="op">&amp;</span> rock <span class="op">:</span> rocks<span class="op">)</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    BindPipeline<span class="op">();</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    BindMesh<span class="op">();</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    BindMaterial<span class="op">();</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    SetTransform<span class="op">(</span>rock<span class="op">.</span>transform<span class="op">);</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    DrawIndexed<span class="op">();</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Even if each rock contains little geometry, the CPU must repeatedly:</p>
+<pre class="text"><code>select state
+encode commands
+validate objects
+write/update descriptors or constants
+call API
+manage command-buffer state</code></pre>
+<p>A draw call is not fundamentally expensive because “function calls are slow.”</p>
+<p>It is expensive because it represents <strong>submission and state-management work</strong>.</p>
+<p>If GPU geometry work becomes tiny but CPU submission remains one command per object, the renderer becomes CPU-bound.</p>
+<hr />
+<p><strong>Instanced rendering</strong></p>
+<p>If many objects use the same mesh and pipeline, issue one draw:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>one mesh</mtext>
+          <mo>+</mo>
+          <mi>N</mi>
+          <mtext> instance records</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>instead of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> independent draws.</p>
+<p>A conceptual instance record:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> InstanceData</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    Mat4 model<span class="op">;</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    Vec4 color<span class="op">;</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then the vertex shader receives an instance index:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mo>=</mo>
+  <mtext>InstanceIndex</mtext>
+  <mo>.</mo>
+</math>
+<p>It fetches</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>M</mi>
+    <mi>i</mi>
+  </msub>
+</math>
+<p>and computes</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>M</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>p</mi>
+    <mi>o</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>One indexed draw can now request:</p>
+<pre class="text"><code>indexCount   = mesh indices
+instanceCount = 50,000</code></pre>
+<p>and the vertex workload becomes logically</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>each mesh vertex</mtext>
+  <mo>×</mo>
+  <mtext>each instance</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Instance buffers</strong></p>
+<p>One way to supply per-instance data is another vertex-input stream whose rate is:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>VK_VERTEX_INPUT_RATE_INSTANCE</span></code></pre></div>
+<p>Rather than incrementing once per vertex, the record advances once per instance.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>binding 0:
+Vertex 0
+Vertex 1
+Vertex 2
+...
+
+binding 1:
+Instance 0 transform
+Instance 1 transform
+Instance 2 transform
+...</code></pre>
+<p>The vertex invocation sees:</p>
+<pre class="text"><code>mesh attributes from binding 0
++
+instance attributes from binding 1</code></pre>
+<p>Large modern engines often instead store instance data in structured/storage buffers because those scale better and allow GPU-side indexing, culling and compaction.</p>
+<hr />
+<p><strong>Batching is broader than instancing</strong></p>
+<p>Instancing requires meaningful commonality.</p>
+<p>Usually:</p>
+<pre class="text"><code>same mesh
+same pipeline
+often same material family</code></pre>
+<p>Batching is the broader strategy of reorganizing work so fewer submissions/state switches are needed.</p>
+<p>You may batch by:</p>
+<pre class="text"><code>pipeline
+material
+mesh
+render pass
+texture set
+depth bucket</code></pre>
+<p>But batching has costs.</p>
+<p>Suppose two objects are spatially far apart.</p>
+<p>Combining them into one monolithic batch may destroy culling granularity.</p>
+<p>One invisible object can no longer be removed independently.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>submission efficiency</mtext>
+          <mo stretchy="false">↔</mo>
+          <mtext>culling granularity</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>is a real design trade-off.</p>
+<hr />
+<p><strong>Indirect drawing</strong></p>
+<p>In ordinary drawing the CPU records parameters directly:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>vkCmdDrawIndexed<span class="op">(</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    cmd<span class="op">,</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    indexCount<span class="op">,</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    instanceCount<span class="op">,</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    firstIndex<span class="op">,</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    vertexOffset<span class="op">,</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    firstInstance<span class="op">);</span></span></code></pre></div>
+<p>Indirect drawing moves those parameters into GPU-visible memory.</p>
+<p>For indexed drawing, the conceptual command record is:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> DrawIndexedIndirectCommand</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> indexCount<span class="op">;</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> instanceCount<span class="op">;</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> firstIndex<span class="op">;</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int32_t</span>  vertexOffset<span class="op">;</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> firstInstance<span class="op">;</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>vkCmdDrawIndexedIndirect<span class="op">(...,</span> indirectBuffer<span class="op">,</span> <span class="op">...);</span></span></code></pre></div>
+<p>causes the device to read drawing parameters from the buffer.</p>
+<p>Vulkan defines indirect commands precisely this way: draw parameters are fetched by the device from a buffer during execution rather than embedded in the command recording itself. <a href="https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdDrawIndirect.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<p>Why is that transformative?</p>
+<p>Because the <strong>GPU itself can write that buffer</strong>.</p>
+<hr />
+<p><strong>GPU-driven rendering</strong></p>
+<p>Now imagine this pipeline:</p>
+<pre class="text"><code>scene instances
+      ↓
+compute shader
+      ↓
+frustum/occlusion/LOD culling
+      ↓
+visible instance list
+      ↓
+indirect command buffer
+      ↓
+graphics draw consumes buffer</code></pre>
+<p>No CPU readback is required.</p>
+<p>The GPU decides:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>what survives</mtext>
+</math>
+<p>and directly emits the work description consumed by rendering.</p>
+<p>That is the core idea of GPU-driven rendering.</p>
+<p>The CPU submits a broad workload once.</p>
+<p>The GPU specializes it every frame.</p>
+<hr />
+<p><strong>Compute-driven culling example</strong></p>
+<p>Suppose we have one million instances.</p>
+<p>Each instance stores:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Instance</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    BoundingSphere bounds<span class="op">;</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    Mat4 transform<span class="op">;</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> meshID<span class="op">;</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>A compute invocation handles one instance.</p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="dt">uint</span> i <span class="op">=</span> <span class="bu">gl_GlobalInvocationID</span><span class="op">.</span><span class="fu">x</span><span class="op">;</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="kw">if</span> <span class="op">(</span>i <span class="op">&gt;=</span> instanceCount<span class="op">)</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span><span class="op">;</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>Instance instance <span class="op">=</span> instances<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a><span class="kw">if</span> <span class="op">(!</span><span class="fu">IntersectsFrustum</span><span class="op">(</span>instance<span class="op">.</span><span class="fu">bounds</span><span class="op">))</span></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span><span class="op">;</span></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a><span class="dt">uint</span> slot <span class="op">=</span> <span class="bu">atomicAdd</span><span class="op">(</span>visibleCount<span class="op">,</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>visibleInstances<span class="op">[</span>slot<span class="op">]</span> <span class="op">=</span> i<span class="op">;</span></span></code></pre></div>
+<p>Now the compute pass has compacted the visible set.</p>
+<p>A later stage constructs indirect draw commands.</p>
+<p>The architecture has changed from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mo stretchy="false">→</mo>
+  <mtext>one command per object</mtext>
+</math>
+<p>to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mo stretchy="false">→</mo>
+  <mtext>dispatch</mtext>
+  <mo stretchy="false">→</mo>
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mtext> visibility</mtext>
+  <mo stretchy="false">→</mo>
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mtext> command data</mtext>
+  <mo stretchy="false">→</mo>
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mtext> draws</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Synchronization cannot disappear</strong></p>
+<p>Suppose compute writes:</p>
+<pre class="text"><code>indirectCommands[]</code></pre>
+<p>and graphics immediately consumes it.</p>
+<p>The memory dependency must be declared.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>compute shader WRITE
+        ↓ barrier
+indirect-command READ</code></pre>
+<p>With modern Vulkan synchronization2 terminology, the destination stage for consuming indirect commands is <code>DRAW_INDIRECT</code>, and indirect command data uses <code>INDIRECT_COMMAND_READ</code>. Khronos’ synchronization examples explicitly show a shader-write → draw-indirect-read barrier for this pattern. <a href="https://docs.vulkan.org/spec/latest/chapters/synchronization.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<p>This is an important GPU-programming principle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>GPU-generated data does not imply automatically synchronized data</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Computation and ordering are separate responsibilities.</p>
+<hr />
+<p><strong>Multi-draw indirect</strong></p>
+<p>Suppose the indirect buffer contains:</p>
+<pre class="text"><code>command 0
+command 1
+command 2
+...
+command 9999</code></pre>
+<p>With multi-draw indirect, one recorded API command can execute many of these records.</p>
+<p>This further reduces CPU submission work.</p>
+<p>Vulkan’s <code>multiDrawIndirect</code> feature controls whether a single indirect command may execute more than one draw record; otherwise the indirect draw count is restricted to zero or one. <a href="https://docs.vulkan.org/spec/latest/chapters/features.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<p>The GPU-driven pipeline then becomes approximately:</p>
+<pre class="text"><code>compute:
+    generate 7,842 visible draw records
+
+graphics:
+    execute those 7,842 records from one indirect buffer</code></pre>
+<p>Khronos’ current GPU-driven material describes MDI precisely as the bridge from compute-generated visibility to GPU-side graphics submission. <a href="https://docs.vulkan.org/samples/latest/samples/performance/multi_draw_indirect/README.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<hr />
+<p><strong>Mesh shaders change the pre-rasterization model</strong></p>
+<p>The classic path is:</p>
+<pre class="text"><code>vertex/index buffer
+      ↓
+fixed-function vertex fetch
+      ↓
+primitive assembly
+      ↓
+vertex shader
+      ↓
+optional tessellation/geometry stages
+      ↓
+rasterizer</code></pre>
+<p>Mesh shaders replace much of this front end with workgroup-programmable geometry generation.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>workgroup
+  reads meshlet data
+  performs culling
+  generates vertices
+  generates primitive indices
+        ↓
+rasterizer</code></pre>
+<p>Khronos describes <code>VK_EXT_mesh_shader</code> as a compute-like programmable mechanism that can replace the traditional pre-rasterization vertex/primitive pipeline, with mesh shaders producing vertices and primitives directly for rasterization. <a href="https://docs.vulkan.org/features/latest/features/proposals/VK_EXT_mesh_shader.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<hr />
+<p><strong>Meshlets</strong></p>
+<p>Mesh shaders become much easier to understand if you first understand meshlets.</p>
+<p>Instead of one giant indexed mesh:</p>
+<pre class="text"><code>500,000 triangles</code></pre>
+<p>partition it into small clusters, for example:</p>
+<pre class="text"><code>meshlet:
+≤ 64 vertices
+≤ 126 triangles
+bounding sphere
+normal cone
+material</code></pre>
+<p>Now each cluster becomes a convenient unit for:</p>
+<pre class="text"><code>frustum culling
+cone/backface culling
+LOD
+parallel processing</code></pre>
+<p>A mesh shader workgroup can process one meshlet.</p>
+<p>It loads its compact local vertex/index data, rejects the entire cluster if invisible, and otherwise emits the required vertices and primitives.</p>
+<p>This creates much finer control over geometry processing than the traditional “feed vertices one by one through fixed assembly” model.</p>
+<hr />
+<p><strong>Task shaders</strong></p>
+<p>Task shaders are an optional stage before mesh shaders.</p>
+<p>Their mental model is:</p>
+<pre class="text"><code>task workgroup
+    ↓
+coarse analysis / culling / LOD
+    ↓
+decide how many mesh workgroups exist
+    ↓
+emit payload
+    ↓
+mesh shader workgroups</code></pre>
+<p>A task shader might inspect a collection of meshlets and decide:</p>
+<pre class="text"><code>meshlets 0–11 invisible → launch nothing
+meshlet 12 visible       → launch one mesh group
+meshlet 13 high detail   → launch several groups</code></pre>
+<p>Current Khronos documentation emphasizes exactly this role: task shaders can perform coarse culling and dynamically emit mesh shader groups via a workgroup-level payload. <a href="https://docs.vulkan.org/features/latest/features/proposals/VK_EXT_mesh_shader.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<p>Important: mesh shaders are <strong>not automatically faster</strong>.</p>
+<p>The extension documentation itself warns that their flexibility can incur platform-dependent cost and that optimized traditional pipelines may remain faster for some workloads. <a href="https://docs.vulkan.org/features/latest/features/proposals/VK_EXT_mesh_shader.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<p>That is the right engineering attitude.</p>
+<hr />
+<p><strong>Raster-order dependencies</strong></p>
+<p>The GPU wants to execute fragments aggressively in parallel.</p>
+<p>But some operations fundamentally care about ordering.</p>
+<p>Suppose fragment B reads the color produced by fragment A at the same pixel and then writes another value.</p>
+<p>If the two overlap, ordinary independent fragment execution has a data hazard:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">→</mo>
+  <mi>B</mi>
+</math>
+<p>must be enforced.</p>
+<p>Typical examples include:</p>
+<pre class="text"><code>framebuffer feedback
+certain order-dependent compositing algorithms
+per-pixel linked structures
+some programmable blending algorithms</code></pre>
+<p>You cannot assume:</p>
+<blockquote>
+<p>“Triangle A was submitted before triangle B, therefore every fragment of A finishes first.”</p>
+</blockquote>
+<p>Graphics APIs expose explicit mechanisms for ordering/synchronization where required. Vulkan’s current specification includes rasterization-order attachment access and fragment interlock mechanisms for cases where same-pixel ordering must be constrained. <a href="https://registry.khronos.org/vulkan/specs/latest/pdf/vkspec.pdf?utm_source=chatgpt.com">Khronos Registry</a></p>
+<p>The performance lesson is important:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>ordering constraints reduce freedom for parallel execution</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>so use them only when the algorithm genuinely requires them.</p>
+<hr />
+<p><strong>Shader divergence</strong></p>
+<p>GPUs execute nearby shader invocations in groups.</p>
+<p>Suppose 32 lanes execute:</p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="kw">if</span> <span class="op">(</span>materialType <span class="op">==</span> METAL<span class="op">)</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">DoMetal</span><span class="op">();</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="kw">else</span></span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">DoGlass</span><span class="op">();</span></span></code></pre></div>
+<p>If every lane takes <code>METAL</code>, the group runs efficiently.</p>
+<p>If half take each branch, hardware may need to execute:</p>
+<pre class="text"><code>DoMetal()
+with glass lanes masked
+
+then
+
+DoGlass()
+with metal lanes masked</code></pre>
+<p>Useful lane utilization falls.</p>
+<p>This is branch divergence.</p>
+<p>The important distinction from CPU branch prediction is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>GPU divergence is primarily about lanes disagreeing</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>rather than predicting one control path incorrectly.</p>
+<p>A branch can be perfectly predictable and still divergent.</p>
+<hr />
+<p><strong>Divergence is not “branches are bad”</strong></p>
+<p>Consider:</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="kw">if</span> <span class="op">(</span><span class="bu">distance</span> <span class="op">&gt;</span> maxRange<span class="op">)</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span><span class="op">;</span></span></code></pre></div>
+<p>If nearly the entire wave takes the same path, this branch may be cheap and save huge work.</p>
+<p>Conversely, replacing the branch with both computations and selecting afterward could be worse.</p>
+<p>The correct question is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>How coherent is this branch across executing lanes?</mtext>
+</math>
+<p>not:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Can I remove every `if`?</mtext>
+</math>
+<p>This becomes particularly important with material megashaders.</p>
+<hr />
+<p><strong>Register pressure</strong></p>
+<p>Every active shader invocation needs temporary storage.</p>
+<p>Suppose a shader uses many live values:</p>
+<pre class="text"><code>positions
+normals
+several BRDF intermediates
+many texture coordinates
+large temporary arrays</code></pre>
+<p>The compiler may require more registers per invocation.</p>
+<p>An SM/CU contains a finite register file.</p>
+<p>If each invocation consumes <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+</math> registers and there are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>R</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>total</mtext>
+    </mrow>
+  </msub>
+</math> registers available, the rough upper bound on concurrently resident invocations is constrained by</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>≤</mo>
+  <mfrac>
+    <msub>
+      <mi>R</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mtext>total</mtext>
+      </mrow>
+    </msub>
+    <mi>R</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>So increasing registers per thread can reduce occupancy.</p>
+<p>If pressure becomes severe, values may spill into slower memory.</p>
+<p>Therefore a shader optimization that reduces instruction count while doubling register pressure can actually become slower.</p>
+<p>This is why GPU performance cannot be reasoned from source-code operation count alone.</p>
+<hr />
+<p><strong>Shader constant data</strong></p>
+<p>Not all shader data changes at the same frequency.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>per frame:
+camera
+time
+global environment
+
+per pass:
+shadow matrix
+render mode
+
+per material:
+base color
+roughness
+texture handles
+
+per object:
+model matrix
+object ID
+
+per instance:
+instance transform</code></pre>
+<p>Grouping data by update frequency matters for:</p>
+<pre class="text"><code>CPU update cost
+descriptor churn
+cache behavior
+binding architecture
+GPU bandwidth</code></pre>
+<p>This is the beginning of production renderer data architecture.</p>
+<hr />
+<p><strong>Uniform buffers</strong></p>
+<p>A uniform buffer is intended for relatively small read-only shader data shared across many invocations.</p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="kw">layout</span><span class="op">(</span><span class="dt">binding</span> <span class="op">=</span> <span class="dv">0</span><span class="op">)</span> <span class="kw">uniform</span> Camera</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">mat4</span> view<span class="op">;</span></span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">mat4</span> projection<span class="op">;</span></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> cameraPosition<span class="op">;</span></span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Every vertex/fragment invocation can read the same camera state.</p>
+<p>Your Kairo renderer has exactly this concept.</p>
+<p>Its <code>CameraUniform</code> currently contains:</p>
+<pre class="text"><code>view matrix
+projection matrix
+lighting data
+camera position
+light VP
+shadow parameters
+viewport parameters
+scene parameters
+light arrays
+background</code></pre>
+<p>and is uploaded into a Vulkan uniform buffer.</p>
+<hr />
+<p><strong>Storage buffers</strong></p>
+<p>Storage buffers are more general.</p>
+<p>They can hold large arrays and can support reads and writes depending on shader/API configuration.</p>
+<p>For GPU-driven rendering:</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="kw">layout</span><span class="op">(</span><span class="dt">std430</span><span class="op">,</span> <span class="dt">binding</span> <span class="op">=</span> <span class="dv">4</span><span class="op">)</span> <span class="dt">readonly</span> <span class="kw">buffer</span> Instances</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>    InstanceData instances<span class="op">[];</span></span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>could store hundreds of thousands of instances.</p>
+<p>A compute shader could write:</p>
+<div class="sourceCode" id="cb57"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="kw">layout</span><span class="op">(</span><span class="dt">std430</span><span class="op">,</span> <span class="dt">binding</span> <span class="op">=</span> <span class="dv">5</span><span class="op">)</span> <span class="kw">buffer</span> VisibleList</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint</span> visible<span class="op">[];</span></span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>The philosophical difference is useful:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>uniform buffer</mtext>
+  <mo>≈</mo>
+  <mtext>small structured shared constants</mtext>
+</math>
+<p>whereas</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>storage buffer</mtext>
+  <mo>≈</mo>
+  <mtext>general shader-visible structured memory</mtext>
+  <mo>.</mo>
+</math>
+<p>Modern APIs blur the exact performance distinction, but the usage model remains valuable.</p>
+<p>Your current main Kairo mesh path does not yet depend on storage-buffer-driven instance/draw generation.</p>
+<hr />
+<p><strong>Push constants</strong></p>
+<p>Push/root constants target very small, frequently changing data.</p>
+<p>Instead of updating a buffer allocation or descriptor for every draw, small bytes can be embedded into command state.</p>
+<p>Your current Kairo renderer uses exactly this.</p>
+<p>Its <code>MeshPushConstants</code> is:</p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> MeshPushConstants</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>array<span class="op">&lt;</span><span class="dt">float</span><span class="op">,</span> <span class="dv">32</span><span class="op">&gt;</span> Values<span class="op">{};</span></span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>That is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>32</mn>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>128</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>It carries approximately:</p>
+<pre class="text"><code>model matrix
+normal matrix columns
+shadow-receive flag / tint/object ID fields</code></pre>
+<p>and is sent with:</p>
+<div class="sourceCode" id="cb60"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>vkCmdPushConstants<span class="op">(...)</span></span></code></pre></div>
+<p>for each draw.</p>
+<p>This is a textbook example of dividing data by update frequency:</p>
+<pre class="text"><code>camera/lights → uniform buffer
+object transform → push constants
+textures/material → descriptor set
+mesh geometry → vertex/index buffers</code></pre>
+<hr />
+<p><strong>Render-state objects</strong></p>
+<p>A modern graphics pipeline contains a large amount of state:</p>
+<pre class="text"><code>shader stages
+vertex input
+topology
+rasterization
+culling
+front-face
+depth test
+stencil
+multisampling
+blending
+attachment formats
+pipeline layout</code></pre>
+<p>Older APIs historically allowed much of this to be changed individually as mutable global state.</p>
+<p>Modern explicit APIs push toward immutable or semi-immutable pipeline objects.</p>
+<p>Why?</p>
+<p>Because the driver can compile a coherent hardware configuration ahead of draw time.</p>
+<p>The cost is pipeline creation complexity and potentially huge numbers of state combinations.</p>
+<hr />
+<p><strong>Pipeline state caching</strong></p>
+<p>Suppose pipeline creation involves:</p>
+<pre class="text"><code>shader translation
+hardware code generation
+state validation
+linking
+internal representation construction</code></pre>
+<p>Doing that during a frame can cause a visible hitch.</p>
+<p>Vulkan therefore has pipeline caches that let pipeline-construction results be reused between related pipelines and, when serialized appropriately, between application runs. <a href="https://docs.vulkan.org/spec/latest/chapters/pipelines.html?utm_source=chatgpt.com">docs.vulkan.org</a></p>
+<p>An important current Kairo detail:</p>
+<div class="sourceCode" id="cb64"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>vkCreateGraphicsPipelines<span class="op">(</span></span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_Device</span><span class="op">,</span></span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>    VK_NULL_HANDLE<span class="op">,</span></span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a><span class="op">);</span></span></code></pre></div>
+<p>Kairo currently passes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><menclose notation="box"><mtext mathvariant="monospace">𝚅𝙺_𝙽𝚄𝙻𝙻_𝙷𝙰𝙽𝙳𝙻𝙴</mtext></menclose><annotation encoding="application/x-tex">
+\boxed{\texttt{VK\_NULL\_HANDLE}}
+</annotation></semantics></math>
+<p>as the application pipeline cache.</p>
+<p>So <strong>application-provided Vulkan pipeline caching is presently disabled in this path</strong>.</p>
+<p>That is not incorrect for a small renderer.</p>
+<p>It becomes increasingly relevant as permutation count and pipeline complexity grow.</p>
+<hr />
+<p><strong>Shader compilation</strong></p>
+<p>Your <code>.vert</code> and <code>.frag</code> source is not what Vulkan GPU hardware executes directly.</p>
+<p>Your Kairo path loads precompiled:</p>
+<pre class="text"><code>*.spv</code></pre>
+<p>files.</p>
+<p>At runtime:</p>
+<div class="sourceCode" id="cb66"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>ReadSpirv<span class="op">(...)</span></span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>→ vkCreateShaderModule<span class="op">(...)</span></span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>→ vkCreateGraphicsPipelines<span class="op">(...)</span></span></code></pre></div>
+<p>So there are multiple compilation levels:</p>
+<pre class="text"><code>GLSL source
+    ↓ compiler outside/around runtime
+SPIR-V
+    ↓ Vulkan driver
+device-specific machine representation</code></pre>
+<p>The driver-level stage can still be expensive even though GLSL has already become SPIR-V.</p>
+<p>That is why pipeline creation can hitch.</p>
+<hr />
+<p><strong>Shader permutation explosion</strong></p>
+<p>Suppose your shader supports binary features:</p>
+<pre class="text"><code>skin?
+normal map?
+alpha blend?
+clearcoat?
+shadow receive?
+fog?
+vertex color?
+double sided?</code></pre>
+<p>Eight binary switches imply up to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>2</mn>
+    <mn>8</mn>
+  </msup>
+  <mo>=</mo>
+  <mn>256</mn>
+</math>
+<p>possible variants.</p>
+<p>Twenty switches imply:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>20</mn>
+    </mrow>
+  </msup>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mn>048</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mn>576.</mn>
+</math>
+<p>This is permutation explosion.</p>
+<p>Obviously many combinations are invalid or unnecessary, but the combinatorial growth is real.</p>
+<p>The engineering problem becomes deciding what should be:</p>
+<pre class="text"><code>compile-time shader variant
+pipeline state
+runtime uniform branch
+specialization constant
+separate pass/material family</code></pre>
+<p>There is no single correct answer.</p>
+<hr />
+<p><strong>Kairo already has a tiny permutation system</strong></p>
+<p>Current <code>VulkanTriangle</code> creates separate pipelines for approximately:</p>
+<pre class="text"><code>static opaque
+static transparent
+skinned opaque
+skinned transparent
+static shadow
+skinned shadow
+debug lines</code></pre>
+<p>This is already a small permutation matrix.</p>
+<p>For the mesh path:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mtext> skin states</mtext>
+  <mo>×</mo>
+  <mn>2</mn>
+  <mtext> alpha states</mtext>
+  <mo>=</mo>
+  <mn>4</mn>
+  <mtext> primary mesh pipelines</mtext>
+  <mo>.</mo>
+</math>
+<p>As you later add:</p>
+<pre class="text"><code>two-sided
+MSAA mode
+depth prepass
+wireframe
+deferred/forward
+clearcoat
+transmission</code></pre>
+<p>you will have to decide carefully which dimensions deserve real PSO variants.</p>
+<p>This is where engine rendering architecture begins becoming a combinatorial-management problem rather than only a graphics-math problem.</p>
+<hr />
+<p><strong>Kairo’s current renderer is not GPU-driven yet</strong></p>
+<p>Current <code>DrawMeshes()</code> effectively performs:</p>
+<pre class="text"><code>for every submitted draw
+    bind material descriptor
+    select static/skinned + opaque/blend pipeline
+    push object constants
+    bind vertex buffer
+    bind index buffer
+    vkCmdDrawIndexed</code></pre>
+<p>So submission granularity remains one indexed draw per mesh draw.</p>
+<p>There is no indirect draw in the current <code>VulkanTriangle</code> path.</p>
+<p>There is no compute-generated visible command buffer in that path.</p>
+<p>That gives you a clean future progression:</p>
+<pre class="text"><code>today:
+CPU scene iteration
+→ per-object vkCmdDrawIndexed
+
+next:
+CPU batching / instancing
+
+then:
+GPU instance buffer
+→ compute culling
+→ indirect command generation
+→ MDI/IndirectCount
+
+advanced:
+meshlet representation
+→ task/mesh shader path</code></pre>
+<p>That is a real architecture evolution rather than throwing every modern technique into the engine at once.</p>
+<hr />
+</section>
+<section id="id_03-visual-computing-i-ch014-black-frame-debugging-vertex-tracing-complete-cpu-rasterization-gpu-mapping" class="level4">
+<h4>Black-frame debugging, vertex tracing, complete CPU rasterization, GPU mapping</h4>
+<p>This is where we prove that we actually understand the previous 100 parts.</p>
+<hr />
+<p><strong>A black frame is not one bug</strong></p>
+<p>Suppose the application window appears and nothing renders.</p>
+<p>“Graphics are broken” is too vague to be useful.</p>
+<p>The frame is a dependency chain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><mtext mathvariant="normal">scene</mtext></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>→</mo><mtext mathvariant="normal">resource upload</mtext><mo>→</mo><mtext mathvariant="normal">command recording</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><mtext mathvariant="normal">command recording</mtext></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>→</mo><mtext mathvariant="normal">submission</mtext><mo>→</mo><mtext mathvariant="normal">vertex stage</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><mtext mathvariant="normal">vertex stage</mtext></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>→</mo><mtext mathvariant="normal">clipping</mtext><mo>→</mo><mtext mathvariant="normal">rasterization</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><mtext mathvariant="normal">rasterization</mtext></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>→</mo><mtext mathvariant="normal">fragment stage</mtext><mo>→</mo><mtext mathvariant="normal">depth/stencil</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><mtext mathvariant="normal">depth/stencil</mtext></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>→</mo><mtext mathvariant="normal">attachment</mtext><mo>→</mo><mtext mathvariant="normal">presentation</mtext><mi>.</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}\text{scene} &amp;\rightarrow \text{resource upload} \rightarrow \text{command recording} \\\text{command recording} &amp;\rightarrow \text{submission} \rightarrow \text{vertex stage} \\\text{vertex stage} &amp;\rightarrow \text{clipping} \rightarrow \text{rasterization} \\\text{rasterization} &amp;\rightarrow \text{fragment stage} \rightarrow \text{depth/stencil} \\\text{depth/stencil} &amp;\rightarrow \text{attachment} \rightarrow \text{presentation}.\end{aligned}</annotation></semantics></math>
+<p>A systematic debugger asks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>What is the last stage that can be proven correct?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Do not randomly edit shaders.</p>
+<p>Bisect the rendering machine.</p>
+<hr />
+<p><strong>The black-frame attack tree</strong></p>
+<p>Use this exact order because each stage removes huge classes of hypotheses.</p>
+<ol type="1">
+<li><p><strong>Prove the frame exists at all.</strong> Clear the target to violent magenta. If magenta never reaches the screen, geometry and shaders are irrelevant; inspect acquire/record/submit/present and render-target routing. In Kairo, that means following <code>VulkanRendererRuntime::DrawFrame</code>: wait/retire → acquire → record → submit → present.</p></li>
+<li><p><strong>Prove the correct render target is being written.</strong> Kairo renders the 3D scene into <code>VulkanViewportTarget</code>, then later presents UI to the swapchain. A valid swapchain does not prove the offscreen viewport pass is correct.</p></li>
+<li><p><strong>Remove geometry complexity.</strong> Draw one hard-coded triangle with no index buffer, no material, no textures, no lighting, no skinning.</p></li>
+<li><p><strong>Remove depth and culling.</strong> Disable depth and face culling. If the triangle appears, reintroduce those independently.</p></li>
+<li><p><strong>Replace the fragment shader with constant output.</strong> <code>outColor = vec4(1,0,1,1);</code>. If it now appears, rasterization works and the failure is downstream of interpolation/material shading.</p></li>
+<li><p><strong>Trace one vertex numerically.</strong> Record object, world, view, clip and NDC coordinates. Verify finite <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+</math>, clip inequalities and expected screen position.</p></li>
+<li><p><strong>Check vertex layout contracts.</strong> Buffer stride, offsets, formats and shader locations must describe the same bytes.</p></li>
+<li><p><strong>Check draw ranges.</strong> Index count, index type, bound offsets, vertex offsets and actual buffer sizes.</p></li>
+<li><p><strong>Check attachment compatibility and writes.</strong> Pipeline render-pass compatibility, color write masks, blend state, depth state and final image layouts.</p></li>
+<li><p><strong>Only then inspect sophisticated systems.</strong> Descriptor contents, material textures, normal maps, shadow passes, HDR exposure and render-graph synchronization.</p></li>
+</ol>
+<p>That is our one deliberate list for the pass because it is meant to become an actual debugging procedure.</p>
+<hr />
+<p><strong>Mapping that procedure onto current Kairo</strong></p>
+<p>Your frame begins in:</p>
+<pre class="text"><code>VulkanRendererRuntime::DrawFrame()</code></pre>
+<p>Current flow is:</p>
+<pre class="text"><code>Retire
+  ↓
+vkWaitForFences
+
+Acquire
+  ↓
+vkAcquireNextImageKHR
+
+Record
+  ↓
+RecordFrameCommands()
+  ↓
+VulkanTriangle::Record()
+
+Submit
+  ↓
+vkQueueSubmit
+
+Present
+  ↓
+vkQueuePresentKHR</code></pre>
+<p>This already gives you a powerful first divide.</p>
+<p>If <code>vkQueuePresentKHR</code> succeeds but you see only UI background, the swapchain path can be alive while scene rendering into <code>VulkanViewportTarget</code> is wrong.</p>
+<p>Within <code>VulkanTriangle::Record()</code> the scene path is approximately:</p>
+<pre class="text"><code>rebuild descriptors
+update camera uniforms
+upload debug vertices
+begin command buffer
+
+optional directional shadow pass
+
+begin viewport render pass
+set viewport/scissor
+DrawMeshes()
+DrawDebugLines()
+end viewport render pass
+
+optional picking/capture copy
+
+begin presentation pass
+draw editor overlay
+end pass
+
+end command buffer</code></pre>
+<p>So a black viewport while UI remains visible strongly narrows the bug.</p>
+<hr />
+<p><strong>Broken transform debugging: trace one vertex</strong></p>
+<p>Do not inspect an entire model.</p>
+<p>Choose one vertex.</p>
+<p>Suppose</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>o</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>5</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Use identity model and identity view:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mo>=</mo>
+  <mi>I</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>V</mi>
+  <mo>=</mo>
+  <mi>I</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>o</mi>
+  </msub>
+</math>
+<p>and</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>v</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Choose a simple 90° vertical FOV, aspect 1, near 1, far 10.</p>
+<p>For a conventional right-handed Vulkan projection, the important relationships are approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>v</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>y</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>y</mi>
+    <mi>v</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mo>−</mo>
+  <msub>
+    <mi>z</mi>
+    <mi>v</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Thus</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>5.</mn>
+</math>
+<p>A valid Vulkan projection maps the point’s depth to about</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>40</mn>
+    <mn>9</mn>
+  </mfrac>
+  <mo>≈</mo>
+  <mn>4.444</mn>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>≈</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>4.444</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Now perspective divide:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>5</mn>
+  </mfrac>
+  <mo>=</mo>
+  <mn>0.2</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>y</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>4.444</mn>
+    <mn>5</mn>
+  </mfrac>
+  <mo>≈</mo>
+  <mn>0.8889</mn>
+  <mo>.</mo>
+</math>
+<p>All are valid:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>≤</mo>
+  <mn>0.2</mn>
+  <mo>≤</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>≤</mo>
+  <mn>0</mn>
+  <mo>≤</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>≤</mo>
+  <mn>0.8889</mn>
+  <mo>≤</mo>
+  <mn>1.</mn>
+</math>
+<p>For an 800×600 viewport:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>f</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mn>0.2</mn>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+    <mn>2</mn>
+  </mfrac>
+  <mo>×</mo>
+  <mn>800</mn>
+  <mo>=</mo>
+  <mn>480.</mn>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>y</mi>
+    <mi>f</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mn>0</mn>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+    <mn>2</mn>
+  </mfrac>
+  <mo>×</mo>
+  <mn>600</mn>
+  <mo>=</mo>
+  <mn>300</mn>
+</math>
+<p>under the simple bottom-left mathematical mapping.</p>
+<p>So the vertex should appear around:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">(</mo>
+          <mn>480</mn>
+          <mo>,</mo>
+          <mn>300</mn>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+  <mo>.</mo>
+</math>
+<p>If instead your program gets:</p>
+<pre class="text"><code>clip w = -5</code></pre>
+<p>you likely have a sign/convention problem.</p>
+<p>If:</p>
+<pre class="text"><code>w ≈ 0</code></pre>
+<p>you are near the projection singularity.</p>
+<p>If:</p>
+<pre class="text"><code>z_NDC = -3</code></pre>
+<p>you have a depth/projection mismatch.</p>
+<p>If:</p>
+<pre class="text"><code>x_NDC = 400</code></pre>
+<p>you likely have bad matrix data or a missing homogeneous divide.</p>
+<p>Tracing one vertex turns “camera broken” into a mathematical diagnosis.</p>
+<hr />
+<p><strong>Why this is especially relevant to Kairo</strong></p>
+<p>Current Kairo vertex shader literally gives us the trace:</p>
+<div class="sourceCode" id="cb81"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="dt">const</span> <span class="dt">vec4</span> worldPosition <span class="op">=</span></span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>    draw<span class="op">.</span><span class="fu">model</span> <span class="op">*</span> <span class="dt">vec4</span><span class="op">(</span>inPosition<span class="op">,</span> <span class="fl">1.0</span><span class="op">);</span></span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-4"><a href="#cb81-4" aria-hidden="true" tabindex="-1"></a><span class="bu">gl_Position</span> <span class="op">=</span></span>
+<span id="cb81-5"><a href="#cb81-5" aria-hidden="true" tabindex="-1"></a>    camera<span class="op">.</span><span class="fu">projection</span> <span class="op">*</span></span>
+<span id="cb81-6"><a href="#cb81-6" aria-hidden="true" tabindex="-1"></a>    camera<span class="op">.</span><span class="fu">view</span> <span class="op">*</span></span>
+<span id="cb81-7"><a href="#cb81-7" aria-hidden="true" tabindex="-1"></a>    worldPosition<span class="op">;</span></span></code></pre></div>
+<p>So instrumenting one vertex conceptually means extracting:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>o</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <msub>
+    <mi>p</mi>
+    <mi>o</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>M</mi>
+  <msub>
+    <mi>p</mi>
+    <mi>o</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>V</mi>
+  <mi>M</mi>
+  <msub>
+    <mi>p</mi>
+    <mi>o</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Remember also that Kairo modifies projection Y:</p>
+<div class="sourceCode" id="cb82"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a>projection<span class="op">(</span><span class="dv">1</span><span class="op">,</span><span class="dv">1</span><span class="op">)</span> <span class="op">*=</span> <span class="op">-</span><span class="fl">1.0</span><span class="bu">f</span><span class="op">;</span></span></code></pre></div>
+<p>because it uses a positive-height Vulkan viewport.</p>
+<p>So an apparent Y inversion must be diagnosed with that fact included.</p>
+<p>Never debug it as though the projection were a generic textbook matrix.</p>
+<hr />
+<p><strong>Complete minimal CPU rasterizer</strong></p>
+<p>Now we reconstruct the rasterizer.</p>
+<p>This is deliberately not “pseudocode pretending to be implementation.”</p>
+<p>The following C++ is a small coherent triangle rasterizer with:</p>
+<pre class="text"><code>screen-space triangle setup
+top-left edge ownership
+pixel-center sampling
+depth
+barycentrics
+perspective-correct interpolation
+color output</code></pre>
+<p>The precondition is that clipping has already happened, because Pass 1 implemented the clip-space stage.</p>
+<p>For clarity, this implementation uses a <strong>bottom-left / +Y-up raster coordinate system</strong>. A production framebuffer with top-left storage can flip the row when writing.</p>
+<div class="sourceCode" id="cb84"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;algorithm&gt;</span></span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;array&gt;</span></span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;cmath&gt;</span></span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;cstdint&gt;</span></span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;limits&gt;</span></span>
+<span id="cb84-6"><a href="#cb84-6" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;vector&gt;</span></span>
+<span id="cb84-7"><a href="#cb84-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-8"><a href="#cb84-8" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Vec2</span>
+<span id="cb84-9"><a href="#cb84-9" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb84-10"><a href="#cb84-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> x<span class="op">{};</span></span>
+<span id="cb84-11"><a href="#cb84-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> y<span class="op">{};</span></span>
+<span id="cb84-12"><a href="#cb84-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-13"><a href="#cb84-13" aria-hidden="true" tabindex="-1"></a>    Vec2 <span class="kw">operator</span><span class="op">+(</span><span class="at">const</span> Vec2<span class="op">&amp;</span> r<span class="op">)</span> <span class="at">const</span> <span class="op">{</span> <span class="cf">return</span> <span class="op">{</span> x <span class="op">+</span> r<span class="op">.</span>x<span class="op">,</span> y <span class="op">+</span> r<span class="op">.</span>y <span class="op">};</span> <span class="op">}</span></span>
+<span id="cb84-14"><a href="#cb84-14" aria-hidden="true" tabindex="-1"></a>    Vec2 <span class="kw">operator</span><span class="op">-(</span><span class="at">const</span> Vec2<span class="op">&amp;</span> r<span class="op">)</span> <span class="at">const</span> <span class="op">{</span> <span class="cf">return</span> <span class="op">{</span> x <span class="op">-</span> r<span class="op">.</span>x<span class="op">,</span> y <span class="op">-</span> r<span class="op">.</span>y <span class="op">};</span> <span class="op">}</span></span>
+<span id="cb84-15"><a href="#cb84-15" aria-hidden="true" tabindex="-1"></a>    Vec2 <span class="kw">operator</span><span class="op">*(</span><span class="dt">float</span> s<span class="op">)</span> <span class="at">const</span> <span class="op">{</span> <span class="cf">return</span> <span class="op">{</span> x <span class="op">*</span> s<span class="op">,</span> y <span class="op">*</span> s <span class="op">};</span> <span class="op">}</span></span>
+<span id="cb84-16"><a href="#cb84-16" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb84-17"><a href="#cb84-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-18"><a href="#cb84-18" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Vec3</span>
+<span id="cb84-19"><a href="#cb84-19" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb84-20"><a href="#cb84-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> x<span class="op">{};</span></span>
+<span id="cb84-21"><a href="#cb84-21" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> y<span class="op">{};</span></span>
+<span id="cb84-22"><a href="#cb84-22" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> z<span class="op">{};</span></span>
+<span id="cb84-23"><a href="#cb84-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-24"><a href="#cb84-24" aria-hidden="true" tabindex="-1"></a>    Vec3 <span class="kw">operator</span><span class="op">+(</span><span class="at">const</span> Vec3<span class="op">&amp;</span> r<span class="op">)</span> <span class="at">const</span></span>
+<span id="cb84-25"><a href="#cb84-25" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb84-26"><a href="#cb84-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="op">{</span> x <span class="op">+</span> r<span class="op">.</span>x<span class="op">,</span> y <span class="op">+</span> r<span class="op">.</span>y<span class="op">,</span> z <span class="op">+</span> r<span class="op">.</span>z <span class="op">};</span></span>
+<span id="cb84-27"><a href="#cb84-27" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb84-28"><a href="#cb84-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-29"><a href="#cb84-29" aria-hidden="true" tabindex="-1"></a>    Vec3 <span class="kw">operator</span><span class="op">*(</span><span class="dt">float</span> s<span class="op">)</span> <span class="at">const</span></span>
+<span id="cb84-30"><a href="#cb84-30" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb84-31"><a href="#cb84-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="op">{</span> x <span class="op">*</span> s<span class="op">,</span> y <span class="op">*</span> s<span class="op">,</span> z <span class="op">*</span> s <span class="op">};</span></span>
+<span id="cb84-32"><a href="#cb84-32" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb84-33"><a href="#cb84-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-34"><a href="#cb84-34" aria-hidden="true" tabindex="-1"></a>    Vec3 <span class="kw">operator</span><span class="op">/(</span><span class="dt">float</span> s<span class="op">)</span> <span class="at">const</span></span>
+<span id="cb84-35"><a href="#cb84-35" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb84-36"><a href="#cb84-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="op">{</span> x <span class="op">/</span> s<span class="op">,</span> y <span class="op">/</span> s<span class="op">,</span> z <span class="op">/</span> s <span class="op">};</span></span>
+<span id="cb84-37"><a href="#cb84-37" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb84-38"><a href="#cb84-38" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb84-39"><a href="#cb84-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-40"><a href="#cb84-40" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Vec4</span>
+<span id="cb84-41"><a href="#cb84-41" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb84-42"><a href="#cb84-42" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> x<span class="op">{};</span></span>
+<span id="cb84-43"><a href="#cb84-43" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> y<span class="op">{};</span></span>
+<span id="cb84-44"><a href="#cb84-44" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> z<span class="op">{};</span></span>
+<span id="cb84-45"><a href="#cb84-45" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> w<span class="op">{};</span></span>
+<span id="cb84-46"><a href="#cb84-46" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb84-47"><a href="#cb84-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-48"><a href="#cb84-48" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> VertexOut</span>
+<span id="cb84-49"><a href="#cb84-49" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb84-50"><a href="#cb84-50" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Clip-space position after the vertex shader.</span></span>
+<span id="cb84-51"><a href="#cb84-51" aria-hidden="true" tabindex="-1"></a>    Vec4 clip<span class="op">{};</span></span>
+<span id="cb84-52"><a href="#cb84-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-53"><a href="#cb84-53" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Example varying produced by the vertex shader.</span></span>
+<span id="cb84-54"><a href="#cb84-54" aria-hidden="true" tabindex="-1"></a>    Vec3 color<span class="op">{};</span></span>
+<span id="cb84-55"><a href="#cb84-55" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb84-56"><a href="#cb84-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-57"><a href="#cb84-57" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ScreenVertex</span>
+<span id="cb84-58"><a href="#cb84-58" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb84-59"><a href="#cb84-59" aria-hidden="true" tabindex="-1"></a>    Vec2 position<span class="op">{};</span></span>
+<span id="cb84-60"><a href="#cb84-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-61"><a href="#cb84-61" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Window/NDC depth. For conventional Vulkan depth:</span></span>
+<span id="cb84-62"><a href="#cb84-62" aria-hidden="true" tabindex="-1"></a>    <span class="co">// near ≈ 0, far ≈ 1.</span></span>
+<span id="cb84-63"><a href="#cb84-63" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> depth<span class="op">{};</span></span>
+<span id="cb84-64"><a href="#cb84-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-65"><a href="#cb84-65" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Perspective interpolation state.</span></span>
+<span id="cb84-66"><a href="#cb84-66" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> invW<span class="op">{};</span></span>
+<span id="cb84-67"><a href="#cb84-67" aria-hidden="true" tabindex="-1"></a>    Vec3 colorOverW<span class="op">{};</span></span>
+<span id="cb84-68"><a href="#cb84-68" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb84-69"><a href="#cb84-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-70"><a href="#cb84-70" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Framebuffer</span>
+<span id="cb84-71"><a href="#cb84-71" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb84-72"><a href="#cb84-72" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> width<span class="op">{};</span></span>
+<span id="cb84-73"><a href="#cb84-73" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> height<span class="op">{};</span></span>
+<span id="cb84-74"><a href="#cb84-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-75"><a href="#cb84-75" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>Vec3<span class="op">&gt;</span> color<span class="op">;</span></span>
+<span id="cb84-76"><a href="#cb84-76" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">float</span><span class="op">&gt;</span> depth<span class="op">;</span></span>
+<span id="cb84-77"><a href="#cb84-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-78"><a href="#cb84-78" aria-hidden="true" tabindex="-1"></a>    Framebuffer<span class="op">(</span><span class="dt">int</span> w<span class="op">,</span> <span class="dt">int</span> h<span class="op">)</span></span>
+<span id="cb84-79"><a href="#cb84-79" aria-hidden="true" tabindex="-1"></a>        <span class="op">:</span> width<span class="op">(</span>w<span class="op">),</span></span>
+<span id="cb84-80"><a href="#cb84-80" aria-hidden="true" tabindex="-1"></a>          height<span class="op">(</span>h<span class="op">),</span></span>
+<span id="cb84-81"><a href="#cb84-81" aria-hidden="true" tabindex="-1"></a>          color<span class="op">(</span><span class="kw">static_cast</span><span class="op">&lt;</span><span class="bu">std::</span>size_t<span class="op">&gt;(</span>w <span class="op">*</span> h<span class="op">)),</span></span>
+<span id="cb84-82"><a href="#cb84-82" aria-hidden="true" tabindex="-1"></a>          depth<span class="op">(</span><span class="kw">static_cast</span><span class="op">&lt;</span><span class="bu">std::</span>size_t<span class="op">&gt;(</span>w <span class="op">*</span> h<span class="op">),</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb84-83"><a href="#cb84-83" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb84-84"><a href="#cb84-84" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb84-85"><a href="#cb84-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-86"><a href="#cb84-86" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>size_t Index<span class="op">(</span><span class="dt">int</span> x<span class="op">,</span> <span class="dt">int</span> y<span class="op">)</span> <span class="at">const</span></span>
+<span id="cb84-87"><a href="#cb84-87" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb84-88"><a href="#cb84-88" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Our mathematical raster coordinates use +Y upward.</span></span>
+<span id="cb84-89"><a href="#cb84-89" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Memory rows use Y downward, so flip here.</span></span>
+<span id="cb84-90"><a href="#cb84-90" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="dt">int</span> storedY <span class="op">=</span> height <span class="op">-</span> <span class="dv">1</span> <span class="op">-</span> y<span class="op">;</span></span>
+<span id="cb84-91"><a href="#cb84-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-92"><a href="#cb84-92" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">static_cast</span><span class="op">&lt;</span><span class="bu">std::</span>size_t<span class="op">&gt;(</span></span>
+<span id="cb84-93"><a href="#cb84-93" aria-hidden="true" tabindex="-1"></a>            storedY <span class="op">*</span> width <span class="op">+</span> x<span class="op">);</span></span>
+<span id="cb84-94"><a href="#cb84-94" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb84-95"><a href="#cb84-95" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb84-96"><a href="#cb84-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-97"><a href="#cb84-97" aria-hidden="true" tabindex="-1"></a><span class="co">// -----------------------------------------------------------------------------</span></span>
+<span id="cb84-98"><a href="#cb84-98" aria-hidden="true" tabindex="-1"></a><span class="co">// Clip → NDC → viewport.</span></span>
+<span id="cb84-99"><a href="#cb84-99" aria-hidden="true" tabindex="-1"></a><span class="co">//</span></span>
+<span id="cb84-100"><a href="#cb84-100" aria-hidden="true" tabindex="-1"></a><span class="co">// Assumption:</span></span>
+<span id="cb84-101"><a href="#cb84-101" aria-hidden="true" tabindex="-1"></a><span class="co">// the triangle has already been clipped against the clip volume,</span></span>
+<span id="cb84-102"><a href="#cb84-102" aria-hidden="true" tabindex="-1"></a><span class="co">// therefore clip.w is valid and nonzero.</span></span>
+<span id="cb84-103"><a href="#cb84-103" aria-hidden="true" tabindex="-1"></a><span class="co">// -----------------------------------------------------------------------------</span></span>
+<span id="cb84-104"><a href="#cb84-104" aria-hidden="true" tabindex="-1"></a>ScreenVertex ToScreen<span class="op">(</span></span>
+<span id="cb84-105"><a href="#cb84-105" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> VertexOut<span class="op">&amp;</span> v<span class="op">,</span></span>
+<span id="cb84-106"><a href="#cb84-106" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> width<span class="op">,</span></span>
+<span id="cb84-107"><a href="#cb84-107" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> height<span class="op">)</span></span>
+<span id="cb84-108"><a href="#cb84-108" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb84-109"><a href="#cb84-109" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> invW <span class="op">=</span> <span class="fl">1.0</span><span class="bu">f</span> <span class="op">/</span> v<span class="op">.</span>clip<span class="op">.</span>w<span class="op">;</span></span>
+<span id="cb84-110"><a href="#cb84-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-111"><a href="#cb84-111" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> ndcX <span class="op">=</span> v<span class="op">.</span>clip<span class="op">.</span>x <span class="op">*</span> invW<span class="op">;</span></span>
+<span id="cb84-112"><a href="#cb84-112" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> ndcY <span class="op">=</span> v<span class="op">.</span>clip<span class="op">.</span>y <span class="op">*</span> invW<span class="op">;</span></span>
+<span id="cb84-113"><a href="#cb84-113" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> ndcZ <span class="op">=</span> v<span class="op">.</span>clip<span class="op">.</span>z <span class="op">*</span> invW<span class="op">;</span></span>
+<span id="cb84-114"><a href="#cb84-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-115"><a href="#cb84-115" aria-hidden="true" tabindex="-1"></a>    ScreenVertex result<span class="op">{};</span></span>
+<span id="cb84-116"><a href="#cb84-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-117"><a href="#cb84-117" aria-hidden="true" tabindex="-1"></a>    <span class="co">// [-1,+1] → [0,width]</span></span>
+<span id="cb84-118"><a href="#cb84-118" aria-hidden="true" tabindex="-1"></a>    result<span class="op">.</span>position<span class="op">.</span>x <span class="op">=</span></span>
+<span id="cb84-119"><a href="#cb84-119" aria-hidden="true" tabindex="-1"></a>        <span class="op">(</span>ndcX <span class="op">*</span> <span class="fl">0.5</span><span class="bu">f</span> <span class="op">+</span> <span class="fl">0.5</span><span class="bu">f</span><span class="op">)</span> <span class="op">*</span></span>
+<span id="cb84-120"><a href="#cb84-120" aria-hidden="true" tabindex="-1"></a>        <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">float</span><span class="op">&gt;(</span>width<span class="op">);</span></span>
+<span id="cb84-121"><a href="#cb84-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-122"><a href="#cb84-122" aria-hidden="true" tabindex="-1"></a>    <span class="co">// [-1,+1] → [0,height]</span></span>
+<span id="cb84-123"><a href="#cb84-123" aria-hidden="true" tabindex="-1"></a>    result<span class="op">.</span>position<span class="op">.</span>y <span class="op">=</span></span>
+<span id="cb84-124"><a href="#cb84-124" aria-hidden="true" tabindex="-1"></a>        <span class="op">(</span>ndcY <span class="op">*</span> <span class="fl">0.5</span><span class="bu">f</span> <span class="op">+</span> <span class="fl">0.5</span><span class="bu">f</span><span class="op">)</span> <span class="op">*</span></span>
+<span id="cb84-125"><a href="#cb84-125" aria-hidden="true" tabindex="-1"></a>        <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">float</span><span class="op">&gt;(</span>height<span class="op">);</span></span>
+<span id="cb84-126"><a href="#cb84-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-127"><a href="#cb84-127" aria-hidden="true" tabindex="-1"></a>    result<span class="op">.</span>depth <span class="op">=</span> ndcZ<span class="op">;</span></span>
+<span id="cb84-128"><a href="#cb84-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-129"><a href="#cb84-129" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Store reciprocal W so varyings can later be reconstructed</span></span>
+<span id="cb84-130"><a href="#cb84-130" aria-hidden="true" tabindex="-1"></a>    <span class="co">// with perspective-correct interpolation.</span></span>
+<span id="cb84-131"><a href="#cb84-131" aria-hidden="true" tabindex="-1"></a>    result<span class="op">.</span>invW <span class="op">=</span> invW<span class="op">;</span></span>
+<span id="cb84-132"><a href="#cb84-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-133"><a href="#cb84-133" aria-hidden="true" tabindex="-1"></a>    result<span class="op">.</span>colorOverW <span class="op">=</span> v<span class="op">.</span>color <span class="op">*</span> invW<span class="op">;</span></span>
+<span id="cb84-134"><a href="#cb84-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-135"><a href="#cb84-135" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result<span class="op">;</span></span>
+<span id="cb84-136"><a href="#cb84-136" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb84-137"><a href="#cb84-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-138"><a href="#cb84-138" aria-hidden="true" tabindex="-1"></a><span class="co">// -----------------------------------------------------------------------------</span></span>
+<span id="cb84-139"><a href="#cb84-139" aria-hidden="true" tabindex="-1"></a><span class="co">// Signed edge equation.</span></span>
+<span id="cb84-140"><a href="#cb84-140" aria-hidden="true" tabindex="-1"></a><span class="co">//</span></span>
+<span id="cb84-141"><a href="#cb84-141" aria-hidden="true" tabindex="-1"></a><span class="co">// Positive means p lies on one side of directed edge a→b.</span></span>
+<span id="cb84-142"><a href="#cb84-142" aria-hidden="true" tabindex="-1"></a><span class="co">// -----------------------------------------------------------------------------</span></span>
+<span id="cb84-143"><a href="#cb84-143" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> Edge<span class="op">(</span></span>
+<span id="cb84-144"><a href="#cb84-144" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec2<span class="op">&amp;</span> a<span class="op">,</span></span>
+<span id="cb84-145"><a href="#cb84-145" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec2<span class="op">&amp;</span> b<span class="op">,</span></span>
+<span id="cb84-146"><a href="#cb84-146" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec2<span class="op">&amp;</span> p<span class="op">)</span></span>
+<span id="cb84-147"><a href="#cb84-147" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb84-148"><a href="#cb84-148" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span></span>
+<span id="cb84-149"><a href="#cb84-149" aria-hidden="true" tabindex="-1"></a>        <span class="op">(</span>b<span class="op">.</span>x <span class="op">-</span> a<span class="op">.</span>x<span class="op">)</span> <span class="op">*</span> <span class="op">(</span>p<span class="op">.</span>y <span class="op">-</span> a<span class="op">.</span>y<span class="op">)</span> <span class="op">-</span></span>
+<span id="cb84-150"><a href="#cb84-150" aria-hidden="true" tabindex="-1"></a>        <span class="op">(</span>b<span class="op">.</span>y <span class="op">-</span> a<span class="op">.</span>y<span class="op">)</span> <span class="op">*</span> <span class="op">(</span>p<span class="op">.</span>x <span class="op">-</span> a<span class="op">.</span>x<span class="op">);</span></span>
+<span id="cb84-151"><a href="#cb84-151" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb84-152"><a href="#cb84-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-153"><a href="#cb84-153" aria-hidden="true" tabindex="-1"></a><span class="co">// -----------------------------------------------------------------------------</span></span>
+<span id="cb84-154"><a href="#cb84-154" aria-hidden="true" tabindex="-1"></a><span class="co">// Top-left ownership.</span></span>
+<span id="cb84-155"><a href="#cb84-155" aria-hidden="true" tabindex="-1"></a><span class="co">//</span></span>
+<span id="cb84-156"><a href="#cb84-156" aria-hidden="true" tabindex="-1"></a><span class="co">// Convention here:</span></span>
+<span id="cb84-157"><a href="#cb84-157" aria-hidden="true" tabindex="-1"></a><span class="co">// +Y points upward and the triangle is normalized to CCW orientation.</span></span>
+<span id="cb84-158"><a href="#cb84-158" aria-hidden="true" tabindex="-1"></a><span class="co">//</span></span>
+<span id="cb84-159"><a href="#cb84-159" aria-hidden="true" tabindex="-1"></a><span class="co">// For exact GPU agreement a production software rasterizer should normally</span></span>
+<span id="cb84-160"><a href="#cb84-160" aria-hidden="true" tabindex="-1"></a><span class="co">// use fixed/subpixel integer edge equations rather than float equality.</span></span>
+<span id="cb84-161"><a href="#cb84-161" aria-hidden="true" tabindex="-1"></a><span class="co">// -----------------------------------------------------------------------------</span></span>
+<span id="cb84-162"><a href="#cb84-162" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> IsTopLeft<span class="op">(</span></span>
+<span id="cb84-163"><a href="#cb84-163" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec2<span class="op">&amp;</span> a<span class="op">,</span></span>
+<span id="cb84-164"><a href="#cb84-164" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec2<span class="op">&amp;</span> b<span class="op">)</span></span>
+<span id="cb84-165"><a href="#cb84-165" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb84-166"><a href="#cb84-166" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> dx <span class="op">=</span> b<span class="op">.</span>x <span class="op">-</span> a<span class="op">.</span>x<span class="op">;</span></span>
+<span id="cb84-167"><a href="#cb84-167" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> dy <span class="op">=</span> b<span class="op">.</span>y <span class="op">-</span> a<span class="op">.</span>y<span class="op">;</span></span>
+<span id="cb84-168"><a href="#cb84-168" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-169"><a href="#cb84-169" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span></span>
+<span id="cb84-170"><a href="#cb84-170" aria-hidden="true" tabindex="-1"></a>        <span class="op">(</span>dy <span class="op">&gt;</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">)</span> <span class="op">||</span></span>
+<span id="cb84-171"><a href="#cb84-171" aria-hidden="true" tabindex="-1"></a>        <span class="op">(</span>dy <span class="op">==</span> <span class="fl">0.0</span><span class="bu">f</span> <span class="op">&amp;&amp;</span> dx <span class="op">&lt;</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">);</span></span>
+<span id="cb84-172"><a href="#cb84-172" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb84-173"><a href="#cb84-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-174"><a href="#cb84-174" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> EdgePasses<span class="op">(</span></span>
+<span id="cb84-175"><a href="#cb84-175" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> value<span class="op">,</span></span>
+<span id="cb84-176"><a href="#cb84-176" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> topLeft<span class="op">)</span></span>
+<span id="cb84-177"><a href="#cb84-177" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb84-178"><a href="#cb84-178" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>value <span class="op">&gt;</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb84-179"><a href="#cb84-179" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb84-180"><a href="#cb84-180" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-181"><a href="#cb84-181" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>value <span class="op">&lt;</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb84-182"><a href="#cb84-182" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb84-183"><a href="#cb84-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-184"><a href="#cb84-184" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Exact boundary:</span></span>
+<span id="cb84-185"><a href="#cb84-185" aria-hidden="true" tabindex="-1"></a>    <span class="co">// only the top/left owner includes it.</span></span>
+<span id="cb84-186"><a href="#cb84-186" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> topLeft<span class="op">;</span></span>
+<span id="cb84-187"><a href="#cb84-187" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb84-188"><a href="#cb84-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-189"><a href="#cb84-189" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> RasterizeTriangle<span class="op">(</span></span>
+<span id="cb84-190"><a href="#cb84-190" aria-hidden="true" tabindex="-1"></a>    ScreenVertex v0<span class="op">,</span></span>
+<span id="cb84-191"><a href="#cb84-191" aria-hidden="true" tabindex="-1"></a>    ScreenVertex v1<span class="op">,</span></span>
+<span id="cb84-192"><a href="#cb84-192" aria-hidden="true" tabindex="-1"></a>    ScreenVertex v2<span class="op">,</span></span>
+<span id="cb84-193"><a href="#cb84-193" aria-hidden="true" tabindex="-1"></a>    Framebuffer<span class="op">&amp;</span> framebuffer<span class="op">)</span></span>
+<span id="cb84-194"><a href="#cb84-194" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb84-195"><a href="#cb84-195" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> area <span class="op">=</span></span>
+<span id="cb84-196"><a href="#cb84-196" aria-hidden="true" tabindex="-1"></a>        Edge<span class="op">(</span>v0<span class="op">.</span>position<span class="op">,</span></span>
+<span id="cb84-197"><a href="#cb84-197" aria-hidden="true" tabindex="-1"></a>             v1<span class="op">.</span>position<span class="op">,</span></span>
+<span id="cb84-198"><a href="#cb84-198" aria-hidden="true" tabindex="-1"></a>             v2<span class="op">.</span>position<span class="op">);</span></span>
+<span id="cb84-199"><a href="#cb84-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-200"><a href="#cb84-200" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Degenerate projected triangle.</span></span>
+<span id="cb84-201"><a href="#cb84-201" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>area <span class="op">==</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb84-202"><a href="#cb84-202" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span><span class="op">;</span></span>
+<span id="cb84-203"><a href="#cb84-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-204"><a href="#cb84-204" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Normalize to CCW according to this rasterizer&#39;s convention.</span></span>
+<span id="cb84-205"><a href="#cb84-205" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>area <span class="op">&lt;</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb84-206"><a href="#cb84-206" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb84-207"><a href="#cb84-207" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>swap<span class="op">(</span>v1<span class="op">,</span> v2<span class="op">);</span></span>
+<span id="cb84-208"><a href="#cb84-208" aria-hidden="true" tabindex="-1"></a>        area <span class="op">=</span> <span class="op">-</span>area<span class="op">;</span></span>
+<span id="cb84-209"><a href="#cb84-209" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb84-210"><a href="#cb84-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-211"><a href="#cb84-211" aria-hidden="true" tabindex="-1"></a>    <span class="co">// -------------------------------------------------------------------------</span></span>
+<span id="cb84-212"><a href="#cb84-212" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Triangle bounding box.</span></span>
+<span id="cb84-213"><a href="#cb84-213" aria-hidden="true" tabindex="-1"></a>    <span class="co">// -------------------------------------------------------------------------</span></span>
+<span id="cb84-214"><a href="#cb84-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-215"><a href="#cb84-215" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> minXf <span class="op">=</span> <span class="bu">std::</span>min<span class="op">({</span></span>
+<span id="cb84-216"><a href="#cb84-216" aria-hidden="true" tabindex="-1"></a>        v0<span class="op">.</span>position<span class="op">.</span>x<span class="op">,</span></span>
+<span id="cb84-217"><a href="#cb84-217" aria-hidden="true" tabindex="-1"></a>        v1<span class="op">.</span>position<span class="op">.</span>x<span class="op">,</span></span>
+<span id="cb84-218"><a href="#cb84-218" aria-hidden="true" tabindex="-1"></a>        v2<span class="op">.</span>position<span class="op">.</span>x</span>
+<span id="cb84-219"><a href="#cb84-219" aria-hidden="true" tabindex="-1"></a>    <span class="op">});</span></span>
+<span id="cb84-220"><a href="#cb84-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-221"><a href="#cb84-221" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> maxXf <span class="op">=</span> <span class="bu">std::</span>max<span class="op">({</span></span>
+<span id="cb84-222"><a href="#cb84-222" aria-hidden="true" tabindex="-1"></a>        v0<span class="op">.</span>position<span class="op">.</span>x<span class="op">,</span></span>
+<span id="cb84-223"><a href="#cb84-223" aria-hidden="true" tabindex="-1"></a>        v1<span class="op">.</span>position<span class="op">.</span>x<span class="op">,</span></span>
+<span id="cb84-224"><a href="#cb84-224" aria-hidden="true" tabindex="-1"></a>        v2<span class="op">.</span>position<span class="op">.</span>x</span>
+<span id="cb84-225"><a href="#cb84-225" aria-hidden="true" tabindex="-1"></a>    <span class="op">});</span></span>
+<span id="cb84-226"><a href="#cb84-226" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-227"><a href="#cb84-227" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> minYf <span class="op">=</span> <span class="bu">std::</span>min<span class="op">({</span></span>
+<span id="cb84-228"><a href="#cb84-228" aria-hidden="true" tabindex="-1"></a>        v0<span class="op">.</span>position<span class="op">.</span>y<span class="op">,</span></span>
+<span id="cb84-229"><a href="#cb84-229" aria-hidden="true" tabindex="-1"></a>        v1<span class="op">.</span>position<span class="op">.</span>y<span class="op">,</span></span>
+<span id="cb84-230"><a href="#cb84-230" aria-hidden="true" tabindex="-1"></a>        v2<span class="op">.</span>position<span class="op">.</span>y</span>
+<span id="cb84-231"><a href="#cb84-231" aria-hidden="true" tabindex="-1"></a>    <span class="op">});</span></span>
+<span id="cb84-232"><a href="#cb84-232" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-233"><a href="#cb84-233" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> maxYf <span class="op">=</span> <span class="bu">std::</span>max<span class="op">({</span></span>
+<span id="cb84-234"><a href="#cb84-234" aria-hidden="true" tabindex="-1"></a>        v0<span class="op">.</span>position<span class="op">.</span>y<span class="op">,</span></span>
+<span id="cb84-235"><a href="#cb84-235" aria-hidden="true" tabindex="-1"></a>        v1<span class="op">.</span>position<span class="op">.</span>y<span class="op">,</span></span>
+<span id="cb84-236"><a href="#cb84-236" aria-hidden="true" tabindex="-1"></a>        v2<span class="op">.</span>position<span class="op">.</span>y</span>
+<span id="cb84-237"><a href="#cb84-237" aria-hidden="true" tabindex="-1"></a>    <span class="op">});</span></span>
+<span id="cb84-238"><a href="#cb84-238" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-239"><a href="#cb84-239" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> minX <span class="op">=</span></span>
+<span id="cb84-240"><a href="#cb84-240" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>max<span class="op">(</span></span>
+<span id="cb84-241"><a href="#cb84-241" aria-hidden="true" tabindex="-1"></a>            <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb84-242"><a href="#cb84-242" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;(</span><span class="bu">std::</span>floor<span class="op">(</span>minXf<span class="op">)));</span></span>
+<span id="cb84-243"><a href="#cb84-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-244"><a href="#cb84-244" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> maxX <span class="op">=</span></span>
+<span id="cb84-245"><a href="#cb84-245" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>min<span class="op">(</span></span>
+<span id="cb84-246"><a href="#cb84-246" aria-hidden="true" tabindex="-1"></a>            framebuffer<span class="op">.</span>width <span class="op">-</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb84-247"><a href="#cb84-247" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;(</span><span class="bu">std::</span>ceil<span class="op">(</span>maxXf<span class="op">)));</span></span>
+<span id="cb84-248"><a href="#cb84-248" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-249"><a href="#cb84-249" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> minY <span class="op">=</span></span>
+<span id="cb84-250"><a href="#cb84-250" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>max<span class="op">(</span></span>
+<span id="cb84-251"><a href="#cb84-251" aria-hidden="true" tabindex="-1"></a>            <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb84-252"><a href="#cb84-252" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;(</span><span class="bu">std::</span>floor<span class="op">(</span>minYf<span class="op">)));</span></span>
+<span id="cb84-253"><a href="#cb84-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-254"><a href="#cb84-254" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> maxY <span class="op">=</span></span>
+<span id="cb84-255"><a href="#cb84-255" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>min<span class="op">(</span></span>
+<span id="cb84-256"><a href="#cb84-256" aria-hidden="true" tabindex="-1"></a>            framebuffer<span class="op">.</span>height <span class="op">-</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb84-257"><a href="#cb84-257" aria-hidden="true" tabindex="-1"></a>            <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;(</span><span class="bu">std::</span>ceil<span class="op">(</span>maxYf<span class="op">)));</span></span>
+<span id="cb84-258"><a href="#cb84-258" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-259"><a href="#cb84-259" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Each barycentric weight uses the opposite directed edge.</span></span>
+<span id="cb84-260"><a href="#cb84-260" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">bool</span> edge12TopLeft <span class="op">=</span></span>
+<span id="cb84-261"><a href="#cb84-261" aria-hidden="true" tabindex="-1"></a>        IsTopLeft<span class="op">(</span>v1<span class="op">.</span>position<span class="op">,</span> v2<span class="op">.</span>position<span class="op">);</span></span>
+<span id="cb84-262"><a href="#cb84-262" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-263"><a href="#cb84-263" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">bool</span> edge20TopLeft <span class="op">=</span></span>
+<span id="cb84-264"><a href="#cb84-264" aria-hidden="true" tabindex="-1"></a>        IsTopLeft<span class="op">(</span>v2<span class="op">.</span>position<span class="op">,</span> v0<span class="op">.</span>position<span class="op">);</span></span>
+<span id="cb84-265"><a href="#cb84-265" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-266"><a href="#cb84-266" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">bool</span> edge01TopLeft <span class="op">=</span></span>
+<span id="cb84-267"><a href="#cb84-267" aria-hidden="true" tabindex="-1"></a>        IsTopLeft<span class="op">(</span>v0<span class="op">.</span>position<span class="op">,</span> v1<span class="op">.</span>position<span class="op">);</span></span>
+<span id="cb84-268"><a href="#cb84-268" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-269"><a href="#cb84-269" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> invArea <span class="op">=</span> <span class="fl">1.0</span><span class="bu">f</span> <span class="op">/</span> area<span class="op">;</span></span>
+<span id="cb84-270"><a href="#cb84-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-271"><a href="#cb84-271" aria-hidden="true" tabindex="-1"></a>    <span class="co">// -------------------------------------------------------------------------</span></span>
+<span id="cb84-272"><a href="#cb84-272" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Raster loop.</span></span>
+<span id="cb84-273"><a href="#cb84-273" aria-hidden="true" tabindex="-1"></a>    <span class="co">// -------------------------------------------------------------------------</span></span>
+<span id="cb84-274"><a href="#cb84-274" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> y <span class="op">=</span> minY<span class="op">;</span> y <span class="op">&lt;=</span> maxY<span class="op">;</span> <span class="op">++</span>y<span class="op">)</span></span>
+<span id="cb84-275"><a href="#cb84-275" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb84-276"><a href="#cb84-276" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> x <span class="op">=</span> minX<span class="op">;</span> x <span class="op">&lt;=</span> maxX<span class="op">;</span> <span class="op">++</span>x<span class="op">)</span></span>
+<span id="cb84-277"><a href="#cb84-277" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb84-278"><a href="#cb84-278" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Single-sample rasterization:</span></span>
+<span id="cb84-279"><a href="#cb84-279" aria-hidden="true" tabindex="-1"></a>            <span class="co">// test the pixel center.</span></span>
+<span id="cb84-280"><a href="#cb84-280" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> Vec2 p<span class="op">{</span></span>
+<span id="cb84-281"><a href="#cb84-281" aria-hidden="true" tabindex="-1"></a>                <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">float</span><span class="op">&gt;(</span>x<span class="op">)</span> <span class="op">+</span> <span class="fl">0.5</span><span class="bu">f</span><span class="op">,</span></span>
+<span id="cb84-282"><a href="#cb84-282" aria-hidden="true" tabindex="-1"></a>                <span class="kw">static_cast</span><span class="op">&lt;</span><span class="dt">float</span><span class="op">&gt;(</span>y<span class="op">)</span> <span class="op">+</span> <span class="fl">0.5</span><span class="bu">f</span></span>
+<span id="cb84-283"><a href="#cb84-283" aria-hidden="true" tabindex="-1"></a>            <span class="op">};</span></span>
+<span id="cb84-284"><a href="#cb84-284" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-285"><a href="#cb84-285" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> <span class="dt">float</span> e0 <span class="op">=</span></span>
+<span id="cb84-286"><a href="#cb84-286" aria-hidden="true" tabindex="-1"></a>                Edge<span class="op">(</span></span>
+<span id="cb84-287"><a href="#cb84-287" aria-hidden="true" tabindex="-1"></a>                    v1<span class="op">.</span>position<span class="op">,</span></span>
+<span id="cb84-288"><a href="#cb84-288" aria-hidden="true" tabindex="-1"></a>                    v2<span class="op">.</span>position<span class="op">,</span></span>
+<span id="cb84-289"><a href="#cb84-289" aria-hidden="true" tabindex="-1"></a>                    p<span class="op">);</span></span>
+<span id="cb84-290"><a href="#cb84-290" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-291"><a href="#cb84-291" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> <span class="dt">float</span> e1 <span class="op">=</span></span>
+<span id="cb84-292"><a href="#cb84-292" aria-hidden="true" tabindex="-1"></a>                Edge<span class="op">(</span></span>
+<span id="cb84-293"><a href="#cb84-293" aria-hidden="true" tabindex="-1"></a>                    v2<span class="op">.</span>position<span class="op">,</span></span>
+<span id="cb84-294"><a href="#cb84-294" aria-hidden="true" tabindex="-1"></a>                    v0<span class="op">.</span>position<span class="op">,</span></span>
+<span id="cb84-295"><a href="#cb84-295" aria-hidden="true" tabindex="-1"></a>                    p<span class="op">);</span></span>
+<span id="cb84-296"><a href="#cb84-296" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-297"><a href="#cb84-297" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> <span class="dt">float</span> e2 <span class="op">=</span></span>
+<span id="cb84-298"><a href="#cb84-298" aria-hidden="true" tabindex="-1"></a>                Edge<span class="op">(</span></span>
+<span id="cb84-299"><a href="#cb84-299" aria-hidden="true" tabindex="-1"></a>                    v0<span class="op">.</span>position<span class="op">,</span></span>
+<span id="cb84-300"><a href="#cb84-300" aria-hidden="true" tabindex="-1"></a>                    v1<span class="op">.</span>position<span class="op">,</span></span>
+<span id="cb84-301"><a href="#cb84-301" aria-hidden="true" tabindex="-1"></a>                    p<span class="op">);</span></span>
+<span id="cb84-302"><a href="#cb84-302" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-303"><a href="#cb84-303" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Top-left coverage rule.</span></span>
+<span id="cb84-304"><a href="#cb84-304" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="op">(!</span>EdgePasses<span class="op">(</span>e0<span class="op">,</span> edge12TopLeft<span class="op">)</span> <span class="op">||</span></span>
+<span id="cb84-305"><a href="#cb84-305" aria-hidden="true" tabindex="-1"></a>                <span class="op">!</span>EdgePasses<span class="op">(</span>e1<span class="op">,</span> edge20TopLeft<span class="op">)</span> <span class="op">||</span></span>
+<span id="cb84-306"><a href="#cb84-306" aria-hidden="true" tabindex="-1"></a>                <span class="op">!</span>EdgePasses<span class="op">(</span>e2<span class="op">,</span> edge01TopLeft<span class="op">))</span></span>
+<span id="cb84-307"><a href="#cb84-307" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb84-308"><a href="#cb84-308" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb84-309"><a href="#cb84-309" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb84-310"><a href="#cb84-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-311"><a href="#cb84-311" aria-hidden="true" tabindex="-1"></a>            <span class="co">// -----------------------------------------------------------------</span></span>
+<span id="cb84-312"><a href="#cb84-312" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Barycentric coordinates.</span></span>
+<span id="cb84-313"><a href="#cb84-313" aria-hidden="true" tabindex="-1"></a>            <span class="co">// -----------------------------------------------------------------</span></span>
+<span id="cb84-314"><a href="#cb84-314" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> <span class="dt">float</span> lambda0 <span class="op">=</span> e0 <span class="op">*</span> invArea<span class="op">;</span></span>
+<span id="cb84-315"><a href="#cb84-315" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> <span class="dt">float</span> lambda1 <span class="op">=</span> e1 <span class="op">*</span> invArea<span class="op">;</span></span>
+<span id="cb84-316"><a href="#cb84-316" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> <span class="dt">float</span> lambda2 <span class="op">=</span> e2 <span class="op">*</span> invArea<span class="op">;</span></span>
+<span id="cb84-317"><a href="#cb84-317" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-318"><a href="#cb84-318" aria-hidden="true" tabindex="-1"></a>            <span class="co">// -----------------------------------------------------------------</span></span>
+<span id="cb84-319"><a href="#cb84-319" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Depth interpolation.</span></span>
+<span id="cb84-320"><a href="#cb84-320" aria-hidden="true" tabindex="-1"></a>            <span class="co">//</span></span>
+<span id="cb84-321"><a href="#cb84-321" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Window/NDC depth is linearly interpolated across the projected</span></span>
+<span id="cb84-322"><a href="#cb84-322" aria-hidden="true" tabindex="-1"></a>            <span class="co">// triangle.</span></span>
+<span id="cb84-323"><a href="#cb84-323" aria-hidden="true" tabindex="-1"></a>            <span class="co">// -----------------------------------------------------------------</span></span>
+<span id="cb84-324"><a href="#cb84-324" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> <span class="dt">float</span> depth <span class="op">=</span></span>
+<span id="cb84-325"><a href="#cb84-325" aria-hidden="true" tabindex="-1"></a>                lambda0 <span class="op">*</span> v0<span class="op">.</span>depth <span class="op">+</span></span>
+<span id="cb84-326"><a href="#cb84-326" aria-hidden="true" tabindex="-1"></a>                lambda1 <span class="op">*</span> v1<span class="op">.</span>depth <span class="op">+</span></span>
+<span id="cb84-327"><a href="#cb84-327" aria-hidden="true" tabindex="-1"></a>                lambda2 <span class="op">*</span> v2<span class="op">.</span>depth<span class="op">;</span></span>
+<span id="cb84-328"><a href="#cb84-328" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-329"><a href="#cb84-329" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Reject invalid Vulkan-style depth.</span></span>
+<span id="cb84-330"><a href="#cb84-330" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="op">(</span>depth <span class="op">&lt;</span> <span class="fl">0.0</span><span class="bu">f</span> <span class="op">||</span> depth <span class="op">&gt;</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb84-331"><a href="#cb84-331" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb84-332"><a href="#cb84-332" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-333"><a href="#cb84-333" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> <span class="bu">std::</span>size_t index <span class="op">=</span></span>
+<span id="cb84-334"><a href="#cb84-334" aria-hidden="true" tabindex="-1"></a>                framebuffer<span class="op">.</span>Index<span class="op">(</span>x<span class="op">,</span> y<span class="op">);</span></span>
+<span id="cb84-335"><a href="#cb84-335" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-336"><a href="#cb84-336" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Conventional depth:</span></span>
+<span id="cb84-337"><a href="#cb84-337" aria-hidden="true" tabindex="-1"></a>            <span class="co">// smaller = nearer.</span></span>
+<span id="cb84-338"><a href="#cb84-338" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="op">(!(</span>depth <span class="op">&lt;</span> framebuffer<span class="op">.</span>depth<span class="op">[</span>index<span class="op">]))</span></span>
+<span id="cb84-339"><a href="#cb84-339" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb84-340"><a href="#cb84-340" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-341"><a href="#cb84-341" aria-hidden="true" tabindex="-1"></a>            <span class="co">// -----------------------------------------------------------------</span></span>
+<span id="cb84-342"><a href="#cb84-342" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Perspective-correct varying interpolation.</span></span>
+<span id="cb84-343"><a href="#cb84-343" aria-hidden="true" tabindex="-1"></a>            <span class="co">//</span></span>
+<span id="cb84-344"><a href="#cb84-344" aria-hidden="true" tabindex="-1"></a>            <span class="co">// We interpolate:</span></span>
+<span id="cb84-345"><a href="#cb84-345" aria-hidden="true" tabindex="-1"></a>            <span class="co">//</span></span>
+<span id="cb84-346"><a href="#cb84-346" aria-hidden="true" tabindex="-1"></a>            <span class="co">//      color / w</span></span>
+<span id="cb84-347"><a href="#cb84-347" aria-hidden="true" tabindex="-1"></a>            <span class="co">//      1 / w</span></span>
+<span id="cb84-348"><a href="#cb84-348" aria-hidden="true" tabindex="-1"></a>            <span class="co">//</span></span>
+<span id="cb84-349"><a href="#cb84-349" aria-hidden="true" tabindex="-1"></a>            <span class="co">// then divide them.</span></span>
+<span id="cb84-350"><a href="#cb84-350" aria-hidden="true" tabindex="-1"></a>            <span class="co">// -----------------------------------------------------------------</span></span>
+<span id="cb84-351"><a href="#cb84-351" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> <span class="dt">float</span> interpolatedInvW <span class="op">=</span></span>
+<span id="cb84-352"><a href="#cb84-352" aria-hidden="true" tabindex="-1"></a>                lambda0 <span class="op">*</span> v0<span class="op">.</span>invW <span class="op">+</span></span>
+<span id="cb84-353"><a href="#cb84-353" aria-hidden="true" tabindex="-1"></a>                lambda1 <span class="op">*</span> v1<span class="op">.</span>invW <span class="op">+</span></span>
+<span id="cb84-354"><a href="#cb84-354" aria-hidden="true" tabindex="-1"></a>                lambda2 <span class="op">*</span> v2<span class="op">.</span>invW<span class="op">;</span></span>
+<span id="cb84-355"><a href="#cb84-355" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-356"><a href="#cb84-356" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="op">(</span><span class="bu">std::</span>abs<span class="op">(</span>interpolatedInvW<span class="op">)</span> <span class="op">&lt;</span></span>
+<span id="cb84-357"><a href="#cb84-357" aria-hidden="true" tabindex="-1"></a>                <span class="fl">1.0e-12</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb84-358"><a href="#cb84-358" aria-hidden="true" tabindex="-1"></a>            <span class="op">{</span></span>
+<span id="cb84-359"><a href="#cb84-359" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb84-360"><a href="#cb84-360" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb84-361"><a href="#cb84-361" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-362"><a href="#cb84-362" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> Vec3 colorOverW <span class="op">=</span></span>
+<span id="cb84-363"><a href="#cb84-363" aria-hidden="true" tabindex="-1"></a>                v0<span class="op">.</span>colorOverW <span class="op">*</span> lambda0 <span class="op">+</span></span>
+<span id="cb84-364"><a href="#cb84-364" aria-hidden="true" tabindex="-1"></a>                v1<span class="op">.</span>colorOverW <span class="op">*</span> lambda1 <span class="op">+</span></span>
+<span id="cb84-365"><a href="#cb84-365" aria-hidden="true" tabindex="-1"></a>                v2<span class="op">.</span>colorOverW <span class="op">*</span> lambda2<span class="op">;</span></span>
+<span id="cb84-366"><a href="#cb84-366" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-367"><a href="#cb84-367" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> Vec3 finalColor <span class="op">=</span></span>
+<span id="cb84-368"><a href="#cb84-368" aria-hidden="true" tabindex="-1"></a>                colorOverW <span class="op">/</span></span>
+<span id="cb84-369"><a href="#cb84-369" aria-hidden="true" tabindex="-1"></a>                interpolatedInvW<span class="op">;</span></span>
+<span id="cb84-370"><a href="#cb84-370" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-371"><a href="#cb84-371" aria-hidden="true" tabindex="-1"></a>            <span class="co">// -----------------------------------------------------------------</span></span>
+<span id="cb84-372"><a href="#cb84-372" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Commit successful opaque fragment.</span></span>
+<span id="cb84-373"><a href="#cb84-373" aria-hidden="true" tabindex="-1"></a>            <span class="co">// -----------------------------------------------------------------</span></span>
+<span id="cb84-374"><a href="#cb84-374" aria-hidden="true" tabindex="-1"></a>            framebuffer<span class="op">.</span>depth<span class="op">[</span>index<span class="op">]</span> <span class="op">=</span> depth<span class="op">;</span></span>
+<span id="cb84-375"><a href="#cb84-375" aria-hidden="true" tabindex="-1"></a>            framebuffer<span class="op">.</span>color<span class="op">[</span>index<span class="op">]</span> <span class="op">=</span> finalColor<span class="op">;</span></span>
+<span id="cb84-376"><a href="#cb84-376" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb84-377"><a href="#cb84-377" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb84-378"><a href="#cb84-378" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>That is a real miniature raster pipeline.</p>
+<hr />
+<p><strong>What is still educational rather than hardware-exact in that implementation</strong></p>
+<p>The algorithm is mathematically valid, but a GPU-equivalent reference rasterizer needs stricter engineering.</p>
+<p>The edge equations should generally operate in a fixed subpixel representation.</p>
+<p>For example, with 8 fractional bits:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>f</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>round</mi>
+  <mo stretchy="false">(</mo>
+  <mn>256</mn>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then pixel-center coordinates become:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>sample</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>256</mn>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mn>128.</mn>
+</math>
+<p>The edge equation can use 64-bit integers:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>b</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>a</mi>
+    <mi>x</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>a</mi>
+    <mi>y</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>−</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>b</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>a</mi>
+    <mi>y</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>a</mi>
+    <mi>x</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Why?</p>
+<p>Because neighboring triangles need to make <strong>exactly identical shared-edge decisions</strong>.</p>
+<p>A floating epsilon such as:</p>
+<div class="sourceCode" id="cb85"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>edge <span class="op">&gt;=</span> <span class="op">-</span><span class="fl">1e-6</span><span class="bu">f</span><span class="op">)</span></span></code></pre></div>
+<p>does not define a watertight rasterization convention.</p>
+<p>It creates scale-dependent ambiguity.</p>
+<p>The correct production idea is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>quantized subpixel coordinates</mtext>
+          <mo>+</mo>
+          <mtext>integer edge equations</mtext>
+          <mo>+</mo>
+          <mtext>exact top-left tie breaking</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>which is much closer to how hardware rasterization is reasoned about.</p>
+<hr />
+<p><strong>Incremental edge stepping</strong></p>
+<p>Our educational code recalculates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>for every pixel.</p>
+<p>But because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mi>B</mi>
+  <mi>y</mi>
+  <mo>+</mo>
+  <mi>C</mi>
+  <mo>,</mo>
+</math>
+<p>we have:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>E</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>E</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>A faster rasterizer computes edge values once at the start of a scan region.</p>
+<p>Then moving horizontally only adds precomputed increments.</p>
+<p>For the three edges:</p>
+<div class="sourceCode" id="cb86"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>e0 <span class="op">+=</span> stepX0<span class="op">;</span></span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a>e1 <span class="op">+=</span> stepX1<span class="op">;</span></span>
+<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a>e2 <span class="op">+=</span> stepX2<span class="op">;</span></span></code></pre></div>
+<p>Moving to the next row adds the Y increments.</p>
+<p>That turns coverage calculation into cheap integer additions.</p>
+<p>The same edge values yield barycentrics.</p>
+<p>Thus triangle setup pays once for coefficients and the inner loop becomes extremely regular.</p>
+<hr />
+<p><strong>Tile-based raster traversal</strong></p>
+<p>Rather than scan every pixel in the bounding box, partition the screen into tiles such as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mo>×</mo>
+  <mn>8</mn>
+</math>
+<p>or</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mo>×</mo>
+  <mn>16.</mn>
+</math>
+<p>For each tile, test whether each edge proves:</p>
+<pre class="text"><code>whole tile outside
+whole tile inside
+partial overlap</code></pre>
+<p>Then entire empty blocks can be skipped.</p>
+<p>This hierarchical reasoning is conceptually related to Hi-Z.</p>
+<p>Modern hardware contains many such coarse/fine stages.</p>
+<p>The important mental progression is:</p>
+<pre class="text"><code>triangle
+→ coarse screen region
+→ fine coverage
+→ samples</code></pre>
+<p>rather than thinking hardware literally runs a nested <code>for(y) for(x)</code> over every bounding-box pixel.</p>
+<hr />
+<p><strong>One-for-one mapping: CPU rasterizer → GPU pipeline</strong></p>
+<p>Now we can map every significant CPU operation to GPU machinery.</p>
+<table>
+<thead>
+<tr>
+<th>CPU reconstruction</th>
+<th>Modern GPU/Vulkan equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>VertexOut</code> input</td>
+<td>vertex/index buffers + vertex fetch</td>
+</tr>
+<tr>
+<td>object/world/view/projection math</td>
+<td>vertex shader</td>
+</tr>
+<tr>
+<td>clip-space polygon clipping</td>
+<td>fixed-function clipping</td>
+</tr>
+<tr>
+<td>divide by <code>w</code></td>
+<td>perspective divide</td>
+</tr>
+<tr>
+<td>NDC → screen</td>
+<td>viewport transform</td>
+</tr>
+<tr>
+<td>area determinant</td>
+<td>triangle setup/orientation</td>
+</tr>
+<tr>
+<td>reject backface</td>
+<td>culling stage</td>
+</tr>
+<tr>
+<td>edge equations</td>
+<td>rasterizer setup</td>
+</tr>
+<tr>
+<td>pixel-center test</td>
+<td>sample coverage</td>
+</tr>
+<tr>
+<td>top-left tie</td>
+<td>API rasterization convention</td>
+</tr>
+<tr>
+<td>barycentrics</td>
+<td>interpolator</td>
+</tr>
+<tr>
+<td><code>a/w</code> and <code>1/w</code></td>
+<td>perspective-correct varying interpolation</td>
+</tr>
+<tr>
+<td>fragment function</td>
+<td>fragment shader</td>
+</tr>
+<tr>
+<td>depth compare</td>
+<td>depth test</td>
+</tr>
+<tr>
+<td>stencil state machine</td>
+<td>stencil test</td>
+</tr>
+<tr>
+<td>source/destination recurrence</td>
+<td>blend unit</td>
+</tr>
+<tr>
+<td>write color</td>
+<td>color attachment</td>
+</tr>
+<tr>
+<td>depth array</td>
+<td>depth attachment</td>
+</tr>
+<tr>
+<td>framebuffer arrays</td>
+<td>Vulkan framebuffer/image attachments</td>
+</tr>
+<tr>
+<td>outer triangle loop</td>
+<td>draw commands</td>
+</tr>
+<tr>
+<td>repeated object loop</td>
+<td>instancing/batching</td>
+</tr>
+<tr>
+<td>GPU-generated loop</td>
+<td>indirect/GPU-driven drawing</td>
+</tr>
+</tbody>
+</table>
+<p>This is Part 1900.</p>
+<p>And it is the point of the entire phase.</p>
+<p>The GPU pipeline is no longer a diagram you memorize.</p>
+<p>It is a hardware-parallel implementation of mechanisms you could reconstruct yourself.</p>
+<hr />
+<p><strong>CPU → Kairo → Vulkan → hardware trace</strong></p>
+<p>For one current Kairo mesh:</p>
+<pre class="text"><code>Mesh
+    contains
+    MeshVertex[]
+    uint32 indices[]
+        ↓
+CreateMesh()
+        ↓
+VulkanHostBuffer vertex buffer
+VulkanHostBuffer index buffer
+        ↓
+RenderScene MeshDraw
+        ↓
+VulkanTriangle::DrawMeshes
+        ↓
+select pipeline
+        ↓
+BindMaterial descriptor set
+        ↓
+MeshPushConstants:
+model / normal data / ID
+        ↓
+vkCmdBindVertexBuffers
+vkCmdBindIndexBuffer
+        ↓
+vkCmdDrawIndexed
+        ↓
+vertex fetch
+        ↓
+triangle.vert
+        ↓
+worldPosition = M p
+        ↓
+gl_Position = P V worldPosition
+        ↓
+clipping
+        ↓
+perspective divide
+        ↓
+viewport
+        ↓
+triangle setup / coverage
+        ↓
+fragment interpolation
+        ↓
+triangle.frag
+        ↓
+PBR + texture evaluation
+        ↓
+mask discard if necessary
+        ↓
+depth test
+        ↓
+optional source-over blend
+        ↓
+HDR color attachment
++
+object-ID attachment
+        ↓
+viewport color becomes shader-readable
+        ↓
+editor/presentation path</code></pre>
+<p>That is the actual machine you are working with now.</p>
+<hr />
+<p><strong>One subtle Kairo issue worth understanding: transparent object IDs</strong></p>
+<p>Your viewport has two color outputs:</p>
+<pre class="text"><code>HDR color
+object ID</code></pre>
+<p>The color attachment can blend.</p>
+<p>The object-ID attachment does not use blending.</p>
+<p>So a transparent fragment that passes depth testing can write an object ID even though its visible color may only contribute partially.</p>
+<p>Because transparent depth writes are disabled, the relationship among:</p>
+<pre class="text"><code>visible composited surface
+object picking identity
+draw order</code></pre>
+<p>is not necessarily trivial.</p>
+<p>This is not automatically wrong.</p>
+<p>For an editor, picking the nearest submitted transparent object may be desired.</p>
+<p>But once transparent overlap becomes complex, picking semantics must be explicitly defined.</p>
+<p>Questions arise such as:</p>
+<pre class="text"><code>Should nearly invisible glass be pickable?
+Should alpha &lt; 0.05 count?
+Should masked holes write IDs?
+Should transparent object picking use a separate pass?</code></pre>
+<p>That is a real engine-design issue hidden behind what looks like a simple second attachment.</p>
+<hr />
+<p><strong>Another Kairo issue: transparent sort key is object-origin distance</strong></p>
+<p>Current sorting uses distance squared from camera to model translation.</p>
+<p>That avoids square roots because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>d</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>&gt;</mo>
+  <msub>
+    <mi>d</mi>
+    <mn>2</mn>
+  </msub>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <mo stretchy="false">⟺</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.278em"></mspace>
+  </mstyle>
+  <msubsup>
+    <mi>d</mi>
+    <mn>1</mn>
+    <mn>2</mn>
+  </msubsup>
+  <mo>&gt;</mo>
+  <msubsup>
+    <mi>d</mi>
+    <mn>2</mn>
+    <mn>2</mn>
+  </msubsup>
+</math>
+<p>for nonnegative distances.</p>
+<p>Good.</p>
+<p>But it is not equivalent to true per-fragment ordering.</p>
+<p>Consider a wall-sized transparent quad whose origin lies far away but which extends in front of another object’s center.</p>
+<p>The sort key cannot capture that geometry.</p>
+<p>Production renderers therefore combine strategies such as:</p>
+<pre class="text"><code>object sort
+material-specific assumptions
+depth peeling
+weighted blended OIT
+per-pixel linked lists
+stochastic transparency</code></pre>
+<p>depending on cost and quality constraints.</p>
+<p>We will revisit those in advanced real-time rendering.</p>
+<hr />
+<p><strong>Current Kairo raster-state audit</strong></p>
+<p>The following is what the current Vulkan mesh path actually does, as verified against the connected repository:</p>
+<table>
+<thead>
+<tr>
+<th>Raster concern</th>
+<th>Current Kairo behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Face culling</td>
+<td>disabled (<code>VK_CULL_MODE_NONE</code>)</td>
+</tr>
+<tr>
+<td>Front convention</td>
+<td>CCW</td>
+</tr>
+<tr>
+<td>Polygon mode</td>
+<td>fill</td>
+</tr>
+<tr>
+<td>MSAA</td>
+<td>1×</td>
+</tr>
+<tr>
+<td>Stencil</td>
+<td>absent from viewport D32 target</td>
+</tr>
+<tr>
+<td>Depth test</td>
+<td>enabled</td>
+</tr>
+<tr>
+<td>Opaque depth write</td>
+<td>enabled</td>
+</tr>
+<tr>
+<td>Transparent depth write</td>
+<td>disabled</td>
+</tr>
+<tr>
+<td>Depth compare</td>
+<td>LESS</td>
+</tr>
+<tr>
+<td>Depth clear</td>
+<td>1.0</td>
+</tr>
+<tr>
+<td>Reversed-Z</td>
+<td>not implemented</td>
+</tr>
+<tr>
+<td>Color target</td>
+<td>RGBA16F</td>
+</tr>
+<tr>
+<td>Object-ID target</td>
+<td>R32_UINT</td>
+</tr>
+<tr>
+<td>Depth target</td>
+<td>D32_FLOAT</td>
+</tr>
+<tr>
+<td>Color load/store</td>
+<td>CLEAR / STORE</td>
+</tr>
+<tr>
+<td>ID load/store</td>
+<td>CLEAR / STORE</td>
+</tr>
+<tr>
+<td>Depth load/store</td>
+<td>CLEAR / DONT_CARE</td>
+</tr>
+<tr>
+<td>Transparent blending</td>
+<td>straight-alpha source-over</td>
+</tr>
+<tr>
+<td>Masked alpha</td>
+<td>fragment <code>discard</code></td>
+</tr>
+<tr>
+<td>Viewport/scissor</td>
+<td>dynamic</td>
+</tr>
+<tr>
+<td>Main geometry draw</td>
+<td><code>vkCmdDrawIndexed</code></td>
+</tr>
+<tr>
+<td>Instancing</td>
+<td>not used in main mesh draw</td>
+</tr>
+<tr>
+<td>Indirect draws</td>
+<td>not used in current <code>VulkanTriangle</code> path</td>
+</tr>
+<tr>
+<td>Mesh/task shaders</td>
+<td>classic vertex path instead</td>
+</tr>
+<tr>
+<td>Pipeline cache</td>
+<td>application cache currently <code>VK_NULL_HANDLE</code></td>
+</tr>
+<tr>
+<td>Pipeline variants</td>
+<td>static/skinned × opaque/blend + shadow/debug</td>
+</tr>
+<tr>
+<td>Frame orchestration</td>
+<td>acquire → record → submit → present</td>
+</tr>
+</tbody>
+</table>
+<p>This is an unusually useful audit because almost every M111–M113 concept maps directly either to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>implemented</mtext>
+</math>
+<p>or</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>clear next architectural capability</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>How the pipeline state interacts rather than existing independently</strong></p>
+<p>A common weak understanding is to learn:</p>
+<pre class="text"><code>culling
+depth
+blending
+MSAA
+stencil</code></pre>
+<p>as separate checkboxes.</p>
+<p>They interact.</p>
+<p>Consider foliage.</p>
+<p>If you use alpha blending:</p>
+<pre class="text"><code>backface culling maybe disabled
+depth testing enabled
+depth writes often disabled
+back-to-front ordering needed
+overdraw high
+early-Z usefulness reduced</code></pre>
+<p>If you instead use cutout alpha:</p>
+<pre class="text"><code>depth writes can remain enabled
+sorting becomes easier
+but discard introduces aliasing</code></pre>
+<p>If you add MSAA + alpha-to-coverage:</p>
+<pre class="text"><code>coverage becomes sample-based
+depth can remain per-sample
+cutout edges become smoother
+bandwidth rises</code></pre>
+<p>This is the kind of system-level reasoning you need to choose techniques rather than name them.</p>
+<hr />
+<p><strong>A production opaque pass</strong></p>
+<p>A typical opaque pass wants something close to:</p>
+<pre class="text"><code>backface culling       ON
+depth test             ON
+depth write            ON
+blend                  OFF
+front-to-back-ish sort
+MSAA                    optional
+stencil                 technique-dependent</code></pre>
+<p>because opaque surfaces obey a simple visibility invariant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>nearest visible surface completely replaces farther surfaces</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Depth is extraordinarily effective for this case.</p>
+<hr />
+<p><strong>A production transparent pass</strong></p>
+<p>Traditional sorted transparency looks more like:</p>
+<pre class="text"><code>depth test             ON
+depth write            OFF
+blend                  ON
+back-to-front sorting
+culling                material-dependent</code></pre>
+<p>because a transparent surface does not erase all radiance behind it.</p>
+<p>This destroys many of the nice ordering freedoms opaque rendering has.</p>
+<p>That is why transparent rendering is disproportionately difficult relative to the simple blend equation.</p>
+<hr />
+<p><strong>Pipeline permutations versus dynamic state</strong></p>
+<p>Suppose culling changes per material.</p>
+<p>You could compile:</p>
+<pre class="text"><code>opaque_cull_back
+opaque_two_sided
+transparent_cull_back
+transparent_two_sided
+...</code></pre>
+<p>or make cull mode dynamic when supported.</p>
+<p>Dynamic state reduces pipeline count.</p>
+<p>But there is no universal rule that “more dynamic state is better.”</p>
+<p>Hardware/driver implementation, pipeline compilation, command recording and state-change frequency all matter.</p>
+<p>The deeper design variable is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>what belongs in immutable pipeline identity</mtext>
+          <mstyle scriptlevel="0">
+            <mspace width="1em"></mspace>
+          </mstyle>
+          <mtext>vs</mtext>
+          <mstyle scriptlevel="0">
+            <mspace width="1em"></mspace>
+          </mstyle>
+          <mtext>runtime command state</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is one of the central Vulkan architecture decisions we will revisit in Phase 23.</p>
+<hr />
+<p><strong>Pipeline cache versus engine-level PSO cache</strong></p>
+<p>Do not confuse two caches.</p>
+<p>An <strong>engine PSO cache</strong> might map:</p>
+<div class="sourceCode" id="cb101"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a>PipelineKey</span>
+<span id="cb101-2"><a href="#cb101-2" aria-hidden="true" tabindex="-1"></a>→ VkPipeline</span></code></pre></div>
+<p>where <code>PipelineKey</code> includes:</p>
+<pre class="text"><code>shader variant
+blend mode
+depth mode
+cull mode
+vertex layout
+render target formats</code></pre>
+<p>This avoids creating duplicate Vulkan pipelines.</p>
+<p>A Vulkan <code>VkPipelineCache</code>, meanwhile, lets the <strong>driver</strong> reuse internal compilation artifacts during pipeline creation.</p>
+<p>They solve different layers:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>engine cache</mtext>
+          <mo>:</mo>
+          <mtext>which VkPipeline object have I already made?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>driver pipeline cache</mtext>
+          <mo>:</mo>
+          <mtext>can expensive pipeline compilation work be reused?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A mature renderer often has both.</p>
+<hr />
+<p><strong>Shader permutations versus runtime branches</strong></p>
+<p>Suppose normal mapping is optional.</p>
+<p>Approach A:</p>
+<div class="sourceCode" id="cb103"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a><span class="kw">if</span> <span class="op">(</span>material<span class="op">.</span><span class="fu">hasNormalMap</span><span class="op">)</span></span>
+<span id="cb103-2"><a href="#cb103-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ApplyNormalMap</span><span class="op">();</span></span></code></pre></div>
+<p>One shader.</p>
+<p>Potential divergence and unnecessary resources.</p>
+<p>Approach B:</p>
+<pre class="text"><code>NORMAL_MAP=0 shader
+NORMAL_MAP=1 shader</code></pre>
+<p>No runtime branch, but another permutation dimension.</p>
+<p>If there are 20 such features, compiling every combination becomes impossible.</p>
+<p>A production strategy often categorizes features:</p>
+<pre class="text"><code>large structural feature
+→ permutation
+
+small cheap coherent choice
+→ runtime uniform branch
+
+material specialization known at pipeline creation
+→ specialization constant
+
+entirely separate rendering technique
+→ separate pass/shader family</code></pre>
+<p>This is shader architecture, not merely shader syntax.</p>
+<hr />
+<p><strong>GPU-driven rendering changes ownership</strong></p>
+<p>In today’s Kairo loop, CPU code decides:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>which draws exist</mtext>
+  <mo>.</mo>
+</math>
+<p>In a GPU-driven architecture, CPU decides:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>which broad workload exists</mtext>
+  <mo>,</mo>
+</math>
+<p>while GPU decides:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>which individual instances are visible and emitted</mtext>
+  <mo>.</mo>
+</math>
+<p>That changes ownership and debugging.</p>
+<p>Your old debugging question:</p>
+<blockquote>
+<p>“Did CPU code call DrawIndexed for object 518?”</p>
+</blockquote>
+<p>becomes:</p>
+<blockquote>
+<p>“Did compute classify instance 518 visible, did it survive compaction, did its indirect record get written, did synchronization make that record visible, and did the indirect draw consume it?”</p>
+</blockquote>
+<p>GPU-driven systems improve throughput.</p>
+<p>They also create new observability problems.</p>
+<p>A mature implementation therefore needs debugging buffers, counters and capture tools from the start.</p>
+<hr />
+<p><strong>Research bridge for Phase 19</strong></p>
+<p>A genuinely useful Phase 19 experiment would compare several raster/submission policies using one identical Kairo scene.</p>
+<p>Measure:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>CPU submit</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>GPU vertex</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>fragment</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>draw count</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>fragment invocations</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>overdraw</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>visible-instance ratio</mtext>
+  <mo>.</mo>
+</math>
+<p>Construct controlled scenes with:</p>
+<pre class="text"><code>1,000 objects
+10,000 objects
+100,000 objects
+
+low overlap
+high overlap
+
+one material
+many materials
+
+small triangles
+large triangles</code></pre>
+<p>Compare:</p>
+<pre class="text"><code>baseline per-object draws
+
+CPU batching
+
+instancing
+
+compute culling + indirect draws</code></pre>
+<p>A falsifiable hypothesis could be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><mi>H</mi><mo>:</mo></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mtext mathvariant="normal">GPU-driven culling overtakes CPU submission only after a particular</mtext></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mtext mathvariant="normal">object-count/visibility threshold.</mtext></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}H: &amp;\text{GPU-driven culling overtakes CPU submission only after a particular}\\&amp;\text{object-count/visibility threshold.}\end{aligned}</annotation></semantics></math>
+<p>The independent variables would be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>objects</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>visibility fraction</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>material diversity</mtext>
+  <mo>.</mo>
+</math>
+<p>The dependent metrics would be frame time broken into CPU submission and GPU stages.</p>
+<p>That is far more meaningful than claiming “GPU-driven is faster.”</p>
+<p>You find the boundary where it becomes faster.</p>
+<hr />
+<p><strong>Phase-19 reconstruction</strong></p>
+<p>You should now be capable of mentally rebuilding:</p>
+<pre class="text"><code>CPU scene
+    ↓
+vertex/index/instance data
+    ↓
+draw command
+    ↓
+vertex fetch
+    ↓
+vertex processing
+    ↓
+clip coordinates
+    ↓
+clipping
+    ↓
+perspective divide
+    ↓
+viewport
+    ↓
+primitive orientation/culling
+    ↓
+triangle setup
+    ↓
+edge equations
+    ↓
+coverage / MSAA mask
+    ↓
+barycentrics
+    ↓
+perspective-correct varyings
+    ↓
+fragment shader
+    ↓
+alpha discard
+    ↓
+stencil/depth
+    ↓
+blend
+    ↓
+attachments
+    ↓
+store/resolve
+    ↓
+later pass / presentation</code></pre>
+<p>And alongside that, a second pipeline exists:</p>
+<pre class="text"><code>CPU scene
+     ↓
+submission architecture
+     ↓
+per-object draw
+     OR
+instanced draw
+     OR
+indirect command buffer
+     OR
+GPU-generated draw
+     OR
+mesh/task workgroups
+     ↓
+same raster backend</code></pre>
+<p>That second chain is why rasterization knowledge and GPU architecture are inseparable.</p>
+<hr />
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Reconstruction cue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Stencil</strong></td>
+<td>Integer per-sample state; compare reference vs stored value; separate fail/depth-fail/pass operations.</td>
+</tr>
+<tr>
+<td><strong>Face culling</strong></td>
+<td>Projected signed area → winding → front/back classification.</td>
+</tr>
+<tr>
+<td><strong>Negative determinant</strong></td>
+<td>Orientation reversal can invert winding.</td>
+</tr>
+<tr>
+<td><strong>Two-sided</strong></td>
+<td>Disable culling, then define back-face normal/material semantics.</td>
+</tr>
+<tr>
+<td><strong>Viewport</strong></td>
+<td>NDC → framebuffer transform.</td>
+</tr>
+<tr>
+<td><strong>Scissor</strong></td>
+<td>Rectangular fragment rejection.</td>
+</tr>
+<tr>
+<td><strong>Framebuffer</strong></td>
+<td>Collection of color/depth/stencil attachments participating in rendering.</td>
+</tr>
+<tr>
+<td><strong>Load/store</strong></td>
+<td>Is old data needed at pass start? Is new data needed after pass end?</td>
+</tr>
+<tr>
+<td><strong>MSAA</strong></td>
+<td>Multiple exact coverage/depth/color samples per pixel; resolve afterward.</td>
+</tr>
+<tr>
+<td><strong>SSAA</strong></td>
+<td>Render full shading at higher spatial resolution then filter down.</td>
+</tr>
+<tr>
+<td><strong>Blend equation</strong></td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>C</mi>
+    <mi>o</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>F</mi>
+    <mi>s</mi>
+  </msub>
+  <msub>
+    <mi>C</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>F</mi>
+    <mi>d</mi>
+  </msub>
+  <msub>
+    <mi>C</mi>
+    <mi>d</mi>
+  </msub>
+</math>.</td>
+</tr>
+<tr>
+<td><strong>Straight source-over</strong></td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>C</mi>
+    <mi>o</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>s</mi>
+  </msub>
+  <msub>
+    <mi>C</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>s</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>d</mi>
+  </msub>
+</math>.</td>
+</tr>
+<tr>
+<td><strong>Premultiplied source-over</strong></td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msubsup>
+    <mi>C</mi>
+    <mi>o</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>=</mo>
+  <msubsup>
+    <mi>C</mi>
+    <mi>s</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>s</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <msubsup>
+    <mi>C</mi>
+    <mi>d</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+</math>.</td>
+</tr>
+<tr>
+<td><strong>Transparency</strong></td>
+<td>Ordinary source-over is order dependent.</td>
+</tr>
+<tr>
+<td><strong>Cutout</strong></td>
+<td>Alpha threshold → discard; can retain ordinary depth writes.</td>
+</tr>
+<tr>
+<td><strong>Alpha-to-coverage</strong></td>
+<td>Alpha modulates MSAA sample coverage instead of conventional blend opacity.</td>
+</tr>
+<tr>
+<td><strong>Overdraw</strong></td>
+<td>Fragment work exceeding visible output work.</td>
+</tr>
+<tr>
+<td><strong>Early-Z</strong></td>
+<td>Establish occluder depth first so hidden work can die before expensive shading.</td>
+</tr>
+<tr>
+<td><strong>Hi-Z conventional</strong></td>
+<td>Conservative coarse max-depth reasoning for LESS-style depth.</td>
+</tr>
+<tr>
+<td><strong>Hi-Z reversed</strong></td>
+<td>Conservative coarse min-depth reasoning for GREATER-style depth.</td>
+</tr>
+<tr>
+<td><strong>Instancing</strong></td>
+<td>One geometry draw × many instance records.</td>
+</tr>
+<tr>
+<td><strong>Indirect draw</strong></td>
+<td>Draw arguments stored in GPU-readable memory.</td>
+</tr>
+<tr>
+<td><strong>GPU-driven</strong></td>
+<td>Compute culls/compacts/generates command data consumed by graphics.</td>
+</tr>
+<tr>
+<td><strong>MDI</strong></td>
+<td>Many indirect records consumed by one recorded draw command.</td>
+</tr>
+<tr>
+<td><strong>Mesh shader</strong></td>
+<td>Workgroup generates vertex/primitive output directly for rasterizer.</td>
+</tr>
+<tr>
+<td><strong>Task shader</strong></td>
+<td>Optional coarse workgroup that emits mesh-shader work.</td>
+</tr>
+<tr>
+<td><strong>Divergence</strong></td>
+<td>Lanes disagree about control flow.</td>
+</tr>
+<tr>
+<td><strong>Register pressure</strong></td>
+<td>More registers/thread → potentially fewer resident threads / spills.</td>
+</tr>
+<tr>
+<td><strong>Uniform buffer</strong></td>
+<td>Shared read-only structured shader constants.</td>
+</tr>
+<tr>
+<td><strong>Storage buffer</strong></td>
+<td>Larger/general shader-visible structured memory.</td>
+</tr>
+<tr>
+<td><strong>Push constants</strong></td>
+<td>Tiny high-frequency command-state data.</td>
+</tr>
+<tr>
+<td><strong>PSO</strong></td>
+<td>Precompiled collection of graphics shader + fixed-function state.</td>
+</tr>
+<tr>
+<td><strong>Pipeline cache</strong></td>
+<td>Reuse internal pipeline compilation results.</td>
+</tr>
+<tr>
+<td><strong>Permutation explosion</strong></td>
+<td>Independent feature dimensions multiply shader/PSO variants.</td>
+</tr>
+<tr>
+<td><strong>Black frame</strong></td>
+<td>Prove pipeline stages in order; find last known-good stage.</td>
+</tr>
+<tr>
+<td><strong>Vertex trace</strong></td>
+<td>object → world → view → clip → NDC → screen.</td>
+</tr>
+<tr>
+<td><strong>CPU rasterizer</strong></td>
+<td>fixed-point/edge tests → top-left → barycentrics → depth → interpolation.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch316.xhtml#id_04-Light-Transport-and-Image-Synthesis" class="wikilink">Reading map</a> · <a href="ch311.xhtml#id_03-visual-computing-i-ch013-from-view-space-to-clip-space" class="wikilink">Previous chapter (Geometry, Cameras, and Image Formation, Part 1, Ch. 12)</a> · <a href="ch327.xhtml#id_03-visual-computing-i-ch015-rasterization-foundations-and-renderer-evidence" class="wikilink">Next chapter</a></p>
+</section>
+</section>
+</body>
+</html>

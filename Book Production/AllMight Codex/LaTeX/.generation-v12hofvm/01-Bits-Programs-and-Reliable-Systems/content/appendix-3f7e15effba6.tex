@@ -1,0 +1,38 @@
+\hypertarget{appendix-3f7e15effba6}{}\label{referencestart:appendix-3f7e15effba6}
+\section{Named members versus array elements}\label{appendix-3f7e15effba6-named-members-versus-array-elements}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C007 · \textbf{Latest development:} C008
+
+\subsection{Definition and mechanism}\label{appendix-3f7e15effba6-definition-and-mechanism}
+
+The x member's one-past pointer is not an authorized y access. A span describes an already-valid range; adjacency cannot create that range.
+
+Adjacent x/y/z fields are separate subobjects, not T{[}3{]}. A pointer to x supports one-element-array pointer arithmetic; one-past cannot be dereferenced to access y. span(\&x,3) does not create an array. Use explicit member dispatch or actual array storage; a ToArray result is a copy.
+
+\subsection{Prerequisites}\label{appendix-3f7e15effba6-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-6af5921bc853]{Pointer arithmetic and provenance} --- Array-relative pointer bounds explain why adjacency of separate members cannot authorize indexing.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-3f7e15effba6-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-37a39984ba66}{Vector value types and component access (Vision, XR, and Playable Worlds, Reference notes: Vector value types and component access)} --- Phase 6 uses this established foundation in its geometry narrative.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-3f7e15effba6-recall-and-next-depth}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} Deeper ownership, pointer/reference, generic programming and module rules from later sources. This is written coverage, not demonstrated personal mastery.
+
+\subsection{Source and navigation}\label{appendix-3f7e15effba6-source-and-navigation}
+
+\hyperref[appendix-fd090d982a15-m008---parts-113-126]{C008 development and corrections}
+
+\hyperref[01-foundations-i-ch003-bringing-the-object-model-back-to-bytes]{C007 teaching chapter} · \hyperref[appendix-fd090d982a15-m007---parts-101-112]{Source coverage} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

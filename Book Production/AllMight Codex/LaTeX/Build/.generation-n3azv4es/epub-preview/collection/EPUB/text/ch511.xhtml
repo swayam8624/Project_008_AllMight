@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch511.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-c3421e6b4f2c-qr-factorization-and-least-squares" class="level2">
+<h2>QR factorization and least squares</h2>
+<p>QR writes <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mi>Q</mi>
+  <mi>R</mi>
+</math> with orthonormal columns in <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+</math> and triangular <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+</math>. Orthogonal coordinates preserve Euclidean lengths, so least squares reduces to a triangular solve and a perpendicular residual. Householder QR is a stable dense method; Gram–Schmidt explains the geometry but can lose orthogonality.</p>
+<p><strong>Use it when:</strong> fitting overdetermined data with known full column rank.</p>
+<p><strong>Developed in Phase 8:</strong> Orthogonal transformations change coordinates without changing Euclidean lengths. QR therefore separates the fitted component, solved through triangular <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+</math>, from the constant perpendicular residual; the Householder construction is the stable dense route, with Gram–Schmidt retained to make the geometry visible. <a href="ch262.xhtml#id_01-foundations-i-ch020-reflections-and-plane-rotations-build-qr-without-losing-lengths" class="wikilink">Householder and Givens construction (Mathematics for Visual Computing, Part 1, Ch. 4)</a> · <a href="ch262.xhtml#id_01-foundations-i-ch020-qr-turns-least-squares-into-a-triangular-solve-plus-an-irreducible-residual" class="wikilink">least squares and its residual (Mathematics for Visual Computing, Part 1, Ch. 4)</a></p>
+<section id="appendix-c3421e6b4f2c-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<p><a href="ch493.xhtml#appendix-8572a4a060c1-linear-systems-and-fundamental-subspaces" class="wikilink">Linear systems and fundamental subspaces</a>, <a href="ch435.xhtml#appendix-8bc4e8fc547c-dot-products-and-orthogonality" class="wikilink">Dot products and orthogonality (GPU Architecture and Real-Time Rendering, Part 2, Reference notes: Dot products and orthogonality)</a>, <a href="ch072.xhtml#appendix-8f6a01f284a7-conditioning-and-singularity" class="wikilink">Conditioning and singularity (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Conditioning and singularity)</a>.</p>
+</section>
+<section id="appendix-c3421e6b4f2c-used-by" class="level3">
+<h3>Used by</h3>
+<p><a href="ch461.xhtml#appendix-221a483bec2d-matrix-factorization-choices" class="wikilink">Matrix factorization choices</a>, <a href="ch329.xhtml#appendix-1fad5e7f36fa-singular-value-decomposition" class="wikilink">Singular value decomposition (Light Transport and Image Synthesis, Part 1, Reference notes: Singular value decomposition)</a>, <a href="ch506.xhtml#appendix-ad175ef3c5bf-pca-and-covariance-eigensystems" class="wikilink">PCA and covariance eigensystems</a>.</p>
+<p><strong>Teaching path:</strong> <a href="ch262.xhtml#id_01-foundations-i-ch020-structure-makes-a-decomposition-a-better-tool-than-generic-elimination" class="wikilink">QR and fitting (Mathematics for Visual Computing, Part 1, Ch. 4)</a>.</p>
+</section>
+</section>
+</body>
+</html>

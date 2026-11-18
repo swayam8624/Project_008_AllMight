@@ -1,0 +1,36 @@
+\hypertarget{appendix-e0f7c7e08f3a}{}
+\section*{Stateful pseudorandom generators and stream state}
+\chapter{Stateful pseudorandom generators and stream state}\label{appendix-e0f7c7e08f3a-stateful-pseudorandom-generators-and-stream-state}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\section{Definition and mechanism}\label{appendix-e0f7c7e08f3a-definition-and-mechanism}
+
+A pseudorandom-number generator is a deterministic state transition plus an output rule. With a fixed engine, seed, and call order, its integer sequence is reproducible; it is not a source of mathematical independence by itself. Linear congruential generators are compact but have lattice and low-bit structure that can make multidimensional samples poor. Larger-state engines trade memory for period and other statistical properties. Parallel programs need an explicit stream strategy: shared state couples samples to thread scheduling, while copied seeds can duplicate streams. Reproducibility requires recording algorithm version, state, seed derivation, distribution mapping, and sampling order. Standard-library distributions may not yield identical transformed sequences across implementations. Simulation generators are not cryptographically secure unless specifically designed for that purpose.
+
+\section{Prerequisites}\label{appendix-e0f7c7e08f3a-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a2360b435383]{Common probability distributions and their assumptions}
+\end{itemize}
+
+\section{Used by}\label{appendix-e0f7c7e08f3a-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-8d863ed954d0]{Inverse, rejection, and importance sampling}
+\item
+  \hyperref[appendix-daaf25bfd3a0]{Stateless keyed sampling and reproducibility}
+\item
+  \hyperref[appendix-184fcc411663]{Uniform shuffling without replacement} \#\# Full teaching explanation
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#6.\%20A\%20computer\%20produces\%20deterministic\%20pseudorandom\%20sequences}{Phase 10 teaching section}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (01-Foundations-I, appendix-cb5af353ef77)} · visual recall
+\end{itemize}
+
+\section{Source coverage}\label{appendix-e0f7c7e08f3a-source-coverage}
+
+Supplied lesson parts: 932 (T06 · M057), 933 (T06 · M057), 934 (T06 · M057), 935 (T06 · M057), 936 (T06 · M057), 937 (T06 · M057).

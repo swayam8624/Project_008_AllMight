@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch293.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-68f22c734be3-matrices-transforms-and-quaternions-visual-recall" class="level2">
+<h2>Matrices, Transforms and Quaternions — Visual Recall</h2>
+<p>Companion to <a href="ch245.xhtml#id_01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations" class="wikilink">the Phase 7 teaching story (Mathematics for Visual Computing, Part 1, Ch. 2)</a>. Start with the short route, reconstruct a worked figure, then follow its link when an assumption or definition is missing. Six excerpts supply 84 numbered lessons; the affine bridge is reconstruction, and Parts 635–650 remain source gaps.</p>
+<section id="appendix-68f22c734be3-the-short-route" class="level3">
+<h3>The short route</h3>
+<p><img src="../media/file130.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Convention card:</strong> active right-handed rotations; column vectors; <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+  <mo>=</mo>
+  <mi>M</mi>
+  <mi>x</mi>
+</math>; rightmost operation first; code angles in radians; Hamilton quaternion components <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>w</mi>
+  <mo>,</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+  <mo stretchy="false">)</mo>
+</math>. Row-major storage does not choose any of those mathematical conventions.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Shortest useful rule</th>
+<th>Figure or explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Meaning</td>
+<td>A rectangular table becomes a map only after input/output bases and roles are fixed. Columns are input-basis images.</td>
+<td><a href="ch245.xhtml#id_01-foundations-i-ch018-figure-m1---coordinates-weight-the-new-basis-directions" class="wikilink">M1: weighted columns (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td>Shape</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>m</mi>
+  <mo>×</mo>
+  <mi>k</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <mi>k</mi>
+  <mo>×</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math> yields <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+  <mo>×</mo>
+  <mi>n</mi>
+</math>; shared dimensions must match. Addition needs equal shape.</td>
+<td><a href="ch245.xhtml#id_01-foundations-i-ch018-combining-rules-explains-the-multiplication-law" class="wikilink">Derive the product (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td>Composition</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mi>B</mi>
+  <mi>x</mi>
+</math> applies <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math> first. Noncommutative order is separate from associative grouping; floating-point regrouping can change bits.</td>
+<td><a href="ch245.xhtml#id_01-foundations-i-ch018-figure-m2---the-same-operations-give-different-results-in-different-orders" class="wikilink">M2: two orders (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td>Rotations</td>
+<td>Derive columns from rotated axes. For <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>R</mi>
+    <mi>y</mi>
+  </msub>
+</math>, rotate the oriented pair <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>z</mi>
+  <mo>,</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math>, then restore <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+  <mo stretchy="false">)</mo>
+</math> order.</td>
+<td><a href="ch245.xhtml#id_01-foundations-i-ch018-the-oriented-plane-explains-the-y-rotation-signs" class="wikilink">Axis derivation and values (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td>Structure</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mi>B</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mi>T</mi>
+  </msup>
+  <mo>=</mo>
+  <msup>
+    <mi>B</mi>
+    <mi>T</mi>
+  </msup>
+  <msup>
+    <mi>A</mi>
+    <mi>T</mi>
+  </msup>
+</math>; <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo>+</mo>
+  <msup>
+    <mi>A</mi>
+    <mi>T</mi>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo>−</mo>
+  <msup>
+    <mi>A</mi>
+    <mi>T</mi>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+</math>. Trace is similarity-invariant, not a full map identifier.</td>
+<td><a href="ch245.xhtml#id_01-foundations-i-ch018-transpose-lets-us-compare-measurements-and-structure" class="wikilink">Transpose, symmetry and trace (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td>Determinant</td>
+<td>Magnitude = volume scale; sign = orientation; zero = rank loss for square maps. It does not measure conditioning alone.</td>
+<td><a href="ch245.xhtml#id_01-foundations-i-ch018-figure-m3---three-different-questions-answered-by-one-determinant" class="wikilink">M3: determinant questions (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td>Inversion</td>
+<td>Cofactors explain a formula; pivoted elimination explains an algorithm. Solve directly when the inverse itself is unnecessary.</td>
+<td><a href="ch245.xhtml#id_01-foundations-i-ch018-row-reduction-makes-the-inverse-observable" class="wikilink">Full elimination trace (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td>Sensitivity</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>κ</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>A</mi>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <msup>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+</math> in a compatible norm. Stable code cannot restore information lost to input uncertainty.</td>
+<td><a href="ch245.xhtml#id_01-foundations-i-ch018-figure-m4---uncertainty-can-be-amplified-by-a-reversible-map" class="wikilink">M4: perturbed observation (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td>Point/vector</td>
+<td>Affine points receive <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mi>p</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+</math>; displacements receive <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mi>v</mi>
+</math>. Homogeneous <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math> expose the distinction.</td>
+<td><a href="ch245.xhtml#id_01-foundations-i-ch018-figure-m5---the-same-frame-moves-a-point-and-redirects-a-displacement" class="wikilink">M5: two roles (Mathematics for Visual Computing, Part 1, Ch. 2)</a></td>
+</tr>
+<tr>
+<td>Frames</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msubsup>
+    <mi>F</mi>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <msub>
+    <mi>F</mi>
+    <mi>B</mi>
+  </msub>
+</math> converts B-coordinates to C-coordinates. The camera view is the inverse camera pose.</td>
+<td><a href="ch261.xhtml#id_01-foundations-i-ch019-coordinates-can-change-while-the-geometric-object-stays-still" class="wikilink">Active/passive and frame conversion (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+<tr>
+<td>Projection</td>
+<td>Clip retains <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+</math>; NDC divides by valid <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+</math>. Clipping, depth range and backend conventions remain explicit.</td>
+<td><a href="ch261.xhtml#id_01-foundations-i-ch019-figure-m6---follow-one-point-through-named-spaces" class="wikilink">M6: complete point walk (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+<tr>
+<td>Normals</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <msup>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mi>T</mi>
+    </mrow>
+  </msup>
+  <mi>n</mi>
+</math> preserves zero action on transformed tangents. Normalize only after a valid transformation.</td>
+<td><a href="ch261.xhtml#id_01-foundations-i-ch019-a-normal-transforms-as-a-measurement-that-must-still-vanish-on-tangents" class="wikilink">Proof and counterexample (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+<tr>
+<td>Layout</td>
+<td>Logical width is not physical stride. Real arrays provide array bounds; views borrow both layout and lifetime.</td>
+<td><a href="ch292.xhtml#id_02-foundations-ii-ch038-figure-m7---a-submatrix-keeps-the-parents-physical-stride" class="wikilink">M7: subview addresses</a></td>
+</tr>
+<tr>
+<td>Performance</td>
+<td>SIMD, loop order and tiling change reuse and rounding. Measure hardware/workload; algebra alone supplies no speedup.</td>
+<td><a href="ch292.xhtml#id_02-foundations-ii-ch038-simd-and-loop-order-change-the-execution-schedule-not-the-matrix-question" class="wikilink">Reuse and loop trace</a></td>
+</tr>
+<tr>
+<td>Quaternion</td>
+<td>Hamilton product = scalar/dot part + weighted vectors/cross part. Unit <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math> permits inverse-by-conjugate.</td>
+<td><a href="ch261.xhtml#id_01-foundations-i-ch019-figure-m8---one-orientation-several-checkable-actions" class="wikilink">M8: axis to action (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+<tr>
+<td>Half-angle</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <mi>θ</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mi>a</mi>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <mi>θ</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+</math> for unit axis. Two-sided action produces the full angle; <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mi>q</mi>
+</math> share orientation.</td>
+<td><a href="ch261.xhtml#id_01-foundations-i-ch019-derive-the-axis-angle-mapping-by-deriving-its-action" class="wikilink">Sandwich derivation (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+<tr>
+<td>Conversion</td>
+<td>Quaternion↔︎matrix tests compare basis actions; near <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>180</mn>
+    <mo>∘</mo>
+  </msup>
+</math> recover a large component. Reject scale/shear/reflection as rotation inputs.</td>
+<td><a href="ch261.xhtml#id_01-foundations-i-ch019-recover-a-large-component-instead-of-dividing-by-a-nearly-zero-one" class="wikilink">Stable branches (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+<tr>
+<td>Interpolation</td>
+<td>Sign-align endpoints. NLERP normalizes the chord; SLERP advances on the great circle. Small-angle fallback needs a policy.</td>
+<td><a href="ch261.xhtml#id_01-foundations-i-ch019-figure-m9---choose-a-representative-before-choosing-a-path" class="wikilink">M9: path selection (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+<tr>
+<td>Euler</td>
+<td>Axis sequence is part of the type contract. Gimbal lock is a singular coordinate chart; original angle history cannot be recovered.</td>
+<td><a href="ch261.xhtml#id_01-foundations-i-ch019-euler-coordinates-remain-useful-when-their-chart-is-explicit" class="wikilink">Substitute the singular pitch (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+<tr>
+<td>Rigid dual</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>q</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>q</mi>
+    <mi>r</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+</math>; require <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <msub>
+    <mi>q</mi>
+    <mi>r</mi>
+  </msub>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo>=</mo>
+  <mn>1</mn>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>q</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>⋅</mo>
+  <msub>
+    <mi>q</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>. Do not normalize the two halves independently.</td>
+<td><a href="ch261.xhtml#id_01-foundations-i-ch019-two-coupled-constraints-make-the-eight-coefficients-a-rigid-motion" class="wikilink">Study constraint and recovery (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+<tr>
+<td>TRS/cache</td>
+<td>Local TRS is useful authoring data; full affine world products may contain shear. Dirty flags record dependency invalidation.</td>
+<td><a href="ch261.xhtml#id_01-foundations-i-ch019-figure-m10---representation-follows-the-permitted-operation" class="wikilink">M10: choose representation (Mathematics for Visual Computing, Part 1, Ch. 3)</a> · <a href="ch261.xhtml#id_01-foundations-i-ch019-figure-m11---invalidate-the-values-that-actually-depend-on-the-edit" class="wikilink">M11: cache dependencies (Mathematics for Visual Computing, Part 1, Ch. 3)</a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-68f22c734be3-four-experiments-to-reconstruct-without-the-chapter" class="level3">
+<h3>Four experiments to reconstruct without the chapter</h3>
+<ol type="1">
+<li>Send <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+</math> through columns <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+</math>. Obtain <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>6</mn>
+  <mo>,</mo>
+  <mn>10</mn>
+  <mo stretchy="false">)</mo>
+</math> by column contributions and row sums. Explain why changing storage cannot change that answer.</li>
+<li>Compare observations <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>2.001</mn>
+  <mo stretchy="false">)</mo>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>2.002</mn>
+  <mo stretchy="false">)</mo>
+</math> for <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+        <mtd>
+          <mn>1.001</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+</math>. Recover <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math> versus <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+</math> and identify the source of uncertainty.</li>
+<li>For <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>q</mi>
+    <mi>Z</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msqrt>
+    <mn>2</mn>
+  </msqrt>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <msqrt>
+    <mn>2</mn>
+  </msqrt>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+</math>, rotate X to Y. Then use <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>2</mn>
+  <msub>
+    <mi>q</mi>
+    <mi>Z</mi>
+  </msub>
+</math>: true inverse still gives Y, conjugate sandwich gives four times Y, and the unit-optimized formula is outside its contract.</li>
+<li>Compare the columns of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+  <msub>
+    <mi>R</mi>
+    <mrow data-mjx-texclass="ORD">
+      <msup>
+        <mn>45</mn>
+        <mo>∘</mo>
+      </msup>
+    </mrow>
+  </msub>
+</math> with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+  <mo>=</mo>
+  <mi>diag</mi>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>. Their dot is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mn>3</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+</math>, proving that the result is not an orthogonal rotation times diagonal scale.</li>
+</ol>
+<p><strong>Teaching check:</strong> explain every coefficient, space and failure result before running <a href="ch292.xhtml#id_02-foundations-ii-ch038-a-complete-scalar-laboratory-makes-the-contracts-observable" class="wikilink">the standalone C++ laboratory</a>. Written coverage and successful tests do not measure personal mastery.</p>
+<p><a href="ch207.xhtml#appendix-fd090d982a15-phase-7---parts-601-700" class="wikilink">Source ledger and gap</a> · <a href="ch443.xhtml#id_02-foundations-ii-ch039-phase-7---transform-reconstruction-proofs" class="wikilink">Derivations (Vision, XR, and Playable Worlds, Part 1, Ch. 1)</a> · <a href="ch074.xhtml#appendix-92ff77d4dfdc-phase-7---the-moving-panel-tracebook" class="wikilink">Tracebook</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-68f22c734be3-added-retrieval-prompt" class="level3">
+<h3>Added retrieval prompt</h3>
+<p>Project onto y=x: standard matrix <code>[[1/2,1/2],[1/2,1/2]]</code>, aligned-basis matrix diag(1,0); explain why P squared equals P. <span>Rebuild both descriptions</span>.</p>
+<figure class="allmight-auto-path-caption" data-auto-path-caption-uri="Visual Recall/Math Foundations/M07-1_rotated-coordinate-chart.png">
+<img src="../media/file91.png" class="wikilink allmight-auto-path-caption" data-auto-path-caption-uri="Visual Recall/Math Foundations/M07-1_rotated-coordinate-chart.png" alt="Visual Recall/Math Foundations/M07-1_rotated-coordinate-chart.png" />
+<figcaption aria-hidden="true">Visual Recall/Math Foundations/M07-1_rotated-coordinate-chart.png</figcaption>
+</figure>
+<p><strong>M07-1. A point expressed in a rotated local chart.</strong> For the quarter-turn basis at (1,1), point (3,2) has local coordinates (1,-2) and reconstructs the original point.</p>
+</section>
+</section>
+</body>
+</html>

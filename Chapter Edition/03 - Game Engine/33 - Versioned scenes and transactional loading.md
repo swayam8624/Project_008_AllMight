@@ -8,7 +8,7 @@ A scene file is an interface between authoring and runtime, so unknown versions 
 
 **Recall question:** If parsing or reference resolution fails halfway through loading, how do you guarantee that the previous live scene remains intact?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 79214–80372; source-span SHA256 ba50fb5d7039c4ca168b1517ef30e9be59a4211ec235e4281eef05ffcc076225. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 80143–81531; source-span SHA256 0ea639b20bdce5ceb3b1592362e4c0a675364fd46a58b3c0c140a24e2d3085c6. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Save scenes as a versioned authoring contract
@@ -229,51 +229,51 @@ The cross term matters because the inertia tensor rotates with the body. The sim
 
 ## Generalized coordinates describe the configuration the mechanism can actually have
 
-The Newtonian state above is written in ambient Cartesian coordinates because a free rigid body naturally lives in three-dimensional space. A constrained mechanism often has fewer independent degrees of freedom. A pendulum bob occupies \(\mathbb R^3\), but once its rod length is fixed its allowed positions lie on a sphere; a planar pendulum needs only one angle. A door has thousands of mesh vertices but one hinge angle. **Generalized coordinates** \(q=(q_1,\ldots,q_n)\) parameterize the configuration manifold rather than storing every constrained Cartesian coordinate as independent state.
+The Newtonian state above is written in ambient Cartesian coordinates because a free rigid body naturally lives in three-dimensional space. A constrained mechanism often has fewer independent degrees of freedom. A pendulum bob occupies $\mathbb R^3$, but once its rod length is fixed its allowed positions lie on a sphere; a planar pendulum needs only one angle. A door has thousands of mesh vertices but one hinge angle. **Generalized coordinates** $q=(q_1,\ldots,q_n)$ parameterize the configuration manifold rather than storing every constrained Cartesian coordinate as independent state.
 
 This is not merely a memory optimization. It changes the mathematical form of the dynamics. Let the Cartesian configuration be a smooth map
 
-\[
+$$
 x=x(q).
-\]
+$$
 
 Then velocity is obtained by the chain rule,
 
-\[
+$$
 \dot x
 =
 J(q)\dot q,
 \qquad
 J(q)=\frac{\partial x}{\partial q}.
-\]
+$$
 
 The kinetic energy becomes a quadratic form in generalized velocity,
 
-\[
+$$
 T(q,\dot q)
 =
 \frac12
 \dot q^T M(q)\dot q,
-\]
+$$
 
-where \(M(q)\) is the generalized mass matrix induced by the embedding and physical masses/inertias. Potential energy is \(U(q)\). Define the Lagrangian
+where $M(q)$ is the generalized mass matrix induced by the embedding and physical masses/inertias. Potential energy is $U(q)$. Define the Lagrangian
 
-\[
+$$
 L(q,\dot q,t)=T-U.
-\]
+$$
 
 Hamilton's principle states that the physical motion between fixed endpoint configurations is a stationary curve of the action
 
-\[
+$$
 \mathcal S[q]
 =
 \int_{t_0}^{t_1}
 L(q,\dot q,t)\,dt.
-\]
+$$
 
-Vary the path by \(q(t)+\varepsilon\eta(t)\) with \(\eta(t_0)=\eta(t_1)=0\). Differentiating the action with respect to \(\varepsilon\), integrating the \(\partial L/\partial\dot q\) term by parts, and requiring the first variation to vanish for arbitrary \(\eta\) yields
+Vary the path by $q(t)+\varepsilon\eta(t)$ with $\eta(t_0)=\eta(t_1)=0$. Differentiating the action with respect to $\varepsilon$, integrating the $\partial L/\partial\dot q$ term by parts, and requiring the first variation to vanish for arbitrary $\eta$ yields
 
-\[
+$$
 \boxed{
 \frac{d}{dt}
 \frac{\partial L}{\partial\dot q_i}
@@ -282,35 +282,35 @@ Vary the path by \(q(t)+\varepsilon\eta(t)\) with \(\eta(t_0)=\eta(t_1)=0\). Dif
 =
 0
 }
-\]
+$$
 
 for every generalized coordinate.
 
-Arnold emphasizes a structural advantage that is easy to miss in component derivations: the extremal condition does not depend on whether the same curve is described in Cartesian, polar, or another smooth coordinate system. The formula for \(L\) changes with coordinates, but the physical extremal does not. That is the right reason to use generalized coordinates—not because angles are somehow more “physical,” but because coordinates should follow the configuration manifold.
+Arnold emphasizes a structural advantage that is easy to miss in component derivations: the extremal condition does not depend on whether the same curve is described in Cartesian, polar, or another smooth coordinate system. The formula for $L$ changes with coordinates, but the physical extremal does not. That is the right reason to use generalized coordinates—not because angles are somehow more “physical,” but because coordinates should follow the configuration manifold.
 
-For a simple planar pendulum with length \(\ell\), mass \(m\), and angle \(\theta\),
+For a simple planar pendulum with length $\ell$, mass $m$, and angle $\theta$,
 
-\[
+$$
 T=\frac12m\ell^2\dot\theta^2,
 \qquad
 U=mg\ell(1-\cos\theta).
-\]
+$$
 
 The Euler–Lagrange equation gives
 
-\[
+$$
 m\ell^2\ddot\theta
 +
 mg\ell\sin\theta
 =
 0,
-\]
+$$
 
 or
 
-\[
+$$
 \ddot\theta+\frac{g}{\ell}\sin\theta=0.
-\]
+$$
 
 The rod-length constraint never appears as a multiplier because the coordinate already lives on the allowed one-dimensional configuration space. This is a **reduced-coordinate** model. The contact solver later in this chapter instead uses full body coordinates and imposes transient constraints through impulses. Both are legitimate; they solve different structural problems.
 
@@ -320,11 +320,11 @@ Source basis: V. I. Arnold, *Mathematical Methods of Classical Mechanics*, Part 
 
 ## D'Alembert's principle says ideal constraint reactions do no virtual work
 
-A holonomic constraint restricts configuration to a submanifold \(M\). In Cartesian coordinates, the body may feel reaction forces that enforce the restriction. D'Alembert's principle characterizes an **ideal** constraint by saying the reaction has no component along any allowed virtual displacement.
+A holonomic constraint restricts configuration to a submanifold $M$. In Cartesian coordinates, the body may feel reaction forces that enforce the restriction. D'Alembert's principle characterizes an **ideal** constraint by saying the reaction has no component along any allowed virtual displacement.
 
-Let \(x(t)\in M\), and let \(\xi\in T_xM\) be any tangent vector to the constraint manifold at the current configuration. For a unit-mass natural mechanical system with potential \(U(x)\), Arnold writes the constrained equation in the form
+Let $x(t)\in M$, and let $\xi\in T_xM$ be any tangent vector to the constraint manifold at the current configuration. For a unit-mass natural mechanical system with potential $U(x)$, Arnold writes the constrained equation in the form
 
-\[
+$$
 \left(
 \ddot x+\nabla U(x),
 \xi
@@ -333,45 +333,45 @@ Let \(x(t)\in M\), and let \(\xi\in T_xM\) be any tangent vector to the constrai
 0
 \qquad
 \forall \xi\in T_xM.
-\]
+$$
 
 Equivalently, the residual
 
-\[
+$$
 \ddot x+\nabla U(x)
-\]
+$$
 
 is normal to the allowed tangent space. That normal component is supplied by the constraint reaction.
 
 This is the geometric reason Lagrange multipliers appear. Suppose constraints are
 
-\[
+$$
 g_a(x)=0.
-\]
+$$
 
-Their gradients \(\nabla g_a\) span normal directions under regularity assumptions, so the Cartesian equation can be written
+Their gradients $\nabla g_a$ span normal directions under regularity assumptions, so the Cartesian equation can be written
 
-\[
+$$
 M\ddot x
 =
 F_{\mathrm{applied}}
 +
 J_g(x)^T\lambda,
-\]
+$$
 
-where \(J_g\) is the constraint Jacobian and \(\lambda\) contains reaction magnitudes. Multiplying by an allowed virtual displacement \(\delta x\) satisfying \(J_g\delta x=0\) makes the constraint term vanish:
+where $J_g$ is the constraint Jacobian and $\lambda$ contains reaction magnitudes. Multiplying by an allowed virtual displacement $\delta x$ satisfying $J_g\delta x=0$ makes the constraint term vanish:
 
-\[
+$$
 \delta x^T J_g^T\lambda
 =
 (J_g\delta x)^T\lambda
 =
 0.
-\]
+$$
 
 The reaction enforces geometry without doing first-order work along permitted motion.
 
-Do not overextend this idealization. Dry friction, motors, damping, joint limits with impacts, and compliant contacts can perform or dissipate work. A rolling-without-slip condition may be nonholonomic and cannot always be represented as a position-level manifold \(g(q)=0\). Game-engine joints often add stabilization terms because discrete integration drifts away from the ideal manifold. Those numerical terms should be identified separately from the physical constraint.
+Do not overextend this idealization. Dry friction, motors, damping, joint limits with impacts, and compliant contacts can perform or dissipate work. A rolling-without-slip condition may be nonholonomic and cannot always be represented as a position-level manifold $g(q)=0$. Game-engine joints often add stabilization terms because discrete integration drifts away from the ideal manifold. Those numerical terms should be identified separately from the physical constraint.
 
 The contact constraint later in this chapter is unilateral rather than an equality manifold: bodies may separate but may not interpenetrate. Its multiplier/impulse must satisfy a nonnegativity/complementarity condition. D'Alembert's tangent/normal picture still helps: the normal reaction acts in the forbidden direction, while tangential motion is free until friction introduces another constraint law.
 
@@ -381,15 +381,15 @@ Source basis: Arnold, Part II, §21 on D'Alembert's principle and constrained ex
 
 A nonlinear mechanical system can be difficult globally and simple locally. Arnold begins the theory of oscillations by linearizing near an equilibrium because the linearized system often explains frequencies, stability, resonance, and the first visible response to small disturbances.
 
-Let \(q_0\) be a stable equilibrium and write
+Let $q_0$ be a stable equilibrium and write
 
-\[
+$$
 q=q_0+\eta.
-\]
+$$
 
 For a natural Lagrangian, expand the potential:
 
-\[
+$$
 U(q_0+\eta)
 =
 U(q_0)
@@ -397,94 +397,94 @@ U(q_0)
 \frac12\eta^T K\eta
 +
 O(\|\eta\|^3),
-\]
+$$
 
-because the first derivative vanishes at equilibrium. Here \(K\) is the Hessian of the potential at \(q_0\). Freeze the mass matrix to first order,
+because the first derivative vanishes at equilibrium. Here $K$ is the Hessian of the potential at $q_0$. Freeze the mass matrix to first order,
 
-\[
+$$
 T
 \approx
 \frac12\dot\eta^T M\dot\eta.
-\]
+$$
 
 The linearized Euler–Lagrange equations are
 
-\[
+$$
 M\ddot\eta+K\eta=0.
-\]
+$$
 
 Seek a harmonic mode
 
-\[
+$$
 \eta(t)=\phi e^{i\omega t}.
-\]
+$$
 
 Then
 
-\[
+$$
 (K-\omega^2M)\phi=0,
-\]
+$$
 
 or
 
-\[
+$$
 \boxed{
 K\phi=\omega^2M\phi.
 }
-\]
+$$
 
-This is a generalized eigenvalue problem. Eigenvectors \(\phi_j\) are mode shapes; \(\omega_j\) are natural angular frequencies. Under the usual symmetric positive-definite mass matrix and stable stiffness assumptions, modes can be chosen \(M\)-orthogonal:
+This is a generalized eigenvalue problem. Eigenvectors $\phi_j$ are mode shapes; $\omega_j$ are natural angular frequencies. Under the usual symmetric positive-definite mass matrix and stable stiffness assumptions, modes can be chosen $M$-orthogonal:
 
-\[
+$$
 \phi_i^T M\phi_j=0
 \qquad i\neq j.
-\]
+$$
 
 Expand displacement as
 
-\[
+$$
 \eta(t)=\sum_j a_j(t)\phi_j.
-\]
+$$
 
 The coupled system then decouples into scalar oscillators,
 
-\[
+$$
 \ddot a_j+\omega_j^2a_j=0,
-\]
+$$
 
 until damping, forcing, nonlinearities, or mode truncation are added.
 
 This is the mechanics counterpart of PCA/SVD and Laplacian eigenmodes elsewhere in the curriculum: a basis is chosen that diagonalizes the important quadratic forms. Modal animation and reduced deformable simulation exploit exactly this structure. Keeping the lowest modes can reproduce large-scale compliant motion at much lower cost, but mode truncation cannot represent arbitrary local deformation or topology change.
 
-Stability also depends on the Hessian. If \(K\) has a negative generalized eigenvalue relative to \(M\), then \(\omega^2<0\) for that direction and the linearized solution grows exponentially rather than oscillating. A zero mode can correspond to a symmetry or unconstrained rigid motion. Thus an eigenanalysis is also a local stability diagnostic.
+Stability also depends on the Hessian. If $K$ has a negative generalized eigenvalue relative to $M$, then $\omega^2<0$ for that direction and the linearized solution grows exponentially rather than oscillating. A zero mode can correspond to a symmetry or unconstrained rigid motion. Thus an eigenanalysis is also a local stability diagnostic.
 
-Numerical stepping must respect the highest retained frequency. Explicit methods can become unstable when \(h\omega_{\max}\) is too large. A reduced model with fewer high-frequency modes can therefore be cheaper not only because it has fewer coordinates but because it may permit a larger stable timestep—though that changes the represented physics.
+Numerical stepping must respect the highest retained frequency. Explicit methods can become unstable when $h\omega_{\max}$ is too large. A reduced model with fewer high-frequency modes can therefore be cheaper not only because it has fewer coordinates but because it may permit a larger stable timestep—though that changes the represented physics.
 
 Source basis: Arnold, Chapter 5 on linearization and oscillations; the generalized mass/stiffness eigenproblem is also the normal-mode framework developed in Riley, Hobson, and Bence, *Mathematical Methods for Physics and Engineering*, Chapter 9.
 
 ## The Legendre transform turns configuration-space dynamics into phase-space dynamics
 
-The Lagrangian formulation evolves \(q\) through a second-order differential equation. Hamiltonian mechanics introduces canonical momentum
+The Lagrangian formulation evolves $q$ through a second-order differential equation. Hamiltonian mechanics introduces canonical momentum
 
-\[
+$$
 p_i
 =
 \frac{\partial L}{\partial\dot q_i}
-\]
+$$
 
-and, when the velocity-to-momentum map is invertible, uses \((q,p)\) as independent phase-space coordinates.
+and, when the velocity-to-momentum map is invertible, uses $(q,p)$ as independent phase-space coordinates.
 
 Define the Hamiltonian by the Legendre transform in the velocity variables,
 
-\[
+$$
 H(q,p,t)
 =
 p^T\dot q-L(q,\dot q,t),
-\]
+$$
 
-where \(\dot q\) is expressed as a function of \((q,p,t)\). Differentiating,
+where $\dot q$ is expressed as a function of $(q,p,t)$. Differentiating,
 
-\[
+$$
 dH
 =
 \dot q^Tdp
@@ -492,11 +492,11 @@ dH
 \frac{\partial L}{\partial q}^Tdq
 -
 \frac{\partial L}{\partial t}dt,
-\]
+$$
 
-after the \(p^Td\dot q\) terms cancel using \(p=\partial L/\partial\dot q\). The Euler–Lagrange equation gives \(\dot p=\partial L/\partial q\), so
+after the $p^Td\dot q$ terms cancel using $p=\partial L/\partial\dot q$. The Euler–Lagrange equation gives $\dot p=\partial L/\partial q$, so
 
-\[
+$$
 \boxed{
 \dot q=
 \frac{\partial H}{\partial p},
@@ -504,37 +504,37 @@ after the \(p^Td\dot q\) terms cancel using \(p=\partial L/\partial\dot q\). The
 \dot p=
 -\frac{\partial H}{\partial q}.
 }
-\]
+$$
 
-A second-order system in \(q\) has become a first-order system in twice as many variables.
+A second-order system in $q$ has become a first-order system in twice as many variables.
 
 For a standard particle with
 
-\[
+$$
 L(q,\dot q)
 =
 \frac12\dot q^TM\dot q-U(q)
-\]
+$$
 
-and constant positive-definite \(M\),
+and constant positive-definite $M$,
 
-\[
+$$
 p=M\dot q,
-\]
+$$
 
 and
 
-\[
+$$
 H(q,p)
 =
 \frac12p^TM^{-1}p+U(q).
-\]
+$$
 
-Here \(H\) equals total mechanical energy. That equality is common but not the definition of a Hamiltonian; generalized velocity-dependent potentials, time-dependent coordinates, or other Lagrangians require more care.
+Here $H$ equals total mechanical energy. That equality is common but not the definition of a Hamiltonian; generalized velocity-dependent potentials, time-dependent coordinates, or other Lagrangians require more care.
 
-If \(H\) has no explicit time dependence, then along a Hamiltonian trajectory
+If $H$ has no explicit time dependence, then along a Hamiltonian trajectory
 
-\[
+$$
 \frac{dH}{dt}
 =
 \nabla_qH^T\dot q
@@ -546,7 +546,7 @@ If \(H\) has no explicit time dependence, then along a Hamiltonian trajectory
 \nabla_pH^T\nabla_qH
 =
 0.
-\]
+$$
 
 Energy conservation follows directly from the canonical equations. In a numerical engine this exact continuous invariant need not be exactly preserved by a discrete integrator. That distinction is why energy drift is a property of the time-stepping method, not proof that Hamiltonian mechanics itself is dissipative or explosive.
 
@@ -556,7 +556,7 @@ Source basis: Arnold, Chapter 3 §§14–15 on Legendre transforms and Hamilton'
 
 Write canonical phase state as
 
-\[
+$$
 z=
 \begin{bmatrix}
 q\\p
@@ -567,27 +567,27 @@ J=
 0&I\\
 -I&0
 \end{bmatrix}.
-\]
+$$
 
 Hamilton's equations are
 
-\[
+$$
 \dot z
 =
 J\nabla H(z).
-\]
+$$
 
-The canonical symplectic two-form is represented locally by \(J\). A smooth map \(\Phi\) is symplectic when its Jacobian satisfies
+The canonical symplectic two-form is represented locally by $J$. A smooth map $\Phi$ is symplectic when its Jacobian satisfies
 
-\[
+$$
 D\Phi(z)^T J D\Phi(z)=J.
-\]
+$$
 
 This condition is stronger than ordinary volume preservation. Taking determinants implies
 
-\[
+$$
 |\det D\Phi|=1,
-\]
+$$
 
 so a symplectic map preserves phase volume, but many volume-preserving maps are not symplectic. Arnold develops both ideas: Liouville's theorem states that Hamiltonian phase flow preserves phase volume, while the symplectic formulation identifies the closed nondegenerate two-form preserved by Hamiltonian flow.
 
@@ -595,43 +595,43 @@ The distinction matters numerically. A generic high-order integrator can have ex
 
 For the separable Hamiltonian
 
-\[
+$$
 H(q,p)=T(p)+U(q),
-\]
+$$
 
 symplectic Euler can be written in one variant as
 
-\[
+$$
 p_{n+1}
 =
 p_n-h\nabla U(q_n),
-\]
+$$
 
-\[
+$$
 q_{n+1}
 =
 q_n+h\nabla T(p_{n+1}).
-\]
+$$
 
-For \(T=p^2/(2m)\), this is the familiar velocity-first/semi-implicit Euler update already used earlier in the engine curriculum. Its value is not that it is magically exact. Its update order gives a symplectic map for this Hamiltonian form, which often produces much better long-time qualitative behavior than explicit Euler.
+For $T=p^2/(2m)$, this is the familiar velocity-first/semi-implicit Euler update already used earlier in the engine curriculum. Its value is not that it is magically exact. Its update order gives a symplectic map for this Hamiltonian form, which often produces much better long-time qualitative behavior than explicit Euler.
 
 Hamiltonian mechanics also introduces the **Poisson bracket**
 
-\[
+$$
 \{f,g\}
 =
 \nabla f^T J\nabla g.
-\]
+$$
 
 Along an autonomous Hamiltonian trajectory,
 
-\[
+$$
 \frac{df}{dt}
 =
 \{f,H\}.
-\]
+$$
 
-A quantity \(f\) is conserved when its Poisson bracket with \(H\) vanishes. This gives a compact algebraic language for invariants and canonical transformations. In a game engine one does not need to implement a Poisson-bracket type to benefit from the concept: it explains why position and momentum are paired, why canonical transforms preserve dynamics, and why integrator structure can matter beyond local truncation order.
+A quantity $f$ is conserved when its Poisson bracket with $H$ vanishes. This gives a compact algebraic language for invariants and canonical transformations. In a game engine one does not need to implement a Poisson-bracket type to benefit from the concept: it explains why position and momentum are paired, why canonical transforms preserve dynamics, and why integrator structure can matter beyond local truncation order.
 
 Do not confuse this with contact/constraint projection. A collision impulse makes the trajectory nonsmooth and can intentionally dissipate energy through restitution/friction. A projected constraint solver can also destroy exact symplecticity. Structure-preserving free-flight integration is still useful, but the full engine is a hybrid dynamical system containing smooth Hamiltonian segments, external forces, constraints, impacts, sleeps, and authored corrections. Each layer should state which invariants it preserves or intentionally breaks.
 
@@ -805,6 +805,236 @@ $$
 $$
 
 With the earlier normal from A to B, apply $\Delta\mathbf x_A=-w_A\mathbf n\Delta\lambda$ and $\Delta\mathbf x_B=w_B\mathbf n\Delta\lambda$. Setting $\alpha=0$ recovers the hard distance correction when the denominator is nonzero. Positive compliance permits extension; it is a different physical model, not merely a slower hard rod. A cable additionally needs an inequality and an admissible tension multiplier. [XPBD](https://mmacklin.com/xpbd.pdf) addresses the stiffness dependence of ordinary PBD on timestep and iteration count; finite convergence error still depends on the solver budget. Multiplier initialization, inter-step warm starting, contact handling and velocity reconstruction remain explicit implementation choices.
+
+<!-- Book-completion teaching addition 4fcab2c176def371 -->
+
+### A joint removes selected relative motion, not every motion
+
+A contact is created and may disappear as two shapes move. A **joint** instead preserves an authored relationship between bodies across simulation steps. The type names are shorthand for the motions they allow. A distance joint keeps two anchors at a chosen distance; a cable permits separation only up to a maximum. A 2D revolute joint (hinge or pin) keeps one point on each body coincident while allowing relative rotation. A 2D prismatic joint (slider) permits translation along one declared axis and prevents sideways translation and relative rotation. A weld/fixed joint also prevents relative rotation. In 3D, a ball-and-socket joint keeps two anchors coincident but leaves all three relative rotations free. These descriptions count allowed motion; they do not say how a discrete solver will correct error. Box2D's current joint reference distinguishes revolute, prismatic, distance, motor and weld contracts, while Catto's constraint notes derive the reusable Jacobian recipe. [Box2D Joint Reference](https://box2d.org/documentation/group__joint.html) · [Catto, Iterative Dynamics with Temporal Coherence](https://box2d.org/files/ErinCatto_IterativeDynamicsSlides_GDC2005.pdf)
+
+Use local anchor points because they belong to each body's authored frame. For body $i$, let its centre of mass be $x_i$, orientation be $R_i$, and local anchor relative to the body-local centre of mass be $a_i$. If the authored anchor is measured from another origin, subtract the local centre-of-mass offset before forming $a_i$. The world lever arm and anchor are $r_i=R_i a_i$ and $p_i=x_i+r_i$. For a planar rigid body, the anchor velocity is $v_i+\omega_i\times r_i$. A revolute joint between A and B requires the two anchor positions to agree, so define the vector error $C=p_B-p_A$. Its velocity constraint is
+
+$$
+\dot C=(v_B+\omega_B\times r_B)-(v_A+\omega_A\times r_A)=JV.
+$$
+
+Here $V=(v_{Ax},v_{Ay},\omega_A,v_{Bx},v_{By},\omega_B)^T$. For each world axis $e_k$, one row of $J$ is $(-e_k^T,-(r_A\times e_k),e_k^T,(r_B\times e_k))$. These two rows remove relative x and y motion of the anchors; they leave the bodies' relative angle free. Do not form a zero or unnormalized slider axis: validate its length, normalize it once, and derive the perpendicular from the same orientation convention. A zero-length or nonfinite axis makes the constraint definition invalid, not merely a difficult solve.
+
+For this planar state, $M^{-1}=\operatorname{diag}(w_A,w_A,I_A^{-1},w_B,w_B,I_B^{-1})$, where $w_i$ is inverse mass and $I_i^{-1}$ is inverse planar inertia. The impulse-space effective-mass matrix is $K=JM^{-1}J^T$. It maps a vector of row impulses into changes in the constrained anchor speeds. For a joint with position error, a simple stabilization target is $v_{target}=-\beta C/h$, where $h>0$ is the step and $0\le\beta\le1$. A finite $\beta$ does not bound the correction speed for arbitrarily large $C$; cap the bias magnitude at a declared correction-speed limit when needed. The bilateral anchor solve is $K\lambda=v_{target}-JV$; its impulses may have either sign because an anchor can pull or push. Check that $K$ is finite and sufficiently full rank before solving. If both bodies are fixed, or rows are redundant, the solver must report/skip an unsolvable row set under an explicit policy rather than invert a singular matrix. A contact differs here: its normal multiplier is unilateral and cannot pull. Reuse the matrix method only after writing the joint's actual allowed-motion equations.
+
+**Worked planar hinge.** Fix body A. Body B has mass $2\,\mathrm{kg}$, moment of inertia $0.5\,\mathrm{kg\,m^2}$, and anchor lever arm $r_B=(0,0.5)\,\mathrm m$. The two anchor rows give $K=\operatorname{diag}(1,0.5)\,\mathrm{kg}^{-1}$: the x row has translational inverse mass $0.5$ plus rotational term $2(0.5)^2=0.5$; the y row has no rotational arm and has inverse mass $0.5$. Suppose the measured anchor error is $C=(0.02,-0.01)\,\mathrm m$ and current anchor velocity is $(1,-0.5)\,\mathrm{m/s}$. With $\beta=0.2$ and $h=1/60\,\mathrm s$, the desired velocity is $-\beta C/h=(-0.24,0.12)\,\mathrm{m/s}$. Thus the required velocity change is $(-1.24,0.62)\,\mathrm{m/s}$ and the row impulse is $\lambda=K^{-1}(-1.24,0.62)^T=(-1.24,1.24)\,\mathrm{N\,s}$. It changes B's centre velocity by $(-0.62,0.62)\,\mathrm{m/s}$ and angular velocity by $+1.24\,\mathrm{rad/s}$; the rotational point-velocity change is $(-0.62,0)$, so the anchor changes by exactly $(-1.24,0.62)\,\mathrm{m/s}$. The corrected anchor speed is the stated target. The negative x impulse is valid because these rows are bilateral.
+
+A rotational motor adds a different row, not a new joint type. For relative angular speed $\omega_B-\omega_A$, a desired speed $\omega^*$, and inverse rotational effective mass $k_\omega=I_A^{-1}+I_B^{-1}$, the unconstrained increment is $\Delta\lambda=(\omega^*-(\omega_B-\omega_A))/k_\omega$. Accumulate the motor impulse and clamp its total to $[-h\tau_{max},+h\tau_{max}]$, where $\tau_{max}$ is the allowed torque; apply only the change from the prior total. At a lower angular limit, a unilateral row can only push the angle upward when motion would cross below the bound; the upper limit has the opposite sign. A limit row is inactive away from its boundary when the predicted motion also remains inside the permitted interval. Fast motion may need a speculative activation test or substeps so the solver does not wait until the angle has crossed the limit. Motors and limits must not be allowed to override one another by applying unbounded impulses in different solve phases. Box2D documents motor speed, max torque, angular limits, and spring settings as explicit joint fields; exact units and defaults are versioned API facts, not universal mechanical laws. [Box2D Revolute Joint](https://box2d.org/documentation/group__revolute__joint.html)
+
+**Solved checks.** (1) If the hinge's current anchor error is zero and anchor velocity is already $(0,0)$, both anchor-row impulses are zero. (2) If the body is fixed and has zero inverse mass and inertia, then $K=0$ and no division is permitted. (3) Starting from zero accumulated motor impulse, if its unconstrained impulse is $4\,\mathrm{N\,m\,s}$ but $h=0.01\,\mathrm s$ and $\tau_{max}=100\,\mathrm{N\,m}$, the total impulse cap is $h\tau_{max}=1\,\mathrm{N\,m\,s}$; the projected total is 1. With a nonzero previous total, apply the difference between projected new and previous totals; an individual iteration delta may exceed the absolute cap while the final accumulated total remains within it. (4) If the lower limit is $-0.5$ rad and the joint is at $-0.6$ rad moving farther negative, activate the lower-limit row; if it moves back toward the interval, do not apply a pulling impulse.
+
+#### Count the rows before extending the solver to three dimensions
+
+Two unconstrained bodies have three relative degrees of freedom in the plane and six in space. At a regular configuration, each independent scalar equality row removes one. Limits and motors are additional conditional or driven rows, so they should not be counted as permanent locks.
+
+| Relationship | Planar equality rows | Spatial equality rows | Remaining spatial relative motion |
+|---|---:|---:|---|
+| Fixed-length distance | 1 | 1 | Five relative motions, subject to the distance |
+| Coincident anchors / ball-and-socket | 2 | 3 | Three rotations |
+| Hinge / revolute | 2 | 5 | Rotation about its common axis |
+| Slider / prismatic | 2 | 5 | Translation along its common axis |
+| Weld / fixed | 3 | 6 | None |
+
+For a spatial ball-and-socket joint use $C=p_B-p_A\in\mathbb R^3$. Along any world unit direction $t$, the velocity row is $(-t^T,-(r_A\times t)^T,t^T,(r_B\times t)^T)$ on state $(v_A,\omega_A,v_B,\omega_B)$. Three independent directions give the three anchor rows. World-space inverse inertia is now a $3\times3$ tensor, so the planar scalar formula cannot be copied unchanged.
+
+A spatial hinge adds two angular rows that suppress relative angular velocity perpendicular to the common unit axis $a$. Construct orthonormal directions $t_1,t_2$ perpendicular to $a$; their angular rows are $(-t_j^T,t_j^T)$ on $(\omega_A,\omega_B)$. The component along $a$ stays free. A cross-product alignment error vanishes for both parallel and opposite axes, so a finite-error implementation must disambiguate those cases and maintain the authored reference frames. These velocity rows describe a regular aligned configuration, not an arbitrary-angle orientation-error solver.
+
+A spatial slider keeps two transverse anchor coordinates zero and keeps the authored relative orientation fixed. Its basis moves with body A: put $q=p_B-p_A$, $a=R_Aa_{local}$, and choose transverse directions $t_j=R_At_{j,local}$. Differentiating $C_j=t_j^Tq$ includes a moving-basis term:
+
+$$
+\dot C_j=t_j^T(v_{Bp}-v_{Ap})+(\omega_A\times t_j)^Tq.
+$$
+
+Therefore the angular-A block is $-(r_A\times t_j)^T+(t_j\times q)^T$, not merely the projected ball-joint block. Omitting it gives incorrect behavior when the slider frame rotates while its anchors are separated. Three relative-orientation rows suppress angular motion, leaving translation along $a$ free. A weld instead uses all three anchor rows and all three orientation rows. Finite orientation correction needs a consistent rotation error and its Jacobian, such as the SO(3) logarithm developed in the foundations; subtracting arbitrary Euler angles is not a general replacement.
+
+These row counts agree with the fixed, spherical, revolute and prismatic contracts in the versioned [PhysX 5.4 joint documentation](https://nvidia-omniverse.github.io/PhysX/physx/5.4.0/docs/Joints.html). The row derivations here explain their kinematic structure; they do not claim that a complete spatial joint solver has been implemented or tested.
+
+
+#### Verify the planar rows independently
+
+The following complete Python lab checks the analytic anchor Jacobian against 360 finite differences, solves the worked hinge, checks body-order invariance, distinguishes total motor impulse from its iteration delta, and rejects singular/nonfinite inputs. Run `python3 tools/labs/planar_joint_rows_lab.py` or `python3 -O tools/labs/planar_joint_rows_lab.py`. It implements a bounded planar velocity solve, not world integration, spatial joints, a persistent joint cache or a ragdoll. The comments teach the implementation beside each operation.
+
+```python
+#!/usr/bin/env python3
+"""Planar anchor Jacobian/impulse and motor-bound witness; not a world solver."""
+import math
+import random
+
+
+def require(condition, message):
+    # Remains active with python -O; a lesson check must not silently disappear.
+    if not condition:
+        raise AssertionError(message)
+
+
+def rotate(angle, point):
+    c, s = math.cos(angle), math.sin(angle)
+    return c*point[0]-s*point[1], s*point[0]+c*point[1]
+
+
+def constraint_and_rows(q, anchors):
+    # q stores (COM x, COM y, angle) for A followed by B. Each anchor is
+    # measured from its body's LOCAL COM, not an unrelated mesh pivot.
+    if not all(math.isfinite(v) for v in (*q, *anchors[0], *anchors[1])):
+        raise ValueError('Finite body poses and local anchors required')
+    ra = rotate(q[2], anchors[0])
+    rb = rotate(q[5], anchors[1])
+    error = (q[3]+rb[0]-q[0]-ra[0], q[4]+rb[1]-q[1]-ra[1])
+    if not all(math.isfinite(v) for v in error):
+        raise ValueError("Anchor separation overflow")
+    # d(R*a)/d(angle) = (-r_y,r_x). The negative A contribution reverses
+    # those signs. Rows map generalized body velocity into anchor velocity.
+    rows = ((-1., 0., ra[1], 1., 0., -rb[1]),
+            (0., -1., -ra[0], 0., 1., rb[0]))
+    return error, rows
+
+
+def solve_symmetric_two(k00, k01, k11, rhs):
+    # Both rows constrain distance, so they have compatible units. Normalize
+    # to avoid forming an unscaled determinant. This tolerance is an explicit
+    # singularity policy, not a general condition estimator or sparse solver.
+    if not all(math.isfinite(v) for v in (k00, k01, k11, *rhs)):
+        raise ValueError("Finite matrix and right-hand side required")
+    scale = max(abs(k00), abs(k01), abs(k11))
+    if not math.isfinite(scale) or scale == 0:
+        raise ValueError('Both-fixed or invalid constraint block')
+    a, b, d = k00/scale, k01/scale, k11/scale
+    determinant = a*d-b*b
+    if a <= 0 or d <= 0 or determinant <= 1e-12:
+        raise ValueError('Singular, redundant or ill-conditioned anchor rows')
+    u, v = rhs[0]/scale, rhs[1]/scale
+    result = ((d*u-b*v)/determinant, (a*v-b*u)/determinant)
+    if not all(math.isfinite(x) for x in result):
+        raise ValueError('Unrepresentable impulse')
+    return result
+
+
+def solve_anchor(q, anchors, inverse_mass, velocity, target):
+    if not all(math.isfinite(w) and w >= 0 for w in inverse_mass):
+        raise ValueError('Nonnegative finite inverse masses/inertias required')
+    if not all(math.isfinite(v) for v in (*velocity, *target)):
+        raise ValueError('Finite velocities required')
+    _, rows = constraint_and_rows(q, anchors)
+    # K = J M^-1 J^T. The angular inverse inertia occupies the third component
+    # of each body block, so lever-arm effects enter without a special case.
+    def k(i, j):
+        return sum(rows[i][n]*inverse_mass[n]*rows[j][n] for n in range(6))
+    current = tuple(sum(row[n]*velocity[n] for n in range(6)) for row in rows)
+    impulse = solve_symmetric_two(k(0, 0), k(0, 1), k(1, 1),
+                                 tuple(target[i]-current[i] for i in range(2)))
+    delta = tuple(inverse_mass[n]*sum(rows[i][n]*impulse[i] for i in range(2))
+                  for n in range(6))
+    # This applies a velocity correction only. Position integration, contacts,
+    # warm starting, sleep, breakage and frame-to-frame joint state are absent.
+    return tuple(velocity[n]+delta[n] for n in range(6)), impulse
+
+
+def bias_velocity(error, beta, step, speed_cap):
+    if not (math.isfinite(step) and step > 0 and 0 <= beta <= 1
+            and math.isfinite(speed_cap) and speed_cap >= 0):
+        raise ValueError('Positive step, valid beta and finite nonnegative cap required')
+    if not all(math.isfinite(c) for c in error):
+        raise ValueError("Finite positional error required")
+    target = tuple(-beta*c/step for c in error)
+    if not all(math.isfinite(c) for c in target):
+        raise ValueError("Bias arithmetic overflow before capping")
+    length = math.hypot(*target)
+    factor = min(1., speed_cap/length) if length else 1.
+    return tuple(x*factor for x in target)
+
+
+def motor_update(previous, increment, max_torque, step):
+    if not all(math.isfinite(x) for x in (previous, increment, max_torque, step)):
+        raise ValueError('Finite motor data required')
+    if max_torque < 0 or step <= 0:
+        raise ValueError('Motor cap nonnegative and timestep positive required')
+    cap = step*max_torque
+    if not math.isfinite(cap):
+        raise ValueError("Motor cap overflow")
+    total = max(-cap, min(cap, previous+increment))
+    # Bound the ACCUMULATED impulse. The corrective increment can exceed cap
+    # when it cancels a previously applied impulse with the opposite sign.
+    return total, total-previous
+
+
+def run():
+    q = (0., 0., 0., .02, -.51, 0.)
+    anchors = ((0., 0.), (0., .5))
+    weights = (0., 0., 0., .5, .5, 2.)
+    velocity = (0., 0., 0., 1., -.5, 0.)
+    error, rows = constraint_and_rows(q, anchors)
+    target = bias_velocity(error, .2, 1/60, 10.)
+    after, impulse = solve_anchor(q, anchors, weights, velocity, target)
+    require(all(math.isclose(x, y, abs_tol=1e-12)
+                for x, y in zip(impulse, (-1.24, 1.24))), 'Worked hinge impulse')
+    require(math.isclose(after[5], 1.24, abs_tol=1e-12), 'Angular response')
+    actual = tuple(sum(row[i]*after[i] for i in range(6)) for row in rows)
+    require(all(math.isclose(x, y, abs_tol=1e-12) for x, y in zip(actual, target)),
+            'Post-solve anchor speed equals bias target')
+
+    # Swapping A/B reverses error and row impulse, but preserves each actual
+    # body's resulting velocity. This catches a body-order sign mistake.
+    swapped, _ = solve_anchor(q[3:]+q[:3], anchors[::-1], weights[3:]+weights[:3],
+                              velocity[3:]+velocity[:3], tuple(-x for x in target))
+    require(all(math.isclose(x, y, abs_tol=1e-12)
+                for x, y in zip(swapped[3:]+swapped[:3], after)), 'Body swap invariance')
+
+    rng = random.Random(920)
+    for _ in range(30):
+        pose = tuple(rng.uniform(-2, 2) for _ in range(6))
+        points = ((.2, -.4), (-.1, .6))
+        _, analytic = constraint_and_rows(pose, points)
+        for axis in range(6):
+            lo, hi = list(pose), list(pose)
+            lo[axis] -= 1e-6
+            hi[axis] += 1e-6
+            left, _ = constraint_and_rows(lo, points)
+            right, _ = constraint_and_rows(hi, points)
+            for row in range(2):
+                derivative = (right[row]-left[row])/2e-6
+                require(math.isclose(derivative, analytic[row][axis], abs_tol=1e-8),
+                        'Independent finite-difference anchor Jacobian')
+    total, delta = motor_update(-.8, 1.7, 100., .01)
+    require(math.isclose(total, .9) and math.isclose(delta, 1.7), 'Total versus delta cap')
+    require(math.isclose(math.hypot(*bias_velocity((100., 100.), .2, .01, 3.)), 3.),
+            'Large positional error respects declared bias-speed cap')
+    try:
+        solve_anchor(q, anchors, (0.,)*6, velocity, target)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('Both-fixed singular block accepted')
+    try:
+        solve_symmetric_two(1., 1., 1., (1., 1.))
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('Redundant rows accepted')
+    for call in (lambda: bias_velocity((math.nan, 0), .2, .01, 3),
+                 lambda: motor_update(0., 1., math.inf, .01),
+                 lambda: solve_symmetric_two(1., 0., 1., (math.nan, 0.))):
+        try:
+            call()
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('Nonfinite solver input accepted')
+    print('PASS: planar hinge trace, 360 finite differences, body swap, motor total cap, '
+          'bias cap and singular cases; no spatial joint/world-solver claim')
+
+
+if __name__ == '__main__':
+    run()
+```
+
+Before implementing another joint, write four items: its allowed degrees of freedom; the constraint equation in authored local frames; the Jacobian rows and units; and the feasible sign/range for each accumulated impulse. Then test anchor coincidence, allowed motion, limit activation on both sides, motor saturation, swapped body order, a zero axis, both-fixed bodies, redundant rows, and a large initial error. A planar hinge has two bilateral anchor rows plus an optional angle row; it does not validate a 3D ball-and-socket solver, a 3D hinge, a general articulated ragdoll, coupled compliant joints, or a production engine. The adjacent executable witness verifies planar anchor rows, their velocity solve and a bounded motor-impulse policy. Spatial joint implementations, iterative world integration and a production joint runtime remain outside that witness.
+
+
 
 
 

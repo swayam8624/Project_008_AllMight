@@ -1,0 +1,39 @@
+\hypertarget{appendix-8f96f9c4d5bc}{}
+\section*{Time integrators and symplectic updates}
+\section{Time integrators and symplectic updates}\label{appendix-8f96f9c4d5bc-time-integrators-and-symplectic-updates}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 9 · \textbf{Latest development:} Phase 9
+
+\subsection{Definition and mechanism}\label{appendix-8f96f9c4d5bc-definition-and-mechanism}
+
+A time integrator turns a differential equation into a discrete state update. Explicit Euler uses the current slope; midpoint and Runge--Kutta methods combine several slope evaluations to improve local accuracy; semi-implicit Euler updates velocity before position and can behave better for mechanical systems. Symplectic methods preserve the geometric structure of Hamiltonian dynamics, often keeping long-run energy error bounded rather than allowing systematic drift. No method is universally best: order, stability region, cost, conservation, and stiffness all matter. A higher formal order does not guarantee better behavior at an unsuitable step size or under discontinuous forces. Compare integrators on the same problem, step policy, and error target. Update order is part of the algorithm: changing it can change stability and physical behavior, not merely code style.
+
+\subsection{Prerequisites}\label{appendix-8f96f9c4d5bc-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-e8ab9836882e]{ODE initial-value problems and stiffness}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-8f96f9c4d5bc-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-18eacf61a04b}{ODE integration and stability (04-Visual-Computing-II, appendix-18eacf61a04b)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-8f96f9c4d5bc-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[02-foundations-ii-ch025-odes-and-numerical-simulation]{Phase 9 teaching section}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-adf48f5dc5c1}{Visual Recall/09 - Calculus and Optimization - Visual Recall.md (01-Foundations-I, appendix-adf48f5dc5c1)} · visual recall
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-8f96f9c4d5bc-source-coverage}
+
+Supplied lesson parts: 840 (T03 · M051), 841 (T03 · M051), 842 (T03 · M051), 843 (T03 · M051), 844 (T03 · M051).

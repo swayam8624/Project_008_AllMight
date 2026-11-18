@@ -1,0 +1,105 @@
+{
+  "status": "compiled_and_visually_reviewed",
+  "verified_at": "2026-11-16",
+  "design_version": "allmight-book v0.1",
+  "style_path": "LaTeX/allmight-book.sty",
+  "style_sha256": "394422f0d253eecf5f86ddb218aef6a300dae04795e36d43e18b116abf7f1dab",
+  "supervisor_design_review": {
+    "status": "approved",
+    "approved_by": "root supervisor agent",
+    "approved_style_sha256": "394422f0d253eecf5f86ddb218aef6a300dae04795e36d43e18b116abf7f1dab",
+    "scope": "print style and visual design proof; fixture heading semantics were corrected and rebuilt after review"
+  },
+  "runtime": {
+    "engine": "LuaHBTeX 1.21.0",
+    "distribution": "TeX Live 2025",
+    "path": "/usr/local/texlive/2025/bin/universal-darwin/lualatex",
+    "project_texmfhome": "/tmp/allmight-local-texmf"
+  },
+  "print_profile": {
+    "fixture": "LaTeX/sample/design-proof.tex",
+    "compile_passes": 2,
+    "pdf": "LaTeX/QA/design-proof.pdf",
+    "pdf_sha256": "2ef06a775fe85f7ccf349d31e96577c1598a5261c68359f08fb46f83a4eb3524",
+    "pages": 5,
+    "page_size_points": "576 x 720",
+    "trim": "8 x 10 inches",
+    "body_type": "10.5 pt on 13 pt baseline",
+    "fonts_observed_in_compile_log": [
+      "TeX Gyre Pagella",
+      "TeX Gyre Pagella Math",
+      "Menlo"
+    ],
+    "visually_reviewed_pages": [
+      {
+        "page": 3,
+        "image": "LaTeX/QA/design-proof-rounding-math.png",
+        "covers": "rounding table, native matrix and derivative math, definition and theorem callouts"
+      },
+      {
+        "page": 4,
+        "image": "LaTeX/QA/design-proof-code-diagram.png",
+        "covers": "worked example, code block, bounded vector flow, start of the continued table"
+      },
+      {
+        "page": 5,
+        "image": "LaTeX/QA/design-proof-continued-table.png",
+        "covers": "continued table with repeated column headers"
+      }
+    ],
+    "compile_warnings": [
+      "microtype could not apply its footnote patch with the selected Unicode font setup.",
+      "Underfull horizontal and vertical boxes remain in fixed-width table cells and page breaks; no overfull boxes were reported."
+    ]
+  },
+  "ebook_pdf_profile": {
+    "fixture": "LaTeX/sample/ebook-profile-proof.tex",
+    "compile_passes": 2,
+    "pdf": "LaTeX/QA/ebook-profile-proof.pdf",
+    "pdf_sha256": "8873431cd05604392a0be0a971d5badc71ba6fbbdedd566b29fd6fd8d18caa09",
+    "preview": "LaTeX/QA/ebook-profile-proof.png",
+    "pages": 1,
+    "page_size_points": "432 x 648",
+    "page_size": "6 x 9 inches",
+    "visually_reviewed": true,
+    "scope_note": "This is a fixed-page PDF typography profile. Reflowable EPUB generation and reader rendering are separate gates."
+  },
+  "converter_fragment_smoke": {
+    "fragment_set": "Foundations I chapter 1 plus current book production front/back matter",
+    "result": "LuaLaTeX completed successfully against this style",
+    "pdf_path": "/tmp/allmight-chapter-smoke.pdf",
+    "pdf_sha256": "e2b6385a584a5d674b325bd214a1eedc088d5b974fe519110d98b20d5afda96b",
+    "pages": 41,
+    "page_size_points": "576 x 720",
+    "log_path": "/tmp/allmight-chapter-smoke.log",
+    "limitations": [
+      "The isolated chapter smoke reports undefined hyperlink references for destinations outside the fragment set and requests another pass for labels and longtable widths.",
+      "This is not a six-volume compilation or final cross-reference verification."
+    ]
+  },
+  "scope_limits": [
+    "The fixtures demonstrate the style and do not prove layout acceptance for all six books or all 129 chapters.",
+    "Source-aware diagram QA must check that labels remain at least 8 pt in print. The shrink-only 0.8 linewidth by 0.4 textheight cap cannot certify label size.",
+    "Final volume page counts, print platform page-limit preflight, and EPUB validation are not part of this design proof.",
+      "The independent pypdf check verified selectable text and embedded font programs, but did not perform a full accessibility or glyph-by-glyph semantic audit."
+  ],
+  "pdf_content_check": {
+    "tool": "pypdf",
+    "result": "All font programs referenced by the proof were embedded; selectable page text was extracted.",
+    "font_subsets": [
+      "TeX Gyre Pagella Regular",
+      "TeX Gyre Pagella Bold",
+      "TeX Gyre Pagella Math Regular",
+      "LM Sans 10 Bold",
+      "Menlo Regular"
+    ],
+    "extracted_rounding_headers": [
+      "Input",
+      "Nearest-even",
+      "Upward",
+      "Downward",
+      "Toward zero"
+    ]
+  },
+  "compile_command": "From LaTeX/sample: env TEXMFHOME=/tmp/allmight-local-texmf TEXINPUTS=..//: /usr/local/texlive/2025/bin/universal-darwin/lualatex -interaction=nonstopmode -halt-on-error -file-line-error -output-directory=build {design-proof.tex|ebook-profile-proof.tex} (run twice per fixture)."
+}

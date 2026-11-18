@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch078.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-a2773a6a2f9d-cancellation-and-loss-of-significance" class="level2">
+<h2>Cancellation and loss of significance</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C005 · <strong>Latest development:</strong> C005</p>
+<section id="appendix-a2773a6a2f9d-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Nearly equal magnitudes subtract to a small difference, amplifying prior operand errors by roughly (|a|+|b|)/|a−b|. Stored subtraction can itself be exact. The source binary pair 1753/1024 and 1751/1024 differs by exactly 2^-9.</p>
+</section>
+<section id="appendix-a2773a6a2f9d-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch039.xhtml#appendix-3ae74e89b4e6-absolute-and-relative-error" class="wikilink">Absolute and relative error</a> — Discrepancy, magnitude and reference units define sensitivity and threshold significance.</li>
+<li><a href="ch077.xhtml#appendix-a24fd710cf67-significand-and-hidden-bit" class="wikilink">Significand and hidden bit</a> — Significant digit positions determine alignment and what leading digits cancel.</li>
+<li><a href="ch072.xhtml#appendix-8f6a01f284a7-conditioning-and-singularity" class="wikilink">Conditioning and singularity</a> — Input sensitivity is distinct from errors an implementation introduces.</li>
+</ul>
+</section>
+<section id="appendix-a2773a6a2f9d-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch037.xhtml#appendix-399b7ad53f39-sterbenz-lemma" class="wikilink">Sterbenz lemma</a> — uses this mechanism to establish its numerical contract.</li>
+<li><a href="ch104.xhtml#appendix-d7f8ba961670-stable-reformulation" class="wikilink">Stable reformulation</a> — uses this mechanism to establish its numerical contract.</li>
+<li><a href="ch238.xhtml#appendix-5aef4f13483a-dot-and-cross-product-rounding" class="wikilink">Dot and cross-product rounding (Mathematics for Visual Computing, Part 1, Reference notes: Dot and cross-product rounding)</a> — uses this mechanism to establish its numerical contract.</li>
+</ul>
+</section>
+<section id="appendix-a2773a6a2f9d-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the definition’s example and name the assumptions that make it valid.</p>
+<p><strong>Pending:</strong> Separate input quantization, product rounding, final subtraction, and underlying sensitivity.</p>
+</section>
+<section id="appendix-a2773a6a2f9d-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-when-arithmetic-meets-uncertainty" class="wikilink">M005 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m005---parts-77-88" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

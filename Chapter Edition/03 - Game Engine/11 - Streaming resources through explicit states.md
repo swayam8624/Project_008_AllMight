@@ -8,7 +8,7 @@ Large worlds cannot load every resource before play begins, so readiness becomes
 
 **Recall question:** When an older load finishes after a newer request, what prevents the stale result from becoming visible or freeing a resource still in use?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 15915–20055; source-span SHA256 81533611d264a650abc63f2d382154b8cf1a1e248c708174371955334754e42b. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 16279–20419; source-span SHA256 81533611d264a650abc63f2d382154b8cf1a1e248c708174371955334754e42b. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 **A streaming state machine**

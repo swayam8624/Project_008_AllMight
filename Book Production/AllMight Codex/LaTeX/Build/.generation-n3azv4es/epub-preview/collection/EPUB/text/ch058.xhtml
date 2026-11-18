@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch058.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-638204c40e8b-groupwise-quantization-and-metadata" class="level2">
+<h2>Groupwise quantization and metadata</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C006 · <strong>Latest development:</strong> C006</p>
+<section id="appendix-638204c40e8b-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Local groups share a scale, improving adaptation at a metadata cost. Symmetric INT4 calibration maxAbs/7 reconstructs codes around [-7,7]; float scales add about 32/G bits per value for full groups.</p>
+</section>
+<section id="appendix-638204c40e8b-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch101.xhtml#appendix-d5da3eaabaef-affine-quantization-and-zero-point" class="wikilink">Affine quantization and zero point</a> — supplies the representation or validity rule used above.</li>
+<li><a href="ch020.xhtml#appendix-1f9963e1a5d1-bit-packing" class="wikilink">Bit packing</a> — supplies the representation or validity rule used above.</li>
+</ul>
+</section>
+<section id="appendix-638204c40e8b-used-by" class="level3">
+<h3>Used by</h3>
+<p>Connect later dependent concepts here when their explanations use this mechanism.</p>
+</section>
+<section id="appendix-638204c40e8b-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the example and identify the condition that would invalidate it.</p>
+<p><strong>Pending:</strong> No task-accuracy or throughput benchmark was run.</p>
+</section>
+<section id="appendix-638204c40e8b-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-choosing-what-information-to-keep" class="wikilink">Continuous teaching story</a> · <span>Source coverage ledger</span> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-638204c40e8b-reconstruction-depth" class="level3">
+<h3>Reconstruction depth</h3>
+<p>Groupwise quantization divides a tensor into blocks and assigns quantization parameters per block rather than per entire tensor. For affine quantization, a group may store scale <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+</math> and zero point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>z</mi>
+</math> so that <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>x</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <mi>s</mi>
+  <mo stretchy="false">(</mo>
+  <mi>q</mi>
+  <mo>−</mo>
+  <mi>z</mi>
+  <mo stretchy="false">)</mo>
+</math>.</p>
+<p>The group size controls a three-way trade: smaller groups follow local distributions more accurately but increase metadata bandwidth and reduce the work sharing one scale; larger groups amortize metadata and simplify vector kernels but increase approximation error when values have heterogeneous ranges.</p>
+<p>Metadata is part of the runtime format. A decoder needs the exact grouping axis and order, group length, code width, scale type, zero-point type, tail policy, alignment and byte order. A mismatch can produce plausible but entirely wrong model outputs.</p>
+<p>Benchmarking should report payload plus metadata bytes and measure the real dequantized dot-product kernel rather than only offline reconstruction error. The best group size depends on cache behavior, SIMD width, memory bandwidth and model sensitivity.</p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,39 @@
+\hypertarget{appendix-37a39984ba66}{}
+\section*{Vector value types and component access}
+\section{Vector value types and component access}\label{vector-value-types-and-component-access}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+A vector value type stores components directly with coherent arithmetic and initialization. Named members are not an array. Named dot, cross and Hadamard operations avoid ambiguous vector multiplication; writable swizzles need explicit alias policies.
+
+A checked component accessor selects one of three real members and rejects out-of-range indices. It does not traverse from the address of the first member.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0659864c0aa3]{Vectors coordinates and affine points} --- Point, displacement and coordinate roles determine which geometric operations are meaningful.
+\item
+  \href{}{Named members versus array elements (01-Foundations-I, appendix-3f7e15effba6)} --- Array-relative pointer rules constrain safe named-component access.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-26bf6bf2fb8b]{Vector storage SIMD and boundary layouts} --- Builds on this mechanism in the connected geometry story.
+\item
+  \hyperref[appendix-380a220e2529]{Coordinate-space types and validated invariants} --- Builds on this mechanism in the connected geometry story.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Distinguish constexpr, noexcept, finite results, trivial copying and serialization. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Three\%20stored\%20numbers\%20are\%20not\%20the\%20complete\%20contract}{Teaching narrative} · \href{}{Coverage and source gap (01-Foundations-I, appendix-fd090d982a15 § Phase 6 - Parts 501-600)} · \href{}{Evidence and limits (01-Foundations-I, appendix-a103e7846d21 § Phase 6 - Source analysis and verification)} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

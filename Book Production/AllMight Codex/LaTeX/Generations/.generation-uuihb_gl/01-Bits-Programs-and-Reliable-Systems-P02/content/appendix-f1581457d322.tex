@@ -1,0 +1,56 @@
+\hypertarget{appendix-f1581457d322}{}\label{referencestart:appendix-f1581457d322}
+\section{Object identity and generation handles}\label{appendix-f1581457d322-object-identity-and-generation-handles}
+
+\hypertarget{appendix-f1581457d322-object-identity-and-generation-handles}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C007 · \textbf{Latest development:} C008
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-f1581457d322-definition-and-mechanism}
+
+\hypertarget{appendix-f1581457d322-definition-and-mechanism}{}
+
+Copied handles are distinct C++ objects with equal application identities. A validated handle does not certify a previous component borrow; assignment may preserve a C++ slot while changing logical ownership.
+
+\end{allmightroledefinition}
+
+Object value, identity and address answer different questions. Equal values can belong to different objects; the same address can host successive lifetimes. A logical index/generation handle must be checked against the owning registry's bounds, occupancy and generation. Counter wrap and registry identity remain policy obligations.
+
+\subsection{Prerequisites}\label{appendix-f1581457d322-prerequisites}
+
+\hypertarget{appendix-f1581457d322-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a82f9c438857]{Object construction and storage reuse} --- Storage reuse creates successive occupants, motivating handles that record the intended generation.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-f1581457d322-used-by}
+
+\hypertarget{appendix-f1581457d322-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-f9b8b9188c7f]{Borrow invalidation and logical identity}
+\item
+  \hyperref[appendix-1340cd1ce582]{Copy semantics and resource identity}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-f1581457d322-recall-and-next-depth}
+
+\hypertarget{appendix-f1581457d322-recall-and-next-depth}{}
+
+Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
+
+\textbf{Pending:} Deeper ownership, pointer/reference, generic programming and module rules from later sources. This is written coverage, not demonstrated personal mastery.
+
+\subsection{Source and navigation}\label{appendix-f1581457d322-source-and-navigation}
+
+\hypertarget{appendix-f1581457d322-source-and-navigation}{}
+
+\hyperref[appendix-fd090d982a15-m008---parts-113-126]{C008 development and corrections}
+
+\hyperref[01-foundations-i-ch002-values-occupants-and-addresses-tell-different-stories]{C007 teaching chapter} · \hyperref[appendix-fd090d982a15-m007---parts-101-112]{Source coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

@@ -1,0 +1,41 @@
+\hypertarget{appendix-0234ab7f86b1}{}\label{referencestart:appendix-0234ab7f86b1}
+\section{Subdivision surface masks}\label{appendix-0234ab7f86b1-subdivision-surface-masks}
+
+\hypertarget{appendix-0234ab7f86b1-subdivision-surface-masks}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-0234ab7f86b1-definition-and-mechanism}
+
+\hypertarget{appendix-0234ab7f86b1-definition-and-mechanism}{}
+
+Subdivision refines a control mesh and updates old and newly inserted vertices with local masks, producing a sequence that approaches a smooth limit surface. Loop subdivision targets triangle meshes: for an interior edge with endpoints \(a,b\) and opposite vertices \(c,d\), its new point is \(3(a+b)/8+(c+d)/8\). An old vertex of degree \(n\) becomes \((1-n\beta)S+\beta\sum_iP_i\), with the lecture's simple weight \(\beta=3/16\) for \(n=3\) and \(3/(8n)\) otherwise. Catmull--Clark targets polygon meshes: face points are face-vertex averages, interior edge points average endpoints and two adjacent face points, and old vertices use face-average, edge-midpoint-average, and original-position terms. Boundary rules differ from interior masks and must be stated. Extraordinary vertices have nonregular valence and need deliberate treatment.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-0234ab7f86b1-prerequisites}
+
+\hypertarget{appendix-0234ab7f86b1-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1aea26b2307f]{Half-edge mesh connectivity}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-0026ec42c9d5}{Convex combinations and convex hulls (Vision, XR, and Playable Worlds, Reference notes: Convex combinations and convex hulls)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-0234ab7f86b1-used-by}
+
+\hypertarget{appendix-0234ab7f86b1-used-by}{}
+
+\begin{itemize}
+\item
+  {Worlds, Images and Inference}
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=appendix-7107009c505b}{Local rigidity and mesh orientation fields (Geometry, Cameras, and Image Formation, Reference notes: Local rigidity and mesh orientation fields)} \#\# Full teaching explanation
+\end{itemize}
+
+\href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=03-visual-computing-i-ch002-meshes-connectivity-and-geometry-processing}{Meshes, connectivity, and geometry processing (Geometry, Cameras, and Image Formation, Ch. 9)} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch032-surface-descriptions-and-gaussian-images}{Surface descriptions and Gaussian images (Vision, XR, and Playable Worlds, Ch. 3)}

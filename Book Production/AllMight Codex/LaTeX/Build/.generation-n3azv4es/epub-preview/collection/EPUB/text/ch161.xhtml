@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch161.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-bc07c3d25b18-endianness" class="level2">
+<h2>Endianness</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C001 · <strong>Latest development:</strong> C003</p>
+<section id="appendix-bc07c3d25b18-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Byte order maps numeric significance to ascending addresses without changing the value. Little endian emits the low octet first; big endian emits the high octet first. The 32-bit value 0x12345678 becomes 78/56/34/12 or 12/34/56/78 respectively. It does not specify intra-byte bit order. Explicit unsigned shifts/masks define an external representation independent of native host order.</p>
+</section>
+<section id="appendix-bc07c3d25b18-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch053.xhtml#appendix-5bee2df85484-byte-and-octet" class="wikilink">Byte and octet (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Byte and octet)</a> — Byte units define both storage offsets and significance digits.</li>
+<li><a href="ch024.xhtml#appendix-280445746493-bit-significance" class="wikilink">Bit significance (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Bit significance)</a> — Distinguish byte significance from where it is stored.</li>
+</ul>
+</section>
+<section id="appendix-bc07c3d25b18-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch132.xhtml#appendix-230b59c0676b-memory-dump-interpretation" class="wikilink">Memory dump interpretation</a> — uses this mechanism to define its representation, error or validation contract.</p></li>
+<li><p><a href="ch137.xhtml#appendix-367b6abf460e-little-endian" class="wikilink">Little endian</a> — uses this mechanism as stated in its prerequisites.</p></li>
+<li><p><a href="ch153.xhtml#appendix-92e040df969a-big-endian" class="wikilink">Big endian</a> — uses this mechanism as stated in its prerequisites.</p></li>
+<li><p><a href="ch129.xhtml#appendix-11ba36693aa2-byte-swapping-and-network-order" class="wikilink">Byte swapping and network order</a> — uses this mechanism as stated in its prerequisites.</p></li>
+<li><p><a href="ch152.xhtml#appendix-91d09ebed979-serialization" class="wikilink">Serialization</a> — uses this mechanism as stated in its prerequisites.</p></li>
+</ul>
+</section>
+<section id="appendix-bc07c3d25b18-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Derive four bytes, invert each matching codec, and explain the mismatched decode.</p>
+<p><strong>Pending:</strong> Mixed endian representations and protocol-specific rules.</p>
+</section>
+<section id="appendix-bc07c3d25b18-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch124.xhtml#id_01-foundations-i-ch002-where-the-bytes-live" class="wikilink">C003 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m003---parts-41-60" class="wikilink">Part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

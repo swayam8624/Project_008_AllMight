@@ -8,7 +8,7 @@ Valid allocations are not enough if reads and writes overlap across queues or fr
 
 **Recall question:** For each write and later read, which barrier or completion event establishes both visibility and safe reuse?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 51848–55749; source-span SHA256 44c52c968d522cd4f7ec8fa483ef65aad6fbd372a7114433ca610d77b7a313de. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 52777–56678; source-span SHA256 04a5734561ca7378260ef195914ecf51207429f9c08a9d9012050d6d5806b756. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### VULKAN MEMORY MODEL, BARRIERS & MULTI-FRAME LIFETIMES
@@ -3319,11 +3319,11 @@ submit
 
 The invariant is:
 
-\[
+$$
 \boxed{
 \text{never reset command storage while GPU work can still reference it}
 }
-\]
+$$
 
 That invariant belongs in frame-lifetime management, not in ad-hoc rendering calls.
 
@@ -3333,7 +3333,7 @@ Old Metal code often creates one short-lived command buffer per frame. Metal 4 a
 
 So distinguish:
 
-\[
+$$
 \boxed{
 \text{command-buffer object identity}
 \neq
@@ -3341,7 +3341,7 @@ So distinguish:
 \neq
 \text{GPU completion epoch}
 }
-\]
+$$
 
 A persistent C++ wrapper must not imply that the commands inside the object are persistent.
 
@@ -3414,7 +3414,7 @@ This becomes important for large streamed scenes, ray-tracing acceleration struc
 
 The cross-backend truth is:
 
-\[
+$$
 \boxed{
 \text{producer access}
 \rightarrow
@@ -3422,7 +3422,7 @@ The cross-backend truth is:
 \rightarrow
 \text{consumer access}
 }
-\]
+$$
 
 If ComputeCull writes VisibleDraws and GraphicsMain reads it, the render graph owns that fact. Vulkan and Metal encode it differently. The engine should not own a function named “insert Metal barrier because Metal needs one”; it should own the producer/consumer relation.
 
@@ -3445,11 +3445,11 @@ The tensor additions matter because rendering, reconstruction, denoising and ML 
 
 An ordinary tensor represents multidimensional data with extents/strides. A cooperative tensor partitions its elements across participating threads according to a device-oriented layout. The correct mental model is therefore a collective data structure:
 
-\[
+$$
 \boxed{
 \text{one logical tensor operation distributed across lanes}
 }
-\]
+$$
 
 not “every thread owns a complete little matrix.”
 
@@ -3507,7 +3507,7 @@ The first Metal 4 section establishes the new objects. The deeper architectural 
 
 The useful way to read the Metal 4 core API is as four linked questions:
 
-\[
+$$
 \boxed{
 \begin{aligned}
 &\text{Where are commands stored?} &&\rightarrow \text{command allocator}\\
@@ -3516,7 +3516,7 @@ The useful way to read the Metal 4 core API is as four linked questions:
 &\text{What earlier work must precede later work?} &&\rightarrow \text{barrier/dependency}
 \end{aligned}
 }
-\]
+$$
 
 A renderer that answers only one of those questions is incomplete.
 
@@ -3558,11 +3558,11 @@ However, argument tables should not be interpreted as permission to place every 
 
 A good table hierarchy reflects lifetime domains.
 
-\[
+$$
 \boxed{
 \text{binding domain should usually follow resource lifetime/update domain}
 }
-\]
+$$
 
 This is the same reason a frame table, material table and scene table are often better than one mutable mega-table.
 
@@ -3595,13 +3595,13 @@ GPU table slot:
 
 The deferred-reuse rule is:
 
-\[
+$$
 \boxed{
 \text{recycle slot only after completedEpoch}
 \ge
 \text{lastEpochThatCanReadSlot}
 }
-\]
+$$
 
 That same invariant applies to Vulkan descriptor arrays, descriptor buffers, Metal argument tables, and custom GPU-visible heaps.
 
@@ -3694,9 +3694,9 @@ Pass B:
 
 That edge carries four pieces of information:
 
-\[
+$$
 (\text{resource},\text{producer access},\text{consumer access},\text{execution order})
-\]
+$$
 
 The Metal backend maps the edge to the appropriate Metal 4 dependency mechanism.
 
@@ -3723,7 +3723,7 @@ A barrier between two passes does not mean the CPU can destroy the resource afte
 
 The correct chain is:
 
-\[
+$$
 \boxed{
 \text{hazard ordering}
 \neq
@@ -3731,7 +3731,7 @@ The correct chain is:
 \neq
 \text{resource retirement}
 }
-\]
+$$
 
 This distinction should appear in backend abstractions. Otherwise one generic word such as sync ends up hiding three different problems.
 
@@ -3836,11 +3836,11 @@ A view pool reduces repeated allocation pressure.
 
 Placement sparse resources go deeper: they separate virtual resource shape from physical backing. The useful mental model is:
 
-\[
+$$
 \text{virtual texture address space}
 \quad\neq\quad
 \text{currently backed physical pages}
-\]
+$$
 
 This is valuable for huge textures, streamed worlds, and memory-budgeted content, but it means the engine must track residency at subresource/page granularity when it chooses to exploit sparsity.
 
@@ -3892,7 +3892,7 @@ Metal 4:
 
 The portable engine abstraction should therefore not try to make one API look like the other. It should preserve the shared truths:
 
-\[
+$$
 \boxed{
 \text{resource identity}
 +
@@ -3906,7 +3906,7 @@ The portable engine abstraction should therefore not try to make one API look li
 +
 \text{retirement}
 }
-\]
+$$
 
 Then each backend can express those truths using its native mechanisms.
 

@@ -1,0 +1,61 @@
+\hypertarget{appendix-34ee45f161c1}{}\label{referencestart:appendix-34ee45f161c1}
+\section{Bit casting and representation}\label{appendix-34ee45f161c1-bit-casting-and-representation}
+
+\hypertarget{appendix-34ee45f161c1-bit-casting-and-representation}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C004 · \textbf{Latest development:} C006
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-34ee45f161c1-definition-and-mechanism}
+
+\hypertarget{appendix-34ee45f161c1-definition-and-mechanism}{}
+
+A same-size eligible bit\_cast transfers representation, not numeric value. On the checked binary32 host, bit\_cast\textless uint32\_t\textgreater{}(1.0f)=3F800000, whereas a numeric cast gives 1. Pointer punning is not an equivalent legal operation.
+
+\end{allmightroledefinition}
+
+M006 separates representation copying, numeric conversion and endian coding. Eligibility does not validate arbitrary padding/target representations or establish a typed object in file-mapped bytes. Use initialized compatible scalars and explicit external encoding.
+
+\subsection{Prerequisites}\label{appendix-34ee45f161c1-prerequisites}
+
+\hypertarget{appendix-34ee45f161c1-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-cc04044b5782]{Fixed-width integer types} --- A same-size unsigned carrier holds the specified interchange representation.
+\item
+  \hyperref[appendix-f414bd4ed05c]{Interpretation contract} --- A bit transfer and a numeric conversion interpret the same carrier differently.
+\item
+  \hyperref[appendix-343615f49ddf]{IEEE-754 floating point} --- The format/arithmetic contract gives these bits their numerical domain.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-34ee45f161c1-used-by}
+
+\hypertarget{appendix-34ee45f161c1-used-by}{}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-590bbb2424c1]{Binary format contracts} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-230b59c0676b]{Memory dump interpretation} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-e90053a4b201]{Floating-point canonicalization} --- uses this mechanism in its explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-34ee45f161c1-recall-and-next-depth}
+
+\hypertarget{appendix-34ee45f161c1-recall-and-next-depth}{}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Format checks, object-model validity, byte order, and payload transport are separate constraints.
+
+\subsection{Source and navigation}\label{appendix-34ee45f161c1-source-and-navigation}
+
+\hypertarget{appendix-34ee45f161c1-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch002-bytes-become-a-durable-agreement]{Narrative development}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

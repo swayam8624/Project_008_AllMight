@@ -1,0 +1,54 @@
+\hypertarget{appendix-0104b704fb11}{}\label{referencestart:appendix-0104b704fb11}
+\section{Move casts and forwarding references}\label{appendix-0104b704fb11-move-casts-and-forwarding-references}
+
+\hypertarget{appendix-0104b704fb11-move-casts-and-forwarding-references}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C008 · \textbf{Latest development:} C009
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-0104b704fb11-definition-and-mechanism}
+
+\hypertarget{appendix-0104b704fb11-definition-and-mechanism}{}
+
+Consumer constructors/assignments now distinguish the cast from actual resource transfer. Const can force copying, return std::move(local) can prevent NRVO, and move\_if\_noexcept selects a path based on usable construction properties.
+
+\end{allmightroledefinition}
+
+std::move is an xvalue cast preserving constness, not a resource transfer. A deduced cv-unqualified T\&\& parameter can be a forwarding reference: lvalue arguments deduce T\& and collapse to an lvalue reference. std::forward\textless T\textgreater{} restores the category encoded by deduction.
+
+\subsection{Prerequisites}\label{appendix-0104b704fb11-prerequisites}
+
+\hypertarget{appendix-0104b704fb11-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5d4252a42886]{Auto decltype and reference collapsing} --- Deduction and collapsing encode the caller category forwarding restores.
+\item
+  \hyperref[appendix-1121b30eaeb0]{Value categories and materialization} --- Expression category determines viable binding and whether temporary identity is needed.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-0104b704fb11-used-by}
+
+\hypertarget{appendix-0104b704fb11-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5636651017c2]{Move operations and moved-from states}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-0104b704fb11-recall-and-next-depth}
+
+\hypertarget{appendix-0104b704fb11-recall-and-next-depth}{}
+
+Deduce both calls to relay and contrast unconditional move. Pending: deeper forwarding failures and constrained generic interfaces. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{appendix-0104b704fb11-source-and-navigation}
+
+\hypertarget{appendix-0104b704fb11-source-and-navigation}{}
+
+\hyperref[appendix-fd090d982a15-m009---parts-127-147]{C009 development}
+
+\hyperref[01-foundations-i-ch003-move-permission-is-not-resource-transfer]{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

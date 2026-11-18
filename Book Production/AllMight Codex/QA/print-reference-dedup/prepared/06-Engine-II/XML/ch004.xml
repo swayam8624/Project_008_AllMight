@@ -1,0 +1,1461 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Chapter xmlns:ns0="http://ns.adobe.com/AdobeInDesign/4.0/" id="06-engine-ii-ch028" source="Chapter Edition/03 - Game Engine/28 - BVH traversal, refitting, and SIMD.md">
+<Content ns0:pstyle="ChapterHeader" id="06-engine-ii-ch028-bvh-traversal-refitting-and-simd">28 — BVH traversal, refitting, and SIMD</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#06-engine-ii-ch027">Previous chapter</Link> · <Link href="#06-engine-ii-ch029">Next chapter</Link></Content>
+<Content ns0:pstyle="Content">A hierarchy reduces query work only when its bounds remain valid after scene changes. This chapter follows traversal and refitting, then asks which parts can be widened or vectorized without weakening correctness.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">By the end:</Strong> Trace a BVH query, update bounds after motion, and describe the invariants required for wide nodes and SIMD traversal.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Recall question:</Strong> Which bound should be tested next during traversal, and what update must occur when one primitive moves?</Content>
+
+
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch028-traversal-refitting-wide-bvhs-and-simd">TRAVERSAL, REFITTING, WIDE BVHs AND SIMD</Content>
+<Content ns0:pstyle="Content">We now own tree construction.</Content>
+<Content ns0:pstyle="Content">The next question is:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">How does a query move through that tree while doing the minimum necessary work?</Content></BlockQuote>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Depth-first BVH traversal</Strong></Content>
+<Content ns0:pstyle="Content">Consider:</Content>
+<Code ns0:pstyle="Code" language="text">                  N0
+               /      \
+             N1        N2
+            /  \      /  \
+          L3   L4   L5   L6</Code>
+<Content ns0:pstyle="Content">Suppose the ray intersects N0.</Content>
+<Content ns0:pstyle="Content">Depth-first traversal follows one branch until reaching a leaf, then returns to unexplored branches.</Content>
+<Content ns0:pstyle="Content">Pseudocode:</Content>
+<Code ns0:pstyle="Code" language="text">push(root)
+
+while stack not empty:
+    node = pop()
+
+    if query misses node.bounds:
+        continue
+
+    if leaf:
+        test primitives
+    else:
+        push children</Code>
+<Content ns0:pstyle="Content">That is the core BVH traversal algorithm.</Content>
+<Content ns0:pstyle="Content">The tree itself does not answer the final query.</Content>
+<Content ns0:pstyle="Content">It eliminates impossible work.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Explicit traversal stacks</Strong></Content>
+<Content ns0:pstyle="Content">Recursive traversal can be expressed naturally:</Content>
+<Code ns0:pstyle="Code" language="cpp">void traverse(Node* node)
+{
+    if (!intersect(node-&gt;bounds))
+        return;
+
+    if (node-&gt;leaf)
+        test(node-&gt;primitives);
+    else {
+        traverse(node-&gt;left);
+        traverse(node-&gt;right);
+    }
+}</Code>
+<Content ns0:pstyle="Content">But high-performance implementations often use explicit stacks.</Content>
+<Content ns0:pstyle="Content">Why?</Content>
+<Content ns0:pstyle="Content">Function recursion consumes call-stack state and gives the implementation less explicit control over traversal order.</Content>
+<Content ns0:pstyle="Content">An explicit stack:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::array&lt;uint32_t, 64&gt; stack;
+uint32_t top = 0;
+
+stack[top++] = root;
+
+while (top != 0) {
+    const uint32_t nodeIndex =
+        stack[--top];
+
+    ...
+}</Code>
+<Content ns0:pstyle="Content">allows you to decide which child is visited next.</Content>
+<Content ns0:pstyle="Content">It can also avoid dynamic allocation.</Content>
+<Content ns0:pstyle="Content">Your traversal currently uses:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::vector&lt;SpatialIndex&gt; stack;
+stack.reserve(64);
+stack.push_back(0);</Code>
+<Content ns0:pstyle="Content">This is convenient and safe for arbitrary depth, but <InlineCode ns0:cstyle="InlineCode">reserve(64)</InlineCode> may allocate heap storage for every query.</Content>
+<Content ns0:pstyle="Content">For a very hot ray-tracing path, a fixed local stack or small-buffer container can remove that per-query allocation.</Content>
+<Content ns0:pstyle="Content">But there is a tradeoff: fixed stacks need an overflow policy.</Content>
+<Content ns0:pstyle="Content">Never assume tree depth can never exceed the capacity unless construction enforces that invariant.</Content>
+<Content ns0:pstyle="Content">Your builder already has:</Content>
+<Code ns0:pstyle="Code" language="cpp">MaxDepth = 64;</Code>
+<Content ns0:pstyle="Content">which could support a carefully designed fixed traversal stack, although wide traversal and sibling scheduling may affect the exact capacity calculation.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Stackless BVH traversal</Strong></Content>
+<Content ns0:pstyle="Content">Can traversal avoid a stack entirely?</Content>
+<Content ns0:pstyle="Content">Yes, by storing enough structural information to know where to continue after finishing a subtree.</Content>
+<Content ns0:pstyle="Content">One option is a <Strong ns0:cstyle="Bold">parent pointer</Strong>, which your node already stores.</Content>
+<Content ns0:pstyle="Content">Another common concept is an <Strong ns0:cstyle="Bold">escape index</Strong> or <Strong ns0:cstyle="Bold">rope</Strong>.</Content>
+<Content ns0:pstyle="Content">For depth-first linearized nodes:</Content>
+<Code ns0:pstyle="Code" language="text">Node:
+    bounds
+    firstChild
+    escape</Code>
+<Content ns0:pstyle="Content">If the node intersects, descend.</Content>
+<Content ns0:pstyle="Content">If it misses, jump directly to <InlineCode ns0:cstyle="InlineCode">escape</InlineCode>.</Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">N0
+|
++-- N1
+|   |
+|   +-- L2
+|   +-- L3
+|
++-- N4</Code>
+<Content ns0:pstyle="Content">The escape link for N1 points to N4.</Content>
+<Content ns0:pstyle="Content">A stackless traversal might be:</Content>
+<Code ns0:pstyle="Code" language="cpp">index = root;
+
+while (index != INVALID)
+{
+    const Node&amp; node = nodes[index];
+
+    if (!intersects(node.bounds))
+    {
+        index = node.escape;
+        continue;
+    }
+
+    if (node.isLeaf())
+    {
+        testLeaf(node);
+        index = node.escape;
+    }
+    else
+    {
+        index = node.firstChild;
+    }
+}</Code>
+<Content ns0:pstyle="Content">The advantage is reduced per-ray stack storage.</Content>
+<Content ns0:pstyle="Content">The disadvantage is more complex node layout and potentially less flexible ordering.</Content>
+<Content ns0:pstyle="Content">For closest-hit rays, near-first ordering becomes harder if the linear layout disagrees with ray direction.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Near-child-first ray traversal</Strong></Content>
+<Content ns0:pstyle="Content">Suppose a ray intersects both child boxes.</Content>
+<Content ns0:pstyle="Content">Their first intersection parameters are:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/75f1ed6ea663e6caa8eccd0b.svg" alt="&#10;t_L=3&#10;" jobId="75f1ed6ea663e6caa8eccd0b" originalTeX="&#10;t_L=3&#10;" /></Formula>
+<Content ns0:pstyle="Content">and</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f83717015c68eeff5afc5fd3.svg" alt="&#10;t_R=20.&#10;" jobId="f83717015c68eeff5afc5fd3" originalTeX="&#10;t_R=20.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Which child should we traverse first?</Content>
+<Content ns0:pstyle="Content">For closest-hit queries, the near child.</Content>
+<Content ns0:pstyle="Content">Why?</Content>
+<Content ns0:pstyle="Content">Suppose the left subtree contains an actual primitive hit at</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/52a4c5529f217a0440429ad3.svg" alt="&#10;t=4.&#10;" jobId="52a4c5529f217a0440429ad3" originalTeX="&#10;t=4.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then current closest becomes</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/219d588cf4cfdb122132f3e7.svg" alt="&#10;t_{\text{closest}}=4.&#10;" jobId="219d588cf4cfdb122132f3e7" originalTeX="&#10;t_{\text{closest}}=4.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The right child begins at <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/346fe1c18587dc1a6fbcdf52.svg" alt="20" jobId="346fe1c18587dc1a6fbcdf52" originalTeX="20" />, therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c374fd49b41eed5fba2a2ac3.svg" alt="&#10;20&gt;4.&#10;" jobId="c374fd49b41eed5fba2a2ac3" originalTeX="&#10;20&gt;4.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The entire right subtree can now be discarded.</Content>
+<Content ns0:pstyle="Content">If we traversed the far child first, we might perform substantial work before discovering the near hit.</Content>
+<Content ns0:pstyle="Content">Therefore near-first ordering is not required for correctness, but can massively improve pruning.</Content>
+<Content ns0:pstyle="Content">Your current <InlineCode ns0:cstyle="InlineCode">Raycast()</InlineCode> calculates:</Content>
+<Code ns0:pstyle="Code" language="cpp">leftDistance
+rightDistance</Code>
+<Content ns0:pstyle="Content">and when both children intersect:</Content>
+<Code ns0:pstyle="Code" language="cpp">if (leftDistance &lt; rightDistance)
+{
+    stack.push_back(node.Right);
+    stack.push_back(node.Left);
+}</Code>
+<Content ns0:pstyle="Content">Because the stack is LIFO, the left child is processed next.</Content>
+<Content ns0:pstyle="Content">So your closest-hit traversal already implements near-child-first ordering.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Closest-hit pruning by current ray t</Strong></Content>
+<Content ns0:pstyle="Content">Suppose current nearest primitive hit is</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ac181e9f0940e4aec7e8fe5d.svg" alt="&#10;t_{\text{best}}.&#10;" jobId="ac181e9f0940e4aec7e8fe5d" originalTeX="&#10;t_{\text{best}}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For any node whose bounding box cannot be entered before <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cc4d8ddc163b305691071c39.svg" alt="t_{\text{best}}" jobId="cc4d8ddc163b305691071c39" originalTeX="t_{\text{best}}" />, no primitive in that node can improve the solution.</Content>
+<Content ns0:pstyle="Content">Thus the node’s ray-box test uses:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6abd8bfcfdf44254fc7a097a.svg" alt="&#10;t_{\max}=t_{\text{best}}.&#10;" jobId="6abd8bfcfdf44254fc7a097a" originalTeX="&#10;t_{\max}=t_{\text{best}}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Every time we discover a closer primitive:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/aca25cb34a7f391b9be59d19.svg" alt="&#10;t_{\text{best}}&#10;\leftarrow&#10;t_{\text{hit}}.&#10;" jobId="aca25cb34a7f391b9be59d19" originalTeX="&#10;t_{\text{best}}&#10;\leftarrow&#10;t_{\text{hit}}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The search domain shrinks dynamically.</Content>
+<Content ns0:pstyle="Content">This is branch-and-bound reasoning.</Content>
+<Content ns0:pstyle="Content">The BVH tree gives spatial lower bounds.</Content>
+<Content ns0:pstyle="Content">The current closest hit gives an upper bound.</Content>
+<Content ns0:pstyle="Content">When:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/075243dafb934d8498a0fab2.svg" alt="&#10;t_{\text{nodeNear}}&gt;t_{\text{best}},&#10;" jobId="075243dafb934d8498a0fab2" originalTeX="&#10;t_{\text{nodeNear}}&gt;t_{\text{best}},&#10;" /></Formula>
+<Content ns0:pstyle="Content">the subtree cannot contain the optimum.</Content>
+<Content ns0:pstyle="Content">This same pattern appears far beyond ray tracing:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7870e62567b3e66981306231.svg" alt="&#10;\boxed{&#10;\text{Lower bound of unexplored region}&#10;&gt;&#10;\text{best known solution}&#10;\Rightarrow&#10;\text{prune}&#10;}&#10;" jobId="7870e62567b3e66981306231" originalTeX="&#10;\boxed{&#10;\text{Lower bound of unexplored region}&#10;&gt;&#10;\text{best known solution}&#10;\Rightarrow&#10;\text{prune}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Your implementation correctly passes <InlineCode ns0:cstyle="InlineCode">closestDistance</InlineCode> into its node AABB tests and updates it whenever a closer primitive hit appears.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">A subtle inefficiency in your current traversal</Strong></Content>
+<Content ns0:pstyle="Content">Your implementation performs child bounds tests here:</Content>
+<Code ns0:pstyle="Code" language="cpp">RayIntersectsAABB(
+    ray,
+    bvh.Nodes[node.Left].Bounds,
+    closestDistance,
+    leftDistance);</Code>
+<Content ns0:pstyle="Content">and similarly for right.</Content>
+<Content ns0:pstyle="Content">It then pushes the intersected child.</Content>
+<Content ns0:pstyle="Content">When that child is popped on the next loop iteration, the code again performs:</Content>
+<Code ns0:pstyle="Code" language="cpp">RayIntersectsAABB(
+    ray,
+    node.Bounds,
+    closestDistance,
+    boundsDistance);</Code>
+<Content ns0:pstyle="Content">Therefore many node AABBs are tested twice.</Content>
+<Content ns0:pstyle="Content">Why might this have been written this way?</Content>
+<Content ns0:pstyle="Content">Because child pretesting is required to determine near versus far ordering.</Content>
+<Content ns0:pstyle="Content">A common optimization is to store the already calculated entry distance on the stack:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct StackEntry
+{
+    uint32_t node;
+    float nearT;
+};</Code>
+<Content ns0:pstyle="Content">Then the popped node need not repeat the ray-box test unless the current closest hit has changed enough that a cheap <InlineCode ns0:cstyle="InlineCode">nearT &gt; closestDistance</InlineCode> check can reject it.</Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="cpp">if (entry.nearT &gt; closestDistance)
+    continue;</Code>
+<Content ns0:pstyle="Content">This converts a repeated six-slab test into one scalar comparison.</Content>
+<Content ns0:pstyle="Content">Whether this materially improves performance must be benchmarked.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Any-hit traversal</Strong></Content>
+<Content ns0:pstyle="Content">Any-hit asks:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cb7ccb7c00f00acd0037a722.svg" alt="&#10;\exists p:&#10;\operatorname{Intersect}(Q,p)?&#10;" jobId="cb7ccb7c00f00acd0037a722" originalTeX="&#10;\exists p:&#10;\operatorname{Intersect}(Q,p)?&#10;" /></Formula>
+<Content ns0:pstyle="Content">The moment one acceptable hit is found:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/21ed22d15e7591d7d9a8e2c1.svg" alt="&#10;\boxed{\text{return true}}&#10;" jobId="21ed22d15e7591d7d9a8e2c1" originalTeX="&#10;\boxed{\text{return true}}&#10;" /></Formula>
+<Content ns0:pstyle="Content">No closest distance must be maintained.</Content>
+<Content ns0:pstyle="Content">This makes it ideal for binary visibility queries.</Content>
+<Content ns0:pstyle="Content">Shadow ray:</Content>
+<Code ns0:pstyle="Code" language="text">Light ------------------------- Surface point
+             ^
+             |
+      Is anything here?</Code>
+<Content ns0:pstyle="Content">If one opaque occluder exists, traversal ends.</Content>
+<Content ns0:pstyle="Content">Your <InlineCode ns0:cstyle="InlineCode">RaycastAny()</InlineCode> does exactly this.</Content>
+<Content ns0:pstyle="Content">It traverses nodes until <InlineCode ns0:cstyle="InlineCode">primitiveHit()</InlineCode> returns true, then returns immediately.</Content>
+<Content ns0:pstyle="Content">It does <Strong ns0:cstyle="Bold">not</Strong> perform near-child sorting.</Content>
+<Content ns0:pstyle="Content">That does not affect correctness.</Content>
+<Content ns0:pstyle="Content">However, ordering can still affect performance: a child likely to contain a hit should ideally be visited first.</Content>
+<Content ns0:pstyle="Content">For incoherent shadow rays, deciding that order may or may not be worth the additional box-intersection work.</Content>
+<Content ns0:pstyle="Content">This is a workload-dependent tradeoff.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">One current API subtlety: <InlineCode ns0:cstyle="InlineCode">Raycast().Hits</InlineCode></Strong></Content>
+<Content ns0:pstyle="Content">Your closest-hit traversal performs:</Content>
+<Code ns0:pstyle="Code" language="cpp">if (hit &amp;&amp;
+    hit-&gt;Distance &lt;= closestDistance)
+{
+    result.Hits.push_back(*hit);
+    result.Closest = *hit;
+    closestDistance = hit-&gt;Distance;
+}</Code>
+<Content ns0:pstyle="Content">That means <InlineCode ns0:cstyle="InlineCode">result.Hits</InlineCode> is <Strong ns0:cstyle="Bold">not an all-hit list</Strong>.</Content>
+<Content ns0:pstyle="Content">Suppose traversal encounters distances:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7759a5f39b3e4e6a6a6808ac.svg" alt="&#10;12,\quad 7,\quad 9,\quad 3.&#10;" jobId="7759a5f39b3e4e6a6a6808ac" originalTeX="&#10;12,\quad 7,\quad 9,\quad 3.&#10;" /></Formula>
+<Content ns0:pstyle="Content">The stored sequence becomes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f42bdedc7543fc9da8371ec5.svg" alt="&#10;[12,7,3].&#10;" jobId="f42bdedc7543fc9da8371ec5" originalTeX="&#10;[12,7,3].&#10;" /></Formula>
+<Content ns0:pstyle="Content">The hit at 9 is valid geometrically but is discarded because 7 was already closer.</Content>
+<Content ns0:pstyle="Content">Therefore <InlineCode ns0:cstyle="InlineCode">Hits</InlineCode> currently means something like:</Content>
+<BlockQuote><Content ns0:pstyle="Quote">sequence of progressively improving closest candidates encountered during traversal.</Content></BlockQuote>
+<Content ns0:pstyle="Content">That is a perfectly usable internal diagnostic concept, but the name <InlineCode ns0:cstyle="InlineCode">Hits</InlineCode> can be mistaken for an all-hit query.</Content>
+<Content ns0:pstyle="Content">If external users interpret it as every ray hit, the API would be misleading.</Content>
+<Content ns0:pstyle="Content">A clearer design could expose only <InlineCode ns0:cstyle="InlineCode">Closest</InlineCode>, or rename the vector to something like <InlineCode ns0:cstyle="InlineCode">ImprovingHits</InlineCode>/<InlineCode ns0:cstyle="InlineCode">TraversalHits</InlineCode>, while implementing a distinct <InlineCode ns0:cstyle="InlineCode">RaycastAll()</InlineCode> traversal if actual all-hit semantics are needed.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">BVH overlap traversal</Strong></Content>
+<Content ns0:pstyle="Content">Ray traversal is only one BVH query.</Content>
+<Content ns0:pstyle="Content">Consider AABB query <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/53a1fd7a21736b779e4ab8fe.svg" alt="Q" jobId="53a1fd7a21736b779e4ab8fe" originalTeX="Q" />.</Content>
+<Content ns0:pstyle="Content">At node <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea63a9f9a03c273b93026960.svg" alt="N" jobId="ea63a9f9a03c273b93026960" originalTeX="N" />:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8f94d9384af4ab778d710830.svg" alt="&#10;Q\cap B_N=\varnothing&#10;\Rightarrow&#10;\text{skip entire subtree}.&#10;" jobId="8f94d9384af4ab778d710830" originalTeX="&#10;Q\cap B_N=\varnothing&#10;\Rightarrow&#10;\text{skip entire subtree}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">If it overlaps, continue.</Content>
+<Content ns0:pstyle="Content">At leaves, test the actual primitive bounds:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/222e84f26a92460a7bd212cc.svg" alt="&#10;Q\cap B_{P_i}\ne\varnothing.&#10;" jobId="222e84f26a92460a7bd212cc" originalTeX="&#10;Q\cap B_{P_i}\ne\varnothing.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Canonical traversal:</Content>
+<Code ns0:pstyle="Code" language="cpp">stack.push(root);
+
+while (!stack.empty())
+{
+    Node node = pop();
+
+    if (!overlap(query, node.bounds))
+        continue;
+
+    if (node.isLeaf())
+    {
+        for (primitive : node)
+            if (overlap(query, primitive.bounds))
+                output.push_back(primitive);
+    }
+    else
+    {
+        stack.push(node.left);
+        stack.push(node.right);
+    }
+}</Code>
+<Content ns0:pstyle="Content">Your <InlineCode ns0:cstyle="InlineCode">QueryAABB()</InlineCode> implements exactly this structure and supports layer-mask filtering.</Content>
+<Content ns0:pstyle="Content">This is acceleration, not necessarily final narrowphase.</Content>
+<Content ns0:pstyle="Content">If each <InlineCode ns0:cstyle="InlineCode">SpatialPrimitive.Bounds</InlineCode> represents a broadphase collider box, a returned ID means:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9e241002a9db76f6a59b6639.svg" alt="&#10;\text{&quot;candidate whose bound overlaps query&quot;}&#10;" jobId="9e241002a9db76f6a59b6639" originalTeX="&#10;\text{&quot;candidate whose bound overlaps query&quot;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">not necessarily:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b948f0ec4582b85688a128b4.svg" alt="&#10;\text{&quot;exact underlying shape overlaps query&quot;}.&#10;" jobId="b948f0ec4582b85688a128b4" originalTeX="&#10;\text{&quot;exact underlying shape overlaps query&quot;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That distinction prevents broadphase results from being mistaken for exact collision results.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">BVH point query</Strong></Content>
+<Content ns0:pstyle="Content">A point can be treated as a zero-size AABB:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8735f8fe60365cae7e4fc0ee.svg" alt="&#10;B_P=[P,P].&#10;" jobId="8735f8fe60365cae7e4fc0ee" originalTeX="&#10;B_P=[P,P].&#10;" /></Formula>
+<Content ns0:pstyle="Content">Your <InlineCode ns0:cstyle="InlineCode">QueryPoint()</InlineCode> literally delegates:</Content>
+<Code ns0:pstyle="Code" language="cpp">return QueryAABB(
+    bvh,
+    SpatialAABB::FromPoint(point),
+    layerMask);</Code>
+<Content ns0:pstyle="Content">That is excellent API reuse because containment:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b95485039931ce42574561c9.svg" alt="&#10;P\in B&#10;" jobId="b95485039931ce42574561c9" originalTeX="&#10;P\in B&#10;" /></Formula>
+<Content ns0:pstyle="Content">is equivalent to:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dc8216c0ae4c7aae7d4ca374.svg" alt="&#10;[P,P]\cap B\ne\varnothing.&#10;" jobId="dc8216c0ae4c7aae7d4ca374" originalTeX="&#10;[P,P]\cap B\ne\varnothing.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Again, the result identifies primitive <Strong ns0:cstyle="Bold">bounds</Strong> containing the point.</Content>
+<Content ns0:pstyle="Content">It does not prove that the point lies inside an arbitrary triangle mesh or convex hull.</Content>
+<Content ns0:pstyle="Content">That would require the appropriate narrowphase/containment test.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">BVH frustum query</Strong></Content>
+<Content ns0:pstyle="Content">For each node:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3ed6e13b4a0fa196ac923f04.svg" alt="&#10;F\cap B_N=\varnothing&#10;\Rightarrow&#10;\text{prune}.&#10;" jobId="3ed6e13b4a0fa196ac923f04" originalTeX="&#10;F\cap B_N=\varnothing&#10;\Rightarrow&#10;\text{prune}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">If the bound survives frustum rejection, descend.</Content>
+<Content ns0:pstyle="Content">At leaves, classify primitive bounds.</Content>
+<Content ns0:pstyle="Content">Your <InlineCode ns0:cstyle="InlineCode">QueryFrustum()</InlineCode> uses:</Content>
+<Code ns0:pstyle="Code" language="cpp">frustum.IntersectsAABB(node.Bounds)</Code>
+<Content ns0:pstyle="Content">for nodes and again for leaf primitive bounds.</Content>
+<Content ns0:pstyle="Content">This is particularly effective for rendering because the hierarchy can reject entire groups of objects with six-plane tests against one node bound.</Content>
+<Content ns0:pstyle="Content">If 10,000 nearby renderables occupy one region outside the camera, a high-level BVH node may eliminate all 10,000.</Content>
+<Content ns0:pstyle="Content">The query structure becomes:</Content>
+<Code ns0:pstyle="Code" language="text">Camera frustum
+       |
+       v
+BVH root
+       |
+       +--- outside? ---&gt; reject enormous subtree
+       |
+       v
+surviving children
+       |
+       v
+leaf bounds
+       |
+       v
+visible candidate IDs</Code>
+<Content ns0:pstyle="Content">The output should normally remain conservative for rendering: extra visible candidates are preferable to incorrectly disappearing geometry.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">BVH refitting</Strong></Content>
+<Content ns0:pstyle="Content">Suppose the topology remains valid but primitives move.</Content>
+<Content ns0:pstyle="Content">Do we have to rebuild the tree?</Content>
+<Content ns0:pstyle="Content">Not necessarily.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Refitting</Strong> preserves the tree topology and updates bounds.</Content>
+<Content ns0:pstyle="Content">For a leaf:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2b8b9230fceb4bf300517c57.svg" alt="&#10;B_L&#10;=&#10;\bigcup_{p\in L}&#10;B(p).&#10;" jobId="2b8b9230fceb4bf300517c57" originalTeX="&#10;B_L&#10;=&#10;\bigcup_{p\in L}&#10;B(p).&#10;" /></Formula>
+<Content ns0:pstyle="Content">For an internal node:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4b3b3a38864c707422430e8c.svg" alt="&#10;B_N=&#10;B_{\text{left}(N)}&#10;\cup&#10;B_{\text{right}(N)}.&#10;" jobId="4b3b3a38864c707422430e8c" originalTeX="&#10;B_N=&#10;B_{\text{left}(N)}&#10;\cup&#10;B_{\text{right}(N)}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore process bottom-up.</Content>
+<Code ns0:pstyle="Code" language="cpp">void refitBVH(
+    BVH&amp; bvh,
+    std::span&lt;const AABB&gt; updatedPrimitiveBounds)
+{
+    // 1. Update leaf bounds.
+    for (std::size_t nodeIndex = 0;
+         nodeIndex &lt; bvh.nodes.size();
+         ++nodeIndex)
+    {
+        Node&amp; node = bvh.nodes[nodeIndex];
+
+        if (!node.isLeaf())
+            continue;
+
+        AABB bounds = AABB::Empty();
+
+        for (std::uint32_t i = 0;
+             i &lt; node.primitiveCount;
+             ++i)
+        {
+            const auto primitive =
+                bvh.primitiveOrder[
+                    node.firstPrimitive + i];
+
+            bounds.expand(
+                updatedPrimitiveBounds[primitive]);
+        }
+
+        node.bounds = bounds;
+    }
+
+    // 2. Update internal nodes bottom-up.
+    //
+    // This assumes construction order guarantees children
+    // appear after parents, as in a pre-order flat layout.
+    for (std::size_t i = bvh.nodes.size();
+         i-- &gt; 0;)
+    {
+        Node&amp; node = bvh.nodes[i];
+
+        if (node.isLeaf())
+            continue;
+
+        node.bounds =
+            Union(
+                bvh.nodes[node.left].bounds,
+                bvh.nodes[node.right].bounds);
+    }
+}</Code>
+<Content ns0:pstyle="Content">This is usually much cheaper than rebuilding because no split decisions or sorting are performed.</Content>
+<Content ns0:pstyle="Content">If each node is visited once:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/87db36f3c1865616f1c449dc.svg" alt="&#10;T_{\text{refit}}=O(N_{\text{nodes}}).&#10;" jobId="87db36f3c1865616f1c449dc" originalTeX="&#10;T_{\text{refit}}=O(N_{\text{nodes}}).&#10;" /></Formula>
+<Content ns0:pstyle="Content">For a binary BVH with <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c2ac1f4c776140c85ede3c96.svg" alt="L" jobId="c2ac1f4c776140c85ede3c96" originalTeX="L" /> leaves, internal node count is on the order of <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a266ec0301151cdb08f7ef80.svg" alt="L-1" jobId="a266ec0301151cdb08f7ef80" originalTeX="L-1" />, so refitting is linear.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">When reverse node order is valid</Strong></Content>
+<Content ns0:pstyle="Content">The previous code assumes a construction layout in which descendants have larger indices than ancestors.</Content>
+<Content ns0:pstyle="Content">Your recursive builder does exactly that:</Content>
+<List type="ordered" start="1" numberStyle="Decimal" delimiter="Period">
+<ListItem><Content ns0:pstyle="Content">append parent,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">recurse left,</Content></ListItem>
+<ListItem><Content ns0:pstyle="Content">recurse right.</Content></ListItem>
+</List>
+<Content ns0:pstyle="Content">Thus:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5c99d79b06f4684358ca981c.svg" alt="&#10;index(parent)&lt;index(child).&#10;" jobId="5c99d79b06f4684358ca981c" originalTeX="&#10;index(parent)&lt;index(child).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Consequently walking the flat node array backwards visits children before parents.</Content>
+<Content ns0:pstyle="Content">That makes reverse-order refitting possible without recursion.</Content>
+<Content ns0:pstyle="Content">This is a beautiful example of how construction order creates an algorithmic property later.</Content>
+<Content ns0:pstyle="Content">The flat layout is not merely storage.</Content>
+<Content ns0:pstyle="Content">It can encode traversal/refit relationships.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Selective refitting</Strong></Content>
+<Content ns0:pstyle="Content">Suppose only one primitive moves.</Content>
+<Content ns0:pstyle="Content">Refitting the entire tree is unnecessary.</Content>
+<Content ns0:pstyle="Content">If leaves know their parents, update the affected leaf, then walk upward:</Content>
+<Code ns0:pstyle="Code" language="text">changed primitive
+      |
+      v
+leaf bound
+      |
+      v
+parent
+      |
+      v
+grandparent
+      |
+      v
+root</Code>
+<Content ns0:pstyle="Content">At each ancestor:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5c63b7f756464e8b3fed18d0.svg" alt="&#10;B_N=&#10;B_L\cup B_R.&#10;" jobId="5c63b7f756464e8b3fed18d0" originalTeX="&#10;B_N=&#10;B_L\cup B_R.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Your <InlineCode ns0:cstyle="InlineCode">BVHNode</InlineCode> already stores <InlineCode ns0:cstyle="InlineCode">Parent</InlineCode>.</Content>
+<Content ns0:pstyle="Content">Therefore the representation already contains one of the pieces needed for incremental refitting.</Content>
+<Content ns0:pstyle="Content">What is missing is a reverse mapping from primitive to containing leaf.</Content>
+<Content ns0:pstyle="Content">You currently know:</Content>
+<Code ns0:pstyle="Code" language="text">leaf -&gt; primitive range</Code>
+<Content ns0:pstyle="Content">but efficient selective updates also benefit from:</Content>
+<Code ns0:pstyle="Code" language="text">primitive -&gt; leaf</Code>
+<Content ns0:pstyle="Content">Otherwise locating the affected leaf may itself require searching the tree or scanning leaves.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Rebuilding</Strong></Content>
+<Content ns0:pstyle="Content">Refit changes bounds.</Content>
+<Content ns0:pstyle="Content">Rebuild changes topology.</Content>
+<Content ns0:pstyle="Content">A rebuild re-runs partition decisions:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4c266ee905331e7cf72cdc69.svg" alt="&#10;\text{primitives}&#10;\rightarrow&#10;\text{new bounds}&#10;\rightarrow&#10;\text{new splits}&#10;\rightarrow&#10;\text{new tree}.&#10;" jobId="4c266ee905331e7cf72cdc69" originalTeX="&#10;\text{primitives}&#10;\rightarrow&#10;\text{new bounds}&#10;\rightarrow&#10;\text{new splits}&#10;\rightarrow&#10;\text{new tree}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Why ever pay this cost?</Content>
+<Content ns0:pstyle="Content">Because topology can become poor after large motion.</Content>
+<Content ns0:pstyle="Content">Imagine the tree initially separates objects spatially:</Content>
+<Code ns0:pstyle="Code" language="text">LEFT subtree              RIGHT subtree
+
+AAAA AAAAA                BBBB BBBB</Code>
+<Content ns0:pstyle="Content">After deformation:</Content>
+<Code ns0:pstyle="Code" language="text">LEFT objects:   A A A A scattered everywhere
+RIGHT objects:  B B B B scattered everywhere</Code>
+<Content ns0:pstyle="Content">Refitting creates enormous overlapping child bounds:</Content>
+<Code ns0:pstyle="Code" language="text">+---------------------------------------+
+| LEFT BOUND                            |
+|     +---------------------------------+----+
+|     | RIGHT BOUND                          |
+|     |                                      |
++-----|--------------------------------------+
+      +--------------------------------------+</Code>
+<Content ns0:pstyle="Content">The tree remains mathematically valid.</Content>
+<Content ns0:pstyle="Content">But nearly every query enters both branches.</Content>
+<Content ns0:pstyle="Content">Acceleration collapses.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Quality degradation under deformation</Strong></Content>
+<Content ns0:pstyle="Content">This distinction is essential:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4592a925e04ded75487acf7d.svg" alt="&#10;\boxed{&#10;\text{BVH correctness}&#10;\ne&#10;\text{BVH quality}&#10;}&#10;" jobId="4592a925e04ded75487acf7d" originalTeX="&#10;\boxed{&#10;\text{BVH correctness}&#10;\ne&#10;\text{BVH quality}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">A refitted tree can be 100% correct and almost useless.</Content>
+<Content ns0:pstyle="Content">Useful quality measures include expected SAH cost, sibling overlap, child-to-parent area ratio, traversal node counts, or actual measured query cost.</Content>
+<Content ns0:pstyle="Content">For an internal node, a simple overlap-volume metric could be:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2b3f5a7af01c222749324b5d.svg" alt="&#10;Q_{\text{overlap}}&#10;=&#10;\frac{&#10;V(B_L\cap B_R)&#10;}{&#10;V(B_P)&#10;}.&#10;" jobId="2b3f5a7af01c222749324b5d" originalTeX="&#10;Q_{\text{overlap}}&#10;=&#10;\frac{&#10;V(B_L\cap B_R)&#10;}{&#10;V(B_P)&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">But volume overlap does not necessarily predict ray traversal perfectly.</Content>
+<Content ns0:pstyle="Content">SAH-inspired metric:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d5c1cf8c9a763dfd501e1072.svg" alt="&#10;Q_N&#10;=&#10;\frac{A_L}{A_P}C_L&#10;+&#10;\frac{A_R}{A_P}C_R.&#10;" jobId="d5c1cf8c9a763dfd501e1072" originalTeX="&#10;Q_N&#10;=&#10;\frac{A_L}{A_P}C_L&#10;+&#10;\frac{A_R}{A_P}C_R.&#10;" /></Formula>
+<Content ns0:pstyle="Content">An even better production metric may be direct telemetry:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0b38ed4fa43b73757b18a190.svg" alt="&#10;\text{average visited nodes/query}&#10;" jobId="0b38ed4fa43b73757b18a190" originalTeX="&#10;\text{average visited nodes/query}&#10;" /></Formula>
+<Content ns0:pstyle="Content">and</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/beb84b50c43761264d764597.svg" alt="&#10;\text{primitive tests/query}.&#10;" jobId="beb84b50c43761264d764597" originalTeX="&#10;\text{primitive tests/query}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Your traversal already returns:</Content>
+<Code ns0:pstyle="Code" language="cpp">VisitedNodes
+TestedPrimitives</Code>
+<Content ns0:pstyle="Content">which gives you exactly the instrumentation required to detect quality degradation empirically.</Content>
+<Content ns0:pstyle="Content">A practical rebuild policy could look like:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fc145b0d49a2b864fbcecda7.svg" alt="&#10;\frac{&#10;\text{current avg visited nodes}&#10;}{&#10;\text{baseline avg visited nodes}&#10;}&#10;&gt;\tau&#10;\quad\Rightarrow\quad&#10;\text{schedule rebuild}.&#10;" jobId="fc145b0d49a2b864fbcecda7" originalTeX="&#10;\frac{&#10;\text{current avg visited nodes}&#10;}{&#10;\text{baseline avg visited nodes}&#10;}&#10;&gt;\tau&#10;\quad\Rightarrow\quad&#10;\text{schedule rebuild}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is not automatically optimal, but it gives you a measurable control signal instead of guessing.</Content>
+<Content ns0:pstyle="Content">Dynamic-scene BVH literature explicitly observes that refitting can preserve correctness while traversal performance deteriorates enough to justify rebuilding. <Link href="https://www.researchgate.net/publication/234777055_Special_Section_Parallel_Graphics_and_Visualization_Fast_parallel_and_asynchronous_construction_of_BVHs_for_ray_tracing_animated_scenes?utm_source=chatgpt.com">ResearchGate</Link></Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Your repository currently has no static-BVH refit/rebuild API</Strong></Content>
+<Content ns0:pstyle="Content">I searched the current <InlineCode ns0:cstyle="InlineCode">KairoSpatial</InlineCode> implementation for static-BVH refit, rebuild, quantized-node, wide-node and packet-traversal implementations.</Content>
+<Content ns0:pstyle="Content">They are not currently exposed as implemented BVH mechanisms.</Content>
+<Content ns0:pstyle="Content">That means Parts 1330–1336 are primarily <Strong ns0:cstyle="Bold">canonical theory and implementation targets</Strong>, not descriptions of already-existing Kairo behavior.</Content>
+<Content ns0:pstyle="Content">This is important to say explicitly rather than pretending the repository already contains all curriculum topics.</Content>
+<Content ns0:pstyle="Content">You do already possess several prerequisites for refitting:</Content>
+<Code ns0:pstyle="Code" language="text">BVHNode.Parent
+BVHNode.Bounds
+BVHNode.Left / Right
+leaf primitive ranges
+flat recursive node order</Code>
+<Content ns0:pstyle="Content">So adding static refit would fit naturally into the current representation.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Wide BVHs</Strong></Content>
+<Content ns0:pstyle="Content">So far every internal node has two children.</Content>
+<Content ns0:pstyle="Content">That is BVH2.</Content>
+<Content ns0:pstyle="Content">A wide BVH might use four children:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f99f58354b08ffe4229395f6.svg" alt="&#10;BVH4&#10;" jobId="f99f58354b08ffe4229395f6" originalTeX="&#10;BVH4&#10;" /></Formula>
+<Content ns0:pstyle="Content">or eight:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3c403688f3789d2a92571d94.svg" alt="&#10;BVH8.&#10;" jobId="3c403688f3789d2a92571d94" originalTeX="&#10;BVH8.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">Binary:
+
+                 Node
+                /    \
+               A      B
+
+
+BVH4:
+
+              Node
+          /    |    |    \
+         A     B    C     D</Code>
+<Content ns0:pstyle="Content">Why make nodes wider?</Content>
+<Content ns0:pstyle="Content">Tree depth decreases.</Content>
+<Content ns0:pstyle="Content">A perfectly balanced binary tree with <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea63a9f9a03c273b93026960.svg" alt="N" jobId="ea63a9f9a03c273b93026960" originalTeX="N" /> leaves has approximate depth:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8f89d169eed2b0ce0b74128d.svg" alt="&#10;D_2\approx\log_2N.&#10;" jobId="8f89d169eed2b0ce0b74128d" originalTeX="&#10;D_2\approx\log_2N.&#10;" /></Formula>
+<Content ns0:pstyle="Content">For branching factor <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d2884c0481e0eb7ae5d428e3.svg" alt="k" jobId="d2884c0481e0eb7ae5d428e3" originalTeX="k" />:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/df239220a6bd83f2ccdc8ea1.svg" alt="&#10;D_k\approx\log_kN.&#10;" jobId="df239220a6bd83f2ccdc8ea1" originalTeX="&#10;D_k\approx\log_kN.&#10;" /></Formula>
+<Content ns0:pstyle="Content">With one million leaves:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1a97484751018f4c5ee776a0.svg" alt="&#10;\log_2(10^6)\approx20&#10;" jobId="1a97484751018f4c5ee776a0" originalTeX="&#10;\log_2(10^6)\approx20&#10;" /></Formula>
+<Content ns0:pstyle="Content">while</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0219fe9ab9e2e33440b92489.svg" alt="&#10;\log_8(10^6)\approx6.64.&#10;" jobId="0219fe9ab9e2e33440b92489" originalTeX="&#10;\log_8(10^6)\approx6.64.&#10;" /></Formula>
+<Content ns0:pstyle="Content">So a BVH8 can reduce traversal levels dramatically.</Content>
+<Content ns0:pstyle="Content">But every node now needs to test more children.</Content>
+<Content ns0:pstyle="Content">This becomes attractive when SIMD can test several child boxes in parallel.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Binary traversal versus wide traversal</Strong></Content>
+<Content ns0:pstyle="Content">For BVH2:</Content>
+<Code ns0:pstyle="Code" language="text">test left box
+test right box
+choose order</Code>
+<Content ns0:pstyle="Content">For BVH8:</Content>
+<Code ns0:pstyle="Code" language="text">test 8 child boxes simultaneously
+        |
+        v
+8-bit hit mask
+        |
+        v
+sort/interleave surviving children
+        |
+        v
+continue</Code>
+<Content ns0:pstyle="Content">A wide node representation might use structure-of-arrays:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct BVH8Node
+{
+    float minX[8];
+    float minY[8];
+    float minZ[8];
+
+    float maxX[8];
+    float maxY[8];
+    float maxZ[8];
+
+    uint32_t child[8];
+};</Code>
+<Content ns0:pstyle="Content">That layout is deliberately SIMD-friendly.</Content>
+<Content ns0:pstyle="Content">One vector load obtains multiple <InlineCode ns0:cstyle="InlineCode">minX</InlineCode> values.</Content>
+<Content ns0:pstyle="Content">This connects directly back to the SoA material from M021/M078.</Content>
+<Content ns0:pstyle="Content">Wide BVHs are therefore not merely trees with more children.</Content>
+<Content ns0:pstyle="Content">They are a co-design between:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/aaef962afdcad81447111616.svg" alt="&#10;\boxed{&#10;\text{tree topology}&#10;+&#10;\text{node layout}&#10;+&#10;\text{SIMD width}&#10;+&#10;\text{traversal algorithm}.&#10;}&#10;" jobId="aaef962afdcad81447111616" originalTeX="&#10;\boxed{&#10;\text{tree topology}&#10;+&#10;\text{node layout}&#10;+&#10;\text{SIMD width}&#10;+&#10;\text{traversal algorithm}.&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Embree is an excellent production example of this architecture-aware design, including BVH4 variants and multiple primitive layouts selected for different memory/performance characteristics. <Link href="https://embree.github.io/papers/2014-Siggraph-Embree.pdf?utm_source=chatgpt.com">embree.github.io</Link></Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Wide-node construction</Strong></Content>
+<Content ns0:pstyle="Content">How do we obtain a BVH4 or BVH8?</Content>
+<Content ns0:pstyle="Content">One option is to build a binary BVH first and collapse subtrees.</Content>
+<Content ns0:pstyle="Content">Suppose:</Content>
+<Code ns0:pstyle="Code" language="text">              P
+            /   \
+           A     B
+          / \   / \
+         C  D  E  F</Code>
+<Content ns0:pstyle="Content">Collapse one level:</Content>
+<Code ns0:pstyle="Code" language="text">              P
+        /     |     |     \
+       C      D     E      F</Code>
+<Content ns0:pstyle="Content">Now P has four children.</Content>
+<Content ns0:pstyle="Content">The collapse decision should consider traversal quality and node width.</Content>
+<Content ns0:pstyle="Content">Blindly flattening everything may worsen bounding overlap.</Content>
+<Content ns0:pstyle="Content">More advanced builders construct wide BVHs directly or use SAH-based collapsing.</Content>
+<Content ns0:pstyle="Content">The important invariant remains:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/66026ea11ad3a26625776d0a.svg" alt="&#10;B_P&#10;\supseteq&#10;\bigcup_iB_{C_i}.&#10;" jobId="66026ea11ad3a26625776d0a" originalTeX="&#10;B_P&#10;\supseteq&#10;\bigcup_iB_{C_i}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Quantized BVH bounds</Strong></Content>
+<Content ns0:pstyle="Content">Bounds consume substantial memory.</Content>
+<Content ns0:pstyle="Content">For a BVH8 storing full 32-bit floating point bounds:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d56f88e97aa8133df58d65a7.svg" alt="&#10;8\text{ children}&#10;\times&#10;6\text{ coordinates}&#10;\times&#10;4\text{ bytes}&#10;=&#10;192\text{ bytes}&#10;" jobId="d56f88e97aa8133df58d65a7" originalTeX="&#10;8\text{ children}&#10;\times&#10;6\text{ coordinates}&#10;\times&#10;4\text{ bytes}&#10;=&#10;192\text{ bytes}&#10;" /></Formula>
+<Content ns0:pstyle="Content">just for child AABBs.</Content>
+<Content ns0:pstyle="Content">That is several cache lines before child metadata.</Content>
+<Content ns0:pstyle="Content">Quantization reduces this.</Content>
+<Content ns0:pstyle="Content">Suppose parent bounds are:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a5f19cef3b61056c51a6fc15.svg" alt="&#10;B_P=[P_{\min},P_{\max}].&#10;" jobId="a5f19cef3b61056c51a6fc15" originalTeX="&#10;B_P=[P_{\min},P_{\max}].&#10;" /></Formula>
+<Content ns0:pstyle="Content">A child min coordinate <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4ce3ff3ec89e9d288f068415.svg" alt="x_{\min}" jobId="4ce3ff3ec89e9d288f068415" originalTeX="x_{\min}" /> can be represented relative to parent extent:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3f5624745a412eddc42b5107.svg" alt="&#10;u=&#10;\frac{x_{\min}-P_{\min,x}}&#10;{P_{\max,x}-P_{\min,x}}.&#10;" jobId="3f5624745a412eddc42b5107" originalTeX="&#10;u=&#10;\frac{x_{\min}-P_{\min,x}}&#10;{P_{\max,x}-P_{\min,x}}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">With <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/10799c3093ba1db90ffafafc.svg" alt="b" jobId="10799c3093ba1db90ffafafc" originalTeX="b" /> quantization bits:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/afc83c2b122d7624cb3d8925.svg" alt="&#10;q=&#10;\operatorname{round}&#10;\left(&#10;u(2^b-1)&#10;\right).&#10;" jobId="afc83c2b122d7624cb3d8925" originalTeX="&#10;q=&#10;\operatorname{round}&#10;\left(&#10;u(2^b-1)&#10;\right).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Decoding gives:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3a47a66bd27411e199472578.svg" alt="&#10;\hat x=&#10;P_{\min,x}&#10;+&#10;\frac{q}{2^b-1}&#10;(P_{\max,x}-P_{\min,x}).&#10;" jobId="3a47a66bd27411e199472578" originalTeX="&#10;\hat x=&#10;P_{\min,x}&#10;+&#10;\frac{q}{2^b-1}&#10;(P_{\max,x}-P_{\min,x}).&#10;" /></Formula>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Conservative quantization</Strong></Content>
+<Content ns0:pstyle="Content">Ordinary nearest-value rounding can shrink a bound.</Content>
+<Content ns0:pstyle="Content">That is dangerous.</Content>
+<Content ns0:pstyle="Content">A quantized BVH must preserve:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0d6db474a77808c351b578ea.svg" alt="&#10;B_{\text{true}}\subseteq B_{\text{decoded}}.&#10;" jobId="0d6db474a77808c351b578ea" originalTeX="&#10;B_{\text{true}}\subseteq B_{\text{decoded}}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore minima should round outward downward and maxima outward upward.</Content>
+<Content ns0:pstyle="Content">For <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f575751713c8e40ddc5f21ca.svg" alt="Q=2^b-1" jobId="f575751713c8e40ddc5f21ca" originalTeX="Q=2^b-1" />:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/07656ee6f33d530007b45ff2.svg" alt="&#10;q_{\min}&#10;=&#10;\left\lfloor&#10;Q&#10;\frac{x_{\min}-P_{\min}}&#10;{P_{\max}-P_{\min}}&#10;\right\rfloor&#10;" jobId="07656ee6f33d530007b45ff2" originalTeX="&#10;q_{\min}&#10;=&#10;\left\lfloor&#10;Q&#10;\frac{x_{\min}-P_{\min}}&#10;{P_{\max}-P_{\min}}&#10;\right\rfloor&#10;" /></Formula>
+<Content ns0:pstyle="Content">and</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/17e4f55aff4181fd97b85a9b.svg" alt="&#10;q_{\max}&#10;=&#10;\left\lceil&#10;Q&#10;\frac{x_{\max}-P_{\min}}&#10;{P_{\max}-P_{\min}}&#10;\right\rceil.&#10;" jobId="17e4f55aff4181fd97b85a9b" originalTeX="&#10;q_{\max}&#10;=&#10;\left\lceil&#10;Q&#10;\frac{x_{\max}-P_{\min}}&#10;{P_{\max}-P_{\min}}&#10;\right\rceil.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then decode both.</Content>
+<Content ns0:pstyle="Content">This may enlarge the child slightly.</Content>
+<Content ns0:pstyle="Content">That introduces extra false-positive traversal but preserves correctness.</Content>
+<Content ns0:pstyle="Content">This is the same conservative principle from M078, now applied to compressed spatial representation.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Quantization error</Strong></Content>
+<Content ns0:pstyle="Content">With parent extent <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9b3271c88e95a2c24d86080d.svg" alt="E" jobId="9b3271c88e95a2c24d86080d" originalTeX="E" /> and <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/10799c3093ba1db90ffafafc.svg" alt="b" jobId="10799c3093ba1db90ffafafc" originalTeX="b" /> bits, one quantization step is approximately:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6ea91e28ad34141a178f9401.svg" alt="&#10;\Delta=&#10;\frac{E}{2^b-1}.&#10;" jobId="6ea91e28ad34141a178f9401" originalTeX="&#10;\Delta=&#10;\frac{E}{2^b-1}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">With eight bits:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8fb71b5100ceb32cae475b87.svg" alt="&#10;\Delta\approx \frac{E}{255}.&#10;" jobId="8fb71b5100ceb32cae475b87" originalTeX="&#10;\Delta\approx \frac{E}{255}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">If parent X extent is 100 m:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/06cd05f159a91c3871584008.svg" alt="&#10;\Delta_x\approx0.392\text{ m}.&#10;" jobId="06cd05f159a91c3871584008" originalTeX="&#10;\Delta_x\approx0.392\text{ m}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That can significantly inflate small child boxes.</Content>
+<Content ns0:pstyle="Content">With 16 bits:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/301fb2c60b974c140581f193.svg" alt="&#10;\Delta_x\approx&#10;\frac{100}{65535}&#10;\approx1.53\text{ mm}.&#10;" jobId="301fb2c60b974c140581f193" originalTeX="&#10;\Delta_x\approx&#10;\frac{100}{65535}&#10;\approx1.53\text{ mm}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Therefore quantization quality is relative to parent extent.</Content>
+<Content ns0:pstyle="Content">Hierarchical quantization helps because deeper nodes usually cover progressively smaller spatial regions.</Content>
+<Content ns0:pstyle="Content">Compressed wide BVHs can reduce working-set size and improve cache behavior, which is one reason compressed wide layouts are actively studied for high-performance traversal. <Link href="https://www.intel.com/content/dam/develop/external/us/en/documents/wide-bvh-traversal-with-a-short-stack-837099.pdf?utm_source=chatgpt.com">Intel</Link></Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">BVH node memory layout</Strong></Content>
+<Content ns0:pstyle="Content">Now we reach a topic people often underestimate.</Content>
+<Content ns0:pstyle="Content">Two BVHs can have identical topology and identical bounds but perform differently because their nodes occupy memory differently.</Content>
+<Content ns0:pstyle="Content">Consider an AoS binary node:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct Node
+{
+    AABB bounds;
+    uint32_t left;
+    uint32_t right;
+    uint32_t first;
+    uint32_t count;
+};</Code>
+<Content ns0:pstyle="Content">Traversal reads:</Content>
+<Code ns0:pstyle="Code" language="text">bounds
+child metadata
+possibly primitive metadata</Code>
+<Content ns0:pstyle="Content">For internal nodes, leaf fields may be unused.</Content>
+<Content ns0:pstyle="Content">For leaves, child fields may be unused.</Content>
+<Content ns0:pstyle="Content">That means every node carries mutually exclusive information.</Content>
+<Content ns0:pstyle="Content">Alternative packed representations encode node type inside metadata:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct PackedNode
+{
+    AABB bounds;
+    uint32_t offset;
+    uint32_t meta;
+};</Code>
+<Content ns0:pstyle="Content">For an internal node:</Content>
+<Code ns0:pstyle="Code" language="text">offset -&gt; first child
+meta   -&gt; internal flag</Code>
+<Content ns0:pstyle="Content">For a leaf:</Content>
+<Code ns0:pstyle="Code" language="text">offset -&gt; primitive offset
+meta   -&gt; leaf flag + primitive count</Code>
+<Content ns0:pstyle="Content">This reduces memory footprint.</Content>
+<Content ns0:pstyle="Content">But compression may add decoding operations.</Content>
+<Content ns0:pstyle="Content">Again:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a96d80798baeddf45515e15b.svg" alt="&#10;\text{smaller}&#10;\not\Rightarrow&#10;\text{always faster}.&#10;" jobId="a96d80798baeddf45515e15b" originalTeX="&#10;\text{smaller}&#10;\not\Rightarrow&#10;\text{always faster}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">You trade memory bandwidth against decode complexity and implementation flexibility.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Cache-line reasoning</Strong></Content>
+<Content ns0:pstyle="Content">Suppose a node fits in one 64-byte cache line.</Content>
+<Content ns0:pstyle="Content">Loading the node may require one cache-line transfer.</Content>
+<Content ns0:pstyle="Content">If it is 80 bytes and straddles two cache lines, potentially two lines must be fetched.</Content>
+<Content ns0:pstyle="Content">But the exact cost depends on alignment, cache state, hardware prefetching and neighboring accesses.</Content>
+<Content ns0:pstyle="Content">Therefore never optimize node layout purely from <InlineCode ns0:cstyle="InlineCode">sizeof</InlineCode>.</Content>
+<Content ns0:pstyle="Content">Measure:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6d60820156241c5fd55fab29.svg" alt="&#10;\text{cache misses},&#10;\quad&#10;\text{bytes/ray},&#10;\quad&#10;\text{nodes/ray},&#10;\quad&#10;\text{cycles/node}.&#10;" jobId="6d60820156241c5fd55fab29" originalTeX="&#10;\text{cache misses},&#10;\quad&#10;\text{bytes/ray},&#10;\quad&#10;\text{nodes/ray},&#10;\quad&#10;\text{cycles/node}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Your current node contains:</Content>
+<Code ns0:pstyle="Code" language="text">AABB
+Left
+Right
+FirstPrimitive
+PrimitiveCount
+Parent</Code>
+<Content ns0:pstyle="Content">To know its actual ABI size, alignment and padding, measure:</Content>
+<Code ns0:pstyle="Code" language="cpp">std::cout &lt;&lt; sizeof(BVHNode)
+          &lt;&lt; ' '
+          &lt;&lt; alignof(BVHNode);</Code>
+<Content ns0:pstyle="Content">Do not infer it solely from source fields because the underlying <InlineCode ns0:cstyle="InlineCode">Vec3f/AABBf</InlineCode> alignment rules matter.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Primitive ordering matters too</Strong></Content>
+<Content ns0:pstyle="Content">Your hierarchy separates:</Content>
+<Code ns0:pstyle="Code" language="cpp">Primitives
+PrimitiveOrder</Code>
+<Content ns0:pstyle="Content">A leaf owns a range in <InlineCode ns0:cstyle="InlineCode">PrimitiveOrder</InlineCode>.</Content>
+<Content ns0:pstyle="Content">Then:</Content>
+<Code ns0:pstyle="Code" language="cpp">PrimitiveAtOrderedOffset(offset)</Code>
+<Content ns0:pstyle="Content">performs:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3dbdcabb150a325e88df0ae1.svg" alt="&#10;i=\text{PrimitiveOrder[offset]}&#10;" jobId="3dbdcabb150a325e88df0ae1" originalTeX="&#10;i=\text{PrimitiveOrder[offset]}&#10;" /></Formula>
+<Content ns0:pstyle="Content">then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f52a6c0644f4ae5b9d494a5f.svg" alt="&#10;\text{Primitives}[i].&#10;" jobId="f52a6c0644f4ae5b9d494a5f" originalTeX="&#10;\text{Primitives}[i].&#10;" /></Formula>
+<Content ns0:pstyle="Content">That adds an indirection.</Content>
+<Content ns0:pstyle="Content">Why keep it?</Content>
+<Content ns0:pstyle="Content">Because construction can reorder primitive <Strong ns0:cstyle="Bold">references</Strong> without moving the original primitive records.</Content>
+<Content ns0:pstyle="Content">This makes building convenient and preserves stable original indexing.</Content>
+<Content ns0:pstyle="Content">An alternative is to physically reorder primitive records into leaf order after construction.</Content>
+<Content ns0:pstyle="Content">That can improve leaf traversal locality but changes indices and may require remapping external identifiers.</Content>
+<Content ns0:pstyle="Content">Again, there is no universally free choice.</Content>
+<Content ns0:pstyle="Content">Embree’s published architecture explicitly discusses the memory/performance trade-off between leaves that store references to primitives and layouts that place primitive data contiguously for faster traversal. <Link href="https://embree.github.io/papers/2014-Siggraph-Embree.pdf?utm_source=chatgpt.com">embree.github.io</Link></Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">SIMD packet BVH traversal</Strong></Content>
+<Content ns0:pstyle="Content">There are two fundamentally different SIMD strategies that beginners often conflate.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Strategy A: one ray versus many child boxes</Strong></Content>
+<Content ns0:pstyle="Content">A wide BVH node contains four or eight child AABBs.</Content>
+<Content ns0:pstyle="Content">SIMD lanes represent child nodes.</Content>
+<Code ns0:pstyle="Code" language="text">one ray
+
+lane 0 -&gt; child 0
+lane 1 -&gt; child 1
+lane 2 -&gt; child 2
+lane 3 -&gt; child 3
+...</Code>
+<Content ns0:pstyle="Content">This is node SIMD.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Strategy B: many rays versus one box</Strong></Content>
+<Content ns0:pstyle="Content">A packet contains rays:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/aa39fc5dcbb7e1c456107d84.svg" alt="&#10;R_0,R_1,\ldots,R_7.&#10;" jobId="aa39fc5dcbb7e1c456107d84" originalTeX="&#10;R_0,R_1,\ldots,R_7.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Each SIMD lane represents one ray.</Content>
+<Code ns0:pstyle="Code" language="text">one BVH node
+
+lane 0 -&gt; ray 0
+lane 1 -&gt; ray 1
+lane 2 -&gt; ray 2
+...</Code>
+<Content ns0:pstyle="Content">This is ray-packet traversal.</Content>
+<Content ns0:pstyle="Content">They solve different vectorization problems.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Why ray packets work</Strong></Content>
+<Content ns0:pstyle="Content">Primary camera rays are often coherent.</Content>
+<Content ns0:pstyle="Content">Neighboring pixels have nearby origins and similar directions.</Content>
+<Content ns0:pstyle="Content">Thus a packet such as:</Content>
+<Code ns0:pstyle="Code" language="text">R0 R1 R2 R3
+R4 R5 R6 R7</Code>
+<Content ns0:pstyle="Content">often traverses the same BVH regions.</Content>
+<Content ns0:pstyle="Content">Instead of running eight independent traversals, we can process them together.</Content>
+<Content ns0:pstyle="Content">For each node calculate a lane mask:</Content>
+<Code ns0:pstyle="Code" language="text">ray 0 intersects node? 1
+ray 1 intersects node? 1
+ray 2 intersects node? 0
+ray 3 intersects node? 1
+...
+
+mask = 1101...</Code>
+<Content ns0:pstyle="Content">If mask is zero, reject the node for the entire packet.</Content>
+<Content ns0:pstyle="Content">Otherwise continue with only active lanes.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Packet divergence</Strong></Content>
+<Content ns0:pstyle="Content">Packet traversal performs poorly when rays become incoherent.</Content>
+<Content ns0:pstyle="Content">Imagine reflected rays bouncing in different directions.</Content>
+<Code ns0:pstyle="Code" language="text">R0 -&gt; north
+R1 -&gt; south
+R2 -&gt; west
+R3 -&gt; up
+R4 -&gt; east
+...</Code>
+<Content ns0:pstyle="Content">Now every ray may require a different subtree.</Content>
+<Content ns0:pstyle="Content">SIMD lanes diverge.</Content>
+<Content ns0:pstyle="Content">If one lane needs child A and another needs child B, the packet may eventually visit both.</Content>
+<Content ns0:pstyle="Content">The work approaches the union of all individual traversal paths.</Content>
+<Content ns0:pstyle="Content">This can eliminate packet efficiency.</Content>
+<Content ns0:pstyle="Content">Therefore:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e7ff4b347156d2e58af62547.svg" alt="&#10;\boxed{&#10;\text{Packet traversal benefits from ray coherence.}&#10;}&#10;" jobId="e7ff4b347156d2e58af62547" originalTeX="&#10;\boxed{&#10;\text{Packet traversal benefits from ray coherence.}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Primary rays: often coherent.</Content>
+<Content ns0:pstyle="Content">Diffuse secondary rays: frequently less coherent.</Content>
+<Content ns0:pstyle="Content">Shadow rays: depends heavily on light geometry and scene layout.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Packet traversal state</Strong></Content>
+<Content ns0:pstyle="Content">Suppose packet width is <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b8384a897ac473bd448edc57.svg" alt="W" jobId="b8384a897ac473bd448edc57" originalTeX="W" />.</Content>
+<Content ns0:pstyle="Content">Maintain:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a9c04981b5e68a74b571c891.svg" alt="&#10;M_N\in\{0,1\}^W&#10;" jobId="a9c04981b5e68a74b571c891" originalTeX="&#10;M_N\in\{0,1\}^W&#10;" /></Formula>
+<Content ns0:pstyle="Content">for every stack entry, where bit/lane <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c9a9aab9bd49b5120a91abe6.svg" alt="i" jobId="c9a9aab9bd49b5120a91abe6" originalTeX="i" /> indicates whether ray <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c9a9aab9bd49b5120a91abe6.svg" alt="i" jobId="c9a9aab9bd49b5120a91abe6" originalTeX="i" /> remains active for that node.</Content>
+<Content ns0:pstyle="Content">Pseudo-architecture:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct PacketStackEntry
+{
+    uint32_t node;
+    LaneMask activeRays;
+};
+
+push({root, allRays});
+
+while (!stack.empty())
+{
+    auto [nodeIndex, active] = pop();
+
+    LaneMask intersects =
+        intersectAABBPacket(
+            rays,
+            active,
+            nodes[nodeIndex].bounds);
+
+    if (intersects.none())
+        continue;
+
+    if (nodes[nodeIndex].isLeaf())
+    {
+        intersectPrimitivePacket(
+            rays,
+            intersects,
+            leaf);
+    }
+    else
+    {
+        push({
+            nodes[nodeIndex].left,
+            intersects
+        });
+
+        push({
+            nodes[nodeIndex].right,
+            intersects
+        });
+    }
+}</Code>
+<Content ns0:pstyle="Content">The actual high-performance version becomes substantially more complicated because each lane has its own closest distance:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/368e950d139ddd606562563a.svg" alt="&#10;t_{\max,0},&#10;t_{\max,1},&#10;\dots,&#10;t_{\max,W-1}.&#10;" jobId="368e950d139ddd606562563a" originalTeX="&#10;t_{\max,0},&#10;t_{\max,1},&#10;\dots,&#10;t_{\max,W-1}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Node intersection therefore uses a vector of ray-specific bounds.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Single-ray SIMD versus packet SIMD</Strong></Content>
+<Content ns0:pstyle="Content">Modern CPU ray tracers frequently use SIMD even for individual rays by testing multiple child boxes or primitives at once.</Content>
+<Content ns0:pstyle="Content">This can be superior to packets for incoherent workloads.</Content>
+<Content ns0:pstyle="Content">The distinction is:</Content>
+<Code ns0:pstyle="Code" language="text">Packet traversal:
+SIMD axis = rays
+
+Wide-node traversal:
+SIMD axis = child bounds
+
+Primitive SIMD:
+SIMD axis = primitives</Code>
+<Content ns0:pstyle="Content">A sophisticated renderer may choose among all three depending on ray coherence.</Content>
+<Content ns0:pstyle="Content">This is one of the major lessons from production ray-tracing systems such as Embree: SIMD width, node arity, triangle layout and ray coherence have to be designed together rather than treated as independent optimizations. <Link href="https://embree.github.io/papers/2014-Siggraph-Embree.pdf?utm_source=chatgpt.com">embree.github.io</Link></Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">A complete closest-hit traversal implementation</Strong></Content>
+<Content ns0:pstyle="Content">Let us now write the canonical mechanism with the optimization we identified earlier: store the already-computed near distance on the stack.</Content>
+<Code ns0:pstyle="Code" language="cpp">struct TraversalEntry
+{
+    std::uint32_t nodeIndex;
+    float nearT;
+};
+
+template &lt;class PrimitiveIntersector&gt;
+std::optional&lt;Hit&gt; closestHitBVH(
+    const BVH&amp; bvh,
+    const Ray&amp; ray,
+    PrimitiveIntersector&amp;&amp; intersectPrimitive,
+    float maxDistance)
+{
+    if (bvh.nodes.empty())
+        return std::nullopt;
+
+    std::array&lt;TraversalEntry, 128&gt; stack{};
+    std::size_t stackSize = 0;
+
+    float rootNear = 0.0f;
+
+    if (!intersectAABB(
+            ray,
+            bvh.nodes[0].bounds,
+            maxDistance,
+            rootNear))
+    {
+        return std::nullopt;
+    }
+
+    stack[stackSize++] =
+        {0u, rootNear};
+
+    float closest =
+        maxDistance;
+
+    std::optional&lt;Hit&gt; best;
+
+    while (stackSize != 0)
+    {
+        const TraversalEntry current =
+            stack[--stackSize];
+
+        // The box was already tested when inserted.
+        // Since closest may have decreased meanwhile,
+        // one scalar test can now prune the node.
+        if (current.nearT &gt; closest)
+            continue;
+
+        const BVHNode&amp; node =
+            bvh.nodes[current.nodeIndex];
+
+        if (node.isLeaf())
+        {
+            for (std::uint32_t i = 0;
+                 i &lt; node.primitiveCount;
+                 ++i)
+            {
+                const std::uint32_t primitive =
+                    bvh.primitiveOrder[
+                        node.firstPrimitive + i];
+
+                auto hit =
+                    intersectPrimitive(
+                        primitive,
+                        ray,
+                        closest);
+
+                if (!hit)
+                    continue;
+
+                if (hit-&gt;distance &lt; 0.0f ||
+                    hit-&gt;distance &gt; closest)
+                    continue;
+
+                closest = hit-&gt;distance;
+                best = *hit;
+            }
+
+            continue;
+        }
+
+        float leftNear = 0.0f;
+        float rightNear = 0.0f;
+
+        const bool hitLeft =
+            intersectAABB(
+                ray,
+                bvh.nodes[node.left].bounds,
+                closest,
+                leftNear);
+
+        const bool hitRight =
+            intersectAABB(
+                ray,
+                bvh.nodes[node.right].bounds,
+                closest,
+                rightNear);
+
+        if (hitLeft &amp;&amp; hitRight)
+        {
+            // Push far first because stack is LIFO.
+            if (leftNear &lt;= rightNear)
+            {
+                stack[stackSize++] =
+                    {node.right, rightNear};
+
+                stack[stackSize++] =
+                    {node.left, leftNear};
+            }
+            else
+            {
+                stack[stackSize++] =
+                    {node.left, leftNear};
+
+                stack[stackSize++] =
+                    {node.right, rightNear};
+            }
+        }
+        else if (hitLeft)
+        {
+            stack[stackSize++] =
+                {node.left, leftNear};
+        }
+        else if (hitRight)
+        {
+            stack[stackSize++] =
+                {node.right, rightNear};
+        }
+    }
+
+    return best;
+}</Code>
+<Content ns0:pstyle="Content">The complete causal chain is now visible:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7df4755c20b637676a162260.svg" alt="&#10;\text{node bounds}&#10;\rightarrow&#10;t_{\text{near}}&#10;\rightarrow&#10;\text{near-first ordering}&#10;\rightarrow&#10;\text{early primitive hit}&#10;\rightarrow&#10;t_{\text{closest}}\downarrow&#10;\rightarrow&#10;\text{more subtree pruning}.&#10;" jobId="7df4755c20b637676a162260" originalTeX="&#10;\text{node bounds}&#10;\rightarrow&#10;t_{\text{near}}&#10;\rightarrow&#10;\text{near-first ordering}&#10;\rightarrow&#10;\text{early primitive hit}&#10;\rightarrow&#10;t_{\text{closest}}\downarrow&#10;\rightarrow&#10;\text{more subtree pruning}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">That is why construction quality and traversal algorithm are inseparable.</Content>
+<Content ns0:pstyle="Content">A good tree gives traversal more opportunities to prune.</Content>
+<Content ns0:pstyle="Content">A good traversal exploits those opportunities quickly.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Manual traversal trace</Strong></Content>
+<Content ns0:pstyle="Content">Consider:</Content>
+<Code ns0:pstyle="Code" language="text">                         N0
+                  [0 ---------------- 20]
+                    /               \
+                   /                 \
+                 N1                   N2
+              [1---8]              [9----20]
+             /      \              /       \
+           P0       P1           P2         P3
+          t=7      t=3          t=11       miss</Code>
+<Content ns0:pstyle="Content">Initial:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6c9f39fd55cf64607a19b439.svg" alt="&#10;t_{\text{closest}}=\infty.&#10;" jobId="6c9f39fd55cf64607a19b439" originalTeX="&#10;t_{\text{closest}}=\infty.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Root N0 intersects.</Content>
+<Content ns0:pstyle="Content">Child entry distances:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/fdb4a7d53924f32f7c99dc8b.svg" alt="&#10;t_{N1}=1,&#10;\qquad&#10;t_{N2}=9.&#10;" jobId="fdb4a7d53924f32f7c99dc8b" originalTeX="&#10;t_{N1}=1,&#10;\qquad&#10;t_{N2}=9.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Visit N1 first.</Content>
+<Content ns0:pstyle="Content">Suppose N1’s children yield primitive P1 at:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7960645aa1fc10de85ace509.svg" alt="&#10;t=3.&#10;" jobId="7960645aa1fc10de85ace509" originalTeX="&#10;t=3.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Now:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/97a13f1052db6def8e874781.svg" alt="&#10;t_{\text{closest}}=3.&#10;" jobId="97a13f1052db6def8e874781" originalTeX="&#10;t_{\text{closest}}=3.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Return to pending N2.</Content>
+<Content ns0:pstyle="Content">Its recorded entry distance is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/11f5244946749bd9be00e7ae.svg" alt="&#10;9.&#10;" jobId="11f5244946749bd9be00e7ae" originalTeX="&#10;9.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Since</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/de39e0dc5ec9cc096fd6141e.svg" alt="&#10;9&gt;3,&#10;" jobId="de39e0dc5ec9cc096fd6141e" originalTeX="&#10;9&gt;3,&#10;" /></Formula>
+<Content ns0:pstyle="Content">N2 is pruned without touching P2 or P3.</Content>
+<Content ns0:pstyle="Content">The BVH saved two primitive tests and further node traversal.</Content>
+<Content ns0:pstyle="Content">Scale this to millions of primitives and this mechanism becomes the difference between interactive and unusable rendering.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Build quality affects traversal exponentially through overlap</Strong></Content>
+<Content ns0:pstyle="Content">Suppose siblings barely overlap:</Content>
+<Code ns0:pstyle="Code" language="text">+--------+      +--------+
+| LEFT   |      | RIGHT  |
++--------+      +--------+</Code>
+<Content ns0:pstyle="Content">Most rays enter one or the other.</Content>
+<Content ns0:pstyle="Content">Now suppose:</Content>
+<Code ns0:pstyle="Code" language="text">+-------------------+
+| LEFT              |
+|    +-------------------+
+|    | RIGHT        |    |
++----|--------------+    |
+     +-------------------+</Code>
+<Content ns0:pstyle="Content">Many rays enter both.</Content>
+<Content ns0:pstyle="Content">Every time both children survive, traversal branches.</Content>
+<Content ns0:pstyle="Content">Repeated overlap throughout several levels can produce a combinatorial increase in visited nodes.</Content>
+<Content ns0:pstyle="Content">This is why balancing primitive counts alone is not enough.</Content>
+<Content ns0:pstyle="Content">A slightly unbalanced SAH tree can outperform a perfectly balanced median tree because it reduces simultaneous child intersections.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Build-time complexity comparison</Strong></Content>
+<Content ns0:pstyle="Content">Let <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea63a9f9a03c273b93026960.svg" alt="N" jobId="ea63a9f9a03c273b93026960" originalTeX="N" /> be primitive count.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Median builder with sorting at every node</Strong></Content>
+<Content ns0:pstyle="Content">At a node of size <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ccc6004d8d51b36be50af39f.svg" alt="m" jobId="ccc6004d8d51b36be50af39f" originalTeX="m" />:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/922ef7acc3131b8cfc104de6.svg" alt="&#10;O(m\log m)&#10;" jobId="922ef7acc3131b8cfc104de6" originalTeX="&#10;O(m\log m)&#10;" /></Formula>
+<Content ns0:pstyle="Content">for sorting.</Content>
+<Content ns0:pstyle="Content">Across a balanced hierarchy:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c3c37be633a61f39a3b06309.svg" alt="&#10;O(N\log^2N)&#10;" jobId="c3c37be633a61f39a3b06309" originalTeX="&#10;O(N\log^2N)&#10;" /></Formula>
+<Content ns0:pstyle="Content">is a reasonable upper-level characterization of repeated full sorting.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Binned SAH</Strong></Content>
+<Content ns0:pstyle="Content">Each node can bin and partition in roughly:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c476d632bcf49958c5abdaa8.svg" alt="&#10;O(m+B)&#10;" jobId="c476d632bcf49958c5abdaa8" originalTeX="&#10;O(m+B)&#10;" /></Formula>
+<Content ns0:pstyle="Content">for fixed bin count <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/24e6e5b89dadb3d2c6a3bc68.svg" alt="B" jobId="24e6e5b89dadb3d2c6a3bc68" originalTeX="B" />.</Content>
+<Content ns0:pstyle="Content">Across balanced levels:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9ea27f4aeb13276706469377.svg" alt="&#10;O(N\log N)&#10;" jobId="9ea27f4aeb13276706469377" originalTeX="&#10;O(N\log N)&#10;" /></Formula>
+<Content ns0:pstyle="Content">approximately.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Morton / LBVH-style builder</Strong></Content>
+<Content ns0:pstyle="Content">Morton-code calculation:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1443cd4b69efe1caefeab00b.svg" alt="&#10;O(N).&#10;" jobId="1443cd4b69efe1caefeab00b" originalTeX="&#10;O(N).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Sorting:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9ea27f4aeb13276706469377.svg" alt="&#10;O(N\log N)&#10;" jobId="9ea27f4aeb13276706469377" originalTeX="&#10;O(N\log N)&#10;" /></Formula>
+<Content ns0:pstyle="Content">with comparison sort, or potentially closer to linear passes using radix sort.</Content>
+<Content ns0:pstyle="Content">Topology generation from sorted keys can be:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1443cd4b69efe1caefeab00b.svg" alt="&#10;O(N).&#10;" jobId="1443cd4b69efe1caefeab00b" originalTeX="&#10;O(N).&#10;" /></Formula>
+<Content ns0:pstyle="Content">This is why LBVH is attractive for rapidly changing scenes, particularly on GPUs.</Content>
+<Content ns0:pstyle="Content">The tradeoff is tree quality: raw Morton-based trees can have poorer traversal efficiency than high-quality SAH trees.</Content>
+<Content ns0:pstyle="Content">Hybrid techniques therefore often use fast Morton construction plus local/treelet optimization.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Your builder’s current complexity profile</Strong></Content>
+<Content ns0:pstyle="Content">Your current repository has three distinct paths.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Median path</Strong></Content>
+<Content ns0:pstyle="Content">Each recursive node:</Content>
+<Code ns0:pstyle="Code" language="cpp">stable_sort(range by selected axis)</Code>
+<Content ns0:pstyle="Content">then splits midpoint.</Content>
+<Content ns0:pstyle="Content">Build quality is simple and predictable.</Content>
+<Content ns0:pstyle="Content">Build cost can be substantial because ranges are repeatedly sorted.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">SAH path</Strong></Content>
+<Content ns0:pstyle="Content">For every node:</Content>
+<Code ns0:pstyle="Code" language="text">sort X
+prefix/suffix sweep
+
+sort Y
+prefix/suffix sweep
+
+sort Z
+prefix/suffix sweep</Code>
+<Content ns0:pstyle="Content">plus temporary <InlineCode ns0:cstyle="InlineCode">left/right</InlineCode> vectors.</Content>
+<Content ns0:pstyle="Content">This gives relatively high-quality split candidates but significant build overhead.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Morton path</Strong></Content>
+<Content ns0:pstyle="Content">One global Morton sort occurs before recursion.</Content>
+<Content ns0:pstyle="Content">Then recursive ranges are split at their midpoint.</Content>
+<Content ns0:pstyle="Content">No per-node sorting happens.</Content>
+<Content ns0:pstyle="Content">This makes it substantially closer to a fast build path, although the current <InlineCode ns0:cstyle="InlineCode">stable_sort</InlineCode> comparator recomputes normalized centroids and Morton codes during comparisons instead of precomputing one key per primitive.</Content>
+<Content ns0:pstyle="Content">A more efficient design would store:</Content>
+<Code ns0:pstyle="Code" language="cpp">struct MortonRef
+{
+    uint32_t code;
+    uint32_t primitive;
+};</Code>
+<Content ns0:pstyle="Content">compute each code once, then sort those records.</Content>
+<Content ns0:pstyle="Content">For large builds, that avoids repeated Morton encoding inside the comparison function.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Repository tests and what they actually prove</Strong></Content>
+<Content ns0:pstyle="Content">Your <InlineCode ns0:cstyle="InlineCode">SpatialTests.cpp</InlineCode> checks several important invariants.</Content>
+<Content ns0:pstyle="Content">The suite verifies that root bounds equal the brute union of all primitive bounds, empty/single-element trees behave correctly, leaf primitive counts obey <InlineCode ns0:cstyle="InlineCode">MaxLeafSize</InlineCode>, Morton build mode produces a valid hierarchy, closest raycasts return the expected primitive, any-hit exits before visiting every primitive in the sample, and AABB/sphere/frustum queries agree with direct expected results.</Content>
+<Content ns0:pstyle="Content"><InlineCode ns0:cstyle="InlineCode">ScaleStressTests.cpp</InlineCode> raises the size.</Content>
+<Content ns0:pstyle="Content">It constructs a:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9ccd877bf7de1600a2048ac8.svg" alt="&#10;64\times64=4096&#10;" jobId="9ccd877bf7de1600a2048ac8" originalTeX="&#10;64\times64=4096&#10;" /></Formula>
+<Content ns0:pstyle="Content">primitive grid, builds with Morton ordering and leaf size eight, then checks 128 AABB queries against brute force.</Content>
+<Content ns0:pstyle="Content">This is valuable correctness evidence.</Content>
+<Content ns0:pstyle="Content">What it does <Strong ns0:cstyle="Bold">not</Strong> yet establish is comparative build quality.</Content>
+<Content ns0:pstyle="Content">The test does not currently ask questions such as:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1c22aabacdb7ead1f7f61a66.svg" alt="&#10;\text{median nodes/query}&#10;" jobId="1c22aabacdb7ead1f7f61a66" originalTeX="&#10;\text{median nodes/query}&#10;" /></Formula>
+<Content ns0:pstyle="Content">versus</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a2fb4bd21080dd51c84a3440.svg" alt="&#10;\text{SAH nodes/query}&#10;" jobId="a2fb4bd21080dd51c84a3440" originalTeX="&#10;\text{SAH nodes/query}&#10;" /></Formula>
+<Content ns0:pstyle="Content">versus</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a89dd4b21fa43d4a93496753.svg" alt="&#10;\text{Morton nodes/query}.&#10;" jobId="a89dd4b21fa43d4a93496753" originalTeX="&#10;\text{Morton nodes/query}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Nor does it benchmark:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c63e226e60d60f8aed21f1ca.svg" alt="&#10;\text{build ms}&#10;" jobId="c63e226e60d60f8aed21f1ca" originalTeX="&#10;\text{build ms}&#10;" /></Formula>
+<Content ns0:pstyle="Content">against:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d529f9c55845a006cb844bde.svg" alt="&#10;\text{query ms}.&#10;" jobId="d529f9c55845a006cb844bde" originalTeX="&#10;\text{query ms}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Those are the exact experiments M079/M080 naturally motivate.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">A proper BVH benchmark matrix</Strong></Content>
+<Content ns0:pstyle="Content">For each build strategy, record:</Content>
+<Table ns0:table="table" ns0:trows="14" ns0:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">Metric</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="header"><Content ns0:pstyle="Caption">What it tells you</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">Build time</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content ns0:pstyle="TableCell">Construction overhead</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Node count</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content ns0:pstyle="TableCell">Hierarchy storage</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Leaf count</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content ns0:pstyle="TableCell">Terminal grouping</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">Maximum/average depth</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content ns0:pstyle="TableCell">Structural shape</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">Bytes/tree</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content ns0:pstyle="TableCell">Memory cost</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">Average nodes/ray</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content ns0:pstyle="TableCell">Traversal quality</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">p95 nodes/ray</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content ns0:pstyle="TableCell">Bad-case traversal</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">Average primitive tests/ray</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content ns0:pstyle="TableCell">Pruning effectiveness</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">Rays/sec</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content ns0:pstyle="TableCell">End-to-end throughput</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">AABB queries/sec</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content ns0:pstyle="TableCell">Non-ray workload quality</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content ns0:pstyle="TableCell">Refit time</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content ns0:pstyle="TableCell">Dynamic update cost</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content ns0:pstyle="TableCell">Post-deformation traversal cost</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content ns0:pstyle="TableCell">Quality degradation</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content ns0:pstyle="TableCell">Rebuild threshold benefit</Content></Cell><Cell ns0:table="cell" ns0:crows="1" ns0:ccols="1" ns0:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content ns0:pstyle="TableCell">Whether rebuilding pays</Content></Cell></Table>
+<Content ns0:pstyle="Content">Do this on different distributions.</Content>
+<Content ns0:pstyle="Content">Uniform grid.</Content>
+<Content ns0:pstyle="Content">Clustered scene.</Content>
+<Content ns0:pstyle="Content">One giant primitive plus many tiny primitives.</Content>
+<Content ns0:pstyle="Content">Long corridor.</Content>
+<Content ns0:pstyle="Content">Random clouds.</Content>
+<Content ns0:pstyle="Content">Highly overlapping primitives.</Content>
+<Content ns0:pstyle="Content">Deforming mesh.</Content>
+<Content ns0:pstyle="Content">This is important because there is no universally best BVH builder.</Content>
+<Content ns0:pstyle="Content">There is a best builder <Strong ns0:cstyle="Bold">for a workload and cost budget</Strong>.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">CPU cache behavior</Strong></Content>
+<Content ns0:pstyle="Content">Traversal repeatedly performs:</Content>
+<Code ns0:pstyle="Code" language="text">load node
+test bounds
+decide children
+load next node
+...</Code>
+<Content ns0:pstyle="Content">A highly coherent traversal may reuse upper nodes heavily.</Content>
+<Content ns0:pstyle="Content">Root and top-level nodes can remain hot in cache.</Content>
+<Content ns0:pstyle="Content">Lower nodes are visited more sparsely.</Content>
+<Content ns0:pstyle="Content">This creates an asymmetry:</Content>
+<Code ns0:pstyle="Code" language="text">Top BVH levels:
+high reuse
+small count
+likely cache-resident
+
+Bottom BVH levels:
+huge count
+lower reuse
+memory-bandwidth sensitive</Code>
+<Content ns0:pstyle="Content">Wide-node compression is especially useful deeper in the hierarchy because reducing the node working set increases the chance relevant child data arrives in fewer cache lines.</Content>
+<Content ns0:pstyle="Content">But wide nodes also increase each individual node’s raw information.</Content>
+<Content ns0:pstyle="Content">Hence compression and quantization become natural partners for wide BVHs.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">GPU traversal</Strong></Content>
+<Content ns0:pstyle="Content">The same conceptual BVH works on GPUs, but the execution constraints change.</Content>
+<Content ns0:pstyle="Content">CPU:</Content>
+<Code ns0:pstyle="Code" language="text">few powerful threads
+large caches
+out-of-order execution
+branch prediction
+SIMD</Code>
+<Content ns0:pstyle="Content">GPU:</Content>
+<Code ns0:pstyle="Code" language="text">many lightweight threads
+SIMT warps/waves
+latency hiding
+coalesced memory access
+divergence concerns
+limited per-thread local state</Code>
+<Content ns0:pstyle="Content">An explicit per-ray traversal stack consumes registers/local memory.</Content>
+<Content ns0:pstyle="Content">Too much stack state reduces occupancy.</Content>
+<Content ns0:pstyle="Content">A wide or stackless representation may therefore become attractive.</Content>
+<Content ns0:pstyle="Content">Packet coherence maps differently because GPU hardware already groups threads into execution warps/waves.</Content>
+<Content ns0:pstyle="Content">The tree layout can determine whether neighboring threads access nearby nodes or scatter across memory.</Content>
+<Content ns0:pstyle="Content">This is why BVHs used in hardware ray tracing are deeply tied to architecture.</Content>
+<Content ns0:pstyle="Content">The abstract tree is only the beginning.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">RT hardware perspective</Strong></Content>
+<Content ns0:pstyle="Content">Modern ray-tracing hardware accelerates parts of the traversal/intersection pipeline.</Content>
+<Content ns0:pstyle="Content">Conceptually the application still supplies acceleration structures and rays.</Content>
+<Content ns0:pstyle="Content">The hardware can accelerate operations analogous to:</Content>
+<Code ns0:pstyle="Code" language="text">ray-box traversal
+hierarchy navigation
+triangle intersection</Code>
+<Content ns0:pstyle="Content">But it cannot make a badly structured scene representation irrelevant.</Content>
+<Content ns0:pstyle="Content">Build mode, update mode, instance structure, memory footprint and dynamic geometry still affect performance.</Content>
+<Content ns0:pstyle="Content">A useful mental model is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/32c8f505594c348a0fe82a90.svg" alt="&#10;\boxed{&#10;\text{RT hardware accelerates BVH machinery;}&#10;\quad&#10;\text{it does not repeal spatial reasoning.}&#10;}&#10;" jobId="32c8f505594c348a0fe82a90" originalTeX="&#10;\boxed{&#10;\text{RT hardware accelerates BVH machinery;}&#10;\quad&#10;\text{it does not repeal spatial reasoning.}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">Understanding software BVHs remains essential for debugging hardware-accelerated ray tracing.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Two-level BVHs</Strong></Content>
+<Content ns0:pstyle="Content">Real rendering engines frequently distinguish geometry-level and scene-level hierarchy.</Content>
+<Content ns0:pstyle="Content">Conceptually:</Content>
+<Code ns0:pstyle="Code" language="text">Top-Level Acceleration Structure
+
+             TLAS
+           /      \
+       Instance A  Instance B
+          |           |
+          v           v
+        BLAS A       BLAS B
+          |           |
+       triangles    triangles</Code>
+<Content ns0:pstyle="Content">A BLAS represents local geometry.</Content>
+<Content ns0:pstyle="Content">TLAS represents transformed instances.</Content>
+<Content ns0:pstyle="Content">Why do this?</Content>
+<Content ns0:pstyle="Content">Suppose one chair mesh appears 100 times.</Content>
+<Content ns0:pstyle="Content">We should not duplicate its triangle BVH 100 times.</Content>
+<Content ns0:pstyle="Content">Store one BLAS.</Content>
+<Content ns0:pstyle="Content">Each instance stores a transformation and a top-level bound.</Content>
+<Content ns0:pstyle="Content">Traversal becomes:</Content>
+<Code ns0:pstyle="Code" language="text">world ray
+  |
+TLAS
+  |
+instance hit
+  |
+transform ray into instance local space
+  |
+BLAS
+  |
+triangle</Code>
+<Content ns0:pstyle="Content">This is the same local-space query strategy you already saw with triangle-mesh colliders.</Content>
+<Content ns0:pstyle="Content">It is a general engine pattern.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Instancing and transform correctness</Strong></Content>
+<Content ns0:pstyle="Content">For rigid transform:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b3f1820357e56eda554ba43b.svg" alt="&#10;x_w=Rx_l+t.&#10;" jobId="b3f1820357e56eda554ba43b" originalTeX="&#10;x_w=Rx_l+t.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Ray origin transforms:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a2e8d40821c83305830e59b1.svg" alt="&#10;O_l=R^{-1}(O_w-t).&#10;" jobId="a2e8d40821c83305830e59b1" originalTeX="&#10;O_l=R^{-1}(O_w-t).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Direction:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/af4601f25dfe287a9024a67c.svg" alt="&#10;D_l=R^{-1}D_w.&#10;" jobId="af4601f25dfe287a9024a67c" originalTeX="&#10;D_l=R^{-1}D_w.&#10;" /></Formula>
+<Content ns0:pstyle="Content">If scale exists, especially nonuniform scale, parameter/distance semantics become more subtle.</Content>
+<Content ns0:pstyle="Content">If you renormalize local direction, local <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c0e9c136f0f850d8b55a01b3.svg" alt="t" jobId="c0e9c136f0f850d8b55a01b3" originalTeX="t" /> no longer directly equals world-space <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c0e9c136f0f850d8b55a01b3.svg" alt="t" jobId="c0e9c136f0f850d8b55a01b3" originalTeX="t" />.</Content>
+<Content ns0:pstyle="Content">A robust instance traversal must preserve a clear parameter convention.</Content>
+<Content ns0:pstyle="Content">This is the same issue we covered in M077 mesh raycasts but now expressed as BVH hierarchy design.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">BVH build determinism</Strong></Content>
+<Content ns0:pstyle="Content">Your builder uses <InlineCode ns0:cstyle="InlineCode">std::stable_sort</InlineCode>.</Content>
+<Content ns0:pstyle="Content">That gives equal-key primitives stable relative ordering.</Content>
+<Content ns0:pstyle="Content">Determinism matters for:</Content>
+<Code ns0:pstyle="Code" language="text">reproducible debugging
+networked simulations
+benchmark comparisons
+regression tests
+research experiments
+binary output comparison</Code>
+<Content ns0:pstyle="Content">However stable sorting alone does not guarantee cross-platform bit-identical trees.</Content>
+<Content ns0:pstyle="Content">Floating-point centroid computation, sort implementations, equal NaN behavior, compiler settings and parallel construction can still differ.</Content>
+<Content ns0:pstyle="Content">If strict reproducibility matters, define explicit tie-breaks.</Content>
+<Content ns0:pstyle="Content">For example:</Content>
+<Code ns0:pstyle="Code" language="cpp">if (lhsCentroid &lt; rhsCentroid)
+    return true;
+
+if (rhsCentroid &lt; lhsCentroid)
+    return false;
+
+return lhsPrimitiveID &lt; rhsPrimitiveID;</Code>
+<Content ns0:pstyle="Content">That turns equality into a total ordering.</Content>
+<Content ns0:pstyle="Content">For Morton keys:</Content>
+<Code ns0:pstyle="Code" language="text">(code, primitiveID)</Code>
+<Content ns0:pstyle="Content">is even more explicit.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Numerical considerations during BVH construction</Strong></Content>
+<Content ns0:pstyle="Content">BVHs are often considered data-structure problems, but floating-point behavior matters.</Content>
+<Content ns0:pstyle="Content">AABB union repeatedly performs min/max:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/07c565aa4663b85352c275f0.svg" alt="&#10;B_{\min}=\min(B_{\min},P_{\min})&#10;" jobId="07c565aa4663b85352c275f0" originalTeX="&#10;B_{\min}=\min(B_{\min},P_{\min})&#10;" /></Formula>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/784fad029d251eb1418ed7f7.svg" alt="&#10;B_{\max}=\max(B_{\max},P_{\max}).&#10;" jobId="784fad029d251eb1418ed7f7" originalTeX="&#10;B_{\max}=\max(B_{\max},P_{\max}).&#10;" /></Formula>
+<Content ns0:pstyle="Content">Ordinary finite numbers behave well here.</Content>
+<Content ns0:pstyle="Content">NaNs are dangerous because comparison semantics can poison or inconsistently ignore coordinates depending on implementation.</Content>
+<Content ns0:pstyle="Content">Therefore primitive bounds should be validated before build.</Content>
+<Content ns0:pstyle="Content">Your <InlineCode ns0:cstyle="InlineCode">BuildBVH()</InlineCode> already checks:</Content>
+<Code ns0:pstyle="Code" language="cpp">if (!primitives[i].Bounds.IsValid())
+    throw ...</Code>
+<Content ns0:pstyle="Content">That is the correct boundary.</Content>
+<Content ns0:pstyle="Content">However, <InlineCode ns0:cstyle="InlineCode">IsValid()</InlineCode> should itself ensure not merely:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/22e439d99d7ec1cbfcdb5eb9.svg" alt="&#10;\min\le\max&#10;" jobId="22e439d99d7ec1cbfcdb5eb9" originalTeX="&#10;\min\le\max&#10;" /></Formula>
+<Content ns0:pstyle="Content">but also appropriate finite-coordinate requirements if the system expects them.</Content>
+<Content ns0:pstyle="Content">An infinite root bound would technically contain geometry but destroy useful SAH and traversal behavior.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Degenerate primitive bounds</Strong></Content>
+<Content ns0:pstyle="Content">A triangle perfectly parallel to XY can have:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5111b60fbf0e3c4883a9c204.svg" alt="&#10;z_{\min}=z_{\max}.&#10;" jobId="5111b60fbf0e3c4883a9c204" originalTeX="&#10;z_{\min}=z_{\max}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Its AABB has zero thickness along Z.</Content>
+<Content ns0:pstyle="Content">That is not automatically invalid.</Content>
+<Content ns0:pstyle="Content">Its surface area remains:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d74a6a9ccae2e13665ca44e3.svg" alt="&#10;2d_xd_y&#10;" jobId="d74a6a9ccae2e13665ca44e3" originalTeX="&#10;2d_xd_y&#10;" /></Formula>
+<Content ns0:pstyle="Content">when <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d7285299f3613cf59fc816c9.svg" alt="d_z=0" jobId="d7285299f3613cf59fc816c9" originalTeX="d_z=0" />.</Content>
+<Content ns0:pstyle="Content">A point primitive could have:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/44919620407896db1e98557a.svg" alt="&#10;d_x=d_y=d_z=0.&#10;" jobId="44919620407896db1e98557a" originalTeX="&#10;d_x=d_y=d_z=0.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Then surface area is zero.</Content>
+<Content ns0:pstyle="Content">SAH divisions involving a zero-area parent require a fallback strategy.</Content>
+<Content ns0:pstyle="Content">Examples:</Content>
+<Code ns0:pstyle="Code" language="text">all primitive centroids identical
+all primitive bounds collapse to one point
+all primitives lie on same degenerate geometric configuration</Code>
+<Content ns0:pstyle="Content">A safe builder should detect these cases and choose median/index splitting or create a leaf rather than divide by zero.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">BVH failure modes you should be able to diagnose</Strong></Content>
+<Content ns0:pstyle="Content">A ray missing visible triangles despite brute-force intersection succeeding usually indicates an <Strong ns0:cstyle="Bold">incorrect bound or traversal false negative</Strong>, not merely a poor tree.</Content>
+<Content ns0:pstyle="Content">A correct BVH that is slower than brute force on some scene may indicate excessive overlap, tiny leaves, pathological structure or a workload too small to amortize traversal.</Content>
+<Content ns0:pstyle="Content">Stack overflow indicates pathological depth or inadequate traversal-stack capacity.</Content>
+<Content ns0:pstyle="Content">A dynamic mesh that becomes slower every frame despite correct output suggests refit quality degradation.</Content>
+<Content ns0:pstyle="Content">Random crashes after building often indicate node-reference invalidation, bad child indices, or primitive-order corruption.</Content>
+<Content ns0:pstyle="Content">Flickering misses around huge coordinates may originate in ray–AABB numerical precision rather than tree topology.</Content>
+<Content ns0:pstyle="Content">SAH build taking unexpectedly long may result from repeated sorting and allocations—the exact issue your current full-sweep implementation exposes.</Content>
+<Content ns0:pstyle="Content">Morton tree correct but slower than SAH is not contradictory. Build speed and traversal quality are separate objectives.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Debugging a BVH visually</Strong></Content>
+<Content ns0:pstyle="Content">Your <InlineCode ns0:cstyle="InlineCode">SpatialDebug.cppm</InlineCode> already exposes <InlineCode ns0:cstyle="InlineCode">ExtractBVHBoxes()</InlineCode>.</Content>
+<Content ns0:pstyle="Content">That is useful.</Content>
+<Content ns0:pstyle="Content">But note the current implementation writes:</Content>
+<Code ns0:pstyle="Code" language="cpp">Depth = 0</Code>
+<Content ns0:pstyle="Content">for every extracted BVH node.</Content>
+<Content ns0:pstyle="Content">So the debug record does not currently reconstruct static-BVH depth.</Content>
+<Content ns0:pstyle="Content">An improved visualization should derive depth from parent links or traversal.</Content>
+<Content ns0:pstyle="Content">Then color nodes by hierarchy depth:</Content>
+<Code ns0:pstyle="Code" language="text">depth 0   root
+depth 1   children
+depth 2   grandchildren
+...</Code>
+<Content ns0:pstyle="Content">Useful visualizations include:</Content>
+<Code ns0:pstyle="Code" language="text">node AABBs by depth
+leaf occupancy
+overlapping siblings
+ray traversal order
+visited node count
+pruned nodes
+Morton order
+SAH split planes
+refit before/after bounds</Code>
+<Content ns0:pstyle="Content">For SAH specifically, displaying candidate split planes and their costs can make an apparently mysterious builder completely understandable.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Research bridge — what is actually worth testing here?</Strong></Content>
+<Content ns0:pstyle="Content">A useful research-grade question is:</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Can a hybrid builder select among full SAH, binned SAH, Morton hierarchy and refit/rebuild using scene telemetry such that total build + query cost beats any one fixed strategy across changing workloads?</Strong></Content>
+<Content ns0:pstyle="Content">This is related to, but distinct from, the adaptive broadphase research file already present in <InlineCode ns0:cstyle="InlineCode">KairoSpatial/research/adaptive_collision_pipeline.yaml</InlineCode>.</Content>
+<Content ns0:pstyle="Content">That file currently proposes choosing among:</Content>
+<Code ns0:pstyle="Code" language="text">dynamic AABB tree
+sweep-and-prune
+spatial hash</Code>
+<Content ns0:pstyle="Content">using online density, velocity and churn telemetry.</Content>
+<Content ns0:pstyle="Content">The same philosophy can be brought inside the BVH family.</Content>
+<Content ns0:pstyle="Content">Let</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1beb878c1daa8369b986dd79.svg" alt="&#10;T_{\text{total}}&#10;=&#10;T_{\text{build/update}}&#10;+&#10;Q\,T_{\text{query}},&#10;" jobId="1beb878c1daa8369b986dd79" originalTeX="&#10;T_{\text{total}}&#10;=&#10;T_{\text{build/update}}&#10;+&#10;Q\,T_{\text{query}},&#10;" /></Formula>
+<Content ns0:pstyle="Content">where <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/53a1fd7a21736b779e4ab8fe.svg" alt="Q" jobId="53a1fd7a21736b779e4ab8fe" originalTeX="Q" /> is expected query count before the next update.</Content>
+<Content ns0:pstyle="Content">A high-quality SAH build is valuable when <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/53a1fd7a21736b779e4ab8fe.svg" alt="Q" jobId="53a1fd7a21736b779e4ab8fe" originalTeX="Q" /> is huge.</Content>
+<Content ns0:pstyle="Content">A fast Morton build may dominate when geometry changes every frame and only a small number of queries occur.</Content>
+<Content ns0:pstyle="Content">A refit dominates when motion is modest and tree topology remains good.</Content>
+<Content ns0:pstyle="Content">A rebuild dominates when refitting has degraded traversal badly.</Content>
+<Content ns0:pstyle="Content">Therefore the actual optimization target is not:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7ee7c432d592cd9b0f3ca2aa.svg" alt="&#10;\min T_{\text{build}}&#10;" jobId="7ee7c432d592cd9b0f3ca2aa" originalTeX="&#10;\min T_{\text{build}}&#10;" /></Formula>
+<Content ns0:pstyle="Content">or:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e1fd9499d50d10f93bc25afa.svg" alt="&#10;\min T_{\text{query}}.&#10;" jobId="e1fd9499d50d10f93bc25afa" originalTeX="&#10;\min T_{\text{query}}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">It is:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ddcca26f34d252aaa9623afa.svg" alt="&#10;\boxed{&#10;\min&#10;\left(&#10;T_{\text{update}}&#10;+&#10;Q\,T_{\text{query}}&#10;\right)&#10;}&#10;" jobId="ddcca26f34d252aaa9623afa" originalTeX="&#10;\boxed{&#10;\min&#10;\left(&#10;T_{\text{update}}&#10;+&#10;Q\,T_{\text{query}}&#10;\right)&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">subject to correctness and latency constraints.</Content>
+<Content ns0:pstyle="Content">That turns which BVH is best? into a measurable systems question rather than a naming contest.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Repository audit summary</Strong></Content>
+<Content ns0:pstyle="Content">Your current <InlineCode ns0:cstyle="InlineCode">KairoSpatial</InlineCode> design is a <Strong ns0:cstyle="Bold">binary, flat-array, index-linked BVH</Strong> with cached primitive bounds/centroids, stable primitive ordering, parent indices and configurable leaf/depth limits.</Content>
+<Content ns0:pstyle="Content">Its median builder chooses the largest centroid axis and recursively median-splits.</Content>
+<Content ns0:pstyle="Content">Its SAH path performs exact candidate sweeps over centroid-sorted primitives for all three axes, using:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c8a9db2e1874abe59bb6b7d6.svg" alt="&#10;A_LN_L+A_RN_R&#10;" jobId="c8a9db2e1874abe59bb6b7d6" originalTeX="&#10;A_LN_L+A_RN_R&#10;" /></Formula>
+<Content ns0:pstyle="Content">as the split objective.</Content>
+<Content ns0:pstyle="Content">Its Morton path performs 10-bit-per-axis centroid quantization and 30-bit Morton ordering, followed by midpoint recursive splitting.</Content>
+<Content ns0:pstyle="Content">Its closest-hit traversal uses an explicit vector stack, current-distance pruning and near-child-first ordering.</Content>
+<Content ns0:pstyle="Content">Its any-hit traversal short-circuits.</Content>
+<Content ns0:pstyle="Content">It supports AABB, sphere, point and frustum BVH queries.</Content>
+<Content ns0:pstyle="Content">Its tests verify correctness against direct/brute-force expectations, including a 4096-primitive Morton-ordered stress case.</Content>
+<Content ns0:pstyle="Content">It currently does <Strong ns0:cstyle="Bold">not</Strong> implement canonical prefix-based LBVH topology construction, static-BVH refitting, static rebuild heuristics, wide BVHs, quantized bounds or packet SIMD traversal.</Content>
+<Content ns0:pstyle="Content">Those are not criticisms—they are simply the exact boundary between the repository’s current implementation and the complete M079/M080 curriculum.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Compact recall sheet — M079</Strong></Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">CONCEPT:</Strong> Use conservative hierarchical bounds so one cheap query can eliminate many expensive primitive tests.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">REPRESENTATION:</Strong></Content>
+<Code ns0:pstyle="Code" language="text">BVH
+├── Nodes[]
+│    ├── Bounds
+│    ├── Left/Right
+│    ├── FirstPrimitive/Count
+│    └── Parent
+├── Primitives[]
+└── PrimitiveOrder[]</Code>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">CORE INVARIANT:</Strong></Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/814649c7719a4896ef4eaad8.svg" alt="&#10;B_N\supseteq&#10;\bigcup_{\text{subtree}}B_P.&#10;" jobId="814649c7719a4896ef4eaad8" originalTeX="&#10;B_N\supseteq&#10;\bigcup_{\text{subtree}}B_P.&#10;" /></Formula>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">MEDIAN SPLIT:</Strong></Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/97af687ebd1cc0f7726c9e08.svg" alt="&#10;axis=\arg\max&#10;(C_{\max}-C_{\min}),&#10;" jobId="97af687ebd1cc0f7726c9e08" originalTeX="&#10;axis=\arg\max&#10;(C_{\max}-C_{\min}),&#10;" /></Formula>
+<Content ns0:pstyle="Content">sort centroids, split middle.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">SAH:</Strong></Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/19af28892f5cd52ad10c8c20.svg" alt="&#10;C_{\text{split}}&#10;=&#10;C_T+&#10;C_I&#10;\frac{&#10;A_LN_L+A_RN_R&#10;}{&#10;A_P&#10;}.&#10;" jobId="19af28892f5cd52ad10c8c20" originalTeX="&#10;C_{\text{split}}&#10;=&#10;C_T+&#10;C_I&#10;\frac{&#10;A_LN_L+A_RN_R&#10;}{&#10;A_P&#10;}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Compare against:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a814cc3728bddc769befa6aa.svg" alt="&#10;C_{\text{leaf}}&#10;=&#10;NC_I.&#10;" jobId="a814cc3728bddc769befa6aa" originalTeX="&#10;C_{\text{leaf}}&#10;=&#10;NC_I.&#10;" /></Formula>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">BINNED SAH:</Strong> centroid → fixed bins → prefix/suffix bounds → evaluate <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6d1f80b803d02a72308a70fd.svg" alt="B-1" jobId="6d1f80b803d02a72308a70fd" originalTeX="B-1" /> boundaries.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">MORTON:</Strong> normalize → quantize → interleave bits → sort.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">LBVH:</Strong> sorted Morton keys → longest common prefixes → radix-tree topology → bounds.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">KAIRO REALITY:</Strong> Morton sort exists; prefix/radix LBVH topology does not yet. Current Morton mode splits sorted ranges by midpoint.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Compact recall sheet — M080</Strong></Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">DEPTH-FIRST TRAVERSAL:</Strong></Content>
+<Code ns0:pstyle="Code" language="text">push root
+
+while stack:
+    pop node
+    reject if query misses bounds
+
+    if leaf:
+        test primitives
+    else:
+        push children</Code>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">CLOSEST HIT:</Strong></Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/deb264d9691c999c3d01d2a4.svg" alt="&#10;t_{\text{best}}&#10;\downarrow&#10;" jobId="deb264d9691c999c3d01d2a4" originalTeX="&#10;t_{\text{best}}&#10;\downarrow&#10;" /></Formula>
+<Content ns0:pstyle="Content">as hits improve.</Content>
+<Content ns0:pstyle="Content">Reject subtree when:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3cb5ff21827c0849a4b2f9e5.svg" alt="&#10;t_{\text{nodeNear}}&gt;t_{\text{best}}.&#10;" jobId="3cb5ff21827c0849a4b2f9e5" originalTeX="&#10;t_{\text{nodeNear}}&gt;t_{\text{best}}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Visit near child first to discover tight <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cc4d8ddc163b305691071c39.svg" alt="t_{\text{best}}" jobId="cc4d8ddc163b305691071c39" originalTeX="t_{\text{best}}" /> early.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">ANY HIT:</Strong> terminate at first accepted primitive intersection.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">OVERLAP:</Strong> node AABB prune → leaf bound check.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">POINT:</Strong> zero-size AABB query.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">FRUSTUM:</Strong> conservative AABB/frustum pruning.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">REFIT:</Strong></Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/694ea9ebb8e02d2efe634474.svg" alt="&#10;B_{\text{leaf}}&#10;=&#10;\bigcup B_P,&#10;" jobId="694ea9ebb8e02d2efe634474" originalTeX="&#10;B_{\text{leaf}}&#10;=&#10;\bigcup B_P,&#10;" /></Formula>
+<Content ns0:pstyle="Content">then:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/dc54aca99610b862d2d8b83c.svg" alt="&#10;B_{\text{parent}}&#10;=&#10;B_L\cup B_R.&#10;" jobId="dc54aca99610b862d2d8b83c" originalTeX="&#10;B_{\text{parent}}&#10;=&#10;B_L\cup B_R.&#10;" /></Formula>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">REBUILD:</Strong> rerun topology generation when refitted hierarchy quality deteriorates.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">WIDE BVH:</Strong> fewer levels, more child tests, natural SIMD mapping.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">QUANTIZATION:</Strong> encode child bounds relative to parent; round outward to preserve containment.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">PACKET SIMD:</Strong> one lane per ray; useful with coherent rays, degraded by divergence.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">CURRENT KAIRO:</Strong> BVH2 + explicit stack + near-first closest traversal. No static refit/wide/quantized/packet implementation yet.</Content>
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Reconstruction challenge</Strong></Content>
+<Content ns0:pstyle="Content">Before Pass 08, you should be able to reconstruct the following from a blank page without memorized prose.</Content>
+<Content ns0:pstyle="Content">Derive why SAH contains the ratio <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/51104a457f6c62453b7fb4a2.svg" alt="A_C/A_P" jobId="51104a457f6c62453b7fb4a2" originalTeX="A_C/A_P" />, then derive the leaf-versus-split decision including <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5c659a58c1fa40d118c8f861.svg" alt="C_T" jobId="5c659a58c1fa40d118c8f861" originalTeX="C_T" /> and <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9660c802f0d3ffa610da3f39.svg" alt="C_I" jobId="9660c802f0d3ffa610da3f39" originalTeX="C_I" />. Explain why the simplified Kairo expression preserves split ranking but changes the formal stopping model. Starting from three 10-bit coordinates, explain how Morton dilation and interleaving produce one 30-bit key, then explain why sorting those keys is <Strong ns0:cstyle="Bold">not by itself</Strong> canonical LBVH construction. Draw a flat <InlineCode ns0:cstyle="InlineCode">BVHNode[]</InlineCode> representation and manually execute a closest-hit ray with near-first traversal, showing exactly when <InlineCode ns0:cstyle="InlineCode">tClosest</InlineCode> removes a pending subtree. Then explain why refitting preserves correctness while potentially destroying performance, derive bottom-up refit, and finally explain why BVH8 + quantized child bounds + SIMD is a coherent design rather than three unrelated optimizations.</Content>
+<Content ns0:pstyle="Content">If you can do those six things and implement the skeletons without copying, you own the central machinery of this pass.</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Pass 07 is complete in coverage: M079 + M080, Parts 1301–1336.</Strong></Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Next — Pass 08: M081 + M082, Parts 1337–1374.</Strong> That moves from largely static BVHs into <Strong ns0:cstyle="Bold">dynamic AABB trees, fat bounds, insertion/removal heuristics, sweep-and-prune, temporal coherence, spatial hashes, dense/hashed grids, octrees, quadtrees, KD-trees, BSP/sphere hierarchies, scene graphs, portals/PVS and hierarchical occlusion.</Strong> <Link href="https://research.nvidia.com/publication/2012-06_maximizing-parallelism-construction-bvhs-octrees-and-k-d-trees?utm_source=chatgpt.com">NVIDIA</Link></Content>
+<Content ns0:pstyle="SubChapterSubHeading" id="06-engine-ii-ch028-dynamic-spatial-indices-sweep-and-prune-hash-grids-octrees-quadtrees-kd-trees-bsp-sphere-hierarchies-portalspvs-and-hierarchical-z">Dynamic Spatial Indices, Sweep-and-Prune, Hash Grids, Octrees, Quadtrees, KD-Trees, BSP, Sphere Hierarchies, Portals/PVS and Hierarchical-Z</Content>
+<Content ns0:pstyle="Content"><Strong ns0:cstyle="Bold">Coverage:</Strong> M081 owns <Strong ns0:cstyle="Bold">Parts 1337–1356</Strong> and M082 owns <Strong ns0:cstyle="Bold">Parts 1357–1374</Strong>. The curriculum explicitly requires every part in both ranges with no skips. Graphics_Engine_Mastery_Integra… Graphics_Engine_Mastery_Integra…</Content>
+<Content ns0:pstyle="Content">We finished Pass 07 with a mainly static hierarchy:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/049439cb136f2de89c4bff5b.svg" alt="&#10;\text{primitives}&#10;\rightarrow&#10;\text{BVH construction}&#10;\rightarrow&#10;\text{many accelerated queries}.&#10;" jobId="049439cb136f2de89c4bff5b" originalTeX="&#10;\text{primitives}&#10;\rightarrow&#10;\text{BVH construction}&#10;\rightarrow&#10;\text{many accelerated queries}.&#10;" /></Formula>
+<Content ns0:pstyle="Content">Pass 08 changes the problem.</Content>
+<Content ns0:pstyle="Content">A game world is not static. Characters move. Projectiles move. Doors open. Particles spawn and die. The camera crosses rooms. A physics broadphase is queried every frame. A renderer wants to discard objects that are not merely outside the frustum, but actually hidden behind other geometry.</Content>
+<Content ns0:pstyle="Content">So the question becomes:</Content>
+<Formula ns0:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e06e0a886bc3e86c28152a17.svg" alt="&#10;\boxed{&#10;\text{How do we organize a world whose spatial relationships themselves change?}&#10;}&#10;" jobId="e06e0a886bc3e86c28152a17" originalTeX="&#10;\boxed{&#10;\text{How do we organize a world whose spatial relationships themselves change?}&#10;}&#10;" /></Formula>
+<Content ns0:pstyle="Content">And there is no single universal answer.</Content>
+<Content ns0:pstyle="Content">A dynamic AABB tree trades slightly inflated bounds for cheap motion. Sweep-and-prune exploits temporal coherence. Hash grids exploit approximately uniform object scale. Octrees explicitly subdivide space. KD-trees dominate many point-neighbor problems. Portals exploit architectural connectivity. Hierarchical-Z exploits the image-space depth already generated by the renderer.</Content>
+<Content ns0:pstyle="Content">The entire pass is ultimately about <Strong ns0:cstyle="Bold">matching the index to the structure of the workload</Strong>.</Content>
+<Content ns0:pstyle="Content">—</Content>
+
+<Content ns0:pstyle="Content">—</Content>
+<Content ns0:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#06-engine-ii-ch027">Previous chapter</Link> · <Link href="#06-engine-ii-ch029">Next chapter</Link></Content>
+</Chapter>

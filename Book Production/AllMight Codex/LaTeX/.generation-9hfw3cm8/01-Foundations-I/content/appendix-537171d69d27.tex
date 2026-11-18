@@ -1,0 +1,42 @@
+\hypertarget{appendix-537171d69d27}{}
+\section{Quantization error metrics}\label{appendix-537171d69d27-quantization-error-metrics}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C006 · \textbf{Latest development:} C006
+
+\subsection{Definition and mechanism}\label{appendix-537171d69d27-definition-and-mechanism}
+
+For N\textgreater0, RMSE is sqrt(sum squared discrepancies/N), MAE is mean absolute discrepancy, and max error is the largest observed magnitude. Promote float operands before subtraction when measuring in double.
+
+\subsection{Prerequisites}\label{appendix-537171d69d27-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-3ae74e89b4e6]{Absolute and relative error} --- supplies the representation or validity rule used above.
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-fdc7879e8bf2}{Quantization and compressed weights (04-Visual-Computing-II, appendix-fdc7879e8bf2)} --- supplies the representation or validity rule used above.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-537171d69d27-used-by}
+
+Connect later dependent concepts here when their explanations use this mechanism.
+
+\subsection{Recall and next depth}\label{appendix-537171d69d27-recall-and-next-depth}
+
+Reconstruct the example and identify the condition that would invalidate it.
+
+\textbf{Pending:} Representation error alone does not establish downstream task correctness.
+
+\subsection{Source and navigation}\label{appendix-537171d69d27-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-choosing-what-information-to-keep]{Continuous teaching story} · {Source coverage ledger {[}referenced section unavailable{]}} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\subsection{A metric must match what the consumer loses}\label{appendix-537171d69d27-a-metric-must-match-what-the-consumer-loses}
+
+Quantization error is the difference \(e=x-\hat x\) between source and reconstruction, but one scalar summary cannot answer every engineering question. Mean squared error emphasizes large deviations; mean absolute error is less sensitive to outliers; maximum absolute error exposes worst-case bounds; relative error becomes useful when scale varies but is unstable near zero.
+
+For tensors, per-tensor MSE can hide one badly damaged channel or group. Diagnostics should often include per-group distributions, saturation counts, scale histograms, and downstream task error. A quantizer that minimizes weight MSE is not guaranteed to minimize model-output error because layers amplify directions differently.
+
+Signal metrics also depend on representation. Comparing gamma-encoded RGB with ordinary squared error is not the same as comparing linear-light energy. Normals may need angular error rather than component MSE.
+
+A useful quantization benchmark therefore reports storage cost together with several reconstruction metrics and one consumer-level metric. The metric is part of the experiment hypothesis, not a decorative number added after compression.

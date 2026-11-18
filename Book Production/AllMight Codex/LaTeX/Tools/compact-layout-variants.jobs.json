@@ -1,0 +1,85 @@
+{
+  "schema": "allmight-compact-layout-jobs-v1",
+  "assets": [
+    {
+      "id": "d21d21b04281361cfda13e69-lr",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 12, 'rankSpacing': 12, 'padding': 4, 'wrappingWidth': 104, 'htmlLabels': false}}}%%\nflowchart LR\n    A[Stored bytes] --> B[Decode and validate]\n    B --> C[Construct a typed object]\n    C --> D[Publish a usable resource]\n    D --> E[Use through an API]\n    E --> F[Wait for the last consumer]\n    F --> G[Destroy the object and release storage]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Review-v1/d21d21b04281361cfda13e69-lr.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/01 - A game promise becomes bytes and running state.md",
+      "volume": "05-Engine-I"
+    },
+    {
+      "id": "d21d21b04281361cfda13e69-tb",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 12, 'rankSpacing': 12, 'padding': 4, 'wrappingWidth': 104, 'htmlLabels': false}}}%%\nflowchart TB\n    A[Stored bytes] --> B[Decode and validate]\n    B --> C[Construct a typed object]\n    C --> D[Publish a usable resource]\n    D --> E[Use through an API]\n    E --> F[Wait for the last consumer]\n    F --> G[Destroy the object and release storage]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Review-v1/d21d21b04281361cfda13e69-tb.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/01 - A game promise becomes bytes and running state.md",
+      "volume": "05-Engine-I"
+    },
+    {
+      "id": "843c03a92a2bd701feb3265d-lr",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 18, 'rankSpacing': 16, 'padding': 4, 'wrappingWidth': 112, 'htmlLabels': false}}}%%\nflowchart LR\n    S[Reserved storage] -->|construct| O[Live C++ object]\n    O -->|owns or governs| R[Resource handle / allocation]\n    R -->|may be submitted to| E[External user: GPU, OS, file system]\n    O -->|destructor runs| D[Release protocol begins]\n    D -->|only after external-use contract permits| X[Resource becomes reclaimable]\n    S -. may remain reserved .-> N[Next object may later occupy same storage]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Review-v1/843c03a92a2bd701feb3265d-lr.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/04 - Resource ownership, failure paths, and review practice.md",
+      "volume": "05-Engine-I"
+    },
+    {
+      "id": "843c03a92a2bd701feb3265d-tb",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 18, 'rankSpacing': 16, 'padding': 4, 'wrappingWidth': 112, 'htmlLabels': false}}}%%\nflowchart TB\n    S[Reserved storage] -->|construct| O[Live C++ object]\n    O -->|owns or governs| R[Resource handle / allocation]\n    R -->|may be submitted to| E[External user: GPU, OS, file system]\n    O -->|destructor runs| D[Release protocol begins]\n    D -->|only after external-use contract permits| X[Resource becomes reclaimable]\n    S -. may remain reserved .-> N[Next object may later occupy same storage]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Review-v1/843c03a92a2bd701feb3265d-tb.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/04 - Resource ownership, failure paths, and review practice.md",
+      "volume": "05-Engine-I"
+    },
+    {
+      "id": "d1a7a180dbe8b9fa761dcd70-lr",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 12, 'rankSpacing': 16, 'padding': 4, 'wrappingWidth': 104, 'htmlLabels': false}}}%%\ngraph LR\n  A[Elapsed render time] --> B[Accumulator]\n  B --> C{At least fixed step?}\n  C -->|yes| D[Simulate h]\n  D --> B\n  C -->|no| E[alpha = remainder / h]\n  F[Previous pose] --> G[Render interpolation]\n  H[Current pose] --> G\n  E --> G",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Review-v1/d1a7a180dbe8b9fa761dcd70-lr.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/34 - Rigid-body motion from forces to contact.md",
+      "volume": "06-Engine-II"
+    },
+    {
+      "id": "d1a7a180dbe8b9fa761dcd70-tb",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 12, 'rankSpacing': 16, 'padding': 4, 'wrappingWidth': 104, 'htmlLabels': false}}}%%\ngraph TB\n  A[Elapsed render time] --> B[Accumulator]\n  B --> C{At least fixed step?}\n  C -->|yes| D[Simulate h]\n  D --> B\n  C -->|no| E[alpha = remainder / h]\n  F[Previous pose] --> G[Render interpolation]\n  H[Current pose] --> G\n  E --> G",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Review-v1/d1a7a180dbe8b9fa761dcd70-tb.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/03 - Game Engine/34 - Rigid-body motion from forces to contact.md",
+      "volume": "06-Engine-II"
+    },
+    {
+      "id": "8ffa21a425f320ac21b9143b-lr",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 18, 'rankSpacing': 12, 'padding': 4, 'wrappingWidth': 112, 'htmlLabels': false}}}%%\ngraph LR\n  A[Triangle geometry and adjacency] --> B[Stiffness S]\n  C[Vertex control areas] --> D[Mass matrix M]\n  B --> E[Generalized modes S phi = lambda M phi]\n  D --> E\n  E --> F[\"Decay exp(-kappa lambda t)\"]\n  F --> G[Implicit or explicit time step]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Review-v1/8ffa21a425f320ac21b9143b-lr.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/02 - Graphics Vision and XR/30 - Mesh Operators, Boundaries and Diffusion.md",
+      "volume": "04-Visual-Computing-II"
+    },
+    {
+      "id": "8ffa21a425f320ac21b9143b-tb",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 18, 'rankSpacing': 12, 'padding': 4, 'wrappingWidth': 112, 'htmlLabels': false}}}%%\ngraph TB\n  A[Triangle geometry and adjacency] --> B[Stiffness S]\n  C[Vertex control areas] --> D[Mass matrix M]\n  B --> E[Generalized modes S phi = lambda M phi]\n  D --> E\n  E --> F[\"Decay exp(-kappa lambda t)\"]\n  F --> G[Implicit or explicit time step]",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Review-v1/8ffa21a425f320ac21b9143b-tb.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/02 - Graphics Vision and XR/30 - Mesh Operators, Boundaries and Diffusion.md",
+      "volume": "04-Visual-Computing-II"
+    },
+    {
+      "id": "68fe71157effee5a538f53db-lr",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 12, 'rankSpacing': 16, 'padding': 4, 'wrappingWidth': 104, 'htmlLabels': false}}}%%\nflowchart LR\n    W[\"Represent a world<br/>geometry \u00b7 materials \u00b7 motion\"] --> L[\"Transport light<br/>visibility \u00b7 reflection \u00b7 integration\"]\n    L --> C[\"Measure it<br/>lens \u00b7 shutter \u00b7 sensor\"]\n    C --> I[\"Store an image<br/>sampling \u00b7 color \u00b7 encoding\"]\n    I --> V[\"Infer the world<br/>shape \u00b7 pose \u00b7 motion\"]\n    V --> T[\"Test a prediction<br/>render \u00b7 compare \u00b7 inspect residuals\"]\n    T --> W",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Review-v1/68fe71157effee5a538f53db-lr.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/02 - Graphics Vision and XR/01 - From Worlds to Images and Inference.md",
+      "volume": "03-Visual-Computing-I"
+    },
+    {
+      "id": "68fe71157effee5a538f53db-tb",
+      "kind": "mermaid",
+      "code": "%%{init: {'themeVariables': {'fontSize': '12px', 'fontFamily': 'Arial'}, 'flowchart': {'nodeSpacing': 12, 'rankSpacing': 16, 'padding': 4, 'wrappingWidth': 104, 'htmlLabels': false}}}%%\nflowchart TB\n    W[\"Represent a world<br/>geometry \u00b7 materials \u00b7 motion\"] --> L[\"Transport light<br/>visibility \u00b7 reflection \u00b7 integration\"]\n    L --> C[\"Measure it<br/>lens \u00b7 shutter \u00b7 sensor\"]\n    C --> I[\"Store an image<br/>sampling \u00b7 color \u00b7 encoding\"]\n    I --> V[\"Infer the world<br/>shape \u00b7 pose \u00b7 motion\"]\n    V --> T[\"Test a prediction<br/>render \u00b7 compare \u00b7 inspect residuals\"]\n    T --> W",
+      "outfile": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/LaTeX/Assets/Diagrams/Review-v1/68fe71157effee5a538f53db-tb.svg",
+      "source": "/Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Chapter Edition/02 - Graphics Vision and XR/01 - From Worlds to Images and Inference.md",
+      "volume": "03-Visual-Computing-I"
+    }
+  ]
+}

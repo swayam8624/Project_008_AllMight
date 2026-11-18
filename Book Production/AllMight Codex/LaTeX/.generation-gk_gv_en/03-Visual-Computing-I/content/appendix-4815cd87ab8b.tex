@@ -1,0 +1,54 @@
+\hypertarget{appendix-4815cd87ab8b}{}
+\section*{Probability density and change of measure}
+\chapter{Probability density and change of measure}\label{appendix-4815cd87ab8b-probability-density-and-change-of-measure}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} Phase 10
+
+\section{Definition and mechanism}\label{appendix-4815cd87ab8b-definition-and-mechanism}
+
+A probability density describes probability per unit of a chosen measure, not probability at a point. A density \(p_A(a)\) over area differs from a density \(p_\omega(\omega)\) over solid angle. When a mapping changes variables, its Jacobian converts density so total probability remains one: \(p_B(b)=p_A(a)|da/db|\) in one dimension, with the determinant of the inverse Jacobian in multiple dimensions. In rendering, choosing a point on a light and using its direction from a shading point requires an area-to-solid-angle conversion involving distance squared and the light's projected cosine. Estimator formulas are only correct when the sampling density and integral use the same measure. This concept prevents missing factors in importance sampling, environment-map sampling, and camera-lens integration.
+
+\subsection{Phase 9--10 development}\label{appendix-4815cd87ab8b-phase-910-development}
+
+A density is meaningful relative to a measure and its support; its value at a point is not itself an event probability. For a continuous scalar variable, an interval probability is the integral of the density over that interval. Under a differentiable one-to-one change of variables, the transformed density includes the absolute determinant of the inverse Jacobian. Values outside the transformed support have zero probability. A mixed law can contain both point masses and a continuous part, so one PDF alone cannot describe every distribution. When a renderer changes a surface-area density into a solid-angle density, the geometric Jacobian must preserve the same probability.
+
+\section{Prerequisites}\label{appendix-4815cd87ab8b-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-215c2570199b}{Light spectra and radiometry (04-Visual-Computing-II, appendix-215c2570199b)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4d0203f7944f}{Random variables and probability laws (02-Foundations-II, appendix-4d0203f7944f)}
+\end{itemize}
+
+\section{Used by}\label{appendix-4815cd87ab8b-used-by}
+
+\begin{itemize}
+\item
+  \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography}{Worlds, Images and Inference}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-031e02bf28af}{Monte Carlo rendering estimators and variance (04-Visual-Computing-II, appendix-031e02bf28af)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-a9d5dfdd164a}{Attention and visual transformers (04-Visual-Computing-II, appendix-a9d5dfdd164a)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-772f1fd96148}{Contrastive vision and image-language alignment (04-Visual-Computing-II, appendix-772f1fd96148)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-2c568f05ee34}{Latent-variable models and generative flows (04-Visual-Computing-II, appendix-2c568f05ee34)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-b0c42da325f1}{Perception feedback and robot learning (04-Visual-Computing-II, appendix-b0c42da325f1)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-c5b332e400e7}{Radiance fields and Gaussian splatting (04-Visual-Computing-II, appendix-c5b332e400e7)}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-d8a7ddb675eb}{Jacobians, pushforwards, and pullbacks (01-Foundations-I, appendix-d8a7ddb675eb)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-8d863ed954d0}{Inverse, rejection, and importance sampling (02-Foundations-II, appendix-8d863ed954d0)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-12bbe185dbe5}{Multivariate Gaussian distributions and whitening (02-Foundations-II, appendix-12bbe185dbe5)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-1c5e85693a06}{Latin-hypercube sampling (02-Foundations-II, appendix-1c5e85693a06)}
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-d580b422240f}{Stable probability normalization and log-sum-exp (02-Foundations-II, appendix-d580b422240f)} \#\# Full teaching explanation
+\end{itemize}
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Light\%20measurement\%20and\%20radiometry}{Light measurement and radiometry} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Numerical\%20integration\%20and\%20Monte\%20Carlo\%20estimation}{Numerical integration and Monte Carlo estimation} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Lens\%20optics,\%20focus,\%20and\%20image\%20formation}{Lens optics, focus, and image formation} - \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#2.\%20Random\%20quantities\%20and\%20their\%20probability\%20laws}{Phase 10 teaching section} - \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#7.\%20Transformations\%20turn\%20simple\%20inputs\%20into\%20useful\%20samples}{Phase 10 teaching section} - \href{../01-Foundations-I/main.pdf\#nameddest=appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (01-Foundations-I, appendix-cb5af353ef77)} · Phase 10 visual recall

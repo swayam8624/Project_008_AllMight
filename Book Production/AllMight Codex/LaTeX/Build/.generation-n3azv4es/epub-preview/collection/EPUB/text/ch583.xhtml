@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch583.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-64ea716dcadc-game-engine---retrieval-card" class="level2">
+<h2>Game Engine - Retrieval Card</h2>
+<p>Use this as a short teaching route, then follow the heading links for explanations, traces and code. The diagram shows responsibilities; it does not imply that every stage runs on a separate thread.</p>
+<p><img src="../media/file228.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Recall</th>
+<th>Minimum mechanism to reconstruct</th>
+<th>Reopen the explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ownership</td>
+<td>Initialization order follows dependencies; shutdown releases dependents first. A manager does not remove those edges.</td>
+<td>[[Game Engine - From First Frame to Living Worlds#Keep engine lifecycle separate from game-specific frame work</td>
+</tr>
+<tr>
+<td>Time</td>
+<td>Elapsed wall time and simulated time are separate. State catch-up, interpolation and pause policies before diagnosing movement.</td>
+<td>[[Game Engine - From First Frame to Living Worlds#Make timestep and integration choices explicit</td>
+</tr>
+<tr>
+<td>Identity</td>
+<td>A storage index can move or be reused. Stable identity plus a generation/revision prevents stale references naming a replacement.</td>
+<td>[[Game Engine - From First Frame to Living Worlds#A live object needs an identity that survives storage changes</td>
+</tr>
+<tr>
+<td>Assets</td>
+<td>Decode, validate and build a replacement before publication. CPU ownership and final GPU use are different lifetime facts.</td>
+<td>[[Game Engine - From First Frame to Living Worlds#6. Asset publication connects files, runtime, and graph resources</td>
+</tr>
+<tr>
+<td>Render graph</td>
+<td>Reads name versions; dependencies order users; compatible non-overlapping lifetimes may alias. Async schedules need actual completion edges.</td>
+<td>[[Game Engine - From First Frame to Living Worlds#2. Compile a render graph before executing it</td>
+</tr>
+<tr>
+<td>Contact coupling</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>G</mi>
+</math> maps velocity to gap velocity; <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>W</mi>
+  <mo>=</mo>
+  <mi>G</mi>
+  <msup>
+    <mi>M</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <msup>
+    <mi>G</mi>
+    <mi>T</mi>
+  </msup>
+</math> maps reactions to contact acceleration. Shared bodies create off-diagonal coupling.</td>
+<td>[[Game Engine - From First Frame to Living Worlds#Contact forces form a coupled system</td>
+</tr>
+<tr>
+<td>Captured worlds</td>
+<td>A splat index is not durable entity identity. Physical support supplies deformation; appearance alone supplies neither mass nor colliders.</td>
+<td>[[Game Engine - From First Frame to Living Worlds#Rendering identity becomes world identity only through an explicit bridge</td>
+</tr>
+<tr>
+<td>Edit bounds</td>
+<td>Name color range, contributor order, evaluated pixel opacities, appearance changes and actual stop policy. An alpha-only estimate misses color/order edits.</td>
+<td>[[Game Engine - From First Frame to Living Worlds#An image-change certificate must name the edits it covers</td>
+</tr>
+<tr>
+<td>Save</td>
+<td>New scene clears its path. Cancel is a no-op; failed writing keeps the dirty document. Save must choose authored versus runtime state explicitly.</td>
+<td>[[Game Engine - From First Frame to Living Worlds#A scene’s save path is part of its editor state</td>
+</tr>
+<tr>
+<td>Camera</td>
+<td>The controller chooses input, zoom, speed and resize policy. A viewport change alone does not recompute projection.</td>
+<td>[[Game Engine - From First Frame to Living Worlds#A camera controller is a policy object, not a projection matrix</td>
+</tr>
+<tr>
+<td>Replay</td>
+<td>Inputs need compatible state/simulation; snapshots need interpolation; captured video limits camera freedom. Edited retellings are separate from authoritative records.</td>
+<td>[[Game Engine - From First Frame to Living Worlds#Let play become a replayable story</td>
+</tr>
+<tr>
+<td>Game rules</td>
+<td>Trace immediate reward and delayed consequences together. Shooting a segment can remove danger while creating mushrooms and split threats.</td>
+<td>[[Game Engine - From First Frame to Living Worlds#From one core action to a coupled play system: Centipede</td>
+</tr>
+<tr>
+<td>Narrative</td>
+<td>Authored context and emergent play histories cooperate. Make state changes legible before assuming players understand their consequences.</td>
+<td>[[Game Engine - From First Frame to Living Worlds#Narrative can be authored, played, and retold</td>
+</tr>
+<tr>
+<td>Design document</td>
+<td>Record the rule, exception, intended experience and evidence status. A large specification is not proof that play works.</td>
+<td>[[Game Engine - From First Frame to Living Worlds#A design document is a working reference, not a frozen game</td>
+</tr>
+</tbody>
+</table>
+<section id="appendix-64ea716dcadc-two-figures-worth-reconstructing" class="level3">
+<h3>Two figures worth reconstructing</h3>
+<figure class="allmight-auto-path-caption" data-auto-path-caption-uri="Visual Recall/Game Engine/sphere-bound-gap.svg">
+<img src="../media/file157.png" class="wikilink allmight-auto-path-caption" data-auto-path-caption-uri="Visual Recall/Game Engine/sphere-bound-gap.svg" alt="Visual Recall/Game Engine/sphere-bound-gap.svg" />
+<figcaption aria-hidden="true">Visual Recall/Game Engine/sphere-bound-gap.svg</figcaption>
+</figure>
+<p>An enclosing parent bound can overlap a candidate that misses both children: broad-phase inclusion is a possibility, not a collision. Reopen <a href="ch400.xhtml#id_06-engine-ii-ch033-see-the-empty-space-inside-a-parent-bound" class="wikilink">the scaled witness and its distances (Spatial Worlds, Engine State, and Simulation, Part 2, Ch. 22)</a>.</p>
+<p>For the separate contracts of pixel footprint, compositing order and storage reuse, use <a href="ch548.xhtml#id_04-visual-computing-ii-ch037-figure-er1---footprint-compositing-order-and-storage-lifetime" class="wikilink">Figure ER1 and its caption (Vision, XR, and Playable Worlds, Part 1, Ch. 6)</a>.</p>
+<p>Before teaching a topic, reconstruct one failure trace: which invariant was violated, what visible symptom followed, and which measurement isolates the first wrong state? A successful build, a correct CPU formula and a correct native frame are different kinds of evidence.</p>
+<p><strong>Trace a confusing action:</strong> context → visible option → accepted action → changed state → visible result. Reopen <a href="ch582.xhtml#id_06-engine-ii-ch047-figure-e-choice---from-opportunity-to-consequence" class="wikilink">the five-stage choice figure and door trace</a>.</p>
+<p><strong>Stable IDs:</strong> random identifiers need a bit-width/count model and a collision policy. <a href="ch582.xhtml#id_06-engine-ii-ch047-figure-e-id---birthday-collision-risk" class="wikilink">Figure E-ID</a> compares the assumptions; a display name or temporary entity slot is a different kind of identifier.</p>
+</section>
+<section id="appendix-64ea716dcadc-contact-candidates-active-constraints-and-surviving-identities" class="level3">
+<h3>Contact candidates, active constraints, and surviving identities</h3>
+<p><img src="../media/file229.png" class="allmight-diagram-panel" alt="Diagram" /></p>
+<p><strong>Read the figure:</strong> retaining a key preserves a candidate, not a force. Refresh its geometry before deciding whether it belongs in this step’s active constraints; validate any old impulse separately.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Prompt</th>
+<th>Short answer</th>
+<th>Reopen the worked teaching</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sphere passes each box slab test; collision proved?</td>
+<td>No: diagonal corner distance can exceed the radius. A 0.30-radius sphere at (1.25,1.25,0) misses a unit-half-extent box.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#From a conservative box check to a sphere–box contact</td>
+</tr>
+<tr>
+<td>Closest-point delta is zero?</td>
+<td>The sphere center may be inside. Declare a containment policy before choosing a normal.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#From a conservative box check to a sphere–box contact</td>
+</tr>
+<tr>
+<td>A contact remains cached across a small gap?</td>
+<td>It can remain geometrically retained while inactive; no automatic support, friction, restitution or old impulse.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Keep contact features coherent across frames</td>
+</tr>
+<tr>
+<td>Reconnecting seat is still owned?</td>
+<td>Preserve participant/avatar identity; rebind authenticated transport, change its generation and reject stale or duplicate commands.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#A reconnect window needs an ownership policy</td>
+</tr>
+<tr>
+<td>Five seconds equals 300 ticks?</td>
+<td>Only at 60 ticks per elapsed second. Declare whether pause/stall consumes the grace window.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#A reconnect window needs an ownership policy</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Reconstruct:</strong> calculate the corner miss, then explain the inside-box normal failure. Trace a cached depth through 0.018, 0.004, -0.006 and -0.014 metres with separate retention and activation thresholds. Finally decide the outcomes of reconnect at ticks 1499 and 1500, an old-generation packet, and a duplicated new-generation command.</p>
+</section>
+<section id="appendix-64ea716dcadc-clip-first-divide-second-query-only-completed-pass-inputs" class="level3">
+<h3>Clip first, divide second, query only completed pass inputs</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Prompt</th>
+<th>Short answer</th>
+<th>Expand immediately</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Is clip x restricted to minus one through one?</td>
+<td>No. Its bounds depend on w; x=2,w=2 lies on the right plane.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Clip coordinates are not normalized device coordinates</td>
+</tr>
+<tr>
+<td>Why is NDC-only testing unsafe?</td>
+<td>Dividing (0,0,0,-1) hides its invalid clip inequalities.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Clip coordinates are not normalized device coordinates</td>
+</tr>
+<tr>
+<td>Which edge parameter creates the clip intersection?</td>
+<td>For (0,0,0,1) to (6,0,0,2), homogeneous t=1/5; divided-coordinate interpolation gives 1/3.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Clip coordinates are not normalized device coordinates</td>
+</tr>
+<tr>
+<td>Can the first cascade iteration consume the last cascade’s bound?</td>
+<td>Only after that bound is complete. Produce pass inputs before gathering geometry.</td>
+<td>[[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Compute pass inputs before gathering objects</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-64ea716dcadc-the-editor-has-its-own-visibility-and-freshness-rules" class="level3">
+<h3>The editor has its own visibility and freshness rules</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Prompt</th>
+<th>Short answer</th>
+<th>Worked teaching</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Slow directory result arrives after navigation?</td>
+<td>Check project, path and request generation; the old folder’s result does not own the new active panel.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Keep filesystem work out of the editor’s frame loop</td>
+</tr>
+<tr>
+<td>Gizmo drawn above a wall but cannot be clicked?</td>
+<td>Its input precedence disagrees with its displayed depth policy. Keep rendering and picking consistent.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#An editor manipulator can stay in world space while drawing above the scene</td>
+</tr>
+<tr>
+<td>Overlay means skip clipping?</td>
+<td>No. Valid projection and viewport inputs still apply even when scene depth cannot hide the handle.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#An editor manipulator can stay in world space while drawing above the scene</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-64ea716dcadc-signed-forces-and-changing-contacts" class="level3">
+<h3>Signed forces and changing contacts</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Prompt</th>
+<th>Short answer</th>
+<th>Return to the narrative / figure</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Compressed ordinary spring versus slack bungee?</td>
+<td>Ordinary spring pushes apart; bungee has zero compression force. With k=8 N/m and rest length1m, half-length spring gives +4N outward.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#A spring law is signed, not just a magnitude</td>
+</tr>
+<tr>
+<td>Can a current force fix a position-first Euler endpoint?</td>
+<td>No. That position update already uses old velocity; derive the target force for the actual integrator.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#The analytic “fake stiff spring” has two separate caveats</td>
+</tr>
+<tr>
+<td>What happens to neighboring contact depths?</td>
+<td>Translation and small rotation shift shared points; project their relative shift onto the frozen normal and search severity again.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Refresh neighboring penetrations after position correction</td>
+</tr>
+<tr>
+<td>Is the shared-point calculation executable?</td>
+<td>The full planar witness checks body-order signs, 2/10/13mm depths, unchanged unrelated contact and tangential motion.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#A planar penetration refresh witness</td>
+</tr>
+<tr>
+<td>Which kind of game correctness did a test establish?</td>
+<td>Separate formal rules, participant perception/coordination and community expectations; use the matching evidence.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Read a game feature at three nested scales</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-64ea716dcadc-model-choices-before-tuning" class="level3">
+<h3>Model choices before tuning</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Prompt</th>
+<th>Short answer</th>
+<th>Full explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Is static friction always at its limit?</td>
+<td>No: a 45 N push needs 45 N, below a 60 N limit. The coefficient describes the material pair.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#A friction coefficient describes a pair, not a timestep</td>
+</tr>
+<tr>
+<td>Does an energy-preserving slow projectile preserve impact momentum?</td>
+<td>No: the 2 kg proxy keeps 625 J but multiplies momentum by twenty.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Slow a projectile only after choosing what to preserve</td>
+</tr>
+<tr>
+<td>What preserves drop at fixed horizontal range when speed falls twentyfold?</td>
+<td>Under the stated drag-free horizontal-launch model, gravity must fall four hundredfold.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Slow a projectile only after choosing what to preserve</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-64ea716dcadc-context-and-lifecycle" class="level3">
+<h3>Context and lifecycle</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Prompt</th>
+<th>Short answer</th>
+<th>Full teaching</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Does a successful thread-status query mean the job succeeded?</td>
+<td>No. Query success, final worker status, and handle lifetime are separate states. Closing a handle does not stop its worker.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Query success, worker completion and handle lifetime are separate states</td>
+</tr>
+<tr>
+<td>Does identifying a reward prove its effect on every player?</td>
+<td>No. Observe the rule, state the cultural interpretation, then test actual behavior.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Ask what the game makes valuable</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-64ea716dcadc-reconstruct-the-integrated-runtime-witnesses" class="level3">
+<h3>Reconstruct the integrated runtime witnesses</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Prompt</th>
+<th>Short answer</th>
+<th>Full explanation and commented code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>When does a decoded scene become live?</td>
+<td>After strict parsing, migration, complete reference/cycle validation and the final no-throw swap.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Serialize scene meaning through stable identities</td>
+</tr>
+<tr>
+<td>Why is a resource DAG insufficient for a backend?</td>
+<td>Each mip/layer also has initialized contents, layout, access history and queue ownership.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Plan subresource state before translating it to an API</td>
+</tr>
+<tr>
+<td>What repairs a wrong predicted tick?</td>
+<td>Restore retained state and replay the corrected input sequence; reject corrections older than the declared history policy.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Prediction hides latency; rollback repairs a wrong prediction</td>
+</tr>
+<tr>
+<td>What does an audio voice own?</td>
+<td>One playback cursor and policy state; it borrows clip data under an explicit lifetime.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Turn the audio front end into a real-time voice and mixing system</td>
+</tr>
+<tr>
+<td>What question comes before navigation?</td>
+<td>Which action or goal to pursue; behavior trees, utility and planning express different decisions.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Navigation answers how to move; the decision layer answers what to do</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="appendix-64ea716dcadc-recall-the-contract-before-trusting-the-result" class="level3">
+<h3>Recall the contract before trusting the result</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Recall prompt</th>
+<th>Short answer</th>
+<th>Complete teaching and witness</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Which motions should a joint remove?</td>
+<td>Only its constrained relative degrees of freedom. Derive velocity rows before solving effective mass.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#A joint removes selected relative motion, not every motion</td>
+</tr>
+<tr>
+<td>Is a sensor event a body pointer to retain?</td>
+<td>Queue stable IDs and generation checks; consume after the step with an explicit destruction policy.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Decide which pairs may interact, then publish overlap transitions safely</td>
+</tr>
+<tr>
+<td>Does an alias copy a CMake target?</td>
+<td>No. It is another name; modify the real target. Imported target metadata describes an external artifact.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Imported targets describe external artifacts; aliases provide a stable name</td>
+</tr>
+<tr>
+<td>May an older shader job replace a newer edit?</td>
+<td>Cache its result if valid; activate only the expected current revision. A real concurrent publisher needs a transaction or lock.</td>
+<td>[[Continuous Notes/Game Engine - From First Frame to Living Worlds#Turn shader import into a checked derivation transaction</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</body>
+</html>

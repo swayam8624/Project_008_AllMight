@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch561.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-7d356c396d1a-visual-angle-and-calibrated-rays" class="level2">
+<h2>Visual angle and calibrated rays</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> XR01 · <strong>Latest development:</strong> XR01</p>
+<section id="appendix-7d356c396d1a-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Visual angle depends on geometry, not an image’s pixel count alone. Eccentricity is the angle between calibrated unit gaze/pixel directions. Average PPD differs from local density under a rectilinear mapping; UV distance is dimensionless.</p>
+</section>
+<section id="appendix-7d356c396d1a-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch569.xhtml#appendix-f90cee1be7a4-optical-focus-and-binocular-conflict" class="wikilink">Optical focus and binocular conflict</a> — Optical image formation determines the direction/focus assumptions used by geometry and binocular analysis.</li>
+</ul>
+</section>
+<section id="appendix-7d356c396d1a-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch567.xhtml#appendix-b491fc48c54b-visual-acuity-and-eccentricity" class="wikilink">Visual acuity and eccentricity</a></p></li>
+<li><p><a href="ch564.xhtml#appendix-a6f2c4fe1996-eye-movements-and-display-time-gaze" class="wikilink">Eye movements and display-time gaze</a></p></li>
+<li><p><a href="ch537.xhtml#appendix-fc99ad39f351-omnidirectional-camera-projections" class="wikilink">Omnidirectional camera projections (Vision, XR, and Playable Worlds, Part 1, Reference notes: Omnidirectional camera projections)</a></p></li>
+<li><p><a href="ch531.xhtml#appendix-f1a6d43e80d1-screen-space-ray-generation-and-mouse-picking" class="wikilink">Screen-space ray generation and mouse picking (Vision, XR, and Playable Worlds, Part 1, Reference notes: Screen-space ray generation and mouse picking)</a></p></li>
+<li><p><a href="ch496.xhtml#appendix-8c40fad29462-ray-differentials-and-camera-sampling-measures" class="wikilink">Ray differentials and camera sampling measures (Vision, XR, and Playable Worlds, Part 1, Reference notes: Ray differentials and camera sampling measures)</a></p></li>
+</ul>
+</section>
+<section id="appendix-7d356c396d1a-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Derive center PPD from pixel pitch separately from average PPD. Pending: distortion mappings and measured headset rays. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.</p>
+</section>
+<section id="appendix-7d356c396d1a-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch551.xhtml#id_04-visual-computing-ii-ch042-angles-connect-display-samples-to-a-viewer" class="wikilink">Expanded teaching explanation</a> · <a href="ch207.xhtml#appendix-fd090d982a15-xr01---independent-seeing-and-representation-source" class="wikilink">Independent coverage</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+<section id="appendix-7d356c396d1a-phase-11-camera-development" class="level3">
+<h3>Phase 11 camera development</h3>
+<p>A calibrated pixel maps to a viewing direction through inverse intrinsics and a declared distortion model. Nearby pixels define nearby directions; their derivatives estimate how a finite pixel footprint expands on a surface. Visual angle measures directional separation, while ray differentials describe local change in generated rays and may include lens sampling. For fisheye or omnidirectional cameras, angular footprint varies across the image. Transform sampling densities with the correct Jacobian when changing from pixel area to solid angle. Link: <a href="ch290.xhtml#id_02-foundations-ii-ch037-a-camera-model-must-close-the-loop" class="wikilink">A camera model must close the loop (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)</a>; research: <a href="ch289.xhtml#id_02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review" class="wikilink">Four deeper links from the TUM lecture review (Geometry, Cameras, and Image Formation, Part 1, Ch. 5)</a>.</p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,40 @@
+\hypertarget{appendix-e90053a4b201}{}\label{referencestart:appendix-e90053a4b201}
+\section{Floating-point canonicalization}\label{appendix-e90053a4b201-floating-point-canonicalization}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C004 · \textbf{Latest development:} C006
+
+\subsection{Definition and mechanism}\label{appendix-e90053a4b201-definition-and-mechanism}
+
+Canonicalization deliberately merges encodings: both zeros to positive zero, all NaNs to one quiet pattern. Raw preservation instead keeps sign/payload distinctions. Neither is universally correct; this is a file/hash contract choice.
+
+M006's BF16 converter explicitly canonicalizes NaNs while its raw tensor codec preserves uint32 payload words. These are distinct contracts: numerical closeness, canonical identity and raw byte identity must not be conflated.
+
+\subsection{Prerequisites}\label{appendix-e90053a4b201-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-3a048f032c1f]{Signed zero} --- Numerical equality merges two encodings and must be reflected in the chosen ordering or byte policy.
+\item
+  \hyperref[appendix-d6607cc4c235]{NaNs and payloads} --- Unordered comparisons and payload distinctions require explicit metric, comparison and serialization policy.
+\item
+  \hyperref[appendix-91d09ebed979]{Serialization} --- Changing canonical representation changes the external byte contract.
+\item
+  \hyperref[appendix-34ee45f161c1]{Bit casting and representation} --- A representation word must be distinguished from a numeric conversion before canonicalization.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-e90053a4b201-used-by}
+
+Connect later dependent concepts here as their lessons arrive.
+
+\subsection{Recall and next depth}\label{appendix-e90053a4b201-recall-and-next-depth}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Do not silently change an existing asset format; cross-platform payload transport needs its own tests.
+
+\subsection{Source and navigation}\label{appendix-e90053a4b201-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-choosing-what-information-to-keep]{Narrative development}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

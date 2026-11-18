@@ -1,0 +1,45 @@
+\hypertarget{appendix-00a6e044c437}{}\label{referencestart:appendix-00a6e044c437}
+\section{Subnormals and gradual underflow}\label{appendix-00a6e044c437-subnormals-and-gradual-underflow}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C004 · \textbf{Latest development:} C004
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-00a6e044c437-definition-and-mechanism}
+
+Exponent zero and nonzero fraction remove the hidden one and hold the effective exponent at the normal minimum. Binary32 values are F×2\^{}-149, connecting smoothly to 2\^{}-126. Absolute spacing stays fixed while relative precision degrades.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-00a6e044c437-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-2fae058c82e1]{Exponent bias} --- Stored exponents must be translated to effective powers before reconstructing value or spacing.
+\item
+  \hyperref[appendix-a24fd710cf67]{Significand and hidden bit} --- Fraction weights and effective precision determine value and the smallest retained position.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-00a6e044c437-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-399b7ad53f39]{Sterbenz lemma} --- An exact tiny difference may need gradual-underflow representability.
+\item
+  \hyperref[appendix-14bab4cab9d4]{ULP and representable spacing} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-ed8531b46754]{Floating-point exception flags} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-e979eb012782]{Flush-to-zero and denormals-are-zero} --- uses this mechanism in its explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-00a6e044c437-recall-and-next-depth}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} A subnormal value alone does not imply an underflow flag; distinguish tininess from inexactness.
+
+\subsection{Source and navigation}\label{appendix-00a6e044c437-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}

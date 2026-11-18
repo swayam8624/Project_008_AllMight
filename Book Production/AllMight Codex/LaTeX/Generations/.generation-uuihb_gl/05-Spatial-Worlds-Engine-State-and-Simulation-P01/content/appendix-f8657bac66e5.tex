@@ -1,0 +1,30 @@
+\hypertarget{appendix-f8657bac66e5}{}\label{referencestart:appendix-f8657bac66e5}
+\section{Matrix norms and numerical error}\label{appendix-f8657bac66e5-matrix-norms-and-numerical-error}
+
+\hypertarget{appendix-f8657bac66e5-matrix-norms-and-numerical-error}{}
+
+The spectral norm is the largest 2-norm stretch and equals the largest singular value. The Frobenius norm measures aggregate squared entry energy. Residuals, orthogonality errors, and condition numbers need a declared norm and scale; a small residual alone need not imply a sensitive solution is accurate.
+
+\textbf{Use it when:} setting scaled tolerances or interpreting numerical diagnostics.
+
+\textbf{Developed in Phase 8:} The spectral norm measures worst-case amplification, while the Frobenius norm accumulates squared energy across entries. The chapter uses them to scale residuals, reconstruction errors, and orthogonality defects, and separates backward error in a nearby problem from forward error in the requested answer. \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#nameddest=01-foundations-i-ch019-matrix-norms-put-scale-into-error-statements}{norms and scale (Mathematics for Visual Computing, Part 1, Ch. 3)} · \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#nameddest=01-foundations-i-ch020-residuals-distinguish-backward-accuracy-from-forward-certainty}{residuals and error interpretation (Mathematics for Visual Computing, Part 1, Ch. 4)}
+
+\subsection{Prerequisites}\label{appendix-f8657bac66e5-prerequisites}
+
+\hypertarget{appendix-f8657bac66e5-prerequisites}{}
+
+\href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-49933872bb51}{Norms lengths and induced distances (Vision, XR, and Playable Worlds, Part 1, Reference notes: Norms lengths and induced distances)}, \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#nameddest=appendix-1fad5e7f36fa}{Singular value decomposition (Light Transport and Image Synthesis, Part 1, Reference notes: Singular value decomposition)}, \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#nameddest=appendix-a7fbaf6d1b1c}{Forward and backward error (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Forward and backward error)}.
+
+\subsection{Used by}\label{appendix-f8657bac66e5-used-by}
+
+\hypertarget{appendix-f8657bac66e5-used-by}{}
+
+\href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-541306fdbc1b}{Moore-Penrose pseudoinverse (Vision, XR, and Playable Worlds, Part 1, Reference notes: Moore-Penrose pseudoinverse)}, \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-0f4bc2bf2b1f}{Matrix functions (Vision, XR, and Playable Worlds, Part 1, Reference notes: Matrix functions)}, \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-67c87a3d9e94}{Sparse and iterative solvers (Vision, XR, and Playable Worlds, Part 1, Reference notes: Sparse and iterative solvers)}.
+
+\textbf{Teaching path:} \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#nameddest=01-foundations-i-ch019-matrix-norms-give-scale-to-residuals-and-error-claims}{norms and error (Mathematics for Visual Computing, Part 1, Ch. 3)}.
+
+\subsection{A matrix norm can protect a geometry bound}\label{appendix-f8657bac66e5-a-matrix-norm-can-protect-a-geometry-bound}
+
+\hypertarget{appendix-f8657bac66e5-a-matrix-norm-can-protect-a-geometry-bound}{}
+
+A local sphere under a linear transform is generally an ellipsoid. The Frobenius norm times its original radius gives a safe, possibly loose enclosing radius. Taking only the longest matrix column can fail under shear. \hyperref[04-visual-computing-ii-ch028-a-line-corridor-can-be-a-cheap-prefilter-for-shadow-caster-work]{The culling example} derives the bound, demonstrates the shear counterexample, and links its geometric figure. This connects numerical matrix norms to conservative rejection decisions.

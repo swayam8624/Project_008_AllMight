@@ -1,0 +1,1384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Chapter xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/" id="05-engine-i-ch012" source="Chapter Edition/03 - Game Engine/12 - Transactions, recovery, and safe project boundaries.md">
+<Content aid:pstyle="ChapterHeader" id="05-engine-i-ch012-transactions-recovery-and-safe-project-boundaries">12 — Transactions, recovery, and safe project boundaries&#13;</Content>
+<Content aid:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#05-engine-i-ch011">Previous chapter</Link> · <Link href="#05-engine-i-ch013">Next chapter</Link>&#13;</Content>
+<Content aid:pstyle="Content">Interactive tools need edits that can be undone and projects that can be reopened after failure. This chapter makes mutation transactional and treats paths, packages, backups, and atomic publication as security and recovery contracts.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">By the end:</Strong> Design undo/redo, save recovery, path validation, and package publication so partial failure cannot silently corrupt authored work.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Recall question:</Strong> Which state is authoritative before and after a failed save, and how does the system prove that the published project is complete?&#13;</Content>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 20420–24709; source-span SHA256 92d825554ec3ec68c9a64a4357481a4f61ed46201d275c8ccef881791b1ca3f8. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<Content aid:pstyle="SubChapterSubHeading" id="05-engine-i-ch012-undo-transactions-recovery-project-boundaries-path-security-packaging-and-atomic-publication">UNDO, TRANSACTIONS, RECOVERY, PROJECT BOUNDARIES, PATH SECURITY, PACKAGING AND ATOMIC PUBLICATION&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Undo commands</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Undo begins with one idea:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f82010b944db61362970ff6f.svg" alt="&#10;\boxed{&#10;\text{An edit must contain enough information to reverse itself.}&#10;}&#10;" jobId="f82010b944db61362970ff6f" originalTeX="&#10;\boxed{&#10;\text{An edit must contain enough information to reverse itself.}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">For property edit:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Entity&#10;Component&#10;Property&#10;Before&#10;After.&#13;</Code>
+<Content aid:pstyle="Content">For create entity:&#13;</Content>
+<Code aid:pstyle="Code" language="text">CreatedEntityID&#10;complete creation state.&#13;</Code>
+<Content aid:pstyle="Content">For delete entity:&#13;</Content>
+<Code aid:pstyle="Code" language="text">serialized deleted subtree.&#13;</Code>
+<Content aid:pstyle="Content">The inverse operation must be deterministic.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Command interface</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo currently defines:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">class EditorCommand&#10;{&#10;public:&#10;    virtual std::string_view&#10;    Name() const noexcept = 0;&#10;&#10;    virtual void Execute() = 0;&#10;    virtual void Undo() = 0;&#10;&#10;    virtual bool TryMerge(&#10;        EditorCommand&amp;) noexcept&#10;    {&#10;        return false;&#10;    }&#10;};&#13;</Code>
+<Content aid:pstyle="Content">This is an excellent minimal command model.&#13;</Content>
+<Content aid:pstyle="Content">Each command owns the state necessary for forward and reverse transitions.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Creation command identity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A subtle problem:&#13;</Content>
+<Content aid:pstyle="Content">Create entity.&#13;</Content>
+<Content aid:pstyle="Content">Undo.&#13;</Content>
+<Content aid:pstyle="Content">Redo.&#13;</Content>
+<Content aid:pstyle="Content">If redo allocates a <Strong aid:cstyle="Bold">different Entity ID</Strong>, references or selection state may behave unexpectedly.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s creation commands preserve the allocated scene identity.&#13;</Content>
+<Content aid:pstyle="Content">First execution:&#13;</Content>
+<Code aid:pstyle="Code" language="text">allocate ID 42.&#13;</Code>
+<Content aid:pstyle="Content">Undo:&#13;</Content>
+<Code aid:pstyle="Code" language="text">destroy 42.&#13;</Code>
+<Content aid:pstyle="Content">Redo:&#13;</Content>
+<Code aid:pstyle="Code" language="text">CreateEntityWithID(42).&#13;</Code>
+<Content aid:pstyle="Content">This is exactly the right editor semantic.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Undo commands should store semantic state</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For Light edit:&#13;</Content>
+<Content aid:pstyle="Content">Bad:&#13;</Content>
+<Code aid:pstyle="Code" language="text">store pointer to Light&#10;store raw bytes.&#13;</Code>
+<Content aid:pstyle="Content">Better:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Entity ID&#10;Before LightComponent&#10;After LightComponent.&#13;</Code>
+<Content aid:pstyle="Content">Kairo’s <InlineCode aid:cstyle="InlineCode">SetSceneComponentCommand</InlineCode> follows this model.&#13;</Content>
+<Content aid:pstyle="Content">It captures complete before/after component values.&#13;</Content>
+<Content aid:pstyle="Content">Undo therefore does not depend on stale memory addresses.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Command-pattern undo/redo</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Command history is a sequence:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/003a1db6729af05ea162b0c3.svg" alt="&#10;C_0,C_1,\dots,C_{n-1}.&#10;" jobId="003a1db6729af05ea162b0c3" originalTeX="&#10;C_0,C_1,\dots,C_{n-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Maintain cursor <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/d2884c0481e0eb7ae5d428e3.svg" alt="k" jobId="d2884c0481e0eb7ae5d428e3" originalTeX="k"/>:&#13;</Content>
+<Code aid:pstyle="Code" language="text">[ applied commands | redo commands ]&#10;                  ^&#10;                cursor&#13;</Code>
+<Content aid:pstyle="Content">If:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2238c1d4c8733c2e5828e1ef.svg" alt="&#10;k=3,&#10;" jobId="2238c1d4c8733c2e5828e1ef" originalTeX="&#10;k=3,&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">commands 0–2 are applied.&#13;</Content>
+<Content aid:pstyle="Content">Commands 3 onward are redoable.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Undo</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Undo command:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a99c016215b8c7a06a0c8361.svg" alt="&#10;C_{k-1}.Undo().&#10;" jobId="a99c016215b8c7a06a0c8361" originalTeX="&#10;C_{k-1}.Undo().&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Only after successful Undo:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/95d136ff46cee89de081200f.svg" alt="&#10;k\leftarrow k-1.&#10;" jobId="95d136ff46cee89de081200f" originalTeX="&#10;k\leftarrow k-1.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This ordering matters.&#13;</Content>
+<Content aid:pstyle="Content">If Undo throws and cursor moved first, history would claim state changed when it did not.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo does the operation first and changes cursor afterward.&#13;</Content>
+<Content aid:pstyle="Content">Strong design.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Redo</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Redo:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/78d2ed8b180c9da78450fa89.svg" alt="&#10;C_k.Execute().&#10;" jobId="78d2ed8b180c9da78450fa89" originalTeX="&#10;C_k.Execute().&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a2b7106bbf1a0f2becacc706.svg" alt="&#10;k\leftarrow k+1.&#10;" jobId="a2b7106bbf1a0f2becacc706" originalTeX="&#10;k\leftarrow k+1.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Again cursor changes only after successful execution.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">New edit after undo</Strong>&#13;</Content>
+<Content aid:pstyle="Content">History:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A B C D&#10;      ^&#13;</Code>
+<Content aid:pstyle="Content">Suppose C/D are redo branch.&#13;</Content>
+<Content aid:pstyle="Content">Now execute X.&#13;</Content>
+<Content aid:pstyle="Content">Expected:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A B X&#13;</Code>
+<Content aid:pstyle="Content">not:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A B X C D.&#13;</Code>
+<Content aid:pstyle="Content">Kairo truncates redo entries when a new command executes after undo.&#13;</Content>
+<Content aid:pstyle="Content">This is standard linear undo semantics.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Command history memory</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Unlimited undo can retain huge snapshots.&#13;</Content>
+<Content aid:pstyle="Content">Imagine deleting a 2 GiB terrain entity snapshot 500 times.&#13;</Content>
+<Content aid:pstyle="Content">History becomes enormous.&#13;</Content>
+<Content aid:pstyle="Content">Kairo bounds command history, defaulting to:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/88a40190c52dfe0da0647fe2.svg" alt="&#10;512&#10;" jobId="88a40190c52dfe0da0647fe2" originalTeX="&#10;512&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">entries.&#13;</Content>
+<Content aid:pstyle="Content">When full, oldest applied command is evicted.&#13;</Content>
+<Content aid:pstyle="Content">That is a reasonable first memory policy.&#13;</Content>
+<Content aid:pstyle="Content">More advanced systems use:&#13;</Content>
+<Code aid:pstyle="Code" language="text">byte budget&#10;compressed snapshots&#10;disk-backed history.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Command merging</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Slider drag generates many micro-edits:&#13;</Content>
+<Code aid:pstyle="Code" language="text">1.00&#10;1.01&#10;1.02&#10;...&#10;3.50.&#13;</Code>
+<Content aid:pstyle="Content">Without merging, Ctrl-Z walks every intermediate frame.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">TryMerge(...)&#13;</Code>
+<Content aid:pstyle="Content">allows adjacent compatible commands to coalesce.&#13;</Content>
+<Content aid:pstyle="Content">A merged command should preserve:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Before = initial value&#10;After = latest value.&#13;</Code>
+<Content aid:pstyle="Content">That makes one intuitive undo step.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Transactional editor changes</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A transaction is stronger than an undo command.&#13;</Content>
+<Content aid:pstyle="Content">It means an operation involving several mutations behaves:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b5499e1c1a02b763774cf970.svg" alt="&#10;\boxed{&#10;\text{all succeed or none become visible}.&#10;}&#10;" jobId="b5499e1c1a02b763774cf970" originalTeX="&#10;\boxed{&#10;\text{all succeed or none become visible}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Suppose Add Physics Preview adds:&#13;</Content>
+<Code aid:pstyle="Code" language="text">RigidBody&#10;Collider.&#13;</Code>
+<Content aid:pstyle="Content">If RigidBody succeeds but Collider validation fails, leaving only one component is undesirable.&#13;</Content>
+<Content aid:pstyle="Content">A transactional command should prevalidate or mutate a candidate state first.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Strong exception guarantee</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For an operation <Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/6c545e75c8708e0c86ff2194.svg" alt="F" jobId="6c545e75c8708e0c86ff2194" originalTeX="F"/>:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a4722a69eb997134d13f39d3.svg" alt="&#10;F(State)=&#10;\begin{cases}&#10;State',&amp;success\\&#10;State,&amp;failure&#10;\end{cases}&#10;" jobId="a4722a69eb997134d13f39d3" originalTeX="&#10;F(State)=&#10;\begin{cases}&#10;State',&amp;success\\&#10;State,&amp;failure&#10;\end{cases}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">not:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/85127e229cfa2c666b1b02fd.svg" alt="&#10;State_{half-mutated}.&#10;" jobId="85127e229cfa2c666b1b02fd" originalTeX="&#10;State_{half-mutated}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Kairo’s command interface explicitly requires a strong exception guarantee from commands.&#13;</Content>
+<Content aid:pstyle="Content">This is a very good contract.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Validate before mutation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">void SetMaterial(&#10;    Entity e,&#10;    MaterialAssetHandle asset)&#10;{&#10;    // May throw.&#10;    assets.Resolve(asset);&#10;&#10;    // Only mutate after validation.&#10;    scene.SetMaterial(e, asset);&#10;}&#13;</Code>
+<Content aid:pstyle="Content">Kairo’s logic-document command uses precisely this pattern: it resolves the typed asset before replacing the component.&#13;</Content>
+<Content aid:pstyle="Content">This keeps failure atomic.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Candidate-copy transactions</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For complex state:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">Scene candidate = scene;&#10;&#10;ApplyOperation(candidate);&#10;&#10;candidate.Validate();&#10;&#10;scene =&#10;    std::move(candidate);&#13;</Code>
+<Content aid:pstyle="Content">This can be expensive but gives strong semantics.&#13;</Content>
+<Content aid:pstyle="Content">Your RuntimeWorld and several project-loading paths already use candidate state before commit.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Multi-command transactions</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Sometimes one UI action logically contains many commands.&#13;</Content>
+<Content aid:pstyle="Content">Example prefab instantiation:&#13;</Content>
+<Code aid:pstyle="Code" language="text">create root&#10;create 20 children&#10;add components&#10;set hierarchy&#10;resolve references.&#13;</Code>
+<Content aid:pstyle="Content">Undo should happen as one action.&#13;</Content>
+<Content aid:pstyle="Content">Use composite command:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">class CompositeCommand&#10;{&#10;    vector&lt;Command&gt; Commands;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Execute in order.&#13;</Content>
+<Content aid:pstyle="Content">Undo in reverse:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e1c8f9fca3c80a0f4a3909b1.svg" alt="&#10;C_n^{-1},&#10;C_{n-1}^{-1},&#10;\dots,&#10;C_0^{-1}.&#10;" jobId="e1c8f9fca3c80a0f4a3909b1" originalTeX="&#10;C_n^{-1},&#10;C_{n-1}^{-1},&#10;\dots,&#10;C_0^{-1}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If an Execute fails midway, undo already-applied children before propagating failure.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Transaction boundary should match user intent</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Not every low-level mutation deserves an undo record.&#13;</Content>
+<Content aid:pstyle="Content">User performs:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Duplicate subtree.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">That is one logical operation even though hundreds of component writes occur.&#13;</Content>
+<Content aid:pstyle="Content">The undo stack should reflect <Strong aid:cstyle="Bold">semantic authoring actions</Strong>, not internal implementation calls.&#13;</Content>
+<Content aid:pstyle="Content">This dramatically improves editor usability.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Recovery journals</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Undo protects against:&#13;</Content>
+<Code aid:pstyle="Code" language="text">user mistake during a live session.&#13;</Code>
+<Content aid:pstyle="Content">Recovery protects against:&#13;</Content>
+<Code aid:pstyle="Code" language="text">process crash&#10;OS crash&#10;power loss&#10;editor bug.&#13;</Code>
+<Content aid:pstyle="Content">These are different problems.&#13;</Content>
+<Content aid:pstyle="Content">Undo history stored only in RAM disappears during a crash.&#13;</Content>
+<Content aid:pstyle="Content">Recovery state must live outside the process.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Snapshot versus write-ahead journal</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Two broad approaches exist.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Snapshot</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Periodically save complete recovery state:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Project&#10;Manifest&#10;Scene&#10;Documents&#10;Draft buffers.&#13;</Code>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Operation journal</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Append every mutation:&#13;</Content>
+<Code aid:pstyle="Code" language="text">SetTransform&#10;DeleteEntity&#10;ChangeMaterial&#10;...&#13;</Code>
+<Content aid:pstyle="Content">Then replay after last durable checkpoint.&#13;</Content>
+<Content aid:pstyle="Content">Kairo currently uses a recovery <Strong aid:cstyle="Bold">snapshot</Strong> model.&#13;</Content>
+<Content aid:pstyle="Content">That is simpler and robust.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kairo recovery snapshot</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A recovery point contains metadata such as:&#13;</Content>
+<Code aid:pstyle="Code" language="text">original project root&#10;project file&#10;active scene&#10;creation time&#10;list of recovery files.&#13;</Code>
+<Content aid:pstyle="Content">Each payload records:&#13;</Content>
+<Code aid:pstyle="Code" language="text">role&#10;target path&#10;payload path&#10;byte count&#10;checksum&#10;dirty state&#10;active state.&#13;</Code>
+<Content aid:pstyle="Content">The snapshot includes:&#13;</Content>
+<Code aid:pstyle="Code" language="text">project descriptor&#10;asset manifest&#10;scene&#10;authoring documents&#10;text drafts.&#13;</Code>
+<Content aid:pstyle="Content">This is impressively complete.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Drafts versus canonical documents</Strong>&#13;</Content>
+<Content aid:pstyle="Content">One subtle feature matters greatly.&#13;</Content>
+<Content aid:pstyle="Content">A text editor buffer may currently contain invalid syntax.&#13;</Content>
+<Content aid:pstyle="Content">Example user is halfway typing:&#13;</Content>
+<Code aid:pstyle="Code" language="text">function foo(&#13;</Code>
+<Content aid:pstyle="Content">An autosave/recovery system must preserve those bytes.&#13;</Content>
+<Content aid:pstyle="Content">It must <Strong aid:cstyle="Bold">not</Strong> require them to parse as a valid authoritative document.&#13;</Content>
+<Content aid:pstyle="Content">Kairo distinguishes:&#13;</Content>
+<Code aid:pstyle="Code" language="text">AuthoringDocument&#10;TextDraft.&#13;</Code>
+<Content aid:pstyle="Content">The recovery code explicitly says drafts may be syntactically invalid and should not be promoted to authoritative state merely because they were recovered.&#13;</Content>
+<Content aid:pstyle="Content">That is exactly correct.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Recovery integrity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">On load Kairo verifies:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/94160b21ac0a025fa5646bfa.svg" alt="&#10;ActualByteCount=&#10;ManifestByteCount&#10;" jobId="94160b21ac0a025fa5646bfa" originalTeX="&#10;ActualByteCount=&#10;ManifestByteCount&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1a65d2e27ed00a6f9075a116.svg" alt="&#10;Checksum(payload)=&#10;ManifestChecksum.&#10;" jobId="1a65d2e27ed00a6f9075a116" originalTeX="&#10;Checksum(payload)=&#10;ManifestChecksum.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If one payload fails:&#13;</Content>
+<Code aid:pstyle="Code" language="text">reject recovery snapshot.&#13;</Code>
+<Content aid:pstyle="Content">This is much safer than opening a partially written state and hoping.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Recovery publication</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A recovery snapshot is built in a staging directory.&#13;</Content>
+<Content aid:pstyle="Content">Only after payloads and manifest are complete is the snapshot directory published into the recovery root.&#13;</Content>
+<Content aid:pstyle="Content">Thus discovery sees either:&#13;</Content>
+<Code aid:pstyle="Code" language="text">old complete snapshots&#13;</Code>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Code aid:pstyle="Code" language="text">new complete snapshot.&#13;</Code>
+<Content aid:pstyle="Content">Not a partially assembled snapshot masquerading as valid.&#13;</Content>
+<Content aid:pstyle="Content">This is atomic-publication thinking at directory granularity.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Retention</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Recovery data grows indefinitely unless bounded.&#13;</Content>
+<Content aid:pstyle="Content">Kairo defaults to:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b7370c5fa73282660d2e5f9c.svg" alt="&#10;10&#10;" jobId="b7370c5fa73282660d2e5f9c" originalTeX="&#10;10&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">snapshots and permits up to:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7efd7de40ea4464aa3340070.svg" alt="&#10;64.&#10;" jobId="7efd7de40ea4464aa3340070" originalTeX="&#10;64.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Old recovery points can be removed according to creation ordering.&#13;</Content>
+<Content aid:pstyle="Content">This is the correct distinction:&#13;</Content>
+<Code aid:pstyle="Code" language="text">recovery data is redundant safety state,&#10;not permanent project history.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Autosave architecture</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Autosave is a policy layered over recovery primitives.&#13;</Content>
+<Content aid:pstyle="Content">The safe definition is not:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Call Save All every 30 seconds.&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">That can overwrite the user’s authoritative files with partially edited state.&#13;</Content>
+<Content aid:pstyle="Content">Better:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c8dfc6b3426c4431a278ffef.svg" alt="&#10;\boxed{&#10;Autosave&#10;\rightarrow&#10;RecoverySnapshot.&#10;}&#10;" jobId="c8dfc6b3426c4431a278ffef" originalTeX="&#10;\boxed{&#10;Autosave&#10;\rightarrow&#10;RecoverySnapshot.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">The user’s real project remains unchanged.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Autosave should not clear dirty state</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose scene is unsaved.&#13;</Content>
+<Content aid:pstyle="Content">Autosave creates recovery snapshot.&#13;</Content>
+<Content aid:pstyle="Content">The editor must still display:&#13;</Content>
+<Code aid:pstyle="Code" language="text">*&#10;unsaved changes.&#13;</Code>
+<Content aid:pstyle="Content">Because autosave did not commit the user’s canonical project.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s recovery API explicitly says creating a recovery point does not modify:&#13;</Content>
+<Code aid:pstyle="Code" language="text">dirty flags&#10;command history&#10;authored files.&#13;</Code>
+<Content aid:pstyle="Content">Excellent.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Autosave scheduling</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A practical policy might trigger when:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a5624e93388d6d8cffaebab1.svg" alt="&#10;TimeSinceLastRecovery&#10;&gt;&#10;T&#10;" jobId="a5624e93388d6d8cffaebab1" originalTeX="&#10;TimeSinceLastRecovery&#10;&gt;&#10;T&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4db6f4150161534cbd4d7851.svg" alt="&#10;HasUnsavedChanges&#10;" jobId="4db6f4150161534cbd4d7851" originalTeX="&#10;HasUnsavedChanges&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and editor is not currently in a critical file operation.&#13;</Content>
+<Content aid:pstyle="Content">For example:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">if (&#10;    session.HasUnsavedChanges() &amp;&amp;&#10;    now - lastRecovery &gt;&#10;        std::chrono::minutes(2))&#10;{&#10;    session.CreateRecoveryPoint();&#10;}&#13;</Code>
+<Content aid:pstyle="Content">But do not perform heavy serialization synchronously every frame.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Snapshot consistency under asynchronous autosave</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If autosave happens on a background thread while UI mutates Scene concurrently, copying live structures without synchronization is dangerous.&#13;</Content>
+<Content aid:pstyle="Content">Options:&#13;</Content>
+<Code aid:pstyle="Code" language="text">short lock + snapshot copy&#10;immutable/persistent document structures&#10;command barrier&#10;serialize a versioned copy.&#13;</Code>
+<Content aid:pstyle="Content">The recovery job should operate on a stable snapshot, not moving live state.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo status for autosave</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The inspected code clearly provides:&#13;</Content>
+<Code aid:pstyle="Code" language="text">CreateRecoveryPoint&#10;LoadRecoverySnapshot&#10;RestoreRecoveryPoint&#10;retention&#10;checksums&#10;draft preservation.&#13;</Code>
+<Content aid:pstyle="Content">A full time-based autosave scheduler was not evident in the inspected recovery/session files.&#13;</Content>
+<Content aid:pstyle="Content">So the <Strong aid:cstyle="Bold">recovery mechanism exists</Strong>; automatic scheduling is a host/editor policy that can be layered on top.&#13;</Content>
+<Content aid:pstyle="Content">That is a reasonable architectural separation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Project descriptors</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A project descriptor tells the engine how to bootstrap the project.&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo descriptor contains:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Name&#10;AssetManifest&#10;StartupScene&#10;EngineVersion&#10;InputMap&#10;RenderingProfile&#10;GraphicsBackend&#10;optional PlayExecutable&#10;EnabledPlugins&#10;BuildProfiles.&#13;</Code>
+<Content aid:pstyle="Content">This is exactly the right level of information.&#13;</Content>
+<Content aid:pstyle="Content">It does not contain:&#13;</Content>
+<Code aid:pstyle="Code" language="text">VkDevice&#10;runtime ECS entity IDs&#10;GPU resources.&#13;</Code>
+<Content aid:pstyle="Content">It contains persistent bootstrap policy.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Descriptor versus runtime state</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Descriptor:&#13;</Content>
+<Code aid:pstyle="Code" language="text">graphics-backend metal&#13;</Code>
+<Content aid:pstyle="Content">is configuration.&#13;</Content>
+<Content aid:pstyle="Content">Runtime:&#13;</Content>
+<Code aid:pstyle="Code" language="text">selected physical device&#10;queue family&#10;swapchain image count&#13;</Code>
+<Content aid:pstyle="Content">is runtime state.&#13;</Content>
+<Content aid:pstyle="Content">Do not serialize runtime discoveries back into project descriptor unless they are deliberate project settings.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Descriptor versioning</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo supports:&#13;</Content>
+<Code aid:pstyle="Code" language="text">kairo-project 1&#10;kairo-project 2.&#13;</Code>
+<Content aid:pstyle="Content">New v2 fields include broader engine/build settings.&#13;</Content>
+<Content aid:pstyle="Content">The parser explicitly applies version-specific requirements.&#13;</Content>
+<Content aid:pstyle="Content">That is much better than:&#13;</Content>
+<Code aid:pstyle="Code" language="text">try reading fields and guess format.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Manifest validation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A manifest should be validated structurally and semantically.&#13;</Content>
+<Content aid:pstyle="Content">Structural validation:&#13;</Content>
+<Code aid:pstyle="Code" language="text">header valid?&#10;token count correct?&#10;values parse?&#10;counts bounded?&#10;records closed?&#13;</Code>
+<Content aid:pstyle="Content">Semantic validation:&#13;</Content>
+<Code aid:pstyle="Code" language="text">IDs valid?&#10;paths valid?&#10;asset types valid?&#10;dependencies exist?&#10;dependency types match?&#10;cycles absent?&#10;duplicates absent?&#13;</Code>
+<Content aid:pstyle="Content">Do both.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Kairo asset manifest validation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current parser bounds:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3b7d920a74870d87804cbdb4.svg" alt="&#10;ManifestSize\le64\text{ MiB}.&#10;" jobId="3b7d920a74870d87804cbdb4" originalTeX="&#10;ManifestSize\le64\text{ MiB}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">It bounds:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/845197044a029176cd7e8347.svg" alt="&#10;AssetCount\le1,000,000.&#10;" jobId="845197044a029176cd7e8347" originalTeX="&#10;AssetCount\le1,000,000.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">It bounds dependency count per asset.&#13;</Content>
+<Content aid:pstyle="Content">It limits path/importer lengths.&#13;</Content>
+<Content aid:pstyle="Content">It rejects unknown statements.&#13;</Content>
+<Content aid:pstyle="Content">Then registry installation performs graph/topology validation.&#13;</Content>
+<Content aid:pstyle="Content">This is strong layered validation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why limits are security features</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Input says:&#13;</Content>
+<Code aid:pstyle="Code" language="text">array-count = 4,000,000,000.&#13;</Code>
+<Content aid:pstyle="Content">Naive parser:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">vector.resize(count);&#13;</Code>
+<Content aid:pstyle="Content">may attempt huge allocation.&#13;</Content>
+<Content aid:pstyle="Content">Always validate before allocating:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/8181a17fee009f295652e798.svg" alt="&#10;count\le MaximumAllowed.&#10;" jobId="8181a17fee009f295652e798" originalTeX="&#10;count\le MaximumAllowed.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Every variable-length structure needs a budget.&#13;</Content>
+<Content aid:pstyle="Content">This applies even to local project files because corrupted data should not be capable of crashing the tool unpredictably.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Duplicate validation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Manifest might list same AssetID twice.&#13;</Content>
+<Content aid:pstyle="Content">Or two paths differing only by case:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Textures/A.png&#10;textures/a.png.&#13;</Code>
+<Content aid:pstyle="Content">On Windows/macOS configurations these may alias.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s portable path key case-folds logical paths to avoid such ambiguous manifests.&#13;</Content>
+<Content aid:pstyle="Content">That is an important cross-platform policy.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Sandboxed project-relative paths</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A project file should normally reference:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Scenes/Main.kscene&#10;Textures/A.png.&#13;</Code>
+<Content aid:pstyle="Content">Not:&#13;</Content>
+<Code aid:pstyle="Code" language="text">C:\Users\Alice\Desktop\foo.png&#13;</Code>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Code aid:pstyle="Code" language="text">/home/alice/foo.png.&#13;</Code>
+<Content aid:pstyle="Content">Project-relative paths enable:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/bd4657c9a847b09b6d032d2a.svg" alt="&#10;\boxed{&#10;relocatability&#10;+&#10;portability&#10;+&#10;sandboxing.&#10;}&#10;" jobId="bd4657c9a847b09b6d032d2a" originalTeX="&#10;\boxed{&#10;relocatability&#10;+&#10;portability&#10;+&#10;sandboxing.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Path resolution model</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Given canonical root:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/841d637d5f268e4d14a96483.svg" alt="&#10;R.&#10;" jobId="841d637d5f268e4d14a96483" originalTeX="&#10;R.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Given validated relative path:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5f6e51d4e894862576e94b31.svg" alt="&#10;p.&#10;" jobId="5f6e51d4e894862576e94b31" originalTeX="&#10;p.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Candidate:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c1182ed1df9e56546bca9c98.svg" alt="&#10;C=Canonical(R/p).&#10;" jobId="c1182ed1df9e56546bca9c98" originalTeX="&#10;C=Canonical(R/p).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Then require:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea84bea52e4e84b6646f1457.svg" alt="&#10;C\in Descendants(R).&#10;" jobId="ea84bea52e4e84b6646f1457" originalTeX="&#10;C\in Descendants(R).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">That is stronger than lexical normalization alone because symlinks can alter filesystem resolution.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Never use string-prefix containment</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Wrong:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">candidateString.starts_with(&#10;    rootString);&#13;</Code>
+<Content aid:pstyle="Content">If root:&#13;</Content>
+<Code aid:pstyle="Code" language="text">/Game&#13;</Code>
+<Content aid:pstyle="Content">then:&#13;</Content>
+<Code aid:pstyle="Code" language="text">/Game2/evil.txt&#13;</Code>
+<Content aid:pstyle="Content">also starts with <InlineCode aid:cstyle="InlineCode">/Game</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s <InlineCode aid:cstyle="InlineCode">IsWithinProjectRoot()</InlineCode> compares filesystem path components instead.&#13;</Content>
+<Content aid:pstyle="Content">Correct.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Existing files and future outputs differ</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Existing path can use:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::filesystem::canonical(...)&#13;</Code>
+<Content aid:pstyle="Content">because target exists.&#13;</Content>
+<Content aid:pstyle="Content">Future save path may not exist yet.&#13;</Content>
+<Content aid:pstyle="Content">Kairo uses:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">weakly_canonical(...)&#13;</Code>
+<Content aid:pstyle="Content">for future output paths, resolving existing prefixes while allowing missing final components.&#13;</Content>
+<Content aid:pstyle="Content">This distinction is exactly right.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Path traversal prevention</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Classic traversal:&#13;</Content>
+<Code aid:pstyle="Code" language="text">../../../../etc/passwd&#13;</Code>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Code aid:pstyle="Code" language="text">..\..\Windows\System32.&#13;</Code>
+<Content aid:pstyle="Content">If joined naively:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">root / userPath&#13;</Code>
+<Content aid:pstyle="Content">attacker can escape root.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s <InlineCode aid:cstyle="InlineCode">NormalizeAssetPath()</InlineCode> rejects parent components.&#13;</Content>
+<Content aid:pstyle="Content">That is the first line of defense.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Absolute path injection</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Also reject:&#13;</Content>
+<Code aid:pstyle="Code" language="text">/etc/passwd&#10;C:\Windows\System32&#10;\\server\share&#13;</Code>
+<Content aid:pstyle="Content">because path joining semantics may discard the project root.&#13;</Content>
+<Content aid:pstyle="Content">A relative-project field should be <Strong aid:cstyle="Bold">provably relative</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">Kairo checks:&#13;</Content>
+<Code aid:pstyle="Code" language="text">is_absolute&#10;has_root_name&#10;has_root_directory.&#13;</Code>
+<Content aid:pstyle="Content">Good.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Encodings and separators</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Cross-platform paths are tricky.&#13;</Content>
+<Content aid:pstyle="Content">On Windows:&#13;</Content>
+<Code aid:pstyle="Code" language="text">\&#13;</Code>
+<Content aid:pstyle="Content">is native separator.&#13;</Content>
+<Content aid:pstyle="Content">Portable project formats should usually canonicalize to:&#13;</Content>
+<Code aid:pstyle="Code" language="text">/&#13;</Code>
+<Content aid:pstyle="Content">when serialized.&#13;</Content>
+<Content aid:pstyle="Content">Kairo uses generic path spelling and validates portable character sets.&#13;</Content>
+<Content aid:pstyle="Content">This means the same manifest behaves consistently across host systems.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold"><InlineCode aid:cstyle="InlineCode">.</InlineCode> and empty components</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Normalize:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Meshes/./Cube.obj&#13;</Code>
+<Content aid:pstyle="Content">to:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Meshes/Cube.obj.&#13;</Code>
+<Content aid:pstyle="Content">Reject paths that normalize to the project root itself when a file is expected.&#13;</Content>
+<Content aid:pstyle="Content">Canonical path representation reduces ambiguity and duplicate identities.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Symlink escape prevention</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Lexical traversal checks are not enough.&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Project/&#10;    Assets/&#10;        External -&gt; /etc&#13;</Code>
+<Content aid:pstyle="Content">Then user path:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Assets/External/passwd&#13;</Code>
+<Content aid:pstyle="Content">contains no <InlineCode aid:cstyle="InlineCode">..</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">Lexically it appears inside project.&#13;</Content>
+<Content aid:pstyle="Content">Filesystem resolution escapes.&#13;</Content>
+<Content aid:pstyle="Content">Therefore canonicalize after filesystem resolution and verify containment.&#13;</Content>
+<Content aid:pstyle="Content">Kairo does this for existing project files.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Future output symlink problem</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Project/Saves&#13;</Code>
+<Content aid:pstyle="Content">is a symlink to:&#13;</Content>
+<Code aid:pstyle="Code" language="text">/tmp/other.&#13;</Code>
+<Content aid:pstyle="Content">Saving:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Saves/Main.kscene&#13;</Code>
+<Content aid:pstyle="Content">would escape project.&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">ResolveProjectOutput()</InlineCode> uses <InlineCode aid:cstyle="InlineCode">weakly_canonical(root / relative)</InlineCode> and then component-wise root containment.&#13;</Content>
+<Content aid:pstyle="Content">This catches existing symlink redirects.&#13;</Content>
+<Content aid:pstyle="Content">Good.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Packaging is stricter</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s package collector rejects symbolic links entirely.&#13;</Content>
+<Content aid:pstyle="Content">This is an excellent packaging policy.&#13;</Content>
+<Content aid:pstyle="Content">Why?&#13;</Content>
+<Content aid:pstyle="Content">A bundle should contain concrete files, not references whose meaning changes after relocation.&#13;</Content>
+<Content aid:pstyle="Content">A symlink could point:&#13;</Content>
+<Code aid:pstyle="Code" language="text">outside project&#10;to machine-specific location&#10;to missing target after installation.&#13;</Code>
+<Content aid:pstyle="Content">Rejecting all symlinks produces a much cleaner portable bundle.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">TOCTOU caveat</Strong>&#13;</Content>
+<Content aid:pstyle="Content">There is one deeper security issue.&#13;</Content>
+<Content aid:pstyle="Content">Sequence:&#13;</Content>
+<Code aid:pstyle="Code" language="text">canonicalize path&#10;check path&#10;open file&#13;</Code>
+<Content aid:pstyle="Content">has a time-of-check/time-of-use window.&#13;</Content>
+<Content aid:pstyle="Content">An adversarial process could replace a path component with a symlink between check and open.&#13;</Content>
+<Content aid:pstyle="Content">For a normal trusted desktop project environment, canonicalization is usually sufficient.&#13;</Content>
+<Content aid:pstyle="Content">For hardened untrusted sandboxes, use OS-level directory handles and no-follow APIs such as <InlineCode aid:cstyle="InlineCode">openat</InlineCode>-style relative opening, platform equivalents, and descriptor-relative traversal.&#13;</Content>
+<Content aid:pstyle="Content">That is the difference between:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/e250f210f3027163d73a5c2b.svg" alt="&#10;\text{robust editor sandboxing}&#10;" jobId="e250f210f3027163d73a5c2b" originalTeX="&#10;\text{robust editor sandboxing}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/1327bcfa2e87d43e3c65ee90.svg" alt="&#10;\text{hostile multi-user filesystem security}.&#10;" jobId="1327bcfa2e87d43e3c65ee90" originalTeX="&#10;\text{hostile multi-user filesystem security}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Runtime packaging</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Packaging converts a development project into a runnable deployment bundle.&#13;</Content>
+<Content aid:pstyle="Content">It should not simply <InlineCode aid:cstyle="InlineCode">zip</InlineCode> the whole repository.&#13;</Content>
+<Content aid:pstyle="Content">Exclude:&#13;</Content>
+<Code aid:pstyle="Code" language="text">.git&#10;temporary caches&#10;recovery journals&#10;editor-only metadata&#10;build outputs recursively copied into themselves.&#13;</Code>
+<Content aid:pstyle="Content">Include:&#13;</Content>
+<Code aid:pstyle="Code" language="text">runtime project&#10;required assets&#10;player executable&#10;required runtime libraries&#10;manifest&#10;launcher/config.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo package pipeline</Strong>&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">PackageRuntimeProject()</InlineCode> roughly performs:&#13;</Content>
+<Code aid:pstyle="Code" language="text">select build profile&#10;resolve player executable&#10;validate output&#10;create staging directory&#10;collect bounded project payload&#10;reject symlinks/non-regular entries&#10;copy project&#10;relocate descriptor as Project.kproject&#10;copy player&#10;write launcher&#10;write package manifest&#10;re-open staged RuntimeProject&#10;publish staging directory.&#13;</Code>
+<Content aid:pstyle="Content">That is a serious packaging pipeline rather than an ad-hoc copy script.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Revalidate staged package</Strong>&#13;</Content>
+<Content aid:pstyle="Content">One particularly good step is:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">RuntimeProject(&#10;    packagedProject /&#10;    "Project.kproject");&#13;</Code>
+<Content aid:pstyle="Content">before publication.&#13;</Content>
+<Content aid:pstyle="Content">This means all descriptor-relative paths are exercised in the <Strong aid:cstyle="Bold">actual relocated layout</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">So:&#13;</Content>
+<Code aid:pstyle="Code" language="text">package builds&#13;</Code>
+<Content aid:pstyle="Content">is not considered success until:&#13;</Content>
+<Code aid:pstyle="Code" language="text">packaged project can bootstrap.&#13;</Code>
+<Content aid:pstyle="Content">Excellent acceptance gate.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Package closure</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The next level beyond copying an entire project tree is dependency-closure packaging.&#13;</Content>
+<Content aid:pstyle="Content">Given startup scene roots:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/841d637d5f268e4d14a96483.svg" alt="&#10;R.&#10;" jobId="841d637d5f268e4d14a96483" originalTeX="&#10;R.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Compute transitive asset closure:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2e32fab5c972cf845889a067.svg" alt="&#10;Closure(R).&#10;" jobId="2e32fab5c972cf845889a067" originalTeX="&#10;Closure(R).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Package only needed cooked assets.&#13;</Content>
+<Content aid:pstyle="Content">This reduces shipping size and prevents unused source content from leaking into distribution.&#13;</Content>
+<Content aid:pstyle="Content">Current packaging appears project-tree based with filtering rather than complete asset-DAG cooking, so dependency-closure packaging remains a future optimization.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Development versus release packaging</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Development bundle may include:&#13;</Content>
+<Code aid:pstyle="Code" language="text">symbols&#10;debug shaders&#10;validation layers configuration&#10;diagnostics&#10;editable assets.&#13;</Code>
+<Content aid:pstyle="Content">Release:&#13;</Content>
+<Code aid:pstyle="Code" language="text">optimized cooked assets&#10;stripped symbols&#10;shipping config&#10;no editor recovery state.&#13;</Code>
+<Content aid:pstyle="Content">Project <InlineCode aid:cstyle="InlineCode">BuildProfiles</InlineCode> already provide the right policy hook.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Relocatable bundles</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A relocatable bundle runs regardless of absolute install directory.&#13;</Content>
+<Content aid:pstyle="Content">Bad:&#13;</Content>
+<Code aid:pstyle="Code" language="text">/home/swayam/KairoBuild/project/Scenes/Main.kscene&#13;</Code>
+<Content aid:pstyle="Content">embedded into executable.&#13;</Content>
+<Content aid:pstyle="Content">Good:&#13;</Content>
+<Code aid:pstyle="Code" language="text">project/Project.kproject&#13;</Code>
+<Content aid:pstyle="Content">resolved relative to package root.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Launcher-relative discovery</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s Unix launcher determines:&#13;</Content>
+<Code aid:pstyle="Code" language="sh">KAIRO_PACKAGE_ROOT=&#10;    directory of launcher&#13;</Code>
+<Content aid:pstyle="Content">then executes:&#13;</Content>
+<Code aid:pstyle="Code" language="text">bin/KairoPlayer&#10;project/Project.kproject&#13;</Code>
+<Content aid:pstyle="Content">relative to that root.&#13;</Content>
+<Content aid:pstyle="Content">Thus moving:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Build/Release&#13;</Code>
+<Content aid:pstyle="Content">to:&#13;</Content>
+<Code aid:pstyle="Code" language="text">/Applications/MyGame&#13;</Code>
+<Content aid:pstyle="Content">does not break project paths.&#13;</Content>
+<Content aid:pstyle="Content">That is relocatability.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Shared libraries complicate relocatability</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If KairoPlayer dynamically depends on:&#13;</Content>
+<Code aid:pstyle="Code" language="text">libFoo.so&#10;SomeFramework.dylib&#10;Some.dll&#13;</Code>
+<Content aid:pstyle="Content">package must include them and configure loader discovery.&#13;</Content>
+<Content aid:pstyle="Content">Linux:&#13;</Content>
+<Code aid:pstyle="Code" language="text">RPATH / $ORIGIN&#13;</Code>
+<Content aid:pstyle="Content">macOS:&#13;</Content>
+<Code aid:pstyle="Code" language="text">@executable_path&#10;@loader_path&#10;install names.&#13;</Code>
+<Content aid:pstyle="Content">Windows:&#13;</Content>
+<Code aid:pstyle="Code" language="text">DLL beside executable&#10;or controlled search paths.&#13;</Code>
+<Content aid:pstyle="Content">Static linking reduces much of this complexity.&#13;</Content>
+<Content aid:pstyle="Content">But a truly relocatable shared-library build must manage loader paths explicitly.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Runtime content must also avoid absolute paths</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Even if executable locates project correctly, a scene containing:&#13;</Content>
+<Code aid:pstyle="Code" language="text">C:\Users\Swayam\Textures\a.png&#13;</Code>
+<Content aid:pstyle="Content">kills relocatability.&#13;</Content>
+<Content aid:pstyle="Content">That is why Part 1576’s project-relative path discipline and Part 1580 are connected.&#13;</Content>
+<Content aid:pstyle="Content">Relocatable packaging is not a packaging-only feature.&#13;</Content>
+<Content aid:pstyle="Content">It starts at every persistent reference.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Atomic publication by rename</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose saving:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Assets.kassets.&#13;</Code>
+<Content aid:pstyle="Content">Bad:&#13;</Content>
+<Code aid:pstyle="Code" language="text">open destination truncate&#10;write half&#10;power loss.&#13;</Code>
+<Content aid:pstyle="Content">Now original file is gone and replacement is incomplete.&#13;</Content>
+<Content aid:pstyle="Content">Better:&#13;</Content>
+<Code aid:pstyle="Code" language="text">write temporary sibling&#10;flush/close&#10;validate&#10;rename temp -&gt; destination.&#13;</Code>
+<Content aid:pstyle="Content">Within the same filesystem, rename/replacement can provide atomic <Strong aid:cstyle="Bold">visibility</Strong> semantics.&#13;</Content>
+<Content aid:pstyle="Content">Readers see old or new name, not half a file.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Why same-directory temporary matters</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Rename between different filesystems may become:&#13;</Content>
+<Code aid:pstyle="Code" language="text">copy + delete&#13;</Code>
+<Content aid:pstyle="Content">or fail.&#13;</Content>
+<Content aid:pstyle="Content">Atomicity is typically guaranteed only within the same filesystem.&#13;</Content>
+<Content aid:pstyle="Content">So create:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Assets.kassets.tmp-UUID&#13;</Code>
+<Content aid:pstyle="Content">beside:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Assets.kassets.&#13;</Code>
+<Content aid:pstyle="Content">Kairo follows this pattern.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Windows versus POSIX replacement</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo centralizes platform behavior in <InlineCode aid:cstyle="InlineCode">AtomicFile.cppm</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">On Windows it uses:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">MoveFileExW(&#10;    temporary,&#10;    destination,&#10;    MOVEFILE_REPLACE_EXISTING |&#10;    MOVEFILE_WRITE_THROUGH);&#13;</Code>
+<Content aid:pstyle="Content">On non-Windows it uses:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">std::filesystem::rename(&#10;    temporary,&#10;    destination);&#13;</Code>
+<Content aid:pstyle="Content">This avoids duplicating platform-specific final-publication behavior across manifests/scenes/documents.&#13;</Content>
+<Content aid:pstyle="Content">Good architecture.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Atomic visibility is not full crash durability</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This distinction is extremely important.&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">write()&#10;flush C++ stream&#10;rename()&#13;</Code>
+<Content aid:pstyle="Content">completes.&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">flush()</InlineCode> generally pushes data to the OS kernel.&#13;</Content>
+<Content aid:pstyle="Content">It does <Strong aid:cstyle="Bold">not necessarily guarantee</Strong> the data has reached stable physical storage.&#13;</Content>
+<Content aid:pstyle="Content">For stronger POSIX crash durability you may need:&#13;</Content>
+<Code aid:pstyle="Code" language="text">fsync(temp file)&#10;rename()&#10;fsync(parent directory)&#13;</Code>
+<Content aid:pstyle="Content">and equivalent platform-specific primitives.&#13;</Content>
+<Content aid:pstyle="Content">Thus:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/43653902e9431fedfe5337f1.svg" alt="&#10;\boxed{&#10;Atomic\ rename&#10;\neq&#10;Guaranteed\ power-loss\ durability.&#10;}&#10;" jobId="43653902e9431fedfe5337f1" originalTeX="&#10;\boxed{&#10;Atomic\ rename&#10;\neq&#10;Guaranteed\ power-loss\ durability.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Kairo’s current atomic replacement design is strong against partial application-level writes and rename-level replacement failures, but do not overstate POSIX <InlineCode aid:cstyle="InlineCode">std::filesystem::rename + ostream::flush</InlineCode> as full journaled-disk durability.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Directory publication</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Packaging uses a similar principle.&#13;</Content>
+<Content aid:pstyle="Content">Build complete staging directory:&#13;</Content>
+<Code aid:pstyle="Code" language="text">.Release.kairo-stage-123/&#13;</Code>
+<Content aid:pstyle="Content">then rename:&#13;</Content>
+<Code aid:pstyle="Code" language="text">stage&#10;→&#10;Release.&#13;</Code>
+<Content aid:pstyle="Content">If replacing an existing package, Kairo:&#13;</Content>
+<Code aid:pstyle="Code" language="text">existing -&gt; backup&#10;stage -&gt; output&#13;</Code>
+<Content aid:pstyle="Content">and attempts rollback if publication fails.&#13;</Content>
+<Content aid:pstyle="Content">That is transactional directory publication.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Multi-file atomicity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Atomic rename solves one file.&#13;</Content>
+<Content aid:pstyle="Content">Suppose project Save All modifies:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Project.kproject&#10;Assets.kassets&#10;Main.kscene.&#13;</Code>
+<Content aid:pstyle="Content">Saving each atomically does <Strong aid:cstyle="Bold">not</Strong> make the set atomically consistent across a crash.&#13;</Content>
+<Content aid:pstyle="Content">Crash after manifest replacement but before scene replacement can leave mixed generations.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s own comments correctly avoid claiming cross-file crash atomicity.&#13;</Content>
+<Content aid:pstyle="Content">Recovery journaling addresses this higher-level problem.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Ways to achieve stronger multi-file commits</Strong>&#13;</Content>
+<Content aid:pstyle="Content">You can use:&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Generation directory</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Write:&#13;</Content>
+<Code aid:pstyle="Code" language="text">generation-42/&#13;</Code>
+<Content aid:pstyle="Content">completely.&#13;</Content>
+<Content aid:pstyle="Content">Then atomically switch:&#13;</Content>
+<Code aid:pstyle="Code" language="text">current -&gt; generation-42&#13;</Code>
+<Content aid:pstyle="Content">through a manifest/pointer.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Journal</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Record intended transaction.&#13;</Content>
+<Content aid:pstyle="Content">Apply files.&#13;</Content>
+<Content aid:pstyle="Content">Mark commit complete.&#13;</Content>
+<Content aid:pstyle="Content">Recovery either rolls forward or rolls back.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Single container</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Store project in one database/container that supports transactions.&#13;</Content>
+<Content aid:pstyle="Content">Each approach adds complexity.&#13;</Content>
+<Content aid:pstyle="Content">For Kairo’s current editor, independent atomic files + recovery snapshots is a very reasonable balance.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Build configuration versus runtime configuration</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This distinction is frequently abused.&#13;</Content>
+<Content aid:pstyle="Content">Build configuration determines <Strong aid:cstyle="Bold">what code/artifacts are produced</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">Examples:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Debug / Release&#10;sanitizers enabled&#10;editor target built&#10;raytracer built&#10;AI cloud provider compiled&#10;Vulkan backend compiled.&#13;</Code>
+<Content aid:pstyle="Content">Runtime configuration determines <Strong aid:cstyle="Bold">how an existing executable behaves</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">Examples:&#13;</Content>
+<Code aid:pstyle="Code" language="text">renderer = metal&#10;resolution = 1920×1080&#10;volume = 0.8&#10;startup scene&#10;graphics quality.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Build-time configuration</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current Kairo CMake options include things like:&#13;</Content>
+<Code aid:pstyle="Code" language="text">BUILD_EDITOR&#10;BUILD_PLAYER&#10;BUILD_RAYTRACER&#10;BUILD_COMPUTE_STACK&#10;ENABLE_SANITIZERS&#10;ENABLE_PACKAGING.&#13;</Code>
+<Content aid:pstyle="Content">These change the target graph or compilation.&#13;</Content>
+<Content aid:pstyle="Content">They belong to build configuration.&#13;</Content>
+<Content aid:pstyle="Content">You cannot meaningfully toggle:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ENABLE_SANITIZERS=true&#13;</Code>
+<Content aid:pstyle="Content">at runtime if sanitizer instrumentation was never compiled in.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Runtime configuration</Strong>&#13;</Content>
+<Content aid:pstyle="Content"><InlineCode aid:cstyle="InlineCode">ProjectDescriptor</InlineCode> contains:&#13;</Content>
+<Code aid:pstyle="Code" language="text">graphics-backend&#10;rendering-profile&#10;startup-scene&#10;input-map&#10;plugins&#10;build profiles.&#13;</Code>
+<Content aid:pstyle="Content">Some of these are persistent project policy consumed at startup.&#13;</Content>
+<Content aid:pstyle="Content">For example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">graphics-backend = auto&#13;</Code>
+<Content aid:pstyle="Content">can be overridden by player command line:&#13;</Content>
+<Code aid:pstyle="Code" language="text">--renderer metal.&#13;</Code>
+<Content aid:pstyle="Content">That is runtime policy.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Compile-time feature vs runtime feature</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose Vulkan support is not built.&#13;</Content>
+<Content aid:pstyle="Content">Project says:&#13;</Content>
+<Code aid:pstyle="Code" language="text">graphics-backend vulkan.&#13;</Code>
+<Content aid:pstyle="Content">Runtime cannot magically create Vulkan code.&#13;</Content>
+<Content aid:pstyle="Content">So capability is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/7e80ea1766ed6ddf51f3a0b1.svg" alt="&#10;AvailableRuntimeOptions&#10;=&#10;CompiledCapabilities&#10;\cap&#10;PlatformCapabilities.&#10;" jobId="7e80ea1766ed6ddf51f3a0b1" originalTeX="&#10;AvailableRuntimeOptions&#10;=&#10;CompiledCapabilities&#10;\cap&#10;PlatformCapabilities.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Runtime configuration selects <Strong aid:cstyle="Bold">within</Strong> compiled capabilities.&#13;</Content>
+<Content aid:pstyle="Content">That is the correct relation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Environment configuration</Strong>&#13;</Content>
+<Content aid:pstyle="Content">There is also deployment/environment configuration:&#13;</Content>
+<Code aid:pstyle="Code" language="text">cache directory&#10;logging level&#10;crash upload endpoint&#10;server port.&#13;</Code>
+<Content aid:pstyle="Content">Some may be runtime command-line/environment settings rather than project-persistent settings.&#13;</Content>
+<Content aid:pstyle="Content">Do not stuff every setting into <InlineCode aid:cstyle="InlineCode">ProjectDescriptor</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">Ask:&#13;</Content>
+<BlockQuote><Content aid:pstyle="Quote">Is this project content, user preference, machine configuration, build configuration or runtime session state?&#13;</Content></BlockQuote>
+<Content aid:pstyle="Content">Different scopes deserve different storage.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Configuration precedence</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A common policy:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/a7167afb66c46ef5d75c54dc.svg" alt="&#10;Defaults&#10;&lt;&#10;ProjectConfig&#10;&lt;&#10;UserConfig&#10;&lt;&#10;CommandLine.&#10;" jobId="a7167afb66c46ef5d75c54dc" originalTeX="&#10;Defaults&#10;&lt;&#10;ProjectConfig&#10;&lt;&#10;UserConfig&#10;&lt;&#10;CommandLine.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Example:&#13;</Content>
+<Code aid:pstyle="Code" language="text">engine default:&#10;renderer auto&#10;&#10;project:&#10;renderer vulkan&#10;&#10;user:&#10;renderer metal&#10;&#10;CLI:&#10;--renderer opengl&#13;</Code>
+<Content aid:pstyle="Content">Final:&#13;</Content>
+<Code aid:pstyle="Code" language="text">opengl.&#13;</Code>
+<Content aid:pstyle="Content">The exact precedence is a product choice.&#13;</Content>
+<Content aid:pstyle="Content">But it should be deterministic and documented.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Never serialize secrets into project config accidentally</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Runtime configuration can include credentials:&#13;</Content>
+<Code aid:pstyle="Code" language="text">API tokens&#10;server keys.&#13;</Code>
+<Content aid:pstyle="Content">These should not enter:&#13;</Content>
+<Code aid:pstyle="Code" language="text">source-controlled Project.kproject.&#13;</Code>
+<Content aid:pstyle="Content">Secrets belong in environment/secure credential stores.&#13;</Content>
+<Content aid:pstyle="Content">This is another reason configuration scopes must remain distinct.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reflection + undo integration</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Now combine M093 and M094.&#13;</Content>
+<Content aid:pstyle="Content">Inspector reads:&#13;</Content>
+<Code aid:pstyle="Code" language="text">TypeKey&#10;PropertyKey&#10;CurrentValue.&#13;</Code>
+<Content aid:pstyle="Content">User edits.&#13;</Content>
+<Content aid:pstyle="Content">Do not call reflection setter directly from UI.&#13;</Content>
+<Content aid:pstyle="Content">Instead create:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">ReflectedPropertyCommand&#10;{&#10;    Entity;&#10;    TypeKey;&#10;    PropertyKey;&#10;    Before;&#10;    After;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Execute:&#13;</Content>
+<Code aid:pstyle="Code" language="text">registry.Write(...After).&#13;</Code>
+<Content aid:pstyle="Content">Undo:&#13;</Content>
+<Code aid:pstyle="Code" language="text">registry.Write(...Before).&#13;</Code>
+<Content aid:pstyle="Content">Now every reflected property automatically participates in undo.&#13;</Content>
+<Content aid:pstyle="Content">That is one of the greatest practical benefits of stable property IDs.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Example reflected property command</Strong>&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">class SetReflectedPropertyCommand&#10;    final : public EditorCommand&#10;{&#10;public:&#10;    SetReflectedPropertyCommand(&#10;        ReflectionRegistry&amp; reflection,&#10;        std::string type,&#10;        std::string property,&#10;        void* object,&#10;        PropertyValue before,&#10;        PropertyValue after)&#10;        : m_Reflection(&amp;reflection),&#10;          m_Type(std::move(type)),&#10;          m_Property(std::move(property)),&#10;          m_Object(object),&#10;          m_Before(std::move(before)),&#10;          m_After(std::move(after))&#10;    {}&#10;&#10;    void Execute() override&#10;    {&#10;        m_Reflection-&gt;Write(&#10;            m_Type,&#10;            m_Property,&#10;            m_Object,&#10;            m_After);&#10;    }&#10;&#10;    void Undo() override&#10;    {&#10;        m_Reflection-&gt;Write(&#10;            m_Type,&#10;            m_Property,&#10;            m_Object,&#10;            m_Before);&#10;    }&#10;&#10;private:&#10;    ReflectionRegistry* m_Reflection;&#10;&#10;    std::string m_Type;&#10;    std::string m_Property;&#10;&#10;    void* m_Object;&#10;&#10;    PropertyValue m_Before;&#10;    PropertyValue m_After;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">But there is a major problem.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Do not store long-lived raw <InlineCode aid:cstyle="InlineCode">void*</InlineCode> in editor commands</Strong>&#13;</Content>
+<Content aid:pstyle="Content">That object’s address may change.&#13;</Content>
+<Content aid:pstyle="Content">Scene may be reloaded.&#13;</Content>
+<Content aid:pstyle="Content">Entity may be destroyed.&#13;</Content>
+<Content aid:pstyle="Content">Component may move.&#13;</Content>
+<Content aid:pstyle="Content">So actual editor command should store:&#13;</Content>
+<Code aid:pstyle="Code" language="text">persistent Scene Entity ID&#10;TypeKey&#10;PropertyKey&#10;Before&#10;After.&#13;</Code>
+<Content aid:pstyle="Content">On Execute/Undo:&#13;</Content>
+<Code aid:pstyle="Code" language="text">resolve entity&#10;resolve component object&#10;write reflected property.&#13;</Code>
+<Content aid:pstyle="Content">Again:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/75195e8447e71bf219623b96.svg" alt="&#10;\boxed{&#10;Identity&#10;\neq&#10;Address.&#10;}&#10;" jobId="75195e8447e71bf219623b96" originalTeX="&#10;\boxed{&#10;Identity&#10;\neq&#10;Address.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This same principle has now appeared in ECS, assets, GPU resources, object references, undo and reflection.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reflection + serialization integration</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If every serializable property has stable ID:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Camera.NearPlane&#10;Camera.FarPlane&#10;Camera.Exposure.&#13;</Code>
+<Content aid:pstyle="Content">then file can store:&#13;</Content>
+<Code aid:pstyle="Code" language="text">type Kairo.Engine.Camera&#10;&#10;property near-plane 0.1&#10;property far-plane 1000&#10;property exposure 1.&#13;</Code>
+<Content aid:pstyle="Content">Generic loader resolves:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b04f4bf9358cc59c383aaed4.svg" alt="&#10;TypeKey&#10;\rightarrow&#10;TypeDescriptor&#10;" jobId="b04f4bf9358cc59c383aaed4" originalTeX="&#10;TypeKey&#10;\rightarrow&#10;TypeDescriptor&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">then:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0a4e59aab2ae269cdd8200f9.svg" alt="&#10;PropertyKey&#10;\rightarrow&#10;PropertyDescriptor.&#10;" jobId="0a4e59aab2ae269cdd8200f9" originalTeX="&#10;PropertyKey&#10;\rightarrow&#10;PropertyDescriptor.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is how reflection becomes schema machinery.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Property rename problem</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">near-plane&#13;</Code>
+<Content aid:pstyle="Content">renamed to:&#13;</Content>
+<Code aid:pstyle="Code" language="text">near-clip.&#13;</Code>
+<Content aid:pstyle="Content">If property key changes, old serialized files break.&#13;</Content>
+<Content aid:pstyle="Content">Therefore distinguish:&#13;</Content>
+<Code aid:pstyle="Code" language="text">DisplayName can change freely.&#10;&#10;Persistent PropertyKey should remain stable.&#13;</Code>
+<Content aid:pstyle="Content">If semantic key must change, provide migration alias:&#13;</Content>
+<Code aid:pstyle="Code" language="text">old near-plane&#10;→ new near-clip.&#13;</Code>
+<Content aid:pstyle="Content">Never casually rename persistent IDs for cosmetic reasons.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Type rename problem</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Similarly:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Kairo.Engine.MeshRenderer&#13;</Code>
+<Content aid:pstyle="Content">might later be called:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Kairo.Rendering.MeshRenderer&#13;</Code>
+<Content aid:pstyle="Content">as code organization changes.&#13;</Content>
+<Content aid:pstyle="Content">Should persistent type ID change?&#13;</Content>
+<Content aid:pstyle="Content">Probably not unless schema identity truly changes.&#13;</Content>
+<Content aid:pstyle="Content">Persistence identity should not necessarily mirror source namespace.&#13;</Content>
+<Content aid:pstyle="Content">You may keep legacy stable key forever while C++ type moves namespaces.&#13;</Content>
+<Content aid:pstyle="Content">This is why persistent IDs must not be auto-derived blindly from <InlineCode aid:cstyle="InlineCode">typeid</InlineCode>.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Unknown reflected properties</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose plugin missing.&#13;</Content>
+<Content aid:pstyle="Content">Scene has:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Kairo.Plugin.Water&#13;</Code>
+<Content aid:pstyle="Content">but registry does not contain that type.&#13;</Content>
+<Content aid:pstyle="Content">Policies include:&#13;</Content>
+<Code aid:pstyle="Code" language="text">hard failure&#10;preserve opaque component&#10;load placeholder&#10;disable component.&#13;</Code>
+<Content aid:pstyle="Content">If editor aims to preserve projects even when optional plugin is temporarily unavailable, opaque preservation can be extremely valuable.&#13;</Content>
+<Content aid:pstyle="Content">If runtime requires plugin for correctness, hard failure may be right.&#13;</Content>
+<Content aid:pstyle="Content">This policy belongs to serialization/product design.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Version reflection descriptors too</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If a reflected type’s schema evolves, you may associate:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct TypeDescriptor&#10;{&#10;    StableTypeID ID;&#10;    uint32_t SchemaVersion;&#10;    ...&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Then serializer can know:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Component Camera schema 3.&#13;</Code>
+<Content aid:pstyle="Content">This is more scalable than relying only on global scene-format version when plugins/components evolve independently.&#13;</Content>
+<Content aid:pstyle="Content">Kairo currently uses stable type/property keys and versioned scene formats; per-type schema versions would be a possible future extension.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Safe type erasure + plugins</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose plugin registers:&#13;</Content>
+<Code aid:pstyle="Code" language="text">TypeDescriptor&#10;accessor callbacks.&#13;</Code>
+<Content aid:pstyle="Content">Then plugin unloads while registry still holds <InlineCode aid:cstyle="InlineCode">std::function</InlineCode> lambdas whose code lives inside unloaded library.&#13;</Content>
+<Content aid:pstyle="Content">Calling them becomes catastrophic.&#13;</Content>
+<Content aid:pstyle="Content">So dynamic plugin systems require descriptor/code lifetime coupling.&#13;</Content>
+<Content aid:pstyle="Content">Policy:&#13;</Content>
+<Code aid:pstyle="Code" language="text">plugin may unload only after&#10;all registered descriptors are removed&#10;and no reflected objects remain.&#13;</Code>
+<Content aid:pstyle="Content">Or descriptors remain valid until process shutdown.&#13;</Content>
+<Content aid:pstyle="Content">Type erasure solves type coupling.&#13;</Content>
+<Content aid:pstyle="Content">It does not solve code lifetime automatically.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Inspector transactions</Strong>&#13;</Content>
+<Content aid:pstyle="Content">When user drags Transform X for 200 frames:&#13;</Content>
+<Code aid:pstyle="Code" language="text">UI needs immediate live preview.&#13;</Code>
+<Content aid:pstyle="Content">But undo should be one command.&#13;</Content>
+<Content aid:pstyle="Content">A strong pattern:&#13;</Content>
+<Code aid:pstyle="Code" language="text">BeginInteraction:&#10;capture Before&#10;&#10;During drag:&#10;apply preview state&#10;&#10;EndInteraction:&#10;capture After&#10;push one command representing Before→After&#13;</Code>
+<Content aid:pstyle="Content">Be careful not to execute command twice if preview already applied.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s <InlineCode aid:cstyle="InlineCode">TryMerge</InlineCode> model is another valid solution: each incremental command executes and subsequent commands merge into the previous history entry.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Recovery versus undo history</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Should recovery snapshots store entire undo stack?&#13;</Content>
+<Content aid:pstyle="Content">Not necessarily.&#13;</Content>
+<Content aid:pstyle="Content">Two different recovery goals:&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Document recovery</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Restore unsaved content.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Session recovery</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Restore undo/redo cursor, selection, tabs, camera, etc.&#13;</Content>
+<Content aid:pstyle="Content">Kairo currently prioritizes authored/recovery payloads and session context such as active document.&#13;</Content>
+<Content aid:pstyle="Content">That is a sound first target.&#13;</Content>
+<Content aid:pstyle="Content">Recovering exact undo history requires serializing every command, which is significantly more complex.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Recovery snapshots and checksum collision</Strong>&#13;</Content>
+<Content aid:pstyle="Content">FNV-1a 64-bit collision is possible.&#13;</Content>
+<Content aid:pstyle="Content">For accidental bit corruption, risk is sufficiently low for many editor recovery contexts.&#13;</Content>
+<Content aid:pstyle="Content">For adversarially modified recovery directories, not secure.&#13;</Content>
+<Content aid:pstyle="Content">If future threat model includes untrusted recovery payloads, replace or augment with SHA-256.&#13;</Content>
+<Content aid:pstyle="Content">Security algorithms should match threat model rather than superstition.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Recovery timestamp ordering</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Kairo goes beyond simply naming snapshots by wall clock.&#13;</Content>
+<Content aid:pstyle="Content">Wall clocks can move backward.&#13;</Content>
+<Content aid:pstyle="Content">Multiple snapshots can occur in same millisecond.&#13;</Content>
+<Content aid:pstyle="Content">It ensures each published recovery timestamp is greater than prior valid snapshots.&#13;</Content>
+<Content aid:pstyle="Content">This gives deterministic retention ordering even across clock rollback/collisions.&#13;</Content>
+<Content aid:pstyle="Content">That is a thoughtful production detail.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Project paths and case sensitivity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose Linux allows both:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Textures/A.png&#10;Textures/a.png.&#13;</Code>
+<Content aid:pstyle="Content">Windows may treat them as same path.&#13;</Content>
+<Content aid:pstyle="Content">A cross-platform project should reject ambiguous case-only duplicates.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s portable key lowercases paths for lookup while preserving authored spelling.&#13;</Content>
+<Content aid:pstyle="Content">This is a pragmatic cross-platform policy.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Unicode path complexity</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Even case folding does not solve every Unicode issue.&#13;</Content>
+<Content aid:pstyle="Content">Characters may have multiple normalization forms:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/028c40b1911a0044197cd261.svg" alt="&#10;é&#10;" jobId="028c40b1911a0044197cd261" originalTeX="&#10;é&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">can be one code point or:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3aa81bc4cf2e14b35d2da17d.svg" alt="&#10;e+\text{combining accent}.&#10;" jobId="3aa81bc4cf2e14b35d2da17d" originalTeX="&#10;e+\text{combining accent}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Some filesystems normalize automatically; others do not.&#13;</Content>
+<Content aid:pstyle="Content">A fully portable asset pipeline may need defined Unicode normalization rules.&#13;</Content>
+<Content aid:pstyle="Content">Kairo’s current path rules concentrate on portable ASCII-sensitive filesystem hazards and Windows reserved names, which is already strong; deeper Unicode canonicalization can become relevant for global content pipelines.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Manifest canonical ordering</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current AssetManifest serializer sorts assets by stable AssetID and dependencies by dependency ID.&#13;</Content>
+<Content aid:pstyle="Content">This means semantically identical registry state serializes consistently.&#13;</Content>
+<Content aid:pstyle="Content">Benefits:&#13;</Content>
+<Code aid:pstyle="Code" language="text">clean diffs&#10;stable hashes&#10;reproducible builds&#10;lower merge noise.&#13;</Code>
+<Content aid:pstyle="Content">Deterministic ordering is one of the cheapest high-value persistence improvements.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reflection registry canonical ordering</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Similarly Kairo:&#13;</Content>
+<Code aid:pstyle="Code" language="text">uses std::map for types&#10;sorts properties by stable key.&#13;</Code>
+<Content aid:pstyle="Content">That makes descriptor snapshots deterministic independent of registration call order.&#13;</Content>
+<Content aid:pstyle="Content">Again, deterministic metadata matters for:&#13;</Content>
+<Code aid:pstyle="Code" language="text">tooling&#10;testing&#10;serialization&#10;plugin diagnostics.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Build config should not leak into data semantics accidentally</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose Debug build serializes:&#13;</Content>
+<Code aid:pstyle="Code" language="text">sizeof(size_t)=8&#13;</Code>
+<Content aid:pstyle="Content">while another target differs.&#13;</Content>
+<Content aid:pstyle="Content">Persistent file must not depend on compile flags such as:&#13;</Content>
+<Code aid:pstyle="Code" language="text">NDEBUG&#10;packing pragmas&#10;compiler ABI.&#13;</Code>
+<Content aid:pstyle="Content">The serialization layer acts as the firewall between:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/660c8dc0482e5057aa1302ee.svg" alt="&#10;BuildConfiguration&#10;" jobId="660c8dc0482e5057aa1302ee" originalTeX="&#10;BuildConfiguration&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/32cd5ee2213363147cf25f9e.svg" alt="&#10;PersistentDataSchema.&#10;" jobId="32cd5ee2213363147cf25f9e" originalTeX="&#10;PersistentDataSchema.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This is one reason explicit field serialization matters.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Runtime config should not invalidate DDC unless semantically relevant</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose runtime setting:&#13;</Content>
+<Code aid:pstyle="Code" language="text">masterVolume = 0.5.&#13;</Code>
+<Content aid:pstyle="Content">It should not change asset cache keys.&#13;</Content>
+<Content aid:pstyle="Content">But build/import setting:&#13;</Content>
+<Code aid:pstyle="Code" language="text">texture compression = BC7.&#13;</Code>
+<Content aid:pstyle="Content">must.&#13;</Content>
+<Content aid:pstyle="Content">So configuration scope influences derivation identity.&#13;</Content>
+<Content aid:pstyle="Content">Ask:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/eb7138fa80ff46dab2e0c0f3.svg" alt="&#10;\text{Can this setting change artifact bytes?}&#10;" jobId="eb7138fa80ff46dab2e0c0f3" originalTeX="&#10;\text{Can this setting change artifact bytes?}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If yes:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ea2493e9ec8cf7410536d027.svg" alt="&#10;\text{include in DDC recipe}.&#10;" jobId="ea2493e9ec8cf7410536d027" originalTeX="&#10;\text{include in DDC recipe}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If no, do not over-invalidate.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Configuration is another dependency graph</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Artifact:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/28d9b0d24f961469e410d957.svg" alt="&#10;A=F(Source,Settings,Toolchain).&#10;" jobId="28d9b0d24f961469e410d957" originalTeX="&#10;A=F(Source,Settings,Toolchain).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Thus configuration values are hidden edges in build graph.&#13;</Content>
+<Content aid:pstyle="Content">If a setting influences output but is not included in cache key:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0d00b2a60ffd23ead4bd8791.svg" alt="&#10;\text{cache correctness bug}.&#10;" jobId="0d00b2a60ffd23ead4bd8791" originalTeX="&#10;\text{cache correctness bug}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This connects M092’s DDC logic directly to Part 1582.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Current Kairo audit for M093/M094</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The inspected implementation currently provides:&#13;</Content>
+<Table aid:table="table" aid:trows="37" aid:tcols="2" sourceHeadRows="1" sourceBodyHeadRows=""><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="header"><Content aid:pstyle="Caption">Area&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="header"><Content aid:pstyle="Caption">Current Kairo status&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">Versioned project formats&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">Versioned scene formats&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">Versioned asset manifest&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">Strict unknown-statement handling&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">Implemented in inspected text formats&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">Stable asset/entity references&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">Stable reflection type/property keys&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">UI-neutral reflection values&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">Runtime reflection registry&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">Generic getter/setter descriptors&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">Generic ImGui reflection inspector&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">Safe owned <InlineCode aid:cstyle="InlineCode">PropertyValue</InlineCode> type erasure&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell"><InlineCode aid:cstyle="InlineCode">void*</InlineCode> object erasure&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">Implemented, descriptor pairing remains invariant&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">Command-pattern undo/redo&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">Bounded command history&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">Redo-branch truncation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">Command merging hook&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">Scene creation commands preserve IDs&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">Strong-exception command contract&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">Explicit&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">Recovery snapshots&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">Recovery payload checksums&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">Invalid text draft recovery&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">Recovery retention&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">Periodic autosave scheduler&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">Not evident in inspected core recovery code&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">Project descriptor v2&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">Asset manifest validation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">Project-relative path normalization&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">Traversal rejection&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">Canonical symlink escape checks&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">Packaging symlink rejection&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">Runtime package staging&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">Staged package bootstrap validation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">Relocatable launcher&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">Atomic file replacement&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">Atomic directory package publication&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">Implemented&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="34"><Content aid:pstyle="TableCell">Full fsync-style POSIX crash durability&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="34"><Content aid:pstyle="TableCell">Not established by the inspected atomic-file code&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="35"><Content aid:pstyle="TableCell">Build/runtime config separation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="198" sourceRowKind="data" sourceRow="35"><Content aid:pstyle="TableCell">Strongly present&#13;</Content></Cell></Table>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Important Kairo improvement: checked erased object views</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current reflection accessors accept:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">const void*&#10;void*.&#13;</Code>
+<Content aid:pstyle="Content">The registry validates:&#13;</Content>
+<Code aid:pstyle="Code" language="text">type key&#10;property key&#10;PropertyValue kind.&#13;</Code>
+<Content aid:pstyle="Content">But it cannot intrinsically prove that:&#13;</Content>
+<Code aid:pstyle="Code" language="text">void*&#13;</Code>
+<Content aid:pstyle="Content">actually points to the C++ type associated with descriptor.&#13;</Content>
+<Content aid:pstyle="Content">A useful future abstraction:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct ReflectedObject&#10;{&#10;    void* Address = nullptr;&#10;    std::string_view TypeKey;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Then:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">registry.Write(&#10;    object,&#10;    property,&#10;    value);&#13;</Code>
+<Content aid:pstyle="Content">compares:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0aea146225604f2628af5dcd.svg" alt="&#10;object.TypeKey=&#10;descriptor.Key.&#10;" jobId="0aea146225604f2628af5dcd" originalTeX="&#10;object.TypeKey=&#10;descriptor.Key.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">This turns one class of UB into deterministic validation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stronger alternative using runtime token</Strong>&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">using RuntimeTypeToken =&#10;    std::uint32_t;&#10;&#10;struct ReflectedObject&#10;{&#10;    void* Address;&#10;    RuntimeTypeToken RuntimeType;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">TypeDescriptor contains matching token.&#13;</Content>
+<Content aid:pstyle="Content">Persistent key remains:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Kairo.Engine.Camera.&#13;</Code>
+<Content aid:pstyle="Content">Runtime token is dense and fast.&#13;</Content>
+<Content aid:pstyle="Content">Again:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c3efe242b44042530be07e98.svg" alt="&#10;PersistentID&#10;\neq&#10;RuntimeIndex.&#10;" jobId="c3efe242b44042530be07e98" originalTeX="&#10;PersistentID&#10;\neq&#10;RuntimeIndex.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Same architecture as assets and ECS.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Important Kairo improvement: reflection serialization policy flags</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current metadata already has:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ReadOnly&#10;Multiline&#10;Advanced.&#13;</Code>
+<Content aid:pstyle="Content">Future flags might include:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">enum class PropertyFlags&#10;{&#10;    None,&#10;    ReadOnly,&#10;    Multiline,&#10;    Advanced,&#10;&#10;    Serializable,&#10;    Transient,&#10;    SaveGame,&#10;    Replicated,&#10;    EditorOnly&#10;};&#13;</Code>
+<Content aid:pstyle="Content">This lets reflection drive more systems without assuming every visible property belongs in every persistence domain.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Important Kairo improvement: field aliases</Strong>&#13;</Content>
+<Content aid:pstyle="Content">For schema evolution:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">PropertyMetadata&#10;{&#10;    Key = "near-clip",&#10;    LegacyKeys =&#10;    {&#10;        "near-plane"&#10;    }&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Deserializer sees old field:&#13;</Content>
+<Code aid:pstyle="Code" language="text">near-plane&#13;</Code>
+<Content aid:pstyle="Content">and maps it to current property.&#13;</Content>
+<Content aid:pstyle="Content">Writer emits only:&#13;</Content>
+<Code aid:pstyle="Code" language="text">near-clip.&#13;</Code>
+<Content aid:pstyle="Content">This gradually canonicalizes old formats.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Important Kairo improvement: descriptor schema version</Strong>&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct TypeDescriptor&#10;{&#10;    std::string Key;&#10;    uint32_t SchemaVersion;&#10;&#10;    ...&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Then plugin/component persistence can evolve independently from whole-scene version.&#13;</Content>
+<Content aid:pstyle="Content">This becomes especially valuable once third-party components exist.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Important Kairo improvement: recovery scheduling</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Existing primitives are already strong.&#13;</Content>
+<Content aid:pstyle="Content">A thin editor policy can add:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">class RecoveryScheduler&#10;{&#10;public:&#10;    void Tick(&#10;        ProjectSession&amp; session,&#10;        TimePoint now)&#10;    {&#10;        if (&#10;            !session.HasUnsavedChanges())&#10;        {&#10;            return;&#10;        }&#10;&#10;        if (&#10;            now - m_LastSnapshot &lt;&#10;            m_Interval)&#10;        {&#10;            return;&#10;        }&#10;&#10;        session.CreateRecoveryPoint();&#10;&#10;        m_LastSnapshot = now;&#10;    }&#10;&#10;private:&#10;    Duration m_Interval =&#10;        std::chrono::minutes(2);&#10;&#10;    TimePoint m_LastSnapshot{};&#10;};&#13;</Code>
+<Content aid:pstyle="Content">In production, snapshot creation may be delegated to an I/O worker after capturing immutable state.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Important Kairo improvement: full durable save option</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current atomic rename semantics are excellent for normal editor failure resistance.&#13;</Content>
+<Content aid:pstyle="Content">For workloads where power-loss durability matters, introduce a lower-level durable file abstraction:&#13;</Content>
+<Code aid:pstyle="Code" language="text">write temp&#10;flush userspace&#10;fsync temp&#10;atomic rename&#10;fsync containing directory.&#13;</Code>
+<Content aid:pstyle="Content">On Windows, use the appropriate write-through/handle flush semantics.&#13;</Content>
+<Content aid:pstyle="Content">Then expose:&#13;</Content>
+<Code aid:pstyle="Code" language="text">SaveMode::Atomic&#10;SaveMode::Durable.&#13;</Code>
+<Content aid:pstyle="Content">Not every editor keystroke requires durability-grade fsync latency.&#13;</Content>
+<Content aid:pstyle="Content">Recovery snapshots perhaps do.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Important Kairo improvement: package dependency closure</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Current package process copies a validated project payload with exclusions.&#13;</Content>
+<Content aid:pstyle="Content">Future release cooker should use:&#13;</Content>
+<Code aid:pstyle="Code" language="text">startup scene&#10;+&#10;runtime config roots&#10;        ↓&#10;asset dependency DAG&#10;        ↓&#10;transitive required assets&#10;        ↓&#10;platform-specific derived artifacts&#10;        ↓&#10;runtime package.&#13;</Code>
+<Content aid:pstyle="Content">Then exclude:&#13;</Content>
+<Code aid:pstyle="Code" language="text">source OBJ&#10;source PSD&#10;unused scenes&#10;unused editor documents&#10;local DDC.&#13;</Code>
+<Content aid:pstyle="Content">This would complete Pass 13’s authoring/runtime separation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — serialization</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Given:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">struct Camera&#10;{&#10;    float Near;&#10;    float Far;&#10;};&#13;</Code>
+<Content aid:pstyle="Content">Explain why this is wrong:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">file.write(&#10;    reinterpret_cast&lt;char*&gt;(&amp;camera),&#10;    sizeof(Camera));&#13;</Code>
+<Content aid:pstyle="Content">Then derive a robust representation defining:&#13;</Content>
+<Code aid:pstyle="Code" language="text">format identity&#10;version&#10;field IDs/names&#10;float representation&#10;validation&#10;unknown-field policy.&#13;</Code>
+<Content aid:pstyle="Content">If you cannot explain padding, ABI, endian, schema evolution and unknown-field consequences, serialization is not yet mastered.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — compatibility</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Suppose v1:&#13;</Content>
+<Code aid:pstyle="Code" language="text">entity&#10;position&#10;rotation&#13;</Code>
+<Content aid:pstyle="Content">v2 adds:&#13;</Content>
+<Code aid:pstyle="Code" language="text">scale.&#13;</Code>
+<Content aid:pstyle="Content">Answer separately:&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">New reader loading old file</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Backward compatibility.&#13;</Content>
+<Content aid:pstyle="Content">Give:&#13;</Content>
+<Code aid:pstyle="Code" language="text">scale = 1.&#13;</Code>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Old reader loading new file</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Forward compatibility.&#13;</Content>
+<Content aid:pstyle="Content">Possible only if unknown <InlineCode aid:cstyle="InlineCode">scale</InlineCode> can be skipped or preserved.&#13;</Content>
+<Content aid:pstyle="Content">Then explain why strict parsers intentionally reject it.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — object references</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Given:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Entity 10 parent Entity 5&#13;</Code>
+<Content aid:pstyle="Content">runtime entities are:&#13;</Content>
+<Code aid:pstyle="Code" language="text">10 -&gt; {42,7}&#10;5  -&gt; {91,3}.&#13;</Code>
+<Content aid:pstyle="Content">Save:&#13;</Content>
+<Code aid:pstyle="Code" language="text">10 parent 5.&#13;</Code>
+<Content aid:pstyle="Content">Never:&#13;</Content>
+<Code aid:pstyle="Code" language="text">42:7 parent 91:3.&#13;</Code>
+<Content aid:pstyle="Content">Load:&#13;</Content>
+<Code aid:pstyle="Code" language="text">create all persistent entities&#10;build ID map&#10;resolve parent references&#10;validate no cycles.&#13;</Code>
+<Content aid:pstyle="Content">That algorithm should now be automatic.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — reflection</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Given C++ field:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">float Camera::Exposure;&#13;</Code>
+<Content aid:pstyle="Content">derive:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Stable TypeKey&#10;Stable PropertyKey&#10;DisplayName&#10;PropertyValueKind&#10;Read accessor&#10;Write accessor&#10;Range&#10;Flags.&#13;</Code>
+<Content aid:pstyle="Content">Then trace:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Camera instance&#10;    ↓&#10;registry.Read&#10;    ↓&#10;PropertyValue&#10;    ↓&#10;ImGui adapter&#10;    ↓&#10;user changes&#10;    ↓&#10;command&#10;    ↓&#10;registry.Write.&#13;</Code>
+<Content aid:pstyle="Content">That is the complete reflection/editor path.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — type erasure</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Explain why:&#13;</Content>
+<Code aid:pstyle="Code" language="cpp">void* object&#13;</Code>
+<Content aid:pstyle="Content">does not provide type safety.&#13;</Content>
+<Content aid:pstyle="Content">Safety comes from:&#13;</Content>
+<Code aid:pstyle="Code" language="text">object pointer&#10;+&#10;correct descriptor&#10;+&#10;validated PropertyValue kind.&#13;</Code>
+<Content aid:pstyle="Content">Then propose runtime TypeToken if you need explicit misuse detection.&#13;</Content>
+<Content aid:pstyle="Content">That is safe type erasure.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — undo</Strong>&#13;</Content>
+<Content aid:pstyle="Content">History:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A B C D&#10;cursor after D.&#13;</Code>
+<Content aid:pstyle="Content">Undo twice:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A B | C D.&#13;</Code>
+<Content aid:pstyle="Content">Execute X.&#13;</Content>
+<Content aid:pstyle="Content">Result:&#13;</Content>
+<Code aid:pstyle="Code" language="text">A B X |&#13;</Code>
+<Content aid:pstyle="Content">C/D discarded.&#13;</Content>
+<Content aid:pstyle="Content">Then explain why cursor moves only <Strong aid:cstyle="Bold">after</Strong> Execute/Undo succeeds.&#13;</Content>
+<Content aid:pstyle="Content">That is command-history correctness.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — recovery</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Explain difference:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Save&#13;</Code>
+<Content aid:pstyle="Content">writes authoritative state.&#13;</Content>
+<Code aid:pstyle="Code" language="text">Undo&#13;</Code>
+<Content aid:pstyle="Content">reverses semantic edits in current process.&#13;</Content>
+<Code aid:pstyle="Code" language="text">Recovery snapshot&#13;</Code>
+<Content aid:pstyle="Content">protects unsaved state against process failure.&#13;</Content>
+<Code aid:pstyle="Code" language="text">Autosave&#13;</Code>
+<Content aid:pstyle="Content">periodically produces recovery state without necessarily committing authoritative files.&#13;</Content>
+<Content aid:pstyle="Content">Those are four separate mechanisms.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — path sandbox</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Given:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ProjectRoot =&#10;/Users/x/Game&#10;&#10;Input =&#10;Assets/../Outside/file&#13;</Code>
+<Content aid:pstyle="Content">reject lexically.&#13;</Content>
+<Content aid:pstyle="Content">Given:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Assets/External&#13;</Code>
+<Content aid:pstyle="Content">is symlink to:&#13;</Content>
+<Code aid:pstyle="Code" language="text">/etc.&#13;</Code>
+<Content aid:pstyle="Content">canonical path escapes root.&#13;</Content>
+<Content aid:pstyle="Content">Reject after filesystem resolution.&#13;</Content>
+<Content aid:pstyle="Content">Then explain why string prefix comparison is unsafe and path-component comparison is required.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — atomic save</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Correct sequence:&#13;</Content>
+<Code aid:pstyle="Code" language="text">serialize/validate&#10;      ↓&#10;write sibling temp&#10;      ↓&#10;flush/close&#10;      ↓&#10;atomic replace&#10;      ↓&#10;cleanup.&#13;</Code>
+<Content aid:pstyle="Content">Explain:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/252d5497b3990c8168f8380a.svg" alt="&#10;\text{atomic visibility}&#10;" jobId="252d5497b3990c8168f8380a" originalTeX="&#10;\text{atomic visibility}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">versus:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ae8ea9186af22bd243eb0d18.svg" alt="&#10;\text{power-loss durability}.&#10;" jobId="ae8ea9186af22bd243eb0d18" originalTeX="&#10;\text{power-loss durability}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">They are not identical.&#13;</Content>
+<Content aid:pstyle="Content">That distinction is important enough to remember permanently.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — package relocation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Bundle:&#13;</Content>
+<Code aid:pstyle="Code" language="text">MyGame/&#10;├── run.sh&#10;├── bin/&#10;│   └── KairoPlayer&#10;└── project/&#10;    ├── Project.kproject&#10;    ├── Scenes/&#10;    └── Assets...&#13;</Code>
+<Content aid:pstyle="Content">Launcher discovers root from itself.&#13;</Content>
+<Content aid:pstyle="Content">All project paths are relative.&#13;</Content>
+<Content aid:pstyle="Content">Therefore moving:&#13;</Content>
+<Code aid:pstyle="Code" language="text">/home/a/MyGame&#13;</Code>
+<Content aid:pstyle="Content">to:&#13;</Content>
+<Code aid:pstyle="Code" language="text">/opt/MyGame&#13;</Code>
+<Content aid:pstyle="Content">should still work.&#13;</Content>
+<Content aid:pstyle="Content">That is relocatability.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Reconstruction challenge — configuration</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Classify:&#13;</Content>
+<Code aid:pstyle="Code" language="text">BUILD_EDITOR=ON&#13;</Code>
+<Content aid:pstyle="Content">as build-time.&#13;</Content>
+<Code aid:pstyle="Code" language="text">--renderer metal&#13;</Code>
+<Content aid:pstyle="Content">as runtime.&#13;</Content>
+<Code aid:pstyle="Code" language="text">startup-scene Scenes/Main.kscene&#13;</Code>
+<Content aid:pstyle="Content">as persistent project runtime policy.&#13;</Content>
+<Code aid:pstyle="Code" language="text">OPENAI_API_KEY&#13;</Code>
+<Content aid:pstyle="Content">as environment/secret configuration.&#13;</Content>
+<Code aid:pstyle="Code" language="text">texture-compression=BC7&#13;</Code>
+<Content aid:pstyle="Content">as asset-build configuration and therefore potentially a DDC-key input.&#13;</Content>
+<Content aid:pstyle="Content">If you can classify settings by lifetime/scope, you understand Part 1582 rather than merely memorizing terms.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The deep unifying principle of M093</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Serialization, reflection and compatibility are all fundamentally about <Strong aid:cstyle="Bold">stable semantic identity</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">You need stable identity for:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/c8a5347451e6006c37fe1efc.svg" alt="&#10;Type&#10;" jobId="c8a5347451e6006c37fe1efc" originalTeX="&#10;Type&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/01bfdeae720ca5ad5e46dfc0.svg" alt="&#10;Property&#10;" jobId="01bfdeae720ca5ad5e46dfc0" originalTeX="&#10;Property&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/889bce5ac2709dbc7adf5f22.svg" alt="&#10;Entity&#10;" jobId="889bce5ac2709dbc7adf5f22" originalTeX="&#10;Entity&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/22dd9e76d2573d9932b0fc8b.svg" alt="&#10;Asset&#10;" jobId="22dd9e76d2573d9932b0fc8b" originalTeX="&#10;Asset&#10;"/>&#13;</Formula>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/71c69770394a39cd61338a89.svg" alt="&#10;FileFormat.&#10;" jobId="71c69770394a39cd61338a89" originalTeX="&#10;FileFormat.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">And you must keep those identities independent from:&#13;</Content>
+<Code aid:pstyle="Code" language="text">memory address&#10;vector index&#10;compiler RTTI name&#10;display label&#10;filesystem location&#10;GPU handle.&#13;</Code>
+<Content aid:pstyle="Content">This is the exact same principle that has appeared repeatedly throughout the curriculum.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The deep unifying principle of M094</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Undo, recovery and atomic save are all forms of <Strong aid:cstyle="Bold">controlled state transition</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">Instead of:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/115521060f272dd953ad52e2.svg" alt="&#10;State&#10;\rightarrow&#10;Mutation&#10;" jobId="115521060f272dd953ad52e2" originalTeX="&#10;State&#10;\rightarrow&#10;Mutation&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">think:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/3cea42abe5043981d9d1b6d4.svg" alt="&#10;\boxed{&#10;State_{old}&#10;\xrightarrow{validated\ transaction}&#10;State_{new}.&#10;}&#10;" jobId="3cea42abe5043981d9d1b6d4" originalTeX="&#10;\boxed{&#10;State_{old}&#10;\xrightarrow{validated\ transaction}&#10;State_{new}.&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">And preserve enough information to either:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/71c0731483d278b0fed2ba15.svg" alt="&#10;Rollback&#10;" jobId="71c0731483d278b0fed2ba15" originalTeX="&#10;Rollback&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">or:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/cd12d3ee6c36583f6dcb1525.svg" alt="&#10;Recover.&#10;" jobId="cd12d3ee6c36583f6dcb1525" originalTeX="&#10;Recover.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Undo gives semantic rollback.&#13;</Content>
+<Content aid:pstyle="Content">Atomic rename gives file-level publication.&#13;</Content>
+<Content aid:pstyle="Content">Recovery gives crash-level restoration.&#13;</Content>
+<Content aid:pstyle="Content">Staging packaging gives directory-level publication.&#13;</Content>
+<Content aid:pstyle="Content">These are the same systems idea applied at different scopes.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Exact coverage — M093 + M094</Strong>&#13;</Content>
+<Table aid:table="table" aid:trows="38" aid:tcols="3" sourceHeadRows="1" sourceBodyHeadRows=""><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="header"><Content aid:pstyle="Caption">Part&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="header"><Content aid:pstyle="Caption">Topic&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="header"><Content aid:pstyle="Caption">Status&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">1546&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">Serialization goals&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="0"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">1547&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">Binary versus text serialization&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="1"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">1548&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">Versioned file formats&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="2"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">1549&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">Schema evolution&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="3"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">1550&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">Forward compatibility&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="4"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">1551&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">Backward compatibility&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="5"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">1552&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">Unknown-field handling&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="6"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">1553&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">Stable endianness and numeric widths&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="7"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">1554&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">Checksums and content hashes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="8"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">1555&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">Serialization of object references&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="9"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">1556&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">Serialization of ECS entities&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="10"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">1557&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">Scene-graph serialization&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="11"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">1558&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">Reflection metadata&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="12"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">1559&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">Type IDs&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="13"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">1560&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">Property IDs&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="14"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">1561&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">Reflection without language runtime reflection&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="15"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">1562&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">Compile-time reflection patterns&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="16"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">1563&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">Runtime reflection registries&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="17"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">1564&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">Property getters and setters&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="18"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">1565&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">Inspector adapters&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="19"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">1566&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">Serialization driven by reflection&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="20"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">1567&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">Editor UI driven by reflection&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="21"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">1568&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">Safe type erasure&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="22"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">1569&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">Undo commands&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="23"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">1570&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">Command-pattern undo/redo&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="24"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">1571&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">Transactional editor changes&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="25"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">1572&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">Recovery journals&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="26"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">1573&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">Autosave architecture&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="27"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">1574&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">Project descriptors&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="28"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">1575&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">Manifest validation&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="29"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">1576&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">Sandboxed project-relative paths&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="30"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">1577&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">Path traversal prevention&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="31"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">1578&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">Symlink escape prevention&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="32"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">1579&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">Runtime packaging&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="33"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="34"><Content aid:pstyle="TableCell">1580&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="34"><Content aid:pstyle="TableCell">Relocatable bundles&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="34"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="35"><Content aid:pstyle="TableCell">1581&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="35"><Content aid:pstyle="TableCell">Atomic publication by filesystem rename&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="35"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="36"><Content aid:pstyle="TableCell">1582&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="36"><Content aid:pstyle="TableCell">Build configuration versus runtime configuration&#13;</Content></Cell><Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="132" sourceRowKind="data" sourceRow="36"><Content aid:pstyle="TableCell">✓&#13;</Content></Cell></Table>
+<Content aid:pstyle="Content">You now have the complete persistence/tooling chain:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/4e6bb296c560ab1de05ad36e.svg" alt="&#10;\boxed{&#10;\begin{aligned}&#10;\text{C++ object}&#10;&amp;\rightarrow&#10;\text{stable reflected schema}&#10;\\&#10;&amp;\rightarrow&#10;\text{versioned semantic representation}&#10;\\&#10;&amp;\rightarrow&#10;\text{validated references}&#10;\\&#10;&amp;\rightarrow&#10;\text{atomic persistent file}&#10;\\&#10;&amp;\rightarrow&#10;\text{recovery-protected editor state}&#10;\\&#10;&amp;\rightarrow&#10;\text{relocatable runtime package}.&#10;\end{aligned}&#10;}&#10;" jobId="4e6bb296c560ab1de05ad36e" originalTeX="&#10;\boxed{&#10;\begin{aligned}&#10;\text{C++ object}&#10;&amp;\rightarrow&#10;\text{stable reflected schema}&#10;\\&#10;&amp;\rightarrow&#10;\text{versioned semantic representation}&#10;\\&#10;&amp;\rightarrow&#10;\text{validated references}&#10;\\&#10;&amp;\rightarrow&#10;\text{atomic persistent file}&#10;\\&#10;&amp;\rightarrow&#10;\text{recovery-protected editor state}&#10;\\&#10;&amp;\rightarrow&#10;\text{relocatable runtime package}.&#10;\end{aligned}&#10;}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">And the Kairo-specific architecture is already substantially aligned with that model: <Strong aid:cstyle="Bold">strict versioned text formats, persistent IDs instead of pointers, stable reflection keys instead of RTTI names, generic owned reflection values, UI-neutral descriptors, command-based undo, recovery snapshots with checksums, canonicalized project-relative paths, symlink escape checking, staged package validation, and atomic replacement.</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The biggest remaining upgrades from this pass are not conceptual rewrites. They are production hardening: <Strong aid:cstyle="Bold">runtime-checked reflected object/type pairing, reflection serialization-policy flags and schema aliases, automatic recovery scheduling, stronger fsync-level durability where required, and dependency-closure/platform-cooked runtime packages.</Strong>&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Pass 15 is M095 + M096, Parts 1583–1600.</Strong> It closes Phase 16 with <Strong aid:cstyle="Bold">CMake’s target model; PUBLIC/PRIVATE/INTERFACE dependency propagation; imported/alias targets; presets; Ninja’s build DAG; compiler toolchains; Clang/MSVC portability; C++ modules across targets; Git submodule pinning; reproducible superbuilds; CI matrices; unit/integration/smoke testing; crash reporting; structured logs/profiling hooks; portable subsystem boundaries; and finally drawing the full ownership/data flow from source asset → editor → package → player → runtime subsystem.</Strong>&#13;</Content>
+<!-- Book-completion teaching addition 1a6abe03521a3636 -->
+<Content aid:pstyle="SubChapterSubHeading" id="05-engine-i-ch012-imported-targets-describe-external-artifacts-aliases-provide-a-stable-name">Imported targets describe external artifacts; aliases provide a stable name&#13;</Content>
+<Content aid:pstyle="Content">A CMake target is a named node in the build graph, with properties describing its sources, output and usage requirements. An <Strong aid:cstyle="Bold">imported target</Strong> describes an artifact built outside this CMake build. It creates no compile/archive rule for that artifact, but consumers can still inherit its declared include paths, definitions and link requirements. An <Strong aid:cstyle="Bold">alias</Strong> gives the same target another name. It does not copy properties or create a wrapper library; later changes to the real target remain visible through the alias.&#13;</Content>
+<Content aid:pstyle="Content">This exercise uses CMake 3.18’s documented behavior. A non-GLOBAL imported target is visible in its declaring directory and descendants. CMake 3.18 permits an alias of that imported target, with matching directory visibility. An alias cannot itself be aliased, installed or exported, and cannot be the target whose properties are modified. Modify the real target; there is no requirement that all such modifications precede creation of the alias.&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="05-engine-i-ch012-a-complete-project-with-an-externally-produced-archive">A complete project with an externally produced archive&#13;</Content>
+<Content aid:pstyle="Content">Create the files below under <InlineCode aid:cstyle="InlineCode">tools/labs/cmake_imported_alias/</InlineCode>, or use the saved copy in the vault. The vendor source is included solely so this exercise can produce its own stand-in archive before CMake runs. The CMake build then treats that archive exactly as an outside artifact: it builds only the consumer. No package download or third-party library is required.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">CMakeLists.txt</Strong>&#13;</Content>
+<!-- exact-source: tools/labs/cmake_imported_alias/CMakeLists.txt -->
+<Code aid:pstyle="Code" language="cmake"># This minimum selects the documented imported-alias directory-scope behavior.&#10;cmake_minimum_required(VERSION 3.18)&#10;# Enable and identify the host C++ toolchain. No dependency is downloaded.&#10;project(ImportedAliasExample LANGUAGES CXX)&#10;&#10;if(NOT DEFINED VENDOR_MATH_LIBRARY OR NOT EXISTS "${VENDOR_MATH_LIBRARY}")&#10;  message(FATAL_ERROR "Set VENDOR_MATH_LIBRARY to the prebuilt vendor_math archive")&#10;endif()&#10;&#10;# The target is a build-graph description of a file produced elsewhere.&#10;# It contributes no compile or archive rule of its own.&#10;add_subdirectory(deps)&#10;add_subdirectory(scope_probe)&#13;</Code>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">deps/CMakeLists.txt</Strong>&#13;</Content>
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/CMakeLists.txt -->
+<Code aid:pstyle="Code" language="cmake"># STATIC describes the external archive; IMPORTED means CMake will not build it.&#10;add_library(Vendor::Math STATIC IMPORTED)&#10;set_target_properties(Vendor::Math PROPERTIES&#10;  IMPORTED_LOCATION "${VENDOR_MATH_LIBRARY}"&#10;  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/include"&#10;  INTERFACE_COMPILE_DEFINITIONS "VENDOR_MATH_IMPORTED=1"&#10;)&#10;&#10;# Alias supplies this project with a stable name. It remains the same target.&#10;add_library(Project::Math ALIAS Vendor::Math)&#10;# An alias does not copy properties. Later changes to Vendor::Math are&#10;# observed through Project::Math too; modify the real target, not the alias.&#10;&#10;# Both imported target and its alias are visible in this child directory.&#10;add_subdirectory(consumer)&#13;</Code>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">deps/include/vendor_math.hpp</Strong>&#13;</Content>
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/include/vendor_math.hpp -->
+<Code aid:pstyle="Code" language="cpp">#pragma once&#10;namespace vendor { int forty_two(); }&#13;</Code>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">deps/vendor_math.cpp</Strong>&#13;</Content>
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/vendor_math.cpp -->
+<Code aid:pstyle="Code" language="cpp">#include "vendor_math.hpp"&#10;namespace vendor { int forty_two() { return 42; } }&#13;</Code>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">deps/consumer/CMakeLists.txt</Strong>&#13;</Content>
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/consumer/CMakeLists.txt -->
+<Code aid:pstyle="Code" language="cmake">if(NOT TARGET Vendor::Math OR NOT TARGET Project::Math)&#10;  message(FATAL_ERROR "Imported target and alias must be visible below deps/")&#10;endif()&#10;add_executable(imported_consumer main.cpp)&#10;# Linking the alias carries its location and include/definition usage requirements.&#10;target_link_libraries(imported_consumer PRIVATE Project::Math)&#13;</Code>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">deps/consumer/main.cpp</Strong>&#13;</Content>
+<!-- exact-source: tools/labs/cmake_imported_alias/deps/consumer/main.cpp -->
+<Code aid:pstyle="Code" language="cpp">#include &lt;vendor_math.hpp&gt;&#10;int main() {&#10;  // This compile-time check proves INTERFACE_COMPILE_DEFINITIONS propagated.&#10;#ifndef VENDOR_MATH_IMPORTED&#10;#error expected imported target usage requirement&#10;#endif&#10;  return vendor::forty_two() == 42 ? 0 : 1;&#10;}&#13;</Code>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">scope_probe/CMakeLists.txt</Strong>&#13;</Content>
+<!-- exact-source: tools/labs/cmake_imported_alias/scope_probe/CMakeLists.txt -->
+<Code aid:pstyle="Code" language="cmake"># The imported target was not GLOBAL; sibling directories cannot see it.&#10;if(TARGET Vendor::Math OR TARGET Project::Math)&#10;  message(FATAL_ERROR "non-GLOBAL imported target leaked outside deps/")&#10;endif()&#10;message(STATUS "PASS: non-GLOBAL imported target and alias are directory-scoped")&#13;</Code>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">negative/CMakeLists.txt</Strong>&#13;</Content>
+<!-- exact-source: tools/labs/cmake_imported_alias/negative/CMakeLists.txt -->
+<Code aid:pstyle="Code" language="cmake">cmake_minimum_required(VERSION 3.18)&#10;project(ExpectedFailure LANGUAGES CXX)&#10;add_executable(missing_target main.cpp)&#10;target_link_libraries(missing_target PRIVATE Missing::Target)&#13;</Code>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">negative/main.cpp</Strong>&#13;</Content>
+<!-- exact-source: tools/labs/cmake_imported_alias/negative/main.cpp -->
+<Code aid:pstyle="Code" language="cpp">int main() { return 0; }&#13;</Code>
+<Content aid:pstyle="SubChapterSubHeading" id="05-engine-i-ch012-read-the-dependency-graph-then-run-it">Read the dependency graph, then run it&#13;</Content>
+<Content aid:pstyle="Content">The imported name and alias are declared in <InlineCode aid:cstyle="InlineCode">deps/</InlineCode>. Its consumer is a descendant, so both names resolve there. The root’s <InlineCode aid:cstyle="InlineCode">scope_probe/</InlineCode> is a sibling, so neither non-GLOBAL name resolves there. Linking <InlineCode aid:cstyle="InlineCode">Project::Math</InlineCode> carries the archive location, header directory and <InlineCode aid:cstyle="InlineCode">VENDOR_MATH_IMPORTED</InlineCode> definition. The consumer never receives a hand-written include flag or macro outside the target interface, and its compile-time check fails if that interface is lost.&#13;</Content>
+<Content aid:pstyle="Content">For independent siblings that need the dependency, declare it in their common parent, intentionally use an imported GLOBAL target, or consume a package configuration that defines the target in the required scope. An alias created where the real target is invisible does not repair visibility. The <InlineCode aid:cstyle="InlineCode">::</InlineCode> name is also useful: an unresolved namespaced dependency raises a configure/generate error instead of being treated as an ordinary raw linker name.&#13;</Content>
+<Content aid:pstyle="Content">From the example’s directory, produce the archive outside the CMake graph and build the consumer. These shell comments explain which owner performs each step:&#13;</Content>
+<Code aid:pstyle="Code" language="sh"># The host compiler and archiver act as the external vendor for this small demo.&#10;c++ -std=c++11 -Ideps/include -c deps/vendor_math.cpp -o /tmp/vendor_math.o&#10;ar rcs /tmp/libvendor_math.a /tmp/vendor_math.o&#10;&#10;# IMPORTED_LOCATION receives an absolute path to that already-existing archive.&#10;cmake -S . -B /tmp/imported-alias-build -DVENDOR_MATH_LIBRARY=/tmp/libvendor_math.a&#10;cmake --build /tmp/imported-alias-build&#10;/tmp/imported-alias-build/deps/consumer/imported_consumer&#10;&#10;# This independent negative project must fail for Missing::Target, not a compiler error.&#10;cmake -S negative -B /tmp/imported-alias-negative&#13;</Code>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Worked solution and expected results.</Strong> The positive project reports that the imported target and alias are directory-scoped, compiles the consumer with its inherited header path and definition, links the prebuilt archive, and returns zero. The negative project fails during configuration/generation because <InlineCode aid:cstyle="InlineCode">Missing::Target</InlineCode> is not defined. A nonzero return alone is insufficient evidence: inspect the diagnostic to confirm the intended failure. If the positive consumer cannot find the header, inspect <InlineCode aid:cstyle="InlineCode">INTERFACE_INCLUDE_DIRECTORIES</InlineCode>; if its macro check fails, inspect <InlineCode aid:cstyle="InlineCode">INTERFACE_COMPILE_DEFINITIONS</InlineCode>; if linking fails, verify the archive’s absolute path, architecture and symbol definition.&#13;</Content>
+<Content aid:pstyle="Content">The solution to making the target visible to a sibling is a scope change at the shared dependency declaration, not a duplicate archive or an alias of an invisible target. If a dependency’s requirements are wrong, update the real imported target; the alias remains another spelling of it.&#13;</Content>
+<Content aid:pstyle="Content">A static archive uses <InlineCode aid:cstyle="InlineCode">IMPORTED_LOCATION</InlineCode>. A Windows shared-library package may need both <InlineCode aid:cstyle="InlineCode">IMPORTED_IMPLIB</InlineCode> for the link-time import library and <InlineCode aid:cstyle="InlineCode">IMPORTED_LOCATION</InlineCode> for the runtime DLL. A header-only imported INTERFACE target has no compiled artifact. Multiple configurations may require configuration-specific locations. Those are distinct package contracts; this static host example does not test every platform layout.&#13;</Content>
+<Content aid:pstyle="Content">Source policy: the <Link href="https://cmake.org/cmake/help/v3.18/command/add_library.html">CMake 3.18 add_library reference</Link>, <Link href="https://cmake.org/cmake/help/v3.18/command/target_link_libraries.html">target_link_libraries</Link>, and <Link href="https://cmake.org/cmake/help/v3.18/prop_tgt/IMPORTED_LOCATION.html">IMPORTED_LOCATION</Link> define the behavior used here. The completed lab verifies this one project under the recorded installed toolchain, not every CMake generator or vendor SDK.&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Complete source→editor→runtime data and ownership flow</Strong>&#13;</Content>
+<Content aid:pstyle="Content">This is the culmination of the entire Phase 16.&#13;</Content>
+<Content aid:pstyle="Content">We are going to trace <Strong aid:cstyle="Bold">one texture</Strong>, <Strong aid:cstyle="Bold">one scene entity</Strong>, and <Strong aid:cstyle="Bold">one frame</Strong> through the whole engine.&#13;</Content>
+<Content aid:pstyle="Content">If you can draw this from memory, you understand the phase.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 1 — source content</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Artist creates:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Project/&#10;└── Textures/&#10;    └── Wall.png&#13;</Code>
+<Content aid:pstyle="Content">At this stage the authoritative thing is:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f17ba1ca0d92f8a36907329e.svg" alt="&#10;SourceBytes.&#10;" jobId="f17ba1ca0d92f8a36907329e" originalTeX="&#10;SourceBytes.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Ownership:&#13;</Content>
+<Code aid:pstyle="Code" language="text">filesystem/project content.&#13;</Code>
+<Content aid:pstyle="Content">It is not yet:&#13;</Content>
+<Code aid:pstyle="Code" language="text">renderer texture&#10;GPU image&#10;runtime handle.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 2 — persistent asset registration</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Asset system gives it:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/df88cc7407b9a745c2260e16.svg" alt="&#10;AssetID=A_{wall}.&#10;" jobId="df88cc7407b9a745c2260e16" originalTeX="&#10;AssetID=A_{wall}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Metadata:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ID&#10;Type = Texture&#10;Path = Textures/Wall.png&#10;Importer = kairo.texture.stb&#10;Dependencies...&#13;</Code>
+<Content aid:pstyle="Content">Ownership:&#13;</Content>
+<Code aid:pstyle="Code" language="text">AssetRegistry owns metadata.&#13;</Code>
+<Content aid:pstyle="Content">Important separation:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/0f87b12d36627012d27a325c.svg" alt='&#10;A_{wall}&#10;\neq&#10;"Textures/Wall.png".&#10;' jobId="0f87b12d36627012d27a325c" originalTeX='&#10;A_{wall}&#10;\neq&#10;"Textures/Wall.png".&#10;'/>&#13;</Formula>
+<Content aid:pstyle="Content">Move path; ID survives.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 3 — import recipe</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Import database records:&#13;</Content>
+<Code aid:pstyle="Code" language="text">source fingerprint&#10;importer ID&#10;importer version&#10;canonical settings.&#13;</Code>
+<Content aid:pstyle="Content">Derived key:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/9d6bde8aab66c149c75aefec.svg" alt="&#10;K=&#10;H(&#10;SourceFingerprint,&#10;ImporterID,&#10;ImporterVersion,&#10;Settings,&#10;Target,&#10;DependencyInputs&#10;).&#10;" jobId="9d6bde8aab66c149c75aefec" originalTeX="&#10;K=&#10;H(&#10;SourceFingerprint,&#10;ImporterID,&#10;ImporterVersion,&#10;Settings,&#10;Target,&#10;DependencyInputs&#10;).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Ownership:&#13;</Content>
+<Code aid:pstyle="Code" language="text">import pipeline.&#13;</Code>
+<Content aid:pstyle="Content">This is reproducibility metadata.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 4 — derived artifact</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Importer produces:&#13;</Content>
+<Code aid:pstyle="Code" language="text">TextureArtifact&#13;</Code>
+<Content aid:pstyle="Content">with:&#13;</Content>
+<Code aid:pstyle="Code" language="text">dimensions&#10;format&#10;mip levels&#10;pixel payload.&#13;</Code>
+<Content aid:pstyle="Content">DDC stores it under immutable key K.&#13;</Content>
+<Content aid:pstyle="Content">Ownership:&#13;</Content>
+<Code aid:pstyle="Code" language="text">DerivedDataCache.&#13;</Code>
+<Content aid:pstyle="Content">Deleting DDC should not destroy project identity.&#13;</Content>
+<Content aid:pstyle="Content">The artifact is reproducible.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 5 — authored scene reference</Strong>&#13;</Content>
+<Content aid:pstyle="Content">A scene entity’s MeshRenderer/Material may store:&#13;</Content>
+<Code aid:pstyle="Code" language="text">TextureAssetHandle{&#10;    AssetID = A_wall&#10;}.&#13;</Code>
+<Content aid:pstyle="Content">Ownership:&#13;</Content>
+<Code aid:pstyle="Code" language="text">EngineCore Scene.&#13;</Code>
+<Content aid:pstyle="Content">It does not store:&#13;</Content>
+<Code aid:pstyle="Code" language="text">VkImage&#10;TextureHandle&#10;filesystem pointer.&#13;</Code>
+<Content aid:pstyle="Content">Excellent lifetime separation.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 6 — editor inspection</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Reflection registry describes:&#13;</Content>
+<Code aid:pstyle="Code" language="text">MeshRenderer&#10;Material&#10;asset-reference property.&#13;</Code>
+<Content aid:pstyle="Content">Inspector displays stable semantic reference.&#13;</Content>
+<Content aid:pstyle="Content">User edits.&#13;</Content>
+<Content aid:pstyle="Content">The ImGui layer emits intent:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Set property&#13;</Code>
+<Content aid:pstyle="Content">rather than mutating arbitrary bytes.&#13;</Content>
+<Content aid:pstyle="Content">Ownership flow:&#13;</Content>
+<Code aid:pstyle="Code" language="text">UI&#10;    ↓&#10;Editor command&#10;    ↓&#10;Scene persistent state.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 7 — undo transaction</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Command captures:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Entity ID&#10;TypeKey&#10;PropertyKey&#10;Before&#10;After.&#13;</Code>
+<Content aid:pstyle="Content">Execute modifies scene.&#13;</Content>
+<Content aid:pstyle="Content">History owns command.&#13;</Content>
+<Content aid:pstyle="Content">Undo reverses.&#13;</Content>
+<Content aid:pstyle="Content">The scene remains the authoritative authored state.&#13;</Content>
+<Content aid:pstyle="Content">No renderer object is directly edited by the property widget.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 8 — persistent save</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Scene serializer writes:&#13;</Content>
+<Code aid:pstyle="Code" language="text">stable entity IDs&#10;component schema&#10;asset IDs&#10;hierarchy references.&#13;</Code>
+<Content aid:pstyle="Content">It uses a versioned format.&#13;</Content>
+<Content aid:pstyle="Content">Save sequence:&#13;</Content>
+<Code aid:pstyle="Code" language="text">serialize candidate&#10;write temporary sibling&#10;flush/close&#10;atomic replace.&#13;</Code>
+<Content aid:pstyle="Content">Ownership transfers from in-memory scene representation to durable file representation.&#13;</Content>
+<Content aid:pstyle="Content">They represent the same semantics, not the same memory.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 9 — recovery path</Strong>&#13;</Content>
+<Content aid:pstyle="Content">If scene is unsaved:&#13;</Content>
+<Code aid:pstyle="Code" language="text">CreateRecoveryPoint&#13;</Code>
+<Content aid:pstyle="Content">serializes current in-memory state into separate recovery snapshot.&#13;</Content>
+<Content aid:pstyle="Content">Recovery owns redundant safety copies.&#13;</Content>
+<Content aid:pstyle="Content">It does <Strong aid:cstyle="Bold">not</Strong> become canonical project state unless explicitly restored.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 10 — packaging</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Build profile determines output.&#13;</Content>
+<Content aid:pstyle="Content">Packaging creates staging tree:&#13;</Content>
+<Code aid:pstyle="Code" language="text">package/&#10;├── bin/KairoPlayer&#10;├── project/Project.kproject&#10;├── project/Scenes/...&#10;└── package.kmanifest&#13;</Code>
+<Content aid:pstyle="Content">It rejects unsafe symlinks and transient editor state.&#13;</Content>
+<Content aid:pstyle="Content">Then staged project is reopened and validated.&#13;</Content>
+<Content aid:pstyle="Content">Only after success does package become visible.&#13;</Content>
+<Content aid:pstyle="Content">Ownership:&#13;</Content>
+<Code aid:pstyle="Code" language="text">packaging pipeline&#10;→ published bundle.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 11 — Player bootstrap</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Launcher determines package root.&#13;</Content>
+<Content aid:pstyle="Content">Runs:&#13;</Content>
+<Code aid:pstyle="Code" language="text">KairoPlayer&#10;project/Project.kproject.&#13;</Code>
+<Content aid:pstyle="Content">Player loads:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ProjectDescriptor&#10;AssetManifest&#10;StartupScene.&#13;</Code>
+<Content aid:pstyle="Content">No editor is required.&#13;</Content>
+<Content aid:pstyle="Content">The runtime composition root constructs:&#13;</Content>
+<Code aid:pstyle="Code" language="text">runtime project&#10;ECS bridge&#10;physics&#10;audio&#10;input&#10;renderer&#10;gameplay&#10;render bridge.&#13;</Code>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 12 — scene→runtime ECS extraction</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Persistent authored:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Scene Entity 1007&#13;</Code>
+<Content aid:pstyle="Content">becomes:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Runtime Entity {Index,Generation}.&#13;</Code>
+<Content aid:pstyle="Content">Bridge records:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/844669c10302f0233c6e2065.svg" alt="&#10;SceneID&#10;\leftrightarrow&#10;RuntimeEntity.&#10;" jobId="844669c10302f0233c6e2065" originalTeX="&#10;SceneID&#10;\leftrightarrow&#10;RuntimeEntity.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Persistent scene remains distinct from process-local ECS storage.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 13 — asset runtime resolution</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The runtime entity references:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/2f3c2b736e53baa6b631b96b.svg" alt="&#10;A_{wall}.&#10;" jobId="2f3c2b736e53baa6b631b96b" originalTeX="&#10;A_{wall}.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Asset runtime resolves:&#13;</Content>
+<Code aid:pstyle="Code" language="text">AssetID&#10;   ↓&#10;derived artifact&#10;   ↓&#10;renderer resource creation.&#13;</Code>
+<Content aid:pstyle="Content">Renderer creates:&#13;</Content>
+<Code aid:pstyle="Code" language="text">TextureHandle T17&#13;</Code>
+<Content aid:pstyle="Content">which may internally correspond to:&#13;</Content>
+<Code aid:pstyle="Code" language="text">VkImage&#10;MTLTexture&#10;ID3D12Resource&#10;OpenGL texture.&#13;</Code>
+<Content aid:pstyle="Content">Now we have three distinct identities:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/f47eca2cdb67d9cd5704e499.svg" alt="&#10;A_{wall}&#10;" jobId="f47eca2cdb67d9cd5704e499" originalTeX="&#10;A_{wall}&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">persistent,&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/ab8fd3ed26ddd858bb2db92b.svg" alt="&#10;T17&#10;" jobId="ab8fd3ed26ddd858bb2db92b" originalTeX="&#10;T17&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">runtime renderer identity,&#13;</Content>
+<Content aid:pstyle="Content">and:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/5a8244013c55147707e9d390.svg" alt="&#10;GPUObject&#10;" jobId="5a8244013c55147707e9d390" originalTeX="&#10;GPUObject&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">backend-specific object.&#13;</Content>
+<Content aid:pstyle="Content">Never merge them conceptually.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 14 — simulation</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Runtime systems operate on:&#13;</Content>
+<Code aid:pstyle="Code" language="text">ECS entities&#10;physics BodyIDs&#10;input state&#10;script state.&#13;</Code>
+<Content aid:pstyle="Content">Physics may map:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/784fd5587c2561343086438d.svg" alt="&#10;RuntimeEntity&#10;\leftrightarrow&#10;BodyID.&#10;" jobId="784fd5587c2561343086438d" originalTeX="&#10;RuntimeEntity&#10;\leftrightarrow&#10;BodyID.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Renderer does not become physics owner.&#13;</Content>
+<Content aid:pstyle="Content">Subsystem-specific identities remain separate.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 15 — render extraction</Strong>&#13;</Content>
+<Content aid:pstyle="Content">ECS:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Transform&#10;Renderable&#10;Light&#10;Camera&#13;</Code>
+<Content aid:pstyle="Content">becomes frame data:&#13;</Content>
+<Code aid:pstyle="Code" language="text">RenderScene&#10;MeshDraw[]&#10;Lights&#10;Camera.&#13;</Code>
+<Content aid:pstyle="Content">This is a <Strong aid:cstyle="Bold">copy/extraction boundary</Strong>.&#13;</Content>
+<Content aid:pstyle="Content">Renderer receives exactly what it needs.&#13;</Content>
+<Content aid:pstyle="Content">It does not traverse arbitrary editor Scene internals.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 16 — render graph</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Renderer compiles:&#13;</Content>
+<Code aid:pstyle="Code" language="text">passes&#10;resources&#10;accesses&#10;transitions&#10;lifetimes.&#13;</Code>
+<Content aid:pstyle="Content">RenderGraph produces execution plan.&#13;</Content>
+<Content aid:pstyle="Content">CPU timing can produce:&#13;</Content>
+<Code aid:pstyle="Code" language="text">RenderGraphExecutionProfile.&#13;</Code>
+<Content aid:pstyle="Content">Backend records GPU work.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 17 — GPU submission</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Backend submits resources.&#13;</Content>
+<Content aid:pstyle="Content">Now their lifetime extends beyond CPU frame construction.&#13;</Content>
+<Content aid:pstyle="Content">For a resource R:&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/b750652363e82a1d832d97fb.svg" alt="&#10;Lifetime(R)&#10;&gt;&#10;LastGPUUse(R).&#10;" jobId="b750652363e82a1d832d97fb" originalTeX="&#10;Lifetime(R)&#10;&gt;&#10;LastGPUUse(R).&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">If hot reloaded:&#13;</Content>
+<Code aid:pstyle="Code" language="text">new resource published&#10;old resource retired&#10;old object destroyed only after GPU completion.&#13;</Code>
+<Content aid:pstyle="Content">This is the frames-in-flight rule from Pass 13.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 18 — diagnostics</Strong>&#13;</Content>
+<Content aid:pstyle="Content">Along the entire path:&#13;</Content>
+<Code aid:pstyle="Code" language="text">Logger&#10;profiling&#10;validation&#10;tests&#10;crash metadata.&#13;</Code>
+<Content aid:pstyle="Content">observe the system.&#13;</Content>
+<Content aid:pstyle="Content">Diagnostics should <Strong aid:cstyle="Bold">observe</Strong> engine state.&#13;</Content>
+<Content aid:pstyle="Content">They should not become the owner of core semantics.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">Stage 19 — CI proves the complete graph</Strong>&#13;</Content>
+<Content aid:pstyle="Content">The build artifact did not emerge from nowhere.&#13;</Content>
+<Content aid:pstyle="Content">CI reconstructs:&#13;</Content>
+<Code aid:pstyle="Code" language="text">workspace.lock&#10;        ↓&#10;exact repositories&#10;        ↓&#10;preset&#10;        ↓&#10;toolchain&#10;        ↓&#10;CMake target graph&#10;        ↓&#10;Ninja DAG&#10;        ↓&#10;build&#10;        ↓&#10;unit tests&#10;        ↓&#10;integration tests&#10;        ↓&#10;smoke tests&#10;        ↓&#10;package.&#13;</Code>
+<Content aid:pstyle="Content">That chain is the <Strong aid:cstyle="Bold">build-time equivalent</Strong> of your runtime ownership chain.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The two master DAGs</Strong>&#13;</Content>
+<Content aid:pstyle="Content">At this point you should mentally separate two large graphs.&#13;</Content>
+<Content aid:pstyle="SubChapterSubHeading" id="05-engine-i-ch012-build-dag">Build DAG&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/045b5c3ef8cd4987061ec4a9.svg" alt="&#10;SourceRepos&#10;\rightarrow&#10;CMakeTargets&#10;\rightarrow&#10;GeneratedArtifacts&#10;\rightarrow&#10;Executables.&#10;" jobId="045b5c3ef8cd4987061ec4a9" originalTeX="&#10;SourceRepos&#10;\rightarrow&#10;CMakeTargets&#10;\rightarrow&#10;GeneratedArtifacts&#10;\rightarrow&#10;Executables.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="SubChapterSubHeading" id="05-engine-i-ch012-runtime-dag">Runtime DAG&#13;</Content>
+<Formula aid:pstyle="Formula" display="block"><Image href="file:///Users/swayamsingal/Library/Mobile Documents/iCloud~md~obsidian/Documents/Master/Book Production/AllMight Codex/sharedAssets/math/97ea0d308d1d036b248f67db.svg" alt="&#10;ProjectData&#10;\rightarrow&#10;RuntimeServices&#10;\rightarrow&#10;SubsystemResources&#10;\rightarrow&#10;FrameWork.&#10;" jobId="97ea0d308d1d036b248f67db" originalTeX="&#10;ProjectData&#10;\rightarrow&#10;RuntimeServices&#10;\rightarrow&#10;SubsystemResources&#10;\rightarrow&#10;FrameWork.&#10;"/>&#13;</Formula>
+<Content aid:pstyle="Content">Neither should contain hidden cycles.&#13;</Content>
+<Content aid:pstyle="Content">And both should have explicit ownership.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Strong aid:cstyle="Bold">The full Kairo architecture in one view</Strong>&#13;</Content>
+<Code aid:pstyle="Code" language="text">                    DEVELOPMENT / AUTHORING&#10;&#10; Source repositories&#10;       |&#10;       | exact SHAs&#10;       v&#10; workspace.lock&#10;       |&#10;       v&#10; CMake target graph&#10;       |&#10;       v&#10; Ninja build graph&#10;       |&#10;       +--------------------+&#10;       |                    |&#10;       v                    v&#10;    KairoEditor          KairoPlayer&#10;       |                    ^&#10;       |                    |&#10;       v                    |&#10; Project + source assets    |&#10;       |                    |&#10;       v                    |&#10; Asset Registry             |&#10;       |                    |&#10;       v                    |&#10; Importers / DDC            |&#10;       |                    |&#10;       v                    |&#10; Derived artifacts          |&#10;       |                    |&#10;       v                    |&#10; Scene authoring            |&#10;       |                    |&#10;       v                    |&#10; Reflection inspector       |&#10;       |                    |&#10;       v                    |&#10; Undo / recovery            |&#10;       |                    |&#10;       v                    |&#10; Persistent project files   |&#10;       |                    |&#10;       +-------&gt; Packaging--+&#10;                            |&#10;                            v&#10;&#10;                         RUNTIME&#10;&#10;                     ProjectDescriptor&#10;                            |&#10;                            v&#10;                       AssetManifest&#10;                            |&#10;                            v&#10;                         Scene&#10;                            |&#10;                            v&#10;                      ECS extraction&#10;                    /       |        \&#10;                   v        v         v&#10;               Physics    Logic     Render&#10;                   |        |         |&#10;                   +--------+---------+&#10;                            |&#10;                            v&#10;                        Frame state&#10;                            |&#10;                            v&#10;                       RenderScene&#10;                            |&#10;                            v&#10;                       RenderGraph&#10;                            |&#10;                            v&#10;                      Backend commands&#10;                            |&#10;                            v&#10;                           GPU&#13;</Code>
+<Content aid:pstyle="Content">That is Phase 16.&#13;</Content>
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<!-- CHAPTER-SOURCE-END -->
+<Content aid:pstyle="Content">&#8212;&#13;</Content>
+<Content aid:pstyle="Content"><Link href="Chapter Edition/03 - Game Engine/00 - Reading Map">Reading map</Link> · <Link href="#05-engine-i-ch011">Previous chapter</Link> · <Link href="#05-engine-i-ch013">Next chapter</Link>&#13;</Content>
+</Chapter>

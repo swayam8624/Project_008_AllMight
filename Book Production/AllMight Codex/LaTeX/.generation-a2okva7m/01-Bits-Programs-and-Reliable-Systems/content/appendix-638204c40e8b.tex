@@ -1,0 +1,46 @@
+\hypertarget{appendix-638204c40e8b}{}\label{referencestart:appendix-638204c40e8b}
+\section{Groupwise quantization and metadata}\label{appendix-638204c40e8b-groupwise-quantization-and-metadata}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C006 · \textbf{Latest development:} C006
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-638204c40e8b-definition-and-mechanism}
+
+Local groups share a scale, improving adaptation at a metadata cost. Symmetric INT4 calibration maxAbs/7 reconstructs codes around {[}-7,7{]}; float scales add about 32/G bits per value for full groups.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-638204c40e8b-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-d5da3eaabaef]{Affine quantization and zero point} --- supplies the representation or validity rule used above.
+\item
+  \hyperref[appendix-1f9963e1a5d1]{Bit packing} --- supplies the representation or validity rule used above.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-638204c40e8b-used-by}
+
+Connect later dependent concepts here when their explanations use this mechanism.
+
+\subsection{Recall and next depth}\label{appendix-638204c40e8b-recall-and-next-depth}
+
+Reconstruct the example and identify the condition that would invalidate it.
+
+\textbf{Pending:} No task-accuracy or throughput benchmark was run.
+
+\subsection{Source and navigation}\label{appendix-638204c40e8b-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-choosing-what-information-to-keep]{Continuous teaching story} · {Source coverage ledger} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Reference notes: Dependency Map)}
+
+\subsection{Reconstruction depth}\label{appendix-638204c40e8b-reconstruction-depth}
+
+Groupwise quantization divides a tensor into blocks and assigns quantization parameters per block rather than per entire tensor. For affine quantization, a group may store scale \(s\) and zero point \(z\) so that \(\hat x=s(q-z)\).
+
+The group size controls a three-way trade: smaller groups follow local distributions more accurately but increase metadata bandwidth and reduce the work sharing one scale; larger groups amortize metadata and simplify vector kernels but increase approximation error when values have heterogeneous ranges.
+
+Metadata is part of the runtime format. A decoder needs the exact grouping axis and order, group length, code width, scale type, zero-point type, tail policy, alignment and byte order. A mismatch can produce plausible but entirely wrong model outputs.
+
+Benchmarking should report payload plus metadata bytes and measure the real dequantized dot-product kernel rather than only offline reconstruction error. The best group size depends on cache behavior, SIMD width, memory bandwidth and model sensitivity.

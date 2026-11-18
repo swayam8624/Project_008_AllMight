@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch279.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-1ed5f96c73ea-perspective-correct-interpolation" class="level2">
+<h2>Perspective-correct interpolation</h2>
+<p>Rasterization computes barycentric coordinates in screen space, but many vertex attributes are defined as linear functions on the original 3D primitive before perspective division. Directly interpolating those attributes with screen-space barycentrics therefore produces the wrong result.</p>
+<p>Let clip-space vertex <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> have homogeneous coordinate <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+</math> and attribute <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mi>i</mi>
+  </msub>
+</math>. If screen-space barycentric weights at a sample are <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+</math>, perspective-correct interpolation is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <munder>
+        <mo data-mjx-texclass="OP">∑</mo>
+        <mi>i</mi>
+      </munder>
+      <msub>
+        <mi>λ</mi>
+        <mi>i</mi>
+      </msub>
+      <msub>
+        <mi>a</mi>
+        <mi>i</mi>
+      </msub>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <msub>
+        <mi>w</mi>
+        <mi>i</mi>
+      </msub>
+    </mrow>
+    <mrow>
+      <munder>
+        <mo data-mjx-texclass="OP">∑</mo>
+        <mi>i</mi>
+      </munder>
+      <msub>
+        <mi>λ</mi>
+        <mi>i</mi>
+      </msub>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <msub>
+        <mi>w</mi>
+        <mi>i</mi>
+      </msub>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>The denominator reconstructs the projective scaling that was lost during perspective division.</p>
+<section id="appendix-1ed5f96c73ea-why-affine-screen-interpolation-fails" class="level3">
+<h3>Why affine screen interpolation fails</h3>
+<p>Imagine two vertices at different depths but carrying texture coordinates that vary linearly across the original triangle. Perspective makes equal screen distances correspond to unequal distances on the surface. Affine screen interpolation assumes the opposite, so textures visibly “swim” or warp across polygons.</p>
+<p>The derivation can be viewed by interpolating homogeneous quantities before division: both <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>w</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>w</mi>
+</math> are affine in screen barycentrics, then dividing recovers <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>.</p>
+</section>
+<section id="appendix-1ed5f96c73ea-depth-is-a-separate-contract" class="level3">
+<h3>Depth is a separate contract</h3>
+<p>Do not blindly apply the same formula to every quantity named “depth.” Hardware depth after projection/divide is designed to interpolate affinely in screen space under the pipeline’s projective construction. Camera-space <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>z</mi>
+</math>, Euclidean range and reciprocal depth are different quantities.</p>
+<p>The shader/runtime must know which one it is carrying.</p>
+</section>
+<section id="appendix-1ed5f96c73ea-derivatives" class="level3">
+<h3>Derivatives</h3>
+<p>Texture gradients used for mip/anisotropic filtering are derivatives of the perspective-correct attribute with respect to screen position. Finite differences across neighboring fragments approximate that quotient behavior; manually reconstructing derivatives requires differentiating the quotient rather than differentiating the raw affine numerator alone.</p>
+</section>
+<section id="appendix-1ed5f96c73ea-executable-reference" class="level3">
+<h3>Executable reference</h3>
+<p>tools/labs/raster_reference_lab.cpp chooses a triangle with unequal reciprocal-w values and verifies that affine interpolation differs from the perspective-correct result. The same lab tests top-left edge ownership and depth ordering.</p>
+<p>Teach and reconstruct: <a href="ch277.xhtml#id_03-visual-computing-i-ch012-decide-which-samples-a-triangle-owns" class="wikilink">Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Decide which samples a triangle owns</a>.</p>
+<p>Related: <a href="ch307.xhtml#appendix-40426e4b2103-homogeneous-clipping-and-perspective-interpolation" class="wikilink">Homogeneous clipping and perspective interpolation (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Homogeneous clipping and perspective interpolation)</a>, <a href="ch280.xhtml#appendix-275ec8847057-reversed-z-depth-contracts" class="wikilink">Reversed-Z depth contracts</a>.</p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,50 @@
+\hypertarget{appendix-9079d3659da4}{}\label{referencestart:appendix-9079d3659da4}
+\section{De Morgan's laws}\label{appendix-9079d3659da4-de-morgans-laws}
+
+\hypertarget{appendix-9079d3659da4-de-morgans-laws}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C001 · \textbf{Latest development:} C001
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-9079d3659da4-definition-and-mechanism}
+
+\hypertarget{appendix-9079d3659da4-definition-and-mechanism}{}
+
+Negation crossing a conjunction or disjunction swaps the operator: \(\neg(A\land B)=\neg A\lor\neg B\), and dually for OR.
+
+\end{allmightroledefinition}
+
+Negating `both' means at least one condition fails; negating `either' means both fail. \BookInlineCode{!(visible\ \&\&\ loaded)} equals \BookInlineCode{!visible\ \textbar\textbar{}\ !loaded}. The identities hold lane by lane for fixed-width vectors. Rewriting comparisons also requires their domain: negating a floating comparison needs care around NaN.
+
+\subsection{Prerequisites}\label{appendix-9079d3659da4-prerequisites}
+
+\hypertarget{appendix-9079d3659da4-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-24475e1596a8]{Boolean algebra} --- The logical domain is false/true.
+\item
+  \hyperref[appendix-8f38927cfc54]{Bitwise NOT} --- Complement must specify width: eight-bit complement of \BookInlineCode{0x0F} is \BookInlineCode{0xF0}, while sixteen-bit complement is \BookInlineCode{0xFFF0}.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-9079d3659da4-used-by}
+
+\hypertarget{appendix-9079d3659da4-used-by}{}
+
+Connect later chunks here when they use this concept.
+
+\subsection{Recall and next depth}\label{appendix-9079d3659da4-recall-and-next-depth}
+
+\hypertarget{appendix-9079d3659da4-recall-and-next-depth}{}
+
+Explain de morgan's laws without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} Apply and reconstruct this concept independently.
+
+\subsection{Source and navigation}\label{appendix-9079d3659da4-source-and-navigation}
+
+\hypertarget{appendix-9079d3659da4-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

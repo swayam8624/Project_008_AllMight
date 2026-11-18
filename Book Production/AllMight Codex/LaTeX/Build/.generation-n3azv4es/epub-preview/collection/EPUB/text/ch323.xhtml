@@ -1,0 +1,5655 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch323.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_03-visual-computing-i-ch008-sampling-directions-and-light-transport" class="level2">
+<h2>Sampling Directions and Light Transport</h2>
+<p><a href="ch316.xhtml#id_04-Light-Transport-and-Image-Synthesis" class="wikilink">Reading map</a> · <a href="ch319.xhtml#id_03-visual-computing-i-ch007-the-rendering-equation-and-path-probabilities" class="wikilink">Previous chapter</a> · <a href="ch324.xhtml#id_03-visual-computing-i-ch009-point-lights-mis-and-environment-lighting" class="wikilink">Next chapter</a></p>
+<p>Uniformly sampling angles is not the same as uniformly sampling directions on a sphere. These chapters derive the relevant distributions and show how practical path-tracer choices affect variance and convergence.</p>
+<p><strong>By the end:</strong> Construct and compare directional sampling strategies for path tracing.</p>
+<p><strong>Recall question:</strong> Why does uniform theta sampling overrepresent some regions of a sphere?</p>
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 16566–19391; source-span SHA256 7c6f2a0a8cefb6d7221ab8bcc33a0e7a400344c81b2b38c4deb75ebf02570803. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_03-visual-computing-i-ch008-next-pass-7-m123-m124-parts-20312069" class="level4">
+<h4>Next — Pass 7: M123 + M124, Parts 2031–2069</h4>
+<p>This is where the Monte Carlo machinery becomes a practical path tracer: <strong>uniform sphere/hemisphere sampling, cosine-weighted sampling, local tangent bases, inverse-CDF/sample transformations, GGX importance sampling, variance and importance-sampling theory, MIS motivation and balance/power heuristics, light sampling versus BRDF sampling, path throughput, Russian roulette, next-event estimation, point/area/environment-light sampling, area↔︎solid-angle PDF conversion, environment CDF/alias sampling, progressive accumulation, noise/fireflies/clamping, and path-event classification.</strong></p>
+<p>This pass is the point where the rendering equation from Pass 6 becomes an actual practical path tracer.</p>
+<p>The central equation from Pass 6 was</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>o</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>o</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>L</mi>
+    <mi>e</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>o</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <msub>
+    <mo data-mjx-texclass="OP">∫</mo>
+    <mrow data-mjx-texclass="ORD">
+      <msup>
+        <mi mathvariant="normal">Ω</mi>
+        <mo>+</mo>
+      </msup>
+    </mrow>
+  </msub>
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>o</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">(</mo>
+    <mi>n</mi>
+    <mo>⋅</mo>
+    <msub>
+      <mi>ω</mi>
+      <mi>i</mi>
+    </msub>
+    <mo data-mjx-texclass="CLOSE">)</mo>
+  </mrow>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Monte Carlo turned this into</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mrow data-mjx-texclass="ORD">
+              <mover>
+                <mi>L</mi>
+                <mo stretchy="false">^</mo>
+              </mover>
+            </mrow>
+            <mi>o</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>L</mi>
+            <mi>e</mi>
+          </msub>
+          <mo>+</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mi>N</mi>
+          </mfrac>
+          <munderover>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>k</mi>
+              <mo>=</mo>
+              <mn>1</mn>
+            </mrow>
+            <mrow data-mjx-texclass="ORD">
+              <mi>N</mi>
+            </mrow>
+          </munderover>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>f</mi>
+                <mi>r</mi>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>ω</mi>
+                <mi>k</mi>
+              </msub>
+              <mo>,</mo>
+              <msub>
+                <mi>ω</mi>
+                <mi>o</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+              <msub>
+                <mi>L</mi>
+                <mi>i</mi>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>ω</mi>
+                <mi>k</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+              <mrow data-mjx-texclass="ORD">
+                <mo stretchy="false">|</mo>
+              </mrow>
+              <mi>n</mi>
+              <mo>⋅</mo>
+              <msub>
+                <mi>ω</mi>
+                <mi>k</mi>
+              </msub>
+              <mo stretchy="false">|</mo>
+            </mrow>
+            <mrow>
+              <mi>p</mi>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>ω</mi>
+                <mi>k</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and nearly everything in Pass 7 is about one question:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>How should we choose </mtext>
+          <mi>p</mi>
+          <mo stretchy="false">(</mo>
+          <mi>ω</mi>
+          <mo stretchy="false">)</mo>
+          <mtext> so that this estimator is cheap, correct, and low variance?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Sampling a direction is sampling a point on a sphere</strong></p>
+<p>A unit direction</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ω</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>satisfies</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <msup>
+    <mi>y</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <msup>
+    <mi>z</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>Using spherical coordinates around a chosen normal axis,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>ϕ</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo>=</mo>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>z</mi>
+  <mo>=</mo>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>ϕ</mi>
+  <mo>.</mo>
+</math>
+<p>I am using <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>+</mo>
+  <mi>Y</mi>
+</math> as the local normal axis here because your current <code>CosineHemisphereDirection()</code> does exactly that.</p>
+<p>The differential solid angle is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mi>ω</mi>
+          <mo>=</mo>
+          <mi>sin</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <mi>θ</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <mi>d</mi>
+          <mi>θ</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <mi>d</mi>
+          <mi>ϕ</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+</math> is the source of many sampling formulas that otherwise look mysterious.</p>
+<hr />
+<p><strong>Why choosing <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>θ</mi>
+</math> uniformly is not uniform on a sphere</strong></p>
+<p>A common first attempt is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>θ</mi>
+  <mo>=</mo>
+  <mi>π</mi>
+  <msub>
+    <mi>ξ</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <mi>ϕ</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>π</mi>
+  <msub>
+    <mi>ξ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>with</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ξ</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>ξ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>∼</mo>
+  <mi>U</mi>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>That is <strong>not</strong> uniform in solid angle.</p>
+<p>Near the poles, many values of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>ϕ</mi>
+</math> describe points that are physically very close together.</p>
+<p>The area element of the unit sphere is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>A</mi>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>θ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>ϕ</mi>
+  <mo>.</mo>
+</math>
+<p>When</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>θ</mi>
+  <mo stretchy="false">→</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo stretchy="false">→</mo>
+  <mn>0.</mn>
+</math>
+<p>So equal increments of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>θ</mi>
+</math> do not correspond to equal surface area.</p>
+<p>Uniform <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>θ</mi>
+</math> causes clustering near the poles.</p>
+<p>This is one of the first rules of sampling:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>uniform parameter values do not imply uniform geometric measure.</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Uniform sphere sampling</strong></p>
+<p>The total solid angle of a sphere is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mi>π</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore a uniform spherical-direction PDF is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>sphere</mtext>
+            </mrow>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>ω</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mrow>
+              <mn>4</mn>
+              <mi>π</mi>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>To generate such a direction, observe that</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>z</mi>
+  <mo>=</mo>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>.</mo>
+</math>
+<p>From</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>θ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>ϕ</mi>
+  <mo>,</mo>
+</math>
+<p>and</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>z</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>θ</mi>
+  <mo>,</mo>
+</math>
+<p>we get</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi>ϕ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>z</mi>
+</math>
+<p>up to sign/orientation.</p>
+<p>Therefore uniform solid angle corresponds to uniform:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ϕ</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mi>π</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and uniform:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>z</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Let</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ξ</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>ξ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>∼</mo>
+  <mi>U</mi>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Choose</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>z</mi>
+          <mo>=</mo>
+          <mn>1</mn>
+          <mo>−</mo>
+          <mn>2</mn>
+          <msub>
+            <mi>ξ</mi>
+            <mn>1</mn>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>ϕ</mi>
+          <mo>=</mo>
+          <mn>2</mn>
+          <mi>π</mi>
+          <msub>
+            <mi>ξ</mi>
+            <mn>2</mn>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The radius of the horizontal circle is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <msqrt>
+    <mn>1</mn>
+    <mo>−</mo>
+    <msup>
+      <mi>z</mi>
+      <mn>2</mn>
+    </msup>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>Therefore</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>ω</mi>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">(</mo>
+            <mi>r</mi>
+            <mi>cos</mi>
+            <mo data-mjx-texclass="NONE">⁡</mo>
+            <mi>ϕ</mi>
+            <mo>,</mo>
+            <mi>z</mi>
+            <mo>,</mo>
+            <mi>r</mi>
+            <mi>sin</mi>
+            <mo data-mjx-texclass="NONE">⁡</mo>
+            <mi>ϕ</mi>
+            <mo data-mjx-texclass="CLOSE">)</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Every equal-solid-angle patch receives the same probability.</p>
+<hr />
+<p><strong>Uniform hemisphere sampling</strong></p>
+<p>For a hemisphere around <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>+</mo>
+  <mi>Y</mi>
+</math>,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo>=</mo>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Hemisphere solid angle is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mi>π</mi>
+  <mo>.</mo>
+</math>
+<p>Thus</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>hemisphere</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mrow>
+              <mn>2</mn>
+              <mi>π</mi>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Let:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ξ</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>ξ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>∼</mo>
+  <mi>U</mi>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Use</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>y</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>ξ</mi>
+            <mn>1</mn>
+          </msub>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ϕ</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>π</mi>
+  <msub>
+    <mi>ξ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <msqrt>
+    <mn>1</mn>
+    <mo>−</mo>
+    <msup>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msup>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>So:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>Vec3 SampleUniformHemisphere<span class="op">(</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> xi1<span class="op">,</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> xi2<span class="op">)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> y <span class="op">=</span> xi1<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> phi <span class="op">=</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="fl">2.0</span><span class="bu">f</span> <span class="op">*</span> Pi <span class="op">*</span> xi2<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> radius <span class="op">=</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>sqrt<span class="op">(</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>            <span class="bu">std::</span>max<span class="op">(</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>                <span class="fl">0.0</span><span class="bu">f</span><span class="op">,</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>                <span class="fl">1.0</span><span class="bu">f</span> <span class="op">-</span> y <span class="op">*</span> y<span class="op">));</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>        radius <span class="op">*</span> <span class="bu">std::</span>cos<span class="op">(</span>phi<span class="op">),</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        y<span class="op">,</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>        radius <span class="op">*</span> <span class="bu">std::</span>sin<span class="op">(</span>phi<span class="op">)</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Its PDF is always:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fl">1.0</span><span class="bu">f</span> <span class="op">/</span> <span class="op">(</span><span class="fl">2.0</span><span class="bu">f</span> <span class="op">*</span> Pi<span class="op">)</span></span></code></pre></div>
+<p>for directions in the upper hemisphere.</p>
+<hr />
+<p><strong>Uniform hemisphere sampling is correct but often inefficient</strong></p>
+<p>Suppose we have a Lambertian surface:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mi>ρ</mi>
+    <mi>π</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Its rendering-equation integrand contains</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>.</mo>
+</math>
+<p>Even if incoming radiance were constant,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mo>,</mo>
+</math>
+<p>the integrand varies as</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>.</mo>
+</math>
+<p>Near the normal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>≈</mo>
+  <mn>1.</mn>
+</math>
+<p>Near grazing:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>≈</mo>
+  <mn>0.</mn>
+</math>
+<p>Uniform hemisphere sampling spends just as many samples near grazing as near the normal even though those grazing samples contribute much less.</p>
+<p>That is legal.</p>
+<p>It is merely wasteful.</p>
+<hr />
+<p><strong>Cosine-weighted hemisphere sampling</strong></p>
+<p>For Lambertian transport, a much better PDF is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>p</mi>
+          <mo stretchy="false">(</mo>
+          <mi>ω</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mi>cos</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <mi>θ</mi>
+            </mrow>
+            <mi>π</mi>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>First verify normalization:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mo data-mjx-texclass="OP">∫</mo>
+    <mrow data-mjx-texclass="ORD">
+      <msup>
+        <mi mathvariant="normal">Ω</mi>
+        <mo>+</mo>
+      </msup>
+    </mrow>
+  </msub>
+  <mfrac>
+    <mrow>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mi>θ</mi>
+    </mrow>
+    <mi>π</mi>
+  </mfrac>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>ω</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>π</mi>
+  </mfrac>
+  <msubsup>
+    <mo data-mjx-texclass="OP">∫</mo>
+    <mn>0</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>2</mn>
+      <mi>π</mi>
+    </mrow>
+  </msubsup>
+  <msubsup>
+    <mo data-mjx-texclass="OP">∫</mo>
+    <mn>0</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mi>π</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mn>2</mn>
+    </mrow>
+  </msubsup>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>θ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>ϕ</mi>
+  <mo>.</mo>
+</math>
+<p>Inner integral:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mo data-mjx-texclass="OP">∫</mo>
+    <mn>0</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mi>π</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mn>2</mn>
+    </mrow>
+  </msubsup>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>θ</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>2</mn>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Outer integral:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mi>π</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mn>1</mn>
+    <mi>π</mi>
+  </mfrac>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mi>π</mi>
+  <mo stretchy="false">)</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mn>2</mn>
+  </mfrac>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>So it is a valid PDF.</p>
+<hr />
+<p><strong>Deriving the cosine-weighted sampling formula</strong></p>
+<p>Marginal distribution in <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>θ</mi>
+</math> is proportional to</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>.</mo>
+</math>
+<p>Normalized angular PDF is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>θ</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>θ</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>.</mo>
+</math>
+<p>CDF:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo stretchy="false">(</mo>
+  <mi>θ</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msubsup>
+    <mo data-mjx-texclass="OP">∫</mo>
+    <mn>0</mn>
+    <mi>θ</mi>
+  </msubsup>
+  <mn>2</mn>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>t</mi>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>t</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Since:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mi>d</mi>
+    <mrow>
+      <mi>d</mi>
+      <mi>t</mi>
+    </mrow>
+  </mfrac>
+  <msup>
+    <mi>sin</mi>
+    <mn>2</mn>
+  </msup>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>t</mi>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<p>we get:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>F</mi>
+          <mo stretchy="false">(</mo>
+          <mi>θ</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <msup>
+            <mi>sin</mi>
+            <mn>2</mn>
+          </msup>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <mi>θ</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Set:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ξ</mi>
+  <mo>=</mo>
+  <mi>F</mi>
+  <mo stretchy="false">(</mo>
+  <mi>θ</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msup>
+    <mi>sin</mi>
+    <mn>2</mn>
+  </msup>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>=</mo>
+  <msqrt>
+    <mi>ξ</mi>
+  </msqrt>
+  <mo>,</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>=</mo>
+  <msqrt>
+    <mn>1</mn>
+    <mo>−</mo>
+    <mi>ξ</mi>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>Let:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>=</mo>
+  <msqrt>
+    <msub>
+      <mi>ξ</mi>
+      <mn>2</mn>
+    </msub>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>Choose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ϕ</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>π</mi>
+  <msub>
+    <mi>ξ</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mi>r</mi>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>ϕ</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>z</mi>
+  <mo>=</mo>
+  <mi>r</mi>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>ϕ</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo>=</mo>
+  <msqrt>
+    <mn>1</mn>
+    <mo>−</mo>
+    <msub>
+      <mi>ξ</mi>
+      <mn>2</mn>
+    </msub>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>ω</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>local</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">(</mo>
+            <msqrt>
+              <msub>
+                <mi>ξ</mi>
+                <mn>2</mn>
+              </msub>
+            </msqrt>
+            <mi>cos</mi>
+            <mo data-mjx-texclass="NONE">⁡</mo>
+            <mo stretchy="false">(</mo>
+            <mn>2</mn>
+            <mi>π</mi>
+            <msub>
+              <mi>ξ</mi>
+              <mn>1</mn>
+            </msub>
+            <mo stretchy="false">)</mo>
+            <mo>,</mo>
+            <msqrt>
+              <mn>1</mn>
+              <mo>−</mo>
+              <msub>
+                <mi>ξ</mi>
+                <mn>2</mn>
+              </msub>
+            </msqrt>
+            <mo>,</mo>
+            <msqrt>
+              <msub>
+                <mi>ξ</mi>
+                <mn>2</mn>
+              </msub>
+            </msqrt>
+            <mi>sin</mi>
+            <mo data-mjx-texclass="NONE">⁡</mo>
+            <mo stretchy="false">(</mo>
+            <mn>2</mn>
+            <mi>π</mi>
+            <msub>
+              <mi>ξ</mi>
+              <mn>1</mn>
+            </msub>
+            <mo stretchy="false">)</mo>
+            <mo data-mjx-texclass="CLOSE">)</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is exactly the structure currently present in Kairo’s <code>CosineHemisphereDirection()</code>.</p>
+<p>The square root is not arbitrary.</p>
+<p>It comes directly from inverting the CDF.</p>
+<hr />
+<p><strong>Equivalent disk interpretation</strong></p>
+<p>Cosine-weighted hemisphere sampling can also be understood as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>uniform disk</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>project upward onto hemisphere</mtext>
+  <mo>.</mo>
+</math>
+<p>Sample a uniform unit disk:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <msqrt>
+    <msub>
+      <mi>ξ</mi>
+      <mn>1</mn>
+    </msub>
+  </msqrt>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ϕ</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>π</mi>
+  <msub>
+    <mi>ξ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mi>r</mi>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>ϕ</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>z</mi>
+  <mo>=</mo>
+  <mi>r</mi>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>ϕ</mi>
+  <mo>.</mo>
+</math>
+<p>Lift onto sphere:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo>=</mo>
+  <msqrt>
+    <mn>1</mn>
+    <mo>−</mo>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>−</mo>
+    <msup>
+      <mi>z</mi>
+      <mn>2</mn>
+    </msup>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>The resulting hemisphere density becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mi>θ</mi>
+    </mrow>
+    <mi>π</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>This geometric view is often easier to remember than the CDF derivation.</p>
+<hr />
+<p><strong>Why the square root appears in uniform disk sampling</strong></p>
+<p>A disk has area element:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>A</mi>
+  <mo>=</mo>
+  <mi>r</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>r</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>ϕ</mi>
+  <mo>.</mo>
+</math>
+<p>If we chose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mi>ξ</mi>
+</math>
+<p>uniformly, samples would cluster near the center.</p>
+<p>Disk area within radius <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+</math> is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>π</mi>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Normalized CDF:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Set:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ξ</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>r</mi>
+          <mo>=</mo>
+          <msqrt>
+            <mi>ξ</mi>
+          </msqrt>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>inverse CDF produces the square root.</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Sampling formulas should be reconstructed from measure, not memorized.</p>
+<hr />
+<p><strong>Local coordinates are not world coordinates</strong></p>
+<p>The formulas above assume the hemisphere is oriented around:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>local</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>But the actual surface normal might be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.3</mn>
+  <mo>,</mo>
+  <mn>0.8</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>0.52</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>We need an orthonormal basis:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>,</mo>
+  <mi>N</mi>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>Then local direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ω</mi>
+    <mi>l</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>becomes world direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>ω</mi>
+            <mi>w</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>x</mi>
+          <mi>T</mi>
+          <mo>+</mo>
+          <mi>y</mi>
+          <mi>N</mi>
+          <mo>+</mo>
+          <mi>z</mi>
+          <mi>B</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is the same tangent-frame idea from normal mapping, now used in reverse: instead of transforming a normal into world space, we transform a sampled direction.</p>
+<hr />
+<p><strong>Constructing a robust basis</strong></p>
+<p>Given unit normal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>.</mo>
+</math>
+<p>Choose a helper axis not nearly parallel to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math>.</p>
+<p>For example:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>Vec3 BuildTangent<span class="op">(</span>Vec3 n<span class="op">)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> Vec3 helper <span class="op">=</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>abs<span class="op">(</span>n<span class="op">.</span>y<span class="op">)</span> <span class="op">&lt;</span> <span class="fl">0.999</span><span class="bu">f</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">?</span> Vec3<span class="op">{</span><span class="dv">0</span><span class="op">,</span> <span class="dv">1</span><span class="op">,</span> <span class="dv">0</span><span class="op">}</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">:</span> Vec3<span class="op">{</span><span class="dv">1</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">};</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Normalize<span class="op">(</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        Cross<span class="op">(</span>helper<span class="op">,</span> n<span class="op">));</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mi>normalize</mi>
+  <mo stretchy="false">(</mo>
+  <mi>H</mi>
+  <mo>×</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mi>N</mi>
+  <mo>×</mo>
+  <mi>T</mi>
+  <mo>.</mo>
+</math>
+<p>Kairo currently does approximately:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>tangent <span class="op">=</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    abs<span class="op">(</span>normal<span class="op">.</span>y<span class="op">)</span> <span class="op">&lt;</span> <span class="fl">0.999</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        <span class="op">?</span> normalize<span class="op">(</span>cross<span class="op">(</span>Up<span class="op">,</span> normal<span class="op">))</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">:</span> UnitX<span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>bitangent <span class="op">=</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    normalize<span class="op">(</span>cross<span class="op">(</span>normal<span class="op">,</span> tangent<span class="op">));</span></span></code></pre></div>
+<p>Then:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>world <span class="op">=</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    normalize<span class="op">(</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        tangent <span class="op">*</span> x <span class="op">+</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        normal  <span class="op">*</span> y <span class="op">+</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        bitangent <span class="op">*</span> z<span class="op">);</span></span></code></pre></div>
+<p>That is exactly Part 2034.</p>
+<hr />
+<p><strong>Why the helper-axis test exists</strong></p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>≈</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and helper is also:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mo>×</mo>
+  <mi>N</mi>
+  <mo>≈</mo>
+  <mn>0.</mn>
+</math>
+<p>Normalization becomes unstable or undefined.</p>
+<p>So we deliberately choose an axis sufficiently different from the normal.</p>
+<p>This small numerical detail is one of those things that separates “formula works on paper” from “renderer survives every normal.”</p>
+<hr />
+<p><strong>Sampling Lambertian BRDFs</strong></p>
+<p>Lambert BRDF:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mi>ρ</mi>
+    <mi>π</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Cosine PDF:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>n</mi>
+      <mo>⋅</mo>
+      <msub>
+        <mi>ω</mi>
+        <mi>i</mi>
+      </msub>
+    </mrow>
+    <mi>π</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Path throughput update is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <msub>
+        <mi>f</mi>
+        <mi>r</mi>
+      </msub>
+      <mo stretchy="false">(</mo>
+      <mi>n</mi>
+      <mo>⋅</mo>
+      <msub>
+        <mi>ω</mi>
+        <mi>i</mi>
+      </msub>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mi>p</mi>
+      <mo stretchy="false">(</mo>
+      <msub>
+        <mi>ω</mi>
+        <mi>i</mi>
+      </msub>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Substitute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mo stretchy="false">(</mo>
+      <mi>ρ</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mi>π</mi>
+      <mo stretchy="false">)</mo>
+      <mo stretchy="false">(</mo>
+      <mi>n</mi>
+      <mo>⋅</mo>
+      <msub>
+        <mi>ω</mi>
+        <mi>i</mi>
+      </msub>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mo stretchy="false">(</mo>
+      <mi>n</mi>
+      <mo>⋅</mo>
+      <msub>
+        <mi>ω</mi>
+        <mi>i</mi>
+      </msub>
+      <mo stretchy="false">)</mo>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mi>π</mi>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Everything cancels:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>β</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>new</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>β</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>old</mtext>
+            </mrow>
+          </msub>
+          <mi>ρ</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is why a cosine-sampled Lambert bounce can reduce to:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>throughput <span class="op">*=</span> albedo<span class="op">;</span></span></code></pre></div>
+<p>There is no missing <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π</mi>
+</math>.</p>
+<p>The:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>π</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>π</mi>
+</math>
+<p>cancel exactly.</p>
+<p>Current Kairo’s recursive indirect term:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>indirect <span class="op">=</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    albedo <span class="op">*</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    TracePath<span class="op">(</span>nextRay<span class="op">)</span> <span class="op">/</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    survivalProbability<span class="op">;</span></span></code></pre></div>
+<p>implicitly relies on precisely this cancellation.</p>
+<p>That is mathematically legitimate for a cosine-sampled ideal Lambert bounce.</p>
+<hr />
+<p><strong>Importance sampling</strong></p>
+<p>General Monte Carlo variance is determined by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Y</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>f</mi>
+      <mo stretchy="false">(</mo>
+      <mi>X</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mi>p</mi>
+      <mo stretchy="false">(</mo>
+      <mi>X</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>For estimator:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>I</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>N</mi>
+  </mfrac>
+  <mo data-mjx-texclass="OP">∑</mo>
+  <msub>
+    <mi>Y</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Variance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Var</mi>
+  <mo stretchy="false">[</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>I</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>N</mi>
+  </mfrac>
+  <mi>Var</mi>
+  <mo stretchy="false">[</mo>
+  <mi>Y</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Now:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <msup>
+    <mi>Y</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP">∫</mo>
+  <msup>
+    <mrow data-mjx-texclass="INNER">
+      <mo data-mjx-texclass="OPEN">(</mo>
+      <mfrac>
+        <mrow>
+          <mi>f</mi>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+        <mrow>
+          <mi>p</mi>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mfrac>
+      <mo data-mjx-texclass="CLOSE">)</mo>
+    </mrow>
+    <mn>2</mn>
+  </msup>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <msup>
+    <mi>Y</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo data-mjx-texclass="OP">∫</mo>
+          <mfrac>
+            <mrow>
+              <mi>f</mi>
+              <mo stretchy="false">(</mo>
+              <mi>x</mi>
+              <msup>
+                <mo stretchy="false">)</mo>
+                <mn>2</mn>
+              </msup>
+            </mrow>
+            <mrow>
+              <mi>p</mi>
+              <mo stretchy="false">(</mo>
+              <mi>x</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </mfrac>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <mi>d</mi>
+          <mi>x</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>Var</mi>
+          <mo stretchy="false">(</mo>
+          <mi>Y</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mo data-mjx-texclass="OP">∫</mo>
+          <mfrac>
+            <mrow>
+              <mi>f</mi>
+              <mo stretchy="false">(</mo>
+              <mi>x</mi>
+              <msup>
+                <mo stretchy="false">)</mo>
+                <mn>2</mn>
+              </msup>
+            </mrow>
+            <mrow>
+              <mi>p</mi>
+              <mo stretchy="false">(</mo>
+              <mi>x</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </mfrac>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <mi>d</mi>
+          <mi>x</mi>
+          <mo>−</mo>
+          <msup>
+            <mi>I</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This equation explains importance sampling more rigorously than “sample bright things more.”</p>
+<p>If <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math> is large but <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math> is tiny, then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mi>f</mi>
+      <mo stretchy="false">(</mo>
+      <mi>x</mi>
+      <msup>
+        <mo stretchy="false">)</mo>
+        <mn>2</mn>
+      </msup>
+    </mrow>
+    <mrow>
+      <mi>p</mi>
+      <mo stretchy="false">(</mo>
+      <mi>x</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+</math>
+<p>can become enormous.</p>
+<p>That produces variance and potentially fireflies.</p>
+<hr />
+<p><strong>Ideal importance distribution</strong></p>
+<p>For a nonnegative integrand, the zero-variance distribution is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>p</mi>
+            <mo>∗</mo>
+          </msup>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mi>f</mi>
+              <mo stretchy="false">(</mo>
+              <mi>x</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+            <mrow>
+              <mo data-mjx-texclass="OP">∫</mo>
+              <mi>f</mi>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mi>f</mi>
+      <mo stretchy="false">(</mo>
+      <mi>x</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <msup>
+        <mi>p</mi>
+        <mo>∗</mo>
+      </msup>
+      <mo stretchy="false">(</mo>
+      <mi>x</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP">∫</mo>
+  <mi>f</mi>
+  <mo>=</mo>
+  <mi>I</mi>
+  <mo>.</mo>
+</math>
+<p>Every sample gives exactly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>.</mo>
+</math>
+<p>Variance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.</mn>
+</math>
+<p>We cannot normally use this because its normalization contains the integral we are trying to estimate.</p>
+<p>But the principle is fundamental:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>p</mi>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo stretchy="false">)</mo>
+          <mtext> should resemble </mtext>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mi>f</mi>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo stretchy="false">)</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Why cosine sampling reduces Lambert variance</strong></p>
+<p>For constant incoming radiance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mo>.</mo>
+</math>
+<p>Lambert integrand:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>ω</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <mi>ρ</mi>
+    <mi>π</mi>
+  </mfrac>
+  <mi>C</mi>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>ω</mi>
+  <mo stretchy="false">)</mo>
+  <mo>∝</mo>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>.</mo>
+</math>
+<p>Cosine PDF:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mi>ω</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mi>θ</mi>
+    </mrow>
+    <mi>π</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>g</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>p</mi>
+  <mo>=</mo>
+  <mi>ρ</mi>
+  <mi>C</mi>
+</math>
+<p>is constant.</p>
+<p>Zero variance.</p>
+<p>If incoming illumination is not constant, variance remains, but cosine sampling still matches one major factor of the integrand.</p>
+<hr />
+<p><strong>Sampling GGX: what are we actually sampling?</strong></p>
+<p>For Cook–Torrance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>D</mi>
+      <mo stretchy="false">(</mo>
+      <mi>H</mi>
+      <mo stretchy="false">)</mo>
+      <mi>F</mi>
+      <mo stretchy="false">(</mo>
+      <mi>H</mi>
+      <mo stretchy="false">)</mo>
+      <mi>G</mi>
+    </mrow>
+    <mrow>
+      <mn>4</mn>
+      <msub>
+        <mi>N</mi>
+        <mi>L</mi>
+      </msub>
+      <msub>
+        <mi>N</mi>
+        <mi>V</mi>
+      </msub>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>The lobe is strongly influenced by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo stretchy="false">(</mo>
+  <mi>H</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Therefore, rather than choosing incoming direction <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+</math> uniformly, we can sample a <strong>microfacet half-vector</strong> <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>H</mi>
+</math> according to the GGX normal distribution and reflect the outgoing/view vector around it.</p>
+<p>The chain is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ξ</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>ξ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mi>H</mi>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>That introduces a change-of-variables PDF.</p>
+<hr />
+<p><strong>GGX NDF</strong></p>
+<p>For isotropic GGX:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo stretchy="false">(</mo>
+  <mi>H</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <msup>
+      <mi>α</mi>
+      <mn>2</mn>
+    </msup>
+    <mrow>
+      <mi>π</mi>
+      <mo stretchy="false">[</mo>
+      <mo stretchy="false">(</mo>
+      <mi>N</mi>
+      <mo>⋅</mo>
+      <mi>H</mi>
+      <msup>
+        <mo stretchy="false">)</mo>
+        <mn>2</mn>
+      </msup>
+      <mo stretchy="false">(</mo>
+      <msup>
+        <mi>α</mi>
+        <mn>2</mn>
+      </msup>
+      <mo>−</mo>
+      <mn>1</mn>
+      <mo stretchy="false">)</mo>
+      <mo>+</mo>
+      <mn>1</mn>
+      <msup>
+        <mo stretchy="false">]</mo>
+        <mn>2</mn>
+      </msup>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>The projected microfacet normal density is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mi>H</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>H</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mi>D</mi>
+          <mo stretchy="false">(</mo>
+          <mi>H</mi>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">(</mo>
+          <mi>N</mi>
+          <mo>⋅</mo>
+          <mi>H</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Why the cosine?</p>
+<p>Because <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+</math> describes microfacet area per macro projected area, and converting it into a proper directional sampling density includes projected orientation.</p>
+<hr />
+<p><strong>Deriving isotropic GGX half-vector sampling</strong></p>
+<p>One common sampling formulation is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ϕ</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>π</mi>
+  <msub>
+    <mi>ξ</mi>
+    <mn>1</mn>
+  </msub>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>tan</mi>
+    <mn>2</mn>
+  </msup>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>h</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <msup>
+        <mi>α</mi>
+        <mn>2</mn>
+      </msup>
+      <msub>
+        <mi>ξ</mi>
+        <mn>2</mn>
+      </msub>
+    </mrow>
+    <mrow>
+      <mn>1</mn>
+      <mo>−</mo>
+      <msub>
+        <mi>ξ</mi>
+        <mn>2</mn>
+      </msub>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>tan</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>h</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>α</mi>
+  <msqrt>
+    <mfrac>
+      <msub>
+        <mi>ξ</mi>
+        <mn>2</mn>
+      </msub>
+      <mrow>
+        <mn>1</mn>
+        <mo>−</mo>
+        <msub>
+          <mi>ξ</mi>
+          <mn>2</mn>
+        </msub>
+      </mrow>
+    </mfrac>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>From:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>+</mo>
+  <msup>
+    <mi>tan</mi>
+    <mn>2</mn>
+  </msup>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <msup>
+        <mi>cos</mi>
+        <mn>2</mn>
+      </msup>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mi>θ</mi>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+</math>
+<p>we get:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>cos</mi>
+    <mn>2</mn>
+  </msup>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>h</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <mn>1</mn>
+      <mo>+</mo>
+      <msup>
+        <mi>α</mi>
+        <mn>2</mn>
+      </msup>
+      <mfrac>
+        <mi>ξ</mi>
+        <mrow>
+          <mn>1</mn>
+          <mo>−</mo>
+          <mi>ξ</mi>
+        </mrow>
+      </mfrac>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Multiply numerator and denominator by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>ξ</mi>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>cos</mi>
+            <mn>2</mn>
+          </msup>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <msub>
+            <mi>θ</mi>
+            <mi>h</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mn>1</mn>
+              <mo>−</mo>
+              <mi>ξ</mi>
+            </mrow>
+            <mrow>
+              <mn>1</mn>
+              <mo>+</mo>
+              <mo stretchy="false">(</mo>
+              <msup>
+                <mi>α</mi>
+                <mn>2</mn>
+              </msup>
+              <mo>−</mo>
+              <mn>1</mn>
+              <mo stretchy="false">)</mo>
+              <mi>ξ</mi>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Hence:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>cos</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <msub>
+            <mi>θ</mi>
+            <mi>h</mi>
+          </msub>
+          <mo>=</mo>
+          <msqrt>
+            <mfrac>
+              <mrow>
+                <mn>1</mn>
+                <mo>−</mo>
+                <msub>
+                  <mi>ξ</mi>
+                  <mn>2</mn>
+                </msub>
+              </mrow>
+              <mrow>
+                <mn>1</mn>
+                <mo>+</mo>
+                <mo stretchy="false">(</mo>
+                <msup>
+                  <mi>α</mi>
+                  <mn>2</mn>
+                </msup>
+                <mo>−</mo>
+                <mn>1</mn>
+                <mo stretchy="false">)</mo>
+                <msub>
+                  <mi>ξ</mi>
+                  <mn>2</mn>
+                </msub>
+              </mrow>
+            </mfrac>
+          </msqrt>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>h</mi>
+  </msub>
+  <mo>=</mo>
+  <msqrt>
+    <mn>1</mn>
+    <mo>−</mo>
+    <msup>
+      <mi>cos</mi>
+      <mn>2</mn>
+    </msup>
+    <mo data-mjx-texclass="NONE">⁡</mo>
+    <msub>
+      <mi>θ</mi>
+      <mi>h</mi>
+    </msub>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>Local half-vector:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>H</mi>
+    <mi>l</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>h</mi>
+  </msub>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>ϕ</mi>
+  <mo>,</mo>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>h</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>h</mi>
+  </msub>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>ϕ</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Transform it into the surface basis.</p>
+<hr />
+<p><strong>Half-vector to sampled light direction</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+</math>
+<p>points away from the surface toward the camera.</p>
+<p>A microfacet normal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+</math>
+<p>reflects <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mi>V</mi>
+</math> into incoming-light direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>L</mi>
+          <mo>=</mo>
+          <mi>reflect</mi>
+          <mo stretchy="false">(</mo>
+          <mo>−</mo>
+          <mi>V</mi>
+          <mo>,</mo>
+          <mi>H</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then reject if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>L</mi>
+  <mo>≤</mo>
+  <mn>0.</mn>
+</math>
+<p>But this transformation changes probability density.</p>
+<p>The reflection Jacobian gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mi>L</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>L</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>p</mi>
+                <mi>H</mi>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>H</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+            <mrow>
+              <mn>4</mn>
+              <mrow data-mjx-texclass="ORD">
+                <mo stretchy="false">|</mo>
+              </mrow>
+              <mi>V</mi>
+              <mo>⋅</mo>
+              <mi>H</mi>
+              <mo stretchy="false">|</mo>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Thus if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>H</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>D</mi>
+  <mo stretchy="false">(</mo>
+  <mi>H</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>H</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mi>L</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mi>D</mi>
+              <mo stretchy="false">(</mo>
+              <mi>H</mi>
+              <mo stretchy="false">)</mo>
+              <mo stretchy="false">(</mo>
+              <mi>N</mi>
+              <mo>⋅</mo>
+              <mi>H</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+            <mrow>
+              <mn>4</mn>
+              <mrow data-mjx-texclass="ORD">
+                <mo stretchy="false">|</mo>
+              </mrow>
+              <mi>V</mi>
+              <mo>⋅</mo>
+              <mi>H</mi>
+              <mo stretchy="false">|</mo>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For a GGX importance-sampled BRDF estimator, this PDF—not merely <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+</math>—belongs in the denominator.</p>
+<hr />
+<p><strong>Why ordinary NDF sampling wastes samples</strong></p>
+<p>Suppose view direction is highly grazing.</p>
+<p>You sample a microfacet normal <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>H</mi>
+</math> according to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo stretchy="false">(</mo>
+  <mi>H</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>H</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Some sampled microfacets are geometrically invisible from <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>V</mi>
+</math>.</p>
+<p>Others reflect <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mi>V</mi>
+</math> below the macroscopic surface:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <mi>L</mi>
+  <mo>&lt;</mo>
+  <mn>0.</mn>
+</math>
+<p>Those samples contribute zero.</p>
+<p>At grazing angles this waste can become significant.</p>
+<p>Ordinary NDF sampling samples <strong>all microfacets</strong>.</p>
+<p>But the camera only sees a subset.</p>
+<p>This motivates visible-normal sampling.</p>
+<hr />
+<p><strong>Visible Normal Distribution Function</strong></p>
+<p>The GGX visible-normal distribution conditions the microfacet distribution on visibility from the outgoing direction.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>VNDF</mtext>
+            </mrow>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>H</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo stretchy="false">|</mo>
+          </mrow>
+          <mi>V</mi>
+          <mo stretchy="false">)</mo>
+          <mo>∝</mo>
+          <mi>D</mi>
+          <mo stretchy="false">(</mo>
+          <mi>H</mi>
+          <mo stretchy="false">)</mo>
+          <msub>
+            <mi>G</mi>
+            <mn>1</mn>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>V</mi>
+          <mo>,</mo>
+          <mi>H</mi>
+          <mo stretchy="false">)</mo>
+          <mfrac>
+            <mrow>
+              <mi>V</mi>
+              <mo>⋅</mo>
+              <mi>H</mi>
+            </mrow>
+            <mrow>
+              <mi>N</mi>
+              <mo>⋅</mo>
+              <mi>V</mi>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The exact normalized form for visible microfacet normals can be expressed approximately as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>D</mi>
+            <mi>V</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>H</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>G</mi>
+                <mn>1</mn>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>V</mi>
+              <mo stretchy="false">)</mo>
+              <mo stretchy="false">(</mo>
+              <mi>V</mi>
+              <mo>⋅</mo>
+              <mi>H</mi>
+              <mo stretchy="false">)</mo>
+              <mi>D</mi>
+              <mo stretchy="false">(</mo>
+              <mi>H</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+            <mrow>
+              <mi>N</mi>
+              <mo>⋅</mo>
+              <mi>V</mi>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for valid visible normals.</p>
+<p>This automatically suppresses microfacets the viewer cannot see.</p>
+<p>The result is much lower wasted-sample rate, particularly for:</p>
+<ul>
+<li>rough surfaces,</li>
+<li>grazing views,</li>
+<li>GGX’s long tails.</li>
+</ul>
+<p>This is why modern production GGX samplers generally prefer VNDF sampling over blindly sampling the bare NDF.</p>
+<hr />
+<p><strong>Heitz-style GGX VNDF idea</strong></p>
+<p>The classic practical strategy can be understood geometrically.</p>
+<p>First stretch the view vector by roughness:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>V</mi>
+    <mi>h</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>normalize</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>x</mi>
+  </msub>
+  <msub>
+    <mi>V</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>y</mi>
+  </msub>
+  <msub>
+    <mi>V</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>V</mi>
+    <mi>z</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then construct a basis around the stretched view.</p>
+<p>Then sample a projected disk corresponding to visible slopes.</p>
+<p>Then warp the disk sample according to the visible projected hemisphere.</p>
+<p>Then reconstruct the normal in stretched space.</p>
+<p>Finally unstretch:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mo>=</mo>
+  <mi>normalize</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>x</mi>
+  </msub>
+  <msub>
+    <mi>H</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>y</mi>
+  </msub>
+  <msub>
+    <mi>H</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>,</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <msub>
+    <mi>H</mi>
+    <mi>z</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>The details are subtler than ordinary inverse-CDF GGX sampling because the distribution is view-dependent.</p>
+<p>The important conceptual distinction is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>NDF sampling: sample surface normals that exist</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>versus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>VNDF sampling: sample surface normals that exist and are visible from </mtext>
+          <mi>V</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Importance sampling cannot optimize every term simultaneously</strong></p>
+<p>The full integrand is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>o</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>BRDF importance sampling approximates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>.</mo>
+</math>
+<p>It knows nothing about:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Light importance sampling approximates bright incoming radiance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>It knows less about the BRDF.</p>
+<p>Suppose a tiny bright area light illuminates a diffuse wall.</p>
+<p>BRDF sampling may never randomly hit the tiny light.</p>
+<p>Suppose instead a highly glossy surface sees a huge environment.</p>
+<p>Uniformly/light-sampling the environment may frequently choose directions outside the narrow specular lobe.</p>
+<p>Neither strategy is universally best.</p>
+<p>That is why we need <strong>multiple importance sampling</strong>.</p>
+<hr />
+<p><strong>MIS motivation</strong></p>
+<p>Suppose we have two estimators for the same integral.</p>
+<p>Technique A:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>A</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>is good in one region.</p>
+<p>Technique B:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>B</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>is good somewhere else.</p>
+<p>Rather than choose only one technique, sample from both and weight each contribution.</p>
+<p>The weights must satisfy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>w</mi>
+            <mi>A</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo stretchy="false">)</mo>
+          <mo>+</mo>
+          <msub>
+            <mi>w</mi>
+            <mi>B</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mn>1</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where both techniques can generate the same contribution.</p>
+<p>Then the combined estimator remains correct if designed properly.</p>
+<hr />
+<p><strong>Balance heuristic</strong></p>
+<p>For technique <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> using <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>n</mi>
+    <mi>i</mi>
+  </msub>
+</math> samples and PDF <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math>, the balance weight is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>w</mi>
+            <mi>i</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>n</mi>
+                <mi>i</mi>
+              </msub>
+              <msub>
+                <mi>p</mi>
+                <mi>i</mi>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>x</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+            <mrow>
+              <munder>
+                <mo data-mjx-texclass="OP">∑</mo>
+                <mi>j</mi>
+              </munder>
+              <msub>
+                <mi>n</mi>
+                <mi>j</mi>
+              </msub>
+              <msub>
+                <mi>p</mi>
+                <mi>j</mi>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <mi>x</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For one sample from light sampling and one from BRDF sampling:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>n</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>w</mi>
+            <mi>L</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <msub>
+              <mi>p</mi>
+              <mi>L</mi>
+            </msub>
+            <mrow>
+              <msub>
+                <mi>p</mi>
+                <mi>L</mi>
+              </msub>
+              <mo>+</mo>
+              <msub>
+                <mi>p</mi>
+                <mi>B</mi>
+              </msub>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>w</mi>
+            <mi>B</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <msub>
+              <mi>p</mi>
+              <mi>B</mi>
+            </msub>
+            <mrow>
+              <msub>
+                <mi>p</mi>
+                <mi>L</mi>
+              </msub>
+              <mo>+</mo>
+              <msub>
+                <mi>p</mi>
+                <mi>B</mi>
+              </msub>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Notice:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>w</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<hr />
+<p><strong>Power heuristic</strong></p>
+<p>A commonly used MIS weighting is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>w</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>n</mi>
+                <mi>i</mi>
+              </msub>
+              <msub>
+                <mi>p</mi>
+                <mi>i</mi>
+              </msub>
+              <msup>
+                <mo stretchy="false">)</mo>
+                <mi>β</mi>
+              </msup>
+            </mrow>
+            <mrow>
+              <munder>
+                <mo data-mjx-texclass="OP">∑</mo>
+                <mi>j</mi>
+              </munder>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>n</mi>
+                <mi>j</mi>
+              </msub>
+              <msub>
+                <mi>p</mi>
+                <mi>j</mi>
+              </msub>
+              <msup>
+                <mo stretchy="false">)</mo>
+                <mi>β</mi>
+              </msup>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Usually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>β</mi>
+  <mo>=</mo>
+  <mn>2.</mn>
+</math>
+<p>For one sample from each:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>w</mi>
+            <mi>L</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <msubsup>
+              <mi>p</mi>
+              <mi>L</mi>
+              <mn>2</mn>
+            </msubsup>
+            <mrow>
+              <msubsup>
+                <mi>p</mi>
+                <mi>L</mi>
+                <mn>2</mn>
+              </msubsup>
+              <mo>+</mo>
+              <msubsup>
+                <mi>p</mi>
+                <mi>B</mi>
+                <mn>2</mn>
+              </msubsup>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Kairo’s current helper is exactly:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dt">float</span> PowerHeuristic<span class="op">(</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> pdfA<span class="op">,</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> pdfB<span class="op">)</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> a2 <span class="op">=</span> pdfA <span class="op">*</span> pdfA<span class="op">;</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> <span class="dt">float</span> b2 <span class="op">=</span> pdfB <span class="op">*</span> pdfB<span class="op">;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>        a2 <span class="op">/</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        max<span class="op">(</span>a2 <span class="op">+</span> b2<span class="op">,</span> epsilon<span class="op">);</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>That is the canonical two-technique, one-sample-each power heuristic.</p>
+<hr />
+<p><strong>Why power heuristic often works better than balance</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>100</mn>
+  <msub>
+    <mi>p</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Balance heuristic gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>100</mn>
+    <mn>101</mn>
+  </mfrac>
+  <mo>≈</mo>
+  <mn>0.9901</mn>
+  <mo>.</mo>
+</math>
+<p>Power heuristic:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>10000</mn>
+    <mn>10001</mn>
+  </mfrac>
+  <mo>≈</mo>
+  <mn>0.9999</mn>
+  <mo>.</mo>
+</math>
+<p>The power heuristic more aggressively favors the sampling technique that considers the sample likely.</p>
+<p>This suppresses high-variance contributions from techniques that accidentally stumble into regions they sample poorly.</p>
+<hr />
+<p><strong>MIS does not mean “multiply a sample by a heuristic”</strong></p>
+<p>MIS requires that multiple techniques are genuinely capable of sampling the same contribution and that each PDF is evaluated in the same measure.</p>
+<p>A correct two-technique direct-light estimator is schematically:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>L</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <munder>
+    <mrow data-mjx-texclass="OP">
+      <munder>
+        <mrow>
+          <mfrac>
+            <mrow>
+              <mi>f</mi>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>x</mi>
+                <mi>L</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+            </mrow>
+            <mrow>
+              <msub>
+                <mi>p</mi>
+                <mi>L</mi>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>x</mi>
+                <mi>L</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </mfrac>
+          <msub>
+            <mi>w</mi>
+            <mi>L</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>x</mi>
+            <mi>L</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+        <mo>⏟</mo>
+      </munder>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>light-sampled</mtext>
+    </mrow>
+  </munder>
+  <mo>+</mo>
+  <munder>
+    <mrow data-mjx-texclass="OP">
+      <munder>
+        <mrow>
+          <mfrac>
+            <mrow>
+              <mi>f</mi>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>x</mi>
+                <mi>B</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+            </mrow>
+            <mrow>
+              <msub>
+                <mi>p</mi>
+                <mi>B</mi>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>x</mi>
+                <mi>B</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </mfrac>
+          <msub>
+            <mi>w</mi>
+            <mi>B</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>x</mi>
+            <mi>B</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+        <mo>⏟</mo>
+      </munder>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>BSDF-sampled</mtext>
+    </mrow>
+  </munder>
+  <mo>.</mo>
+</math>
+<p>Both techniques must exist.</p>
+<p>Simply calculating:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msubsup>
+      <mi>p</mi>
+      <mi>L</mi>
+      <mn>2</mn>
+    </msubsup>
+    <mrow>
+      <msubsup>
+        <mi>p</mi>
+        <mi>L</mi>
+        <mn>2</mn>
+      </msubsup>
+      <mo>+</mo>
+      <msubsup>
+        <mi>p</mi>
+        <mi>B</mi>
+        <mn>2</mn>
+      </msubsup>
+    </mrow>
+  </mfrac>
+</math>
+<p>and multiplying only the light-sampled estimator by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>w</mi>
+    <mi>L</mi>
+  </msub>
+</math> while never evaluating the corresponding BSDF estimator generally reduces expected energy.</p>
+<p>That is bias.</p>
+<hr />
+<p><strong>Important current-Kairo observation</strong></p>
+<p>Current <code>DirectLambert()</code> computes an area-light sample and evaluates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msup>
+      <mi>r</mi>
+      <mn>2</mn>
+    </msup>
+    <mrow>
+      <mi>A</mi>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <msub>
+        <mi>θ</mi>
+        <mi>L</mi>
+      </msub>
+    </mrow>
+  </mfrac>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>B</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <msub>
+        <mi>θ</mi>
+        <mi>x</mi>
+      </msub>
+    </mrow>
+    <mi>π</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mo>=</mo>
+  <mfrac>
+    <msubsup>
+      <mi>p</mi>
+      <mi>L</mi>
+      <mn>2</mn>
+    </msubsup>
+    <mrow>
+      <msubsup>
+        <mi>p</mi>
+        <mi>L</mi>
+        <mn>2</mn>
+      </msubsup>
+      <mo>+</mo>
+      <msubsup>
+        <mi>p</mi>
+        <mi>B</mi>
+        <mn>2</mn>
+      </msubsup>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>That is the correct shape for an MIS power weight.</p>
+<p>However, the current path integrator does not have a matching direct-light BSDF-sampling MIS branch at that point.</p>
+<p>Its ordinary bounce can eventually hit emissive geometry, but the current <code>AreaLight</code> is a separate light object rather than necessarily a sampled emissive primitive, and no symmetric MIS weight is applied when an indirect ray reaches emission.</p>
+<p>Therefore the current area-light weighting is best understood as an <strong>incomplete MIS scaffold</strong>, not a full unbiased two-technique MIS estimator.</p>
+<p>This is a concrete mathematical upgrade target.</p>
+<hr />
+<p><strong>Light sampling versus BRDF sampling</strong></p>
+<p>Consider a small area light visible from a diffuse surface.</p>
+<p>The solid angle subtended by the light may be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>4</mn>
+    </mrow>
+  </msup>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mtext>sr</mtext>
+  <mo>.</mo>
+</math>
+<p>Hemisphere:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mi>π</mi>
+  <mo>≈</mo>
+  <mn>6.28</mn>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mtext>sr</mtext>
+  <mo>.</mo>
+</math>
+<p>Probability that a random uniform hemisphere direction lands on the light is approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <msup>
+      <mn>10</mn>
+      <mrow data-mjx-texclass="ORD">
+        <mo>−</mo>
+        <mn>4</mn>
+      </mrow>
+    </msup>
+    <mn>6.28</mn>
+  </mfrac>
+  <mo>≈</mo>
+  <mn>1.6</mn>
+  <mo>×</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>5</mn>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>You could wait tens of thousands of samples for one useful light hit.</p>
+<p>Directly sampling the light guarantees the sample lands on it.</p>
+<p>That is why next-event estimation is so powerful.</p>
+<hr />
+<p><strong>The opposite case: sharp glossy BRDF</strong></p>
+<p>Suppose a roughness:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>0.03</mn>
+  <mo>.</mo>
+</math>
+<p>The GGX lobe is extremely narrow.</p>
+<p>An enormous area light occupies much of the hemisphere.</p>
+<p>Uniformly sampling the light can produce many directions for which:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>≈</mo>
+  <mn>0.</mn>
+</math>
+<p>A GGX/VNDF BRDF sample naturally points near the reflection direction.</p>
+<p>Thus BRDF sampling wins.</p>
+<p>MIS adapts between the two.</p>
+<hr />
+<p><strong>Path throughput</strong></p>
+<p>A path is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mo>…</mo>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mtext>camera</mtext>
+  <mo>.</mo>
+</math>
+<p>At each bounce the scattering estimator contributes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <msub>
+        <mi>f</mi>
+        <mi>r</mi>
+      </msub>
+      <mrow data-mjx-texclass="ORD">
+        <mo stretchy="false">|</mo>
+      </mrow>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mi>θ</mi>
+      <mo stretchy="false">|</mo>
+    </mrow>
+    <mi>p</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Define path throughput:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>β</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>=</mo>
+          <mn>1.</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>After bounce <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>β</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>k</mi>
+              <mo>+</mo>
+              <mn>1</mn>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>β</mi>
+            <mi>k</mi>
+          </msub>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>f</mi>
+                <mi>k</mi>
+              </msub>
+              <mrow data-mjx-texclass="ORD">
+                <mo stretchy="false">|</mo>
+              </mrow>
+              <mi>cos</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <msub>
+                <mi>θ</mi>
+                <mi>k</mi>
+              </msub>
+              <mo stretchy="false">|</mo>
+            </mrow>
+            <msub>
+              <mi>p</mi>
+              <mi>k</mi>
+            </msub>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>β</mi>
+            <mi>n</mi>
+          </msub>
+          <mo>=</mo>
+          <munderover>
+            <mo data-mjx-texclass="OP">∏</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>k</mi>
+              <mo>=</mo>
+              <mn>1</mn>
+            </mrow>
+            <mrow data-mjx-texclass="ORD">
+              <mi>n</mi>
+            </mrow>
+          </munderover>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>f</mi>
+                <mi>k</mi>
+              </msub>
+              <mrow data-mjx-texclass="ORD">
+                <mo stretchy="false">|</mo>
+              </mrow>
+              <mi>cos</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <msub>
+                <mi>θ</mi>
+                <mi>k</mi>
+              </msub>
+              <mo stretchy="false">|</mo>
+            </mrow>
+            <msub>
+              <mi>p</mi>
+              <mi>k</mi>
+            </msub>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>It means:</p>
+<blockquote>
+<p>How much weight does radiance encountered later in this path have when transported back toward the camera?</p>
+</blockquote>
+<hr />
+<p><strong>Why throughput is multiplicative</strong></p>
+<p>Suppose first surface reflects:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>50</mn>
+  <mi mathvariant="normal">%</mi>
+</math>
+<p>of relevant energy.</p>
+<p>Second reflects:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>20</mn>
+  <mi mathvariant="normal">%</mi>
+  <mo>.</mo>
+</math>
+<p>Then only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.5</mn>
+  <mo>×</mo>
+  <mn>0.2</mn>
+  <mo>=</mo>
+  <mn>0.1</mn>
+</math>
+<p>remains.</p>
+<p>Path transport is sequential attenuation/scattering.</p>
+<p>Thus multiplicative accumulation is natural.</p>
+<p>A path tracer often has:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>Color radiance <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>Color beta     <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span></code></pre></div>
+<p>where <code>radiance</code> accumulates arrived/emitted/direct energy, while <code>beta</code> carries future path weight.</p>
+<p>These are conceptually different variables.</p>
+<hr />
+<p><strong>The iterative path-tracing loop</strong></p>
+<p>A clean diffuse/glossy path tracer is usually easier to reason about iteratively than recursively:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>Color TracePath<span class="op">(</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    Ray ray<span class="op">,</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    RNG<span class="op">&amp;</span> rng<span class="op">)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    Color L <span class="op">=</span> Color<span class="op">::</span>Black<span class="op">();</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Throughput from camera to current vertex.</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    Color beta <span class="op">=</span> Color<span class="op">::</span>White<span class="op">();</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> previousWasDelta <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">uint32_t</span> bounce <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>         bounce <span class="op">&lt;</span> MaxDepth<span class="op">;</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>         <span class="op">++</span>bounce<span class="op">)</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="kw">auto</span> hit <span class="op">=</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>            scene<span class="op">.</span>Intersect<span class="op">(</span>ray<span class="op">);</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>hit<span class="op">)</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Environment radiance reaching this path.</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>            L <span class="op">+=</span> beta <span class="op">*</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>                 scene<span class="op">.</span>Environment<span class="op">(</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>                     ray<span class="op">.</span>Direction<span class="op">);</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> Material<span class="op">&amp;</span> material <span class="op">=</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>            scene<span class="op">.</span>Material<span class="op">(</span></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>                hit<span class="op">-&gt;</span>MaterialID<span class="op">);</span></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Surface emission.</span></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>        L <span class="op">+=</span> beta <span class="op">*</span></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>             material<span class="op">.</span>Emission<span class="op">;</span></span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Direct-light next-event estimation would happen here.</span></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>        BSDFSample s <span class="op">=</span></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>            SampleBSDF<span class="op">(</span></span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>                material<span class="op">,</span></span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>                <span class="op">*</span>hit<span class="op">,</span></span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>                <span class="op">-</span>ray<span class="op">.</span>Direction<span class="op">,</span></span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>                rng<span class="op">);</span></span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>s<span class="op">.</span>Valid <span class="op">||</span></span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>            s<span class="op">.</span>Pdf <span class="op">&lt;=</span> <span class="fl">0.0</span><span class="bu">f</span><span class="op">)</span></span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>        <span class="op">{</span></span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="dt">float</span> cosine <span class="op">=</span></span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a>            <span class="bu">std::</span>abs<span class="op">(</span></span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a>                Dot<span class="op">(</span></span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a>                    hit<span class="op">-&gt;</span>ShadingNormal<span class="op">,</span></span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a>                    s<span class="op">.</span>Wi<span class="op">));</span></span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a>        beta <span class="op">*=</span></span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>            s<span class="op">.</span>F <span class="op">*</span></span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>            <span class="op">(</span>cosine <span class="op">/</span> s<span class="op">.</span>Pdf<span class="op">);</span></span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a>        ray <span class="op">=</span></span>
+<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a>            SpawnRay<span class="op">(</span></span>
+<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a>                <span class="op">*</span>hit<span class="op">,</span></span>
+<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a>                s<span class="op">.</span>Wi<span class="op">);</span></span>
+<span id="cb10-65"><a href="#cb10-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-66"><a href="#cb10-66" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Russian roulette after a few bounces...</span></span>
+<span id="cb10-67"><a href="#cb10-67" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb10-68"><a href="#cb10-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-69"><a href="#cb10-69" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> L<span class="op">;</span></span>
+<span id="cb10-70"><a href="#cb10-70" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>That is the skeleton behind essentially every conventional unidirectional path tracer.</p>
+<hr />
+<p><strong>Adding emitted radiance along a path</strong></p>
+<p>Suppose the path reaches an emitter at bounce <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>.</p>
+<p>Its emitted radiance is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>e</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Camera contribution is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="normal">Δ</mi>
+          <mi>L</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>β</mi>
+            <mi>k</mi>
+          </msub>
+          <msub>
+            <mi>L</mi>
+            <mi>e</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Why multiply by throughput?</p>
+<p>Because the emitter’s radiance has already passed through all preceding BRDF interactions.</p>
+<p>For example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo stretchy="false">→</mo>
+  <mtext>red wall</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>light</mtext>
+  <mo>.</mo>
+</math>
+<p>The light is white.</p>
+<p>But the path is filtered by the red wall’s reflectance.</p>
+<p>So camera receives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>β</mi>
+  <msub>
+    <mi>L</mi>
+    <mi>e</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Emission double-counting with NEE</strong></p>
+<p>Once next-event estimation is introduced, a path can discover an emitter in two ways.</p>
+<p>First:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>explicit light sample from current vertex</mtext>
+  <mo>.</mo>
+</math>
+<p>Second:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>BSDF sample that happens to hit that same light</mtext>
+  <mo>.</mo>
+</math>
+<p>If we fully add both without MIS, we double count that transport path.</p>
+<p>A robust MIS path tracer therefore tracks enough context to weight emissive hits appropriately.</p>
+<p>Common logic is approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>primary/emitter hit after delta event</mtext>
+  <mo stretchy="false">⇒</mo>
+  <mtext>full emission</mtext>
+  <mo>,</mo>
+</math>
+<p>while a non-delta BSDF hit on a light gets an MIS weight against the corresponding light-sampling PDF.</p>
+<p>This detail becomes critical once you stop using purely diffuse educational transport.</p>
+<hr />
+<p><strong>Throughput update <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>p</mi>
+</math></strong></p>
+<p>The update:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>β</mi>
+          <mo stretchy="false">←</mo>
+          <mi>β</mi>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>f</mi>
+                <mi>r</mi>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>ω</mi>
+                <mi>i</mi>
+              </msub>
+              <mo>,</mo>
+              <msub>
+                <mi>ω</mi>
+                <mi>o</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+              <mrow data-mjx-texclass="ORD">
+                <mo stretchy="false">|</mo>
+              </mrow>
+              <mi>cos</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <msub>
+                <mi>θ</mi>
+                <mi>i</mi>
+              </msub>
+              <mo stretchy="false">|</mo>
+            </mrow>
+            <mrow>
+              <mi>p</mi>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>ω</mi>
+                <mi>i</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>is not a heuristic.</p>
+<p>It is the Monte Carlo estimator.</p>
+<p>If this factor is wrong, the renderer is mathematically solving a different integral.</p>
+<p>Each piece comes from somewhere specific:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+</math>
+<p>is material scattering,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">|</mo>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo stretchy="false">|</mo>
+</math>
+<p>is projected area,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+</math>
+<p>corrects for how frequently the sample was chosen.</p>
+<hr />
+<p><strong>Lambert cancellation in throughput</strong></p>
+<p>Again, for Lambert:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mi>ρ</mi>
+    <mi>π</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Cosine sampling:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mi>θ</mi>
+    </mrow>
+    <mi>π</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mi>f</mi>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mi>θ</mi>
+    </mrow>
+    <mi>p</mi>
+  </mfrac>
+  <mo>=</mo>
+  <mi>ρ</mi>
+  <mo>.</mo>
+</math>
+<p>This is why current Kairo’s diffuse bounce code can use:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>indirect <span class="op">=</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    albedo <span class="op">*</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    TracePath<span class="op">(</span>nextRay<span class="op">);</span></span></code></pre></div>
+<p>before Russian-roulette compensation.</p>
+<p>The simplification is specific to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Lambert BRDF + cosine-weighted PDF</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Do not carry that shortcut into GGX unless you derive a corresponding cancellation.</p>
+<hr />
+<p><strong>Maximum bounce depth</strong></p>
+<p>A practical path tracer often has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>d</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Stopping deterministically at a fixed depth causes bias because paths that should continue are discarded.</p>
+<p>However, a maximum depth still serves useful purposes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>bug containment</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>bounded runtime</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>stack/resource safety</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>debug reproducibility</mtext>
+  <mo>.</mo>
+</math>
+<p>Production renderers may set it high and rely primarily on Russian roulette for normal termination.</p>
+<hr />
+<p><strong>Russian roulette path termination</strong></p>
+<p>Suppose throughput has become:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>β</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.03</mn>
+  <mo>,</mo>
+  <mn>0.02</mn>
+  <mo>,</mo>
+  <mn>0.01</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Most future contributions are likely small.</p>
+<p>Continuing every path wastes computation.</p>
+<p>Russian roulette probabilistically terminates a path.</p>
+<p>Let survival probability be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Draw:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ξ</mi>
+  <mo>∼</mo>
+  <mi>U</mi>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ξ</mi>
+  <mo>&gt;</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>terminate.</p>
+<p>If path survives, compensate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>β</mi>
+          <mo stretchy="false">←</mo>
+          <mfrac>
+            <mi>β</mi>
+            <msub>
+              <mi>p</mi>
+              <mi>s</mi>
+            </msub>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Why Russian roulette remains unbiased</strong></p>
+<p>Suppose continuation contribution without roulette would be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>.</mo>
+</math>
+<p>With roulette:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>X</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">{</mo>
+    <mtable columnalign="left left" columnspacing="1em" rowspacing=".2em">
+      <mtr>
+        <mtd>
+          <mi>C</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <msub>
+            <mi>p</mi>
+            <mi>s</mi>
+          </msub>
+          <mo>,</mo>
+        </mtd>
+        <mtd>
+          <mtext>with probability </mtext>
+          <msub>
+            <mi>p</mi>
+            <mi>s</mi>
+          </msub>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+          <mo>,</mo>
+        </mtd>
+        <mtd>
+          <mtext>with probability </mtext>
+          <mn>1</mn>
+          <mo>−</mo>
+          <msub>
+            <mi>p</mi>
+            <mi>s</mi>
+          </msub>
+          <mo>.</mo>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE" fence="true" stretchy="true" symmetric="true"></mo>
+  </mrow>
+</math>
+<p>Expected value:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <mi>X</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mfrac>
+    <mi>C</mi>
+    <msub>
+      <mi>p</mi>
+      <mi>s</mi>
+    </msub>
+  </mfrac>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mn>0</mn>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <mi>C</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>E</mi>
+          <mo stretchy="false">[</mo>
+          <mi>X</mi>
+          <mo stretchy="false">]</mo>
+          <mo>=</mo>
+          <mi>C</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>No bias.</p>
+<p>Variance increases somewhat, but expected computation decreases.</p>
+<p>This is the classic variance-versus-cost tradeoff.</p>
+<hr />
+<p><strong>Choosing survival probability</strong></p>
+<p>A common choice is based on maximum throughput component:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>clamp</mi>
+  <mo stretchy="false">(</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>β</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>β</mi>
+    <mi>g</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>β</mi>
+    <mi>b</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Why maximum channel?</p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>β</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.9</mn>
+  <mo>,</mo>
+  <mn>0.01</mn>
+  <mo>,</mo>
+  <mn>0.01</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Average throughput is only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.3067</mn>
+  <mo>.</mo>
+</math>
+<p>Terminating based on average could prematurely kill an important red path.</p>
+<p>Maximum component better respects the strongest remaining spectral channel.</p>
+<p>Typical upper clamp:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.95</mn>
+</math>
+<p>ensures even bright paths eventually terminate.</p>
+<hr />
+<p><strong>Current Kairo Russian roulette</strong></p>
+<p>Kairo currently computes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>r</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>albedo</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>g</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>albedo</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>b</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>albedo</mtext>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <mn>0.15</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>then clamps:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>≤</mo>
+  <mn>0.95</mn>
+  <mo>.</mo>
+</math>
+<p>Roulette begins at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>depth</mtext>
+  <mo>≥</mo>
+  <mn>2.</mn>
+</math>
+<p>On survival, indirect radiance is divided by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>The compensation is correct in principle.</p>
+<p>The limitation is that it uses the <strong>current surface albedo</strong>, not accumulated path throughput.</p>
+<p>Once materials become glossy, metallic, transmissive or importance-sampled in more complex ways, survival probability should usually derive from actual:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>β</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Why Russian roulette should not begin immediately</strong></p>
+<p>At bounce 0 or 1, throughput is often still significant.</p>
+<p>Terminating very short paths increases noise badly.</p>
+<p>Also direct/first-bounce transport is perceptually dominant.</p>
+<p>Therefore common policy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>never roulette first few bounces</mtext>
+  <mo>.</mo>
+</math>
+<p>Then enable it after:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>5</mn>
+</math>
+<p>or another chosen depth.</p>
+<p>Current Kairo starts at depth 2.</p>
+<p>That is a sensible educational default.</p>
+<hr />
+<p>Suppose current path hits diffuse surface <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>.</p>
+<p>A pure BSDF path tracer chooses a random outgoing bounce direction.</p>
+<p>Eventually it may hit a light.</p>
+<p>If lights are small, this is inefficient.</p>
+<p>Next-event estimation explicitly asks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Can I connect this surface directly to a sampled light point right now?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>At each non-delta surface:</p>
+<ol type="1">
+<li>select a light;</li>
+<li>sample a point/direction on that light;</li>
+<li>test shadow visibility;</li>
+<li>evaluate BRDF;</li>
+<li>divide by light PDF;</li>
+<li>optionally MIS-weight against BSDF sampling.</li>
+</ol>
+<p>That direct connection is a one-segment path extension toward an emitter.</p>
+<hr />
+<p><strong>Direct-light estimator</strong></p>
+<p>Suppose light-sampled direction is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Directional light PDF:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>L</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mrow data-mjx-texclass="ORD">
+              <mover>
+                <mi>L</mi>
+                <mo stretchy="false">^</mo>
+              </mover>
+            </mrow>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>direct</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>L</mi>
+                <mi>i</mi>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>ω</mi>
+                <mi>i</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+              <msub>
+                <mi>f</mi>
+                <mi>r</mi>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>ω</mi>
+                <mi>i</mi>
+              </msub>
+              <mo>,</mo>
+              <msub>
+                <mi>ω</mi>
+                <mi>o</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+              <mrow data-mjx-texclass="ORD">
+                <mo stretchy="false">|</mo>
+              </mrow>
+              <msub>
+                <mi>n</mi>
+                <mi>x</mi>
+              </msub>
+              <mo>⋅</mo>
+              <msub>
+                <mi>ω</mi>
+                <mi>i</mi>
+              </msub>
+              <mrow data-mjx-texclass="ORD">
+                <mo stretchy="false">|</mo>
+              </mrow>
+              <mi>V</mi>
+              <mo stretchy="false">(</mo>
+              <mi>x</mi>
+              <mo>,</mo>
+              <msub>
+                <mi>ω</mi>
+                <mi>i</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+            </mrow>
+            <mrow>
+              <msub>
+                <mi>p</mi>
+                <mi>L</mi>
+              </msub>
+              <mo stretchy="false">(</mo>
+              <msub>
+                <mi>ω</mi>
+                <mi>i</mi>
+              </msub>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>With MIS:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mrow data-mjx-texclass="ORD">
+              <mover>
+                <mi>L</mi>
+                <mo stretchy="false">^</mo>
+              </mover>
+            </mrow>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>direct</mtext>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>w</mi>
+            <mi>L</mi>
+          </msub>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>L</mi>
+                <mi>i</mi>
+              </msub>
+              <msub>
+                <mi>f</mi>
+                <mi>r</mi>
+              </msub>
+              <mi>cos</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <msub>
+                <mi>θ</mi>
+                <mi>x</mi>
+              </msub>
+              <mi>V</mi>
+            </mrow>
+            <msub>
+              <mi>p</mi>
+              <mi>L</mi>
+            </msub>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is the mathematically complete expression.</p>
+<hr />
+<p><strong>Area-light sampling</strong></p>
+<p>Consider rectangular area light parameterized by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mi>L</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>P</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>+</mo>
+  <mi>u</mi>
+  <mi>U</mi>
+  <mo>+</mo>
+  <mi>v</mi>
+  <mi>V</mi>
+  <mo>.</mo>
+</math>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Light area is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>A</mi>
+          <mo>=</mo>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <mi>U</mi>
+          <mo>×</mo>
+          <mi>V</mi>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Sampling uniformly on area means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>A</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>A</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>That PDF has units:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="normal">m</mi>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>2</mn>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>But our rendering equation integrates over <strong>solid angle</strong> at the shading point.</p>
+<p>So we must transform measures.</p>
+<hr />
+<p><strong>Area-to-solid-angle differential relationship</strong></p>
+<p>Let surface point be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>Sampled light point:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<p>Distance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>y</mi>
+  <mo>−</mo>
+  <mi>x</mi>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo>.</mo>
+</math>
+<p>Direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ω</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>y</mi>
+      <mo>−</mo>
+      <mi>x</mi>
+    </mrow>
+    <mi>r</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Emitter normal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>n</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>A small light patch:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <msub>
+    <mi>A</mi>
+    <mi>y</mi>
+  </msub>
+</math>
+<p>subtends solid angle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mi>ω</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mo stretchy="false">|</mo>
+              <msub>
+                <mi>n</mi>
+                <mi>y</mi>
+              </msub>
+              <mo>⋅</mo>
+              <mo stretchy="false">(</mo>
+              <mo>−</mo>
+              <mi>ω</mi>
+              <mo stretchy="false">)</mo>
+              <mo stretchy="false">|</mo>
+            </mrow>
+            <msup>
+              <mi>r</mi>
+              <mn>2</mn>
+            </msup>
+          </mfrac>
+          <mi>d</mi>
+          <msub>
+            <mi>A</mi>
+            <mi>y</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is geometry.</p>
+<p>Projected emitter area is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <msub>
+    <mi>A</mi>
+    <mi>y</mi>
+  </msub>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>and angular size falls as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msup>
+    <mi>r</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Converting the PDF</strong></p>
+<p>Probability must remain invariant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>A</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mi>d</mi>
+  <mi>A</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>ω</mi>
+  <mo stretchy="false">)</mo>
+  <mi>d</mi>
+  <mi>ω</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>A</mi>
+  </msub>
+  <mfrac>
+    <mrow>
+      <mi>d</mi>
+      <mi>A</mi>
+    </mrow>
+    <mrow>
+      <mi>d</mi>
+      <mi>ω</mi>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Using:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>ω</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <msub>
+        <mi>θ</mi>
+        <mi>y</mi>
+      </msub>
+    </mrow>
+    <msup>
+      <mi>r</mi>
+      <mn>2</mn>
+    </msup>
+  </mfrac>
+  <mi>d</mi>
+  <mi>A</mi>
+  <mo>,</mo>
+</math>
+<p>we get:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mi>ω</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>p</mi>
+            <mi>A</mi>
+          </msub>
+          <mfrac>
+            <msup>
+              <mi>r</mi>
+              <mn>2</mn>
+            </msup>
+            <mrow>
+              <mo stretchy="false">|</mo>
+              <mi>cos</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <msub>
+                <mi>θ</mi>
+                <mi>y</mi>
+              </msub>
+              <mo stretchy="false">|</mo>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For uniform area:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>A</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>p</mi>
+            <mi>ω</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <msup>
+              <mi>r</mi>
+              <mn>2</mn>
+            </msup>
+            <mrow>
+              <mi>A</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mo stretchy="false">|</mo>
+              </mrow>
+              <msub>
+                <mi>n</mi>
+                <mi>y</mi>
+              </msub>
+              <mo>⋅</mo>
+              <mo stretchy="false">(</mo>
+              <mo>−</mo>
+              <mi>ω</mi>
+              <mo stretchy="false">)</mo>
+              <mo stretchy="false">|</mo>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is exactly the formula current Kairo computes as:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>lightPdf <span class="op">=</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    lightDistance <span class="op">*</span> lightDistance <span class="op">/</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">(</span>lightArea <span class="op">*</span> lightFacing<span class="op">);</span></span></code></pre></div>
+<p>The PDF conversion itself is correct.</p>
+<hr />
+<p><strong>Area-light estimator after conversion</strong></p>
+<p>If emitter has radiance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>e</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mi>ω</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>then direct estimator is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mrow data-mjx-texclass="ORD">
+              <mover>
+                <mi>L</mi>
+                <mo stretchy="false">^</mo>
+              </mover>
+            </mrow>
+            <mi>d</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>L</mi>
+                <mi>e</mi>
+              </msub>
+              <msub>
+                <mi>f</mi>
+                <mi>r</mi>
+              </msub>
+              <mrow data-mjx-texclass="ORD">
+                <mo stretchy="false">|</mo>
+              </mrow>
+              <msub>
+                <mi>n</mi>
+                <mi>x</mi>
+              </msub>
+              <mo>⋅</mo>
+              <mi>ω</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mo stretchy="false">|</mo>
+              </mrow>
+              <mi>V</mi>
+            </mrow>
+            <msub>
+              <mi>p</mi>
+              <mi>ω</mi>
+            </msub>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Substitute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msup>
+      <mi>r</mi>
+      <mn>2</mn>
+    </msup>
+    <mrow>
+      <mi>A</mi>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <msub>
+        <mi>θ</mi>
+        <mi>y</mi>
+      </msub>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>L</mi>
+        <mo stretchy="false">^</mo>
+      </mover>
+    </mrow>
+    <mi>d</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>L</mi>
+    <mi>e</mi>
+  </msub>
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>x</mi>
+  </msub>
+  <mi>V</mi>
+  <mfrac>
+    <mrow>
+      <mi>A</mi>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <msub>
+        <mi>θ</mi>
+        <mi>y</mi>
+      </msub>
+    </mrow>
+    <msup>
+      <mi>r</mi>
+      <mn>2</mn>
+    </msup>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>The familiar geometric term emerges:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>G</mi>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo>,</mo>
+          <mi>y</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mi>cos</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <msub>
+                <mi>θ</mi>
+                <mi>x</mi>
+              </msub>
+              <mi>cos</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <msub>
+                <mi>θ</mi>
+                <mi>y</mi>
+              </msub>
+            </mrow>
+            <msup>
+              <mi>r</mi>
+              <mn>2</mn>
+            </msup>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>So area sampling and the geometric form of light transport are simply two representations of the same quantity.</p>
+<hr />
+<p><strong>Current Kairo area-light caveat</strong></p>
+<p>Kairo currently calculates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msup>
+      <mi>r</mi>
+      <mn>2</mn>
+    </msup>
+    <mrow>
+      <mi>A</mi>
+      <mi>cos</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <msub>
+        <mi>θ</mi>
+        <mi>y</mi>
+      </msub>
+    </mrow>
+  </mfrac>
+</math>
+<p>for MIS weighting.</p>
+<p>But the contribution itself uses approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Intensity</mtext>
+  <mfrac>
+    <mn>1</mn>
+    <msup>
+      <mi>r</mi>
+      <mn>2</mn>
+    </msup>
+  </mfrac>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>x</mi>
+  </msub>
+</math>
+<p>without dividing the estimator by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Therefore its <code>AreaLight</code> behaves more like a collection of soft point-light samples than a rigorously defined radiance-emitting area source.</p>
+<p>That is fine for an educational renderer if documented, but it is not the same estimator as physically defined area-light Monte Carlo integration.</p>
+<p>For rigorous NEE, choose clear emitter semantics such as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>e</mi>
+  </msub>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mo stretchy="false">[</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="normal">W</mi>
+    <mstyle scriptlevel="0">
+      <mspace width="0.167em"></mspace>
+    </mstyle>
+    <msup>
+      <mi mathvariant="normal">m</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>−</mo>
+        <mn>2</mn>
+      </mrow>
+    </msup>
+    <mstyle scriptlevel="0">
+      <mspace width="0.167em"></mspace>
+    </mstyle>
+    <msup>
+      <mi data-mjx-auto-op="false">sr</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>−</mo>
+        <mn>1</mn>
+      </mrow>
+    </msup>
+  </mrow>
+  <mo stretchy="false">]</mo>
+</math>
+<p>and evaluate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>e</mi>
+  </msub>
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>θ</mi>
+    <mi>x</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>p</mi>
+    <mi>ω</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Current Kairo area sample pattern caveat</strong></p>
+<p>The current code computes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mo stretchy="false">(</mo>
+      <mi>s</mi>
+      <mi>a</mi>
+      <mi>m</mi>
+      <mi>p</mi>
+      <mi>l</mi>
+      <mi>e</mi>
+      <mo lspace="thickmathspace" rspace="thickmathspace">mod</mo>
+      <mn>2</mn>
+      <mo stretchy="false">)</mo>
+      <mo>+</mo>
+      <mn>0.5</mn>
+    </mrow>
+    <mn>2</mn>
+  </mfrac>
+  <mo>−</mo>
+  <mn>0.5</mn>
+</math>
+<p>and analogous <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math>.</p>
+<p>That creates a fixed:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mo>×</mo>
+  <mn>2</mn>
+</math>
+<p>stratified pattern.</p>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+</math>
+<p>that is reasonable.</p>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>&gt;</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+</math>
+<p>the <code>% 2</code> logic repeats the same four positions.</p>
+<p>So increasing <code>AreaLight::Samples</code> beyond four does not generate additional distinct sample locations.</p>
+<p>A scalable sampler should generate arbitrary stratification or random/low-discrepancy 2D points.</p>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch316.xhtml#id_04-Light-Transport-and-Image-Synthesis" class="wikilink">Reading map</a> · <a href="ch319.xhtml#id_03-visual-computing-i-ch007-the-rendering-equation-and-path-probabilities" class="wikilink">Previous chapter</a> · <a href="ch324.xhtml#id_03-visual-computing-i-ch009-point-lights-mis-and-environment-lighting" class="wikilink">Next chapter</a></p>
+</section>
+</section>
+</body>
+</html>

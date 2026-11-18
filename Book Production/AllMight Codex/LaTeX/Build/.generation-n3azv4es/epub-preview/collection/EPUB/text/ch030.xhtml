@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch030.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-2fae058c82e1-exponent-bias" class="level2">
+<h2>Exponent bias</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C004 · <strong>Latest development:</strong> C004</p>
+<section id="appendix-2fae058c82e1-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Normal exponents are encoded as unsigned E=e+B. Binary32 B=127, so exponent 3 stores 130. Field zero and all-ones are reserved; classify before subtracting bias.</p>
+</section>
+<section id="appendix-2fae058c82e1-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch047.xhtml#appendix-5057f9ad327f-binary32" class="wikilink">Binary32</a> — The concrete fields provide the representation used in this mechanism.</li>
+</ul>
+</section>
+<section id="appendix-2fae058c82e1-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch076.xhtml#appendix-a1b1b4580dfd-floating-point-addition-and-absorption" class="wikilink">Floating-point addition and absorption</a> — Effective exponents must be decoded before comparing scale and shifting.</p></li>
+<li><p><a href="ch059.xhtml#appendix-6854d0e2218e-floating-point-encoding-and-decoding" class="wikilink">Floating-point encoding and decoding</a> — uses this mechanism in its explanation.</p></li>
+<li><p><a href="ch003.xhtml#appendix-00a6e044c437-subnormals-and-gradual-underflow" class="wikilink">Subnormals and gradual underflow</a> — uses this mechanism in its explanation.</p></li>
+<li><p><a href="ch010.xhtml#appendix-14bab4cab9d4-ulp-and-representable-spacing" class="wikilink">ULP and representable spacing</a> — uses this mechanism in its explanation.</p></li>
+</ul>
+</section>
+<section id="appendix-2fae058c82e1-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the concrete example in the definition and identify its validity assumptions.</p>
+<p><strong>Pending:</strong> Generalize B=2^(k-1)-1 to binary64 without mis-decoding subnormals.</p>
+</section>
+<section id="appendix-2fae058c82e1-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">M004 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m004---parts-61-76" class="wikilink">Per-part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

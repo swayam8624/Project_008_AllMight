@@ -1,0 +1,41 @@
+\hypertarget{appendix-18b8dd966b5d}{}
+\section*{Bfloat16}
+\section{Bfloat16}\label{appendix-18b8dd966b5d-bfloat16}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C006 · \textbf{Latest development:} C006
+
+\subsection{Definition and mechanism}\label{appendix-18b8dd966b5d-definition-and-mechanism}
+
+BF16 has1/8/7 fields, bias127 and8 normal precision bits. It keeps broad exponent range at coarse spacing2\^{}-7 above1. A nearest-even conversion must handle NaNs separately from finite rounding.
+
+\subsection{Prerequisites}\label{appendix-18b8dd966b5d-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-343615f49ddf]{IEEE-754 floating point} --- supplies the representation or validity rule used above.
+\item
+  \hyperref[appendix-614afe1de592]{Rounding to nearest ties to even} --- supplies the representation or validity rule used above.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-18b8dd966b5d-used-by}
+
+Connect later dependent concepts here when their explanations use this mechanism.
+
+\subsection{Recall and next depth}\label{appendix-18b8dd966b5d-recall-and-next-depth}
+
+Reconstruct the example and identify the condition that would invalidate it.
+
+\textbf{Pending:} Target flushing, payload conventions and accumulation instructions require independent checks.
+
+\subsection{Source and navigation}\label{appendix-18b8dd966b5d-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-choosing-what-information-to-keep]{Continuous teaching story} · {Source coverage ledger {[}referenced section unavailable{]}} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\subsection{Range is preserved more than precision}\label{appendix-18b8dd966b5d-range-is-preserved-more-than-precision}
+
+Bfloat16 keeps the 8-bit exponent width of binary32 but stores only 7 explicit fraction bits. A normal value therefore has 8 bits of significand precision including the hidden leading one. Compared with IEEE binary16, bfloat16 sacrifices substantial local precision to retain a binary32-like exponent range.
+
+That trade is useful for ML tensors whose dynamic range matters more than fine per-value precision. It is poor for algorithms where small relative changes accumulate over many steps. Common mixed-precision kernels store operands in bfloat16 but accumulate products in binary32.
+
+Conversion is not merely truncation if the implementation promises round-to-nearest behavior. Correct rounding must account for discarded bits and tie policy; NaN payloads and infinities need explicit handling. Tests should inspect bit-level round trips, halfway cases, overflow/underflow, NaNs, and error growth in dot products accumulated in bfloat16 versus binary32.

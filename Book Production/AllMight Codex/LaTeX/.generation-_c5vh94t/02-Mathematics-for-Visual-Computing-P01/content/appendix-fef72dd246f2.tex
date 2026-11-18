@@ -1,0 +1,67 @@
+\hypertarget{appendix-fef72dd246f2}{}\label{referencestart:appendix-fef72dd246f2}
+\section{GGUF binary model loading}\label{appendix-fef72dd246f2-gguf-binary-model-loading}
+
+\hypertarget{appendix-fef72dd246f2-gguf-binary-model-loading}{}
+
+GGUF is a binary container used by GGML-family inference runtimes. Treating it as ``a file full of weights'' is too vague for a safe loader. A loader must first establish a byte-level contract: magic, format version, tensor count, metadata count, typed metadata records, tensor descriptors, alignment, tensor-data offsets, and bounds. Only after those checks can tensor bytes become runtime values.
+
+The first four bytes identify the format as GGUF. Multi-byte fields must be decoded according to the file format instead of reinterpreting an arbitrary file buffer as a C++ struct. Native C++ structs inherit compiler padding, alignment and host-representation assumptions that a binary file does not owe the process reading it.
+
+A useful loading pipeline is:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Read and validate the fixed prefix.
+\item
+  Parse metadata key/value records with checked lengths.
+\item
+  Parse tensor descriptors: name, rank and shape, data type, and relative data offset.
+\item
+  Compute the aligned start of the tensor-data section.
+\item
+  Validate every tensor interval against file length and arithmetic overflow.
+\item
+  Keep file or mapping ownership alive for every lazy tensor view.
+\item
+  Convert the file tensor type into an internal runtime type only after the descriptor is validated.
+\item
+  Dispatch dequantization or quantized kernels from that internal type rather than from filename assumptions.
+\end{enumerate}
+
+The official GGUF documentation describes the format as a single-file, extensible model container and defines architecture metadata, tensor data layout information, and attention metadata such as head counts and key/value dimensions. Those metadata values affect runtime shape contracts; they are not merely labels.
+
+Primary reference: https://github.com/ggml-org/ggml/blob/master/docs/gguf.md
+
+\subsection{Prefix witness}\label{appendix-fef72dd246f2-prefix-witness}
+
+\hypertarget{appendix-fef72dd246f2-prefix-witness}{}
+
+tools/labs/phase29\_ml\_runtime\_lab.cpp parses the GGUF magic, version, tensor count and metadata count from an explicit byte vector using checked little-endian reads. It has a negative case for invalid magic.
+
+That witness intentionally stops at the prefix. It proves that the repository now owns the boundary between raw bytes and validated scalar header fields; it does not pretend that the entire GGUF metadata type system or quantized tensor catalog has already been implemented.
+
+\subsection{What a full loader must prove}\label{appendix-fef72dd246f2-what-a-full-loader-must-prove}
+
+\hypertarget{appendix-fef72dd246f2-what-a-full-loader-must-prove}{}
+
+A production reader must defend against truncated strings, absurd ranks, shape-product overflow, unsupported quantization types, alignment overflow, tensor intervals outside the file, duplicate or contradictory metadata, offsets that alias unintentionally, and files whose declared architecture cannot be executed by the runtime.
+
+For memory mapping, ``the pointer is valid'' is not enough. The mapping object and file lifetime must outlive every lazy tensor view. Page faults also become part of performance: a model that technically maps instantly can still stall during first use if access order faults pages unpredictably.
+
+\subsection{Quantized execution boundary}\label{appendix-fef72dd246f2-quantized-execution-boundary}
+
+\hypertarget{appendix-fef72dd246f2-quantized-execution-boundary}{}
+
+GGUF storage type and execution type are separate decisions. A block-quantized format normally stores scale or other metadata together with packed codes. A portable reference path should decode or dot-product those blocks in a simple scalar implementation first. SIMD or Metal kernels then have an independent oracle. If the optimized path disagrees, the scalar path is evidence; if both paths share the same unpacking bug, the test is not independent enough.
+
+Related: \hyperref[appendix-cebadf3106d1]{Tensor runtime layout and views}, \hyperref[appendix-241c0e42ac2d]{Quantized matvec and dequantization}, \hyperref[appendix-ea2dadd21ce5]{Transformer attention and KV cache runtime}, \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-590bbb2424c1}{Binary format contracts (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Binary format contracts)}.
+
+\subsection{Metadata and tensor-descriptor witness}\label{appendix-fef72dd246f2-metadata-and-tensor-descriptor-witness}
+
+\hypertarget{appendix-fef72dd246f2-metadata-and-tensor-descriptor-witness}{}
+
+The earlier prefix-only boundary has now been extended by \texttt{tools/labs/gguf\_metadata\_tensor\_lab.cpp}. The subset parser validates GGUF v3 magic and counts, parses typed UINT32 and STRING metadata, consumes \texttt{general.alignment}, reads tensor names/ranks/dimensions/type IDs/relative offsets, computes the aligned tensor-data start, and rejects truncation or invalid alignment.
+
+The parser remains deliberately incomplete rather than permissive. Unsupported metadata types are rejected instead of skipped with guessed sizes. It does not yet implement arrays, every GGUF value type, every GGML quantized tensor block, tokenizer metadata, endian conversion for big-endian files, or payload interval validation for all tensor types. That is the correct boundary for an independent reference: a small loader should fail loudly outside the subset it actually understands.

@@ -1,0 +1,33 @@
+\hypertarget{appendix-dc552784a2c0}{}
+\section*{Binary conversion}
+\section{Binary conversion}\label{appendix-dc552784a2c0-binary-conversion}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C001 · \textbf{Latest development:} C001
+
+\subsection{Definition and mechanism}\label{appendix-dc552784a2c0-definition-and-mechanism}
+
+Repeated division emits low-to-high binary digits; weighted sums or Horner evaluation decode them.
+
+Euclidean division writes n = 2q + r, where q is the integer quotient and r is 0 or 1. Repeated remainders give bits from least to most significant. Zero must be represented explicitly as \texttt{0}. Horner evaluation reads left to right: accumulator = 2×accumulator + next bit.
+
+\subsection{Prerequisites}\label{appendix-dc552784a2c0-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-83c3f28f7bda]{Positional notation} --- A base is the number of available digits.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-dc552784a2c0-used-by}
+
+Connect later chunks here when they use this concept.
+
+\subsection{Recall and next depth}\label{appendix-dc552784a2c0-recall-and-next-depth}
+
+Explain binary conversion without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} fractional conversion and arbitrary-precision representation.
+
+\subsection{Source and navigation}\label{appendix-dc552784a2c0-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

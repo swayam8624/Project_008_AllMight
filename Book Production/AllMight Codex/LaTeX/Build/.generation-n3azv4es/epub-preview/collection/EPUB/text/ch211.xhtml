@@ -1,0 +1,3974 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch211.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_01-foundations-i-ch010-reproducible-builds-profiling-and-repository-contracts" class="level2">
+<h2>Reproducible Builds, Profiling, and Repository Contracts</h2>
+<p><a href="ch001.xhtml#id_01-Bits-Programs-and-Reliable-Systems" class="wikilink">Reading map</a> · <a href="ch210.xhtml#id_01-foundations-i-ch007-typed-interfaces-identity-and-data-structures" class="wikilink">Previous chapter</a> · <a href="ch212.xhtml#id_01-foundations-i-ch011-c-const-borrowing-and-cpugpu-buffering" class="wikilink">Next chapter</a></p>
+<p>A system is only reproducible when its build graph, dependencies, tests, diagnostics, and measurement method are explicit. The chapter follows the source-to-editor-to-runtime path and explains how to report evidence without elevating a repository snapshot into a universal promise.</p>
+<p><strong>By the end:</strong> Create build and measurement workflows whose dependencies, configuration, test evidence, and platform boundaries can be reconstructed.</p>
+<p><strong>Recall question:</strong> What evidence would let another engineer distinguish a successful build from a reproducible runtime result?</p>
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 16356–20373; source-span SHA256 2d674841a3d0f56d6591af78daf9bc1ed06b6e6cf5cd0e0afa5333e60389f1ba. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_01-foundations-i-ch010-build-document-measure-and-reproduce-the-program" class="level3">
+<h3>Build, document, measure, and reproduce the program</h3>
+<p>Repository-specific passages below describe the supplied Kairo snapshot. They have not been revalidated against a current checkout; code fragments retain their stated surrounding context and are not all standalone tested programs. Numerical and contract explanations are taught independently of those implementation observations.</p>
+<section id="id_01-foundations-i-ch010-cmake-target-semantics-usage-requirements-presets-ninja-dags-toolchains-clangmsvc-portability-c-modules-repository-pinning-reproducible-superbuilds-ci-matrices-test-architecture-crashloggingprofiling-hooks-portable-engine-boundaries-and-the-complete-sourceeditorpackageruntime-ownership-graph" class="level4">
+<h4>CMake Target Semantics, Usage Requirements, Presets, Ninja DAGs, Toolchains, Clang/MSVC Portability, C++ Modules, Repository Pinning, Reproducible Superbuilds, CI Matrices, Test Architecture, Crash/Logging/Profiling Hooks, Portable Engine Boundaries, and the Complete Source→Editor→Package→Runtime Ownership Graph</h4>
+<p>This pass <strong>closes Phase 16</strong>.</p>
+<p>Pass 14 ended with something like:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>correct source code</mtext>
+  <mo>+</mo>
+  <mtext>correct persistent data</mtext>
+  <mo>.</mo>
+</math>
+<p>Pass 15 asks a much nastier question:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Can another machine, OS, compiler and CI worker actually reconstruct the same engine correctly?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Because an architecture that only builds on one developer’s machine is not yet an architecture.</p>
+<p>The other core question is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>How do we prove that the thing we built is actually the thing we intended to build?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is why CMake, repository pinning, tests, CI, diagnostics and ownership diagrams belong in the same phase. They are all parts of <strong>reproducibility</strong>.</p>
+<hr />
+</section>
+<section id="id_01-foundations-i-ch010-the-build-graph-itself" class="level4">
+<h4>THE BUILD GRAPH ITSELF</h4>
+<p><strong>The CMake target model</strong></p>
+<p>The most important conceptual correction is this:</p>
+<blockquote>
+<p>Modern CMake should be thought of primarily as a <strong>target graph generator</strong>, not as a collection of global compiler flags.</p>
+</blockquote>
+<p>Suppose the project has:</p>
+<pre class="text"><code>KairoMath
+KairoGeometry
+KairoSpatial
+KairoPhysicsEngine
+KairoAssets
+KairoRenderer
+KairoEngineCore
+KairoPlayer</code></pre>
+<p>The real build model is a graph:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>V</mi>
+  <mo>,</mo>
+  <mi>E</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>where a vertex is a CMake target and an edge means one target has a usage/build/link relationship with another.</p>
+<p>For example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>K</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo stretchy="false">→</mo>
+  <mi>K</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>M</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>K</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>S</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo stretchy="false">→</mo>
+  <mi>K</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>G</mi>
+  <mi>e</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>K</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>P</mi>
+  <mi>h</mi>
+  <mi>y</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>s</mi>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>K</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>S</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>K</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>P</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mi>K</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>That graph is what CMake eventually lowers into Ninja, Make, Visual Studio or another generator’s rules.</p>
+<p>The crucial mental shift is that a target is not merely:</p>
+<pre class="text"><code>&quot;a library file.&quot;</code></pre>
+<p>A target is a structured bundle of:</p>
+<pre class="text"><code>sources
+compile features
+compile definitions
+include requirements
+link requirements
+generated sources
+module interfaces
+platform-specific properties
+transitive usage requirements.</code></pre>
+<hr />
+<p><strong>Target-local state beats global state</strong></p>
+<p>Old-school CMake often looks like:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">include_directories</span>(...)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_definitions</span>(...)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">link_libraries</span>(...)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(<span class="dv">CMAKE_CXX_FLAGS</span> ...)</span></code></pre></div>
+<p>These mutate directory/global state.</p>
+<p>Now imagine you add:</p>
+<pre class="text"><code>KairoEditor
+KairoPlayer
+KairoTools</code></pre>
+<p>and only one target needs some definition.</p>
+<p>Global state leaks it into all of them.</p>
+<p>Modern target style instead:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(<span class="bn">KairoRenderer</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_features</span>(</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoRenderer</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PUBLIC</span> <span class="ot">cxx_std_23</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_definitions</span>(</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoRenderer</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PRIVATE</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        KAIRO_RENDERER_INTERNAL_DIAGNOSTICS=1</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoRenderer</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PUBLIC</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>        KairoMath</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        KairoAssets</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>Everything is attached to the owning target.</p>
+<p>This gives you locality:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>the build specification follows architectural ownership</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Build graph versus source architecture</strong></p>
+<p>A CMake graph can expose architectural mistakes.</p>
+<p>Suppose low-level:</p>
+<pre class="text"><code>KairoMath</code></pre>
+<p>links:</p>
+<pre class="text"><code>KairoRenderer.</code></pre>
+<p>You should immediately ask why.</p>
+<p>Likewise if:</p>
+<pre class="text"><code>KairoAssets</code></pre>
+<p>requires:</p>
+<pre class="text"><code>KairoEditor.</code></pre>
+<p>your dependency direction is probably broken.</p>
+<p>The build graph therefore acts as an <strong>executable architecture document</strong>.</p>
+<p>If a dependency is absent from CMake, the code ideally cannot quietly use it.</p>
+<hr />
+<p><strong>Current Kairo superbuild</strong></p>
+<p>Your top-level <code>KairoGameEngine</code> CMake explicitly treats the project as a <strong>sibling-repository workspace</strong>.</p>
+<p>It expects something like:</p>
+<pre class="text"><code>Kairo/
+├── KairoGameEngine/
+├── KairoMath/
+├── KairoGeometry/
+├── KairoSpatial/
+├── KairoPhysicsEngine/
+├── KairoAssets/
+├── KairoECS/
+├── KairoReflection/
+├── KairoEngineCore/
+├── KairoRenderer/
+└── ...</code></pre>
+<p>Then the integration repository calls:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_subdirectory</span>(...)</span></code></pre></div>
+<p>for those sibling source trees.</p>
+<p>This is important because there is only one physical checkout of each component in the integration workspace.</p>
+<p>You explicitly migrated away from nested duplicated submodules.</p>
+<p>That substantially simplifies local development.</p>
+<hr />
+<p><strong><code>add_library()</code> does not necessarily mean an archive</strong></p>
+<p>CMake targets may represent:</p>
+<pre class="text"><code>STATIC
+SHARED
+MODULE
+OBJECT
+INTERFACE
+IMPORTED
+ALIAS.</code></pre>
+<p>An <code>INTERFACE</code> target does not produce a library binary; it exists to carry usage requirements. Official CMake documentation describes interface libraries precisely as linkable usage-requirement targets rather than ordinary compiled artifacts. <a href="https://cmake.org/cmake/help/latest/command/add_library.html?utm_source=chatgpt.com">cmake.org</a></p>
+<p>Your current:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoGameEngine</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">INTERFACE</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>is therefore not supposed to create:</p>
+<pre class="text"><code>libKairoGameEngine.a.</code></pre>
+<p>It creates a convenience architectural umbrella.</p>
+<hr />
+<p><strong>Current Kairo umbrella target</strong></p>
+<p>You have conceptually:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoGameEngine</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">INTERFACE</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>        KairoAssets</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>        KairoECS</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>        KairoReflection</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>        KairoEngineCore</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>        KairoSceneECSBridge</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>        KairoRenderer</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>        KairoPhysicsEngine</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>This says:</p>
+<blockquote>
+<p>A consumer linking the KairoGameEngine umbrella inherits this engine integration surface.</p>
+</blockquote>
+<p>That is reasonable <strong>at the top boundary</strong>.</p>
+<p>But low-level targets should not link <code>KairoGameEngine</code> just because it is convenient.</p>
+<p>Otherwise:</p>
+<pre class="text"><code>KairoSpatial</code></pre>
+<p>would transitively gain visibility into:</p>
+<pre class="text"><code>Renderer
+Assets
+ECS
+EngineCore
+Physics.</code></pre>
+<p>That destroys architectural discipline.</p>
+<p>The umbrella belongs at the composition edge.</p>
+<hr />
+<p><strong>Target properties are the build-system equivalent of component metadata</strong></p>
+<p>Think of:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_features</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>target_compile_definitions</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>target_link_libraries</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>target_sources</span></code></pre></div>
+<p>as assigning structured properties to a target.</p>
+<p>CMake then computes the transitive closure of those properties.</p>
+<p>This is similar to our ECS/system dependency thinking:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>A</mi>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <mi>T</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>B</mi>
+  </msub>
+</math>
+<p>can imply:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>q</mi>
+  <mi>u</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo stretchy="false">(</mo>
+  <mi>B</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">→</mo>
+  <mi>A</mi>
+  <mo>.</mo>
+</math>
+<p>The difference is build-time rather than runtime.</p>
+<hr />
+<p><strong>PUBLIC, PRIVATE and INTERFACE</strong></p>
+<p>This is probably the most important modern-CMake concept to know perfectly.</p>
+<p>For a target A depending on B:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">A</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PRIVATE</span> B</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mtext> </mtext>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mtext> </mtext>
+  <mi>B</mi>
+</math>
+<p>but:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>do <strong>not</strong> automatically inherit B as part of A’s usage requirements.</p>
+<hr />
+<p><strong>PRIVATE dependency</strong></p>
+<p>Imagine:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co">// A.cpp</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;zstd.h&gt;</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> InternalCompression<span class="op">()</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>but A’s public API exposes no zstd concepts.</p>
+<p>Then:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">A</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PRIVATE</span> zstd</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>makes sense.</p>
+<p>B is implementation detail.</p>
+<hr />
+<p><strong>PUBLIC dependency</strong></p>
+<p>Suppose A’s public interface exposes B:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co">// exported API</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>MeshBounds ComputeBounds<span class="op">(</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">const</span> kairo<span class="op">::</span>math<span class="op">::</span>Vec3f<span class="op">*</span> vertices<span class="op">);</span></span></code></pre></div>
+<p>If consumers of A must also satisfy B’s usage requirements to compile/use A correctly, B is effectively part of A’s public contract.</p>
+<p>Then:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">A</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PUBLIC</span> KairoMath</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>is appropriate.</p>
+<p>CMake propagates PUBLIC and INTERFACE usage requirements transitively to consumers. That is how <code>INTERFACE_LINK_LIBRARIES</code>, include requirements, definitions, and compile features flow through the target graph. <a href="https://cmake.org/cmake/help/latest/prop_tgt/INTERFACE_LINK_LIBRARIES.html?utm_source=chatgpt.com">cmake.org</a></p>
+<hr />
+<p><strong>INTERFACE dependency</strong></p>
+<p>Suppose target A itself does not need B to build, but users of A do.</p>
+<p>An <code>INTERFACE</code> library is the clearest example:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoGameEngine</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">INTERFACE</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoGameEngine</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    <span class="ot">INTERFACE</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>        KairoRenderer</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>        KairoPhysicsEngine</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>There is no KairoGameEngine object code needing those libraries.</p>
+<p>The <strong>consumers</strong> do.</p>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>N</mi>
+  <mi>T</mi>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mi>F</mi>
+  <mi>A</mi>
+  <mi>C</mi>
+  <mi>E</mi>
+  <mo>=</mo>
+  <mtext>consumer requirement only</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Truth table</strong></p>
+<p>The easiest way to remember scope is:</p>
+<table>
+<thead>
+<tr>
+<th>Scope</th>
+<th style="text-align: right;">Used to build target itself?</th>
+<th style="text-align: right;">Propagated to consumers?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PRIVATE</td>
+<td style="text-align: right;">yes</td>
+<td style="text-align: right;">no</td>
+</tr>
+<tr>
+<td>PUBLIC</td>
+<td style="text-align: right;">yes</td>
+<td style="text-align: right;">yes</td>
+</tr>
+<tr>
+<td>INTERFACE</td>
+<td style="text-align: right;">no</td>
+<td style="text-align: right;">yes</td>
+</tr>
+</tbody>
+</table>
+<p>This applies conceptually to:</p>
+<pre class="text"><code>link libraries
+include directories
+compile definitions
+compile features
+source/interface sets.</code></pre>
+<p>The exact property plumbing differs, but this mental model is excellent.</p>
+<hr />
+<p><strong>Why incorrect PUBLIC creates dependency contagion</strong></p>
+<p>Suppose:</p>
+<pre class="text"><code>Renderer PUBLIC Physics</code></pre>
+<p>even though Physics is needed only inside one <code>.cpp</code>.</p>
+<p>Then:</p>
+<pre class="text"><code>Editor
+→ Renderer
+→ Physics</code></pre>
+<p>inherits Physics.</p>
+<p>Later some editor code casually uses Physics because it “just works.”</p>
+<p>Now a build-system mistake created architectural coupling.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mi>U</mi>
+          <mi>B</mi>
+          <mi>L</mi>
+          <mi>I</mi>
+          <mi>C</mi>
+          <mtext> </mtext>
+          <mi>i</mi>
+          <mi>s</mi>
+          <mtext> </mtext>
+          <mi>a</mi>
+          <mi>r</mi>
+          <mi>c</mi>
+          <mi>h</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>c</mi>
+          <mi>t</mi>
+          <mi>u</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mtext> </mtext>
+          <mi>A</mi>
+          <mi>P</mi>
+          <mi>I</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Do not use PUBLIC because linking failed and you want the error to disappear.</p>
+<hr />
+<p><strong>Why incorrect PRIVATE also fails</strong></p>
+<p>Opposite problem:</p>
+<pre class="text"><code>A&#39;s public interface genuinely exposes B</code></pre>
+<p>but B is marked PRIVATE.</p>
+<p>A’s own build succeeds.</p>
+<p>A downstream consumer may fail because it lacks B’s includes, module BMIs, compile definitions or link requirements.</p>
+<p>Therefore scope describes <strong>semantic ownership</strong>.</p>
+<p>Not “whatever gets today’s build green.”</p>
+<hr />
+<p><strong>Current Kairo example: native framework transitivity</strong></p>
+<p><code>KairoRenderer</code> contains Objective-C++ Metal implementation code on macOS.</p>
+<p>The final executable may be pure C++.</p>
+<p>If the renderer’s static archive requires:</p>
+<pre class="text"><code>Foundation.framework
+Metal.framework
+AppKit.framework
+QuartzCore.framework
+libobjc</code></pre>
+<p>those final-link requirements have to reach consumers.</p>
+<p>Your renderer marks the native link contract PUBLIC.</p>
+<p>That is appropriate because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>consumer linking KairoRenderer</mtext>
+</math>
+<p>must satisfy that final link environment.</p>
+<p>Even though the consumer does not call Objective-C directly.</p>
+<hr />
+<p><strong>Public compile definitions</strong></p>
+<p>Current renderer exports backend capability definitions such as:</p>
+<pre class="text"><code>KAIRO_RENDERER_HAS_VULKAN_BACKEND
+KAIRO_RENDERER_HAS_OPENGL_BACKEND</code></pre>
+<p>and platform-specific capabilities.</p>
+<p>If public headers/module interfaces use these definitions to alter exposed contract, PUBLIC may make sense.</p>
+<p>If a definition only changes <code>.cpp</code> internals, it should be PRIVATE.</p>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Does the consumer need this to interpret the target&#39;s interface?</mtext>
+</math>
+<p>That is the test.</p>
+<hr />
+<p><strong>Imported and alias targets</strong></p>
+<p>An imported target represents something CMake does <strong>not build here</strong>.</p>
+<p>Example:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">find_package</span>(<span class="im">Vulkan</span> <span class="ot">REQUIRED</span>)</span></code></pre></div>
+<p>might provide:</p>
+<pre class="text"><code>Vulkan::Vulkan.</code></pre>
+<p>That is effectively an imported target.</p>
+<p>It carries:</p>
+<pre class="text"><code>library location
+include requirements
+link requirements
+possibly per-config locations.</code></pre>
+<p>CMake documentation explicitly treats IMPORTED targets as externally provided targets with <code>IMPORTED_*</code> and <code>INTERFACE_*</code> properties. <a href="https://cmake.org/cmake/help/latest/command/add_library.html?utm_source=chatgpt.com">cmake.org</a></p>
+<hr />
+<p><strong>Why imported targets beat raw library paths</strong></p>
+<p>Bad:</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">Renderer</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PRIVATE</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;/usr/local/lib/libvulkan.so&quot;</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>This bakes in:</p>
+<pre class="text"><code>one machine
+one filesystem
+one platform.</code></pre>
+<p>Better:</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">Renderer</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PRIVATE</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    <span class="bn">Vulkan::Vulkan</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>Now the package finder/toolchain determines actual location.</p>
+<p>The consuming target expresses a semantic dependency.</p>
+<hr />
+<p><strong>Alias targets</strong></p>
+<p>Alias:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">Kairo::SceneECSBridge</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">ALIAS</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoSceneECSBridge</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>does not create another library.</p>
+<p>It gives another stable target name.</p>
+<p>Common convention:</p>
+<pre class="text"><code>Namespace::Target.</code></pre>
+<p>Benefits include:</p>
+<pre class="text"><code>clear ownership
+package-like naming
+easy typo detection
+consistent consumer syntax.</code></pre>
+<p>Official CMake treats alias targets as alternate target names rather than separate build artifacts. <a href="https://cmake.org/cmake/help/latest/command/add_library.html?utm_source=chatgpt.com">cmake.org</a></p>
+<hr />
+<p><strong>Alias naming is useful even internally</strong></p>
+<p>Instead of:</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">Game</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PRIVATE</span> KairoRenderer</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>a future installed/exported API might prefer:</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">Game</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PRIVATE</span> <span class="bn">Kairo::Renderer</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>This visually communicates:</p>
+<blockquote>
+<p>this is a CMake target contract, not a raw linker filename.</p>
+</blockquote>
+<hr />
+<p><strong>CMake presets</strong></p>
+<p>A preset is a versioned named build configuration.</p>
+<p>Instead of telling every developer:</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">-S</span> . <span class="at">-B</span> build/foo <span class="dt">\</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-G</span> Ninja <span class="dt">\</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-DCMAKE_BUILD_TYPE</span><span class="op">=</span>Debug <span class="dt">\</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-DBUILD_TESTING</span><span class="op">=</span>ON <span class="dt">\</span></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">-DKAIRO_GAME_ENGINE_BUILD_EDITOR</span><span class="op">=</span>ON <span class="dt">\</span></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">-DKAIRO_GAME_ENGINE_BUILD_RAYTRACER</span><span class="op">=</span>ON <span class="dt">\</span></span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>  ...</span></code></pre></div>
+<p>you write:</p>
+<div class="sourceCode" id="cb44"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--preset</span> dev-clang</span></code></pre></div>
+<p>Official CMake distinguishes checked-in <code>CMakePresets.json</code> for project-wide shared configuration from <code>CMakeUserPresets.json</code> for developer-local settings that generally should not be committed. <a href="https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html?utm_source=chatgpt.com">cmake.org</a></p>
+<hr />
+<p><strong>Current Kairo presets</strong></p>
+<p>Your current file defines profiles including roughly:</p>
+<pre class="text"><code>dev
+dev-clang
+release
+ci-clang
+ci-sanitized
+ci-msvc
+compute-stack-clang.</code></pre>
+<p>This is good because each name describes an <strong>intent</strong>.</p>
+<p><code>ci-sanitized</code> means:</p>
+<pre class="text"><code>Debug
+ASan + UBSan
+no heavyweight editor/raytracer paths</code></pre>
+<p>while:</p>
+<pre class="text"><code>release</code></pre>
+<p>turns testing/validation features down appropriately.</p>
+<hr />
+<p><strong>Preset inheritance</strong></p>
+<p>Current:</p>
+<pre class="text"><code>dev-clang</code></pre>
+<p>inherits:</p>
+<pre class="text"><code>dev</code></pre>
+<p>then adds:</p>
+<pre class="text"><code>Clang toolchain
+separate binary directory.</code></pre>
+<p>This avoids duplicating 20 settings.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>c</mi>
+      <mi>h</mi>
+      <mi>i</mi>
+      <mi>l</mi>
+      <mi>d</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>p</mi>
+      <mi>a</mi>
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <mi>O</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Why binary directories should differ</strong></p>
+<p>Do not use one build directory for:</p>
+<pre class="text"><code>GCC Debug
+Clang Release
+MSVC
+ASan.</code></pre>
+<p>Compiler and configuration-specific artifacts are not interchangeable.</p>
+<p>Current Kairo uses:</p>
+<pre class="text"><code>build/dev
+build/dev-clang
+build/release
+build/ci-clang
+...</code></pre>
+<p>which is correct.</p>
+<hr />
+<p><strong>Developer-local compiler path</strong></p>
+<p>You do <strong>not</strong> want this in checked-in presets:</p>
+<pre class="text"><code>/opt/homebrew/Cellar/llvm/23.1.4/bin/clang++.</code></pre>
+<p>That path belongs to one machine.</p>
+<p>Instead Kairo’s toolchain accepts:</p>
+<pre class="text"><code>KAIRO_CXX_COMPILER</code></pre>
+<p>from environment or locates Homebrew LLVM dynamically.</p>
+<p>This cleanly separates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>shared build intent</mtext>
+</math>
+<p>from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>machine-local toolchain location</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Command-line override</strong></p>
+<p>Presets are defaults, not absolute prison.</p>
+<p>You can do:</p>
+<div class="sourceCode" id="cb55"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cmake</span> <span class="at">--preset</span> ci-clang <span class="dt">\</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-DKAIRO_GAME_ENGINE_BUILD_RAYTRACER</span><span class="op">=</span>OFF</span></code></pre></div>
+<p>CMake permits command-line settings to override preset variables. <a href="https://cmake.org/cmake/help/git-stage/guide/tutorial/Configuration%20and%20Cache%20Variables.html?utm_source=chatgpt.com">cmake.org</a></p>
+<p>Your CI does this on macOS for a known current Clang/frontend limitation.</p>
+<p>That is a legitimate targeted override.</p>
+<hr />
+<p><strong>Ninja build scheduling</strong></p>
+<p>CMake does not generally compile source files itself.</p>
+<p>With Ninja generator:</p>
+<pre class="text"><code>CMake
+  |
+  | generates
+  v
+build.ninja
+  |
+  v
+Ninja
+  |
+  v
+compiler/linker/custom commands.</code></pre>
+<p>Ninja is intentionally a low-level dependency-graph executor. It tries to do the minimum work needed and executes independent edges in parallel. <a href="https://ninja-build.org/manual.html?utm_source=chatgpt.com">ninja-build.org</a></p>
+<hr />
+<p><strong>Build edge model</strong></p>
+<p>A simple compile relationship:</p>
+<pre class="text"><code>foo.cpp
+  |
+  v
+foo.o</code></pre>
+<p>and:</p>
+<pre class="text"><code>bar.cpp
+  |
+  v
+bar.o</code></pre>
+<p>then:</p>
+<pre class="text"><code>foo.o + bar.o
+      |
+      v
+   executable.</code></pre>
+<p>Ninja can compile <code>foo.cpp</code> and <code>bar.cpp</code> concurrently because neither depends on the other.</p>
+<p>Graph:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mo>.</mo>
+  <mi>c</mi>
+  <mi>p</mi>
+  <mi>p</mi>
+  <mo stretchy="false">→</mo>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mo>.</mo>
+  <mi>o</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+  <mi>c</mi>
+  <mi>p</mi>
+  <mi>p</mi>
+  <mo stretchy="false">→</mo>
+  <mi>b</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+  <mi>o</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mo>.</mo>
+  <mi>o</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+  <mi>o</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">→</mo>
+  <mi>G</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Parallelism is graph-limited</strong></p>
+<p>Suppose 100 translation units are independent.</p>
+<p>Ninja can run many simultaneously.</p>
+<p>But if:</p>
+<pre class="text"><code>GeneratedHeader
+      ↓
+A.cpp
+      ↓
+B.cpp
+      ↓
+C.cpp</code></pre>
+<p>the dependency chain constrains parallelism.</p>
+<p>Critical-path build time approximately depends on:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <munder>
+            <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>path</mtext>
+            </mrow>
+          </munder>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mi>i</mi>
+          </munder>
+          <mi>C</mi>
+          <mi>o</mi>
+          <mi>s</mi>
+          <mi>t</mi>
+          <mo stretchy="false">(</mo>
+          <mi>e</mi>
+          <mi>d</mi>
+          <mi>g</mi>
+          <msub>
+            <mi>e</mi>
+            <mi>i</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>rather than only total work.</p>
+<p>This is why build architecture matters.</p>
+<hr />
+<p><strong>Incorrect dependency declaration causes flaky clean builds</strong></p>
+<p>Suppose shader code generation creates:</p>
+<pre class="text"><code>generated_shader.hpp</code></pre>
+<p>but consumer target does not depend on generator.</p>
+<p>Incremental build may succeed because stale generated file exists.</p>
+<p>Fresh CI build fails.</p>
+<p>This is a classic underspecified build DAG.</p>
+<p>Ninja is deliberately strict: missing dependency edges can lead to incorrect concurrent scheduling. Its manual even provides <code>missingdeps</code> diagnostics for generated-file dependency problems. <a href="https://ninja-build.org/manual.html?utm_source=chatgpt.com">ninja-build.org</a></p>
+<hr />
+<p><strong>Current Kairo shader build edges</strong></p>
+<p>Renderer uses explicit:</p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_custom_command</span>(</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">OUTPUT</span> ...</span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">COMMAND</span> glslangValidator ...</span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>    <span class="ot">DEPENDS</span> shader-source</span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>then:</p>
+<div class="sourceCode" id="cb63"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_custom_target</span>(</span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoRendererShaders</span></span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">DEPENDS</span> generated SPIR-V files</span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>and:</p>
+<div class="sourceCode" id="cb64"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_dependencies</span>(</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoRenderer</span></span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoRendererShaders</span></span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>That explicitly represents:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>S</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>S</mi>
+  <mi>P</mi>
+  <mi>I</mi>
+  <mi>R</mi>
+  <mi>V</mi>
+  <mo stretchy="false">→</mo>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>T</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Correct build graph thinking.</p>
+<hr />
+<p><strong>Over-serialization of build graph</strong></p>
+<p>The opposite mistake is:</p>
+<div class="sourceCode" id="cb65"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_dependencies</span>(<span class="bn">A</span> <span class="bn">B</span>)</span></code></pre></div>
+<p>when no true ordering exists.</p>
+<p>That prevents parallelism.</p>
+<p>If:</p>
+<pre class="text"><code>A and B are independent</code></pre>
+<p>but build graph says:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo stretchy="false">→</mo>
+  <mi>A</mi>
+  <mo>,</mo>
+</math>
+<p>Ninja must wait.</p>
+<p>Use dependency edges only when correctness requires them.</p>
+<hr />
+<p><strong>C++ modules change build scheduling</strong></p>
+<p>Headers permit:</p>
+<pre class="text"><code>A.cpp
+B.cpp
+C.cpp</code></pre>
+<p>to compile independently after preprocessing dependencies are known.</p>
+<p>C++ modules introduce BMIs.</p>
+<p>If:</p>
+<div class="sourceCode" id="cb68"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="co">// B.cppm</span></span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a><span class="kw">export</span> <span class="kw">module</span> B<span class="op">;</span></span></code></pre></div>
+<p>and:</p>
+<div class="sourceCode" id="cb69"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="co">// A.cppm</span></span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a><span class="kw">export</span> <span class="kw">module</span> A<span class="op">;</span></span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> B<span class="op">;</span></span></code></pre></div>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mi>M</mi>
+  <msub>
+    <mi>I</mi>
+    <mi>B</mi>
+  </msub>
+</math>
+<p>must exist before A can compile.</p>
+<p>CMake scans module imports and communicates dynamic ordering to the underlying build tool. CMake’s C++ module support was introduced in 3.28 specifically because module compilation requires build-order discovery that ordinary header workflows do not. <a href="https://cmake.org/cmake/help/git-stage/manual/cmake-cxxmodules.7.html?utm_source=chatgpt.com">cmake.org</a></p>
+<hr />
+<p><strong>Compiler toolchains</strong></p>
+<p>A toolchain is more than:</p>
+<pre class="text"><code>clang++.</code></pre>
+<p>It includes some combination of:</p>
+<pre class="text"><code>C compiler
+C++ compiler
+linker
+archiver
+standard library
+target triple
+sysroot
+SDK
+platform frameworks
+runtime libraries.</code></pre>
+<p>CMake’s toolchain abstraction exists so these choices can be established early, especially for non-default or cross-compilation builds. <a href="https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html?highlight=toolchains&amp;utm_source=chatgpt.com">cmake.org</a></p>
+<hr />
+<p><strong>Why compiler selection must happen early</strong></p>
+<p>CMake interrogates the compiler during configuration.</p>
+<p>It learns:</p>
+<pre class="text"><code>compiler ID
+compiler version
+ABI
+supported features
+platform defaults.</code></pre>
+<p>Changing compiler after a build directory is configured is unsafe.</p>
+<p>That is why:</p>
+<pre class="text"><code>one build dir per toolchain</code></pre>
+<p>is a strong rule.</p>
+<hr />
+<p><strong>Current Kairo Clang toolchain</strong></p>
+<p>Your toolchain does several good things.</p>
+<p>It first checks:</p>
+<pre class="text"><code>KAIRO_CXX_COMPILER</code></pre>
+<p>environment override.</p>
+<p>On macOS it can discover Homebrew LLVM without hard-coding:</p>
+<pre class="text"><code>/opt/homebrew</code></pre>
+<p>or:</p>
+<pre class="text"><code>/usr/local.</code></pre>
+<p>Then it derives matching:</p>
+<pre class="text"><code>clang
+clang++
+Objective-C++ driver</code></pre>
+<p>from one LLVM installation.</p>
+<p>That avoids an ugly mixed toolchain such as:</p>
+<pre class="text"><code>Homebrew clang++ compile
+Apple clang Objective-C++
+different linker assumptions.</code></pre>
+<hr />
+<p><strong>SDK/toolchain consistency</strong></p>
+<p>A C++ object is not compiled in isolation.</p>
+<p>Especially on macOS:</p>
+<pre class="text"><code>compiler frontend
+SDK headers
+libc++
+linker
+Objective-C runtime
+frameworks
+debug info format</code></pre>
+<p>must cooperate.</p>
+<p>Your current toolchain even pins Debug DWARF behavior because newer upstream Clang output can trigger diagnostic incompatibilities with Apple’s linker.</p>
+<p>This is exactly what “toolchain portability” means in practice.</p>
+<p>Not just:</p>
+<blockquote>
+<p>install clang.</p>
+</blockquote>
+<hr />
+<p><strong>Cross compilation</strong></p>
+<p>Suppose host:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <msub>
+    <mn>86</mn>
+    <mn>6</mn>
+  </msub>
+  <mn>4</mn>
+  <mtext> </mtext>
+  <mi>L</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>u</mi>
+  <mi>x</mi>
+</math>
+<p>target:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>R</mi>
+  <mi>M</mi>
+  <mn>64</mn>
+  <mtext> </mtext>
+  <mi>L</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>u</mi>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>Compiler must use:</p>
+<pre class="text"><code>target triple
+target sysroot
+target libraries.</code></pre>
+<p>CMake toolchain can define:</p>
+<div class="sourceCode" id="cb81"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(</span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>    <span class="dv">CMAKE_SYSTEM_NAME</span></span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>    Linux</span>
+<span id="cb81-4"><a href="#cb81-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb81-5"><a href="#cb81-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-6"><a href="#cb81-6" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(</span>
+<span id="cb81-7"><a href="#cb81-7" aria-hidden="true" tabindex="-1"></a>    <span class="dv">CMAKE_SYSTEM_PROCESSOR</span></span>
+<span id="cb81-8"><a href="#cb81-8" aria-hidden="true" tabindex="-1"></a>    arm64</span>
+<span id="cb81-9"><a href="#cb81-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb81-10"><a href="#cb81-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-11"><a href="#cb81-11" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(</span>
+<span id="cb81-12"><a href="#cb81-12" aria-hidden="true" tabindex="-1"></a>    <span class="dv">CMAKE_CXX_COMPILER</span></span>
+<span id="cb81-13"><a href="#cb81-13" aria-hidden="true" tabindex="-1"></a>    clang++</span>
+<span id="cb81-14"><a href="#cb81-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb81-15"><a href="#cb81-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-16"><a href="#cb81-16" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span>(</span>
+<span id="cb81-17"><a href="#cb81-17" aria-hidden="true" tabindex="-1"></a>    <span class="dv">CMAKE_CXX_COMPILER_TARGET</span></span>
+<span id="cb81-18"><a href="#cb81-18" aria-hidden="true" tabindex="-1"></a>    aarch64-linux-gnu</span>
+<span id="cb81-19"><a href="#cb81-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>The target architecture is part of the build identity.</p>
+<hr />
+<p><strong>Toolchain fingerprints matter for reproducibility</strong></p>
+<p>Two developers can build the same source SHA using:</p>
+<pre class="text"><code>Clang 18
+Clang 23</code></pre>
+<p>and get different:</p>
+<pre class="text"><code>warnings
+code generation
+module behavior
+debug info
+optimizer behavior.</code></pre>
+<p>Therefore a truly reproducible build record should capture:</p>
+<pre class="text"><code>compiler
+version
+standard library
+CMake
+Ninja
+dependency SHAs
+configuration.</code></pre>
+<p>Source commit alone is not complete provenance.</p>
+<hr />
+<p><strong>Clang versus MSVC compatibility</strong></p>
+<p>“Valid C++23” is not enough to guarantee both toolchains compile the same code today.</p>
+<p>Differences arise from:</p>
+<pre class="text"><code>feature implementation maturity
+diagnostics
+extensions
+preprocessor
+module implementation
+warning policy
+linker behavior
+runtime library
+Windows ABI.</code></pre>
+<p>This is why CI must actually build with multiple compilers.</p>
+<hr />
+<p><strong>Warning syntax differs</strong></p>
+<p>Clang/GCC:</p>
+<div class="sourceCode" id="cb86"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>-<span class="fu">Wall</span></span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a><span class="fu">-Wextra</span></span>
+<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a><span class="fu">-Wpedantic</span></span></code></pre></div>
+<p>MSVC:</p>
+<div class="sourceCode" id="cb87"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a>/<span class="fu">W4</span></span></code></pre></div>
+<p>Kairo’s CMake selects appropriate warning options by compiler ID.</p>
+<p>That is correct.</p>
+<p>Do not feed:</p>
+<pre class="text"><code>-Wall</code></pre>
+<p>to MSVC and assume CMake will translate it.</p>
+<hr />
+<p><strong>Diagnostic suppression should be narrow</strong></p>
+<p>Current renderer has an excellent example.</p>
+<p>D3D12 implementation intentionally uses explicit alignment that produces MSVC warning:</p>
+<pre class="text"><code>C4324</code></pre>
+<p>for padding.</p>
+<p>Rather than disabling C4324 globally:</p>
+<div class="sourceCode" id="cb90"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_compile_options</span>(/wd4324)</span></code></pre></div>
+<p>you apply it only to:</p>
+<pre class="text"><code>detail/Direct3D12Backend.cpp.</code></pre>
+<p>That preserves the warning everywhere else.</p>
+<p>Principle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>suppress the warning at the narrowest justified scope</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Vendor/compiler quirks need explicit gates</strong></p>
+<p>Current Kairo also contains a very specific macOS LLVM 23 workaround for source-location exhaustion in a massive module graph.</p>
+<p>It disables one host integration route only for:</p>
+<pre class="text"><code>Apple platform
+Clang
+version &gt;=23 and &lt;24.</code></pre>
+<p>Other compilers/platforms retain the path.</p>
+<p>That is vastly better than:</p>
+<pre class="text"><code>disable feature everywhere.</code></pre>
+<p>This is how portability should work:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>smallest capability-conditioned deviation</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Never use compiler name as a substitute for capability forever</strong></p>
+<p>Initially:</p>
+<div class="sourceCode" id="cb94"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="dv">MSVC</span>)</span>
+<span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a>...</span>
+<span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a><span class="cf">endif</span>()</span></code></pre></div>
+<p>is often necessary.</p>
+<p>But when possible, test actual capability.</p>
+<p>For example:</p>
+<pre class="text"><code>supports feature?
+library available?
+header available?
+backend available?</code></pre>
+<p>because compilers evolve.</p>
+<p>The long-term abstraction should be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+</math>
+<p>rather than:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>N</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>C++ modules in multi-target builds</strong></p>
+<p>Now we combine:</p>
+<pre class="text"><code>targets
+PUBLIC/PRIVATE
+Ninja
+compiler differences
+dependency ordering.</code></pre>
+<p>A C++ module interface:</p>
+<div class="sourceCode" id="cb97"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a><span class="kw">export</span> <span class="kw">module</span> Kairo<span class="op">.</span>Math<span class="op">;</span></span>
+<span id="cb97-2"><a href="#cb97-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb97-3"><a href="#cb97-3" aria-hidden="true" tabindex="-1"></a><span class="kw">export</span> <span class="kw">struct</span> Vec3</span>
+<span id="cb97-4"><a href="#cb97-4" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb97-5"><a href="#cb97-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb97-6"><a href="#cb97-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>produces a compiled module interface/BMI.</p>
+<p>If another target imports:</p>
+<div class="sourceCode" id="cb98"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> Kairo<span class="op">.</span>Math<span class="op">;</span></span></code></pre></div>
+<p>the build system must know:</p>
+<ol type="1">
+<li>which target provides it,</li>
+<li>how that target is compiled,</li>
+<li>which BMI belongs to the current compiler/configuration,</li>
+<li>that provider must be available before consumer module compiles.</li>
+</ol>
+<hr />
+<p><strong>CMake <code>FILE_SET CXX_MODULES</code></strong></p>
+<p>Current Kairo uses patterns like:</p>
+<div class="sourceCode" id="cb99"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_sources</span>(</span>
+<span id="cb99-2"><a href="#cb99-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoSceneECSBridge</span></span>
+<span id="cb99-3"><a href="#cb99-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PUBLIC</span></span>
+<span id="cb99-4"><a href="#cb99-4" aria-hidden="true" tabindex="-1"></a>    <span class="ot">FILE_SET</span> <span class="ot">CXX_MODULES</span></span>
+<span id="cb99-5"><a href="#cb99-5" aria-hidden="true" tabindex="-1"></a>    <span class="ot">BASE_DIRS</span></span>
+<span id="cb99-6"><a href="#cb99-6" aria-hidden="true" tabindex="-1"></a>        <span class="dv">${CMAKE_CURRENT_SOURCE_DIR}</span>/Runtime</span>
+<span id="cb99-7"><a href="#cb99-7" aria-hidden="true" tabindex="-1"></a>    <span class="ot">FILES</span></span>
+<span id="cb99-8"><a href="#cb99-8" aria-hidden="true" tabindex="-1"></a>        Runtime/KairoSceneECSBridge.cppm</span>
+<span id="cb99-9"><a href="#cb99-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>CMake 3.28 added module dependency scanning support; files in <code>CXX_MODULES</code> file sets participate in module scanning and ordering. <a href="https://cmake.org/cmake/help/git-stage/manual/cmake-cxxmodules.7.html?utm_source=chatgpt.com">cmake.org</a></p>
+<p>This is exactly why your root requires:</p>
+<div class="sourceCode" id="cb100"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a><span class="kw">cmake_minimum_required</span>(</span>
+<span id="cb100-2"><a href="#cb100-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">VERSION</span> <span class="dt">3.28</span></span>
+<span id="cb100-3"><a href="#cb100-3" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>rather than an older version.</p>
+<hr />
+<p><strong>Module BMI is compiler-specific</strong></p>
+<p>Do not treat a Clang BMI as a portable artifact consumable by MSVC.</p>
+<p>In general:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mi>M</mi>
+  <mi>I</mi>
+  <mo>=</mo>
+  <mi>F</mi>
+  <mo stretchy="false">(</mo>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>V</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>F</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>S</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This means BMI should live in build tree/cache, not be checked into source control as universal binaries.</p>
+<hr />
+<p><strong>Modules reduce textual inclusion but introduce stronger build dependencies</strong></p>
+<p>Header model:</p>
+<pre class="text"><code>A.cpp preprocesses header B</code></pre>
+<p>Module model:</p>
+<pre class="text"><code>B must compile to BMI
+then A consumes BMI.</code></pre>
+<p>This can improve compile isolation but creates more explicit graph ordering.</p>
+<p>Large chains:</p>
+<pre class="text"><code>M1 → M2 → M3 → M4 → M5</code></pre>
+<p>reduce available parallelism.</p>
+<p>So module architecture still benefits from shallow dependency layering.</p>
+<hr />
+<p><strong>Module cycles remain architectural cycles</strong></p>
+<p>If:</p>
+<div class="sourceCode" id="cb104"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> A<span class="op">;</span></span>
+<span id="cb104-2"><a href="#cb104-2" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> B<span class="op">;</span></span></code></pre></div>
+<p>and:</p>
+<div class="sourceCode" id="cb105"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb105-1"><a href="#cb105-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> B<span class="op">;</span></span>
+<span id="cb105-2"><a href="#cb105-2" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> A<span class="op">;</span></span></code></pre></div>
+<p>you have not found a “modules problem.”</p>
+<p>You have an architectural cycle.</p>
+<p>Fix by:</p>
+<pre class="text"><code>extracting shared contracts
+moving bridge upward
+splitting responsibility.</code></pre>
+<p>Exactly the same principles from M091.</p>
+<hr />
+<p><strong>Public modules and target dependencies</strong></p>
+<p>If an exported module interface exposes types or requirements from another target, that dependency is generally part of the consumer-facing contract.</p>
+<p>For example:</p>
+<div class="sourceCode" id="cb107"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb107-1"><a href="#cb107-1" aria-hidden="true" tabindex="-1"></a><span class="kw">export</span> <span class="kw">module</span> Renderer<span class="op">.</span>Scene<span class="op">;</span></span>
+<span id="cb107-2"><a href="#cb107-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb107-3"><a href="#cb107-3" aria-hidden="true" tabindex="-1"></a><span class="kw">export</span> <span class="kw">import</span> Kairo<span class="op">.</span>Math<span class="op">;</span></span></code></pre></div>
+<p>is obviously public.</p>
+<p>Even without <code>export import</code>, if exported signatures use types whose definitions/usage requirements are required downstream, the target dependency must be modeled accordingly.</p>
+<p>PUBLIC/PRIVATE remains architectural even with modules.</p>
+<p>Modules do not remove transitive dependency design.</p>
+<hr />
+</section>
+<section id="id_01-foundations-i-ch010-reproducibility-ci-testing-diagnostics-profiling-and-the-complete-engine-flow" class="level4">
+<h4>REPRODUCIBILITY, CI, TESTING, DIAGNOSTICS, PROFILING AND THE COMPLETE ENGINE FLOW</h4>
+<p><strong>Git submodule commit pinning</strong></p>
+<p>A Git submodule fundamentally records:</p>
+<pre class="text"><code>path
+repository URL/config
+exact commit object.</code></pre>
+<p>The important part for reproducibility is the commit.</p>
+<p>Not:</p>
+<pre class="text"><code>&quot;main branch.&quot;</code></pre>
+<p>Because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>t</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>≠</mo>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>t</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>If your integration project says:</p>
+<pre class="text"><code>KairoRenderer main</code></pre>
+<p>two clones at different dates may build different engines.</p>
+<p>Pin:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>K</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>@</mo>
+  </mrow>
+  <mi>S</mi>
+  <mi>H</mi>
+  <mi>A</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Why commit pinning matters</strong></p>
+<p>Suppose EngineCore expects renderer API:</p>
+<div class="sourceCode" id="cb111"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb111-1"><a href="#cb111-1" aria-hidden="true" tabindex="-1"></a>SubmitScene<span class="op">(</span></span>
+<span id="cb111-2"><a href="#cb111-2" aria-hidden="true" tabindex="-1"></a>    RenderScene<span class="op">&amp;);</span></span></code></pre></div>
+<p>Renderer main changes tomorrow to:</p>
+<div class="sourceCode" id="cb112"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb112-1"><a href="#cb112-1" aria-hidden="true" tabindex="-1"></a>SubmitFrame<span class="op">(</span></span>
+<span id="cb112-2"><a href="#cb112-2" aria-hidden="true" tabindex="-1"></a>    FrameDescription<span class="op">&amp;);</span></span></code></pre></div>
+<p>A fresh CI clone now fails despite GameEngine source being unchanged.</p>
+<p>The integration state was never fully specified.</p>
+<p>A reproducible workspace must define:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>E</mi>
+          <mi>n</mi>
+          <mi>g</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>e</mi>
+          <mi>S</mi>
+          <mi>t</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mo>=</mo>
+          <mo fence="false" stretchy="false">{</mo>
+          <mi>R</mi>
+          <mi>e</mi>
+          <mi>p</mi>
+          <msub>
+            <mi>o</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>,</mo>
+          <mi>S</mi>
+          <mi>H</mi>
+          <msub>
+            <mi>A</mi>
+            <mi>i</mi>
+          </msub>
+          <msubsup>
+            <mo fence="false" stretchy="false">}</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mo>=</mo>
+              <mn>1</mn>
+            </mrow>
+            <mrow data-mjx-texclass="ORD">
+              <mi>N</mi>
+            </mrow>
+          </msubsup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Current Kairo has moved beyond ordinary submodules</strong></p>
+<p>Your repository includes a migration script explicitly removing old nested component submodules.</p>
+<p>Current architecture instead uses sibling repositories plus:</p>
+<pre class="text"><code>workspace.lock.</code></pre>
+<p>This is important.</p>
+<p>The curriculum atom says “Git submodule commit pinning,” but the underlying principle is <strong>commit-pinned multi-repository composition</strong>.</p>
+<p>Kairo currently implements the principle without using active nested submodules.</p>
+<hr />
+<p><strong>Current <code>workspace.lock</code></strong></p>
+<p>It records exact full 40-hex SHAs:</p>
+<pre class="text"><code>KairoMath          &lt;SHA&gt;
+KairoGeometry      &lt;SHA&gt;
+KairoSpatial       &lt;SHA&gt;
+KairoPhysicsEngine &lt;SHA&gt;
+...</code></pre>
+<p>This is functionally the same integration guarantee as submodule gitlinks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>N</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>E</mi>
+  <mi>x</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>In some ways it is easier to reason about in your sibling-workspace model.</p>
+<hr />
+<p><strong>Why full SHA, not short SHA</strong></p>
+<p>Short SHAs are contextual prefixes.</p>
+<p>They may become ambiguous as repository history grows.</p>
+<p>A reproducibility lock should use full commit ID.</p>
+<p>Current Kairo validates:</p>
+<pre class="text"><code>40 lowercase hex characters.</code></pre>
+<p>That is good.</p>
+<hr />
+<p><strong>Lock verification must also detect dirty trees</strong></p>
+<p>Suppose repository HEAD exactly matches locked SHA but developer modified one file.</p>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>E</mi>
+  <mi>A</mi>
+  <mi>D</mi>
+  <mo>=</mo>
+  <mi>L</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>S</mi>
+  <mi>H</mi>
+  <mi>A</mi>
+</math>
+<p>yet actual source is different.</p>
+<p>So reproducible state requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>E</mi>
+  <mi>A</mi>
+  <msub>
+    <mi>D</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>L</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>S</mi>
+  <mi>H</mi>
+  <msub>
+    <mi>A</mi>
+    <mi>i</mi>
+  </msub>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>k</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>Your <code>verify_workspace_lock.sh</code> checks both.</p>
+<p>This is an important detail many “reproducible” scripts miss.</p>
+<hr />
+<p><strong>Materialization algorithm</strong></p>
+<p>Your materializer roughly performs:</p>
+<pre class="text"><code>read lock entry
+      ↓
+repo exists?
+  no → clone
+  yes → reject meaningful dirty changes
+      ↓
+fetch commit
+      ↓
+verify commit object exists
+      ↓
+checkout --detach exact SHA
+      ↓
+verify HEAD == expected SHA.</code></pre>
+<p>This is much stronger than:</p>
+<div class="sourceCode" id="cb117"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone repo</span>
+<span id="cb117-2"><a href="#cb117-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> checkout main</span></code></pre></div>
+<hr />
+<p><strong>Detached HEAD is desirable in CI</strong></p>
+<p>CI does not need to accidentally track a branch tip.</p>
+<p>It wants exactly:</p>
+<pre class="text"><code>commit X.</code></pre>
+<p>Detached HEAD communicates:</p>
+<blockquote>
+<p>this checkout represents immutable integration input.</p>
+</blockquote>
+<p>That is appropriate for build workers.</p>
+<hr />
+<p><strong>Reproducible superbuilds</strong></p>
+<p>A <strong>superbuild</strong> composes many projects into one coordinated build.</p>
+<p>Your KairoGameEngine root is effectively a superbuild.</p>
+<p>It:</p>
+<pre class="text"><code>materializes component repos
+sets component options
+adds component subdirectories
+builds integration bridges
+builds player/editor/samples
+runs cross-component tests.</code></pre>
+<p>The key property is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>one configuration creates one coherent component graph</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Why standalone CI is not enough</strong></p>
+<p>Suppose:</p>
+<pre class="text"><code>KairoRenderer tests pass.
+KairoEngineCore tests pass.</code></pre>
+<p>But Renderer changed a public module contract that EngineCore integration bridge expects.</p>
+<p>Each repo independently green.</p>
+<p>Combined engine broken.</p>
+<p>Therefore you need:</p>
+<pre class="text"><code>component CI
++
+superbuild CI.</code></pre>
+<p>They test different boundaries.</p>
+<hr />
+<p><strong>Current dual strategy</strong></p>
+<p>Your repositories do both.</p>
+<p>Examples:</p>
+<pre class="text"><code>KairoECS CI
+KairoRenderer CI
+KairoEngineCore CI</code></pre>
+<p>test standalone component correctness.</p>
+<p>Then:</p>
+<pre class="text"><code>KairoGameEngine Build, Test, and Package</code></pre>
+<p>materializes locked component versions and tests the integrated stack.</p>
+<p>Excellent architecture.</p>
+<hr />
+<p><strong>Immutable dependency fallback</strong></p>
+<p>KairoRenderer also defines pinned commit SHAs for standalone dependencies.</p>
+<p>If it is built inside superbuild:</p>
+<pre class="text"><code>TARGET KairoMath already exists</code></pre>
+<p>so reuse.</p>
+<p>If standalone:</p>
+<pre class="text"><code>local source path?
+sibling?
+otherwise FetchContent exact pinned SHA.</code></pre>
+<p>This allows:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>g</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+</math>
+<p>without tracking dependency branch heads.</p>
+<p>That is good reproducibility.</p>
+<hr />
+<p><strong>Reproducibility has levels</strong></p>
+<p>A useful hierarchy is:</p>
+<p><strong>Source reproducibility</strong></p>
+<p>Exact source SHAs known.</p>
+<p><strong>Dependency reproducibility</strong></p>
+<p>Third-party versions pinned.</p>
+<p><strong>Toolchain reproducibility</strong></p>
+<p>Compiler/CMake/Ninja/SDK known.</p>
+<p><strong>Configuration reproducibility</strong></p>
+<p>Preset/options known.</p>
+<p><strong>Artifact reproducibility</strong></p>
+<p>Same bytes produced.</p>
+<p>Kairo is strong on the first four.</p>
+<p>Bit-for-bit artifact reproducibility is a further bar and may require eliminating timestamps, absolute paths, nondeterministic archive ordering, linker build IDs, etc.</p>
+<p>Do not claim more than you prove.</p>
+<hr />
+<p><strong>Build provenance record</strong></p>
+<p>A strong release could emit:</p>
+<pre class="text"><code>KairoGameEngine SHA
+workspace.lock hash
+CMake version
+Ninja version
+compiler ID/version
+platform/SDK
+preset
+configuration flags
+dependency package versions.</code></pre>
+<p>Then any artifact can be traced to its exact build recipe.</p>
+<p>This is extremely valuable for research reproducibility too.</p>
+<hr />
+<p><strong>Continuous-integration matrices</strong></p>
+<p>A CI matrix answers:</p>
+<blockquote>
+<p>Which combinations of environment do we prove?</p>
+</blockquote>
+<p>Current top-level superbuild matrix includes approximately:</p>
+<pre class="text"><code>Ubuntu + Clang
+Ubuntu + Clang + ASan/UBSan
+macOS + upstream/Homebrew Clang
+Windows + MSVC.</code></pre>
+<p>This is meaningful coverage.</p>
+<p>It is not simply four duplicate jobs.</p>
+<p>Each axis catches different defects.</p>
+<hr />
+<p><strong>Why Linux Clang matters</strong></p>
+<p>It catches:</p>
+<pre class="text"><code>POSIX assumptions
+Clang diagnostics
+Linux linker behavior
+case-sensitive filesystem behavior
+OpenGL/Vulkan Linux runtime issues.</code></pre>
+<hr />
+<p><strong>Why macOS LLVM matters</strong></p>
+<p>It catches:</p>
+<pre class="text"><code>Apple frameworks
+Objective-C++
+Metal
+MoltenVK
+Darwin linker semantics
+macOS module/toolchain behavior.</code></pre>
+<hr />
+<p><strong>Why Windows MSVC matters</strong></p>
+<p>It catches:</p>
+<pre class="text"><code>MSVC language conformance differences
+Windows filesystem/path behavior
+D3D12
+Windows linker/import-library semantics
+different standard library implementation.</code></pre>
+<p>A project that compiles only with Clang has not proven portable C++.</p>
+<hr />
+<p><strong>Sanitizer lane</strong></p>
+<p>ASan:</p>
+<pre class="text"><code>heap buffer overflow
+use-after-free
+stack errors</code></pre>
+<p>UBSan:</p>
+<pre class="text"><code>undefined shifts
+bad casts
+signed overflow classes
+alignment violations</code></pre>
+<p>depending on instrumentation.</p>
+<p>These are orthogonal to normal Release build tests.</p>
+<p>Current <code>ci-sanitized</code> removes some heavyweight targets to keep the sanitizer lane focused and tractable.</p>
+<p>That is reasonable.</p>
+<hr />
+<p><strong>CI matrix explosion</strong></p>
+<p>Suppose you test:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <mtext> </mtext>
+  <mi>O</mi>
+  <mi>S</mi>
+  <mo>×</mo>
+  <mn>3</mn>
+  <mtext> </mtext>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mo>×</mo>
+  <mn>3</mn>
+  <mtext> </mtext>
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>d</mi>
+  <mtext> </mtext>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mtext> </mtext>
+  <mi>b</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mn>108</mn>
+</math>
+<p>jobs.</p>
+<p>That becomes expensive.</p>
+<p>Choose representative combinations.</p>
+<p>You do not need full Cartesian product every commit.</p>
+<p>You can have:</p>
+<pre class="text"><code>PR matrix
+nightly extended matrix
+release matrix.</code></pre>
+<p>Optimization problem:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+</math>
+<p>subject to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>I</mi>
+  <mtext> </mtext>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>≤</mo>
+  <mi>B</mi>
+  <mi>u</mi>
+  <mi>d</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Fail-fast false</strong></p>
+<p>Your main matrix uses:</p>
+<div class="sourceCode" id="cb134"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb134-1"><a href="#cb134-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fail-fast</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span></code></pre></div>
+<p>That is useful.</p>
+<p>If Linux fails, still learn whether Windows/macOS pass.</p>
+<p>One CI run produces a cross-platform failure map.</p>
+<p>For portability work, that diagnostic value is often worth extra runner time.</p>
+<hr />
+<p><strong>CI dependency installation is part of the test</strong></p>
+<p>Current CI explicitly installs:</p>
+<pre class="text"><code>Ninja
+Clang
+GLFW
+Vulkan SDK/libraries
+glslang
+Xvfb
+etc.</code></pre>
+<p>A clean runner therefore exercises bootstrap assumptions.</p>
+<p>A developer machine may accidentally have hidden dependencies installed.</p>
+<p>CI reveals them.</p>
+<hr />
+<p><strong>Unit tests versus integration tests</strong></p>
+<p>A unit test tries to isolate a small behavior.</p>
+<p>Example ECS:</p>
+<div class="sourceCode" id="cb136"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb136-1"><a href="#cb136-1" aria-hidden="true" tabindex="-1"></a>TEST_CASE<span class="op">(</span></span>
+<span id="cb136-2"><a href="#cb136-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;destroyed entity handle is stale&quot;</span><span class="op">)</span></span>
+<span id="cb136-3"><a href="#cb136-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb136-4"><a href="#cb136-4" aria-hidden="true" tabindex="-1"></a>    Registry registry<span class="op">;</span></span>
+<span id="cb136-5"><a href="#cb136-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb136-6"><a href="#cb136-6" aria-hidden="true" tabindex="-1"></a>    Entity a <span class="op">=</span></span>
+<span id="cb136-7"><a href="#cb136-7" aria-hidden="true" tabindex="-1"></a>        registry<span class="op">.</span>Create<span class="op">();</span></span>
+<span id="cb136-8"><a href="#cb136-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb136-9"><a href="#cb136-9" aria-hidden="true" tabindex="-1"></a>    registry<span class="op">.</span>Destroy<span class="op">(</span>a<span class="op">);</span></span>
+<span id="cb136-10"><a href="#cb136-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb136-11"><a href="#cb136-11" aria-hidden="true" tabindex="-1"></a>    REQUIRE_FALSE<span class="op">(</span></span>
+<span id="cb136-12"><a href="#cb136-12" aria-hidden="true" tabindex="-1"></a>        registry<span class="op">.</span>IsAlive<span class="op">(</span>a<span class="op">));</span></span>
+<span id="cb136-13"><a href="#cb136-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>No renderer.</p>
+<p>No window.</p>
+<p>No project loading.</p>
+<p>No GPU.</p>
+<p>This is a unit-level invariant test.</p>
+<hr />
+<p><strong>Unit tests should localize failures</strong></p>
+<p>If sparse-set invariant breaks, you want:</p>
+<pre class="text"><code>KairoECS tests fail.</code></pre>
+<p>Not:</p>
+<pre class="text"><code>KairoPlayer cannot render sample project.</code></pre>
+<p>The latter is too far from cause.</p>
+<p>Unit tests provide fault localization.</p>
+<hr />
+<p><strong>Integration tests</strong></p>
+<p>An integration test deliberately crosses boundaries.</p>
+<p>Example:</p>
+<pre class="text"><code>Scene
+    ↓
+SceneECSBridge
+    ↓
+ECS</code></pre>
+<p>Current:</p>
+<pre class="text"><code>KairoSceneECSBridgeTests</code></pre>
+<p>does exactly this class of test.</p>
+<p>Another:</p>
+<pre class="text"><code>Physics debug data
+    ↓
+Renderer bridge</code></pre>
+<p>is integration.</p>
+<hr />
+<p><strong>Integration tests validate contracts, not implementation details</strong></p>
+<p>Suppose:</p>
+<pre class="text"><code>AssetRegistry
++
+SceneLoader
++
+RendererAdapter.</code></pre>
+<p>An integration test should verify:</p>
+<pre class="text"><code>the same stable asset reaches renderer correctly.</code></pre>
+<p>It should not assert internal vector capacities unless those are contract.</p>
+<p>This keeps tests robust during refactoring.</p>
+<hr />
+<p><strong>Test pyramid for engine code</strong></p>
+<p>A practical distribution:</p>
+<pre class="text"><code>many fast unit tests
+
+fewer subsystem integration tests
+
+fewer full player/editor smoke tests
+
+very few expensive hardware/content acceptance tests.</code></pre>
+<p>Why?</p>
+<p>Fast unit tests run continuously.</p>
+<p>Full GPU tests are slower and more environment-sensitive.</p>
+<p>Every test layer has a role.</p>
+<hr />
+<p><strong>Smoke tests</strong></p>
+<p>A smoke test asks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Does the major path basically start and function?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>It does not prove every detail.</p>
+<p>Example:</p>
+<pre class="text"><code>launch KairoPlayer
+load project
+initialize renderer
+execute one/few frames
+exit successfully.</code></pre>
+<p>That is much broader than a unit test.</p>
+<hr />
+<p><strong>Current shared-content smoke</strong></p>
+<p>Your superbuild uses:</p>
+<pre class="text"><code>KairoSharedContentPlayerSmoke.</code></pre>
+<p>It chooses a deterministic backend by platform rather than letting <code>auto</code> choose unpredictably.</p>
+<p>Linux/macOS CI window constraints are handled explicitly.</p>
+<p>This is good smoke-test design.</p>
+<hr />
+<p><strong>Why smoke tests may legitimately skip</strong></p>
+<p>Renderer smoke tests use:</p>
+<pre class="text"><code>SKIP_RETURN_CODE 77.</code></pre>
+<p>Suppose a CI machine lacks required GPU/display capability.</p>
+<p>That is not necessarily:</p>
+<pre class="text"><code>test passed.</code></pre>
+<p>Nor necessarily:</p>
+<pre class="text"><code>engine code failed.</code></pre>
+<p>It may be:</p>
+<pre class="text"><code>environment cannot execute this test.</code></pre>
+<p>A distinct skip state is honest.</p>
+<p>Never report unavailable-hardware tests as passes.</p>
+<hr />
+<p><strong>Validation test versus smoke test</strong></p>
+<p>Current Kairo distinguishes:</p>
+<pre class="text"><code>KairoSharedContentProjectValidation</code></pre>
+<p>from:</p>
+<pre class="text"><code>KairoSharedContentPlayerSmoke.</code></pre>
+<p>Validation asks:</p>
+<blockquote>
+<p>Is project structurally valid?</p>
+</blockquote>
+<p>Smoke asks:</p>
+<blockquote>
+<p>Can runtime execute it?</p>
+</blockquote>
+<p>This separation is excellent.</p>
+<p>One can run headlessly even when GPU/window tests cannot.</p>
+<hr />
+<p><strong>Deterministic test fixtures</strong></p>
+<p>A deterministic fixture should behave identically across runs.</p>
+<p>Avoid:</p>
+<pre class="text"><code>download current latest model
+use current time
+random unseeded values
+depend on user&#39;s home directory
+depend on current network response.</code></pre>
+<p>Prefer:</p>
+<pre class="text"><code>committed fixture
+exact checksum
+seeded PRNG
+fixed paths
+known expected outputs.</code></pre>
+<hr />
+<p><strong>Current Kairo content fixtures</strong></p>
+<p>Your repository has:</p>
+<pre class="text"><code>TestContent/Compatibility/committed/</code></pre>
+<p>containing known assets such as glTF/HDR fixtures and malformed input.</p>
+<p>It also has checksum verification scripts.</p>
+<p>This is exactly the correct strategy for deterministic compatibility tests.</p>
+<hr />
+<p><strong>Why checksums matter for test content</strong></p>
+<p>Imagine fixture file silently changes.</p>
+<p>Tests may begin producing different results.</p>
+<p>Without provenance you may think:</p>
+<blockquote>
+<p>engine regression.</p>
+</blockquote>
+<p>But actual change was fixture.</p>
+<p>Checksum gate verifies:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>B</mi>
+  <mi>y</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mi>E</mi>
+  <mi>x</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>B</mi>
+  <mi>y</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Thus the input itself is controlled.</p>
+<hr />
+<p><strong>Malformed fixtures are first-class test assets</strong></p>
+<p>A good test corpus includes not only happy data.</p>
+<p>Examples:</p>
+<pre class="text"><code>invalid JSON
+truncated binary
+missing dependency
+unsupported schema version
+out-of-range count
+path traversal
+cycle.</code></pre>
+<p>A robust engine must prove:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>invalid input</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>controlled failure</mtext>
+  <mo>.</mo>
+</math>
+<p>Not:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>crash/UB</mtext>
+  <mo>.</mo>
+</math>
+<p>Your compatibility tree includes malformed content, which is good.</p>
+<hr />
+<p><strong>Randomness in deterministic tests</strong></p>
+<p>If algorithm needs randomness:</p>
+<div class="sourceCode" id="cb157"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb157-1"><a href="#cb157-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>mt19937 rng<span class="op">(</span></span>
+<span id="cb157-2"><a href="#cb157-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">0x12345678</span><span class="op">);</span></span></code></pre></div>
+<p>Record seed.</p>
+<p>On failure:</p>
+<pre class="text"><code>seed=0x12345678</code></pre>
+<p>allows exact replay.</p>
+<p>Property-based tests can use many seeds, but failing seed must be reported.</p>
+<hr />
+<p><strong>Time</strong></p>
+<p>Avoid:</p>
+<div class="sourceCode" id="cb159"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb159-1"><a href="#cb159-1" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> now <span class="op">=</span></span>
+<span id="cb159-2"><a href="#cb159-2" aria-hidden="true" tabindex="-1"></a>    system_clock<span class="op">::</span>now<span class="op">();</span></span></code></pre></div>
+<p>inside deterministic test semantics.</p>
+<p>Inject:</p>
+<div class="sourceCode" id="cb160"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb160-1"><a href="#cb160-1" aria-hidden="true" tabindex="-1"></a>FakeClock<span class="op">.</span></span></code></pre></div>
+<p>Your logger’s monotonic sequence numbers rather than wall-clock timestamps are a nice example of making diagnostics testable and deterministic.</p>
+<hr />
+<p><strong>Crash reporting and structured logging</strong></p>
+<p>These are related but distinct.</p>
+<p>Structured logging answers:</p>
+<blockquote>
+<p>What happened before the failure?</p>
+</blockquote>
+<p>Crash reporting answers:</p>
+<blockquote>
+<p>What failed at process level, where, and in what environment?</p>
+</blockquote>
+<p>A serious engine eventually wants both.</p>
+<hr />
+<p><strong>Structured logging</strong></p>
+<p>Bad log:</p>
+<pre class="text"><code>failed</code></pre>
+<p>Better:</p>
+<pre class="text"><code>severity=error
+category=assets.import
+asset=f03b...
+importer=kairo.texture.stb
+message=&quot;invalid mip payload&quot;</code></pre>
+<p>Structure lets tooling filter/search.</p>
+<p>A log record can conceptually be:</p>
+<div class="sourceCode" id="cb163"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb163-1"><a href="#cb163-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> LogRecord</span>
+<span id="cb163-2"><a href="#cb163-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb163-3"><a href="#cb163-3" aria-hidden="true" tabindex="-1"></a>    Severity Severity<span class="op">;</span></span>
+<span id="cb163-4"><a href="#cb163-4" aria-hidden="true" tabindex="-1"></a>    StringID Category<span class="op">;</span></span>
+<span id="cb163-5"><a href="#cb163-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> Sequence<span class="op">;</span></span>
+<span id="cb163-6"><a href="#cb163-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>string Message<span class="op">;</span></span>
+<span id="cb163-7"><a href="#cb163-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb163-8"><a href="#cb163-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// optional fields</span></span>
+<span id="cb163-9"><a href="#cb163-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>vector<span class="op">&lt;</span>Field<span class="op">&gt;</span></span>
+<span id="cb163-10"><a href="#cb163-10" aria-hidden="true" tabindex="-1"></a>        Fields<span class="op">;</span></span>
+<span id="cb163-11"><a href="#cb163-11" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<hr />
+<p><strong>Current Kairo Logger</strong></p>
+<p>Current <code>EngineCore::Logger</code> has:</p>
+<pre class="text"><code>Trace
+Debug
+Info
+Warning
+Error
+Critical</code></pre>
+<p>and stores:</p>
+<pre class="text"><code>Sequence
+Severity
+Category
+Message.</code></pre>
+<p>It is:</p>
+<pre class="text"><code>thread-safe
+bounded
+backend-neutral.</code></pre>
+<p>Very sensible foundation.</p>
+<p>It deliberately does not force:</p>
+<pre class="text"><code>stdout
+file
+network telemetry.</code></pre>
+<p>The host can snapshot and forward records.</p>
+<hr />
+<p><strong>Deterministic sequence numbers</strong></p>
+<p>Instead of attaching wall-clock timestamp as primary identity, Kairo increments:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>e</mi>
+  <mi>q</mi>
+  <mi>u</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mo>…</mo>
+</math>
+<p>This gives deterministic event ordering per logger instance.</p>
+<p>For runtime production you may additionally attach:</p>
+<pre class="text"><code>monotonic timestamp
+wall-clock timestamp
+thread ID
+frame number
+run ID.</code></pre>
+<p>But sequence is a strong ordering key.</p>
+<hr />
+<p><strong>Bounded logging</strong></p>
+<p>Unbounded logger:</p>
+<pre class="text"><code>runs 8 hours
+writes millions of messages
+memory grows indefinitely.</code></pre>
+<p>Kairo evicts oldest record when capacity is reached.</p>
+<p>That is appropriate for in-memory diagnostic history.</p>
+<p>Persistent sinks may use rolling files.</p>
+<hr />
+<p><strong>Crash reporting</strong></p>
+<p>No dedicated <code>CrashReporter</code>/<code>CoreDiagnostics.cppm</code> equivalent was found in the inspected current repositories even though the curriculum lab card names a <code>CoreDiagnostics.cppm</code> target concept.</p>
+<p>So for Part 1597, this is partly <strong>target architecture</strong>, not a claim about current implementation.</p>
+<p>A crash system generally needs platform-specific hooks:</p>
+<pre class="text"><code>Windows:
+unhandled exception / minidump
+
+Linux:
+signals + external dump tooling
+
+macOS:
+Mach/CrashReporter integration or external service.</code></pre>
+<p>Be extremely careful doing complex work inside POSIX signal handlers.</p>
+<hr />
+<p><strong>Crash-report payload</strong></p>
+<p>Useful crash metadata:</p>
+<pre class="text"><code>build ID
+workspace.lock hash
+Git SHA
+platform
+compiler
+exception/signal
+thread
+stack
+recent structured log ring
+active scene
+last frame number
+renderer backend
+GPU/driver info
+possibly recent profiler breadcrumbs.</code></pre>
+<p>The crash artifact becomes reproducibility evidence.</p>
+<hr />
+<p><strong>Do not allocate wildly in a crash handler</strong></p>
+<p>At crash time:</p>
+<pre class="text"><code>heap may be corrupted
+locks may be held
+threads may be suspended.</code></pre>
+<p>Calling arbitrary engine code can deadlock or crash again.</p>
+<p>A robust crash architecture pre-allocates/minimizes in-process work and delegates symbolization/upload to a safer postmortem helper where possible.</p>
+<hr />
+<p><strong>Breadcrumbs</strong></p>
+<p>Before risky transitions:</p>
+<pre class="text"><code>&quot;loading scene X&quot;
+&quot;submitting frame 731&quot;
+&quot;reloading shader Y&quot;</code></pre>
+<p>record lightweight breadcrumbs.</p>
+<p>Crash report can reveal the last known logical path even when stack is low-level.</p>
+<p>This is particularly useful for asynchronous engines.</p>
+<hr />
+<p><strong>Runtime profiling hooks</strong></p>
+<p>Logging tells:</p>
+<pre class="text"><code>what happened.</code></pre>
+<p>Profiling tells:</p>
+<pre class="text"><code>where time/resources went.</code></pre>
+<p>A profiling hook should have extremely low overhead when disabled.</p>
+<p>Typical API:</p>
+<div class="sourceCode" id="cb176"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb176-1"><a href="#cb176-1" aria-hidden="true" tabindex="-1"></a>ProfileScope scope<span class="op">{</span></span>
+<span id="cb176-2"><a href="#cb176-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;Physics.Broadphase&quot;</span></span>
+<span id="cb176-3"><a href="#cb176-3" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>or macro:</p>
+<div class="sourceCode" id="cb177"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb177-1"><a href="#cb177-1" aria-hidden="true" tabindex="-1"></a>KAIRO_PROFILE_SCOPE<span class="op">(</span></span>
+<span id="cb177-2"><a href="#cb177-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;Physics.Broadphase&quot;</span><span class="op">);</span></span></code></pre></div>
+<hr />
+<p><strong>RAII profile scope</strong></p>
+<div class="sourceCode" id="cb178"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb178-1"><a href="#cb178-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ProfileScope</span>
+<span id="cb178-2"><a href="#cb178-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb178-3"><a href="#cb178-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span><span class="op">:</span></span>
+<span id="cb178-4"><a href="#cb178-4" aria-hidden="true" tabindex="-1"></a>    ProfileScope<span class="op">(</span></span>
+<span id="cb178-5"><a href="#cb178-5" aria-hidden="true" tabindex="-1"></a>        Profiler<span class="op">&amp;</span> profiler<span class="op">,</span></span>
+<span id="cb178-6"><a href="#cb178-6" aria-hidden="true" tabindex="-1"></a>        StringID name<span class="op">)</span></span>
+<span id="cb178-7"><a href="#cb178-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">:</span> <span class="va">m_Profiler</span><span class="op">(&amp;</span>profiler<span class="op">),</span></span>
+<span id="cb178-8"><a href="#cb178-8" aria-hidden="true" tabindex="-1"></a>          <span class="va">m_Name</span><span class="op">(</span>name<span class="op">),</span></span>
+<span id="cb178-9"><a href="#cb178-9" aria-hidden="true" tabindex="-1"></a>          <span class="va">m_Start</span><span class="op">(</span></span>
+<span id="cb178-10"><a href="#cb178-10" aria-hidden="true" tabindex="-1"></a>              Clock<span class="op">::</span>now<span class="op">())</span></span>
+<span id="cb178-11"><a href="#cb178-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">{}</span></span>
+<span id="cb178-12"><a href="#cb178-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb178-13"><a href="#cb178-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">~</span>ProfileScope<span class="op">()</span> <span class="kw">noexcept</span></span>
+<span id="cb178-14"><a href="#cb178-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb178-15"><a href="#cb178-15" aria-hidden="true" tabindex="-1"></a>        <span class="va">m_Profiler</span><span class="op">-&gt;</span>Record<span class="op">(</span></span>
+<span id="cb178-16"><a href="#cb178-16" aria-hidden="true" tabindex="-1"></a>            <span class="va">m_Name</span><span class="op">,</span></span>
+<span id="cb178-17"><a href="#cb178-17" aria-hidden="true" tabindex="-1"></a>            Clock<span class="op">::</span>now<span class="op">()</span> <span class="op">-</span></span>
+<span id="cb178-18"><a href="#cb178-18" aria-hidden="true" tabindex="-1"></a>                <span class="va">m_Start</span><span class="op">);</span></span>
+<span id="cb178-19"><a href="#cb178-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb178-20"><a href="#cb178-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb178-21"><a href="#cb178-21" aria-hidden="true" tabindex="-1"></a><span class="kw">private</span><span class="op">:</span></span>
+<span id="cb178-22"><a href="#cb178-22" aria-hidden="true" tabindex="-1"></a>    Profiler<span class="op">*</span> <span class="va">m_Profiler</span><span class="op">;</span></span>
+<span id="cb178-23"><a href="#cb178-23" aria-hidden="true" tabindex="-1"></a>    StringID <span class="va">m_Name</span><span class="op">;</span></span>
+<span id="cb178-24"><a href="#cb178-24" aria-hidden="true" tabindex="-1"></a>    TimePoint <span class="va">m_Start</span><span class="op">;</span></span>
+<span id="cb178-25"><a href="#cb178-25" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then:</p>
+<div class="sourceCode" id="cb179"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb179-1"><a href="#cb179-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> PhysicsWorld<span class="op">::</span>Step<span class="op">(...)</span></span>
+<span id="cb179-2"><a href="#cb179-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb179-3"><a href="#cb179-3" aria-hidden="true" tabindex="-1"></a>    ProfileScope profile<span class="op">{</span></span>
+<span id="cb179-4"><a href="#cb179-4" aria-hidden="true" tabindex="-1"></a>        profiler<span class="op">,</span></span>
+<span id="cb179-5"><a href="#cb179-5" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;Physics.Step&quot;</span></span>
+<span id="cb179-6"><a href="#cb179-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb179-7"><a href="#cb179-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb179-8"><a href="#cb179-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb179-9"><a href="#cb179-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>No forgotten end marker.</p>
+<hr />
+<p><strong>Current Kairo has subsystem profiling but no unified profiler abstraction</strong></p>
+<p>Current PhysicsWorld exposes:</p>
+<pre class="text"><code>PhysicsStepProfile</code></pre>
+<p>with timing for:</p>
+<pre class="text"><code>whole step
+broadphase
+narrowphase
+solver.</code></pre>
+<p>RenderGraph exposes:</p>
+<pre class="text"><code>RenderPassProfile
+RenderGraphExecutionProfile</code></pre>
+<p>with per-pass and total milliseconds.</p>
+<p>BVH exposes:</p>
+<pre class="text"><code>BuildMilliseconds.</code></pre>
+<p>So profiling instrumentation exists in important subsystems.</p>
+<p>But no single cross-engine tracing/profiler API was found in the inspected Core/integration repos.</p>
+<p>That is the next architectural step.</p>
+<hr />
+<p><strong>CPU profiling clocks</strong></p>
+<p>Use:</p>
+<div class="sourceCode" id="cb184"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb184-1"><a href="#cb184-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>chrono::steady_clock</span></code></pre></div>
+<p>for durations.</p>
+<p>Not:</p>
+<div class="sourceCode" id="cb185"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb185-1"><a href="#cb185-1" aria-hidden="true" tabindex="-1"></a>system_clock</span></code></pre></div>
+<p>because wall clock can jump due to:</p>
+<pre class="text"><code>NTP
+manual adjustment
+timezone
+daylight saving.</code></pre>
+<p>Duration measurement requires monotonic time.</p>
+<p>Your PhysicsWorld and RenderGraph already use <code>steady_clock</code>.</p>
+<p>Good.</p>
+<hr />
+<p><strong>GPU profiling is different</strong></p>
+<p>CPU timing:</p>
+<pre class="text"><code>submit command buffer</code></pre>
+<p>does not measure actual GPU execution.</p>
+<p>For GPU passes you need backend timestamp queries.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>write GPU timestamp before pass
+execute pass
+write GPU timestamp after pass
+resolve after GPU completion.</code></pre>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>G</mi>
+      <mi>P</mi>
+      <mi>U</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>d</mi>
+    </mrow>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>b</mi>
+      <mi>e</mi>
+      <mi>g</mi>
+      <mi>i</mi>
+      <mi>n</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>×</mo>
+  <mi>T</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>P</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>CPU and GPU timelines are separate.</p>
+<hr />
+<p><strong>Profiling spans need hierarchy</strong></p>
+<p>Frame:</p>
+<pre class="text"><code>Frame
+├── Input
+├── Physics
+│   ├── Broadphase
+│   ├── Narrowphase
+│   └── Solver
+├── Animation
+├── RenderExtract
+└── Render
+    ├── Shadow
+    ├── GBuffer
+    └── Lighting</code></pre>
+<p>A span model lets tools reconstruct nesting and thread activity.</p>
+<p>Record:</p>
+<pre class="text"><code>span ID
+parent span ID
+thread
+start
+end
+category.</code></pre>
+<hr />
+<p><strong>Multithreaded profiling</strong></p>
+<p>With jobs:</p>
+<pre class="text"><code>thread A runs physics chunk
+thread B runs animation chunk
+thread C builds render commands.</code></pre>
+<p>Per-thread scopes need a shared monotonic clock domain.</p>
+<p>Then visualization can show:</p>
+<pre class="text"><code>worker0 █████
+worker1   ███████
+worker2 ███   ███</code></pre>
+<p>and expose:</p>
+<pre class="text"><code>idle gaps
+contention
+critical path.</code></pre>
+<hr />
+<p><strong>Profiling should not become global hidden dependency</strong></p>
+<p>Avoid every module directly calling:</p>
+<div class="sourceCode" id="cb194"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb194-1"><a href="#cb194-1" aria-hidden="true" tabindex="-1"></a>GlobalProfiler<span class="op">::</span>Get<span class="op">().</span></span></code></pre></div>
+<p>A lightweight hook interface or compile-time macro layer can keep foundational modules independent.</p>
+<p>Example:</p>
+<div class="sourceCode" id="cb195"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb195-1"><a href="#cb195-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ProfileSink</span>
+<span id="cb195-2"><a href="#cb195-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb195-3"><a href="#cb195-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">virtual</span> <span class="dt">void</span> Record<span class="op">(</span></span>
+<span id="cb195-4"><a href="#cb195-4" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> ProfileEvent<span class="op">&amp;)</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb195-5"><a href="#cb195-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>or a no-op backend.</p>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>instrumentation mechanism</mtext>
+  <mo>≠</mo>
+  <mtext>telemetry product</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Portable boundaries without lowest-common-denominator design</strong></p>
+<p>This atom is extremely important.</p>
+<p>A common portability mistake is:</p>
+<blockquote>
+<p>Vulkan, Metal and D3D12 differ. Therefore expose only the tiny intersection of all three.</p>
+</blockquote>
+<p>You end up with:</p>
+<pre class="text"><code>Renderer API from 2005</code></pre>
+<p>unable to use modern capabilities.</p>
+<p>That is <strong>lowest-common-denominator abstraction</strong>.</p>
+<p>Do not do this.</p>
+<hr />
+<p><strong>Another portability mistake</strong></p>
+<p>The opposite failure:</p>
+<div class="sourceCode" id="cb197"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb197-1"><a href="#cb197-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>backend <span class="op">==</span> Vulkan<span class="op">)</span></span>
+<span id="cb197-2"><a href="#cb197-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb197-3"><a href="#cb197-3" aria-hidden="true" tabindex="-1"></a>    use VkImage<span class="op">...</span></span>
+<span id="cb197-4"><a href="#cb197-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb197-5"><a href="#cb197-5" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>backend <span class="op">==</span> Metal<span class="op">)</span></span>
+<span id="cb197-6"><a href="#cb197-6" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb197-7"><a href="#cb197-7" aria-hidden="true" tabindex="-1"></a>    use id<span class="op">&lt;</span>MTLTexture<span class="op">&gt;...</span></span>
+<span id="cb197-8"><a href="#cb197-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>through every higher-level subsystem.</p>
+<p>Now no abstraction exists.</p>
+<p>You need a middle path.</p>
+<hr />
+<p><strong>Separate semantic intent from backend capability</strong></p>
+<p>High-level rendering API can express intent:</p>
+<div class="sourceCode" id="cb198"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb198-1"><a href="#cb198-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> TextureDesc</span>
+<span id="cb198-2"><a href="#cb198-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb198-3"><a href="#cb198-3" aria-hidden="true" tabindex="-1"></a>    TextureDimension Dimension<span class="op">;</span></span>
+<span id="cb198-4"><a href="#cb198-4" aria-hidden="true" tabindex="-1"></a>    PixelFormat Format<span class="op">;</span></span>
+<span id="cb198-5"><a href="#cb198-5" aria-hidden="true" tabindex="-1"></a>    TextureUsage Usage<span class="op">;</span></span>
+<span id="cb198-6"><a href="#cb198-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Width<span class="op">;</span></span>
+<span id="cb198-7"><a href="#cb198-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Height<span class="op">;</span></span>
+<span id="cb198-8"><a href="#cb198-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then backend maps to:</p>
+<pre class="text"><code>VkImage
+MTLTexture
+ID3D12Resource.</code></pre>
+<p>The semantic model should be rich enough for modern hardware.</p>
+<hr />
+<p><strong>Capabilities instead of pretending equality</strong></p>
+<p>Expose:</p>
+<div class="sourceCode" id="cb200"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb200-1"><a href="#cb200-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> RenderCapabilities</span>
+<span id="cb200-2"><a href="#cb200-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb200-3"><a href="#cb200-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> RayTracing <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb200-4"><a href="#cb200-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> MeshShaders <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb200-5"><a href="#cb200-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> VariableRateShading <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb200-6"><a href="#cb200-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb200-7"><a href="#cb200-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> MaxBindlessTextures <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb200-8"><a href="#cb200-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Then high-level renderer chooses algorithm:</p>
+<div class="sourceCode" id="cb201"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb201-1"><a href="#cb201-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>caps<span class="op">.</span>MeshShaders<span class="op">)</span></span>
+<span id="cb201-2"><a href="#cb201-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb201-3"><a href="#cb201-3" aria-hidden="true" tabindex="-1"></a>    UseMeshletPath<span class="op">();</span></span>
+<span id="cb201-4"><a href="#cb201-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb201-5"><a href="#cb201-5" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span></span>
+<span id="cb201-6"><a href="#cb201-6" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb201-7"><a href="#cb201-7" aria-hidden="true" tabindex="-1"></a>    UseIndexedDrawPath<span class="op">();</span></span>
+<span id="cb201-8"><a href="#cb201-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Portable architecture does <strong>not</strong> mean identical algorithm everywhere.</p>
+<p>It means capability-sensitive policy above clean backend mechanisms.</p>
+<hr />
+<p><strong>Feature tiers</strong></p>
+<p>Instead of dozens of backend checks:</p>
+<pre class="text"><code>Tier 0:
+basic rasterization
+
+Tier 1:
+compute + modern descriptors
+
+Tier 2:
+bindless
+
+Tier 3:
+ray tracing.</code></pre>
+<p>Then game/rendering policy can target tiers.</p>
+<p>Backend maps hardware/API capabilities to tier.</p>
+<p>This reduces conditional complexity.</p>
+<hr />
+<p><strong>Backend-specific escape hatches</strong></p>
+<p>Sometimes you genuinely need a platform-specific extension.</p>
+<p>A portable engine can expose:</p>
+<pre class="text"><code>generic core
++
+optional extension interfaces.</code></pre>
+<p>For example:</p>
+<div class="sourceCode" id="cb204"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb204-1"><a href="#cb204-1" aria-hidden="true" tabindex="-1"></a>IRenderDevice</span></code></pre></div>
+<p>plus:</p>
+<div class="sourceCode" id="cb205"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb205-1"><a href="#cb205-1" aria-hidden="true" tabindex="-1"></a>IMetalRenderDeviceExtensions</span></code></pre></div>
+<p>accessible only where appropriate.</p>
+<p>This is better than polluting every generic API with Metal-only fields.</p>
+<hr />
+<p><strong>Portability applies beyond rendering</strong></p>
+<p>Filesystem:</p>
+<pre class="text"><code>project-relative semantic path</code></pre>
+<p>above:</p>
+<pre class="text"><code>Windows/Unix filesystem mechanics.</code></pre>
+<p>Threading:</p>
+<pre class="text"><code>JobSystem</code></pre>
+<p>above:</p>
+<pre class="text"><code>OS thread primitives.</code></pre>
+<p>Input:</p>
+<pre class="text"><code>gameplay actions</code></pre>
+<p>above:</p>
+<pre class="text"><code>keyboard/gamepad APIs.</code></pre>
+<p>Assets:</p>
+<pre class="text"><code>AssetID</code></pre>
+<p>above:</p>
+<pre class="text"><code>filesystem path.</code></pre>
+<p>The repeated pattern is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>S</mi>
+          <mi>e</mi>
+          <mi>m</mi>
+          <mi>a</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>c</mi>
+          <mi>C</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>t</mi>
+          <mo>+</mo>
+          <mi>C</mi>
+          <mi>a</mi>
+          <mi>p</mi>
+          <mi>a</mi>
+          <mi>b</mi>
+          <mi>i</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+          <mi>M</mi>
+          <mi>o</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>l</mi>
+          <mo>+</mo>
+          <mi>B</mi>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>k</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>A</mi>
+          <mi>d</mi>
+          <mi>a</mi>
+          <mi>p</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Current Kairo renderer demonstrates this direction</strong></p>
+<p>You have high-level:</p>
+<pre class="text"><code>RenderScene
+MeshDraw
+TextureHandle
+GraphicsBackend
+RenderGraph</code></pre>
+<p>and backend-specific:</p>
+<pre class="text"><code>VulkanRenderer
+MetalRenderer
+Direct3D12Renderer
+OpenGLRenderer.</code></pre>
+<p>Compilation includes Metal only on Apple, D3D12 only on Windows, while Vulkan/OpenGL remain broad.</p>
+<p>Backend capability definitions are exported.</p>
+<p>That is a good basis for portable-not-neutered architecture.</p>
+<hr />
+<p><strong>Current Kairo M095/M096 audit</strong></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Current state</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Target-oriented CMake</td>
+<td>Strongly implemented</td>
+</tr>
+<tr>
+<td>Modern PUBLIC/PRIVATE/INTERFACE use</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Integration INTERFACE umbrella</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Alias targets</td>
+<td>Present</td>
+</tr>
+<tr>
+<td>Imported package targets</td>
+<td>Used through find_package dependencies</td>
+</tr>
+<tr>
+<td>Presets</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Ninja</td>
+<td>Standard Kairo preset generator</td>
+</tr>
+<tr>
+<td>Toolchain file</td>
+<td>Implemented for Clang</td>
+</tr>
+<tr>
+<td>MSVC CI</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>macOS upstream LLVM CI</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>C++23 modules</td>
+<td>Heavily implemented</td>
+</tr>
+<tr>
+<td>CMake CXX_MODULES file sets</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Module/compiler quirks</td>
+<td>Explicitly handled</td>
+</tr>
+<tr>
+<td>Old nested submodules</td>
+<td>Migrated away</td>
+</tr>
+<tr>
+<td>Exact repository commit pinning</td>
+<td>Implemented via <code>workspace.lock</code></td>
+</tr>
+<tr>
+<td>Dirty-tree verification</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Workspace materialization</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Component CI</td>
+<td>Implemented across repos</td>
+</tr>
+<tr>
+<td>Integration superbuild CI</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Linux/macOS/Windows matrix</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Sanitizer lane</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Unit tests</td>
+<td>Extensive</td>
+</tr>
+<tr>
+<td>Integration tests</td>
+<td>Extensive</td>
+</tr>
+<tr>
+<td>Runtime smoke tests</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Content checksum fixtures</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Malformed-content fixtures</td>
+<td>Present</td>
+</tr>
+<tr>
+<td>Structured in-memory logging</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Dedicated crash-report subsystem</td>
+<td>Not found</td>
+</tr>
+<tr>
+<td>Physics profiling</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>RenderGraph profiling</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>BVH build timing</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Unified cross-engine profiler/tracing</td>
+<td>Not found</td>
+</tr>
+<tr>
+<td>Portable multi-backend renderer</td>
+<td>Strongly implemented</td>
+</tr>
+<tr>
+<td>Full source→package→runtime boundary</td>
+<td>Present and increasingly explicit</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>One important CMake improvement</strong></p>
+<p>Your top-level root uses some global:</p>
+<div class="sourceCode" id="cb216"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb216-1"><a href="#cb216-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_compile_options</span>(...)</span>
+<span id="cb216-2"><a href="#cb216-2" aria-hidden="true" tabindex="-1"></a><span class="kw">add_link_options</span>(...)</span></code></pre></div>
+<p>for sanitizer enablement.</p>
+<p>That is understandable for a superbuild because sanitizers intentionally need broad coverage.</p>
+<p>But a more target-oriented architecture can define:</p>
+<div class="sourceCode" id="cb217"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb217-1"><a href="#cb217-1" aria-hidden="true" tabindex="-1"></a><span class="kw">add_library</span>(</span>
+<span id="cb217-2"><a href="#cb217-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoSanitizers</span></span>
+<span id="cb217-3"><a href="#cb217-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">INTERFACE</span></span>
+<span id="cb217-4"><a href="#cb217-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb217-5"><a href="#cb217-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb217-6"><a href="#cb217-6" aria-hidden="true" tabindex="-1"></a><span class="kw">target_compile_options</span>(</span>
+<span id="cb217-7"><a href="#cb217-7" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoSanitizers</span></span>
+<span id="cb217-8"><a href="#cb217-8" aria-hidden="true" tabindex="-1"></a>    <span class="ot">INTERFACE</span></span>
+<span id="cb217-9"><a href="#cb217-9" aria-hidden="true" tabindex="-1"></a>        -fsanitize=address,undefined</span>
+<span id="cb217-10"><a href="#cb217-10" aria-hidden="true" tabindex="-1"></a>        -fno-omit-frame-pointer</span>
+<span id="cb217-11"><a href="#cb217-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb217-12"><a href="#cb217-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb217-13"><a href="#cb217-13" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_options</span>(</span>
+<span id="cb217-14"><a href="#cb217-14" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoSanitizers</span></span>
+<span id="cb217-15"><a href="#cb217-15" aria-hidden="true" tabindex="-1"></a>    <span class="ot">INTERFACE</span></span>
+<span id="cb217-16"><a href="#cb217-16" aria-hidden="true" tabindex="-1"></a>        -fsanitize=address,undefined</span>
+<span id="cb217-17"><a href="#cb217-17" aria-hidden="true" tabindex="-1"></a>        -fno-omit-frame-pointer</span>
+<span id="cb217-18"><a href="#cb217-18" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>then link participating targets:</p>
+<div class="sourceCode" id="cb218"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb218-1"><a href="#cb218-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target_link_libraries</span>(</span>
+<span id="cb218-2"><a href="#cb218-2" aria-hidden="true" tabindex="-1"></a>    <span class="bn">KairoEngineCore</span></span>
+<span id="cb218-3"><a href="#cb218-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">PRIVATE</span></span>
+<span id="cb218-4"><a href="#cb218-4" aria-hidden="true" tabindex="-1"></a>    KairoSanitizers</span>
+<span id="cb218-5"><a href="#cb218-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>Why?</p>
+<p>Because the sanitizer configuration becomes a named usage requirement instead of ambient global state.</p>
+<p>For a whole-engine sanitizer build your current global approach is functional; the interface-target pattern scales better when you need selective instrumentation.</p>
+<hr />
+<p><strong>One reproducibility improvement</strong></p>
+<p><code>workspace.lock</code> records source SHAs.</p>
+<p>A next-level lock could also record third-party/toolchain provenance, for example:</p>
+<pre class="text"><code>cmake minimum 3.28
+ninja minimum 1.11
+glad v0.1.36
+Catch2 v3.5.4
+compiler-family expectations
+Vulkan SDK compatibility range.</code></pre>
+<p>Not necessarily in the same file.</p>
+<p>But a release provenance artifact should capture the whole input closure.</p>
+<p>Because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Repo SHAs</mtext>
+</math>
+<p>alone do not uniquely define:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Binary Artifact</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>One module-build improvement</strong></p>
+<p>As the module graph grows, measure:</p>
+<pre class="text"><code>number of BMI edges
+module critical path
+module fan-in
+module fan-out.</code></pre>
+<p>A target can become a build bottleneck even if runtime architecture is clean.</p>
+<p>For example:</p>
+<pre class="text"><code>CoreHugeModule</code></pre>
+<p>imported by 80 modules means every change can rebuild enormous portions of the tree.</p>
+<p>Module architecture should minimize unnecessary re-exporting and keep foundational interfaces stable.</p>
+<hr />
+<p><strong>One diagnostics improvement</strong></p>
+<p>You already have:</p>
+<pre class="text"><code>Logger
+PhysicsStepProfile
+RenderGraphExecutionProfile
+BVHBuildStats.</code></pre>
+<p>A natural next layer is one common diagnostics transport.</p>
+<p>For example:</p>
+<div class="sourceCode" id="cb223"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb223-1"><a href="#cb223-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ProfileEvent</span>
+<span id="cb223-2"><a href="#cb223-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb223-3"><a href="#cb223-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>string_view Category<span class="op">;</span></span>
+<span id="cb223-4"><a href="#cb223-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>string_view Name<span class="op">;</span></span>
+<span id="cb223-5"><a href="#cb223-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb223-6"><a href="#cb223-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> Thread<span class="op">;</span></span>
+<span id="cb223-7"><a href="#cb223-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint64_t</span> Frame<span class="op">;</span></span>
+<span id="cb223-8"><a href="#cb223-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb223-9"><a href="#cb223-9" aria-hidden="true" tabindex="-1"></a>    TimePoint Begin<span class="op">;</span></span>
+<span id="cb223-10"><a href="#cb223-10" aria-hidden="true" tabindex="-1"></a>    TimePoint End<span class="op">;</span></span>
+<span id="cb223-11"><a href="#cb223-11" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Subsystems emit to a sink.</p>
+<p>Then editor can show:</p>
+<pre class="text"><code>CPU timeline
+physics phases
+render passes
+jobs
+asset loads.</code></pre>
+<p>without making every subsystem depend on ImGui or one third-party profiler.</p>
+<hr />
+<p><strong>One crash-reporting improvement</strong></p>
+<p>Add a thin Core diagnostics layer that captures:</p>
+<pre class="text"><code>build provenance
+current project
+run ID
+recent Logger ring
+last frame
+last profile breadcrumbs.</code></pre>
+<p>Platform backend creates:</p>
+<pre class="text"><code>minidump / crash artifact.</code></pre>
+<p>Postmortem helper performs:</p>
+<pre class="text"><code>symbolization
+compression
+optional upload.</code></pre>
+<p>Keep crash implementation platform-specific while crash metadata format remains portable.</p>
+<hr />
+<p><strong>Reconstruction challenge — CMake scope</strong></p>
+<p>Suppose:</p>
+<pre class="text"><code>A.cpp internally uses B
+A&#39;s public module API never exposes B.</code></pre>
+<p>Use:</p>
+<div class="sourceCode" id="cb229"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb229-1"><a href="#cb229-1" aria-hidden="true" tabindex="-1"></a><span class="fu">PRIVATE B.</span></span></code></pre></div>
+<p>Suppose A’s exported API requires B’s public types/usage requirements.</p>
+<p>Use:</p>
+<div class="sourceCode" id="cb230"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb230-1"><a href="#cb230-1" aria-hidden="true" tabindex="-1"></a><span class="fu">PUBLIC B.</span></span></code></pre></div>
+<p>Suppose A is an INTERFACE convenience target forwarding B.</p>
+<p>Use:</p>
+<div class="sourceCode" id="cb231"><pre class="sourceCode cmake"><code class="sourceCode cmake"><span id="cb231-1"><a href="#cb231-1" aria-hidden="true" tabindex="-1"></a><span class="fu">INTERFACE B.</span></span></code></pre></div>
+<p>If you cannot justify the scope from architectural semantics, do not choose it based on linker error experimentation.</p>
+<hr />
+<p><strong>Reconstruction challenge — Ninja DAG</strong></p>
+<p>Given:</p>
+<pre class="text"><code>shader.vert
+shader.frag
+Renderer.cppm
+Player.cpp</code></pre>
+<p>and:</p>
+<pre class="text"><code>Renderer imports compiled shader artifacts
+Player depends on Renderer</code></pre>
+<p>derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mo stretchy="false">→</mo>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+  <mi>s</mi>
+  <mi>p</mi>
+  <mi>v</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mo stretchy="false">→</mo>
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mo>.</mo>
+  <mi>s</mi>
+  <mi>p</mi>
+  <mi>v</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+  <mi>s</mi>
+  <mi>p</mi>
+  <mi>v</mi>
+  <mo>,</mo>
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mo>.</mo>
+  <mi>s</mi>
+  <mi>p</mi>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">→</mo>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo stretchy="false">→</mo>
+  <mi>P</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>Then explain which edges can execute concurrently and where critical path lies.</p>
+<hr />
+<p><strong>Reconstruction challenge — modules</strong></p>
+<p>Given:</p>
+<div class="sourceCode" id="cb234"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb234-1"><a href="#cb234-1" aria-hidden="true" tabindex="-1"></a><span class="kw">export</span> <span class="kw">module</span> A<span class="op">;</span></span>
+<span id="cb234-2"><a href="#cb234-2" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> B<span class="op">;</span></span></code></pre></div>
+<p>explain why:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mi>M</mi>
+  <msub>
+    <mi>I</mi>
+    <mi>B</mi>
+  </msub>
+</math>
+<p>must exist before A compilation.</p>
+<p>Explain why BMIs are compiler/configuration specific.</p>
+<p>Explain why checked-in universal BMIs are a bad idea.</p>
+<p>Explain why module dependency cycle is architecture problem rather than an include-guard problem.</p>
+<p>That is Part 1590.</p>
+<hr />
+<p><strong>Reconstruction challenge — reproducible workspace</strong></p>
+<p>State the invariant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">∀</mi>
+  <msub>
+    <mi>R</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>:</mo>
+  <mi>H</mi>
+  <mi>E</mi>
+  <mi>A</mi>
+  <mi>D</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>R</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>L</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>S</mi>
+  <mi>H</mi>
+  <mi>A</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>R</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>k</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>T</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>R</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mo>.</mo>
+</math>
+<p>Then add:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mo>=</mo>
+  <mi>E</mi>
+  <mi>x</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>T</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>=</mo>
+  <mi>E</mi>
+  <mi>x</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>P</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Only then can you accurately call a build:</p>
+<pre class="text"><code>the locked integration state.</code></pre>
+<p>Your verify script actually enforces the first two conditions.</p>
+<hr />
+<p><strong>Reconstruction challenge — test types</strong></p>
+<p>Given an ECS generation bug:</p>
+<pre class="text"><code>unit test.</code></pre>
+<p>Given Scene→ECS conversion:</p>
+<pre class="text"><code>integration test.</code></pre>
+<p>Given startup sample project through KairoPlayer:</p>
+<pre class="text"><code>smoke test.</code></pre>
+<p>Given known glTF with checksum:</p>
+<pre class="text"><code>deterministic fixture.</code></pre>
+<p>Given Vulkan test unavailable on a CI worker:</p>
+<pre class="text"><code>skip/unavailable</code></pre>
+<p>not fake success.</p>
+<p>The terminology matters because each test answers a different question.</p>
+<hr />
+<p><strong>Reconstruction challenge — portable renderer</strong></p>
+<p>Explain why both are wrong:</p>
+<pre class="text"><code>generic API exposes only 1990s OpenGL-level features</code></pre>
+<p>and:</p>
+<pre class="text"><code>engine logic directly manipulates VkImage/MTLTexture everywhere.</code></pre>
+<p>Correct model:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>A</mi>
+  <mi>P</mi>
+  <mi>I</mi>
+  <mo>+</mo>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>+</mo>
+  <mi>B</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>A</mi>
+  <mi>d</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>The high-level algorithm may differ per capability.</p>
+<p>Portability does not require identical execution path.</p>
+<hr />
+<p><strong>Reconstruction challenge — complete ownership</strong></p>
+<p>Take one texture and state the owner at each step:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>N</mi>
+  <mi>G</mi>
+</math>
+<p>owned by project filesystem.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+</math>
+<p>owned by asset metadata model.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>A</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+</math>
+<p>owned/cached by DDC/import layer.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>A</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>H</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+</math>
+<p>stored by persistent scene/material.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>H</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+</math>
+<p>owned by renderer runtime table.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>I</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>M</mi>
+  <mi>T</mi>
+  <mi>L</mi>
+  <mi>T</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+</math>
+<p>owned by concrete backend.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>F</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mi>U</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+</math>
+<p>owned logically by submitted work until completion.</p>
+<p>If you can trace that without conflating any identities, you have understood Phase 16.</p>
+<hr />
+<p><strong>Exact coverage — M095 + M096</strong></p>
+<table>
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 30%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: right;">Part</th>
+<th>Topic</th>
+<th>Covered</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1583</td>
+<td>CMake target model</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1584</td>
+<td>PUBLIC, PRIVATE, INTERFACE dependencies</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1585</td>
+<td>Imported and alias targets</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1586</td>
+<td>CMake presets</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1587</td>
+<td>Ninja build scheduling</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1588</td>
+<td>Compiler toolchains</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1589</td>
+<td>Clang versus MSVC compatibility</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1590</td>
+<td>C++ modules in multi-target builds</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1591</td>
+<td>Git submodule commit pinning</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1592</td>
+<td>Reproducible superbuilds</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1593</td>
+<td>Continuous-integration matrices</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1594</td>
+<td>Unit versus integration tests</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1595</td>
+<td>Smoke tests</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1596</td>
+<td>Deterministic test fixtures</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1597</td>
+<td>Crash reporting and structured logging</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1598</td>
+<td>Runtime profiling hooks</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1599</td>
+<td>Portable boundary without lowest-common-denominator abstraction</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">1600</td>
+<td>Complete source→editor→packaged-runtime ownership/data flow</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<p>At this point the entire engine architecture from Parts 1501–1600 can be compressed into two invariants.</p>
+<p>The first is the <strong>dependency invariant</strong>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>F</mi>
+          <mi>o</mi>
+          <mi>u</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mo stretchy="false">←</mo>
+          <mi>S</mi>
+          <mi>u</mi>
+          <mi>b</mi>
+          <mi>s</mi>
+          <mi>y</mi>
+          <mi>s</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>m</mi>
+          <mi>s</mi>
+          <mo stretchy="false">←</mo>
+          <mi>B</mi>
+          <mi>r</mi>
+          <mi>i</mi>
+          <mi>d</mi>
+          <mi>g</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mo stretchy="false">←</mo>
+          <mi>P</mi>
+          <mi>l</mi>
+          <mi>a</mi>
+          <mi>y</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <mi>E</mi>
+          <mi>d</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <mi>G</mi>
+          <mi>a</mi>
+          <mi>m</mi>
+          <mi>e</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>with the build system enforcing that direction through target dependencies, modules, CMake usage requirements and composition roots.</p>
+<p>The second is the <strong>identity/lifetime invariant</strong>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>s</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>I</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+          <mo>≠</mo>
+          <mi>R</mi>
+          <mi>u</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>m</mi>
+          <mi>e</mi>
+          <mi>H</mi>
+          <mi>a</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>l</mi>
+          <mi>e</mi>
+          <mo>≠</mo>
+          <mi>S</mi>
+          <mi>t</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mi>g</mi>
+          <mi>e</mi>
+          <mi>A</mi>
+          <mi>d</mi>
+          <mi>d</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mi>s</mi>
+          <mo>≠</mo>
+          <mi>B</mi>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>k</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>R</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mi>o</mi>
+          <mi>u</mi>
+          <mi>r</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>with explicit bridges connecting them.</p>
+<p>And now we can append the reproducibility invariant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>B</mi>
+          <mi>u</mi>
+          <mi>i</mi>
+          <mi>l</mi>
+          <mi>d</mi>
+          <mi>A</mi>
+          <mi>r</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>f</mi>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>t</mi>
+          <mo>=</mo>
+          <mi>F</mi>
+          <mo stretchy="false">(</mo>
+          <mi>E</mi>
+          <mi>x</mi>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>t</mi>
+          <mi>S</mi>
+          <mi>o</mi>
+          <mi>u</mi>
+          <mi>r</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+          <mi>C</mi>
+          <mi>o</mi>
+          <mi>m</mi>
+          <mi>m</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>s</mi>
+          <mo>,</mo>
+          <mi>D</mi>
+          <mi>e</mi>
+          <mi>p</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>c</mi>
+          <mi>i</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mo>,</mo>
+          <mi>T</mi>
+          <mi>o</mi>
+          <mi>o</mi>
+          <mi>l</mi>
+          <mi>c</mi>
+          <mi>h</mi>
+          <mi>a</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mo>,</mo>
+          <mi>C</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mi>f</mi>
+          <mi>i</mi>
+          <mi>g</mi>
+          <mi>u</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>o</mi>
+          <mi>n</mi>
+          <mo>,</mo>
+          <mi>G</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>d</mi>
+          <mi>I</mi>
+          <mi>n</mi>
+          <mi>p</mi>
+          <mi>u</mi>
+          <mi>t</mi>
+          <mi>s</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If any input to <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math> is implicit, the build is not fully reproducible.</p>
+<p>Your current Kairo ecosystem is already quite mature at this boundary: it has an exact sibling-workspace lock, clean-tree verification, component CI plus superbuild CI, Clang/MSVC/macOS coverage, sanitizer lanes, deterministic content fixtures, C++ module file sets, explicit platform backend compilation, structured logging, and several subsystem-level profiling instruments. The two clearest missing production layers are <strong>one unified profiling/tracing transport and a dedicated crash-report pipeline tied to build provenance and recent structured diagnostics</strong>.</p>
+<p><strong>Pass 16 starts Phase 17 at Part 1601: rigid-body dynamics from first principles.</strong> We leave engine/tooling architecture and go directly into the physics mathematics: particles versus rigid bodies, translational/rotational state, center of mass, mass/inverse mass, density, momentum, Newton’s laws, forces, torques, inertia tensors, coordinate-space transformation of inertia, and the numerical integration machinery that turns those laws into an actual physics engine.</p>
+</section>
+</section>
+<section id="id_01-foundations-i-ch010-reconstruct-the-representation-and-lifetime-proofs" class="level3">
+<h3>Reconstruct the representation and lifetime proofs</h3>
+</section>
+<section id="id_01-foundations-i-ch010-c---assignment-as-a-resource-transaction" class="level3">
+<h3>C++ - Assignment as a resource transaction</h3>
+<p>The <a href="ch195.xhtml#appendix-bea6beb5350f-assignment-and-exception-guarantees" class="wikilink">strong guarantee (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Assignment and exception guarantees)</a> requires a defined observable state before the operation and an unchanged promised state if preparation fails. Let D0 be the destination’s original owned allocation/value and S the source. The teaching byte owner’s copy assignment follows:</p>
+<ol type="1">
+<li>Construct replacement R from S without changing D0. Allocation failure propagates while D0 and S retain their original state.</li>
+<li>Non-throwing swap transfers R’s value into the destination and D0 into the temporary. This is the commit point: no remaining step can fail under the stated byte-copy/release contract.</li>
+<li>Destroy R, releasing the former destination D0 exactly once.</li>
+</ol>
+<p>Self-copy is explicitly guarded; an alternative copy-and-swap without that guard could still be safe but allocate unnecessarily. This proof assumes a non-throwing swap, safe release, and copy preparation that does not mutate its source. It does not establish whole-object strong guarantees for arbitrary memberwise assignment or a copy operation with external side effects.</p>
+<p>For the failure-injection witness, initial owners A/B each hold one allocation. An injected exception before the new allocation succeeds leaves two owners/two live allocations and B’s old byte9. Moving A into C then leaves A empty while C owns A’s allocation. Moving C into B releases B’s previous allocation before adoption, leaving one allocation. Destroying/resetting its final owner leaves zero. The source remains a live empty object throughout its moved-from interval.</p>
+<section id="id_01-foundations-i-ch010-why-no-throw-properties-matter-to-growth" class="level4">
+<h4>Why no-throw properties matter to growth</h4>
+<p>Suppose source element0 is moved and changed, then moving element1 throws. The partially populated new buffer can be cleaned up, but cleanup alone does not restore element0’s old value. Copying that preserves source state can support rollback where available; a genuinely non-throwing move avoids that transfer failure. If copying is unavailable and moving may throw, consult the exact operation’s exceptional-effects contract. move_if_noexcept encodes the relevant construction-expression choice, not a universal rollback theorem.</p>
+</section>
+<section id="id_01-foundations-i-ch010-isolating-sink-counts-from-growth" class="level4">
+<h4>Isolating sink counts from growth</h4>
+<p>With spare destination capacity and a Probe type whose copy/move constructors are instrumented: lvalue→value parameter→element gives one copy/one move; xvalue→parameter→element gives two moves; same-type prvalue→parameter→element gives direct parameter construction/one move. Cache growth would add transfer of old elements. Optional named-result NRVO is independent of these parameter routes, so record it separately instead of silently adding it to a fixed portable count.</p>
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch001.xhtml#id_01-Bits-Programs-and-Reliable-Systems" class="wikilink">Reading map</a> · <a href="ch413.xhtml#id_01-foundations-i-ch009-gpu-memory-divergence-atomics-and-ordering" class="wikilink">Previous chapter (GPU Architecture and Real-Time Rendering, Part 1, Ch. 2)</a> · <a href="ch212.xhtml#id_01-foundations-i-ch011-c-const-borrowing-and-cpugpu-buffering" class="wikilink">Next chapter</a></p>
+</section>
+</section>
+</section>
+</body>
+</html>

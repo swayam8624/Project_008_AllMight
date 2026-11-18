@@ -1,0 +1,6236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch367.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_04-visual-computing-ii-ch040-lighting-reconstruction-and-surface-motion" class="level2">
+<h2>Lighting, Reconstruction and Surface Motion</h2>
+<p><a href="ch316.xhtml#id_04-Light-Transport-and-Image-Synthesis" class="wikilink">Reading map</a> · <a href="ch334.xhtml#id_04-visual-computing-ii-ch035-a-complete-renderer-as-an-executable-forward-model" class="wikilink">Previous chapter</a> · <a href="ch371.xhtml#id_06-engine-ii-ch032-terrain-materials-and-image-composition" class="wikilink">Next chapter</a></p>
+<p>Rendering captured kernels still requires lighting, reconstruction and temporal surface behavior. This span considers those extensions and how motion changes the representation over time.</p>
+<p><strong>By the end:</strong> Connect lighting and reconstruction choices to animated surface representations.</p>
+<p><strong>Recall question:</strong> What additional information is needed when a captured surface changes over time?</p>
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 92692–95948; source-span SHA256 a55a6beecf9a393c115d469a2d7f91cc09f84521eeced8863d8c7b2727ef8229. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_04-visual-computing-ii-ch040-illuminate-reconstruct-and-animate-the-surface" class="level3">
+<h3>Illuminate, reconstruct and animate the surface</h3>
+<p><strong>Coordinate-space clarification:</strong> glTF morph targets precede skinning and node transforms. A global-joint skin palette already produces world-space positions; a mesh-local palette needs the matching inverse mesh transform. Bind-pose identity requires the declared bind-shape/output-space convention, not merely the presence of inverse-bind matrices.</p>
+<p>We are doing both in one continuous pass, with no curriculum boundary drift.</p>
+<p><strong>Pass 17 = M151–M156, Parts 2501–2600</strong>, covering advanced real-time rendering: many-light indexing, clustered lighting, adaptive work, Hi-Z, shadows, AO, GI/probes/SSR/radiance cascades, TAA/post, particles/decals and performance-quality selection.</p>
+<p><strong>Pass 18 = M157–M162, Parts 2601–2700</strong>, covering indexed meshes, topology, half-edges, normals/tangents, OBJ/glTF, simplification/subdivision/smoothing, skeletons, skinning, animation, morphing and complete animated-vertex ingestion.</p>
+<hr />
+<section id="id_04-visual-computing-ii-ch040-advanced-real-time-rendering" class="level4">
+<h4>ADVANCED REAL-TIME RENDERING</h4>
+</section>
+<section id="id_04-visual-computing-ii-ch040-m156" class="level4">
+<h4>M156</h4>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-many-light-rendering-and-clustered-lighting" class="level4">
+<h4>MANY-LIGHT RENDERING AND CLUSTERED LIGHTING</h4>
+<section id="id_04-visual-computing-ii-ch040-reconstruction-checkpoint-make-the-cluster-coordinate-measurable" class="level5">
+<h5>Reconstruction checkpoint — make the cluster coordinate measurable</h5>
+<p>The new <code>tools/labs/realtime_rendering_reference_lab.cpp</code> turns the depth-slice equation into an executable contract. It checks near/far clamping, monotonic slice assignment over a logarithmic depth sweep, and the fact that equal depth decades occupy equal widths in log space. This proves the z partition only; full light-volume/cluster overlap, GPU count/scan/fill and overflow handling remain later implementation evidence. See <a href="ch369.xhtml#appendix-b0efeb3f3648-clustered-lighting-depth-slicing" class="wikilink">Clustered lighting depth slicing</a>.</p>
+<p>The central problem of many-light rendering is not the BRDF anymore. We already know how to evaluate one light:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>o</mi>
+  </msub>
+  <mrow data-mjx-texclass="REL">
+    <mo>+</mo>
+  </mrow>
+  <mo>=</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>o</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo>⋅</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>The problem is finding:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>which lights are actually relevant to this shading point?</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If the scene has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>10</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>lights and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>P</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>pixels, naïvely evaluating all lights gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mo>×</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>10</mn>
+    </mrow>
+  </msup>
+</math>
+<p>light/pixel tests.</p>
+<p>That is why Part 2501 describes many-light rendering as a <strong>visibility and indexing problem</strong>.</p>
+<hr />
+</section>
+</section>
+<section id="id_04-visual-computing-ii-ch040-forward-rendering" class="level4">
+<h4>Forward rendering</h4>
+<p>Traditional forward shading:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> every object<span class="op">:</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    bind material</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> every pixel produced<span class="op">:</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> every light<span class="op">:</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>            shade</span></code></pre></div>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>∼</mo>
+  <mi>P</mi>
+  <mi>i</mi>
+  <mi>x</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>s</mi>
+  <mo>×</mo>
+  <mi>L</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Forward rendering has several strengths. Material data is naturally available while the object is drawn, transparency works naturally, MSAA is straightforward, and the geometry need not be encoded into an intermediate G-buffer.</p>
+<p>Its many-light weakness is that the fragment shader does not inherently know a small relevant subset of lights.</p>
+<p>You can CPU-cull lights per object, but a large object spanning the screen may still intersect hundreds of lights that affect different regions.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-deferred-rendering" class="level4">
+<h4>Deferred rendering</h4>
+<p>Deferred rendering separates geometry from lighting.</p>
+<p>First pass writes a G-buffer, perhaps:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mo>=</mo>
+  <mo fence="false" stretchy="false">{</mo>
+  <mi>n</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mo>,</mo>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mo fence="false" stretchy="false">}</mo>
+  <mo>.</mo>
+</math>
+<p>Then lighting is evaluated later using screen-space data.</p>
+<p>A representative layout might be:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> GBuffer</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    RGBA8_SRGB   BaseColorMetallic<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    RGBA16F      NormalRoughness<span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    R32F         Depth<span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Actual formats vary.</p>
+<p>The benefit is that lighting occurs only for visible pixels and geometry cost does not multiply per light.</p>
+<p>But G-buffer bandwidth can be large.</p>
+<p>At 1920×1080, suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>32</mn>
+  <mtext> bytes/pixel</mtext>
+  <mo>.</mo>
+</math>
+<p>One full write:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1920</mn>
+  <mo>×</mo>
+  <mn>1080</mn>
+  <mo>×</mo>
+  <mn>32</mn>
+  <mo>≈</mo>
+  <mn>66.4</mn>
+  <mtext> MB</mtext>
+  <mo>.</mo>
+</math>
+<p>At 60 FPS, ignoring reads and compression:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>≈</mo>
+  <mn>4</mn>
+  <mtext> GB/s</mtext>
+  <mo>.</mo>
+</math>
+<p>So deferred shading trades some repeated shading work for memory bandwidth and storage.</p>
+<p>Transparency also generally needs a separate forward path.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-tiled-lighting" class="level4">
+<h4>Tiled lighting</h4>
+<p>Divide screen into tiles:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mo>×</mo>
+  <mn>16</mn>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>32</mn>
+  <mo>×</mo>
+  <mn>32.</mn>
+</math>
+<p>For each tile, determine:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <mo fence="false" stretchy="false">{</mo>
+  <mtext>lights overlapping tile</mtext>
+  <mo fence="false" stretchy="false">}</mo>
+  <mo>.</mo>
+</math>
+<p>Then every pixel in that tile loops only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>t</mi>
+  </msub>
+</math>
+<p>rather than every light.</p>
+<p>This changes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>P</mi>
+  <msub>
+    <mi>N</mi>
+    <mi>L</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>toward something closer to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>N</mi>
+    <mi>L</mi>
+  </msub>
+  <mo>⋅</mo>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>T</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>+</mo>
+  <mi>P</mi>
+  <mo>⋅</mo>
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>L</mi>
+        <mo stretchy="false">¯</mo>
+      </mover>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mi>i</mi>
+      <mi>l</mi>
+      <mi>e</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>But tiles only partition x/y.</p>
+<p>A light close to the camera and another 500 meters away can occupy the same screen tile.</p>
+<p>That motivates clustered lighting.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-clustered-lighting" class="level4">
+<h4>Clustered lighting</h4>
+<p>A cluster adds depth.</p>
+<p>Instead of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>we partition:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>A cluster is a sub-frustum.</p>
+<p>Think:</p>
+<pre class="text"><code>screen
+┌─────────────────────────────┐
+│ x/y tile grid               │
+└─────────────────────────────┘
+            ×
+depth slices</code></pre>
+<p>Cluster index:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>C</mi>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo>,</mo>
+          <mi>y</mi>
+          <mo>,</mo>
+          <mi>z</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mi>z</mi>
+          <msub>
+            <mi>N</mi>
+            <mi>y</mi>
+          </msub>
+          <mo>+</mo>
+          <mi>y</mi>
+          <mo stretchy="false">)</mo>
+          <msub>
+            <mi>N</mi>
+            <mi>x</mi>
+          </msub>
+          <mo>+</mo>
+          <mi>x</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Now a pixel can find:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>I</mi>
+  <mi>D</mi>
+</math>
+<p>and fetch only lights affecting that 3D region.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-screen-tile-construction" class="level4">
+<h4>Screen-tile construction</h4>
+<p>With tile dimensions:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>y</mi>
+  </msub>
+</math>
+<p>and framebuffer:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mo>,</mo>
+  <mi>H</mi>
+  <mo>,</mo>
+</math>
+<p>tile counts are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌈</mo>
+    <mfrac>
+      <mi>W</mi>
+      <msub>
+        <mi>T</mi>
+        <mi>x</mi>
+      </msub>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">⌉</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌈</mo>
+    <mfrac>
+      <mi>H</mi>
+      <msub>
+        <mi>T</mi>
+        <mi>y</mi>
+      </msub>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">⌉</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Pixel:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>p</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>y</mi>
+    <mi>p</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>maps to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mo fence="false" stretchy="false">⌊</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>p</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>T</mi>
+    <mi>x</mi>
+  </msub>
+  <mo fence="false" stretchy="false">⌋</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>=</mo>
+  <mo fence="false" stretchy="false">⌊</mo>
+  <msub>
+    <mi>y</mi>
+    <mi>p</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>T</mi>
+    <mi>y</mi>
+  </msub>
+  <mo fence="false" stretchy="false">⌋</mo>
+  <mo>.</mo>
+</math>
+<p>Exactly the same spatial partitioning principle we just used for Gaussian rasterization.</p>
+<p>The difference is that now we’re assigning <strong>lights</strong> rather than splats.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-logarithmic-depth-slicing" class="level4">
+<h4>Logarithmic depth slicing</h4>
+<p>Perspective distributes perceptual/geometric importance nonlinearly with depth.</p>
+<p>A logarithmic partition is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>z</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>n</mi>
+          <msup>
+            <mrow data-mjx-texclass="INNER">
+              <mo data-mjx-texclass="OPEN">(</mo>
+              <mfrac>
+                <mi>f</mi>
+                <mi>n</mi>
+              </mfrac>
+              <mo data-mjx-texclass="CLOSE">)</mo>
+            </mrow>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mo>/</mo>
+              </mrow>
+              <msub>
+                <mi>N</mi>
+                <mi>z</mi>
+              </msub>
+            </mrow>
+          </msup>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>N</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Given depth <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>z</mi>
+</math>, solve for slice.</p>
+<p>Start:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>z</mi>
+  <mo>=</mo>
+  <mi>n</mi>
+  <mo stretchy="false">(</mo>
+  <mi>f</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>n</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <msub>
+        <mi>N</mi>
+        <mi>z</mi>
+      </msub>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Divide:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>z</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>n</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>f</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>n</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <msub>
+        <mi>N</mi>
+        <mi>z</mi>
+      </msub>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Log:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ln</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <mi>z</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <mi>i</mi>
+    <msub>
+      <mi>N</mi>
+      <mi>z</mi>
+    </msub>
+  </mfrac>
+  <mi>ln</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <mi>f</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>i</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>N</mi>
+            <mi>z</mi>
+          </msub>
+          <mfrac>
+            <mrow>
+              <mi>ln</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <mo stretchy="false">(</mo>
+              <mi>z</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mo>/</mo>
+              </mrow>
+              <mi>n</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+            <mrow>
+              <mi>ln</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <mo stretchy="false">(</mo>
+              <mi>f</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mo>/</mo>
+              </mrow>
+              <mi>n</mi>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Cluster index:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mo fence="false" stretchy="false">⌊</mo>
+  <mi>i</mi>
+  <mo fence="false" stretchy="false">⌋</mo>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <msub>
+    <mi>N</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Current Maveb’s <code>Lighting.cpp</code> implements precisely this normalized logarithmic mapping.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-why-log-depth-is-good" class="level4">
+<h4>Why log depth is good</h4>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>=</mo>
+  <mn>0.1</mn>
+  <mo>,</mo>
+  <mi>f</mi>
+  <mo>=</mo>
+  <mn>1000.</mn>
+</math>
+<p>A linear 16-slice scheme gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>∼</mo>
+  <mn>62.5</mn>
+  <mi>m</mi>
+</math>
+<p>per slice.</p>
+<p>The entire region from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.1</mn>
+  <mi>m</mi>
+</math>
+<p>to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>62.6</mn>
+  <mi>m</mi>
+</math>
+<p>becomes one slice.</p>
+<p>Terrible for nearby lighting.</p>
+<p>Log slicing gives much finer near-camera partitioning and increasingly large far slices.</p>
+<p>This aligns much better with perspective projection.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-linear-slicing" class="level4">
+<h4>Linear slicing</h4>
+<p>Linear slices are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>z</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>n</mi>
+          <mo>+</mo>
+          <mo stretchy="false">(</mo>
+          <mi>f</mi>
+          <mo>−</mo>
+          <mi>n</mi>
+          <mo stretchy="false">)</mo>
+          <mfrac>
+            <mi>i</mi>
+            <mi>N</mi>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Slice:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>i</mi>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">⌊</mo>
+            <mi>N</mi>
+            <mfrac>
+              <mrow>
+                <mi>z</mi>
+                <mo>−</mo>
+                <mi>n</mi>
+              </mrow>
+              <mrow>
+                <mi>f</mi>
+                <mo>−</mo>
+                <mi>n</mi>
+              </mrow>
+            </mfrac>
+            <mo data-mjx-texclass="CLOSE">⌋</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Advantages are simplicity and predictable physical size.</p>
+<p>Disadvantage is poor depth distribution when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>n</mi>
+</math>
+<p>is huge.</p>
+<p>Linear slicing can still make sense in bounded scenes or orthographic cameras.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-frustum-cluster-bounds" class="level4">
+<h4>Frustum-cluster bounds</h4>
+<p>A cluster is not really an axis-aligned world-space box.</p>
+<p>It is the volume between four screen-space tile rays and two depth planes.</p>
+<p>For one tile, construct NDC corners:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>y</mi>
+    <mn>0</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>y</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>At near depth <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>z</mi>
+    <mi>a</mi>
+  </msub>
+</math> and far depth <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>z</mi>
+    <mi>b</mi>
+  </msub>
+</math>, back-project:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>x</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>n</mi>
+              <mi>d</mi>
+              <mi>c</mi>
+            </mrow>
+          </msub>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>y</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>n</mi>
+              <mi>d</mi>
+              <mi>c</mi>
+            </mrow>
+          </msub>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>z</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>n</mi>
+              <mi>d</mi>
+              <mi>c</mi>
+            </mrow>
+          </msub>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+</math>
+<p>then divide by homogeneous w.</p>
+<p>You obtain eight view-space points defining a frustum cell.</p>
+<p>For exact intersection tests you can derive its six planes.</p>
+<p>For faster conservative tests, you may approximate cluster with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>A</mi>
+  <mi>B</mi>
+  <mi>B</mi>
+</math>
+<p>or bounding sphere in view space.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-light-bounding-volumes" class="level4">
+<h4>Light bounding volumes</h4>
+<p>Directional lights:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>affect all clusters</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>unless further masked.</p>
+<p>Point light naturally has a sphere:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>p</mi>
+  <mo>−</mo>
+  <mi>L</mi>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo>≤</mo>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>Spot light naturally has a cone.</p>
+<p>Area lights may use bounding spheres/AABBs or custom conservative volumes.</p>
+<p>Bounding volumes must be conservative:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>f</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mi>s</mi>
+          <mi>e</mi>
+          <mtext> </mtext>
+          <mi>p</mi>
+          <mi>o</mi>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>v</mi>
+          <mi>e</mi>
+          <mo stretchy="false">⇒</mo>
+          <mi>e</mi>
+          <mi>x</mi>
+          <mi>t</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mtext> </mtext>
+          <mi>s</mi>
+          <mi>h</mi>
+          <mi>a</mi>
+          <mi>d</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>g</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>but:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>f</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mi>s</mi>
+          <mi>e</mi>
+          <mtext> </mtext>
+          <mi>n</mi>
+          <mi>e</mi>
+          <mi>g</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>v</mi>
+          <mi>e</mi>
+          <mo stretchy="false">⇒</mo>
+          <mi>m</mi>
+          <mi>i</mi>
+          <mi>s</mi>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>g</mi>
+          <mtext> </mtext>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>g</mi>
+          <mi>h</mi>
+          <mi>t</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Correct renderer prefers conservative false positives.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-point-light-sphere-vs-cluster" class="level4">
+<h4>Point-light sphere vs cluster</h4>
+<p>If cluster is approximated by AABB:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>x</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<p>find closest point on box to sphere center:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mi>L</mi>
+  <mo>,</mo>
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>d</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>L</mi>
+  <mo>−</mo>
+  <mi>q</mi>
+  <msup>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Sphere intersects if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>d</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>≤</mo>
+          <msup>
+            <mi>r</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Very cheap.</p>
+<p>Exact frustum-plane sphere test is possible:</p>
+<p>For each cluster plane:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>n</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>⋅</mo>
+  <mi>L</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>d</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>If sphere lies completely outside any plane:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>n</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>⋅</mo>
+  <mi>L</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>d</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>&lt;</mo>
+  <mo>−</mo>
+  <mi>r</mi>
+</math>
+<p>then reject.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-spot-cone-vs-cluster" class="level4">
+<h4>Spot cone vs cluster</h4>
+<p>Spotlight cone defined by apex <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math>, axis <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>d</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+</math>, range <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+</math>, half-angle <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>θ</mi>
+</math>.</p>
+<p>A point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math> is inside infinite cone when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+  <mo>⋅</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>d</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>
+<p>and radial distance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>r</mi>
+    <mo>⊥</mo>
+  </msub>
+  <mo>≤</mo>
+  <mi>t</mi>
+  <mi>tan</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>.</mo>
+</math>
+<p>Exact cone-frustum intersection is more expensive.</p>
+<p>Typical clustered renderers use conservative approximations such as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>cone bounding sphere</mtext>
+</math>
+<p>or cone-vs-plane tests.</p>
+<p>Important repository detail: current Maveb validates spotlight cone parameters, but its inspected CPU cluster assignment uses the light’s <strong>range sphere/projected range bound</strong> rather than a dedicated exact cone-vs-cluster refinement. That is conservative and correct, but it admits extra clusters for spots.</p>
+<hr />
+<p>A naïve dense representation:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>LightIndex clusterLights<span class="op">[</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    ClusterCount</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="op">][</span>MaxLightsPerCluster<span class="op">];</span></span></code></pre></div>
+<p>Memory:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mo>=</mo>
+  <mi>C</mi>
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mn>120</mn>
+  <mo>×</mo>
+  <mn>68</mn>
+  <mo>×</mo>
+  <mn>24</mn>
+  <mo>=</mo>
+  <mn>195</mn>
+  <mo>,</mo>
+  <mn>840</mn>
+</math>
+<p>clusters and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>128.</mn>
+</math>
+<p>With 4-byte indices:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>M</mi>
+  <mo>≈</mo>
+  <mn>100</mn>
+  <mtext> MB</mtext>
+  <mo>.</mo>
+</math>
+<p>Mostly wasted if average cluster contains 8 lights.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-compact-representation" class="level4">
+<h4>Compact representation</h4>
+<p>Use:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ClusterRange</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Offset<span class="op">;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> Count<span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">uint32_t</span><span class="op">&gt;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    LightIndices<span class="op">;</span></span></code></pre></div>
+<p>For cluster <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>:</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>c</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Storage:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>C</mi>
+  <mo>+</mo>
+  <mi>R</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>=</mo>
+  <mtext>total light references</mtext>
+  <mo>.</mo>
+</math>
+<p>This is CSR again.</p>
+<p>Exactly the same storage pattern as Gaussian tile lists.</p>
+<p>Current Maveb’s <code>ClusteredLightLists</code> ends with:</p>
+<pre class="text"><code>clusters:
+    offset,count
+
+lightIndices:
+    flat list</code></pre>
+<p>so the final representation is already CSR-like.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-gpu-construction" class="level4">
+<h4>GPU construction</h4>
+<p>If building on GPU:</p>
+<p>First count:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">[</mo>
+  <mi>c</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Then exclusive scan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo stretchy="false">[</mo>
+  <mi>c</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>&lt;</mo>
+      <mi>c</mi>
+    </mrow>
+  </munder>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">[</mo>
+  <mi>j</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Then second pass scatters light indices into:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo stretchy="false">[</mo>
+  <mi>c</mi>
+  <mo stretchy="false">]</mo>
+  <mo>+</mo>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>R</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>k</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>c</mi>
+          <mi>o</mi>
+          <mi>u</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mo stretchy="false">→</mo>
+          <mi>s</mi>
+          <mi>c</mi>
+          <mi>a</mi>
+          <mi>n</mi>
+          <mo stretchy="false">→</mo>
+          <mi>s</mi>
+          <mi>c</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This should now feel like a universal GPU pattern rather than a one-off algorithm.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-current-maveb-construction" class="level4">
+<h4>Current Maveb construction</h4>
+<p>Current inspected <code>Lighting.cpp</code> is CPU-side and simpler:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>vector<span class="op">&lt;</span>vector<span class="op">&lt;</span><span class="dt">uint32_t</span><span class="op">&gt;&gt;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    temporary<span class="op">(</span>clusterCount<span class="op">);</span></span></code></pre></div>
+<p>It conservatively appends each light to every overlapped cluster and then flattens the vectors into:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>f</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>That is perfectly acceptable as a reference/CPU builder.</p>
+<p>A future GPU implementation should replace nested dynamic vectors with count/scan/scatter.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-overflow-handling" class="level4">
+<h4>Overflow handling</h4>
+<p>Never allow light assignment to silently overflow.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>&gt;</mo>
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>d</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<p>options include:</p>
+<p>Reject frame/configuration.</p>
+<p>Clamp and report.</p>
+<p>Drop lowest-priority lights.</p>
+<p>Increase buffer next frame.</p>
+<p>Use fallback global-light list.</p>
+<p>Current Maveb uses a configured:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>x</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>u</mi>
+  <mi>m</mi>
+  <mi>L</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mi>R</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+</math>
+<p>and fails with:</p>
+<pre class="text"><code>resourceExhausted</code></pre>
+<p>if exceeded.</p>
+<p>That is conservative correctness-first behavior.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-memory-budgeting" class="level4">
+<h4>Memory budgeting</h4>
+<p>You should budget:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>M</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>c</mi>
+      <mi>l</mi>
+      <mi>u</mi>
+      <mi>s</mi>
+      <mi>t</mi>
+      <mi>e</mi>
+      <mi>r</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mo>×</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mi>R</mi>
+  <mo>×</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mn>200</mn>
+  <mi>k</mi>
+  <mo>,</mo>
+</math>
+<p>8-byte range:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1.6</mn>
+  <mi>M</mi>
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>M</mi>
+</math>
+<p>references:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mi>M</mi>
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>Total:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>∼</mo>
+  <mn>9.6</mn>
+  <mi>M</mi>
+  <mi>B</mi>
+  <mo>.</mo>
+</math>
+<p>Reasonable.</p>
+<p>But worst-case:</p>
+<p>Every local light touches every cluster:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mo>×</mo>
+  <mi>L</mi>
+  <mo>.</mo>
+</math>
+<p>That explodes.</p>
+<p>Hence robust renderer must define explicit:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>c</mi>
+          <mi>l</mi>
+          <mi>u</mi>
+          <mi>s</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>b</mi>
+          <mi>u</mi>
+          <mi>d</mi>
+          <mi>g</mi>
+          <mi>e</mi>
+          <mi>t</mi>
+          <mo>,</mo>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>f</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+          <mi>b</mi>
+          <mi>u</mi>
+          <mi>d</mi>
+          <mi>g</mi>
+          <mi>e</mi>
+          <mi>t</mi>
+          <mo>,</mo>
+          <mi>o</mi>
+          <mi>v</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>f</mi>
+          <mi>l</mi>
+          <mi>o</mi>
+          <mi>w</mi>
+          <mi>t</mi>
+          <mi>e</mi>
+          <mi>l</mi>
+          <mi>e</mi>
+          <mi>m</mi>
+          <mi>e</mi>
+          <mi>t</mi>
+          <mi>r</mi>
+          <mi>y</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-debug-visualization" class="level4">
+<h4>Debug visualization</h4>
+<p>A clustered renderer should visualize cluster occupancy.</p>
+<p>For pixel cluster:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo>,</mo>
+</math>
+<p>map:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>c</mi>
+  </msub>
+</math>
+<p>to heat.</p>
+<p>For example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>c</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>K</mi>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then display low occupancy dark, high occupancy bright.</p>
+<p>Useful views include cluster ID, z-slice, light count, overflow clusters and selected light volumes.</p>
+<p>If one region suddenly has 300 lights/cluster, performance mystery becomes obvious.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-adaptive-work-hysteresis-and-hi-z" class="level4">
+<h4>ADAPTIVE WORK, HYSTERESIS AND HI-Z</h4>
+<p>The unifying idea is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>not every possible rendering calculation deserves equal work every frame</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Suppose a renderer has 11 ms budget.</p>
+<p>You cannot simply enable every expensive feature at maximum quality.</p>
+<p>You need an allocation rule.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-adaptive-work" class="level4">
+<h4>Adaptive work</h4>
+<p>For task <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math>, estimate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>expected visual error if skipped/reduced</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>cost</mtext>
+  <mo>.</mo>
+</math>
+<p>A simple benefit score:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>S</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <msub>
+              <mi>E</mi>
+              <mi>i</mi>
+            </msub>
+            <msub>
+              <mi>C</mi>
+              <mi>i</mi>
+            </msub>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then execute highest-value work until budget exhausted.</p>
+<p>This resembles knapsack optimization.</p>
+<p>Examples:</p>
+<p>A shadow cascade covering center screen might have high benefit.</p>
+<p>Updating a tiny reflection probe behind camera may have low benefit.</p>
+<p>In foveated XR, center-of-gaze work gets much higher benefit.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-error-metrics" class="level4">
+<h4>Error metrics</h4>
+<p>Possible lighting error proxy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>c</mi>
+      <mi>l</mi>
+      <mi>u</mi>
+      <mi>s</mi>
+      <mi>t</mi>
+      <mi>e</mi>
+      <mi>r</mi>
+    </mrow>
+  </msub>
+  <mo>∼</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>l</mi>
+      <mo>∈</mo>
+      <mi>o</mi>
+      <mi>m</mi>
+      <mi>i</mi>
+      <mi>t</mi>
+      <mi>t</mi>
+      <mi>e</mi>
+      <mi>d</mi>
+    </mrow>
+  </munder>
+  <msub>
+    <mi>I</mi>
+    <mi>l</mi>
+  </msub>
+  <msub>
+    <mi>A</mi>
+    <mi>l</mi>
+  </msub>
+</math>
+<p>where:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>I</mi>
+    <mi>l</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>estimated intensity</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>A</mi>
+    <mi>l</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>screen relevance</mtext>
+  <mo>.</mo>
+</math>
+<p>Or use gradient/sensitivity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>E</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>≈</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">|</mo>
+    <mfrac>
+      <mrow>
+        <mi>∂</mi>
+        <mi>Q</mi>
+      </mrow>
+      <mrow>
+        <mi>∂</mi>
+        <msub>
+          <mi>x</mi>
+          <mi>i</mi>
+        </msub>
+      </mrow>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">|</mo>
+  </mrow>
+  <mi mathvariant="normal">Δ</mi>
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>This is conceptually close to Vulkax’s current adaptive-material-influence research code, which ranks regions by absolute adjoint gradient contribution and selects enough work to cover a target fraction of total sensitivity.</p>
+<p>That code is not itself a renderer controller, but the allocation mathematics is directly analogous.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-work-budget" class="level4">
+<h4>Work budget</h4>
+<p>Suppose tasks sorted by score:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>≥</mo>
+  <msub>
+    <mi>S</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>≥</mo>
+  <mo>⋯</mo>
+  <mo>.</mo>
+</math>
+<p>Choose largest <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math> such that:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <munderover>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mo>=</mo>
+              <mn>1</mn>
+            </mrow>
+            <mrow data-mjx-texclass="ORD">
+              <mi>k</mi>
+            </mrow>
+          </munderover>
+          <msub>
+            <mi>C</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>≤</mo>
+          <mi>B</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Budget may be measured as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mi>P</mi>
+  <mi>U</mi>
+  <mtext> </mtext>
+  <mi>m</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mtext> </mtext>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>o</mi>
+  <mi>w</mi>
+  <mtext> </mtext>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mo>,</mo>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+</math>
+<p>For FoveaBench-style work, a very useful unit is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>GPU time under fixed image-quality target</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-online-controller" class="level4">
+<h4>Online controller</h4>
+<p>Target frame time:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>T</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Measured:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Error:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>e</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <msup>
+    <mi>T</mi>
+    <mo>∗</mo>
+  </msup>
+  <mo>−</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>If frame too slow:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>e</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>&lt;</mo>
+  <mn>0.</mn>
+</math>
+<p>A proportional controller:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>B</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>K</mi>
+    <mi>p</mi>
+  </msub>
+  <msub>
+    <mi>e</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>A PI controller:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>B</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>t</mi>
+              <mo>+</mo>
+              <mn>1</mn>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>B</mi>
+            <mi>t</mi>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>K</mi>
+            <mi>p</mi>
+          </msub>
+          <msub>
+            <mi>e</mi>
+            <mi>t</mi>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>K</mi>
+            <mi>i</mi>
+          </msub>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>τ</mi>
+              <mo>≤</mo>
+              <mi>t</mi>
+            </mrow>
+          </munder>
+          <msub>
+            <mi>e</mi>
+            <mi>τ</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Clamp:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>i</mi>
+      <mi>n</mi>
+    </mrow>
+  </msub>
+  <mo>≤</mo>
+  <mi>B</mi>
+  <mo>≤</mo>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Do not react too aggressively or quality oscillates.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-temporal-hysteresis" class="level4">
+<h4>Temporal hysteresis</h4>
+<p>Suppose expensive feature activates when importance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mo>&gt;</mo>
+  <mn>0.5</mn>
+  <mo>.</mo>
+</math>
+<p>If signal fluctuates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.49</mn>
+  <mo>,</mo>
+  <mn>0.51</mn>
+  <mo>,</mo>
+  <mn>0.49</mn>
+  <mo>,</mo>
+  <mn>0.51</mn>
+</math>
+<p>feature toggles every frame.</p>
+<p>Visible flicker and scheduling instability.</p>
+<p>Instead use separate thresholds:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>T</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>e</mi>
+              <mi>n</mi>
+              <mi>t</mi>
+              <mi>e</mi>
+              <mi>r</mi>
+            </mrow>
+          </msub>
+          <mo>&gt;</mo>
+          <msub>
+            <mi>T</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>e</mi>
+              <mi>x</mi>
+              <mi>i</mi>
+              <mi>t</mi>
+            </mrow>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If inactive:</p>
+<p>activate only when:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mo>&gt;</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>t</mi>
+      <mi>e</mi>
+      <mi>r</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>If active:</p>
+<p>remain active until:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mo>&lt;</mo>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>e</mi>
+      <mi>x</mi>
+      <mi>i</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>t</mi>
+      <mi>e</mi>
+      <mi>r</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>0.6</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>e</mi>
+      <mi>x</mi>
+      <mi>i</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>0.4</mn>
+  <mo>.</mo>
+</math>
+<p>That dead band is hysteresis.</p>
+<p>You can also require persistence:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>t</mi>
+      <mi>e</mi>
+      <mi>r</mi>
+    </mrow>
+  </msub>
+</math>
+<p>consecutive qualifying frames.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-hi-z" class="level4">
+<h4>Hi-Z</h4>
+<p>A depth pyramid stores progressively coarser depth information.</p>
+<p>Level 0:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mo>×</mo>
+  <mi>H</mi>
+  <mo>.</mo>
+</math>
+<p>Level 1:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo>×</mo>
+  <mi>H</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2.</mn>
+</math>
+<p>Each texel summarizes a:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mo>×</mo>
+  <mn>2</mn>
+</math>
+<p>region.</p>
+<p>Continue until:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>×</mo>
+  <mn>1.</mn>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-min-depth-vs-max-depth-pyramid" class="level4">
+<h4>Min-depth vs max-depth pyramid</h4>
+<p>Which reduction you need depends on depth convention and query.</p>
+<p>For conventional depth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>If asking:</p>
+<blockquote>
+<p>Is an object’s nearest depth behind <strong>every</strong> occluder across its screen rectangle?</p>
+</blockquote>
+<p>you need the <strong>farthest occluder</strong> in that region:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>m</mi>
+          <mi>a</mi>
+          <mi>x</mi>
+          <mo stretchy="false">(</mo>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>p</mi>
+          <mi>t</mi>
+          <mi>h</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for conventional depth.</p>
+<p>If even the farthest occluder is nearer than object:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>x</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <msub>
+    <mi>h</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>o</mi>
+      <mi>c</mi>
+      <mi>c</mi>
+      <mi>l</mi>
+      <mi>u</mi>
+      <mi>d</mi>
+      <mi>e</mi>
+      <mi>r</mi>
+      <mi>s</mi>
+    </mrow>
+  </msub>
+  <mo>&lt;</mo>
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>o</mi>
+      <mi>b</mi>
+      <mi>j</mi>
+      <mi>e</mi>
+      <mi>c</mi>
+      <mi>t</mi>
+      <mi>N</mi>
+      <mi>e</mi>
+      <mi>a</mi>
+      <mi>r</mi>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>then every pixel is occluded.</p>
+<p>For reversed-Z:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>the analogous conservative farthest-depth summary is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>m</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mo stretchy="false">(</mo>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>p</mi>
+          <mi>t</mi>
+          <mi>h</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>So never copy “Hi-Z uses max” without knowing the depth convention and query semantics.</p>
+<hr />
+<p><strong>2×2 reduction</strong></p>
+<p>For conventional max pyramid:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>D</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>l</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">{</mo>
+    <mtable columnalign="left left" columnspacing="1em" rowspacing=".2em">
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>D</mi>
+            <mi>l</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mn>2</mn>
+          <mi>x</mi>
+          <mo>,</mo>
+          <mn>2</mn>
+          <mi>y</mi>
+          <mo stretchy="false">)</mo>
+          <mo>,</mo>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>D</mi>
+            <mi>l</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mn>2</mn>
+          <mi>x</mi>
+          <mo>+</mo>
+          <mn>1</mn>
+          <mo>,</mo>
+          <mn>2</mn>
+          <mi>y</mi>
+          <mo stretchy="false">)</mo>
+          <mo>,</mo>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>D</mi>
+            <mi>l</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mn>2</mn>
+          <mi>x</mi>
+          <mo>,</mo>
+          <mn>2</mn>
+          <mi>y</mi>
+          <mo>+</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+          <mo>,</mo>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>D</mi>
+            <mi>l</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mn>2</mn>
+          <mi>x</mi>
+          <mo>+</mo>
+          <mn>1</mn>
+          <mo>,</mo>
+          <mn>2</mn>
+          <mi>y</mi>
+          <mo>+</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE" fence="true" stretchy="true" symmetric="true"></mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>For reversed-Z conservative farthest:</p>
+<p>replace max with min.</p>
+<p>This is a perfect compute-shader workload.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-screen-space-bounding-rectangle" class="level4">
+<h4>Screen-space bounding rectangle</h4>
+<p>Project object’s conservative bounding volume.</p>
+<p>AABB corners or bounding sphere give:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>×</mo>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>y</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>y</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Choose mip roughly matching rectangle size.</p>
+<p>If rectangle spans:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mo>×</mo>
+  <mi>h</mi>
+</math>
+<p>pixels, choose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mo>≈</mo>
+  <mo fence="false" stretchy="false">⌊</mo>
+  <msub>
+    <mi>log</mi>
+    <mn>2</mn>
+  </msub>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <mi>w</mi>
+  <mo>,</mo>
+  <mi>h</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+  <mo fence="false" stretchy="false">⌋</mo>
+  <mo>.</mo>
+</math>
+<p>Sample enough pyramid texels conservatively.</p>
+<p>Then compare object’s near depth against stored aggregate.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-occlusion-false-positives-and-false-negatives" class="level4">
+<h4>Occlusion false positives and false negatives</h4>
+<p>Conservative occlusion culling must prefer:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>false visible</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>rather than:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>false occluded</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>False visible wastes draw.</p>
+<p>False occluded creates holes.</p>
+<p>Temporal occlusion systems often also delay culling by a frame or use history to avoid flicker around boundaries.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-shadows-and-ambient-occlusion" class="level4">
+<h4>SHADOWS AND AMBIENT OCCLUSION</h4>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-shadow-mapping" class="level4">
+<h4>Shadow mapping</h4>
+<p>A shadow map asks:</p>
+<blockquote>
+<p>From the light’s viewpoint, what is the nearest visible depth?</p>
+</blockquote>
+<p>First render scene from light into depth texture.</p>
+<p>For world point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>w</mi>
+  </msub>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>l</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>P</mi>
+    <mi>L</mi>
+  </msub>
+  <msub>
+    <mi>V</mi>
+    <mi>L</mi>
+  </msub>
+  <msub>
+    <mi>p</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Perspective divide:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mi>d</mi>
+      <mi>c</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>l</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>p</mi>
+    <mi>l</mi>
+  </msub>
+  <mo>.</mo>
+  <mi>w</mi>
+  <mo>.</mo>
+</math>
+<p>Convert x/y to shadow texture UV.</p>
+<p>Compare current light-space depth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>c</mi>
+      <mi>u</mi>
+      <mi>r</mi>
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+</math>
+<p>with stored:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>p</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Conventional depth test:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>z</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>c</mi>
+              <mi>u</mi>
+              <mi>r</mi>
+              <mi>r</mi>
+              <mi>e</mi>
+              <mi>n</mi>
+              <mi>t</mi>
+            </mrow>
+          </msub>
+          <mo>&gt;</mo>
+          <msub>
+            <mi>z</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>m</mi>
+              <mi>a</mi>
+              <mi>p</mi>
+            </mrow>
+          </msub>
+          <mo>+</mo>
+          <mi>b</mi>
+          <mi>i</mi>
+          <mi>a</mi>
+          <mi>s</mi>
+          <mo stretchy="false">⇒</mo>
+          <mi>s</mi>
+          <mi>h</mi>
+          <mi>a</mi>
+          <mi>d</mi>
+          <mi>o</mi>
+          <mi>w</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Exact sign changes with reversed-Z conventions.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-shadow-acne" class="level4">
+<h4>Shadow acne</h4>
+<p>Suppose receiver surface generated shadow map.</p>
+<p>Due to finite raster precision and sample mismatch, shading point depth may be slightly behind its own stored depth.</p>
+<p>Then self-shadowing stripes appear.</p>
+<p>This is shadow acne.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-constant-bias" class="level4">
+<h4>Constant bias</h4>
+<p>Offset comparison:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>c</mi>
+      <mi>u</mi>
+      <mi>r</mi>
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">←</mo>
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>c</mi>
+      <mi>u</mi>
+      <mi>r</mi>
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>−</mo>
+  <mi>b</mi>
+</math>
+<p>or equivalently adjust stored threshold depending convention.</p>
+<p>Too small:</p>
+<p>acne.</p>
+<p>Too large:</p>
+<p>shadow disconnects from caster.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-slope-scaled-bias" class="level4">
+<h4>Slope-scaled bias</h4>
+<p>Problem grows when surface is grazing relative to light.</p>
+<p>Bias can depend on angle:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>b</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>b</mi>
+            <mi>c</mi>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>b</mi>
+            <mi>s</mi>
+          </msub>
+          <mi>tan</mi>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <mi>θ</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>θ</mi>
+</math> is surface/light slope.</p>
+<p>Raster APIs often implement slope-scaled depth bias directly using polygon depth slope.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-peter-panning" class="level4">
+<h4>Peter-panning</h4>
+<p>Excessive bias moves shadow away from caster.</p>
+<p>Object appears to float:</p>
+<pre class="text"><code>caster
+  █
+
+    shadow</code></pre>
+<p>That is Peter-panning.</p>
+<p>Bias tuning is always compromise:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mo stretchy="false">↔</mo>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mtext> </mtext>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>Normal-offset shadowing is another technique: offset receiver along normal.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-pcf" class="level4">
+<h4>PCF</h4>
+<p>Instead of one binary comparison:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+  <mo>∈</mo>
+  <mo fence="false" stretchy="false">{</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo fence="false" stretchy="false">}</mo>
+  <mo>,</mo>
+</math>
+<p>sample a neighborhood:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>V</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>P</mi>
+              <mi>C</mi>
+              <mi>F</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mi>N</mi>
+          </mfrac>
+          <munderover>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi>i</mi>
+              <mo>=</mo>
+              <mn>1</mn>
+            </mrow>
+            <mrow data-mjx-texclass="ORD">
+              <mi>N</mi>
+            </mrow>
+          </munderover>
+          <mi>C</mi>
+          <mi>o</mi>
+          <mi>m</mi>
+          <mi>p</mi>
+          <mi>a</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mo stretchy="false">(</mo>
+          <mi>z</mi>
+          <mo>,</mo>
+          <mi>D</mi>
+          <mo stretchy="false">(</mo>
+          <mi>u</mi>
+          <mo>+</mo>
+          <mi mathvariant="normal">Δ</mi>
+          <msub>
+            <mi>u</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>,</mo>
+          <mi>v</mi>
+          <mo>+</mo>
+          <mi mathvariant="normal">Δ</mi>
+          <msub>
+            <mi>v</mi>
+            <mi>i</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This produces soft transitions.</p>
+<p>It is filtering <strong>comparison results</strong>, not averaging depths and comparing once.</p>
+<p>Important distinction.</p>
+<p>Hardware comparison samplers can implement this efficiently.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-cascaded-shadow-maps" class="level4">
+<h4>Cascaded shadow maps</h4>
+<p>Directional light with huge view range cannot maintain resolution everywhere.</p>
+<p>Split camera frustum into cascades.</p>
+<p>Near cascades cover small physical region with high texel density.</p>
+<p>Far cascades cover large region.</p>
+<p>Current Maveb supports up to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+</math>
+<p>cascades.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-cascade-split-formula" class="level4">
+<h4>Cascade split formula</h4>
+<p>Uniform split:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>u</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>n</mi>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mi>f</mi>
+  <mo>−</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mi>i</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>N</mi>
+  <mo>.</mo>
+</math>
+<p>Log split:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>l</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>n</mi>
+  <mo stretchy="false">(</mo>
+  <mi>f</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>n</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mi>N</mi>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Practical split:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>s</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>λ</mi>
+          <msub>
+            <mi>l</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>+</mo>
+          <mo stretchy="false">(</mo>
+          <mn>1</mn>
+          <mo>−</mo>
+          <mi>λ</mi>
+          <mo stretchy="false">)</mo>
+          <msub>
+            <mi>u</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Current Maveb implements exactly this with:</p>
+<pre class="text"><code>splitLambda</code></pre>
+<p>clamped:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>≤</mo>
+  <mi>λ</mi>
+  <mo>≤</mo>
+  <mn>1.</mn>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-stabilization" class="level4">
+<h4>Stabilization</h4>
+<p>If cascade projection changes continuously with camera movement, shadow texel grid swims.</p>
+<p>Snap light-space cascade center to texel increments.</p>
+<p>If cascade width:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>W</mi>
+    <mi>c</mi>
+  </msub>
+</math>
+<p>and resolution:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>,</mo>
+</math>
+<p>texel world size:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>W</mi>
+    <mi>c</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>R</mi>
+  <mo>.</mo>
+</math>
+<p>Snap:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msubsup>
+            <mi>x</mi>
+            <mi>c</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msubsup>
+          <mo>=</mo>
+          <mi>r</mi>
+          <mi>o</mi>
+          <mi>u</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>x</mi>
+            <mi>c</mi>
+          </msub>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <mi>t</mi>
+          <mo stretchy="false">)</mo>
+          <mi>t</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Same y.</p>
+<p>Maveb currently performs this center quantization.</p>
+<p>It also quantizes its cascade radius conservatively before constructing light-space projection.</p>
+<p>That is classic cascade stabilization.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-shadow-atlas" class="level4">
+<h4>Shadow atlas</h4>
+<p>Instead of one texture per light/cascade, pack shadow maps into one atlas.</p>
+<p>Each allocation gives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>w</mi>
+  <mo>,</mo>
+  <mi>h</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Shading transforms local shadow UV:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>l</mi>
+      <mi>o</mi>
+      <mi>c</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+</math>
+<p>to atlas:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>a</mi>
+      <mi>t</mi>
+      <mi>l</mi>
+      <mi>a</mi>
+      <mi>s</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>+</mo>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>⋅</mo>
+  <mi>u</mi>
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>l</mi>
+      <mi>o</mi>
+      <mi>c</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Benefits:</p>
+<p>fewer resource bindings.</p>
+<p>Problems:</p>
+<p>allocation fragmentation, padding, filtering bleed, differing resolutions.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-point-light-cubemap-shadows" class="level4">
+<h4>Point-light cubemap shadows</h4>
+<p>Point light emits all directions.</p>
+<p>Render six faces:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>±</mo>
+  <mi>X</mi>
+  <mo>,</mo>
+  <mo>±</mo>
+  <mi>Y</mi>
+  <mo>,</mo>
+  <mo>±</mo>
+  <mi>Z</mi>
+  <mo>.</mo>
+</math>
+<p>For shaded point:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mo>−</mo>
+  <mi>L</mi>
+  <mo>.</mo>
+</math>
+<p>Direction selects cubemap face.</p>
+<p>Stored value often radial distance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>d</mi>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mo>.</mo>
+</math>
+<p>Compare with current radial distance.</p>
+<p>Cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>6</mn>
+</math>
+<p>shadow renders per point light.</p>
+<p>Expensive.</p>
+<p>Dual-paraboloid or octahedral shadow maps exist, but cubemap is straightforward.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-vsm" class="level4">
+<h4>VSM</h4>
+<p>Variance shadow maps store moments:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>m</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <mi>z</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>m</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <msup>
+    <mi>z</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Variance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>σ</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <msub>
+    <mi>m</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>−</mo>
+  <msubsup>
+    <mi>m</mi>
+    <mn>1</mn>
+    <mn>2</mn>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>For receiver depth <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>t</mi>
+  <mo>&gt;</mo>
+  <msub>
+    <mi>m</mi>
+    <mn>1</mn>
+  </msub>
+</math>, Chebyshev bound:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mo stretchy="false">(</mo>
+          <mi>z</mi>
+          <mo>≥</mo>
+          <mi>t</mi>
+          <mo stretchy="false">)</mo>
+          <mo>≤</mo>
+          <mfrac>
+            <msup>
+              <mi>σ</mi>
+              <mn>2</mn>
+            </msup>
+            <mrow>
+              <msup>
+                <mi>σ</mi>
+                <mn>2</mn>
+              </msup>
+              <mo>+</mo>
+              <mo stretchy="false">(</mo>
+              <mi>t</mi>
+              <mo>−</mo>
+              <msub>
+                <mi>m</mi>
+                <mn>1</mn>
+              </msub>
+              <msup>
+                <mo stretchy="false">)</mo>
+                <mn>2</mn>
+              </msup>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This gives filterable soft visibility.</p>
+<p>Problem:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>light bleeding</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>because probability bound can be loose.</p>
+<p>EVSM transforms depth exponentially to improve separation, with its own precision issues.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-contact-shadows" class="level4">
+<h4>Contact shadows</h4>
+<p>Shadow map resolution often misses tiny near-contact occlusion.</p>
+<p>Screen-space contact shadows ray march a short segment from shading point toward light using scene depth.</p>
+<p>Good for:</p>
+<p>feet on floor, object contact, small creases.</p>
+<p>Limitations:</p>
+<p>screen-space only, missing off-screen occluders, finite depth thickness.</p>
+<p>Use as supplement, not full shadow replacement.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-ambient-occlusion" class="level4">
+<h4>Ambient occlusion</h4>
+<p>AO estimates how blocked local hemisphere is.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>A</mi>
+          <mi>O</mi>
+          <mo stretchy="false">(</mo>
+          <mi>p</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mi>π</mi>
+          </mfrac>
+          <msub>
+            <mo data-mjx-texclass="OP">∫</mo>
+            <mrow data-mjx-texclass="ORD">
+              <msup>
+                <mi mathvariant="normal">Ω</mi>
+                <mo>+</mo>
+              </msup>
+            </mrow>
+          </msub>
+          <mi>V</mi>
+          <mo stretchy="false">(</mo>
+          <mi>p</mi>
+          <mo>,</mo>
+          <mi>ω</mi>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo>⋅</mo>
+          <mi>ω</mi>
+          <mo stretchy="false">)</mo>
+          <mi>d</mi>
+          <mi>ω</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If fully open:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>O</mi>
+  <mo>≈</mo>
+  <mn>1.</mn>
+</math>
+<p>Highly occluded:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mi>O</mi>
+  <mo stretchy="false">→</mo>
+  <mn>0.</mn>
+</math>
+<p>It is not global illumination.</p>
+<p>It is an approximation to local visibility, generally used to attenuate indirect diffuse.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-ssao" class="level4">
+<h4>SSAO</h4>
+<p>Reconstruct view-space position from depth.</p>
+<p>Sample neighboring offsets.</p>
+<p>Compare whether neighbors occlude hemisphere around point.</p>
+<p>A simple sample:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mo>+</mo>
+  <mi>T</mi>
+  <mi>B</mi>
+  <mi>N</mi>
+  <mo>⋅</mo>
+  <msub>
+    <mi>k</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>⋅</mo>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>u</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Project <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+</math> to screen.</p>
+<p>Fetch depth.</p>
+<p>If scene geometry lies in front of sample position by appropriate threshold, count occlusion.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-sample-kernels" class="level4">
+<h4>Sample kernels</h4>
+<p>Generate hemisphere samples biased near origin.</p>
+<p>Example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>k</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>n</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>H</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>p</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>⋅</mo>
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Use nonlinear radius:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>r</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mn>0.1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mi>i</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>N</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>More samples near center.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-noise-rotation" class="level4">
+<h4>Noise rotation</h4>
+<p>If every pixel uses same kernel, visible repeated pattern appears.</p>
+<p>Use small tiled noise texture containing random tangent-plane rotations.</p>
+<p>Construct TBN:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mi>n</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mo>−</mo>
+  <mi>n</mi>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo>⋅</mo>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mi>n</mi>
+  <mo>×</mo>
+  <mi>T</mi>
+  <mo>.</mo>
+</math>
+<p>Rotate kernel around normal per pixel.</p>
+<p>Then blur AO.</p>
+<p>Noise becomes high-frequency and easier to filter.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-hbao" class="level4">
+<h4>HBAO</h4>
+<p>Horizon-based AO considers horizon angle along screen-space directions.</p>
+<p>For direction <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>ϕ</mi>
+</math>, find maximum elevation angle of surrounding geometry:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mo stretchy="false">(</mo>
+  <mi>ϕ</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Occlusion is derived from angular horizon relative to normal.</p>
+<p>This tends to produce more geometrically grounded AO than simple random depth tests.</p>
+<p>Modern techniques like GTAO build further on horizon/integral reasoning.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-gi-probes-ssr-and-radiance-cascades" class="level4">
+<h4>GI, PROBES, SSR AND RADIANCE CASCADES</h4>
+<p>Global illumination means light paths involving indirect bounces.</p>
+<p>Direct:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mo stretchy="false">←</mo>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo stretchy="false">←</mo>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Indirect:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mo stretchy="false">←</mo>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>A</mi>
+  </msub>
+  <mo stretchy="false">←</mo>
+  <mi>s</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>B</mi>
+  </msub>
+  <mo stretchy="false">←</mo>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Rendering equation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mi>o</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>L</mi>
+    <mi>e</mi>
+  </msub>
+  <mo>+</mo>
+  <mo data-mjx-texclass="OP">∫</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo>⋅</mo>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mi>d</mi>
+  <msub>
+    <mi>ω</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>L</mi>
+    <mi>i</mi>
+  </msub>
+</math> itself may contain light bounced from many previous surfaces.</p>
+<p>That recursive dependency is GI.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-irradiance-probes" class="level4">
+<h4>Irradiance probes</h4>
+<p>Irradiance probe stores:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mo>,</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>or low-frequency directional representation near position <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math>.</p>
+<p>For diffuse surfaces:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>d</mi>
+      <mi>i</mi>
+      <mi>f</mi>
+      <mi>f</mi>
+      <mi>u</mi>
+      <mi>s</mi>
+      <mi>e</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mi>ρ</mi>
+    <mi>π</mi>
+  </mfrac>
+  <mi>E</mi>
+  <mo>.</mo>
+</math>
+<p>Since diffuse irradiance is low frequency, spherical harmonics are common.</p>
+<p>A probe might store 9 SH coefficients per color for degree 2.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-radiance-probes" class="level4">
+<h4>Radiance probes</h4>
+<p>Radiance depends on direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mo>,</mo>
+  <mi>ω</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>A radiance probe stores more directional information than a scalar irradiance probe.</p>
+<p>Useful for glossy response or propagation.</p>
+<p>Can use:</p>
+<p>cubemaps, octahedral maps, SH, SGs, learned representations.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-probe-interpolation" class="level4">
+<h4>Probe interpolation</h4>
+<p>For probes <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+</math> around shading point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <msub>
+      <mrow data-mjx-texclass="ORD">
+        <mover>
+          <mi>w</mi>
+          <mo stretchy="false">~</mo>
+        </mover>
+      </mrow>
+      <mi>i</mi>
+    </msub>
+    <mrow>
+      <munder>
+        <mo data-mjx-texclass="OP">∑</mo>
+        <mi>j</mi>
+      </munder>
+      <msub>
+        <mrow data-mjx-texclass="ORD">
+          <mover>
+            <mi>w</mi>
+            <mo stretchy="false">~</mo>
+          </mover>
+        </mrow>
+        <mi>j</mi>
+      </msub>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>For inverse-distance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mover>
+        <mi>w</mi>
+        <mo stretchy="false">~</mo>
+      </mover>
+    </mrow>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <mo stretchy="false">(</mo>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+      <mi>x</mi>
+      <mo>−</mo>
+      <msub>
+        <mi>p</mi>
+        <mi>i</mi>
+      </msub>
+      <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+      <mo>+</mo>
+      <mi>ϵ</mi>
+      <msup>
+        <mo stretchy="false">)</mo>
+        <mi>k</mi>
+      </msup>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>E</mi>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo stretchy="false">)</mo>
+          <mo>≈</mo>
+          <munder>
+            <mo data-mjx-texclass="OP">∑</mo>
+            <mi>i</mi>
+          </munder>
+          <msub>
+            <mi>w</mi>
+            <mi>i</mi>
+          </msub>
+          <msub>
+            <mi>E</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Grid probes often use trilinear interpolation.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-probe-leakage" class="level4">
+<h4>Probe leakage</h4>
+<p>Suppose wall separates bright room and dark room.</p>
+<p>Probe on bright side may be spatially close to point on dark side.</p>
+<p>Pure distance interpolation leaks light through wall.</p>
+<p>This is one of the major problems of probe GI.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-visibility-aware-probes" class="level4">
+<h4>Visibility-aware probes</h4>
+<p>Weight can include visibility:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>w</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>∝</mo>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>W</mi>
+  <mi>e</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mo>×</mo>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>b</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Visibility may use:</p>
+<p>depth moments, ray tests, signed distance, probe relocation/classification, geometry normals.</p>
+<p>DDGI-style systems maintain visibility information to reduce leakage.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-reflection-probes" class="level4">
+<h4>Reflection probes</h4>
+<p>Reflection probe stores environment radiance, often cubemap.</p>
+<p>Reflection direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>=</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mi>V</mi>
+  <mo>,</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Sample:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>L</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>e</mi>
+      <mi>n</mi>
+      <mi>v</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>For rough surfaces, use prefiltered mip level:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>O</mi>
+  <mi>D</mi>
+  <mo>∼</mo>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Probe parallax is a problem because cubemap assumes rays originate at probe center.</p>
+<p>Box projection/parallax correction partially fixes this for interiors.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-ssr" class="level4">
+<h4>SSR</h4>
+<p>Screen-space reflection begins with view-space point <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+</math>, normal <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math>, view vector <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>V</mi>
+</math>.</p>
+<p>Reflection direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>=</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi>V</mi>
+  <mo>,</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>according to convention.</p>
+<p>Ray:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mo stretchy="false">(</mo>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>P</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mi>R</mi>
+  <mo>.</mo>
+</math>
+<p>Project successive points into screen.</p>
+<p>Compare ray depth against depth buffer.</p>
+<p>When ray crosses scene depth, infer intersection.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-ray-marching" class="level4">
+<h4>Ray marching</h4>
+<p>Simple fixed step:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>t</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>t</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>+</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <mo>.</mo>
+</math>
+<p>Better hierarchical march uses Hi-Z to skip empty regions.</p>
+<p>Binary refinement around crossing improves hit precision.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-thickness-problem" class="level4">
+<h4>Thickness problem</h4>
+<p>Depth buffer gives one front surface.</p>
+<p>Suppose ray projected depth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mi>r</mi>
+  </msub>
+</math>
+<p>and scene depth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>&gt;</mo>
+  <msub>
+    <mi>z</mi>
+    <mi>s</mi>
+  </msub>
+</math>
+<p>you may think ray passed behind geometry.</p>
+<p>But is geometry infinitesimally thin?</p>
+<p>Usually assign thickness:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>&lt;</mo>
+  <msub>
+    <mi>z</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>z</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>&lt;</mo>
+  <mi>τ</mi>
+</math>
+<p>for hit.</p>
+<p>Too small:</p>
+<p>misses.</p>
+<p>Too large:</p>
+<p>false hits/reflecting through objects.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-missing-data" class="level4">
+<h4>Missing data</h4>
+<p>SSR fundamentally cannot reflect:</p>
+<p>off-screen objects, back-facing surfaces not in depth, hidden geometry, geometry behind visible front layer.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>S</mi>
+          <mi>S</mi>
+          <mi>R</mi>
+          <mo>=</mo>
+          <mtext>high-quality local screen-space supplement</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>not complete reflection solution.</p>
+<p>Fallback can be reflection probe, environment map or ray tracing.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-radiance-cascades" class="level4">
+<h4>Radiance cascades</h4>
+<p>The core motivation is the <strong>spatial-angular resolution tradeoff</strong>.</p>
+<p>Nearby radiance details require high spatial resolution.</p>
+<p>Distant radiance changes slowly across position but requires more angular resolution to represent directional light structure.</p>
+<p>Radiance-cascade-style thinking therefore uses approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>n</mi>
+          <mi>e</mi>
+          <mi>a</mi>
+          <mi>r</mi>
+          <mo>:</mo>
+          <mi>h</mi>
+          <mi>i</mi>
+          <mi>g</mi>
+          <mi>h</mi>
+          <mtext> </mtext>
+          <mi>s</mi>
+          <mi>p</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mo>,</mo>
+          <mtext> </mtext>
+          <mi>l</mi>
+          <mi>o</mi>
+          <mi>w</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mtext> </mtext>
+          <mi>a</mi>
+          <mi>n</mi>
+          <mi>g</mi>
+          <mi>u</mi>
+          <mi>l</mi>
+          <mi>a</mi>
+          <mi>r</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>f</mi>
+          <mi>a</mi>
+          <mi>r</mi>
+          <mo>:</mo>
+          <mi>l</mi>
+          <mi>o</mi>
+          <mi>w</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mtext> </mtext>
+          <mi>s</mi>
+          <mi>p</mi>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>i</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mo>,</mo>
+          <mtext> </mtext>
+          <mi>h</mi>
+          <mi>i</mi>
+          <mi>g</mi>
+          <mi>h</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mtext> </mtext>
+          <mi>a</mi>
+          <mi>n</mi>
+          <mi>g</mi>
+          <mi>u</mi>
+          <mi>l</mi>
+          <mi>a</mi>
+          <mi>r</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Successive cascades represent increasingly distant radiance intervals with different sampling density.</p>
+<p>This avoids storing full:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>ω</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>at equally high spatial and angular resolution everywhere, which would be enormous.</p>
+<p>The same idea should feel familiar from:</p>
+<p>mipmaps, clipmaps, cascaded shadows, hierarchical grids.</p>
+<p>The resolution allocation follows signal structure.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-temporal-rendering-and-post" class="level4">
+<h4>TEMPORAL RENDERING AND POST</h4>
+<section id="id_04-visual-computing-ii-ch040-reconstruction-checkpoint-history-is-a-hypothesis-with-rejection-tests" class="level5">
+<h5>Reconstruction checkpoint — history is a hypothesis with rejection tests</h5>
+<p>The same real-time witness declares one motion-vector sign convention and proves that current UV plus motion reaches the previous UV. Its history predicate rejects out-of-bounds reprojection, history-generation changes such as camera cuts, object-identity mismatch, scale-aware depth disagreement and normal disagreement; invalid history contributes no temporal weight. The lab also evaluates a hand-checkable 3×3 PCF visibility fraction and a variance-shadow upper bound that decreases as the receiver moves farther behind the stored mean.</p>
+<p>This is not full TAA or full shadow rendering. Jitter generation, neighborhood/variance clipping, reactive masks, cascade selection, SSR/SSAO, volumetrics, particles and GPU execution remain distinct. <a href="ch370.xhtml#appendix-e8c352e39466-temporal-history-validation-and-reprojection" class="wikilink">Temporal history validation and reprojection</a> and <a href="ch368.xhtml#appendix-7cac8a689849-shadow-filtering-pcf-and-variance-bounds" class="wikilink">Shadow filtering PCF and variance bounds</a> turn those boundaries into explicit next tests rather than hidden omissions.</p>
+<p>TAA is not simply:</p>
+<blockquote>
+<p>average current and previous image.</p>
+</blockquote>
+<p>Correct temporal rendering requires motion correspondence, validity tests and anti-ghosting.</p>
+<hr />
+</section>
+</section>
+<section id="id_04-visual-computing-ii-ch040-motion-vectors" class="level4">
+<h4>Motion vectors</h4>
+<p>For current clip position:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>P</mi>
+    <mi>t</mi>
+  </msub>
+  <msub>
+    <mi>V</mi>
+    <mi>t</mi>
+  </msub>
+  <msub>
+    <mi>M</mi>
+    <mi>t</mi>
+  </msub>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>Previous:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <msub>
+    <mi>V</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <msub>
+    <mi>M</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>NDC:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>n</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>.</mo>
+  <mi>x</mi>
+  <mi>y</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>c</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>.</mo>
+  <mi>w</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>n</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>c</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+  <mi>x</mi>
+  <mi>y</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>c</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+  <mi>w</mi>
+  <mo>.</mo>
+</math>
+<p>Motion:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>v</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>n</mi>
+            <mi>t</mi>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>n</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>t</mi>
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Convert to UV scale if needed:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>u</mi>
+      <mi>v</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>0.5</mn>
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mi>d</mi>
+      <mi>c</mi>
+    </mrow>
+  </msub>
+</math>
+<p>with y sign depending convention.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-previous-position-vertex-data" class="level4">
+<h4>Previous-position vertex data</h4>
+<p>For deforming mesh you cannot reconstruct previous position using only previous camera.</p>
+<p>You need:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>For rigid object:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>M</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>For skinned object:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>j</mi>
+  </munder>
+  <msub>
+    <mi>w</mi>
+    <mi>j</mi>
+  </msub>
+  <msub>
+    <mi>M</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>,</mo>
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>For morph:</p>
+<p>previous morph weights.</p>
+<p>For procedural animation:</p>
+<p>previous procedural state.</p>
+<p>This is why motion-vector correctness propagates deep into animation systems.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-camera-motion" class="level4">
+<h4>Camera motion</h4>
+<p>For static geometry you can reconstruct world position from current depth.</p>
+<p>Then project it with previous:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <msub>
+    <mi>V</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>This avoids storing previous clip position per vertex for static scene.</p>
+<p>But dynamic objects still need object/animation history.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-skinned-motion" class="level4">
+<h4>Skinned motion</h4>
+<p>Current skinned position:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>j</mi>
+  </munder>
+  <msub>
+    <mi>w</mi>
+    <mi>j</mi>
+  </msub>
+  <msub>
+    <mi>S</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>,</mo>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>Previous:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>j</mi>
+  </munder>
+  <msub>
+    <mi>w</mi>
+    <mi>j</mi>
+  </msub>
+  <msub>
+    <mi>S</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>,</mo>
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>Using only current skin and previous camera misses character motion.</p>
+<p>This causes TAA ghosting trails on limbs.</p>
+<p>A serious renderer keeps previous joint palette.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-procedural-animation" class="level4">
+<h4>Procedural animation</h4>
+<p>Vertex shader displacement such as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>p</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mo>+</mo>
+  <mi>N</mi>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <mi>k</mi>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mi>ω</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>needs previous time:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mo>−</mo>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Otherwise motion vector says zero for waving vegetation/ocean while image visibly moves.</p>
+<p>Any procedure that affects position must have a previous-frame equivalent.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-reprojection" class="level4">
+<h4>Reprojection</h4>
+<p>If motion defined current minus previous:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>u</mi>
+      <mi>v</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>u</mi>
+  <msub>
+    <mi>v</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>−</mo>
+  <mi>u</mi>
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>u</mi>
+          <msub>
+            <mi>v</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>h</mi>
+              <mi>i</mi>
+              <mi>s</mi>
+              <mi>t</mi>
+              <mi>o</mi>
+              <mi>r</mi>
+              <mi>y</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mi>u</mi>
+          <msub>
+            <mi>v</mi>
+            <mi>t</mi>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>v</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>u</mi>
+              <mi>v</mi>
+            </mrow>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Sample previous history there.</p>
+<p>Convention can be opposite; document it.</p>
+<p>Half of temporal bugs are sign/convention bugs.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-history-buffers" class="level4">
+<h4>History buffers</h4>
+<p>Store previous temporally accumulated HDR or post-lighting image.</p>
+<p>Often also need previous:</p>
+<p>depth, normal, object/material ID or reactive mask.</p>
+<p>History validity is not a single global boolean.</p>
+<p>Different pixels can become invalid due to disocclusion.</p>
+<p>Current Maveb’s <code>TemporalInvalidation</code> subsystem focuses specifically on invalidating history regions when captured-world edits change local content—a valuable connection between editing and temporal rendering.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-temporal-blending" class="level4">
+<h4>Temporal blending</h4>
+<p>Simple:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msubsup>
+            <mi>C</mi>
+            <mi>t</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>T</mi>
+              <mi>A</mi>
+              <mi>A</mi>
+            </mrow>
+          </msubsup>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mn>1</mn>
+          <mo>−</mo>
+          <mi>α</mi>
+          <mo stretchy="false">)</mo>
+          <msub>
+            <mi>H</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>t</mi>
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msub>
+          <mo>+</mo>
+          <mi>α</mi>
+          <msub>
+            <mi>C</mi>
+            <mi>t</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Small <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>α</mi>
+</math>:</p>
+<p>stable but slow response.</p>
+<p>Large <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>α</mi>
+</math>:</p>
+<p>responsive but less temporal accumulation.</p>
+<p>Often adaptive based on velocity, variance, disocclusion or reactive content.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-history-rejection" class="level4">
+<h4>History rejection</h4>
+<p>Reject if reprojected sample does not represent same surface.</p>
+<p>Possible tests:</p>
+<p>Depth difference:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">|</mo>
+  <msub>
+    <mi>z</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>−</mo>
+  <msub>
+    <mi>z</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>h</mi>
+      <mi>i</mi>
+      <mi>s</mi>
+      <mi>t</mi>
+      <mi>o</mi>
+      <mi>r</mi>
+      <mi>y</mi>
+    </mrow>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>&gt;</mo>
+  <msub>
+    <mi>ϵ</mi>
+    <mi>z</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Normal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>n</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>⋅</mo>
+  <msub>
+    <mi>n</mi>
+    <mi>h</mi>
+  </msub>
+  <mo>&lt;</mo>
+  <msub>
+    <mi>τ</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Object ID mismatch.</p>
+<p>Large motion.</p>
+<p>Outside viewport.</p>
+<p>Known camera cut.</p>
+<p>Local edit invalidation.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-neighborhood-clamping" class="level4">
+<h4>Neighborhood clamping</h4>
+<p>History may contain color no longer plausible in current neighborhood.</p>
+<p>Compute current 3×3 min/max:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>i</mi>
+      <mi>n</mi>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Clamp history:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>H</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msup>
+          <mo>=</mo>
+          <mi>c</mi>
+          <mi>l</mi>
+          <mi>a</mi>
+          <mi>m</mi>
+          <mi>p</mi>
+          <mo stretchy="false">(</mo>
+          <mi>H</mi>
+          <mo>,</mo>
+          <msub>
+            <mi>C</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>m</mi>
+              <mi>i</mi>
+              <mi>n</mi>
+            </mrow>
+          </msub>
+          <mo>,</mo>
+          <msub>
+            <mi>C</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>m</mi>
+              <mi>a</mi>
+              <mi>x</mi>
+            </mrow>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>More sophisticated methods operate in YCoCg or use variance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>μ</mi>
+  <mo>±</mo>
+  <mi>γ</mi>
+  <mi>σ</mi>
+  <mo>.</mo>
+</math>
+<p>This strongly reduces ghost trails.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-ghosting" class="level4">
+<h4>Ghosting</h4>
+<p>Ghosting means outdated history remains visible after object moved/disappeared.</p>
+<p>Causes:</p>
+<p>wrong velocity, missing velocity, disocclusion not detected, over-aggressive history weight, insufficient clamp.</p>
+<p>Debug:</p>
+<p>current frame, raw history reprojection, velocity, rejection mask, history weight.</p>
+<p>Do not debug final TAA output only.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-jitter" class="level4">
+<h4>Jitter</h4>
+<p>Without subpixel jitter each frame samples same locations.</p>
+<p>Temporal accumulation cannot reconstruct extra subpixel information.</p>
+<p>Projection jitter:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>P</mi>
+    <mi>t</mi>
+  </msub>
+  <mo stretchy="false">→</mo>
+  <msub>
+    <mi>P</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>δ</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Common sequences:</p>
+<p>Halton base 2/3, Sobol, blue-noise temporal sequences.</p>
+<p>Scale jitter in pixel units:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>δ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mi>d</mi>
+      <mi>c</mi>
+      <mo>,</mo>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>2</mn>
+  <msub>
+    <mi>j</mi>
+    <mi>x</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>W</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>δ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>n</mi>
+      <mi>d</mi>
+      <mi>c</mi>
+      <mo>,</mo>
+      <mi>y</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>2</mn>
+  <msub>
+    <mi>j</mi>
+    <mi>y</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>H</mi>
+  <mo>.</mo>
+</math>
+<p>Motion vectors must account correctly for current and previous jitter.</p>
+<p>Often velocities use unjittered matrices to represent scene motion while reprojection handles jitter explicitly.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-temporal-upscaling" class="level4">
+<h4>Temporal upscaling</h4>
+<p>Render internally at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>W</mi>
+    <mi>r</mi>
+  </msub>
+  <mo>&lt;</mo>
+  <msub>
+    <mi>H</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>d</mi>
+      <mi>i</mi>
+      <mi>s</mi>
+      <mi>p</mi>
+      <mi>l</mi>
+      <mi>a</mi>
+      <mi>y</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Jitter samples different subpixel locations each frame.</p>
+<p>Motion vectors map samples across frames.</p>
+<p>Temporal reconstruction accumulates enough information to synthesize higher-resolution output.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>low-resolution spatial samples</mtext>
+          <mo>+</mo>
+          <mtext>time</mtext>
+          <mo>+</mo>
+          <mtext>motion</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>higher-resolution estimate</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>But disocclusions and thin geometry remain hard.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-bloom" class="level4">
+<h4>Bloom</h4>
+<p>Bloom represents optical scattering of bright light.</p>
+<p>Extract bright signal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>x</mi>
+  <mo stretchy="false">(</mo>
+  <mi>C</mi>
+  <mo>−</mo>
+  <mi>T</mi>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>or smooth threshold.</p>
+<p>Better soft-knee threshold avoids hard discontinuity.</p>
+<p>Then downsample and blur.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-separable-gaussian-blur" class="level4">
+<h4>Separable Gaussian blur</h4>
+<p>2D Gaussian:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>G</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>G</mi>
+    <mi>x</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>G</mi>
+    <mi>y</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Thus instead of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>K</mi>
+  <mo>×</mo>
+  <mi>K</mi>
+</math>
+<p>samples per pixel, use:</p>
+<p>horizontal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>K</mi>
+</math>
+<p>then vertical:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>K</mi>
+  <mo>.</mo>
+</math>
+<p>Cost:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>K</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>rather than:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>K</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>For large bloom, mip/downsample chain is often even cheaper.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-tone-mapping" class="level4">
+<h4>Tone mapping</h4>
+<p>Correct post chain conceptually keeps lighting/bloom in linear HDR.</p>
+<p>Typical:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>D</mi>
+  <mi>R</mi>
+  <mtext> </mtext>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>+</mo>
+  <mi>H</mi>
+  <mi>D</mi>
+  <mi>R</mi>
+  <mtext> </mtext>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+</math>
+<p>then exposure:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mi>e</mi>
+  </msub>
+  <mo>=</mo>
+  <msup>
+    <mn>2</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mi>E</mi>
+      <mi>V</mi>
+    </mrow>
+  </msup>
+  <mi>C</mi>
+</math>
+<p>then tone-map:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mi>m</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>e</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>then display transform/sRGB encoding.</p>
+<p>Do not tone-map the scene before bloom if you want bright HDR energy to drive bloom.</p>
+<p>This is the issue we identified earlier in Kairo’s current realtime shader path: tone mapping too early destroys true HDR values before later HDR post effects can consume them.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-color-grading-lut" class="level4">
+<h4>Color grading LUT</h4>
+<p>3D LUT maps color:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>g</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">→</mo>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>r</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>,</mo>
+  <msup>
+    <mi>g</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>,</mo>
+  <msup>
+    <mi>b</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>A:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>32</mn>
+    <mn>3</mn>
+  </msup>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mn>64</mn>
+    <mn>3</mn>
+  </msup>
+</math>
+<p>LUT is common.</p>
+<p>Trilinear/tetrahedral interpolation between LUT samples.</p>
+<p>Placement depends grading pipeline, but often after tone mapping or within a defined display-referred grading stage.</p>
+<p>The key is consistency of color space.</p>
+<p>A LUT authored in Rec.709/sRGB display space should not blindly consume scene-linear HDR.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-motion-blur" class="level4">
+<h4>Motion blur</h4>
+<p>Velocity gives blur path.</p>
+<p>Simple screen-space integration:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>b</mi>
+      <mi>l</mi>
+      <mi>u</mi>
+      <mi>r</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>N</mi>
+  </mfrac>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <mi>C</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>s</mi>
+    <mi>i</mi>
+  </msub>
+  <mi>v</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Problems:</p>
+<p>foreground/background bleeding, disocclusion, nonlinear motion, rotational blur.</p>
+<p>Tile-max velocity buffers can accelerate and stabilize neighborhood sampling.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-depth-of-field" class="level4">
+<h4>Depth of field</h4>
+<p>Thin lens circle of confusion depends on focal parameters.</p>
+<p>A useful proportional form:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>C</mi>
+  <mo>∝</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">|</mo>
+    <mfrac>
+      <mn>1</mn>
+      <mi>z</mi>
+    </mfrac>
+    <mo>−</mo>
+    <mfrac>
+      <mn>1</mn>
+      <msub>
+        <mi>z</mi>
+        <mi>f</mi>
+      </msub>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">|</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Near/far blur sign distinguishes which side of focus plane.</p>
+<p>Real-time DoF generally:</p>
+<p>compute CoC, split near/far, gather/scatter blur, composite.</p>
+<p>Depth discontinuities are hard because foreground blur must spread over background without background bleeding into foreground incorrectly.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-particles-decals-and-technique-selection" class="level4">
+<h4>PARTICLES, DECALS AND TECHNIQUE SELECTION</h4>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-gpu-particle-buffers" class="level4">
+<h4>GPU particle buffers</h4>
+<p>Particle state:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Particle</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    Vec3 Position<span class="op">;</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    Vec3 Velocity<span class="op">;</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Age<span class="op">;</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Lifetime<span class="op">;</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    Vec4 Color<span class="op">;</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Size<span class="op">;</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="ex">uint</span> Flags<span class="op">;</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>SoA can be better for compute:</p>
+<pre class="text"><code>positions[]
+velocities[]
+ages[]
+lifetimes[]</code></pre>
+<p>because simulation kernels may read only subsets.</p>
+<p>Update:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>+</mo>
+      <mi mathvariant="normal">Δ</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>a</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>+</mo>
+      <mi mathvariant="normal">Δ</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>v</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mo>+</mo>
+      <mi mathvariant="normal">Δ</mi>
+    </mrow>
+  </msub>
+  <mi mathvariant="normal">Δ</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-alivedead-management" class="level4">
+<h4>Alive/dead management</h4>
+<p>Keep:</p>
+<pre class="text"><code>AliveList
+DeadList</code></pre>
+<p>Spawn:</p>
+<p>pop from dead.</p>
+<p>Initialize.</p>
+<p>Append to alive.</p>
+<p>Update:</p>
+<p>if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo>≥</mo>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+</math>
+<p>append index back to dead.</p>
+<p>GPU can use atomic counters or prefix compaction.</p>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>k</mi>
+  <mo stretchy="false">→</mo>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mo stretchy="false">→</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-transparency-sorting" class="level4">
+<h4>Transparency sorting</h4>
+<p>Particles often alpha blend.</p>
+<p>Need back-to-front for ordinary blend or front-to-back explicit compositor.</p>
+<p>Sort by depth.</p>
+<p>For hundreds of thousands of particles:</p>
+<p>radix sort.</p>
+<p>Exact sorting may be expensive; approximate bucket sorting is often enough for soft effects.</p>
+<p>Weighted blended OIT can avoid full sorting at different visual tradeoffs.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-soft-particles" class="level4">
+<h4>Soft particles</h4>
+<p>Hard particle polygon intersecting geometry produces obvious edge.</p>
+<p>Use scene depth.</p>
+<p>Particle depth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mi>p</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Scene depth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>z</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Fade as intersection approaches:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>f</mi>
+          <mi>a</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mo>=</mo>
+          <mi>c</mi>
+          <mi>l</mi>
+          <mi>a</mi>
+          <mi>m</mi>
+          <mi>p</mi>
+          <mo stretchy="false">(</mo>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>z</mi>
+            <mi>s</mi>
+          </msub>
+          <mo>−</mo>
+          <msub>
+            <mi>z</mi>
+            <mi>p</mi>
+          </msub>
+          <mo stretchy="false">)</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <msub>
+            <mi>d</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>s</mi>
+              <mi>o</mi>
+              <mi>f</mi>
+              <mi>t</mi>
+            </mrow>
+          </msub>
+          <mo>,</mo>
+          <mn>0</mn>
+          <mo>,</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>according to depth convention.</p>
+<p>Multiply alpha by fade.</p>
+<p>Smoke disappears smoothly into wall/floor.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-decals" class="level4">
+<h4>Decals</h4>
+<p>A decal projects material information onto existing surface.</p>
+<p>Examples:</p>
+<p>bullet holes, blood, dirt, graffiti.</p>
+<p>Deferred decal often renders a box volume.</p>
+<p>For pixels inside projected box, reconstruct world position from depth, transform into decal local space.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">|</mo>
+  <mi>x</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>,</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>y</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>,</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>z</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>≤</mo>
+  <mn>1</mn>
+</math>
+<p>sample decal texture from local coordinates.</p>
+<p>Then blend into G-buffer/material attributes.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-screen-space-decals" class="level4">
+<h4>Screen-space decals</h4>
+<p>Advantages:</p>
+<p>no mesh topology modification.</p>
+<p>Works on arbitrary geometry.</p>
+<p>Problems:</p>
+<p>normal-angle stretching, overlap ordering, depth discontinuities, transparency, MSAA.</p>
+<p>Angle rejection:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>N</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>s</mi>
+      <mi>u</mi>
+      <mi>r</mi>
+      <mi>f</mi>
+      <mi>a</mi>
+      <mi>c</mi>
+      <mi>e</mi>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>N</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>d</mi>
+      <mi>e</mi>
+      <mi>c</mi>
+      <mi>a</mi>
+      <mi>l</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>&gt;</mo>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-overdraw" class="level4">
+<h4>Overdraw</h4>
+<p>Particles and decals can become fill-rate monsters.</p>
+<p>Overdraw:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mtext>number of fragment invocations covering pixel</mtext>
+  <mo>.</mo>
+</math>
+<p>Total shaded fragments:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>p</mi>
+  </munder>
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Transparent fragments cannot benefit from normal early-Z rejection as effectively because many layers contribute.</p>
+<p>A particle system with tiny geometry cost can still destroy performance through fill.</p>
+<p>Debug with overdraw heatmap.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-ablations" class="level4">
+<h4>Ablations</h4>
+<p>For any advanced renderer feature, test:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>O</mi>
+  <mi>F</mi>
+  <mi>F</mi>
+</math>
+<p>versus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mtext> </mtext>
+  <mi>O</mi>
+  <mi>N</mi>
+  <mo>.</mo>
+</math>
+<p>Measure:</p>
+<p>frame time, GPU pass time, memory, image error/quality.</p>
+<p>For adaptive feature, compare several budget points.</p>
+<p>Do not claim improvement because screenshot looks better.</p>
+<p>Construct Pareto curve:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>Q</mi>
+          <mi>u</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>y</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="1em"></mspace>
+          </mstyle>
+          <mi>v</mi>
+          <mi>s</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="1em"></mspace>
+          </mstyle>
+          <mi>C</mi>
+          <mi>o</mi>
+          <mi>s</mi>
+          <mi>t</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is especially relevant to FoveaBench and your adaptive-rendering research.</p>
+<hr />
+<p>This is the synthesis of Phase 26.</p>
+<p>Exact methods are appropriate when correctness cost is acceptable.</p>
+<p>Approximate methods exploit signal structure.</p>
+<p>Spatial methods use nearby pixels/clusters/probes.</p>
+<p>Temporal methods reuse previous frames.</p>
+<p>Adaptive methods spend work where predicted benefit is highest.</p>
+<p>A robust decision framework is:</p>
+<table>
+<thead>
+<tr>
+<th>Workload</th>
+<th>Prefer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>few lights, simple scene</td>
+<td>forward</td>
+</tr>
+<tr>
+<td>many opaque lights</td>
+<td>clustered/deferred</td>
+</tr>
+<tr>
+<td>huge static occlusion</td>
+<td>Hi-Z</td>
+</tr>
+<tr>
+<td>sharp direct shadows</td>
+<td>shadow maps / RT</td>
+</tr>
+<tr>
+<td>diffuse indirect</td>
+<td>probes/DDGI/radiance structures</td>
+</tr>
+<tr>
+<td>glossy on-screen reflection</td>
+<td>SSR</td>
+</tr>
+<tr>
+<td>off-screen reflection</td>
+<td>probes/RT</td>
+</tr>
+<tr>
+<td>subpixel stability</td>
+<td>TAA</td>
+</tr>
+<tr>
+<td>high-resolution output from lower render</td>
+<td>temporal upscale</td>
+</tr>
+<tr>
+<td>massive soft effects</td>
+<td>GPU particles + approximate sorting</td>
+</tr>
+<tr>
+<td>strict frame budget</td>
+<td>adaptive allocation</td>
+</tr>
+</tbody>
+</table>
+<p>The principle is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>the best rendering algorithm is workload-dependent</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p>Current Maveb’s clustered light builder already uses logarithmic depth slicing, screen/depth conservative bounds, explicit reference budgets and flattened offset-count lists. It does not yet perform a dedicated exact cone-vs-cluster test for spots; local lights use conservative range bounds. Its shadow system implements practical CSM split blending and texel-grid stabilization. Its image-based-lighting code contains real irradiance/specular/BRDF preprocessing rather than a placeholder environment lookup. Temporal invalidation is already connected to local world edits, which is unusually relevant to your captured-world work.</p>
+<p>The deeper opportunity is to join these systems: clustered light assignment, Hi-Z visibility, temporal reuse and adaptive work allocation can all become <strong>budgeted spatial work distributions</strong>. That same mathematical structure already appears in Gaussian tiling and Vulkax’s gradient-ranked adaptive material regions.</p>
+<p><strong>Pass 17 complete: Parts 2501–2600.</strong></p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-mesh-topology-geometry-processing-gltf-skinning-animation-and-morphs" class="level4">
+<h4>MESH TOPOLOGY, GEOMETRY PROCESSING, GLTF, SKINNING, ANIMATION AND MORPHS</h4>
+</section>
+<section id="id_04-visual-computing-ii-ch040-m162" class="level4">
+<h4>M162</h4>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-indexed-meshes-topology-and-half-edges" class="level4">
+<h4>INDEXED MESHES, TOPOLOGY AND HALF-EDGES</h4>
+<p>A triangle mesh has two fundamentally different kinds of information:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>geometry</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>topology</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Geometry says:</p>
+<blockquote>
+<p>Where are points?</p>
+</blockquote>
+<p>Topology says:</p>
+<blockquote>
+<p>Which points are connected into edges/faces?</p>
+</blockquote>
+<p>Never conflate them.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-indexed-vertices-and-faces" class="level4">
+<h4>Indexed vertices and faces</h4>
+<p>Unindexed triangles:</p>
+<pre class="text"><code>triangle 0:
+    v0 v1 v2
+
+triangle 1:
+    v3 v4 v5</code></pre>
+<p>Even if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>v</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>v</mi>
+    <mn>3</mn>
+  </msub>
+</math>
+<p>position-wise, they are separate storage.</p>
+<p>Indexed:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>vertices <span class="op">=</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="op">[</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    V0<span class="op">,</span>V1<span class="op">,</span>V2<span class="op">,</span>V3</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="op">];</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>indices <span class="op">=</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="op">[</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span><span class="dv">1</span><span class="op">,</span><span class="dv">2</span><span class="op">,</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2</span><span class="op">,</span><span class="dv">1</span><span class="op">,</span><span class="dv">3</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="op">];</span></span></code></pre></div>
+<p>Two triangles share:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>V</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>V</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Memory improves and topology becomes more explicit.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch040-attributes" class="level4">
+<h4>Attributes</h4>
+<p>Vertex may contain channels:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mi>v</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>j</mi>
+  <mi>o</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mi>e</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>These are not all intrinsically per-vertex.</p>
+<p>Position often represents topological vertex.</p>
+<p>UV frequently belongs to <strong>face corner</strong>.</p>
+<p>Normal can be per-corner at hard edges.</p>
+<p>This distinction is critical.</p>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch316.xhtml#id_04-Light-Transport-and-Image-Synthesis" class="wikilink">Reading map</a> · <a href="ch550.xhtml#id_04-visual-computing-ii-ch039-tiling-ordering-and-compositing-at-scale" class="wikilink">Previous chapter (Vision, XR, and Playable Worlds, Part 2, Ch. 8)</a> · <a href="ch387.xhtml#id_04-visual-computing-ii-ch041-per-vertex-and-per-corner-mesh-attributes" class="wikilink">Next chapter (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 12)</a></p>
+</section>
+</section>
+</section>
+</body>
+</html>

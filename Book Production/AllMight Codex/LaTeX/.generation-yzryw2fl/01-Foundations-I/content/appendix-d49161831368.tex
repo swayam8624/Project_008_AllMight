@@ -1,0 +1,38 @@
+\hypertarget{appendix-d49161831368}{}
+\section*{Bitwise XOR}
+\section{Bitwise XOR}\label{appendix-d49161831368-bitwise-xor}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C001 · \textbf{Latest development:} C001
+
+\subsection{Definition and mechanism}\label{appendix-d49161831368-definition-and-mechanism}
+
+Toggles selected lanes and marks differences; applying the same mask twice restores the input.
+
+XOR returns 1 when inputs differ. \texttt{0xAD\ \^{}\ 0x08\ =\ 0xA5} toggles visible; applying \texttt{0x08} again restores \texttt{0xAD}. XOR between old and new words marks changed positions. Reversibility alone does not provide secure encryption.
+
+\subsection{Prerequisites}\label{appendix-d49161831368-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-24475e1596a8]{Boolean algebra} --- The logical domain is false/true.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-d49161831368-used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-ed338677de0a]{Checksums CRCs and hashes} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-1652d27a8e90]{Half adder} --- uses bitwise xor as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-d49161831368-recall-and-next-depth}
+
+Explain bitwise xor without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} parity, checksums, coding theory, and cryptographic constructions.
+
+\subsection{Source and navigation}\label{appendix-d49161831368-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

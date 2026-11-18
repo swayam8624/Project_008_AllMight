@@ -8,7 +8,7 @@ Vulkan begins by making device and presentation choices explicit, then ties reso
 
 **Recall question:** Which Vulkan objects describe a resource, which hold its bytes, and which make it available to a shader?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 25731–30267; source-span SHA256 a6c14aa70517aa292f103ef2f8e76050be8380f22566c3fbd4dd35245b506b11. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 25912–30448; source-span SHA256 a6c14aa70517aa292f103ef2f8e76050be8380f22566c3fbd4dd35245b506b11. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Open the device and describe its storage

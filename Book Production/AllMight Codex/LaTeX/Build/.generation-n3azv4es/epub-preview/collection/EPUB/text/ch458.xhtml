@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch458.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-1bc40b08db4a-hardware-depth-buffer-linearization" class="level2">
+<h2>Hardware depth-buffer linearization</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 11 · <strong>Latest development:</strong> Phase 11</p>
+<section id="appendix-1bc40b08db4a-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Perspective projection maps axial distance nonlinearly into NDC depth. For a declared projection depth row <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mi>A</mi>
+  <mo>+</mo>
+  <mi>B</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>d</mi>
+</math>, solve <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+  <mo>=</mo>
+  <mi>B</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>q</mi>
+  <mo>+</mo>
+  <mi>A</mi>
+  <mo stretchy="false">)</mo>
+</math>; finite conventional, finite reversed, infinite reversed, and OpenGL-style conventions have different coefficients or NDC conversions. The depth sample must first be interpreted in the same range and direction used by the projection matrix. This is why a single generic formula without an API and projection contract is unsafe. Verify near and far endpoints, test round trips over a range of distances, and handle an infinite-far endpoint such as reversed depth <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math> explicitly. Near/far endpoint checks catch sign mistakes immediately; interior round trips then test scaling and finite precision.</p>
+</section>
+<section id="appendix-1bc40b08db4a-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch328.xhtml#appendix-1c07d64f5e70-camera-view-and-clip-space-pipeline" class="wikilink">Camera view and clip-space pipeline (Light Transport and Image Synthesis, Part 1, Reference notes: Camera view and clip-space pipeline)</a></li>
+<li><a href="ch514.xhtml#appendix-cac01ebeeb11-axial-depth-and-euclidean-range" class="wikilink">Axial depth and Euclidean range</a></li>
+<li><a href="ch331.xhtml#appendix-97578ed97952-depth-buffering-and-visibility-order" class="wikilink">Depth buffering and visibility order (Light Transport and Image Synthesis, Part 1, Reference notes: Depth buffering and visibility order)</a></li>
+</ul>
+</section>
+<section id="appendix-1bc40b08db4a-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch466.xhtml#appendix-2cbf2968e866-position-reconstruction-from-depth" class="wikilink">Position reconstruction from depth</a></li>
+</ul>
+</section>
+<section id="appendix-1bc40b08db4a-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch288.xhtml#id_02-foundations-ii-ch035-recover-geometry-from-depth-and-construct-screen-space-rays" class="wikilink">Recover geometry from depth and construct screen-space rays (Geometry, Cameras, and Image Formation, Part 1, Ch. 4)</a></li>
+</ul>
+</section>
+<section id="appendix-1bc40b08db4a-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 1079.</p>
+</section>
+<section id="appendix-1bc40b08db4a-future-keywords" class="level3">
+<h3>Future keywords</h3>
+<p>standard depth, reversed-Z, infinite far plane</p>
+</section>
+</section>
+</body>
+</html>

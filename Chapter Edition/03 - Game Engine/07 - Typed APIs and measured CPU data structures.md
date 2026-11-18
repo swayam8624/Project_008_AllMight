@@ -8,7 +8,7 @@ An asset service now needs an interface that hides implementation without hiding
 
 **Recall question:** Which promises does the public API make, and what measurement would show whether its internal representation meets them?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 9067–9743; source-span SHA256 b7e4a76ceb20782e78e411986c4de6fa7a969f0117a4a2ba87445aa7e273f4a8. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 9067–9769; source-span SHA256 fb7cf3a30707b0466df12c78aa6650c4f3c49dfac04e12f4416021e4bca79d50. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## A registry crosses its last C++ boundary: hidden implementation, typed identity and measured abstraction cost
@@ -147,9 +147,9 @@ The distinction between static and dynamic dimensions appears when the same math
 
 For a dot product of size n, the straightforward algorithm is
 
-\[
+$$
 s=\sum_{i=0}^{n-1}a_i b_i.
-\]
+$$
 
 It performs n multiplications and n additions in a single pass (counting the first accumulation into zero), with O(n) time and O(1) auxiliary scalar storage. Floating-point addition, however, is not associative, so a compiler's SIMD reduction or reassociation may change rounding. The mathematical formula and the machine's numerical contract must not be casually equated. For large n, error analysis, compensated summation and reduction order may matter more than whether the vector's dimension was a template parameter.
 
@@ -301,17 +301,17 @@ Trace a hot asset loop. One instruction loads the record's mass, another loads x
 
 A simple recurrence makes this precise. For a scalar reduction
 
-\[
+$$
 s_{i+1}=s_i+x_i m_i,
-\]
+$$
 
 every new value of s depends on the previous sum. Even if loads and multiplications overlap, the accumulation itself forms a dependency chain. Multiple independent partial accumulators can shorten that chain, but changing the grouping changes floating-point rounding. A compiler using permitted vector or fast-math transformations can choose a different evaluation tree; strict language and compiler options limit which transformations are legal. Therefore a proposed faster reduction must state **both its numerical tolerance and its reassociation policy**.
 
 Instruction-level parallelism (ILP) is the independence available among operations within one instruction stream. Superscalar issue width is a hardware upper bound on how many appropriate operations can be issued in a cycle, not a guarantee that every instruction sequence reaches that width. Execution-port conflicts, dependent chains, branch recovery, cache misses, front-end bandwidth and register pressure reduce the realized rate. A useful first model is
 
-\[
+$$
 T_{\text{CPU}}\approx \frac{I\,\mathrm{CPI}}{f},
-\]
+$$
 
 where I is the number of executed instructions, CPI the *measured average* cycles per instruction and f the frequency. CPI is an aggregate result of a workload and machine, not an intrinsic constant for one C++ expression. Instructions that retire several per cycle can produce CPI below one; stalls can make it much larger. Frequency scaling and heterogeneous core placement further invalidate naive cycle-to-wall-time assumptions.
 
@@ -339,10 +339,10 @@ Prefetchers may recognize predictable sequential or strided streams and begin lo
 
 We can estimate a bandwidth lower bound when the memory-bound conditions really apply:
 
-\[
+$$
 T \;\geq\; \frac{\text{bytes that must cross the limiting interface}}
                     {\text{sustainable bytes per second}}.
-\]
+$$
 
 For a purely illustrative machine capable of sustaining 20 GB/s on the relevant transfer path, moving 2 GB of indispensable data takes at least 0.1 s on that path. The estimate is only useful if the bytes and the interface are correctly identified. Cache reuse can reduce DRAM traffic; write allocation, coherence, other threads and prefetching can increase it. We should never take the structure's size and automatically equate it to memory-bus traffic.
 
@@ -442,9 +442,9 @@ Different ownership patterns suggest different allocation strategies. A free-lis
 
 Alignment constrains the addresses at which objects may reside. If a type needs alignment a, its address must be divisible by a under the relevant C++/ABI definition. Over-aligned allocations may require an allocation mechanism that honors the greater alignment. For a linear arena with current cursor p and power-of-two a, a familiar alignment expression is
 
-\[
+$$
 p_{\mathrm{aligned}}=(p+a-1)\mathbin{\&}\sim(a-1),
-\]
+$$
 
 but a correct implementation must ensure that p+a−1 does not overflow, that a is valid, that the aligned extent fits the backing allocation, and that the returned pointer meets the type's actual alignment. A robust arena should reason about byte spans and capacity *before* pointer arithmetic. The formulas are not license to write past a buffer.
 
@@ -518,13 +518,39 @@ A persistent **thread pool** keeps a bounded set of workers alive and reuses the
 
 The Phase 4 lab constructs a real small worker pool with a shared mutex-protected deque, a condition variable and packaged_task-backed futures. Callers submit jobs; each worker removes a job under the lock and executes it outside the lock. Exceptions thrown by a user job are stored in the packaged task and can be rethrown by future.get() in the caller. Shutdown changes a protected stop flag, wakes the workers, permits queued work to drain and joins all worker threads. These choices are correct for the exercised protocol; they are **not** work stealing or a complete dependency-aware production scheduler.
 
+<!-- Book-completion teaching addition 46d4ea4d700f480a -->
+
+### A bounded priority scheduler from Kohi #067 — and the limits of what it proves
+
+The Phase 4 worker-pool laboratory establishes one useful design: a shared mutex-protected deque, a condition variable, packaged tasks and futures. A historical Kohi episode provides a contrasting scheduler that makes different tradeoffs. Treat the following as a reconstruction of the episode's narrated design, not a source-code audit: its available transcript is noisy automatic English captions, and the retained source metadata does not pin the matching Kohi repository revision. The episode is [Kohi #067, “Job System”](https://www.youtube.com/watch?v=3JbLqoDubIY), especially 00:10:50–01:39:08. The current Kohi GitHub README says GitHub is now a periodically updated mirror and points to SVN as the source of truth, so current repository code cannot silently stand in for the episode's historical snapshot.
+
+Before introducing the scheduler, the episode clears fixed mesh-name/material-path buffers. An empty C string needs a terminating zero byte; clearing a buffer establishes initial contents but does not make a later copy length-safe. Capacity checks and the lifetime of any borrowed pointer remain separate obligations. That distinction reappears in the scheduler's copied payloads.
+
+The task begins with a fixed-capacity circular FIFO. With capacity four, enqueue `A, B, C`, dequeue `A, B`, then enqueue `D, E`: the logical queue is `C, D, E` even though its occupied storage wraps across the array boundary. The queue copies one fixed-size record and advances indices modulo capacity; it does not shift the remaining records. Empty and full are distinct states, and insertion into a full queue must return or record failure. This container is not inherently thread-safe: Kohi's narrated system places a mutex around each priority queue because multiple workers and task submitters can touch them. The ring removes element-shifting work; it does not remove synchronization, capacity planning, or a full-queue policy.
+
+Kohi's narrated scheduler has three such queues—high, normal and low—and workers advertise task-type masks. A task is eligible for a worker only when its type intersects that worker's mask. `process_queue` scans a priority queue and searches for an eligible free worker. That lets a renderer-affine operation be kept away from workers that cannot perform it, but it also creates a head-of-line case: an ineligible task at the front can delay later work that some idle worker could do. The presenter explicitly recognizes that the fixed FIFO cannot select a compatible item from the middle and leaves that improvement for later. The same queue capacity and task type must be validated at submission, not guessed from the fact that some worker thread exists.
+
+High priority has a special fast path in the narrated design: if a compatible worker is already free, the submitter assigns the task directly instead of waiting for the next frame's queue-processing pass. If none is free, the task is enqueued. This improves start latency for genuinely urgent work, but it is not preemption: it cannot interrupt a running task, create capacity, or guarantee a deadline. Overuse can starve normal and low priority work. The claimed priority ordering is therefore a scheduling preference, not a real-time guarantee; aging, budgets or reserved capacity would need their own policy and tests.
+
+Each worker has a current-task record guarded by its own mutex, a stable worker identity and a supported-type mask. The narrated lifecycle creates a bounded set of persistent workers, each loops until shutdown, snapshots its assigned task while holding the record lock, releases the lock before invoking user work, and marks itself available afterward. On shutdown the system stops admission, signals or otherwise wakes workers, joins them, then destroys queue storage and synchronization state. Keep the lock scope around publication and state changes; never hold a queue or worker mutex while invoking arbitrary task code or a completion callback. The transcript is unclear about the exact idle-wait primitive and wake-up sequence, so this chapter specifies the invariant rather than claiming the episode implemented a particular semaphore/condition-variable protocol.
+
+The task record in the captions carries a type, priority, entry function, optional success/failure callbacks, and byte counts plus pointers for input and result data. The narrated constructor copies input bytes into owned storage; the worker runs the entry function; a completed result record is copied into a bounded result array and delivered during a later system update. This separates worker completion from callback execution and can keep renderer or game-state callbacks on the update thread. It also creates explicit ownership questions: reject a submission if input/result allocation or queue insertion fails; define what happens when the fixed result array is full; free copied input after execution; and free result storage only after its callback has returned. A byte copy is not a deep copy of pointed-to objects and does not run C++ constructors or destructors. The payload contract must therefore be restricted to bytewise-copyable data with a documented pointer-lifetime rule, or replaced with an ownership-aware typed message.
+
+The task-type mask is Kohi's scheduler policy, not a Vulkan feature query and not a universal rule that a GPU resource task belongs to one particular worker. Vulkan permits host work to be multithreaded subject to the external-synchronization requirements of each API object and command. For example, host access to a `VkQueue` is externally synchronized unless a supported and enabled `VK_KHR_internally_synchronized_queues` path uses `VK_DEVICE_QUEUE_CREATE_INTERNALLY_SYNCHRONIZED_BIT_KHR` for that queue; that optional host-side guarantee does not replace device execution or memory synchronization. Command pools are externally synchronized, so per-thread command pools are a common way to record command buffers concurrently. A queue-family capability, a `VkQueue`, a host worker and an engine task type are four different things. The chapter's own renderer flag should be read as an engine/backend capability seam; it does not prove that a device reports a general “multithreaded renderer” feature.
+
+This case study complements the Phase 4 pool but does not claim work stealing, task-dependency scheduling, cancellation, preemption, lock-free queues, GPU-completion tracking or production-grade backpressure. The episode itself flags its queue head-of-line limitation and describes the next episode as the place where mesh and texture loading will use the system. For a reconstructable exercise, trace the wrapped `C, D, E` queue; then place a GPU-affine task at the front and a CPU-only task behind it while the GPU-capable worker is busy and a CPU worker is idle. State why the CPU worker cannot legally take the first, GPU-affine item under the mask policy, why a fixed FIFO may then stall other work, and compare three repairs: scan/skip incompatible entries, use per-type queues, or express dependencies/readiness separately. For each repair, test full-queue rejection, worker shutdown with pending work, exactly-once callback delivery, callback-thread ownership, and freeing payloads only after their last reader finishes. A CPU simulation can validate those scheduler contracts; Vulkan validation on a named device is still required for real API-object synchronization, and neither test alone demonstrates a performance gain.
+
+**Evidence boundary.** This reconstruction uses the full retained 88-span automatic-caption transcript (01:39:08 of timestamped material) and the existing Foundations/Engine chapters. It is a source-unit review of those transcript spans, not verification against the spoken audio, the exact historical repository commit, or the later jobified-loading episode. The current [Kohi repository README](https://github.com/travisvroman/kohi) states that its GitHub repository is a mirror and SVN is now the single source of truth. Vulkan constraints above are checked against the current [Khronos Vulkan threading guide](https://docs.vulkan.org/guide/latest/threading.html), [queue guide](https://docs.vulkan.org/guide/latest/queues.html) and [specification device/queue chapter](https://docs.vulkan.org/spec/latest/chapters/devsandqueues.html).
+
+
+
 The test first partitions a 10,000-element array into fixed chunks, submits independent reductions and combines the returned subtotals in a fixed order. It uses values exactly representable as double, so the oracle is an exact integer-valued total of 15,000. It tests grain sizes 1, 127 and 4,096. That demonstrates correctness over different task partitions. It does not demonstrate that creating 10,000 tiny tasks is efficient. The cost of packaging, queueing, waking and collecting those tasks may dominate the few arithmetic operations each job performs.
 
 A practical scheduler chooses **grain size** so each task contains enough useful work to amortize scheduling overhead but not so much that one worker remains busy after others finish. If a task costs c units of useful work and incurs overhead h, then for n tasks
 
-\[
+$$
 T_{\mathrm{overhead}}\approx n h,
-\]
+$$
 
 before accounting for contention, cache effects and critical path dependencies. Smaller tasks improve load balancing in irregular workloads but increase overhead. Coarser tasks reduce overhead but may create idle workers and poor balance. There is no universal ideal grain size expressed solely in bytes or number of particles.
 
@@ -534,9 +560,9 @@ A **task dependency graph** makes execution constraints explicit. If animation m
 
 For a workload with total work W and critical-path length S, the work/span model gives a conceptual lower bound
 
-\[
+$$
 T_P\;\geq\;\max\!\left(\frac{W}{P},\, S\right)
-\]
+$$
 
 for P equal-speed processors under the model. W/P expresses total work capacity; S expresses serial dependency limitations. Real systems add scheduler cost, synchronization, memory effects and heterogeneous execution. A job system with a hundred workers cannot beat a single long dependency chain.
 
@@ -544,9 +570,9 @@ for P equal-speed processors under the model. W/P expresses total work capacity;
 
 Parallel reductions expose an immediate determinism problem. Floating-point addition is generally not associative:
 
-\[
+$$
 (a+b)+c\neq a+(b+c)
-\]
+$$
 
 for some representable a, b, c under finite-precision rounding. If task completion order determines reduction order, two valid executions may obtain slightly different results even without a data race. For deterministic physics, reproducible experiments and binary comparison tests, the update must define its accumulation and iteration ordering (or tolerate and quantify numerical differences).
 
@@ -564,9 +590,9 @@ A proper microbenchmark includes warm-up and repeated runs, measures enough work
 
 A useful speedup model is **Amdahl's law**. If fraction s of the baseline execution is inherently serial and the remainder is accelerated by a factor P, then the idealized overall speedup is
 
-\[
+$$
 S(P)=\frac{1}{s+(1-s)/P}.
-\]
+$$
 
 With s=0.2 and P=4, the ideal speedup is 1/(0.2+0.8/4)=2.5, *not* four. As P grows without limit, the maximum under this fixed-fraction model approaches 1/s=5. The model assumes the work fractions and costs are meaningful and ignores many real overheads; it does not predict actual hardware utilization. It teaches us why profiling the serial fraction and the critical path matters before growing the pool.
 
@@ -600,9 +626,9 @@ Space complexity should identify auxiliary storage separately from input and out
 
 A dynamic array stores elements contiguously and supports amortized O(1) append under geometric growth. Suppose capacity doubles whenever it fills. At growth sizes 1,2,4,8,..., the number of elements moved over n insertions is bounded by a geometric series:
 
-\[
+$$
 1+2+4+\cdots+2^k < 2^{k+1}\leq 2n
-\]
+$$
 
 for the relevant k near the final capacity. Although one particular insertion can move Θ(n) elements, the total relocation work across n insertions is O(n), making average amortized relocation cost O(1) per insertion. This is an **aggregate analysis**, not a guarantee that every append has constant latency. A real engine may need to reserve capacity before a frame deadline to avoid an occasional large allocation/copy in a hot path.
 
@@ -616,9 +642,9 @@ A linked list avoids relocating existing nodes during insertion at a known posit
 
 An asset-streaming queue receives new work and processes it in FIFO order. We can represent it with a fixed array, a head index and a count. Its invariant is 0 ≤ count ≤ capacity; the next insertion position is
 
-\[
+$$
 \mathrm{tail}=(\mathrm{head}+\mathrm{count})\bmod C.
-\]
+$$
 
 When count=C, the queue is full; when count=0, it is empty. This avoids the ambiguity of a representation using only head and tail, for which head==tail can mean full *or* empty unless one slot is deliberately left unused or another state bit/count is stored. A design that leaves one slot unused has effective capacity C−1. Neither representation is universally better; the full/empty policy must be explicit to callers.
 
@@ -646,9 +672,9 @@ Sometimes the streaming system wants to ask whether a requested asset is *defini
 
 With n inserted keys and ideal independent uniform hashing assumptions, a familiar approximate false-positive probability is
 
-\[
+$$
 p_{\mathrm{fp}}\approx\left(1-e^{-kn/m}\right)^k.
-\]
+$$
 
 The approximation comes from estimating the probability that a bit remains zero after kn bit assignments as (1−1/m)^{kn}≈e^{-kn/m}, then requiring all k queried positions to be one. This is an approximate probabilistic model, not an exact guarantee for arbitrary poor or correlated hash functions. The choice of m and k trades memory, compute and false-positive rate.
 

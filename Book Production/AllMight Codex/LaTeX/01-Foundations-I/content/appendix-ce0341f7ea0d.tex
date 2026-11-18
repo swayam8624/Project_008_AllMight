@@ -1,0 +1,48 @@
+\hypertarget{appendix-ce0341f7ea0d}{}
+\section*{Basis coordinates and dimension}
+\section{Basis coordinates and dimension}\label{basis-coordinates-and-dimension}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase7
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Phase 7 stores basis images as matrix columns and derives coordinate conversion \([v]_C=C^{-1}B[v]_B\). The endpoint bases and whether motion is active or passive determine the product; row-major storage does not. \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Coordinates\%20can\%20change\%20while\%20the\%20geometric\%20object\%20stays\%20still}{Reconstruction and active/passive example}.
+
+A basis is an ordered independent spanning set. Independence makes coordinates unique; spanning makes every vector reachable. Dimension counts basis elements over the chosen field, not stored components or bytes. A basis change alters coordinates without necessarily moving the physical vector.
+
+\((3,2)=1(1,0)+2(1,1)\), so its slanted-basis coordinates are \((1,2)\). A plane inside three-dimensional coordinates still has dimension two.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Vector spaces subspaces and span (02-Foundations-II, appendix-173b52c063ae)} --- Reachability and closure establish the spanning and independence questions.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-bd39c3bf5d64]{Matrices as linear maps and basis images}
+\item
+  \href{}{Norms lengths and induced distances (02-Foundations-II, appendix-49933872bb51)} --- Builds on this mechanism in the connected geometry story.
+\item
+  \href{}{Gram matrices and coordinate metrics (02-Foundations-II, appendix-3b863809f82a)} --- Builds on this mechanism in the connected geometry story.
+\item
+  \hyperref[appendix-46da295c6787]{Covectors linear functionals and normal transforms} --- Builds on this mechanism in the connected geometry story.
+\item
+  \href{}{Linear systems and fundamental subspaces (02-Foundations-II, appendix-8572a4a060c1)} --- Extends this foundation into linear-systems and decomposition analysis.
+\item
+  \href{}{Spline bases and curve evaluation (03-Visual-Computing-I, appendix-f28eeec97a3d)}
+\item
+  \href{}{Additive energy and approximate structure (04-Visual-Computing-II, appendix-b0732b22e7d6)}
+\item
+  \href{}{Exceptional projections and dimension (04-Visual-Computing-II, appendix-3c73f7862157)} \#\# Recall and next depth
+\end{itemize}
+
+Separate passive coordinate change from active transformation and explain near-dependent basis sensitivity. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20basis\%20is\%20a\%20measuring\%20arrangement,\%20not\%20the\%20vector\%20itself}{Teaching narrative} · \hyperref[appendix-fd090d982a15]{Coverage and source gap} · \hyperref[appendix-a103e7846d21]{Evidence and limits} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

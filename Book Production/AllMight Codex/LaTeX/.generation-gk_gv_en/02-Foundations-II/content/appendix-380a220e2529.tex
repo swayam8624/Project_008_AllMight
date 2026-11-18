@@ -1,0 +1,35 @@
+\hypertarget{appendix-380a220e2529}{}
+\section*{Coordinate-space types and validated invariants}
+\chapter{Coordinate-space types and validated invariants}\label{appendix-380a220e2529-coordinate-space-types-and-validated-invariants}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase6 · \textbf{Latest development:} Phase6
+
+\section{Definition and mechanism}\label{appendix-380a220e2529-definition-and-mechanism}
+
+Compile-time space tags and affine-role types reject some meaningless operations without stored tag bytes. Validated wrappers carry finite/unit promises only through invariant-preserving operations. Broad local-space tags do not identify every dynamic object's frame.
+
+Point difference returns a same-space vector. Scaling a unit direction by two returns an ordinary vector, not another unit direction.
+
+\section{Prerequisites}\label{appendix-380a220e2529-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0659864c0aa3]{Vectors coordinates and affine points} --- Point, displacement and coordinate roles determine which geometric operations are meaningful.
+\item
+  \hyperref[appendix-f744e41b95b4]{Unit directions and safe normalization} --- Validated finite unit directions establish the preconditions for simplified geometry formulas.
+\item
+  \hyperref[appendix-37a39984ba66]{Vector value types and component access} --- Primitive representation and access rules support layout choices and semantic wrappers.
+\end{itemize}
+
+\section{Used by}\label{appendix-380a220e2529-used-by}
+
+Later curriculum sources can deepen this same node; no future coverage is marked complete.
+
+\section{Recall and next depth}\label{appendix-380a220e2529-recall-and-next-depth}
+
+Name the promise each constructor establishes; encode transform source/destination and separate normal transformation. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\section{Source and navigation}\label{appendix-380a220e2529-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Types\%20can\%20remember\%20the\%20promises\%20that\%20three\%20components\%20forget}{Teaching narrative} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-fd090d982a15-phase-6---parts-501-600}{Coverage and source gap (01-Foundations-I, appendix-fd090d982a15-phase-6-\/-\/-parts-501-600)} · \href{../01-Foundations-I/main.pdf\#nameddest=appendix-a103e7846d21-phase-6---source-analysis-and-verification}{Evidence and limits (01-Foundations-I, appendix-a103e7846d21-phase-6-\/-\/-source-analysis-and-verification)} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

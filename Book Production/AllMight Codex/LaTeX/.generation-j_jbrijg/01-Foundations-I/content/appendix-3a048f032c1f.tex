@@ -1,0 +1,53 @@
+\hypertarget{appendix-3a048f032c1f}{}
+\section*{Signed zero}
+\chapter{Signed zero}\label{appendix-3a048f032c1f-signed-zero}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C004 · \textbf{Latest development:} C004
+
+\section{Definition and mechanism}\label{appendix-3a048f032c1f-definition-and-mechanism}
+
+Exponent and fraction zero permit either sign. 00000000 and 80000000 compare numerically equal, but signbit and reciprocal distinguish them. Ordinary x\textless0 does not detect negative zero.
+
+\section{Prerequisites}\label{appendix-3a048f032c1f-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5057f9ad327f]{Binary32} --- The concrete fields provide the representation used in this mechanism.
+\end{itemize}
+
+\section{Used by}\label{appendix-3a048f032c1f-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-deca299ae4b8]{ULP distance policies} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-e90053a4b201]{Floating-point canonicalization} --- uses this mechanism in its explanation.
+\end{itemize}
+
+\section{Recall and next depth}\label{appendix-3a048f032c1f-recall-and-next-depth}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Specify zero equality separately from raw-byte equality and ULP ordering.
+
+\section{Source and navigation}\label{appendix-3a048f032c1f-source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#A\%20stretching\%20ruler\%20for\%20real-valued\%20quantities}{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}
+
+\section{Reconstruction depth}\label{appendix-3a048f032c1f-reconstruction-depth}
+
+IEEE-754 has both \(+0\) and \(-0\). They compare equal numerically in ordinary equality, but the sign remains observable through operations such as reciprocal, sign-bit inspection and some branch-cut-sensitive functions:
+
+\[
+\frac{1}{+0}=+\infty,
+\qquad
+\frac{1}{-0}=-\infty.
+\]
+
+Signed zero preserves directional information after underflow or exact cancellation. That can matter in complex functions, interval boundaries and geometric code that interprets the sign of a quantity near a separating surface.
+
+It can also surprise serialization, hashing and deterministic comparison. If the application's semantic model says both zeros are identical, canonicalization may deliberately map negative zero to positive zero before hashing or bytewise equality. If directional zero is meaningful, that canonicalization destroys information.
+
+Tests should distinguish numeric equality from bit representation and include operations that expose the sign. This is one reason floating-point equality policy must start from domain semantics rather than from a universal epsilon.

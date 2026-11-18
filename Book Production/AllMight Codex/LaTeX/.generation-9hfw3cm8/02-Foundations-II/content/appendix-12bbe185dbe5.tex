@@ -1,0 +1,46 @@
+\hypertarget{appendix-12bbe185dbe5}{}
+\section{Multivariate Gaussian distributions and whitening}\label{appendix-12bbe185dbe5-multivariate-gaussian-distributions-and-whitening}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{appendix-12bbe185dbe5-definition-and-mechanism}
+
+A multivariate Gaussian is determined by a mean vector and a symmetric positive-semidefinite covariance matrix. When the covariance is positive definite, its density is an elliptical bell whose principal directions are covariance eigenvectors. Cholesky factorization maps independent standard-normal samples into correlated samples; whitening applies an inverse factor to express observations in unit-variance coordinates. Singular covariance instead confines the distribution to a lower-dimensional affine subspace and has no ordinary density with respect to full-dimensional volume. Covariance transforms as AΣAᵀ under a linear map and approximately as JΣJᵀ through a nonlinear map near a reference point. These equations support sensor fusion and projected uncertainty, but a Gaussian rendering kernel is not automatically a normalized probability density or epistemic uncertainty model.
+
+\subsection{Prerequisites}\label{appendix-12bbe185dbe5-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-54c383df9992]{Expectation, covariance, and dependence}
+\item
+  \hyperref[appendix-50d2ea3c9b26]{Symmetric positive-definite matrices and Cholesky}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-4815cd87ab8b}{Probability density and change of measure (03-Visual-Computing-I, appendix-4815cd87ab8b)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-12bbe185dbe5-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-f0437ea55a47]{Conditional Gaussians and Schur complements}
+\item
+  \hyperref[appendix-ad175ef3c5bf]{PCA and covariance eigensystems}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-12bbe185dbe5-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[02-foundations-ii-ch024-waiting-times-event-counts-and-covariance-geometry]{Phase 10 teaching section}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (01-Foundations-I, appendix-cb5af353ef77)} · visual recall
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-12bbe185dbe5-source-coverage}
+
+Supplied lesson parts: 928 (T01 · M056), 929 (T01 · M056), 930 (T01 · M056).
+
+Expanded direct teaching: \hyperref[02-foundations-ii-ch023-whiten-residuals-without-pretending-every-ellipse-has-the-same-probability]{Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\#Whiten residuals without pretending every ellipse has the same probability}.

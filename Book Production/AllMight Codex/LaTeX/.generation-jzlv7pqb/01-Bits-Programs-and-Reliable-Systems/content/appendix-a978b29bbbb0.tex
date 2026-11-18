@@ -1,0 +1,36 @@
+\hypertarget{appendix-a978b29bbbb0}{}\label{referencestart:appendix-a978b29bbbb0}
+\section{Temporary lifetime extension}\label{appendix-a978b29bbbb0-temporary-lifetime-extension}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C008 · \textbf{Latest development:} C008
+
+\subsection{Definition and mechanism}\label{appendix-a978b29bbbb0-definition-and-mechanism}
+
+Ordinary temporary destruction occurs at the full-expression's end unless specified extension applies. Direct local binding can extend lifetime, but a returned parameter reference cannot transitively extend it. Aggregate braces and parentheses differ for reference members; new-initializer extension does not last as long as the allocated holder.
+
+\subsection{Prerequisites}\label{appendix-a978b29bbbb0-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-37856d997bb0]{Reference binding and converted temporaries} --- The chosen original or converted referent determines the destruction deadline.
+\item
+  \hyperref[appendix-0b104bcba06b]{Storage duration and object lifetime} --- The referent and its backing storage must survive each alias use.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-a978b29bbbb0-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-aea529eb5175]{Deferred captures and borrowed views}
+\item
+  \hyperref[appendix-d42039b1d6f7]{Ref-qualified accessors}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-a978b29bbbb0-recall-and-next-depth}
+
+Draw the destruction point for pass(std::string\{``x''\}). Pending: detailed subobject extension and C++26 diagnostic changes. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{appendix-a978b29bbbb0-source-and-navigation}
+
+\hyperref[01-foundations-i-ch003-a-temporary-needs-an-explicit-lifetime-story]{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \hyperref[appendix-4ad47bdd269a]{Dependency Map}

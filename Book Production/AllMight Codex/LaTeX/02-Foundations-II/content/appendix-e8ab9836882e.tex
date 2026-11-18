@@ -1,0 +1,45 @@
+\hypertarget{appendix-e8ab9836882e}{}
+\section*{ODE initial-value problems and stiffness}
+\section{ODE initial-value problems and stiffness}\label{ode-initial-value-problems-and-stiffness}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 9 · \textbf{Latest development:} Phase 9
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+An ordinary differential equation specifies a state's rate of change as a function of state and time. An initial-value problem adds the starting state; together they define the trajectory when existence and uniqueness conditions hold. Numerical integration advances approximate states through finite time steps. Stability concerns whether numerical errors remain controlled under repeated updates, not just whether one step is accurate. A stiff system contains modes with very different time scales; explicit methods may require impractically small steps to remain stable even when the visible solution changes slowly. Implicit methods can enlarge the stable step region but require solving equations. Consistency, stability, and convergence are distinct properties. A simulator should choose its step and integrator based on the dynamics, not merely the display frame interval or apparent smoothness of one trajectory.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1a50e72435c2]{Definite integrals and the fundamental theorem}
+\item
+  \hyperref[appendix-0b3be18411f9]{Eigenvalues and eigenspaces}
+\item
+  \href{}{Absolute and relative error (01-Foundations-I, appendix-3ae74e89b4e6)}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{ODE integration and stability (04-Visual-Computing-II, appendix-18eacf61a04b)}
+\item
+  \hyperref[appendix-8f96f9c4d5bc]{Time integrators and symplectic updates}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#ODEs\%20and\%20numerical\%20simulation}{Phase 9 teaching section}
+\item
+  \href{}{Visual Recall/09 - Calculus and Optimization - Visual Recall.md (01-Foundations-I, appendix-adf48f5dc5c1)} · visual recall
+\end{itemize}
+
+\subsection{Source coverage}\label{source-coverage}
+
+Supplied lesson parts: 838 (T03 · M051), 839 (T03 · M051), 845 (T03 · M051), 846 (T03 · M051).

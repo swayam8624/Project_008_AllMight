@@ -1,0 +1,55 @@
+\hypertarget{appendix-dbe5905163c2}{}\label{referencestart:appendix-dbe5905163c2}
+\section{Bit mask}\label{appendix-dbe5905163c2-bit-mask}
+
+\hypertarget{appendix-dbe5905163c2-bit-mask}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C001 · \textbf{Latest development:} C001
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-dbe5905163c2-definition-and-mechanism}
+
+\hypertarget{appendix-dbe5905163c2-definition-and-mechanism}{}
+
+A pattern naming selected bit positions; its effect depends on the operation used with it.
+
+\end{allmightroledefinition}
+
+A mask is a selection pattern, not an operation. \BookInlineCode{{0}{x}{3}{0}{\ }{=}{\ }{0}{0}{1}{1}{0}{0}{0}{0}{₂}}{0x30\ =\ 00110000₂} names positions 4 and 5. AND reads selected positions, OR sets them, XOR toggles them, and AND with the width-limited complement clears them. Full-width masks need a special implementation case.
+
+\subsection{Prerequisites}\label{appendix-dbe5905163c2-prerequisites}
+
+\hypertarget{appendix-dbe5905163c2-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-280445746493]{Bit significance} --- LSB means least significant bit, normally position 0 with weight 1.
+\item
+  \hyperref[appendix-5bee2df85484]{Byte and octet} --- An octet is exactly eight bits.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-dbe5905163c2-used-by}
+
+\hypertarget{appendix-dbe5905163c2-used-by}{}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-ac697f5c66e8]{Bit field} --- uses bit mask as part of its representation or reasoning.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#nameddest=appendix-0c67cd5bf30a}{Pages and page offsets (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Pages and page offsets)} --- depends on this concept; see its prerequisite explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-dbe5905163c2-recall-and-next-depth}
+
+\hypertarget{appendix-dbe5905163c2-recall-and-next-depth}{}
+
+Explain bit mask without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} Apply and reconstruct this concept independently.
+
+\subsection{Source and navigation}\label{appendix-dbe5905163c2-source-and-navigation}
+
+\hypertarget{appendix-dbe5905163c2-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#nameddest=appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

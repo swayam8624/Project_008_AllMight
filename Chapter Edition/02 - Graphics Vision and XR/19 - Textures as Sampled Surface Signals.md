@@ -8,7 +8,7 @@ A texture stores samples of a signal over a surface, and its footprint changes w
 
 **Recall question:** Why does a minified texture need a different footprint than a magnified one?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 45446–48179; source-span SHA256 7652991984c323a7432aee7bf45394b9029c86219ca693a6cea9960a1be03bec. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 46448–49181; source-span SHA256 7652991984c323a7432aee7bf45394b9029c86219ca693a6cea9960a1be03bec. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## Textures and surface detail

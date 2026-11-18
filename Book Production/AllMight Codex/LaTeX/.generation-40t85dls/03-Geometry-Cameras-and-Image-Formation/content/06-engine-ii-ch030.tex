@@ -1,0 +1,4003 @@
+\chapter{Depth, projection, and shadow-map precision}\label{06-engine-ii-ch030-depth-projection-and-shadow-map-precision}\phantomsection\hypertarget{06-engine-ii-ch030}{}\label{stagechapter:06-engine-ii-ch030}
+
+\hypertarget{06-engine-ii-ch030-depth-projection-and-shadow-map-precision}{}
+
+\hyperref[volume-reading-map]{Reading map} · \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=06-engine-ii-ch029-dynamic-spatial-indices-for-moving-worlds}{Previous chapter (Spatial Worlds, Engine State, and Simulation, Ch. 20)} · \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=06-engine-ii-ch031-spatial-index-serialization-and-query-evidence}{Next chapter (Spatial Worlds, Engine State, and Simulation, Ch. 21)}
+
+Depth buffers encode an ordering decision under finite precision, and projection choices determine where that precision is spent. This chapter connects conventional depth, reverse-Z, and shadow comparisons to geometry and camera range.
+
+\textbf{By the end:} Derive how projection maps distance to depth and explain precision, bias, and coverage limits in a shadow pass.
+
+\textbf{Recall question:} For the chosen near/far range, where is depth precision concentrated and how can you test whether shadow acne is numerical or geometric?
+
+\subsection{Conventional depth}\label{06-engine-ii-ch030-conventional-depth}
+
+\hypertarget{06-engine-ii-ch030-conventional-depth}{}
+
+Suppose:
+
+\[
+near\rightarrow0,
+\qquad
+far\rightarrow1
+\]
+
+with depth comparison \texttt{LESS}.
+
+At each full-resolution pixel, depth buffer contains the nearest visible surface:
+
+\[
+z_p.
+\]
+
+For a coarse 2×2 block to prove an object is hidden behind \textbf{all four pixels}, we need the farthest of those nearest occluders:
+
+\[
+\boxed{
+z_{\text{coarse}}
+=
+\max(z_0,z_1,z_2,z_3).
+}
+\]
+
+Why max?
+
+Suppose depths are:
+
+\[
+0.1,\ 0.1,\ 0.1,\ 0.8.
+\]
+
+An object at depth 0.5 is hidden behind the first three pixels, but would be in front of the 0.8 surface.
+
+Using minimum 0.1 would falsely classify it as occluded.
+
+Using maximum 0.8 does not.
+
+For object's nearest possible depth \(z_{\text{obj}}\), conservative occlusion requires:
+
+\[
+\boxed{
+z_{\text{obj}}>z_{\text{coarse}}
+}
+\]
+
+for the relevant covered region.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Reverse-Z changes the reduction}
+
+This matters directly for your renderer because you have worked with reverse-Z.
+
+Reverse-Z typically maps:
+
+\[
+near\rightarrow1,
+\qquad
+far\rightarrow0
+\]
+
+with \texttt{GREATER} depth testing.
+
+Now larger depth means closer.
+
+At full-resolution pixel, nearest visible surface has the \textbf{largest} depth.
+
+To obtain a conservative coarse value representing the weakest/farthest occluder across a block, use:
+
+\[
+\boxed{
+z_{\text{coarse}}
+=
+\min(z_0,z_1,z_2,z_3).
+}
+\]
+
+Example:
+
+\[
+0.9,\ 0.9,\ 0.9,\ 0.2.
+\]
+
+Object nearest depth:
+
+\[
+0.5.
+\]
+
+It is behind the first three surfaces because:
+
+\[
+0.5<0.9,
+\]
+
+but in front of the fourth:
+
+\[
+0.5>0.2.
+\]
+
+Taking minimum:
+
+\[
+z_{\text{coarse}}=0.2
+\]
+
+prevents us from declaring it occluded.
+
+The conservative reverse-Z condition becomes approximately:
+
+\[
+\boxed{
+z_{\text{object nearest}}
+<
+z_{\text{HZB}}
+\Rightarrow
+\text{occluded}
+}
+\]
+
+for a fully covered region and compatible depth conventions.
+
+This is the exact opposite reduction direction from conventional Z.
+
+A reverse-Z engine that builds its HZB pyramid using the wrong min/max operation can produce catastrophic false occlusion.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Projecting a bounding volume to HZB}
+
+For object AABB:
+
+\[
+B,
+\]
+
+we need a conservative screen-space rectangle.
+
+Project its relevant corners using:
+
+\[
+p_c=PVMp.
+\]
+
+After correct clipping and perspective divide:
+
+\[
+p_{ndc}=
+\left(
+\frac{x_c}{w_c},
+\frac{y_c}{w_c},
+\frac{z_c}{w_c}
+\right).
+\]
+
+Find screen bounds:
+
+\[
+x_{\min},x_{\max},
+y_{\min},y_{\max}.
+\]
+
+Also determine the object's nearest possible depth.
+
+Then select a pyramid mip level whose texels roughly match the projected rectangle.
+
+If projected size is:
+
+\[
+W\times H
+\]
+
+pixels, a common idea is choose:
+
+\[
+L\approx
+\lfloor
+\log_2(\max(W,H))
+\rfloor
+\]
+
+with implementation-specific adjustment so only a small number of HZB texels cover the rectangle.
+
+The exact choice is a performance policy.
+
+Correctness comes from conservative depth aggregation and conservative projected bounds.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why coarse HZB works}
+
+Suppose object covers:
+
+\[
+128\times128
+\]
+
+pixels.
+
+Testing full resolution could mean considering:
+
+\[
+16,384
+\]
+
+depth samples.
+
+At mip level 7:
+
+\[
+128/2^7=1.
+\]
+
+One coarse sample summarizes roughly that region.
+
+So instead of pixel-by-pixel occlusion, we ask:
+
+\begin{quote}
+Is the nearest point of the entire object still behind the conservative farthest occluder covering this entire screen region?
+\end{quote}
+
+If yes, the whole object can be culled before expensive rendering.
+
+That is spatial pruning in screen space.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{HZB is not the same thing as ordinary early-Z}
+
+Early-Z occurs while rasterizing fragments.
+
+The triangle is already submitted and rasterization has begun.
+
+HZB object culling attempts to reject geometry \textbf{before} submitting its expensive draw/mesh work.
+
+NVIDIA's occlusion-culling discussions make the same broad distinction: depth testing can cheaply discard individual hidden fragments, while hierarchical/object-level visibility systems aim to avoid processing whole objects or hierarchy nodes when they are known to be hidden. \href{https://developer.nvidia.com/gpugems/gpugems/part-v-performance-and-practicalities/chapter-29-efficient-occlusion-culling?utm_source=chatgpt.com}{NVIDIA Developer}
+
+Hardware GPUs also maintain internal hierarchical depth representations for efficient depth rejection; application-built HZBs are conceptually related but are not necessarily the same data structure as the hardware's private Hi-Z metadata. GPUOpen documents hardware Hi-Z metadata being maintained and resummarized as depth data changes. \href{https://gpuopen.com/manuals/rgp_manual/overview_windows/?utm_source=chatgpt.com}{AMD GPUOpen}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{HZB must be conservative}
+
+A false negative in visibility means:
+
+\[
+\text{visible object classified occluded}.
+\]
+
+The result is missing geometry or flicker.
+
+That is much worse than rendering an unnecessary hidden object.
+
+Therefore if uncertainty exists:
+
+\[
+\boxed{\text{assume visible}.}
+\]
+
+Examples of uncertainty:
+
+\begin{itemize}
+\tightlist
+\item
+  projected bound crosses the near plane,
+\item
+  object fills most of screen,
+\item
+  depth bounds are poorly conditioned,
+\item
+  previous-frame depth may no longer match,
+\item
+  camera teleported,
+\item
+  object moved rapidly,
+\item
+  HZB rectangle coverage is uncertain.
+\end{itemize}
+
+This repeats the entire conservative-geometry philosophy of M078.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Previous-frame HZB and temporal coherence}
+
+Often the current frame's complete depth is not available before deciding what to render.
+
+One solution uses previous-frame depth.
+
+That introduces one-frame latency.
+
+If an object was hidden last frame but camera suddenly moves and exposes it, blindly trusting old depth can incorrectly cull it.
+
+Countermeasures include:
+
+\[
+\text{expand projected bounds}
+\]
+
+\[
+\text{camera-motion thresholds}
+\]
+
+\[
+\text{keep recently visible objects visible}
+\]
+
+\[
+\text{disable occlusion after teleport}
+\]
+
+\[
+\text{reproject previous depth}
+\]
+
+\[
+\text{conservative velocity expansion}.
+\]
+
+This is the rendering analogue of fat AABBs.
+
+Again:
+
+\[
+\text{temporal slack}
+\leftrightarrow
+\text{robustness}.
+\]
+
+Historical hierarchical occlusion systems similarly exploit temporal coherence because visibility tends to persist between nearby frames, though overly trusting it results in additional rendering or visibility errors depending on the policy. \href{https://developer.nvidia.com/gpugems/gpugems2/part-i-geometric-complexity/chapter-6-hardware-occlusion-queries-made-useful?utm_source=chatgpt.com}{NVIDIA Developer}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The unifying picture of all structures in Pass 08}
+
+Now compare the central abstraction each structure uses.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Structure
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+What gets partitioned?
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Best exploitation
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Main weakness
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Dynamic AABB tree & Object hierarchy & Dynamic bounded objects & Tree quality/updating \\
+SAP & Axis intervals & Temporal coherence & Dense overlap \\
+Spatial hash & Uniform cells & Uniform-scale local neighborhoods & Cell-size sensitivity \\
+Dense grid & Uniform cells in bounded domain & Extreme locality/GPU friendliness & Memory \\
+Octree & 3D space recursively & Sparse multiscale worlds & Boundary/large-object issues \\
+Loose octree & Overlapping 3D cells & Moving extended objects & More overlap \\
+Quadtree & 2D space recursively & Maps/terrain/2D worlds & Same regular-partition issues \\
+KD-tree & Space via axis planes & Point nearest-neighbor & Dynamic/extended geometry \\
+BSP & Arbitrary half-spaces & Static architectural space & Expensive preprocessing \\
+Sphere hierarchy & Object groups by spheres & Cheap tests/rotation & Loose fit \\
+Scene graph & Semantic/transform relationships & Ownership/transforms & Not intrinsically spatial \\
+Portals/PVS & Visibility connectivity & Static indoor visibility & Static/precompute assumptions \\
+HZB & Screen-space depth & Dynamic occlusion & Temporal/projection conservatism \\
+\end{longtable}
+}
+
+The deeper point is:
+
+\[
+\boxed{
+\text{A spatial structure is a hypothesis about the workload.}
+}
+\]
+
+A hash grid hypothesizes useful locality at one fixed spatial scale.
+
+SAP hypothesizes strong temporal coherence.
+
+KD-tree hypothesizes point-like data and useful axis separation.
+
+Portal/PVS hypothesizes a cell-connected architectural environment.
+
+HZB hypothesizes enough existing screen-space occlusion to make depth rejection worthwhile.
+
+If that hypothesis is false, the data structure can become slower than the simpler alternative.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Choosing between dynamic tree, SAP and spatial hash}
+
+Imagine 50,000 particles uniformly spread through a cubic region, all roughly equal size.
+
+Spatial hash is attractive.
+
+Imagine 5,000 rigid bodies moving smoothly with similar frame-to-frame order.
+
+SAP can be very effective.
+
+Imagine 10,000 differently sized rigid bodies moving arbitrarily through a world.
+
+Dynamic AABB tree is more general.
+
+Imagine millions of static reconstructed triangles.
+
+Static SAH BVH from Pass 07 is the better fit.
+
+Imagine millions of static point samples requiring nearest-neighbor search.
+
+KD-tree is a stronger candidate.
+
+Imagine an indoor level consisting of rooms and corridors.
+
+Portals/PVS can remove entire inaccessible regions before generic spatial culling even begins.
+
+This is why production engines frequently use \textbf{several structures simultaneously}.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{A realistic engine composition}
+
+A modern world might use:
+
+\begin{verbatim}
+                    WORLD / ENTITY SYSTEM
+                           |
+               -------------------------
+               |                       |
+       static geometry           dynamic objects
+               |                       |
+             BVH / BLAS          Dynamic AABB tree
+               |                       |
+               -----------+------------
+                          |
+                          v
+                     candidate set
+                          |
+                       frustum
+                          |
+                        PVS
+                          |
+                         HZB
+                          |
+                         GPU
+\end{verbatim}
+
+Meanwhile:
+
+\begin{verbatim}
+AI points / landmarks
+          |
+        KD-tree
+\end{verbatim}
+
+Particle neighborhood queries:
+
+\begin{verbatim}
+particles
+    |
+spatial hash
+\end{verbatim}
+
+Indoor visibility:
+
+\begin{verbatim}
+cell / portal graph
+\end{verbatim}
+
+The same world can legitimately contain all of them.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current KairoSpatial implementation audit}
+
+This pass exposes a useful maturity map.
+
+\textbf{\texttt{DynamicAABBTree.cppm}}
+
+Already implemented:
+
+\begin{verbatim}
+binary dynamic tree
+tight/fat leaf bounds
+proxy handles
+incremental insertion
+remove/reinsert updates
+AABB/sphere/ray queries
+layer masks
+pair generation
+height/balance/area diagnostics
+rebuild-through-reinsertion
+\end{verbatim}
+
+Missing or improvable:
+
+\begin{verbatim}
+node free-list reuse
+rotations/balancing
+motion-predictive fattening
+stronger insertion SAH
+moved-proxy pair generation
+true optimized bottom-up rebuild
+near-first ray traversal
+\end{verbatim}
+
+\textbf{\texttt{SweepAndPrune.cppm}}
+
+Already implemented:
+
+\begin{verbatim}
+proxy storage
+update/remove
+X-axis sorting
+early X rejection
+full 3D candidate confirmation
+\end{verbatim}
+
+Not yet implemented despite the declared endpoint type:
+
+\begin{verbatim}
+persistent endpoints
+active-set sweep
+incremental endpoint crossing
+temporal-coherence insertion sort
+multi-axis pair masks
+\end{verbatim}
+
+\textbf{\texttt{SpatialHash.cppm}}
+
+Already quite coherent:
+
+\begin{verbatim}
+floor-based cell mapping
+negative coordinates
+AABB multi-cell occupancy
+coordinate hashing
+reverse ID->cells mapping
+remove/reinsert
+AABB query
+radius query
+deduplication
+\end{verbatim}
+
+Main limitations are structural rather than correctness errors:
+
+\begin{verbatim}
+single fixed cell size
+large-object cell explosion
+unordered_map locality/overhead
+full removal/reinsert on every update
+\end{verbatim}
+
+\textbf{\texttt{Octree.cppm}}
+
+Implemented as a real loose octree:
+
+\begin{verbatim}
+8-way subdivision
+depth/capacity limits
+loose bounds
+ancestor storage for large items
+AABB/sphere/frustum/ray query
+empty-subtree collapse
+\end{verbatim}
+
+Important improvements:
+
+\begin{verbatim}
+enforce root/world containment
+ID->node proxy map for fast updates
+population-based merge
+near-first / closest-pruned raycast
+pool/flat allocation
+layer masks
+\end{verbatim}
+
+\textbf{\texttt{Quadtree.cppm}}
+
+Currently:
+
+\[
+\boxed{\text{not yet hierarchically subdivided}}
+\]
+
+It is a flat item vector with linear queries.
+
+\textbf{\texttt{KDTree.cppm}}
+
+Implemented well for point queries:
+
+\begin{verbatim}
+median nth_element build
+cyclic axes
+nearest neighbor
+radius search
+K-nearest
+max-heap pruning
+\end{verbatim}
+
+Possible additions:
+
+\begin{verbatim}
+AABB range query
+spread-based axis choice
+deterministic tie-breaks
+bulk point-data locality optimization
+\end{verbatim}
+
+\textbf{BSP / sphere hierarchy / portal-PVS / HZB}
+
+No dedicated implementations were found in the inspected \texttt{KairoSpatial} repository. Those topics are therefore canonical system knowledge and future engine-integration targets rather than existing code descriptions.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{One especially useful implementation project from this pass}
+
+The best single improvement to make after learning these chunks would be to turn your dynamic AABB tree into a genuinely production-style update structure.
+
+The sequence would be:
+
+\begin{verbatim}
+1. Implement free-list node reuse
+2. Add displacement-aware fat bounds
+3. Add local rotations
+4. Add proper insertion SAH / inheritance cost
+5. Maintain moved-proxy list
+6. Generate pairs only from moved proxies
+7. Add near-first ray traversal
+8. Benchmark against current implementation
+\end{verbatim}
+
+Do not implement all eight and merely declare victory.
+
+Measure after each stage:
+
+\[
+\text{update time},
+\]
+
+\[
+\text{pair generation time},
+\]
+
+\[
+\text{node visits},
+\]
+
+\[
+\text{area ratio},
+\]
+
+\[
+\text{tree height},
+\]
+
+\[
+\text{reinsertion rate}.
+\]
+
+That lets you know which features actually pay for your workloads.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Research bridge: your existing adaptive collision hypothesis becomes much more meaningful now}
+
+Your repository already contains the research hypothesis:
+
+\begin{verbatim}
+Online scene telemetry can choose among:
+dynamic tree
+sweep-and-prune
+spatial hash
+
+such that p95 collision cost is lower
+than one fixed policy.
+\end{verbatim}
+
+Pass 08 gives that hypothesis real algorithmic substance.
+
+The three methods fail under very different conditions.
+
+For dynamic tree, useful telemetry includes:
+
+\[
+H=\text{height}
+\]
+
+\[
+R_A=\text{area ratio}
+\]
+
+\[
+V=\text{visited nodes/query}
+\]
+
+\[
+U=\text{reinsertion rate}.
+\]
+
+For SAP:
+
+\[
+K=\text{endpoint inversions/frame}
+\]
+
+\[
+A=\text{average active-set size}
+\]
+
+\[
+P_x=\text{X candidate pairs}.
+\]
+
+For hash:
+
+\[
+O=\text{occupied cells}
+\]
+
+\[
+B=\text{mean bucket occupancy}
+\]
+
+\[
+B_{\max}=\text{max bucket occupancy}
+\]
+
+\[
+C=\text{mean cells/object}.
+\]
+
+Then define estimated total broadphase cost:
+
+\[
+C_T
+=
+C_{\text{update}}
++
+C_{\text{query}}
++
+C_{\text{candidate narrowphase}}.
+\]
+
+A switching policy should minimize \textbf{total frame cost}, not merely broadphase query time.
+
+If hash returns twice as many false-positive candidates, its narrowphase cost belongs in the evaluation.
+
+Likewise switching structures has a migration cost:
+
+\[
+C_{\text{switch}}.
+\]
+
+A policy that switches every frame may be worse than the fixed structures it attempts to outperform.
+
+So hysteresis is necessary:
+
+\[
+C_{\text{new}}
+<
+C_{\text{current}}-\Delta
+\]
+
+for several frames before switching.
+
+That connects directly to your repository's existing \texttt{no\_hysteresis} ablation idea.
+
+This is a genuine systems research direction, provided the final contribution goes beyond simply comparing standard broadphase algorithms.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Pass 08 deep reconstruction map}
+
+You should now mentally see the full phase progression:
+
+\begin{verbatim}
+PASS 07
+STATIC / SEMI-STATIC ACCELERATION
+
+Primitive bounds
+       |
+       v
+      BVH
+       |
+SAH / Morton / LBVH
+       |
+Traversal / pruning
+       |
+Wide / quantized / SIMD
+
+
+PASS 08
+DYNAMIC / SPECIALIZED SPATIAL SYSTEMS
+
+moving AABBs
+   |
+   +---- Dynamic AABB tree
+   |
+   +---- Sweep and prune
+   |
+   +---- Spatial hash / grid
+
+explicit space partition
+   |
+   +---- Octree / loose octree
+   +---- Quadtree
+   +---- KD-tree
+   +---- BSP
+
+alternative bounding hierarchy
+   |
+   +---- sphere hierarchy
+
+scene organization
+   |
+   +---- scene graph
+
+visibility organization
+   |
+   +---- portals
+   +---- PVS
+   +---- hierarchical Z
+\end{verbatim}
+
+These are not random data structures.
+
+They are different answers to:
+
+\[
+\boxed{
+\text{What information about space is stable enough that I can exploit it?}
+}
+\]
+
+Dynamic tree exploits bounded movement.
+
+SAP exploits ordering stability.
+
+Hash grids exploit fixed scale.
+
+Octrees exploit coordinate hierarchy.
+
+KD-trees exploit point distributions.
+
+BSP exploits planes.
+
+Portals exploit architectural connectivity.
+
+HZB exploits already-rendered depth.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Parts 1337--1374 coverage check}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}rll@{}}
+\toprule\noalign{}
+Part & Required subject & Covered \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1337 & Dynamic AABB tree node representation & ✓ \\
+1338 & Fat AABBs & ✓ \\
+1339 & Dynamic-tree insertion heuristic & ✓ \\
+1340 & Leaf removal & ✓ \\
+1341 & Proxy updates & ✓ \\
+1342 & Rotations and balancing & ✓ \\
+1343 & Dynamic-tree overlap queries & ✓ \\
+1344 & SAP endpoints & ✓ \\
+1345 & SAP active sets & ✓ \\
+1346 & Temporal coherence & ✓ \\
+1347 & Insertion sort for endpoints & ✓ \\
+1348 & Multi-axis SAP & ✓ \\
+1349 & Spatial-hash cell coordinates & ✓ \\
+1350 & World → cell mapping & ✓ \\
+1351 & Coordinate hashing & ✓ \\
+1352 & Hash bucket collision handling & ✓ \\
+1353 & Moving-object insertion/update & ✓ \\
+1354 & Neighbor/range queries & ✓ \\
+1355 & Uniform grids & ✓ \\
+1356 & Dense versus hashed grids & ✓ \\
+1357 & Octree node representation & ✓ \\
+1358 & Octree subdivision & ✓ \\
+1359 & Octree insertion & ✓ \\
+1360 & Octree range query & ✓ \\
+1361 & Loose octrees & ✓ \\
+1362 & Quadtree representation & ✓ \\
+1363 & Quadtree insertion/subdivision & ✓ \\
+1364 & KD splitting planes & ✓ \\
+1365 & Median KD construction & ✓ \\
+1366 & KD nearest neighbor & ✓ \\
+1367 & KD range queries & ✓ \\
+1368 & KD versus BVH & ✓ \\
+1369 & BSP concept & ✓ \\
+1370 & Bounding-sphere hierarchies & ✓ \\
+1371 & Scene graph vs spatial index & ✓ \\
+1372 & Portals/cells & ✓ \\
+1373 & PVS & ✓ \\
+1374 & Hierarchical-Z occlusion & ✓ \\
+\end{longtable}
+}
+
+\textbf{Pass 08 --- complete.}
+
+You now have \textbf{8 / 18 passes completed}, with \textbf{10 remaining}.
+
+\subsection{Next --- Pass 09: M083 + M084, Parts 1375--1400}\label{06-engine-ii-ch030-next-pass-09-m083-m084-parts-13751400}
+
+\hypertarget{06-engine-ii-ch030-next-pass-09-m083-m084-parts-13751400}{}
+
+That finishes this entire spatial phase: \textbf{navigation graphs, weighted edges, complete A*, admissible/consistent heuristics, grids and navmeshes, funnel/string-pulling reasoning, dynamic obstacles, hierarchical pathfinding, then spatial serialization, visualization, build-vs-query benchmarking, workload-driven structure selection, and a unified query interface over the complete KairoSpatial family.}
+
+\subsection{Navigation Graphs, A*, Heuristic Theory, Grids, NavMeshes, Funnel/String Pulling, Dynamic Obstacles, Hierarchical Pathfinding, Serialization, Visualization, Benchmarking, Workload Selection, and Unified Spatial APIs}\label{06-engine-ii-ch030-navigation-graphs-a-heuristic-theory-grids-navmeshes-funnelstring-pulling-dynamic-obstacles-hierarchical-pathfinding-serialization-visualization-benchmarking-workload-selection-and-unified-spatial-apis}
+
+\hypertarget{06-engine-ii-ch030-navigation-graphs-a-heuristic-theory-grids-navmeshes-funnelstring-pulling-dynamic-obstacles-hierarchical-pathfinding-serialization-visualization-benchmarking-workload-selection-and-unified-spatial-apis}{}
+
+This pass completes the entire spatial-acceleration/navigation phase. \textbf{M083 owns Parts 1375--1395 and M084 owns Parts 1396--1400}, so we go from graph representation all the way through A* theory and practical navmeshes, then finish by asking how all the spatial structures from Passes 07--09 should actually be serialized, visualized, benchmarked, selected and exposed through an engine API. Graphics\_Engine\_Mastery\_Integra\ldots{}
+
+The central transition is this:
+
+\[
+\text{Spatial querying asks: "What is where?"}
+\]
+
+while navigation asks:
+
+\[
+\text{Pathfinding asks: "How can I get from here to there?"}
+\]
+
+Those are related but not identical problems. A BVH tells you that a wall occupies space. A navigation representation tells you that the wall prevents movement and therefore changes connectivity. A pathfinder then searches that connectivity, while a movement/steering system eventually turns the abstract route into actual character motion.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{NAVIGATION GRAPHS, A*, GRIDS, NAVMESHES AND HIERARCHICAL PATHFINDING}\label{06-engine-ii-ch030-navigation-graphs-a-grids-navmeshes-and-hierarchical-pathfinding}
+
+\hypertarget{06-engine-ii-ch030-navigation-graphs-a-grids-navmeshes-and-hierarchical-pathfinding}{}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Navigation-graph representation}
+
+The most general navigation abstraction is a weighted directed graph:
+
+\[
+G=(V,E).
+\]
+
+\(V\) is a set of states or locations, and \(E\) is a set of legal transitions.
+
+For navigation:
+
+\[
+v_i\in V
+\]
+
+might represent a waypoint, grid cell, navmesh polygon, room, road junction, ladder endpoint, teleport destination, or any other traversable state.
+
+An edge
+
+\[
+e=(u,v)
+\]
+
+means:
+
+\begin{quote}
+an agent may legally travel from node \(u\) to node \(v\).
+\end{quote}
+
+Your Kairo representation is intentionally simple:
+
+\begin{verbatim}
+struct GraphNode final
+{
+    NavigationNodeID ID;
+    Vec3f Position;
+};
+
+struct GraphEdge final
+{
+    NavigationNodeID From;
+    NavigationNodeID To;
+    float Cost;
+};
+\end{verbatim}
+
+and the graph stores:
+
+\begin{verbatim}
+std::vector<GraphNode> m_Nodes;
+
+std::unordered_map<
+    NavigationNodeID,
+    std::size_t
+> m_NodeLookup;
+
+std::unordered_map<
+    NavigationNodeID,
+    std::vector<GraphEdge>
+> m_Adjacency;
+\end{verbatim}
+
+This is an \textbf{adjacency-list graph}.
+
+For every node \(u\):
+
+\[
+Adj(u)
+=
+\{
+(u,v_1),
+(u,v_2),
+\dots
+\}.
+\]
+
+That is the representation A* wants, because from the current node we usually care only about outgoing neighbors.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\subsection{Why not an adjacency matrix?}\label{06-engine-ii-ch030-why-not-an-adjacency-matrix}
+
+\hypertarget{06-engine-ii-ch030-why-not-an-adjacency-matrix}{}
+
+For \(N\) nodes an adjacency matrix stores:
+
+\[
+N^2
+\]
+
+possible connections.
+
+If:
+
+\[
+N=100\,000,
+\]
+
+that means:
+
+\[
+10^{10}
+\]
+
+matrix entries.
+
+Navigation graphs are generally sparse. A grid node may have only 4 or 8 neighbors; a navmesh polygon may have perhaps 3--8 neighbors.
+
+If average degree is \(d\ll N\), an adjacency list uses approximately:
+
+\[
+O(N+Nd)
+=
+O(N+E).
+\]
+
+That is vastly more appropriate.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Stable IDs versus storage indices}
+
+Your graph separates:
+
+\[
+NavigationNodeID
+\]
+
+from:
+
+\[
+std::size_t\text{ vector index}.
+\]
+
+That is good engine architecture.
+
+Suppose:
+
+\begin{verbatim}
+ID 500 → vector slot 3
+ID 17  → vector slot 4
+ID 92  → vector slot 5
+\end{verbatim}
+
+External systems can keep ID 500 even if internal storage moves.
+
+The map:
+
+\begin{verbatim}
+m_NodeLookup[id] -> index
+\end{verbatim}
+
+provides the translation.
+
+But note the current \texttt{RemoveNode()} behavior. It erases from the middle of \texttt{m\_Nodes}:
+
+\begin{verbatim}
+m_Nodes.erase(...)
+\end{verbatim}
+
+then runs:
+
+\begin{verbatim}
+RebuildLookup();
+\end{verbatim}
+
+Therefore removal is at least:
+
+\[
+O(N)
+\]
+
+for vector movement and rebuilding, plus the cost of scanning adjacency lists to remove incoming edges.
+
+For relatively static authored navigation graphs this is fine.
+
+For graphs with heavy real-time node insertion/removal, sparse-set/generational-handle patterns from the next phase would be superior.
+
+You are about to see why Phase 15's ECS/handle material naturally follows this phase.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Directed versus bidirectional connectivity}
+
+A physical connection is not always symmetric.
+
+A staircase may be traversable both ways:
+
+\[
+A\leftrightarrow B.
+\]
+
+A one-way drop may permit:
+
+\[
+A\rightarrow B
+\]
+
+but not:
+
+\[
+B\rightarrow A.
+\]
+
+A jump pad, escalator, directional road lane, locked doorway, ledge drop or teleport can all produce asymmetric connectivity.
+
+Your \texttt{AddEdge()} supports:
+
+\begin{verbatim}
+bool bidirectional = true;
+\end{verbatim}
+
+so:
+
+\begin{verbatim}
+graph.AddEdge(A, B, cost, true);
+\end{verbatim}
+
+creates:
+
+\[
+A\rightarrow B
+\]
+
+and:
+
+\[
+B\rightarrow A.
+\]
+
+Whereas:
+
+\begin{verbatim}
+graph.AddEdge(A, B, cost, false);
+\end{verbatim}
+
+creates only:
+
+\[
+A\rightarrow B.
+\]
+
+That distinction becomes essential for admissible pathfinding: A* searches the graph that actually exists, not a geometric guess about connectivity.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Weighted navigation edges}
+
+The shortest path is not necessarily the path with the fewest edges.
+
+Suppose:
+
+\begin{verbatim}
+A ----1---- B ----1---- C
+
+ \                       ^
+  \------ 100 -----------/
+\end{verbatim}
+
+A → C is one edge but costs 100.
+
+A → B → C has two edges but costs:
+
+\[
+1+1=2.
+\]
+
+Path cost is:
+
+\[
+\boxed{
+g(P)=
+\sum_{e\in P}c(e)
+}
+\]
+
+where every edge has weight:
+
+\[
+c(e)\ge0.
+\]
+
+Your graph enforces:
+
+\begin{verbatim}
+if (!std::isfinite(cost) ||
+    cost < 0.0f)
+{
+    throw ...
+}
+\end{verbatim}
+
+That nonnegative-cost restriction is fundamental for Dijkstra/A* assumptions.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{What can an edge cost represent?}
+
+Do not think:
+
+\[
+cost = distance
+\]
+
+by definition.
+
+Cost is whatever objective the navigation system is minimizing.
+
+A useful model might be:
+
+\[
+c(e)
+=
+w_dD(e)
++
+w_tT(e)
++
+w_rR(e)
++
+w_nN(e),
+\]
+
+where \(D\) is distance, \(T\) estimated traversal time, \(R\) danger/risk, and \(N\) noise/exposure or some game-specific penalty.
+
+Suppose two routes exist:
+
+\begin{verbatim}
+Route 1:
+short open road
+distance = 20
+danger   = 100
+
+Route 2:
+long covered tunnel
+distance = 35
+danger   = 5
+\end{verbatim}
+
+An ordinary civilian NPC might minimize time.
+
+A stealth NPC may heavily penalize exposure.
+
+A wounded NPC may penalize danger.
+
+The graph remains identical while edge costs change.
+
+That is one reason graph search is so powerful: geometry and objective can remain separate.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{State expansion when costs depend on more than location}
+
+There is a deeper issue.
+
+Suppose entering a locked room is possible only after acquiring a key.
+
+Then node:
+
+\[
+RoomA
+\]
+
+alone no longer describes search state.
+
+We need:
+
+\[
+(RoomA,\ hasKey)
+\]
+
+versus:
+
+\[
+(RoomA,\ !hasKey).
+\]
+
+Similarly, if movement cost depends on remaining fuel, stance, weapon state, time of day, door state or vehicle type, the pathfinding state may need to include those variables.
+
+So:
+
+\[
+\boxed{
+\text{graph node}
+\neq
+\text{necessarily physical location}.
+}
+\]
+
+It represents the minimum state required for the Markov property:
+
+\begin{quote}
+once current state is known, future transition costs should not depend on forgotten history.
+\end{quote}
+
+This perspective becomes important in advanced AI planning.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{A* open set}
+
+A* maintains candidate nodes that have been discovered but not yet fully processed.
+
+This is the \textbf{open set}.
+
+A* repeatedly chooses the node with smallest:
+
+\[
+f(n).
+\]
+
+Therefore the natural data structure is a \textbf{min-priority queue}.
+
+Conceptually:
+
+\begin{verbatim}
+open
+
+node   f
+-----------
+A      12
+B       7   <- pop this
+C      19
+D       9
+\end{verbatim}
+
+Your implementation uses:
+
+\begin{verbatim}
+std::priority_queue<OpenNode> open;
+\end{verbatim}
+
+C++'s \texttt{priority\_queue} is normally a max-heap.
+
+So your \texttt{OpenNode::operator\textless{}} reverses priority comparison:
+
+\begin{verbatim}
+bool operator<(const OpenNode& other) const noexcept
+{
+    return Priority > other.Priority;
+}
+\end{verbatim}
+
+which effectively makes the smallest priority appear at the top.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why a binary heap?}
+
+A binary heap gives:
+
+\[
+\text{push}=O(\log N)
+\]
+
+and:
+
+\[
+\text{pop-min}=O(\log N).
+\]
+
+A* can perform both operations many times.
+
+A plain unsorted vector gives:
+
+\[
+O(1)
+\]
+
+insertion but:
+
+\[
+O(N)
+\]
+
+minimum extraction.
+
+A sorted vector gives cheap extraction but:
+
+\[
+O(N)
+\]
+
+insertion.
+
+A heap is a good general compromise.
+
+Other structures can be better for special cases: bucket queues for bounded integer costs, radix heaps for monotonic integer keys, specialized priority queues for huge navigation workloads.
+
+But the binary heap remains the standard general-purpose implementation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The decrease-key problem}
+
+Suppose node X is already in open with:
+
+\[
+g(X)=15.
+\]
+
+Later we discover a better route:
+
+\[
+g(X)=8.
+\]
+
+Ideally we would decrease its heap priority.
+
+\texttt{std::priority\_queue} does not provide efficient arbitrary decrease-key.
+
+Your implementation uses the standard duplicate-entry technique.
+
+Instead of modifying the old entry:
+
+\begin{verbatim}
+X cost 15
+\end{verbatim}
+
+push another:
+
+\begin{verbatim}
+X cost 8
+\end{verbatim}
+
+Now both exist.
+
+When popping:
+
+\begin{verbatim}
+if (next.Cost != gScore.at(next.ID))
+    continue;
+\end{verbatim}
+
+the stale entry is ignored.
+
+Thus:
+
+\begin{verbatim}
+heap
+
+X g=8   <- useful
+X g=15  <- stale
+\end{verbatim}
+
+This avoids complex heap-handle management.
+
+It increases heap entries somewhat but is often an excellent engineering tradeoff.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Closed sets}
+
+Textbook A* often maintains:
+
+\begin{verbatim}
+OPEN
+CLOSED
+\end{verbatim}
+
+OPEN contains discovered candidates.
+
+CLOSED contains nodes whose best path has been finalized.
+
+With a \textbf{consistent heuristic}, once node \(n\) is popped with minimum \(f\), its \(g(n)\) is final.
+
+It can safely enter CLOSED.
+
+Your generic \texttt{FindPathAStar()} interestingly has \textbf{no explicit closed set}.
+
+It stores:
+
+\begin{verbatim}
+gScore
+cameFrom
+open
+\end{verbatim}
+
+and permits nodes to be inserted again if a better route appears.
+
+That means nodes can effectively be reopened.
+
+This makes the implementation more tolerant of heuristic behavior than a strict no-reopening closed set.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Your NavMesh A* does have a closed set}
+
+Inside \texttt{NavMesh::FindPath()} the implementation uses:
+
+\begin{verbatim}
+std::vector<bool> closed(count, false);
+\end{verbatim}
+
+and once a polygon is popped:
+
+\begin{verbatim}
+closed[current.Index] = true;
+\end{verbatim}
+
+Then neighbors that are already closed are skipped:
+
+\begin{verbatim}
+if (closed[next])
+    continue;
+\end{verbatim}
+
+This version depends more strongly on the heuristic being consistent.
+
+That difference between the two Kairo searches is subtle but important.
+
+The generic graph A* can reopen improved nodes.
+
+The navmesh A* does not.
+
+We will return to this when we derive consistency.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The g score}
+
+A* defines:
+
+\[
+\boxed{
+g(n)
+=
+\text{best known cost from start to }n
+}
+\]
+
+Initially:
+
+\[
+g(start)=0.
+\]
+
+All unknown nodes are conceptually:
+
+\[
+g(n)=\infty.
+\]
+
+Suppose current node is \(u\), and edge:
+
+\[
+u\rightarrow v
+\]
+
+has cost \(c(u,v)\).
+
+Candidate path to \(v\):
+
+\[
+g_{\text{tentative}}(v)
+=
+g(u)+c(u,v).
+\]
+
+If:
+
+\[
+g_{\text{tentative}}(v)<g(v),
+\]
+
+we found a better path.
+
+So:
+
+\[
+g(v)
+\leftarrow
+g_{\text{tentative}}(v).
+\]
+
+Your code:
+
+\begin{verbatim}
+const float tentative =
+    gScore[current] + edge.Cost;
+
+if (!gScore.contains(edge.To) ||
+    tentative < gScore[edge.To])
+{
+    cameFrom[edge.To] = current;
+    gScore[edge.To] = tentative;
+    ...
+}
+\end{verbatim}
+
+This operation is called \textbf{relaxation}.
+
+It is the core operation behind Dijkstra, A*, Bellman-Ford and many shortest-path algorithms.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why relaxation works}
+
+Suppose current best route to V costs 20.
+
+Now we discover:
+
+\[
+S\rightarrow A\rightarrow V
+\]
+
+costing:
+
+\[
+5+7=12.
+\]
+
+Then 20 is no longer relevant.
+
+We replace:
+
+\[
+g(V)=20
+\]
+
+with:
+
+\[
+g(V)=12.
+\]
+
+The predecessor also changes:
+
+\[
+cameFrom[V]=A.
+\]
+
+A* gradually improves upper bounds on optimal path costs until nodes become finalized.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Floating-point path costs}
+
+Your implementation rejects nonfinite edge costs and checks accumulated cost:
+
+\begin{verbatim}
+if (!std::isfinite(tentative))
+    continue;
+\end{verbatim}
+
+This is useful.
+
+Even finite float edges can overflow after accumulation.
+
+If:
+
+\[
+g(u)\approx3\times10^{38}
+\]
+
+and:
+
+\[
+c(u,v)\approx3\times10^{38},
+\]
+
+their sum becomes infinity in 32-bit float.
+
+Putting NaN/∞ values into a heap comparator can destroy ordering assumptions.
+
+Your code explicitly guards against that.
+
+For ordinary game-scale navigation this may seem excessive, but these are the edge conditions that make foundational libraries reliable rather than merely functional.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The heuristic h score}
+
+A*'s second quantity is:
+
+\[
+\boxed{
+h(n)=
+\text{estimated remaining cost from }n\text{ to goal}.
+}
+\]
+
+If:
+
+\[
+h(n)=0,
+\]
+
+the algorithm has no idea where the goal lies.
+
+It behaves like Dijkstra.
+
+If \(h\) accurately predicts remaining cost without overestimating, A* can ignore enormous regions of the graph.
+
+Consider:
+
+\begin{verbatim}
+          irrelevant branch
+             /
+S ----------A--------- goal
+             \
+          irrelevant branch
+\end{verbatim}
+
+Dijkstra explores primarily by distance from start.
+
+A* biases search toward states likely to lead toward the goal.
+
+The heuristic therefore injects \textbf{domain knowledge} into otherwise generic shortest-path search. The original Hart--Nilsson--Raphael formulation formalized exactly this use of heuristic information in minimum-cost graph search. \href{https://ai.stanford.edu/~nilsson/OnlinePubs-Nils/PublishedPapers/astar.pdf?utm_source=chatgpt.com}{Stanford AI Lab}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{f score}
+
+A* combines known and estimated costs:
+
+\[
+\boxed{
+f(n)=g(n)+h(n).
+}
+\]
+
+Interpretation:
+
+\[
+g(n)
+=
+\text{what the path has already cost}
+\]
+
+while:
+
+\[
+h(n)
+=
+\text{what we estimate remains}.
+\]
+
+Therefore:
+
+\[
+f(n)
+=
+\text{estimated complete path cost through }n.
+\]
+
+A* expands the node with the smallest predicted total.
+
+Suppose:
+
+\begin{verbatim}
+Node A:
+g = 3
+h = 20
+f = 23
+
+Node B:
+g = 10
+h = 4
+f = 14
+\end{verbatim}
+
+Even though B is more expensive to reach, it appears much closer to the goal overall.
+
+A* chooses B.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{A* is not ``greedy best-first + Dijkstra''}
+
+It is tempting to think:
+
+\begin{verbatim}
+Dijkstra uses g
+Greedy best-first uses h
+A* uses g+h
+\end{verbatim}
+
+That is directionally useful, but the deeper interpretation is stronger.
+
+With admissible \(h\):
+
+\[
+f(n)
+\]
+
+acts as a \textbf{lower bound} on the cost of the best solution passing through \(n\).
+
+A* therefore performs a branch-and-bound-like search:
+
+\begin{quote}
+explore nodes whose optimistic total cost is competitive with the best possible solution.
+\end{quote}
+
+This is conceptually similar to BVH pruning.
+
+BVH:
+
+\[
+\text{lower geometric bound}>
+\text{best hit}
+\Rightarrow
+\text{prune}.
+\]
+
+A*:
+
+\[
+\text{optimistic route estimate}
+\]
+
+orders which partial solutions deserve exploration.
+
+This connection is why spatial acceleration and graph search fit so naturally in one phase.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{cameFrom / parent map}
+
+Knowing:
+
+\[
+g(goal)
+\]
+
+does not tell us the actual path.
+
+Whenever relaxation improves node V through U:
+
+\begin{verbatim}
+cameFrom[V] = U;
+\end{verbatim}
+
+This records:
+
+\[
+V\leftarrow U.
+\]
+
+Suppose search discovers:
+
+\begin{verbatim}
+cameFrom[D] = C
+cameFrom[C] = B
+cameFrom[B] = A
+cameFrom[A] = S
+\end{verbatim}
+
+Then the predecessor chain is:
+
+\begin{verbatim}
+D ← C ← B ← A ← S
+\end{verbatim}
+
+The actual forward path is:
+
+\begin{verbatim}
+S → A → B → C → D
+\end{verbatim}
+
+The parent map represents a shortest-path tree rooted at the start, or at least the portion discovered so far.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Path reconstruction}
+
+Start from goal:
+
+\begin{verbatim}
+step = goal;
+\end{verbatim}
+
+Walk backwards:
+
+\begin{verbatim}
+while (step != start)
+{
+    path.push_back(step);
+    step = cameFrom[step];
+}
+\end{verbatim}
+
+Finally push start and reverse.
+
+Your generic implementation does exactly this.
+
+If path length contains \(L\) nodes:
+
+\[
+T_{\text{reconstruct}}
+=
+O(L).
+\]
+
+There is no reason to store full path prefixes for every open node.
+
+Doing so would duplicate enormous amounts of memory.
+
+The predecessor relation is enough.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Path reconstruction failure modes}
+
+If goal is reached but:
+
+\begin{verbatim}
+cameFrom chain
+\end{verbatim}
+
+fails to reach start, either the search state is corrupted or the implementation incorrectly marked the goal as reachable.
+
+Your \texttt{NavMesh} code explicitly detects:
+
+\begin{verbatim}
+if (parent[cursor] == count)
+    throw std::logic_error(...)
+\end{verbatim}
+
+while reconstructing.
+
+That is a strong invariant check.
+
+Another case is:
+
+\[
+start=goal.
+\]
+
+The generic A* naturally returns a single-node path.
+
+The navmesh has a related but geometrically richer case: if start and end are within the same polygon, no graph traversal is needed and the route can simply be:
+
+\begin{verbatim}
+start → end
+\end{verbatim}
+
+with a one-polygon corridor.
+
+Your tests verify exactly that.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Euclidean heuristic}
+
+For ordinary continuous geometric movement:
+
+\[
+\boxed{
+h_E=
+\sqrt{
+(\Delta x)^2+
+(\Delta y)^2+
+(\Delta z)^2
+}
+}
+\]
+
+with:
+
+\[
+\Delta x=x_g-x_n
+\]
+
+and equivalent Y/Z.
+
+Why is Euclidean distance attractive?
+
+Because any physically traversed path from \(n\) to goal must have length at least the straight-line distance:
+
+\[
+L_{\text{path}}
+\ge
+\|goal-n\|.
+\]
+
+If movement cost per meter is at least \(k\):
+
+\[
+c(P)\ge kL(P),
+\]
+
+then:
+
+\[
+h(n)=k\|goal-n\|
+\]
+
+is a lower bound on remaining cost.
+
+This is the important part.
+
+Euclidean \textbf{distance} is admissible only if the graph's cost units support it.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The common Euclidean-heuristic bug}
+
+Suppose:
+
+\begin{verbatim}
+A ---------------- B
+
+distance = 100
+edge cost = 1
+\end{verbatim}
+
+Raw Euclidean heuristic says:
+
+\[
+h(A)=100.
+\]
+
+But the actual optimal remaining cost is:
+
+\[
+h^*(A)=1.
+\]
+
+Therefore:
+
+\[
+h(A)>h^*(A).
+\]
+
+The heuristic overestimates and is inadmissible.
+
+This can happen with:
+
+\begin{itemize}
+\tightlist
+\item
+  teleporters,
+\item
+  highways with speed bonuses,
+\item
+  elevators where cost is time instead of distance,
+\item
+  abstract edges,
+\item
+  game-defined cost units.
+\end{itemize}
+
+Your repository previously encountered exactly this class of failure, as evidenced by the regression test where a detour over a node 100 units away costs only 2.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo's scaled Euclidean heuristic}
+
+Your generic A* now calculates:
+
+\[
+\alpha=
+\min_{(u,v)\in E,\ d(u,v)>0}
+\frac{c(u,v)}{d(u,v)}.
+\]
+
+Then:
+
+\[
+\boxed{
+h(n)=
+\alpha\,d(n,goal).
+}
+\]
+
+This is a very interesting general solution.
+
+For every edge:
+
+\[
+\alpha
+\le
+\frac{c(u,v)}{d(u,v)}.
+\]
+
+Therefore:
+
+\[
+\alpha d(u,v)
+\le
+c(u,v).
+\]
+
+Now take any path:
+
+\[
+n=v_0,v_1,\dots,v_k=goal.
+\]
+
+By triangle inequality:
+
+\[
+d(n,goal)
+\le
+\sum_i d(v_i,v_{i+1}).
+\]
+
+Multiply by \(\alpha\):
+
+\[
+\alpha d(n,goal)
+\le
+\sum_i
+\alpha d(v_i,v_{i+1}).
+\]
+
+And because:
+
+\[
+\alpha d(v_i,v_{i+1})
+\le
+c(v_i,v_{i+1}),
+\]
+
+we get:
+
+\[
+\boxed{
+h(n)
+\le
+\sum_i c(v_i,v_{i+1})
+}
+\]
+
+for every possible path.
+
+Therefore:
+
+\[
+h(n)\le h^*(n).
+\]
+
+The heuristic is admissible.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{The same construction proves consistency}
+
+Consistency requires:
+
+\[
+\boxed{
+h(u)\le c(u,v)+h(v)
+}
+\]
+
+for every edge \(u\rightarrow v\).
+
+Using triangle inequality:
+
+\[
+d(u,g)
+\le
+d(u,v)+d(v,g).
+\]
+
+Multiply by \(\alpha\):
+
+\[
+\alpha d(u,g)
+\le
+\alpha d(u,v)
++
+\alpha d(v,g).
+\]
+
+Because:
+
+\[
+\alpha d(u,v)
+\le
+c(u,v),
+\]
+
+we obtain:
+
+\[
+h(u)
+\le
+c(u,v)+h(v).
+\]
+
+Therefore the scaled Euclidean heuristic is consistent as well.
+
+That is a strong property of your current generic A* implementation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why zero-cost travel collapses to Dijkstra}
+
+Suppose there is a nonzero-distance edge:
+
+\[
+d(u,v)>0
+\]
+
+with:
+
+\[
+c(u,v)=0.
+\]
+
+Then:
+
+\[
+\frac{c(u,v)}{d(u,v)}
+=
+0.
+\]
+
+Therefore:
+
+\[
+\alpha=0.
+\]
+
+And:
+
+\[
+h(n)=0.
+\]
+
+So the search automatically becomes Dijkstra.
+
+That is exactly what must happen if zero-cost long-distance transitions exist, because ordinary geometry may no longer provide a useful positive lower bound on cost.
+
+Your test suite explicitly checks zero-cost travel links.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Manhattan heuristic}
+
+For a grid where movement is restricted to axis directions:
+
+\begin{verbatim}
+← ↑ → ↓
+\end{verbatim}
+
+in 2D:
+
+\[
+\boxed{
+h_M=
+|\Delta x|+|\Delta y|.
+}
+\]
+
+In 3D:
+
+\[
+h_M=
+|\Delta x|+
+|\Delta y|+
+|\Delta z|.
+\]
+
+Suppose target differs by:
+
+\[
+\Delta x=4,
+\qquad
+\Delta y=3.
+\]
+
+With four-neighbor movement, every legal route requires at least:
+
+\[
+4+3=7
+\]
+
+steps.
+
+Thus:
+
+\[
+h_M=7.
+\]
+
+Euclidean would give:
+
+\[
+5,
+\]
+
+which is admissible but less informed.
+
+A tighter admissible heuristic usually means fewer expansions.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why Manhattan fails for diagonal movement}
+
+Suppose diagonal movement is allowed with cost:
+
+\[
+\sqrt2.
+\]
+
+Start:
+
+\[
+(0,0)
+\]
+
+goal:
+
+\[
+(1,1).
+\]
+
+Actual optimal cost:
+
+\[
+\sqrt2\approx1.414.
+\]
+
+Manhattan:
+
+\[
+|1|+|1|=2.
+\]
+
+Since:
+
+\[
+2>1.414,
+\]
+
+Manhattan overestimates.
+
+It is no longer admissible.
+
+A heuristic must match the movement model.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Octile heuristic}
+
+For an 8-connected 2D grid:
+
+\begin{verbatim}
+N S E W
+NE NW SE SW
+\end{verbatim}
+
+let:
+
+\[
+dx=|\Delta x|,
+\qquad
+dy=|\Delta y|.
+\]
+
+Assume cardinal move cost:
+
+\[
+D
+\]
+
+and diagonal cost:
+
+\[
+D_2.
+\]
+
+Use diagonals for:
+
+\[
+\min(dx,dy)
+\]
+
+steps.
+
+Then remaining straight steps:
+
+\[
+|dx-dy|.
+\]
+
+So:
+
+\[
+\boxed{
+h_O
+=
+D\max(dx,dy)
++
+(D_2-D)\min(dx,dy)
+}
+\]
+
+which is algebraically equivalent to:
+
+\[
+D(dx+dy)
++
+(D_2-2D)\min(dx,dy).
+\]
+
+For:
+
+\[
+D=1,
+\qquad
+D_2=\sqrt2,
+\]
+
+we get:
+
+\[
+\boxed{
+h_O
+=
+\max(dx,dy)
++
+(\sqrt2-1)\min(dx,dy).
+}
+\]
+
+This is the exact unobstructed grid cost for an 8-connected grid with those move costs.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Corner cutting matters}
+
+Suppose diagonal movement from:
+
+\begin{verbatim}
+A #
+# B
+\end{verbatim}
+
+is technically geometrically diagonal but both adjacent cardinal cells are blocked.
+
+Can A move directly to B?
+
+Different games choose different answers.
+
+If no corner cutting is allowed, a diagonal neighbor should require sufficient clearance through adjacent cardinal cells.
+
+That affects reachability but usually not the basic octile lower-bound argument.
+
+For agents with radius, grid occupancy should also be expanded/eroded accordingly.
+
+A point-agent path through a one-cell diagonal crack may be impossible for a physical character.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dijkstra as A* with zero heuristic}
+
+Set:
+
+\[
+h(n)=0.
+\]
+
+Then:
+
+\[
+f(n)=g(n).
+\]
+
+A* now always expands the discovered node with smallest path cost from start.
+
+That is Dijkstra's algorithm.
+
+So:
+
+\[
+\boxed{
+Dijkstra
+=
+A^*\text{ with }h=0.
+}
+\]
+
+This is not merely a cute fact.
+
+It gives a debugging baseline.
+
+If A* returns a path costing more than Dijkstra's result under nonnegative edges:
+
+\[
+\text{something is wrong}.
+\]
+
+Usually the culprit is:
+
+\begin{itemize}
+\tightlist
+\item
+  an inadmissible heuristic,
+\item
+  incorrect closed-set handling,
+\item
+  stale priority logic,
+\item
+  overflow,
+\item
+  bad graph connectivity.
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Heuristic admissibility}
+
+A heuristic is admissible if:
+
+\[
+\boxed{
+0\le h(n)\le h^*(n)
+}
+\]
+
+where \(h^*(n)\) is the true optimal remaining cost.
+
+It never overestimates.
+
+Think of it as an \textbf{optimistic lower bound}.
+
+Suppose true remaining cost is 20.
+
+These are admissible:
+
+\[
+h=0,\quad5,\quad18,\quad20.
+\]
+
+This is inadmissible:
+
+\[
+h=25.
+\]
+
+The closer an admissible heuristic gets to \(h^*\), the more informed it is.
+
+In the ideal impossible case:
+
+\[
+h(n)=h^*(n),
+\]
+
+A* effectively knows the remaining optimal cost already.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why overestimation can break optimality}
+
+Suppose:
+
+\begin{verbatim}
+        A ---- 2 ---- Goal
+       /
+Start
+       \
+        B ---- 1 ---- Goal
+\end{verbatim}
+
+Assume total route through A really costs 10, through B costs 5.
+
+But heuristic says:
+
+\[
+h(B)=100.
+\]
+
+A* may completely deprioritize B and reach/terminate at the more expensive goal route first, depending on implementation and termination conditions.
+
+The guarantee is gone.
+
+An inadmissible heuristic can still be intentionally useful in games if faster, slightly suboptimal routes are acceptable.
+
+Weighted A* uses:
+
+\[
+f(n)=g(n)+w h(n),
+\qquad
+w>1.
+\]
+
+That trades optimality for speed.
+
+But that must be a deliberate algorithmic policy, not an accidental heuristic bug.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Heuristic consistency}
+
+Consistency, also called monotonicity, requires:
+
+\[
+\boxed{
+h(u)
+\le
+c(u,v)+h(v)
+}
+\]
+
+for every edge.
+
+Interpretation:
+
+\begin{quote}
+our estimated distance from U to goal should not exceed the cost of stepping to V plus our estimate from V onward.
+\end{quote}
+
+It is essentially a triangle inequality in cost space.
+
+Consistency implies admissibility when:
+
+\[
+h(goal)=0.
+\]
+
+It also implies that along any path:
+
+\[
+f
+\]
+
+does not decrease after relaxation in the problematic way that would require reopening finalized nodes.
+
+This is why closed-set A* becomes much simpler with a consistent heuristic.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Admissible but inconsistent heuristics}
+
+A heuristic can be admissible globally but violate consistency locally.
+
+Then a node that was previously expanded may later receive a better \(g\).
+
+If the implementation permanently closes it and refuses reopening, optimality can fail.
+
+Therefore:
+
+\begin{verbatim}
+consistent heuristic
+    ↓
+closed node never needs reopening
+
+admissible but inconsistent heuristic
+    ↓
+reopening may be necessary
+\end{verbatim}
+
+Your generic A* has no permanent closed set, so it naturally allows improvements.
+
+Your navmesh search permanently closes polygons, so its heuristic should be consistent.
+
+That brings us to an important repository issue.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{A real NavMesh heuristic issue in current Kairo}
+
+Your navmesh edge cost is:
+
+\[
+c(i,j)
+=
+d(C_i,C_j)
+\cdot
+\frac{
+AreaCost_i+AreaCost_j
+}{2}.
+\]
+
+Your navmesh heuristic is:
+
+\[
+h(i)
+=
+d(C_i,C_g).
+\]
+
+If every polygon has:
+
+\[
+AreaCost\ge1,
+\]
+
+then:
+
+\[
+c(i,j)\ge d(C_i,C_j)
+\]
+
+and Euclidean centroid distance is consistent.
+
+But \texttt{AddPolygon()} currently validates only:
+
+\[
+AreaCost>0.
+\]
+
+It allows:
+
+\[
+AreaCost=0.1.
+\]
+
+Then an edge of geometric length 10 may cost:
+
+\[
+1.
+\]
+
+Yet the raw Euclidean heuristic may estimate:
+
+\[
+10.
+\]
+
+That can overestimate.
+
+Because navmesh A* also permanently closes nodes, this is not merely theoretical.
+
+A clean fix is either to enforce:
+
+\[
+AreaCost\ge1
+\]
+
+or calculate a valid heuristic scale analogous to the generic graph A*:
+
+\[
+\alpha
+=
+\min
+\text{effective cost multiplier}.
+\]
+
+Then:
+
+\[
+h(i)
+=
+\alpha d(C_i,C_g).
+\]
+
+That would preserve admissibility/consistency for discounted areas.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Navigation grids}
+
+A navigation grid maps walkable space into discrete cells.
+
+Example:
+
+\begin{verbatim}
+. . . # . .
+. S . # . .
+. . . # . .
+. . . . . G
+\end{verbatim}
+
+Each walkable cell becomes a node.
+
+Edges connect legal neighbors.
+
+With four-neighbor movement:
+
+\[
+degree\le4.
+\]
+
+With eight-neighbor movement:
+
+\[
+degree\le8.
+\]
+
+In 3D voxel navigation:
+
+\[
+degree
+\]
+
+can become 6, 18 or 26 depending on movement rules.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Grid coordinate → node identity}
+
+For a dense 2D grid width \(W\):
+
+\[
+index=x+Wy.
+\]
+
+Reverse:
+
+\[
+x=index\bmod W,
+\]
+
+\[
+y=\left\lfloor
+\frac{index}{W}
+\right\rfloor.
+\]
+
+This lets navigation avoid storing an explicit adjacency vector for every cell.
+
+Neighbors can be generated procedurally.
+
+For example:
+
+\begin{verbatim}
+constexpr int offsets[4][2] =
+{
+    { 1,  0 },
+    {-1,  0 },
+    { 0,  1 },
+    { 0, -1 }
+};
+\end{verbatim}
+
+That can make grids extremely compact.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Grid resolution tradeoff}
+
+Smaller cells give more detailed paths.
+
+But node count scales rapidly.
+
+For a 1000 m × 1000 m map:
+
+At 1 m:
+
+\[
+10^6
+\]
+
+cells.
+
+At 0.5 m:
+
+\[
+4\times10^6.
+\]
+
+At 0.1 m:
+
+\[
+100\times10^6.
+\]
+
+So halving cell size in 2D quadruples cell count:
+
+\[
+N\propto\frac1{h^2}.
+\]
+
+In 3D:
+
+\[
+N\propto\frac1{h^3}.
+\]
+
+Resolution therefore directly controls memory and A* search-space size.
+
+This is one reason navmeshes are attractive for continuous walkable surfaces.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Clearance and agent size in grids}
+
+A grid marking only obstacle centers is insufficient.
+
+Suppose an agent radius is:
+
+\[
+r.
+\]
+
+We need to ensure its center never comes within \(r\) of obstacles.
+
+One viewpoint is to Minkowski-expand obstacles by the agent radius:
+
+\[
+Obstacle'
+=
+Obstacle\oplus Sphere(r).
+\]
+
+Then pathfind a point-agent center through the remaining free space.
+
+This same conceptual transformation appears in navmesh generation: walkable space is eroded according to agent radius.
+
+Navigation should operate on the configuration space of the agent, not merely raw world geometry.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Navigation meshes}
+
+A navigation mesh represents walkable free space using convex polygons.
+
+Instead of:
+
+\begin{verbatim}
+hundreds of tiny grid cells
+\end{verbatim}
+
+an open floor may become one large polygon.
+
+Example:
+
+\begin{verbatim}
++--------------------+
+|                    |
+|     polygon A      |
+|                    |
++----------+---------+
+           |
++----------+---------+
+|     polygon B      |
++--------------------+
+\end{verbatim}
+
+Each polygon becomes a graph state.
+
+Shared traversable edges become graph edges.
+
+This gives two levels:
+
+\[
+\text{geometric representation}
+\]
+
+and:
+
+\[
+\text{graph representation}.
+\]
+
+That is why navmeshes are so efficient for ordinary character navigation.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Why convex polygons?}
+
+Inside a convex polygon, any line segment connecting two points stays inside the polygon.
+
+For any:
+
+\[
+p,q\in P,
+\]
+
+convexity guarantees:
+
+\[
+(1-t)p+tq\in P
+\quad
+\forall t\in[0,1].
+\]
+
+Therefore once the agent enters a convex nav polygon, local movement within it is straightforward.
+
+Complex concave walkable regions are decomposed into multiple convex polygons.
+
+Your \texttt{NavMesh::ValidatePolygon()} explicitly checks convexity in XZ projection.
+
+It also checks:
+
+\begin{itemize}
+\tightlist
+\item
+  at least 3 vertices,
+\item
+  at most 64,
+\item
+  finite coordinates,
+\item
+  nondegenerate projected area,
+\item
+  coplanarity,
+\item
+  a surface normal with meaningful Y component.
+\end{itemize}
+
+So this navmesh is specifically designed for mostly horizontal walkable surfaces represented in XZ.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Navigation mesh path pipeline}
+
+A complete navmesh route is not simply:
+
+\begin{verbatim}
+A* → final path
+\end{verbatim}
+
+It is:
+
+\begin{verbatim}
+world-space start/end
+        |
+        v
+locate/snap to polygons
+        |
+        v
+A* over polygon adjacency
+        |
+        v
+polygon corridor
+        |
+        v
+portal sequence
+        |
+        v
+funnel/string pulling
+        |
+        v
+waypoints
+        |
+        v
+steering / locomotion
+\end{verbatim}
+
+Each stage solves a different problem.
+
+Your current Kairo implementation already contains the first five stages.
+
+That is significantly more complete than a mere waypoint graph.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Start/end polygon location}
+
+Your navmesh first attempts:
+
+\begin{verbatim}
+FindContainingPolygon(...)
+\end{verbatim}
+
+using point-in-convex-XZ plus vertical tolerance.
+
+If no polygon contains the point, it can snap to:
+
+\begin{verbatim}
+FindNearestPolygon(...)
+\end{verbatim}
+
+within \texttt{snapDistance}.
+
+This is important because animation/physics can place a character slightly off the mathematical navmesh.
+
+Without snapping, tiny numerical errors could cause every path query to fail.
+
+But snapping should be bounded.
+
+A character 50 m outside the navmesh should not silently teleport logically to the nearest polygon.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current polygon-location complexity}
+
+\texttt{FindContainingPolygon()} scans every polygon.
+
+\texttt{FindNearestPolygon()} also scans every polygon.
+
+For \(P\) navmesh polygons:
+
+\[
+O(P)
+\]
+
+per location query.
+
+For small meshes this is fine.
+
+For a huge open-world navmesh, use a spatial index:
+
+\begin{verbatim}
+navmesh polygon bounds
+        |
+        v
+BVH / grid / tile lookup
+        |
+        v
+small candidate set
+        |
+        v
+exact polygon test
+\end{verbatim}
+
+This is a perfect example of the previous passes supporting navigation.
+
+The navmesh does not replace spatial indexing; it can itself be spatially indexed.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Navmesh polygon adjacency}
+
+Two polygons are adjacent if they share a traversable boundary segment.
+
+That segment becomes a \textbf{portal}.
+
+Your representation is:
+
+\begin{verbatim}
+struct NavMeshPortal final
+{
+    NavPolygonID From;
+    NavPolygonID To;
+
+    Vec3f Left;
+    Vec3f Right;
+};
+\end{verbatim}
+
+Note the portal is directed.
+
+Traveling:
+
+\[
+A\rightarrow B
+\]
+
+has a left/right orientation.
+
+Traveling:
+
+\[
+B\rightarrow A
+\]
+
+reverses the viewpoint, so portal orientation must be recomputed.
+
+This is necessary for funnel string pulling.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Building adjacency in Kairo}
+
+Current \texttt{BuildAdjacency()} compares every polygon pair:
+
+\[
+(A,B).
+\]
+
+Then \texttt{SharedEdge()} compares all edges of A against all edges of B looking for endpoints that match within:
+
+\[
+\epsilon.
+\]
+
+For polygons A and B with edge counts \(E_A,E_B\):
+
+\[
+O(E_AE_B)
+\]
+
+for that pair.
+
+Across \(P\) polygons, naïvely:
+
+\[
+O(P^2E^2)
+\]
+
+for roughly equal edge count.
+
+For a few hundred polygons this may be acceptable.
+
+For hundreds of thousands, it is not.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Edge-map adjacency construction}
+
+A more scalable build creates a canonical edge key.
+
+For each polygon edge:
+
+\[
+(a,b),
+\]
+
+quantize/weld endpoints and create unordered key:
+
+\[
+key=\{\min(a,b),\max(a,b)\}.
+\]
+
+Then:
+
+\begin{verbatim}
+edge key
+  |
+  +-- polygon 17
+  +-- polygon 42
+\end{verbatim}
+
+Two polygons appearing under the same key are adjacent.
+
+That can reduce adjacency construction toward the total number of edges, assuming effective hashing.
+
+This is especially natural for navmeshes generated from indexed topology.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{T-junction issue}
+
+Your current \texttt{SharedEdge()} expects the two edge endpoints to match within epsilon.
+
+Suppose:
+
+\begin{verbatim}
+Polygon A edge:
+A0 --------------------------- A1
+
+Polygon B:
+          B0 -------- B1
+\end{verbatim}
+
+B's edge is a strict subsegment of A's edge.
+
+They geometrically share a portal but their edge endpoints do not match pairwise.
+
+The current algorithm may fail to connect them.
+
+A professionally generated navmesh usually removes such topological T-junction ambiguity during construction, or adjacency construction computes overlapping collinear segments rather than exact edge-pair equality.
+
+So this is another important contract:
+
+\[
+\boxed{
+\text{Kairo currently assumes authored/welded compatible polygon boundaries}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Area costs on navmesh polygons}
+
+Your polygon stores:
+
+\begin{verbatim}
+float AreaCost = 1.0f;
+\end{verbatim}
+
+and edge cost uses:
+
+\[
+d(C_A,C_B)
+\cdot
+\frac{Cost_A+Cost_B}{2}.
+\]
+
+This allows terrain preferences.
+
+Examples:
+
+\begin{verbatim}
+road       1.0
+grass      1.5
+mud        3.0
+lava      100.0
+\end{verbatim}
+
+assuming costs are multipliers above one.
+
+A path may therefore choose a geometrically longer corridor if its traversability cost is lower.
+
+But remember the heuristic issue from above if multipliers below one are allowed.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Corridor versus actual geometric path}
+
+A* on navmesh polygons returns:
+
+\begin{verbatim}
+Poly 10
+  ↓
+Poly 20
+  ↓
+Poly 30
+\end{verbatim}
+
+That does not mean the character should move through polygon centroids:
+
+\begin{verbatim}
+start
+ → center10
+ → center20
+ → center30
+ → end
+\end{verbatim}
+
+That often produces ugly zig-zags.
+
+Instead, the polygon route defines a \textbf{corridor}.
+
+The exact geometric shortest route through that corridor is found by string pulling.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Funnel algorithm}
+
+Imagine the sequence of shared portals:
+
+\begin{verbatim}
+        L1        L2
+         \        /
+          \      /
+start -----\----/-------
+            \  /
+             \/
+             /\
+            /  \
+           /    \
+         R1      R2
+\end{verbatim}
+
+At any point we maintain an apex:
+
+\[
+A
+\]
+
+and two rays toward:
+
+\[
+L
+\]
+
+and:
+
+\[
+R.
+\]
+
+These form the current visibility funnel.
+
+Each new portal provides:
+
+\[
+L_i,R_i.
+\]
+
+If a new left or right endpoint lies inside the funnel, tighten that side.
+
+If one side crosses the opposite side, the opposite boundary becomes an unavoidable path corner.
+
+Then:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  emit that corner,
+\item
+  move apex there,
+\item
+  restart funnel construction from that portal.
+\end{enumerate}
+
+This is the string-pulling algorithm.
+
+The well-known ``simple stupid funnel'' implementation deliberately restarts from the new apex because the extra portal reprocessing is often worth the simpler, robust control flow. \href{https://digestingduck.blogspot.com/2010/03/simple-stupid-funnel-algorithm.html?utm_source=chatgpt.com}{digestingduck.blogspot.com}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Signed area drives funnel orientation}
+
+For XZ navigation, your code uses:
+
+\[
+Area_2(A,B,C)
+=
+(B_x-A_x)(C_z-A_z)
+-
+(B_z-A_z)(C_x-A_x).
+\]
+
+This is the 2D cross product.
+
+Its sign tells us which side of ray \(A\rightarrow B\) point C lies on.
+
+That allows tests such as:
+
+\begin{verbatim}
+Is new right endpoint tighter?
+Has right crossed left?
+Is new left endpoint tighter?
+Has left crossed right?
+\end{verbatim}
+
+Your code's \texttt{TriArea2XZ()} implements exactly this.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Kairo's funnel setup}
+
+The portal sequence begins with a degenerate portal:
+
+\[
+(start,start)
+\]
+
+and ends with:
+
+\[
+(end,end).
+\]
+
+Between them:
+
+\begin{verbatim}
+PortalBetween(
+    corridor[i],
+    corridor[i + 1]
+)
+\end{verbatim}
+
+provides left/right boundaries.
+
+So:
+
+\begin{verbatim}
+(start,start)
+portal 0
+portal 1
+portal 2
+...
+(end,end)
+\end{verbatim}
+
+is passed to the funnel.
+
+This is a very clean formulation because start and end then participate in the same algorithm as ordinary portals.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Funnel narrowing}
+
+Suppose current funnel is:
+
+\begin{verbatim}
+        L
+       /
+      /
+     A
+      \
+       \
+        R
+\end{verbatim}
+
+A new portal arrives.
+
+If new right lies between current right and left, update:
+
+\[
+R\leftarrow R_{new}.
+\]
+
+Similarly for left.
+
+The funnel becomes narrower as the corridor constrains visibility.
+
+As long as the straight route from apex remains possible, no waypoint is needed.
+
+This is why a perfectly straight corridor of many polygons can collapse to only:
+
+\begin{verbatim}
+start
+end
+\end{verbatim}
+
+Your test suite verifies exactly this across three polygons.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Funnel crossing}
+
+Suppose new right crosses current left.
+
+That means no line from the existing apex can remain inside the corridor while passing through the new portal.
+
+The current left boundary is now a necessary corner.
+
+Emit:
+
+\[
+waypoint=L.
+\]
+
+Set:
+
+\[
+A=L.
+\]
+
+Reset:
+
+\[
+L=A,
+\qquad
+R=A.
+\]
+
+Then reprocess portals from the new apex.
+
+Symmetric logic applies when new left crosses right.
+
+That is the core geometric proof underlying string pulling.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Path cost versus funnel path length in current Kairo}
+
+There are two different quantities in your \texttt{NavMeshPath}.
+
+A* cost is based on:
+
+\[
+\text{centroid-to-centroid distance}
+\times
+\text{area costs}.
+\]
+
+Funnel outputs a geometric waypoint route through the selected corridor.
+
+Therefore:
+
+\[
+result.Cost
+\]
+
+is \textbf{not necessarily the physical length of \texttt{Waypoints}}.
+
+Nor is it necessarily the exact integrated terrain cost along the funnel path.
+
+It is the graph-search corridor cost.
+
+That is fine if documented.
+
+But systems consuming \texttt{Cost} should understand its meaning.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Funnel does not solve locomotion}
+
+A funnel provides useful geometric corners.
+
+It does not solve:
+
+\begin{itemize}
+\tightlist
+\item
+  acceleration,
+\item
+  turning radius,
+\item
+  character radius near corners,
+\item
+  crowd avoidance,
+\item
+  animation,
+\item
+  velocity obstacles,
+\item
+  moving obstacles,
+\item
+  local steering.
+\end{itemize}
+
+A useful architecture is:
+
+\begin{verbatim}
+A*
+ ↓
+polygon corridor
+ ↓
+funnel
+ ↓
+corner sequence
+ ↓
+steering
+ ↓
+locomotion / physics
+\end{verbatim}
+
+Trying to make string pulling itself solve all movement behavior usually produces an overly complicated and brittle layer. This separation is also emphasized by the Recast/Detour author's practical funnel guidance: graph search selects a corridor, string pulling gives directions through it, and steering/locomotion handles final movement. \href{https://digestingduck.blogspot.com/2010/03/simple-stupid-funnel-algorithm.html?utm_source=chatgpt.com}{digestingduck.blogspot.com}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Agent radius and portals}
+
+The basic funnel algorithm treats the agent as a point.
+
+For an agent with radius \(r\), portal clearance must account for that radius.
+
+A common solution is to build/erode the navmesh for a particular agent radius.
+
+Then an agent center can safely be treated as a point moving over the already-clearance-adjusted mesh.
+
+If instead using a generic mesh, portals need to be shrunk by radius and corners offset appropriately.
+
+This becomes complicated around sharp turns.
+
+That is why navigation meshes are usually generated from explicit agent configuration:
+
+\begin{verbatim}
+radius
+height
+max slope
+step height
+\end{verbatim}
+
+rather than using raw render geometry directly.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Dynamic obstacles}
+
+A navmesh describes static walkable space well.
+
+But worlds contain:
+
+\begin{verbatim}
+closed doors
+moving crates
+vehicles
+temporary barriers
+fallen debris
+crowds
+\end{verbatim}
+
+There are several levels of dynamic response.
+
+The first is \textbf{cost modification}.
+
+Instead of deleting navigation topology, temporarily increase cost:
+
+\[
+c(e)\leftarrow c(e)+penalty.
+\]
+
+This is appropriate when passage remains possible but undesirable.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Blocking edges or polygons}
+
+A stronger policy marks some nodes/edges unavailable:
+
+\[
+walkable(n)=false.
+\]
+
+Then A* simply ignores them.
+
+Example:
+
+\begin{verbatim}
+Door open:
+Room A ↔ Room B
+
+Door closed:
+Room A   Room B
+\end{verbatim}
+
+This works well for discrete dynamic state changes.
+
+Your current generic \texttt{NavigationGraph} does not expose an enabled/disabled edge flag, but such a flag would be straightforward.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Navmesh carving}
+
+For an obstacle occupying part of a nav polygon, merely disabling the entire polygon may be overly conservative.
+
+You can carve the obstacle shape out of walkable space and retriangulate/repolygonize the local region.
+
+This gives accurate navigation but modification is much more expensive.
+
+Therefore dynamic navmesh systems often divide the world into \textbf{tiles}.
+
+Only affected tiles are rebuilt.
+
+Recast/Detour's tile-cache API follows exactly that model: obstacle changes mark affected tiles, and updates rebuild the touched tiles incrementally rather than regenerating the whole navigation mesh. \href{https://recastnav.com/classdtTileCache.html?utm_source=chatgpt.com}{Recast Navigation}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Static planning versus local avoidance}
+
+Suppose another character walks across your path.
+
+Rebuilding navmesh geometry for every other agent every frame would be absurd.
+
+Instead:
+
+\begin{verbatim}
+Navmesh/A*
+    ↓
+global route around walls
+    ↓
+local avoidance
+    ↓
+avoid nearby moving agents
+\end{verbatim}
+
+This separates two timescales.
+
+Global pathfinding handles persistent geometry.
+
+Steering handles rapidly changing local interactions.
+
+This is analogous to broadphase/narrowphase separation in collision detection.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Current Kairo dynamic-navigation status}
+
+Your \texttt{NavMesh} supports:
+
+\begin{itemize}
+\tightlist
+\item
+  adding/removing polygons,
+\item
+  rebuilding adjacency,
+\item
+  polygon costs,
+\item
+  containment/nearest queries,
+\item
+  corridor A*,
+\item
+  funnel waypoints.
+\end{itemize}
+
+It does \textbf{not} currently expose a dedicated dynamic-obstacle system, tile cache, local carving API or edge-blocking layer.
+
+So Part 1394 is not yet represented as a full runtime subsystem.
+
+A practical next step would be a query-time navigation filter:
+
+\begin{verbatim}
+struct NavQueryFilter
+{
+    bool IsPolygonEnabled(NavPolygonID id) const;
+    float ExtraCost(NavPolygonID id) const;
+};
+\end{verbatim}
+
+That alone would support doors, temporary hazards and many game-state changes without rebuilding polygon topology.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hierarchical pathfinding}
+
+A* search cost grows with the number of states it may need to expand.
+
+For a huge grid:
+
+\[
+N=10^7
+\]
+
+cells.
+
+Even a good heuristic may touch many nodes.
+
+Hierarchical pathfinding compresses large regions into higher-level abstractions.
+
+Suppose grid is divided into clusters:
+
+\begin{verbatim}
++-------+-------+-------+
+|   A   |   B   |   C   |
+|       |       |       |
++-------+-------+-------+
+|   D   |   E   |   F   |
+|       |       |       |
++-------+-------+-------+
+\end{verbatim}
+
+We identify entrances between clusters.
+
+Then construct abstract graph:
+
+\begin{verbatim}
+A ↔ B ↔ C
+↕   ↕   ↕
+D ↔ E ↔ F
+\end{verbatim}
+
+High-level A* searches cluster connectivity first.
+
+Then refine only the relevant clusters.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{HPA* concept}
+
+Hierarchical Path-Finding A* generally performs roughly:
+
+\begin{verbatim}
+Low-level map
+    ↓
+partition into clusters
+    ↓
+find entrances
+    ↓
+precompute local entrance-to-entrance costs
+    ↓
+construct abstract graph
+    ↓
+search abstract graph
+    ↓
+refine each abstract segment locally
+\end{verbatim}
+
+The great advantage is reducing search-space size.
+
+Instead of exploring thousands of cells across an open region, high-level search crosses that region as one abstract transition.
+
+The HPA* literature reports large reductions in search effort while accepting small path-quality loss in its approximate variants; the classic paper demonstrated multi-level abstractions and near-optimal paths for game maps. \href{https://webdocs.cs.ualberta.ca/~mmueller/ps/2004/hpastar.pdf?utm_source=chatgpt.com}{webdocs.cs.ualberta.ca}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hierarchical navmeshes}
+
+The same principle applies to navmeshes.
+
+Individual polygons can be grouped into:
+
+\begin{verbatim}
+region
+sector
+zone
+island
+\end{verbatim}
+
+Then search:
+
+\begin{verbatim}
+world regions
+     ↓
+region portals
+     ↓
+polygon corridor inside chosen regions
+     ↓
+funnel
+\end{verbatim}
+
+For an open-world game:
+
+\begin{verbatim}
+continent
+  ↓
+district
+  ↓
+navmesh tile
+  ↓
+polygon
+\end{verbatim}
+
+may all participate.
+
+Hierarchy is not tied to grids.
+
+It is a general search-space abstraction technique.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{Hierarchical pathfinding is an approximation problem}
+
+If high-level abstraction stores only approximate local costs, the route can become suboptimal.
+
+Suppose an abstract cluster appears cheap from entrance A to B, but the exact local geometry produces a detour.
+
+If abstraction cost is inaccurate, high-level route selection may choose the wrong cluster sequence.
+
+There is a spectrum:
+
+\[
+\text{exact precomputed abstraction}
+\]
+
+through:
+
+\[
+\text{near-optimal approximation}
+\]
+
+to:
+
+\[
+\text{very cheap coarse guidance}.
+\]
+
+Games often willingly sacrifice a tiny amount of path optimality for huge reductions in CPU cost.
+
+An NPC taking a path 1\% longer is usually invisible to the player.
+
+A frame hitch from pathfinding is not.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\textbf{A* repository audit before leaving M083}
+
+Your generic A* implementation has several strong properties.
+
+It validates finite/nonnegative edge costs, handles start/goal absence cleanly, uses duplicate heap entries instead of requiring decrease-key, skips stale entries, protects against accumulated float overflow, records expansion count, reconstructs through \texttt{cameFrom}, and computes a Euclidean heuristic scale that remains safe when edge costs are cheaper than geometric distance.
+
+There are also improvements available.
+
+The generic priority queue has no deterministic secondary tie-breaker, so equal-\(f\) routes may not have fully deterministic expansion ordering. Computing the global heuristic scale scans every edge on every path query, which can become expensive; because graph topology/costs usually change much less frequently than queries, the scale could be cached and invalidated when edges change. \texttt{unordered\_map} storage is flexible but expensive for dense contiguous navigation IDs; vector-backed arrays can be much faster when node indices are compact.
+
+The navmesh pathfinder has excellent deterministic tie-breaking by \(F\), then \(G\), then polygon ID, but as discussed, discounted \texttt{AreaCost\ \textless{}\ 1} can invalidate its unscaled Euclidean heuristic.
+
+That is the important systems lesson:
+
+\[
+\boxed{
+\text{algorithm correctness lives in data contracts as much as code}.
+}
+\]
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hyperref[volume-reading-map]{Reading map} · \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=06-engine-ii-ch029-dynamic-spatial-indices-for-moving-worlds}{Previous chapter (Spatial Worlds, Engine State, and Simulation, Ch. 20)} · \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=06-engine-ii-ch031-spatial-index-serialization-and-query-evidence}{Next chapter (Spatial Worlds, Engine State, and Simulation, Ch. 21)}

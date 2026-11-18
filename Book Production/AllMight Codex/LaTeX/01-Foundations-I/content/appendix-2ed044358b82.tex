@@ -1,0 +1,44 @@
+\hypertarget{appendix-2ed044358b82}{}
+\section*{Arithmetic policies}
+\section{Arithmetic policies}\label{arithmetic-policies}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Modular, checked, widened, saturated, and arbitrary-precision arithmetic define different outcomes when a mathematical result does not fit.
+
+A policy states the intended response to an unrepresentable answer: wrap modulo a base, report checked failure, widen storage, clamp to an endpoint, or grow arbitrary precision. Choose by subsystem meaning. Color-byte output and hash arithmetic need different policies.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c99977d88b33]{Unsigned modular arithmetic} --- Modulo m retains the remainder class after division by m.
+\item
+  \hyperref[appendix-4fbc03d20829]{Two\textquotesingle s complement} --- For raw unsigned value u in N bits, signed decoding is u when u\textless2ᴺ⁻¹, otherwise u−2ᴺ.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-3333db47830f]{Fixed-point rescaling} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-1e45d0613db3]{Capped weighted updates} --- Capping changes which influence is retained rather than only the representation.
+\item
+  \href{}{Quantization and compressed weights (04-Visual-Computing-II, appendix-fdc7879e8bf2)} --- uses arithmetic policies as part of its representation or reasoning.
+\item
+  \hyperref[appendix-3999c6209649]{Saturating arithmetic} --- uses arithmetic policies as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Explain arithmetic policies without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} choosing and documenting policies per subsystem.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Arithmetic\%20becomes\%20a\%20policy}{C002 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

@@ -1,0 +1,39 @@
+\hypertarget{appendix-8d687c9c08ab}{}
+\section*{Carry, overflow, negative, and zero flags}
+\section{Carry, overflow, negative, and zero flags}\label{carry-overflow-negative-and-zero-flags}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+\texttt{C} reports unsigned carry, \texttt{V} signed-range failure, \texttt{N} the result's sign bit, and \texttt{Z} an all-zero architectural result.
+
+For eight-bit addition, C tests exact sum\textgreater255; V tests signed sum outside {[}−128,127{]}; N is result bit 7; Z tests low result==0. \texttt{7F+01} gives 0,1,1,0; \texttt{FF+01} gives 1,0,0,1 in C,V,N,Z order. These are binary arithmetic flags, not decimal-mode behavior.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-4fbc03d20829]{Two\textquotesingle s complement} --- For raw unsigned value u in N bits, signed decoding is u when u\textless2ᴺ⁻¹, otherwise u−2ᴺ.
+\item
+  \hyperref[appendix-d1a5b1e520c2]{Full adder} --- A full adder adds A, B, and carry-in.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-33e7a011b684]{Guest and host integer domains} --- uses carry, overflow, negative, and zero flags as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Explain carry, overflow, negative, and zero flags without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} Apply and reconstruct this concept independently.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Arithmetic\%20becomes\%20a\%20policy}{C002 teaching chapter} · \hyperref[appendix-fd090d982a15]{Part definitions and mechanisms} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

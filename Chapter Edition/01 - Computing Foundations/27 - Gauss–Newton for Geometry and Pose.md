@@ -8,7 +8,7 @@ Gauss–Newton replaces the exact Hessian with a residual-Jacobian approximation
 
 **Recall question:** What information is lost when the exact Hessian is replaced by the Gauss–Newton approximation?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 63466–66236; source-span SHA256 772924b006241043470e4545a6c5b98505cfff5ec8c0248249ab6902a2576065. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 63713–66483; source-span SHA256 552939f115bc315ae2711947f6ae79ea51e82942f9a841f100b077d33304828f. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Gauss–Newton
@@ -24,7 +24,7 @@ But the exact Hessian contains second derivatives of every residual.
 Gauss–Newton replaces it with:
 
 $$
-H\_{\mathrm{GN}}=J^TJ.
+H_{\mathrm{GN}}=J^TJ.
 $$
 
 The resulting step solves:
@@ -56,7 +56,7 @@ $$
 Differentiate with respect to the step:
 
 $$
-\nabla\_{\Delta\mathbf x}m = J^T\mathbf r+J^TJ\Delta\mathbf x.
+\nabla_{\Delta\mathbf x}m = J^T\mathbf r+J^TJ\Delta\mathbf x.
 $$
 
 Set this to zero:
@@ -210,13 +210,13 @@ $$
 Add a penalty on the step:
 
 $$
-m\_\lambda(\Delta\mathbf x) = \frac12\|\mathbf r+J\Delta\mathbf x\|^2 +\frac\lambda2\Delta\mathbf x^TD\Delta\mathbf x.
+m_\lambda(\Delta\mathbf x) = \frac12\|\mathbf r+J\Delta\mathbf x\|^2 +\frac\lambda2\Delta\mathbf x^TD\Delta\mathbf x.
 $$
 
 Differentiate:
 
 $$
-\nabla m\_\lambda= J^T(\mathbf r+J\Delta\mathbf x) +\lambda D\Delta\mathbf x.
+\nabla m_\lambda= J^T(\mathbf r+J\Delta\mathbf x) +\lambda D\Delta\mathbf x.
 $$
 
 Setting the gradient to zero:
@@ -400,7 +400,7 @@ Even when the solution is unique, it may be highly sensitive to measurement nois
 Regularization modifies the optimization problem by expressing an additional preference:
 
 $$
-\boxed{ \min\_{\mathbf x} \frac12\|A\mathbf x-\mathbf b\|^2 + \lambda R(\mathbf x) }.
+\boxed{ \min_{\mathbf x} \frac12\|A\mathbf x-\mathbf b\|^2 + \lambda R(\mathbf x) }.
 $$
 
 Here $R(\mathbf x)$ is a regularizer, and $\lambda\ge0$ controls its influence.
@@ -444,17 +444,17 @@ $$
 The regularized objective is:
 
 $$
-E\_\lambda= \frac12(x_1+x_2-10)^2 +\frac\lambda2(x_1^2+x_2^2).
+E_\lambda= \frac12(x_1+x_2-10)^2 +\frac\lambda2(x_1^2+x_2^2).
 $$
 
 Differentiate:
 
 $$
-\frac{\partial E\_\lambda}{\partial x_1} = x_1+x_2-10+\lambda x_1,
+\frac{\partial E_\lambda}{\partial x_1} = x_1+x_2-10+\lambda x_1,
 $$
 
 $$
-\frac{\partial E\_\lambda}{\partial x_2} = x_1+x_2-10+\lambda x_2.
+\frac{\partial E_\lambda}{\partial x_2} = x_1+x_2-10+\lambda x_2.
 $$
 
 Subtract the two equations at stationarity:
@@ -514,13 +514,13 @@ Regularization resolves numerical or modeling ambiguity according to assumptions
 The L1 norm is:
 
 $$
-\boxed{ \|\mathbf x\|\_1=\sum_i|x_i| }.
+\boxed{ \|\mathbf x\|_1=\sum_i|x_i| }.
 $$
 
 An L1-regularized objective has the form:
 
 $$
-\boxed{ E(\mathbf x)= f(\mathbf x)+\lambda\|\mathbf x\|\_1 }.
+\boxed{ E(\mathbf x)= f(\mathbf x)+\lambda\|\mathbf x\|_1 }.
 $$
 
 L1 regularization often encourages exact zeros in the solution.
@@ -598,7 +598,7 @@ is satisfied at $x=0$ when $|a|\le\lambda$.
 Combining the cases:
 
 $$
-\boxed{ S\_\lambda(a)= \operatorname{sign}(a) \max(|a|-\lambda,0) }.
+\boxed{ S_\lambda(a)= \operatorname{sign}(a) \max(|a|-\lambda,0) }.
 $$
 
 This is the soft-thresholding operator.
@@ -620,13 +620,13 @@ We can use subgradient methods, but proximal-gradient methods often exploit the 
 For:
 
 $$
-E(\mathbf x)=f(\mathbf x)+\lambda\|\mathbf x\|\_1,
+E(\mathbf x)=f(\mathbf x)+\lambda\|\mathbf x\|_1,
 $$
 
 where $f$ is smooth, a proximal-gradient step is:
 
 $$
-\boxed{ \mathbf x\_{k+1} = S\_{\alpha\lambda} \left( \mathbf x_k-\alpha\nabla f(\mathbf x_k) \right) }.
+\boxed{ \mathbf x_{k+1} = S_{\alpha\lambda} \left( \mathbf x_k-\alpha\nabla f(\mathbf x_k) \right) }.
 $$
 
 Soft-thresholding is applied componentwise.
@@ -648,13 +648,13 @@ Therefore an L1 prior on deformation coefficients expresses a preference tied to
 The L2 norm is:
 
 $$
-\|\mathbf x\|\_2= \sqrt{\sum_i x_i^2}.
+\|\mathbf x\|_2= \sqrt{\sum_i x_i^2}.
 $$
 
 In optimization, L2 regularization commonly refers to the squared L2 norm:
 
 $$
-\boxed{ R(\mathbf x)=\frac12\|\mathbf x\|\_2^2 }.
+\boxed{ R(\mathbf x)=\frac12\|\mathbf x\|_2^2 }.
 $$
 
 Its gradient is:
@@ -672,13 +672,13 @@ $$
 For:
 
 $$
-E\_\lambda(\mathbf x) = \frac12\|A\mathbf x-\mathbf b\|^2 +\frac\lambda2\|\mathbf x\|^2,
+E_\lambda(\mathbf x) = \frac12\|A\mathbf x-\mathbf b\|^2 +\frac\lambda2\|\mathbf x\|^2,
 $$
 
 the gradient is:
 
 $$
-\nabla E\_\lambda = A^T(A\mathbf x-\mathbf b)+\lambda\mathbf x.
+\nabla E_\lambda = A^T(A\mathbf x-\mathbf b)+\lambda\mathbf x.
 $$
 
 Set to zero:
@@ -742,19 +742,19 @@ We covered finite differences and automatic differentiation in M052, so here the
 Suppose an implementation returns:
 
 $$
-\mathbf g\_{\mathrm{analytic}}.
+\mathbf g_{\mathrm{analytic}}.
 $$
 
 For a randomly selected direction $\mathbf d$, compute:
 
 $$
-D\_{\mathrm{analytic}} = \mathbf g\_{\mathrm{analytic}}^T\mathbf d.
+D_{\mathrm{analytic}} = \mathbf g_{\mathrm{analytic}}^T\mathbf d.
 $$
 
 Then compute the central finite-difference estimate:
 
 $$
-D\_{\mathrm{numeric}} = \frac{ f(\mathbf x+h\mathbf d) - f(\mathbf x-h\mathbf d) }{2h}.
+D_{\mathrm{numeric}} = \frac{ f(\mathbf x+h\mathbf d) - f(\mathbf x-h\mathbf d) }{2h}.
 $$
 
 We compare them across several reasonable values of $h$.
@@ -762,7 +762,7 @@ We compare them across several reasonable values of $h$.
 A useful scale-aware metric is:
 
 $$
-\boxed{ e= \frac{ |D\_{\mathrm{analytic}}-D\_{\mathrm{numeric}}| }{ \max(1,|D\_{\mathrm{analytic}}|,|D\_{\mathrm{numeric}}|) } }.
+\boxed{ e= \frac{ |D_{\mathrm{analytic}}-D_{\mathrm{numeric}}| }{ \max(1,|D_{\mathrm{analytic}}|,|D_{\mathrm{numeric}}|) } }.
 $$
 
 The constant one here assumes the derivatives have been suitably nondimensionalized or that a unit-scale comparison is meaningful. For a general physical model, choose a reference scale compatible with the derivative's units.
@@ -846,7 +846,7 @@ This is why nearly flat optimization valleys can be difficult even when the obje
 The spectral condition number is:
 
 $$
-\boxed{ \kappa_2(H)= \frac{\lambda\_{\max}}{\lambda\_{\min}} }
+\boxed{ \kappa_2(H)= \frac{\lambda_{\max}}{\lambda_{\min}} }
 $$
 
 for symmetric positive-definite $H$.
@@ -856,7 +856,7 @@ A large value means the curvature scales are very different.
 For general invertible matrices:
 
 $$
-\kappa_2(A)= \frac{\sigma\_{\max}(A)}{\sigma\_{\min}(A)},
+\kappa_2(A)= \frac{\sigma_{\max}(A)}{\sigma_{\min}(A)},
 $$
 
 where $\sigma_i$ are singular values.
@@ -994,13 +994,13 @@ $$
 By the chain rule:
 
 $$
-\boxed{ \nabla\_{\mathbf z}\tilde f = S^T\nabla\_{\mathbf x}f }.
+\boxed{ \nabla_{\mathbf z}\tilde f = S^T\nabla_{\mathbf x}f }.
 $$
 
 For a twice-differentiable objective with constant $S$:
 
 $$
-\boxed{ H\_{\mathbf z}=S^TH\_{\mathbf x}S }.
+\boxed{ H_{\mathbf z}=S^TH_{\mathbf x}S }.
 $$
 
 Thus, normalization changes both the gradient and Hessian representation.
@@ -1014,7 +1014,7 @@ For example, a camera parameter vector may contain translation in metres, rotati
 One might use:
 
 $$
-S= \operatorname{diag} (s_t,s_t,s_t,s\_\omega,s\_\omega,s\_\omega,s_f).
+S= \operatorname{diag} (s_t,s_t,s_t,s_\omega,s_\omega,s_\omega,s_f).
 $$
 
 The values should represent meaningful changes in the respective parameters, not arbitrary magnitudes selected solely to force the numbers into a preferred range.
@@ -1176,7 +1176,7 @@ Therefore a tiny step should not automatically be called convergence.
 A common criterion is:
 
 $$
-|f\_{k+1}-f_k|\le\epsilon_f.
+|f_{k+1}-f_k|\le\epsilon_f.
 $$
 
 This can be useful, but a small objective change may mean the algorithm is stuck rather than near a solution.
@@ -1200,7 +1200,7 @@ Relative tolerances scale comparisons by a reference quantity.
 A common parameter-step criterion is:
 
 $$
-\boxed{ \|\Delta\mathbf x\| \le \epsilon\_{\mathrm{abs}}+ \epsilon\_{\mathrm{rel}}\|\mathbf x\| }.
+\boxed{ \|\Delta\mathbf x\| \le \epsilon_{\mathrm{abs}}+ \epsilon_{\mathrm{rel}}\|\mathbf x\| }.
 $$
 
 This allows a fixed minimum precision requirement while accounting for the scale of the current parameter vector.
@@ -1210,13 +1210,13 @@ However, for parameters with different units, a raw Euclidean norm can be physic
 A better approach is to use normalized coordinates or componentwise tolerances:
 
 $$
-|\Delta x_i| \le \epsilon\_{\mathrm{abs},i} + \epsilon\_{\mathrm{rel},i}|x_i|.
+|\Delta x_i| \le \epsilon_{\mathrm{abs},i} + \epsilon_{\mathrm{rel},i}|x_i|.
 $$
 
 For objective changes, one might use:
 
 $$
-|f\_{k+1}-f_k| \le \epsilon\_{\mathrm{abs},f} + \epsilon\_{\mathrm{rel},f}\max(|f_k|,|f\_{k+1}|).
+|f_{k+1}-f_k| \le \epsilon_{\mathrm{abs},f} + \epsilon_{\mathrm{rel},f}\max(|f_k|,|f_{k+1}|).
 $$
 
 The choice depends on whether the objective has a meaningful absolute scale.
@@ -1300,7 +1300,7 @@ $$
 For box constraints, Euclidean projection is componentwise clipping:
 
 $$
-\boxed{ [\Pi\_{\mathcal C}(\mathbf x)]\_i = \min(u_i,\max(l_i,x_i)) }.
+\boxed{ [\Pi_{\mathcal C}(\mathbf x)]_i = \min(u_i,\max(l_i,x_i)) }.
 $$
 
 This is the closest feasible point to $\mathbf x$ under Euclidean distance.
@@ -1350,7 +1350,7 @@ This motivates projected-gradient methods and constrained stationarity measureme
 The projected-gradient update is:
 
 $$
-\boxed{ \mathbf x\_{k+1} = \Pi\_{\mathcal C} \left( \mathbf x_k-\alpha\nabla f(\mathbf x_k) \right) }.
+\boxed{ \mathbf x_{k+1} = \Pi_{\mathcal C} \left( \mathbf x_k-\alpha\nabla f(\mathbf x_k) \right) }.
 $$
 
 It first computes an unconstrained gradient step, then projects the candidate into the feasible set.
@@ -1360,19 +1360,19 @@ It first computes an unconstrained gradient step, then projects the candidate in
 Define:
 
 $$
-\boxed{ G\_\alpha(\mathbf x)= \frac1\alpha \left[ \mathbf x- \Pi\_{\mathcal C} (\mathbf x-\alpha\nabla f(\mathbf x)) \right] }.
+\boxed{ G_\alpha(\mathbf x)= \frac1\alpha \left[ \mathbf x- \Pi_{\mathcal C} (\mathbf x-\alpha\nabla f(\mathbf x)) \right] }.
 $$
 
 For an unconstrained problem, projection is the identity:
 
 $$
-\Pi\_{\mathbb R^n}(\mathbf z)=\mathbf z.
+\Pi_{\mathbb R^n}(\mathbf z)=\mathbf z.
 $$
 
 Therefore:
 
 $$
-G\_\alpha(\mathbf x) = \frac1\alpha[ \mathbf x-(\mathbf x-\alpha\nabla f) ] = \nabla f.
+G_\alpha(\mathbf x) = \frac1\alpha[ \mathbf x-(\mathbf x-\alpha\nabla f) ] = \nabla f.
 $$
 
 Thus the projected-gradient mapping generalizes the ordinary gradient.
@@ -1380,7 +1380,7 @@ Thus the projected-gradient mapping generalizes the ordinary gradient.
 At a constrained first-order stationary point:
 
 $$
-\boxed{ G\_\alpha(\mathbf x^\star)=0 }
+\boxed{ G_\alpha(\mathbf x^\star)=0 }
 $$
 
 for an appropriate positive $\alpha$, assuming the standard convex feasible-set projection formulation.
@@ -1440,7 +1440,7 @@ $$
 Project back into the box:
 
 $$
-\Pi\_{\mathcal C}(3,-2.5)=(1,-0.5).
+\Pi_{\mathcal C}(3,-2.5)=(1,-0.5).
 $$
 
 Therefore:
@@ -1456,13 +1456,13 @@ This correctly identifies a constrained stationary point despite the nonzero ord
 When using line search with a projected method, the trial update is:
 
 $$
-\mathbf x\_{\mathrm{trial}} = \Pi\_{\mathcal C} (\mathbf x-\alpha\mathbf g).
+\mathbf x_{\mathrm{trial}} = \Pi_{\mathcal C} (\mathbf x-\alpha\mathbf g).
 $$
 
 The actual displacement is:
 
 $$
-\mathbf d= \mathbf x\_{\mathrm{trial}}-\mathbf x.
+\mathbf d= \mathbf x_{\mathrm{trial}}-\mathbf x.
 $$
 
 It is generally not equal to $-\alpha\mathbf g$, because projection may alter individual components.
@@ -1486,7 +1486,7 @@ $$
 a coordinate update solves or approximates:
 
 $$
-\boxed{ x_i^{k+1} = \arg\min_z f(x_1^{k+1},\ldots,x\_{i-1}^{k+1}, z,x\_{i+1}^{k},\ldots,x_n^k) }.
+\boxed{ x_i^{k+1} = \arg\min_z f(x_1^{k+1},\ldots,x_{i-1}^{k+1}, z,x_{i+1}^{k},\ldots,x_n^k) }.
 $$
 
 This is a cyclic coordinate descent update when coordinates are processed in a fixed order.
@@ -1588,13 +1588,13 @@ $$
 the derivative is represented by a Jacobian:
 
 $$
-\boxed{ J\_{\mathbf f}= \begin{bmatrix} \frac{\partial f_1}{\partial x_1}&\cdots&\frac{\partial f_1}{\partial x_n}\\ \vdots&\ddots&\vdots\\ \frac{\partial f_m}{\partial x_1}&\cdots&\frac{\partial f_m}{\partial x_n} \end{bmatrix} }.
+\boxed{ J_{\mathbf f}= \begin{bmatrix} \frac{\partial f_1}{\partial x_1}&\cdots&\frac{\partial f_1}{\partial x_n}\\ \vdots&\ddots&\vdots\\ \frac{\partial f_m}{\partial x_1}&\cdots&\frac{\partial f_m}{\partial x_n} \end{bmatrix} }.
 $$
 
 Its meaning is:
 
 $$
-\delta\mathbf y\approx J\_{\mathbf f}\delta\mathbf x.
+\delta\mathbf y\approx J_{\mathbf f}\delta\mathbf x.
 $$
 
 This is the forward sensitivity calculation.
@@ -1602,7 +1602,7 @@ This is the forward sensitivity calculation.
 If a scalar loss $L$ depends on $\mathbf y=\mathbf f(\mathbf x)$, the gradient propagates backward:
 
 $$
-\boxed{ \nabla\_{\mathbf x}L = J\_{\mathbf f}^T\nabla\_{\mathbf y}L }.
+\boxed{ \nabla_{\mathbf x}L = J_{\mathbf f}^T\nabla_{\mathbf y}L }.
 $$
 
 These two operations are essential to differentiable programming.
@@ -1634,13 +1634,13 @@ This is a vector-valued product rule.
 Using the skew-symmetric matrix:
 
 $$
-[\mathbf a]\_\times= \begin{bmatrix} 0&-a_z&a_y\\ a_z&0&-a_x\\ -a_y&a_x&0 \end{bmatrix},
+[\mathbf a]_\times= \begin{bmatrix} 0&-a_z&a_y\\ a_z&0&-a_x\\ -a_y&a_x&0 \end{bmatrix},
 $$
 
 we have:
 
 $$
-\mathbf a\times\mathbf b=[\mathbf a]\_\times\mathbf b.
+\mathbf a\times\mathbf b=[\mathbf a]_\times\mathbf b.
 $$
 
 A perturbation produces:
@@ -1652,19 +1652,19 @@ $$
 Since:
 
 $$
-\delta\mathbf a\times\mathbf b = -[\mathbf b]\_\times\delta\mathbf a,
+\delta\mathbf a\times\mathbf b = -[\mathbf b]_\times\delta\mathbf a,
 $$
 
 the Jacobians are:
 
 $$
-\boxed{ \frac{\partial(\mathbf a\times\mathbf b)}{\partial\mathbf a} = -[\mathbf b]\_\times }
+\boxed{ \frac{\partial(\mathbf a\times\mathbf b)}{\partial\mathbf a} = -[\mathbf b]_\times }
 $$
 
 and:
 
 $$
-\boxed{ \frac{\partial(\mathbf a\times\mathbf b)}{\partial\mathbf b} = [\mathbf a]\_\times }.
+\boxed{ \frac{\partial(\mathbf a\times\mathbf b)}{\partial\mathbf b} = [\mathbf a]_\times }.
 $$
 
 These formulas are useful in rigid-body mechanics, geometric constraints, angular velocity, and rotation optimization.
@@ -1674,7 +1674,7 @@ These formulas are useful in rigid-body mechanics, geometric constraints, angula
 For:
 
 $$
-f(\mathbf x)=\|\mathbf x\|\_2 = \sqrt{\mathbf x^T\mathbf x},
+f(\mathbf x)=\|\mathbf x\|_2 = \sqrt{\mathbf x^T\mathbf x},
 $$
 
 differentiate:
@@ -1698,7 +1698,7 @@ $$
 Therefore:
 
 $$
-\boxed{ \nabla\_{\mathbf x}\|\mathbf x\| = \frac{\mathbf x}{\|\mathbf x\|} }
+\boxed{ \nabla_{\mathbf x}\|\mathbf x\| = \frac{\mathbf x}{\|\mathbf x\|} }
 $$
 
 when $\mathbf x\ne0$.
@@ -1706,7 +1706,7 @@ when $\mathbf x\ne0$.
 At zero, the Euclidean norm is not classically differentiable. Its convex subdifferential is the unit ball:
 
 $$
-\partial\|\mathbf0\|\_2= \{\mathbf g:\|\mathbf g\|\_2\le1\}.
+\partial\|\mathbf0\|_2= \{\mathbf g:\|\mathbf g\|_2\le1\}.
 $$
 
 A solver or AD library must choose how to represent that nonsmooth case.
@@ -1724,7 +1724,7 @@ $$
 has derivative:
 
 $$
-\boxed{ A'(t)= \begin{bmatrix} a'\_{11}(t)&\cdots&a'\_{1n}(t)\\ \vdots&\ddots&\vdots\\ a'\_{m1}(t)&\cdots&a'\_{mn}(t) \end{bmatrix} }.
+\boxed{ A'(t)= \begin{bmatrix} a'_{11}(t)&\cdots&a'_{1n}(t)\\ \vdots&\ddots&\vdots\\ a'_{m1}(t)&\cdots&a'_{mn}(t) \end{bmatrix} }.
 $$
 
 The derivative is computed elementwise, but it also follows matrix-level rules.
@@ -1780,25 +1780,25 @@ $$
 Differentiate with respect to $\theta$:
 
 $$
-A\_\theta\mathbf x+A\mathbf x\_\theta = \mathbf b\_\theta.
+A_\theta\mathbf x+A\mathbf x_\theta = \mathbf b_\theta.
 $$
 
 Rearrange:
 
 $$
-A\mathbf x\_\theta= \mathbf b\_\theta-A\_\theta\mathbf x.
+A\mathbf x_\theta= \mathbf b_\theta-A_\theta\mathbf x.
 $$
 
 Therefore:
 
 $$
-\boxed{ \mathbf x\_\theta = A^{-1}(\mathbf b\_\theta-A\_\theta\mathbf x) }.
+\boxed{ \mathbf x_\theta = A^{-1}(\mathbf b_\theta-A_\theta\mathbf x) }.
 $$
 
 Computationally, solve:
 
 $$
-\boxed{ A\mathbf x\_\theta = \mathbf b\_\theta-A\_\theta\mathbf x }.
+\boxed{ A\mathbf x_\theta = \mathbf b_\theta-A_\theta\mathbf x }.
 $$
 
 This avoids explicitly forming the inverse.
@@ -1822,7 +1822,7 @@ then its complete derivative formally contains relationships between every input
 Written entrywise:
 
 $$
-\frac{\partial F\_{ij}}{\partial X\_{kl}}.
+\frac{\partial F_{ij}}{\partial X_{kl}}.
 $$
 
 This is a fourth-order tensor if the matrix indices remain explicit.
@@ -2006,7 +2006,7 @@ $$
 Differentiate:
 
 $$
-d\mathbf n = r^{-1}d\mathbf v+ \mathbf v\\,d(r^{-1}).
+d\mathbf n = r^{-1}d\mathbf v+ \mathbf v\,d(r^{-1}).
 $$
 
 Since:
@@ -2048,7 +2048,7 @@ $$
 we obtain:
 
 $$
-\boxed{ J\_{\mathrm{normalize}}(\mathbf v) = \frac1{\|\mathbf v\|} (I-\mathbf n\mathbf n^T) }.
+\boxed{ J_{\mathrm{normalize}}(\mathbf v) = \frac1{\|\mathbf v\|} (I-\mathbf n\mathbf n^T) }.
 $$
 
 ##### Geometric interpretation
@@ -2122,7 +2122,7 @@ $$
 Divide by five:
 
 $$
-\boxed{ J\_{\mathrm{normalize}}= \begin{bmatrix} 0.128&-0.096\\ -0.096&0.072 \end{bmatrix} }.
+\boxed{ J_{\mathrm{normalize}}= \begin{bmatrix} 0.128&-0.096\\ -0.096&0.072 \end{bmatrix} }.
 $$
 
 A perturbation:
@@ -2256,13 +2256,13 @@ Therefore $\Omega$ is skew-symmetric.
 Every $3\times3$ skew-symmetric matrix can be represented by an angular velocity vector:
 
 $$
-\Omega=[\boldsymbol\omega]\_\times.
+\Omega=[\boldsymbol\omega]_\times.
 $$
 
 Hence:
 
 $$
-\boxed{ \dot R=R[\boldsymbol\omega_b]\_\times }
+\boxed{ \dot R=R[\boldsymbol\omega_b]_\times }
 $$
 
 when $\boldsymbol\omega_b$ is expressed in the body frame.
@@ -2270,7 +2270,7 @@ when $\boldsymbol\omega_b$ is expressed in the body frame.
 Alternatively:
 
 $$
-\boxed{ \dot R=[\boldsymbol\omega_w]\_\times R }
+\boxed{ \dot R=[\boldsymbol\omega_w]_\times R }
 $$
 
 when angular velocity is expressed in the world frame.
@@ -2292,43 +2292,43 @@ $$
 A small left-applied rotation perturbation is:
 
 $$
-R\_{\mathrm{new}} = \exp([\delta\boldsymbol\omega]\_\times)R.
+R_{\mathrm{new}} = \exp([\delta\boldsymbol\omega]_\times)R.
 $$
 
 For a small perturbation:
 
 $$
-\exp([\delta\boldsymbol\omega]\_\times) \approx I+[\delta\boldsymbol\omega]\_\times.
+\exp([\delta\boldsymbol\omega]_\times) \approx I+[\delta\boldsymbol\omega]_\times.
 $$
 
 Then:
 
 $$
-\begin{aligned} \mathbf p'\_{\mathrm{new}} &\approx (I+[\delta\boldsymbol\omega]\_\times)R\mathbf p\\ &=R\mathbf p+ \delta\boldsymbol\omega\times(R\mathbf p). \end{aligned}
+\begin{aligned} \mathbf p'_{\mathrm{new}} &\approx (I+[\delta\boldsymbol\omega]_\times)R\mathbf p\\ &=R\mathbf p+ \delta\boldsymbol\omega\times(R\mathbf p). \end{aligned}
 $$
 
 Using:
 
 $$
-\mathbf a\times\mathbf b = -[\mathbf b]\_\times\mathbf a,
+\mathbf a\times\mathbf b = -[\mathbf b]_\times\mathbf a,
 $$
 
 we obtain:
 
 $$
-\boxed{ \frac{\partial(R\mathbf p)} {\partial\delta\boldsymbol\omega\_{\mathrm{left}}} = -[R\mathbf p]\_\times }.
+\boxed{ \frac{\partial(R\mathbf p)} {\partial\delta\boldsymbol\omega_{\mathrm{left}}} = -[R\mathbf p]_\times }.
 $$
 
 For a right-applied perturbation:
 
 $$
-R\_{\mathrm{new}} = R\exp([\delta\boldsymbol\omega]\_\times),
+R_{\mathrm{new}} = R\exp([\delta\boldsymbol\omega]_\times),
 $$
 
 the corresponding Jacobian is:
 
 $$
-\boxed{ \frac{\partial(R\mathbf p)} {\partial\delta\boldsymbol\omega\_{\mathrm{right}}} = -R[\mathbf p]\_\times }.
+\boxed{ \frac{\partial(R\mathbf p)} {\partial\delta\boldsymbol\omega_{\mathrm{right}}} = -R[\mathbf p]_\times }.
 $$
 
 These matrices are generally different.
@@ -2352,19 +2352,19 @@ $$
 For a left perturbation of the full rigid transform:
 
 $$
-T\_{\mathrm{new}}= \exp([\delta\boldsymbol\xi]^\wedge)T,
+T_{\mathrm{new}}= \exp([\delta\boldsymbol\xi]^\wedge)T,
 $$
 
 the first-order point variation is:
 
 $$
-\delta\mathbf p_c = -[\mathbf p_c]\_\times\delta\boldsymbol\omega +\delta\mathbf v.
+\delta\mathbf p_c = -[\mathbf p_c]_\times\delta\boldsymbol\omega +\delta\mathbf v.
 $$
 
 Therefore:
 
 $$
-\boxed{ J\_{\mathrm{pose}} = \begin{bmatrix} -[\mathbf p_c]\_\times&I \end{bmatrix} }.
+\boxed{ J_{\mathrm{pose}} = \begin{bmatrix} -[\mathbf p_c]_\times&I \end{bmatrix} }.
 $$
 
 This is a $3\times6$ matrix.
@@ -2372,7 +2372,7 @@ This is a $3\times6$ matrix.
 If the resulting camera-space point is projected into image space, the complete Jacobian is:
 
 $$
-\boxed{ J\_{\mathrm{pixel,pose}} = J\_{\mathrm{projection}} \begin{bmatrix} -[\mathbf p_c]\_\times&I \end{bmatrix} }.
+\boxed{ J_{\mathrm{pixel,pose}} = J_{\mathrm{projection}} \begin{bmatrix} -[\mathbf p_c]_\times&I \end{bmatrix} }.
 $$
 
 The result is $2\times6$.
@@ -2422,7 +2422,7 @@ Optimizing the four components as unconstrained variables may violate the unit-l
 One option is to normalize after updates:
 
 $$
-q\_{\mathrm{new}}= \frac{q+\delta q}{\|q+\delta q\|}.
+q_{\mathrm{new}}= \frac{q+\delta q}{\|q+\delta q\|}.
 $$
 
 But this update is not equivalent to an intrinsic three-dimensional rotation update in every respect.
@@ -2430,7 +2430,7 @@ But this update is not equivalent to an intrinsic three-dimensional rotation upd
 Another option is to use a local rotation perturbation and compose it with the existing orientation:
 
 $$
-q\_{\mathrm{new}}= \delta q(\delta\boldsymbol\omega)\otimes q.
+q_{\mathrm{new}}= \delta q(\delta\boldsymbol\omega)\otimes q.
 $$
 
 The small rotation vector $\delta\boldsymbol\omega\in\mathbb R^3$ is converted into a unit quaternion through an exponential-map-like construction.

@@ -7,8 +7,8 @@ import re
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from note_integrity import (BT, code_blocks, migrate_legacy_links,
-                            normalized_baseline, ordered_lines_preserved)
-from check_continuous_code_sync import exact_program_count
+                            normalized_baseline, ordered_lines_preserved, normalize_math_delimiters)
+from check_continuous_code_sync import exact_program_count, exact_labeled_source_count
 from check_vault_links import audit
 
 
@@ -18,6 +18,19 @@ class NoteIntegrityTests(unittest.TestCase):
         blocks = code_blocks(text)
         self.assertEqual([b.language for b in blocks], ["cpp", "python"])
         self.assertEqual(blocks[0].body, BT*3 + "\nint x;")
+
+    def test_identical_small_project_files_require_their_own_label(self):
+        text = "<!-- exact-source: tools/labs/project/first.cpp -->\n" + BT*3 + "cpp\nint main() {}\n" + BT*3 + "\n"
+        blocks = code_blocks(text)
+        self.assertEqual(exact_labeled_source_count(text, blocks, "int main() {}", "project/first.cpp", "cpp"), 1)
+        self.assertEqual(exact_labeled_source_count(text, blocks, "int main() {}", "project/other.cpp", "cpp"), 0)
+
+    def test_math_delimiters_convert_without_touching_code_or_tex(self):
+        legacy = r"Inline \(x_1\), then \[" + "\na+b\n" + r"\]" + "\n"
+        modern = "Inline $x_1$, then $$\na+b\n$$\n"
+        literal = BT + r"\(literal\)" + BT + "\n" + BT*3 + "text\n" + r"\[literal\]" + "\n" + BT*3 + "\n"
+        self.assertEqual(normalize_math_delimiters(legacy+literal), modern+literal)
+        self.assertEqual(normalize_math_delimiters(modern+literal), modern+literal)
 
     def test_unclosed_fence_is_not_hidden_by_other_marker(self):
         with self.assertRaisesRegex(ValueError, "line 1"):

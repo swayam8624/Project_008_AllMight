@@ -1,0 +1,25 @@
+\hypertarget{appendix-1fad5e7f36fa}{}
+\section*{Singular value decomposition}
+\section{Singular value decomposition}\label{singular-value-decomposition}
+
+For any real rectangular matrix, \(A=U\Sigma V^\mathsf T\). Right singular vectors are input directions, left singular vectors are output directions, and nonnegative singular values are principal stretches. Unlike eigenvectors, the two sets live in different spaces.
+
+\textbf{Use it when:} revealing rank and conditioning, solving rank-uncertain least squares, compressing a matrix, or understanding PCA.
+
+\textbf{Developed in Phase 8:} The SVD expresses a rectangular map using orthonormal input and output directions joined by nonnegative stretches. Full, thin, and compact shapes have different dimensions; bidiagonal reduction and Jacobi methods compute the factors, and reconstruction, orthogonality, and triplet residuals check them independently. \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Full,\%20thin,\%20and\%20compact\%20shapes\%20for\%20tall\%20and\%20wide\%20matrices}{factor shapes} · \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#How\%20numerical\%20software\%20computes\%20and\%20checks\%20an\%20SVD}{SVD algorithms and validation}
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\hyperref[appendix-ab31ef447dbf]{Matrix multiplication and composition order}, \hyperref[appendix-0b3be18411f9]{Eigenvalues and eigenspaces}, \hyperref[appendix-8bc4e8fc547c]{Dot products and orthogonality}.
+
+\subsection{Used by}\label{used-by}
+
+\hyperref[appendix-541306fdbc1b]{Moore-Penrose pseudoinverse}, \hyperref[appendix-ad175ef3c5bf]{PCA and covariance eigensystems}, \hyperref[appendix-73f5bcf7a462]{Polar decomposition}, \hyperref[appendix-221a483bec2d]{Matrix factorization choices}.
+
+\textbf{Teaching path:} \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Singular\%20value\%20decomposition\%20covers\%20every\%20rectangular\%20map}{SVD geometry}. - \hyperref[appendix-f8657bac66e5]{Matrix norms and numerical error} --- Extends this foundation into the Phase 8 dependency spine. - \href{}{Camera calibration and bundle adjustment (04-Visual-Computing-II, appendix-3ee9861904d5)} - \href{}{Constrained optimization and inverse kinematics (04-Visual-Computing-II, appendix-29f4bea4c2bb)}
+
+\subsection{University course development}\label{university-course-development}
+
+Extend the existing factorization note with its role in estimation, conditioning, and geometry. For matrix \(A\), the decomposition \(A=U\Sigma V^T\) separates orthogonal input directions, axis-aligned scaling, and orthogonal output directions. Singular values on the diagonal of \(\Sigma\) quantify how strongly each independent direction is preserved; a zero or tiny value signals rank loss or poor conditioning. Least-squares fitting can use this structure to identify which parameter combinations are well constrained and to avoid amplifying measurement noise along nearly invisible directions. The same analysis explains why a camera calibration or bundle-adjustment system can have gauge freedoms: translating or scaling the entire reconstruction may leave image measurements unchanged. Singular values diagnose these ambiguities, while constraints or fixed reference poses remove them. Thus SVD links linear algebra to robust vision, not just matrix compression.
+
+\href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Pose\%20estimation,\%20transforms,\%20and\%20robust\%20fitting}{Pose estimation, transforms, and robust fitting} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Stereo,\%20relative\%20orientation,\%20and\%20reconstruction}{Stereo, relative orientation, and reconstruction} · \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#Optimization,\%20constraints,\%20and\%20inverse\%20kinematics}{Optimization, constraints, and inverse kinematics}

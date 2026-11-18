@@ -1,0 +1,63 @@
+\hypertarget{appendix-e4d8ed8d6787}{}
+\section*{Persistent homology}
+\chapter{Persistent homology}\label{appendix-e4d8ed8d6787-persistent-homology}
+
+Ordinary homology asks which connected components, loops and higher-dimensional voids exist in one topological complex. Persistent homology asks how those features appear and disappear as a scale or threshold changes.
+
+Begin with a \textbf{filtration}:
+
+\[
+K_0\subseteq K_1\subseteq\cdots\subseteq K_m.
+\]
+
+Each step adds vertices, edges, faces or higher cells according to a declared rule. A topological feature is born when it first appears and dies when it becomes a boundary or merges according to the homology pairing convention.
+
+Its persistence is often summarized by an interval
+
+\[
+[b,d)
+\]
+
+or a point \((b,d)\) in a persistence diagram.
+
+\section{What persistence means}\label{appendix-e4d8ed8d6787-what-persistence-means}
+
+A long-lived feature is stable across a wider range of the chosen filtration parameter. That can make it more robust to one class of perturbation, but it is not proof that the feature is physically meaningful. The conclusion depends on:
+
+\begin{itemize}
+\tightlist
+\item
+  the distance or scalar field used;
+\item
+  sampling density;
+\item
+  noise/outlier model;
+\item
+  complex construction such as Vietoris--Rips, Čech or alpha complex;
+\item
+  coefficient field;
+\item
+  filtration scale.
+\end{itemize}
+
+A persistent loop in a noisy scan can reflect real geometry, a sampling hole, or the behavior of the chosen complex.
+
+\section{Union-find intuition for H0}\label{appendix-e4d8ed8d6787-union-find-intuition-for-h0}
+
+For connected components, persistence can be understood with disjoint sets. Vertices are born as components. When an edge connects two previously separate components, one component dies at that edge's filtration value according to a consistent elder-rule convention.
+
+Higher-dimensional persistence requires boundary-matrix reduction or more specialized algorithms.
+
+\section{Mesh/reconstruction relevance}\label{appendix-e4d8ed8d6787-meshreconstruction-relevance}
+
+Persistent homology can help diagnose captured geometry across thresholds: which holes survive changing reconstruction confidence, neighborhood radius or density? That is a better use than quoting a Betti number from one arbitrary threshold.
+
+A study should compare the persistence structure with controlled synthetic holes/noise so the interpretation is calibrated.
+
+\section{Evidence boundary}\label{appendix-e4d8ed8d6787-evidence-boundary}
+
+The repository's mathematics expansion develops complexes, chains, boundaries, Betti reasoning and persistence concepts. It does not yet claim a production-scale persistent-homology solver or a theorem that a persistent feature corresponds to a physically correct surface.
+
+Read the connected explanation in \href{Continuous\%20Notes/University\%20-\%20Worlds,\%20Images\%20and\%20Inference\%20-\%20Graphics,\%20Vision\%20and\%20Photography\#From\%20a\%20scanned\%20triangle\%20soup\%20to\%20a\%20mesh\%20we\%20can\%20trust}{Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#From a scanned triangle soup to a mesh we can trust}.
+
+Related: \hyperref[appendix-e38976cbbf86]{Mesh topology and homology}, \hyperref[appendix-faac749c9cdd]{Half-edge topology invariants}.

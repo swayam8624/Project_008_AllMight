@@ -1,0 +1,479 @@
+\contentsline {chapter}{\numberline {1}Graphs, Search, and GPU Scheduling}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}From an asset map to a correct navigable world --- Phase 5, M028--M030, Parts 446--500}{1}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}A graph is a data model before it is an algorithm}{1}{subsection.1.1.1}%
+\contentsline {subsection}{\numberline {1.1.2}A queue discovers reachability one edge at a time}{2}{subsection.1.1.2}%
+\contentsline {subsection}{\numberline {1.1.3}A render graph is an ordering proof, not simply a list of passes}{2}{subsection.1.1.3}%
+\contentsline {subsection}{\numberline {1.1.4}Shortest paths: the edge assumptions determine the proof}{3}{subsection.1.1.4}%
+\contentsline {subsection}{\numberline {1.1.5}A* is Dijkstra informed by an admissible lower bound}{4}{subsection.1.1.5}%
+\contentsline {subsection}{\numberline {1.1.6}Minimum spanning trees solve a different global problem}{5}{subsection.1.1.6}%
+\contentsline {subsection}{\numberline {1.1.7}Searching and sorting: the order of keys is itself a contract}{5}{subsection.1.1.7}%
+\contentsline {subsection}{\numberline {1.1.8}Morton keys turn 2D proximity into a sortable integer---within limits}{6}{subsection.1.1.8}%
+\contentsline {subsection}{\numberline {1.1.9}Prefix scans turn counts into a proof of nonoverlapping output}{6}{subsection.1.1.9}%
+\contentsline {subsection}{\numberline {1.1.10}Windows, recursion, dynamic programming and greedy proofs are algorithmic choices}{7}{subsection.1.1.10}%
+\contentsline {subsection}{\numberline {1.1.11}Randomization needs a probability proof as well as a seeded test}{8}{subsection.1.1.11}%
+\contentsline {subsection}{\numberline {1.1.12}An LRU cache and a sparse set reconnect algorithms to engine ownership}{8}{subsection.1.1.12}%
+\contentsline {subsection}{\numberline {1.1.13}The final choice is an experiment grounded in an operation distribution}{9}{subsection.1.1.13}%
+\contentsline {section}{\numberline {1.2}An API is a promise about an operation}{10}{section.1.2}%
+\contentsline {subsection}{\numberline {1.2.1}State the contract at the boundary}{10}{subsection.1.2.1}%
+\contentsline {subsection}{\numberline {1.2.2}Publication is the moment other code may rely on a result}{11}{subsection.1.2.2}%
+\contentsline {subsection}{\numberline {1.2.3}A buffer name, an API object, and its storage are separate}{12}{subsection.1.2.3}%
+\contentsline {subsection}{\numberline {1.2.4}Destroying a C++ wrapper may not finish external work}{12}{subsection.1.2.4}%
+\contentsline {subsection}{\numberline {1.2.5}Error types should preserve the caller's decision}{13}{subsection.1.2.5}%
+\contentsline {section}{\numberline {1.3}A complete handle contract in a small program}{13}{section.1.3}%
+\contentsline {section}{\numberline {1.4}The build graph becomes another interface}{15}{section.1.4}%
+\contentsline {subsection}{\numberline {1.4.1}A capability exists only where the complete resource contract permits it}{15}{subsection.1.4.1}%
+\contentsline {subsection}{\numberline {1.4.2}Packaging removes an editor dependency, not every runtime dependency}{16}{subsection.1.4.2}%
+\contentsline {section}{\numberline {1.5}Make a shader record an explicit binary contract}{16}{section.1.5}%
+\contentsline {section}{\numberline {1.6}Let many invocations cooperate without inventing a global clock}{17}{section.1.6}%
+\contentsline {subsection}{\numberline {1.6.1}Scan turns local counts into nonoverlapping output regions}{18}{subsection.1.6.1}%
+\contentsline {subsection}{\numberline {1.6.2}Load a partial matrix tile with two different bounds}{19}{subsection.1.6.2}%
+\contentsline {subsection}{\numberline {1.6.3}+ M129}{34}{subsection.1.6.3}%
+\contentsline {subsection}{\numberline {1.6.4}GPU EXECUTION ARCHITECTURE}{34}{subsection.1.6.4}%
+\contentsline {chapter}{\numberline {2}GPU Memory, Divergence, Atomics, and Ordering}{49}{chapter.2}%
+\contentsline {subsection}{\numberline {2.0.1}MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{49}{subsection.2.0.1}%
+\contentsline {subsection}{\numberline {2.0.2}GENERAL COMPUTE \& PARALLEL ALGORITHMS}{63}{subsection.2.0.2}%
+\contentsline {subsubsection}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{84}{subsubsection*.90}%
+\contentsline {subsection}{\numberline {2.0.3}Next --- Pass 10: M130 + M131 + M132, Parts 2157--2200}{100}{subsection.2.0.3}%
+\contentsline {chapter}{\numberline {3}Open Vulkan Devices and Describe Resources}{101}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Open the device and describe its storage}{101}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}+ M135}{101}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}VULKAN PHILOSOPHY, INSTANCE, DEVICES, QUEUES, SURFACE \& SWAPCHAIN}{101}{subsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.1.3}BUFFERS, IMAGES, MEMORY \& UPLOADS}{121}{subsection.3.1.3}%
+\contentsline {subsection}{\numberline {3.1.4}DESCRIPTORS, PIPELINE LAYOUTS, SHADERS \& RENDERING STATE}{138}{subsection.3.1.4}%
+\contentsline {chapter}{\numberline {4}Submit, Synchronize, and Retire GPU Work}{174}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Record, synchronize and retire explicit work}{174}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}+ M138}{174}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}COMMAND POOLS, COMMAND BUFFERS, SUBMISSION \& SEMAPHORES}{175}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}VULKAN MEMORY MODEL, BARRIERS \& MULTI-FRAME LIFETIMES}{193}{subsection.4.1.3}%
+\contentsline {subsection}{\numberline {4.1.4}TIMESTAMPS, VALIDATION, DEVICE LOSS, MOLTENVK \& EXPLICIT RAII}{211}{subsection.4.1.4}%
+\contentsline {chapter}{\numberline {5}Execute and Measure a Metal Frame}{245}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Execute and measure a Metal frame}{245}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}+ M141}{245}{subsection.5.1.1}%
+\contentsline {subsection}{\numberline {5.1.2}METAL'S CORE EXECUTION MODEL}{246}{subsection.5.1.2}%
+\contentsline {subsection}{\numberline {5.1.3}STORAGE MODES, TILE MEMORY, DRAWABLES, FRAMES IN FLIGHT, HEAPS \& SYNCHRONIZATION}{268}{subsection.5.1.3}%
+\contentsline {chapter}{\numberline {6}Profile GPUs and Respect Apple Ownership Boundaries}{294}{chapter.6}%
+\contentsline {subsection}{\numberline {6.0.1}PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI \& THREAD BOUNDARIES}{294}{subsection.6.0.1}%
+\contentsline {subsubsection}{First-use completion --- lifetime analysis for a frame-local attachment and a history image}{318}{subsubsection*.105}%
+\contentsline {subsection}{\numberline {6.0.2}Distinguish host allocation callbacks from device-memory allocation}{330}{subsection.6.0.2}%
+\contentsline {section}{\numberline {6.1}A generated binding is still an API boundary}{331}{section.6.1}%
+\contentsline {subsection}{\numberline {6.1.1}Choose the language boundary before choosing a generator}{332}{subsection.6.1.1}%
+\contentsline {subsection}{\numberline {6.1.2}A visual description does not identify a shader operator}{332}{subsection.6.1.2}%
+\contentsline {section}{\numberline {6.2}A platform escape hatch must also restore process-wide state}{333}{section.6.2}%
+\contentsline {subsection}{\numberline {6.2.1}Restore the state that existed before the adapter changed it}{333}{subsection.6.2.1}%
+\contentsline {subsection}{\numberline {6.2.2}Range count, byte capacity and API guarantees are different quantities}{334}{subsection.6.2.2}%
+\contentsline {section}{\numberline {6.3}Integrated Systems Continuation --- From Machine State to Reproducible Execution}{334}{section.6.3}%
+\contentsline {section}{\numberline {6.4}An executable byte acquires meaning only inside a machine}{335}{section.6.4}%
+\contentsline {subsection}{\numberline {6.4.1}Addressing is an algorithm for finding a value, not a suffix}{335}{subsection.6.4.1}%
+\contentsline {subsection}{\numberline {6.4.2}Unsigned carry is not signed overflow}{336}{subsection.6.4.2}%
+\contentsline {section}{\numberline {6.5}The memory bus is a device router, not one enormous RAM array}{336}{section.6.5}%
+\contentsline {subsection}{\numberline {6.5.1}An iNES file describes cartridge memory; it is not executable code itself}{337}{subsection.6.5.1}%
+\contentsline {section}{\numberline {6.6}Rendering time is not the same clock as CPU time}{337}{section.6.6}%
+\contentsline {section}{\numberline {6.7}Deterministic replay requires an explicit state contract}{338}{section.6.7}%
+\contentsline {section}{\numberline {6.8}Reference implementation and evidence gate}{339}{section.6.8}%
+\contentsline {section}{\numberline {6.9}From a deterministic emulator state to an operating-system file}{339}{section.6.9}%
+\contentsline {section}{\numberline {6.10}From a file to a message on an unreliable network}{340}{section.6.10}%
+\contentsline {section}{\numberline {6.11}From received bytes to a trust decision}{341}{section.6.11}%
+\contentsline {chapter}{\numberline {7}From Material Data to GPU Bindings}{344}{chapter.7}%
+\contentsline {subsection}{\numberline {7.0.1}Blank-page mastery test}{344}{subsection.7.0.1}%
+\contentsline {subsection}{\numberline {7.0.2}PARTS 1987--1995}{345}{subsection.7.0.2}%
+\contentsline {subsection}{\numberline {7.0.3}glTF → GPU material representation → scalable binding architecture}{345}{subsection.7.0.3}%
+\contentsline {subsection}{\numberline {7.0.4}PARTS 1996--2000}{363}{subsection.7.0.4}%
+\contentsline {subsection}{\numberline {7.0.5}How to prove a PBR renderer is actually correct}{363}{subsection.7.0.5}%
+\contentsline {subsection}{\numberline {7.0.6}Final Phase-20 reconstruction gate}{403}{subsection.7.0.6}%
+\contentsline {subsection}{\numberline {7.0.7}BRDF examples and angular response}{405}{subsection.7.0.7}%
+\contentsline {subsection}{\numberline {7.0.8}Color under ultraviolet illumination}{405}{subsection.7.0.8}%
+\contentsline {subsection}{\numberline {7.0.9}Lambertian versus perfect specular reflection}{406}{subsection.7.0.9}%
+\contentsline {subsection}{\numberline {7.0.10}Shading links geometry to light}{406}{subsection.7.0.10}%
+\contentsline {chapter}{\numberline {8}BVH Traversal and Deterministic Evidence}{407}{chapter.8}%
+\contentsline {subsection}{\numberline {8.0.1}PARTS 2090--2100}{407}{subsection.8.0.1}%
+\contentsline {subsection}{\numberline {8.0.2}Next --- Pass 9: M127 + M128 + M129, Parts 2101--2156}{446}{subsection.8.0.2}%
+\contentsline {subsection}{\numberline {8.0.3}Rendering equation and numerical integration}{446}{subsection.8.0.3}%
+\contentsline {subsection}{\numberline {8.0.4}From the rendering equation to paths}{447}{subsection.8.0.4}%
+\contentsline {subsection}{\numberline {8.0.5}One-bounce Monte Carlo estimator}{447}{subsection.8.0.5}%
+\contentsline {subsection}{\numberline {8.0.6}Bidirectional path construction}{449}{subsection.8.0.6}%
+\contentsline {subsection}{\numberline {8.0.7}Metropolis light transport as a path-space walk}{449}{subsection.8.0.7}%
+\contentsline {subsection}{\numberline {8.0.8}Photon mapping and radiosity}{450}{subsection.8.0.8}%
+\contentsline {subsection}{\numberline {8.0.9}Recursive light paths: shadows, mirrors, glass, and sampled effects}{450}{subsection.8.0.9}%
+\contentsline {subsection}{\numberline {8.0.10}Global illumination solves a coupled light transport problem}{452}{subsection.8.0.10}%
+\contentsline {subsection}{\numberline {8.0.11}Additional geometry notes for cameras}{453}{subsection.8.0.11}%
+\contentsline {subsubsection}{Rotate around an arbitrary line by aligning it to a known axis}{453}{subsubsection*.106}%
+\contentsline {subsubsection}{Color and the simplified local-lighting model}{454}{subsubsection*.107}%
+\contentsline {subsubsection}{Shadow representations: geometry, volumes, and depth maps}{455}{subsubsection*.108}%
+\contentsline {subsubsection}{Source video index}{457}{subsubsection*.109}%
+\contentsline {subsection}{\numberline {8.0.12}A programmable, differentiable rendering system}{457}{subsection.8.0.12}%
+\contentsline {subsubsection}{Differentiable caustics and media}{459}{subsubsection*.110}%
+\contentsline {subsubsection}{Coherent bundles for Markov-chain rendering}{459}{subsubsection*.111}%
+\contentsline {chapter}{\numberline {9}GPU Memory, Divergence and Execution Order}{461}{chapter.9}%
+\contentsline {subsection}{\numberline {9.0.1}MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{461}{subsection.9.0.1}%
+\contentsline {subsection}{\numberline {9.0.2}GENERAL COMPUTE \& PARALLEL ALGORITHMS}{475}{subsection.9.0.2}%
+\contentsline {subsubsection}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{496}{subsubsection*.173}%
+\contentsline {section}{\numberline {9.1}Build GPU bins and fixed hash tables only after capacity and ownership are explicit}{512}{section.9.1}%
+\contentsline {subsection}{\numberline {9.1.1}First decide what a successful build means}{512}{subsection.9.1.1}%
+\contentsline {subsection}{\numberline {9.1.2}Worked 2D spatial-bin build}{513}{subsection.9.1.2}%
+\contentsline {subsection}{\numberline {9.1.3}Fixed-capacity open addressing with a bounded build pass}{514}{subsection.9.1.3}%
+\contentsline {subsection}{\numberline {9.1.4}Collision trace and full-table failure}{515}{subsection.9.1.4}%
+\contentsline {subsection}{\numberline {9.1.5}Limits and exit check}{516}{subsection.9.1.5}%
+\contentsline {subsection}{\numberline {9.1.6}Reconstruct the append, bin and hash contracts on the CPU}{516}{subsection.9.1.6}%
+\contentsline {section}{\numberline {9.2}Keep a frame's memory alive until its final consumer is finished}{529}{section.9.2}%
+\contentsline {subsection}{\numberline {9.2.1}Double and triple buffering change ownership, not execution speed}{529}{subsection.9.2.1}%
+\contentsline {subsection}{\numberline {9.2.2}Async compute starts with a dependency graph}{530}{subsection.9.2.2}%
+\contentsline {subsection}{\numberline {9.2.3}Uploads need bandwidth, visibility and retirement}{530}{subsection.9.2.3}%
+\contentsline {subsection}{\numberline {9.2.4}Readback reverses the direction, not the lifetime rule}{531}{subsection.9.2.4}%
+\contentsline {subsection}{\numberline {9.2.5}Suballocation and aliasing require different proofs}{531}{subsection.9.2.5}%
+\contentsline {section}{\numberline {9.3}Measure the limiting resource before changing the arithmetic}{532}{section.9.3}%
+\contentsline {subsection}{\numberline {9.3.1}A query reports a defined event, not an explanation by itself}{532}{subsection.9.3.1}%
+\contentsline {subsection}{\numberline {9.3.2}Derive a roofline bound with matching units}{533}{subsection.9.3.2}%
+\contentsline {subsection}{\numberline {9.3.3}Fast math changes a numerical contract}{534}{subsection.9.3.3}%
+\contentsline {subsection}{\numberline {9.3.4}Half precision is a range and accumulation decision}{534}{subsection.9.3.4}%
+\contentsline {subsection}{\numberline {9.3.5}Collective matrix operations distribute a tile across lanes}{535}{subsection.9.3.5}%
+\contentsline {subsection}{\numberline {9.3.6}Check the scheduling and precision examples with a scalar witness}{535}{subsection.9.3.6}%
+\contentsline {subsection}{\numberline {9.3.7}Next --- Pass 10: M130 + M131 + M132, Parts 2157--2200}{539}{subsection.9.3.7}%
+\contentsline {chapter}{\numberline {10}GPU work and reusable Metal frames}{540}{chapter.10}%
+\contentsline {section}{\numberline {10.1}From GPU-generated work to a Metal frame that can be reused safely}{540}{section.10.1}%
+\contentsline {subsection}{\numberline {10.1.1}The list that the CPU used to build}{540}{subsection.10.1.1}%
+\contentsline {subsection}{\numberline {10.1.2}Keep separate kinds of ping-pong separate}{542}{subsection.10.1.2}%
+\contentsline {subsection}{\numberline {10.1.3}Dependency graphs are the real meaning of asynchrony}{543}{subsection.10.1.3}%
+\contentsline {subsection}{\numberline {10.1.4}Arithmetic intensity tells you what to measure next}{544}{subsection.10.1.4}%
+\contentsline {subsection}{\numberline {10.1.5}Metal is a chain of objects with distinct jobs}{545}{subsection.10.1.5}%
+\contentsline {subsection}{\numberline {10.1.6}C++, Objective-C++, and Swift have different ownership rules}{546}{subsection.10.1.6}%
+\contentsline {subsection}{\numberline {10.1.7}A repeatable design and debugging walk-through}{547}{subsection.10.1.7}%
+\contentsline {subsection}{\numberline {10.1.8}Give one image an explicit path through the machine}{548}{subsection.10.1.8}%
+\contentsline {subsubsection}{Native-API evidence is a separate layer from the logical renderer}{548}{subsubsection*.185}%
+\contentsline {subsubsection}{Start by separating discovery from permission}{548}{subsubsection*.186}%
+\contentsline {subsubsection}{Create storage and then describe how to interpret it}{549}{subsubsection*.187}%
+\contentsline {subsubsection}{Follow a frame slot and a presentation image separately}{549}{subsubsection*.188}%
+\contentsline {subsubsection}{A command buffer is reusable only under its actual state contract}{551}{subsubsection*.189}%
+\contentsline {subsubsection}{Derive a dependency from the real producer and consumer}{551}{subsubsection*.190}%
+\contentsline {subsubsection}{Retire a resource after every user, not after one convenient clock}{552}{subsubsection*.191}%
+\contentsline {subsection}{\numberline {10.1.9}Build variable GPU workloads without a CPU round trip}{554}{subsection.10.1.9}%
+\contentsline {subsubsection}{+ M132}{554}{subsubsection*.192}%
+\contentsline {subsubsection}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{555}{subsubsection*.193}%
+\contentsline {subsubsection}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{576}{subsubsection*.218}%
+\contentsline {chapter}{\numberline {11}GPU performance models and principled redesign}{589}{chapter.11}%
+\contentsline {subsection}{\numberline {11.0.1}PERFORMANCE MODELING \& PRINCIPLED GPU REDESIGN}{589}{subsection.11.0.1}%
+\contentsline {section}{\numberline {11.1}Open the device and describe its storage}{624}{section.11.1}%
+\contentsline {subsection}{\numberline {11.1.1}+ M135}{624}{subsection.11.1.1}%
+\contentsline {subsection}{\numberline {11.1.2}VULKAN PHILOSOPHY, INSTANCE, DEVICES, QUEUES, SURFACE \& SWAPCHAIN}{624}{subsection.11.1.2}%
+\contentsline {chapter}{\numberline {12}Buffers, images, memory, and uploads}{645}{chapter.12}%
+\contentsline {subsection}{\numberline {12.0.1}BUFFERS, IMAGES, MEMORY \& UPLOADS}{645}{subsection.12.0.1}%
+\contentsline {subsection}{\numberline {12.0.2}DESCRIPTORS, PIPELINE LAYOUTS, SHADERS \& RENDERING STATE}{661}{subsection.12.0.2}%
+\contentsline {section}{\numberline {12.1}Record, synchronize and retire explicit work}{696}{section.12.1}%
+\contentsline {subsection}{\numberline {12.1.1}+ M138}{696}{subsection.12.1.1}%
+\contentsline {subsection}{\numberline {12.1.2}COMMAND POOLS, COMMAND BUFFERS, SUBMISSION \& SEMAPHORES}{697}{subsection.12.1.2}%
+\contentsline {chapter}{\numberline {13}Vulkan synchronization and multi-frame lifetimes}{715}{chapter.13}%
+\contentsline {subsection}{\numberline {13.0.1}VULKAN MEMORY MODEL, BARRIERS \& MULTI-FRAME LIFETIMES}{715}{subsection.13.0.1}%
+\contentsline {subsection}{\numberline {13.0.2}TIMESTAMPS, VALIDATION, DEVICE LOSS, MOLTENVK \& EXPLICIT RAII}{733}{subsection.13.0.2}%
+\contentsline {subsection}{\numberline {13.0.3}METAL 4 IS A NEW SUBMISSION MODEL, NOT A RENAME OF OLD METAL}{767}{subsection.13.0.3}%
+\contentsline {subsubsection}{Command allocators make command-memory lifetime explicit}{767}{subsubsection*.254}%
+\contentsline {subsubsection}{Reusable command buffers separate object identity from recorded-work identity}{768}{subsubsection*.255}%
+\contentsline {subsubsection}{Queue commit becomes an explicit batching point}{768}{subsubsection*.256}%
+\contentsline {subsubsection}{Argument tables push binding toward shader-visible tables}{768}{subsubsection*.257}%
+\contentsline {subsubsection}{Residency sets expose the working set}{769}{subsubsection*.258}%
+\contentsline {subsubsection}{Next-generation barriers should come from graph dependencies}{769}{subsubsection*.259}%
+\contentsline {subsubsection}{Metal Shading Language 4 expands the GPU programming model}{770}{subsubsection*.260}%
+\contentsline {subsubsection}{Uniformity is an execution property}{770}{subsubsection*.261}%
+\contentsline {subsubsection}{MSL atomics resemble C++ vocabulary but have Metal rules}{770}{subsubsection*.262}%
+\contentsline {subsubsection}{Capabilities should drive backend paths}{771}{subsubsection*.263}%
+\contentsline {subsection}{\numberline {13.0.4}Metal 4 deepening: argument tables, residency, barriers, and multi-threaded encoding are one resource protocol}{771}{subsection.13.0.4}%
+\contentsline {subsubsection}{Argument tables are a root-binding layer, not a replacement for all resource indirection}{771}{subsubsection*.264}%
+\contentsline {subsubsection}{Bindless resource identity still needs generation safety}{772}{subsubsection*.265}%
+\contentsline {subsubsection}{Residency is the physical counterpart to logical binding}{773}{subsubsection*.266}%
+\contentsline {subsubsection}{Residency sets and streaming need a publication point}{774}{subsubsection*.267}%
+\contentsline {subsubsection}{Queue barriers should be derived from resource hazards}{774}{subsubsection*.268}%
+\contentsline {subsubsection}{A barrier is not a lifetime guarantee}{775}{subsubsection*.269}%
+\contentsline {subsubsection}{Command allocators create an allocator epoch}{775}{subsubsection*.270}%
+\contentsline {subsubsection}{Reusable command-buffer objects do not imply reusable encoded commands}{776}{subsubsection*.271}%
+\contentsline {subsubsection}{Suspended/resumed render passes change how parallel encoding is partitioned}{776}{subsubsection*.272}%
+\contentsline {subsubsection}{Attachment maps separate logical shader outputs from physical attachment slots}{777}{subsubsection*.273}%
+\contentsline {subsubsection}{Texture view pools and placement sparse resources belong to the memory system}{777}{subsubsection*.274}%
+\contentsline {subsubsection}{Metal 4 machine-learning encoding strengthens the need for one graph of heterogeneous GPU work}{777}{subsubsection*.275}%
+\contentsline {subsubsection}{The cross-backend lesson from Metal 4 and modern Vulkan is convergence around explicit resource databases}{778}{subsubsection*.276}%
+\contentsline {chapter}{\numberline {14}Execute and measure a Metal frame}{779}{chapter.14}%
+\contentsline {section}{\numberline {14.1}Execute and measure a Metal frame}{779}{section.14.1}%
+\contentsline {subsection}{\numberline {14.1.1}+ M141}{779}{subsection.14.1.1}%
+\contentsline {subsection}{\numberline {14.1.2}CURRENT VULKAN PRACTICE: LEARN THE EXECUTION CONTRACT, NOT AN OLD OBJECT CHECKLIST}{780}{subsection.14.1.2}%
+\contentsline {subsubsection}{Dynamic rendering removes an object layer, not attachment semantics}{780}{subsubsection*.277}%
+\contentsline {subsubsection}{Synchronization2 is easiest to understand as producer-to-consumer intent}{781}{subsubsection*.278}%
+\contentsline {subsubsection}{Timeline semaphores turn completion into epochs}{781}{subsubsection*.279}%
+\contentsline {subsubsection}{Descriptor indexing is not literal absence of bindings}{782}{subsubsection*.280}%
+\contentsline {subsubsection}{GPU-driven rendering reorganizes dataflow}{782}{subsubsection*.281}%
+\contentsline {subsubsection}{Use tutorial sequence, engine evolution and current docs together}{783}{subsubsection*.282}%
+\contentsline {subsection}{\numberline {14.1.3}CURRENT VULKAN DEEPENING: DESCRIPTORS ARE BECOMING MEMORY, PIPELINES ARE BECOMING MORE DYNAMIC, BUT THE CONTRACT IS STILL EXPLICIT}{783}{subsection.14.1.3}%
+\contentsline {subsubsection}{Descriptor buffers expose the fact that descriptors are encoded data}{784}{subsubsection*.283}%
+\contentsline {subsubsection}{Descriptor-buffer writes are ordinary memory hazards}{784}{subsubsection*.284}%
+\contentsline {subsubsection}{Host descriptor writes and device descriptor writes have different visibility concerns}{785}{subsubsection*.285}%
+\contentsline {subsubsection}{Descriptor buffers make allocator architecture important again}{785}{subsubsection*.286}%
+\contentsline {subsubsection}{Shader objects decouple shader-stage selection from monolithic pipeline objects}{786}{subsubsection*.287}%
+\contentsline {subsubsection}{Dynamic rendering plus shader objects pushes the backend toward semantic state tracking}{786}{subsubsection*.288}%
+\contentsline {subsubsection}{Dynamic rendering local read closes part of the old subpass gap}{787}{subsubsection*.289}%
+\contentsline {subsubsection}{Timeline semaphores are powerful, but swapchain presentation remains a special boundary}{787}{subsubsection*.290}%
+\contentsline {subsubsection}{Out-of-order submission can increase latency even when it is legal}{787}{subsubsection*.291}%
+\contentsline {subsubsection}{Streaming needs a safe descriptor publication point}{788}{subsubsection*.292}%
+\contentsline {subsubsection}{Descriptor update-after-bind is a permission with conditions, not universal mutability}{788}{subsubsection*.293}%
+\contentsline {subsubsection}{Ray queries show why acceleration structures belong to the shared scene database}{789}{subsubsection*.294}%
+\contentsline {subsubsection}{Ray-query rebuild policy is a workload tradeoff}{789}{subsubsection*.295}%
+\contentsline {subsubsection}{Mesh shaders change geometry amplification and culling location}{790}{subsubsection*.296}%
+\contentsline {subsubsection}{Fragment shading rate connects rendering policy to perception and content frequency}{790}{subsubsection*.297}%
+\contentsline {subsubsection}{Modern Vulkan study should preserve one invariant across every feature}{790}{subsubsection*.298}%
+\contentsline {subsection}{\numberline {14.1.4}METAL'S CORE EXECUTION MODEL}{791}{subsection.14.1.4}%
+\contentsline {subsection}{\numberline {14.1.5}STORAGE MODES, TILE MEMORY, DRAWABLES, FRAMES IN FLIGHT, HEAPS \& SYNCHRONIZATION}{813}{subsection.14.1.5}%
+\contentsline {chapter}{\numberline {15}Profiling and language/platform ownership}{840}{chapter.15}%
+\contentsline {subsection}{\numberline {15.0.1}PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI \& THREAD BOUNDARIES}{840}{subsection.15.0.1}%
+\contentsline {subsubsection}{First-use completion --- lifetime analysis for a frame-local attachment and a history image}{864}{subsubsection*.299}%
+\contentsline {subsection}{\numberline {15.0.2}Distinguish host allocation callbacks from device-memory allocation}{876}{subsection.15.0.2}%
+\contentsline {section}{\numberline {15.1}A generated binding is still an API boundary}{877}{section.15.1}%
+\contentsline {subsection}{\numberline {15.1.1}Choose the language boundary before choosing a generator}{878}{subsection.15.1.1}%
+\contentsline {subsection}{\numberline {15.1.2}A visual description does not identify a shader operator}{878}{subsection.15.1.2}%
+\contentsline {section}{\numberline {15.2}A platform escape hatch must also restore process-wide state}{879}{section.15.2}%
+\contentsline {subsection}{\numberline {15.2.1}Restore the state that existed before the adapter changed it}{879}{subsection.15.2.1}%
+\contentsline {subsection}{\numberline {15.2.2}Range count, byte capacity and API guarantees are different quantities}{880}{subsection.15.2.2}%
+\contentsline {chapter}{\numberline {16}Renderer evolution through resource ownership}{881}{chapter.16}%
+\contentsline {section}{\numberline {16.1}Let a renderer evolve without losing resource ownership}{881}{section.16.1}%
+\contentsline {subsection}{\numberline {16.1.1}See a frame as a small, inspectable grid}{882}{subsection.16.1.1}%
+\contentsline {subsection}{\numberline {16.1.2}Put a rendering boundary between games and graphics APIs}{883}{subsection.16.1.2}%
+\contentsline {subsubsection}{API abstraction has a price}{884}{subsubsection*.300}%
+\contentsline {subsubsection}{From vertices to useful render operations}{884}{subsubsection*.301}%
+\contentsline {paragraph}{Submit work, then flush it}{884}{paragraph*.302}%
+\contentsline {subsubsection}{Give named cameras an owner and a release path}{885}{subsubsection*.303}%
+\contentsline {subsubsection}{Camera and coordinate spaces}{885}{subsubsection*.304}%
+\contentsline {paragraph}{Give vectors clear value semantics}{885}{paragraph*.305}%
+\contentsline {paragraph}{Transform a point with its rigid body}{886}{paragraph*.306}%
+\contentsline {paragraph}{Advance orientation and find a moving point's velocity}{888}{paragraph*.307}%
+\contentsline {paragraph}{Make transform conventions visible in the data layout}{889}{paragraph*.308}%
+\contentsline {paragraph}{A transform matrix can move points and directions, but not in the same way}{891}{paragraph*.309}%
+\contentsline {subsubsection}{Keep renderer contracts small while the backend grows}{892}{subsubsection*.310}%
+\contentsline {paragraph}{Reading a matrix column without rebuilding it}{892}{paragraph*.311}%
+\contentsline {subsubsection}{What the graphics pipeline stages do}{893}{subsubsection*.312}%
+\contentsline {subsubsection}{Load a renderer through a small, platform-aware plugin contract}{893}{subsubsection*.313}%
+\contentsline {subsubsection}{Rendering features emerge through visible experiments}{894}{subsubsection*.314}%
+\contentsline {subsubsection}{Save the selected device facts for later stages}{897}{subsubsection*.315}%
+\contentsline {subsection}{\numberline {16.1.3}Choosing and integrating a graphics math library}{897}{subsection.16.1.3}%
+\contentsline {subsubsection}{Reuse geometry while varying the object transform}{898}{subsubsection*.316}%
+\contentsline {subsection}{\numberline {16.1.4}Make each 2D draw describe its own transform}{898}{subsection.16.1.4}%
+\contentsline {subsection}{\numberline {16.1.5}Load modern OpenGL entry points at the platform edge}{899}{subsection.16.1.5}%
+\contentsline {subsection}{\numberline {16.1.6}Keep the renderer frontend useful without pretending backends are identical}{900}{subsection.16.1.6}%
+\contentsline {subsection}{\numberline {16.1.7}Give a 2D renderer a clean place to be exercised}{900}{subsection.16.1.7}%
+\contentsline {subsection}{\numberline {16.1.8}Start a 2D renderer with one visible, deliberately limited draw path}{901}{subsection.16.1.8}%
+\contentsline {subsection}{\numberline {16.1.9}Put a render API under scene-level submission calls}{902}{subsection.16.1.9}%
+\contentsline {subsubsection}{A graphics context still has a concrete backend}{903}{subsubsection*.317}%
+\contentsline {subsubsection}{Separate a renderer plan from an implemented command queue}{903}{subsubsection*.318}%
+\contentsline {subsection}{\numberline {16.1.10}Build a renderer interface before investing in one graphics API}{903}{subsection.16.1.10}%
+\contentsline {subsubsection}{Add a second graphics API only after shared assumptions are ready}{904}{subsubsection*.319}%
+\contentsline {subsubsection}{Constructing a Vulkan graphics pipeline}{904}{subsubsection*.320}%
+\contentsline {subsubsection}{Keep Vulkan inputs alive through the call that consumes them}{905}{subsubsection*.321}%
+\contentsline {subsubsection}{Share a renderer contract while keeping backend facts explicit}{905}{subsubsection*.322}%
+\contentsline {subsection}{\numberline {16.1.11}Understand Vulkan setup as a chain of explicit dependencies}{905}{subsection.16.1.11}%
+\contentsline {subsubsection}{Buffer storage, reuse, and the first backend allocation}{906}{subsubsection*.323}%
+\contentsline {subsubsection}{Dynamic allocation inside renderer buffers}{907}{subsubsection*.324}%
+\contentsline {subsubsection}{Give render buffers an API-neutral owner}{908}{subsubsection*.325}%
+\contentsline {subsubsection}{Current Vulkan concepts that make the narration easier to follow}{908}{subsubsection*.326}%
+\contentsline {subsection}{\numberline {16.1.12}Read a triangle's bytes as the GPU will read them}{909}{subsection.16.1.12}%
+\contentsline {subsection}{\numberline {16.1.13}Read vertex records as bytes before asking the backend to draw them}{910}{subsection.16.1.13}%
+\contentsline {subsubsection}{Treat vertex data as an agreement between CPU and GPU}{910}{subsubsection*.327}%
+\contentsline {subsection}{\numberline {16.1.14}Make geometry, buffers and memory visibility explicit}{911}{subsection.16.1.14}%
+\contentsline {subsubsection}{A shared position is not always a shared vertex}{911}{subsubsection*.328}%
+\contentsline {paragraph}{Read a vertex as position plus the attributes the surface needs}{912}{paragraph*.329}%
+\contentsline {subsubsection}{Load six sky directions into one cubemap resource}{913}{subsubsection*.330}%
+\contentsline {subsubsection}{Let the engine prepare HDR environments for image-based lighting}{913}{subsubsection*.331}%
+\contentsline {subsubsection}{Shader modules as pipeline inputs}{914}{subsubsection*.332}%
+\contentsline {subsubsection}{Keep sampling policy with the texture use}{914}{subsubsection*.333}%
+\contentsline {subsubsection}{Connecting per-object material data and texture sampling}{914}{subsubsection*.334}%
+\contentsline {subsection}{\numberline {16.1.15}Treat a material file as a versioned contract between authoring data and shader inputs}{915}{subsection.16.1.15}%
+\contentsline {subsubsection}{Treat materials as data contracts, and validate the lighting behind them}{915}{subsubsection*.335}%
+\contentsline {subsection}{\numberline {16.1.16}Follow terrain material identity all the way to its draw}{916}{subsection.16.1.16}%
+\contentsline {subsection}{\numberline {16.1.17}Move from Phong maps to metallic and roughness with explicit defaults}{916}{subsection.16.1.17}%
+\contentsline {subsection}{\numberline {16.1.18}Keep environment-light precedence and capability requirements visible}{917}{subsection.16.1.18}%
+\contentsline {subsubsection}{Materials combine surface values with texture references}{917}{subsubsection*.336}%
+\contentsline {subsubsection}{A general shader layer and material binding}{918}{subsubsection*.337}%
+\contentsline {subsubsection}{Why tangent space is needed for normal maps}{918}{subsubsection*.338}%
+\contentsline {subsubsection}{Transparency needs an explicit ordering strategy}{919}{subsubsection*.339}%
+\contentsline {subsection}{\numberline {16.1.19}Keep descriptor arrays and image-array layers separate}{919}{subsection.16.1.19}%
+\contentsline {subsubsection}{A factory selects an implementation whose behavior still needs testing}{920}{subsubsection*.340}%
+\contentsline {subsection}{\numberline {16.1.20}Separate shader interface from backend implementation}{920}{subsection.16.1.20}%
+\contentsline {subsection}{\numberline {16.1.21}A material is shared shading code plus surface-specific data}{921}{subsection.16.1.21}%
+\contentsline {subsection}{\numberline {16.1.22}Compile shader stages, link a program, and inspect both failure points}{922}{subsection.16.1.22}%
+\contentsline {subsubsection}{Clip coordinates are not normalized device coordinates}{922}{subsubsection*.341}%
+\contentsline {subsubsection}{Return to shader compilation and linking}{924}{subsubsection*.342}%
+\contentsline {subsection}{\numberline {16.1.23}Centralize shader lookup without hiding identity and capacity rules}{924}{subsection.16.1.23}%
+\contentsline {chapter}{\numberline {17}Descriptor arrays and backend limits}{926}{chapter.17}%
+\contentsline {subsection}{\numberline {17.0.1}Model descriptor arrays as indexed data, and keep backend limits at the backend boundary}{926}{subsection.17.0.1}%
+\contentsline {subsection}{\numberline {17.0.2}A vertex array records OpenGL binding state; it does not own the buffers}{927}{subsection.17.0.2}%
+\contentsline {subsection}{\numberline {17.0.3}Pack scalar material maps only under an explicit channel contract}{927}{subsection.17.0.3}%
+\contentsline {subsection}{\numberline {17.0.4}Keep descriptor input arrays alive until the update call consumes them}{928}{subsection.17.0.4}%
+\contentsline {subsubsection}{A file-backed shader is not yet hot reload}{929}{subsubsection*.343}%
+\contentsline {subsection}{\numberline {17.0.5}One shader source can target two APIs through SPIR-V}{929}{subsection.17.0.5}%
+\contentsline {subsubsection}{Source-to-volume map}{929}{subsubsection*.344}%
+\contentsline {subsection}{\numberline {17.0.6}Treat shaders and materials as a pipeline, not just files}{930}{subsection.17.0.6}%
+\contentsline {subsubsection}{Find the missing triangle before rebuilding the renderer}{931}{subsubsection*.345}%
+\contentsline {subsubsection}{A first input-driven camera}{931}{subsubsection*.346}%
+\contentsline {paragraph}{Treat camera and movement as related modes}{932}{paragraph*.347}%
+\contentsline {subsubsection}{Per-surface response and specular light}{933}{subsubsection*.348}%
+\contentsline {subsubsection}{Reject a bound only when the plane test proves it is outside}{933}{subsubsection*.349}%
+\contentsline {paragraph}{Filter at geometry granularity}{934}{paragraph*.350}%
+\contentsline {subsection}{\numberline {17.0.7}Resize the drawable area, then decide what the camera should show}{934}{subsection.17.0.7}%
+\contentsline {subsection}{\numberline {17.0.8}Keep camera data separate from camera behavior}{935}{subsection.17.0.8}%
+\contentsline {subsection}{\numberline {17.0.9}Derive a camera from the data the renderer actually consumes}{936}{subsection.17.0.9}%
+\contentsline {subsection}{\numberline {17.0.10}Keep an orthographic camera's view and projection jobs separate}{937}{subsection.17.0.10}%
+\contentsline {subsection}{\numberline {17.0.11}Use math to answer questions the renderer can test}{937}{subsection.17.0.11}%
+\contentsline {subsubsection}{Per-object transforms with push constants}{938}{subsubsection*.351}%
+\contentsline {subsection}{\numberline {17.0.12}Render the state the simulation actually produced}{939}{subsection.17.0.12}%
+\contentsline {subsubsection}{Inspect cascades and fade shadows before their quality runs out}{939}{subsubsection*.352}%
+\contentsline {subsubsection}{Use controlled simplification and hardware counters to find a GPU bottleneck}{939}{subsubsection*.353}%
+\contentsline {subsubsection}{Choose font storage around glyph coverage and layout needs}{940}{subsubsection*.354}%
+\contentsline {subsubsection}{Choose glyph storage for the scale range you need}{940}{subsubsection*.355}%
+\contentsline {subsubsection}{Debugging lighting and surface direction}{941}{subsubsection*.356}%
+\contentsline {paragraph}{Debug the coordinate data that reaches the shader}{941}{paragraph*.357}%
+\contentsline {subsection}{\numberline {17.0.13}Diagnose a frame as a pipeline}{942}{subsection.17.0.13}%
+\contentsline {subsubsection}{Reuse geometry while keeping each object's state}{942}{subsubsection*.358}%
+\contentsline {subsubsection}{A capacity target needs a later measurement}{943}{subsubsection*.359}%
+\contentsline {subsubsection}{Measure the actual path, then keep time and network work bounded}{943}{subsubsection*.360}%
+\contentsline {subsection}{\numberline {17.0.14}Reuse geometry and choose a batch boundary from the data path}{944}{subsection.17.0.14}%
+\contentsline {subsection}{\numberline {17.0.15}Keep the OpenGL ASR example separate from the Kohi Vulkan renderer}{945}{subsection.17.0.15}%
+\contentsline {subsection}{\numberline {17.0.16}A sprite texture is an authoring reference that reaches a batched draw}{946}{subsection.17.0.16}%
+\contentsline {subsubsection}{Source-to-volume map}{946}{subsubsection*.361}%
+\contentsline {subsection}{\numberline {17.0.17}A tile map needs both a symbol table and a row convention}{947}{subsection.17.0.17}%
+\contentsline {subsubsection}{Source-to-volume map}{947}{subsubsection*.362}%
+\contentsline {subsection}{\numberline {17.0.18}A batch limit must trigger a flush before the next quad is written}{947}{subsection.17.0.18}%
+\contentsline {subsubsection}{Source-to-volume map}{948}{subsubsection*.363}%
+\contentsline {subsection}{\numberline {17.0.19}Rotating one rectangle inside a batch}{948}{subsection.17.0.19}%
+\contentsline {subsection}{\numberline {17.0.20}Keep common quad options in the renderer API}{949}{subsection.17.0.20}%
+\contentsline {subsection}{\numberline {17.0.21}A sprite sheet is a texture plus a region}{949}{subsection.17.0.21}%
+\contentsline {subsection}{\numberline {17.0.22}Batch the data that actually travels together}{950}{subsection.17.0.22}%
+\contentsline {subsubsection}{Choose textures inside a batch}{950}{subsubsection*.364}%
+\contentsline {subsection}{\numberline {17.0.23}Definitions and a compact applied exercise}{950}{subsection.17.0.23}%
+\contentsline {subsection}{\numberline {17.0.24}Measure the renderer, then choose a batch boundary}{951}{subsection.17.0.24}%
+\contentsline {subsubsection}{A frame can preserve one pass while preparing another}{952}{subsubsection*.365}%
+\contentsline {subsubsection}{Screen-space geometry as a separate rendering concern}{952}{subsubsection*.366}%
+\contentsline {subsection}{\numberline {17.0.25}Turn a visible object into a dependable frame pipeline}{953}{subsection.17.0.25}%
+\contentsline {subsubsection}{Let render views assemble frame-specific work}{953}{subsubsection*.367}%
+\contentsline {subsection}{\numberline {17.0.26}A graph describes dependencies before choosing an order}{954}{subsection.17.0.26}%
+\contentsline {subsection}{\numberline {17.0.27}Keep pass lifetime separate from frame data and scene ownership}{955}{subsection.17.0.27}%
+\contentsline {subsection}{\numberline {17.0.28}Prepare each pass's inputs according to its ordering rules}{956}{subsection.17.0.28}%
+\contentsline {subsection}{\numberline {17.0.29}Rebuild image references only after the swap chain has changed}{956}{subsection.17.0.29}%
+\contentsline {subsubsection}{A frame can be drawn only after the presentation image is acquired}{956}{subsubsection*.368}%
+\contentsline {paragraph}{Follow one frame through recording and presentation}{957}{paragraph*.369}%
+\contentsline {subsection}{\numberline {17.0.30}A small software renderer makes order dependence visible}{957}{subsection.17.0.30}%
+\contentsline {subsubsection}{Describe what every pass reads and writes}{958}{subsubsection*.370}%
+\contentsline {subsubsection}{Forward and deferred rendering move costs to different places}{959}{subsubsection*.371}%
+\contentsline {subsubsection}{A material is data interpreted by an agreed shading model}{959}{subsubsection*.372}%
+\contentsline {subsection}{\numberline {17.0.31}Choose shadow bias and filtering with the receiver geometry in view}{960}{subsection.17.0.31}%
+\contentsline {subsection}{\numberline {17.0.32}Fit light coverage to the camera only after validating every coordinate transform}{960}{subsection.17.0.32}%
+\contentsline {subsection}{\numberline {17.0.33}Why a single map loses detail}{960}{subsection.17.0.33}%
+\contentsline {subsection}{\numberline {17.0.34}Choose split distances that spend precision near the camera}{961}{subsection.17.0.34}%
+\contentsline {subsection}{\numberline {17.0.35}Fit a light projection to each slice of the camera view}{961}{subsection.17.0.35}%
+\contentsline {subsection}{\numberline {17.0.36}Read the debug view as evidence, not as a finished quality claim}{962}{subsection.17.0.36}%
+\contentsline {subsection}{\numberline {17.0.37}Keep the prototype's costs and open work visible}{962}{subsection.17.0.37}%
+\contentsline {subsection}{\numberline {17.0.38}Use different views of one image for rendering and sampling}{963}{subsection.17.0.38}%
+\contentsline {subsection}{\numberline {17.0.39}Consolidate shadow storage without claiming fewer scene renders}{963}{subsection.17.0.39}%
+\contentsline {subsection}{\numberline {17.0.40}Treat the final array-texture state as unfinished}{964}{subsection.17.0.40}%
+\contentsline {subsubsection}{A shadow is a visibility question with a coordinate convention}{964}{subsubsection*.373}%
+\contentsline {subsubsection}{Hierarchies make transform ownership visible}{964}{subsubsection*.374}%
+\contentsline {subsubsection}{Name GPU objects and inspect uniform bytes before changing equations}{965}{subsubsection*.375}%
+\contentsline {subsubsection}{Per-frame uniform data and descriptor binding}{965}{subsubsection*.376}%
+\contentsline {subsection}{\numberline {17.0.41}Treat submission and completion as separate events}{966}{subsection.17.0.41}%
+\contentsline {subsection}{\numberline {17.0.42}Grow concurrency from a dependency you can draw}{967}{subsection.17.0.42}%
+\contentsline {subsubsection}{Make light overlap visible before promising a faster frame}{968}{subsubsection*.377}%
+\contentsline {subsubsection}{Separate a dead resource from an unfinished workload}{968}{subsubsection*.378}%
+\contentsline {subsubsection}{Separate a glowing image from illumination of the room}{969}{subsubsection*.379}%
+\contentsline {subsection}{\numberline {17.0.43}From a named texture to a writable image}{970}{subsection.17.0.43}%
+\contentsline {subsection}{\numberline {17.0.44}Creating and filling the image}{970}{subsection.17.0.44}%
+\contentsline {chapter}{\numberline {18}Preparing and publishing runtime content}{972}{chapter.18}%
+\contentsline {section}{\numberline {18.1}Prepare and publish content before promising it is ready}{972}{section.18.1}%
+\contentsline {subsection}{\numberline {18.1.1}Allocate every mip level and keep the sampler synchronized with it}{972}{subsection.18.1.1}%
+\contentsline {subsection}{\numberline {18.1.2}Treat texture layout and transparency as two separate questions}{972}{subsection.18.1.2}%
+\contentsline {subsection}{\numberline {18.1.3}Debug texture coordinates before changing sampling policy}{973}{subsection.18.1.3}%
+\contentsline {subsection}{\numberline {18.1.4}Trace an image from file bytes to a correctly sampled texel}{974}{subsection.18.1.4}%
+\contentsline {subsubsection}{From decoded pixels to a sampleable Vulkan texture}{975}{subsubsection*.380}%
+\contentsline {subsubsection}{A completed load still needs permission to enter the world}{975}{subsubsection*.381}%
+\contentsline {paragraph}{Publish the result of a worker load}{977}{paragraph*.382}%
+\contentsline {subsubsection}{Reloading code needs a quiet boundary, not just a new file}{977}{subsubsection*.383}%
+\contentsline {subsubsection}{Loading image data means interpreting its layout}{978}{subsubsection*.384}%
+\contentsline {subsection}{\numberline {18.1.5}Make loading a state transition rather than a hopeful pointer}{978}{subsection.18.1.5}%
+\contentsline {subsubsection}{Resource streaming is a publication protocol, not just a background read}{979}{subsubsection*.385}%
+\contentsline {subsubsection}{From a simulated asset job to real concurrent decoding --- Gregory integration}{980}{subsubsection*.386}%
+\contentsline {subsubsection}{Runtime texture replacement and safe publication}{990}{subsubsection*.387}%
+\contentsline {subsubsection}{A named texture system with reference counting}{990}{subsubsection*.388}%
+\contentsline {subsection}{\numberline {18.1.6}Put file access behind an engine contract}{991}{subsection.18.1.6}%
+\contentsline {subsubsection}{Give game code a stable asset address}{992}{subsubsection*.389}%
+\contentsline {subsection}{\numberline {18.1.7}A content browser starts with a root and a navigation rule}{992}{subsection.18.1.7}%
+\contentsline {subsubsection}{Keep filesystem work out of the editor's frame loop}{993}{subsubsection*.390}%
+\contentsline {subsubsection}{Source-to-volume map}{994}{subsubsection*.391}%
+\contentsline {subsection}{\numberline {18.1.8}Resource and asset systems are about reliable identity and lifetime}{994}{subsection.18.1.8}%
+\contentsline {subsubsection}{Loading different asset types through resource loaders}{995}{subsubsection*.392}%
+\contentsline {subsubsection}{Runtime loading and an engine-oriented mesh cache}{995}{subsubsection*.393}%
+\contentsline {subsubsection}{Invalidate derived assets when vertex layouts change}{996}{subsubsection*.394}%
+\contentsline {subsubsection}{Importing a readable mesh format, then caching it}{996}{subsubsection*.395}%
+\contentsline {subsection}{\numberline {18.1.9}Treat assets as references plus a pipeline}{997}{subsection.18.1.9}%
+\contentsline {subsubsection}{Quiesce every callback before unloading a code module}{997}{subsubsection*.396}%
+\contentsline {subsubsection}{Failure handling and hot reload}{998}{subsubsection*.397}%
+\contentsline {subsubsection}{Let a material survive the model that introduced it}{998}{subsubsection*.398}%
+\contentsline {subsection}{\numberline {18.1.10}Wrapping images and deciding who owns them}{998}{subsection.18.1.10}%
+\contentsline {section}{\numberline {18.2}Find the few objects that can affect the next decision}{999}{section.18.2}%
+\contentsline {subsection}{\numberline {18.2.1}BVH Construction, SAH, Morton/LBVH, Traversal, Refit, Wide/Quantized BVHs and SIMD Packets}{999}{subsection.18.2.1}%
+\contentsline {subsubsection}{Reconstruction checkpoint --- compare the hierarchy with an oracle}{999}{subsubsection*.399}%
+\contentsline {chapter}{\numberline {19}Compiling renderer intent into backend work}{1028}{chapter.19}%
+\contentsline {section}{\numberline {19.1}Compile renderer intent into backend work}{1028}{section.19.1}%
+\contentsline {subsection}{\numberline {19.1.1}+ M144}{1028}{subsection.19.1.1}%
+\contentsline {subsection}{\numberline {19.1.2}MULTI-BACKEND RENDERER ARCHITECTURE}{1028}{subsection.19.1.2}%
+\contentsline {subsection}{\numberline {19.1.3}COMPLETE RENDER GRAPH}{1045}{subsection.19.1.3}%
+\contentsline {chapter}{\numberline {20}Cross-backend conversion and agreement}{1079}{chapter.20}%
+\contentsline {subsection}{\numberline {20.0.1}REAL CROSS-BACKEND CONVERSION \& AGREEMENT}{1079}{subsection.20.0.1}%
+\contentsline {chapter}{\numberline {21}Rasterizing kernels and connecting world identity}{1122}{chapter.21}%
+\contentsline {section}{\numberline {21.1}Rasterize kernels at scale and connect their identities --- world correspondence}{1122}{section.21.1}%
+\contentsline {subsection}{\numberline {21.1.1}CAPTURED WORLDS: FROM APPEARANCE FIELD TO EDITABLE, PHYSICAL SCENE}{1122}{subsection.21.1.1}%
+\contentsline {subsection}{\numberline {21.1.2}THE DEEPEST ARCHITECTURAL CONNECTION OF PHASE 25}{1156}{subsection.21.1.2}%
+\contentsline {subsection}{\numberline {21.1.3}An image-change certificate must name the edits it covers}{1161}{subsection.21.1.3}%
+\contentsline {subsubsection}{Check which transmittance the stopping test actually uses}{1163}{subsubsection*.415}%
+\contentsline {subsection}{\numberline {21.1.4}PHASE 25 VERDICT}{1176}{subsection.21.1.4}%
+\contentsline {chapter}{\numberline {A}Reference Notes}{1177}{appendix.A}%
+\contentsline {section}{\numberline {A.1}A* search and navigation contracts}{1177}{section.A.1}%
+\contentsline {subsection}{\numberline {A.1.1}Relaxation}{1177}{subsection.A.1.1}%
+\contentsline {subsection}{\numberline {A.1.2}Navigation is larger than A*}{1177}{subsection.A.1.2}%
+\contentsline {subsection}{\numberline {A.1.3}Executable reference}{1177}{subsection.A.1.3}%
+\contentsline {section}{\numberline {A.2}BVH build, traversal, and workload selection}{1178}{section.A.2}%
+\contentsline {subsection}{\numberline {A.2.1}Build choices}{1178}{subsection.A.2.1}%
+\contentsline {subsection}{\numberline {A.2.2}Traversal representation}{1178}{subsection.A.2.2}%
+\contentsline {subsection}{\numberline {A.2.3}Dynamic scenes}{1178}{subsection.A.2.3}%
+\contentsline {subsection}{\numberline {A.2.4}Executable reference}{1179}{subsection.A.2.4}%
+\contentsline {subsection}{\numberline {A.2.5}SAH, Morton and refit witness}{1179}{subsection.A.2.5}%
+\contentsline {section}{\numberline {A.3}Build graph usage requirements}{1179}{section.A.3}%
+\contentsline {subsection}{\numberline {A.3.1}Why public headers force propagation}{1180}{subsection.A.3.1}%
+\contentsline {subsection}{\numberline {A.3.2}Build graph versus include graph}{1180}{subsection.A.3.2}%
+\contentsline {subsection}{\numberline {A.3.3}Cycles and architecture}{1180}{subsection.A.3.3}%
+\contentsline {subsection}{\numberline {A.3.4}Evidence}{1180}{subsection.A.3.4}%
+\contentsline {section}{\numberline {A.4}Dot products and orthogonality}{1180}{section.A.4}%
+\contentsline {subsection}{\numberline {A.4.1}Definition and mechanism}{1180}{subsection.A.4.1}%
+\contentsline {subsection}{\numberline {A.4.2}Prerequisites}{1181}{subsection.A.4.2}%
+\contentsline {subsection}{\numberline {A.4.3}Used by}{1181}{subsection.A.4.3}%
+\contentsline {subsection}{\numberline {A.4.4}Source and navigation}{1181}{subsection.A.4.4}%
+\contentsline {section}{\numberline {A.5}GPU workgroups and synchronization}{1182}{section.A.5}%
+\contentsline {subsection}{\numberline {A.5.1}Execution barrier versus memory visibility}{1182}{subsection.A.5.1}%
+\contentsline {subsection}{\numberline {A.5.2}Subgroups}{1182}{subsection.A.5.2}%
+\contentsline {subsection}{\numberline {A.5.3}Shared memory and bank conflicts}{1182}{subsection.A.5.3}%
+\contentsline {subsection}{\numberline {A.5.4}Evidence boundary}{1182}{subsection.A.5.4}%
+\contentsline {section}{\numberline {A.6}Interface contracts and publication}{1183}{section.A.6}%
+\contentsline {subsection}{\numberline {A.6.1}Publication is a state transition}{1183}{subsection.A.6.1}%
+\contentsline {subsection}{\numberline {A.6.2}Ownership versus readiness}{1183}{subsection.A.6.2}%
+\contentsline {subsection}{\numberline {A.6.3}Failure guarantees}{1183}{subsection.A.6.3}%
+\contentsline {subsection}{\numberline {A.6.4}Evidence}{1184}{subsection.A.6.4}%
+\contentsline {section}{\numberline {A.7}Metal heaps, memoryless resources, and hazards}{1184}{section.A.7}%
+\contentsline {subsection}{\numberline {A.7.1}Heap aliasing is a lifetime proof}{1184}{subsection.A.7.1}%
+\contentsline {subsection}{\numberline {A.7.2}Hazard tracking mode}{1184}{subsection.A.7.2}%
+\contentsline {subsection}{\numberline {A.7.3}Memoryless attachments}{1185}{subsection.A.7.3}%
+\contentsline {subsection}{\numberline {A.7.4}Argument buffers and residency}{1185}{subsection.A.7.4}%
+\contentsline {subsection}{\numberline {A.7.5}Current evidence}{1185}{subsection.A.7.5}%
+\contentsline {section}{\numberline {A.8}Native GPU evidence protocol}{1185}{section.A.8}%
+\contentsline {subsection}{\numberline {A.8.1}Evidence tiers}{1185}{subsection.A.8.1}%
+\contentsline {subsection}{\numberline {A.8.2}Current branch}{1186}{subsection.A.8.2}%
+\contentsline {section}{\numberline {A.9}Render graph barrier lowering}{1186}{section.A.9}%
+\contentsline {subsection}{\numberline {A.9.1}State machine per resource version}{1186}{subsection.A.9.1}%
+\contentsline {subsection}{\numberline {A.9.2}Subresource granularity}{1187}{subsection.A.9.2}%
+\contentsline {subsection}{\numberline {A.9.3}Vulkan lowering}{1187}{subsection.A.9.3}%
+\contentsline {subsection}{\numberline {A.9.4}Metal lowering}{1187}{subsection.A.9.4}%
+\contentsline {subsection}{\numberline {A.9.5}Verification ladder}{1187}{subsection.A.9.5}%
+\contentsline {section}{\numberline {A.10}Vulkan synchronization2 and resource transitions}{1187}{section.A.10}%
+\contentsline {subsection}{\numberline {A.10.1}Producer → consumer reasoning}{1188}{subsection.A.10.1}%
+\contentsline {subsection}{\numberline {A.10.2}Image transitions add a layout contract}{1188}{subsection.A.10.2}%
+\contentsline {subsection}{\numberline {A.10.3}Queue submission and timeline semaphores}{1188}{subsection.A.10.3}%
+\contentsline {subsection}{\numberline {A.10.4}Native witness now in the repository}{1189}{subsection.A.10.4}%
+\contentsline {chapter}{\numberline {B}Source Attachments}{1190}{appendix.B}%

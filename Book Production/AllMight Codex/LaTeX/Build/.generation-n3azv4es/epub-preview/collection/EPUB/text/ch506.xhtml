@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch506.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-ad175ef3c5bf-pca-and-covariance-eigensystems" class="level2">
+<h2>PCA and covariance eigensystems</h2>
+<p>Center sample rows, then find the orthogonal directions of greatest variance. For centered <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>X</mi>
+</math>, SVD gives directions in <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>V</mi>
+</math>, scores in <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>U</mi>
+  <mi mathvariant="normal">Σ</mi>
+</math>, and covariance eigenvalues <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msubsup>
+    <mi>σ</mi>
+    <mi>i</mi>
+    <mn>2</mn>
+  </msubsup>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>. Units and feature scaling change the question; near-equal eigenvalues make individual axes unstable.</p>
+<p><strong>Use it when:</strong> describing point clouds, reducing dimensions, or estimating a best-fit plane.</p>
+<p><strong>Developed in Phase 8:</strong> PCA first centers observations so the covariance measures variation around the sample mean. The right singular vectors of centered data give principal directions, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>U</mi>
+  <mi mathvariant="normal">Σ</mi>
+</math> gives scores, and squared singular values scaled by sample count give covariance eigenvalues; feature units and small eigengaps affect interpretation. <a href="ch268.xhtml#id_02-foundations-ii-ch024-centered-measurements-reveal-principal-directions" class="wikilink">centering and principal axes (Mathematics for Visual Computing, Part 1, Ch. 8)</a> · <a href="ch268.xhtml#id_02-foundations-ii-ch024-plane-fits-eigengaps-and-interpretation-of-uncertain-components" class="wikilink">plane fits and eigengaps (Mathematics for Visual Computing, Part 1, Ch. 8)</a></p>
+<p><strong>Phase 9–10 development:</strong> For a random vector <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>X</mi>
+</math> with finite second moments, covariance is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="normal">Σ</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="double-struck">E</mi>
+  </mrow>
+  <mo stretchy="false">[</mo>
+  <mo stretchy="false">(</mo>
+  <mi>X</mi>
+  <mo>−</mo>
+  <mi>μ</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <mi>X</mi>
+  <mo>−</mo>
+  <mi>μ</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mi>T</mi>
+  </msup>
+  <mo stretchy="false">]</mo>
+</math>. For every vector <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>v</mi>
+    <mi>T</mi>
+  </msup>
+  <mi mathvariant="normal">Σ</mi>
+  <mi>v</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="double-struck">E</mi>
+  </mrow>
+  <mo stretchy="false">[</mo>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>v</mi>
+    <mi>T</mi>
+  </msup>
+  <mo stretchy="false">(</mo>
+  <mi>X</mi>
+  <mo>−</mo>
+  <mi>μ</mi>
+  <mo stretchy="false">)</mo>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">]</mo>
+  <mo>≥</mo>
+  <mn>0</mn>
+</math>, so covariance is positive semidefinite. Its eigenvectors give uncorrelated principal directions and the eigenvalues give variance along them. Whitening rescales nonzero-variance directions and needs a stated policy for zero or tiny eigenvalues. A Gaussian kernel used to model rendering footprints is a spatial distribution model, not automatically a statement about epistemic uncertainty.</p>
+<section id="appendix-ad175ef3c5bf-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<p><a href="ch448.xhtml#appendix-0b3be18411f9-eigenvalues-and-eigenspaces" class="wikilink">Eigenvalues and eigenspaces</a>, <a href="ch329.xhtml#appendix-1fad5e7f36fa-singular-value-decomposition" class="wikilink">Singular value decomposition (Light Transport and Image Synthesis, Part 1, Reference notes: Singular value decomposition)</a>, <a href="ch480.xhtml#appendix-50d2ea3c9b26-symmetric-positive-definite-matrices-and-cholesky" class="wikilink">Symmetric positive-definite matrices and Cholesky</a>. - <a href="ch388.xhtml#appendix-54c383df9992-expectation-covariance-and-dependence" class="wikilink">Expectation, covariance, and dependence (Spatial Worlds, Engine State, and Simulation, Part 1, Reference notes: Expectation, covariance, and dependence)</a> - <a href="ch452.xhtml#appendix-12bbe185dbe5-multivariate-gaussian-distributions-and-whitening" class="wikilink">Multivariate Gaussian distributions and whitening</a> - <a href="ch482.xhtml#appendix-541306fdbc1b-moore-penrose-pseudoinverse" class="wikilink">Moore-Penrose pseudoinverse</a> - <a href="ch511.xhtml#appendix-c3421e6b4f2c-qr-factorization-and-least-squares" class="wikilink">QR factorization and least squares</a></p>
+</section>
+<section id="appendix-ad175ef3c5bf-used-by" class="level3">
+<h3>Used by</h3>
+<p><a href="ch490.xhtml#appendix-73f5bcf7a462-polar-decomposition" class="wikilink">Polar decomposition</a>, <a href="ch461.xhtml#appendix-221a483bec2d-matrix-factorization-choices" class="wikilink">Matrix factorization choices</a>.</p>
+<p><strong>Teaching path:</strong> <a href="ch268.xhtml#id_02-foundations-ii-ch024-pca-turns-a-cloud-of-points-into-measured-variation" class="wikilink">PCA from data (Mathematics for Visual Computing, Part 1, Ch. 8)</a>.</p>
+</section>
+<section id="appendix-ad175ef3c5bf-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch267.xhtml#id_02-foundations-ii-ch023-expected-values-describe-centers-covariance-describes-dependence" class="wikilink">Phase 10 teaching section (Mathematics for Visual Computing, Part 1, Ch. 7)</a></li>
+<li><a href="ch268.xhtml#id_02-foundations-ii-ch024-waiting-times-event-counts-and-covariance-geometry" class="wikilink">Phase 10 teaching section (Mathematics for Visual Computing, Part 1, Ch. 8)</a></li>
+<li><a href="ch094.xhtml#appendix-cb5af353ef77-probability-and-uncertainty-visual-recall" class="wikilink">Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)</a> · Phase 10 visual recall</li>
+</ul>
+</section>
+</section>
+</body>
+</html>

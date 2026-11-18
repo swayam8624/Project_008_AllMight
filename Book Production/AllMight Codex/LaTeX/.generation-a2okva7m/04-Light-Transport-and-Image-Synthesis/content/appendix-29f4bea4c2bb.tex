@@ -1,0 +1,53 @@
+\hypertarget{appendix-29f4bea4c2bb}{}\label{referencestart:appendix-29f4bea4c2bb}
+\section{Constrained optimization and inverse kinematics}\label{appendix-29f4bea4c2bb-constrained-optimization-and-inverse-kinematics}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} Phase 9
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-29f4bea4c2bb-definition-and-mechanism}
+
+Optimization chooses parameters to minimize an objective while satisfying constraints. Gradient descent steps opposite the gradient; Newton's method also uses curvature, while quasi-Newton methods estimate curvature from gradient changes. Constraints may be enforced by parameterization, penalty terms, projection, or constrained solvers. In inverse kinematics, the parameters are joint angles and the objective measures distance between an end effector and its target. Forward kinematics maps angles to a hand or foot position; its Jacobian maps small joint changes to small endpoint changes. A damped least-squares step solves a stabilized linear system to reduce target error without exploding near singular poses. Joint limits, collisions, and multiple valid solutions make initialization and constraints important. The same framework applies to fitting cameras, deforming meshes, or matching image observations.
+
+\end{allmightroledefinition}
+
+\subsubsection{Phase 9--10 development}\label{appendix-29f4bea4c2bb-phase-910-development}
+
+An optimization problem specifies an objective, variables, and equality or inequality constraints before an algorithm is selected. A gradient step uses first-order information; Newton and quasi-Newton steps add curvature, while line searches or trust regions control how far a local model is trusted. For nonlinear least squares, Gauss-Newton approximates curvature from the residual Jacobian and Levenberg-Marquardt damps the resulting system. Lagrange multipliers and KKT conditions describe constrained stationary points under their regularity assumptions. These local conditions do not by themselves prove global optimality.
+
+\subsection{Prerequisites}\label{appendix-29f4bea4c2bb-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1fad5e7f36fa]{Singular value decomposition}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-1bae9457dbc3}{Coordinate frames and change of basis (Vision, XR, and Playable Worlds, Reference notes: Coordinate frames and change of basis)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-29f4bea4c2bb-used-by}
+
+\begin{itemize}
+\item
+  {Worlds, Images and Inference}
+\item
+  \hyperref[appendix-40df0855b4a7]{Automatic differentiation and backpropagation}
+\item
+  \hyperref[appendix-a9ba01fa72a6]{Collision barriers and continuous detection}
+\item
+  \hyperref[appendix-2c568f05ee34]{Latent-variable models and generative flows}
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation/main.pdf\#nameddest=appendix-7107009c505b}{Local rigidity and mesh orientation fields (Geometry, Cameras, and Image Formation, Reference notes: Local rigidity and mesh orientation fields)}
+\item
+  \hyperref[appendix-b0c42da325f1]{Perception feedback and robot learning}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-54c8f5828387}{Newton and quasi-Newton optimization (Vision, XR, and Playable Worlds, Reference notes: Newton and quasi-Newton optimization)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-2c2df8345991}{Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt (Vision, XR, and Playable Worlds, Reference notes: Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=appendix-8836553d56fc}{Implicit differentiation and parameter sensitivities (Vision, XR, and Playable Worlds, Reference notes: Implicit differentiation and parameter sensitivities)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-29f4bea4c2bb-full-teaching-explanation}
+
+\href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch029-optimization-constraints-and-inverse-kinematics}{Optimization, constraints, and inverse kinematics (Spatial Worlds, Engine State, and Simulation, Ch. 10)} · \href{../05-Spatial-Worlds-Engine-State-and-Simulation/main.pdf\#nameddest=04-visual-computing-ii-ch029-scene-graphs-and-articulated-geometry}{Scene graphs and articulated geometry (Spatial Worlds, Engine State, and Simulation, Ch. 10)} · \href{../07-Vision-XR-and-Playable-Worlds/main.pdf\#nameddest=04-visual-computing-ii-ch032-pose-estimation-transforms-and-robust-fitting}{Pose estimation, transforms, and robust fitting (Vision, XR, and Playable Worlds, Ch. 3)} - \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch026-optimization-and-inverse-problems}{Phase 9 teaching section (Mathematics for Visual Computing, Ch. 10)} - \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-adf48f5dc5c1}{Visual Recall/09 - Calculus and Optimization - Visual Recall.md (Bits, Programs, and Reliable Systems, Reference notes: 09 - Calculus and Optimization - Visual Recall)} · Phase 9 visual recall

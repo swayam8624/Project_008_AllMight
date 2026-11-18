@@ -1,0 +1,4453 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch413.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_01-foundations-i-ch009-gpu-memory-divergence-atomics-and-ordering" class="level2">
+<h2>GPU Memory, Divergence, Atomics, and Ordering</h2>
+<p><a href="ch410.xhtml#id_06-GPU-Architecture-and-Real-Time-Rendering" class="wikilink">Reading map</a> · <a href="ch411.xhtml#id_01-foundations-i-ch008-graphs-search-and-gpu-scheduling" class="wikilink">Previous chapter</a> · <a href="ch415.xhtml#id_01-foundations-i-ch013-open-vulkan-devices-and-describe-resources" class="wikilink">Next chapter</a></p>
+<p>The GPU’s memory spaces and execution model shape performance and correctness together. This chapter explains memory access, caches, divergence, subgroups, atomics, and ordering as contracts that kernel authors must reason about.</p>
+<p><strong>By the end:</strong> Predict how memory placement, branch divergence, synchronization, and atomic ordering affect a GPU kernel.</p>
+<p><strong>Recall question:</strong> Why can a memory model that appears unified still require explicit reasoning about access cost and visibility?</p>
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 13019–16355; source-span SHA256 97747b6c97e94bf083c6a849b1d49ce42a8620679d0c96f200ff99ada6dbc21d. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_01-foundations-i-ch009-memory-divergence-subgroups-atomics-ordering" class="level4">
+<h4>MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS &amp; ORDERING</h4>
+<p><strong>Device/global memory</strong></p>
+<p>Device memory is the large memory space holding things such as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>vertex buffers</mtext>
+  <mo>,</mo>
+  <mtext>textures</mtext>
+  <mo>,</mo>
+  <mtext>material arrays</mtext>
+  <mo>,</mo>
+  <mtext>Gaussian records</mtext>
+  <mo>,</mo>
+  <mtext>BVHs</mtext>
+  <mo>,</mo>
+  <mtext>scan buffers</mtext>
+  <mo>.</mo>
+</math>
+<p>It is huge compared with registers/threadgroup storage.</p>
+<p>It is also much higher latency.</p>
+<p>GPU programming therefore revolves around:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>use device memory efficiently and reuse data closer to computation whenever possible</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Unified memory does not remove GPU memory behavior</strong></p>
+<p>On Apple silicon, CPU and GPU can share physical system memory.</p>
+<p>That eliminates some discrete-GPU PCIe transfer problems.</p>
+<p>It does <strong>not</strong> mean:</p>
+<blockquote>
+<p>GPU memory access patterns no longer matter.</p>
+</blockquote>
+<p>The GPU still has:</p>
+<ul>
+<li>caches,</li>
+<li>transaction widths,</li>
+<li>load/store units,</li>
+<li>coalescing behavior,</li>
+<li>cache-line effects.</li>
+</ul>
+<p>A random gather remains far more expensive than a contiguous stream merely because CPU and GPU share DRAM.</p>
+<hr />
+<p><strong>GPU caches</strong></p>
+<p>A simplified hierarchy might be conceptualized as:</p>
+<pre id="q2nq6h" class="text"><code>registers
+    ↓
+threadgroup/shared memory
+    ↓
+local/on-chip cache
+    ↓
+larger shared cache
+    ↓
+device DRAM</code></pre>
+<p>Exact organizations vary heavily between GPUs.</p>
+<p>Therefore engine code should optimize for universal principles:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>locality</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>reuse</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>coalesced transactions</mtext>
+  <mo>,</mo>
+</math>
+<p>rather than assuming one vendor’s exact cache dimensions.</p>
+<hr />
+<p><strong>Constant / uniform memory</strong></p>
+<p>Some shader data is identical across many lanes:</p>
+<pre id="xfh30n" class="text"><code>camera matrix
+frame constants
+light count
+viewport size</code></pre>
+<p>GPU architectures and APIs provide read-only/uniform access mechanisms optimized for this use case.</p>
+<p>If every lane requests the same address, the hardware may broadcast/cached-deliver efficiently.</p>
+<p>Contrast that with:</p>
+<div class="sourceCode" id="id_7e3tbt"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="id_7e3tbt-1"><a href="#id_7e3tbt-1" aria-hidden="true" tabindex="-1"></a>constants<span class="op">[</span>laneID<span class="op">]</span></span></code></pre></div>
+<p>where each lane accesses a different location.</p>
+<p>The first is genuinely uniform.</p>
+<p>The second merely happens to reside in a buffer named <code>constant</code>.</p>
+<hr />
+<p><strong>Texture cache</strong></p>
+<p>Textures are usually sampled with strong 2D spatial locality.</p>
+<p>Neighboring fragment invocations tend to access neighboring texels.</p>
+<p>Texture hardware is therefore optimized around:</p>
+<ul>
+<li>spatial locality,</li>
+<li>dedicated caching,</li>
+<li>address modes,</li>
+<li>filtering.</li>
+</ul>
+<p>Texture cache behavior differs from a plain linear-buffer cache.</p>
+<p>This is why an image should often be represented as an actual texture when you need image-sampling semantics rather than manually implementing filtered random buffer reads.</p>
+<hr />
+<p><strong>Memory coalescing</strong></p>
+<p>Suppose subgroup lanes read:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo>+</mo>
+  <mtext>lane</mtext>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Addresses are contiguous:</p>
+<pre id="id_4d98r5" class="text"><code>lane 0 → A[100]
+lane 1 → A[101]
+lane 2 → A[102]
+...</code></pre>
+<p>The memory system may service many lane requests with a small number of transactions.</p>
+<p>This is coalescing.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>many lane accesses</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>few wide memory transactions</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is ideal.</p>
+<hr />
+<p><strong>KairoGPU vector multiply has excellent access locality</strong></p>
+<p>Thread:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+</math>
+<p>loads:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>h</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>r</mi>
+  <mi>h</mi>
+  <mi>s</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+</math>
+<p>and writes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Adjacent threads use adjacent values.</p>
+<p>So memory traffic is approximately:</p>
+<pre id="r4zgcd" class="text"><code>lane 0 → lhs[0]
+lane 1 → lhs[1]
+...</code></pre>
+<p>This is almost the ideal streaming GPU workload.</p>
+<p>It is a useful baseline against which irregular workloads can be compared.</p>
+<hr />
+<p><strong>Alignment</strong></p>
+<p>Suppose a memory transaction naturally covers some aligned region.</p>
+<p>A contiguous access beginning exactly at the region boundary can require fewer transactions than one straddling boundaries.</p>
+<p>For example, conceptually:</p>
+<pre id="yfpnbu" class="text"><code>aligned:
+|----------transaction----------|
+[ lane data .................... ]
+
+misaligned:
+|----------T0----------|
+               [ lane data ............ ]
+                    |----------T1----------|</code></pre>
+<p>The exact transaction width depends on hardware.</p>
+<p>The universal principle is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>naturally aligned contiguous data makes coalescing easier</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Strided access</strong></p>
+<p>Consider:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">[</mo>
+  <mtext>lane</mtext>
+  <mo>×</mo>
+  <mn>32</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Adjacent lanes now read values separated by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>32</mn>
+</math>
+<p>elements.</p>
+<p>Instead of touching one compact cache region, a subgroup may touch dozens of cache lines.</p>
+<p>Bandwidth efficiency collapses.</p>
+<p>This is why a matrix should be tiled or transposed appropriately rather than having every thread walk a poorly oriented column directly from global memory.</p>
+<hr />
+<p><strong>AoS versus SoA</strong></p>
+<p>Suppose:</p>
+<div class="sourceCode" id="id_4azajn"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="id_4azajn-1"><a href="#id_4azajn-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Particle</span>
+<span id="id_4azajn-2"><a href="#id_4azajn-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="id_4azajn-3"><a href="#id_4azajn-3" aria-hidden="true" tabindex="-1"></a>    Vec3 Position<span class="op">;</span></span>
+<span id="id_4azajn-4"><a href="#id_4azajn-4" aria-hidden="true" tabindex="-1"></a>    Vec3 Velocity<span class="op">;</span></span>
+<span id="id_4azajn-5"><a href="#id_4azajn-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Mass<span class="op">;</span></span>
+<span id="id_4azajn-6"><a href="#id_4azajn-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> Lifetime<span class="op">;</span></span>
+<span id="id_4azajn-7"><a href="#id_4azajn-7" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Array of structures:</p>
+<pre id="id_9euomv" class="text"><code>P0 V0 M0 L0
+P1 V1 M1 L1
+...</code></pre>
+<p>If a kernel only needs positions, it loads irrelevant fields or jumps with a large structure stride.</p>
+<p>Structure of arrays:</p>
+<pre id="atbpdt" class="text"><code>Positions[]
+Velocities[]
+Masses[]
+Lifetimes[]</code></pre>
+<p>lets adjacent lanes stream only the required field.</p>
+<p>SoA often improves GPU bandwidth.</p>
+<p>But if every invocation uses the full record, AoS may be perfectly reasonable.</p>
+<p>Data layout must match access pattern.</p>
+<hr />
+<p><strong>Gather-like access</strong></p>
+<p>Suppose:</p>
+<div class="sourceCode" id="yx7r08"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="yx7r08-1"><a href="#yx7r08-1" aria-hidden="true" tabindex="-1"></a>value <span class="op">=</span></span>
+<span id="yx7r08-2"><a href="#yx7r08-2" aria-hidden="true" tabindex="-1"></a>    objects<span class="op">[</span></span>
+<span id="yx7r08-3"><a href="#yx7r08-3" aria-hidden="true" tabindex="-1"></a>        indices<span class="op">[</span>id<span class="op">]</span></span>
+<span id="yx7r08-4"><a href="#yx7r08-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">];</span></span></code></pre></div>
+<p><code>indices[id]</code> may be arbitrary.</p>
+<p>Adjacent lanes might fetch completely unrelated addresses.</p>
+<p>That is a gather.</p>
+<p>Examples include:</p>
+<ul>
+<li>BVH traversal,</li>
+<li>indirect particle lists,</li>
+<li>mesh adjacency,</li>
+<li>sorted Gaussian references.</li>
+</ul>
+<p>These patterns are often cache-latency dominated.</p>
+<p>GPU algorithms therefore frequently <strong>sort or bin data first</strong> to make later gathers more coherent.</p>
+<p>This is exactly what your Gaussian pipeline is doing.</p>
+<hr />
+<p><strong>Maveb Gaussian sorting is a locality transformation</strong></p>
+<p>The Gaussian pipeline generates entries keyed by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mtext>depth</mtext>
+  <mo>,</mo>
+  <mtext>tile ID</mtext>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and sorts them so entries for one tile become contiguous.</p>
+<p>Then the composite kernel can process one pixel/tile range without globally searching all Gaussians.</p>
+<p>So sorting is not merely:</p>
+<blockquote>
+<p>I need things alphabetically ordered.</p>
+</blockquote>
+<p>It transforms an irregular gather problem into a locally traversable range problem.</p>
+<p>That is an important GPU-design pattern.</p>
+<hr />
+<p><strong>Branch divergence</strong></p>
+<p>Suppose lanes encounter:</p>
+<div class="sourceCode" id="id_86rlbx"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="id_86rlbx-1"><a href="#id_86rlbx-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>material <span class="op">==</span> Glass<span class="op">)</span></span>
+<span id="id_86rlbx-2"><a href="#id_86rlbx-2" aria-hidden="true" tabindex="-1"></a>    TraceGlass<span class="op">();</span></span>
+<span id="id_86rlbx-3"><a href="#id_86rlbx-3" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span></span>
+<span id="id_86rlbx-4"><a href="#id_86rlbx-4" aria-hidden="true" tabindex="-1"></a>    TraceDiffuse<span class="op">();</span></span></code></pre></div>
+<p>If every lane selects Glass, subgroup runs one path efficiently.</p>
+<p>If half choose Glass and half Diffuse, hardware must execute both instruction paths with different active masks.</p>
+<p>Conceptually:</p>
+<pre id="c7d0fn" class="text"><code>execute Glass:
+    lanes 0,2,5 active
+    others disabled
+
+execute Diffuse:
+    remaining lanes active</code></pre>
+<p>That is divergence.</p>
+<hr />
+<p><strong>Divergence cost</strong></p>
+<p>A simple mental model is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>divergent</mtext>
+    </mrow>
+  </msub>
+  <mo>≈</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>B</mi>
+  </msub>
+</math>
+<p>rather than:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>A</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>B</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Real hardware control flow is more sophisticated, but this captures the danger.</p>
+<p>If each lane enters a different deep path, SIMD/SIMT utilization can collapse.</p>
+<p>This is exactly why wavefront path tracing regrouped rays by material/event in Pass 8.</p>
+<hr />
+<p><strong>Uniform branching is cheap</strong></p>
+<p>This:</p>
+<div class="sourceCode" id="id_3mrjt7"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="id_3mrjt7-1"><a href="#id_3mrjt7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>frameDebugMode <span class="op">==</span> <span class="dv">3</span><span class="op">)</span></span></code></pre></div>
+<p>is often uniform across an entire dispatch.</p>
+<p>Every lane chooses the same branch.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>branch instruction</mtext>
+          <mo>≠</mo>
+          <mtext>divergence</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The expensive thing is differing control flow across lanes of one subgroup.</p>
+<hr />
+<p><strong>Last-workgroup bounds divergence</strong></p>
+<p>A check like:</p>
+<pre id="jynsrg" class="metal"><code>if (index &gt;= count)
+    return;</code></pre>
+<p>typically diverges only in the final partially occupied subgroup/workgroup.</p>
+<p>For large arrays, this cost is tiny.</p>
+<p>Do not contort algorithms to eliminate a single tail bounds check.</p>
+<hr />
+<p><strong>Reconvergence</strong></p>
+<p>After divergent branches:</p>
+<div class="sourceCode" id="x2i0x6"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="x2i0x6-1"><a href="#x2i0x6-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>condition<span class="op">)</span></span>
+<span id="x2i0x6-2"><a href="#x2i0x6-2" aria-hidden="true" tabindex="-1"></a>    A<span class="op">();</span></span>
+<span id="x2i0x6-3"><a href="#x2i0x6-3" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span></span>
+<span id="x2i0x6-4"><a href="#x2i0x6-4" aria-hidden="true" tabindex="-1"></a>    B<span class="op">();</span></span>
+<span id="x2i0x6-5"><a href="#x2i0x6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="x2i0x6-6"><a href="#x2i0x6-6" aria-hidden="true" tabindex="-1"></a>C<span class="op">();</span></span></code></pre></div>
+<p>lanes eventually reconverge at <code>C()</code>.</p>
+<p>GPU control-flow hardware/compiler tracks active masks and reconvergence structure.</p>
+<p>The programmer mainly needs to understand that divergent branches consume execution time until reconvergence.</p>
+<hr />
+<p><strong>Predication</strong></p>
+<p>For a tiny branch such as:</p>
+<div class="sourceCode" id="whgcgz"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="whgcgz-1"><a href="#whgcgz-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>x <span class="op">&gt;</span> <span class="dv">0</span><span class="op">)</span></span>
+<span id="whgcgz-2"><a href="#whgcgz-2" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> a<span class="op">;</span></span>
+<span id="whgcgz-3"><a href="#whgcgz-3" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span></span>
+<span id="whgcgz-4"><a href="#whgcgz-4" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> b<span class="op">;</span></span></code></pre></div>
+<p>compiler may execute both simple possibilities and select with a predicate rather than actually branching.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>y</mi>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>?</mo>
+  <mi>a</mi>
+  <mo>:</mo>
+  <mi>b</mi>
+  <mo>.</mo>
+</math>
+<p>Predication avoids branch-control overhead but executes some unnecessary instructions.</p>
+<p>It is excellent for short branches.</p>
+<p>Terrible for giant expensive branches.</p>
+<hr />
+<p><strong>Subgroup vote operations</strong></p>
+<p>Subgroup operations let lanes cooperate without going through threadgroup memory.</p>
+<p>Examples conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>any</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>all</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ballot</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Suppose a ray subgroup wants to know:</p>
+<blockquote>
+<p>Does any ray remain active?</p>
+</blockquote>
+<p>A subgroup-wide <code>any</code> can answer quickly.</p>
+<p>Ballot returns an active-bit mask useful for compaction/ranking.</p>
+<hr />
+<p><strong>Subgroup shuffle</strong></p>
+<p>Shuffle allows one lane to read a value held in another lane’s register.</p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="kjzl1q"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="kjzl1q-1"><a href="#kjzl1q-1" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span></span>
+<span id="kjzl1q-2"><a href="#kjzl1q-2" aria-hidden="true" tabindex="-1"></a>    shuffle<span class="op">(</span>value<span class="op">,</span> sourceLane<span class="op">);</span></span></code></pre></div>
+<p>No shared memory array.</p>
+<p>No ordinary load/store.</p>
+<p>This makes reductions and scans inside a subgroup extremely efficient.</p>
+<p>For example:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">←</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>+</mo>
+      <mn>16</mn>
+    </mrow>
+  </msub>
+</math>
+<p>then offsets 8,4,2,1 can reduce a subgroup.</p>
+<hr />
+<p><strong>Cross-API subgroup terminology</strong></p>
+<p>Your codebase spans several worlds.</p>
+<p><code>KairoSIMD</code> exposes explicit CPU vectors.</p>
+<p>Metal exposes <code>simdgroup</code> intrinsics.</p>
+<p>Vulkax’s backend capability model already contains:</p>
+<div class="sourceCode" id="id_1hu377"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="id_1hu377-1"><a href="#id_1hu377-1" aria-hidden="true" tabindex="-1"></a>Feature<span class="op">::</span>Subgroups</span></code></pre></div>
+<p>alongside:</p>
+<div class="sourceCode" id="id_4aem6v"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="id_4aem6v-1"><a href="#id_4aem6v-1" aria-hidden="true" tabindex="-1"></a>Compute</span>
+<span id="id_4aem6v-2"><a href="#id_4aem6v-2" aria-hidden="true" tabindex="-1"></a>StorageBuffers</span>
+<span id="id_4aem6v-3"><a href="#id_4aem6v-3" aria-hidden="true" tabindex="-1"></a>StorageImages</span>
+<span id="id_4aem6v-4"><a href="#id_4aem6v-4" aria-hidden="true" tabindex="-1"></a>Atomics</span>
+<span id="id_4aem6v-5"><a href="#id_4aem6v-5" aria-hidden="true" tabindex="-1"></a>Float16</span></code></pre></div>
+<p>That is the correct engine-level approach:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>treat subgroup capability as a backend capability, not as an assumption</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Maveb uses real subgroup reductions</strong></p>
+<p>Its radix histogram performs:</p>
+<pre id="z1r98r" class="metal"><code>const uint matches =
+    digit == bucket ? 1 : 0;
+
+const uint total =
+    simd_sum(matches);
+
+if (lane == 0)
+    simdCounts[
+        simdGroup][bucket] =
+        total;</code></pre>
+<p>This is beautiful.</p>
+<p>Instead of every thread performing a global atomic increment:</p>
+<pre id="nh6bpq" class="text"><code>atomic histogram[bucket]++</code></pre>
+<p>each subgroup first aggregates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>one count per bucket per subgroup</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That drastically reduces contention.</p>
+<p>This single kernel demonstrates M128 parts 2128, 2130 and 2133 in real production-like code.</p>
+<hr />
+<p><strong>Atomic operations</strong></p>
+<p>An atomic read-modify-write guarantees that competing threads do not lose updates.</p>
+<p>For example:</p>
+<div class="sourceCode" id="xpapkm"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="xpapkm-1"><a href="#xpapkm-1" aria-hidden="true" tabindex="-1"></a>atomic_fetch_add<span class="op">(</span>counter<span class="op">,</span> <span class="dv">1</span><span class="op">);</span></span></code></pre></div>
+<p>Two threads cannot both read 5 and both write 6.</p>
+<p>Atomic result becomes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>7.</mn>
+</math>
+<p>Without atomicity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>5</mn>
+  <mo stretchy="false">→</mo>
+  <mn>6</mn>
+</math>
+<p>could occur twice with one increment lost.</p>
+<hr />
+<p><strong>Atomics are not free serialization breakers</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+</math>
+<p>threads all increment one counter.</p>
+<p>The operation is correct.</p>
+<p>But all accesses contend on the same memory location.</p>
+<p>At some level they must serialize.</p>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>atomics solve correctness, not scalability</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The algorithm should reduce contention.</p>
+<hr />
+<p><strong>Atomic contention</strong></p>
+<p>Compare:</p>
+<div class="sourceCode" id="id_3nct9g"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="id_3nct9g-1"><a href="#id_3nct9g-1" aria-hidden="true" tabindex="-1"></a>atomicAdd<span class="op">(</span>globalCounter<span class="op">,</span> <span class="dv">1</span><span class="op">);</span></span></code></pre></div>
+<p>executed by every thread,</p>
+<p>against:</p>
+<pre id="oah6qe" class="text"><code>each subgroup counts locally
+one lane adds subgroup count</code></pre>
+<p>For subgroup size <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math>:</p>
+<p>atomic count falls roughly from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+</math>
+<p>to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>S</mi>
+  <mo>.</mo>
+</math>
+<p>Aggregate at workgroup level and it may drop further to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>group</mtext>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>This is a fundamental pattern:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>aggregate locally, atomically merge globally</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Maveb does this explicitly</strong></p>
+<p>Its parallel radix histogram first computes:</p>
+<pre id="l7udrw" class="metal"><code>simd_sum(matches)</code></pre>
+<p>then stores subgroup-level counts into:</p>
+<pre id="af4u60" class="metal"><code>threadgroup uint
+simdCounts[32][16];</code></pre>
+<p>After a barrier, only a small set of threads combines subgroup counts into one group histogram.</p>
+<p>That avoids a global atomic for every key.</p>
+<p>Exactly what M128 asks you to understand.</p>
+<hr />
+<p><strong>Atomic memory ordering</strong></p>
+<p>Atomicity and memory ordering are separate.</p>
+<p>Maveb often uses:</p>
+<pre id="id_7dyn47" class="metal"><code>memory_order_relaxed</code></pre>
+<p>because it needs the counter update itself to be atomic but does not necessarily require that operation to impose ordering on unrelated memory writes.</p>
+<p>General rule:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>atomic operation</mtext>
+          <mo>≠</mo>
+          <mtext>global synchronization barrier</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>If another memory dependency exists, it must be expressed separately.</p>
+<hr />
+<p><strong>Workgroup barrier</strong></p>
+<p>Maveb’s scan uses:</p>
+<pre id="jow2md" class="metal"><code>threadgroup_barrier(
+    mem_flags::mem_threadgroup);</code></pre>
+<p>This provides a synchronization point for invocations of one threadgroup and visibility of relevant threadgroup-memory writes.</p>
+<p>It does <strong>not</strong> synchronize another workgroup somewhere else on the GPU.</p>
+<p>That is perhaps the most important synchronization boundary in compute programming.</p>
+<hr />
+<p><strong>Barrier convergence requirement</strong></p>
+<p>Suppose:</p>
+<div class="sourceCode" id="sp9bsz"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="sp9bsz-1"><a href="#sp9bsz-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>localIndex <span class="op">&lt;</span> <span class="dv">10</span><span class="op">)</span></span>
+<span id="sp9bsz-2"><a href="#sp9bsz-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="sp9bsz-3"><a href="#sp9bsz-3" aria-hidden="true" tabindex="-1"></a>    threadgroup_barrier<span class="op">(...);</span></span>
+<span id="sp9bsz-4"><a href="#sp9bsz-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>but the workgroup contains 256 invocations.</p>
+<p>Only 10 reach the barrier.</p>
+<p>The others do not.</p>
+<p>That is fundamentally invalid synchronization logic.</p>
+<p>Workgroup barriers generally need to be reached coherently by all participating workgroup threads.</p>
+<p>This is why scan code places barriers outside conditional bodies even when only some lanes update data.</p>
+<p>Maveb does exactly this correctly.</p>
+<hr />
+<p><strong>No device-wide barrier inside a normal workgroup kernel</strong></p>
+<p>Suppose group 0 computes a partial result and group 1 needs it.</p>
+<p>You cannot generally do:</p>
+<div class="sourceCode" id="o1fakh"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="o1fakh-1"><a href="#o1fakh-1" aria-hidden="true" tabindex="-1"></a>device_barrier_for_every_workgroup<span class="op">();</span></span></code></pre></div>
+<p>mid-dispatch.</p>
+<p>Workgroups can execute in any order and may not all be resident simultaneously.</p>
+<p>Trying to implement a global spin barrier can deadlock:</p>
+<p>resident groups wait for unscheduled groups that cannot start because the resident groups are occupying all resources.</p>
+<p>The correct structure is often:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>dispatch A</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>global dependency</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>dispatch B</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Maveb’s scan is a real multi-dispatch global synchronization algorithm</strong></p>
+<p>Its pipeline performs conceptually:</p>
+<pre id="id_0mnqgj" class="text"><code>dispatch:
+    scan each 256-element block
+
+dispatch:
+    scan block sums
+
+dispatch:
+    add block offsets</code></pre>
+<p>No workgroup barrier could perform this entire global scan by itself because block 7 cannot safely synchronize with block 2.</p>
+<p>The dispatch boundary becomes the algorithmic phase boundary.</p>
+<p>On different graphics APIs, the precise execution/memory dependency mechanism differs, but the architecture remains:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>global synchronization</mtext>
+          <mo stretchy="false">⇒</mo>
+          <mtext>kernel/dispatch phase decomposition</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+</section>
+<section id="id_01-foundations-i-ch009-general-compute-parallel-algorithms" class="level4">
+<h4>GENERAL COMPUTE &amp; PARALLEL ALGORITHMS</h4>
+<p><strong>Compute shaders are general GPU kernels</strong></p>
+<p>A compute shader does not need:</p>
+<ul>
+<li>vertices,</li>
+<li>triangles,</li>
+<li>rasterization,</li>
+<li>framebuffer coverage.</li>
+</ul>
+<p>It says:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>run this kernel over a logical N-dimensional grid</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That makes GPUs useful for:</p>
+<ul>
+<li>image processing,</li>
+<li>physics,</li>
+<li>simulation,</li>
+<li>sorting,</li>
+<li>scans,</li>
+<li>culling,</li>
+<li>ML,</li>
+<li>Gaussian splatting preprocessing.</li>
+</ul>
+<p>KairoGPU’s vector operations and matrix multiply are already pure compute workloads.</p>
+<p>Maveb’s Gaussian preparation is an entire compute pipeline.</p>
+<hr />
+<p><strong>Workgroup size is an algorithmic choice</strong></p>
+<p>You cannot choose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>256</mn>
+</math>
+<p>just because “256 is standard.”</p>
+<p>Workgroup size affects:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>subgroup packing</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>register consumption</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>shared-memory consumption</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>occupancy</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>synchronization cost</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>data locality</mtext>
+  <mo>.</mo>
+</math>
+<p>The ideal size depends on the kernel.</p>
+<hr />
+<p><strong>Current Kairo/Maveb dispatch policy</strong></p>
+<p>KairoGPU vector kernels choose:</p>
+<pre id="ozt45h" class="objc"><code>width =
+    MIN(
+        pipeline.maxTotalThreadsPerThreadgroup,
+        256);</code></pre>
+<p>Maveb’s generic <code>dispatch1D()</code> similarly caps at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256.</mn>
+</math>
+<p>This guarantees the group size does not exceed a pipeline limit.</p>
+<p>However, neither current code path queries:</p>
+<pre id="p4wrmn" class="text"><code>threadExecutionWidth</code></pre>
+<p>when choosing the generic group width.</p>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mn>256</mn>
+          <mtext> is a valid cap, not yet an architecture-tuned choice</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A more tuned Metal implementation would consider both maximum group size and execution-width/subgroup characteristics.</p>
+<hr />
+<p><strong>1D decomposition</strong></p>
+<p>For:</p>
+<pre id="zugmms" class="text"><code>vector length = N</code></pre>
+<p>map:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>thread </mtext>
+          <mi>i</mi>
+          <mo stretchy="false">→</mo>
+          <mtext>element </mtext>
+          <mi>i</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Kairo’s vector add/multiply are textbook examples.</p>
+<p>Global ID:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mo>.</mo>
+</math>
+<p>Bounds:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mo>&lt;</mo>
+  <mi>N</mi>
+  <mo>.</mo>
+</math>
+<p>Memory:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+  <mi>B</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+  <mi>C</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>This has excellent coalescing and essentially no inter-thread communication.</p>
+<hr />
+<p><strong>2D decomposition</strong></p>
+<p>For an image:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mo>×</mo>
+  <mi>H</mi>
+</math>
+<p>thread:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>handles pixel:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Linear index:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>i</mi>
+          <mo>=</mo>
+          <mi>y</mi>
+          <mi>W</mi>
+          <mo>+</mo>
+          <mi>x</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Typical group:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mo>×</mo>
+  <mn>16</mn>
+  <mo>,</mo>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mo>×</mo>
+  <mn>8</mn>
+  <mo>,</mo>
+</math>
+<p>depending on workload and hardware.</p>
+<p>KairoGPU’s matrix multiplication uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mo>×</mo>
+  <mn>16</mn>
+  <mo>=</mo>
+  <mn>256</mn>
+</math>
+<p>threads per group.</p>
+<hr />
+<p><strong>Kairo matrix dispatch geometry</strong></p>
+<p>Host:</p>
+<div class="sourceCode" id="dgqe6p"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="dgqe6p-1"><a href="#dgqe6p-1" aria-hidden="true" tabindex="-1"></a>dispatchThreadgroups<span class="op">(</span></span>
+<span id="dgqe6p-2"><a href="#dgqe6p-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="dgqe6p-3"><a href="#dgqe6p-3" aria-hidden="true" tabindex="-1"></a>        ceil<span class="op">(</span>columns <span class="op">/</span> <span class="dv">16</span><span class="op">),</span></span>
+<span id="dgqe6p-4"><a href="#dgqe6p-4" aria-hidden="true" tabindex="-1"></a>        ceil<span class="op">(</span>rows <span class="op">/</span> <span class="dv">16</span><span class="op">),</span></span>
+<span id="dgqe6p-5"><a href="#dgqe6p-5" aria-hidden="true" tabindex="-1"></a>        <span class="dv">1</span></span>
+<span id="dgqe6p-6"><a href="#dgqe6p-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
+<span id="dgqe6p-7"><a href="#dgqe6p-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="dgqe6p-8"><a href="#dgqe6p-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="dgqe6p-9"><a href="#dgqe6p-9" aria-hidden="true" tabindex="-1"></a>        <span class="dv">16</span><span class="op">,</span></span>
+<span id="dgqe6p-10"><a href="#dgqe6p-10" aria-hidden="true" tabindex="-1"></a>        <span class="dv">16</span><span class="op">,</span></span>
+<span id="dgqe6p-11"><a href="#dgqe6p-11" aria-hidden="true" tabindex="-1"></a>        <span class="dv">1</span></span>
+<span id="dgqe6p-12"><a href="#dgqe6p-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">});</span></span></code></pre></div>
+<p>Shader:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>w</mi>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <msub>
+    <mi>p</mi>
+    <mi>y</mi>
+  </msub>
+  <mn>16</mn>
+  <mo>+</mo>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <msub>
+    <mi>l</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <mi>m</mi>
+  <mi>n</mi>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <msub>
+    <mi>p</mi>
+    <mi>x</mi>
+  </msub>
+  <mn>16</mn>
+  <mo>+</mo>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <msub>
+    <mi>l</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>This is exact 2D decomposition.</p>
+<hr />
+<p><strong>3D decomposition</strong></p>
+<p>A volume:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mo>×</mo>
+  <mi>H</mi>
+  <mo>×</mo>
+  <mi>D</mi>
+</math>
+<p>maps naturally to invocation coordinate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Linear index:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>i</mi>
+          <mo>=</mo>
+          <mi>x</mi>
+          <mo>+</mo>
+          <mi>y</mi>
+          <mi>W</mi>
+          <mo>+</mo>
+          <mi>z</mi>
+          <mi>W</mi>
+          <mi>H</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This appears in:</p>
+<ul>
+<li>voxel grids,</li>
+<li>TSDF volumes,</li>
+<li>fluid simulation,</li>
+<li>3D cellular grids,</li>
+<li>volumetric lighting.</li>
+</ul>
+<p>A group might be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mo>×</mo>
+  <mn>8</mn>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>256</mn>
+</math>
+<p>threads, for example.</p>
+<p>But local neighborhood access pattern should determine the shape.</p>
+<hr />
+<p><strong>Over-dispatch bounds</strong></p>
+<p>For arbitrary dimensions:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>G</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌈</mo>
+    <mfrac>
+      <mi>W</mi>
+      <msub>
+        <mi>T</mi>
+        <mi>x</mi>
+      </msub>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">⌉</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>G</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">⌈</mo>
+    <mfrac>
+      <mi>H</mi>
+      <msub>
+        <mi>T</mi>
+        <mi>y</mi>
+      </msub>
+    </mfrac>
+    <mo data-mjx-texclass="CLOSE">⌉</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Then shader:</p>
+<div class="sourceCode" id="ivlz2y"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="ivlz2y-1"><a href="#ivlz2y-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>x <span class="op">&gt;=</span> width <span class="op">||</span></span>
+<span id="ivlz2y-2"><a href="#ivlz2y-2" aria-hidden="true" tabindex="-1"></a>    y <span class="op">&gt;=</span> height<span class="op">)</span></span>
+<span id="ivlz2y-3"><a href="#ivlz2y-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="ivlz2y-4"><a href="#ivlz2y-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span><span class="op">;</span></span>
+<span id="ivlz2y-5"><a href="#ivlz2y-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Current Maveb Gaussian composite has exactly:</p>
+<pre id="zvkv4c" class="metal"><code>if (pixel.x &gt;= width ||
+    pixel.y &gt;= height)
+{
+    return;
+}</code></pre>
+<p>This is standard and correct.</p>
+<hr />
+<p><strong>Reduction</strong></p>
+<p>A reduction converts:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>x</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>N</mi>
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+</math>
+<p>into one value:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>R</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>x</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>⊕</mo>
+          <msub>
+            <mi>x</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>⊕</mo>
+          <mo>…</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>⊕</mo>
+</math> is associative enough for the required application:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>+</mo>
+  <mo>,</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo>,</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo>,</mo>
+  <mo>…</mo>
+</math>
+<p>Serial:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>latency.</p>
+<p>Parallel tree:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>log</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>dependency depth with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>total work.</p>
+<hr />
+<p><strong>Tree reduction</strong></p>
+<p>For eight values:</p>
+<pre id="uxlrwn" class="text"><code>a b c d e f g h
+\ /   \ /   \ /
+ A     B     C     D
+   \ /         \ /
+    E           F
+         \ /
+          R</code></pre>
+<p>At each step active thread count halves.</p>
+<p>Mathematically:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>s</mi>
+    <mi>i</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo stretchy="false">(</mo>
+      <mn>0</mn>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </msubsup>
+  <mo>=</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>s</mi>
+    <mi>i</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo stretchy="false">(</mo>
+      <mi>k</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </msubsup>
+  <mo>=</mo>
+  <msubsup>
+    <mi>s</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>2</mn>
+      <mi>i</mi>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mo stretchy="false">(</mo>
+      <mi>k</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </msubsup>
+  <mo>+</mo>
+  <msubsup>
+    <mi>s</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>2</mn>
+      <mi>i</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mo stretchy="false">(</mo>
+      <mi>k</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>After:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>log</mi>
+    <mn>2</mn>
+  </msub>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>N</mi>
+</math>
+<p>steps:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi>s</mi>
+    <mn>0</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo stretchy="false">(</mo>
+      <mi>log</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mi>N</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </msubsup>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Threadgroup reduction</strong></p>
+<pre id="zq2h7f" class="metal"><code>threadgroup float scratch[256];
+
+scratch[local] =
+    value;
+
+threadgroup_barrier(...);
+
+for (uint stride = 128;
+     stride &gt; 0;
+     stride &gt;&gt;= 1)
+{
+    if (local &lt; stride)
+        scratch[local] +=
+            scratch[local + stride];
+
+    threadgroup_barrier(...);
+}
+
+if (local == 0)
+    blockSums[group] =
+        scratch[0];</code></pre>
+<p>This reduces 256 values into one block sum.</p>
+<p>Then another dispatch reduces block sums.</p>
+<hr />
+<p><strong>Warp/subgroup-level reduction</strong></p>
+<p>Inside one subgroup, shared memory and barriers can often be avoided.</p>
+<p>Conceptually:</p>
+<div class="sourceCode" id="ywrrrk"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="ywrrrk-1"><a href="#ywrrrk-1" aria-hidden="true" tabindex="-1"></a>value <span class="op">+=</span></span>
+<span id="ywrrrk-2"><a href="#ywrrrk-2" aria-hidden="true" tabindex="-1"></a>    shuffle_down<span class="op">(</span>value<span class="op">,</span> <span class="dv">16</span><span class="op">);</span></span>
+<span id="ywrrrk-3"><a href="#ywrrrk-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="ywrrrk-4"><a href="#ywrrrk-4" aria-hidden="true" tabindex="-1"></a>value <span class="op">+=</span></span>
+<span id="ywrrrk-5"><a href="#ywrrrk-5" aria-hidden="true" tabindex="-1"></a>    shuffle_down<span class="op">(</span>value<span class="op">,</span> <span class="dv">8</span><span class="op">);</span></span>
+<span id="ywrrrk-6"><a href="#ywrrrk-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="ywrrrk-7"><a href="#ywrrrk-7" aria-hidden="true" tabindex="-1"></a>value <span class="op">+=</span></span>
+<span id="ywrrrk-8"><a href="#ywrrrk-8" aria-hidden="true" tabindex="-1"></a>    shuffle_down<span class="op">(</span>value<span class="op">,</span> <span class="dv">4</span><span class="op">);</span></span>
+<span id="ywrrrk-9"><a href="#ywrrrk-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="ywrrrk-10"><a href="#ywrrrk-10" aria-hidden="true" tabindex="-1"></a>value <span class="op">+=</span></span>
+<span id="ywrrrk-11"><a href="#ywrrrk-11" aria-hidden="true" tabindex="-1"></a>    shuffle_down<span class="op">(</span>value<span class="op">,</span> <span class="dv">2</span><span class="op">);</span></span>
+<span id="ywrrrk-12"><a href="#ywrrrk-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="ywrrrk-13"><a href="#ywrrrk-13" aria-hidden="true" tabindex="-1"></a>value <span class="op">+=</span></span>
+<span id="ywrrrk-14"><a href="#ywrrrk-14" aria-hidden="true" tabindex="-1"></a>    shuffle_down<span class="op">(</span>value<span class="op">,</span> <span class="dv">1</span><span class="op">);</span></span></code></pre></div>
+<p>or use a native collective:</p>
+<pre id="jheza8" class="metal"><code>simd_sum(value)</code></pre>
+<p>Maveb uses <code>simd_sum()</code> in its histogram.</p>
+<p>This is exactly Part 2144 realized in code.</p>
+<hr />
+<p><strong>Prefix sum / scan</strong></p>
+<p>Given:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Inclusive scan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>8</mn>
+  <mo>,</mo>
+  <mn>8</mn>
+  <mo>,</mo>
+  <mn>10</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Exclusive scan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">[</mo>
+          <mn>0</mn>
+          <mo>,</mo>
+          <mn>3</mn>
+          <mo>,</mo>
+          <mn>4</mn>
+          <mo>,</mo>
+          <mn>8</mn>
+          <mo>,</mo>
+          <mn>8</mn>
+          <mo stretchy="false">]</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Exclusive relation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>y</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>&lt;</mo>
+      <mi>i</mi>
+    </mrow>
+  </munder>
+  <msub>
+    <mi>x</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Why is this so powerful?</p>
+<p>Because <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>y</mi>
+    <mi>i</mi>
+  </msub>
+</math> tells element <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> exactly how many preceding contributions exist.</p>
+<p>That converts local counts/predicates into globally unique output offsets.</p>
+<hr />
+<p><strong>Scan is the allocator of parallel algorithms</strong></p>
+<p>Suppose every object emits:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>i</mi>
+  </msub>
+</math>
+<p>output records.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<p>exclusive scan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<pre id="id_9j7ww5" class="text"><code>object 0 writes [0,1]
+object 1 writes nothing
+object 2 writes [2,3,4]
+object 3 writes [5]</code></pre>
+<p>No atomics are required for each output record.</p>
+<p>This pattern appears everywhere:</p>
+<ul>
+<li>compaction,</li>
+<li>binning,</li>
+<li>variable output generation,</li>
+<li>mesh processing,</li>
+<li>Gaussian tile expansion.</li>
+</ul>
+<hr />
+<p><strong>Maveb Gaussian counts use exactly this pattern</strong></p>
+<p>A projected Gaussian overlaps some number of screen tiles.</p>
+<p>Gaussian <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> computes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>number of tile entries it needs</mtext>
+  <mo>.</mo>
+</math>
+<p>The scan produces:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>&lt;</mo>
+      <mi>i</mi>
+    </mrow>
+  </munder>
+  <msub>
+    <mi>c</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then Gaussian <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> writes its tile records starting at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>This gives each Gaussian a unique contiguous output region with no global append atomic for every tile.</p>
+<p>That is an extremely good real-world scan example.</p>
+<hr />
+<p><strong>Blelloch exclusive scan</strong></p>
+<p>The Blelloch algorithm has two phases:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>upsweep</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>downsweep</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For power-of-two <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math>.</p>
+<p>Upsweep constructs partial sums.</p>
+<p>For stride:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <mi>N</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+</math>
+<p>combine tree children.</p>
+<p>At the end root contains total sum.</p>
+<p>Then set root:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.</mn>
+</math>
+<p>Downsweep propagates exclusive prefixes toward leaves.</p>
+<p>Total work:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Parallel depth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>log</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>That makes it <strong>work-efficient</strong> compared with some simpler <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mi>log</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math> scan methods.</p>
+<hr />
+<p><strong>Maveb implements Blelloch almost literally</strong></p>
+<p>Current <code>aetherGaussianScanBlocks</code>:</p>
+<pre id="id_4ie3j5" class="metal"><code>threadgroup uint scratch[256];
+
+scratch[localIndex] =
+    valid
+    ? counts[index]
+    : 0;
+
+threadgroup_barrier(...);</code></pre>
+<p>Upsweep:</p>
+<pre id="id_5188rr" class="metal"><code>for (uint stride = 1;
+     stride &lt; 256;
+     stride &lt;&lt;= 1)
+{
+    const uint element =
+        (localIndex + 1) *
+        stride * 2 - 1;
+
+    if (element &lt; 256)
+        scratch[element] +=
+            scratch[
+                element - stride];
+
+    threadgroup_barrier(...);
+}</code></pre>
+<p>Then:</p>
+<pre id="sz0hjf" class="metal"><code>if (localIndex == 0)
+{
+    blockSums[groupIndex] =
+        scratch[255];
+
+    scratch[255] = 0;
+}</code></pre>
+<p>Then downsweep:</p>
+<pre id="id_67v40p" class="metal"><code>for (uint stride = 128;
+     stride &gt; 0;
+     stride &gt;&gt;= 1)
+{
+    ...
+}</code></pre>
+<p>This is not “scan-like.”</p>
+<p>It is recognizably a textbook work-efficient Blelloch exclusive scan.</p>
+<hr />
+<p><strong>Why zeroing the root makes the scan exclusive</strong></p>
+<p>Before zeroing, root contains:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>For exclusive scan, first output must be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.</mn>
+</math>
+<p>By setting root to zero and distributing left-prefix values during downsweep, each leaf receives the sum of all values strictly before it.</p>
+<p>That is the mathematical purpose of:</p>
+<pre id="t9o8ez" class="metal"><code>scratch[255] = 0;</code></pre>
+<hr />
+<p><strong>Hierarchical scan</strong></p>
+<p>One workgroup can only scan a bounded number of elements.</p>
+<p>For arbitrary <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math>:</p>
+<p>First scan each block independently.</p>
+<p>Store each block’s total.</p>
+<p>Scan those block totals.</p>
+<p>Then add each block’s prefix to every element in that block.</p>
+<p>Symbolically:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>local scan</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>scan block sums</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>add block offsets</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is Part 2147.</p>
+<hr />
+<p><strong>Maveb’s three stages</strong></p>
+<p>Maveb has kernels:</p>
+<pre id="r92vsu" class="text"><code>aetherGaussianScanBlocks
+aetherGaussianScanBlockSums
+aetherGaussianAddBlockOffsets</code></pre>
+<p>This is exactly the hierarchical decomposition.</p>
+<p>But there is one scaling caveat.</p>
+<hr />
+<p><strong>Current Maveb block-sum scan is serial</strong></p>
+<p><code>aetherGaussianScanBlockSums</code> contains:</p>
+<pre id="qa2bts" class="metal"><code>if (index != 0)
+    return;
+
+for (uint block = 0;
+     block &lt; blockCount;
+     ++block)
+{
+    ...
+}</code></pre>
+<p>So one GPU invocation serially scans all block sums.</p>
+<p>For moderate Gaussian counts this may be perfectly adequate.</p>
+<p>For huge numbers of blocks, it becomes a bottleneck.</p>
+<p>A fully scalable scan recursively applies another parallel scan to the block-sums array.</p>
+<p>Thus Maveb currently has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>parallel local scan</mtext>
+          <mo>+</mo>
+          <mtext>serial second level</mtext>
+          <mo>+</mo>
+          <mtext>parallel offset add</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A useful optimization target if profiling shows the second stage mattering.</p>
+<hr />
+<p><strong>Stream compaction</strong></p>
+<p>Given:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mi>a</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mo>,</mo>
+  <mi>d</mi>
+  <mo>,</mo>
+  <mi>e</mi>
+  <mo stretchy="false">]</mo>
+</math>
+<p>and keep predicate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Wanted output:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>a</mi>
+  <mo>,</mo>
+  <mi>c</mi>
+  <mo>,</mo>
+  <mi>d</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>We cannot have every surviving thread perform:</p>
+<div class="sourceCode" id="ddkrn5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="ddkrn5-1"><a href="#ddkrn5-1" aria-hidden="true" tabindex="-1"></a>output<span class="op">[</span>atomicAdd<span class="op">(</span>counter<span class="op">,</span><span class="dv">1</span><span class="op">)]</span> <span class="op">=</span></span>
+<span id="ddkrn5-2"><a href="#ddkrn5-2" aria-hidden="true" tabindex="-1"></a>    value<span class="op">;</span></span></code></pre></div>
+<p>without contention.</p>
+<p>Instead scan predicate.</p>
+<p>Exclusive scan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Then if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>p</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>write:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>o</mi>
+          <mi>u</mi>
+          <mi>t</mi>
+          <mi>p</mi>
+          <mi>u</mi>
+          <mi>t</mi>
+          <mo stretchy="false">[</mo>
+          <msub>
+            <mi>s</mi>
+            <mi>i</mi>
+          </msub>
+          <mo stretchy="false">]</mo>
+          <mo>=</mo>
+          <msub>
+            <mi>x</mi>
+            <mi>i</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Result:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo stretchy="false">→</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo stretchy="false">→</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo stretchy="false">→</mo>
+  <mn>2.</mn>
+</math>
+<p>No collisions.</p>
+<hr />
+<p><strong>Predicate–scan–scatter</strong></p>
+<p>This is such an important general GPU pattern that it should be memorized structurally:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>predicate</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>exclusive scan</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>scatter</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Predicate determines whether/how many outputs.</p>
+<p>Scan allocates unique positions.</p>
+<p>Scatter writes.</p>
+<p>For variable expansion, replace binary predicate:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>1</mn>
+</math>
+<p>with count:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mo>…</mo>
+</math>
+<p>which is exactly what Gaussian tile expansion does.</p>
+<hr />
+<p><strong>Parallel histogram</strong></p>
+<p>Suppose every item has category:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>d</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mi>R</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Histogram:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>H</mi>
+    <mi>b</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo fence="false" stretchy="false">{</mo>
+  <mi>i</mi>
+  <mo>:</mo>
+  <msub>
+    <mi>d</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>b</mi>
+  <mo fence="false" stretchy="false">}</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Naive GPU implementation:</p>
+<div class="sourceCode" id="mdso8e"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="mdso8e-1"><a href="#mdso8e-1" aria-hidden="true" tabindex="-1"></a>atomicAdd<span class="op">(</span></span>
+<span id="mdso8e-2"><a href="#mdso8e-2" aria-hidden="true" tabindex="-1"></a>    histogram<span class="op">[</span>digit<span class="op">],</span></span>
+<span id="mdso8e-3"><a href="#mdso8e-3" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="op">);</span></span></code></pre></div>
+<p>Correct.</p>
+<p>Potentially terrible.</p>
+<p>If many items fall in bucket 0:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>everyone contends on </mtext>
+  <msub>
+    <mi>H</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Histogram contention mitigation</strong></p>
+<p>Better hierarchy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>lane</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>subgroup histogram</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>workgroup histogram</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>global histogram</mtext>
+  <mo>.</mo>
+</math>
+<p>Each level reduces how frequently global memory must be updated.</p>
+<p>This is exactly what Maveb’s radix histogram does.</p>
+<p>It has:</p>
+<pre id="ctu20l" class="metal"><code>threadgroup uint
+simdCounts[32][16];</code></pre>
+<p>For each radix bucket, each subgroup computes:</p>
+<pre id="id_6uv2yi" class="metal"><code>simd_sum(matches)</code></pre>
+<p>and lane 0 stores one result.</p>
+<p>Then a handful of local threads combine subgroup counts.</p>
+<p>Very little contention.</p>
+<hr />
+<p><strong>Radix sort</strong></p>
+<p>Radix sort sorts integer-like keys by processing fixed-width digit groups.</p>
+<p>Suppose key has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>K</mi>
+</math>
+<p>bits.</p>
+<p>Choose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+</math>
+<p>bits per pass.</p>
+<p>Radix:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>=</mo>
+  <msup>
+    <mn>2</mn>
+    <mi>b</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Number of passes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">⌈</mo>
+            <mfrac>
+              <mi>K</mi>
+              <mi>b</mi>
+            </mfrac>
+            <mo data-mjx-texclass="CLOSE">⌉</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mo>=</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+</math>
+<p>radix:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>=</mo>
+  <mn>16.</mn>
+</math>
+<p>A 64-bit key requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+</math>
+<p>passes.</p>
+<p>Exactly what Maveb’s parallel radix path does.</p>
+<hr />
+<p><strong>Radix digit extraction</strong></p>
+<p>For pass <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>b</mi>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>Digit:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>d</mi>
+            <mi>p</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>k</mi>
+          <mi>e</mi>
+          <mi>y</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mi>k</mi>
+          <mi>e</mi>
+          <mi>y</mi>
+          <mo>≫</mo>
+          <mi>s</mi>
+          <mi>h</mi>
+          <mi>i</mi>
+          <mi>f</mi>
+          <mi>t</mi>
+          <mo stretchy="false">)</mo>
+          <mi mathvariant="normal">&amp;</mi>
+          <mo stretchy="false">(</mo>
+          <mi>R</mi>
+          <mo>−</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For four-bit digits:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>=</mo>
+  <mn>15</mn>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mi>x</mi>
+  <mi>F</mi>
+  <mo>.</mo>
+</math>
+<p>Maveb:</p>
+<pre id="ugtp35" class="metal"><code>const uint component =
+    pass &lt; 8
+    ? key.x
+    : key.y;
+
+return
+    (
+        component &gt;&gt;
+        ((pass &amp; 7) * 4)
+    )
+    &amp; 15;</code></pre>
+<p>That is literally Part 2153.</p>
+<hr />
+<p><strong>One radix pass</strong></p>
+<p>A stable radix pass has three conceptual stages:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>histogram</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>prefix offsets</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>stable scatter</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Histogram says how many values belong to each digit.</p>
+<p>Prefix tells where each bucket begins.</p>
+<p>Scatter places each item at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>bucketBase</mtext>
+  <mo>+</mo>
+  <mtext>rankWithinBucket</mtext>
+  <mo>.</mo>
+</math>
+<p>Stability is essential for least-significant-digit radix sorting.</p>
+<hr />
+<p><strong>Why stability matters</strong></p>
+<p>Suppose first pass sorts lower digit.</p>
+<p>Second pass sorts next digit.</p>
+<p>If second pass arbitrarily scrambles values having equal second digit, it destroys ordering established by the lower digit.</p>
+<p>Stable sorting preserves earlier passes within equal current digit.</p>
+<p>Therefore after all passes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>all digits collectively determine correct ordering</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Maveb parallel radix histogram</strong></p>
+<p>Each item computes digit:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>For every bucket:</p>
+<pre id="id_45mfzb" class="metal"><code>matches =
+    digit == bucket
+    ? 1
+    : 0;
+
+total =
+    simd_sum(matches);</code></pre>
+<p>So subgroup produces count of how many lanes belong to each of 16 buckets.</p>
+<p>After workgroup consolidation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>H</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>g</mi>
+      <mo>,</mo>
+      <mi>b</mi>
+    </mrow>
+  </msub>
+</math>
+<p>contains count for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>group </mtext>
+  <mi>g</mi>
+  <mo>,</mo>
+  <mtext> bucket </mtext>
+  <mi>b</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Radix offset stage</strong></p>
+<p>Maveb’s current <code>aetherGaussianRadixOffsets</code> runs one invocation:</p>
+<pre id="akbc8n" class="metal"><code>if (index != 0)
+    return;</code></pre>
+<p>then computes bucket/group prefix positions.</p>
+<p>Conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo stretchy="false">[</mo>
+  <mi>g</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <msup>
+        <mi>b</mi>
+        <mo data-mjx-alternate="1">′</mo>
+      </msup>
+      <mo>&lt;</mo>
+      <mi>b</mi>
+    </mrow>
+  </munder>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <msup>
+        <mi>g</mi>
+        <mo data-mjx-alternate="1">′</mo>
+      </msup>
+    </mrow>
+  </munder>
+  <mi>H</mi>
+  <mo stretchy="false">[</mo>
+  <msup>
+    <mi>g</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>,</mo>
+  <msup>
+    <mi>b</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo stretchy="false">]</mo>
+  <mo>+</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <msup>
+        <mi>g</mi>
+        <mo data-mjx-alternate="1">′</mo>
+      </msup>
+      <mo>&lt;</mo>
+      <mi>g</mi>
+    </mrow>
+  </munder>
+  <mi>H</mi>
+  <mo stretchy="false">[</mo>
+  <msup>
+    <mi>g</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>This gives the global starting destination of group <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+</math>’s entries in bucket <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>.</p>
+<p>Again, this stage is serial today.</p>
+<p>It is correct but eventually becomes a scalability candidate.</p>
+<hr />
+<p><strong>Stable parallel scatter</strong></p>
+<p>Within a subgroup Maveb computes:</p>
+<pre id="bypw71" class="metal"><code>prefix =
+    simd_prefix_exclusive_sum(
+        matches);</code></pre>
+<p>If current lane belongs to bucket <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>, <code>prefix</code> says:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>number of earlier lanes in same subgroup with digit </mtext>
+  <mi>b</mi>
+  <mo>.</mo>
+</math>
+<p>Then it adds counts from earlier subgroups in the same workgroup:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <msub>
+    <mi>k</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>local</mtext>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <msub>
+    <mi>k</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mtext>subgroup</mtext>
+    </mrow>
+  </msub>
+  <mo>+</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <msup>
+        <mi>s</mi>
+        <mo data-mjx-alternate="1">′</mo>
+      </msup>
+      <mo>&lt;</mo>
+      <mi>s</mi>
+    </mrow>
+  </munder>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo stretchy="false">[</mo>
+  <msup>
+    <mi>s</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Final destination:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mi>s</mi>
+          <mi>t</mi>
+          <mo>=</mo>
+          <mi>g</mi>
+          <mi>r</mi>
+          <mi>o</mi>
+          <mi>u</mi>
+          <mi>p</mi>
+          <mi>O</mi>
+          <mi>f</mi>
+          <mi>f</mi>
+          <mi>s</mi>
+          <mi>e</mi>
+          <mi>t</mi>
+          <mo stretchy="false">[</mo>
+          <mi>g</mi>
+          <mo>,</mo>
+          <mi>b</mi>
+          <mo stretchy="false">]</mo>
+          <mo>+</mo>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mi>n</mi>
+          <msub>
+            <mi>k</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mtext>local</mtext>
+            </mrow>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is a very elegant practical use of subgroup scan.</p>
+<hr />
+<p><strong>Maveb’s radix sort is a direct fusion of M128 and M129</strong></p>
+<p>One kernel uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>SIMT lanes</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>subgroup IDs</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>subgroup reduction</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>subgroup exclusive scan</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>threadgroup memory</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>threadgroup barrier</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>coalesced buffers</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>histogram</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>stable scatter</mtext>
+  <mo>.</mo>
+</math>
+<p>This is exactly why these curriculum topics belong in one phase.</p>
+<p>They are not isolated tricks.</p>
+<p>They compose into real algorithms.</p>
+<hr />
+<p><strong>Maveb’s 64-bit logical sorting key</strong></p>
+<p><code>GenerateKeys</code> creates:</p>
+<pre id="e9dtbb" class="metal"><code>keys[destination] =
+    uint2(
+        as_type&lt;uint&gt;(
+            gaussianDepth),
+        tileID);</code></pre>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+  <mi>x</mi>
+  <mo>=</mo>
+  <mtext>depth bits</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+  <mi>y</mi>
+  <mo>=</mo>
+  <mtext>tile ID</mtext>
+  <mo>.</mo>
+</math>
+<p>The parallel radix algorithm processes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+  <mi>x</mi>
+</math>
+<p>for passes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>…</mo>
+  <mn>7</mn>
+</math>
+<p>and then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo>.</mo>
+  <mi>y</mi>
+</math>
+<p>for passes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+  <mo>…</mo>
+  <mn>15.</mn>
+</math>
+<p>Because it is stable least-significant-digit sorting, the final major key is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>tile ID</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>while previously established depth order remains inside equal tile IDs.</p>
+<p>Therefore final ordering is effectively:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>tile-major, depth-ordered within tile</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is precisely what Gaussian compositing needs.</p>
+<p>This is a beautiful architecture.</p>
+<hr />
+<p><strong>Why reinterpreting positive float depth as uint works here</strong></p>
+<p>IEEE-754 positive finite floats have bit patterns whose unsigned integer ordering preserves numerical ordering.</p>
+<p>So for positive depth:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>d</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>&lt;</mo>
+  <msub>
+    <mi>d</mi>
+    <mn>2</mn>
+  </msub>
+</math>
+<p>corresponds to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>d</mi>
+    <mn>1</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>&lt;</mo>
+  <mi>b</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>d</mi>
+    <mn>2</mn>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>That makes:</p>
+<pre id="brslup" class="metal"><code>as_type&lt;uint&gt;(depth)</code></pre>
+<p>usable as a sortable depth key.</p>
+<p>This trick would not directly work for arbitrary signed floating-point values without a sign-aware key transform.</p>
+<p>The assumption that valid projected depth is positive matters.</p>
+<hr />
+<p><strong>Key–value sorting</strong></p>
+<p>Sorting geometry usually needs to retain identity.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>y</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>sorting key</mtext>
+  <mo>,</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>u</mi>
+  <msub>
+    <mi>e</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mtext>Gaussian index</mtext>
+  <mo>,</mo>
+</math>
+<p>then sorting keys alone destroys the mapping.</p>
+<p>Therefore every scatter writes both:</p>
+<pre id="oxmxax" class="metal"><code>outputKeys[destination] =
+    inputKeys[index];
+
+outputValues[destination] =
+    inputValues[index];</code></pre>
+<p>This is key-value sorting.</p>
+<p>After sort:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">(</mo>
+          <mtext>sorted key</mtext>
+          <mo>,</mo>
+          <mtext>original payload identity</mtext>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>remain paired.</p>
+<p>Maveb’s <code>keysA/keysB</code> and <code>valuesA/valuesB</code> buffers implement exactly this double-buffered key-value radix architecture.</p>
+<hr />
+<p><strong>Ping-pong sorting buffers</strong></p>
+<p>A radix pass cannot generally overwrite its input while arbitrary entries are being scattered.</p>
+<p>So use:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">→</mo>
+  <mi>B</mi>
+</math>
+<p>on pass 0,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo stretchy="false">→</mo>
+  <mi>A</mi>
+</math>
+<p>on pass 1,</p>
+<p>and alternate.</p>
+<p>Maveb:</p>
+<div class="sourceCode" id="w6g26n"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="w6g26n-1"><a href="#w6g26n-1" aria-hidden="true" tabindex="-1"></a>even</span>
+<span id="w6g26n-2"><a href="#w6g26n-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">?</span> input <span class="op">=</span> keysA</span>
+<span id="w6g26n-3"><a href="#w6g26n-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">:</span> input <span class="op">=</span> keysB<span class="op">;</span></span>
+<span id="w6g26n-4"><a href="#w6g26n-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="w6g26n-5"><a href="#w6g26n-5" aria-hidden="true" tabindex="-1"></a>even</span>
+<span id="w6g26n-6"><a href="#w6g26n-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">?</span> output <span class="op">=</span> keysB</span>
+<span id="w6g26n-7"><a href="#w6g26n-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">:</span> output <span class="op">=</span> keysA<span class="op">;</span></span></code></pre></div>
+<p>This is another standard GPU pattern.</p>
+<section id="id_01-foundations-i-ch009-first-use-completion-a-stable-radix-pass-is-a-permutation-not-an-in-place-edit" class="level5">
+<h5>First-use completion — a stable radix pass is a permutation, not an in-place edit</h5>
+<p>Ping-pong storage is not only a pattern for alternating GPU kernels. Here it is a <strong>correctness requirement</strong> of a scatter algorithm. A radix pass examines one digit of each key, counts how many entries belong to each digit value, computes each digit’s starting output offset, and distributes records into distinct destinations. If the output aliases the input, an early thread may overwrite a record another thread has not yet read. A barrier at the end of the scatter cannot undo that overwrite. The input snapshot must remain readable until <em>every</em> output index has been assigned and its value written.</p>
+<p>For a least-significant-digit (LSD) radix sort, stability makes successive passes compose correctly. A pass on bit 0 preserves input order among all zeros and separately among all ones. The following pass on bit 1 must preserve the preceding bit-0 ordering within its own zero/one groups. That is why simply partitioning without a stable scatter does not produce a correctly sorted multi-bit key. For four labeled records in arrival order </p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mn>3</mn>
+    <mi>A</mi>
+  </msub>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <msub>
+    <mn>1</mn>
+    <mi>B</mi>
+  </msub>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <msub>
+    <mn>2</mn>
+    <mi>C</mi>
+  </msub>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <msub>
+    <mn>0</mn>
+    <mi>D</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+</math>
+<p> the bit-0 pass writes <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mn>2</mn>
+    <mi>C</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mn>0</mn>
+    <mi>D</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mn>3</mn>
+    <mi>A</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mn>1</mn>
+    <mi>B</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+</math>. The bit-1 pass writes <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mn>0</mn>
+    <mi>D</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mn>1</mn>
+    <mi>B</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mn>2</mn>
+    <mi>C</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mn>3</mn>
+    <mi>A</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+</math>. If the original array also contained <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mn>2</mn>
+    <mi>E</mi>
+  </msub>
+</math> after <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mn>2</mn>
+    <mi>C</mi>
+  </msub>
+</math>, the final sorted order must still put <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mn>2</mn>
+    <mi>C</mi>
+  </msub>
+</math> before <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mn>2</mn>
+    <mi>E</mi>
+  </msub>
+</math>. The stable property is observable independently of whether the integer keys look sorted.</p>
+<p>For an exclusive scan on the binary pass, let <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>z</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math> if key <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> has a zero in the selected bit, and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0</mn>
+</math> otherwise; let <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Z</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <msub>
+    <mi>z</mi>
+    <mi>i</mi>
+  </msub>
+</math>. For a zero-bit item, its destination is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>&lt;</mo>
+      <mi>i</mi>
+    </mrow>
+  </munder>
+  <msub>
+    <mi>z</mi>
+    <mi>j</mi>
+  </msub>
+</math>. For a one-bit item, its destination is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Z</mi>
+  <mo>+</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>&lt;</mo>
+      <mi>i</mi>
+    </mrow>
+  </munder>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <msub>
+    <mi>z</mi>
+    <mi>j</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>. Both formulas are exclusive prefixes, so no two records receive the same destination and the within-group order is preserved. A GPU implementation normally computes block-local histograms and prefixes, scans the block totals, then scatters with the block prefix added to the local rank. The scan of block totals needs its own inter-dispatch or globally coordinated synchronization; a threadgroup barrier only orders threads within one group.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;array&gt;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;cstddef&gt;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;cstdint&gt;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;utility&gt;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">// Each record carries an identity, so we can verify stability for equal keys.</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> SortRecord <span class="op">{</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t key<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>uint32_t identity<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">// Two stable one-bit passes sort a two-bit key into ascending order.</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span> <span class="op">&lt;</span><span class="bu">std::</span>size_t N<span class="op">&gt;</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>array<span class="op">&lt;</span>SortRecord<span class="op">,</span> N<span class="op">&gt;</span> sort_two_bits<span class="op">(</span><span class="bu">std::</span>array<span class="op">&lt;</span>SortRecord<span class="op">,</span> N<span class="op">&gt;</span> input<span class="op">)</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>array<span class="op">&lt;</span>SortRecord<span class="op">,</span> N<span class="op">&gt;</span> scratch<span class="op">{};</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">auto</span><span class="op">*</span> read <span class="op">=</span> <span class="op">&amp;</span>input<span class="op">;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">auto</span><span class="op">*</span> write <span class="op">=</span> <span class="op">&amp;</span>scratch<span class="op">;</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">unsigned</span> bit <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> bit <span class="op">!=</span> <span class="dv">2</span><span class="op">;</span> <span class="op">++</span>bit<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>size_t zeroCount <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="op">(</span><span class="at">const</span> SortRecord<span class="op">&amp;</span> record <span class="op">:</span> <span class="op">*</span>read<span class="op">)</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>            zeroCount <span class="op">+=</span> <span class="op">((</span>record<span class="op">.</span>key <span class="op">&gt;&gt;</span> bit<span class="op">)</span> <span class="op">&amp;</span> <span class="dv">1</span><span class="bu">u</span><span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="bu">u</span><span class="op">;</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>size_t zeroOut <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>size_t oneOut <span class="op">=</span> zeroCount<span class="op">;</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="op">(</span><span class="at">const</span> SortRecord<span class="op">&amp;</span> record <span class="op">:</span> <span class="op">*</span>read<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Exclusive ranks: disjoint destinations, stable in each group.</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>            <span class="at">const</span> <span class="dt">bool</span> one <span class="op">=</span> <span class="op">((</span>record<span class="op">.</span>key <span class="op">&gt;&gt;</span> bit<span class="op">)</span> <span class="op">&amp;</span> <span class="dv">1</span><span class="bu">u</span><span class="op">)</span> <span class="op">!=</span> <span class="dv">0</span><span class="bu">u</span><span class="op">;</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>            <span class="op">(*</span>write<span class="op">)[</span>one <span class="op">?</span> oneOut<span class="op">++</span> <span class="op">:</span> zeroOut<span class="op">++]</span> <span class="op">=</span> record<span class="op">;</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Swap the roles, not the contents of the two allocations.</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>        <span class="bu">std::</span>swap<span class="op">(</span>read<span class="op">,</span> write<span class="op">);</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">*</span>read<span class="op">;</span> <span class="co">// May be either allocation when pass count changes.</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The code intentionally exposes the scan’s simple serial reference implementation: counting zeros plus per-group running offsets is equivalent to exclusive prefix ranks in input order. It is <strong>not</strong> pretending to be an efficient GPU parallel scan. The GPU version must provide disjoint outputs at every level, global offsets that are ready before scatter, correct device memory visibility between dispatches, and allocation lifetimes extending through the final consumer. Histogram, scan, scatter and indirect consumption are distinct phases even if a backend fuses some operations.</p>
+<p><strong>Buffer parity is part of the API contract.</strong> After an even number of complete passes, the final records are back in the original allocation; after an odd number, they reside in scratch. Returning the original pointer unconditionally can silently return stale data. If a later renderer pass expects one fixed buffer, either expose the actual final-buffer handle or perform an explicit copy after an odd pass and account for its cost. A frame allocator must not recycle the scratch range merely because its CPU-side pointer was swapped: the GPU may still be reading it. The same two-buffer idea is used for Jacobi-style iterative updates, where each iteration must read the previous state rather than partially updated neighbors, but the <em>reason</em> for alternation is the dependency of the particular algorithm, not the mere existence of two resources.</p>
+<p>A reproducible regression sorts repeated keys with distinct identities and checks both ascending keys and stable identity order; the <a href="ch605.xhtml#source-source-file-a41016f2e326b40cdff18ff4">first-use C++ witness (Mathematics for Visual Computing, Part 1, Ch. 1)</a> contains that check. GPU performance must be assessed separately: record histogram throughput, scan cost, scatter bandwidth, allocation pressure, command dependencies, and the amount of synchronization. A serial fallback can be correct without being fast; a parallel path can be fast and still be wrong if one prefix or visibility edge is missing. We do not need another teaching pass to establish these properties.</p>
+<hr />
+<p><strong>Parallel versus serial radix fallback in Maveb</strong></p>
+<p>Current Maveb has two paths.</p>
+<p>When relevant compute pipelines support at least:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+</math>
+<p>threads/group, it runs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+</math>
+<p>parallel 4-bit passes.</p>
+<p>Otherwise it uses a one-thread serial fallback with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>8</mn>
+</math>
+<p>8-bit passes.</p>
+<p>Parallel path:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>=</mo>
+  <mn>16</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>P</mi>
+  <mo>=</mo>
+  <mn>16.</mn>
+</math>
+<p>Serial fallback:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>=</mo>
+  <mn>256</mn>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>P</mi>
+  <mo>=</mo>
+  <mn>8.</mn>
+</math>
+<p>This makes sense because a huge 256-bin local histogram is acceptable in one serial invocation but much more expensive to parallelize per workgroup.</p>
+<hr />
+<p><strong>Bitonic sort</strong></p>
+<p>Bitonic sort is a comparison network rather than digit-based sort.</p>
+<p>It creates bitonic sequences—sequences that monotonically increase then decrease—and repeatedly merges them.</p>
+<p>A common compare-exchange condition uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mi>i</mi>
+  <mo>⊕</mo>
+  <mi>j</mi>
+  <mo>.</mo>
+</math>
+<p>Each stage compares:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>a</mi>
+    <mi>i</mi>
+  </msub>
+</math>
+<p>against:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>a</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>⊕</mo>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>The network topology is deterministic.</p>
+<p>Complexity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>O</mi>
+          <mo stretchy="false">(</mo>
+          <mi>N</mi>
+          <msup>
+            <mi>log</mi>
+            <mn>2</mn>
+          </msup>
+          <mo data-mjx-texclass="NONE">⁡</mo>
+          <mi>N</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>comparisons.</p>
+<hr />
+<p><strong>Why bitonic sort is still useful on GPUs</strong></p>
+<p>Radix sort is usually preferable for large integer keys.</p>
+<p>Bitonic sort remains useful when:</p>
+<ul>
+<li>arrays are small,</li>
+<li>size is bounded,</li>
+<li>data fits in threadgroup memory,</li>
+<li>deterministic comparison structure is desirable,</li>
+<li>arbitrary comparable keys are required.</li>
+</ul>
+<p>Its fixed communication pattern maps well to SIMD/SIMT.</p>
+<p>For sorting millions of simple integer keys, radix generally wins.</p>
+<p>For 32 or 64 values inside one workgroup, bitonic can be beautifully simple.</p>
+<hr />
+<p><strong>Parallel algorithm design principle</strong></p>
+<p>There is a recurring transformation:</p>
+<p>Serial:</p>
+<div class="sourceCode" id="x1rcxl"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="x1rcxl-1"><a href="#x1rcxl-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> each item<span class="op">:</span></span>
+<span id="x1rcxl-2"><a href="#x1rcxl-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> useful<span class="op">:</span></span>
+<span id="x1rcxl-3"><a href="#x1rcxl-3" aria-hidden="true" tabindex="-1"></a>        output<span class="op">.</span>push_back<span class="op">(</span>item<span class="op">);</span></span></code></pre></div>
+<p>GPU-naive:</p>
+<div class="sourceCode" id="di1gjk"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="di1gjk-1"><a href="#di1gjk-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> useful<span class="op">:</span></span>
+<span id="di1gjk-2"><a href="#di1gjk-2" aria-hidden="true" tabindex="-1"></a>    output<span class="op">[</span></span>
+<span id="di1gjk-3"><a href="#di1gjk-3" aria-hidden="true" tabindex="-1"></a>        atomicAdd<span class="op">(</span>counter<span class="op">,</span><span class="dv">1</span><span class="op">)</span></span>
+<span id="di1gjk-4"><a href="#di1gjk-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">]</span> <span class="op">=</span> item<span class="op">;</span></span></code></pre></div>
+<p>GPU-scalable:</p>
+<pre id="id_0aznm5" class="text"><code>predicate/count
+    ↓
+parallel scan
+    ↓
+unique offsets
+    ↓
+scatter</code></pre>
+<p>This transition appears in:</p>
+<ul>
+<li>compaction,</li>
+<li>particle spawning,</li>
+<li>Gaussian tile entry generation,</li>
+<li>visible-object lists,</li>
+<li>clustered lighting,</li>
+<li>meshlet generation.</li>
+</ul>
+<p>Once scan becomes intuitive, a huge amount of GPU algorithm design becomes intuitive.</p>
+<hr />
+<p><strong>KairoGPU matrix multiplication also illustrates arithmetic intensity</strong></p>
+<p>Naive matrix multiplication repeatedly reads global memory.</p>
+<p>For each output element:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>k</mi>
+  </munder>
+  <msub>
+    <mi>A</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mi>k</mi>
+    </mrow>
+  </msub>
+  <msub>
+    <mi>B</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Naively approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mi>K</mi>
+</math>
+<p>global loads for:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>2</mn>
+  <mi>K</mi>
+</math>
+<p>floating operations.</p>
+<p>With a <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>16</mn>
+  <mo>×</mo>
+  <mn>16</mn>
+</math> tile, each workgroup loads:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+</math>
+<p>A values and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+</math>
+<p>B values for a tile step.</p>
+<p>Those values feed:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>256</mn>
+  <mo>×</mo>
+  <mn>16</mn>
+</math>
+<p>multiply-add pairs.</p>
+<p>Global memory bytes are reused across many arithmetic operations.</p>
+<p>Thus shared-memory tiling increases:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>arithmetic intensity</mtext>
+          <mo>=</mo>
+          <mfrac>
+            <mtext>operations</mtext>
+            <mtext>bytes transferred</mtext>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That will become a central roofline-model concept in Pass 10/M132.</p>
+<hr />
+<p><strong>One major KairoGPU improvement: execution-width-aware group selection</strong></p>
+<p>Current vector kernels use:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <mtext mathvariant="monospace">maxTotalThreadsPerThreadgroup</mtext>
+  <mo>,</mo>
+  <mn>256</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>A more informed Metal setup can consider:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mo>=</mo>
+  <mtext mathvariant="monospace">threadExecutionWidth</mtext>
+  <mo>.</mo>
+</math>
+<p>Then choose group size:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mi>k</mi>
+  <mi>W</mi>
+</math>
+<p>for integer <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>, while satisfying register/threadgroup-memory constraints.</p>
+<p>You still benchmark.</p>
+<p>But this reduces the chance of dispatching groups that leave an awkward partial SIMD group.</p>
+<hr />
+<p><strong>One major Maveb scan improvement: fully parallel second level</strong></p>
+<p>Current pipeline:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo stretchy="false">→</mo>
+  <mi>N</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>256</mn>
+</math>
+<p>block sums.</p>
+<p>Then a single thread scans those block sums.</p>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+</math>
+<p>block count is around:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3907.</mn>
+</math>
+<p>A single thread looping over 3907 entries may not dominate the whole frame.</p>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mo>=</mo>
+  <mn>100</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+  <mn>000</mn>
+  <mo>,</mo>
+</math>
+<p>block count:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>390625.</mn>
+</math>
+<p>Now the serial second level becomes serious.</p>
+<p>A recursive hierarchical scan would process block sums in parallel:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>390625</mn>
+  <mo stretchy="false">→</mo>
+  <mn>1526</mn>
+  <mo stretchy="false">→</mo>
+  <mn>6</mn>
+  <mo stretchy="false">→</mo>
+  <mn>1.</mn>
+</math>
+<p>Then propagate offsets downward.</p>
+<p>That is the general scalable version.</p>
+<hr />
+<p><strong>One major Maveb radix improvement: parallel global bucket-prefix stage</strong></p>
+<p>Similarly, current <code>aetherGaussianRadixOffsets</code> performs the entire group/bucket prefix with one thread.</p>
+<p>The parallel histogram and scatter scale well; the prefix stage eventually becomes the serial fraction.</p>
+<p>A fully scalable implementation can scan per-bucket group counts in parallel and then compute bucket bases.</p>
+<p>This is a classic manifestation of Amdahl’s law:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><menclose notation="box"><mrow><mtext mathvariant="normal">parallelizing 99%does not make the remaining serial 1%disappear</mtext><mi>.</mi></mrow></menclose><annotation encoding="application/x-tex">
+\boxed{
+\text{parallelizing 99\% does not make the remaining serial 1\% disappear}.
+}
+</annotation></semantics></math>
+<p>We will revisit that logic when discussing GPU performance modeling.</p>
+<hr />
+<p><strong>Why Maveb’s local subgroup logic is already strong</strong></p>
+<p>The interesting point is that you do <strong>not</strong> need to rewrite the entire pipeline.</p>
+<p>The local mechanics are already sophisticated:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext mathvariant="monospace">𝚜𝚒𝚖𝚍_𝚜𝚞𝚖</mtext><mo>,</mo></mrow><annotation encoding="application/x-tex">
+\texttt{simd\_sum},
+</annotation></semantics></math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext mathvariant="monospace">𝚜𝚒𝚖𝚍_𝚙𝚛𝚎𝚏𝚒𝚡_𝚎𝚡𝚌𝚕𝚞𝚜𝚒𝚟𝚎_𝚜𝚞𝚖</mtext><mo>,</mo></mrow><annotation encoding="application/x-tex">
+\texttt{simd\_prefix\_exclusive\_sum},
+</annotation></semantics></math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>threadgroup-local aggregation</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>stable scatter</mtext>
+  <mo>.</mo>
+</math>
+<p>The scalability bottleneck is now in global phase construction.</p>
+<p>That is exactly the sort of distinction GPU performance work requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>find the actual serial/global bottleneck instead of optimizing already-fast local math</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>GPU algorithm correctness invariant</strong></p>
+<p>Parallel algorithms are easiest to trust when you can write down ownership.</p>
+<p>For scan-based allocation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>p</mi>
+  <mi>u</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>For any:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mo>&lt;</mo>
+  <mi>j</mi>
+  <mo>,</mo>
+</math>
+<p>exclusive scan guarantees:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>≤</mo>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Therefore output intervals do not overlap.</p>
+<p>That is the proof of race freedom.</p>
+<p>Do not merely say:</p>
+<blockquote>
+<p>Threads probably write different locations.</p>
+</blockquote>
+<p>Derive why.</p>
+<hr />
+<p><strong>Histogram race-freedom</strong></p>
+<p>If many threads update shared histogram bins nonatomically:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>d</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>+</mo>
+  <mo>+</mo>
+  <mo>,</mo>
+</math>
+<p>there is a race.</p>
+<p>Maveb avoids that within each subgroup by using:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="OP">
+    <mi>simd</mi>
+    <mi mathvariant="normal">_</mi>
+    <mi>sum</mi>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mo>==</mo>
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Only one lane writes the subgroup count:</p>
+<pre id="yjtusl" class="metal"><code>if (lane == 0)
+    simdCounts[...] = total;</code></pre>
+<p>Distinct subgroups write distinct rows.</p>
+<p>No collision.</p>
+<p>After barrier, a small set of threads reads those rows.</p>
+<p>That is explicit ownership again.</p>
+<hr />
+<p><strong>Radix scatter race-freedom</strong></p>
+<p>Every element receives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mi>O</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo stretchy="false">[</mo>
+  <mi>g</mi>
+  <mo>,</mo>
+  <mi>b</mi>
+  <mo stretchy="false">]</mo>
+  <mo>+</mo>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>k</mi>
+  <mi>W</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>G</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p><code>groupOffset</code> assigns disjoint bucket/group ranges.</p>
+<p><code>rankWithinGroup</code> is unique among items in that group/bucket because it comes from prefix counts.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <msub>
+    <mi>n</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>≠</mo>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <msub>
+    <mi>n</mi>
+    <mi>j</mi>
+  </msub>
+</math>
+<p>for distinct elements.</p>
+<p>No atomic is needed.</p>
+<p>That is what good GPU algorithms do:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>replace synchronization with mathematically unique ownership whenever possible</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Why atomics are sometimes still best</strong></p>
+<p>Scan requires multiple phases and temporary buffers.</p>
+<p>If only 20 threads occasionally append something, one atomic append may be much cheaper.</p>
+<p>If 50 million threads append, scan becomes attractive.</p>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>atomics versus scan is a workload-scale/contention tradeoff</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Pass 10’s M130 starts precisely with this decision for append buffers and spatial bins.</p>
+<hr />
+<p><strong>GPU architecture audit of your current code</strong></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Current repository evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Simple 1D compute</td>
+<td>KairoGPU vector add/multiply</td>
+</tr>
+<tr>
+<td>Global invocation ID</td>
+<td><code>thread_position_in_grid</code></td>
+</tr>
+<tr>
+<td>2D workgroup decomposition</td>
+<td>KairoGPU 16×16 matrix multiply</td>
+</tr>
+<tr>
+<td>Threadgroup memory</td>
+<td>matrix tiles + Gaussian scan scratch</td>
+</tr>
+<tr>
+<td>Workgroup barriers</td>
+<td>matrix multiply + Blelloch scan</td>
+</tr>
+<tr>
+<td>Max group-size query</td>
+<td><code>maxTotalThreadsPerThreadgroup</code></td>
+</tr>
+<tr>
+<td>Execution-width-aware sizing</td>
+<td>not currently used</td>
+</tr>
+<tr>
+<td>Subgroup IDs/lane IDs</td>
+<td>Maveb Gaussian radix kernels</td>
+</tr>
+<tr>
+<td>Subgroup reduction</td>
+<td><code>simd_sum</code></td>
+</tr>
+<tr>
+<td>Subgroup scan</td>
+<td><code>simd_prefix_exclusive_sum</code></td>
+</tr>
+<tr>
+<td>Device-memory buffers</td>
+<td>extensive Kairo/Maveb use</td>
+</tr>
+<tr>
+<td>Storage capability abstraction</td>
+<td>Vulkax backend features</td>
+</tr>
+<tr>
+<td>Atomics</td>
+<td>Gaussian counters</td>
+</tr>
+<tr>
+<td>Local-before-global aggregation</td>
+<td>radix histogram</td>
+</tr>
+<tr>
+<td>Blelloch scan</td>
+<td><code>aetherGaussianScanBlocks</code></td>
+</tr>
+<tr>
+<td>Hierarchical scan</td>
+<td>block scan + block sums + add offsets</td>
+</tr>
+<tr>
+<td>Fully parallel higher scan level</td>
+<td>not yet; second stage serial</td>
+</tr>
+<tr>
+<td>Variable-output allocation</td>
+<td>Gaussian tile counts → scan → offsets</td>
+</tr>
+<tr>
+<td>Histogram</td>
+<td>radix group histogram</td>
+</tr>
+<tr>
+<td>Radix sort</td>
+<td>16 parallel 4-bit passes</td>
+</tr>
+<tr>
+<td>Stable scatter</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>Key-value sorting</td>
+<td><code>uint2</code> keys + Gaussian index values</td>
+</tr>
+<tr>
+<td>Ping-pong buffers</td>
+<td>keysA/B + valuesA/B</td>
+</tr>
+<tr>
+<td>Large global prefix</td>
+<td>currently serial offset kernel</td>
+</tr>
+<tr>
+<td>Bitonic sort</td>
+<td>conceptual curriculum topic, not needed in current Gaussian path</td>
+</tr>
+</tbody>
+</table>
+<p>That is a very meaningful implementation baseline.</p>
+<hr />
+<p><strong>Reconstruct the Maveb Gaussian GPU pipeline as a parallel algorithm</strong></p>
+<p>The pipeline can now be understood without looking at code names.</p>
+<p>Each Gaussian is projected.</p>
+<p>For Gaussian <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math>, determine how many screen tiles it overlaps:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Exclusive scan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>&lt;</mo>
+      <mi>i</mi>
+    </mrow>
+  </munder>
+  <msub>
+    <mi>c</mi>
+    <mi>j</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Now Gaussian <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> owns:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>It generates one key/value entry per overlapped tile.</p>
+<p>Key:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mtext>depth bits</mtext>
+  <mo>,</mo>
+  <mtext>tile ID</mtext>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Value:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Gaussian index</mtext>
+  <mo>.</mo>
+</math>
+<p>Stable LSD radix sort first resolves all depth digits and then all tile digits.</p>
+<p>Result:</p>
+<pre id="id_387b66" class="text"><code>tile 0:
+    nearest/farthest ordered Gaussians
+
+tile 1:
+    ordered Gaussians
+
+...</code></pre>
+<p>Range construction records:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>t</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>e</mi>
+  <mi>n</mi>
+  <msub>
+    <mi>d</mi>
+    <mi>t</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>for each tile.</p>
+<p>Composite kernel for each pixel reads only the Gaussian range relevant to its tile and blends in sorted order.</p>
+<p>That is a complete GPU pipeline built from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>map</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>count</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>scan</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>expand</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>radix sort</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>range construction</mtext>
+          <mo stretchy="false">→</mo>
+          <mtext>parallel composite</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is exactly what the abstract parallel-algorithm curriculum is preparing you to build.</p>
+<hr />
+<p><strong>The fundamental GPU thinking shift</strong></p>
+<p>CPU programmer often asks:</p>
+<blockquote>
+<p>What is the next operation?</p>
+</blockquote>
+<p>GPU programmer must increasingly ask:</p>
+<blockquote>
+<p>What is the data-parallel ownership structure?</p>
+</blockquote>
+<p>Instead of:</p>
+<div class="sourceCode" id="yllozt"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="yllozt-1"><a href="#yllozt-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> each Gaussian<span class="op">:</span></span>
+<span id="yllozt-2"><a href="#yllozt-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> each tile<span class="op">:</span></span>
+<span id="yllozt-3"><a href="#yllozt-3" aria-hidden="true" tabindex="-1"></a>        append<span class="op">()</span></span></code></pre></div>
+<p>you derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mtext>scatter region</mtext>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Instead of:</p>
+<div class="sourceCode" id="qfd2y3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="qfd2y3-1"><a href="#qfd2y3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> each key<span class="op">:</span></span>
+<span id="qfd2y3-2"><a href="#qfd2y3-2" aria-hidden="true" tabindex="-1"></a>    insert into sorted vector</span></code></pre></div>
+<p>you derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>h</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>g</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>x</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>k</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>The important GPU skill is not syntax.</p>
+<p>It is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>turning dependency-heavy serial ownership into explicit parallel ownership</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>PASS 9 RECONSTRUCTION SHEET</strong></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Reconstruction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU emphasis</td>
+<td>low-latency powerful threads</td>
+</tr>
+<tr>
+<td>GPU emphasis</td>
+<td>throughput across massive parallel work</td>
+</tr>
+<tr>
+<td>Compute unit</td>
+<td>scheduling + ALUs + register file + shared memory</td>
+</tr>
+<tr>
+<td>SIMT</td>
+<td>scalar-looking invocations execute in groups</td>
+</tr>
+<tr>
+<td>Subgroup</td>
+<td>hardware execution group</td>
+</tr>
+<tr>
+<td>Lane</td>
+<td>invocation inside subgroup</td>
+</tr>
+<tr>
+<td>Workgroup</td>
+<td>collaboration/synchronization domain</td>
+</tr>
+<tr>
+<td>Global ID</td>
+<td>group × group-size + local ID</td>
+</tr>
+<tr>
+<td>Latency hiding</td>
+<td>issue another ready subgroup while one stalls</td>
+</tr>
+<tr>
+<td>Occupancy</td>
+<td>resident subgroups / hardware maximum</td>
+</tr>
+<tr>
+<td>Register pressure</td>
+<td>live per-thread state consumes register file</td>
+</tr>
+<tr>
+<td>Spill</td>
+<td>logical register moved to slower private memory</td>
+</tr>
+<tr>
+<td>Threadgroup memory</td>
+<td>fast group-local explicitly managed storage</td>
+</tr>
+<tr>
+<td>Bank conflict</td>
+<td>simultaneous accesses collide on same shared-memory bank</td>
+</tr>
+<tr>
+<td>Device memory</td>
+<td>large high-latency storage</td>
+</tr>
+<tr>
+<td>Coalescing</td>
+<td>adjacent lane accesses collapse into few memory transactions</td>
+</tr>
+<tr>
+<td>Stride</td>
+<td>spreads lanes across transactions/cache lines</td>
+</tr>
+<tr>
+<td>Gather</td>
+<td>indirect/random addresses</td>
+</tr>
+<tr>
+<td>Divergence</td>
+<td>subgroup lanes take different control paths</td>
+</tr>
+<tr>
+<td>Reconvergence</td>
+<td>lanes regroup after branch</td>
+</tr>
+<tr>
+<td>Predication</td>
+<td>execute/select small branches without full control divergence</td>
+</tr>
+<tr>
+<td>Vote</td>
+<td>subgroup-wide any/all/ballot</td>
+</tr>
+<tr>
+<td>Shuffle</td>
+<td>register exchange between subgroup lanes</td>
+</tr>
+<tr>
+<td>Atomic</td>
+<td>indivisible RMW operation</td>
+</tr>
+<tr>
+<td>Contention</td>
+<td>many lanes serialize on same atomic location</td>
+</tr>
+<tr>
+<td>Local aggregation</td>
+<td>reduce locally before one global update</td>
+</tr>
+<tr>
+<td>Workgroup barrier</td>
+<td>synchronize one group, not entire GPU</td>
+</tr>
+<tr>
+<td>Device-wide phase</td>
+<td>separate dispatch + appropriate API dependency</td>
+</tr>
+<tr>
+<td>1D decomposition</td>
+<td>one thread per linear element</td>
+</tr>
+<tr>
+<td>2D decomposition</td>
+<td>one thread per pixel/matrix coordinate</td>
+</tr>
+<tr>
+<td>3D decomposition</td>
+<td>one thread per voxel</td>
+</tr>
+<tr>
+<td>Reduction</td>
+<td>many values → one</td>
+</tr>
+<tr>
+<td>Scan</td>
+<td>every element gets prefix aggregate</td>
+</tr>
+<tr>
+<td>Blelloch</td>
+<td>upsweep + root zero + downsweep</td>
+</tr>
+<tr>
+<td>Hierarchical scan</td>
+<td>block scan → block-sum scan → offset add</td>
+</tr>
+<tr>
+<td>Compaction</td>
+<td>predicate → scan → scatter</td>
+</tr>
+<tr>
+<td>Histogram</td>
+<td>count items per bucket</td>
+</tr>
+<tr>
+<td>Radix digit</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>y</mi>
+  <mo>&gt;&gt;</mo>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>t</mi>
+  <mo stretchy="false">)</mo>
+  <mi mathvariant="normal">&amp;</mi>
+  <mo stretchy="false">(</mo>
+  <mi>R</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math></td>
+</tr>
+<tr>
+<td>Radix pass</td>
+<td>histogram → prefix → stable scatter</td>
+</tr>
+<tr>
+<td>LSD stability</td>
+<td>preserves previous less-significant ordering</td>
+</tr>
+<tr>
+<td>Bitonic</td>
+<td>deterministic <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <msup>
+    <mi>log</mi>
+    <mn>2</mn>
+  </msup>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>N</mi>
+  <mo stretchy="false">)</mo>
+</math> comparison network</td>
+</tr>
+<tr>
+<td>Key-value sort</td>
+<td>reorder key and payload together</td>
+</tr>
+<tr>
+<td>Maveb key</td>
+<td>depth bits + tile ID</td>
+</tr>
+<tr>
+<td>Maveb final order</td>
+<td>tile-major, depth-ordered within tile</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Blank-page mastery gate</strong></p>
+<p>Start with this innocent kernel:</p>
+<div class="sourceCode" id="d6k0c3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="d6k0c3-1"><a href="#d6k0c3-1" aria-hidden="true" tabindex="-1"></a>output<span class="op">[</span>id<span class="op">]</span> <span class="op">=</span></span>
+<span id="d6k0c3-2"><a href="#d6k0c3-2" aria-hidden="true" tabindex="-1"></a>    input<span class="op">[</span>id<span class="op">]</span> <span class="op">*</span> <span class="dv">2</span><span class="op">;</span></span></code></pre></div>
+<p>and explain all of the invisible hardware underneath it: invocation, local ID, workgroup, subgroup, lane, scheduler, resident warps, register allocation, device-memory transaction and eventual store.</p>
+<p>Then explain why a 400-cycle memory load does not necessarily stall the entire GPU for 400 cycles.</p>
+<p>Derive conceptual occupancy from register and shared-memory limits, and explain why maximum occupancy is not equivalent to maximum performance.</p>
+<p>Then compare:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+</math>
+<p>against:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo stretchy="false">[</mo>
+  <mn>32</mn>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+</math>
+<p>for a subgroup of lanes and explain why the second can produce far more memory transactions.</p>
+<p>Then distinguish:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>CPU SIMD</mtext>
+</math>
+<p>from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>GPU SIMT</mtext>
+  <mo>.</mo>
+</math>
+<p>Then explain why this is cheap:</p>
+<div class="sourceCode" id="lgnm0f"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="lgnm0f-1"><a href="#lgnm0f-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>id <span class="op">&lt;</span> count<span class="op">)</span></span></code></pre></div>
+<p>at only the dispatch tail, while this can be catastrophic:</p>
+<div class="sourceCode" id="nhzbj0"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="nhzbj0-1"><a href="#nhzbj0-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span>material<span class="op">[</span>id<span class="op">]</span> <span class="op">==</span> Glass<span class="op">)</span></span>
+<span id="nhzbj0-2"><a href="#nhzbj0-2" aria-hidden="true" tabindex="-1"></a>    LongGlassPath<span class="op">();</span></span>
+<span id="nhzbj0-3"><a href="#nhzbj0-3" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span></span>
+<span id="nhzbj0-4"><a href="#nhzbj0-4" aria-hidden="true" tabindex="-1"></a>    LongDiffusePath<span class="op">();</span></span></code></pre></div>
+<p>when mixed inside one subgroup.</p>
+<p>Then explain why:</p>
+<div class="sourceCode" id="hbs55l"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="hbs55l-1"><a href="#hbs55l-1" aria-hidden="true" tabindex="-1"></a>threadgroup_barrier<span class="op">()</span></span></code></pre></div>
+<p>cannot implement a device-wide barrier.</p>
+<p>Then take:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>
+<p>and derive exclusive scan:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Use those offsets to allocate unique variable-size output regions without atomics.</p>
+<p>Then reconstruct Blelloch scan from the upsweep and downsweep trees.</p>
+<p>Then derive stream compaction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mo stretchy="false">→</mo>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>Then derive one radix pass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mo stretchy="false">→</mo>
+  <mi>h</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>g</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mo stretchy="false">→</mo>
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>c</mi>
+  <mi>k</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>x</mi>
+  <mo stretchy="false">→</mo>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>k</mi>
+  <mo stretchy="false">→</mo>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>.</mo>
+</math>
+<p>Finally reconstruct your own Maveb Gaussian pipeline:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics>
+  <mtable displaystyle="true" columnspacing="1em" rowspacing="3pt">
+    <mtr>
+      <mtd>
+        <mtext>project Gaussian</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>tile-overlap count</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>exclusive scan</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>generate depth/tile key-value entries</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>stable radix sort</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>tile ranges</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>sorted compositing</mtext>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+<annotation encoding="application/x-tex">
+\text{project Gaussian}
+\rightarrow
+\text{tile-overlap count}
+\rightarrow
+\text{exclusive scan}
+\rightarrow
+\text{generate depth/tile key-value entries}
+\rightarrow
+\text{stable radix sort}
+\rightarrow
+\text{tile ranges}
+\rightarrow
+\text{sorted compositing}.
+</annotation></semantics></math>
+<p>If you can explain why the current radix histogram uses <code>simd_sum</code>, why the scatter uses <code>simd_prefix_exclusive_sum</code>, why a threadgroup barrier is required between subgroup-count publication and group aggregation, why the final destination addresses are race-free, and why processing depth digits before tile digits produces <strong>tile-major/depth-minor final ordering</strong>, then you are no longer just writing compute shaders.</p>
+<p>You are reasoning in <strong>parallel algorithm structure</strong>.</p>
+</section>
+</section>
+<section id="id_01-foundations-i-ch009-next-pass-10-m130-m131-m132-parts-21572200" class="level4">
+<h4>Next — Pass 10: M130 + M131 + M132, Parts 2157–2200</h4>
+<p>That finishes Phase 22: <strong>GPU hash tables and spatial binning, atomic append versus scan construction, indirect buffers and GPU-driven frustum/Hi-Z/LOD pipelines, particle free lists/compaction/sorting, ping-pong and multi-buffering, CPU–GPU pipelining, command processors and asynchronous compute, transfer/upload/readback behavior, persistent/ring buffers and suballocation, transient aliasing, timestamps/profiling zones, then occupancy-versus-throughput, arithmetic intensity and roofline analysis, bandwidth/compute bottlenecks, fast math, FP16, subgroup matrix concepts, race debugging and principled GPU algorithm redesign.</strong></p>
+<p>Once the program has several modules, each module must provide enough information for its consumers to compile and link. A <strong><a href="ch414.xhtml#appendix-3327b8977adf-build-graph-usage-requirements" class="wikilink">usage requirement</a></strong> is build information a consumer needs because it uses a target: an include directory, a required language feature, a compile definition, or another dependency exposed through the interface.</p>
+<p>This is why a build system should express relationships between targets. If <code>Renderer</code> exposes a public header that includes a public <code>Math</code> header, the consumer must be able to find that header through the build interface. Hiding every relationship in global include paths makes the project appear healthy until a clean build or an independent consumer exposes the missing dependency.</p>
+<p>In CMake, <code>PUBLIC</code>, <code>PRIVATE</code>, and <code>INTERFACE</code> describe how requirements apply to the target and its consumers. They are not C++ access specifiers and do not hide header declarations from a determined reader. Exact propagation also depends on the command, target kind, and linking situation; static-library implementation dependencies deserve particular attention when following the final link. Use the <a href="https://cmake.org/cmake/help/latest/command/target_link_libraries.html">current command documentation</a> when checking a specific build.</p>
+<p>A clean experiment is to create a tiny consumer that includes one public engine header and links the advertised target, without adding the engine’s internal directories by hand. If that consumer fails, the public build contract is incomplete even when the engine’s own tests happen to compile. The later build-tool chapter develops the target graph, presets, toolchain inputs, reproducibility, profiling, and the complete path from source content to a runtime package.</p>
+<p>The recurring lesson is that a working program is an agreement across time and boundaries. Bytes need an interpretation. Objects need valid lifetimes. Handles need identities and validity intervals. Asynchronous results need publication rules. Modules need build requirements. Once those agreements are explicit, the graphics and engine stories can depend on them without repeatedly rediscovering the same hidden assumptions.</p>
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch410.xhtml#id_06-GPU-Architecture-and-Real-Time-Rendering" class="wikilink">Reading map</a> · <a href="ch411.xhtml#id_01-foundations-i-ch008-graphs-search-and-gpu-scheduling" class="wikilink">Previous chapter</a> · <a href="ch211.xhtml#id_01-foundations-i-ch010-reproducible-builds-profiling-and-repository-contracts" class="wikilink">Next chapter (Bits, Programs, and Reliable Systems, Part 3, Ch. 8)</a></p>
+</section>
+</section>
+</body>
+</html>

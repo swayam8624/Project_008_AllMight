@@ -8,7 +8,7 @@ The same force law can produce different motion when time is discretized differe
 
 **Recall question:** For the same initial state and step, how do the two integrators differ, and which energy change comes from damping versus discretization?
 
-<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 92392–95877; source-span SHA256 bbbc9ae48404078c70158b6bf68ab03e87b3f3848d0936b107e29c38e9410358. -->
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 93573–97058; source-span SHA256 bbbc9ae48404078c70158b6bf68ab03e87b3f3848d0936b107e29c38e9410358. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### Explicit versus semi-implicit energy example

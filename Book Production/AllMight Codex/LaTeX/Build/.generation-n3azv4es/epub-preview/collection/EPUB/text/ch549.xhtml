@@ -1,0 +1,6917 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch549.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_04-visual-computing-ii-ch038-projecting-ellipsoids-into-screen-space-conics" class="level2">
+<h2>Projecting Ellipsoids into Screen-Space Conics</h2>
+<p><a href="ch442.xhtml#id_07-Vision-XR-and-Playable-Worlds" class="wikilink">Reading map</a> · <a href="ch548.xhtml#id_04-visual-computing-ii-ch037-gaussian-splatting-and-editable-captured-worlds" class="wikilink">Previous chapter</a> · <a href="ch550.xhtml#id_04-visual-computing-ii-ch039-tiling-ordering-and-compositing-at-scale" class="wikilink">Next chapter (Vision, XR, and Playable Worlds, Part 2, Ch. 8)</a></p>
+<p>Projecting a 3D ellipsoid requires transforming its center and covariance into camera coordinates. The resulting screen-space conic links 3D shape to a two-dimensional footprint.</p>
+<p><strong>By the end:</strong> Derive the screen-space conic induced by a projected ellipsoid.</p>
+<p><strong>Recall question:</strong> Why does translation affect the projected mean while covariance follows the linear transform?</p>
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 85852–88886; source-span SHA256 7aac5dd41cb728fb18cfd25087a00e097736bb750dff3cabbf9941114e72b343. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_04-visual-computing-ii-ch038-from-a-3d-ellipsoid-to-a-screen-space-conic" class="level4">
+<h4>FROM A 3D ELLIPSOID TO A SCREEN-SPACE CONIC</h4>
+<p>This is the mathematical core.</p>
+<p>Everything so far built:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>μ</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>,</mo>
+  <mi>α</mi>
+  <mo>,</mo>
+  <mi>S</mi>
+  <mi>H</mi>
+  <mo>.</mo>
+</math>
+<p>Now we need a pixel footprint.</p>
+<hr />
+<p>World Gaussian center:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>μ</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>x</mi>
+            <mi>w</mi>
+          </msub>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>y</mi>
+            <mi>w</mi>
+          </msub>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>z</mi>
+            <mi>w</mi>
+          </msub>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>World-to-camera rigid transform:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>R</mi>
+            <mi>c</mi>
+          </msub>
+        </mtd>
+        <mtd>
+          <msub>
+            <mi>t</mi>
+            <mi>c</mi>
+          </msub>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>μ</mi>
+            <mi>c</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>R</mi>
+            <mi>c</mi>
+          </msub>
+          <msub>
+            <mi>μ</mi>
+            <mi>w</mi>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>t</mi>
+            <mi>c</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Write:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>μ</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>X</mi>
+  <mo>,</mo>
+  <mi>Y</mi>
+  <mo>,</mo>
+  <mi>Z</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Maveb’s isolated reference API explicitly defines camera as looking along:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo>+</mo>
+          <mi>Z</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and warns adapters to make renderer-coordinate conversion explicit.</p>
+<p>That is excellent API documentation because many renderers use <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−</mo>
+  <mi>Z</mi>
+</math> forward.</p>
+<hr />
+<p><strong>Translation affects the mean, not covariance</strong></p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>X</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mi>X</mi>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <msup>
+    <mi>X</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mi>μ</mi>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mo>.</mo>
+</math>
+<p>But covariance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>v</mi>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>X</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mi mathvariant="normal">Σ</mi>
+  <msup>
+    <mi>A</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Translation disappears because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>X</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>+</mo>
+  <mo>−</mo>
+  <msup>
+    <mi>μ</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mo stretchy="false">(</mo>
+  <mi>X</mi>
+  <mo>−</mo>
+  <mi>μ</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>So center transformation uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>μ</mi>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Covariance uses only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi mathvariant="normal">Σ</mi>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<hr />
+<p>Pinhole camera projection:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>x</mi>
+  </msub>
+  <mfrac>
+    <mi>X</mi>
+    <mi>Z</mi>
+  </mfrac>
+  <mo>+</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>y</mi>
+  </msub>
+  <mfrac>
+    <mi>Y</mi>
+    <mi>Z</mi>
+  </mfrac>
+  <mo>+</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Exactly Maveb:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>centerX <span class="op">=</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    focalX <span class="op">*</span> X <span class="op">/</span> Z <span class="op">+</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    centerX<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>centerY <span class="op">=</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    focalY <span class="op">*</span> Y <span class="op">/</span> Z <span class="op">+</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    centerY<span class="op">;</span></span></code></pre></div>
+<hr />
+<p>Intrinsics matrix:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>K</mi>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">[</mo>
+            <mtable columnspacing="1em" rowspacing="4pt">
+              <mtr>
+                <mtd>
+                  <msub>
+                    <mi>f</mi>
+                    <mi>x</mi>
+                  </msub>
+                </mtd>
+                <mtd>
+                  <mn>0</mn>
+                </mtd>
+                <mtd>
+                  <msub>
+                    <mi>c</mi>
+                    <mi>x</mi>
+                  </msub>
+                </mtd>
+              </mtr>
+              <mtr>
+                <mtd>
+                  <mn>0</mn>
+                </mtd>
+                <mtd>
+                  <msub>
+                    <mi>f</mi>
+                    <mi>y</mi>
+                  </msub>
+                </mtd>
+                <mtd>
+                  <msub>
+                    <mi>c</mi>
+                    <mi>y</mi>
+                  </msub>
+                </mtd>
+              </mtr>
+              <mtr>
+                <mtd>
+                  <mn>0</mn>
+                </mtd>
+                <mtd>
+                  <mn>0</mn>
+                </mtd>
+                <mtd>
+                  <mn>1</mn>
+                </mtd>
+              </mtr>
+            </mtable>
+            <mo data-mjx-texclass="CLOSE">]</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>f</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>y</mi>
+  </msub>
+</math> are in <strong>pixel units</strong>.</p>
+<p>If vertical field of view is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>V</mi>
+    <mi>y</mi>
+  </msub>
+</math>
+<p>and image height:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>tan</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <mi>F</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>V</mi>
+    <mi>y</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>H</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mn>2</mn>
+    </mrow>
+    <msub>
+      <mi>f</mi>
+      <mi>y</mi>
+    </msub>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>f</mi>
+            <mi>y</mi>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mi>H</mi>
+            <mrow>
+              <mn>2</mn>
+              <mi>tan</mi>
+              <mo data-mjx-texclass="NONE">⁡</mo>
+              <mo stretchy="false">(</mo>
+              <mi>F</mi>
+              <mi>O</mi>
+              <msub>
+                <mi>V</mi>
+                <mi>y</mi>
+              </msub>
+              <mrow data-mjx-texclass="ORD">
+                <mo>/</mo>
+              </mrow>
+              <mn>2</mn>
+              <mo stretchy="false">)</mo>
+            </mrow>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For square pixels:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>x</mi>
+  </msub>
+</math>
+<p>can be derived consistently from horizontal FOV or aspect.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>F</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>V</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>arctan</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mi>s</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>tan</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo stretchy="false">(</mo>
+  <mi>F</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>V</mi>
+    <mi>y</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mi>W</mi>
+    <mrow>
+      <mn>2</mn>
+      <mi>tan</mi>
+      <mo data-mjx-texclass="NONE">⁡</mo>
+      <mo stretchy="false">(</mo>
+      <mi>F</mi>
+      <mi>O</mi>
+      <msub>
+        <mi>V</mi>
+        <mi>x</mi>
+      </msub>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mn>2</mn>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Under square-pixel/aspect-consistent construction this yields the expected equivalent focal scale.</p>
+<hr />
+<p><strong>Principal point</strong></p>
+<p>Usually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>≈</mo>
+  <mi>W</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>≈</mo>
+  <mi>H</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>2.</mn>
+</math>
+<p>But calibrated cameras need not have centered principal point.</p>
+<p>Maveb’s reference camera stores both explicitly:</p>
+<pre id="id_30s5gu" class="text"><code>focalX
+focalY
+centerX
+centerY</code></pre>
+<p>which is the more general model.</p>
+<hr />
+<p>Under a purely linear transformation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Y</mi>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mi>X</mi>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mo>,</mo>
+</math>
+<p>a Gaussian remains Gaussian:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>X</mi>
+  <mo>∼</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi data-mjx-variant="-tex-calligraphic" mathvariant="script">N</mi>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>μ</mi>
+  <mo>,</mo>
+  <mi mathvariant="normal">Σ</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>implies:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Y</mi>
+  <mo>∼</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi data-mjx-variant="-tex-calligraphic" mathvariant="script">N</mi>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mi>μ</mi>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mo>,</mo>
+  <mi>A</mi>
+  <mi mathvariant="normal">Σ</mi>
+  <msup>
+    <mi>A</mi>
+    <mi>T</mi>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Perspective projection is not linear because of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>X</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>Z</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>Y</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>Z</mi>
+  <mo>.</mo>
+</math>
+<p>So it does not globally transform a Gaussian into a mathematically exact Gaussian.</p>
+<p>Instead we linearize projection around its center.</p>
+<p>Locally:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>j</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>≈</mo>
+  <mi>a</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Affine transform of Gaussian is Gaussian.</p>
+<p>Therefore the projected footprint is approximated by a 2D Gaussian.</p>
+<p>Its constant-density contours are ellipses.</p>
+<p>This local affine approximation is the same fundamental machinery used by EWA splatting. <a href="https://vcg.seas.harvard.edu/content/3-publications/20010101-surface-splatting/p371-zwicker.pdf?utm_source=chatgpt.com">vcg.seas.harvard.edu</a></p>
+<hr />
+<p>Let projection:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">f</mi>
+  </mrow>
+  <mo>:</mo>
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="double-struck">R</mi>
+    </mrow>
+    <mn>3</mn>
+  </msup>
+  <mo stretchy="false">→</mo>
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="double-struck">R</mi>
+    </mrow>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>For point near mean:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">x</mi>
+  </mrow>
+  <mo>=</mo>
+  <mi>μ</mi>
+  <mo>+</mo>
+  <mi>δ</mi>
+  <mo>.</mo>
+</math>
+<p>Taylor expansion:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">f</mi>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>μ</mi>
+  <mo>+</mo>
+  <mi>δ</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">f</mi>
+  </mrow>
+  <mo stretchy="false">(</mo>
+  <mi>μ</mi>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <msub>
+    <mi>J</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mrow data-mjx-texclass="ORD">
+        <mi mathvariant="bold">f</mi>
+      </mrow>
+    </mrow>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>μ</mi>
+  <mo stretchy="false">)</mo>
+  <mi>δ</mi>
+  <mo>+</mo>
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <mi>δ</mi>
+  <msup>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Drop higher-order terms:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">f</mi>
+          </mrow>
+          <mo stretchy="false">(</mo>
+          <mi>μ</mi>
+          <mo>+</mo>
+          <mi>δ</mi>
+          <mo stretchy="false">)</mo>
+          <mo>≈</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">f</mi>
+          </mrow>
+          <mo stretchy="false">(</mo>
+          <mi>μ</mi>
+          <mo stretchy="false">)</mo>
+          <mo>+</mo>
+          <mi>J</mi>
+          <mi>δ</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>So local perturbations transform by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>δ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>s</mi>
+      <mi>c</mi>
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>e</mi>
+      <mi>n</mi>
+    </mrow>
+  </msub>
+  <mo>≈</mo>
+  <mi>J</mi>
+  <msub>
+    <mi>δ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>c</mi>
+      <mi>a</mi>
+      <mi>m</mi>
+      <mi>e</mi>
+      <mi>r</mi>
+      <mi>a</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then covariance follows directly.</p>
+<hr />
+<p>Projection:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mo stretchy="false">(</mo>
+  <mi>X</mi>
+  <mo>,</mo>
+  <mi>Y</mi>
+  <mo>,</mo>
+  <mi>Z</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>x</mi>
+  </msub>
+  <mfrac>
+    <mi>X</mi>
+    <mi>Z</mi>
+  </mfrac>
+  <mo>+</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Compute derivatives:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mi>∂</mi>
+      <mi>u</mi>
+    </mrow>
+    <mrow>
+      <mi>∂</mi>
+      <mi>X</mi>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mfrac>
+    <msub>
+      <mi>f</mi>
+      <mi>x</mi>
+    </msub>
+    <mi>Z</mi>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mi>∂</mi>
+      <mi>u</mi>
+    </mrow>
+    <mrow>
+      <mi>∂</mi>
+      <mi>Y</mi>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mi>∂</mi>
+      <mi>u</mi>
+    </mrow>
+    <mrow>
+      <mi>∂</mi>
+      <mi>Z</mi>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mo>−</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>x</mi>
+  </msub>
+  <mfrac>
+    <mi>X</mi>
+    <msup>
+      <mi>Z</mi>
+      <mn>2</mn>
+    </msup>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Similarly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>y</mi>
+  </msub>
+  <mfrac>
+    <mi>Y</mi>
+    <mi>Z</mi>
+  </mfrac>
+  <mo>+</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mi>∂</mi>
+      <mi>v</mi>
+    </mrow>
+    <mrow>
+      <mi>∂</mi>
+      <mi>X</mi>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mi>∂</mi>
+      <mi>v</mi>
+    </mrow>
+    <mrow>
+      <mi>∂</mi>
+      <mi>Y</mi>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mfrac>
+    <msub>
+      <mi>f</mi>
+      <mi>y</mi>
+    </msub>
+    <mi>Z</mi>
+  </mfrac>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <mi>∂</mi>
+      <mi>v</mi>
+    </mrow>
+    <mrow>
+      <mi>∂</mi>
+      <mi>Z</mi>
+    </mrow>
+  </mfrac>
+  <mo>=</mo>
+  <mo>−</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>y</mi>
+  </msub>
+  <mfrac>
+    <mi>Y</mi>
+    <msup>
+      <mi>Z</mi>
+      <mn>2</mn>
+    </msup>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>J</mi>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">[</mo>
+            <mtable columnspacing="1em" rowspacing="4pt">
+              <mtr>
+                <mtd>
+                  <mfrac>
+                    <msub>
+                      <mi>f</mi>
+                      <mi>x</mi>
+                    </msub>
+                    <mi>Z</mi>
+                  </mfrac>
+                </mtd>
+                <mtd>
+                  <mn>0</mn>
+                </mtd>
+                <mtd>
+                  <mo>−</mo>
+                  <mfrac>
+                    <mrow>
+                      <msub>
+                        <mi>f</mi>
+                        <mi>x</mi>
+                      </msub>
+                      <mi>X</mi>
+                    </mrow>
+                    <msup>
+                      <mi>Z</mi>
+                      <mn>2</mn>
+                    </msup>
+                  </mfrac>
+                </mtd>
+              </mtr>
+              <mtr>
+                <mtd>
+                  <mn>0</mn>
+                </mtd>
+                <mtd>
+                  <mfrac>
+                    <msub>
+                      <mi>f</mi>
+                      <mi>y</mi>
+                    </msub>
+                    <mi>Z</mi>
+                  </mfrac>
+                </mtd>
+                <mtd>
+                  <mo>−</mo>
+                  <mfrac>
+                    <mrow>
+                      <msub>
+                        <mi>f</mi>
+                        <mi>y</mi>
+                      </msub>
+                      <mi>Y</mi>
+                    </mrow>
+                    <msup>
+                      <mi>Z</mi>
+                      <mn>2</mn>
+                    </msup>
+                  </mfrac>
+                </mtd>
+              </mtr>
+            </mtable>
+            <mo data-mjx-texclass="CLOSE">]</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This equation must become instinctive.</p>
+<hr />
+<p><strong>Maveb code is the Jacobian verbatim</strong></p>
+<p>CPU:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>jacobianX <span class="op">=</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    fx <span class="op">/</span> Z<span class="op">,</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">-</span>fx <span class="op">*</span> X <span class="op">/</span> Z²</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>jacobianY <span class="op">=</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    fy <span class="op">/</span> Z<span class="op">,</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">-</span>fy <span class="op">*</span> Y <span class="op">/</span> Z²</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Metal kernel:</p>
+<pre class="metal"><code>float3 jacobianX =
+    float3(
+        fx * inverseZ,
+        0,
+        -fx * X *
+         inverseZ * inverseZ);
+
+float3 jacobianY =
+    float3(
+        0,
+        fy * inverseZ,
+        -fy * Y *
+         inverseZ * inverseZ);</code></pre>
+<p>There is no mystery abstraction here.</p>
+<p>That code is exactly the calculus.</p>
+<hr />
+<p><strong>Why projection explodes near the camera</strong></p>
+<p>Terms contain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mn>1</mn>
+    <mi>Z</mi>
+  </mfrac>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mn>1</mn>
+    <msup>
+      <mi>Z</mi>
+      <mn>2</mn>
+    </msup>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>As:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Z</mi>
+  <mo stretchy="false">→</mo>
+  <msup>
+    <mn>0</mn>
+    <mo>+</mo>
+  </msup>
+  <mo>,</mo>
+</math>
+<p>Jacobian magnitude explodes.</p>
+<p>Therefore projected covariance can become enormous.</p>
+<p>This is why near-plane culling is not only geometrically meaningful but numerically important.</p>
+<hr />
+<p><strong>Original GraphDECO adds another stabilization near FOV boundaries</strong></p>
+<p>The canonical CUDA implementation clamps normalized projected <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>z</mi>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>z</mi>
+</math> to a slightly expanded field-of-view range before constructing the covariance Jacobian. It also adds <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.3</mn>
+</math> to the 2D covariance diagonal. <a href="https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu?utm_source=chatgpt.com">GitHub</a></p>
+<p>Maveb currently matches the <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>+</mo>
+  <mn>0.3</mn>
+</math> regularization but does not perform that same 1.3× tangent-FOV clamp in the inspected CPU/Metal projection code.</p>
+<p>That is not automatically wrong—the implementations can define their own valid projection domain—but it is a meaningful difference from GraphDECO when stress-testing very large/off-axis splats.</p>
+<hr />
+<p>World covariance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Camera linear rotation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>c</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>R</mi>
+            <mi>c</mi>
+          </msub>
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>w</mi>
+          </msub>
+          <msubsup>
+            <mi>R</mi>
+            <mi>c</mi>
+            <mi>T</mi>
+          </msubsup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Why?</p>
+<p>Let:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>δ</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>R</mi>
+    <mi>c</mi>
+  </msub>
+  <msub>
+    <mi>δ</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>δ</mi>
+    <mi>c</mi>
+  </msub>
+  <msubsup>
+    <mi>δ</mi>
+    <mi>c</mi>
+    <mi>T</mi>
+  </msubsup>
+  <mo stretchy="false">]</mo>
+  <mo>=</mo>
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>R</mi>
+    <mi>c</mi>
+  </msub>
+  <msub>
+    <mi>δ</mi>
+    <mi>w</mi>
+  </msub>
+  <msubsup>
+    <mi>δ</mi>
+    <mi>w</mi>
+    <mi>T</mi>
+  </msubsup>
+  <msubsup>
+    <mi>R</mi>
+    <mi>c</mi>
+    <mi>T</mi>
+  </msubsup>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Move constants out:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <msub>
+    <mi>R</mi>
+    <mi>c</mi>
+  </msub>
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>δ</mi>
+    <mi>w</mi>
+  </msub>
+  <msubsup>
+    <mi>δ</mi>
+    <mi>w</mi>
+    <mi>T</mi>
+  </msubsup>
+  <mo stretchy="false">]</mo>
+  <msubsup>
+    <mi>R</mi>
+    <mi>c</mi>
+    <mi>T</mi>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+</section>
+<section id="id_04-visual-computing-ii-ch038-r_csigma_wr_ct." class="level3">
+<h3><math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <msub>
+    <mi>R</mi>
+    <mi>c</mi>
+  </msub>
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>w</mi>
+  </msub>
+  <msubsup>
+    <mi>R</mi>
+    <mi>c</mi>
+    <mi>T</mi>
+  </msubsup>
+  <mo>.</mo>
+</math></h3>
+<p><strong>More general affine transform</strong></p>
+<p>If world-to-camera upper-left block is not a pure rotation but a general linear matrix:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>,</mo>
+</math>
+<p>then covariance transformation is still:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>A</mi>
+          <mi mathvariant="normal">Σ</mi>
+          <msup>
+            <mi>A</mi>
+            <mi>T</mi>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The Maveb CPU helper actually multiplies by the transform’s upper 3×3 linear block, so mathematically it supports this more general affine covariance transform.</p>
+<p>The GPU variable is called <code>cameraRotation</code>, implying the intended camera transform is rigid.</p>
+<hr />
+<p>After camera covariance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>and local projection Jacobian:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>J</mi>
+  <mo>∈</mo>
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="double-struck">R</mi>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mn>2</mn>
+      <mo>×</mo>
+      <mn>3</mn>
+    </mrow>
+  </msup>
+  <mo>,</mo>
+</math>
+<p>screen covariance is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mn>2</mn>
+              <mi>D</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mi>J</mi>
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>c</mi>
+          </msub>
+          <msup>
+            <mi>J</mi>
+            <mi>T</mi>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Dimension check:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>×</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>×</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <mn>3</mn>
+  <mo>×</mo>
+  <mn>2</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mo>×</mo>
+  <mn>2.</mn>
+</math>
+<p>Correct.</p>
+<hr />
+<p><strong>Derivation from local perturbations</strong></p>
+<p>We have:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>δ</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>≈</mo>
+  <mi>J</mi>
+  <msub>
+    <mi>δ</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Screen covariance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>δ</mi>
+    <mi>s</mi>
+  </msub>
+  <msubsup>
+    <mi>δ</mi>
+    <mi>s</mi>
+    <mi>T</mi>
+  </msubsup>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Substitute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <mi>J</mi>
+  <msub>
+    <mi>δ</mi>
+    <mi>c</mi>
+  </msub>
+  <msubsup>
+    <mi>δ</mi>
+    <mi>c</mi>
+    <mi>T</mi>
+  </msubsup>
+  <msup>
+    <mi>J</mi>
+    <mi>T</mi>
+  </msup>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Pull <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>J</mi>
+</math> out:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <mi>J</mi>
+  <mi>E</mi>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>δ</mi>
+    <mi>c</mi>
+  </msub>
+  <msubsup>
+    <mi>δ</mi>
+    <mi>c</mi>
+    <mi>T</mi>
+  </msubsup>
+  <mo stretchy="false">]</mo>
+  <msup>
+    <mi>J</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>s</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>J</mi>
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>c</mi>
+          </msub>
+          <msup>
+            <mi>J</mi>
+            <mi>T</mi>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is the entire derivation.</p>
+<hr />
+<p><strong>Expanded implementation</strong></p>
+<p>Let Jacobian rows be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>j</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>j</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>j</mi>
+            <mi>x</mi>
+          </msub>
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>c</mi>
+          </msub>
+          <msubsup>
+            <mi>j</mi>
+            <mi>x</mi>
+            <mi>T</mi>
+          </msubsup>
+        </mtd>
+        <mtd>
+          <msub>
+            <mi>j</mi>
+            <mi>x</mi>
+          </msub>
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>c</mi>
+          </msub>
+          <msubsup>
+            <mi>j</mi>
+            <mi>y</mi>
+            <mi>T</mi>
+          </msubsup>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>j</mi>
+            <mi>y</mi>
+          </msub>
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>c</mi>
+          </msub>
+          <msubsup>
+            <mi>j</mi>
+            <mi>x</mi>
+            <mi>T</mi>
+          </msubsup>
+        </mtd>
+        <mtd>
+          <msub>
+            <mi>j</mi>
+            <mi>y</mi>
+          </msub>
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>c</mi>
+          </msub>
+          <msubsup>
+            <mi>j</mi>
+            <mi>y</mi>
+            <mi>T</mi>
+          </msubsup>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Because covariance symmetric:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>j</mi>
+    <mi>x</mi>
+  </msub>
+  <mi mathvariant="normal">Σ</mi>
+  <msubsup>
+    <mi>j</mi>
+    <mi>y</mi>
+    <mi>T</mi>
+  </msubsup>
+  <mo>=</mo>
+  <msub>
+    <mi>j</mi>
+    <mi>y</mi>
+  </msub>
+  <mi mathvariant="normal">Σ</mi>
+  <msubsup>
+    <mi>j</mi>
+    <mi>x</mi>
+    <mi>T</mi>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<p>Maveb calculates exactly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>j</mi>
+    <mi>x</mi>
+  </msub>
+  <mi mathvariant="normal">Σ</mi>
+  <msubsup>
+    <mi>j</mi>
+    <mi>x</mi>
+    <mi>T</mi>
+  </msubsup>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>j</mi>
+    <mi>x</mi>
+  </msub>
+  <mi mathvariant="normal">Σ</mi>
+  <msubsup>
+    <mi>j</mi>
+    <mi>y</mi>
+    <mi>T</mi>
+  </msubsup>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>j</mi>
+    <mi>y</mi>
+  </msub>
+  <mi mathvariant="normal">Σ</mi>
+  <msubsup>
+    <mi>j</mi>
+    <mi>y</mi>
+    <mi>T</mi>
+  </msubsup>
+  <mo>.</mo>
+</math>
+<hr />
+<p>Maveb adds:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.3</mn>
+</math>
+<p>to both diagonal entries:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo stretchy="false">←</mo>
+  <mi>a</mi>
+  <mo>+</mo>
+  <mn>0.3</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo stretchy="false">←</mo>
+  <mi>c</mi>
+  <mo>+</mo>
+  <mn>0.3</mn>
+  <mo>.</mo>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msubsup>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>s</mi>
+            <mo data-mjx-alternate="1">′</mo>
+          </msubsup>
+          <mo>=</mo>
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>s</mi>
+          </msub>
+          <mo>+</mo>
+          <mn>0.3</mn>
+          <mi>I</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The canonical GraphDECO rasterizer uses the same constant and explicitly describes it as a low-pass stabilization ensuring Gaussians retain a minimum screen footprint. <a href="https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu?utm_source=chatgpt.com">GitHub</a></p>
+<hr />
+<p><strong>Why adding <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>λ</mi>
+  <mi>I</mi>
+</math> helps</strong></p>
+<p>Eigenvalues of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Σ</mi>
+</math>
+<p>are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Eigenvalues of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Σ</mi>
+  <mo>+</mo>
+  <mi>ϵ</mi>
+  <mi>I</mi>
+</math>
+<p>become:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>ϵ</mi>
+  <mo>.</mo>
+</math>
+<p>So the smallest eigenvalue can no longer collapse below <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>ϵ</mi>
+</math>, ignoring numerical roundoff.</p>
+<p>That improves:</p>
+<ul>
+<li>invertibility,</li>
+<li>minimum pixel footprint,</li>
+<li>stability,</li>
+<li>anti-aliasing behavior.</li>
+</ul>
+<hr />
+<p><strong>What <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.3</mn>
+</math> means</strong></p>
+<p>Variance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.3</mn>
+  <msup>
+    <mtext> pixels</mtext>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Corresponding standard deviation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msqrt>
+    <mn>0.3</mn>
+  </msqrt>
+  <mo>≈</mo>
+  <mn>0.548</mn>
+  <mtext> pixels</mtext>
+  <mo>.</mo>
+</math>
+<p>A 3σ radius from that term alone is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <msqrt>
+    <mn>0.3</mn>
+  </msqrt>
+  <mo>≈</mo>
+  <mn>1.64</mn>
+  <mtext> pixels</mtext>
+  <mo>.</mo>
+</math>
+<p>So even an extremely tiny projected splat retains a nonzero footprint.</p>
+<hr />
+<p>We now have:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mn>2</mn>
+              <mi>D</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">[</mo>
+            <mtable columnspacing="1em" rowspacing="4pt">
+              <mtr>
+                <mtd>
+                  <mi>a</mi>
+                </mtd>
+                <mtd>
+                  <mi>b</mi>
+                </mtd>
+              </mtr>
+              <mtr>
+                <mtd>
+                  <mi>b</mi>
+                </mtd>
+                <mtd>
+                  <mi>c</mi>
+                </mtd>
+              </mtr>
+            </mtable>
+            <mo data-mjx-texclass="CLOSE">]</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Interpretation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>=</mo>
+  <msubsup>
+    <mi>σ</mi>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msubsup>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo>=</mo>
+  <msubsup>
+    <mi>σ</mi>
+    <mi>y</mi>
+    <mn>2</mn>
+  </msubsup>
+  <mo>,</mo>
+</math>
+<p>while:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+</math>
+<p>describes correlation/rotation.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>ellipse axes align with screen axes.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mo>≠</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>ellipse is rotated.</p>
+<hr />
+<p><strong>Example</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Σ</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>9</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Standard deviations:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>1.</mn>
+</math>
+<p>So one-sigma ellipse has radii:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>1.</mn>
+</math>
+<p>Three-sigma:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>9</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>3.</mn>
+</math>
+<p>If we rotate covariance 45°, diagonal entries/off-diagonal terms change, while eigenvalues remain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>9</mn>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>1.</mn>
+</math>
+<p>Same ellipse shape.</p>
+<p>Different screen orientation.</p>
+<hr />
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Σ</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mi>a</mi>
+        </mtd>
+        <mtd>
+          <mi>b</mi>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mi>b</mi>
+        </mtd>
+        <mtd>
+          <mi>c</mi>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<p>determinant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>D</mi>
+          <mo>=</mo>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mo>−</mo>
+          <msup>
+            <mi>b</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For SPD 2×2 covariance we need:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo>&gt;</mo>
+  <mn>0.</mn>
+</math>
+<p>Geometrically, determinant relates to ellipse area.</p>
+<p>Product of eigenvalues:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mn>1</mn>
+  </msub>
+  <msub>
+    <mi>λ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mi>D</mi>
+  <mo>.</mo>
+</math>
+<p>One-sigma ellipse area:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mi>π</mi>
+  <msqrt>
+    <msub>
+      <mi>λ</mi>
+      <mn>1</mn>
+    </msub>
+  </msqrt>
+  <msqrt>
+    <msub>
+      <mi>λ</mi>
+      <mn>2</mn>
+    </msub>
+  </msqrt>
+  <mo>=</mo>
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>π</mi>
+          <msqrt>
+            <mi>D</mi>
+          </msqrt>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>So determinant approaching zero means the ellipse collapses toward a line.</p>
+<hr />
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mi>a</mi>
+        </mtd>
+        <mtd>
+          <mi>b</mi>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mi>b</mi>
+        </mtd>
+        <mtd>
+          <mi>c</mi>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<p>inverse is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msup>
+            <mi>A</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mn>1</mn>
+            </mrow>
+          </msup>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mrow>
+              <mi>a</mi>
+              <mi>c</mi>
+              <mo>−</mo>
+              <msup>
+                <mi>b</mi>
+                <mn>2</mn>
+              </msup>
+            </mrow>
+          </mfrac>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">[</mo>
+            <mtable columnspacing="1em" rowspacing="4pt">
+              <mtr>
+                <mtd>
+                  <mi>c</mi>
+                </mtd>
+                <mtd>
+                  <mo>−</mo>
+                  <mi>b</mi>
+                </mtd>
+              </mtr>
+              <mtr>
+                <mtd>
+                  <mo>−</mo>
+                  <mi>b</mi>
+                </mtd>
+                <mtd>
+                  <mi>a</mi>
+                </mtd>
+              </mtr>
+            </mtable>
+            <mo data-mjx-texclass="CLOSE">]</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Proof:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mi>c</mi>
+        </mtd>
+        <mtd>
+          <mo>−</mo>
+          <mi>b</mi>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mo>−</mo>
+          <mi>b</mi>
+        </mtd>
+        <mtd>
+          <mi>a</mi>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mo>−</mo>
+          <msup>
+            <mi>b</mi>
+            <mn>2</mn>
+          </msup>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mo>−</mo>
+          <msup>
+            <mi>b</mi>
+            <mn>2</mn>
+          </msup>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Divide by determinant.</p>
+<hr />
+<p>Rasterization does not need covariance itself at every pixel.</p>
+<p>It needs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi mathvariant="normal">Σ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Define conic:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <msup>
+    <mi mathvariant="normal">Σ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mi>A</mi>
+        </mtd>
+        <mtd>
+          <mi>B</mi>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mi>B</mi>
+        </mtd>
+        <mtd>
+          <mi>C</mi>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Maveb stores:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>=</mo>
+  <mi>c</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>D</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>=</mo>
+  <mo>−</mo>
+  <mi>b</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>D</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mi>a</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>D</mi>
+  <mo>.</mo>
+</math>
+<p>Its struct names are:</p>
+<pre id="cgxb8q" class="text"><code>inverseA
+inverseB
+inverseC.</code></pre>
+<hr />
+<p><strong>Pixel evaluation</strong></p>
+<p>Let pixel center be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>+</mo>
+  <mn>0.5</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Projected Gaussian center:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>μ</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Δ</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mi>d</mi>
+          <mi>x</mi>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mi>d</mi>
+          <mi>y</mi>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>=</mo>
+  <mi>p</mi>
+  <mo>−</mo>
+  <msub>
+    <mi>μ</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Mahalanobis squared distance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <msup>
+    <mi mathvariant="normal">Δ</mi>
+    <mi>T</mi>
+  </msup>
+  <mi>C</mi>
+  <mi mathvariant="normal">Δ</mi>
+  <mo>.</mo>
+</math>
+<p>Expand:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>q</mi>
+          <mo>=</mo>
+          <mi>A</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <mi>d</mi>
+          <msup>
+            <mi>x</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>+</mo>
+          <mn>2</mn>
+          <mi>B</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <mi>d</mi>
+          <mi>x</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <mi>d</mi>
+          <mi>y</mi>
+          <mo>+</mo>
+          <mi>C</mi>
+          <mstyle scriptlevel="0">
+            <mspace width="0.167em"></mspace>
+          </mstyle>
+          <mi>d</mi>
+          <msup>
+            <mi>y</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Maveb CPU oracle uses exactly this expression.</p>
+<hr />
+<p><strong>Gaussian screen weight</strong></p>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>w</mi>
+          <mo>=</mo>
+          <msup>
+            <mi>e</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>−</mo>
+              <mi>q</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mo>/</mo>
+              </mrow>
+              <mn>2</mn>
+            </mrow>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>At center:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>so:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>On one-sigma contour:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>e</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mn>2</mn>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>On three-sigma contour:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mn>9</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>e</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>4.5</mn>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Maveb CPU oracle rejects:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>&gt;</mo>
+  <mn>9.</mn>
+</math>
+<p>So it evaluates only the 3σ ellipse inside its conservative square raster bound.</p>
+<section id="id_04-visual-computing-ii-ch038-first-use-completion-from-one-gaussians-footprint-to-the-final-pixel" class="level5">
+<h5>First-use completion — from one Gaussian’s footprint to the final pixel</h5>
+<p>The ellipse test <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+  <mo>≤</mo>
+  <mn>9</mn>
+</math> only determines whether a projected Gaussian is a <em>candidate contributor</em>. It does not yet calculate the final pixel, because several Gaussians can overlap the same sample and obscure each other. For a projected Gaussian <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math>, let <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>q</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>−</mo>
+  <msub>
+    <mi>μ</mi>
+    <mi>i</mi>
+  </msub>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mi>T</mi>
+  </msup>
+  <msubsup>
+    <mi mathvariant="normal">Σ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>2</mn>
+      <mi>D</mi>
+      <mo>,</mo>
+      <mi>i</mi>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>−</mo>
+  <msub>
+    <mi>μ</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math> be its squared elliptical distance at pixel sample <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>; <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>μ</mi>
+    <mi>i</mi>
+  </msub>
+</math> is its projected center and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mn>2</mn>
+      <mi>D</mi>
+      <mo>,</mo>
+      <mi>i</mi>
+    </mrow>
+  </msub>
+</math> is the screen covariance, assumed positive definite. The unnormalized weight is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>g</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msup>
+    <mi>e</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <msub>
+        <mi>q</mi>
+        <mi>i</mi>
+      </msub>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mn>2</mn>
+    </mrow>
+  </msup>
+</math>. If its stored opacity is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>∈</mo>
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>, a common splatting convention defines the effective sample opacity as </p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>α</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>α</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>o</mi>
+    <mi>i</mi>
+  </msub>
+  <msup>
+    <mi>e</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <msub>
+        <mi>q</mi>
+        <mi>i</mi>
+      </msub>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mn>2</mn>
+    </mrow>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<p> where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>α</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+    </mrow>
+  </msub>
+  <mo>&lt;</mo>
+  <mn>1</mn>
+</math> may be a deliberate numerical clamp. The cutoff and clamp are separate approximations: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>q</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>&gt;</mo>
+  <mn>9</mn>
+</math> skips the contribution, whereas the clamp caps the contribution of a retained Gaussian. Neither operation turns the Gaussian into an opaque mesh surface.</p>
+<p>With overlapping splats, order them from <strong>near to far using one declared camera-depth convention</strong>. Reversed-Z may encode near objects with a larger stored depth, so blindly sorting an API depth value ascending is not universally front-to-back. For the sorted contributors, let <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>T</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math> be the fraction of light not yet blocked, and let <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>C</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> be accumulated <em>linear</em> RGB. For the next Gaussian: </p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>α</mi>
+    <mi>i</mi>
+  </msub>
+  <msub>
+    <mi>c</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>T</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p> Here <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>c</mi>
+    <mi>i</mi>
+  </msub>
+</math> is its view-dependent RGB contribution in the declared linear working space. A background <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>b</mi>
+      <mi>g</mi>
+    </mrow>
+  </msub>
+</math> enters <em>after</em> the last contributor as <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>T</mi>
+    <mi>n</mi>
+  </msub>
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>b</mi>
+      <mi>g</mi>
+    </mrow>
+  </msub>
+</math>. This is front-to-back premultiplied-alpha compositing written without pretending that stored Gaussian colors were already premultiplied. The product form </p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>T</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∏</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>j</mi>
+      <mo>&lt;</mo>
+      <mi>i</mi>
+    </mrow>
+  </munder>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>j</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p> explains the recurrence: a farther Gaussian contributes only through the surviving transmittance from every nearer one.</p>
+<p>For two overlapping center samples, take a near <strong>red</strong> splat with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>α</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>0.6</mn>
+</math>, and a far <strong>blue</strong> splat with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>α</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>0.5</mn>
+</math>. Start with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mi>C</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>. Red contributes <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0.6</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math> and leaves <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>0.4</mn>
+</math>. Blue contributes only <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.4</mn>
+  <mo stretchy="false">(</mo>
+  <mn>0.5</mn>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0.2</mn>
+  <mo stretchy="false">)</mo>
+</math>, leaving <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>0.2</mn>
+</math>. The result before background is <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.6</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0.2</mn>
+  <mo stretchy="false">)</mo>
+</math>. Reverse the order and you obtain <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.3</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0.5</mn>
+  <mo stretchy="false">)</mo>
+</math>, still with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>0.2</mn>
+</math>. Thus sorting is a <strong>visible mathematical requirement</strong>, not an optional optimization. Overlapping equal-depth or intersecting splats require a declared approximation/tie policy; one global center-depth ordering cannot reproduce all possible volumetric occlusion.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;array&gt;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;algorithm&gt;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;cmath&gt;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;span&gt;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> SplatSample <span class="op">{</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> ellipticalDistanceSquared<span class="op">;</span> <span class="co">// q, already computed in screen space.</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> opacity<span class="op">;</span>                    <span class="co">// Stored amplitude in [0,1].</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>array<span class="op">&lt;</span><span class="dt">double</span><span class="op">,</span> <span class="dv">3</span><span class="op">&gt;</span> linearRGB<span class="op">;</span>   <span class="co">// At this viewing direction.</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> PixelState <span class="op">{</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="bu">std::</span>array<span class="op">&lt;</span><span class="dt">double</span><span class="op">,</span> <span class="dv">3</span><span class="op">&gt;</span> linearRGB<span class="op">{</span><span class="fl">0.0</span><span class="op">,</span> <span class="fl">0.0</span><span class="op">,</span> <span class="fl">0.0</span><span class="op">};</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="dt">double</span> transmittance <span class="op">=</span> <span class="fl">1.0</span><span class="op">;</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co">// Caller guarantees near-to-far order, finite inputs and valid opacities.</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co">// This CPU reference deliberately shows the exact sequential dependency.</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>PixelState composite_front_to_back<span class="op">(</span><span class="bu">std::</span>span<span class="op">&lt;</span><span class="at">const</span> SplatSample<span class="op">&gt;</span> sorted<span class="op">)</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    PixelState pixel<span class="op">;</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="at">const</span> SplatSample<span class="op">&amp;</span> s <span class="op">:</span> sorted<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="dt">double</span> q <span class="op">=</span> s<span class="op">.</span>ellipticalDistanceSquared<span class="op">;</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>q <span class="op">&gt;</span> <span class="fl">9.0</span><span class="op">)</span> <span class="cf">continue</span><span class="op">;</span> <span class="co">// Explicit 3-sigma squared-distance policy.</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>        <span class="at">const</span> <span class="dt">double</span> alpha <span class="op">=</span> <span class="bu">std::</span>clamp<span class="op">(</span>s<span class="op">.</span>opacity <span class="op">*</span> <span class="bu">std::</span>exp<span class="op">(-</span><span class="fl">0.5</span> <span class="op">*</span> q<span class="op">),</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>                                        <span class="fl">0.0</span><span class="op">,</span> <span class="fl">0.999</span><span class="op">);</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> channel <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> channel <span class="op">&lt;</span> <span class="dv">3</span><span class="op">;</span> <span class="op">++</span>channel<span class="op">)</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>            pixel<span class="op">.</span>linearRGB<span class="op">[</span>channel<span class="op">]</span> <span class="op">+=</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>                pixel<span class="op">.</span>transmittance <span class="op">*</span> alpha <span class="op">*</span> s<span class="op">.</span>linearRGB<span class="op">[</span>channel<span class="op">];</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>        pixel<span class="op">.</span>transmittance <span class="op">*=</span> <span class="op">(</span><span class="fl">1.0</span> <span class="op">-</span> alpha<span class="op">);</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>pixel<span class="op">.</span>transmittance <span class="op">&lt;</span> <span class="fl">1e-4</span><span class="op">)</span> <span class="cf">break</span><span class="op">;</span> <span class="co">// Declared approximation.</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pixel<span class="op">;</span> <span class="co">// Add T * background before display encoding.</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Why stop at a small <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math>? If every remaining source and the background have channels in <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>, the <strong>maximum missing residual contribution</strong> in any channel is bounded by the surviving <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math>. Stopping at <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>4</mn>
+    </mrow>
+  </msup>
+</math> therefore gives a conditional channel-error bound of at most <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>4</mn>
+    </mrow>
+  </msup>
+</math> in that working range; unbounded HDR radiance has <strong>no such numerical error bound without an additional radiance limit</strong>. Likewise, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+  <mo>≤</mo>
+  <mn>9</mn>
+</math> encloses <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mo>−</mo>
+  <msup>
+    <mi>e</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>9</mn>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mn>2</mn>
+    </mrow>
+  </msup>
+  <mo>≈</mo>
+  <mn>98.89</mn>
+  <mi mathvariant="normal">%</mi>
+</math> of the total probability mass of an ideal normalized two-dimensional Gaussian. That is not a guarantee about image error: learned amplitudes, overlap, colors, sorting and pixel footprints affect the actual rendered result. Keep the cutoff a measured quality/performance parameter.</p>
+<p>A GPU tile renderer can assign Gaussian references to screen tiles and sort the tile’s references by depth, but it must still evaluate each pixel’s <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>q</mi>
+    <mi>i</mi>
+  </msub>
+</math>, opacity, RGB and the recurrence above. The tile list is a conservative candidate structure, not a composited pixel. A prefix sum builds disjoint reference ranges; sorting and sequential transmittance then answer a different question. For correctness, compare a scalar CPU oracle against the GPU’s color and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math> on tiny scenes with one splat, two reversed-order splats, zero opacity, footprint cutoff, overlapping centers, invalid covariance and early termination. The <a href="ch605.xhtml#source-source-file-a41016f2e326b40cdff18ff4">first-use C++ witness (Mathematics for Visual Computing, Part 1, Ch. 1)</a> checks the two-splat numeric example. Source claims about a particular Maveb revision require separately inspected code; this section teaches the algorithm itself rather than asserting a current implementation audit.</p>
+<hr />
+<p>Solve:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo stretchy="false">(</mo>
+  <mi mathvariant="normal">Σ</mi>
+  <mo>−</mo>
+  <mi>λ</mi>
+  <mi>I</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>For:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Σ</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mi>a</mi>
+        </mtd>
+        <mtd>
+          <mi>b</mi>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mi>b</mi>
+        </mtd>
+        <mtd>
+          <mi>c</mi>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>−</mo>
+  <mi>λ</mi>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">(</mo>
+  <mi>c</mi>
+  <mo>−</mo>
+  <mi>λ</mi>
+  <mo stretchy="false">)</mo>
+  <mo>−</mo>
+  <msup>
+    <mi>b</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Expand:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>λ</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>−</mo>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>+</mo>
+  <mi>c</mi>
+  <mo stretchy="false">)</mo>
+  <mi>λ</mi>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mo>−</mo>
+  <msup>
+    <mi>b</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>Quadratic formula:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>λ</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mo>±</mo>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mo stretchy="false">(</mo>
+              <mi>a</mi>
+              <mo>+</mo>
+              <mi>c</mi>
+              <mo stretchy="false">)</mo>
+              <mo>±</mo>
+              <msqrt>
+                <mo stretchy="false">(</mo>
+                <mi>a</mi>
+                <mo>−</mo>
+                <mi>c</mi>
+                <msup>
+                  <mo stretchy="false">)</mo>
+                  <mn>2</mn>
+                </msup>
+                <mo>+</mo>
+                <mn>4</mn>
+                <msup>
+                  <mi>b</mi>
+                  <mn>2</mn>
+                </msup>
+              </msqrt>
+            </mrow>
+            <mn>2</mn>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Maveb computes:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>discriminant <span class="op">=</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    sqrt<span class="op">(</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>      max<span class="op">(</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">(</span>a<span class="op">-</span>c<span class="op">)^</span><span class="dv">2</span> <span class="op">+</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        <span class="dv">4</span><span class="er">b</span><span class="op">^</span><span class="dv">2</span><span class="op">));</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>maximumEigenvalue <span class="op">=</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="fl">0.5</span> <span class="op">*</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">(</span>a<span class="op">+</span>c<span class="op">+</span>discriminant<span class="op">);</span></span></code></pre></div>
+<p>Exactly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Eigenvector orientation</strong></p>
+<p>For debugging or tight oriented geometry, ellipse angle can be obtained from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>θ</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mn>2</mn>
+          </mfrac>
+          <mi>a</mi>
+          <mi>t</mi>
+          <mi>a</mi>
+          <mi>n</mi>
+          <mn>2</mn>
+          <mo stretchy="false">(</mo>
+          <mn>2</mn>
+          <mi>b</mi>
+          <mo>,</mo>
+          <mi>a</mi>
+          <mo>−</mo>
+          <mi>c</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A major-axis unit vector:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">e</mi>
+    </mrow>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>cos</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo>,</mo>
+  <mi>sin</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mi>θ</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>with sign/order adjusted according to which eigenvalue it corresponds to.</p>
+<p>Maveb’s simple CPU oracle does not need this because it uses an isotropic square bound based on <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>λ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+</math>.</p>
+<p>Vulkax’s projected representation does preserve major/minor oriented axes for raster geometry, so eigenvector interpretation becomes operational there.</p>
+<hr />
+<p>Principal standard deviations:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>σ</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <msqrt>
+    <msub>
+      <mi>λ</mi>
+      <mn>1</mn>
+    </msub>
+  </msqrt>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>σ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <msqrt>
+    <msub>
+      <mi>λ</mi>
+      <mn>2</mn>
+    </msub>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>At cutoff <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>r</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>=</mo>
+          <mi>k</mi>
+          <msqrt>
+            <msub>
+              <mi>λ</mi>
+              <mn>1</mn>
+            </msub>
+          </msqrt>
+          <mo>,</mo>
+          <mstyle scriptlevel="0">
+            <mspace width="1em"></mspace>
+          </mstyle>
+          <msub>
+            <mi>r</mi>
+            <mn>2</mn>
+          </msub>
+          <mo>=</mo>
+          <mi>k</mi>
+          <msqrt>
+            <msub>
+              <mi>λ</mi>
+              <mn>2</mn>
+            </msub>
+          </msqrt>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For Maveb:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>k</mi>
+  <mo>=</mo>
+  <mn>3.</mn>
+</math>
+<p>Thus maximum conservative radius:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>r</mi>
+          <mo>=</mo>
+          <mn>3</mn>
+          <msqrt>
+            <msub>
+              <mi>λ</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mi>m</mi>
+                <mi>a</mi>
+                <mi>x</mi>
+              </mrow>
+            </msub>
+          </msqrt>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Current CPU and Metal implementations use exactly this.</p>
+<hr />
+<p>Maveb uses square:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>−</mo>
+  <mi>r</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>r</mi>
+  <mo stretchy="false">]</mo>
+  <mo>×</mo>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>y</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>−</mo>
+  <mi>r</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>y</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>r</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>This contains the entire 3σ ellipse because every directional variance is bounded by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Formally for unit <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">u</mi>
+  </mrow>
+</math>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="bold">u</mi>
+    </mrow>
+    <mi>T</mi>
+  </msup>
+  <mi mathvariant="normal">Σ</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mi mathvariant="bold">u</mi>
+  </mrow>
+  <mo>≤</mo>
+  <msub>
+    <mi>λ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Hence no ellipse direction extends beyond:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <msqrt>
+    <msub>
+      <mi>λ</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi>m</mi>
+        <mi>a</mi>
+        <mi>x</mi>
+      </mrow>
+    </msub>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>A tighter axis-aligned bound is possible</strong></p>
+<p>For ellipse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi mathvariant="normal">Δ</mi>
+    <mi>T</mi>
+  </msup>
+  <msup>
+    <mi mathvariant="normal">Σ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi mathvariant="normal">Δ</mi>
+  <mo>≤</mo>
+  <msup>
+    <mi>k</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>,</mo>
+</math>
+<p>maximum x coordinate displacement is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">|</mo>
+          <mi>d</mi>
+          <mi>x</mi>
+          <msub>
+            <mrow data-mjx-texclass="ORD">
+              <mo stretchy="false">|</mo>
+            </mrow>
+            <mrow data-mjx-texclass="ORD">
+              <mi>m</mi>
+              <mi>a</mi>
+              <mi>x</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mi>k</mi>
+          <msqrt>
+            <mi>a</mi>
+          </msqrt>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Maximum y:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mo stretchy="false">|</mo>
+          <mi>d</mi>
+          <mi>y</mi>
+          <msub>
+            <mrow data-mjx-texclass="ORD">
+              <mo stretchy="false">|</mo>
+            </mrow>
+            <mrow data-mjx-texclass="ORD">
+              <mi>m</mi>
+              <mi>a</mi>
+              <mi>x</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mi>k</mi>
+          <msqrt>
+            <mi>c</mi>
+          </msqrt>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>So tighter AABB can use:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>r</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>3</mn>
+  <msqrt>
+    <mi>a</mi>
+  </msqrt>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>r</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>3</mn>
+  <msqrt>
+    <mi>c</mi>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>The <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>λ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+</math> square is simpler and always conservative but can cause extra raster/tile work for very elongated Gaussians.</p>
+<p>That performance distinction becomes important in Pass 16.</p>
+<hr />
+<p><strong>Why conservative bounds are required</strong></p>
+<p>A false positive bound:</p>
+<blockquote>
+<p>rasterize some pixels where Gaussian ultimately has negligible/no support</p>
+</blockquote>
+<p>costs performance.</p>
+<p>A false negative bound:</p>
+<blockquote>
+<p>fail to rasterize a pixel with valid contribution</p>
+</blockquote>
+<p>changes the rendered image.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>bounding must err outward, never inward</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p>Maveb’s reference renderer uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Z</mi>
+  <mo>&lt;</mo>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>P</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+</math>
+<p>or:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Z</mi>
+  <mo>&gt;</mo>
+  <mi>f</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>P</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+</math>
+<p>to reject.</p>
+<p>Because reference camera looks along:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>+</mo>
+  <mi>Z</mi>
+  <mo>.</mo>
+</math>
+<p>This means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Z</mi>
+  <mo>≤</mo>
+  <mn>0</mn>
+</math>
+<p>is behind or at camera.</p>
+<p>Near plane additionally prevents unstable:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>Z</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msup>
+    <mi>Z</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Large Gaussian crossing near plane</strong></p>
+<p>There is a subtle approximation.</p>
+<p>A Gaussian center might satisfy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Z</mi>
+  <mo>&lt;</mo>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+</math>
+<p>while its covariance volume extends into visible space.</p>
+<p>Center culling would remove the whole primitive.</p>
+<p>This is not a mathematically exact clipping of the Gaussian volume.</p>
+<p>Most real 3DGS rasterizers rely on point-center/frustum-style visibility approximations because splats are generally sufficiently localized.</p>
+<p>If you use gigantic Gaussians near the camera, this becomes a potential artifact.</p>
+<p>That is a good stress test for Maveb.</p>
+<hr />
+<p>With screen center:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>y</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and radius:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>,</mo>
+</math>
+<p>entire Gaussian is left of screen if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>r</mi>
+  <mo>&lt;</mo>
+  <mn>0.</mn>
+</math>
+<p>Entirely above:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>r</mi>
+  <mo>&lt;</mo>
+  <mn>0.</mn>
+</math>
+<p>Entirely right if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>−</mo>
+  <mi>r</mi>
+  <mo>≥</mo>
+  <mi>W</mi>
+  <mo>.</mo>
+</math>
+<p>Entirely below:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>c</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>−</mo>
+  <mi>r</mi>
+  <mo>≥</mo>
+  <mi>H</mi>
+  <mo>.</mo>
+</math>
+<p>Maveb Metal performs exactly these four tests.</p>
+<p>If any true:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>and projected record is invalid.</p>
+<hr />
+<p><strong>Then clamp the surviving bounds</strong></p>
+<p>For visible splat:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>i</mi>
+      <mi>n</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mo fence="false" stretchy="false">⌊</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>−</mo>
+  <mi>r</mi>
+  <mo fence="false" stretchy="false">⌋</mo>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>x</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <mi>W</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mo fence="false" stretchy="false">⌈</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>r</mi>
+  <mo fence="false" stretchy="false">⌉</mo>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Similarly y.</p>
+<p>The GPU then converts those pixel coordinates into tile bounds.</p>
+<p>That last step belongs conceptually to Part 2453, so we stop before teaching the tile scheduling algorithm itself.</p>
+<hr />
+<p>After low-pass regularization:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo>=</mo>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mo>−</mo>
+  <msup>
+    <mi>b</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Maveb checks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo>≤</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>12</mn>
+    </mrow>
+  </msup>
+</math>
+<p>or non-finite.</p>
+<p>If so, reject.</p>
+<p>Why?</p>
+<p>Because conic needs:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>D</mi>
+  <mo>.</mo>
+</math>
+<p>A tiny determinant produces huge coefficients and numerical instability.</p>
+<hr />
+<p><strong>Determinant threshold alone is not a complete condition-number test</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>12</mn>
+    </mrow>
+  </msup>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>6</mn>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+  <mo>,</mo>
+</math>
+<p>which looks large.</p>
+<p>But condition number:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>κ</mi>
+  <mo>=</mo>
+  <mfrac>
+    <msub>
+      <mi>λ</mi>
+      <mn>1</mn>
+    </msub>
+    <msub>
+      <mi>λ</mi>
+      <mn>2</mn>
+    </msub>
+  </mfrac>
+  <mo>=</mo>
+  <msup>
+    <mn>10</mn>
+    <mrow data-mjx-texclass="ORD">
+      <mn>18</mn>
+    </mrow>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>The matrix is terribly ill-conditioned.</p>
+<p>For hostile inputs, a stronger test considers:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>i</mi>
+      <mi>n</mi>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>or a scale-relative criterion such as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>t</mi>
+          <mo>&gt;</mo>
+          <mi>ϵ</mi>
+          <mo stretchy="false">(</mo>
+          <mi>t</mi>
+          <mi>r</mi>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+          <mo stretchy="false">(</mo>
+          <mi mathvariant="normal">Σ</mi>
+          <mo stretchy="false">)</mo>
+          <msup>
+            <mo stretchy="false">)</mo>
+            <mn>2</mn>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>The <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>+</mo>
+  <mn>0.3</mn>
+  <mi>I</mi>
+</math> regularization already greatly limits this problem for ordinary 3DGS data.</p>
+<hr />
+<p><strong>Radius sanity</strong></p>
+<p>Maveb CPU oracle additionally rejects:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>&gt;</mo>
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+</math>
+<p>as unsafe.</p>
+<p>This protects the reference implementation from a pathological Gaussian causing effectively unbounded raster work.</p>
+<p>The inspected Metal projection kernel checks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">(</mo>
+  <mi>r</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math>
+<p>plus screen overlap, but does not contain that same explicit <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+</math> upper bound.</p>
+<p>That means hostile/extreme covariance cases can have slightly different failure behavior between CPU and GPU paths.</p>
+<p>For ordinary learned assets this probably does not matter, but a correctness oracle should have an explicit stress case for it.</p>
+<hr />
+<p>At every screen point:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo>&lt;</mo>
+  <mi>w</mi>
+  <mo>≤</mo>
+  <mn>1.</mn>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <msub>
+    <mi>α</mi>
+    <mn>0</mn>
+  </msub>
+  <mi>w</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mo stretchy="false">)</mo>
+  <mo>≤</mo>
+  <msub>
+    <mi>α</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>This gives a very useful proof.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>α</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>&lt;</mo>
+  <msub>
+    <mi>α</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mi>h</mi>
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>s</mi>
+      <mi>h</mi>
+      <mi>o</mi>
+      <mi>l</mi>
+      <mi>d</mi>
+    </mrow>
+  </msub>
+  <mo>,</mo>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo stretchy="false">(</mo>
+  <mi>p</mi>
+  <mo stretchy="false">)</mo>
+  <mo>&lt;</mo>
+  <msub>
+    <mi>α</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>t</mi>
+      <mi>h</mi>
+      <mi>r</mi>
+      <mi>e</mi>
+      <mi>s</mi>
+      <mi>h</mi>
+      <mi>o</mi>
+      <mi>l</mi>
+      <mi>d</mi>
+    </mrow>
+  </msub>
+</math>
+<p>for <strong>every pixel</strong>.</p>
+<p>Therefore the Gaussian can be culled before projection/raster scheduling with no effect under that thresholding policy.</p>
+<hr />
+<p><strong>Maveb’s current behavior</strong></p>
+<p>Maveb CPU reference does not currently projection-cull based solely on base opacity.</p>
+<p>It projects the Gaussian, then during per-pixel evaluation computes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">min</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0.99</mn>
+  <mo>,</mo>
+  <msub>
+    <mi>α</mi>
+    <mn>0</mn>
+  </msub>
+  <msup>
+    <mi>e</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mi>q</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo>/</mo>
+      </mrow>
+      <mn>2</mn>
+    </mrow>
+  </msup>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and skips if:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>α</mi>
+          <mo>&lt;</mo>
+          <mn>1</mn>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <mn>255.</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Because:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>w</mi>
+  <mo>≤</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>a Gaussian with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>α</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>&lt;</mo>
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>255</mn>
+</math>
+<p>will necessarily contribute nothing anywhere.</p>
+<p>So moving that check into projection would be a mathematically safe optimization relative to the existing per-pixel threshold.</p>
+<hr />
+<p><strong>Vulkax already models opacity as a projection cull reason</strong></p>
+<p>Its native projection result accounting explicitly distinguishes:</p>
+<pre id="qdflga" class="text"><code>Visible
+Opacity
+BehindCamera
+OutsideImage</code></pre>
+<p>and validates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>p</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>S</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>=</mo>
+  <mi>V</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>+</mo>
+  <mi>C</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>O</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo>+</mo>
+  <mi>C</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>B</mi>
+  <mi>e</mi>
+  <mi>h</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mo>+</mo>
+  <mi>C</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mi>O</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>That is a useful diagnostic model.</p>
+<p>Maveb could expose the same category counters in its projection pipeline if detailed visibility telemetry becomes useful.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch038-the-complete-pass-15-transformation" class="level4">
+<h4>THE COMPLETE PASS-15 TRANSFORMATION</h4>
+<p>You should now be able to start from one PLY row and reach the screen-space ellipse without hand-waving.</p>
+<p>Stored Gaussian:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>G</mi>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mi>μ</mi>
+          <mo>,</mo>
+          <mi>ℓ</mi>
+          <mo>,</mo>
+          <mi>q</mi>
+          <mo>,</mo>
+          <mi>o</mi>
+          <mo>,</mo>
+          <mi>S</mi>
+          <mi>H</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Decode scales:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>s</mi>
+          <mo>=</mo>
+          <msup>
+            <mi>e</mi>
+            <mi>ℓ</mi>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Normalize quaternion:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>q</mi>
+          <mo stretchy="false">←</mo>
+          <mi>q</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <mi>q</mi>
+          <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Construct rotation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mo>=</mo>
+  <mi>R</mi>
+  <mo stretchy="false">(</mo>
+  <mi>q</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Construct 3D covariance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>w</mi>
+          </msub>
+          <mo>=</mo>
+          <mi>R</mi>
+          <mi>d</mi>
+          <mi>i</mi>
+          <mi>a</mi>
+          <mi>g</mi>
+          <mo stretchy="false">(</mo>
+          <msubsup>
+            <mi>s</mi>
+            <mi>x</mi>
+            <mn>2</mn>
+          </msubsup>
+          <mo>,</mo>
+          <msubsup>
+            <mi>s</mi>
+            <mi>y</mi>
+            <mn>2</mn>
+          </msubsup>
+          <mo>,</mo>
+          <msubsup>
+            <mi>s</mi>
+            <mi>z</mi>
+            <mn>2</mn>
+          </msubsup>
+          <mo stretchy="false">)</mo>
+          <msup>
+            <mi>R</mi>
+            <mi>T</mi>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Decode opacity:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>α</mi>
+            <mn>0</mn>
+          </msub>
+          <mo>=</mo>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>g</mi>
+          <mi>m</mi>
+          <mi>o</mi>
+          <mi>i</mi>
+          <mi>d</mi>
+          <mo stretchy="false">(</mo>
+          <mi>o</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Evaluate view-dependent SH color:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>C</mi>
+          <mo stretchy="false">(</mo>
+          <mrow data-mjx-texclass="ORD">
+            <mi mathvariant="bold">d</mi>
+          </mrow>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">(</mo>
+            <mn>0</mn>
+            <mo>,</mo>
+            <mn>0.5</mn>
+            <mo>+</mo>
+            <munder>
+              <mo data-mjx-texclass="OP">∑</mo>
+              <mi>i</mi>
+            </munder>
+            <msub>
+              <mi>c</mi>
+              <mi>i</mi>
+            </msub>
+            <msub>
+              <mi>Y</mi>
+              <mi>i</mi>
+            </msub>
+            <mo stretchy="false">(</mo>
+            <mrow data-mjx-texclass="ORD">
+              <mi mathvariant="bold">d</mi>
+            </mrow>
+            <mo stretchy="false">)</mo>
+            <mo data-mjx-texclass="CLOSE">)</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Transform center:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>μ</mi>
+            <mi>c</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>R</mi>
+            <mi>c</mi>
+          </msub>
+          <msub>
+            <mi>μ</mi>
+            <mi>w</mi>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>t</mi>
+            <mi>c</mi>
+          </msub>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mi>X</mi>
+          <mo>,</mo>
+          <mi>Y</mi>
+          <mo>,</mo>
+          <mi>Z</mi>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Cull invalid depth.</p>
+<p>Project center:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>u</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>f</mi>
+            <mi>x</mi>
+          </msub>
+          <mi>X</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <mi>Z</mi>
+          <mo>+</mo>
+          <msub>
+            <mi>c</mi>
+            <mi>x</mi>
+          </msub>
+          <mo>,</mo>
+          <mstyle scriptlevel="0">
+            <mspace width="2em"></mspace>
+          </mstyle>
+          <mi>v</mi>
+          <mo>=</mo>
+          <msub>
+            <mi>f</mi>
+            <mi>y</mi>
+          </msub>
+          <mi>Y</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <mi>Z</mi>
+          <mo>+</mo>
+          <msub>
+            <mi>c</mi>
+            <mi>y</mi>
+          </msub>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Transform covariance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>c</mi>
+          </msub>
+          <mo>=</mo>
+          <msub>
+            <mi>R</mi>
+            <mi>c</mi>
+          </msub>
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>w</mi>
+          </msub>
+          <msubsup>
+            <mi>R</mi>
+            <mi>c</mi>
+            <mi>T</mi>
+          </msubsup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Construct Jacobian:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>J</mi>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">[</mo>
+            <mtable columnspacing="1em" rowspacing="4pt">
+              <mtr>
+                <mtd>
+                  <msub>
+                    <mi>f</mi>
+                    <mi>x</mi>
+                  </msub>
+                  <mrow data-mjx-texclass="ORD">
+                    <mo>/</mo>
+                  </mrow>
+                  <mi>Z</mi>
+                </mtd>
+                <mtd>
+                  <mn>0</mn>
+                </mtd>
+                <mtd>
+                  <mo>−</mo>
+                  <msub>
+                    <mi>f</mi>
+                    <mi>x</mi>
+                  </msub>
+                  <mi>X</mi>
+                  <mrow data-mjx-texclass="ORD">
+                    <mo>/</mo>
+                  </mrow>
+                  <msup>
+                    <mi>Z</mi>
+                    <mn>2</mn>
+                  </msup>
+                </mtd>
+              </mtr>
+              <mtr>
+                <mtd>
+                  <mn>0</mn>
+                </mtd>
+                <mtd>
+                  <msub>
+                    <mi>f</mi>
+                    <mi>y</mi>
+                  </msub>
+                  <mrow data-mjx-texclass="ORD">
+                    <mo>/</mo>
+                  </mrow>
+                  <mi>Z</mi>
+                </mtd>
+                <mtd>
+                  <mo>−</mo>
+                  <msub>
+                    <mi>f</mi>
+                    <mi>y</mi>
+                  </msub>
+                  <mi>Y</mi>
+                  <mrow data-mjx-texclass="ORD">
+                    <mo>/</mo>
+                  </mrow>
+                  <msup>
+                    <mi>Z</mi>
+                    <mn>2</mn>
+                  </msup>
+                </mtd>
+              </mtr>
+            </mtable>
+            <mo data-mjx-texclass="CLOSE">]</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Project covariance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mn>2</mn>
+              <mi>D</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mi>J</mi>
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mi>c</mi>
+          </msub>
+          <msup>
+            <mi>J</mi>
+            <mi>T</mi>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Regularize:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msubsup>
+            <mi mathvariant="normal">Σ</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mn>2</mn>
+              <mi>D</mi>
+            </mrow>
+            <mo data-mjx-alternate="1">′</mo>
+          </msubsup>
+          <mo>=</mo>
+          <msub>
+            <mi mathvariant="normal">Σ</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mn>2</mn>
+              <mi>D</mi>
+            </mrow>
+          </msub>
+          <mo>+</mo>
+          <mn>0.3</mn>
+          <mi>I</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Write:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi mathvariant="normal">Σ</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mi>a</mi>
+        </mtd>
+        <mtd>
+          <mi>b</mi>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mi>b</mi>
+        </mtd>
+        <mtd>
+          <mi>c</mi>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Check:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>D</mi>
+          <mo>=</mo>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mo>−</mo>
+          <msup>
+            <mi>b</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>&gt;</mo>
+          <mn>0.</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Invert:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>C</mi>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mi>D</mi>
+          </mfrac>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">[</mo>
+            <mtable columnspacing="1em" rowspacing="4pt">
+              <mtr>
+                <mtd>
+                  <mi>c</mi>
+                </mtd>
+                <mtd>
+                  <mo>−</mo>
+                  <mi>b</mi>
+                </mtd>
+              </mtr>
+              <mtr>
+                <mtd>
+                  <mo>−</mo>
+                  <mi>b</mi>
+                </mtd>
+                <mtd>
+                  <mi>a</mi>
+                </mtd>
+              </mtr>
+            </mtable>
+            <mo data-mjx-texclass="CLOSE">]</mo>
+          </mrow>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Largest eigenvalue:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <msub>
+            <mi>λ</mi>
+            <mrow data-mjx-texclass="ORD">
+              <mi>m</mi>
+              <mi>a</mi>
+              <mi>x</mi>
+            </mrow>
+          </msub>
+          <mo>=</mo>
+          <mfrac>
+            <mrow>
+              <mi>a</mi>
+              <mo>+</mo>
+              <mi>c</mi>
+              <mo>+</mo>
+              <msqrt>
+                <mo stretchy="false">(</mo>
+                <mi>a</mi>
+                <mo>−</mo>
+                <mi>c</mi>
+                <msup>
+                  <mo stretchy="false">)</mo>
+                  <mn>2</mn>
+                </msup>
+                <mo>+</mo>
+                <mn>4</mn>
+                <msup>
+                  <mi>b</mi>
+                  <mn>2</mn>
+                </msup>
+              </msqrt>
+            </mrow>
+            <mn>2</mn>
+          </mfrac>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Three-sigma conservative radius:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>r</mi>
+          <mo>=</mo>
+          <mn>3</mn>
+          <msqrt>
+            <msub>
+              <mi>λ</mi>
+              <mrow data-mjx-texclass="ORD">
+                <mi>m</mi>
+                <mi>a</mi>
+                <mi>x</mi>
+              </mrow>
+            </msub>
+          </msqrt>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Cull if screen rectangle does not intersect viewport.</p>
+<p>What survives is a projected splat containing approximately:</p>
+<div class="sourceCode" id="d8pb5g"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="d8pb5g-1"><a href="#d8pb5g-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> ProjectedGaussian</span>
+<span id="d8pb5g-2"><a href="#d8pb5g-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="d8pb5g-3"><a href="#d8pb5g-3" aria-hidden="true" tabindex="-1"></a>    float2 center<span class="op">;</span></span>
+<span id="d8pb5g-4"><a href="#d8pb5g-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> depth<span class="op">;</span></span>
+<span id="d8pb5g-5"><a href="#d8pb5g-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="d8pb5g-6"><a href="#d8pb5g-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> conicA<span class="op">;</span></span>
+<span id="d8pb5g-7"><a href="#d8pb5g-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> conicB<span class="op">;</span></span>
+<span id="d8pb5g-8"><a href="#d8pb5g-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> conicC<span class="op">;</span></span>
+<span id="d8pb5g-9"><a href="#d8pb5g-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="d8pb5g-10"><a href="#d8pb5g-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> radius<span class="op">;</span></span>
+<span id="d8pb5g-11"><a href="#d8pb5g-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="d8pb5g-12"><a href="#d8pb5g-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> opacity<span class="op">;</span></span>
+<span id="d8pb5g-13"><a href="#d8pb5g-13" aria-hidden="true" tabindex="-1"></a>    float3 color<span class="op">;</span></span>
+<span id="d8pb5g-14"><a href="#d8pb5g-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="d8pb5g-15"><a href="#d8pb5g-15" aria-hidden="true" tabindex="-1"></a>    <span class="ex">uint</span> sourceIdentity<span class="op">;</span></span>
+<span id="d8pb5g-16"><a href="#d8pb5g-16" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<section id="id_04-visual-computing-ii-ch038-first-use-completion-schedule-the-projected-ellipse-into-actual-tile-work" class="level5">
+<h5>First-use completion — schedule the projected ellipse into actual tile work</h5>
+<p>We already know the screen-space center, conic, bounding radius, depth, color and source identity. A projected Gaussian is now a <em>bounded screen-space workload</em>. The remaining questions are concrete: which pixels might it affect, how do GPU threads find the Gaussians relevant to their tile without testing every Gaussian in the scene, and how do those contributors reach the pixel in an order suitable for transmittance compositing? We can answer them here, without deferring tiling and sorting to another numbered pass.</p>
+<p>Let a render target have width <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>W</mi>
+</math>, height <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>H</mi>
+</math>, and square tile width <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math> pixels. Give tiles integer coordinates <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>t</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>,</mo>
+  <msub>
+    <mi>t</mi>
+    <mi>y</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</math>, with <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0</mn>
+  <mo>≤</mo>
+  <msub>
+    <mi>t</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>&lt;</mo>
+  <mo fence="false" stretchy="false">⌈</mo>
+  <mi>W</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>T</mi>
+  <mo fence="false" stretchy="false">⌉</mo>
+</math> and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0</mn>
+  <mo>≤</mo>
+  <msub>
+    <mi>t</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>&lt;</mo>
+  <mo fence="false" stretchy="false">⌈</mo>
+  <mi>H</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>T</mi>
+  <mo fence="false" stretchy="false">⌉</mo>
+</math>. The conservative circular bound derived from the screen covariance is a circle of radius <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>3</mn>
+  <msqrt>
+    <msub>
+      <mi>λ</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+      </mrow>
+    </msub>
+  </msqrt>
+</math> around projected center <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mo stretchy="false">)</mo>
+</math>. The actual Gaussian ellipse may cover much less area; the circle is useful because it allows cheap rejection without missing the entire three-sigma ellipse. Clip its screen rectangle to the viewport. If the rectangle is empty, the Gaussian contributes no tile references.</p>
+<p>For a nonempty clipped rectangle, conservatively map the minimum and maximum screen coordinates to tile indices by dividing by <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math> and taking the floor, clamped to valid tile coordinates. The exact upper-bound formula depends on whether the rectangle uses inclusive or exclusive pixel bounds. Never mix conventions: using an exclusive upper bound with an inclusive floor can either generate an unnecessary extra tile or, worse, omit a boundary sample after a mismatched clamp. Conservative overcount only wastes work; undercount removes contributions.</p>
+<p>For example, let <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>W</mi>
+  <mo>=</mo>
+  <mi>H</mi>
+  <mo>=</mo>
+  <mn>64</mn>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>16</mn>
+</math>, the center be <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>20</mn>
+  <mo>,</mo>
+  <mn>20</mn>
+  <mo stretchy="false">)</mo>
+</math> and radius be <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>10</mn>
+</math> pixels. Its bound runs from coordinate <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>10</mn>
+</math> through <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>30</mn>
+</math> on each axis, so it intersects tile columns 0 and 1 and tile rows 0 and 1. It emits four references, one each for tiles <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>. Those references do <em>not</em> copy the full Gaussian record: they name the Gaussian (by a stable index or validated handle) and the tile that may need it.</p>
+<p>A scalable implementation is a count–scan–scatter pipeline. In the <strong>count</strong> stage each visible Gaussian reports how many tile references it requires. Suppose three Gaussians request counts <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">[</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>. An <strong>exclusive scan</strong> constructs offsets <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">]</mo>
+</math>. The first Gaussian owns output slots 0 and 1, the second owns an empty range beginning and ending at 2, and the third owns slot 2. The last offset is the required capacity <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>K</mi>
+  <mo>=</mo>
+  <mn>3</mn>
+</math>. This is a memory-allocation proof: before scattering, the producer knows how many references exist and which nonoverlapping range belongs to each Gaussian. A parallel GPU scan must establish that these offsets are ready before the scatter dispatch reads them. A workgroup barrier alone does not complete a cross-workgroup scan.</p>
+<pre class="text"><code># Read-only projected records, already validated and viewport-clipped.
+for each gaussian i:
+    tile_rectangle[i] = conservative_tile_range(center[i], radius[i])
+    count[i] = number_of_tiles(tile_rectangle[i])
+
+offset[0] = 0
+for i in [0, gaussian_count):
+    offset[i+1] = checked_add(offset[i], count[i])
+
+K = offset[gaussian_count]          # Reject overflow or resource-budget excess.
+references = allocate(K)            # No kernel may write past K.
+
+for each gaussian i:
+    output = offset[i]
+    for each tile in tile_rectangle[i]:
+        references[output++] = (tile_id(tile), depth_key(i), source_id(i))
+    assert(output == offset[i+1])   # A CPU witness; GPU uses validation counters.
+
+stable_sort(references, by tile_id then near_to_far_depth then tie_policy)
+for each tile:
+    for each pixel sample in tile:
+        C = (0,0,0); transmittance = 1
+        for each reference of this tile in the established depth order:
+            compute conic distance q for this pixel and referenced Gaussian
+            if q &gt; cutoff: continue
+            alpha = opacity * exp(-q/2), with declared clamping
+            C += transmittance * alpha * linear_color
+            transmittance *= (1-alpha)
+            if transmittance &lt; cutoff_T: break
+        C += transmittance * linear_background</code></pre>
+<p>This pseudocode makes each intermediate state explicit. <strong>Count</strong> is one integer per input Gaussian. <strong>Scan</strong> owns a prefix array of <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+</math> entries. <strong>Scatter</strong> writes exactly <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>K</mi>
+  <mo>=</mo>
+  <munder>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mi>i</mi>
+  </munder>
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <msub>
+    <mi>t</mi>
+    <mi>i</mi>
+  </msub>
+</math> references. <strong>Sort</strong> groups those references by tile and establishes the compositing order. <strong>Raster</strong> evaluates the actual conic at individual pixel samples, eliminating false positives left by the conservative tile bound. The tile list is therefore an acceleration structure for contributors, not a final visibility answer.</p>
+<p>A naive renderer considers all <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>N</mi>
+</math> splats for each of the <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>M</mi>
+</math> tiles, producing <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>O</mi>
+  <mo stretchy="false">(</mo>
+  <mi>N</mi>
+  <mi>M</mi>
+  <mo stretchy="false">)</mo>
+</math> potential pair tests. A tiled pipeline instead emits <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>K</mi>
+</math> actual overlap references and sorts or bins them. A small compact Gaussian can touch very few tiles; a giant close-up Gaussian can touch nearly all of them. This changes both the asymptotic work and the memory budget. Use a counter width that can represent the total <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>K</mi>
+</math>, check multiplication/addition overflow, and set a deliberate policy for unreasonably large footprints. Prefix-sum and sorting are not free, so on small workloads the simplest CPU or GPU path may still be faster. Measure count, scan, scatter, sort and raster time separately.</p>
+<p><strong>Depth ordering is not implied by the GPU’s stored depth convention.</strong> Choose a monotone near-to-far key in the declared camera space, then encode or compare it consistently. A reversed-Z depth buffer, a positive-Z computer-vision camera and a negative-Z graphics camera may all represent the same physical scene with different numeric depth order. At equal depths use a deterministic tie policy if reproducibility matters, while recognizing that per-Gaussian center-depth sorting is only an approximation when spatially extended kernels intersect.</p>
+<p>Finally, the dependency graph is executable, not decorative: projected records must be ready before count; scan must finish before scatter; references must be complete and sorted before raster; and output attachments must survive until the final consumer. The source Gaussian buffer must remain allocated while references still contain its indices. A resize invalidates tile geometry and may require reallocation. An edit that changes Gaussian count, covariance, opacity or camera pose requires rebuilding the affected candidate ranges; reusing old ranges without a proof of conservativeness can silently remove pixels.</p>
+<p>The immediate reconstruction test is now possible: for the 64-by-64 target, independently enumerate the four tile coordinates of the <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mn>20</mn>
+  <mo>,</mo>
+  <mn>20</mn>
+  <mo stretchy="false">)</mo>
+</math> radius-10 Gaussian, verify the count–scan–scatter ranges on <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">[</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">]</mo>
+</math>, and compare the final two-Gaussian pixel against the earlier front-to-back CPU oracle. This proves separate facts about indexing, memory safety, order and color rather than accepting one plausible-looking screenshot as evidence for every stage.</p>
+<hr />
+</section>
+</section>
+<section id="id_04-visual-computing-ii-ch038-how-this-maps-to-mavebs-actual-metal-kernel" class="level4">
+<h4>HOW THIS MAPS TO MAVEB’S ACTUAL METAL KERNEL</h4>
+<p>The current <code>aetherGaussianProject</code> kernel essentially follows the derivation line-for-line.</p>
+<p>Input:</p>
+<pre id="pcn1vt" class="text"><code>AetherGaussianGpu</code></pre>
+<p>contains center, log-scale, quaternion, opacity logit and SH.</p>
+<p>Then:</p>
+<pre id="id_3sxvec" class="metal"><code>cameraPoint =
+    worldToCamera *
+    float4(position,1);</code></pre>
+<p>implements:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>μ</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<pre id="id_9a8s32" class="metal"><code>scales =
+    exp(logScale);</code></pre>
+<p>implements:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>e</mi>
+    <mi>ℓ</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<pre id="d32mgd" class="metal"><code>worldCovariance =
+    R *
+    diag(s²) *
+    transpose(R);</code></pre>
+<p>implements:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<pre id="bwtx1c" class="metal"><code>covariance =
+    cameraRotation *
+    worldCovariance *
+    transpose(cameraRotation);</code></pre>
+<p>implements:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then two Jacobian row vectors exactly implement:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>J</mi>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<pre id="bd7vol" class="metal"><code>a =
+    dot(jx, covariance*jx)
+    + 0.3;
+
+b =
+    dot(jx, covariance*jy);
+
+c =
+    dot(jy, covariance*jy)
+    + 0.3;</code></pre>
+<p>implements:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>J</mi>
+  <mi mathvariant="normal">Σ</mi>
+  <msup>
+    <mi>J</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>+</mo>
+  <mn>0.3</mn>
+  <mi>I</mi>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<pre id="tf2x2w" class="metal"><code>det =
+    a*c-b*b;</code></pre>
+<p>then conic:</p>
+<pre id="qebz4r" class="text"><code>c/det
+-b/det
+a/det</code></pre>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <msqrt>
+    <msub>
+      <mi>λ</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi>m</mi>
+        <mi>a</mi>
+        <mi>x</mi>
+      </mrow>
+    </msub>
+  </msqrt>
+</math>
+<p>radius.</p>
+<p>Then it computes screen center and culls offscreen.</p>
+<p>Then it stores sigmoid opacity and evaluated SH color.</p>
+<p>So this is not merely theory relevant to Maveb.</p>
+<p>It is literally the mathematical explanation of the currently executing GPU instructions.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch038-cpu-oracle-versus-metal-projection" class="level4">
+<h4>CPU ORACLE VERSUS METAL PROJECTION</h4>
+<p>The two paths agree on the critical mathematical chain.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Stage</th>
+<th>CPU <code>ReferenceRasterizer</code></th>
+<th>Metal <code>gaussian.metal</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Log scale decode</td>
+<td><code>exp(logScale)</code></td>
+<td><code>exp(logScale)</code></td>
+</tr>
+<tr>
+<td>Scale→variance</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+</math></td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+</math></td>
+</tr>
+<tr>
+<td>Quaternion</td>
+<td>normalized on import</td>
+<td>normalized again</td>
+</tr>
+<tr>
+<td>3D covariance</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+</math></td>
+<td>same</td>
+</tr>
+<tr>
+<td>Camera covariance</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>R</mi>
+    <mi>c</mi>
+  </msub>
+  <mi mathvariant="normal">Σ</mi>
+  <msubsup>
+    <mi>R</mi>
+    <mi>c</mi>
+    <mi>T</mi>
+  </msubsup>
+</math></td>
+<td>same</td>
+</tr>
+<tr>
+<td>Projection</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+  <mi>X</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>Z</mi>
+  <mo>+</mo>
+  <mi>c</mi>
+</math></td>
+<td>same</td>
+</tr>
+<tr>
+<td>Jacobian</td>
+<td>analytic</td>
+<td>analytic</td>
+</tr>
+<tr>
+<td>Low-pass</td>
+<td>+0.3 diagonal</td>
+<td>+0.3 diagonal</td>
+</tr>
+<tr>
+<td>Conic</td>
+<td>closed-form inverse</td>
+<td>closed-form inverse</td>
+</tr>
+<tr>
+<td>Radius</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>3</mn>
+  <msqrt>
+    <msub>
+      <mi>λ</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi>m</mi>
+        <mi>a</mi>
+        <mi>x</mi>
+      </mrow>
+    </msub>
+  </msqrt>
+</math></td>
+<td>same</td>
+</tr>
+<tr>
+<td>SH</td>
+<td>degree 0–3</td>
+<td>degree 0–3</td>
+</tr>
+<tr>
+<td>Opacity</td>
+<td>sigmoid clamp ±30</td>
+<td>sigmoid clamp ±30</td>
+</tr>
+<tr>
+<td>Offscreen cull</td>
+<td>during raster bound generation</td>
+<td>projection kernel</td>
+</tr>
+<tr>
+<td>Extreme radius guard</td>
+<td><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+  <mo>≤</mo>
+  <msup>
+    <mn>10</mn>
+    <mn>6</mn>
+  </msup>
+</math></td>
+<td>no matching explicit upper cap in inspected kernel</td>
+</tr>
+<tr>
+<td>Pixel compositing</td>
+<td>CPU oracle</td>
+<td>later Metal composite kernel</td>
+</tr>
+</tbody>
+</table>
+<p>That last separation is important.</p>
+<p><code>aetherGaussianProject</code> does <strong>not render pixels yet</strong>.</p>
+<p>It turns expensive 3D primitive representation into compact screen-space data.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch038-a-numerical-example" class="level4">
+<h4>A NUMERICAL EXAMPLE</h4>
+<p>Suppose a Gaussian in camera space has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>μ</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0.5</mn>
+  <mo>,</mo>
+  <mn>5</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Use:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>1000.</mn>
+</math>
+<p>Principal point:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>960</mn>
+  <mo>,</mo>
+  <mn>540</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Screen center:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mo>=</mo>
+  <mn>1000</mn>
+  <mfrac>
+    <mn>1</mn>
+    <mn>5</mn>
+  </mfrac>
+  <mo>+</mo>
+  <mn>960</mn>
+  <mo>=</mo>
+  <mn>1160.</mn>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mo>=</mo>
+  <mn>1000</mn>
+  <mfrac>
+    <mn>0.5</mn>
+    <mn>5</mn>
+  </mfrac>
+  <mo>+</mo>
+  <mn>540</mn>
+  <mo>=</mo>
+  <mn>640.</mn>
+</math>
+<p>Now Jacobian:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>J</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>200</mn>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mo>−</mo>
+          <mn>40</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mn>200</mn>
+        </mtd>
+        <mtd>
+          <mo>−</mo>
+          <mn>20</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Suppose camera covariance is isotropic:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <mn>0.01</mn>
+  <mi>I</mi>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>J</mi>
+  <mo stretchy="false">(</mo>
+  <mn>0.01</mn>
+  <mi>I</mi>
+  <mo stretchy="false">)</mo>
+  <msup>
+    <mi>J</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>=</mo>
+  <mn>0.01</mn>
+  <mi>J</mi>
+  <msup>
+    <mi>J</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Compute:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>J</mi>
+  <msup>
+    <mi>J</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <msup>
+            <mn>200</mn>
+            <mn>2</mn>
+          </msup>
+          <mo>+</mo>
+          <msup>
+            <mn>40</mn>
+            <mn>2</mn>
+          </msup>
+        </mtd>
+        <mtd>
+          <mo stretchy="false">(</mo>
+          <mo>−</mo>
+          <mn>40</mn>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">(</mo>
+          <mo>−</mo>
+          <mn>20</mn>
+          <mo stretchy="false">)</mo>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mo stretchy="false">(</mo>
+          <mo>−</mo>
+          <mn>40</mn>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">(</mo>
+          <mo>−</mo>
+          <mn>20</mn>
+          <mo stretchy="false">)</mo>
+        </mtd>
+        <mtd>
+          <msup>
+            <mn>200</mn>
+            <mn>2</mn>
+          </msup>
+          <mo>+</mo>
+          <msup>
+            <mn>20</mn>
+            <mn>2</mn>
+          </msup>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>J</mi>
+  <msup>
+    <mi>J</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>41600</mn>
+        </mtd>
+        <mtd>
+          <mn>800</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>800</mn>
+        </mtd>
+        <mtd>
+          <mn>40400</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>416</mn>
+        </mtd>
+        <mtd>
+          <mn>8</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>8</mn>
+        </mtd>
+        <mtd>
+          <mn>404</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Add low-pass:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>s</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msubsup>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>416.3</mn>
+        </mtd>
+        <mtd>
+          <mn>8</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>8</mn>
+        </mtd>
+        <mtd>
+          <mn>404.3</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Determinant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo>=</mo>
+  <mn>416.3</mn>
+  <mo stretchy="false">(</mo>
+  <mn>404.3</mn>
+  <mo stretchy="false">)</mo>
+  <mo>−</mo>
+  <mn>64.</mn>
+</math>
+<p>Approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mo>≈</mo>
+  <mn>168236.</mn>
+</math>
+<p>Conic:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>D</mi>
+  </mfrac>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mn>404.3</mn>
+        </mtd>
+        <mtd>
+          <mo>−</mo>
+          <mn>8</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mo>−</mo>
+          <mn>8</mn>
+        </mtd>
+        <mtd>
+          <mn>416.3</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Eigen discriminant:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msqrt>
+    <mo stretchy="false">(</mo>
+    <mn>416.3</mn>
+    <mo>−</mo>
+    <mn>404.3</mn>
+    <msup>
+      <mo stretchy="false">)</mo>
+      <mn>2</mn>
+    </msup>
+    <mo>+</mo>
+    <mn>4</mn>
+    <mo stretchy="false">(</mo>
+    <mn>8</mn>
+    <msup>
+      <mo stretchy="false">)</mo>
+      <mn>2</mn>
+    </msup>
+  </msqrt>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>=</mo>
+  <msqrt>
+    <mn>144</mn>
+    <mo>+</mo>
+    <mn>256</mn>
+  </msqrt>
+  <mo>=</mo>
+  <mn>20.</mn>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>m</mi>
+      <mi>a</mi>
+      <mi>x</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mn>416.3</mn>
+      <mo>+</mo>
+      <mn>404.3</mn>
+      <mo>+</mo>
+      <mn>20</mn>
+    </mrow>
+    <mn>2</mn>
+  </mfrac>
+  <mo>=</mo>
+  <mn>420.3</mn>
+  <mo>.</mo>
+</math>
+<p>Three-sigma radius:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>3</mn>
+  <msqrt>
+    <mn>420.3</mn>
+  </msqrt>
+  <mo>≈</mo>
+  <mn>61.5</mn>
+  <mtext> px</mtext>
+  <mo>.</mo>
+</math>
+<p>So the Gaussian centered at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>1160</mn>
+  <mo>,</mo>
+  <mn>640</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>gets a conservative raster box about:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1098.5</mn>
+  <mo>…</mo>
+  <mn>1221.5</mn>
+</math>
+<p>by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>578.5</mn>
+  <mo>…</mo>
+  <mn>701.5</mn>
+  <mo>.</mo>
+</math>
+<p>That is exactly the kind of record the projection kernel produces before tile scheduling.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch038-why-the-jacobian-approximation-works-and-where-it-breaks" class="level4">
+<h4>WHY THE JACOBIAN APPROXIMATION WORKS — AND WHERE IT BREAKS</h4>
+<p>If Gaussian is small relative to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Z</mi>
+  <mo>,</mo>
+</math>
+<p>projection changes approximately linearly across its support.</p>
+<p>Then first-order approximation is excellent.</p>
+<p>If Gaussian is huge or extremely close to camera, projection curvature over its support becomes significant.</p>
+<p>True projected shape is no longer exactly one ellipse generated from the center Jacobian.</p>
+<p>So one approximation condition is roughly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mfrac>
+            <mtext>Gaussian spatial extent</mtext>
+            <mrow>
+              <mi>c</mi>
+              <mi>a</mi>
+              <mi>m</mi>
+              <mi>e</mi>
+              <mi>r</mi>
+              <mi>a</mi>
+              <mtext> </mtext>
+              <mi>d</mi>
+              <mi>i</mi>
+              <mi>s</mi>
+              <mi>t</mi>
+              <mi>a</mi>
+              <mi>n</mi>
+              <mi>c</mi>
+              <mi>e</mi>
+            </mrow>
+          </mfrac>
+          <mo>≪</mo>
+          <mn>1.</mn>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is not normally written as a hard renderer invariant, but it explains why pathological giant near-camera Gaussians are problematic.</p>
+<p>The EWA lineage explicitly relies on local affine approximation of projective mapping. <a href="https://vcg.seas.harvard.edu/content/3-publications/20020101-ewa-splatting/zwicker_ewa.pdf?utm_source=chatgpt.com">vcg.seas.harvard.edu</a></p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch038-why-covariance-is-such-a-powerful-representation" class="level4">
+<h4>WHY COVARIANCE IS SUCH A POWERFUL REPRESENTATION</h4>
+<p>A naive oriented ellipsoid could store:</p>
+<pre id="nmuml2" class="text"><code>three axis vectors
+three radii</code></pre>
+<p>but covariance gives all of this in one symmetric mathematical object.</p>
+<p>It transforms cleanly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi mathvariant="normal">Σ</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mi mathvariant="normal">Σ</mi>
+  <msup>
+    <mi>A</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>It projects cleanly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>J</mi>
+  <mi mathvariant="normal">Σ</mi>
+  <msup>
+    <mi>J</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Its inverse evaluates screen-space weighting:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>d</mi>
+    <mi>T</mi>
+  </msup>
+  <msup>
+    <mi mathvariant="normal">Σ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Its eigenvalues give radii.</p>
+<p>Its eigenvectors give orientation.</p>
+<p>Its determinant detects collapse.</p>
+<p>The same matrix simultaneously encodes geometry, filtering footprint and rasterization kernel.</p>
+<p>That is why covariance is the core representation of anisotropic splatting.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch038-the-three-most-common-covariance-bugs" class="level4">
+<h4>THE THREE MOST COMMON COVARIANCE BUGS</h4>
+<p>The first is forgetting to square scale:</p>
+<p>Wrong:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Σ</mi>
+  <mo>=</mo>
+  <mi>R</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>s</mi>
+  <mo stretchy="false">)</mo>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Correct:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi mathvariant="normal">Σ</mi>
+          <mo>=</mo>
+          <mi>R</mi>
+          <mi>d</mi>
+          <mi>i</mi>
+          <mi>a</mi>
+          <mi>g</mi>
+          <mo stretchy="false">(</mo>
+          <msup>
+            <mi>s</mi>
+            <mn>2</mn>
+          </msup>
+          <mo stretchy="false">)</mo>
+          <msup>
+            <mi>R</mi>
+            <mi>T</mi>
+          </msup>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Scale is standard deviation.</p>
+<p>Covariance stores variance.</p>
+<p>The second is wrong transpose order:</p>
+<p>Wrong:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+  <mi>D</mi>
+  <mi>R</mi>
+</math>
+<p>when your mathematical convention expects:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>D</mi>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>That rotates axes differently.</p>
+<p>The third is using the whole camera 4×4 on covariance including translation.</p>
+<p>Translation does not belong in covariance propagation.</p>
+<p>Use upper linear 3×3 only.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch038-the-four-most-common-projection-bugs" class="level4">
+<h4>THE FOUR MOST COMMON PROJECTION BUGS</h4>
+<p>One is wrong forward axis:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>+</mo>
+  <mi>Z</mi>
+</math>
+<p>versus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo>−</mo>
+  <mi>Z</mi>
+  <mo>.</mo>
+</math>
+<p>Two is mixing normalized-device coordinates with pixel-space focal lengths.</p>
+<p>Three is forgetting:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>Z</mi>
+    <mn>2</mn>
+  </msup>
+</math>
+<p>in Jacobian depth derivatives.</p>
+<p>Four is using:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Σ</mi>
+  <mi>J</mi>
+</math>
+<p>instead of:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>J</mi>
+  <mi mathvariant="normal">Σ</mi>
+  <msup>
+    <mi>J</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Every one of these can still produce “something visible,” which makes 3DGS bugs deceptive.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch038-the-sh-debugging-check" class="level4">
+<h4>THE SH DEBUGGING CHECK</h4>
+<p>For a degree-zero Gaussian:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>C</mi>
+    <mn>0</mn>
+  </msub>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>c</mi>
+  <mo>+</mo>
+  <mn>0.5</mn>
+  <mo>.</mo>
+</math>
+<p>Color must not change as camera rotates around Gaussian.</p>
+<p>If it does, degree-zero handling is broken.</p>
+<p>For degree-one data, evaluate at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mo stretchy="false">(</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mo>−</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>The signs of the first-order basis become obvious.</p>
+<p>This catches:</p>
+<ul>
+<li>camera→Gaussian versus Gaussian→camera reversal,</li>
+<li>x/y/z swaps,</li>
+<li>coefficient-order errors.</li>
+</ul>
+<p>Given the Maveb/Vulkax higher-order storage-layout difference identified above, this is a particularly valuable test.</p>
+<hr />
+</section>
+<section id="id_04-visual-computing-ii-ch038-the-ply-debugging-check" class="level4">
+<h4>THE PLY DEBUGGING CHECK</h4>
+<p>For one synthetic Gaussian, create PLY with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>g</mi>
+  <mi>S</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>ln</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mi>ln</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mi>ln</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mn>4</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mi>L</mi>
+  <mi>o</mi>
+  <mi>g</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>
+<p>so decoded:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mn>3</mn>
+  <mo>,</mo>
+  <mn>4</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo>=</mo>
+  <mn>0.5</mn>
+  <mo>.</mo>
+</math>
+<p>Expected covariance:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Σ</mi>
+  <mo>=</mo>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mn>4</mn>
+  <mo>,</mo>
+  <mn>9</mn>
+  <mo>,</mo>
+  <mn>16</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then choose one nonzero SH coefficient at a time.</p>
+<p>If loader/rasterizer does not reproduce expected basis response exactly, the property mapping is wrong.</p>
+<p>This single synthetic file tests a huge amount of infrastructure.</p>
+<hr />
+<p>You should now be able to derive, not memorize, the entire path.</p>
+<p>Start with a PLY Gaussian containing:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <msub>
+    <mi>e</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <msub>
+    <mi>e</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>,</mo>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <msub>
+    <mi>e</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>o</mi>
+  <msub>
+    <mi>t</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>,</mo>
+  <mo>…</mo>
+  <mo>,</mo>
+  <mi>r</mi>
+  <mi>o</mi>
+  <msub>
+    <mi>t</mi>
+    <mn>3</mn>
+  </msub>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>f</mi>
+    <mi>d</mi>
+  </msub>
+  <mi>c</mi>
+  <mo>,</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>r</mi>
+  </msub>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Explain why stored scale is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ℓ</mi>
+</math>
+<p>rather than:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>Recover:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mo>=</mo>
+  <msup>
+    <mi>e</mi>
+    <mi>ℓ</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Explain why:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi mathvariant="normal">Σ</mi>
+  <mo>=</mo>
+  <mi>R</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+</math>
+<p>is automatically positive semidefinite.</p>
+<p>Prove:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>x</mi>
+    <mi>T</mi>
+  </msup>
+  <mi mathvariant="normal">Σ</mi>
+  <mi>x</mi>
+  <mo>=</mo>
+  <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+  <msup>
+    <mi>M</mi>
+    <mi>T</mi>
+  </msup>
+  <mi>x</mi>
+  <msup>
+    <mo data-mjx-texclass="ORD" fence="false" stretchy="false">‖</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Then explain why quaternion must be normalized.</p>
+<p>Then derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>α</mi>
+  <mo>=</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mo stretchy="false">(</mo>
+  <mi>o</mi>
+  <mo stretchy="false">)</mo>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>α</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>d</mi>
+  <mi>o</mi>
+  <mo>=</mo>
+  <mi>α</mi>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <mi>α</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then explain why maximum Gaussian alpha occurs at its center.</p>
+<p>Then explain why base opacity below a raster threshold allows whole-Gaussian culling.</p>
+<p>Then derive coefficient count:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mi>L</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Explain why degree three has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>45</mn>
+</math>
+<p><code>f_rest</code> values rather than 48.</p>
+<p>Then evaluate degree-one SH by hand for direction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>0</mn>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Then explain why reversing direction changes odd-degree terms.</p>
+<p>Then explain Maveb’s channel-major PLY layout.</p>
+<p>Then explain why stable ID cannot equal storage index if sorting/filtering occurs.</p>
+<p>Then take world center:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>μ</mi>
+    <mi>w</mi>
+  </msub>
+</math>
+<p>and derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>μ</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>R</mi>
+    <mi>c</mi>
+  </msub>
+  <msub>
+    <mi>μ</mi>
+    <mi>w</mi>
+  </msub>
+  <mo>+</mo>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Then derive perspective:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>x</mi>
+  </msub>
+  <mi>X</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>Z</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>x</mi>
+  </msub>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mo>=</mo>
+  <msub>
+    <mi>f</mi>
+    <mi>y</mi>
+  </msub>
+  <mi>Y</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>Z</mi>
+  <mo>+</mo>
+  <msub>
+    <mi>c</mi>
+    <mi>y</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>Then, from calculus alone, derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>J</mi>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <msub>
+            <mi>f</mi>
+            <mi>x</mi>
+          </msub>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <mi>Z</mi>
+        </mtd>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mo>−</mo>
+          <msub>
+            <mi>f</mi>
+            <mi>x</mi>
+          </msub>
+          <mi>X</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <msup>
+            <mi>Z</mi>
+            <mn>2</mn>
+          </msup>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <msub>
+            <mi>f</mi>
+            <mi>y</mi>
+          </msub>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <mi>Z</mi>
+        </mtd>
+        <mtd>
+          <mo>−</mo>
+          <msub>
+            <mi>f</mi>
+            <mi>y</mi>
+          </msub>
+          <mi>Y</mi>
+          <mrow data-mjx-texclass="ORD">
+            <mo>/</mo>
+          </mrow>
+          <msup>
+            <mi>Z</mi>
+            <mn>2</mn>
+          </msup>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Then prove covariance transformation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>v</mi>
+  <mo stretchy="false">(</mo>
+  <mi>A</mi>
+  <mi>X</mi>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mi mathvariant="normal">Σ</mi>
+  <msup>
+    <mi>A</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Use it twice:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>c</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>R</mi>
+    <mi>c</mi>
+  </msub>
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>w</mi>
+  </msub>
+  <msubsup>
+    <mi>R</mi>
+    <mi>c</mi>
+    <mi>T</mi>
+  </msubsup>
+</math>
+<p>then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>J</mi>
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>c</mi>
+  </msub>
+  <msup>
+    <mi>J</mi>
+    <mi>T</mi>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Then explain why second equation is approximate while first is exact for rigid/affine camera transforms.</p>
+<p>Then regularize:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>s</mi>
+  </msub>
+  <mo stretchy="false">←</mo>
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>+</mo>
+  <mn>0.3</mn>
+  <mi>I</mi>
+  <mo>.</mo>
+</math>
+<p>Write:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mi>a</mi>
+        </mtd>
+        <mtd>
+          <mi>b</mi>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mi>b</mi>
+        </mtd>
+        <mtd>
+          <mi>c</mi>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mo>−</mo>
+  <msup>
+    <mi>b</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Derive inverse:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msubsup>
+    <mi mathvariant="normal">Σ</mi>
+    <mi>s</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>−</mo>
+      <mn>1</mn>
+    </mrow>
+  </msubsup>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <mi>d</mi>
+      <mi>e</mi>
+      <mi>t</mi>
+    </mrow>
+  </mfrac>
+  <mrow data-mjx-texclass="INNER">
+    <mo data-mjx-texclass="OPEN">[</mo>
+    <mtable columnspacing="1em" rowspacing="4pt">
+      <mtr>
+        <mtd>
+          <mi>c</mi>
+        </mtd>
+        <mtd>
+          <mo>−</mo>
+          <mi>b</mi>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mo>−</mo>
+          <mi>b</mi>
+        </mtd>
+        <mtd>
+          <mi>a</mi>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo data-mjx-texclass="CLOSE">]</mo>
+  </mrow>
+  <mo>.</mo>
+</math>
+<p>Then derive pixel exponent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mi>d</mi>
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <mn>2</mn>
+  <mi>B</mi>
+  <mi>d</mi>
+  <mi>x</mi>
+  <mi>d</mi>
+  <mi>y</mi>
+  <mo>+</mo>
+  <mi>C</mi>
+  <mi>d</mi>
+  <msup>
+    <mi>y</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>.</mo>
+</math>
+<p>Explain why:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>q</mi>
+  <mo>=</mo>
+  <mn>9</mn>
+</math>
+<p>means a three-sigma contour.</p>
+<p>Then solve characteristic polynomial and obtain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>λ</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mo>±</mo>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mfrac>
+    <mrow>
+      <mi>a</mi>
+      <mo>+</mo>
+      <mi>c</mi>
+      <mo>±</mo>
+      <msqrt>
+        <mo stretchy="false">(</mo>
+        <mi>a</mi>
+        <mo>−</mo>
+        <mi>c</mi>
+        <msup>
+          <mo stretchy="false">)</mo>
+          <mn>2</mn>
+        </msup>
+        <mo>+</mo>
+        <mn>4</mn>
+        <msup>
+          <mi>b</mi>
+          <mn>2</mn>
+        </msup>
+      </msqrt>
+    </mrow>
+    <mn>2</mn>
+  </mfrac>
+  <mo>.</mo>
+</math>
+<p>Then derive:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>3</mn>
+  <msqrt>
+    <msub>
+      <mi>λ</mi>
+      <mrow data-mjx-texclass="ORD">
+        <mi>m</mi>
+        <mi>a</mi>
+        <mi>x</mi>
+      </mrow>
+    </msub>
+  </msqrt>
+  <mo>.</mo>
+</math>
+<p>Then explain why this radius creates a conservative square but:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>3</mn>
+  <msqrt>
+    <mi>a</mi>
+  </msqrt>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mn>3</mn>
+  <msqrt>
+    <mi>c</mi>
+  </msqrt>
+</math>
+<p>can produce a tighter axis-aligned rectangle.</p>
+<p>Then explain why:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>Z</mi>
+  <mo stretchy="false">→</mo>
+  <mn>0</mn>
+</math>
+<p>is dangerous from the Jacobian itself.</p>
+<p>Then explain why offscreen culling can operate entirely on the projected bound.</p>
+<p>Finally, open Maveb’s <code>aetherGaussianProject</code> mentally and map each line to one equation above.</p>
+<p>If you can do that without looking at the code, then you understand 3D Gaussian projection rather than merely knowing that “3DGS projects ellipses.”</p>
+<hr />
+<p>The current <strong>Maveb</strong> path is unusually useful pedagogically because its CPU oracle and Metal implementation track one another closely. The canonical asset preserves trained log-scale/logit values; PLY loading is strict and supports ASCII and binary little-endian; quaternion normalization and SH degrees 0–3 are explicit; CPU and GPU construct <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <msup>
+    <mi>s</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <msup>
+    <mi>R</mi>
+    <mi>T</mi>
+  </msup>
+</math>, transform it into camera space, use the analytically derived perspective Jacobian, add the same <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0.3</mn>
+  <mi>I</mi>
+</math> low-pass covariance, invert the same 2×2 matrix and use the same three-sigma maximum-eigenvalue bound. Its CPU oracle then supplies deterministic color, depth and dominant-source-ID evidence, making it a real correctness oracle rather than merely a second renderer.</p>
+<p>There are also four details worth retaining in your mental bug list. Maveb’s canonical Gaussian itself does not yet use a persistent stable ID; its oracle IDs are source-index-derived. The CPU oracle has an extreme-radius safety cap that the inspected Metal projection kernel does not mirror exactly. Maveb does not currently projection-cull low base opacity even though its <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mn>255</mn>
+</math> pixel threshold makes such a cull provably safe. Finally, Vulkax’s inspected higher-order SH indexing does not currently appear to use the same GraphDECO channel-major ordering that Maveb explicitly documents, so that should be regression-tested rather than assumed equivalent.</p>
+<p>That is the completion of the Gaussian phase: the projected ellipse now becomes a <strong>scalable rasterizer</strong>. We will derive 16×16 screen tiling, Gaussian→tile range expansion, count arrays and exclusive prefix sums as a CSR-like reference structure, depth/tile key construction, why sorting order is required by alpha compositing, stable radix sorting, quadratic Gaussian weight evaluation, transmittance and premultiplied front-to-back accumulation, early termination and numerical underflow; then map the CPU reference raster loop against Maveb’s complete Metal pipeline—projection → scan → key generation → radix histogram/offset/scatter → tile ranges → composite—and validate CPU/GPU output using RMSE, PSNR, max error and changed-pixel fractions. M150 then moves from “rendered splats” into the reason <strong>MAVEB exists</strong>: stable captured-world identity, Gaussian ↔︎ entity/DOF correspondence, covariance deformation under edits, affine motion transfer, appearance-versus-physical representation, support-weighted appearance/physics coupling, provenance and the limits of treating a learned radiance-field primitive as physical matter.</p>
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch442.xhtml#id_07-Vision-XR-and-Playable-Worlds" class="wikilink">Reading map</a> · <a href="ch548.xhtml#id_04-visual-computing-ii-ch037-gaussian-splatting-and-editable-captured-worlds" class="wikilink">Previous chapter</a> · <a href="ch550.xhtml#id_04-visual-computing-ii-ch039-tiling-ordering-and-compositing-at-scale" class="wikilink">Next chapter (Vision, XR, and Playable Worlds, Part 2, Ch. 8)</a></p>
+</section>
+</section>
+</section>
+</body>
+</html>

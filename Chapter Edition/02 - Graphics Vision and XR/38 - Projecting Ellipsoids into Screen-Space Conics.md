@@ -8,7 +8,7 @@ Projecting a 3D ellipsoid requires transforming its center and covariance into c
 
 **Recall question:** Why does translation affect the projected mean while covariance follows the linear transform?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 84850–87884; source-span SHA256 7aac5dd41cb728fb18cfd25087a00e097736bb750dff3cabbf9941114e72b343. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 85852–88886; source-span SHA256 7aac5dd41cb728fb18cfd25087a00e097736bb750dff3cabbf9941114e72b343. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ### FROM A 3D ELLIPSOID TO A SCREEN-SPACE CONIC

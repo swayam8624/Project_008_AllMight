@@ -1,0 +1,40 @@
+\hypertarget{appendix-33237f0f618b}{}
+\section{Online moments and Welford accumulation}\label{appendix-33237f0f618b-online-moments-and-welford-accumulation}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\subsection{Definition and mechanism}\label{appendix-33237f0f618b-definition-and-mechanism}
+
+Online statistics update a mean and centered sum of squares as observations arrive, using constant storage. Welford's recurrence computes a new mean from the old mean and one sample, then adds the product of deviations measured before and after that update. The centered form avoids severe cancellation in E{[}X²{]}−E{[}X{]}² for data with a large offset and small spread. Divide accumulated scatter by n for descriptive population-normalized variance or by n−1 for unbiased sample variance under IID finite-variance assumptions. The recurrence is numerically better behaved, not immune to overflow, count exhaustion, or all rounding error. Parallel workers can merge count, mean, and scatter summaries with a correction term for different means; merge order can change floating-point results.
+
+\subsection{Prerequisites}\label{appendix-33237f0f618b-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-54c383df9992]{Expectation, covariance, and dependence}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-f82e270791c8}{Accumulated rounding error (01-Foundations-I, appendix-f82e270791c8)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-33237f0f618b-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  This node is a current endpoint in the supplied Phase 9--10 path.
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-33237f0f618b-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[02-foundations-ii-ch030-finite-samples-need-stable-descriptive-statistics]{Phase 10 teaching section}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (01-Foundations-I, appendix-cb5af353ef77)} · visual recall
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-33237f0f618b-source-coverage}
+
+Supplied lesson parts: 951 (T06 · M058), 952 (T06 · M058), 953 (T06 · M058), 954 (T06 · M058), 955 (T06 · M058).

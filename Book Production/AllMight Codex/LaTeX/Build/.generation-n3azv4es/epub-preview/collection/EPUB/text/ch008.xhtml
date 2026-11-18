@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch008.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-0ec599f8ba27-numerical-tolerance-policies" class="level2">
+<h2>Numerical tolerance policies</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> C004 · <strong>Latest development:</strong> C005</p>
+<section id="appendix-0ec599f8ba27-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Tolerance is a task-chosen allowed discrepancy: absolute in original units, relative to scale, or representable-step based. Machine epsilon is not automatically a norm cutoff. Handle non-finite values and validate tolerances before formulas.</p>
+<p>M005 distinguishes absolute tolerance in the quantity’s units from dimensionless relative tolerance. Validate policy parameters and classify non-finite values before arithmetic; approximate closeness is not transitive.</p>
+</section>
+<section id="appendix-0ec599f8ba27-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch035.xhtml#appendix-390ea641da54-machine-epsilon" class="wikilink">Machine epsilon</a> — Spacing near one supplies a reference precision scale, not a universal local gap or tolerance.</li>
+<li><a href="ch010.xhtml#appendix-14bab4cab9d4-ulp-and-representable-spacing" class="wikilink">ULP and representable spacing</a> — Adjacent representable points define rounding candidates, errors and step distances.</li>
+<li><a href="ch115.xhtml#appendix-eb336149c00a-floating-point-infinities" class="wikilink">Floating-point infinities</a> — Non-finite operands and overflowing intermediates need branches before ordinary finite formulas.</li>
+<li><a href="ch102.xhtml#appendix-d6607cc4c235-nans-and-payloads" class="wikilink">NaNs and payloads</a> — Unordered comparisons and payload distinctions require explicit metric, comparison and serialization policy.</li>
+</ul>
+</section>
+<section id="appendix-0ec599f8ba27-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch507.xhtml#appendix-b5b83329215b-vector-tolerances-and-finite-state-diagnostics" class="wikilink">Vector tolerances and finite-state diagnostics (Vision, XR, and Playable Worlds, Part 1, Reference notes: Vector tolerances and finite-state diagnostics)</a> — Phase 6 uses this established foundation in its geometry narrative.</p></li>
+<li><p><a href="ch072.xhtml#appendix-8f6a01f284a7-conditioning-and-singularity" class="wikilink">Conditioning and singularity</a> — uses this mechanism in its explanation.</p></li>
+</ul>
+</section>
+<section id="appendix-0ec599f8ba27-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Reconstruct the concrete example in the definition and identify its validity assumptions.</p>
+<p><strong>Pending:</strong> Extend this mechanism to later algorithms and target-specific behavior. See the M005 chapter for its current examples and validity assumptions.</p>
+</section>
+<section id="appendix-0ec599f8ba27-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-when-arithmetic-meets-uncertainty" class="wikilink">M005 development</a></p>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities" class="wikilink">M004 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-m004---parts-61-76" class="wikilink">Per-part definitions</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

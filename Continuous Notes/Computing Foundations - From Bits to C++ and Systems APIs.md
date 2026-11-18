@@ -7283,11 +7283,11 @@ may still copy: most move constructors take a non-const rvalue reference because
 
 The engine rule is:
 
-\[
+$$
 \boxed{
 \text{use move to express permission to transfer from a source whose state may change}
 }
-\]
+$$
 
 not “sprinkle move on expensive objects.”
 
@@ -7312,11 +7312,11 @@ This is why an asset factory or ECS construction helper can accidentally turn ev
 
 Reference collapsing provides the mechanism:
 
-\[
+$$
 T\&\& \text{ with } T=U\&
 \quad\Rightarrow\quad
 U\&.
-\]
+$$
 
 The engineering point is not memorizing the collapse table. It is understanding that generic wrappers must preserve the semantic difference between “borrow/copy this existing object” and “you may consume this temporary.”
 
@@ -7336,11 +7336,11 @@ But declaring noexcept dishonestly is worse: an escaping exception causes termin
 
 The rule is therefore:
 
-\[
+$$
 \boxed{
 \text{declare noexcept when the implementation's contract genuinely supports it}
 }
-\]
+$$
 
 and understand that exception specifications participate in optimization and generic-library behavior.
 
@@ -7372,13 +7372,13 @@ A cache may be mutable. A lazily initialized field may be mutable. Another objec
 
 For a shared engine object, the concurrency contract must be separate:
 
-\[
+$$
 \boxed{
 \text{const-correctness}
 \neq
 \text{data-race freedom}
 }
-\]
+$$
 
 If a const method mutates a cache, that cache needs synchronization or a design that avoids shared mutation.
 
@@ -7463,17 +7463,17 @@ Use emplacement when constructing the element from constructor arguments is the 
 
 The consistent message across the modern C++ sources is not “use the newest feature everywhere.” It is:
 
-\[
+$$
 \boxed{
 \text{make ownership, lifetime, type intent and synchronization easier to verify}
 }
-\]
+$$
 
 A Tour of C++ gives the integrated language map. Effective Modern C++ concentrates on C++11/14 feature interactions such as type deduction, smart pointers, move/forwarding, lambdas and atomics. Professional C++ broadens the discussion into design, testing, debugging, efficiency, multithreading and maintainability. CppCon talks are most useful when a particular engine problem needs a deeper specialist treatment. The Cherno's C++ material gives practical demonstrations that can be connected back to these rules.
 
 The source hierarchy for this volume is therefore:
 
-\[
+$$
 \text{language semantics}
 \rightarrow
 \text{small example}
@@ -7481,7 +7481,7 @@ The source hierarchy for this volume is therefore:
 \text{engine ownership/lifetime consequence}
 \rightarrow
 \text{measured production behavior}
-\]
+$$
 
 rather than a list of style commandments.
 
@@ -7543,13 +7543,13 @@ Now ownership semantics are inherited from a tested vocabulary type. The compile
 
 The important reduction is
 
-\[
+$$
 \boxed{
 \text{fewer custom lifetime transitions}
 \Rightarrow
 \text{fewer states requiring manual proof}
 }
-\]
+$$
 
 Rule of zero therefore matters to engine design because it moves correctness responsibility from ad-hoc transitions into well-defined types.
 
@@ -7611,11 +7611,11 @@ The job owns the immutable upload payload but only carries identity for the text
 
 The rule is:
 
-\[
+$$
 \boxed{
 \text{representation should reveal lifetime category whenever practical}
 }
-\]
+$$
 
 A raw pointer can be correct, but pointer alone does not communicate enough of the lifetime contract for long-lived asynchronous engine work.
 
@@ -7709,11 +7709,11 @@ This matters for:
 
 The engine rule is not to fear low-level code. It is to write low-level code inside a model whose assumptions can be established.
 
-\[
+$$
 \boxed{
 \text{only optimize inside a contract whose preconditions you can prove}
 }
-\]
+$$
 
 When code intentionally depends on representation, use mechanisms that make the operation legal and visible: bit-casting, byte copies, alignment-aware allocation, explicit lifetime APIs where needed, and small wrappers around platform-specific behavior.
 
@@ -7770,7 +7770,7 @@ This is not automatically faster. It helps only if memory traffic, vectorization
 
 A simple decomposition is:
 
-\[
+$$
 T
 \approx
 T_{\text{memory}}
@@ -7782,7 +7782,7 @@ T_{\text{branches}}
 T_{\text{synchronization}}
 +
 T_{\text{overhead}}.
-\]
+$$
 
 Changing AoS to SoA primarily attacks memory traffic and vectorization constraints. If another term dominates, the speedup may be small.
 
@@ -7828,11 +7828,11 @@ private:
 
 Hot loops can still traverse direct arrays, while editor, debugging, scripting, and gameplay code can receive structured views.
 
-\[
+$$
 \boxed{
 \text{abstraction boundary need not equal physical memory layout}
 }
-\]
+$$
 
 This is central to ECS, animation, particles, transforms, visibility, and renderer scene databases.
 
@@ -7848,7 +7848,7 @@ The caller may own those vertices in a vector, fixed array, memory-mapped file, 
 
 For multidimensional data, mdspan extends the same idea to shape, strides, and index mapping. This is valuable for matrices, tiled images, tensors, simulation grids, and staging views because it separates four concerns:
 
-\[
+$$
 \text{owner}
 \quad
 \text{shape}
@@ -7856,17 +7856,17 @@ For multidimensional data, mdspan extends the same idea to shape, strides, and i
 \text{layout mapping}
 \quad
 \text{element access}.
-\]
+$$
 
 Conceptually:
 
-\[
+$$
 \text{logical index}
 \overset{\text{mapping}}{\longrightarrow}
 \text{linear offset}
 \overset{\text{accessor}}{\longrightarrow}
 \text{element}.
-\]
+$$
 
 That separation mirrors GPU resource-view design and is useful far beyond the standard library type itself.
 
@@ -7907,11 +7907,11 @@ A monotonic resource is efficient when individual deallocation is unnecessary an
 
 But the critical rule is:
 
-\[
+$$
 \boxed{
 \text{an object allocated from a short-lived resource must not escape that resource lifetime}
 }
-\]
+$$
 
 PMR does not eliminate lifetime reasoning. It makes the allocation domain explicit enough that the lifetime can be audited.
 
@@ -7952,11 +7952,11 @@ When the parent scope ends, children are completed, cancelled, or joined accordi
 
 That gives a powerful invariant:
 
-\[
+$$
 \boxed{
 \text{async lifetime should be nested whenever possible}
 }
-\]
+$$
 
 Detached work is sometimes necessary, but it should be exceptional because detached lifetime is harder to prove.
 
@@ -7981,13 +7981,13 @@ Cancellation after submission is different. GPU work may already reference stagi
 
 Therefore:
 
-\[
+$$
 \boxed{
 \text{cancel logical operation}
 \neq
 \text{instantly destroy all physical resources involved}
 }
-\]
+$$
 
 This is the same lifetime separation used by deferred GPU destruction.
 
@@ -8001,7 +8001,7 @@ A class can need a type at runtime without requiring that type's full definition
 
 The relevant productivity model is:
 
-\[
+$$
 T_{\text{developer loop}}
 =
 T_{\text{edit}}
@@ -8011,7 +8011,7 @@ T_{\text{incremental compile}}
 T_{\text{link}}
 +
 T_{\text{launch/test}}.
-\]
+$$
 
 If a frequently edited header forces hundreds of translation units to rebuild, it is a productivity hotspot even when runtime performance is perfect.
 
@@ -8063,7 +8063,7 @@ This keeps optimization from becoming folklore.
 
 The combined rule for this C++ layer is:
 
-\[
+$$
 \boxed{
 \text{make ownership explicit}
 +
@@ -8073,7 +8073,7 @@ The combined rule for this C++ layer is:
 +
 \text{make performance claims reproducible}
 }
-\]
+$$
 
 Source integration basis for this deepening includes CppCon material on lifetime management, undefined behavior, data-oriented design, mdspan, performance engineering, build profiling, and coroutine/structured-concurrency practice. The conference boundaries are intentionally not preserved: each concept is placed where it constrains engine code.
 
@@ -8213,11 +8213,11 @@ This sequence has a deliberate order. The capacity check happens before construc
 
 Let `c` be the number of published entries before the call and `C` the static capacity. We maintain the invariant:
 
-\[
+$$
 0\le c\le C,\qquad
 \text{slots }[0,c)\text{ are engaged},\qquad
 \text{slots }[c,C)\text{ are disengaged}.
-\]
+$$
 
 If `c=C`, the function rejects the insertion and changes nothing. If `c<C` and the proposed construction throws, the next optional remains disengaged and the published count stays `c`. If construction succeeds, the new slot is engaged, and incrementing the count makes the published interval `[0,c+1)`. This is a short, inspectable correctness proof that depends on the container's real semantics, not merely the word "generic".
 
@@ -8264,7 +8264,7 @@ The solution is not “move everything into templates.” We must split the **st
 
 ### The pixel format is not an integer whose meaning we must rediscover
 
-Suppose the tile is an 8-by-2 image with four 8-bit channels per pixel. It has \(8\times 2=16\) pixels. Each pixel contributes four source bytes, so its uncompressed, tightly packed payload has \(16\times4=64\) bytes. For an RGB image with four rows and four columns, the source payload has \(4\times4\times3=48\) bytes. These equations arise from the representation we have chosen: width and height count pixels, while `channels` counts 8-bit source components per pixel. They do **not** automatically give the amount of device memory after alignment, row-pitch requirements, mipmaps, block compression, or backend-specific allocation overhead.
+Suppose the tile is an 8-by-2 image with four 8-bit channels per pixel. It has $8\times 2=16$ pixels. Each pixel contributes four source bytes, so its uncompressed, tightly packed payload has $16\times4=64$ bytes. For an RGB image with four rows and four columns, the source payload has $4\times4\times3=48$ bytes. These equations arise from the representation we have chosen: width and height count pixels, while `channels` counts 8-bit source components per pixel. They do **not** automatically give the amount of device memory after alignment, row-pitch requirements, mipmaps, block compression, or backend-specific allocation overhead.
 
 Our asset type already knows its format. We therefore define a finite domain:
 
@@ -8329,7 +8329,7 @@ static_assert(checked_product(8, 4) == 32);
 
 The word `constexpr` means this function is **eligible** for evaluation in a constant-expression context when the necessary conditions hold. It does not say every invocation executes during compilation. In the static assertion, `checked_product(8,4)` is evaluated as a constant expression. When we later call `checked_product(runtime_width,runtime_height)`, the same source function may execute at runtime. A compiler may also optimize a runtime call using ordinary constant propagation where it has sufficient information; that optimization is distinct from the language-level requirement to produce a constant expression.
 
-Why is the overflow check written as a division? Multiplying first would already lose the information we needed to detect overflow. For nonnegative unsigned numbers \(x,y\), a product fits in a maximum representable value \(M\) exactly when \(x\le M/y\) for \(y\ne0\). We therefore test the inequality before multiplication. The `y == 0` case needs separate handling to avoid division by zero; multiplying by zero is safe and yields zero. In the tile pipeline, we apply this function once to `width * height` and again to `pixels * channels`. This establishes a correct *count arithmetic* invariant, although it does not establish enough available memory or any GPU-specific alignment guarantee.
+Why is the overflow check written as a division? Multiplying first would already lose the information we needed to detect overflow. For nonnegative unsigned numbers $x,y$, a product fits in a maximum representable value $M$ exactly when $x\le M/y$ for $y\ne0$. We therefore test the inequality before multiplication. The `y == 0` case needs separate handling to avoid division by zero; multiplying by zero is safe and yields zero. In the tile pipeline, we apply this function once to `width * height` and again to `pixels * channels`. This establishes a correct *count arithmetic* invariant, although it does not establish enough available memory or any GPU-specific alignment guarantee.
 
 At runtime, the laboratory asks for a tile with width `SIZE_MAX` and height two. The first multiplication check throws before computing an overflowing product. The policy and recorder are not invoked after that failure, so the rejected request does not appear as a planned tile. In a compile-time constant-evaluation context, a call that attempts to evaluate the throwing path cannot produce the required constant expression; the program must reject its use as a compile-time constant. This is not an excuse to rely on exceptions in a real-time hot loop: the public engine may instead return a typed error, as Phase 2 developed. The function illustrates the distinction between the *arithmetic rule* and the *chosen error-delivery policy*.
 
@@ -8363,23 +8363,23 @@ Three terms are now distinguishable. `constexpr` enables constant evaluation of 
 
 The same engine that loads textures may divide images into small tiles and assign compact keys to neighboring positions. One common ordering scheme is **Morton order**, also called Z-order, which interleaves the binary digits of two coordinates. It is useful because coordinates that are near one another often receive nearby keys, but it does not guarantee perfect spatial locality or replace a complete spatial index.
 
-Take a four-bit coordinate \(x\). Write its bits as \(x_3x_2x_1x_0\). To make room for a second coordinate, place each bit at an even position:
+Take a four-bit coordinate $x$. Write its bits as $x_3x_2x_1x_0$. To make room for a second coordinate, place each bit at an even position:
 
-\[
+$$
 \operatorname{spread}(x)
 =\sum_{i=0}^{3} \left(\left\lfloor\frac{x}{2^i}\right\rfloor\bmod 2\right)2^{2i}.
-\]
+$$
 
-The division and remainder here simply ask for bit \(i\); in C++ we use a right shift and bitwise AND. For \(x=3\), binary `0011`, the low two bits are set, so spreading produces `00000101`, decimal five. For \(y=5\), binary `0101`, spreading produces `00010001`, decimal seventeen. Shift the spread \(y\) bits left by one and combine:
+The division and remainder here simply ask for bit $i$; in C++ we use a right shift and bitwise AND. For $x=3$, binary `0011`, the low two bits are set, so spreading produces `00000101`, decimal five. For $y=5$, binary `0101`, spreading produces `00010001`, decimal seventeen. Shift the spread $y$ bits left by one and combine:
 
-\[
+$$
 \operatorname{morton}(3,5)
 =\operatorname{spread}(3)\;|\;
 \big(\operatorname{spread}(5)\ll 1\big)
 =5\;|\;(17\ll1)
 =5\;|\;34
 =39.
-\]
+$$
 
 The bitwise OR is correct here because one spread result occupies even bit positions and the other, after shifting, occupies odd bit positions; there is no overlapping set bit to carry. If the coordinates are outside the range zero through fifteen, the four-bit function cannot represent them and must reject them or use a wider scheme. This small example is **one four-bit-per-axis tile key**, not a complete texture layout for arbitrary image dimensions.
 
@@ -8464,7 +8464,7 @@ public:
 
 The policy instance's *type* is fixed by the specialization, but its stored state, such as a 64-byte budget, can still be supplied at runtime. That distinction is important: choosing `ByteBudgetPolicy` at compile time does not mean the number 64 must be a template argument. We can change budgets between planner objects without compiling a different type for every numeric value.
 
-For the RGBA example, width eight and height two require \(8\times2\times4=64\) bytes. With a 64-byte budget, the plan is accepted and recorded. An 8-by-3 tile would require 96 bytes, so the same planner throws before recording it. A different 4-by-4 tile also requires 64 bytes, but when the verified-payload mode is used with an empty buffer, it fails the length check. Both failure paths leave the recorder's count at one. The error source and the publish boundary remain observable; policy selection does not hide them.
+For the RGBA example, width eight and height two require $8\times2\times4=64$ bytes. With a 64-byte budget, the plan is accepted and recorded. An 8-by-3 tile would require 96 bytes, so the same planner throws before recording it. A different 4-by-4 tile also requires 64 bytes, but when the verified-payload mode is used with an empty buffer, it fails the length check. Both failure paths leave the recorder's count at one. The error source and the publish boundary remain observable; policy selection does not hide them.
 
 ### The recorder is known statically; explain the CRTP rather than mystifying it
 
@@ -8585,7 +8585,7 @@ There is also a transaction boundary worth examining. The `TilePlanner::prepare`
 
 ### A mastery test that connects every mechanism without breaking the narrative
 
-You should now be able to reconstruct the following reasoning without opening the source. Start with a mesh/texture asset pipeline and explain which values are known by the compiler and which appear only at runtime. Derive the source-byte size \(W\times H\times C\) and explain why multiplication must be checked before forming the result. Design a trait whose compile-time channel count is an `integral_constant` value, then show when `if constexpr` eliminates a format-specific branch and when `constexpr` merely permits a calculation to execute during compilation.
+You should now be able to reconstruct the following reasoning without opening the source. Start with a mesh/texture asset pipeline and explain which values are known by the compiler and which appear only at runtime. Derive the source-byte size $W\times H\times C$ and explain why multiplication must be checked before forming the result. Design a trait whose compile-time channel count is an `integral_constant` value, then show when `if constexpr` eliminates a format-specific branch and when `constexpr` merely permits a calculation to execute during compilation.
 
 Build a legal compile-time tile configuration with `consteval`; explain why a runtime argument cannot replace a required constant expression. Derive a four-bit Morton table from interleaving coordinate bits and verify why (3,5) yields 39. Explain why the resulting `inline constexpr` table and the `constinit` mutable counter make different guarantees. Choose two budget policies and show why the checked arithmetic contract remains valid under both. Build a `RecorderBase<Derived>` and explain precisely why the derived cast is sound only for a genuinely appropriate object; contrast that static call with runtime type erasure. Use empty tag types to distinguish a verified payload from a metadata-only plan and explain why the latter cannot be used as proof of upload readiness. Finally draw the three policy holder layouts and state what EBO and `[[no_unique_address]]` *permit*—and what they do not promise across compilers.
 
@@ -8644,18 +8644,18 @@ One important nonstandard-looking exception to "vector is a normal contiguous ar
 
 Allocating a new block for *every* append would be expensive. If a sequence grows from zero to `n` elements, and on each append we move every existing element into a precisely sized replacement block, the total number of moved elements is:
 
-\[
+$$
 0+1+2+\cdots+(n-1)=\frac{n(n-1)}{2}.
-\]
+$$
 
 This is quadratic in `n`. It is not a reasonable growth strategy for a large asset array.
 
 A common implementation instead chooses a new capacity that is a factor `g>1` larger when the vector fills. If the capacities are approximately `1,g,g^2,\ldots,g^k`, the total number of previously stored elements copied or moved across those reallocation events is a geometric series:
 
-\[
+$$
 1+g+g^2+\cdots+g^{k-1}
 =\frac{g^k-1}{g-1}.
-\]
+$$
 
 Since the last capacity is on the order of the final element count, the total relocation work over all appends is proportional to `n` for fixed `g>1`. Divide total work by `n` appends and the *amortized* relocation cost per append is constant, even though one particular append may relocate a large existing sequence. For a factor around two, the geometric series of prior capacities is bounded by a small multiple of the final size; for a smaller growth factor the storage overhead may be lower but the number of reallocations higher. These are tradeoffs, not standardized growth factors.
 
@@ -8781,15 +8781,15 @@ Under typical hash distribution assumptions, insertion, lookup and deletion have
 
 A hash table's **load factor** is:
 
-\[
+$$
 \alpha = \frac{n}{b},
-\]
+$$
 
 where `n` is the number of elements and `b` is the number of buckets. The `max_load_factor` setting establishes the desired upper bound after applicable operations and controls when growth is needed. If we want to support at least `N` elements while targeting maximum load `m`, the bucket count needs to be at least approximately:
 
-\[
+$$
 b \ge \left\lceil \frac{N}{m} \right\rceil.
-\]
+$$
 
 In the lab we set `max_load_factor(0.5f)` and later call `reserve(96)`, requesting enough bucket capacity for that many elements under the configured maximum. This request is not the same as reserving space for 96 contiguous objects. `unordered_map::reserve` is connected to bucket reorganization, not vector's element storage. Some implementations may grow or choose a bucket count using their own policies; the exact bucket number is not a portable constant.
 
@@ -9164,9 +9164,9 @@ Partitioning is an important building block in many algorithms, from in-place fi
 
 Our owned snapshot's byte sizes are 48, 64, 16, 128 and 48. After sorting by byte count they are:
 
-\[
+$$
 [16,\ 48,\ 48,\ 64,\ 128].
-\]
+$$
 
 The editor asks for all assets whose source payload is exactly 48 bytes. A linear scan would work, but because we have *already sorted by this key*, we can search the boundaries of the equal-key range.
 
@@ -9235,9 +9235,9 @@ An overlapping input/output arrangement must satisfy the algorithm's specified i
 
 Our byte counts are:
 
-\[
+$$
 48+64+16+128+48 = 304.
-\]
+$$
 
 With integers in a sufficiently wide type, this is straightforward. The lab uses `std::accumulate` with a `std::size_t{0}` initial value:
 
@@ -9246,31 +9246,31 @@ auto total = std::accumulate(
     sizes.begin(), sizes.end(), std::size_t{0});
 ```
 
-The initial value matters twice. First, it sets the result's initial value and type. Supplying a plain `0` would commonly select an `int` accumulator, which can truncate conversions or overflow when counting a large number of bytes. Second, `accumulate` is an **ordered left fold**. For elements \(a_1,\ldots,a_n\) and initial \(z\), its grouping follows:
+The initial value matters twice. First, it sets the result's initial value and type. Supplying a plain `0` would commonly select an `int` accumulator, which can truncate conversions or overflow when counting a large number of bytes. Second, `accumulate` is an **ordered left fold**. For elements $a_1,\ldots,a_n$ and initial $z$, its grouping follows:
 
-\[
+$$
 (((z+a_1)+a_2)+\cdots)+a_n.
-\]
+$$
 
 The algorithm traverses the range from beginning to end and combines each next element with the current accumulator in that sequence. If the operation itself has side effects, they must still respect its specified use and not illegally invalidate the input range.
 
 `std::reduce` has a different semantic allowance. It may combine elements in an unspecified grouping and order rather than necessarily following that left fold. This can enable more freedom for a reduction implementation, including implementations taking advantage of parallel-friendly combinations. But there is **no guarantee that a particular call without an execution policy actually launches parallel threads**. The important difference is what order and grouping the language permits.
 
-Why does the distinction matter? Addition of *mathematical real numbers* is associative. Floating-point addition on a finite machine is not, because intermediate results are rounded. Take \(L=10^{20}\) and the sequence \(L,1,-L,3\). In the tested ordinary binary64 representation:
+Why does the distinction matter? Addition of *mathematical real numbers* is associative. Floating-point addition on a finite machine is not, because intermediate results are rounded. Take $L=10^{20}$ and the sequence $L,1,-L,3$. In the tested ordinary binary64 representation:
 
-\[
+$$
 ((L+1)-L)+3 = 3
-\]
+$$
 
-because adding one to a quantity of magnitude \(10^{20}\) loses the one at the available precision. But another grouping gives:
+because adding one to a quantity of magnitude $10^{20}$ loses the one at the available precision. But another grouping gives:
 
-\[
+$$
 (L-L)+(1+3)=4.
-\]
+$$
 
 The difference is not merely performance; it changes the numerical result. A floating-point `reduce` is allowed to group operations in ways that yield a different rounding pattern from a specified sequential `accumulate`. The lab checks two explicit groupings to demonstrate the numerical issue, rather than asserting that `std::reduce` on this compiler *must* choose one particular grouping. For the five small `std::size_t` byte counts, both accumulate and reduce yield 304 under the tested implementation, and their integer addition is exact within the chosen range.
 
-For a production engine, we must separately think about overflow and reproducibility. Unsigned integer addition can wrap if the total exceeds its range, producing an incorrect allocation budget even though it is defined modulo \(2^N\); signed overflow is an undefined-behavior risk in the wrong context. A checked sum can reject values before addition, or use a wider bounded accumulator. For floating-point statistics, we can choose a deterministic accumulation order, wider precision, pairwise summation, compensated summation such as Kahan's method when appropriate, or reproducible reduction schemes. These methods have their own numerical assumptions and performance costs; simply selecting `reduce` does not certify an accurate, deterministic total.
+For a production engine, we must separately think about overflow and reproducibility. Unsigned integer addition can wrap if the total exceeds its range, producing an incorrect allocation budget even though it is defined modulo $2^N$; signed overflow is an undefined-behavior risk in the wrong context. A checked sum can reject values before addition, or use a wider bounded accumulator. For floating-point statistics, we can choose a deterministic accumulation order, wider precision, pairwise summation, compensated summation such as Kahan's method when appropriate, or reproducible reduction schemes. These methods have their own numerical assumptions and performance costs; simply selecting `reduce` does not certify an accurate, deterministic total.
 
 ### Erasing “by algorithm” is not automatically erasing “from the container”
 
@@ -9336,7 +9336,7 @@ g++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror \
 
 The exact committed source was compiled and executed with GCC 14.2.0 and AddressSanitizer/UndefinedBehaviorSanitizer, Clang 17.0.0 with warnings as errors, and GCC 14.2.0 with `-O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror`. Each run printed `asset_query_algorithm_lab: all checks passed` and the sanitizer run reported no diagnostics. The local executed and GitHub committed source matched the same Git blob `0fa0a888b2aa0c348a52307a049bbf38527fcde1` and SHA-256 `c479bd493444d093f6c34898d4ecdf43938cdbd82de8986a7b1906a5bc374f9c`. These are witnesses for the modeled C++ semantics, not proofs of thread safety, a production asset query service or native GPU execution.
 
-To **reconstruct from a blank file**, begin by explaining why `optional<AssetHandle>` is a useful presence test but cannot say whether the input name was invalid. Build a success-or-error type, then contrast it with a three-alternative command variant and an open-ended diagnostic `any`. Give an example where a structured binding copies its pair versus borrowing it. Prove the iterator-category requirements for vector, deque, list, forward_list and input streams. Sort five asset records by bytes with an explicit tie-breaker, then use stable sort when the original order of equal-priority items matters. Partition by asset kind, locate the partition boundary, and explain why this does not satisfy the byte-count sorting precondition for binary search. From the sorted byte sequence `[16,48,48,64,128]`, derive the exact lower and upper bound indices for 48. Transform the records into sizes and derive 304 with a correctly typed initial accumulator. Show, with \(10^{20},1,-10^{20},3\), why floating-point grouping can produce 3 or 4. Finally implement both erase–remove and `std::erase_if`, and explain why deleting *report rows* is not the same as destroying *live assets*.
+To **reconstruct from a blank file**, begin by explaining why `optional<AssetHandle>` is a useful presence test but cannot say whether the input name was invalid. Build a success-or-error type, then contrast it with a three-alternative command variant and an open-ended diagnostic `any`. Give an example where a structured binding copies its pair versus borrowing it. Prove the iterator-category requirements for vector, deque, list, forward_list and input streams. Sort five asset records by bytes with an explicit tie-breaker, then use stable sort when the original order of equal-priority items matters. Partition by asset kind, locate the partition boundary, and explain why this does not satisfy the byte-count sorting precondition for binary search. From the sorted byte sequence `[16,48,48,64,128]`, derive the exact lower and upper bound indices for 48. Transform the records into sizes and derive 304 with a correctly typed initial accumulator. Show, with $10^{20},1,-10^{20},3$, why floating-point grouping can produce 3 or 4. Finally implement both erase–remove and `std::erase_if`, and explain why deleting *report rows* is not the same as destroying *live assets*.
 
 The complete coverage reference is [[Supplementary/Foundations#M016 — Parts 251–270: the asset registry becomes a query and transformation pipeline|M016's original twenty-part audit map]], supported by [[Supplementary/Sources and Code Anchors#Phase 6 additive reconstruction — M016 / Parts 251–270|the verification and provenance ledger]] and [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall#Query the registry without confusing identity and a snapshot — M016 reconstruction|the reconstruction board]]. This chapter is **authored reconstruction based on the canonical curriculum**, not a newly received M016 transcript. The current separate `KairoSpatial/BVH.cppm` and `KairoRayTracer/Scene.cppm` repositories and their specific revisions have not been inspected in this phase. No independent learner mastery test, real asset-registry concurrency proof, numerical-reproducibility benchmark, or GPU/graphics test is claimed. The next contract range, M017 / Parts 271–290, should become necessary when this query pipeline needs lazy ranges, allocators, PMR and stable modules/ABI boundaries.
 
@@ -10050,9 +10050,9 @@ The distinction between static and dynamic dimensions appears when the same math
 
 For a dot product of size n, the straightforward algorithm is
 
-\[
+$$
 s=\sum_{i=0}^{n-1}a_i b_i.
-\]
+$$
 
 It performs n multiplications and n additions in a single pass (counting the first accumulation into zero), with O(n) time and O(1) auxiliary scalar storage. Floating-point addition, however, is not associative, so a compiler's SIMD reduction or reassociation may change rounding. The mathematical formula and the machine's numerical contract must not be casually equated. For large n, error analysis, compensated summation and reduction order may matter more than whether the vector's dimension was a template parameter.
 
@@ -10204,17 +10204,17 @@ Trace a hot asset loop. One instruction loads the record's mass, another loads x
 
 A simple recurrence makes this precise. For a scalar reduction
 
-\[
+$$
 s_{i+1}=s_i+x_i m_i,
-\]
+$$
 
 every new value of s depends on the previous sum. Even if loads and multiplications overlap, the accumulation itself forms a dependency chain. Multiple independent partial accumulators can shorten that chain, but changing the grouping changes floating-point rounding. A compiler using permitted vector or fast-math transformations can choose a different evaluation tree; strict language and compiler options limit which transformations are legal. Therefore a proposed faster reduction must state **both its numerical tolerance and its reassociation policy**.
 
 Instruction-level parallelism (ILP) is the independence available among operations within one instruction stream. Superscalar issue width is a hardware upper bound on how many appropriate operations can be issued in a cycle, not a guarantee that every instruction sequence reaches that width. Execution-port conflicts, dependent chains, branch recovery, cache misses, front-end bandwidth and register pressure reduce the realized rate. A useful first model is
 
-\[
+$$
 T_{\text{CPU}}\approx \frac{I\,\mathrm{CPI}}{f},
-\]
+$$
 
 where I is the number of executed instructions, CPI the *measured average* cycles per instruction and f the frequency. CPI is an aggregate result of a workload and machine, not an intrinsic constant for one C++ expression. Instructions that retire several per cycle can produce CPI below one; stalls can make it much larger. Frequency scaling and heterogeneous core placement further invalidate naive cycle-to-wall-time assumptions.
 
@@ -10242,10 +10242,10 @@ Prefetchers may recognize predictable sequential or strided streams and begin lo
 
 We can estimate a bandwidth lower bound when the memory-bound conditions really apply:
 
-\[
+$$
 T \;\geq\; \frac{\text{bytes that must cross the limiting interface}}
                     {\text{sustainable bytes per second}}.
-\]
+$$
 
 For a purely illustrative machine capable of sustaining 20 GB/s on the relevant transfer path, moving 2 GB of indispensable data takes at least 0.1 s on that path. The estimate is only useful if the bytes and the interface are correctly identified. Cache reuse can reduce DRAM traffic; write allocation, coherence, other threads and prefetching can increase it. We should never take the structure's size and automatically equate it to memory-bus traffic.
 
@@ -10311,6 +10311,121 @@ For a loop processing N elements in packets of W lanes, the main body executes r
 
 Alignment means that an address is a multiple of a required boundary. Some SIMD loads benefit from or require alignment; others accept unaligned addresses with possible architectural or workload-dependent costs. ISO C++ object alignment, allocator guarantees and an ISA's memory-operation requirements are related but distinct. A programmer cannot assume a vector's data pointer is aligned to a particular extended SIMD width merely because the element is a float. If using aligned instructions, establish or check alignment through the correct allocator and type contracts.
 
+<!-- Book-completion teaching addition a6d1c5b3901d4323 -->
+
+#### Three lane-arithmetic contracts: wrap, saturate and widen
+
+A packed operation applies the same operation to several independent element lanes held in a vector. “Independent” matters: when one 8-bit lane overflows, its carry does not flow into the next lane. A real instruction’s lane width and overflow policy are ISA-specific, so first work out the desired result for each lane as a small scalar calculation.
+
+Take four unsigned 8-bit lanes:
+
+$$
+a=[250,1,128,0],\qquad b=[10,255,128,7].
+$$
+
+**Wrapping addition** keeps the low eight bits of each exact sum. For an unsigned 8-bit result, this is reduction modulo $2^8=256$:
+
+| Lane | Exact sum | Low eight bits | Wrapping result |
+|---:|---:|---:|---:|
+| 0 | $250+10=260=0x104$ | $0x04$ | 4 |
+| 1 | $1+255=256=0x100$ | $0x00$ | 0 |
+| 2 | $128+128=256=0x100$ | $0x00$ | 0 |
+| 3 | $0+7=7$ | $0x07$ | 7 |
+
+So the wrapping vector is $[4,0,0,7]$. Lane 0’s carry is discarded; it does not increment lane 1. This is different from adding the four bytes as one 32-bit integer.
+
+**Saturating addition** uses a different policy: clamp each lane’s exact sum to the largest representable value, 255. Its result is $[255,255,255,7]$. **Widening addition** keeps the exact sums in 16-bit lanes, producing $[260,256,256,7]$. Neither saturation nor widening happens merely because values are stored in an 8-bit vector; the chosen operation must request and support that policy.
+
+In portable C++, two `std::uint8_t` operands undergo integral promotion before addition. On implementations where `int` represents every `std::uint8_t` value, the addition is evaluated as `int`; explicitly converting the sum back to `std::uint8_t` gives the value congruent modulo $2^8$. To make the model and intermediate width visible, the companion lab first adds in `unsigned int`, then stores the bounded exact sum in `std::uint16_t`, then either narrows explicitly for wrapping, clamps for saturation, or keeps the 16-bit value for widening. This scalar loop is an oracle for lane results. It does not prove the compiler emitted SIMD instructions, and it does not establish any ISA’s exact instruction semantics.
+
+Signed lanes need an equally explicit policy. With signed eight-bit range $[-128,127]$, exact sums $120+20=140$ and $-120-20=-140$ saturate to $127$ and $-128$, while a two's-complement wrapping contract gives $-116$ and $116$. Widening preserves $140$ and $-140$. These hardware-style contracts do not make overflowing ordinary signed C++ arithmetic valid: check the expression's promoted type, range and conversion rules. The program below verifies the unsigned profile; it does not claim execution of a signed SIMD instruction.
+
+**Worked check.** For lane 0, $250+10=260$. Since $260=1\cdot256+4$, wrapping stores 4; saturation stores 255; widening stores 260. For lane 3, $0+7=7$, so all three policies produce 7. These checks distinguish a real overflow case from an ordinary lane and catch accidental carry between lanes.
+
+**Exercise.** For $x=[15,240,127,250]$ and $y=[20,30,1,10]$, calculate the wrapping, saturating and 16-bit widening sums. Which lanes overflow the 8-bit range? Explain why one lane’s overflow cannot alter another lane’s answer.
+
+**Solution.** The exact lane sums are $[35,270,128,260]$. Modulo 256 gives wrapping results $[35,14,128,4]$, because $270=256+14$ and $260=256+4$. Clamping each exact result to 255 gives $[35,255,128,255]$. Widening keeps $[35,270,128,260]$. Lanes 1 and 3 exceed 255. Each result is computed per lane; the discarded carry or clamp in one lane has no path into another lane.
+
+These are three arithmetic contracts, not a claim that one instruction supports all three. Before replacing a scalar loop with an ISA intrinsic, check that ISA’s lane width, signedness, wrap/saturate/widen rule, feature availability, alignment, tail behavior and fallback. Then compare the selected instruction’s per-lane results with this scalar oracle on boundary values as well as ordinary values.
+
+The complete scalar oracle follows. Its checks include both the worked trace and solved exercise and remain active in release builds. Compile and run the saved source with:
+
+```sh
+c++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror tools/labs/packed_arithmetic_lab.cpp -o /tmp/packed_arithmetic_lab
+/tmp/packed_arithmetic_lab
+```
+
+This validates lane arithmetic, not generated SIMD instructions or speedup.
+
+```cpp
+// Portable scalar oracle for independent packed 8-bit lane addition.
+// This models three arithmetic policies; it does not select or prove SIMD code.
+#include <array>
+#include <cstdint>
+#include <cstddef>
+#include <iostream>
+#include <limits>
+
+struct Results {
+    std::array<std::uint8_t, 4> wrapping{};
+    std::array<std::uint8_t, 4> saturating{};
+    std::array<std::uint16_t, 4> widening{};
+};
+
+constexpr Results add_lanes(const std::array<std::uint8_t, 4>& a,
+                            const std::array<std::uint8_t, 4>& b) {
+    Results out{};
+    for (std::size_t lane = 0; lane < a.size(); ++lane) {
+        // Promote before adding so the exact sum is visible and in range.
+        // Unsigned int can represent the largest sum, 255+255.
+        const unsigned sum = static_cast<unsigned>(a[lane]) +
+                             static_cast<unsigned>(b[lane]);
+        const auto exact = static_cast<std::uint16_t>(sum);
+        // Narrowing to uint8_t applies the unsigned modulo-2^8 conversion.
+        out.wrapping[lane] = static_cast<std::uint8_t>(exact);
+        // Saturation is an explicit policy, not ordinary uint8_t addition.
+        out.saturating[lane] = static_cast<std::uint8_t>(
+            exact > std::numeric_limits<std::uint8_t>::max()
+                ? std::numeric_limits<std::uint8_t>::max() : exact);
+        // Preserve each lane's exact sum in the wider result type.
+        out.widening[lane] = exact;
+    }
+    return out;
+}
+
+template<class T, std::size_t N>
+bool equals(const std::array<T, N>& actual, const std::array<T, N>& expected) {
+    for (std::size_t i = 0; i < N; ++i)
+        if (actual[i] != expected[i]) return false;
+    return true;
+}
+
+int main() {
+    constexpr std::array<std::uint8_t, 4> a{250, 1, 128, 0};
+    constexpr std::array<std::uint8_t, 4> b{10, 255, 128, 7};
+    constexpr auto r = add_lanes(a, b);
+    constexpr std::array<std::uint8_t, 4> wrap{4, 0, 0, 7};
+    constexpr std::array<std::uint8_t, 4> sat{255, 255, 255, 7};
+    constexpr std::array<std::uint16_t, 4> wide{260, 256, 256, 7};
+    // Keep checks active under NDEBUG: no assert-only test contract.
+    if (!equals(r.wrapping, wrap) || !equals(r.saturating, sat) ||
+        !equals(r.widening, wide)) {
+        std::cerr << "packed-lane scalar oracle mismatch\n";
+        return 1;
+    }
+    // Reproduce the solved exercise independently of the first example.
+    constexpr auto exercise = add_lanes({15, 240, 127, 250}, {20, 30, 1, 10});
+    if (exercise.wrapping != std::array<std::uint8_t, 4>{35, 14, 128, 4} ||
+        exercise.saturating != std::array<std::uint8_t, 4>{35, 255, 128, 255} ||
+        exercise.widening != std::array<std::uint16_t, 4>{35, 270, 128, 260}) {
+        std::cerr << "exercise arithmetic mismatch\n";
+        return 1;
+    }
+    std::cout << "packed lane scalar oracle: PASS\n";
+    return 0;
+}
+```
+
 Horizontal reduction combines multiple lanes into one result. It can create a tree of additions rather than a left-to-right scalar chain. For floating-point input, that tree may round differently. Likewise, a branchless SIMD mask can avoid branch divergence while still doing unused operations; gather and scatter can access noncontiguous addresses but often lose the advantage of contiguous streams. Gather/scatter should be chosen from actual address patterns, not because the instructions sound more advanced.
 
 Auto-vectorization depends on the compiler proving enough about loop independence, aliasing, trip counts, alignment and target instruction support. Conditional code, indirect indexing, potential exceptions and unclear alias relationships may block profitable transformations. The practical evidence chain is: compile with explicit optimization and target options, request the compiler's vectorization report, inspect the relevant machine code, check numerical correctness, then benchmark a realistic workload. The absence of a vectorization message does not alone prove poor performance; the presence of one does not prove speedup.
@@ -10345,9 +10460,9 @@ Different ownership patterns suggest different allocation strategies. A free-lis
 
 Alignment constrains the addresses at which objects may reside. If a type needs alignment a, its address must be divisible by a under the relevant C++/ABI definition. Over-aligned allocations may require an allocation mechanism that honors the greater alignment. For a linear arena with current cursor p and power-of-two a, a familiar alignment expression is
 
-\[
+$$
 p_{\mathrm{aligned}}=(p+a-1)\mathbin{\&}\sim(a-1),
-\]
+$$
 
 but a correct implementation must ensure that p+a−1 does not overflow, that a is valid, that the aligned extent fits the backing allocation, and that the returned pointer meets the type's actual alignment. A robust arena should reason about byte spans and capacity *before* pointer arithmetic. The formulas are not license to write past a buffer.
 
@@ -10425,9 +10540,9 @@ The test first partitions a 10,000-element array into fixed chunks, submits inde
 
 A practical scheduler chooses **grain size** so each task contains enough useful work to amortize scheduling overhead but not so much that one worker remains busy after others finish. If a task costs c units of useful work and incurs overhead h, then for n tasks
 
-\[
+$$
 T_{\mathrm{overhead}}\approx n h,
-\]
+$$
 
 before accounting for contention, cache effects and critical path dependencies. Smaller tasks improve load balancing in irregular workloads but increase overhead. Coarser tasks reduce overhead but may create idle workers and poor balance. There is no universal ideal grain size expressed solely in bytes or number of particles.
 
@@ -10437,9 +10552,9 @@ A **task dependency graph** makes execution constraints explicit. If animation m
 
 For a workload with total work W and critical-path length S, the work/span model gives a conceptual lower bound
 
-\[
+$$
 T_P\;\geq\;\max\!\left(\frac{W}{P},\, S\right)
-\]
+$$
 
 for P equal-speed processors under the model. W/P expresses total work capacity; S expresses serial dependency limitations. Real systems add scheduler cost, synchronization, memory effects and heterogeneous execution. A job system with a hundred workers cannot beat a single long dependency chain.
 
@@ -10447,9 +10562,9 @@ for P equal-speed processors under the model. W/P expresses total work capacity;
 
 Parallel reductions expose an immediate determinism problem. Floating-point addition is generally not associative:
 
-\[
+$$
 (a+b)+c\neq a+(b+c)
-\]
+$$
 
 for some representable a, b, c under finite-precision rounding. If task completion order determines reduction order, two valid executions may obtain slightly different results even without a data race. For deterministic physics, reproducible experiments and binary comparison tests, the update must define its accumulation and iteration ordering (or tolerate and quantify numerical differences).
 
@@ -10467,9 +10582,9 @@ A proper microbenchmark includes warm-up and repeated runs, measures enough work
 
 A useful speedup model is **Amdahl's law**. If fraction s of the baseline execution is inherently serial and the remainder is accelerated by a factor P, then the idealized overall speedup is
 
-\[
+$$
 S(P)=\frac{1}{s+(1-s)/P}.
-\]
+$$
 
 With s=0.2 and P=4, the ideal speedup is 1/(0.2+0.8/4)=2.5, *not* four. As P grows without limit, the maximum under this fixed-fraction model approaches 1/s=5. The model assumes the work fractions and costs are meaningful and ignores many real overheads; it does not predict actual hardware utilization. It teaches us why profiling the serial fraction and the critical path matters before growing the pool.
 
@@ -10495,6 +10610,72 @@ Let n denote the number of stored assets. An operation's running time can be ana
 
 A single operation often has multiple relevant input sizes. Building an index of n assets may depend on the total bytes B of their names; exploring a graph depends on vertices V and edges E; an open-addressed hash table's expected probe length depends on load factor α=n/m as well as on n; a matrix graph representation costs Θ(V²) storage even when the edge count is small. When a paper or tutorial says simply "linear time," ask *linear in what?* The same operation might be O(n) in object count but O(B) in total input bytes.
 
+<!-- Book-completion teaching addition 004b07ac84227223 -->
+
+### A recurrence turns recursive calls into a cost equation
+
+When an algorithm calls itself on smaller inputs, describe its running time with a **recurrence**: a rule for the cost on size $n$ in terms of costs on smaller sizes, plus the work done outside those recursive calls. For a divide-and-conquer algorithm with $a$ subproblems, each of size $n/b$, and nonrecursive work $f(n)$, the common form is
+
+$$
+T(n)=aT(n/b)+f(n),\qquad T(1)=\Theta(1),
+$$
+
+where $a\geq1$, $b>1$, and $f(n)$ is asymptotically nonnegative. For a first derivation, assume $n$ is a power of $b$ so each level has equal-size subproblems. Real algorithms round sizes and stop at a base threshold; those details should be checked, but usually do not change the bound when the split stays balanced.
+
+At recursion depth $i$, there are $a^i$ subproblems, each of size $n/b^i$. The nonrecursive work on that level is therefore
+
+$$
+a^i f(n/b^i).
+$$
+
+The tree reaches size one after about $\log_b n$ levels. It has
+
+$$
+a^{\log_b n}=n^{\log_b a}
+$$
+
+leaves. Write $p=\log_b a$; the total leaf work is $\Theta(n^p)$ when each base case costs constant work. The comparison behind the Master theorem is between $f(n)$ (work near the root) and $n^p$ (work represented by the leaves). Summing level costs explains why the larger contribution dominates, why a tie accumulates across levels, and why the result depends on regularity assumptions.
+
+For $T(n)=aT(n/b)+f(n)$, the standard three cases are:
+
+1. **Leaves dominate.** If there is a constant $\varepsilon>0$ such that $f(n)=O(n^{p-\varepsilon})$, then $T(n)=\Theta(n^p)$.
+2. **Levels have comparable work.** If $f(n)=\Theta(n^p\log^k n)$ for a constant $k\geq0$, then $T(n)=\Theta(n^p\log^{k+1}n)$. The familiar equal-work case is $k=0$. This statement does not cover every possible logarithmic factor; in particular it makes no claim for negative $k$.
+3. **Root-side work dominates.** If there is a constant $\varepsilon>0$ with $f(n)=\Omega(n^{p+\varepsilon})$, and the regularity condition
+
+   $$
+   a f(n/b)\leq c f(n)\quad\text{for some constant }c<1
+   $$
+
+   holds for sufficiently large $n$, then $T(n)=\Theta(f(n))$. The condition prevents the next level from growing back to rival the root cost.
+
+These are conditional tools, not a button for every recurrence. Check the subproblem count and size, the nonrecursive work, the base case, and (for Case 3) regularity. If none of the cases applies, sum a recursion tree, use substitution/induction, or use another method instead of forcing a match.
+
+**Worked example 1: binary search.** A balanced binary search makes at most one recursive call on half the range and does constant work to compare and select a half:
+
+$$
+T(n)=T(n/2)+\Theta(1).
+$$
+
+Here $a=1$, $b=2$, and $p=\log_2 1=0$. The level-work tie is $f(n)=\Theta(n^0\log^0 n)$, so Case 2 with $k=0$ gives $T(n)=\Theta(\log n)$. The sorted-range precondition is part of the algorithm's correctness; the recurrence says nothing about an unsorted input.
+
+**Worked example 2: mergesort on eight values.** Split into two equal halves and merge in linear work: $T(n)=2T(n/2)+n$, with $T(1)=1$. Directly,
+
+$$
+T(2)=2(1)+2=4,\quad T(4)=2(4)+4=12,\quad T(8)=2(12)+8=32.
+$$
+
+For general $n$, $a=2$, $b=2$, and $p=1$. Each level costs $2^i(n/2^i)=n$; there are $\log_2 n$ non-leaf levels and $n$ constant-cost leaves. Thus $T(n)=\Theta(n\log n)$, matching Case 2 at $k=0$. This derivation explains the bound instead of merely naming a theorem.
+
+**Worked example 3: root-dominant work.** For $T(n)=2T(n/2)+n^2$, $p=1$, and $f(n)=n^2=\Omega(n^{1+\varepsilon})$ for, say, $\varepsilon=1/2$. Regularity holds because $2f(n/2)=n^2/2\leq(1/2)f(n)$. Case 3 gives $T(n)=\Theta(n^2)$: the root's work outweighs the geometrically shrinking work below it.
+
+**A boundary the three cases do not cover.** Consider $T(n)=2T(n/2)+n/\log_2 n$ above a constant-size base case. Here $p=1$. The added work is not smaller than $n^{1-\varepsilon}$ for any fixed positive $\varepsilon$, is not $\Theta(n\log^k n)$ for any $k\geq0$, and is not polynomially larger than $n$. No standard case applies. At level $i$ while subproblem size is at least two, all nodes together do about $n/(\log_2 n-i)$ work. Summing these levels gives $n H_{\lfloor\log_2 n\rfloor}=\Theta(n\log\log n)$; the leaves contribute only $\Theta(n)$. The recursion tree supplies the answer that an overextended Master theorem would miss.
+
+**Exercise.** Classify $T(n)=3T(n/2)+n$ with constant base cost. Find $p=\log_2 3$, identify the applicable case, and give a tight asymptotic bound.
+
+**Solution.** The recurrence has $a=3$, $b=2$, so $p=\log_2 3\approx1.585$. Choose any fixed $\varepsilon$ with $0<\varepsilon<p-1$; then $n=O(n^{p-\varepsilon})$. Case 1 applies: the leaves dominate, and $T(n)=\Theta(n^{\log_2 3})$. The answer is not $\Theta(n\log n)$ because the number of subproblems grows faster than the amount of merge-like work at each node.
+
+**Source trail.** The recurrence method and theorem conditions can be checked against [MIT 6.006 Recitation 3](https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/1869dbf640ded6b31f1bd369d2001ef5_MIT6_006S20_r03.pdf) and [MIT 6.046 Lecture 3](https://ocw.mit.edu/courses/6-046j-introduction-to-algorithms-sma-5503-fall-2005/9cdb6914be3e87215cb86f327ee4180b_lec3.pdf). The exact eight-element recurrence and boundary example above are worked here so that the result can be reconstructed without watching a lecture.
+
 **Best-, average- and worst-case** statements require different assumptions. A linear search for a key at the front may take one comparison; its worst case scans n elements; an average-case result needs a distribution over positions or inputs. Hash lookup is expected O(1) only under a stated hashing, table and load regime; malicious collisions or pathological clustering can create much worse behavior. A balanced search tree offers O(log n) worst-case search but may have less favorable constants and locality. These distinctions do not license omitting a worst-case failure or calling an empirical benchmark "a proof of average complexity."
 
 Space complexity should identify auxiliary storage separately from input and output storage. Merge sort may allocate Θ(n) temporary storage; in-place heapsort can use O(1) extra array space with an unstable order; recursive depth-first search may use O(V) call-stack frames in a long chain, while an explicit stack makes that usage visible and avoids stack overflow from unbounded recursion. In an engine, the difference between transient scratch and persistent storage also affects frame arenas, thread-local resources and GPU memory budgets.
@@ -10503,9 +10684,9 @@ Space complexity should identify auxiliary storage separately from input and out
 
 A dynamic array stores elements contiguously and supports amortized O(1) append under geometric growth. Suppose capacity doubles whenever it fills. At growth sizes 1,2,4,8,..., the number of elements moved over n insertions is bounded by a geometric series:
 
-\[
+$$
 1+2+4+\cdots+2^k < 2^{k+1}\leq 2n
-\]
+$$
 
 for the relevant k near the final capacity. Although one particular insertion can move Θ(n) elements, the total relocation work across n insertions is O(n), making average amortized relocation cost O(1) per insertion. This is an **aggregate analysis**, not a guarantee that every append has constant latency. A real engine may need to reserve capacity before a frame deadline to avoid an occasional large allocation/copy in a hot path.
 
@@ -10519,9 +10700,9 @@ A linked list avoids relocating existing nodes during insertion at a known posit
 
 An asset-streaming queue receives new work and processes it in FIFO order. We can represent it with a fixed array, a head index and a count. Its invariant is 0 ≤ count ≤ capacity; the next insertion position is
 
-\[
+$$
 \mathrm{tail}=(\mathrm{head}+\mathrm{count})\bmod C.
-\]
+$$
 
 When count=C, the queue is full; when count=0, it is empty. This avoids the ambiguity of a representation using only head and tail, for which head==tail can mean full *or* empty unless one slot is deliberately left unused or another state bit/count is stored. A design that leaves one slot unused has effective capacity C−1. Neither representation is universally better; the full/empty policy must be explicit to callers.
 
@@ -10549,9 +10730,9 @@ Sometimes the streaming system wants to ask whether a requested asset is *defini
 
 With n inserted keys and ideal independent uniform hashing assumptions, a familiar approximate false-positive probability is
 
-\[
+$$
 p_{\mathrm{fp}}\approx\left(1-e^{-kn/m}\right)^k.
-\]
+$$
 
 The approximation comes from estimating the probability that a bit remains zero after kn bit assignments as (1−1/m)^{kn}≈e^{-kn/m}, then requiring all k queried positions to be one. This is an approximate probabilistic model, not an exact guarantee for arbitrary poor or correlated hash functions. The choice of m and k trades memory, compute and false-positive rate.
 
@@ -10631,9 +10812,9 @@ Now assign nonnegative weights to the same navigation graph: 0→1 costs 2, 0→
 
 A relaxation computes
 
-\[
+$$
 d(v)\leftarrow\min(d(v),\,d(u)+w(u,v)).
-\]
+$$
 
 The sum must be representable. An integer implementation should guard overflow; a floating implementation should specify how NaNs, infinities and negative values are handled. The lab uses a bounded integer infinity sentinel, checks positive-distance addition before performing it, rejects negative edge weights and ignores stale heap entries. With a binary heap and adjacency lists, an implementation that inserts an improved entry rather than decreasing an existing heap key typically has a bound on the order of O((V+E)log(V+E)) in a straightforward analysis, with variations from data structure and representation. Stating simply O(E log V) without identifying the queue and update strategy can hide assumptions.
 
@@ -10641,10 +10822,10 @@ The sum must be representable. An integer implementation should guard overflow; 
 
 **Floyd–Warshall** computes all-pairs shortest paths by gradually allowing more intermediate vertices. Let D_k(i,j) be the shortest route from i to j whose intermediate vertices are drawn from the first k candidate vertices. The recurrence is
 
-\[
+$$
 D_k(i,j)=\min\!\left(D_{k-1}(i,j),
 D_{k-1}(i,k)+D_{k-1}(k,j)\right).
-\]
+$$
 
 The algorithm follows from whether an optimal path uses intermediate k or not. A direct implementation costs O(V³) time and O(V²) storage, making it attractive as a small-graph *reference oracle* even when it is too expensive for a massive world graph. Negative cycles require explicit detection and interpretation. The Phase 5 lab uses bounded nonnegative generated weights and compares each Dijkstra row against Floyd–Warshall on 48 deterministic random six-vertex graphs. This is valuable differential testing, not proof for arbitrary graph size, negative weights or overflow.
 
@@ -10652,9 +10833,9 @@ The algorithm follows from whether an optimal path uses intermediate k or not. A
 
 In a large navigation world, we often want the shortest path to one target rather than the distances to all vertices. **A*** maintains the actual best-known cost g(n) from the start and a heuristic estimate h(n) of the remaining cost to the goal, ordering exploration by
 
-\[
+$$
 f(n)=g(n)+h(n).
-\]
+$$
 
 An **admissible heuristic** never overestimates the true remaining optimal cost h*(n), so h(n) ≤ h*(n). A **consistent heuristic** satisfies h(u) ≤ w(u,v)+h(v) for each edge and h(goal)=0, under the conventional nonnegative route-cost model. Consistency is a triangle inequality on heuristic potential and implies that f values behave nondecreasingly along improvements in a way that permits particularly simple closed-set handling. Admissibility and consistency are related but not synonymous.
 
@@ -10700,10 +10881,10 @@ One of the most important bridges from CPU algorithms to GPU execution is the **
 
 Formally,
 
-\[
+$$
 o_i=\sum_{j<i}c_j,\qquad
 \mathrm{total}=\sum_{j=0}^{n-1}c_j.
-\]
+$$
 
 An **inclusive scan** instead outputs the sum through the current element, e.g. [3,3,7,9]. The two definitions differ by an index shift and identity element. Confusing them can make GPU scatter writes overlap or start one element too far into a buffer. The lab tests both the expected exclusive offsets and total and rejects unsigned-sum overflow before it can wrap. An empty input has total zero and no offsets.
 
@@ -40144,11 +40325,11 @@ Fluent Python's data-model perspective matters because sequences, mappings, iter
 
 A Python list stores references to Python objects. A NumPy array is a dense typed memory view described by data, shape, strides and dtype. For graphics-style numeric work that distinction dominates locality and bandwidth.
 
-For a C-contiguous array of shape \((H,W,C)\) and element size \(s\),
+For a C-contiguous array of shape $(H,W,C)$ and element size $s$,
 
-\[
+$$
 offset=s(iWC+jC+k).
-\]
+$$
 
 A slice may share storage with different strides. A downstream API that requires contiguous storage can silently introduce a copy. Log shape, dtype and strides when debugging data movement.
 
@@ -40162,11 +40343,11 @@ Always ask who owns the bytes, whether they are writable, their dtype/stride, va
 
 High Performance Python's durable workflow is measure total time, locate hot functions, measure hot lines/kernels, inspect memory, change one hypothesis, rerun correctness tests and compare distributions.
 
-Amdahl's law gives the upper bound when only fraction \(p\) is accelerated by factor \(s\):
+Amdahl's law gives the upper bound when only fraction $p$ is accelerated by factor $s$:
 
-\[
+$$
 S=\frac{1}{(1-p)+p/s}.
-\]
+$$
 
 Speeding up a tiny fraction cannot transform the whole application.
 
@@ -40176,21 +40357,21 @@ NumPy executes regular typed loops in compiled code. This reduces interpreter ov
 
 For
 
-\[
+$$
 C=A+B\cdot D,
-\]
+$$
 
 an implementation may allocate an intermediate product. In-place or fused operations can reduce traffic when aliasing allows it. Image buffers, dense grids and point clouds are often bandwidth-limited.
 
 ## Broadcasting is shape algebra
 
-For point cloud \(P\in\mathbb R^{N\times3}\) and translation \(t\in\mathbb R^3\),
+For point cloud $P\in\mathbb R^{N\times3}$ and translation $t\in\mathbb R^3$,
 
-\[
+$$
 P'=P+t.
-\]
+$$
 
-The translation is logically expanded across rows. Broadcasting avoids storing repeated \(t\), but later operations can still create large temporaries. Treat ndim, shape, dtype and finite-value checks as runtime contracts.
+The translation is logically expanded across rows. Broadcasting avoids storing repeated $t$, but later operations can still create large temporaries. Treat ndim, shape, dtype and finite-value checks as runtime contracts.
 
 ## The GIL separates concurrency from CPU parallelism
 
@@ -40206,9 +40387,9 @@ Numba JIT-compiles supported numeric code. Cython adds static/native compilation
 
 The total cost is
 
-\[
+$$
 T_{total}=T_{marshal}+T_{copy}+T_{kernel}+T_{sync}.
-\]
+$$
 
 A fast kernel called once on a large array is often better than millions of tiny cross-language calls.
 
@@ -40218,21 +40399,21 @@ Michael Heath's framework is essential for graphics. Error can come from uncerta
 
 Forward error measures error in the answer. Backward error asks what nearby input would make the computed answer exact. Stable algorithms often solve a nearby problem accurately.
 
-For scalar \(y=f(x)\), a local relative condition number is approximately
+For scalar $y=f(x)$, a local relative condition number is approximately
 
-\[
+$$
 \kappa_f(x)=\left|\frac{x f'(x)}{f(x)}\right|.
-\]
+$$
 
-Large \(\kappa\) means small relative input errors can become large output errors even with a stable implementation.
+Large $\kappa$ means small relative input errors can become large output errors even with a stable implementation.
 
 ## Floating point changes algebra
 
 Floating-point addition is not associative:
 
-\[
+$$
 (a+b)+c\neq a+(b+c)
-\]
+$$
 
 in general.
 
@@ -40242,7 +40423,7 @@ Prefer stable formulations: avoid catastrophic subtraction, scale problems, use 
 
 ## Linear algebra has structure-specific algorithms
 
-Do not compute \(A^{-1}\) merely to solve \(Ax=b\).
+Do not compute $A^{-1}$ merely to solve $Ax=b$.
 
 LU is general; Cholesky exploits SPD structure; QR is robust for least squares; SVD exposes rank and singular directions; iterative methods matter for sparse systems.
 
@@ -40252,15 +40433,15 @@ Graphics uses these in calibration, fitting, PCA, bundle adjustment, FEM and inv
 
 For
 
-\[
+$$
 \min_\theta L(\theta),
-\]
+$$
 
 gradient descent is
 
-\[
+$$
 \theta_{k+1}=\theta_k-\eta_k\nabla L(\theta_k).
-\]
+$$
 
 The hard questions are parameterization, scale, local minima, derivative quality and identifiability. Automatic differentiation differentiates the implementation; it does not prove the implementation is the intended physical model.
 
@@ -40270,15 +40451,15 @@ Neural rendering is especially vulnerable because camera pose, geometry, appeara
 
 For
 
-\[
+$$
 \dot y=f(t,y),\qquad y(t_0)=y_0,
-\]
+$$
 
 explicit Euler gives
 
-\[
+$$
 y_{n+1}=y_n+h f(t_n,y_n).
-\]
+$$
 
 It is simple but can be unstable for stiff systems. Higher-order explicit methods improve local accuracy; implicit methods can improve stability at solve cost.
 
@@ -40286,7 +40467,7 @@ PDE discretization turns continuous models into algebraic systems. Grid spacing 
 
 ## FFT is an algorithmic change
 
-A direct DFT costs \(O(N^2)\); FFT algorithms reduce common cases to \(O(N\log N)\). This matters in convolution, spectral simulation, filtering and signal analysis. FFT convolution still needs explicit padding and boundary semantics because circular and linear convolution differ.
+A direct DFT costs $O(N^2)$; FFT algorithms reduce common cases to $O(N\log N)$. This matters in convolution, spectral simulation, filtering and signal analysis. FFT convolution still needs explicit padding and boundary semantics because circular and linear convolution differ.
 
 ## pandas is a relational layer for experiments
 
@@ -40716,31 +40897,31 @@ This development uses the reciprocal-vector treatment in *Mathematical Methods f
 
 Our sheared panel has already shown that a vector is not its coordinate list. To implement that statement in an engine, we need two distinct operations. **Construction** takes local coordinates and produces a world-space position. **Recovery** starts with a measured world point and determines its local coordinates. If these are confused, imported mesh vertices, UV frames, hit locations and moving-object attachments drift or point to the wrong feature even when every multiplication has the right dimensions.
 
-Fix a two-dimensional affine frame consisting of an origin \(o\) and two ordered world-space displacement axes \(a,b\), each measured in metres. Local coefficients \(u,v\) count how many steps to take along each axis; they are dimensionless if each axis represents a world displacement per unit local coordinate. The geometric definition is
+Fix a two-dimensional affine frame consisting of an origin $o$ and two ordered world-space displacement axes $a,b$, each measured in metres. Local coefficients $u,v$ count how many steps to take along each axis; they are dimensionless if each axis represents a world displacement per unit local coordinate. The geometric definition is
 
-\[
+$$
 p=o+ua+vb,\qquad d=p-o,\qquad
 B=\begin{bmatrix}a_x&b_x\\a_y&b_y\end{bmatrix},\qquad
 B\begin{bmatrix}u\\v\end{bmatrix}=d.
-\]
+$$
 
-The expression \(p-o\) is legitimate point subtraction and produces a displacement. Adding \(a\) and \(b\) to the origin produces another point. Changing the origin alone is translation; changing the axes changes both the basis and the metric seen by coordinate lists. This distinction is why transforming a *direction* must not add translation, while transforming a *point* does.
+The expression $p-o$ is legitimate point subtraction and produces a displacement. Adding $a$ and $b$ to the origin produces another point. Changing the origin alone is translation; changing the axes changes both the basis and the metric seen by coordinate lists. This distinction is why transforming a *direction* must not add translation, while transforming a *point* does.
 
-Recovery is a linear solve. Cross the equation \(d=ua+vb\) with \(b\): because \(b\times b=0\), we obtain \(d\times b=u(a\times b)\). Similarly \(a\times d=v(a\times b)\). Thus
+Recovery is a linear solve. Cross the equation $d=ua+vb$ with $b$: because $b\times b=0$, we obtain $d\times b=u(a\times b)$. Similarly $a\times d=v(a\times b)$. Thus
 
-\[
+$$
 u=\frac{d_xb_y-d_yb_x}{a_xb_y-a_yb_x},
 \qquad
 v=\frac{a_xd_y-a_yd_x}{a_xb_y-a_yb_x}.
-\]
+$$
 
-Here the 2D cross product returns a signed **area**, not a 3D direction. The common denominator is \(\det B\). If it vanishes, the axes are linearly dependent and infinitely many or no coordinate pairs may explain the observation. A small *relative* determinant is more subtle: the frame is technically invertible but tiny measurement errors can cause large coefficient errors. The signed quantity \(\det B/(\|a\|\|b\|)=\sin\theta\) measures the angle between the axes independently of their lengths. A numerical implementation should reject an axis of zero length, reject nonfinite data, and define a documented conditioning policy. The threshold below is **an application policy**, not the mathematical definition of singularity.
+Here the 2D cross product returns a signed **area**, not a 3D direction. The common denominator is $\det B$. If it vanishes, the axes are linearly dependent and infinitely many or no coordinate pairs may explain the observation. A small *relative* determinant is more subtle: the frame is technically invertible but tiny measurement errors can cause large coefficient errors. The signed quantity $\det B/(\|a\|\|b\|)=\sin\theta$ measures the angle between the axes independently of their lengths. A numerical implementation should reject an axis of zero length, reject nonfinite data, and define a documented conditioning policy. The threshold below is **an application policy**, not the mathematical definition of singularity.
 
-Our panel frame uses \(o=(5,-1)\,\mathrm m\), \(a=(2,0)\,\mathrm m\), and \(b=(1,3)\,\mathrm m\). A local point \(q=(2,-1)\) becomes \(p=(5,-1)+2(2,0)-(1,3)=(8,-4)\,\mathrm m\). Starting instead with \(p\), the displacement \(d=(3,-3)\) gives \(\det B=6\), \(u=12/6=2\), and \(v=-6/6=-1\). Both directions agree, and the intermediate values let us distinguish a basis-order bug from a rounding bug.
+Our panel frame uses $o=(5,-1)\,\mathrm m$, $a=(2,0)\,\mathrm m$, and $b=(1,3)\,\mathrm m$. A local point $q=(2,-1)$ becomes $p=(5,-1)+2(2,0)-(1,3)=(8,-4)\,\mathrm m$. Starting instead with $p$, the displacement $d=(3,-3)$ gives $\det B=6$, $u=12/6=2$, and $v=-6/6=-1$. Both directions agree, and the intermediate values let us distinguish a basis-order bug from a rounding bug.
 
-A coordinate list is **not** automatically a Euclidean ruler. For our axes, \(G=B^\mathsf{T}B=\left[\begin{smallmatrix}4&2\\2&10\end{smallmatrix}\right]\). The world squared distance of a local difference \(q\) is \(q^\mathsf{T}Gq\), giving \(16-8+10=18\,\mathrm m^2\) for \(q=(2,-1)\). Its ordinary coordinate sum of squares is only \(5\), which has no claim to be the physical squared distance. This same metric issue reappears in collision margins, gradient descent with nonorthogonal coordinates, texel footprints and surface parameterization.
+A coordinate list is **not** automatically a Euclidean ruler. For our axes, $G=B^\mathsf{T}B=\left[\begin{smallmatrix}4&2\\2&10\end{smallmatrix}\right]$. The world squared distance of a local difference $q$ is $q^\mathsf{T}Gq$, giving $16-8+10=18\,\mathrm m^2$ for $q=(2,-1)$. Its ordinary coordinate sum of squares is only $5$, which has no claim to be the physical squared distance. This same metric issue reappears in collision margins, gradient descent with nonorthogonal coordinates, texel footprints and surface parameterization.
 
-The following **complete C++20 laboratory** implements both operations and makes the failure contract visible. It uses \(\mathrm{hypot}\) to compute axis lengths, divides each axis by its own norm before forming the determinant, and checks nonfinite input and output. These scaling steps reduce some intermediate overflow hazards; they do not guarantee accuracy for all floating-point exponents or for extremely ill-conditioned frames. Production code should expose error diagnostics, coordinate-space types and domain-specific tolerances. A \(\texttt{Vec2}\) of two doubles is a host-side mathematical record, **not** a portable shader ABI contract.
+The following **complete C++20 laboratory** implements both operations and makes the failure contract visible. It uses $\mathrm{hypot}$ to compute axis lengths, divides each axis by its own norm before forming the determinant, and checks nonfinite input and output. These scaling steps reduce some intermediate overflow hazards; they do not guarantee accuracy for all floating-point exponents or for extremely ill-conditioned frames. Production code should expose error diagnostics, coordinate-space types and domain-specific tolerances. A $\texttt{Vec2}$ of two doubles is a host-side mathematical record, **not** a portable shader ABI contract.
 
 ```cpp
 #include <algorithm>
@@ -40838,7 +41019,7 @@ int main() {
 }
 ```
 
-**Execution and failure reconstruction.** Compile with `clang++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined tools/labs/basis_measurement_lab.cpp -o /tmp/basis_lab && /tmp/basis_lab`. The exact program was compiled and run with Clang 17 under AddressSanitizer and UndefinedBehaviorSanitizer in the local verification environment. Tests establish the round trip for one nonorthogonal frame, the Gram-metric calculation, rejection of one nearly parallel frame and rejection of nonfinite input. They do **not** prove general overflow immunity, perfect conditioning, GPU agreement, or the correctness of a 3D inverse. To reconstruct rather than memorize, derive the signed-area ratios, prove the metric identity by expanding \((Bq)\cdot(Bq)\), then change the basis to left-handed and verify the signs still recover the correct local point.
+**Execution and failure reconstruction.** Compile with `clang++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined tools/labs/basis_measurement_lab.cpp -o /tmp/basis_lab && /tmp/basis_lab`. The exact program was compiled and run with Clang 17 under AddressSanitizer and UndefinedBehaviorSanitizer in the local verification environment. Tests establish the round trip for one nonorthogonal frame, the Gram-metric calculation, rejection of one nearly parallel frame and rejection of nonfinite input. They do **not** prove general overflow immunity, perfect conditioning, GPU agreement, or the correctness of a 3D inverse. To reconstruct rather than memorize, derive the signed-area ratios, prove the metric identity by expanding $(Bq)\cdot(Bq)$, then change the basis to left-handed and verify the signs still recover the correct local point.
 
 This example is an original implementation bridge informed by the reciprocal-basis, inner-product and matrix treatments in the supplied *Mathematical Methods for Physics and Engineering*. Its implementation and test claims refer to this stand-alone program, not to an uninspected production Kairo source file.
 
@@ -45382,7 +45563,7 @@ penalizes the magnitude of a residual $r$, but has a corner at $r=0$. Optimizati
 A particularly relevant edge case is the length of a vector:
 
 $$
-f(\mathbf v)=\|\mathbf v\|\_2.
+f(\mathbf v)=\|\mathbf v\|_2.
 $$
 
 It is continuous everywhere, but its ordinary gradient is undefined at the zero vector. Normalizing a zero-length direction therefore has a mathematical singularity, not merely a software inconvenience.
@@ -46268,7 +46449,7 @@ Input clamping can prevent accidental out-of-domain values caused by rounding, b
 A more robust angle computation often uses `atan2` with both sine-like and cosine-like information:
 
 $$
-\theta=\operatorname{atan2} \left(\|\mathbf a\times\mathbf b\|,\\, \mathbf a\cdot\mathbf b\right)
+\theta=\operatorname{atan2} \left(\|\mathbf a\times\mathbf b\|,\, \mathbf a\cdot\mathbf b\right)
 $$
 
 for nonzero vectors, with the appropriate interpretation of the returned angle.
@@ -46322,7 +46503,7 @@ One way to derive this is through the differential of the direction angle. Along
 The corresponding local differential is:
 
 $$
-d\theta=\frac{-y\\,dx+x\\,dy}{x^2+y^2}.
+d\theta=\frac{-y\,dx+x\,dy}{x^2+y^2}.
 $$
 
 At the origin, the direction is undefined. The denominator makes this explicit.
@@ -46883,7 +47064,7 @@ People often memorize that the gradient points uphill. We should prove it and un
 Suppose we want the direction $\mathbf u$ that maximizes the rate of increase of $f$, subject to:
 
 $$
-\|\mathbf u\|\_2=1.
+\|\mathbf u\|_2=1.
 $$
 
 The directional derivative is:
@@ -46935,7 +47116,7 @@ The argument assumes Euclidean unit length.
 Suppose distance is instead measured by a positive-definite metric matrix $G$:
 
 $$
-\|\mathbf u\|\_G^2=\mathbf u^TG\mathbf u.
+\|\mathbf u\|_G^2=\mathbf u^TG\mathbf u.
 $$
 
 The steepest-ascent direction under this metric is proportional to:
@@ -46950,7 +47131,7 @@ $$
 \mathbf u_{\max} = \frac{G^{-1}\nabla f} {\sqrt{\nabla f^TG^{-1}\nabla f}}.
 $$
 
-To see why, substitute $\mathbf v=G^{1/2}\mathbf u$ into the maximization problem. The constraint becomes $\|\mathbf v\|\_2=1$, while the objective becomes $(G^{-1/2}\nabla f)^T\mathbf v$. Ordinary Cauchy–Schwarz then gives the formula.
+To see why, substitute $\mathbf v=G^{1/2}\mathbf u$ into the maximization problem. The constraint becomes $\|\mathbf v\|_2=1$, while the objective becomes $(G^{-1/2}\nabla f)^T\mathbf v$. Ordinary Cauchy–Schwarz then gives the formula.
 
 This generalized view is the mathematical foundation behind preconditioning, natural gradients, and optimization on curved spaces.
 
@@ -47453,7 +47634,7 @@ $$
 Assemble the Jacobian, using one output coordinate per row:
 
 $$
-\boxed{ J\_\pi(X,Y,Z)= \begin{bmatrix} \frac{f_x}{Z}&0&-\frac{f_xX}{Z^2}\\[4pt] 0&\frac{f_y}{Z}&-\frac{f_yY}{Z^2} \end{bmatrix} }.
+\boxed{ J_\pi(X,Y,Z)= \begin{bmatrix} \frac{f_x}{Z}&0&-\frac{f_xX}{Z^2}\\[4pt] 0&\frac{f_y}{Z}&-\frac{f_yY}{Z^2} \end{bmatrix} }.
 $$
 
 Every term now has a clear interpretation.
@@ -47515,7 +47696,7 @@ $$
 Thus:
 
 $$
-\boxed{ J\_\pi= \begin{bmatrix} 400&0&-40\\ 0&410&-20.5 \end{bmatrix} }.
+\boxed{ J_\pi= \begin{bmatrix} 400&0&-40\\ 0&410&-20.5 \end{bmatrix} }.
 $$
 
 Suppose the point moves by:
@@ -47527,7 +47708,7 @@ $$
 The predicted pixel displacement is:
 
 $$
-\Delta\mathbf s \approx J\_\pi\Delta\mathbf p.
+\Delta\mathbf s \approx J_\pi\Delta\mathbf p.
 $$
 
 Multiplying:
@@ -47707,14 +47888,14 @@ $$
 By the chain rule:
 
 $$
-\boxed{ \frac{\partial\mathbf s}{\partial\mathbf p_w} = J\_\pi(\mathbf p_c)R }.
+\boxed{ \frac{\partial\mathbf s}{\partial\mathbf p_w} = J_\pi(\mathbf p_c)R }.
 $$
 
 This matrix is $2\times3$.
 
 Its entries describe how a world-space motion affects image-space position after accounting for camera orientation.
 
-Translation affects the camera-space point at which $J\_\pi$ is evaluated, but the derivative of the affine world-to-camera mapping with respect to point position is still $R$.
+Translation affects the camera-space point at which $J_\pi$ is evaluated, but the derivative of the affine world-to-camera mapping with respect to point position is still $R$.
 
 ##### Including object transforms
 
@@ -47729,7 +47910,7 @@ where $A$ is the linear part of an object transform.
 Then:
 
 $$
-\boxed{ \frac{\partial\mathbf s}{\partial\mathbf p_o} = J\_\pi(\mathbf p_c)RA }.
+\boxed{ \frac{\partial\mathbf s}{\partial\mathbf p_o} = J_\pi(\mathbf p_c)RA }.
 $$
 
 Each matrix acts on perturbations in its own coordinate space.
@@ -47743,25 +47924,25 @@ Suppose we perturb a camera-space point using a small translation $\delta\mathbf
 For a left-applied perturbation to the camera-space point:
 
 $$
-\mathbf p_c' = \exp([\delta\boldsymbol\omega]\_\times)\mathbf p_c +\delta\mathbf t.
+\mathbf p_c' = \exp([\delta\boldsymbol\omega]_\times)\mathbf p_c +\delta\mathbf t.
 $$
 
-Here $[\mathbf a]\_\times$ is the skew-symmetric matrix satisfying:
+Here $[\mathbf a]_\times$ is the skew-symmetric matrix satisfying:
 
 $$
-[\mathbf a]\_\times\mathbf b=\mathbf a\times\mathbf b.
+[\mathbf a]_\times\mathbf b=\mathbf a\times\mathbf b.
 $$
 
 For small rotation:
 
 $$
-\exp([\delta\boldsymbol\omega]\_\times) \approx I+[\delta\boldsymbol\omega]\_\times.
+\exp([\delta\boldsymbol\omega]_\times) \approx I+[\delta\boldsymbol\omega]_\times.
 $$
 
 Therefore:
 
 $$
-\begin{aligned} \delta\mathbf p_c &\approx\delta\boldsymbol\omega\times\mathbf p_c +\delta\mathbf t\\ &=-[\mathbf p_c]\_\times\delta\boldsymbol\omega +\delta\mathbf t. \end{aligned}
+\begin{aligned} \delta\mathbf p_c &\approx\delta\boldsymbol\omega\times\mathbf p_c +\delta\mathbf t\\ &=-[\mathbf p_c]_\times\delta\boldsymbol\omega +\delta\mathbf t. \end{aligned}
 $$
 
 If we parameterize the perturbation as:
@@ -47773,13 +47954,13 @@ $$
 then:
 
 $$
-\frac{\partial\mathbf p_c} {\partial\delta\boldsymbol\xi} = \begin{bmatrix} -[\mathbf p_c]\_\times&I_3 \end{bmatrix}.
+\frac{\partial\mathbf p_c} {\partial\delta\boldsymbol\xi} = \begin{bmatrix} -[\mathbf p_c]_\times&I_3 \end{bmatrix}.
 $$
 
 The projected-point Jacobian with respect to these six perturbation parameters becomes:
 
 $$
-\boxed{ J_{\text{pose}} = J\_\pi \begin{bmatrix} -[\mathbf p_c]\_\times&I_3 \end{bmatrix} }.
+\boxed{ J_{\text{pose}} = J_\pi \begin{bmatrix} -[\mathbf p_c]_\times&I_3 \end{bmatrix} }.
 $$
 
 This is a $2\times6$ Jacobian.
@@ -48258,7 +48439,7 @@ $$
 where:
 
 $$
-A=\left.\frac{\partial F}{\partial\mathbf x}\right|\_0, \qquad B=\left.\frac{\partial F}{\partial\mathbf u}\right|\_0.
+A=\left.\frac{\partial F}{\partial\mathbf x}\right|_0, \qquad B=\left.\frac{\partial F}{\partial\mathbf u}\right|_0.
 $$
 
 If the operating point is an equilibrium satisfying $F(\mathbf x_0,\mathbf u_0)=0$, the perturbation dynamics become:
@@ -48362,13 +48543,13 @@ So differentiability alone does not guarantee quadratic first-order approximatio
 For a twice continuously differentiable scalar function, if the Hessian operator norm satisfies:
 
 $$
-\|H_f(\mathbf z)\|\_2\le M
+\|H_f(\mathbf z)\|_2\le M
 $$
 
 throughout the line segment joining $\mathbf x$ and $\mathbf x+\mathbf h$, then the first-order Taylor error satisfies:
 
 $$
-\boxed{ \left| f(\mathbf x+\mathbf h) -f(\mathbf x) -\nabla f(\mathbf x)^T\mathbf h \right| \le \frac M2\|\mathbf h\|\_2^2 }.
+\boxed{ \left| f(\mathbf x+\mathbf h) -f(\mathbf x) -\nabla f(\mathbf x)^T\mathbf h \right| \le \frac M2\|\mathbf h\|_2^2 }.
 $$
 
 The constant $M$ bounds the maximum local curvature along the segment.
@@ -48410,7 +48591,7 @@ Likewise, a tiny absolute error near a true value of zero can correspond to an e
 For vectors, we often use norm-based errors:
 
 $$
-E=\|\hat{\mathbf y}-\mathbf y\|\_2.
+E=\|\hat{\mathbf y}-\mathbf y\|_2.
 $$
 
 For multiple samples, additional metrics such as maximum error, RMS error, and percentile errors reveal different kinds of failure.
@@ -48846,7 +49027,7 @@ $$
 
 when converting to a positive-forward, positive-downward image-camera frame, with the relevant viewport mapping applied.
 
-Consequently, you should not paste the canonical $J\_\pi$ directly into an engine function without checking what coordinate space its input occupies and whether viewport or projection sign conventions have already been applied.
+Consequently, you should not paste the canonical $J_\pi$ directly into an engine function without checking what coordinate space its input occupies and whether viewport or projection sign conventions have already been applied.
 
 A robust engine API should either state the expected coordinate frame explicitly or expose a transformation that makes the conversion unambiguous.
 
@@ -48971,7 +49152,7 @@ A perspective projection is nonlinear, so a 3D Gaussian does not generally trans
 However, we can linearize the projection around the mean:
 
 $$
-\pi(\mathbf p) \approx \pi(\boldsymbol\mu) + J\_\pi(\boldsymbol\mu) (\mathbf p-\boldsymbol\mu).
+\pi(\mathbf p) \approx \pi(\boldsymbol\mu) + J_\pi(\boldsymbol\mu) (\mathbf p-\boldsymbol\mu).
 $$
 
 Define the random perturbation:
@@ -48989,25 +49170,25 @@ $$
 Then the linearized image perturbation is:
 
 $$
-\delta\mathbf s=J\_\pi\boldsymbol\epsilon.
+\delta\mathbf s=J_\pi\boldsymbol\epsilon.
 $$
 
 Its covariance is:
 
 $$
-\begin{aligned} \operatorname{Cov}(\delta\mathbf s) &=\mathbb E[ (J\_\pi\boldsymbol\epsilon) (J\_\pi\boldsymbol\epsilon)^T ]\\ &=J\_\pi\\, \mathbb E[\boldsymbol\epsilon\boldsymbol\epsilon^T]\\, J\_\pi^T. \end{aligned}
+\begin{aligned} \operatorname{Cov}(\delta\mathbf s) &=\mathbb E[ (J_\pi\boldsymbol\epsilon) (J_\pi\boldsymbol\epsilon)^T ]\\ &=J_\pi\, \mathbb E[\boldsymbol\epsilon\boldsymbol\epsilon^T]\, J_\pi^T. \end{aligned}
 $$
 
 Therefore:
 
 $$
-\boxed{ \Sigma_{\text{image}} \approx J\_\pi\Sigma J\_\pi^T }.
+\boxed{ \Sigma_{\text{image}} \approx J_\pi\Sigma J_\pi^T }.
 $$
 
 If the original Gaussian covariance is defined in world space, and $R$ is the linear rotational part of the world-to-camera transformation:
 
 $$
-\boxed{ \Sigma_{\text{image}} \approx J\_\pi R\Sigma_{\text{world}}R^TJ\_\pi^T }.
+\boxed{ \Sigma_{\text{image}} \approx J_\pi R\Sigma_{\text{world}}R^TJ_\pi^T }.
 $$
 
 This is the first-order covariance projection used in 3D Gaussian splatting formulations. A survey of the field expresses this same Jacobian-based transformation and explains its role in approximating projective geometry.&#x20;
@@ -49023,7 +49204,7 @@ ACM Computing Surveys
 Use our previously derived Jacobian:
 
 $$
-J\_\pi= \begin{bmatrix} 400&0&-40\\ 0&410&-20.5 \end{bmatrix}.
+J_\pi= \begin{bmatrix} 400&0&-40\\ 0&410&-20.5 \end{bmatrix}.
 $$
 
 Suppose the camera-space Gaussian has independent coordinate uncertainties with standard deviations:
@@ -49041,7 +49222,7 @@ $$
 Compute:
 
 $$
-\Sigma_{\text{image}}=J\_\pi\Sigma J\_\pi^T.
+\Sigma_{\text{image}}=J_\pi\Sigma J_\pi^T.
 $$
 
 The top-left entry is:
@@ -49229,7 +49410,7 @@ Treating its nine entries as independent optimization variables ignores the orth
 A more appropriate local update uses a three-dimensional tangent-space perturbation:
 
 $$
-R_{\text{new}}=\exp([\delta\boldsymbol\omega]\_\times)R.
+R_{\text{new}}=\exp([\delta\boldsymbol\omega]_\times)R.
 $$
 
 The gradient and Jacobian are then expressed with respect to the local perturbation coordinates, rather than nine unconstrained matrix entries.
@@ -49324,7 +49505,7 @@ The complete progression from Parts 801–831 can be expressed as one chain:
 The following formulas are the most important reconstruction anchors:
 
 $$
-\boxed{ \begin{aligned} f'(x)&=\lim_{h\to0}\frac{f(x+h)-f(x)}h\\[3pt] Df(\mathbf x)[\mathbf h]&=\nabla f(\mathbf x)^T\mathbf h\\[3pt] F(\mathbf x+\mathbf h)&\approx F(\mathbf x)+J_F(\mathbf x)\mathbf h\\[3pt] J_{G\circ F}&=J_GJ_F\\[3pt] f(\mathbf x+\mathbf h)&\approx f(\mathbf x)+\nabla f^T\mathbf h+ \frac12\mathbf h^TH_f\mathbf h\\[3pt] \Sigma_{\text{image}}&\approx J\_\pi\Sigma J\_\pi^T \end{aligned} }
+\boxed{ \begin{aligned} f'(x)&=\lim_{h\to0}\frac{f(x+h)-f(x)}h\\[3pt] Df(\mathbf x)[\mathbf h]&=\nabla f(\mathbf x)^T\mathbf h\\[3pt] F(\mathbf x+\mathbf h)&\approx F(\mathbf x)+J_F(\mathbf x)\mathbf h\\[3pt] J_{G\circ F}&=J_GJ_F\\[3pt] f(\mathbf x+\mathbf h)&\approx f(\mathbf x)+\nabla f^T\mathbf h+ \frac12\mathbf h^TH_f\mathbf h\\[3pt] \Sigma_{\text{image}}&\approx J_\pi\Sigma J_\pi^T \end{aligned} }
 $$
 
 Every formula is a different expression of how local changes propagate through a system.
@@ -49393,18 +49574,18 @@ $$
 If we make the intervals increasingly small, their accumulated contribution approaches the definite integral:
 
 $$
-\boxed{\Delta x=\int_0^2v(t)\\,dt}.
+\boxed{\Delta x=\int_0^2v(t)\,dt}.
 $$
 
 For our velocity:
 
 $$
-\int_0^2 3t^2\\,dt = \left[t^3\right]\_0^2=8.
+\int_0^2 3t^2\,dt = \left[t^3\right]_0^2=8.
 $$
 
 The object travels 8 metres.
 
-The expression $[t^3]\_0^2$ means evaluate $t^3$ at the upper boundary and subtract its value at the lower boundary.
+The expression $[t^3]_0^2$ means evaluate $t^3$ at the upper boundary and subtract its value at the lower boundary.
 
 This is the fundamental meaning of integration: it calculates the net accumulation of a continuously varying quantity.
 
@@ -49417,7 +49598,7 @@ An integral can represent accumulated displacement, work, mass, electric charge,
 For instance, work done by a variable force along a one-dimensional path is:
 
 $$
-W=\int_{x_0}^{x_1}F(x)\\,dx.
+W=\int_{x_0}^{x_1}F(x)\,dx.
 $$
 
 If force is measured in newtons and position in metres, the integral has units of newton-metres, or joules.
@@ -49425,7 +49606,7 @@ If force is measured in newtons and position in metres, the integral has units o
 The impulse delivered by a time-varying force is:
 
 $$
-\mathbf J=\int_{t_0}^{t_1}\mathbf F(t)\\,dt,
+\mathbf J=\int_{t_0}^{t_1}\mathbf F(t)\,dt,
 $$
 
 with units of newton-seconds, equal to the change in linear momentum.
@@ -49439,7 +49620,7 @@ The geometric interpretation differs across these applications, but the principl
 A definite integral has specified boundaries:
 
 $$
-\int_a^b f(x)\\,dx.
+\int_a^b f(x)\,dx.
 $$
 
 It produces a scalar when $f$ is scalar-valued and integrable, or a vector when the integrand is vector-valued and the integral is defined componentwise.
@@ -49447,7 +49628,7 @@ It produces a scalar when $f$ is scalar-valued and integrable, or a vector when 
 An indefinite integral denotes a family of antiderivatives:
 
 $$
-\int f(x)\\,dx=F(x)+C,
+\int f(x)\,dx=F(x)+C,
 $$
 
 where:
@@ -49461,7 +49642,7 @@ The constant $C$ exists because differentiation eliminates additive constants.
 For example:
 
 $$
-\int 6x\\,dx=3x^2+C.
+\int 6x\,dx=3x^2+C.
 $$
 
 There is no single unique antiderivative unless an additional condition fixes $C$.
@@ -49479,19 +49660,19 @@ If an object moves forward and then backward, positive and negative velocity con
 For a differentiable one-dimensional trajectory:
 
 $$
-x(b)-x(a)=\int_a^b v(t)\\,dt.
+x(b)-x(a)=\int_a^b v(t)\,dt.
 $$
 
 Total distance is:
 
 $$
-\boxed{D=\int_a^b|v(t)|\\,dt}.
+\boxed{D=\int_a^b|v(t)|\,dt}.
 $$
 
 For a three-dimensional path $\mathbf x(t)$, its arc length is:
 
 $$
-\boxed{ L=\int_a^b\|\mathbf x'(t)\|\\,dt }.
+\boxed{ L=\int_a^b\|\mathbf x'(t)\|\,dt }.
 $$
 
 The norm converts velocity into nonnegative speed. This distinction matters in animation path lengths, odometry, physical travel distances, and path-following systems.
@@ -49505,7 +49686,7 @@ To understand numerical integration, we need to reconstruct the integral using f
 Suppose we want:
 
 $$
-I=\int_a^b f(x)\\,dx.
+I=\int_a^b f(x)\,dx.
 $$
 
 Divide the interval into $N$ subintervals:
@@ -49531,7 +49712,7 @@ $$
 For a Riemann-integrable function, as the maximum subinterval width tends to zero, the sum approaches the integral:
 
 $$
-\boxed{ \int_a^b f(x)\\,dx = \lim_{\|\mathcal P\|\to0} \sum_{i=0}^{N-1}f(\xi_i)\Delta x_i }.
+\boxed{ \int_a^b f(x)\,dx = \lim_{\|\mathcal P\|\to0} \sum_{i=0}^{N-1}f(\xi_i)\Delta x_i }.
 $$
 
 Here $\mathcal P$ denotes the partition, and its mesh width is:
@@ -49587,7 +49768,7 @@ All three approximate the same integral, but their error differs because they ch
 Consider:
 
 $$
-I=\int_0^2x^2\\,dx=\frac83\approx2.6666667.
+I=\int_0^2x^2\,dx=\frac83\approx2.6666667.
 $$
 
 Take four equal intervals:
@@ -49641,7 +49822,7 @@ The fundamental theorem establishes two related statements.
 Define an accumulation function:
 
 $$
-A(x)=\int_a^x f(t)\\,dt.
+A(x)=\int_a^x f(t)\,dt.
 $$
 
 The upper boundary changes with $x$, so $A(x)$ represents everything accumulated from $a$ to the current location $x$.
@@ -49657,13 +49838,13 @@ Why?
 For a small increment $h$:
 
 $$
-A(x+h)-A(x)=\int_x^{x+h}f(t)\\,dt.
+A(x+h)-A(x)=\int_x^{x+h}f(t)\,dt.
 $$
 
 Divide by $h$:
 
 $$
-\frac{A(x+h)-A(x)}h = \frac1h\int_x^{x+h}f(t)\\,dt.
+\frac{A(x+h)-A(x)}h = \frac1h\int_x^{x+h}f(t)\,dt.
 $$
 
 The right side is the average value of $f$ over the tiny interval.
@@ -49683,7 +49864,7 @@ The dummy variable $t$ names the points being accumulated; the upper endpoint $x
 For a physical trajectory:
 
 $$
-x(t)=x(t_0)+\int_{t_0}^{t}v(s)\\,ds,
+x(t)=x(t_0)+\int_{t_0}^{t}v(s)\,ds,
 $$
 
 we recover:
@@ -49695,7 +49876,7 @@ $$
 For velocity obtained by accumulating acceleration:
 
 $$
-v(t)=v(t_0)+\int_{t_0}^{t}a(s)\\,ds,
+v(t)=v(t_0)+\int_{t_0}^{t}a(s)\,ds,
 $$
 
 differentiating recovers acceleration.
@@ -49705,7 +49886,7 @@ differentiating recovers acceleration.
 If $F'(x)=f(x)$, and $f$ satisfies the usual integrability assumptions, then:
 
 $$
-\boxed{\int_a^b f(x)\\,dx=F(b)-F(a)}.
+\boxed{\int_a^b f(x)\,dx=F(b)-F(a)}.
 $$
 
 This converts an accumulation problem into two evaluations of an antiderivative.
@@ -49719,7 +49900,7 @@ $$
 Therefore:
 
 $$
-\int_0^2x^2\\,dx = \frac{2^3}{3}-0 =\frac83.
+\int_0^2x^2\,dx = \frac{2^3}{3}-0 =\frac83.
 $$
 
 ##### When the theorem is insufficient computationally
@@ -49729,7 +49910,7 @@ The theorem is exact, but it does not imply that every integral can be evaluated
 For example:
 
 $$
-\int e^{-x^2}\\,dx
+\int e^{-x^2}\,dx
 $$
 
 does not have an antiderivative expressible using only elementary functions.
@@ -49759,7 +49940,7 @@ $$
 Integrate over $s\in[0,h]$:
 
 $$
-\int_{x_i}^{x_i+h}f(x)\\,dx = hf(x_i)+\frac{h^2}{2}f'(x_i)+O(h^3)
+\int_{x_i}^{x_i+h}f(x)\,dx = hf(x_i)+\frac{h^2}{2}f'(x_i)+O(h^3)
 $$
 
 under sufficient smoothness assumptions.
@@ -49797,7 +49978,7 @@ for $s\in[-h/2,h/2]$.
 Integrating the linear term:
 
 $$
-\int_{-h/2}^{h/2}f'(m_i)s\\,ds=0.
+\int_{-h/2}^{h/2}f'(m_i)s\,ds=0.
 $$
 
 The positive and negative contributions cancel.
@@ -49805,7 +49986,7 @@ The positive and negative contributions cancel.
 Consequently:
 
 $$
-\int_{x_i}^{x_{i+1}}f(x)\\,dx = hf(m_i)+\frac{h^3}{24}f''(m_i)+O(h^5)
+\int_{x_i}^{x_{i+1}}f(x)\,dx = hf(m_i)+\frac{h^3}{24}f''(m_i)+O(h^5)
 $$
 
 for sufficiently smooth $f$.
@@ -49849,7 +50030,7 @@ $$
 Integrate:
 
 $$
-\begin{aligned} \int_a^b p(x)\\,dx &=hf(a)+ \frac{f(b)-f(a)}h\frac{h^2}{2}\\ &=\frac h2[f(a)+f(b)]. \end{aligned}
+\begin{aligned} \int_a^b p(x)\,dx &=hf(a)+ \frac{f(b)-f(a)}h\frac{h^2}{2}\\ &=\frac h2[f(a)+f(b)]. \end{aligned}
 $$
 
 Therefore the single-interval trapezoidal rule is:
@@ -49936,24 +50117,24 @@ $$
 p(u)=f(x_0)L_0(u)+f(x_1)L_1(u)+f(x_2)L_2(u).
 $$
 
-Because $dx=h\\,du$:
+Because $dx=h\,du$:
 
 $$
-\int_{x_0}^{x_2}p(x)\\,dx = h\int_0^2p(u)\\,du.
+\int_{x_0}^{x_2}p(x)\,dx = h\int_0^2p(u)\,du.
 $$
 
 Evaluate each basis integral:
 
 $$
-\int_0^2L_0(u)\\,du=\frac13,
+\int_0^2L_0(u)\,du=\frac13,
 $$
 
 $$
-\int_0^2L_1(u)\\,du=\frac43,
+\int_0^2L_1(u)\,du=\frac43,
 $$
 
 $$
-\int_0^2L_2(u)\\,du=\frac13.
+\int_0^2L_2(u)\,du=\frac13.
 $$
 
 Therefore:
@@ -50000,7 +50181,7 @@ Simpson's rule is therefore globally fourth-order accurate, compared with second
 | Trapezoidal     | 2.750000 | 0.083333       | $O(h^2)$ |
 | Simpson         | 2.666667 | 0              | $O(h^4)$ |
 
-All estimates use four equal subintervals for $\int_0^2x^2\\,dx$. Orders assume sufficient smoothness and a fixed interval as $h\to0$.
+All estimates use four equal subintervals for $\int_0^2x^2\,dx$. Orders assume sufficient smoothness and a fixed interval as $h\to0$.
 
 Higher-order methods are not automatically better for every workload. Simpson's rule benefits from smoothness and regularly structured sampling. For discontinuous or noisy measurements, the extra polynomial approximation may have little advantage, and irregularly spaced data requires a modified formulation.
 
@@ -50283,7 +50464,7 @@ This issue has practical analogues in discontinuous contact laws, friction model
 From the fundamental theorem of calculus:
 
 $$
-\boxed{ \mathbf y(t) = \mathbf y_0+ \int_{t_0}^{t}f(s,\mathbf y(s))\\,ds }.
+\boxed{ \mathbf y(t) = \mathbf y_0+ \int_{t_0}^{t}f(s,\mathbf y(s))\,ds }.
 $$
 
 This is a particularly powerful expression.
@@ -50690,7 +50871,7 @@ because higher-order terms contain $\varepsilon^2$ and vanish.
 Therefore:
 
 $$
-\boxed{ \sin(a+b\varepsilon) = \sin a+b\cos a\\,\varepsilon }
+\boxed{ \sin(a+b\varepsilon) = \sin a+b\cos a\,\varepsilon }
 $$
 
 and:
@@ -51027,7 +51208,7 @@ $$
 Thus:
 
 $$
-\boxed{ \bar x\mathrel{+}=\bar z\\,y, \qquad \bar y\mathrel{+}=\bar z\\,x }.
+\boxed{ \bar x\mathrel{+}=\bar z\,y, \qquad \bar y\mathrel{+}=\bar z\,x }.
 $$
 
 For sine:
@@ -51153,7 +51334,7 @@ $$
 Thus:
 
 $$
-\bar x_{\text{product}} = \bar a\\,y = 13.818594853(3).
+\bar x_{\text{product}} = \bar a\,y = 13.818594853(3).
 $$
 
 So:
@@ -51165,7 +51346,7 @@ $$
 The gradient contribution to $y$ is:
 
 $$
-\bar y=\bar a\\,x.
+\bar y=\bar a\,x.
 $$
 
 Therefore:
@@ -51814,10 +51995,10 @@ $$
 Therefore:
 
 $$
-\boxed{ S_{n+1} = S_n+ h\left(J_fS_n+f\_\theta\right) }.
+\boxed{ S_{n+1} = S_n+ h\left(J_fS_n+f_\theta\right) }.
 $$
 
-Here $J_f=\partial f/\partial\mathbf y$ is the Jacobian of the dynamics with respect to state, and $f\_\theta=\partial f/\partial\theta$ is the direct parameter derivative.
+Here $J_f=\partial f/\partial\mathbf y$ is the Jacobian of the dynamics with respect to state, and $f_\theta=\partial f/\partial\theta$ is the direct parameter derivative.
 
 This equation is the differentiated Euler update.
 
@@ -51834,13 +52015,13 @@ $$
 differentiate with respect to $\theta$:
 
 $$
-\frac{d}{dt} \left( \frac{\partial\mathbf y}{\partial\theta} \right) = J_f \frac{\partial\mathbf y}{\partial\theta} + f\_\theta.
+\frac{d}{dt} \left( \frac{\partial\mathbf y}{\partial\theta} \right) = J_f \frac{\partial\mathbf y}{\partial\theta} + f_\theta.
 $$
 
 Thus:
 
 $$
-\boxed{ \dot S=J_fS+f\_\theta }.
+\boxed{ \dot S=J_fS+f_\theta }.
 $$
 
 This is an ODE in its own right.
@@ -51848,7 +52029,7 @@ This is an ODE in its own right.
 We can integrate the physical state and sensitivity together:
 
 $$
-\frac d{dt} \begin{bmatrix} \mathbf y\\S \end{bmatrix} = \begin{bmatrix} f(t,\mathbf y,\theta)\\ J_fS+f\_\theta \end{bmatrix}.
+\frac d{dt} \begin{bmatrix} \mathbf y\\S \end{bmatrix} = \begin{bmatrix} f(t,\mathbf y,\theta)\\ J_fS+f_\theta \end{bmatrix}.
 $$
 
 The extra sensitivity state can be large if there are many parameters.
@@ -51896,7 +52077,7 @@ $$
 Its derivatives are:
 
 $$
-f_y=-\lambda, \qquad f\_\lambda=-y.
+f_y=-\lambda, \qquad f_\lambda=-y.
 $$
 
 Therefore:
@@ -51986,7 +52167,7 @@ $$
 Under appropriate smoothness assumptions and when the initial state does not depend on parameters, the parameter gradient is:
 
 $$
-\boxed{ \frac{dL}{d\boldsymbol\theta} = \int_0^T \left(\frac{\partial f}{\partial\boldsymbol\theta}\right)^T \boldsymbol\lambda(t)\\,dt }.
+\boxed{ \frac{dL}{d\boldsymbol\theta} = \int_0^T \left(\frac{\partial f}{\partial\boldsymbol\theta}\right)^T \boldsymbol\lambda(t)\,dt }.
 $$
 
 If the initial state depends on parameters, an additional initial-condition sensitivity term appears. Explicit parameter dependence in the terminal loss also contributes directly, and running costs require further terms.
@@ -52407,7 +52588,7 @@ It is tempting to describe these problems by saying that something is random. Bu
 The central object of this phase is a random variable:
 
 $$
- X:\Omega\rightarrow\mathbb R, 
+ X:\Omega\rightarrow\mathbb R,
 $$
 
 where $\Omega$ is a set of possible outcomes.
@@ -52415,19 +52596,19 @@ where $\Omega$ is a set of possible outcomes.
 Later, we will work with random vectors:
 
 $$
- \mathbf X:\Omega\rightarrow\mathbb R^n, 
+ \mathbf X:\Omega\rightarrow\mathbb R^n,
 $$
 
 and summarize their behavior through a mean vector:
 
 $$
- \boldsymbol\mu=\mathbb E[\mathbf X] 
+ \boldsymbol\mu=\mathbb E[\mathbf X]
 $$
 
 and covariance matrix:
 
 $$
- \Sigma= \mathbb E[ (\mathbf X-\boldsymbol\mu) (\mathbf X-\boldsymbol\mu)^T ]. 
+ \Sigma= \mathbb E[ (\mathbf X-\boldsymbol\mu) (\mathbf X-\boldsymbol\mu)^T ].
 $$
 
 These equations connect probability to the gradients, matrices, camera projections, optimization solvers, and Gaussian representations we developed earlier.
@@ -52449,25 +52630,25 @@ A [[#1. A probability model begins with possible outcomes|sample space]], conven
 For a coin toss:
 
 $$
- \Omega=\{H,T\}. 
+ \Omega=\{H,T\}.
 $$
 
 For rolling one conventional six-sided die:
 
 $$
- \Omega=\{1,2,3,4,5,6\}. 
+ \Omega=\{1,2,3,4,5,6\}.
 $$
 
 For sampling a continuous number between zero and one:
 
 $$
- \Omega=[0,1]. 
+ \Omega=[0,1].
 $$
 
 For sampling a two-dimensional direction in a local rendering parameterization:
 
 $$
- \Omega=[0,1]^2 
+ \Omega=[0,1]^2
 $$
 
 might represent the initial random parameters, even though the generated direction lives on a hemisphere or sphere.
@@ -52479,13 +52660,13 @@ This distinction is important. The sample space depends on which experiment and 
 Suppose a rendering experiment selects one of three lights:
 
 $$
- \Omega=\{L_1,L_2,L_3\}. 
+ \Omega=\{L_1,L_2,L_3\}.
 $$
 
 We might assign:
 
 $$
- P(L_1)=0.6,\qquad P(L_2)=0.3,\qquad P(L_3)=0.1. 
+ P(L_1)=0.6,\qquad P(L_2)=0.3,\qquad P(L_3)=0.1.
 $$
 
 The sample space only describes what can happen. It does not imply that every outcome has equal probability.
@@ -52501,7 +52682,7 @@ For a finite sample space, individual outcomes can carry nonzero probabilities.
 For an ideal continuous uniform variable on $[0,1]$:
 
 $$
- P(X=0.3)=0. 
+ P(X=0.3)=0.
 $$
 
 This does not mean that $0.3$ is impossible. It means an individual exact real value carries zero probability under a continuous distribution.
@@ -52511,7 +52692,7 @@ Probability belongs to intervals or more general measurable sets, not necessaril
 For example:
 
 $$
- P(0.2\le X\le0.5)=0.3 
+ P(0.2\le X\le0.5)=0.3
 $$
 
 under the standard uniform model.
@@ -52537,13 +52718,13 @@ An event is a set of outcomes.
 Suppose:
 
 $$
- \Omega=\{1,2,3,4,5,6\}. 
+ \Omega=\{1,2,3,4,5,6\}.
 $$
 
 Define:
 
 $$
- A=\{2,4,6\} 
+ A=\{2,4,6\}
 $$
 
 as the event that the die result is even.
@@ -52551,7 +52732,7 @@ as the event that the die result is even.
 Define:
 
 $$
- B=\{4,5,6\} 
+ B=\{4,5,6\}
 $$
 
 as the event that the result is greater than three.
@@ -52559,7 +52740,7 @@ as the event that the result is greater than three.
 Then:
 
 $$
- A\cap B=\{4,6\} 
+ A\cap B=\{4,6\}
 $$
 
 means both events occur.
@@ -52567,7 +52748,7 @@ means both events occur.
 The union:
 
 $$
- A\cup B=\{2,4,5,6\} 
+ A\cup B=\{2,4,5,6\}
 $$
 
 means at least one event occurs.
@@ -52575,7 +52756,7 @@ means at least one event occurs.
 The complement:
 
 $$
- A^c=\{1,3,5\} 
+ A^c=\{1,3,5\}
 $$
 
 means $A$ does not occur.
@@ -52583,7 +52764,7 @@ means $A$ does not occur.
 The difference:
 
 $$
- A\setminus B=\{2\} 
+ A\setminus B=\{2\}
 $$
 
 means $A$ occurs but $B$ does not.
@@ -52597,33 +52778,33 @@ If we add $P(A)+P(B)$, outcomes in the intersection are counted twice.
 Therefore we subtract the intersection once:
 
 $$
- \boxed{ P(A\cup B) = P(A)+P(B)-P(A\cap B) }. 
+ \boxed{ P(A\cup B) = P(A)+P(B)-P(A\cap B) }.
 $$
 
 For a fair die:
 
 $$
- P(A)=\frac36=\frac12, 
+ P(A)=\frac36=\frac12,
 $$
 
 $$
- P(B)=\frac36=\frac12, 
+ P(B)=\frac36=\frac12,
 $$
 
 $$
- P(A\cap B)=\frac26=\frac13. 
+ P(A\cap B)=\frac26=\frac13.
 $$
 
 Thus:
 
 $$
- P(A\cup B) = \frac12+\frac12-\frac13 =\boxed{\frac23}. 
+ P(A\cup B) = \frac12+\frac12-\frac13 =\boxed{\frac23}.
 $$
 
 We can verify this by counting the union's four outcomes:
 
 $$
- P(A\cup B)=\frac46=\frac23. 
+ P(A\cup B)=\frac46=\frac23.
 $$
 
 #### 2 Disjoint events
@@ -52631,7 +52812,7 @@ $$
 Two events are disjoint or mutually exclusive when:
 
 $$
- A\cap B=\varnothing. 
+ A\cap B=\varnothing.
 $$
 
 They cannot both occur in the same trial.
@@ -52641,7 +52822,7 @@ For example, when rolling one die, the events $X=2$ and $X=5$ are disjoint.
 In that case:
 
 $$
- P(A\cup B)=P(A)+P(B). 
+ P(A\cup B)=P(A)+P(B).
 $$
 
 But disjointness should not be confused with independence. These concepts answer entirely different questions, as we will prove in the independence section.
@@ -52657,7 +52838,7 @@ A sigma-algebra satisfies three important closure properties: it includes the wh
 The pair:
 
 $$
- (\Omega,\mathcal F) 
+ (\Omega,\mathcal F)
 $$
 
 is a measurable space.
@@ -52675,7 +52856,7 @@ A complete treatment of measure theory is larger than the probability foundation
 A probability measure is a function:
 
 $$
- P:\mathcal F\rightarrow[0,1] 
+ P:\mathcal F\rightarrow[0,1]
 $$
 
 satisfying the Kolmogorov axioms.
@@ -52685,7 +52866,7 @@ satisfying the Kolmogorov axioms.
 For every event $A$:
 
 $$
- \boxed{P(A)\ge0}. 
+ \boxed{P(A)\ge0}.
 $$
 
 Probabilities cannot be negative.
@@ -52695,7 +52876,7 @@ Probabilities cannot be negative.
 For the complete sample space:
 
 $$
- \boxed{P(\Omega)=1}. 
+ \boxed{P(\Omega)=1}.
 $$
 
 One of the model's permitted outcomes occurs.
@@ -52705,7 +52886,7 @@ One of the model's permitted outcomes occurs.
 For pairwise disjoint events $A_1,A_2,\ldots$:
 
 $$
- \boxed{ P\left(\bigcup_{i=1}^{\infty}A_i\right) = \sum_{i=1}^{\infty}P(A_i) }. 
+ \boxed{ P\left(\bigcup_{i=1}^{\infty}A_i\right) = \sum_{i=1}^{\infty}P(A_i) }.
 $$
 
 This is stronger than merely requiring probabilities of two disjoint events to add.
@@ -52719,19 +52900,19 @@ The empty event represents no possible outcomes.
 Because:
 
 $$
- \Omega=\Omega\cup\varnothing 
+ \Omega=\Omega\cup\varnothing
 $$
 
 and the two sets are disjoint:
 
 $$
- P(\Omega)=P(\Omega)+P(\varnothing). 
+ P(\Omega)=P(\Omega)+P(\varnothing).
 $$
 
 Subtract $P(\Omega)$:
 
 $$
- \boxed{P(\varnothing)=0}. 
+ \boxed{P(\varnothing)=0}.
 $$
 
 #### 2 Deriving the complement rule
@@ -52739,19 +52920,19 @@ $$
 Since:
 
 $$
- A\cup A^c=\Omega 
+ A\cup A^c=\Omega
 $$
 
 and the events are disjoint:
 
 $$
- P(A)+P(A^c)=1. 
+ P(A)+P(A^c)=1.
 $$
 
 Therefore:
 
 $$
- \boxed{P(A^c)=1-P(A)}. 
+ \boxed{P(A^c)=1-P(A)}.
 $$
 
 #### 3 Deriving monotonicity
@@ -52759,13 +52940,13 @@ $$
 If:
 
 $$
- A\subseteq B, 
+ A\subseteq B,
 $$
 
 then:
 
 $$
- B=A\cup(B\setminus A) 
+ B=A\cup(B\setminus A)
 $$
 
 with disjoint components.
@@ -52773,13 +52954,13 @@ with disjoint components.
 Therefore:
 
 $$
- P(B)=P(A)+P(B\setminus A). 
+ P(B)=P(A)+P(B\setminus A).
 $$
 
 By nonnegativity:
 
 $$
- \boxed{P(A)\le P(B)}. 
+ \boxed{P(A)\le P(B)}.
 $$
 
 A larger event cannot have a smaller probability than an event entirely contained within it.
@@ -52789,7 +52970,7 @@ A larger event cannot have a smaller probability than an event entirely containe
 For arbitrary events $A_1,\ldots,A_n$:
 
 $$
- \boxed{ P\left(\bigcup_{i=1}^{n}A_i\right) \le \sum_{i=1}^{n}P(A_i) }. 
+ \boxed{ P\left(\bigcup_{i=1}^{n}A_i\right) \le \sum_{i=1}^{n}P(A_i) }.
 $$
 
 The right side may overcount overlapping outcomes, but it provides an upper bound.
@@ -52809,7 +52990,7 @@ That knowledge may change how likely $A$ is.
 The conditional probability of $A$ given $B$ is:
 
 $$
- \boxed{ P(A\mid B) = \frac{P(A\cap B)}{P(B)} } 
+ \boxed{ P(A\mid B) = \frac{P(A\cap B)}{P(B)} }
 $$
 
 when $P(B)>0$.
@@ -52823,7 +53004,7 @@ Imagine rolling a fair die.
 Let:
 
 $$
- A=\{2,4,6\} 
+ A=\{2,4,6\}
 $$
 
 be the event that the outcome is even.
@@ -52831,7 +53012,7 @@ be the event that the outcome is even.
 Let:
 
 $$
- B=\{4,5,6\} 
+ B=\{4,5,6\}
 $$
 
 be the event that the outcome exceeds three.
@@ -52839,7 +53020,7 @@ be the event that the outcome exceeds three.
 Before receiving any information:
 
 $$
- P(A)=\frac12. 
+ P(A)=\frac12.
 $$
 
 Now suppose we know the outcome is in $B$.
@@ -52847,31 +53028,31 @@ Now suppose we know the outcome is in $B$.
 The possible outcomes are restricted to:
 
 $$
- \{4,5,6\}. 
+ \{4,5,6\}.
 $$
 
 Among them, two are even:
 
 $$
- \{4,6\}. 
+ \{4,6\}.
 $$
 
 Thus:
 
 $$
- P(A\mid B)=\frac23. 
+ P(A\mid B)=\frac23.
 $$
 
 Using the formula:
 
 $$
- P(A\cap B)=\frac26, \qquad P(B)=\frac36, 
+ P(A\cap B)=\frac26, \qquad P(B)=\frac36,
 $$
 
 so:
 
 $$
- P(A\mid B) = \frac{2/6}{3/6} =\boxed{\frac23}. 
+ P(A\mid B) = \frac{2/6}{3/6} =\boxed{\frac23}.
 $$
 
 Conditional probability renormalizes the probability assigned to the intersection relative to the event we know occurred.
@@ -52881,13 +53062,13 @@ Conditional probability renormalizes the probability assigned to the intersectio
 Rearrange the definition:
 
 $$
- P(A\cap B) = P(A\mid B)P(B). 
+ P(A\cap B) = P(A\mid B)P(B).
 $$
 
 Equivalently:
 
 $$
- \boxed{ P(A\cap B) = P(B\mid A)P(A) }. 
+ \boxed{ P(A\cap B) = P(B\mid A)P(A) }.
 $$
 
 These two expressions describe the same joint event from different directions.
@@ -52895,7 +53076,7 @@ These two expressions describe the same joint event from different directions.
 For several events:
 
 $$
- \boxed{ P(A_1\cap\cdots\cap A_n) = P(A_1) \prod_{k=2}^{n} P(A_k\mid A_1\cap\cdots\cap A_{k-1}) } 
+ \boxed{ P(A_1\cap\cdots\cap A_n) = P(A_1) \prod_{k=2}^{n} P(A_k\mid A_1\cap\cdots\cap A_{k-1}) }
 $$
 
 provided the conditioning events have positive probability.
@@ -52929,13 +53110,13 @@ That distinction becomes essential when we derive conditional Gaussian distribut
 Two events are independent if:
 
 $$
- \boxed{ P(A\cap B)=P(A)P(B) }. 
+ \boxed{ P(A\cap B)=P(A)P(B) }.
 $$
 
 When $P(B)>0$, this is equivalent to:
 
 $$
- P(A\mid B)=P(A). 
+ P(A\mid B)=P(A).
 $$
 
 Knowing that $B$ occurred does not change the probability of $A$.
@@ -52949,13 +53130,13 @@ Suppose $A$ and $B$ are disjoint, with both having positive probability.
 Then:
 
 $$
- P(A\cap B)=0. 
+ P(A\cap B)=0.
 $$
 
 But:
 
 $$
- P(A)P(B)>0. 
+ P(A)P(B)>0.
 $$
 
 Therefore the independence condition fails.
@@ -52971,19 +53152,19 @@ Let $A$ mean the first toss is heads and $B$ mean the second toss is heads.
 For independent fair tosses:
 
 $$
- P(A)=\frac12, \qquad P(B)=\frac12. 
+ P(A)=\frac12, \qquad P(B)=\frac12.
 $$
 
 The probability of both is:
 
 $$
- P(A\cap B)=\frac14. 
+ P(A\cap B)=\frac14.
 $$
 
 Since:
 
 $$
- P(A)P(B)=\frac14, 
+ P(A)P(B)=\frac14,
 $$
 
 the events are independent.
@@ -52997,7 +53178,7 @@ Consider two independent fair bits $U,V\in\{0,1\}$.
 Define three random bits:
 
 $$
- X=U, \qquad Y=V, \qquad Z=U\oplus V, 
+ X=U, \qquad Y=V, \qquad Z=U\oplus V,
 $$
 
 where $\oplus$ denotes exclusive OR.
@@ -53011,13 +53192,13 @@ But all three are not jointly independent because $Z$ is completely determined b
 For instance:
 
 $$
- P(X=0,Y=0,Z=0)=\frac14, 
+ P(X=0,Y=0,Z=0)=\frac14,
 $$
 
 while the product of their marginal probabilities is:
 
 $$
- \frac12\cdot\frac12\cdot\frac12=\frac18. 
+ \frac12\cdot\frac12\cdot\frac12=\frac18.
 $$
 
 The probabilities differ.
@@ -53037,13 +53218,13 @@ This is a common structure in Bayesian sensor fusion, probabilistic graphical mo
 Conditional independence is written:
 
 $$
- X\perp Y\mid Z. 
+ X\perp Y\mid Z.
 $$
 
 It means the conditional joint distribution factors:
 
 $$
- p(x,y\mid z)=p(x\mid z)p(y\mid z) 
+ p(x,y\mid z)=p(x\mid z)p(y\mid z)
 $$
 
 where these conditional densities are defined.
@@ -53055,25 +53236,25 @@ Bayes' theorem is not an additional axiom. It follows from the definition of con
 We have:
 
 $$
- P(A\mid B)=\frac{P(A\cap B)}{P(B)} 
+ P(A\mid B)=\frac{P(A\cap B)}{P(B)}
 $$
 
 and:
 
 $$
- P(B\mid A)=\frac{P(A\cap B)}{P(A)}. 
+ P(B\mid A)=\frac{P(A\cap B)}{P(A)}.
 $$
 
 Rearrange the second:
 
 $$
- P(A\cap B)=P(B\mid A)P(A). 
+ P(A\cap B)=P(B\mid A)P(A).
 $$
 
 Substitute into the first:
 
 $$
- \boxed{ P(A\mid B) = \frac{P(B\mid A)P(A)}{P(B)} }. 
+ \boxed{ P(A\mid B) = \frac{P(B\mid A)P(A)}{P(B)} }.
 $$
 
 This is Bayes' theorem.
@@ -53081,7 +53262,7 @@ This is Bayes' theorem.
 The terminology is:
 
 $$
- \underbrace{P(A\mid B)}_{\text{posterior}} = \frac{ \underbrace{P(B\mid A)}_{\text{likelihood}} \underbrace{P(A)}_{\text{prior}} }{ \underbrace{P(B)}_{\text{evidence}} }. 
+ \underbrace{P(A\mid B)}_{\text{posterior}} = \frac{ \underbrace{P(B\mid A)}_{\text{likelihood}} \underbrace{P(A)}_{\text{prior}} }{ \underbrace{P(B)}_{\text{evidence}} }.
 $$
 
 The prior describes the probability before seeing the new information.
@@ -53097,13 +53278,13 @@ The posterior describes the updated probability after observing the information.
 Suppose mutually exclusive events $H_1,\ldots,H_n$ form a partition of the sample space:
 
 $$
- \bigcup_iH_i=\Omega. 
+ \bigcup_iH_i=\Omega.
 $$
 
 For any event $E$:
 
 $$
- E=\bigcup_i(E\cap H_i) 
+ E=\bigcup_i(E\cap H_i)
 $$
 
 with disjoint intersections.
@@ -53111,19 +53292,19 @@ with disjoint intersections.
 Thus:
 
 $$
- P(E)=\sum_iP(E\cap H_i). 
+ P(E)=\sum_iP(E\cap H_i).
 $$
 
 Apply the multiplication rule:
 
 $$
- \boxed{ P(E)=\sum_iP(E\mid H_i)P(H_i) }. 
+ \boxed{ P(E)=\sum_iP(E\mid H_i)P(H_i) }.
 $$
 
 Bayes' theorem for hypothesis $H_j$ becomes:
 
 $$
- \boxed{ P(H_j\mid E) = \frac{ P(E\mid H_j)P(H_j) }{ \sum_iP(E\mid H_i)P(H_i) } }. 
+ \boxed{ P(H_j\mid E) = \frac{ P(E\mid H_j)P(H_j) }{ \sum_iP(E\mid H_i)P(H_i) } }.
 $$
 
 The denominator accounts for all alternative explanations of the observation.
@@ -53135,31 +53316,31 @@ Suppose only 10% of queried rays truly intersect a small target object.
 Let:
 
 $$
- H=\text{ray truly hits the object}. 
+ H=\text{ray truly hits the object}.
 $$
 
 Then:
 
 $$
- P(H)=0.10. 
+ P(H)=0.10.
 $$
 
 Suppose an approximate visibility detector reports a hit correctly 95% of the time:
 
 $$
- P(+\mid H)=0.95. 
+ P(+\mid H)=0.95.
 $$
 
 But it also reports a false hit for 8% of rays that actually miss:
 
 $$
- P(+\mid H^c)=0.08. 
+ P(+\mid H^c)=0.08.
 $$
 
 The probability of a positive report is:
 
 $$
- \begin{aligned} P(+) &=P(+\mid H)P(H) +P(+\mid H^c)P(H^c)\\ &=0.95(0.10)+0.08(0.90)\\ &=0.095+0.072\\ &=\boxed{0.167}. \end{aligned} 
+ \begin{aligned} P(+) &=P(+\mid H)P(H) +P(+\mid H^c)P(H^c)\\ &=0.95(0.10)+0.08(0.90)\\ &=0.095+0.072\\ &=\boxed{0.167}. \end{aligned}
 $$
 
 Now suppose the detector reports a hit. What is the probability that the ray really hit the object?
@@ -53167,13 +53348,13 @@ Now suppose the detector reports a hit. What is the probability that the ray rea
 By Bayes:
 
 $$
- P(H\mid+) = \frac{0.95(0.10)}{0.167}. 
+ P(H\mid+) = \frac{0.95(0.10)}{0.167}.
 $$
 
 Therefore:
 
 $$
- \boxed{ P(H\mid+)\approx0.568862 }. 
+ \boxed{ P(H\mid+)\approx0.568862 }.
 $$
 
 Even though the detector identifies true hits with 95% sensitivity, a positive report is correct only about 56.9% of the time under this model.
@@ -53185,7 +53366,7 @@ Why? Because true hits are relatively rare, while false positives are drawn from
 Bayes can also be written using odds:
 
 $$
- \frac{P(H\mid E)}{P(H^c\mid E)} = \frac{P(H)}{P(H^c)} \frac{P(E\mid H)}{P(E\mid H^c)}. 
+ \frac{P(H\mid E)}{P(H^c\mid E)} = \frac{P(H)}{P(H^c)} \frac{P(E\mid H)}{P(E\mid H^c)}.
 $$
 
 The last ratio is the likelihood ratio.
@@ -53193,25 +53374,25 @@ The last ratio is the likelihood ratio.
 For our example:
 
 $$
- \text{prior odds}=\frac{0.1}{0.9}=\frac19. 
+ \text{prior odds}=\frac{0.1}{0.9}=\frac19.
 $$
 
 The positive-result likelihood ratio is:
 
 $$
- \frac{0.95}{0.08}=11.875. 
+ \frac{0.95}{0.08}=11.875.
 $$
 
 The posterior odds are:
 
 $$
- \frac19(11.875)\approx1.319444. 
+ \frac19(11.875)\approx1.319444.
 $$
 
 Convert odds $o$ into probability:
 
 $$
- P=\frac{o}{1+o}, 
+ P=\frac{o}{1+o},
 $$
 
 which again gives approximately $0.568862$.
@@ -53293,7 +53474,7 @@ A probability space describes possible outcomes and assigns probabilities to eve
 A random variable is a function that assigns a value to each outcome:
 
 $$
- \boxed{X:\Omega\rightarrow\mathbb R}. 
+ \boxed{X:\Omega\rightarrow\mathbb R}.
 $$
 
 More precisely, it is a measurable function, meaning events of the form $X\le x$ belong to the probability space's event collection.
@@ -53301,19 +53482,19 @@ More precisely, it is a measurable function, meaning events of the form $X\le x$
 Consider rolling two dice. The complete outcome is an ordered pair:
 
 $$
- \omega=(d_1,d_2). 
+ \omega=(d_1,d_2).
 $$
 
 The sample space has 36 outcomes:
 
 $$
- \Omega=\{1,\ldots,6\}^2. 
+ \Omega=\{1,\ldots,6\}^2.
 $$
 
 We might define a random variable:
 
 $$
- X(d_1,d_2)=d_1+d_2. 
+ X(d_1,d_2)=d_1+d_2.
 $$
 
 Then $X$ represents the sum of the dice, with possible values from 2 to 12.
@@ -53321,7 +53502,7 @@ Then $X$ represents the sum of the dice, with possible values from 2 to 12.
 Notice that many outcomes produce the same random-variable value. For example:
 
 $$
- X(1,3)=X(2,2)=X(3,1)=4. 
+ X(1,3)=X(2,2)=X(3,1)=4.
 $$
 
 The probability that $X=4$ is the total probability of all outcomes mapped to four.
@@ -53329,7 +53510,7 @@ The probability that $X=4$ is the total probability of all outcomes mapped to fo
 For independent fair dice:
 
 $$
- P(X=4)=\frac3{36}=\frac1{12}. 
+ P(X=4)=\frac3{36}=\frac1{12}.
 $$
 
 A random variable is therefore not the same as a single random outcome. It is a numerical measurement or transformation of the outcome.
@@ -53341,13 +53522,13 @@ The notation $X$ represents the entire function from outcomes to values. A reali
 When we write:
 
 $$
- P(X\le4), 
+ P(X\le4),
 $$
 
 we mean:
 
 $$
- P(\{\omega\in\Omega:X(\omega)\le4\}). 
+ P(\{\omega\in\Omega:X(\omega)\le4\}).
 $$
 
 This explains how events involving numerical values arise from the original probability space.
@@ -53357,13 +53538,13 @@ This explains how events involving numerical values arise from the original prob
 A random vector is:
 
 $$
- \mathbf X:\Omega\rightarrow\mathbb R^n. 
+ \mathbf X:\Omega\rightarrow\mathbb R^n.
 $$
 
 For a noisy camera observation:
 
 $$
- \mathbf X= \begin{bmatrix} U\\V \end{bmatrix} 
+ \mathbf X= \begin{bmatrix} U\\V \end{bmatrix}
 $$
 
 could represent measured pixel coordinates.
@@ -53397,13 +53578,13 @@ Examples include the number of rays that hit a light, the number of detected fea
 Let:
 
 $$
- X\in\{0,1,2,\ldots\}. 
+ X\in\{0,1,2,\ldots\}.
 $$
 
 Its behavior is determined by the probabilities of its possible values:
 
 $$
- P(X=k). 
+ P(X=k).
 $$
 
 #### 1 Countably infinite distributions
@@ -53413,7 +53594,7 @@ Discrete does not necessarily mean finitely many outcomes.
 A Poisson variable takes nonnegative integer values with no finite upper bound:
 
 $$
- 0,1,2,\ldots 
+ 0,1,2,\ldots
 $$
 
 A geometric variable can represent how many Bernoulli trials are needed before a first success.
@@ -53453,7 +53634,7 @@ A continuous random variable with a probability density assigns probability to i
 Suppose:
 
 $$
- X\sim U(0,1), 
+ X\sim U(0,1),
 $$
 
 meaning $X$ is uniformly distributed between zero and one.
@@ -53461,13 +53642,13 @@ meaning $X$ is uniformly distributed between zero and one.
 Then:
 
 $$
- P(0.2\le X\le0.5)=0.3. 
+ P(0.2\le X\le0.5)=0.3.
 $$
 
 But:
 
 $$
- P(X=0.3)=0. 
+ P(X=0.3)=0.
 $$
 
 #### 1 Why individual exact values have zero probability
@@ -53477,13 +53658,13 @@ Imagine a tiny interval around $x$ of width $\Delta x$.
 For a sufficiently smooth density:
 
 $$
- P(x\le X\le x+\Delta x) \approx p_X(x)\Delta x. 
+ P(x\le X\le x+\Delta x) \approx p_X(x)\Delta x.
 $$
 
 As:
 
 $$
- \Delta x\to0, 
+ \Delta x\to0,
 $$
 
 the probability approaches zero, provided the density remains finite near that point.
@@ -53501,25 +53682,25 @@ Suppose $X$ is a measured length in metres.
 Its density $p_X(x)$ has units:
 
 $$
- \mathrm m^{-1}. 
+ \mathrm m^{-1}.
 $$
 
 Then:
 
 $$
- p_X(x)\\,dx 
+ p_X(x)\,dx
 $$
 
 is dimensionless because:
 
 $$
- \mathrm m^{-1}\times\mathrm m=1. 
+ \mathrm m^{-1}\times\mathrm m=1.
 $$
 
 If a random vector contains three spatial coordinates, its density with respect to 3D volume has units:
 
 $$
- \mathrm m^{-3}. 
+ \mathrm m^{-3}.
 $$
 
 This unit dependence is important in rendering.
@@ -53535,25 +53716,25 @@ We will derive those conversions in the sampling and Monte Carlo chapters.
 For a discrete random variable, define the probability mass function, or PMF:
 
 $$
- \boxed{ p_X(x)=P(X=x) }. 
+ \boxed{ p_X(x)=P(X=x) }.
 $$
 
 The PMF must satisfy:
 
 $$
- p_X(x)\ge0 
+ p_X(x)\ge0
 $$
 
 for every possible value, and:
 
 $$
- \boxed{ \sum_xp_X(x)=1 }. 
+ \boxed{ \sum_xp_X(x)=1 }.
 $$
 
 For a Bernoulli variable with success probability $p$:
 
 $$
- p_X(0)=1-p, \qquad p_X(1)=p. 
+ p_X(0)=1-p, \qquad p_X(1)=p.
 $$
 
 All other values have probability zero.
@@ -53565,7 +53746,7 @@ For a small finite distribution, we can store every probability in an array.
 For example, a light-selection distribution might use:
 
 $$
- [p_0,p_1,p_2]=[0.5,0.3,0.2]. 
+ [p_0,p_1,p_2]=[0.5,0.3,0.2].
 $$
 
 For a Poisson or binomial distribution, calculating mass from a formula may be more convenient than storing a table.
@@ -53575,13 +53756,13 @@ For a large distribution with repeated sampling, an alias table can make samplin
 Those algorithms belong to the sampling and Monte Carlo chapters, but the critical invariant already comes from the PMF:
 
 $$
- \sum_ip_i=1. 
+ \sum_ip_i=1.
 $$
 
 If we store unnormalized nonnegative weights $w_i$, we must convert them into probabilities:
 
 $$
- \boxed{ p_i=\frac{w_i}{\sum_jw_j} } 
+ \boxed{ p_i=\frac{w_i}{\sum_jw_j} }
 $$
 
 provided the total is finite and positive.
@@ -53597,7 +53778,7 @@ Suppose we take 100 random samples and observe 32 successes.
 The observed frequency:
 
 $$
- \frac{32}{100}=0.32 
+ \frac{32}{100}=0.32
 $$
 
 is an estimate of the success probability, not proof that the true Bernoulli parameter equals $0.32$.
@@ -53611,13 +53792,13 @@ We will examine estimation and statistical error in the statistical validation c
 For a continuous random variable whose distribution is absolutely continuous with respect to Lebesgue measure, a probability density function, or PDF, is a nonnegative function $p_X$ satisfying:
 
 $$
- \boxed{ P(a\le X\le b) = \int_a^bp_X(x)\\,dx }. 
+ \boxed{ P(a\le X\le b) = \int_a^bp_X(x)\,dx }.
 $$
 
 Normalization requires:
 
 $$
- \boxed{ \int_{-\infty}^{\infty}p_X(x)\\,dx=1 }. 
+ \boxed{ \int_{-\infty}^{\infty}p_X(x)\,dx=1 }.
 $$
 
 #### 1 A density can exceed one
@@ -53625,13 +53806,13 @@ $$
 Consider:
 
 $$
- X\sim U(0,0.1). 
+ X\sim U(0,0.1).
 $$
 
 Its density is:
 
 $$
- p_X(x)=10 
+ p_X(x)=10
 $$
 
 inside the interval and zero elsewhere.
@@ -53643,7 +53824,7 @@ There is no contradiction because the density is not a probability.
 Its integrated probability is:
 
 $$
- \int_0^{0.1}10\\,dx=1. 
+ \int_0^{0.1}10\,dx=1.
 $$
 
 #### 2 The probability associated with a small region
@@ -53651,7 +53832,7 @@ $$
 For a sufficiently smooth density:
 
 $$
- P(x\le X\le x+h) \approx p_X(x)h. 
+ P(x\le X\le x+h) \approx p_X(x)h.
 $$
 
 The approximation error depends on how much the density varies over the interval.
@@ -53659,13 +53840,13 @@ The approximation error depends on how much the density varies over the interval
 In several dimensions:
 
 $$
- P(\mathbf X\in R) = \int_Rp_{\mathbf X}(\mathbf x)\\,d\mathbf x. 
+ P(\mathbf X\in R) = \int_Rp_{\mathbf X}(\mathbf x)\,d\mathbf x.
 $$
 
 If $R$ is sufficiently small, we may approximate:
 
 $$
- P(\mathbf X\in R) \approx p_{\mathbf X}(\mathbf x_0)\operatorname{Volume}(R) 
+ P(\mathbf X\in R) \approx p_{\mathbf X}(\mathbf x_0)\operatorname{Volume}(R)
 $$
 
 when the density is nearly constant over that region.
@@ -53677,7 +53858,7 @@ This is directly relevant to Gaussian footprints, spatial uncertainty, and local
 Suppose:
 
 $$
- Y=2X, 
+ Y=2X,
 $$
 
 where $X\sim U(0,1)$.
@@ -53685,13 +53866,13 @@ where $X\sim U(0,1)$.
 Then:
 
 $$
- Y\sim U(0,2). 
+ Y\sim U(0,2).
 $$
 
 The new density is:
 
 $$
- p_Y(y)=\frac12 
+ p_Y(y)=\frac12
 $$
 
 on $[0,2]$.
@@ -53703,13 +53884,13 @@ The transformation doubled interval lengths. To preserve total probability, dens
 The general one-dimensional transformation rule for a smooth monotone invertible function $Y=g(X)$ is:
 
 $$
- \boxed{ p_Y(y) = p_X(g^{-1}(y)) \left| \frac{d}{dy}g^{-1}(y) \right| }. 
+ \boxed{ p_Y(y) = p_X(g^{-1}(y)) \left| \frac{d}{dy}g^{-1}(y) \right| }.
 $$
 
 For an invertible multivariable mapping $\mathbf y=g(\mathbf x)$:
 
 $$
- \boxed{ p_{\mathbf Y}(\mathbf y) = p_{\mathbf X}(g^{-1}(\mathbf y)) \left| \det J_{g^{-1}}(\mathbf y) \right| }. 
+ \boxed{ p_{\mathbf Y}(\mathbf y) = p_{\mathbf X}(g^{-1}(\mathbf y)) \left| \det J_{g^{-1}}(\mathbf y) \right| }.
 $$
 
 These formulas follow from conservation of probability under a change of variables. More general transformations may require summing contributions from multiple inverse branches.
@@ -53721,7 +53902,7 @@ This is the bridge between probability densities and Phase 9's Jacobians. It bec
 The cumulative distribution function, or CDF, is defined for every real-valued random variable:
 
 $$
- \boxed{ F_X(x)=P(X\le x) }. 
+ \boxed{ F_X(x)=P(X\le x) }.
 $$
 
 It measures all probability accumulated up to the threshold $x$.
@@ -53733,29 +53914,29 @@ Unlike a PDF or PMF, the CDF is defined for discrete, continuous, mixed, and sin
 A CDF is nondecreasing:
 
 $$
- x_1\<x_2 \implies F_X(x_1)\le F_X(x_2). 
+ x_1\<x_2 \implies F_X(x_1)\le F_X(x_2).
 $$
 
 It is right-continuous, and:
 
 $$
- \lim_{x\to-\infty}F_X(x)=0, 
+ \lim_{x\to-\infty}F_X(x)=0,
 $$
 
 $$
- \lim_{x\to+\infty}F_X(x)=1. 
+ \lim_{x\to+\infty}F_X(x)=1.
 $$
 
 For a continuous distribution with density:
 
 $$
- \boxed{ F_X(x)=\int_{-\infty}^{x}p_X(t)\\,dt }. 
+ \boxed{ F_X(x)=\int_{-\infty}^{x}p_X(t)\,dt }.
 $$
 
 Where differentiable:
 
 $$
- \boxed{ F_X'(x)=p_X(x) }. 
+ \boxed{ F_X'(x)=p_X(x) }.
 $$
 
 This is the fundamental theorem of calculus applied to probability accumulation.
@@ -53765,13 +53946,13 @@ This is the fundamental theorem of calculus applied to probability accumulation.
 For:
 
 $$
- X\sim U(a,b), 
+ X\sim U(a,b),
 $$
 
 the CDF is:
 
 $$
- \boxed{ F_X(x)= \begin{cases} 0,&x\<a,\\ \dfrac{x-a}{b-a},&a\le x\<b,\\ 1,&x\ge b. \end{cases} } 
+ \boxed{ F_X(x)= \begin{cases} 0,&x\<a,\\ \dfrac{x-a}{b-a},&a\le x\<b,\\ 1,&x\ge b. \end{cases} }
 $$
 
 The density is constant in the interval, so cumulative probability increases linearly.
@@ -53781,7 +53962,7 @@ The density is constant in the interval, so cumulative probability increases lin
 For a discrete random variable:
 
 $$
- F_X(x)= \sum_{t\le x}p_X(t). 
+ F_X(x)= \sum_{t\le x}p_X(t).
 $$
 
 Its graph contains jumps at values with nonzero probability mass.
@@ -53789,7 +53970,7 @@ Its graph contains jumps at values with nonzero probability mass.
 In fact:
 
 $$
- \boxed{ P(X=x) = F_X(x)-F_X(x^-) } 
+ \boxed{ P(X=x) = F_X(x)-F_X(x^-) }
 $$
 
 where $F_X(x^-)$ denotes the left-hand limit.
@@ -53801,19 +53982,19 @@ This formula shows how discrete point masses are encoded by jumps in the CDF.
 A quantile function can be defined as:
 
 $$
- \boxed{ Q(u)=\inf\{x:F_X(x)\ge u\} }, \qquad u\in(0,1). 
+ \boxed{ Q(u)=\inf\{x:F_X(x)\ge u\} }, \qquad u\in(0,1).
 $$
 
 For a continuous strictly increasing CDF, this reduces to:
 
 $$
- Q(u)=F_X^{-1}(u). 
+ Q(u)=F_X^{-1}(u).
 $$
 
 If $U\sim U(0,1)$, then:
 
 $$
- X=Q(U) 
+ X=Q(U)
 $$
 
 has the desired distribution under the standard inverse-transform construction.
@@ -53838,7 +54019,7 @@ The expected value describes a probability-weighted average.
 For a discrete variable:
 
 $$
- \boxed{ \mathbb E[X]=\sum_xx\\,p_X(x) } 
+ \boxed{ \mathbb E[X]=\sum_xx\,p_X(x) }
 $$
 
 when the sum is well defined.
@@ -53846,7 +54027,7 @@ when the sum is well defined.
 For a continuous variable with PDF:
 
 $$
- \boxed{ \mathbb E[X]= \int_{-\infty}^{\infty}x\\,p_X(x)\\,dx } 
+ \boxed{ \mathbb E[X]= \int_{-\infty}^{\infty}x\,p_X(x)\,dx }
 $$
 
 when the expectation exists.
@@ -53854,7 +54035,7 @@ when the expectation exists.
 More generally:
 
 $$
- \mathbb E[X]=\int\_\Omega X(\omega)\\,dP(\omega). 
+ \mathbb E[X]=\int_\Omega X(\omega)\,dP(\omega).
 $$
 
 That last expression is the measure-theoretic definition and handles random variables without requiring a PDF.
@@ -53864,7 +54045,7 @@ That last expression is the measure-theoretic definition and handles random vari
 For a fair six-sided die:
 
 $$
- \mathbb E[X] = \frac{1+2+3+4+5+6}{6} =\boxed{3.5}. 
+ \mathbb E[X] = \frac{1+2+3+4+5+6}{6} =\boxed{3.5}.
 $$
 
 The die can never actually show $3.5$.
@@ -53876,19 +54057,19 @@ Expected value is a summary of a distribution, not necessarily a realizable resu
 Suppose we want:
 
 $$
- \mathbb E[g(X)]. 
+ \mathbb E[g(X)].
 $$
 
 For discrete $X$:
 
 $$
- \boxed{ \mathbb E[g(X)] = \sum_xg(x)p_X(x) }. 
+ \boxed{ \mathbb E[g(X)] = \sum_xg(x)p_X(x) }.
 $$
 
 For continuous $X$:
 
 $$
- \boxed{ \mathbb E[g(X)] = \int g(x)p_X(x)\\,dx }. 
+ \boxed{ \mathbb E[g(X)] = \int g(x)p_X(x)\,dx }.
 $$
 
 This is often called the law of the unconscious statistician, or LOTUS.
@@ -53898,13 +54079,13 @@ We do not need to derive the full distribution of $Y=g(X)$ before calculating it
 For example, if:
 
 $$
- X\sim U(0,1), 
+ X\sim U(0,1),
 $$
 
 then:
 
 $$
- \mathbb E[X^2] = \int_0^1x^2\\,dx =\boxed{\frac13}. 
+ \mathbb E[X^2] = \int_0^1x^2\,dx =\boxed{\frac13}.
 $$
 
 #### 3 Linearity of expectation
@@ -53912,7 +54093,7 @@ $$
 For random variables $X,Y$ and constants $a,b,c$:
 
 $$
- \boxed{ \mathbb E[aX+bY+c] = a\mathbb E[X]+b\mathbb E[Y]+c }. 
+ \boxed{ \mathbb E[aX+bY+c] = a\mathbb E[X]+b\mathbb E[Y]+c }.
 $$
 
 This follows from linearity of summation or integration.
@@ -53924,7 +54105,7 @@ This is one of the most useful probability rules in algorithm analysis.
 Suppose:
 
 $$
- X=\sum_{i=1}^NI_i 
+ X=\sum_{i=1}^NI_i
 $$
 
 where each indicator $I_i\in\{0,1\}$ represents whether a ray hits a surface.
@@ -53932,7 +54113,7 @@ where each indicator $I_i\in\{0,1\}$ represents whether a ray hits a surface.
 Then:
 
 $$
- \mathbb E[X] = \sum_i\mathbb E[I_i] = \sum_iP(I_i=1). 
+ \mathbb E[X] = \sum_i\mathbb E[I_i] = \sum_iP(I_i=1).
 $$
 
 The expected number of hits is the sum of the individual hit probabilities even when the hit events are dependent.
@@ -53942,7 +54123,7 @@ The expected number of hits is the sum of the individual hit probabilities even 
 For independent integrable random variables under suitable assumptions:
 
 $$
- \boxed{ \mathbb E[XY]=\mathbb E[X]\mathbb E[Y] }. 
+ \boxed{ \mathbb E[XY]=\mathbb E[X]\mathbb E[Y] }.
 $$
 
 But this factorization does not generally hold for dependent variables.
@@ -53954,31 +54135,31 @@ Its failure motivates covariance.
 Consider an integral:
 
 $$
- I=\int_Df(x)\\,dx. 
+ I=\int_Df(x)\,dx.
 $$
 
 If we sample $X$ uniformly over a domain $D$ of finite volume $V$, its PDF is:
 
 $$
- p_X(x)=\frac1V. 
+ p_X(x)=\frac1V.
 $$
 
 Then:
 
 $$
- \mathbb E[f(X)] = \int_Df(x)\frac1V\\,dx. 
+ \mathbb E[f(X)] = \int_Df(x)\frac1V\,dx.
 $$
 
 Therefore:
 
 $$
- \boxed{ I=V\\,\mathbb E[f(X)] }. 
+ \boxed{ I=V\,\mathbb E[f(X)] }.
 $$
 
 More generally, if a PDF $p(x)>0$ wherever the integrand contributes:
 
 $$
- \boxed{ I= \mathbb E_{X\sim p} \left[ \frac{f(X)}{p(X)} \right] }. 
+ \boxed{ I= \mathbb E_{X\sim p} \left[ \frac{f(X)}{p(X)} \right] }.
 $$
 
 This identity is the mathematical foundation of Monte Carlo integration and importance sampling. It does not yet tell us how many samples we need, how accurate an estimator is, or how to minimize its variance; those belong to the sampling and Monte Carlo chapters.
@@ -53994,13 +54175,13 @@ But two random variables can have the same mean and very different uncertainty.
 Consider:
 
 $$
- X=5 
+ X=5
 $$
 
 with probability one, and:
 
 $$
- Y= \begin{cases} 0,&\text{probability }1/2,\\ 10,&\text{probability }1/2. \end{cases} 
+ Y= \begin{cases} 0,&\text{probability }1/2,\\ 10,&\text{probability }1/2. \end{cases}
 $$
 
 Both have expected value five.
@@ -54012,13 +54193,13 @@ Variance captures that difference.
 Define the mean:
 
 $$
- \mu=\mathbb E[X]. 
+ \mu=\mathbb E[X].
 $$
 
 The variance is:
 
 $$
- \boxed{ \operatorname{Var}(X)= \mathbb E[(X-\mu)^2] }. 
+ \boxed{ \operatorname{Var}(X)= \mathbb E[(X-\mu)^2] }.
 $$
 
 The square makes deviations nonnegative and gives greater weight to larger deviations.
@@ -54028,31 +54209,31 @@ The square makes deviations nonnegative and gives greater weight to larger devia
 Expand:
 
 $$
- (X-\mu)^2=X^2-2\mu X+\mu^2. 
+ (X-\mu)^2=X^2-2\mu X+\mu^2.
 $$
 
 Take expectation:
 
 $$
- \operatorname{Var}(X) = \mathbb E[X^2] -2\mu\mathbb E[X] +\mu^2. 
+ \operatorname{Var}(X) = \mathbb E[X^2] -2\mu\mathbb E[X] +\mu^2.
 $$
 
 Because:
 
 $$
- \mathbb E[X]=\mu, 
+ \mathbb E[X]=\mu,
 $$
 
 we get:
 
 $$
- \operatorname{Var}(X) = \mathbb E[X^2]-2\mu^2+\mu^2. 
+ \operatorname{Var}(X) = \mathbb E[X^2]-2\mu^2+\mu^2.
 $$
 
 Thus:
 
 $$
- \boxed{ \operatorname{Var}(X)= \mathbb E[X^2]-(\mathbb E[X])^2 }. 
+ \boxed{ \operatorname{Var}(X)= \mathbb E[X^2]-(\mathbb E[X])^2 }.
 $$
 
 This identity is mathematically useful, but it can be numerically unstable when both terms are large and nearly equal.
@@ -54064,19 +54245,19 @@ For sampled data, a centered two-pass or online Welford-type method may be prefe
 For $Y\in\{0,10\}$ with equal probabilities:
 
 $$
- \mu=5. 
+ \mu=5.
 $$
 
 Then:
 
 $$
- \begin{aligned} \operatorname{Var}(Y) &=\frac12(0-5)^2+\frac12(10-5)^2\\ &=\frac12(25)+\frac12(25)\\ &=\boxed{25}. \end{aligned} 
+ \begin{aligned} \operatorname{Var}(Y) &=\frac12(0-5)^2+\frac12(10-5)^2\\ &=\frac12(25)+\frac12(25)\\ &=\boxed{25}. \end{aligned}
 $$
 
 For the constant variable $X=5$:
 
 $$
- \operatorname{Var}(X)=0. 
+ \operatorname{Var}(X)=0.
 $$
 
 A random variable has zero variance if and only if it equals its mean almost surely, provided the relevant expectation exists.
@@ -54086,25 +54267,25 @@ A random variable has zero variance if and only if it equals its mean almost sur
 Let:
 
 $$
- Y=aX+b. 
+ Y=aX+b.
 $$
 
 Its mean is:
 
 $$
- \mathbb E[Y]=a\mu+b. 
+ \mathbb E[Y]=a\mu+b.
 $$
 
 The centred quantity is:
 
 $$
- Y-\mathbb E[Y]=a(X-\mu). 
+ Y-\mathbb E[Y]=a(X-\mu).
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{Var}(aX+b)=a^2\operatorname{Var}(X) }. 
+ \boxed{ \operatorname{Var}(aX+b)=a^2\operatorname{Var}(X) }.
 $$
 
 Adding a constant does not affect variance.
@@ -54118,7 +54299,7 @@ This matters when converting units. If position uncertainty is represented in me
 For two random variables:
 
 $$
- \operatorname{Var}(X+Y) = \operatorname{Var}(X)+ \operatorname{Var}(Y)+ 2\operatorname{Cov}(X,Y). 
+ \operatorname{Var}(X+Y) = \operatorname{Var}(X)+ \operatorname{Var}(Y)+ 2\operatorname{Cov}(X,Y).
 $$
 
 Only when covariance is zero does the variance equal the sum of individual variances.
@@ -54134,7 +54315,7 @@ Variance uses squared deviations, so its units are the square of the underlying 
 If $X$ is measured in metres, then:
 
 $$
- \operatorname{Var}(X) 
+ \operatorname{Var}(X)
 $$
 
 has units of square metres.
@@ -54142,7 +54323,7 @@ has units of square metres.
 The standard deviation is:
 
 $$
- \boxed{ \sigma_X=\sqrt{\operatorname{Var}(X)} }. 
+ \boxed{ \sigma_X=\sqrt{\operatorname{Var}(X)} }.
 $$
 
 It has the same physical units as $X$.
@@ -54150,7 +54331,7 @@ It has the same physical units as $X$.
 For the earlier random variable with variance 25:
 
 $$
- \sigma_Y=\sqrt{25}=5. 
+ \sigma_Y=\sqrt{25}=5.
 $$
 
 The standard deviation measures the scale of dispersion, but it does not universally mean that most observations lie within one standard deviation of the mean.
@@ -54170,13 +54351,13 @@ Given a finite sample $x_1,\ldots,x_n$, we estimate the underlying spread.
 Two common sample variance formulas are:
 
 $$
- \frac1n\sum_i(x_i-\bar x)^2 
+ \frac1n\sum_i(x_i-\bar x)^2
 $$
 
 and:
 
 $$
- \frac1{n-1}\sum_i(x_i-\bar x)^2. 
+ \frac1{n-1}\sum_i(x_i-\bar x)^2.
 $$
 
 The second is the usual unbiased sample variance estimator under independent identically distributed sampling with finite variance.
@@ -54194,13 +54375,13 @@ Covariance describes how two variables vary together.
 Let:
 
 $$
- \mu_X=\mathbb E[X], \qquad \mu_Y=\mathbb E[Y]. 
+ \mu_X=\mathbb E[X], \qquad \mu_Y=\mathbb E[Y].
 $$
 
 The covariance is:
 
 $$
- \boxed{ \operatorname{Cov}(X,Y)= \mathbb E[(X-\mu_X)(Y-\mu_Y)] }. 
+ \boxed{ \operatorname{Cov}(X,Y)= \mathbb E[(X-\mu_X)(Y-\mu_Y)] }.
 $$
 
 #### 1 Deriving the alternative formula
@@ -54208,19 +54389,19 @@ $$
 Expand:
 
 $$
- (X-\mu_X)(Y-\mu_Y) = XY-\mu_XY-\mu_YX+\mu_X\mu_Y. 
+ (X-\mu_X)(Y-\mu_Y) = XY-\mu_XY-\mu_YX+\mu_X\mu_Y.
 $$
 
 Take expectation:
 
 $$
- \begin{aligned} \operatorname{Cov}(X,Y) &=\mathbb E[XY] -\mu_X\mathbb E[Y] -\mu_Y\mathbb E[X] +\mu_X\mu_Y\\ &=\mathbb E[XY] -\mu_X\mu_Y-\mu_X\mu_Y+\mu_X\mu_Y. \end{aligned} 
+ \begin{aligned} \operatorname{Cov}(X,Y) &=\mathbb E[XY] -\mu_X\mathbb E[Y] -\mu_Y\mathbb E[X] +\mu_X\mu_Y\\ &=\mathbb E[XY] -\mu_X\mu_Y-\mu_X\mu_Y+\mu_X\mu_Y. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{Cov}(X,Y) = \mathbb E[XY]-\mathbb E[X]\mathbb E[Y] }. 
+ \boxed{ \operatorname{Cov}(X,Y) = \mathbb E[XY]-\mathbb E[X]\mathbb E[Y] }.
 $$
 
 #### 2 Positive covariance
@@ -54246,7 +54427,7 @@ Negative covariance means the centred deviations tend to have opposite signs.
 If:
 
 $$
- \operatorname{Cov}(X,Y)=0, 
+ \operatorname{Cov}(X,Y)=0,
 $$
 
 the variables are uncorrelated.
@@ -54260,7 +54441,7 @@ It does not rule out nonlinear dependence.
 For constants $a,b,c,d$:
 
 $$
- \boxed{ \operatorname{Cov}(aX+b,cY+d) = ac\operatorname{Cov}(X,Y) }. 
+ \boxed{ \operatorname{Cov}(aX+b,cY+d) = ac\operatorname{Cov}(X,Y) }.
 $$
 
 Translation has no effect.
@@ -54274,31 +54455,31 @@ If one variable reverses sign, covariance reverses sign.
 Let:
 
 $$
- Z=X+Y. 
+ Z=X+Y.
 $$
 
 Its centred value is:
 
 $$
- Z-\mathbb E[Z] = (X-\mu_X)+(Y-\mu_Y). 
+ Z-\mathbb E[Z] = (X-\mu_X)+(Y-\mu_Y).
 $$
 
 Square:
 
 $$
- \begin{aligned} (Z-\mathbb E[Z])^2 &=(X-\mu_X)^2+(Y-\mu_Y)^2\\ &\quad+2(X-\mu_X)(Y-\mu_Y). \end{aligned} 
+ \begin{aligned} (Z-\mathbb E[Z])^2 &=(X-\mu_X)^2+(Y-\mu_Y)^2\\ &\quad+2(X-\mu_X)(Y-\mu_Y). \end{aligned}
 $$
 
 Take expectation:
 
 $$
- \boxed{ \operatorname{Var}(X+Y) = \operatorname{Var}(X)+ \operatorname{Var}(Y)+ 2\operatorname{Cov}(X,Y) }. 
+ \boxed{ \operatorname{Var}(X+Y) = \operatorname{Var}(X)+ \operatorname{Var}(Y)+ 2\operatorname{Cov}(X,Y) }.
 $$
 
 For a difference:
 
 $$
- \boxed{ \operatorname{Var}(X-Y) = \operatorname{Var}(X)+ \operatorname{Var}(Y)- 2\operatorname{Cov}(X,Y) }. 
+ \boxed{ \operatorname{Var}(X-Y) = \operatorname{Var}(X)+ \operatorname{Var}(Y)- 2\operatorname{Cov}(X,Y) }.
 $$
 
 These identities explain why positive correlation can increase uncertainty in a sum but decrease uncertainty in a difference.
@@ -54308,31 +54489,31 @@ These identities explain why positive correlation can increase uncertainty in a 
 For:
 
 $$
- \mathbf X= \begin{bmatrix}X_1\\X_2\\vdots\\X_n\end{bmatrix}, 
+ \mathbf X= \begin{bmatrix}X_1\\X_2\\vdots\\X_n\end{bmatrix},
 $$
 
 define:
 
 $$
- \boldsymbol\mu=\mathbb E[\mathbf X]. 
+ \boldsymbol\mu=\mathbb E[\mathbf X].
 $$
 
 Its [[#3. Expected values describe centers; covariance describes dependence|covariance matrix]] is:
 
 $$
- \boxed{ \Sigma= \mathbb E[ (\mathbf X-\boldsymbol\mu) (\mathbf X-\boldsymbol\mu)^T ] }. 
+ \boxed{ \Sigma= \mathbb E[ (\mathbf X-\boldsymbol\mu) (\mathbf X-\boldsymbol\mu)^T ] }.
 $$
 
 The entries are:
 
 $$
- \Sigma_{ij}=\operatorname{Cov}(X_i,X_j). 
+ \Sigma_{ij}=\operatorname{Cov}(X_i,X_j).
 $$
 
 Diagonal entries are variances:
 
 $$
- \Sigma_{ii}=\operatorname{Var}(X_i). 
+ \Sigma_{ii}=\operatorname{Var}(X_i).
 $$
 
 Off-diagonal entries are pairwise covariances.
@@ -54346,7 +54527,7 @@ Covariance depends on the units of its variables.
 For example, covariance between position and velocity has units:
 
 $$
- \mathrm{m^2/s}. 
+ \mathrm{m^2/s}.
 $$
 
 It is difficult to compare such raw covariances across unrelated measurement scales.
@@ -54354,7 +54535,7 @@ It is difficult to compare such raw covariances across unrelated measurement sca
 The Pearson correlation coefficient normalizes covariance by the standard deviations:
 
 $$
- \boxed{ \rho_{XY}= \frac{ \operatorname{Cov}(X,Y) }{ \sigma_X\sigma_Y } }. 
+ \boxed{ \rho_{XY}= \frac{ \operatorname{Cov}(X,Y) }{ \sigma_X\sigma_Y } }.
 $$
 
 It is defined when both standard deviations are finite and strictly positive.
@@ -54364,25 +54545,25 @@ It is defined when both standard deviations are finite and strictly positive.
 The Cauchy–Schwarz inequality for square-integrable random variables gives:
 
 $$
- |\mathbb E[UV]| \le \sqrt{\mathbb E[U^2]\mathbb E[V^2]}. 
+ |\mathbb E[UV]| \le \sqrt{\mathbb E[U^2]\mathbb E[V^2]}.
 $$
 
 Let:
 
 $$
- U=X-\mu_X, \qquad V=Y-\mu_Y. 
+ U=X-\mu_X, \qquad V=Y-\mu_Y.
 $$
 
 Then:
 
 $$
- |\operatorname{Cov}(X,Y)| \le \sigma_X\sigma_Y. 
+ |\operatorname{Cov}(X,Y)| \le \sigma_X\sigma_Y.
 $$
 
 Divide by the positive product:
 
 $$
- \boxed{ -1\le\rho_{XY}\le1 }. 
+ \boxed{ -1\le\rho_{XY}\le1 }.
 $$
 
 Correlation $+1$ or $-1$ corresponds to an exact affine relationship almost surely when both variances are positive.
@@ -54392,13 +54573,13 @@ Correlation $+1$ or $-1$ corresponds to an exact affine relationship almost sure
 Let:
 
 $$
- X\sim U(-1,1) 
+ X\sim U(-1,1)
 $$
 
 and define:
 
 $$
- Y=X^2. 
+ Y=X^2.
 $$
 
 Clearly, $Y$ is completely determined by $X$, so the variables are dependent.
@@ -54406,7 +54587,7 @@ Clearly, $Y$ is completely determined by $X$, so the variables are dependent.
 But:
 
 $$
- \mathbb E[X]=0 
+ \mathbb E[X]=0
 $$
 
 by symmetry.
@@ -54414,7 +54595,7 @@ by symmetry.
 Also:
 
 $$
- \mathbb E[XY] = \mathbb E[X^3]=0 
+ \mathbb E[XY] = \mathbb E[X^3]=0
 $$
 
 because the integrand is odd over the symmetric interval.
@@ -54422,13 +54603,13 @@ because the integrand is odd over the symmetric interval.
 Therefore:
 
 $$
- \operatorname{Cov}(X,Y) = \mathbb E[XY]-\mathbb E[X]\mathbb E[Y] =0. 
+ \operatorname{Cov}(X,Y) = \mathbb E[XY]-\mathbb E[X]\mathbb E[Y] =0.
 $$
 
 Thus:
 
 $$
- \boxed{\rho_{XY}=0} 
+ \boxed{\rho_{XY}=0}
 $$
 
 even though $Y=X^2$.
@@ -54448,13 +54629,13 @@ A joint distribution describes multiple variables together.
 For discrete $X,Y$, define:
 
 $$
- \boxed{ p_{X,Y}(x,y)=P(X=x,Y=y) }. 
+ \boxed{ p_{X,Y}(x,y)=P(X=x,Y=y) }.
 $$
 
 For continuous variables with a joint density:
 
 $$
- \boxed{ P((X,Y)\in R) = \iint_Rp_{X,Y}(x,y)\\,dx\\,dy }. 
+ \boxed{ P((X,Y)\in R) = \iint_Rp_{X,Y}(x,y)\,dx\,dy }.
 $$
 
 #### 1 A complete joint distribution example
@@ -54472,25 +54653,25 @@ Every entry is nonnegative, and all joint probabilities sum to one.
 The marginal probability of $X=1$ is:
 
 $$
- P(X=1)=0.20+0.30=0.50. 
+ P(X=1)=0.20+0.30=0.50.
 $$
 
 The marginal probability of $Y=1$ is:
 
 $$
- P(Y=1)=0.10+0.30=0.40. 
+ P(Y=1)=0.10+0.30=0.40.
 $$
 
 The probability of both being one is:
 
 $$
- P(X=1,Y=1)=0.30. 
+ P(X=1,Y=1)=0.30.
 $$
 
 If $X$ and $Y$ were independent, the joint probability of both being one would be:
 
 $$
- 0.5(0.4)=0.2. 
+ 0.5(0.4)=0.2.
 $$
 
 But the actual value is $0.3$, so they are dependent.
@@ -54500,39 +54681,39 @@ But the actual value is $0.3$, so they are dependent.
 Since $X,Y\in\{0,1\}$:
 
 $$
- \mathbb E[X]=P(X=1)=0.5, 
+ \mathbb E[X]=P(X=1)=0.5,
 $$
 
 $$
- \mathbb E[Y]=P(Y=1)=0.4. 
+ \mathbb E[Y]=P(Y=1)=0.4.
 $$
 
 Their product $XY$ is one only when both variables equal one. Therefore:
 
 $$
- \mathbb E[XY]=0.3. 
+ \mathbb E[XY]=0.3.
 $$
 
 Thus:
 
 $$
- \operatorname{Cov}(X,Y) = 0.3-(0.5)(0.4) =\boxed{0.1}. 
+ \operatorname{Cov}(X,Y) = 0.3-(0.5)(0.4) =\boxed{0.1}.
 $$
 
 The variances are:
 
 $$
- \operatorname{Var}(X)=0.5(0.5)=0.25, 
+ \operatorname{Var}(X)=0.5(0.5)=0.25,
 $$
 
 $$
- \operatorname{Var}(Y)=0.4(0.6)=0.24. 
+ \operatorname{Var}(Y)=0.4(0.6)=0.24.
 $$
 
 The correlation is:
 
 $$
- \rho= \frac{0.1}{\sqrt{0.25(0.24)}} =\boxed{0.408248\ldots}. 
+ \rho= \frac{0.1}{\sqrt{0.25(0.24)}} =\boxed{0.408248\ldots}.
 $$
 
 So the two binary variables have positive linear association.
@@ -54544,13 +54725,13 @@ A marginal distribution describes one variable without retaining the detailed va
 For discrete random variables:
 
 $$
- \boxed{ p_X(x)=\sum_yp_{X,Y}(x,y) }. 
+ \boxed{ p_X(x)=\sum_yp_{X,Y}(x,y) }.
 $$
 
 For continuous variables:
 
 $$
- \boxed{ p_X(x)= \int_{-\infty}^{\infty} p_{X,Y}(x,y)\\,dy }. 
+ \boxed{ p_X(x)= \int_{-\infty}^{\infty} p_{X,Y}(x,y)\,dy }.
 $$
 
 We are summing or integrating over the variables we no longer want to represent explicitly.
@@ -54564,7 +54745,7 @@ The event $X=x$ can occur together with any permitted value of $Y$.
 In the discrete case:
 
 $$
- \{X=x\} = \bigcup_y\{X=x,Y=y\}. 
+ \{X=x\} = \bigcup_y\{X=x,Y=y\}.
 $$
 
 The component events for distinct $y$ are disjoint.
@@ -54572,7 +54753,7 @@ The component events for distinct $y$ are disjoint.
 Therefore:
 
 $$
- P(X=x)=\sum_yP(X=x,Y=y). 
+ P(X=x)=\sum_yP(X=x,Y=y).
 $$
 
 The continuous case is the analogous integration over the unwanted variable.
@@ -54584,7 +54765,7 @@ Return to our binary joint distribution.
 The marginals are:
 
 $$
- P(X=1)=0.5, \qquad P(Y=1)=0.4. 
+ P(X=1)=0.5, \qquad P(Y=1)=0.4.
 $$
 
 Knowing only these two values does not tell us whether $X$ and $Y$ are independent, positively correlated, or negatively correlated.
@@ -54594,13 +54775,13 @@ Different joint distributions can share the same marginals.
 For instance, the independent joint distribution with the same marginals would have:
 
 $$
- P(X=1,Y=1)=0.2. 
+ P(X=1,Y=1)=0.2.
 $$
 
 Our actual joint distribution has:
 
 $$
- P(X=1,Y=1)=0.3. 
+ P(X=1,Y=1)=0.3.
 $$
 
 Thus marginal distributions describe the individual variables but do not preserve the full dependence structure.
@@ -54614,7 +54795,7 @@ A conditional distribution describes one variable after accounting for informati
 For discrete variables:
 
 $$
- \boxed{ p_{Y\mid X}(y\mid x) = \frac{p_{X,Y}(x,y)}{p_X(x)} } 
+ \boxed{ p_{Y\mid X}(y\mid x) = \frac{p_{X,Y}(x,y)}{p_X(x)} }
 $$
 
 when $p_X(x)>0$.
@@ -54622,7 +54803,7 @@ when $p_X(x)>0$.
 For continuous variables with a joint density:
 
 $$
- \boxed{ p_{Y\mid X}(y\mid x) = \frac{p_{X,Y}(x,y)}{p_X(x)} } 
+ \boxed{ p_{Y\mid X}(y\mid x) = \frac{p_{X,Y}(x,y)}{p_X(x)} }
 $$
 
 where the marginal density is positive and the relevant conditional density exists.
@@ -54634,19 +54815,19 @@ The formulas look identical, but their interpretations differ: one divides proba
 We know:
 
 $$
- P(X=1)=0.5. 
+ P(X=1)=0.5.
 $$
 
 Therefore:
 
 $$
- P(Y=1\mid X=1) = \frac{0.3}{0.5} =\boxed{0.6}. 
+ P(Y=1\mid X=1) = \frac{0.3}{0.5} =\boxed{0.6}.
 $$
 
 Similarly:
 
 $$
- P(Y=1\mid X=0) = \frac{0.1}{0.5} =\boxed{0.2}. 
+ P(Y=1\mid X=0) = \frac{0.1}{0.5} =\boxed{0.2}.
 $$
 
 Knowing $X$ changes the success probability of $Y$ considerably.
@@ -54658,35 +54839,35 @@ The conditional distribution of $Y$ is Bernoulli with parameter $0.6$ when $X=1$
 The expected value of $Y$ conditional on $X$ is itself a function of $X$:
 
 $$
- \mathbb E[Y\mid X]. 
+ \mathbb E[Y\mid X].
 $$
 
 The law of total expectation states:
 
 $$
- \boxed{ \mathbb E[Y]= \mathbb E[\mathbb E[Y\mid X]] }. 
+ \boxed{ \mathbb E[Y]= \mathbb E[\mathbb E[Y\mid X]] }.
 $$
 
 For our example:
 
 $$
- \mathbb E[Y\mid X=0]=0.2, 
+ \mathbb E[Y\mid X=0]=0.2,
 $$
 
 $$
- \mathbb E[Y\mid X=1]=0.6. 
+ \mathbb E[Y\mid X=1]=0.6.
 $$
 
 Since:
 
 $$
- P(X=0)=P(X=1)=0.5, 
+ P(X=0)=P(X=1)=0.5,
 $$
 
 the outer expectation is:
 
 $$
- \begin{aligned} \mathbb E[\mathbb E[Y\mid X]] &=0.5(0.2)+0.5(0.6)\\ &=0.1+0.3\\ &=\boxed{0.4}. \end{aligned} 
+ \begin{aligned} \mathbb E[\mathbb E[Y\mid X]] &=0.5(0.2)+0.5(0.6)\\ &=0.1+0.3\\ &=\boxed{0.4}. \end{aligned}
 $$
 
 This agrees with the marginal expected value of $Y$.
@@ -54696,7 +54877,7 @@ This agrees with the marginal expected value of $Y$.
 An even deeper result is:
 
 $$
- \boxed{ \operatorname{Var}(Y) = \mathbb E[\operatorname{Var}(Y\mid X)] + \operatorname{Var}(\mathbb E[Y\mid X]) }. 
+ \boxed{ \operatorname{Var}(Y) = \mathbb E[\operatorname{Var}(Y\mid X)] + \operatorname{Var}(\mathbb E[Y\mid X]) }.
 $$
 
 The first term measures uncertainty remaining within each conditional situation.
@@ -54706,7 +54887,7 @@ The second measures uncertainty caused by not knowing which conditional situatio
 Derive it by writing:
 
 $$
- Y-\mathbb E[Y] = (Y-\mathbb E[Y\mid X]) + (\mathbb E[Y\mid X]-\mathbb E[Y]). 
+ Y-\mathbb E[Y] = (Y-\mathbb E[Y\mid X]) + (\mathbb E[Y\mid X]-\mathbb E[Y]).
 $$
 
 Square both sides and take expectation. The cross term vanishes because the conditional residual has conditional expectation zero.
@@ -54714,35 +54895,35 @@ Square both sides and take expectation. The cross term vanishes because the cond
 For our example, conditional Bernoulli variances are:
 
 $$
- \operatorname{Var}(Y\mid X=0)=0.2(0.8)=0.16, 
+ \operatorname{Var}(Y\mid X=0)=0.2(0.8)=0.16,
 $$
 
 $$
- \operatorname{Var}(Y\mid X=1)=0.6(0.4)=0.24. 
+ \operatorname{Var}(Y\mid X=1)=0.6(0.4)=0.24.
 $$
 
 Their average is:
 
 $$
- \mathbb E[\operatorname{Var}(Y\mid X)] = 0.5(0.16)+0.5(0.24) =\boxed{0.20}. 
+ \mathbb E[\operatorname{Var}(Y\mid X)] = 0.5(0.16)+0.5(0.24) =\boxed{0.20}.
 $$
 
 The conditional means are $0.2$ and $0.6$, each with probability $0.5$. Their overall mean is $0.4$, so:
 
 $$
- \operatorname{Var}(\mathbb E[Y\mid X]) = 0.5(0.2-0.4)^2+ 0.5(0.6-0.4)^2 =\boxed{0.04}. 
+ \operatorname{Var}(\mathbb E[Y\mid X]) = 0.5(0.2-0.4)^2+ 0.5(0.6-0.4)^2 =\boxed{0.04}.
 $$
 
 Therefore:
 
 $$
- \operatorname{Var}(Y)=0.20+0.04=\boxed{0.24}. 
+ \operatorname{Var}(Y)=0.20+0.04=\boxed{0.24}.
 $$
 
 This again matches the marginal Bernoulli variance:
 
 $$
- 0.4(0.6)=0.24. 
+ 0.4(0.6)=0.24.
 $$
 
 #### 4 Why this matters for graphics and uncertainty
@@ -54782,29 +54963,29 @@ A Bernoulli random variable represents one binary trial.
 Its possible values are:
 
 $$
- X\in\{0,1\}. 
+ X\in\{0,1\}.
 $$
 
 Let $p\in[0,1]$ be the probability of success:
 
 $$
- P(X=1)=p, 
+ P(X=1)=p,
 $$
 
 $$
- P(X=0)=1-p. 
+ P(X=0)=1-p.
 $$
 
 We write:
 
 $$
- \boxed{X\sim\operatorname{Bernoulli}(p)}. 
+ \boxed{X\sim\operatorname{Bernoulli}(p)}.
 $$
 
 The PMF can be expressed compactly as:
 
 $$
- \boxed{ P(X=x)=p^x(1-p)^{1-x}, \qquad x\in\{0,1\} }. 
+ \boxed{ P(X=x)=p^x(1-p)^{1-x}, \qquad x\in\{0,1\} }.
 $$
 
 When $x=1$, the expression gives $p$. When $x=0$, it gives $1-p$. At the endpoints $p=0$ and $p=1$, the two-case definition is preferable to relying on expressions involving $0^0$.
@@ -54814,13 +54995,13 @@ When $x=1$, the expression gives $p$. When $x=0$, it gives $1-p$. At the endpoin
 By definition:
 
 $$
- \mathbb E[X] = 0(1-p)+1(p). 
+ \mathbb E[X] = 0(1-p)+1(p).
 $$
 
 Therefore:
 
 $$
- \boxed{\mathbb E[X]=p}. 
+ \boxed{\mathbb E[X]=p}.
 $$
 
 The mean of a Bernoulli variable is exactly its success probability.
@@ -54830,25 +55011,25 @@ The mean of a Bernoulli variable is exactly its success probability.
 Because $X$ is either zero or one:
 
 $$
- X^2=X. 
+ X^2=X.
 $$
 
 Thus:
 
 $$
- \mathbb E[X^2]=\mathbb E[X]=p. 
+ \mathbb E[X^2]=\mathbb E[X]=p.
 $$
 
 Using:
 
 $$
- \operatorname{Var}(X)= \mathbb E[X^2]-(\mathbb E[X])^2, 
+ \operatorname{Var}(X)= \mathbb E[X^2]-(\mathbb E[X])^2,
 $$
 
 we obtain:
 
 $$
- \boxed{ \operatorname{Var}(X)=p(1-p) }. 
+ \boxed{ \operatorname{Var}(X)=p(1-p) }.
 $$
 
 The variance is zero at $p=0$ and $p=1$, where the outcome is deterministic.
@@ -54856,23 +55037,23 @@ The variance is zero at $p=0$ and $p=1$, where the outcome is deterministic.
 It is maximized at $p=0.5$, where:
 
 $$
- \operatorname{Var}(X)=0.25. 
+ \operatorname{Var}(X)=0.25.
 $$
 
 To prove the maximum, differentiate:
 
 $$
- v(p)=p-p^2, 
+ v(p)=p-p^2,
 $$
 
 $$
- v'(p)=1-2p. 
+ v'(p)=1-2p.
 $$
 
 Set:
 
 $$
- v'(p)=0 
+ v'(p)=0
 $$
 
 to obtain $p=1/2$. Since $v''(p)=-2$, this is a maximum.
@@ -54882,19 +55063,19 @@ to obtain $p=1/2$. Since $v''(p)=-2$, this is a maximum.
 For any event $A$, define the indicator:
 
 $$
- I_A= \begin{cases} 1,&A\text{ occurs},\\ 0,&A\text{ does not occur}. \end{cases} 
+ I_A= \begin{cases} 1,&A\text{ occurs},\\ 0,&A\text{ does not occur}. \end{cases}
 $$
 
 Then:
 
 $$
- I_A\sim\operatorname{Bernoulli}(P(A)). 
+ I_A\sim\operatorname{Bernoulli}(P(A)).
 $$
 
 Thus:
 
 $$
- \boxed{\mathbb E[I_A]=P(A)}. 
+ \boxed{\mathbb E[I_A]=P(A)}.
 $$
 
 This identity is extremely useful.
@@ -54908,19 +55089,19 @@ Suppose an observed binary outcome is $x\in\{0,1\}$, and our model predicts prob
 The likelihood of the observation is:
 
 $$
- L(p)=p^x(1-p)^{1-x}. 
+ L(p)=p^x(1-p)^{1-x}.
 $$
 
 Take logarithms:
 
 $$
- \log L(p)= x\log p+(1-x)\log(1-p). 
+ \log L(p)= x\log p+(1-x)\log(1-p).
 $$
 
 The negative log-likelihood is:
 
 $$
- \boxed{ -\log L(p)= -x\log p-(1-x)\log(1-p) }. 
+ \boxed{ -\log L(p)= -x\log p-(1-x)\log(1-p) }.
 $$
 
 This is the binary cross-entropy expression used in statistical classification.
@@ -54934,7 +55115,7 @@ A binomial random variable counts the number of successes in $n$ independent, id
 Let:
 
 $$
- X_i\sim\operatorname{Bernoulli}(p) 
+ X_i\sim\operatorname{Bernoulli}(p)
 $$
 
 for $i=1,\ldots,n$, with the $X_i$ independent.
@@ -54942,19 +55123,19 @@ for $i=1,\ldots,n$, with the $X_i$ independent.
 Define:
 
 $$
- K=\sum_{i=1}^nX_i. 
+ K=\sum_{i=1}^nX_i.
 $$
 
 Then:
 
 $$
- \boxed{K\sim\operatorname{Binomial}(n,p)}. 
+ \boxed{K\sim\operatorname{Binomial}(n,p)}.
 $$
 
 Its possible values are:
 
 $$
- K=0,1,\ldots,n. 
+ K=0,1,\ldots,n.
 $$
 
 #### 1 Deriving the binomial PMF
@@ -54964,7 +55145,7 @@ Suppose we want exactly $k$ successes and $n-k$ failures.
 One particular sequence, such as $k$ successes followed by $n-k$ failures, has probability:
 
 $$
- p^k(1-p)^{n-k} 
+ p^k(1-p)^{n-k}
 $$
 
 by independence.
@@ -54974,7 +55155,7 @@ But the successes can occur in different positions.
 The number of ways to choose the $k$ success positions is:
 
 $$
- \binom nk= \frac{n!}{k!(n-k)!}. 
+ \binom nk= \frac{n!}{k!(n-k)!}.
 $$
 
 All those distinct sequences have the same probability and are mutually exclusive.
@@ -54982,7 +55163,7 @@ All those distinct sequences have the same probability and are mutually exclusiv
 Therefore:
 
 $$
- \boxed{ P(K=k) = \binom nkp^k(1-p)^{n-k} }. 
+ \boxed{ P(K=k) = \binom nkp^k(1-p)^{n-k} }.
 $$
 
 #### 2 Worked example
@@ -54994,25 +55175,25 @@ What is the probability that exactly two succeed?
 We have:
 
 $$
- n=5,\qquad k=2,\qquad p=0.3. 
+ n=5,\qquad k=2,\qquad p=0.3.
 $$
 
 The number of possible sequences containing two successes is:
 
 $$
- \binom52=\frac{5!}{2!3!}=10. 
+ \binom52=\frac{5!}{2!3!}=10.
 $$
 
 One such sequence has probability:
 
 $$
- (0.3)^2(0.7)^3. 
+ (0.3)^2(0.7)^3.
 $$
 
 Therefore:
 
 $$
- \begin{aligned} P(K=2) &=10(0.3)^2(0.7)^3\\ &=10(0.09)(0.343)\\ &=\boxed{0.3087}. \end{aligned} 
+ \begin{aligned} P(K=2) &=10(0.3)^2(0.7)^3\\ &=10(0.09)(0.343)\\ &=\boxed{0.3087}. \end{aligned}
 $$
 
 #### 3 Deriving mean and variance
@@ -55020,25 +55201,25 @@ $$
 Since:
 
 $$
- K=\sum_iX_i, 
+ K=\sum_iX_i,
 $$
 
 linearity of expectation gives:
 
 $$
- \mathbb E[K]=\sum_i\mathbb E[X_i]. 
+ \mathbb E[K]=\sum_i\mathbb E[X_i].
 $$
 
 Each Bernoulli mean is $p$, so:
 
 $$
- \boxed{\mathbb E[K]=np}. 
+ \boxed{\mathbb E[K]=np}.
 $$
 
 For the variance:
 
 $$
- \operatorname{Var}(K) = \operatorname{Var}\left(\sum_iX_i\right). 
+ \operatorname{Var}(K) = \operatorname{Var}\left(\sum_iX_i\right).
 $$
 
 Because the trials are independent, their pairwise covariances vanish.
@@ -55046,23 +55227,23 @@ Because the trials are independent, their pairwise covariances vanish.
 Therefore:
 
 $$
- \operatorname{Var}(K)= \sum_i\operatorname{Var}(X_i). 
+ \operatorname{Var}(K)= \sum_i\operatorname{Var}(X_i).
 $$
 
 Each variance is $p(1-p)$, so:
 
 $$
- \boxed{ \operatorname{Var}(K)=np(1-p) }. 
+ \boxed{ \operatorname{Var}(K)=np(1-p) }.
 $$
 
 For $n=5,p=0.3$:
 
 $$
- \mathbb E[K]=1.5, 
+ \mathbb E[K]=1.5,
 $$
 
 $$
- \operatorname{Var}(K)=5(0.3)(0.7)=1.05. 
+ \operatorname{Var}(K)=5(0.3)(0.7)=1.05.
 $$
 
 The expected number of successes need not be an integer.
@@ -55072,7 +55253,7 @@ The expected number of successes need not be an integer.
 If the trials are dependent:
 
 $$
- \operatorname{Var}(K)= \sum_i\operatorname{Var}(X_i) + 2\sum_{i\<j}\operatorname{Cov}(X_i,X_j). 
+ \operatorname{Var}(K)= \sum_i\operatorname{Var}(X_i) + 2\sum_{i\<j}\operatorname{Cov}(X_i,X_j).
 $$
 
 The usual binomial variance no longer applies unless those covariance terms vanish under the relevant assumptions.
@@ -55096,13 +55277,13 @@ but factorial values overflow ordinary integer and floating-point types quickly.
 Instead, compute the log probability:
 
 $$
- \begin{aligned} \log P(K=k) &= \log\Gamma(n+1) -\log\Gamma(k+1) -\log\Gamma(n-k+1)\\ &\quad+k\log p+(n-k)\log(1-p). \end{aligned} 
+ \begin{aligned} \log P(K=k) &= \log\Gamma(n+1) -\log\Gamma(k+1) -\log\Gamma(n-k+1)\\ &\quad+k\log p+(n-k)\log(1-p). \end{aligned}
 $$
 
 Here $\Gamma$ is the gamma function satisfying:
 
 $$
- \Gamma(n+1)=n! 
+ \Gamma(n+1)=n!
 $$
 
 for nonnegative integers $n$.
@@ -55118,13 +55299,13 @@ The continuous uniform distribution assigns equal probability density across an 
 Write:
 
 $$
- X\sim U(a,b), \qquad a\<b. 
+ X\sim U(a,b), \qquad a\<b.
 $$
 
 Its density is:
 
 $$
- \boxed{ p_X(x)= \begin{cases} \dfrac1{b-a},&a\le x\le b,\\ 0,&\text{otherwise}. \end{cases} } 
+ \boxed{ p_X(x)= \begin{cases} \dfrac1{b-a},&a\le x\le b,\\ 0,&\text{otherwise}. \end{cases} }
 $$
 
 The density value at the exact endpoints can be chosen differently without affecting probabilities, because individual endpoints have zero probability under this continuous distribution.
@@ -55136,19 +55317,19 @@ Suppose the density equals some constant $c$ over $[a,b]$.
 Normalization requires:
 
 $$
- \int_a^bc\\,dx=1. 
+ \int_a^bc\,dx=1.
 $$
 
 Thus:
 
 $$
- c(b-a)=1, 
+ c(b-a)=1,
 $$
 
 so:
 
 $$
- \boxed{c=\frac1{b-a}}. 
+ \boxed{c=\frac1{b-a}}.
 $$
 
 #### 2 Deriving the mean: uniform distribution
@@ -55156,31 +55337,31 @@ $$
 The mean is:
 
 $$
- \mathbb E[X] = \int_a^b x\frac1{b-a}\\,dx. 
+ \mathbb E[X] = \int_a^b x\frac1{b-a}\,dx.
 $$
 
 Integrate:
 
 $$
- \mathbb E[X] = \frac1{b-a} \left[\frac{x^2}{2}\right]\_a^b. 
+ \mathbb E[X] = \frac1{b-a} \left[\frac{x^2}{2}\right]_a^b.
 $$
 
 Therefore:
 
 $$
- \mathbb E[X] = \frac{b^2-a^2}{2(b-a)}. 
+ \mathbb E[X] = \frac{b^2-a^2}{2(b-a)}.
 $$
 
 Factor:
 
 $$
- b^2-a^2=(b-a)(b+a). 
+ b^2-a^2=(b-a)(b+a).
 $$
 
 Cancel:
 
 $$
- \boxed{ \mathbb E[X]=\frac{a+b}{2} }. 
+ \boxed{ \mathbb E[X]=\frac{a+b}{2} }.
 $$
 
 The expected value lies at the interval midpoint.
@@ -55190,49 +55371,49 @@ The expected value lies at the interval midpoint.
 We can compute:
 
 $$
- \mathbb E[X^2] = \int_a^b\frac{x^2}{b-a}\\,dx. 
+ \mathbb E[X^2] = \int_a^b\frac{x^2}{b-a}\,dx.
 $$
 
 Thus:
 
 $$
- \mathbb E[X^2] = \frac{b^3-a^3}{3(b-a)}. 
+ \mathbb E[X^2] = \frac{b^3-a^3}{3(b-a)}.
 $$
 
 Factor:
 
 $$
- b^3-a^3=(b-a)(a^2+ab+b^2). 
+ b^3-a^3=(b-a)(a^2+ab+b^2).
 $$
 
 Therefore:
 
 $$
- \mathbb E[X^2] = \frac{a^2+ab+b^2}{3}. 
+ \mathbb E[X^2] = \frac{a^2+ab+b^2}{3}.
 $$
 
 Subtract the squared mean:
 
 $$
- \operatorname{Var}(X) = \frac{a^2+ab+b^2}{3} -\frac{(a+b)^2}{4}. 
+ \operatorname{Var}(X) = \frac{a^2+ab+b^2}{3} -\frac{(a+b)^2}{4}.
 $$
 
 Using a common denominator of 12:
 
 $$
- \operatorname{Var}(X) = \frac{ 4(a^2+ab+b^2)-3(a^2+2ab+b^2) }{12}. 
+ \operatorname{Var}(X) = \frac{ 4(a^2+ab+b^2)-3(a^2+2ab+b^2) }{12}.
 $$
 
 Simplify:
 
 $$
- \operatorname{Var}(X) = \frac{a^2-2ab+b^2}{12}. 
+ \operatorname{Var}(X) = \frac{a^2-2ab+b^2}{12}.
 $$
 
 Hence:
 
 $$
- \boxed{ \operatorname{Var}(X)=\frac{(b-a)^2}{12} }. 
+ \boxed{ \operatorname{Var}(X)=\frac{(b-a)^2}{12} }.
 $$
 
 #### 4 Worked example
@@ -55240,31 +55421,31 @@ $$
 For:
 
 $$
- X\sim U(2,6), 
+ X\sim U(2,6),
 $$
 
 the mean is:
 
 $$
- \mathbb E[X]=4. 
+ \mathbb E[X]=4.
 $$
 
 The variance is:
 
 $$
- \operatorname{Var}(X) = \frac{(6-2)^2}{12} = \boxed{\frac43}. 
+ \operatorname{Var}(X) = \frac{(6-2)^2}{12} = \boxed{\frac43}.
 $$
 
 The standard deviation is:
 
 $$
- \sigma=\sqrt{\frac43}\approx1.154701. 
+ \sigma=\sqrt{\frac43}\approx1.154701.
 $$
 
 The probability of the interval $[3,5]$ is:
 
 $$
- P(3\le X\le5) = \int_3^5\frac14\\,dx =\boxed{0.5}. 
+ P(3\le X\le5) = \int_3^5\frac14\,dx =\boxed{0.5}.
 $$
 
 #### 5 Uniform in coordinates is not always uniform geometrically
@@ -55278,7 +55459,7 @@ Why?
 The spherical surface-area element is:
 
 $$
- dA=r^2\sin\theta\\,d\theta\\,d\phi. 
+ dA=r^2\sin\theta\,d\theta\,d\phi.
 $$
 
 Equal changes in $\theta$ correspond to different surface areas depending on latitude.
@@ -55288,13 +55469,13 @@ Uniform polar-angle sampling overrepresents directions near the poles relative t
 To sample uniformly over a sphere, one can choose:
 
 $$
- z\sim U(-1,1), \qquad \phi\sim U(0,2\pi), 
+ z\sim U(-1,1), \qquad \phi\sim U(0,2\pi),
 $$
 
 then construct:
 
 $$
- \mathbf d= \begin{bmatrix} \sqrt{1-z^2}\cos\phi\\ \sqrt{1-z^2}\sin\phi\\ z \end{bmatrix}. 
+ \mathbf d= \begin{bmatrix} \sqrt{1-z^2}\cos\phi\\ \sqrt{1-z^2}\sin\phi\\ z \end{bmatrix}.
 $$
 
 The resulting direction is uniform with respect to spherical surface area.
@@ -55310,13 +55491,13 @@ It appears in measurement uncertainty, stochastic perturbation models, regressio
 A scalar Gaussian is parameterized by a mean $\mu$ and positive standard deviation $\sigma$:
 
 $$
- \boxed{ X\sim\mathcal N(\mu,\sigma^2) }. 
+ \boxed{ X\sim\mathcal N(\mu,\sigma^2) }.
 $$
 
 Its density is:
 
 $$
- \boxed{ p_X(x)= \frac1{\sigma\sqrt{2\pi}} \exp\left( -\frac{(x-\mu)^2}{2\sigma^2} \right) }. 
+ \boxed{ p_X(x)= \frac1{\sigma\sqrt{2\pi}} \exp\left( -\frac{(x-\mu)^2}{2\sigma^2} \right) }.
 $$
 
 The notation uses $\sigma^2$, the variance, as the second distribution parameter.
@@ -55328,7 +55509,7 @@ The density is symmetric around $\mu$, reaches its maximum there, and decreases 
 The expression:
 
 $$
- (x-\mu)^2 
+ (x-\mu)^2
 $$
 
 measures squared deviation from the centre.
@@ -55336,7 +55517,7 @@ measures squared deviation from the centre.
 The factor:
 
 $$
- 2\sigma^2 
+ 2\sigma^2
 $$
 
 controls how quickly density decreases.
@@ -55352,7 +55533,7 @@ But the formula must also integrate to one.
 The normalizing coefficient:
 
 $$
- \frac1{\sigma\sqrt{2\pi}} 
+ \frac1{\sigma\sqrt{2\pi}}
 $$
 
 is essential for turning the bell-shaped exponential into a probability density.
@@ -55362,7 +55543,7 @@ is essential for turning the bell-shaped exponential into a probability density.
 Consider:
 
 $$
- I=\int_{-\infty}^{\infty}e^{-x^2/2}\\,dx. 
+ I=\int_{-\infty}^{\infty}e^{-x^2/2}\,dx.
 $$
 
 This integral is not evaluated using an elementary antiderivative.
@@ -55370,61 +55551,61 @@ This integral is not evaluated using an elementary antiderivative.
 Instead, square it:
 
 $$
- I^2= \left(\int_{-\infty}^{\infty}e^{-x^2/2}\\,dx\right) \left(\int_{-\infty}^{\infty}e^{-y^2/2}\\,dy\right). 
+ I^2= \left(\int_{-\infty}^{\infty}e^{-x^2/2}\,dx\right) \left(\int_{-\infty}^{\infty}e^{-y^2/2}\,dy\right).
 $$
 
 Combine the independent integration variables:
 
 $$
- I^2= \iint_{\mathbb R^2} e^{-(x^2+y^2)/2}\\,dx\\,dy. 
+ I^2= \iint_{\mathbb R^2} e^{-(x^2+y^2)/2}\,dx\,dy.
 $$
 
 Switch to polar coordinates:
 
 $$
- x=r\cos\theta, \qquad y=r\sin\theta. 
+ x=r\cos\theta, \qquad y=r\sin\theta.
 $$
 
 The area element transforms as:
 
 $$
- dx\\,dy=r\\,dr\\,d\theta. 
+ dx\,dy=r\,dr\,d\theta.
 $$
 
 Therefore:
 
 $$
- I^2= \int_0^{2\pi}\int_0^\infty e^{-r^2/2}r\\,dr\\,d\theta. 
+ I^2= \int_0^{2\pi}\int_0^\infty e^{-r^2/2}r\,dr\,d\theta.
 $$
 
 Evaluate the radial integral using:
 
 $$
- u=\frac{r^2}{2}, \qquad du=r\\,dr. 
+ u=\frac{r^2}{2}, \qquad du=r\,dr.
 $$
 
 Then:
 
 $$
- \int_0^\infty e^{-r^2/2}r\\,dr = \int_0^\infty e^{-u}\\,du =1. 
+ \int_0^\infty e^{-r^2/2}r\,dr = \int_0^\infty e^{-u}\,du =1.
 $$
 
 Thus:
 
 $$
- I^2=2\pi. 
+ I^2=2\pi.
 $$
 
 Since $I>0$:
 
 $$
- \boxed{I=\sqrt{2\pi}}. 
+ \boxed{I=\sqrt{2\pi}}.
 $$
 
 Therefore the standard Gaussian must include:
 
 $$
- \frac1{\sqrt{2\pi}} 
+ \frac1{\sqrt{2\pi}}
 $$
 
 to integrate to one.
@@ -55432,7 +55613,7 @@ to integrate to one.
 For a Gaussian with mean $\mu$ and standard deviation $\sigma$, substituting:
 
 $$
- z=\frac{x-\mu}{\sigma} 
+ z=\frac{x-\mu}{\sigma}
 $$
 
 introduces a factor of $\sigma$ in the integration measure, requiring the additional $1/\sigma$ normalization.
@@ -55442,31 +55623,31 @@ introduces a factor of $\sigma$ in the integration measure, requiring the additi
 Because the standard Gaussian is symmetric around zero:
 
 $$
- \mathbb E[Z]=0. 
+ \mathbb E[Z]=0.
 $$
 
 Its variance is:
 
 $$
- \operatorname{Var}(Z)=\mathbb E[Z^2]. 
+ \operatorname{Var}(Z)=\mathbb E[Z^2].
 $$
 
 We can evaluate:
 
 $$
- \mathbb E[Z^2] = \frac1{\sqrt{2\pi}} \int_{-\infty}^{\infty}z^2e^{-z^2/2}\\,dz. 
+ \mathbb E[Z^2] = \frac1{\sqrt{2\pi}} \int_{-\infty}^{\infty}z^2e^{-z^2/2}\,dz.
 $$
 
 Use integration by parts with:
 
 $$
- u=z,\qquad dv=ze^{-z^2/2}\\,dz. 
+ u=z,\qquad dv=ze^{-z^2/2}\,dz.
 $$
 
 Then:
 
 $$
- du=dz, \qquad v=-e^{-z^2/2}. 
+ du=dz, \qquad v=-e^{-z^2/2}.
 $$
 
 The boundary term vanishes because $ze^{-z^2/2}\to0$ as $|z|\to\infty$.
@@ -55474,31 +55655,31 @@ The boundary term vanishes because $ze^{-z^2/2}\to0$ as $|z|\to\infty$.
 We obtain:
 
 $$
- \int_{-\infty}^{\infty}z^2e^{-z^2/2}\\,dz = \int_{-\infty}^{\infty}e^{-z^2/2}\\,dz =\sqrt{2\pi}. 
+ \int_{-\infty}^{\infty}z^2e^{-z^2/2}\,dz = \int_{-\infty}^{\infty}e^{-z^2/2}\,dz =\sqrt{2\pi}.
 $$
 
 Thus:
 
 $$
- \boxed{\operatorname{Var}(Z)=1}. 
+ \boxed{\operatorname{Var}(Z)=1}.
 $$
 
 Now let:
 
 $$
- X=\mu+\sigma Z. 
+ X=\mu+\sigma Z.
 $$
 
 Linearity of expectation gives:
 
 $$
- \mathbb E[X]=\mu. 
+ \mathbb E[X]=\mu.
 $$
 
 Variance scaling gives:
 
 $$
- \operatorname{Var}(X)=\sigma^2. 
+ \operatorname{Var}(X)=\sigma^2.
 $$
 
 These are exactly the distribution parameters.
@@ -55516,7 +55697,7 @@ The chart illustrates density height, not probability at individual exact values
 Suppose a measured value $y$ follows:
 
 $$
- Y\sim\mathcal N(f(\theta),\sigma^2) 
+ Y\sim\mathcal N(f(\theta),\sigma^2)
 $$
 
 where $f(\theta)$ is a model prediction.
@@ -55524,13 +55705,13 @@ where $f(\theta)$ is a model prediction.
 The density of observing $y$ is:
 
 $$
- p(y\mid\theta) = \frac1{\sigma\sqrt{2\pi}} \exp\left( -\frac{(y-f(\theta))^2}{2\sigma^2} \right). 
+ p(y\mid\theta) = \frac1{\sigma\sqrt{2\pi}} \exp\left( -\frac{(y-f(\theta))^2}{2\sigma^2} \right).
 $$
 
 Take the negative logarithm:
 
 $$
- -\log p(y\mid\theta) = \frac{(y-f(\theta))^2}{2\sigma^2} +\log\sigma+\frac12\log(2\pi). 
+ -\log p(y\mid\theta) = \frac{(y-f(\theta))^2}{2\sigma^2} +\log\sigma+\frac12\log(2\pi).
 $$
 
 If $\sigma$ is known and constant, the final two terms do not depend on $\theta$.
@@ -55538,7 +55719,7 @@ If $\sigma$ is known and constant, the final two terms do not depend on $\theta$
 Therefore minimizing the negative log-likelihood is equivalent to minimizing:
 
 $$
- \boxed{ \frac{(y-f(\theta))^2}{2\sigma^2} }. 
+ \boxed{ \frac{(y-f(\theta))^2}{2\sigma^2} }.
 $$
 
 This is weighted least squares.
@@ -55562,19 +55743,19 @@ A model should use Gaussian uncertainty because it is justified by the applicati
 The standard [[#4. Discrete and continuous distribution families|normal distribution]] is the special case:
 
 $$
- \boxed{Z\sim\mathcal N(0,1)}. 
+ \boxed{Z\sim\mathcal N(0,1)}.
 $$
 
 Its PDF is:
 
 $$
- \boxed{ \phi(z)= \frac1{\sqrt{2\pi}}e^{-z^2/2} }. 
+ \boxed{ \phi(z)= \frac1{\sqrt{2\pi}}e^{-z^2/2} }.
 $$
 
 Its CDF is conventionally denoted:
 
 $$
- \boxed{ \Phi(z)= \int_{-\infty}^{z}\phi(t)\\,dt }. 
+ \boxed{ \Phi(z)= \int_{-\infty}^{z}\phi(t)\,dt }.
 $$
 
 #### 1 Standardization
@@ -55582,19 +55763,19 @@ $$
 Suppose:
 
 $$
- X\sim\mathcal N(\mu,\sigma^2). 
+ X\sim\mathcal N(\mu,\sigma^2).
 $$
 
 Define:
 
 $$
- \boxed{ Z=\frac{X-\mu}{\sigma} }. 
+ \boxed{ Z=\frac{X-\mu}{\sigma} }.
 $$
 
 Then:
 
 $$
- Z\sim\mathcal N(0,1). 
+ Z\sim\mathcal N(0,1).
 $$
 
 This follows because shifting removes the mean and dividing by $\sigma$ makes the variance one.
@@ -55606,7 +55787,7 @@ The standardized variable $Z$ is dimensionless.
 Suppose pixel localization error is modeled as:
 
 $$
- X\sim\mathcal N(0,2^2) 
+ X\sim\mathcal N(0,2^2)
 $$
 
 with error measured in pixels.
@@ -55616,31 +55797,31 @@ What is the probability that the error lies between $-2$ and $2$ pixels?
 Standardize:
 
 $$
- P(-2\le X\le2) = P\left(-1\le Z\le1\right). 
+ P(-2\le X\le2) = P\left(-1\le Z\le1\right).
 $$
 
 Using the standard normal CDF:
 
 $$
- P(-1\le Z\le1) = \Phi(1)-\Phi(-1). 
+ P(-1\le Z\le1) = \Phi(1)-\Phi(-1).
 $$
 
 By symmetry:
 
 $$
- \Phi(-1)=1-\Phi(1). 
+ \Phi(-1)=1-\Phi(1).
 $$
 
 Therefore:
 
 $$
- P(-1\le Z\le1) = 2\Phi(1)-1. 
+ P(-1\le Z\le1) = 2\Phi(1)-1.
 $$
 
 Numerically:
 
 $$
- \boxed{P(-2\le X\le2)\approx0.682689}. 
+ \boxed{P(-2\le X\le2)\approx0.682689}.
 $$
 
 The familiar 68% rule comes from this exact Gaussian calculation.
@@ -55650,25 +55831,25 @@ The familiar 68% rule comes from this exact Gaussian calculation.
 The normal CDF can be expressed using the error function:
 
 $$
- \operatorname{erf}(x)= \frac2{\sqrt\pi} \int_0^xe^{-t^2}\\,dt. 
+ \operatorname{erf}(x)= \frac2{\sqrt\pi} \int_0^xe^{-t^2}\,dt.
 $$
 
 For a general normal variable:
 
 $$
- \boxed{ F_X(x) = \frac12\left[ 1+\operatorname{erf} \left(\frac{x-\mu}{\sigma\sqrt2}\right) \right] }. 
+ \boxed{ F_X(x) = \frac12\left[ 1+\operatorname{erf} \left(\frac{x-\mu}{\sigma\sqrt2}\right) \right] }.
 $$
 
 An equivalent expression uses the complementary error function:
 
 $$
- \operatorname{erfc}(x)=1-\operatorname{erf}(x). 
+ \operatorname{erfc}(x)=1-\operatorname{erf}(x).
 $$
 
 Thus:
 
 $$
- \boxed{ F_X(x) = \frac12\operatorname{erfc} \left( -\frac{x-\mu}{\sigma\sqrt2} \right) }. 
+ \boxed{ F_X(x) = \frac12\operatorname{erfc} \left( -\frac{x-\mu}{\sigma\sqrt2} \right) }.
 $$
 
 This second expression is often preferable for numerical evaluation in extreme lower tails because it avoids explicitly adding one to an `erf` result that may be almost negative one.
@@ -55676,7 +55857,7 @@ This second expression is often preferable for numerical evaluation in extreme l
 For upper-tail probability:
 
 $$
- P(X>x) = \frac12\operatorname{erfc} \left( \frac{x-\mu}{\sigma\sqrt2} \right). 
+ P(X>x) = \frac12\operatorname{erfc} \left( \frac{x-\mu}{\sigma\sqrt2} \right).
 $$
 
 This is often more reliable than subtracting a CDF close to one from one.
@@ -55694,11 +55875,11 @@ A raw error of $3$ pixels is unusually large for A but less significant for B.
 Their standardized residuals are:
 
 $$
- z_A=3, 
+ z_A=3,
 $$
 
 $$
- z_B=\frac35=0.6. 
+ z_B=\frac35=0.6.
 $$
 
 Normalizing by uncertainty allows us to compare errors on a common probabilistic scale.
@@ -55718,13 +55899,13 @@ The exponential distribution models a nonnegative waiting time in a memoryless e
 Let:
 
 $$
- T\sim\operatorname{Exponential}(\lambda), 
+ T\sim\operatorname{Exponential}(\lambda),
 $$
 
 where:
 
 $$
- \lambda>0 
+ \lambda>0
 $$
 
 is the rate parameter.
@@ -55732,7 +55913,7 @@ is the rate parameter.
 Its PDF is:
 
 $$
- \boxed{ p_T(t)= \begin{cases} \lambda e^{-\lambda t},&t\ge0,\\ 0,&t<0. \end{cases} } 
+ \boxed{ p_T(t)= \begin{cases} \lambda e^{-\lambda t},&t\ge0,\\ 0,&t<0. \end{cases} }
 $$
 
 The parameter $\lambda$ has units of inverse time if $T$ is measured in time.
@@ -55742,19 +55923,19 @@ The parameter $\lambda$ has units of inverse time if $T$ is measured in time.
 For $t\ge0$:
 
 $$
- F_T(t)= \int_0^t\lambda e^{-\lambda s}\\,ds. 
+ F_T(t)= \int_0^t\lambda e^{-\lambda s}\,ds.
 $$
 
 Integrate:
 
 $$
- F_T(t)= \left[-e^{-\lambda s}\right]\_0^t. 
+ F_T(t)= \left[-e^{-\lambda s}\right]_0^t.
 $$
 
 Therefore:
 
 $$
- \boxed{ F_T(t)=1-e^{-\lambda t} }. 
+ \boxed{ F_T(t)=1-e^{-\lambda t} }.
 $$
 
 For $t<0$, the CDF is zero.
@@ -55762,13 +55943,13 @@ For $t<0$, the CDF is zero.
 The survival function is:
 
 $$
- S_T(t)=P(T>t). 
+ S_T(t)=P(T>t).
 $$
 
 For $t\ge0$:
 
 $$
- \boxed{ S_T(t)=e^{-\lambda t} }. 
+ \boxed{ S_T(t)=e^{-\lambda t} }.
 $$
 
 #### 2 Deriving the mean: exponential distribution
@@ -55776,13 +55957,13 @@ $$
 The mean is:
 
 $$
- \mathbb E[T]= \int_0^\infty t\lambda e^{-\lambda t}\\,dt. 
+ \mathbb E[T]= \int_0^\infty t\lambda e^{-\lambda t}\,dt.
 $$
 
 Integration by parts gives:
 
 $$
- \mathbb E[T] = \frac1\lambda 
+ \mathbb E[T] = \frac1\lambda
 $$
 
 because the boundary term vanishes and the remaining exponential integral evaluates to $1/\lambda$.
@@ -55790,25 +55971,25 @@ because the boundary term vanishes and the remaining exponential integral evalua
 Thus:
 
 $$
- \boxed{ \mathbb E[T]=\frac1\lambda }. 
+ \boxed{ \mathbb E[T]=\frac1\lambda }.
 $$
 
 The second moment is:
 
 $$
- \mathbb E[T^2]=\frac2{\lambda^2}. 
+ \mathbb E[T^2]=\frac2{\lambda^2}.
 $$
 
 Therefore:
 
 $$
- \operatorname{Var}(T) = \frac2{\lambda^2} -\frac1{\lambda^2} = \boxed{\frac1{\lambda^2}}. 
+ \operatorname{Var}(T) = \frac2{\lambda^2} -\frac1{\lambda^2} = \boxed{\frac1{\lambda^2}}.
 $$
 
 The standard deviation is also:
 
 $$
- \sigma_T=\frac1\lambda. 
+ \sigma_T=\frac1\lambda.
 $$
 
 #### 3 Memorylessness
@@ -55816,7 +55997,7 @@ $$
 The defining property is:
 
 $$
- \boxed{ P(T>s+t\mid T>s)=P(T>t) } 
+ \boxed{ P(T>s+t\mid T>s)=P(T>t) }
 $$
 
 for $s,t\ge0$.
@@ -55826,25 +56007,25 @@ Let's derive it.
 Because:
 
 $$
- \{T>s+t\}\subseteq\{T>s\}, 
+ \{T>s+t\}\subseteq\{T>s\},
 $$
 
 conditional probability gives:
 
 $$
- P(T>s+t\mid T>s) = \frac{P(T>s+t)}{P(T>s)}. 
+ P(T>s+t\mid T>s) = \frac{P(T>s+t)}{P(T>s)}.
 $$
 
 Using the exponential survival function:
 
 $$
- = \frac{e^{-\lambda(s+t)}}{e^{-\lambda s}} =e^{-\lambda t}. 
+ = \frac{e^{-\lambda(s+t)}}{e^{-\lambda s}} =e^{-\lambda t}.
 $$
 
 But:
 
 $$
- e^{-\lambda t}=P(T>t). 
+ e^{-\lambda t}=P(T>t).
 $$
 
 Therefore the exponential distribution is memoryless.
@@ -55858,25 +56039,25 @@ This is a special property and is not true for most waiting-time distributions.
 Suppose events arrive at an average rate of:
 
 $$
- \lambda=2\text{ events per second}. 
+ \lambda=2\text{ events per second}.
 $$
 
 The mean waiting time is:
 
 $$
- \mathbb E[T]=0.5\text{ seconds}. 
+ \mathbb E[T]=0.5\text{ seconds}.
 $$
 
 The probability of observing an event within $0.1$ seconds is:
 
 $$
- \begin{aligned} P(T\le0.1) &=1-e^{-2(0.1)}\\ &=1-e^{-0.2}\\ &\approx\boxed{0.181269}. \end{aligned} 
+ \begin{aligned} P(T\le0.1) &=1-e^{-2(0.1)}\\ &=1-e^{-0.2}\\ &\approx\boxed{0.181269}. \end{aligned}
 $$
 
 The probability of waiting longer than one second is:
 
 $$
- P(T>1)=e^{-2}\approx0.135335. 
+ P(T>1)=e^{-2}\approx0.135335.
 $$
 
 #### 5 Numerical stability of the CDF
@@ -55884,7 +56065,7 @@ $$
 The formula:
 
 $$
- 1-e^{-\lambda t} 
+ 1-e^{-\lambda t}
 $$
 
 can lose precision when $\lambda t$ is very small, because $e^{-\lambda t}$ is close to one.
@@ -55916,31 +56097,31 @@ This is an example of mathematically equivalent formulas having different numeri
 Let:
 
 $$
- U\sim U(0,1). 
+ U\sim U(0,1).
 $$
 
 Set:
 
 $$
- U=F_T(t)=1-e^{-\lambda t}. 
+ U=F_T(t)=1-e^{-\lambda t}.
 $$
 
 Then:
 
 $$
- 1-U=e^{-\lambda t}. 
+ 1-U=e^{-\lambda t}.
 $$
 
 Take logarithms:
 
 $$
- \log(1-U)=-\lambda t. 
+ \log(1-U)=-\lambda t.
 $$
 
 Thus:
 
 $$
- \boxed{ T=-\frac{\log(1-U)}{\lambda} }. 
+ \boxed{ T=-\frac{\log(1-U)}{\lambda} }.
 $$
 
 In floating-point code, `-log1p(-u)/lambda` can be preferable when $u$ is small.
@@ -55954,13 +56135,13 @@ The Poisson distribution models counts of events under an idealized Poisson proc
 A Poisson random variable takes values:
 
 $$
- K\in\{0,1,2,\ldots\}. 
+ K\in\{0,1,2,\ldots\}.
 $$
 
 Write:
 
 $$
- \boxed{K\sim\operatorname{Poisson}(\lambda)} 
+ \boxed{K\sim\operatorname{Poisson}(\lambda)}
 $$
 
 where $\lambda\ge0$ is the expected count over the specified observation interval or region.
@@ -55968,7 +56149,7 @@ where $\lambda\ge0$ is the expected count over the specified observation interva
 Its PMF is:
 
 $$
- \boxed{ P(K=k)= e^{-\lambda}\frac{\lambda^k}{k!} }. 
+ \boxed{ P(K=k)= e^{-\lambda}\frac{\lambda^k}{k!} }.
 $$
 
 For $\lambda=0$, the distribution is concentrated at $K=0$.
@@ -55980,7 +56161,7 @@ Suppose an interval is divided into $n$ small subintervals.
 Assume each subinterval contains an event with probability:
 
 $$
- p=\frac\lambda n, 
+ p=\frac\lambda n,
 $$
 
 and trials are independent.
@@ -55988,43 +56169,43 @@ and trials are independent.
 The total count is:
 
 $$
- K_n\sim\operatorname{Binomial} \left(n,\frac\lambda n\right). 
+ K_n\sim\operatorname{Binomial} \left(n,\frac\lambda n\right).
 $$
 
 Therefore:
 
 $$
- P(K_n=k) = \binom nk \left(\frac\lambda n\right)^k \left(1-\frac\lambda n\right)^{n-k}. 
+ P(K_n=k) = \binom nk \left(\frac\lambda n\right)^k \left(1-\frac\lambda n\right)^{n-k}.
 $$
 
 Rewrite the first two factors:
 
 $$
- \binom nk\left(\frac\lambda n\right)^k = \frac{n(n-1)\cdots(n-k+1)}{k!} \frac{\lambda^k}{n^k}. 
+ \binom nk\left(\frac\lambda n\right)^k = \frac{n(n-1)\cdots(n-k+1)}{k!} \frac{\lambda^k}{n^k}.
 $$
 
 For fixed $k$, as $n\to\infty$:
 
 $$
- \frac{n(n-1)\cdots(n-k+1)}{n^k} \to1. 
+ \frac{n(n-1)\cdots(n-k+1)}{n^k} \to1.
 $$
 
 Therefore:
 
 $$
- \binom nk\left(\frac\lambda n\right)^k \to \frac{\lambda^k}{k!}. 
+ \binom nk\left(\frac\lambda n\right)^k \to \frac{\lambda^k}{k!}.
 $$
 
 The remaining factor satisfies:
 
 $$
- \left(1-\frac\lambda n\right)^{n-k} \to e^{-\lambda}. 
+ \left(1-\frac\lambda n\right)^{n-k} \to e^{-\lambda}.
 $$
 
 Thus:
 
 $$
- \boxed{ P(K=k)=e^{-\lambda}\frac{\lambda^k}{k!} }. 
+ \boxed{ P(K=k)=e^{-\lambda}\frac{\lambda^k}{k!} }.
 $$
 
 This is the Poisson limit of the binomial distribution.
@@ -56034,7 +56215,7 @@ This is the Poisson limit of the binomial distribution.
 Start with:
 
 $$
- \mathbb E[K] = \sum_{k=0}^\infty k e^{-\lambda}\frac{\lambda^k}{k!}. 
+ \mathbb E[K] = \sum_{k=0}^\infty k e^{-\lambda}\frac{\lambda^k}{k!}.
 $$
 
 The $k=0$ term vanishes.
@@ -56042,19 +56223,19 @@ The $k=0$ term vanishes.
 For $k\ge1$:
 
 $$
- \frac{k}{k!}=\frac1{(k-1)!}. 
+ \frac{k}{k!}=\frac1{(k-1)!}.
 $$
 
 Therefore:
 
 $$
- \begin{aligned} \mathbb E[K] &= e^{-\lambda} \sum_{k=1}^\infty \frac{\lambda^k}{(k-1)!}\\ &= \lambda e^{-\lambda} \sum_{j=0}^\infty \frac{\lambda^j}{j!}\\ &=\lambda e^{-\lambda}e^\lambda. \end{aligned} 
+ \begin{aligned} \mathbb E[K] &= e^{-\lambda} \sum_{k=1}^\infty \frac{\lambda^k}{(k-1)!}\\ &= \lambda e^{-\lambda} \sum_{j=0}^\infty \frac{\lambda^j}{j!}\\ &=\lambda e^{-\lambda}e^\lambda. \end{aligned}
 $$
 
 Thus:
 
 $$
- \boxed{\mathbb E[K]=\lambda}. 
+ \boxed{\mathbb E[K]=\lambda}.
 $$
 
 #### 3 Deriving the variance: Poisson distribution
@@ -56062,49 +56243,49 @@ $$
 First calculate the factorial second moment:
 
 $$
- \mathbb E[K(K-1)]. 
+ \mathbb E[K(K-1)].
 $$
 
 Using the PMF:
 
 $$
- \mathbb E[K(K-1)] = \sum_{k=2}^\infty k(k-1)e^{-\lambda} \frac{\lambda^k}{k!}. 
+ \mathbb E[K(K-1)] = \sum_{k=2}^\infty k(k-1)e^{-\lambda} \frac{\lambda^k}{k!}.
 $$
 
 Because:
 
 $$
- \frac{k(k-1)}{k!}=\frac1{(k-2)!}, 
+ \frac{k(k-1)}{k!}=\frac1{(k-2)!},
 $$
 
 we obtain:
 
 $$
- \mathbb E[K(K-1)] = \lambda^2e^{-\lambda} \sum_{j=0}^{\infty}\frac{\lambda^j}{j!} =\lambda^2. 
+ \mathbb E[K(K-1)] = \lambda^2e^{-\lambda} \sum_{j=0}^{\infty}\frac{\lambda^j}{j!} =\lambda^2.
 $$
 
 Now use:
 
 $$
- K^2=K(K-1)+K. 
+ K^2=K(K-1)+K.
 $$
 
 Thus:
 
 $$
- \mathbb E[K^2] = \lambda^2+\lambda. 
+ \mathbb E[K^2] = \lambda^2+\lambda.
 $$
 
 Therefore:
 
 $$
- \operatorname{Var}(K) = \lambda^2+\lambda-\lambda^2. 
+ \operatorname{Var}(K) = \lambda^2+\lambda-\lambda^2.
 $$
 
 Hence:
 
 $$
- \boxed{ \operatorname{Var}(K)=\lambda }. 
+ \boxed{ \operatorname{Var}(K)=\lambda }.
 $$
 
 The Poisson distribution has equal mean and variance.
@@ -56116,25 +56297,25 @@ This equality is an important model diagnostic, although finite-sample estimates
 Suppose:
 
 $$
- K\sim\operatorname{Poisson}(2). 
+ K\sim\operatorname{Poisson}(2).
 $$
 
 What is the probability of exactly three events?
 
 $$
- P(K=3) = e^{-2}\frac{2^3}{3!}. 
+ P(K=3) = e^{-2}\frac{2^3}{3!}.
 $$
 
 Therefore:
 
 $$
- P(K=3)= e^{-2}\frac86 \approx\boxed{0.180447}. 
+ P(K=3)= e^{-2}\frac86 \approx\boxed{0.180447}.
 $$
 
 The probability of zero events is:
 
 $$
- P(K=0)=e^{-2}\approx0.135335. 
+ P(K=0)=e^{-2}\approx0.135335.
 $$
 
 #### 5 Poisson process and exponential waiting times
@@ -56144,19 +56325,19 @@ Suppose events occur according to a homogeneous Poisson process with rate $r$ ev
 The count in an interval of duration $t$ satisfies:
 
 $$
- \boxed{ N(t)\sim\operatorname{Poisson}(rt) }. 
+ \boxed{ N(t)\sim\operatorname{Poisson}(rt) }.
 $$
 
 Thus:
 
 $$
- \mathbb E[N(t)]=rt. 
+ \mathbb E[N(t)]=rt.
 $$
 
 The probability of no events during the interval is:
 
 $$
- P(N(t)=0)=e^{-rt}. 
+ P(N(t)=0)=e^{-rt}.
 $$
 
 Let $T$ be the waiting time until the first event.
@@ -56166,7 +56347,7 @@ The event $T>t$ means no event occurred during the first $t$ units of time.
 Therefore:
 
 $$
- P(T>t)=P(N(t)=0)=e^{-rt}. 
+ P(T>t)=P(N(t)=0)=e^{-rt}.
 $$
 
 This is exactly the survival function of an exponential distribution with rate $r$.
@@ -56174,7 +56355,7 @@ This is exactly the survival function of an exponential distribution with rate $
 Hence:
 
 $$
- \boxed{ T\sim\operatorname{Exponential}(r) }. 
+ \boxed{ T\sim\operatorname{Exponential}(r) }.
 $$
 
 This establishes the connection between Poisson counts and exponential waiting times.
@@ -56196,7 +56377,7 @@ We now extend the Gaussian distribution from one uncertain scalar to an entire u
 Suppose a reconstructed point has uncertain position:
 
 $$
- \mathbf X= \begin{bmatrix} X\\Y\\Z \end{bmatrix}. 
+ \mathbf X= \begin{bmatrix} X\\Y\\Z \end{bmatrix}.
 $$
 
 We need to describe not only how uncertain each coordinate is, but also how coordinate errors are coupled.
@@ -56204,25 +56385,25 @@ We need to describe not only how uncertain each coordinate is, but also how coor
 A multivariate Gaussian uses a mean vector:
 
 $$
- \boldsymbol\mu\in\mathbb R^n 
+ \boldsymbol\mu\in\mathbb R^n
 $$
 
 and covariance matrix:
 
 $$
- \Sigma\in\mathbb R^{n\times n}. 
+ \Sigma\in\mathbb R^{n\times n}.
 $$
 
 We write:
 
 $$
- \boxed{ \mathbf X\sim\mathcal N(\boldsymbol\mu,\Sigma) }. 
+ \boxed{ \mathbf X\sim\mathcal N(\boldsymbol\mu,\Sigma) }.
 $$
 
 For a nonsingular covariance matrix, its PDF is:
 
 $$
- \boxed{ p(\mathbf x)= \frac{ \exp\left[ -\frac12(\mathbf x-\boldsymbol\mu)^T \Sigma^{-1} (\mathbf x-\boldsymbol\mu) \right] }{ (2\pi)^{n/2}\sqrt{\det\Sigma} } }. 
+ \boxed{ p(\mathbf x)= \frac{ \exp\left[ -\frac12(\mathbf x-\boldsymbol\mu)^T \Sigma^{-1} (\mathbf x-\boldsymbol\mu) \right] }{ (2\pi)^{n/2}\sqrt{\det\Sigma} } }.
 $$
 
 This formula is dense, so we will derive it from transformations and explain every component.
@@ -56232,7 +56413,7 @@ This formula is dense, so we will derive it from transformations and explain eve
 Let:
 
 $$
- \mathbf Z= \begin{bmatrix} Z_1\\ \vdots\\ Z_n \end{bmatrix} 
+ \mathbf Z= \begin{bmatrix} Z_1\\ \vdots\\ Z_n \end{bmatrix}
 $$
 
 where each $Z_i\sim\mathcal N(0,1)$, and the components are independent.
@@ -56240,31 +56421,31 @@ where each $Z_i\sim\mathcal N(0,1)$, and the components are independent.
 Their joint density is the product of the scalar densities:
 
 $$
- p_{\mathbf Z}(\mathbf z)= \prod_{i=1}^{n} \frac1{\sqrt{2\pi}}e^{-z_i^2/2}. 
+ p_{\mathbf Z}(\mathbf z)= \prod_{i=1}^{n} \frac1{\sqrt{2\pi}}e^{-z_i^2/2}.
 $$
 
 Multiply the normalizing factors:
 
 $$
- \prod_{i=1}^{n}\frac1{\sqrt{2\pi}} = \frac1{(2\pi)^{n/2}}. 
+ \prod_{i=1}^{n}\frac1{\sqrt{2\pi}} = \frac1{(2\pi)^{n/2}}.
 $$
 
 Combine the exponents:
 
 $$
- \prod_i e^{-z_i^2/2} = e^{-\frac12\sum_i z_i^2}. 
+ \prod_i e^{-z_i^2/2} = e^{-\frac12\sum_i z_i^2}.
 $$
 
 Since:
 
 $$
- \sum_i z_i^2=\mathbf z^T\mathbf z, 
+ \sum_i z_i^2=\mathbf z^T\mathbf z,
 $$
 
 the joint density becomes:
 
 $$
- \boxed{ p_{\mathbf Z}(\mathbf z)= \frac1{(2\pi)^{n/2}} e^{-\frac12\mathbf z^T\mathbf z} }. 
+ \boxed{ p_{\mathbf Z}(\mathbf z)= \frac1{(2\pi)^{n/2}} e^{-\frac12\mathbf z^T\mathbf z} }.
 $$
 
 This is the standard multivariate Gaussian with zero mean and identity covariance.
@@ -56272,7 +56453,7 @@ This is the standard multivariate Gaussian with zero mean and identity covarianc
 Its equal-density surfaces are spheres because the exponent depends only on:
 
 $$
- \\|\mathbf z\\|^2. 
+ \|\mathbf z\|^2.
 $$
 
 #### 2 Transform the standard Gaussian
@@ -56280,7 +56461,7 @@ $$
 Let:
 
 $$
- \boxed{ \mathbf X=\boldsymbol\mu+A\mathbf Z } 
+ \boxed{ \mathbf X=\boldsymbol\mu+A\mathbf Z }
 $$
 
 where $A$ is an invertible $n\times n$ matrix.
@@ -56288,19 +56469,19 @@ where $A$ is an invertible $n\times n$ matrix.
 The mean is:
 
 $$
- \mathbb E[\mathbf X] = \boldsymbol\mu+A\mathbb E[\mathbf Z] =\boldsymbol\mu. 
+ \mathbb E[\mathbf X] = \boldsymbol\mu+A\mathbb E[\mathbf Z] =\boldsymbol\mu.
 $$
 
 The covariance is:
 
 $$
- \begin{aligned} \operatorname{Cov}(\mathbf X) &= \mathbb E[ (A\mathbf Z)(A\mathbf Z)^T ]\\ &= A\mathbb E[\mathbf Z\mathbf Z^T]A^T\\ &=AIA^T. \end{aligned} 
+ \begin{aligned} \operatorname{Cov}(\mathbf X) &= \mathbb E[ (A\mathbf Z)(A\mathbf Z)^T ]\\ &= A\mathbb E[\mathbf Z\mathbf Z^T]A^T\\ &=AIA^T. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{\Sigma=AA^T}. 
+ \boxed{\Sigma=AA^T}.
 $$
 
 This says an arbitrary nonsingular linear transformation of an independent standard Gaussian produces a correlated Gaussian.
@@ -56312,79 +56493,79 @@ We can interpret $A$ as combining rotation, stretching, and shearing of the stan
 We have:
 
 $$
- \mathbf x=\boldsymbol\mu+A\mathbf z. 
+ \mathbf x=\boldsymbol\mu+A\mathbf z.
 $$
 
 Solve for $\mathbf z$:
 
 $$
- \mathbf z=A^{-1}(\mathbf x-\boldsymbol\mu). 
+ \mathbf z=A^{-1}(\mathbf x-\boldsymbol\mu).
 $$
 
 The Jacobian of this inverse transformation is:
 
 $$
- J=A^{-1}. 
+ J=A^{-1}.
 $$
 
 The density transformation formula is:
 
 $$
- p_{\mathbf X}(\mathbf x) = p_{\mathbf Z}(A^{-1}(\mathbf x-\boldsymbol\mu)) |\det A^{-1}|. 
+ p_{\mathbf X}(\mathbf x) = p_{\mathbf Z}(A^{-1}(\mathbf x-\boldsymbol\mu)) |\det A^{-1}|.
 $$
 
 Substitute the standard Gaussian density:
 
 $$
- p_{\mathbf X}(\mathbf x) = \frac{|\det A^{-1}|}{(2\pi)^{n/2}} \exp\left[ -\frac12 \\|A^{-1}(\mathbf x-\boldsymbol\mu)\\|^2 \right]. 
+ p_{\mathbf X}(\mathbf x) = \frac{|\det A^{-1}|}{(2\pi)^{n/2}} \exp\left[ -\frac12 \|A^{-1}(\mathbf x-\boldsymbol\mu)\|^2 \right].
 $$
 
 Now expand the squared norm:
 
 $$
- \begin{aligned} \\|A^{-1}\mathbf d\\|^2 &=(A^{-1}\mathbf d)^T(A^{-1}\mathbf d)\\ &=\mathbf d^TA^{-T}A^{-1}\mathbf d. \end{aligned} 
+ \begin{aligned} \|A^{-1}\mathbf d\|^2 &=(A^{-1}\mathbf d)^T(A^{-1}\mathbf d)\\ &=\mathbf d^TA^{-T}A^{-1}\mathbf d. \end{aligned}
 $$
 
 Because:
 
 $$
- \Sigma=AA^T, 
+ \Sigma=AA^T,
 $$
 
 we have:
 
 $$
- \Sigma^{-1}=A^{-T}A^{-1}. 
+ \Sigma^{-1}=A^{-T}A^{-1}.
 $$
 
 Thus:
 
 $$
- \\|A^{-1}\mathbf d\\|^2 = \mathbf d^T\Sigma^{-1}\mathbf d. 
+ \|A^{-1}\mathbf d\|^2 = \mathbf d^T\Sigma^{-1}\mathbf d.
 $$
 
 For the normalization, use:
 
 $$
- \det\Sigma= \det(AA^T) =(\det A)^2. 
+ \det\Sigma= \det(AA^T) =(\det A)^2.
 $$
 
 Therefore:
 
 $$
- |\det A|=\sqrt{\det\Sigma}. 
+ |\det A|=\sqrt{\det\Sigma}.
 $$
 
 Since:
 
 $$
- |\det A^{-1}|=\frac1{|\det A|}, 
+ |\det A^{-1}|=\frac1{|\det A|},
 $$
 
 we obtain:
 
 $$
- \boxed{ p(\mathbf x)= \frac1{(2\pi)^{n/2}\sqrt{\det\Sigma}} \exp\left[ -\frac12(\mathbf x-\boldsymbol\mu)^T \Sigma^{-1}(\mathbf x-\boldsymbol\mu) \right] }. 
+ \boxed{ p(\mathbf x)= \frac1{(2\pi)^{n/2}\sqrt{\det\Sigma}} \exp\left[ -\frac12(\mathbf x-\boldsymbol\mu)^T \Sigma^{-1}(\mathbf x-\boldsymbol\mu) \right] }.
 $$
 
 That is the full multivariate Gaussian density, derived rather than memorized.
@@ -56394,7 +56575,7 @@ That is the full multivariate Gaussian density, derived rather than memorized.
 The quantity:
 
 $$
- \boxed{ d_M^2= (\mathbf x-\boldsymbol\mu)^T \Sigma^{-1} (\mathbf x-\boldsymbol\mu) } 
+ \boxed{ d_M^2= (\mathbf x-\boldsymbol\mu)^T \Sigma^{-1} (\mathbf x-\boldsymbol\mu) }
 $$
 
 is the squared [[#5. Waiting times, event counts, and covariance geometry|Mahalanobis distance]].
@@ -56402,7 +56583,7 @@ is the squared [[#5. Waiting times, event counts, and covariance geometry|Mahala
 Ordinary Euclidean squared distance is:
 
 $$
- d_E^2= (\mathbf x-\boldsymbol\mu)^T (\mathbf x-\boldsymbol\mu). 
+ d_E^2= (\mathbf x-\boldsymbol\mu)^T (\mathbf x-\boldsymbol\mu).
 $$
 
 Mahalanobis distance accounts for the distribution's scale and correlations.
@@ -56416,13 +56597,13 @@ If another direction has small variance, a comparable physical displacement can 
 Because a covariance matrix is symmetric, it can be eigendecomposed:
 
 $$
- \Sigma=Q\Lambda Q^T. 
+ \Sigma=Q\Lambda Q^T.
 $$
 
 For positive-definite covariance:
 
 $$
- \Lambda= \operatorname{diag}(\lambda_1,\ldots,\lambda_n) 
+ \Lambda= \operatorname{diag}(\lambda_1,\ldots,\lambda_n)
 $$
 
 with every $\lambda_i>0$.
@@ -56430,31 +56611,31 @@ with every $\lambda_i>0$.
 Then:
 
 $$
- \Sigma^{-1}=Q\Lambda^{-1}Q^T. 
+ \Sigma^{-1}=Q\Lambda^{-1}Q^T.
 $$
 
 Let:
 
 $$
- \mathbf d=\mathbf x-\boldsymbol\mu. 
+ \mathbf d=\mathbf x-\boldsymbol\mu.
 $$
 
 Express the displacement in the covariance eigenbasis:
 
 $$
- \mathbf z=Q^T\mathbf d. 
+ \mathbf z=Q^T\mathbf d.
 $$
 
 The squared Mahalanobis distance becomes:
 
 $$
- \boxed{ d_M^2= \sum_{i=1}^{n}\frac{z_i^2}{\lambda_i} }. 
+ \boxed{ d_M^2= \sum_{i=1}^{n}\frac{z_i^2}{\lambda_i} }.
 $$
 
 A constant-density surface satisfies:
 
 $$
- d_M^2=c 
+ d_M^2=c
 $$
 
 for some $c>0$.
@@ -56466,7 +56647,7 @@ The eigenvectors identify the principal directions. The square roots of eigenval
 For the contour $d_M^2=c$, the semi-axis lengths are:
 
 $$
- \boxed{ a_i=\sqrt{c\lambda_i} }. 
+ \boxed{ a_i=\sqrt{c\lambda_i} }.
 $$
 
 Thus covariance is not merely a table of correlations. It encodes the geometry of an uncertainty ellipsoid.
@@ -56476,37 +56657,37 @@ Thus covariance is not merely a table of correlations. It encodes the geometry o
 Consider a random vector with mean:
 
 $$
- \boldsymbol\mu= \begin{bmatrix} 0.5\\-1 \end{bmatrix} 
+ \boldsymbol\mu= \begin{bmatrix} 0.5\\-1 \end{bmatrix}
 $$
 
 and covariance:
 
 $$
- \boxed{ \Sigma= \begin{bmatrix} 4&1.2\\ 1.2&9 \end{bmatrix} }. 
+ \boxed{ \Sigma= \begin{bmatrix} 4&1.2\\ 1.2&9 \end{bmatrix} }.
 $$
 
 The first coordinate has variance 4, so its standard deviation is:
 
 $$
- \sigma_X=2. 
+ \sigma_X=2.
 $$
 
 The second has variance 9:
 
 $$
- \sigma_Y=3. 
+ \sigma_Y=3.
 $$
 
 The covariance between them is:
 
 $$
- \operatorname{Cov}(X,Y)=1.2. 
+ \operatorname{Cov}(X,Y)=1.2.
 $$
 
 Their correlation is:
 
 $$
- \rho=\frac{1.2}{(2)(3)} =\boxed{0.2}. 
+ \rho=\frac{1.2}{(2)(3)} =\boxed{0.2}.
 $$
 
 The positive correlation causes the distribution's equal-density contours to be tilted relative to the coordinate axes.
@@ -56516,13 +56697,13 @@ The positive correlation causes the distribution's equal-density contours to be 
 The determinant is:
 
 $$
- \begin{aligned} \det\Sigma &=(4)(9)-(1.2)^2\\ &=36-1.44\\ &=\boxed{34.56}. \end{aligned} 
+ \begin{aligned} \det\Sigma &=(4)(9)-(1.2)^2\\ &=36-1.44\\ &=\boxed{34.56}. \end{aligned}
 $$
 
 For a two-dimensional Gaussian:
 
 $$
- p(\boldsymbol\mu)= \frac1{2\pi\sqrt{\det\Sigma}}, 
+ p(\boldsymbol\mu)= \frac1{2\pi\sqrt{\det\Sigma}},
 $$
 
 because the Mahalanobis distance at the mean is zero.
@@ -56530,7 +56711,7 @@ because the Mahalanobis distance at the mean is zero.
 Thus:
 
 $$
- \boxed{ p(\boldsymbol\mu) = \frac1{2\pi\sqrt{34.56}} \approx0.027072806 }. 
+ \boxed{ p(\boldsymbol\mu) = \frac1{2\pi\sqrt{34.56}} \approx0.027072806 }.
 $$
 
 The units are inverse square units of the random coordinates. This is a density value, not the probability that $\mathbf X$ equals the mean exactly.
@@ -56540,85 +56721,85 @@ The units are inverse square units of the random coordinates. This is a density 
 We can generate a correlated Gaussian from independent standard normals using:
 
 $$
- \mathbf X=\boldsymbol\mu+L\mathbf Z 
+ \mathbf X=\boldsymbol\mu+L\mathbf Z
 $$
 
 where:
 
 $$
- \Sigma=LL^T. 
+ \Sigma=LL^T.
 $$
 
 For our covariance, choose lower-triangular:
 
 $$
- L= \begin{bmatrix} a&0\\ b&c \end{bmatrix}. 
+ L= \begin{bmatrix} a&0\\ b&c \end{bmatrix}.
 $$
 
 Then:
 
 $$
- LL^T= \begin{bmatrix} a^2&ab\\ ab&b^2+c^2 \end{bmatrix}. 
+ LL^T= \begin{bmatrix} a^2&ab\\ ab&b^2+c^2 \end{bmatrix}.
 $$
 
 Match this with:
 
 $$
- \Sigma= \begin{bmatrix} 4&1.2\\ 1.2&9 \end{bmatrix}. 
+ \Sigma= \begin{bmatrix} 4&1.2\\ 1.2&9 \end{bmatrix}.
 $$
 
 First:
 
 $$
- a^2=4 \quad\Longrightarrow\quad a=2. 
+ a^2=4 \quad\Longrightarrow\quad a=2.
 $$
 
 Then:
 
 $$
- ab=1.2 \quad\Longrightarrow\quad b=\frac{1.2}{2}=0.6. 
+ ab=1.2 \quad\Longrightarrow\quad b=\frac{1.2}{2}=0.6.
 $$
 
 Finally:
 
 $$
- b^2+c^2=9. 
+ b^2+c^2=9.
 $$
 
 Thus:
 
 $$
- c^2=9-0.36=8.64, 
+ c^2=9-0.36=8.64,
 $$
 
 so:
 
 $$
- c=\sqrt{8.64}. 
+ c=\sqrt{8.64}.
 $$
 
 Therefore:
 
 $$
- \boxed{ L= \begin{bmatrix} 2&0\\ 0.6&\sqrt{8.64} \end{bmatrix} }. 
+ \boxed{ L= \begin{bmatrix} 2&0\\ 0.6&\sqrt{8.64} \end{bmatrix} }.
 $$
 
 If:
 
 $$
- Z_1,Z_2\overset{\mathrm{iid}}{\sim}\mathcal N(0,1), 
+ Z_1,Z_2\overset{\mathrm{iid}}{\sim}\mathcal N(0,1),
 $$
 
 then:
 
 $$
- \boxed{ X=0.5+2Z_1 } 
+ \boxed{ X=0.5+2Z_1 }
 $$
 
 and:
 
 $$
- \boxed{ Y=-1+0.6Z_1+\sqrt{8.64}\\,Z_2 }. 
+ \boxed{ Y=-1+0.6Z_1+\sqrt{8.64}\,Z_2 }.
 $$
 
 The shared $Z_1$ component creates the desired correlation.
@@ -56626,13 +56807,13 @@ The shared $Z_1$ component creates the desired correlation.
 Verify the covariance:
 
 $$
- \operatorname{Cov}(X,Y) = \operatorname{Cov}(2Z_1,0.6Z_1+\sqrt{8.64}Z_2). 
+ \operatorname{Cov}(X,Y) = \operatorname{Cov}(2Z_1,0.6Z_1+\sqrt{8.64}Z_2).
 $$
 
 By bilinearity:
 
 $$
- = 1.2\operatorname{Var}(Z_1) + 2\sqrt{8.64}\operatorname{Cov}(Z_1,Z_2). 
+ = 1.2\operatorname{Var}(Z_1) + 2\sqrt{8.64}\operatorname{Cov}(Z_1,Z_2).
 $$
 
 The standard normals are independent, so their covariance is zero. Also $\operatorname{Var}(Z_1)=1$.
@@ -56640,13 +56821,13 @@ The standard normals are independent, so their covariance is zero. Also $\operat
 Therefore:
 
 $$
- \boxed{\operatorname{Cov}(X,Y)=1.2}. 
+ \boxed{\operatorname{Cov}(X,Y)=1.2}.
 $$
 
 The variance of $Y$ is:
 
 $$
- 0.6^2+8.64=9. 
+ 0.6^2+8.64=9.
 $$
 
 The transformation reproduces the required covariance exactly in the mathematical model.
@@ -56658,31 +56839,31 @@ An especially important result is that conditioning one part of a jointly Gaussi
 Partition the random vector:
 
 $$
- \mathbf X= \begin{bmatrix} \mathbf X_a\\ \mathbf X_b \end{bmatrix} 
+ \mathbf X= \begin{bmatrix} \mathbf X_a\\ \mathbf X_b \end{bmatrix}
 $$
 
 with mean:
 
 $$
- \boldsymbol\mu= \begin{bmatrix} \boldsymbol\mu_a\\ \boldsymbol\mu_b \end{bmatrix} 
+ \boldsymbol\mu= \begin{bmatrix} \boldsymbol\mu_a\\ \boldsymbol\mu_b \end{bmatrix}
 $$
 
 and covariance:
 
 $$
- \Sigma= \begin{bmatrix} \Sigma_{aa}&\Sigma_{ab}\\ \Sigma_{ba}&\Sigma_{bb} \end{bmatrix}. 
+ \Sigma= \begin{bmatrix} \Sigma_{aa}&\Sigma_{ab}\\ \Sigma_{ba}&\Sigma_{bb} \end{bmatrix}.
 $$
 
 If $\Sigma_{aa}$ is positive definite, then:
 
 $$
- \boxed{ \mathbb E[\mathbf X_b\mid\mathbf X_a=\mathbf a] = \boldsymbol\mu_b+ \Sigma_{ba}\Sigma_{aa}^{-1} (\mathbf a-\boldsymbol\mu_a) } 
+ \boxed{ \mathbb E[\mathbf X_b\mid\mathbf X_a=\mathbf a] = \boldsymbol\mu_b+ \Sigma_{ba}\Sigma_{aa}^{-1} (\mathbf a-\boldsymbol\mu_a) }
 $$
 
 and:
 
 $$
- \boxed{ \operatorname{Cov}(\mathbf X_b\mid\mathbf X_a) = \Sigma_{bb} - \Sigma_{ba}\Sigma_{aa}^{-1}\Sigma_{ab} }. 
+ \boxed{ \operatorname{Cov}(\mathbf X_b\mid\mathbf X_a) = \Sigma_{bb} - \Sigma_{ba}\Sigma_{aa}^{-1}\Sigma_{ab} }.
 $$
 
 For any vector $v$, set $u=-\Sigma_{aa}^{-1}\Sigma_{ab}v$. Then
@@ -56703,51 +56884,51 @@ This directly connects probability to the Schur-complement linear algebra used i
 Return to:
 
 $$
- \mu_X=0.5,\qquad \mu_Y=-1, 
+ \mu_X=0.5,\qquad \mu_Y=-1,
 $$
 
 $$
- \operatorname{Var}(X)=4,\qquad \operatorname{Var}(Y)=9, 
+ \operatorname{Var}(X)=4,\qquad \operatorname{Var}(Y)=9,
 $$
 
 $$
- \operatorname{Cov}(X,Y)=1.2. 
+ \operatorname{Cov}(X,Y)=1.2.
 $$
 
 The conditional mean of $Y$ given $X=x$ is:
 
 $$
- \mathbb E[Y\mid X=x] = -1+\frac{1.2}{4}(x-0.5). 
+ \mathbb E[Y\mid X=x] = -1+\frac{1.2}{4}(x-0.5).
 $$
 
 Thus:
 
 $$
- \boxed{ \mathbb E[Y\mid X=x] = -1+0.3(x-0.5) }. 
+ \boxed{ \mathbb E[Y\mid X=x] = -1+0.3(x-0.5) }.
 $$
 
 If we observe:
 
 $$
- X=2.5, 
+ X=2.5,
 $$
 
 the conditional mean becomes:
 
 $$
- -1+0.3(2) =\boxed{-0.4}. 
+ -1+0.3(2) =\boxed{-0.4}.
 $$
 
 The conditional variance is:
 
 $$
- \operatorname{Var}(Y\mid X) = 9-\frac{1.2^2}{4}. 
+ \operatorname{Var}(Y\mid X) = 9-\frac{1.2^2}{4}.
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{Var}(Y\mid X)=8.64 }. 
+ \boxed{ \operatorname{Var}(Y\mid X)=8.64 }.
 $$
 
 Before observing $X$, the variance of $Y$ was 9.
@@ -56765,7 +56946,7 @@ That property is one reason Gaussian models are convenient for estimation and fi
 For a scalar Gaussian:
 
 $$
- P(|Z|\le1)\approx0.6827. 
+ P(|Z|\le1)\approx0.6827.
 $$
 
 It is tempting to assume that the corresponding two-dimensional one-sigma ellipse contains 68.27% probability.
@@ -56775,13 +56956,13 @@ That is incorrect.
 For:
 
 $$
- \mathbf X\sim\mathcal N(\boldsymbol\mu,\Sigma) 
+ \mathbf X\sim\mathcal N(\boldsymbol\mu,\Sigma)
 $$
 
 in two dimensions with positive-definite covariance, the squared Mahalanobis distance:
 
 $$
- D^2= (\mathbf X-\boldsymbol\mu)^T \Sigma^{-1} (\mathbf X-\boldsymbol\mu) 
+ D^2= (\mathbf X-\boldsymbol\mu)^T \Sigma^{-1} (\mathbf X-\boldsymbol\mu)
 $$
 
 follows a chi-squared distribution with two degrees of freedom.
@@ -56789,19 +56970,19 @@ follows a chi-squared distribution with two degrees of freedom.
 Therefore:
 
 $$
- P(D^2\le c)=1-e^{-c/2}. 
+ P(D^2\le c)=1-e^{-c/2}.
 $$
 
 For the ellipse with:
 
 $$
- D^2\le1, 
+ D^2\le1,
 $$
 
 the enclosed probability is:
 
 $$
- \boxed{ P(D^2\le1)=1-e^{-1/2}\approx0.393469 }. 
+ \boxed{ P(D^2\le1)=1-e^{-1/2}\approx0.393469 }.
 $$
 
 So the one-sigma ellipse contains only about 39.3% probability.
@@ -56809,23 +56990,23 @@ So the one-sigma ellipse contains only about 39.3% probability.
 To enclose 95% probability, solve:
 
 $$
- 1-e^{-c/2}=0.95. 
+ 1-e^{-c/2}=0.95.
 $$
 
 Then:
 
 $$
- e^{-c/2}=0.05, 
+ e^{-c/2}=0.05,
 $$
 
 $$
- c=-2\log0.05\approx5.991465. 
+ c=-2\log0.05\approx5.991465.
 $$
 
 The ellipse semi-axis lengths are therefore:
 
 $$
- \sqrt{5.991465\lambda_i} 
+ \sqrt{5.991465\lambda_i}
 $$
 
 along the covariance eigenvectors.
@@ -56839,25 +57020,25 @@ We have already introduced covariance matrices, but now we will study their full
 For a random vector $\mathbf X\in\mathbb R^n$:
 
 $$
- \boxed{ \Sigma= \mathbb E[ (\mathbf X-\boldsymbol\mu) (\mathbf X-\boldsymbol\mu)^T ] }. 
+ \boxed{ \Sigma= \mathbb E[ (\mathbf X-\boldsymbol\mu) (\mathbf X-\boldsymbol\mu)^T ] }.
 $$
 
 Write the centred random vector as:
 
 $$
- \mathbf Z=\mathbf X-\boldsymbol\mu. 
+ \mathbf Z=\mathbf X-\boldsymbol\mu.
 $$
 
 Then:
 
 $$
- \Sigma=\mathbb E[\mathbf Z\mathbf Z^T]. 
+ \Sigma=\mathbb E[\mathbf Z\mathbf Z^T].
 $$
 
 Each matrix entry is:
 
 $$
- \Sigma_{ij}=\mathbb E[Z_iZ_j]. 
+ \Sigma_{ij}=\mathbb E[Z_iZ_j].
 $$
 
 #### 1 Covariance is symmetric
@@ -56865,19 +57046,19 @@ $$
 Take the transpose:
 
 $$
- \Sigma^T = \mathbb E[(\mathbf Z\mathbf Z^T)^T]. 
+ \Sigma^T = \mathbb E[(\mathbf Z\mathbf Z^T)^T].
 $$
 
 But:
 
 $$
- (\mathbf Z\mathbf Z^T)^T = \mathbf Z\mathbf Z^T. 
+ (\mathbf Z\mathbf Z^T)^T = \mathbf Z\mathbf Z^T.
 $$
 
 Therefore:
 
 $$
- \boxed{\Sigma^T=\Sigma}. 
+ \boxed{\Sigma^T=\Sigma}.
 $$
 
 This is an exact mathematical property of covariance matrices.
@@ -56891,31 +57072,31 @@ Small numerical asymmetries may arise from independent calculations or rounding,
 Choose any deterministic vector:
 
 $$
- \mathbf a\in\mathbb R^n. 
+ \mathbf a\in\mathbb R^n.
 $$
 
 Form the scalar random variable:
 
 $$
- Y=\mathbf a^T\mathbf X. 
+ Y=\mathbf a^T\mathbf X.
 $$
 
 Its mean is:
 
 $$
- \mathbb E[Y]=\mathbf a^T\boldsymbol\mu. 
+ \mathbb E[Y]=\mathbf a^T\boldsymbol\mu.
 $$
 
 Its variance is:
 
 $$
- \begin{aligned} \operatorname{Var}(Y) &= \mathbb E[ (\mathbf a^T(\mathbf X-\boldsymbol\mu))^2 ]\\ &= \mathbb E[ \mathbf a^T\mathbf Z\mathbf Z^T\mathbf a ]\\ &= \mathbf a^T\mathbb E[\mathbf Z\mathbf Z^T]\mathbf a. \end{aligned} 
+ \begin{aligned} \operatorname{Var}(Y) &= \mathbb E[ (\mathbf a^T(\mathbf X-\boldsymbol\mu))^2 ]\\ &= \mathbb E[ \mathbf a^T\mathbf Z\mathbf Z^T\mathbf a ]\\ &= \mathbf a^T\mathbb E[\mathbf Z\mathbf Z^T]\mathbf a. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{Var}(\mathbf a^T\mathbf X) = \mathbf a^T\Sigma\mathbf a }. 
+ \boxed{ \operatorname{Var}(\mathbf a^T\mathbf X) = \mathbf a^T\Sigma\mathbf a }.
 $$
 
 This is one of the most powerful covariance identities.
@@ -56927,7 +57108,7 @@ It says the uncertainty of a linear measurement is obtained by projecting the co
 Let:
 
 $$
- \mathbf Y=A\mathbf X+\mathbf b, 
+ \mathbf Y=A\mathbf X+\mathbf b,
 $$
 
 where $A$ is a deterministic matrix and $\mathbf b$ is a deterministic translation.
@@ -56935,25 +57116,25 @@ where $A$ is a deterministic matrix and $\mathbf b$ is a deterministic translati
 The mean is:
 
 $$
- \boxed{ \boldsymbol\mu_Y=A\boldsymbol\mu_X+\mathbf b }. 
+ \boxed{ \boldsymbol\mu_Y=A\boldsymbol\mu_X+\mathbf b }.
 $$
 
 The centred output is:
 
 $$
- \mathbf Y-\boldsymbol\mu_Y = A(\mathbf X-\boldsymbol\mu_X). 
+ \mathbf Y-\boldsymbol\mu_Y = A(\mathbf X-\boldsymbol\mu_X).
 $$
 
 Its covariance becomes:
 
 $$
- \begin{aligned} \Sigma_Y &= \mathbb E[ A(\mathbf X-\boldsymbol\mu_X) (\mathbf X-\boldsymbol\mu_X)^TA^T ]\\ &= A\Sigma_XA^T. \end{aligned} 
+ \begin{aligned} \Sigma_Y &= \mathbb E[ A(\mathbf X-\boldsymbol\mu_X) (\mathbf X-\boldsymbol\mu_X)^TA^T ]\\ &= A\Sigma_XA^T. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{ \Sigma_Y=A\Sigma_XA^T }. 
+ \boxed{ \Sigma_Y=A\Sigma_XA^T }.
 $$
 
 Translation changes the mean but does not change covariance.
@@ -56963,13 +57144,13 @@ Translation changes the mean but does not change covariance.
 If $R$ is a rotation matrix:
 
 $$
- \mathbf Y=R\mathbf X+\mathbf t, 
+ \mathbf Y=R\mathbf X+\mathbf t,
 $$
 
 then:
 
 $$
- \boxed{ \Sigma_Y=R\Sigma_XR^T }. 
+ \boxed{ \Sigma_Y=R\Sigma_XR^T }.
 $$
 
 This rotates the covariance ellipsoid without changing its eigenvalues.
@@ -56983,7 +57164,7 @@ By contrast, a nonuniform scale or general affine transform changes those varian
 Suppose:
 
 $$
- \mathbf Y=f(\mathbf X) 
+ \mathbf Y=f(\mathbf X)
 $$
 
 with differentiable $f$.
@@ -56991,13 +57172,13 @@ with differentiable $f$.
 For small uncertainty around the mean, linearize:
 
 $$
- f(\mathbf X) \approx f(\boldsymbol\mu_X) + J_f(\boldsymbol\mu_X) (\mathbf X-\boldsymbol\mu_X). 
+ f(\mathbf X) \approx f(\boldsymbol\mu_X) + J_f(\boldsymbol\mu_X) (\mathbf X-\boldsymbol\mu_X).
 $$
 
 The approximate covariance is:
 
 $$
- \boxed{ \Sigma_Y \approx J_f\Sigma_XJ_f^T }. 
+ \boxed{ \Sigma_Y \approx J_f\Sigma_XJ_f^T }.
 $$
 
 This is the first-order covariance propagation formula derived through Jacobians in the geometry and Jacobian discussion.
@@ -57007,7 +57188,7 @@ The approximation becomes less reliable when uncertainty is large relative to lo
 A second-order Taylor expansion can also introduce a correction to the predicted mean:
 
 $$
- \mathbb E[f_i(\mathbf X)] \approx f_i(\boldsymbol\mu) + \frac12\operatorname{tr}(H_{f_i}\Sigma). 
+ \mathbb E[f_i(\mathbf X)] \approx f_i(\boldsymbol\mu) + \frac12\operatorname{tr}(H_{f_i}\Sigma).
 $$
 
 Here $H_{f_i}$ is the Hessian of output component $i$.
@@ -57019,31 +57200,31 @@ Thus nonlinear transformations can change both the covariance and the mean in wa
 A 3D Gaussian representation may have a mean position:
 
 $$
- \boldsymbol\mu_{3D} 
+ \boldsymbol\mu_{3D}
 $$
 
 and covariance:
 
 $$
- \Sigma_{3D}. 
+ \Sigma_{3D}.
 $$
 
 A camera rotation maps its covariance into camera coordinates:
 
 $$
- \Sigma_c=R\Sigma_{3D}R^T. 
+ \Sigma_c=R\Sigma_{3D}R^T.
 $$
 
 A local perspective-projection Jacobian then gives an approximate image-space covariance:
 
 $$
- \boxed{ \Sigma_{2D}\approx J\_\pi\Sigma_cJ\_\pi^T }. 
+ \boxed{ \Sigma_{2D}\approx J_\pi\Sigma_cJ_\pi^T }.
 $$
 
 Combining:
 
 $$
- \boxed{ \Sigma_{2D}\approx J\_\pi R\Sigma_{3D}R^TJ\_\pi^T }. 
+ \boxed{ \Sigma_{2D}\approx J_\pi R\Sigma_{3D}R^TJ_\pi^T }.
 $$
 
 This formula is directly relevant to projected Gaussian footprints.
@@ -57053,7 +57234,7 @@ But there is an important distinction between a normalized probability density a
 A probability density contains the normalization factor involving $\det\Sigma$. Many Gaussian rendering formulations use kernels of the form:
 
 $$
- G(\mathbf x)= \exp\left( -\frac12(\mathbf x-\boldsymbol\mu)^T \Sigma^{-1}(\mathbf x-\boldsymbol\mu) \right) 
+ G(\mathbf x)= \exp\left( -\frac12(\mathbf x-\boldsymbol\mu)^T \Sigma^{-1}(\mathbf x-\boldsymbol\mu) \right)
 $$
 
 together with learned opacity or amplitude terms.
@@ -57069,13 +57250,13 @@ The mathematical covariance transformation is closely related, but the full rend
 Let:
 
 $$
- \Sigma_Y=J\Sigma_XJ^T. 
+ \Sigma_Y=J\Sigma_XJ^T.
 $$
 
 The rank satisfies:
 
 $$
- \operatorname{rank}(\Sigma_Y) \le \min(\operatorname{rank}(J),\operatorname{rank}(\Sigma_X)). 
+ \operatorname{rank}(\Sigma_Y) \le \min(\operatorname{rank}(J),\operatorname{rank}(\Sigma_X)).
 $$
 
 If a transformation loses dimensions, the output covariance cannot recover them.
@@ -57083,7 +57264,7 @@ If a transformation loses dimensions, the output covariance cannot recover them.
 For a $2\times3$ perspective-projection Jacobian:
 
 $$
- J\_\pi:\mathbb R^3\rightarrow\mathbb R^2, 
+ J_\pi:\mathbb R^3\rightarrow\mathbb R^2,
 $$
 
 the output covariance has rank at most two.
@@ -57105,13 +57286,13 @@ It must be symmetric and positive semidefinite, abbreviated PSD.
 We write:
 
 $$
- \boxed{\Sigma\succeq0}. 
+ \boxed{\Sigma\succeq0}.
 $$
 
 The mathematical definition is:
 
 $$
- \boxed{ \mathbf a^T\Sigma\mathbf a\ge0 \quad\text{for every }\mathbf a\in\mathbb R^n }. 
+ \boxed{ \mathbf a^T\Sigma\mathbf a\ge0 \quad\text{for every }\mathbf a\in\mathbb R^n }.
 $$
 
 Why must this hold?
@@ -57119,13 +57300,13 @@ Why must this hold?
 From the covariance quadratic-form section:
 
 $$
- \mathbf a^T\Sigma\mathbf a = \operatorname{Var}(\mathbf a^T\mathbf X). 
+ \mathbf a^T\Sigma\mathbf a = \operatorname{Var}(\mathbf a^T\mathbf X).
 $$
 
 A variance is an expectation of a square:
 
 $$
- \operatorname{Var}(Y) = \mathbb E[(Y-\mathbb E[Y])^2]. 
+ \operatorname{Var}(Y) = \mathbb E[(Y-\mathbb E[Y])^2].
 $$
 
 A square is nonnegative.
@@ -57135,7 +57316,7 @@ Therefore variance cannot be negative.
 Hence:
 
 $$
- \boxed{ \mathbf a^T\Sigma\mathbf a = \operatorname{Var}(\mathbf a^T\mathbf X) \ge0 }. 
+ \boxed{ \mathbf a^T\Sigma\mathbf a = \operatorname{Var}(\mathbf a^T\mathbf X) \ge0 }.
 $$
 
 That proves the PSD requirement.
@@ -57147,15 +57328,15 @@ Because $\Sigma$ is real symmetric, it has real eigenvalues and an orthonormal e
 Let:
 
 $$
- \Sigma\mathbf v_i=\lambda_i\mathbf v_i. 
+ \Sigma\mathbf v_i=\lambda_i\mathbf v_i.
 $$
 
-Choose $\mathbf a=\mathbf v_i$, with $\\|\mathbf v_i\\|=1$.
+Choose $\mathbf a=\mathbf v_i$, with $\|\mathbf v_i\|=1$.
 
 Then:
 
 $$
- \mathbf v_i^T\Sigma\mathbf v_i = \lambda_i. 
+ \mathbf v_i^T\Sigma\mathbf v_i = \lambda_i.
 $$
 
 But PSD requires this quadratic form to be nonnegative.
@@ -57163,7 +57344,7 @@ But PSD requires this quadratic form to be nonnegative.
 Therefore:
 
 $$
- \boxed{\lambda_i\ge0}. 
+ \boxed{\lambda_i\ge0}.
 $$
 
 Every eigenvalue of a valid covariance matrix must be nonnegative.
@@ -57177,7 +57358,7 @@ Thus these are equivalent descriptions.
 A matrix is positive definite, or PD, if:
 
 $$
- \mathbf a^T\Sigma\mathbf a>0 
+ \mathbf a^T\Sigma\mathbf a>0
 $$
 
 for every nonzero $\mathbf a$.
@@ -57195,19 +57376,19 @@ That means some linear combination of the random variables is deterministic.
 Consider:
 
 $$
- \boxed{ \Sigma= \begin{bmatrix} 1&2\\ 2&4 \end{bmatrix} }. 
+ \boxed{ \Sigma= \begin{bmatrix} 1&2\\ 2&4 \end{bmatrix} }.
 $$
 
 The determinant is:
 
 $$
- \det\Sigma=4-4=0. 
+ \det\Sigma=4-4=0.
 $$
 
 The eigenvalues are:
 
 $$
- 5,\qquad0. 
+ 5,\qquad0.
 $$
 
 Both are nonnegative, so the matrix is PSD.
@@ -57219,27 +57400,27 @@ What physical uncertainty could produce it?
 Let $X$ be a scalar random variable with variance one, and let:
 
 $$
- Y=2X. 
+ Y=2X.
 $$
 
 Then:
 
 $$
- \operatorname{Var}(X)=1, 
+ \operatorname{Var}(X)=1,
 $$
 
 $$
- \operatorname{Var}(Y)=4, 
+ \operatorname{Var}(Y)=4,
 $$
 
 $$
- \operatorname{Cov}(X,Y)=2. 
+ \operatorname{Cov}(X,Y)=2.
 $$
 
 The covariance matrix is exactly:
 
 $$
- \begin{bmatrix} 1&2\\2&4 \end{bmatrix}. 
+ \begin{bmatrix} 1&2\\2&4 \end{bmatrix}.
 $$
 
 The variables have perfect linear dependence.
@@ -57247,7 +57428,7 @@ The variables have perfect linear dependence.
 The combination:
 
 $$
- Y-2X 
+ Y-2X
 $$
 
 has zero variance.
@@ -57261,13 +57442,13 @@ It does not have an ordinary nonsingular 2D Gaussian density with respect to are
 Consider:
 
 $$
- \boxed{ A= \begin{bmatrix} 1&2\\ 2&1 \end{bmatrix} }. 
+ \boxed{ A= \begin{bmatrix} 1&2\\ 2&1 \end{bmatrix} }.
 $$
 
 Its eigenvalues are:
 
 $$
- 3,\qquad-1. 
+ 3,\qquad-1.
 $$
 
 The negative eigenvalue makes it indefinite.
@@ -57275,19 +57456,19 @@ The negative eigenvalue makes it indefinite.
 Choose:
 
 $$
- \mathbf a= \begin{bmatrix} 1\\-1 \end{bmatrix}. 
+ \mathbf a= \begin{bmatrix} 1\\-1 \end{bmatrix}.
 $$
 
 Then:
 
 $$
- \mathbf a^TA\mathbf a=-2. 
+ \mathbf a^TA\mathbf a=-2.
 $$
 
 If this matrix were a covariance, it would imply:
 
 $$
- \operatorname{Var}(X-Y)=-2, 
+ \operatorname{Var}(X-Y)=-2,
 $$
 
 which is impossible.
@@ -57299,37 +57480,37 @@ Therefore $A$ cannot be a valid covariance matrix.
 Consider a symmetric covariance matrix:
 
 $$
- \Sigma= \begin{bmatrix} \sigma_X^2&c\\ c&\sigma_Y^2 \end{bmatrix}. 
+ \Sigma= \begin{bmatrix} \sigma_X^2&c\\ c&\sigma_Y^2 \end{bmatrix}.
 $$
 
 For it to be PSD, we require:
 
 $$
- \sigma_X^2\ge0, \qquad \sigma_Y^2\ge0, 
+ \sigma_X^2\ge0, \qquad \sigma_Y^2\ge0,
 $$
 
 and:
 
 $$
- \boxed{ \sigma_X^2\sigma_Y^2-c^2\ge0 }. 
+ \boxed{ \sigma_X^2\sigma_Y^2-c^2\ge0 }.
 $$
 
 Equivalently:
 
 $$
- |c|\le\sigma_X\sigma_Y. 
+ |c|\le\sigma_X\sigma_Y.
 $$
 
 If both standard deviations are positive:
 
 $$
- \left|\frac{c}{\sigma_X\sigma_Y}\right|\le1. 
+ \left|\frac{c}{\sigma_X\sigma_Y}\right|\le1.
 $$
 
 Thus:
 
 $$
- \boxed{|\rho|\le1}. 
+ \boxed{|\rho|\le1}.
 $$
 
 The familiar correlation bound is therefore also a matrix positive-semidefiniteness condition.
@@ -57339,7 +57520,7 @@ The familiar correlation bound is therefore also a matrix positive-semidefiniten
 For a symmetric positive-definite matrix:
 
 $$
- \boxed{\Sigma=LL^T} 
+ \boxed{\Sigma=LL^T}
 $$
 
 with $L$ lower triangular and positive diagonal.
@@ -57387,19 +57568,19 @@ In practical code, a covariance estimate can contain a tiny negative eigenvalue 
 One simple repair for a symmetric matrix is to eigendecompose:
 
 $$
- A=Q\Lambda Q^T, 
+ A=Q\Lambda Q^T,
 $$
 
 replace negative eigenvalues by zero:
 
 $$
- \Lambda\_+= \operatorname{diag}(\max(\lambda_i,0)), 
+ \Lambda\_+= \operatorname{diag}(\max(\lambda_i,0)),
 $$
 
 then reconstruct:
 
 $$
- \boxed{ A\_+=Q\Lambda\_+Q^T }. 
+ \boxed{ A\_+=Q\Lambda\_+Q^T }.
 $$
 
 For a real symmetric matrix, this is a nearest PSD projection in the Frobenius norm when no additional constraints are imposed.
@@ -58196,7 +58377,7 @@ The heat-equation discussion above already showed that a differential operator h
 
 A **Sturm–Liouville** problem has the form
 
-\[
+$$
 -\frac{d}{dx}
 \left(
 p(x)\frac{dy}{dx}
@@ -58204,35 +58385,35 @@ p(x)\frac{dy}{dx}
 -q(x)y
 =
 \lambda \rho(x)y
-\]
+$$
 
 under boundary conditions that make the differential operator self-adjoint with respect to the weighted inner product
 
-\[
+$$
 \langle f,g\rangle_\rho
 =
 \int_a^b
 f(x)^*g(x)\rho(x)\,dx.
-\]
+$$
 
-Self-adjointness is the infinite-dimensional analogue of a real symmetric/Hermitian matrix. Under the appropriate regular setting, eigenvalues are real and eigenfunctions associated with distinct eigenvalues are orthogonal under the weight \(\rho\). The conceptual bridge to the matrix spectral theorem is direct: a function can be expanded in operator-adapted modes, and the differential equation acts independently on those modes.
+Self-adjointness is the infinite-dimensional analogue of a real symmetric/Hermitian matrix. Under the appropriate regular setting, eigenvalues are real and eigenfunctions associated with distinct eigenvalues are orthogonal under the weight $\rho$. The conceptual bridge to the matrix spectral theorem is direct: a function can be expanded in operator-adapted modes, and the differential equation acts independently on those modes.
 
 This is why sine/cosine series appear for strings and heat flow, spherical harmonics appear for angular problems on a sphere, and Bessel functions appear in cylindrical/radial separation problems. They are not a bag of unrelated “special functions.” They are eigenfunctions selected by the operator, coordinate geometry, and boundary conditions.
 
 For a one-dimensional fixed-end string, spatial separation leads to
 
-\[
+$$
 X''+\lambda X=0,
 \qquad
 X(0)=X(L)=0,
-\]
+$$
 
 whose nonzero modes are
 
-\[
+$$
 X_n(x)=
 \sin\left(\frac{n\pi x}{L}\right).
-\]
+$$
 
 The boundary conditions quantize the allowed spatial frequencies. The temporal equation then determines how each coefficient oscillates. For heat flow the same spatial modes decay exponentially rather than oscillate. The geometry of the domain and boundary conditions choose the basis; the time-evolution law chooses what happens to each coefficient.
 
@@ -58244,7 +58425,7 @@ Source basis: Riley, Hobson, and Bence, *Mathematical Methods for Physics and En
 
 A Fourier series expands a periodic function in discrete harmonics. A Fourier transform extends the idea to a continuum of frequencies. With one common convention,
 
-\[
+$$
 \hat f(\omega)
 =
 \int_{-\infty}^{\infty}
@@ -58255,58 +58436,58 @@ f(t)
 \frac{1}{2\pi}
 \int_{-\infty}^{\infty}
 \hat f(\omega)e^{i\omega t}\,d\omega.
-\]
+$$
 
-The exact \(2\pi\) factors depend on convention; the transform pair must be declared together.
+The exact $2\pi$ factors depend on convention; the transform pair must be declared together.
 
 Differentiation becomes multiplication:
 
-\[
+$$
 \widehat{f'}(\omega)=i\omega\hat f(\omega),
-\]
+$$
 
 when boundary/regularity assumptions justify the manipulation. Convolution becomes pointwise multiplication:
 
-\[
+$$
 \widehat{f*g}
 =
 \hat f\,\hat g.
-\]
+$$
 
 This is why blur kernels, linear shift-invariant filters, diffraction formulas, image correlation, and frequency-domain PDE solvers all meet Fourier analysis. The transform is not “making an image into frequencies” in a vague sense; it changes coordinates so translation-invariant linear operators become multiplication.
 
 A Laplace transform,
 
-\[
+$$
 F(s)
 =
 \int_0^\infty
 f(t)e^{-st}\,dt,
-\]
+$$
 
-uses a complex parameter \(s\) and is especially useful for initial-value systems where exponential growth/decay and transient behavior matter. Derivatives transform into algebraic expressions that include initial conditions. Fourier analysis emphasizes steady frequency content; Laplace analysis includes a real exponential weighting and exposes poles that govern temporal modes. One can often obtain a Fourier transform as a boundary case when the relevant convergence conditions permit.
+uses a complex parameter $s$ and is especially useful for initial-value systems where exponential growth/decay and transient behavior matter. Derivatives transform into algebraic expressions that include initial conditions. Fourier analysis emphasizes steady frequency content; Laplace analysis includes a real exponential weighting and exposes poles that govern temporal modes. One can often obtain a Fourier transform as a boundary case when the relevant convergence conditions permit.
 
-A **Green function** solves a different but connected problem. For a linear operator \(L\), define \(G(x,\xi)\) by
+A **Green function** solves a different but connected problem. For a linear operator $L$, define $G(x,\xi)$ by
 
-\[
+$$
 L_x G(x,\xi)=\delta(x-\xi)
-\]
+$$
 
 with the desired boundary conditions. Then a solution of
 
-\[
+$$
 L u=f
-\]
+$$
 
 can be represented schematically as
 
-\[
+$$
 u(x)
 =
 \int G(x,\xi)f(\xi)\,d\xi
-\]
+$$
 
-plus any terms required by nonhomogeneous boundary conditions. \(G\) is an impulse response: it tells how a unit source at \(\xi\) influences \(x\). In translation-invariant domains, \(G(x,\xi)\) may depend only on \(x-\xi\), turning the integral into a convolution and reconnecting directly to Fourier multiplication.
+plus any terms required by nonhomogeneous boundary conditions. $G$ is an impulse response: it tells how a unit source at $\xi$ influences $x$. In translation-invariant domains, $G(x,\xi)$ may depend only on $x-\xi$, turning the integral into a convolution and reconnecting directly to Fourier multiplication.
 
 These are therefore three views of the same linear-operator problem. Eigenfunction expansion diagonalizes using problem-specific modes. Fourier/Laplace transforms diagonalize or algebraize operators using standard exponential families. A Green function represents the inverse operator as the response to impulses. The right choice depends on domain, boundary/initial conditions, symmetry, and whether an analytic or numerical representation is desired.
 
@@ -58316,26 +58497,26 @@ Source basis: Riley, Hobson, and Bence, Chapters 12–17 and 20–21 on Fourier 
 
 The same differential expression can define very different physical and numerical problems depending on its boundary and initial data. Three canonical linear PDE families recur throughout graphics and simulation:
 
-\[
+$$
 \frac{\partial u}{\partial t}
 =
 \kappa\nabla^2u
 \quad\text{(diffusion/heat)},
-\]
+$$
 
-\[
+$$
 \frac{\partial^2u}{\partial t^2}
 =
 c^2\nabla^2u
 \quad\text{(wave)},
-\]
+$$
 
 and
 
-\[
+$$
 \nabla^2u=f
 \quad\text{(Poisson; \(f=0\) gives Laplace)}.
-\]
+$$
 
 Diffusion is dissipative: high-frequency modes decay rapidly. The wave equation is second order in time and supports propagating oscillations. Poisson/Laplace are typically boundary-value equations without a time evolution at all. Reusing one “PDE solver” abstraction without representing these different contracts can hide which data are mathematically required.
 
@@ -58343,9 +58524,9 @@ A Dirichlet condition specifies the field value on a boundary. A Neumann conditi
 
 **Separation of variables** assumes a product such as
 
-\[
+$$
 u(x,t)=X(x)T(t)
-\]
+$$
 
 and rearranges a PDE so each coordinate-dependent side must equal a separation constant. This does not magically solve arbitrary PDEs. It succeeds when geometry, coefficients, and boundary conditions permit a separable basis. The resulting spatial equations are often Sturm–Liouville eigenproblems, which explains why the previous section is not separate trivia.
 
@@ -58357,29 +58538,29 @@ Source basis: Riley, Hobson, and Bence, Chapters 20–21 on the wave, diffusion,
 
 ### Complex analysis explains why conformal maps, residues, and asymptotic integrals share one language
 
-A complex-valued function \(f(z)\) of \(z=x+iy\) is differentiable in the complex sense only under stronger conditions than ordinary two-variable differentiability. Writing
+A complex-valued function $f(z)$ of $z=x+iy$ is differentiable in the complex sense only under stronger conditions than ordinary two-variable differentiability. Writing
 
-\[
+$$
 f(z)=u(x,y)+iv(x,y),
-\]
+$$
 
 analyticity implies the Cauchy–Riemann relations
 
-\[
+$$
 u_x=v_y,\qquad u_y=-v_x
-\]
+$$
 
-under the standard regularity assumptions. These equations force angle-preserving local behavior wherever \(f'(z)\neq0\), which is why analytic functions are a natural source of **conformal maps**.
+under the standard regularity assumptions. These equations force angle-preserving local behavior wherever $f'(z)\neq0$, which is why analytic functions are a natural source of **conformal maps**.
 
-Contour integration then turns analyticity into global identities. Cauchy’s theorem and integral formula constrain integrals of analytic functions; a Laurent series exposes isolated singularities. The coefficient of \((z-z_0)^{-1}\) is the **residue**, and the residue theorem converts certain contour integrals into a sum over enclosed singularities:
+Contour integration then turns analyticity into global identities. Cauchy’s theorem and integral formula constrain integrals of analytic functions; a Laurent series exposes isolated singularities. The coefficient of $(z-z_0)^{-1}$ is the **residue**, and the residue theorem converts certain contour integrals into a sum over enclosed singularities:
 
-\[
+$$
 \oint_C f(z)\,dz
 =
 2\pi i
 \sum_{z_k\in\mathrm{inside}(C)}
 \operatorname{Res}(f,z_k).
-\]
+$$
 
 For engineering mathematics, the point is not to replace numerical integration with clever contours everywhere. The pole/singularity structure often reveals system behavior directly. Inverse Laplace transforms, linear-system responses, wave propagation, and asymptotic integrals can all be interpreted through complex singularities.
 
@@ -58451,14 +58632,14 @@ The source comparison for this worked practice used Riley, Hobson and Bence, *Ma
 
 When an integral contains a rapidly varying phase or exponential,
 
-\[
+$$
 I(\lambda)
 =
 \int e^{\lambda\phi(z)}a(z)\,dz,
 \qquad |\lambda|\gg1,
-\]
+$$
 
-the dominant contribution often comes from neighborhoods of stationary/saddle points where \(\phi'(z)=0\). Stationary-phase and steepest-descent methods deform or analyze the integration path so the important local contributions become explicit. WKB methods apply related asymptotic reasoning to differential equations with a slowly varying scale. These techniques are useful conceptual ancestors of modern importance/saddle-point approximations: large problems can be dominated by small geometrically structured regions.
+the dominant contribution often comes from neighborhoods of stationary/saddle points where $\phi'(z)=0$. Stationary-phase and steepest-descent methods deform or analyze the integration path so the important local contributions become explicit. WKB methods apply related asymptotic reasoning to differential equations with a slowly varying scale. These techniques are useful conceptual ancestors of modern importance/saddle-point approximations: large problems can be dominated by small geometrically structured regions.
 
 Source basis: Riley, Hobson, and Bence, Chapters 24–25 on analytic functions, Cauchy–Riemann equations, conformal transformations, contour integration, Laurent series, residues, inverse Laplace transforms, WKB, stationary phase, and steepest descent.
 
@@ -58715,17 +58896,17 @@ The spring examples above began from a differential equation and asked how to in
 
 Let the generalized coordinates of a mechanical system be
 
-\[
+$$
 \mathbf q(t)
 =
 (q_1(t),\ldots,q_n(t)).
-\]
+$$
 
 The coordinates do not have to be Cartesian positions. They may be joint angles, slider distances, or any independent coordinates that describe a configuration locally.
 
 Define the **Lagrangian**
 
-\[
+$$
 \boxed{
 L(\mathbf q,\dot{\mathbf q},t)
 =
@@ -58733,46 +58914,46 @@ T(\mathbf q,\dot{\mathbf q},t)
 -
 V(\mathbf q,t)
 }
-\]
+$$
 
-for the common conservative mechanical case, where \(T\) is kinetic energy and \(V\) is potential energy.
+for the common conservative mechanical case, where $T$ is kinetic energy and $V$ is potential energy.
 
 For a candidate trajectory between fixed endpoint configurations at fixed times, define the **action**
 
-\[
+$$
 \boxed{
 S[\mathbf q]
 =
 \int_{t_0}^{t_1}
 L(\mathbf q,\dot{\mathbf q},t)\,dt
 }.
-\]
+$$
 
 Hamilton's principle states that the physical trajectory is stationary with respect to admissible infinitesimal variations of the path whose endpoint variations vanish:
 
-\[
+$$
 \delta S=0.
-\]
+$$
 
 “Stationary” is more precise than “minimum.” Depending on the problem, the physical path need not globally minimize the action. The first variation must vanish.
 
 #### Deriving the Euler–Lagrange equations rather than quoting them
 
-Perturb one coordinate by a small function \(\eta_i(t)\):
+Perturb one coordinate by a small function $\eta_i(t)$:
 
-\[
+$$
 q_i(t)\mapsto q_i(t)+\varepsilon\eta_i(t),
-\]
+$$
 
 with
 
-\[
+$$
 \eta_i(t_0)=\eta_i(t_1)=0.
-\]
+$$
 
-Differentiate the action with respect to \(\varepsilon\) at zero:
+Differentiate the action with respect to $\varepsilon$ at zero:
 
-\[
+$$
 \delta S
 =
 \int_{t_0}^{t_1}
@@ -58783,11 +58964,11 @@ Differentiate the action with respect to \(\varepsilon\) at zero:
 \frac{\partial L}{\partial \dot q_i}\dot\eta_i
 \right)
 dt.
-\]
+$$
 
 Integrate the second term by parts:
 
-\[
+$$
 \int
 \frac{\partial L}{\partial\dot q_i}
 \dot\eta_i\,dt
@@ -58801,11 +58982,11 @@ Integrate the second term by parts:
 \left(
 \frac{\partial L}{\partial\dot q_i}
 \right)\eta_i\,dt.
-\]
+$$
 
 The boundary term vanishes because the endpoint variations are zero. Therefore
 
-\[
+$$
 \delta S
 =
 \int_{t_0}^{t_1}
@@ -58819,11 +59000,11 @@ The boundary term vanishes because the endpoint variations are zero. Therefore
 \right)
 \right]
 \eta_i\,dt.
-\]
+$$
 
-The variations \(\eta_i\) are otherwise arbitrary. Hence every coefficient must vanish:
+The variations $\eta_i$ are otherwise arbitrary. Hence every coefficient must vanish:
 
-\[
+$$
 \boxed{
 \frac{d}{dt}
 \left(
@@ -58834,83 +59015,83 @@ The variations \(\eta_i\) are otherwise arbitrary. Hence every coefficient must 
 =
 0
 }.
-\]
+$$
 
 These are the Euler–Lagrange equations.
 
 For a particle in one dimension,
 
-\[
+$$
 L(x,\dot x)=\frac12m\dot x^2-V(x).
-\]
+$$
 
 Then
 
-\[
+$$
 \frac{\partial L}{\partial\dot x}=m\dot x,
 \qquad
 \frac{\partial L}{\partial x}=-V'(x),
-\]
+$$
 
 so
 
-\[
+$$
 m\ddot x+V'(x)=0.
-\]
+$$
 
 Because force is
 
-\[
+$$
 F(x)=-V'(x),
-\]
+$$
 
 we recover
 
-\[
+$$
 m\ddot x=F(x).
-\]
+$$
 
 The variational and Newtonian descriptions agree here, but the variational form generalizes naturally to non-Cartesian coordinates and exposes symmetries that may be hidden in component force equations.
 
 #### Generalized momentum is defined by the Lagrangian
 
-The momentum conjugate to \(q_i\) is
+The momentum conjugate to $q_i$ is
 
-\[
+$$
 \boxed{
 p_i
 =
 \frac{\partial L}{\partial\dot q_i}
 }.
-\]
+$$
 
-For a Cartesian particle with ordinary kinetic energy this becomes \(p_i=m\dot q_i\), but the definition is more general. In curvilinear coordinates or coupled systems, conjugate momentum need not be a mass times the corresponding coordinate velocity.
+For a Cartesian particle with ordinary kinetic energy this becomes $p_i=m\dot q_i$, but the definition is more general. In curvilinear coordinates or coupled systems, conjugate momentum need not be a mass times the corresponding coordinate velocity.
 
-This matters when converting an engine model into Hamiltonian form: blindly storing \(\mathbf p=m\mathbf v\) is only valid when the model's kinetic energy gives that relation.
+This matters when converting an engine model into Hamiltonian form: blindly storing $\mathbf p=m\mathbf v$ is only valid when the model's kinetic energy gives that relation.
 
 #### Cyclic coordinates reveal conservation laws immediately
 
-If a coordinate \(q_j\) does not appear explicitly in the Lagrangian,
+If a coordinate $q_j$ does not appear explicitly in the Lagrangian,
 
-\[
+$$
 \frac{\partial L}{\partial q_j}=0,
-\]
+$$
 
 then the Euler–Lagrange equation gives
 
-\[
+$$
 \frac{d}{dt}
 \left(
 \frac{\partial L}{\partial\dot q_j}
 \right)
 =0.
-\]
+$$
 
 Thus
 
-\[
+$$
 \boxed{p_j=\text{constant}.}
-\]
+$$
 
 Such a coordinate is called **cyclic** or **ignorable**. The word “ignorable” does not mean physically unimportant; it means the Lagrangian is invariant under translation in that coordinate.
 
@@ -58922,29 +59103,29 @@ A conservation law should not be treated as a lucky algebraic cancellation. When
 
 The full theorem can be expressed geometrically, but three standard correspondences provide the engineering intuition:
 
-\[
+$$
 \boxed{
 \text{spatial translation symmetry}
 \longleftrightarrow
 \text{linear momentum conservation}
 }
-\]
+$$
 
-\[
+$$
 \boxed{
 \text{rotational symmetry}
 \longleftrightarrow
 \text{angular momentum conservation}
 }
-\]
+$$
 
-\[
+$$
 \boxed{
 \text{time-translation symmetry}
 \longleftrightarrow
 \text{energy conservation}
 }
-\]
+$$
 
 The assumptions matter. An external time-dependent force breaks time-translation invariance. A fixed wall or field can break spatial translation symmetry. Dissipation is generally not described by the simple conservative action above. A collision solver that injects or removes energy according to restitution is not obliged to conserve the pre-impact Hamiltonian.
 
@@ -58952,29 +59133,29 @@ For debugging, however, symmetry-derived invariants are extremely useful. If an 
 
 ### Configuration space, velocity space, and phase space are different state spaces
 
-A configuration is one possible geometric arrangement of the system. The set of all configurations is the **configuration space**, usually denoted \(Q\).
+A configuration is one possible geometric arrangement of the system. The set of all configurations is the **configuration space**, usually denoted $Q$.
 
-For a point particle constrained to a sphere, \(Q\) is the sphere itself, not all of \(\mathbb R^3\). For a rigid body's orientation, the configuration space is the rotation group \(SO(3)\), not an arbitrary three-vector space even though software may use three local parameters or four quaternion components to represent it.
+For a point particle constrained to a sphere, $Q$ is the sphere itself, not all of $\mathbb R^3$. For a rigid body's orientation, the configuration space is the rotation group $SO(3)$, not an arbitrary three-vector space even though software may use three local parameters or four quaternion components to represent it.
 
-A Lagrangian state needs both configuration and velocity. Geometrically, velocities live in the tangent space \(T_qQ\) at the current configuration. The collection of all pairs
+A Lagrangian state needs both configuration and velocity. Geometrically, velocities live in the tangent space $T_qQ$ at the current configuration. The collection of all pairs
 
-\[
+$$
 (q,\dot q)
-\]
+$$
 
-forms the tangent bundle \(TQ\).
+forms the tangent bundle $TQ$.
 
 Hamiltonian mechanics instead uses configuration and conjugate momentum:
 
-\[
+$$
 (q,p).
-\]
+$$
 
-Momenta are covector-like objects belonging to the cotangent space \(T_q^*Q\). The collection of all such pairs is the **cotangent bundle**
+Momenta are covector-like objects belonging to the cotangent space $T_q^*Q$. The collection of all such pairs is the **cotangent bundle**
 
-\[
+$$
 \boxed{T^*Q,}
-\]
+$$
 
 which is the natural phase space for Hamiltonian mechanics.
 
@@ -58982,23 +59163,23 @@ This distinction connects directly to the earlier vector/covector discussion in 
 
 ### The Legendre transform moves from velocity to momentum
 
-Starting with a Lagrangian \(L(q,\dot q,t)\), define
+Starting with a Lagrangian $L(q,\dot q,t)$, define
 
-\[
+$$
 p_i=\frac{\partial L}{\partial\dot q_i}.
-\]
+$$
 
 If these relations can be inverted to obtain
 
-\[
+$$
 \dot{\mathbf q}
 =
 \dot{\mathbf q}(\mathbf q,\mathbf p,t),
-\]
+$$
 
 then define the Hamiltonian by the Legendre transform
 
-\[
+$$
 \boxed{
 H(\mathbf q,\mathbf p,t)
 =
@@ -59006,25 +59187,25 @@ H(\mathbf q,\mathbf p,t)
 -
 L(\mathbf q,\dot{\mathbf q},t)
 }.
-\]
+$$
 
 For
 
-\[
+$$
 L=\frac12m\dot q^2-V(q),
-\]
+$$
 
 we have
 
-\[
+$$
 p=m\dot q,
 \qquad
 \dot q=\frac pm.
-\]
+$$
 
 Therefore
 
-\[
+$$
 H
 =
 p\frac pm
@@ -59038,20 +59219,20 @@ V(q)
 \boxed{
 \frac{p^2}{2m}+V(q)
 }.
-\]
+$$
 
-In this familiar case \(H\) is total mechanical energy.
+In this familiar case $H$ is total mechanical energy.
 
 But “Hamiltonian equals energy” is not a definition that works without qualification. Time-dependent coordinates, velocity-dependent potentials, constrained or singular systems, and other generalized models can make the relationship subtler.
 
 The invertibility condition is also substantive. The velocity Hessian
 
-\[
+$$
 \left[
 \frac{\partial^2L}
 {\partial\dot q_i\partial\dot q_j}
 \right]
-\]
+$$
 
 must be nonsingular for the ordinary Legendre transformation to define velocities uniquely from momenta. If it is singular, constraints are present in the Hamiltonian description and a naive inversion fails. This is one reason constrained mechanics requires more than rearranging equations.
 
@@ -59059,7 +59240,7 @@ must be nonsingular for the ordinary Legendre transformation to define velocitie
 
 When the Legendre transform is regular, the dynamics can be written
 
-\[
+$$
 \boxed{
 \dot q_i
 =
@@ -59070,43 +59251,43 @@ When the Legendre transform is regular, the dynamics can be written
 -
 \frac{\partial H}{\partial q_i}
 }.
-\]
+$$
 
 Second-order equations in configuration become a first-order system on phase space.
 
 For a harmonic oscillator,
 
-\[
+$$
 H(q,p)
 =
 \frac{p^2}{2m}
 +
 \frac12kq^2.
-\]
+$$
 
 Then
 
-\[
+$$
 \dot q=\frac pm,
 \qquad
 \dot p=-kq.
-\]
+$$
 
 The energy level
 
-\[
+$$
 H(q,p)=E
-\]
+$$
 
-is an ellipse in the \((q,p)\) phase plane:
+is an ellipse in the $(q,p)$ phase plane:
 
-\[
+$$
 \frac{p^2}{2mE}
 +
 \frac{kq^2}{2E}
 =
 1.
-\]
+$$
 
 The exact trajectory circulates around this ellipse. This phase portrait makes numerical behavior visually interpretable. A method whose states spiral outward is injecting energy. A method whose states spiral inward is dissipating energy. A structure-preserving method may follow a nearby closed curve while its exact energy oscillates.
 
@@ -59116,58 +59297,58 @@ That geometric picture is the reason the symplectic discussion below is more tha
 
 In canonical coordinates
 
-\[
+$$
 (q_1,\ldots,q_n,p_1,\ldots,p_n),
-\]
+$$
 
 the canonical symplectic two-form is
 
-\[
+$$
 \boxed{
 \omega
 =
 \sum_{i=1}^{n}
 dq_i\wedge dp_i
 }.
-\]
+$$
 
 A two-form measures oriented infinitesimal area in pairs of tangent directions. The wedge product is antisymmetric:
 
-\[
+$$
 dq_i\wedge dp_i
 =
 -
 dp_i\wedge dq_i.
-\]
+$$
 
 In matrix form the same bilinear structure is represented by
 
-\[
+$$
 \Omega
 =
 \begin{bmatrix}
 0&I\\
 -I&0
 \end{bmatrix}.
-\]
+$$
 
-A Hamiltonian \(H\) determines a vector field \(X_H\) through the symplectic form. With one common sign convention,
+A Hamiltonian $H$ determines a vector field $X_H$ through the symplectic form. With one common sign convention,
 
-\[
+$$
 \boxed{
 \iota_{X_H}\omega=dH
 }
-\]
+$$
 
-with the corresponding canonical-coordinate convention chosen consistently. Expanding the relation yields Hamilton's equations. Different texts may place a minus sign in the defining contraction depending on whether \(\omega\) is written \(dq\wedge dp\) or \(dp\wedge dq\); the physical equations do not change when conventions are used consistently.
+with the corresponding canonical-coordinate convention chosen consistently. Expanding the relation yields Hamilton's equations. Different texts may place a minus sign in the defining contraction depending on whether $\omega$ is written $dq\wedge dp$ or $dp\wedge dq$; the physical equations do not change when conventions are used consistently.
 
-The important idea is that the Hamiltonian is not merely a scalar we try to conserve. Through \(\omega\), its differential generates the direction of motion in phase space.
+The important idea is that the Hamiltonian is not merely a scalar we try to conserve. Through $\omega$, its differential generates the direction of motion in phase space.
 
 ### Poisson brackets turn observables into a dynamical algebra
 
-Let \(f(q,p,t)\) be any scalar observable on phase space. Define the canonical **Poisson bracket**
+Let $f(q,p,t)$ be any scalar observable on phase space. Define the canonical **Poisson bracket**
 
-\[
+$$
 \boxed{
 \{f,g\}
 =
@@ -59180,11 +59361,11 @@ Let \(f(q,p,t)\) be any scalar observable on phase space. Define the canonical *
 \frac{\partial g}{\partial q_i}
 \right)
 }.
-\]
+$$
 
 Along Hamiltonian motion,
 
-\[
+$$
 \boxed{
 \frac{df}{dt}
 =
@@ -59192,44 +59373,44 @@ Along Hamiltonian motion,
 +
 \frac{\partial f}{\partial t}
 }.
-\]
+$$
 
-This single formula packages many conservation arguments. If \(f\) has no explicit time dependence and
+This single formula packages many conservation arguments. If $f$ has no explicit time dependence and
 
-\[
+$$
 \{f,H\}=0,
-\]
+$$
 
-then \(f\) is conserved.
+then $f$ is conserved.
 
-For the coordinate observable \(q_j\),
+For the coordinate observable $q_j$,
 
-\[
+$$
 \{q_j,H\}
 =
 \frac{\partial H}{\partial p_j}
 =
 \dot q_j.
-\]
+$$
 
-For \(p_j\),
+For $p_j$,
 
-\[
+$$
 \{p_j,H\}
 =
 -
 \frac{\partial H}{\partial q_j}
 =
 \dot p_j.
-\]
+$$
 
 Thus Hamilton's equations themselves are special cases of observable evolution.
 
 The bracket is bilinear and antisymmetric:
 
-\[
+$$
 \{f,g\}=-\{g,f\},
-\]
+$$
 
 obeys a product rule, and satisfies the Jacobi identity. Those properties make phase-space observables into a Lie algebra. For practical mechanics, the main value is conceptual compression: “commutes with the Hamiltonian under the Poisson bracket” becomes a test for a conserved quantity.
 
@@ -59237,7 +59418,7 @@ obeys a product rule, and satisfies the Jacobi identity. Those properties make p
 
 Consider the phase-space vector field
 
-\[
+$$
 \dot{\mathbf z}
 =
 \begin{bmatrix}
@@ -59249,11 +59430,11 @@ Consider the phase-space vector field
 \nabla_pH\\
 -\nabla_qH
 \end{bmatrix}.
-\]
+$$
 
 Its divergence in canonical coordinates is
 
-\[
+$$
 \nabla_{\mathbf z}\cdot\dot{\mathbf z}
 =
 \sum_i
@@ -59263,7 +59444,7 @@ Its divergence in canonical coordinates is
 \frac{\partial^2H}{\partial p_i\partial q_i}
 \right)
 =0
-\]
+$$
 
 when the required mixed derivatives are regular.
 
@@ -59271,11 +59452,11 @@ Zero divergence means the continuous Hamiltonian flow preserves phase-space volu
 
 This is **Liouville's theorem**.
 
-For one degree of freedom, phase space is two-dimensional, so volume preservation becomes area preservation. In higher dimensions, preserving \(2n\)-dimensional volume is weaker than preserving the full symplectic structure. A map can have determinant one and still fail the symplectic condition
+For one degree of freedom, phase space is two-dimensional, so volume preservation becomes area preservation. In higher dimensions, preserving $2n$-dimensional volume is weaker than preserving the full symplectic structure. A map can have determinant one and still fail the symplectic condition
 
-\[
+$$
 (D\Phi)^T\Omega(D\Phi)=\Omega.
-\]
+$$
 
 This distinction prevents a common shortcut: “volume preserving” and “symplectic” are not interchangeable.
 
@@ -59283,9 +59464,9 @@ This distinction prevents a common shortcut: “volume preserving” and “symp
 
 A change of phase-space variables
 
-\[
+$$
 (q,p)\mapsto(Q,P)
-\]
+$$
 
 is **canonical** when it preserves the symplectic form. In matrix language for a differentiable map, the Jacobian must satisfy the same symplectic condition used below for discrete integrators.
 
@@ -59297,7 +59478,7 @@ This perspective explains why the symplectic condition is the right discrete ana
 
 The hierarchy is now precise:
 
-\[
+$$
 \boxed{
 \text{action}
 \rightarrow
@@ -59309,7 +59490,7 @@ The hierarchy is now precise:
 \rightarrow
 \text{symplectic discrete update}
 }
-\]
+$$
 
 Each arrow introduces assumptions.
 
@@ -59635,7 +59816,7 @@ A general Runge–Kutta method uses several derivative evaluations, called stage
 The generic equations are:
 
 $$
-k_i= f\left( t_n+c_ih,\\, y_n+h\sum_{j=1}^{s}a_{ij}k_j \right),
+k_i= f\left( t_n+c_ih,\, y_n+h\sum_{j=1}^{s}a_{ij}k_j \right),
 $$
 
 $$
@@ -59977,19 +60158,19 @@ $$
 Since the eigenvalues of $A$ are $\pm i\omega$, the update-matrix eigenvalues are:
 
 $$
-\mu\_\pm=1\pm ih\omega.
+\mu_\pm=1\pm ih\omega.
 $$
 
 Their magnitudes are:
 
 $$
-|\mu\_\pm| = \sqrt{1+h^2\omega^2}.
+|\mu_\pm| = \sqrt{1+h^2\omega^2}.
 $$
 
 For any positive $h\omega$:
 
 $$
-\boxed{|\mu\_\pm|>1}.
+\boxed{|\mu_\pm|>1}.
 $$
 
 Therefore explicit Euler is unstable for the ideal harmonic oscillator for every positive fixed timestep.
@@ -61187,7 +61368,7 @@ Optimization starts before we choose an algorithm. We first need to decide preci
 Suppose a camera predicts that a reconstructed 3D point appears at pixel location:
 
 $$
-\hat{\mathbf u}\_i(\mathbf x)= \begin{bmatrix}\hat u_i\\hat v_i\end{bmatrix}
+\hat{\mathbf u}_i(\mathbf x)= \begin{bmatrix}\hat u_i\\\hat v_i\end{bmatrix}
 $$
 
 where $\mathbf x$ contains the unknown camera parameters.
@@ -61201,7 +61382,7 @@ $$
 Define the residual:
 
 $$
-\boxed{ \mathbf r_i(\mathbf x) = \hat{\mathbf u}\_i(\mathbf x)-\mathbf u_i }.
+\boxed{ \mathbf r_i(\mathbf x) = \hat{\mathbf u}_i(\mathbf x)-\mathbf u_i }.
 $$
 
 A residual is the signed difference between a prediction and a target. For reprojection error, its components have units of pixels.
@@ -61209,7 +61390,7 @@ A residual is the signed difference between a prediction and a target. For repro
 We could minimize the sum of squared residual magnitudes:
 
 $$
-\boxed{ E(\mathbf x)= \frac12\sum_{i=1}^{N} \|\mathbf r_i(\mathbf x)\|\_2^2 }.
+\boxed{ E(\mathbf x)= \frac12\sum_{i=1}^{N} \|\mathbf r_i(\mathbf x)\|_2^2 }.
 $$
 
 Why square the residuals?
@@ -61221,7 +61402,7 @@ But the choice is not automatically correct for every problem. Squared residuals
 For instance, if a measurement has standard deviation $\sigma_i$, it is often more appropriate to use the normalized residual:
 
 $$
-\tilde{\mathbf r}\_i= \frac{\mathbf r_i}{\sigma_i}.
+\tilde{\mathbf r}_i= \frac{\mathbf r_i}{\sigma_i}.
 $$
 
 A weighted objective is then:
@@ -63250,17 +63431,17 @@ web.stanford.edu
 
 The KKT conditions above are easier to understand once the **Lagrange dual function** is derived rather than treated as a separate optimization trick. Consider
 
-\[
+$$
 \begin{aligned}
 \text{minimize}\quad & f_0(x)\\
 \text{subject to}\quad & f_i(x)\le 0,\quad i=1,\ldots,m,\\
 & Ax=b.
 \end{aligned}
-\]
+$$
 
-With multipliers \(\lambda_i\ge0\) and \(\nu\), the Lagrangian is
+With multipliers $\lambda_i\ge0$ and $\nu$, the Lagrangian is
 
-\[
+$$
 L(x,\lambda,\nu)
 =
 f_0(x)
@@ -63268,37 +63449,37 @@ f_0(x)
 \sum_{i=1}^{m}\lambda_i f_i(x)
 +
 \nu^T(Ax-b).
-\]
+$$
 
 For fixed multipliers, minimize over the primal variable:
 
-\[
+$$
 g(\lambda,\nu)
 =
 \inf_x L(x,\lambda,\nu).
-\]
+$$
 
-For any primal-feasible \(x\) and dual-feasible \(\lambda\ge0\),
+For any primal-feasible $x$ and dual-feasible $\lambda\ge0$,
 
-\[
+$$
 g(\lambda,\nu)
 \le
 f_0(x).
-\]
+$$
 
 This is **weak duality**. Every dual-feasible point supplies a certified lower bound on the primal optimum in a minimization problem. The dual problem chooses the best such certificate:
 
-\[
+$$
 \text{maximize}\quad g(\lambda,\nu)
 \quad
 \text{subject to}\quad \lambda\ge0.
-\]
+$$
 
 The **duality gap**
 
-\[
+$$
 f_0(x)-g(\lambda,\nu)
-\]
+$$
 
 therefore measures how far a primal/dual candidate pair is from proving optimality. A small objective gradient alone cannot make that certification.
 
@@ -63316,48 +63497,48 @@ Source basis: Boyd and Vandenberghe, *Convex Optimization*, Chapter 5 on the Lag
 
 Projected methods react to a boundary after a trial step. **Interior-point methods** take a different route: stay inside the feasible region and solve a sequence of smooth problems that approach the constrained optimum. For inequalities
 
-\[
+$$
 f_i(x)\le0,
-\]
+$$
 
 the logarithmic barrier
 
-\[
+$$
 \phi(x)
 =
 -\sum_{i=1}^{m}\log(-f_i(x))
-\]
+$$
 
 is finite only for strictly feasible points and diverges as a boundary is approached. The barrier subproblem is
 
-\[
+$$
 \min_x\;
 t f_0(x)+\phi(x)
 \quad
 \text{subject to}\quad Ax=b,
-\]
+$$
 
-with \(t>0\). Small \(t\) gives the barrier substantial influence; increasing \(t\) makes the objective dominate while the iterates remain interior.
+with $t>0$. Small $t$ gives the barrier substantial influence; increasing $t$ makes the objective dominate while the iterates remain interior.
 
-The minimizers \(x^*(t)\) trace the **central path**. Introduce
+The minimizers $x^*(t)$ trace the **central path**. Introduce
 
-\[
+$$
 \lambda_i(t)
 =
 -\frac{1}{t f_i(x^*(t))}.
-\]
+$$
 
 The barrier optimality conditions can then be written like KKT, except complementary slackness becomes
 
-\[
+$$
 -\lambda_i f_i(x)=\frac{1}{t}.
-\]
+$$
 
-As \(t\rightarrow\infty\), the right side tends to zero. The central path is therefore a continuous deformation toward the KKT conditions rather than an arbitrary sequence of penalty parameters.
+As $t\rightarrow\infty$, the right side tends to zero. The central path is therefore a continuous deformation toward the KKT conditions rather than an arbitrary sequence of penalty parameters.
 
 Each centering step is usually solved with Newton’s method subject to equality constraints. Linearization produces a KKT-like block system. This reconnects interior-point optimization to the existing material on symmetric-indefinite factorization and Schur complements. The numerical core is not “take an inverse”; it is repeatedly solve a structured linear system while controlling line search, feasibility, and residual decrease.
 
-A primal-dual interior-point method works directly with modified KKT residuals. The state includes primal variables \(x\), inequality multipliers \(\lambda\), and equality multipliers \(\nu\). A Newton step simultaneously reduces stationarity, feasibility, and complementarity residuals. This is why a production implementation should track a vector of residual criteria rather than one scalar loss.
+A primal-dual interior-point method works directly with modified KKT residuals. The state includes primal variables $x$, inequality multipliers $\lambda$, and equality multipliers $\nu$. A Newton step simultaneously reduces stationarity, feasibility, and complementarity residuals. This is why a production implementation should track a vector of residual criteria rather than one scalar loss.
 
 The barrier also has a useful mechanical interpretation given by Boyd and Vandenberghe. Each constraint creates a repulsive potential that becomes large near its boundary, while the scaled objective pulls toward lower objective values. A central point is where these influences balance. The analogy helps intuition, but the actual convergence claim comes from convex analysis and self-concordance, not from simulated physical dynamics.
 
@@ -63380,7 +63561,7 @@ be a residual vector.
 Define:
 
 $$
-\boxed{ E(\mathbf x)=\frac12\|\mathbf r(\mathbf x)\|\_2^2 }.
+\boxed{ E(\mathbf x)=\frac12\|\mathbf r(\mathbf x)\|_2^2 }.
 $$
 
 The residual dimension $m$ need not equal the parameter dimension $n$.
@@ -63728,13 +63909,13 @@ $$
 Add a penalty on the step:
 
 $$
-m\_\lambda(\Delta\mathbf x) = \frac12\|\mathbf r+J\Delta\mathbf x\|^2 +\frac\lambda2\Delta\mathbf x^TD\Delta\mathbf x.
+m_\lambda(\Delta\mathbf x) = \frac12\|\mathbf r+J\Delta\mathbf x\|^2 +\frac\lambda2\Delta\mathbf x^TD\Delta\mathbf x.
 $$
 
 Differentiate:
 
 $$
-\nabla m\_\lambda= J^T(\mathbf r+J\Delta\mathbf x) +\lambda D\Delta\mathbf x.
+\nabla m_\lambda= J^T(\mathbf r+J\Delta\mathbf x) +\lambda D\Delta\mathbf x.
 $$
 
 Setting the gradient to zero:
@@ -63962,17 +64143,17 @@ $$
 The regularized objective is:
 
 $$
-E\_\lambda= \frac12(x_1+x_2-10)^2 +\frac\lambda2(x_1^2+x_2^2).
+E_\lambda= \frac12(x_1+x_2-10)^2 +\frac\lambda2(x_1^2+x_2^2).
 $$
 
 Differentiate:
 
 $$
-\frac{\partial E\_\lambda}{\partial x_1} = x_1+x_2-10+\lambda x_1,
+\frac{\partial E_\lambda}{\partial x_1} = x_1+x_2-10+\lambda x_1,
 $$
 
 $$
-\frac{\partial E\_\lambda}{\partial x_2} = x_1+x_2-10+\lambda x_2.
+\frac{\partial E_\lambda}{\partial x_2} = x_1+x_2-10+\lambda x_2.
 $$
 
 Subtract the two equations at stationarity:
@@ -64032,13 +64213,13 @@ Regularization resolves numerical or modeling ambiguity according to assumptions
 The L1 norm is:
 
 $$
-\boxed{ \|\mathbf x\|\_1=\sum_i|x_i| }.
+\boxed{ \|\mathbf x\|_1=\sum_i|x_i| }.
 $$
 
 An L1-regularized objective has the form:
 
 $$
-\boxed{ E(\mathbf x)= f(\mathbf x)+\lambda\|\mathbf x\|\_1 }.
+\boxed{ E(\mathbf x)= f(\mathbf x)+\lambda\|\mathbf x\|_1 }.
 $$
 
 L1 regularization often encourages exact zeros in the solution.
@@ -64116,7 +64297,7 @@ is satisfied at $x=0$ when $|a|\le\lambda$.
 Combining the cases:
 
 $$
-\boxed{ S\_\lambda(a)= \operatorname{sign}(a) \max(|a|-\lambda,0) }.
+\boxed{ S_\lambda(a)= \operatorname{sign}(a) \max(|a|-\lambda,0) }.
 $$
 
 This is the soft-thresholding operator.
@@ -64138,7 +64319,7 @@ We can use subgradient methods, but proximal-gradient methods often exploit the 
 For:
 
 $$
-E(\mathbf x)=f(\mathbf x)+\lambda\|\mathbf x\|\_1,
+E(\mathbf x)=f(\mathbf x)+\lambda\|\mathbf x\|_1,
 $$
 
 where $f$ is smooth, a proximal-gradient step is:
@@ -64166,13 +64347,13 @@ Therefore an L1 prior on deformation coefficients expresses a preference tied to
 The L2 norm is:
 
 $$
-\|\mathbf x\|\_2= \sqrt{\sum_i x_i^2}.
+\|\mathbf x\|_2= \sqrt{\sum_i x_i^2}.
 $$
 
 In optimization, L2 regularization commonly refers to the squared L2 norm:
 
 $$
-\boxed{ R(\mathbf x)=\frac12\|\mathbf x\|\_2^2 }.
+\boxed{ R(\mathbf x)=\frac12\|\mathbf x\|_2^2 }.
 $$
 
 Its gradient is:
@@ -64190,13 +64371,13 @@ $$
 For:
 
 $$
-E\_\lambda(\mathbf x) = \frac12\|A\mathbf x-\mathbf b\|^2 +\frac\lambda2\|\mathbf x\|^2,
+E_\lambda(\mathbf x) = \frac12\|A\mathbf x-\mathbf b\|^2 +\frac\lambda2\|\mathbf x\|^2,
 $$
 
 the gradient is:
 
 $$
-\nabla E\_\lambda = A^T(A\mathbf x-\mathbf b)+\lambda\mathbf x.
+\nabla E_\lambda = A^T(A\mathbf x-\mathbf b)+\lambda\mathbf x.
 $$
 
 Set to zero:
@@ -64532,7 +64713,7 @@ For example, a camera parameter vector may contain translation in metres, rotati
 One might use:
 
 $$
-S= \operatorname{diag} (s_t,s_t,s_t,s\_\omega,s\_\omega,s\_\omega,s_f).
+S= \operatorname{diag} (s_t,s_t,s_t,s_\omega,s_\omega,s_\omega,s_f).
 $$
 
 The values should represent meaningful changes in the respective parameters, not arbitrary magnitudes selected solely to force the numbers into a preferred range.
@@ -64818,7 +64999,7 @@ $$
 For box constraints, Euclidean projection is componentwise clipping:
 
 $$
-\boxed{ [\Pi_{\mathcal C}(\mathbf x)]\_i = \min(u_i,\max(l_i,x_i)) }.
+\boxed{ [\Pi_{\mathcal C}(\mathbf x)]_i = \min(u_i,\max(l_i,x_i)) }.
 $$
 
 This is the closest feasible point to $\mathbf x$ under Euclidean distance.
@@ -64878,7 +65059,7 @@ It first computes an unconstrained gradient step, then projects the candidate in
 Define:
 
 $$
-\boxed{ G\_\alpha(\mathbf x)= \frac1\alpha \left[ \mathbf x- \Pi_{\mathcal C} (\mathbf x-\alpha\nabla f(\mathbf x)) \right] }.
+\boxed{ G_\alpha(\mathbf x)= \frac1\alpha \left[ \mathbf x- \Pi_{\mathcal C} (\mathbf x-\alpha\nabla f(\mathbf x)) \right] }.
 $$
 
 For an unconstrained problem, projection is the identity:
@@ -64890,7 +65071,7 @@ $$
 Therefore:
 
 $$
-G\_\alpha(\mathbf x) = \frac1\alpha[ \mathbf x-(\mathbf x-\alpha\nabla f) ] = \nabla f.
+G_\alpha(\mathbf x) = \frac1\alpha[ \mathbf x-(\mathbf x-\alpha\nabla f) ] = \nabla f.
 $$
 
 Thus the projected-gradient mapping generalizes the ordinary gradient.
@@ -64898,7 +65079,7 @@ Thus the projected-gradient mapping generalizes the ordinary gradient.
 At a constrained first-order stationary point:
 
 $$
-\boxed{ G\_\alpha(\mathbf x^\star)=0 }
+\boxed{ G_\alpha(\mathbf x^\star)=0 }
 $$
 
 for an appropriate positive $\alpha$, assuming the standard convex feasible-set projection formulation.
@@ -65152,13 +65333,13 @@ This is a vector-valued product rule.
 Using the skew-symmetric matrix:
 
 $$
-[\mathbf a]\_\times= \begin{bmatrix} 0&-a_z&a_y\\ a_z&0&-a_x\\ -a_y&a_x&0 \end{bmatrix},
+[\mathbf a]_\times= \begin{bmatrix} 0&-a_z&a_y\\ a_z&0&-a_x\\ -a_y&a_x&0 \end{bmatrix},
 $$
 
 we have:
 
 $$
-\mathbf a\times\mathbf b=[\mathbf a]\_\times\mathbf b.
+\mathbf a\times\mathbf b=[\mathbf a]_\times\mathbf b.
 $$
 
 A perturbation produces:
@@ -65170,19 +65351,19 @@ $$
 Since:
 
 $$
-\delta\mathbf a\times\mathbf b = -[\mathbf b]\_\times\delta\mathbf a,
+\delta\mathbf a\times\mathbf b = -[\mathbf b]_\times\delta\mathbf a,
 $$
 
 the Jacobians are:
 
 $$
-\boxed{ \frac{\partial(\mathbf a\times\mathbf b)}{\partial\mathbf a} = -[\mathbf b]\_\times }
+\boxed{ \frac{\partial(\mathbf a\times\mathbf b)}{\partial\mathbf a} = -[\mathbf b]_\times }
 $$
 
 and:
 
 $$
-\boxed{ \frac{\partial(\mathbf a\times\mathbf b)}{\partial\mathbf b} = [\mathbf a]\_\times }.
+\boxed{ \frac{\partial(\mathbf a\times\mathbf b)}{\partial\mathbf b} = [\mathbf a]_\times }.
 $$
 
 These formulas are useful in rigid-body mechanics, geometric constraints, angular velocity, and rotation optimization.
@@ -65192,7 +65373,7 @@ These formulas are useful in rigid-body mechanics, geometric constraints, angula
 For:
 
 $$
-f(\mathbf x)=\|\mathbf x\|\_2 = \sqrt{\mathbf x^T\mathbf x},
+f(\mathbf x)=\|\mathbf x\|_2 = \sqrt{\mathbf x^T\mathbf x},
 $$
 
 differentiate:
@@ -65224,7 +65405,7 @@ when $\mathbf x\ne0$.
 At zero, the Euclidean norm is not classically differentiable. Its convex subdifferential is the unit ball:
 
 $$
-\partial\|\mathbf0\|\_2= \{\mathbf g:\|\mathbf g\|\_2\le1\}.
+\partial\|\mathbf0\|_2= \{\mathbf g:\|\mathbf g\|_2\le1\}.
 $$
 
 A solver or AD library must choose how to represent that nonsmooth case.
@@ -65298,25 +65479,25 @@ $$
 Differentiate with respect to $\theta$:
 
 $$
-A\_\theta\mathbf x+A\mathbf x\_\theta = \mathbf b\_\theta.
+A_\theta\mathbf x+A\mathbf x_\theta = \mathbf b_\theta.
 $$
 
 Rearrange:
 
 $$
-A\mathbf x\_\theta= \mathbf b\_\theta-A\_\theta\mathbf x.
+A\mathbf x_\theta= \mathbf b_\theta-A_\theta\mathbf x.
 $$
 
 Therefore:
 
 $$
-\boxed{ \mathbf x\_\theta = A^{-1}(\mathbf b\_\theta-A\_\theta\mathbf x) }.
+\boxed{ \mathbf x_\theta = A^{-1}(\mathbf b_\theta-A_\theta\mathbf x) }.
 $$
 
 Computationally, solve:
 
 $$
-\boxed{ A\mathbf x\_\theta = \mathbf b\_\theta-A\_\theta\mathbf x }.
+\boxed{ A\mathbf x_\theta = \mathbf b_\theta-A_\theta\mathbf x }.
 $$
 
 This avoids explicitly forming the inverse.
@@ -65524,7 +65705,7 @@ $$
 Differentiate:
 
 $$
-d\mathbf n = r^{-1}d\mathbf v+ \mathbf v\\,d(r^{-1}).
+d\mathbf n = r^{-1}d\mathbf v+ \mathbf v\,d(r^{-1}).
 $$
 
 Since:
@@ -65774,13 +65955,13 @@ Therefore $\Omega$ is skew-symmetric.
 Every $3\times3$ skew-symmetric matrix can be represented by an angular velocity vector:
 
 $$
-\Omega=[\boldsymbol\omega]\_\times.
+\Omega=[\boldsymbol\omega]_\times.
 $$
 
 Hence:
 
 $$
-\boxed{ \dot R=R[\boldsymbol\omega_b]\_\times }
+\boxed{ \dot R=R[\boldsymbol\omega_b]_\times }
 $$
 
 when $\boldsymbol\omega_b$ is expressed in the body frame.
@@ -65788,7 +65969,7 @@ when $\boldsymbol\omega_b$ is expressed in the body frame.
 Alternatively:
 
 $$
-\boxed{ \dot R=[\boldsymbol\omega_w]\_\times R }
+\boxed{ \dot R=[\boldsymbol\omega_w]_\times R }
 $$
 
 when angular velocity is expressed in the world frame.
@@ -65810,43 +65991,43 @@ $$
 A small left-applied rotation perturbation is:
 
 $$
-R_{\mathrm{new}} = \exp([\delta\boldsymbol\omega]\_\times)R.
+R_{\mathrm{new}} = \exp([\delta\boldsymbol\omega]_\times)R.
 $$
 
 For a small perturbation:
 
 $$
-\exp([\delta\boldsymbol\omega]\_\times) \approx I+[\delta\boldsymbol\omega]\_\times.
+\exp([\delta\boldsymbol\omega]_\times) \approx I+[\delta\boldsymbol\omega]_\times.
 $$
 
 Then:
 
 $$
-\begin{aligned} \mathbf p'_{\mathrm{new}} &\approx (I+[\delta\boldsymbol\omega]\_\times)R\mathbf p\\ &=R\mathbf p+ \delta\boldsymbol\omega\times(R\mathbf p). \end{aligned}
+\begin{aligned} \mathbf p'_{\mathrm{new}} &\approx (I+[\delta\boldsymbol\omega]_\times)R\mathbf p\\ &=R\mathbf p+ \delta\boldsymbol\omega\times(R\mathbf p). \end{aligned}
 $$
 
 Using:
 
 $$
-\mathbf a\times\mathbf b = -[\mathbf b]\_\times\mathbf a,
+\mathbf a\times\mathbf b = -[\mathbf b]_\times\mathbf a,
 $$
 
 we obtain:
 
 $$
-\boxed{ \frac{\partial(R\mathbf p)} {\partial\delta\boldsymbol\omega_{\mathrm{left}}} = -[R\mathbf p]\_\times }.
+\boxed{ \frac{\partial(R\mathbf p)} {\partial\delta\boldsymbol\omega_{\mathrm{left}}} = -[R\mathbf p]_\times }.
 $$
 
 For a right-applied perturbation:
 
 $$
-R_{\mathrm{new}} = R\exp([\delta\boldsymbol\omega]\_\times),
+R_{\mathrm{new}} = R\exp([\delta\boldsymbol\omega]_\times),
 $$
 
 the corresponding Jacobian is:
 
 $$
-\boxed{ \frac{\partial(R\mathbf p)} {\partial\delta\boldsymbol\omega_{\mathrm{right}}} = -R[\mathbf p]\_\times }.
+\boxed{ \frac{\partial(R\mathbf p)} {\partial\delta\boldsymbol\omega_{\mathrm{right}}} = -R[\mathbf p]_\times }.
 $$
 
 These matrices are generally different.
@@ -65876,13 +66057,13 @@ $$
 the first-order point variation is:
 
 $$
-\delta\mathbf p_c = -[\mathbf p_c]\_\times\delta\boldsymbol\omega +\delta\mathbf v.
+\delta\mathbf p_c = -[\mathbf p_c]_\times\delta\boldsymbol\omega +\delta\mathbf v.
 $$
 
 Therefore:
 
 $$
-\boxed{ J_{\mathrm{pose}} = \begin{bmatrix} -[\mathbf p_c]\_\times&I \end{bmatrix} }.
+\boxed{ J_{\mathrm{pose}} = \begin{bmatrix} -[\mathbf p_c]_\times&I \end{bmatrix} }.
 $$
 
 This is a $3\times6$ matrix.
@@ -65890,7 +66071,7 @@ This is a $3\times6$ matrix.
 If the resulting camera-space point is projected into image space, the complete Jacobian is:
 
 $$
-\boxed{ J_{\mathrm{pixel,pose}} = J_{\mathrm{projection}} \begin{bmatrix} -[\mathbf p_c]\_\times&I \end{bmatrix} }.
+\boxed{ J_{\mathrm{pixel,pose}} = J_{\mathrm{projection}} \begin{bmatrix} -[\mathbf p_c]_\times&I \end{bmatrix} }.
 $$
 
 The result is $2\times6$.
@@ -66813,13 +66994,13 @@ A robust loss reduces the influence of sufficiently large residuals.
 For example, Huber loss with threshold $\delta>0$ is:
 
 $$
-\rho\_\delta(r)= \begin{cases} \frac12r^2,&|r|\le\delta,\\ \delta(|r|-\frac12\delta),&|r|>\delta. \end{cases}
+\rho_\delta(r)= \begin{cases} \frac12r^2,&|r|\le\delta,\\ \delta(|r|-\frac12\delta),&|r|>\delta. \end{cases}
 $$
 
 Its derivative is:
 
 $$
-\rho\_\delta'(r)= \begin{cases} r,&|r|\le\delta,\\ \delta\\,\operatorname{sign}(r),&|r|>\delta. \end{cases}
+\rho_\delta'(r)= \begin{cases} r,&|r|\le\delta,\\ \delta\,\operatorname{sign}(r),&|r|>\delta. \end{cases}
 $$
 
 Small residuals receive quadratic treatment. Large residuals receive a linear penalty, limiting their influence.
@@ -70243,13 +70424,13 @@ The light-contribution example returns throughout the volume as a concrete use o
 The starting point of many randomized algorithms is a random variable:
 
 $$
- U\sim\mathcal U(0,1). 
+ U\sim\mathcal U(0,1).
 $$
 
 Its probability density is:
 
 $$
- p_U(u)= \begin{cases} 1,&0\le u\le1,\\ 0,&\text{otherwise}, \end{cases} 
+ p_U(u)= \begin{cases} 1,&0\le u\le1,\\ 0,&\text{otherwise}, \end{cases}
 $$
 
 where endpoint conventions do not affect this ideal continuous distribution.
@@ -70257,7 +70438,7 @@ where endpoint conventions do not affect this ideal continuous distribution.
 Its CDF is:
 
 $$
- F_U(u)=u,\qquad 0\le u\le1. 
+ F_U(u)=u,\qquad 0\le u\le1.
 $$
 
 This distribution is important not because all physical quantities are uniform, but because a source of uniform random numbers can be transformed into many other distributions.
@@ -70271,31 +70452,31 @@ A practical uniform generator produces a discrete approximation to an ideal cont
 Suppose we obtain an unsigned 32-bit integer $R$ uniformly distributed over:
 
 $$
- \{0,1,\ldots,2^{32}-1\}. 
+ \{0,1,\ldots,2^{32}-1\}.
 $$
 
 Define:
 
 $$
- \boxed{U=\frac{R}{2^{32}}}. 
+ \boxed{U=\frac{R}{2^{32}}}.
 $$
 
 Then:
 
 $$
- 0\le U<1. 
+ 0\le U<1.
 $$
 
 Every attainable lattice value:
 
 $$
- \frac{k}{2^{32}} 
+ \frac{k}{2^{32}}
 $$
 
 has probability:
 
 $$
- \frac1{2^{32}}. 
+ \frac1{2^{32}}.
 $$
 
 The generated variable is not mathematically continuous. It is uniform over a finite dyadic grid.
@@ -70305,7 +70486,7 @@ For a `double`, this conversion can preserve those 32 random bits exactly becaus
 A higher-resolution approach can use 53 random bits:
 
 $$
- \boxed{ U=\frac{R_{53}}{2^{53}} } 
+ \boxed{ U=\frac{R_{53}}{2^{53}} }
 $$
 
 where $R_{53}$ is a uniformly distributed integer from zero through $2^{53}-1$.
@@ -70317,7 +70498,7 @@ This provides samples in the half-open interval $[0,1)$ on a grid compatible wit
 The interval:
 
 $$
- [0,1) 
+ [0,1)
 $$
 
 contains zero but not one.
@@ -70327,7 +70508,7 @@ That convention is particularly convenient for indexing and inverse-transform sa
 For example, if we choose an integer bucket using:
 
 $$
- i=\lfloor NU\rfloor, 
+ i=\lfloor NU\rfloor,
 $$
 
 then $i$ lies between zero and $N-1$ whenever $U\in[0,1)$.
@@ -70337,7 +70518,7 @@ If $U=1$ were permitted, the expression could produce $i=N$, an invalid array in
 But some transformations require excluding zero as well. The expression:
 
 $$
- -\log U 
+ -\log U
 $$
 
 is undefined at $U=0$.
@@ -70351,19 +70532,19 @@ A sampler interface should document its exact floating-point endpoint behavior.
 Suppose a generator produces uniformly distributed integers:
 
 $$
- R\in\{0,1,\ldots,7\}. 
+ R\in\{0,1,\ldots,7\}.
 $$
 
 We want one of three outcomes:
 
 $$
- 0,1,2. 
+ 0,1,2.
 $$
 
 A naive approach is:
 
 $$
- K=R\bmod3. 
+ K=R\bmod3.
 $$
 
 List the results:
@@ -70375,15 +70556,15 @@ List the results:
 The resulting probabilities are:
 
 $$
- P(K=0)=\frac38, 
+ P(K=0)=\frac38,
 $$
 
 $$
- P(K=1)=\frac38, 
+ P(K=1)=\frac38,
 $$
 
 $$
- P(K=2)=\frac28. 
+ P(K=2)=\frac28.
 $$
 
 The distribution is not uniform.
@@ -70399,7 +70580,7 @@ Among these six retained integers, each residue modulo three occurs exactly twic
 Therefore:
 
 $$
- P(K=0)=P(K=1)=P(K=2)=\frac13. 
+ P(K=0)=P(K=1)=P(K=2)=\frac13.
 $$
 
 The cost is that some generated values are discarded, so the number of generator draws is variable.
@@ -70415,13 +70596,13 @@ A pseudorandom-number generator, or PRNG, is a deterministic algorithm designed 
 At its simplest, it has an internal state $s_n$ and a state transition:
 
 $$
- \boxed{s_{n+1}=T(s_n)}. 
+ \boxed{s_{n+1}=T(s_n)}.
 $$
 
 An output function maps the state to a generated value:
 
 $$
- \boxed{r_n=O(s_n)}. 
+ \boxed{r_n=O(s_n)}.
 $$
 
 Given the initial state and the transition/output algorithms, the sequence is determined.
@@ -70511,7 +70692,7 @@ For deterministic replay, a stateful generator can expose a serializable state.
 We can store:
 
 $$
- s_n 
+ s_n
 $$
 
 at a checkpoint and restore it later.
@@ -70541,7 +70722,7 @@ One strategy assigns each pixel a stream derived from its coordinates and a glob
 For example:
 
 $$
- s_{\mathrm{pixel}}= H(\text{seed},x,y), 
+ s_{\mathrm{pixel}}= H(\text{seed},x,y),
 $$
 
 where $H$ is a mixing function.
@@ -70559,7 +70740,7 @@ That leads to stateless generation.
 A linear congruential generator, or LCG, uses:
 
 $$
- \boxed{ x_{n+1}=(ax_n+c)\bmod m }. 
+ \boxed{ x_{n+1}=(ax_n+c)\bmod m }.
 $$
 
 Here $a$ is the multiplier, $c$ is the increment, and $m$ is the modulus.
@@ -70573,45 +70754,45 @@ This is among the simplest possible PRNG designs.
 Consider the toy generator:
 
 $$
- x_{n+1}=(5x_n+1)\bmod16. 
+ x_{n+1}=(5x_n+1)\bmod16.
 $$
 
 Let:
 
 $$
- x_0=3. 
+ x_0=3.
 $$
 
 Then:
 
 $$
- x_1=(5\cdot3+1)\bmod16=16\bmod16=0. 
+ x_1=(5\cdot3+1)\bmod16=16\bmod16=0.
 $$
 
 Next:
 
 $$
- x_2=(5\cdot0+1)\bmod16=1. 
+ x_2=(5\cdot0+1)\bmod16=1.
 $$
 
 Then:
 
 $$
- x_3=(5\cdot1+1)\bmod16=6, 
+ x_3=(5\cdot1+1)\bmod16=6,
 $$
 
 $$
- x_4=(5\cdot6+1)\bmod16=31\bmod16=15, 
+ x_4=(5\cdot6+1)\bmod16=31\bmod16=15,
 $$
 
 $$
- x_5=(5\cdot15+1)\bmod16=76\bmod16=12. 
+ x_5=(5\cdot15+1)\bmod16=76\bmod16=12.
 $$
 
 The sequence begins:
 
 $$
- 3,\ 0,\ 1,\ 6,\ 15,\ 12,\ldots 
+ 3,\ 0,\ 1,\ 6,\ 15,\ 12,\ldots
 $$
 
 Every value is completely determined by the previous state.
@@ -70627,19 +70808,19 @@ For a mixed LCG with positive modulus $m$, the Hull–Dobell theorem gives condi
 For our toy example:
 
 $$
- m=16,\quad a=5,\quad c=1. 
+ m=16,\quad a=5,\quad c=1.
 $$
 
 We have:
 
 $$
- \gcd(1,16)=1. 
+ \gcd(1,16)=1.
 $$
 
 The only prime factor of 16 is 2, and:
 
 $$
- a-1=4 
+ a-1=4
 $$
 
 is divisible by 2 and 4.
@@ -70653,7 +70834,7 @@ Look at the least significant bit.
 When $a$ and $c$ are odd:
 
 $$
- x_{n+1}\equiv x_n+1\pmod2. 
+ x_{n+1}\equiv x_n+1\pmod2.
 $$
 
 Therefore the lowest bit alternates between zero and one.
@@ -70695,7 +70876,7 @@ The Mersenne Twister family was designed to produce long-period pseudorandom seq
 The commonly used MT19937 has period:
 
 $$
- \boxed{2^{19937}-1}. 
+ \boxed{2^{19937}-1}.
 $$
 
 The exponent is a Mersenne-prime exponent.
@@ -70729,7 +70910,7 @@ Its large state is an advantage for some statistical uses but a disadvantage for
 MT19937's underlying 624-word state requires roughly:
 
 $$
- 624\cdot4=2496\text{ bytes} 
+ 624\cdot4=2496\text{ bytes}
 $$
 
 just for the principal 32-bit state array, not counting implementation metadata.
@@ -70737,7 +70918,7 @@ just for the principal 32-bit state array, not counting implementation metadata.
 If a renderer naively stores one such generator per million simultaneous ray states:
 
 $$
- 2496\times10^6\text{ bytes} 
+ 2496\times10^6\text{ bytes}
 $$
 
 is approximately 2.5 GB of state data alone.
@@ -70777,13 +70958,13 @@ The central design idea is to combine a simple state transition, often based on 
 Conceptually:
 
 $$
- \boxed{ s_{n+1}=as_n+c\pmod{2^w} } 
+ \boxed{ s_{n+1}=as_n+c\pmod{2^w} }
 $$
 
 followed by:
 
 $$
- \boxed{ r_n=P(s_n) } 
+ \boxed{ r_n=P(s_n) }
 $$
 
 where $P$ is a suitable output permutation.
@@ -70803,7 +70984,7 @@ A representative PCG32-style generator uses 64-bit internal state and emits 32-b
 Its state transition may use:
 
 $$
- s_{n+1} = 6364136223846793005\\,s_n+c \pmod{2^{64}}, 
+ s_{n+1} = 6364136223846793005\,s_n+c \pmod{2^{64}},
 $$
 
 with an odd increment $c$.
@@ -70859,7 +71040,7 @@ A good experiment should record the master seed, generator algorithm and version
 A practical system can derive stream identifiers from a master seed:
 
 $$
- s_i=H(s_{\mathrm{master}},i). 
+ s_i=H(s_{\mathrm{master}},i).
 $$
 
 Here $i$ identifies a worker or logical stream, and $H$ is a suitable mixing function.
@@ -70867,7 +71048,7 @@ Here $i$ identifies a worker or logical stream, and $H$ is a suitable mixing fun
 If the application also uses sample indices and dimensions:
 
 $$
- r=F(s_{\mathrm{master}},\text{pixel},\text{sample},\text{dimension}), 
+ r=F(s_{\mathrm{master}},\text{pixel},\text{sample},\text{dimension}),
 $$
 
 the generated value can be independent of execution scheduling.
@@ -70901,7 +71082,7 @@ A stateless generator instead calculates a random-looking output from explicit i
 For example:
 
 $$
- \boxed{ r=H(\text{seed},x,y,s,d) } 
+ \boxed{ r=H(\text{seed},x,y,s,d) }
 $$
 
 where:
@@ -71001,7 +71182,7 @@ Suppose a sequence has an approximately uniform histogram on $[0,1)$.
 Now pair consecutive values:
 
 $$
- (u_0,u_1),\quad(u_2,u_3),\quad\ldots. 
+ (u_0,u_1),\quad(u_2,u_3),\quad\ldots.
 $$
 
 If the paired points align along a small number of lines, the two-dimensional sampling pattern is poor even though the one-dimensional histogram looks good.
@@ -71011,7 +71192,7 @@ Rendering frequently uses two-dimensional or higher-dimensional samples.
 A camera ray may use:
 
 $$
- (u_1,u_2) 
+ (u_1,u_2)
 $$
 
 for pixel position, another pair for lens coordinates, and additional dimensions for bounce sampling.
@@ -71068,7 +71249,7 @@ We now have a source of approximately uniform random values. But a ray tracer ne
 How do we transform:
 
 $$
- U\sim\mathcal U(0,1) 
+ U\sim\mathcal U(0,1)
 $$
 
 into a target distribution?
@@ -71076,7 +71257,7 @@ into a target distribution?
 The general idea is to define a mapping:
 
 $$
- \boxed{X=g(U)} 
+ \boxed{X=g(U)}
 $$
 
 and choose $g$ so that the resulting variable $X$ has the desired probability law.
@@ -71095,19 +71276,19 @@ The second is essential for unbiased Monte Carlo weighting.
 Suppose:
 
 $$
- U\sim\mathcal U(0,1). 
+ U\sim\mathcal U(0,1).
 $$
 
 We want:
 
 $$
- X\sim\mathcal U(a,b). 
+ X\sim\mathcal U(a,b).
 $$
 
 Define:
 
 $$
- \boxed{X=a+(b-a)U}. 
+ \boxed{X=a+(b-a)U}.
 $$
 
 Because $U\in[0,1]$, $X$ lies in $[a,b]$.
@@ -71115,25 +71296,25 @@ Because $U\in[0,1]$, $X$ lies in $[a,b]$.
 The inverse mapping is:
 
 $$
- U=\frac{X-a}{b-a}. 
+ U=\frac{X-a}{b-a}.
 $$
 
 Its derivative is:
 
 $$
- \frac{dU}{dX}=\frac1{b-a}. 
+ \frac{dU}{dX}=\frac1{b-a}.
 $$
 
 The density transformation formula gives:
 
 $$
- p_X(x)= p_U\left(\frac{x-a}{b-a}\right) \left|\frac1{b-a}\right|. 
+ p_X(x)= p_U\left(\frac{x-a}{b-a}\right) \left|\frac1{b-a}\right|.
 $$
 
 Inside the interval, $p_U=1$, so:
 
 $$
- \boxed{p_X(x)=\frac1{b-a}}. 
+ \boxed{p_X(x)=\frac1{b-a}}.
 $$
 
 The same affine transformation that changes the numerical range also changes the density according to the Jacobian.
@@ -71173,13 +71354,13 @@ Suppose $X$ has cumulative distribution function $F_X(x)$.
 For a continuous strictly increasing CDF, we can sample $X$ by:
 
 $$
- \boxed{X=F_X^{-1}(U)} 
+ \boxed{X=F_X^{-1}(U)}
 $$
 
 where:
 
 $$
- U\sim\mathcal U(0,1). 
+ U\sim\mathcal U(0,1).
 $$
 
 Why does this work?
@@ -71187,25 +71368,25 @@ Why does this work?
 Let:
 
 $$
- X=F^{-1}(U). 
+ X=F^{-1}(U).
 $$
 
 For a monotone increasing inverse:
 
 $$
- P(X\le x) = P(F^{-1}(U)\le x). 
+ P(X\le x) = P(F^{-1}(U)\le x).
 $$
 
 Apply the increasing function $F$:
 
 $$
- P(X\le x)=P(U\le F(x)). 
+ P(X\le x)=P(U\le F(x)).
 $$
 
 Because $U$ is uniform on $[0,1]$:
 
 $$
- P(U\le v)=v 
+ P(U\le v)=v
 $$
 
 for $v\in[0,1]$.
@@ -71213,7 +71394,7 @@ for $v\in[0,1]$.
 Therefore:
 
 $$
- \boxed{P(X\le x)=F(x)}. 
+ \boxed{P(X\le x)=F(x)}.
 $$
 
 The constructed random variable has the desired CDF.
@@ -71225,37 +71406,37 @@ For general distributions with jumps, the generalized inverse, or quantile funct
 Consider the target density:
 
 $$
- p(x)=2x,\qquad0\le x\le1. 
+ p(x)=2x,\qquad0\le x\le1.
 $$
 
 Check normalization:
 
 $$
- \int_0^12x\\,dx = [x^2]\_0^1=1. 
+ \int_0^12x\,dx = [x^2]_0^1=1.
 $$
 
 Its CDF is:
 
 $$
- F(x)=\int_0^x2t\\,dt=x^2. 
+ F(x)=\int_0^x2t\,dt=x^2.
 $$
 
 Set:
 
 $$
- u=F(x)=x^2. 
+ u=F(x)=x^2.
 $$
 
 Solve for $x$:
 
 $$
- \boxed{x=\sqrt u}. 
+ \boxed{x=\sqrt u}.
 $$
 
 Thus:
 
 $$
- \boxed{X=\sqrt U}. 
+ \boxed{X=\sqrt U}.
 $$
 
 The transformation requires only one uniform random number and a square root.
@@ -71291,13 +71472,13 @@ The staged teaching version adds an explicit finiteness check before the interva
 For $0\le x\le1$:
 
 $$
- P(X\le x) = P(\sqrt U\le x) = P(U\le x^2) =x^2. 
+ P(X\le x) = P(\sqrt U\le x) = P(U\le x^2) =x^2.
 $$
 
 Differentiate the CDF:
 
 $$
- p_X(x)=2x. 
+ p_X(x)=2x.
 $$
 
 The transformed sample follows the intended distribution.
@@ -71321,25 +71502,25 @@ A sampling implementation should not silently produce an infinite estimator weig
 For the exponential distribution:
 
 $$
- F(x)=1-e^{-\lambda x}. 
+ F(x)=1-e^{-\lambda x}.
 $$
 
 Set:
 
 $$
- u=1-e^{-\lambda x}. 
+ u=1-e^{-\lambda x}.
 $$
 
 Rearrange:
 
 $$
- e^{-\lambda x}=1-u. 
+ e^{-\lambda x}=1-u.
 $$
 
 Taking logarithms:
 
 $$
- \boxed{ x=-\frac{\log(1-u)}{\lambda} }. 
+ \boxed{ x=-\frac{\log(1-u)}{\lambda} }.
 $$
 
 A numerically careful implementation uses:
@@ -71373,7 +71554,7 @@ Suppose the target PDF is $p(x)$ and we can easily sample a proposal PDF $q(x)$.
 Choose a constant $M$ satisfying:
 
 $$
- \boxed{ p(x)\le Mq(x) } 
+ \boxed{ p(x)\le Mq(x) }
 $$
 
 for every point in the relevant support.
@@ -71385,7 +71566,7 @@ The algorithm is:
 3. Accept $X$ if:
 
 $$
- \boxed{ U\le\frac{p(X)}{Mq(X)} }. 
+ \boxed{ U\le\frac{p(X)}{Mq(X)} }.
 $$
 
 Otherwise, reject and repeat.
@@ -71397,31 +71578,31 @@ The acceptance probability at a particular proposed $x$ is proportional to $p(x)
 The joint probability density of proposing $x$ and accepting it is proportional to:
 
 $$
- q(x)\frac{p(x)}{Mq(x)} = \frac{p(x)}M. 
+ q(x)\frac{p(x)}{Mq(x)} = \frac{p(x)}M.
 $$
 
 The overall probability of accepting any proposal is:
 
 $$
- P(\text{accept}) = \int q(x)\frac{p(x)}{Mq(x)}\\,dx. 
+ P(\text{accept}) = \int q(x)\frac{p(x)}{Mq(x)}\,dx.
 $$
 
 Cancel $q(x)$:
 
 $$
- P(\text{accept}) = \frac1M\int p(x)\\,dx. 
+ P(\text{accept}) = \frac1M\int p(x)\,dx.
 $$
 
 Since $p$ is normalized:
 
 $$
- \boxed{ P(\text{accept})=\frac1M }. 
+ \boxed{ P(\text{accept})=\frac1M }.
 $$
 
 Conditioning on acceptance gives:
 
 $$
- p(x\mid\text{accept}) = \frac{p(x)/M}{1/M} =p(x). 
+ p(x\mid\text{accept}) = \frac{p(x)/M}{1/M} =p(x).
 $$
 
 Therefore the accepted samples have the desired density.
@@ -71433,31 +71614,31 @@ This proof assumes a valid finite envelope $M$, an appropriate proposal support,
 Use:
 
 $$
- p(x)=2x,\qquad0\le x\le1. 
+ p(x)=2x,\qquad0\le x\le1.
 $$
 
 Choose a uniform proposal:
 
 $$
- q(x)=1. 
+ q(x)=1.
 $$
 
 Because:
 
 $$
- 2x\le2, 
+ 2x\le2,
 $$
 
 we can use:
 
 $$
- M=2. 
+ M=2.
 $$
 
 The acceptance probability becomes:
 
 $$
- \frac{p(x)}{Mq(x)} = \frac{2x}{2} =x. 
+ \frac{p(x)}{Mq(x)} = \frac{2x}{2} =x.
 $$
 
 Therefore the algorithm is remarkably simple.
@@ -71467,13 +71648,13 @@ Generate two independent uniform random values $u_1,u_2$.
 Set:
 
 $$
- x=u_1. 
+ x=u_1.
 $$
 
 Accept if:
 
 $$
- \boxed{u_2\<x}. 
+ \boxed{u_2\<x}.
 $$
 
 Otherwise try again.
@@ -71483,13 +71664,13 @@ Otherwise try again.
 The theoretical acceptance probability is:
 
 $$
- \frac1M=\frac12. 
+ \frac1M=\frac12.
 $$
 
 Therefore the expected number of proposals per accepted sample is:
 
 $$
- \boxed{M=2}. 
+ \boxed{M=2}.
 $$
 
 On average, we need two proposal attempts to obtain one accepted sample.
@@ -71529,7 +71710,7 @@ Importance sampling is among the most consequential concepts in Monte Carlo rend
 Suppose our goal is to evaluate:
 
 $$
- \boxed{ I=\int_Df(x)\\,dx }. 
+ \boxed{ I=\int_Df(x)\,dx }.
 $$
 
 We choose a normalized PDF $p(x)$ that is strictly positive wherever $f(x)$ makes a relevant contribution, apart from harmless measure-zero exceptions.
@@ -71537,19 +71718,19 @@ We choose a normalized PDF $p(x)$ that is strictly positive wherever $f(x)$ make
 Multiply and divide by the PDF:
 
 $$
- I= \int_D \frac{f(x)}{p(x)}p(x)\\,dx. 
+ I= \int_D \frac{f(x)}{p(x)}p(x)\,dx.
 $$
 
 Recognize the expectation:
 
 $$
- \boxed{ I= \mathbb E_{X\sim p} \left[ \frac{f(X)}{p(X)} \right] }. 
+ \boxed{ I= \mathbb E_{X\sim p} \left[ \frac{f(X)}{p(X)} \right] }.
 $$
 
 Given $N$ independent samples $X_1,\ldots,X_N\sim p$, the Monte Carlo estimator is:
 
 $$
- \boxed{ \widehat I_N= \frac1N\sum_{i=1}^{N} \frac{f(X_i)}{p(X_i)} }. 
+ \boxed{ \widehat I_N= \frac1N\sum_{i=1}^{N} \frac{f(X_i)}{p(X_i)} }.
 $$
 
 The division by the actual sampling PDF is essential.
@@ -71561,25 +71742,25 @@ Sampling more frequently in important regions without compensating for the PDF g
 For one sample, define:
 
 $$
- Y=\frac{f(X)}{p(X)}. 
+ Y=\frac{f(X)}{p(X)}.
 $$
 
 Then:
 
 $$
- \mathbb E[Y] = \int_D \frac{f(x)}{p(x)}p(x)\\,dx = \int_Df(x)\\,dx =I. 
+ \mathbb E[Y] = \int_D \frac{f(x)}{p(x)}p(x)\,dx = \int_Df(x)\,dx =I.
 $$
 
 Therefore:
 
 $$
- \mathbb E[\widehat I_N] = \frac1N\sum_i\mathbb E[Y_i] =I. 
+ \mathbb E[\widehat I_N] = \frac1N\sum_i\mathbb E[Y_i] =I.
 $$
 
 Thus:
 
 $$
- \boxed{ \mathbb E[\widehat I_N]=I }. 
+ \boxed{ \mathbb E[\widehat I_N]=I }.
 $$
 
 The estimator is unbiased under the stated sampling and integrability assumptions.
@@ -71589,83 +71770,83 @@ The estimator is unbiased under the stated sampling and integrability assumption
 The variance of one contribution is:
 
 $$
- \operatorname{Var}(Y) = \mathbb E[Y^2]-I^2. 
+ \operatorname{Var}(Y) = \mathbb E[Y^2]-I^2.
 $$
 
 Now:
 
 $$
- \mathbb E[Y^2] = \int_D \left(\frac{f(x)}{p(x)}\right)^2p(x)\\,dx = \int_D\frac{f(x)^2}{p(x)}\\,dx. 
+ \mathbb E[Y^2] = \int_D \left(\frac{f(x)}{p(x)}\right)^2p(x)\,dx = \int_D\frac{f(x)^2}{p(x)}\,dx.
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{Var}(Y) = \int_D\frac{f(x)^2}{p(x)}\\,dx-I^2 }. 
+ \boxed{ \operatorname{Var}(Y) = \int_D\frac{f(x)^2}{p(x)}\,dx-I^2 }.
 $$
 
 For independent samples with finite variance:
 
 $$
- \boxed{ \operatorname{Var}(\widehat I_N) = \frac{\operatorname{Var}(Y)}{N} }. 
+ \boxed{ \operatorname{Var}(\widehat I_N) = \frac{\operatorname{Var}(Y)}{N} }.
 $$
 
 Importance sampling is valuable when a good choice of $p$ substantially reduces this variance.
 
-#### 3 Worked example: estimating $\int_0^1x^2\\,dx$
+#### 3 Worked example: estimating $\int_0^1x^2\,dx$
 
 Consider:
 
 $$
- I=\int_0^1x^2\\,dx=\boxed{\frac13}. 
+ I=\int_0^1x^2\,dx=\boxed{\frac13}.
 $$
 
 First use uniform sampling:
 
 $$
- p_U(x)=1. 
+ p_U(x)=1.
 $$
 
 Then the sample contribution is:
 
 $$
- Y_U=x^2. 
+ Y_U=x^2.
 $$
 
 Its expected value is:
 
 $$
- \mathbb E[Y_U]=\frac13. 
+ \mathbb E[Y_U]=\frac13.
 $$
 
 Its second moment is:
 
 $$
- \mathbb E[Y_U^2] = \int_0^1x^4\\,dx =\frac15. 
+ \mathbb E[Y_U^2] = \int_0^1x^4\,dx =\frac15.
 $$
 
 Thus:
 
 $$
- \operatorname{Var}(Y_U) = \frac15-\frac19 = \boxed{\frac4{45}} \approx0.0888889. 
+ \operatorname{Var}(Y_U) = \frac15-\frac19 = \boxed{\frac4{45}} \approx0.0888889.
 $$
 
 Now choose the nonuniform importance PDF:
 
 $$
- p_I(x)=2x. 
+ p_I(x)=2x.
 $$
 
 We already know how to sample it:
 
 $$
- X=\sqrt U. 
+ X=\sqrt U.
 $$
 
 The weighted estimator contribution becomes:
 
 $$
- Y_I= \frac{x^2}{2x} =\frac x2 
+ Y_I= \frac{x^2}{2x} =\frac x2
 $$
 
 for $x>0$.
@@ -71673,25 +71854,25 @@ for $x>0$.
 Its mean remains:
 
 $$
- \mathbb E[Y_I] = \int_0^1\frac x2(2x)\\,dx = \int_0^1x^2\\,dx =\frac13. 
+ \mathbb E[Y_I] = \int_0^1\frac x2(2x)\,dx = \int_0^1x^2\,dx =\frac13.
 $$
 
 Its second moment is:
 
 $$
- \begin{aligned} \mathbb E[Y_I^2] &= \int_0^1\left(\frac x2\right)^2(2x)\\,dx\\ &= \frac12\int_0^1x^3\\,dx\\ &=\frac12\cdot\frac14\\ &=\frac18. \end{aligned} 
+ \begin{aligned} \mathbb E[Y_I^2] &= \int_0^1\left(\frac x2\right)^2(2x)\,dx\\ &= \frac12\int_0^1x^3\,dx\\ &=\frac12\cdot\frac14\\ &=\frac18. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \operatorname{Var}(Y_I) = \frac18-\frac19 = \boxed{\frac1{72}} \approx0.0138889. 
+ \operatorname{Var}(Y_I) = \frac18-\frac19 = \boxed{\frac1{72}} \approx0.0138889.
 $$
 
 Compare variances:
 
 $$
- \boxed{ \frac{\operatorname{Var}(Y_U)} {\operatorname{Var}(Y_I)} = \frac{4/45}{1/72} =6.4 }. 
+ \boxed{ \frac{\operatorname{Var}(Y_U)} {\operatorname{Var}(Y_I)} = \frac{4/45}{1/72} =6.4 }.
 $$
 
 The importance-sampling estimator has 6.4 times smaller per-sample variance than the uniform estimator.
@@ -71701,7 +71882,7 @@ At a fixed number of independent samples, the ratio of estimator variances is al
 The corresponding standard-deviation improvement is:
 
 $$
- \sqrt{6.4}\approx2.53. 
+ \sqrt{6.4}\approx2.53.
 $$
 
 For equal target standard error and equal sample cost, uniform sampling would require approximately 6.4 times as many samples.
@@ -71719,19 +71900,19 @@ Exact analytical variances for estimating ∫₀¹ x² dx. Lower is better.
 For a nonnegative integrand $f(x)\ge0$, suppose the integral is:
 
 $$
- I=\int_Df(x)\\,dx>0. 
+ I=\int_Df(x)\,dx>0.
 $$
 
 Choose:
 
 $$
- \boxed{ p^\star(x)=\frac{f(x)}I }. 
+ \boxed{ p^\star(x)=\frac{f(x)}I }.
 $$
 
 Then:
 
 $$
- \frac{f(x)}{p^\star(x)} = \frac{f(x)}{f(x)/I} =I 
+ \frac{f(x)}{p^\star(x)} = \frac{f(x)}{f(x)/I} =I
 $$
 
 where $f(x)>0$.
@@ -71741,7 +71922,7 @@ Every sample contribution is identical.
 Therefore:
 
 $$
- \boxed{ \operatorname{Var}(Y)=0 }. 
+ \boxed{ \operatorname{Var}(Y)=0 }.
 $$
 
 This is the zero-variance importance distribution.
@@ -71749,31 +71930,31 @@ This is the zero-variance importance distribution.
 For our example:
 
 $$
- f(x)=x^2, \qquad I=\frac13. 
+ f(x)=x^2, \qquad I=\frac13.
 $$
 
 Thus:
 
 $$
- \boxed{ p^\star(x)=3x^2 }. 
+ \boxed{ p^\star(x)=3x^2 }.
 $$
 
 Its CDF is:
 
 $$
- F(x)=x^3. 
+ F(x)=x^3.
 $$
 
 We can sample it using:
 
 $$
- \boxed{ X=U^{1/3} }. 
+ \boxed{ X=U^{1/3} }.
 $$
 
 Every valid weighted contribution is:
 
 $$
- \frac{x^2}{3x^2}=\frac13. 
+ \frac{x^2}{3x^2}=\frac13.
 $$
 
 The variance is zero in the ideal mathematical model.
@@ -71783,7 +71964,7 @@ The variance is zero in the ideal mathematical model.
 The formula:
 
 $$
- p^\star(x)=\frac{f(x)}I 
+ p^\star(x)=\frac{f(x)}I
 $$
 
 contains the unknown integral $I$.
@@ -71807,19 +71988,19 @@ Importance sampling is valid only when the estimator uses the PDF corresponding 
 Suppose a random variable $X$ has PDF $p_X(x)$, and we transform it:
 
 $$
- Y=g(X). 
+ Y=g(X).
 $$
 
 If $g$ is differentiable, invertible, and has a nonzero Jacobian determinant, the transformed PDF is:
 
 $$
- \boxed{ p_Y(y) = p_X(g^{-1}(y)) \left|\det J_{g^{-1}}(y)\right| }. 
+ \boxed{ p_Y(y) = p_X(g^{-1}(y)) \left|\det J_{g^{-1}}(y)\right| }.
 $$
 
 Equivalently, at corresponding points $y=g(x)$:
 
 $$
- \boxed{ p_Y(g(x)) = \frac{p_X(x)}{|\det J_g(x)|} }. 
+ \boxed{ p_Y(g(x)) = \frac{p_X(x)}{|\det J_g(x)|} }.
 $$
 
 The determinant measures how a small volume element expands or contracts under the mapping.
@@ -71829,31 +72010,31 @@ The determinant measures how a small volume element expands or contracts under t
 For a small region near $x$, probability is approximately:
 
 $$
- p_X(x)\\,dV_x. 
+ p_X(x)\,dV_x.
 $$
 
 The transformation maps it into a region with volume:
 
 $$
- dV_y= |\det J_g(x)|\\,dV_x. 
+ dV_y= |\det J_g(x)|\,dV_x.
 $$
 
 Probability is preserved:
 
 $$
- p_Y(y)\\,dV_y=p_X(x)\\,dV_x. 
+ p_Y(y)\,dV_y=p_X(x)\,dV_x.
 $$
 
 Substitute the volume relation:
 
 $$
- p_Y(y) |\det J_g(x)|dV_x = p_X(x)dV_x. 
+ p_Y(y) |\det J_g(x)|dV_x = p_X(x)dV_x.
 $$
 
 Cancel $dV_x$:
 
 $$
- p_Y(y)= \frac{p_X(x)}{|\det J_g(x)|}. 
+ p_Y(y)= \frac{p_X(x)}{|\det J_g(x)|}.
 $$
 
 This is the multivariable form of the one-dimensional inverse-derivative rule.
@@ -71863,13 +72044,13 @@ This is the multivariable form of the one-dimensional inverse-derivative rule.
 In direct lighting, we may sample a point on a light source using a PDF defined with respect to surface area:
 
 $$
- p_A(x). 
+ p_A(x).
 $$
 
 But the rendering equation integrates incoming directions with respect to solid angle:
 
 $$
- d\omega. 
+ d\omega.
 $$
 
 We need to convert the density.
@@ -71881,37 +72062,37 @@ Let $\theta_L$ be the angle between the light patch's normal and the direction t
 The patch subtends solid angle:
 
 $$
- \boxed{ d\omega= \frac{|\cos\theta_L|}{r^2}\\,dA }. 
+ \boxed{ d\omega= \frac{|\cos\theta_L|}{r^2}\,dA }.
 $$
 
 Therefore:
 
 $$
- dA= \frac{r^2}{|\cos\theta_L|}\\,d\omega. 
+ dA= \frac{r^2}{|\cos\theta_L|}\,d\omega.
 $$
 
 Probability conservation gives:
 
 $$
- p_A\\,dA=p\_\omega\\,d\omega. 
+ p_A\,dA=p_\omega\,d\omega.
 $$
 
 Substitute:
 
 $$
- p_A\frac{r^2}{|\cos\theta_L|}\\,d\omega = p\_\omega\\,d\omega. 
+ p_A\frac{r^2}{|\cos\theta_L|}\,d\omega = p_\omega\,d\omega.
 $$
 
 Thus:
 
 $$
- \boxed{ p\_\omega= p_A\frac{r^2}{|\cos\theta_L|} }. 
+ \boxed{ p_\omega= p_A\frac{r^2}{|\cos\theta_L|} }.
 $$
 
 The inverse relation is:
 
 $$
- \boxed{ p_A= p\_\omega\frac{|\cos\theta_L|}{r^2} }. 
+ \boxed{ p_A= p_\omega\frac{|\cos\theta_L|}{r^2} }.
 $$
 
 These are essential conversions for sampling area lights in path tracing.
@@ -71933,7 +72114,7 @@ They are not arbitrary rendering corrections.
 When:
 
 $$
- |\cos\theta_L|=0, 
+ |\cos\theta_L|=0,
 $$
 
 the differential mapping becomes singular at the grazing configuration.
@@ -72066,13 +72247,13 @@ Choosing among rendering strategies can be a pure-exploration task if the final 
 
 The UCB discussion above assumes each arm has a stable reward law. *Bandit Algorithms* develops a different model in which the environment is represented by a sequence of reward vectors
 
-\[
+$$
 x_1,\ldots,x_n,\qquad x_t\in[0,1]^k,
-\]
+$$
 
-without assuming that arm \(i\) is repeatedly sampled from one fixed distribution. At round \(t\), the learner chooses a distribution \(P_t\), samples an action \(A_t\sim P_t\), and sees only \(x_{t,A_t}\). Performance is compared with the best **fixed** action in hindsight:
+without assuming that arm $i$ is repeatedly sampled from one fixed distribution. At round $t$, the learner chooses a distribution $P_t$, samples an action $A_t\sim P_t$, and sees only $x_{t,A_t}$. Performance is compared with the best **fixed** action in hindsight:
 
-\[
+$$
 R_n
 =
 \max_{i\in[k]}
@@ -72081,39 +72262,39 @@ R_n
 \mathbb E\!\left[
 \sum_{t=1}^{n}x_{t,A_t}
 \right].
-\]
+$$
 
 The comparator matters. Low adversarial regret does not mean the learner tracks an arbitrarily changing best arm; that stronger target needs a switching/nonstationary comparator.
 
-Because unplayed rewards are hidden, the learner constructs an importance-weighted estimate. For an observed reward \(X_t=x_{t,A_t}\), a basic estimator for arm \(i\) is
+Because unplayed rewards are hidden, the learner constructs an importance-weighted estimate. For an observed reward $X_t=x_{t,A_t}$, a basic estimator for arm $i$ is
 
-\[
+$$
 \hat x_{t,i}
 =
 \frac{\mathbf 1\{A_t=i\}X_t}{P_{t,i}}.
-\]
+$$
 
 Conditioned on the past and the current reward vector,
 
-\[
+$$
 \mathbb E[\hat x_{t,i}]
 =
 x_{t,i},
-\]
+$$
 
-provided \(P_{t,i}>0\). The price is variance: when \(P_{t,i}\) is tiny, \(1/P_{t,i}\) can be huge. **Exploration is therefore also a variance-control mechanism.** A policy that drives an arm’s probability essentially to zero loses reliable information about that arm.
+provided $P_{t,i}>0$. The price is variance: when $P_{t,i}$ is tiny, $1/P_{t,i}$ can be huge. **Exploration is therefore also a variance-control mechanism.** A policy that drives an arm’s probability essentially to zero loses reliable information about that arm.
 
-Exp3 combines this estimator with exponential weighting. Cumulative estimated reward \( \hat S_{t-1,i} \) is mapped to a probability roughly proportional to
+Exp3 combines this estimator with exponential weighting. Cumulative estimated reward $ \hat S_{t-1,i} $ is mapped to a probability roughly proportional to
 
-\[
+$$
 \exp(\eta\hat S_{t-1,i}),
-\]
+$$
 
-with learning rate \(\eta\). Large \(\eta\) commits aggressively to the apparent leader; small \(\eta\) stays closer to uniform. In the bounded adversarial model, an appropriate choice gives the characteristic regret scale
+with learning rate $\eta$. Large $\eta$ commits aggressively to the apparent leader; small $\eta$ stays closer to uniform. In the bounded adversarial model, an appropriate choice gives the characteristic regret scale
 
-\[
+$$
 R_n=O(\sqrt{nk\log k}).
-\]
+$$
 
 The theorem is not “Exp3 works on arbitrary reality.” It assumes a particular feedback protocol, reward range, comparator, and adversary model. If the environment reacts after seeing the learner’s current random action in a prohibited way, or if rewards are unbounded/heavy-tailed without adaptation, the proof no longer applies as stated.
 
@@ -72123,21 +72304,21 @@ Source basis: Lattimore and Szepesvári, *Bandit Algorithms*, Chapters 11–12 o
 
 ### Context and linear structure let one observation teach us about more than one action
 
-A contextual bandit observes a context \(c_t\) **before** choosing the action. The benchmark is no longer necessarily the best one global arm; it can be a policy mapping contexts to actions. If every possible context is treated as an unrelated problem, data fragment badly. The useful question is what structure lets experience transfer across contexts.
+A contextual bandit observes a context $c_t$ **before** choosing the action. The benchmark is no longer necessarily the best one global arm; it can be a policy mapping contexts to actions. If every possible context is treated as an unrelated problem, data fragment badly. The useful question is what structure lets experience transfer across contexts.
 
-The expert-advice formulation represents candidate policies as experts. At each round, expert \(m\) provides a distribution over actions. Exp4 maintains weights over experts and mixes their recommendations, using bandit feedback and importance weighting to update the experts indirectly. This makes the comparator “best expert in hindsight” rather than “best arm.” The framework is powerful precisely because the internal form of an expert can be opaque to the bandit algorithm.
+The expert-advice formulation represents candidate policies as experts. At each round, expert $m$ provides a distribution over actions. Exp4 maintains weights over experts and mixes their recommendations, using bandit feedback and importance weighting to update the experts indirectly. This makes the comparator “best expert in hindsight” rather than “best arm.” The framework is powerful precisely because the internal form of an expert can be opaque to the bandit algorithm.
 
-A **linear bandit** assumes more explicit structure. Each action is represented by a feature vector \(a\in\mathbb R^d\), and expected reward is
+A **linear bandit** assumes more explicit structure. Each action is represented by a feature vector $a\in\mathbb R^d$, and expected reward is
 
-\[
+$$
 \mathbb E[X_t\mid A_t=a]
 =
 \langle \theta_*,a\rangle
-\]
+$$
 
-for an unknown parameter \(\theta_*\). One observation informs every action whose features overlap the measured direction. A regularized least-squares estimate is
+for an unknown parameter $\theta_*$. One observation informs every action whose features overlap the measured direction. A regularized least-squares estimate is
 
-\[
+$$
 \hat\theta_t
 =
 V_t^{-1}
@@ -72146,22 +72327,22 @@ V_t^{-1}
 V_t
 =
 \lambda I+\sum_{s=1}^{t}A_sA_s^T.
-\]
+$$
 
-The matrix \(V_t\) is not just bookkeeping. It records **which directions of parameter space have been excited by the chosen actions**. Directions with little action energy remain uncertain.
+The matrix $V_t$ is not just bookkeeping. It records **which directions of parameter space have been excited by the chosen actions**. Directions with little action energy remain uncertain.
 
-Optimism now operates over a confidence **set** rather than an interval. If \(C_t\) is a high-probability set containing \(\theta_*\), define
+Optimism now operates over a confidence **set** rather than an interval. If $C_t$ is a high-probability set containing $\theta_*$, define
 
-\[
+$$
 \operatorname{UCB}_t(a)
 =
 \max_{\theta\in C_t}
 \langle\theta,a\rangle,
-\]
+$$
 
-and choose the action with largest optimistic value. For ellipsoidal confidence sets this becomes a mean prediction plus a geometry-dependent uncertainty bonus involving \(V_t^{-1}\). An action can be attractive because its predicted reward is high or because it probes a weakly measured direction.
+and choose the action with largest optimistic value. For ellipsoidal confidence sets this becomes a mean prediction plus a geometry-dependent uncertainty bonus involving $V_t^{-1}$. An action can be attractive because its predicted reward is high or because it probes a weakly measured direction.
 
-The adaptive design makes confidence analysis subtle. \(A_t\) depends on earlier rewards, so ordinary fixed-design least-squares intervals cannot simply be copied into the bandit loop. The book develops martingale/self-normalized tools precisely because the design matrix is data-dependent. This is a recurring lesson in active vision and adaptive rendering: once the algorithm chooses where to measure based on previous measurements, uncertainty calculations must cover that adaptivity.
+The adaptive design makes confidence analysis subtle. $A_t$ depends on earlier rewards, so ordinary fixed-design least-squares intervals cannot simply be copied into the bandit loop. The book develops martingale/self-normalized tools precisely because the design matrix is data-dependent. This is a recurring lesson in active vision and adaptive rendering: once the algorithm chooses where to measure based on previous measurements, uncertainty calculations must cover that adaptivity.
 
 A graphics example is choosing among candidate ray bundles whose feature vector describes depth variance, normal variation, material roughness, and prior sample count. A global arm mean throws away that structure. A linear model can share information across similar bundles, while its confidence geometry reveals which feature combinations have not been explored. If reward is nonlinear in those features, however, the linear-bandit guarantee is misspecified rather than merely conservative.
 
@@ -72173,22 +72354,22 @@ In a Bayesian bandit model, uncertainty is represented by a posterior distributi
 
 For a Bernoulli arm with a Beta prior,
 
-\[
+$$
 \mu_i\sim\operatorname{Beta}(\alpha_i,\beta_i),
-\]
+$$
 
 success/failure observations update the posterior analytically. A Thompson step samples
 
-\[
+$$
 \tilde\mu_i\sim
 \operatorname{Beta}(\alpha_i+s_i,\beta_i+f_i)
-\]
+$$
 
-for each arm and selects \(\arg\max_i\tilde\mu_i\). Arms with uncertain posteriors sometimes produce optimistic samples and are explored automatically; concentrated clearly inferior posteriors are sampled less often.
+for each arm and selects $\arg\max_i\tilde\mu_i$. Arms with uncertain posteriors sometimes produce optimistic samples and are explored automatically; concentrated clearly inferior posteriors are sampled less often.
 
 This should not be confused with “Bayesian means prior choice does not matter after enough data.” In a sequential bandit, an overly pessimistic prior can suppress an arm, which prevents collecting the data that would correct that pessimism. The feedback loop couples inference and data acquisition. Lattimore and Szepesvári explicitly warn that Thompson sampling is not a universal silver bullet; optimality depends on the model class and prior/algorithm assumptions.
 
-For linear contextual problems, posterior sampling can be performed over the parameter vector. Under a Gaussian model, one samples a plausible \(\tilde\theta_t\) from a covariance shaped by accumulated design information and chooses the action maximizing \(\langle \tilde\theta_t,a\rangle\). This makes the connection to covariance geometry concrete: exploration happens in directions where the posterior remains wide.
+For linear contextual problems, posterior sampling can be performed over the parameter vector. Under a Gaussian model, one samples a plausible $\tilde\theta_t$ from a covariance shaped by accumulated design information and chooses the action maximizing $\langle \tilde\theta_t,a\rangle$. This makes the connection to covariance geometry concrete: exploration happens in directions where the posterior remains wide.
 
 The practical distinction among UCB, Exp3, and Thompson sampling is therefore not cosmetic. UCB constructs an explicit confidence-based optimistic bound under a stochastic model. Exp3 uses randomized exponential weighting and unbiased partial-feedback estimates to compete with a fixed action in an adversarial sequence. Thompson sampling samples a plausible environment from a Bayesian posterior. They can choose similar actions on one trace while carrying different correctness claims.
 
@@ -72196,21 +72377,21 @@ Source basis: *Bandit Algorithms*, Chapters 34–36 on Bayesian learning, Bayesi
 
 ### A bandit becomes a sequential-control problem when actions change what is observed next
 
-A standard bandit reward for arm \(i\) does not require an evolving state whose transition depends on the chosen action. Many engine and robotics decisions do. Moving the camera changes the next viewpoint; a navigation action changes the next location; an allocation decision changes cache state; a control impulse changes future dynamics. The appropriate abstraction is a **Markov decision process** rather than a stateless arm table.
+A standard bandit reward for arm $i$ does not require an evolving state whose transition depends on the chosen action. Many engine and robotics decisions do. Moving the camera changes the next viewpoint; a navigation action changes the next location; an allocation decision changes cache state; a control impulse changes future dynamics. The appropriate abstraction is a **Markov decision process** rather than a stateless arm table.
 
-An MDP defines states \(S_t\), actions \(A_t\), transition probabilities
+An MDP defines states $S_t$, actions $A_t$, transition probabilities
 
-\[
+$$
 P_a(s,s')
 =
 P(S_{t+1}=s'\mid S_t=s,A_t=a),
-\]
+$$
 
-and expected rewards \(r_a(s)\). A policy selects actions from state. The Markov property says the modeled current state contains the information needed for the next-state law; it does not say the real world has no memory. If crucial history is omitted from \(S_t\), the model is not Markov with respect to that state representation.
+and expected rewards $r_a(s)$. A policy selects actions from state. The Markov property says the modeled current state contains the information needed for the next-state law; it does not say the real world has no memory. If crucial history is omitted from $S_t$, the model is not Markov with respect to that state representation.
 
 For a discounted finite MDP, a familiar Bellman optimality equation is
 
-\[
+$$
 V^*(s)
 =
 \max_a
@@ -72221,11 +72402,11 @@ r(s,a)
 \sum_{s'}
 P(s'|s,a)V^*(s')
 \right].
-\]
+$$
 
 Lattimore and Szepesvári’s final chapter develops the average-reward strongly connected setting, where an optimal gain and a relative value/bias function replace the simple discounted form. The exact Bellman equation therefore depends on the objective. The structural idea is the same: optimal value satisfies a fixed-point relation combining immediate reward with the value of successor states.
 
-When \(P\) and \(r\) are unknown, reinforcement learning must explore **state–action dynamics**, not just reward means. Optimism can extend by constructing plausible MDPs or confidence regions for transitions/rewards and acting according to an optimistic model. The difficulty is now that poor exploration can prevent visiting entire state regions. A one-state MDP with action-dependent rewards collapses toward the bandit case; adding state introduces temporal credit and reachability.
+When $P$ and $r$ are unknown, reinforcement learning must explore **state–action dynamics**, not just reward means. Optimism can extend by constructing plausible MDPs or confidence regions for transitions/rewards and acting according to an optimistic model. The difficulty is now that poor exploration can prevent visiting entire state regions. A one-state MDP with action-dependent rewards collapses toward the bandit case; adding state introduces temporal credit and reachability.
 
 This boundary is important for adaptive engine systems. If choosing a denoiser only affects the current frame score, a bandit may suffice. If it changes a temporal history buffer that affects future frames, the reward process has state. If choosing a collision broad-phase rebuild policy changes the structure and cost of future queries, current action and future workload are coupled. Modeling that coupling explicitly is better than forcing history-dependent rewards into a stationary-arm assumption.
 
@@ -72290,19 +72471,19 @@ Monte Carlo estimation uses randomized sampling to approximate an expectation or
 Suppose:
 
 $$
- I=\mathbb E[Y] 
+ I=\mathbb E[Y]
 $$
 
 and we can generate independent identically distributed samples:
 
 $$
- Y_1,\ldots,Y_N. 
+ Y_1,\ldots,Y_N.
 $$
 
 The sample-mean estimator is:
 
 $$
- \boxed{ \widehat I_N= \frac1N\sum_{i=1}^NY_i }. 
+ \boxed{ \widehat I_N= \frac1N\sum_{i=1}^NY_i }.
 $$
 
 If the expectation exists, this is a natural estimator.
@@ -72310,13 +72491,13 @@ If the expectation exists, this is a natural estimator.
 If $Y$ has finite variance:
 
 $$
- \sigma_Y^2=\operatorname{Var}(Y), 
+ \sigma_Y^2=\operatorname{Var}(Y),
 $$
 
 then:
 
 $$
- \boxed{ \operatorname{Var}(\widehat I_N) = \frac{\sigma_Y^2}{N} } 
+ \boxed{ \operatorname{Var}(\widehat I_N) = \frac{\sigma_Y^2}{N} }
 $$
 
 for independent samples.
@@ -72324,7 +72505,7 @@ for independent samples.
 Its standard deviation, often called the standard error of the mean, is:
 
 $$
- \boxed{ \operatorname{SE}(\widehat I_N) = \frac{\sigma_Y}{\sqrt N} }. 
+ \boxed{ \operatorname{SE}(\widehat I_N) = \frac{\sigma_Y}{\sqrt N} }.
 $$
 
 #### 1 Why the convergence rate is $1/\sqrt N$
@@ -72332,25 +72513,25 @@ $$
 Let:
 
 $$
- \widehat I_N= \frac1N\sum_iY_i. 
+ \widehat I_N= \frac1N\sum_iY_i.
 $$
 
 For independent samples:
 
 $$
- \operatorname{Var}\left(\sum_iY_i\right) = \sum_i\operatorname{Var}(Y_i) =N\sigma_Y^2. 
+ \operatorname{Var}\left(\sum_iY_i\right) = \sum_i\operatorname{Var}(Y_i) =N\sigma_Y^2.
 $$
 
 Scaling variance by $1/N^2$:
 
 $$
- \operatorname{Var}(\widehat I_N) = \frac{N\sigma_Y^2}{N^2} = \frac{\sigma_Y^2}{N}. 
+ \operatorname{Var}(\widehat I_N) = \frac{N\sigma_Y^2}{N^2} = \frac{\sigma_Y^2}{N}.
 $$
 
 Take the square root:
 
 $$
- \operatorname{SE}= \frac{\sigma_Y}{\sqrt N}. 
+ \operatorname{SE}= \frac{\sigma_Y}{\sqrt N}.
 $$
 
 Therefore halving the standard error requires increasing the number of samples by a factor of four.
@@ -72364,37 +72545,37 @@ This scaling is central to Monte Carlo rendering performance.
 Suppose an estimator contribution has variance:
 
 $$
- \sigma_Y^2=0.09. 
+ \sigma_Y^2=0.09.
 $$
 
 Then:
 
 $$
- \sigma_Y=0.3. 
+ \sigma_Y=0.3.
 $$
 
 With:
 
 $$
- N=100, 
+ N=100,
 $$
 
 the standard error is:
 
 $$
- \operatorname{SE} = \frac{0.3}{10} =\boxed{0.03}. 
+ \operatorname{SE} = \frac{0.3}{10} =\boxed{0.03}.
 $$
 
 With:
 
 $$
- N=10{,}000, 
+ N=10{,}000,
 $$
 
 it becomes:
 
 $$
- \frac{0.3}{100} =\boxed{0.003}. 
+ \frac{0.3}{100} =\boxed{0.003}.
 $$
 
 We used 100 times more samples to reduce the standard error tenfold.
@@ -72406,7 +72587,7 @@ Deterministic grid quadrature can suffer dramatically as dimension increases.
 For example, using 100 samples along each of ten dimensions would require:
 
 $$
- 100^{10}=10^{20} 
+ 100^{10}=10^{20}
 $$
 
 grid points.
@@ -72430,7 +72611,7 @@ It estimates an unknown fixed parameter $\theta$.
 The estimator is unbiased if:
 
 $$
- \boxed{ \mathbb E[\widehat\theta]=\theta }. 
+ \boxed{ \mathbb E[\widehat\theta]=\theta }.
 $$
 
 Unbiasedness is a statement about the estimator's average behavior over repeated hypothetical datasets or sample sequences.
@@ -72442,31 +72623,31 @@ It does not mean every individual estimate equals the truth.
 Let:
 
 $$
- X_1,\ldots,X_N 
+ X_1,\ldots,X_N
 $$
 
 have common finite mean:
 
 $$
- \mathbb E[X_i]=\mu. 
+ \mathbb E[X_i]=\mu.
 $$
 
 Define:
 
 $$
- \bar X=\frac1N\sum_iX_i. 
+ \bar X=\frac1N\sum_iX_i.
 $$
 
 Then:
 
 $$
- \begin{aligned} \mathbb E[\bar X] &=\frac1N\sum_i\mathbb E[X_i]\\ &=\frac1N(N\mu)\\ &=\mu. \end{aligned} 
+ \begin{aligned} \mathbb E[\bar X] &=\frac1N\sum_i\mathbb E[X_i]\\ &=\frac1N(N\mu)\\ &=\mu. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{\mathbb E[\bar X]=\mu}. 
+ \boxed{\mathbb E[\bar X]=\mu}.
 $$
 
 Independence is not required for this unbiasedness derivation, although independence matters for its usual variance formula and many convergence results.
@@ -72476,13 +72657,13 @@ Independence is not required for this unbiasedness derivation, although independ
 For:
 
 $$
- \widehat I_N= \frac1N\sum_i\frac{f(X_i)}{p(X_i)}, 
+ \widehat I_N= \frac1N\sum_i\frac{f(X_i)}{p(X_i)},
 $$
 
 we derived:
 
 $$
- \mathbb E[\widehat I_N]=I. 
+ \mathbb E[\widehat I_N]=I.
 $$
 
 This property depends on using the correct PDF, valid support, and well-defined expectation.
@@ -72494,13 +72675,13 @@ If the renderer samples using one density but divides by another, the equality c
 Consider a random estimate:
 
 $$
- \widehat\theta= \begin{cases} 0,&\text{probability }0.99,\\ 100,&\text{probability }0.01. \end{cases} 
+ \widehat\theta= \begin{cases} 0,&\text{probability }0.99,\\ 100,&\text{probability }0.01. \end{cases}
 $$
 
 Its mean is:
 
 $$
- \mathbb E[\widehat\theta]=1. 
+ \mathbb E[\widehat\theta]=1.
 $$
 
 If the true parameter is $\theta=1$, the estimator is unbiased.
@@ -72510,13 +72691,13 @@ But 99% of its individual outputs are zero.
 Its second moment is:
 
 $$
- \mathbb E[\widehat\theta^2] = 0.99(0)+0.01(10000)=100. 
+ \mathbb E[\widehat\theta^2] = 0.99(0)+0.01(10000)=100.
 $$
 
 Its variance is:
 
 $$
- 100-1^2=\boxed{99}. 
+ 100-1^2=\boxed{99}.
 $$
 
 This is an unbiased but extremely noisy estimator.
@@ -72528,7 +72709,7 @@ Unbiasedness alone is not a sufficient quality criterion.
 The bias of an estimator is:
 
 $$
- \boxed{ \operatorname{Bias}(\widehat\theta) = \mathbb E[\widehat\theta]-\theta }. 
+ \boxed{ \operatorname{Bias}(\widehat\theta) = \mathbb E[\widehat\theta]-\theta }.
 $$
 
 An estimator is biased when its expectation differs from the target parameter.
@@ -72544,19 +72725,19 @@ Suppose $X_i$ have mean $\mu$.
 Define:
 
 $$
- \widehat\mu= \frac1{N+1}\sum_{i=1}^NX_i. 
+ \widehat\mu= \frac1{N+1}\sum_{i=1}^NX_i.
 $$
 
 Then:
 
 $$
- \mathbb E[\widehat\mu] = \frac{N}{N+1}\mu. 
+ \mathbb E[\widehat\mu] = \frac{N}{N+1}\mu.
 $$
 
 Therefore the bias is:
 
 $$
- \boxed{ -\frac{\mu}{N+1} }. 
+ \boxed{ -\frac{\mu}{N+1} }.
 $$
 
 The estimator approaches unbiasedness as $N$ grows, but it is biased for finite $N$ unless $\mu=0$.
@@ -72570,19 +72751,19 @@ Large contributions occasionally occur.
 To reduce visible fireflies, an implementation may clamp:
 
 $$
- Y_{\mathrm{clamped}}=\min(Y,T). 
+ Y_{\mathrm{clamped}}=\min(Y,T).
 $$
 
 Since:
 
 $$
- Y_{\mathrm{clamped}}\le Y 
+ Y_{\mathrm{clamped}}\le Y
 $$
 
 for every sample:
 
 $$
- \mathbb E[Y_{\mathrm{clamped}}] \le \mathbb E[Y]. 
+ \mathbb E[Y_{\mathrm{clamped}}] \le \mathbb E[Y].
 $$
 
 Unless no contributions exceed $T$, the inequality is strict under suitable integrability conditions.
@@ -72600,7 +72781,7 @@ Suppose we know a target distribution only up to a normalizing constant.
 We may use an estimator:
 
 $$
- \widehat\mu= \frac{ \sum_iw_i f(X_i) }{ \sum_iw_i }. 
+ \widehat\mu= \frac{ \sum_iw_i f(X_i) }{ \sum_iw_i }.
 $$
 
 This ratio is often called a self-normalized importance-sampling estimator.
@@ -72608,7 +72789,7 @@ This ratio is often called a self-normalized importance-sampling estimator.
 It can be consistent under appropriate conditions, but it is generally biased at finite sample count because:
 
 $$
- \mathbb E\left[\frac AB\right] \ne \frac{\mathbb E[A]}{\mathbb E[B]} 
+ \mathbb E\left[\frac AB\right] \ne \frac{\mathbb E[A]}{\mathbb E[B]}
 $$
 
 in general.
@@ -72624,13 +72805,13 @@ Variance measures how much the estimator changes across repeated independent dat
 For an estimator:
 
 $$
- \widehat\theta, 
+ \widehat\theta,
 $$
 
 its variance is:
 
 $$
- \boxed{ \operatorname{Var}(\widehat\theta) = \mathbb E[ (\widehat\theta-\mathbb E[\widehat\theta])^2 ] }. 
+ \boxed{ \operatorname{Var}(\widehat\theta) = \mathbb E[ (\widehat\theta-\mathbb E[\widehat\theta])^2 ] }.
 $$
 
 A low-variance estimator is consistent across repeated experiments, but it may be consistently wrong if it is biased.
@@ -72640,19 +72821,19 @@ A low-variance estimator is consistent across repeated experiments, but it may b
 A central quantity is mean squared error:
 
 $$
- \operatorname{MSE}(\widehat\theta) = \mathbb E[(\widehat\theta-\theta)^2]. 
+ \operatorname{MSE}(\widehat\theta) = \mathbb E[(\widehat\theta-\theta)^2].
 $$
 
 Insert and subtract the estimator's mean:
 
 $$
- \widehat\theta-\theta = (\widehat\theta-\mathbb E[\widehat\theta]) + (\mathbb E[\widehat\theta]-\theta). 
+ \widehat\theta-\theta = (\widehat\theta-\mathbb E[\widehat\theta]) + (\mathbb E[\widehat\theta]-\theta).
 $$
 
 Square:
 
 $$
- \begin{aligned} (\widehat\theta-\theta)^2 &= (\widehat\theta-\mathbb E[\widehat\theta])^2\\ &\quad+ 2(\widehat\theta-\mathbb E[\widehat\theta]) (\mathbb E[\widehat\theta]-\theta)\\ &\quad+ (\mathbb E[\widehat\theta]-\theta)^2. \end{aligned} 
+ \begin{aligned} (\widehat\theta-\theta)^2 &= (\widehat\theta-\mathbb E[\widehat\theta])^2\\ &\quad+ 2(\widehat\theta-\mathbb E[\widehat\theta]) (\mathbb E[\widehat\theta]-\theta)\\ &\quad+ (\mathbb E[\widehat\theta]-\theta)^2. \end{aligned}
 $$
 
 Take expectations.
@@ -72660,13 +72841,13 @@ Take expectations.
 The cross term vanishes because:
 
 $$
- \mathbb E[ \widehat\theta-\mathbb E[\widehat\theta] ]=0. 
+ \mathbb E[ \widehat\theta-\mathbb E[\widehat\theta] ]=0.
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{MSE}(\widehat\theta) = \operatorname{Var}(\widehat\theta) + \operatorname{Bias}(\widehat\theta)^2 }. 
+ \boxed{ \operatorname{MSE}(\widehat\theta) = \operatorname{Var}(\widehat\theta) + \operatorname{Bias}(\widehat\theta)^2 }.
 $$
 
 This is one of the most important equations in statistical estimation.
@@ -72676,37 +72857,37 @@ This is one of the most important equations in statistical estimation.
 Suppose estimator A is unbiased:
 
 $$
- \operatorname{Bias}(A)=0, 
+ \operatorname{Bias}(A)=0,
 $$
 
 but has:
 
 $$
- \operatorname{Var}(A)=9. 
+ \operatorname{Var}(A)=9.
 $$
 
 Then:
 
 $$
- \operatorname{MSE}(A)=9. 
+ \operatorname{MSE}(A)=9.
 $$
 
 Estimator B has bias:
 
 $$
- \operatorname{Bias}(B)=1 
+ \operatorname{Bias}(B)=1
 $$
 
 and variance:
 
 $$
- \operatorname{Var}(B)=2. 
+ \operatorname{Var}(B)=2.
 $$
 
 Then:
 
 $$
- \operatorname{MSE}(B)=2+1^2=\boxed3. 
+ \operatorname{MSE}(B)=2+1^2=\boxed3.
 $$
 
 Estimator B has smaller mean squared error despite being biased.
@@ -72720,19 +72901,19 @@ In rendering, some controlled-bias methods may produce smaller perceptual or num
 For:
 
 $$
- \bar Y=\frac1N\sum_iY_i, 
+ \bar Y=\frac1N\sum_iY_i,
 $$
 
 the general variance formula is:
 
 $$
- \boxed{ \operatorname{Var}(\bar Y) = \frac1{N^2} \left[ \sum_i\operatorname{Var}(Y_i) + 2\sum_{i\<j}\operatorname{Cov}(Y_i,Y_j) \right] }. 
+ \boxed{ \operatorname{Var}(\bar Y) = \frac1{N^2} \left[ \sum_i\operatorname{Var}(Y_i) + 2\sum_{i\<j}\operatorname{Cov}(Y_i,Y_j) \right] }.
 $$
 
 The familiar:
 
 $$
- \sigma^2/N 
+ \sigma^2/N
 $$
 
 appears only when the samples have common variance and pairwise covariances vanish.
@@ -72752,7 +72933,7 @@ The law of large numbers explains why sample averages can approach expected valu
 For independent identically distributed random variables with finite mean $\mu$, the strong law states under its standard assumptions:
 
 $$
- \boxed{ \bar X_N= \frac1N\sum_{i=1}^NX_i \longrightarrow\mu \quad\text{almost surely} }. 
+ \boxed{ \bar X_N= \frac1N\sum_{i=1}^NX_i \longrightarrow\mu \quad\text{almost surely} }.
 $$
 
 Almost-sure convergence means that, with probability one, the infinite sequence of sample averages converges to the expectation.
@@ -72760,7 +72941,7 @@ Almost-sure convergence means that, with probability one, the infinite sequence 
 The weak law describes convergence in probability:
 
 $$
- \boxed{ P(|\bar X_N-\mu|>\varepsilon) \longrightarrow0 } 
+ \boxed{ P(|\bar X_N-\mu|>\varepsilon) \longrightarrow0 }
 $$
 
 for every $\varepsilon>0$.
@@ -72774,31 +72955,31 @@ Assume independent identically distributed samples with finite variance $\sigma^
 We know:
 
 $$
- \operatorname{Var}(\bar X_N)=\frac{\sigma^2}{N}. 
+ \operatorname{Var}(\bar X_N)=\frac{\sigma^2}{N}.
 $$
 
 Chebyshev's inequality states:
 
 $$
- P(|Y-\mathbb E[Y]|\ge\varepsilon) \le \frac{\operatorname{Var}(Y)}{\varepsilon^2}. 
+ P(|Y-\mathbb E[Y]|\ge\varepsilon) \le \frac{\operatorname{Var}(Y)}{\varepsilon^2}.
 $$
 
 Apply it to the sample mean:
 
 $$
- P(|\bar X_N-\mu|\ge\varepsilon) \le \frac{\sigma^2}{N\varepsilon^2}. 
+ P(|\bar X_N-\mu|\ge\varepsilon) \le \frac{\sigma^2}{N\varepsilon^2}.
 $$
 
 As $N\to\infty$:
 
 $$
- \frac{\sigma^2}{N\varepsilon^2}\to0. 
+ \frac{\sigma^2}{N\varepsilon^2}\to0.
 $$
 
 Therefore:
 
 $$
- \boxed{ P(|\bar X_N-\mu|\ge\varepsilon)\to0 }. 
+ \boxed{ P(|\bar X_N-\mu|\ge\varepsilon)\to0 }.
 $$
 
 This proves weak convergence under the finite-variance IID assumptions.
@@ -72834,25 +73015,25 @@ The central limit theorem describes the shape of its fluctuations around the tru
 Suppose:
 
 $$
- X_1,\ldots,X_N 
+ X_1,\ldots,X_N
 $$
 
 are IID with:
 
 $$
- \mathbb E[X_i]=\mu 
+ \mathbb E[X_i]=\mu
 $$
 
 and:
 
 $$
- 0<\operatorname{Var}(X_i)=\sigma^2<\infty. 
+ 0<\operatorname{Var}(X_i)=\sigma^2<\infty.
 $$
 
 The classical central limit theorem states:
 
 $$
- \boxed{ \frac{\sqrt N(\bar X_N-\mu)}{\sigma} \xrightarrow{d}\mathcal N(0,1) }. 
+ \boxed{ \frac{\sqrt N(\bar X_N-\mu)}{\sigma} \xrightarrow{d}\mathcal N(0,1) }.
 $$
 
 The notation $\xrightarrow{d}$ denotes convergence in distribution.
@@ -72860,7 +73041,7 @@ The notation $\xrightarrow{d}$ denotes convergence in distribution.
 For sufficiently large $N$, this suggests:
 
 $$
- \boxed{ \bar X_N \approx \mathcal N\left( \mu,\frac{\sigma^2}{N} \right) } 
+ \boxed{ \bar X_N \approx \mathcal N\left( \mu,\frac{\sigma^2}{N} \right) }
 $$
 
 as an approximation to the sampling distribution of the mean.
@@ -72870,43 +73051,43 @@ as an approximation to the sampling distribution of the mean.
 Let:
 
 $$
- S_N=\sum_iX_i. 
+ S_N=\sum_iX_i.
 $$
 
 Its mean is:
 
 $$
- \mathbb E[S_N]=N\mu. 
+ \mathbb E[S_N]=N\mu.
 $$
 
 Its variance is:
 
 $$
- \operatorname{Var}(S_N)=N\sigma^2. 
+ \operatorname{Var}(S_N)=N\sigma^2.
 $$
 
 Therefore its standard deviation is:
 
 $$
- \sigma\sqrt N. 
+ \sigma\sqrt N.
 $$
 
 To centre and scale the sum:
 
 $$
- Z_N= \frac{S_N-N\mu}{\sigma\sqrt N}. 
+ Z_N= \frac{S_N-N\mu}{\sigma\sqrt N}.
 $$
 
 Since:
 
 $$
- S_N=N\bar X_N, 
+ S_N=N\bar X_N,
 $$
 
 we obtain:
 
 $$
- Z_N= \frac{N(\bar X_N-\mu)} {\sigma\sqrt N} = \frac{\sqrt N(\bar X_N-\mu)}{\sigma}. 
+ Z_N= \frac{N(\bar X_N-\mu)} {\sigma\sqrt N} = \frac{\sqrt N(\bar X_N-\mu)}{\sigma}.
 $$
 
 That explains the normalization appearing in the theorem.
@@ -72938,7 +73119,7 @@ For a path tracer, rare high-energy contributions can produce strongly skewed or
 For a stationary sequence with variance $\sigma^2$ and lag-$k$ autocorrelation $\rho_k$, the variance of the sample mean is:
 
 $$
- \boxed{ \operatorname{Var}(\bar X_N) = \frac{\sigma^2}{N} \left[ 1+ 2\sum_{k=1}^{N-1} \left(1-\frac{k}{N}\right)\rho_k \right] }. 
+ \boxed{ \operatorname{Var}(\bar X_N) = \frac{\sigma^2}{N} \left[ 1+ 2\sum_{k=1}^{N-1} \left(1-\frac{k}{N}\right)\rho_k \right] }.
 $$
 
 When the autocorrelations vanish, we recover $\sigma^2/N$.
@@ -72948,7 +73129,7 @@ For persistent positive correlations, the bracketed factor is greater than one.
 A heuristic effective sample size is:
 
 $$
- N_{\mathrm{eff}} \approx \frac{N}{ 1+2\sum_{k\ge1}\rho_k } 
+ N_{\mathrm{eff}} \approx \frac{N}{ 1+2\sum_{k\ge1}\rho_k }
 $$
 
 when the relevant series converges and the approximation is appropriate.
@@ -72994,15 +73175,15 @@ Statistics allows us to answer those questions without relying on impressions fr
 
 The central limit theorem tells us how one important statistic behaves asymptotically, but it does not by itself explain a much broader statistical pattern: how can we estimate an unknown property of a population when we do not want to commit to a narrow parametric family?
 
-Suppose the unknown data-generating distribution is \(F\), and we observe
+Suppose the unknown data-generating distribution is $F$, and we observe
 
-\[
+$$
 X_1,\ldots,X_n\sim F.
-\]
+$$
 
 The **empirical distribution function** is
 
-\[
+$$
 \boxed{
 \widehat F_n(x)
 =
@@ -73010,35 +73191,35 @@ The **empirical distribution function** is
 \sum_{i=1}^{n}
 \mathbf 1\{X_i\le x\}
 }.
-\]
+$$
 
-At any query value \(x\), \(\widehat F_n(x)\) is simply the fraction of observed samples not exceeding \(x\). It is a step function with a jump of \(1/n\) at every observation, counting repeated observations with repeated mass.
+At any query value $x$, $\widehat F_n(x)$ is simply the fraction of observed samples not exceeding $x$. It is a step function with a jump of $1/n$ at every observation, counting repeated observations with repeated mass.
 
-This construction is more important than it first appears. It says that the observed sample itself can define a complete discrete probability model: place probability \(1/n\) on each observed datum. That model is not asserted to be the true population. It is a data-supported surrogate that becomes increasingly informative as sampling improves.
+This construction is more important than it first appears. It says that the observed sample itself can define a complete discrete probability model: place probability $1/n$ on each observed datum. That model is not asserted to be the true population. It is a data-supported surrogate that becomes increasingly informative as sampling improves.
 
 For a concrete sample
 
-\[
+$$
 2,\;2,\;5,\;9,
-\]
+$$
 
-the empirical model assigns total mass \(1/2\) to value \(2\), mass \(1/4\) to \(5\), and mass \(1/4\) to \(9\). Therefore
+the empirical model assigns total mass $1/2$ to value $2$, mass $1/4$ to $5$, and mass $1/4$ to $9$. Therefore
 
-\[
+$$
 \widehat F_4(4)=\frac{2}{4}=\frac12,
 \qquad
 \widehat F_4(7)=\frac{3}{4}.
-\]
+$$
 
 The empirical CDF is useful because many population quantities can be regarded as **functionals of a distribution**. The population mean can be written
 
-\[
+$$
 \mu(F)=\int x\,dF(x).
-\]
+$$
 
-Replacing \(F\) by \(\widehat F_n\) gives
+Replacing $F$ by $\widehat F_n$ gives
 
-\[
+$$
 \mu(\widehat F_n)
 =
 \int x\,d\widehat F_n(x)
@@ -73046,7 +73227,7 @@ Replacing \(F\) by \(\widehat F_n\) gives
 \frac1n\sum_iX_i
 =
 \bar X.
-\]
+$$
 
 So the ordinary sample mean is a special case of a much larger pattern.
 
@@ -73054,62 +73235,62 @@ So the ordinary sample mean is a special case of a much larger pattern.
 
 If the desired population quantity is
 
-\[
+$$
 \theta=T(F),
-\]
+$$
 
-then the **plug-in estimator** replaces the unknown \(F\) with its empirical estimate:
+then the **plug-in estimator** replaces the unknown $F$ with its empirical estimate:
 
-\[
+$$
 \boxed{
 \widehat\theta_{\mathrm{plug\text{-}in}}
 =
 T(\widehat F_n)
 }.
-\]
+$$
 
 This one idea unifies many familiar formulas.
 
 For the population variance,
 
-\[
+$$
 V(F)=
 \int (x-\mu(F))^2\,dF(x),
-\]
+$$
 
 the direct plug-in estimate is
 
-\[
+$$
 V(\widehat F_n)
 =
 \frac1n\sum_i(X_i-\bar X)^2.
-\]
+$$
 
-Notice that this is the denominator-\(n\) empirical variance, not the denominator-\((n-1)\) unbiased sample-variance estimator discussed later. The distinction is instructive. **Plug-in estimation and unbiased estimation are different design criteria.** A plug-in estimator asks, “what do I obtain by replacing the unknown distribution by the empirical distribution?” An unbiased estimator asks, “does the repeated-sampling expectation equal the target?” Sometimes the same formula satisfies both goals; sometimes it does not.
+Notice that this is the denominator-$n$ empirical variance, not the denominator-$(n-1)$ unbiased sample-variance estimator discussed later. The distinction is instructive. **Plug-in estimation and unbiased estimation are different design criteria.** A plug-in estimator asks, “what do I obtain by replacing the unknown distribution by the empirical distribution?” An unbiased estimator asks, “does the repeated-sampling expectation equal the target?” Sometimes the same formula satisfies both goals; sometimes it does not.
 
-Quantiles provide another example. If \(q_\alpha(F)\) is the population \(\alpha\)-quantile, then \(q_\alpha(\widehat F_n)\) is an empirical quantile. Medians, trimmed statistics, empirical moments, and many risk summaries can all be viewed this way.
+Quantiles provide another example. If $q_\alpha(F)$ is the population $\alpha$-quantile, then $q_\alpha(\widehat F_n)$ is an empirical quantile. Medians, trimmed statistics, empirical moments, and many risk summaries can all be viewed this way.
 
-The empirical-distribution viewpoint also makes the bootstrap section later in this volume much less mysterious. A nonparametric bootstrap sample is simply a fresh IID sample drawn from \(\widehat F_n\). The bootstrap therefore asks what the estimator would do if the empirical distribution were the population. It is not random perturbation for its own sake; it is repeated sampling from a concrete estimated distribution.
+The empirical-distribution viewpoint also makes the bootstrap section later in this volume much less mysterious. A nonparametric bootstrap sample is simply a fresh IID sample drawn from $\widehat F_n$. The bootstrap therefore asks what the estimator would do if the empirical distribution were the population. It is not random perturbation for its own sake; it is repeated sampling from a concrete estimated distribution.
 
 #### Convergence of a distribution estimate is stronger than convergence of one statistic
 
-For any fixed \(x\), the random variables
+For any fixed $x$, the random variables
 
-\[
+$$
 \mathbf 1\{X_i\le x\}
-\]
+$$
 
-are Bernoulli with expectation \(F(x)\). Their sample mean is exactly \(\widehat F_n(x)\). The law of large numbers therefore suggests
+are Bernoulli with expectation $F(x)$. Their sample mean is exactly $\widehat F_n(x)$. The law of large numbers therefore suggests
 
-\[
+$$
 \widehat F_n(x)\to F(x)
-\]
+$$
 
-at continuity points of \(F\).
+at continuity points of $F$.
 
 A stronger result, the Glivenko–Cantelli theorem, says under the IID setup that the maximum CDF discrepancy converges to zero:
 
-\[
+$$
 \boxed{
 \sup_x
 \left|
@@ -73117,7 +73298,7 @@ A stronger result, the Glivenko–Cantelli theorem, says under the IID setup tha
 \right|
 \longrightarrow 0
 }
-\]
+$$
 
 almost surely.
 
@@ -73127,23 +73308,23 @@ For graphics, simulation, and experimental engineering this matters whenever a p
 
 ### The delta method propagates asymptotic uncertainty through a nonlinear function
 
-Suppose an estimator \(\widehat\theta_n\) already has an asymptotic normal approximation:
+Suppose an estimator $\widehat\theta_n$ already has an asymptotic normal approximation:
 
-\[
+$$
 \sqrt n(\widehat\theta_n-\theta)
 \xrightarrow{d}
 \mathcal N(0,\sigma^2).
-\]
+$$
 
-Now suppose the quantity we actually care about is not \(\theta\), but a smooth transformation
+Now suppose the quantity we actually care about is not $\theta$, but a smooth transformation
 
-\[
+$$
 \psi=g(\theta).
-\]
+$$
 
 Examples appear constantly:
 
-- a variance estimate may be converted to a standard deviation by \(g(v)=\sqrt v\);
+- a variance estimate may be converted to a standard deviation by $g(v)=\sqrt v$;
 - an odds estimate may be converted to probability;
 - a camera calibration parameter may be transformed into field of view;
 - a positive scale may be logged;
@@ -73151,9 +73332,9 @@ Examples appear constantly:
 
 We could derive a new sampling distribution from scratch for every transformation. The **delta method** instead uses the same local linearization idea that already appears throughout calculus and numerical analysis.
 
-Taylor-expand \(g\) around the true parameter:
+Taylor-expand $g$ around the true parameter:
 
-\[
+$$
 g(\widehat\theta_n)
 =
 g(\theta)
@@ -73161,11 +73342,11 @@ g(\theta)
 g'(\theta)(\widehat\theta_n-\theta)
 +
 R_n,
-\]
+$$
 
-where the remainder is smaller than the first-order term under the usual differentiability and convergence conditions. Multiply by \(\sqrt n\):
+where the remainder is smaller than the first-order term under the usual differentiability and convergence conditions. Multiply by $\sqrt n$:
 
-\[
+$$
 \sqrt n
 \left[
 g(\widehat\theta_n)-g(\theta)
@@ -73175,11 +73356,11 @@ g'(\theta)
 \sqrt n(\widehat\theta_n-\theta)
 +
 \sqrt nR_n.
-\]
+$$
 
 If the remainder vanishes in probability, the limiting distribution becomes
 
-\[
+$$
 \boxed{
 \sqrt n
 \left[
@@ -73192,16 +73373,16 @@ g(\widehat\theta_n)-g(\theta)
 [g'(\theta)]^2\sigma^2
 \right)
 }.
-\]
+$$
 
-Equivalently, when the large-\(n\) variance of \(\widehat\theta_n\) is approximately \(\sigma^2/n\),
+Equivalently, when the large-$n$ variance of $\widehat\theta_n$ is approximately $\sigma^2/n$,
 
-\[
+$$
 \operatorname{Var}\!\left[g(\widehat\theta_n)\right]
 \approx
 [g'(\theta)]^2
 \frac{\sigma^2}{n}.
-\]
+$$
 
 This is statistical uncertainty propagation through a Jacobian.
 
@@ -73209,39 +73390,39 @@ This is statistical uncertainty propagation through a Jacobian.
 
 Let
 
-\[
+$$
 \widehat{\boldsymbol\theta}\in\mathbb R^p
-\]
+$$
 
 satisfy
 
-\[
+$$
 \sqrt n
 (\widehat{\boldsymbol\theta}-\boldsymbol\theta)
 \xrightarrow{d}
 \mathcal N(\mathbf 0,\Sigma).
-\]
+$$
 
 For a differentiable scalar function
 
-\[
+$$
 g:\mathbb R^p\to\mathbb R,
-\]
+$$
 
 the first-order perturbation is
 
-\[
+$$
 g(\widehat{\boldsymbol\theta})
 -
 g(\boldsymbol\theta)
 \approx
 \nabla g(\boldsymbol\theta)^T
 (\widehat{\boldsymbol\theta}-\boldsymbol\theta).
-\]
+$$
 
 Therefore
 
-\[
+$$
 \boxed{
 \sqrt n
 \left[
@@ -73258,17 +73439,17 @@ g(\boldsymbol\theta)
 \nabla g
 \right)
 }.
-\]
+$$
 
 For a vector-valued transformation
 
-\[
+$$
 \mathbf g:\mathbb R^p\to\mathbb R^m
-\]
+$$
 
-with Jacobian \(J_g\),
+with Jacobian $J_g$,
 
-\[
+$$
 \boxed{
 \operatorname{Cov}
 \left[
@@ -73280,56 +73461,56 @@ J_g
 \Sigma
 J_g^T
 }.
-\]
+$$
 
-This is the same mathematical structure used earlier for first-order covariance propagation. The difference is interpretive: here \(\Sigma\) describes an estimator's asymptotic sampling fluctuation; in a state-estimation calculation it may describe uncertainty in a random state vector. The algebra can be identical while the source of uncertainty is different.
+This is the same mathematical structure used earlier for first-order covariance propagation. The difference is interpretive: here $\Sigma$ describes an estimator's asymptotic sampling fluctuation; in a state-estimation calculation it may describe uncertainty in a random state vector. The algebra can be identical while the source of uncertainty is different.
 
 #### Worked example: uncertainty of an estimated standard deviation
 
-Suppose an estimator of variance \(v=\sigma^2\) is approximately normal:
+Suppose an estimator of variance $v=\sigma^2$ is approximately normal:
 
-\[
+$$
 \widehat v
 \approx
 \mathcal N(v,\tau^2).
-\]
+$$
 
 We want the standard deviation
 
-\[
+$$
 s=\sqrt v.
-\]
+$$
 
 Here
 
-\[
+$$
 g(v)=\sqrt v,
 \qquad
 g'(v)=\frac{1}{2\sqrt v}.
-\]
+$$
 
 The delta method gives
 
-\[
+$$
 \operatorname{Var}(\widehat s)
 \approx
 \frac{\tau^2}{4v}.
-\]
+$$
 
 So an approximate standard error is
 
-\[
+$$
 \boxed{
 \operatorname{se}(\widehat s)
 \approx
 \frac{\operatorname{se}(\widehat v)}
 {2\sqrt v}
 }.
-\]
+$$
 
-In practice \(v\) is unknown, so a plug-in step often replaces it by \(\widehat v\). This shows how two ideas connect rather than living in separate chapters:
+In practice $v$ is unknown, so a plug-in step often replaces it by $\widehat v$. This shows how two ideas connect rather than living in separate chapters:
 
-\[
+$$
 \text{estimate distribution or parameter}
 \rightarrow
 \text{plug in unknown quantities}
@@ -73337,7 +73518,7 @@ In practice \(v\) is unknown, so a plug-in step often replaces it by \(\widehat 
 \text{linearize the requested transformation}
 \rightarrow
 \text{propagate uncertainty}.
-\]
+$$
 
 #### Where the first-order delta method can fail
 
@@ -73345,25 +73526,25 @@ A derivative is not a ceremonial requirement. It controls the approximation.
 
 If
 
-\[
+$$
 g'(\theta)=0,
-\]
+$$
 
-the first-order term disappears and a second-order expansion may determine the limiting behavior. If \(g\) is not differentiable at the true value, the ordinary delta method may be invalid. If the parameter lies on a boundary, the estimator's limiting distribution itself may be non-Gaussian. If the transformation has a very large derivative near the operating point, small parameter uncertainty can become large output uncertainty.
+the first-order term disappears and a second-order expansion may determine the limiting behavior. If $g$ is not differentiable at the true value, the ordinary delta method may be invalid. If the parameter lies on a boundary, the estimator's limiting distribution itself may be non-Gaussian. If the transformation has a very large derivative near the operating point, small parameter uncertainty can become large output uncertainty.
 
 A common numerical example is reciprocal depth:
 
-\[
+$$
 z=\frac1d.
-\]
+$$
 
 Its derivative is
 
-\[
+$$
 \frac{dz}{dd}=-\frac1{d^2}.
-\]
+$$
 
-When disparity \(d\) approaches zero, first-order uncertainty in depth explodes. That is not merely a bad covariance matrix; it reflects real geometric ill-conditioning. The same Jacobian that propagates uncertainty also exposes sensitivity.
+When disparity $d$ approaches zero, first-order uncertainty in depth explodes. That is not merely a bad covariance matrix; it reflects real geometric ill-conditioning. The same Jacobian that propagates uncertainty also exposes sensitivity.
 
 The broader lesson is that **asymptotic normality is not closed under arbitrary nonlinear operations without conditions**. A transformed estimate should inherit its uncertainty through an explicitly justified transformation, not through the assumption that every downstream number is “approximately Gaussian.”
 
@@ -73377,13 +73558,13 @@ Source basis: Wasserman, *All of Statistics*, especially the chapters on empiric
 Suppose we observe $N$ values:
 
 $$
- x_1,x_2,\ldots,x_N. 
+ x_1,x_2,\ldots,x_N.
 $$
 
 Their arithmetic sample mean is:
 
 $$
- \boxed{ \bar x=\frac1N\sum_{i=1}^{N}x_i }. 
+ \boxed{ \bar x=\frac1N\sum_{i=1}^{N}x_i }.
 $$
 
 This is a descriptive statistic of the observed data.
@@ -73391,7 +73572,7 @@ This is a descriptive statistic of the observed data.
 When the observations are draws from a distribution, the sample mean can also estimate the population mean:
 
 $$
- \mu=\mathbb E[X]. 
+ \mu=\mathbb E[X].
 $$
 
 #### 1 Exact example
@@ -73399,13 +73580,13 @@ $$
 Let:
 
 $$
- x=(1,2,3,4,5,6). 
+ x=(1,2,3,4,5,6).
 $$
 
 Then:
 
 $$
- \bar x= \frac{1+2+3+4+5+6}{6} =\boxed{3.5}. 
+ \bar x= \frac{1+2+3+4+5+6}{6} =\boxed{3.5}.
 $$
 
 This number summarizes the centre of the observed data.
@@ -73417,13 +73598,13 @@ It does not tell us how spread out the observations are or whether the data cont
 Consider:
 
 $$
- x=(1,2,3,4,100). 
+ x=(1,2,3,4,100).
 $$
 
 The mean is:
 
 $$
- \bar x=\frac{110}{5}=\boxed{22}. 
+ \bar x=\frac{110}{5}=\boxed{22}.
 $$
 
 Four of the five observations are between one and four, yet the mean is 22.
@@ -73439,37 +73620,37 @@ There is an important connection to Phase 9.
 Consider choosing one number $m$ to represent all observations, minimizing squared error:
 
 $$
- E(m)= \sum_{i=1}^{N}(x_i-m)^2. 
+ E(m)= \sum_{i=1}^{N}(x_i-m)^2.
 $$
 
 Differentiate:
 
 $$
- E'(m)= -2\sum_i(x_i-m). 
+ E'(m)= -2\sum_i(x_i-m).
 $$
 
 Set to zero:
 
 $$
- \sum_i(x_i-m)=0. 
+ \sum_i(x_i-m)=0.
 $$
 
 Thus:
 
 $$
- \sum_ix_i-Nm=0, 
+ \sum_ix_i-Nm=0,
 $$
 
 so:
 
 $$
- \boxed{ m=\frac1N\sum_ix_i=\bar x }. 
+ \boxed{ m=\frac1N\sum_ix_i=\bar x }.
 $$
 
 The second derivative is:
 
 $$
- E''(m)=2N>0. 
+ E''(m)=2N>0.
 $$
 
 Therefore the sample mean is the unique minimizer of the total squared deviation.
@@ -73485,13 +73666,13 @@ Sample variance measures the spread of observed values around their sample mean.
 One natural descriptive version is:
 
 $$
- \boxed{ v_N= \frac1N \sum_{i=1}^{N}(x_i-\bar x)^2 }. 
+ \boxed{ v_N= \frac1N \sum_{i=1}^{N}(x_i-\bar x)^2 }.
 $$
 
 If our goal is to estimate the variance of an underlying population from IID samples, the conventional unbiased estimator is:
 
 $$
- \boxed{ s^2= \frac1{N-1} \sum_{i=1}^{N}(x_i-\bar x)^2 } 
+ \boxed{ s^2= \frac1{N-1} \sum_{i=1}^{N}(x_i-\bar x)^2 }
 $$
 
 for $N\ge2$.
@@ -73503,43 +73684,43 @@ These have different denominators and different interpretations.
 Using:
 
 $$
- x=(1,2,3,4,5,6), 
+ x=(1,2,3,4,5,6),
 $$
 
 the sample mean is:
 
 $$
- \bar x=3.5. 
+ \bar x=3.5.
 $$
 
 The deviations are:
 
 $$
- (-2.5,-1.5,-0.5,0.5,1.5,2.5). 
+ (-2.5,-1.5,-0.5,0.5,1.5,2.5).
 $$
 
 Square them:
 
 $$
- (6.25,2.25,0.25,0.25,2.25,6.25). 
+ (6.25,2.25,0.25,0.25,2.25,6.25).
 $$
 
 Sum:
 
 $$
- 6.25+2.25+0.25+0.25+2.25+6.25 =\boxed{17.5}. 
+ 6.25+2.25+0.25+0.25+2.25+6.25 =\boxed{17.5}.
 $$
 
 The population-normalized empirical variance is:
 
 $$
- v_N=\frac{17.5}{6} =\boxed{2.9166667}. 
+ v_N=\frac{17.5}{6} =\boxed{2.9166667}.
 $$
 
 The unbiased sample variance estimate is:
 
 $$
- s^2=\frac{17.5}{5} =\boxed{3.5}. 
+ s^2=\frac{17.5}{5} =\boxed{3.5}.
 $$
 
 The distinction is not caused by arithmetic error. The formulas estimate or describe different quantities.
@@ -73549,13 +73730,13 @@ The distinction is not caused by arithmetic error. The formulas estimate or desc
 The sample standard deviation is:
 
 $$
- \boxed{s=\sqrt{s^2}}. 
+ \boxed{s=\sqrt{s^2}}.
 $$
 
 For our example:
 
 $$
- s=\sqrt{3.5}\approx1.870829. 
+ s=\sqrt{3.5}\approx1.870829.
 $$
 
 It has the same units as the observations.
@@ -73579,7 +73760,7 @@ Let's prove it.
 Suppose:
 
 $$
- X_1,\ldots,X_N 
+ X_1,\ldots,X_N
 $$
 
 are IID with population mean $\mu$ and finite population variance $\sigma^2$.
@@ -73587,7 +73768,7 @@ are IID with population mean $\mu$ and finite population variance $\sigma^2$.
 We want to evaluate:
 
 $$
- \mathbb E\left[ \sum_i(X_i-\bar X)^2 \right]. 
+ \mathbb E\left[ \sum_i(X_i-\bar X)^2 \right].
 $$
 
 #### 1 Decompose deviations around the true mean
@@ -73595,37 +73776,37 @@ $$
 Write:
 
 $$
- X_i-\bar X = (X_i-\mu)-(\bar X-\mu). 
+ X_i-\bar X = (X_i-\mu)-(\bar X-\mu).
 $$
 
 Square and sum:
 
 $$
- \sum_i(X_i-\bar X)^2 = \sum_i[ (X_i-\mu)-(\bar X-\mu) ]^2. 
+ \sum_i(X_i-\bar X)^2 = \sum_i[ (X_i-\mu)-(\bar X-\mu) ]^2.
 $$
 
 Expand:
 
 $$
- \begin{aligned} \sum_i(X_i-\bar X)^2 &= \sum_i(X_i-\mu)^2\\ &\quad-2(\bar X-\mu)\sum_i(X_i-\mu)\\ &\quad+N(\bar X-\mu)^2. \end{aligned} 
+ \begin{aligned} \sum_i(X_i-\bar X)^2 &= \sum_i(X_i-\mu)^2\\ &\quad-2(\bar X-\mu)\sum_i(X_i-\mu)\\ &\quad+N(\bar X-\mu)^2. \end{aligned}
 $$
 
 But:
 
 $$
- \sum_i(X_i-\mu)=N(\bar X-\mu). 
+ \sum_i(X_i-\mu)=N(\bar X-\mu).
 $$
 
 Substitute:
 
 $$
- \begin{aligned} \sum_i(X_i-\bar X)^2 &= \sum_i(X_i-\mu)^2\\ &\quad-2N(\bar X-\mu)^2 +N(\bar X-\mu)^2. \end{aligned} 
+ \begin{aligned} \sum_i(X_i-\bar X)^2 &= \sum_i(X_i-\mu)^2\\ &\quad-2N(\bar X-\mu)^2 +N(\bar X-\mu)^2. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{ \sum_i(X_i-\bar X)^2 = \sum_i(X_i-\mu)^2 - N(\bar X-\mu)^2 }. 
+ \boxed{ \sum_i(X_i-\bar X)^2 = \sum_i(X_i-\mu)^2 - N(\bar X-\mu)^2 }.
 $$
 
 #### 2 Take expectations
@@ -73633,13 +73814,13 @@ $$
 For the first term:
 
 $$
- \mathbb E\left[ \sum_i(X_i-\mu)^2 \right] =N\sigma^2. 
+ \mathbb E\left[ \sum_i(X_i-\mu)^2 \right] =N\sigma^2.
 $$
 
 For the second term:
 
 $$
- \mathbb E[(\bar X-\mu)^2] = \operatorname{Var}(\bar X) = \frac{\sigma^2}{N} 
+ \mathbb E[(\bar X-\mu)^2] = \operatorname{Var}(\bar X) = \frac{\sigma^2}{N}
 $$
 
 under independence.
@@ -73647,13 +73828,13 @@ under independence.
 Thus:
 
 $$
- \begin{aligned} \mathbb E\left[ \sum_i(X_i-\bar X)^2 \right] &= N\sigma^2- N\frac{\sigma^2}{N}\\ &=(N-1)\sigma^2. \end{aligned} 
+ \begin{aligned} \mathbb E\left[ \sum_i(X_i-\bar X)^2 \right] &= N\sigma^2- N\frac{\sigma^2}{N}\\ &=(N-1)\sigma^2. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbb E\left[ \frac1{N-1} \sum_i(X_i-\bar X)^2 \right] = \sigma^2 }. 
+ \boxed{ \mathbb E\left[ \frac1{N-1} \sum_i(X_i-\bar X)^2 \right] = \sigma^2 }.
 $$
 
 That proves the usual unbiased sample variance formula.
@@ -73663,7 +73844,7 @@ That proves the usual unbiased sample variance formula.
 The deviations from the sample mean satisfy:
 
 $$
- \sum_i(X_i-\bar X)=0. 
+ \sum_i(X_i-\bar X)=0.
 $$
 
 If you know $N-1$ deviations, the final deviation is determined by this constraint.
@@ -73685,7 +73866,7 @@ We may not want to store every sample just to calculate the mean.
 Let:
 
 $$
- \mu_n= \frac1n\sum_{i=1}^{n}x_i 
+ \mu_n= \frac1n\sum_{i=1}^{n}x_i
 $$
 
 be the mean after $n$ observations.
@@ -73693,31 +73874,31 @@ be the mean after $n$ observations.
 When a new sample $x_{n+1}$ arrives:
 
 $$
- \mu_{n+1} = \frac{ \sum_{i=1}^{n}x_i+x_{n+1} }{ n+1 }. 
+ \mu_{n+1} = \frac{ \sum_{i=1}^{n}x_i+x_{n+1} }{ n+1 }.
 $$
 
 Since:
 
 $$
- \sum_{i=1}^{n}x_i=n\mu_n, 
+ \sum_{i=1}^{n}x_i=n\mu_n,
 $$
 
 we have:
 
 $$
- \mu_{n+1} = \frac{n\mu_n+x_{n+1}}{n+1}. 
+ \mu_{n+1} = \frac{n\mu_n+x_{n+1}}{n+1}.
 $$
 
 Rearrange:
 
 $$
- \mu_{n+1} = \mu_n+ \frac{x_{n+1}-\mu_n}{n+1}. 
+ \mu_{n+1} = \mu_n+ \frac{x_{n+1}-\mu_n}{n+1}.
 $$
 
 Thus:
 
 $$
- \boxed{ \mu_{n+1} = \mu_n+ \frac{x_{n+1}-\mu_n}{n+1} }. 
+ \boxed{ \mu_{n+1} = \mu_n+ \frac{x_{n+1}-\mu_n}{n+1} }.
 $$
 
 This is the online mean update.
@@ -73727,31 +73908,31 @@ This is the online mean update.
 Suppose samples arrive as:
 
 $$
- 4,\ 7,\ 10. 
+ 4,\ 7,\ 10.
 $$
 
 Start with the first observation:
 
 $$
- \mu_1=4. 
+ \mu_1=4.
 $$
 
 The second sample is seven:
 
 $$
- \mu_2 = 4+\frac{7-4}{2} =5.5. 
+ \mu_2 = 4+\frac{7-4}{2} =5.5.
 $$
 
 The third sample is ten:
 
 $$
- \mu_3 = 5.5+\frac{10-5.5}{3} =7. 
+ \mu_3 = 5.5+\frac{10-5.5}{3} =7.
 $$
 
 The direct mean is:
 
 $$
- \frac{4+7+10}{3}=7. 
+ \frac{4+7+10}{3}=7.
 $$
 
 Both calculations agree.
@@ -73786,7 +73967,7 @@ But a numerically stable mean algorithm does not automatically give us a stable 
 The naive formula:
 
 $$
- \operatorname{Var}(X)= \mathbb E[X^2]-\mathbb E[X]^2 
+ \operatorname{Var}(X)= \mathbb E[X^2]-\mathbb E[X]^2
 $$
 
 can suffer severe cancellation in floating-point arithmetic.
@@ -73802,21 +73983,21 @@ We want to accumulate variance online while avoiding the numerical problems caus
 Maintain three quantities:
 
 $$
- n=\text{number of samples}, 
+ n=\text{number of samples},
 $$
 
 $$
- \mu_n=\text{sample mean}, 
+ \mu_n=\text{sample mean},
 $$
 
 $$
- M_{2,n}= \sum_{i=1}^{n}(x_i-\mu_n)^2. 
+ M_{2,n}= \sum_{i=1}^{n}(x_i-\mu_n)^2.
 $$
 
 The sample variance will later be:
 
 $$
- s^2=\frac{M_{2,n}}{n-1}. 
+ s^2=\frac{M_{2,n}}{n-1}.
 $$
 
 #### 1 Derive the update
@@ -73826,25 +74007,25 @@ Suppose we have $n$ samples and receive a new value $x$.
 Define the difference from the old mean:
 
 $$
- \boxed{\delta=x-\mu_n}. 
+ \boxed{\delta=x-\mu_n}.
 $$
 
 The new mean is:
 
 $$
- \boxed{ \mu_{n+1} = \mu_n+\frac{\delta}{n+1} }. 
+ \boxed{ \mu_{n+1} = \mu_n+\frac{\delta}{n+1} }.
 $$
 
 Define the difference from the new mean:
 
 $$
- \boxed{ \delta_2=x-\mu_{n+1} }. 
+ \boxed{ \delta_2=x-\mu_{n+1} }.
 $$
 
 Welford's scatter update is:
 
 $$
- \boxed{ M_{2,n+1} = M_{2,n}+\delta\delta_2 }. 
+ \boxed{ M_{2,n+1} = M_{2,n}+\delta\delta_2 }.
 $$
 
 Let's derive why.
@@ -73854,73 +74035,73 @@ Let's derive why.
 By definition:
 
 $$
- M_{2,n+1} = \sum_{i=1}^{n}(x_i-\mu_{n+1})^2 + (x-\mu_{n+1})^2. 
+ M_{2,n+1} = \sum_{i=1}^{n}(x_i-\mu_{n+1})^2 + (x-\mu_{n+1})^2.
 $$
 
 For old samples:
 
 $$
- x_i-\mu_{n+1} = (x_i-\mu_n)-(\mu_{n+1}-\mu_n). 
+ x_i-\mu_{n+1} = (x_i-\mu_n)-(\mu_{n+1}-\mu_n).
 $$
 
 Define:
 
 $$
- d=\mu_{n+1}-\mu_n=\frac{\delta}{n+1}. 
+ d=\mu_{n+1}-\mu_n=\frac{\delta}{n+1}.
 $$
 
 Then:
 
 $$
- \sum_{i=1}^{n}(x_i-\mu_{n+1})^2 = \sum_i[(x_i-\mu_n)-d]^2. 
+ \sum_{i=1}^{n}(x_i-\mu_{n+1})^2 = \sum_i[(x_i-\mu_n)-d]^2.
 $$
 
 Expand:
 
 $$
- = \sum_i(x_i-\mu_n)^2 - 2d\sum_i(x_i-\mu_n) + nd^2. 
+ = \sum_i(x_i-\mu_n)^2 - 2d\sum_i(x_i-\mu_n) + nd^2.
 $$
 
 The centred deviations sum to zero:
 
 $$
- \sum_i(x_i-\mu_n)=0. 
+ \sum_i(x_i-\mu_n)=0.
 $$
 
 Thus:
 
 $$
- \sum_{i=1}^{n}(x_i-\mu_{n+1})^2 = M_{2,n}+nd^2. 
+ \sum_{i=1}^{n}(x_i-\mu_{n+1})^2 = M_{2,n}+nd^2.
 $$
 
 The new sample's deviation from the new mean is:
 
 $$
- x-\mu_{n+1} = x-\mu_n-\frac{\delta}{n+1}. 
+ x-\mu_{n+1} = x-\mu_n-\frac{\delta}{n+1}.
 $$
 
 Because $\delta=x-\mu_n$:
 
 $$
- x-\mu_{n+1} = \delta\left(1-\frac1{n+1}\right) = \frac{n}{n+1}\delta. 
+ x-\mu_{n+1} = \delta\left(1-\frac1{n+1}\right) = \frac{n}{n+1}\delta.
 $$
 
 Therefore:
 
 $$
- \begin{aligned} M_{2,n+1} &= M_{2,n} +n\frac{\delta^2}{(n+1)^2} +\frac{n^2\delta^2}{(n+1)^2}\\ &= M_{2,n} +\frac{n(n+1)\delta^2}{(n+1)^2}\\ &= M_{2,n}+\frac{n}{n+1}\delta^2. \end{aligned} 
+ \begin{aligned} M_{2,n+1} &= M_{2,n} +n\frac{\delta^2}{(n+1)^2} +\frac{n^2\delta^2}{(n+1)^2}\\ &= M_{2,n} +\frac{n(n+1)\delta^2}{(n+1)^2}\\ &= M_{2,n}+\frac{n}{n+1}\delta^2. \end{aligned}
 $$
 
 But:
 
 $$
- \delta_2=\frac{n}{n+1}\delta. 
+ \delta_2=\frac{n}{n+1}\delta.
 $$
 
 Therefore:
 
 $$
- \boxed{ M_{2,n+1} = M_{2,n}+\delta\delta_2 }. 
+ \boxed{ M_{2,n+1} = M_{2,n}+\delta\delta_2 }.
 $$
 
 This is the Welford recurrence.
@@ -73978,37 +74159,37 @@ It can handle arbitrarily long streams in $O(1)$ storage, assuming the count typ
 Suppose the observations are:
 
 $$
- 10^9+1,\quad10^9+2,\quad10^9+3,\quad10^9+4. 
+ 10^9+1,\quad10^9+2,\quad10^9+3,\quad10^9+4.
 $$
 
 The true mean is:
 
 $$
- 10^9+2.5. 
+ 10^9+2.5.
 $$
 
 Their deviations are:
 
 $$
- -1.5,-0.5,0.5,1.5. 
+ -1.5,-0.5,0.5,1.5.
 $$
 
 The squared deviations sum to:
 
 $$
- 2.25+0.25+0.25+2.25=5. 
+ 2.25+0.25+0.25+2.25=5.
 $$
 
 Thus the unbiased sample variance is:
 
 $$
- \boxed{s^2=\frac53\approx1.6666667}. 
+ \boxed{s^2=\frac53\approx1.6666667}.
 $$
 
 Now consider computing variance using:
 
 $$
- \frac1N\sum_ix_i^2-\bar x^2. 
+ \frac1N\sum_ix_i^2-\bar x^2.
 $$
 
 Both terms are of order $10^{18}$.
@@ -74032,13 +74213,13 @@ Suppose worker A processes $n_A$ samples and worker B processes $n_B$.
 Their summaries are:
 
 $$
- (n_A,\mu_A,M_{2,A}) 
+ (n_A,\mu_A,M_{2,A})
 $$
 
 and:
 
 $$
- (n_B,\mu_B,M_{2,B}). 
+ (n_B,\mu_B,M_{2,B}).
 $$
 
 We want to combine them without replaying individual samples.
@@ -74046,23 +74227,23 @@ We want to combine them without replaying individual samples.
 Define:
 
 $$
- n=n_A+n_B, 
+ n=n_A+n_B,
 $$
 
 $$
- \delta=\mu_B-\mu_A. 
+ \delta=\mu_B-\mu_A.
 $$
 
 The merged mean is:
 
 $$
- \boxed{ \mu= \mu_A+\delta\frac{n_B}{n} }. 
+ \boxed{ \mu= \mu_A+\delta\frac{n_B}{n} }.
 $$
 
 The merged scatter is:
 
 $$
- \boxed{ M_2= M_{2,A}+M_{2,B} + \delta^2\frac{n_An_B}{n} }. 
+ \boxed{ M_2= M_{2,A}+M_{2,B} + \delta^2\frac{n_An_B}{n} }.
 $$
 
 The additional term accounts for the difference between the workers' mean values.
@@ -74080,19 +74261,19 @@ A histogram groups observations into intervals called bins.
 Suppose we collect pixel noise magnitudes:
 
 $$
- x_1,\ldots,x_N. 
+ x_1,\ldots,x_N.
 $$
 
 Choose bin edges:
 
 $$
- b_0\<b_1<\cdots\<b_K. 
+ b_0\<b_1<\cdots\<b_K.
 $$
 
 The count in bin $j$ is:
 
 $$
- \boxed{ c_j= \#\{i:b_j\le x_i < b_{j+1}\} }. 
+ \boxed{ c_j= \#\{i:b_j\le x_i < b_{j+1}\} }.
 $$
 
 The half-open convention prevents observations on shared boundaries from being counted twice.
@@ -74104,19 +74285,19 @@ A histogram can display several different quantities.
 Count:
 
 $$
- c_j. 
+ c_j.
 $$
 
 Relative frequency:
 
 $$
- \frac{c_j}{N}. 
+ \frac{c_j}{N}.
 $$
 
 Density estimate for a bin of width $h_j$:
 
 $$
- \boxed{ \hat p_j= \frac{c_j}{Nh_j} }. 
+ \boxed{ \hat p_j= \frac{c_j}{Nh_j} }.
 $$
 
 These are not interchangeable.
@@ -74124,7 +74305,7 @@ These are not interchangeable.
 For a density histogram, the probability represented by the bin is approximated by:
 
 $$
- \hat p_jh_j=\frac{c_j}{N}. 
+ \hat p_jh_j=\frac{c_j}{N}.
 $$
 
 The area of the histogram bar, not simply its height, corresponds to probability.
@@ -74142,7 +74323,7 @@ There is no universally optimal histogram resolution.
 Some practical rules scale bin width with sample size, such as the Freedman–Diaconis rule:
 
 $$
- \boxed{ h=2\operatorname{IQR}N^{-1/3} } 
+ \boxed{ h=2\operatorname{IQR}N^{-1/3} }
 $$
 
 where IQR is the interquartile range.
@@ -74166,25 +74347,25 @@ A quantile describes a threshold below which a specified fraction of a distribut
 For a population distribution with CDF $F$, the generalized $p$-quantile is:
 
 $$
- \boxed{ Q(p)=\inf\{x:F(x)\ge p\} }. 
+ \boxed{ Q(p)=\inf\{x:F(x)\ge p\} }.
 $$
 
 Typical examples include:
 
 $$
- Q(0.25) 
+ Q(0.25)
 $$
 
 for the first quartile,
 
 $$
- Q(0.5) 
+ Q(0.5)
 $$
 
 for a median, and:
 
 $$
- Q(0.95) 
+ Q(0.95)
 $$
 
 for the 95th percentile.
@@ -74194,7 +74375,7 @@ for the 95th percentile.
 For a finite sample, sort the observations:
 
 $$
- x_{(1)}\le\cdots\le x_{(N)}. 
+ x_{(1)}\le\cdots\le x_{(N)}.
 $$
 
 Different software libraries use different interpolation conventions for sample quantiles.
@@ -74202,19 +74383,19 @@ Different software libraries use different interpolation conventions for sample 
 One common convention, often called type 7, uses:
 
 $$
- h=(N-1)p. 
+ h=(N-1)p.
 $$
 
 Let:
 
 $$
- i=\lfloor h\rfloor, \qquad t=h-i. 
+ i=\lfloor h\rfloor, \qquad t=h-i.
 $$
 
 Using zero-based sorted indices:
 
 $$
- \boxed{ \hat Q(p)=(1-t)x_{(i)}+t x_{(i+1)} } 
+ \boxed{ \hat Q(p)=(1-t)x_{(i)}+t x_{(i+1)} }
 $$
 
 with appropriate endpoint handling.
@@ -74224,7 +74405,7 @@ with appropriate endpoint handling.
 Let:
 
 $$
- x=(1,2,3,4,100). 
+ x=(1,2,3,4,100).
 $$
 
 The observations are already sorted.
@@ -74232,43 +74413,43 @@ The observations are already sorted.
 For:
 
 $$
- p=0.25, 
+ p=0.25,
 $$
 
 we have:
 
 $$
- h=(5-1)(0.25)=1. 
+ h=(5-1)(0.25)=1.
 $$
 
 Thus:
 
 $$
- \hat Q(0.25)=2. 
+ \hat Q(0.25)=2.
 $$
 
 For:
 
 $$
- p=0.75, 
+ p=0.75,
 $$
 
 we obtain:
 
 $$
- h=3. 
+ h=3.
 $$
 
 Therefore:
 
 $$
- \hat Q(0.75)=4. 
+ \hat Q(0.75)=4.
 $$
 
 The interquartile range is:
 
 $$
- \boxed{ \operatorname{IQR}=Q(0.75)-Q(0.25)=2 }. 
+ \boxed{ \operatorname{IQR}=Q(0.75)-Q(0.25)=2 }.
 $$
 
 The extreme outlier at 100 does not affect these particular quartile values under this convention.
@@ -74298,13 +74479,13 @@ For an even sample count, a conventional sample median is the average of the two
 For:
 
 $$
- (1,2,3,4,100), 
+ (1,2,3,4,100),
 $$
 
 the median is:
 
 $$
- \boxed{3}. 
+ \boxed{3}.
 $$
 
 The mean is 22.
@@ -74318,7 +74499,7 @@ The sample mean minimizes squared deviations.
 The sample median minimizes absolute deviations:
 
 $$
- \boxed{ m^\star\in \arg\min_m\sum_i|x_i-m| }. 
+ \boxed{ m^\star\in \arg\min_m\sum_i|x_i-m| }.
 $$
 
 Why?
@@ -74326,13 +74507,13 @@ Why?
 For a value $m$ not equal to any observation, the derivative of $|x_i-m|$ with respect to $m$ is:
 
 $$
- -1 
+ -1
 $$
 
 when $x_i>m$, and:
 
 $$
- +1 
+ +1
 $$
 
 when $x_i\<m$.
@@ -74362,25 +74543,25 @@ The median and interquartile range are more resistant to some forms of contamina
 Define the sample median:
 
 $$
- m=\operatorname{median}(x_i). 
+ m=\operatorname{median}(x_i).
 $$
 
 Calculate absolute deviations from the median:
 
 $$
- d_i=|x_i-m|. 
+ d_i=|x_i-m|.
 $$
 
 The median absolute deviation, or MAD, is:
 
 $$
- \boxed{ \operatorname{MAD} = \operatorname{median}(|x_i-m|) }. 
+ \boxed{ \operatorname{MAD} = \operatorname{median}(|x_i-m|) }.
 $$
 
 For:
 
 $$
- x=(1,2,3,4,100), 
+ x=(1,2,3,4,100),
 $$
 
 the median is three.
@@ -74388,19 +74569,19 @@ the median is three.
 The absolute deviations are:
 
 $$
- (2,1,0,1,97). 
+ (2,1,0,1,97).
 $$
 
 Sort:
 
 $$
- (0,1,1,2,97). 
+ (0,1,1,2,97).
 $$
 
 Therefore:
 
 $$
- \boxed{\operatorname{MAD}=1}. 
+ \boxed{\operatorname{MAD}=1}.
 $$
 
 The outlier at 100 has little influence on this result.
@@ -74410,19 +74591,19 @@ The outlier at 100 has little influence on this result.
 For an approximately Gaussian distribution, MAD can be scaled to estimate standard deviation:
 
 $$
- \boxed{ \hat\sigma_{\mathrm{MAD}} \approx1.4826\\,\operatorname{MAD} }. 
+ \boxed{ \hat\sigma_{\mathrm{MAD}} \approx1.4826\,\operatorname{MAD} }.
 $$
 
 The factor comes from the standard normal distribution's median absolute deviation:
 
 $$
- \Phi^{-1}(0.75)\approx0.67449. 
+ \Phi^{-1}(0.75)\approx0.67449.
 $$
 
 Its reciprocal is approximately:
 
 $$
- \frac1{0.67449}\approx1.4826. 
+ \frac1{0.67449}\approx1.4826.
 $$
 
 This scaling is meaningful under a Gaussian reference model and should not be blindly interpreted as a universally unbiased standard-deviation estimate for every distribution.
@@ -74434,19 +74615,19 @@ A trimmed mean removes a specified fraction of the smallest and largest observat
 For:
 
 $$
- (1,2,3,4,100), 
+ (1,2,3,4,100),
 $$
 
 remove the smallest and largest values to obtain:
 
 $$
- (2,3,4). 
+ (2,3,4).
 $$
 
 The trimmed mean is:
 
 $$
- \boxed{3}. 
+ \boxed{3}.
 $$
 
 Winsorization instead replaces extreme observations with less extreme boundary values rather than discarding them.
@@ -74535,13 +74716,13 @@ This connects vectors, quadratic forms, least squares, dual norms and experiment
 Suppose our goal is to estimate a population mean:
 
 $$
- \mu. 
+ \mu.
 $$
 
 We observe a sample mean:
 
 $$
- \bar X. 
+ \bar X.
 $$
 
 Because the sample is random, $\bar X$ varies between repeated experiments.
@@ -74559,7 +74740,7 @@ This distinction is fundamental.
 If the sampling distribution of the mean is normal, or a suitable normal approximation is justified, and the population standard deviation $\sigma$ is known:
 
 $$
- \frac{\bar X-\mu}{\sigma/\sqrt N} 
+ \frac{\bar X-\mu}{\sigma/\sqrt N}
 $$
 
 has a standard-normal distribution exactly under normal sampling, or approximately under a suitable CLT regime.
@@ -74567,13 +74748,13 @@ has a standard-normal distribution exactly under normal sampling, or approximate
 For a two-sided 95% interval, the standard-normal critical value is approximately:
 
 $$
- z_{0.975}=1.959964. 
+ z_{0.975}=1.959964.
 $$
 
 Thus:
 
 $$
- \boxed{ \mu\in \bar x\pm1.96\frac{\sigma}{\sqrt N} } 
+ \boxed{ \mu\in \bar x\pm1.96\frac{\sigma}{\sqrt N} }
 $$
 
 is the familiar 95% normal confidence interval.
@@ -74587,13 +74768,13 @@ We estimate it from the sample using $s$.
 For IID normal observations, the statistic:
 
 $$
- \boxed{ T= \frac{\bar X-\mu}{s/\sqrt N} } 
+ \boxed{ T= \frac{\bar X-\mu}{s/\sqrt N} }
 $$
 
 has a Student's t-distribution with:
 
 $$
- N-1 
+ N-1
 $$
 
 degrees of freedom.
@@ -74601,7 +74782,7 @@ degrees of freedom.
 The corresponding interval is:
 
 $$
- \boxed{ \bar x \pm t_{0.975,N-1}\frac{s}{\sqrt N} }. 
+ \boxed{ \bar x \pm t_{0.975,N-1}\frac{s}{\sqrt N} }.
 $$
 
 For large $N$, the t critical value approaches the normal critical value.
@@ -74617,59 +74798,59 @@ itl.nist.gov+1
 Return to:
 
 $$
- x=(1,2,3,4,5,6). 
+ x=(1,2,3,4,5,6).
 $$
 
 We computed:
 
 $$
- \bar x=3.5, 
+ \bar x=3.5,
 $$
 
 $$
- s^2=3.5, 
+ s^2=3.5,
 $$
 
 so:
 
 $$
- s\approx1.870829. 
+ s\approx1.870829.
 $$
 
 The estimated standard error is:
 
 $$
- \operatorname{SE}= \frac{s}{\sqrt6} = \sqrt{\frac{3.5}{6}} \approx0.763763. 
+ \operatorname{SE}= \frac{s}{\sqrt6} = \sqrt{\frac{3.5}{6}} \approx0.763763.
 $$
 
 A normal-approximation interval uses:
 
 $$
- 3.5\pm1.96(0.763763). 
+ 3.5\pm1.96(0.763763).
 $$
 
 This is approximately:
 
 $$
- \boxed{[2.003,\ 4.997]}. 
+ \boxed{[2.003,\ 4.997]}.
 $$
 
 But with only six observations, and assuming IID normal sampling, the appropriate exact t critical value for five degrees of freedom is about:
 
 $$
- t_{0.975,5}\approx2.571. 
+ t_{0.975,5}\approx2.571.
 $$
 
 Therefore the t interval is approximately:
 
 $$
- 3.5\pm2.571(0.763763), 
+ 3.5\pm2.571(0.763763),
 $$
 
 giving:
 
 $$
- \boxed{[1.536,\ 5.464]}. 
+ \boxed{[1.536,\ 5.464]}.
 $$
 
 The t interval is wider.
@@ -74681,31 +74862,31 @@ Crucially, if the observations are not plausibly sampled from a normal populatio
 Suppose a pixel is estimated from $N$ independent contribution samples:
 
 $$
- Y_1,\ldots,Y_N. 
+ Y_1,\ldots,Y_N.
 $$
 
 The mean is:
 
 $$
- \bar Y. 
+ \bar Y.
 $$
 
 The sample variance is:
 
 $$
- s_Y^2= \frac1{N-1}\sum_i(Y_i-\bar Y)^2. 
+ s_Y^2= \frac1{N-1}\sum_i(Y_i-\bar Y)^2.
 $$
 
 The estimated standard error is:
 
 $$
- \boxed{ \widehat{\operatorname{SE}}= \frac{s_Y}{\sqrt N} }. 
+ \boxed{ \widehat{\operatorname{SE}}= \frac{s_Y}{\sqrt N} }.
 $$
 
 A normal-approximation 95% confidence interval is:
 
 $$
- \boxed{ \bar Y\pm1.96\frac{s_Y}{\sqrt N} } 
+ \boxed{ \bar Y\pm1.96\frac{s_Y}{\sqrt N} }
 $$
 
 when the assumptions and sample size make that approximation appropriate.
@@ -74737,7 +74918,7 @@ We want to know whether their expected errors differ.
 Define:
 
 $$
- H_0:\mu_A=\mu_B 
+ H_0:\mu_A=\mu_B
 $$
 
 as the null hypothesis.
@@ -74745,7 +74926,7 @@ as the null hypothesis.
 An alternative might be:
 
 $$
- H_1:\mu_A\ne\mu_B. 
+ H_1:\mu_A\ne\mu_B.
 $$
 
 A test statistic summarizes evidence against the null.
@@ -74759,7 +74940,7 @@ A Type II error occurs when we fail to reject a false null hypothesis.
 The significance level:
 
 $$
- \alpha 
+ \alpha
 $$
 
 typically controls the probability of a Type I error under the test's assumptions and specified null model.
@@ -74767,7 +74948,7 @@ typically controls the probability of a Type I error under the test's assumption
 The power of a test is:
 
 $$
- \boxed{ 1-\beta } 
+ \boxed{ 1-\beta }
 $$
 
 where $\beta$ is its Type II error probability under a specified alternative.
@@ -74797,19 +74978,19 @@ Suppose both algorithms are evaluated on the same scenes and corresponding seeds
 Define a difference for each trial:
 
 $$
- D_i=E_{A,i}-E_{B,i}. 
+ D_i=E_{A,i}-E_{B,i}.
 $$
 
 Then analyze:
 
 $$
- \bar D=\frac1N\sum_iD_i. 
+ \bar D=\frac1N\sum_iD_i.
 $$
 
 The variance of one paired difference is:
 
 $$
- \operatorname{Var}(D) = \operatorname{Var}(E_A)+ \operatorname{Var}(E_B)- 2\operatorname{Cov}(E_A,E_B). 
+ \operatorname{Var}(D) = \operatorname{Var}(E_A)+ \operatorname{Var}(E_B)- 2\operatorname{Cov}(E_A,E_B).
 $$
 
 If the paired errors are positively correlated because scene difficulty affects both algorithms similarly, their difference may have substantially lower variance than two unpaired measurements.
@@ -74823,25 +75004,25 @@ However, the pairing must reflect comparable experimental units. Merely giving t
 Assuming the paired differences satisfy the relevant normality assumptions, or an appropriate large-sample approximation is valid, test:
 
 $$
- H_0:\mathbb E[D]=0. 
+ H_0:\mathbb E[D]=0.
 $$
 
 Compute the sample mean difference:
 
 $$
- \bar D 
+ \bar D
 $$
 
 and sample standard deviation:
 
 $$
- s_D. 
+ s_D.
 $$
 
 The test statistic is:
 
 $$
- \boxed{ t= \frac{\bar D}{s_D/\sqrt N} }. 
+ \boxed{ t= \frac{\bar D}{s_D/\sqrt N} }.
 $$
 
 Under an exact IID normal-difference null model, this follows a t-distribution with $N-1$ degrees of freedom.
@@ -74855,7 +75036,7 @@ If a study tests 100 different configurations at significance level 0.05 without
 Under independent true-null tests, the expected number of false rejections would be:
 
 $$
- 100(0.05)=5. 
+ 100(0.05)=5.
 $$
 
 Not every study has independent tests, but the example illustrates the issue.
@@ -75132,63 +75313,63 @@ if __name__ == "__main__":
 
 Probability starts with a model and asks what observations it can generate. Statistical inference reverses that direction: after seeing observations, we ask which model parameters remain plausible. Wasserman makes this probability/inference inversion the organizing idea of *All of Statistics*. The distinction matters in visual computing because a renderer, camera-noise model, tracking model, or reconstruction system often supplies the **forward law**, while calibration and inverse graphics solve the corresponding **inverse statistical problem**.
 
-Let independent observations \(X_1,\ldots,X_n\) have density or mass function \(f(x;\theta)\). Once the data \(x_1,\ldots,x_n\) are fixed, the same product
+Let independent observations $X_1,\ldots,X_n$ have density or mass function $f(x;\theta)$. Once the data $x_1,\ldots,x_n$ are fixed, the same product
 
-\[
+$$
 L_n(\theta)=\prod_{i=1}^{n} f(x_i;\theta)
-\]
+$$
 
-is viewed as a function of the unknown parameter. It is the **likelihood**, not a probability density over \(\theta\); in general it need not integrate to one with respect to the parameter. The maximum-likelihood estimator is
+is viewed as a function of the unknown parameter. It is the **likelihood**, not a probability density over $\theta$; in general it need not integrate to one with respect to the parameter. The maximum-likelihood estimator is
 
-\[
+$$
 \hat\theta_{\mathrm{MLE}}\in\arg\max_{\theta\in\Theta}L_n(\theta).
-\]
+$$
 
 Products of many small probabilities underflow, so implementations normally maximize the log-likelihood
 
-\[
+$$
 \ell_n(\theta)=\sum_{i=1}^{n}\log f(x_i;\theta).
-\]
+$$
 
-The logarithm is monotone, so it preserves the maximizer while converting products into sums. Constants independent of \(\theta\) may be dropped when finding the argmax, but not when the actual normalized likelihood value matters.
+The logarithm is monotone, so it preserves the maximizer while converting products into sums. Constants independent of $\theta$ may be dropped when finding the argmax, but not when the actual normalized likelihood value matters.
 
 The familiar least-squares objective is therefore not a mysterious universal choice. If
 
-\[
+$$
 Y_i=g_\theta(X_i)+\varepsilon_i,\qquad
 \varepsilon_i\sim\mathcal N(0,\sigma^2)
-\]
+$$
 
-independently with fixed \(\sigma\), then
+independently with fixed $\sigma$, then
 
-\[
+$$
 -\ell_n(\theta)
 =
 \frac{1}{2\sigma^2}\sum_i
 \left(Y_i-g_\theta(X_i)\right)^2
 +\text{constant}.
-\]
+$$
 
 Minimizing squared residuals is exactly maximum likelihood under this Gaussian conditional-noise model. Change the noise law and the statistically motivated loss changes. A Laplace error model leads to an absolute-deviation term; a Bernoulli observation model leads to a log-loss/cross-entropy term. This is why an inverse-rendering objective should say which residual distribution it assumes rather than merely calling a loss “standard.”
 
 Maximum likelihood also supplies an information geometry. For a one-parameter regular model the score is
 
-\[
+$$
 S_\theta(X)=\frac{\partial}{\partial\theta}\log f(X;\theta),
-\]
+$$
 
 and the Fisher information can be written, under the usual regularity assumptions, as
 
-\[
+$$
 I(\theta)=
 \mathbb E_\theta[S_\theta(X)^2].
-\]
+$$
 
-Large information means the likelihood changes strongly when the parameter moves; weak information means nearby parameters produce hard-to-distinguish observations. For regular fixed-dimensional models, the MLE often has asymptotic variance approximately \(1/(nI(\theta))\) in the scalar case and an inverse Fisher-information matrix in the multivariate case. This is an asymptotic statement, not a guarantee for small data, singular models, boundary parameters, changing model dimension, or poorly identifiable inverse problems. A reconstruction can have a perfectly implemented optimizer and still possess little information about one parameter.
+Large information means the likelihood changes strongly when the parameter moves; weak information means nearby parameters produce hard-to-distinguish observations. For regular fixed-dimensional models, the MLE often has asymptotic variance approximately $1/(nI(\theta))$ in the scalar case and an inverse Fisher-information matrix in the multivariate case. This is an asymptotic statement, not a guarantee for small data, singular models, boundary parameters, changing model dimension, or poorly identifiable inverse problems. A reconstruction can have a perfectly implemented optimizer and still possess little information about one parameter.
 
 A useful engine/research diagnostic is therefore to keep three objects distinct:
 
-\[
+$$
 \boxed{
 \text{forward model}
 \;\longrightarrow\;
@@ -75196,7 +75377,7 @@ A useful engine/research diagnostic is therefore to keep three objects distinct:
 \;\longrightarrow\;
 \text{estimator}
 }
-\]
+$$
 
 The forward model states what data would look like under a parameter. The likelihood scores parameters using the observed data. The estimator is a rule that converts the likelihood and any other assumptions into a reported parameter. Conflating them makes it difficult to tell whether failure came from the physical model, the statistical assumption, or the numerical optimizer.
 
@@ -75206,21 +75387,21 @@ Source basis: Wasserman, *All of Statistics*, Chapters 6 and 9, especially the m
 
 An estimate is only one number. Scientific use usually needs to know how much that number would vary under repeated sampling. Sometimes an exact sampling distribution is available; often it is not. The **bootstrap** approximates that repeated-sampling experiment using the observed empirical distribution.
 
-Given observations \(X_1,\ldots,X_n\), the empirical distribution places mass \(1/n\) on each observed value. A nonparametric bootstrap replicate draws
+Given observations $X_1,\ldots,X_n$, the empirical distribution places mass $1/n$ on each observed value. A nonparametric bootstrap replicate draws
 
-\[
+$$
 X_1^*,\ldots,X_n^*
-\]
+$$
 
 independently **with replacement** from those observed values and recomputes the statistic,
 
-\[
+$$
 \hat\theta^*=T(X_1^*,\ldots,X_n^*).
-\]
+$$
 
-Repeating this \(B\) times produces \(\hat\theta_1^*,\ldots,\hat\theta_B^*\). Their sample spread estimates the sampling spread of \(\hat\theta\). For example,
+Repeating this $B$ times produces $\hat\theta_1^*,\ldots,\hat\theta_B^*$. Their sample spread estimates the sampling spread of $\hat\theta$. For example,
 
-\[
+$$
 \widehat{\operatorname{se}}_{\mathrm{boot}}
 =
 \sqrt{
@@ -75228,11 +75409,11 @@ Repeating this \(B\) times produces \(\hat\theta_1^*,\ldots,\hat\theta_B^*\). Th
 \sum_{b=1}^{B}
 (\hat\theta_b^*-\bar{\theta}^*)^2
 }.
-\]
+$$
 
-The key conceptual step is that the bootstrap does **not** resample arbitrary numbers around the estimator. It substitutes the empirical distribution for the unknown population and then repeats the same estimator on samples drawn from that surrogate population. A **parametric bootstrap** instead fits a parametric model \(f(x;\hat\theta)\), simulates data from that fitted model, and reruns the estimator. The two procedures make different assumptions.
+The key conceptual step is that the bootstrap does **not** resample arbitrary numbers around the estimator. It substitutes the empirical distribution for the unknown population and then repeats the same estimator on samples drawn from that surrogate population. A **parametric bootstrap** instead fits a parametric model $f(x;\hat\theta)$, simulates data from that fitted model, and reruns the estimator. The two procedures make different assumptions.
 
-Bootstrap confidence intervals can be built in several ways. A percentile interval uses empirical quantiles of the bootstrap replicates. A pivotal construction instead approximates the distribution of \(\hat\theta-\theta\) using \(\hat\theta^*-\hat\theta\). More sophisticated corrections exist because bootstrap distributions can be biased or skewed. The important engineering lesson is not to memorize one interval recipe but to identify which sampling distribution the resampling scheme is trying to approximate.
+Bootstrap confidence intervals can be built in several ways. A percentile interval uses empirical quantiles of the bootstrap replicates. A pivotal construction instead approximates the distribution of $\hat\theta-\theta$ using $\hat\theta^*-\hat\theta$. More sophisticated corrections exist because bootstrap distributions can be biased or skewed. The important engineering lesson is not to memorize one interval recipe but to identify which sampling distribution the resampling scheme is trying to approximate.
 
 Bootstrap validity is not automatic. Statistics defined by extreme order behavior, nonsmooth boundaries, dependence, or non-IID data can defeat the naive IID bootstrap. Wasserman gives the uniform-endpoint MLE as a concrete warning: the ordinary nonparametric bootstrap can put anomalously large probability on reproducing the observed sample maximum because it can never generate values beyond that maximum. Time series, spatially correlated pixels, rays sharing random paths, and temporally correlated benchmark frames also violate the simple IID resampling story unless blocks or another dependence-aware scheme are used.
 
@@ -75244,48 +75425,48 @@ Source basis: Wasserman, *All of Statistics*, Chapters 7–9, especially the emp
 
 Two estimators can have different error patterns without one being universally “better.” Statistical decision theory makes the comparison explicit by specifying a **loss function**
 
-\[
+$$
 L(\theta,a),
-\]
+$$
 
-where \(\theta\) is the unknown state/parameter and \(a\) is the action or estimate reported by the procedure. The estimator \(\delta(X)\) is then a decision rule. Its frequentist **risk** at parameter value \(\theta\) is the expected loss over data generated from that \(\theta\):
+where $\theta$ is the unknown state/parameter and $a$ is the action or estimate reported by the procedure. The estimator $\delta(X)$ is then a decision rule. Its frequentist **risk** at parameter value $\theta$ is the expected loss over data generated from that $\theta$:
 
-\[
+$$
 R(\theta,\delta)
 =
 \mathbb E_\theta[
 L(\theta,\delta(X))
 ].
-\]
+$$
 
 Under squared-error loss this becomes mean squared error,
 
-\[
+$$
 R(\theta,\delta)
 =
 \operatorname{Var}_\theta[\delta(X)]
 +
 \operatorname{Bias}_\theta[\delta(X)]^2,
-\]
+$$
 
 which connects decision theory directly to the bias–variance decomposition already used in rendering and learning experiments.
 
 Different losses encode genuinely different tasks. Squared error punishes large mistakes strongly. Absolute error changes the optimal point summary from a mean-like answer toward a median-like one. Zero-one loss asks whether a discrete decision is correct. Kullback–Leibler loss compares distributions. A perception system choosing a pose estimate, a renderer choosing a denoised pixel, and a safety test deciding “collision/no collision” can therefore prefer different decision rules even when they observe the same data.
 
-A **Bayes rule** minimizes risk averaged under a prior distribution on \(\theta\). Under squared error, the posterior mean is the Bayes estimator. A **minimax rule** minimizes the maximum risk over \(\theta\):
+A **Bayes rule** minimizes risk averaged under a prior distribution on $\theta$. Under squared error, the posterior mean is the Bayes estimator. A **minimax rule** minimizes the maximum risk over $\theta$:
 
-\[
+$$
 \delta_{\mathrm{minimax}}
 \in
 \arg\min_\delta
 \sup_{\theta}R(\theta,\delta).
-\]
+$$
 
 These are different design criteria. Bayes risk asks for good average performance under a specified prior; minimax risk asks for protection against the worst parameter in the chosen class. An **admissible** rule is one that is not uniformly dominated by another rule. Admissibility is a weak sanity condition, not proof that a rule is practically good: a bizarre rule can be admissible because no single alternative beats it everywhere.
 
 This framework also prevents over-reading maximum likelihood. In regular fixed-dimensional parametric models, MLEs often enjoy attractive local large-sample risk properties, but Wasserman explicitly notes that this story can fail when the dimension grows with the data. “MLE” is an estimation construction, not a theorem of universal optimality.
 
-For visual-computing evaluation, write the loss before choosing the estimator. If a depth error of \(10\) cm at two metres matters differently from the same absolute error at fifty metres, ordinary squared depth error may not represent the application. If catastrophic outliers matter more than typical error, a mean metric can hide the relevant risk. Decision theory turns this from a metrics argument into a precise statement about which errors the system is being optimized to avoid.
+For visual-computing evaluation, write the loss before choosing the estimator. If a depth error of $10$ cm at two metres matters differently from the same absolute error at fifty metres, ordinary squared depth error may not represent the application. If catastrophic outliers matter more than typical error, a mean metric can hide the relevant risk. Decision theory turns this from a metrics argument into a precise statement about which errors the system is being optimized to avoid.
 
 Source basis: Wasserman, *All of Statistics*, Chapter 12 on loss, risk, Bayes rules, minimax rules, admissibility, and the large-sample relationship between maximum likelihood, Bayes, and minimax procedures.
 
@@ -75293,19 +75474,19 @@ Source basis: Wasserman, *All of Statistics*, Chapter 12 on loss, risk, Bayes ru
 
 A model fitted and scored on the same observations is rewarded for remembering the noise in those observations. Wasserman’s regression discussion makes the distinction through **prediction risk** versus **training error**. Adding parameters can always make the training fit no worse, while future prediction can deteriorate because variance increases. This is the operational meaning of overfitting.
 
-Suppose a model class indexed by \(S\) produces a fitted predictor \(\hat r_S\). A future-data risk has the form
+Suppose a model class indexed by $S$ produces a fitted predictor $\hat r_S$. A future-data risk has the form
 
-\[
+$$
 R(S)
 =
 \mathbb E[
 L(Y^*,\hat r_S(X^*))
 ],
-\]
+$$
 
-where the expectation includes a fresh observation. The training loss instead evaluates the same samples used to fit \(\hat r_S\). It is generally optimistically biased as an estimate of future risk because the fitted values depend on those same responses.
+where the expectation includes a fresh observation. The training loss instead evaluates the same samples used to fit $\hat r_S$. It is generally optimistically biased as an estimate of future risk because the fitted values depend on those same responses.
 
-**Cross-validation** breaks that reuse deliberately. In \(K\)-fold cross-validation, partition the sample into \(K\) blocks. For each fold, fit on the other \(K-1\) blocks and score on the held-out block. Aggregate the held-out losses. The procedure estimates performance of the full fitting pipeline, including preprocessing and hyperparameter selection that occurs **inside** each training split. If normalization, feature selection, or parameter tuning sees the held-out data before scoring, the apparent validation estimate leaks information.
+**Cross-validation** breaks that reuse deliberately. In $K$-fold cross-validation, partition the sample into $K$ blocks. For each fold, fit on the other $K-1$ blocks and score on the held-out block. Aggregate the held-out losses. The procedure estimates performance of the full fitting pipeline, including preprocessing and hyperparameter selection that occurs **inside** each training split. If normalization, feature selection, or parameter tuning sees the held-out data before scoring, the apparent validation estimate leaks information.
 
 The bias–variance tradeoff is therefore not merely a slogan about “simple versus complex.” A larger model can reduce approximation bias while increasing sensitivity to the particular training sample. Regularization, feature selection, early stopping, and model averaging all change that trade. Their value should be judged on new data or through a defensible resampling procedure, not by training fit.
 
@@ -75315,14 +75496,14 @@ Source basis: Wasserman, Chapters 13 and 22, especially regression model selecti
 
 ### A graphical model can encode conditional independence without proving causation
 
-A directed acyclic graph can make a multivariate probability law easier to reason about. If each variable \(X_i\) has parent set \(\pi_i\), a distribution Markov to a DAG factors as
+A directed acyclic graph can make a multivariate probability law easier to reason about. If each variable $X_i$ has parent set $\pi_i$, a distribution Markov to a DAG factors as
 
-\[
+$$
 p(x_1,\ldots,x_k)
 =
 \prod_{i=1}^{k}
 p(x_i\mid \pi_i).
-\]
+$$
 
 This factorization says which conditional dependencies the model retains. It can reduce a high-dimensional joint distribution into local conditional models and exposes conditional independences through the graph.
 
@@ -75330,19 +75511,19 @@ The graph’s arrows are not automatically causal arrows. **d-separation** gives
 
 Causal questions require another operation: intervention. Wasserman distinguishes passive conditioning
 
-\[
+$$
 P(Y\mid X=x)
-\]
+$$
 
 from an intervention written in his notation as
 
-\[
+$$
 P(Y\mid X:=x).
-\]
+$$
 
-To represent setting \(X=x\), arrows entering \(X\) are removed and the corresponding conditional factor for \(X\) is replaced by the intervention. Observation asks what tends to be true among cases where \(X=x\); intervention asks what would happen under a rule that forces \(X\) to \(x\). Those distributions can differ.
+To represent setting $X=x$, arrows entering $X$ are removed and the corresponding conditional factor for $X$ is replaced by the intervention. Observation asks what tends to be true among cases where $X=x$; intervention asks what would happen under a rule that forces $X$ to $x$. Those distributions can differ.
 
-A confounder \(Z\) that causes both treatment \(X\) and outcome \(Y\) can make association misleading. Randomization breaks the assignment dependence and can make the causal effect identifiable without modeling the original treatment-selection mechanism. In observational data, adjustment requires the relevant confounders to be measured and the causal assumptions to be defensible. An unobserved confounder cannot be repaired by adding more optimizer iterations.
+A confounder $Z$ that causes both treatment $X$ and outcome $Y$ can make association misleading. Randomization breaks the assignment dependence and can make the causal effect identifiable without modeling the original treatment-selection mechanism. In observational data, adjustment requires the relevant confounders to be measured and the causal assumptions to be defensible. An unobserved confounder cannot be repaired by adding more optimizer iterations.
 
 This distinction is directly relevant to graphics/vision experiments. If a new reconstruction method is evaluated mostly on easier scenes because it fails to initialize on harder ones, conditioning on “successful run” can create selection effects. If exposure settings affect both image noise and which frames enter a dataset, the observed noise/accuracy correlation is not automatically causal. A DAG can make those assumptions visible, but the graph itself must be justified by experimental design or domain knowledge.
 
@@ -75355,19 +75536,19 @@ The term mean squared error, or MSE, has two closely related but distinct uses.
 In statistical estimation, it measures expected squared error of a random estimator:
 
 $$
- \boxed{ \operatorname{MSE}(\widehat\theta) = \mathbb E[(\widehat\theta-\theta)^2] }. 
+ \boxed{ \operatorname{MSE}(\widehat\theta) = \mathbb E[(\widehat\theta-\theta)^2] }.
 $$
 
 As derived in the sampling and Monte Carlo chapters:
 
 $$
- \boxed{ \operatorname{MSE} = \operatorname{Var}(\widehat\theta) + \operatorname{Bias}(\widehat\theta)^2 }. 
+ \boxed{ \operatorname{MSE} = \operatorname{Var}(\widehat\theta) + \operatorname{Bias}(\widehat\theta)^2 }.
 $$
 
 In model evaluation, we often calculate the empirical average squared prediction error:
 
 $$
- \boxed{ \operatorname{MSE}_{\mathrm{empirical}} = \frac1N\sum_{i=1}^{N} (\hat y_i-y_i)^2 }. 
+ \boxed{ \operatorname{MSE}_{\mathrm{empirical}} = \frac1N\sum_{i=1}^{N} (\hat y_i-y_i)^2 }.
 $$
 
 The first is a theoretical performance quantity of a random estimator.
@@ -75381,31 +75562,31 @@ They are related, but not automatically identical.
 Suppose the true observations are:
 
 $$
- y=(1,2,4). 
+ y=(1,2,4).
 $$
 
 The predicted values are:
 
 $$
- \hat y=(2,1,5). 
+ \hat y=(2,1,5).
 $$
 
 The errors are:
 
 $$
- e=(1,-1,1). 
+ e=(1,-1,1).
 $$
 
 Square:
 
 $$
- e^2=(1,1,1). 
+ e^2=(1,1,1).
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{MSE}= \frac{1+1+1}{3}=1 }. 
+ \boxed{ \operatorname{MSE}= \frac{1+1+1}{3}=1 }.
 $$
 
 #### 2 MSE sensitivity to outliers
@@ -75425,7 +75606,7 @@ But it can be misleading when outliers arise from data corruption or mismatched 
 Root mean squared error is:
 
 $$
- \boxed{ \operatorname{RMSE} = \sqrt{ \frac1N\sum_i(\hat y_i-y_i)^2 } }. 
+ \boxed{ \operatorname{RMSE} = \sqrt{ \frac1N\sum_i(\hat y_i-y_i)^2 } }.
 $$
 
 RMSE has the same units as the original measurements.
@@ -75439,37 +75620,37 @@ MSE would instead have units of square metres.
 For the previous errors:
 
 $$
- e=(1,-1,1), 
+ e=(1,-1,1),
 $$
 
 we have:
 
 $$
- \operatorname{MSE}=1. 
+ \operatorname{MSE}=1.
 $$
 
 Thus:
 
 $$
- \boxed{\operatorname{RMSE}=1}. 
+ \boxed{\operatorname{RMSE}=1}.
 $$
 
 Now consider errors:
 
 $$
- e=(1,1,3). 
+ e=(1,1,3).
 $$
 
 Then:
 
 $$
- \operatorname{MSE} = \frac{1+1+9}{3} =\frac{11}{3}. 
+ \operatorname{MSE} = \frac{1+1+9}{3} =\frac{11}{3}.
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{RMSE} = \sqrt{\frac{11}{3}} \approx1.914854 }. 
+ \boxed{ \operatorname{RMSE} = \sqrt{\frac{11}{3}} \approx1.914854 }.
 $$
 
 #### 2 RMSE and Euclidean vector norms
@@ -75477,19 +75658,19 @@ $$
 For a residual vector:
 
 $$
- \mathbf r= \begin{bmatrix} r_1\\vdots\\r_N \end{bmatrix}, 
+ \mathbf r= \begin{bmatrix} r_1\\vdots\\r_N \end{bmatrix},
 $$
 
 the Euclidean norm is:
 
 $$
- \\|\mathbf r\\|\_2= \sqrt{\sum_i r_i^2}. 
+ \|\mathbf r\|_2= \sqrt{\sum_i r_i^2}.
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{RMSE} = \frac{\\|\mathbf r\\|\_2}{\sqrt N} }. 
+ \boxed{ \operatorname{RMSE} = \frac{\|\mathbf r\|_2}{\sqrt N} }.
 $$
 
 This directly connects RMSE to least-squares optimization and vector norms.
@@ -75513,7 +75694,7 @@ A benchmark must specify the aggregation procedure.
 Mean absolute error, or MAE, is:
 
 $$
- \boxed{ \operatorname{MAE} = \frac1N\sum_{i=1}^{N} |\hat y_i-y_i| }. 
+ \boxed{ \operatorname{MAE} = \frac1N\sum_{i=1}^{N} |\hat y_i-y_i| }.
 $$
 
 Instead of squaring errors, it takes their absolute magnitudes.
@@ -75521,31 +75702,31 @@ Instead of squaring errors, it takes their absolute magnitudes.
 For:
 
 $$
- e=(1,-1,1), 
+ e=(1,-1,1),
 $$
 
 we obtain:
 
 $$
- \boxed{\operatorname{MAE}=1}. 
+ \boxed{\operatorname{MAE}=1}.
 $$
 
 For:
 
 $$
- e=(1,1,3), 
+ e=(1,1,3),
 $$
 
 the result is:
 
 $$
- \boxed{ \operatorname{MAE}=\frac53\approx1.666667 }. 
+ \boxed{ \operatorname{MAE}=\frac53\approx1.666667 }.
 $$
 
 Compare RMSE:
 
 $$
- 1.914854. 
+ 1.914854.
 $$
 
 RMSE is larger because it gives more influence to the error of magnitude three.
@@ -75555,13 +75736,13 @@ RMSE is larger because it gives more influence to the error of magnitude three.
 For residual vector $\mathbf r$:
 
 $$
- \\|\mathbf r\\|\_1=\sum_i|r_i|. 
+ \|\mathbf r\|_1=\sum_i|r_i|.
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{MAE}= \frac1N\\|\mathbf r\\|\_1 }. 
+ \boxed{ \operatorname{MAE}= \frac1N\|\mathbf r\|_1 }.
 $$
 
 MSE and RMSE are connected to the L2 norm.
@@ -75594,13 +75775,13 @@ Relative error attempts to express the error compared with a meaningful referenc
 For an approximation $\hat x$ to a nonzero true value $x$:
 
 $$
- \boxed{ e_{\mathrm{rel}} = \frac{|\hat x-x|}{|x|} }. 
+ \boxed{ e_{\mathrm{rel}} = \frac{|\hat x-x|}{|x|} }.
 $$
 
 The corresponding percentage error is:
 
 $$
- 100e_{\mathrm{rel}}\\%. 
+ 100e_{\mathrm{rel}}\\%.
 $$
 
 #### 1 Numerical example: relative error metrics
@@ -75608,31 +75789,31 @@ $$
 Suppose the true length is:
 
 $$
- x=200\ \mathrm{mm}. 
+ x=200\ \mathrm{mm}.
 $$
 
 The estimate is:
 
 $$
- \hat x=202\ \mathrm{mm}. 
+ \hat x=202\ \mathrm{mm}.
 $$
 
 The absolute error is:
 
 $$
- 2\ \mathrm{mm}. 
+ 2\ \mathrm{mm}.
 $$
 
 The relative error is:
 
 $$
- \frac2{200}=0.01. 
+ \frac2{200}=0.01.
 $$
 
 Thus the percentage error is:
 
 $$
- \boxed{1\%}. 
+ \boxed{1\%}.
 $$
 
 #### 2 Why relative error fails near zero
@@ -75640,25 +75821,25 @@ $$
 Suppose:
 
 $$
- x=10^{-8} 
+ x=10^{-8}
 $$
 
 and:
 
 $$
- \hat x=10^{-6}. 
+ \hat x=10^{-6}.
 $$
 
 The absolute error is approximately:
 
 $$
- 9.9\times10^{-7}. 
+ 9.9\times10^{-7}.
 $$
 
 But the relative error is:
 
 $$
- \frac{9.9\times10^{-7}}{10^{-8}} =99. 
+ \frac{9.9\times10^{-7}}{10^{-8}} =99.
 $$
 
 That is 9,900%.
@@ -75674,7 +75855,7 @@ Therefore relative error should not be used blindly for values near zero.
 For observations $y_i\ne0$:
 
 $$
- \boxed{ \operatorname{MAPE} = \frac1N \sum_i \left| \frac{\hat y_i-y_i}{y_i} \right| }. 
+ \boxed{ \operatorname{MAPE} = \frac1N \sum_i \left| \frac{\hat y_i-y_i}{y_i} \right| }.
 $$
 
 Multiply by 100 to express the result as a percentage.
@@ -75690,7 +75871,7 @@ For values that can be zero or negative, other metrics may be preferable.
 One commonly used version of symmetric MAPE is:
 
 $$
- \boxed{ \operatorname{sMAPE} = \frac1N\sum_i \frac{2|\hat y_i-y_i|} {|\hat y_i|+|y_i|} }. 
+ \boxed{ \operatorname{sMAPE} = \frac1N\sum_i \frac{2|\hat y_i-y_i|} {|\hat y_i|+|y_i|} }.
 $$
 
 The result is often multiplied by 100.
@@ -75706,7 +75887,7 @@ Despite its name, sMAPE does not eliminate every undesirable property of percent
 A benchmark may report:
 
 $$
- \operatorname{NRMSE} = \frac{\operatorname{RMSE}}{s_{\mathrm{reference}}} 
+ \operatorname{NRMSE} = \frac{\operatorname{RMSE}}{s_{\mathrm{reference}}}
 $$
 
 where $s_{\mathrm{reference}}$ is a specified scale.
@@ -75722,7 +75903,7 @@ Therefore an NRMSE result is incomplete unless the normalization convention is r
 For 3D reconstruction, we might measure:
 
 $$
- e_i=\\|\hat{\mathbf p}\_i-\mathbf p_i\\|\_2 
+ e_i=\|\hat{\mathbf p}_i-\mathbf p_i\|_2
 $$
 
 in metres.
@@ -75732,7 +75913,7 @@ Then report mean Euclidean distance, RMSE of Euclidean distances, median point e
 For image reprojection:
 
 $$
- e_i= \left\\| \begin{bmatrix}\hat u_i\\hat v_i\end{bmatrix} - \begin{bmatrix}u_i\\v_i\end{bmatrix} \right\\|\_2. 
+ e_i= \left\| \begin{bmatrix}\hat u_i\\\hat v_i\end{bmatrix} - \begin{bmatrix}u_i\\v_i\end{bmatrix} \right\|_2.
 $$
 
 Those errors are measured in pixels.
@@ -75770,19 +75951,19 @@ But these types have different domains.
 A Bernoulli probability must satisfy:
 
 $$
- 0\le p\le1. 
+ 0\le p\le1.
 $$
 
 A normal standard deviation must satisfy:
 
 $$
- \sigma>0. 
+ \sigma>0.
 $$
 
 An exponential rate must satisfy:
 
 $$
- \lambda>0. 
+ \lambda>0.
 $$
 
 A nonsingular multivariate Gaussian covariance must be symmetric positive definite.
@@ -75852,7 +76033,7 @@ Why should a normal distribution expose both `cdf()` and `survival()`?
 Mathematically:
 
 $$
- S(x)=1-F(x). 
+ S(x)=1-F(x).
 $$
 
 But in floating-point arithmetic, if $F(x)$ is extremely close to one, the subtraction can lose many significant digits.
@@ -75862,7 +76043,7 @@ For example, the upper tail of a standard normal at a large positive $z$ is tiny
 Using:
 
 $$
- S(z)=\frac12\operatorname{erfc}(z/\sqrt2) 
+ S(z)=\frac12\operatorname{erfc}(z/\sqrt2)
 $$
 
 allows the implementation to calculate that tail more directly.
@@ -75876,7 +76057,7 @@ Mathematical equivalence does not guarantee numerical equivalence.
 The binomial PMF contains:
 
 $$
- \binom nk= \frac{n!}{k!(n-k)!}. 
+ \binom nk= \frac{n!}{k!(n-k)!}.
 $$
 
 A naive factorial-based implementation becomes problematic for large $n$.
@@ -75955,7 +76136,7 @@ double poisson_pmf(unsigned k, double lambda) {
 It uses:
 
 $$
- \log P(K=k) = k\log\lambda-\lambda-\log(k!). 
+ \log P(K=k) = k\log\lambda-\lambda-\log(k!).
 $$
 
 Again, we do not calculate a large factorial explicitly.
@@ -75965,7 +76146,7 @@ This is a recurring numerical principle: when probabilities are represented as p
 For distributions with extremely small probabilities, log probabilities also make multiplication into addition:
 
 $$
- \log(p_1p_2)=\log p_1+\log p_2. 
+ \log(p_1p_2)=\log p_1+\log p_2.
 $$
 
 The reverse transformation, summing probabilities represented in log space, requires care and motivates the log-sum-exp technique covered later in Phase 10.
@@ -75975,13 +76156,13 @@ The reverse transformation, summing probabilities represented in log space, requ
 The mathematical PDF contains:
 
 $$
- \Sigma^{-1} 
+ \Sigma^{-1}
 $$
 
 and:
 
 $$
- \det\Sigma. 
+ \det\Sigma.
 $$
 
 A naive implementation might construct the inverse, calculate its determinant, and evaluate the quadratic form directly.
@@ -75991,49 +76172,49 @@ But matrix inversion is often unnecessary and can be numerically undesirable.
 For a symmetric positive-definite covariance, Cholesky factorization gives:
 
 $$
- \boxed{\Sigma=LL^T}. 
+ \boxed{\Sigma=LL^T}.
 $$
 
 Define:
 
 $$
- \mathbf d=\mathbf x-\boldsymbol\mu. 
+ \mathbf d=\mathbf x-\boldsymbol\mu.
 $$
 
 The squared Mahalanobis distance is:
 
 $$
- d_M^2=\mathbf d^T\Sigma^{-1}\mathbf d. 
+ d_M^2=\mathbf d^T\Sigma^{-1}\mathbf d.
 $$
 
 Since:
 
 $$
- \Sigma^{-1}=L^{-T}L^{-1}, 
+ \Sigma^{-1}=L^{-T}L^{-1},
 $$
 
 we have:
 
 $$
- d_M^2= \mathbf d^TL^{-T}L^{-1}\mathbf d. 
+ d_M^2= \mathbf d^TL^{-T}L^{-1}\mathbf d.
 $$
 
 Let:
 
 $$
- \mathbf y=L^{-1}\mathbf d. 
+ \mathbf y=L^{-1}\mathbf d.
 $$
 
 Then:
 
 $$
- \boxed{d_M^2=\mathbf y^T\mathbf y}. 
+ \boxed{d_M^2=\mathbf y^T\mathbf y}.
 $$
 
 We obtain $\mathbf y$ by solving the lower-triangular system:
 
 $$
- L\mathbf y=\mathbf d. 
+ L\mathbf y=\mathbf d.
 $$
 
 No explicit inverse is required.
@@ -76041,25 +76222,25 @@ No explicit inverse is required.
 Likewise:
 
 $$
- \det\Sigma=(\det L)^2. 
+ \det\Sigma=(\det L)^2.
 $$
 
 Because $L$ is triangular:
 
 $$
- \det L=\prod_iL_{ii}. 
+ \det L=\prod_iL_{ii}.
 $$
 
 Therefore:
 
 $$
- \boxed{ \log\det\Sigma = 2\sum_i\log L_{ii} }. 
+ \boxed{ \log\det\Sigma = 2\sum_i\log L_{ii} }.
 $$
 
 These identities lead to the stable log-density expression:
 
 $$
- \boxed{ \log p(\mathbf x)= -\frac n2\log(2\pi) -\frac12\log\det\Sigma -\frac12\mathbf y^T\mathbf y }. 
+ \boxed{ \log p(\mathbf x)= -\frac n2\log(2\pi) -\frac12\log\det\Sigma -\frac12\mathbf y^T\mathbf y }.
 $$
 
 #### 1 The 2D implementation
@@ -76170,37 +76351,37 @@ Instead, we can maintain streaming statistics.
 For sample $n$, maintain the current mean:
 
 $$
- \boldsymbol\mu_n 
+ \boldsymbol\mu_n
 $$
 
 and centred scatter matrix:
 
 $$
- S_n= \sum_{i=1}^{n} (\mathbf x_i-\boldsymbol\mu_n) (\mathbf x_i-\boldsymbol\mu_n)^T. 
+ S_n= \sum_{i=1}^{n} (\mathbf x_i-\boldsymbol\mu_n) (\mathbf x_i-\boldsymbol\mu_n)^T.
 $$
 
 When a new sample $\mathbf x$ arrives, define:
 
 $$
- \boldsymbol\delta=\mathbf x-\boldsymbol\mu_n. 
+ \boldsymbol\delta=\mathbf x-\boldsymbol\mu_n.
 $$
 
 Update the mean:
 
 $$
- \boxed{ \boldsymbol\mu_{n+1} = \boldsymbol\mu_n+ \frac{\boldsymbol\delta}{n+1} }. 
+ \boxed{ \boldsymbol\mu_{n+1} = \boldsymbol\mu_n+ \frac{\boldsymbol\delta}{n+1} }.
 $$
 
 The scatter update is:
 
 $$
- \boxed{ S_{n+1} = S_n+ \boldsymbol\delta (\mathbf x-\boldsymbol\mu_{n+1})^T }. 
+ \boxed{ S_{n+1} = S_n+ \boldsymbol\delta (\mathbf x-\boldsymbol\mu_{n+1})^T }.
 $$
 
 The sample covariance estimate is:
 
 $$
- \boxed{ \widehat\Sigma= \frac{S_n}{n-1} } 
+ \boxed{ \widehat\Sigma= \frac{S_n}{n-1} }
 $$
 
 for $n\ge2$.
@@ -76212,67 +76393,67 @@ The corresponding population-normalized empirical covariance divides by $n$.
 Take three observations:
 
 $$
- \mathbf x_1= \begin{bmatrix}1\\1\end{bmatrix}, 
+ \mathbf x_1= \begin{bmatrix}1\\1\end{bmatrix},
 $$
 
 $$
- \mathbf x_2= \begin{bmatrix}2\\3\end{bmatrix}, 
+ \mathbf x_2= \begin{bmatrix}2\\3\end{bmatrix},
 $$
 
 $$
- \mathbf x_3= \begin{bmatrix}3\\5\end{bmatrix}. 
+ \mathbf x_3= \begin{bmatrix}3\\5\end{bmatrix}.
 $$
 
 The sample mean is:
 
 $$
- \boldsymbol\mu= \begin{bmatrix}2\\3\end{bmatrix}. 
+ \boldsymbol\mu= \begin{bmatrix}2\\3\end{bmatrix}.
 $$
 
 The centred observations are:
 
 $$
- \mathbf d_1= \begin{bmatrix}-1\\-2\end{bmatrix}, 
+ \mathbf d_1= \begin{bmatrix}-1\\-2\end{bmatrix},
 $$
 
 $$
- \mathbf d_2= \begin{bmatrix}0\\0\end{bmatrix}, 
+ \mathbf d_2= \begin{bmatrix}0\\0\end{bmatrix},
 $$
 
 $$
- \mathbf d_3= \begin{bmatrix}1\\2\end{bmatrix}. 
+ \mathbf d_3= \begin{bmatrix}1\\2\end{bmatrix}.
 $$
 
 Compute outer products:
 
 $$
- \mathbf d_1\mathbf d_1^T= \begin{bmatrix}1&2\\2&4\end{bmatrix}, 
+ \mathbf d_1\mathbf d_1^T= \begin{bmatrix}1&2\\2&4\end{bmatrix},
 $$
 
 $$
- \mathbf d_2\mathbf d_2^T=0, 
+ \mathbf d_2\mathbf d_2^T=0,
 $$
 
 $$
- \mathbf d_3\mathbf d_3^T= \begin{bmatrix}1&2\\2&4\end{bmatrix}. 
+ \mathbf d_3\mathbf d_3^T= \begin{bmatrix}1&2\\2&4\end{bmatrix}.
 $$
 
 Sum:
 
 $$
- S= \begin{bmatrix} 2&4\\4&8 \end{bmatrix}. 
+ S= \begin{bmatrix} 2&4\\4&8 \end{bmatrix}.
 $$
 
 Divide by:
 
 $$
- n-1=2. 
+ n-1=2.
 $$
 
 Therefore:
 
 $$
- \boxed{ \widehat\Sigma= \begin{bmatrix} 1&2\\ 2&4 \end{bmatrix} }. 
+ \boxed{ \widehat\Sigma= \begin{bmatrix} 1&2\\ 2&4 \end{bmatrix} }.
 $$
 
 This is exactly the singular PSD covariance we analyzed earlier.
@@ -76354,7 +76535,7 @@ Suppose we want to estimate an unknown scalar $x$.
 Before receiving a measurement, our uncertainty is:
 
 $$
- X\sim\mathcal N(\mu_0,\sigma_0^2). 
+ X\sim\mathcal N(\mu_0,\sigma_0^2).
 $$
 
 This is the prior.
@@ -76362,13 +76543,13 @@ This is the prior.
 Now observe:
 
 $$
- Y=x+\varepsilon, 
+ Y=x+\varepsilon,
 $$
 
 where measurement noise is:
 
 $$
- \varepsilon\sim\mathcal N(0,\tau^2) 
+ \varepsilon\sim\mathcal N(0,\tau^2)
 $$
 
 and is independent of $X$.
@@ -76376,31 +76557,31 @@ and is independent of $X$.
 The likelihood of observation $y$ given $x$ is:
 
 $$
- p(y\mid x) \propto \exp\left( -\frac{(y-x)^2}{2\tau^2} \right). 
+ p(y\mid x) \propto \exp\left( -\frac{(y-x)^2}{2\tau^2} \right).
 $$
 
 The prior density is:
 
 $$
- p(x)\propto \exp\left( -\frac{(x-\mu_0)^2}{2\sigma_0^2} \right). 
+ p(x)\propto \exp\left( -\frac{(x-\mu_0)^2}{2\sigma_0^2} \right).
 $$
 
 Bayes gives:
 
 $$
- p(x\mid y)\propto p(y\mid x)p(x). 
+ p(x\mid y)\propto p(y\mid x)p(x).
 $$
 
 Multiply the two exponential expressions:
 
 $$
- p(x\mid y) \propto \exp\left[ -\frac12 \left( \frac{(y-x)^2}{\tau^2} + \frac{(x-\mu_0)^2}{\sigma_0^2} \right) \right]. 
+ p(x\mid y) \propto \exp\left[ -\frac12 \left( \frac{(y-x)^2}{\tau^2} + \frac{(x-\mu_0)^2}{\sigma_0^2} \right) \right].
 $$
 
 Therefore maximizing the posterior is equivalent to minimizing:
 
 $$
- \boxed{ E(x)= \frac{(y-x)^2}{2\tau^2} + \frac{(x-\mu_0)^2}{2\sigma_0^2} }. 
+ \boxed{ E(x)= \frac{(y-x)^2}{2\tau^2} + \frac{(x-\mu_0)^2}{2\sigma_0^2} }.
 $$
 
 The first term fits the measurement.
@@ -76414,31 +76595,31 @@ This is exactly the structure of a regularized least-squares objective.
 Differentiate:
 
 $$
- E'(x)= \frac{x-y}{\tau^2} + \frac{x-\mu_0}{\sigma_0^2}. 
+ E'(x)= \frac{x-y}{\tau^2} + \frac{x-\mu_0}{\sigma_0^2}.
 $$
 
 Set equal to zero:
 
 $$
- \frac{x-y}{\tau^2} + \frac{x-\mu_0}{\sigma_0^2} =0. 
+ \frac{x-y}{\tau^2} + \frac{x-\mu_0}{\sigma_0^2} =0.
 $$
 
 Collect $x$:
 
 $$
- x\left( \frac1{\tau^2} +\frac1{\sigma_0^2} \right) = \frac y{\tau^2} +\frac{\mu_0}{\sigma_0^2}. 
+ x\left( \frac1{\tau^2} +\frac1{\sigma_0^2} \right) = \frac y{\tau^2} +\frac{\mu_0}{\sigma_0^2}.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mu_{\mathrm{post}} = \frac{ y/\tau^2+\mu_0/\sigma_0^2 }{ 1/\tau^2+1/\sigma_0^2 } }. 
+ \boxed{ \mu_{\mathrm{post}} = \frac{ y/\tau^2+\mu_0/\sigma_0^2 }{ 1/\tau^2+1/\sigma_0^2 } }.
 $$
 
 The posterior variance is:
 
 $$
- \boxed{ \sigma_{\mathrm{post}}^2 = \left( \frac1{\sigma_0^2} +\frac1{\tau^2} \right)^{-1} }. 
+ \boxed{ \sigma_{\mathrm{post}}^2 = \left( \frac1{\sigma_0^2} +\frac1{\tau^2} \right)^{-1} }.
 $$
 
 Notice that inverse variance acts like information or precision.
@@ -76452,31 +76633,31 @@ A highly uncertain prior receives smaller weight.
 Let:
 
 $$
- \mu_0=0,\qquad \sigma_0^2=4. 
+ \mu_0=0,\qquad \sigma_0^2=4.
 $$
 
 We observe:
 
 $$
- y=3 
+ y=3
 $$
 
 with measurement variance:
 
 $$
- \tau^2=1. 
+ \tau^2=1.
 $$
 
 The posterior variance is:
 
 $$
- \sigma_{\mathrm{post}}^2= \left(\frac14+1\right)^{-1} =\boxed{0.8}. 
+ \sigma_{\mathrm{post}}^2= \left(\frac14+1\right)^{-1} =\boxed{0.8}.
 $$
 
 The posterior mean is:
 
 $$
- \mu_{\mathrm{post}} = 0.8\left(0+\frac31\right) =\boxed{2.4}. 
+ \mu_{\mathrm{post}} = 0.8\left(0+\frac31\right) =\boxed{2.4}.
 $$
 
 The observation says three, but the prior was centered at zero.
@@ -76486,7 +76667,7 @@ The posterior compromise is $2.4$, weighted according to the two uncertainties.
 The posterior standard deviation is:
 
 $$
- \sqrt{0.8}\approx0.894427. 
+ \sqrt{0.8}\approx0.894427.
 $$
 
 This is smaller than either the prior standard deviation of two or the measurement noise standard deviation of one.
@@ -76526,7 +76707,7 @@ Vary their mean depth, depth variance, anisotropy, orientation, and position rel
 For each configuration, calculate the first-order projected covariance:
 
 $$
- \Sigma_{\mathrm{predicted}} = J\_\pi\Sigma_{3D}J\_\pi^T. 
+ \Sigma_{\mathrm{predicted}} = J_\pi\Sigma_{3D}J_\pi^T.
 $$
 
 Then generate samples from the 3D distribution, project samples satisfying a defined visibility and clipping policy, and estimate their empirical image-space covariance.
@@ -76577,15 +76758,15 @@ We can connect the sampling transformations and Monte Carlo sections directly to
 At a surface point, outgoing radiance in direction $\omega_o$ can be expressed as:
 
 $$
- \boxed{ L_o(\omega_o) = \int_H f_r(\omega_i,\omega_o) L_i(\omega_i) (\mathbf n\cdot\omega_i)\\,d\omega_i } 
+ \boxed{ L_o(\omega_o) = \int_H f_r(\omega_i,\omega_o) L_i(\omega_i) (\mathbf n\cdot\omega_i)\,d\omega_i }
 $$
 
 where $H$ is the surface hemisphere, $f_r$ is the BRDF, $L_i$ is incoming radiance, $\mathbf n$ is the surface normal, and the cosine factor accounts for projected area.
 
-For a direction sampled from a solid-angle PDF $p\_\omega$, a one-sample Monte Carlo contribution is:
+For a direction sampled from a solid-angle PDF $p_\omega$, a one-sample Monte Carlo contribution is:
 
 $$
- \boxed{ Y= \frac{ f_r(\omega_i,\omega_o) L_i(\omega_i) (\mathbf n\cdot\omega_i) }{ p\_\omega(\omega_i) } }. 
+ \boxed{ Y= \frac{ f_r(\omega_i,\omega_o) L_i(\omega_i) (\mathbf n\cdot\omega_i) }{ p_\omega(\omega_i) } }.
 $$
 
 This assumes the integrand and PDF are expressed using compatible measures.
@@ -76595,13 +76776,13 @@ This assumes the integrand and PDF are expressed using compatible measures.
 For a uniform hemisphere:
 
 $$
- p\_\omega=\frac1{2\pi}. 
+ p_\omega=\frac1{2\pi}.
 $$
 
 Let:
 
 $$
- z=\cos\theta. 
+ z=\cos\theta.
 $$
 
 Under a uniform hemisphere distribution, $z\sim U(0,1)$.
@@ -76609,31 +76790,31 @@ Under a uniform hemisphere distribution, $z\sim U(0,1)$.
 For the test integral:
 
 $$
- I=\int_H\cos\theta\\,d\omega, 
+ I=\int_H\cos\theta\,d\omega,
 $$
 
 the Monte Carlo contribution becomes:
 
 $$
- Y_{\mathrm{uniform}} = \frac z{1/(2\pi)} =2\pi z. 
+ Y_{\mathrm{uniform}} = \frac z{1/(2\pi)} =2\pi z.
 $$
 
 The expected contribution is:
 
 $$
- \mathbb E[Y_{\mathrm{uniform}}] = 2\pi\mathbb E[z] =2\pi\frac12 =\pi. 
+ \mathbb E[Y_{\mathrm{uniform}}] = 2\pi\mathbb E[z] =2\pi\frac12 =\pi.
 $$
 
 Its variance is:
 
 $$
- \operatorname{Var}(Y_{\mathrm{uniform}}) = (2\pi)^2\operatorname{Var}(z). 
+ \operatorname{Var}(Y_{\mathrm{uniform}}) = (2\pi)^2\operatorname{Var}(z).
 $$
 
 Because a uniform $[0,1]$ variable has variance $1/12$:
 
 $$
- \boxed{ \operatorname{Var}(Y_{\mathrm{uniform}}) = \frac{\pi^2}{3} }. 
+ \boxed{ \operatorname{Var}(Y_{\mathrm{uniform}}) = \frac{\pi^2}{3} }.
 $$
 
 #### 2 Cosine-weighted hemisphere sampling
@@ -76641,19 +76822,19 @@ $$
 Instead, choose:
 
 $$
- \boxed{ p\_\omega(\omega)=\frac{\cos\theta}{\pi} }. 
+ \boxed{ p_\omega(\omega)=\frac{\cos\theta}{\pi} }.
 $$
 
 It is normalized because:
 
 $$
- \int_H\frac{\cos\theta}{\pi}\\,d\omega=1. 
+ \int_H\frac{\cos\theta}{\pi}\,d\omega=1.
 $$
 
 The weighted contribution becomes:
 
 $$
- Y_{\mathrm{cosine}} = \frac{\cos\theta}{\cos\theta/\pi} =\boxed{\pi} 
+ Y_{\mathrm{cosine}} = \frac{\cos\theta}{\cos\theta/\pi} =\boxed{\pi}
 $$
 
 where the PDF is positive.
@@ -76663,7 +76844,7 @@ Every ideal sample gives exactly $\pi$.
 Therefore:
 
 $$
- \boxed{ \operatorname{Var}(Y_{\mathrm{cosine}})=0 }. 
+ \boxed{ \operatorname{Var}(Y_{\mathrm{cosine}})=0 }.
 $$
 
 That explains the program output of $3.141592654$.
@@ -76673,19 +76854,19 @@ That explains the program output of $3.141592654$.
 Take two uniform random numbers:
 
 $$
- u_1,u_2\in[0,1). 
+ u_1,u_2\in[0,1).
 $$
 
 Construct:
 
 $$
- r=\sqrt{u_1}, \qquad \phi=2\pi u_2. 
+ r=\sqrt{u_1}, \qquad \phi=2\pi u_2.
 $$
 
 Then:
 
 $$
- \boxed{ \omega= \begin{bmatrix} r\cos\phi\\ r\sin\phi\\ \sqrt{1-u_1} \end{bmatrix} }. 
+ \boxed{ \omega= \begin{bmatrix} r\cos\phi\\ r\sin\phi\\ \sqrt{1-u_1} \end{bmatrix} }.
 $$
 
 This first samples a uniform point on the unit disk, then lifts it onto the upper hemisphere.
@@ -76693,7 +76874,7 @@ This first samples a uniform point on the unit disk, then lifts it onto the uppe
 The resulting solid-angle PDF is:
 
 $$
- \boxed{ p\_\omega=\frac{\omega_z}{\pi} }. 
+ \boxed{ p_\omega=\frac{\omega_z}{\pi} }.
 $$
 
 The complete reference implementation includes this sampling map.
@@ -76703,37 +76884,37 @@ The complete reference implementation includes this sampling map.
 For a Lambertian surface of reflectance $\rho$:
 
 $$
- f_r=\frac\rho\pi. 
+ f_r=\frac\rho\pi.
 $$
 
 Suppose incoming radiance is constant:
 
 $$
- L_i(\omega)=L. 
+ L_i(\omega)=L.
 $$
 
 The outgoing radiance becomes:
 
 $$
- L_o= \int_H \frac\rho\pi L\cos\theta\\,d\omega. 
+ L_o= \int_H \frac\rho\pi L\cos\theta\,d\omega.
 $$
 
 Because:
 
 $$
- \int_H\cos\theta\\,d\omega=\pi, 
+ \int_H\cos\theta\,d\omega=\pi,
 $$
 
 we obtain:
 
 $$
- \boxed{L_o=\rho L}. 
+ \boxed{L_o=\rho L}.
 $$
 
 A cosine-weighted importance sample gives contribution:
 
 $$
- Y= \frac{ (\rho/\pi)L\cos\theta }{ \cos\theta/\pi } =\rho L. 
+ Y= \frac{ (\rho/\pi)L\cos\theta }{ \cos\theta/\pi } =\rho L.
 $$
 
 The estimator has zero variance for this idealized constant-radiance Lambertian case.
@@ -76761,13 +76942,13 @@ Suppose technique $j$ draws $n_j$ samples from $p_j(x)$.
 A general MIS estimator is:
 
 $$
- \boxed{ \widehat I= \sum_j\frac1{n_j} \sum_{i=1}^{n_j} w_j(X_{ji}) \frac{f(X_{ji})}{p_j(X_{ji})} }. 
+ \boxed{ \widehat I= \sum_j\frac1{n_j} \sum_{i=1}^{n_j} w_j(X_{ji}) \frac{f(X_{ji})}{p_j(X_{ji})} }.
 $$
 
 The weights must satisfy suitable conditions, including:
 
 $$
- \sum_jw_j(x)=1 
+ \sum_jw_j(x)=1
 $$
 
 where the integrand contributes and the combined sampling techniques provide coverage.
@@ -76777,7 +76958,7 @@ One common weighting scheme is the balance heuristic:
 
 
 $$
- \boxed{ w_j(x)= \frac{n_jp_j(x)} {\sum_kn_kp_k(x)} }. 
+ \boxed{ w_j(x)= \frac{n_jp_j(x)} {\sum_kn_kp_k(x)} }.
 $$
 
 These weights favor techniques that assign relatively high sampling probability to the evaluated point.
@@ -76799,25 +76980,25 @@ Suppose the remaining path contribution would be $Y$.
 Let the survival probability be:
 
 $$
- q\in(0,1]. 
+ q\in(0,1].
 $$
 
 Define:
 
 $$
- \widehat Y= \begin{cases} Y/q,&\text{with probability }q,\\ 0,&\text{with probability }1-q. \end{cases} 
+ \widehat Y= \begin{cases} Y/q,&\text{with probability }q,\\ 0,&\text{with probability }1-q. \end{cases}
 $$
 
 Then:
 
 $$
- \mathbb E[\widehat Y\mid Y] = q\frac Yq+(1-q)0 =Y. 
+ \mathbb E[\widehat Y\mid Y] = q\frac Yq+(1-q)0 =Y.
 $$
 
 Thus:
 
 $$
- \boxed{ \mathbb E[\widehat Y]=\mathbb E[Y] }. 
+ \boxed{ \mathbb E[\widehat Y]=\mathbb E[Y] }.
 $$
 
 Proper Russian-roulette termination can preserve unbiasedness while reducing expected computational work.
@@ -76833,25 +77014,25 @@ Deterministically truncating paths after a fixed depth is generally a different 
 Suppose we want:
 
 $$
- I=\mathbb E[Y]. 
+ I=\mathbb E[Y].
 $$
 
 Assume we also have a correlated variable $C$ with known expectation:
 
 $$
- \mathbb E[C]=\mu_C. 
+ \mathbb E[C]=\mu_C.
 $$
 
 Construct:
 
 $$
- \boxed{ Z=Y-\beta(C-\mu_C) }. 
+ \boxed{ Z=Y-\beta(C-\mu_C) }.
 $$
 
 Its expectation is:
 
 $$
- \mathbb E[Z] = \mathbb E[Y]-\beta(\mathbb E[C]-\mu_C) =I. 
+ \mathbb E[Z] = \mathbb E[Y]-\beta(\mathbb E[C]-\mu_C) =I.
 $$
 
 So the estimator remains unbiased for any fixed $\beta$ under the assumptions.
@@ -76859,19 +77040,19 @@ So the estimator remains unbiased for any fixed $\beta$ under the assumptions.
 Its variance is:
 
 $$
- \begin{aligned} \operatorname{Var}(Z) &= \operatorname{Var}(Y) +\beta^2\operatorname{Var}(C)\\ &\quad-2\beta\operatorname{Cov}(Y,C). \end{aligned} 
+ \begin{aligned} \operatorname{Var}(Z) &= \operatorname{Var}(Y) +\beta^2\operatorname{Var}(C)\\ &\quad-2\beta\operatorname{Cov}(Y,C). \end{aligned}
 $$
 
 Differentiate with respect to $\beta$:
 
 $$
- 2\beta\operatorname{Var}(C) -2\operatorname{Cov}(Y,C)=0. 
+ 2\beta\operatorname{Var}(C) -2\operatorname{Cov}(Y,C)=0.
 $$
 
 Therefore the variance-minimizing coefficient is:
 
 $$
- \boxed{ \beta^\star= \frac{\operatorname{Cov}(Y,C)} {\operatorname{Var}(C)} } 
+ \boxed{ \beta^\star= \frac{\operatorname{Cov}(Y,C)} {\operatorname{Var}(C)} }
 $$
 
 when $\operatorname{Var}(C)>0$.
@@ -76915,7 +77096,7 @@ This can directly test whether the current partial-grid design introduces system
 the sampling and Monte Carlo chapters and the statistical validation chapters should now form one continuous chain in your mental model:
 
 $$
- \boxed{ \text{Generator} \rightarrow \text{Sample distribution} \rightarrow \text{Weighted contribution} \rightarrow \text{Estimator} \rightarrow \text{Statistical evidence} } 
+ \boxed{ \text{Generator} \rightarrow \text{Sample distribution} \rightarrow \text{Weighted contribution} \rightarrow \text{Estimator} \rightarrow \text{Statistical evidence} }
 $$
 
 Every arrow has assumptions.
@@ -78388,7 +78569,7 @@ The most foundational idea is that a coordinate tuple is not a geometric object 
 Consider the tuple:
 
 $$
- \begin{bmatrix}2\\1\\0\end{bmatrix}. 
+ \begin{bmatrix}2\\1\\0\end{bmatrix}.
 $$
 
 What does it represent?
@@ -78400,7 +78581,7 @@ A coordinate frame consists of an origin and basis vectors.
 Let:
 
 $$
- \mathcal F=(\mathbf o,\mathbf b_1,\mathbf b_2,\mathbf b_3). 
+ \mathcal F=(\mathbf o,\mathbf b_1,\mathbf b_2,\mathbf b_3).
 $$
 
 Here $\mathbf o$ is the frame's origin, while $\mathbf b_1,\mathbf b_2,\mathbf b_3$ identify its coordinate directions.
@@ -78408,13 +78589,13 @@ Here $\mathbf o$ is the frame's origin, while $\mathbf b_1,\mathbf b_2,\mathbf b
 A point with coordinates:
 
 $$
- \mathbf p_{\mathcal F}= \begin{bmatrix}x\\y\\z\end{bmatrix} 
+ \mathbf p_{\mathcal F}= \begin{bmatrix}x\\y\\z\end{bmatrix}
 $$
 
 represents the geometric point:
 
 $$
- \boxed{ \mathbf p= \mathbf o+x\mathbf b_1+y\mathbf b_2+z\mathbf b_3 }. 
+ \boxed{ \mathbf p= \mathbf o+x\mathbf b_1+y\mathbf b_2+z\mathbf b_3 }.
 $$
 
 This equation is the actual meaning of a coordinate system.
@@ -78424,19 +78605,19 @@ This equation is the actual meaning of a coordinate system.
 Arrange the basis vectors as columns:
 
 $$
- B= \begin{bmatrix} |&|&|\\ \mathbf b_1&\mathbf b_2&\mathbf b_3\\ |&|&| \end{bmatrix}. 
+ B= \begin{bmatrix} |&|&|\\ \mathbf b_1&\mathbf b_2&\mathbf b_3\\ |&|&| \end{bmatrix}.
 $$
 
 Then:
 
 $$
- B\mathbf p_{\mathcal F} = x\mathbf b_1+y\mathbf b_2+z\mathbf b_3. 
+ B\mathbf p_{\mathcal F} = x\mathbf b_1+y\mathbf b_2+z\mathbf b_3.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf p=\mathbf o+B\mathbf p_{\mathcal F} }. 
+ \boxed{ \mathbf p=\mathbf o+B\mathbf p_{\mathcal F} }.
 $$
 
 The basis matrix must be invertible if we want a unique coordinate representation for every point in the space.
@@ -78448,37 +78629,37 @@ If two basis vectors are linearly dependent, coordinates cannot uniquely describ
 Suppose a frame has origin:
 
 $$
- \mathbf o= \begin{bmatrix}10\\2\\0\end{bmatrix} 
+ \mathbf o= \begin{bmatrix}10\\2\\0\end{bmatrix}
 $$
 
 and basis:
 
 $$
- \mathbf b_1= \begin{bmatrix}0\\1\\0\end{bmatrix},\quad \mathbf b_2= \begin{bmatrix}-1\\0\\0\end{bmatrix},\quad \mathbf b_3= \begin{bmatrix}0\\0\\1\end{bmatrix}. 
+ \mathbf b_1= \begin{bmatrix}0\\1\\0\end{bmatrix},\quad \mathbf b_2= \begin{bmatrix}-1\\0\\0\end{bmatrix},\quad \mathbf b_3= \begin{bmatrix}0\\0\\1\end{bmatrix}.
 $$
 
 Its basis matrix is:
 
 $$
- B= \begin{bmatrix} 0&-1&0\\ 1&0&0\\ 0&0&1 \end{bmatrix}. 
+ B= \begin{bmatrix} 0&-1&0\\ 1&0&0\\ 0&0&1 \end{bmatrix}.
 $$
 
 Consider the local coordinates:
 
 $$
- \mathbf p_{\mathcal F}= \begin{bmatrix}2\\1\\3\end{bmatrix}. 
+ \mathbf p_{\mathcal F}= \begin{bmatrix}2\\1\\3\end{bmatrix}.
 $$
 
 Then:
 
 $$
- B\mathbf p_{\mathcal F} = \begin{bmatrix}-1\\2\\3\end{bmatrix}. 
+ B\mathbf p_{\mathcal F} = \begin{bmatrix}-1\\2\\3\end{bmatrix}.
 $$
 
 Add the frame origin:
 
 $$
- \boxed{ \mathbf p= \begin{bmatrix}9\\4\\3\end{bmatrix} }. 
+ \boxed{ \mathbf p= \begin{bmatrix}9\\4\\3\end{bmatrix} }.
 $$
 
 Thus the local tuple $(2,1,3)$ and the global tuple $(9,4,3)$ describe the same geometric point in different frames.
@@ -78490,25 +78671,25 @@ A basis need not be perpendicular or have unit-length vectors.
 If $B$ is a general invertible matrix, recovering local coordinates requires:
 
 $$
- \boxed{ \mathbf p_{\mathcal F} = B^{-1}(\mathbf p-\mathbf o) }. 
+ \boxed{ \mathbf p_{\mathcal F} = B^{-1}(\mathbf p-\mathbf o) }.
 $$
 
 If the basis is orthonormal:
 
 $$
- B^TB=I. 
+ B^TB=I.
 $$
 
 Therefore:
 
 $$
- B^{-1}=B^T. 
+ B^{-1}=B^T.
 $$
 
 The inverse becomes:
 
 $$
- \boxed{ \mathbf p_{\mathcal F} = B^T(\mathbf p-\mathbf o) }. 
+ \boxed{ \mathbf p_{\mathcal F} = B^T(\mathbf p-\mathbf o) }.
 $$
 
 This is much cheaper and simpler than a general inverse.
@@ -78524,7 +78705,7 @@ Local space describes geometry relative to an object's own coordinate frame.
 Suppose you create a cube centred at its local origin:
 
 $$
- (-1,-1,-1),\quad (1,-1,-1),\quad\ldots 
+ (-1,-1,-1),\quad (1,-1,-1),\quad\ldots
 $$
 
 The vertices do not know where the cube is placed in the game world.
@@ -78538,13 +78719,13 @@ Let the object have scale $S$, rotation $R$, and translation $\mathbf t$.
 Then:
 
 $$
- \boxed{ \mathbf p_{\mathrm{world}} = \mathbf t+RS\mathbf p_{\mathrm{local}} }. 
+ \boxed{ \mathbf p_{\mathrm{world}} = \mathbf t+RS\mathbf p_{\mathrm{local}} }.
 $$
 
 With homogeneous matrices:
 
 $$
- \boxed{ M=TRS }. 
+ \boxed{ M=TRS }.
 $$
 
 The rightmost operation happens first:
@@ -78560,43 +78741,43 @@ This order is not arbitrary.
 Consider:
 
 $$
- \mathbf p= \begin{bmatrix}1\\0\\0\end{bmatrix}. 
+ \mathbf p= \begin{bmatrix}1\\0\\0\end{bmatrix}.
 $$
 
 Let $R$ rotate 90° counterclockwise about $Z$, and let translation be:
 
 $$
- \mathbf t= \begin{bmatrix}3\\0\\0\end{bmatrix}. 
+ \mathbf t= \begin{bmatrix}3\\0\\0\end{bmatrix}.
 $$
 
 Rotate first:
 
 $$
- R\mathbf p= \begin{bmatrix}0\\1\\0\end{bmatrix}. 
+ R\mathbf p= \begin{bmatrix}0\\1\\0\end{bmatrix}.
 $$
 
 Then translate:
 
 $$
- \mathbf t+R\mathbf p= \begin{bmatrix}3\\1\\0\end{bmatrix}. 
+ \mathbf t+R\mathbf p= \begin{bmatrix}3\\1\\0\end{bmatrix}.
 $$
 
 But translate first:
 
 $$
- \mathbf p+\mathbf t= \begin{bmatrix}4\\0\\0\end{bmatrix}. 
+ \mathbf p+\mathbf t= \begin{bmatrix}4\\0\\0\end{bmatrix}.
 $$
 
 Then rotate:
 
 $$
- R(\mathbf p+\mathbf t)= \begin{bmatrix}0\\4\\0\end{bmatrix}. 
+ R(\mathbf p+\mathbf t)= \begin{bmatrix}0\\4\\0\end{bmatrix}.
 $$
 
 Thus:
 
 $$
- \boxed{TR\mathbf p\ne RT\mathbf p} 
+ \boxed{TR\mathbf p\ne RT\mathbf p}
 $$
 
 in general.
@@ -78608,13 +78789,13 @@ A very common engine bug is applying translation, rotation, and scale in the wro
 For a child object attached to a parent, the world matrix is:
 
 $$
- \boxed{ M_{\mathrm{child,world}} = M_{\mathrm{parent,world}} M_{\mathrm{child,local}} }. 
+ \boxed{ M_{\mathrm{child,world}} = M_{\mathrm{parent,world}} M_{\mathrm{child,local}} }.
 $$
 
 For a deeper hierarchy:
 
 $$
- M_{\mathrm{world}} = M_0M_1\cdots M_k. 
+ M_{\mathrm{world}} = M_0M_1\cdots M_k.
 $$
 
 The transformations compose from the root toward the child.
@@ -78630,13 +78811,13 @@ World space is a shared reference frame used to place scene objects relative to 
 If a mesh has a local vertex:
 
 $$
- \mathbf p_L, 
+ \mathbf p_L,
 $$
 
 its world position is:
 
 $$
- \mathbf p_W=M\mathbf p_L 
+ \mathbf p_W=M\mathbf p_L
 $$
 
 using homogeneous coordinates.
@@ -78662,7 +78843,7 @@ A coordinate conversion between conventions can include axis permutations, sign 
 For example, converting centimetres to metres requires multiplication by:
 
 $$
- 0.01. 
+ 0.01.
 $$
 
 If one subsystem treats positions as metres and another as centimetres, a matrix may be algebraically correct yet physically wrong.
@@ -78672,7 +78853,7 @@ If one subsystem treats positions as metres and another as centimetres, a matrix
 Suppose a player is far from the world origin, with coordinates near:
 
 $$
- (10^8,0,10^8). 
+ (10^8,0,10^8).
 $$
 
 Single-precision arithmetic loses fine local positional resolution at such magnitudes.
@@ -78707,13 +78888,13 @@ In our reference convention:
 Therefore a point directly in front of the camera has:
 
 $$
- z_{\mathrm{view}}<0. 
+ z_{\mathrm{view}}<0.
 $$
 
 For example:
 
 $$
- \boxed{ \mathbf p_{\mathrm{view}}= \begin{bmatrix}0\\0\\-5\end{bmatrix} } 
+ \boxed{ \mathbf p_{\mathrm{view}}= \begin{bmatrix}0\\0\\-5\end{bmatrix} }
 $$
 
 describes a point five units in front of a camera located at the view-space origin.
@@ -78733,7 +78914,7 @@ Then every scene point can be projected using the same matrix.
 This is the purpose of the view matrix:
 
 $$
- \boxed{ \mathbf p_V=V\mathbf p_W }. 
+ \boxed{ \mathbf p_V=V\mathbf p_W }.
 $$
 
 The actual camera does not need to move physically. We are changing coordinates.
@@ -78743,13 +78924,13 @@ The actual camera does not need to move physically. We are changing coordinates.
 Clip space is produced by applying the projection matrix:
 
 $$
- \boxed{ \mathbf p_C=P\mathbf p_V }. 
+ \boxed{ \mathbf p_C=P\mathbf p_V }.
 $$
 
 A projected vertex is represented as a homogeneous four-vector:
 
 $$
- \mathbf p_C= \begin{bmatrix} x_c\\y_c\\z_c\\w_c \end{bmatrix}. 
+ \mathbf p_C= \begin{bmatrix} x_c\\y_c\\z_c\\w_c \end{bmatrix}.
 $$
 
 Clip space is not yet normalized device coordinates.
@@ -78761,23 +78942,23 @@ Instead, the visibility boundaries depend on $w_c$.
 For the conventional symmetric clip volume:
 
 $$
- -w_c\le x_c\le w_c, 
+ -w_c\le x_c\le w_c,
 $$
 
 $$
- -w_c\le y_c\le w_c. 
+ -w_c\le y_c\le w_c.
 $$
 
 For OpenGL's default clip-depth convention:
 
 $$
- -w_c\le z_c\le w_c. 
+ -w_c\le z_c\le w_c.
 $$
 
 For Vulkan's ordinary zero-to-one depth convention:
 
 $$
- 0\le z_c\le w_c. 
+ 0\le z_c\le w_c.
 $$
 
 The role of $w_c$ becomes essential during homogeneous clipping and perspective division.
@@ -78799,23 +78980,23 @@ Hardware performs clipping according to the active graphics pipeline's clip conv
 For a valid homogeneous clip coordinate with:
 
 $$
- w_c\ne0, 
+ w_c\ne0,
 $$
 
 normalized device coordinates, or NDC, are obtained by:
 
 $$
- \boxed{ x_n=\frac{x_c}{w_c}, \qquad y_n=\frac{y_c}{w_c}, \qquad z_n=\frac{z_c}{w_c} }. 
+ \boxed{ x_n=\frac{x_c}{w_c}, \qquad y_n=\frac{y_c}{w_c}, \qquad z_n=\frac{z_c}{w_c} }.
 $$
 
 For visible geometry under a conventional symmetric XY clip volume:
 
 $$
- -1\le x_n\le1, 
+ -1\le x_n\le1,
 $$
 
 $$
- -1\le y_n\le1. 
+ -1\le y_n\le1.
 $$
 
 The depth range depends on API conventions.
@@ -78834,7 +79015,7 @@ Modern OpenGL can also use zero-to-one clip depth through `glClipControl`. Thus 
 A point at:
 
 $$
- (x_n,y_n)=(0,0) 
+ (x_n,y_n)=(0,0)
 $$
 
 lies at the centre of normalized device space.
@@ -78852,41 +79033,41 @@ Assume a viewport with top-left origin, width $W$, height $H$, and $Y$ increasin
 If NDC $Y$ increases upward, a typical mapping is:
 
 $$
- \boxed{ x_p=\frac{x_n+1}{2}W } 
+ \boxed{ x_p=\frac{x_n+1}{2}W }
 $$
 
 and:
 
 $$
- \boxed{ y_p=\frac{1-y_n}{2}H }. 
+ \boxed{ y_p=\frac{1-y_n}{2}H }.
 $$
 
 For:
 
 $$
- W=1920,\quad H=1080, 
+ W=1920,\quad H=1080,
 $$
 
 consider:
 
 $$
- x_n=0.5,\qquad y_n=0.5. 
+ x_n=0.5,\qquad y_n=0.5.
 $$
 
 Then:
 
 $$
- x_p=\frac{1.5}{2}(1920)=1440, 
+ x_p=\frac{1.5}{2}(1920)=1440,
 $$
 
 $$
- y_p=\frac{0.5}{2}(1080)=270. 
+ y_p=\frac{0.5}{2}(1080)=270.
 $$
 
 Thus the continuous raster coordinate is:
 
 $$
- \boxed{(1440,270)}. 
+ \boxed{(1440,270)}.
 $$
 
 ### Continuous raster positions versus discrete pixel indices
@@ -78898,7 +79079,7 @@ The framebuffer contains discrete pixels indexed by integers.
 Under the common convention in which pixel centres are at:
 
 $$
- (i+0.5,j+0.5), 
+ (i+0.5,j+0.5),
 $$
 
 a raster coordinate of $(1440,270)$ lies on grid boundaries rather than at the centre of a unique pixel.
@@ -78912,7 +79093,7 @@ This distinction matters for texture sampling, picking, camera rays, antialiasin
 Texture coordinates, often written:
 
 $$
- (u,v), 
+ (u,v),
 $$
 
 identify positions in texture parameter space.
@@ -78922,7 +79103,7 @@ They are not necessarily world-space or raster-space coordinates.
 A typical normalized texture mapping uses:
 
 $$
- 0\le u\le1,\qquad0\le v\le1. 
+ 0\le u\le1,\qquad0\le v\le1.
 $$
 
 But texture coordinates may extend outside this interval to support wrapping, repetition, and mirroring.
@@ -78932,13 +79113,13 @@ But texture coordinates may extend outside this interval to support wrapping, re
 A triangle has three positions:
 
 $$
- \mathbf p_0,\mathbf p_1,\mathbf p_2 
+ \mathbf p_0,\mathbf p_1,\mathbf p_2
 $$
 
 and three associated texture coordinates:
 
 $$
- \mathbf t_0,\mathbf t_1,\mathbf t_2. 
+ \mathbf t_0,\mathbf t_1,\mathbf t_2.
 $$
 
 Rasterization interpolates the texture coordinates across the projected triangle according to the shader interpolation mode.
@@ -78984,19 +79165,19 @@ A typical tangent frame contains:
 Together these form the TBN matrix:
 
 $$
- \boxed{ TBN= \begin{bmatrix} |&|&|\\ \mathbf T&\mathbf B&\mathbf N\\ |&|&| \end{bmatrix} }. 
+ \boxed{ TBN= \begin{bmatrix} |&|&|\\ \mathbf T&\mathbf B&\mathbf N\\ |&|&| \end{bmatrix} }.
 $$
 
 A tangent-space normal:
 
 $$
- \mathbf n_t 
+ \mathbf n_t
 $$
 
 can be transformed into world space:
 
 $$
- \boxed{ \mathbf n_W= \operatorname{normalize}(TBN\,\mathbf n_t) }. 
+ \boxed{ \mathbf n_W= \operatorname{normalize}(TBN\,\mathbf n_t) }.
 $$
 
 ### Deriving surface tangents from UV coordinates
@@ -79004,57 +79185,57 @@ $$
 Consider a triangle with world-space edges:
 
 $$
- \mathbf e_1=\mathbf p_1-\mathbf p_0, \qquad \mathbf e_2=\mathbf p_2-\mathbf p_0. 
+ \mathbf e_1=\mathbf p_1-\mathbf p_0, \qquad \mathbf e_2=\mathbf p_2-\mathbf p_0.
 $$
 
 Let its UV differences be:
 
 $$
- (\Delta u_1,\Delta v_1), 
+ (\Delta u_1,\Delta v_1),
 $$
 
 $$
- (\Delta u_2,\Delta v_2). 
+ (\Delta u_2,\Delta v_2).
 $$
 
 Assume the local surface displacement satisfies:
 
 $$
- \mathbf e_1=\mathbf T\Delta u_1+\mathbf B\Delta v_1, 
+ \mathbf e_1=\mathbf T\Delta u_1+\mathbf B\Delta v_1,
 $$
 
 $$
- \mathbf e_2=\mathbf T\Delta u_2+\mathbf B\Delta v_2. 
+ \mathbf e_2=\mathbf T\Delta u_2+\mathbf B\Delta v_2.
 $$
 
 Write this as a matrix equation:
 
 $$
- \begin{bmatrix} |&|\\ \mathbf e_1&\mathbf e_2\\ |&| \end{bmatrix} = \begin{bmatrix} |&|\\ \mathbf T&\mathbf B\\ |&| \end{bmatrix} \begin{bmatrix} \Delta u_1&\Delta u_2\\ \Delta v_1&\Delta v_2 \end{bmatrix}. 
+ \begin{bmatrix} |&|\\ \mathbf e_1&\mathbf e_2\\ |&| \end{bmatrix} = \begin{bmatrix} |&|\\ \mathbf T&\mathbf B\\ |&| \end{bmatrix} \begin{bmatrix} \Delta u_1&\Delta u_2\\ \Delta v_1&\Delta v_2 \end{bmatrix}.
 $$
 
 If the UV matrix is invertible, then:
 
 $$
- \boxed{ [\mathbf T\ \mathbf B] = [\mathbf e_1\ \mathbf e_2] \begin{bmatrix} \Delta u_1&\Delta u_2\\ \Delta v_1&\Delta v_2 \end{bmatrix}^{-1} }. 
+ \boxed{ [\mathbf T\ \mathbf B] = [\mathbf e_1\ \mathbf e_2] \begin{bmatrix} \Delta u_1&\Delta u_2\\ \Delta v_1&\Delta v_2 \end{bmatrix}^{-1} }.
 $$
 
 For the $2\times2$ UV matrix, define:
 
 $$
- D=\Delta u_1\Delta v_2-\Delta u_2\Delta v_1. 
+ D=\Delta u_1\Delta v_2-\Delta u_2\Delta v_1.
 $$
 
 Then:
 
 $$
- \boxed{ \mathbf T= \frac{ \Delta v_2\mathbf e_1-\Delta v_1\mathbf e_2 }{D} } 
+ \boxed{ \mathbf T= \frac{ \Delta v_2\mathbf e_1-\Delta v_1\mathbf e_2 }{D} }
 $$
 
 and:
 
 $$
- \boxed{ \mathbf B= \frac{ -\Delta u_2\mathbf e_1+\Delta u_1\mathbf e_2 }{D} }. 
+ \boxed{ \mathbf B= \frac{ -\Delta u_2\mathbf e_1+\Delta u_1\mathbf e_2 }{D} }.
 $$
 
 If $D=0$, the UV mapping is locally degenerate and the tangent basis cannot be constructed by this inverse.
@@ -79066,13 +79247,13 @@ The calculated tangent may not be exactly perpendicular to the vertex normal.
 A common correction uses Gram–Schmidt orthogonalization:
 
 $$
- \boxed{ \mathbf T'= \operatorname{normalize} \left[ \mathbf T-\mathbf N(\mathbf N\cdot\mathbf T) \right] }. 
+ \boxed{ \mathbf T'= \operatorname{normalize} \left[ \mathbf T-\mathbf N(\mathbf N\cdot\mathbf T) \right] }.
 $$
 
 The bitangent can be reconstructed using:
 
 $$
- \boxed{ \mathbf B'=h(\mathbf N\times\mathbf T') } 
+ \boxed{ \mathbf B'=h(\mathbf N\times\mathbf T') }
 $$
 
 where $h\in\\{-1,+1\\}$ encodes tangent-frame handedness.
@@ -79088,7 +79269,7 @@ Surface normals do not generally transform using the same $3\times3$ matrix as p
 For a general invertible linear transform $A$:
 
 $$
- \boxed{ \mathbf n'\propto(A^{-1})^T\mathbf n }. 
+ \boxed{ \mathbf n'\propto(A^{-1})^T\mathbf n }.
 $$
 
 Why?
@@ -79098,31 +79279,31 @@ A normal must remain perpendicular to every transformed tangent.
 If:
 
 $$
- \mathbf n\cdot\mathbf t=0 
+ \mathbf n\cdot\mathbf t=0
 $$
 
 and the transformed tangent is:
 
 $$
- \mathbf t'=A\mathbf t, 
+ \mathbf t'=A\mathbf t,
 $$
 
 we need:
 
 $$
- \mathbf n'\cdot A\mathbf t=0. 
+ \mathbf n'\cdot A\mathbf t=0.
 $$
 
 Choose:
 
 $$
- \mathbf n'=(A^{-1})^T\mathbf n. 
+ \mathbf n'=(A^{-1})^T\mathbf n.
 $$
 
 Then:
 
 $$
- \mathbf n'^TA\mathbf t = \mathbf n^TA^{-1}A\mathbf t = \mathbf n^T\mathbf t=0. 
+ \mathbf n'^TA\mathbf t = \mathbf n^TA^{-1}A\mathbf t = \mathbf n^T\mathbf t=0.
 $$
 
 This proves the inverse-transpose rule.
@@ -79138,19 +79319,19 @@ A point has position relative to an origin.
 For a rigid transform with rotation $R$ and translation $\mathbf t$:
 
 $$
- \boxed{ \mathbf p_W=R\mathbf p_L+\mathbf t }. 
+ \boxed{ \mathbf p_W=R\mathbf p_L+\mathbf t }.
 $$
 
 To convert backward:
 
 $$
- \mathbf p_W-\mathbf t=R\mathbf p_L. 
+ \mathbf p_W-\mathbf t=R\mathbf p_L.
 $$
 
 Multiply by $R^T$, using $R^{-1}=R^T$:
 
 $$
- \boxed{ \mathbf p_L=R^T(\mathbf p_W-\mathbf t) }. 
+ \boxed{ \mathbf p_L=R^T(\mathbf p_W-\mathbf t) }.
 $$
 
 ### Numerical example · V11.02.12
@@ -79158,43 +79339,43 @@ $$
 Suppose a local point is:
 
 $$
- \mathbf p_L= \begin{bmatrix}2\\0\\0\end{bmatrix}. 
+ \mathbf p_L= \begin{bmatrix}2\\0\\0\end{bmatrix}.
 $$
 
 Rotate it by +90° about $Z$:
 
 $$
- R= \begin{bmatrix} 0&-1&0\\ 1&0&0\\ 0&0&1 \end{bmatrix}. 
+ R= \begin{bmatrix} 0&-1&0\\ 1&0&0\\ 0&0&1 \end{bmatrix}.
 $$
 
 Then:
 
 $$
- R\mathbf p_L= \begin{bmatrix}0\\2\\0\end{bmatrix}. 
+ R\mathbf p_L= \begin{bmatrix}0\\2\\0\end{bmatrix}.
 $$
 
 Translate by:
 
 $$
- \mathbf t= \begin{bmatrix}3\\4\\0\end{bmatrix}. 
+ \mathbf t= \begin{bmatrix}3\\4\\0\end{bmatrix}.
 $$
 
 The world point is:
 
 $$
- \boxed{ \mathbf p_W= \begin{bmatrix}3\\6\\0\end{bmatrix} }. 
+ \boxed{ \mathbf p_W= \begin{bmatrix}3\\6\\0\end{bmatrix} }.
 $$
 
 Convert it back:
 
 $$
- \mathbf p_W-\mathbf t= \begin{bmatrix}0\\2\\0\end{bmatrix}. 
+ \mathbf p_W-\mathbf t= \begin{bmatrix}0\\2\\0\end{bmatrix}.
 $$
 
 Then:
 
 $$
- R^T \begin{bmatrix}0\\2\\0\end{bmatrix} = \begin{bmatrix}2\\0\\0\end{bmatrix}. 
+ R^T \begin{bmatrix}0\\2\\0\end{bmatrix} = \begin{bmatrix}2\\0\\0\end{bmatrix}.
 $$
 
 We recover the original coordinates.
@@ -79204,19 +79385,19 @@ We recover the original coordinates.
 A point is represented as:
 
 $$
- \boxed{ \tilde{\mathbf p}= \begin{bmatrix}x\\y\\z\\1\end{bmatrix} }. 
+ \boxed{ \tilde{\mathbf p}= \begin{bmatrix}x\\y\\z\\1\end{bmatrix} }.
 $$
 
 An affine matrix is:
 
 $$
- M= \begin{bmatrix} A&\mathbf t\\ 0&1 \end{bmatrix}. 
+ M= \begin{bmatrix} A&\mathbf t\\ 0&1 \end{bmatrix}.
 $$
 
 Multiplication gives:
 
 $$
- M\tilde{\mathbf p}= \begin{bmatrix} A\mathbf p+\mathbf t\\1 \end{bmatrix}. 
+ M\tilde{\mathbf p}= \begin{bmatrix} A\mathbf p+\mathbf t\\1 \end{bmatrix}.
 $$
 
 The final coordinate of one allows translation to affect the point.
@@ -79230,7 +79411,7 @@ It represents a displacement, not a location relative to an origin.
 For a rigid transform:
 
 $$
- \boxed{ \mathbf d_W=R\mathbf d_L }. 
+ \boxed{ \mathbf d_W=R\mathbf d_L }.
 $$
 
 There is no translation term.
@@ -79238,19 +79419,19 @@ There is no translation term.
 Its homogeneous representation is:
 
 $$
- \boxed{ \tilde{\mathbf d}= \begin{bmatrix}x\\y\\z\\0\end{bmatrix} }. 
+ \boxed{ \tilde{\mathbf d}= \begin{bmatrix}x\\y\\z\\0\end{bmatrix} }.
 $$
 
 Multiply by the same affine matrix:
 
 $$
- \begin{bmatrix} A&\mathbf t\\ 0&1 \end{bmatrix} \begin{bmatrix} \mathbf d\\0 \end{bmatrix} = \begin{bmatrix} A\mathbf d\\0 \end{bmatrix}. 
+ \begin{bmatrix} A&\mathbf t\\ 0&1 \end{bmatrix} \begin{bmatrix} \mathbf d\\0 \end{bmatrix} = \begin{bmatrix} A\mathbf d\\0 \end{bmatrix}.
 $$
 
 Translation disappears because:
 
 $$
- \mathbf t\cdot0=0. 
+ \mathbf t\cdot0=0.
 $$
 
 This is why homogeneous points use $w=1$ and affine direction vectors use $w=0$.
@@ -79260,19 +79441,19 @@ This is why homogeneous points use $w=1$ and affine direction vectors use $w=0$.
 A camera ray has an origin:
 
 $$
- \mathbf o 
+ \mathbf o
 $$
 
 and direction:
 
 $$
- \mathbf d. 
+ \mathbf d.
 $$
 
 Under an affine transform:
 
 $$
- \boxed{ \mathbf o'=A\mathbf o+\mathbf t, \qquad \mathbf d'=A\mathbf d }. 
+ \boxed{ \mathbf o'=A\mathbf o+\mathbf t, \qquad \mathbf d'=A\mathbf d }.
 $$
 
 Do not add translation to the direction.
@@ -79288,7 +79469,7 @@ An affine frame combines an origin with a basis, allowing us to describe points 
 An affine transform has the form:
 
 $$
- \boxed{ f(\mathbf p)=A\mathbf p+\mathbf t } 
+ \boxed{ f(\mathbf p)=A\mathbf p+\mathbf t }
 $$
 
 where $A$ is linear.
@@ -79298,19 +79479,19 @@ Such a transformation preserves collinearity and affine combinations.
 If:
 
 $$
- \mathbf p=(1-\alpha)\mathbf p_0+\alpha\mathbf p_1, 
+ \mathbf p=(1-\alpha)\mathbf p_0+\alpha\mathbf p_1,
 $$
 
 then:
 
 $$
- \begin{aligned} f(\mathbf p) &= A[(1-\alpha)\mathbf p_0+\alpha\mathbf p_1]+\mathbf t\\ &=(1-\alpha)(A\mathbf p_0+\mathbf t) +\alpha(A\mathbf p_1+\mathbf t). \end{aligned} 
+ \begin{aligned} f(\mathbf p) &= A[(1-\alpha)\mathbf p_0+\alpha\mathbf p_1]+\mathbf t\\ &=(1-\alpha)(A\mathbf p_0+\mathbf t) +\alpha(A\mathbf p_1+\mathbf t). \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{ f((1-\alpha)\mathbf p_0+\alpha\mathbf p_1) = (1-\alpha)f(\mathbf p_0)+\alpha f(\mathbf p_1) }. 
+ \boxed{ f((1-\alpha)\mathbf p_0+\alpha\mathbf p_1) = (1-\alpha)f(\mathbf p_0)+\alpha f(\mathbf p_1) }.
 $$
 
 Straight lines remain straight.
@@ -79324,13 +79505,13 @@ But affine transforms do not necessarily preserve lengths, angles, areas, or vol
 For an invertible linear transformation $A$, a volume element transforms as:
 
 $$
- \boxed{ dV'=|\det A|\,dV }. 
+ \boxed{ dV'=|\det A|\,dV }.
 $$
 
 For a pure rotation:
 
 $$
- \det R=1, 
+ \det R=1,
 $$
 
 so volume is preserved.
@@ -79338,25 +79519,25 @@ so volume is preserved.
 For uniform scale $s$ in three dimensions:
 
 $$
- A=sI, 
+ A=sI,
 $$
 
 so:
 
 $$
- \det A=s^3. 
+ \det A=s^3.
 $$
 
 Volume scales by:
 
 $$
- |s|^3. 
+ |s|^3.
 $$
 
 For a reflection:
 
 $$
- \det A<0, 
+ \det A<0,
 $$
 
 orientation reverses.
@@ -79380,7 +79561,7 @@ A camera API should generally separate pose from object scaling or explicitly de
 A camera pose has two principal components:
 
 $$
- \boxed{ \text{Pose}=(\mathbf c,R) } 
+ \boxed{ \text{Pose}=(\mathbf c,R) }
 $$
 
 where $\mathbf c$ is the camera's world position and $R$ describes its orientation.
@@ -79405,13 +79586,13 @@ Euler angles may be convenient for user controls but can suffer parameterization
 For a rigid camera pose:
 
 $$
- \boxed{ C= \begin{bmatrix} R&\mathbf c\\ 0&1 \end{bmatrix} }. 
+ \boxed{ C= \begin{bmatrix} R&\mathbf c\\ 0&1 \end{bmatrix} }.
 $$
 
 It converts camera-local points into world space:
 
 $$
- \mathbf p_W=C\mathbf p_C. 
+ \mathbf p_W=C\mathbf p_C.
 $$
 
 This is called the camera-to-world transform.
@@ -79421,7 +79602,7 @@ This is called the camera-to-world transform.
 The view transform is the inverse:
 
 $$
- \boxed{V=C^{-1}}. 
+ \boxed{V=C^{-1}}.
 $$
 
 It converts world-space points into camera space.
@@ -79436,7 +79617,7 @@ The distinction is fundamental:
 For our right-handed convention, the camera's local axes are:
 
 $$
- \mathbf e_x= \begin{bmatrix}1\\0\\0\end{bmatrix}, \qquad \mathbf e_y= \begin{bmatrix}0\\1\\0\end{bmatrix}, \qquad \mathbf e_z= \begin{bmatrix}0\\0\\1\end{bmatrix}. 
+ \mathbf e_x= \begin{bmatrix}1\\0\\0\end{bmatrix}, \qquad \mathbf e_y= \begin{bmatrix}0\\1\\0\end{bmatrix}, \qquad \mathbf e_z= \begin{bmatrix}0\\0\\1\end{bmatrix}.
 $$
 
 The camera looks toward local $-Z$.
@@ -79444,7 +79625,7 @@ The camera looks toward local $-Z$.
 Thus its local forward direction is:
 
 $$
- \boxed{ \mathbf f_C= \begin{bmatrix}0\\0\\-1\end{bmatrix} }. 
+ \boxed{ \mathbf f_C= \begin{bmatrix}0\\0\\-1\end{bmatrix} }.
 $$
 
 Let $R$ be the camera-to-world rotation.
@@ -79452,19 +79633,19 @@ Let $R$ be the camera-to-world rotation.
 The world-space right vector is:
 
 $$
- \boxed{ \mathbf r_W=R\mathbf e_x }. 
+ \boxed{ \mathbf r_W=R\mathbf e_x }.
 $$
 
 The world-space up vector is:
 
 $$
- \boxed{ \mathbf u_W=R\mathbf e_y }. 
+ \boxed{ \mathbf u_W=R\mathbf e_y }.
 $$
 
 The world-space forward vector is:
 
 $$
- \boxed{ \mathbf f_W=-R\mathbf e_z }. 
+ \boxed{ \mathbf f_W=-R\mathbf e_z }.
 $$
 
 The third column of $R$ points backward, not forward.
@@ -79476,33 +79657,33 @@ This distinction causes many sign mistakes in view-matrix implementations.
 For a rigid camera basis:
 
 $$
- \\|\mathbf r\\|=\\|\mathbf u\\|=\\|\mathbf f\\|=1. 
+ \|\mathbf r\|=\|\mathbf u\|=\|\mathbf f\|=1.
 $$
 
 Also:
 
 $$
- \mathbf r\cdot\mathbf u=0, 
+ \mathbf r\cdot\mathbf u=0,
 $$
 
 $$
- \mathbf r\cdot\mathbf f=0, 
+ \mathbf r\cdot\mathbf f=0,
 $$
 
 $$
- \mathbf u\cdot\mathbf f=0. 
+ \mathbf u\cdot\mathbf f=0.
 $$
 
 For the chosen convention, right and up and backward form a right-handed basis:
 
 $$
- \mathbf r\times\mathbf u=-\mathbf f. 
+ \mathbf r\times\mathbf u=-\mathbf f.
 $$
 
 Equivalently:
 
 $$
- \mathbf r=\mathbf f\times\mathbf u 
+ \mathbf r=\mathbf f\times\mathbf u
 $$
 
 for an orthonormal camera basis with our stated forward convention.
@@ -79510,13 +79691,13 @@ for an orthonormal camera basis with our stated forward convention.
 To verify the identity, take the canonical case:
 
 $$
- \mathbf f=(0,0,-1),\quad \mathbf u=(0,1,0). 
+ \mathbf f=(0,0,-1),\quad \mathbf u=(0,1,0).
 $$
 
 Then:
 
 $$
- \mathbf f\times\mathbf u=(1,0,0)=\mathbf r. 
+ \mathbf f\times\mathbf u=(1,0,0)=\mathbf r.
 $$
 
 ### Why the basis must be recomputed carefully
@@ -79532,19 +79713,19 @@ A robust look-at function performs this construction.
 Suppose the camera position is:
 
 $$
- \mathbf c 
+ \mathbf c
 $$
 
 and the target point is:
 
 $$
- \mathbf t. 
+ \mathbf t.
 $$
 
 We also have an approximate world-up direction:
 
 $$
- \mathbf u_0. 
+ \mathbf u_0.
 $$
 
 We want a camera aimed at the target.
@@ -79554,13 +79735,13 @@ We want a camera aimed at the target.
 The direction from camera to target is:
 
 $$
- \mathbf t-\mathbf c. 
+ \mathbf t-\mathbf c.
 $$
 
 Normalize:
 
 $$
- \boxed{ \mathbf f= \frac{\mathbf t-\mathbf c} {\\|\mathbf t-\mathbf c\\|} }. 
+ \boxed{ \mathbf f= \frac{\mathbf t-\mathbf c} {\|\mathbf t-\mathbf c\|} }.
 $$
 
 The target must not coincide with the camera position.
@@ -79568,7 +79749,7 @@ The target must not coincide with the camera position.
 If:
 
 $$
- \mathbf t=\mathbf c, 
+ \mathbf t=\mathbf c,
 $$
 
 the forward direction is undefined.
@@ -79578,7 +79759,7 @@ the forward direction is undefined.
 Under our reference convention:
 
 $$
- \boxed{ \mathbf r= \frac{\mathbf f\times\mathbf u_0} {\\|\mathbf f\times\mathbf u_0\\|} }. 
+ \boxed{ \mathbf r= \frac{\mathbf f\times\mathbf u_0} {\|\mathbf f\times\mathbf u_0\|} }.
 $$
 
 Why this cross-product order?
@@ -79594,7 +79775,7 @@ The supplied up vector may not be exactly perpendicular to forward.
 Construct:
 
 $$
- \boxed{ \mathbf u=\mathbf r\times\mathbf f }. 
+ \boxed{ \mathbf u=\mathbf r\times\mathbf f }.
 $$
 
 Now $\mathbf r,\mathbf u,-\mathbf f$ form an orthonormal right-handed camera basis.
@@ -79604,13 +79785,13 @@ Now $\mathbf r,\mathbf u,-\mathbf f$ form an orthonormal right-handed camera bas
 Arrange the local camera axes expressed in world coordinates as columns:
 
 $$
- \boxed{ R= \begin{bmatrix} |&|&|\\ \mathbf r&\mathbf u&-\mathbf f\\ |&|&| \end{bmatrix} }. 
+ \boxed{ R= \begin{bmatrix} |&|&|\\ \mathbf r&\mathbf u&-\mathbf f\\ |&|&| \end{bmatrix} }.
 $$
 
 Then:
 
 $$
- R \begin{bmatrix}0\\0\\-1\end{bmatrix} = \mathbf f. 
+ R \begin{bmatrix}0\\0\\-1\end{bmatrix} = \mathbf f.
 $$
 
 This confirms that the camera's local forward direction maps to the intended world forward direction.
@@ -79628,7 +79809,7 @@ Suppose the forward direction is parallel to the supplied world-up vector.
 Then:
 
 $$
- \mathbf f\times\mathbf u_0=\mathbf0. 
+ \mathbf f\times\mathbf u_0=\mathbf0.
 $$
 
 Right is undefined.
@@ -79644,39 +79825,39 @@ The fallback policy can cause an orientation discontinuity when the chosen refer
 Let:
 
 $$
- \mathbf c=(0,0,5), 
+ \mathbf c=(0,0,5),
 $$
 
 $$
- \mathbf t=(0,0,0), 
+ \mathbf t=(0,0,0),
 $$
 
 $$
- \mathbf u_0=(0,1,0). 
+ \mathbf u_0=(0,1,0).
 $$
 
 The forward direction is:
 
 $$
- \mathbf f= \frac{(0,0,-5)}5 = (0,0,-1). 
+ \mathbf f= \frac{(0,0,-5)}5 = (0,0,-1).
 $$
 
 Right:
 
 $$
- \mathbf r=(0,0,-1)\times(0,1,0) =(1,0,0). 
+ \mathbf r=(0,0,-1)\times(0,1,0) =(1,0,0).
 $$
 
 Up:
 
 $$
- \mathbf u=(1,0,0)\times(0,0,-1) =(0,1,0). 
+ \mathbf u=(1,0,0)\times(0,0,-1) =(0,1,0).
 $$
 
 Thus:
 
 $$
- R=I. 
+ R=I.
 $$
 
 The camera has no rotation relative to our canonical axes.
@@ -79688,61 +79869,61 @@ It is simply translated five units along world $+Z$.
 We have the camera-to-world matrix:
 
 $$
- C= \begin{bmatrix} R&\mathbf c\\ 0&1 \end{bmatrix}. 
+ C= \begin{bmatrix} R&\mathbf c\\ 0&1 \end{bmatrix}.
 $$
 
 Because the camera rotation is orthonormal:
 
 $$
- R^{-1}=R^T. 
+ R^{-1}=R^T.
 $$
 
 We seek:
 
 $$
- V=C^{-1}. 
+ V=C^{-1}.
 $$
 
 Suppose:
 
 $$
- V= \begin{bmatrix} R^T&\mathbf q\\ 0&1 \end{bmatrix}. 
+ V= \begin{bmatrix} R^T&\mathbf q\\ 0&1 \end{bmatrix}.
 $$
 
 Require:
 
 $$
- VC=I. 
+ VC=I.
 $$
 
 Multiply:
 
 $$
- VC= \begin{bmatrix} R^TR&R^T\mathbf c+\mathbf q\\ 0&1 \end{bmatrix}. 
+ VC= \begin{bmatrix} R^TR&R^T\mathbf c+\mathbf q\\ 0&1 \end{bmatrix}.
 $$
 
 Because:
 
 $$
- R^TR=I, 
+ R^TR=I,
 $$
 
 the translation block must satisfy:
 
 $$
- R^T\mathbf c+\mathbf q=0. 
+ R^T\mathbf c+\mathbf q=0.
 $$
 
 Therefore:
 
 $$
- \mathbf q=-R^T\mathbf c. 
+ \mathbf q=-R^T\mathbf c.
 $$
 
 Thus:
 
 $$
- \boxed{ V= \begin{bmatrix} R^T&-R^T\mathbf c\\ 0&1 \end{bmatrix} }. 
+ \boxed{ V= \begin{bmatrix} R^T&-R^T\mathbf c\\ 0&1 \end{bmatrix} }.
 $$
 
 This is the exact inverse of a rigid camera transform.
@@ -79752,19 +79933,19 @@ This is the exact inverse of a rigid camera transform.
 Recall:
 
 $$
- R=[\mathbf r\ \mathbf u\ -\mathbf f]. 
+ R=[\mathbf r\ \mathbf u\ -\mathbf f].
 $$
 
 Therefore:
 
 $$
- R^T= \begin{bmatrix} \mathbf r^T\\ \mathbf u^T\\ -\mathbf f^T \end{bmatrix}. 
+ R^T= \begin{bmatrix} \mathbf r^T\\ \mathbf u^T\\ -\mathbf f^T \end{bmatrix}.
 $$
 
 The view matrix is:
 
 $$
- \boxed{ V= \begin{bmatrix} r_x&r_y&r_z&-\mathbf r\cdot\mathbf c\\ u_x&u_y&u_z&-\mathbf u\cdot\mathbf c\\ -f_x&-f_y&-f_z&\mathbf f\cdot\mathbf c\\ 0&0&0&1 \end{bmatrix} }. 
+ \boxed{ V= \begin{bmatrix} r_x&r_y&r_z&-\mathbf r\cdot\mathbf c\\ u_x&u_y&u_z&-\mathbf u\cdot\mathbf c\\ -f_x&-f_y&-f_z&\mathbf f\cdot\mathbf c\\ 0&0&0&1 \end{bmatrix} }.
 $$
 
 This is a row-by-row mathematical display for column-vector multiplication. It does not prescribe whether the 16 numbers are stored row-major or column-major in CPU memory.
@@ -79774,19 +79955,19 @@ This is a row-by-row mathematical display for column-vector multiplication. It d
 Apply $V$ to the camera's own world position:
 
 $$
- \mathbf p_W=\mathbf c. 
+ \mathbf p_W=\mathbf c.
 $$
 
 Then:
 
 $$
- \mathbf p_V=R^T(\mathbf c-\mathbf c)=0. 
+ \mathbf p_V=R^T(\mathbf c-\mathbf c)=0.
 $$
 
 So:
 
 $$
- \boxed{ V\begin{bmatrix}\mathbf c\\1\end{bmatrix} = \begin{bmatrix}0\\0\\0\\1\end{bmatrix} }. 
+ \boxed{ V\begin{bmatrix}\mathbf c\\1\end{bmatrix} = \begin{bmatrix}0\\0\\0\\1\end{bmatrix} }.
 $$
 
 A correct view matrix must put the camera at the origin of view space.
@@ -79796,7 +79977,7 @@ A correct view matrix must put the camera at the origin of view space.
 Let:
 
 $$
- \mathbf t=\mathbf c+d\mathbf f 
+ \mathbf t=\mathbf c+d\mathbf f
 $$
 
 for $d>0$.
@@ -79804,25 +79985,25 @@ for $d>0$.
 Then:
 
 $$
- \mathbf t-\mathbf c=d\mathbf f. 
+ \mathbf t-\mathbf c=d\mathbf f.
 $$
 
 Transform:
 
 $$
- R^T(d\mathbf f). 
+ R^T(d\mathbf f).
 $$
 
 Because $\mathbf f=-R\mathbf e_z$:
 
 $$
- R^T(d\mathbf f) = -d\mathbf e_z. 
+ R^T(d\mathbf f) = -d\mathbf e_z.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf t_V=(0,0,-d) }. 
+ \boxed{ \mathbf t_V=(0,0,-d) }.
 $$
 
 The look-at target lies on the view-space negative-Z axis.
@@ -79834,25 +80015,25 @@ This is an excellent property-based test.
 For:
 
 $$
- \mathbf c=(0,0,5) 
+ \mathbf c=(0,0,5)
 $$
 
 with identity orientation:
 
 $$
- \boxed{ V= \begin{bmatrix} 1&0&0&0\\ 0&1&0&0\\ 0&0&1&-5\\ 0&0&0&1 \end{bmatrix} }. 
+ \boxed{ V= \begin{bmatrix} 1&0&0&0\\ 0&1&0&0\\ 0&0&1&-5\\ 0&0&0&1 \end{bmatrix} }.
 $$
 
 The world origin:
 
 $$
- (0,0,0,1)^T 
+ (0,0,0,1)^T
 $$
 
 transforms to:
 
 $$
- \boxed{(0,0,-5,1)^T}. 
+ \boxed{(0,0,-5,1)^T}.
 $$
 
 The point is five units in front of the camera, exactly as intended.
@@ -79870,25 +80051,25 @@ In one dimension, the world position of an object is $x_W$, while the camera pos
 Its camera-relative position is:
 
 $$
- \boxed{x_C=x_W-c}. 
+ \boxed{x_C=x_W-c}.
 $$
 
 If the camera moves right by $\Delta c$:
 
 $$
- c'=c+\Delta c. 
+ c'=c+\Delta c.
 $$
 
 The new camera-relative coordinate is:
 
 $$
- x_C'=x_W-(c+\Delta c). 
+ x_C'=x_W-(c+\Delta c).
 $$
 
 Therefore:
 
 $$
- \boxed{x_C'=x_C-\Delta c}. 
+ \boxed{x_C'=x_C-\Delta c}.
 $$
 
 Moving the camera right makes world points shift left in camera coordinates.
@@ -79900,7 +80081,7 @@ Suppose the camera rotates by a world-space rotation $R$.
 The view-space transformation uses:
 
 $$
- R^T=R^{-1}. 
+ R^T=R^{-1}.
 $$
 
 If the camera rotates left, the coordinates of stationary world objects rotate right relative to the camera.
@@ -79930,7 +80111,7 @@ In robotics, camera calibration, SLAM, and reconstruction, transform names must 
 For example, define:
 
 $$
- T_{W\leftarrow C} 
+ T_{W\leftarrow C}
 $$
 
 to mean camera coordinates converted into world coordinates.
@@ -79938,7 +80119,7 @@ to mean camera coordinates converted into world coordinates.
 Then:
 
 $$
- T_{C\leftarrow W} = T_{W\leftarrow C}^{-1}. 
+ T_{C\leftarrow W} = T_{W\leftarrow C}^{-1}.
 $$
 
 This arrow convention avoids ambiguous names such as `cameraTransform`, which might mean either camera-to-world or world-to-camera.
@@ -79984,19 +80165,19 @@ The answer is that perspective projection is not an affine transformation.
 An affine transformation has the form:
 
 $$
- \boxed{ \mathbf y=A\mathbf x+\mathbf t }. 
+ \boxed{ \mathbf y=A\mathbf x+\mathbf t }.
 $$
 
 Take a straight line:
 
 $$
- \mathbf x(\lambda)=\mathbf p+\lambda\mathbf d. 
+ \mathbf x(\lambda)=\mathbf p+\lambda\mathbf d.
 $$
 
 Apply the affine transform:
 
 $$
- \begin{aligned} \mathbf y(\lambda) &= A(\mathbf p+\lambda\mathbf d)+\mathbf t\\ &= (A\mathbf p+\mathbf t)+\lambda A\mathbf d. \end{aligned} 
+ \begin{aligned} \mathbf y(\lambda) &= A(\mathbf p+\lambda\mathbf d)+\mathbf t\\ &= (A\mathbf p+\mathbf t)+\lambda A\mathbf d. \end{aligned}
 $$
 
 The image is another straight line with direction $A\mathbf d$.
@@ -80010,45 +80191,45 @@ Thus nonsingular affine transformations preserve parallelism.
 For a pinhole camera looking along the positive optical Z direction, normalized projection is:
 
 $$
- \boxed{ x'=\frac XZ,\qquad y'=\frac YZ }. 
+ \boxed{ x'=\frac XZ,\qquad y'=\frac YZ }.
 $$
 
 Consider a 3D line:
 
 $$
- \mathbf X(t)= \begin{bmatrix} a+tv_x\\ b+tv_y\\ c+tv_z \end{bmatrix}. 
+ \mathbf X(t)= \begin{bmatrix} a+tv_x\\ b+tv_y\\ c+tv_z \end{bmatrix}.
 $$
 
 Its projected coordinates are:
 
 $$
- x'(t)=\frac{a+tv_x}{c+tv_z}, 
+ x'(t)=\frac{a+tv_x}{c+tv_z},
 $$
 
 $$
- y'(t)=\frac{b+tv_y}{c+tv_z}. 
+ y'(t)=\frac{b+tv_y}{c+tv_z}.
 $$
 
 If:
 
 $$
- v_z\ne0, 
+ v_z\ne0,
 $$
 
 take the limit as $t\to\infty$:
 
 $$
- \lim_{t\to\infty}x'(t)=\frac{v_x}{v_z}, 
+ \lim_{t\to\infty}x'(t)=\frac{v_x}{v_z},
 $$
 
 $$
- \lim_{t\to\infty}y'(t)=\frac{v_y}{v_z}. 
+ \lim_{t\to\infty}y'(t)=\frac{v_y}{v_z}.
 $$
 
 Thus the projected line approaches:
 
 $$
- \boxed{ \left( \frac{v_x}{v_z}, \frac{v_y}{v_z} \right) }. 
+ \boxed{ \left( \frac{v_x}{v_z}, \frac{v_y}{v_z} \right) }.
 $$
 
 This limiting image point depends on the line's direction, not its starting position.
@@ -80072,25 +80253,25 @@ That uniformity is extremely useful for camera geometry, calibration, image rect
 In two-dimensional projective geometry, a homogeneous point is represented by a nonzero triple:
 
 $$
- \boxed{ \mathbf p= \begin{bmatrix} x\\y\\w \end{bmatrix} }. 
+ \boxed{ \mathbf p= \begin{bmatrix} x\\y\\w \end{bmatrix} }.
 $$
 
 If:
 
 $$
- w\ne0, 
+ w\ne0,
 $$
 
 the corresponding finite Cartesian point is:
 
 $$
- \boxed{ \left(\frac xw,\frac yw\right) }. 
+ \boxed{ \left(\frac xw,\frac yw\right) }.
 $$
 
 But if:
 
 $$
- \boxed{w=0}, 
+ \boxed{w=0},
 $$
 
 we cannot convert the representation to a finite Cartesian point.
@@ -80102,25 +80283,25 @@ Instead, the homogeneous point represents a point at infinity.
 Consider the homogeneous point:
 
 $$
- \boxed{ \mathbf p_\infty= \begin{bmatrix} d_x\\d_y\\0 \end{bmatrix} }. 
+ \boxed{ \mathbf p_\infty= \begin{bmatrix} d_x\\d_y\\0 \end{bmatrix} }.
 $$
 
 It represents the ideal point associated with direction:
 
 $$
- (d_x,d_y). 
+ (d_x,d_y).
 $$
 
 Because homogeneous coordinates are defined only up to nonzero scale, the representations:
 
 $$
- (d_x,d_y,0) 
+ (d_x,d_y,0)
 $$
 
 and:
 
 $$
- (2d_x,2d_y,0) 
+ (2d_x,2d_y,0)
 $$
 
 represent the same projective point.
@@ -80134,13 +80315,13 @@ Its orientation is the important feature.
 Consider two horizontal lines:
 
 $$
- y=1 
+ y=1
 $$
 
 and:
 
 $$
- y=2. 
+ y=2.
 $$
 
 They have no finite Euclidean intersection.
@@ -80148,11 +80329,11 @@ They have no finite Euclidean intersection.
 In homogeneous line form, their equations are:
 
 $$
- y-w=0, 
+ y-w=0,
 $$
 
 $$
- y-2w=0. 
+ y-2w=0.
 $$
 
 An intersection must satisfy both.
@@ -80160,13 +80341,13 @@ An intersection must satisfy both.
 Subtract the equations:
 
 $$
- w=0. 
+ w=0.
 $$
 
 Then:
 
 $$
- y=0. 
+ y=0.
 $$
 
 The remaining nonzero homogeneous coordinate may be $x$.
@@ -80174,7 +80355,7 @@ The remaining nonzero homogeneous coordinate may be $x$.
 Thus the intersection is:
 
 $$
- \boxed{ (1,0,0) }. 
+ \boxed{ (1,0,0) }.
 $$
 
 This is the point at infinity in the horizontal direction.
@@ -80184,19 +80365,19 @@ This is the point at infinity in the horizontal direction.
 In the projective plane, all points at infinity satisfy:
 
 $$
- w=0. 
+ w=0.
 $$
 
 That is itself a projective line, called the line at infinity:
 
 $$
- \boxed{ \ell_\infty=(0,0,1) }. 
+ \boxed{ \ell_\infty=(0,0,1) }.
 $$
 
 Its equation is:
 
 $$
- 0x+0y+1w=0. 
+ 0x+0y+1w=0.
 $$
 
 The line at infinity contains the ideal points associated with all directions in the affine plane.
@@ -80208,19 +80389,19 @@ A general projective transformation need not preserve the chosen line at infinit
 In projective 3D, a point has homogeneous representation:
 
 $$
- \boxed{ (X,Y,Z,W) }. 
+ \boxed{ (X,Y,Z,W) }.
 $$
 
 Finite points have:
 
 $$
- W\ne0. 
+ W\ne0.
 $$
 
 Points at infinity have:
 
 $$
- \boxed{W=0}. 
+ \boxed{W=0}.
 $$
 
 The ideal points form a plane at infinity in projective 3D.
@@ -80238,31 +80419,31 @@ It represents an equivalence class of nonzero vectors.
 The relation is:
 
 $$
- \boxed{ \mathbf p\sim\lambda\mathbf p } 
+ \boxed{ \mathbf p\sim\lambda\mathbf p }
 $$
 
 for:
 
 $$
- \lambda\ne0. 
+ \lambda\ne0.
 $$
 
 In projective 2D:
 
 $$
- (2,4,2)\sim(1,2,1). 
+ (2,4,2)\sim(1,2,1).
 $$
 
 Both represent Cartesian point:
 
 $$
- (1,2). 
+ (1,2).
 $$
 
 Similarly:
 
 $$
- (4,8,0)\sim(1,2,0). 
+ (4,8,0)\sim(1,2,0).
 $$
 
 Both represent the same point at infinity.
@@ -80272,7 +80453,7 @@ Both represent the same point at infinity.
 If we permitted:
 
 $$
- \lambda=0, 
+ \lambda=0,
 $$
 
 every homogeneous vector could become the zero vector.
@@ -80288,25 +80469,25 @@ Let $H$ be an invertible projective transformation matrix.
 Suppose two homogeneous vectors represent the same projective point:
 
 $$
- \mathbf q=\lambda\mathbf p. 
+ \mathbf q=\lambda\mathbf p.
 $$
 
 Then:
 
 $$
- H\mathbf q=H(\lambda\mathbf p). 
+ H\mathbf q=H(\lambda\mathbf p).
 $$
 
 By linearity:
 
 $$
- H\mathbf q=\lambda H\mathbf p. 
+ H\mathbf q=\lambda H\mathbf p.
 $$
 
 Therefore:
 
 $$
- \boxed{ H\mathbf q\sim H\mathbf p }. 
+ \boxed{ H\mathbf q\sim H\mathbf p }.
 $$
 
 The transformation is well-defined on projective equivalence classes.
@@ -80318,37 +80499,37 @@ This is one of the reasons matrix algebra fits projective geometry so naturally.
 A projective point transforms as:
 
 $$
- \boxed{ \mathbf p'=H\mathbf p }. 
+ \boxed{ \mathbf p'=H\mathbf p }.
 $$
 
 A plane is represented by a covector $\boldsymbol\pi$ satisfying:
 
 $$
- \boldsymbol\pi^T\mathbf p=0. 
+ \boldsymbol\pi^T\mathbf p=0.
 $$
 
 We want incidence to remain valid after transformation:
 
 $$
- \boldsymbol\pi'^T\mathbf p'=0. 
+ \boldsymbol\pi'^T\mathbf p'=0.
 $$
 
 Substitute:
 
 $$
- \boldsymbol\pi'^TH\mathbf p=0. 
+ \boldsymbol\pi'^TH\mathbf p=0.
 $$
 
 To preserve the original plane equation for all points on the plane, choose:
 
 $$
- \boldsymbol\pi'^TH=\boldsymbol\pi^T. 
+ \boldsymbol\pi'^TH=\boldsymbol\pi^T.
 $$
 
 Therefore:
 
 $$
- \boxed{ \boldsymbol\pi'=H^{-T}\boldsymbol\pi }. 
+ \boxed{ \boldsymbol\pi'=H^{-T}\boldsymbol\pi }.
 $$
 
 This is the same inverse-transpose rule used to transform geometric planes.
@@ -80374,31 +80555,31 @@ A robust projective geometry API should distinguish finite points from ideal poi
 A line in the projective plane has homogeneous coefficients:
 
 $$
- \boxed{ \boldsymbol\ell= \begin{bmatrix} a\\b\\c \end{bmatrix} }. 
+ \boxed{ \boldsymbol\ell= \begin{bmatrix} a\\b\\c \end{bmatrix} }.
 $$
 
 A homogeneous point:
 
 $$
- \mathbf p= \begin{bmatrix} x\\y\\w \end{bmatrix} 
+ \mathbf p= \begin{bmatrix} x\\y\\w \end{bmatrix}
 $$
 
 lies on the line if:
 
 $$
- \boxed{ \boldsymbol\ell^T\mathbf p=0 }. 
+ \boxed{ \boldsymbol\ell^T\mathbf p=0 }.
 $$
 
 Expanded:
 
 $$
- \boxed{ ax+by+cw=0 }. 
+ \boxed{ ax+by+cw=0 }.
 $$
 
 For finite points with $w=1$, this becomes the ordinary Cartesian line:
 
 $$
- ax+by+c=0. 
+ ax+by+c=0.
 $$
 
 ### Construct a line from two points
@@ -80406,17 +80587,17 @@ $$
 Take two homogeneous points:
 
 $$
- \mathbf p,\mathbf q. 
+ \mathbf p,\mathbf q.
 $$
 
 We want a line whose coefficients are perpendicular to both homogeneous vectors:
 
 $$
- \boldsymbol\ell^T\mathbf p=0, 
+ \boldsymbol\ell^T\mathbf p=0,
 $$
 
 $$
- \boldsymbol\ell^T\mathbf q=0. 
+ \boldsymbol\ell^T\mathbf q=0.
 $$
 
 In three dimensions, the cross product produces a vector orthogonal to both inputs.
@@ -80424,7 +80605,7 @@ In three dimensions, the cross product produces a vector orthogonal to both inpu
 Therefore:
 
 $$
- \boxed{ \boldsymbol\ell=\mathbf p\times\mathbf q }. 
+ \boxed{ \boldsymbol\ell=\mathbf p\times\mathbf q }.
 $$
 
 This is the join operation in the projective plane.
@@ -80434,47 +80615,47 @@ This is the join operation in the projective plane.
 Take Cartesian points:
 
 $$
- P=(1,2) 
+ P=(1,2)
 $$
 
 and:
 
 $$
- Q=(3,6). 
+ Q=(3,6).
 $$
 
 Their homogeneous representations are:
 
 $$
- \mathbf p=(1,2,1), 
+ \mathbf p=(1,2,1),
 $$
 
 $$
- \mathbf q=(3,6,1). 
+ \mathbf q=(3,6,1).
 $$
 
 Compute:
 
 $$
- \mathbf p\times\mathbf q= \begin{bmatrix} 2(1)-1(6)\\ 1(3)-1(1)\\ 1(6)-2(3) \end{bmatrix}. 
+ \mathbf p\times\mathbf q= \begin{bmatrix} 2(1)-1(6)\\ 1(3)-1(1)\\ 1(6)-2(3) \end{bmatrix}.
 $$
 
 Thus:
 
 $$
- \boxed{ \boldsymbol\ell=(-4,2,0) }. 
+ \boxed{ \boldsymbol\ell=(-4,2,0) }.
 $$
 
 The line equation is:
 
 $$
- -4x+2y=0. 
+ -4x+2y=0.
 $$
 
 Simplify:
 
 $$
- \boxed{y=2x}. 
+ \boxed{y=2x}.
 $$
 
 Both points satisfy it.
@@ -80484,7 +80665,7 @@ Both points satisfy it.
 Suppose two projective lines have coefficient vectors:
 
 $$
- \boldsymbol\ell_1,\boldsymbol\ell_2. 
+ \boldsymbol\ell_1,\boldsymbol\ell_2.
 $$
 
 Their intersection is a point orthogonal to both line vectors.
@@ -80492,7 +80673,7 @@ Their intersection is a point orthogonal to both line vectors.
 Therefore:
 
 $$
- \boxed{ \mathbf p=\boldsymbol\ell_1\times\boldsymbol\ell_2 }. 
+ \boxed{ \mathbf p=\boldsymbol\ell_1\times\boldsymbol\ell_2 }.
 $$
 
 This is the meet operation.
@@ -80502,35 +80683,35 @@ This is the meet operation.
 Consider:
 
 $$
- x=1 
+ x=1
 $$
 
 and:
 
 $$
- y=2. 
+ y=2.
 $$
 
 In homogeneous form:
 
 $$
- \boldsymbol\ell_1=(1,0,-1), 
+ \boldsymbol\ell_1=(1,0,-1),
 $$
 
 $$
- \boldsymbol\ell_2=(0,1,-2). 
+ \boldsymbol\ell_2=(0,1,-2).
 $$
 
 Their cross product is:
 
 $$
- \boldsymbol\ell_1\times\boldsymbol\ell_2 = \begin{bmatrix} 1\\2\\1 \end{bmatrix}. 
+ \boldsymbol\ell_1\times\boldsymbol\ell_2 = \begin{bmatrix} 1\\2\\1 \end{bmatrix}.
 $$
 
 Thus the intersection is:
 
 $$
- \boxed{(1,2)}. 
+ \boxed{(1,2)}.
 $$
 
 The exact same operation also handles parallel lines, producing a homogeneous point at infinity when appropriate.
@@ -80540,13 +80721,13 @@ The exact same operation also handles parallel lines, producing a homogeneous po
 Let image points transform by a homography:
 
 $$
- \mathbf p'=H\mathbf p. 
+ \mathbf p'=H\mathbf p.
 $$
 
 The corresponding line transforms as:
 
 $$
- \boxed{ \boldsymbol\ell'=H^{-T}\boldsymbol\ell }. 
+ \boxed{ \boldsymbol\ell'=H^{-T}\boldsymbol\ell }.
 $$
 
 This follows from the same incidence-preservation derivation used for planes.
@@ -80566,31 +80747,31 @@ A Euclidean distance formula is not needed for the basic intersection operation.
 A plane in projective three-dimensional space is represented by four homogeneous coefficients:
 
 $$
- \boxed{ \boldsymbol\pi= \begin{bmatrix} a\\b\\c\\d \end{bmatrix} }. 
+ \boxed{ \boldsymbol\pi= \begin{bmatrix} a\\b\\c\\d \end{bmatrix} }.
 $$
 
 A homogeneous 3D point:
 
 $$
- \mathbf p= \begin{bmatrix} X\\Y\\Z\\W \end{bmatrix} 
+ \mathbf p= \begin{bmatrix} X\\Y\\Z\\W \end{bmatrix}
 $$
 
 lies on the plane when:
 
 $$
- \boxed{ \boldsymbol\pi^T\mathbf p=0 }. 
+ \boxed{ \boldsymbol\pi^T\mathbf p=0 }.
 $$
 
 Expanded:
 
 $$
- \boxed{ aX+bY+cZ+dW=0 }. 
+ \boxed{ aX+bY+cZ+dW=0 }.
 $$
 
 For an ordinary Cartesian point represented with $W=1$:
 
 $$
- aX+bY+cZ+d=0. 
+ aX+bY+cZ+d=0.
 $$
 
 ### Plane through three points
@@ -80598,47 +80779,47 @@ $$
 Suppose three noncollinear finite points are:
 
 $$
- P_0,\quad P_1,\quad P_2. 
+ P_0,\quad P_1,\quad P_2.
 $$
 
 Construct edges:
 
 $$
- \mathbf e_1=P_1-P_0, 
+ \mathbf e_1=P_1-P_0,
 $$
 
 $$
- \mathbf e_2=P_2-P_0. 
+ \mathbf e_2=P_2-P_0.
 $$
 
 The Euclidean normal is:
 
 $$
- \boxed{ \mathbf n=\mathbf e_1\times\mathbf e_2 }. 
+ \boxed{ \mathbf n=\mathbf e_1\times\mathbf e_2 }.
 $$
 
 The plane equation must satisfy:
 
 $$
- \mathbf n\cdot(P-P_0)=0. 
+ \mathbf n\cdot(P-P_0)=0.
 $$
 
 Expand:
 
 $$
- \mathbf n\cdot P-\mathbf n\cdot P_0=0. 
+ \mathbf n\cdot P-\mathbf n\cdot P_0=0.
 $$
 
 Thus the plane offset is:
 
 $$
- \boxed{ d=-\mathbf n\cdot P_0 }. 
+ \boxed{ d=-\mathbf n\cdot P_0 }.
 $$
 
 The homogeneous plane is:
 
 $$
- \boxed{ \boldsymbol\pi= (n_x,n_y,n_z,d) }. 
+ \boxed{ \boldsymbol\pi= (n_x,n_y,n_z,d) }.
 $$
 
 ### Example
@@ -80646,49 +80827,49 @@ $$
 Take:
 
 $$
- P_0=(0,0,2), 
+ P_0=(0,0,2),
 $$
 
 $$
- P_1=(1,0,2), 
+ P_1=(1,0,2),
 $$
 
 $$
- P_2=(0,1,2). 
+ P_2=(0,1,2).
 $$
 
 The edges are:
 
 $$
- \mathbf e_1=(1,0,0), 
+ \mathbf e_1=(1,0,0),
 $$
 
 $$
- \mathbf e_2=(0,1,0). 
+ \mathbf e_2=(0,1,0).
 $$
 
 Their cross product is:
 
 $$
- \mathbf n=(0,0,1). 
+ \mathbf n=(0,0,1).
 $$
 
 The offset is:
 
 $$
- d=-\mathbf n\cdot P_0=-2. 
+ d=-\mathbf n\cdot P_0=-2.
 $$
 
 Thus:
 
 $$
- \boxed{ \boldsymbol\pi=(0,0,1,-2) }. 
+ \boxed{ \boldsymbol\pi=(0,0,1,-2) }.
 $$
 
 Its Cartesian equation is:
 
 $$
- \boxed{z=2}. 
+ \boxed{z=2}.
 $$
 
 ### Three planes can determine a point
@@ -80696,13 +80877,13 @@ $$
 For three independent planes:
 
 $$
- \boldsymbol\pi_1,\boldsymbol\pi_2,\boldsymbol\pi_3, 
+ \boldsymbol\pi_1,\boldsymbol\pi_2,\boldsymbol\pi_3,
 $$
 
 a point at their intersection satisfies:
 
 $$
- \boldsymbol\pi_i^T\mathbf p=0 
+ \boldsymbol\pi_i^T\mathbf p=0
 $$
 
 for all three planes.
@@ -80720,19 +80901,19 @@ This is a projective version of solving three simultaneous plane equations.
 If points transform as:
 
 $$
- \mathbf p'=H\mathbf p, 
+ \mathbf p'=H\mathbf p,
 $$
 
 then planes transform as:
 
 $$
- \boxed{ \boldsymbol\pi'=H^{-T}\boldsymbol\pi }. 
+ \boxed{ \boldsymbol\pi'=H^{-T}\boldsymbol\pi }.
 $$
 
 This preserves the incidence relationship:
 
 $$
- \boldsymbol\pi^T\mathbf p=0. 
+ \boldsymbol\pi^T\mathbf p=0.
 $$
 
 A crucial practical consequence is that you should not generally transform a plane by multiplying its coefficient vector directly by the point transformation matrix.
@@ -80770,13 +80951,13 @@ Imagine a camera looking along local $-Z$.
 Consider two equal-sized squares, one at:
 
 $$
- z=-2 
+ z=-2
 $$
 
 and another at:
 
 $$
- z=-20. 
+ z=-20.
 $$
 
 Under orthographic projection, their horizontal and vertical image dimensions are equal.
@@ -80788,13 +80969,13 @@ The camera is defined by a rectangular viewing volume with horizontal boundaries
 For our right-handed convention:
 
 $$
- z_{\mathrm{near}}=-n, \qquad z_{\mathrm{far}}=-f 
+ z_{\mathrm{near}}=-n, \qquad z_{\mathrm{far}}=-f
 $$
 
 where:
 
 $$
- 0\<n\<f. 
+ 0\<n\<f.
 $$
 
 The view volume is a rectangular box, rather than a pyramidal frustum.
@@ -80806,7 +80987,7 @@ Under orthographic projection, the projected XY position depends only on the cam
 For a centred orthographic camera:
 
 $$
- x_n=k_xx_v, \qquad y_n=k_yy_v. 
+ x_n=k_xx_v, \qquad y_n=k_yy_v.
 $$
 
 There is no division by depth.
@@ -80814,13 +80995,13 @@ There is no division by depth.
 A point at:
 
 $$
- (1,2,-3) 
+ (1,2,-3)
 $$
 
 and a point at:
 
 $$
- (1,2,-300) 
+ (1,2,-300)
 $$
 
 have identical projected XY coordinates.
@@ -80840,65 +81021,65 @@ However, calling an orthographic view physically realistic is not generally corr
 We want to map the horizontal camera-space interval:
 
 $$
- x\in[l,r] 
+ x\in[l,r]
 $$
 
 to:
 
 $$
- x_n\in[-1,1]. 
+ x_n\in[-1,1].
 $$
 
 Assume an affine mapping:
 
 $$
- x_n=ax+b. 
+ x_n=ax+b.
 $$
 
 Enforce the endpoints:
 
 $$
- al+b=-1, 
+ al+b=-1,
 $$
 
 $$
- ar+b=1. 
+ ar+b=1.
 $$
 
 Subtract:
 
 $$
- a(r-l)=2. 
+ a(r-l)=2.
 $$
 
 Therefore:
 
 $$
- \boxed{ a=\frac2{r-l} }. 
+ \boxed{ a=\frac2{r-l} }.
 $$
 
 Substitute into the first equation:
 
 $$
- b=-1-\frac{2l}{r-l}. 
+ b=-1-\frac{2l}{r-l}.
 $$
 
 Combine:
 
 $$
- \boxed{ b=-\frac{r+l}{r-l} }. 
+ \boxed{ b=-\frac{r+l}{r-l} }.
 $$
 
 Thus:
 
 $$
- \boxed{ x_n= \frac{2x}{r-l} -\frac{r+l}{r-l} }. 
+ \boxed{ x_n= \frac{2x}{r-l} -\frac{r+l}{r-l} }.
 $$
 
 For the vertical coordinate, the same reasoning gives:
 
 $$
- \boxed{ y_n= \frac{2y}{t-b} -\frac{t+b}{t-b} }. 
+ \boxed{ y_n= \frac{2y}{t-b} -\frac{t+b}{t-b} }.
 $$
 
 ### Derive the depth mapping
@@ -80908,51 +81089,51 @@ Under our right-handed camera convention, points in front have negative view-spa
 We want the conventional zero-to-one depth mapping:
 
 $$
- z=-n\longmapsto z_n=0, 
+ z=-n\longmapsto z_n=0,
 $$
 
 $$
- z=-f\longmapsto z_n=1. 
+ z=-f\longmapsto z_n=1.
 $$
 
 Assume:
 
 $$
- z_n=Az+B. 
+ z_n=Az+B.
 $$
 
 The endpoint equations are:
 
 $$
- -An+B=0, 
+ -An+B=0,
 $$
 
 $$
- -Af+B=1. 
+ -Af+B=1.
 $$
 
 Subtract the first equation from the second:
 
 $$
- -A(f-n)=1. 
+ -A(f-n)=1.
 $$
 
 Thus:
 
 $$
- \boxed{ A=-\frac1{f-n} }. 
+ \boxed{ A=-\frac1{f-n} }.
 $$
 
 From the first equation:
 
 $$
- B=An=-\frac n{f-n}. 
+ B=An=-\frac n{f-n}.
 $$
 
 Therefore:
 
 $$
- \boxed{ z_n=\frac{-z-n}{f-n} }. 
+ \boxed{ z_n=\frac{-z-n}{f-n} }.
 $$
 
 ### Assemble the matrix
@@ -80960,19 +81141,19 @@ $$
 Using column-vector multiplication:
 
 $$
- \boxed{ P_{\mathrm{ortho}}^{[0,1]}= \begin{bmatrix} \dfrac2{r-l}&0&0&-\dfrac{r+l}{r-l}\\ 0&\dfrac2{t-b}&0&-\dfrac{t+b}{t-b}\\ 0&0&-\dfrac1{f-n}&-\dfrac n{f-n}\\ 0&0&0&1 \end{bmatrix} }. 
+ \boxed{ P_{\mathrm{ortho}}^{[0,1]}= \begin{bmatrix} \dfrac2{r-l}&0&0&-\dfrac{r+l}{r-l}\\ 0&\dfrac2{t-b}&0&-\dfrac{t+b}{t-b}\\ 0&0&-\dfrac1{f-n}&-\dfrac n{f-n}\\ 0&0&0&1 \end{bmatrix} }.
 $$
 
 Multiply it by:
 
 $$
- \begin{bmatrix}x\\y\\z\\1\end{bmatrix}. 
+ \begin{bmatrix}x\\y\\z\\1\end{bmatrix}.
 $$
 
 The resulting homogeneous coordinate has:
 
 $$
- w_c=1. 
+ w_c=1.
 $$
 
 Therefore the perspective division does nothing to XY.
@@ -80984,25 +81165,25 @@ This is why the orthographic matrix does not produce perspective shrinking.
 If the target depth interval is:
 
 $$
- [-1,1], 
+ [-1,1],
 $$
 
 the depth mapping must send:
 
 $$
- -n\mapsto-1, \qquad -f\mapsto1. 
+ -n\mapsto-1, \qquad -f\mapsto1.
 $$
 
 Solving the same affine mapping gives:
 
 $$
- \boxed{ z_n= -\frac{2z+f+n}{f-n} }. 
+ \boxed{ z_n= -\frac{2z+f+n}{f-n} }.
 $$
 
 Thus the depth row becomes:
 
 $$
- \begin{bmatrix} 0&0&-\dfrac2{f-n}&-\dfrac{f+n}{f-n} \end{bmatrix}. 
+ \begin{bmatrix} 0&0&-\dfrac2{f-n}&-\dfrac{f+n}{f-n} \end{bmatrix}.
 $$
 
 The XY rows remain unchanged.
@@ -81012,23 +81193,23 @@ The XY rows remain unchanged.
 For reversed zero-to-one depth:
 
 $$
- -n\mapsto1, 
+ -n\mapsto1,
 $$
 
 $$
- -f\mapsto0. 
+ -f\mapsto0.
 $$
 
 The mapping is:
 
 $$
- \boxed{ z_n=\frac{z+f}{f-n} }. 
+ \boxed{ z_n=\frac{z+f}{f-n} }.
 $$
 
 The third row becomes:
 
 $$
- \begin{bmatrix} 0&0&\dfrac1{f-n}&\dfrac f{f-n} \end{bmatrix}. 
+ \begin{bmatrix} 0&0&\dfrac1{f-n}&\dfrac f{f-n} \end{bmatrix}.
 $$
 
 Orthographic depth is linear in camera-space depth. Reversing the mapping does not create the same large floating-point precision benefit that reversed-Z produces for perspective projection.
@@ -81038,41 +81219,41 @@ Orthographic depth is linear in camera-space depth. Reversing the mapping does n
 Let:
 
 $$
- l=-4,\ r=4,\ b=-3,\ t=3, 
+ l=-4,\ r=4,\ b=-3,\ t=3,
 $$
 
 $$
- n=1,\ f=101. 
+ n=1,\ f=101.
 $$
 
 For a point:
 
 $$
- \mathbf p_V= \begin{bmatrix}2\\1.5\\-51\\1\end{bmatrix}, 
+ \mathbf p_V= \begin{bmatrix}2\\1.5\\-51\\1\end{bmatrix},
 $$
 
 the horizontal coordinate is:
 
 $$
- x_n=\frac{2(2)}8=0.5. 
+ x_n=\frac{2(2)}8=0.5.
 $$
 
 The vertical coordinate is:
 
 $$
- y_n=\frac{2(1.5)}6=0.5. 
+ y_n=\frac{2(1.5)}6=0.5.
 $$
 
 The depth is:
 
 $$
- z_n=\frac{51-1}{101-1}=\frac{50}{100}=0.5. 
+ z_n=\frac{51-1}{101-1}=\frac{50}{100}=0.5.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf p_{\mathrm{NDC}}=(0.5,0.5,0.5) }. 
+ \boxed{ \mathbf p_{\mathrm{NDC}}=(0.5,0.5,0.5) }.
 $$
 
 Every coordinate lies at the midpoint between its corresponding boundaries.
@@ -81086,7 +81267,7 @@ A point's apparent position depends on both its transverse displacement and its 
 For our camera convention, define positive forward distance:
 
 $$
- \boxed{d=-z_v>0}. 
+ \boxed{d=-z_v>0}.
 $$
 
 The camera looks toward $-Z$, but it is more convenient to express physical depth as a positive number $d$.
@@ -81096,25 +81277,25 @@ Suppose the camera has a virtual image plane at distance $s>0$.
 A point:
 
 $$
- (x_v,y_v,-d) 
+ (x_v,y_v,-d)
 $$
 
 projects to image-plane coordinates:
 
 $$
- \boxed{ x_{\mathrm{image}}=\frac{s}{d}x_v } 
+ \boxed{ x_{\mathrm{image}}=\frac{s}{d}x_v }
 $$
 
 and:
 
 $$
- \boxed{ y_{\mathrm{image}}=\frac{s}{d}y_v }. 
+ \boxed{ y_{\mathrm{image}}=\frac{s}{d}y_v }.
 $$
 
 The key factor is:
 
 $$
- \frac1d. 
+ \frac1d.
 $$
 
 As depth increases, apparent size decreases.
@@ -81128,13 +81309,13 @@ Suppose an object has physical height $H_o$ and is approximately perpendicular t
 Its projected height on the virtual image plane is:
 
 $$
- \boxed{ h_{\mathrm{image}}=\frac{sH_o}{d} }. 
+ \boxed{ h_{\mathrm{image}}=\frac{sH_o}{d} }.
 $$
 
 If the object moves from depth $d$ to depth $2d$:
 
 $$
- h'_{\mathrm{image}} = \frac{sH_o}{2d} = \frac12h_{\mathrm{image}}. 
+ h'_{\mathrm{image}} = \frac{sH_o}{2d} = \frac12h_{\mathrm{image}}.
 $$
 
 Thus doubling distance halves apparent size in the ideal pinhole model.
@@ -81146,7 +81327,7 @@ This is the basic geometric explanation for perspective.
 The projected coordinate:
 
 $$
- x_{\mathrm{image}}=\frac{s x_v}{d} 
+ x_{\mathrm{image}}=\frac{s x_v}{d}
 $$
 
 is a ratio of quantities.
@@ -81170,19 +81351,19 @@ The two right triangles formed by the camera centre, optical axis, and projected
 Therefore:
 
 $$
- \frac{x_s}{s}=\frac{x}{d}. 
+ \frac{x_s}{s}=\frac{x}{d}.
 $$
 
 Multiply by $s$:
 
 $$
- \boxed{ x_s=\frac{s}{d}x }. 
+ \boxed{ x_s=\frac{s}{d}x }.
 $$
 
 The same derivation gives:
 
 $$
- \boxed{ y_s=\frac{s}{d}y }. 
+ \boxed{ y_s=\frac{s}{d}y }.
 $$
 
 ### Field of view from the viewing triangle
@@ -81194,19 +81375,19 @@ The vertical field of view is $\theta_y$.
 The upper half of the viewing triangle satisfies:
 
 $$
- \tan\left(\frac{\theta_y}{2}\right) = \frac{H_s/2}{s}. 
+ \tan\left(\frac{\theta_y}{2}\right) = \frac{H_s/2}{s}.
 $$
 
 Therefore:
 
 $$
- \boxed{ H_s=2s\tan\left(\frac{\theta_y}{2}\right) }. 
+ \boxed{ H_s=2s\tan\left(\frac{\theta_y}{2}\right) }.
 $$
 
 At depth $d$, the visible world-space height is:
 
 $$
- \boxed{ H(d)=2d\tan\left(\frac{\theta_y}{2}\right) }. 
+ \boxed{ H(d)=2d\tan\left(\frac{\theta_y}{2}\right) }.
 $$
 
 This formula is useful for determining the footprint of a pixel at a given camera depth and for selecting spatial detail relative to screen resolution.
@@ -81216,31 +81397,31 @@ This formula is useful for determining the footprint of a pixel at a given camer
 Suppose:
 
 $$
- \theta_y=60^\circ, \qquad d=10. 
+ \theta_y=60^\circ, \qquad d=10.
 $$
 
 Then:
 
 $$
- H(10)=20\tan30^\circ. 
+ H(10)=20\tan30^\circ.
 $$
 
 Since:
 
 $$
- \tan30^\circ=\frac1{\sqrt3}, 
+ \tan30^\circ=\frac1{\sqrt3},
 $$
 
 we get:
 
 $$
- \boxed{ H(10)\approx11.5470 }. 
+ \boxed{ H(10)\approx11.5470 }.
 $$
 
 At depth 20:
 
 $$
- H(20)\approx23.0940. 
+ H(20)\approx23.0940.
 $$
 
 The visible height doubles with depth.
@@ -81248,7 +81429,7 @@ The visible height doubles with depth.
 For a framebuffer with 1080 pixels vertically, the idealized world-space height corresponding to one pixel at depth 10 is approximately:
 
 $$
- \frac{11.5470}{1080}\approx0.01069 
+ \frac{11.5470}{1080}\approx0.01069
 $$
 
 world units, assuming a locally front-facing plane and simple pinhole projection.
@@ -81262,19 +81443,19 @@ This is one reason distant geometry has smaller screen-space footprints.
 The perspective divide converts homogeneous clip coordinates:
 
 $$
- \mathbf p_C= (x_c,y_c,z_c,w_c) 
+ \mathbf p_C= (x_c,y_c,z_c,w_c)
 $$
 
 into NDC:
 
 $$
- \boxed{ \mathbf p_N= \left( \frac{x_c}{w_c}, \frac{y_c}{w_c}, \frac{z_c}{w_c} \right) }. 
+ \boxed{ \mathbf p_N= \left( \frac{x_c}{w_c}, \frac{y_c}{w_c}, \frac{z_c}{w_c} \right) }.
 $$
 
 In our right-handed perspective convention, we will choose:
 
 $$
- \boxed{ w_c=-z_v=d }. 
+ \boxed{ w_c=-z_v=d }.
 $$
 
 Then any clip coordinate proportional to camera-space $x$ or $y$ becomes inversely proportional to depth after division.
@@ -81282,13 +81463,13 @@ Then any clip coordinate proportional to camera-space $x$ or $y$ becomes inverse
 For example, choose:
 
 $$
- x_c=k_xx_v. 
+ x_c=k_xx_v.
 $$
 
 Then:
 
 $$
- x_n= \frac{k_xx_v}{-z_v} = k_x\frac{x_v}{d}. 
+ x_n= \frac{k_xx_v}{-z_v} = k_x\frac{x_v}{d}.
 $$
 
 This is exactly the similar-triangle relationship.
@@ -81298,13 +81479,13 @@ This is exactly the similar-triangle relationship.
 Suppose the projection produces:
 
 $$
- \mathbf p_C= \begin{bmatrix} 2\\1\\3\\4 \end{bmatrix}. 
+ \mathbf p_C= \begin{bmatrix} 2\\1\\3\\4 \end{bmatrix}.
 $$
 
 The NDC position is:
 
 $$
- \boxed{ \mathbf p_N= \begin{bmatrix} 0.5\\0.25\\0.75 \end{bmatrix} }. 
+ \boxed{ \mathbf p_N= \begin{bmatrix} 0.5\\0.25\\0.75 \end{bmatrix} }.
 $$
 
 The division is applied to all three spatial coordinates, including depth.
@@ -81316,19 +81497,19 @@ The perspective divide is undefined.
 For our perspective matrix:
 
 $$
- w_c=-z_v. 
+ w_c=-z_v.
 $$
 
 Thus a point lying exactly on the camera plane:
 
 $$
- z_v=0 
+ z_v=0
 $$
 
 has:
 
 $$
- w_c=0. 
+ w_c=0.
 $$
 
 It cannot be projected as an ordinary finite camera-visible point through the perspective divide.
@@ -81340,13 +81521,13 @@ The clipping and rasterization pipeline must handle such geometry before perform
 A point behind the camera has:
 
 $$
- z_v>0, 
+ z_v>0,
 $$
 
 so:
 
 $$
- w_c=-z_v<0. 
+ w_c=-z_v<0.
 $$
 
 Blindly dividing a behind-camera point can produce XY coordinates that look numerically plausible while describing an invalid visible projection.
@@ -81362,13 +81543,13 @@ Homogeneous coordinates represent geometric points in projective space.
 For ordinary affine 3D points, we commonly use:
 
 $$
- (x,y,z,1). 
+ (x,y,z,1).
 $$
 
 But a general projective point is represented by:
 
 $$
- \boxed{ (x,y,z,w) } 
+ \boxed{ (x,y,z,w) }
 $$
 
 with not all components zero.
@@ -81376,25 +81557,25 @@ with not all components zero.
 Two nonzero homogeneous vectors represent the same projective point if they differ by a nonzero scalar factor:
 
 $$
- \boxed{ (x,y,z,w) \sim (\lambda x,\lambda y,\lambda z,\lambda w) } 
+ \boxed{ (x,y,z,w) \sim (\lambda x,\lambda y,\lambda z,\lambda w) }
 $$
 
 for:
 
 $$
- \lambda\ne0. 
+ \lambda\ne0.
 $$
 
 For example:
 
 $$
- (2,4,6,2) 
+ (2,4,6,2)
 $$
 
 and:
 
 $$
- (1,2,3,1) 
+ (1,2,3,1)
 $$
 
 represent the same finite point.
@@ -81402,7 +81583,7 @@ represent the same finite point.
 After homogeneous division, both produce:
 
 $$
- (1,2,3). 
+ (1,2,3).
 $$
 
 ### Why projective equivalence matters
@@ -81410,7 +81591,7 @@ $$
 Suppose a projection matrix produces:
 
 $$
- \mathbf p_C=(x_c,y_c,z_c,w_c). 
+ \mathbf p_C=(x_c,y_c,z_c,w_c).
 $$
 
 Multiplying all four coordinates by a positive nonzero scalar does not change the post-divide NDC values.
@@ -81424,7 +81605,7 @@ However, when interpreting clip inequalities in a graphics pipeline, the sign an
 An affine transformation has a final row of:
 
 $$
- (0,0,0,1) 
+ (0,0,0,1)
 $$
 
 under the conventional homogeneous matrix representation.
@@ -81436,7 +81617,7 @@ A perspective projection matrix contains a final row involving the original $z$ 
 Thus:
 
 $$
- w_c 
+ w_c
 $$
 
 depends on depth.
@@ -81448,7 +81629,7 @@ That is the mathematical mechanism allowing perspective projection to be express
 In projective geometry, homogeneous vectors with:
 
 $$
- w=0 
+ w=0
 $$
 
 can represent points at infinity, corresponding to directions.
@@ -81466,7 +81647,7 @@ The fourth clip coordinate has several distinct roles that are easy to conflate.
 First, it enables the perspective divide:
 
 $$
- x_n=x_c/w_c, \qquad y_n=y_c/w_c. 
+ x_n=x_c/w_c, \qquad y_n=y_c/w_c.
 $$
 
 Second, it defines the homogeneous clipping boundaries.
@@ -81482,25 +81663,25 @@ Our camera looks toward negative view-space $Z$.
 A visible point has:
 
 $$
- z_v=-d, \qquad d>0. 
+ z_v=-d, \qquad d>0.
 $$
 
 If we set:
 
 $$
- w_c=-z_v, 
+ w_c=-z_v,
 $$
 
 then:
 
 $$
- w_c=d>0. 
+ w_c=d>0.
 $$
 
 The perspective divide gives:
 
 $$
- x_n\propto x_v/d. 
+ x_n\propto x_v/d.
 $$
 
 Thus projected displacement decreases as positive depth increases.
@@ -81512,7 +81693,7 @@ The $w$ coordinate naturally represents forward view depth for this conventional
 The identity:
 
 $$
- w_c=-z_v 
+ w_c=-z_v
 $$
 
 is a property of the particular perspective matrix we choose.
@@ -81522,7 +81703,7 @@ It is not a universal definition of the fourth homogeneous coordinate.
 For a conventional orthographic projection:
 
 $$
- w_c=1. 
+ w_c=1.
 $$
 
 For an oblique or more general projective transformation, $w_c$ may be a different linear combination of input coordinates.
@@ -81538,19 +81719,19 @@ Directly interpolating $a$ linearly in screen space generally does not reproduce
 The rasterizer uses relationships involving:
 
 $$
- \frac{a_i}{w_i} 
+ \frac{a_i}{w_i}
 $$
 
 and:
 
 $$
- \frac1{w_i}. 
+ \frac1{w_i}.
 $$
 
 The attribute can be reconstructed using:
 
 $$
- \boxed{ a= \frac{ \sum_i\lambda_i(a_i/w_i) }{ \sum_i\lambda_i(1/w_i) } } 
+ \boxed{ a= \frac{ \sum_i\lambda_i(a_i/w_i) }{ \sum_i\lambda_i(1/w_i) } }
 $$
 
 where $\lambda_i$ are screen-space barycentric coordinates.
@@ -81578,37 +81759,37 @@ Assume:
 At positive depth $d=-z_v$, the half-height of the visible region is:
 
 $$
- h(d)=d\tan(\theta_y/2). 
+ h(d)=d\tan(\theta_y/2).
 $$
 
 A point at the top of the view has:
 
 $$
- y_v=h(d). 
+ y_v=h(d).
 $$
 
 We want it to map to:
 
 $$
- y_n=1. 
+ y_n=1.
 $$
 
 Therefore:
 
 $$
- y_n= \frac{y_v}{d\tan(\theta_y/2)}. 
+ y_n= \frac{y_v}{d\tan(\theta_y/2)}.
 $$
 
 Define:
 
 $$
- \boxed{ s_y=\frac1{\tan(\theta_y/2)} }. 
+ \boxed{ s_y=\frac1{\tan(\theta_y/2)} }.
 $$
 
 Then:
 
 $$
- \boxed{ y_n=\frac{s_yy_v}{d} }. 
+ \boxed{ y_n=\frac{s_yy_v}{d} }.
 $$
 
 ### Derive the horizontal scale
@@ -81616,31 +81797,31 @@ $$
 The visible width is the visible height multiplied by aspect ratio:
 
 $$
- w(d)=a\,h(d). 
+ w(d)=a\,h(d).
 $$
 
 Thus the horizontal half-width is:
 
 $$
- a\,d\tan(\theta_y/2). 
+ a\,d\tan(\theta_y/2).
 $$
 
 Therefore:
 
 $$
- \boxed{ x_n= \frac{x_v}{ad\tan(\theta_y/2)} }. 
+ \boxed{ x_n= \frac{x_v}{ad\tan(\theta_y/2)} }.
 $$
 
 Define:
 
 $$
- \boxed{ s_x=\frac{s_y}{a} }. 
+ \boxed{ s_x=\frac{s_y}{a} }.
 $$
 
 Then:
 
 $$
- \boxed{ x_n=\frac{s_xx_v}{d} }. 
+ \boxed{ x_n=\frac{s_xx_v}{d} }.
 $$
 
 ### Choose homogeneous $w$
@@ -81648,19 +81829,19 @@ $$
 Let:
 
 $$
- \boxed{ w_c=-z_v=d }. 
+ \boxed{ w_c=-z_v=d }.
 $$
 
 Then we can generate the desired XY numerators using:
 
 $$
- x_c=s_xx_v, \qquad y_c=s_yy_v. 
+ x_c=s_xx_v, \qquad y_c=s_yy_v.
 $$
 
 After division:
 
 $$
- x_n=x_c/w_c, \qquad y_n=y_c/w_c. 
+ x_n=x_c/w_c, \qquad y_n=y_c/w_c.
 $$
 
 ### Derive the depth row
@@ -81668,101 +81849,101 @@ $$
 Assume the clip-space depth is linear in view-space $z$:
 
 $$
- \boxed{ z_c=Az_v+B }. 
+ \boxed{ z_c=Az_v+B }.
 $$
 
 Since:
 
 $$
- w_c=-z_v, 
+ w_c=-z_v,
 $$
 
 the NDC depth is:
 
 $$
- z_n= \frac{Az_v+B}{-z_v}. 
+ z_n= \frac{Az_v+B}{-z_v}.
 $$
 
 Let positive view depth be:
 
 $$
- d=-z_v. 
+ d=-z_v.
 $$
 
 Then:
 
 $$
- z_c=-Ad+B, 
+ z_c=-Ad+B,
 $$
 
 $$
- w_c=d. 
+ w_c=d.
 $$
 
 Therefore:
 
 $$
- \boxed{ z_n=-A+\frac Bd }. 
+ \boxed{ z_n=-A+\frac Bd }.
 $$
 
 We require near depth:
 
 $$
- d=n\longmapsto z_n=0. 
+ d=n\longmapsto z_n=0.
 $$
 
 Thus:
 
 $$
- -A+\frac Bn=0. 
+ -A+\frac Bn=0.
 $$
 
 So:
 
 $$
- \boxed{B=An}. 
+ \boxed{B=An}.
 $$
 
 We also require far depth:
 
 $$
- d=f\longmapsto z_n=1. 
+ d=f\longmapsto z_n=1.
 $$
 
 Thus:
 
 $$
- -A+\frac Bf=1. 
+ -A+\frac Bf=1.
 $$
 
 Substitute $B=An$:
 
 $$
- -A+\frac{An}{f}=1. 
+ -A+\frac{An}{f}=1.
 $$
 
 Factor:
 
 $$
- A\left(-1+\frac nf\right)=1. 
+ A\left(-1+\frac nf\right)=1.
 $$
 
 Therefore:
 
 $$
- A\frac{n-f}{f}=1. 
+ A\frac{n-f}{f}=1.
 $$
 
 Hence:
 
 $$
- \boxed{ A=\frac f{n-f} =-\frac f{f-n} }. 
+ \boxed{ A=\frac f{n-f} =-\frac f{f-n} }.
 $$
 
 And:
 
 $$
- \boxed{ B=An= \frac{fn}{n-f} =-\frac{fn}{f-n} }. 
+ \boxed{ B=An= \frac{fn}{n-f} =-\frac{fn}{f-n} }.
 $$
 
 ### Assemble the matrix · V11.03.26
@@ -81770,25 +81951,25 @@ $$
 We want:
 
 $$
- x_c=s_xx_v, 
+ x_c=s_xx_v,
 $$
 
 $$
- y_c=s_yy_v, 
+ y_c=s_yy_v,
 $$
 
 $$
- z_c=Az_v+B, 
+ z_c=Az_v+B,
 $$
 
 $$
- w_c=-z_v. 
+ w_c=-z_v.
 $$
 
 Therefore:
 
 $$
- \boxed{ P_{\mathrm{perspective}}^{[0,1]}= \begin{bmatrix} \dfrac1{a\tan(\theta_y/2)}&0&0&0\\ 0&\dfrac1{\tan(\theta_y/2)}&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix} }. 
+ \boxed{ P_{\mathrm{perspective}}^{[0,1]}= \begin{bmatrix} \dfrac1{a\tan(\theta_y/2)}&0&0&0\\ 0&\dfrac1{\tan(\theta_y/2)}&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix} }.
 $$
 
 Every nonzero entry has now been derived.
@@ -81804,31 +81985,31 @@ The third row produces the requested near-to-far depth mapping.
 Take a point on the optical axis at the near plane:
 
 $$
- \mathbf p_V=(0,0,-n,1)^T. 
+ \mathbf p_V=(0,0,-n,1)^T.
 $$
 
 Its clip $z$ is:
 
 $$
- z_c= -\frac f{f-n}(-n)-\frac{fn}{f-n}. 
+ z_c= -\frac f{f-n}(-n)-\frac{fn}{f-n}.
 $$
 
 Thus:
 
 $$
- z_c= \frac{fn}{f-n}-\frac{fn}{f-n}=0. 
+ z_c= \frac{fn}{f-n}-\frac{fn}{f-n}=0.
 $$
 
 Its clip $w$ is:
 
 $$
- w_c=n. 
+ w_c=n.
 $$
 
 Therefore:
 
 $$
- \boxed{z_n=0/n=0}. 
+ \boxed{z_n=0/n=0}.
 $$
 
 ### Verify the far plane
@@ -81836,31 +82017,31 @@ $$
 At:
 
 $$
- z_v=-f, 
+ z_v=-f,
 $$
 
 we get:
 
 $$
- z_c= \frac{f^2}{f-n}-\frac{fn}{f-n}. 
+ z_c= \frac{f^2}{f-n}-\frac{fn}{f-n}.
 $$
 
 Factor:
 
 $$
- z_c= \frac{f(f-n)}{f-n}=f. 
+ z_c= \frac{f(f-n)}{f-n}=f.
 $$
 
 And:
 
 $$
- w_c=f. 
+ w_c=f.
 $$
 
 Thus:
 
 $$
- \boxed{z_n=f/f=1}. 
+ \boxed{z_n=f/f=1}.
 $$
 
 ### Numerical matrix example
@@ -81868,49 +82049,49 @@ $$
 Use:
 
 $$
- \theta_y=60^\circ, 
+ \theta_y=60^\circ,
 $$
 
 $$
- a=\frac{16}{9}, 
+ a=\frac{16}{9},
 $$
 
 $$
- n=0.1,\qquad f=1000. 
+ n=0.1,\qquad f=1000.
 $$
 
 Because:
 
 $$
- \tan30^\circ=\frac1{\sqrt3}, 
+ \tan30^\circ=\frac1{\sqrt3},
 $$
 
 the vertical scale is:
 
 $$
- s_y=\sqrt3\approx1.7320508. 
+ s_y=\sqrt3\approx1.7320508.
 $$
 
 The horizontal scale is:
 
 $$
- s_x=\frac{\sqrt3}{16/9} \approx0.9742786. 
+ s_x=\frac{\sqrt3}{16/9} \approx0.9742786.
 $$
 
 The depth coefficients are approximately:
 
 $$
- A=-1.00010001, 
+ A=-1.00010001,
 $$
 
 $$
- B=-0.100010001. 
+ B=-0.100010001.
 $$
 
 Thus:
 
 $$
- \boxed{ P\approx \begin{bmatrix} 0.9742786&0&0&0\\ 0&1.7320508&0&0\\ 0&0&-1.00010001&-0.100010001\\ 0&0&-1&0 \end{bmatrix} }. 
+ \boxed{ P\approx \begin{bmatrix} 0.9742786&0&0&0\\ 0&1.7320508&0&0\\ 0&0&-1.00010001&-0.100010001\\ 0&0&-1&0 \end{bmatrix} }.
 $$
 
 This is a conventional right-handed, zero-to-one, non-reversed perspective projection.
@@ -81932,7 +82113,7 @@ The projection also assigns depth. That mapping controls both clipping and how f
 Vertical field of view, written:
 
 $$
- \boxed{\theta_y}, 
+ \boxed{\theta_y},
 $$
 
 is the angular extent visible from the bottom to the top of the image.
@@ -81940,13 +82121,13 @@ is the angular extent visible from the bottom to the top of the image.
 For a pinhole camera with virtual image-plane half-height $h$ and image-plane distance $s$:
 
 $$
- \boxed{ \tan(\theta_y/2)=\frac hs }. 
+ \boxed{ \tan(\theta_y/2)=\frac hs }.
 $$
 
 Therefore:
 
 $$
- \boxed{ \theta_y=2\arctan(h/s) }. 
+ \boxed{ \theta_y=2\arctan(h/s) }.
 $$
 
 ### Field of view controls perspective scale
@@ -81954,7 +82135,7 @@ $$
 The projection Y scale is:
 
 $$
- \boxed{ s_y=\frac1{\tan(\theta_y/2)} }. 
+ \boxed{ s_y=\frac1{\tan(\theta_y/2)} }.
 $$
 
 A smaller field of view gives a larger projection scale.
@@ -81970,37 +82151,37 @@ Objects appear smaller, with more of the surrounding scene visible.
 For:
 
 $$
- \theta_y=30^\circ, 
+ \theta_y=30^\circ,
 $$
 
 we have:
 
 $$
- s_y=\frac1{\tan15^\circ}\approx3.732. 
+ s_y=\frac1{\tan15^\circ}\approx3.732.
 $$
 
 For:
 
 $$
- \theta_y=60^\circ, 
+ \theta_y=60^\circ,
 $$
 
 we have:
 
 $$
- s_y=\frac1{\tan30^\circ}\approx1.732. 
+ s_y=\frac1{\tan30^\circ}\approx1.732.
 $$
 
 For:
 
 $$
- \theta_y=90^\circ, 
+ \theta_y=90^\circ,
 $$
 
 we have:
 
 $$
- s_y=\frac1{\tan45^\circ}=1. 
+ s_y=\frac1{\tan45^\circ}=1.
 $$
 
 As vertical FOV increases, projected object height decreases for the same depth.
@@ -82012,7 +82193,7 @@ C++ trigonometric functions expect radians.
 Convert degrees to radians:
 
 $$
- \boxed{ \theta_{\mathrm{rad}}= \theta_{\mathrm{deg}}\frac\pi{180} }. 
+ \boxed{ \theta_{\mathrm{rad}}= \theta_{\mathrm{deg}}\frac\pi{180} }.
 $$
 
 A camera API should use a clearly named type or field such as:
@@ -82036,43 +82217,43 @@ Let the image-plane half-width be $w$ and half-height be $h$.
 The aspect ratio is:
 
 $$
- a=\frac wh. 
+ a=\frac wh.
 $$
 
 We know:
 
 $$
- \tan(\theta_y/2)=\frac hs. 
+ \tan(\theta_y/2)=\frac hs.
 $$
 
 Also:
 
 $$
- \tan(\theta_x/2)=\frac ws. 
+ \tan(\theta_x/2)=\frac ws.
 $$
 
 Because:
 
 $$
- w=ah, 
+ w=ah,
 $$
 
 we get:
 
 $$
- \tan(\theta_x/2) = a\frac hs. 
+ \tan(\theta_x/2) = a\frac hs.
 $$
 
 Therefore:
 
 $$
- \boxed{ \tan(\theta_x/2) = a\tan(\theta_y/2) }. 
+ \boxed{ \tan(\theta_x/2) = a\tan(\theta_y/2) }.
 $$
 
 Take arctangent:
 
 $$
- \boxed{ \theta_x= 2\arctan \left( a\tan(\theta_y/2) \right) }. 
+ \boxed{ \theta_x= 2\arctan \left( a\tan(\theta_y/2) \right) }.
 $$
 
 This formula is essential when changing window aspect ratio.
@@ -82082,19 +82263,19 @@ This formula is essential when changing window aspect ratio.
 Suppose:
 
 $$
- \theta_y=60^\circ, \qquad a=\frac{16}{9}. 
+ \theta_y=60^\circ, \qquad a=\frac{16}{9}.
 $$
 
 Then:
 
 $$
- \theta_x= 2\arctan \left( \frac{16}{9}\tan30^\circ \right). 
+ \theta_x= 2\arctan \left( \frac{16}{9}\tan30^\circ \right).
 $$
 
 Numerically:
 
 $$
- \boxed{ \theta_x\approx91.492845^\circ }. 
+ \boxed{ \theta_x\approx91.492845^\circ }.
 $$
 
 Thus a 60° vertical FOV corresponds to approximately 91.5° horizontal FOV at 16:9.
@@ -82104,7 +82285,7 @@ Thus a 60° vertical FOV corresponds to approximately 91.5° horizontal FOV at 1
 A tempting mistake is:
 
 $$
- \theta_x=a\theta_y. 
+ \theta_x=a\theta_y.
 $$
 
 This is generally wrong.
@@ -82122,7 +82303,7 @@ For wide FOVs, the error becomes significant.
 The projection aspect ratio is:
 
 $$
- \boxed{ a=\frac WH } 
+ \boxed{ a=\frac WH }
 $$
 
 where $W,H$ describe the intended image or viewport dimensions, assuming square pixels in the usual simple model.
@@ -82130,19 +82311,19 @@ where $W,H$ describe the intended image or viewport dimensions, assuming square 
 For:
 
 $$
- W=1920,\quad H=1080, 
+ W=1920,\quad H=1080,
 $$
 
 we have:
 
 $$
- \boxed{ a=\frac{16}{9}\approx1.777778 }. 
+ \boxed{ a=\frac{16}{9}\approx1.777778 }.
 $$
 
 Aspect ratio affects the horizontal scale of a perspective projection when vertical FOV is held constant:
 
 $$
- s_x=\frac{s_y}{a}. 
+ s_x=\frac{s_y}{a}.
 $$
 
 ### Horizontal versus vertical FOV locking
@@ -82164,25 +82345,25 @@ The choice changes what the camera reveals during resizing.
 Suppose the vertical FOV remains:
 
 $$
- 60^\circ. 
+ 60^\circ.
 $$
 
 At aspect 1:1:
 
 $$
- \theta_x=60^\circ. 
+ \theta_x=60^\circ.
 $$
 
 At aspect 16:9:
 
 $$
- \theta_x\approx91.49^\circ. 
+ \theta_x\approx91.49^\circ.
 $$
 
 At aspect 21:9:
 
 $$
- \theta_x= 2\arctan\left(\frac{21}{9}\tan30^\circ\right) \approx106.82^\circ. 
+ \theta_x= 2\arctan\left(\frac{21}{9}\tan30^\circ\right) \approx106.82^\circ.
 $$
 
 Wider aspect reveals more horizontal angular extent under vertical-FOV locking.
@@ -82202,13 +82383,13 @@ The intrinsic matrix $K$ is derived in the calibration chapter.
 The near clipping plane is located at positive camera depth:
 
 $$
- \boxed{d=n} 
+ \boxed{d=n}
 $$
 
 or:
 
 $$
- z_v=-n 
+ z_v=-n
 $$
 
 under our right-handed convention.
@@ -82216,7 +82397,7 @@ under our right-handed convention.
 For ordinary perspective projection:
 
 $$
- \boxed{n>0}. 
+ \boxed{n>0}.
 $$
 
 A near plane at exactly zero causes a degenerate perspective frustum and invalid matrix coefficients.
@@ -82234,7 +82415,7 @@ This prevents the rasterizer from attempting to project geometry that intersects
 A ray tracer may use a minimum ray parameter:
 
 $$
- t_{\min}=\varepsilon 
+ t_{\min}=\varepsilon
 $$
 
 to avoid self-intersections or reject nearby hits.
@@ -82250,13 +82431,13 @@ The two concepts serve related but distinct purposes.
 Suppose:
 
 $$
- n=0.0001, \qquad f=1000. 
+ n=0.0001, \qquad f=1000.
 $$
 
 The far-to-near ratio is:
 
 $$
- \frac fn=10^7. 
+ \frac fn=10^7.
 $$
 
 Under conventional perspective depth mapping, finite depth-buffer precision becomes especially problematic at large distances.
@@ -82272,13 +82453,13 @@ In conventional perspective projection, moving the near plane unnecessarily clos
 The far plane is located at positive camera depth:
 
 $$
- \boxed{d=f} 
+ \boxed{d=f}
 $$
 
 with:
 
 $$
- f>n. 
+ f>n.
 $$
 
 Under ordinary finite perspective projection, it defines the farthest depth accepted by the conventional clipping volume.
@@ -82302,7 +82483,7 @@ These are independent camera properties in the idealized projection model.
 Suppose:
 
 $$
- n=0.1,\qquad f=100. 
+ n=0.1,\qquad f=100.
 $$
 
 The depth range extends from 0.1 to 100 world units.
@@ -82310,7 +82491,7 @@ The depth range extends from 0.1 to 100 world units.
 If the far plane becomes:
 
 $$
- f=1000, 
+ f=1000,
 $$
 
 the projection now accepts geometry ten times farther away.
@@ -82324,7 +82505,7 @@ But the depth mapping changes because the near/far coefficients change.
 Yes, for perspective projection we can take the limit:
 
 $$
- f\to\infty 
+ f\to\infty
 $$
 
 and derive a finite projection matrix.
@@ -82342,7 +82523,7 @@ This part explains an enormous number of rendering artifacts.
 Many developers assume a depth buffer stores physical distance from the camera:
 
 $$
- d=0.1,\ 1,\ 10,\ 100,\ldots 
+ d=0.1,\ 1,\ 10,\ 100,\ldots
 $$
 
 in a linear fashion.
@@ -82352,7 +82533,7 @@ For conventional perspective projection, that is not what happens.
 The post-divide depth is a function of reciprocal camera-space depth:
 
 $$
- \boxed{ z_{\mathrm{NDC}}(d)=A+\frac Bd }. 
+ \boxed{ z_{\mathrm{NDC}}(d)=A+\frac Bd }.
 $$
 
 The constants depend on the projection convention and near/far planes.
@@ -82360,23 +82541,23 @@ The constants depend on the projection convention and near/far planes.
 For our conventional right-handed zero-to-one projection:
 
 $$
- \boxed{ z_{\mathrm{NDC}}(d) = \frac f{f-n} - \frac{fn}{(f-n)d} }. 
+ \boxed{ z_{\mathrm{NDC}}(d) = \frac f{f-n} - \frac{fn}{(f-n)d} }.
 $$
 
 You can rewrite this as:
 
 $$
- \boxed{ z_{\mathrm{NDC}}(d) = \frac f{f-n}\left(1-\frac nd\right) }. 
+ \boxed{ z_{\mathrm{NDC}}(d) = \frac f{f-n}\left(1-\frac nd\right) }.
 $$
 
 This formula maps:
 
 $$
- d=n\mapsto0, 
+ d=n\mapsto0,
 $$
 
 $$
- d=f\mapsto1. 
+ d=f\mapsto1.
 $$
 
 But the mapping is not linear in $d$.
@@ -82386,19 +82567,19 @@ But the mapping is not linear in $d$.
 Differentiate:
 
 $$
- z(d)= \frac f{f-n} - \frac{fn}{(f-n)d}. 
+ z(d)= \frac f{f-n} - \frac{fn}{(f-n)d}.
 $$
 
 The derivative is:
 
 $$
- \boxed{ \frac{dz}{dd} = \frac{fn}{(f-n)d^2} }. 
+ \boxed{ \frac{dz}{dd} = \frac{fn}{(f-n)d^2} }.
 $$
 
 The derivative decreases as:
 
 $$
- \frac1{d^2}. 
+ \frac1{d^2}.
 $$
 
 Therefore a fixed change in physical depth produces a much smaller change in stored depth when the object is far away.
@@ -82412,7 +82593,7 @@ Far away, many different physical depths are compressed into a tiny portion of t
 Use:
 
 $$
- n=0.1,\qquad f=1000. 
+ n=0.1,\qquad f=1000.
 $$
 
 The conventional depth mapping gives:
@@ -82448,25 +82629,25 @@ The chart compares conventional finite-far depth with infinite reversed-Z. The l
 Suppose the stored normalized depth changes by a small amount:
 
 $$
- \Delta z. 
+ \Delta z.
 $$
 
 Using a first-order approximation:
 
 $$
- \Delta z\approx\frac{dz}{dd}\Delta d. 
+ \Delta z\approx\frac{dz}{dd}\Delta d.
 $$
 
 Therefore:
 
 $$
- \Delta d\approx \frac{\Delta z}{dz/dd}. 
+ \Delta d\approx \frac{\Delta z}{dz/dd}.
 $$
 
 Substitute the derivative:
 
 $$
- \boxed{ \Delta d \approx \frac{(f-n)d^2}{fn}\Delta z }. 
+ \boxed{ \Delta d \approx \frac{(f-n)d^2}{fn}\Delta z }.
 $$
 
 This is an approximate local mapping from depth-buffer spacing to physical view-depth spacing.
@@ -82476,13 +82657,13 @@ This is an approximate local mapping from depth-buffer spacing to physical view-
 For a normalized 24-bit fixed-point depth buffer, the approximate quantization step is:
 
 $$
- \Delta z= \frac1{2^{24}-1} \approx5.96\times10^{-8}. 
+ \Delta z= \frac1{2^{24}-1} \approx5.96\times10^{-8}.
 $$
 
 With:
 
 $$
- n=0.1,\quad f=1000, 
+ n=0.1,\quad f=1000,
 $$
 
 we obtain the following first-order physical depth increments:
@@ -82506,7 +82687,7 @@ These are local approximations based on idealized fixed-point spacing, not guara
 The precision formula contains:
 
 $$
- \frac1n. 
+ \frac1n.
 $$
 
 If the near plane is pushed closer to zero, the far-depth resolution deteriorates.
@@ -82514,19 +82695,19 @@ If the near plane is pushed closer to zero, the far-depth resolution deteriorate
 For a large depth range $f\gg n$, the coefficient:
 
 $$
- \frac{f-n}{fn} 
+ \frac{f-n}{fn}
 $$
 
 is approximately:
 
 $$
- \frac1n. 
+ \frac1n.
 $$
 
 Therefore:
 
 $$
- \boxed{ \Delta d\approx\frac{d^2}{n}\Delta z }. 
+ \boxed{ \Delta d\approx\frac{d^2}{n}\Delta z }.
 $$
 
 This makes the near plane extremely important.
@@ -82559,17 +82740,17 @@ The result may appear as flickering, striped patterns, unstable overlays, or sur
 Suppose two walls are positioned at:
 
 $$
- d_1=500.000, 
+ d_1=500.000,
 $$
 
 $$
- d_2=500.001. 
+ d_2=500.001.
 $$
 
 Their physical separation is:
 
 $$
- 0.001. 
+ 0.001.
 $$
 
 But under conventional perspective depth, the difference in normalized depth may be smaller than one representable depth-buffer step.
@@ -82607,13 +82788,13 @@ Reversed-Z changes the depth mapping so that the near plane corresponds to a lar
 For zero-to-one depth:
 
 $$
- \boxed{ d=n\mapsto1 } 
+ \boxed{ d=n\mapsto1 }
 $$
 
 and:
 
 $$
- \boxed{ d=f\mapsto0 }. 
+ \boxed{ d=f\mapsto0 }.
 $$
 
 The camera remains right-handed and forward remains $-Z$.
@@ -82627,99 +82808,99 @@ It changes the depth mapping and associated depth-test convention.
 We still use:
 
 $$
- w_c=-z_v=d. 
+ w_c=-z_v=d.
 $$
 
 Assume:
 
 $$
- z_c=Az_v+B. 
+ z_c=Az_v+B.
 $$
 
 Therefore:
 
 $$
- z_n=-A+\frac Bd. 
+ z_n=-A+\frac Bd.
 $$
 
 Now enforce:
 
 $$
- -A+\frac Bn=1 
+ -A+\frac Bn=1
 $$
 
 and:
 
 $$
- -A+\frac Bf=0. 
+ -A+\frac Bf=0.
 $$
 
 Subtract the second equation from the first:
 
 $$
- B\left(\frac1n-\frac1f\right)=1. 
+ B\left(\frac1n-\frac1f\right)=1.
 $$
 
 Thus:
 
 $$
- B\frac{f-n}{nf}=1. 
+ B\frac{f-n}{nf}=1.
 $$
 
 Therefore:
 
 $$
- \boxed{ B=\frac{nf}{f-n} }. 
+ \boxed{ B=\frac{nf}{f-n} }.
 $$
 
 From the far equation:
 
 $$
- -A+\frac Bf=0. 
+ -A+\frac Bf=0.
 $$
 
 So:
 
 $$
- A=\frac Bf=\frac n{f-n}. 
+ A=\frac Bf=\frac n{f-n}.
 $$
 
 Hence:
 
 $$
- \boxed{ z_c= \frac n{f-n}z_v+ \frac{nf}{f-n} }. 
+ \boxed{ z_c= \frac n{f-n}z_v+ \frac{nf}{f-n} }.
 $$
 
 The complete reversed-Z perspective matrix becomes:
 
 $$
- \boxed{ P_{\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac n{f-n}&\dfrac{nf}{f-n}\\ 0&0&-1&0 \end{bmatrix} }. 
+ \boxed{ P_{\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac n{f-n}&\dfrac{nf}{f-n}\\ 0&0&-1&0 \end{bmatrix} }.
 $$
 
 After division:
 
 $$
- \boxed{ z_n(d)= \frac{nf}{(f-n)d} -\frac n{f-n} }. 
+ \boxed{ z_n(d)= \frac{nf}{(f-n)d} -\frac n{f-n} }.
 $$
 
 At the near plane:
 
 $$
- d=n: 
+ d=n:
 $$
 
 $$
- z_n= \frac f{f-n}-\frac n{f-n}=1. 
+ z_n= \frac f{f-n}-\frac n{f-n}=1.
 $$
 
 At the far plane:
 
 $$
- d=f: 
+ d=f:
 $$
 
 $$
- z_n= \frac n{f-n}-\frac n{f-n}=0. 
+ z_n= \frac n{f-n}-\frac n{f-n}=0.
 $$
 
 The boundary conditions are satisfied exactly in real arithmetic.
@@ -82788,7 +82969,7 @@ This is why floating-point depth plus reversed-Z is the particularly important c
 An infinite far plane is obtained by taking:
 
 $$
- \boxed{f\to\infty}. 
+ \boxed{f\to\infty}.
 $$
 
 We can derive the resulting matrices from the finite-far formulas.
@@ -82798,43 +82979,43 @@ We can derive the resulting matrices from the finite-far formulas.
 Start from:
 
 $$
- P= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix}. 
+ P= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix}.
 $$
 
 As:
 
 $$
- f\to\infty, 
+ f\to\infty,
 $$
 
 we have:
 
 $$
- \frac f{f-n}\to1. 
+ \frac f{f-n}\to1.
 $$
 
 Also:
 
 $$
- \frac{fn}{f-n}\to n. 
+ \frac{fn}{f-n}\to n.
 $$
 
 Therefore:
 
 $$
- \boxed{ P_{\infty,\mathrm{standard}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-1&-n\\ 0&0&-1&0 \end{bmatrix} }. 
+ \boxed{ P_{\infty,\mathrm{standard}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-1&-n\\ 0&0&-1&0 \end{bmatrix} }.
 $$
 
 After division:
 
 $$
- z_n(d)= \frac{d-n}{d} = 1-\frac nd. 
+ z_n(d)= \frac{d-n}{d} = 1-\frac nd.
 $$
 
 Thus:
 
 $$
- \boxed{ z_n(d)=1-\frac nd }. 
+ \boxed{ z_n(d)=1-\frac nd }.
 $$
 
 At $d=n$, depth is zero.
@@ -82846,41 +83027,41 @@ As $d\to\infty$, depth approaches one.
 Start from:
 
 $$
- P_{\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac n{f-n}&\dfrac{nf}{f-n}\\ 0&0&-1&0 \end{bmatrix}. 
+ P_{\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac n{f-n}&\dfrac{nf}{f-n}\\ 0&0&-1&0 \end{bmatrix}.
 $$
 
 As $f\to\infty$:
 
 $$
- \frac n{f-n}\to0. 
+ \frac n{f-n}\to0.
 $$
 
 And:
 
 $$
- \frac{nf}{f-n}\to n. 
+ \frac{nf}{f-n}\to n.
 $$
 
 Thus:
 
 $$
- \boxed{ P_{\infty,\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&0&n\\ 0&0&-1&0 \end{bmatrix} }. 
+ \boxed{ P_{\infty,\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&0&n\\ 0&0&-1&0 \end{bmatrix} }.
 $$
 
 After division:
 
 $$
- z_c=n, 
+ z_c=n,
 $$
 
 $$
- w_c=d. 
+ w_c=d.
 $$
 
 Therefore:
 
 $$
- \boxed{ z_n(d)=\frac nd }. 
+ \boxed{ z_n(d)=\frac nd }.
 $$
 
 This is extraordinarily simple.
@@ -82888,13 +83069,13 @@ This is extraordinarily simple.
 Near plane:
 
 $$
- d=n\Rightarrow z_n=1. 
+ d=n\Rightarrow z_n=1.
 $$
 
 Infinite depth:
 
 $$
- d\to\infty\Rightarrow z_n\to0. 
+ d\to\infty\Rightarrow z_n\to0.
 $$
 
 ### Recover positive view depth
@@ -82902,13 +83083,13 @@ $$
 For this particular infinite reversed-Z projection:
 
 $$
- z_n=\frac nd. 
+ z_n=\frac nd.
 $$
 
 Solve:
 
 $$
- \boxed{ d=\frac n{z_n} }. 
+ \boxed{ d=\frac n{z_n} }.
 $$
 
 For $z_n=0$, the ideal mapping corresponds to infinite depth.
@@ -82916,7 +83097,7 @@ For $z_n=0$, the ideal mapping corresponds to infinite depth.
 For finite depth:
 
 $$
- z_n>0. 
+ z_n>0.
 $$
 
 This simple relation is useful for understanding depth reconstruction, although robust implementation must also account for the viewport depth transform, precision, and any projection modifications.
@@ -82928,55 +83109,55 @@ Depth linearization follows in the later depth-reconstruction chapter.
 Let:
 
 $$
- n=0.1. 
+ n=0.1.
 $$
 
 For:
 
 $$
- d=1, 
+ d=1,
 $$
 
 we have:
 
 $$
- z_n=\frac{0.1}{1}=0.1. 
+ z_n=\frac{0.1}{1}=0.1.
 $$
 
 For:
 
 $$
- d=10, 
+ d=10,
 $$
 
 we have:
 
 $$
- z_n=0.01. 
+ z_n=0.01.
 $$
 
 For:
 
 $$
- d=100, 
+ d=100,
 $$
 
 we have:
 
 $$
- z_n=0.001. 
+ z_n=0.001.
 $$
 
 For:
 
 $$
- d=1000, 
+ d=1000,
 $$
 
 we have:
 
 $$
- z_n=0.0001. 
+ z_n=0.0001.
 $$
 
 The matrix needs no finite far value.
@@ -83023,13 +83204,13 @@ These are separate design choices.
 A conventional right-handed camera frequently uses:
 
 $$
- \boxed{ \text{camera forward}=-Z }. 
+ \boxed{ \text{camera forward}=-Z }.
 $$
 
 A conventional left-handed camera formulation frequently uses:
 
 $$
- \boxed{ \text{camera forward}=+Z }. 
+ \boxed{ \text{camera forward}=+Z }.
 $$
 
 The full interpretation depends on the associated basis convention.
@@ -83039,19 +83220,19 @@ The full interpretation depends on the associated basis convention.
 Under our reference convention:
 
 $$
- d=-z_v, 
+ d=-z_v,
 $$
 
 so the homogeneous depth denominator is:
 
 $$
- \boxed{w_c=-z_v}. 
+ \boxed{w_c=-z_v}.
 $$
 
 The final projection row is:
 
 $$
- \boxed{ (0,0,-1,0) }. 
+ \boxed{ (0,0,-1,0) }.
 $$
 
 ### Conventional left-handed perspective
@@ -83059,77 +83240,77 @@ $$
 For a camera using positive view-space $Z$ as forward depth:
 
 $$
- d=z_v>0. 
+ d=z_v>0.
 $$
 
 Choose:
 
 $$
- \boxed{w_c=z_v}. 
+ \boxed{w_c=z_v}.
 $$
 
 Now assume:
 
 $$
- z_c=Az_v+B. 
+ z_c=Az_v+B.
 $$
 
 We want:
 
 $$
- z_n=\frac{Ad+B}{d} =A+\frac Bd. 
+ z_n=\frac{Ad+B}{d} =A+\frac Bd.
 $$
 
 For conventional zero-to-one depth:
 
 $$
- d=n\mapsto0, 
+ d=n\mapsto0,
 $$
 
 $$
- d=f\mapsto1. 
+ d=f\mapsto1.
 $$
 
 Thus:
 
 $$
- A+\frac Bn=0 
+ A+\frac Bn=0
 $$
 
 and:
 
 $$
- A+\frac Bf=1. 
+ A+\frac Bf=1.
 $$
 
 Subtract:
 
 $$
- B\left(\frac1n-\frac1f\right)=-1. 
+ B\left(\frac1n-\frac1f\right)=-1.
 $$
 
 Therefore:
 
 $$
- \boxed{ B=-\frac{nf}{f-n} }. 
+ \boxed{ B=-\frac{nf}{f-n} }.
 $$
 
 Then:
 
 $$
- A=-\frac Bn=\frac f{f-n}. 
+ A=-\frac Bn=\frac f{f-n}.
 $$
 
 The conventional positive-Z-forward perspective matrix becomes:
 
 $$
- \boxed{ P_{\mathrm{LH}}^{[0,1]}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&1&0 \end{bmatrix} }. 
+ \boxed{ P_{\mathrm{LH}}^{[0,1]}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&1&0 \end{bmatrix} }.
 $$
 
 Compare with our right-handed zero-to-one matrix:
 
 $$
- P_{\mathrm{RH}}^{[0,1]}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix}. 
+ P_{\mathrm{RH}}^{[0,1]}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix}.
 $$
 
 The signs of the depth-related terms differ because the view-space forward-depth convention differs.
@@ -83139,7 +83320,7 @@ The signs of the depth-related terms differ because the view-space forward-depth
 A right-handed camera can use:
 
 $$
- z_n\in[0,1]. 
+ z_n\in[0,1].
 $$
 
 That is exactly what your KairoMath projection helper does.
@@ -83147,13 +83328,13 @@ That is exactly what your KairoMath projection helper does.
 A left-handed camera can also use:
 
 $$
- z_n\in[0,1]. 
+ z_n\in[0,1].
 $$
 
 Likewise, a right-handed camera can target traditional OpenGL:
 
 $$
- z_n\in[-1,1]. 
+ z_n\in[-1,1].
 $$
 
 These are independent axes of configuration.
@@ -83185,19 +83366,19 @@ Traditional OpenGL uses a symmetric clip-depth interval.
 For a vertex in homogeneous clip space:
 
 $$
- (x_c,y_c,z_c,w_c), 
+ (x_c,y_c,z_c,w_c),
 $$
 
 the default clip volume includes:
 
 $$
- \boxed{-w_c\le z_c\le w_c}. 
+ \boxed{-w_c\le z_c\le w_c}.
 $$
 
 After division:
 
 $$
- \boxed{-1\le z_n\le1}. 
+ \boxed{-1\le z_n\le1}.
 $$
 
 This differs from the ordinary Vulkan/Metal zero-to-one depth convention.
@@ -83207,79 +83388,79 @@ This differs from the ordinary Vulkan/Metal zero-to-one depth convention.
 Again let:
 
 $$
- z_c=Az_v+B, 
+ z_c=Az_v+B,
 $$
 
 $$
- w_c=-z_v=d. 
+ w_c=-z_v=d.
 $$
 
 Thus:
 
 $$
- z_n=-A+\frac Bd. 
+ z_n=-A+\frac Bd.
 $$
 
 For traditional OpenGL, impose:
 
 $$
- d=n\mapsto-1, 
+ d=n\mapsto-1,
 $$
 
 $$
- d=f\mapsto1. 
+ d=f\mapsto1.
 $$
 
 The equations are:
 
 $$
- -A+\frac Bn=-1, 
+ -A+\frac Bn=-1,
 $$
 
 $$
- -A+\frac Bf=1. 
+ -A+\frac Bf=1.
 $$
 
 Subtract:
 
 $$
- B\left(\frac1n-\frac1f\right)=-2. 
+ B\left(\frac1n-\frac1f\right)=-2.
 $$
 
 Therefore:
 
 $$
- B=-\frac{2nf}{f-n}. 
+ B=-\frac{2nf}{f-n}.
 $$
 
 From the far equation:
 
 $$
- -A+\frac Bf=1. 
+ -A+\frac Bf=1.
 $$
 
 Thus:
 
 $$
- A=\frac Bf-1. 
+ A=\frac Bf-1.
 $$
 
 Substitute:
 
 $$
- A=-\frac{2n}{f-n}-1. 
+ A=-\frac{2n}{f-n}-1.
 $$
 
 Combine:
 
 $$
- \boxed{ A=-\frac{f+n}{f-n} }. 
+ \boxed{ A=-\frac{f+n}{f-n} }.
 $$
 
 Therefore:
 
 $$
- \boxed{ P_{\mathrm{OpenGL,default}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac{f+n}{f-n}&-\dfrac{2nf}{f-n}\\ 0&0&-1&0 \end{bmatrix} }. 
+ \boxed{ P_{\mathrm{OpenGL,default}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac{f+n}{f-n}&-\dfrac{2nf}{f-n}\\ 0&0&-1&0 \end{bmatrix} }.
 $$
 
 ### Depth-buffer mapping
@@ -83287,7 +83468,7 @@ $$
 Traditional OpenGL typically maps NDC depth $[-1,1]$ into the window-depth interval $[0,1]$:
 
 $$
- \boxed{ z_{\mathrm{window}}=\frac{z_n+1}{2} } 
+ \boxed{ z_{\mathrm{window}}=\frac{z_n+1}{2} }
 $$
 
 when the depth range is configured to its usual defaults.
@@ -83334,13 +83515,13 @@ Simply changing the depth comparison operator without changing the projection an
 Vulkan's ordinary depth-clipping convention uses:
 
 $$
- \boxed{ 0\le z_c\le w_c }. 
+ \boxed{ 0\le z_c\le w_c }.
 $$
 
 After perspective division:
 
 $$
- \boxed{ 0\le z_n\le1 }. 
+ \boxed{ 0\le z_n\le1 }.
 $$
 
 This is why your KairoMath projection helper is documented as Vulkan/Metal-friendly.
@@ -83371,13 +83552,13 @@ viewport.maxDepth = 1.0f;
 Under the ordinary zero-to-one mapping, framebuffer depth is:
 
 $$
- \boxed{ z_f= \text{minDepth} + z_n(\text{maxDepth}-\text{minDepth}) }. 
+ \boxed{ z_f= \text{minDepth} + z_n(\text{maxDepth}-\text{minDepth}) }.
 $$
 
 For the usual defaults:
 
 $$
- z_f=z_n. 
+ z_f=z_n.
 $$
 
 Vulkan also permits configurations where the depth-range endpoints are reversed, subject to its specification and enabled features.
@@ -83426,7 +83607,7 @@ This is an important debugging distinction.
 Metal uses a zero-to-one normalized depth convention for ordinary visible geometry:
 
 $$
- \boxed{ 0\le z_n\le1 }. 
+ \boxed{ 0\le z_n\le1 }.
 $$
 
 Like Vulkan, it can use a right-handed camera model that looks toward local $-Z$.
@@ -83438,7 +83619,7 @@ The world-space handedness and view matrix are application choices.
 For our right-handed zero-to-one convention, the matrix:
 
 $$
- P= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix} 
+ P= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix}
 $$
 
 is mathematically appropriate for ordinary finite perspective projection.
@@ -83446,7 +83627,7 @@ is mathematically appropriate for ordinary finite perspective projection.
 A reversed-Z Metal projection can instead use:
 
 $$
- P_{\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac n{f-n}&\dfrac{nf}{f-n}\\ 0&0&-1&0 \end{bmatrix}. 
+ P_{\mathrm{reverse}}= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&\dfrac n{f-n}&\dfrac{nf}{f-n}\\ 0&0&-1&0 \end{bmatrix}.
 $$
 
 Metal accepts clip-space positions from vertex shaders and performs perspective division and viewport mapping as part of its rasterization pipeline. Apple's depth-testing documentation provides a concrete description of this process.&#x20;
@@ -83461,7 +83642,7 @@ This is a storage and API representation detail.
 The mathematical transform may still be expressed as:
 
 $$
- \mathbf p'=M\mathbf p. 
+ \mathbf p'=M\mathbf p.
 $$
 
 When transferring a CPU-side row-major matrix to a shader expecting column-based storage, ensure the memory representation is converted correctly.
@@ -83500,13 +83681,13 @@ Your inspected [Maveb Camera.cpp](https://github.com/swayam8624/Maveb/blob/main/
 Its finite-depth coefficients are:
 
 $$
- \boxed{ A=\frac n{f-n}, \qquad B=\frac{nf}{f-n} }. 
+ \boxed{ A=\frac n{f-n}, \qquad B=\frac{nf}{f-n} }.
 $$
 
 Its infinite-far coefficients become:
 
 $$
- \boxed{ A=0,\qquad B=n }. 
+ \boxed{ A=0,\qquad B=n }.
 $$
 
 These match our derivations exactly.
@@ -83540,37 +83721,37 @@ These are separate conventions.
 For an image with top-left origin, width $W$, height $H$, and positive raster Y downward, a common mapping is:
 
 $$
- \boxed{ x_p=\frac{x_n+1}{2}W } 
+ \boxed{ x_p=\frac{x_n+1}{2}W }
 $$
 
 and:
 
 $$
- \boxed{ y_p=\frac{1-y_n}{2}H }. 
+ \boxed{ y_p=\frac{1-y_n}{2}H }.
 $$
 
 Under this mapping:
 
 $$
- y_n=1 
+ y_n=1
 $$
 
 maps to raster top:
 
 $$
- y_p=0. 
+ y_p=0.
 $$
 
 And:
 
 $$
- y_n=-1 
+ y_n=-1
 $$
 
 maps to raster bottom:
 
 $$
- y_p=H. 
+ y_p=H.
 $$
 
 ### Vulkan's positive-height viewport
@@ -83578,7 +83759,7 @@ $$
 Under the standard Vulkan viewport formula:
 
 $$
- y_f=\frac{H}{2}y_n+y_0+\frac H2 
+ y_f=\frac{H}{2}y_n+y_0+\frac H2
 $$
 
 for a positive viewport height $H$.
@@ -83586,11 +83767,11 @@ for a positive viewport height $H$.
 Thus:
 
 $$
- y_n=-1\mapsto y_0, 
+ y_n=-1\mapsto y_0,
 $$
 
 $$
- y_n=1\mapsto y_0+H. 
+ y_n=1\mapsto y_0+H.
 $$
 
 With a top-left framebuffer interpretation, positive NDC Y maps downward.
@@ -83598,7 +83779,7 @@ With a top-left framebuffer interpretation, positive NDC Y maps downward.
 To make a conventional $+Y$-up camera render upright using a positive-height Vulkan viewport, the application can negate projected Y:
 
 $$
- \boxed{ y_c'=-y_c }. 
+ \boxed{ y_c'=-y_c }.
 $$
 
 This is the strategy used by your inspected `KairoRenderer/Camera.cppm`:
@@ -83650,19 +83831,19 @@ The viewport transform converts NDC into framebuffer coordinates.
 For a generic axis-aligned viewport with:
 
 $$
- x_0,y_0,W,H, 
+ x_0,y_0,W,H,
 $$
 
 a mathematical mapping with X increasing right and NDC Y increasing up is:
 
 $$
- \boxed{ x_p=x_0+\frac W2(x_n+1) } 
+ \boxed{ x_p=x_0+\frac W2(x_n+1) }
 $$
 
 and, for top-left raster coordinates:
 
 $$
- \boxed{ y_p=y_0+\frac H2(1-y_n) }. 
+ \boxed{ y_p=y_0+\frac H2(1-y_n) }.
 $$
 
 ### Deriving X mapping
@@ -83670,51 +83851,51 @@ $$
 We want:
 
 $$
- x_n=-1\mapsto x_0, 
+ x_n=-1\mapsto x_0,
 $$
 
 $$
- x_n=1\mapsto x_0+W. 
+ x_n=1\mapsto x_0+W.
 $$
 
 Assume:
 
 $$
- x_p=ax_n+b. 
+ x_p=ax_n+b.
 $$
 
 The equations give:
 
 $$
- -a+b=x_0, 
+ -a+b=x_0,
 $$
 
 $$
- a+b=x_0+W. 
+ a+b=x_0+W.
 $$
 
 Subtract:
 
 $$
- 2a=W. 
+ 2a=W.
 $$
 
 Thus:
 
 $$
- a=W/2. 
+ a=W/2.
 $$
 
 Then:
 
 $$
- b=x_0+W/2. 
+ b=x_0+W/2.
 $$
 
 Therefore:
 
 $$
- \boxed{ x_p=x_0+\frac W2(x_n+1) }. 
+ \boxed{ x_p=x_0+\frac W2(x_n+1) }.
 $$
 
 ### Deriving Y mapping
@@ -83722,51 +83903,51 @@ $$
 For a top-left raster convention, we want:
 
 $$
- y_n=1\mapsto y_0, 
+ y_n=1\mapsto y_0,
 $$
 
 $$
- y_n=-1\mapsto y_0+H. 
+ y_n=-1\mapsto y_0+H.
 $$
 
 Assume:
 
 $$
- y_p=cy_n+d. 
+ y_p=cy_n+d.
 $$
 
 Then:
 
 $$
- c+d=y_0, 
+ c+d=y_0,
 $$
 
 $$
- -c+d=y_0+H. 
+ -c+d=y_0+H.
 $$
 
 Subtract:
 
 $$
- -2c=H. 
+ -2c=H.
 $$
 
 Therefore:
 
 $$
- c=-H/2. 
+ c=-H/2.
 $$
 
 Then:
 
 $$
- d=y_0+H/2. 
+ d=y_0+H/2.
 $$
 
 Thus:
 
 $$
- \boxed{ y_p=y_0+\frac H2(1-y_n) }. 
+ \boxed{ y_p=y_0+\frac H2(1-y_n) }.
 $$
 
 ### Viewport offsets
@@ -83774,35 +83955,35 @@ $$
 Suppose an editor scene is rendered inside a viewport panel starting at:
 
 $$
- (x_0,y_0)=(200,100) 
+ (x_0,y_0)=(200,100)
 $$
 
 with dimensions:
 
 $$
- W=800,\qquad H=600. 
+ W=800,\qquad H=600.
 $$
 
 A point at NDC centre:
 
 $$
- (0,0) 
+ (0,0)
 $$
 
 maps to:
 
 $$
- x_p=200+400=600, 
+ x_p=200+400=600,
 $$
 
 $$
- y_p=100+300=400. 
+ y_p=100+300=400.
 $$
 
 Thus:
 
 $$
- \boxed{(x_p,y_p)=(600,400)}. 
+ \boxed{(x_p,y_p)=(600,400)}.
 $$
 
 If a picking routine assumes the viewport starts at $(0,0)$, it will interpret the wrong pixel.
@@ -83814,13 +83995,13 @@ This is a frequent editor bug when the rendering target occupies only part of a 
 For zero-to-one depth and normal viewport endpoints:
 
 $$
- \boxed{ z_f=\mathrm{minDepth} + z_n(\mathrm{maxDepth}-\mathrm{minDepth}) }. 
+ \boxed{ z_f=\mathrm{minDepth} + z_n(\mathrm{maxDepth}-\mathrm{minDepth}) }.
 $$
 
 For OpenGL-style negative-one-to-one depth mapped into a conventional zero-to-one window interval:
 
 $$
- \boxed{ z_f=\frac{z_n+1}{2} } 
+ \boxed{ z_f=\frac{z_n+1}{2} }
 $$
 
 when the depth range uses the corresponding defaults.
@@ -83846,31 +84027,31 @@ A raster image contains discrete pixels.
 Under the common modern convention, the centre of pixel:
 
 $$
- (i,j) 
+ (i,j)
 $$
 
 lies at continuous raster coordinate:
 
 $$
- \boxed{ (x_p,y_p)=(i+0.5,j+0.5) }. 
+ \boxed{ (x_p,y_p)=(i+0.5,j+0.5) }.
 $$
 
 The top-left pixel is indexed:
 
 $$
- (0,0). 
+ (0,0).
 $$
 
 Its centre is:
 
 $$
- \boxed{(0.5,0.5)}. 
+ \boxed{(0.5,0.5)}.
 $$
 
 The next pixel to the right has centre:
 
 $$
- (1.5,0.5). 
+ (1.5,0.5).
 $$
 
 This half-unit offset is not a mysterious antialiasing correction. It follows from defining integer coordinates at pixel-cell corners.
@@ -83882,49 +84063,49 @@ Assume a full-size top-left raster viewport.
 The horizontal viewport mapping is:
 
 $$
- x_p=\frac{x_n+1}{2}W. 
+ x_p=\frac{x_n+1}{2}W.
 $$
 
 For pixel column $i$, use its centre:
 
 $$
- x_p=i+0.5. 
+ x_p=i+0.5.
 $$
 
 Solve:
 
 $$
- i+0.5=\frac{x_n+1}{2}W. 
+ i+0.5=\frac{x_n+1}{2}W.
 $$
 
 Multiply:
 
 $$
- \frac{2(i+0.5)}W=x_n+1. 
+ \frac{2(i+0.5)}W=x_n+1.
 $$
 
 Thus:
 
 $$
- \boxed{ x_n=\frac{2(i+0.5)}W-1 }. 
+ \boxed{ x_n=\frac{2(i+0.5)}W-1 }.
 $$
 
 For Y:
 
 $$
- y_p=\frac{1-y_n}{2}H. 
+ y_p=\frac{1-y_n}{2}H.
 $$
 
 At row $j$:
 
 $$
- y_p=j+0.5. 
+ y_p=j+0.5.
 $$
 
 Therefore:
 
 $$
- \boxed{ y_n=1-\frac{2(j+0.5)}H }. 
+ \boxed{ y_n=1-\frac{2(j+0.5)}H }.
 $$
 
 These formulas convert discrete pixel indices to corresponding NDC sample positions.
@@ -83934,31 +84115,31 @@ These formulas convert discrete pixel indices to corresponding NDC sample positi
 For:
 
 $$
- i=0,\qquad j=0, 
+ i=0,\qquad j=0,
 $$
 
 we have:
 
 $$
- x_n=\frac1{1920}-1. 
+ x_n=\frac1{1920}-1.
 $$
 
 Thus:
 
 $$
- \boxed{x_n\approx-0.999479167}. 
+ \boxed{x_n\approx-0.999479167}.
 $$
 
 And:
 
 $$
- y_n=1-\frac1{1080}. 
+ y_n=1-\frac1{1080}.
 $$
 
 Thus:
 
 $$
- \boxed{y_n\approx0.999074074}. 
+ \boxed{y_n\approx0.999074074}.
 $$
 
 The pixel centre is slightly inside the NDC boundaries rather than exactly at $(-1,1)$.
@@ -83970,31 +84151,31 @@ Consider a 1920-pixel-wide image.
 The geometric centre of the viewport is:
 
 $$
- x_p=960. 
+ x_p=960.
 $$
 
 But pixel centres occur at:
 
 $$
- i+0.5. 
+ i+0.5.
 $$
 
 The two central pixel centres are:
 
 $$
- 959.5 
+ 959.5
 $$
 
 and:
 
 $$
- 960.5. 
+ 960.5.
 $$
 
 There is no pixel whose centre is exactly at:
 
 $$
- 960. 
+ 960.
 $$
 
 The optical axis of a centred camera passes between the two central columns.
@@ -84012,27 +84193,27 @@ For an odd-resolution image, there can be one central pixel whose centre aligns 
 To generate a camera ray through pixel $(i,j)$, we commonly begin with its centre:
 
 $$
- u=\frac{i+0.5}{W}, 
+ u=\frac{i+0.5}{W},
 $$
 
 $$
- v=\frac{j+0.5}{H}. 
+ v=\frac{j+0.5}{H}.
 $$
 
 Subpixel sampling adds jitter:
 
 $$
- u=\frac{i+\xi_x}{W}, 
+ u=\frac{i+\xi_x}{W},
 $$
 
 $$
- v=\frac{j+\xi_y}{H}, 
+ v=\frac{j+\xi_y}{H},
 $$
 
 where:
 
 $$
- \xi_x,\xi_y\in[0,1). 
+ \xi_x,\xi_y\in[0,1).
 $$
 
 This connects pixel-sampling strategies with camera projection mathematics.
@@ -84050,7 +84231,7 @@ The most important example is the difference between Direct3D 9 and Direct3D 10.
 Direct3D 9 traditionally defined the upper-left pixel centre at integer coordinate:
 
 $$
- \boxed{(0,0)}. 
+ \boxed{(0,0)}.
 $$
 
 Thus the first pixel centre was not at $(0.5,0.5)$ under that convention.
@@ -84062,7 +84243,7 @@ Applications rendering screen-aligned quads sometimes needed an offset to align 
 Direct3D 10 changed the raster-coordinate convention so that the upper-left corner of the upper-left pixel is the origin, and the centre lies at:
 
 $$
- \boxed{(0.5,0.5)}. 
+ \boxed{(0.5,0.5)}.
 $$
 
 Microsoft documents this historical distinction explicitly.&#x20;
@@ -84073,13 +84254,13 @@ Microsoft documents this historical distinction explicitly.&#x20;
 Suppose a modern renderer already maps pixel indices using:
 
 $$
- x_p=i+0.5. 
+ x_p=i+0.5.
 $$
 
 If we apply an additional half-pixel translation copied from an old Direct3D 9 tutorial, the sample location becomes:
 
 $$
- i+1. 
+ i+1.
 $$
 
 This creates an unintended shift.
@@ -84099,13 +84280,13 @@ It is:
 For a texture of width $W$, a conventional normalized UV coordinate for the centre of texel $i$ is:
 
 $$
- \boxed{ u_i=\frac{i+0.5}{W} }. 
+ \boxed{ u_i=\frac{i+0.5}{W} }.
 $$
 
 For a texture of height $H$:
 
 $$
- \boxed{ v_j=\frac{j+0.5}{H} } 
+ \boxed{ v_j=\frac{j+0.5}{H} }
 $$
 
 under a top-left-style normalized indexing convention.
@@ -84113,13 +84294,13 @@ under a top-left-style normalized indexing convention.
 For example, for a $4\times4$ texture, the centres along either dimension are:
 
 $$
- \boxed{ 0.125,\ 0.375,\ 0.625,\ 0.875 }. 
+ \boxed{ 0.125,\ 0.375,\ 0.625,\ 0.875 }.
 $$
 
 They are not:
 
 $$
- 0,\ 0.25,\ 0.5,\ 0.75. 
+ 0,\ 0.25,\ 0.5,\ 0.75.
 $$
 
 The latter values correspond to cell boundaries under the usual normalized coordinate mapping.
@@ -84236,49 +84417,49 @@ Assume the camera looks along negative view-space $Z$.
 Let positive forward depth be:
 
 $$
- d=-z_v>0. 
+ d=-z_v>0.
 $$
 
 Let the vertical field of view be $\theta_y$, and aspect ratio be:
 
 $$
- a=\frac WH. 
+ a=\frac WH.
 $$
 
 Define:
 
 $$
- t_y=\tan\left(\frac{\theta_y}{2}\right). 
+ t_y=\tan\left(\frac{\theta_y}{2}\right).
 $$
 
 At depth $d$, the visible half-height is:
 
 $$
- \boxed{h(d)=dt_y}. 
+ \boxed{h(d)=dt_y}.
 $$
 
 The visible half-width is:
 
 $$
- \boxed{w(d)=ad t_y}. 
+ \boxed{w(d)=ad t_y}.
 $$
 
 Therefore, a view-space point $(x,y,-d)$ is inside the lateral frustum boundaries exactly when:
 
 $$
- \boxed{-ad t_y\le x\le ad t_y} 
+ \boxed{-ad t_y\le x\le ad t_y}
 $$
 
 and:
 
 $$
- \boxed{-dt_y\le y\le dt_y}. 
+ \boxed{-dt_y\le y\le dt_y}.
 $$
 
 With finite near and far distances:
 
 $$
- \boxed{n\le d\le f}. 
+ \boxed{n\le d\le f}.
 $$
 
 These six inequalities describe the entire symmetric perspective viewing frustum.
@@ -84288,45 +84469,45 @@ These six inequalities describe the entire symmetric perspective viewing frustum
 Suppose:
 
 $$
- \theta_y=60^\circ,\qquad a=\frac{16}{9}, 
+ \theta_y=60^\circ,\qquad a=\frac{16}{9},
 $$
 
 $$
- n=0.1,\qquad f=100. 
+ n=0.1,\qquad f=100.
 $$
 
 Since:
 
 $$
- \tan30^\circ=\frac1{\sqrt3}\approx0.577350269, 
+ \tan30^\circ=\frac1{\sqrt3}\approx0.577350269,
 $$
 
 the half-height at depth $d=10$ is:
 
 $$
- h(10)=10(0.577350269)\approx5.773503. 
+ h(10)=10(0.577350269)\approx5.773503.
 $$
 
 The half-width is:
 
 $$
- w(10)=\frac{16}{9}(5.773503)\approx10.264005. 
+ w(10)=\frac{16}{9}(5.773503)\approx10.264005.
 $$
 
 Thus the visible rectangle at depth ten is approximately:
 
 $$
- x\in[-10.264,10.264], 
+ x\in[-10.264,10.264],
 $$
 
 $$
- y\in[-5.774,5.774]. 
+ y\in[-5.774,5.774].
 $$
 
 The point:
 
 $$
- (8,3,-10) 
+ (8,3,-10)
 $$
 
 is inside.
@@ -84334,7 +84515,7 @@ is inside.
 The point:
 
 $$
- (12,3,-10) 
+ (12,3,-10)
 $$
 
 is outside the right frustum boundary.
@@ -84342,7 +84523,7 @@ is outside the right frustum boundary.
 The point:
 
 $$
- (0,0,-0.05) 
+ (0,0,-0.05)
 $$
 
 is outside the near boundary because its positive depth is smaller than $0.1$.
@@ -84386,31 +84567,31 @@ For a symmetric camera, we can construct them analytically.
 Define:
 
 $$
- t_y=\tan(\theta_y/2). 
+ t_y=\tan(\theta_y/2).
 $$
 
 Near half-height and half-width:
 
 $$
- \boxed{ h_n=nt_y,\qquad w_n=ant_y }. 
+ \boxed{ h_n=nt_y,\qquad w_n=ant_y }.
 $$
 
 Far half-height and half-width:
 
 $$
- \boxed{ h_f=ft_y,\qquad w_f=aft_y }. 
+ \boxed{ h_f=ft_y,\qquad w_f=aft_y }.
 $$
 
 In our camera coordinate system, the near corners are:
 
 $$
- \boxed{ (\pm w_n,\pm h_n,-n) }. 
+ \boxed{ (\pm w_n,\pm h_n,-n) }.
 $$
 
 The far corners are:
 
 $$
- \boxed{ (\pm w_f,\pm h_f,-f) }. 
+ \boxed{ (\pm w_f,\pm h_f,-f) }.
 $$
 
 Every independent choice of the two signs gives one corner.
@@ -84420,47 +84601,47 @@ Every independent choice of the two signs gives one corner.
 Let:
 
 $$
- \theta_y=90^\circ,\qquad a=1, 
+ \theta_y=90^\circ,\qquad a=1,
 $$
 
 $$
- n=1,\qquad f=3. 
+ n=1,\qquad f=3.
 $$
 
 Because:
 
 $$
- \tan45^\circ=1, 
+ \tan45^\circ=1,
 $$
 
 we obtain:
 
 $$
- h_n=w_n=1, 
+ h_n=w_n=1,
 $$
 
 $$
- h_f=w_f=3. 
+ h_f=w_f=3.
 $$
 
 The near corners are:
 
 $$
- (-1,-1,-1),\ (1,-1,-1), 
+ (-1,-1,-1),\ (1,-1,-1),
 $$
 
 $$
- (1,1,-1),\ (-1,1,-1). 
+ (1,1,-1),\ (-1,1,-1).
 $$
 
 The far corners are:
 
 $$
- (-3,-3,-3),\ (3,-3,-3), 
+ (-3,-3,-3),\ (3,-3,-3),
 $$
 
 $$
- (3,3,-3),\ (-3,3,-3). 
+ (3,3,-3),\ (-3,3,-3).
 $$
 
 Notice that far-plane dimensions are three times near-plane dimensions because the far depth is three times the near depth.
@@ -84472,7 +84653,7 @@ Suppose the camera has world position $\mathbf c$ and camera-to-world rotation $
 Then:
 
 $$
- \boxed{ \mathbf p_W=\mathbf c+R\mathbf p_C }. 
+ \boxed{ \mathbf p_W=\mathbf c+R\mathbf p_C }.
 $$
 
 For any of the eight view-space corners, use this transformation to obtain the corresponding world-space point.
@@ -84480,7 +84661,7 @@ For any of the eight view-space corners, use this transformation to obtain the c
 Equivalently, if $C$ is the camera-to-world homogeneous matrix:
 
 $$
- \boxed{ \tilde{\mathbf p}_W=C\tilde{\mathbf p}_C }. 
+ \boxed{ \tilde{\mathbf p}_W=C\tilde{\mathbf p}_C }.
 $$
 
 ### Frustum corners from inverse view-projection
@@ -84490,37 +84671,37 @@ For a general projection, including an asymmetric or off-axis camera, the analyt
 Instead, construct the inverse view-projection:
 
 $$
- \boxed{ Q=(PV)^{-1} }. 
+ \boxed{ Q=(PV)^{-1} }.
 $$
 
 For a conventional zero-to-one clip-depth camera, the eight NDC corner positions are:
 
 $$
- (x_n,y_n,z_n) 
+ (x_n,y_n,z_n)
 $$
 
 with:
 
 $$
- x_n\in\\{-1,1\\},\quad y_n\in\\{-1,1\\},\quad z_n\in\\{0,1\\}. 
+ x_n\in\\{-1,1\\},\quad y_n\in\\{-1,1\\},\quad z_n\in\\{0,1\\}.
 $$
 
 Lift an NDC corner to homogeneous coordinates:
 
 $$
- \tilde{\mathbf q}= \begin{bmatrix}x_n\\y_n\\z_n\\1\end{bmatrix}. 
+ \tilde{\mathbf q}= \begin{bmatrix}x_n\\y_n\\z_n\\1\end{bmatrix}.
 $$
 
 Compute:
 
 $$
- \tilde{\mathbf p}=Q\tilde{\mathbf q}. 
+ \tilde{\mathbf p}=Q\tilde{\mathbf q}.
 $$
 
 Then divide by its homogeneous coordinate:
 
 $$
- \boxed{ \mathbf p_W= \frac{\tilde{\mathbf p}_{xyz}}{\tilde p_w} }. 
+ \boxed{ \mathbf p_W= \frac{\tilde{\mathbf p}_{xyz}}{\tilde p_w} }.
 $$
 
 This reconstructs the world-space frustum corner, assuming the inverse exists and the resulting point is finite.
@@ -84530,13 +84711,13 @@ This reconstructs the world-space frustum corner, assuming the inverse exists an
 For conventional zero-to-one depth:
 
 $$
- z_n=0 \text{ is near},\qquad z_n=1 \text{ is far}. 
+ z_n=0 \text{ is near},\qquad z_n=1 \text{ is far}.
 $$
 
 For reversed-Z:
 
 $$
- z_n=1 \text{ is near},\qquad z_n=0 \text{ is far}. 
+ z_n=1 \text{ is near},\qquad z_n=0 \text{ is far}.
 $$
 
 An inverse-projection implementation must use the appropriate depth endpoints.
@@ -84550,7 +84731,7 @@ An infinite-far projection has no finite far rectangle.
 When unprojecting the far depth endpoint, a homogeneous result may have:
 
 $$
- w=0. 
+ w=0.
 $$
 
 This represents a direction or point at infinity rather than a finite Cartesian point.
@@ -84564,13 +84745,13 @@ For infinite frusta, construct near corners and far rays, or represent the frust
 A plane in three-dimensional Euclidean space can be represented by:
 
 $$
- \boxed{ \mathbf n\cdot\mathbf p+d=0 }. 
+ \boxed{ \mathbf n\cdot\mathbf p+d=0 }.
 $$
 
 Here:
 
 $$
- \mathbf n= \begin{bmatrix}a\\b\\c\end{bmatrix} 
+ \mathbf n= \begin{bmatrix}a\\b\\c\end{bmatrix}
 $$
 
 is the plane normal, and $d$ is the plane offset.
@@ -84578,13 +84759,13 @@ is the plane normal, and $d$ is the plane offset.
 In expanded form:
 
 $$
- \boxed{ ax+by+cz+d=0 }. 
+ \boxed{ ax+by+cz+d=0 }.
 $$
 
 The four plane coefficients can be stored as:
 
 $$
- \boxed{ \boldsymbol\pi=(a,b,c,d)^T }. 
+ \boxed{ \boldsymbol\pi=(a,b,c,d)^T }.
 $$
 
 ### Signed distance
@@ -84592,13 +84773,13 @@ $$
 If the normal is unit length:
 
 $$
- \\|\mathbf n\\|=1, 
+ \|\mathbf n\|=1,
 $$
 
 then:
 
 $$
- \boxed{ s(\mathbf p)=\mathbf n\cdot\mathbf p+d } 
+ \boxed{ s(\mathbf p)=\mathbf n\cdot\mathbf p+d }
 $$
 
 is the signed Euclidean distance from the point to the plane.
@@ -84606,7 +84787,7 @@ is the signed Euclidean distance from the point to the plane.
 If the normal is not normalized, the signed Euclidean distance is:
 
 $$
- \boxed{ s(\mathbf p)= \frac{\mathbf n\cdot\mathbf p+d}{\\|\mathbf n\\|} }. 
+ \boxed{ s(\mathbf p)= \frac{\mathbf n\cdot\mathbf p+d}{\|\mathbf n\|} }.
 $$
 
 This distinction is crucial for sphere culling.
@@ -84620,7 +84801,7 @@ For frustum culling, a convenient convention is to orient every plane normal tow
 Then:
 
 $$
- \boxed{ \mathbf n_i\cdot\mathbf p+d_i\ge0 } 
+ \boxed{ \mathbf n_i\cdot\mathbf p+d_i\ge0 }
 $$
 
 means the point is on or inside plane $i$'s permitted half-space.
@@ -84632,55 +84813,55 @@ A point is inside the entire frustum if it satisfies all six inequalities.
 For our view space, positive forward depth is:
 
 $$
- d_{\mathrm{view}}=-z. 
+ d_{\mathrm{view}}=-z.
 $$
 
 The near condition:
 
 $$
- d_{\mathrm{view}}\ge n 
+ d_{\mathrm{view}}\ge n
 $$
 
 becomes:
 
 $$
- -z\ge n. 
+ -z\ge n.
 $$
 
 Thus:
 
 $$
- \boxed{ -z-n\ge0 }. 
+ \boxed{ -z-n\ge0 }.
 $$
 
 The inward-facing near plane is:
 
 $$
- \boxed{ \boldsymbol\pi_{\mathrm{near}}=(0,0,-1,-n) }. 
+ \boxed{ \boldsymbol\pi_{\mathrm{near}}=(0,0,-1,-n) }.
 $$
 
 The far condition:
 
 $$
- d_{\mathrm{view}}\le f 
+ d_{\mathrm{view}}\le f
 $$
 
 becomes:
 
 $$
- -z\le f. 
+ -z\le f.
 $$
 
 Therefore:
 
 $$
- \boxed{ z+f\ge0 }. 
+ \boxed{ z+f\ge0 }.
 $$
 
 The inward-facing far plane is:
 
 $$
- \boxed{ \boldsymbol\pi_{\mathrm{far}}=(0,0,1,f) }. 
+ \boxed{ \boldsymbol\pi_{\mathrm{far}}=(0,0,1,f) }.
 $$
 
 The unit normals point toward the interior.
@@ -84690,65 +84871,65 @@ The unit normals point toward the interior.
 Let:
 
 $$
- t_x=a\tan(\theta_y/2), 
+ t_x=a\tan(\theta_y/2),
 $$
 
 $$
- t_y=\tan(\theta_y/2). 
+ t_y=\tan(\theta_y/2).
 $$
 
 The left condition is:
 
 $$
- x\ge-d_{\mathrm{view}}t_x. 
+ x\ge-d_{\mathrm{view}}t_x.
 $$
 
 Since $d_{\mathrm{view}}=-z$:
 
 $$
- x\ge zt_x. 
+ x\ge zt_x.
 $$
 
 Thus:
 
 $$
- \boxed{x-t_xz\ge0}. 
+ \boxed{x-t_xz\ge0}.
 $$
 
 The unnormalized left plane is:
 
 $$
- \boxed{ \boldsymbol\pi_L=(1,0,-t_x,0) }. 
+ \boxed{ \boldsymbol\pi_L=(1,0,-t_x,0) }.
 $$
 
 The right condition is:
 
 $$
- x\le-d_{\mathrm{view}}t_x=-zt_x. 
+ x\le-d_{\mathrm{view}}t_x=-zt_x.
 $$
 
 Therefore:
 
 $$
- \boxed{-x-t_xz\ge0}, 
+ \boxed{-x-t_xz\ge0},
 $$
 
 giving:
 
 $$
- \boxed{ \boldsymbol\pi_R=(-1,0,-t_x,0) }. 
+ \boxed{ \boldsymbol\pi_R=(-1,0,-t_x,0) }.
 $$
 
 Similarly:
 
 $$
- \boxed{ \boldsymbol\pi_B=(0,1,-t_y,0) } 
+ \boxed{ \boldsymbol\pi_B=(0,1,-t_y,0) }
 $$
 
 and:
 
 $$
- \boxed{ \boldsymbol\pi_T=(0,-1,-t_y,0) }. 
+ \boxed{ \boldsymbol\pi_T=(0,-1,-t_y,0) }.
 $$
 
 For a symmetric perspective frustum, these four side planes pass through the camera origin.
@@ -84760,19 +84941,19 @@ Their plane offsets are zero.
 The left normal is:
 
 $$
- \mathbf n_L=(1,0,-t_x). 
+ \mathbf n_L=(1,0,-t_x).
 $$
 
 Its length is:
 
 $$
- \sqrt{1+t_x^2}. 
+ \sqrt{1+t_x^2}.
 $$
 
 Therefore the normalized plane is:
 
 $$
- \boxed{ \hat{\boldsymbol\pi}_L= \frac{(1,0,-t_x,0)} {\sqrt{1+t_x^2}} }. 
+ \boxed{ \hat{\boldsymbol\pi}_L= \frac{(1,0,-t_x,0)} {\sqrt{1+t_x^2}} }.
 $$
 
 The same normalization applies to the remaining side planes.
@@ -84780,7 +84961,7 @@ The same normalization applies to the remaining side planes.
 For a plane $(a,b,c,d)$, always divide all four coefficients by:
 
 $$
- \sqrt{a^2+b^2+c^2}. 
+ \sqrt{a^2+b^2+c^2}.
 $$
 
 Normalizing only the first three coefficients but leaving the offset untouched changes the plane.
@@ -84794,7 +84975,7 @@ Instead of explicitly constructing frustum corners and taking cross products, we
 Let:
 
 $$
- \boxed{ C=PV } 
+ \boxed{ C=PV }
 $$
 
 map world-space homogeneous points into clip space.
@@ -84802,25 +84983,25 @@ map world-space homogeneous points into clip space.
 Write its rows as:
 
 $$
- C= \begin{bmatrix} \mathbf r_0^T\\ \mathbf r_1^T\\ \mathbf r_2^T\\ \mathbf r_3^T \end{bmatrix}. 
+ C= \begin{bmatrix} \mathbf r_0^T\\ \mathbf r_1^T\\ \mathbf r_2^T\\ \mathbf r_3^T \end{bmatrix}.
 $$
 
 For a world-space homogeneous point $\tilde{\mathbf p}$:
 
 $$
- x_c=\mathbf r_0^T\tilde{\mathbf p}, 
+ x_c=\mathbf r_0^T\tilde{\mathbf p},
 $$
 
 $$
- y_c=\mathbf r_1^T\tilde{\mathbf p}, 
+ y_c=\mathbf r_1^T\tilde{\mathbf p},
 $$
 
 $$
- z_c=\mathbf r_2^T\tilde{\mathbf p}, 
+ z_c=\mathbf r_2^T\tilde{\mathbf p},
 $$
 
 $$
- w_c=\mathbf r_3^T\tilde{\mathbf p}. 
+ w_c=\mathbf r_3^T\tilde{\mathbf p}.
 $$
 
 The clip-space inequalities can therefore be pulled back into world-space plane inequalities.
@@ -84830,25 +85011,25 @@ The clip-space inequalities can therefore be pulled back into world-space plane 
 The clip-space left boundary is:
 
 $$
- -w_c\le x_c. 
+ -w_c\le x_c.
 $$
 
 Rearrange:
 
 $$
- x_c+w_c\ge0. 
+ x_c+w_c\ge0.
 $$
 
 Substitute the row expressions:
 
 $$
- (\mathbf r_0+\mathbf r_3)^T\tilde{\mathbf p}\ge0. 
+ (\mathbf r_0+\mathbf r_3)^T\tilde{\mathbf p}\ge0.
 $$
 
 Thus:
 
 $$
- \boxed{ \boldsymbol\pi_L=\mathbf r_3+\mathbf r_0 }. 
+ \boxed{ \boldsymbol\pi_L=\mathbf r_3+\mathbf r_0 }.
 $$
 
 ### Right plane
@@ -84856,19 +85037,19 @@ $$
 The right boundary is:
 
 $$
- x_c\le w_c. 
+ x_c\le w_c.
 $$
 
 Thus:
 
 $$
- w_c-x_c\ge0. 
+ w_c-x_c\ge0.
 $$
 
 Therefore:
 
 $$
- \boxed{ \boldsymbol\pi_R=\mathbf r_3-\mathbf r_0 }. 
+ \boxed{ \boldsymbol\pi_R=\mathbf r_3-\mathbf r_0 }.
 $$
 
 ### Bottom and top planes
@@ -84876,25 +85057,25 @@ $$
 The bottom clip inequality is:
 
 $$
- y_c+w_c\ge0. 
+ y_c+w_c\ge0.
 $$
 
 Thus:
 
 $$
- \boxed{ \boldsymbol\pi_B=\mathbf r_3+\mathbf r_1 }. 
+ \boxed{ \boldsymbol\pi_B=\mathbf r_3+\mathbf r_1 }.
 $$
 
 The top inequality is:
 
 $$
- w_c-y_c\ge0. 
+ w_c-y_c\ge0.
 $$
 
 Thus:
 
 $$
- \boxed{ \boldsymbol\pi_T=\mathbf r_3-\mathbf r_1 }. 
+ \boxed{ \boldsymbol\pi_T=\mathbf r_3-\mathbf r_1 }.
 $$
 
 ### Near and far for zero-to-one clip depth
@@ -84902,31 +85083,31 @@ $$
 For Vulkan/Metal-style zero-to-one clipping:
 
 $$
- 0\le z_c\le w_c. 
+ 0\le z_c\le w_c.
 $$
 
 The lower-depth boundary is:
 
 $$
- z_c\ge0. 
+ z_c\ge0.
 $$
 
 Therefore:
 
 $$
- \boxed{ \boldsymbol\pi_{z=0}=\mathbf r_2 }. 
+ \boxed{ \boldsymbol\pi_{z=0}=\mathbf r_2 }.
 $$
 
 The upper-depth boundary is:
 
 $$
- w_c-z_c\ge0. 
+ w_c-z_c\ge0.
 $$
 
 Therefore:
 
 $$
- \boxed{ \boldsymbol\pi_{z=w}=\mathbf r_3-\mathbf r_2 }. 
+ \boxed{ \boldsymbol\pi_{z=w}=\mathbf r_3-\mathbf r_2 }.
 $$
 
 These are the two depth-boundary planes.
@@ -84942,19 +85123,19 @@ The extraction identities do not change under reversed-Z, but the semantic label
 Under traditional OpenGL clip depth:
 
 $$
- -w_c\le z_c\le w_c. 
+ -w_c\le z_c\le w_c.
 $$
 
 The lower-depth plane is:
 
 $$
- \boxed{ \boldsymbol\pi_{z=-w}=\mathbf r_3+\mathbf r_2 }. 
+ \boxed{ \boldsymbol\pi_{z=-w}=\mathbf r_3+\mathbf r_2 }.
 $$
 
 The upper-depth plane remains:
 
 $$
- \boxed{ \boldsymbol\pi_{z=w}=\mathbf r_3-\mathbf r_2 }. 
+ \boxed{ \boldsymbol\pi_{z=w}=\mathbf r_3-\mathbf r_2 }.
 $$
 
 Therefore a plane extractor must know the active clip-depth convention.
@@ -84974,7 +85155,7 @@ Therefore a plane extractor must know the active clip-depth convention.
 These formulas assume column vectors, with world points multiplied on the right of the matrix:
 
 $$
- \mathbf p_c=C\mathbf p_w. 
+ \mathbf p_c=C\mathbf p_w.
 $$
 
 For row-vector mathematics, corresponding formulas use columns rather than rows.
@@ -84986,25 +85167,25 @@ Row-major versus column-major storage does not determine whether to extract rows
 For each extracted plane:
 
 $$
- \boldsymbol\pi=(a,b,c,d), 
+ \boldsymbol\pi=(a,b,c,d),
 $$
 
 calculate:
 
 $$
- \ell=\sqrt{a^2+b^2+c^2}. 
+ \ell=\sqrt{a^2+b^2+c^2}.
 $$
 
 If:
 
 $$
- \ell>0, 
+ \ell>0,
 $$
 
 normalize:
 
 $$
- \boxed{ \hat{\boldsymbol\pi}=\boldsymbol\pi/\ell }. 
+ \boxed{ \hat{\boldsymbol\pi}=\boldsymbol\pi/\ell }.
 $$
 
 If $\ell$ is zero or numerically degenerate, the boundary may represent a redundant constraint rather than a finite plane.
@@ -85023,7 +85204,7 @@ scottfielder.com
 You can extract planes from:
 
 $$
- C=PVM 
+ C=PVM
 $$
 
 to obtain clipping inequalities expressed in the object's local coordinates.
@@ -85041,25 +85222,25 @@ But choose one consistent coordinate space for the plane and the bound. Testing 
 A sphere is defined by centre:
 
 $$
- \mathbf c 
+ \mathbf c
 $$
 
 and radius:
 
 $$
- r\ge0. 
+ r\ge0.
 $$
 
 Suppose we have a normalized inward-facing plane:
 
 $$
- \mathbf n\cdot\mathbf p+d=0, \qquad \\|\mathbf n\\|=1. 
+ \mathbf n\cdot\mathbf p+d=0, \qquad \|\mathbf n\|=1.
 $$
 
 The signed distance from the sphere centre to the plane is:
 
 $$
- \boxed{ s=\mathbf n\cdot\mathbf c+d }. 
+ \boxed{ s=\mathbf n\cdot\mathbf c+d }.
 $$
 
 The sphere extends $r$ units from its centre in every direction.
@@ -85067,13 +85248,13 @@ The sphere extends $r$ units from its centre in every direction.
 Therefore, its smallest signed distance to the plane is:
 
 $$
- s-r. 
+ s-r.
 $$
 
 Its largest signed distance is:
 
 $$
- s+r. 
+ s+r.
 $$
 
 ### Derive the three cases
@@ -85081,7 +85262,7 @@ $$
 If:
 
 $$
- \boxed{s<-r}, 
+ \boxed{s<-r},
 $$
 
 even the nearest part of the sphere toward the plane's interior remains outside.
@@ -85093,7 +85274,7 @@ It can be culled.
 If:
 
 $$
- \boxed{s>r}, 
+ \boxed{s>r},
 $$
 
 the sphere lies entirely inside that half-space.
@@ -85101,7 +85282,7 @@ the sphere lies entirely inside that half-space.
 If:
 
 $$
- \boxed{-r\le s\le r}, 
+ \boxed{-r\le s\le r},
 $$
 
 the sphere intersects the plane.
@@ -85138,13 +85319,13 @@ This code assumes every plane normal has unit length and both the sphere and pla
 Take the near plane:
 
 $$
- \boldsymbol\pi_N=(0,0,-1,-1). 
+ \boldsymbol\pi_N=(0,0,-1,-1).
 $$
 
 The permitted region is:
 
 $$
- -z-1\ge0, 
+ -z-1\ge0,
 $$
 
 meaning positive view depth is at least one.
@@ -85152,25 +85333,25 @@ meaning positive view depth is at least one.
 Suppose the sphere has:
 
 $$
- \mathbf c=(0,0,-0.5) 
+ \mathbf c=(0,0,-0.5)
 $$
 
 and radius:
 
 $$
- r=0.2. 
+ r=0.2.
 $$
 
 Its signed distance is:
 
 $$
- s=0.5-1=-0.5. 
+ s=0.5-1=-0.5.
 $$
 
 Because:
 
 $$
- -0.5<-0.2, 
+ -0.5<-0.2,
 $$
 
 the sphere is entirely outside the near plane.
@@ -85180,19 +85361,19 @@ Cull it.
 Now increase the radius:
 
 $$
- r=0.6. 
+ r=0.6.
 $$
 
 Then:
 
 $$
- -r=-0.6. 
+ -r=-0.6.
 $$
 
 Since:
 
 $$
- s=-0.5\ge-0.6, 
+ s=-0.5\ge-0.6,
 $$
 
 the sphere intersects the near plane.
@@ -85218,7 +85399,7 @@ Suppose a local sphere has radius $r_L$, and the object's linear transform is $A
 Under pure uniform scale $s$:
 
 $$
- r_W=|s|r_L. 
+ r_W=|s|r_L.
 $$
 
 For nonuniform scale, the transformed sphere becomes an ellipsoid.
@@ -85226,15 +85407,15 @@ For nonuniform scale, the transformed sphere becomes an ellipsoid.
 To obtain a conservative world-space enclosing sphere, use:
 
 $$
- \boxed{ r_W=\\|A\\|_2r_L } 
+ \boxed{ r_W=\|A\|_2r_L }
 $$
 
-where $\\|A\\|_2$ is the largest singular value of $A$.
+where $\|A\|_2$ is the largest singular value of $A$.
 
 A simpler conservative upper bound is the Frobenius norm:
 
 $$
- r_W\le\\|A\\|_Fr_L, 
+ r_W\le\|A\|_Fr_L,
 $$
 
 although it may be looser.
@@ -85246,13 +85427,13 @@ Using only the largest diagonal scale component is not always conservative if sh
 An axis-aligned bounding box, or AABB, is defined by minimum and maximum coordinate vectors:
 
 $$
- \mathbf b_{\min}, \qquad \mathbf b_{\max}. 
+ \mathbf b_{\min}, \qquad \mathbf b_{\max}.
 $$
 
 Every contained point satisfies:
 
 $$
- b_{\min,i}\le p_i\le b_{\max,i}. 
+ b_{\min,i}\le p_i\le b_{\max,i}.
 $$
 
 For efficient plane testing, it is useful to express the box using its centre and half-extents.
@@ -85260,25 +85441,25 @@ For efficient plane testing, it is useful to express the box using its centre an
 Define:
 
 $$
- \boxed{ \mathbf c= \frac{\mathbf b_{\min}+\mathbf b_{\max}}2 } 
+ \boxed{ \mathbf c= \frac{\mathbf b_{\min}+\mathbf b_{\max}}2 }
 $$
 
 and:
 
 $$
- \boxed{ \mathbf e= \frac{\mathbf b_{\max}-\mathbf b_{\min}}2 }. 
+ \boxed{ \mathbf e= \frac{\mathbf b_{\max}-\mathbf b_{\min}}2 }.
 $$
 
 Any point inside the box can be written:
 
 $$
- \mathbf p=\mathbf c+\boldsymbol\delta 
+ \mathbf p=\mathbf c+\boldsymbol\delta
 $$
 
 with:
 
 $$
- |\delta_x|\le e_x, \qquad |\delta_y|\le e_y, \qquad |\delta_z|\le e_z. 
+ |\delta_x|\le e_x, \qquad |\delta_y|\le e_y, \qquad |\delta_z|\le e_z.
 $$
 
 ### Derive the projected radius
@@ -85286,37 +85467,37 @@ $$
 For a normalized plane normal $\mathbf n$, the plane expression is:
 
 $$
- s(\mathbf p)=\mathbf n\cdot\mathbf p+d. 
+ s(\mathbf p)=\mathbf n\cdot\mathbf p+d.
 $$
 
 Substitute:
 
 $$
- \mathbf p=\mathbf c+\boldsymbol\delta. 
+ \mathbf p=\mathbf c+\boldsymbol\delta.
 $$
 
 Then:
 
 $$
- s(\mathbf p)= \mathbf n\cdot\mathbf c+d+ \mathbf n\cdot\boldsymbol\delta. 
+ s(\mathbf p)= \mathbf n\cdot\mathbf c+d+ \mathbf n\cdot\boldsymbol\delta.
 $$
 
 Define centre distance:
 
 $$
- \boxed{ s_c=\mathbf n\cdot\mathbf c+d }. 
+ \boxed{ s_c=\mathbf n\cdot\mathbf c+d }.
 $$
 
 Now find the maximum possible magnitude of the offset term:
 
 $$
- \mathbf n\cdot\boldsymbol\delta = n_x\delta_x+n_y\delta_y+n_z\delta_z. 
+ \mathbf n\cdot\boldsymbol\delta = n_x\delta_x+n_y\delta_y+n_z\delta_z.
 $$
 
 Because each $\delta_i$ is bounded, the maximum absolute projection is:
 
 $$
- \boxed{ r_{\mathrm{box}}= |n_x|e_x+|n_y|e_y+|n_z|e_z }. 
+ \boxed{ r_{\mathrm{box}}= |n_x|e_x+|n_y|e_y+|n_z|e_z }.
 $$
 
 This is the box's support radius along the plane normal.
@@ -85326,19 +85507,19 @@ This is the box's support radius along the plane normal.
 The minimum signed distance of the box to the plane is:
 
 $$
- s_{\min}=s_c-r_{\mathrm{box}}. 
+ s_{\min}=s_c-r_{\mathrm{box}}.
 $$
 
 The box lies entirely outside the inward half-space if its maximum signed distance is negative:
 
 $$
- s_{\max}=s_c+r_{\mathrm{box}}<0. 
+ s_{\max}=s_c+r_{\mathrm{box}}<0.
 $$
 
 Therefore the correct rejection condition is:
 
 $$
- \boxed{ s_c<-r_{\mathrm{box}} }. 
+ \boxed{ s_c<-r_{\mathrm{box}} }.
 $$
 
 The corresponding conservative code is:
@@ -85381,13 +85562,13 @@ Plane normalization is not strictly required for this AABB support-radius compar
 Consider the inward plane:
 
 $$
- x\ge0. 
+ x\ge0.
 $$
 
 Its normal is:
 
 $$
- \mathbf n=(1,0,0), 
+ \mathbf n=(1,0,0),
 $$
 
 with $d=0$.
@@ -85395,31 +85576,31 @@ with $d=0$.
 Let an AABB have centre:
 
 $$
- \mathbf c=(-3,0,0) 
+ \mathbf c=(-3,0,0)
 $$
 
 and half-extents:
 
 $$
- \mathbf e=(1,2,1). 
+ \mathbf e=(1,2,1).
 $$
 
 The centre signed distance is:
 
 $$
- s_c=-3. 
+ s_c=-3.
 $$
 
 The projected radius is:
 
 $$
- r_{\mathrm{box}}= |1|(1)+0+0=1. 
+ r_{\mathrm{box}}= |1|(1)+0+0=1.
 $$
 
 Since:
 
 $$
- -3<-1, 
+ -3<-1,
 $$
 
 the box is outside.
@@ -85427,19 +85608,19 @@ the box is outside.
 Now move its centre to:
 
 $$
- (-0.5,0,0). 
+ (-0.5,0,0).
 $$
 
 Then:
 
 $$
- s_c=-0.5. 
+ s_c=-0.5.
 $$
 
 Because:
 
 $$
- -0.5\not<-1, 
+ -0.5\not<-1,
 $$
 
 the box intersects the permitted half-space.
@@ -85461,7 +85642,7 @@ A local-space AABB transformed by a rotation is an oriented bounding box, not au
 A conservative world AABB can be computed using the transformed centre and absolute linear matrix:
 
 $$
- \boxed{ \mathbf e_W=|A|\mathbf e_L } 
+ \boxed{ \mathbf e_W=|A|\mathbf e_L }
 $$
 
 where $|A|$ denotes the matrix formed by taking the absolute value of each element.
@@ -85469,7 +85650,7 @@ where $|A|$ denotes the matrix formed by taking the absolute value of each eleme
 This follows from applying componentwise bounds to:
 
 $$
- A\boldsymbol\delta. 
+ A\boldsymbol\delta.
 $$
 
 The resulting world AABB is conservative under affine transformations.
@@ -85491,13 +85672,13 @@ An oblique clipping plane is a clipping boundary that is not aligned with the co
 Ordinary perspective projection clips against planes such as:
 
 $$
- z_{\mathrm{view}}=-n. 
+ z_{\mathrm{view}}=-n.
 $$
 
 An oblique plane might instead have the equation:
 
 $$
- \boxed{ ax+by+cz+d=0 } 
+ \boxed{ ax+by+cz+d=0 }
 $$
 
 with a normal not parallel to the camera's forward axis.
@@ -85523,43 +85704,43 @@ An oblique near plane makes the projection's clipping boundary match the desired
 Suppose a plane in world space is:
 
 $$
- \boldsymbol\pi_W= \begin{bmatrix} a\\b\\c\\d \end{bmatrix}. 
+ \boldsymbol\pi_W= \begin{bmatrix} a\\b\\c\\d \end{bmatrix}.
 $$
 
 A point transforms from world to view using:
 
 $$
- \mathbf p_V=V\mathbf p_W. 
+ \mathbf p_V=V\mathbf p_W.
 $$
 
 Thus:
 
 $$
- \mathbf p_W=V^{-1}\mathbf p_V. 
+ \mathbf p_W=V^{-1}\mathbf p_V.
 $$
 
 The world plane equation is:
 
 $$
- \boldsymbol\pi_W^T\mathbf p_W=0. 
+ \boldsymbol\pi_W^T\mathbf p_W=0.
 $$
 
 Substitute:
 
 $$
- \boldsymbol\pi_W^TV^{-1}\mathbf p_V=0. 
+ \boldsymbol\pi_W^TV^{-1}\mathbf p_V=0.
 $$
 
 We want:
 
 $$
- \boldsymbol\pi_V^T\mathbf p_V=0. 
+ \boldsymbol\pi_V^T\mathbf p_V=0.
 $$
 
 Therefore:
 
 $$
- \boxed{ \boldsymbol\pi_V=V^{-T}\boldsymbol\pi_W }. 
+ \boxed{ \boldsymbol\pi_V=V^{-T}\boldsymbol\pi_W }.
 $$
 
 This is the inverse-transpose rule for transforming planes.
@@ -85571,7 +85752,7 @@ The same dual-space principle appears in normal transformations.
 An inward-facing oblique clip plane can be written:
 
 $$
- \boxed{ \boldsymbol\pi^T\tilde{\mathbf p}\ge0 }. 
+ \boxed{ \boldsymbol\pi^T\tilde{\mathbf p}\ge0 }.
 $$
 
 The clipping algorithm retains the permitted half-space.
@@ -85581,7 +85762,7 @@ A projection matrix can be modified so that a canonical clip boundary correspond
 For zero-to-one clip depth, the canonical lower-depth boundary is:
 
 $$
- z_c\ge0. 
+ z_c\ge0.
 $$
 
 If the third row of a projection matrix is constructed to be proportional to the desired plane coefficients in view space, that lower clip boundary can represent the oblique plane.
@@ -85634,7 +85815,7 @@ After perspective projection, rasterization computes barycentric coordinates rel
 A tempting implementation is:
 
 $$
- \boxed{ a_{\mathrm{naive}}= \lambda_0a_0+\lambda_1a_1+\lambda_2a_2 }. 
+ \boxed{ a_{\mathrm{naive}}= \lambda_0a_0+\lambda_1a_1+\lambda_2a_2 }.
 $$
 
 Here $\lambda_i$ are screen-space barycentric weights.
@@ -85652,23 +85833,23 @@ Consider two 3D endpoints along a projected line.
 Endpoint 0 lies at positive camera depth:
 
 $$
- d_0=1. 
+ d_0=1.
 $$
 
 Endpoint 1 lies at:
 
 $$
- d_1=4. 
+ d_1=4.
 $$
 
 Let an attribute such as texture coordinate be:
 
 $$
- a_0=0, 
+ a_0=0,
 $$
 
 $$
- a_1=1. 
+ a_1=1.
 $$
 
 Suppose a screen-space point is halfway between the projected endpoints.
@@ -85676,7 +85857,7 @@ Suppose a screen-space point is halfway between the projected endpoints.
 A naive screen-space interpolation gives:
 
 $$
- \boxed{ a_{\mathrm{naive}}=0.5 }. 
+ \boxed{ a_{\mathrm{naive}}=0.5 }.
 $$
 
 But the 3D segment is not sampled halfway in its original affine parameter.
@@ -85688,43 +85869,43 @@ The nearer endpoint influences projected position more strongly because perspect
 For a screen-space halfway point, use weights:
 
 $$
- \lambda_0=\lambda_1=0.5. 
+ \lambda_0=\lambda_1=0.5.
 $$
 
 The perspective-correct attribute formula is:
 
 $$
- a= \frac{ \lambda_0a_0/d_0+\lambda_1a_1/d_1 }{ \lambda_0/d_0+\lambda_1/d_1 }. 
+ a= \frac{ \lambda_0a_0/d_0+\lambda_1a_1/d_1 }{ \lambda_0/d_0+\lambda_1/d_1 }.
 $$
 
 Substitute:
 
 $$
- a= \frac{ 0.5(0)/1+0.5(1)/4 }{ 0.5/1+0.5/4 }. 
+ a= \frac{ 0.5(0)/1+0.5(1)/4 }{ 0.5/1+0.5/4 }.
 $$
 
 The numerator is:
 
 $$
- 0.125. 
+ 0.125.
 $$
 
 The denominator is:
 
 $$
- 0.5+0.125=0.625. 
+ 0.5+0.125=0.625.
 $$
 
 Therefore:
 
 $$
- \boxed{ a=\frac{0.125}{0.625}=0.2 }. 
+ \boxed{ a=\frac{0.125}{0.625}=0.2 }.
 $$
 
 The true projectively corrected attribute is:
 
 $$
- \boxed{0.2}, 
+ \boxed{0.2},
 $$
 
 not $0.5$.
@@ -85767,37 +85948,37 @@ We now derive the full formula for a triangle rather than memorizing the result.
 Let the original 3D triangle vertices be:
 
 $$
- P_0,P_1,P_2. 
+ P_0,P_1,P_2.
 $$
 
 Let a point on the original triangle have 3D affine barycentric coordinates:
 
 $$
- \alpha_0,\alpha_1,\alpha_2. 
+ \alpha_0,\alpha_1,\alpha_2.
 $$
 
 Then:
 
 $$
- \boxed{ \alpha_0+\alpha_1+\alpha_2=1 } 
+ \boxed{ \alpha_0+\alpha_1+\alpha_2=1 }
 $$
 
 and:
 
 $$
- \boxed{ P=\alpha_0P_0+\alpha_1P_1+\alpha_2P_2 }. 
+ \boxed{ P=\alpha_0P_0+\alpha_1P_1+\alpha_2P_2 }.
 $$
 
 Suppose an attribute is affinely interpolated on the original triangle:
 
 $$
- \boxed{ a=\alpha_0a_0+\alpha_1a_1+\alpha_2a_2 }. 
+ \boxed{ a=\alpha_0a_0+\alpha_1a_1+\alpha_2a_2 }.
 $$
 
 The problem is that the rasterizer knows screen-space barycentric weights:
 
 $$
- \lambda_0,\lambda_1,\lambda_2, 
+ \lambda_0,\lambda_1,\lambda_2,
 $$
 
 not the original $\alpha_i$.
@@ -85809,49 +85990,49 @@ We need a relationship between them.
 Let the projected homogeneous vertices be:
 
 $$
- C_i= \begin{bmatrix} x_i\\y_i\\z_i\\w_i \end{bmatrix}. 
+ C_i= \begin{bmatrix} x_i\\y_i\\z_i\\w_i \end{bmatrix}.
 $$
 
 Their NDC XY positions are:
 
 $$
- q_i= \begin{bmatrix} x_i/w_i\\ y_i/w_i \end{bmatrix}. 
+ q_i= \begin{bmatrix} x_i/w_i\\ y_i/w_i \end{bmatrix}.
 $$
 
 Because projective transformations are linear in homogeneous coordinates, the homogeneous image of the affine 3D combination is proportional to:
 
 $$
- \boxed{ C=\sum_i\alpha_iC_i }. 
+ \boxed{ C=\sum_i\alpha_iC_i }.
 $$
 
 Its homogeneous denominator is:
 
 $$
- \boxed{ W=\sum_i\alpha_iw_i }. 
+ \boxed{ W=\sum_i\alpha_iw_i }.
 $$
 
 Its projected XY position is:
 
 $$
- q= \frac{ \sum_i\alpha_iw_iq_i }{ \sum_i\alpha_iw_i }. 
+ q= \frac{ \sum_i\alpha_iw_iq_i }{ \sum_i\alpha_iw_i }.
 $$
 
 Define:
 
 $$
- \boxed{ \lambda_i=\frac{\alpha_iw_i}{W} }. 
+ \boxed{ \lambda_i=\frac{\alpha_iw_i}{W} }.
 $$
 
 Then:
 
 $$
- \sum_i\lambda_i=1. 
+ \sum_i\lambda_i=1.
 $$
 
 And:
 
 $$
- q=\sum_i\lambda_iq_i. 
+ q=\sum_i\lambda_iq_i.
 $$
 
 Thus $\lambda_i$ are precisely the affine barycentric weights in the projected screen-space triangle.
@@ -85861,13 +86042,13 @@ Thus $\lambda_i$ are precisely the affine barycentric weights in the projected s
 From:
 
 $$
- \lambda_i=\frac{\alpha_iw_i}{W}, 
+ \lambda_i=\frac{\alpha_iw_i}{W},
 $$
 
 we get:
 
 $$
- \alpha_i=\lambda_i\frac W{w_i}. 
+ \alpha_i=\lambda_i\frac W{w_i}.
 $$
 
 We still need $W$.
@@ -85875,31 +86056,31 @@ We still need $W$.
 Use:
 
 $$
- \sum_i\alpha_i=1. 
+ \sum_i\alpha_i=1.
 $$
 
 Therefore:
 
 $$
- \sum_i\lambda_i\frac W{w_i}=1. 
+ \sum_i\lambda_i\frac W{w_i}=1.
 $$
 
 Factor $W$:
 
 $$
- W\sum_i\frac{\lambda_i}{w_i}=1. 
+ W\sum_i\frac{\lambda_i}{w_i}=1.
 $$
 
 Hence:
 
 $$
- \boxed{ W= \frac1{\sum_i\lambda_i/w_i} }. 
+ \boxed{ W= \frac1{\sum_i\lambda_i/w_i} }.
 $$
 
 Substitute:
 
 $$
- \boxed{ \alpha_i= \frac{\lambda_i/w_i} {\sum_j\lambda_j/w_j} }. 
+ \boxed{ \alpha_i= \frac{\lambda_i/w_i} {\sum_j\lambda_j/w_j} }.
 $$
 
 This is the central relationship between screen-space and original-triangle barycentric coordinates.
@@ -85909,19 +86090,19 @@ This is the central relationship between screen-space and original-triangle bary
 We know:
 
 $$
- a=\sum_i\alpha_i a_i. 
+ a=\sum_i\alpha_i a_i.
 $$
 
 Substitute the recovered $\alpha_i$:
 
 $$
- a= \sum_i a_i \frac{\lambda_i/w_i} {\sum_j\lambda_j/w_j}. 
+ a= \sum_i a_i \frac{\lambda_i/w_i} {\sum_j\lambda_j/w_j}.
 $$
 
 Factor the common denominator:
 
 $$
- \boxed{ a= \frac{ \sum_i\lambda_i a_i/w_i }{ \sum_i\lambda_i/w_i } }. 
+ \boxed{ a= \frac{ \sum_i\lambda_i a_i/w_i }{ \sum_i\lambda_i/w_i } }.
 $$
 
 That is perspective-correct interpolation.
@@ -85933,49 +86114,49 @@ It works componentwise for vector attributes.
 Suppose a rasterized triangle has screen-space barycentric weights:
 
 $$
- \lambda=(0.5,0.25,0.25). 
+ \lambda=(0.5,0.25,0.25).
 $$
 
 Its clip $w$ values are:
 
 $$
- w=(1,4,4). 
+ w=(1,4,4).
 $$
 
 The scalar vertex attribute is:
 
 $$
- a=(0,1,0). 
+ a=(0,1,0).
 $$
 
 Naive interpolation gives:
 
 $$
- a_{\mathrm{naive}} = 0.5(0)+0.25(1)+0.25(0) =\boxed{0.25}. 
+ a_{\mathrm{naive}} = 0.5(0)+0.25(1)+0.25(0) =\boxed{0.25}.
 $$
 
 Perspective-correct numerator:
 
 $$
- N= 0.5\frac01+ 0.25\frac14+ 0.25\frac04 =0.0625. 
+ N= 0.5\frac01+ 0.25\frac14+ 0.25\frac04 =0.0625.
 $$
 
 Denominator:
 
 $$
- D= 0.5\frac11+ 0.25\frac14+ 0.25\frac14. 
+ D= 0.5\frac11+ 0.25\frac14+ 0.25\frac14.
 $$
 
 Thus:
 
 $$
- D=0.5+0.0625+0.0625=0.625. 
+ D=0.5+0.0625+0.0625=0.625.
 $$
 
 Therefore:
 
 $$
- \boxed{ a=\frac{0.0625}{0.625}=0.1 }. 
+ \boxed{ a=\frac{0.0625}{0.625}=0.1 }.
 $$
 
 This example is tested in the compiled C++23 laboratory.
@@ -85985,13 +86166,13 @@ This example is tested in the compiled C++23 laboratory.
 From the earlier relationship:
 
 $$
- W=\frac1{\sum_i\lambda_i/w_i}, 
+ W=\frac1{\sum_i\lambda_i/w_i},
 $$
 
 we obtain:
 
 $$
- \boxed{ \frac1W= \sum_i\frac{\lambda_i}{w_i} }. 
+ \boxed{ \frac1W= \sum_i\frac{\lambda_i}{w_i} }.
 $$
 
 Thus reciprocal homogeneous $w$ is affine in screen-space barycentric coordinates.
@@ -85999,13 +86180,13 @@ Thus reciprocal homogeneous $w$ is affine in screen-space barycentric coordinate
 For the conventional perspective matrix with:
 
 $$
- w=d, 
+ w=d,
 $$
 
 this becomes:
 
 $$
- \boxed{ \frac1d= \sum_i\lambda_i\frac1{d_i} }. 
+ \boxed{ \frac1d= \sum_i\lambda_i\frac1{d_i} }.
 $$
 
 This explains why reciprocal depth plays such a central role in rasterization.
@@ -86017,7 +86198,7 @@ The corrected attribute is a ratio of two affine expressions in screen-space bar
 For a segment, it has the form:
 
 $$
- a(t)= \frac{A+Bt}{C+Dt}. 
+ a(t)= \frac{A+Bt}{C+Dt}.
 $$
 
 This is a rational-linear or linear-fractional function.
@@ -86045,33 +86226,33 @@ Barycentric coordinates describe a point as an affine combination of triangle ve
 Let a 2D triangle have raster-space or NDC vertices:
 
 $$
- A=(x_0,y_0), 
+ A=(x_0,y_0),
 $$
 
 $$
- B=(x_1,y_1), 
+ B=(x_1,y_1),
 $$
 
 $$
- C=(x_2,y_2). 
+ C=(x_2,y_2).
 $$
 
 We want weights:
 
 $$
- \lambda_0,\lambda_1,\lambda_2 
+ \lambda_0,\lambda_1,\lambda_2
 $$
 
 satisfying:
 
 $$
- \boxed{ P=\lambda_0A+\lambda_1B+\lambda_2C } 
+ \boxed{ P=\lambda_0A+\lambda_1B+\lambda_2C }
 $$
 
 and:
 
 $$
- \boxed{ \lambda_0+\lambda_1+\lambda_2=1 }. 
+ \boxed{ \lambda_0+\lambda_1+\lambda_2=1 }.
 $$
 
 ### Derive using two edge vectors
@@ -86079,33 +86260,33 @@ $$
 Subtract $A$:
 
 $$
- P-A= \lambda_1(B-A)+\lambda_2(C-A) 
+ P-A= \lambda_1(B-A)+\lambda_2(C-A)
 $$
 
 because:
 
 $$
- \lambda_0=1-\lambda_1-\lambda_2. 
+ \lambda_0=1-\lambda_1-\lambda_2.
 $$
 
 Define:
 
 $$
- \mathbf e_1=B-A, 
+ \mathbf e_1=B-A,
 $$
 
 $$
- \mathbf e_2=C-A, 
+ \mathbf e_2=C-A,
 $$
 
 $$
- \mathbf q=P-A. 
+ \mathbf q=P-A.
 $$
 
 We need to solve:
 
 $$
- \mathbf q= \lambda_1\mathbf e_1+ \lambda_2\mathbf e_2. 
+ \mathbf q= \lambda_1\mathbf e_1+ \lambda_2\mathbf e_2.
 $$
 
 This is a $2\times2$ linear system.
@@ -86115,37 +86296,37 @@ This is a $2\times2$ linear system.
 Define the scalar 2D cross product:
 
 $$
- \boxed{ \operatorname{cross}_2(a,b)=a_xb_y-a_yb_x }. 
+ \boxed{ \operatorname{cross}_2(a,b)=a_xb_y-a_yb_x }.
 $$
 
 Cross both sides with $\mathbf e_2$:
 
 $$
- \operatorname{cross}_2(\mathbf q,\mathbf e_2) = \lambda_1 \operatorname{cross}_2(\mathbf e_1,\mathbf e_2) 
+ \operatorname{cross}_2(\mathbf q,\mathbf e_2) = \lambda_1 \operatorname{cross}_2(\mathbf e_1,\mathbf e_2)
 $$
 
 because:
 
 $$
- \operatorname{cross}_2(\mathbf e_2,\mathbf e_2)=0. 
+ \operatorname{cross}_2(\mathbf e_2,\mathbf e_2)=0.
 $$
 
 Therefore:
 
 $$
- \boxed{ \lambda_1= \frac{ \operatorname{cross}_2(P-A,C-A) }{ \operatorname{cross}_2(B-A,C-A) } }. 
+ \boxed{ \lambda_1= \frac{ \operatorname{cross}_2(P-A,C-A) }{ \operatorname{cross}_2(B-A,C-A) } }.
 $$
 
 Similarly, cross $\mathbf e_1$ with both sides:
 
 $$
- \boxed{ \lambda_2= \frac{ \operatorname{cross}_2(B-A,P-A) }{ \operatorname{cross}_2(B-A,C-A) } }. 
+ \boxed{ \lambda_2= \frac{ \operatorname{cross}_2(B-A,P-A) }{ \operatorname{cross}_2(B-A,C-A) } }.
 $$
 
 Then:
 
 $$
- \boxed{ \lambda_0=1-\lambda_1-\lambda_2 }. 
+ \boxed{ \lambda_0=1-\lambda_1-\lambda_2 }.
 $$
 
 These are the screen-space barycentric coordinates.
@@ -86155,69 +86336,69 @@ These are the screen-space barycentric coordinates.
 Let:
 
 $$
- A=(0,0),\quad B=(1,0),\quad C=(0,1). 
+ A=(0,0),\quad B=(1,0),\quad C=(0,1).
 $$
 
 Choose:
 
 $$
- P=(0.25,0.25). 
+ P=(0.25,0.25).
 $$
 
 Then:
 
 $$
- B-A=(1,0), 
+ B-A=(1,0),
 $$
 
 $$
- C-A=(0,1), 
+ C-A=(0,1),
 $$
 
 $$
- P-A=(0.25,0.25). 
+ P-A=(0.25,0.25).
 $$
 
 The denominator is:
 
 $$
- \operatorname{cross}_2((1,0),(0,1))=1. 
+ \operatorname{cross}_2((1,0),(0,1))=1.
 $$
 
 For $\lambda_1$:
 
 $$
- \operatorname{cross}_2((0.25,0.25),(0,1))=0.25. 
+ \operatorname{cross}_2((0.25,0.25),(0,1))=0.25.
 $$
 
 Thus:
 
 $$
- \lambda_1=0.25. 
+ \lambda_1=0.25.
 $$
 
 For $\lambda_2$:
 
 $$
- \operatorname{cross}_2((1,0),(0.25,0.25))=0.25. 
+ \operatorname{cross}_2((1,0),(0.25,0.25))=0.25.
 $$
 
 Thus:
 
 $$
- \lambda_2=0.25. 
+ \lambda_2=0.25.
 $$
 
 And:
 
 $$
- \lambda_0=0.5. 
+ \lambda_0=0.5.
 $$
 
 Therefore:
 
 $$
- \boxed{ \lambda=(0.5,0.25,0.25) }. 
+ \boxed{ \lambda=(0.5,0.25,0.25) }.
 $$
 
 ### Point-in-triangle testing
@@ -86225,7 +86406,7 @@ $$
 For a nondegenerate triangle, the point is inside or on its boundary when:
 
 $$
- \boxed{ \lambda_i\ge0 } 
+ \boxed{ \lambda_i\ge0 }
 $$
 
 for all three weights, subject to the chosen boundary convention and numerical tolerance.
@@ -86237,7 +86418,7 @@ If any weight is negative, the point lies outside the triangle.
 The denominator is twice the oriented area of the triangle:
 
 $$
- \operatorname{cross}_2(B-A,C-A). 
+ \operatorname{cross}_2(B-A,C-A).
 $$
 
 If it is zero, the triangle vertices are collinear and the ordinary barycentric coordinate solution is not unique.
@@ -86253,7 +86434,7 @@ Floating-point tolerance rules must be chosen with attention to triangle scale a
 Define an oriented edge function:
 
 $$
- \boxed{ E_{AB}(P)= \operatorname{cross}_2(B-A,P-A) }. 
+ \boxed{ E_{AB}(P)= \operatorname{cross}_2(B-A,P-A) }.
 $$
 
 It is affine in the coordinates of $P$.
@@ -86311,19 +86492,19 @@ We will make this conversion explicit later.
 For a point in camera coordinates:
 
 $$
- \mathbf X_C= \begin{bmatrix} X_C\\Y_C\\Z_C \end{bmatrix}, 
+ \mathbf X_C= \begin{bmatrix} X_C\\Y_C\\Z_C \end{bmatrix},
 $$
 
 with:
 
 $$
- Z_C>0, 
+ Z_C>0,
 $$
 
 the normalized pinhole coordinates are:
 
 $$
- \boxed{ x=\frac{X_C}{Z_C}, \qquad y=\frac{Y_C}{Z_C} }. 
+ \boxed{ x=\frac{X_C}{Z_C}, \qquad y=\frac{Y_C}{Z_C} }.
 $$
 
 These coordinates describe the direction of the incoming ray relative to the optical axis.
@@ -86333,13 +86514,13 @@ These coordinates describe the direction of the incoming ray relative to the opt
 A simple calibrated camera maps normalized coordinates to pixels using:
 
 $$
- \boxed{ u=f_xx+c_x } 
+ \boxed{ u=f_xx+c_x }
 $$
 
 and:
 
 $$
- \boxed{ v=f_yy+c_y }. 
+ \boxed{ v=f_yy+c_y }.
 $$
 
 Here $u,v$ are image pixel coordinates.
@@ -86347,19 +86528,19 @@ Here $u,v$ are image pixel coordinates.
 The parameters have the following meanings.
 
 $$
- f_x 
+ f_x
 $$
 
 is the horizontal focal scale in pixels.
 
 $$
- f_y 
+ f_y
 $$
 
 is the vertical focal scale in pixels.
 
 $$
- (c_x,c_y) 
+ (c_x,c_y)
 $$
 
 is the principal point, expressed in the same pixel-coordinate convention as the image observations.
@@ -86367,7 +86548,7 @@ is the principal point, expressed in the same pixel-coordinate convention as the
 The camera intrinsic model can include skew:
 
 $$
- \boxed{ u=f_xx+s\,y+c_x }. 
+ \boxed{ u=f_xx+s\,y+c_x }.
 $$
 
 Usually skew is zero or small in modern ordinary digital cameras, but it should not be silently assumed zero when working with an arbitrary calibration file.
@@ -86396,7 +86577,7 @@ For an ideal pinhole projection, it controls the scale between ray angle and ima
 Suppose the ideal image plane is at distance:
 
 $$
- f 
+ f
 $$
 
 from the pinhole.
@@ -86404,19 +86585,19 @@ from the pinhole.
 By similar triangles:
 
 $$
- \frac{x_{\mathrm{image}}}{f} = \frac{X_C}{Z_C}. 
+ \frac{x_{\mathrm{image}}}{f} = \frac{X_C}{Z_C}.
 $$
 
 Therefore:
 
 $$
- \boxed{ x_{\mathrm{image}}= f\frac{X_C}{Z_C} }. 
+ \boxed{ x_{\mathrm{image}}= f\frac{X_C}{Z_C} }.
 $$
 
 Similarly:
 
 $$
- \boxed{ y_{\mathrm{image}}= f\frac{Y_C}{Z_C} }. 
+ \boxed{ y_{\mathrm{image}}= f\frac{Y_C}{Z_C} }.
 $$
 
 The image-plane dimensions and $f$ must use the same physical length units.
@@ -86426,13 +86607,13 @@ The image-plane dimensions and $f$ must use the same physical length units.
 Suppose the physical sensor height is:
 
 $$
- H_s. 
+ H_s.
 $$
 
 The vertical FOV is:
 
 $$
- \boxed{ \theta_y= 2\arctan\left(\frac{H_s}{2f}\right) } 
+ \boxed{ \theta_y= 2\arctan\left(\frac{H_s}{2f}\right) }
 $$
 
 for the ideal rectilinear model.
@@ -86440,13 +86621,13 @@ for the ideal rectilinear model.
 Rearrange:
 
 $$
- \tan(\theta_y/2)=\frac{H_s}{2f}. 
+ \tan(\theta_y/2)=\frac{H_s}{2f}.
 $$
 
 Thus:
 
 $$
- \boxed{ f=\frac{H_s}{2\tan(\theta_y/2)} }. 
+ \boxed{ f=\frac{H_s}{2\tan(\theta_y/2)} }.
 $$
 
 A larger focal length produces a narrower FOV when sensor size is fixed.
@@ -86458,23 +86639,23 @@ A smaller focal length produces a wider FOV.
 Suppose:
 
 $$
- H_s=24\text{ mm}, 
+ H_s=24\text{ mm},
 $$
 
 $$
- f=35\text{ mm}. 
+ f=35\text{ mm}.
 $$
 
 Then:
 
 $$
- \theta_y= 2\arctan\left(\frac{24}{70}\right). 
+ \theta_y= 2\arctan\left(\frac{24}{70}\right).
 $$
 
 Numerically:
 
 $$
- \boxed{ \theta_y\approx37.85^\circ }. 
+ \boxed{ \theta_y\approx37.85^\circ }.
 $$
 
 The exact value depends on the adopted idealized sensor geometry.
@@ -86500,7 +86681,7 @@ The principal point is the image location where the optical axis intersects the 
 Its coordinates are:
 
 $$
- \boxed{(c_x,c_y)}. 
+ \boxed{(c_x,c_y)}.
 $$
 
 It need not coincide exactly with the geometric centre of the image.
@@ -86512,11 +86693,11 @@ Several factors can shift the effective principal point: sensor alignment, optic
 For a simple centred camera, one might use:
 
 $$
- c_x\approx W/2, 
+ c_x\approx W/2,
 $$
 
 $$
- c_y\approx H/2 
+ c_y\approx H/2
 $$
 
 when coordinates are defined continuously from the image's outer edges.
@@ -86526,7 +86707,7 @@ But this must be interpreted according to the image-coordinate convention.
 If integer pixel indices denote pixel centres at coordinates $0,1,\ldots,W-1$, a geometric centre is often represented as:
 
 $$
- \frac{W-1}{2}. 
+ \frac{W-1}{2}.
 $$
 
 These are two coordinate conventions for the same geometric idea, differing by half a pixel.
@@ -86538,7 +86719,7 @@ A calibration should explicitly define whether integer coordinates refer to pixe
 The normalized camera ray corresponding to pixel $(u,v)$, assuming zero skew and no distortion, has direction proportional to:
 
 $$
- \boxed{ \mathbf d_C= \begin{bmatrix} (u-c_x)/f_x\\ (v-c_y)/f_y\\ 1 \end{bmatrix} }. 
+ \boxed{ \mathbf d_C= \begin{bmatrix} (u-c_x)/f_x\\ (v-c_y)/f_y\\ 1 \end{bmatrix} }.
 $$
 
 If $c_x$ changes while $u$ remains fixed, the inferred horizontal ray angle changes.
@@ -86550,19 +86731,19 @@ Thus a principal-point error causes systematic reprojection errors, especially w
 Suppose:
 
 $$
- W=1920,\quad H=1080. 
+ W=1920,\quad H=1080.
 $$
 
 The nominal centred optical location under a continuous image-edge coordinate convention is:
 
 $$
- (960,540). 
+ (960,540).
 $$
 
 But calibration gives:
 
 $$
- (c_x,c_y)=(968,535). 
+ (c_x,c_y)=(968,535).
 $$
 
 The principal point is shifted eight pixels right and five pixels upward relative to that nominal centre.
@@ -86570,7 +86751,7 @@ The principal point is shifted eight pixels right and five pixels upward relativ
 A point along the optical axis maps to:
 
 $$
- \boxed{(u,v)=(968,535)}. 
+ \boxed{(u,v)=(968,535)}.
 $$
 
 If an algorithm assumes $(960,540)$, it assigns the optical-axis point an incorrect normalized direction.
@@ -86584,7 +86765,7 @@ The intrinsic focal parameters $f_x,f_y$ are measured in pixels.
 Suppose the horizontal pixel pitch is:
 
 $$
- p_x 
+ p_x
 $$
 
 millimetres per pixel.
@@ -86592,13 +86773,13 @@ millimetres per pixel.
 Then:
 
 $$
- \boxed{ f_x=\frac f{p_x} }. 
+ \boxed{ f_x=\frac f{p_x} }.
 $$
 
 Similarly, if vertical pixel pitch is $p_y$:
 
 $$
- \boxed{ f_y=\frac f{p_y} }. 
+ \boxed{ f_y=\frac f{p_y} }.
 $$
 
 If the pixel pitches differ, $f_x$ and $f_y$ can differ even when physical focal length is the same.
@@ -86608,19 +86789,19 @@ If the pixel pitches differ, $f_x$ and $f_y$ can differ even when physical focal
 If the physical sensor width is $S_x$ and the image width is $W$ pixels:
 
 $$
- p_x=\frac{S_x}{W}. 
+ p_x=\frac{S_x}{W}.
 $$
 
 Therefore:
 
 $$
- \boxed{ f_x=\frac{fW}{S_x} }. 
+ \boxed{ f_x=\frac{fW}{S_x} }.
 $$
 
 Likewise:
 
 $$
- \boxed{ f_y=\frac{fH}{S_y} }. 
+ \boxed{ f_y=\frac{fH}{S_y} }.
 $$
 
 These formulas assume the stated sensor region maps to the stated image dimensions without additional crop, resampling, or calibration changes.
@@ -86630,39 +86811,39 @@ These formulas assume the stated sensor region maps to the stated image dimensio
 Suppose:
 
 $$
- f=35\text{ mm}, 
+ f=35\text{ mm},
 $$
 
 $$
- S_x=36\text{ mm}, 
+ S_x=36\text{ mm},
 $$
 
 $$
- W=6000\text{ pixels}. 
+ W=6000\text{ pixels}.
 $$
 
 Then:
 
 $$
- f_x=\frac{35(6000)}{36}. 
+ f_x=\frac{35(6000)}{36}.
 $$
 
 Thus:
 
 $$
- \boxed{ f_x\approx5833.33\text{ pixels} }. 
+ \boxed{ f_x\approx5833.33\text{ pixels} }.
 $$
 
 If the sensor height is 24 mm and the image height is 4000 pixels:
 
 $$
- f_y=\frac{35(4000)}{24}. 
+ f_y=\frac{35(4000)}{24}.
 $$
 
 Therefore:
 
 $$
- \boxed{ f_y\approx5833.33\text{ pixels} }. 
+ \boxed{ f_y\approx5833.33\text{ pixels} }.
 $$
 
 The two values agree because the image and sensor aspect ratios agree and the assumed pixels are square.
@@ -86674,25 +86855,25 @@ Suppose the original image is $W\times H$.
 Resize it by horizontal scale:
 
 $$
- s_x 
+ s_x
 $$
 
 and vertical scale:
 
 $$
- s_y. 
+ s_y.
 $$
 
 Under a compatible continuous pixel-coordinate convention:
 
 $$
- \boxed{ f_x'=s_xf_x, \qquad f_y'=s_yf_y }. 
+ \boxed{ f_x'=s_xf_x, \qquad f_y'=s_yf_y }.
 $$
 
 The principal point also transforms:
 
 $$
- \boxed{ c_x'=s_xc_x, \qquad c_y'=s_yc_y }. 
+ \boxed{ c_x'=s_xc_x, \qquad c_y'=s_yc_y }.
 $$
 
 However, if the resize operation uses a pixel-centre alignment convention, half-pixel offsets may appear in the exact coordinate transformation.
@@ -86700,13 +86881,13 @@ However, if the resize operation uses a pixel-centre alignment convention, half-
 For example, a common centre-preserving transformation between integer-centred pixel coordinate systems is:
 
 $$
- u'=(u+0.5)s_x-0.5. 
+ u'=(u+0.5)s_x-0.5.
 $$
 
 Then:
 
 $$
- \boxed{ c_x'=(c_x+0.5)s_x-0.5 }. 
+ \boxed{ c_x'=(c_x+0.5)s_x-0.5 }.
 $$
 
 The correct formula depends on the image resampler's coordinate convention.
@@ -86716,7 +86897,7 @@ The correct formula depends on the image resampler's coordinate convention.
 If an image is cropped by removing $x_0$ pixels from the left and $y_0$ pixels from the top, under a consistent pixel coordinate system:
 
 $$
- \boxed{ c_x'=c_x-x_0, \qquad c_y'=c_y-y_0 }. 
+ \boxed{ c_x'=c_x-x_0, \qquad c_y'=c_y-y_0 }.
 $$
 
 Focal scales remain unchanged when cropping alone does not rescale the image.
@@ -86728,7 +86909,7 @@ Failing to update the principal point after cropping creates systematic calibrat
 The intrinsic parameters can be assembled into one matrix:
 
 $$
- \boxed{ K= \begin{bmatrix} f_x&s&c_x\\ 0&f_y&c_y\\ 0&0&1 \end{bmatrix} }. 
+ \boxed{ K= \begin{bmatrix} f_x&s&c_x\\ 0&f_y&c_y\\ 0&0&1 \end{bmatrix} }.
 $$
 
 Here $s$ is the skew coefficient, expressed consistently with the camera's pixel-coordinate model.
@@ -86736,7 +86917,7 @@ Here $s$ is the skew coefficient, expressed consistently with the camera's pixel
 For the common zero-skew case:
 
 $$
- \boxed{ K= \begin{bmatrix} f_x&0&c_x\\ 0&f_y&c_y\\ 0&0&1 \end{bmatrix} }. 
+ \boxed{ K= \begin{bmatrix} f_x&0&c_x\\ 0&f_y&c_y\\ 0&0&1 \end{bmatrix} }.
 $$
 
 ### From camera coordinates to homogeneous pixels
@@ -86744,13 +86925,13 @@ $$
 Take:
 
 $$
- \mathbf X_C= \begin{bmatrix} X_C\\Y_C\\Z_C \end{bmatrix}. 
+ \mathbf X_C= \begin{bmatrix} X_C\\Y_C\\Z_C \end{bmatrix}.
 $$
 
 Multiply:
 
 $$
- K\mathbf X_C= \begin{bmatrix} f_xX_C+sY_C+c_xZ_C\\ f_yY_C+c_yZ_C\\ Z_C \end{bmatrix}. 
+ K\mathbf X_C= \begin{bmatrix} f_xX_C+sY_C+c_xZ_C\\ f_yY_C+c_yZ_C\\ Z_C \end{bmatrix}.
 $$
 
 This is a homogeneous pixel coordinate.
@@ -86758,19 +86939,19 @@ This is a homogeneous pixel coordinate.
 Divide by the third component $Z_C$:
 
 $$
- \boxed{ u=f_x\frac{X_C}{Z_C} +s\frac{Y_C}{Z_C} +c_x } 
+ \boxed{ u=f_x\frac{X_C}{Z_C} +s\frac{Y_C}{Z_C} +c_x }
 $$
 
 and:
 
 $$
- \boxed{ v=f_y\frac{Y_C}{Z_C} +c_y }. 
+ \boxed{ v=f_y\frac{Y_C}{Z_C} +c_y }.
 $$
 
 Therefore:
 
 $$
- \boxed{ \lambda \begin{bmatrix}u\\v\\1\end{bmatrix} = K\mathbf X_C } 
+ \boxed{ \lambda \begin{bmatrix}u\\v\\1\end{bmatrix} = K\mathbf X_C }
 $$
 
 for an appropriate nonzero homogeneous scale $\lambda$, often $Z_C$.
@@ -86780,53 +86961,53 @@ for an appropriate nonzero homogeneous scale $\lambda$, often $Z_C$.
 Let:
 
 $$
- K= \begin{bmatrix} 800&0&960\\ 0&820&535\\ 0&0&1 \end{bmatrix}. 
+ K= \begin{bmatrix} 800&0&960\\ 0&820&535\\ 0&0&1 \end{bmatrix}.
 $$
 
 Consider camera-space point:
 
 $$
- \mathbf X_C= \begin{bmatrix}1\\0.5\\2\end{bmatrix}. 
+ \mathbf X_C= \begin{bmatrix}1\\0.5\\2\end{bmatrix}.
 $$
 
 Its normalized coordinates are:
 
 $$
- x=\frac12=0.5, 
+ x=\frac12=0.5,
 $$
 
 $$
- y=\frac{0.5}{2}=0.25. 
+ y=\frac{0.5}{2}=0.25.
 $$
 
 Pixel X:
 
 $$
- u=800(0.5)+960. 
+ u=800(0.5)+960.
 $$
 
 Thus:
 
 $$
- \boxed{u=1360}. 
+ \boxed{u=1360}.
 $$
 
 Pixel Y:
 
 $$
- v=820(0.25)+535. 
+ v=820(0.25)+535.
 $$
 
 Therefore:
 
 $$
- \boxed{v=740}. 
+ \boxed{v=740}.
 $$
 
 The resulting pixel location is:
 
 $$
- \boxed{(1360,740)}. 
+ \boxed{(1360,740)}.
 $$
 
 This exact numerical case is tested in the reference implementation.
@@ -86836,7 +87017,7 @@ This exact numerical case is tested in the reference implementation.
 Suppose we observe an ideal undistorted pixel coordinate:
 
 $$
- (u,v). 
+ (u,v).
 $$
 
 We want the normalized camera ray.
@@ -86844,37 +87025,37 @@ We want the normalized camera ray.
 For zero skew:
 
 $$
- \boxed{ x=\frac{u-c_x}{f_x} } 
+ \boxed{ x=\frac{u-c_x}{f_x} }
 $$
 
 and:
 
 $$
- \boxed{ y=\frac{v-c_y}{f_y} }. 
+ \boxed{ y=\frac{v-c_y}{f_y} }.
 $$
 
 The unnormalized camera ray is:
 
 $$
- \boxed{ \mathbf d_C= \begin{bmatrix} x\\y\\1 \end{bmatrix} }. 
+ \boxed{ \mathbf d_C= \begin{bmatrix} x\\y\\1 \end{bmatrix} }.
 $$
 
 With skew, solve the Y coordinate first:
 
 $$
- y=\frac{v-c_y}{f_y}. 
+ y=\frac{v-c_y}{f_y}.
 $$
 
 Then:
 
 $$
- \boxed{ x=\frac{u-c_x-sy}{f_x} }. 
+ \boxed{ x=\frac{u-c_x-sy}{f_x} }.
 $$
 
 This is equivalent to applying:
 
 $$
- K^{-1} 
+ K^{-1}
 $$
 
 to the homogeneous pixel vector.
@@ -86945,7 +87126,7 @@ The direction of the transformation must be explicit.
 In computer vision, a common extrinsic convention maps world coordinates into camera coordinates:
 
 $$
- \boxed{ \mathbf X_C=R_{CW}\mathbf X_W+\mathbf t_{CW} }. 
+ \boxed{ \mathbf X_C=R_{CW}\mathbf X_W+\mathbf t_{CW} }.
 $$
 
 The subscript $CW$ here means world-to-camera.
@@ -86955,25 +87136,25 @@ The subscript $CW$ here means world-to-camera.
 Suppose the camera centre in world coordinates is:
 
 $$
- \mathbf C_W. 
+ \mathbf C_W.
 $$
 
 At that point:
 
 $$
- \mathbf X_W=\mathbf C_W. 
+ \mathbf X_W=\mathbf C_W.
 $$
 
 Its camera coordinates must be zero:
 
 $$
- \mathbf0=R_{CW}\mathbf C_W+\mathbf t_{CW}. 
+ \mathbf0=R_{CW}\mathbf C_W+\mathbf t_{CW}.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf t_{CW}=-R_{CW}\mathbf C_W }. 
+ \boxed{ \mathbf t_{CW}=-R_{CW}\mathbf C_W }.
 $$
 
 This is one of the most important extrinsic relationships.
@@ -86985,7 +87166,7 @@ The translation vector in the world-to-camera extrinsic matrix is generally not 
 Suppose the camera is at:
 
 $$
- \mathbf C_W= \begin{bmatrix}3\\0\\0\end{bmatrix} 
+ \mathbf C_W= \begin{bmatrix}3\\0\\0\end{bmatrix}
 $$
 
 with identity world-to-camera rotation.
@@ -86993,31 +87174,31 @@ with identity world-to-camera rotation.
 Then:
 
 $$
- R_{CW}=I. 
+ R_{CW}=I.
 $$
 
 The extrinsic translation is:
 
 $$
- \mathbf t_{CW}= -I \begin{bmatrix}3\\0\\0\end{bmatrix} = \begin{bmatrix}-3\\0\\0\end{bmatrix}. 
+ \mathbf t_{CW}= -I \begin{bmatrix}3\\0\\0\end{bmatrix} = \begin{bmatrix}-3\\0\\0\end{bmatrix}.
 $$
 
 The world point:
 
 $$
- \mathbf X_W=(4,0,5) 
+ \mathbf X_W=(4,0,5)
 $$
 
 transforms to:
 
 $$
- \mathbf X_C= (4,0,5)+(-3,0,0). 
+ \mathbf X_C= (4,0,5)+(-3,0,0).
 $$
 
 Thus:
 
 $$
- \boxed{ \mathbf X_C=(1,0,5) }. 
+ \boxed{ \mathbf X_C=(1,0,5) }.
 $$
 
 The point is one unit right of the camera and five units forward.
@@ -87027,25 +87208,25 @@ The point is one unit right of the camera and five units forward.
 If the camera-to-world pose is:
 
 $$
- T_{WC}= \begin{bmatrix} R_{WC}&\mathbf C_W\\ 0&1 \end{bmatrix}, 
+ T_{WC}= \begin{bmatrix} R_{WC}&\mathbf C_W\\ 0&1 \end{bmatrix},
 $$
 
 then:
 
 $$
- \boxed{ T_{CW}=T_{WC}^{-1} }. 
+ \boxed{ T_{CW}=T_{WC}^{-1} }.
 $$
 
 For a rigid rotation:
 
 $$
- R_{CW}=R_{WC}^T. 
+ R_{CW}=R_{WC}^T.
 $$
 
 And:
 
 $$
- \boxed{ \mathbf t_{CW}=-R_{WC}^T\mathbf C_W }. 
+ \boxed{ \mathbf t_{CW}=-R_{WC}^T\mathbf C_W }.
 $$
 
 Thus a camera pose and an extrinsic matrix encode the same rigid relationship in opposite directions.
@@ -87055,13 +87236,13 @@ Thus a camera pose and an extrinsic matrix encode the same rigid relationship in
 The world-to-camera rigid extrinsic matrix is:
 
 $$
- \boxed{ T_{CW}= \begin{bmatrix} R_{CW}&\mathbf t_{CW}\\ 0&1 \end{bmatrix} }. 
+ \boxed{ T_{CW}= \begin{bmatrix} R_{CW}&\mathbf t_{CW}\\ 0&1 \end{bmatrix} }.
 $$
 
 For projection calculations, we frequently use only the top three rows:
 
 $$
- \boxed{ [R_{CW}\mid\mathbf t_{CW}] } 
+ \boxed{ [R_{CW}\mid\mathbf t_{CW}] }
 $$
 
 which form a $3\times4$ matrix.
@@ -87069,19 +87250,19 @@ which form a $3\times4$ matrix.
 The full ideal pinhole projection is then:
 
 $$
- \boxed{ \lambda\tilde{\mathbf x} = K[R_{CW}\mid\mathbf t_{CW}] \tilde{\mathbf X}_W } 
+ \boxed{ \lambda\tilde{\mathbf x} = K[R_{CW}\mid\mathbf t_{CW}] \tilde{\mathbf X}_W }
 $$
 
 where:
 
 $$
- \tilde{\mathbf x}= \begin{bmatrix}u\\v\\1\end{bmatrix} 
+ \tilde{\mathbf x}= \begin{bmatrix}u\\v\\1\end{bmatrix}
 $$
 
 is a homogeneous image point and:
 
 $$
- \tilde{\mathbf X}_W= \begin{bmatrix}X\\Y\\Z\\1\end{bmatrix} 
+ \tilde{\mathbf X}_W= \begin{bmatrix}X\\Y\\Z\\1\end{bmatrix}
 $$
 
 is a homogeneous world point.
@@ -87091,7 +87272,7 @@ is a homogeneous world point.
 Define:
 
 $$
- \boxed{ P_{\mathrm{CV}}=K[R\mid t] }. 
+ \boxed{ P_{\mathrm{CV}}=K[R\mid t] }.
 $$
 
 This is a $3\times4$ projective camera matrix.
@@ -87101,7 +87282,7 @@ It maps projective 3D world points into projective 2D image points.
 In homogeneous notation:
 
 $$
- \boxed{ \tilde{\mathbf x}\sim P_{\mathrm{CV}}\tilde{\mathbf X}_W }. 
+ \boxed{ \tilde{\mathbf x}\sim P_{\mathrm{CV}}\tilde{\mathbf X}_W }.
 $$
 
 The symbol $\sim$ means projective equivalence up to a nonzero scalar.
@@ -87113,59 +87294,59 @@ This matrix has a different purpose from the $4\times4$ GPU clip-space projectio
 Suppose:
 
 $$
- K= \begin{bmatrix} 800&0&960\\ 0&800&540\\ 0&0&1 \end{bmatrix}. 
+ K= \begin{bmatrix} 800&0&960\\ 0&800&540\\ 0&0&1 \end{bmatrix}.
 $$
 
 Let:
 
 $$
- R=I, 
+ R=I,
 $$
 
 $$
- t=(-1,0,0)^T. 
+ t=(-1,0,0)^T.
 $$
 
 Then:
 
 $$
- [R\mid t] = \begin{bmatrix} 1&0&0&-1\\ 0&1&0&0\\ 0&0&1&0 \end{bmatrix}. 
+ [R\mid t] = \begin{bmatrix} 1&0&0&-1\\ 0&1&0&0\\ 0&0&1&0 \end{bmatrix}.
 $$
 
 Multiply:
 
 $$
- P_{\mathrm{CV}}= K[R\mid t]. 
+ P_{\mathrm{CV}}= K[R\mid t].
 $$
 
 The result is:
 
 $$
- \boxed{ P_{\mathrm{CV}}= \begin{bmatrix} 800&0&960&-800\\ 0&800&540&0\\ 0&0&1&0 \end{bmatrix} }. 
+ \boxed{ P_{\mathrm{CV}}= \begin{bmatrix} 800&0&960&-800\\ 0&800&540&0\\ 0&0&1&0 \end{bmatrix} }.
 $$
 
 Consider world point:
 
 $$
- \tilde{\mathbf X}_W=(2,0,5,1)^T. 
+ \tilde{\mathbf X}_W=(2,0,5,1)^T.
 $$
 
 Multiply:
 
 $$
- P_{\mathrm{CV}}\tilde{\mathbf X}_W = \begin{bmatrix} 800(2)+960(5)-800\\ 800(0)+540(5)\\ 5 \end{bmatrix}. 
+ P_{\mathrm{CV}}\tilde{\mathbf X}_W = \begin{bmatrix} 800(2)+960(5)-800\\ 800(0)+540(5)\\ 5 \end{bmatrix}.
 $$
 
 Thus:
 
 $$
- = \begin{bmatrix} 5600\\2700\\5 \end{bmatrix}. 
+ = \begin{bmatrix} 5600\\2700\\5 \end{bmatrix}.
 $$
 
 Divide by the last coordinate:
 
 $$
- \boxed{ (u,v)=(1120,540) }. 
+ \boxed{ (u,v)=(1120,540) }.
 $$
 
 This is consistent with the camera being located one world unit to the right of the origin and observing the point at relative $X=1,Z=5$.
@@ -87175,37 +87356,37 @@ This is consistent with the camera being located one world unit to the right of 
 Our graphics camera uses:
 
 $$
- +X\text{ right},\quad+Y\text{ up},\quad-Z\text{ forward}. 
+ +X\text{ right},\quad+Y\text{ up},\quad-Z\text{ forward}.
 $$
 
 Our CV camera uses:
 
 $$
- +X\text{ right},\quad+Y\text{ down},\quad+Z\text{ forward}. 
+ +X\text{ right},\quad+Y\text{ down},\quad+Z\text{ forward}.
 $$
 
 A rotation that converts graphics view coordinates to this CV optical frame is:
 
 $$
- \boxed{ S= \begin{bmatrix} 1&0&0\\ 0&-1&0\\ 0&0&-1 \end{bmatrix} }. 
+ \boxed{ S= \begin{bmatrix} 1&0&0\\ 0&-1&0\\ 0&0&-1 \end{bmatrix} }.
 $$
 
 Then:
 
 $$
- \boxed{ \mathbf X_{\mathrm{CV}}=S\mathbf X_{\mathrm{graphicsView}} }. 
+ \boxed{ \mathbf X_{\mathrm{CV}}=S\mathbf X_{\mathrm{graphicsView}} }.
 $$
 
 For graphics point:
 
 $$
- (1,2,-5), 
+ (1,2,-5),
 $$
 
 the CV coordinate becomes:
 
 $$
- \boxed{(1,-2,5)}. 
+ \boxed{(1,-2,5)}.
 $$
 
 The point is right, above the optical axis, and in front.
@@ -87215,7 +87396,7 @@ Because CV image $Y$ increases downward, its pixel $v$ coordinate is less than t
 Notice:
 
 $$
- \det S=(1)(-1)(-1)=+1. 
+ \det S=(1)(-1)(-1)=+1.
 $$
 
 This is a proper 180° rotation about the X axis, not an orientation-reversing reflection.
@@ -87235,49 +87416,49 @@ There is no lens aperture, defocus blur, or optical distortion in the ideal mode
 Given world point:
 
 $$
- \mathbf X_W, 
+ \mathbf X_W,
 $$
 
 first transform into camera coordinates:
 
 $$
- \boxed{ \mathbf X_C=R\mathbf X_W+\mathbf t }. 
+ \boxed{ \mathbf X_C=R\mathbf X_W+\mathbf t }.
 $$
 
 Write:
 
 $$
- \mathbf X_C=(X_C,Y_C,Z_C). 
+ \mathbf X_C=(X_C,Y_C,Z_C).
 $$
 
 Assume:
 
 $$
- Z_C>0. 
+ Z_C>0.
 $$
 
 Normalize:
 
 $$
- \boxed{ x=\frac{X_C}{Z_C}, \qquad y=\frac{Y_C}{Z_C} }. 
+ \boxed{ x=\frac{X_C}{Z_C}, \qquad y=\frac{Y_C}{Z_C} }.
 $$
 
 Apply intrinsics:
 
 $$
- \boxed{ u=f_xx+sy+c_x } 
+ \boxed{ u=f_xx+sy+c_x }
 $$
 
 and:
 
 $$
- \boxed{ v=f_yy+c_y }. 
+ \boxed{ v=f_yy+c_y }.
 $$
 
 Together:
 
 $$
- \boxed{ \tilde{\mathbf x} \sim K[R\mid t]\tilde{\mathbf X}_W }. 
+ \boxed{ \tilde{\mathbf x} \sim K[R\mid t]\tilde{\mathbf X}_W }.
 $$
 
 ### Why a single image cannot determine unique 3D depth
@@ -87285,19 +87466,19 @@ $$
 Suppose a pixel corresponds to normalized coordinates:
 
 $$
- (x,y). 
+ (x,y).
 $$
 
 All points along the camera ray:
 
 $$
- \boxed{ \mathbf X_C(\lambda)= \lambda \begin{bmatrix} x\\y\\1 \end{bmatrix} } 
+ \boxed{ \mathbf X_C(\lambda)= \lambda \begin{bmatrix} x\\y\\1 \end{bmatrix} }
 $$
 
 for:
 
 $$
- \lambda>0 
+ \lambda>0
 $$
 
 project to the same ideal pixel.
@@ -87305,11 +87486,11 @@ project to the same ideal pixel.
 Indeed:
 
 $$
- \frac{\lambda x}{\lambda}=x, 
+ \frac{\lambda x}{\lambda}=x,
 $$
 
 $$
- \frac{\lambda y}{\lambda}=y. 
+ \frac{\lambda y}{\lambda}=y.
 $$
 
 The scale cancels.
@@ -87329,7 +87510,7 @@ If all scene points and camera translations are scaled by the same positive fact
 For example, doubling the depth and transverse camera-relative coordinates preserves normalized ratios:
 
 $$
- \frac{2X}{2Z}=\frac XZ. 
+ \frac{2X}{2Z}=\frac XZ.
 $$
 
 Thus image observations alone may not determine absolute metric scale.
@@ -87343,25 +87524,25 @@ This is a central issue in structure-from-motion and monocular SLAM.
 Suppose an observed image point is:
 
 $$
- \mathbf u_i^{\mathrm{obs}} 
+ \mathbf u_i^{\mathrm{obs}}
 $$
 
 and the camera model predicts:
 
 $$
- \hat{\mathbf u}_i= \pi(K,R,t,\mathbf X_i). 
+ \hat{\mathbf u}_i= \pi(K,R,t,\mathbf X_i).
 $$
 
 Define the reprojection residual:
 
 $$
- \boxed{ \mathbf r_i= \hat{\mathbf u}_i-\mathbf u_i^{\mathrm{obs}} }. 
+ \boxed{ \mathbf r_i= \hat{\mathbf u}_i-\mathbf u_i^{\mathrm{obs}} }.
 $$
 
 A common calibration objective is:
 
 $$
- \boxed{ E= \sum_i \\|\mathbf r_i\\|_2^2 }. 
+ \boxed{ E= \sum_i \|\mathbf r_i\|_2^2 }.
 $$
 
 This connects camera geometry directly to least-squares estimation and robust optimization.
@@ -87375,11 +87556,11 @@ The optimization can be nonlinear and sensitive to parameter initialization, out
 Let:
 
 $$
- u=f_x\frac XZ+c_x, 
+ u=f_x\frac XZ+c_x,
 $$
 
 $$
- v=f_y\frac YZ+c_y 
+ v=f_y\frac YZ+c_y
 $$
 
 for zero skew.
@@ -87387,7 +87568,7 @@ for zero skew.
 The Jacobian with respect to camera-space point coordinates is:
 
 $$
- \boxed{ J_\pi= \begin{bmatrix} \dfrac{f_x}{Z}&0&-\dfrac{f_xX}{Z^2}\\ 0&\dfrac{f_y}{Z}&-\dfrac{f_yY}{Z^2} \end{bmatrix} }. 
+ \boxed{ J_\pi= \begin{bmatrix} \dfrac{f_x}{Z}&0&-\dfrac{f_xX}{Z^2}\\ 0&\dfrac{f_y}{Z}&-\dfrac{f_yY}{Z^2} \end{bmatrix} }.
 $$
 
 This follows by partial differentiation.
@@ -87395,29 +87576,29 @@ This follows by partial differentiation.
 For example:
 
 $$
- \frac{\partial u}{\partial X}=\frac{f_x}{Z}, 
+ \frac{\partial u}{\partial X}=\frac{f_x}{Z},
 $$
 
 $$
- \frac{\partial u}{\partial Z}=-\frac{f_xX}{Z^2}. 
+ \frac{\partial u}{\partial Z}=-\frac{f_xX}{Z^2}.
 $$
 
 The Jacobian maps small 3D camera-space perturbations into image-space pixel perturbations:
 
 $$
- \boxed{ \Delta\mathbf u\approx J_\pi\Delta\mathbf X_C }. 
+ \boxed{ \Delta\mathbf u\approx J_\pi\Delta\mathbf X_C }.
 $$
 
 If the 3D point has covariance:
 
 $$
- \Sigma_X, 
+ \Sigma_X,
 $$
 
 then first-order image covariance is:
 
 $$
- \boxed{ \Sigma_u\approx J_\pi\Sigma_XJ_\pi^T }. 
+ \boxed{ \Sigma_u\approx J_\pi\Sigma_XJ_\pi^T }.
 $$
 
 This is a direct application of probability and covariance theory.
@@ -87463,7 +87644,7 @@ A distortion model describes the difference between ideal normalized pinhole coo
 Let:
 
 $$
- (x,y) 
+ (x,y)
 $$
 
 be the ideal undistorted normalized camera coordinates.
@@ -87471,7 +87652,7 @@ be the ideal undistorted normalized camera coordinates.
 Let:
 
 $$
- (x_d,y_d) 
+ (x_d,y_d)
 $$
 
 be distorted normalized coordinates produced by the lens model.
@@ -87479,25 +87660,25 @@ be distorted normalized coordinates produced by the lens model.
 The distortion transformation is:
 
 $$
- \boxed{ D: (x,y)\mapsto(x_d,y_d) }. 
+ \boxed{ D: (x,y)\mapsto(x_d,y_d) }.
 $$
 
 After distortion, the intrinsic matrix converts normalized coordinates to pixels:
 
 $$
- \boxed{ u=f_xx_d+sy_d+c_x } 
+ \boxed{ u=f_xx_d+sy_d+c_x }
 $$
 
 and:
 
 $$
- \boxed{ v=f_yy_d+c_y }. 
+ \boxed{ v=f_yy_d+c_y }.
 $$
 
 Therefore the correct pipeline is:
 
 $$
- \boxed{ \mathbf X_W \rightarrow \mathbf X_C \rightarrow (x,y) \rightarrow (x_d,y_d) \rightarrow (u,v) }. 
+ \boxed{ \mathbf X_W \rightarrow \mathbf X_C \rightarrow (x,y) \rightarrow (x_d,y_d) \rightarrow (u,v) }.
 $$
 
 The order matters.
@@ -87550,25 +87731,25 @@ Radial distortion depends primarily on distance from the optical centre in norma
 Define:
 
 $$
- \boxed{ r^2=x^2+y^2 }. 
+ \boxed{ r^2=x^2+y^2 }.
 $$
 
 A common polynomial radial factor is:
 
 $$
- \boxed{ L(r)= 1+k_1r^2+k_2r^4+k_3r^6 }. 
+ \boxed{ L(r)= 1+k_1r^2+k_2r^4+k_3r^6 }.
 $$
 
 The radially distorted coordinates are:
 
 $$
- \boxed{ x_d=xL(r) } 
+ \boxed{ x_d=xL(r) }
 $$
 
 and:
 
 $$
- \boxed{ y_d=yL(r) }. 
+ \boxed{ y_d=yL(r) }.
 $$
 
 The coefficients $k_1,k_2,k_3$ determine how magnification changes with distance from the image centre.
@@ -87580,7 +87761,7 @@ An ideal rotationally symmetric distortion field should not depend on the angula
 Its radial scaling depends on the radius:
 
 $$
- r=\sqrt{x^2+y^2}. 
+ r=\sqrt{x^2+y^2}.
 $$
 
 For a smooth radial model symmetric under coordinate sign reversal, a polynomial in $r^2$ is a natural parameterization.
@@ -87588,7 +87769,7 @@ For a smooth radial model symmetric under coordinate sign reversal, a polynomial
 Thus the distortion scale can be modeled as:
 
 $$
- 1+k_1r^2+k_2r^4+k_3r^6+\cdots. 
+ 1+k_1r^2+k_2r^4+k_3r^6+\cdots.
 $$
 
 The constant term is one so the mapping has unit scale at the optical centre in this normalized formulation.
@@ -87602,13 +87783,13 @@ Points at large radius are mapped inward compared with the ideal pinhole model.
 For a simple model with:
 
 $$
- k_1<0 
+ k_1<0
 $$
 
 and sufficiently small higher-order contributions:
 
 $$
- L(r)<1 
+ L(r)<1
 $$
 
 away from the centre.
@@ -87616,7 +87797,7 @@ away from the centre.
 Thus:
 
 $$
- r_d=rL(r)\<r. 
+ r_d=rL(r)\<r.
 $$
 
 Straight lines away from the image centre can appear bowed outward.
@@ -87630,7 +87811,7 @@ In a common pincushion-distortion regime, magnification increases with radius.
 For a simple positive $k_1$ model:
 
 $$
- L(r)>1 
+ L(r)>1
 $$
 
 away from the centre.
@@ -87638,7 +87819,7 @@ away from the centre.
 Then:
 
 $$
- r_d>r. 
+ r_d>r.
 $$
 
 Straight lines can appear pulled inward toward the centre.
@@ -87650,63 +87831,63 @@ Again, the total radial polynomial matters, especially when higher-order coeffic
 Take:
 
 $$
- x=0.3,\qquad y=0.4. 
+ x=0.3,\qquad y=0.4.
 $$
 
 Then:
 
 $$
- r^2=0.3^2+0.4^2 =0.09+0.16 =\boxed{0.25}. 
+ r^2=0.3^2+0.4^2 =0.09+0.16 =\boxed{0.25}.
 $$
 
 Let:
 
 $$
- k_1=-0.2, 
+ k_1=-0.2,
 $$
 
 $$
- k_2=0.04, 
+ k_2=0.04,
 $$
 
 $$
- k_3=0. 
+ k_3=0.
 $$
 
 Then:
 
 $$
- L(r)=1-0.2(0.25)+0.04(0.25^2). 
+ L(r)=1-0.2(0.25)+0.04(0.25^2).
 $$
 
 Compute:
 
 $$
- L(r)=1-0.05+0.0025 =\boxed{0.9525}. 
+ L(r)=1-0.05+0.0025 =\boxed{0.9525}.
 $$
 
 Therefore:
 
 $$
- x_d=0.3(0.9525) =\boxed{0.28575}. 
+ x_d=0.3(0.9525) =\boxed{0.28575}.
 $$
 
 And:
 
 $$
- y_d=0.4(0.9525) =\boxed{0.381}. 
+ y_d=0.4(0.9525) =\boxed{0.381}.
 $$
 
 The ideal point:
 
 $$
- (0.3,0.4) 
+ (0.3,0.4)
 $$
 
 moves inward to:
 
 $$
- \boxed{(0.28575,0.381)}. 
+ \boxed{(0.28575,0.381)}.
 $$
 
 The distortion preserves the point's angular direction in this radial-only model.
@@ -87716,7 +87897,7 @@ The distortion preserves the point's angular direction in this radial-only model
 The distorted radial distance is:
 
 $$
- \boxed{ r_d=rL(r) }. 
+ \boxed{ r_d=rL(r) }.
 $$
 
 For a unique radial inverse across the valid domain, we need the radial mapping to be suitably one-to-one.
@@ -87724,7 +87905,7 @@ For a unique radial inverse across the valid domain, we need the radial mapping 
 A sufficient local condition for positive radial orientation is:
 
 $$
- \boxed{ \frac{dr_d}{dr}>0 } 
+ \boxed{ \frac{dr_d}{dr}>0 }
 $$
 
 throughout the modeled domain.
@@ -87732,19 +87913,19 @@ throughout the modeled domain.
 Differentiate:
 
 $$
- r_d=r(1+k_1r^2+k_2r^4+k_3r^6). 
+ r_d=r(1+k_1r^2+k_2r^4+k_3r^6).
 $$
 
 Thus:
 
 $$
- \frac{dr_d}{dr} = 1+k_1r^2+k_2r^4+k_3r^6 +r(2k_1r+4k_2r^3+6k_3r^5). 
+ \frac{dr_d}{dr} = 1+k_1r^2+k_2r^4+k_3r^6 +r(2k_1r+4k_2r^3+6k_3r^5).
 $$
 
 Combine:
 
 $$
- \boxed{ \frac{dr_d}{dr} = 1+3k_1r^2+5k_2r^4+7k_3r^6 }. 
+ \boxed{ \frac{dr_d}{dr} = 1+3k_1r^2+5k_2r^4+7k_3r^6 }.
 $$
 
 If this derivative becomes zero, the radial mapping can locally fold or lose invertibility.
@@ -87759,7 +87940,7 @@ OpenCV's calibration documentation explicitly discusses the need for physically 
 More complex OpenCV-compatible models can use a rational radial factor:
 
 $$
- \boxed{ L(r)= \frac{ 1+k_1r^2+k_2r^4+k_3r^6 }{ 1+k_4r^2+k_5r^4+k_6r^6 } }. 
+ \boxed{ L(r)= \frac{ 1+k_1r^2+k_2r^4+k_3r^6 }{ 1+k_4r^2+k_5r^4+k_6r^6 } }.
 $$
 
 This adds flexibility but also introduces possible denominator singularities.
@@ -87779,19 +87960,19 @@ Unlike purely radial distortion, it does not simply multiply both image coordina
 The common two-parameter model uses:
 
 $$
- p_1,\quad p_2. 
+ p_1,\quad p_2.
 $$
 
 Its displacement terms are:
 
 $$
- \boxed{ \Delta x_t= 2p_1xy+p_2(r^2+2x^2) } 
+ \boxed{ \Delta x_t= 2p_1xy+p_2(r^2+2x^2) }
 $$
 
 and:
 
 $$
- \boxed{ \Delta y_t= p_1(r^2+2y^2)+2p_2xy }. 
+ \boxed{ \Delta y_t= p_1(r^2+2y^2)+2p_2xy }.
 $$
 
 ### Full radial-plus-tangential model
@@ -87799,19 +87980,19 @@ $$
 Define:
 
 $$
- L(r)=1+k_1r^2+k_2r^4+k_3r^6. 
+ L(r)=1+k_1r^2+k_2r^4+k_3r^6.
 $$
 
 Then:
 
 $$
- \boxed{ x_d= xL(r)+2p_1xy+p_2(r^2+2x^2) } 
+ \boxed{ x_d= xL(r)+2p_1xy+p_2(r^2+2x^2) }
 $$
 
 and:
 
 $$
- \boxed{ y_d= yL(r)+p_1(r^2+2y^2)+2p_2xy }. 
+ \boxed{ y_d= yL(r)+p_1(r^2+2y^2)+2p_2xy }.
 $$
 
 This is a standard five-coefficient Brown–Conrady-style camera distortion formulation.
@@ -87819,7 +88000,7 @@ This is a standard five-coefficient Brown–Conrady-style camera distortion form
 A common OpenCV coefficient order for the five-coefficient case is:
 
 $$
- \boxed{ (k_1,k_2,p_1,p_2,k_3) }. 
+ \boxed{ (k_1,k_2,p_1,p_2,k_3) }.
 $$
 
 The order of parameters in a software file must be treated as an explicit schema contract.
@@ -87831,19 +88012,19 @@ Do not assume every calibration library stores coefficients in the same order.
 Take:
 
 $$
- x=0.3,\qquad y=0.4. 
+ x=0.3,\qquad y=0.4.
 $$
 
 Then:
 
 $$
- r^2=0.25. 
+ r^2=0.25.
 $$
 
 Let:
 
 $$
- p_1=0.01,\qquad p_2=-0.005, 
+ p_1=0.01,\qquad p_2=-0.005,
 $$
 
 with radial coefficients zero.
@@ -87851,67 +88032,67 @@ with radial coefficients zero.
 The horizontal tangential displacement is:
 
 $$
- \Delta x_t= 2(0.01)(0.3)(0.4) +(-0.005)(0.25+2(0.3)^2). 
+ \Delta x_t= 2(0.01)(0.3)(0.4) +(-0.005)(0.25+2(0.3)^2).
 $$
 
 First term:
 
 $$
- 2(0.01)(0.12)=0.0024. 
+ 2(0.01)(0.12)=0.0024.
 $$
 
 Second term:
 
 $$
- -0.005(0.25+0.18) =-0.005(0.43) =-0.00215. 
+ -0.005(0.25+0.18) =-0.005(0.43) =-0.00215.
 $$
 
 Therefore:
 
 $$
- \boxed{ \Delta x_t=0.00025 }. 
+ \boxed{ \Delta x_t=0.00025 }.
 $$
 
 Thus:
 
 $$
- \boxed{x_d=0.30025}. 
+ \boxed{x_d=0.30025}.
 $$
 
 For Y:
 
 $$
- \Delta y_t= 0.01(0.25+2(0.4)^2) +2(-0.005)(0.3)(0.4). 
+ \Delta y_t= 0.01(0.25+2(0.4)^2) +2(-0.005)(0.3)(0.4).
 $$
 
 First term:
 
 $$
- 0.01(0.25+0.32)=0.0057. 
+ 0.01(0.25+0.32)=0.0057.
 $$
 
 Second term:
 
 $$
- -0.01(0.12)=-0.0012. 
+ -0.01(0.12)=-0.0012.
 $$
 
 Thus:
 
 $$
- \boxed{ \Delta y_t=0.0045 }. 
+ \boxed{ \Delta y_t=0.0045 }.
 $$
 
 Therefore:
 
 $$
- \boxed{y_d=0.4045}. 
+ \boxed{y_d=0.4045}.
 $$
 
 The point moves asymmetrically:
 
 $$
- (0.3,0.4)\mapsto(0.30025,0.4045). 
+ (0.3,0.4)\mapsto(0.30025,0.4045).
 $$
 
 It does not simply move radially inward or outward.
@@ -87927,11 +88108,11 @@ Their numerical magnitudes should not be interpreted as millimetre displacements
 Pixel distortion depends on intrinsics:
 
 $$
- \Delta u\approx f_x\Delta x_d+s\Delta y_d, 
+ \Delta u\approx f_x\Delta x_d+s\Delta y_d,
 $$
 
 $$
- \Delta v\approx f_y\Delta y_d. 
+ \Delta v\approx f_y\Delta y_d.
 $$
 
 A small normalized distortion can correspond to several pixels when focal scales are large.
@@ -87941,25 +88122,25 @@ A small normalized distortion can correspond to several pixels when focal scales
 A real calibrated camera forward model is:
 
 $$
- \boxed{ \mathbf X_C=R\mathbf X_W+\mathbf t } 
+ \boxed{ \mathbf X_C=R\mathbf X_W+\mathbf t }
 $$
 
 followed by:
 
 $$
- \boxed{ x=X_C/Z_C,\qquad y=Y_C/Z_C } 
+ \boxed{ x=X_C/Z_C,\qquad y=Y_C/Z_C }
 $$
 
 then:
 
 $$
- \boxed{ (x_d,y_d)=D(x,y) } 
+ \boxed{ (x_d,y_d)=D(x,y) }
 $$
 
 and finally:
 
 $$
- \boxed{ \begin{bmatrix}u\\v\\1\end{bmatrix} \sim K \begin{bmatrix}x_d\\y_d\\1\end{bmatrix} }. 
+ \boxed{ \begin{bmatrix}u\\v\\1\end{bmatrix} \sim K \begin{bmatrix}x_d\\y_d\\1\end{bmatrix} }.
 $$
 
 This full mapping is nonlinear due to distortion, even though the rigid transform and intrinsic matrix are linear in homogeneous coordinates.
@@ -87975,19 +88156,19 @@ We want to recover the ideal normalized pinhole coordinate, or construct an undi
 The distortion model provides a forward mapping:
 
 $$
- \boxed{ \mathbf q_d=D(\mathbf q) } 
+ \boxed{ \mathbf q_d=D(\mathbf q) }
 $$
 
 where:
 
 $$
- \mathbf q= \begin{bmatrix}x\\y\end{bmatrix}. 
+ \mathbf q= \begin{bmatrix}x\\y\end{bmatrix}.
 $$
 
 Given $\mathbf q_d$, we seek:
 
 $$
- \boxed{ D(\mathbf q)=\mathbf q_d }. 
+ \boxed{ D(\mathbf q)=\mathbf q_d }.
 $$
 
 This is a nonlinear root-finding problem.
@@ -87999,7 +88180,7 @@ Newton iteration, Jacobians, and numerical-stability analysis directly apply.
 Given observed pixel:
 
 $$
- (u_d,v_d), 
+ (u_d,v_d),
 $$
 
 first remove intrinsics.
@@ -88007,13 +88188,13 @@ first remove intrinsics.
 For zero skew:
 
 $$
- \boxed{ x_d=\frac{u_d-c_x}{f_x} } 
+ \boxed{ x_d=\frac{u_d-c_x}{f_x} }
 $$
 
 and:
 
 $$
- \boxed{ y_d=\frac{v_d-c_y}{f_y} }. 
+ \boxed{ y_d=\frac{v_d-c_y}{f_y} }.
 $$
 
 If skew is nonzero, use the inverse intrinsic matrix instead of independently dividing both coordinates.
@@ -88021,7 +88202,7 @@ If skew is nonzero, use the inverse intrinsic matrix instead of independently di
 Now solve:
 
 $$
- D(x,y)=(x_d,y_d). 
+ D(x,y)=(x_d,y_d).
 $$
 
 ### Fixed-point inversion
@@ -88029,7 +88210,7 @@ $$
 A simple approach starts with:
 
 $$
- \boxed{ (x_0,y_0)=(x_d,y_d) }. 
+ \boxed{ (x_0,y_0)=(x_d,y_d) }.
 $$
 
 If distortion is weak, we can iteratively subtract the estimated distortion displacement.
@@ -88037,29 +88218,29 @@ If distortion is weak, we can iteratively subtract the estimated distortion disp
 For a pure radial model:
 
 $$
- x_d=xL(r), 
+ x_d=xL(r),
 $$
 
 $$
- y_d=yL(r). 
+ y_d=yL(r).
 $$
 
 One possible iteration is:
 
 $$
- \boxed{ x_{k+1}=\frac{x_d}{L(r_k)} } 
+ \boxed{ x_{k+1}=\frac{x_d}{L(r_k)} }
 $$
 
 and:
 
 $$
- \boxed{ y_{k+1}=\frac{y_d}{L(r_k)} } 
+ \boxed{ y_{k+1}=\frac{y_d}{L(r_k)} }
 $$
 
 where:
 
 $$
- r_k^2=x_k^2+y_k^2. 
+ r_k^2=x_k^2+y_k^2.
 $$
 
 This can work under suitable conditions.
@@ -88073,37 +88254,37 @@ A strongly distorted or noninvertible mapping can cause divergence or convergenc
 Define the residual function:
 
 $$
- \boxed{ \mathbf F(\mathbf q)= D(\mathbf q)-\mathbf q_d }. 
+ \boxed{ \mathbf F(\mathbf q)= D(\mathbf q)-\mathbf q_d }.
 $$
 
 We seek:
 
 $$
- \mathbf F(\mathbf q)=\mathbf0. 
+ \mathbf F(\mathbf q)=\mathbf0.
 $$
 
 At iteration $k$, linearize:
 
 $$
- \mathbf F(\mathbf q_k+\Delta\mathbf q) \approx \mathbf F(\mathbf q_k)+J_D(\mathbf q_k)\Delta\mathbf q. 
+ \mathbf F(\mathbf q_k+\Delta\mathbf q) \approx \mathbf F(\mathbf q_k)+J_D(\mathbf q_k)\Delta\mathbf q.
 $$
 
 Set the linear model to zero:
 
 $$
- J_D(\mathbf q_k)\Delta\mathbf q = -\mathbf F(\mathbf q_k). 
+ J_D(\mathbf q_k)\Delta\mathbf q = -\mathbf F(\mathbf q_k).
 $$
 
 Thus:
 
 $$
- \boxed{ \Delta\mathbf q = -J_D(\mathbf q_k)^{-1} \mathbf F(\mathbf q_k) }. 
+ \boxed{ \Delta\mathbf q = -J_D(\mathbf q_k)^{-1} \mathbf F(\mathbf q_k) }.
 $$
 
 The update is:
 
 $$
- \boxed{ \mathbf q_{k+1} = \mathbf q_k- J_D(\mathbf q_k)^{-1} [D(\mathbf q_k)-\mathbf q_d] }. 
+ \boxed{ \mathbf q_{k+1} = \mathbf q_k- J_D(\mathbf q_k)^{-1} [D(\mathbf q_k)-\mathbf q_d] }.
 $$
 
 In practice, solve the $2\times2$ linear system rather than explicitly computing a general matrix inverse.
@@ -88113,113 +88294,113 @@ In practice, solve the $2\times2$ linear system rather than explicitly computing
 Let:
 
 $$
- r^2=x^2+y^2. 
+ r^2=x^2+y^2.
 $$
 
 Define:
 
 $$
- L=1+k_1r^2+k_2r^4+k_3r^6. 
+ L=1+k_1r^2+k_2r^4+k_3r^6.
 $$
 
 It is convenient to treat $L$ as a function of:
 
 $$
- q=r^2. 
+ q=r^2.
 $$
 
 Then:
 
 $$
- L(q)=1+k_1q+k_2q^2+k_3q^3. 
+ L(q)=1+k_1q+k_2q^2+k_3q^3.
 $$
 
 Differentiate:
 
 $$
- \boxed{ L_q=\frac{dL}{dq} = k_1+2k_2q+3k_3q^2 }. 
+ \boxed{ L_q=\frac{dL}{dq} = k_1+2k_2q+3k_3q^2 }.
 $$
 
 Because:
 
 $$
- q=x^2+y^2, 
+ q=x^2+y^2,
 $$
 
 we have:
 
 $$
- \frac{\partial q}{\partial x}=2x, 
+ \frac{\partial q}{\partial x}=2x,
 $$
 
 $$
- \frac{\partial q}{\partial y}=2y. 
+ \frac{\partial q}{\partial y}=2y.
 $$
 
 Therefore:
 
 $$
- \boxed{ \frac{\partial L}{\partial x}=2xL_q } 
+ \boxed{ \frac{\partial L}{\partial x}=2xL_q }
 $$
 
 and:
 
 $$
- \boxed{ \frac{\partial L}{\partial y}=2yL_q }. 
+ \boxed{ \frac{\partial L}{\partial y}=2yL_q }.
 $$
 
 Now recall:
 
 $$
- x_d=xL+2p_1xy+p_2(r^2+2x^2). 
+ x_d=xL+2p_1xy+p_2(r^2+2x^2).
 $$
 
 Differentiate with respect to $x$:
 
 $$
- \frac{\partial x_d}{\partial x} = L+x\frac{\partial L}{\partial x} +2p_1y +p_2(2x+4x). 
+ \frac{\partial x_d}{\partial x} = L+x\frac{\partial L}{\partial x} +2p_1y +p_2(2x+4x).
 $$
 
 Thus:
 
 $$
- \boxed{ J_{00}= L+2x^2L_q+2p_1y+6p_2x }. 
+ \boxed{ J_{00}= L+2x^2L_q+2p_1y+6p_2x }.
 $$
 
 Differentiate $x_d$ with respect to $y$:
 
 $$
- \frac{\partial x_d}{\partial y} = x\frac{\partial L}{\partial y} +2p_1x +2p_2y. 
+ \frac{\partial x_d}{\partial y} = x\frac{\partial L}{\partial y} +2p_1x +2p_2y.
 $$
 
 Therefore:
 
 $$
- \boxed{ J_{01}= 2xyL_q+2p_1x+2p_2y }. 
+ \boxed{ J_{01}= 2xyL_q+2p_1x+2p_2y }.
 $$
 
 For the second distorted coordinate:
 
 $$
- y_d=yL+p_1(r^2+2y^2)+2p_2xy. 
+ y_d=yL+p_1(r^2+2y^2)+2p_2xy.
 $$
 
 Differentiate with respect to $x$:
 
 $$
- \boxed{ J_{10}= 2xyL_q+2p_1x+2p_2y }. 
+ \boxed{ J_{10}= 2xyL_q+2p_1x+2p_2y }.
 $$
 
 Differentiate with respect to $y$:
 
 $$
- \boxed{ J_{11}= L+2y^2L_q+6p_1y+2p_2x }. 
+ \boxed{ J_{11}= L+2y^2L_q+6p_1y+2p_2x }.
 $$
 
 Thus the full Jacobian is:
 
 $$
- \boxed{ J_D= \begin{bmatrix} L+2x^2L_q+2p_1y+6p_2x& 2xyL_q+2p_1x+2p_2y\\ 2xyL_q+2p_1x+2p_2y& L+2y^2L_q+6p_1y+2p_2x \end{bmatrix} }. 
+ \boxed{ J_D= \begin{bmatrix} L+2x^2L_q+2p_1y+6p_2x& 2xyL_q+2p_1x+2p_2y\\ 2xyL_q+2p_1x+2p_2y& L+2y^2L_q+6p_1y+2p_2x \end{bmatrix} }.
 $$
 
 This analytic Jacobian is implemented in the reference C++23 laboratory.
@@ -88229,55 +88410,55 @@ This analytic Jacobian is implemented in the reference C++23 laboratory.
 Let the current residual be:
 
 $$
- \mathbf e= \begin{bmatrix} e_x\\e_y \end{bmatrix} = D(\mathbf q)-\mathbf q_d. 
+ \mathbf e= \begin{bmatrix} e_x\\e_y \end{bmatrix} = D(\mathbf q)-\mathbf q_d.
 $$
 
 Write:
 
 $$
- J_D= \begin{bmatrix} a&b\\c&d \end{bmatrix}. 
+ J_D= \begin{bmatrix} a&b\\c&d \end{bmatrix}.
 $$
 
 The determinant is:
 
 $$
- \boxed{ \Delta=ad-bc }. 
+ \boxed{ \Delta=ad-bc }.
 $$
 
 When:
 
 $$
- \Delta\ne0, 
+ \Delta\ne0,
 $$
 
 the inverse is:
 
 $$
- J_D^{-1} = \frac1\Delta \begin{bmatrix} d&-b\\ -c&a \end{bmatrix}. 
+ J_D^{-1} = \frac1\Delta \begin{bmatrix} d&-b\\ -c&a \end{bmatrix}.
 $$
 
 Therefore the correction is:
 
 $$
- \boxed{ \delta_x= \frac{de_x-be_y}{\Delta} } 
+ \boxed{ \delta_x= \frac{de_x-be_y}{\Delta} }
 $$
 
 and:
 
 $$
- \boxed{ \delta_y= \frac{-ce_x+ae_y}{\Delta} }. 
+ \boxed{ \delta_y= \frac{-ce_x+ae_y}{\Delta} }.
 $$
 
 Update:
 
 $$
- \boxed{ x_{k+1}=x_k-\delta_x } 
+ \boxed{ x_{k+1}=x_k-\delta_x }
 $$
 
 and:
 
 $$
- \boxed{ y_{k+1}=y_k-\delta_y }. 
+ \boxed{ y_{k+1}=y_k-\delta_y }.
 $$
 
 ### What can go wrong?
@@ -88318,25 +88499,25 @@ The process generally requires image filtering and a choice of output camera int
 Suppose the undistorted normalized point has uncertainty covariance:
 
 $$
- \Sigma_q. 
+ \Sigma_q.
 $$
 
 The distorted point is:
 
 $$
- \mathbf q_d=D(\mathbf q). 
+ \mathbf q_d=D(\mathbf q).
 $$
 
 For small uncertainty, first-order covariance propagation gives:
 
 $$
- \boxed{ \Sigma_d\approx J_D\Sigma_qJ_D^T }. 
+ \boxed{ \Sigma_d\approx J_D\Sigma_qJ_D^T }.
 $$
 
 After mapping to pixels with an intrinsic linear part $K_{2\times2}$:
 
 $$
- \boxed{ \Sigma_{\mathrm{pixels}} \approx K_{2\times2} J_D\Sigma_qJ_D^T K_{2\times2}^T }. 
+ \boxed{ \Sigma_{\mathrm{pixels}} \approx K_{2\times2} J_D\Sigma_qJ_D^T K_{2\times2}^T }.
 $$
 
 This allows camera calibration uncertainty to be connected to image-space observation uncertainty.
@@ -91233,19 +91414,19 @@ The important idea is that camera jitter changes where the scene is sampled, not
 Suppose a pixel has integer coordinates $(i,j)$. Its conventional centre is:
 
 $$
- (i+0.5,j+0.5). 
+ (i+0.5,j+0.5).
 $$
 
 If we want a sample shifted by:
 
 $$
- (\delta_x,\delta_y) 
+ (\delta_x,\delta_y)
 $$
 
 measured in pixels, its sampling position becomes:
 
 $$
- \boxed{ (i+0.5+\delta_x,\ j+0.5+\delta_y) }. 
+ \boxed{ (i+0.5+\delta_x,\ j+0.5+\delta_y) }.
 $$
 
 The shifts are typically subpixel quantities.
@@ -91273,13 +91454,13 @@ A TAA image is not automatically an unbiased Monte Carlo estimate.
 Suppose a camera renders at:
 
 $$
- W=1920,\qquad H=1080. 
+ W=1920,\qquad H=1080.
 $$
 
 On frame 0, use jitter:
 
 $$
- \boldsymbol\delta_0=(+0.25,-0.25) 
+ \boldsymbol\delta_0=(+0.25,-0.25)
 $$
 
 pixels.
@@ -91287,7 +91468,7 @@ pixels.
 On frame 1, use:
 
 $$
- \boldsymbol\delta_1=(-0.25,+0.25). 
+ \boldsymbol\delta_1=(-0.25,+0.25).
 $$
 
 The projected scene shifts relative to the pixel grid differently on the two frames.
@@ -91307,19 +91488,19 @@ Useful jitter sequences include stratified patterns, Halton sequences, and scram
 For example, using Halton bases two and three:
 
 $$
- \mathbf h_k=(\phi_2(k),\phi_3(k)), 
+ \mathbf h_k=(\phi_2(k),\phi_3(k)),
 $$
 
 we can centre the result:
 
 $$
- \boxed{ \boldsymbol\delta_k= \mathbf h_k-(0.5,0.5) }. 
+ \boxed{ \boldsymbol\delta_k= \mathbf h_k-(0.5,0.5) }.
 $$
 
 That produces subpixel offsets in approximately:
 
 $$
- [-0.5,0.5)^2. 
+ [-0.5,0.5)^2.
 $$
 
 The precise sequence length and indexing policy matter.
@@ -91345,7 +91526,7 @@ The pixel-space shift is the same relative to the current raster grid, but the n
 For a surface point with world position $\mathbf p_W$, jittered projection is:
 
 $$
- \mathbf p_{C,j}=P_jV\mathbf p_W. 
+ \mathbf p_{C,j}=P_jV\mathbf p_W.
 $$
 
 If $P_j$ changes, its raster position changes even when $V$ and $\mathbf p_W$ are constant.
@@ -91366,13 +91547,13 @@ We now derive exactly how a subpixel offset modifies a projection matrix.
 Let the original clip coordinates be:
 
 $$
- \mathbf p_c=P\mathbf p_v. 
+ \mathbf p_c=P\mathbf p_v.
 $$
 
 We want the new NDC coordinates to be:
 
 $$
- \boxed{ x_n'=x_n+j_x, \qquad y_n'=y_n+j_y } 
+ \boxed{ x_n'=x_n+j_x, \qquad y_n'=y_n+j_y }
 $$
 
 where $j_x,j_y$ are NDC offsets.
@@ -91380,25 +91561,25 @@ where $j_x,j_y$ are NDC offsets.
 Since:
 
 $$
- x_n=\frac{x_c}{w_c}, 
+ x_n=\frac{x_c}{w_c},
 $$
 
 we require:
 
 $$
- \frac{x_c'}{w_c}= \frac{x_c}{w_c}+j_x. 
+ \frac{x_c'}{w_c}= \frac{x_c}{w_c}+j_x.
 $$
 
 Multiply by $w_c$:
 
 $$
- \boxed{x_c'=x_c+j_xw_c}. 
+ \boxed{x_c'=x_c+j_xw_c}.
 $$
 
 Similarly:
 
 $$
- \boxed{y_c'=y_c+j_yw_c}. 
+ \boxed{y_c'=y_c+j_yw_c}.
 $$
 
 The depth and $w$ coordinates remain unchanged.
@@ -91408,45 +91589,45 @@ The depth and $w$ coordinates remain unchanged.
 Let the projection matrix rows be:
 
 $$
- \mathbf r_0,\mathbf r_1,\mathbf r_2,\mathbf r_3. 
+ \mathbf r_0,\mathbf r_1,\mathbf r_2,\mathbf r_3.
 $$
 
 They produce:
 
 $$
- x_c=\mathbf r_0\mathbf p_v, 
+ x_c=\mathbf r_0\mathbf p_v,
 $$
 
 $$
- y_c=\mathbf r_1\mathbf p_v, 
+ y_c=\mathbf r_1\mathbf p_v,
 $$
 
 $$
- w_c=\mathbf r_3\mathbf p_v. 
+ w_c=\mathbf r_3\mathbf p_v.
 $$
 
 To obtain:
 
 $$
- x_c'=x_c+j_xw_c, 
+ x_c'=x_c+j_xw_c,
 $$
 
 the first row must become:
 
 $$
- \boxed{ \mathbf r_0'=\mathbf r_0+j_x\mathbf r_3 }. 
+ \boxed{ \mathbf r_0'=\mathbf r_0+j_x\mathbf r_3 }.
 $$
 
 Similarly:
 
 $$
- \boxed{ \mathbf r_1'=\mathbf r_1+j_y\mathbf r_3 }. 
+ \boxed{ \mathbf r_1'=\mathbf r_1+j_y\mathbf r_3 }.
 $$
 
 Therefore the most general row-based jitter operation is:
 
 $$
- \boxed{ P_j= \begin{bmatrix} \mathbf r_0+j_x\mathbf r_3\\ \mathbf r_1+j_y\mathbf r_3\\ \mathbf r_2\\ \mathbf r_3 \end{bmatrix} }. 
+ \boxed{ P_j= \begin{bmatrix} \mathbf r_0+j_x\mathbf r_3\\ \mathbf r_1+j_y\mathbf r_3\\ \mathbf r_2\\ \mathbf r_3 \end{bmatrix} }.
 $$
 
 This works for our column-vector convention and also describes the operation for general perspective matrices with nonstandard off-axis terms.
@@ -91456,35 +91637,35 @@ This works for our column-vector convention and also describes the operation for
 For a top-left raster image whose NDC $Y$ increases upward:
 
 $$
- x_p=\frac{W}{2}(x_n+1), 
+ x_p=\frac{W}{2}(x_n+1),
 $$
 
 $$
- y_p=\frac{H}{2}(1-y_n). 
+ y_p=\frac{H}{2}(1-y_n).
 $$
 
 Differentiate:
 
 $$
- \Delta x_p=\frac W2\Delta x_n. 
+ \Delta x_p=\frac W2\Delta x_n.
 $$
 
 Thus:
 
 $$
- \boxed{ j_x=\Delta x_n=\frac{2\delta_x}{W} }. 
+ \boxed{ j_x=\Delta x_n=\frac{2\delta_x}{W} }.
 $$
 
 For Y:
 
 $$
- \Delta y_p=-\frac H2\Delta y_n. 
+ \Delta y_p=-\frac H2\Delta y_n.
 $$
 
 Therefore:
 
 $$
- \boxed{ j_y=-\frac{2\delta_y}{H} }. 
+ \boxed{ j_y=-\frac{2\delta_y}{H} }.
 $$
 
 The negative sign follows from the chosen top-left raster mapping.
@@ -91494,37 +91675,37 @@ The negative sign follows from the chosen top-left raster mapping.
 For:
 
 $$
- W=1920,\qquad H=1080, 
+ W=1920,\qquad H=1080,
 $$
 
 and jitter:
 
 $$
- \delta_x=0.25,\qquad\delta_y=-0.5, 
+ \delta_x=0.25,\qquad\delta_y=-0.5,
 $$
 
 we get:
 
 $$
- j_x=\frac{0.5}{1920} =\boxed{0.000260416667}. 
+ j_x=\frac{0.5}{1920} =\boxed{0.000260416667}.
 $$
 
 And:
 
 $$
- j_y=-\frac{-1}{1080} =\boxed{0.000925925926}. 
+ j_y=-\frac{-1}{1080} =\boxed{0.000925925926}.
 $$
 
 If the original raster position is:
 
 $$
- (x_p,y_p)=(960,540), 
+ (x_p,y_p)=(960,540),
 $$
 
 the new projected position is:
 
 $$
- \boxed{(960.25,539.5)}. 
+ \boxed{(960.25,539.5)}.
 $$
 
 The reference C++23 laboratory verifies this exact shift numerically.
@@ -91534,25 +91715,25 @@ The reference C++23 laboratory verifies this exact shift numerically.
 For our conventional right-handed perspective matrix:
 
 $$
- \mathbf r_3=(0,0,-1,0). 
+ \mathbf r_3=(0,0,-1,0).
 $$
 
 Thus:
 
 $$
- \mathbf r_0'= (s_x,0,-j_x,0) 
+ \mathbf r_0'= (s_x,0,-j_x,0)
 $$
 
 and:
 
 $$
- \mathbf r_1'= (0,s_y,-j_y,0). 
+ \mathbf r_1'= (0,s_y,-j_y,0).
 $$
 
 The jitter appears in the matrix entries:
 
 $$
- \boxed{ P_{0,2}=-j_x, \qquad P_{1,2}=-j_y } 
+ \boxed{ P_{0,2}=-j_x, \qquad P_{1,2}=-j_y }
 $$
 
 under the standard centred projection and our convention.
@@ -91566,13 +91747,13 @@ The general row update is safer and more expressive.
 A production TAA renderer commonly maintains both:
 
 $$
- P_{\mathrm{jittered}} 
+ P_{\mathrm{jittered}}
 $$
 
 and:
 
 $$
- P_{\mathrm{unjittered}}. 
+ P_{\mathrm{unjittered}}.
 $$
 
 The jittered projection is used to generate spatially shifted raster samples.
@@ -91592,7 +91773,7 @@ Temporal reconstruction requires information about where the current visible sur
 Let:
 
 $$
- V_t,\ P_t 
+ V_t,\ P_t
 $$
 
 be the current view and projection matrices.
@@ -91600,7 +91781,7 @@ be the current view and projection matrices.
 Let:
 
 $$
- V_{t-1},\ P_{t-1} 
+ V_{t-1},\ P_{t-1}
 $$
 
 be their previous-frame counterparts.
@@ -91608,31 +91789,31 @@ be their previous-frame counterparts.
 Define:
 
 $$
- \boxed{ C_t=P_tV_t } 
+ \boxed{ C_t=P_tV_t }
 $$
 
 and:
 
 $$
- \boxed{ C_{t-1}=P_{t-1}V_{t-1} }. 
+ \boxed{ C_{t-1}=P_{t-1}V_{t-1} }.
 $$
 
 For a static world-space point:
 
 $$
- \mathbf p_W, 
+ \mathbf p_W,
 $$
 
 its current clip position is:
 
 $$
- \boxed{ \mathbf c_t=C_t\tilde{\mathbf p}_W }. 
+ \boxed{ \mathbf c_t=C_t\tilde{\mathbf p}_W }.
 $$
 
 Its previous clip position is:
 
 $$
- \boxed{ \mathbf c_{t-1}=C_{t-1}\tilde{\mathbf p}_W }. 
+ \boxed{ \mathbf c_{t-1}=C_{t-1}\tilde{\mathbf p}_W }.
 $$
 
 After dividing by their respective $w$ coordinates, we obtain current and previous NDC positions.
@@ -91642,31 +91823,31 @@ After dividing by their respective $w$ coordinates, we obtain current and previo
 Suppose we know the current homogeneous view-space point:
 
 $$
- \tilde{\mathbf p}_{V,t}. 
+ \tilde{\mathbf p}_{V,t}.
 $$
 
 The current view matrix satisfies:
 
 $$
- \tilde{\mathbf p}_{V,t} = V_t\tilde{\mathbf p}_W. 
+ \tilde{\mathbf p}_{V,t} = V_t\tilde{\mathbf p}_W.
 $$
 
 Therefore:
 
 $$
- \tilde{\mathbf p}_W= V_t^{-1}\tilde{\mathbf p}_{V,t}. 
+ \tilde{\mathbf p}_W= V_t^{-1}\tilde{\mathbf p}_{V,t}.
 $$
 
 The previous clip position is:
 
 $$
- \tilde{\mathbf c}_{t-1} = P_{t-1}V_{t-1}\tilde{\mathbf p}_W. 
+ \tilde{\mathbf c}_{t-1} = P_{t-1}V_{t-1}\tilde{\mathbf p}_W.
 $$
 
 Substitute:
 
 $$
- \boxed{ \tilde{\mathbf c}_{t-1} = P_{t-1}V_{t-1}V_t^{-1} \tilde{\mathbf p}_{V,t} }. 
+ \boxed{ \tilde{\mathbf c}_{t-1} = P_{t-1}V_{t-1}V_t^{-1} \tilde{\mathbf p}_{V,t} }.
 $$
 
 This is a camera-only reprojection transformation.
@@ -91680,19 +91861,19 @@ If the point is moving, its previous world position must also be considered.
 If the current clip coordinate is:
 
 $$
- \tilde{\mathbf c}_t, 
+ \tilde{\mathbf c}_t,
 $$
 
 then:
 
 $$
- \tilde{\mathbf p}_W = (P_tV_t)^{-1}\tilde{\mathbf c}_t. 
+ \tilde{\mathbf p}_W = (P_tV_t)^{-1}\tilde{\mathbf c}_t.
 $$
 
 Thus:
 
 $$
- \boxed{ \tilde{\mathbf c}_{t-1} = P_{t-1}V_{t-1} (P_tV_t)^{-1} \tilde{\mathbf c}_t }. 
+ \boxed{ \tilde{\mathbf c}_{t-1} = P_{t-1}V_{t-1} (P_tV_t)^{-1} \tilde{\mathbf c}_t }.
 $$
 
 This expresses how a homogeneous current clip-space point can be mapped to the previous clip frame for static geometry, subject to the relevant inverses and consistent homogeneous scaling.
@@ -91704,25 +91885,25 @@ In screen-space passes, a current NDC position and depth value can be lifted int
 For a moving rigid object:
 
 $$
- \mathbf p_{W,t}=M_t\mathbf p_L. 
+ \mathbf p_{W,t}=M_t\mathbf p_L.
 $$
 
 Its previous world position is:
 
 $$
- \boxed{ \mathbf p_{W,t-1}=M_{t-1}\mathbf p_L }. 
+ \boxed{ \mathbf p_{W,t-1}=M_{t-1}\mathbf p_L }.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf c_t=P_tV_tM_t\tilde{\mathbf p}_L } 
+ \boxed{ \mathbf c_t=P_tV_tM_t\tilde{\mathbf p}_L }
 $$
 
 and:
 
 $$
- \boxed{ \mathbf c_{t-1}= P_{t-1}V_{t-1}M_{t-1}\tilde{\mathbf p}_L }. 
+ \boxed{ \mathbf c_{t-1}= P_{t-1}V_{t-1}M_{t-1}\tilde{\mathbf p}_L }.
 $$
 
 If an engine uses only previous camera matrices but ignores object motion, moving objects may have incorrect motion vectors.
@@ -91734,13 +91915,13 @@ For skinned or deforming geometry, the current and previous local vertex positio
 Then:
 
 $$
- \boxed{ \mathbf c_t=P_tV_tM_t\tilde{\mathbf p}_{L,t} } 
+ \boxed{ \mathbf c_t=P_tV_tM_t\tilde{\mathbf p}_{L,t} }
 $$
 
 and:
 
 $$
- \boxed{ \mathbf c_{t-1}= P_{t-1}V_{t-1}M_{t-1}\tilde{\mathbf p}_{L,t-1} }. 
+ \boxed{ \mathbf c_{t-1}= P_{t-1}V_{t-1}M_{t-1}\tilde{\mathbf p}_{L,t-1} }.
 $$
 
 The previous vertex state may depend on previous skeletal joint transforms, morph weights, cloth states, or other deformation data.
@@ -91768,13 +91949,13 @@ The convention must be declared.
 One common TAA convention defines a backward motion vector:
 
 $$
- \boxed{ \mathbf v= \mathbf p_{\mathrm{previous,raster}} - \mathbf p_{\mathrm{current,raster}} }. 
+ \boxed{ \mathbf v= \mathbf p_{\mathrm{previous,raster}} - \mathbf p_{\mathrm{current,raster}} }.
 $$
 
 Then the previous sampling position is:
 
 $$
- \boxed{ \mathbf p_{\mathrm{previous}} = \mathbf p_{\mathrm{current}}+\mathbf v }. 
+ \boxed{ \mathbf p_{\mathrm{previous}} = \mathbf p_{\mathrm{current}}+\mathbf v }.
 $$
 
 Other pipelines store the opposite sign. Both are valid if consistently implemented.
@@ -91784,7 +91965,7 @@ Other pipelines store the opposite sign. Both are valid if consistently implemen
 Take a stationary world point:
 
 $$
- \mathbf p_W=(0,0,-5) 
+ \mathbf p_W=(0,0,-5)
 $$
 
 and a camera initially at the origin, looking toward $-Z$.
@@ -91792,13 +91973,13 @@ and a camera initially at the origin, looking toward $-Z$.
 Assume:
 
 $$
- \theta_y=90^\circ,\quad a=1. 
+ \theta_y=90^\circ,\quad a=1.
 $$
 
 The horizontal projection is:
 
 $$
- x_n=\frac{x_v}{d} 
+ x_n=\frac{x_v}{d}
 $$
 
 because $s_x=1$.
@@ -91806,49 +91987,49 @@ because $s_x=1$.
 Initially:
 
 $$
- x_v=0,\quad d=5. 
+ x_v=0,\quad d=5.
 $$
 
 Thus:
 
 $$
- x_{n,0}=0. 
+ x_{n,0}=0.
 $$
 
 Now move the camera right by:
 
 $$
- \Delta c_x=0.2. 
+ \Delta c_x=0.2.
 $$
 
 The stationary world's camera-relative X becomes:
 
 $$
- x_{v,1}=0-0.2=-0.2. 
+ x_{v,1}=0-0.2=-0.2.
 $$
 
 Thus:
 
 $$
- x_{n,1}=\frac{-0.2}{5}=-0.04. 
+ x_{n,1}=\frac{-0.2}{5}=-0.04.
 $$
 
 For a 1920-pixel-wide viewport:
 
 $$
- \Delta x_p=\frac{1920}{2}(-0.04) =-38.4. 
+ \Delta x_p=\frac{1920}{2}(-0.04) =-38.4.
 $$
 
 Therefore the point appears to move left by:
 
 $$
- \boxed{38.4\text{ pixels}}. 
+ \boxed{38.4\text{ pixels}}.
 $$
 
 Under the previous-minus-current convention:
 
 $$
- v_x=+38.4. 
+ v_x=+38.4.
 $$
 
 The compiled laboratory reproduces this result.
@@ -91858,25 +92039,25 @@ The compiled laboratory reproduces this result.
 Let current and previous NDC positions be:
 
 $$
- \mathbf n_t,\quad\mathbf n_{t-1}. 
+ \mathbf n_t,\quad\mathbf n_{t-1}.
 $$
 
 An NDC motion vector is:
 
 $$
- \Delta\mathbf n=\mathbf n_{t-1}-\mathbf n_t. 
+ \Delta\mathbf n=\mathbf n_{t-1}-\mathbf n_t.
 $$
 
 For a top-left raster mapping, the pixel-space displacement is:
 
 $$
- \boxed{ v_x=\frac W2\Delta n_x } 
+ \boxed{ v_x=\frac W2\Delta n_x }
 $$
 
 and:
 
 $$
- \boxed{ v_y=-\frac H2\Delta n_y }. 
+ \boxed{ v_y=-\frac H2\Delta n_y }.
 $$
 
 Do not assume that a motion vector stored in NDC can be added directly to a pixel coordinate.
@@ -91888,25 +92069,25 @@ Its units and sign must be defined.
 Let:
 
 $$
- \mathbf n_t^{(j)}= \mathbf n_t^{(0)}+\mathbf j_t 
+ \mathbf n_t^{(j)}= \mathbf n_t^{(0)}+\mathbf j_t
 $$
 
 and:
 
 $$
- \mathbf n_{t-1}^{(j)}= \mathbf n_{t-1}^{(0)}+\mathbf j_{t-1}. 
+ \mathbf n_{t-1}^{(j)}= \mathbf n_{t-1}^{(0)}+\mathbf j_{t-1}.
 $$
 
 Then the jittered NDC displacement is:
 
 $$
- \begin{aligned} \Delta\mathbf n^{(j)} &= \mathbf n_{t-1}^{(j)}-\mathbf n_t^{(j)}\\ &= \mathbf n_{t-1}^{(0)}-\mathbf n_t^{(0)} +\mathbf j_{t-1}-\mathbf j_t. \end{aligned} 
+ \begin{aligned} \Delta\mathbf n^{(j)} &= \mathbf n_{t-1}^{(j)}-\mathbf n_t^{(j)}\\ &= \mathbf n_{t-1}^{(0)}-\mathbf n_t^{(0)} +\mathbf j_{t-1}-\mathbf j_t. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{ \Delta\mathbf n^{(j)} = \Delta\mathbf n^{(0)} + (\mathbf j_{t-1}-\mathbf j_t) }. 
+ \boxed{ \Delta\mathbf n^{(j)} = \Delta\mathbf n^{(0)} + (\mathbf j_{t-1}-\mathbf j_t) }.
 $$
 
 The motion vector includes the difference between temporal sample offsets if jittered positions are used directly.
@@ -91966,25 +92147,25 @@ The motivation is numerical precision.
 Let a world-space point be:
 
 $$
- \mathbf p_W. 
+ \mathbf p_W.
 $$
 
 Let the camera world position be:
 
 $$
- \mathbf c_W. 
+ \mathbf c_W.
 $$
 
 Define the camera-relative vector:
 
 $$
- \boxed{ \mathbf p_R=\mathbf p_W-\mathbf c_W }. 
+ \boxed{ \mathbf p_R=\mathbf p_W-\mathbf c_W }.
 $$
 
 The camera orientation then transforms it into view space:
 
 $$
- \boxed{ \mathbf p_V=R^T\mathbf p_R }. 
+ \boxed{ \mathbf p_V=R^T\mathbf p_R }.
 $$
 
 This is mathematically equivalent to applying the inverse rigid camera transform.
@@ -92029,17 +92210,17 @@ The much smaller relative vector is then converted to binary32.
 Let:
 
 $$
- x_W=100000000.125, 
+ x_W=100000000.125,
 $$
 
 $$
- c_W=100000000. 
+ c_W=100000000.
 $$
 
 Their exact difference is:
 
 $$
- \boxed{x_R=0.125}. 
+ \boxed{x_R=0.125}.
 $$
 
 Binary32 cannot distinguish these two values at that magnitude.
@@ -92047,25 +92228,25 @@ Binary32 cannot distinguish these two values at that magnitude.
 If we first convert both to `float`, they can round to the same representable value:
 
 $$
- \operatorname{float}(x_W) = \operatorname{float}(c_W). 
+ \operatorname{float}(x_W) = \operatorname{float}(c_W).
 $$
 
 Then:
 
 $$
- \boxed{ \operatorname{float}(x_W) - \operatorname{float}(c_W)=0 }. 
+ \boxed{ \operatorname{float}(x_W) - \operatorname{float}(c_W)=0 }.
 $$
 
 But if we subtract in binary64 first:
 
 $$
- x_W-c_W=0.125, 
+ x_W-c_W=0.125,
 $$
 
 then convert:
 
 $$
- \boxed{ \operatorname{float}(x_W-c_W)=0.125 }. 
+ \boxed{ \operatorname{float}(x_W-c_W)=0.125 }.
 $$
 
 The compiled lab verifies exactly this difference.
@@ -92075,13 +92256,13 @@ The compiled lab verifies exactly this difference.
 For a mesh with local vertices $\mathbf p_L$, a world transform may be:
 
 $$
- \mathbf p_W=A\mathbf p_L+\mathbf t_W. 
+ \mathbf p_W=A\mathbf p_L+\mathbf t_W.
 $$
 
 Camera-relative position is:
 
 $$
- \mathbf p_R= A\mathbf p_L+(\mathbf t_W-\mathbf c_W). 
+ \mathbf p_R= A\mathbf p_L+(\mathbf t_W-\mathbf c_W).
 $$
 
 This suggests a practical division of work.
@@ -92089,7 +92270,7 @@ This suggests a practical division of work.
 On the CPU, calculate:
 
 $$
- \boxed{ \mathbf t_R=\mathbf t_W-\mathbf c_W } 
+ \boxed{ \mathbf t_R=\mathbf t_W-\mathbf c_W }
 $$
 
 in high precision.
@@ -92099,7 +92280,7 @@ Upload $\mathbf t_R$ in binary32 where appropriate.
 Then the GPU computes:
 
 $$
- \boxed{ \mathbf p_R=A_f\mathbf p_L+\mathbf t_{R,f} }. 
+ \boxed{ \mathbf p_R=A_f\mathbf p_L+\mathbf t_{R,f} }.
 $$
 
 This avoids constructing huge world coordinates in float and subtracting the camera afterward.
@@ -92129,13 +92310,13 @@ The spacing between representable numbers grows as the exponent increases.
 For a normal binary32 value in the interval:
 
 $$
- [2^e,2^{e+1}), 
+ [2^e,2^{e+1}),
 $$
 
 the spacing is:
 
 $$
- \boxed{ \mathrm{ULP}(x)=2^{e-23} } 
+ \boxed{ \mathrm{ULP}(x)=2^{e-23} }
 $$
 
 because the significand has 24 significant bits, including the implicit leading one.
@@ -92145,37 +92326,37 @@ because the significand has 24 significant bits, including the implicit leading 
 At values around:
 
 $$
- 2^{10}=1024, 
+ 2^{10}=1024,
 $$
 
 the spacing is:
 
 $$
- 2^{10-23}=2^{-13} \approx0.00012207. 
+ 2^{10-23}=2^{-13} \approx0.00012207.
 $$
 
 At values around:
 
 $$
- 2^{20}=1{,}048{,}576, 
+ 2^{20}=1{,}048{,}576,
 $$
 
 the spacing is:
 
 $$
- 2^{20-23}=2^{-3}=0.125. 
+ 2^{20-23}=2^{-3}=0.125.
 $$
 
 At values around:
 
 $$
- 2^{26}=67{,}108{,}864, 
+ 2^{26}=67{,}108{,}864,
 $$
 
 the spacing is:
 
 $$
- 2^{26-23}=8. 
+ 2^{26-23}=8.
 $$
 
 Thus near $10^8$, adjacent binary32 numbers can differ by eight units.
@@ -92197,7 +92378,7 @@ Conversely, fixing the renderer does not automatically fix a float-based physics
 Suppose an object is at world position:
 
 $$
- 10^8\text{ metres}. 
+ 10^8\text{ metres}.
 $$
 
 Its distance from the world origin is huge.
@@ -92205,7 +92386,7 @@ Its distance from the world origin is huge.
 But the camera may be only:
 
 $$
- 2\text{ metres} 
+ 2\text{ metres}
 $$
 
 away.
@@ -92236,43 +92417,43 @@ Origin rebasing periodically changes the simulation's local coordinate origin so
 Suppose world coordinates are represented relative to a current origin:
 
 $$
- \mathbf O. 
+ \mathbf O.
 $$
 
 An object's local runtime coordinate is:
 
 $$
- \boxed{ \mathbf p_R=\mathbf p_W-\mathbf O }. 
+ \boxed{ \mathbf p_R=\mathbf p_W-\mathbf O }.
 $$
 
 If the active region moves far from $\mathbf O$, choose a new origin:
 
 $$
- \mathbf O'=\mathbf O+\Delta. 
+ \mathbf O'=\mathbf O+\Delta.
 $$
 
 To preserve the same geometric world position:
 
 $$
- \mathbf p_R'=\mathbf p_W-\mathbf O'. 
+ \mathbf p_R'=\mathbf p_W-\mathbf O'.
 $$
 
 Substitute:
 
 $$
- \mathbf p_R' = \mathbf p_W-(\mathbf O+\Delta). 
+ \mathbf p_R' = \mathbf p_W-(\mathbf O+\Delta).
 $$
 
 Since:
 
 $$
- \mathbf p_R=\mathbf p_W-\mathbf O, 
+ \mathbf p_R=\mathbf p_W-\mathbf O,
 $$
 
 we get:
 
 $$
- \boxed{ \mathbf p_R'=\mathbf p_R-\Delta }. 
+ \boxed{ \mathbf p_R'=\mathbf p_R-\Delta }.
 $$
 
 Every local position must shift by the negative origin change.
@@ -92282,25 +92463,25 @@ Every local position must shift by the negative origin change.
 Suppose the old runtime origin is:
 
 $$
- \mathbf O=(0,0,0). 
+ \mathbf O=(0,0,0).
 $$
 
 A player is located at:
 
 $$
- \mathbf p_W=(120000,2,50000). 
+ \mathbf p_W=(120000,2,50000).
 $$
 
 Choose a new origin:
 
 $$
- \mathbf O'=(120000,0,50000). 
+ \mathbf O'=(120000,0,50000).
 $$
 
 The player's rebased position is:
 
 $$
- \boxed{ \mathbf p_R'=(0,2,0) }. 
+ \boxed{ \mathbf p_R'=(0,2,0) }.
 $$
 
 The physical player has not moved.
@@ -92332,31 +92513,31 @@ Rebasing scene objects without updating the spatial index can cause incorrect cu
 Suppose the previous frame used origin:
 
 $$
- \mathbf O_{t-1} 
+ \mathbf O_{t-1}
 $$
 
 and the current frame uses:
 
 $$
- \mathbf O_t. 
+ \mathbf O_t.
 $$
 
 The same world point has coordinates:
 
 $$
- \mathbf p_{R,t-1} = \mathbf p_W-\mathbf O_{t-1} 
+ \mathbf p_{R,t-1} = \mathbf p_W-\mathbf O_{t-1}
 $$
 
 and:
 
 $$
- \mathbf p_{R,t} = \mathbf p_W-\mathbf O_t. 
+ \mathbf p_{R,t} = \mathbf p_W-\mathbf O_t.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf p_{R,t-1} = \mathbf p_{R,t} + (\mathbf O_t-\mathbf O_{t-1}) }. 
+ \boxed{ \mathbf p_{R,t-1} = \mathbf p_{R,t} + (\mathbf O_t-\mathbf O_{t-1}) }.
 $$
 
 That origin difference must be accounted for when reconstructing previous-frame positions.
@@ -92386,7 +92567,7 @@ Double precision is often appropriate for global camera positions and scene-to-c
 Let the camera have world position:
 
 $$
- \mathbf c_d 
+ \mathbf c_d
 $$
 
 stored in binary64.
@@ -92394,13 +92575,13 @@ stored in binary64.
 Let its world-space rotation be:
 
 $$
- R_d. 
+ R_d.
 $$
 
 Then the exact mathematical view transform is:
 
 $$
- \boxed{ \mathbf p_V=R_d^T(\mathbf p_W-\mathbf c_d) }. 
+ \boxed{ \mathbf p_V=R_d^T(\mathbf p_W-\mathbf c_d) }.
 $$
 
 A good implementation may perform the subtraction in double precision and convert the resulting relative position to float for GPU stages.
@@ -92441,13 +92622,13 @@ Very small orientation errors can cause noticeable screen-space shifts at large 
 Suppose a point lies at distance $d$ and the camera orientation changes by a small angle:
 
 $$
- \delta\theta. 
+ \delta\theta.
 $$
 
 For small angles, the transverse displacement of the viewing ray at that distance is approximately:
 
 $$
- \boxed{ \delta x\approx d\,\delta\theta } 
+ \boxed{ \delta x\approx d\,\delta\theta }
 $$
 
 with $\delta\theta$ measured in radians.
@@ -92455,19 +92636,19 @@ with $\delta\theta$ measured in radians.
 At:
 
 $$
- d=1000 
+ d=1000
 $$
 
 and:
 
 $$
- \delta\theta=10^{-5}, 
+ \delta\theta=10^{-5},
 $$
 
 the transverse displacement is approximately:
 
 $$
- 0.01 
+ 0.01
 $$
 
 world units.
@@ -93674,13 +93855,13 @@ We have now studied all 42 original parts individually. Let's combine them into 
 Suppose a mesh contains local point:
 
 $$
- \boxed{ \mathbf p_L=(1,0,0) }. 
+ \boxed{ \mathbf p_L=(1,0,0) }.
 $$
 
 Its model matrix translates the object by:
 
 $$
- \mathbf t=(2,1,0) 
+ \mathbf t=(2,1,0)
 $$
 
 with no rotation or scale.
@@ -93688,29 +93869,29 @@ with no rotation or scale.
 The camera is at:
 
 $$
- \mathbf c=(0,0,5) 
+ \mathbf c=(0,0,5)
 $$
 
 looking at the world origin with world up:
 
 $$
- (0,1,0). 
+ (0,1,0).
 $$
 
 The camera parameters are:
 
 $$
- \theta_y=60^\circ, \qquad a=\frac{16}{9}, 
+ \theta_y=60^\circ, \qquad a=\frac{16}{9},
 $$
 
 $$
- n=0.1,\qquad f=1000. 
+ n=0.1,\qquad f=1000.
 $$
 
 The framebuffer resolution is:
 
 $$
- 1920\times1080. 
+ 1920\times1080.
 $$
 
 We use conventional zero-to-one perspective depth and an explicitly defined top-left raster mapping.
@@ -93720,19 +93901,19 @@ We use conventional zero-to-one perspective depth and an explicitly defined top-
 The model matrix is:
 
 $$
- M= \begin{bmatrix} 1&0&0&2\\ 0&1&0&1\\ 0&0&1&0\\ 0&0&0&1 \end{bmatrix}. 
+ M= \begin{bmatrix} 1&0&0&2\\ 0&1&0&1\\ 0&0&1&0\\ 0&0&0&1 \end{bmatrix}.
 $$
 
 Transform the homogeneous local point:
 
 $$
- \mathbf p_L= \begin{bmatrix} 1\\0\\0\\1 \end{bmatrix}. 
+ \mathbf p_L= \begin{bmatrix} 1\\0\\0\\1 \end{bmatrix}.
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf p_W= M\mathbf p_L= \begin{bmatrix} 3\\1\\0\\1 \end{bmatrix} }. 
+ \boxed{ \mathbf p_W= M\mathbf p_L= \begin{bmatrix} 3\\1\\0\\1 \end{bmatrix} }.
 $$
 
 #### World to view
@@ -93742,13 +93923,13 @@ The camera is translated five units along $+Z$, looking toward $-Z$.
 Its view matrix is:
 
 $$
- V= \begin{bmatrix} 1&0&0&0\\ 0&1&0&0\\ 0&0&1&-5\\ 0&0&0&1 \end{bmatrix}. 
+ V= \begin{bmatrix} 1&0&0&0\\ 0&1&0&0\\ 0&0&1&-5\\ 0&0&0&1 \end{bmatrix}.
 $$
 
 Thus:
 
 $$
- \boxed{ \mathbf p_V= V\mathbf p_W= \begin{bmatrix} 3\\1\\-5\\1 \end{bmatrix} }. 
+ \boxed{ \mathbf p_V= V\mathbf p_W= \begin{bmatrix} 3\\1\\-5\\1 \end{bmatrix} }.
 $$
 
 The point is three units right, one unit up, and five units forward from the camera.
@@ -93756,7 +93937,7 @@ The point is three units right, one unit up, and five units forward from the cam
 Its positive camera depth is:
 
 $$
- \boxed{d=5}. 
+ \boxed{d=5}.
 $$
 
 Note that this is axial view depth, not Euclidean distance from the camera centre.
@@ -93764,7 +93945,7 @@ Note that this is axial view depth, not Euclidean distance from the camera centr
 The Euclidean distance is:
 
 $$
- \sqrt{3^2+1^2+5^2}=\sqrt{35}\approx5.9161. 
+ \sqrt{3^2+1^2+5^2}=\sqrt{35}\approx5.9161.
 $$
 
 Ordinary perspective depth mapping uses $d=-z_v=5$, not the Euclidean range.
@@ -93774,53 +93955,53 @@ Ordinary perspective depth mapping uses $d=-z_v=5$, not the Euclidean range.
 For the stated FOV and aspect ratio:
 
 $$
- s_x\approx0.9742785793, 
+ s_x\approx0.9742785793,
 $$
 
 $$
- s_y\approx1.7320508076. 
+ s_y\approx1.7320508076.
 $$
 
 Our projection is:
 
 $$
- P= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-1.00010001&-0.100010001\\ 0&0&-1&0 \end{bmatrix}. 
+ P= \begin{bmatrix} s_x&0&0&0\\ 0&s_y&0&0\\ 0&0&-1.00010001&-0.100010001\\ 0&0&-1&0 \end{bmatrix}.
 $$
 
 Apply to:
 
 $$
- \mathbf p_V=(3,1,-5,1)^T. 
+ \mathbf p_V=(3,1,-5,1)^T.
 $$
 
 The clip X coordinate is:
 
 $$
- x_c=s_x(3)\approx2.922835738. 
+ x_c=s_x(3)\approx2.922835738.
 $$
 
 The clip Y coordinate is:
 
 $$
- y_c=s_y(1)\approx1.732050808. 
+ y_c=s_y(1)\approx1.732050808.
 $$
 
 The clip W coordinate is:
 
 $$
- \boxed{w_c=5}. 
+ \boxed{w_c=5}.
 $$
 
 The clip Z coordinate follows from the depth row and is approximately:
 
 $$
- z_c=4.900490049. 
+ z_c=4.900490049.
 $$
 
 Thus:
 
 $$
- \boxed{ \mathbf p_C\approx \begin{bmatrix} 2.922835738\\ 1.732050808\\ 4.900490049\\ 5 \end{bmatrix} }. 
+ \boxed{ \mathbf p_C\approx \begin{bmatrix} 2.922835738\\ 1.732050808\\ 4.900490049\\ 5 \end{bmatrix} }.
 $$
 
 #### Perspective divide
@@ -93830,25 +94011,25 @@ Divide by $w_c=5$.
 Therefore:
 
 $$
- \boxed{ x_n\approx0.584567148 } 
+ \boxed{ x_n\approx0.584567148 }
 $$
 
 and:
 
 $$
- \boxed{ y_n\approx0.346410162 }. 
+ \boxed{ y_n\approx0.346410162 }.
 $$
 
 The depth is:
 
 $$
- \boxed{ z_n\approx0.980098010 }. 
+ \boxed{ z_n\approx0.980098010 }.
 $$
 
 The NDC point is:
 
 $$
- \boxed{ \mathbf p_N\approx (0.584567148,\ 0.346410162,\ 0.980098010) }. 
+ \boxed{ \mathbf p_N\approx (0.584567148,\ 0.346410162,\ 0.980098010) }.
 $$
 
 It lies inside the conventional zero-to-one visible depth interval and symmetric XY NDC bounds.
@@ -93858,37 +94039,37 @@ It lies inside the conventional zero-to-one visible depth interval and symmetric
 Using a top-left raster origin:
 
 $$
- x_p=\frac{x_n+1}{2}1920. 
+ x_p=\frac{x_n+1}{2}1920.
 $$
 
 Substitute:
 
 $$
- x_p= \frac{1.584567148}{2}(1920). 
+ x_p= \frac{1.584567148}{2}(1920).
 $$
 
 Therefore:
 
 $$
- \boxed{x_p\approx1521.184462}. 
+ \boxed{x_p\approx1521.184462}.
 $$
 
 For Y:
 
 $$
- y_p=\frac{1-y_n}{2}1080. 
+ y_p=\frac{1-y_n}{2}1080.
 $$
 
 Thus:
 
 $$
- \boxed{y_p\approx352.938513}. 
+ \boxed{y_p\approx352.938513}.
 $$
 
 The final continuous raster position is:
 
 $$
- \boxed{ \mathbf p_{\mathrm{raster}} \approx (1521.1845,\ 352.9385) }. 
+ \boxed{ \mathbf p_{\mathrm{raster}} \approx (1521.1845,\ 352.9385) }.
 $$
 
 That is the complete mathematical journey from a mesh vertex to an image position.
@@ -93915,13 +94096,13 @@ The earlier perspective derivation used a centred frustum; the more general form
 Suppose the near plane has horizontal coordinates:
 
 $$
- l,\ r 
+ l,\ r
 $$
 
 and vertical coordinates:
 
 $$
- b,\ t. 
+ b,\ t.
 $$
 
 The near plane is at positive camera depth $n$.
@@ -93931,53 +94112,53 @@ We want near-plane X coordinate $l$ to map to NDC $-1$, and $r$ to map to $+1$.
 Assume the clip X numerator is:
 
 $$
- x_c=\alpha x+\beta z. 
+ x_c=\alpha x+\beta z.
 $$
 
 The perspective denominator is:
 
 $$
- w_c=-z=d. 
+ w_c=-z=d.
 $$
 
 At the near plane:
 
 $$
- z=-n. 
+ z=-n.
 $$
 
 Thus:
 
 $$
- x_n=\frac{\alpha x-\beta n}{n} = \frac{\alpha x}{n}-\beta. 
+ x_n=\frac{\alpha x-\beta n}{n} = \frac{\alpha x}{n}-\beta.
 $$
 
 Enforce the left and right bounds:
 
 $$
- \frac{\alpha l}{n}-\beta=-1, 
+ \frac{\alpha l}{n}-\beta=-1,
 $$
 
 $$
- \frac{\alpha r}{n}-\beta=1. 
+ \frac{\alpha r}{n}-\beta=1.
 $$
 
 Subtract:
 
 $$
- \frac{\alpha(r-l)}n=2. 
+ \frac{\alpha(r-l)}n=2.
 $$
 
 Therefore:
 
 $$
- \boxed{ \alpha=\frac{2n}{r-l} }. 
+ \boxed{ \alpha=\frac{2n}{r-l} }.
 $$
 
 Substitute:
 
 $$
- \boxed{ \beta=\frac{r+l}{r-l} }. 
+ \boxed{ \beta=\frac{r+l}{r-l} }.
 $$
 
 The same reasoning applies vertically.
@@ -93985,23 +94166,23 @@ The same reasoning applies vertically.
 Therefore a general asymmetric right-handed zero-to-one perspective matrix is:
 
 $$
- \boxed{ P= \begin{bmatrix} \dfrac{2n}{r-l}&0&\dfrac{r+l}{r-l}&0\\ 0&\dfrac{2n}{t-b}&\dfrac{t+b}{t-b}&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix} }. 
+ \boxed{ P= \begin{bmatrix} \dfrac{2n}{r-l}&0&\dfrac{r+l}{r-l}&0\\ 0&\dfrac{2n}{t-b}&\dfrac{t+b}{t-b}&0\\ 0&0&-\dfrac f{f-n}&-\dfrac{fn}{f-n}\\ 0&0&-1&0 \end{bmatrix} }.
 $$
 
 When the frustum is symmetric:
 
 $$
- l=-r,\qquad b=-t, 
+ l=-r,\qquad b=-t,
 $$
 
 the off-axis terms vanish:
 
 $$
- \frac{r+l}{r-l}=0, 
+ \frac{r+l}{r-l}=0,
 $$
 
 $$
- \frac{t+b}{t-b}=0. 
+ \frac{t+b}{t-b}=0.
 $$
 
 The matrix reduces to our ordinary centred perspective projection.
@@ -94063,57 +94244,57 @@ Rather than writing several superficially different projection functions, it der
 For our right-handed perspective convention, let:
 
 $$
- z_n(d)=-A+\frac Bd. 
+ z_n(d)=-A+\frac Bd.
 $$
 
 Define desired endpoint depths:
 
 $$
- d_n=z_n(n), 
+ d_n=z_n(n),
 $$
 
 $$
- d_f=z_n(f). 
+ d_f=z_n(f).
 $$
 
 We have:
 
 $$
- -A+\frac Bn=d_n, 
+ -A+\frac Bn=d_n,
 $$
 
 $$
- -A+\frac Bf=d_f. 
+ -A+\frac Bf=d_f.
 $$
 
 Subtract:
 
 $$
- B\left(\frac1n-\frac1f\right)=d_n-d_f. 
+ B\left(\frac1n-\frac1f\right)=d_n-d_f.
 $$
 
 Thus:
 
 $$
- \boxed{ B=\frac{nf(d_n-d_f)}{f-n} }. 
+ \boxed{ B=\frac{nf(d_n-d_f)}{f-n} }.
 $$
 
 Use the near equation:
 
 $$
- A=\frac Bn-d_n. 
+ A=\frac Bn-d_n.
 $$
 
 Substitute:
 
 $$
- \boxed{ A=\frac{nd_n-fd_f}{f-n} }. 
+ \boxed{ A=\frac{nd_n-fd_f}{f-n} }.
 $$
 
 Therefore a general finite perspective depth row is:
 
 $$
- \boxed{ \left( 0,\ 0,\ \frac{nd_n-fd_f}{f-n},\ \frac{nf(d_n-d_f)}{f-n} \right) }. 
+ \boxed{ \left( 0,\ 0,\ \frac{nd_n-fd_f}{f-n},\ \frac{nf(d_n-d_f)}{f-n} \right) }.
 $$
 
 This formula handles conventional and reversed depth in both supported depth intervals.
@@ -94125,35 +94306,35 @@ It is more robust conceptually than memorizing four matrices separately.
 Take:
 
 $$
- f\to\infty. 
+ f\to\infty.
 $$
 
 Then:
 
 $$
- A\to-d_f, 
+ A\to-d_f,
 $$
 
 $$
- B\to n(d_n-d_f). 
+ B\to n(d_n-d_f).
 $$
 
 Thus:
 
 $$
- \boxed{ A_{\infty}=-d_f, \qquad B_{\infty}=n(d_n-d_f) }. 
+ \boxed{ A_{\infty}=-d_f, \qquad B_{\infty}=n(d_n-d_f) }.
 $$
 
 For infinite reversed-Z with zero-to-one depth:
 
 $$
- d_n=1,\qquad d_f=0. 
+ d_n=1,\qquad d_f=0.
 $$
 
 Therefore:
 
 $$
- A=0,\qquad B=n. 
+ A=0,\qquad B=n.
 $$
 
 We recover the simple infinite reversed-Z matrix.
@@ -94183,7 +94364,7 @@ The tests verify several important properties rather than merely comparing print
 The camera-to-world and world-to-camera matrices compose to identity:
 
 $$
- \boxed{VC=I}. 
+ \boxed{VC=I}.
 $$
 
 The camera's world position transforms to the view origin.
@@ -94225,15 +94406,15 @@ These conventions are internally coherent and match the reference mathematics of
 The existing `Perspective()` function produces:
 
 $$
- P_{22}=\frac f{n-f}, 
+ P_{22}=\frac f{n-f},
 $$
 
 $$
- P_{23}=\frac{fn}{n-f}, 
+ P_{23}=\frac{fn}{n-f},
 $$
 
 $$
- P_{32}=-1. 
+ P_{32}=-1.
 $$
 
 Those are the conventional right-handed zero-to-one coefficients derived earlier.
@@ -94292,13 +94473,13 @@ But those checks do not prove the up vector is nonparallel to the forward direct
 If:
 
 $$
- \mathbf f\parallel\mathbf u_0, 
+ \mathbf f\parallel\mathbf u_0,
 $$
 
 then:
 
 $$
- \mathbf f\times\mathbf u_0=\mathbf0. 
+ \mathbf f\times\mathbf u_0=\mathbf0.
 $$
 
 A look-at implementation must handle this case explicitly.
@@ -94354,7 +94535,7 @@ Thus it would be incorrect to claim this renderer already uses reversed-Z merely
 The pinhole camera constructs a forward/right/up basis and generates rays using:
 
 $$
- \boxed{ \mathbf d= \operatorname{normalize} \left[ \mathbf f+ x_s\mathbf r+ y_s\mathbf u \right] }. 
+ \boxed{ \mathbf d= \operatorname{normalize} \left[ \mathbf f+ x_s\mathbf r+ y_s\mathbf u \right] }.
 $$
 
 The screen offsets use vertical FOV and aspect ratio.
@@ -94362,11 +94543,11 @@ The screen offsets use vertical FOV and aspect ratio.
 Its normalized raster inputs are mapped using:
 
 $$
- x_s=(2u-1)\tan(\theta_y/2)a, 
+ x_s=(2u-1)\tan(\theta_y/2)a,
 $$
 
 $$
- y_s=(1-2v)\tan(\theta_y/2). 
+ y_s=(1-2v)\tan(\theta_y/2).
 $$
 
 This is mathematically consistent with the top-left normalized raster convention and a right-handed camera looking along local $-Z$.
@@ -94402,7 +94583,7 @@ It is being able to reconstruct the complete rendering coordinate pipeline from 
 Start with the definition of a frame:
 
 $$
- \mathbf p=\mathbf o+B\mathbf p_{\mathrm{local}}. 
+ \mathbf p=\mathbf o+B\mathbf p_{\mathrm{local}}.
 $$
 
 Derive its inverse, explain why points and directions transform differently, derive rigid camera inverse matrices, construct a look-at basis with correct cross-product order, and demonstrate why camera movement produces an inverse transformation of world coordinates.
@@ -94412,13 +94593,13 @@ You should also explain how tangent frames and normal matrices differ, why nonun
 Start from similar triangles:
 
 $$
- x_s=\frac{sx}{d}, \qquad y_s=\frac{sy}{d}. 
+ x_s=\frac{sx}{d}, \qquad y_s=\frac{sy}{d}.
 $$
 
 Derive the perspective divide through:
 
 $$
- w_c=-z_v. 
+ w_c=-z_v.
 $$
 
 Derive the projection scale from FOV and aspect ratio.
@@ -94436,53 +94617,53 @@ A complete implementation should test all of these against independently constru
 Object to clip
 
 $$
- \boxed{ \mathbf p_C=PVM\mathbf p_L } 
+ \boxed{ \mathbf p_C=PVM\mathbf p_L }
 $$
 
 World to camera
 
 $$
- \boxed{ \mathbf p_V=R^T(\mathbf p_W-\mathbf c) } 
+ \boxed{ \mathbf p_V=R^T(\mathbf p_W-\mathbf c) }
 $$
 
 Perspective division
 
 $$
- \boxed{ \mathbf p_N= \frac{\mathbf p_C.xyz}{\mathbf p_C.w} } 
+ \boxed{ \mathbf p_N= \frac{\mathbf p_C.xyz}{\mathbf p_C.w} }
 $$
 
 Vertical and horizontal FOV
 
 $$
- \boxed{ \theta_x= 2\arctan \left( a\tan(\theta_y/2) \right) } 
+ \boxed{ \theta_x= 2\arctan \left( a\tan(\theta_y/2) \right) }
 $$
 
 Standard zero-to-one perspective depth
 
 $$
- \boxed{ z_n(d)= \frac f{f-n} - \frac{fn}{(f-n)d} } 
+ \boxed{ z_n(d)= \frac f{f-n} - \frac{fn}{(f-n)d} }
 $$
 
 Finite reversed-Z perspective depth
 
 $$
- \boxed{ z_n(d)= \frac{nf}{(f-n)d} - \frac n{f-n} } 
+ \boxed{ z_n(d)= \frac{nf}{(f-n)d} - \frac n{f-n} }
 $$
 
 Infinite reversed-Z
 
 $$
- \boxed{ z_n(d)=\frac nd } 
+ \boxed{ z_n(d)=\frac nd }
 $$
 
 Top-left pixel centre to NDC
 
 $$
- \boxed{ x_n=\frac{2(i+0.5)}W-1 } 
+ \boxed{ x_n=\frac{2(i+0.5)}W-1 }
 $$
 
 $$
- \boxed{ y_n=1-\frac{2(j+0.5)}H } 
+ \boxed{ y_n=1-\frac{2(j+0.5)}H }
 $$
 
 ### Calibrated projection, uncertainty, reference implementation, and repository evidence
@@ -94494,7 +94675,7 @@ Let's connect the two modules through one camera observation.
 Assume a graphics camera located at world position:
 
 $$
- \mathbf C_W=(0,0,5) 
+ \mathbf C_W=(0,0,5)
 $$
 
 with its canonical orientation looking toward world $-Z$.
@@ -94502,7 +94683,7 @@ with its canonical orientation looking toward world $-Z$.
 A world point is:
 
 $$
- \mathbf X_W=(1,1,0). 
+ \mathbf X_W=(1,1,0).
 $$
 
 We want to determine where it appears in a calibrated camera image, optionally apply lens distortion, and determine how small 3D position uncertainty affects the projected pixel.
@@ -94516,13 +94697,13 @@ The graphics camera is translated five units along $+Z$.
 Its world-to-view transform subtracts:
 
 $$
- (0,0,5). 
+ (0,0,5).
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbf X_G=(1,1,-5) }. 
+ \boxed{ \mathbf X_G=(1,1,-5) }.
 $$
 
 The point is one unit right, one unit up, and five units forward.
@@ -94532,23 +94713,23 @@ The point is one unit right, one unit up, and five units forward.
 Apply the convention conversion:
 
 $$
- S= \begin{bmatrix} 1&0&0\\ 0&-1&0\\ 0&0&-1 \end{bmatrix}. 
+ S= \begin{bmatrix} 1&0&0\\ 0&-1&0\\ 0&0&-1 \end{bmatrix}.
 $$
 
 Then:
 
 $$
- \boxed{ \mathbf X_C=S\mathbf X_G=(1,-1,5) }. 
+ \boxed{ \mathbf X_C=S\mathbf X_G=(1,-1,5) }.
 $$
 
 The optical camera sees the point at normalized coordinates:
 
 $$
- x=\frac15=0.2, 
+ x=\frac15=0.2,
 $$
 
 $$
- y=\frac{-1}{5}=-0.2. 
+ y=\frac{-1}{5}=-0.2.
 $$
 
 #### 36.3 Apply intrinsics
@@ -94556,37 +94737,37 @@ $$
 Let:
 
 $$
- K= \begin{bmatrix} 800&0&960\\ 0&820&540\\ 0&0&1 \end{bmatrix}. 
+ K= \begin{bmatrix} 800&0&960\\ 0&820&540\\ 0&0&1 \end{bmatrix}.
 $$
 
 For the undistorted image:
 
 $$
- u=800(0.2)+960. 
+ u=800(0.2)+960.
 $$
 
 Thus:
 
 $$
- \boxed{u=1120}. 
+ \boxed{u=1120}.
 $$
 
 And:
 
 $$
- v=820(-0.2)+540. 
+ v=820(-0.2)+540.
 $$
 
 Thus:
 
 $$
- \boxed{v=376}. 
+ \boxed{v=376}.
 $$
 
 The undistorted pixel is:
 
 $$
- \boxed{(1120,376)}. 
+ \boxed{(1120,376)}.
 $$
 
 It lies to the right and above the principal point, as expected.
@@ -94596,7 +94777,7 @@ It lies to the right and above the principal point, as expected.
 Let:
 
 $$
- k_1=-0.1 
+ k_1=-0.1
 $$
 
 with all other distortion coefficients zero.
@@ -94604,53 +94785,53 @@ with all other distortion coefficients zero.
 The normalized squared radius is:
 
 $$
- r^2=0.2^2+(-0.2)^2=0.08. 
+ r^2=0.2^2+(-0.2)^2=0.08.
 $$
 
 The radial factor is:
 
 $$
- L=1-0.1(0.08)=0.992. 
+ L=1-0.1(0.08)=0.992.
 $$
 
 Therefore:
 
 $$
- x_d=0.2(0.992)=0.1984, 
+ x_d=0.2(0.992)=0.1984,
 $$
 
 $$
- y_d=-0.2(0.992)=-0.1984. 
+ y_d=-0.2(0.992)=-0.1984.
 $$
 
 Map to pixels:
 
 $$
- u_d=800(0.1984)+960. 
+ u_d=800(0.1984)+960.
 $$
 
 Thus:
 
 $$
- \boxed{u_d=1118.72}. 
+ \boxed{u_d=1118.72}.
 $$
 
 And:
 
 $$
- v_d=820(-0.1984)+540. 
+ v_d=820(-0.1984)+540.
 $$
 
 Thus:
 
 $$
- \boxed{v_d=377.312}. 
+ \boxed{v_d=377.312}.
 $$
 
 The distorted pixel is:
 
 $$
- \boxed{(1118.72,377.312)}. 
+ \boxed{(1118.72,377.312)}.
 $$
 
 The observed point moves inward toward the principal point.
@@ -94662,13 +94843,13 @@ That is consistent with the negative radial coefficient in this example.
 Suppose the camera-space 3D point has covariance:
 
 $$
- \Sigma_X= \begin{bmatrix} 0.0001&0&0\\ 0&0.0001&0\\ 0&0&0.0004 \end{bmatrix}. 
+ \Sigma_X= \begin{bmatrix} 0.0001&0&0\\ 0&0.0001&0\\ 0&0&0.0004 \end{bmatrix}.
 $$
 
 These entries correspond to standard deviations of:
 
 $$
- 0.01,\quad0.01,\quad0.02 
+ 0.01,\quad0.01,\quad0.02
 $$
 
 world units along the three camera-space axes.
@@ -94676,71 +94857,71 @@ world units along the three camera-space axes.
 For the undistorted pinhole mapping, the Jacobian is:
 
 $$
- J_\pi= \begin{bmatrix} f_x/Z&0&-f_xX/Z^2\\ 0&f_y/Z&-f_yY/Z^2 \end{bmatrix}. 
+ J_\pi= \begin{bmatrix} f_x/Z&0&-f_xX/Z^2\\ 0&f_y/Z&-f_yY/Z^2 \end{bmatrix}.
 $$
 
 Substitute:
 
 $$
- f_x=800,\quad f_y=820, 
+ f_x=800,\quad f_y=820,
 $$
 
 $$
- X=1,\quad Y=-1,\quad Z=5. 
+ X=1,\quad Y=-1,\quad Z=5.
 $$
 
 Then:
 
 $$
- \boxed{ J_\pi= \begin{bmatrix} 160&0&-32\\ 0&164&32.8 \end{bmatrix} }. 
+ \boxed{ J_\pi= \begin{bmatrix} 160&0&-32\\ 0&164&32.8 \end{bmatrix} }.
 $$
 
 The first-order projected pixel covariance is:
 
 $$
- \Sigma_u\approx J_\pi\Sigma_XJ_\pi^T. 
+ \Sigma_u\approx J_\pi\Sigma_XJ_\pi^T.
 $$
 
 Calculate the horizontal variance:
 
 $$
- \sigma_u^2= 160^2(0.0001)+(-32)^2(0.0004). 
+ \sigma_u^2= 160^2(0.0001)+(-32)^2(0.0004).
 $$
 
 Therefore:
 
 $$
- \sigma_u^2=2.56+0.4096 =\boxed{2.9696}. 
+ \sigma_u^2=2.56+0.4096 =\boxed{2.9696}.
 $$
 
 The vertical variance is:
 
 $$
- \sigma_v^2= 164^2(0.0001)+32.8^2(0.0004). 
+ \sigma_v^2= 164^2(0.0001)+32.8^2(0.0004).
 $$
 
 Thus:
 
 $$
- \sigma_v^2= 2.6896+0.430336 =\boxed{3.119936}. 
+ \sigma_v^2= 2.6896+0.430336 =\boxed{3.119936}.
 $$
 
 The covariance is:
 
 $$
- \operatorname{Cov}(u,v) = (-32)(32.8)(0.0004). 
+ \operatorname{Cov}(u,v) = (-32)(32.8)(0.0004).
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{Cov}(u,v)=-0.41984 }. 
+ \boxed{ \operatorname{Cov}(u,v)=-0.41984 }.
 $$
 
 The full first-order pixel covariance is:
 
 $$
- \boxed{ \Sigma_u\approx \begin{bmatrix} 2.9696&-0.41984\\ -0.41984&3.119936 \end{bmatrix} }. 
+ \boxed{ \Sigma_u\approx \begin{bmatrix} 2.9696&-0.41984\\ -0.41984&3.119936 \end{bmatrix} }.
 $$
 
 Its off-diagonal terms arise because uncertainty in camera-space depth affects both pixel coordinates.
@@ -94750,7 +94931,7 @@ This is a concrete example of a 3D uncertainty ellipsoid projecting to a correla
 With optical distortion, the full local Jacobian becomes:
 
 $$
- \boxed{ J_{\mathrm{pixel}} = K_{2\times2}J_DJ_{\mathrm{normalize}} } 
+ \boxed{ J_{\mathrm{pixel}} = K_{2\times2}J_DJ_{\mathrm{normalize}} }
 $$
 
 where $J_D$ is the distortion Jacobian and $J_{\mathrm{normalize}}$ is the normalized pinhole Jacobian.
@@ -94758,7 +94939,7 @@ where $J_D$ is the distortion Jacobian and $J_{\mathrm{normalize}}$ is the norma
 Then:
 
 $$
- \boxed{ \Sigma_{\mathrm{pixel}} \approx J_{\mathrm{pixel}} \Sigma_X J_{\mathrm{pixel}}^T }. 
+ \boxed{ \Sigma_{\mathrm{pixel}} \approx J_{\mathrm{pixel}} \Sigma_X J_{\mathrm{pixel}}^T }.
 $$
 
 This is a useful bridge from the camera mathematics to uncertainty-aware Gaussian projection and reconstruction.
@@ -94900,7 +95081,7 @@ y -= delta.y;
 This is not just a procedural recipe. Every step follows from the local linearization:
 
 $$
- D(\mathbf q+\Delta) \approx D(\mathbf q)+J_D(\mathbf q)\Delta. 
+ D(\mathbf q+\Delta) \approx D(\mathbf q)+J_D(\mathbf q)\Delta.
 $$
 
 A complete implementation must check the determinant or numerical conditioning, limit iterations, reject nonfinite results, and confirm the final residual.
@@ -94961,7 +95142,7 @@ Also, a temporal renderer must distinguish sampled camera-path motion from TAA j
 The inspected [Maveb CalibrationLoader.cpp](https://github.com/swayam8624/Maveb/blob/main/engine/capture/calibration/CalibrationLoader.cpp?utm_source=chatgpt.com) reads:
 
 $$
- f_x,\ f_y,\ c_x,\ c_y 
+ f_x,\ f_y,\ c_x,\ c_y
 $$
 
 and supports distortion-model labels including `None`, `Radial`, and `Opencv`.
@@ -94983,7 +95164,7 @@ Those require semantic validation.
 The inspected [Vulkax pinhole_camera.hpp](https://github.com/swayam8624/Vulkax/blob/main/include/vulkax/world/pinhole_camera.hpp?utm_source=chatgpt.com) implements a pinhole projection forward model with:
 
 $$
- f_x,\ f_y,\ c_x,\ c_y, 
+ f_x,\ f_y,\ c_x,\ c_y,
 $$
 
 camera position, target, up, and near plane.
@@ -94993,13 +95174,13 @@ It uses world-space basis vectors and computes positive forward depth as the dot
 Its pixel mapping is:
 
 $$
- \boxed{ u=f_x\frac{X}{d}+c_x } 
+ \boxed{ u=f_x\frac{X}{d}+c_x }
 $$
 
 and:
 
 $$
- \boxed{ v=c_y-f_y\frac{Y}{d} } 
+ \boxed{ v=c_y-f_y\frac{Y}{d} }
 $$
 
 where its camera $Y$ axis points upward while pixel Y points downward.
@@ -95023,7 +95204,7 @@ A rendering engine culls geometry using frustum half-spaces. A temporal renderer
 The common mathematical structure is:
 
 $$
- \boxed{ \text{Geometry} \rightarrow \text{Coordinate transformation} \rightarrow \text{Projection} \rightarrow \text{Observation} }. 
+ \boxed{ \text{Geometry} \rightarrow \text{Coordinate transformation} \rightarrow \text{Projection} \rightarrow \text{Observation} }.
 $$
 
 The same structure supports both forward rendering and inverse reconstruction.
@@ -97570,7 +97751,7 @@ It computes a mean per feature and then accumulates centred products.
 Its covariance divisor is:
 
 $$
- n-1, 
+ n-1,
 $$
 
 so it implements the conventional unbiased sample covariance estimator, not the population covariance using divisor $n$.
@@ -97600,7 +97781,7 @@ A robust implementation should distinguish small tolerated numerical violations 
 It is also useful to test reconstruction, orthogonality, and eigenvalue residuals:
 
 $$
- \\|\Sigma Q-Q\Lambda\\| 
+ \|\Sigma Q-Q\Lambda\|
 $$
 
 rather than trusting eigenvalue signs alone.
@@ -97715,7 +97896,7 @@ The current `Sampler.cppm` defines `PixelSample`, `Hash01`, and `StratifiedPixel
 The stratified sampler computes:
 
 $$
- s=\left\lceil\sqrt N\right\rceil 
+ s=\left\lceil\sqrt N\right\rceil
 $$
 
 where $N$ is `samplesPerPixel`.
@@ -97723,17 +97904,17 @@ where $N$ is `samplesPerPixel`.
 It then maps:
 
 $$
- s_x=\text{sampleIndex}\bmod s, 
+ s_x=\text{sampleIndex}\bmod s,
 $$
 
 $$
- s_y=\left\lfloor\frac{\text{sampleIndex}}s\right\rfloor. 
+ s_y=\left\lfloor\frac{\text{sampleIndex}}s\right\rfloor.
 $$
 
 The jittered sample coordinates are constructed as:
 
 $$
- u=\frac{s_x+\xi_x}{s}, \qquad v=\frac{s_y+\xi_y}{s}, 
+ u=\frac{s_x+\xi_x}{s}, \qquad v=\frac{s_y+\xi_y}{s},
 $$
 
 with pseudorandom jitters $\xi_x,\xi_y\in[0,1)$.
@@ -97747,13 +97928,13 @@ But when $N$ is not a perfect square, it uses only the first $N$ cells in a grid
 Suppose:
 
 $$
- N=5. 
+ N=5.
 $$
 
 Then:
 
 $$
- s=\lceil\sqrt5\rceil=3. 
+ s=\lceil\sqrt5\rceil=3.
 $$
 
 The intended grid contains nine cells.
@@ -97777,19 +97958,19 @@ For $N$ samples, divide both coordinate axes into $N$ equal intervals.
 Generate a random permutation:
 
 $$
- \pi:\{0,\ldots,N-1\}\rightarrow\{0,\ldots,N-1\}. 
+ \pi:\{0,\ldots,N-1\}\rightarrow\{0,\ldots,N-1\}.
 $$
 
 For each sample $i$, draw independent jitters $u_i,v_i\sim U(0,1)$ and construct:
 
 $$
- \boxed{ x_i=\frac{i+u_i}{N} } 
+ \boxed{ x_i=\frac{i+u_i}{N} }
 $$
 
 and:
 
 $$
- \boxed{ y_i=\frac{\pi(i)+v_i}{N} }. 
+ \boxed{ y_i=\frac{\pi(i)+v_i}{N} }.
 $$
 
 Every horizontal stratum is visited once, and every vertical stratum is visited once.
@@ -98549,51 +98730,51 @@ The cross term matters because the inertia tensor rotates with the body. The sim
 
 ## Generalized coordinates describe the configuration the mechanism can actually have
 
-The Newtonian state above is written in ambient Cartesian coordinates because a free rigid body naturally lives in three-dimensional space. A constrained mechanism often has fewer independent degrees of freedom. A pendulum bob occupies \(\mathbb R^3\), but once its rod length is fixed its allowed positions lie on a sphere; a planar pendulum needs only one angle. A door has thousands of mesh vertices but one hinge angle. **Generalized coordinates** \(q=(q_1,\ldots,q_n)\) parameterize the configuration manifold rather than storing every constrained Cartesian coordinate as independent state.
+The Newtonian state above is written in ambient Cartesian coordinates because a free rigid body naturally lives in three-dimensional space. A constrained mechanism often has fewer independent degrees of freedom. A pendulum bob occupies $\mathbb R^3$, but once its rod length is fixed its allowed positions lie on a sphere; a planar pendulum needs only one angle. A door has thousands of mesh vertices but one hinge angle. **Generalized coordinates** $q=(q_1,\ldots,q_n)$ parameterize the configuration manifold rather than storing every constrained Cartesian coordinate as independent state.
 
 This is not merely a memory optimization. It changes the mathematical form of the dynamics. Let the Cartesian configuration be a smooth map
 
-\[
+$$
 x=x(q).
-\]
+$$
 
 Then velocity is obtained by the chain rule,
 
-\[
+$$
 \dot x
 =
 J(q)\dot q,
 \qquad
 J(q)=\frac{\partial x}{\partial q}.
-\]
+$$
 
 The kinetic energy becomes a quadratic form in generalized velocity,
 
-\[
+$$
 T(q,\dot q)
 =
 \frac12
 \dot q^T M(q)\dot q,
-\]
+$$
 
-where \(M(q)\) is the generalized mass matrix induced by the embedding and physical masses/inertias. Potential energy is \(U(q)\). Define the Lagrangian
+where $M(q)$ is the generalized mass matrix induced by the embedding and physical masses/inertias. Potential energy is $U(q)$. Define the Lagrangian
 
-\[
+$$
 L(q,\dot q,t)=T-U.
-\]
+$$
 
 Hamilton's principle states that the physical motion between fixed endpoint configurations is a stationary curve of the action
 
-\[
+$$
 \mathcal S[q]
 =
 \int_{t_0}^{t_1}
 L(q,\dot q,t)\,dt.
-\]
+$$
 
-Vary the path by \(q(t)+\varepsilon\eta(t)\) with \(\eta(t_0)=\eta(t_1)=0\). Differentiating the action with respect to \(\varepsilon\), integrating the \(\partial L/\partial\dot q\) term by parts, and requiring the first variation to vanish for arbitrary \(\eta\) yields
+Vary the path by $q(t)+\varepsilon\eta(t)$ with $\eta(t_0)=\eta(t_1)=0$. Differentiating the action with respect to $\varepsilon$, integrating the $\partial L/\partial\dot q$ term by parts, and requiring the first variation to vanish for arbitrary $\eta$ yields
 
-\[
+$$
 \boxed{
 \frac{d}{dt}
 \frac{\partial L}{\partial\dot q_i}
@@ -98602,35 +98783,35 @@ Vary the path by \(q(t)+\varepsilon\eta(t)\) with \(\eta(t_0)=\eta(t_1)=0\). Dif
 =
 0
 }
-\]
+$$
 
 for every generalized coordinate.
 
-Arnold emphasizes a structural advantage that is easy to miss in component derivations: the extremal condition does not depend on whether the same curve is described in Cartesian, polar, or another smooth coordinate system. The formula for \(L\) changes with coordinates, but the physical extremal does not. That is the right reason to use generalized coordinates—not because angles are somehow more “physical,” but because coordinates should follow the configuration manifold.
+Arnold emphasizes a structural advantage that is easy to miss in component derivations: the extremal condition does not depend on whether the same curve is described in Cartesian, polar, or another smooth coordinate system. The formula for $L$ changes with coordinates, but the physical extremal does not. That is the right reason to use generalized coordinates—not because angles are somehow more “physical,” but because coordinates should follow the configuration manifold.
 
-For a simple planar pendulum with length \(\ell\), mass \(m\), and angle \(\theta\),
+For a simple planar pendulum with length $\ell$, mass $m$, and angle $\theta$,
 
-\[
+$$
 T=\frac12m\ell^2\dot\theta^2,
 \qquad
 U=mg\ell(1-\cos\theta).
-\]
+$$
 
 The Euler–Lagrange equation gives
 
-\[
+$$
 m\ell^2\ddot\theta
 +
 mg\ell\sin\theta
 =
 0,
-\]
+$$
 
 or
 
-\[
+$$
 \ddot\theta+\frac{g}{\ell}\sin\theta=0.
-\]
+$$
 
 The rod-length constraint never appears as a multiplier because the coordinate already lives on the allowed one-dimensional configuration space. This is a **reduced-coordinate** model. The contact solver later in this chapter instead uses full body coordinates and imposes transient constraints through impulses. Both are legitimate; they solve different structural problems.
 
@@ -98640,11 +98821,11 @@ Source basis: V. I. Arnold, *Mathematical Methods of Classical Mechanics*, Part 
 
 ## D'Alembert's principle says ideal constraint reactions do no virtual work
 
-A holonomic constraint restricts configuration to a submanifold \(M\). In Cartesian coordinates, the body may feel reaction forces that enforce the restriction. D'Alembert's principle characterizes an **ideal** constraint by saying the reaction has no component along any allowed virtual displacement.
+A holonomic constraint restricts configuration to a submanifold $M$. In Cartesian coordinates, the body may feel reaction forces that enforce the restriction. D'Alembert's principle characterizes an **ideal** constraint by saying the reaction has no component along any allowed virtual displacement.
 
-Let \(x(t)\in M\), and let \(\xi\in T_xM\) be any tangent vector to the constraint manifold at the current configuration. For a unit-mass natural mechanical system with potential \(U(x)\), Arnold writes the constrained equation in the form
+Let $x(t)\in M$, and let $\xi\in T_xM$ be any tangent vector to the constraint manifold at the current configuration. For a unit-mass natural mechanical system with potential $U(x)$, Arnold writes the constrained equation in the form
 
-\[
+$$
 \left(
 \ddot x+\nabla U(x),
 \xi
@@ -98653,45 +98834,45 @@ Let \(x(t)\in M\), and let \(\xi\in T_xM\) be any tangent vector to the constrai
 0
 \qquad
 \forall \xi\in T_xM.
-\]
+$$
 
 Equivalently, the residual
 
-\[
+$$
 \ddot x+\nabla U(x)
-\]
+$$
 
 is normal to the allowed tangent space. That normal component is supplied by the constraint reaction.
 
 This is the geometric reason Lagrange multipliers appear. Suppose constraints are
 
-\[
+$$
 g_a(x)=0.
-\]
+$$
 
-Their gradients \(\nabla g_a\) span normal directions under regularity assumptions, so the Cartesian equation can be written
+Their gradients $\nabla g_a$ span normal directions under regularity assumptions, so the Cartesian equation can be written
 
-\[
+$$
 M\ddot x
 =
 F_{\mathrm{applied}}
 +
 J_g(x)^T\lambda,
-\]
+$$
 
-where \(J_g\) is the constraint Jacobian and \(\lambda\) contains reaction magnitudes. Multiplying by an allowed virtual displacement \(\delta x\) satisfying \(J_g\delta x=0\) makes the constraint term vanish:
+where $J_g$ is the constraint Jacobian and $\lambda$ contains reaction magnitudes. Multiplying by an allowed virtual displacement $\delta x$ satisfying $J_g\delta x=0$ makes the constraint term vanish:
 
-\[
+$$
 \delta x^T J_g^T\lambda
 =
 (J_g\delta x)^T\lambda
 =
 0.
-\]
+$$
 
 The reaction enforces geometry without doing first-order work along permitted motion.
 
-Do not overextend this idealization. Dry friction, motors, damping, joint limits with impacts, and compliant contacts can perform or dissipate work. A rolling-without-slip condition may be nonholonomic and cannot always be represented as a position-level manifold \(g(q)=0\). Game-engine joints often add stabilization terms because discrete integration drifts away from the ideal manifold. Those numerical terms should be identified separately from the physical constraint.
+Do not overextend this idealization. Dry friction, motors, damping, joint limits with impacts, and compliant contacts can perform or dissipate work. A rolling-without-slip condition may be nonholonomic and cannot always be represented as a position-level manifold $g(q)=0$. Game-engine joints often add stabilization terms because discrete integration drifts away from the ideal manifold. Those numerical terms should be identified separately from the physical constraint.
 
 The contact constraint later in this chapter is unilateral rather than an equality manifold: bodies may separate but may not interpenetrate. Its multiplier/impulse must satisfy a nonnegativity/complementarity condition. D'Alembert's tangent/normal picture still helps: the normal reaction acts in the forbidden direction, while tangential motion is free until friction introduces another constraint law.
 
@@ -98701,15 +98882,15 @@ Source basis: Arnold, Part II, §21 on D'Alembert's principle and constrained ex
 
 A nonlinear mechanical system can be difficult globally and simple locally. Arnold begins the theory of oscillations by linearizing near an equilibrium because the linearized system often explains frequencies, stability, resonance, and the first visible response to small disturbances.
 
-Let \(q_0\) be a stable equilibrium and write
+Let $q_0$ be a stable equilibrium and write
 
-\[
+$$
 q=q_0+\eta.
-\]
+$$
 
 For a natural Lagrangian, expand the potential:
 
-\[
+$$
 U(q_0+\eta)
 =
 U(q_0)
@@ -98717,94 +98898,94 @@ U(q_0)
 \frac12\eta^T K\eta
 +
 O(\|\eta\|^3),
-\]
+$$
 
-because the first derivative vanishes at equilibrium. Here \(K\) is the Hessian of the potential at \(q_0\). Freeze the mass matrix to first order,
+because the first derivative vanishes at equilibrium. Here $K$ is the Hessian of the potential at $q_0$. Freeze the mass matrix to first order,
 
-\[
+$$
 T
 \approx
 \frac12\dot\eta^T M\dot\eta.
-\]
+$$
 
 The linearized Euler–Lagrange equations are
 
-\[
+$$
 M\ddot\eta+K\eta=0.
-\]
+$$
 
 Seek a harmonic mode
 
-\[
+$$
 \eta(t)=\phi e^{i\omega t}.
-\]
+$$
 
 Then
 
-\[
+$$
 (K-\omega^2M)\phi=0,
-\]
+$$
 
 or
 
-\[
+$$
 \boxed{
 K\phi=\omega^2M\phi.
 }
-\]
+$$
 
-This is a generalized eigenvalue problem. Eigenvectors \(\phi_j\) are mode shapes; \(\omega_j\) are natural angular frequencies. Under the usual symmetric positive-definite mass matrix and stable stiffness assumptions, modes can be chosen \(M\)-orthogonal:
+This is a generalized eigenvalue problem. Eigenvectors $\phi_j$ are mode shapes; $\omega_j$ are natural angular frequencies. Under the usual symmetric positive-definite mass matrix and stable stiffness assumptions, modes can be chosen $M$-orthogonal:
 
-\[
+$$
 \phi_i^T M\phi_j=0
 \qquad i\neq j.
-\]
+$$
 
 Expand displacement as
 
-\[
+$$
 \eta(t)=\sum_j a_j(t)\phi_j.
-\]
+$$
 
 The coupled system then decouples into scalar oscillators,
 
-\[
+$$
 \ddot a_j+\omega_j^2a_j=0,
-\]
+$$
 
 until damping, forcing, nonlinearities, or mode truncation are added.
 
 This is the mechanics counterpart of PCA/SVD and Laplacian eigenmodes elsewhere in the curriculum: a basis is chosen that diagonalizes the important quadratic forms. Modal animation and reduced deformable simulation exploit exactly this structure. Keeping the lowest modes can reproduce large-scale compliant motion at much lower cost, but mode truncation cannot represent arbitrary local deformation or topology change.
 
-Stability also depends on the Hessian. If \(K\) has a negative generalized eigenvalue relative to \(M\), then \(\omega^2<0\) for that direction and the linearized solution grows exponentially rather than oscillating. A zero mode can correspond to a symmetry or unconstrained rigid motion. Thus an eigenanalysis is also a local stability diagnostic.
+Stability also depends on the Hessian. If $K$ has a negative generalized eigenvalue relative to $M$, then $\omega^2<0$ for that direction and the linearized solution grows exponentially rather than oscillating. A zero mode can correspond to a symmetry or unconstrained rigid motion. Thus an eigenanalysis is also a local stability diagnostic.
 
-Numerical stepping must respect the highest retained frequency. Explicit methods can become unstable when \(h\omega_{\max}\) is too large. A reduced model with fewer high-frequency modes can therefore be cheaper not only because it has fewer coordinates but because it may permit a larger stable timestep—though that changes the represented physics.
+Numerical stepping must respect the highest retained frequency. Explicit methods can become unstable when $h\omega_{\max}$ is too large. A reduced model with fewer high-frequency modes can therefore be cheaper not only because it has fewer coordinates but because it may permit a larger stable timestep—though that changes the represented physics.
 
 Source basis: Arnold, Chapter 5 on linearization and oscillations; the generalized mass/stiffness eigenproblem is also the normal-mode framework developed in Riley, Hobson, and Bence, *Mathematical Methods for Physics and Engineering*, Chapter 9.
 
 ## The Legendre transform turns configuration-space dynamics into phase-space dynamics
 
-The Lagrangian formulation evolves \(q\) through a second-order differential equation. Hamiltonian mechanics introduces canonical momentum
+The Lagrangian formulation evolves $q$ through a second-order differential equation. Hamiltonian mechanics introduces canonical momentum
 
-\[
+$$
 p_i
 =
 \frac{\partial L}{\partial\dot q_i}
-\]
+$$
 
-and, when the velocity-to-momentum map is invertible, uses \((q,p)\) as independent phase-space coordinates.
+and, when the velocity-to-momentum map is invertible, uses $(q,p)$ as independent phase-space coordinates.
 
 Define the Hamiltonian by the Legendre transform in the velocity variables,
 
-\[
+$$
 H(q,p,t)
 =
 p^T\dot q-L(q,\dot q,t),
-\]
+$$
 
-where \(\dot q\) is expressed as a function of \((q,p,t)\). Differentiating,
+where $\dot q$ is expressed as a function of $(q,p,t)$. Differentiating,
 
-\[
+$$
 dH
 =
 \dot q^Tdp
@@ -98812,11 +98993,11 @@ dH
 \frac{\partial L}{\partial q}^Tdq
 -
 \frac{\partial L}{\partial t}dt,
-\]
+$$
 
-after the \(p^Td\dot q\) terms cancel using \(p=\partial L/\partial\dot q\). The Euler–Lagrange equation gives \(\dot p=\partial L/\partial q\), so
+after the $p^Td\dot q$ terms cancel using $p=\partial L/\partial\dot q$. The Euler–Lagrange equation gives $\dot p=\partial L/\partial q$, so
 
-\[
+$$
 \boxed{
 \dot q=
 \frac{\partial H}{\partial p},
@@ -98824,37 +99005,37 @@ after the \(p^Td\dot q\) terms cancel using \(p=\partial L/\partial\dot q\). The
 \dot p=
 -\frac{\partial H}{\partial q}.
 }
-\]
+$$
 
-A second-order system in \(q\) has become a first-order system in twice as many variables.
+A second-order system in $q$ has become a first-order system in twice as many variables.
 
 For a standard particle with
 
-\[
+$$
 L(q,\dot q)
 =
 \frac12\dot q^TM\dot q-U(q)
-\]
+$$
 
-and constant positive-definite \(M\),
+and constant positive-definite $M$,
 
-\[
+$$
 p=M\dot q,
-\]
+$$
 
 and
 
-\[
+$$
 H(q,p)
 =
 \frac12p^TM^{-1}p+U(q).
-\]
+$$
 
-Here \(H\) equals total mechanical energy. That equality is common but not the definition of a Hamiltonian; generalized velocity-dependent potentials, time-dependent coordinates, or other Lagrangians require more care.
+Here $H$ equals total mechanical energy. That equality is common but not the definition of a Hamiltonian; generalized velocity-dependent potentials, time-dependent coordinates, or other Lagrangians require more care.
 
-If \(H\) has no explicit time dependence, then along a Hamiltonian trajectory
+If $H$ has no explicit time dependence, then along a Hamiltonian trajectory
 
-\[
+$$
 \frac{dH}{dt}
 =
 \nabla_qH^T\dot q
@@ -98866,7 +99047,7 @@ If \(H\) has no explicit time dependence, then along a Hamiltonian trajectory
 \nabla_pH^T\nabla_qH
 =
 0.
-\]
+$$
 
 Energy conservation follows directly from the canonical equations. In a numerical engine this exact continuous invariant need not be exactly preserved by a discrete integrator. That distinction is why energy drift is a property of the time-stepping method, not proof that Hamiltonian mechanics itself is dissipative or explosive.
 
@@ -98876,7 +99057,7 @@ Source basis: Arnold, Chapter 3 §§14–15 on Legendre transforms and Hamilton'
 
 Write canonical phase state as
 
-\[
+$$
 z=
 \begin{bmatrix}
 q\\p
@@ -98887,27 +99068,27 @@ J=
 0&I\\
 -I&0
 \end{bmatrix}.
-\]
+$$
 
 Hamilton's equations are
 
-\[
+$$
 \dot z
 =
 J\nabla H(z).
-\]
+$$
 
-The canonical symplectic two-form is represented locally by \(J\). A smooth map \(\Phi\) is symplectic when its Jacobian satisfies
+The canonical symplectic two-form is represented locally by $J$. A smooth map $\Phi$ is symplectic when its Jacobian satisfies
 
-\[
+$$
 D\Phi(z)^T J D\Phi(z)=J.
-\]
+$$
 
 This condition is stronger than ordinary volume preservation. Taking determinants implies
 
-\[
+$$
 |\det D\Phi|=1,
-\]
+$$
 
 so a symplectic map preserves phase volume, but many volume-preserving maps are not symplectic. Arnold develops both ideas: Liouville's theorem states that Hamiltonian phase flow preserves phase volume, while the symplectic formulation identifies the closed nondegenerate two-form preserved by Hamiltonian flow.
 
@@ -98915,43 +99096,43 @@ The distinction matters numerically. A generic high-order integrator can have ex
 
 For the separable Hamiltonian
 
-\[
+$$
 H(q,p)=T(p)+U(q),
-\]
+$$
 
 symplectic Euler can be written in one variant as
 
-\[
+$$
 p_{n+1}
 =
 p_n-h\nabla U(q_n),
-\]
+$$
 
-\[
+$$
 q_{n+1}
 =
 q_n+h\nabla T(p_{n+1}).
-\]
+$$
 
-For \(T=p^2/(2m)\), this is the familiar velocity-first/semi-implicit Euler update already used earlier in the engine curriculum. Its value is not that it is magically exact. Its update order gives a symplectic map for this Hamiltonian form, which often produces much better long-time qualitative behavior than explicit Euler.
+For $T=p^2/(2m)$, this is the familiar velocity-first/semi-implicit Euler update already used earlier in the engine curriculum. Its value is not that it is magically exact. Its update order gives a symplectic map for this Hamiltonian form, which often produces much better long-time qualitative behavior than explicit Euler.
 
 Hamiltonian mechanics also introduces the **Poisson bracket**
 
-\[
+$$
 \{f,g\}
 =
 \nabla f^T J\nabla g.
-\]
+$$
 
 Along an autonomous Hamiltonian trajectory,
 
-\[
+$$
 \frac{df}{dt}
 =
 \{f,H\}.
-\]
+$$
 
-A quantity \(f\) is conserved when its Poisson bracket with \(H\) vanishes. This gives a compact algebraic language for invariants and canonical transformations. In a game engine one does not need to implement a Poisson-bracket type to benefit from the concept: it explains why position and momentum are paired, why canonical transforms preserve dynamics, and why integrator structure can matter beyond local truncation order.
+A quantity $f$ is conserved when its Poisson bracket with $H$ vanishes. This gives a compact algebraic language for invariants and canonical transformations. In a game engine one does not need to implement a Poisson-bracket type to benefit from the concept: it explains why position and momentum are paired, why canonical transforms preserve dynamics, and why integrator structure can matter beyond local truncation order.
 
 Do not confuse this with contact/constraint projection. A collision impulse makes the trajectory nonsmooth and can intentionally dissipate energy through restitution/friction. A projected constraint solver can also destroy exact symplecticity. Structure-preserving free-flight integration is still useful, but the full engine is a hybrid dynamical system containing smooth Hamiltonian segments, external forces, constraints, impacts, sleeps, and authored corrections. Each layer should state which invariants it preserves or intentionally breaks.
 

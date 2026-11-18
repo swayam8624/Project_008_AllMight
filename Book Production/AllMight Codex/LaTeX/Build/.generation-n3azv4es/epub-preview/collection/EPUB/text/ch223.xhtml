@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch223.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-877738f6f4d2-batch-013-media-acquisition-attempts" class="level2">
+<h2>Batch 013 media acquisition attempts</h2>
+<p>These are failed acquisition attempts, not transcript reviews. Keep each video ID and result separate from the completed caption ledger. No review count or source-audit promotion follows from these attempts.</p>
+<ul>
+<li><code>BxcQ80wljuA</code> — one unauthenticated English caption probe on 2026-11-06 20:56 UTC. yt-dlp reached the video page but reported age restriction and ended with “Sign in to confirm your age.” No subtitle file was saved. This says nothing about whether captions exist. See <code>caption-acquisition.json</code> and <code>caption-attempt.log</code>. No further media access was attempted for this ID.</li>
+<li><code>hRL71D1f3pU</code> — one additional unauthenticated English subtitle probe on 2026-11-06 20:58 UTC. yt-dlp reached player metadata and listed English subtitles, then the subtitle retrieval returned HTTP 429. No track was saved. This is evidence that the request was rate-limited, not that captions are absent. See <code>kohi-caption-acquisition.json</code> and <code>kohi-caption-attempt.log</code>. No audio fallback or further media access was attempted in this turn. The previous separate attempt and generated-ASR review in batch-010 remain separate artifacts and are not overwritten here.</li>
+</ul>
+<p>Neither source was read or promoted. These are acquisition outcomes, not proof that captions are absent. No additional media requests followed the timed-subtitle HTTP429.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Teaching source</th>
+<th>Section</th>
+<th>Book destination</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pdf-additions.md</td>
+<td>Let object schemas bridge editor choices and runtime creation</td>
+<td>Let the editor describe authored state without dictating runtime representation</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>Stream world data while protecting both memory and visibility</td>
+<td>Separate a world chunk’s authored description from its live objects</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>Save the state the player needs to resume</td>
+<td>Stable identity matters for saving</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>Turn aerodynamic controls and buoyancy into forces at useful points</td>
+<td>Approximate aerodynamic forces with a body-space tensor</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>Separate likely collision pairs from exact contact data</td>
+<td>Broad phase, narrow phase, and contact data</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>Reading boundary</td>
+<td>Evidence, scope, and how to use this chapter</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>A design document describes a game that is meant to exist</td>
+<td>A design document can specify a playable contract without pretending a game exists</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>Teach a control when the player needs it</td>
+<td>Let one input produce one intended change</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>Treat camera and movement as related modes</td>
+<td>A first input-driven camera</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>Conflict comes from the rules players can use</td>
+<td>Use game theory as a narrow lens on choices and conflict</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>Choose goals and endings as part of the mechanic</td>
+<td>Design a mechanic as a state transition, not just a button label</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>Fairness is both structure and player trust</td>
+<td>Design decisions as authored experiments</td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Book</th>
+<th>PDF pages read</th>
+<th>PDF pages visually inspected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Game Engine Architecture</td>
+<td>760-771 inclusive (12 pages)</td>
+<td>764, 765, 766</td>
+</tr>
+<tr>
+<td>Game Physics Engine Development</td>
+<td>244-255 inclusive (12 pages)</td>
+<td>244, 245, 246, 247, 248, 249, 250</td>
+</tr>
+<tr>
+<td>Game Design Theory and Practice</td>
+<td>[609, 610, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620]</td>
+<td>614, 616, 619</td>
+</tr>
+<tr>
+<td>Game Design Fundamentals Rules of Play</td>
+<td>[253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264]</td>
+<td>259, 261, 262, 264</td>
+</tr>
+</tbody>
+</table>
+<p>Full-reading sources in this batch (each count derives from its receipt, not URL presence):</p>
+<section id="appendix-877738f6f4d2-batch-014-expanded-reading-and-integration" class="level3">
+<h3>batch-014 — expanded reading and integration</h3>
+<p>0 saved caption tracks were read in full (0 canonical spoken words), plus one separate local Whisper base.en transcript (8,745 words). No new YouTube caption track is claimed. Full transcript reading is distinct from checking video frames, source code or runtime behavior.</p>
+<p>48 selected PDF pages were read; 20 source pages were visually inspected. Exact source hashes, page locators, reading findings and visual limits remain in this batch’s receipts. This is not a whole-book coverage claim.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Teaching source</th>
+<th>Section</th>
+<th>Book destination</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pdf-additions.md</td>
+<td>Give references a way to survive object deletion and relocation</td>
+<td>Keep identity, storage, and ownership in agreement</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>Make common searches cheap by choosing them deliberately</td>
+<td>Make a world that can be authored, saved, and run</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>Update gameplay state, then let subsystems batch their work</td>
+<td>Let one input produce one intended change</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>Use a hierarchy to avoid testing every collision pair</td>
+<td>Let motion and contact answer the same world rules</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>A weapon spec is a set of decisions the player can feel</td>
+<td>Specify both allowed actions and boundaries</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>A resource meter can reward style and create a deadline</td>
+<td>Design a mechanic as a state transition, not just a button label</td>
+</tr>
+<tr>
+<td>pdf-additions.md</td>
+<td>Exploiting a rule is different from breaking it</td>
+<td>Rules, emergence, and meaningful outcomes</td>
+</tr>
+<tr>
+<td>additions-asr.md</td>
+<td>A resize becomes pending work</td>
+<td>Keep a window milestone small enough to verify</td>
+</tr>
+<tr>
+<td>additions-asr.md</td>
+<td>Follow one frame through recording and presentation</td>
+<td>A frame can be drawn only after the presentation image is acquired</td>
+</tr>
+<tr>
+<td>additions-asr.md</td>
+<td>Current Vulkan concepts that make the narration easier to follow</td>
+<td>Understand Vulkan setup as a chain of explicit dependencies</td>
+</tr>
+<tr>
+<td>additions-asr.md</td>
+<td>Two indexes answer two different questions</td>
+<td>Understand Vulkan setup as a chain of explicit dependencies</td>
+</tr>
+<tr>
+<td>additions-asr.md</td>
+<td>What the recorded commands describe</td>
+<td>Understand Vulkan setup as a chain of explicit dependencies</td>
+</tr>
+<tr>
+<td>additions-asr.md</td>
+<td>Fence and semaphore jobs</td>
+<td>Keep submitted render resources alive until their users finish</td>
+</tr>
+<tr>
+<td>additions-asr.md</td>
+<td>The episode’s viewport choice</td>
+<td>Understand Vulkan setup as a chain of explicit dependencies</td>
+</tr>
+<tr>
+<td>additions-asr.md</td>
+<td>Evidence boundary</td>
+<td>Know which story each source can tell</td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Book</th>
+<th>PDF pages read</th>
+<th>PDF pages visually inspected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Game Engine Architecture</td>
+<td>772-783 inclusive (12 pages)</td>
+<td>775</td>
+</tr>
+<tr>
+<td>Game Physics Engine Development</td>
+<td>256-267 inclusive (12 pages)</td>
+<td>257, 258, 259, 264</td>
+</tr>
+<tr>
+<td>Game Design Theory and Practice</td>
+<td>[621, 622, 623, 624, 625, 626, 627, 628, 629, 630, 631, 632]</td>
+<td>621, 622, 625, 626, 627, 630, 632</td>
+</tr>
+<tr>
+<td>Game Design Fundamentals Rules of Play</td>
+<td>[265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276]</td>
+<td>268, 269, 271, 272, 273, 274, 275, 276</td>
+</tr>
+</tbody>
+</table>
+<p>Full-reading sources in this batch (each count derives from its receipt, not URL presence):</p>
+<ul>
+<li><a href="https://www.youtube.com/watch?v=hRL71D1f3pU">Kohi#021: BIG Milestone! Clearing the Screen</a> — separate local ASR; technical tokens unverified against audio.</li>
+</ul>
+</section>
+<section id="appendix-877738f6f4d2-batch-015-expanded-reading-and-integration" class="level3">
+<h3>batch-015 — expanded reading and integration</h3>
+<p>0 saved caption tracks were read in full (0 canonical spoken words), plus one separate local Whisper base.en transcript (13,090 words). No new YouTube caption track is claimed. Full transcript reading is distinct from checking video frames, source code or runtime behavior.</p>
+<p>48 selected PDF pages were read; 19 source pages were visually inspected. Exact source hashes, page locators, reading findings and visual limits remain in this batch’s receipts. This is not a whole-book coverage claim.</p>
+</section>
+</section>
+</body>
+</html>

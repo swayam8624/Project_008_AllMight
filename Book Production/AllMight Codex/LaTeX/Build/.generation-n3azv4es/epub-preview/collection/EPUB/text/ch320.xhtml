@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch320.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-10308c3d753e-sampling-support-and-missing-strata" class="level2">
+<h2>Sampling support and missing strata</h2>
+<p>The <strong>support</strong> of a sampling distribution is the set of outcomes it can generate with nonzero probability. Importance sampling can change how often regions are visited, but it cannot estimate a nonzero contribution from a region that the estimator never samples unless another technique covers that region.</p>
+<p>For an integral</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>I</mi>
+  <mo>=</mo>
+  <msub>
+    <mo data-mjx-texclass="OP">∫</mo>
+    <mi>D</mi>
+  </msub>
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="0.167em"></mspace>
+  </mstyle>
+  <mi>d</mi>
+  <mi>x</mi>
+  <mo>,</mo>
+</math>
+<p>an ordinary importance estimator using density <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math> is</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow data-mjx-texclass="ORD">
+    <mover>
+      <mi>I</mi>
+      <mo stretchy="false">^</mo>
+    </mover>
+  </mrow>
+  <mo>=</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mi>N</mi>
+  </mfrac>
+  <munderover>
+    <mo data-mjx-texclass="OP">∑</mo>
+    <mrow data-mjx-texclass="ORD">
+      <mi>i</mi>
+      <mo>=</mo>
+      <mn>1</mn>
+    </mrow>
+    <mi>N</mi>
+  </munderover>
+  <mfrac>
+    <mrow>
+      <mi>f</mi>
+      <mo stretchy="false">(</mo>
+      <msub>
+        <mi>X</mi>
+        <mi>i</mi>
+      </msub>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mi>p</mi>
+      <mo stretchy="false">(</mo>
+      <msub>
+        <mi>X</mi>
+        <mi>i</mi>
+      </msub>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="2em"></mspace>
+  </mstyle>
+  <msub>
+    <mi>X</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>∼</mo>
+  <mi>p</mi>
+  <mo>.</mo>
+</math>
+<p>This requires <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>&gt;</mo>
+  <mn>0</mn>
+</math> wherever <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+</math> contributes to the target integral, up to measure-zero exceptions.</p>
+<p>If a region has nonzero integral but <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+</math> there, taking more samples from the existing support cannot repair the missing contribution. The estimator converges to the wrong target.</p>
+<section id="appendix-10308c3d753e-stratification" class="level3">
+<h3>Stratification</h3>
+<p>Partition domain <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>D</mi>
+</math> into strata <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>D</mi>
+    <mi>k</mi>
+  </msub>
+</math>. A correct stratified estimator accounts for each stratum’s measure/probability. If a 3×3 pixel partition has nine equal cells but the algorithm always samples only the first five and treats their mean as the full-pixel mean, it has changed the integration domain.</p>
+<p>Randomly selecting strata with the appropriate selection probability can remain unbiased; permanently omitting fixed strata cannot.</p>
+</section>
+<section id="appendix-10308c3d753e-mis-support" class="level3">
+<h3>MIS support</h3>
+<p>Multiple importance sampling can repair a weak proposal when another technique covers the missing region and the combined estimator uses compatible PDFs. The PDFs must include discrete technique/light selection probabilities as well as continuous densities.</p>
+</section>
+<section id="appendix-10308c3d753e-debugging" class="level3">
+<h3>Debugging</h3>
+<p>Visualize sample positions and build a support occupancy histogram. Many “mysterious bias” bugs become obvious when entire regions are empty.</p>
+<p>For image-space algorithms, also test edges/corners of the reconstruction filter, not only the pixel center.</p>
+<p>Teach and reconstruct: <a href="ch319.xhtml#id_03-visual-computing-i-ch007-a-missing-region-cannot-be-repaired-by-taking-more-samples-there" class="wikilink">Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#A missing region cannot be repaired by taking more samples there</a>.</p>
+<p>Related: <a href="ch322.xhtml#appendix-ca8898faf1a6-multiple-importance-sampling" class="wikilink">Multiple importance sampling</a>, <a href="ch459.xhtml#appendix-1c5e85693a06-latin-hypercube-sampling" class="wikilink">Latin-hypercube sampling (Vision, XR, and Playable Worlds, Part 1, Reference notes: Latin-hypercube sampling)</a>, <a href="ch555.xhtml#appendix-4192b2bdd21e-antialiasing-and-sample-allocation" class="wikilink">Antialiasing and sample allocation (Vision, XR, and Playable Worlds, Part 2, Reference notes: Antialiasing and sample allocation)</a>.</p>
+</section>
+</section>
+</body>
+</html>

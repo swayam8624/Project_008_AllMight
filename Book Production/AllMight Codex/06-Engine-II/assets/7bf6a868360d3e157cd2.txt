@@ -1,0 +1,5754 @@
+We are now in the **implementation half of Phase 6**. Parts 501–587 established what vectors *mean* mathematically; **588–599 asks whether your engine's vector types actually preserve that mathematics once the objects become C++ types, bytes, SIMD lanes, API parameters, and values moving between coordinate spaces.**
+
+The canonical sequence is **588. Vec2 data structure design, 589. Vec3 data structure design, 590. Vec4 data structure design, 591. Operator overloads for vector arithmetic, 592. Swizzles and component access, 593. Alignment of vector types, 594. Packed versus aligned Vec3 representations, 595. SIMD implementation of vector arithmetic, 596. Approximate vector equality, 597. Debugging NaN vectors, 598. Vector invariants in engine APIs, and 599. Distinguishing world-space and local-space vector types.** Project_Sheldon_Master_Curricul…
+
+And because you called out the compression earlier, I'm treating **each Part as a real Part**, not twelve bullet points.
+
+---
+
+# Running engine example for 588–599
+
+We will keep one concrete situation alive throughout.
+
+Your engine loads a spaceship mesh.
+
+One vertex in the mesh is stored in the spaceship's **local/model space**:
+
+\[
+P_L=(2,\;0.5,\;-1)
+\]
+
+metres relative to the spaceship's own origin.
+
+That vertex also has:
+
+\[
+N_L=(0,1,0)
+\]
+
+as a local normal,
+
+\[
+UV=(0.7,0.2)
+\]
+
+as texture coordinates,
+
+and perhaps a tangent.
+
+The spaceship itself is located in the world at some world position.
+
+A camera later sees it, and some of these vectors eventually become GPU data.
+
+The engine therefore needs several things that *all look like a few floats*:
+
+```cpp
+Vec2 uv;
+Vec3 localPosition;
+Vec3 worldPosition;
+Vec3 normal;
+Vec3 velocity;
+Vec4 clipPosition;
+```
+
+The entire lesson is about why:
+
+\[
+\boxed{
+\text{"they are all floats"}
+\neq
+\text{"they are all the same type of thing"}
+}
+\]
+
+and how to design accordingly.
+
+---
+
+# PART 588 — VEC2 DATA STRUCTURE DESIGN
+
+---
+
+## 588.1 What problem does `Vec2` solve?
+
+Mathematically:
+
+\[
+v=(x,y)\in\mathbb R^2.
+\]
+
+In memory, we need some concrete representation.
+
+The most obvious C++ type is:
+
+```cpp
+struct Vec2
+{
+    float x;
+    float y;
+};
+```
+
+It looks almost insultingly simple.
+
+But an engine-quality math type immediately forces design questions:
+
+- Is it always initialized?
+- Is it allowed to contain NaN?
+- Is scalar type fixed to `float`?
+- Can you index it?
+- What does `operator*` mean?
+- Can it be passed to GPU buffers safely?
+- Are `x/y` guaranteed adjacent?
+- Can a caller construct it accidentally from one scalar?
+- Is equality exact?
+- Can we use it in `constexpr` code?
+- Does it allocate?
+- What are its alignment and layout guarantees?
+
+So the data structure is only two members, but its **contract** is much larger.
+
+---
+
+# 588.2 The minimum representation
+
+A practical baseline:
+
+```cpp
+struct Vec2
+{
+    float x{};
+    float y{};
+};
+```
+
+The braces give default member initialization to zero.
+
+So:
+
+```cpp
+Vec2 v;
+```
+
+gives:
+
+\[
+v=(0,0)
+\]
+
+rather than indeterminate floating-point values.
+
+That is useful for safety.
+
+But there is a performance/design tradeoff.
+
+---
+
+# 588.3 Zero initialization versus uninitialized construction
+
+Suppose you write:
+
+```cpp
+Vec2 v;
+v.x = expensiveCalculationX();
+v.y = expensiveCalculationY();
+```
+
+If `v` was zero-initialized first, those zero stores may be dead work.
+
+Compilers can often eliminate them, but not always in every circumstance.
+
+High-performance libraries sometimes distinguish:
+
+```cpp
+Vec2{};
+```
+
+meaning zero vector,
+
+from an intentionally uninitialized construction.
+
+However, uninitialized floating vectors create one of the nastiest engine bug classes:
+
+```text
+random stack bits
+    ↓
+interpreted as float
+    ↓
+huge value / NaN / denormal
+    ↓
+physics/rendering explodes 300 calls later
+```
+
+For most foundational engine code, safe initialization is worth a lot.
+
+You should introduce uninitialized constructors only when measurement proves they matter and the API makes them explicit.
+
+Never let "fast" secretly mean "contains garbage until caller hopefully fills it."
+
+---
+
+# 588.4 Constructor design
+
+We might provide:
+
+```cpp
+struct Vec2
+{
+    float x{};
+    float y{};
+
+    constexpr Vec2() noexcept = default;
+
+    constexpr Vec2(float x_, float y_) noexcept
+        : x{x_}, y{y_}
+    {
+    }
+};
+```
+
+Now:
+
+```cpp
+Vec2 p{3.0f, 4.0f};
+```
+
+means:
+
+\[
+(3,4).
+\]
+
+Should this exist?
+
+Yes.
+
+Should this exist?
+
+```cpp
+Vec2 v{5.0f};
+```
+
+meaning:
+
+\[
+(5,5)?
+\]
+
+Maybe, but it changes API semantics.
+
+Some libraries intentionally support scalar broadcast:
+
+```cpp
+Vec2(5.0f) -> (5,5)
+```
+
+because shaders do this frequently.
+
+But then accidental code:
+
+```cpp
+foo(1.0f);
+```
+
+may silently become a vector.
+
+If you provide it in C++, strongly consider:
+
+```cpp
+explicit constexpr Vec2(float s) noexcept
+    : x{s}, y{s}
+{}
+```
+
+so implicit scalar-to-vector conversion does not happen accidentally.
+
+---
+
+# 588.5 Why `constexpr` matters
+
+Vector operations are often simple enough to evaluate at compile time.
+
+Example:
+
+```cpp
+constexpr Vec2 gravity2D{0.0f, -9.81f};
+```
+
+or axis constants:
+
+```cpp
+static constexpr Vec2 XAxis{1.0f, 0.0f};
+```
+
+If constructors/operators are `constexpr`, C++ can use them during constant evaluation.
+
+This costs nothing at runtime and expands the usefulness of the type.
+
+---
+
+# 588.6 Why `noexcept` matters
+
+A basic component constructor has no reason to throw.
+
+So:
+
+```cpp
+constexpr Vec2(float x, float y) noexcept;
+```
+
+documents that property.
+
+For tiny value types, predictable exception behavior helps generic containers and optimizers and communicates intent.
+
+---
+
+# 588.7 Indexing
+
+Users will eventually want:
+
+```cpp
+v[0]
+v[1]
+```
+
+in generic loops.
+
+We could write:
+
+```cpp
+constexpr float& operator[](std::size_t i) noexcept
+{
+    return i == 0 ? x : y;
+}
+```
+
+But this has a terrible property:
+
+```cpp
+v[900]
+```
+
+also returns `y`.
+
+The implementation did not validate the domain.
+
+Better:
+
+```cpp
+constexpr float& operator[](std::size_t i) noexcept
+{
+    assert(i < 2);
+
+    return i == 0 ? x : y;
+}
+```
+
+and const version:
+
+```cpp
+constexpr float operator[](std::size_t i) const noexcept
+{
+    assert(i < 2);
+
+    return i == 0 ? x : y;
+}
+```
+
+Though you may prefer returning `const float&`.
+
+---
+
+# 588.8 Why not simply do `(&x)[i]`?
+
+You may encounter:
+
+```cpp
+return (&x)[i];
+```
+
+because people assume `x` and `y` behave like an array.
+
+It often works on ordinary layouts, but writing low-level C++ by relying on adjacent struct-member pointer arithmetic is a subtle area of the object model.
+
+A cleaner design can store an actual array:
+
+```cpp
+struct Vec2
+{
+    std::array<float, 2> data;
+};
+```
+
+but then named `.x`, `.y` access becomes less convenient unless additional machinery is added.
+
+This is one of those places where library design trades syntax, standard guarantees, ABI, and implementation simplicity.
+
+The correct mindset is:
+
+\[
+\boxed{
+\text{do not use undefined/fragile tricks merely because vector code is low level}.
+}
+\]
+
+---
+
+# 588.9 Real-life `Vec2` roles
+
+A single `Vec2` representation may physically support:
+
+### Screen coordinate
+
+\[
+(1920,1080)
+\]
+
+### UV coordinate
+
+\[
+(0.7,0.2)
+\]
+
+### 2D velocity
+
+\[
+(3,-1)
+\]
+
+### NDC coordinate
+
+\[
+(-0.4,0.8)
+\]
+
+### 2D scale
+
+\[
+(2,0.5)
+\]
+
+All are two floats.
+
+But semantic units differ wildly.
+
+A UV plus a velocity is nonsense even though:
+
+```cpp
+Vec2 + Vec2
+```
+
+would compile in a weakly typed system.
+
+This observation foreshadows Part 598–599.
+
+---
+
+# 588.10 `Vec2` is a value type
+
+A good basic vector type normally owns its values inline:
+
+```text
+Vec2
+┌─────────┐
+│ x float │
+│ y float │
+└─────────┘
+```
+
+No heap.
+
+No pointer.
+
+No reference counting.
+
+No hidden allocation.
+
+Copying:
+
+```cpp
+Vec2 b = a;
+```
+
+should conceptually copy:
+
+\[
+a_x,\ a_y.
+\]
+
+That makes vectors easy to:
+
+- pass by value;
+- return from functions;
+- store densely;
+- move through CPU registers.
+
+---
+
+# 588.11 Generic scalar type?
+
+You might instead design:
+
+```cpp
+template<class T>
+struct Vec2T
+{
+    T x{};
+    T y{};
+};
+```
+
+Then:
+
+```cpp
+using Vec2f = Vec2T<float>;
+using Vec2d = Vec2T<double>;
+using Vec2i = Vec2T<int>;
+```
+
+This is attractive.
+
+But it creates a major semantic trap.
+
+Operations valid for floating vectors may not make sense for integer vectors.
+
+For example normalization:
+
+\[
+(3,4)
+\rightarrow
+(0.6,0.8)
+\]
+
+cannot be represented as an integer vector.
+
+So a generic vector template requires constraints:
+
+```cpp
+template<std::floating_point T>
+Vec2T<T> normalize(Vec2T<T>);
+```
+
+while integer vectors can still support:
+
+```text
+addition
+subtraction
+component access
+possibly dot products
+```
+
+but not every Euclidean operation.
+
+Template generality without semantic constraints creates APIs that compile nonsense.
+
+---
+
+# 588.12 Mastery gate — 588
+
+You should be able to defend:
+
+```cpp
+struct Vec2
+{
+    float x{};
+    float y{};
+};
+```
+
+as a tiny inline value type, then explain why the *real* engineering design includes:
+
+- initialization policy;
+- construction policy;
+- indexing;
+- scalar type;
+- constexpr/noexcept;
+- semantic meaning;
+- later alignment/ABI contracts.
+
+**Completed Part 588 — Vec2 data structure design**
+
+---
+
+# PART 589 — VEC3 DATA STRUCTURE DESIGN
+
+`Vec3` is where vector design stops being merely convenient and becomes **the central numeric primitive of a 3D engine**.
+
+---
+
+# 589.1 Mathematical role
+
+A 3D vector is:
+
+\[
+v=(x,y,z).
+\]
+
+A baseline storage type:
+
+```cpp
+struct Vec3
+{
+    float x{};
+    float y{};
+    float z{};
+};
+```
+
+But in an engine, this same storage may represent:
+
+```text
+mesh vertex
+world position
+velocity
+normal
+tangent
+force
+acceleration
+ray direction
+angular axis
+RGB color
+```
+
+That makes `Vec3` incredibly useful—and incredibly dangerous if semantics are ignored.
+
+---
+
+# 589.2 Construction
+
+Baseline:
+
+```cpp
+struct Vec3
+{
+    float x{};
+    float y{};
+    float z{};
+
+    constexpr Vec3() noexcept = default;
+
+    constexpr Vec3(
+        float x_,
+        float y_,
+        float z_) noexcept
+        : x{x_}, y{y_}, z{z_}
+    {}
+};
+```
+
+Potential scalar broadcast:
+
+```cpp
+explicit constexpr Vec3(float s) noexcept
+    : x{s}, y{s}, z{s}
+{}
+```
+
+Then:
+
+```cpp
+Vec3{1.0f}
+```
+
+could represent:
+
+\[
+(1,1,1).
+\]
+
+Useful for scales, but should be deliberate.
+
+---
+
+# 589.3 Why `Vec3` is not a point
+
+This needs constant reinforcement.
+
+Storage:
+
+```cpp
+Vec3 position;
+```
+
+does not make the mathematical type a free vector.
+
+A point has affine semantics.
+
+A direction has vector semantics.
+
+Yet simple engines often store both as `Vec3`.
+
+So this compiles:
+
+```cpp
+Vec3 a = positionA + positionB;
+```
+
+even though point + point is not intrinsically meaningful.
+
+This means:
+
+\[
+\boxed{
+\text{Vec3 is often a storage/algebra primitive, not a complete semantic geometry type}.
+}
+\]
+
+You can choose to accept that flexibility, or build stronger wrappers.
+
+Part 599 will show the stronger approach.
+
+---
+
+# 589.4 3D-specific operations
+
+Unlike `Vec2`, `Vec3` naturally supports the ordinary 3D cross product:
+
+```cpp
+constexpr Vec3 cross(
+    Vec3 a,
+    Vec3 b) noexcept
+{
+    return {
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    };
+}
+```
+
+This operation belongs specifically to 3D Euclidean geometry.
+
+That is one reason blindly building:
+
+```cpp
+template<int N>
+Vector<N>
+```
+
+and assuming every operation exists for every N can produce poor APIs.
+
+Dimension matters.
+
+---
+
+# 589.5 Named constants
+
+Often useful:
+
+```cpp
+struct Vec3
+{
+    // ...
+
+    static constexpr Vec3 Zero()
+    {
+        return {0.0f, 0.0f, 0.0f};
+    }
+
+    static constexpr Vec3 XAxis()
+    {
+        return {1.0f, 0.0f, 0.0f};
+    }
+
+    static constexpr Vec3 YAxis()
+    {
+        return {0.0f, 1.0f, 0.0f};
+    }
+
+    static constexpr Vec3 ZAxis()
+    {
+        return {0.0f, 0.0f, 1.0f};
+    }
+};
+```
+
+Why functions rather than static inline members inside incomplete-class situations is partly a C++ design choice; modern implementations have multiple clean options.
+
+The broader point:
+
+```text
+Zero
+XAxis
+YAxis
+ZAxis
+```
+
+are semantic constants worth exposing.
+
+---
+
+# 589.6 Unit constants are not coordinate conventions
+
+If:
+
+```cpp
+Vec3::YAxis()
+```
+
+returns:
+
+\[
+(0,1,0),
+\]
+
+that says "second coordinate basis axis."
+
+It does **not** inherently mean:
+
+```text
+world up
+```
+
+unless your engine convention says Y is up.
+
+Do not encode semantic folklore into raw math types.
+
+A generic math library should know mathematics.
+
+The engine layer should know world conventions.
+
+---
+
+# 589.7 Size problem already appears
+
+Three 32-bit floats carry:
+
+\[
+3\times4=12
+\]
+
+bytes of scalar payload.
+
+So the natural expectation is:
+
+```text
+Vec3 ≈ 12 bytes
+```
+
+but SIMD often prefers 16-byte groups.
+
+This creates one of graphics engineering's most persistent design tensions:
+
+\[
+\boxed{
+\text{compact storage}
+\quad\text{vs}\quad
+\text{SIMD-friendly representation}.
+}
+\]
+
+Parts 593–595 will resolve this properly.
+
+Do not prematurely bake SIMD assumptions into the semantic design.
+
+---
+
+# 589.8 `Vec3` and numerical scale
+
+Suppose spaceship world position is:
+
+\[
+(10^8,0,0)
+\]
+
+metres.
+
+A nearby vertex offset is:
+
+\[
+(0.001,0,0).
+\]
+
+If both are stored in binary32 world coordinates, adding that millimetre may no longer change the stored value.
+
+That means:
+
+```cpp
+Vec3 worldVertex =
+    hugeWorldOrigin + localVertex;
+```
+
+may lose local precision.
+
+`Vec3f` versus `Vec3d` can therefore become an **architectural** choice rather than merely a memory choice.
+
+Possible design:
+
+```cpp
+using LocalVec3 = Vec3T<float>;
+using WorldVec3 = Vec3T<double>;
+```
+
+or camera-relative rendering.
+
+Again: representation determines possible geometry.
+
+---
+
+# 589.9 Passing by value versus reference
+
+A `Vec3` is tiny.
+
+You might see:
+
+```cpp
+Vec3 add(Vec3 a, Vec3 b);
+```
+
+rather than:
+
+```cpp
+Vec3 add(
+    Vec3 const& a,
+    Vec3 const& b);
+```
+
+On modern ABIs, small vector-like values can often be passed efficiently in registers, and value passing can simplify optimization/alias analysis.
+
+But exact ABI behavior depends on platform/type layout.
+
+The important lesson is:
+
+\[
+\boxed{
+\text{do not mechanically use const-reference for every small type}.
+}
+\]
+
+Measure and understand the ABI.
+
+---
+
+# 589.10 Real engine vertex
+
+A mesh vertex might be:
+
+```cpp
+struct Vertex
+{
+    Vec3 position;
+    Vec3 normal;
+    Vec2 uv;
+};
+```
+
+If Vec3 is 12 bytes and Vec2 8, naïve payload:
+
+\[
+12+12+8=32.
+\]
+
+One million vertices:
+
+\[
+32\text{ MB}
+\]
+
+before indices or extra attributes.
+
+Change Vec3 stride to 16 and this layout may become significantly larger depending on packing/alignment.
+
+This is why math-type layout propagates into entire rendering architectures.
+
+---
+
+# 589.11 Mastery gate — 589
+
+You should understand that `Vec3` needs to serve 3D arithmetic efficiently but cannot, by itself, encode:
+
+- point versus direction;
+- units;
+- coordinate space;
+- unit-vector invariants;
+- normal semantics.
+
+It is a **numeric carrier** unless your architecture adds stronger types.
+
+**Completed Part 589 — Vec3 data structure design**
+
+---
+
+# PART 590 — VEC4 DATA STRUCTURE DESIGN
+
+Why four components in a 3D engine?
+
+Because the fourth component is not merely "another axis."
+
+`Vec4` appears everywhere because several systems naturally need four scalars.
+
+---
+
+# 590.1 Basic representation
+
+```cpp
+struct Vec4
+{
+    float x{};
+    float y{};
+    float z{};
+    float w{};
+};
+```
+
+Payload:
+
+\[
+4\times4=16\text{ bytes}
+\]
+
+on a conventional 4-byte float platform.
+
+This size maps naturally to many 128-bit SIMD operations.
+
+But SIMD is only one reason Vec4 exists.
+
+---
+
+# 590.2 Homogeneous/projective coordinates
+
+From Parts 578–580:
+
+Point:
+
+\[
+(x,y,z,1)
+\]
+
+Direction:
+
+\[
+(x,y,z,0).
+\]
+
+Clip-space point:
+
+\[
+(X_c,Y_c,Z_c,W_c)
+\]
+
+may have arbitrary \(W_c\).
+
+So `Vec4` is foundational to transformation pipelines.
+
+Example:
+
+```cpp
+Vec4 clipPosition;
+```
+
+does **not** necessarily represent a 4D Euclidean vector.
+
+It may represent a homogeneous projective point.
+
+That is different mathematics.
+
+---
+
+# 590.3 Color
+
+RGBA:
+
+\[
+(r,g,b,a)
+\]
+
+is also four scalars.
+
+So people often reuse `Vec4`.
+
+This works mechanically.
+
+But:
+
+```cpp
+Vec4 clip;
+Vec4 color;
+```
+
+having the same storage does not mean operations have the same meaning.
+
+For example:
+
+```cpp
+color / color.w
+```
+
+is usually nonsense.
+
+But:
+
+```cpp
+clip.xyz / clip.w
+```
+
+may be precisely the perspective divide.
+
+Semantic types can prevent these mistakes.
+
+---
+
+# 590.4 Quaternion warning
+
+A quaternion often stores four scalars too.
+
+That does **not** make it a Vec4.
+
+Quaternion multiplication is not componentwise vector arithmetic.
+
+A quaternion has its own algebra.
+
+So do not implement:
+
+```cpp
+using Quaternion = Vec4;
+```
+
+merely because both contain four floats.
+
+You may share low-level storage internally, but the public mathematical type should reflect different operations.
+
+This is a major theme:
+
+\[
+\boxed{
+\text{same representation}
+\neq
+\text{same algebra}.
+}
+\]
+
+---
+
+# 590.5 Why Vec4 is convenient for SIMD
+
+A 128-bit SIMD register can hold:
+
+\[
+4\times32=128
+\]
+
+bits.
+
+So:
+
+```text
+[x y z w]
+```
+
+fits naturally in one register on instruction sets with 128-bit float vectors.
+
+This can make:
+
+```cpp
+a + b
+```
+
+a four-lane operation.
+
+No horizontal work.
+
+No missing lane.
+
+This makes Vec4 frequently the easiest vector dimension to SIMD-optimize.
+
+---
+
+# 590.6 Should `Vec3` secretly be a `Vec4`?
+
+Some libraries implement a `Vec3` as four stored floats:
+
+```cpp
+struct alignas(16) Vec3
+{
+    float x, y, z, pad;
+};
+```
+
+or perhaps keep a fourth SIMD lane internally.
+
+Advantages:
+
+- 16-byte alignment;
+- single SIMD load;
+- same physical width as Vec4.
+
+Costs:
+
+- 33% more storage than 12-byte payload;
+- padding lane semantics;
+- possible serialization/GPU mismatch.
+
+That decision belongs to Parts 593–594, not to mathematical Vec3 semantics.
+
+---
+
+# 590.7 Homogeneous `w` must not be casually destroyed
+
+Suppose:
+
+```cpp
+Vec4 p = {x, y, z, w};
+```
+
+is clip-space data.
+
+A generic operation such as:
+
+```cpp
+normalize(p);
+```
+
+is usually meaningless.
+
+Why?
+
+Its Euclidean 4D magnitude:
+
+\[
+\sqrt{x^2+y^2+z^2+w^2}
+\]
+
+has nothing to do with projective equivalence or perspective division.
+
+So "Vec4 supports normalize" may be mathematically valid for genuine \(\mathbb R^4\) vectors but semantically wrong for homogeneous coordinates.
+
+Again:
+
+\[
+\boxed{
+\text{generic numeric capability does not imply domain validity}.
+}
+\]
+
+---
+
+# 590.8 Mastery gate — 590
+
+Know at least four distinct Vec4 roles:
+
+- true 4D vector;
+- homogeneous/projective point;
+- RGBA;
+- SIMD storage carrier.
+
+And understand why one public type may be convenient but weaker semantically.
+
+**Completed Part 590 — Vec4 data structure design**
+
+---
+
+# PART 591 — OPERATOR OVERLOADS FOR VECTOR ARITHMETIC
+
+This is where C++ can make math code beautiful—or create extremely subtle ambiguity.
+
+---
+
+# 591.1 Goal
+
+We want:
+
+```cpp
+Vec3 c = a + b;
+Vec3 d = a - b;
+Vec3 e = 2.0f * a;
+```
+
+to visually resemble mathematics:
+
+\[
+c=a+b
+\]
+
+\[
+d=a-b
+\]
+
+\[
+e=2a.
+\]
+
+Operator overloading is valuable when the operator has a clear mathematical interpretation.
+
+---
+
+# 591.2 Addition
+
+```cpp
+constexpr Vec3 operator+(
+    Vec3 a,
+    Vec3 b) noexcept
+{
+    return {
+        a.x + b.x,
+        a.y + b.y,
+        a.z + b.z
+    };
+}
+```
+
+This is componentwise because coordinate addition represents vector addition:
+
+\[
+(a_x,a_y,a_z)
++
+(b_x,b_y,b_z)
+=
+(a_x+b_x,\ldots).
+\]
+
+---
+
+# 591.3 Compound assignment
+
+```cpp
+constexpr Vec3& operator+=(
+    Vec3& a,
+    Vec3 b) noexcept
+{
+    a.x += b.x;
+    a.y += b.y;
+    a.z += b.z;
+
+    return a;
+}
+```
+
+Why return `Vec3&`?
+
+So conventional chaining works:
+
+```cpp
+a += b += c;
+```
+
+though readability may argue against heavy chaining.
+
+---
+
+# 591.4 Derive binary operators from compound ones?
+
+Possible:
+
+```cpp
+constexpr Vec3 operator+(Vec3 a, Vec3 b)
+{
+    a += b;
+    return a;
+}
+```
+
+This reduces duplicated logic.
+
+For tiny types, compiler inlining normally removes abstraction cost.
+
+It also centralizes arithmetic behavior.
+
+---
+
+# 591.5 Scalar multiplication
+
+Mathematically:
+
+\[
+\lambda v.
+\]
+
+Support both:
+
+```cpp
+Vec3 operator*(Vec3 v, float s);
+Vec3 operator*(float s, Vec3 v);
+```
+
+so:
+
+```cpp
+v * 2.0f
+```
+
+and:
+
+```cpp
+2.0f * v
+```
+
+both work.
+
+The second can delegate:
+
+```cpp
+constexpr Vec3 operator*(
+    float s,
+    Vec3 v) noexcept
+{
+    return v * s;
+}
+```
+
+---
+
+# 591.6 The dangerous question: what should `Vec3 * Vec3` mean?
+
+There are multiple plausible operations.
+
+### Hadamard/componentwise product
+
+\[
+(a_xb_x,a_yb_y,a_zb_z).
+\]
+
+### Dot product
+
+\[
+a_xb_x+a_yb_y+a_zb_z.
+\]
+
+These have different return types and meanings.
+
+Some libraries choose:
+
+```cpp
+a * b
+```
+
+for componentwise multiply.
+
+Others use it for dot.
+
+Others forbid it.
+
+A strong engine library often prefers explicit names:
+
+```cpp
+dot(a, b);
+hadamard(a, b);
+cross(a, b);
+```
+
+because:
+
+```cpp
+a * b
+```
+
+does not visually reveal which product was intended.
+
+This is a perfect case where overloading can make code **less mathematical**, not more.
+
+---
+
+# 591.7 Division
+
+Vector divided by scalar:
+
+\[
+v/s
+\]
+
+means:
+
+\[
+\left(
+\frac{x}{s},
+\frac{y}{s},
+\frac{z}{s}
+\right).
+\]
+
+Implementation:
+
+```cpp
+constexpr Vec3 operator/(
+    Vec3 v,
+    float s) noexcept
+{
+    return {
+        v.x / s,
+        v.y / s,
+        v.z / s
+    };
+}
+```
+
+What happens when:
+
+\[
+s=0?
+\]
+
+With IEEE floating point:
+
+```text
+nonzero / 0
+→ ±infinity
+
+0 / 0
+→ NaN
+```
+
+The operator itself may leave IEEE behavior intact, while higher-level operations such as `normalize()` explicitly reject zero length.
+
+That can be a good separation of abstraction:
+
+```text
+raw arithmetic
+→ follows scalar arithmetic
+
+semantic operations
+→ enforce geometric preconditions
+```
+
+---
+
+# 591.8 Unary negation
+
+```cpp
+constexpr Vec3 operator-(Vec3 v) noexcept
+{
+    return {-v.x, -v.y, -v.z};
+}
+```
+
+represents vector additive inverse:
+
+\[
+-v.
+\]
+
+This is mathematically clean.
+
+---
+
+# 591.9 Exact `operator==`
+
+Should:
+
+```cpp
+a == b
+```
+
+mean exact component equality?
+
+A defensible design is yes:
+
+```cpp
+return
+    a.x == b.x &&
+    a.y == b.y &&
+    a.z == b.z;
+```
+
+Why not approximate equality?
+
+Because approximate equality is not an equivalence relation in the same robust sense—especially **transitivity can fail**.
+
+Example with tolerance 0.1:
+
+\[
+a=0,
+\quad
+b=0.09,
+\quad
+c=0.18.
+\]
+
+Then:
+
+\[
+a\approx b
+\]
+
+and:
+
+\[
+b\approx c,
+\]
+
+but:
+
+\[
+a\not\approx c.
+\]
+
+Making `operator==` approximate can break expectations in generic algorithms, containers, hashing, and reasoning.
+
+Use named operations:
+
+```cpp
+almostEqual(a, b, tolerance);
+```
+
+Part 596 develops this.
+
+---
+
+# 591.10 Ordering operators?
+
+What does:
+
+```cpp
+a < b
+```
+
+mean for vectors?
+
+Possibilities:
+
+- compare X only;
+- lexicographic order;
+- compare magnitude;
+- all components less.
+
+None is "the" natural geometric ordering.
+
+So a general Vec3 should often **not** define `<` unless there is a specific documented purpose.
+
+Magnitude comparison should be explicit:
+
+```cpp
+lengthSquared(a) <
+lengthSquared(b)
+```
+
+Lexicographic ordering, if needed for maps/serialization, should be named/documented.
+
+---
+
+# 591.11 Real-life bug
+
+Imagine code:
+
+```cpp
+if (velocity < maxVelocity)
+```
+
+If `<` secretly means componentwise all-less, then:
+
+\[
+v=(100,0,0)
+\]
+
+and:
+
+\[
+max=(50,50,50)
+\]
+
+returns false, but what was the intended meaning?
+
+Probably magnitude.
+
+Operators should make incorrect assumptions difficult.
+
+---
+
+# 591.12 Mastery gate — 591
+
+Operators should be overloaded where there is one clear algebraic interpretation:
+
+```text
++  vector addition
+-  vector subtraction
+*  scalar multiplication
+/  scalar division
+```
+
+Ambiguous products should preferably be named.
+
+Approximate equality should not silently masquerade as `==`.
+
+**Completed Part 591 — Operator overloads for vector arithmetic**
+
+---
+
+# PART 592 — SWIZZLES AND COMPONENT ACCESS
+
+If you've used shaders, you know:
+
+```glsl
+v.xy
+v.yxz
+color.rgb
+position.zyx
+```
+
+Those are **swizzles**.
+
+They seem cosmetic.
+
+They are actually a small language for component permutation and selection.
+
+---
+
+# 592.1 Read swizzle
+
+Suppose:
+
+\[
+v=(1,2,3,4).
+\]
+
+Then:
+
+```text
+v.xy   → (1,2)
+v.yx   → (2,1)
+v.xxz  → (1,1,3)
+v.wzyx → (4,3,2,1)
+```
+
+Mathematically, a swizzle is a coordinate-selection map.
+
+For example:
+
+\[
+S_{yx}(x,y,z)
+=
+(y,x).
+\]
+
+It can reorder and duplicate components.
+
+---
+
+# 592.2 Why useful?
+
+Consider UV extraction from a larger object:
+
+```cpp
+Vec2 uv = vertexData.xy();
+```
+
+or making a perpendicular in simple 2D code:
+
+```text
+(x,y)
+→ (-y,x)
+```
+
+Swizzle/permutation operations also appear heavily in SIMD implementations of cross products.
+
+---
+
+# 592.3 Named accessors versus shader-like syntax
+
+C++ doesn't natively understand arbitrary `.xyz` properties like shader languages.
+
+You could offer named functions:
+
+```cpp
+Vec2 xy() const;
+Vec2 xz() const;
+Vec3 yzx() const;
+```
+
+Simple, safe, but number of combinations explodes.
+
+For four components and swizzles of length up to four:
+
+\[
+4^1+4^2+4^3+4^4
+=
+4+16+64+256
+=
+340
+\]
+
+possible swizzles.
+
+Generating hundreds of members creates complexity.
+
+---
+
+# 592.4 Compile-time generic swizzle
+
+A more scalable conceptual API:
+
+```cpp
+template<std::size_t... I>
+auto swizzle() const;
+```
+
+Then:
+
+```cpp
+v.swizzle<1, 0>();
+```
+
+returns:
+
+\[
+(y,x).
+\]
+
+Potential implementation:
+
+```cpp
+template<std::size_t... I>
+constexpr auto swizzle() const
+{
+    static_assert(((I < 3) && ...));
+
+    return Vector<float, sizeof...(I)>{
+        (*this)[I]...
+    };
+}
+```
+
+This gives compile-time validation and avoids generating every named combination.
+
+But syntax is less shader-like.
+
+---
+
+# 592.5 Writable swizzles are much harder
+
+Reading:
+
+```text
+v.xy
+```
+
+is straightforward.
+
+Writing:
+
+```text
+v.xy = {4,5}
+```
+
+means:
+
+\[
+v_x=4,\quad v_y=5.
+\]
+
+Still easy.
+
+Now:
+
+```text
+v.yx = v.xy;
+```
+
+Suppose initial:
+
+\[
+v=(1,2).
+\]
+
+Expected result:
+
+\[
+(2,1).
+\]
+
+A naïve implementation might do:
+
+```text
+y = rhs.x   → y becomes 1
+x = rhs.y   → but rhs.y now reads modified y = 1
+```
+
+Result:
+
+\[
+(1,1)
+\]
+
+instead of:
+
+\[
+(2,1).
+\]
+
+Therefore writable swizzles require **RHS snapshot semantics** or careful proxy design.
+
+---
+
+# 592.6 Duplicate writable components
+
+What should this mean?
+
+```text
+v.xx = (2,3)
+```
+
+First write says:
+
+\[
+x=2.
+\]
+
+Second says:
+
+\[
+x=3.
+\]
+
+Which wins?
+
+Shader languages typically restrict assignment swizzles with duplicate destination components because the semantics are ambiguous.
+
+A C++ swizzle proxy should similarly reject duplicate lvalue indices.
+
+Reading:
+
+```text
+v.xx
+```
+
+is fine.
+
+Writing:
+
+```text
+v.xx = ...
+```
+
+should be invalid.
+
+---
+
+# 592.7 `xyz` versus `rgb`
+
+Many libraries alias:
+
+```text
+x y z w
+r g b a
+s t p q
+```
+
+depending on domain.
+
+This is convenient but can weaken semantics.
+
+If a geometric Vec4 suddenly exposes:
+
+```cpp
+position.r
+```
+
+the alias is technically possible but conceptually weird.
+
+Separate color/vector types may offer cleaner APIs.
+
+Again:
+
+\[
+\boxed{
+\text{syntax convenience versus semantic type safety}.
+}
+\]
+
+---
+
+# 592.8 Component access by index
+
+Swizzles are static selections.
+
+Indexing is dynamic:
+
+```cpp
+v[i]
+```
+
+This supports loops:
+
+```cpp
+for (int i = 0; i < 3; ++i)
+    sum += v[i];
+```
+
+But bounds become runtime/precondition concerns.
+
+Swizzles with compile-time indices can be checked at compile time.
+
+Both forms serve different purposes.
+
+---
+
+# 592.9 Swizzle and SIMD
+
+Recall cross product:
+
+\[
+a\times b.
+\]
+
+A SIMD implementation often constructs permutations conceptually like:
+
+\[
+a_{yzx}=(a_y,a_z,a_x)
+\]
+
+and:
+
+\[
+a_{zxy}=(a_z,a_x,a_y).
+\]
+
+Then:
+
+\[
+a\times b
+=
+a_{yzx}b_{zxy}
+-
+a_{zxy}b_{yzx}.
+\]
+
+So shader-level swizzle notation has a real machine-level analogy: hardware shuffle/permutation instructions.
+
+---
+
+# 592.10 Mastery gate — 592
+
+Understand:
+
+- read swizzle = component projection/permutation;
+- writable swizzle = proxy/reference problem;
+- aliasing requires RHS snapshot;
+- duplicate destination components create ambiguity;
+- swizzles map naturally to SIMD permutations.
+
+**Completed Part 592 — Swizzles and component access**
+
+---
+
+# PART 593 — ALIGNMENT OF VECTOR TYPES
+
+We now move from:
+
+> How many bytes does the data contain?
+
+to:
+
+> At which addresses is the object allowed or required to begin?
+
+These are different questions.
+
+---
+
+# 593.1 Address intuition
+
+Imagine memory addresses:
+
+```text
+... 1000
+    1001
+    1002
+    1003
+    1004
+...
+```
+
+An object with alignment requirement 4 must begin at an address divisible by 4:
+
+```text
+1000 ✓
+1004 ✓
+1008 ✓
+1002 ✗
+```
+
+So:
+
+\[
+\boxed{
+\text{alignment = constraint on valid starting addresses}.
+}
+\]
+
+---
+
+# 593.2 `sizeof` versus `alignof`
+
+In C++:
+
+```cpp
+sizeof(T)
+```
+
+asks:
+
+> How many bytes does an object/array element of T occupy?
+
+while:
+
+```cpp
+alignof(T)
+```
+
+asks:
+
+> What address alignment does T require?
+
+Example conventional layout:
+
+```cpp
+struct Vec3
+{
+    float x, y, z;
+};
+```
+
+might produce:
+
+```text
+sizeof(Vec3)  = 12
+alignof(Vec3) = 4
+```
+
+assuming 4-byte floats and ordinary ABI.
+
+But:
+
+```cpp
+struct alignas(16) AlignedVec3
+{
+    float x, y, z;
+};
+```
+
+may produce:
+
+```text
+sizeof       = 16
+alignof      = 16
+```
+
+because array elements must each satisfy the alignment.
+
+---
+
+# 593.3 Why size often becomes multiple of alignment
+
+Suppose:
+
+```text
+alignof(T) = 16
+```
+
+but:
+
+```text
+sizeof(T) = 12.
+```
+
+Then an array:
+
+```cpp
+T arr[2];
+```
+
+would place:
+
+```text
+arr[0] at offset 0
+arr[1] at offset 12
+```
+
+but offset 12 is not 16-byte aligned.
+
+Therefore object size/array stride typically needs to accommodate the alignment requirement, producing padding.
+
+Hence aligned Vec3 commonly becomes 16 bytes.
+
+---
+
+# 593.4 Padding
+
+Conceptual layout:
+
+```text
+AlignedVec3
+
+offset 0   x
+offset 4   y
+offset 8   z
+offset 12  padding
+```
+
+The padding is not an additional mathematical component.
+
+It exists for storage-layout requirements.
+
+Never treat padding as a valid `w` unless you explicitly choose a four-component representation with defined semantics.
+
+---
+
+# 593.5 Why does alignment matter?
+
+Several reasons.
+
+### CPU instruction requirements/history
+
+Some vector instructions historically preferred or required aligned memory operands; modern hardware often handles unaligned accesses but may still have performance consequences in specific patterns.
+
+### SIMD storage
+
+Four 32-bit floats = 16 bytes, so 16-byte alignment maps naturally to many 128-bit vector operations.
+
+### ABI
+
+Function parameter/return conventions may depend on alignment and aggregate classification.
+
+### GPU/buffer formats
+
+External interfaces impose their own alignment and stride rules.
+
+### Atomic/cache considerations
+
+For other types, alignment can interact with atomicity or cache behavior, though those are separate issues.
+
+---
+
+# 593.6 Alignment is not automatically speed
+
+This misconception is common:
+
+> align everything to 16 and it becomes fast.
+
+Not necessarily.
+
+Suppose 1,000,000 Vec3s.
+
+12-byte representation:
+
+\[
+12\text{ MB}.
+\]
+
+16-byte:
+
+\[
+16\text{ MB}.
+\]
+
+The aligned version transfers:
+
+\[
+33\%
+\]
+
+more memory.
+
+If the workload is memory-bandwidth bound, the larger representation may be slower despite easier SIMD loads.
+
+Alignment is a trade-off, not a spell.
+
+---
+
+# 593.7 Over-alignment in C++
+
+```cpp
+struct alignas(16) Vec4
+{
+    float x, y, z, w;
+};
+```
+
+requires 16-byte alignment.
+
+Modern C++ allocation machinery supports over-aligned types appropriately when used correctly.
+
+But custom allocators, placement buffers, arena allocators, binary blobs, or manually calculated offsets must respect:
+
+\[
+alignof(T).
+\]
+
+Example:
+
+```cpp
+void* raw = arena.allocate(...);
+```
+
+If the arena returns insufficiently aligned storage, constructing T there is invalid.
+
+Engine allocators must understand alignment.
+
+---
+
+# 593.8 Structure nesting
+
+Consider:
+
+```cpp
+struct Particle
+{
+    float lifetime;
+    AlignedVec3 position;
+};
+```
+
+If `AlignedVec3` requires 16-byte alignment:
+
+```text
+offset 0 lifetime
+offset 4..15 padding
+offset 16 position
+```
+
+Then more padding may appear.
+
+So a single member's alignment can reshape the entire containing structure.
+
+This matters for ECS components and large arrays.
+
+---
+
+# 593.9 Alignment and cache lines
+
+Suppose a cache line is 64 bytes on some target CPU.
+
+Four 16-byte Vec3s fit exactly.
+
+A 12-byte layout has:
+
+\[
+64/12\approx5.33
+\]
+
+vectors worth of byte footprint per line, with some vectors potentially crossing line boundaries.
+
+Which is better?
+
+Depends on access.
+
+If you read complete vectors sequentially, packed data can save bandwidth.
+
+If each operation benefits substantially from aligned full-width loads, 16-byte representation may simplify processing.
+
+You must examine the whole loop.
+
+---
+
+# 593.10 Mastery gate — 593
+
+You must distinguish:
+
+\[
+\boxed{\text{size}}
+\]
+
+from:
+
+\[
+\boxed{\text{alignment}}
+\]
+
+and explain why a 3-float vector can contain 12 bytes of mathematical data yet occupy 16 bytes as an aligned object.
+
+**Completed Part 593 — Alignment of vector types**
+
+---
+
+# PART 594 — PACKED VERSUS ALIGNED VEC3 REPRESENTATIONS
+
+Now we explicitly compare the two models.
+
+---
+
+# 594.1 Packed Vec3
+
+Conceptually:
+
+```cpp
+struct PackedVec3
+{
+    float x;
+    float y;
+    float z;
+};
+```
+
+Typical payload/stride:
+
+\[
+12\text{ bytes}.
+\]
+
+Memory:
+
+```text
+x y z | x y z | x y z | ...
+```
+
+Advantages:
+
+- compact;
+- lower memory bandwidth;
+- natural vertex-buffer position format;
+- efficient storage of huge arrays.
+
+Disadvantages:
+
+- three-lane shape is awkward for some SIMD operations;
+- some external layouts require different alignment;
+- loading into a four-lane SIMD register may need special handling.
+
+---
+
+# 594.2 Aligned Vec3
+
+```cpp
+struct alignas(16) AlignedVec3
+{
+    float x;
+    float y;
+    float z;
+};
+```
+
+likely consumes:
+
+\[
+16\text{ bytes}.
+\]
+
+Memory:
+
+```text
+x y z _ | x y z _ | x y z _ | ...
+```
+
+Advantages:
+
+- regular 16-byte stride;
+- easy full-width SIMD loads;
+- may integrate conveniently with SIMD-heavy internal math.
+
+Disadvantages:
+
+- 4 bytes wasted per vector if fourth lane has no meaning;
+- 33% storage overhead versus 12 bytes;
+- external file/GPU buffer layouts may not match.
+
+---
+
+# 594.3 One million normals
+
+Normals are three numbers.
+
+Packed:
+
+\[
+12,000,000\text{ bytes}.
+\]
+
+Aligned:
+
+\[
+16,000,000\text{ bytes}.
+\]
+
+Difference:
+
+\[
+4,000,000\text{ bytes}.
+\]
+
+Now store:
+
+```text
+positions
+normals
+tangents
+velocities
+accelerations
+```
+
+Five arrays.
+
+Potential extra storage:
+
+\[
+5\times4\text{ MB}
+=
+20\text{ MB}
+\]
+
+per million elements.
+
+Memory decisions compound.
+
+---
+
+# 594.4 Separate storage type and compute type
+
+A sophisticated design does not require one representation everywhere.
+
+You can store:
+
+```cpp
+PackedVec3
+```
+
+in mesh buffers.
+
+When processing:
+
+```text
+load 3 floats
+      ↓
+expand into SIMD register
+[x y z 0]
+      ↓
+compute
+      ↓
+pack result back
+```
+
+This allows compact memory plus wide computation.
+
+This is a central performance design pattern:
+
+\[
+\boxed{
+\text{storage format}
+\neq
+\text{compute format}.
+}
+\]
+
+---
+
+# 594.5 Vertex streams
+
+Rendering is frequently bandwidth-sensitive.
+
+A mesh might use packed GPU-oriented attributes:
+
+```text
+position 3 floats
+normal compressed
+uv 2 floats
+...
+```
+
+Using 16-byte CPU-aligned Vec3 blindly for file or GPU vertex data can waste bandwidth.
+
+On the other hand, your internal transform system may prefer aligned vectors.
+
+Thus one engine might intentionally have:
+
+```cpp
+struct PackedFloat3;
+struct Vec3;
+```
+
+with explicit conversions.
+
+That duplication can be healthy because the types have different contracts.
+
+---
+
+# 594.6 Why not use the padding lane as `w`?
+
+Tempting:
+
+```text
+[x y z padding]
+```
+
+and then sometimes pretend padding is:
+
+\[
+w=0
+\]
+
+or:
+
+\[
+w=1.
+\]
+
+Dangerous.
+
+A 3D vector's hidden fourth lane has no guaranteed semantic value unless you explicitly maintain it.
+
+If cross-product SIMD leaves garbage in lane 3 and some later homogeneous operation assumes lane 3 is 0, bugs appear.
+
+If you choose a fourth lane, establish an invariant:
+
+```text
+direction Vec3 internal lane 3 = 0
+```
+
+for example.
+
+Otherwise treat it as undefined.
+
+---
+
+# 594.7 False economy of universal 16-byte layout
+
+Suppose your physics solver performs lots of arithmetic and benefits from aligned SIMD.
+
+Fine.
+
+But your asset import format, network replication, disk cache, and GPU vertex input all use 12-byte vectors.
+
+Forcing a universal 16-byte Vec3 across every layer may require larger files/messages and conversion complexity elsewhere.
+
+The "one type everywhere" dream can create worse architecture.
+
+Often:
+
+\[
+\boxed{
+\text{explicit boundary conversions are healthier than pretending all representations have identical requirements}.
+}
+\]
+
+---
+
+# 594.8 Mastery gate — 594
+
+You should be able to defend **both**:
+
+### packed 12-byte Vec3
+when memory/bandwidth is dominant;
+
+### aligned 16-byte Vec3
+when compute/storage regularity matters.
+
+No universal winner.
+
+**Completed Part 594 — Packed versus aligned Vec3 representations**
+
+---
+
+# PART 595 — SIMD IMPLEMENTATION OF VECTOR ARITHMETIC
+
+SIMD means:
+
+\[
+\boxed{\text{Single Instruction, Multiple Data}.}
+\]
+
+Instead of operating on one scalar at a time:
+
+```text
+x + x
+y + y
+z + z
+```
+
+a processor may operate on several lanes simultaneously.
+
+---
+
+# 595.1 Scalar Vec4 addition
+
+```cpp
+result.x = a.x + b.x;
+result.y = a.y + b.y;
+result.z = a.z + b.z;
+result.w = a.w + b.w;
+```
+
+Four scalar conceptual additions.
+
+SIMD representation:
+
+```text
+A = [ax ay az aw]
+B = [bx by bz bw]
+
+A + B
+  ↓
+
+[ax+bx ay+by az+bz aw+bw]
+```
+
+One vector instruction conceptually performs four lane additions.
+
+---
+
+# 595.2 Vec3 issue
+
+Vec3 has only three values.
+
+A 4-lane register may hold:
+
+```text
+[x y z 0]
+```
+
+or:
+
+```text
+[x y z garbage]
+```
+
+Then addition still works for XYZ.
+
+But horizontal operations such as dot products must avoid including the fourth lane unless its invariant is controlled.
+
+---
+
+# 595.3 SIMD dot product
+
+For:
+
+\[
+a=(a_x,a_y,a_z)
+\]
+
+and:
+
+\[
+b=(b_x,b_y,b_z),
+\]
+
+first multiply lanes:
+
+```text
+[ax*bx ay*by az*bz 0]
+```
+
+Then we need a **horizontal reduction**:
+
+\[
+p_x+p_y+p_z.
+\]
+
+SIMD is excellent at independent lanes.
+
+Dot product eventually needs to combine lanes, which can require shuffles/horizontal-add operations.
+
+So not every vector operation maps equally cleanly to SIMD.
+
+---
+
+# 595.4 Cross product
+
+Recall:
+
+\[
+a\times b
+=
+\begin{pmatrix}
+a_yb_z-a_zb_y\\
+a_zb_x-a_xb_z\\
+a_xb_y-a_yb_x
+\end{pmatrix}.
+\]
+
+SIMD strategy conceptually:
+
+Create:
+
+\[
+a_{yzx}=(a_y,a_z,a_x)
+\]
+
+and:
+
+\[
+a_{zxy}=(a_z,a_x,a_y),
+\]
+
+same for b.
+
+Then:
+
+\[
+\boxed{
+a\times b
+=
+a_{yzx}b_{zxy}
+-
+a_{zxy}b_{yzx}.
+}
+\]
+
+This requires:
+
+```text
+lane permutations/shuffles
+multiplication
+subtraction
+```
+
+Your swizzle knowledge from Part 592 is now hardware relevant.
+
+---
+
+# 595.5 AoS versus SIMD
+
+Suppose positions:
+
+```text
+x0 y0 z0
+x1 y1 z1
+x2 y2 z2
+x3 y3 z3
+```
+
+This AoS layout stores one vector contiguously.
+
+A SIMD instruction can process one aligned Vec4-like object naturally, but processing four X values simultaneously requires rearrangement.
+
+---
+
+# 595.6 SoA
+
+Structure of arrays:
+
+```text
+x0 x1 x2 x3
+y0 y1 y2 y3
+z0 z1 z2 z3
+```
+
+Now to update four particle X positions:
+
+```text
+X = X + VX * dt
+```
+
+SIMD lanes correspond to **different particles** rather than different components.
+
+This is called exploiting SIMD **across objects**.
+
+For bulk physics/particles, this may be more powerful than SIMD inside one Vec3.
+
+---
+
+# 595.7 AoSoA
+
+Hybrid:
+
+```text
+4 particles packed together
+then next 4
+then next 4
+```
+
+often called Array of Structures of Arrays, AoSoA.
+
+This can balance:
+
+- data locality;
+- SIMD width;
+- object grouping.
+
+High-performance engine systems often reshape data around processing patterns rather than around pretty class definitions.
+
+---
+
+# 595.8 Compiler auto-vectorization
+
+You do not always need hand-written intrinsics.
+
+Simple loops:
+
+```cpp
+for (std::size_t i = 0; i < count; ++i)
+{
+    x[i] += vx[i] * dt;
+}
+```
+
+may auto-vectorize very well if:
+
+- aliasing is understandable;
+- data alignment/layout is friendly;
+- loop dependencies are absent;
+- optimization is enabled.
+
+Hand-written SIMD can outperform compiler code in some kernels, but it also:
+
+- increases portability burden;
+- increases complexity;
+- can block compiler improvements;
+- creates architecture-specific code paths.
+
+Use assembly/profiling evidence.
+
+---
+
+# 595.9 FMA
+
+An expression:
+
+\[
+a b+c
+\]
+
+may use a fused multiply-add instruction:
+
+\[
+\operatorname{fma}(a,b,c)
+\]
+
+which performs multiplication and addition with a single final rounding rather than rounding the multiplication first and then the addition.
+
+This can be faster and **numerically different**.
+
+Example:
+
+```text
+scalar reference
+!= bitwise SIMD/FMA result
+```
+
+does not automatically imply a bug.
+
+Floating-point operation ordering changes results.
+
+This becomes relevant for deterministic simulation.
+
+---
+
+# 595.10 Determinism
+
+Suppose physics must produce identical results across:
+
+```text
+x86 CPU
+ARM CPU
+GPU
+```
+
+Different SIMD widths, FMA use, compiler reassociation, and rounding can cause small divergences.
+
+In chaotic or iterative systems, tiny differences can grow.
+
+So high-performance floating-point code may need to choose between:
+
+\[
+\boxed{\text{maximum throughput}}
+\]
+
+and:
+
+\[
+\boxed{\text{strict reproducibility}}.
+\]
+
+This is an engine architecture concern, not merely a math-library concern.
+
+---
+
+# 595.11 SIMD normalization
+
+Normalization:
+
+\[
+\hat v=
+\frac{v}{\sqrt{v\cdot v}}.
+\]
+
+Pipeline:
+
+```text
+multiply components
+      ↓
+horizontal sum
+      ↓
+sqrt / reciprocal sqrt
+      ↓
+broadcast reciprocal length
+      ↓
+multiply lanes
+```
+
+Some hardware offers approximate reciprocal-square-root operations followed by refinement.
+
+This can trade precision for speed.
+
+For graphics shading directions, approximation may be acceptable.
+
+For sensitive numerical algorithms, maybe not.
+
+Domain matters.
+
+---
+
+# 595.12 Mastery gate — 595
+
+Understand two different SIMD strategies:
+
+1. **within one vector**
+   ```text
+   [x y z w]
+   ```
+
+2. **across many vectors**
+   ```text
+   [x0 x1 x2 x3]
+   ```
+
+And understand why storage layout strongly affects which is efficient.
+
+**Completed Part 595 — SIMD implementation of vector arithmetic**
+
+---
+
+# PART 596 — APPROXIMATE VECTOR EQUALITY
+
+Floating-point vector equality is one of the most abused topics in beginner code.
+
+---
+
+# 596.1 Why exact equality can fail
+
+Mathematically:
+
+\[
+0.1+0.2=0.3.
+\]
+
+Binary floating point usually stores approximations to these decimal fractions.
+
+So an expression may produce:
+
+\[
+0.3000000119\ldots
+\]
+
+versus another calculation producing a nearby representable value.
+
+Therefore:
+
+```cpp
+a == b
+```
+
+can be false when geometrically you intended "close enough."
+
+---
+
+# 596.2 But exact equality is not useless
+
+These cases may legitimately use exact equality:
+
+```cpp
+Vec3 a = b;
+
+assert(a == b);
+```
+
+or checking a known sentinel/bit-stable result depending on semantics.
+
+The error is not using exact comparison.
+
+The error is using exact comparison when your concept is **geometric closeness**.
+
+---
+
+# 596.3 Absolute tolerance
+
+First attempt:
+
+\[
+|a-b|\le\varepsilon.
+\]
+
+For scalar values:
+
+```cpp
+bool almostEqualAbs(
+    float a,
+    float b,
+    float eps)
+{
+    return std::abs(a - b) <= eps;
+}
+```
+
+For vectors, componentwise:
+
+\[
+|a_x-b_x|\le\varepsilon
+\]
+
+etc.
+
+---
+
+# 596.4 Why absolute epsilon fails at large scale
+
+Suppose:
+
+\[
+a=10^8
+\]
+
+and:
+
+\[
+b=10^8+1.
+\]
+
+A tolerance:
+
+\[
+10^{-5}
+\]
+
+is meaningless at this scale.
+
+Conversely near zero, a purely relative tolerance can become too strict.
+
+So robust approximate scalar comparison often combines:
+
+\[
+\boxed{
+\text{absolute tolerance}
++
+\text{relative tolerance}.
+}
+\]
+
+---
+
+# 596.5 Combined rule
+
+A common form:
+
+\[
+\boxed{
+|a-b|
+\le
+\max(
+\varepsilon_{\text{abs}},
+\varepsilon_{\text{rel}}
+\max(|a|,|b|)
+)
+}
+\]
+
+Implementation:
+
+```cpp
+bool almostEqual(
+    float a,
+    float b,
+    float absTol,
+    float relTol)
+{
+    const float diff =
+        std::abs(a - b);
+
+    const float scale =
+        std::max(std::abs(a),
+                 std::abs(b));
+
+    return diff <=
+        std::max(absTol,
+                 relTol * scale);
+}
+```
+
+Absolute tolerance handles numbers near zero.
+
+Relative tolerance scales with magnitude.
+
+---
+
+# 596.6 Componentwise vector equality
+
+```cpp
+bool almostEqual(
+    Vec3 a,
+    Vec3 b,
+    float absTol,
+    float relTol)
+{
+    return
+        almostEqual(a.x, b.x, absTol, relTol) &&
+        almostEqual(a.y, b.y, absTol, relTol) &&
+        almostEqual(a.z, b.z, absTol, relTol);
+}
+```
+
+This means:
+
+\[
+\boxed{
+\text{each coordinate is sufficiently close}.
+}
+\]
+
+That is one legitimate vector closeness definition.
+
+---
+
+# 596.7 Norm-based closeness
+
+Another question:
+
+> Is the Euclidean distance between vectors below tolerance?
+
+Then:
+
+\[
+\boxed{
+\|a-b\|\le\varepsilon.
+}
+\]
+
+Avoid sqrt:
+
+\[
+\boxed{
+\|a-b\|^2
+\le
+\varepsilon^2.
+}
+\]
+
+This describes a spherical tolerance region in vector space.
+
+Componentwise tolerance describes a box.
+
+These are different semantics.
+
+---
+
+# 596.8 Geometric example
+
+Let error vector:
+
+\[
+e=(0.09,0.09).
+\]
+
+Componentwise epsilon:
+
+\[
+0.1
+\]
+
+passes.
+
+But Euclidean error:
+
+\[
+\sqrt{0.09^2+0.09^2}
+\approx0.127.
+\]
+
+So a norm tolerance 0.1 fails.
+
+Neither is wrong.
+
+They answer different questions.
+
+---
+
+# 596.9 Direction equality
+
+Suppose two unit directions should be nearly equal.
+
+Coordinate epsilon may not be the best concept.
+
+Angular comparison might be more meaningful:
+
+\[
+a\cdot b\ge\cos\theta_{\max}.
+\]
+
+Example:
+
+> Directions differ by less than 0.1 degrees.
+
+That is a domain-specific invariant.
+
+Good APIs compare the **physical property** the system actually cares about.
+
+---
+
+# 596.10 NaN behavior
+
+If either value is NaN:
+
+```cpp
+abs(a - b)
+```
+
+becomes NaN.
+
+Comparisons with NaN are generally false.
+
+So almost-equality usually correctly fails.
+
+You should not "approximately equal" a NaN to anything.
+
+---
+
+# 596.11 Infinity
+
+If:
+
+\[
+a=b=+\infty,
+\]
+
+then:
+
+\[
+a-b
+\]
+
+is NaN.
+
+A generic tolerance function may therefore return false even though exact infinity equality returns true.
+
+If infinities are valid domain values, handle them explicitly:
+
+```cpp
+if (a == b)
+    return true;
+
+if (!std::isfinite(a) ||
+    !std::isfinite(b))
+    return false;
+```
+
+Then perform tolerance arithmetic.
+
+But in many geometry APIs, infinity itself signals invalid state and should be rejected anyway.
+
+---
+
+# 596.12 ULP comparison
+
+Another approach compares representable floating-point values by distance in **units in the last place**, ULPs.
+
+This can be useful for low-level numerical testing.
+
+But an engine gameplay tolerance is usually better expressed in domain units:
+
+```text
+1 mm
+0.1 degrees
+1e-4 normalized units
+```
+
+rather than "4 ULPs."
+
+ULP equality answers a machine-representation question.
+
+Physical tolerances answer a domain question.
+
+---
+
+# 596.13 Why approximate `operator==` is dangerous
+
+Approximate relation may fail transitivity.
+
+As shown:
+
+\[
+a\approx b,
+\]
+
+\[
+b\approx c,
+\]
+
+but:
+
+\[
+a\not\approx c.
+\]
+
+If used as key equality in a hash table or ordered structure, invariants collapse.
+
+Therefore keep:
+
+```cpp
+operator==
+```
+
+exact/documented, and expose:
+
+```cpp
+almostEqual(...)
+```
+
+separately.
+
+---
+
+# 596.14 Mastery gate — 596
+
+Be able to distinguish:
+
+- exact component equality;
+- componentwise approximate equality;
+- Euclidean-distance equality;
+- angular equality;
+- ULP equality.
+
+There is no universal epsilon.
+
+**Completed Part 596 — Approximate vector equality**
+
+---
+
+# PART 597 — DEBUGGING NaN VECTORS
+
+NaN means:
+
+\[
+\boxed{\text{Not a Number}.}
+\]
+
+A NaN vector is not a special vector type.
+
+It means one or more components contain floating-point NaN.
+
+Example:
+
+```text
+(x = 1.0,
+ y = NaN,
+ z = 4.0)
+```
+
+---
+
+# 597.1 Where do NaNs come from?
+
+Classic sources:
+
+### Zero normalization
+
+\[
+\frac{0}{\|0\|}
+=
+\frac00.
+\]
+
+### Invalid square root
+
+\[
+\sqrt{-1}
+\]
+
+in real floating arithmetic.
+
+### `inf - inf`
+
+undefined indeterminate result.
+
+### `0 * inf`
+
+can yield NaN.
+
+### `acos` outside domain
+
+\[
+\arccos(1.000001).
+\]
+
+### Invalid refraction
+
+\[
+\sqrt{k}
+\]
+
+when:
+
+\[
+k<0.
+\]
+
+### Uninitialized memory
+
+Some arbitrary bit patterns may decode to NaN.
+
+---
+
+# 597.2 NaN is contagious
+
+Suppose:
+
+\[
+v=(1,\text{NaN},3).
+\]
+
+Then:
+
+\[
+v+u
+\]
+
+will generally still contain NaN in the affected component.
+
+Dot product:
+
+\[
+v\cdot u
+\]
+
+likely becomes NaN because the sum includes:
+
+\[
+\text{NaN}\times u_y.
+\]
+
+Then normalization:
+
+\[
+\frac{v}{\sqrt{v\cdot v}}
+\]
+
+makes every component potentially NaN.
+
+One invalid component can contaminate an entire object/system.
+
+---
+
+# 597.3 The worst debugging pattern
+
+Imagine:
+
+```text
+frame 100:
+animation produced zero tangent
+
+frame 100:
+normalize(zero) → NaN
+
+frame 101:
+transform matrix built from NaN
+
+frame 101:
+world position becomes NaN
+
+frame 102:
+physics broad phase receives NaN AABB
+
+frame 102:
+object disappears
+```
+
+You see:
+
+> "object vanished."
+
+But the bug happened two frames earlier in tangent normalization.
+
+Therefore finding **where NaN is observed** is not enough.
+
+You need where it was **created**.
+
+---
+
+# 597.4 `isFinite`
+
+A core debugging utility:
+
+```cpp
+bool isFinite(Vec3 v) noexcept
+{
+    return
+        std::isfinite(v.x) &&
+        std::isfinite(v.y) &&
+        std::isfinite(v.z);
+}
+```
+
+And:
+
+```cpp
+bool hasNaN(Vec3 v) noexcept
+{
+    return
+        std::isnan(v.x) ||
+        std::isnan(v.y) ||
+        std::isnan(v.z);
+}
+```
+
+Finite check rejects both:
+
+```text
+NaN
+±infinity.
+```
+
+For most positions/directions/normals, finite is the stronger useful invariant.
+
+---
+
+# 597.5 Assert at subsystem boundaries
+
+Bad debugging strategy:
+
+```cpp
+assert(isFinite(finalFrameOutput));
+```
+
+only.
+
+Better:
+
+```text
+mesh import
+    ↓ finite check
+
+animation output
+    ↓ finite check
+
+transform output
+    ↓ finite check
+
+physics input
+    ↓ finite check
+```
+
+Binary-search the dataflow.
+
+You want to catch the corruption **near creation**.
+
+---
+
+# 597.6 Normalize example
+
+Weak API:
+
+```cpp
+Vec3 normalize(Vec3 v)
+{
+    return v / length(v);
+}
+```
+
+A zero vector silently creates NaN.
+
+Stronger:
+
+```cpp
+std::optional<Vec3>
+tryNormalize(Vec3 v)
+{
+    const float l2 = dot(v, v);
+
+    if (!std::isfinite(l2) ||
+        l2 <= minimumLengthSquared)
+    {
+        return std::nullopt;
+    }
+
+    return v / std::sqrt(l2);
+}
+```
+
+Or domain-specific fallback:
+
+```cpp
+normalizeOr(v, fallback);
+```
+
+The API forces the caller to acknowledge failure.
+
+---
+
+# 597.7 NaN comparisons are weird
+
+IEEE semantics intentionally make:
+
+\[
+NaN == NaN
+\]
+
+false.
+
+Also:
+
+\[
+NaN < x
+\]
+
+false,
+
+and:
+
+\[
+NaN > x
+\]
+
+false.
+
+So code:
+
+```cpp
+if (distance < 100.0f)
+```
+
+with NaN distance goes false.
+
+The object may simply skip a branch instead of obviously crashing.
+
+That makes NaNs dangerous in game logic.
+
+---
+
+# 597.8 NaN and min/max
+
+Depending on operation/library instruction semantics, min/max with NaN can behave unexpectedly or asymmetrically.
+
+Do not use clamping as a substitute for validating finite input.
+
+Example:
+
+```cpp
+v.x =
+    std::clamp(v.x, -100.0f, 100.0f);
+```
+
+should not be assumed to "sanitize" all NaNs.
+
+Explicitly test finiteness.
+
+---
+
+# 597.9 Debug poisoning
+
+In debug builds, some systems intentionally initialize memory to conspicuous patterns/NaNs.
+
+Why?
+
+Because:
+
+```text
+uninitialized = 0
+```
+
+can accidentally look valid.
+
+But:
+
+```text
+uninitialized = signaling/quiet NaN-like poison
+```
+
+causes corruption to become visible rapidly.
+
+Whether this is appropriate depends on platform/tooling, but the principle is excellent:
+
+\[
+\boxed{
+\text{make invalid states fail loudly in debug builds}.
+}
+\]
+
+---
+
+# 597.10 GPU NaNs
+
+Shader NaNs are especially difficult because you cannot casually attach a debugger to millions of fragment invocations.
+
+Useful strategies include:
+
+```glsl
+if (any(isnan(value)))
+    outputColor = magenta;
+```
+
+conceptually.
+
+Then invalid regions become visually obvious.
+
+You can similarly write diagnostic buffers or use GPU debugging/capture tools.
+
+Bright diagnostic colors are not childish—they are an efficient spatial debugger.
+
+---
+
+# 597.11 NaN source tracing
+
+Suppose `normal` is invalid.
+
+Walk backward:
+
+```text
+normal
+  ↑ normalize(rawNormal)
+  ↑ cross(edge1, edge2)
+  ↑ edge positions
+  ↑ vertex transform
+  ↑ imported data
+```
+
+Check each intermediate.
+
+A disciplined engineer asks:
+
+1. Which operation first had invalid preconditions?
+2. Was the invalid input geometrically meaningful?
+3. Should API have represented failure?
+4. Why was the invariant not checked earlier?
+
+That prevents merely patching the symptom.
+
+---
+
+# 597.12 Mastery gate — 597
+
+You should immediately suspect:
+
+```text
+normalize zero
+invalid sqrt
+domain error
+infinity arithmetic
+uninitialized data
+```
+
+and know why NaN may silently poison later comparisons.
+
+**Completed Part 597 — Debugging NaN vectors**
+
+---
+
+# PART 598 — VECTOR INVARIANTS IN ENGINE APIs
+
+An **invariant** is a property that a type/value promises to maintain.
+
+This Part is where math types stop being dumb bags of floats.
+
+---
+
+# 598.1 Example: unit vector
+
+A plain:
+
+```cpp
+Vec3 v;
+```
+
+can contain anything.
+
+But a `UnitVec3` promises:
+
+\[
+\boxed{
+\|v\|\approx1.
+}
+\]
+
+If that invariant is maintained, callers can safely use optimized formulas.
+
+Projection:
+
+\[
+(a\cdot u)u
+\]
+
+requires no denominator because:
+
+\[
+u\cdot u=1.
+\]
+
+Reflection:
+
+\[
+r=i-2(i\cdot n)n
+\]
+
+can assume unit normal.
+
+The type's invariant removes repeated checks/normalization.
+
+---
+
+# 598.2 Weak API
+
+```cpp
+Vec3 reflect(
+    Vec3 incident,
+    Vec3 normal);
+```
+
+The caller must know:
+
+> normal must be unit.
+
+Nothing in the type says so.
+
+---
+
+# 598.3 Strong API
+
+```cpp
+Vec3 reflect(
+    Vec3 incident,
+    UnitVec3 normal);
+```
+
+Now the requirement is encoded in the function signature.
+
+That is much stronger documentation.
+
+---
+
+# 598.4 Constructor problem
+
+Do not allow:
+
+```cpp
+UnitVec3 u{3, 4, 0};
+```
+
+if constructor merely stores values.
+
+That violates:
+
+\[
+\|u\|=1.
+\]
+
+Instead:
+
+```cpp
+class UnitVec3
+{
+public:
+    static std::optional<UnitVec3>
+    from(Vec3 v);
+
+    Vec3 value() const noexcept;
+
+private:
+    explicit UnitVec3(Vec3 normalized)
+        : value_{normalized}
+    {}
+
+    Vec3 value_;
+};
+```
+
+Only controlled construction establishes the invariant.
+
+---
+
+# 598.5 Invariants other than unit length
+
+### Finite vector
+
+\[
+x,y,z\in\mathbb R
+\]
+
+not NaN/Inf.
+
+### Nonzero direction
+
+\[
+\|v\|>0.
+\]
+
+### Surface normal
+
+May require:
+
+- finite;
+- unit;
+- correct coordinate space.
+
+### Barycentric weights
+
+\[
+\alpha+\beta+\gamma\approx1.
+\]
+
+For inside triangle additionally:
+
+\[
+\alpha,\beta,\gamma\ge0.
+\]
+
+### RGB color
+
+Maybe:
+
+\[
+r,g,b\ge0
+\]
+
+depending on HDR representation.
+
+### Quaternion
+
+Usually:
+
+\[
+\|q\|=1
+\]
+
+for rotation quaternion.
+
+Types can encode these promises.
+
+---
+
+# 598.6 Why not validate every operation?
+
+Suppose every dot product does:
+
+```cpp
+assert(isFinite(a));
+assert(isFinite(b));
+```
+
+in release code.
+
+Millions of operations may make that too expensive.
+
+A common architecture is:
+
+```text
+debug/development:
+aggressive assertions
+
+release:
+trust type/subsystem invariants
+```
+
+or validate at boundaries rather than every arithmetic operation.
+
+This is why strong types are useful: once validated, the invariant can propagate.
+
+---
+
+# 598.7 Invariant-preserving operations
+
+If:
+
+\[
+u
+\]
+
+is unit, then:
+
+\[
+-u
+\]
+
+is also unit.
+
+So:
+
+```cpp
+UnitVec3 operator-(UnitVec3);
+```
+
+can safely return `UnitVec3`.
+
+But:
+
+\[
+u+v
+\]
+
+is generally not unit.
+
+Therefore:
+
+```cpp
+UnitVec3 + UnitVec3
+```
+
+should return:
+
+```cpp
+Vec3
+```
+
+not `UnitVec3`.
+
+This is subtle and important.
+
+Your return types should follow the mathematical invariant.
+
+---
+
+# 598.8 Scaling
+
+For unit u:
+
+\[
+2u
+\]
+
+has magnitude 2.
+
+So:
+
+```cpp
+2.0f * UnitVec3
+```
+
+must return:
+
+```cpp
+Vec3.
+```
+
+But rotation of a unit vector by a proper rotation preserves magnitude:
+
+\[
+\|Ru\|=1.
+\]
+
+So:
+
+```cpp
+UnitVec3 rotate(
+    Rotation r,
+    UnitVec3 u);
+```
+
+can return `UnitVec3` if the rotation type itself maintains its invariant.
+
+This is how mathematical knowledge becomes API design.
+
+---
+
+# 598.9 Normal versus unit direction
+
+A unit surface normal and a unit ray direction both satisfy:
+
+\[
+\|v\|=1.
+\]
+
+But semantics differ.
+
+A normal transforms with inverse transpose under general transforms.
+
+A direction transforms with the linear transform.
+
+So a single:
+
+```cpp
+UnitVec3
+```
+
+still does not capture every important invariant.
+
+Potential stronger types:
+
+```cpp
+UnitDirection3
+UnitNormal3
+```
+
+or space-tagged versions.
+
+---
+
+# 598.10 State explosion problem
+
+If you make a distinct type for every combination:
+
+```text
+WorldUnitNormal
+LocalUnitNormal
+ViewUnitNormal
+WorldDirection
+LocalDirection
+...
+```
+
+the type system can become cumbersome.
+
+A generic tagging architecture can help:
+
+```cpp
+template<class Space>
+struct Direction3;
+
+template<class Space>
+struct Normal3;
+```
+
+and perhaps normalized wrappers.
+
+Strong typing has engineering cost.
+
+The goal is not maximum type count.
+
+The goal is preventing expensive categories of bugs.
+
+---
+
+# 598.11 Boundary principle
+
+Strong invariants are particularly valuable at boundaries:
+
+```text
+asset importer
+→ engine math
+
+physics
+→ gameplay
+
+CPU
+→ GPU
+
+local space
+→ world space
+```
+
+Validate/convert explicitly there.
+
+Inside a tight trusted kernel, raw representations may be appropriate.
+
+This layered approach gives both safety and performance.
+
+---
+
+# 598.12 Mastery gate — 598
+
+An invariant is not a comment.
+
+It is a property the API architecture makes hard to violate.
+
+You should know why:
+
+```cpp
+UnitVec3
+```
+
+can remove repeated normalization and why operators must preserve or deliberately drop the invariant based on mathematics.
+
+**Completed Part 598 — Vector invariants in engine APIs**
+
+---
+
+# PART 599 — DISTINGUISHING WORLD-SPACE AND LOCAL-SPACE VECTOR TYPES
+
+This is one of the highest-value compile-time safety techniques in graphics.
+
+---
+
+# 599.1 The bug
+
+Our spaceship vertex:
+
+\[
+P_L=(2,\;0.5,\;-1)
+\]
+
+is in **local space**.
+
+Suppose spaceship world origin is:
+
+\[
+T_W=(100,\;20,\;50).
+\]
+
+World position might eventually become something like:
+
+\[
+P_W=(102,\;20.5,\;49)
+\]
+
+if there is only translation.
+
+Now imagine:
+
+```cpp
+Vec3 lightPositionWorld;
+Vec3 vertexPositionLocal;
+
+Vec3 toLight =
+    lightPositionWorld -
+    vertexPositionLocal;
+```
+
+C++ happily subtracts them.
+
+Numerically:
+
+```text
+world numbers - local numbers
+```
+
+produce three floats.
+
+Geometrically the operation is garbage.
+
+The vectors were expressed in different coordinate systems.
+
+---
+
+# 599.2 Why spaces matter mathematically
+
+A tuple:
+
+\[
+(1,0,0)
+\]
+
+in spaceship local coordinates means:
+
+> one unit along spaceship's local X axis.
+
+The same tuple in world coordinates means:
+
+> one unit along world X.
+
+If spaceship is rotated 90°:
+
+```text
+local +X
+```
+
+might geometrically point along:
+
+```text
+world +Z.
+```
+
+So the coordinate tuples may be identical while physical directions differ.
+
+This is exactly Part 506:
+
+\[
+\boxed{
+\text{vector}
+\neq
+\text{its coordinate tuple}.
+}
+\]
+
+Part 599 finally forces C++ to respect that.
+
+---
+
+# 599.3 Weak representation
+
+```cpp
+using Vec3 = ...;
+
+Vec3 localPosition;
+Vec3 worldPosition;
+```
+
+Names are the only protection.
+
+One refactor later:
+
+```cpp
+update(position, velocity);
+```
+
+and nobody remembers which space `position` inhabits.
+
+---
+
+# 599.4 Tagged vector type
+
+Concept:
+
+```cpp
+struct LocalSpace {};
+struct WorldSpace {};
+struct ViewSpace {};
+
+template<class Space>
+struct Vector3
+{
+    float x{};
+    float y{};
+    float z{};
+};
+```
+
+Now:
+
+```cpp
+Vector3<LocalSpace> local;
+Vector3<WorldSpace> world;
+```
+
+are different C++ types.
+
+You can define:
+
+```cpp
+template<class S>
+Vector3<S> operator+(
+    Vector3<S>,
+    Vector3<S>);
+```
+
+Same-space addition works.
+
+But:
+
+```cpp
+local + world
+```
+
+does not match the function.
+
+Compile error.
+
+A geometry bug becomes a compiler error.
+
+---
+
+# 599.5 Space tags cost zero runtime storage
+
+`LocalSpace` is a template parameter.
+
+It need not exist inside each object.
+
+Both:
+
+```cpp
+Vector3<LocalSpace>
+```
+
+and:
+
+```cpp
+Vector3<WorldSpace>
+```
+
+can still physically be:
+
+```text
+3 floats
+```
+
+with no extra space tag at runtime.
+
+This is **zero-cost semantic typing**.
+
+The compiler tracks meaning.
+
+The CPU still sees the same numerical payload.
+
+---
+
+# 599.6 Point versus vector plus space
+
+Even stronger:
+
+```cpp
+template<class Space>
+struct Point3;
+
+template<class Space>
+struct Vector3;
+```
+
+Then define:
+
+```cpp
+template<class S>
+Point3<S> operator+(
+    Point3<S> p,
+    Vector3<S> v);
+```
+
+and:
+
+```cpp
+template<class S>
+Vector3<S> operator-(
+    Point3<S> a,
+    Point3<S> b);
+```
+
+But do not define:
+
+```cpp
+Point3<S> + Point3<S>.
+```
+
+Now the type system enforces both:
+
+\[
+\boxed{\text{affine role}}
+\]
+
+and:
+
+\[
+\boxed{\text{coordinate space}}.
+\]
+
+---
+
+# 599.7 Transform types should encode source and destination
+
+Suppose:
+
+```cpp
+Transform<LocalSpace, WorldSpace>
+localToWorld;
+```
+
+Then:
+
+```cpp
+Point3<WorldSpace> pWorld =
+    localToWorld.transformPoint(pLocal);
+```
+
+The transform itself documents:
+
+\[
+\boxed{
+Local
+\rightarrow
+World.
+}
+\]
+
+Trying:
+
+```cpp
+localToWorld.transformPoint(pWorld);
+```
+
+should fail to compile.
+
+This prevents double-transform bugs.
+
+---
+
+# 599.8 Transformation composition becomes type checked
+
+Suppose:
+
+```cpp
+Transform<LocalSpace, WorldSpace> L2W;
+Transform<WorldSpace, ViewSpace> W2V;
+```
+
+Then composition:
+
+```text
+Local → World → View
+```
+
+is valid.
+
+Result:
+
+```cpp
+Transform<LocalSpace, ViewSpace>.
+```
+
+But:
+
+```text
+World→View
+composed with
+View→Local
+```
+
+in the wrong order can fail at compile time.
+
+Later matrix Parts will make the algebra explicit.
+
+The type architecture already knows the domain/codomain.
+
+---
+
+# 599.9 Same-space rule for dot products
+
+Can you do:
+
+\[
+a\cdot b
+\]
+
+if:
+
+```text
+a = local direction
+b = world direction?
+```
+
+No.
+
+The components refer to different bases.
+
+So:
+
+```cpp
+template<class S>
+float dot(
+    Vector3<S> a,
+    Vector3<S> b);
+```
+
+only accepts same-space vectors.
+
+This is incredibly valuable.
+
+A raw Vec3 library cannot stop:
+
+```cpp
+dot(localNormal, worldLightDirection);
+```
+
+which may produce a plausible-looking number and broken shading.
+
+Strong spaces stop it.
+
+---
+
+# 599.10 Cross product same issue
+
+```cpp
+cross(
+    Vector3<WorldSpace>,
+    Vector3<WorldSpace>)
+```
+
+returns world-space oriented result.
+
+But crossing local and world vectors is meaningless.
+
+Again, tagged types reject the mistake.
+
+---
+
+# 599.11 Normals complicate transforms
+
+Remember Part 582.
+
+A direction:
+
+\[
+d_L
+\]
+
+transforms with the linear transform:
+
+\[
+d_W=A d_L.
+\]
+
+A normal:
+
+\[
+n_L
+\]
+
+transforms:
+
+\[
+n_W=A^{-T}n_L.
+\]
+
+So strong APIs might distinguish:
+
+```cpp
+Direction3<LocalSpace>
+Normal3<LocalSpace>
+```
+
+and provide:
+
+```cpp
+Direction3<WorldSpace>
+transformDirection(...);
+
+Normal3<WorldSpace>
+transformNormal(...);
+```
+
+A single generic:
+
+```cpp
+transform(Vec3)
+```
+
+cannot communicate the correct operation.
+
+This is one of the biggest practical payoffs of semantic types.
+
+---
+
+# 599.12 Real shading bug
+
+Suppose:
+
+```cpp
+Normal3<WorldSpace> N;
+Direction3<WorldSpace> L;
+```
+
+Then:
+
+\[
+N\cdot L
+\]
+
+is meaningful.
+
+But accidentally:
+
+```cpp
+Normal3<LocalSpace> N;
+Direction3<WorldSpace> L;
+```
+
+Raw Vec3 version compiles:
+
+```cpp
+dot(N, L);
+```
+
+and returns some number between approximately -1 and 1.
+
+It may even look visually "almost right" for unrotated objects.
+
+Then you rotate the spaceship and lighting breaks.
+
+Those are some of the hardest graphics bugs because the math looks numerically valid.
+
+Tagged types turn it into:
+
+```text
+compiler:
+cannot dot LocalSpace normal
+with WorldSpace direction
+```
+
+Much better.
+
+---
+
+# 599.13 Dynamic coordinate frames
+
+Compile-time tags work beautifully for broad spaces:
+
+```text
+World
+View
+Clip
+NDC
+```
+
+But what about:
+
+```text
+spaceship A local space
+spaceship B local space
+```
+
+Both are `LocalSpace` conceptually, but they are not the same coordinate frame.
+
+If you define one:
+
+```cpp
+LocalSpace
+```
+
+tag, this still compiles incorrectly:
+
+```cpp
+positionFromShipA -
+positionFromShipB
+```
+
+So compile-time broad-space tags cannot solve every dynamic frame-identity problem.
+
+Possible approaches include:
+
+- unique entity/frame handles;
+- transform graph discipline;
+- runtime frame IDs in debug builds;
+- APIs that don't expose unrelated local values together;
+- stronger typed handles at higher layers.
+
+This is a critical limitation to understand.
+
+Type safety is not magic.
+
+---
+
+# 599.14 Why not put runtime space IDs in every vector?
+
+You could:
+
+```cpp
+struct Vec3
+{
+    float x, y, z;
+    SpaceId space;
+};
+```
+
+Now every vector carries provenance.
+
+But cost becomes significant:
+
+```text
+more memory
+more bandwidth
+more comparisons
+more complexity
+```
+
+for millions of vectors.
+
+Engines often prefer:
+
+\[
+\boxed{
+\text{space provenance from types/data ownership}
+}
+\]
+
+rather than attaching runtime metadata to every scalar tuple.
+
+---
+
+# 599.15 External API evidence
+
+This distinction isn't merely theoretical. Production graphics interfaces explicitly name values by space—for example, Metal's ray-intersection data distinguishes a `world_space_origin` and `world_space_direction`, while barycentric coordinates are separately identified as their own semantic data. Metal Shading Language Specific…
+
+That naming exists because coordinate-space semantics matter operationally.
+
+---
+
+# 599.16 Local-to-world example from start to finish
+
+Suppose spaceship's local vertex:
+
+\[
+P_L=(2,0,0).
+\]
+
+Spaceship is rotated so local X points along world Z and translated to:
+
+\[
+T_W=(100,0,50).
+\]
+
+Then:
+
+```text
+Local Point
+(2,0,0)
+     ↓ rotate
+World displacement
+(0,0,2)
+     ↓ translate
+World Point
+(100,0,52)
+```
+
+The same local coordinate:
+
+\[
+(2,0,0)
+\]
+
+was not a world point.
+
+It had to be interpreted relative to the spaceship's basis.
+
+Now a local direction:
+
+\[
+D_L=(1,0,0)
+\]
+
+becomes:
+
+\[
+D_W=(0,0,1).
+\]
+
+But translation is **not** added because directions are not positions.
+
+And a local normal may require inverse transpose if the object transform includes nonuniform scale.
+
+Three values may all begin as:
+
+```text
+three floats in local space
+```
+
+but their transform rules differ:
+
+```text
+Point:
+rotation/scale + translation
+
+Direction:
+rotation/scale
+no translation
+
+Normal:
+inverse-transpose linear transform
+no translation
+```
+
+This is precisely why semantic API types matter.
+
+---
+
+# 599.17 A stronger conceptual C++ design
+
+Illustrative skeleton:
+
+```cpp
+struct LocalSpace {};
+struct WorldSpace {};
+struct ViewSpace {};
+
+template<class Space>
+struct Vec3T
+{
+    float x{};
+    float y{};
+    float z{};
+};
+
+template<class Space>
+struct Point3T
+{
+    float x{};
+    float y{};
+    float z{};
+};
+
+template<class Space>
+struct Normal3T
+{
+    float x{};
+    float y{};
+    float z{};
+};
+```
+
+Vector difference:
+
+```cpp
+template<class S>
+constexpr Vec3T<S> operator-(
+    Point3T<S> b,
+    Point3T<S> a) noexcept
+{
+    return {
+        b.x - a.x,
+        b.y - a.y,
+        b.z - a.z
+    };
+}
+```
+
+Point translation:
+
+```cpp
+template<class S>
+constexpr Point3T<S> operator+(
+    Point3T<S> p,
+    Vec3T<S> v) noexcept
+{
+    return {
+        p.x + v.x,
+        p.y + v.y,
+        p.z + v.z
+    };
+}
+```
+
+Dot:
+
+```cpp
+template<class S>
+constexpr float dot(
+    Vec3T<S> a,
+    Vec3T<S> b) noexcept
+{
+    return
+        a.x * b.x +
+        a.y * b.y +
+        a.z * b.z;
+}
+```
+
+The lack of cross-space overload is the feature.
+
+---
+
+# 599.18 Memory cost of these wrappers
+
+Assuming no extra members:
+
+```cpp
+sizeof(Point3T<WorldSpace>)
+```
+
+can be identical to:
+
+```cpp
+sizeof(Vec3T<LocalSpace>)
+```
+
+because template tags exist only at compile time.
+
+So we gain semantic safety without adding runtime bytes.
+
+This is one of C++'s strongest zero-cost abstraction opportunities.
+
+---
+
+# 599.19 Mastery gate — 599
+
+If you see:
+
+```cpp
+Vec3 a;
+Vec3 b;
+
+float x = dot(a, b);
+```
+
+you should mentally ask:
+
+1. Are these actually vectors rather than points?
+2. Same units?
+3. Same coordinate space?
+4. Are either normals?
+5. Are required normalization invariants satisfied?
+6. Are values finite?
+
+Those questions are invisible in three floats.
+
+Strong APIs make some of them visible to the compiler.
+
+**Completed Part 599 — Distinguishing world-space and local-space vector types**
+
+---
+
+# NOW CONNECT ALL 588–599
+
+The twelve Parts form one continuous engineering story.
+
+We begin with pure storage:
+
+```cpp
+struct Vec2;
+struct Vec3;
+struct Vec4;
+```
+
+These give concrete representations of tuples.
+
+Then Part 591 asks:
+
+> Which mathematical operations should syntax permit?
+
+Part 592 asks:
+
+> How do we access/rearrange components without introducing aliasing bugs?
+
+Parts 593–594 ask:
+
+> What does this type physically look like in RAM, and do we optimize for storage or machine-wide arithmetic?
+
+Part 595 asks:
+
+> Once loaded into registers, how can multiple scalar operations happen in parallel?
+
+Then Part 596 reminds us:
+
+> The scalars are floating-point approximations, so geometric equality needs a deliberate tolerance model.
+
+Part 597 asks:
+
+> What happens when floating arithmetic leaves the real-number world entirely and produces NaN/Inf?
+
+Part 598 says:
+
+> Stop forcing every caller to remember every precondition. Encode important mathematical promises as type invariants.
+
+And Part 599 makes the most important semantic leap:
+
+\[
+\boxed{
+\text{coordinates are meaningless without their space}.
+}
+\]
+
+A final engine type should increasingly represent not merely:
+
+```text
+3 floats
+```
+
+but concepts such as:
+
+```text
+finite
+unit
+world-space
+surface normal
+```
+
+where appropriate.
+
+---
+
+# ONE COMPLETE FAILURE STORY
+
+Imagine code:
+
+```cpp
+Vec3 normal = mesh.vertexNormal;
+Vec3 light  = worldLightPosition - mesh.vertexPosition;
+
+float diffuse =
+    std::max(dot(normalize(normal),
+                 normalize(light)),
+             0.0f);
+```
+
+Looks reasonable.
+
+But there are hidden assumptions everywhere.
+
+### Bug 1 — spaces
+
+`vertexNormal` is local space.
+
+`worldLightPosition` is world space.
+
+`vertexPosition` is local space.
+
+So:
+
+```cpp
+worldLightPosition -
+localPosition
+```
+
+is meaningless.
+
+### Bug 2 — point/vector role
+
+A light position and vertex position should be points, not generic vectors.
+
+### Bug 3 — normal transform
+
+Even if you transform the normal, if model has nonuniform scale it needs inverse transpose.
+
+### Bug 4 — zero length
+
+If light exactly coincides with point:
+
+```cpp
+normalize(light)
+```
+
+fails.
+
+### Bug 5 — NaN
+
+Failure produces NaN.
+
+### Bug 6 — comparison
+
+`std::max`/subsequent logic receives NaN and behavior becomes difficult to reason about.
+
+Now imagine a stronger API:
+
+```cpp
+Point3<WorldSpace> lightPos;
+Point3<WorldSpace> surfacePos;
+
+UnitNormal3<WorldSpace> normal;
+
+const Vec3<WorldSpace> toLight =
+    lightPos - surfacePos;
+
+auto lightDir = tryNormalize(toLight);
+
+if (!lightDir)
+{
+    // Explicit degeneracy policy.
+}
+else
+{
+    const float diffuse =
+        std::max(
+            dot(normal, *lightDir),
+            0.0f);
+}
+```
+
+Notice what disappeared.
+
+The compiler/API architecture already eliminated entire bug categories.
+
+That is what Part 598–599 is about.
+
+---
+
+# ONE COMPLETE MEMORY/PERFORMANCE STORY
+
+Suppose 4 million mesh vertices.
+
+If position and normal each use 12-byte Vec3:
+
+\[
+24\text{ bytes/vertex}
+\]
+
+for those two attributes.
+
+Total:
+
+\[
+4,000,000\times24
+=
+96,000,000\text{ bytes}.
+\]
+
+If both are blindly expanded to 16-byte aligned representation:
+
+\[
+32\text{ bytes/vertex}
+\]
+
+giving:
+
+\[
+128,000,000\text{ bytes}.
+\]
+
+Extra:
+
+\[
+32\text{ MB}.
+\]
+
+Maybe worthwhile for a CPU compute structure.
+
+Maybe terrible for a GPU streaming vertex buffer.
+
+Hence:
+
+```text
+packed external/storage representation
+              ↓
+explicit load/convert
+              ↓
+aligned/SIMD compute representation
+              ↓
+explicit store/pack
+```
+
+can be superior to forcing one Vec3 type to satisfy every subsystem.
+
+---
+
+# ONE COMPLETE NUMERICAL STORY
+
+Start:
+
+\[
+v=(10^{-30},0,0).
+\]
+
+Attempt to normalize in binary32.
+
+Squared length:
+
+\[
+10^{-60}
+\]
+
+may underflow toward zero depending on exact scale/representation.
+
+Then:
+
+\[
+1/\sqrt{0}
+\]
+
+becomes infinity.
+
+Then:
+
+\[
+10^{-30}\times\infty
+\]
+
+can produce infinity or problematic behavior while zero lanes can yield NaN through:
+
+\[
+0\times\infty.
+\]
+
+Suddenly your "normalized vector" is invalid.
+
+This explains why:
+
+```cpp
+if (lengthSquared(v) == 0)
+```
+
+is not necessarily a complete robust normalization policy for extreme ranges.
+
+Scaling-based normalization or domain-specific thresholds may be required.
+
+---
+
+# THE THREE LAYERS YOU MUST NOW KEEP SEPARATE
+
+From this whole phase, distinguish:
+
+## 1. Mathematical object
+
+Example:
+
+\[
+\text{world-space unit surface normal}.
+\]
+
+Properties:
+
+```text
+3D
+normal/covector semantics
+unit length
+world space
+finite
+```
+
+## 2. Coordinate representation
+
+Example:
+
+\[
+(0.2,\;0.9,\;-0.38).
+\]
+
+Those are coefficients relative to a basis.
+
+## 3. Machine representation
+
+Example:
+
+```text
+three IEEE-like binary32 values
+12 bytes packed
+or 16 bytes aligned
+possibly loaded into a SIMD register
+```
+
+A mature graphics engineer can move mentally in both directions:
+
+```text
+surface normal
+    ↓
+world basis coordinates
+    ↓
+float components
+    ↓
+bytes / SIMD lanes
+```
+
+and:
+
+```text
+bytes
+  ↓
+three floats
+  ↓
+coordinates in some space
+  ↓
+what mathematical object do these actually represent?
+```
+
+If you only understand the first direction, low-level engine bugs remain mysterious.
+
+If you only understand the second, your math becomes meaningless machine manipulation.
+
+---
+
+# RECONSTRUCTION TEST — 588
+
+Design `Vec2` from nothing and justify:
+
+- inline components;
+- initialization;
+- constructors;
+- indexing;
+- value semantics;
+- scalar-type constraints.
+
+---
+
+# RECONSTRUCTION TEST — 589
+
+Design Vec3 and explain why:
+
+\[
+3\text{ floats}
+\]
+
+are insufficient to tell whether the value is:
+
+```text
+point
+normal
+velocity
+color
+world-space
+local-space.
+```
+
+Know why cross product is dimension-specific.
+
+---
+
+# RECONSTRUCTION TEST — 590
+
+Explain why Vec4 appears in a 3D engine.
+
+You must explicitly distinguish:
+
+\[
+(x,y,z,w)
+\]
+
+as a true 4D vector from homogeneous coordinates.
+
+And explain why quaternion ≠ Vec4 algebraically.
+
+---
+
+# RECONSTRUCTION TEST — 591
+
+You should be able to defend each operator.
+
+Why does:
+
+```cpp
+Vec3 + Vec3
+```
+
+have an obvious meaning?
+
+Why is:
+
+```cpp
+Vec3 * Vec3
+```
+
+ambiguous?
+
+Why should approximate equality not normally be `operator==`?
+
+---
+
+# RECONSTRUCTION TEST — 592
+
+For:
+
+\[
+v=(1,2,3)
+\]
+
+derive:
+
+```text
+v.yzx = (2,3,1)
+```
+
+and explain why:
+
+```text
+v.yx = v.xy
+```
+
+requires temporary/snapshot semantics.
+
+Explain why writable:
+
+```text
+v.xx
+```
+
+is problematic.
+
+---
+
+# RECONSTRUCTION TEST — 593
+
+Given:
+
+```cpp
+alignas(16) Vec3
+```
+
+explain why an object with 12 bytes of payload generally needs a 16-byte stride in arrays.
+
+Distinguish:
+
+```cpp
+sizeof
+```
+
+and:
+
+```cpp
+alignof.
+```
+
+---
+
+# RECONSTRUCTION TEST — 594
+
+For one million Vec3s, calculate:
+
+\[
+12\text{-byte array}
+\]
+
+versus:
+
+\[
+16\text{-byte array}.
+\]
+
+Then defend when you would choose either.
+
+Most important insight:
+
+\[
+\boxed{
+\text{storage representation can differ from compute representation}.
+}
+\]
+
+---
+
+# RECONSTRUCTION TEST — 595
+
+Explain how SIMD handles:
+
+\[
+[x,y,z,w]+[x,y,z,w].
+\]
+
+Then explain why dot product requires a horizontal reduction.
+
+Then derive the shuffle form of the cross product.
+
+Finally distinguish SIMD **within a vector** from SIMD **across many vectors**.
+
+---
+
+# RECONSTRUCTION TEST — 596
+
+Explain why:
+
+```cpp
+a == b
+```
+
+and:
+
+```cpp
+almostEqual(a, b)
+```
+
+are different concepts.
+
+Derive combined tolerance:
+
+\[
+|a-b|
+\le
+\max(
+\epsilon_a,
+\epsilon_r\max(|a|,|b|)
+).
+\]
+
+And explain componentwise tolerance versus Euclidean-distance tolerance.
+
+---
+
+# RECONSTRUCTION TEST — 597
+
+Starting with:
+
+\[
+v=0,
+\]
+
+trace:
+
+\[
+\operatorname{normalize}(v)
+\]
+
+all the way to NaN.
+
+Then explain why the eventual visual symptom may occur much later.
+
+Know how to use:
+
+```cpp
+std::isfinite
+std::isnan
+```
+
+and why subsystem-boundary assertions help locate the first corruption point.
+
+---
+
+# RECONSTRUCTION TEST — 598
+
+Define an invariant.
+
+Then explain why:
+
+```cpp
+UnitVec3 + UnitVec3
+```
+
+must generally return `Vec3`, while:
+
+```cpp
+-UnitVec3
+```
+
+may remain `UnitVec3`.
+
+Explain why a normal and direction can both have unit length yet still deserve different types.
+
+---
+
+# RECONSTRUCTION TEST — 599
+
+This is the biggest one.
+
+You must be able to explain why:
+
+\[
+(1,0,0)_{\text{local}}
+\]
+
+and:
+
+\[
+(1,0,0)_{\text{world}}
+\]
+
+can represent different physical directions.
+
+Then design:
+
+```cpp
+Vector3<LocalSpace>
+Vector3<WorldSpace>
+```
+
+such that:
+
+```cpp
+local + world
+```
+
+cannot compile.
+
+Then extend the idea to:
+
+```cpp
+Point3<Space>
+Normal3<Space>
+Transform<From, To>
+```
+
+and explain how the compiler can enforce the geometry at zero runtime storage cost.
+
+---
+
+# THE END OF PHASE-6 VECTOR IMPLEMENTATION IS NOW ONE PART AWAY
+
+At this stage you should no longer think:
+
+```cpp
+Vec3
+```
+
+means:
+
+> three floats with some operators.
+
+A production vector system sits at the intersection of:
+
+\[
+\boxed{\text{linear algebra}}
+\]
+
+\[
+\boxed{\text{affine geometry}}
+\]
+
+\[
+\boxed{\text{coordinate-space semantics}}
+\]
+
+\[
+\boxed{\text{floating-point numerics}}
+\]
+
+\[
+\boxed{\text{C++ type design}}
+\]
+
+\[
+\boxed{\text{object layout/alignment}}
+\]
+
+\[
+\boxed{\text{SIMD and memory bandwidth}}
+\]
+
+and:
+
+\[
+\boxed{\text{debuggability/invariants}}.
+\]
+
+That is why `Vec3`—despite looking like one of the simplest types in an engine—is actually one of the most foundational types to design correctly.
+
+**Completed Part 588 — Vec2 data structure design**  
+**Completed Part 589 — Vec3 data structure design**  
+**Completed Part 590 — Vec4 data structure design**  
+**Completed Part 591 — Operator overloads for vector arithmetic**  
+**Completed Part 592 — Swizzles and component access**  
+**Completed Part 593 — Alignment of vector types**  
+**Completed Part 594 — Packed versus aligned Vec3 representations**  
+**Completed Part 595 — SIMD implementation of vector arithmetic**  
+**Completed Part 596 — Approximate vector equality**  
+**Completed Part 597 — Debugging NaN vectors**  
+**Completed Part 598 — Vector invariants in engine APIs**  
+**Completed Part 599 — Distinguishing world-space and local-space vector types**
+
+**Next Core Part 600 — Reconstructing a production-ready Vec3 library from first principles.**

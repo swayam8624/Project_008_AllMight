@@ -8,7 +8,7 @@ A graphics system maps a scene description through light and a camera into measu
 
 **Recall question:** What information must be known to predict an image, and what can an image constrain?
 
-<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 1–2172; source-span SHA256 7659efcd194f6b929c4c50e53e9c9372330b5e0285cba270f7a9236c13809c02. -->
+<!-- Derived from Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md; source lines 1–2203; source-span SHA256 4e96f00f81fcedaba2f588a213edbd5f40d03c1303f3520719c1711b56329822. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 # Worlds, Images and Inference
@@ -78,6 +78,37 @@ The vault develops related math in [[Chapter Edition/01 - Computing Foundations/
 
 A **derivation** shows why a formula follows from its assumptions. A **trace** follows the values as an algorithm runs. A **laboratory check** tests a prediction in code or a controlled example. Each catches a different problem: a sound derivation can still be coded with the wrong coordinate convention, while one passing example can hide an unstated restriction.
 
+<!-- Book-completion teaching addition 67b66028305e65d4 -->
+
+### A project ladder that turns the image pipeline into evidence
+
+Each stage reuses the previous one and adds a new failure mode. Keep one repository per project with a short design note, source/version record, deterministic input, reference result, executable checks, and a one-page failure analysis. A polished image is a useful artifact; it is not by itself evidence that the model or implementation is correct.
+
+1. **Sample and reconstruct a signal.** Build a tiny image/texture pipeline with nearest, bilinear, and one declared wider filter. Derive the footprint, render a checkerboard while changing scale, and compare against a high-rate reference. Solution evidence: constant preservation, impulse response, aliasing counterexample, boundary behavior, and a documented linear-light or encoded-light convention.
+2. **Make a camera measurable.** Generate rays and project known 3D points using stated world/camera frames, intrinsics, distortion, and near/far conventions. Recover a known pose from noisy correspondences. Solution evidence: a hand-computed projection, residual/Jacobian check, unit test for frame direction, and a degeneracy case such as nearly collinear points.
+3. **Build a bounded renderer.** Implement a small triangle rasterizer and a diffuse path tracer on the same scene. Compare visibility, color, and energy behavior against simple analytic scenes. Solution evidence: fixed seeds, a numerical reference, negative tests for edge/tangent cases, and an explanation of sampling variance and bias.
+4. **Make geometry queries survive degeneracy.** Implement ray/triangle and one broad-phase hierarchy, then differential-test against a slower reference over fixed and generated inputs. Solution evidence: classification agreement, scale-aware tolerances, shared-edge and zero-area cases, and a counterexample that breaks a naïve predicate.
+5. **Recover and evaluate a scene.** Fit a small calibrated multi-view representation (mesh, radiance field, or Gaussian splats). Keep training views separate from held-out views. Solution evidence: stated objective, parameterization and optimizer state; per-view residuals; geometry checks if geometry is claimed; capacity and overfit diagnosis; memory and runtime measurements with machine/configuration recorded.
+6. **Close the XR loop.** Turn measured display sampling, pose timing, reprojection, and gaze/perceptual assumptions into a bounded experiment. Use synthetic data first, then identify which claims need headset or participant evidence. Solution evidence: named coordinate frames and clock, prediction-error calculation, controlled stimulus and metric, uncertainty interval, comfort/perception limits, and explicit device or human-study evidence boundary.
+
+A project is ready to advance when its written solution lets a second learner reproduce the inputs, derive the expected output, execute the checks, interpret a failing case, and state which real-world claims remain untested. A report that only lists topics, links code without a current build, or shows a best-case screenshot does not satisfy that bar.
+
+#### Worked checkpoints for the six-stage route
+
+**Signal solution.** For a two-by-two scalar texture with rows $(0,1)$ and $(1,0)$, bilinear interpolation at equal weights gives $0.5$. It also preserves a constant texture: weights summing to one return that same constant. State the boundary and texel-center convention before testing edge samples. For linear-light endpoints 0 and 1, the mean is $0.5$ linear. The sRGB encoding $1.055L^{1/2.4}-0.055$ at this value is approximately $0.73536$, while averaging the encoded endpoints gives $0.5$ encoded, which decodes to about $0.21404$ linear. These are different operations; decide which signal the filter is meant to reconstruct.
+
+**Camera solution.** Choose a camera looking along negative $z$, image $v$ increasing upward, $f_x=f_y=400$ pixels, principal point $(320,240)$, and camera point $(1,0.5,-2)$. The pinhole formulas give $u=400(1/2)+320=520$ and $v=400(0.5/2)+240=340$. For image rows increasing downward, the second result is instead $v=240-100=140$. A camera-parallel translation at that fixed depth has derivative magnitude $200$ pixels per metre; a two-pixel residual corresponds to $0.01$ metre along that direction in this restricted model. It does not determine an arbitrary 3-D pose from a single point.
+
+**Light-transport solution.** A Lambertian patch with reflectance $\rho=0.8$ under uniform incident radiance $L_i=1$ over its upper hemisphere has $L_o=(\rho/\pi)\int L_i\cos\theta\,d\omega=0.8$, since the cosine integral is $\pi$. With cosine-weighted sampling $p(\omega)=\cos\theta/\pi$, each ideal unoccluded sample gives $f_rL_i\cos\theta/p=0.8$. A result of $0.8/\pi$ has probably omitted the integration measure or canceled the sampling density incorrectly. This unusually simple reference has no visibility variation; it does not establish low variance for a general scene.
+
+**Geometry solution.** Use triangle vertices $(0,0,0)$, $(1,0,0)$, $(0,1,0)$ and ray origin $(0.25,0.25,1)$ with direction $(0,0,-1)$. The intersection is at ray parameter $t=1$, position $(0.25,0.25,0)$ and barycentric weights $(0.5,0.25,0.25)$. Now replace the third vertex by $(2,0,0)$: the triangle has zero area, so the routine must return its declared degenerate classification rather than divide by a zero determinant. Changing the ray direction to $(1,0,0)$ makes it parallel to the original triangle's plane. Document whether coplanar overlap is a separate query; a point-hit routine should not invent a unique hit distance.
+
+**Fitting solution.** Reproduce the two-layer training example later in this book: with unit footprint weights, front opacity $0.5$, front color $0.8$, back opacity $0.25$, back color $0.2$, black background and target $0.4$, the rendered value is $0.425$ and the front-logit loss gradient is $0.0046875$. Then use a nonunit footprint and check the chain rule by finite differences. A falling training error with increasing held-out error suggests overfitting or a distribution/calibration problem; first rule out shared captures, preprocessing leakage and repeatedly tuning on the purported test set before crediting a better model.
+
+**Timing solution.** With constant translational velocity $1\,\mathrm{m/s}$, a $20\,\mathrm{ms}$ prediction horizon advances the position by $0.02\,\mathrm m$. Under constant single-axis angular velocity $0.5\,\mathrm{rad/s}$, it advances that angle by $0.01\,\mathrm{rad}$. A five-millisecond clock offset alone introduces $0.005\,\mathrm m$ of translational discrepancy in this example. These are synthetic kinematic checks with fixed velocity, not a headset tracking or comfort result. Acceleration, uncertain clocks and display timing require their own model and measurements.
+
+
+
 > [!abstract]- Chapter map
 > - [[Chapter Edition/02 - Graphics Vision and XR/01 - From Worlds to Images and Inference#A scene description becomes an image|A scene description becomes an image]]
 > - [[Chapter Edition/02 - Graphics Vision and XR/01 - From Worlds to Images and Inference#Mathematical language: points, vectors, and derivatives|Mathematical language: points, vectors, and derivatives]]
@@ -135,9 +166,9 @@ An image pixel is not inherently the color of a mathematical point. It summarize
 
 The mathematical ray
 
-\[
+$$
 \mathbf r(t)=\mathbf o+t\mathbf d
-\]
+$$
 
 is simple. A production ray tracer becomes difficult when finite precision, secondary rays, texture filtering, stochastic sampling, denoising, temporal reuse, acceleration structures and rasterized passes interact.
 
@@ -147,9 +178,9 @@ Ray Tracing Gems is valuable because its chapters live at these boundaries: robu
 
 Suppose a ray intersects a surface at computed position
 
-\[
+$$
 \widehat{\mathbf p}.
-\]
+$$
 
 In exact arithmetic, a reflected ray begins on the surface and leaves it. Floating-point reconstruction can place the computed point microscopically on the wrong side. The acceleration structure may then report the same surface at a tiny positive parameter, producing acne, black speckles or recursive self-hits.
 
@@ -163,12 +194,12 @@ is not scale invariant. A scene containing microscopic and kilometer-scale geome
 
 The robust concept is:
 
-\[
+$$
 \boxed{
 \text{offset far enough to cross the numerical uncertainty interval,
 not an arbitrary visual distance}
 }
-\]
+$$
 
 The sign of the offset must also agree with the side of the interface into which the new ray travels. Reflection, transmission and nested-medium logic must use a consistent geometric-normal convention.
 
@@ -178,21 +209,21 @@ This generalizes beyond ray tracing: tolerances should be connected to scale and
 
 A ray is not only origin and direction. Its valid parameter interval
 
-\[
+$$
 t\in[t_{\min},t_{\max}]
-\]
+$$
 
 can encode self-hit exclusion, nearest-hit search, continuation after a previous hit, a finite sensor range or a shadow segment ending at a light.
 
-For a point light at \(\mathbf l\), a shadow ray from \(\mathbf p\) has
+For a point light at $\mathbf l$, a shadow ray from $\mathbf p$ has
 
-\[
+$$
 \mathbf d=\mathbf l-\mathbf p,
 \qquad
 D=\|\mathbf d\|.
-\]
+$$
 
-After normalization, the useful ray ends at distance \(D\). A blocker farther away is irrelevant.
+After normalization, the useful ray ends at distance $D$. A blocker farther away is irrelevant.
 
 An engine ray type should therefore carry interval semantics explicitly rather than letting every caller invent a different distance test.
 
@@ -206,7 +237,7 @@ Two practical approximations are **ray differentials** and **ray cones**.
 
 A ray differential tracks small changes of origin and direction with respect to image-space coordinates:
 
-\[
+$$
 \frac{\partial \mathbf o}{\partial x},
 \quad
 \frac{\partial \mathbf o}{\partial y},
@@ -214,13 +245,13 @@ A ray differential tracks small changes of origin and direction with respect to 
 \frac{\partial \mathbf d}{\partial x},
 \quad
 \frac{\partial \mathbf d}{\partial y}.
-\]
+$$
 
 After intersection, those derivatives induce a surface/texture Jacobian such as
 
-\[
+$$
 \frac{\partial(u,v)}{\partial(x,y)},
-\]
+$$
 
 which can drive mip selection and anisotropic filtering.
 
@@ -242,11 +273,11 @@ ray cones:
 
 The general sampling principle is:
 
-\[
+$$
 \boxed{
 \text{filter width should reflect the sample footprint in signal space}
 }
-\]
+$$
 
 Mipmapping is therefore not merely a texture-memory optimization. It is an anti-aliasing response to finite footprint.
 
@@ -254,20 +285,20 @@ Mipmapping is therefore not merely a texture-memory optimization. It is an anti-
 
 For
 
-\[
+$$
 I=\int_\Omega f(x)\,dx
-\]
+$$
 
-and samples \(X_i\sim p\),
+and samples $X_i\sim p$,
 
-\[
+$$
 \widehat I_N=
 \frac1N
 \sum_{i=1}^{N}
 \frac{f(X_i)}{p(X_i)}.
-\]
+$$
 
-Changing \(p\) can reduce variance without changing the target, provided support and weights remain correct.
+Changing $p$ can reduce variance without changing the target, provided support and weights remain correct.
 
 This matters for many-light rendering. A renderer may choose lights according to power, distance, a spatial hierarchy or another proxy. Whatever selection policy is used, the estimator must account for its sampling probability.
 
@@ -286,15 +317,15 @@ Rare paths can produce huge contributions and visible fireflies.
 
 Clamping
 
-\[
+$$
 \widetilde f=\min(f,C)
-\]
+$$
 
-reduces variance but changes expectation whenever values above \(C\) have nonzero probability:
+reduces variance but changes expectation whenever values above $C$ have nonzero probability:
 
-\[
+$$
 \mathbb E[\widetilde f]\neq\mathbb E[f].
-\]
+$$
 
 This does not make clamping forbidden. Real-time rendering frequently accepts controlled bias. It means the trade should be named correctly.
 
@@ -302,11 +333,11 @@ Path regularization makes a similar compromise by modifying difficult later scat
 
 The general relation is
 
-\[
+$$
 \boxed{
 \text{less variance may require more bias}
 }
-\]
+$$
 
 and “looks cleaner” is not evidence that the estimator stayed unchanged.
 
@@ -314,13 +345,13 @@ and “looks cleaner” is not evidence that the estimator stayed unchanged.
 
 A low-sample ray-traced component can be viewed schematically as
 
-\[
+$$
 Y=X+\varepsilon,
-\]
+$$
 
-where \(X\) is desired signal and \(\varepsilon\) is sampling noise.
+where $X$ is desired signal and $\varepsilon$ is sampling noise.
 
-A denoiser estimates \(X\) from \(Y\) plus features such as:
+A denoiser estimates $X$ from $Y$ plus features such as:
 
 ~~~
 depth
@@ -405,7 +436,7 @@ A production ray tracer is not just an intersection function. It is a scheduler 
 
 The MIT graphics sequence supplies the conceptual chain:
 
-\[
+$$
 \text{ray casting}
 \rightarrow
 \text{ray tracing}
@@ -419,11 +450,11 @@ The MIT graphics sequence supplies the conceptual chain:
 \text{Monte Carlo}
 \rightarrow
 \text{rasterization/shadows}
-\]
+$$
 
 Ray Tracing Gems adds the production pressure:
 
-\[
+$$
 \boxed{
 \text{precision}
 +
@@ -437,7 +468,7 @@ Ray Tracing Gems adds the production pressure:
 +
 \text{hybrid dependencies}
 }
-\]
+$$
 
 Those two layers belong in one narrative: first understand what the renderer computes, then understand why a correct-looking mathematical formula can still fail in a real-time implementation.
 
@@ -449,7 +480,7 @@ Source basis: MIT 6.837 Computer Graphics and Ray Tracing Gems, especially its s
 
 The ray-tracing section above closes an important production gap, but the MIT 6.837 sequence is valuable precisely because it refuses to treat rendering as an isolated API exercise. Curves, transformations, hierarchy, color, animation, differential equations, collisions, shading, sampling, global illumination, rasterization and shadows are all different views of one problem:
 
-\[
+$$
 \boxed{
 \text{represent a changing world continuously}
 \rightarrow
@@ -457,7 +488,7 @@ The ray-tracing section above closes an important production gap, but the MIT 6.
 \rightarrow
 \text{produce a finite image}
 }
-\]
+$$
 
 The deep connection is numerical. Geometry is sampled into vertices. Curves are sampled into segments. Motion is sampled in time. Textures are sampled in image space. Illumination is sampled in direction/path space. Rasterization samples coverage. A camera samples radiance. A display reconstructs emitted light from finite pixels.
 
@@ -467,7 +498,7 @@ Once this common structure is visible, many engine rules stop looking arbitrary.
 
 A parametric curve is
 
-\[
+$$
 \mathbf p(t)=
 \begin{bmatrix}
 x(t)\\
@@ -476,27 +507,27 @@ z(t)
 \end{bmatrix},
 \qquad
 t\in[a,b].
-\]
+$$
 
 The first derivative
 
-\[
+$$
 \mathbf p'(t)
-\]
+$$
 
 gives tangent direction and speed with respect to parameter t.
 
 The second derivative
 
-\[
+$$
 \mathbf p''(t)
-\]
+$$
 
 describes how that tangent changes.
 
-A cubic Bézier curve with control points \(\mathbf P_0,\mathbf P_1,\mathbf P_2,\mathbf P_3\) is
+A cubic Bézier curve with control points $\mathbf P_0,\mathbf P_1,\mathbf P_2,\mathbf P_3$ is
 
-\[
+$$
 \mathbf B(t)
 =
 (1-t)^3\mathbf P_0
@@ -506,19 +537,19 @@ A cubic Bézier curve with control points \(\mathbf P_0,\mathbf P_1,\mathbf P_2,
 3(1-t)t^2\mathbf P_2
 +
 t^3\mathbf P_3.
-\]
+$$
 
 Its endpoint properties are immediate:
 
-\[
+$$
 \mathbf B(0)=\mathbf P_0,
 \qquad
 \mathbf B(1)=\mathbf P_3.
-\]
+$$
 
 Its derivative is
 
-\[
+$$
 \mathbf B'(t)
 =
 3(1-t)^2(\mathbf P_1-\mathbf P_0)
@@ -526,15 +557,15 @@ Its derivative is
 6(1-t)t(\mathbf P_2-\mathbf P_1)
 +
 3t^2(\mathbf P_3-\mathbf P_2).
-\]
+$$
 
 Therefore
 
-\[
+$$
 \mathbf B'(0)=3(\mathbf P_1-\mathbf P_0),
 \qquad
 \mathbf B'(1)=3(\mathbf P_3-\mathbf P_2).
-\]
+$$
 
 This explains why the inner control points determine endpoint tangents even though the curve generally does not pass through them.
 
@@ -550,13 +581,13 @@ For an engine, derivatives matter because a curve is rarely only a visible line.
 - motion blur,
 - arc-length parameterization.
 
-A camera following \(\mathbf B(t)\) can use a normalized tangent
+A camera following $\mathbf B(t)$ can use a normalized tangent
 
-\[
+$$
 \mathbf T(t)=
 \frac{\mathbf B'(t)}
 {\|\mathbf B'(t)\|}
-\]
+$$
 
 as one orientation axis.
 
@@ -564,15 +595,15 @@ But parameter t does not usually correspond to constant world-space speed.
 
 The speed is
 
-\[
+$$
 v(t)=\|\mathbf B'(t)\|.
-\]
+$$
 
 Arc length from 0 to t is
 
-\[
+$$
 s(t)=\int_0^t\|\mathbf B'(u)\|\,du.
-\]
+$$
 
 If the camera should move at constant physical speed, the engine should advance approximately uniformly in s, not uniformly in t.
 
@@ -594,13 +625,13 @@ recover t
 
 The general lesson is:
 
-\[
+$$
 \boxed{
 \text{parameter uniformity}
 \neq
 \text{spatial uniformity}
 }
-\]
+$$
 
 This same distinction appears in texture parameterization and animation timing.
 
@@ -610,33 +641,33 @@ Cubic Bézier evaluation can be written as repeated interpolation.
 
 First level:
 
-\[
+$$
 \mathbf Q_0=(1-t)\mathbf P_0+t\mathbf P_1
-\]
+$$
 
-\[
+$$
 \mathbf Q_1=(1-t)\mathbf P_1+t\mathbf P_2
-\]
+$$
 
-\[
+$$
 \mathbf Q_2=(1-t)\mathbf P_2+t\mathbf P_3.
-\]
+$$
 
 Second level:
 
-\[
+$$
 \mathbf R_0=(1-t)\mathbf Q_0+t\mathbf Q_1
-\]
+$$
 
-\[
+$$
 \mathbf R_1=(1-t)\mathbf Q_1+t\mathbf Q_2.
-\]
+$$
 
 Final:
 
-\[
+$$
 \mathbf B(t)=(1-t)\mathbf R_0+t\mathbf R_1.
-\]
+$$
 
 This construction proves the convex-hull property because every stage is an interpolation of points already inside the previous convex hull.
 
@@ -662,29 +693,29 @@ The important engine pattern is adaptive work based on error, not fixed work bas
 
 Two curve pieces can meet with different continuity guarantees.
 
-\(C^0\) continuity means positions agree:
+$C^0$ continuity means positions agree:
 
-\[
+$$
 \mathbf B_1(1)=\mathbf B_2(0).
-\]
+$$
 
-\(C^1\) continuity means first derivatives also agree:
+$C^1$ continuity means first derivatives also agree:
 
-\[
+$$
 \mathbf B_1'(1)=\mathbf B_2'(0).
-\]
+$$
 
-Geometric \(G^1\) continuity only requires tangent directions to agree up to positive scaling:
+Geometric $G^1$ continuity only requires tangent directions to agree up to positive scaling:
 
-\[
+$$
 \mathbf B_2'(0)=\lambda\mathbf B_1'(1),
 \qquad
 \lambda>0.
-\]
+$$
 
 This distinction matters visually.
 
-A road or camera path can look directionally smooth under \(G^1\) while speed changes because derivative magnitudes differ.
+A road or camera path can look directionally smooth under $G^1$ while speed changes because derivative magnitudes differ.
 
 Animation, camera rails, and physically meaningful trajectories often care about more than geometric appearance.
 
@@ -694,12 +725,12 @@ A scene graph is often introduced as a parent-child tree. The deeper model is co
 
 Let
 
-\[
+$$
 M_{world}^{child}
 =
 M_{world}^{parent}
 M_{parent}^{child}.
-\]
+$$
 
 For a chain
 
@@ -715,13 +746,13 @@ brake-caliper
 
 the final transform is
 
-\[
+$$
 M_{world}^{caliper}
 =
 M_{world}^{vehicle}
 M_{vehicle}^{wheel}
 M_{wheel}^{caliper}.
-\]
+$$
 
 The multiplication order encodes the change-of-basis sequence.
 
@@ -729,12 +760,12 @@ This is why transform order is not cosmetic.
 
 If the convention uses column vectors,
 
-\[
+$$
 \mathbf p_{world}
 =
 M_{world}^{object}
 \mathbf p_{object}.
-\]
+$$
 
 Then composing translation and rotation in the wrong order changes the pivot/orbit behavior.
 
@@ -779,13 +810,13 @@ The editor can still present the tree.
 
 Again:
 
-\[
+$$
 \boxed{
 \text{logical abstraction}
 \neq
 \text{physical data layout}
 }
-\]
+$$
 
 This connects MIT hierarchical modeling directly to the data-oriented C++ discussion.
 
@@ -793,31 +824,31 @@ This connects MIT hierarchical modeling directly to the data-oriented C++ discus
 
 Linear blend skinning transforms a rest-pose vertex by several joint transforms.
 
-For vertex position \(\mathbf p\),
+For vertex position $\mathbf p$,
 
-\[
+$$
 \mathbf p'
 =
 \sum_{j=1}^{k}
 w_j
 M_j
 \mathbf p,
-\]
+$$
 
 with
 
-\[
+$$
 \sum_j w_j=1.
-\]
+$$
 
 In practice each joint matrix often combines current pose with inverse bind pose:
 
-\[
+$$
 M_j
 =
 M_{world,j}^{current}
 \left(M_{world,j}^{bind}\right)^{-1}.
-\]
+$$
 
 The inverse bind transform maps the vertex from mesh bind space into the joint's bind-local frame, after which the current joint transform carries it into the current posed frame.
 
@@ -831,33 +862,33 @@ The engine lesson is to know what approximation the skinning representation make
 
 #### Normals cannot always use the same matrix as positions
 
-A transformed tangent \(\mathbf t\) and normal \(\mathbf n\) should remain perpendicular:
+A transformed tangent $\mathbf t$ and normal $\mathbf n$ should remain perpendicular:
 
-\[
+$$
 \mathbf n^\top\mathbf t=0.
-\]
+$$
 
 Under a linear transform A,
 
-\[
+$$
 \mathbf t'=A\mathbf t.
-\]
+$$
 
-We want a transformed normal \(\mathbf n'\) such that
+We want a transformed normal $\mathbf n'$ such that
 
-\[
+$$
 {\mathbf n'}^\top A\mathbf t=0.
-\]
+$$
 
 Choosing
 
-\[
+$$
 \mathbf n'=(A^{-1})^\top\mathbf n
-\]
+$$
 
 gives
 
-\[
+$$
 {\mathbf n'}^\top A\mathbf t
 =
 \mathbf n^\top A^{-1}A\mathbf t
@@ -865,7 +896,7 @@ gives
 \mathbf n^\top\mathbf t
 =
 0.
-\]
+$$
 
 Therefore the normal matrix is inverse-transpose of the relevant linear transform when nonuniform scale/shear is present.
 
@@ -889,15 +920,15 @@ Arithmetic such as interpolation and lighting belongs in a linear-light domain.
 
 If values are gamma encoded, naive averaging is wrong.
 
-For two encoded colors \(c_1,c_2\), generally
+For two encoded colors $c_1,c_2$, generally
 
-\[
+$$
 decode\left(
 \frac{c_1+c_2}{2}
 \right)
 \neq
 \frac{decode(c_1)+decode(c_2)}{2}.
-\]
+$$
 
 This is why texture formats and framebuffer transfer functions matter.
 
@@ -907,7 +938,7 @@ Color management is not a final export concern; it is part of numerical correctn
 
 The rendering equation is
 
-\[
+$$
 L_o(\mathbf x,\omega_o)
 =
 L_e(\mathbf x,\omega_o)
@@ -917,14 +948,14 @@ f_r(\mathbf x,\omega_i,\omega_o)
 L_i(\mathbf x,\omega_i)
 (\mathbf n\cdot\omega_i)^+
 d\omega_i.
-\]
+$$
 
 Each factor has a role:
 
-- \(L_o\): outgoing radiance,
-- \(L_e\): emitted radiance,
-- \(f_r\): BRDF,
-- \(L_i\): incident radiance,
+- $L_o$: outgoing radiance,
+- $L_e$: emitted radiance,
+- $f_r$: BRDF,
+- $L_i$: incident radiance,
 - cosine term: projected-area factor,
 - solid-angle differential: directional integration measure.
 
@@ -938,21 +969,21 @@ Many animation systems can be expressed as ordinary differential equations.
 
 For particle position x and velocity v:
 
-\[
+$$
 \dot{\mathbf x}=\mathbf v,
-\]
+$$
 
-\[
+$$
 m\dot{\mathbf v}=\mathbf F(\mathbf x,\mathbf v,t).
-\]
+$$
 
 Equivalently,
 
-\[
+$$
 \dot{\mathbf v}
 =
 \frac{\mathbf F}{m}.
-\]
+$$
 
 The continuous equations do not directly tell the computer how to advance one frame.
 
@@ -960,17 +991,17 @@ A numerical integrator approximates that evolution.
 
 ##### Explicit Euler
 
-\[
+$$
 \mathbf x_{n+1}
 =
 \mathbf x_n+h\mathbf v_n,
-\]
+$$
 
-\[
+$$
 \mathbf v_{n+1}
 =
 \mathbf v_n+h\mathbf a_n.
-\]
+$$
 
 It is simple and first-order accurate, but it can inject energy into oscillatory systems.
 
@@ -978,19 +1009,19 @@ It is simple and first-order accurate, but it can inject energy into oscillatory
 
 Update velocity first:
 
-\[
+$$
 \mathbf v_{n+1}
 =
 \mathbf v_n+h\mathbf a_n,
-\]
+$$
 
 then position using the new velocity:
 
-\[
+$$
 \mathbf x_{n+1}
 =
 \mathbf x_n+h\mathbf v_{n+1}.
-\]
+$$
 
 For many game-physics systems, this small change has much better qualitative energy behavior than explicit Euler while remaining cheap.
 
@@ -1000,13 +1031,13 @@ This is why two methods with nearly identical code can behave very differently.
 
 Backward Euler evaluates the derivative at the future state:
 
-\[
+$$
 \mathbf x_{n+1}
 =
 \mathbf x_n
 +
 h f(\mathbf x_{n+1},t_{n+1}).
-\]
+$$
 
 Because the unknown future state appears on both sides, the step is implicit and often requires solving a system.
 
@@ -1018,7 +1049,7 @@ The trade is numerical damping and solve cost.
 
 A simple position Verlet form is
 
-\[
+$$
 \mathbf x_{n+1}
 =
 2\mathbf x_n
@@ -1026,7 +1057,7 @@ A simple position Verlet form is
 \mathbf x_{n-1}
 +
 h^2\mathbf a_n.
-\]
+$$
 
 It stores previous position rather than explicit velocity.
 
@@ -1034,17 +1065,17 @@ Constraint-based cloth and particle systems often like Verlet-style formulations
 
 The deeper point is:
 
-\[
+$$
 \boxed{
 \text{integration scheme is part of the simulated model}
 }
-\]
+$$
 
 Changing integrator can change observed energy, damping, stability, and phase behavior even when the force equations remain identical.
 
 #### Time step is a numerical parameter, not merely frame duration
 
-If the render frame takes \(\Delta t\), it does not follow that the physics integrator should always advance by exactly that variable step.
+If the render frame takes $\Delta t$, it does not follow that the physics integrator should always advance by exactly that variable step.
 
 Large variable steps can destabilize simulation.
 
@@ -1066,37 +1097,37 @@ The simulation then has more predictable numerical behavior and deterministic-re
 
 The remaining interpolation fraction is
 
-\[
+$$
 \alpha=
 \frac{accumulator}{h}.
-\]
+$$
 
 Visual state can be interpolated between the previous and current simulation states.
 
 #### A mass-spring system exposes stiffness
 
-For a spring between positions \(\mathbf x_i\) and \(\mathbf x_j\),
+For a spring between positions $\mathbf x_i$ and $\mathbf x_j$,
 
-\[
+$$
 \mathbf d=\mathbf x_j-\mathbf x_i,
 \qquad
 \ell=\|\mathbf d\|.
-\]
+$$
 
 Hooke's law force magnitude is
 
-\[
+$$
 F=-k(\ell-\ell_0).
-\]
+$$
 
 A vector force can be
 
-\[
+$$
 \mathbf F_i
 =
 k(\ell-\ell_0)
 \frac{\mathbf d}{\ell},
-\]
+$$
 
 with opposite force on j.
 
@@ -1112,48 +1143,48 @@ Detection asks whether objects overlap or will contact.
 
 Response asks what change in velocity/position should follow.
 
-For a simple frictionless impulse between two bodies with contact normal \(\mathbf n\), relative contact velocity is
+For a simple frictionless impulse between two bodies with contact normal $\mathbf n$, relative contact velocity is
 
-\[
+$$
 \mathbf v_r
 =
 \mathbf v_B-\mathbf v_A.
-\]
+$$
 
 Its normal component is
 
-\[
+$$
 v_n=\mathbf v_r\cdot\mathbf n.
-\]
+$$
 
-If \(v_n\ge0\), the bodies are already separating along the normal and a new closing impulse is usually unnecessary.
+If $v_n\ge0$, the bodies are already separating along the normal and a new closing impulse is usually unnecessary.
 
-For point masses with inverse masses \(m_A^{-1}\) and \(m_B^{-1}\), coefficient of restitution e, the scalar impulse magnitude is
+For point masses with inverse masses $m_A^{-1}$ and $m_B^{-1}$, coefficient of restitution e, the scalar impulse magnitude is
 
-\[
+$$
 j
 =
 -\frac{(1+e)v_n}
 {m_A^{-1}+m_B^{-1}}.
-\]
+$$
 
 Then
 
-\[
+$$
 \mathbf v_A'
 =
 \mathbf v_A
 -
 j m_A^{-1}\mathbf n,
-\]
+$$
 
-\[
+$$
 \mathbf v_B'
 =
 \mathbf v_B
 +
 j m_B^{-1}\mathbf n.
-\]
+$$
 
 Rigid bodies add rotational terms because an impulse away from the center of mass changes angular velocity.
 
@@ -1161,11 +1192,11 @@ The full denominator contains effective mass contributions from inertia tensors 
 
 The conceptual lesson is:
 
-\[
+$$
 \boxed{
 \text{contact response acts on relative velocity through effective mass}
 }
-\]
+$$
 
 not simply by reversing one object's velocity.
 
@@ -1173,11 +1204,11 @@ not simply by reversing one object's velocity.
 
 Restitution relates pre- and post-collision normal relative velocity in an idealized contact:
 
-\[
+$$
 v_n'
 =
 -e v_n.
-\]
+$$
 
 Using high restitution for tiny resting contacts can create jitter because numerical noise becomes repeated bounce energy.
 
@@ -1189,28 +1220,28 @@ This is an example of a physically motivated model requiring numerical policy.
 
 After solving the normal impulse, compute tangential relative velocity:
 
-\[
+$$
 \mathbf v_t
 =
 \mathbf v_r
 -
 (\mathbf v_r\cdot\mathbf n)\mathbf n.
-\]
+$$
 
 If nonzero, tangent direction is
 
-\[
+$$
 \mathbf t=
 \frac{\mathbf v_t}{\|\mathbf v_t\|}.
-\]
+$$
 
 A candidate tangential impulse can be derived through tangential effective mass, then clamped according to Coulomb friction:
 
-\[
+$$
 |j_t|
 \le
 \mu j_n.
-\]
+$$
 
 The normal impulse creates the bound on friction impulse.
 
@@ -1240,12 +1271,12 @@ A pixel value conceptually averages a continuous image signal over a footprint.
 
 For pixel region A,
 
-\[
+$$
 I_A
 =
 \frac{1}{|A|}
 \int_A I(x,y)\,dx\,dy.
-\]
+$$
 
 One sample at the pixel center estimates that integral poorly when signal frequencies exceed the sampling rate.
 
@@ -1269,11 +1300,11 @@ Anisotropic filtering goes further because the projected footprint is often elon
 
 The correct abstraction is:
 
-\[
+$$
 \boxed{
 \text{texture lookup should approximate footprint integration}
 }
-\]
+$$
 
 not merely nearest color retrieval.
 
@@ -1283,7 +1314,7 @@ For a triangle projected to screen, rasterization determines which pixels/sample
 
 Barycentric coordinates express a point as
 
-\[
+$$
 \mathbf p
 =
 \lambda_0\mathbf p_0
@@ -1291,13 +1322,13 @@ Barycentric coordinates express a point as
 \lambda_1\mathbf p_1
 +
 \lambda_2\mathbf p_2,
-\]
+$$
 
 with
 
-\[
+$$
 \lambda_0+\lambda_1+\lambda_2=1.
-\]
+$$
 
 Attributes can be interpolated from those weights.
 
@@ -1305,15 +1336,15 @@ But perspective changes the correct interpolation rule.
 
 For an attribute a stored at clip-space vertices with w values, perspective-correct interpolation uses quantities related to
 
-\[
+$$
 \frac{a_i}{w_i}
 \quad\text{and}\quad
 \frac{1}{w_i}
-\]
+$$
 
 then divides after interpolation:
 
-\[
+$$
 a
 =
 \frac{
@@ -1321,7 +1352,7 @@ a
 }{
 \sum_i \lambda_i \frac{1}{w_i}
 }.
-\]
+$$
 
 This is why naive screen-space linear interpolation makes textures visibly warp.
 
@@ -1362,7 +1393,7 @@ Cascaded shadow maps allocate more light-space resolution near the camera where 
 
 Again:
 
-\[
+$$
 \boxed{
 \text{shadow quality}
 =
@@ -1372,7 +1403,7 @@ Again:
 +
 \text{numerical robustness}
 }
-\]
+$$
 
 #### Image-based lighting turns the environment into an integral
 
@@ -1380,14 +1411,14 @@ An environment map provides incident radiance over direction.
 
 Diffuse irradiance at normal n is
 
-\[
+$$
 E(\mathbf n)
 =
 \int_{\Omega^+}
 L_i(\omega)
 (\mathbf n\cdot\omega)
 \,d\omega.
-\]
+$$
 
 Rather than evaluate this expensive integral per shading point from raw environment samples, renderers precompute approximations such as irradiance maps or spherical-harmonic coefficients.
 
@@ -1434,7 +1465,7 @@ It is finished only when the display-facing signal is produced under a known col
 
 The most useful reading of the course is:
 
-\[
+$$
 \boxed{
 \begin{array}{c}
 \text{curves/surfaces}\\
@@ -1458,7 +1489,7 @@ The most useful reading of the course is:
 \text{display}
 \end{array}
 }
-\]
+$$
 
 A game engine repeatedly traverses this dependency graph every frame.
 

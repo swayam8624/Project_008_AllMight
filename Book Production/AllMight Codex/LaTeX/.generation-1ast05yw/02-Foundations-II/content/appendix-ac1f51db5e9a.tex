@@ -1,0 +1,44 @@
+\hypertarget{appendix-ac1f51db5e9a}{}
+\section*{Manual Integration - Pending Source Queue}
+\section{Manual integration --- retained sources and unfinished work}\label{appendix-ac1f51db5e9a-manual-integration-retained-sources-and-unfinished-work}
+
+This is the persistent queue for the earlier source corpus and later supplied lessons. A newly received text adds work; it does not replace an earlier text, caption, book, or unfinished teaching draft. Original evidence and review checkpoints remain available until its contribution has been traced into the teaching volumes or explicitly documented as already covered. Acquisition remains paused under the earlier stop instruction; direct reading and note integration continue separately.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Material
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Preserved evidence
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Integration/review boundary
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Earlier 18 supplied texts & Original attachment hashes and byte copies, P01--P18 & Parts 1101--1700 integrated into graphics, engine and foundations; source/code preservation checked \\
+Nine later supplied texts & Original attachment hashes and byte copies, R01--R09 & Parts 1801--2156 routed by subject; corrections and performed checks recorded in the source ledger \\
+Missing curriculum interval & No source supplied for Parts 1701--1800 in these batches & Keep missing; do not silently invent received coverage \\
+Earlier extracted caption/book records & 590 records; 29,715 extracted point claims; all referenced point and source-unit files found & 28,485 claim texts reviewed; 1,230 await claim-level review (14 November reconciliation). Reading a claim does not certify its source or its narrative integration \\
+Seven newly supplied mathematics books & Seven original PDFs, 4,205 physical pages, mechanical text cache where available & Selected passages read and taught; full-book reading is unfinished. The scanned Arnold book requires visual/OCR work \\
+Original bits and C++ notes & Combined foundations volume plus byte-identical recovery copies outside the live vault & Two originals retired after explicit approval and a complete-body/code/link audit \\
+Earlier saved delta draft & Circle coverage/picking and Rules of Play social-rule teaching & Included in the engine revision; no current engine build or participant-behavior claim inferred \\
+\end{longtable}
+}
+
+The machine-readable queue retains each extraction job, exact pending point IDs, source paths, SHA-256 hashes and its review ledger: \hyperref[source-file-77f5d6d48d2587f7e7779921]{ALL\_SOURCES\_BACKLOG.json}. It is an inventory and resume authority, not a claim that all of the corpus has been integrated.
+
+Use \hyperref[source-file-4269beda3a2effefff717ba5]{WORK\_STATE.json} for the active revision and \href{../06-Engine-II/main.pdf\#nameddest=appendix-3b67654799a2}{source verification (06-Engine-II, appendix-3b67654799a2)} for what was actually tested. Keep advancing pending sources in bounded batches, inspecting original source units before adopting uncertain claims, and teaching substantive additions inside the existing subject volumes.
+
+\subsubsection{Root caption review continuation --- ten records}\label{appendix-ac1f51db5e9a-root-caption-review-continuation-ten-records}
+
+The next ten retained video records were checked against their cited raw caption units: 57 extracted claims were read and compared with their evidence. Incorrect animation and platform-testing claims were rejected; historical announcements are retained as catalog/roadmap evidence, not implemented features. Animation workflow, method inputs/composition order, packaging dependencies and API capability contracts were developed in the engine/foundations books. At that historical checkpoint, totals were \textbf{14,240 reviewed and 15,475 pending}; the current table above supersedes those figures. This is still an unfinished whole-corpus review. \hyperref[source-file-02ebf2c2c2c38aae0035fc9f]{Exact source/point decisions}.
+
+\subsection{Current repair and retention boundary --- 14 November 2026}\label{appendix-ac1f51db5e9a-current-repair-and-retention-boundary-14-november-2026}
+
+\href{../01-Foundations-I/main.pdf\#nameddest=appendix-faa2b5a8e820}{The supervised repair record (01-Foundations-I, appendix-faa2b5a8e820)} separates implemented teaching, executed checks, unresolved source review and cleanup. Source captions and acquisition scripts have not been retired: the 1,230 pending claim texts and 103 open extraction jobs require their retained evidence. This local repair does not resume acquisition or mark unread book pages complete.

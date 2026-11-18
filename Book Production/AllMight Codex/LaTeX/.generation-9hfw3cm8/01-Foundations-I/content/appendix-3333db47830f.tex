@@ -1,0 +1,34 @@
+\hypertarget{appendix-3333db47830f}{}
+\section{Fixed-point rescaling}\label{appendix-3333db47830f-fixed-point-rescaling}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C006 · \textbf{Latest development:} C006
+
+\subsection{Definition and mechanism}\label{appendix-3333db47830f-definition-and-mechanism}
+
+Raw multiplication changes scale S to S²; divide the wide product by S with a declared rounding rule. Raw division uses A*S/B. Check the destination after widening, and handle divisor zero and signed minima.
+
+\subsection{Prerequisites}\label{appendix-3333db47830f-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1d0dbe8924cc]{Fixed-point representation} --- supplies the representation or validity rule used above.
+\item
+  \hyperref[appendix-05f39b10364d]{Minimum signed value} --- supplies the representation or validity rule used above.
+\item
+  \hyperref[appendix-2ed044358b82]{Arithmetic policies} --- supplies the representation or validity rule used above.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-3333db47830f-used-by}
+
+Connect later dependent concepts here when their explanations use this mechanism.
+
+\subsection{Recall and next depth}\label{appendix-3333db47830f-recall-and-next-depth}
+
+Reconstruct the example and identify the condition that would invalidate it.
+
+\textbf{Pending:} General arbitrary-width arithmetic is not supplied by this bounded int32/int64 lab.
+
+\subsection{Source and navigation}\label{appendix-3333db47830f-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-choosing-what-information-to-keep]{Continuous teaching story} · {Source coverage ledger {[}referenced section unavailable{]}} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

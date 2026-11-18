@@ -1,0 +1,43 @@
+\hypertarget{appendix-8836553d56fc}{}
+\section*{Implicit differentiation and parameter sensitivities}
+\chapter{Implicit differentiation and parameter sensitivities}\label{appendix-8836553d56fc-implicit-differentiation-and-parameter-sensitivities}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 9 · \textbf{Latest development:} Phase 9
+
+\section{Definition and mechanism}\label{appendix-8836553d56fc-definition-and-mechanism}
+
+Implicit differentiation obtains how a solution changes when it is defined by an equation rather than an explicit formula. If a state satisfies F(y,θ)=0 and the Jacobian with respect to y is invertible, differentiating gives dy/dθ=−(∂F/∂y)⁻¹(∂F/∂θ). This can differentiate equilibrium states, constrained optima, and roots without unrolling every solver iteration. For a converged optimizer, differentiating stationarity and constraint conditions yields sensitivity equations, but active-set changes, nonunique solutions, singular Jacobians, and imperfect convergence complicate the result. Continuous sensitivity equations propagate derivatives alongside an ODE; adjoint methods can reduce cost when there are many parameters and few scalar outputs. These are modeling tools with assumptions, not a guarantee that every algorithmic branch is differentiable.
+
+\section{Prerequisites}\label{appendix-8836553d56fc-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-40df0855b4a7}{Automatic differentiation and backpropagation (03-Visual-Computing-I, appendix-40df0855b4a7)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-29f4bea4c2bb}{Constrained optimization and inverse kinematics (04-Visual-Computing-II, appendix-29f4bea4c2bb)}
+\item
+  \href{../04-Visual-Computing-II/main.pdf\#nameddest=appendix-18eacf61a04b}{ODE integration and stability (04-Visual-Computing-II, appendix-18eacf61a04b)}
+\end{itemize}
+
+\section{Used by}\label{appendix-8836553d56fc-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  This node is a current endpoint in the supplied Phase 9--10 path.
+\end{itemize}
+
+\section{Full teaching explanation}\label{appendix-8836553d56fc-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Numerical\%20differentiation\%20and\%20automatic\%20differentiation}{Phase 9 teaching section}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-adf48f5dc5c1}{Visual Recall/09 - Calculus and Optimization - Visual Recall.md (01-Foundations-I, appendix-adf48f5dc5c1)} · visual recall
+\end{itemize}
+
+\section{Source coverage}\label{appendix-8836553d56fc-source-coverage}
+
+Supplied lesson parts: 855 (T03 · M052), 899 (T02 · M054), 900 (T02 · M054).

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch455.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-184fcc411663-uniform-shuffling-without-replacement" class="level2">
+<h2>Uniform shuffling without replacement</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 10 · <strong>Latest development:</strong> Phase 10</p>
+<section id="appendix-184fcc411663-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Fisher–Yates generates a uniform permutation by walking from the last array element downward and choosing an index uniformly from the unshuffled prefix. Each permutation has probability <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>n</mi>
+  <mo>!</mo>
+</math> if every bounded integer choice is unbiased and the random source meets its assumptions. A common error is to use a random integer routine with modulo bias; another is to draw from the wrong interval and omit permutations. For a fixed input array, test that the output contains every original element once; statistical tests can supplement, but not replace, deterministic checks of bounds and uniqueness. The same primitive supports uniform sample subsets and randomized stratification.</p>
+</section>
+<section id="appendix-184fcc411663-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch523.xhtml#appendix-e0f7c7e08f3a-stateful-pseudorandom-generators-and-stream-state" class="wikilink">Stateful pseudorandom generators and stream state</a></li>
+<li><a href="ch520.xhtml#appendix-daaf25bfd3a0-stateless-keyed-sampling-and-reproducibility" class="wikilink">Stateless keyed sampling and reproducibility</a></li>
+<li><a href="ch532.xhtml#appendix-f1ef323f6ed7-probability-spaces-events-and-conditioning" class="wikilink">Probability spaces, events, and conditioning</a></li>
+</ul>
+</section>
+<section id="appendix-184fcc411663-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch459.xhtml#appendix-1c5e85693a06-latin-hypercube-sampling" class="wikilink">Latin-hypercube sampling</a></li>
+<li><a href="ch499.xhtml#appendix-9f693ffd82bc-sampling-quality-stratification-quasi-monte-carlo-and-blue-noise" class="wikilink">Sampling quality: stratification, quasi-Monte Carlo, and blue noise</a></li>
+</ul>
+</section>
+<section id="appendix-184fcc411663-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch276.xhtml#id_02-foundations-ii-ch031-design-samples-without-replacement-stratified-and-low-discrepancy" class="wikilink">Design samples: without replacement, stratified, and low-discrepancy (Mathematics for Visual Computing, Part 2, Ch. 15)</a></li>
+</ul>
+</section>
+<section id="appendix-184fcc411663-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 995.</p>
+</section>
+<section id="appendix-184fcc411663-future-keywords" class="level3">
+<h3>Future keywords</h3>
+<p>Fisher–Yates, bounded random integer, permutation uniformity</p>
+</section>
+</section>
+</body>
+</html>

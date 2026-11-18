@@ -1,0 +1,6387 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch429.xhtml</title>
+  <style>
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="id_05-engine-i-ch021-buffers-images-memory-and-uploads" class="level2">
+<h2>Buffers, images, memory, and uploads</h2>
+<p><a href="ch410.xhtml#id_06-GPU-Architecture-and-Real-Time-Rendering" class="wikilink">Reading map</a> · <a href="ch428.xhtml#id_05-engine-i-ch020-gpu-performance-models-and-principled-redesign" class="wikilink">Previous chapter</a> · <a href="ch430.xhtml#id_05-engine-i-ch022-vulkan-synchronization-and-multi-frame-lifetimes" class="wikilink">Next chapter</a></p>
+<p>GPU resources are not just arrays; formats, usage, alignment, staging, and device-memory requirements shape whether a transfer is valid. This chapter follows buffers and images through allocation, upload, and visibility.</p>
+<p><strong>By the end:</strong> Select resource layouts and memory types from API requirements, and trace a CPU upload until the GPU may safely consume it.</p>
+<p><strong>Recall question:</strong> Which size, alignment, usage, and memory-type checks must pass before this image can be bound for rendering?</p>
+<!-- Derived from Continuous Notes/Game Engine - From First Frame to Living Worlds.md; source lines 48387–52776; source-span SHA256 673c57948ffcadffee27142340c44407edd6ec2b89ea6ab803651c34615a0ea7. -->
+<!-- CHAPTER-SOURCE-BEGIN -->
+<section id="id_05-engine-i-ch021-buffers-images-memory-uploads" class="level4">
+<h4>BUFFERS, IMAGES, MEMORY &amp; UPLOADS</h4>
+<p><strong>Vulkan separates resources from memory</strong></p>
+<p>This is one of Vulkan’s most important concepts.</p>
+<p>Creating:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>VkBuffer</span></code></pre></div>
+<p>does not necessarily allocate its backing bytes.</p>
+<p>Similarly:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>VkImage</span></code></pre></div>
+<p>describes an image resource but not necessarily its allocated memory.</p>
+<p>The general model is:</p>
+<pre class="text"><code>create resource
+    ↓
+query memory requirements
+    ↓
+allocate VkDeviceMemory
+    ↓
+bind memory to resource</code></pre>
+<p>This separation enables sophisticated memory allocators and aliasing.</p>
+<hr />
+<p><strong><code>VkBuffer</code></strong></p>
+<p>A buffer is an unformatted linear byte range.</p>
+<p>Creation:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>VkBufferCreateInfo create<span class="op">{};</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>create<span class="op">.</span>sType <span class="op">=</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>create<span class="op">.</span>size <span class="op">=</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    bytes<span class="op">;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>create<span class="op">.</span>usage <span class="op">=</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    usageFlags<span class="op">;</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>create<span class="op">.</span>sharingMode <span class="op">=</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    VK_SHARING_MODE_EXCLUSIVE<span class="op">;</span></span></code></pre></div>
+<p>then:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>vkCreateBuffer<span class="op">(...);</span></span></code></pre></div>
+<p>Its meaning comes from usage and how commands/shaders interpret its bytes.</p>
+<hr />
+<p><strong>Buffer usage flags</strong></p>
+<p>Possible roles include:</p>
+<pre class="text"><code>vertex data
+index data
+uniform data
+storage data
+transfer source
+transfer destination
+indirect arguments
+texel buffer</code></pre>
+<p>A buffer can combine roles.</p>
+<p>For example:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>VK_BUFFER_USAGE_TRANSFER_DST_BIT <span class="op">|</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>VK_BUFFER_USAGE_VERTEX_BUFFER_BIT</span></code></pre></div>
+<p>means:</p>
+<blockquote>
+<p>data may be copied into this buffer, then consumed as vertex input.</p>
+</blockquote>
+<p>Usage flags are not decorative.</p>
+<p>They tell the driver what operations will legally use the resource.</p>
+<hr />
+<p><strong>Kairo’s host buffer</strong></p>
+<p>Current <code>VulkanHostBuffer</code> creates a buffer with caller-provided usage flags, then chooses memory requiring:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>O</mi>
+  <mi>S</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>V</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>S</mi>
+  <mi>I</mi>
+  <mi>B</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>O</mi>
+  <mi>S</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>H</mi>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+  <mi>N</mi>
+  <mi>T</mi>
+  <mo>.</mo>
+</math>
+<p>It maps the allocation once during construction and retains:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span><span class="op">*</span> <span class="va">m_Mapped</span><span class="op">;</span></span></code></pre></div>
+<p>for its entire lifetime.</p>
+<p>That is essentially persistent mapping.</p>
+<hr />
+<p><strong><code>VkImage</code></strong></p>
+<p>An image is not merely “a 2D pixel array.”</p>
+<p>Its creation specifies:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>image type</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>format</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>extent</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>mip levels</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>array layers</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>sample count</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>tiling</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>usage</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>initial layout</mtext>
+  <mo>.</mo>
+</math>
+<p>These properties determine how memory is interpreted and accessed.</p>
+<hr />
+<p><strong>Kairo texture image</strong></p>
+<p>Kairo creates:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>imageType <span class="op">=</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    VK_IMAGE_TYPE_2D<span class="op">;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>extent <span class="op">=</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span>width<span class="op">,</span>height<span class="op">,</span><span class="dv">1</span><span class="op">};</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>mipLevels <span class="op">=</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    textureMipCount<span class="op">;</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>arrayLayers <span class="op">=</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    VK_SAMPLE_COUNT_1_BIT<span class="op">;</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>tiling <span class="op">=</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    VK_IMAGE_TILING_OPTIMAL<span class="op">;</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>usage <span class="op">=</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    VK_IMAGE_USAGE_TRANSFER_DST_BIT <span class="op">|</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    VK_IMAGE_USAGE_SAMPLED_BIT<span class="op">;</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>initialLayout <span class="op">=</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    VK_IMAGE_LAYOUT_UNDEFINED<span class="op">;</span></span></code></pre></div>
+<p>This describes a typical immutable sampled texture upload destination.</p>
+<hr />
+<p><strong>Image dimensions</strong></p>
+<p>Image types conceptually include:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mi>D</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>2</mn>
+  <mi>D</mi>
+  <mo>,</mo>
+  <mtext> </mtext>
+  <mn>3</mn>
+  <mi>D</mi>
+  <mo>.</mo>
+</math>
+<p>A cube map is generally represented using a 2D image with six layers and cube-compatible usage/view semantics.</p>
+<p>An array texture similarly uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>L</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mo>&gt;</mo>
+  <mn>1.</mn>
+</math>
+<p>Mipmap count:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+  <mo>+</mo>
+  <mo fence="false" stretchy="false">⌊</mo>
+  <msub>
+    <mi>log</mi>
+    <mn>2</mn>
+  </msub>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <mo data-mjx-texclass="OP" movablelimits="true">max</mo>
+  <mo stretchy="false">(</mo>
+  <mi>W</mi>
+  <mo>,</mo>
+  <mi>H</mi>
+  <mo>,</mo>
+  <mi>D</mi>
+  <mo stretchy="false">)</mo>
+  <mo fence="false" stretchy="false">⌋</mo>
+</math>
+<p>for a full chain.</p>
+<hr />
+<p><strong>Mip subresources</strong></p>
+<p>An image is divided into subresources by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>aspect</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>mip level</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>array layer</mtext>
+  <mo>.</mo>
+</math>
+<p>A barrier/view/copy may affect one subset rather than the entire image.</p>
+<p>For example:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>baseMipLevel <span class="op">=</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>levelCount   <span class="op">=</span> <span class="dv">3</span><span class="op">;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>baseArrayLayer <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>layerCount   <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span></code></pre></div>
+<p>selects mip levels 2–4.</p>
+<p>This explicitness becomes crucial for streaming and render graphs.</p>
+<hr />
+<p><strong>Image formats</strong></p>
+<p>A format defines:</p>
+<ul>
+<li>channel count,</li>
+<li>channel size,</li>
+<li>numeric interpretation,</li>
+<li>ordering,</li>
+<li>possibly sRGB decoding/encoding behavior.</li>
+</ul>
+<p>Examples from Kairo:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>F</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>R</mi>
+  <mi>M</mi>
+  <mi>A</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>R</mi>
+  </msub>
+  <msub>
+    <mn>8</mn>
+    <mi>U</mi>
+  </msub>
+  <mi>N</mi>
+  <mi>O</mi>
+  <mi>R</mi>
+  <mi>M</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>F</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>R</mi>
+  <mi>M</mi>
+  <mi>A</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>R</mi>
+  </msub>
+  <mn>8</mn>
+  <mi>G</mi>
+  <mn>8</mn>
+  <mi>B</mi>
+  <mn>8</mn>
+  <mi>A</mi>
+  <msub>
+    <mn>8</mn>
+    <mi>S</mi>
+  </msub>
+  <mi>R</mi>
+  <mi>G</mi>
+  <mi>B</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>F</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>R</mi>
+  <mi>M</mi>
+  <mi>A</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>R</mi>
+  </msub>
+  <mn>16</mn>
+  <mi>G</mi>
+  <mn>16</mn>
+  <mi>B</mi>
+  <mn>16</mn>
+  <mi>A</mi>
+  <msub>
+    <mn>16</mn>
+    <mi>S</mi>
+  </msub>
+  <mi>F</mi>
+  <mi>L</mi>
+  <mi>O</mi>
+  <mi>A</mi>
+  <mi>T</mi>
+  <mo>.</mo>
+</math>
+<p>Kairo maps the asset’s <strong>semantic color-space metadata</strong> to sRGB versus linear Vulkan formats.</p>
+<p>That is exactly correct.</p>
+<hr />
+<p><strong><code>UNORM</code> versus <code>SFLOAT</code></strong></p>
+<p><code>UNORM</code> stores integer bits interpreted as normalized values.</p>
+<p>For 8-bit:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0</mn>
+  <mo stretchy="false">→</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>255</mn>
+  <mo stretchy="false">→</mo>
+  <mn>1.</mn>
+</math>
+<p><code>SFLOAT</code> stores floating-point values.</p>
+<p>Use:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>R</mi>
+  <mi>G</mi>
+  <mi>B</mi>
+  <mi>A</mi>
+  <mn>16</mn>
+  <mi>F</mi>
+</math>
+<p>when HDR values above 1 must be represented.</p>
+<p>Do not mistake “16-bit format” for a single numerical category.</p>
+<hr />
+<p><strong>Image views</strong></p>
+<p>A <code>VkImageView</code> selects how an image is accessed.</p>
+<p>It specifies:</p>
+<ul>
+<li>view type,</li>
+<li>format interpretation,</li>
+<li>subresource range.</li>
+</ul>
+<p>One underlying image may have several views.</p>
+<p>For example, an array texture might have:</p>
+<ul>
+<li>one 2D-array view over all layers,</li>
+<li>separate 2D views for individual layers.</li>
+</ul>
+<p>This resource/view separation is extremely useful.</p>
+<hr />
+<p><strong>Kairo texture view</strong></p>
+<p>Kairo creates one:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>I</mi>
+  </msub>
+  <mi>M</mi>
+  <mi>A</mi>
+  <mi>G</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>V</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>W</mi>
+    <mi>T</mi>
+  </msub>
+  <mi>Y</mi>
+  <mi>P</mi>
+  <msub>
+    <mi>E</mi>
+    <mn>2</mn>
+  </msub>
+  <mi>D</mi>
+</math>
+<p>view covering:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>…</mo>
+  <mi>L</mi>
+  <mo>−</mo>
+  <mn>1</mn>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<p>The color aspect is selected.</p>
+<p>So the shader can sample across the full mip chain through one view.</p>
+<hr />
+<p><strong>Samplers</strong></p>
+<p>A sampler describes <strong>how</strong> a sampled image is filtered/addressed.</p>
+<p>This is separate from image storage.</p>
+<p>Sampler state includes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>l</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>p</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>d</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>U</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>V</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <mi>W</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>O</mi>
+  <mi>D</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>p</mi>
+  <mi>y</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Kairo currently uses linear min/mag and linear mip interpolation:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>trilinear filtering</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>with configurable address modes.</p>
+<hr />
+<p><strong>Sampler LOD range</strong></p>
+<p>Kairo sets:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>L</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>x</mi>
+  <mi>L</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mi>L</mi>
+  <mo>−</mo>
+  <mn>1.</mn>
+</math>
+<p>That permits the sampler to access the entire mip chain.</p>
+<p>The derivatives generated by fragment execution drive ordinary implicit LOD selection.</p>
+<hr />
+<p><strong>Anisotropy</strong></p>
+<p>Current Kairo:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>maxAnisotropy <span class="op">=</span> <span class="fl">1.0</span><span class="bu">f</span><span class="op">;</span></span></code></pre></div>
+<p>so anisotropic filtering is effectively disabled.</p>
+<p>Enabling higher anisotropy generally requires:</p>
+<ul>
+<li>checking physical-device feature,</li>
+<li>enabling <code>samplerAnisotropy</code>,</li>
+<li>respecting device limit.</li>
+</ul>
+<p>That would be an example of feature-driven optional quality.</p>
+<hr />
+<p><strong>Device-memory heaps</strong></p>
+<p>Vulkan distinguishes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>memory heaps</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>memory types</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>A heap represents a large physical memory pool/budget.</p>
+<p>A memory type describes properties of allocations sourced from a heap.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>heap 0: device local memory
+    type 0: DEVICE_LOCAL
+
+heap 1: host accessible memory
+    type 1: HOST_VISIBLE | HOST_COHERENT
+    type 2: HOST_VISIBLE | HOST_CACHED</code></pre>
+<p>Exact organization is device specific.</p>
+<hr />
+<p><strong>Integrated versus discrete GPU memory types</strong></p>
+<p>On a discrete GPU:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>E</mi>
+  <mi>V</mi>
+  <mi>I</mi>
+  <mi>C</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>L</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>C</mi>
+  <mi>A</mi>
+  <mi>L</mi>
+</math>
+<p>often means VRAM that the CPU cannot directly access efficiently.</p>
+<p>Host-visible memory may reside in system memory or in a special host-visible region.</p>
+<p>On an integrated/unified device, memory types may simultaneously expose combinations such as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>E</mi>
+  <mi>V</mi>
+  <mi>I</mi>
+  <mi>C</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>L</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>C</mi>
+  <mi>A</mi>
+  <mi>L</mi>
+  <mo>+</mo>
+  <mi>H</mi>
+  <mi>O</mi>
+  <mi>S</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>V</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>S</mi>
+  <mi>I</mi>
+  <mi>B</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+  <mo>.</mo>
+</math>
+<p>Never hardcode assumptions.</p>
+<p>Query memory properties.</p>
+<hr />
+<p><strong>Memory requirements</strong></p>
+<p>After creating a buffer/image:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>VkMemoryRequirements req<span class="op">{};</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>vkGetBufferMemoryRequirements<span class="op">(</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    device<span class="op">,</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    buffer<span class="op">,</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span>req<span class="op">);</span></span></code></pre></div>
+<p>or image equivalent.</p>
+<p>Requirements include:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>n</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mi>T</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>B</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>.</mo>
+</math>
+<p>The <code>memoryTypeBits</code> mask says which memory types are legal for this resource.</p>
+<hr />
+<p><strong>Finding a memory type</strong></p>
+<p>Kairo’s function:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="op">(</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    bits <span class="op">&amp;</span> <span class="op">(</span><span class="dv">1</span><span class="bu">u</span> <span class="op">&lt;&lt;</span> index<span class="op">)</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="op">)</span></span></code></pre></div>
+<p>checks whether resource permits type <code>index</code>.</p>
+<p>Then:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="op">(</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>propertyFlags <span class="op">&amp;</span> required</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="op">)</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="op">==</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>required</span></code></pre></div>
+<p>ensures requested properties are all present.</p>
+<p>Mathematically:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>l</mi>
+          <mi>e</mi>
+          <mi>g</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mo stretchy="false">(</mo>
+          <mi>i</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mi>b</mi>
+          <mi>i</mi>
+          <msub>
+            <mi>t</mi>
+            <mi>i</mi>
+          </msub>
+          <mo stretchy="false">(</mo>
+          <mi>m</mi>
+          <mi>e</mi>
+          <mi>m</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mi>y</mi>
+          <mi>T</mi>
+          <mi>y</mi>
+          <mi>p</mi>
+          <mi>e</mi>
+          <mi>B</mi>
+          <mi>i</mi>
+          <mi>t</mi>
+          <mi>s</mi>
+          <mo stretchy="false">)</mo>
+          <mo>∧</mo>
+          <mo stretchy="false">[</mo>
+          <mo stretchy="false">(</mo>
+          <mi>p</mi>
+          <mi>r</mi>
+          <mi>o</mi>
+          <mi>p</mi>
+          <msub>
+            <mi>s</mi>
+            <mi>i</mi>
+          </msub>
+          <mi mathvariant="normal">&amp;</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>q</mi>
+          <mi>u</mi>
+          <mi>i</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>d</mi>
+          <mo stretchy="false">)</mo>
+          <mo>=</mo>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>q</mi>
+          <mi>u</mi>
+          <mi>i</mi>
+          <mi>r</mi>
+          <mi>e</mi>
+          <mi>d</mi>
+          <mo stretchy="false">]</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This pattern is canonical Vulkan memory selection.</p>
+<hr />
+<p><strong>Host-visible memory</strong></p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>M</mi>
+  </msub>
+  <mi>E</mi>
+  <mi>M</mi>
+  <mi>O</mi>
+  <mi>R</mi>
+  <msub>
+    <mi>Y</mi>
+    <mi>P</mi>
+  </msub>
+  <mi>R</mi>
+  <mi>O</mi>
+  <mi>P</mi>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mi>T</mi>
+  <msub>
+    <mi>Y</mi>
+    <mi>H</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>S</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>V</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>S</mi>
+  <mi>I</mi>
+  <mi>B</mi>
+  <mi>L</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>B</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>T</mi>
+</math>
+<p>means CPU can map the allocation:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>vkMapMemory<span class="op">(...)</span></span></code></pre></div>
+<p>and access it through a pointer.</p>
+<p>It does <strong>not</strong> automatically mean writes become immediately visible to the GPU without cache management.</p>
+<p>That is where coherency matters.</p>
+<hr />
+<p><strong>Host-coherent memory</strong></p>
+<p>With:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>O</mi>
+  <mi>S</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>H</mi>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+  <mi>N</mi>
+  <mi>T</mi>
+</math>
+<p>you generally do not need explicit flush/invalidate calls for host/device visibility of mapped writes/reads within Vulkan’s synchronization rules.</p>
+<p>Without it, host writes may require:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>vkFlushMappedMemoryRanges<span class="op">(...)</span></span></code></pre></div>
+<p>and device-written data may require:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>vkInvalidateMappedMemoryRanges<span class="op">(...)</span></span></code></pre></div>
+<p>before CPU reads.</p>
+<p>Kairo requests both:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>O</mi>
+  <mi>S</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>V</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>S</mi>
+  <mi>I</mi>
+  <mi>B</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>H</mi>
+  <mi>O</mi>
+  <mi>S</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>H</mi>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+  <mi>N</mi>
+  <mi>T</mi>
+  <mo>.</mo>
+</math>
+<p>Therefore <code>memcpy()</code> into mapped memory is sufficient from the host-cache-coherency perspective.</p>
+<p>GPU execution ordering is still a separate concern.</p>
+<hr />
+<p><strong>Coherency is not synchronization</strong></p>
+<p>This deserves emphasis.</p>
+<p>Host coherent means:</p>
+<blockquote>
+<p>caches do not require explicit flush/invalidate for visibility.</p>
+</blockquote>
+<p>It does not mean:</p>
+<blockquote>
+<p>CPU may overwrite memory while GPU is reading it.</p>
+</blockquote>
+<p>You still need fences/timeline ownership or per-frame buffer slices.</p>
+<p>Similarly:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>visibility/coherency</mtext>
+          <mo>≠</mo>
+          <mtext>execution ordering</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This distinction becomes central in M137.</p>
+<hr />
+<p><strong>Device-local memory</strong></p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>M</mi>
+  </msub>
+  <mi>E</mi>
+  <mi>M</mi>
+  <mi>O</mi>
+  <mi>R</mi>
+  <msub>
+    <mi>Y</mi>
+    <mi>P</mi>
+  </msub>
+  <mi>R</mi>
+  <mi>O</mi>
+  <mi>P</mi>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mi>T</mi>
+  <msub>
+    <mi>Y</mi>
+    <mi>D</mi>
+  </msub>
+  <mi>E</mi>
+  <mi>V</mi>
+  <mi>I</mi>
+  <mi>C</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>L</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>C</mi>
+  <mi>A</mi>
+  <msub>
+    <mi>L</mi>
+    <mi>B</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>T</mi>
+</math>
+<p>is desirable for frequently GPU-accessed resources.</p>
+<p>Kairo textures allocate device-local memory.</p>
+<p>That is the correct default for static sampled images.</p>
+<p>The CPU therefore cannot simply <code>memcpy</code> texture pixels directly into their final image allocation.</p>
+<p>So we need staging.</p>
+<hr />
+<p><strong>Binding memory</strong></p>
+<p>After allocation:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>vkBindBufferMemory<span class="op">(</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    device<span class="op">,</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    buffer<span class="op">,</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    memory<span class="op">,</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    offset<span class="op">);</span></span></code></pre></div>
+<p>or:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>vkBindImageMemory<span class="op">(...)</span></span></code></pre></div>
+<p>connects the logical resource to bytes inside a memory allocation.</p>
+<p>The offset must satisfy alignment requirements.</p>
+<p>Kairo currently binds dedicated allocations at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mn>0.</mn>
+</math>
+<hr />
+<p><strong>Dedicated allocation versus suballocation</strong></p>
+<p>Kairo’s small wrapper currently tends to perform:</p>
+<pre class="text"><code>resource
+→ query requirements
+→ vkAllocateMemory
+→ bind at offset 0</code></pre>
+<p>for each resource.</p>
+<p>That is simple.</p>
+<p>A production Vulkan allocator often instead does:</p>
+<pre class="text"><code>large VkDeviceMemory block
+    ↓
+suballocate offsets
+    ↓
+bind many resources to slices</code></pre>
+<p>because frequent <code>vkAllocateMemory()</code> calls are expensive and device allocation counts are limited.</p>
+<hr />
+<p><strong>Suballocation math</strong></p>
+<p>Suppose allocation cursor:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo>.</mo>
+</math>
+<p>Resource alignment:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mo>.</mo>
+</math>
+<p>Aligned start:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>o</mi>
+          <mo>=</mo>
+          <mrow data-mjx-texclass="INNER">
+            <mo data-mjx-texclass="OPEN">⌈</mo>
+            <mfrac>
+              <mi>c</mi>
+              <mi>a</mi>
+            </mfrac>
+            <mo data-mjx-texclass="CLOSE">⌉</mo>
+          </mrow>
+          <mi>a</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>For power-of-two alignment:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>o</mi>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mi>c</mi>
+          <mo>+</mo>
+          <mi>a</mi>
+          <mo>−</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+          <mi mathvariant="normal">&amp;</mi>
+          <mo stretchy="false">(</mo>
+          <mo>∼</mo>
+          <mo stretchy="false">(</mo>
+          <mi>a</mi>
+          <mo>−</mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+          <mo stretchy="false">)</mo>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Then resource occupies:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mi>o</mi>
+  <mo>,</mo>
+  <mi>o</mi>
+  <mo>+</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Next cursor:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>c</mi>
+    <mo data-mjx-alternate="1">′</mo>
+  </msup>
+  <mo>=</mo>
+  <mi>o</mi>
+  <mo>+</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>This is the same bump-allocation principle we saw in Maveb’s Metal frame arenas.</p>
+<p>Different API; same allocator mathematics.</p>
+<hr />
+<p><strong>Staging buffers</strong></p>
+<p>A staging buffer is a host-visible temporary transfer source.</p>
+<p>Static resource upload:</p>
+<pre class="text"><code>CPU
+ ↓
+mapped host-visible staging buffer
+ ↓ copy command
+device-local buffer/image</code></pre>
+<p>This lets final GPU resource live in fast device-local memory.</p>
+<p>Kairo texture upload follows exactly this design.</p>
+<hr />
+<p><strong>Kairo texture upload</strong></p>
+<p>It packs all mip pixels into one contiguous staging buffer.</p>
+<p>For each mip it creates a <code>VkBufferImageCopy</code> with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>O</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+</math>
+<p>and the mip’s extent.</p>
+<p>Then issues:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>vkCmdCopyBufferToImage<span class="op">(...)</span></span></code></pre></div>
+<p>covering all mip levels in one copy command sequence.</p>
+<p>That is a good bulk-upload design.</p>
+<hr />
+<p><strong>Image layouts appear during upload</strong></p>
+<p>The texture starts at:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>I</mi>
+  </msub>
+  <mi>M</mi>
+  <mi>A</mi>
+  <mi>G</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>L</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>Y</mi>
+  <mi>O</mi>
+  <mi>U</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>U</mi>
+  </msub>
+  <mi>N</mi>
+  <mi>D</mi>
+  <mi>E</mi>
+  <mi>F</mi>
+  <mi>I</mi>
+  <mi>N</mi>
+  <mi>E</mi>
+  <mi>D</mi>
+  <mo>.</mo>
+</math>
+<p>Before copy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>U</mi>
+          <mi>N</mi>
+          <mi>D</mi>
+          <mi>E</mi>
+          <mi>F</mi>
+          <mi>I</mi>
+          <mi>N</mi>
+          <mi>E</mi>
+          <mi>D</mi>
+          <mo stretchy="false">→</mo>
+          <mi>T</mi>
+          <mi>R</mi>
+          <mi>A</mi>
+          <mi>N</mi>
+          <mi>S</mi>
+          <mi>F</mi>
+          <mi>E</mi>
+          <msub>
+            <mi>R</mi>
+            <mi>D</mi>
+          </msub>
+          <mi>S</mi>
+          <msub>
+            <mi>T</mi>
+            <mi>O</mi>
+          </msub>
+          <mi>P</mi>
+          <mi>T</mi>
+          <mi>I</mi>
+          <mi>M</mi>
+          <mi>A</mi>
+          <mi>L</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>After copy:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>T</mi>
+          <mi>R</mi>
+          <mi>A</mi>
+          <mi>N</mi>
+          <mi>S</mi>
+          <mi>F</mi>
+          <mi>E</mi>
+          <msub>
+            <mi>R</mi>
+            <mi>D</mi>
+          </msub>
+          <mi>S</mi>
+          <msub>
+            <mi>T</mi>
+            <mi>O</mi>
+          </msub>
+          <mi>P</mi>
+          <mi>T</mi>
+          <mi>I</mi>
+          <mi>M</mi>
+          <mi>A</mi>
+          <mi>L</mi>
+          <mo stretchy="false">→</mo>
+          <mi>S</mi>
+          <mi>H</mi>
+          <mi>A</mi>
+          <mi>D</mi>
+          <mi>E</mi>
+          <msub>
+            <mi>R</mi>
+            <mi>R</mi>
+          </msub>
+          <mi>E</mi>
+          <mi>A</mi>
+          <msub>
+            <mi>D</mi>
+            <mi>O</mi>
+          </msub>
+          <mi>N</mi>
+          <mi>L</mi>
+          <msub>
+            <mi>Y</mi>
+            <mi>O</mi>
+          </msub>
+          <mi>P</mi>
+          <mi>T</mi>
+          <mi>I</mi>
+          <mi>M</mi>
+          <mi>A</mi>
+          <mi>L</mi>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Kairo performs exactly these transitions.</p>
+<p>Detailed barrier semantics belong to M137, but the resource-state intent belongs here.</p>
+<hr />
+<p><strong>Why <code>UNDEFINED</code> is useful</strong></p>
+<p>If old contents do not matter, transitioning from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>I</mi>
+  </msub>
+  <mi>M</mi>
+  <mi>A</mi>
+  <mi>G</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>L</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>Y</mi>
+  <mi>O</mi>
+  <mi>U</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>U</mi>
+  </msub>
+  <mi>N</mi>
+  <mi>D</mi>
+  <mi>E</mi>
+  <mi>F</mi>
+  <mi>I</mi>
+  <mi>N</mi>
+  <mi>E</mi>
+  <mi>D</mi>
+</math>
+<p>allows the implementation to discard previous image contents.</p>
+<p>This can avoid preserving memory unnecessarily.</p>
+<p>Never use <code>UNDEFINED</code> when old contents must survive.</p>
+<hr />
+<p><strong>Kairo’s upload synchronization is intentionally simple</strong></p>
+<p>Texture upload creates a temporary command pool and command buffer, submits to the graphics queue, then calls:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>vkQueueWaitIdle<span class="op">(...)</span></span></code></pre></div>
+<p>before destroying staging resources.</p>
+<p>This is correct.</p>
+<p>But it serializes the queue.</p>
+<p>A high-throughput asset streamer would instead batch uploads and retire staging buffers using fences/timeline semaphores without queue-wide idle.</p>
+<p>That optimization belongs naturally to later synchronization work.</p>
+<hr />
+<p><strong>Vertex buffers</strong></p>
+<p>A vertex buffer is merely a <code>VkBuffer</code> used through:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>B</mi>
+  </msub>
+  <mi>U</mi>
+  <mi>F</mi>
+  <mi>F</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>R</mi>
+    <mi>U</mi>
+  </msub>
+  <mi>S</mi>
+  <mi>A</mi>
+  <mi>G</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>V</mi>
+  </msub>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mi>T</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>X</mi>
+    <mi>B</mi>
+  </msub>
+  <mi>U</mi>
+  <mi>F</mi>
+  <mi>F</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>R</mi>
+    <mi>B</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>T</mi>
+  <mo>.</mo>
+</math>
+<p>The pipeline’s vertex-input state says how bytes are interpreted.</p>
+<p>Your <code>MeshVertex</code> layout is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>P</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>:</mo>
+  <mi>f</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mn>3</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>:</mo>
+  <mi>f</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mn>3</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>N</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>:</mo>
+  <mi>f</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mn>3</mn>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>d</mi>
+  <mo>:</mo>
+  <mi>f</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mn>2.</mn>
+</math>
+<p>The Vulkan pipeline specifies matching offsets and formats.</p>
+<hr />
+<p><strong>Index buffers</strong></p>
+<p>Index data allows multiple primitives to reuse vertices.</p>
+<p>Kairo binds:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>vkCmdBindIndexBuffer<span class="op">(</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">...,</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    VK_INDEX_TYPE_UINT32<span class="op">);</span></span></code></pre></div>
+<p>therefore indices are:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>32</mn>
+  <mtext>-bit unsigned integers</mtext>
+  <mo>.</mo>
+</math>
+<p>Index buffer’s resource usage must permit index consumption.</p>
+<hr />
+<p><strong>Uniform buffers</strong></p>
+<p>Uniform buffers represent relatively small read-only shader parameter blocks.</p>
+<p>Typical data:</p>
+<ul>
+<li>camera matrices,</li>
+<li>lighting constants,</li>
+<li>frame parameters.</li>
+</ul>
+<p>Kairo has a large <code>CameraUniform</code> written through its host buffer and exposed via descriptor binding 0.</p>
+<p>Uniform-buffer access is designed for relatively uniform reads across shader invocations.</p>
+<hr />
+<p><strong>Storage buffers</strong></p>
+<p>Storage buffers permit larger/general shader-readable/writable data.</p>
+<p>Examples:</p>
+<ul>
+<li>particle arrays,</li>
+<li>material tables,</li>
+<li>visible-instance lists,</li>
+<li>GPU-driven draw data.</li>
+</ul>
+<p>Unlike uniform buffers, storage buffers are suited to broader random/indexed access and shader writes.</p>
+<p>Current Kairo material system does not yet use a large bindless material SSBO, but that is the natural future architecture discussed in Pass 5.</p>
+<hr />
+<p><strong>Texel buffers</strong></p>
+<p>A texel buffer combines a buffer with a format interpretation through a buffer view.</p>
+<p>Instead of reading raw bytes/structs, shader accesses formatted texel values.</p>
+<p>Useful for some large one-dimensional formatted datasets.</p>
+<p>Less common in modern engine code than storage buffers/images, but still part of Vulkan’s resource model.</p>
+<hr />
+</section>
+<section id="id_05-engine-i-ch021-descriptors-pipeline-layouts-shaders-rendering-state" class="level4">
+<h4>DESCRIPTORS, PIPELINE LAYOUTS, SHADERS &amp; RENDERING STATE</h4>
+<p><strong>Descriptors solve one core question</strong></p>
+<p>A shader contains something conceptually like:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">layout</span><span class="op">(</span>set<span class="op">=</span><span class="dv">0</span><span class="op">,</span> <span class="dt">binding</span><span class="op">=</span><span class="dv">7</span><span class="op">)</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> MaterialData</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> baseColor<span class="op">;</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>The shader needs to know:</p>
+<blockquote>
+<p>Which actual buffer backs this declaration?</p>
+</blockquote>
+<p>That association is represented through descriptors.</p>
+<p>A descriptor is effectively metadata connecting a shader-visible binding slot to a resource.</p>
+<hr />
+<p><strong>Descriptor types</strong></p>
+<p>Important descriptor types include:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <mi>N</mi>
+  <mi>I</mi>
+  <mi>F</mi>
+  <mi>O</mi>
+  <mi>R</mi>
+  <msub>
+    <mi>M</mi>
+    <mi>B</mi>
+  </msub>
+  <mi>U</mi>
+  <mi>F</mi>
+  <mi>F</mi>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>T</mi>
+  <mi>O</mi>
+  <mi>R</mi>
+  <mi>A</mi>
+  <mi>G</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>B</mi>
+  </msub>
+  <mi>U</mi>
+  <mi>F</mi>
+  <mi>F</mi>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>O</mi>
+  <mi>M</mi>
+  <mi>B</mi>
+  <mi>I</mi>
+  <mi>N</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>D</mi>
+    <mi>I</mi>
+  </msub>
+  <mi>M</mi>
+  <mi>A</mi>
+  <mi>G</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>S</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>M</mi>
+  <mi>P</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>A</mi>
+  <mi>M</mi>
+  <mi>P</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>D</mi>
+    <mi>I</mi>
+  </msub>
+  <mi>M</mi>
+  <mi>A</mi>
+  <mi>G</mi>
+  <mi>E</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>A</mi>
+  <mi>M</mi>
+  <mi>P</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>T</mi>
+  <mi>O</mi>
+  <mi>R</mi>
+  <mi>A</mi>
+  <mi>G</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>I</mi>
+  </msub>
+  <mi>M</mi>
+  <mi>A</mi>
+  <mi>G</mi>
+  <mi>E</mi>
+  <mo>,</mo>
+</math>
+<p>plus dynamic-buffer variants and others.</p>
+<p>The descriptor type must match shader declaration semantics.</p>
+<hr />
+<p><strong>Kairo’s descriptor model</strong></p>
+<p>Kairo’s material descriptor set has ten bindings.</p>
+<p>The important layout is approximately:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Binding</th>
+<th>Resource</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td>Camera uniform buffer</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>Shadow sampled image</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td>Base-color texture</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td>Normal texture</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td>Metallic-roughness texture</td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td>Emissive texture</td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
+<td>Occlusion texture</td>
+</tr>
+<tr>
+<td style="text-align: right;">7</td>
+<td>Material uniform buffer</td>
+</tr>
+<tr>
+<td style="text-align: right;">8</td>
+<td>Environment sampled image</td>
+</tr>
+<tr>
+<td style="text-align: right;">9</td>
+<td>Optional skin uniform buffer</td>
+</tr>
+</tbody>
+</table>
+<p>This is a conventional per-material/per-draw descriptor architecture.</p>
+<hr />
+<p><strong>Descriptor-set layout</strong></p>
+<p><code>VkDescriptorSetLayout</code> defines the <strong>shape</strong> of a descriptor set.</p>
+<p>For each binding:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>VkDescriptorSetLayoutBinding b<span class="op">{};</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>b<span class="op">.</span>binding <span class="op">=</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="dv">7</span><span class="op">;</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>b<span class="op">.</span>descriptorType <span class="op">=</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER<span class="op">;</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>b<span class="op">.</span>descriptorCount <span class="op">=</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>b<span class="op">.</span>stageFlags <span class="op">=</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    VK_SHADER_STAGE_FRAGMENT_BIT<span class="op">;</span></span></code></pre></div>
+<p>The layout says:</p>
+<blockquote>
+<p>binding 7 exists, contains one UBO descriptor, and fragment shaders may access it.</p>
+</blockquote>
+<p>It does not yet point to a particular buffer.</p>
+<hr />
+<p><strong>Descriptor pool</strong></p>
+<p>Descriptor sets are allocated from a:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>P</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mo>.</mo>
+</math>
+<p>Pool creation reserves capacities by descriptor type.</p>
+<p>If you want 100 sets each containing:</p>
+<ul>
+<li>3 UBOs,</li>
+<li>7 combined samplers,</li>
+</ul>
+<p>pool needs approximately:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>300</mn>
+  <mtext> UBO descriptors</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>700</mn>
+  <mtext> combined image-sampler descriptors</mtext>
+  <mo>.</mo>
+</math>
+<p>Kairo computes exactly this for its material set rebuild.</p>
+<hr />
+<p><strong>Descriptor-set allocation</strong></p>
+<p>Given a pool and one or more layouts:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>VkDescriptorSetAllocateInfo info<span class="op">{};</span></span></code></pre></div>
+<p>then:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>vkAllocateDescriptorSets<span class="op">(...)</span></span></code></pre></div>
+<p>returns actual sets.</p>
+<p>A set has a defined layout but does not yet necessarily contain meaningful resource descriptors.</p>
+<p>That comes through update.</p>
+<hr />
+<p><strong>Updating descriptor sets</strong></p>
+<p>Kairo builds:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>VkDescriptorBufferInfo</span></code></pre></div>
+<p>for buffers and:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>VkDescriptorImageInfo</span></code></pre></div>
+<p>for images/samplers.</p>
+<p>Then fills:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>VkWriteDescriptorSet</span></code></pre></div>
+<p>and calls:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>vkUpdateDescriptorSets<span class="op">(...)</span></span></code></pre></div>
+<p>This is the “connect actual resource to slot” step.</p>
+<hr />
+<p><strong>Descriptor lifetime hazard</strong></p>
+<p>Suppose descriptor points to:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>I</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>V</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>w</mi>
+  <mi>A</mi>
+  <mo>.</mo>
+</math>
+<p>You destroy image view A while GPU still executes a draw that uses the descriptor.</p>
+<p>That is invalid even though the descriptor set object itself still exists.</p>
+<p>Resource lifetime must extend through all GPU uses.</p>
+<p>Kairo’s comments explicitly say descriptor pools are rebuilt only after fence-safe frame boundaries.</p>
+<p>That is the right mindset.</p>
+<hr />
+<p><strong>Kairo descriptor rebuild architecture</strong></p>
+<p><code>VulkanMaterialDescriptors::Rebuild()</code> first clears the old pool.</p>
+<p>But its precondition says:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>render fence must have completed</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is essential.</p>
+<p>Otherwise destroying pool/material buffers would invalidate resources still referenced by in-flight commands.</p>
+<p>Later M137 will formalize deferred lifetime rules.</p>
+<hr />
+<p><strong>Dynamic buffer offsets</strong></p>
+<p>Suppose one large uniform buffer contains:</p>
+<pre id="p11-dyn-ubo" class="text"><code>camera 0 at offset 0
+camera 1 at offset 256
+camera 2 at offset 512
+...</code></pre>
+<p>A dynamic uniform-buffer descriptor can bind the same buffer descriptor, while the draw call provides a dynamic offset.</p>
+<p>This avoids creating/updating separate descriptor sets for many small per-object blocks.</p>
+<p>Offset must obey:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>m</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>U</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>B</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>O</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mi>A</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>n</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Why dynamic offsets matter</strong></p>
+<p>Without dynamic offsets:</p>
+<pre class="text"><code>1000 objects
+→ potentially 1000 descriptor updates/sets</code></pre>
+<p>With one big ring buffer:</p>
+<pre class="text"><code>one descriptor
++ per-draw offset</code></pre>
+<p>This can reduce descriptor management overhead substantially.</p>
+<p>Kairo’s current material system instead creates separate small host buffers and sets per draw/material instance.</p>
+<p>Simple, but not maximally scalable.</p>
+<hr />
+<p><strong>Descriptor indexing / bindless</strong></p>
+<p>Traditional descriptors require resources to be bound into relatively fixed slots.</p>
+<p>Bindless-style systems instead expose a large descriptor array:</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">layout</span><span class="op">(</span>set<span class="op">=</span><span class="dv">0</span><span class="op">,</span><span class="dt">binding</span><span class="op">=</span><span class="dv">0</span><span class="op">)</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> <span class="dt">sampler2D</span> textures<span class="op">[];</span></span></code></pre></div>
+<p>Material record stores:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>.</mo>
+</math>
+<p>Shader:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>color <span class="op">=</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">texture</span><span class="op">(</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>        textures<span class="op">[</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>            <span class="fu">nonuniformEXT</span><span class="op">(</span>material<span class="op">.</span><span class="fu">textureIndex</span><span class="op">)</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">],</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>        uv<span class="op">);</span></span></code></pre></div>
+<p>This makes material data far more GPU-driven.</p>
+<p>We already explored this architecturally in Pass 5.</p>
+<hr />
+<p><strong>Descriptor indexing is not one feature bit</strong></p>
+<p>A robust Vulkan bindless design may involve capabilities such as:</p>
+<ul>
+<li>runtime descriptor arrays,</li>
+<li>partially bound descriptors,</li>
+<li>variable descriptor counts,</li>
+<li>nonuniform indexing,</li>
+<li>update-after-bind.</li>
+</ul>
+<p>These need to be queried/enabled appropriately.</p>
+<p>Kairo currently does not use this path.</p>
+<p>Its descriptor system is deliberately conventional.</p>
+<hr />
+<p><strong>Push constants</strong></p>
+<p>Push constants are a tiny block of command-supplied shader data associated with pipeline layout.</p>
+<p>They are ideal for:</p>
+<ul>
+<li>per-draw matrix,</li>
+<li>object ID,</li>
+<li>small scalar constants.</li>
+</ul>
+<p>Kairo uses a push block containing its mesh/model transform.</p>
+<hr />
+<p><strong>Kairo push constants</strong></p>
+<p>Pipeline layout declares:</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>VkPushConstantRange</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    VK_SHADER_STAGE_VERTEX_BIT <span class="op">|</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    VK_SHADER_STAGE_FRAGMENT_BIT<span class="op">,</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">sizeof</span><span class="op">(</span>MeshPushConstants<span class="op">)</span></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Earlier we verified this is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>128</mn>
+  <mtext> bytes</mtext>
+</math>
+<p>in the current design.</p>
+<p>Then draw code executes:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>vkCmdPushConstants<span class="op">(...)</span></span></code></pre></div>
+<p>before each mesh draw.</p>
+<hr />
+<p><strong>Why push constants differ from uniform buffers</strong></p>
+<p>Uniform buffer:</p>
+<pre class="text"><code>resource object
+→ descriptor
+→ memory load</code></pre>
+<p>Push constant:</p>
+<pre class="text"><code>small command-recorded value
+→ pipeline layout range</code></pre>
+<p>Push constants are limited in size.</p>
+<p>They are excellent for data changing extremely frequently.</p>
+<p>Do not try to store an entire material database in them.</p>
+<hr />
+<p><strong>Pipeline layout</strong></p>
+<p>A:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>P</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>L</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+</math>
+<p>defines the shader-visible interface at the pipeline level.</p>
+<p>It contains:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>descriptor-set layouts</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>push-constant ranges</mtext>
+  <mo>.</mo>
+</math>
+<p>Think of it as the ABI between command recording and shaders.</p>
+<p>If shader expects set/binding layout incompatible with pipeline layout, the engine contract is broken.</p>
+<hr />
+<p><strong>Kairo pipeline layout</strong></p>
+<p>Kairo currently uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+</math>
+<p>descriptor-set layout:</p>
+<pre class="text"><code>material/camera/shadow/environment/skin set</code></pre>
+<p>plus one push-constant range.</p>
+<p>This same layout is shared across mesh/shadow pipeline variants.</p>
+<p>That allows common draw-binding logic.</p>
+<hr />
+<p><strong>Shader modules</strong></p>
+<p>Vulkan consumes shader code in SPIR-V form.</p>
+<p>SPIR-V is a binary intermediate representation.</p>
+<p>Pipeline creation references a:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>S</mi>
+  <mi>h</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Kairo loads <code>.spv</code> files into:</p>
+<div class="sourceCode" id="cb44"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>vector<span class="op">&lt;</span><span class="dt">uint32_t</span><span class="op">&gt;</span></span></code></pre></div>
+<p>and passes the words to:</p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>vkCreateShaderModule<span class="op">(...)</span></span></code></pre></div>
+<p>Exactly correct.</p>
+<hr />
+<p><strong>Why SPIR-V is 32-bit word aligned</strong></p>
+<p>SPIR-V binary is defined as a stream of 32-bit words.</p>
+<p>Kairo checks file byte count is divisible by:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>u</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <msub>
+    <mn>32</mn>
+    <mi>t</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>This is a useful sanity check before creating the module.</p>
+<hr />
+<p><strong>Shader module is not the final executable pipeline</strong></p>
+<p><code>VkShaderModule</code> represents shader IR.</p>
+<p>Graphics pipeline creation combines shader stages with:</p>
+<ul>
+<li>vertex input,</li>
+<li>assembly,</li>
+<li>rasterizer state,</li>
+<li>multisampling,</li>
+<li>depth/stencil,</li>
+<li>blending,</li>
+<li>render-pass compatibility,</li>
+<li>pipeline layout.</li>
+</ul>
+<p>Driver may perform compilation/optimization during pipeline creation.</p>
+<p>This is why pipeline creation can be expensive.</p>
+<hr />
+<p><strong>Graphics pipeline state</strong></p>
+<p>A Vulkan graphics pipeline packages a huge amount of state that older APIs allowed to mutate independently.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>shader stages
+vertex-input interpretation
+input assembly
+viewport/scissor policy
+rasterization
+multisampling
+depth/stencil
+color blending
+pipeline layout
+rendering/render-pass compatibility</code></pre>
+<p>Some state can be marked dynamic.</p>
+<p>Everything else is baked into the pipeline.</p>
+<hr />
+<p><strong>Shader stages</strong></p>
+<p>Kairo regular mesh pipeline uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+</math>
+<p>plus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Shadow pipeline uses vertex only because it writes no color.</p>
+<p>That is efficient.</p>
+<p>No fragment stage is needed when only depth is relevant and rasterization rules permit omission.</p>
+<hr />
+<p><strong>Input assembly</strong></p>
+<p>Kairo opaque mesh pipeline:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>P</mi>
+  </msub>
+  <mi>R</mi>
+  <mi>I</mi>
+  <mi>M</mi>
+  <mi>I</mi>
+  <mi>T</mi>
+  <mi>I</mi>
+  <mi>V</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>T</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>P</mi>
+  <mi>O</mi>
+  <mi>L</mi>
+  <mi>O</mi>
+  <mi>G</mi>
+  <msub>
+    <mi>Y</mi>
+    <mi>T</mi>
+  </msub>
+  <mi>R</mi>
+  <mi>I</mi>
+  <mi>A</mi>
+  <mi>N</mi>
+  <mi>G</mi>
+  <mi>L</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>L</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>S</mi>
+  <mi>T</mi>
+  <mo>.</mo>
+</math>
+<p>Debug pipeline:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>P</mi>
+  </msub>
+  <mi>R</mi>
+  <mi>I</mi>
+  <mi>M</mi>
+  <mi>I</mi>
+  <mi>T</mi>
+  <mi>I</mi>
+  <mi>V</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>T</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>P</mi>
+  <mi>O</mi>
+  <mi>L</mi>
+  <mi>O</mi>
+  <mi>G</mi>
+  <msub>
+    <mi>Y</mi>
+    <mi>L</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>N</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>L</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>S</mi>
+  <mi>T</mi>
+  <mo>.</mo>
+</math>
+<p>Input assembly interprets indices/vertices into primitives before rasterization.</p>
+<hr />
+<p><strong>Rasterization state</strong></p>
+<p>Kairo currently configures:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>y</mi>
+  <mi>g</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>F</mi>
+  <mi>I</mi>
+  <mi>L</mi>
+  <mi>L</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>u</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>M</mi>
+  <mi>o</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>N</mi>
+  <mi>O</mi>
+  <mi>N</mi>
+  <mi>E</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>F</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>C</mi>
+  <mi>W</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>W</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mo>=</mo>
+  <mn>1.</mn>
+</math>
+<p>Disabling culling simplifies double-sided and current rendering behavior but sacrifices potential triangle rejection.</p>
+<p>Material-dependent culling would require pipeline variants or dynamic cull state if supported/enabled.</p>
+<hr />
+<p><strong>Vertex-input state</strong></p>
+<p>Kairo’s main vertex binding:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>V</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>.</mo>
+</math>
+<p>Attributes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mn>0</mn>
+  <mo>:</mo>
+  <mi>R</mi>
+  <mn>32</mn>
+  <mi>G</mi>
+  <mn>32</mn>
+  <mi>B</mi>
+  <msub>
+    <mn>32</mn>
+    <mi>S</mi>
+  </msub>
+  <mi>F</mi>
+  <mi>L</mi>
+  <mi>O</mi>
+  <mi>A</mi>
+  <mi>T</mi>
+  <mo stretchy="false">→</mo>
+  <mi>P</mi>
+  <mi>o</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mn>1</mn>
+  <mo>:</mo>
+  <mi>R</mi>
+  <mn>32</mn>
+  <mi>G</mi>
+  <mn>32</mn>
+  <mi>B</mi>
+  <msub>
+    <mn>32</mn>
+    <mi>S</mi>
+  </msub>
+  <mi>F</mi>
+  <mi>L</mi>
+  <mi>O</mi>
+  <mi>A</mi>
+  <mi>T</mi>
+  <mo stretchy="false">→</mo>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mn>2</mn>
+  <mo>:</mo>
+  <mi>R</mi>
+  <mn>32</mn>
+  <mi>G</mi>
+  <mn>32</mn>
+  <mi>B</mi>
+  <msub>
+    <mn>32</mn>
+    <mi>S</mi>
+  </msub>
+  <mi>F</mi>
+  <mi>L</mi>
+  <mi>O</mi>
+  <mi>A</mi>
+  <mi>T</mi>
+  <mo stretchy="false">→</mo>
+  <mi>N</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>o</mi>
+  <mi>n</mi>
+  <mn>3</mn>
+  <mo>:</mo>
+  <mi>R</mi>
+  <mn>32</mn>
+  <mi>G</mi>
+  <msub>
+    <mn>32</mn>
+    <mi>S</mi>
+  </msub>
+  <mi>F</mi>
+  <mi>L</mi>
+  <mi>O</mi>
+  <mi>A</mi>
+  <mi>T</mi>
+  <mo stretchy="false">→</mo>
+  <mi>T</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>This is the CPU↔︎GPU vertex ABI.</p>
+<p>If <code>offsetof()</code> disagrees with asset/buffer layout, vertices decode incorrectly.</p>
+<hr />
+<p><strong>Skinning uses a second vertex binding</strong></p>
+<p>Kairo skinned pipeline adds binding 1 with:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>J</mi>
+  <mi>o</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>:</mo>
+  <mi>R</mi>
+  <mn>32</mn>
+  <mi>G</mi>
+  <mn>32</mn>
+  <mi>B</mi>
+  <mn>32</mn>
+  <mi>A</mi>
+  <msub>
+    <mn>32</mn>
+    <mi>U</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>N</mi>
+  <mi>T</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>W</mi>
+  <mi>e</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>h</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo>:</mo>
+  <mi>R</mi>
+  <mn>32</mn>
+  <mi>G</mi>
+  <mn>32</mn>
+  <mi>B</mi>
+  <mn>32</mn>
+  <mi>A</mi>
+  <msub>
+    <mn>32</mn>
+    <mi>S</mi>
+  </msub>
+  <mi>F</mi>
+  <mi>L</mi>
+  <mi>O</mi>
+  <mi>A</mi>
+  <mi>T</mi>
+  <mo>.</mo>
+</math>
+<p>Both bindings use per-vertex input rate.</p>
+<p>This is a nice example of multiple vertex streams.</p>
+<p>The static mesh buffer and skin influence buffer remain separate.</p>
+<hr />
+<p><strong>Depth/stencil state</strong></p>
+<p>Kairo uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>T</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mi>R</mi>
+  <mi>U</mi>
+  <mi>E</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>a</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>O</mi>
+  <mi>p</mi>
+  <mo>=</mo>
+  <mi>L</mi>
+  <mi>E</mi>
+  <mi>S</mi>
+  <mi>S</mi>
+  <mo>.</mo>
+</math>
+<p>Opaque pipeline:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>W</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>T</mi>
+  <mi>R</mi>
+  <mi>U</mi>
+  <mi>E</mi>
+  <mo>.</mo>
+</math>
+<p>Transparent pipeline:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>W</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>F</mi>
+  <mi>A</mi>
+  <mi>L</mi>
+  <mi>S</mi>
+  <mi>E</mi>
+  <mo>.</mo>
+</math>
+<p>That matches our Pass 2 analysis.</p>
+<p>Transparent fragments test against opaque depth but do not overwrite it.</p>
+<hr />
+<p><strong>Kairo does not currently use reversed-Z in this Vulkan path</strong></p>
+<p>The depth compare is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>E</mi>
+  <mi>S</mi>
+  <mi>S</mi>
+</math>
+<p>with conventional depth behavior.</p>
+<p>Your Maveb Metal pipeline has reverse-Z work, but current Kairo Vulkan mesh pipeline remains conventional.</p>
+<p>Do not mix assumptions between those projects.</p>
+<hr />
+<p><strong>Blend state</strong></p>
+<p>Opaque color attachment:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>E</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>b</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>F</mi>
+  <mi>A</mi>
+  <mi>L</mi>
+  <mi>S</mi>
+  <mi>E</mi>
+  <mo>.</mo>
+</math>
+<p>Transparent:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mo>=</mo>
+  <mi>S</mi>
+  <mi>R</mi>
+  <msub>
+    <mi>C</mi>
+    <mi>A</mi>
+  </msub>
+  <mi>L</mi>
+  <mi>P</mi>
+  <mi>H</mi>
+  <mi>A</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mi>N</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>M</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>N</mi>
+  <mi>U</mi>
+  <msub>
+    <mi>S</mi>
+    <mi>S</mi>
+  </msub>
+  <mi>R</mi>
+  <msub>
+    <mi>C</mi>
+    <mi>A</mi>
+  </msub>
+  <mi>L</mi>
+  <mi>P</mi>
+  <mi>H</mi>
+  <mi>A</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>o</mi>
+  <mi>p</mi>
+  <mo>=</mo>
+  <mi>A</mi>
+  <mi>D</mi>
+  <mi>D</mi>
+  <mo>.</mo>
+</math>
+<p>Thus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>C</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>o</mi>
+      <mi>u</mi>
+      <mi>t</mi>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>s</mi>
+  </msub>
+  <msub>
+    <mi>C</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>−</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>s</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+  <msub>
+    <mi>C</mi>
+    <mi>d</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>For alpha channel Kairo uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>r</mi>
+  <mi>c</mi>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mi>N</mi>
+  <mi>E</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>O</mi>
+  <mi>N</mi>
+  <mi>E</mi>
+  <mo>−</mo>
+  <msub>
+    <mi>α</mi>
+    <mi>s</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Independent blending</strong></p>
+<p>Kairo has two attachments in the viewport path:</p>
+<ul>
+<li>shaded color,</li>
+<li>object ID.</li>
+</ul>
+<p>Color can blend.</p>
+<p>Object IDs must remain exact.</p>
+<p>Therefore attachment 0 and attachment 1 have different blend behavior.</p>
+<p>That is why Kairo explicitly requires:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>p</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>t</mi>
+          <mi>B</mi>
+          <mi>l</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>during physical-device selection.</p>
+<p>This is a perfect example of an API feature requirement being traceable to renderer semantics.</p>
+<hr />
+<p><strong>Dynamic state</strong></p>
+<p>Kairo marks:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>w</mi>
+  <mi>p</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>s</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+</math>
+<p>dynamic.</p>
+<p>Shadow pipeline additionally makes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>h</mi>
+  <mi>B</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>s</mi>
+</math>
+<p>dynamic.</p>
+<p>Therefore those values can change at command-recording time without creating a new pipeline object.</p>
+<p>Everything not dynamic remains baked.</p>
+<hr />
+<p><strong>Why not make everything dynamic?</strong></p>
+<p>Historically Vulkan exposed limited dynamic state; newer extensions/core versions expand it considerably.</p>
+<p>Even when available, fully dynamic state is not automatically ideal.</p>
+<p>Static state lets driver optimize more aggressively and makes pipeline behavior predictable.</p>
+<p>Dynamic state reduces pipeline permutations.</p>
+<p>It is an engine-design tradeoff.</p>
+<hr />
+<p><strong>Pipeline creation cost</strong></p>
+<p><code>vkCreateGraphicsPipelines()</code> can trigger significant compilation.</p>
+<p>Inputs include shaders and state.</p>
+<p>That can involve:</p>
+<ul>
+<li>shader compilation,</li>
+<li>specialization,</li>
+<li>hardware ISA generation,</li>
+<li>state optimization.</li>
+</ul>
+<p>Doing this during gameplay can cause stutter.</p>
+<p>Pipelines should usually be:</p>
+<ul>
+<li>created ahead of time,</li>
+<li>cached,</li>
+<li>prewarmed,</li>
+<li>asynchronously compiled where architecture permits.</li>
+</ul>
+<hr />
+<p><strong>Current Kairo pipeline variants</strong></p>
+<p>Kairo builds variants for:</p>
+<pre class="text"><code>static opaque
+skinned opaque
+static transparent
+skinned transparent
+static shadow
+skinned shadow
+debug lines</code></pre>
+<p>This is a manageable permutation set.</p>
+<p>It has not yet exploded features such as normal-map on/off, metallic on/off, emissive on/off into separate pipelines.</p>
+<p>That is good.</p>
+<hr />
+<p><strong>Pipeline caches</strong></p>
+<p>Vulkan lets you supply:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>P</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+</math>
+<p>to pipeline creation.</p>
+<p>The implementation may store reusable compilation artifacts.</p>
+<p>A cache can potentially be serialized and reused between runs, subject to compatibility requirements.</p>
+<p>Kairo currently calls:</p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>vkCreateGraphicsPipelines<span class="op">(</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>    device<span class="op">,</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>    VK_NULL_HANDLE<span class="op">,</span></span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">...</span></span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a><span class="op">);</span></span></code></pre></div>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>current Kairo uses no pipeline cache</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That is a concrete future optimization.</p>
+<hr />
+<p><strong>Pipeline cache is not magic portable shader binary storage</strong></p>
+<p>Cache data is implementation/device/driver dependent.</p>
+<p>You cannot assume a pipeline-cache blob from one GPU/driver is valid on another.</p>
+<p>The engine needs cache identity/version handling.</p>
+<p>Think:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>implementation-specific acceleration artifact</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>not:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>universal compiled shader package</mtext>
+  <mo>.</mo>
+</math>
+<hr />
+<p><strong>Dynamic rendering</strong></p>
+<p>Modern Vulkan can begin rendering without constructing a traditional <code>VkRenderPass</code>/<code>VkFramebuffer</code> pair.</p>
+<p>Instead the command specifies current attachments directly.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>old model:
+VkRenderPass
++ VkFramebuffer
+→ begin render pass
+
+dynamic rendering:
+attachment descriptions at command time
+→ begin rendering</code></pre>
+<p>This substantially reduces boilerplate and render-pass object management.</p>
+<hr />
+<p><strong>Dynamic rendering does not remove attachment semantics</strong></p>
+<p>You still need to know:</p>
+<ul>
+<li>image format,</li>
+<li>layout,</li>
+<li>load operation,</li>
+<li>store operation,</li>
+<li>synchronization,</li>
+<li>sample count.</li>
+</ul>
+<p>Dynamic rendering removes the traditional render-pass object structure.</p>
+<p>It does <strong>not</strong> make rendering state implicit again.</p>
+<hr />
+<p><strong>Current Kairo uses traditional render passes</strong></p>
+<p>Current <code>VulkanTriangle</code> creates:</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>vkCreateRenderPass<span class="op">(...)</span></span></code></pre></div>
+<p>and creates framebuffers per swapchain image.</p>
+<p>Pipelines reference compatible render passes.</p>
+<p>Therefore current Kairo does <strong>not</strong> use Vulkan dynamic rendering.</p>
+<p>That is completely valid, especially for Vulkan 1.1 portability.</p>
+<hr />
+<p><strong>Traditional render pass</strong></p>
+<p>A <code>VkRenderPass</code> describes:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>attachments</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>subpasses</mtext>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>dependencies</mtext>
+  <mo>.</mo>
+</math>
+<p>Attachment description includes:</p>
+<ul>
+<li>format,</li>
+<li>sample count,</li>
+<li>load/store operations,</li>
+<li>initial/final layouts.</li>
+</ul>
+<p>A framebuffer supplies the actual image views used by that render pass.</p>
+<p>So:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>render pass = structural rendering contract</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>while:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>framebuffer = concrete attachment instances</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Kairo swapchain render pass</strong></p>
+<p>Its swapchain pass has one color attachment.</p>
+<p>It begins:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>L</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>U</mi>
+  <mi>N</mi>
+  <mi>D</mi>
+  <mi>E</mi>
+  <mi>F</mi>
+  <mi>I</mi>
+  <mi>N</mi>
+  <mi>E</mi>
+  <mi>D</mi>
+  <mo>.</mo>
+</math>
+<p>Rendering uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>O</mi>
+  <mi>L</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>R</mi>
+    <mi>A</mi>
+  </msub>
+  <mi>T</mi>
+  <mi>T</mi>
+  <mi>A</mi>
+  <mi>C</mi>
+  <mi>H</mi>
+  <mi>M</mi>
+  <mi>E</mi>
+  <mi>N</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>O</mi>
+  </msub>
+  <mi>P</mi>
+  <mi>T</mi>
+  <mi>I</mi>
+  <mi>M</mi>
+  <mi>A</mi>
+  <mi>L</mi>
+  <mo>.</mo>
+</math>
+<p>Ends:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>L</mi>
+  <mi>a</mi>
+  <mi>y</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>t</mi>
+  <mo>=</mo>
+  <mi>P</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+  <mi>S</mi>
+  <mi>E</mi>
+  <mi>N</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>S</mi>
+  </msub>
+  <mi>R</mi>
+  <msub>
+    <mi>C</mi>
+    <mi>K</mi>
+  </msub>
+  <mi>H</mi>
+  <mi>R</mi>
+  <mo>.</mo>
+</math>
+<p>That is the canonical render-to-present lifecycle.</p>
+<hr />
+<p><strong>Why initial <code>UNDEFINED</code> is valid here</strong></p>
+<p>Attachment uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>O</mi>
+  <mi>p</mi>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+  <mi>A</mi>
+  <mi>R</mi>
+  <mo>.</mo>
+</math>
+<p>Previous swapchain image contents are irrelevant.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>U</mi>
+  <mi>N</mi>
+  <mi>D</mi>
+  <mi>E</mi>
+  <mi>F</mi>
+  <mi>I</mi>
+  <mi>N</mi>
+  <mi>E</mi>
+  <mi>D</mi>
+</math>
+<p>is appropriate.</p>
+<p>The implementation may discard old contents freely.</p>
+<p>If you wanted to preserve old image contents, this would be wrong.</p>
+<hr />
+<p><strong>Subpasses</strong></p>
+<p>A render pass may contain multiple subpasses.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>subpass 0:
+    geometry writes attachments
+
+subpass 1:
+    lighting consumes prior attachment as input
+
+subpass 2:
+    composition</code></pre>
+<p>Subpasses historically let tile-based/mobile GPUs keep data in on-chip tile memory and avoid external memory round trips.</p>
+<p>They also formalize attachment dependencies.</p>
+<hr />
+<p><strong>Why modern engines sometimes prefer dynamic rendering instead</strong></p>
+<p>Subpasses are powerful but make render-pass compatibility/state management more rigid.</p>
+<p>Modern explicit APIs increasingly favor flexible pass graphs and dynamic rendering plus explicit synchronization.</p>
+<p>This often maps better to complex cross-platform render-graph systems.</p>
+<p>But traditional subpasses remain important to understand because:</p>
+<ul>
+<li>many engines use them,</li>
+<li>Vulkan compatibility rules reference them,</li>
+<li>tile-based architectures may benefit.</li>
+</ul>
+<hr />
+<p><strong>Attachment load operation</strong></p>
+<p>At beginning of rendering:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>O</mi>
+  <mi>p</mi>
+</math>
+<p>specifies what happens to existing attachment contents.</p>
+<p>Main choices conceptually:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>L</mi>
+  <mi>O</mi>
+  <mi>A</mi>
+  <mi>D</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+  <mi>A</mi>
+  <mi>R</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>O</mi>
+  <mi>N</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+  <mo>.</mo>
+</math>
+<p><code>LOAD</code> preserves previous contents.</p>
+<p><code>CLEAR</code> initializes to specified clear value.</p>
+<p><code>DONT_CARE</code> says previous values need not be preserved.</p>
+<hr />
+<p><strong>Attachment store operation</strong></p>
+<p>At end:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>O</mi>
+  <mi>p</mi>
+</math>
+<p>states whether rendered results must be preserved.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>S</mi>
+  <mi>T</mi>
+  <mi>O</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+</math>
+<p>keeps results for later use/presentation.</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>O</mi>
+  <mi>N</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+</math>
+<p>allows implementation to discard them.</p>
+<p>Using <code>STORE</code> unnecessarily can force memory traffic, especially on tile-based GPUs.</p>
+<hr />
+<p><strong>Load/store are performance semantics, not just correctness flags</strong></p>
+<p>Imagine a mobile tile renderer.</p>
+<p>Color attachment begins in system memory.</p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>O</mi>
+  <mi>p</mi>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+  <mi>A</mi>
+  <mi>R</mi>
+  <mo>,</mo>
+</math>
+<p>the GPU need not load old color from memory.</p>
+<p>It can clear tile storage on-chip.</p>
+<p>If final result will never be read:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>O</mi>
+  <mi>p</mi>
+  <mo>=</mo>
+  <mi>D</mi>
+  <mi>O</mi>
+  <mi>N</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+</math>
+<p>means no writeback required.</p>
+<p>Thus correct load/store selection can eliminate significant bandwidth.</p>
+<p>This is one reason explicit APIs expose them.</p>
+<hr />
+<p><strong>Kairo swapchain attachment</strong></p>
+<p>Current main swapchain attachment:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mi>O</mi>
+  <mi>p</mi>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+  <mi>A</mi>
+  <mi>R</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>O</mi>
+  <mi>p</mi>
+  <mo>=</mo>
+  <mi>S</mi>
+  <mi>T</mi>
+  <mi>O</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+  <mo>.</mo>
+</math>
+<p>Correct:</p>
+<ul>
+<li>old frame contents irrelevant,</li>
+<li>final image must survive for presentation.</li>
+</ul>
+<hr />
+<p><strong>Object-ID attachment</strong></p>
+<p>For the offscreen viewport path, object-ID attachment is cleared at start and stored because tools/picking need the result later.</p>
+<p>That also makes sense.</p>
+<p>If the ID attachment were never read after the pass, <code>STORE</code> would be wasteful.</p>
+<p>This is the mindset to maintain across every attachment.</p>
+<hr />
+<p><strong>Depth attachment store semantics</strong></p>
+<p>Depth may be:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+  <mi>A</mi>
+  <mi>R</mi>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>D</mi>
+  <mi>O</mi>
+  <mi>N</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+</math>
+<p>if no later pass samples/reads depth.</p>
+<p>But if:</p>
+<ul>
+<li>SSAO,</li>
+<li>Hi-Z,</li>
+<li>TAA,</li>
+<li>picking,</li>
+<li>depth-aware postprocess</li>
+</ul>
+<p>needs it later, then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>S</mi>
+  <mi>T</mi>
+  <mi>O</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+  <mo>.</mo>
+</math>
+<p>Load/store decisions derive from downstream consumers.</p>
+<p>A render graph can automate this from resource lifetime analysis.</p>
+<hr />
+<p><strong>Vulkan’s explicitness is dependency visibility</strong></p>
+<p>At first Vulkan feels verbose because it asks you to specify:</p>
+<pre class="text"><code>which queue?
+which format?
+which layout?
+which memory type?
+which descriptor binding?
+which pipeline?
+which render pass?
+which load/store?</code></pre>
+<p>But every one of those questions corresponds to something the hardware/driver must know anyway.</p>
+<p>Vulkan’s philosophy is to move those decisions into a form where the engine can reason about them ahead of time.</p>
+<p>That is why it pairs so naturally with:</p>
+<ul>
+<li>render graphs,</li>
+<li>explicit allocators,</li>
+<li>pipeline caches,</li>
+<li>GPU-driven rendering.</li>
+</ul>
+<hr />
+<p><strong>Current Kairo Vulkan architecture end to end</strong></p>
+<p>The current path is approximately:</p>
+<pre id="p11-kairo-chain" class="text"><code>VulkanInstance
+    ↓
+GLFW Vulkan extensions
++ optional portability enumeration
++ optional validation
+
+VulkanSurface
+    ↓
+physical-device enumeration
+
+VulkanDevice
+    ↓
+select device with:
+    graphics family
+    present family
+    swapchain extension
+    independentBlend
+
+VkDevice
+    ↓
+graphics queue
+present queue
+
+VulkanSwapchain
+    ↓
+surface capabilities
+format
+present mode
+extent
+images
+image views
+
+resources
+    ↓
+VulkanHostBuffer
+VulkanTexture2D
+
+texture upload
+    ↓
+host-coherent staging buffer
+    ↓
+copy to device-local image
+    ↓
+shader-read layout
+
+descriptors
+    ↓
+camera
+shadow
+material textures
+material UBO
+environment
+skin UBO
+
+pipeline layout
+    ↓
+descriptor layout
++ push constants
+
+SPIR-V modules
+    ↓
+graphics pipeline variants
+
+traditional render pass
+    ↓
+framebuffers
+    ↓
+swapchain presentation</code></pre>
+<p>That is already a coherent explicit renderer.</p>
+<hr />
+<p><strong>Where current Kairo is intentionally simple</strong></p>
+<p>It currently favors correctness/clarity over maximum Vulkan sophistication.</p>
+<p>It uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Vulkan 1.1</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>rather than building around newer core features.</p>
+<p>It uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>graphics + present queues</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>without separate compute/transfer queue architecture.</p>
+<p>It uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>one VkDeviceMemory allocation per simple resource</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>rather than a global suballocator.</p>
+<p>Texture upload creates a transient command pool and waits on queue idle.</p>
+<p>Descriptors are conventional per-draw/per-material rather than bindless.</p>
+<p>Pipeline creation uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>N</mi>
+  </msub>
+  <mi>U</mi>
+  <mi>L</mi>
+  <msub>
+    <mi>L</mi>
+    <mi>H</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>N</mi>
+  <mi>D</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+</math>
+<p>pipeline cache.</p>
+<p>Rendering uses traditional render passes rather than dynamic rendering.</p>
+<p>These are all reasonable simplifications for an engine that is still establishing correctness.</p>
+<hr />
+<p><strong>Where I would evolve Kairo next</strong></p>
+<p>The highest-value resource-side step is a real Vulkan memory allocator.</p>
+<p>Instead of:</p>
+<pre class="text"><code>every buffer
+→ vkAllocateMemory</code></pre>
+<p>use:</p>
+<pre class="text"><code>device-local pools
+host-visible upload pools
+readback pools</code></pre>
+<p>with aligned suballocation.</p>
+<p>Then static vertex/index data should move toward:</p>
+<pre class="text"><code>host staging
+→ device-local vertex/index buffers</code></pre>
+<p>instead of permanently host-visible allocations for everything.</p>
+<p>This better matches the GPU memory hierarchy.</p>
+<hr />
+<p><strong>Next descriptor evolution</strong></p>
+<p>Current descriptor-per-draw design is easy to reason about.</p>
+<p>The next scalable model would likely be:</p>
+<pre class="text"><code>frame set
+    camera/light globals
+
+material table
+    SSBO of material records
+
+global texture descriptor array
+    bindless/indexed textures
+
+per-draw
+    material ID + transform</code></pre>
+<p>This reduces descriptor-set binding frequency and fits GPU-driven draw generation.</p>
+<p>But do this only when current architecture becomes a measured bottleneck.</p>
+<hr />
+<p><strong>Next pipeline evolution</strong></p>
+<p>Introduce a pipeline cache.</p>
+<p>Potentially compile pipelines asynchronously.</p>
+<p>Separate shader permutation identity from runtime material values.</p>
+<p>Keep variant count controlled.</p>
+<p>If portability target later moves beyond Vulkan 1.1, consider dynamic rendering to simplify render-target management.</p>
+<p>But do not rewrite working render-pass infrastructure merely because newer API exists.</p>
+<p>Solve an actual architectural problem.</p>
+<hr />
+<p><strong>One subtle but important resource-lifetime issue</strong></p>
+<p>Kairo texture destruction currently destroys:</p>
+<pre class="text"><code>sampler
+view
+image
+memory</code></pre>
+<p>in that order.</p>
+<p>Correct conceptual dependency:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+</math>
+<p>does not own image, but descriptors may reference both.</p>
+<p>The engine must ensure no in-flight descriptor uses them before destruction.</p>
+<p>RAII controls CPU lifetime.</p>
+<p>It does <strong>not</strong> automatically solve GPU lifetime.</p>
+<p>This is the single most important explicit-API lifetime concept to carry into Pass 12/13.</p>
+<hr />
+<p><strong>CPU lifetime versus GPU lifetime</strong></p>
+<p>Suppose:</p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>    VulkanTexture texture<span class="op">;</span></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>    RecordDraw<span class="op">(</span>texture<span class="op">);</span></span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>C++ scope ends.</p>
+<p>Destructor runs.</p>
+<p>But recorded command buffer may execute 10 ms later.</p>
+<p>Then GPU references destroyed resources.</p>
+<p>CPU lifetime:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>ended</mtext>
+  <mo>.</mo>
+</math>
+<p>GPU lifetime:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>still active</mtext>
+  <mo>.</mo>
+</math>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>RAII alone is insufficient for GPU resources</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>You need retirement synchronization.</p>
+<p>This is why fences/timeline values become so important next.</p>
+<hr />
+<p><strong>Descriptor ABI reasoning</strong></p>
+<p>Shader:</p>
+<div class="sourceCode" id="cb59"><pre class="sourceCode glsl"><code class="sourceCode glsl"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="kw">layout</span><span class="op">(</span>set <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> <span class="dt">binding</span> <span class="op">=</span> <span class="dv">7</span><span class="op">)</span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="kw">uniform</span> MaterialData</span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> baseColorFactor<span class="op">;</span></span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> emissiveAndNormalScale<span class="op">;</span></span>
+<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> factors<span class="op">;</span></span>
+<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">vec4</span> flags<span class="op">;</span></span>
+<span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>CPU layout:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>4</mn>
+  <mo>×</mo>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>c</mi>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>64</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>Kairo CPU uses:</p>
+<div class="sourceCode" id="cb60"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="bu">std::</span>array<span class="op">&lt;</span><span class="dt">float</span><span class="op">,</span><span class="dv">16</span><span class="op">&gt;</span></span></code></pre></div>
+<p>also:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>16</mn>
+  <mo>×</mo>
+  <mn>4</mn>
+  <mo>=</mo>
+  <mn>64</mn>
+  <mtext> bytes</mtext>
+  <mo>.</mo>
+</math>
+<p>This is an intentional ABI.</p>
+<p>Descriptors point to bytes.</p>
+<p>They do not understand C++ classes.</p>
+<p>If CPU/GPU layout disagrees, Vulkan will faithfully provide the wrong bytes to your shader.</p>
+<p>Explicit API does not rescue your struct layout.</p>
+<hr />
+<p><strong>Pipeline ABI reasoning</strong></p>
+<p>Pipeline layout says:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>e</mi>
+  <msub>
+    <mi>t</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mtext>MaterialDescriptors layout</mtext>
+</math>
+<p>and push constants:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+  <mn>128</mn>
+  <mo stretchy="false">)</mo>
+</math>
+<p>visible to vertex+fragment.</p>
+<p>Every shader used with that layout must conform.</p>
+<p>Therefore:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>pipeline layout is effectively a shader-resource ABI</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This is a better mental model than “some Vulkan object I have to create before pipeline.”</p>
+<hr />
+<p><strong>Render-pass compatibility reasoning</strong></p>
+<p>A pipeline created against a traditional render pass expects compatible attachment structure.</p>
+<p>The renderer cannot arbitrarily bind it inside an unrelated render pass.</p>
+<p>That is one reason render-pass architecture can produce many pipeline compatibility relationships.</p>
+<p>Dynamic rendering weakens some of that object coupling but not the underlying format/sample requirements.</p>
+<hr />
+<p><strong>Swapchain is not your scene framebuffer</strong></p>
+<p>This is a subtle architectural distinction.</p>
+<p>A sophisticated renderer often renders scene into:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>D</mi>
+  <mi>R</mi>
+  <mtext> </mtext>
+  <mi>o</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mtext> </mtext>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>t</mi>
+  <mi>u</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+</math>
+<p>then tone maps/composites into swapchain.</p>
+<p>The swapchain is presentation infrastructure.</p>
+<p>It should not necessarily dictate all internal rendering formats.</p>
+<p>Kairo already has offscreen viewport targets elsewhere in the rendering architecture, which is the right direction.</p>
+<hr />
+<p><strong>Vulkan image view versus sampler versus descriptor</strong></p>
+<p>These three are often confused.</p>
+<p><code>VkImage</code>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>storage/resource</mtext>
+  <mo>.</mo>
+</math>
+<p><code>VkImageView</code>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>interpretation/subresource selection</mtext>
+  <mo>.</mo>
+</math>
+<p><code>VkSampler</code>:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>filter/addressing behavior</mtext>
+  <mo>.</mo>
+</math>
+<p>Descriptor:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>shader binding referencing view/sampler</mtext>
+  <mo>.</mo>
+</math>
+<p>For combined image sampler:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>s</mi>
+          <mi>c</mi>
+          <mi>r</mi>
+          <mi>i</mi>
+          <mi>p</mi>
+          <mi>t</mi>
+          <mi>o</mi>
+          <mi>r</mi>
+          <mo>=</mo>
+          <mo stretchy="false">(</mo>
+          <mi>i</mi>
+          <mi>m</mi>
+          <mi>a</mi>
+          <mi>g</mi>
+          <mi>e</mi>
+          <mi>V</mi>
+          <mi>i</mi>
+          <mi>e</mi>
+          <mi>w</mi>
+          <mo>,</mo>
+          <mi>s</mi>
+          <mi>a</mi>
+          <mi>m</mi>
+          <mi>p</mi>
+          <mi>l</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mo>,</mo>
+          <mi>l</mi>
+          <mi>a</mi>
+          <mi>y</mi>
+          <mi>o</mi>
+          <mi>u</mi>
+          <mi>t</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>conceptually.</p>
+<p>Kairo’s <code>VkDescriptorImageInfo</code> contains exactly those three pieces.</p>
+<hr />
+<p><strong>Why descriptor contains image layout</strong></p>
+<p>Kairo descriptor writes:</p>
+<div class="sourceCode" id="cb61"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>    sampler<span class="op">,</span></span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>    view<span class="op">,</span></span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL</span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The descriptor states the layout in which the image is expected when accessed.</p>
+<p>The actual image must truly be in that layout when shader access occurs.</p>
+<p>Descriptor metadata does not perform the transition.</p>
+<p>This is another crucial distinction:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>descriptor declares expected state</mtext>
+          <mo>≠</mo>
+          <mtext>barrier establishes state</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Buffer memory type choice should derive from access frequency</strong></p>
+<p>A static vertex buffer:</p>
+<p>CPU writes once.</p>
+<p>GPU reads millions of times.</p>
+<p>Ideal:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>d</mi>
+          <mi>e</mi>
+          <mi>v</mi>
+          <mi>i</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+          <mo>−</mo>
+          <mi>l</mi>
+          <mi>o</mi>
+          <mi>c</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mi>f</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mi>b</mi>
+          <mi>u</mi>
+          <mi>f</mi>
+          <mi>f</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>with staging upload.</p>
+<p>A frequently updated tiny uniform:</p>
+<p>CPU writes every frame.</p>
+<p>GPU reads once/few times.</p>
+<p>Host-visible/coherent mapped ring buffer may be ideal.</p>
+<p>A readback counter:</p>
+<p>GPU writes.</p>
+<p>CPU occasionally reads after synchronization.</p>
+<p>Use host-visible readback memory.</p>
+<p>Resource usage pattern should drive memory architecture.</p>
+<hr />
+<p><strong>Current Kairo host buffers trade simplicity for performance</strong></p>
+<p><code>VulkanHostBuffer</code> always chooses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>O</mi>
+  <mi>S</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>V</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>S</mi>
+  <mi>I</mi>
+  <mi>B</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+  <mrow data-mjx-texclass="ORD">
+    <mo stretchy="false">|</mo>
+  </mrow>
+  <mi>H</mi>
+  <mi>O</mi>
+  <mi>S</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>H</mi>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+  <mi>N</mi>
+  <mi>T</mi>
+  <mo>.</mo>
+</math>
+<p>That means even vertex/index/debug/uniform data can be straightforwardly updated.</p>
+<p>But it does not guarantee ideal device-local bandwidth.</p>
+<p>On some architectures host-visible memory is also device-local.</p>
+<p>On others it is not.</p>
+<p>A more mature allocator should distinguish:</p>
+<pre class="text"><code>UploadBuffer
+ReadbackBuffer
+DeviceBuffer
+DynamicUniformRing</code></pre>
+<p>rather than one universal host buffer class.</p>
+<hr />
+<p><strong>Descriptor pool lifetime model</strong></p>
+<p>A descriptor pool owns descriptor-set allocations.</p>
+<p>Destroying the pool implicitly invalidates its sets.</p>
+<p>Therefore:</p>
+<pre class="text"><code>pool
+    ↓ owns allocation storage
+descriptor sets</code></pre>
+<p>Kairo’s <code>ClearPool()</code> correctly clears set handles before destroying pool.</p>
+<p>But CPU vector clearing does not itself synchronize GPU.</p>
+<p>The method relies on its fence-safe precondition.</p>
+<p>Again:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>lifetime correctness has two layers</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>CPU ownership and GPU completion.</p>
+<hr />
+<p><strong>Why descriptor pools exist at all</strong></p>
+<p>If every descriptor-set allocation had to individually allocate driver memory, overhead would be high.</p>
+<p>Pools allow bulk resource management.</p>
+<p>They are especially useful for allocation patterns such as:</p>
+<pre class="text"><code>per frame pool
+→ reset when frame fence completes</code></pre>
+<p>or:</p>
+<pre class="text"><code>long-lived material pool</code></pre>
+<p>Different lifetime classes can have separate pools.</p>
+<hr />
+<p><strong>Pipeline creation object graph</strong></p>
+<p>To create Kairo’s mesh pipeline, all these contracts converge:</p>
+<pre id="p11-pso-graph" class="text"><code>SPIR-V vertex module
+SPIR-V fragment module
+
+vertex binding/attributes
+
+input assembly
+
+raster state
+
+multisample state
+
+depth state
+
+blend state
+
+dynamic-state declaration
+
+pipeline layout
+    descriptors
+    push constants
+
+render-pass compatibility</code></pre>
+<p>Only after all that:</p>
+<div class="sourceCode" id="cb66"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>vkCreateGraphicsPipelines<span class="op">(...)</span></span></code></pre></div>
+<p>returns a pipeline.</p>
+<p>This is why Vulkan pipeline creation feels heavy.</p>
+<p>The advantage is that a huge amount of state validation/compilation can happen before draw time.</p>
+<hr />
+<p><strong>Draw-time state becomes relatively small</strong></p>
+<p>Once pipeline/resources exist, actual draw recording mainly says:</p>
+<pre class="text"><code>bind pipeline
+bind descriptor set
+set dynamic viewport/scissor
+push constants
+bind vertex/index buffers
+draw</code></pre>
+<p>That is deliberately lightweight compared with rebuilding/validating state every draw.</p>
+<p>This is the payoff of up-front pipeline construction.</p>
+<hr />
+<p><strong>The explicit renderer lifecycle</strong></p>
+<p>Before frame:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>create stable objects/resources</mtext>
+  <mo>.</mo>
+</math>
+<p>At frame time:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>select current dynamic resources</mtext>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>record lightweight commands</mtext>
+  <mo>.</mo>
+</math>
+<p>Then:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>submit</mtext>
+  <mo>.</mo>
+</math>
+<p>Then GPU executes asynchronously.</p>
+<p>Then resources retire only when synchronization proves they are unused.</p>
+<p>That complete final half begins next pass.</p>
+<hr />
+<p><strong>PASS 11 RECALL SHEET</strong></p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Reconstruction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vulkan philosophy</td>
+<td>Explicit state, memory, synchronization and lifetime</td>
+</tr>
+<tr>
+<td><code>VkInstance</code></td>
+<td>Application↔︎Vulkan implementation connection</td>
+</tr>
+<tr>
+<td>Instance extension</td>
+<td>Optional instance-level capability</td>
+</tr>
+<tr>
+<td>Validation layer</td>
+<td>Development-time API correctness diagnostics</td>
+</tr>
+<tr>
+<td><code>VkPhysicalDevice</code></td>
+<td>Enumerated adapter</td>
+</tr>
+<tr>
+<td>Properties</td>
+<td>Device facts/limits</td>
+</tr>
+<tr>
+<td>Features</td>
+<td>Optional capabilities explicitly enabled</td>
+</tr>
+<tr>
+<td>Queue family</td>
+<td>Group of queues with operation capabilities</td>
+</tr>
+<tr>
+<td>Present support</td>
+<td>Surface-specific queue capability</td>
+</tr>
+<tr>
+<td><code>VkDevice</code></td>
+<td>Logical device created from selected physical device</td>
+</tr>
+<tr>
+<td><code>VkQueue</code></td>
+<td>Submission channel</td>
+</tr>
+<tr>
+<td><code>VkSurfaceKHR</code></td>
+<td>Window-system presentation target</td>
+</tr>
+<tr>
+<td>Surface capabilities</td>
+<td>Extent/image-count/transform constraints</td>
+</tr>
+<tr>
+<td>Surface format</td>
+<td>Image format + color space</td>
+</tr>
+<tr>
+<td>Present mode</td>
+<td>FIFO/mailbox/etc. presentation policy</td>
+</tr>
+<tr>
+<td>Swapchain</td>
+<td>Rotating presentable image set</td>
+</tr>
+<tr>
+<td>Acquire</td>
+<td>Obtain usable swapchain image index</td>
+</tr>
+<tr>
+<td>Present</td>
+<td>Queue presentation of completed image</td>
+</tr>
+<tr>
+<td>Out-of-date</td>
+<td>Swapchain no longer usable</td>
+</tr>
+<tr>
+<td>Suboptimal</td>
+<td>Still usable but should recreate</td>
+</tr>
+<tr>
+<td>Buffer</td>
+<td>Linear unformatted resource</td>
+</tr>
+<tr>
+<td>Image</td>
+<td>Structured multidimensional resource</td>
+</tr>
+<tr>
+<td>Image view</td>
+<td>Format/subresource interpretation of image</td>
+</tr>
+<tr>
+<td>Sampler</td>
+<td>Filtering/addressing state</td>
+</tr>
+<tr>
+<td>Heap</td>
+<td>Physical memory budget/pool</td>
+</tr>
+<tr>
+<td>Memory type</td>
+<td>Heap-backed memory with property flags</td>
+</tr>
+<tr>
+<td>Host visible</td>
+<td>CPU mappable</td>
+</tr>
+<tr>
+<td>Host coherent</td>
+<td>No explicit host cache flush/invalidate needed</td>
+</tr>
+<tr>
+<td>Device local</td>
+<td>Efficient GPU-local access</td>
+</tr>
+<tr>
+<td>Requirements</td>
+<td>Size, alignment, compatible memory-type mask</td>
+</tr>
+<tr>
+<td>Bind memory</td>
+<td>Attach resource to allocation/offset</td>
+</tr>
+<tr>
+<td>Suballocation</td>
+<td>Many resources from one large allocation</td>
+</tr>
+<tr>
+<td>Staging</td>
+<td>Host-visible temporary transfer source</td>
+</tr>
+<tr>
+<td>Vertex buffer</td>
+<td>Buffer consumed as vertex input</td>
+</tr>
+<tr>
+<td>Index buffer</td>
+<td>Buffer consumed as primitive indices</td>
+</tr>
+<tr>
+<td>Uniform buffer</td>
+<td>Small read-only shader parameter block</td>
+</tr>
+<tr>
+<td>Storage buffer</td>
+<td>General larger shader data</td>
+</tr>
+<tr>
+<td>Texel buffer</td>
+<td>Formatted buffer access through buffer view</td>
+</tr>
+<tr>
+<td>Descriptor</td>
+<td>Resource binding metadata</td>
+</tr>
+<tr>
+<td>Descriptor set layout</td>
+<td>Binding ABI/shape</td>
+</tr>
+<tr>
+<td>Descriptor pool</td>
+<td>Allocation arena for descriptor sets</td>
+</tr>
+<tr>
+<td>Descriptor set</td>
+<td>Concrete collection of descriptors</td>
+</tr>
+<tr>
+<td>Dynamic offset</td>
+<td>Runtime offset into dynamic buffer descriptor</td>
+</tr>
+<tr>
+<td>Bindless</td>
+<td>Large indexed descriptor/resource arrays</td>
+</tr>
+<tr>
+<td>Push constant</td>
+<td>Tiny high-frequency command-supplied data block</td>
+</tr>
+<tr>
+<td>Pipeline layout</td>
+<td>Descriptor-set + push-constant ABI</td>
+</tr>
+<tr>
+<td>SPIR-V</td>
+<td>Vulkan shader intermediate representation</td>
+</tr>
+<tr>
+<td>Graphics pipeline</td>
+<td>Shader + fixed/dynamic rendering state bundle</td>
+</tr>
+<tr>
+<td>Pipeline cache</td>
+<td>Implementation-specific pipeline compilation reuse</td>
+</tr>
+<tr>
+<td>Dynamic rendering</td>
+<td>Render directly with attachment info, no <code>VkRenderPass</code> object</td>
+</tr>
+<tr>
+<td>Traditional render pass</td>
+<td>Attachment/subpass/dependency contract</td>
+</tr>
+<tr>
+<td>Subpass</td>
+<td>Rendering phase inside one render pass</td>
+</tr>
+<tr>
+<td><code>LOAD</code></td>
+<td>Preserve existing attachment contents</td>
+</tr>
+<tr>
+<td><code>CLEAR</code></td>
+<td>Initialize attachment</td>
+</tr>
+<tr>
+<td><code>DONT_CARE</code> load</td>
+<td>Old contents irrelevant</td>
+</tr>
+<tr>
+<td><code>STORE</code></td>
+<td>Preserve rendered result</td>
+</tr>
+<tr>
+<td><code>DONT_CARE</code> store</td>
+<td>Final contents may be discarded</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Blank-page mastery gate</strong></p>
+<p>Without looking back, reconstruct Vulkan startup from nothing:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>V</mi>
+          <mi>k</mi>
+          <mi>I</mi>
+          <mi>n</mi>
+          <mi>s</mi>
+          <mi>t</mi>
+          <mi>a</mi>
+          <mi>n</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+          <mo stretchy="false">→</mo>
+          <mi>V</mi>
+          <mi>k</mi>
+          <mi>S</mi>
+          <mi>u</mi>
+          <mi>r</mi>
+          <mi>f</mi>
+          <mi>a</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+          <mi>K</mi>
+          <mi>H</mi>
+          <mi>R</mi>
+          <mo stretchy="false">→</mo>
+          <mi>V</mi>
+          <mi>k</mi>
+          <mi>P</mi>
+          <mi>h</mi>
+          <mi>y</mi>
+          <mi>s</mi>
+          <mi>i</mi>
+          <mi>c</mi>
+          <mi>a</mi>
+          <mi>l</mi>
+          <mi>D</mi>
+          <mi>e</mi>
+          <mi>v</mi>
+          <mi>i</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+          <mo stretchy="false">→</mo>
+          <mi>q</mi>
+          <mi>u</mi>
+          <mi>e</mi>
+          <mi>u</mi>
+          <mi>e</mi>
+          <mo>−</mo>
+          <mi>f</mi>
+          <mi>a</mi>
+          <mi>m</mi>
+          <mi>i</mi>
+          <mi>l</mi>
+          <mi>y</mi>
+          <mi>d</mi>
+          <mi>i</mi>
+          <mi>s</mi>
+          <mi>c</mi>
+          <mi>o</mi>
+          <mi>v</mi>
+          <mi>e</mi>
+          <mi>r</mi>
+          <mi>y</mi>
+          <mo stretchy="false">→</mo>
+          <mi>V</mi>
+          <mi>k</mi>
+          <mi>D</mi>
+          <mi>e</mi>
+          <mi>v</mi>
+          <mi>i</mi>
+          <mi>c</mi>
+          <mi>e</mi>
+          <mo stretchy="false">→</mo>
+          <mi>V</mi>
+          <mi>k</mi>
+          <mi>Q</mi>
+          <mi>u</mi>
+          <mi>e</mi>
+          <mi>u</mi>
+          <mi>e</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and explain why presentation support cannot be inferred only from <code>VK_QUEUE_GRAPHICS_BIT</code>.</p>
+<p>Then explain exactly why Kairo requires <code>independentBlend</code>, why it checks <code>VK_KHR_swapchain</code>, and why MoltenVK requires portability-enumeration awareness.</p>
+<p>Then derive swapchain creation from:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>surface capabilities</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>format</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>present mode</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>extent</mtext>
+  <mo stretchy="false">→</mo>
+  <mtext>image count</mtext>
+  <mo>.</mo>
+</math>
+<p>Explain why swapchain images are not manually freed with <code>vkDestroyImage</code>, but their image views are.</p>
+<p>Then explain:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>B</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>≠</mo>
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>v</mi>
+  <mi>i</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>M</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+</math>
+<p>and derive the resource memory process:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>q</mi>
+  <mi>u</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>s</mi>
+  <mo stretchy="false">→</mo>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>m</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>y</mi>
+  <mi>t</mi>
+  <mi>y</mi>
+  <mi>p</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mo stretchy="false">→</mo>
+  <mi>b</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>Then distinguish:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>O</mi>
+  <mi>S</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>V</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>S</mi>
+  <mi>I</mi>
+  <mi>B</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>H</mi>
+  <mi>O</mi>
+  <mi>S</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>H</mi>
+  <mi>E</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+  <mi>N</mi>
+  <mi>T</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>E</mi>
+  <mi>V</mi>
+  <mi>I</mi>
+  <mi>C</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>L</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>C</mi>
+  <mi>A</mi>
+  <mi>L</mi>
+</math>
+<p>and explain why coherency does <strong>not</strong> remove GPU synchronization requirements.</p>
+<p>Then reconstruct Kairo’s texture upload:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics>
+  <mtable displaystyle="true" columnspacing="1em" rowspacing="3pt">
+    <mtr>
+      <mtd>
+        <mtext>asset mips</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>mapped staging buffer</mtext>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>U</mi>
+        <mi>N</mi>
+        <mi>D</mi>
+        <mi>E</mi>
+        <mi>F</mi>
+        <mi>I</mi>
+        <mi>N</mi>
+        <mi>E</mi>
+        <mi>D</mi>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>T</mi>
+        <mi>R</mi>
+        <mi>A</mi>
+        <mi>N</mi>
+        <mi>S</mi>
+        <mi>F</mi>
+        <mi>E</mi>
+        <msub>
+          <mi>R</mi>
+          <mi>D</mi>
+        </msub>
+        <mi>S</mi>
+        <mi>T</mi>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>v</mi>
+        <mi>k</mi>
+        <mi>C</mi>
+        <mi>m</mi>
+        <mi>d</mi>
+        <mi>C</mi>
+        <mi>o</mi>
+        <mi>p</mi>
+        <mi>y</mi>
+        <mi>B</mi>
+        <mi>u</mi>
+        <mi>f</mi>
+        <mi>f</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mi>T</mi>
+        <mi>o</mi>
+        <mi>I</mi>
+        <mi>m</mi>
+        <mi>a</mi>
+        <mi>g</mi>
+        <mi>e</mi>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>S</mi>
+        <mi>H</mi>
+        <mi>A</mi>
+        <mi>D</mi>
+        <mi>E</mi>
+        <msub>
+          <mi>R</mi>
+          <mi>R</mi>
+        </msub>
+        <mi>E</mi>
+        <mi>A</mi>
+        <msub>
+          <mi>D</mi>
+          <mi>O</mi>
+        </msub>
+        <mi>N</mi>
+        <mi>L</mi>
+        <mi>Y</mi>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+<annotation encoding="application/x-tex">
+\text{asset mips}
+\rightarrow
+\text{mapped staging buffer}
+\rightarrow
+UNDEFINED
+\rightarrow
+TRANSFER_DST
+\rightarrow
+vkCmdCopyBufferToImage
+\rightarrow
+SHADER_READ_ONLY.
+</annotation></semantics></math>
+<p>Then explain the difference between:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>I</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>I</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>V</mi>
+  <mi>i</mi>
+  <mi>e</mi>
+  <mi>w</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>S</mi>
+  <mi>a</mi>
+  <mi>m</mi>
+  <mi>p</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <mi>k</mi>
+  <mi>D</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>c</mi>
+  <mi>r</mi>
+  <mi>i</mi>
+  <mi>p</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>I</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>f</mi>
+  <mi>o</mi>
+  <mo>.</mo>
+</math>
+<p>Then reconstruct descriptors from shader declaration to actual bound resource:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics>
+  <mtable displaystyle="true" columnspacing="1em" rowspacing="3pt">
+    <mtr>
+      <mtd>
+        <mi>s</mi>
+        <mi>h</mi>
+        <mi>a</mi>
+        <mi>d</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mo stretchy="false">(</mo>
+        <mi>s</mi>
+        <mi>e</mi>
+        <mi>t</mi>
+        <mo>,</mo>
+        <mi>b</mi>
+        <mi>i</mi>
+        <mi>n</mi>
+        <mi>d</mi>
+        <mi>i</mi>
+        <mi>n</mi>
+        <mi>g</mi>
+        <mo stretchy="false">)</mo>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>d</mi>
+        <mi>e</mi>
+        <mi>s</mi>
+        <mi>c</mi>
+        <mi>r</mi>
+        <mi>i</mi>
+        <mi>p</mi>
+        <mi>t</mi>
+        <mi>o</mi>
+        <mi>r</mi>
+        <mo>−</mo>
+        <mi>s</mi>
+        <mi>e</mi>
+        <mi>t</mi>
+        <mi>l</mi>
+        <mi>a</mi>
+        <mi>y</mi>
+        <mi>o</mi>
+        <mi>u</mi>
+        <mi>t</mi>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>d</mi>
+        <mi>e</mi>
+        <mi>s</mi>
+        <mi>c</mi>
+        <mi>r</mi>
+        <mi>i</mi>
+        <mi>p</mi>
+        <mi>t</mi>
+        <mi>o</mi>
+        <mi>r</mi>
+        <mi>p</mi>
+        <mi>o</mi>
+        <mi>o</mi>
+        <mi>l</mi>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>d</mi>
+        <mi>e</mi>
+        <mi>s</mi>
+        <mi>c</mi>
+        <mi>r</mi>
+        <mi>i</mi>
+        <mi>p</mi>
+        <mi>t</mi>
+        <mi>o</mi>
+        <mi>r</mi>
+        <mi>s</mi>
+        <mi>e</mi>
+        <mi>t</mi>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>v</mi>
+        <mi>k</mi>
+        <mi>U</mi>
+        <mi>p</mi>
+        <mi>d</mi>
+        <mi>a</mi>
+        <mi>t</mi>
+        <mi>e</mi>
+        <mi>D</mi>
+        <mi>e</mi>
+        <mi>s</mi>
+        <mi>c</mi>
+        <mi>r</mi>
+        <mi>i</mi>
+        <mi>p</mi>
+        <mi>t</mi>
+        <mi>o</mi>
+        <mi>r</mi>
+        <mi>S</mi>
+        <mi>e</mi>
+        <mi>t</mi>
+        <mi>s</mi>
+        <mo stretchy="false">→</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>p</mi>
+        <mi>i</mi>
+        <mi>p</mi>
+        <mi>e</mi>
+        <mi>l</mi>
+        <mi>i</mi>
+        <mi>n</mi>
+        <mi>e</mi>
+        <mi>l</mi>
+        <mi>a</mi>
+        <mi>y</mi>
+        <mi>o</mi>
+        <mi>u</mi>
+        <mi>t</mi>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+<annotation encoding="application/x-tex">
+shader(set,binding)
+\rightarrow
+descriptor-set layout
+\rightarrow
+descriptor pool
+\rightarrow
+descriptor set
+\rightarrow
+vkUpdateDescriptorSets
+\rightarrow
+pipeline layout.
+</annotation></semantics></math>
+<p>Then explain why pipeline layout is an ABI, not merely “something Vulkan asks for.”</p>
+<p>Then rebuild a graphics pipeline from its parts:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics>
+  <mtable displaystyle="true" columnspacing="1em" rowspacing="3pt">
+    <mtr>
+      <mtd>
+        <mi>S</mi>
+        <mi>P</mi>
+        <mi>I</mi>
+        <mi>R</mi>
+        <mtext>-</mtext>
+        <mi>V</mi>
+        <mo>+</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>v</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mi>t</mi>
+        <mi>e</mi>
+        <mi>x</mi>
+        <mtext> </mtext>
+        <mi>i</mi>
+        <mi>n</mi>
+        <mi>p</mi>
+        <mi>u</mi>
+        <mi>t</mi>
+        <mo>+</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>a</mi>
+        <mi>s</mi>
+        <mi>s</mi>
+        <mi>e</mi>
+        <mi>m</mi>
+        <mi>b</mi>
+        <mi>l</mi>
+        <mi>y</mi>
+        <mo>+</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>r</mi>
+        <mi>a</mi>
+        <mi>s</mi>
+        <mi>t</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mi>i</mi>
+        <mi>z</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mo>+</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>m</mi>
+        <mi>u</mi>
+        <mi>l</mi>
+        <mi>t</mi>
+        <mi>i</mi>
+        <mi>s</mi>
+        <mi>a</mi>
+        <mi>m</mi>
+        <mi>p</mi>
+        <mi>l</mi>
+        <mi>i</mi>
+        <mi>n</mi>
+        <mi>g</mi>
+        <mo>+</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>d</mi>
+        <mi>e</mi>
+        <mi>p</mi>
+        <mi>t</mi>
+        <mi>h</mi>
+        <mo>+</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>b</mi>
+        <mi>l</mi>
+        <mi>e</mi>
+        <mi>n</mi>
+        <mi>d</mi>
+        <mo>+</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>d</mi>
+        <mi>y</mi>
+        <mi>n</mi>
+        <mi>a</mi>
+        <mi>m</mi>
+        <mi>i</mi>
+        <mi>c</mi>
+        <mtext> </mtext>
+        <mi>s</mi>
+        <mi>t</mi>
+        <mi>a</mi>
+        <mi>t</mi>
+        <mi>e</mi>
+        <mo>+</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>p</mi>
+        <mi>i</mi>
+        <mi>p</mi>
+        <mi>e</mi>
+        <mi>l</mi>
+        <mi>i</mi>
+        <mi>n</mi>
+        <mi>e</mi>
+        <mtext> </mtext>
+        <mi>l</mi>
+        <mi>a</mi>
+        <mi>y</mi>
+        <mi>o</mi>
+        <mi>u</mi>
+        <mi>t</mi>
+        <mo>+</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>r</mi>
+        <mi>e</mi>
+        <mi>n</mi>
+        <mi>d</mi>
+        <mi>e</mi>
+        <mi>r</mi>
+        <mi>i</mi>
+        <mi>n</mi>
+        <mi>g</mi>
+        <mi>c</mi>
+        <mi>o</mi>
+        <mi>m</mi>
+        <mi>p</mi>
+        <mi>a</mi>
+        <mi>t</mi>
+        <mi>i</mi>
+        <mi>b</mi>
+        <mi>i</mi>
+        <mi>l</mi>
+        <mi>i</mi>
+        <mi>t</mi>
+        <mi>y</mi>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+<annotation encoding="application/x-tex">
+SPIR\text{-}V
++
+vertex\ input
++
+assembly
++
+rasterizer
++
+multisampling
++
+depth
++
+blend
++
+dynamic\ state
++
+pipeline\ layout
++
+rendering compatibility.
+</annotation></semantics></math>
+<p>Finally explain these two attachment configurations:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mi>C</mi>
+  <mi>L</mi>
+  <mi>E</mi>
+  <mi>A</mi>
+  <mi>R</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>S</mi>
+  <mi>T</mi>
+  <mi>O</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+</math>
+<p>versus:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>a</mi>
+  <mi>d</mi>
+  <mo>=</mo>
+  <mi>D</mi>
+  <mi>O</mi>
+  <mi>N</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+  <mo>,</mo>
+  <mstyle scriptlevel="0">
+    <mspace width="1em"></mspace>
+  </mstyle>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>o</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mi>D</mi>
+  <mi>O</mi>
+  <mi>N</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>R</mi>
+  <mi>E</mi>
+</math>
+<p>and identify exactly what memory traffic/correctness assumptions each permits.</p>
+<p>If you can do all that from a blank sheet, then Vulkan stops looking like an arbitrary pile of handles. It becomes what it actually is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>a typed description of resources, execution interfaces, memory ownership and rendering contracts</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That will finish Phase 23 and tackle the part of Vulkan that causes most real bugs: <strong>command pools and primary/secondary buffers, recording lifecycle, render scopes, binding and draws/dispatch, queue submissions, fences, binary/timeline semaphores, pipeline stages/access masks, execution versus memory dependencies, buffer/image barriers, queue-family ownership, Synchronization2, frames in flight, per-frame resources, deferred destruction, timestamp queries, validation synchronization diagnostics, debug naming, device loss, MoltenVK portability, the full acquire→record→submit→present frame trace, and an RAII layer that preserves—not hides—Vulkan’s synchronization semantics.</strong></p>
+</section>
+<section id="id_05-engine-i-ch021-record-synchronize-and-retire-explicit-work" class="level3">
+<h3>Record, synchronize and retire explicit work</h3>
+<p><strong>Clarifications before the retained examples:</strong> ordinary reusable and one-time-submit command buffers have different completion states. Frame completion does not prove present-wait semaphore consumption. Use the image-indexed present semaphore policy and late fence-reset/error handling developed above. A FIFO deletion example assumes ordered retirement values; independent queues require joined completion or a componentwise stamp. The retained <code>VulkanBuffer</code> move-constructor fragment delegates to an assignment operator that is not supplied, so it is an incomplete illustration, not a standalone compilable class. Readback additionally needs device-write-to-host-read visibility, and depth barriers must include the actual early/late writers.</p>
+<section id="id_05-engine-i-ch021-m138" class="level4">
+<h4>+ M138</h4>
+<p>This closes <strong>Phase 23</strong>.</p>
+<p>The exact curriculum ownership is: <strong>M136 = Parts 2265–2279</strong>, command pools/buffers, recording, draw/dispatch, submission, fences and binary/timeline semaphores; <strong>M137 = Parts 2280–2292</strong>, synchronization stages/accesses, execution versus memory dependencies, barriers/layouts/queue ownership, Synchronization2, frames in flight and deferred destruction; <strong>M138 = Parts 2293–2300</strong>, timestamp queries/readback, synchronization validation, debug naming, device loss, MoltenVK, full frame tracing and correct Vulkan RAII.</p>
+<p>The original contract confirms the sequence: command pools begin at 2265; queue submission/fences/semaphores close M136 at 2279; synchronization starts at 2280; frame lifetime occupies 2290–2292; diagnostics and explicit RAII finish the phase at 2300.</p>
+<p>This is arguably the most important Vulkan pass.</p>
+<p>Most Vulkan bugs are not:</p>
+<blockquote>
+<p>My matrix multiplication is wrong.</p>
+</blockquote>
+<p>They are:</p>
+<blockquote>
+<p>This resource was used too early, destroyed too early, transitioned incorrectly, waited at the wrong stage, reused while still in flight, or made visible without actually ordering the producer.</p>
+</blockquote>
+<p>The central equation for this pass is therefore not numerical.</p>
+<p>It is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>Correct GPU execution</mtext>
+          <mo>=</mo>
+          <mtext>ordering</mtext>
+          <mo>+</mo>
+          <mtext>memory visibility</mtext>
+          <mo>+</mo>
+          <mtext>lifetime</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and all three are distinct.</p>
+<hr />
+</section>
+<section id="id_05-engine-i-ch021-command-pools-command-buffers-submission-semaphores" class="level4">
+<h4>COMMAND POOLS, COMMAND BUFFERS, SUBMISSION &amp; SEMAPHORES</h4>
+<p><strong>Vulkan commands are recorded before execution</strong></p>
+<p>When you call:</p>
+<div class="sourceCode" id="cb68"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>vkCmdDraw<span class="op">(...);</span></span></code></pre></div>
+<p>the GPU does <strong>not</strong> necessarily draw at that moment.</p>
+<p>You are recording an instruction into a command buffer.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>CPU recording time:
+    vkCmdBindPipeline
+    vkCmdBindDescriptorSets
+    vkCmdDrawIndexed
+    vkCmdPipelineBarrier
+    ...
+
+                ↓
+
+VkCommandBuffer
+
+                ↓ later
+
+vkQueueSubmit
+
+                ↓
+
+GPU execution</code></pre>
+<p>This separation is one of Vulkan’s fundamental architectural properties.</p>
+<hr />
+<p><strong>Command pools</strong></p>
+<p>A <code>VkCommandPool</code> owns allocation backing for command buffers.</p>
+<p>It is created for one:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>queue family</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>not one particular queue handle.</p>
+<p>Kairo:</p>
+<div class="sourceCode" id="cb70"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>VkCommandPoolCreateInfo pool<span class="op">{};</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>pool<span class="op">.</span>sType <span class="op">=</span></span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>    VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO<span class="op">;</span></span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a>pool<span class="op">.</span>flags <span class="op">=</span></span>
+<span id="cb70-6"><a href="#cb70-6" aria-hidden="true" tabindex="-1"></a>    VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT<span class="op">;</span></span>
+<span id="cb70-7"><a href="#cb70-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb70-8"><a href="#cb70-8" aria-hidden="true" tabindex="-1"></a>pool<span class="op">.</span>queueFamilyIndex <span class="op">=</span></span>
+<span id="cb70-9"><a href="#cb70-9" aria-hidden="true" tabindex="-1"></a>    device<span class="op">.</span>GraphicsFamily<span class="op">();</span></span></code></pre></div>
+<p>So command buffers allocated from this pool are compatible with queues belonging to Kairo’s graphics family.</p>
+<hr />
+<p><strong>Why the queue-family index belongs to the pool</strong></p>
+<p>Command-buffer implementation may maintain internal state optimized for a particular family of commands.</p>
+<p>If a command buffer was allocated from a pool associated with graphics family <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>G</mi>
+</math>, it is intended to be submitted to compatible queues from that family.</p>
+<p>This makes pool organization naturally follow threading/queue architecture.</p>
+<hr />
+<p><strong>Command pools are externally synchronized</strong></p>
+<p>A subtle Vulkan rule:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>simultaneous host access to the same command pool must be synchronized</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>This matters when multithread-recording.</p>
+<p>A good design is often:</p>
+<pre class="text"><code>thread 0
+    own command pool
+
+thread 1
+    own command pool
+
+thread 2
+    own command pool</code></pre>
+<p>rather than all CPU workers allocating/resetting from one pool behind a mutex.</p>
+<hr />
+<p><strong>Kairo currently has one command pool</strong></p>
+<p>Current <code>VulkanCommandBuffer</code> owns:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mtext> command pool</mtext>
+</math>
+<p>and:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mtext> primary command buffer</mtext>
+  <mo>.</mo>
+</math>
+<p>The source comment explicitly says this is a:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>single-frame renderer baseline</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>and that the buffer is not safe for concurrent recording.</p>
+<p>This is simple and correct for the current architecture.</p>
+<hr />
+<p><strong>Command-pool reset strategies</strong></p>
+<p>There are several ways to reuse command storage.</p>
+<p>You can reset a particular command buffer if pool supports:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>M</mi>
+  <mi>M</mi>
+  <mi>A</mi>
+  <mi>N</mi>
+  <msub>
+    <mi>D</mi>
+    <mi>P</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>L</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>R</mi>
+  <mi>E</mi>
+  <mi>A</mi>
+  <mi>T</mi>
+  <msub>
+    <mi>E</mi>
+    <mi>R</mi>
+  </msub>
+  <mi>E</mi>
+  <mi>S</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>C</mi>
+  </msub>
+  <mi>O</mi>
+  <mi>M</mi>
+  <mi>M</mi>
+  <mi>A</mi>
+  <mi>N</mi>
+  <msub>
+    <mi>D</mi>
+    <mi>B</mi>
+  </msub>
+  <mi>U</mi>
+  <mi>F</mi>
+  <mi>F</mi>
+  <mi>E</mi>
+  <msub>
+    <mi>R</mi>
+    <mi>B</mi>
+  </msub>
+  <mi>I</mi>
+  <mi>T</mi>
+  <mo>.</mo>
+</math>
+<p>Or reset the entire pool:</p>
+<div class="sourceCode" id="cb72"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>vkResetCommandPool<span class="op">(...);</span></span></code></pre></div>
+<p>which can be more efficient when all command buffers have the same frame lifetime.</p>
+<p>A multi-frame renderer often has:</p>
+<pre class="text"><code>FrameContext 0 → command pool
+FrameContext 1 → command pool
+FrameContext 2 → command pool</code></pre>
+<p>and resets the whole pool only when that frame’s fence/timeline proves completion.</p>
+<hr />
+<p><strong>Primary command buffers</strong></p>
+<p>Primary buffers can be submitted directly to a queue.</p>
+<p>Kairo allocates:</p>
+<div class="sourceCode" id="cb74"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>allocate<span class="op">.</span>level <span class="op">=</span></span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>    VK_COMMAND_BUFFER_LEVEL_PRIMARY<span class="op">;</span></span></code></pre></div>
+<p>Primary buffer can contain:</p>
+<ul>
+<li>render pass begin/end,</li>
+<li>pipeline bindings,</li>
+<li>barriers,</li>
+<li>draws,</li>
+<li>copies,</li>
+<li>dispatches,</li>
+<li>secondary command-buffer execution.</li>
+</ul>
+<p>This is what Kairo records every frame.</p>
+<hr />
+<p><strong>Secondary command buffers</strong></p>
+<p>Secondary command buffers cannot ordinarily be independently submitted like primaries.</p>
+<p>They are executed from primary buffers:</p>
+<div class="sourceCode" id="cb75"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>vkCmdExecuteCommands<span class="op">(</span></span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>    primary<span class="op">,</span></span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>    count<span class="op">,</span></span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>    secondaryBuffers<span class="op">);</span></span></code></pre></div>
+<p>They are particularly useful for multithreaded command generation.</p>
+<p>For example:</p>
+<pre class="text"><code>CPU thread 0 → secondary for opaque batch A
+CPU thread 1 → secondary for opaque batch B
+CPU thread 2 → secondary for opaque batch C
+
+main thread:
+    primary
+        begin render pass
+        execute A/B/C
+        end render pass</code></pre>
+<p>This lets several CPU threads record rendering work in parallel.</p>
+<hr />
+<p><strong>Secondary rendering inheritance</strong></p>
+<p>If a secondary command buffer executes inside a render pass, Vulkan needs enough inherited render-state context to validate/execute it.</p>
+<p>Traditional render-pass secondary command recording uses:</p>
+<div class="sourceCode" id="cb77"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>VkCommandBufferInheritanceInfo</span></code></pre></div>
+<p>and flags such as:</p>
+<div class="sourceCode" id="cb78"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT</span></code></pre></div>
+<p>to describe the render pass/subpass context.</p>
+<p>This is one of the complexities secondary command buffers introduce.</p>
+<hr />
+<p><strong>Secondary buffers are not automatically faster</strong></p>
+<p>They can reduce CPU command-recording bottlenecks.</p>
+<p>But they also add:</p>
+<ul>
+<li>more command buffers,</li>
+<li>execution indirection,</li>
+<li>pool management,</li>
+<li>synchronization between CPU workers.</li>
+</ul>
+<p>If command recording costs only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>0.2</mn>
+  <mtext> ms</mtext>
+  <mo>,</mo>
+</math>
+<p>parallelizing it may be pointless.</p>
+<p>Use them when CPU profiling establishes a recording bottleneck.</p>
+<hr />
+<p><strong>Command-buffer lifecycle</strong></p>
+<p>A simplified state model is:</p>
+<pre class="text"><code>Initial
+   ↓ vkBeginCommandBuffer
+Recording
+   ↓ vkEndCommandBuffer
+Executable
+   ↓ vkQueueSubmit
+Pending
+   ↓ GPU completes
+Executable again
+   ↓ reset
+Initial</code></pre>
+<p>The key dangerous state is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mi>P</mi>
+          <mi>e</mi>
+          <mi>n</mi>
+          <mi>d</mi>
+          <mi>i</mi>
+          <mi>n</mi>
+          <mi>g</mi>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+  <mo>.</mo>
+</math>
+<p>A pending command buffer is still potentially being consumed by the GPU.</p>
+<p>You cannot simply reset/re-record it.</p>
+<hr />
+<p><strong>Kairo’s <code>Begin()</code></strong></p>
+<p>Current Kairo performs:</p>
+<div class="sourceCode" id="cb80"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>vkResetCommandBuffer<span class="op">(</span></span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_Handle</span><span class="op">,</span></span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">);</span></span></code></pre></div>
+<p>then:</p>
+<div class="sourceCode" id="cb81"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>vkBeginCommandBuffer<span class="op">(</span></span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">m_Handle</span><span class="op">,</span></span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span>begin<span class="op">);</span></span></code></pre></div>
+<p>but its comment explicitly states the precondition:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>GPU work previously submitted with this buffer has completed</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>That precondition is guaranteed because <code>DrawFrame()</code> waits on the one in-flight fence before re-recording.</p>
+<p>Correct.</p>
+<hr />
+<p><strong>Why resetting a pending command buffer is disastrous</strong></p>
+<p>Suppose GPU still reads command data:</p>
+<pre class="text"><code>draw mesh A
+draw mesh B</code></pre>
+<p>while CPU resets and overwrites buffer with:</p>
+<pre class="text"><code>draw mesh C</code></pre>
+<p>You have violated lifetime/execution ownership.</p>
+<p>The API may report validation errors or behavior may be undefined.</p>
+<p>The fence is therefore protecting not just “the image.”</p>
+<p>It protects reusable CPU-side Vulkan state too.</p>
+<hr />
+<p><strong>Beginning and ending rendering</strong></p>
+<p>Traditional Vulkan:</p>
+<div class="sourceCode" id="cb84"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>vkCmdBeginRenderPass<span class="op">(...);</span></span></code></pre></div>
+<p>then draw commands.</p>
+<p>Finally:</p>
+<div class="sourceCode" id="cb85"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>vkCmdEndRenderPass<span class="op">(...);</span></span></code></pre></div>
+<p>Current Kairo does this for:</p>
+<ul>
+<li>directional shadow pass,</li>
+<li>HDR editor viewport pass,</li>
+<li>swapchain presentation/overlay pass.</li>
+</ul>
+<p>Inside a render pass, attachment semantics and subpass structure are active.</p>
+<hr />
+<p><strong>Kairo frame recording structure</strong></p>
+<p>Current <code>VulkanTriangle::Record()</code> is approximately:</p>
+<pre class="text"><code>Begin command buffer
+
+if meshes:
+    shadow render pass
+
+viewport render pass
+    draw meshes
+    draw debug lines
+end viewport pass
+
+optional object-ID copy
+optional HDR color readback
+
+swapchain presentation render pass
+    tooling overlay
+end presentation pass
+
+End command buffer</code></pre>
+<p>This is already a multi-pass frame inside one primary command buffer.</p>
+<hr />
+<p><strong>Binding pipelines</strong></p>
+<p>Before graphics commands use a graphics pipeline:</p>
+<div class="sourceCode" id="cb87"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a>vkCmdBindPipeline<span class="op">(</span></span>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>    command<span class="op">,</span></span>
+<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>    VK_PIPELINE_BIND_POINT_GRAPHICS<span class="op">,</span></span>
+<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>    pipeline<span class="op">);</span></span></code></pre></div>
+<p>Pipeline defines the shader/fixed-state contract we covered in Pass 11.</p>
+<p>For compute:</p>
+<div class="sourceCode" id="cb88"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a>VK_PIPELINE_BIND_POINT_COMPUTE<span class="op">.</span></span></code></pre></div>
+<p>Pipeline binding persists until replaced, within applicable recording semantics.</p>
+<hr />
+<p><strong>Pipeline sorting</strong></p>
+<p>If 10,000 objects alternate:</p>
+<pre class="text"><code>pipeline A
+pipeline B
+pipeline A
+pipeline B
+...</code></pre>
+<p>you repeatedly change GPU state.</p>
+<p>Sorting compatible draws by pipeline/material can reduce state changes.</p>
+<p>But transparent rendering may impose strict depth ordering.</p>
+<p>Therefore command ordering balances:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>state locality</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>against:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>rendering correctness</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Binding vertex buffers</strong></p>
+<p>Kairo uses:</p>
+<div class="sourceCode" id="cb90"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a>vkCmdBindVertexBuffers<span class="op">(...)</span></span></code></pre></div>
+<p>with one or two bindings.</p>
+<p>Static mesh:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <msub>
+    <mi>g</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mtext>MeshVertex</mtext>
+  <mo>.</mo>
+</math>
+<p>Skinned mesh additionally has:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>b</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <msub>
+    <mi>g</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mtext>SkinVertexInfluence</mtext>
+  <mo>.</mo>
+</math>
+<p>Each binding has its own byte offset.</p>
+<hr />
+<p><strong>Binding an index buffer</strong></p>
+<p>Kairo:</p>
+<div class="sourceCode" id="cb91"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a>vkCmdBindIndexBuffer<span class="op">(</span></span>
+<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a>    command<span class="op">,</span></span>
+<span id="cb91-3"><a href="#cb91-3" aria-hidden="true" tabindex="-1"></a>    mesh<span class="op">.</span>Indices<span class="op">-&gt;</span>Handle<span class="op">(),</span></span>
+<span id="cb91-4"><a href="#cb91-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb91-5"><a href="#cb91-5" aria-hidden="true" tabindex="-1"></a>    VK_INDEX_TYPE_UINT32<span class="op">);</span></span></code></pre></div>
+<p>The index type tells Vulkan how to interpret index bytes.</p>
+<p>Then indexed drawing becomes possible.</p>
+<hr />
+<p><strong>Descriptor-set binding</strong></p>
+<p>Current Kairo:</p>
+<div class="sourceCode" id="cb92"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a>vkCmdBindDescriptorSets<span class="op">(</span></span>
+<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a>    command<span class="op">,</span></span>
+<span id="cb92-3"><a href="#cb92-3" aria-hidden="true" tabindex="-1"></a>    VK_PIPELINE_BIND_POINT_GRAPHICS<span class="op">,</span></span>
+<span id="cb92-4"><a href="#cb92-4" aria-hidden="true" tabindex="-1"></a>    layout<span class="op">,</span></span>
+<span id="cb92-5"><a href="#cb92-5" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb92-6"><a href="#cb92-6" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb92-7"><a href="#cb92-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span>descriptor<span class="op">,</span></span>
+<span id="cb92-8"><a href="#cb92-8" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb92-9"><a href="#cb92-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">nullptr</span><span class="op">);</span></span></code></pre></div>
+<p>This means:</p>
+<ul>
+<li>graphics bind point,</li>
+<li>pipeline layout defines compatibility,</li>
+<li>first set is set 0,</li>
+<li>one descriptor set,</li>
+<li>no dynamic offsets.</li>
+</ul>
+<p>Descriptor-set contents connect actual resources to shader bindings.</p>
+<hr />
+<p><strong>Push constants</strong></p>
+<p>Kairo also records per-draw transform/object state:</p>
+<div class="sourceCode" id="cb93"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb93-1"><a href="#cb93-1" aria-hidden="true" tabindex="-1"></a>vkCmdPushConstants<span class="op">(...)</span></span></code></pre></div>
+<p>So its per-draw resource state is currently approximately:</p>
+<pre class="text"><code>descriptor set
+    camera + material + textures + skin
+
+push constants
+    model/normal matrix + draw flags/object ID</code></pre>
+<p>This cleanly separates larger persistent resources from tiny high-frequency draw constants.</p>
+<hr />
+<p><strong><code>vkCmdDraw</code></strong></p>
+<p>Non-indexed draw:</p>
+<div class="sourceCode" id="cb95"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb95-1"><a href="#cb95-1" aria-hidden="true" tabindex="-1"></a>vkCmdDraw<span class="op">(</span></span>
+<span id="cb95-2"><a href="#cb95-2" aria-hidden="true" tabindex="-1"></a>    command<span class="op">,</span></span>
+<span id="cb95-3"><a href="#cb95-3" aria-hidden="true" tabindex="-1"></a>    vertexCount<span class="op">,</span></span>
+<span id="cb95-4"><a href="#cb95-4" aria-hidden="true" tabindex="-1"></a>    instanceCount<span class="op">,</span></span>
+<span id="cb95-5"><a href="#cb95-5" aria-hidden="true" tabindex="-1"></a>    firstVertex<span class="op">,</span></span>
+<span id="cb95-6"><a href="#cb95-6" aria-hidden="true" tabindex="-1"></a>    firstInstance<span class="op">);</span></span></code></pre></div>
+<p>The vertex shader’s logical vertex index derives from these parameters.</p>
+<p>Kairo’s debug line system uses:</p>
+<div class="sourceCode" id="cb96"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a>vkCmdDraw<span class="op">(</span></span>
+<span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a>    command<span class="op">,</span></span>
+<span id="cb96-3"><a href="#cb96-3" aria-hidden="true" tabindex="-1"></a>    debugVertexCount<span class="op">,</span></span>
+<span id="cb96-4"><a href="#cb96-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb96-5"><a href="#cb96-5" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb96-6"><a href="#cb96-6" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">);</span></span></code></pre></div>
+<p>because debug lines are directly stored as a vertex stream.</p>
+<hr />
+<p><strong><code>vkCmdDrawIndexed</code></strong></p>
+<p>Kairo meshes use:</p>
+<div class="sourceCode" id="cb97"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb97-1"><a href="#cb97-1" aria-hidden="true" tabindex="-1"></a>vkCmdDrawIndexed<span class="op">(</span></span>
+<span id="cb97-2"><a href="#cb97-2" aria-hidden="true" tabindex="-1"></a>    command<span class="op">,</span></span>
+<span id="cb97-3"><a href="#cb97-3" aria-hidden="true" tabindex="-1"></a>    mesh<span class="op">.</span>IndexCount<span class="op">,</span></span>
+<span id="cb97-4"><a href="#cb97-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb97-5"><a href="#cb97-5" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb97-6"><a href="#cb97-6" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb97-7"><a href="#cb97-7" aria-hidden="true" tabindex="-1"></a>    <span class="dv">0</span><span class="op">);</span></span></code></pre></div>
+<p>Parameters conceptually mean:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>O</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>,</mo>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mo>.</mo>
+</math>
+<p>Per indexed vertex:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>=</mo>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>B</mi>
+  <mi>u</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo stretchy="false">[</mo>
+  <mi>f</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo>+</mo>
+  <mi>i</mi>
+  <mo stretchy="false">]</mo>
+  <mo>+</mo>
+  <mi>v</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>t</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mi>O</mi>
+  <mi>f</mi>
+  <mi>f</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>This is how submeshes can reference ranges/base vertices without copying data.</p>
+<hr />
+<p><strong>Instancing</strong></p>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>t</mi>
+  <mi>a</mi>
+  <mi>n</mi>
+  <mi>c</mi>
+  <mi>e</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>&gt;</mo>
+  <mn>1</mn>
+  <mo>,</mo>
+</math>
+<p>one draw launches multiple logical instances.</p>
+<p>Vertex shader receives instance identity.</p>
+<p>This is important for:</p>
+<ul>
+<li>repeated meshes,</li>
+<li>foliage,</li>
+<li>crowds,</li>
+<li>particles.</li>
+</ul>
+<p>Eventually GPU-driven indirect draws extend this further.</p>
+<hr />
+<p><strong>Compute dispatch</strong></p>
+<p>Compute pipeline dispatch:</p>
+<div class="sourceCode" id="cb98"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a>vkCmdDispatch<span class="op">(</span></span>
+<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a>    command<span class="op">,</span></span>
+<span id="cb98-3"><a href="#cb98-3" aria-hidden="true" tabindex="-1"></a>    groupCountX<span class="op">,</span></span>
+<span id="cb98-4"><a href="#cb98-4" aria-hidden="true" tabindex="-1"></a>    groupCountY<span class="op">,</span></span>
+<span id="cb98-5"><a href="#cb98-5" aria-hidden="true" tabindex="-1"></a>    groupCountZ<span class="op">);</span></span></code></pre></div>
+<p>Total invocation count depends on shader’s local size:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>N</mi>
+    <mi>x</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>g</mi>
+  <mi>r</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>p</mi>
+  <mi>C</mi>
+  <mi>o</mi>
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mi>X</mi>
+  <mo>×</mo>
+  <mi>l</mi>
+  <mi>o</mi>
+  <mi>c</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>S</mi>
+  <mi>i</mi>
+  <mi>z</mi>
+  <mi>e</mi>
+  <mi>X</mi>
+</math>
+<p>and similarly for <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+  <mo>,</mo>
+  <mi>z</mi>
+</math>.</p>
+<p>The workgroup ideas from Pass 9 map directly onto Vulkan compute dispatch.</p>
+<hr />
+<p><strong>Queue submission</strong></p>
+<p>Recording produces an executable command buffer.</p>
+<p>Execution begins when it is submitted:</p>
+<div class="sourceCode" id="cb99"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb99-1"><a href="#cb99-1" aria-hidden="true" tabindex="-1"></a>vkQueueSubmit<span class="op">(...)</span></span></code></pre></div>
+<p>Current Kairo builds:</p>
+<div class="sourceCode" id="cb100"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a>VkSubmitInfo submit<span class="op">{};</span></span></code></pre></div>
+<p>containing:</p>
+<ul>
+<li>semaphore to wait on,</li>
+<li>stage at which to wait,</li>
+<li>command buffer,</li>
+<li>semaphore to signal.</li>
+</ul>
+<p>It also associates a fence with the submission.</p>
+<p>This one call links nearly every synchronization concept in M136.</p>
+<hr />
+<p><strong>Kairo’s submit</strong></p>
+<p>Current flow:</p>
+<pre class="text"><code>wait:
+    imageAvailable semaphore
+
+wait stage:
+    COLOR_ATTACHMENT_OUTPUT
+
+execute:
+    primary command buffer
+
+signal:
+    renderFinished[imageIndex]
+
+CPU completion:
+    inFlight fence</code></pre>
+<p>Then presentation waits on:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>That is a classic acquire→submit→present chain.</p>
+<hr />
+<p><strong>Fence</strong></p>
+<p>A fence is primarily a:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>GPU → CPU completion primitive</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>Create a fence.</p>
+<p>Submit work with fence.</p>
+<p>Later CPU does:</p>
+<div class="sourceCode" id="cb102"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a>vkWaitForFences<span class="op">(...)</span></span></code></pre></div>
+<p>and learns:</p>
+<blockquote>
+<p>work associated with that fence has completed.</p>
+</blockquote>
+<p>This is different from a semaphore, which primarily coordinates GPU/queue operations.</p>
+<hr />
+<p><strong>Why Kairo’s first fence starts signaled</strong></p>
+<p>Kairo creates:</p>
+<div class="sourceCode" id="cb103"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a>fence<span class="op">.</span>flags <span class="op">=</span></span>
+<span id="cb103-2"><a href="#cb103-2" aria-hidden="true" tabindex="-1"></a>    VK_FENCE_CREATE_SIGNALED_BIT<span class="op">;</span></span></code></pre></div>
+<p>Why?</p>
+<p>At the first frame, no previous GPU frame exists.</p>
+<p>But frame loop begins by:</p>
+<div class="sourceCode" id="cb104"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a>vkWaitForFences<span class="op">(...)</span></span></code></pre></div>
+<p>If the fence began unsignaled, first frame would wait forever because nothing had ever been submitted to signal it.</p>
+<p>Starting signaled means:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>frame 0&#39;s reusable resources are initially free</mtext>
+          <mo>.</mo>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<hr />
+<p><strong>Fence reuse cycle</strong></p>
+<p>Kairo performs:</p>
+<pre class="text"><code>wait fence
+    ↓
+fence is signaled
+
+acquire image
+
+reset fence
+    ↓
+fence becomes unsignaled
+
+submit graphics with fence
+
+GPU finishes
+    ↓
+fence becomes signaled</code></pre>
+<p>Then next frame repeats.</p>
+<p>The ordering is crucial.</p>
+<hr />
+<p><strong>Never reset a fence before knowing you will submit</strong></p>
+<p>Suppose you reset the fence first.</p>
+<p>Then acquire returns:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>V</mi>
+  <msub>
+    <mi>K</mi>
+    <mi>E</mi>
+  </msub>
+  <mi>R</mi>
+  <mi>R</mi>
+  <mi>O</mi>
+  <msub>
+    <mi>R</mi>
+    <mi>O</mi>
+  </msub>
+  <mi>U</mi>
+  <msub>
+    <mi>T</mi>
+    <mi>O</mi>
+  </msub>
+  <msub>
+    <mi>F</mi>
+    <mi>D</mi>
+  </msub>
+  <mi>A</mi>
+  <mi>T</mi>
+  <mi>E</mi>
+  <mo>.</mo>
+</math>
+<p>You skip submission.</p>
+<p>The fence remains unsignaled forever.</p>
+<p>Next frame waits forever.</p>
+<p>Kairo correctly acquires first and only resets the fence after successful/suboptimal acquisition.</p>
+<p>This is a very important frame-loop edge case.</p>
+<hr />
+<p><strong>Binary semaphores</strong></p>
+<p>Binary semaphore has two conceptual states:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>u</mi>
+  <mi>n</mi>
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>,</mo>
+</math>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>s</mi>
+  <mi>i</mi>
+  <mi>g</mi>
+  <mi>n</mi>
+  <mi>a</mi>
+  <mi>l</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo>.</mo>
+</math>
+<p>One GPU operation signals it.</p>
+<p>Another waits.</p>
+<p>You do not assign a numerical value.</p>
+<p>Typical chain:</p>
+<pre class="text"><code>presentation engine
+   signal imageAvailable
+          ↓
+graphics submission waits
+          ↓
+graphics finishes
+   signal renderFinished
+          ↓
+present operation waits</code></pre>
+<p>Exactly Kairo’s model.</p>
+<hr />
+<p><strong>Binary semaphore is not a CPU mutex</strong></p>
+<p>You typically do not inspect its “state” on CPU.</p>
+<p>It exists to build asynchronous dependency chains.</p>
+<p>The virtue is that CPU does not need to stall between:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>a</mi>
+  <mi>c</mi>
+  <mi>q</mi>
+  <mi>u</mi>
+  <mi>i</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mo>,</mo>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mo>,</mo>
+  <mi>p</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>s</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>t</mi>
+  <mo>.</mo>
+</math>
+<p>Dependencies execute on the GPU/queue side.</p>
+<hr />
+<p><strong>Why Kairo has one image-available semaphore</strong></p>
+<p>Current Kairo has only:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>1</mn>
+  <mtext> frame in flight</mtext>
+  <mo>.</mo>
+</math>
+<p>It waits the previous frame’s fence before reacquiring.</p>
+<p>Therefore the single <code>imageAvailable</code> semaphore has already been consumed before being reused.</p>
+<p>This is safe under the current architecture.</p>
+<p>With several frames in flight, you normally need per-frame acquire semaphores.</p>
+<hr />
+<p><strong>Why Kairo uses render-finished semaphore per swapchain image</strong></p>
+<p>Presentation completion is subtle because the graphics submission fence does not directly mean the presentation engine has finished consuming the present-wait semaphore.</p>
+<p>Using one render-finished semaphore associated with each swapchain image is a robust pattern: reacquiring that image gives a natural guarantee that its previous presentation cycle has progressed far enough for reuse.</p>
+<p>Kairo creates:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>r</mi>
+  <mi>e</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>F</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>i</mi>
+  <mi>s</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>d</mi>
+  <mo stretchy="false">[</mo>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>a</mi>
+  <mi>g</mi>
+  <mi>e</mi>
+  <mi>I</mi>
+  <mi>n</mi>
+  <mi>d</mi>
+  <mi>e</mi>
+  <mi>x</mi>
+  <mo stretchy="false">]</mo>
+  <mo>.</mo>
+</math>
+<p>Good.</p>
+<hr />
+<p><strong>Timeline semaphores</strong></p>
+<p>A timeline semaphore contains monotonically increasing 64-bit values.</p>
+<p>Instead of:</p>
+<pre class="text"><code>semaphore A
+semaphore B
+semaphore C</code></pre>
+<p>you can have:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>
+<p>for frame/job 1,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+</math>
+<p>for frame/job 2,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>t</mi>
+  <mi>i</mi>
+  <mi>m</mi>
+  <mi>e</mi>
+  <mi>l</mi>
+  <mi>i</mi>
+  <mi>n</mi>
+  <mi>e</mi>
+  <mo>=</mo>
+  <mn>3.</mn>
+</math>
+<p>GPU signals values.</p>
+<p>GPU or CPU waits for values.</p>
+<hr />
+<p><strong>Timeline model</strong></p>
+<p>Suppose:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+</math>
+<p>is one timeline semaphore.</p>
+<p>Upload submission signals:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>5.</mn>
+</math>
+<p>Graphics waits:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>≥</mo>
+  <mn>5.</mn>
+</math>
+<p>Later graphics signals:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>=</mo>
+  <mn>6.</mn>
+</math>
+<p>CPU resource-retirement logic can ask whether:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>T</mi>
+  <mo>≥</mo>
+  <mn>6.</mn>
+</math>
+<p>This creates a much more expressive completion sequence than a large collection of one-shot fences/semaphores.</p>
+<hr />
+<p><strong>Timeline semaphores are excellent for resource retirement</strong></p>
+<p>Suppose texture last used in submission value:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>137.</mn>
+</math>
+<p>Do not destroy immediately.</p>
+<p>Store:</p>
+<pre class="text"><code>resource → retireAfter = 137</code></pre>
+<p>Later query completed timeline value:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>.</mo>
+</math>
+<p>If:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>C</mi>
+  <mo>≥</mo>
+  <mn>137</mn>
+  <mo>,</mo>
+</math>
+<p>destruction is safe.</p>
+<p>This is vastly better than calling:</p>
+<div class="sourceCode" id="cb109"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb109-1"><a href="#cb109-1" aria-hidden="true" tabindex="-1"></a>vkDeviceWaitIdle<span class="op">()</span></span></code></pre></div>
+<p>every time a resource is destroyed.</p>
+<hr />
+<p><strong>Kairo does not currently use timeline semaphores</strong></p>
+<p>Current repository search shows no:</p>
+<pre class="text"><code>VK_SEMAPHORE_TYPE_TIMELINE</code></pre>
+<p>or <code>VkSemaphoreTypeCreateInfo</code>.</p>
+<p>So current Kairo uses:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <menclose notation="box">
+    <mrow data-mjx-texclass="ORD">
+      <mstyle displaystyle="true" scriptlevel="0">
+        <mrow data-mjx-texclass="ORD">
+          <mtext>one fence + binary semaphores</mtext>
+        </mrow>
+      </mstyle>
+    </mrow>
+  </menclose>
+</math>
+<p>for its one-frame-in-flight baseline.</p>
+<p>Timeline retirement is the natural next architectural step.</p>
+<hr />
+<!-- CHAPTER-SOURCE-END -->
+<hr />
+<p><a href="ch410.xhtml#id_06-GPU-Architecture-and-Real-Time-Rendering" class="wikilink">Reading map</a> · <a href="ch428.xhtml#id_05-engine-i-ch020-gpu-performance-models-and-principled-redesign" class="wikilink">Previous chapter</a> · <a href="ch430.xhtml#id_05-engine-i-ch022-vulkan-synchronization-and-multi-frame-lifetimes" class="wikilink">Next chapter</a></p>
+</section>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch301.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-e38976cbbf86-mesh-topology-and-homology" class="level2">
+<h2>Mesh topology and homology</h2>
+<p>Mesh <strong>geometry</strong> concerns positions, lengths, angles and curvature. Mesh <strong>topology</strong> concerns connectivity: which vertices belong to edges, which edges bound faces, which faces meet, where boundaries exist, and how many connected/loop/void structures the complex contains.</p>
+<p>Two meshes can have very different coordinates and the same topology. Two triangles can overlap geometrically without being topologically adjacent if they do not share vertex/edge identity.</p>
+<section id="appendix-e38976cbbf86-simplicial-chain-view" class="level3">
+<h3>Simplicial-chain view</h3>
+<p>For a triangle mesh, vertices are 0-simplices, edges are 1-simplices and faces are 2-simplices. A chain is a formal linear combination of simplices.</p>
+<p>Boundary operators satisfy</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>∂</mi>
+    <mi>k</mi>
+  </msub>
+  <msub>
+    <mi>∂</mi>
+    <mrow data-mjx-texclass="ORD">
+      <mi>k</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <mn>0</mn>
+  <mo>,</mo>
+</math>
+<p>the algebraic statement that “the boundary of a boundary is zero.”</p>
+<p>Cycles are chains whose boundary vanishes. Boundaries are cycles created as the boundary of a higher-dimensional chain. Homology quotients cycles by boundaries:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>H</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>Z</mi>
+    <mi>k</mi>
+  </msub>
+  <mrow data-mjx-texclass="ORD">
+    <mo>/</mo>
+  </mrow>
+  <msub>
+    <mi>B</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>.</mo>
+</math>
+<p>The Betti number <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>β</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>=</mo>
+  <mi>dim</mi>
+  <mo data-mjx-texclass="NONE">⁡</mo>
+  <msub>
+    <mi>H</mi>
+    <mi>k</mi>
+  </msub>
+</math> counts independent homology classes over the chosen coefficient field (for example, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mrow data-mjx-texclass="ORD">
+      <mi mathvariant="double-struck">Z</mi>
+    </mrow>
+    <mn>2</mn>
+  </msub>
+</math>); <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>Z</mi>
+    <mi>k</mi>
+  </msub>
+</math> is the kernel of the <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>-boundary map and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>B</mi>
+    <mi>k</mi>
+  </msub>
+</math> is the image of the <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>k</mi>
+  <mo>+</mo>
+  <mn>1</mn>
+  <mo stretchy="false">)</mo>
+</math>-boundary map.</p>
+<p>For a connected orientable closed surface, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>β</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math>; <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>β</mi>
+    <mn>1</mn>
+  </msub>
+</math> counts independent one-dimensional homology classes (for genus <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+</math>, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>β</mi>
+    <mn>1</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mi>g</mi>
+</math>); and <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>β</mi>
+    <mn>2</mn>
+  </msub>
+  <mo>=</mo>
+  <mn>1</mn>
+</math> represents the surface’s fundamental two-dimensional class. With a boundary, <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>β</mi>
+    <mn>2</mn>
+  </msub>
+</math> need not be one.</p>
+</section>
+<section id="appendix-e38976cbbf86-euler-characteristic" class="level3">
+<h3>Euler characteristic</h3>
+<p>For a finite triangle complex with vertex, edge and face counts <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>V</mi>
+  <mo>,</mo>
+  <mi>E</mi>
+  <mo>,</mo>
+  <mi>F</mi>
+</math>,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>χ</mi>
+  <mo>=</mo>
+  <mi>V</mi>
+  <mo>−</mo>
+  <mi>E</mi>
+  <mo>+</mo>
+  <mi>F</mi>
+  <mo>.</mo>
+</math>
+<p>For a connected closed orientable surface of genus <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+</math>,</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>χ</mi>
+  <mo>=</mo>
+  <mn>2</mn>
+  <mo>−</mo>
+  <mn>2</mn>
+  <mi>g</mi>
+  <mo>.</mo>
+</math>
+<p>But equal Euler characteristic alone does not prove arbitrary complexes are topologically equivalent. It is a checksum, not a complete classifier.</p>
+</section>
+<section id="appendix-e38976cbbf86-mesh-diagnostics" class="level3">
+<h3>Mesh diagnostics</h3>
+<p>Topology checks used by a geometry pipeline should include:</p>
+<ul>
+<li>boundary-edge count;</li>
+<li>non-manifold edges with more than two incident faces;</li>
+<li>inconsistent face orientation;</li>
+<li>disconnected components;</li>
+<li>vertex fan manifoldness;</li>
+<li>isolated vertices/edges;</li>
+<li>duplicate faces;</li>
+<li>Euler characteristic and, where appropriate, homology.</li>
+</ul>
+<p>tools/labs/mesh_topology_lab.cpp now gives an executable layer for unique edges, half-edge twins, boundary/non-manifold classification and Euler characteristic.</p>
+<p>Read the connected explanation in <a href="ch296.xhtml#id_03-visual-computing-i-ch002-from-a-scanned-triangle-soup-to-a-mesh-we-can-trust" class="wikilink">Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#From a scanned triangle soup to a mesh we can trust</a>.</p>
+<p>Related: <a href="ch304.xhtml#appendix-faac749c9cdd-half-edge-topology-invariants" class="wikilink">Half-edge topology invariants</a>, <a href="ch302.xhtml#appendix-e4d8ed8d6787-persistent-homology" class="wikilink">Persistent homology</a>, <a href="ch299.xhtml#appendix-89db9fe1bc8a-qem-edge-collapse-and-validity" class="wikilink">QEM edge collapse and validity</a>.</p>
+</section>
+</section>
+</body>
+</html>

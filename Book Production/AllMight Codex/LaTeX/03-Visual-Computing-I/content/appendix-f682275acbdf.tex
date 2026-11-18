@@ -1,0 +1,31 @@
+\hypertarget{appendix-f682275acbdf}{}
+\section*{Incremental contact penetration refresh}
+\section{Incremental contact penetration refresh}\label{incremental-contact-penetration-refresh}
+
+Position correction moves every contact point attached to the corrected bodies. For a small rotation, its first-order point displacement is translation plus rotation vector crossed with the pre-correction world-space lever arm. Project the difference of the two point movements onto the frozen contact normal, using the declared normal and penetration signs.
+
+Refresh each known contact once for the correction just applied, then reconsider the worst penetration. Reusing an old correction counts movement twice. This local estimate cannot discover new contacts or replace geometry refresh after substantial rotation or a feature change.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Concepts/Cross products and oriented area (02-Foundations-II, appendix-2391db8052b1)}
+\item
+  \href{}{Concepts/Unit directions and safe normalization (02-Foundations-II, appendix-f744e41b95b4)}
+\end{itemize}
+
+\subsection{Full teaching and executable evidence}\label{full-teaching-and-executable-evidence}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{Continuous\%20Notes/Game\%20Engine\%20-\%20From\%20First\%20Frame\%20to\%20Living\%20Worlds\#Refresh\%20neighboring\%20penetrations\%20after\%20position\%20correction}{Derivation, three-contact ranking trace and complexity limits}
+\item
+  \href{Continuous\%20Notes/Game\%20Engine\%20-\%20From\%20First\%20Frame\%20to\%20Living\%20Worlds\#A\%20planar\%20penetration\%20refresh\%20witness}{Complete planar C++20 reference}
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+Iterative position correction and contact-priority updates. The reference is a frozen-feature updater, not a full collision detector or rigid-body solver.

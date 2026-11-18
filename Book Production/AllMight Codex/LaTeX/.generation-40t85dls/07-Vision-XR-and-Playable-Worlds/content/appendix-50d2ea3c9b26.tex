@@ -1,0 +1,42 @@
+\hypertarget{appendix-50d2ea3c9b26}{}\label{referencestart:appendix-50d2ea3c9b26}
+\section{Symmetric positive-definite matrices and Cholesky}\label{appendix-50d2ea3c9b26-symmetric-positive-definite-matrices-and-cholesky}
+
+\hypertarget{appendix-50d2ea3c9b26-symmetric-positive-definite-matrices-and-cholesky}{}
+
+A real symmetric matrix \(A\) is positive definite if every nonzero \(x\) has positive quadratic energy \(x^\mathsf T A x\). Then \(A=LL^\mathsf T\) with nonsingular triangular \(L\). Positive semidefinite permits zero energy directions and may be singular, so Cholesky's assumptions and failure status must be respected.
+
+\textbf{Use it when:} covariance, Gram systems, energy minimization, or an SPD solve is established.
+
+\textbf{Developed in Phase 8:} Positive definiteness means every nonzero direction has positive quadratic energy, which permits a Cholesky factor and stable triangular solves. The continuation derives the positive pivots, then broadens to \(LDL^\mathsf T\) when a symmetric matrix is indefinite and explains how a failed pivot reflects the assumptions or numerical scale. \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch020-positive-definiteness-is-a-structural-promise}{Cholesky and positive energy (Mathematics for Visual Computing, Ch. 4)} · \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch020-ldlt-reaches-symmetric-indefinite-matrices}{the symmetric-indefinite extension (Mathematics for Visual Computing, Ch. 4)}
+
+\subsection{Prerequisites}\label{appendix-50d2ea3c9b26-prerequisites}
+
+\hypertarget{appendix-50d2ea3c9b26-prerequisites}{}
+
+\hyperref[appendix-175ca5ff874d]{Matrix transpose symmetry and trace}, \hyperref[appendix-3b863809f82a]{Gram matrices and coordinate metrics}.
+
+\subsection{Used by}\label{appendix-50d2ea3c9b26-used-by}
+
+\hypertarget{appendix-50d2ea3c9b26-used-by}{}
+
+\hyperref[appendix-221a483bec2d]{Matrix factorization choices}, \hyperref[appendix-ad175ef3c5bf]{PCA and covariance eigensystems}, \hyperref[appendix-67c87a3d9e94]{Sparse and iterative solvers}.
+
+\textbf{Teaching path:} \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=01-foundations-i-ch020-structure-makes-a-decomposition-a-better-tool-than-generic-elimination}{structure-aware factors (Mathematics for Visual Computing, Ch. 4)}. - \hyperref[appendix-6ac071f8b50c]{Hessians and local curvature} - \hyperref[appendix-12bbe185dbe5]{Multivariate Gaussian distributions and whitening} - \hyperref[appendix-2c2df8345991]{Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt}
+
+\subsection{Full teaching explanation}\label{appendix-50d2ea3c9b26-full-teaching-explanation}
+
+\hypertarget{appendix-50d2ea3c9b26-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch021-jacobians-curvature-and-local-approximation}{Phase 9 teaching section (Mathematics for Visual Computing, Ch. 5)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch024-waiting-times-event-counts-and-covariance-geometry}{Phase 10 teaching section (Mathematics for Visual Computing, Ch. 8)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing/main.pdf\#nameddest=02-foundations-ii-ch026-optimization-and-inverse-problems}{Phase 9 teaching section (Mathematics for Visual Computing, Ch. 10)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-adf48f5dc5c1}{Visual Recall/09 - Calculus and Optimization - Visual Recall.md (Bits, Programs, and Reliable Systems, Reference notes: 09 - Calculus and Optimization - Visual Recall)} · Phase 9 visual recall
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems/main.pdf\#nameddest=appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)} · Phase 10 visual recall
+\end{itemize}

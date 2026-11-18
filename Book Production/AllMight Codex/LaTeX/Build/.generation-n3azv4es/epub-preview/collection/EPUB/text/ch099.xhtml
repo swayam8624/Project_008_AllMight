@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch099.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-d49161831368-bitwise-xor" class="level2">
+<h2>Bitwise XOR</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> C001 · <strong>Latest development:</strong> C001</p>
+<section id="appendix-d49161831368-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Toggles selected lanes and marks differences; applying the same mask twice restores the input.</p>
+<p>XOR returns 1 when inputs differ. <code>0xAD ^ 0x08 = 0xA5</code> toggles visible; applying <code>0x08</code> again restores <code>0xAD</code>. XOR between old and new words marks changed positions. Reversibility alone does not provide secure encryption.</p>
+</section>
+<section id="appendix-d49161831368-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch021.xhtml#appendix-24475e1596a8-boolean-algebra" class="wikilink">Boolean algebra</a> — The logical domain is false/true.</li>
+</ul>
+</section>
+<section id="appendix-d49161831368-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><p><a href="ch169.xhtml#appendix-ed338677de0a-checksums-crcs-and-hashes" class="wikilink">Checksums CRCs and hashes (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Checksums CRCs and hashes)</a> — uses this mechanism to define its representation, error or validation contract.</p></li>
+<li><p><a href="ch011.xhtml#appendix-1652d27a8e90-half-adder" class="wikilink">Half adder</a> — uses bitwise xor as part of its representation or reasoning.</p></li>
+</ul>
+</section>
+<section id="appendix-d49161831368-recall-and-next-depth" class="level3">
+<h3>Recall and next depth</h3>
+<p>Explain bitwise xor without the label, work the example above, then state the assumption whose removal would change the result.</p>
+<p><strong>Pending:</strong> parity, checksums, coding theory, and cryptographic constructions.</p>
+</section>
+<section id="appendix-d49161831368-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch002.xhtml#id_01-foundations-i-ch001-from-a-signal-to-an-interpretation" class="wikilink">C001 teaching chapter</a> · <a href="ch207.xhtml#appendix-fd090d982a15-foundations" class="wikilink">Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)</a></p>
+</section>
+</section>
+</body>
+</html>

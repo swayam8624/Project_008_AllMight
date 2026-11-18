@@ -1,0 +1,56 @@
+\hypertarget{appendix-749ba51a6c25}{}
+\section{GPU vertex specification}\label{appendix-749ba51a6c25-gpu-vertex-specification}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\subsection{Definition and mechanism}\label{appendix-749ba51a6c25-definition-and-mechanism}
+
+A GPU vertex-input specification explains how bytes in one or more buffers become per-vertex shader inputs. A buffer object owns bytes; a vertex array object records their interpretation: enabled attributes, component count and type, normalization, stride, byte offset, and the buffer binding used for fetch. Stride is the number of bytes between successive vertices; offset is the first component's byte position. For vertex i, the address is base + offset + i × stride. For interleaved records containing position (3 floats), normal (3), and UV (2), the stride is 8 × 4 = 32 bytes and the UV offset is 24 bytes. Modern binding APIs separate attribute format from the buffer binding; older pointer-style calls can capture the buffer bound at setup time. A wrong stride may still address valid memory, so the symptom is often plausible but scrambled geometry. The contract must agree with CPU packing, shader input types, and the API's state-capture rules.
+
+\subsection{Prerequisites}\label{appendix-749ba51a6c25-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Foundations-II/main.pdf\#nameddest=appendix-26bf6bf2fb8b}{Vector storage SIMD and boundary layouts (02-Foundations-II, appendix-26bf6bf2fb8b)}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-ffdc1d4e5350}{Matrix storage indexing and strides (01-Foundations-I, appendix-ffdc1d4e5350)}
+\item
+  \hyperref[appendix-1c07d64f5e70]{Camera view and clip-space pipeline}
+\item
+  \href{../01-Foundations-I/main.pdf\#nameddest=appendix-6af5921bc853}{Pointer arithmetic and provenance (01-Foundations-I, appendix-6af5921bc853)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-749ba51a6c25-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch012-rasterization-coverage-and-depth}{Rasterization, coverage, and depth (03-Visual-Computing-I, 03-visual-computing-i-ch012-rasterization-coverage-and-depth)}
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=appendix-40426e4b2103}{Homogeneous clipping and perspective interpolation (03-Visual-Computing-I, appendix-40426e4b2103)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-749ba51a6c25-full-teaching-explanation}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch012-rasterization-coverage-and-depth}{Rasterization, coverage, and depth (03-Visual-Computing-I, 03-visual-computing-i-ch012-rasterization-coverage-and-depth)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-749ba51a6c25-recall-and-next-depth}
+
+\begin{itemize}
+\tightlist
+\item
+  Trace the fetched address for vertex 3 when stride is 32 bytes and offset is 24 bytes.
+\item
+  Why can an incorrect stride produce plausible but scrambled geometry without a memory fault?
+\end{itemize}
+
+\subsection{Source and navigation}\label{appendix-749ba51a6c25-source-and-navigation}
+
+Teaching narrative: \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch012-rasterization-coverage-and-depth}{open the main explanation (03-Visual-Computing-I, 03-visual-computing-i-ch012-rasterization-coverage-and-depth)}. Browse the \href{../02-Foundations-II/main.pdf\#nameddest=appendix-a6d556a4ef50-university-graphics-vision-and-photography---independent-series}{University graphics and vision index (02-Foundations-II, appendix-a6d556a4ef50-university-graphics-vision-and-photography-\/-\/-independent-series)}. Additional chapter connections: \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch001-a-scene-description-becomes-an-image}{A scene description becomes an image (03-Visual-Computing-I, 03-visual-computing-i-ch001-a-scene-description-becomes-an-image)}; \href{../03-Visual-Computing-I/main.pdf\#nameddest=03-visual-computing-i-ch012-rasterization-coverage-and-depth}{Rasterization, coverage, and depth (03-Visual-Computing-I, 03-visual-computing-i-ch012-rasterization-coverage-and-depth)}; \href{../02-Foundations-II/main.pdf\#nameddest=02-foundations-ii-ch038-the-mathematical-table-needs-an-explicit-storage-agreement}{The mathematical table needs an explicit storage agreement (02-Foundations-II, 02-foundations-ii-ch038-the-mathematical-table-needs-an-explicit-storage-agreement)}; \href{../01-Foundations-I/main.pdf\#nameddest=01-foundations-i-ch003-a-pointer-carries-an-access-contract}{A pointer carries an access contract (01-Foundations-I, 01-foundations-i-ch003-a-pointer-carries-an-access-contract)}.
+
+Caption/source records: \hyperref[04-visual-computing-ii-ch036-p1-01---module-1.1-course-intro-administrivia-part-1-graphics-visual-computing-2026]{P1-01}, \hyperref[04-visual-computing-ii-ch036-p3-03---moving-objects-in-space]{P3-03}, \hyperref[04-visual-computing-ii-ch036-p3-04---rotations-about-an-arbitrary-axis]{P3-04}.

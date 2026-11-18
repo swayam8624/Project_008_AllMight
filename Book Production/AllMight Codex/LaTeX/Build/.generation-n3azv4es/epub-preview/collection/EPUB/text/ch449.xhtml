@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch449.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-0c2a5f69851e-interpolation-versus-approximation" class="level2">
+<h2>Interpolation versus approximation</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> Phase 10 · <strong>Latest development:</strong> Phase 10</p>
+<section id="appendix-0c2a5f69851e-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Interpolation reproduces every prescribed sample exactly, while approximation minimizes or controls an error criterion and may miss the observations. The distinction matters when data are noisy: a high-degree interpolant can fit measurement noise and oscillate between samples, while a lower-complexity approximation can better represent the underlying trend. In texture reconstruction, the samples themselves often define the represented signal, so interpolation is an appropriate reconstruction rule. In calibration, observations have uncertainty, so fitting a model may be more defensible. Neither method is automatically superior; choose based on the meaning of the data, the error measure, and whether evaluation stays within or extrapolates beyond the sampled domain.</p>
+</section>
+<section id="appendix-0c2a5f69851e-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch468.xhtml#appendix-32f39e9a3738-taylor-models-and-approximation-error" class="wikilink">Taylor models and approximation error</a></li>
+<li><a href="ch336.xhtml#appendix-02b9d9a81dca-barycentric-coordinates-and-interpolation" class="wikilink">Barycentric coordinates and interpolation (Light Transport and Image Synthesis, Part 1, Reference notes: Barycentric coordinates and interpolation)</a></li>
+</ul>
+</section>
+<section id="appendix-0c2a5f69851e-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><a href="ch447.xhtml#appendix-0a09b6dfdc86-tensor-product-interpolation" class="wikilink">Tensor-product interpolation</a></li>
+<li><a href="ch521.xhtml#appendix-db3aef8f2fd6-cubic-hermite-interpolation" class="wikilink">Cubic Hermite interpolation</a></li>
+<li><a href="ch522.xhtml#appendix-ddbec701898c-bézier-curves-and-de-casteljau-evaluation" class="wikilink">Bézier curves and De Casteljau evaluation</a></li>
+</ul>
+</section>
+<section id="appendix-0c2a5f69851e-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<ul>
+<li><a href="ch272.xhtml#id_02-foundations-ii-ch028-reconstructing-values-and-curves-between-samples" class="wikilink">Reconstructing values and curves between samples (Mathematics for Visual Computing, Part 2, Ch. 12)</a></li>
+</ul>
+</section>
+<section id="appendix-0c2a5f69851e-source-coverage" class="level3">
+<h3>Source coverage</h3>
+<p>Supplied lesson parts: 976.</p>
+</section>
+<section id="appendix-0c2a5f69851e-future-keywords" class="level3">
+<h3>Future keywords</h3>
+<p>interpolation nodes, extrapolation, Runge phenomenon</p>
+</section>
+</section>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch354.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-89b2d5b7c9e1-surface-orientation-from-image-brightness" class="level2">
+<h2>Surface orientation from image brightness</h2>
+<p><strong>Curriculum depth:</strong> Developed · <strong>First seen:</strong> University courses · <strong>Latest development:</strong> University courses</p>
+<section id="appendix-89b2d5b7c9e1-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>Shape-from-illumination methods infer surface orientation or depth from how light changes across an image. Photometric stereo observes a fixed camera view under multiple known light directions; for a Lambertian surface, measured intensity is proportional to albedo times the dot product between light direction and surface normal. Solving several such equations estimates the scaled normal, then integration recovers height up to boundary and scale ambiguities. A reflectance map plots brightness as a function of surface normal under fixed illumination and can reveal which orientations are visible. The extended Gaussian image maps each surface area to its normal on the unit sphere; its distribution summarizes orientation and convex shape properties. Shape-from-shading uses one image and must jointly reason about unknown lighting, albedo, and depth, so it is more ambiguous. Each method needs assumptions stated explicitly.</p>
+</section>
+<section id="appendix-89b2d5b7c9e1-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch355.xhtml#appendix-96da0b153b77-reflectance-and-rendering-equation" class="wikilink">Reflectance and rendering equation</a></li>
+<li><a href="ch341.xhtml#appendix-215c2570199b-light-spectra-and-radiometry" class="wikilink">Light spectra and radiometry</a></li>
+</ul>
+</section>
+<section id="appendix-89b2d5b7c9e1-used-by" class="level3">
+<h3>Used by</h3>
+<ul>
+<li><span>Worlds, Images and Inference</span></li>
+</ul>
+</section>
+<section id="appendix-89b2d5b7c9e1-full-teaching-explanation" class="level3">
+<h3>Full teaching explanation</h3>
+<p><a href="ch540.xhtml#id_04-visual-computing-ii-ch032-surface-orientation-from-illumination" class="wikilink">Surface orientation from illumination (Vision, XR, and Playable Worlds, Part 1, Ch. 3)</a> · <a href="ch540.xhtml#id_04-visual-computing-ii-ch032-shape-from-shading-and-reflectance" class="wikilink">Shape from shading and reflectance (Vision, XR, and Playable Worlds, Part 1, Ch. 3)</a> · <a href="ch540.xhtml#id_04-visual-computing-ii-ch032-surface-descriptions-and-gaussian-images" class="wikilink">Surface descriptions and Gaussian images (Vision, XR, and Playable Worlds, Part 1, Ch. 3)</a></p>
+</section>
+</section>
+</body>
+</html>

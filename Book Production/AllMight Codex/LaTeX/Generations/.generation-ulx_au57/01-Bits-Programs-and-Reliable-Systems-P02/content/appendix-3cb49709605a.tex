@@ -1,0 +1,48 @@
+\hypertarget{appendix-3cb49709605a}{}\label{referencestart:appendix-3cb49709605a}
+\section{Member order and delegating constructors}\label{appendix-3cb49709605a-member-order-and-delegating-constructors}
+
+\hypertarget{appendix-3cb49709605a-member-order-and-delegating-constructors}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C009 · \textbf{Latest development:} C009
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-3cb49709605a-definition-and-mechanism}
+
+\hypertarget{appendix-3cb49709605a-definition-and-mechanism}{}
+
+Members initialize in declaration order, not initializer-list spelling order. A provider must precede a dependent member so reverse destruction cleans the dependent first. Delegation uses one target constructor as the sole initializer; the target completes before the delegating body.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-3cb49709605a-prerequisites}
+
+\hypertarget{appendix-3cb49709605a-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-7f8ec83d0886]{Constructors and invariant establishment} --- Initialization form and structural order determine how the constructor establishes members.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-3cb49709605a-used-by}
+
+\hypertarget{appendix-3cb49709605a-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-9bfe377cef7a]{Destruction and partial construction}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-3cb49709605a-recall-and-next-depth}
+
+\hypertarget{appendix-3cb49709605a-recall-and-next-depth}{}
+
+Put a device and its dependent buffer in lifetime order; explain a delegating validation path. Pending: virtual bases and inheritance construction. Written coverage does not demonstrate personal mastery.
+
+\subsection{Source and navigation}\label{appendix-3cb49709605a-source-and-navigation}
+
+\hypertarget{appendix-3cb49709605a-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch003-construction-order-records-lifetime-dependencies]{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15-m009---parts-127-147]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

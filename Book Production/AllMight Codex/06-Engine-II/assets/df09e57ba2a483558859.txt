@@ -1,0 +1,4900 @@
+You're right about the previous block: **571–579 got compressed into definitions + consequences when several of those Parts deserved a full “why does this object exist, what breaks without it, what does it look like in an engine, and how would I derive it if I forgot the formula?” treatment.** I will not do that here.
+
+The canonical sequence is **580. Normalized device-coordinate intuition as a vector-space mapping, 581. Dual vectors and covectors concept, 582. Why surface normals transform differently from positions, 583. Linear functionals, 584. Exterior-product intuition, 585. Wedge product as oriented area concept, 586. Geometric-algebra motivation for graphics, and 587. Floating-point vector storage in C++**. Project_Sheldon_Master_Curricul… The curriculum explicitly says not to optimize for completing many Parts and requires derivation, representation, implementation, numerical behavior, failure cases, and reconstruction-level understanding. Project_Sheldon_Master_Curricul… Pasted markdown
+
+I am going to keep one recurring scene through much of this lesson:
+
+> We have a triangle on the side of a spaceship. We transform it from model space into the camera's view, rasterize it onto a screen, and shade it using its surface normal.
+
+That one triangle will take us through **NDC → covectors → normal transformation → functionals → oriented surface elements → wedge products → geometric algebra → actual bytes storing the vectors**.
+
+---
+
+# PART 580 — NORMALIZED DEVICE-COORDINATE INTUITION AS A VECTOR-SPACE MAPPING
+
+---
+
+## 580.1 The real problem NDC solves
+
+Imagine you are writing a renderer.
+
+Your camera might see geometry measured in metres:
+
+\[
+P=(3.7,\;1.2,\;-42.0).
+\]
+
+Another model might be at:
+
+\[
+(7000,\;20,\;-12000).
+\]
+
+Your screen might be:
+
+```text
+1920 × 1080
+```
+
+or:
+
+```text
+2560 × 1440
+```
+
+or a phone, VR eye buffer, shadow map, off-screen texture, etc.
+
+You do **not** want the core rasterization logic to fundamentally care that this particular framebuffer happens to be 1920 pixels wide.
+
+You want some intermediate coordinate convention saying:
+
+> "After the camera/projection stage, every visible thing lives inside one standardized canonical box."
+
+That canonical coordinate system is **Normalized Device Coordinates**, NDC.
+
+Conceptually:
+
+```text
+arbitrary camera-space geometry
+             ↓
+       camera projection
+             ↓
+          clip space
+             ↓
+       perspective divide
+             ↓
+             NDC
+             ↓
+       viewport mapping
+             ↓
+      framebuffer pixels
+```
+
+NDC separates:
+
+\[
+\boxed{\text{camera/projective geometry}}
+\]
+
+from:
+
+\[
+\boxed{\text{actual output resolution}}.
+\]
+
+That separation is one major reason it exists.
+
+---
+
+# 580.2 What does "normalized" mean?
+
+It does **not** mean:
+
+\[
+\|p\|=1.
+\]
+
+This is not vector normalization from Part 528.
+
+Here "normalized" means coordinates have been mapped into a standardized range.
+
+For X and Y, a common convention is approximately:
+
+\[
+-1\le x_{\text{ndc}}\le1,
+\]
+
+\[
+-1\le y_{\text{ndc}}\le1.
+\]
+
+Depth convention depends on graphics system/projection convention. Common canonical depth intervals include:
+
+\[
+[-1,1]
+\]
+
+or:
+
+\[
+[0,1].
+\]
+
+The important conceptual point is:
+
+\[
+\boxed{
+\text{NDC is a standardized coordinate region independent of framebuffer dimensions.}
+}
+\]
+
+---
+
+# 580.3 Imagine a camera looking at our spaceship triangle
+
+Suppose after all camera/projection machinery, three vertices eventually correspond to:
+
+\[
+A_{\text{ndc}}=(-0.5,-0.5),
+\]
+
+\[
+B_{\text{ndc}}=(0.5,-0.5),
+\]
+
+\[
+C_{\text{ndc}}=(0,0.5).
+\]
+
+Picture:
+
+```text
+NDC
+
+ y = +1
+ ┌──────────────────────────┐
+ │                          │
+ │            C             │
+ │           / \            │
+ │          /   \           │
+ │         /     \          │
+ │        A───────B         │
+ │                          │
+ └──────────────────────────┘
+ y = -1
+
+x=-1                    x=+1
+```
+
+This triangle is now expressed relative to a canonical square.
+
+It doesn't yet mean "pixel 728."
+
+It means something like:
+
+> halfway between the screen centre and the left edge.
+
+---
+
+# 580.4 NDC to screen space
+
+Suppose framebuffer width:
+
+\[
+W=1920.
+\]
+
+An NDC X coordinate:
+
+\[
+x_{\text{ndc}}\in[-1,1]
+\]
+
+must become a screen coordinate in approximately:
+
+\[
+[0,W].
+\]
+
+First map:
+
+\[
+[-1,1]\rightarrow[0,1].
+\]
+
+Use:
+
+\[
+u=
+\frac{x_{\text{ndc}}+1}{2}.
+\]
+
+Check:
+
+For:
+
+\[
+x=-1,
+\]
+
+\[
+u=0.
+\]
+
+For:
+
+\[
+x=0,
+\]
+
+\[
+u=\frac12.
+\]
+
+For:
+
+\[
+x=1,
+\]
+
+\[
+u=1.
+\]
+
+Then:
+
+\[
+x_{\text{screen}}=uW.
+\]
+
+So:
+
+\[
+\boxed{
+x_{\text{screen}}
+=
+\frac{x_{\text{ndc}}+1}{2}W.
+}
+\]
+
+For:
+
+\[
+x_{\text{ndc}}=0.5
+\]
+
+and:
+
+\[
+W=1920,
+\]
+
+we get:
+
+\[
+x_{\text{screen}}
+=
+0.75(1920)
+=
+1440.
+\]
+
+The exact viewport/sample-center convention can modify endpoint interpretation, but the mapping idea is this.
+
+---
+
+# 580.5 Why not project directly into pixels?
+
+You could theoretically design a camera that directly outputs:
+
+```text
+x = 732 pixels
+y = 418 pixels
+```
+
+But then your camera projection becomes coupled to output resolution.
+
+NDC gives a clean architectural split:
+
+```text
+camera
+   ↓
+canonical visual region
+
+viewport
+   ↓
+actual device region
+```
+
+Suppose tomorrow you render the same camera into:
+
+```text
+512 × 512 shadow map
+```
+
+instead of:
+
+```text
+1920 × 1080 screen.
+```
+
+The underlying projected geometry can remain conceptually identical in NDC.
+
+Only the viewport mapping changes.
+
+That is why the abstraction matters.
+
+---
+
+# 580.6 Where homogeneous \(w\) returns
+
+From Part 578, a homogeneous point might be:
+
+\[
+P_c=(X_c,Y_c,Z_c,W_c)
+\]
+
+in **clip space**.
+
+Then NDC is typically obtained by:
+
+\[
+\boxed{
+x_n=\frac{X_c}{W_c}
+}
+\]
+
+\[
+\boxed{
+y_n=\frac{Y_c}{W_c}
+}
+\]
+
+\[
+\boxed{
+z_n=\frac{Z_c}{W_c}.
+}
+\]
+
+This is the **perspective divide**.
+
+Example:
+
+\[
+P_c=(2,1,3,4).
+\]
+
+Then:
+
+\[
+P_{\text{ndc}}
+=
+\left(
+\frac24,\frac14,\frac34
+\right).
+\]
+
+So:
+
+\[
+\boxed{
+P_{\text{ndc}}
+=
+(0.5,0.25,0.75).
+}
+\]
+
+---
+
+# 580.7 Why Part 578 mattered
+
+Recall homogeneous equivalence:
+
+\[
+(X,Y,Z,W)
+\sim
+(\lambda X,\lambda Y,\lambda Z,\lambda W).
+\]
+
+Take:
+
+\[
+(2,1,3,4)
+\]
+
+and scale by 10:
+
+\[
+(20,10,30,40).
+\]
+
+Perspective divide:
+
+\[
+20/40=0.5,
+\]
+
+\[
+10/40=0.25,
+\]
+
+\[
+30/40=0.75.
+\]
+
+Same NDC point.
+
+So perspective division removes the arbitrary homogeneous scale.
+
+It selects the canonical representative where:
+
+\[
+w=1.
+\]
+
+Conceptually:
+
+\[
+(X,Y,Z,W)
+\]
+
+becomes:
+
+\[
+\left(
+\frac XW,
+\frac YW,
+\frac ZW,
+1
+\right).
+\]
+
+This is exactly the projective representative idea from Part 578 becoming graphics machinery.
+
+---
+
+# 580.8 Very important: perspective divide is NOT a linear map
+
+The title says "vector-space mapping intuition," but we must not commit a mathematical lie.
+
+The operation:
+
+\[
+(X,Y,Z,W)
+\mapsto
+\left(
+\frac XW,\frac YW,\frac ZW
+\right)
+\]
+
+is not linear.
+
+Why?
+
+A linear function \(F\) must satisfy:
+
+\[
+F(a+b)=F(a)+F(b).
+\]
+
+Take:
+
+\[
+a=(1,0,0,1),
+\]
+
+\[
+b=(1,0,0,1).
+\]
+
+Each individually gives NDC X:
+
+\[
+1.
+\]
+
+So:
+
+\[
+F(a)+F(b)=2.
+\]
+
+But:
+
+\[
+a+b=(2,0,0,2).
+\]
+
+Perspective divide gives:
+
+\[
+F(a+b)=1.
+\]
+
+Therefore:
+
+\[
+1\neq2.
+\]
+
+So:
+
+\[
+\boxed{
+\text{perspective division is projective/nonlinear in ordinary vector-space terms.}
+}
+\]
+
+This distinction will become incredibly important when we later study matrices and perspective interpolation.
+
+---
+
+# 580.9 So what should "vector-space mapping intuition" mean here?
+
+Think of NDC as a **canonical coordinate space** into which transformed projective points are mapped.
+
+Before perspective divide:
+
+\[
+\text{clip-space homogeneous representation}.
+\]
+
+After divide:
+
+\[
+\text{a canonical coordinate representative suitable for clipping/raster-space reasoning}.
+\]
+
+The pipeline contains linear and affine transformations around it, but the division itself introduces projective nonlinearity.
+
+Never collapse all of that into:
+
+> "NDC is just another linear vector space."
+
+That is too crude.
+
+---
+
+# 580.10 Real-life analogy: architectural blueprint
+
+Imagine a building is 100 metres wide.
+
+You draw it on A4 paper.
+
+Instead of storing every wall as:
+
+```text
+237.4 mm from left paper edge
+```
+
+you might first represent it in normalized blueprint coordinates:
+
+```text
+left boundary  = -1
+centre         =  0
+right boundary = +1
+```
+
+Then whichever paper, monitor, tablet, or printer you use maps those normalized coordinates to actual device dimensions.
+
+NDC serves a similar role.
+
+---
+
+# 580.11 Coordinate-space debugging
+
+Suppose a vertex is:
+
+```cpp
+Vec3 p = {0.4f, 0.2f, 0.8f};
+```
+
+Those three numbers alone tell us almost nothing.
+
+They could mean:
+
+```text
+object metres
+world metres
+camera metres
+NDC
+screen position
+RGB colour
+normal
+```
+
+A graphics engineer should mentally ask:
+
+\[
+\boxed{\text{Which space is this value in?}}
+\]
+
+If it is NDC:
+
+\[
+(0.4,0.2,0.8)
+\]
+
+has a completely different meaning than the same tuple in world space.
+
+That space-tracking habit will save you repeatedly later.
+
+---
+
+# 580.12 Common NDC bug
+
+Suppose you accidentally apply viewport mapping to clip-space X before dividing by W.
+
+Wrong conceptual order:
+
+```text
+clip coordinates
+      ↓
+map X to pixels
+      ↓
+divide somehow later
+```
+
+Correct:
+
+```text
+clip coordinates
+      ↓
+divide X,Y,Z by W
+      ↓
+NDC
+      ↓
+viewport map
+```
+
+Perspective division changes the location nonlinearly, so order matters.
+
+---
+
+# 580.13 Mastery gate 580
+
+You should now be able to reconstruct the chain:
+
+\[
+\boxed{
+P_{\text{clip}}
+=
+(X,Y,Z,W)
+}
+\]
+
+\[
+\Downarrow
+\]
+
+\[
+\boxed{
+P_{\text{ndc}}
+=
+(X/W,Y/W,Z/W)
+}
+\]
+
+then a viewport maps canonical X/Y ranges to pixel coordinates.
+
+And you must be able to explain:
+
+**why NDC exists:** resolution-independent canonical coordinates.
+
+**why W matters:** it encodes projective scale/depth information.
+
+**why the divide is not linear:** division by a component breaks additivity.
+
+**why coordinate space matters:** the same numeric tuple has different geometry in different spaces.
+
+---
+
+# PART 581 — DUAL VECTORS AND COVECTORS
+
+This is probably the first Part here that can feel abstract.
+
+So we will build it from a physical question rather than a definition.
+
+---
+
+# 581.1 You already know vectors
+
+Suppose a displacement is:
+
+\[
+v=(3,2).
+\]
+
+You might interpret it as:
+
+```text
+3 metres east
+2 metres north.
+```
+
+That is a vector.
+
+It represents:
+
+\[
+\boxed{\text{a displacement/direction-like object}.}
+\]
+
+Now ask a different question:
+
+> How much altitude does this displacement gain?
+
+Suppose terrain altitude changes by:
+
+```text
+2 metres of altitude per metre east
+1 metre of altitude per metre north.
+```
+
+Then a movement:
+
+\[
+v=(3,2)
+\]
+
+changes altitude by:
+
+\[
+2(3)+1(2)=8.
+\]
+
+The thing:
+
+\[
+(2,1)
+\]
+
+here is not being used as another displacement.
+
+It is being used as a **measurement rule**.
+
+It eats a vector and produces a scalar.
+
+That is the intuition of a **covector**.
+
+---
+
+# 581.2 Vector versus covector
+
+A vector is something like:
+
+\[
+v.
+\]
+
+A covector is something like:
+
+\[
+\omega
+\]
+
+that acts on a vector:
+
+\[
+\boxed{
+\omega(v)\in\mathbb R.
+}
+\]
+
+Example:
+
+\[
+\omega(x,y)=2x+y.
+\]
+
+Then:
+
+\[
+\omega(3,2)=8.
+\]
+
+This is a completely different semantic role.
+
+Vector:
+
+> "Move this way."
+
+Covector:
+
+> "Measure how much this movement changes the quantity I care about."
+
+---
+
+# 581.3 Another real-life analogy: price
+
+Suppose a shopping vector records quantities:
+
+\[
+q=
+\begin{pmatrix}
+3\\
+5
+\end{pmatrix}
+\]
+
+meaning:
+
+```text
+3 apples
+5 oranges.
+```
+
+A price covector might be:
+
+```text
+₹20/apple
+₹30/orange.
+```
+
+Apply it:
+
+\[
+20(3)+30(5)=210.
+\]
+
+The quantity vector and price rule interact to produce total cost.
+
+The price rule is not "another basket."
+
+It belongs to the **dual role**.
+
+---
+
+# 581.4 What is the dual space?
+
+Given vector space:
+
+\[
+V,
+\]
+
+the **dual space**:
+
+\[
+V^*
+\]
+
+is the collection of all linear scalar-valued measurement rules on V.
+
+Formally:
+
+\[
+\boxed{
+V^*
+=
+\{\omega:V\rightarrow\mathbb R
+\mid
+\omega\text{ linear}\}.
+}
+\]
+
+An element:
+
+\[
+\omega\in V^*
+\]
+
+is a covector/linear functional.
+
+Part 583 will study linear functionals directly.
+
+For now:
+
+\[
+\boxed{
+\text{dual space = space of linear measurements of vectors}.
+}
+\]
+
+---
+
+# 581.5 Why do vectors and covectors often look identical in code?
+
+In ordinary Euclidean \(\mathbb R^3\), a fixed vector:
+
+\[
+n
+\]
+
+can define measurement:
+
+\[
+\omega_n(v)=n\cdot v.
+\]
+
+Example:
+
+\[
+n=(0,1,0).
+\]
+
+Then:
+
+\[
+n\cdot v
+\]
+
+extracts vertical component.
+
+So a vector has apparently become a measurement rule.
+
+Because Euclidean space has a dot product, we can associate vectors with covectors.
+
+This is why beginners rarely notice there are two different concepts.
+
+But the identification depends on the metric.
+
+Conceptually:
+
+\[
+\boxed{
+\text{vector}
+\neq
+\text{covector}
+}
+\]
+
+even if a Euclidean dot product allows convenient conversion between them.
+
+---
+
+# 581.6 The ruler/grid intuition
+
+Imagine graph paper.
+
+A vector is an arrow moving across the paper.
+
+A covector can be imagined as a family of parallel equally spaced lines:
+
+```text
+/////////////////////
+/////////////////////
+/////////////////////
+/////////////////////
+```
+
+Crossing these lines increases the measured scalar.
+
+A vector tells you where you move.
+
+The covector tells you:
+
+> how many measurement contours did that movement cross?
+
+If the vector moves parallel to the contours:
+
+\[
+\omega(v)=0.
+\]
+
+If it crosses many contours:
+
+\[
+|\omega(v)|
+\]
+
+is large.
+
+This intuition becomes perfect for surface normals.
+
+---
+
+# 581.7 Plane equations are covector-like
+
+Consider plane through origin:
+
+\[
+2x+y-z=0.
+\]
+
+Define:
+
+\[
+\omega(x,y,z)=2x+y-z.
+\]
+
+Every vector lying inside the plane satisfies:
+
+\[
+\omega(v)=0.
+\]
+
+Vectors on one side produce positive values.
+
+Other side negative.
+
+So the coefficients:
+
+\[
+(2,1,-1)
+\]
+
+are naturally acting as a covector defining a plane.
+
+This is why normals and plane equations are deeply connected to dual vectors.
+
+---
+
+# 581.8 Why call it "dual"?
+
+Suppose basis vectors:
+
+\[
+e_1,e_2,e_3.
+\]
+
+We can construct measurement rules:
+
+\[
+e^1,e^2,e^3
+\]
+
+such that:
+
+\[
+\boxed{
+e^i(e_j)=
+\delta^i_j.
+}
+\]
+
+Meaning:
+
+\[
+e^1(e_1)=1,
+\]
+
+\[
+e^1(e_2)=0,
+\]
+
+\[
+e^1(e_3)=0.
+\]
+
+So \(e^1\) extracts the coefficient along \(e_1\).
+
+Likewise for the others.
+
+These are called the **dual basis**.
+
+The superscript notation is commonly used to distinguish covector basis objects from vector basis objects.
+
+---
+
+# 581.9 In orthonormal Cartesian space the distinction is hidden
+
+For:
+
+\[
+e_x=(1,0,0),
+\]
+
+the covector extracting X is numerically represented as:
+
+\[
+(1,0,0).
+\]
+
+Same numbers.
+
+So you start believing:
+
+\[
+\text{vector}=\text{covector}.
+\]
+
+But this is a special convenience of an orthonormal Euclidean basis.
+
+Once basis vectors are scaled or skewed, their coordinate transformation behavior differs.
+
+---
+
+# 581.10 The scaling example that makes covectors click
+
+Suppose old coordinate basis uses metres.
+
+A vector has X displacement:
+
+\[
+v_x=4\text{ m}.
+\]
+
+Now choose a new basis where one coordinate unit equals:
+
+\[
+2\text{ m}.
+\]
+
+The same physical displacement now has coordinate:
+
+\[
+v_x'=2.
+\]
+
+So vector coordinate went:
+
+\[
+4\rightarrow2.
+\]
+
+Now consider a covector measuring:
+
+\[
+3\text{ units of temperature change per metre}.
+\]
+
+In old coordinates:
+
+\[
+\omega_x=3.
+\]
+
+If one new coordinate unit represents 2 metres, then moving one new coordinate changes temperature by:
+
+\[
+6.
+\]
+
+So covector coordinate goes:
+
+\[
+3\rightarrow6.
+\]
+
+Notice:
+
+```text
+vector coordinate:
+4 → 2
+
+covector coordinate:
+3 → 6
+```
+
+They transform **oppositely**.
+
+Why?
+
+Because the physical scalar measurement must stay unchanged:
+
+\[
+3\times4=12.
+\]
+
+In new coordinates:
+
+\[
+6\times2=12.
+\]
+
+Thus:
+
+\[
+\boxed{
+\text{vector components and covector components compensate inversely}.
+}
+\]
+
+This is the seed of why normals use inverse-transpose transforms.
+
+---
+
+# 581.11 Mastery gate 581
+
+You should be able to explain:
+
+\[
+\boxed{
+\text{vector = geometric displacement/direction}
+}
+\]
+
+versus:
+
+\[
+\boxed{
+\text{covector = linear scalar measurement rule}.
+}
+\]
+
+You should be able to give examples:
+
+\[
+\text{velocity}
+\]
+
+versus:
+
+\[
+\text{measurement of velocity along some axis}.
+\]
+
+And you should understand why Euclidean dot products let a vector masquerade as a covector—but why their transformation laws are fundamentally different.
+
+---
+
+# PART 582 — WHY SURFACE NORMALS TRANSFORM DIFFERENTLY FROM POSITIONS
+
+This Part is one of the most important transform facts in graphics.
+
+If you only memorize:
+
+> normals use inverse transpose
+
+you will forget it or misuse it.
+
+We are deriving exactly **why**.
+
+---
+
+# 582.1 Start from what a surface normal IS
+
+A surface normal is not fundamentally defined as:
+
+> "a vector sticking out of a polygon."
+
+It is defined through a constraint.
+
+If:
+
+\[
+t
+\]
+
+is any tangent vector of a surface and:
+
+\[
+n
+\]
+
+is a normal, then:
+
+\[
+\boxed{
+n\cdot t=0.
+}
+\]
+
+That orthogonality condition is the meaning we must preserve after transforming the surface.
+
+---
+
+# 582.2 Our spaceship triangle
+
+Take a surface tangent:
+
+\[
+t=(1,1).
+\]
+
+A perpendicular normal is:
+
+\[
+n=(1,-1).
+\]
+
+Check:
+
+\[
+t\cdot n
+=
+1(1)+1(-1)
+=
+0.
+\]
+
+Picture:
+
+```text
+     n
+    ↗
+   /
+  /
+ ●────────? actually tangent slopes upward
+  \
+   \
+    → t
+```
+
+Now stretch the spaceship model horizontally by factor 2.
+
+Transformation:
+
+\[
+(x,y)\rightarrow(2x,y).
+\]
+
+The tangent is an ordinary direction/displacement, so:
+
+\[
+t=(1,1)
+\]
+
+becomes:
+
+\[
+\boxed{
+t'=(2,1).
+}
+\]
+
+---
+
+# 582.3 Naively transform normal the same way
+
+If we do the same to:
+
+\[
+n=(1,-1),
+\]
+
+we get:
+
+\[
+n'_{\text{naive}}=(2,-1).
+\]
+
+Check perpendicularity:
+
+\[
+(2,1)\cdot(2,-1)
+=
+4-1
+=
+3.
+\]
+
+Not zero.
+
+So:
+
+\[
+\boxed{
+\text{using the same nonuniform scale on a normal breaks its defining property}.
+}
+\]
+
+This is the entire reason special normal transformation exists.
+
+---
+
+# 582.4 What should the correct new normal be?
+
+We need some:
+
+\[
+n'=(a,b)
+\]
+
+satisfying:
+
+\[
+n'\cdot t'=0.
+\]
+
+Since:
+
+\[
+t'=(2,1),
+\]
+
+we require:
+
+\[
+2a+b=0.
+\]
+
+Choose:
+
+\[
+a=1.
+\]
+
+Then:
+
+\[
+b=-2.
+\]
+
+So a valid transformed normal direction is:
+
+\[
+\boxed{
+n'=(1,-2).
+}
+\]
+
+Compare scaling:
+
+Original normal:
+
+\[
+(1,-1).
+\]
+
+Transformation effectively changed:
+
+\[
+x\text{ coefficient by }1/2,
+\]
+
+while Y coefficient remained unchanged, up to overall normalization/scale.
+
+That reciprocal relationship is the clue.
+
+---
+
+# 582.5 Why reciprocal scale?
+
+Surface stretch:
+
+\[
+x\rightarrow2x.
+\]
+
+Tangent X component doubles.
+
+To keep:
+
+\[
+n\cdot t=0,
+\]
+
+the normal's X measurement coefficient must halve.
+
+Exactly like the vector/covector scaling example in Part 581.
+
+This is why a normal behaves covector-like.
+
+---
+
+# 582.6 General derivation
+
+Let the surface transformation's linear part be:
+
+\[
+A.
+\]
+
+A tangent transforms:
+
+\[
+\boxed{
+t'=At.
+}
+\]
+
+We need transformed normal \(n'\) such that:
+
+\[
+\boxed{
+n'\cdot t'=0
+}
+\]
+
+whenever:
+
+\[
+n\cdot t=0.
+\]
+
+Substitute:
+
+\[
+n'\cdot At=0.
+\]
+
+Writing dot-product pairing algebraically, we want to move A from the tangent side to the normal side.
+
+The transformation that accomplishes this is the **inverse transpose**:
+
+\[
+\boxed{
+n'=A^{-T}n.
+}
+\]
+
+Check:
+
+\[
+n'^T t'
+=
+(A^{-T}n)^T(At).
+\]
+
+Transpose reverses order:
+
+\[
+=
+n^T A^{-1}At.
+\]
+
+Since:
+
+\[
+A^{-1}A=I,
+\]
+
+we get:
+
+\[
+=
+n^Tt.
+\]
+
+Thus:
+
+\[
+\boxed{
+n'^Tt'=n^Tt.
+}
+\]
+
+So if original was zero:
+
+\[
+n^Tt=0,
+\]
+
+then transformed remains zero.
+
+That is the proof.
+
+---
+
+# 582.7 Why inverse?
+
+Because tangents get stretched by A.
+
+Normal measurement coefficients must compensate for that distortion.
+
+If X stretches by 2:
+
+\[
+A_x=2,
+\]
+
+normal X coefficient effectively scales by:
+
+\[
+1/2.
+\]
+
+That is the inverse part.
+
+---
+
+# 582.8 Why transpose?
+
+Because normals are acting as linear measurement rules—covectors.
+
+The transpose is the coordinate machinery that moves a linear map across the vector/covector pairing.
+
+We will make that idea more explicit in Part 583.
+
+---
+
+# 582.9 Translation does not apply to normals
+
+Suppose spaceship moves 100 metres right.
+
+Triangle point:
+
+\[
+P
+\]
+
+must become:
+
+\[
+P+t.
+\]
+
+Normal orientation should not become:
+
+\[
+N+t.
+\]
+
+That makes no geometric sense.
+
+Normals represent orientation/constraints, not locations.
+
+This is already reflected by homogeneous semantics:
+
+```text
+point:
+w = 1
+
+ordinary direction:
+w = 0
+```
+
+Normals are also translation-insensitive, although under general linear transforms they are **not simply ordinary directions**.
+
+---
+
+# 582.10 Why rotation looks deceptively easy
+
+For a pure rotation \(R\):
+
+\[
+R^{-1}=R^T
+\]
+
+for an orthogonal rotation.
+
+Therefore:
+
+\[
+R^{-T}=R.
+\]
+
+So:
+
+\[
+n'=Rn.
+\]
+
+Normals and ordinary vectors transform identically under pure rotation.
+
+That is why the bug often stays hidden.
+
+Likewise uniform scaling changes only normal magnitude after reciprocal scaling, and if you normalize afterward the direction looks correct.
+
+The failure becomes obvious under:
+
+\[
+\boxed{\text{nonuniform scale}}
+\]
+
+or:
+
+\[
+\boxed{\text{shear}}.
+\]
+
+---
+
+# 582.11 Real engine failure
+
+Imagine a sphere mesh.
+
+Scale object:
+
+```text
+X × 5
+Y × 1
+Z × 1
+```
+
+Now it becomes an ellipsoid.
+
+If you transform normals like positions/directions using the same scale, the normals no longer point perpendicular to the ellipsoid.
+
+Lighting becomes visibly wrong:
+
+```text
+highlights slide strangely
+surface looks dented
+specular lobes distort
+```
+
+Geometry itself can look correct while lighting is broken.
+
+That is the classic symptom of incorrect normal transformation.
+
+---
+
+# 582.12 Why normalize afterward?
+
+Even correct:
+
+\[
+A^{-T}n
+\]
+
+generally does not preserve unit magnitude.
+
+But shading formulas commonly expect:
+
+\[
+\|n\|=1.
+\]
+
+So typical conceptual flow:
+
+\[
+\boxed{
+n'
+=
+\operatorname{normalize}
+(A^{-T}n).
+}
+\]
+
+The inverse-transpose preserves the correct perpendicular direction.
+
+Normalization restores the unit-length invariant.
+
+They solve different problems.
+
+---
+
+# 582.13 Singular transformation problem
+
+Suppose scale X is zero:
+
+\[
+(x,y,z)\rightarrow(0,y,z).
+\]
+
+The transformation crushes 3D space into a lower-dimensional shape.
+
+There is no inverse.
+
+So:
+
+\[
+A^{-T}
+\]
+
+does not exist.
+
+This is not just a library failure.
+
+The geometry itself lost dimension.
+
+A surface may collapse.
+
+Its old normal information cannot in general be transformed uniquely.
+
+Thus:
+
+\[
+\boxed{
+\text{singular transform}
+\rightarrow
+\text{normal transform may be undefined}.
+}
+\]
+
+---
+
+# 582.14 Mastery gate 582
+
+You must be able to recreate the simple example:
+
+\[
+t=(1,1),
+\quad
+n=(1,-1).
+\]
+
+Scale X by 2:
+
+\[
+t'=(2,1).
+\]
+
+Naive normal:
+
+\[
+(2,-1)
+\]
+
+fails:
+
+\[
+3\neq0.
+\]
+
+Correct direction:
+
+\[
+(1,-2)
+\]
+
+satisfies:
+
+\[
+2-2=0.
+\]
+
+Then explain that the general law is:
+
+\[
+\boxed{
+n'=A^{-T}n.
+}
+\]
+
+If you forget the formula, you should be able to rederive it from:
+
+\[
+\boxed{
+n\cdot t=0.
+}
+\]
+
+---
+
+# PART 583 — LINEAR FUNCTIONALS
+
+Part 581 introduced covectors.
+
+Now we formalize the actual thing they do.
+
+---
+
+# 583.1 What is a function?
+
+A function takes input and returns output:
+
+\[
+f:X\rightarrow Y.
+\]
+
+Example:
+
+\[
+f(x)=x^2.
+\]
+
+A **functional** is a function whose output is a scalar.
+
+For vector space V:
+
+\[
+f:V\rightarrow\mathbb R.
+\]
+
+A **linear functional** additionally obeys linearity.
+
+---
+
+# 583.2 Formal definition
+
+A function:
+
+\[
+f:V\rightarrow\mathbb R
+\]
+
+is linear if:
+
+\[
+\boxed{
+f(av+bw)
+=
+af(v)+bf(w)
+}
+\]
+
+for every vectors:
+
+\[
+v,w
+\]
+
+and scalars:
+
+\[
+a,b.
+\]
+
+This combines additivity:
+
+\[
+f(v+w)=f(v)+f(w)
+\]
+
+and homogeneity:
+
+\[
+f(av)=af(v).
+\]
+
+---
+
+# 583.3 Example: coordinate extraction
+
+In:
+
+\[
+\mathbb R^3,
+\]
+
+define:
+
+\[
+f_x(x,y,z)=x.
+\]
+
+Then:
+
+\[
+f_x(av+bw)
+\]
+
+extracts X of the combination.
+
+Because X coordinates combine linearly:
+
+\[
+=
+a f_x(v)+b f_x(w).
+\]
+
+So coordinate extraction is a linear functional.
+
+This is the dual basis idea from 581.
+
+---
+
+# 583.4 Example: dot with fixed vector
+
+Fix:
+
+\[
+n.
+\]
+
+Define:
+
+\[
+f(v)=n\cdot v.
+\]
+
+Then:
+
+\[
+f(av+bw)
+=
+n\cdot(av+bw).
+\]
+
+Dot-product distributivity:
+
+\[
+=
+a(n\cdot v)+b(n\cdot w).
+\]
+
+Therefore:
+
+\[
+\boxed{
+v\mapsto n\cdot v
+}
+\]
+
+is a linear functional.
+
+This is why every fixed normal can be used as a linear measuring rule.
+
+---
+
+# 583.5 Plane as a functional's kernel
+
+Define:
+
+\[
+f(v)=n\cdot v.
+\]
+
+Now consider all vectors satisfying:
+
+\[
+f(v)=0.
+\]
+
+That is:
+
+\[
+n\cdot v=0.
+\]
+
+These are exactly vectors perpendicular to n.
+
+In 3D they form a plane through the origin.
+
+This set is called the **kernel**:
+
+\[
+\boxed{
+\ker f=
+\{v\mid f(v)=0\}.
+}
+\]
+
+So one nonzero linear functional naturally defines a plane of vectors it annihilates.
+
+---
+
+# 583.6 "Annihilate" is not mystical vocabulary
+
+If:
+
+\[
+f(v)=0,
+\]
+
+we say f annihilates v.
+
+For a surface normal/covector n:
+
+\[
+n(t)=0
+\]
+
+for tangent t.
+
+So the normal covector **annihilates tangent directions**.
+
+This is an extremely clean way to define a surface normal:
+
+\[
+\boxed{
+\text{normal covector = measurement rule that returns zero on every tangent direction}.
+}
+\]
+
+Now the inverse-transpose law from Part 582 becomes conceptually natural.
+
+---
+
+# 583.7 Real-life example: elevation function
+
+Suppose coordinates represent displacement:
+
+\[
+v=(\Delta x,\Delta y,\Delta z).
+\]
+
+Define:
+
+\[
+f(v)=\Delta z.
+\]
+
+Then all horizontal displacements satisfy:
+
+\[
+f(v)=0.
+\]
+
+The kernel is the horizontal plane.
+
+If:
+
+\[
+f(v)>0,
+\]
+
+movement goes upward.
+
+If:
+
+\[
+f(v)<0,
+\]
+
+downward.
+
+A linear functional divides vector space into:
+
+```text
+positive side
+zero hyperplane
+negative side
+```
+
+This is exactly how plane equations and half-space tests work.
+
+---
+
+# 583.8 Every linear functional in finite-dimensional coordinates
+
+In ordinary finite-dimensional coordinates, a linear functional on:
+
+\[
+\mathbb R^n
+\]
+
+can be represented:
+
+\[
+\boxed{
+f(x_1,\ldots,x_n)
+=
+a_1x_1+\cdots+a_nx_n.
+}
+\]
+
+For 3D:
+
+\[
+\boxed{
+f(x,y,z)
+=
+ax+by+cz.
+}
+\]
+
+The coefficients:
+
+\[
+(a,b,c)
+\]
+
+are covector components.
+
+This looks exactly like a dot product, but conceptually the object is a scalar-producing map.
+
+---
+
+# 583.9 Linear versus affine functional
+
+Plane not through the origin:
+
+\[
+ax+by+cz+d=0.
+\]
+
+The map:
+
+\[
+f(x)=ax+by+cz+d
+\]
+
+is not linear if:
+
+\[
+d\neq0,
+\]
+
+because:
+
+\[
+f(0)=d\neq0.
+\]
+
+A linear map must send zero to zero.
+
+Instead this is an **affine functional**.
+
+This distinction matters in plane equations.
+
+The normal part:
+
+\[
+ax+by+cz
+\]
+
+is linear.
+
+The offset:
+
+\[
+d
+\]
+
+moves the plane away from the origin.
+
+---
+
+# 583.10 Why transformations of covectors are inverse
+
+Suppose:
+
+\[
+v'=Av.
+\]
+
+We want the same physical scalar measurement:
+
+\[
+f(v)
+\]
+
+after changing vector coordinates.
+
+Call new functional:
+
+\[
+f'.
+\]
+
+We require:
+
+\[
+f'(v')=f(v).
+\]
+
+Since:
+
+\[
+v=A^{-1}v',
+\]
+
+we get:
+
+\[
+f'(v')
+=
+f(A^{-1}v').
+\]
+
+So the new functional must compose with the **inverse** transformation.
+
+That is the conceptual reason covectors transform contragrediently/oppositely to vectors.
+
+In coordinate notation this becomes inverse transpose.
+
+So Part 582 wasn't a weird graphics exception.
+
+It is a manifestation of general dual-space mathematics.
+
+---
+
+# 583.11 Mastery gate 583
+
+You need to own:
+
+\[
+\boxed{
+f(av+bw)=af(v)+bf(w).
+}
+\]
+
+You should be able to identify:
+
+\[
+f(x,y,z)=2x-y+5z
+\]
+
+as linear.
+
+But:
+
+\[
+g(x,y,z)=2x-y+5z+3
+\]
+
+is affine, not linear.
+
+You should understand:
+
+\[
+\ker f
+\]
+
+as the set of directions the functional measures as zero.
+
+And you should connect:
+
+\[
+\boxed{
+\text{surface tangent space}
+=
+\ker(\text{normal covector})
+}
+\]
+
+at least conceptually.
+
+---
+
+# PART 584 — EXTERIOR-PRODUCT INTUITION
+
+Now we return to a problem you first saw around the cross product.
+
+---
+
+# 584.1 Cross product gave us something useful—but suspicious
+
+In 3D:
+
+\[
+a\times b
+\]
+
+produces a vector perpendicular to both.
+
+Its magnitude equals parallelogram area.
+
+Its sign/orientation comes from handedness.
+
+That works beautifully in 3D.
+
+But remember Part 547:
+
+In 4D, two independent vectors do **not** determine a unique perpendicular direction.
+
+So what did the pair \(a,b\) fundamentally represent?
+
+Not necessarily a normal vector.
+
+The truly intrinsic geometric object is:
+
+\[
+\boxed{
+\text{the oriented parallelogram / plane element spanned by }a,b.
+}
+\]
+
+Exterior algebra keeps that object directly instead of converting it into a perpendicular vector.
+
+---
+
+# 584.2 Think of two sticks holding a piece of cloth
+
+Take two vectors:
+
+\[
+a,b.
+\]
+
+Place them tail-to-tail.
+
+They span an oriented parallelogram:
+
+```text
+        a+b
+         ●
+        /|
+       / |
+      /  |
+     /   |
+    ●────●
+   O      a
+
+other side follows b
+```
+
+What information matters?
+
+The spanned plane.
+
+The area.
+
+The orientation.
+
+If the vectors become parallel, area collapses to zero.
+
+This is precisely the information we want an algebraic object to encode.
+
+That object will be a **bivector**.
+
+---
+
+# 584.3 A bivector is not "two vectors stored together"
+
+This distinction matters.
+
+The pair:
+
+\[
+(a,b)
+\]
+
+contains more information than their oriented area element.
+
+For example, replace:
+
+\[
+a,b
+\]
+
+with another pair:
+
+\[
+c,d
+\]
+
+that spans the same oriented parallelogram.
+
+Exterior algebra can represent those as the same bivector.
+
+So the bivector represents the **oriented plane element**, not the specific generating pair.
+
+---
+
+# 584.4 Why not always use cross product?
+
+Because cross product turns oriented area into a normal vector only due to special 3D structure.
+
+Exterior product works naturally in:
+
+\[
+2D,\ 3D,\ 4D,\ \ldots
+\]
+
+without pretending every plane has one unique perpendicular vector.
+
+In 4D, an oriented plane remains an oriented plane.
+
+No fake `Vec4` normal is required.
+
+---
+
+# 584.5 Exterior algebra adds grades
+
+Ordinary scalars are grade 0.
+
+Vectors are grade 1.
+
+Oriented plane elements/bivectors are grade 2.
+
+Oriented volume elements/trivectors are grade 3.
+
+Conceptually:
+
+```text
+grade 0 → scalar
+grade 1 → directed line element
+grade 2 → oriented area element
+grade 3 → oriented volume element
+...
+```
+
+This is extremely powerful because geometry itself naturally has dimensions.
+
+Instead of forcing everything to be "another vector," exterior algebra lets each geometric object retain its dimensional grade.
+
+---
+
+# 584.6 Why this is useful in graphics thinking
+
+A triangle patch naturally supplies two tangent directions:
+
+\[
+T_u,\ T_v.
+\]
+
+What do they fundamentally define?
+
+Not merely a normal.
+
+They define an oriented surface element.
+
+Cross product in 3D gives:
+
+\[
+T_u\times T_v.
+\]
+
+Exterior algebra would instead retain:
+
+\[
+T_u\wedge T_v.
+\]
+
+The latter directly means:
+
+\[
+\boxed{
+\text{oriented tangent-plane area element}.
+}
+\]
+
+A normal can be derived from that later if the ambient dimension, metric, and orientation make such a conversion meaningful.
+
+This is conceptually cleaner.
+
+---
+
+# 584.7 Degeneracy becomes natural
+
+If:
+
+\[
+b=\lambda a,
+\]
+
+the two vectors span no area.
+
+So their exterior product should be:
+
+\[
+0.
+\]
+
+That means:
+
+\[
+\boxed{
+a\wedge b=0
+}
+\]
+
+when they are linearly dependent.
+
+Compare cross product:
+
+\[
+a\times b=0
+\]
+
+for parallel 3D vectors.
+
+Exterior product generalizes that fact to arbitrary dimension.
+
+---
+
+# 584.8 Why Part 584 is before Part 585
+
+Part 584's point is conceptual:
+
+> The cross product was hiding a more fundamental object: oriented area.
+
+Part 585 now gives the actual algebraic operation that constructs it.
+
+---
+
+# PART 585 — WEDGE PRODUCT AS ORIENTED AREA CONCEPT
+
+The wedge product is written:
+
+\[
+\boxed{
+a\wedge b.
+}
+\]
+
+It takes two vectors and returns a bivector.
+
+---
+
+# 585.1 First defining property: antisymmetry
+
+Swapping the vectors reverses orientation:
+
+\[
+\boxed{
+a\wedge b
+=
+-(b\wedge a).
+}
+\]
+
+This matches everything we learned about signed area.
+
+If:
+
+\[
+a=b,
+\]
+
+then:
+
+\[
+a\wedge a
+=
+-(a\wedge a).
+\]
+
+Therefore:
+
+\[
+2(a\wedge a)=0.
+\]
+
+So:
+
+\[
+\boxed{
+a\wedge a=0.
+}
+\]
+
+That immediately captures zero area from repeated direction.
+
+---
+
+# 585.2 Bilinearity
+
+The wedge distributes:
+
+\[
+\boxed{
+(a+b)\wedge c
+=
+a\wedge c+b\wedge c
+}
+\]
+
+and:
+
+\[
+\boxed{
+a\wedge(b+c)
+=
+a\wedge b+a\wedge c.
+}
+\]
+
+Scalars pull out:
+
+\[
+(\lambda a)\wedge b
+=
+\lambda(a\wedge b).
+\]
+
+This means oriented area responds linearly to each edge vector.
+
+Double one side of a parallelogram:
+
+\[
+\text{area doubles}.
+\]
+
+Correct.
+
+---
+
+# 585.3 Derive coordinate form in 2D
+
+Let:
+
+\[
+a=a_xe_x+a_ye_y,
+\]
+
+\[
+b=b_xe_x+b_ye_y.
+\]
+
+Then:
+
+\[
+a\wedge b
+=
+(a_xe_x+a_ye_y)
+\wedge
+(b_xe_x+b_ye_y).
+\]
+
+Expand:
+
+\[
+=
+a_xb_x(e_x\wedge e_x)
++
+a_xb_y(e_x\wedge e_y)
+\]
+
+\[
++
+a_yb_x(e_y\wedge e_x)
++
+a_yb_y(e_y\wedge e_y).
+\]
+
+But:
+
+\[
+e_x\wedge e_x=0,
+\]
+
+\[
+e_y\wedge e_y=0,
+\]
+
+and:
+
+\[
+e_y\wedge e_x
+=
+-(e_x\wedge e_y).
+\]
+
+Therefore:
+
+\[
+a\wedge b
+=
+(a_xb_y-a_yb_x)
+(e_x\wedge e_y).
+\]
+
+So:
+
+\[
+\boxed{
+a\wedge b
+=
+(a_xb_y-a_yb_x)e_x\wedge e_y.
+}
+\]
+
+Recognize the coefficient?
+
+It is exactly the signed 2D area determinant from Part 566.
+
+So orientation tests were already computing the coefficient of a wedge product.
+
+---
+
+# 585.4 3D wedge product
+
+Let:
+
+\[
+a=(a_x,a_y,a_z)
+\]
+
+and:
+
+\[
+b=(b_x,b_y,b_z).
+\]
+
+There are three independent coordinate planes:
+
+\[
+e_x\wedge e_y,
+\]
+
+\[
+e_x\wedge e_z,
+\]
+
+\[
+e_y\wedge e_z.
+\]
+
+Expanding gives:
+
+\[
+\boxed{
+a\wedge b
+=
+(a_xb_y-a_yb_x)e_x\wedge e_y
+}
+\]
+
+\[
+\boxed{
++
+(a_xb_z-a_zb_x)e_x\wedge e_z
+}
+\]
+
+\[
+\boxed{
++
+(a_yb_z-a_zb_y)e_y\wedge e_z.
+}
+\]
+
+These three coefficients describe how much oriented area lies in each coordinate plane.
+
+---
+
+# 585.5 Compare cross product components
+
+Cross product:
+
+\[
+a\times b
+=
+(
+a_yb_z-a_zb_y,\;
+a_zb_x-a_xb_z,\;
+a_xb_y-a_yb_x
+).
+\]
+
+Wedge components are roughly:
+
+```text
+XY area
+XZ area
+YZ area
+```
+
+Cross components correspond to perpendicular axes:
+
+```text
+X normal ↔ YZ area
+Y normal ↔ ZX area
+Z normal ↔ XY area
+```
+
+This is not coincidence.
+
+In 3D, an oriented plane element can be mapped to its perpendicular pseudovector.
+
+This mapping depends on the metric and orientation and is related to the **Hodge dual**.
+
+You don't need Hodge-star machinery yet.
+
+The important thing is:
+
+\[
+\boxed{
+\text{cross product is essentially a 3D dual representation of the wedge product}.
+}
+\]
+
+---
+
+# 585.6 Why wedge product is more fundamental than cross product
+
+In 4D, wedge of two vectors still works.
+
+How many independent plane components exist?
+
+Choose two distinct coordinate axes:
+
+\[
+\binom42=6.
+\]
+
+They are:
+
+\[
+e_1\wedge e_2,
+\]
+
+\[
+e_1\wedge e_3,
+\]
+
+\[
+e_1\wedge e_4,
+\]
+
+\[
+e_2\wedge e_3,
+\]
+
+\[
+e_2\wedge e_4,
+\]
+
+\[
+e_3\wedge e_4.
+\]
+
+So a general 4D bivector has six components.
+
+That exactly matches our dimensional argument from Part 547.
+
+There is no reason to squash those six independent oriented-area components into four coordinates.
+
+Exterior algebra simply stores the correct geometric object.
+
+---
+
+# 585.7 Magnitude
+
+In Euclidean geometry, the magnitude of a simple bivector:
+
+\[
+a\wedge b
+\]
+
+corresponds to parallelogram area:
+
+\[
+\boxed{
+\|a\wedge b\|
+=
+\|a\|\|b\|\sin\theta.
+}
+\]
+
+Same area magnitude as:
+
+\[
+\|a\times b\|
+\]
+
+in 3D.
+
+But the bivector represents the oriented plane directly.
+
+---
+
+# 585.8 Real surface example
+
+Our spaceship triangle has edges:
+
+\[
+e_1=B-A,
+\]
+
+\[
+e_2=C-A.
+\]
+
+Then:
+
+\[
+\boxed{
+e_1\wedge e_2
+}
+\]
+
+represents its oriented double-triangle-area plane element.
+
+Its magnitude:
+
+\[
+\|e_1\wedge e_2\|
+\]
+
+is the parallelogram area.
+
+Triangle area:
+
+\[
+\boxed{
+A_\triangle
+=
+\frac12\|e_1\wedge e_2\|.
+}
+\]
+
+If the triangle collapses to a line:
+
+\[
+e_1\wedge e_2=0.
+\]
+
+This is a dimension-independent way of expressing triangle degeneracy.
+
+---
+
+# 585.9 Wedge builds higher grades
+
+Take three vectors:
+
+\[
+a,b,c.
+\]
+
+You can form:
+
+\[
+\boxed{
+a\wedge b\wedge c.
+}
+\]
+
+This represents an oriented volume element.
+
+If the three vectors are linearly dependent:
+
+\[
+a\wedge b\wedge c=0.
+\]
+
+In 3D, its scalar magnitude corresponds to parallelepiped volume.
+
+So:
+
+```text
+wedge 2 vectors → oriented area
+
+wedge 3 vectors → oriented volume
+
+wedge k vectors → oriented k-dimensional volume
+```
+
+This is a remarkably clean generalization of determinants, cross products and triple products.
+
+---
+
+# 585.10 Linear independence detector
+
+A powerful fact:
+
+\[
+\boxed{
+v_1\wedge\cdots\wedge v_k=0
+}
+\]
+
+iff the vectors are linearly dependent, assuming the usual exterior-algebra setting.
+
+Why?
+
+If one vector is a combination of the others, bilinearity plus antisymmetry causes repeated-direction terms, all of which vanish.
+
+So wedge products naturally encode independence and oriented measure.
+
+---
+
+# 585.11 Mastery gate 585
+
+You should be able to derive:
+
+\[
+a\wedge b
+=
+(a_xb_y-a_yb_x)e_x\wedge e_y
+\]
+
+in 2D from bilinearity and antisymmetry.
+
+Then explain:
+
+\[
+a\wedge a=0
+\]
+
+and why:
+
+\[
+a\wedge b=0
+\]
+
+means no 2D area is spanned.
+
+And you should be able to explain the relationship:
+
+\[
+\boxed{
+\text{cross product}
+\approx
+\text{3D dual encoding of wedge-product area}.
+}
+\]
+
+---
+
+# PART 586 — GEOMETRIC-ALGEBRA MOTIVATION FOR GRAPHICS
+
+Now: why invent an even larger algebra?
+
+Because dot products, wedge products, complex numbers, cross products, reflections and rotations look like separate tricks—but they are related pieces of one geometric multiplication system.
+
+That system is **geometric algebra**.
+
+This Part is motivation, not a full geometric-algebra course.
+
+---
+
+# 586.1 The fragmentation problem
+
+Look at what we have learned:
+
+\[
+a\cdot b
+\]
+
+gives scalar alignment.
+
+\[
+a\wedge b
+\]
+
+gives oriented area.
+
+\[
+a\times b
+\]
+
+gives a special 3D pseudovector.
+
+Complex numbers rotate 2D.
+
+Quaternions will rotate 3D.
+
+Normals/covectors encode constraints.
+
+Matrices transform coordinates.
+
+This works.
+
+But the toolbox feels fragmented.
+
+Geometric algebra asks:
+
+> Can we construct one algebraic product in which geometric relations such as length, angle, oriented plane, reflection and rotation appear naturally?
+
+---
+
+# 586.2 Geometric product
+
+For vectors \(a,b\), geometric algebra defines a product:
+
+\[
+\boxed{
+ab
+=
+a\cdot b
++
+a\wedge b.
+}
+\]
+
+Look carefully.
+
+The result is not necessarily another vector.
+
+It contains:
+
+\[
+\boxed{
+\text{scalar part}
+}
+\]
+
+plus:
+
+\[
+\boxed{
+\text{bivector part}.
+}
+\]
+
+So multiplying two vectors captures both:
+
+\[
+\cos\theta
+\]
+
+and:
+
+\[
+\sin\theta
+\]
+
+style geometric relationships simultaneously.
+
+---
+
+# 586.3 Parallel vectors
+
+If \(a,b\) are parallel:
+
+\[
+a\wedge b=0.
+\]
+
+Therefore:
+
+\[
+ab=a\cdot b.
+\]
+
+Product is purely scalar.
+
+That makes sense: two parallel vectors span no area.
+
+---
+
+# 586.4 Perpendicular vectors
+
+If:
+
+\[
+a\cdot b=0,
+\]
+
+then:
+
+\[
+ab=a\wedge b.
+\]
+
+Product is purely bivector.
+
+Two perpendicular vectors have no scalar alignment and span maximal area for their lengths.
+
+Again the algebra matches geometry.
+
+---
+
+# 586.5 Recover dot and wedge from geometric product
+
+Swap order:
+
+\[
+ba
+=
+b\cdot a+b\wedge a.
+\]
+
+Dot is symmetric:
+
+\[
+b\cdot a=a\cdot b.
+\]
+
+Wedge is antisymmetric:
+
+\[
+b\wedge a=-a\wedge b.
+\]
+
+Therefore:
+
+\[
+ab+ba
+=
+2a\cdot b.
+\]
+
+So:
+
+\[
+\boxed{
+a\cdot b
+=
+\frac12(ab+ba).
+}
+\]
+
+Subtract:
+
+\[
+ab-ba
+=
+2a\wedge b.
+\]
+
+Therefore:
+
+\[
+\boxed{
+a\wedge b
+=
+\frac12(ab-ba).
+}
+\]
+
+So dot and wedge aren't unrelated operations inside geometric algebra.
+
+They are the symmetric and antisymmetric portions of one product.
+
+That is a beautiful structural insight.
+
+---
+
+# 586.6 Vector squared
+
+Take:
+
+\[
+a^2=aa.
+\]
+
+Then:
+
+\[
+a\wedge a=0.
+\]
+
+Thus:
+
+\[
+a^2=a\cdot a.
+\]
+
+So:
+
+\[
+\boxed{
+a^2=\|a\|^2
+}
+\]
+
+in ordinary Euclidean signature.
+
+A vector's square is its squared magnitude.
+
+That gives vector inversion naturally:
+
+For nonzero \(a\):
+
+\[
+a^{-1}
+=
+\frac{a}{a^2}
+=
+\frac{a}{\|a\|^2}.
+\]
+
+Because:
+
+\[
+a a^{-1}=1.
+\]
+
+This starts to make geometry algebraically compact.
+
+---
+
+# 586.7 The startling 2D connection to complex numbers
+
+Let orthonormal basis:
+
+\[
+e_1,e_2.
+\]
+
+Define bivector:
+
+\[
+I=e_1e_2.
+\]
+
+Because they are perpendicular:
+
+\[
+e_1e_2=-e_2e_1.
+\]
+
+Now compute:
+
+\[
+I^2
+=
+e_1e_2e_1e_2.
+\]
+
+Swap middle:
+
+\[
+e_2e_1=-e_1e_2.
+\]
+
+Therefore:
+
+\[
+I^2
+=
+-e_1e_1e_2e_2.
+\]
+
+Since unit basis vectors square to 1:
+
+\[
+e_1^2=e_2^2=1.
+\]
+
+Thus:
+
+\[
+\boxed{
+I^2=-1.
+}
+\]
+
+That is exactly the defining algebraic behavior of:
+
+\[
+i^2=-1
+\]
+
+from complex numbers.
+
+So the imaginary unit in 2D rotations can be interpreted geometrically as the **oriented unit plane element**.
+
+That is a powerful connection to Part 503.
+
+---
+
+# 586.8 Rotations emerge from plane elements
+
+Because:
+
+\[
+I^2=-1,
+\]
+
+the exponential:
+
+\[
+e^{I\theta}
+\]
+
+behaves like:
+
+\[
+\cos\theta+I\sin\theta.
+\]
+
+This is the same structure as complex rotation.
+
+In geometric algebra, rotations are represented by objects called **rotors**.
+
+Conceptually a rotor contains:
+
+\[
+\cos\frac\theta2
+\]
+
+plus an oriented-plane term involving:
+
+\[
+\sin\frac\theta2.
+\]
+
+And vectors are rotated through a sandwich-like operation.
+
+This mirrors what quaternions later do in 3D.
+
+Indeed, 3D rotation quaternions are deeply related to the even subalgebra of 3D geometric algebra.
+
+That is why quaternion formulas can feel less arbitrary once geometric algebra is understood.
+
+We will not replace the dedicated quaternion Parts 667+ here.
+
+---
+
+# 586.9 Reflections become fundamental
+
+Reflection across a plane can also be expressed elegantly using geometric products.
+
+Recall our earlier reflection formula:
+
+\[
+r
+=
+v-2(v\cdot n)n.
+\]
+
+Geometric algebra can encode reflection through compact sandwich products involving a unit normal.
+
+Why is that important conceptually?
+
+Because rotations can be understood as compositions of reflections.
+
+This gives one algebraic framework for both transformations rather than unrelated formulas.
+
+---
+
+# 586.10 Why graphics engineers may care
+
+Geometric algebra offers a unified language for:
+
+\[
+\text{projections},
+\]
+
+\[
+\text{reflections},
+\]
+
+\[
+\text{rotations},
+\]
+
+\[
+\text{oriented subspaces},
+\]
+
+\[
+\text{intersections in extended formulations},
+\]
+
+and other geometry.
+
+It is especially conceptually attractive when a system constantly manipulates directions, planes, rotations, and geometric incidence relations.
+
+---
+
+# 586.11 Why most production graphics code still uses vectors/matrices/quaternions
+
+A powerful abstraction does not automatically win ecosystem adoption.
+
+Traditional graphics stacks have enormous investment in:
+
+```text
+Vec3
+Mat4
+Quat
+dot
+cross
+```
+
+GPUs, shading languages, file formats and APIs are built around them.
+
+Matrices are universally understood.
+
+Quaternions are compact and efficient for rotation.
+
+So geometric algebra may offer conceptual unification but introduce:
+
+- less familiar notation;
+- different library ecosystems;
+- more complex multivector representation;
+- potentially unnecessary generality for routine tasks.
+
+A graphics engineer should understand the idea without assuming every engine should be rewritten around GA.
+
+---
+
+# 586.12 Real benefit even if you never use a GA library
+
+After this Part you should see:
+
+\[
+\boxed{
+\text{dot product = scalar interaction}
+}
+\]
+
+and:
+
+\[
+\boxed{
+\text{wedge product = oriented subspace interaction}.
+}
+\]
+
+Cross products, complex rotations and quaternions stop looking like completely disconnected mathematical hacks.
+
+That conceptual unification alone is useful.
+
+---
+
+# 586.13 Mastery gate 586
+
+You should be able to derive:
+
+\[
+\boxed{
+ab=a\cdot b+a\wedge b
+}
+\]
+
+then:
+
+\[
+\boxed{
+a\cdot b=\frac{ab+ba}{2}
+}
+\]
+
+and:
+
+\[
+\boxed{
+a\wedge b=\frac{ab-ba}{2}.
+}
+\]
+
+You should understand why:
+
+\[
+a^2=\|a\|^2.
+\]
+
+And derive for an orthonormal 2D basis:
+
+\[
+(e_1e_2)^2=-1.
+\]
+
+If you can explain why this links geometric plane orientation to complex-number rotation, you've understood the motivation.
+
+---
+
+# PART 587 — FLOATING-POINT VECTOR STORAGE IN C++
+
+Now we abruptly leave abstract mathematics and touch memory.
+
+This is intentional.
+
+We have spent almost 90 Parts talking about what vectors **mean**.
+
+Now:
+
+> What actually exists inside RAM when an engine says `Vec3 position`?
+
+This Part starts the implementation block leading into Vec2/Vec3/Vec4 design, alignment, SIMD and engine invariants. The following Parts explicitly cover those separately, so here we focus on **the foundational physical storage model**. Project_Sheldon_Master_Curricul…
+
+---
+
+# 587.1 Mathematics says
+
+\[
+v=(x,y,z).
+\]
+
+Computer memory does not store parentheses.
+
+It stores bits.
+
+A typical C++ representation might be:
+
+```cpp
+struct RawVec3
+{
+    float x;
+    float y;
+    float z;
+};
+```
+
+Conceptually:
+
+```text
+RawVec3 object
+
++-----------+
+| x float   |
++-----------+
+| y float   |
++-----------+
+| z float   |
++-----------+
+```
+
+But we need to understand what "float" and those boxes actually mean.
+
+---
+
+# 587.2 What is `float`?
+
+C++ defines a floating-point type named:
+
+```cpp
+float
+```
+
+but C++ does not universally require it to be IEEE-754 binary32 on every imaginable implementation.
+
+On mainstream desktop/mobile/GPU-oriented platforms it is overwhelmingly commonly:
+
+\[
+32\text{-bit IEEE-754 binary32}.
+\]
+
+An engine that depends on that can verify assumptions:
+
+```cpp
+#include <limits>
+
+static_assert(sizeof(float) == 4);
+
+static_assert(
+    std::numeric_limits<float>::is_iec559
+);
+```
+
+`is_iec559` is commonly used to detect IEC 60559/IEEE-style semantics, though platform-specific guarantees may still matter.
+
+Never confuse:
+
+\[
+\boxed{
+\text{common ABI fact}
+}
+\]
+
+with:
+
+\[
+\boxed{
+\text{universal C++ language guarantee}.
+}
+\]
+
+---
+
+# 587.3 Typical binary32 structure
+
+A common IEEE binary32 value occupies:
+
+\[
+32\text{ bits}.
+\]
+
+Conceptually:
+
+```text
+1 sign bit
+8 exponent bits
+23 stored fraction bits
+```
+
+With normalized implicit leading significand bit, effective precision is roughly:
+
+\[
+24\text{ binary significant bits}.
+\]
+
+This is why a `Vec3` does not hold exact real numbers.
+
+It holds three finite floating-point approximations.
+
+So mathematical vector:
+
+\[
+(0.1,0.2,0.3)
+\]
+
+becomes:
+
+```text
+nearest representable binary float to 0.1
+nearest representable binary float to 0.2
+nearest representable binary float to 0.3
+```
+
+Every vector operation later inherits this finite representation.
+
+---
+
+# 587.4 Typical `Vec3` memory footprint
+
+If:
+
+```cpp
+sizeof(float) == 4
+```
+
+then three raw floats require 12 bytes of member payload:
+
+\[
+3\times4=12.
+\]
+
+On many conventional ABIs:
+
+```cpp
+struct RawVec3
+{
+    float x;
+    float y;
+    float z;
+};
+```
+
+will have:
+
+```text
+sizeof(RawVec3) = 12
+alignof(RawVec3) = 4
+```
+
+But do not turn "often" into a language-law assumption.
+
+C++ implementations may insert padding to satisfy object layout/alignment rules.
+
+The object representation can include padding.
+
+This is why later Parts 593–594 explicitly distinguish alignment and packed/aligned Vec3 designs.
+
+---
+
+# 587.5 Arrays give stronger contiguity intuition
+
+For:
+
+```cpp
+float v[3];
+```
+
+array elements are contiguous.
+
+Memory conceptually:
+
+```text
+address +0   → v[0]
+address +4   → v[1]
+address +8   → v[2]
+```
+
+assuming 4-byte floats.
+
+There is no padding **between array elements**.
+
+This fact makes arrays useful when you need guaranteed regular scalar strides.
+
+---
+
+# 587.6 Struct representation
+
+For:
+
+```cpp
+struct Vec3
+{
+    float x;
+    float y;
+    float z;
+};
+```
+
+the compiler lays out the members according to the type's object-layout rules and alignment requirements.
+
+On ordinary platforms you might see:
+
+```text
+offset 0  x
+offset 4  y
+offset 8  z
+sizeof 12
+```
+
+But later we may deliberately request stronger alignment:
+
+```cpp
+struct alignas(16) Vec3Aligned
+{
+    float x;
+    float y;
+    float z;
+};
+```
+
+Now a likely layout is:
+
+```text
+offset 0   x
+offset 4   y
+offset 8   z
+offset 12  padding
+sizeof 16
+```
+
+Why intentionally waste 4 bytes?
+
+Potentially to make loads, arrays, ABI compatibility or SIMD operations simpler.
+
+Full trade-off belongs to Parts 593–595.
+
+---
+
+# 587.7 Arrays of Vec3 make padding matter more
+
+Suppose:
+
+```cpp
+Vec3 positions[4];
+```
+
+If:
+
+\[
+sizeof(Vec3)=12,
+\]
+
+layout might be:
+
+```text
+position 0: bytes  0..11
+position 1: bytes 12..23
+position 2: bytes 24..35
+position 3: bytes 36..47
+```
+
+Stride:
+
+\[
+12.
+\]
+
+If aligned Vec3 has:
+
+\[
+sizeof=16,
+\]
+
+then:
+
+```text
+position 0: bytes  0..15
+position 1: bytes 16..31
+position 2: bytes 32..47
+position 3: bytes 48..63
+```
+
+Stride:
+
+\[
+16.
+\]
+
+This affects:
+
+- total memory;
+- cache usage;
+- vectorized loads;
+- GPU buffer layouts;
+- serialization;
+- binary interoperability.
+
+So `sizeof(Vec3)` is not trivia.
+
+It affects entire array architecture.
+
+---
+
+# 587.8 One million positions
+
+Suppose one million vertices.
+
+Packed 12-byte positions:
+
+\[
+12,000,000\text{ bytes}
+\]
+
+roughly 12 MB decimal.
+
+16-byte stride:
+
+\[
+16,000,000\text{ bytes}.
+\]
+
+Difference:
+
+\[
+4,000,000\text{ bytes}.
+\]
+
+Four megabytes for just one million vectors.
+
+Now add:
+
+- normals;
+- tangents;
+- velocities;
+- particle positions;
+- instance data.
+
+Alignment choices can materially affect memory bandwidth.
+
+But 16-byte layout may also simplify SIMD/GPU paths.
+
+This is why there is no universal "best Vec3 layout."
+
+---
+
+# 587.9 AoS versus SoA preview
+
+Suppose four particle positions.
+
+Array of structures:
+
+```cpp
+struct Vec3 { float x,y,z; };
+
+Vec3 p[4];
+```
+
+Memory:
+
+```text
+x0 y0 z0 | x1 y1 z1 | x2 y2 z2 | x3 y3 z3
+```
+
+This is **Array of Structures**, AoS.
+
+Alternative:
+
+```cpp
+float x[4];
+float y[4];
+float z[4];
+```
+
+Memory:
+
+```text
+x0 x1 x2 x3
+y0 y1 y2 y3
+z0 z1 z2 z3
+```
+
+This is **Structure of Arrays**, SoA.
+
+If computation needs:
+
+```text
+all X components at once
+```
+
+SoA may map naturally to vectorized processing.
+
+If code repeatedly processes:
+
+```text
+one complete position
+```
+
+AoS can be convenient.
+
+We are not choosing yet.
+
+The point is:
+
+\[
+\boxed{
+\text{mathematical vector representation does not dictate physical memory layout}.
+}
+\]
+
+---
+
+# 587.10 CPU register representation need not match memory representation
+
+Memory might store:
+
+```text
+12 bytes
+```
+
+for x,y,z.
+
+CPU calculation may load them into:
+
+```text
+128-bit SIMD register
+```
+
+with a fourth unused lane.
+
+For example conceptually:
+
+```text
+[x y z ?]
+```
+
+or:
+
+```text
+[x y z 0]
+```
+
+So:
+
+\[
+\boxed{
+\text{storage layout}
+\neq
+\text{execution register layout}.
+}
+\]
+
+This distinction matters when people claim:
+
+> Vec3 must be 16 bytes because SIMD.
+
+Not necessarily.
+
+You can have packed memory and widen during computation.
+
+Whether that is beneficial depends on workload and architecture.
+
+Part 595 will study SIMD explicitly.
+
+---
+
+# 587.11 Endianness still exists
+
+Suppose one float uses four bytes.
+
+The order of those bytes in memory depends on machine endianness.
+
+Earlier Parts taught endianness.
+
+A `Vec3` is therefore not merely:
+
+```text
+12 meaningful bytes
+```
+
+in some universally portable serialization format.
+
+If you write raw object bytes to disk and read them on another platform, questions include:
+
+- float representation;
+- byte order;
+- padding;
+- alignment;
+- ABI;
+- versioning.
+
+So robust serialization normally defines a binary format rather than dumping arbitrary C++ object representations blindly.
+
+---
+
+# 587.12 `memcpy` versus reinterpret-casting
+
+Suppose you need the bits of a float.
+
+Dangerous thinking:
+
+```cpp
+uint32_t bits =
+    *reinterpret_cast<uint32_t*>(&f);
+```
+
+That can violate C++ aliasing/object-model rules.
+
+Safer modern approaches include:
+
+```cpp
+#include <bit>
+
+std::uint32_t bits =
+    std::bit_cast<std::uint32_t>(f);
+```
+
+assuming equal sizes.
+
+Or `std::memcpy` for byte transfers.
+
+This matters in graphics engines because low-level math code often sits close to:
+
+- GPU buffers;
+- serialization;
+- SIMD;
+- hashing;
+- binary formats.
+
+Low-level speed does not excuse undefined behavior.
+
+---
+
+# 587.13 Why raw `memcmp` is not vector equality
+
+Suppose:
+
+\[
++0.0f
+\]
+
+and:
+
+\[
+-0.0f.
+\]
+
+They compare numerically equal:
+
+```cpp
++0.0f == -0.0f
+```
+
+is true under normal IEEE behavior.
+
+But their bit patterns differ.
+
+So raw byte equality can say:
+
+```text
+different
+```
+
+while floating-point comparison says:
+
+```text
+equal.
+```
+
+NaNs create even stranger semantics:
+
+\[
+NaN\neq NaN.
+\]
+
+Thus:
+
+```cpp
+memcmp(&a, &b, sizeof(Vec3))
+```
+
+is not generally the same semantic operation as:
+
+```cpp
+a == b
+```
+
+for floating vectors.
+
+And approximate geometric equality is yet another operation, coming in Part 596.
+
+---
+
+# 587.14 Padding makes byte comparison worse
+
+If a struct contains padding bytes, those bytes may hold unspecified values depending on how the object was created/assigned.
+
+Two vectors with equal member values could potentially have different padding bit contents.
+
+Therefore comparing entire object representations can produce false differences.
+
+Likewise hashing raw struct bytes can accidentally hash meaningless padding.
+
+This is why low-level object representation must be understood before binary tricks.
+
+---
+
+# 587.15 Ownership and lifetime
+
+A simple vector value:
+
+```cpp
+struct Vec3
+{
+    float x, y, z;
+};
+```
+
+typically owns its three scalar members directly.
+
+No heap allocation.
+
+No pointer ownership.
+
+Construction creates one value object.
+
+Copying copies component values.
+
+Destruction usually has nothing to do.
+
+This is ideal for a tiny math type.
+
+You generally want:
+
+```text
+cheap copy
+cheap move
+trivial lifetime
+no hidden allocation
+```
+
+unless there is a very unusual requirement.
+
+That is why vector math types are typically value types.
+
+---
+
+# 587.16 Why no heap allocation?
+
+Imagine:
+
+```cpp
+class Vec3
+{
+    float* data;
+};
+```
+
+where every vector allocates three floats dynamically.
+
+Now every position may require:
+
+```text
+allocation
+pointer indirection
+fragmentation
+lifetime management
+cache misses
+```
+
+for twelve bytes of actual numeric payload.
+
+That would be disastrous for normal engine workloads.
+
+Vectors are small fixed-size data.
+
+They should normally live inline.
+
+---
+
+# 587.17 Thread safety
+
+A `Vec3` value has no magical concurrency concerns if each thread owns its own object.
+
+But shared mutation still races.
+
+Example:
+
+```cpp
+sharedPosition.x += 1.0f;
+```
+
+from multiple threads without synchronization can be a data race.
+
+"Vec3 is simple" does not make unsynchronized shared writes legal.
+
+Math types should preferably be easy to use as immutable values or thread-local/data-partitioned values in parallel systems.
+
+---
+
+# 587.18 CPU cache intuition
+
+Suppose cache line is commonly around 64 bytes on a particular CPU.
+
+With packed 12-byte Vec3s, one cache line can contain portions of several vectors.
+
+With 16-byte stride, exactly four vectors fit in 64 bytes.
+
+Neither fact alone says which is faster.
+
+Consider workload.
+
+If you process:
+
+```text
+position + velocity + normal
+```
+
+stored in separate arrays, different cache patterns arise than one monolithic vertex struct.
+
+Performance emerges from access patterns, not merely individual `sizeof`.
+
+---
+
+# 587.19 GPU buffer mismatch
+
+Suppose CPU believes:
+
+```text
+Vec3 stride = 12
+```
+
+but shader/buffer layout expects:
+
+```text
+stride = 16
+```
+
+Then GPU might read:
+
+```text
+vertex 0 xyz correctly
+
+vertex 1 x from previous padding/data
+
+vertex 1 y/z shifted
+
+everything after first element corrupted
+```
+
+This is a classic data-layout bug.
+
+The math is perfect.
+
+The memory contract is wrong.
+
+Graphics engineers must debug both.
+
+---
+
+# 587.20 Real memory trace
+
+Suppose:
+
+```cpp
+RawVec3 v{1.0f, 2.0f, 3.0f};
+```
+
+On a conventional platform with 32-bit IEEE little-endian floats, conceptual byte representation may resemble:
+
+```text
+1.0f bits = 0x3F800000
+bytes     = 00 00 80 3F
+
+2.0f bits = 0x40000000
+bytes     = 00 00 00 40
+
+3.0f bits = 0x40400000
+bytes     = 00 00 40 40
+```
+
+So contiguous memory might look:
+
+```text
+00 00 80 3F | 00 00 00 40 | 00 00 40 40
+     x              y              z
+```
+
+Again, that concrete byte sequence assumes a specific conventional platform and should not be treated as universal C++ behavior.
+
+But this is what "the vector exists in memory" actually means.
+
+---
+
+# 587.21 Float precision propagates into vector geometry
+
+Suppose position:
+
+\[
+P=(10^8,10^8,10^8)
+\]
+
+stored in 32-bit floats.
+
+At that magnitude, the spacing between adjacent representable floats is much larger than around zero.
+
+Adding:
+
+\[
+0.001
+\]
+
+may change nothing.
+
+Then two nearby points:
+
+\[
+P
+\]
+
+and:
+
+\[
+P+(0.001,0,0)
+\]
+
+may collapse to identical stored values.
+
+Now:
+
+\[
+B-A
+\]
+
+becomes zero.
+
+That can destroy:
+
+- normals;
+- triangle areas;
+- collision distances;
+- tangent frames.
+
+So vector storage precision is not only a memory issue.
+
+It changes what geometry can exist numerically.
+
+---
+
+# 587.22 Why large-world engines care
+
+Imagine a world coordinate measured in metres.
+
+At origin:
+
+\[
+x\approx0,
+\]
+
+float gives extremely fine absolute spacing.
+
+At:
+
+\[
+x=10^7,
+\]
+
+spacing becomes much coarser.
+
+Your character can start jittering because centimetre or millimetre movement can no longer be represented accurately.
+
+Solutions later may include:
+
+```text
+double-precision world positions
+floating origin
+camera-relative rendering
+hierarchical coordinates
+local cells
+```
+
+Again, representation affects architecture.
+
+---
+
+# 587.23 Float versus double vector storage
+
+A `double` commonly uses 8 bytes.
+
+So:
+
+```cpp
+struct DVec3
+{
+    double x, y, z;
+};
+```
+
+has 24 bytes of scalar payload versus 12 for three 4-byte floats.
+
+Double offers substantially more precision and exponent range but doubles bandwidth/storage for raw components.
+
+Graphics often uses:
+
+```text
+double on CPU world simulation
+float on GPU relative rendering
+```
+
+in large-world scenarios.
+
+Whether this is appropriate depends on engine requirements.
+
+---
+
+# 587.24 `float` is usually enough for local graphics vectors
+
+Normals:
+
+\[
+[-1,1]
+\]
+
+directions:
+
+\[
+[-1,1]
+\]
+
+UVs often modest ranges.
+
+Camera-relative positions perhaps within kilometres rather than astronomical coordinates.
+
+For these, binary32 may be entirely adequate.
+
+The problem isn't:
+
+> float is bad.
+
+The engineering question is:
+
+\[
+\boxed{
+\text{Does the numeric range and required resolution fit the chosen representation?}
+}
+\]
+
+---
+
+# 587.25 A baseline value type
+
+Before Parts 588–590 design specialized vector APIs, the fundamental storage might look as simple as:
+
+```cpp
+struct Float3
+{
+    float x{};
+    float y{};
+    float z{};
+};
+```
+
+This gives us three named component values.
+
+No normalization invariant.
+
+No semantic coordinate-space information.
+
+No distinction between:
+
+```text
+position
+normal
+velocity
+RGB colour
+```
+
+That's deliberately low-level.
+
+Later Parts add API meaning.
+
+---
+
+# 587.26 Do not confuse storage type with semantic type
+
+These may all physically contain:
+
+```text
+3 × float
+```
+
+but mean wildly different things:
+
+```cpp
+WorldPosition
+WorldDirection
+SurfaceNormal
+Velocity
+RGB
+Scale3
+AngularVelocity
+```
+
+The fact that they have identical memory representation does not mean every operation between them is valid.
+
+For example:
+
+```cpp
+WorldPosition + SurfaceNormal
+```
+
+may compile with a generic raw Vec3 API yet have no sensible domain meaning.
+
+Part 598–599 will address stronger invariants and coordinate-space distinction.
+
+---
+
+# 587.27 Mastery gate 587
+
+You should be able to answer this chain without guessing:
+
+A mathematical Vec3 is:
+
+\[
+(x,y,z).
+\]
+
+A typical machine Vec3 may be:
+
+```text
+three binary floating-point values
+stored inline in a C++ object
+```
+
+with a common payload of:
+
+\[
+12\text{ bytes}
+\]
+
+when `float` is 4 bytes.
+
+But actual `sizeof` and alignment are object-layout/ABI properties.
+
+Padding may exist.
+
+Array elements have regular contiguous layout.
+
+Object memory representation is not automatically a portable file format.
+
+Raw byte equality is not floating-point semantic equality.
+
+A vector's stored precision constrains geometric precision.
+
+And:
+
+\[
+\boxed{
+\text{representation}
+\rightarrow
+\text{memory footprint}
+\rightarrow
+\text{bandwidth/cache behavior}
+\rightarrow
+\text{numeric precision}
+\rightarrow
+\text{actual engine behavior}.
+}
+\]
+
+---
+
+# THE DEEP CONNECTION ACROSS 580–587
+
+Now connect the entire block using our spaceship triangle.
+
+We start with a triangle point.
+
+In homogeneous clip coordinates:
+
+\[
+P_c=(X,Y,Z,W).
+\]
+
+Part 580 says:
+
+\[
+\boxed{
+P_{\text{ndc}}
+=
+(X/W,Y/W,Z/W)
+}
+\]
+
+gives a canonical projective coordinate suitable for later viewport/raster mapping.
+
+Now consider the triangle surface.
+
+Its tangent vectors transform as ordinary vectors.
+
+Its surface normal is something different.
+
+Part 581 says:
+
+\[
+\boxed{
+\text{a normal behaves naturally as a covector-like measurement rule}
+}
+\]
+
+because it measures tangent motion and returns zero:
+
+\[
+n(t)=0.
+\]
+
+Part 583 formalizes such measurement rules as linear functionals.
+
+That lets Part 582 make complete sense:
+
+\[
+\boxed{
+t'=At
+}
+\]
+
+but:
+
+\[
+\boxed{
+n'=A^{-T}n
+}
+\]
+
+so:
+
+\[
+n'(t')=n(t).
+\]
+
+The normal still annihilates the transformed tangent plane.
+
+Then Parts 584–585 ask something even deeper:
+
+What was the surface itself?
+
+Two tangent vectors:
+
+\[
+T_u,T_v
+\]
+
+define an oriented surface element:
+
+\[
+\boxed{
+T_u\wedge T_v.
+}
+\]
+
+The cross-product normal was merely a convenient 3D dual encoding of that oriented area.
+
+Part 586 then shows that:
+
+\[
+\boxed{
+a\cdot b
+}
+\]
+
+and:
+
+\[
+\boxed{
+a\wedge b
+}
+\]
+
+can be seen as complementary portions of one geometric product:
+
+\[
+\boxed{
+ab=a\cdot b+a\wedge b.
+}
+\]
+
+So alignment, area, reflections and rotations begin to fit inside one algebraic picture.
+
+Finally Part 587 asks:
+
+> Fine—but where does any of this actually live?
+
+And the answer is:
+
+```text
+float x
+float y
+float z
+```
+
+or some related layout in real memory, with finite precision, alignment, cache and ABI constraints.
+
+That transition is fundamental:
+
+```text
+projective geometry
+      ↓
+dual-space geometry
+      ↓
+surface orientation
+      ↓
+exterior algebra
+      ↓
+geometric algebra
+      ↓
+actual bits in RAM
+```
+
+That is what this curriculum is supposed to do: connect abstract math all the way down to the machine instead of leaving them as separate subjects.
+
+---
+
+# FINAL RECONSTRUCTION TEST
+
+If I erase every formula from this lesson, you should still be able to rebuild the major ones from these ideas:
+
+**580:** homogeneous points are scale-equivalent, so choose the \(w=1\) representative by dividing by \(w\).
+
+\[
+(X,Y,Z,W)
+\rightarrow
+(X/W,Y/W,Z/W).
+\]
+
+**581–583:** a covector is a scalar-valued linear measuring rule.
+
+\[
+\omega(v)\in\mathbb R.
+\]
+
+A normal measures tangent vectors as zero.
+
+**582:** after transforming tangents, choose the normal transformation that preserves:
+
+\[
+n\cdot t=0.
+\]
+
+That forces inverse-transpose behavior.
+
+**584–585:** two vectors fundamentally span an oriented area, represented by:
+
+\[
+a\wedge b,
+\]
+
+not necessarily by some perpendicular vector.
+
+Antisymmetry gives:
+
+\[
+a\wedge a=0.
+\]
+
+**586:** the geometric product contains both scalar alignment and oriented area:
+
+\[
+ab=a\cdot b+a\wedge b.
+\]
+
+**587:** every abstract coordinate eventually becomes finite bits in a concrete object layout, and that representation constrains both numerical correctness and performance.
+
+---
+
+**Completed Part 580 — Normalized device-coordinate intuition as a vector-space mapping**  
+**Completed Part 581 — Dual vectors and covectors concept**  
+**Completed Part 582 — Why surface normals transform differently from positions**  
+**Completed Part 583 — Linear functionals**  
+**Completed Part 584 — Exterior-product intuition**  
+**Completed Part 585 — Wedge product as oriented area concept**  
+**Completed Part 586 — Geometric-algebra motivation for graphics**  
+**Completed Part 587 — Floating-point vector storage in C++**
+
+**Next Core Part 588 — Vec2 data structure design.**

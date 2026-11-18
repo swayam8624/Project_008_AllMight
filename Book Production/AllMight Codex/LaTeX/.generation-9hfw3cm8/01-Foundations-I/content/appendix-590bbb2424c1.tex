@@ -1,0 +1,40 @@
+\hypertarget{appendix-590bbb2424c1}{}
+\section{Binary format contracts}\label{appendix-590bbb2424c1-binary-format-contracts}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C006 · \textbf{Latest development:} C006
+
+\subsection{Definition and mechanism}\label{appendix-590bbb2424c1-definition-and-mechanism}
+
+A schema declares field widths/order, byte order, numeric representation, valid values, lengths, version, padding and identity policy. Magic identifies a candidate format; version chooses a schema, neither authenticates content.
+
+\subsection{Prerequisites}\label{appendix-590bbb2424c1-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-91d09ebed979]{Serialization} --- supplies the representation or validity rule used above.
+\item
+  \hyperref[appendix-34ee45f161c1]{Bit casting and representation} --- supplies the representation or validity rule used above.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-590bbb2424c1-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-652d81568de9]{Checked binary parsing} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-230b59c0676b]{Memory dump interpretation} --- uses this mechanism to define its representation, error or validation contract.
+\end{itemize}
+
+Connect later dependent concepts here when their explanations use this mechanism.
+
+\subsection{Recall and next depth}\label{appendix-590bbb2424c1-recall-and-next-depth}
+
+Reconstruct the example and identify the condition that would invalidate it.
+
+\textbf{Pending:} No replacement production NanoQuant format was implemented.
+
+\subsection{Source and navigation}\label{appendix-590bbb2424c1-source-and-navigation}
+
+\hyperref[01-foundations-i-ch002-bytes-become-a-durable-agreement]{Continuous teaching story} · {Source coverage ledger {[}referenced section unavailable{]}} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

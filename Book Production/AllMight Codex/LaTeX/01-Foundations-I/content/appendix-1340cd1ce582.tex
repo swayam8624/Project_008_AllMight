@@ -1,0 +1,39 @@
+\hypertarget{appendix-1340cd1ce582}{}
+\section*{Copy semantics and resource identity}
+\section{Copy semantics and resource identity}\label{copy-semantics-and-resource-identity}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C009 · \textbf{Latest development:} C009
+
+\subsection{Definition and mechanism}\label{definition-and-mechanism}
+
+Copy construction creates a new object using member/type semantics. Pointers and reference bindings preserve associations; vector-backed pixel values duplicate owned contents; copying handles does not clone resources. Deep copying a graph needs a defined sharing and identity-remapping policy.
+
+\subsection{Prerequisites}\label{prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{}{Object identity and generation handles (05-Engine-I, appendix-f1581457d322)} --- Copying an identifier differs from cloning the resource or application entity.
+\item
+  \href{}{Ownership and non-owning views (05-Engine-I, appendix-d52e4486f527)} --- The owner/view distinction determines whether copying duplicates resources or descriptors.
+\end{itemize}
+
+\subsection{Used by}\label{used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-bea6beb5350f]{Assignment and exception guarantees}
+\item
+  \hyperref[appendix-5636651017c2]{Move operations and moved-from states}
+\item
+  \hyperref[appendix-42e02a12c694]{Special member generation and traits}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{recall-and-next-depth}
+
+Choose duplicate, share, remap or reject for four engine types. Pending: graph-clone algorithms and immutable shared ownership. Written coverage does not demonstrate personal mastery.
+
+\subsection{Source and navigation}\label{source-and-navigation}
+
+\href{Continuous\%20Notes/Computing\%20Foundations\%20-\%20From\%20Bits\%20to\%20C++\%20and\%20Systems\%20APIs\#Copy\%20a\%20meaning\%20rather\%20than\%20just\%20its\%20bytes}{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15]{Exact coverage} · \href{}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

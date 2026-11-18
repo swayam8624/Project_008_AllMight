@@ -8,7 +8,7 @@ Monte Carlo methods trade computation for uncertainty, with error shrinking acco
 
 **Recall question:** Why does independent Monte Carlo standard error scale as $1/\sqrt{N}$, and what does that scaling not guarantee?
 
-<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 72218–75691; source-span SHA256 6b7237dab5d2dfc78a068b1981f142645a840bd9044bc08ce18094382fc321ee. -->
+<!-- Derived from Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md; source lines 72465–75938; source-span SHA256 b8b42ccc153dddabfb9efe6c1789b37b38313ddd7faa1fa6c86058c1c1e9d3db. -->
 
 <!-- CHAPTER-SOURCE-BEGIN -->
 ## 8. Monte Carlo estimates trade computation for uncertainty
@@ -20,19 +20,19 @@ Monte Carlo estimation uses randomized sampling to approximate an expectation or
 Suppose:
 
 $$
- I=\mathbb E[Y] 
+ I=\mathbb E[Y]
 $$
 
 and we can generate independent identically distributed samples:
 
 $$
- Y_1,\ldots,Y_N. 
+ Y_1,\ldots,Y_N.
 $$
 
 The sample-mean estimator is:
 
 $$
- \boxed{ \widehat I_N= \frac1N\sum\_{i=1}^NY_i }. 
+ \boxed{ \widehat I_N= \frac1N\sum_{i=1}^NY_i }.
 $$
 
 If the expectation exists, this is a natural estimator.
@@ -40,13 +40,13 @@ If the expectation exists, this is a natural estimator.
 If $Y$ has finite variance:
 
 $$
- \sigma_Y^2=\operatorname{Var}(Y), 
+ \sigma_Y^2=\operatorname{Var}(Y),
 $$
 
 then:
 
 $$
- \boxed{ \operatorname{Var}(\widehat I_N) = \frac{\sigma_Y^2}{N} } 
+ \boxed{ \operatorname{Var}(\widehat I_N) = \frac{\sigma_Y^2}{N} }
 $$
 
 for independent samples.
@@ -54,7 +54,7 @@ for independent samples.
 Its standard deviation, often called the standard error of the mean, is:
 
 $$
- \boxed{ \operatorname{SE}(\widehat I_N) = \frac{\sigma_Y}{\sqrt N} }. 
+ \boxed{ \operatorname{SE}(\widehat I_N) = \frac{\sigma_Y}{\sqrt N} }.
 $$
 
 #### 1 Why the convergence rate is $1/\sqrt N$
@@ -62,25 +62,25 @@ $$
 Let:
 
 $$
- \widehat I_N= \frac1N\sum_iY_i. 
+ \widehat I_N= \frac1N\sum_iY_i.
 $$
 
 For independent samples:
 
 $$
- \operatorname{Var}\left(\sum_iY_i\right) = \sum_i\operatorname{Var}(Y_i) =N\sigma_Y^2. 
+ \operatorname{Var}\left(\sum_iY_i\right) = \sum_i\operatorname{Var}(Y_i) =N\sigma_Y^2.
 $$
 
 Scaling variance by $1/N^2$:
 
 $$
- \operatorname{Var}(\widehat I_N) = \frac{N\sigma_Y^2}{N^2} = \frac{\sigma_Y^2}{N}. 
+ \operatorname{Var}(\widehat I_N) = \frac{N\sigma_Y^2}{N^2} = \frac{\sigma_Y^2}{N}.
 $$
 
 Take the square root:
 
 $$
- \operatorname{SE}= \frac{\sigma_Y}{\sqrt N}. 
+ \operatorname{SE}= \frac{\sigma_Y}{\sqrt N}.
 $$
 
 Therefore halving the standard error requires increasing the number of samples by a factor of four.
@@ -94,37 +94,37 @@ This scaling is central to Monte Carlo rendering performance.
 Suppose an estimator contribution has variance:
 
 $$
- \sigma_Y^2=0.09. 
+ \sigma_Y^2=0.09.
 $$
 
 Then:
 
 $$
- \sigma_Y=0.3. 
+ \sigma_Y=0.3.
 $$
 
 With:
 
 $$
- N=100, 
+ N=100,
 $$
 
 the standard error is:
 
 $$
- \operatorname{SE} = \frac{0.3}{10} =\boxed{0.03}. 
+ \operatorname{SE} = \frac{0.3}{10} =\boxed{0.03}.
 $$
 
 With:
 
 $$
- N=10{,}000, 
+ N=10{,}000,
 $$
 
 it becomes:
 
 $$
- \frac{0.3}{100} =\boxed{0.003}. 
+ \frac{0.3}{100} =\boxed{0.003}.
 $$
 
 We used 100 times more samples to reduce the standard error tenfold.
@@ -136,7 +136,7 @@ Deterministic grid quadrature can suffer dramatically as dimension increases.
 For example, using 100 samples along each of ten dimensions would require:
 
 $$
- 100^{10}=10^{20} 
+ 100^{10}=10^{20}
 $$
 
 grid points.
@@ -160,7 +160,7 @@ It estimates an unknown fixed parameter $\theta$.
 The estimator is unbiased if:
 
 $$
- \boxed{ \mathbb E[\widehat\theta]=\theta }. 
+ \boxed{ \mathbb E[\widehat\theta]=\theta }.
 $$
 
 Unbiasedness is a statement about the estimator's average behavior over repeated hypothetical datasets or sample sequences.
@@ -172,31 +172,31 @@ It does not mean every individual estimate equals the truth.
 Let:
 
 $$
- X_1,\ldots,X_N 
+ X_1,\ldots,X_N
 $$
 
 have common finite mean:
 
 $$
- \mathbb E[X_i]=\mu. 
+ \mathbb E[X_i]=\mu.
 $$
 
 Define:
 
 $$
- \bar X=\frac1N\sum_iX_i. 
+ \bar X=\frac1N\sum_iX_i.
 $$
 
 Then:
 
 $$
- \begin{aligned} \mathbb E[\bar X] &=\frac1N\sum_i\mathbb E[X_i]\\ &=\frac1N(N\mu)\\ &=\mu. \end{aligned} 
+ \begin{aligned} \mathbb E[\bar X] &=\frac1N\sum_i\mathbb E[X_i]\\ &=\frac1N(N\mu)\\ &=\mu. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{\mathbb E[\bar X]=\mu}. 
+ \boxed{\mathbb E[\bar X]=\mu}.
 $$
 
 Independence is not required for this unbiasedness derivation, although independence matters for its usual variance formula and many convergence results.
@@ -206,13 +206,13 @@ Independence is not required for this unbiasedness derivation, although independ
 For:
 
 $$
- \widehat I_N= \frac1N\sum_i\frac{f(X_i)}{p(X_i)}, 
+ \widehat I_N= \frac1N\sum_i\frac{f(X_i)}{p(X_i)},
 $$
 
 we derived:
 
 $$
- \mathbb E[\widehat I_N]=I. 
+ \mathbb E[\widehat I_N]=I.
 $$
 
 This property depends on using the correct PDF, valid support, and well-defined expectation.
@@ -224,13 +224,13 @@ If the renderer samples using one density but divides by another, the equality c
 Consider a random estimate:
 
 $$
- \widehat\theta= \begin{cases} 0,&\text{probability }0.99,\\ 100,&\text{probability }0.01. \end{cases} 
+ \widehat\theta= \begin{cases} 0,&\text{probability }0.99,\\ 100,&\text{probability }0.01. \end{cases}
 $$
 
 Its mean is:
 
 $$
- \mathbb E[\widehat\theta]=1. 
+ \mathbb E[\widehat\theta]=1.
 $$
 
 If the true parameter is $\theta=1$, the estimator is unbiased.
@@ -240,13 +240,13 @@ But 99% of its individual outputs are zero.
 Its second moment is:
 
 $$
- \mathbb E[\widehat\theta^2] = 0.99(0)+0.01(10000)=100. 
+ \mathbb E[\widehat\theta^2] = 0.99(0)+0.01(10000)=100.
 $$
 
 Its variance is:
 
 $$
- 100-1^2=\boxed{99}. 
+ 100-1^2=\boxed{99}.
 $$
 
 This is an unbiased but extremely noisy estimator.
@@ -258,7 +258,7 @@ Unbiasedness alone is not a sufficient quality criterion.
 The bias of an estimator is:
 
 $$
- \boxed{ \operatorname{Bias}(\widehat\theta) = \mathbb E[\widehat\theta]-\theta }. 
+ \boxed{ \operatorname{Bias}(\widehat\theta) = \mathbb E[\widehat\theta]-\theta }.
 $$
 
 An estimator is biased when its expectation differs from the target parameter.
@@ -274,19 +274,19 @@ Suppose $X_i$ have mean $\mu$.
 Define:
 
 $$
- \widehat\mu= \frac1{N+1}\sum\_{i=1}^NX_i. 
+ \widehat\mu= \frac1{N+1}\sum_{i=1}^NX_i.
 $$
 
 Then:
 
 $$
- \mathbb E[\widehat\mu] = \frac{N}{N+1}\mu. 
+ \mathbb E[\widehat\mu] = \frac{N}{N+1}\mu.
 $$
 
 Therefore the bias is:
 
 $$
- \boxed{ -\frac{\mu}{N+1} }. 
+ \boxed{ -\frac{\mu}{N+1} }.
 $$
 
 The estimator approaches unbiasedness as $N$ grows, but it is biased for finite $N$ unless $\mu=0$.
@@ -300,19 +300,19 @@ Large contributions occasionally occur.
 To reduce visible fireflies, an implementation may clamp:
 
 $$
- Y\_{\mathrm{clamped}}=\min(Y,T). 
+ Y_{\mathrm{clamped}}=\min(Y,T).
 $$
 
 Since:
 
 $$
- Y\_{\mathrm{clamped}}\le Y 
+ Y_{\mathrm{clamped}}\le Y
 $$
 
 for every sample:
 
 $$
- \mathbb E[Y\_{\mathrm{clamped}}] \le \mathbb E[Y]. 
+ \mathbb E[Y_{\mathrm{clamped}}] \le \mathbb E[Y].
 $$
 
 Unless no contributions exceed $T$, the inequality is strict under suitable integrability conditions.
@@ -330,7 +330,7 @@ Suppose we know a target distribution only up to a normalizing constant.
 We may use an estimator:
 
 $$
- \widehat\mu= \frac{ \sum_iw_i f(X_i) }{ \sum_iw_i }. 
+ \widehat\mu= \frac{ \sum_iw_i f(X_i) }{ \sum_iw_i }.
 $$
 
 This ratio is often called a self-normalized importance-sampling estimator.
@@ -338,7 +338,7 @@ This ratio is often called a self-normalized importance-sampling estimator.
 It can be consistent under appropriate conditions, but it is generally biased at finite sample count because:
 
 $$
- \mathbb E\left[\frac AB\right] \ne \frac{\mathbb E[A]}{\mathbb E[B]} 
+ \mathbb E\left[\frac AB\right] \ne \frac{\mathbb E[A]}{\mathbb E[B]}
 $$
 
 in general.
@@ -354,13 +354,13 @@ Variance measures how much the estimator changes across repeated independent dat
 For an estimator:
 
 $$
- \widehat\theta, 
+ \widehat\theta,
 $$
 
 its variance is:
 
 $$
- \boxed{ \operatorname{Var}(\widehat\theta) = \mathbb E[ (\widehat\theta-\mathbb E[\widehat\theta])^2 ] }. 
+ \boxed{ \operatorname{Var}(\widehat\theta) = \mathbb E[ (\widehat\theta-\mathbb E[\widehat\theta])^2 ] }.
 $$
 
 A low-variance estimator is consistent across repeated experiments, but it may be consistently wrong if it is biased.
@@ -370,19 +370,19 @@ A low-variance estimator is consistent across repeated experiments, but it may b
 A central quantity is mean squared error:
 
 $$
- \operatorname{MSE}(\widehat\theta) = \mathbb E[(\widehat\theta-\theta)^2]. 
+ \operatorname{MSE}(\widehat\theta) = \mathbb E[(\widehat\theta-\theta)^2].
 $$
 
 Insert and subtract the estimator's mean:
 
 $$
- \widehat\theta-\theta = (\widehat\theta-\mathbb E[\widehat\theta]) + (\mathbb E[\widehat\theta]-\theta). 
+ \widehat\theta-\theta = (\widehat\theta-\mathbb E[\widehat\theta]) + (\mathbb E[\widehat\theta]-\theta).
 $$
 
 Square:
 
 $$
- \begin{aligned} (\widehat\theta-\theta)^2 &= (\widehat\theta-\mathbb E[\widehat\theta])^2\\ &\quad+ 2(\widehat\theta-\mathbb E[\widehat\theta]) (\mathbb E[\widehat\theta]-\theta)\\ &\quad+ (\mathbb E[\widehat\theta]-\theta)^2. \end{aligned} 
+ \begin{aligned} (\widehat\theta-\theta)^2 &= (\widehat\theta-\mathbb E[\widehat\theta])^2\\ &\quad+ 2(\widehat\theta-\mathbb E[\widehat\theta]) (\mathbb E[\widehat\theta]-\theta)\\ &\quad+ (\mathbb E[\widehat\theta]-\theta)^2. \end{aligned}
 $$
 
 Take expectations.
@@ -390,13 +390,13 @@ Take expectations.
 The cross term vanishes because:
 
 $$
- \mathbb E[ \widehat\theta-\mathbb E[\widehat\theta] ]=0. 
+ \mathbb E[ \widehat\theta-\mathbb E[\widehat\theta] ]=0.
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{MSE}(\widehat\theta) = \operatorname{Var}(\widehat\theta) + \operatorname{Bias}(\widehat\theta)^2 }. 
+ \boxed{ \operatorname{MSE}(\widehat\theta) = \operatorname{Var}(\widehat\theta) + \operatorname{Bias}(\widehat\theta)^2 }.
 $$
 
 This is one of the most important equations in statistical estimation.
@@ -406,37 +406,37 @@ This is one of the most important equations in statistical estimation.
 Suppose estimator A is unbiased:
 
 $$
- \operatorname{Bias}(A)=0, 
+ \operatorname{Bias}(A)=0,
 $$
 
 but has:
 
 $$
- \operatorname{Var}(A)=9. 
+ \operatorname{Var}(A)=9.
 $$
 
 Then:
 
 $$
- \operatorname{MSE}(A)=9. 
+ \operatorname{MSE}(A)=9.
 $$
 
 Estimator B has bias:
 
 $$
- \operatorname{Bias}(B)=1 
+ \operatorname{Bias}(B)=1
 $$
 
 and variance:
 
 $$
- \operatorname{Var}(B)=2. 
+ \operatorname{Var}(B)=2.
 $$
 
 Then:
 
 $$
- \operatorname{MSE}(B)=2+1^2=\boxed3. 
+ \operatorname{MSE}(B)=2+1^2=\boxed3.
 $$
 
 Estimator B has smaller mean squared error despite being biased.
@@ -450,19 +450,19 @@ In rendering, some controlled-bias methods may produce smaller perceptual or num
 For:
 
 $$
- \bar Y=\frac1N\sum_iY_i, 
+ \bar Y=\frac1N\sum_iY_i,
 $$
 
 the general variance formula is:
 
 $$
- \boxed{ \operatorname{Var}(\bar Y) = \frac1{N^2} \left[ \sum_i\operatorname{Var}(Y_i) + 2\sum\_{i\<j}\operatorname{Cov}(Y_i,Y_j) \right] }. 
+ \boxed{ \operatorname{Var}(\bar Y) = \frac1{N^2} \left[ \sum_i\operatorname{Var}(Y_i) + 2\sum_{i\<j}\operatorname{Cov}(Y_i,Y_j) \right] }.
 $$
 
 The familiar:
 
 $$
- \sigma^2/N 
+ \sigma^2/N
 $$
 
 appears only when the samples have common variance and pairwise covariances vanish.
@@ -482,7 +482,7 @@ The law of large numbers explains why sample averages can approach expected valu
 For independent identically distributed random variables with finite mean $\mu$, the strong law states under its standard assumptions:
 
 $$
- \boxed{ \bar X_N= \frac1N\sum\_{i=1}^NX_i \longrightarrow\mu \quad\text{almost surely} }. 
+ \boxed{ \bar X_N= \frac1N\sum_{i=1}^NX_i \longrightarrow\mu \quad\text{almost surely} }.
 $$
 
 Almost-sure convergence means that, with probability one, the infinite sequence of sample averages converges to the expectation.
@@ -490,7 +490,7 @@ Almost-sure convergence means that, with probability one, the infinite sequence 
 The weak law describes convergence in probability:
 
 $$
- \boxed{ P(|\bar X_N-\mu|>\varepsilon) \longrightarrow0 } 
+ \boxed{ P(|\bar X_N-\mu|>\varepsilon) \longrightarrow0 }
 $$
 
 for every $\varepsilon>0$.
@@ -504,31 +504,31 @@ Assume independent identically distributed samples with finite variance $\sigma^
 We know:
 
 $$
- \operatorname{Var}(\bar X_N)=\frac{\sigma^2}{N}. 
+ \operatorname{Var}(\bar X_N)=\frac{\sigma^2}{N}.
 $$
 
 Chebyshev's inequality states:
 
 $$
- P(|Y-\mathbb E[Y]|\ge\varepsilon) \le \frac{\operatorname{Var}(Y)}{\varepsilon^2}. 
+ P(|Y-\mathbb E[Y]|\ge\varepsilon) \le \frac{\operatorname{Var}(Y)}{\varepsilon^2}.
 $$
 
 Apply it to the sample mean:
 
 $$
- P(|\bar X_N-\mu|\ge\varepsilon) \le \frac{\sigma^2}{N\varepsilon^2}. 
+ P(|\bar X_N-\mu|\ge\varepsilon) \le \frac{\sigma^2}{N\varepsilon^2}.
 $$
 
 As $N\to\infty$:
 
 $$
- \frac{\sigma^2}{N\varepsilon^2}\to0. 
+ \frac{\sigma^2}{N\varepsilon^2}\to0.
 $$
 
 Therefore:
 
 $$
- \boxed{ P(|\bar X_N-\mu|\ge\varepsilon)\to0 }. 
+ \boxed{ P(|\bar X_N-\mu|\ge\varepsilon)\to0 }.
 $$
 
 This proves weak convergence under the finite-variance IID assumptions.
@@ -564,25 +564,25 @@ The central limit theorem describes the shape of its fluctuations around the tru
 Suppose:
 
 $$
- X_1,\ldots,X_N 
+ X_1,\ldots,X_N
 $$
 
 are IID with:
 
 $$
- \mathbb E[X_i]=\mu 
+ \mathbb E[X_i]=\mu
 $$
 
 and:
 
 $$
- 0<\operatorname{Var}(X_i)=\sigma^2<\infty. 
+ 0<\operatorname{Var}(X_i)=\sigma^2<\infty.
 $$
 
 The classical central limit theorem states:
 
 $$
- \boxed{ \frac{\sqrt N(\bar X_N-\mu)}{\sigma} \xrightarrow{d}\mathcal N(0,1) }. 
+ \boxed{ \frac{\sqrt N(\bar X_N-\mu)}{\sigma} \xrightarrow{d}\mathcal N(0,1) }.
 $$
 
 The notation $\xrightarrow{d}$ denotes convergence in distribution.
@@ -590,7 +590,7 @@ The notation $\xrightarrow{d}$ denotes convergence in distribution.
 For sufficiently large $N$, this suggests:
 
 $$
- \boxed{ \bar X_N \approx \mathcal N\left( \mu,\frac{\sigma^2}{N} \right) } 
+ \boxed{ \bar X_N \approx \mathcal N\left( \mu,\frac{\sigma^2}{N} \right) }
 $$
 
 as an approximation to the sampling distribution of the mean.
@@ -600,43 +600,43 @@ as an approximation to the sampling distribution of the mean.
 Let:
 
 $$
- S_N=\sum_iX_i. 
+ S_N=\sum_iX_i.
 $$
 
 Its mean is:
 
 $$
- \mathbb E[S_N]=N\mu. 
+ \mathbb E[S_N]=N\mu.
 $$
 
 Its variance is:
 
 $$
- \operatorname{Var}(S_N)=N\sigma^2. 
+ \operatorname{Var}(S_N)=N\sigma^2.
 $$
 
 Therefore its standard deviation is:
 
 $$
- \sigma\sqrt N. 
+ \sigma\sqrt N.
 $$
 
 To centre and scale the sum:
 
 $$
- Z_N= \frac{S_N-N\mu}{\sigma\sqrt N}. 
+ Z_N= \frac{S_N-N\mu}{\sigma\sqrt N}.
 $$
 
 Since:
 
 $$
- S_N=N\bar X_N, 
+ S_N=N\bar X_N,
 $$
 
 we obtain:
 
 $$
- Z_N= \frac{N(\bar X_N-\mu)} {\sigma\sqrt N} = \frac{\sqrt N(\bar X_N-\mu)}{\sigma}. 
+ Z_N= \frac{N(\bar X_N-\mu)} {\sigma\sqrt N} = \frac{\sqrt N(\bar X_N-\mu)}{\sigma}.
 $$
 
 That explains the normalization appearing in the theorem.
@@ -668,7 +668,7 @@ For a path tracer, rare high-energy contributions can produce strongly skewed or
 For a stationary sequence with variance $\sigma^2$ and lag-$k$ autocorrelation $\rho_k$, the variance of the sample mean is:
 
 $$
- \boxed{ \operatorname{Var}(\bar X_N) = \frac{\sigma^2}{N} \left[ 1+ 2\sum\_{k=1}^{N-1} \left(1-\frac{k}{N}\right)\rho_k \right] }. 
+ \boxed{ \operatorname{Var}(\bar X_N) = \frac{\sigma^2}{N} \left[ 1+ 2\sum_{k=1}^{N-1} \left(1-\frac{k}{N}\right)\rho_k \right] }.
 $$
 
 When the autocorrelations vanish, we recover $\sigma^2/N$.
@@ -678,7 +678,7 @@ For persistent positive correlations, the bracketed factor is greater than one.
 A heuristic effective sample size is:
 
 $$
- N\_{\mathrm{eff}} \approx \frac{N}{ 1+2\sum\_{k\ge1}\rho_k } 
+ N_{\mathrm{eff}} \approx \frac{N}{ 1+2\sum_{k\ge1}\rho_k }
 $$
 
 when the relevant series converges and the approximation is appropriate.
@@ -724,15 +724,15 @@ Statistics allows us to answer those questions without relying on impressions fr
 
 The central limit theorem tells us how one important statistic behaves asymptotically, but it does not by itself explain a much broader statistical pattern: how can we estimate an unknown property of a population when we do not want to commit to a narrow parametric family?
 
-Suppose the unknown data-generating distribution is \(F\), and we observe
+Suppose the unknown data-generating distribution is $F$, and we observe
 
-\[
+$$
 X_1,\ldots,X_n\sim F.
-\]
+$$
 
 The **empirical distribution function** is
 
-\[
+$$
 \boxed{
 \widehat F_n(x)
 =
@@ -740,35 +740,35 @@ The **empirical distribution function** is
 \sum_{i=1}^{n}
 \mathbf 1\{X_i\le x\}
 }.
-\]
+$$
 
-At any query value \(x\), \(\widehat F_n(x)\) is simply the fraction of observed samples not exceeding \(x\). It is a step function with a jump of \(1/n\) at every observation, counting repeated observations with repeated mass.
+At any query value $x$, $\widehat F_n(x)$ is simply the fraction of observed samples not exceeding $x$. It is a step function with a jump of $1/n$ at every observation, counting repeated observations with repeated mass.
 
-This construction is more important than it first appears. It says that the observed sample itself can define a complete discrete probability model: place probability \(1/n\) on each observed datum. That model is not asserted to be the true population. It is a data-supported surrogate that becomes increasingly informative as sampling improves.
+This construction is more important than it first appears. It says that the observed sample itself can define a complete discrete probability model: place probability $1/n$ on each observed datum. That model is not asserted to be the true population. It is a data-supported surrogate that becomes increasingly informative as sampling improves.
 
 For a concrete sample
 
-\[
+$$
 2,\;2,\;5,\;9,
-\]
+$$
 
-the empirical model assigns total mass \(1/2\) to value \(2\), mass \(1/4\) to \(5\), and mass \(1/4\) to \(9\). Therefore
+the empirical model assigns total mass $1/2$ to value $2$, mass $1/4$ to $5$, and mass $1/4$ to $9$. Therefore
 
-\[
+$$
 \widehat F_4(4)=\frac{2}{4}=\frac12,
 \qquad
 \widehat F_4(7)=\frac{3}{4}.
-\]
+$$
 
 The empirical CDF is useful because many population quantities can be regarded as **functionals of a distribution**. The population mean can be written
 
-\[
+$$
 \mu(F)=\int x\,dF(x).
-\]
+$$
 
-Replacing \(F\) by \(\widehat F_n\) gives
+Replacing $F$ by $\widehat F_n$ gives
 
-\[
+$$
 \mu(\widehat F_n)
 =
 \int x\,d\widehat F_n(x)
@@ -776,7 +776,7 @@ Replacing \(F\) by \(\widehat F_n\) gives
 \frac1n\sum_iX_i
 =
 \bar X.
-\]
+$$
 
 So the ordinary sample mean is a special case of a much larger pattern.
 
@@ -784,62 +784,62 @@ So the ordinary sample mean is a special case of a much larger pattern.
 
 If the desired population quantity is
 
-\[
+$$
 \theta=T(F),
-\]
+$$
 
-then the **plug-in estimator** replaces the unknown \(F\) with its empirical estimate:
+then the **plug-in estimator** replaces the unknown $F$ with its empirical estimate:
 
-\[
+$$
 \boxed{
 \widehat\theta_{\mathrm{plug\text{-}in}}
 =
 T(\widehat F_n)
 }.
-\]
+$$
 
 This one idea unifies many familiar formulas.
 
 For the population variance,
 
-\[
+$$
 V(F)=
 \int (x-\mu(F))^2\,dF(x),
-\]
+$$
 
 the direct plug-in estimate is
 
-\[
+$$
 V(\widehat F_n)
 =
 \frac1n\sum_i(X_i-\bar X)^2.
-\]
+$$
 
-Notice that this is the denominator-\(n\) empirical variance, not the denominator-\((n-1)\) unbiased sample-variance estimator discussed later. The distinction is instructive. **Plug-in estimation and unbiased estimation are different design criteria.** A plug-in estimator asks, “what do I obtain by replacing the unknown distribution by the empirical distribution?” An unbiased estimator asks, “does the repeated-sampling expectation equal the target?” Sometimes the same formula satisfies both goals; sometimes it does not.
+Notice that this is the denominator-$n$ empirical variance, not the denominator-$(n-1)$ unbiased sample-variance estimator discussed later. The distinction is instructive. **Plug-in estimation and unbiased estimation are different design criteria.** A plug-in estimator asks, “what do I obtain by replacing the unknown distribution by the empirical distribution?” An unbiased estimator asks, “does the repeated-sampling expectation equal the target?” Sometimes the same formula satisfies both goals; sometimes it does not.
 
-Quantiles provide another example. If \(q_\alpha(F)\) is the population \(\alpha\)-quantile, then \(q_\alpha(\widehat F_n)\) is an empirical quantile. Medians, trimmed statistics, empirical moments, and many risk summaries can all be viewed this way.
+Quantiles provide another example. If $q_\alpha(F)$ is the population $\alpha$-quantile, then $q_\alpha(\widehat F_n)$ is an empirical quantile. Medians, trimmed statistics, empirical moments, and many risk summaries can all be viewed this way.
 
-The empirical-distribution viewpoint also makes the bootstrap section later in this volume much less mysterious. A nonparametric bootstrap sample is simply a fresh IID sample drawn from \(\widehat F_n\). The bootstrap therefore asks what the estimator would do if the empirical distribution were the population. It is not random perturbation for its own sake; it is repeated sampling from a concrete estimated distribution.
+The empirical-distribution viewpoint also makes the bootstrap section later in this volume much less mysterious. A nonparametric bootstrap sample is simply a fresh IID sample drawn from $\widehat F_n$. The bootstrap therefore asks what the estimator would do if the empirical distribution were the population. It is not random perturbation for its own sake; it is repeated sampling from a concrete estimated distribution.
 
 #### Convergence of a distribution estimate is stronger than convergence of one statistic
 
-For any fixed \(x\), the random variables
+For any fixed $x$, the random variables
 
-\[
+$$
 \mathbf 1\{X_i\le x\}
-\]
+$$
 
-are Bernoulli with expectation \(F(x)\). Their sample mean is exactly \(\widehat F_n(x)\). The law of large numbers therefore suggests
+are Bernoulli with expectation $F(x)$. Their sample mean is exactly $\widehat F_n(x)$. The law of large numbers therefore suggests
 
-\[
+$$
 \widehat F_n(x)\to F(x)
-\]
+$$
 
-at continuity points of \(F\).
+at continuity points of $F$.
 
 A stronger result, the Glivenko–Cantelli theorem, says under the IID setup that the maximum CDF discrepancy converges to zero:
 
-\[
+$$
 \boxed{
 \sup_x
 \left|
@@ -847,7 +847,7 @@ A stronger result, the Glivenko–Cantelli theorem, says under the IID setup tha
 \right|
 \longrightarrow 0
 }
-\]
+$$
 
 almost surely.
 
@@ -857,23 +857,23 @@ For graphics, simulation, and experimental engineering this matters whenever a p
 
 ### The delta method propagates asymptotic uncertainty through a nonlinear function
 
-Suppose an estimator \(\widehat\theta_n\) already has an asymptotic normal approximation:
+Suppose an estimator $\widehat\theta_n$ already has an asymptotic normal approximation:
 
-\[
+$$
 \sqrt n(\widehat\theta_n-\theta)
 \xrightarrow{d}
 \mathcal N(0,\sigma^2).
-\]
+$$
 
-Now suppose the quantity we actually care about is not \(\theta\), but a smooth transformation
+Now suppose the quantity we actually care about is not $\theta$, but a smooth transformation
 
-\[
+$$
 \psi=g(\theta).
-\]
+$$
 
 Examples appear constantly:
 
-- a variance estimate may be converted to a standard deviation by \(g(v)=\sqrt v\);
+- a variance estimate may be converted to a standard deviation by $g(v)=\sqrt v$;
 - an odds estimate may be converted to probability;
 - a camera calibration parameter may be transformed into field of view;
 - a positive scale may be logged;
@@ -881,9 +881,9 @@ Examples appear constantly:
 
 We could derive a new sampling distribution from scratch for every transformation. The **delta method** instead uses the same local linearization idea that already appears throughout calculus and numerical analysis.
 
-Taylor-expand \(g\) around the true parameter:
+Taylor-expand $g$ around the true parameter:
 
-\[
+$$
 g(\widehat\theta_n)
 =
 g(\theta)
@@ -891,11 +891,11 @@ g(\theta)
 g'(\theta)(\widehat\theta_n-\theta)
 +
 R_n,
-\]
+$$
 
-where the remainder is smaller than the first-order term under the usual differentiability and convergence conditions. Multiply by \(\sqrt n\):
+where the remainder is smaller than the first-order term under the usual differentiability and convergence conditions. Multiply by $\sqrt n$:
 
-\[
+$$
 \sqrt n
 \left[
 g(\widehat\theta_n)-g(\theta)
@@ -905,11 +905,11 @@ g'(\theta)
 \sqrt n(\widehat\theta_n-\theta)
 +
 \sqrt nR_n.
-\]
+$$
 
 If the remainder vanishes in probability, the limiting distribution becomes
 
-\[
+$$
 \boxed{
 \sqrt n
 \left[
@@ -922,16 +922,16 @@ g(\widehat\theta_n)-g(\theta)
 [g'(\theta)]^2\sigma^2
 \right)
 }.
-\]
+$$
 
-Equivalently, when the large-\(n\) variance of \(\widehat\theta_n\) is approximately \(\sigma^2/n\),
+Equivalently, when the large-$n$ variance of $\widehat\theta_n$ is approximately $\sigma^2/n$,
 
-\[
+$$
 \operatorname{Var}\!\left[g(\widehat\theta_n)\right]
 \approx
 [g'(\theta)]^2
 \frac{\sigma^2}{n}.
-\]
+$$
 
 This is statistical uncertainty propagation through a Jacobian.
 
@@ -939,39 +939,39 @@ This is statistical uncertainty propagation through a Jacobian.
 
 Let
 
-\[
+$$
 \widehat{\boldsymbol\theta}\in\mathbb R^p
-\]
+$$
 
 satisfy
 
-\[
+$$
 \sqrt n
 (\widehat{\boldsymbol\theta}-\boldsymbol\theta)
 \xrightarrow{d}
 \mathcal N(\mathbf 0,\Sigma).
-\]
+$$
 
 For a differentiable scalar function
 
-\[
+$$
 g:\mathbb R^p\to\mathbb R,
-\]
+$$
 
 the first-order perturbation is
 
-\[
+$$
 g(\widehat{\boldsymbol\theta})
 -
 g(\boldsymbol\theta)
 \approx
 \nabla g(\boldsymbol\theta)^T
 (\widehat{\boldsymbol\theta}-\boldsymbol\theta).
-\]
+$$
 
 Therefore
 
-\[
+$$
 \boxed{
 \sqrt n
 \left[
@@ -988,17 +988,17 @@ g(\boldsymbol\theta)
 \nabla g
 \right)
 }.
-\]
+$$
 
 For a vector-valued transformation
 
-\[
+$$
 \mathbf g:\mathbb R^p\to\mathbb R^m
-\]
+$$
 
-with Jacobian \(J_g\),
+with Jacobian $J_g$,
 
-\[
+$$
 \boxed{
 \operatorname{Cov}
 \left[
@@ -1010,56 +1010,56 @@ J_g
 \Sigma
 J_g^T
 }.
-\]
+$$
 
-This is the same mathematical structure used earlier for first-order covariance propagation. The difference is interpretive: here \(\Sigma\) describes an estimator's asymptotic sampling fluctuation; in a state-estimation calculation it may describe uncertainty in a random state vector. The algebra can be identical while the source of uncertainty is different.
+This is the same mathematical structure used earlier for first-order covariance propagation. The difference is interpretive: here $\Sigma$ describes an estimator's asymptotic sampling fluctuation; in a state-estimation calculation it may describe uncertainty in a random state vector. The algebra can be identical while the source of uncertainty is different.
 
 #### Worked example: uncertainty of an estimated standard deviation
 
-Suppose an estimator of variance \(v=\sigma^2\) is approximately normal:
+Suppose an estimator of variance $v=\sigma^2$ is approximately normal:
 
-\[
+$$
 \widehat v
 \approx
 \mathcal N(v,\tau^2).
-\]
+$$
 
 We want the standard deviation
 
-\[
+$$
 s=\sqrt v.
-\]
+$$
 
 Here
 
-\[
+$$
 g(v)=\sqrt v,
 \qquad
 g'(v)=\frac{1}{2\sqrt v}.
-\]
+$$
 
 The delta method gives
 
-\[
+$$
 \operatorname{Var}(\widehat s)
 \approx
 \frac{\tau^2}{4v}.
-\]
+$$
 
 So an approximate standard error is
 
-\[
+$$
 \boxed{
 \operatorname{se}(\widehat s)
 \approx
 \frac{\operatorname{se}(\widehat v)}
 {2\sqrt v}
 }.
-\]
+$$
 
-In practice \(v\) is unknown, so a plug-in step often replaces it by \(\widehat v\). This shows how two ideas connect rather than living in separate chapters:
+In practice $v$ is unknown, so a plug-in step often replaces it by $\widehat v$. This shows how two ideas connect rather than living in separate chapters:
 
-\[
+$$
 \text{estimate distribution or parameter}
 \rightarrow
 \text{plug in unknown quantities}
@@ -1067,7 +1067,7 @@ In practice \(v\) is unknown, so a plug-in step often replaces it by \(\widehat 
 \text{linearize the requested transformation}
 \rightarrow
 \text{propagate uncertainty}.
-\]
+$$
 
 #### Where the first-order delta method can fail
 
@@ -1075,25 +1075,25 @@ A derivative is not a ceremonial requirement. It controls the approximation.
 
 If
 
-\[
+$$
 g'(\theta)=0,
-\]
+$$
 
-the first-order term disappears and a second-order expansion may determine the limiting behavior. If \(g\) is not differentiable at the true value, the ordinary delta method may be invalid. If the parameter lies on a boundary, the estimator's limiting distribution itself may be non-Gaussian. If the transformation has a very large derivative near the operating point, small parameter uncertainty can become large output uncertainty.
+the first-order term disappears and a second-order expansion may determine the limiting behavior. If $g$ is not differentiable at the true value, the ordinary delta method may be invalid. If the parameter lies on a boundary, the estimator's limiting distribution itself may be non-Gaussian. If the transformation has a very large derivative near the operating point, small parameter uncertainty can become large output uncertainty.
 
 A common numerical example is reciprocal depth:
 
-\[
+$$
 z=\frac1d.
-\]
+$$
 
 Its derivative is
 
-\[
+$$
 \frac{dz}{dd}=-\frac1{d^2}.
-\]
+$$
 
-When disparity \(d\) approaches zero, first-order uncertainty in depth explodes. That is not merely a bad covariance matrix; it reflects real geometric ill-conditioning. The same Jacobian that propagates uncertainty also exposes sensitivity.
+When disparity $d$ approaches zero, first-order uncertainty in depth explodes. That is not merely a bad covariance matrix; it reflects real geometric ill-conditioning. The same Jacobian that propagates uncertainty also exposes sensitivity.
 
 The broader lesson is that **asymptotic normality is not closed under arbitrary nonlinear operations without conditions**. A transformed estimate should inherit its uncertainty through an explicitly justified transformation, not through the assumption that every downstream number is “approximately Gaussian.”
 
@@ -1107,13 +1107,13 @@ Source basis: Wasserman, *All of Statistics*, especially the chapters on empiric
 Suppose we observe $N$ values:
 
 $$
- x_1,x_2,\ldots,x_N. 
+ x_1,x_2,\ldots,x_N.
 $$
 
 Their arithmetic sample mean is:
 
 $$
- \boxed{ \bar x=\frac1N\sum\_{i=1}^{N}x_i }. 
+ \boxed{ \bar x=\frac1N\sum_{i=1}^{N}x_i }.
 $$
 
 This is a descriptive statistic of the observed data.
@@ -1121,7 +1121,7 @@ This is a descriptive statistic of the observed data.
 When the observations are draws from a distribution, the sample mean can also estimate the population mean:
 
 $$
- \mu=\mathbb E[X]. 
+ \mu=\mathbb E[X].
 $$
 
 #### 1 Exact example
@@ -1129,13 +1129,13 @@ $$
 Let:
 
 $$
- x=(1,2,3,4,5,6). 
+ x=(1,2,3,4,5,6).
 $$
 
 Then:
 
 $$
- \bar x= \frac{1+2+3+4+5+6}{6} =\boxed{3.5}. 
+ \bar x= \frac{1+2+3+4+5+6}{6} =\boxed{3.5}.
 $$
 
 This number summarizes the centre of the observed data.
@@ -1147,13 +1147,13 @@ It does not tell us how spread out the observations are or whether the data cont
 Consider:
 
 $$
- x=(1,2,3,4,100). 
+ x=(1,2,3,4,100).
 $$
 
 The mean is:
 
 $$
- \bar x=\frac{110}{5}=\boxed{22}. 
+ \bar x=\frac{110}{5}=\boxed{22}.
 $$
 
 Four of the five observations are between one and four, yet the mean is 22.
@@ -1169,37 +1169,37 @@ There is an important connection to Phase 9.
 Consider choosing one number $m$ to represent all observations, minimizing squared error:
 
 $$
- E(m)= \sum\_{i=1}^{N}(x_i-m)^2. 
+ E(m)= \sum_{i=1}^{N}(x_i-m)^2.
 $$
 
 Differentiate:
 
 $$
- E'(m)= -2\sum_i(x_i-m). 
+ E'(m)= -2\sum_i(x_i-m).
 $$
 
 Set to zero:
 
 $$
- \sum_i(x_i-m)=0. 
+ \sum_i(x_i-m)=0.
 $$
 
 Thus:
 
 $$
- \sum_ix_i-Nm=0, 
+ \sum_ix_i-Nm=0,
 $$
 
 so:
 
 $$
- \boxed{ m=\frac1N\sum_ix_i=\bar x }. 
+ \boxed{ m=\frac1N\sum_ix_i=\bar x }.
 $$
 
 The second derivative is:
 
 $$
- E''(m)=2N>0. 
+ E''(m)=2N>0.
 $$
 
 Therefore the sample mean is the unique minimizer of the total squared deviation.
@@ -1215,13 +1215,13 @@ Sample variance measures the spread of observed values around their sample mean.
 One natural descriptive version is:
 
 $$
- \boxed{ v_N= \frac1N \sum\_{i=1}^{N}(x_i-\bar x)^2 }. 
+ \boxed{ v_N= \frac1N \sum_{i=1}^{N}(x_i-\bar x)^2 }.
 $$
 
 If our goal is to estimate the variance of an underlying population from IID samples, the conventional unbiased estimator is:
 
 $$
- \boxed{ s^2= \frac1{N-1} \sum\_{i=1}^{N}(x_i-\bar x)^2 } 
+ \boxed{ s^2= \frac1{N-1} \sum_{i=1}^{N}(x_i-\bar x)^2 }
 $$
 
 for $N\ge2$.
@@ -1233,43 +1233,43 @@ These have different denominators and different interpretations.
 Using:
 
 $$
- x=(1,2,3,4,5,6), 
+ x=(1,2,3,4,5,6),
 $$
 
 the sample mean is:
 
 $$
- \bar x=3.5. 
+ \bar x=3.5.
 $$
 
 The deviations are:
 
 $$
- (-2.5,-1.5,-0.5,0.5,1.5,2.5). 
+ (-2.5,-1.5,-0.5,0.5,1.5,2.5).
 $$
 
 Square them:
 
 $$
- (6.25,2.25,0.25,0.25,2.25,6.25). 
+ (6.25,2.25,0.25,0.25,2.25,6.25).
 $$
 
 Sum:
 
 $$
- 6.25+2.25+0.25+0.25+2.25+6.25 =\boxed{17.5}. 
+ 6.25+2.25+0.25+0.25+2.25+6.25 =\boxed{17.5}.
 $$
 
 The population-normalized empirical variance is:
 
 $$
- v_N=\frac{17.5}{6} =\boxed{2.9166667}. 
+ v_N=\frac{17.5}{6} =\boxed{2.9166667}.
 $$
 
 The unbiased sample variance estimate is:
 
 $$
- s^2=\frac{17.5}{5} =\boxed{3.5}. 
+ s^2=\frac{17.5}{5} =\boxed{3.5}.
 $$
 
 The distinction is not caused by arithmetic error. The formulas estimate or describe different quantities.
@@ -1279,13 +1279,13 @@ The distinction is not caused by arithmetic error. The formulas estimate or desc
 The sample standard deviation is:
 
 $$
- \boxed{s=\sqrt{s^2}}. 
+ \boxed{s=\sqrt{s^2}}.
 $$
 
 For our example:
 
 $$
- s=\sqrt{3.5}\approx1.870829. 
+ s=\sqrt{3.5}\approx1.870829.
 $$
 
 It has the same units as the observations.
@@ -1309,7 +1309,7 @@ Let's prove it.
 Suppose:
 
 $$
- X_1,\ldots,X_N 
+ X_1,\ldots,X_N
 $$
 
 are IID with population mean $\mu$ and finite population variance $\sigma^2$.
@@ -1317,7 +1317,7 @@ are IID with population mean $\mu$ and finite population variance $\sigma^2$.
 We want to evaluate:
 
 $$
- \mathbb E\left[ \sum_i(X_i-\bar X)^2 \right]. 
+ \mathbb E\left[ \sum_i(X_i-\bar X)^2 \right].
 $$
 
 #### 1 Decompose deviations around the true mean
@@ -1325,37 +1325,37 @@ $$
 Write:
 
 $$
- X_i-\bar X = (X_i-\mu)-(\bar X-\mu). 
+ X_i-\bar X = (X_i-\mu)-(\bar X-\mu).
 $$
 
 Square and sum:
 
 $$
- \sum_i(X_i-\bar X)^2 = \sum_i[ (X_i-\mu)-(\bar X-\mu) ]^2. 
+ \sum_i(X_i-\bar X)^2 = \sum_i[ (X_i-\mu)-(\bar X-\mu) ]^2.
 $$
 
 Expand:
 
 $$
- \begin{aligned} \sum_i(X_i-\bar X)^2 &= \sum_i(X_i-\mu)^2\\ &\quad-2(\bar X-\mu)\sum_i(X_i-\mu)\\ &\quad+N(\bar X-\mu)^2. \end{aligned} 
+ \begin{aligned} \sum_i(X_i-\bar X)^2 &= \sum_i(X_i-\mu)^2\\ &\quad-2(\bar X-\mu)\sum_i(X_i-\mu)\\ &\quad+N(\bar X-\mu)^2. \end{aligned}
 $$
 
 But:
 
 $$
- \sum_i(X_i-\mu)=N(\bar X-\mu). 
+ \sum_i(X_i-\mu)=N(\bar X-\mu).
 $$
 
 Substitute:
 
 $$
- \begin{aligned} \sum_i(X_i-\bar X)^2 &= \sum_i(X_i-\mu)^2\\ &\quad-2N(\bar X-\mu)^2 +N(\bar X-\mu)^2. \end{aligned} 
+ \begin{aligned} \sum_i(X_i-\bar X)^2 &= \sum_i(X_i-\mu)^2\\ &\quad-2N(\bar X-\mu)^2 +N(\bar X-\mu)^2. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{ \sum_i(X_i-\bar X)^2 = \sum_i(X_i-\mu)^2 - N(\bar X-\mu)^2 }. 
+ \boxed{ \sum_i(X_i-\bar X)^2 = \sum_i(X_i-\mu)^2 - N(\bar X-\mu)^2 }.
 $$
 
 #### 2 Take expectations
@@ -1363,13 +1363,13 @@ $$
 For the first term:
 
 $$
- \mathbb E\left[ \sum_i(X_i-\mu)^2 \right] =N\sigma^2. 
+ \mathbb E\left[ \sum_i(X_i-\mu)^2 \right] =N\sigma^2.
 $$
 
 For the second term:
 
 $$
- \mathbb E[(\bar X-\mu)^2] = \operatorname{Var}(\bar X) = \frac{\sigma^2}{N} 
+ \mathbb E[(\bar X-\mu)^2] = \operatorname{Var}(\bar X) = \frac{\sigma^2}{N}
 $$
 
 under independence.
@@ -1377,13 +1377,13 @@ under independence.
 Thus:
 
 $$
- \begin{aligned} \mathbb E\left[ \sum_i(X_i-\bar X)^2 \right] &= N\sigma^2- N\frac{\sigma^2}{N}\\ &=(N-1)\sigma^2. \end{aligned} 
+ \begin{aligned} \mathbb E\left[ \sum_i(X_i-\bar X)^2 \right] &= N\sigma^2- N\frac{\sigma^2}{N}\\ &=(N-1)\sigma^2. \end{aligned}
 $$
 
 Therefore:
 
 $$
- \boxed{ \mathbb E\left[ \frac1{N-1} \sum_i(X_i-\bar X)^2 \right] = \sigma^2 }. 
+ \boxed{ \mathbb E\left[ \frac1{N-1} \sum_i(X_i-\bar X)^2 \right] = \sigma^2 }.
 $$
 
 That proves the usual unbiased sample variance formula.
@@ -1393,7 +1393,7 @@ That proves the usual unbiased sample variance formula.
 The deviations from the sample mean satisfy:
 
 $$
- \sum_i(X_i-\bar X)=0. 
+ \sum_i(X_i-\bar X)=0.
 $$
 
 If you know $N-1$ deviations, the final deviation is determined by this constraint.
@@ -1415,39 +1415,39 @@ We may not want to store every sample just to calculate the mean.
 Let:
 
 $$
- \mu_n= \frac1n\sum\_{i=1}^{n}x_i 
+ \mu_n= \frac1n\sum_{i=1}^{n}x_i
 $$
 
 be the mean after $n$ observations.
 
-When a new sample $x\_{n+1}$ arrives:
+When a new sample $x_{n+1}$ arrives:
 
 $$
- \mu\_{n+1} = \frac{ \sum\_{i=1}^{n}x_i+x\_{n+1} }{ n+1 }. 
+ \mu_{n+1} = \frac{ \sum_{i=1}^{n}x_i+x_{n+1} }{ n+1 }.
 $$
 
 Since:
 
 $$
- \sum\_{i=1}^{n}x_i=n\mu_n, 
+ \sum_{i=1}^{n}x_i=n\mu_n,
 $$
 
 we have:
 
 $$
- \mu\_{n+1} = \frac{n\mu_n+x\_{n+1}}{n+1}. 
+ \mu_{n+1} = \frac{n\mu_n+x_{n+1}}{n+1}.
 $$
 
 Rearrange:
 
 $$
- \mu\_{n+1} = \mu_n+ \frac{x\_{n+1}-\mu_n}{n+1}. 
+ \mu_{n+1} = \mu_n+ \frac{x_{n+1}-\mu_n}{n+1}.
 $$
 
 Thus:
 
 $$
- \boxed{ \mu\_{n+1} = \mu_n+ \frac{x\_{n+1}-\mu_n}{n+1} }. 
+ \boxed{ \mu_{n+1} = \mu_n+ \frac{x_{n+1}-\mu_n}{n+1} }.
 $$
 
 This is the online mean update.
@@ -1457,31 +1457,31 @@ This is the online mean update.
 Suppose samples arrive as:
 
 $$
- 4,\ 7,\ 10. 
+ 4,\ 7,\ 10.
 $$
 
 Start with the first observation:
 
 $$
- \mu_1=4. 
+ \mu_1=4.
 $$
 
 The second sample is seven:
 
 $$
- \mu_2 = 4+\frac{7-4}{2} =5.5. 
+ \mu_2 = 4+\frac{7-4}{2} =5.5.
 $$
 
 The third sample is ten:
 
 $$
- \mu_3 = 5.5+\frac{10-5.5}{3} =7. 
+ \mu_3 = 5.5+\frac{10-5.5}{3} =7.
 $$
 
 The direct mean is:
 
 $$
- \frac{4+7+10}{3}=7. 
+ \frac{4+7+10}{3}=7.
 $$
 
 Both calculations agree.
@@ -1516,7 +1516,7 @@ But a numerically stable mean algorithm does not automatically give us a stable 
 The naive formula:
 
 $$
- \operatorname{Var}(X)= \mathbb E[X^2]-\mathbb E[X]^2 
+ \operatorname{Var}(X)= \mathbb E[X^2]-\mathbb E[X]^2
 $$
 
 can suffer severe cancellation in floating-point arithmetic.
@@ -1532,21 +1532,21 @@ We want to accumulate variance online while avoiding the numerical problems caus
 Maintain three quantities:
 
 $$
- n=\text{number of samples}, 
+ n=\text{number of samples},
 $$
 
 $$
- \mu_n=\text{sample mean}, 
+ \mu_n=\text{sample mean},
 $$
 
 $$
- M\_{2,n}= \sum\_{i=1}^{n}(x_i-\mu_n)^2. 
+ M_{2,n}= \sum_{i=1}^{n}(x_i-\mu_n)^2.
 $$
 
 The sample variance will later be:
 
 $$
- s^2=\frac{M\_{2,n}}{n-1}. 
+ s^2=\frac{M_{2,n}}{n-1}.
 $$
 
 #### 1 Derive the update
@@ -1556,25 +1556,25 @@ Suppose we have $n$ samples and receive a new value $x$.
 Define the difference from the old mean:
 
 $$
- \boxed{\delta=x-\mu_n}. 
+ \boxed{\delta=x-\mu_n}.
 $$
 
 The new mean is:
 
 $$
- \boxed{ \mu\_{n+1} = \mu_n+\frac{\delta}{n+1} }. 
+ \boxed{ \mu_{n+1} = \mu_n+\frac{\delta}{n+1} }.
 $$
 
 Define the difference from the new mean:
 
 $$
- \boxed{ \delta_2=x-\mu\_{n+1} }. 
+ \boxed{ \delta_2=x-\mu_{n+1} }.
 $$
 
 Welford's scatter update is:
 
 $$
- \boxed{ M\_{2,n+1} = M\_{2,n}+\delta\delta_2 }. 
+ \boxed{ M_{2,n+1} = M_{2,n}+\delta\delta_2 }.
 $$
 
 Let's derive why.
@@ -1584,73 +1584,73 @@ Let's derive why.
 By definition:
 
 $$
- M\_{2,n+1} = \sum\_{i=1}^{n}(x_i-\mu\_{n+1})^2 + (x-\mu\_{n+1})^2. 
+ M_{2,n+1} = \sum_{i=1}^{n}(x_i-\mu_{n+1})^2 + (x-\mu_{n+1})^2.
 $$
 
 For old samples:
 
 $$
- x_i-\mu\_{n+1} = (x_i-\mu_n)-(\mu\_{n+1}-\mu_n). 
+ x_i-\mu_{n+1} = (x_i-\mu_n)-(\mu_{n+1}-\mu_n).
 $$
 
 Define:
 
 $$
- d=\mu\_{n+1}-\mu_n=\frac{\delta}{n+1}. 
+ d=\mu_{n+1}-\mu_n=\frac{\delta}{n+1}.
 $$
 
 Then:
 
 $$
- \sum\_{i=1}^{n}(x_i-\mu\_{n+1})^2 = \sum_i[(x_i-\mu_n)-d]^2. 
+ \sum_{i=1}^{n}(x_i-\mu_{n+1})^2 = \sum_i[(x_i-\mu_n)-d]^2.
 $$
 
 Expand:
 
 $$
- = \sum_i(x_i-\mu_n)^2 - 2d\sum_i(x_i-\mu_n) + nd^2. 
+ = \sum_i(x_i-\mu_n)^2 - 2d\sum_i(x_i-\mu_n) + nd^2.
 $$
 
 The centred deviations sum to zero:
 
 $$
- \sum_i(x_i-\mu_n)=0. 
+ \sum_i(x_i-\mu_n)=0.
 $$
 
 Thus:
 
 $$
- \sum\_{i=1}^{n}(x_i-\mu\_{n+1})^2 = M\_{2,n}+nd^2. 
+ \sum_{i=1}^{n}(x_i-\mu_{n+1})^2 = M_{2,n}+nd^2.
 $$
 
 The new sample's deviation from the new mean is:
 
 $$
- x-\mu\_{n+1} = x-\mu_n-\frac{\delta}{n+1}. 
+ x-\mu_{n+1} = x-\mu_n-\frac{\delta}{n+1}.
 $$
 
 Because $\delta=x-\mu_n$:
 
 $$
- x-\mu\_{n+1} = \delta\left(1-\frac1{n+1}\right) = \frac{n}{n+1}\delta. 
+ x-\mu_{n+1} = \delta\left(1-\frac1{n+1}\right) = \frac{n}{n+1}\delta.
 $$
 
 Therefore:
 
 $$
- \begin{aligned} M\_{2,n+1} &= M\_{2,n} +n\frac{\delta^2}{(n+1)^2} +\frac{n^2\delta^2}{(n+1)^2}\\ &= M\_{2,n} +\frac{n(n+1)\delta^2}{(n+1)^2}\\ &= M\_{2,n}+\frac{n}{n+1}\delta^2. \end{aligned} 
+ \begin{aligned} M_{2,n+1} &= M_{2,n} +n\frac{\delta^2}{(n+1)^2} +\frac{n^2\delta^2}{(n+1)^2}\\ &= M_{2,n} +\frac{n(n+1)\delta^2}{(n+1)^2}\\ &= M_{2,n}+\frac{n}{n+1}\delta^2. \end{aligned}
 $$
 
 But:
 
 $$
- \delta_2=\frac{n}{n+1}\delta. 
+ \delta_2=\frac{n}{n+1}\delta.
 $$
 
 Therefore:
 
 $$
- \boxed{ M\_{2,n+1} = M\_{2,n}+\delta\delta_2 }. 
+ \boxed{ M_{2,n+1} = M_{2,n}+\delta\delta_2 }.
 $$
 
 This is the Welford recurrence.
@@ -1708,37 +1708,37 @@ It can handle arbitrarily long streams in $O(1)$ storage, assuming the count typ
 Suppose the observations are:
 
 $$
- 10^9+1,\quad10^9+2,\quad10^9+3,\quad10^9+4. 
+ 10^9+1,\quad10^9+2,\quad10^9+3,\quad10^9+4.
 $$
 
 The true mean is:
 
 $$
- 10^9+2.5. 
+ 10^9+2.5.
 $$
 
 Their deviations are:
 
 $$
- -1.5,-0.5,0.5,1.5. 
+ -1.5,-0.5,0.5,1.5.
 $$
 
 The squared deviations sum to:
 
 $$
- 2.25+0.25+0.25+2.25=5. 
+ 2.25+0.25+0.25+2.25=5.
 $$
 
 Thus the unbiased sample variance is:
 
 $$
- \boxed{s^2=\frac53\approx1.6666667}. 
+ \boxed{s^2=\frac53\approx1.6666667}.
 $$
 
 Now consider computing variance using:
 
 $$
- \frac1N\sum_ix_i^2-\bar x^2. 
+ \frac1N\sum_ix_i^2-\bar x^2.
 $$
 
 Both terms are of order $10^{18}$.
@@ -1762,13 +1762,13 @@ Suppose worker A processes $n_A$ samples and worker B processes $n_B$.
 Their summaries are:
 
 $$
- (n_A,\mu_A,M\_{2,A}) 
+ (n_A,\mu_A,M_{2,A})
 $$
 
 and:
 
 $$
- (n_B,\mu_B,M\_{2,B}). 
+ (n_B,\mu_B,M_{2,B}).
 $$
 
 We want to combine them without replaying individual samples.
@@ -1776,23 +1776,23 @@ We want to combine them without replaying individual samples.
 Define:
 
 $$
- n=n_A+n_B, 
+ n=n_A+n_B,
 $$
 
 $$
- \delta=\mu_B-\mu_A. 
+ \delta=\mu_B-\mu_A.
 $$
 
 The merged mean is:
 
 $$
- \boxed{ \mu= \mu_A+\delta\frac{n_B}{n} }. 
+ \boxed{ \mu= \mu_A+\delta\frac{n_B}{n} }.
 $$
 
 The merged scatter is:
 
 $$
- \boxed{ M_2= M\_{2,A}+M\_{2,B} + \delta^2\frac{n_An_B}{n} }. 
+ \boxed{ M_2= M_{2,A}+M_{2,B} + \delta^2\frac{n_An_B}{n} }.
 $$
 
 The additional term accounts for the difference between the workers' mean values.
@@ -1810,19 +1810,19 @@ A histogram groups observations into intervals called bins.
 Suppose we collect pixel noise magnitudes:
 
 $$
- x_1,\ldots,x_N. 
+ x_1,\ldots,x_N.
 $$
 
 Choose bin edges:
 
 $$
- b_0\<b_1<\cdots\<b_K. 
+ b_0\<b_1<\cdots\<b_K.
 $$
 
 The count in bin $j$ is:
 
 $$
- \boxed{ c_j= \#\{i:b_j\le x_i < b_{j+1}\} }. 
+ \boxed{ c_j= \#\{i:b_j\le x_i < b_{j+1}\} }.
 $$
 
 The half-open convention prevents observations on shared boundaries from being counted twice.
@@ -1834,19 +1834,19 @@ A histogram can display several different quantities.
 Count:
 
 $$
- c_j. 
+ c_j.
 $$
 
 Relative frequency:
 
 $$
- \frac{c_j}{N}. 
+ \frac{c_j}{N}.
 $$
 
 Density estimate for a bin of width $h_j$:
 
 $$
- \boxed{ \hat p_j= \frac{c_j}{Nh_j} }. 
+ \boxed{ \hat p_j= \frac{c_j}{Nh_j} }.
 $$
 
 These are not interchangeable.
@@ -1854,7 +1854,7 @@ These are not interchangeable.
 For a density histogram, the probability represented by the bin is approximated by:
 
 $$
- \hat p_jh_j=\frac{c_j}{N}. 
+ \hat p_jh_j=\frac{c_j}{N}.
 $$
 
 The area of the histogram bar, not simply its height, corresponds to probability.
@@ -1872,7 +1872,7 @@ There is no universally optimal histogram resolution.
 Some practical rules scale bin width with sample size, such as the Freedman–Diaconis rule:
 
 $$
- \boxed{ h=2\operatorname{IQR}N^{-1/3} } 
+ \boxed{ h=2\operatorname{IQR}N^{-1/3} }
 $$
 
 where IQR is the interquartile range.
@@ -1896,25 +1896,25 @@ A quantile describes a threshold below which a specified fraction of a distribut
 For a population distribution with CDF $F$, the generalized $p$-quantile is:
 
 $$
- \boxed{ Q(p)=\inf\{x:F(x)\ge p\} }. 
+ \boxed{ Q(p)=\inf\{x:F(x)\ge p\} }.
 $$
 
 Typical examples include:
 
 $$
- Q(0.25) 
+ Q(0.25)
 $$
 
 for the first quartile,
 
 $$
- Q(0.5) 
+ Q(0.5)
 $$
 
 for a median, and:
 
 $$
- Q(0.95) 
+ Q(0.95)
 $$
 
 for the 95th percentile.
@@ -1924,7 +1924,7 @@ for the 95th percentile.
 For a finite sample, sort the observations:
 
 $$
- x\_{(1)}\le\cdots\le x\_{(N)}. 
+ x_{(1)}\le\cdots\le x_{(N)}.
 $$
 
 Different software libraries use different interpolation conventions for sample quantiles.
@@ -1932,19 +1932,19 @@ Different software libraries use different interpolation conventions for sample 
 One common convention, often called type 7, uses:
 
 $$
- h=(N-1)p. 
+ h=(N-1)p.
 $$
 
 Let:
 
 $$
- i=\lfloor h\rfloor, \qquad t=h-i. 
+ i=\lfloor h\rfloor, \qquad t=h-i.
 $$
 
 Using zero-based sorted indices:
 
 $$
- \boxed{ \hat Q(p)=(1-t)x\_{(i)}+t x\_{(i+1)} } 
+ \boxed{ \hat Q(p)=(1-t)x_{(i)}+t x_{(i+1)} }
 $$
 
 with appropriate endpoint handling.
@@ -1954,7 +1954,7 @@ with appropriate endpoint handling.
 Let:
 
 $$
- x=(1,2,3,4,100). 
+ x=(1,2,3,4,100).
 $$
 
 The observations are already sorted.
@@ -1962,43 +1962,43 @@ The observations are already sorted.
 For:
 
 $$
- p=0.25, 
+ p=0.25,
 $$
 
 we have:
 
 $$
- h=(5-1)(0.25)=1. 
+ h=(5-1)(0.25)=1.
 $$
 
 Thus:
 
 $$
- \hat Q(0.25)=2. 
+ \hat Q(0.25)=2.
 $$
 
 For:
 
 $$
- p=0.75, 
+ p=0.75,
 $$
 
 we obtain:
 
 $$
- h=3. 
+ h=3.
 $$
 
 Therefore:
 
 $$
- \hat Q(0.75)=4. 
+ \hat Q(0.75)=4.
 $$
 
 The interquartile range is:
 
 $$
- \boxed{ \operatorname{IQR}=Q(0.75)-Q(0.25)=2 }. 
+ \boxed{ \operatorname{IQR}=Q(0.75)-Q(0.25)=2 }.
 $$
 
 The extreme outlier at 100 does not affect these particular quartile values under this convention.
@@ -2028,13 +2028,13 @@ For an even sample count, a conventional sample median is the average of the two
 For:
 
 $$
- (1,2,3,4,100), 
+ (1,2,3,4,100),
 $$
 
 the median is:
 
 $$
- \boxed{3}. 
+ \boxed{3}.
 $$
 
 The mean is 22.
@@ -2048,7 +2048,7 @@ The sample mean minimizes squared deviations.
 The sample median minimizes absolute deviations:
 
 $$
- \boxed{ m^\star\in \arg\min_m\sum_i|x_i-m| }. 
+ \boxed{ m^\star\in \arg\min_m\sum_i|x_i-m| }.
 $$
 
 Why?
@@ -2056,13 +2056,13 @@ Why?
 For a value $m$ not equal to any observation, the derivative of $|x_i-m|$ with respect to $m$ is:
 
 $$
- -1 
+ -1
 $$
 
 when $x_i>m$, and:
 
 $$
- +1 
+ +1
 $$
 
 when $x_i\<m$.
@@ -2092,25 +2092,25 @@ The median and interquartile range are more resistant to some forms of contamina
 Define the sample median:
 
 $$
- m=\operatorname{median}(x_i). 
+ m=\operatorname{median}(x_i).
 $$
 
 Calculate absolute deviations from the median:
 
 $$
- d_i=|x_i-m|. 
+ d_i=|x_i-m|.
 $$
 
 The median absolute deviation, or MAD, is:
 
 $$
- \boxed{ \operatorname{MAD} = \operatorname{median}(|x_i-m|) }. 
+ \boxed{ \operatorname{MAD} = \operatorname{median}(|x_i-m|) }.
 $$
 
 For:
 
 $$
- x=(1,2,3,4,100), 
+ x=(1,2,3,4,100),
 $$
 
 the median is three.
@@ -2118,19 +2118,19 @@ the median is three.
 The absolute deviations are:
 
 $$
- (2,1,0,1,97). 
+ (2,1,0,1,97).
 $$
 
 Sort:
 
 $$
- (0,1,1,2,97). 
+ (0,1,1,2,97).
 $$
 
 Therefore:
 
 $$
- \boxed{\operatorname{MAD}=1}. 
+ \boxed{\operatorname{MAD}=1}.
 $$
 
 The outlier at 100 has little influence on this result.
@@ -2140,19 +2140,19 @@ The outlier at 100 has little influence on this result.
 For an approximately Gaussian distribution, MAD can be scaled to estimate standard deviation:
 
 $$
- \boxed{ \hat\sigma\_{\mathrm{MAD}} \approx1.4826\\,\operatorname{MAD} }. 
+ \boxed{ \hat\sigma_{\mathrm{MAD}} \approx1.4826\,\operatorname{MAD} }.
 $$
 
 The factor comes from the standard normal distribution's median absolute deviation:
 
 $$
- \Phi^{-1}(0.75)\approx0.67449. 
+ \Phi^{-1}(0.75)\approx0.67449.
 $$
 
 Its reciprocal is approximately:
 
 $$
- \frac1{0.67449}\approx1.4826. 
+ \frac1{0.67449}\approx1.4826.
 $$
 
 This scaling is meaningful under a Gaussian reference model and should not be blindly interpreted as a universally unbiased standard-deviation estimate for every distribution.
@@ -2164,19 +2164,19 @@ A trimmed mean removes a specified fraction of the smallest and largest observat
 For:
 
 $$
- (1,2,3,4,100), 
+ (1,2,3,4,100),
 $$
 
 remove the smallest and largest values to obtain:
 
 $$
- (2,3,4). 
+ (2,3,4).
 $$
 
 The trimmed mean is:
 
 $$
- \boxed{3}. 
+ \boxed{3}.
 $$
 
 Winsorization instead replaces extreme observations with less extreme boundary values rather than discarding them.
@@ -2265,13 +2265,13 @@ This connects vectors, quadratic forms, least squares, dual norms and experiment
 Suppose our goal is to estimate a population mean:
 
 $$
- \mu. 
+ \mu.
 $$
 
 We observe a sample mean:
 
 $$
- \bar X. 
+ \bar X.
 $$
 
 Because the sample is random, $\bar X$ varies between repeated experiments.
@@ -2289,7 +2289,7 @@ This distinction is fundamental.
 If the sampling distribution of the mean is normal, or a suitable normal approximation is justified, and the population standard deviation $\sigma$ is known:
 
 $$
- \frac{\bar X-\mu}{\sigma/\sqrt N} 
+ \frac{\bar X-\mu}{\sigma/\sqrt N}
 $$
 
 has a standard-normal distribution exactly under normal sampling, or approximately under a suitable CLT regime.
@@ -2297,13 +2297,13 @@ has a standard-normal distribution exactly under normal sampling, or approximate
 For a two-sided 95% interval, the standard-normal critical value is approximately:
 
 $$
- z\_{0.975}=1.959964. 
+ z_{0.975}=1.959964.
 $$
 
 Thus:
 
 $$
- \boxed{ \mu\in \bar x\pm1.96\frac{\sigma}{\sqrt N} } 
+ \boxed{ \mu\in \bar x\pm1.96\frac{\sigma}{\sqrt N} }
 $$
 
 is the familiar 95% normal confidence interval.
@@ -2317,13 +2317,13 @@ We estimate it from the sample using $s$.
 For IID normal observations, the statistic:
 
 $$
- \boxed{ T= \frac{\bar X-\mu}{s/\sqrt N} } 
+ \boxed{ T= \frac{\bar X-\mu}{s/\sqrt N} }
 $$
 
 has a Student's t-distribution with:
 
 $$
- N-1 
+ N-1
 $$
 
 degrees of freedom.
@@ -2331,7 +2331,7 @@ degrees of freedom.
 The corresponding interval is:
 
 $$
- \boxed{ \bar x \pm t\_{0.975,N-1}\frac{s}{\sqrt N} }. 
+ \boxed{ \bar x \pm t_{0.975,N-1}\frac{s}{\sqrt N} }.
 $$
 
 For large $N$, the t critical value approaches the normal critical value.
@@ -2347,59 +2347,59 @@ itl.nist.gov+1
 Return to:
 
 $$
- x=(1,2,3,4,5,6). 
+ x=(1,2,3,4,5,6).
 $$
 
 We computed:
 
 $$
- \bar x=3.5, 
+ \bar x=3.5,
 $$
 
 $$
- s^2=3.5, 
+ s^2=3.5,
 $$
 
 so:
 
 $$
- s\approx1.870829. 
+ s\approx1.870829.
 $$
 
 The estimated standard error is:
 
 $$
- \operatorname{SE}= \frac{s}{\sqrt6} = \sqrt{\frac{3.5}{6}} \approx0.763763. 
+ \operatorname{SE}= \frac{s}{\sqrt6} = \sqrt{\frac{3.5}{6}} \approx0.763763.
 $$
 
 A normal-approximation interval uses:
 
 $$
- 3.5\pm1.96(0.763763). 
+ 3.5\pm1.96(0.763763).
 $$
 
 This is approximately:
 
 $$
- \boxed{[2.003,\ 4.997]}. 
+ \boxed{[2.003,\ 4.997]}.
 $$
 
 But with only six observations, and assuming IID normal sampling, the appropriate exact t critical value for five degrees of freedom is about:
 
 $$
- t\_{0.975,5}\approx2.571. 
+ t_{0.975,5}\approx2.571.
 $$
 
 Therefore the t interval is approximately:
 
 $$
- 3.5\pm2.571(0.763763), 
+ 3.5\pm2.571(0.763763),
 $$
 
 giving:
 
 $$
- \boxed{[1.536,\ 5.464]}. 
+ \boxed{[1.536,\ 5.464]}.
 $$
 
 The t interval is wider.
@@ -2411,31 +2411,31 @@ Crucially, if the observations are not plausibly sampled from a normal populatio
 Suppose a pixel is estimated from $N$ independent contribution samples:
 
 $$
- Y_1,\ldots,Y_N. 
+ Y_1,\ldots,Y_N.
 $$
 
 The mean is:
 
 $$
- \bar Y. 
+ \bar Y.
 $$
 
 The sample variance is:
 
 $$
- s_Y^2= \frac1{N-1}\sum_i(Y_i-\bar Y)^2. 
+ s_Y^2= \frac1{N-1}\sum_i(Y_i-\bar Y)^2.
 $$
 
 The estimated standard error is:
 
 $$
- \boxed{ \widehat{\operatorname{SE}}= \frac{s_Y}{\sqrt N} }. 
+ \boxed{ \widehat{\operatorname{SE}}= \frac{s_Y}{\sqrt N} }.
 $$
 
 A normal-approximation 95% confidence interval is:
 
 $$
- \boxed{ \bar Y\pm1.96\frac{s_Y}{\sqrt N} } 
+ \boxed{ \bar Y\pm1.96\frac{s_Y}{\sqrt N} }
 $$
 
 when the assumptions and sample size make that approximation appropriate.
@@ -2467,7 +2467,7 @@ We want to know whether their expected errors differ.
 Define:
 
 $$
- H_0:\mu_A=\mu_B 
+ H_0:\mu_A=\mu_B
 $$
 
 as the null hypothesis.
@@ -2475,7 +2475,7 @@ as the null hypothesis.
 An alternative might be:
 
 $$
- H_1:\mu_A\ne\mu_B. 
+ H_1:\mu_A\ne\mu_B.
 $$
 
 A test statistic summarizes evidence against the null.
@@ -2489,7 +2489,7 @@ A Type II error occurs when we fail to reject a false null hypothesis.
 The significance level:
 
 $$
- \alpha 
+ \alpha
 $$
 
 typically controls the probability of a Type I error under the test's assumptions and specified null model.
@@ -2497,7 +2497,7 @@ typically controls the probability of a Type I error under the test's assumption
 The power of a test is:
 
 $$
- \boxed{ 1-\beta } 
+ \boxed{ 1-\beta }
 $$
 
 where $\beta$ is its Type II error probability under a specified alternative.
@@ -2527,19 +2527,19 @@ Suppose both algorithms are evaluated on the same scenes and corresponding seeds
 Define a difference for each trial:
 
 $$
- D_i=E\_{A,i}-E\_{B,i}. 
+ D_i=E_{A,i}-E_{B,i}.
 $$
 
 Then analyze:
 
 $$
- \bar D=\frac1N\sum_iD_i. 
+ \bar D=\frac1N\sum_iD_i.
 $$
 
 The variance of one paired difference is:
 
 $$
- \operatorname{Var}(D) = \operatorname{Var}(E_A)+ \operatorname{Var}(E_B)- 2\operatorname{Cov}(E_A,E_B). 
+ \operatorname{Var}(D) = \operatorname{Var}(E_A)+ \operatorname{Var}(E_B)- 2\operatorname{Cov}(E_A,E_B).
 $$
 
 If the paired errors are positively correlated because scene difficulty affects both algorithms similarly, their difference may have substantially lower variance than two unpaired measurements.
@@ -2553,25 +2553,25 @@ However, the pairing must reflect comparable experimental units. Merely giving t
 Assuming the paired differences satisfy the relevant normality assumptions, or an appropriate large-sample approximation is valid, test:
 
 $$
- H_0:\mathbb E[D]=0. 
+ H_0:\mathbb E[D]=0.
 $$
 
 Compute the sample mean difference:
 
 $$
- \bar D 
+ \bar D
 $$
 
 and sample standard deviation:
 
 $$
- s_D. 
+ s_D.
 $$
 
 The test statistic is:
 
 $$
- \boxed{ t= \frac{\bar D}{s_D/\sqrt N} }. 
+ \boxed{ t= \frac{\bar D}{s_D/\sqrt N} }.
 $$
 
 Under an exact IID normal-difference null model, this follows a t-distribution with $N-1$ degrees of freedom.
@@ -2585,7 +2585,7 @@ If a study tests 100 different configurations at significance level 0.05 without
 Under independent true-null tests, the expected number of false rejections would be:
 
 $$
- 100(0.05)=5. 
+ 100(0.05)=5.
 $$
 
 Not every study has independent tests, but the example illustrates the issue.
@@ -2862,63 +2862,63 @@ if __name__ == "__main__":
 
 Probability starts with a model and asks what observations it can generate. Statistical inference reverses that direction: after seeing observations, we ask which model parameters remain plausible. Wasserman makes this probability/inference inversion the organizing idea of *All of Statistics*. The distinction matters in visual computing because a renderer, camera-noise model, tracking model, or reconstruction system often supplies the **forward law**, while calibration and inverse graphics solve the corresponding **inverse statistical problem**.
 
-Let independent observations \(X_1,\ldots,X_n\) have density or mass function \(f(x;\theta)\). Once the data \(x_1,\ldots,x_n\) are fixed, the same product
+Let independent observations $X_1,\ldots,X_n$ have density or mass function $f(x;\theta)$. Once the data $x_1,\ldots,x_n$ are fixed, the same product
 
-\[
+$$
 L_n(\theta)=\prod_{i=1}^{n} f(x_i;\theta)
-\]
+$$
 
-is viewed as a function of the unknown parameter. It is the **likelihood**, not a probability density over \(\theta\); in general it need not integrate to one with respect to the parameter. The maximum-likelihood estimator is
+is viewed as a function of the unknown parameter. It is the **likelihood**, not a probability density over $\theta$; in general it need not integrate to one with respect to the parameter. The maximum-likelihood estimator is
 
-\[
+$$
 \hat\theta_{\mathrm{MLE}}\in\arg\max_{\theta\in\Theta}L_n(\theta).
-\]
+$$
 
 Products of many small probabilities underflow, so implementations normally maximize the log-likelihood
 
-\[
+$$
 \ell_n(\theta)=\sum_{i=1}^{n}\log f(x_i;\theta).
-\]
+$$
 
-The logarithm is monotone, so it preserves the maximizer while converting products into sums. Constants independent of \(\theta\) may be dropped when finding the argmax, but not when the actual normalized likelihood value matters.
+The logarithm is monotone, so it preserves the maximizer while converting products into sums. Constants independent of $\theta$ may be dropped when finding the argmax, but not when the actual normalized likelihood value matters.
 
 The familiar least-squares objective is therefore not a mysterious universal choice. If
 
-\[
+$$
 Y_i=g_\theta(X_i)+\varepsilon_i,\qquad
 \varepsilon_i\sim\mathcal N(0,\sigma^2)
-\]
+$$
 
-independently with fixed \(\sigma\), then
+independently with fixed $\sigma$, then
 
-\[
+$$
 -\ell_n(\theta)
 =
 \frac{1}{2\sigma^2}\sum_i
 \left(Y_i-g_\theta(X_i)\right)^2
 +\text{constant}.
-\]
+$$
 
 Minimizing squared residuals is exactly maximum likelihood under this Gaussian conditional-noise model. Change the noise law and the statistically motivated loss changes. A Laplace error model leads to an absolute-deviation term; a Bernoulli observation model leads to a log-loss/cross-entropy term. This is why an inverse-rendering objective should say which residual distribution it assumes rather than merely calling a loss “standard.”
 
 Maximum likelihood also supplies an information geometry. For a one-parameter regular model the score is
 
-\[
+$$
 S_\theta(X)=\frac{\partial}{\partial\theta}\log f(X;\theta),
-\]
+$$
 
 and the Fisher information can be written, under the usual regularity assumptions, as
 
-\[
+$$
 I(\theta)=
 \mathbb E_\theta[S_\theta(X)^2].
-\]
+$$
 
-Large information means the likelihood changes strongly when the parameter moves; weak information means nearby parameters produce hard-to-distinguish observations. For regular fixed-dimensional models, the MLE often has asymptotic variance approximately \(1/(nI(\theta))\) in the scalar case and an inverse Fisher-information matrix in the multivariate case. This is an asymptotic statement, not a guarantee for small data, singular models, boundary parameters, changing model dimension, or poorly identifiable inverse problems. A reconstruction can have a perfectly implemented optimizer and still possess little information about one parameter.
+Large information means the likelihood changes strongly when the parameter moves; weak information means nearby parameters produce hard-to-distinguish observations. For regular fixed-dimensional models, the MLE often has asymptotic variance approximately $1/(nI(\theta))$ in the scalar case and an inverse Fisher-information matrix in the multivariate case. This is an asymptotic statement, not a guarantee for small data, singular models, boundary parameters, changing model dimension, or poorly identifiable inverse problems. A reconstruction can have a perfectly implemented optimizer and still possess little information about one parameter.
 
 A useful engine/research diagnostic is therefore to keep three objects distinct:
 
-\[
+$$
 \boxed{
 \text{forward model}
 \;\longrightarrow\;
@@ -2926,7 +2926,7 @@ A useful engine/research diagnostic is therefore to keep three objects distinct:
 \;\longrightarrow\;
 \text{estimator}
 }
-\]
+$$
 
 The forward model states what data would look like under a parameter. The likelihood scores parameters using the observed data. The estimator is a rule that converts the likelihood and any other assumptions into a reported parameter. Conflating them makes it difficult to tell whether failure came from the physical model, the statistical assumption, or the numerical optimizer.
 
@@ -2936,21 +2936,21 @@ Source basis: Wasserman, *All of Statistics*, Chapters 6 and 9, especially the m
 
 An estimate is only one number. Scientific use usually needs to know how much that number would vary under repeated sampling. Sometimes an exact sampling distribution is available; often it is not. The **bootstrap** approximates that repeated-sampling experiment using the observed empirical distribution.
 
-Given observations \(X_1,\ldots,X_n\), the empirical distribution places mass \(1/n\) on each observed value. A nonparametric bootstrap replicate draws
+Given observations $X_1,\ldots,X_n$, the empirical distribution places mass $1/n$ on each observed value. A nonparametric bootstrap replicate draws
 
-\[
+$$
 X_1^*,\ldots,X_n^*
-\]
+$$
 
 independently **with replacement** from those observed values and recomputes the statistic,
 
-\[
+$$
 \hat\theta^*=T(X_1^*,\ldots,X_n^*).
-\]
+$$
 
-Repeating this \(B\) times produces \(\hat\theta_1^*,\ldots,\hat\theta_B^*\). Their sample spread estimates the sampling spread of \(\hat\theta\). For example,
+Repeating this $B$ times produces $\hat\theta_1^*,\ldots,\hat\theta_B^*$. Their sample spread estimates the sampling spread of $\hat\theta$. For example,
 
-\[
+$$
 \widehat{\operatorname{se}}_{\mathrm{boot}}
 =
 \sqrt{
@@ -2958,11 +2958,11 @@ Repeating this \(B\) times produces \(\hat\theta_1^*,\ldots,\hat\theta_B^*\). Th
 \sum_{b=1}^{B}
 (\hat\theta_b^*-\bar{\theta}^*)^2
 }.
-\]
+$$
 
-The key conceptual step is that the bootstrap does **not** resample arbitrary numbers around the estimator. It substitutes the empirical distribution for the unknown population and then repeats the same estimator on samples drawn from that surrogate population. A **parametric bootstrap** instead fits a parametric model \(f(x;\hat\theta)\), simulates data from that fitted model, and reruns the estimator. The two procedures make different assumptions.
+The key conceptual step is that the bootstrap does **not** resample arbitrary numbers around the estimator. It substitutes the empirical distribution for the unknown population and then repeats the same estimator on samples drawn from that surrogate population. A **parametric bootstrap** instead fits a parametric model $f(x;\hat\theta)$, simulates data from that fitted model, and reruns the estimator. The two procedures make different assumptions.
 
-Bootstrap confidence intervals can be built in several ways. A percentile interval uses empirical quantiles of the bootstrap replicates. A pivotal construction instead approximates the distribution of \(\hat\theta-\theta\) using \(\hat\theta^*-\hat\theta\). More sophisticated corrections exist because bootstrap distributions can be biased or skewed. The important engineering lesson is not to memorize one interval recipe but to identify which sampling distribution the resampling scheme is trying to approximate.
+Bootstrap confidence intervals can be built in several ways. A percentile interval uses empirical quantiles of the bootstrap replicates. A pivotal construction instead approximates the distribution of $\hat\theta-\theta$ using $\hat\theta^*-\hat\theta$. More sophisticated corrections exist because bootstrap distributions can be biased or skewed. The important engineering lesson is not to memorize one interval recipe but to identify which sampling distribution the resampling scheme is trying to approximate.
 
 Bootstrap validity is not automatic. Statistics defined by extreme order behavior, nonsmooth boundaries, dependence, or non-IID data can defeat the naive IID bootstrap. Wasserman gives the uniform-endpoint MLE as a concrete warning: the ordinary nonparametric bootstrap can put anomalously large probability on reproducing the observed sample maximum because it can never generate values beyond that maximum. Time series, spatially correlated pixels, rays sharing random paths, and temporally correlated benchmark frames also violate the simple IID resampling story unless blocks or another dependence-aware scheme are used.
 
@@ -2974,48 +2974,48 @@ Source basis: Wasserman, *All of Statistics*, Chapters 7–9, especially the emp
 
 Two estimators can have different error patterns without one being universally “better.” Statistical decision theory makes the comparison explicit by specifying a **loss function**
 
-\[
+$$
 L(\theta,a),
-\]
+$$
 
-where \(\theta\) is the unknown state/parameter and \(a\) is the action or estimate reported by the procedure. The estimator \(\delta(X)\) is then a decision rule. Its frequentist **risk** at parameter value \(\theta\) is the expected loss over data generated from that \(\theta\):
+where $\theta$ is the unknown state/parameter and $a$ is the action or estimate reported by the procedure. The estimator $\delta(X)$ is then a decision rule. Its frequentist **risk** at parameter value $\theta$ is the expected loss over data generated from that $\theta$:
 
-\[
+$$
 R(\theta,\delta)
 =
 \mathbb E_\theta[
 L(\theta,\delta(X))
 ].
-\]
+$$
 
 Under squared-error loss this becomes mean squared error,
 
-\[
+$$
 R(\theta,\delta)
 =
 \operatorname{Var}_\theta[\delta(X)]
 +
 \operatorname{Bias}_\theta[\delta(X)]^2,
-\]
+$$
 
 which connects decision theory directly to the bias–variance decomposition already used in rendering and learning experiments.
 
 Different losses encode genuinely different tasks. Squared error punishes large mistakes strongly. Absolute error changes the optimal point summary from a mean-like answer toward a median-like one. Zero-one loss asks whether a discrete decision is correct. Kullback–Leibler loss compares distributions. A perception system choosing a pose estimate, a renderer choosing a denoised pixel, and a safety test deciding “collision/no collision” can therefore prefer different decision rules even when they observe the same data.
 
-A **Bayes rule** minimizes risk averaged under a prior distribution on \(\theta\). Under squared error, the posterior mean is the Bayes estimator. A **minimax rule** minimizes the maximum risk over \(\theta\):
+A **Bayes rule** minimizes risk averaged under a prior distribution on $\theta$. Under squared error, the posterior mean is the Bayes estimator. A **minimax rule** minimizes the maximum risk over $\theta$:
 
-\[
+$$
 \delta_{\mathrm{minimax}}
 \in
 \arg\min_\delta
 \sup_{\theta}R(\theta,\delta).
-\]
+$$
 
 These are different design criteria. Bayes risk asks for good average performance under a specified prior; minimax risk asks for protection against the worst parameter in the chosen class. An **admissible** rule is one that is not uniformly dominated by another rule. Admissibility is a weak sanity condition, not proof that a rule is practically good: a bizarre rule can be admissible because no single alternative beats it everywhere.
 
 This framework also prevents over-reading maximum likelihood. In regular fixed-dimensional parametric models, MLEs often enjoy attractive local large-sample risk properties, but Wasserman explicitly notes that this story can fail when the dimension grows with the data. “MLE” is an estimation construction, not a theorem of universal optimality.
 
-For visual-computing evaluation, write the loss before choosing the estimator. If a depth error of \(10\) cm at two metres matters differently from the same absolute error at fifty metres, ordinary squared depth error may not represent the application. If catastrophic outliers matter more than typical error, a mean metric can hide the relevant risk. Decision theory turns this from a metrics argument into a precise statement about which errors the system is being optimized to avoid.
+For visual-computing evaluation, write the loss before choosing the estimator. If a depth error of $10$ cm at two metres matters differently from the same absolute error at fifty metres, ordinary squared depth error may not represent the application. If catastrophic outliers matter more than typical error, a mean metric can hide the relevant risk. Decision theory turns this from a metrics argument into a precise statement about which errors the system is being optimized to avoid.
 
 Source basis: Wasserman, *All of Statistics*, Chapter 12 on loss, risk, Bayes rules, minimax rules, admissibility, and the large-sample relationship between maximum likelihood, Bayes, and minimax procedures.
 
@@ -3023,19 +3023,19 @@ Source basis: Wasserman, *All of Statistics*, Chapter 12 on loss, risk, Bayes ru
 
 A model fitted and scored on the same observations is rewarded for remembering the noise in those observations. Wasserman’s regression discussion makes the distinction through **prediction risk** versus **training error**. Adding parameters can always make the training fit no worse, while future prediction can deteriorate because variance increases. This is the operational meaning of overfitting.
 
-Suppose a model class indexed by \(S\) produces a fitted predictor \(\hat r_S\). A future-data risk has the form
+Suppose a model class indexed by $S$ produces a fitted predictor $\hat r_S$. A future-data risk has the form
 
-\[
+$$
 R(S)
 =
 \mathbb E[
 L(Y^*,\hat r_S(X^*))
 ],
-\]
+$$
 
-where the expectation includes a fresh observation. The training loss instead evaluates the same samples used to fit \(\hat r_S\). It is generally optimistically biased as an estimate of future risk because the fitted values depend on those same responses.
+where the expectation includes a fresh observation. The training loss instead evaluates the same samples used to fit $\hat r_S$. It is generally optimistically biased as an estimate of future risk because the fitted values depend on those same responses.
 
-**Cross-validation** breaks that reuse deliberately. In \(K\)-fold cross-validation, partition the sample into \(K\) blocks. For each fold, fit on the other \(K-1\) blocks and score on the held-out block. Aggregate the held-out losses. The procedure estimates performance of the full fitting pipeline, including preprocessing and hyperparameter selection that occurs **inside** each training split. If normalization, feature selection, or parameter tuning sees the held-out data before scoring, the apparent validation estimate leaks information.
+**Cross-validation** breaks that reuse deliberately. In $K$-fold cross-validation, partition the sample into $K$ blocks. For each fold, fit on the other $K-1$ blocks and score on the held-out block. Aggregate the held-out losses. The procedure estimates performance of the full fitting pipeline, including preprocessing and hyperparameter selection that occurs **inside** each training split. If normalization, feature selection, or parameter tuning sees the held-out data before scoring, the apparent validation estimate leaks information.
 
 The bias–variance tradeoff is therefore not merely a slogan about “simple versus complex.” A larger model can reduce approximation bias while increasing sensitivity to the particular training sample. Regularization, feature selection, early stopping, and model averaging all change that trade. Their value should be judged on new data or through a defensible resampling procedure, not by training fit.
 
@@ -3045,14 +3045,14 @@ Source basis: Wasserman, Chapters 13 and 22, especially regression model selecti
 
 ### A graphical model can encode conditional independence without proving causation
 
-A directed acyclic graph can make a multivariate probability law easier to reason about. If each variable \(X_i\) has parent set \(\pi_i\), a distribution Markov to a DAG factors as
+A directed acyclic graph can make a multivariate probability law easier to reason about. If each variable $X_i$ has parent set $\pi_i$, a distribution Markov to a DAG factors as
 
-\[
+$$
 p(x_1,\ldots,x_k)
 =
 \prod_{i=1}^{k}
 p(x_i\mid \pi_i).
-\]
+$$
 
 This factorization says which conditional dependencies the model retains. It can reduce a high-dimensional joint distribution into local conditional models and exposes conditional independences through the graph.
 
@@ -3060,19 +3060,19 @@ The graph’s arrows are not automatically causal arrows. **d-separation** gives
 
 Causal questions require another operation: intervention. Wasserman distinguishes passive conditioning
 
-\[
+$$
 P(Y\mid X=x)
-\]
+$$
 
 from an intervention written in his notation as
 
-\[
+$$
 P(Y\mid X:=x).
-\]
+$$
 
-To represent setting \(X=x\), arrows entering \(X\) are removed and the corresponding conditional factor for \(X\) is replaced by the intervention. Observation asks what tends to be true among cases where \(X=x\); intervention asks what would happen under a rule that forces \(X\) to \(x\). Those distributions can differ.
+To represent setting $X=x$, arrows entering $X$ are removed and the corresponding conditional factor for $X$ is replaced by the intervention. Observation asks what tends to be true among cases where $X=x$; intervention asks what would happen under a rule that forces $X$ to $x$. Those distributions can differ.
 
-A confounder \(Z\) that causes both treatment \(X\) and outcome \(Y\) can make association misleading. Randomization breaks the assignment dependence and can make the causal effect identifiable without modeling the original treatment-selection mechanism. In observational data, adjustment requires the relevant confounders to be measured and the causal assumptions to be defensible. An unobserved confounder cannot be repaired by adding more optimizer iterations.
+A confounder $Z$ that causes both treatment $X$ and outcome $Y$ can make association misleading. Randomization breaks the assignment dependence and can make the causal effect identifiable without modeling the original treatment-selection mechanism. In observational data, adjustment requires the relevant confounders to be measured and the causal assumptions to be defensible. An unobserved confounder cannot be repaired by adding more optimizer iterations.
 
 This distinction is directly relevant to graphics/vision experiments. If a new reconstruction method is evaluated mostly on easier scenes because it fails to initialize on harder ones, conditioning on “successful run” can create selection effects. If exposure settings affect both image noise and which frames enter a dataset, the observed noise/accuracy correlation is not automatically causal. A DAG can make those assumptions visible, but the graph itself must be justified by experimental design or domain knowledge.
 
@@ -3085,19 +3085,19 @@ The term mean squared error, or MSE, has two closely related but distinct uses.
 In statistical estimation, it measures expected squared error of a random estimator:
 
 $$
- \boxed{ \operatorname{MSE}(\widehat\theta) = \mathbb E[(\widehat\theta-\theta)^2] }. 
+ \boxed{ \operatorname{MSE}(\widehat\theta) = \mathbb E[(\widehat\theta-\theta)^2] }.
 $$
 
 As derived in the sampling and Monte Carlo chapters:
 
 $$
- \boxed{ \operatorname{MSE} = \operatorname{Var}(\widehat\theta) + \operatorname{Bias}(\widehat\theta)^2 }. 
+ \boxed{ \operatorname{MSE} = \operatorname{Var}(\widehat\theta) + \operatorname{Bias}(\widehat\theta)^2 }.
 $$
 
 In model evaluation, we often calculate the empirical average squared prediction error:
 
 $$
- \boxed{ \operatorname{MSE}\_{\mathrm{empirical}} = \frac1N\sum\_{i=1}^{N} (\hat y_i-y_i)^2 }. 
+ \boxed{ \operatorname{MSE}_{\mathrm{empirical}} = \frac1N\sum_{i=1}^{N} (\hat y_i-y_i)^2 }.
 $$
 
 The first is a theoretical performance quantity of a random estimator.
@@ -3111,31 +3111,31 @@ They are related, but not automatically identical.
 Suppose the true observations are:
 
 $$
- y=(1,2,4). 
+ y=(1,2,4).
 $$
 
 The predicted values are:
 
 $$
- \hat y=(2,1,5). 
+ \hat y=(2,1,5).
 $$
 
 The errors are:
 
 $$
- e=(1,-1,1). 
+ e=(1,-1,1).
 $$
 
 Square:
 
 $$
- e^2=(1,1,1). 
+ e^2=(1,1,1).
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{MSE}= \frac{1+1+1}{3}=1 }. 
+ \boxed{ \operatorname{MSE}= \frac{1+1+1}{3}=1 }.
 $$
 
 #### 2 MSE sensitivity to outliers
@@ -3155,7 +3155,7 @@ But it can be misleading when outliers arise from data corruption or mismatched 
 Root mean squared error is:
 
 $$
- \boxed{ \operatorname{RMSE} = \sqrt{ \frac1N\sum_i(\hat y_i-y_i)^2 } }. 
+ \boxed{ \operatorname{RMSE} = \sqrt{ \frac1N\sum_i(\hat y_i-y_i)^2 } }.
 $$
 
 RMSE has the same units as the original measurements.
@@ -3169,37 +3169,37 @@ MSE would instead have units of square metres.
 For the previous errors:
 
 $$
- e=(1,-1,1), 
+ e=(1,-1,1),
 $$
 
 we have:
 
 $$
- \operatorname{MSE}=1. 
+ \operatorname{MSE}=1.
 $$
 
 Thus:
 
 $$
- \boxed{\operatorname{RMSE}=1}. 
+ \boxed{\operatorname{RMSE}=1}.
 $$
 
 Now consider errors:
 
 $$
- e=(1,1,3). 
+ e=(1,1,3).
 $$
 
 Then:
 
 $$
- \operatorname{MSE} = \frac{1+1+9}{3} =\frac{11}{3}. 
+ \operatorname{MSE} = \frac{1+1+9}{3} =\frac{11}{3}.
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{RMSE} = \sqrt{\frac{11}{3}} \approx1.914854 }. 
+ \boxed{ \operatorname{RMSE} = \sqrt{\frac{11}{3}} \approx1.914854 }.
 $$
 
 #### 2 RMSE and Euclidean vector norms
@@ -3207,19 +3207,19 @@ $$
 For a residual vector:
 
 $$
- \mathbf r= \begin{bmatrix} r_1\\vdots\\r_N \end{bmatrix}, 
+ \mathbf r= \begin{bmatrix} r_1\\vdots\\r_N \end{bmatrix},
 $$
 
 the Euclidean norm is:
 
 $$
- \\|\mathbf r\\|\_2= \sqrt{\sum_i r_i^2}. 
+ \|\mathbf r\|_2= \sqrt{\sum_i r_i^2}.
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{RMSE} = \frac{\\|\mathbf r\\|\_2}{\sqrt N} }. 
+ \boxed{ \operatorname{RMSE} = \frac{\|\mathbf r\|_2}{\sqrt N} }.
 $$
 
 This directly connects RMSE to least-squares optimization and vector norms.
@@ -3243,7 +3243,7 @@ A benchmark must specify the aggregation procedure.
 Mean absolute error, or MAE, is:
 
 $$
- \boxed{ \operatorname{MAE} = \frac1N\sum\_{i=1}^{N} |\hat y_i-y_i| }. 
+ \boxed{ \operatorname{MAE} = \frac1N\sum_{i=1}^{N} |\hat y_i-y_i| }.
 $$
 
 Instead of squaring errors, it takes their absolute magnitudes.
@@ -3251,31 +3251,31 @@ Instead of squaring errors, it takes their absolute magnitudes.
 For:
 
 $$
- e=(1,-1,1), 
+ e=(1,-1,1),
 $$
 
 we obtain:
 
 $$
- \boxed{\operatorname{MAE}=1}. 
+ \boxed{\operatorname{MAE}=1}.
 $$
 
 For:
 
 $$
- e=(1,1,3), 
+ e=(1,1,3),
 $$
 
 the result is:
 
 $$
- \boxed{ \operatorname{MAE}=\frac53\approx1.666667 }. 
+ \boxed{ \operatorname{MAE}=\frac53\approx1.666667 }.
 $$
 
 Compare RMSE:
 
 $$
- 1.914854. 
+ 1.914854.
 $$
 
 RMSE is larger because it gives more influence to the error of magnitude three.
@@ -3285,13 +3285,13 @@ RMSE is larger because it gives more influence to the error of magnitude three.
 For residual vector $\mathbf r$:
 
 $$
- \\|\mathbf r\\|\_1=\sum_i|r_i|. 
+ \|\mathbf r\|_1=\sum_i|r_i|.
 $$
 
 Therefore:
 
 $$
- \boxed{ \operatorname{MAE}= \frac1N\\|\mathbf r\\|\_1 }. 
+ \boxed{ \operatorname{MAE}= \frac1N\|\mathbf r\|_1 }.
 $$
 
 MSE and RMSE are connected to the L2 norm.
@@ -3324,13 +3324,13 @@ Relative error attempts to express the error compared with a meaningful referenc
 For an approximation $\hat x$ to a nonzero true value $x$:
 
 $$
- \boxed{ e\_{\mathrm{rel}} = \frac{|\hat x-x|}{|x|} }. 
+ \boxed{ e_{\mathrm{rel}} = \frac{|\hat x-x|}{|x|} }.
 $$
 
 The corresponding percentage error is:
 
 $$
- 100e\_{\mathrm{rel}}\\%. 
+ 100e_{\mathrm{rel}}\\%.
 $$
 
 #### 1 Numerical example: relative error metrics
@@ -3338,31 +3338,31 @@ $$
 Suppose the true length is:
 
 $$
- x=200\ \mathrm{mm}. 
+ x=200\ \mathrm{mm}.
 $$
 
 The estimate is:
 
 $$
- \hat x=202\ \mathrm{mm}. 
+ \hat x=202\ \mathrm{mm}.
 $$
 
 The absolute error is:
 
 $$
- 2\ \mathrm{mm}. 
+ 2\ \mathrm{mm}.
 $$
 
 The relative error is:
 
 $$
- \frac2{200}=0.01. 
+ \frac2{200}=0.01.
 $$
 
 Thus the percentage error is:
 
 $$
- \boxed{1\%}. 
+ \boxed{1\%}.
 $$
 
 #### 2 Why relative error fails near zero
@@ -3370,25 +3370,25 @@ $$
 Suppose:
 
 $$
- x=10^{-8} 
+ x=10^{-8}
 $$
 
 and:
 
 $$
- \hat x=10^{-6}. 
+ \hat x=10^{-6}.
 $$
 
 The absolute error is approximately:
 
 $$
- 9.9\times10^{-7}. 
+ 9.9\times10^{-7}.
 $$
 
 But the relative error is:
 
 $$
- \frac{9.9\times10^{-7}}{10^{-8}} =99. 
+ \frac{9.9\times10^{-7}}{10^{-8}} =99.
 $$
 
 That is 9,900%.
@@ -3404,7 +3404,7 @@ Therefore relative error should not be used blindly for values near zero.
 For observations $y_i\ne0$:
 
 $$
- \boxed{ \operatorname{MAPE} = \frac1N \sum_i \left| \frac{\hat y_i-y_i}{y_i} \right| }. 
+ \boxed{ \operatorname{MAPE} = \frac1N \sum_i \left| \frac{\hat y_i-y_i}{y_i} \right| }.
 $$
 
 Multiply by 100 to express the result as a percentage.
@@ -3420,7 +3420,7 @@ For values that can be zero or negative, other metrics may be preferable.
 One commonly used version of symmetric MAPE is:
 
 $$
- \boxed{ \operatorname{sMAPE} = \frac1N\sum_i \frac{2|\hat y_i-y_i|} {|\hat y_i|+|y_i|} }. 
+ \boxed{ \operatorname{sMAPE} = \frac1N\sum_i \frac{2|\hat y_i-y_i|} {|\hat y_i|+|y_i|} }.
 $$
 
 The result is often multiplied by 100.
@@ -3436,10 +3436,10 @@ Despite its name, sMAPE does not eliminate every undesirable property of percent
 A benchmark may report:
 
 $$
- \operatorname{NRMSE} = \frac{\operatorname{RMSE}}{s\_{\mathrm{reference}}} 
+ \operatorname{NRMSE} = \frac{\operatorname{RMSE}}{s_{\mathrm{reference}}}
 $$
 
-where $s\_{\mathrm{reference}}$ is a specified scale.
+where $s_{\mathrm{reference}}$ is a specified scale.
 
 Possible choices include the reference mean, range, standard deviation, or another characteristic magnitude.
 
@@ -3452,7 +3452,7 @@ Therefore an NRMSE result is incomplete unless the normalization convention is r
 For 3D reconstruction, we might measure:
 
 $$
- e_i=\\|\hat{\mathbf p}\_i-\mathbf p_i\\|\_2 
+ e_i=\|\hat{\mathbf p}_i-\mathbf p_i\|_2
 $$
 
 in metres.
@@ -3462,7 +3462,7 @@ Then report mean Euclidean distance, RMSE of Euclidean distances, median point e
 For image reprojection:
 
 $$
- e_i= \left\\| \begin{bmatrix}\hat u_i\\hat v_i\end{bmatrix} - \begin{bmatrix}u_i\\v_i\end{bmatrix} \right\\|\_2. 
+ e_i= \left\| \begin{bmatrix}\hat u_i\\\hat v_i\end{bmatrix} - \begin{bmatrix}u_i\\v_i\end{bmatrix} \right\|_2.
 $$
 
 Those errors are measured in pixels.

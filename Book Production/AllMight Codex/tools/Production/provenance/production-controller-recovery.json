@@ -1,0 +1,50 @@
+{
+  "schema": "production-controller-recovery-provenance-v1",
+  "status": "source-restored-and-tested",
+  "source_sha256": "3514e0f42d6411567ff119f4cbcd16152da788a8f14e318bcfc30706f544c422",
+  "source_bytes": 50336,
+  "recovery_method": "Reconstructed from original Codex source-creation tool call and successful later patches; no decompilation used. The recompiled Python 3.11 code object matched the preserved bytecode recursively except for co_filename.",
+  "source_creation_evidence": {
+    "session_record": "rollout-2026-11-14T20-45-29-01a1daa0-bd3f-7891-b55e-51939c808b6e.jsonl",
+    "tool_call_ordinal": 6441,
+    "baseline_sha256": "ef59fb0fa37c82f07b3cf932828b1ebe41e87844b0bcf660f9c39c2d1bf3d871",
+    "applied_successful_patch_ordinals": [
+      6458,
+      6465,
+      6495,
+      6540,
+      6598,
+      6683,
+      6692,
+      6699,
+      6726,
+      6733,
+      6740,
+      6763,
+      6779,
+      6786,
+      1518
+    ],
+    "skipped_failed_patch_ordinal": 6708
+  },
+  "preserved_bytecode_evidence_sha256": "36510b9ea154b12bfd26e2034ea676adce718cf06084f59e3ff34c64fc5d8418",
+  "reconstruction_verification_report_sha256": "858bd5326867b79de2d1f0707a4f33d5972bdaf801d7ad7c8fedf3ffab0138f0",
+  "validation": {
+    "python_compile": {
+      "command": "python3 -m py_compile production_controller.py",
+      "result": "exit 0"
+    },
+    "controller_and_native_fixture_suite": {
+      "command": "python3 -m unittest discover -s test-fixtures/production_controller -v",
+      "result": "exit 0",
+      "tests_run": 32
+    },
+    "native_scope_fixture_suite": {
+      "command": "python3 -m unittest test_production_controller_native_scope -v",
+      "result": "exit 0",
+      "tests_run": 2
+    }
+  },
+  "evidence_preservation": "The overwritten JSON and Python bytecode snapshots were retained in the recovery area. This package contains only the restored Python source and this provenance record; it does not depend on the bytecode or private staging cache.",
+  "package_copy_sha256": "3514e0f42d6411567ff119f4cbcd16152da788a8f14e318bcfc30706f544c422"
+}

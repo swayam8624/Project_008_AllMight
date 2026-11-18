@@ -1,0 +1,40 @@
+\hypertarget{appendix-d5da3eaabaef}{}
+\section{Affine quantization and zero point}\label{appendix-d5da3eaabaef-affine-quantization-and-zero-point}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C006 · \textbf{Latest development:} C006
+
+\subsection{Definition and mechanism}\label{appendix-d5da3eaabaef-definition-and-mechanism}
+
+A positive step s, integer zero point z and bounded code q reconstruct x̂=s(q-z). Nearest encode uses clamp(round(x/s)+z). Half-step error assumes no clipping and ideal parameters.
+
+\subsection{Prerequisites}\label{appendix-d5da3eaabaef-prerequisites}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1d0dbe8924cc]{Fixed-point representation} --- supplies the representation or validity rule used above.
+\item
+  \hyperref[appendix-3ae74e89b4e6]{Absolute and relative error} --- supplies the representation or validity rule used above.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-d5da3eaabaef-used-by}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-638204c40e8b]{Groupwise quantization and metadata} --- uses this mechanism to define its representation, error or validation contract.
+\item
+  \hyperref[appendix-b2402c453dac]{UNORM and SNORM} --- uses this mechanism to define its representation, error or validation contract.
+\end{itemize}
+
+Connect later dependent concepts here when their explanations use this mechanism.
+
+\subsection{Recall and next depth}\label{appendix-d5da3eaabaef-recall-and-next-depth}
+
+Reconstruct the example and identify the condition that would invalidate it.
+
+\textbf{Pending:} Calibration objectives and actual model inference quality await experiments.
+
+\subsection{Source and navigation}\label{appendix-d5da3eaabaef-source-and-navigation}
+
+\hyperref[01-foundations-i-ch001-choosing-what-information-to-keep]{Continuous teaching story} · {Source coverage ledger {[}referenced section unavailable{]}} · \href{../02-Foundations-II/main.pdf\#nameddest=appendix-4ad47bdd269a}{Dependency Map (02-Foundations-II, appendix-4ad47bdd269a)}

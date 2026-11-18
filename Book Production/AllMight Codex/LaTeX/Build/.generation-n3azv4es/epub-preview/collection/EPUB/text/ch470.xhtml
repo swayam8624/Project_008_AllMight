@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>ch470.xhtml</title>
+  <style>
+  </style>
+  <link rel="stylesheet" type="text/css" href="../styles/stylesheet1.css" />
+</head>
+<body epub:type="bodymatter">
+<section id="appendix-341296fb3f64-robust-geometric-predicates" class="level2">
+<h2>Robust geometric predicates</h2>
+<p><strong>Curriculum depth:</strong> Introduced · <strong>First seen:</strong> Phase6 · <strong>Latest development:</strong> Phase6</p>
+<section id="appendix-341296fb3f64-definition-and-mechanism" class="level3">
+<h3>Definition and mechanism</h3>
+<p>A geometric predicate decides a category from a sign, such as orientation. Near cancellation, ordinary floating arithmetic may not certify that sign. Adaptive arithmetic adds work only when justified error bounds leave uncertainty. Exact stored-input decisions cannot restore rounded-away physical information.</p>
+<p>A triangle can have an accurately small area estimate yet an uncertified orientation sign. Declaring every small value zero changes topology instead of proving a decision.</p>
+</section>
+<section id="appendix-341296fb3f64-prerequisites" class="level3">
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="ch463.xhtml#appendix-2391db8052b1-cross-products-and-oriented-area" class="wikilink">Cross products and oriented area</a> — Oriented area supplies face normals, frame signs and geometric determinants.</li>
+<li><a href="ch238.xhtml#appendix-5aef4f13483a-dot-and-cross-product-rounding" class="wikilink">Dot and cross-product rounding (Mathematics for Visual Computing, Part 1, Reference notes: Dot and cross-product rounding)</a> — Cancellation and rounded inputs explain when a determinant sign or finite measurement is uncertain.</li>
+</ul>
+</section>
+<section id="appendix-341296fb3f64-used-by" class="level3">
+<h3>Used by</h3>
+<p>Later curriculum sources can deepen this same node; no future coverage is marked complete.</p>
+<ul>
+<li><a href="ch357.xhtml#appendix-a9ba01fa72a6-collision-barriers-and-continuous-detection" class="wikilink">Collision barriers and continuous detection (Light Transport and Image Synthesis, Part 1, Reference notes: Collision barriers and continuous detection)</a> ## Recall and next depth</li>
+</ul>
+<p>Distinguish tolerance-based geometry, measurements and certified predicates; the Phase 6 lab implements only ordinary tests. Full production proofs, target-specific integration and learner mastery require further evidence.</p>
+</section>
+<section id="appendix-341296fb3f64-source-and-navigation" class="level3">
+<h3>Source and navigation</h3>
+<p><a href="ch245.xhtml#id_01-foundations-i-ch018-the-sensor-needs-coordinates-inside-the-triangle" class="wikilink">Teaching narrative (Mathematics for Visual Computing, Part 1, Ch. 2)</a> · <a href="ch207.xhtml#appendix-fd090d982a15-phase-6---parts-501-600" class="wikilink">Coverage and source gap</a> · <a href="ch155.xhtml#appendix-a103e7846d21-phase-6---source-analysis-and-verification" class="wikilink">Evidence and limits</a> · <a href="ch544.xhtml#appendix-4ad47bdd269a-dependency-map" class="wikilink">Dependency Map</a></p>
+</section>
+<section id="appendix-341296fb3f64-phase-11-camera-development" class="level3">
+<h3>Phase 11 camera development</h3>
+<p>Adaptive orientation and incircle predicates protect discrete sign decisions from floating-point error by refining arithmetic when an error bound cannot certify the result. Camera estimation has a different uncertainty: noisy pixels and weak observability can leave pose uncertain even when every sign is exact. Predicate robustness does not improve measurement accuracy, and a low reprojection residual does not guarantee every combinatorial decision was reliable. Keep layers distinct: use robust predicates for topology, uncertainty weights for image residuals, and Jacobian spectra for weak directions. Link: <a href="ch290.xhtml#id_02-foundations-ii-ch037-a-camera-model-must-close-the-loop" class="wikilink">A camera model must close the loop (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)</a>; research: <a href="ch289.xhtml#id_02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review" class="wikilink">Four deeper links from the TUM lecture review (Geometry, Cameras, and Image Formation, Part 1, Ch. 5)</a>.</p>
+</section>
+</section>
+</body>
+</html>
